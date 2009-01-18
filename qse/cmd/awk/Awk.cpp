@@ -14,6 +14,7 @@
 #include <windows.h>
 #else
 #include <unistd.h>
+#include <signal.h>
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
@@ -689,6 +690,49 @@ static void print_usage (const qse_char_t* argv0)
 	}
 }
 
+TestAwk* app_awk = QSE_NULL;
+
+#ifdef _WIN32
+static BOOL WINAPI stop_run (DWORD ctrl_type)
+{
+	if (ctrl_type == CTRL_C_EVENT ||
+	    ctrl_type == CTRL_CLOSE_EVENT)
+	{
+		if (app_awk) app_awk->stop ();
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#else
+static void stop_run (int sig)
+{
+	signal  (SIGINT, SIG_IGN);
+	if (app_awk) app_awk->stop ();
+	signal  (SIGINT, stop_run);
+}
+#endif
+
+static void set_intr_run (TestAwk* awk)
+{
+	app_awk = awk;
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, TRUE);
+#else
+	signal (SIGINT, stop_run);
+#endif
+}
+
+static void unset_intr_run ()
+{
+	app_awk = QSE_NULL;
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, FALSE);
+#else
+	signal (SIGINT, SIG_DFL);
+#endif
+}
+
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	TestAwk awk;
@@ -864,7 +908,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-
 	if (awk.parse (srcin, srcout) == -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
@@ -875,6 +918,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	awk.enableRunCallback ();
 
+
+	set_intr_run (&awk);
 	if (awk.run (mainfn, args, nargs) == -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
@@ -882,8 +927,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 		awk.close ();
 		return -1;
 	}
+	unset_intr_run ();
 
 	awk.close ();
+
 	return 0;
 }
 

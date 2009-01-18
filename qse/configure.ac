@@ -15,6 +15,12 @@ AC_PROG_CC
 dnl determine a C++ compiler to use
 AC_PROG_CXX
 
+dnl determine an Objective-C compiler to use
+AC_PROG_OBJC
+
+dnl check if the Objective-C compiler exists in PATH. 
+AC_CHECK_PROG(HAVE_OBJC, $OBJC, yes, no)
+
 dnl check if the C++ compiler exists in PATH. 
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 
@@ -60,6 +66,7 @@ AC_SUBST(LIBTOOL_DEPS)
 
 dnl make visible the 64-bit interface to the file system
 CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
+OBJCFLAGS="$OBJCFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
 
 dnl define the WIN32 conditional if necessary
@@ -170,15 +177,21 @@ AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
 if test "$enable_debug_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG"]
+	[OBJCFLAGS="$OBJCFLAGS -g -D_DEBUG -UNDEBUG"]
 	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG"]
-	[CJFLAGS="$CJFLAGS -g"]
 	AC_SUBST(BUILD_MODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG"]
+	[OBJCFLAGS="$OBJCFLAGS -DNDEBUG -U_DEBUG"]
 	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG"]
-	[CJFLAGS="$CJFLAGS"]
 	AC_SUBST(BUILD_MODE, "release")
 fi
+
+AC_ARG_ENABLE([objc], [AC_HELP_STRING([--enable-objc],
+	[build the library for Objective-C if an Objective-C compiler is available (default. yes)])],
+	enable_objc_is=$enableval,enable_objc_is=yes) 
+[test "${HAVE_OBJC}" = "yes" || enable_objc_is="no"]
+AM_CONDITIONAL(ENABLE_OBJC, test "${enable_objc_is}" = "yes" )
 
 AC_ARG_ENABLE([cxx], [AC_HELP_STRING([--enable-cxx],
 	[build the library for C++ if a C++ compiler is available (default. yes)])],
@@ -193,6 +206,7 @@ AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
+	[OBJCFLAGS="$OBJCFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
@@ -228,6 +242,7 @@ echo "  Build mode : ${BUILD_MODE}"
 echo "  Source directory: ${srcdir}"
 echo "  Installation directory: ${prefix}"
 echo "  C compiler: ${CC} ${CFLAGS}"
+echo "  Objective-C compiler: ${OBJC} ${OBJCFLAGS}"
 echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
 echo "  Wide character: ${enable_wchar_is}" 
