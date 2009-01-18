@@ -17,6 +17,7 @@
  */
 
 #include <qse/cmn/tio.h>
+#include <qse/cmn/chr.h>
 
 qse_ssize_t qse_tio_putc (qse_tio_t* tio, qse_char_t c)
 {
@@ -85,7 +86,7 @@ qse_ssize_t qse_tio_puts (qse_tio_t* tio, const qse_char_t* str)
 	return p - str;
 }
 
-qse_ssize_t qse_tio_putsx (qse_tio_t* tio, const qse_char_t* str, qse_size_t size)
+qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t size)
 {
 	qse_ssize_t n;
 	const qse_char_t* p, * end;

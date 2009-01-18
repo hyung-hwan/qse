@@ -106,11 +106,6 @@ qse_ssize_t qse_sio_gets (
 	qse_size_t size
 );
 
-qse_ssize_t qse_sio_getsx (
-	qse_sio_t* sio,
-	qse_char_t* buf,
-	qse_size_t size
-);
 
 qse_ssize_t qse_sio_getstr (
 	qse_sio_t* sio, 
@@ -127,7 +122,13 @@ qse_ssize_t qse_sio_puts (
 	const qse_char_t* str
 );
 
-qse_ssize_t qse_sio_putsx (
+qse_ssize_t qse_sio_read (
+	qse_sio_t* sio,
+	qse_char_t* buf,
+	qse_size_t size
+);
+
+qse_ssize_t qse_sio_write (
 	qse_sio_t* sio, 
 	const qse_char_t* str,
 	qse_size_t size
