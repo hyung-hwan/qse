@@ -79,11 +79,20 @@ typedef qse_int64_t qse_fio_off_t;
 typedef enum qse_fio_seek_origin_t qse_fio_ori_t;
 
 typedef struct qse_fio_t qse_fio_t;
+typedef struct qse_fio_lck_t qse_fio_lck_t;
 
 struct qse_fio_t
 {
 	qse_mmgr_t* mmgr;
 	qse_fio_hnd_t handle;
+};
+
+struct qse_fio_lck_t
+{
+	int            type;   /* READ, WRITE */
+	qse_fio_off_t  offset; /* starting offset */
+	qse_fio_off_t  length; /* length */
+	qse_fio_ori_t  origin; /* origin */
 };
 
 #define QSE_FIO_MMGR(fio)   ((fio)->mmgr)
@@ -179,12 +188,40 @@ qse_ssize_t qse_fio_write (
 
 /****f* qse.cmn.fio/qse_fio_chmod
  * NAME
- *  ase_fio_chmod - change the file mode
+ *  qse_fio_chmod - change the file mode
  * SYNOPSIS
  */
 int qse_fio_chmod (
 	qse_fio_t* fio,
 	int mode
+);
+/******/
+
+/****f* qse.cmn.fio/qse_fio_sync
+ * NAME
+ *  qse_fio_sync - synchronize file contents into storage media
+ * DESCRIPTION
+ *  The qse_fio_sync() function is useful in determining the media error,
+ *  without which qse_fio_close() may succeed despite such an error.
+ * SYNOPSIS
+ */
+int qse_fio_sync (
+	qse_fio_t* fio
+);
+/******/
+
+
+/* TODO: qse_fio_lock, qse_fio_unlock */
+int qse_fio_lock ( 
+	qse_fio_t*     fio, 
+	qse_fio_lck_t* lck,
+	int            flags
+);
+
+int qse_fio_unlock (
+	qse_fio_t*     fio,
+	qse_fio_lck_t* lck,
+	int            flags
 );
 
 #ifdef __cplusplus

@@ -154,6 +154,7 @@ qse_fio_t* qse_fio_init (
 	else
 	{
 		int desired_access = 0;
+
 	#ifdef QSE_CHAR_IS_MCHAR
 		const qse_mchar_t* path_mb = path;
 	#else
@@ -439,4 +440,33 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 #else
 	return QSE_FCHMOD (fio->handle, mode);
 #endif
+}
+
+int qse_fio_sync (qse_fio_t* fio)
+{
+#ifdef _WIN32
+	return (FlushFileBuffers (fio->handle) == FALSE)? -1: 0;
+#else
+	return QSE_FSYNC (fio->handle);
+#endif
+}
+
+int qse_fio_lock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
+{
+	/* TODO: qse_fio_lock 
+	 * struct flock fl;
+	 * fl.l_type = F_RDLCK, F_WRLCK;
+	 * QSE_FCNTL (fio->handle, F_SETLK, &fl);
+	 */
+	return -1;
+}
+
+int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
+{
+	/* TODO: qse_fio_unlock 
+	 * struct flock fl;
+	 * fl.l_type = F_UNLCK;
+	 * QSE_FCNTL (fio->handle, F_SETLK, &fl);
+	 */
+	return -1;
 }
