@@ -11,21 +11,30 @@
 #include <math.h>
 
 #if defined(_WIN32)
-#include <windows.h>
+#	include <windows.h>
 #else
-#include <unistd.h>
-#include <signal.h>
+#	include <unistd.h>
+#	include <signal.h>
+#	include <errno.h>
 #endif
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+#	define _CRTDBG_MAP_ALLOC
+#	include <crtdbg.h>
 #endif
 
 #if defined(__linux) && defined(_DEBUG)
-#include <mcheck.h>
+#	include <mcheck.h>
 #endif
 
+class TestAwk;
+#ifdef _WIN32
+static BOOL WINAPI stop_run (DWORD ctrl_type);
+#else
+static void stop_run (int sig);
+#endif
+
+TestAwk* app_awk = QSE_NULL;
 static bool verbose = false;
 
 class TestAwk: public QSE::StdAwk
@@ -226,6 +235,17 @@ protected:
 	void onRunStart (Run& run)
 	{
 		if (verbose) qse_printf (QSE_T("*** awk run started ***\n"));
+
+		app_awk = this;
+	#ifdef _WIN32
+		SetConsoleCtrlHandler (stop_run, TRUE);
+	#else
+		struct sigaction sa_int;
+		sa_int.sa_handler = stop_run;
+		sigemptyset (&sa_int.sa_mask);
+		sa_int.sa_flags = 0;
+		sigaction (SIGINT, &sa_int, NULL);
+	#endif
 	}
 
 	void onRunEnd (Run& run)
@@ -238,6 +258,16 @@ protected:
 				run.getErrorLine(), run.getErrorMessage());
 		}
 
+	#ifdef _WIN32
+		SetConsoleCtrlHandler (stop_run, FALSE);
+	#else
+		struct sigaction sa_int;
+		sa_int.sa_handler = SIG_DFL;
+		sigemptyset (&sa_int.sa_mask);
+		sa_int.sa_flags = 0;
+		sigaction (SIGINT, &sa_int, NULL);
+	#endif
+		app_awk = QSE_NULL;
 		if (verbose) qse_printf (QSE_T("*** awk run ended ***\n"));
 	}
 
@@ -597,6 +627,28 @@ private:
 #endif
 };
 
+#ifdef _WIN32
+static BOOL WINAPI stop_run (DWORD ctrl_type)
+{
+	if (ctrl_type == CTRL_C_EVENT ||
+	    ctrl_type == CTRL_CLOSE_EVENT)
+	{
+		if (app_awk) app_awk->stop ();
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#else
+static void stop_run (int sig)
+{
+	int e = errno;
+	if (app_awk) app_awk->stop ();
+	errno = e;
+}
+#endif
+
+
 #ifndef NDEBUG
 void qse_assert_abort (void)
 {
@@ -688,49 +740,6 @@ static void print_usage (const qse_char_t* argv0)
 	{
 		qse_printf (QSE_T("    -%-20s -no%-20s\n"), otab[j].name, otab[j].name);
 	}
-}
-
-TestAwk* app_awk = QSE_NULL;
-
-#ifdef _WIN32
-static BOOL WINAPI stop_run (DWORD ctrl_type)
-{
-	if (ctrl_type == CTRL_C_EVENT ||
-	    ctrl_type == CTRL_CLOSE_EVENT)
-	{
-		if (app_awk) app_awk->stop ();
-		return TRUE;
-	}
-
-	return FALSE;
-}
-#else
-static void stop_run (int sig)
-{
-	signal  (SIGINT, SIG_IGN);
-	if (app_awk) app_awk->stop ();
-	signal  (SIGINT, stop_run);
-}
-#endif
-
-static void set_intr_run (TestAwk* awk)
-{
-	app_awk = awk;
-#ifdef _WIN32
-	SetConsoleCtrlHandler (stop_run, TRUE);
-#else
-	signal (SIGINT, stop_run);
-#endif
-}
-
-static void unset_intr_run ()
-{
-	app_awk = QSE_NULL;
-#ifdef _WIN32
-	SetConsoleCtrlHandler (stop_run, FALSE);
-#else
-	signal (SIGINT, SIG_DFL);
-#endif
 }
 
 static int awk_main (int argc, qse_char_t* argv[])
@@ -918,8 +927,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	awk.enableRunCallback ();
 
-
-	set_intr_run (&awk);
 	if (awk.run (mainfn, args, nargs) == -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
@@ -927,7 +934,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 		awk.close ();
 		return -1;
 	}
-	unset_intr_run ();
 
 	awk.close ();
 

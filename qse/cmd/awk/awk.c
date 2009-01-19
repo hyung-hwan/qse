@@ -19,18 +19,17 @@
 #define ABORT(label) goto label
 
 #if defined(_WIN32)
-	#include <windows.h>
-	#include <tchar.h>
-	#include <process.h>
-	#pragma warning (disable: 4996)
-	#pragma warning (disable: 4296)
+#	include <windows.h>
+#	include <tchar.h>
+#	include <process.h>
 
-	#if defined(_MSC_VER) && defined(_DEBUG)
-		#define _CRTDBG_MAP_ALLOC
-		#include <crtdbg.h>
-	#endif
+#	if defined(_MSC_VER) && defined(_DEBUG)
+#		define _CRTDBG_MAP_ALLOC
+#		include <crtdbg.h>
+#	endif
 #else
-	#include <unistd.h>
+#	include <unistd.h>
+#	include <errno.h>
 #endif
 
 static qse_awk_t* app_awk = NULL;
@@ -48,7 +47,6 @@ static void dprint (const qse_char_t* fmt, ...)
 	}
 }
 
-
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type)
 {
@@ -64,15 +62,48 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 #else
 static void stop_run (int sig)
 {
-	signal  (SIGINT, SIG_IGN);
+	int e = errno;
 	qse_awk_stop (app_run);
-	signal  (SIGINT, stop_run);
+	errno = e;
 }
 #endif
+
+static void set_intr_run (void)
+{
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, TRUE);
+#else
+	{
+		struct sigaction sa_int;
+
+		sa_int.sa_handler = stop_run;
+		sigemptyset (&sa_int.sa_mask);
+		sa_int.sa_flags = 0;
+		sigaction (SIGINT, &sa_int, NULL);
+	}
+#endif
+}
+
+static void unset_intr_run (void)
+{
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, FALSE);
+#else
+	{
+		struct sigaction sa_int;
+
+		sa_int.sa_handler = SIG_DFL;
+		sigemptyset (&sa_int.sa_mask);
+		sa_int.sa_flags = 0;
+		sigaction (SIGINT, &sa_int, NULL);
+	}
+#endif
+}
 
 static void on_run_start (qse_awk_run_t* run, void* custom)
 {
 	app_run = run;
+	set_intr_run ();
 	dprint (QSE_T("[AWK ABOUT TO START]\n"));
 }
 
@@ -146,6 +177,7 @@ static void on_run_end (qse_awk_run_t* run, int errnum, void* data)
 	}
 	else dprint (QSE_T("[AWK ENDED SUCCESSFULLY]\n"));
 
+	unset_intr_run ();
 	app_run = NULL;
 }
 
@@ -515,8 +547,8 @@ static qse_awk_t* open_awk (void)
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk;
-
 	qse_awk_runcbs_t runcbs;
+	struct sigaction sa_int;
 
 	int i, file_count = 0;
 	const qse_char_t* mfn = QSE_NULL;
@@ -561,7 +593,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
 #else
-	signal (SIGINT, stop_run);
+	sa_int.sa_handler = stop_run;
+	sigemptyset (&sa_int.sa_mask);
+	sa_int.sa_flags = 0;
+	sigaction (SIGINT, &sa_int, NULL);
 #endif
 
 	runcbs.on_start = on_run_start;

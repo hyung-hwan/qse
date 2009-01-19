@@ -84,6 +84,18 @@
 	#define QSE_FCHMOD(handle,mode) fchmod(handle,mode)
 #endif
 
+#if defined(SYS_fsync)
+	#define QSE_FSYNC(handle) syscall(SYS_fsync,handle)
+#else
+	#define QSE_FSYNC(handle) fsync(handle)
+#endif
+
+#if defined(SYS_fcntl)
+	#define QSE_FCNTL(handle,cmd,arg) syscall(SYS_fcntl,handle,cmd,arg)
+#else
+	#define QSE_FCNTL(handle,cmd,arg) fcntl(handle,cmd,arg)
+#endif
+
 #ifdef SYS_dup2
 	#define QSE_DUP2(ofd,nfd) syscall(SYS_dup2,ofd,nfd)
 #else
