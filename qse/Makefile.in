@@ -193,7 +193,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTION = foreign
 # EXTRA_DIST = 
 SUBDIRS = lib cmd
-DIST_SUBDIRS = $(__COREDIRS) include test
+DIST_SUBDIRS = $(SUBDIRS) include test
 all: all-recursive
 
 .SUFFIXES:

@@ -9,9 +9,9 @@ pkgincludedir= $(includedir)/qse
 CLEANFILES = *dist
 
 install-data-hook:
-	@"$(GREP)" -E "#define[ ]+QSE_" "$(srcdir)/config.h" > "$(pkgincludedir)/config.h" 
-	@"$(RM)" -f "$(pkgincludedir)/config.h.in"
-	@"$(SED)" 's|/\*#define QSE_HAVE_CONFIG_H\*/|#define QSE_HAVE_CONFIG_H|' "$(srcdir)/types.h" > "$(pkgincludedir)/types.h" 
+	@"$(GREP)" -E "#define[ ]+QSE_" "$(srcdir)/config.h" > "$(DESTDIR)$(pkgincludedir)/config.h" 
+	@"$(RM)" -f "$(DESTDIR)$(pkgincludedir)/config.h.in"
+	@"$(SED)" 's|/\*#define QSE_HAVE_CONFIG_H\*/|#define QSE_HAVE_CONFIG_H|' "$(srcdir)/types.h" > "$(DESTDIR)$(pkgincludedir)/types.h" 
 
 uninstall-hook:
-	@"$(RM)" -f "$(pkgincludedir)/config.h"
+	@"$(RM)" -f "$(DESTDIR)$(pkgincludedir)/config.h"
