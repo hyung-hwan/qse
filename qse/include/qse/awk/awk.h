@@ -917,6 +917,8 @@ qse_awk_val_t* qse_awk_getarg (qse_awk_run_t* run, qse_size_t idx);
  * RETURN
  *  The pointer to a value is returned. This function never fails
  *  so long as id is valid. Otherwise, you may fall into trouble.
+ *
+ * SYNOPSIS
  */
 qse_awk_val_t* qse_awk_getglobal (
 	qse_awk_run_t* run,
@@ -924,11 +926,18 @@ qse_awk_val_t* qse_awk_getglobal (
 );
 /******/
 
+/****f* qse.awk/qse_awk_setglobal
+ * NAME
+ *  qse_awk_setglobal - set the value of a global variable
+ *  
+ * SYNOPSIS
+ */
 int qse_awk_setglobal (
 	qse_awk_run_t* run, 
 	int            id,
 	qse_awk_val_t* val
 );
+/******/
 
 /****f* qse.awk/qse_awk_setretval
  * NAME

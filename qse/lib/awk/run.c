@@ -265,12 +265,15 @@ static int set_global (
 {
 	qse_awk_val_t* old;
        
+qse_printf (QSE_T("################\n"));
 	old = STACK_GLOBAL (run, idx);
+qse_printf (QSE_T("@@@@@@@@@@@@@@@@@@@\n"));
 	if (old->type == QSE_AWK_VAL_MAP)
 	{	
 		/* once a variable becomes a map,
 		 * it cannot be changed to a scalar variable */
 
+qse_printf (QSE_T("%%%%%%%%%%%%%%%%%%%%\n"));
 		if (var != QSE_NULL)
 		{
 			/* global variable */
@@ -347,13 +350,16 @@ static int set_global (
 		qse_char_t* fs_ptr;
 		qse_size_t fs_len;
 
+		qse_printf (QSE_T("aaaaaaaaaaaa\n"));
 		if (val->type == QSE_AWK_VAL_STR)
 		{
+		qse_printf (QSE_T("bbbbbbbbbbbbb\n"));
 			fs_ptr = ((qse_awk_val_str_t*)val)->ptr;
 			fs_len = ((qse_awk_val_str_t*)val)->len;
 		}
 		else
 		{
+		qse_printf (QSE_T("ccccccccccc\n"));
 			/* due to the expression evaluation rule, the 
 			 * regular expression can not be an assigned value */
 			QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
@@ -367,6 +373,7 @@ static int set_global (
 		{
 			void* rex;
 
+		qse_printf (QSE_T("dddddddddddddd\n"));
 			/* compile the regular expression */
 			/* TODO: use safebuild */
 			rex = QSE_AWK_BUILDREX (
@@ -383,9 +390,12 @@ static int set_global (
 				QSE_AWK_FREEREX (run->awk, run->global.fs);
 			}
 			run->global.fs = rex;
+		qse_printf (QSE_T("eeeeeeeeeeeeee\n"));
 		}
 
+		qse_printf (QSE_T("fffffffffffff\n"));
 		if (val->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, fs_ptr);
+		qse_printf (QSE_T("ggggggggggggg\n"));
 	}
 	else if (idx == QSE_AWK_GLOBAL_IGNORECASE)
 	{
