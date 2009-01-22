@@ -32,9 +32,20 @@
 #	include <errno.h>
 #endif
 
-static qse_awk_t* app_awk = NULL;
 static qse_awk_run_t* app_run = NULL;
 static int app_debug = 0;
+
+struct argout_t
+{
+	void*        isp;  /* input source files or string */
+	int          ist;  /* input source type */
+	qse_size_t   isfl; /* the number of input source files */
+	qse_char_t*  osf;  /* output source file */
+	qse_char_t** icf;  /* input console files */
+	qse_size_t   icfl; /* the number of input console files */
+	qse_map_t*   vm;   /* global variable map */
+	qse_char_t*  fs;   /* field separator */
+};
 
 static void dprint (const qse_char_t* fmt, ...)
 {
@@ -100,11 +111,32 @@ static void unset_intr_run (void)
 #endif
 }
 
-static void on_run_start (qse_awk_run_t* run, void* custom)
+static void on_run_start (qse_awk_run_t* run, void* data)
 {
+	struct argout_t* ao = (struct argout_t*)data;
+
 	app_run = run;
 	set_intr_run ();
+
+	if (ao->fs != QSE_NULL)
+	{
+		qse_awk_val_t* fs;
+
+		qse_printf (QSE_T("1111111111111111111\n"));
+		fs = qse_awk_makestrval0 (run, ao->fs);
+		qse_printf (QSE_T("2222222222222222222\n"));
+		//if (fs == QSE_NULL) return -1;
+		qse_awk_refupval (run, fs);
+		qse_printf (QSE_T("3333333333333333333\n"));
+		qse_awk_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
+		qse_printf (QSE_T("4444444444444444444\n"));
+		qse_awk_refdownval (run, fs);
+		qse_printf (QSE_T("555555555555555555555555\n"));
+	}
+
 	dprint (QSE_T("[AWK ABOUT TO START]\n"));
+
+	//return 0;
 }
 
 static qse_map_walk_t print_awk_value (
@@ -268,17 +300,6 @@ static void out_of_memory (void)
 	qse_fprintf (QSE_STDERR, QSE_T("Error: out of memory\n"));	
 }
 
-struct argout_t
-{
-	void*        isp;  /* input source files or string */
-	int          ist;  /* input source type */
-	qse_size_t   isfl; /* the number of input source files */
-	qse_char_t*  osf;  /* output source file */
-	qse_char_t** icf;  /* input console files */
-	qse_size_t   icfl; /* the number of input console files */
-	qse_map_t*   vm;   /* global variable map */
-};
-
 static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 {
 	static qse_opt_lng_t lng[] = 
@@ -327,6 +348,9 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	qse_char_t** icf = QSE_NULL; /* input console files */
 
 	qse_map_t* vm = QSE_NULL;  /* global variable map */
+	qse_char_t* fs = QSE_NULL; /* field separator */
+
+	memset (ao, 0, QSE_SIZEOF(*ao));
 
 	isf = (qse_char_t**) malloc (QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
@@ -388,7 +412,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 
 			case QSE_T('F'):
 			{
-				qse_printf  (QSE_T("[field separator] = %s\n"), opt.arg);
+				fs = opt.arg;
 				break;
 			}
 
@@ -497,6 +521,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	ao->icf = icf;
 	ao->icfl = icfl;
 	ao->vm = vm;
+	ao->fs = fs;
 
 	return 0;
 
@@ -547,8 +572,8 @@ static qse_awk_t* open_awk (void)
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk;
+
 	qse_awk_runcbs_t runcbs;
-	struct sigaction sa_int;
 
 	int i, file_count = 0;
 	const qse_char_t* mfn = QSE_NULL;
@@ -575,7 +600,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk = open_awk ();
 	if (awk == QSE_NULL) return -1;
 
-	app_awk = awk;
 
 	if (qse_awk_parsesimple (awk, ao.isp, ao.ist, ao.osf) == -1)
 	{
@@ -590,20 +614,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-#ifdef _WIN32
-	SetConsoleCtrlHandler (stop_run, TRUE);
-#else
-	sa_int.sa_handler = stop_run;
-	sigemptyset (&sa_int.sa_mask);
-	sa_int.sa_flags = 0;
-	sigaction (SIGINT, &sa_int, NULL);
-#endif
-
 	runcbs.on_start = on_run_start;
 	runcbs.on_statement = on_run_statement;
 	runcbs.on_return = on_run_return;
 	runcbs.on_end = on_run_end;
-	runcbs.data = QSE_NULL;
+	runcbs.data = &ao;
 
 	if (qse_awk_runsimple (awk, ao.icf, &runcbs) == -1)
 	{
