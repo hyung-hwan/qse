@@ -95,8 +95,6 @@ qse_pcp_t* qse_pcp_init (
 	};
 	int i, minidx = -1, maxidx = -1;
 
-	QSE_ASSERT (QSE_COUNTOF(pcp->hanlde) == QSE_COUNTOF(handle));
-
 	QSE_MEMSET (pcp, 0, QSE_SIZEOF(*pcp));
 	pcp->mmgr = mmgr;
 

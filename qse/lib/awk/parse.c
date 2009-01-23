@@ -463,7 +463,7 @@ const qse_char_t* qse_awk_getglobalname (
 	return gtab[idx].name;
 	*/
 
-	QSE_ASSERT (idx < QSE_LDA_SIZE(&awk->parse.globals));
+	QSE_ASSERT (idx < QSE_LDA_SIZE(awk->parse.globals));
 
 	*len = QSE_LDA_DLEN(awk->parse.globals,idx);
 	return QSE_LDA_DPTR(awk->parse.globals,idx);
@@ -580,7 +580,7 @@ static int parse (qse_awk_t* awk)
 		}
 	}
 
-	QSE_ASSERT (awk->tree.nglobals == awk->parse.globals.size);
+	QSE_ASSERT (awk->tree.nglobals == QSE_LDA_SIZE(awk->parse.globals));
 
 	if (awk->src.ios.out != QSE_NULL) 
 	{
@@ -628,7 +628,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 
 		if (get_token(awk) == -1) return QSE_NULL;
 
-		QSE_ASSERT (awk->tree.nglobals == QSE_LDA_SIZE(&awk->parse.globals));
+		QSE_ASSERT (awk->tree.nglobals == QSE_LDA_SIZE(awk->parse.globals));
 		nglobals = awk->tree.nglobals;
 		if (collect_globals (awk) == QSE_NULL) 
 		{
@@ -912,7 +912,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	}
 
 	/* make sure that parameter table is empty */
-	QSE_ASSERT (QSE_LDA_SIZE(&awk->parse.params) == 0);
+	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.params) == 0);
 
 	/* read parameter list */
 	if (MATCH(awk,TOKEN_RPAREN)) 
@@ -5868,7 +5868,7 @@ static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* 
 	qse_size_t i, n;
 	qse_cstr_t kw;
 
-	QSE_ASSERT (qse_strxncmp (QSE_PAIR_KEYPTR(pair), QSE_PAIR_KEYLEN(pair), afn->name.ptr, afn->name.len) == 0);
+	QSE_ASSERT (qse_strxncmp (QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair), afn->name.ptr, afn->name.len) == 0);
 
 #define PUT_C(x,c) \
 	if (put_char(x->awk,c)==-1) { \

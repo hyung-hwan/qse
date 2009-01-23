@@ -1335,7 +1335,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	size_t i;
 	qse_awk_runios_t runios;
 	qse_awk_runcbs_t runcbs;
-	qse_awk_runarg_t* runarg = QSE_NULL;
+	qse_xstr_t* runarg = QSE_NULL;
 
 	// make sure that the run field is set in Awk::onRunStart.
 	Run runctx (this);
@@ -1350,15 +1350,16 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	if (runCallback)
 	{
 		runcbs.on_end       = onRunEnd;
-		runcbs.on_return    = onRunReturn;
+		runcbs.on_enter     = onRunEnter;
 		runcbs.on_statement = onRunStatement;
+		runcbs.on_exit      = onRunExit;
 	}
 	runcbs.data = &runctx;
 	
 	if (nargs > 0)
 	{
-		runarg = (qse_awk_runarg_t*) qse_awk_alloc (
-			awk, QSE_SIZEOF(qse_awk_runarg_t)*(nargs+1));
+		runarg = (qse_xstr_t*) qse_awk_alloc (
+			awk, QSE_SIZEOF(qse_xstr_t)*(nargs+1));
 
 		if (runarg == QSE_NULL)
 		{
@@ -1383,7 +1384,10 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 		runarg[i].len = 0;
 	}
 	
-	int n = qse_awk_run (awk, main, &runios, &runcbs, runarg, &runctx);
+	int n = qse_awk_run (
+		awk, main, &runios, &runcbs,
+		(qse_cstr_t*)runarg, &runctx
+	);
 	if (n == -1) retrieveError ();
 
 	if (runarg != QSE_NULL) 
@@ -1543,20 +1547,27 @@ void Awk::disableRunCallback ()
 	runCallback = false;
 }
 
-void Awk::triggerOnRunStart (Run& run)
+bool Awk::triggerOnRunStart (Run& run)
 {
-	if (runCallback) onRunStart (run);
+	if (runCallback) return onRunStart (run);
+	return true;
 }
 
-void Awk::onRunStart (Run& run)
+bool Awk::onRunStart (Run& run)
 {
+	return true;
 }
 
 void Awk::onRunEnd (Run& run)
 {
 }
 
-void Awk::onRunReturn (Run& run, const Argument& ret)
+bool Awk::onRunEnter (Run& run)
+{
+	return true;
+}
+
+void Awk::onRunExit (Run& run, const Argument& ret)
 {
 }
 
@@ -1710,7 +1721,7 @@ void Awk::freeFunctionMapValue (map_t* map, void* dptr, size_t dlen)
 	qse_awk_free (awk->awk, dptr);
 }
 
-void Awk::onRunStart (run_t* run, void* data)
+int Awk::onRunStart (run_t* run, void* data)
 {
 	Run* r = (Run*)data;
 
@@ -1723,7 +1734,7 @@ void Awk::onRunStart (run_t* run, void* data)
 	r->run = run; 
 
 	r->callbackFailed = false;
-	r->awk->triggerOnRunStart (*r);
+	return r->awk->triggerOnRunStart(*r)? 0: -1;
 }
 
 void Awk::onRunEnd (run_t* run, int errnum, void* data)
@@ -1738,7 +1749,14 @@ void Awk::onRunEnd (run_t* run, int errnum, void* data)
 	r->awk->onRunEnd (*r);
 }
 
-void Awk::onRunReturn (run_t* run, val_t* ret, void* data)
+int Awk::onRunEnter (run_t* run, void* data)
+{
+	Run* r = (Run*)data;
+	if (r->callbackFailed) return false;
+	return r->awk->onRunEnter(*r)? 0: -1;
+}
+
+void Awk::onRunExit (run_t* run, val_t* ret, void* data)
 {
 	Run* r = (Run*)data;
 	if (r->callbackFailed) return;
@@ -1750,7 +1768,7 @@ void Awk::onRunReturn (run_t* run, val_t* ret, void* data)
 	}
 	else
 	{
-		r->awk->onRunReturn (*r, x);
+		r->awk->onRunExit (*r, x);
 	}
 }
 

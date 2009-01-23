@@ -96,9 +96,15 @@ extern "C" {
 #endif
 
 qse_char_t* qse_awk_format (
-	qse_awk_run_t* run, qse_str_t* out, qse_str_t* fbu,
-	const qse_char_t* fmt, qse_size_t fmt_len, 
-	qse_size_t nargs_on_stack, qse_awk_nde_t* args, qse_size_t* len);
+	qse_awk_run_t*    run, 
+	qse_str_t*        out, 
+	qse_str_t*        fbu,
+	const qse_char_t* fmt, 
+	qse_size_t        fmt_len, 
+	qse_size_t        nargs_on_stack, 
+	qse_awk_nde_t*    args, 
+	qse_size_t*       len
+);
 
 #ifdef __cplusplus
 }

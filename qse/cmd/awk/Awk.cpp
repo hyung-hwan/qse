@@ -232,7 +232,7 @@ public:
 
 protected:
 
-	void onRunStart (Run& run)
+	bool onRunStart (Run& run)
 	{
 		if (verbose) qse_printf (QSE_T("*** awk run started ***\n"));
 
@@ -246,6 +246,8 @@ protected:
 		sa_int.sa_flags = 0;
 		sigaction (SIGINT, &sa_int, NULL);
 	#endif
+
+		return true;
 	}
 
 	void onRunEnd (Run& run)
@@ -269,6 +271,11 @@ protected:
 	#endif
 		app_awk = QSE_NULL;
 		if (verbose) qse_printf (QSE_T("*** awk run ended ***\n"));
+	}
+
+	bool onRunEnter (Run& run)
+	{
+		return true;
 	}
 
 	void onRunReturn (Run& run, const Argument& ret)

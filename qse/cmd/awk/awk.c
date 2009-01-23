@@ -111,32 +111,13 @@ static void unset_intr_run (void)
 #endif
 }
 
-static void on_run_start (qse_awk_run_t* run, void* data)
+static int on_run_start (qse_awk_run_t* run, void* data)
 {
-	struct argout_t* ao = (struct argout_t*)data;
-
 	app_run = run;
 	set_intr_run ();
 
-	if (ao->fs != QSE_NULL)
-	{
-		qse_awk_val_t* fs;
-
-		qse_printf (QSE_T("1111111111111111111\n"));
-		fs = qse_awk_makestrval0 (run, ao->fs);
-		qse_printf (QSE_T("2222222222222222222\n"));
-		//if (fs == QSE_NULL) return -1;
-		qse_awk_refupval (run, fs);
-		qse_printf (QSE_T("3333333333333333333\n"));
-		qse_awk_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
-		qse_printf (QSE_T("4444444444444444444\n"));
-		qse_awk_refdownval (run, fs);
-		qse_printf (QSE_T("555555555555555555555555\n"));
-	}
-
 	dprint (QSE_T("[AWK ABOUT TO START]\n"));
-
-	//return 0;
+	return 0;
 }
 
 static qse_map_walk_t print_awk_value (
@@ -163,13 +144,33 @@ static qse_map_walk_t print_awk_value (
 }
 
 static void on_run_statement (
-	qse_awk_run_t* run, qse_size_t line, void* custom)
+	qse_awk_run_t* run, qse_size_t line, void* data)
 {
 	/*dprint (L"running %d\n", (int)line);*/
 }
 
-static void on_run_return (
-	qse_awk_run_t* run, qse_awk_val_t* ret, void* custom)
+static int on_run_enter (qse_awk_run_t* run, void* data)
+{
+	struct argout_t* ao = (struct argout_t*)data;
+
+	if (ao->fs != QSE_NULL)
+	{
+		qse_awk_val_t* fs;
+
+		fs = qse_awk_makestrval0 (run, ao->fs);
+		if (fs == QSE_NULL) return -1;
+
+		qse_awk_refupval (run, fs);
+		qse_awk_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
+		qse_awk_refdownval (run, fs);
+	}
+
+
+	return 0;
+}
+
+static void on_run_exit (
+	qse_awk_run_t* run, qse_awk_val_t* ret, void* data)
 {
 	qse_size_t len;
 	qse_char_t* str;
@@ -575,12 +576,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	qse_awk_runcbs_t runcbs;
 
-	int i, file_count = 0;
-	const qse_char_t* mfn = QSE_NULL;
-	int mode = 0;
+	int i;
 	int runarg_count = 0;
-	qse_awk_runarg_t runarg[128];
-	int deparse = 0;
+	qse_cstr_t runarg[128];
 	struct argout_t ao;
 	int ret = 0;
 
@@ -615,8 +613,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	runcbs.on_start = on_run_start;
+	runcbs.on_enter = on_run_enter;
 	runcbs.on_statement = on_run_statement;
-	runcbs.on_return = on_run_return;
+	runcbs.on_exit = on_run_exit;
 	runcbs.on_end = on_run_end;
 	runcbs.data = &ao;
 
