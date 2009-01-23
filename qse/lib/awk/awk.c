@@ -337,20 +337,8 @@ qse_ccls_t* qse_awk_getccls (qse_awk_t* awk)
 
 void qse_awk_setccls (qse_awk_t* awk, qse_ccls_t* ccls)
 {
-	QSE_ASSERT (ccls->is_upper  != QSE_NULL);
-	QSE_ASSERT (ccls->is_lower  != QSE_NULL);
-	QSE_ASSERT (ccls->is_alpha  != QSE_NULL);
-	QSE_ASSERT (ccls->is_digit  != QSE_NULL);
-	QSE_ASSERT (ccls->is_xdigit  != QSE_NULL);
-	QSE_ASSERT (ccls->is_alnum  != QSE_NULL);
-	QSE_ASSERT (ccls->is_space  != QSE_NULL);
-	QSE_ASSERT (ccls->is_print  != QSE_NULL);
-	QSE_ASSERT (ccls->is_graph  != QSE_NULL);
-	QSE_ASSERT (ccls->is_cntrl  != QSE_NULL);
-	QSE_ASSERT (ccls->is_punct  != QSE_NULL);
-	QSE_ASSERT (ccls->to_upper  != QSE_NULL);
-	QSE_ASSERT (ccls->to_lower  != QSE_NULL);
-
+	QSE_ASSERT (ccls->is != QSE_NULL);
+	QSE_ASSERT (ccls->to != QSE_NULL);
 	awk->ccls = ccls;
 }
 
@@ -363,7 +351,6 @@ void qse_awk_setprmfns (qse_awk_t* awk, qse_awk_prmfns_t* prmfns)
 {
 	QSE_ASSERT (prmfns->pow     != QSE_NULL);
 	QSE_ASSERT (prmfns->sprintf != QSE_NULL);
-	QSE_ASSERT (prmfns->dprintf != QSE_NULL);
 
 	awk->prmfns = prmfns;
 }

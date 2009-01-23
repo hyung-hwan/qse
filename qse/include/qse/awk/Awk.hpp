@@ -1055,9 +1055,10 @@ protected:
 	/*@}*/
 
 	// run-time callbacks
-	virtual void onRunStart (Run& run);
+	virtual bool onRunStart (Run& run);
 	virtual void onRunEnd (Run& run);
-	virtual void onRunReturn (Run& run, const Argument& ret);
+	virtual bool onRunEnter (Run& run);
+	virtual void onRunExit (Run& run, const Argument& ret);
 	virtual void onRunStatement (Run& run, size_t line);
 	
 	// primitive handlers 
@@ -1089,9 +1090,10 @@ protected:
 		run_t* run, const char_t* name, size_t len);
 	static void freeFunctionMapValue (map_t* map, void* dptr, size_t dlen);
 
-	static void onRunStart (run_t* run, void* data);
+	static int  onRunStart (run_t* run, void* data);
 	static void onRunEnd (run_t* run, int errnum, void* data);
-	static void onRunReturn (run_t* run, val_t* ret, void* data);
+	static int  onRunEnter (run_t* run, void* data);
+	static void onRunExit (run_t* run, val_t* ret, void* data);
 	static void onRunStatement (run_t* run, size_t line, void* data);
 
 	static void* allocMem   (void* data, size_t n);
@@ -1122,7 +1124,7 @@ private:
 	Awk (const Awk&);
 	Awk& operator= (const Awk&);
 
-	void triggerOnRunStart (Run& run);
+	bool triggerOnRunStart (Run& run);
 
 	mmgr_t mmgr;
 	ccls_t ccls;

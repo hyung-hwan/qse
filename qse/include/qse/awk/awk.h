@@ -42,7 +42,6 @@ typedef struct qse_awk_prmfns_t qse_awk_prmfns_t;
 typedef struct qse_awk_srcios_t qse_awk_srcios_t;
 typedef struct qse_awk_runios_t qse_awk_runios_t;
 typedef struct qse_awk_runcbs_t qse_awk_runcbs_t;
-typedef struct qse_awk_runarg_t qse_awk_runarg_t;
 typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (void* data, qse_real_t x, qse_real_t y);
@@ -109,25 +108,22 @@ struct qse_awk_runios_t
 
 struct qse_awk_runcbs_t
 {
-	void (*on_start) (
+	int (*on_start) (
+		qse_awk_run_t* run, void* data);
+
+	int (*on_enter) (
 		qse_awk_run_t* run, void* data);
 
 	void (*on_statement) (
 		qse_awk_run_t* run, qse_size_t line, void* data);
 
-	void (*on_return) (
+	void (*on_exit) (
 		qse_awk_run_t* run, qse_awk_val_t* ret, void* data);
 
 	void (*on_end) (
 		qse_awk_run_t* run, int errnum, void* data);
 
 	void* data;
-};
-
-struct qse_awk_runarg_t
-{
-	qse_char_t* ptr;
-	qse_size_t len;
 };
 
 struct qse_awk_rexfns_t
@@ -888,7 +884,7 @@ int qse_awk_runsimple (
 int qse_awk_run (
 	qse_awk_t* awk, const qse_char_t* main,
 	qse_awk_runios_t* runios, qse_awk_runcbs_t* runcbs, 
-	qse_awk_runarg_t* runarg, void* data);
+	const qse_cstr_t* runarg, void* data);
 
 void qse_awk_stop (qse_awk_run_t* run);
 void qse_awk_stopall (qse_awk_t* awk);
