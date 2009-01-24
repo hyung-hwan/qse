@@ -210,10 +210,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 qseawk_SOURCES = awk.c
-qseawk_LDFLAGS = -L../../lib/awk -L../../lib/utl 
+qseawk_LDFLAGS = -L../../lib/awk
 qseawk_LDADD = -lqseawk $(LIBM)
 @ENABLE_CXX_TRUE@qseawk___SOURCES = Awk.cpp
-@ENABLE_CXX_TRUE@qseawk___LDFLAGS = -L../../lib/awk -L../../lib/utl 
+@ENABLE_CXX_TRUE@qseawk___LDFLAGS = -L../../lib/awk
 @ENABLE_CXX_TRUE@qseawk___LDADD = -lqseawk++ $(LIBM)
 all: all-am
 
