@@ -164,11 +164,11 @@ else
 fi
 
 AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],
-	[use the syscall() function to call system calls (default. no)])],
-	enable_syscall_is=$enableval,enable_syscall_is=no)
+	[use the syscall() function to call system calls (default. yes)])],
+	enable_syscall_is=$enableval,enable_syscall_is=yes)
 if test "${enable_syscall_is}" = "yes"
 then
-	AC_DEFINE([QSE_USE_SYSCALL],[],[use the syscall() function])
+	AC_DEFINE([QSE_USE_SYSCALL],[],[use the syscall() function to invoke a system call])
 fi
 
 AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
