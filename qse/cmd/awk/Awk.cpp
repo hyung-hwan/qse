@@ -244,6 +244,9 @@ protected:
 		sa_int.sa_handler = stop_run;
 		sigemptyset (&sa_int.sa_mask);
 		sa_int.sa_flags = 0;
+	#ifdef SA_RESTART
+		sa_int.sa_flags |= SA_RESTART;
+	#endif
 		sigaction (SIGINT, &sa_int, NULL);
 	#endif
 

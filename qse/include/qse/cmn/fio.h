@@ -22,25 +22,30 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+#include <qse/cmn/tio.h>
+
 enum qse_fio_open_flag_t
 {
+	/* request qse_char_io based IO */
+	QSE_FIO_TEXT       = (1 << 0),
+
 	/* treat the file name pointer as a handle pointer */
-	QSE_FIO_HANDLE     = (1 << 0),
+	QSE_FIO_HANDLE     = (1 << 1),
 
-	QSE_FIO_READ       = (1 << 1),
-	QSE_FIO_WRITE      = (1 << 2),
-	QSE_FIO_APPEND     = (1 << 3),
+	QSE_FIO_READ       = (1 << 8),
+	QSE_FIO_WRITE      = (1 << 9),
+	QSE_FIO_APPEND     = (1 << 10),
 
-	QSE_FIO_CREATE     = (1 << 4),
-	QSE_FIO_TRUNCATE   = (1 << 5),
-	QSE_FIO_EXCLUSIVE  = (1 << 6),
-	QSE_FIO_SYNC       = (1 << 7),
+	QSE_FIO_CREATE     = (1 << 11),
+	QSE_FIO_TRUNCATE   = (1 << 12),
+	QSE_FIO_EXCLUSIVE  = (1 << 13),
+	QSE_FIO_SYNC       = (1 << 14),
 
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
-	QSE_FIO_NOSHRD     = (1 << 16),
-	QSE_FIO_NOSHWR     = (1 << 17),
-	QSE_FIO_RANDOM     = (1 << 18), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL = (1 << 19)  /* hint that access is sequential */
+	QSE_FIO_NOSHRD     = (1 << 24),
+	QSE_FIO_NOSHWR     = (1 << 25),
+	QSE_FIO_RANDOM     = (1 << 26), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL = (1 << 27)  /* hint that access is sequential */
 };
 
 /* seek origin */
@@ -68,10 +73,10 @@ enum qse_fio_mode_t
 };
 
 #ifdef _WIN32
-/* <winnt.h> => typedef PVOID HANDLE; */
-typedef void* qse_fio_hnd_t;
+	/* <winnt.h> => typedef PVOID HANDLE; */
+	typedef void* qse_fio_hnd_t;
 #else
-typedef int qse_fio_hnd_t;
+	typedef int qse_fio_hnd_t;
 #endif
 
 /* file offset */
@@ -83,8 +88,9 @@ typedef struct qse_fio_lck_t qse_fio_lck_t;
 
 struct qse_fio_t
 {
-	qse_mmgr_t* mmgr;
+	QSE_DEFINE_STD_FIELDS (fio)
 	qse_fio_hnd_t handle;
+	qse_tio_t* tio;
 };
 
 struct qse_fio_lck_t
@@ -101,6 +107,8 @@ struct qse_fio_lck_t
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+QSE_DEFINE_STD_FUNCTIONS (fio)
 
 /****f* qse.fio/qse_fio_open
  * NAME
@@ -144,9 +152,15 @@ void qse_fio_fini (
 	qse_fio_t* fio
 );
 
+/****f* qse.cmn.fio/qse_fio_gethandle
+ * NAME
+ *  qse_fio_gethandle - get the native file handle
+ * SYNOPSIS
+ */
 qse_fio_hnd_t qse_fio_gethandle (
 	qse_fio_t* fio
 );
+/******/
 
 /****f* qse.cmn.fio/qse_fio_sethandle
  * NAME
@@ -174,17 +188,45 @@ int qse_fio_truncate (
 	qse_fio_off_t size
 );
 
+/****f* qse.cmn.fio/qse_fio_read
+ * NAME
+ *  qse_fio_read - read data
+ * SYNOPSIS
+ */
 qse_ssize_t qse_fio_read (
-	qse_fio_t* fio,
-	void* buf,
-	qse_size_t size
+	qse_fio_t*  fio,
+	void*       buf,
+	qse_size_t  size
 );
+/******/
 
+/****f* qse.cmn.fio/qse_fio_write
+ * NAME
+ *  qse_fio_write - write data
+ * SYNOPSIS
+ */
 qse_ssize_t qse_fio_write (
-	qse_fio_t* fio,
-	const void* buf,
-	qse_size_t size
+	qse_fio_t*  fio,
+	const void* data,
+	qse_size_t  size
 );
+/******/
+
+
+/****f* qse.cmn.fio/qse_fio_flush
+ * NAME
+ *  qse_fio_flush - flush data
+ *
+ * DESCRIPTION
+ *  The qse_fio_flush() function is useful if QSE_FIO_TEXT is used in 
+ *  qse_fio_open ().
+ *
+ * SYNOPSIS
+ */
+qse_ssize_t qse_fio_flush (
+        qse_fio_t*    fio
+);
+/******/
 
 /****f* qse.cmn.fio/qse_fio_chmod
  * NAME

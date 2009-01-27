@@ -21,15 +21,20 @@
 #include "mem.h"
 
 #ifdef _WIN32
-#include <windows.h>
-#include <psapi.h>
-#include <tchar.h>
+#	include <windows.h>
+#	include <psapi.h>
+#	include <tchar.h>
 #else
-#include "syscall.h"
-#include <sys/types.h>
-#include <fcntl.h>
-#include <limits.h>
+#	include "syscall.h"
+#	include <sys/types.h>
+#	include <fcntl.h>
+#	include <limits.h>
 #endif
+
+QSE_IMPLEMENT_STD_FUNCTIONS (fio)
+
+static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -198,12 +203,41 @@ qse_fio_t* qse_fio_init (
 
 #endif
 
+	if (flags & QSE_FIO_TEXT)
+	{
+		qse_tio_t* tio;
+
+		tio = qse_tio_open (fio->mmgr, 0);
+		if (tio == QSE_NULL) QSE_ERR_THROW (tio);
+
+		if (qse_tio_attachin (tio, fio_input, fio) < 0 ||
+		    qse_tio_attachout (tio, fio_output, fio) < 0)
+		{
+			qse_tio_close (tio);
+			QSE_ERR_THROW (tio);
+		}
+
+		QSE_ERR_CATCH (tio) 
+		{
+		#ifdef _WIN32
+			CloseHandle (handle);
+		#else
+			QSE_CLOSE (handle);
+		#endif
+			return QSE_NULL;
+		}
+
+		fio->tio = tio;
+	}
+
 	fio->handle = handle;
+
 	return fio;
 }
 
 void qse_fio_fini (qse_fio_t* fio)
 {
+	if (fio->tio != QSE_NULL) qse_tio_close (fio->tio);
 #ifdef _WIN32
 	CloseHandle (fio->handle);
 #else
@@ -301,7 +335,7 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 #endif
 }
 
-qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
+static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -314,7 +348,15 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 #endif
 }
 
-qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
+qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
+{
+	if (fio->tio == QSE_NULL) 
+		return fio_read (fio, buf, size);
+	else
+		return qse_tio_read (fio->tio, buf, size);
+}
+
+static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -326,6 +368,21 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	return QSE_WRITE (fio->handle, data, size);
 #endif
 }
+
+qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
+{
+	if (fio->tio == QSE_NULL)
+		return fio_write (fio, data, size);
+	else
+		return qse_tio_write (fio->tio, data, size);
+}
+
+qse_ssize_t qse_fio_flush (qse_fio_t* fio)
+{
+        if (fio->tio == QSE_NULL) return 0;
+        return qse_tio_flush (fio->tio);
+}
+
 
 #ifdef _WIN32
 
@@ -469,4 +526,32 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 	 * QSE_FCNTL (fio->handle, F_SETLK, &fl);
 	 */
 	return -1;
+}
+
+static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size)
+{
+        qse_fio_t* fio = (qse_fio_t*)arg;
+        QSE_ASSERT (fio != QSE_NULL);
+        if (cmd == QSE_TIO_IO_DATA) 
+	{
+		return fio_read (fio, buf, size);
+	}
+
+	/* take no actions for OPEN and CLOSE as they are handled
+	 * by fio */
+        return 0;
+}
+
+static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size)
+{
+        qse_fio_t* fio = (qse_fio_t*)arg;
+        QSE_ASSERT (fio != QSE_NULL);
+        if (cmd == QSE_TIO_IO_DATA) 
+	{
+		return fio_write (fio, buf, size);
+	}
+
+	/* take no actions for OPEN and CLOSE as they are handled
+	 * by fio */
+        return 0;
 }

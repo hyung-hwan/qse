@@ -15,6 +15,9 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
 #include <sys/syscall.h>

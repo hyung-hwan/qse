@@ -27,26 +27,27 @@
 
 enum qse_pcp_open_flag_t
 {
-	QSE_PCP_WRITEIN    = (1 << 0),
-	QSE_PCP_READOUT    = (1 << 1),
-	QSE_PCP_READERR    = (1 << 2),
-
-	QSE_PCP_ERRTOOUT   = (1 << 3),	
-	QSE_PCP_OUTTOERR   = (1 << 4),	
-
-	QSE_PCP_INTONUL    = (1 << 5),
-	QSE_PCP_ERRTONUL   = (1 << 6),
-	QSE_PCP_OUTTONUL   = (1 << 7),
-
-	QSE_PCP_DROPIN     = (1 << 8),
-	QSE_PCP_DROPOUT    = (1 << 9),
-	QSE_PCP_DROPERR    = (1 << 10),
-
-	/* invoke the command through a default system shell */
-	QSE_PCP_SHELL      = (1 << 11),
-
 	/* enable ase_char_t based IO */
-	QSE_PCP_TEXT       = (1 << 12)
+	QSE_PCP_TEXT       = (1 << 0),
+
+	/* invoke the command through a system shell 
+	 * (/bin/sh on *nix, command.com on windows) */
+	QSE_PCP_SHELL      = (1 << 1),
+
+	QSE_PCP_WRITEIN    = (1 << 8),
+	QSE_PCP_READOUT    = (1 << 9),
+	QSE_PCP_READERR    = (1 << 10),
+
+	QSE_PCP_ERRTOOUT   = (1 << 11),	
+	QSE_PCP_OUTTOERR   = (1 << 12),	
+
+	QSE_PCP_INTONUL    = (1 << 13),
+	QSE_PCP_ERRTONUL   = (1 << 14),
+	QSE_PCP_OUTTONUL   = (1 << 15),
+
+	QSE_PCP_DROPIN     = (1 << 16),
+	QSE_PCP_DROPOUT    = (1 << 17),
+	QSE_PCP_DROPERR    = (1 << 18)
 };
 
 enum qse_pcp_wait_flag_t

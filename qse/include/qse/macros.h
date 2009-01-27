@@ -73,10 +73,13 @@
 
 #define QSE_ABS(x) ((x) < 0? -(x): (x))
 
-#define QSE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__;
-#define QSE_LOOP_BREAK(id)    goto __loop_ ## id ## _end__;
+#define QSE_ERR_THROW(id) goto  __err_ ## id 
+#define QSE_ERR_CATCH(id) while(0) __err_ ## id:
+
+#define QSE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__
+#define QSE_LOOP_BREAK(id)    goto __loop_ ## id ## _end__
 #define QSE_LOOP_BEGIN(id)    __loop_ ## id ## _begin__: {
-#define QSE_LOOP_END(id)      QSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:;
+#define QSE_LOOP_END(id)      QSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:
 
 #define QSE_REPEAT(n,blk) \
 	do { \
