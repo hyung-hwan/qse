@@ -58,6 +58,7 @@ static void dprint (const qse_char_t* fmt, ...)
 	}
 }
 
+
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type)
 {
@@ -71,12 +72,38 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	return FALSE;
 }
 #else
+
+static int setsignal (int sig, void(*handler)(int), int restart)
+{
+	struct sigaction sa_int;
+
+	sa_int.sa_handler = handler;
+	sigemptyset (&sa_int.sa_mask);
+	
+	sa_int.sa_flags = 0;
+
+	if (restart)
+	{
+	#ifdef SA_RESTART
+		sa_int.sa_flags |= SA_RESTART;
+	#endif
+	}
+	else
+	{
+	#ifdef SA_INTERRUPT
+		sa_int.sa_flags |= SA_INTERRUPT;
+	#endif
+	}
+	return sigaction (sig, &sa_int, NULL);
+}
+
 static void stop_run (int sig)
 {
 	int e = errno;
 	qse_awk_stop (app_run);
 	errno = e;
 }
+
 #endif
 
 static void set_intr_run (void)
@@ -84,14 +111,7 @@ static void set_intr_run (void)
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
 #else
-	{
-		struct sigaction sa_int;
-
-		sa_int.sa_handler = stop_run;
-		sigemptyset (&sa_int.sa_mask);
-		sa_int.sa_flags = 0;
-		sigaction (SIGINT, &sa_int, NULL);
-	}
+	setsignal (SIGINT, stop_run, 1);
 #endif
 }
 
@@ -100,14 +120,7 @@ static void unset_intr_run (void)
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, FALSE);
 #else
-	{
-		struct sigaction sa_int;
-
-		sa_int.sa_handler = SIG_DFL;
-		sigemptyset (&sa_int.sa_mask);
-		sa_int.sa_flags = 0;
-		sigaction (SIGINT, &sa_int, NULL);
-	}
+	setsignal (SIGINT, SIG_DFL, 1);
 #endif
 }
 

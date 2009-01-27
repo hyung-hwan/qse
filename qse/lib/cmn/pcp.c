@@ -26,7 +26,6 @@
 #else
 #	include "syscall.h"
 #	include <fcntl.h>
-#	include <errno.h>
 #	include <sys/wait.h>
 #endif
 

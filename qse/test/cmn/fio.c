@@ -35,6 +35,7 @@ static int test1 (void)
 	n = qse_fio_write (fio, x, strlen(x));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
+
 	off = qse_fio_seek (fio, 0, QSE_FIO_CURRENT);
 	if (off == (qse_fio_off_t)-1)
 	{
@@ -192,6 +193,56 @@ static int test2 (void)
 	return 0;
 }
 
+static int test3 (void)
+{
+	qse_fio_t* fio;
+	qse_ssize_t n;
+	const qse_char_t* x = QSE_T("\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?");
+	qse_fio_off_t off;
+	qse_char_t buf[1000];
+
+	fio = qse_fio_open (
+		QSE_NULL,
+		0,
+		QSE_T("fio3.txt"), 
+
+		QSE_FIO_TEXT | QSE_FIO_READ | QSE_FIO_WRITE |
+		QSE_FIO_CREATE | QSE_FIO_TRUNCATE, 
+
+		QSE_FIO_RUSR|QSE_FIO_WUSR|QSE_FIO_RGRP|QSE_FIO_ROTH
+	);
+	if (fio == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open file\n"));
+		return -1;
+	}
+
+	n = qse_fio_write (fio, x, qse_strlen(x));
+	qse_printf (QSE_T("written %d chars\n"), (int)n);
+
+	n = qse_fio_flush (fio);
+	qse_printf (QSE_T("flushed %d chars\n"), (int)n);
+
+	off = qse_fio_seek (fio, 0, QSE_FIO_BEGIN);
+	if (off == (qse_fio_off_t)-1)
+	{
+		qse_printf (QSE_T("failed to get file offset\n"));
+	}
+
+
+	n = qse_fio_read (fio, buf, QSE_COUNTOF(buf));
+	qse_printf (QSE_T("read %d chars\n"), (int)n);
+	if (n > 0)
+	{
+		qse_printf (QSE_T("[%.*s]\n"), (int)n,  buf);
+	}
+
+	
+	qse_fio_close (fio);
+
+	return 0;
+}
+
 int main ()
 {
 	setlocale (LC_ALL, "");
@@ -202,6 +253,11 @@ int main ()
 
 	R (test1);
 	R (test2);
+	R (test3);
+
+	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
+	qse_printf (QSE_T("Run \"rm -f fio?.txt\" to delete garbages\n"));
+	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	return 0;
 }
