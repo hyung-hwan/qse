@@ -19,7 +19,7 @@
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/pcp.h>
+#include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
 #include <qse/utl/stdio.h>
 
@@ -283,57 +283,57 @@ int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::openPipe (Pipe& io) 
 { 
 	Awk::Pipe::Mode mode = io.getMode();
-	qse_pcp_t* pcp = QSE_NULL;
+	qse_pio_t* pio = QSE_NULL;
 	int flags;
 
 	switch (mode)
 	{
 		case Awk::Pipe::READ:
 			/* TODO: should we specify ERRTOOUT? */
-			flags = QSE_PCP_READOUT |
-			        QSE_PCP_ERRTOOUT;
+			flags = QSE_PIO_READOUT |
+			        QSE_PIO_ERRTOOUT;
 			break;
 		case Awk::Pipe::WRITE:
-			flags = QSE_PCP_WRITEIN;
+			flags = QSE_PIO_WRITEIN;
 			break;
 		case Awk::Pipe::RW:
-			flags = QSE_PCP_READOUT |
-			        QSE_PCP_ERRTOOUT |
-			        QSE_PCP_WRITEIN;
+			flags = QSE_PIO_READOUT |
+			        QSE_PIO_ERRTOOUT |
+			        QSE_PIO_WRITEIN;
 			break;
 	}
 
-	pcp = qse_pcp_open (
+	pio = qse_pio_open (
 		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
-		flags|QSE_PCP_TEXT|QSE_PCP_SHELL
+		flags|QSE_PIO_TEXT|QSE_PIO_SHELL
 	);
-	if (pcp == QSE_NULL) return -1;
+	if (pio == QSE_NULL) return -1;
 
-	io.setHandle (pcp);
+	io.setHandle (pio);
 	return 1;
 }
 
 int StdAwk::closePipe (Pipe& io) 
 {
-	qse_pcp_close ((qse_pcp_t*)io.getHandle());
+	qse_pio_close ((qse_pio_t*)io.getHandle());
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
 { 
-	return qse_pcp_read ((qse_pcp_t*)io.getHandle(), buf, len, QSE_PCP_OUT);
+	return qse_pio_read ((qse_pio_t*)io.getHandle(), buf, len, QSE_PIO_OUT);
 }
 
 StdAwk::ssize_t StdAwk::writePipe (Pipe& io, const char_t* buf, size_t len) 
 { 
-	return qse_pcp_write ((qse_pcp_t*)io.getHandle(), buf, len, QSE_PCP_IN);
+	return qse_pio_write ((qse_pio_t*)io.getHandle(), buf, len, QSE_PIO_IN);
 }
 
 int StdAwk::flushPipe (Pipe& io) 
 { 
-	return qse_pcp_flush ((qse_pcp_t*)io.getHandle(), QSE_PCP_IN); 
+	return qse_pio_flush ((qse_pio_t*)io.getHandle(), QSE_PIO_IN); 
 }
 
 // file io handlers 

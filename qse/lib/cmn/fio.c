@@ -210,8 +210,8 @@ qse_fio_t* qse_fio_init (
 		tio = qse_tio_open (fio->mmgr, 0);
 		if (tio == QSE_NULL) QSE_ERR_THROW (tio);
 
-		if (qse_tio_attachin (tio, fio_input, fio) < 0 ||
-		    qse_tio_attachout (tio, fio_output, fio) < 0)
+		if (qse_tio_attachin (tio, fio_input, fio) == -1 ||
+		    qse_tio_attachout (tio, fio_output, fio) == -1)
 		{
 			qse_tio_close (tio);
 			QSE_ERR_THROW (tio);

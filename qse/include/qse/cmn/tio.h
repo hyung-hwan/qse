@@ -223,87 +223,55 @@ int qse_tio_detachout (
 	qse_tio_t* tio
 );
 
-/*
- * FUNCTION: qse_tio_flush
- *   Flushes the output buffer
+/****f* qse.cmn.tio/qse_tio_flush
+ * NAME
+ *  qse_tio_flush - flush the output buffer
  *
- * PARAMETERS:
- *   tio - a tio object
+ * RETURNS
+ *  The qse_tio_flush() function return the number of bytes written on 
+ *  success, -1 on failure.
+ * 
+ * SYNOPSIS
+ */
+qse_ssize_t qse_tio_flush (
+	qse_tio_t* tio
+);
+/******/
+
+/****f* qse.cmn.tio/qse_tio_purge
+ * NAME 
+ *  qse_tio_purge - erase input and output buffered 
  *
- * RETURNS:
- *   Number of bytes written on success, -1 on failure
+ * SYNOPSIS
  */
-qse_ssize_t qse_tio_flush (qse_tio_t* tio);
+void qse_tio_purge (
+	qse_tio_t* tio
+);
+/******/
 
-/*
- * FUNCTION: qse_tio_purge
- *   Erases all input and output buffered 
+/****f* qse.cmn.tio/qse_tio_read
+ * NAME
+ *  qse_tio_read - read text
  * 
- * PARAMETERS:
- *   tio - a tio object
- * 
- */
-void qse_tio_purge (qse_tio_t* tio);
-
-/* 
- * FUNCTION: qse_tio_getc
- *   Reads a single character
- */
-qse_ssize_t qse_tio_getc (qse_tio_t* tio, qse_char_t* c);
-
-/* 
- * FUNCTION: qse_tio_gets
- * 
- * DESCRIPTION:
- *   <qse_tio_gets> inserts a terminating null if there is a room
- */
-qse_ssize_t qse_tio_gets (qse_tio_t* tio, qse_char_t* buf, qse_size_t size);
-
-/*
- * FUNCTION: qse_tio_getstr
- */
-qse_ssize_t qse_tio_getstr (qse_tio_t* tio, qse_str_t* buf);
-
-/*
- * FUNCTION: qse_tio_putc
- */
-qse_ssize_t qse_tio_putc (qse_tio_t* tio, qse_char_t c);
-
-/*
- * FUNCTION: qse_tio_puts
- */
-qse_ssize_t qse_tio_puts (qse_tio_t* tio, const qse_char_t* str);
-
-/* 
- * FUNCTION: qse_tio_read
- * 
- * DESCRIPTION:
- *   <qse_tio_read> doesn't insert a terminating null character 
+ * SYNOPSIS
  */
 qse_ssize_t qse_tio_read (
 	qse_tio_t*  tio, 
 	qse_char_t* buf, 
 	qse_size_t  size
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_putsx
+/****f* qse.cmn.tio/qse_tio_write
+ *
+ * SYNOPSIS
  */
 qse_ssize_t qse_tio_write (
 	qse_tio_t*        tio,
-	const qse_char_t* str,
+	const qse_char_t* data,
 	qse_size_t        size
 );
-
-/*
- * FUNCTION: qse_tio_putsn
- */
-qse_ssize_t qse_tio_putsn (qse_tio_t* tio, ...);
-
-/*
- * FUNCTION: qse_tio_putsxn
- */
-qse_ssize_t qse_tio_putsxn (qse_tio_t* tio, ...);
+/******/
 
 #ifdef __cplusplus
 }

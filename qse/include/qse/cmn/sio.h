@@ -41,7 +41,7 @@ enum qse_sio_open_flag_t
         QSE_SIO_NOSHWR    = QSE_FIO_NOSHWR
 };
 
-typedef qse_fio_off_t qse_sio_off_t;
+typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
 
 typedef struct qse_sio_t qse_sio_t;
@@ -95,6 +95,7 @@ void qse_sio_purge (
 	qse_sio_t* sio
 );
 
+#if 0
 qse_ssize_t qse_sio_getc (
 	qse_sio_t* sio,
 	qse_char_t* c
@@ -118,20 +119,31 @@ qse_ssize_t qse_sio_putc (
 );
 
 qse_ssize_t qse_sio_puts (
-	qse_sio_t* sio,
+	qse_sio_t*        sio,
 	const qse_char_t* str
 );
+#endif
 
 qse_ssize_t qse_sio_read (
-	qse_sio_t* sio,
+	qse_sio_t*  sio,
 	qse_char_t* buf,
-	qse_size_t size
+	qse_size_t  size
 );
 
 qse_ssize_t qse_sio_write (
-	qse_sio_t* sio, 
+	qse_sio_t*        sio, 
 	const qse_char_t* str,
-	qse_size_t size
+	qse_size_t        size
+);
+
+int qse_sio_getpos (
+	qse_sio_t*     sio, 
+	qse_sio_pos_t* pos
+);
+
+int qse_sio_setpos (
+	qse_sio_t*    sio, 
+	qse_sio_pos_t pos
 );
 
 #if 0
@@ -143,8 +155,6 @@ qse_ssize_t qse_sio_putsxv (qse_sio_t* sio, qse_va_list ap);
 /* WARNING:
  *   getpos may not return the desired postion because of the buffering 
  */
-int qse_sio_getpos (qse_sio_t* sio, qse_sio_off_t* pos);
-int qse_sio_setpos (qse_sio_t* sio, qse_sio_off_t pos);
 int qse_sio_rewind (qse_sio_t* sio);
 int qse_sio_movetoend (qse_sio_t* sio);
 #endif
