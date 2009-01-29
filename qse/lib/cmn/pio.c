@@ -1,5 +1,5 @@
 /*
- * $Id: pcp.c,v 1.23 2006/06/30 04:18:47 bacon Exp $
+ * $Id: pio.c,v 1.23 2006/06/30 04:18:47 bacon Exp $
  *
    Copyright 2006-2008 Chung, Hyung-Hwan.
 
@@ -16,7 +16,7 @@
    limitations under the License.
  */
 
-#include <qse/cmn/pcp.h>
+#include <qse/cmn/pio.h>
 #include <qse/cmn/str.h>
 #include "mem.h"
 
@@ -29,21 +29,16 @@
 #	include <sys/wait.h>
 #endif
 
-QSE_IMPLEMENT_STD_FUNCTIONS (pcp)
+QSE_IMPLEMENT_STD_FUNCTIONS (pio)
 
-static qse_ssize_t pcp_read (
-	qse_pcp_t* pcp, void* buf, qse_size_t size, qse_pcp_hnd_t hnd);
-static qse_ssize_t pcp_write (
-	qse_pcp_t* pcp, const void* data, qse_size_t size, qse_pcp_hnd_t hnd);
+static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
-static qse_ssize_t pcp_input (int cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t pcp_output (int cmd, void* arg, void* buf, qse_size_t size);
-
-qse_pcp_t* qse_pcp_open (
+qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
 	const qse_char_t* path, int flags)
 {
-	qse_pcp_t* pcp;
+	qse_pio_t* pio;
 
 	if (mmgr == QSE_NULL)
 	{
@@ -55,36 +50,36 @@ qse_pcp_t* qse_pcp_open (
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	pcp = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pcp_t) + ext);
-	if (pcp == QSE_NULL) return QSE_NULL;
+	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
+	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pcp_init (pcp, mmgr, path, flags) == QSE_NULL)
+	if (qse_pio_init (pio, mmgr, path, flags) == QSE_NULL)
 	{
-		QSE_MMGR_FREE (mmgr, pcp);
+		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
 	}
 
-	return pcp;
+	return pio;
 }
 
-void qse_pcp_close (qse_pcp_t* pcp)
+void qse_pio_close (qse_pio_t* pio)
 {
-	qse_pcp_fini (pcp);
-	QSE_MMGR_FREE (pcp->mmgr, pcp);
+	qse_pio_fini (pio);
+	QSE_MMGR_FREE (pio->mmgr, pio);
 }
 
-qse_pcp_t* qse_pcp_init (
-	qse_pcp_t* pcp, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
+qse_pio_t* qse_pio_init (
+	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
 {
-	qse_pcp_pid_t pid;
-	qse_pcp_hnd_t handle[6] = 
+	qse_pio_pid_t pid;
+	qse_pio_hnd_t handle[6] = 
 	{ 
-		QSE_PCP_HND_NIL, 
-		QSE_PCP_HND_NIL,
-		QSE_PCP_HND_NIL,
-		QSE_PCP_HND_NIL,
-		QSE_PCP_HND_NIL,
-		QSE_PCP_HND_NIL
+		QSE_PIO_HND_NIL, 
+		QSE_PIO_HND_NIL,
+		QSE_PIO_HND_NIL,
+		QSE_PIO_HND_NIL,
+		QSE_PIO_HND_NIL,
+		QSE_PIO_HND_NIL
 	};
 	qse_tio_t* tio[3] = 
 	{ 
@@ -94,28 +89,28 @@ qse_pcp_t* qse_pcp_init (
 	};
 	int i, minidx = -1, maxidx = -1;
 
-	QSE_MEMSET (pcp, 0, QSE_SIZEOF(*pcp));
-	pcp->mmgr = mmgr;
+	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
+	pio->mmgr = mmgr;
 
 #ifdef _WIN32
 	/* TODO: XXXXXXXXXXXXXXXXX */
 http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 #else
 
-	if (flags & QSE_PCP_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		if (QSE_PIPE(&handle[0]) == -1) goto oops;
 		minidx = 0; maxidx = 1;
 	}
 
-	if (flags & QSE_PCP_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		if (QSE_PIPE(&handle[2]) == -1) goto oops;
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
 	}
 
-	if (flags & QSE_PCP_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		if (QSE_PIPE(&handle[4]) == -1) goto oops;
 		if (minidx == -1) minidx = 4;
@@ -130,7 +125,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 	if (pid == 0)
 	{
 		/* child */
-		qse_pcp_hnd_t devnull;
+		qse_pio_hnd_t devnull;
 		qse_mchar_t* mcmd;
 		extern char** environ; 
 		int fcnt = 0;
@@ -140,7 +135,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		qse_mchar_t buf[64];
 	#endif
 
-		if (flags & QSE_PCP_WRITEIN)
+		if (flags & QSE_PIO_WRITEIN)
 		{
 			/* child should read */
 			QSE_CLOSE (handle[1]);
@@ -148,13 +143,13 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			QSE_CLOSE (handle[0]);
 		}
 
-		if (flags & QSE_PCP_READOUT)
+		if (flags & QSE_PIO_READOUT)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[2]);
 			if (QSE_DUP2 (handle[3], 1) == -1) goto child_oops;
 
-			if (flags & QSE_PCP_ERRTOOUT)
+			if (flags & QSE_PIO_ERRTOOUT)
 			{
 				if (QSE_DUP2 (handle[3], 2) == -1) goto child_oops;
 			}
@@ -162,13 +157,13 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			QSE_CLOSE (handle[3]);
 		}
 
-		if (flags & QSE_PCP_READERR)
+		if (flags & QSE_PIO_READERR)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[4]);
 			if (QSE_DUP2 (handle[5], 2) == -1) goto child_oops;
 
-			if (flags & QSE_PCP_OUTTOERR)
+			if (flags & QSE_PIO_OUTTOERR)
 			{
 				if (QSE_DUP2 (handle[5], 1) == -1) goto child_oops;
 			}
@@ -176,9 +171,9 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			QSE_CLOSE (handle[5]);
 		}
 
-		if ((flags & QSE_PCP_INTONUL) || 
-		    (flags & QSE_PCP_OUTTONUL) ||
-		    (flags & QSE_PCP_ERRTONUL))
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL))
 		{
 		#ifdef O_LARGEFILE
 			devnull = QSE_OPEN ("/dev/null", O_RDWR|O_LARGEFILE, 0);
@@ -188,26 +183,26 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			if (devnull == -1) goto oops;
 		}
 
-		if ((flags & QSE_PCP_INTONUL)  &&
+		if ((flags & QSE_PIO_INTONUL)  &&
 		    QSE_DUP2(devnull,0) == -1) goto child_oops;
-		if ((flags & QSE_PCP_OUTTONUL) &&
+		if ((flags & QSE_PIO_OUTTONUL) &&
 		    QSE_DUP2(devnull,1) == -1) goto child_oops;
-		if ((flags & QSE_PCP_ERRTONUL) &&
+		if ((flags & QSE_PIO_ERRTONUL) &&
 		    QSE_DUP2(devnull,2) == -1) goto child_oops;
 
-		if ((flags & QSE_PCP_INTONUL) || 
-		    (flags & QSE_PCP_OUTTONUL) ||
-		    (flags & QSE_PCP_ERRTONUL)) QSE_CLOSE (devnull);
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
 
-		if (flags & QSE_PCP_DROPIN) QSE_CLOSE(0);
-		if (flags & QSE_PCP_DROPOUT) QSE_CLOSE(1);
-		if (flags & QSE_PCP_DROPERR) QSE_CLOSE(2);
+		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
+		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
+		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
 
 	#ifdef QSE_CHAR_IS_MCHAR
-		if (flags & QSE_PCP_SHELL) mcmd = (qse_char_t*)cmd;
+		if (flags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
 		else
 		{
-			mcmd =  qse_strdup (cmd, pcp->mmgr);
+			mcmd =  qse_strdup (cmd, pio->mmgr);
 			if (mcmd == QSE_NULL) goto child_oops;
 
 			fcnt = qse_strspl (mcmd, QSE_T(""), 
@@ -219,7 +214,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			}
 		}
 	#else	
-		if (flags & QSE_PCP_SHELL)
+		if (flags & QSE_PIO_SHELL)
 		{
        			n = qse_wcstombslen (cmd, &mn);
 			if (cmd[n] != QSE_WT('\0')) 
@@ -230,7 +225,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		}
 		else
 		{
-			wcmd = qse_strdup (cmd, pcp->mmgr);
+			wcmd = qse_strdup (cmd, pio->mmgr);
 			if (wcmd == QSE_NULL) goto child_oops;
 
 			fcnt = qse_strspl (wcmd, QSE_T(""), 
@@ -260,11 +255,11 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		else
 		{
 			mcmd = QSE_MMGR_ALLOC (
-				pcp->mmgr, mn*QSE_SIZEOF(*mcmd));
+				pio->mmgr, mn*QSE_SIZEOF(*mcmd));
 			if (mcmd == QSE_NULL) goto child_oops;
 		}
 
-		if (flags & QSE_PCP_SHELL)
+		if (flags & QSE_PIO_SHELL)
 		{
 			/* qse_wcstombs() should succeed as 
 			 * qse_wcstombslen() was successful above */
@@ -282,7 +277,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		}
 	#endif
 
-		if (flags & QSE_PCP_SHELL)
+		if (flags & QSE_PIO_SHELL)
 		{
 			const qse_mchar_t* argv[4];
 
@@ -298,7 +293,7 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 			int i;
 			qse_mchar_t** argv;
 
-			argv = QSE_MMGR_ALLOC (pcp->mmgr, (fcnt+1)*QSE_SIZEOF(argv[0]));
+			argv = QSE_MMGR_ALLOC (pio->mmgr, (fcnt+1)*QSE_SIZEOF(argv[0]));
 			if (argv == QSE_NULL) goto child_oops;
 
 			for (i = 0; i < fcnt; i++)
@@ -317,9 +312,9 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 	}
 
 	/* parent */
-	pcp->child = pid;
+	pio->child = pid;
 
-	if (flags & QSE_PCP_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* 
 		 * 012345
@@ -327,10 +322,10 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		 * X  
 		 * WRITE => 1
 		 */
-		QSE_CLOSE (handle[0]); handle[0] = QSE_PCP_HND_NIL;
+		QSE_CLOSE (handle[0]); handle[0] = QSE_PIO_HND_NIL;
 	}
 
-	if (flags & QSE_PCP_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		/* 
 		 * 012345
@@ -338,10 +333,10 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		 *    X
 		 * READ => 2
 		 */
-		QSE_CLOSE (handle[3]); handle[3] = QSE_PCP_HND_NIL;
+		QSE_CLOSE (handle[3]); handle[3] = QSE_PIO_HND_NIL;
 	}
 
-	if (flags & QSE_PCP_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		/* 
 		 * 012345
@@ -349,41 +344,42 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 		 *      X   
 		 * READ => 4
 		 */
-		QSE_CLOSE (handle[5]); handle[5] = QSE_PCP_HND_NIL;
+		QSE_CLOSE (handle[5]); handle[5] = QSE_PIO_HND_NIL;
 	}
 
 #endif
 
 	/* store back references */
-	pcp->pip[QSE_PCP_IN].self = pcp;
-	pcp->pip[QSE_PCP_OUT].self = pcp;
-	pcp->pip[QSE_PCP_ERR].self = pcp;
+	pio->pin[QSE_PIO_IN].self = pio;
+	pio->pin[QSE_PIO_OUT].self = pio;
+	pio->pin[QSE_PIO_ERR].self = pio;
 
 	/* store actual pipe handles */
-	pcp->pip[QSE_PCP_IN].handle = handle[1];
-	pcp->pip[QSE_PCP_OUT].handle = handle[2];
-	pcp->pip[QSE_PCP_ERR].handle = handle[4];
+	pio->pin[QSE_PIO_IN].handle = handle[1];
+	pio->pin[QSE_PIO_OUT].handle = handle[2];
+	pio->pin[QSE_PIO_ERR].handle = handle[4];
 
-	if (flags & QSE_PCP_TEXT)
+	if (flags & QSE_PIO_TEXT)
 	{
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{
 			int r;
 
-			tio[i] = qse_tio_open (pcp->mmgr, 0);
+			tio[i] = qse_tio_open (pio->mmgr, 0);
 			if (tio[i] == QSE_NULL) goto oops;
 
-			r = (i == QSE_PCP_IN)?
-				qse_tio_attachout (tio[i], pcp_output, &pcp->pip[i]):
-				qse_tio_attachin (tio[i], pcp_input, &pcp->pip[i]);
+			r = (i == QSE_PIO_IN)?
+				qse_tio_attachout (tio[i], pio_output, &pio->pin[i]):
+				qse_tio_attachin (tio[i], pio_input, &pio->pin[i]);
 
 			if (r == -1) goto oops;
 
-			pcp->pip[i].tio = tio[i];
+			pio->pin[i].tio = tio[i];
 		}
 	}
 
-	return pcp;
+	pio->flags = 0;
+	return pio;
 
 oops:
 	for (i = 0; i < QSE_COUNTOF(tio); i++) qse_tio_close (tio[i]);
@@ -391,20 +387,40 @@ oops:
 	return QSE_NULL;
 }
 
-void qse_pcp_fini (qse_pcp_t* pcp)
+void qse_pio_fini (qse_pio_t* pio)
 {
-	qse_pcp_end (pcp, QSE_PCP_IN);
-	qse_pcp_end (pcp, QSE_PCP_OUT);
-	qse_pcp_end (pcp, QSE_PCP_ERR);
-	qse_pcp_wait (pcp, QSE_PCP_IGNINTR);
+	qse_pio_end (pio, QSE_PIO_IN);
+	qse_pio_end (pio, QSE_PIO_OUT);
+	qse_pio_end (pio, QSE_PIO_ERR);
+
+	qse_pio_setflags (pio, QSE_PIO_WAIT_NOBLOCK|QSE_PIO_WAIT_NORETRY, -1);
+	qse_pio_wait (pio);
 }
 
-qse_pcp_err_t qse_pcp_geterrnum (qse_pcp_t* pcp)
+int qse_pio_getflags (qse_pio_t* pio)
 {
-	return pcp->errnum;
+	return pio->flags;
 }
 
-const qse_char_t* qse_pcp_geterrstr (qse_pcp_t* pcp)
+void qse_pio_setflags (qse_pio_t* pio, int flags, int op)
+{
+	/*
+	op => set
+	op => off
+	op => on
+	*/
+
+	if (op == 0) pio->flags = flags;
+	else if (op > 0) pio->flags |= flags;
+	else /*if (op < 0)*/ pio->flags &= ~flags;
+}
+
+qse_pio_err_t qse_pio_geterrnum (qse_pio_t* pio)
+{
+	return pio->errnum;
+}
+
+const qse_char_t* qse_pio_geterrstr (qse_pio_t* pio)
 {
 	static const qse_char_t* __errstr[] =
 	{
@@ -418,46 +434,22 @@ const qse_char_t* qse_pcp_geterrstr (qse_pcp_t* pcp)
 	};
 
 	return __errstr[
-		(pcp->errnum < 0 || pcp->errnum >= QSE_COUNTOF(__errstr))? 
-		QSE_COUNTOF(__errstr) - 1: pcp->errnum];
+		(pio->errnum < 0 || pio->errnum >= QSE_COUNTOF(__errstr))? 
+		QSE_COUNTOF(__errstr) - 1: pio->errnum];
 }
 
-qse_pcp_hnd_t qse_pcp_gethandle (qse_pcp_t* pcp, qse_pcp_hid_t hid)
+qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, qse_pio_hid_t hid)
 {
-	return pcp->pip[hid].handle;
+	return pio->pin[hid].handle;
 }
 
-qse_pcp_pid_t qse_pcp_getchild (qse_pcp_t* pcp)
+qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)
 {
-	return pcp->child;
+	return pio->child;
 }
 
-qse_ssize_t qse_pcp_read (
-	qse_pcp_t* pcp, void* buf, qse_size_t size, qse_pcp_hid_t hid)
-{
-	if (pcp->pip[hid].tio == QSE_NULL) 
-		return pcp_read (pcp, buf, size, pcp->pip[hid].handle);
-	else
-		return qse_tio_read (pcp->pip[hid].tio, buf, size);
-}
-
-qse_ssize_t qse_pcp_write (
-	qse_pcp_t* pcp, const void* data, qse_size_t size, qse_pcp_hid_t hid)
-{
-	if (pcp->pip[hid].tio == QSE_NULL)
-		return pcp_write (pcp, data, size, pcp->pip[hid].handle);
-	else
-		return qse_tio_write (pcp->pip[hid].tio, data, size);
-}
-
-qse_ssize_t qse_pcp_flush (qse_pcp_t* pcp, qse_pcp_hid_t hid)
-{
-	if (pcp->pip[hid].tio == QSE_NULL) return 0;
-	return qse_tio_flush (pcp->pip[hid].tio);
-}
-
-static qse_ssize_t pcp_read (
-	qse_pcp_t* pcp, void* buf, qse_size_t size, qse_pcp_hnd_t hnd)
+static qse_ssize_t pio_read (
+	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hnd_t hnd)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -465,10 +457,10 @@ static qse_ssize_t pcp_read (
 	qse_ssize_t n;
 #endif
 
-	if (hnd == QSE_PCP_HND_NIL) 
+	if (hnd == QSE_PIO_HND_NIL) 
 	{
 		/* the stream is already closed */
-		pcp->errnum = QSE_PCP_ENOHND;
+		pio->errnum = QSE_PIO_ENOHND;
 		return (qse_ssize_t)-1;
 	}
 
@@ -479,19 +471,38 @@ static qse_ssize_t pcp_read (
 #else
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+
+reread:
 	n = QSE_READ (hnd, buf, size);
 	if (n == -1) 
 	{
-		pcp->errnum = (errno == EINTR)? 
-			QSE_PCP_EINTR: QSE_PCP_ESYSCALL;
+		if (errno == EINTR)
+		{
+			if (pio->flags & QSE_PIO_READ_NORETRY) 
+				pio->errnum = QSE_PIO_EINTR;
+			else goto reread;
+		}
+		else
+		{
+			pio->errnum = QSE_PIO_ESUBSYS;
+		}
 	}
 
 	return n;
 #endif
 }
 
-static qse_ssize_t pcp_write (
-	qse_pcp_t* pcp, const void* data, qse_size_t size, qse_pcp_hnd_t hnd)
+qse_ssize_t qse_pio_read (
+	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hid_t hid)
+{
+	if (pio->pin[hid].tio == QSE_NULL) 
+		return pio_read (pio, buf, size, pio->pin[hid].handle);
+	else
+		return qse_tio_read (pio->pin[hid].tio, buf, size);
+}
+
+static qse_ssize_t pio_write (
+	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hnd_t hnd)
 {
 #ifdef _WIN32
 	DWORD count;
@@ -499,10 +510,10 @@ static qse_ssize_t pcp_write (
 	qse_ssize_t n;
 #endif
 
-	if (hnd == QSE_PCP_HND_NIL) 
+	if (hnd == QSE_PIO_HND_NIL) 
 	{
 		/* the stream is already closed */
-		pcp->errnum = QSE_PCP_ENOHND;
+		pio->errnum = QSE_PIO_ENOHND;
 		return (qse_ssize_t)-1;
 	}
 
@@ -512,82 +523,108 @@ static qse_ssize_t pcp_write (
 	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+
+rewrite:
 	n = QSE_WRITE (hnd, data, size);
 	if (n == -1) 
 	{
-		pcp->errnum = (errno == EINTR)? 
-			QSE_PCP_EINTR: QSE_PCP_ESYSCALL;
+		if (errno == EINTR)
+		{
+			if (pio->flags & QSE_PIO_WRITE_NORETRY)
+				pio->errnum = QSE_PIO_EINTR;
+			else goto rewrite;
+		}
+		else
+		{
+			pio->errnum = QSE_PIO_ESUBSYS;
+		}
 	}
 	return n;
 #endif
 }
 
-void qse_pcp_end (qse_pcp_t* pcp, qse_pcp_hid_t hid)
+qse_ssize_t qse_pio_write (
+	qse_pio_t* pio, const void* data, qse_size_t size,
+	qse_pio_hid_t hid)
 {
-	if (pcp->pip[hid].tio != QSE_NULL)
+	if (pio->pin[hid].tio == QSE_NULL)
+		return pio_write (pio, data, size, pio->pin[hid].handle);
+	else
+		return qse_tio_write (pio->pin[hid].tio, data, size);
+}
+
+qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
+{
+	if (pio->pin[hid].tio == QSE_NULL) return 0;
+	return qse_tio_flush (pio->pin[hid].tio);
+}
+
+void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
+{
+	if (pio->pin[hid].tio != QSE_NULL)
 	{
-		qse_tio_close (pcp->pip[hid].tio);
-		pcp->pip[hid].tio = QSE_NULL;
+		qse_tio_close (pio->pin[hid].tio);
+		pio->pin[hid].tio = QSE_NULL;
 	}
 
-	if (pcp->pip[hid].handle != QSE_PCP_HND_NIL)
+	if (pio->pin[hid].handle != QSE_PIO_HND_NIL)
 	{
-		QSE_CLOSE (pcp->pip[hid].handle);
-		pcp->pip[hid].handle = QSE_PCP_HND_NIL;
+		QSE_CLOSE (pio->pin[hid].handle);
+		pio->pin[hid].handle = QSE_PIO_HND_NIL;
 	}
 }
 
-int qse_pcp_wait (qse_pcp_t* pcp, int flags)
+int qse_pio_wait (qse_pio_t* pio)
 {
 #ifdef _WIN32
 	DWORD ec;
 
-	if (pcp->child == QSE_PCP_PID_NIL) 
+	if (pio->child == QSE_PIO_PID_NIL) 
 	{
 		
-		pcp->errnum = QSE_PCP_ECHILD;
+		pio->errnum = QSE_PIO_ECHILD;
 		return -1;
 	}
 
-	WaitForSingleObject (pcp->child, -1);
-	if (GetExitCodeProcess (pcp->child, &ec) == -1)
+	WaitForSingleObject (pio->child, -1);
+	if (GetExitCodeProcess (pio->child, &ec) == FALSE) ....
 	/* close handle here to emulate waitpid() as much as possible. */
-	CloseHandle (pcp->child); 
-	pcp->child = QSE_PCP_PID_NIL;
+	CloseHandle (pio->child); 
+	pio->child = QSE_PIO_PID_NIL;
 
 #else
 	int opt = 0;
 	int ret = -1;
 
-	if (pcp->child == QSE_PCP_PID_NIL) 
+	if (pio->child == QSE_PIO_PID_NIL) 
 	{
-		pcp->errnum = QSE_PCP_ECHILD;
+		pio->errnum = QSE_PIO_ECHILD;
 		return -1;
 	}
 
-	if (flags & QSE_PCP_NOHANG) opt |= WNOHANG;
+	if (pio->flags & QSE_PIO_WAIT_NOBLOCK) opt |= WNOHANG;
 
 	while (1)
 	{
 		int status, n;
 
-		n = QSE_WAITPID (pcp->child, &status, opt);
-
+		n = QSE_WAITPID (pio->child, &status, opt);
 		if (n == -1)
 		{
 			if (errno == ECHILD)
 			{
 				/* most likely, the process has already been 
 				 * waitpid()ed on. */
-				pcp->child = QSE_PCP_PID_NIL;
-				pcp->errnum = QSE_PCP_ECHILD;
+				pio->child = QSE_PIO_PID_NIL;
+				pio->errnum = QSE_PIO_ECHILD;
 			}
 			else if (errno == EINTR)
 			{
-				if (flags & QSE_PCP_IGNINTR) continue;
-				pcp->errnum = QSE_PCP_EINTR;
+				if (pio->flags & QSE_PIO_WAIT_NORETRY) 
+					pio->errnum = QSE_PIO_EINTR;
+				else continue;
 			}
-			else pcp->errnum = QSE_PCP_ESYSCALL;
+			else pio->errnum = QSE_PIO_ESUBSYS;
 
 			break;
 		}
@@ -595,14 +632,14 @@ int qse_pcp_wait (qse_pcp_t* pcp, int flags)
 		if (n == 0) 
 		{
 			/* when WNOHANG is not specified, 0 can't be returned */
-			QSE_ASSERT (flags & QSE_PCP_NOHANG);
+			QSE_ASSERT (pio->flags & QSE_PIO_WAIT_NOBLOCK);
 
 			ret = 255 + 1;
 			/* the child process is still alive */
 			break;
 		}
 
-		if (n == pcp->child)
+		if (n == pio->child)
 		{
 			if (WIFEXITED(status))
 			{
@@ -623,7 +660,7 @@ int qse_pcp_wait (qse_pcp_t* pcp, int flags)
 				ret = 0;
 			}
 
-			pcp->child = QSE_PCP_PID_NIL;
+			pio->child = QSE_PIO_PID_NIL;
 			break;
 		}
 	}
@@ -632,7 +669,7 @@ int qse_pcp_wait (qse_pcp_t* pcp, int flags)
 #endif
 }
 
-int qse_pcp_kill (qse_pcp_t* pcp)
+int qse_pio_kill (qse_pio_t* pio)
 {
 #ifdef _WIN32
 	DWORD n;
@@ -640,54 +677,54 @@ int qse_pcp_kill (qse_pcp_t* pcp)
 	int n;
 #endif
 
-	if (pcp->child == QSE_PCP_PID_NIL) 
+	if (pio->child == QSE_PIO_PID_NIL) 
 	{
-		pcp->errnum = QSE_PCP_ECHILD;
+		pio->errnum = QSE_PIO_ECHILD;
 		return -1;
 	}
 
 #ifdef _WIN32
 	/* 9 was chosen below to treat TerminateProcess as kill -KILL. */
-	n = TerminateProcess (pcp->child, 255 + 1 + 9);
+	n = TerminateProcess (pio->child, 255 + 1 + 9);
 	if (n == FALSE) 
 	{
-		pcp->errnum = QSE_PCP_SYSCALL;
+		pio->errnum = QSE_PIO_SYSCALL;
 		return -1;
 	}
 	return 0;
 #else
-	n = QSE_KILL (pcp->child, SIGKILL);
-	if (n == -1) pcp->errnum = QSE_PCP_ESYSCALL;
+	n = QSE_KILL (pio->child, SIGKILL);
+	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
 	return n;
 #endif
 }
 
-static qse_ssize_t pcp_input (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_pcp_pip_t* pip = (qse_pcp_pip_t*)arg;
-        QSE_ASSERT (pip != QSE_NULL);
+        qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
+        QSE_ASSERT (pin != QSE_NULL);
         if (cmd == QSE_TIO_IO_DATA) 
 	{
-		QSE_ASSERT (pip->self != QSE_NULL);
-		return pcp_read (pip->self, buf, size, pip->handle);
+		QSE_ASSERT (pin->self != QSE_NULL);
+		return pio_read (pin->self, buf, size, pin->handle);
 	}
 
 	/* take no actions for OPEN and CLOSE as they are handled
-	 * by pcp */
+	 * by pio */
         return 0;
 }
 
-static qse_ssize_t pcp_output (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_pcp_pip_t* pip = (qse_pcp_pip_t*)arg;
-        QSE_ASSERT (pip != QSE_NULL);
+        qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
+        QSE_ASSERT (pin != QSE_NULL);
         if (cmd == QSE_TIO_IO_DATA) 
 	{
-		QSE_ASSERT (pip->self != QSE_NULL);
-		return pcp_write (pip->self, buf, size, pip->handle);
+		QSE_ASSERT (pin->self != QSE_NULL);
+		return pio_write (pin->self, buf, size, pin->handle);
 	}
 
 	/* take no actions for OPEN and CLOSE as they are handled
-	 * by pcp */
+	 * by pio */
         return 0;
 }

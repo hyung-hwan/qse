@@ -6,7 +6,6 @@
 
 #include "lsp.h"
 
-static qse_lsp_obj_t* __eval (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
 static qse_lsp_obj_t* makefn (
 	qse_lsp_t* lsp, qse_lsp_obj_t* cdr, int is_macro);
 static qse_lsp_obj_t* eval_cons (

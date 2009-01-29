@@ -226,6 +226,7 @@ void qse_sio_purge (qse_sio_t* sio)
 	qse_tio_purge (&sio->tio);
 }
 
+#if 0
 qse_ssize_t qse_sio_getc (qse_sio_t* sio, qse_char_t* c)
 {
 	return qse_tio_getc (&sio->tio, c);
@@ -235,7 +236,6 @@ qse_ssize_t qse_sio_gets (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
 	return qse_tio_gets (&sio->tio, buf, size);
 }
-
 
 qse_ssize_t qse_sio_getstr (qse_sio_t* sio, qse_str_t* buf)
 {
@@ -251,6 +251,7 @@ qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
 {
 	return qse_tio_puts (&sio->tio, str);
 }
+#endif
 
 qse_ssize_t qse_sio_read (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
@@ -262,71 +263,37 @@ qse_ssize_t qse_sio_write (qse_sio_t* sio, const qse_char_t* str, qse_size_t siz
 	return qse_tio_write (&sio->tio, str, size);
 }
 
-#if 0
-qse_ssize_t qse_sio_putsn (qse_sio_t* sio, ...)
+int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 {
-	qse_ssize_t n;
-	qse_va_list ap;
+	qse_fio_off_t off;
 
-	qse_va_start (ap, sio);
-	n = qse_tio_putsv (&sio->tio, ap);
-	qse_va_end (ap);
-
-	return n;
-}
-
-qse_ssize_t qse_sio_putsxn (qse_sio_t* sio, ...)
-{
-	qse_ssize_t n;
-	qse_va_list ap;
-
-	qse_va_start (ap, sio);
-	n = qse_tio_putsxv (&sio->tio, ap);
-	qse_va_end (ap);
-
-	return n;
-}
-
-qse_ssize_t qse_sio_putsv (qse_sio_t* sio, qse_va_list ap)
-{
-	return qse_tio_putsv (&sio->tio, ap);
-}
-
-qse_ssize_t qse_sio_putsxv (qse_sio_t* sio, qse_va_list ap)
-{
-	return qse_tio_putsxv (&sio->tio, ap);
-}
-
-int qse_sio_getpos (qse_sio_t* sio, qse_siopos_t* pos)
-{
-	qse_off_t off;
-
-	off = qse_fio_seek (&sio->fio, 0, QSE_FIO_SEEK_CURRENT);
-	if (off == (qse_off_t)-1) return -1;
+	off = qse_fio_seek (&sio->fio, 0, QSE_FIO_CURRENT);
+	if (off == (qse_fio_off_t)-1) return -1;
 
 	*pos = off;
 	return 0;
 }
 
-int qse_sio_setpos (qse_sio_t* sio, qse_siopos_t pos)
+int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
 {
 	if (qse_sio_flush(sio) == -1) return -1;
 	return (qse_fio_seek (&sio->fio,
-		pos, QSE_FIO_SEEK_BEGIN) == (qse_off_t)-1)? -1: 0;
+		pos, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
 }
 
+#if 0
 int qse_sio_rewind (qse_sio_t* sio)
 {
 	if (qse_sio_flush(sio) == -1) return -1;
 	return (qse_fio_seek (&sio->fio, 
-		0, QSE_FIO_SEEK_BEGIN) == (qse_off_t)-1)? -1: 0;
+		0, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
 }
 
 int qse_sio_movetoend (qse_sio_t* sio)
 {
 	if (qse_sio_flush(sio) == -1) return -1;
 	return (qse_fio_seek (&sio->fio, 
-		0, QSE_FIO_SEEK_END) == (qse_off_t)-1)? -1: 0;
+		0, QSE_FIO_END) == (qse_fio_off_t)-1)? -1: 0;
 }
 #endif
 
