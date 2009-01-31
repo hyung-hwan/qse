@@ -369,7 +369,7 @@ static qse_ssize_t awk_eio_pipe (
 			/*dprint (QSE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);*/
 
 			handle = qse_pio_open (
-				qse_awk_getrunmmgr(epa->run), 
+				qse_awk_rtx_getmmgr(epa->run), 
 				0, 
 				epa->name, 
 				flags|QSE_PIO_SHELL|QSE_PIO_TEXT
@@ -454,7 +454,7 @@ static qse_ssize_t awk_eio_file (
 
 			/*dprint (QSE_T("opening %s of type %d (file)\n"), epa->name, epa->type);*/
 			handle = qse_fio_open (
-				qse_awk_getrunmmgr(epa->run),
+				qse_awk_rtx_getmmgr(epa->run),
 				0,
 				epa->name, 
 				flags | QSE_FIO_TEXT,
@@ -544,7 +544,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 			qse_sio_t* fp;
 
 			fp = qse_sio_open (
-				qse_awk_getrunmmgr(epa->run),
+				qse_awk_rtx_getmmgr(epa->run),
 				0,
 				rd->ic.files[rd->ic.index],
 				QSE_SIO_READ
@@ -561,7 +561,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 			}
 
 			/*dprint (QSE_T("    console(r) - %s\n"), rd->ic.files[rd->ic.index]);*/
-			if (qse_awk_setfilename (
+			if (qse_awk_rtx_setfilename (
 				epa->run, rd->ic.files[rd->ic.index], 
 				qse_strlen(rd->ic.files[rd->ic.index])) == -1)
 			{
@@ -579,7 +579,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 	{
 		/*dprint (QSE_T("    console(w) - <standard output>\n"));*/
 
-		if (qse_awk_setofilename (epa->run, QSE_T(""), 0) == -1)
+		if (qse_awk_rtx_setofilename (epa->run, QSE_T(""), 0) == -1)
 		{
 			return -1;
 		}
@@ -646,7 +646,7 @@ static qse_ssize_t awk_eio_console (
 				qse_sio_t* fp;
 
 				fp = qse_sio_open (
-					qse_awk_getrunmmgr(epa->run),
+					qse_awk_rtx_getmmgr(epa->run),
 					0,
 					rd->ic.files[rd->ic.index],
 					QSE_SIO_READ
@@ -663,7 +663,7 @@ static qse_ssize_t awk_eio_console (
 					return -1;
 				}
 
-				if (qse_awk_setfilename (
+				if (qse_awk_rtx_setfilename (
 					epa->run, rd->ic.files[rd->ic.index], 
 					qse_strlen(rd->ic.files[rd->ic.index])) == -1)
 				{
@@ -671,7 +671,7 @@ static qse_ssize_t awk_eio_console (
 					return -1;
 				}
 
-				if (qse_awk_setglobal (
+				if (qse_awk_rtx_setglobal (
 					epa->run, QSE_AWK_GLOBAL_FNR, qse_awk_val_zero) == -1)
 				{
 					/* need to reset FNR */
@@ -786,10 +786,10 @@ static int bfn_math_1 (
 	qse_awk_val_t* r;
 	int n;
 
-	nargs = qse_awk_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 1);
 
-	a0 = qse_awk_getarg (run, 0);
+	a0 = qse_awk_rtx_getarg (run, 0);
 
 	n = qse_awk_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
@@ -819,7 +819,7 @@ static int bfn_math_1 (
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 
@@ -833,11 +833,11 @@ static int bfn_math_2 (
 	qse_awk_val_t* r;
 	int n;
 
-	nargs = qse_awk_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 2);
 
-	a0 = qse_awk_getarg (run, 0);
-	a1 = qse_awk_getarg (run, 1);
+	a0 = qse_awk_rtx_getarg (run, 0);
+	a1 = qse_awk_rtx_getarg (run, 1);
 
 	n = qse_awk_valtonum (run, a0, &lv0, &rv0);
 	if (n == -1) return -1;
@@ -871,7 +871,7 @@ static int bfn_math_2 (
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 
@@ -1012,10 +1012,10 @@ static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	qse_awk_val_t* r;
 	int n;
 
-	nargs = qse_awk_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 1);
 
-	a0 = qse_awk_getarg (run, 0);
+	a0 = qse_awk_rtx_getarg (run, 0);
 
 	n = qse_awk_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
@@ -1028,7 +1028,7 @@ static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 
@@ -1043,7 +1043,7 @@ static int bfn_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 
@@ -1058,15 +1058,15 @@ static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	unsigned int prev;
 	rxtn_t* rxtn;
 
-	rxtn = (rxtn_t*)qse_awk_getrundata (run);
-	nargs = qse_awk_getnargs (run);
+	rxtn = (rxtn_t*)qse_awk_rtx_getdata (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 0 || nargs == 1);
 
 	prev = rxtn->seed;
 
 	if (nargs == 1)
 	{
-		a0 = qse_awk_getarg (run, 0);
+		a0 = qse_awk_rtx_getarg (run, 0);
 
 		n = qse_awk_valtonum (run, a0, &lv, &rv);
 		if (n == -1) return -1;
@@ -1091,7 +1091,7 @@ static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 
@@ -1103,10 +1103,10 @@ static int bfn_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl
 	qse_size_t len;
 	int n = 0;
 
-	nargs = qse_awk_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 1);
 	
-	v = qse_awk_getarg (run, 0);
+	v = qse_awk_rtx_getarg (run, 0);
 	if (v->type == QSE_AWK_VAL_STR)
 	{
 		str = ((qse_awk_val_str_t*)v)->ptr;
@@ -1180,7 +1180,7 @@ skip_system:
 		return -1;
 	}
 
-	qse_awk_setretval (run, v);
+	qse_awk_rtx_setretval (run, v);
 	return 0;
 }
 

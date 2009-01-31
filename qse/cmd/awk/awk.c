@@ -32,7 +32,7 @@
 #	include <errno.h>
 #endif
 
-static qse_awk_run_t* app_run = NULL;
+static qse_awk_rtx_t* app_run = NULL;
 static int app_debug = 0;
 
 struct argout_t
@@ -65,7 +65,7 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	if (ctrl_type == CTRL_C_EVENT ||
 	    ctrl_type == CTRL_CLOSE_EVENT)
 	{
-		qse_awk_stop (app_run);
+		qse_awk_rtx_stop (app_run);
 		return TRUE;
 	}
 
@@ -100,7 +100,7 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 static void stop_run (int sig)
 {
 	int e = errno;
-	qse_awk_stop (app_run);
+	qse_awk_rtx_stop (app_run);
 	errno = e;
 }
 
@@ -124,7 +124,7 @@ static void unset_intr_run (void)
 #endif
 }
 
-static int on_run_start (qse_awk_run_t* run, void* data)
+static int on_run_start (qse_awk_rtx_t* run, void* data)
 {
 	app_run = run;
 	set_intr_run ();
@@ -136,7 +136,7 @@ static int on_run_start (qse_awk_run_t* run, void* data)
 static qse_map_walk_t print_awk_value (
 	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
-	qse_awk_run_t* run = (qse_awk_run_t*)arg;
+	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
 	qse_char_t* str;
 	qse_size_t len;
 
@@ -150,19 +150,19 @@ static qse_map_walk_t print_awk_value (
 		dprint (QSE_T("%.*s = %.*s\n"), 
 			(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair), 
 			(int)len, str);
-		qse_awk_free (qse_awk_getrunawk(run), str);
+		qse_awk_free (qse_awk_rtx_getawk(run), str);
 	}
 
 	return QSE_MAP_WALK_FORWARD;
 }
 
 static void on_run_statement (
-	qse_awk_run_t* run, qse_size_t line, void* data)
+	qse_awk_rtx_t* run, qse_size_t line, void* data)
 {
 	/*dprint (L"running %d\n", (int)line);*/
 }
 
-static int on_run_enter (qse_awk_run_t* run, void* data)
+static int on_run_enter (qse_awk_rtx_t* run, void* data)
 {
 	struct argout_t* ao = (struct argout_t*)data;
 
@@ -174,7 +174,7 @@ static int on_run_enter (qse_awk_run_t* run, void* data)
 		if (fs == QSE_NULL) return -1;
 
 		qse_awk_refupval (run, fs);
-		qse_awk_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
+		qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
 		qse_awk_refdownval (run, fs);
 	}
 
@@ -183,7 +183,7 @@ static int on_run_enter (qse_awk_run_t* run, void* data)
 }
 
 static void on_run_exit (
-	qse_awk_run_t* run, qse_awk_val_t* ret, void* data)
+	qse_awk_rtx_t* run, qse_awk_val_t* ret, void* data)
 {
 	qse_size_t len;
 	qse_char_t* str;
@@ -202,16 +202,16 @@ static void on_run_exit (
 		else
 		{
 			dprint (QSE_T("[RETURN] - [%.*s]\n"), (int)len, str);
-			qse_awk_free (qse_awk_getrunawk(run), str);
+			qse_awk_free (qse_awk_rtx_getawk(run), str);
 		}
 	}
 
 	dprint (QSE_T("[NAMED VARIABLES]\n"));
-	qse_map_walk (qse_awk_getrunnvmap(run), print_awk_value, run);
+	qse_map_walk (qse_awk_rtx_getnvmap(run), print_awk_value, run);
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
-static void on_run_end (qse_awk_run_t* run, int errnum, void* data)
+static void on_run_end (qse_awk_rtx_t* run, int errnum, void* data)
 {
 	if (errnum != QSE_AWK_ENOERR)
 	{
@@ -239,7 +239,7 @@ static struct
 	{ QSE_T("bxor"),        QSE_AWK_BXOR },
 	{ QSE_T("shift"),       QSE_AWK_SHIFT },
 	{ QSE_T("idiv"),        QSE_AWK_IDIV },
-	{ QSE_T("extio"),       QSE_AWK_EXTIO },
+	{ QSE_T("eio"),         QSE_AWK_EIO },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE },
 	{ QSE_T("baseone"),     QSE_AWK_BASEONE },
@@ -273,7 +273,7 @@ static void print_usage (const qse_char_t* argv0)
 }
 
 static int bfn_sleep (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -282,10 +282,10 @@ static int bfn_sleep (
 	qse_awk_val_t* r;
 	int n;
 
-	nargs = qse_awk_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 1);
 
-	a0 = qse_awk_getarg (run, 0);
+	a0 = qse_awk_rtx_getarg (run, 0);
 
 	n = qse_awk_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
@@ -305,7 +305,7 @@ static int bfn_sleep (
 		return -1;
 	}
 
-	qse_awk_setretval (run, r);
+	qse_awk_rtx_setretval (run, r);
 	return 0;
 }
 

@@ -455,7 +455,7 @@ void qse_awk_setmaxdepth (qse_awk_t* awk, int types, qse_size_t depth)
 	}
 }
 
-const qse_char_t* qse_awk_getglobalname (
+const qse_char_t* qse_awk_rtx_getglobalname (
 	qse_awk_t* awk, qse_size_t idx, qse_size_t* len)
 {
 	/*

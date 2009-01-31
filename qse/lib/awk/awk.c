@@ -366,7 +366,7 @@ void qse_awk_setoption (qse_awk_t* awk, int opt)
 }
 
 
-void qse_awk_stopall (qse_awk_t* awk)
+void qse_awk_rtx_stopall (qse_awk_t* awk)
 {
 	awk->stopall = QSE_TRUE;
 }

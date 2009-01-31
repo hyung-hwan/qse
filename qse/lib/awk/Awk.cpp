@@ -141,12 +141,12 @@ int Awk::Console::setFileName (const char_t* name)
 {
 	if (eio->mode == READ)
 	{
-		return qse_awk_setfilename (
+		return qse_awk_rtx_setfilename (
 			eio->run, name, qse_strlen(name));
 	}
 	else
 	{
-		return qse_awk_setofilename (
+		return qse_awk_rtx_setofilename (
 			eio->run, name, qse_strlen(name));
 	}
 }
@@ -160,7 +160,7 @@ int Awk::Console::setFNR (long_t fnr)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_refupval (eio->run, tmp);
-	n = qse_awk_setglobal (eio->run, QSE_AWK_GLOBAL_FNR, tmp);
+	n = qse_awk_rtx_setglobal (eio->run, QSE_AWK_GLOBAL_FNR, tmp);
 	qse_awk_refdownval (eio->run, tmp);
 
 	return n;
@@ -929,19 +929,19 @@ Awk::Run::operator Awk::run_t* () const
 void Awk::Run::stop () const
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	qse_awk_stop (this->run);
+	qse_awk_rtx_stop (this->run);
 }
 
 bool Awk::Run::isStop () const
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	return qse_awk_isstop (this->run)? true: false;
+	return qse_awk_rtx_shouldstop (this->run)? true: false;
 }
 
 Awk::ErrorCode Awk::Run::getErrorCode () const
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	return (ErrorCode)qse_awk_getrunerrnum (this->run);
+	return (ErrorCode)qse_awk_rtx_geterrnum (this->run);
 }
 
 Awk::size_t Awk::Run::getErrorLine () const
@@ -998,7 +998,7 @@ int Awk::Run::setGlobal (int id, long_t v)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_refupval (run, tmp);
-	int n = qse_awk_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
 	qse_awk_refdownval (run, tmp);
 	return n;
 }
@@ -1011,7 +1011,7 @@ int Awk::Run::setGlobal (int id, real_t v)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_refupval (run, tmp);
-	int n = qse_awk_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
 	qse_awk_refdownval (run, tmp);
 	return n;
 }
@@ -1024,7 +1024,7 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_refupval (run, tmp);
-	int n = qse_awk_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
 	qse_awk_refdownval (run, tmp);
 	return n;
 }
@@ -1033,7 +1033,7 @@ int Awk::Run::setGlobal (int id, const Return& global)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 
-	return qse_awk_setglobal (this->run, id, global.toVal());
+	return qse_awk_rtx_setglobal (this->run, id, global.toVal());
 }
 
 int Awk::Run::getGlobal (int id, Argument& global) const
@@ -1041,7 +1041,7 @@ int Awk::Run::getGlobal (int id, Argument& global) const
 	QSE_ASSERT (this->run != QSE_NULL);
 
 	global.clear ();
-	return global.init (qse_awk_getglobal(this->run,id));
+	return global.init (qse_awk_rtx_getglobal(this->run,id));
 }
 
 void Awk::Run::setData (void* data)
@@ -1402,7 +1402,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 void Awk::stop ()
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_stopall (awk);
+	qse_awk_rtx_stopall (awk);
 }
 
 int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
@@ -1410,7 +1410,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 	pair_t* pair;
 	awk_t* awk = run->awk->awk;
 
-	//awk = qse_awk_getrunawk (run);
+	//awk = qse_awk_rtx_getawk (run);
 
 	pair = qse_map_search (functionMap, name, len);
 	if (pair == QSE_NULL) 
@@ -1422,7 +1422,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 	FunctionHandler handler;
        	handler = *(FunctionHandler*)QSE_MAP_VPTR(pair);	
 
-	size_t i, nargs = qse_awk_getnargs(run->run);
+	size_t i, nargs = qse_awk_rtx_getnargs(run->run);
 
 	//Argument* args = QSE_NULL;
 	//try { args = new Argument [nargs]; } catch (...)  {}
@@ -1438,7 +1438,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 		args[i].run = run; // dirty late initialization 
 		                   // due to c++ array creation limitation.
 
-		val_t* v = qse_awk_getarg (run->run, i);
+		val_t* v = qse_awk_rtx_getarg (run->run, i);
 		if (args[i].init (v) == -1)
 		{
 			run->setError (ERR_NOMEM, 0, QSE_NULL, 0);
@@ -1460,7 +1460,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 		return -1;
 	}
 
-	qse_awk_setretval (run->run, ret);
+	qse_awk_rtx_setretval (run->run, ret);
 	return 0;
 }
 
@@ -1709,7 +1709,7 @@ Awk::ssize_t Awk::consoleHandler (
 int Awk::functionHandler (
 	run_t* run, const char_t* name, size_t len)
 {
-	Run* ctx = (Run*) qse_awk_getrundata (run);
+	Run* ctx = (Run*) qse_awk_rtx_getdata (run);
 	Awk* awk = ctx->awk;
 	return awk->dispatchFunction (ctx, name, len);
 }	
