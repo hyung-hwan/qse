@@ -79,7 +79,7 @@ enum qse_awk_nde_type_t
 enum qse_awk_in_type_t
 {
 	/* the order of these values match 
-	 * __in_type_map and __in_opt_map in extio.c */
+	 * __in_type_map and __in_opt_map in eio.c */
 
 	QSE_AWK_IN_PIPE,
 	QSE_AWK_IN_RWPIPE,
@@ -90,7 +90,7 @@ enum qse_awk_in_type_t
 enum qse_awk_out_type_t
 {
 	/* the order of these values match 
-	 * __out_type_map and __out_opt_map in extio.c */
+	 * __out_type_map and __out_opt_map in eio.c */
 
 	QSE_AWK_OUT_PIPE,
 	QSE_AWK_OUT_RWPIPE, /* dual direction pipe */
@@ -285,7 +285,7 @@ struct qse_awk_nde_call_t
 			} arg;
 
 			int (*handler) (
-				qse_awk_run_t*, const qse_char_t*, qse_size_t);
+				qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
 		} bfn;
 	} what;
 	qse_awk_nde_t* args;

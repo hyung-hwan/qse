@@ -51,15 +51,15 @@ struct qse_awk_val_rchunk_t
 };
 
 static qse_char_t* str_to_str (
-	qse_awk_run_t* run, const qse_char_t* str, qse_size_t str_len,
+	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t str_len,
 	int opt, qse_str_t* buf, qse_size_t* len);
 
 static qse_char_t* val_int_to_str (
-	qse_awk_run_t* run, qse_awk_val_int_t* v,
+	qse_awk_rtx_t* run, qse_awk_val_int_t* v,
 	int opt, qse_str_t* buf, qse_size_t* len);
 
 static qse_char_t* val_real_to_str (
-	qse_awk_run_t* run, qse_awk_val_real_t* v,
+	qse_awk_rtx_t* run, qse_awk_val_real_t* v,
 	int opt, qse_str_t* buf, qse_size_t* len);
 
 static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0 };
@@ -98,7 +98,7 @@ qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
 qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
 qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
 
-qse_awk_val_t* qse_awk_makeintval (qse_awk_run_t* run, qse_long_t v)
+qse_awk_val_t* qse_awk_makeintval (qse_awk_rtx_t* run, qse_long_t v)
 {
 	qse_awk_val_int_t* val;
 
@@ -179,7 +179,7 @@ qse_awk_val_t* qse_awk_makeintval (qse_awk_run_t* run, qse_long_t v)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_makerealval (qse_awk_run_t* run, qse_real_t v)
+qse_awk_val_t* qse_awk_makerealval (qse_awk_rtx_t* run, qse_real_t v)
 {
 	qse_awk_val_real_t* val;
 
@@ -250,13 +250,13 @@ qse_awk_val_t* qse_awk_makerealval (qse_awk_run_t* run, qse_real_t v)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_makestrval0 (qse_awk_run_t* run, const qse_char_t* str)
+qse_awk_val_t* qse_awk_makestrval0 (qse_awk_rtx_t* run, const qse_char_t* str)
 {
 	return qse_awk_makestrval (run, str, qse_strlen(str));
 }
 
 qse_awk_val_t* qse_awk_makestrval (
-	qse_awk_run_t* run, const qse_char_t* str, qse_size_t len)
+	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t len)
 {
 	qse_awk_val_str_t* val;
 	qse_size_t rlen = len;
@@ -306,7 +306,7 @@ init:
 }
 
 qse_awk_val_t* qse_awk_makestrval_nodup (
-	qse_awk_run_t* run, qse_char_t* str, qse_size_t len)
+	qse_awk_rtx_t* run, qse_char_t* str, qse_size_t len)
 {
 	qse_awk_val_str_t* val;
 
@@ -326,7 +326,7 @@ qse_awk_val_t* qse_awk_makestrval_nodup (
 }
 
 qse_awk_val_t* qse_awk_makestrval2 (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	const qse_char_t* str1, qse_size_t len1, 
 	const qse_char_t* str2, qse_size_t len2)
 {
@@ -381,7 +381,7 @@ init:
 }
 
 qse_awk_val_t* qse_awk_makerexval (
-	qse_awk_run_t* run, const qse_char_t* buf, qse_size_t len, void* code)
+	qse_awk_rtx_t* run, const qse_char_t* buf, qse_size_t len, void* code)
 {
 	qse_awk_val_rex_t* val;
 
@@ -445,7 +445,7 @@ static void same_mapval (void* run, void* v)
 */
 static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_run_t* run = *(qse_awk_run_t**)QSE_MAP_XTN(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_MAP_XTN(map);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown in map free..."));
@@ -458,7 +458,7 @@ static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 
 static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_run_t* run = *(qse_awk_run_t**)QSE_MAP_XTN(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_MAP_XTN(map);
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown nofree in map free..."));
 	qse_awk_dprintval (run, dptr);
@@ -468,7 +468,7 @@ static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 }
 /* END CHECK */
 
-qse_awk_val_t* qse_awk_makemapval (qse_awk_run_t* run)
+qse_awk_val_t* qse_awk_makemapval (qse_awk_rtx_t* run)
 {
 	qse_awk_val_map_t* val;
 
@@ -516,7 +516,7 @@ qse_awk_val_t* qse_awk_makemapval (qse_awk_run_t* run)
 		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
-	*(qse_awk_run_t**)QSE_MAP_XTN(val->map) = run;
+	*(qse_awk_rtx_t**)QSE_MAP_XTN(val->map) = run;
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
@@ -533,7 +533,7 @@ qse_awk_val_t* qse_awk_makemapval (qse_awk_run_t* run)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_makerefval (qse_awk_run_t* run, int id, qse_awk_val_t** adr)
+qse_awk_val_t* qse_awk_makerefval (qse_awk_rtx_t* run, int id, qse_awk_val_t** adr)
 {
 	qse_awk_val_ref_t* val;
 
@@ -574,7 +574,7 @@ qse_bool_t qse_awk_isstaticval (qse_awk_val_t* val)
 	return IS_STATICVAL(val);
 }
 
-void qse_awk_freeval (qse_awk_run_t* run, qse_awk_val_t* val, qse_bool_t cache)
+void qse_awk_freeval (qse_awk_rtx_t* run, qse_awk_val_t* val, qse_bool_t cache)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -668,7 +668,7 @@ void qse_awk_freeval (qse_awk_run_t* run, qse_awk_val_t* val, qse_bool_t cache)
 	}
 }
 
-void qse_awk_refupval (qse_awk_run_t* run, qse_awk_val_t* val)
+void qse_awk_refupval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -681,7 +681,7 @@ void qse_awk_refupval (qse_awk_run_t* run, qse_awk_val_t* val)
 	val->ref++;
 }
 
-void qse_awk_refdownval (qse_awk_run_t* run, qse_awk_val_t* val)
+void qse_awk_refdownval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -701,7 +701,7 @@ void qse_awk_refdownval (qse_awk_run_t* run, qse_awk_val_t* val)
 	}
 }
 
-void qse_awk_refdownval_nofree (qse_awk_run_t* run, qse_awk_val_t* val)
+void qse_awk_refdownval_nofree (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -710,7 +710,7 @@ void qse_awk_refdownval_nofree (qse_awk_run_t* run, qse_awk_val_t* val)
 	val->ref--;
 }
 
-void qse_awk_freevalchunk (qse_awk_run_t* run, qse_awk_val_chunk_t* chunk)
+void qse_awk_freevalchunk (qse_awk_rtx_t* run, qse_awk_val_chunk_t* chunk)
 {
 	while (chunk != QSE_NULL)
         {
@@ -720,7 +720,7 @@ void qse_awk_freevalchunk (qse_awk_run_t* run, qse_awk_val_chunk_t* chunk)
 	}
 }
 
-qse_bool_t qse_awk_valtobool (qse_awk_run_t* run, qse_awk_val_t* val)
+qse_bool_t qse_awk_valtobool (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	if (val == QSE_NULL) return QSE_FALSE;
 
@@ -749,7 +749,7 @@ qse_bool_t qse_awk_valtobool (qse_awk_run_t* run, qse_awk_val_t* val)
 }
 
 qse_char_t* qse_awk_valtostr (
-	qse_awk_run_t* run, qse_awk_val_t* v,
+	qse_awk_rtx_t* run, qse_awk_val_t* v,
 	int opt, qse_str_t* buf, qse_size_t* len)
 {
 	if (v->type == QSE_AWK_VAL_NIL)
@@ -810,7 +810,7 @@ qse_char_t* qse_awk_valtostr (
 }
 
 static qse_char_t* str_to_str (
-	qse_awk_run_t* run, const qse_char_t* str, qse_size_t str_len,
+	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t str_len,
 	int opt, qse_str_t* buf, qse_size_t* len)
 {
 	if (buf == QSE_NULL)
@@ -861,7 +861,7 @@ static qse_char_t* str_to_str (
 }
 
 static qse_char_t* val_int_to_str (
-	qse_awk_run_t* run, qse_awk_val_int_t* v,
+	qse_awk_rtx_t* run, qse_awk_val_int_t* v,
 	int opt, qse_str_t* buf, qse_size_t* len)
 {
 	qse_char_t* tmp;
@@ -993,7 +993,7 @@ static qse_char_t* val_int_to_str (
 }
 
 static qse_char_t* val_real_to_str (
-	qse_awk_run_t* run, qse_awk_val_real_t* v,
+	qse_awk_rtx_t* run, qse_awk_val_real_t* v,
 	int opt, qse_str_t* buf, qse_size_t* len)
 {
 	qse_char_t* tmp;
@@ -1087,7 +1087,7 @@ static qse_char_t* val_real_to_str (
 }
 
 int qse_awk_valtonum (
-	qse_awk_run_t* run, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
+	qse_awk_rtx_t* run, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
 {
 	if (v->type == QSE_AWK_VAL_NIL) 
 	{
@@ -1125,7 +1125,7 @@ int qse_awk_valtonum (
 }
 
 int qse_awk_strtonum (
-	qse_awk_run_t* run, const qse_char_t* ptr, qse_size_t len, 
+	qse_awk_rtx_t* run, const qse_char_t* ptr, qse_size_t len, 
 	qse_long_t* l, qse_real_t* r)
 {
 	const qse_char_t* endptr;
@@ -1154,19 +1154,19 @@ int qse_awk_strtonum (
 static qse_map_walk_t print_pair (
 	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
-	qse_awk_run_t* run = (qse_awk_run_t*)arg;
+	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
 
-	QSE_ASSERT (run == *(qse_awk_run_t**)QSE_MAP_XTN(map));
+	QSE_ASSERT (run == *(qse_awk_rtx_t**)QSE_MAP_XTN(map));
 
 	DPRINTF (DCUSTOM, QSE_T(" %.*s=>"),
 		(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
-	qse_awk_dprintval ((qse_awk_run_t*)arg, QSE_MAP_VPTR(pair));
+	qse_awk_dprintval ((qse_awk_rtx_t*)arg, QSE_MAP_VPTR(pair));
 	DPRINTF (DCUSTOM, QSE_T(" "));
 
 	return QSE_MAP_WALK_FORWARD;
 }
 
-void qse_awk_dprintval (qse_awk_run_t* run, qse_awk_val_t* val)
+void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	/* TODO: better value printing ... */
 

@@ -96,7 +96,7 @@ extern "C" {
 #endif
 
 qse_char_t* qse_awk_format (
-	qse_awk_run_t*    run, 
+	qse_awk_rtx_t*    run, 
 	qse_str_t*        out, 
 	qse_str_t*        fbu,
 	const qse_char_t* fmt, 

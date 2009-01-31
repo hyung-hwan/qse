@@ -34,7 +34,7 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #include "func.h"
 #include "parse.h"
 #include "run.h"
-#include "extio.h"
+#include "eio.h"
 #include "misc.h"
 
 #define QSE_AWK_MAX_GLOBALS 9999
@@ -246,7 +246,7 @@ struct qse_awk_chain_t
 	qse_awk_chain_t* next;	
 };
 
-struct qse_awk_run_t
+struct qse_awk_rtx_t
 {
 	int id;
 	qse_map_t* named;
@@ -332,13 +332,13 @@ struct qse_awk_run_t
 		} subsep;
 	} global;
 
-	/* extio chain */
+	/* eio chain */
 	struct
 	{
-		qse_awk_io_t handler[QSE_AWK_EXTIO_NUM];
+		qse_awk_io_t handler[QSE_AWK_EIO_NUM];
 		void* data;
-		qse_awk_extio_t* chain;
-	} extio;
+		qse_awk_eio_t* chain;
+	} eio;
 
 	struct
 	{

@@ -33,10 +33,10 @@
  ******
  */
 
-typedef struct qse_awk_t qse_awk_t;
-typedef struct qse_awk_run_t qse_awk_run_t;
+typedef struct qse_awk_t     qse_awk_t;
+typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 typedef struct qse_awk_val_t qse_awk_val_t;
-typedef struct qse_awk_extio_t qse_awk_extio_t;
+typedef struct qse_awk_eio_t qse_awk_eio_t; /* External IO */
 
 typedef struct qse_awk_prmfns_t qse_awk_prmfns_t;
 typedef struct qse_awk_srcios_t qse_awk_srcios_t;
@@ -52,9 +52,9 @@ typedef int (*qse_awk_sprintf_t) (
 typedef qse_ssize_t (*qse_awk_io_t) (
 	int cmd, void* arg, qse_char_t* data, qse_size_t count);
 
-struct qse_awk_extio_t 
+struct qse_awk_eio_t 
 {
-	qse_awk_run_t* run; /* [IN] */
+	qse_awk_rtx_t* run; /* [IN] */
 	int type;           /* [IN] console, file, coproc, pipe */
 	int mode;           /* [IN] read, write, etc */
 	qse_char_t* name;   /* [IN] */
@@ -78,7 +78,7 @@ struct qse_awk_extio_t
 		qse_bool_t eos;
 	} out;
 
-	qse_awk_extio_t* next;
+	qse_awk_eio_t* next;
 };
 
 struct qse_awk_prmfns_t
@@ -109,19 +109,19 @@ struct qse_awk_runios_t
 struct qse_awk_runcbs_t
 {
 	int (*on_start) (
-		qse_awk_run_t* run, void* data);
+		qse_awk_rtx_t* run, void* data);
 
 	int (*on_enter) (
-		qse_awk_run_t* run, void* data);
+		qse_awk_rtx_t* run, void* data);
 
 	void (*on_statement) (
-		qse_awk_run_t* run, qse_size_t line, void* data);
+		qse_awk_rtx_t* run, qse_size_t line, void* data);
 
 	void (*on_exit) (
-		qse_awk_run_t* run, qse_awk_val_t* ret, void* data);
+		qse_awk_rtx_t* run, qse_awk_val_t* ret, void* data);
 
 	void (*on_end) (
-		qse_awk_run_t* run, int errnum, void* data);
+		qse_awk_rtx_t* run, int errnum, void* data);
 
 	void* data;
 };
@@ -174,9 +174,9 @@ enum qse_awk_option_t
 	QSE_AWK_IDIV        = (1 << 5), 
 
 	/* support getline and print */
-	QSE_AWK_EXTIO       = (1 << 7), 
+	QSE_AWK_EIO       = (1 << 7), 
 
-	/* support dual direction pipe. QSE_AWK_EXTIO must be on */
+	/* support dual direction pipe. QSE_AWK_EIO must be on */
 	QSE_AWK_RWPIPE      = (1 << 8),
 
 	/* can terminate a statement with a new line */
@@ -381,30 +381,30 @@ enum qse_awk_depth_t
 	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5)
 };
 
-/* extio types */
-enum qse_awk_extio_type_t
+/* eio types */
+enum qse_awk_eio_type_t
 {
-	/* extio types available */
-	QSE_AWK_EXTIO_PIPE,
-	QSE_AWK_EXTIO_FILE,
-	QSE_AWK_EXTIO_CONSOLE,
+	/* eio types available */
+	QSE_AWK_EIO_PIPE,
+	QSE_AWK_EIO_FILE,
+	QSE_AWK_EIO_CONSOLE,
 
 	/* reserved for internal use only */
-	QSE_AWK_EXTIO_NUM
+	QSE_AWK_EIO_NUM
 };
 
-enum qse_awk_extio_mode_t
+enum qse_awk_eio_mode_t
 {
-	QSE_AWK_EXTIO_PIPE_READ      = 0,
-	QSE_AWK_EXTIO_PIPE_WRITE     = 1,
-	QSE_AWK_EXTIO_PIPE_RW        = 2,
+	QSE_AWK_EIO_PIPE_READ      = 0,
+	QSE_AWK_EIO_PIPE_WRITE     = 1,
+	QSE_AWK_EIO_PIPE_RW        = 2,
 
-	QSE_AWK_EXTIO_FILE_READ      = 0,
-	QSE_AWK_EXTIO_FILE_WRITE     = 1,
-	QSE_AWK_EXTIO_FILE_APPEND    = 2,
+	QSE_AWK_EIO_FILE_READ      = 0,
+	QSE_AWK_EIO_FILE_WRITE     = 1,
+	QSE_AWK_EIO_FILE_APPEND    = 2,
 
-	QSE_AWK_EXTIO_CONSOLE_READ   = 0,
-	QSE_AWK_EXTIO_CONSOLE_WRITE  = 1
+	QSE_AWK_EIO_CONSOLE_READ   = 0,
+	QSE_AWK_EIO_CONSOLE_WRITE  = 1
 };
 
 enum qse_awk_global_id_t
@@ -886,21 +886,21 @@ int qse_awk_run (
 	qse_awk_runios_t* runios, qse_awk_runcbs_t* runcbs, 
 	const qse_cstr_t* runarg, void* data);
 
-void qse_awk_stop (qse_awk_run_t* run);
+void qse_awk_stop (qse_awk_rtx_t* run);
 void qse_awk_stopall (qse_awk_t* awk);
 
-qse_bool_t qse_awk_isstop (qse_awk_run_t* run);
+qse_bool_t qse_awk_isstop (qse_awk_rtx_t* run);
 
 
 /** 
  * Gets the number of arguments passed to qse_awk_run 
  */
-qse_size_t qse_awk_getnargs (qse_awk_run_t* run);
+qse_size_t qse_awk_getnargs (qse_awk_rtx_t* run);
 
 /** 
  * Gets an argument passed to qse_awk_run
  */
-qse_awk_val_t* qse_awk_getarg (qse_awk_run_t* run, qse_size_t idx);
+qse_awk_val_t* qse_awk_getarg (qse_awk_rtx_t* run, qse_size_t idx);
 
 /****f* qse.awk/qse_awk_getglobal
  * NAME
@@ -917,7 +917,7 @@ qse_awk_val_t* qse_awk_getarg (qse_awk_run_t* run, qse_size_t idx);
  * SYNOPSIS
  */
 qse_awk_val_t* qse_awk_getglobal (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	int            id
 );
 /******/
@@ -929,7 +929,7 @@ qse_awk_val_t* qse_awk_getglobal (
  * SYNOPSIS
  */
 int qse_awk_setglobal (
-	qse_awk_run_t* run, 
+	qse_awk_rtx_t* run, 
 	int            id,
 	qse_awk_val_t* val
 );
@@ -948,14 +948,14 @@ int qse_awk_setglobal (
  *  once the return value is set. 
  */
 void qse_awk_setretval (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	qse_awk_val_t* val
 );
 
 int qse_awk_setfilename (
-	qse_awk_run_t* run, const qse_char_t* name, qse_size_t len);
+	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len);
 int qse_awk_setofilename (
-	qse_awk_run_t* run, const qse_char_t* name, qse_size_t len);
+	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len);
 
 
 /****f* qse.awk/qse_awk_getrunawk
@@ -965,7 +965,7 @@ int qse_awk_setofilename (
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_getrunawk (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 /******/
 
@@ -976,7 +976,7 @@ qse_awk_t* qse_awk_getrunawk (
  * SYNOPSIS
  */
 qse_mmgr_t* qse_awk_getrunmmgr (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 /******/
 
@@ -987,7 +987,7 @@ qse_mmgr_t* qse_awk_getrunmmgr (
  * SYNOPSIS
  */
 void* qse_awk_getrundata (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 /******/
 
@@ -998,37 +998,37 @@ void* qse_awk_getrundata (
  * SYNOPSIS
  */
 qse_map_t* qse_awk_getrunnvmap (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 /******/
 
 /* functions to manipulate the run-time error */
 int qse_awk_getrunerrnum (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 qse_size_t qse_awk_getrunerrlin (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 const qse_char_t* qse_awk_getrunerrmsg (
-	qse_awk_run_t* run
+	qse_awk_rtx_t* run
 );
 void qse_awk_setrunerrnum (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	int errnum
 );
 void qse_awk_setrunerrmsg (
-	qse_awk_run_t* run, 
+	qse_awk_rtx_t* run, 
 	int errnum,
 	qse_size_t errlin,
 	const qse_char_t* errmsg
 );
 
 void qse_awk_getrunerror (
-	qse_awk_run_t* run, int* errnum, 
+	qse_awk_rtx_t* run, int* errnum, 
 	qse_size_t* errlin, const qse_char_t** errmsg);
 
 void qse_awk_setrunerror (
-	qse_awk_run_t* run, int errnum, qse_size_t errlin, 
+	qse_awk_rtx_t* run, int errnum, qse_size_t errlin, 
 	const qse_cstr_t* errarg, qse_size_t argcnt);
 
 /* functions to manipulate intrinsic functions */
@@ -1036,7 +1036,7 @@ void* qse_awk_addfunc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len, 
 	int when_valid, qse_size_t min_args, qse_size_t max_args, 
 	const qse_char_t* arg_spec, 
-	int (*handler)(qse_awk_run_t*,const qse_char_t*,qse_size_t));
+	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t));
 
 int qse_awk_delfunc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len);
@@ -1044,8 +1044,8 @@ int qse_awk_delfunc (
 void qse_awk_clrbfn (qse_awk_t* awk);
 
 /* record and field functions */
-int qse_awk_clrrec (qse_awk_run_t* run, qse_bool_t skip_inrec_line);
-int qse_awk_setrec (qse_awk_run_t* run, qse_size_t idx, const qse_char_t* str, qse_size_t len);
+int qse_awk_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line);
+int qse_awk_setrec (qse_awk_rtx_t* run, qse_size_t idx, const qse_char_t* str, qse_size_t len);
 
 /****f* qse.awk/qse_awk_alloc
  * NAME 
@@ -1116,43 +1116,43 @@ qse_size_t qse_awk_longtostr (
 	qse_char_t* buf, qse_size_t size);
 
 /* value manipulation functions */
-qse_awk_val_t* qse_awk_makeintval (qse_awk_run_t* run, qse_long_t v);
-qse_awk_val_t* qse_awk_makerealval (qse_awk_run_t* run, qse_real_t v);
+qse_awk_val_t* qse_awk_makeintval (qse_awk_rtx_t* run, qse_long_t v);
+qse_awk_val_t* qse_awk_makerealval (qse_awk_rtx_t* run, qse_real_t v);
 
 qse_awk_val_t* qse_awk_makestrval0 (
-	qse_awk_run_t* run, const qse_char_t* str);
+	qse_awk_rtx_t* run, const qse_char_t* str);
 qse_awk_val_t* qse_awk_makestrval (
-	qse_awk_run_t* run, const qse_char_t* str, qse_size_t len);
+	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t len);
 qse_awk_val_t* qse_awk_makestrval_nodup (
-	qse_awk_run_t* run, qse_char_t* str, qse_size_t len);
+	qse_awk_rtx_t* run, qse_char_t* str, qse_size_t len);
 qse_awk_val_t* qse_awk_makestrval2 (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	const qse_char_t* str1, qse_size_t len1, 
 	const qse_char_t* str2, qse_size_t len2);
 
 qse_awk_val_t* qse_awk_makerexval (
-	qse_awk_run_t* run, const qse_char_t* buf, qse_size_t len, void* code);
-qse_awk_val_t* qse_awk_makemapval (qse_awk_run_t* run);
+	qse_awk_rtx_t* run, const qse_char_t* buf, qse_size_t len, void* code);
+qse_awk_val_t* qse_awk_makemapval (qse_awk_rtx_t* run);
 qse_awk_val_t* qse_awk_makerefval (
-	qse_awk_run_t* run, int id, qse_awk_val_t** adr);
+	qse_awk_rtx_t* run, int id, qse_awk_val_t** adr);
 
 qse_bool_t qse_awk_isstaticval (qse_awk_val_t* val);
 
-void qse_awk_freeval (qse_awk_run_t* run, qse_awk_val_t* val, qse_bool_t cache);
+void qse_awk_freeval (qse_awk_rtx_t* run, qse_awk_val_t* val, qse_bool_t cache);
 
-void qse_awk_refupval (qse_awk_run_t* run, qse_awk_val_t* val);
-void qse_awk_refdownval (qse_awk_run_t* run, qse_awk_val_t* val);
-void qse_awk_refdownval_nofree (qse_awk_run_t* run, qse_awk_val_t* val);
+void qse_awk_refupval (qse_awk_rtx_t* run, qse_awk_val_t* val);
+void qse_awk_refdownval (qse_awk_rtx_t* run, qse_awk_val_t* val);
+void qse_awk_refdownval_nofree (qse_awk_rtx_t* run, qse_awk_val_t* val);
 
-void qse_awk_freevalchunk (qse_awk_run_t* run, qse_awk_val_chunk_t* chunk);
+void qse_awk_freevalchunk (qse_awk_rtx_t* run, qse_awk_val_chunk_t* chunk);
 
 qse_bool_t qse_awk_valtobool (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	qse_awk_val_t* val
 );
 
 qse_char_t* qse_awk_valtostr (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	qse_awk_val_t* val, 
 	int            opt, 
 	qse_str_t*     buf,
@@ -1186,7 +1186,7 @@ qse_char_t* qse_awk_valtostr (
  * SYNOPSIS
  */
 int qse_awk_valtonum (
-	qse_awk_run_t* run,
+	qse_awk_rtx_t* run,
 	qse_awk_val_t* v   /* the value to convert to a number */,
 	qse_long_t*    l   /* a pointer to a long number */, 
 	qse_real_t*    r   /* a pointer to a qse_real_t */
@@ -1200,7 +1200,7 @@ int qse_awk_valtonum (
  * SYNOPSIS
  */
 int qse_awk_strtonum (
-	qse_awk_run_t*    run,
+	qse_awk_rtx_t*    run,
 	const qse_char_t* ptr,
 	qse_size_t        len, 
 	qse_long_t*       l, 

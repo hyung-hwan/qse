@@ -263,6 +263,12 @@ qse_ssize_t qse_tio_read (
 /******/
 
 /****f* qse.cmn.tio/qse_tio_write
+ * NAME
+ *  qse_tio_write - write text
+ * 
+ * DESCRIPTION
+ *  If the size paramenter is (qse_size_t)-1, the function treats the data 
+ *  parameter as a pointer to a null-terminated string.
  *
  * SYNOPSIS
  */

@@ -18,18 +18,18 @@
 
 #include "awk.h"
 
-static int bfn_close   (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_fflush  (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_index   (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_length  (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_substr  (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_split   (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_tolower (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_toupper (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_gsub    (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_sub     (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_match   (qse_awk_run_t*, const qse_char_t*, qse_size_t);
-static int bfn_sprintf (qse_awk_run_t*, const qse_char_t*, qse_size_t);
+static int bfn_close   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_fflush  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_index   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_length  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_substr  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_split   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_tolower (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_toupper (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_gsub    (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_sub     (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_match   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int bfn_sprintf (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
 
 #undef MAX
 #define MAX QSE_TYPE_UNSIGNED_MAX(qse_size_t)
@@ -37,8 +37,8 @@ static int bfn_sprintf (qse_awk_run_t*, const qse_char_t*, qse_size_t);
 static qse_awk_bfn_t sys_bfn[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, QSE_AWK_EXTIO, {1, 1, QSE_NULL}, bfn_close},
-	{ {QSE_T("fflush"),  6}, QSE_AWK_EXTIO, {0, 1, QSE_NULL}, bfn_fflush},
+	{ {QSE_T("close"),   5}, QSE_AWK_EIO, {1, 1, QSE_NULL}, bfn_close},
+	{ {QSE_T("fflush"),  6}, QSE_AWK_EIO, {0, 1, QSE_NULL}, bfn_fflush},
 
 	/* string functions */
 	{ {QSE_T("index"),   5}, 0,  {2,   2, QSE_NULL},     bfn_index},
@@ -59,7 +59,7 @@ void* qse_awk_addfunc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len, 
 	int when_valid, qse_size_t min_args, qse_size_t max_args, 
 	const qse_char_t* arg_spec, 
-	int (*handler)(qse_awk_run_t*,const qse_char_t*,qse_size_t))
+	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t))
 {
 	qse_awk_bfn_t* bfn;
 	qse_size_t spec_len;
@@ -226,7 +226,7 @@ qse_awk_bfn_t* qse_awk_getbfn (
 }
 
 static int bfn_close (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v, * a0;
@@ -261,9 +261,9 @@ static int bfn_close (
 		 * it either.  
 		 * another reason for this is if close is called explicitly 
 		 * with an empty string, it may close the console that uses 
-		 * an empty string for its identification because closeextio
-		 * closes any extios that match the name given unlike 
-		 * closeextio_read or closeextio_write. */ 
+		 * an empty string for its identification because closeeio
+		 * closes any eios that match the name given unlike 
+		 * closeeio_read or closeeio_write. */ 
 		n = -1;
 		goto skip_close;
 	}
@@ -279,7 +279,7 @@ static int bfn_close (
 		}
 	}	
 
-	n = qse_awk_closeextio (run, name);
+	n = qse_awk_closeeio (run, name);
 	/*
 	if (n == -1 && run->errnum != QSE_AWK_EIONONE)
 	{
@@ -303,14 +303,14 @@ skip_close:
 	return 0;
 }
 
-static int flush_extio (
-	qse_awk_run_t* run, int extio, const qse_char_t* name, int n)
+static int flush_eio (
+	qse_awk_rtx_t* run, int eio, const qse_char_t* name, int n)
 {
 	int n2;
 
-	if (run->extio.handler[extio] != QSE_NULL)
+	if (run->eio.handler[eio] != QSE_NULL)
 	{
-		n2 = qse_awk_flushextio (run, extio, name);
+		n2 = qse_awk_flusheio (run, eio, name);
 		if (n2 == -1)
 		{
 			/*
@@ -334,7 +334,7 @@ static int flush_extio (
 }
 
 static int bfn_fflush (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -349,7 +349,7 @@ static int bfn_fflush (
 	{
 		/* flush the console output.
 		 * fflush() should return -1 on errors */
-		n = qse_awk_flushextio (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
+		n = qse_awk_flusheio (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
 	}
 	else
 	{
@@ -383,13 +383,13 @@ static int bfn_fflush (
 			ptr++;
 		}
 
-		/* flush the given extio */
-		n = flush_extio (
-			run, QSE_AWK_EXTIO_FILE, 
+		/* flush the given eio */
+		n = flush_eio (
+			run, QSE_AWK_EIO_FILE, 
 			((len0 == 0)? QSE_NULL: str0), 1);
 		/*if (n == -99) return -1;*/
-		n = flush_extio (
-			run, QSE_AWK_EXTIO_PIPE,
+		n = flush_eio (
+			run, QSE_AWK_EIO_PIPE,
 			((len0 == 0)? QSE_NULL: str0), n);
 		/*if (n == -99) return -1;*/
 
@@ -415,7 +415,7 @@ static int bfn_fflush (
 }
 
 static int bfn_index (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -478,7 +478,7 @@ static int bfn_index (
 }
 
 static int bfn_length (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
@@ -513,7 +513,7 @@ static int bfn_length (
 }
 
 static int bfn_substr (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * r;
@@ -587,7 +587,7 @@ static int bfn_substr (
 }
 
 static int bfn_split (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
@@ -844,7 +844,7 @@ static int bfn_split (
 }
 
 static int bfn_tolower (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_char_t* str;
@@ -884,7 +884,7 @@ static int bfn_tolower (
 }
 
 static int bfn_toupper (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_char_t* str;
@@ -923,7 +923,7 @@ static int bfn_toupper (
 	return 0;
 }
 
-static int __substitute (qse_awk_run_t* run, qse_long_t max_count)
+static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
@@ -1215,19 +1215,19 @@ static int __substitute (qse_awk_run_t* run, qse_long_t max_count)
 }
 
 static int bfn_gsub (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return __substitute (run, 0);
 }
 
 static int bfn_sub (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return __substitute (run, 1);
 }
 
 static int bfn_match (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -1346,7 +1346,7 @@ static int bfn_match (
 }
 
 static int bfn_sprintf (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {	
 	qse_size_t nargs;
 	qse_awk_val_t* a0;

@@ -18,13 +18,13 @@
 
 #include "awk.h"
 
-static int split_record (qse_awk_run_t* run);
+static int split_record (qse_awk_rtx_t* run);
 static int recomp_record_fields (
-	qse_awk_run_t* run, qse_size_t lv, 
+	qse_awk_rtx_t* run, qse_size_t lv, 
 	const qse_char_t* str, qse_size_t len);
 
 int qse_awk_setrec (
-	qse_awk_run_t* run, qse_size_t idx, 
+	qse_awk_rtx_t* run, qse_size_t idx, 
 	const qse_char_t* str, qse_size_t len)
 {
 	qse_awk_val_t* v;
@@ -94,7 +94,7 @@ int qse_awk_setrec (
 	return 0;
 }
 
-static int split_record (qse_awk_run_t* run)
+static int split_record (qse_awk_rtx_t* run)
 {
 	qse_char_t* p, * tok;
 	qse_size_t len, tok_len, nflds;
@@ -248,7 +248,7 @@ static int split_record (qse_awk_run_t* run)
 	return 0;
 }
 
-int qse_awk_clrrec (qse_awk_run_t* run, qse_bool_t skip_inrec_line)
+int qse_awk_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
 {
 	qse_size_t i;
 	int n = 0;
@@ -287,7 +287,7 @@ int qse_awk_clrrec (qse_awk_run_t* run, qse_bool_t skip_inrec_line)
 }
 
 static int recomp_record_fields (
-	qse_awk_run_t* run, qse_size_t lv, 
+	qse_awk_rtx_t* run, qse_size_t lv, 
 	const qse_char_t* str, qse_size_t len)
 {
 	qse_awk_val_t* v;

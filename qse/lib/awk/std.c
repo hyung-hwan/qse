@@ -82,7 +82,7 @@ qse_awk_t* qse_awk_opensimple (qse_size_t xtnsize)
 	qse_awk_setprmfns (awk, &xtn->prmfns);
 
 	qse_awk_setoption (awk, 
-		QSE_AWK_IMPLICIT | QSE_AWK_EXTIO | QSE_AWK_NEWLINE | 
+		QSE_AWK_IMPLICIT | QSE_AWK_EIO | QSE_AWK_NEWLINE | 
 		QSE_AWK_BASEONE | QSE_AWK_PABLOCK);
 
 	if (add_functions (awk) == -1)
@@ -176,7 +176,7 @@ static qse_ssize_t sf_in (int cmd, void* arg, qse_char_t* data, qse_size_t size)
 		retry:
 			sio = sf->in.handle;
 
-			n = qse_sio_read (sio, data, size);
+			n = qse_sio_getsn (sio, data, size);
 			if (n == 0 && sf->in.p.files[++sf->in.index] != QSE_NULL)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
@@ -278,7 +278,7 @@ static qse_ssize_t sf_out (int cmd, void* arg, qse_char_t* data, qse_size_t size
 		}
 		*/
 
-		return qse_sio_write (sf->out.handle, data, size);
+		return qse_sio_putsn (sf->out.handle, data, size);
 	}
 
 	return -1;
@@ -336,10 +336,10 @@ typedef struct runio_data_t
 	} ic; /* input console */
 } runio_data_t;
 
-static qse_ssize_t awk_extio_pipe (
+static qse_ssize_t awk_eio_pipe (
 	int cmd, void* arg, qse_char_t* data, qse_size_t size)
 {
-	qse_awk_extio_t* epa = (qse_awk_extio_t*)arg;
+	qse_awk_eio_t* epa = (qse_awk_eio_t*)arg;
 
 	switch (cmd)
 	{
@@ -348,17 +348,17 @@ static qse_ssize_t awk_extio_pipe (
 			qse_pio_t* handle;
 			int flags;
 
-			if (epa->mode == QSE_AWK_EXTIO_PIPE_READ)
+			if (epa->mode == QSE_AWK_EIO_PIPE_READ)
 			{
 				/* TODO: should we specify ERRTOOUT? */
 				flags = QSE_PIO_READOUT | 
 				        QSE_PIO_ERRTOOUT;
 			}
-			else if (epa->mode == QSE_AWK_EXTIO_PIPE_WRITE)
+			else if (epa->mode == QSE_AWK_EIO_PIPE_WRITE)
 			{
 				flags = QSE_PIO_WRITEIN;
 			}
-			else if (epa->mode == QSE_AWK_EXTIO_PIPE_RW)
+			else if (epa->mode == QSE_AWK_EIO_PIPE_RW)
 			{
 				flags = QSE_PIO_READOUT | 
 				        QSE_PIO_ERRTOOUT |
@@ -410,7 +410,7 @@ static qse_ssize_t awk_extio_pipe (
 
 		case QSE_AWK_IO_FLUSH:
 		{
-			/*if (epa->mode == QSE_AWK_EXTIO_PIPE_READ) return -1;*/
+			/*if (epa->mode == QSE_AWK_EIO_PIPE_READ) return -1;*/
 			return qse_pio_flush ((qse_pio_t*)epa->handle, QSE_PIO_IN);
 		}
 
@@ -423,41 +423,43 @@ static qse_ssize_t awk_extio_pipe (
 	return -1;
 }
 
-static qse_ssize_t awk_extio_file (
+static qse_ssize_t awk_eio_file (
 	int cmd, void* arg, qse_char_t* data, qse_size_t size)
 {
-	qse_awk_extio_t* epa = (qse_awk_extio_t*)arg;
+	qse_awk_eio_t* epa = (qse_awk_eio_t*)arg;
 
 	switch (cmd)
 	{
 		case QSE_AWK_IO_OPEN:
 		{
-			qse_sio_t* handle;
-			int mode;
+			qse_fio_t* handle;
+			int flags;
 
-			if (epa->mode == QSE_AWK_EXTIO_FILE_READ)
+			if (epa->mode == QSE_AWK_EIO_FILE_READ)
 			{
-				mode = QSE_SIO_READ;
+				flags = QSE_FIO_READ;
 			}
-			else if (epa->mode == QSE_AWK_EXTIO_FILE_WRITE)
+			else if (epa->mode == QSE_AWK_EIO_FILE_WRITE)
 			{
-				mode = QSE_SIO_WRITE |
-				       QSE_SIO_CREATE |
-				       QSE_SIO_TRUNCATE;
+				flags = QSE_FIO_WRITE |
+				       QSE_FIO_CREATE |
+				       QSE_FIO_TRUNCATE;
 			}
-			else if (epa->mode == QSE_AWK_EXTIO_FILE_APPEND)
+			else if (epa->mode == QSE_AWK_EIO_FILE_APPEND)
 			{
-				mode = QSE_SIO_APPEND |
-				       QSE_SIO_CREATE;
+				flags = QSE_FIO_APPEND |
+				       QSE_FIO_CREATE;
 			}
 			else return -1; /* TODO: any way to set the error number? */
 
 			/*dprint (QSE_T("opening %s of type %d (file)\n"), epa->name, epa->type);*/
-			handle = qse_sio_open (
+			handle = qse_fio_open (
 				qse_awk_getrunmmgr(epa->run),
 				0,
 				epa->name, 
-				mode
+				flags | QSE_FIO_TEXT,
+				QSE_FIO_RUSR | QSE_FIO_WUSR | 
+				QSE_FIO_RGRP | QSE_FIO_ROTH
 			);
 			if (handle == QSE_NULL) 
 			{
@@ -477,15 +479,15 @@ static qse_ssize_t awk_extio_file (
 		case QSE_AWK_IO_CLOSE:
 		{
 			/*dprint (QSE_T("closing %s of type %d (file)\n"), epa->name, epa->type);*/
-			qse_sio_close ((qse_sio_t*)epa->handle);
+			qse_fio_close ((qse_fio_t*)epa->handle);
 			epa->handle = QSE_NULL;
 			return 0;
 		}
 
 		case QSE_AWK_IO_READ:
 		{
-			return qse_sio_read (
-				(qse_sio_t*)epa->handle,
+			return qse_fio_read (
+				(qse_fio_t*)epa->handle,
 				data,	
 				size
 			);
@@ -493,8 +495,8 @@ static qse_ssize_t awk_extio_file (
 
 		case QSE_AWK_IO_WRITE:
 		{
-			return qse_sio_write (
-				(qse_sio_t*)epa->handle,
+			return qse_fio_write (
+				(qse_fio_t*)epa->handle,
 				data,	
 				size
 			);
@@ -502,7 +504,7 @@ static qse_ssize_t awk_extio_file (
 
 		case QSE_AWK_IO_FLUSH:
 		{
-			return qse_sio_flush ((qse_sio_t*)epa->handle);
+			return qse_fio_flush ((qse_fio_t*)epa->handle);
 		}
 
 		case QSE_AWK_IO_NEXT:
@@ -515,13 +517,13 @@ static qse_ssize_t awk_extio_file (
 	return -1;
 }
 
-static int open_extio_console (qse_awk_extio_t* epa)
+static int open_eio_console (qse_awk_eio_t* epa)
 {
 	runio_data_t* rd = (runio_data_t*)epa->data;
 
 	/*dprint (QSE_T("opening console[%s] of type %x\n"), epa->name, epa->type);*/
 
-	if (epa->mode == QSE_AWK_EXTIO_CONSOLE_READ)
+	if (epa->mode == QSE_AWK_EIO_CONSOLE_READ)
 	{
 		if (rd->ic.files[rd->ic.index] == QSE_NULL)
 		{
@@ -573,7 +575,7 @@ static int open_extio_console (qse_awk_extio_t* epa)
 		rd->ic.index++;
 		return 1;
 	}
-	else if (epa->mode == QSE_AWK_EXTIO_CONSOLE_WRITE)
+	else if (epa->mode == QSE_AWK_EIO_CONSOLE_WRITE)
 	{
 		/*dprint (QSE_T("    console(w) - <standard output>\n"));*/
 
@@ -589,15 +591,15 @@ static int open_extio_console (qse_awk_extio_t* epa)
 	return -1;
 }
 
-static qse_ssize_t awk_extio_console (
+static qse_ssize_t awk_eio_console (
 	int cmd, void* arg, qse_char_t* data, qse_size_t size)
 {
-	qse_awk_extio_t* epa = (qse_awk_extio_t*)arg;
+	qse_awk_eio_t* epa = (qse_awk_eio_t*)arg;
 	runio_data_t* rd = (runio_data_t*)epa->data;
 
 	if (cmd == QSE_AWK_IO_OPEN)
 	{
-		return open_extio_console (epa);
+		return open_eio_console (epa);
 	}
 	else if (cmd == QSE_AWK_IO_CLOSE)
 	{
@@ -617,7 +619,7 @@ static qse_ssize_t awk_extio_console (
 	{
 		qse_ssize_t n;
 
-		while ((n = qse_sio_read((qse_sio_t*)epa->handle,data,size)) == 0)
+		while ((n = qse_sio_getsn((qse_sio_t*)epa->handle,data,size)) == 0)
 		{
 			/* it has reached the end of the current file.
 			 * open the next file if available */
@@ -696,7 +698,7 @@ static qse_ssize_t awk_extio_console (
 	}
 	else if (cmd == QSE_AWK_IO_WRITE)
 	{
-		return qse_sio_write (	
+		return qse_sio_putsn (	
 			(qse_sio_t*)epa->handle,
 			data,
 			size
@@ -713,7 +715,7 @@ static qse_ssize_t awk_extio_console (
 
 		/*dprint (QSE_T("switching console[%s] of type %x\n"), epa->name, epa->type);*/
 
-		n = open_extio_console(epa);
+		n = open_eio_console(epa);
 		if (n == -1) return -1;
 
 		if (n == 0) 
@@ -746,9 +748,9 @@ int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_runcbs_t* cbs)
 	rd.ic.files = icf;
 	rd.ic.index = 0;
 
-	ios.pipe = awk_extio_pipe;
-	ios.file = awk_extio_file;
-	ios.console = awk_extio_console;
+	ios.pipe = awk_eio_pipe;
+	ios.file = awk_eio_file;
+	ios.console = awk_eio_console;
 	ios.data = &rd;
 
 	if (qse_gettime (&now) == -1) rxtn.seed = 0;
@@ -775,7 +777,7 @@ enum
 };
 
 static int bfn_math_1 (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -822,7 +824,7 @@ static int bfn_math_1 (
 }
 
 static int bfn_math_2 (
-	qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -873,7 +875,7 @@ static int bfn_math_2 (
 	return 0;
 }
 
-static int bfn_sin (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -889,7 +891,7 @@ static int bfn_sin (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_cos (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -905,7 +907,7 @@ static int bfn_cos (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_tan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -921,7 +923,7 @@ static int bfn_tan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_atan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -937,7 +939,7 @@ static int bfn_atan (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_atan2 (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_2 (
 		run, fnm, fnl, 
@@ -953,7 +955,7 @@ static int bfn_atan2 (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_log (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -969,7 +971,7 @@ static int bfn_log (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_exp (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -985,7 +987,7 @@ static int bfn_exp (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_sqrt (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	return bfn_math_1 (
 		run, fnm, fnl, 
@@ -1001,7 +1003,7 @@ static int bfn_sqrt (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_int (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1030,7 +1032,7 @@ static int bfn_int (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_rand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_awk_val_t* r;
 
@@ -1045,7 +1047,7 @@ static int bfn_rand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_srand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1093,7 +1095,7 @@ static int bfn_srand (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_system (qse_awk_run_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int bfn_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;

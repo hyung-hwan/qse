@@ -19,6 +19,7 @@
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
 #include <qse/utl/stdio.h>
@@ -340,7 +341,7 @@ int StdAwk::flushPipe (Pipe& io)
 int StdAwk::openFile (File& io) 
 { 
 	Awk::File::Mode mode = io.getMode();
-	qse_sio_t* sio = QSE_NULL;
+	qse_fio_t* fio = QSE_NULL;
 	int flags;
 
 	switch (mode)
@@ -359,37 +360,39 @@ int StdAwk::openFile (File& io)
 			break;
 	}
 
-	sio = qse_sio_open (
+	fio = qse_fio_open (
 		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
-		flags
+		flags,
+		QSE_FIO_RUSR | QSE_FIO_WUSR |
+		QSE_FIO_RGRP | QSE_FIO_ROTH
 	);	
-	if (sio == NULL) return -1;
+	if (fio == NULL) return -1;
 
-	io.setHandle (sio);
+	io.setHandle (fio);
 	return 1;
 }
 
 int StdAwk::closeFile (File& io) 
 { 
-	qse_sio_close ((qse_sio_t*)io.getHandle());
+	qse_fio_close ((qse_fio_t*)io.getHandle());
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 {
-	return qse_sio_read ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
-	return qse_sio_write ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_fio_write ((qse_fio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::flushFile (File& io) 
 { 
-	return qse_sio_flush ((qse_sio_t*)io.getHandle());
+	return qse_fio_flush ((qse_fio_t*)io.getHandle());
 }
 
 // memory allocation primitives
