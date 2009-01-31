@@ -231,23 +231,23 @@ typedef qse_awk_val_t* (*binop_func_t) (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
-qse_size_t qse_awk_getnargs (qse_awk_rtx_t* run)
+qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
 {
 	return (qse_size_t) STACK_NARGS (run);
 }
 
-qse_awk_val_t* qse_awk_getarg (qse_awk_rtx_t* run, qse_size_t idx)
+qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* run, qse_size_t idx)
 {
 	return STACK_ARG (run, idx);
 }
 
-qse_awk_val_t* qse_awk_getglobal (qse_awk_rtx_t* run, int id)
+qse_awk_val_t* qse_awk_rtx_getglobal (qse_awk_rtx_t* run, int id)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(run->awk->parse.globals));
 	return STACK_GLOBAL (run, id);
 }
 
-int qse_awk_setglobal (qse_awk_rtx_t* run, int id, qse_awk_val_t* val)
+int qse_awk_rtx_setglobal (qse_awk_rtx_t* run, int id, qse_awk_val_t* val)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(run->awk->parse.globals));
 	return set_global (run, (qse_size_t)id, QSE_NULL, val);
@@ -278,10 +278,10 @@ static int set_global (
 		}
 		else
 		{
-			/* qse_awk_setglobal has been called */
+			/* qse_awk_rtx_setglobal has been called */
 			qse_cstr_t errarg;
 
-			errarg.ptr = qse_awk_getglobalname (
+			errarg.ptr = qse_awk_rtx_getglobalname (
 				run->awk, idx, &errarg.len);
 			qse_awk_setrunerror (run, 
 				QSE_AWK_EMAPTOSCALAR, 0, &errarg, 1);
@@ -547,7 +547,7 @@ static int set_global (
 	return 0;
 }
 
-void qse_awk_setretval (qse_awk_rtx_t* run, qse_awk_val_t* val)
+void qse_awk_rtx_setretval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 {
 	qse_awk_refdownval (run, STACK_RETVAL(run));
 	STACK_RETVAL(run) = val;
@@ -555,7 +555,7 @@ void qse_awk_setretval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 	qse_awk_refupval (run, val); 
 }
 
-int qse_awk_setfilename (
+int qse_awk_rtx_setfilename (
 	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len)
 {
 	qse_awk_val_t* tmp;
@@ -569,13 +569,13 @@ int qse_awk_setfilename (
 	}
 
 	qse_awk_refupval (run, tmp);
-	n = qse_awk_setglobal (run, QSE_AWK_GLOBAL_FILENAME, tmp);
+	n = qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_FILENAME, tmp);
 	qse_awk_refdownval (run, tmp);
 
 	return n;
 }
 
-int qse_awk_setofilename (
+int qse_awk_rtx_setofilename (
 	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len)
 {
 	qse_awk_val_t* tmp;
@@ -591,7 +591,7 @@ int qse_awk_setofilename (
 		}
 
 		qse_awk_refupval (run, tmp);
-		n = qse_awk_setglobal (run, QSE_AWK_GLOBAL_OFILENAME, tmp);
+		n = qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_OFILENAME, tmp);
 		qse_awk_refdownval (run, tmp);
 	}
 	else n = 0;
@@ -599,22 +599,22 @@ int qse_awk_setofilename (
 	return n;
 }
 
-qse_awk_t* qse_awk_getrunawk (qse_awk_rtx_t* run)
+qse_awk_t* qse_awk_rtx_getawk (qse_awk_rtx_t* run)
 {
 	return run->awk;
 }
 
-qse_mmgr_t* qse_awk_getrunmmgr (qse_awk_rtx_t* run)
+qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* run)
 {
 	return run->awk->mmgr;
 }
 
-void* qse_awk_getrundata (qse_awk_rtx_t* run)
+void* qse_awk_rtx_getdata (qse_awk_rtx_t* run)
 {
 	return run->data;
 }
 
-qse_map_t* qse_awk_getrunnvmap (qse_awk_rtx_t* run)
+qse_map_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* run)
 {
 	return run->named;
 }
@@ -727,12 +727,12 @@ int qse_awk_run (qse_awk_t* awk,
 	return n;
 }
 
-void qse_awk_stop (qse_awk_rtx_t* run)
+void qse_awk_rtx_stop (qse_awk_rtx_t* run)
 {
 	run->exit_level = EXIT_ABORT;
 }
 
-qse_bool_t qse_awk_isstop (qse_awk_rtx_t* run)
+qse_bool_t qse_awk_rtx_shouldstop (qse_awk_rtx_t* run)
 {
 	return (run->exit_level == EXIT_ABORT || run->awk->stopall);
 }
@@ -1069,14 +1069,14 @@ static int build_runarg (
 	QSE_ASSERT (
 		STACK_GLOBAL(run,QSE_AWK_GLOBAL_ARGC) == qse_awk_val_nil);
 
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_ARGC, v_argc) == -1) 
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_ARGC, v_argc) == -1) 
 	{
 		qse_awk_refdownval (run, v_argc);
 		qse_awk_refdownval (run, v_argv);
 		return -1;
 	}
 
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_ARGV, v_argv) == -1)
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_ARGV, v_argv) == -1)
 	{
 		/* ARGC is assigned nil when ARGV assignment has failed.
 		 * However, this requires preconditions, as follows:
@@ -1084,7 +1084,7 @@ static int build_runarg (
 		 *     as it is not a generic-purpose routine.
 		 *  2. ARGC should be nil before build_runarg is called 
 		 * If the restoration fails, nothing can salvage it. */
-		qse_awk_setglobal (run, QSE_AWK_GLOBAL_ARGC, qse_awk_val_nil);
+		qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_ARGC, qse_awk_val_nil);
 		qse_awk_refdownval (run, v_argc);
 		qse_awk_refdownval (run, v_argv);
 		return -1;
@@ -1121,14 +1121,14 @@ static int update_fnr (qse_awk_rtx_t* run, qse_long_t fnr, qse_long_t nr)
 	}
 
 
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_FNR, tmp1) == -1)
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_FNR, tmp1) == -1)
 	{
 		if (nr != fnr) qse_awk_refdownval (run, tmp2);
 		qse_awk_refdownval (run, tmp1);
 		return -1;
 	}
 
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NR, tmp2) == -1)
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NR, tmp2) == -1)
 	{
 		if (nr != fnr) qse_awk_refdownval (run, tmp2);
 		qse_awk_refdownval (run, tmp1);
@@ -1183,11 +1183,11 @@ static int set_globals_to_default (qse_awk_rtx_t* run)
 		QSE_ASSERT (
 			STACK_GLOBAL(run,gtab[i].idx) == qse_awk_val_nil);
 
-		if (qse_awk_setglobal (run, gtab[i].idx, tmp) == -1)
+		if (qse_awk_rtx_setglobal (run, gtab[i].idx, tmp) == -1)
 		{
 			for (j = 0; j < i; j++)
 			{
-				qse_awk_setglobal (
+				qse_awk_rtx_setglobal (
 					run, gtab[i].idx, qse_awk_val_nil);
 			}
 
@@ -1237,7 +1237,7 @@ static int prepare_globals (qse_awk_rtx_t* run, const qse_cstr_t* runarg)
 	}	
 
 	/* override NF to zero */
-	if (qse_awk_setglobal (
+	if (qse_awk_rtx_setglobal (
 		run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1) goto oops;
 
 	/* override ARGC and ARGV */
@@ -1376,7 +1376,7 @@ static int run_bpae_loop (qse_awk_rtx_t* run)
 	}
 
 	/* execute END blocks. the first END block is executed if the 
-	 * program is not explicitly aborted with qse_awk_stop().*/
+	 * program is not explicitly aborted with qse_awk_rtx_stop().*/
 	for (nde = run->awk->tree.end;
 	     ret == 0 && nde != QSE_NULL && run->exit_level < EXIT_ABORT;
 	     nde = nde->next) 
@@ -1663,7 +1663,7 @@ static int ____run_main_to_be_removed____ (
 		}
 	}	
 
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1)
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1)
 	{
 		/* it can simply restore the top of the stack this way
 		 * because the values pused onto the stack so far are
@@ -1915,7 +1915,7 @@ static int ____run_main_to_be_removed____ (
 		}
 
 		/* the first END block is executed if the program is not
-		 * explicitly aborted with qse_awk_stop */
+		 * explicitly aborted with qse_awk_rtx_stop */
 		for (nde = run->awk->tree.end;
 		     n == 0 && nde != QSE_NULL && run->exit_level < EXIT_ABORT;
 		     nde = nde->next) 
@@ -3020,7 +3020,7 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 			if (var->type == QSE_AWK_NDE_GLOBAL ||
 			    var->type == QSE_AWK_NDE_GLOBALIDX)
 			{
-				if (qse_awk_setglobal (
+				if (qse_awk_rtx_setglobal (
 					run, (int)var->id.idxa, tmp) == -1)
 				{
 					qse_awk_refupval (run, tmp);
@@ -3911,7 +3911,7 @@ static qse_awk_val_t* do_assignment_map (
 		else if (var->type == QSE_AWK_NDE_GLOBALIDX)
 		{
 			qse_awk_refupval (run, tmp);
-			if (qse_awk_setglobal (run, (int)var->id.idxa, tmp) == -1)
+			if (qse_awk_rtx_setglobal (run, (int)var->id.idxa, tmp) == -1)
 			{
 				qse_awk_refdownval (run, tmp);
 
@@ -6140,7 +6140,7 @@ static qse_awk_val_t* eval_call (
 		 * adjust the reference count of the return value.
 		 * the value must not be freed even if the reference count
 		 * reached zero because its reference has been incremented 
-		 * in run_return or directly by qse_awk_setretval
+		 * in run_return or directly by qse_awk_rtx_setretval
 		 * regardless of its reference count. */
 		qse_awk_refdownval_nofree (run, v);
 	}
@@ -7061,7 +7061,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{
@@ -7167,7 +7167,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{
@@ -7288,7 +7288,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{
@@ -7376,7 +7376,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{
@@ -7453,7 +7453,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{
@@ -7563,7 +7563,7 @@ qse_char_t* qse_awk_format (
 					qse_awk_setrunerrnum (run, QSE_AWK_EFMTARG);
 					return QSE_NULL;
 				}
-				v = qse_awk_getarg (run, stack_arg_idx);
+				v = qse_awk_rtx_getarg (run, stack_arg_idx);
 			}
 			else
 			{

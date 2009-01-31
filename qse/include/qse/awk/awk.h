@@ -410,7 +410,7 @@ enum qse_awk_eio_mode_t
 enum qse_awk_global_id_t
 {
 	/* this table should match gtab in parse.c.
-	 * in addition, qse_awk_setglobal also counts 
+	 * in addition, qse_awk_rtx_setglobal also counts 
 	 * on the order of these values */
 
 	QSE_AWK_GLOBAL_ARGC,
@@ -865,46 +865,94 @@ int qse_awk_runsimple (
 );
 /******/
 
-/**
- * Executes a parsed program.
- *
- * qse_awk_run returns 0 on success and -1 on failure, generally speaking.
+/****f* qse.awk/qse_awk_run
+ * NAME
+ *  qse_awk_run - execute a parsed program
+ * DESCRIPTION
+ *  The qse_awk_run() function returns 0 on success and -1 on failure.
  *  A runtime context is required for it to start running the program.
- *  Once the runtime context is created, the program starts to run.
- *  The context creation failure is reported by the return value -1 of
- *  this function. however, the runtime error after the context creation
- *  is reported differently depending on the use of the callback.
- *  When no callback is specified (i.e. runcbs is QSE_NULL), qse_awk_run
- *  returns -1 on an error and awk->errnum is set accordingly.
- *  However, if a callback is specified (i.e. runcbs is not QSE_NULL),
- *  qse_awk_run returns 0 on both success and failure. Instead, the 
- *  on_end handler of the callback is triggered with the relevant 
- *  error number. The third parameter to on_end denotes this error number.
+ *  Once a runtime context is created, the program starts to run.
+ *  The failure of context creation is reported by the return value of -1.
+ *  However, the runtime error after context creation is reported differently
+ *  depending on the callbacks specified. When no callback is specified 
+ *  (i.e. runcbs is QSE_NULL), the qse_awk_run() function returns -1 on an 
+ *  error and awk->errnum is set accordingly. If a callback is specified 
+ *  (i.e. runcbs is not QSE_NULL), the qse_awk_run() returns 0 on both success
+ *  and failure. Instead, the on_end handler of the callback is triggered with 
+ *  the relevant error number. The third parameter to on_end is the error 
+ *  number.
+ * SYNOPSIS
  */
 int qse_awk_run (
-	qse_awk_t* awk, const qse_char_t* main,
-	qse_awk_runios_t* runios, qse_awk_runcbs_t* runcbs, 
-	const qse_cstr_t* runarg, void* data);
+	qse_awk_t*        awk,
+	const qse_char_t* main,
+	qse_awk_runios_t* runios,
+	qse_awk_runcbs_t* runcbs, 
+	const qse_cstr_t* runarg,
+	void*             data
+);
+/******/
 
-void qse_awk_stop (qse_awk_rtx_t* run);
-void qse_awk_stopall (qse_awk_t* awk);
-
-qse_bool_t qse_awk_isstop (qse_awk_rtx_t* run);
-
-
-/** 
- * Gets the number of arguments passed to qse_awk_run 
- */
-qse_size_t qse_awk_getnargs (qse_awk_rtx_t* run);
-
-/** 
- * Gets an argument passed to qse_awk_run
- */
-qse_awk_val_t* qse_awk_getarg (qse_awk_rtx_t* run, qse_size_t idx);
-
-/****f* qse.awk/qse_awk_getglobal
+/****f* qse.awk/qse_awk_shouldstop
  * NAME
- *  qse_awk_getglobal - gets the value of a global variable
+ *  qse_awk_rtx_stop - test if qse_awk_rtx_stop() is called
+ * SYNOPSIS
+ */
+qse_bool_t qse_awk_rtx_shouldstop (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_stop
+ * NAME
+ *  qse_awk_rtx_stop - stop a runtime context
+ * DESCRIPTION
+ *  The qse_awk_rtx_stop() function causes the active qse_awk_run() function to 
+ *  be aborted. 
+ * SYNOPSIS
+ */
+void qse_awk_rtx_stop (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_stopall
+ * NAME
+ *  qse_awk_rtx_stop - stop all runtime contexts
+ * DESCRIPTION
+ *  The qse_awk_rtx_stopall() function aborts all active qse_awk_run() functions
+ *  invoked with the awk parameter.
+ * SYNOPSIS
+ */
+void qse_awk_rtx_stopall (
+	qse_awk_t* awk
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_getnargs 
+ * NAME
+ *  qse_awk_rtx_getnargs - get the number of arguments passed to qse_awk_run()
+ * SYNOPSIS
+ */
+qse_size_t qse_awk_rtx_getnargs (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_getarg 
+ * NAME
+ *  qse_awk_rtx_getarg - get an argument passed to qse_awk_run
+ * SYNOPSIS
+ */
+qse_awk_val_t* qse_awk_rtx_getarg (
+	qse_awk_rtx_t* rtx,
+	qse_size_t     idx
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_getglobal
+ * NAME
+ *  qse_awk_rtx_getglobal - gets the value of a global variable
  *
  * PARAMETERS
  *  id - A global variable id. An ID is one of the predefined global 
@@ -916,104 +964,125 @@ qse_awk_val_t* qse_awk_getarg (qse_awk_rtx_t* run, qse_size_t idx);
  *
  * SYNOPSIS
  */
-qse_awk_val_t* qse_awk_getglobal (
-	qse_awk_rtx_t* run,
+qse_awk_val_t* qse_awk_rtx_getglobal (
+	qse_awk_rtx_t* rtx,
 	int            id
 );
 /******/
 
-/****f* qse.awk/qse_awk_setglobal
+/****f* qse.awk/qse_awk_rtx_setglobal
  * NAME
- *  qse_awk_setglobal - set the value of a global variable
+ *  qse_awk_rtx_setglobal - set the value of a global variable
  *  
  * SYNOPSIS
  */
-int qse_awk_setglobal (
-	qse_awk_rtx_t* run, 
+int qse_awk_rtx_setglobal (
+	qse_awk_rtx_t* rtx, 
 	int            id,
 	qse_awk_val_t* val
 );
 /******/
 
-/****f* qse.awk/qse_awk_setretval
+/****f* qse.awk/qse_awk_rtx_setretval
  * NAME
- *  qse_awk_setretval - set the return value
- *
+ *  qse_awk_rtx_setretval - set the return value
  * DESCRIPTION
- *  The qse_awk_setretval() sets the return value of a function
+ *  The qse_awk_rtx_setretval() sets the return value of a function
  *  when called from within a function handlers. The caller doesn't
  *  have to invoke qse_awk_refupval() and qse_awk_refdownval() 
- *  with the value to be passed to qse_awk_setretval(). 
- *  The qse_awk_setretval() will update its reference count properly
+ *  with the value to be passed to qse_awk_rtx_setretval(). 
+ *  The qse_awk_rtx_setretval() will update its reference count properly
  *  once the return value is set. 
+ * SYNOPSIS
  */
-void qse_awk_setretval (
-	qse_awk_rtx_t* run,
+void qse_awk_rtx_setretval (
+	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
 );
+/******/
 
-int qse_awk_setfilename (
-	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len);
-int qse_awk_setofilename (
-	qse_awk_rtx_t* run, const qse_char_t* name, qse_size_t len);
-
-
-/****f* qse.awk/qse_awk_getrunawk
+/****f* qse.awk/qse_awk_rtx_setfilename
  * NAME
- *  qse_awk_getrunawk - get the owning awk object
- *
+ *  qse_awk_rtx_setfilename - set FILENAME
  * SYNOPSIS
  */
-qse_awk_t* qse_awk_getrunawk (
-	qse_awk_rtx_t* run
+int qse_awk_rtx_setfilename (
+	qse_awk_rtx_t*    rtx,
+	const qse_char_t* name,
+	qse_size_t        len
 );
 /******/
 
-/****f* qse.awk/qse_awk_getrunmmgr
+/****f* qse.awk/qse_awk_rtx_setofilename
  * NAME
- *  qse_awk_getrunmmgr - get the memory manager of a run object
- * 
+ *  qse_awk_rtx_setofilename - set OFILENAME
  * SYNOPSIS
  */
-qse_mmgr_t* qse_awk_getrunmmgr (
-	qse_awk_rtx_t* run
+int qse_awk_rtx_setofilename (
+	qse_awk_rtx_t*    rtx,
+	const qse_char_t* name,
+	qse_size_t        len
 );
 /******/
 
-/****f* qse.awk/qse_awk_getrundata
+/****f* qse.awk/qse_awk_rtx_getawk
  * NAME
- *  qse_awk_getrundata - get the user-specified data for a run object
- * 
+ *  qse_awk_rtx_getawk - get the owning awk object
  * SYNOPSIS
  */
-void* qse_awk_getrundata (
-	qse_awk_rtx_t* run
+qse_awk_t* qse_awk_rtx_getawk (
+	qse_awk_rtx_t* rtx
 );
 /******/
 
-/****f* qse.awk/qse_awk_getrunnvmap
+/****f* qse.awk/qse_awk_rtx_getmmgr
  * NAME
- *  qse_awk_getrunnvmap - get the map of named variables 
- * 
+ *  qse_awk_rtx_getmmgr - get the memory manager of a runtime context
  * SYNOPSIS
  */
-qse_map_t* qse_awk_getrunnvmap (
-	qse_awk_rtx_t* run
+qse_mmgr_t* qse_awk_rtx_getmmgr (
+	qse_awk_rtx_t* rtx
 );
 /******/
 
-/* functions to manipulate the run-time error */
-int qse_awk_getrunerrnum (
-	qse_awk_rtx_t* run
+/****f* qse.awk/qse_awk_rtx_getdata
+ * NAME
+ *  qse_awk_rtx_getdata - get the user-specified data for a runtime context
+ * SYNOPSIS
+ */
+void* qse_awk_rtx_getdata (
+	qse_awk_rtx_t* rtx
 );
+/******/
+
+/****f* qse.awk/qse_awk_rtx_getnvmap
+ * NAME
+ *  qse_awk_rtx_getnvmap - get the map of named variables 
+ * SYNOPSIS
+ */
+qse_map_t* qse_awk_rtx_getnvmap (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* qse.awk/qse_awk_rtx_geterrnum
+ * NAME
+ *  qse_awk_rtx_geterrnum - get the error number of a runtime context
+ * SYNOPSIS
+ */
+int qse_awk_rtx_geterrnum (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
 qse_size_t qse_awk_getrunerrlin (
-	qse_awk_rtx_t* run
+	qse_awk_rtx_t* rtx
 );
 const qse_char_t* qse_awk_getrunerrmsg (
-	qse_awk_rtx_t* run
+	qse_awk_rtx_t* rtx
 );
 void qse_awk_setrunerrnum (
-	qse_awk_rtx_t* run,
+	qse_awk_rtx_t* rtx,
 	int errnum
 );
 void qse_awk_setrunerrmsg (
@@ -1024,22 +1093,37 @@ void qse_awk_setrunerrmsg (
 );
 
 void qse_awk_getrunerror (
-	qse_awk_rtx_t* run, int* errnum, 
-	qse_size_t* errlin, const qse_char_t** errmsg);
+	qse_awk_rtx_t* run,
+	int* errnum, 
+	qse_size_t* errlin,
+	const qse_char_t** errmsg
+);
 
 void qse_awk_setrunerror (
-	qse_awk_rtx_t* run, int errnum, qse_size_t errlin, 
-	const qse_cstr_t* errarg, qse_size_t argcnt);
+	qse_awk_rtx_t* run,
+	int errnum,
+	qse_size_t errlin, 
+	const qse_cstr_t* errarg,
+	qse_size_t argcnt
+);
 
 /* functions to manipulate intrinsic functions */
 void* qse_awk_addfunc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len, 
-	int when_valid, qse_size_t min_args, qse_size_t max_args, 
+	qse_awk_t* awk,
+	const qse_char_t* name,
+	qse_size_t name_len, 
+	int when_valid,
+	qse_size_t min_args,
+	qse_size_t max_args, 
 	const qse_char_t* arg_spec, 
-	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t));
+	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t)
+);
 
 int qse_awk_delfunc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len);
+	qse_awk_t*        awk,
+	const qse_char_t* name,
+	qse_size_t        len
+);
 
 void qse_awk_clrbfn (qse_awk_t* awk);
 

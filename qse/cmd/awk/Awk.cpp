@@ -296,6 +296,7 @@ protected:
 		Source::Mode mode = io.getMode();
 		FILE* fp = QSE_NULL;
 
+		// TODO: use sio instead of stdio
 		if (mode == Source::READ)
 		{
 			if (srcInName == QSE_NULL) 
@@ -364,7 +365,7 @@ protected:
 		{
 			if (*buf == QSE_T('\0')) 
 			{
-				if (qse_fputc (*buf, fp) == QSE_CHAR_EOF) return -1;
+				if (qse_fputc(*buf,fp) == QSE_CHAR_EOF) return -1;
 				left -= 1; buf += 1;
 			}
 			else
@@ -508,7 +509,7 @@ protected:
 		{
 			if (*buf == QSE_T('\0')) 
 			{
-				if (qse_fputc (*buf, fp) == QSE_CHAR_EOF) return -1;
+				if (qse_fputc(*buf,fp) == QSE_CHAR_EOF) return -1;
 				left -= 1; buf += 1;
 			}
 			else
@@ -708,7 +709,7 @@ static struct
 	{ QSE_T("bxor"),        TestAwk::OPT_BXOR },
 	{ QSE_T("shift"),       TestAwk::OPT_SHIFT },
 	{ QSE_T("idiv"),        TestAwk::OPT_IDIV },
-	{ QSE_T("extio"),       TestAwk::OPT_EXTIO },
+	{ QSE_T("eio"),         TestAwk::OPT_EIO },
 	{ QSE_T("rwpipe"),      TestAwk::OPT_RWPIPE },
 	{ QSE_T("newline"),     TestAwk::OPT_NEWLINE },
 	{ QSE_T("baseone"),     TestAwk::OPT_BASEONE },
@@ -746,7 +747,7 @@ static void print_usage (const qse_char_t* argv0)
 
 
 	qse_printf (QSE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
-	for (j = 0; j < QSE_COUNTOF(otab); j++)
+	for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
 	{
 		qse_printf (QSE_T("    -%-20s -no%-20s\n"), otab[j].name, otab[j].name);
 	}
@@ -794,7 +795,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 					if (argv[i][1] == QSE_T('n') && argv[i][2] == QSE_T('o'))
 					{
-						for (j = 0; j < QSE_COUNTOF(otab); j++)
+						for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
 						{
 							if (qse_strcmp(&argv[i][3], otab[j].name) == 0)
 							{
@@ -805,7 +806,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 					}
 					else
 					{
-						for (j = 0; j < QSE_COUNTOF(otab); j++)
+						for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
 						{
 							if (qse_strcmp(&argv[i][1], otab[j].name) == 0)
 							{

@@ -345,7 +345,7 @@ void qse_awk_seterror (
 	}
 }
 
-int qse_awk_getrunerrnum (qse_awk_rtx_t* run)
+int qse_awk_rtx_geterrnum (qse_awk_rtx_t* run)
 {
 	return run->errnum;
 }

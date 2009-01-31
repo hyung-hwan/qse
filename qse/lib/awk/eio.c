@@ -204,7 +204,7 @@ int qse_awk_readeio (
 	qse_str_clear (buf);
 
 	/* get the record separator */
-	rs = qse_awk_getglobal (run, QSE_AWK_GLOBAL_RS);
+	rs = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_RS);
 	qse_awk_refupval (run, rs);
 
 	if (rs->type == QSE_AWK_VAL_NIL)

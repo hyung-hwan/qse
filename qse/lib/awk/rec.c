@@ -107,7 +107,7 @@ static int split_record (qse_awk_rtx_t* run)
 	QSE_ASSERT (run->inrec.nflds == 0);
 
 	/* get FS */
-	fs = qse_awk_getglobal (run, QSE_AWK_GLOBAL_FS);
+	fs = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_FS);
 	if (fs->type == QSE_AWK_VAL_NIL)
 	{
 		fs_ptr = QSE_T(" ");
@@ -237,7 +237,7 @@ static int split_record (qse_awk_rtx_t* run)
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_refupval (run, v);
-	if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
+	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 	{
 		qse_awk_refdownval (run, v);
 		return -1;
@@ -270,7 +270,7 @@ int qse_awk_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
 		}
 		run->inrec.nflds = 0;
 
-		if (qse_awk_setglobal (
+		if (qse_awk_rtx_setglobal (
 			run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1)
 		{
 			/* first of all, this should never happen. 
@@ -432,7 +432,7 @@ static int recomp_record_fields (
 		}
 	}
 
-	v = qse_awk_getglobal (run, QSE_AWK_GLOBAL_NF);
+	v = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_NF);
 	QSE_ASSERT (v->type == QSE_AWK_VAL_INT);
 
 	if (((qse_awk_val_int_t*)v)->val != max)
@@ -441,7 +441,7 @@ static int recomp_record_fields (
 		if (v == QSE_NULL) return -1;
 
 		qse_awk_refupval (run, v);
-		if (qse_awk_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
+		if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 		{
 			qse_awk_refdownval (run, v);
 			return -1;
