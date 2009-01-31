@@ -33,11 +33,13 @@ static qse_sio_t __sio_in =
 	/* fio */
 	{
 		QSE_NULL,
+		0,
 	#ifdef _WIN32
 		(HANDLE)STD_INPUT_HANDLE,
 	#else
 		0,
 	#endif
+		QSE_NULL
 	},
 
 	/* tio */
@@ -67,11 +69,13 @@ static qse_sio_t __sio_out =
 	/* fio */
 	{
 		QSE_NULL,
+		0,
 	#ifdef _WIN32
 		(HANDLE)STD_OUTPUT_HANDLE,
 	#else
-		1
+		1,
 	#endif
+		QSE_NULL
 	},
 
 	/* tio */
@@ -101,11 +105,13 @@ static qse_sio_t __sio_err =
 	/* fio */
 	{
 		QSE_NULL,
+		0,
 	#ifdef _WIN32
 		(HANDLE)STD_ERROR_HANDLE,
 	#else
-		2
+		2,
 	#endif
+		QSE_NULL
 	},
 
 	/* tio */
@@ -226,39 +232,41 @@ void qse_sio_purge (qse_sio_t* sio)
 	qse_tio_purge (&sio->tio);
 }
 
-#if 0
 qse_ssize_t qse_sio_getc (qse_sio_t* sio, qse_char_t* c)
 {
-	return qse_tio_getc (&sio->tio, c);
+	return qse_tio_read (&sio->tio, c, 1);
 }
 
-qse_ssize_t qse_sio_gets (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
+qse_ssize_t qse_sio_gets (
+	qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
-	return qse_tio_gets (&sio->tio, buf, size);
+	qse_ssize_t n;
+
+	if (size <= 0) return 0;
+	n = qse_tio_read (&sio->tio, buf, size -1);
+	if (n == -1) return -1;
+	buf[n] = QSE_T('\0');
+	return n;
 }
 
-qse_ssize_t qse_sio_getstr (qse_sio_t* sio, qse_str_t* buf)
-{
-	return qse_tio_getstr (&sio->tio, buf);
-}
-
-qse_ssize_t qse_sio_putc (qse_sio_t* sio, qse_char_t c)
-{
-	return qse_tio_putc (&sio->tio, c);
-}
-
-qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
-{
-	return qse_tio_puts (&sio->tio, str);
-}
-#endif
-
-qse_ssize_t qse_sio_read (qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
+qse_ssize_t qse_sio_getsn (
+	qse_sio_t* sio, qse_char_t* buf, qse_size_t size)
 {
 	return qse_tio_read (&sio->tio, buf, size);
 }
 
-qse_ssize_t qse_sio_write (qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
+qse_ssize_t qse_sio_putc (qse_sio_t* sio, qse_char_t c)
+{
+	return qse_tio_write (&sio->tio, &c, 1);
+}
+
+qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
+{
+	return qse_tio_write (&sio->tio, str, (qse_size_t)-1);
+}
+
+qse_ssize_t qse_sio_putsn (
+	qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
 {
 	return qse_tio_write (&sio->tio, str, size);
 }

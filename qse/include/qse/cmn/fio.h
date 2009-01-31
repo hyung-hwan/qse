@@ -88,6 +88,9 @@ typedef struct qse_fio_lck_t qse_fio_lck_t;
 
 struct qse_fio_t
 {
+	/* note that qse_fio_t is instantiated statically 
+	 * in sio.c. make sure that you update the static instantiation
+	 * when you change the structure of qse_fio_t */
 	QSE_DEFINE_STD_FIELDS (fio)
 	int           errnum;
 	qse_fio_hnd_t handle;
@@ -204,6 +207,12 @@ qse_ssize_t qse_fio_read (
 /****f* qse.cmn.fio/qse_fio_write
  * NAME
  *  qse_fio_write - write data
+ *
+ * DESCRIPTION
+ *  If QSE_FIO_TEXT is used and the size parameter is (qse_size_t)-1,
+ *  the function treats the data parameter as a pointer to a null-terminated
+ *  string.
+ * 
  * SYNOPSIS
  */
 qse_ssize_t qse_fio_write (

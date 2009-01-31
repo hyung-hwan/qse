@@ -59,9 +59,9 @@ public:
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
 	/** Represents the external I/O context */
-	typedef qse_awk_extio_t extio_t;
+	typedef qse_awk_eio_t eio_t;
 	/** Represents the run-time context */
-	typedef qse_awk_run_t run_t;
+	typedef qse_awk_rtx_t run_t;
 	/** Represents the underlying interpreter */
 	typedef qse_awk_t awk_t;
 
@@ -214,12 +214,12 @@ public:
 	};
 
 	/**
-	 * Extio class 
+	 * EIO class 
 	 */
-	class Extio
+	class EIO
 	{
 	protected:
-		Extio (extio_t* extio);
+		EIO (eio_t* eio);
 
 	public:
 		const char_t* getName() const;
@@ -228,30 +228,30 @@ public:
 
 		operator Awk* () const;
 		operator awk_t* () const;
-		operator extio_t* () const;
+		operator eio_t* () const;
 		operator run_t* () const;
 
 	protected:
-		extio_t* extio;
+		eio_t* eio;
 	};
 
 	/**
 	 * Pipe
 	 */
-	class Pipe: public Extio
+	class Pipe: public EIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EXTIO_PIPE_READ,
-			WRITE = QSE_AWK_EXTIO_PIPE_WRITE,
-			RW = QSE_AWK_EXTIO_PIPE_RW
+			READ = QSE_AWK_EIO_PIPE_READ,
+			WRITE = QSE_AWK_EIO_PIPE_WRITE,
+			RW = QSE_AWK_EIO_PIPE_RW
 		};
 
 	protected:
-		Pipe (extio_t* extio);
+		Pipe (eio_t* eio);
 
 	public:
 		Mode getMode () const;
@@ -260,20 +260,20 @@ public:
 	/**
 	 * File
 	 */
-	class File: public Extio
+	class File: public EIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EXTIO_FILE_READ,
-			WRITE = QSE_AWK_EXTIO_FILE_WRITE,
-			APPEND = QSE_AWK_EXTIO_FILE_APPEND
+			READ = QSE_AWK_EIO_FILE_READ,
+			WRITE = QSE_AWK_EIO_FILE_WRITE,
+			APPEND = QSE_AWK_EIO_FILE_APPEND
 		};
 
 	protected:
-		File (extio_t* extio);
+		File (eio_t* eio);
 
 	public:
 		Mode getMode () const;
@@ -282,19 +282,19 @@ public:
 	/**
 	 * Console
 	 */
-	class Console: public Extio
+	class Console: public EIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EXTIO_CONSOLE_READ,
-			WRITE = QSE_AWK_EXTIO_CONSOLE_WRITE
+			READ = QSE_AWK_EIO_CONSOLE_READ,
+			WRITE = QSE_AWK_EIO_CONSOLE_WRITE
 		};
 
 	protected:
-		Console (extio_t* extio);
+		Console (eio_t* eio);
 		~Console ();
 
 	public:
@@ -564,7 +564,7 @@ public:
 		OPT_BXOR = QSE_AWK_BXOR,
 		OPT_SHIFT = QSE_AWK_SHIFT,
 		OPT_IDIV = QSE_AWK_IDIV,
-		OPT_EXTIO = QSE_AWK_EXTIO,
+		OPT_EIO = QSE_AWK_EIO,
 		OPT_RWPIPE = QSE_AWK_RWPIPE,
 
 		/** Can terminate a statement with a new line */

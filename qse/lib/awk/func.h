@@ -38,7 +38,7 @@ struct qse_awk_bfn_t
 		qse_char_t* spec;
 	} arg;
 
-	int (*handler) (qse_awk_run_t*, const qse_char_t*, qse_size_t);
+	int (*handler) (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
 
 	/*qse_awk_bfn_t* next;*/
 };

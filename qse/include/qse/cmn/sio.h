@@ -95,9 +95,8 @@ void qse_sio_purge (
 	qse_sio_t* sio
 );
 
-#if 0
 qse_ssize_t qse_sio_getc (
-	qse_sio_t* sio,
+	qse_sio_t*  sio,
 	qse_char_t* c
 );
 
@@ -107,10 +106,10 @@ qse_ssize_t qse_sio_gets (
 	qse_size_t size
 );
 
-
-qse_ssize_t qse_sio_getstr (
-	qse_sio_t* sio, 
-	qse_str_t* buf
+qse_ssize_t qse_sio_getsn (
+	qse_sio_t*  sio,
+	qse_char_t* buf,
+	qse_size_t  size
 );
 
 qse_ssize_t qse_sio_putc (
@@ -122,24 +121,28 @@ qse_ssize_t qse_sio_puts (
 	qse_sio_t*        sio,
 	const qse_char_t* str
 );
-#endif
 
-qse_ssize_t qse_sio_read (
-	qse_sio_t*  sio,
-	qse_char_t* buf,
-	qse_size_t  size
-);
-
-qse_ssize_t qse_sio_write (
+qse_ssize_t qse_sio_putsn (
 	qse_sio_t*        sio, 
 	const qse_char_t* str,
 	qse_size_t        size
 );
 
+/****f* qse.cmn.sio/qse_sio_getpos
+ * NAME
+ *  qse_sio_getpos - get the stream position
+ *
+ * WARNING
+ *  The getpos() function may not return the desired postion because of 
+ *  buffering.
+ *
+ * SYNOPSIS
+ */
 int qse_sio_getpos (
 	qse_sio_t*     sio, 
 	qse_sio_pos_t* pos
 );
+/******/
 
 int qse_sio_setpos (
 	qse_sio_t*    sio, 
@@ -147,14 +150,6 @@ int qse_sio_setpos (
 );
 
 #if 0
-qse_ssize_t qse_sio_putsn (qse_sio_t* sio, ...);
-qse_ssize_t qse_sio_putsxn (qse_sio_t* sio, ...);
-qse_ssize_t qse_sio_putsv (qse_sio_t* sio, qse_va_list ap);
-qse_ssize_t qse_sio_putsxv (qse_sio_t* sio, qse_va_list ap);
-
-/* WARNING:
- *   getpos may not return the desired postion because of the buffering 
- */
 int qse_sio_rewind (qse_sio_t* sio);
 int qse_sio_movetoend (qse_sio_t* sio);
 #endif

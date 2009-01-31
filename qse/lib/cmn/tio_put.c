@@ -74,19 +74,34 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t size)
 {
 	qse_ssize_t n;
-	const qse_char_t* p, * end;
+	const qse_char_t* p;
 
 	if (size == 0) return 0;
 
-	p = str; end = str + size;
-	while (p < end) 
-	{
-		n = tio_putc (tio, *p);
-		if (n == -1) return -1;
-		if (n == 0) break;
+	p = str;
 
-		p++;
+	if (size == (qse_size_t)-1)
+	{
+		while (*p != QSE_T('\0'))
+		{
+			n = tio_putc (tio, *p);
+			if (n == -1) return -1;
+			if (n == 0) break;
+			p++;
+		}
+	}
+	else
+	{
+		const qse_char_t* end = str + size;
+		while (p < end) 
+		{
+			n = tio_putc (tio, *p);
+			if (n == -1) return -1;
+			if (n == 0) break;
+			p++;
+		}
 	}
 
 	return p - str;
 }
+

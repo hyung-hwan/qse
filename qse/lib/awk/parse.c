@@ -178,12 +178,12 @@ static qse_awk_nde_t* parse_binary_expr (
 	qse_awk_nde_t*(*next_level_func)(qse_awk_t*,qse_size_t));
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_logical_or_with_extio (qse_awk_t* awk, qse_size_t line);
+static qse_awk_nde_t* parse_logical_or_with_eio (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_bitwise_or_with_extio (qse_awk_t* awk, qse_size_t line);
+static qse_awk_nde_t* parse_bitwise_or_with_eio (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_equality (qse_awk_t* awk, qse_size_t line);
@@ -282,11 +282,11 @@ static kwent_t kwtab[] =
 	{ QSE_T("nextofile"),    9, TOKEN_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 	{ QSE_T("delete"),       6, TOKEN_DELETE,      0 },
 	{ QSE_T("reset"),        5, TOKEN_RESET,       QSE_AWK_RESET },
-	{ QSE_T("print"),        5, TOKEN_PRINT,       QSE_AWK_EXTIO },
-	{ QSE_T("printf"),       6, TOKEN_PRINTF,      QSE_AWK_EXTIO },
+	{ QSE_T("print"),        5, TOKEN_PRINT,       QSE_AWK_EIO },
+	{ QSE_T("printf"),       6, TOKEN_PRINTF,      QSE_AWK_EIO },
 
 	/* keywords that can start an expression */
-	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_EXTIO },
+	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_EIO },
 
 	{ QSE_NULL,              0, 0,                 0 }
 };
@@ -332,13 +332,13 @@ static global_t gtab[] =
 	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 
 	/* output real-to-str conversion format for 'print' */
-	{ QSE_T("OFMT"),         4,  QSE_AWK_EXTIO}, 
+	{ QSE_T("OFMT"),         4,  QSE_AWK_EIO}, 
 
 	/* output field separator for 'print' */
-	{ QSE_T("OFS"),          3,  QSE_AWK_EXTIO },
+	{ QSE_T("OFS"),          3,  QSE_AWK_EIO },
 
 	/* output record separator. used for 'print' and blockless output */
-	{ QSE_T("ORS"),          3,  QSE_AWK_EXTIO },
+	{ QSE_T("ORS"),          3,  QSE_AWK_EIO },
 
 	{ QSE_T("RLENGTH"),      7,  0 },
 	{ QSE_T("RS"),           2,  0 },
@@ -796,9 +796,9 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 				}	
 			}
 
-			if ((awk->option & QSE_AWK_EXTIO) != QSE_AWK_EXTIO)
+			if ((awk->option & QSE_AWK_EIO) != QSE_AWK_EIO)
 			{
-				/* blockless pattern requires QSE_AWK_EXTIO
+				/* blockless pattern requires QSE_AWK_EIO
 				 * to be ON because the implicit block is
 				 * "print $0" */
 				SETERRLIN (awk, QSE_AWK_ENOSUP, tline);
@@ -2227,10 +2227,10 @@ static qse_awk_nde_t* parse_binary_expr (
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 {
-	if ((awk->option & QSE_AWK_EXTIO) && 
+	if ((awk->option & QSE_AWK_EIO) && 
 	    (awk->option & QSE_AWK_RWPIPE))
 	{
-		return parse_logical_or_with_extio (awk, line);
+		return parse_logical_or_with_eio (awk, line);
 	}
 	else
 	{
@@ -2244,7 +2244,7 @@ static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 	}
 }
 
-static qse_awk_nde_t* parse_logical_or_with_extio (qse_awk_t* awk, qse_size_t line)
+static qse_awk_nde_t* parse_logical_or_with_eio (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_t* left, * right;
 
@@ -2434,9 +2434,9 @@ static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line)
 
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line)
 {
-	if (awk->option & QSE_AWK_EXTIO)
+	if (awk->option & QSE_AWK_EIO)
 	{
-		return parse_bitwise_or_with_extio (awk, line);
+		return parse_bitwise_or_with_eio (awk, line);
 	}
 	else
 	{
@@ -2451,7 +2451,7 @@ static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line)
 	}
 }
 
-static qse_awk_nde_t* parse_bitwise_or_with_extio (qse_awk_t* awk, qse_size_t line)
+static qse_awk_nde_t* parse_bitwise_or_with_eio (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_t* left, * right;
 

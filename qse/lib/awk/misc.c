@@ -611,7 +611,7 @@ qse_size_t qse_awk_longtostr (
 }
 
 qse_char_t* qse_awk_strtok (
-	qse_awk_run_t* run, const qse_char_t* s, 
+	qse_awk_rtx_t* run, const qse_char_t* s, 
 	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len)
 {
 	return qse_awk_strxntok (
@@ -620,7 +620,7 @@ qse_char_t* qse_awk_strtok (
 }
 
 qse_char_t* qse_awk_strxtok (
-	qse_awk_run_t* run, const qse_char_t* s, qse_size_t len,
+	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
 	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len)
 {
 	return qse_awk_strxntok (
@@ -629,7 +629,7 @@ qse_char_t* qse_awk_strxtok (
 }
 
 qse_char_t* qse_awk_strntok (
-	qse_awk_run_t* run, const qse_char_t* s, 
+	qse_awk_rtx_t* run, const qse_char_t* s, 
 	const qse_char_t* delim, qse_size_t delim_len,
 	qse_char_t** tok, qse_size_t* tok_len)
 {
@@ -639,7 +639,7 @@ qse_char_t* qse_awk_strntok (
 }
 
 qse_char_t* qse_awk_strxntok (
-	qse_awk_run_t* run, const qse_char_t* s, qse_size_t len,
+	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
 	const qse_char_t* delim, qse_size_t delim_len, 
 	qse_char_t** tok, qse_size_t* tok_len)
 {
@@ -831,7 +831,7 @@ exit_loop:
 }
 
 qse_char_t* qse_awk_strxntokbyrex (
-	qse_awk_run_t* run, const qse_char_t* s, qse_size_t len,
+	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
 	void* rex, qse_char_t** tok, qse_size_t* tok_len, int* errnum)
 {
 	int n;

@@ -49,83 +49,83 @@ void Awk::Source::setHandle (void* handle)
 }
 
 //////////////////////////////////////////////////////////////////
-// Awk::Extio
+// Awk::EIO
 //////////////////////////////////////////////////////////////////
 
-Awk::Extio::Extio (extio_t* extio): extio (extio)
+Awk::EIO::EIO (eio_t* eio): eio (eio)
 {
 }
 
-const Awk::char_t* Awk::Extio::getName () const
+const Awk::char_t* Awk::EIO::getName () const
 {
-	return extio->name;
+	return eio->name;
 }
 
-const void* Awk::Extio::getHandle () const
+const void* Awk::EIO::getHandle () const
 {
-	return extio->handle;
+	return eio->handle;
 }
 
-void Awk::Extio::setHandle (void* handle)
+void Awk::EIO::setHandle (void* handle)
 {
-	extio->handle = handle;
+	eio->handle = handle;
 }
 
-Awk::Extio::operator Awk::Awk* () const 
+Awk::EIO::operator Awk::Awk* () const 
 {
 	// it assumes that the Awk object is set to the data field.
 	// make sure that it happens in Awk::run () - runios.data = this;
-	return (Awk::Awk*)extio->data;
+	return (Awk::Awk*)eio->data;
 }
 
-Awk::Extio::operator Awk::awk_t* () const 
+Awk::EIO::operator Awk::awk_t* () const 
 {
 	// it assumes that the Awk object is set to the data field.
 	// make sure that it happens in Awk::run () - runios.data = this;
-	return (Awk::awk_t*)(Awk::Awk*)extio->data;
+	return (Awk::awk_t*)(Awk::Awk*)eio->data;
 }
 
-Awk::Extio::operator Awk::extio_t* () const
+Awk::EIO::operator Awk::eio_t* () const
 {
-	return extio;
+	return eio;
 }
 
-Awk::Extio::operator Awk::run_t* () const
+Awk::EIO::operator Awk::run_t* () const
 {
-	return extio->run;
+	return eio->run;
 }
 
 //////////////////////////////////////////////////////////////////
 // Awk::Pipe
 //////////////////////////////////////////////////////////////////
 
-Awk::Pipe::Pipe (extio_t* extio): Extio(extio)
+Awk::Pipe::Pipe (eio_t* eio): EIO(eio)
 {
 }
 
 Awk::Pipe::Mode Awk::Pipe::getMode () const
 {
-	return (Mode)extio->mode;
+	return (Mode)eio->mode;
 }
 
 //////////////////////////////////////////////////////////////////
 // Awk::File
 //////////////////////////////////////////////////////////////////
 
-Awk::File::File (extio_t* extio): Extio(extio)
+Awk::File::File (eio_t* eio): EIO(eio)
 {
 }
 
 Awk::File::Mode Awk::File::getMode () const
 {
-	return (Mode)extio->mode;
+	return (Mode)eio->mode;
 }
 
 //////////////////////////////////////////////////////////////////
 // Awk::Console
 //////////////////////////////////////////////////////////////////
 
-Awk::Console::Console (extio_t* extio): Extio(extio), filename(QSE_NULL)
+Awk::Console::Console (eio_t* eio): EIO(eio), filename(QSE_NULL)
 {
 }
 
@@ -139,15 +139,15 @@ Awk::Console::~Console ()
 
 int Awk::Console::setFileName (const char_t* name)
 {
-	if (extio->mode == READ)
+	if (eio->mode == READ)
 	{
 		return qse_awk_setfilename (
-			extio->run, name, qse_strlen(name));
+			eio->run, name, qse_strlen(name));
 	}
 	else
 	{
 		return qse_awk_setofilename (
-			extio->run, name, qse_strlen(name));
+			eio->run, name, qse_strlen(name));
 	}
 }
 
@@ -156,19 +156,19 @@ int Awk::Console::setFNR (long_t fnr)
 	qse_awk_val_t* tmp;
 	int n;
 
-	tmp = qse_awk_makeintval (extio->run, fnr);
+	tmp = qse_awk_makeintval (eio->run, fnr);
 	if (tmp == QSE_NULL) return -1;
 
-	qse_awk_refupval (extio->run, tmp);
-	n = qse_awk_setglobal (extio->run, QSE_AWK_GLOBAL_FNR, tmp);
-	qse_awk_refdownval (extio->run, tmp);
+	qse_awk_refupval (eio->run, tmp);
+	n = qse_awk_setglobal (eio->run, QSE_AWK_GLOBAL_FNR, tmp);
+	qse_awk_refdownval (eio->run, tmp);
 
 	return n;
 }
 
 Awk::Console::Mode Awk::Console::getMode () const
 {
-	return (Mode)extio->mode;
+	return (Mode)eio->mode;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -1211,7 +1211,7 @@ int Awk::open ()
 
 	int opt = 
 		OPT_IMPLICIT |
-		OPT_EXTIO | 
+		OPT_EIO | 
 		OPT_NEWLINE | 
 		OPT_BASEONE |
 		OPT_PABLOCK;
@@ -1614,12 +1614,12 @@ Awk::ssize_t Awk::sourceWriter (
 Awk::ssize_t Awk::pipeHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
-	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->data;
+	eio_t* eio = (eio_t*)arg;
+	Awk* awk = (Awk*)eio->data;
 
-	QSE_ASSERT ((extio->type & 0xFF) == QSE_AWK_EXTIO_PIPE);
+	QSE_ASSERT ((eio->type & 0xFF) == QSE_AWK_EIO_PIPE);
 
-	Pipe pipe (extio);
+	Pipe pipe (eio);
 
 	switch (cmd)
 	{
@@ -1646,12 +1646,12 @@ Awk::ssize_t Awk::pipeHandler (
 Awk::ssize_t Awk::fileHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
-	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->data;
+	eio_t* eio = (eio_t*)arg;
+	Awk* awk = (Awk*)eio->data;
 
-	QSE_ASSERT ((extio->type & 0xFF) == QSE_AWK_EXTIO_FILE);
+	QSE_ASSERT ((eio->type & 0xFF) == QSE_AWK_EIO_FILE);
 
-	File file (extio);
+	File file (eio);
 
 	switch (cmd)
 	{
@@ -1678,12 +1678,12 @@ Awk::ssize_t Awk::fileHandler (
 Awk::ssize_t Awk::consoleHandler (
 	int cmd, void* arg, char_t* data, size_t count)
 {
-	extio_t* extio = (extio_t*)arg;
-	Awk* awk = (Awk*)extio->data;
+	eio_t* eio = (eio_t*)arg;
+	Awk* awk = (Awk*)eio->data;
 
-	QSE_ASSERT ((extio->type & 0xFF) == QSE_AWK_EXTIO_CONSOLE);
+	QSE_ASSERT ((eio->type & 0xFF) == QSE_AWK_EIO_CONSOLE);
 
-	Console console (extio);
+	Console console (eio);
 
 	switch (cmd)
 	{
