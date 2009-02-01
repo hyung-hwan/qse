@@ -1482,7 +1482,7 @@ static int qse_awk_runfunc (qse_awk_rtx_t* run, const qse_char_t* name)
 
 
 	/* forge a fake node containing a function call */
-	nde.type = QSE_AWK_NDE_AFN;
+	nde.type = QSE_AWK_NDE_FUN;
 	nde.line = 0;
 	nde.next = QSE_NULL;
 	nde.what.fun.name.ptr = (qse_char_t*)name;
@@ -1693,7 +1693,7 @@ static int ____run_main_to_be_removed____ (
 		struct capture_retval_data_t crdata;
 		qse_awk_nde_call_t nde;
 
-		nde.type = QSE_AWK_NDE_AFN;
+		nde.type = QSE_AWK_NDE_FUN;
 		nde.line = 0;
 		nde.next = QSE_NULL;
 		nde.what.fun.name.ptr = (qse_char_t*)main;
@@ -6088,7 +6088,7 @@ static qse_awk_val_t* eval_call (
 					/* the handler has not set the error.
 					 * fix it */ 
 					qse_awk_rtx_seterror (
-						run, QSE_AWK_EBFNIMPL, 
+						run, QSE_AWK_EFNCIMPL, 
 						nde->line, QSE_NULL, 0);
 				}
 				else

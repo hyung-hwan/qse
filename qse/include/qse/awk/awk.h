@@ -288,8 +288,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EBLKEND,        /* END requires an action block */
 	QSE_AWK_EDUPBEG,        /* duplicate BEGIN */
 	QSE_AWK_EDUPEND,        /* duplicate END */
-	QSE_AWK_EBFNRED,        /* intrinsic function redefined */
-	QSE_AWK_EAFNRED,        /* function redefined */
+	QSE_AWK_EFNCRED,        /* intrinsic function redefined */
+	QSE_AWK_EFUNRED,        /* function redefined */
 	QSE_AWK_EGBLRED,        /* global variable redefined */
 	QSE_AWK_EPARRED,        /* parameter redefined */
 	QSE_AWK_EVARRED,        /* named variable redefined */
@@ -341,8 +341,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_ERNEXTEND,         /* next called from END */
 	QSE_AWK_ERNEXTFBEG,        /* nextfile called from BEGIN */
 	QSE_AWK_ERNEXTFEND,        /* nextfile called from END */
-	QSE_AWK_EBFNUSER,          /* wrong intrinsic function implementation */
-	QSE_AWK_EBFNIMPL,          /* intrinsic function handler failed */
+	QSE_AWK_EFNCUSER,          /* wrong intrinsic function implementation */
+	QSE_AWK_EFNCIMPL,          /* intrinsic function handler failed */
 	QSE_AWK_EIOUSER,           /* wrong user io handler implementation */
 	QSE_AWK_EIONONE,           /* no such io name found */
 	QSE_AWK_EIOIMPL,           /* i/o callback returned an error */

@@ -272,7 +272,7 @@ static void print_usage (const qse_char_t* argv0)
 	}
 }
 
-static int bfn_sleep (
+static int fnc_sleep (
 	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
@@ -566,14 +566,14 @@ static qse_awk_t* open_awk (void)
 	/*
 	qse_awk_seterrstr (awk, QSE_AWK_EGBLRED, 
 		QSE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
-	qse_awk_seterrstr (awk, QSE_AWK_EAFNRED, 
+	qse_awk_seterrstr (awk, QSE_AWK_EFUNRED, 
 		QSE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
 	*/
 	/*qse_awk_setkeyword (awk, QSE_T("func"), 4, QSE_T("FX"), 2);*/
 
 	if (qse_awk_addfnc (awk, 
 		QSE_T("sleep"), 5, 0,
-		1, 1, QSE_NULL, bfn_sleep) == QSE_NULL)
+		1, 1, QSE_NULL, fnc_sleep) == QSE_NULL)
 	{
 		qse_awk_close (awk);
 		qse_printf (QSE_T("ERROR: cannot add function 'sleep'\n"));

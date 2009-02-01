@@ -52,8 +52,8 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_EXP_INCPRE,
 	QSE_AWK_NDE_EXP_INCPST,
 	QSE_AWK_NDE_CND,
-	QSE_AWK_NDE_BFN,
-	QSE_AWK_NDE_AFN,
+	QSE_AWK_NDE_FNC,
+	QSE_AWK_NDE_FUN,
 	QSE_AWK_NDE_INT,
 	QSE_AWK_NDE_REAL,
 	QSE_AWK_NDE_STR,
@@ -258,7 +258,7 @@ struct qse_awk_nde_var_t
 	qse_awk_nde_t* idx; /* QSE_NULL for non-XXXXIDX */
 };
 
-/* QSE_AWK_NDE_BFN, QSE_AWK_NDE_AFN */
+/* QSE_AWK_NDE_FNC, QSE_AWK_NDE_FUN */
 struct qse_awk_nde_call_t
 {
 	QSE_AWK_NDE_HDR;
