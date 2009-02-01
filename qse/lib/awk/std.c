@@ -771,9 +771,9 @@ int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_runcbs_t* cbs)
 /*** EXTRA BUILTIN FUNCTIONS ***/
 enum
 {
-	BFN_MATH_LD,
-	BFN_MATH_D,
-	BFN_MATH_F
+	FNC_MATH_LD,
+	FNC_MATH_D,
+	FNC_MATH_F
 };
 
 static int fnc_math_1 (
@@ -795,20 +795,20 @@ static int fnc_math_1 (
 	if (n == -1) return -1;
 	if (n == 0) rv = (qse_real_t)lv;
 
-	if (type == BFN_MATH_LD)
+	if (type == FNC_MATH_LD)
 	{
 		long double (*rf) (long double) = 
 			(long double(*)(long double))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
-	else if (type == BFN_MATH_D)
+	else if (type == FNC_MATH_D)
 	{
 		double (*rf) (double) = (double(*)(double))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	else 
 	{
-		QSE_ASSERT (type == BFN_MATH_F);
+		QSE_ASSERT (type == FNC_MATH_F);
 		float (*rf) (float) = (float(*)(float))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
@@ -847,20 +847,20 @@ static int fnc_math_2 (
 	if (n == -1) return -1;
 	if (n == 0) rv1 = (qse_real_t)lv1;
 
-	if (type == BFN_MATH_LD)
+	if (type == FNC_MATH_LD)
 	{
 		long double (*rf) (long double,long double) = 
 			(long double(*)(long double,long double))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
-	else if (type == BFN_MATH_D)
+	else if (type == FNC_MATH_D)
 	{
 		double (*rf) (double,double) = (double(*)(double,double))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	else 
 	{
-		QSE_ASSERT (type == BFN_MATH_F);
+		QSE_ASSERT (type == FNC_MATH_F);
 		float (*rf) (float,float) = (float(*)(float,float))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
@@ -880,11 +880,11 @@ static int fnc_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_SINL)
-		BFN_MATH_LD, (void*)sinl
+		FNC_MATH_LD, (void*)sinl
 	#elif defined(HAVE_SIN)
-		BFN_MATH_D, (void*)sin
+		FNC_MATH_D, (void*)sin
 	#elif defined(HAVE_SINF)
-		BFN_MATH_F, (void*)sinf
+		FNC_MATH_F, (void*)sinf
 	#else
 		#error ### no sin function available ###
 	#endif
@@ -896,11 +896,11 @@ static int fnc_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_COSL)
-		BFN_MATH_LD, (void*)cosl
+		FNC_MATH_LD, (void*)cosl
 	#elif defined(HAVE_COS)
-		BFN_MATH_D, (void*)cos
+		FNC_MATH_D, (void*)cos
 	#elif defined(HAVE_COSF)
-		BFN_MATH_F, (void*)cosf
+		FNC_MATH_F, (void*)cosf
 	#else
 		#error ### no cos function available ###
 	#endif
@@ -912,11 +912,11 @@ static int fnc_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_TANL)
-		BFN_MATH_LD, (void*)tanl
+		FNC_MATH_LD, (void*)tanl
 	#elif defined(HAVE_TAN)
-		BFN_MATH_D, (void*)tan
+		FNC_MATH_D, (void*)tan
 	#elif defined(HAVE_TANF)
-		BFN_MATH_F, (void*)tanf
+		FNC_MATH_F, (void*)tanf
 	#else
 		#error ### no tan function available ###
 	#endif
@@ -928,11 +928,11 @@ static int fnc_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_ATANL)
-		BFN_MATH_LD, (void*)atanl
+		FNC_MATH_LD, (void*)atanl
 	#elif defined(HAVE_ATAN)
-		BFN_MATH_D, (void*)atan
+		FNC_MATH_D, (void*)atan
 	#elif defined(HAVE_ATANF)
-		BFN_MATH_F, (void*)atanf
+		FNC_MATH_F, (void*)atanf
 	#else
 		#error ### no atan function available ###
 	#endif
@@ -944,11 +944,11 @@ static int fnc_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_2 (
 		run, fnm, fnl, 
 	#if defined(HAVE_ATAN2L)
-		BFN_MATH_LD, (void*)atan2l
+		FNC_MATH_LD, (void*)atan2l
 	#elif defined(HAVE_ATAN2)
-		BFN_MATH_D, (void*)atan2
+		FNC_MATH_D, (void*)atan2
 	#elif defined(HAVE_ATAN2F)
-		BFN_MATH_F, (void*)atan2f
+		FNC_MATH_F, (void*)atan2f
 	#else
 		#error ### no atan2 function available ###
 	#endif
@@ -960,11 +960,11 @@ static int fnc_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_LOGL)
-		BFN_MATH_LD, (void*)logl
+		FNC_MATH_LD, (void*)logl
 	#elif defined(HAVE_LOG)
-		BFN_MATH_D, (void*)log
+		FNC_MATH_D, (void*)log
 	#elif defined(HAVE_LOGF)
-		BFN_MATH_F, (void*)logf
+		FNC_MATH_F, (void*)logf
 	#else
 		#error ### no log function available ###
 	#endif
@@ -976,11 +976,11 @@ static int fnc_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_EXPL)
-		BFN_MATH_LD, (void*)expl
+		FNC_MATH_LD, (void*)expl
 	#elif defined(HAVE_EXP)
-		BFN_MATH_D, (void*)exp
+		FNC_MATH_D, (void*)exp
 	#elif defined(HAVE_EXPF)
-		BFN_MATH_F, (void*)expf
+		FNC_MATH_F, (void*)expf
 	#else
 		#error ### no exp function available ###
 	#endif
@@ -992,11 +992,11 @@ static int fnc_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_SQRTL)
-		BFN_MATH_LD, (void*)sqrtl
+		FNC_MATH_LD, (void*)sqrtl
 	#elif defined(HAVE_SQRT)
-		BFN_MATH_D, (void*)sqrt
+		FNC_MATH_D, (void*)sqrt
 	#elif defined(HAVE_SQRTF)
-		BFN_MATH_F, (void*)sqrtf
+		FNC_MATH_F, (void*)sqrtf
 	#else
 		#error ### no sqrt function available ###
 	#endif
