@@ -350,12 +350,12 @@ int qse_awk_rtx_geterrnum (qse_awk_rtx_t* run)
 	return run->errnum;
 }
 
-qse_size_t qse_awk_getrunerrlin (qse_awk_rtx_t* run)
+qse_size_t qse_awk_rtx_geterrlin (qse_awk_rtx_t* run)
 {
 	return run->errlin;
 }
 
-const qse_char_t* qse_awk_getrunerrmsg (qse_awk_rtx_t* run)
+const qse_char_t* qse_awk_rtx_geterrmsg (qse_awk_rtx_t* run)
 {
 	if (run->errmsg[0] == QSE_T('\0')) 
 		return qse_awk_geterrstr (run->awk, run->errnum);
@@ -363,14 +363,14 @@ const qse_char_t* qse_awk_getrunerrmsg (qse_awk_rtx_t* run)
 	return run->errmsg;
 }
 
-void qse_awk_setrunerrnum (qse_awk_rtx_t* run, int errnum)
+void qse_awk_rtx_seterrnum (qse_awk_rtx_t* run, int errnum)
 {
 	run->errnum = errnum;
 	run->errlin = 0;
 	run->errmsg[0] = QSE_T('\0');
 }
 
-void qse_awk_setrunerrmsg (qse_awk_rtx_t* run, 
+void qse_awk_rtx_seterrmsg (qse_awk_rtx_t* run, 
 	int errnum, qse_size_t errlin, const qse_char_t* errmsg)
 {
 	run->errnum = errnum;
@@ -378,7 +378,7 @@ void qse_awk_setrunerrmsg (qse_awk_rtx_t* run,
 	qse_strxcpy (run->errmsg, QSE_COUNTOF(run->errmsg), errmsg);
 }
 
-void qse_awk_getrunerror (
+void qse_awk_rtx_geterror (
 	qse_awk_rtx_t* run, int* errnum, 
 	qse_size_t* errlin, const qse_char_t** errmsg)
 {
@@ -393,7 +393,7 @@ void qse_awk_getrunerror (
 	}
 }
 
-void qse_awk_setrunerror (
+void qse_awk_rtx_seterror (
 	qse_awk_rtx_t* run, int errnum, qse_size_t errlin,
 	const qse_cstr_t* errarg, qse_size_t argcnt)
 {

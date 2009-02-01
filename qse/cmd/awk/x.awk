@@ -28,6 +28,6 @@ BEGIN {
 	print "wide characteter  넓은 문자";
 
 	print fflush ("abc");
-	return "x.awk";
+	#return "x.awk";
 }
 

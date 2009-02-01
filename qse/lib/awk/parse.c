@@ -205,7 +205,7 @@ static qse_awk_nde_t* parse_hashidx (
 	qse_size_t line);
 static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, qse_char_t* name, qse_size_t name_len, 
-	qse_awk_bfn_t* bfn, qse_size_t line);
+	qse_awk_fnc_t* fnc, qse_size_t line);
 static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_while (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_for (qse_awk_t* awk, qse_size_t line);
@@ -560,10 +560,10 @@ static int parse (qse_awk_t* awk)
 			qse_map_pair_t* p;
 			qse_size_t buckno;
 
-			p = qse_map_getfirstpair (awk->parse.afns, &buckno);
+			p = qse_map_getfirstpair (awk->parse.funs, &buckno);
 			while (p != QSE_NULL)
 			{
-				if (qse_map_search (awk->tree.afns, 
+				if (qse_map_search (awk->tree.funs, 
 					QSE_MAP_KPTR(p), QSE_MAP_KLEN(p)) == QSE_NULL)
 				{
 					/* TODO: set better error no & line */
@@ -574,7 +574,7 @@ static int parse (qse_awk_t* awk)
 					EXIT_PARSE(-1);
 				}
 
-				p = qse_map_getnextpair (awk->parse.afns, p, &buckno);
+				p = qse_map_getnextpair (awk->parse.funs, p, &buckno);
 			}
 
 		}
@@ -834,7 +834,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	qse_char_t* name_dup;
 	qse_size_t name_len;
 	qse_awk_nde_t* body;
-	qse_awk_afn_t* afn;
+	qse_awk_fun_t* fun;
 	qse_size_t nargs, g;
 	qse_map_pair_t* pair;
 
@@ -854,13 +854,13 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	name_len = QSE_STR_LEN(awk->token.name);
 
 	/* check if it is a builtin function */
-	if (qse_awk_getbfn (awk, name, name_len) != QSE_NULL)
+	if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
 	{
 		SETERRARG (awk, QSE_AWK_EBFNRED, awk->token.line, name, name_len);
 		return QSE_NULL;
 	}
 
-	if (qse_map_search (awk->tree.afns, name, name_len) != QSE_NULL) 
+	if (qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL) 
 	{
 		/* the function is defined previously */
 		SETERRARG (
@@ -1052,15 +1052,15 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 	/* remember the current function name so that the body parser
 	 * can know the name of the current function being parsed */
-	awk->tree.cur_afn.ptr = name_dup;
-	awk->tree.cur_afn.len = name_len;
+	awk->tree.cur_fun.ptr = name_dup;
+	awk->tree.cur_fun.len = name_len;
 
 	/* actual function body */
 	body = awk->parse.parse_block (awk, awk->token.prev.line, QSE_TRUE);
 
 	/* clear the current function name remembered */
-	awk->tree.cur_afn.ptr = QSE_NULL;
-	awk->tree.cur_afn.len = 0;
+	awk->tree.cur_fun.ptr = QSE_NULL;
+	awk->tree.cur_fun.len = 0;
 
 	if (body == QSE_NULL) 
 	{
@@ -1075,8 +1075,8 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* parameter names are not required anymore. clear them */
 	qse_lda_clear (awk->parse.params);
 
-	afn = (qse_awk_afn_t*) QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_afn_t));
-	if (afn == QSE_NULL) 
+	fun = (qse_awk_fun_t*) QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_fun_t));
+	if (fun == QSE_NULL) 
 	{
 		QSE_AWK_FREE (awk, name_dup);
 		qse_awk_clrpt (awk, body);
@@ -1085,12 +1085,12 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 		return QSE_NULL;
 	}
 
-	afn->name.ptr = QSE_NULL; /* function name is set below */
-	afn->name.len = 0;
-	afn->nargs = nargs;
-	afn->body = body;
+	fun->name.ptr = QSE_NULL; /* function name is set below */
+	fun->name.len = 0;
+	fun->nargs = nargs;
+	fun->body = body;
 
-	pair = qse_map_insert (awk->tree.afns, name_dup, name_len, afn, 0);
+	pair = qse_map_insert (awk->tree.funs, name_dup, name_len, fun, 0);
 	if (pair == QSE_NULL)
 	{
 		/* if qse_map_insert() fails for other reasons than memory 
@@ -1098,7 +1098,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 		 * functions are detected earlier in this function */
 		QSE_AWK_FREE (awk, name_dup);
 		qse_awk_clrpt (awk, body);
-		QSE_AWK_FREE (awk, afn);
+		QSE_AWK_FREE (awk, fun);
 
 		SETERRLIN (awk, QSE_AWK_ENOMEM, awk->token.line);
 		return QSE_NULL;
@@ -1106,12 +1106,12 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 	/* do some trick to save a string. make it back-point at the key part 
 	 * of the pair */
-	afn->name.ptr = QSE_MAP_KPTR(pair); 
-	afn->name.len = QSE_MAP_KLEN(pair);
+	fun->name.ptr = QSE_MAP_KPTR(pair); 
+	fun->name.len = QSE_MAP_KLEN(pair);
 	QSE_AWK_FREE (awk, name_dup);
 
-	/* remove an undefined function call entry from the parse.afn table */
-	qse_map_delete (awk->parse.afns, afn->name.ptr, name_len);
+	/* remove an undefined function call entry from the parse.fun table */
+	qse_map_delete (awk->parse.funs, fun->name.ptr, name_len);
 	return body;
 }
 
@@ -1517,7 +1517,7 @@ static int add_global (
 	{
 	#endif
 		/* check if it conflict with a builtin function name */
-		if (qse_awk_getbfn (awk, name, len) != QSE_NULL)
+		if (qse_awk_getfnc (awk, name, len) != QSE_NULL)
 		{
 			SETERRARG (
 				awk, QSE_AWK_EBFNRED, awk->token.line,
@@ -1526,7 +1526,7 @@ static int add_global (
 		}
 
 		/* check if it conflict with a function name */
-		if (qse_map_search (awk->tree.afns, name, len) != QSE_NULL) 
+		if (qse_map_search (awk->tree.funs, name, len) != QSE_NULL) 
 		{
 			SETERRARG (
 				awk, QSE_AWK_EAFNRED, line, 
@@ -1536,7 +1536,7 @@ static int add_global (
 
 		/* check if it conflict with a function name 
 		 * caught in the function call table */
-		if (qse_map_search (awk->parse.afns, name, len) != QSE_NULL)
+		if (qse_map_search (awk->parse.funs, name, len) != QSE_NULL)
 		{
 			SETERRARG (
 				awk, QSE_AWK_EAFNRED, line, 
@@ -1706,7 +1706,7 @@ static qse_awk_t* collect_locals (
 
 			/* check if it conflict with a builtin function name 
 			 * function f() { local length; } */
-			if (qse_awk_getbfn (awk, local.ptr, local.len) != QSE_NULL)
+			if (qse_awk_getfnc (awk, local.ptr, local.len) != QSE_NULL)
 			{
 				SETERRARG (
 					awk, QSE_AWK_EBFNRED, awk->token.line,
@@ -1716,14 +1716,14 @@ static qse_awk_t* collect_locals (
 
 		#if 0
 			/* check if it conflict with a function name */
-			if (awk->tree.cur_afn.ptr != QSE_NULL)
+			if (awk->tree.cur_fun.ptr != QSE_NULL)
 			{
 				iscur = (qse_strxncmp (
-					awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+					awk->tree.cur_fun.ptr, awk->tree.cur_fun.len, 
 					local.ptr, local.len) == 0);
 			}
 
-			if (iscur || qse_map_search (awk->tree.afns, local.ptr, local.len) != QSE_NULL) 
+			if (iscur || qse_map_search (awk->tree.funs, local.ptr, local.len) != QSE_NULL) 
 			{
 				SETERRARG (
 					awk, QSE_AWK_EAFNRED, awk->token.line,
@@ -1733,7 +1733,7 @@ static qse_awk_t* collect_locals (
 
 			/* check if it conflict with a function name 
 			 * caught in the function call table */
-			if (qse_map_search (awk->parse.afns, 
+			if (qse_map_search (awk->parse.funs, 
 				local.ptr, local.len) != QSE_NULL)
 			{
 				SETERRARG (
@@ -3247,7 +3247,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 {
 	qse_char_t* name_dup;
 	qse_size_t name_len;
-	qse_awk_bfn_t* bfn;
+	qse_awk_fnc_t* fnc;
 	qse_size_t idxa;
 
 	QSE_ASSERT (MATCH(awk,TOKEN_IDENT));
@@ -3269,8 +3269,8 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 	}
 
 	/* check if name_dup is an intrinsic function name */
-	bfn = qse_awk_getbfn (awk, name_dup, name_len);
-	if (bfn != QSE_NULL)
+	fnc = qse_awk_getfnc (awk, name_dup, name_len);
+	if (fnc != QSE_NULL)
 	{
 		qse_awk_nde_t* nde;
 
@@ -3283,7 +3283,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 			return QSE_NULL;
 		}
 
-		nde = parse_fncall (awk, name_dup, name_len, bfn, line);
+		nde = parse_fncall (awk, name_dup, name_len, fnc, line);
 		if (nde == QSE_NULL) QSE_AWK_FREE (awk, name_dup);
 		return (qse_awk_nde_t*)nde;
 	}
@@ -3443,28 +3443,28 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 
 				/* the name should not conflict with a function name */
 				/* check if it is a builtin function */
-				if (qse_awk_getbfn (awk, name_dup, name_len) != QSE_NULL)
+				if (qse_awk_getfnc (awk, name_dup, name_len) != QSE_NULL)
 				{
 					SETERRARG (awk, QSE_AWK_EBFNRED, line, name_dup, name_len);
 					goto exit_func;
 				}
 
 				/* check if it is an AWK function */
-				if (awk->tree.cur_afn.ptr != QSE_NULL)
+				if (awk->tree.cur_fun.ptr != QSE_NULL)
 				{
 					iscur = (qse_strxncmp (
-						awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+						awk->tree.cur_fun.ptr, awk->tree.cur_fun.len, 
 						name_dup, name_len) == 0);
 				}
 
-				if (iscur || qse_map_search (awk->tree.afns, name_dup, name_len) != QSE_NULL) 
+				if (iscur || qse_map_search (awk->tree.funs, name_dup, name_len) != QSE_NULL) 
 				{
 					/* the function is defined previously */
 					SETERRARG (awk, QSE_AWK_EAFNRED, line, name_dup, name_len);
 					goto exit_func;
 				}
 
-				if (qse_map_search (awk->parse.afns, 
+				if (qse_map_search (awk->parse.funs, 
 					name_dup, name_len) != QSE_NULL)
 				{
 					/* is it one of the function calls found so far? */
@@ -3626,21 +3626,21 @@ static qse_awk_nde_t* parse_hashidx (
 			qse_bool_t iscur = QSE_FALSE;
 
 			/* check if it is a builtin function */
-			if (qse_awk_getbfn (awk, name, name_len) != QSE_NULL)
+			if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
 			{
 				SETERRARG (awk, QSE_AWK_EBFNRED, line, name, name_len);
 				goto exit_func;
 			}
 
 			/* check if it is an AWK function */
-			if (awk->tree.cur_afn.ptr != QSE_NULL)
+			if (awk->tree.cur_fun.ptr != QSE_NULL)
 			{
 				iscur = (qse_strxncmp (
-					awk->tree.cur_afn.ptr, awk->tree.cur_afn.len, 
+					awk->tree.cur_fun.ptr, awk->tree.cur_fun.len, 
 					name, name_len) == 0);
 			}
 
-			if (iscur || qse_map_search (awk->tree.afns, name, name_len) != QSE_NULL) 
+			if (iscur || qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL) 
 			{
 				/* the function is defined previously */
 				SETERRARG (awk, QSE_AWK_EAFNRED, line, name, name_len);
@@ -3648,7 +3648,7 @@ static qse_awk_nde_t* parse_hashidx (
 			}
 
 			if (qse_map_search (
-				awk->parse.afns, name, name_len) != QSE_NULL)
+				awk->parse.funs, name, name_len) != QSE_NULL)
 			{
 				/* is it one of the function calls found so far? */
 				SETERRARG (awk, QSE_AWK_EAFNRED, line, name, name_len);
@@ -3682,7 +3682,7 @@ exit_func:
 
 static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, qse_char_t* name, qse_size_t name_len, 
-	qse_awk_bfn_t* bfn, qse_size_t line)
+	qse_awk_fnc_t* fnc, qse_size_t line)
 {
 	qse_awk_nde_t* head, * curr, * nde;
 	qse_awk_nde_call_t* call;
@@ -3755,28 +3755,28 @@ static qse_awk_nde_t* parse_fncall (
 		return QSE_NULL;
 	}
 
-	if (bfn != QSE_NULL)
+	if (fnc != QSE_NULL)
 	{
 		call->type = QSE_AWK_NDE_BFN;
 		call->line = line;
 		call->next = QSE_NULL;
 
-		/*call->what.bfn = bfn; */
-		call->what.bfn.name.ptr = name;
-		call->what.bfn.name.len = name_len;
+		/*call->what.fnc = fnc; */
+		call->what.fnc.name.ptr = name;
+		call->what.fnc.name.len = name_len;
 
-		/* NOTE: oname is the original as in the bfn table.
+		/* NOTE: oname is the original as in the fnc table.
 		 *       it would not duplicated here and not freed in
-		 *       qse_awk_clrpt either. so qse_awk_delfunc between
+		 *       qse_awk_clrpt either. so qse_awk_delfnc between
 		 *       qse_awk_parse and qse_awk_run may cause the program 
 		 *       to fail. */
-		call->what.bfn.oname.ptr = bfn->name.ptr;
-		call->what.bfn.oname.len = bfn->name.len;
+		call->what.fnc.oname.ptr = fnc->name.ptr;
+		call->what.fnc.oname.len = fnc->name.len;
 
-		call->what.bfn.arg.min = bfn->arg.min;
-		call->what.bfn.arg.max = bfn->arg.max;
-		call->what.bfn.arg.spec = bfn->arg.spec;
-		call->what.bfn.handler = bfn->handler;
+		call->what.fnc.arg.min = fnc->arg.min;
+		call->what.fnc.arg.max = fnc->arg.max;
+		call->what.fnc.arg.spec = fnc->arg.spec;
+		call->what.fnc.handler = fnc->handler;
 
 		call->args = head;
 		call->nargs = nargs;
@@ -3786,8 +3786,8 @@ static qse_awk_nde_t* parse_fncall (
 		call->type = QSE_AWK_NDE_AFN;
 		call->line = line;
 		call->next = QSE_NULL;
-		call->what.afn.name.ptr = name; 
-		call->what.afn.name.len = name_len;
+		call->what.fun.name.ptr = name; 
+		call->what.fun.name.len = name_len;
 		call->args = head;
 		call->nargs = nargs;
 
@@ -3798,9 +3798,9 @@ static qse_awk_nde_t* parse_fncall (
 		{
 		#endif
 
-			/* store a non-builtin function call into the parse.afns table */
+			/* store a non-builtin function call into the parse.funs table */
 			if (qse_map_upsert (
-				awk->parse.afns, name, name_len,
+				awk->parse.funs, name, name_len,
 				&line, QSE_SIZEOF(line)) == QSE_NULL)
 			{
 				QSE_AWK_FREE (awk, call);
@@ -5753,7 +5753,7 @@ static int deparse (qse_awk_t* awk)
 	df.tmp_len = QSE_COUNTOF(tmp);
 	df.ret = 0;
 
-	qse_map_walk (awk->tree.afns, deparse_func, &df);
+	qse_map_walk (awk->tree.funs, deparse_func, &df);
 	if (df.ret == -1)
 	{
 		EXIT_DEPARSE ();
@@ -5864,11 +5864,11 @@ static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* 
 {
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
 /* CHECK: */
-	qse_awk_afn_t* afn = (qse_awk_afn_t*)QSE_MAP_VPTR(pair);
+	qse_awk_fun_t* fun = (qse_awk_fun_t*)QSE_MAP_VPTR(pair);
 	qse_size_t i, n;
 	qse_cstr_t kw;
 
-	QSE_ASSERT (qse_strxncmp (QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair), afn->name.ptr, afn->name.len) == 0);
+	QSE_ASSERT (qse_strxncmp (QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair), fun->name.ptr, fun->name.len) == 0);
 
 #define PUT_C(x,c) \
 	if (put_char(x->awk,c)==-1) { \
@@ -5889,17 +5889,17 @@ static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* 
 	PUT_SX (df, kw.ptr, kw.len);
 
 	PUT_C (df, QSE_T(' '));
-	PUT_SX (df, afn->name.ptr, afn->name.len);
+	PUT_SX (df, fun->name.ptr, fun->name.len);
 	PUT_S (df, QSE_T(" ("));
 
-	for (i = 0; i < afn->nargs; ) 
+	for (i = 0; i < fun->nargs; ) 
 	{
 		n = qse_awk_longtostr (i++, 10, 
 			QSE_T("__p"), df->tmp, df->tmp_len);
 		QSE_ASSERT (n != (qse_size_t)-1);
 		PUT_SX (df, df->tmp, n);
 
-		if (i >= afn->nargs) break;
+		if (i >= fun->nargs) break;
 		PUT_S (df, QSE_T(", "));
 	}
 
@@ -5908,7 +5908,7 @@ static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* 
 
 	PUT_C (df, QSE_T('\n'));
 
-	if (qse_awk_prnpt (df->awk, afn->body) == -1) return -1;
+	if (qse_awk_prnpt (df->awk, fun->body) == -1) return -1;
 	if (df->awk->option & QSE_AWK_CRLF)
 	{
 		PUT_C (df, QSE_T('\r'));

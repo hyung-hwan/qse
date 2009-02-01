@@ -23,7 +23,7 @@ static int recomp_record_fields (
 	qse_awk_rtx_t* run, qse_size_t lv, 
 	const qse_char_t* str, qse_size_t len);
 
-int qse_awk_setrec (
+int qse_awk_rtx_setrec (
 	qse_awk_rtx_t* run, qse_size_t idx, 
 	const qse_char_t* str, qse_size_t len)
 {
@@ -34,37 +34,37 @@ int qse_awk_setrec (
 		if (str == QSE_STR_PTR(&run->inrec.line) &&
 		    len == QSE_STR_LEN(&run->inrec.line))
 		{
-			if (qse_awk_clrrec (run, QSE_TRUE) == -1) return -1;
+			if (qse_awk_rtx_clrrec (run, QSE_TRUE) == -1) return -1;
 		}
 		else
 		{
-			if (qse_awk_clrrec (run, QSE_FALSE) == -1) return -1;
+			if (qse_awk_rtx_clrrec (run, QSE_FALSE) == -1) return -1;
 
 			if (qse_str_ncpy (&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				qse_awk_clrrec (run, QSE_FALSE);
-				qse_awk_setrunerror (
+				qse_awk_rtx_clrrec (run, QSE_FALSE);
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
 
-		v = qse_awk_makestrval (run, str, len);
+		v = qse_awk_rtx_makestrval (run, str, len);
 		if (v == QSE_NULL)
 		{
-			qse_awk_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 
 		QSE_ASSERT (run->inrec.d0->type == QSE_AWK_VAL_NIL);
 		/* d0 should be cleared before the next line is reached
-		 * as it doesn't call qse_awk_refdownval on run->inrec.d0 */
+		 * as it doesn't call qse_awk_rtx_refdownval on run->inrec.d0 */
 		run->inrec.d0 = v;
-		qse_awk_refupval (run, v);
+		qse_awk_rtx_refupval (run, v);
 
 		if (split_record (run) == -1) 
 		{
-			qse_awk_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 	}
@@ -72,23 +72,23 @@ int qse_awk_setrec (
 	{
 		if (recomp_record_fields (run, idx, str, len) == -1)
 		{
-			qse_awk_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 	
 		/* recompose $0 */
-		v = qse_awk_makestrval (run,
+		v = qse_awk_rtx_makestrval (run,
 			QSE_STR_PTR(&run->inrec.line), 
 			QSE_STR_LEN(&run->inrec.line));
 		if (v == QSE_NULL)
 		{
-			qse_awk_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, QSE_FALSE);
 			return -1;
 		}
 
-		qse_awk_refdownval (run, run->inrec.d0);
+		qse_awk_rtx_refdownval (run, run->inrec.d0);
 		run->inrec.d0 = v;
-		qse_awk_refupval (run, v);
+		qse_awk_rtx_refupval (run, v);
 	}
 
 	return 0;
@@ -122,7 +122,7 @@ static int split_record (qse_awk_rtx_t* run)
 	}
 	else 
 	{
-		fs_ptr = qse_awk_valtostr (
+		fs_ptr = qse_awk_rtx_valtostr (
 			run, fs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
 		if (fs_ptr == QSE_NULL) return -1;
 		fs_free = fs_ptr;
@@ -148,7 +148,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_setrunerror (run, errnum, 0, QSE_NULL, 0);
+				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
@@ -156,7 +156,7 @@ static int split_record (qse_awk_rtx_t* run)
 		if (nflds == 0 && p == QSE_NULL && tok_len == 0)
 		{
 			/* there are no fields. it can just return here
-			 * as qse_awk_clrrec has been called before this */
+			 * as qse_awk_rtx_clrrec has been called before this */
 			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 			return 0;
 		}
@@ -176,7 +176,7 @@ static int split_record (qse_awk_rtx_t* run)
 		if (tmp == QSE_NULL) 
 		{
 			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
-			qse_awk_setrunerror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
 
@@ -205,7 +205,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_setrunerror (run, errnum, 0, QSE_NULL, 0);
+				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL, 0);
 				return -1;
 			}
 		}
@@ -215,7 +215,7 @@ static int split_record (qse_awk_rtx_t* run)
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 		run->inrec.flds[run->inrec.nflds].val = 
-			qse_awk_makestrval (run, tok, tok_len);
+			qse_awk_rtx_makestrval (run, tok, tok_len);
 
 		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
 		{
@@ -223,7 +223,7 @@ static int split_record (qse_awk_rtx_t* run)
 			return -1;
 		}
 
-		qse_awk_refupval (run, run->inrec.flds[run->inrec.nflds].val);
+		qse_awk_rtx_refupval (run, run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
 		len = QSE_STR_LEN(&run->inrec.line) - 
@@ -233,29 +233,29 @@ static int split_record (qse_awk_rtx_t* run)
 	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 
 	/* set the number of fields */
-	v = qse_awk_makeintval (run, (qse_long_t)nflds);
+	v = qse_awk_rtx_makeintval (run, (qse_long_t)nflds);
 	if (v == QSE_NULL) return -1;
 
-	qse_awk_refupval (run, v);
+	qse_awk_rtx_refupval (run, v);
 	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 	{
-		qse_awk_refdownval (run, v);
+		qse_awk_rtx_refdownval (run, v);
 		return -1;
 	}
 
-	qse_awk_refdownval (run, v);
+	qse_awk_rtx_refdownval (run, v);
 	QSE_ASSERT (nflds == run->inrec.nflds);
 	return 0;
 }
 
-int qse_awk_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
+int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
 {
 	qse_size_t i;
 	int n = 0;
 
 	if (run->inrec.d0 != qse_awk_val_nil)
 	{
-		qse_awk_refdownval (run, run->inrec.d0);
+		qse_awk_rtx_refdownval (run, run->inrec.d0);
 		run->inrec.d0 = qse_awk_val_nil;
 	}
 
@@ -266,7 +266,7 @@ int qse_awk_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
 		for (i = 0; i < run->inrec.nflds; i++) 
 		{
 			QSE_ASSERT (run->inrec.flds[i].val != QSE_NULL);
-			qse_awk_refdownval (run, run->inrec.flds[i].val);
+			qse_awk_rtx_refdownval (run, run->inrec.flds[i].val);
 		}
 		run->inrec.nflds = 0;
 
@@ -315,7 +315,7 @@ static int recomp_record_fields (
 				QSE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == QSE_NULL) 
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
@@ -326,7 +326,7 @@ static int recomp_record_fields (
 				run->awk, QSE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == QSE_NULL)
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
@@ -355,7 +355,7 @@ static int recomp_record_fields (
 				run->global.ofs.ptr, 
 				run->global.ofs.len) == (qse_size_t)-1) 
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
@@ -373,20 +373,20 @@ static int recomp_record_fields (
 			if (qse_str_ncat (
 				&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 
-			tmp = qse_awk_makestrval (run, str,len);
+			tmp = qse_awk_rtx_makestrval (run, str,len);
 			if (tmp == QSE_NULL) return -1;
 
 			if (i < nflds)
-				qse_awk_refdownval (run, run->inrec.flds[i].val);
+				qse_awk_rtx_refdownval (run, run->inrec.flds[i].val);
 			else run->inrec.nflds++;
 
 			run->inrec.flds[i].val = tmp;
-			qse_awk_refupval (run, tmp);
+			qse_awk_rtx_refupval (run, tmp);
 		}
 		else if (i >= nflds)
 		{
@@ -398,17 +398,17 @@ static int recomp_record_fields (
 			if (qse_str_cat (
 				&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
 
-			/* qse_awk_refdownval should not be called over 
+			/* qse_awk_rtx_refdownval should not be called over 
 			 * run->inrec.flds[i].val as it is not initialized
 			 * to any valid values */
-			/*qse_awk_refdownval (run, run->inrec.flds[i].val);*/
+			/*qse_awk_rtx_refdownval (run, run->inrec.flds[i].val);*/
 			run->inrec.flds[i].val = qse_awk_val_zls;
-			qse_awk_refupval (run, qse_awk_val_zls);
+			qse_awk_rtx_refupval (run, qse_awk_val_zls);
 			run->inrec.nflds++;
 		}
 		else
@@ -425,7 +425,7 @@ static int recomp_record_fields (
 			if (qse_str_ncat (&run->inrec.line, 
 				tmp->ptr, tmp->len) == (qse_size_t)-1)
 			{
-				qse_awk_setrunerror (
+				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 				return -1;
 			}
@@ -437,16 +437,16 @@ static int recomp_record_fields (
 
 	if (((qse_awk_val_int_t*)v)->val != max)
 	{
-		v = qse_awk_makeintval (run, (qse_long_t)max);
+		v = qse_awk_rtx_makeintval (run, (qse_long_t)max);
 		if (v == QSE_NULL) return -1;
 
-		qse_awk_refupval (run, v);
+		qse_awk_rtx_refupval (run, v);
 		if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
 		{
-			qse_awk_refdownval (run, v);
+			qse_awk_rtx_refdownval (run, v);
 			return -1;
 		}
-		qse_awk_refdownval (run, v);
+		qse_awk_rtx_refdownval (run, v);
 	}
 
 	return 0;

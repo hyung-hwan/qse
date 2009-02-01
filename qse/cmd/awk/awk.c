@@ -140,7 +140,7 @@ static qse_map_walk_t print_awk_value (
 	qse_char_t* str;
 	qse_size_t len;
 
-	str = qse_awk_valtostr (run, QSE_MAP_VPTR(pair), 0, QSE_NULL, &len);
+	str = qse_awk_rtx_valtostr (run, QSE_MAP_VPTR(pair), 0, QSE_NULL, &len);
 	if (str == QSE_NULL)
 	{
 		dprint (QSE_T("***OUT OF MEMORY***\n"));
@@ -170,12 +170,12 @@ static int on_run_enter (qse_awk_rtx_t* run, void* data)
 	{
 		qse_awk_val_t* fs;
 
-		fs = qse_awk_makestrval0 (run, ao->fs);
+		fs = qse_awk_rtx_makestrval0 (run, ao->fs);
 		if (fs == QSE_NULL) return -1;
 
-		qse_awk_refupval (run, fs);
+		qse_awk_rtx_refupval (run, fs);
 		qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
-		qse_awk_refdownval (run, fs);
+		qse_awk_rtx_refdownval (run, fs);
 	}
 
 
@@ -194,7 +194,7 @@ static void on_run_exit (
 	}
 	else
 	{
-		str = qse_awk_valtostr (run, ret, 0, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostr (run, ret, 0, QSE_NULL, &len);
 		if (str == QSE_NULL)
 		{
 			dprint (QSE_T("[RETURN] - ***OUT OF MEMORY***\n"));
@@ -218,8 +218,8 @@ static void on_run_end (qse_awk_rtx_t* run, int errnum, void* data)
 		dprint (QSE_T("[AWK ENDED WITH AN ERROR]\n"));
 		qse_printf (QSE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
 			errnum, 
-			(unsigned int)qse_awk_getrunerrlin(run),
-			qse_awk_getrunerrmsg(run));
+			(unsigned int)qse_awk_rtx_geterrlin(run),
+			qse_awk_rtx_geterrmsg(run));
 	}
 	else dprint (QSE_T("[AWK ENDED SUCCESSFULLY]\n"));
 
@@ -287,7 +287,7 @@ static int bfn_sleep (
 
 	a0 = qse_awk_rtx_getarg (run, 0);
 
-	n = qse_awk_valtonum (run, a0, &lv, &rv);
+	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
 	if (n == 1) lv = (qse_long_t)rv;
 
@@ -298,10 +298,10 @@ static int bfn_sleep (
 	n = sleep (lv);	
 #endif
 
-	r = qse_awk_makeintval (run, n);
+	r = qse_awk_rtx_makeintval (run, n);
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -571,7 +571,7 @@ static qse_awk_t* open_awk (void)
 	*/
 	/*qse_awk_setkeyword (awk, QSE_T("func"), 4, QSE_T("FX"), 2);*/
 
-	if (qse_awk_addfunc (awk, 
+	if (qse_awk_addfnc (awk, 
 		QSE_T("sleep"), 5, 0,
 		1, 1, QSE_NULL, bfn_sleep) == QSE_NULL)
 	{
