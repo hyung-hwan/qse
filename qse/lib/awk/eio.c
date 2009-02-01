@@ -114,7 +114,7 @@ int qse_awk_readeio (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -134,7 +134,7 @@ int qse_awk_readeio (
 			run->awk, QSE_SIZEOF(qse_awk_eio_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -142,11 +142,11 @@ int qse_awk_readeio (
 		if (p->name == QSE_NULL)
 		{
 			QSE_AWK_FREE (run->awk, p);
-			qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
-		p->run = run;
+		p->rtx = run;
 		p->type = (eio_type | eio_mask);
 		p->mode = eio_mode;
 		p->handle = QSE_NULL;
@@ -159,7 +159,7 @@ int qse_awk_readeio (
 		p->in.eof = QSE_FALSE;
 		p->in.eos = QSE_FALSE;
 
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 
 		/* request to open the stream */
 		x = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
@@ -172,7 +172,7 @@ int qse_awk_readeio (
 			{
 				/* if the error number has not been 
 				 * set by the user handler */
-				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 			}
 
 			return -1;
@@ -205,7 +205,7 @@ int qse_awk_readeio (
 
 	/* get the record separator */
 	rs = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_RS);
-	qse_awk_refupval (run, rs);
+	qse_awk_rtx_refupval (run, rs);
 
 	if (rs->type == QSE_AWK_VAL_NIL)
 	{
@@ -219,11 +219,11 @@ int qse_awk_readeio (
 	}
 	else 
 	{
-		rs_ptr = qse_awk_valtostr (
+		rs_ptr = qse_awk_rtx_valtostr (
 			run, rs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
 		if (rs_ptr == QSE_NULL)
 		{
-			qse_awk_refdownval (run, rs);
+			qse_awk_rtx_refdownval (run, rs);
 			return -1;
 		}
 	}
@@ -243,7 +243,7 @@ int qse_awk_readeio (
 				break;
 			}
 
-			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 
 			n = handler (QSE_AWK_IO_READ,
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
@@ -253,7 +253,7 @@ int qse_awk_readeio (
 				{
 					/* if the error number has not been 
 				 	 * set by the user handler */
-					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 				}
 
 				ret = -1;
@@ -393,7 +393,7 @@ int qse_awk_readeio (
 
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
-			qse_awk_setrunerror (
+			qse_awk_rtx_seterror (
 				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			ret = -1;
 			break;
@@ -406,7 +406,7 @@ int qse_awk_readeio (
 
 	if (rs_ptr != QSE_NULL && 
 	    rs->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, rs_ptr);
-	qse_awk_refdownval (run, rs);
+	qse_awk_rtx_refdownval (run, rs);
 
 	return ret;
 }
@@ -426,7 +426,7 @@ int qse_awk_writeeio_val (
 	}
 	else
 	{
-		str = qse_awk_valtostr (
+		str = qse_awk_rtx_valtostr (
 			run, v, 
 			QSE_AWK_VALTOSTR_CLEAR | QSE_AWK_VALTOSTR_PRINT, 
 			QSE_NULL, &len);
@@ -461,7 +461,7 @@ int qse_awk_writeeio_str (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -490,7 +490,7 @@ int qse_awk_writeeio_str (
 			run->awk, QSE_SIZEOF(qse_awk_eio_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_setrunerror (
+			qse_awk_rtx_seterror (
 				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
@@ -499,12 +499,12 @@ int qse_awk_writeeio_str (
 		if (p->name == QSE_NULL)
 		{
 			QSE_AWK_FREE (run->awk, p);
-			qse_awk_setrunerror (
+			qse_awk_rtx_seterror (
 				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 			return -1;
 		}
 
-		p->run = run;
+		p->rtx = run;
 		p->type = (eio_type | eio_mask);
 		p->mode = eio_mode;
 		p->handle = QSE_NULL;
@@ -514,7 +514,7 @@ int qse_awk_writeeio_str (
 		p->out.eof = QSE_FALSE;
 		p->out.eos = QSE_FALSE;
 
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 		n = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (n <= -1)
 		{
@@ -522,7 +522,7 @@ int qse_awk_writeeio_str (
 			QSE_AWK_FREE (run->awk, p);
 
 			if (run->errnum == QSE_AWK_ENOERR)
-				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
 		}
@@ -558,12 +558,12 @@ int qse_awk_writeeio_str (
 
 	while (len > 0)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 		n = handler (QSE_AWK_IO_WRITE, p, str, len);
 		if (n <= -1) 
 		{
 			if (run->errnum == QSE_AWK_ENOERR)
-				qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
 		}
@@ -603,7 +603,7 @@ int qse_awk_flusheio (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -613,13 +613,13 @@ int qse_awk_flusheio (
 		if (p->type == (eio_type | eio_mask) && 
 		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
-			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 			n = handler (QSE_AWK_IO_FLUSH, p, QSE_NULL, 0);
 
 			if (n <= -1) 
 			{
 				if (run->errnum == QSE_AWK_ENOERR)
-					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 				return -1;
 			}
 
@@ -632,7 +632,7 @@ int qse_awk_flusheio (
 	if (ok) return 0;
 
 	/* there is no corresponding eio for name */
-	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
@@ -657,7 +657,7 @@ int qse_awk_nexteio_read (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -673,7 +673,7 @@ int qse_awk_nexteio_read (
 		/* something is totally wrong */
 		QSE_ASSERT (
 			!"should never happen - cannot find the relevant eio entry");
-		qse_awk_setrunerror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
 		return -1;
 	}
 
@@ -683,12 +683,12 @@ int qse_awk_nexteio_read (
 		return 0;
 	}
 
-	qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errnum == QSE_AWK_ENOERR)
-			qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
 
@@ -735,7 +735,7 @@ int qse_awk_nexteio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -751,7 +751,7 @@ int qse_awk_nexteio_write (
 		/* something is totally wrong */
 		QSE_ASSERT (!"should never happen - cannot find the relevant eio entry");
 
-		qse_awk_setrunerror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
 		return -1;
 	}
 
@@ -761,12 +761,12 @@ int qse_awk_nexteio_write (
 		return 0;
 	}
 
-	qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errnum == QSE_AWK_ENOERR)
-			qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
 
@@ -807,7 +807,7 @@ int qse_awk_closeeio_read (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 
@@ -824,7 +824,7 @@ int qse_awk_closeeio_read (
 				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					qse_awk_setrunerror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL, 0);
+					qse_awk_rtx_seterror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL, 0);
 					return -1;
 				}
 			}
@@ -842,7 +842,7 @@ int qse_awk_closeeio_read (
 	}
 
 	/* the name given is not found */
-	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
@@ -866,7 +866,7 @@ int qse_awk_closeeio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_setrunerror (run, QSE_AWK_EIOUSER, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EIOUSER, 0, QSE_NULL, 0);
 		return -1;
 	}
 
@@ -880,11 +880,11 @@ int qse_awk_closeeio_write (
 			handler = run->eio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
-				qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					if (run->errnum == QSE_AWK_ENOERR)
-						qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
 			}
@@ -901,7 +901,7 @@ int qse_awk_closeeio_write (
 		p = p->next;
 	}
 
-	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
@@ -920,12 +920,12 @@ int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name)
 			handler = run->eio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
-				qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					if (run->errnum == QSE_AWK_ENOERR)
-						qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
 			}
@@ -943,7 +943,7 @@ int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name)
 		p = p->next;
 	}
 
-	qse_awk_setrunerrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
@@ -961,12 +961,12 @@ void qse_awk_cleareio (qse_awk_rtx_t* run)
 
 		if (handler != QSE_NULL)
 		{
-			qse_awk_setrunerrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 			n = handler (QSE_AWK_IO_CLOSE, run->eio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
 				if (run->errnum == QSE_AWK_ENOERR)
-					qse_awk_setrunerrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 				/* TODO: some warnings need to be shown??? */
 			}
 		}

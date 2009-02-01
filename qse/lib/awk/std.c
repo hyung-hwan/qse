@@ -369,7 +369,7 @@ static qse_ssize_t awk_eio_pipe (
 			/*dprint (QSE_T("opening %s of type %d (pipe)\n"),  epa->name, epa->type);*/
 
 			handle = qse_pio_open (
-				qse_awk_rtx_getmmgr(epa->run), 
+				qse_awk_rtx_getmmgr(epa->rtx), 
 				0, 
 				epa->name, 
 				flags|QSE_PIO_SHELL|QSE_PIO_TEXT
@@ -454,7 +454,7 @@ static qse_ssize_t awk_eio_file (
 
 			/*dprint (QSE_T("opening %s of type %d (file)\n"), epa->name, epa->type);*/
 			handle = qse_fio_open (
-				qse_awk_rtx_getmmgr(epa->run),
+				qse_awk_rtx_getmmgr(epa->rtx),
 				0,
 				epa->name, 
 				flags | QSE_FIO_TEXT,
@@ -468,7 +468,7 @@ static qse_ssize_t awk_eio_file (
 				errarg.ptr = epa->name;
 				errarg.len = qse_strlen(epa->name);
 
-				qse_awk_setrunerror (epa->run, QSE_AWK_EOPEN, 0, &errarg, 1);
+				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
 				return -1;
 			}
 
@@ -544,7 +544,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 			qse_sio_t* fp;
 
 			fp = qse_sio_open (
-				qse_awk_rtx_getmmgr(epa->run),
+				qse_awk_rtx_getmmgr(epa->rtx),
 				0,
 				rd->ic.files[rd->ic.index],
 				QSE_SIO_READ
@@ -556,13 +556,13 @@ static int open_eio_console (qse_awk_eio_t* epa)
 				errarg.ptr = rd->ic.files[rd->ic.index];
 				errarg.len = qse_strlen(rd->ic.files[rd->ic.index]);
 
-				qse_awk_setrunerror (epa->run, QSE_AWK_EOPEN, 0, &errarg, 1);
+				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
 				return -1;
 			}
 
 			/*dprint (QSE_T("    console(r) - %s\n"), rd->ic.files[rd->ic.index]);*/
 			if (qse_awk_rtx_setfilename (
-				epa->run, rd->ic.files[rd->ic.index], 
+				epa->rtx, rd->ic.files[rd->ic.index], 
 				qse_strlen(rd->ic.files[rd->ic.index])) == -1)
 			{
 				qse_sio_close (fp);
@@ -579,7 +579,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 	{
 		/*dprint (QSE_T("    console(w) - <standard output>\n"));*/
 
-		if (qse_awk_rtx_setofilename (epa->run, QSE_T(""), 0) == -1)
+		if (qse_awk_rtx_setofilename (epa->rtx, QSE_T(""), 0) == -1)
 		{
 			return -1;
 		}
@@ -646,7 +646,7 @@ static qse_ssize_t awk_eio_console (
 				qse_sio_t* fp;
 
 				fp = qse_sio_open (
-					qse_awk_rtx_getmmgr(epa->run),
+					qse_awk_rtx_getmmgr(epa->rtx),
 					0,
 					rd->ic.files[rd->ic.index],
 					QSE_SIO_READ
@@ -659,12 +659,12 @@ static qse_ssize_t awk_eio_console (
 					errarg.ptr = rd->ic.files[rd->ic.index];
 					errarg.len = qse_strlen(rd->ic.files[rd->ic.index]);
 
-					qse_awk_setrunerror (epa->run, QSE_AWK_EOPEN, 0, &errarg, 1);
+					qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
 					return -1;
 				}
 
 				if (qse_awk_rtx_setfilename (
-					epa->run, rd->ic.files[rd->ic.index], 
+					epa->rtx, rd->ic.files[rd->ic.index], 
 					qse_strlen(rd->ic.files[rd->ic.index])) == -1)
 				{
 					qse_sio_close (fp);
@@ -672,7 +672,7 @@ static qse_ssize_t awk_eio_console (
 				}
 
 				if (qse_awk_rtx_setglobal (
-					epa->run, QSE_AWK_GLOBAL_FNR, qse_awk_val_zero) == -1)
+					epa->rtx, QSE_AWK_GLOBAL_FNR, qse_awk_val_zero) == -1)
 				{
 					/* need to reset FNR */
 					qse_sio_close (fp);
@@ -776,7 +776,7 @@ enum
 	BFN_MATH_F
 };
 
-static int bfn_math_1 (
+static int fnc_math_1 (
 	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
 {
 	qse_size_t nargs;
@@ -791,7 +791,7 @@ static int bfn_math_1 (
 
 	a0 = qse_awk_rtx_getarg (run, 0);
 
-	n = qse_awk_valtonum (run, a0, &lv, &rv);
+	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
 	if (n == 0) rv = (qse_real_t)lv;
 
@@ -799,23 +799,23 @@ static int bfn_math_1 (
 	{
 		long double (*rf) (long double) = 
 			(long double(*)(long double))f;
-		r = qse_awk_makerealval (run, rf(rv));
+		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	else if (type == BFN_MATH_D)
 	{
 		double (*rf) (double) = (double(*)(double))f;
-		r = qse_awk_makerealval (run, rf(rv));
+		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	else 
 	{
 		QSE_ASSERT (type == BFN_MATH_F);
 		float (*rf) (float) = (float(*)(float))f;
-		r = qse_awk_makerealval (run, rf(rv));
+		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -823,7 +823,7 @@ static int bfn_math_1 (
 	return 0;
 }
 
-static int bfn_math_2 (
+static int fnc_math_2 (
 	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
 {
 	qse_size_t nargs;
@@ -839,11 +839,11 @@ static int bfn_math_2 (
 	a0 = qse_awk_rtx_getarg (run, 0);
 	a1 = qse_awk_rtx_getarg (run, 1);
 
-	n = qse_awk_valtonum (run, a0, &lv0, &rv0);
+	n = qse_awk_rtx_valtonum (run, a0, &lv0, &rv0);
 	if (n == -1) return -1;
 	if (n == 0) rv0 = (qse_real_t)lv0;
 
-	n = qse_awk_valtonum (run, a1, &lv1, &rv1);
+	n = qse_awk_rtx_valtonum (run, a1, &lv1, &rv1);
 	if (n == -1) return -1;
 	if (n == 0) rv1 = (qse_real_t)lv1;
 
@@ -851,23 +851,23 @@ static int bfn_math_2 (
 	{
 		long double (*rf) (long double,long double) = 
 			(long double(*)(long double,long double))f;
-		r = qse_awk_makerealval (run, rf(rv0,rv1));
+		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	else if (type == BFN_MATH_D)
 	{
 		double (*rf) (double,double) = (double(*)(double,double))f;
-		r = qse_awk_makerealval (run, rf(rv0,rv1));
+		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	else 
 	{
 		QSE_ASSERT (type == BFN_MATH_F);
 		float (*rf) (float,float) = (float(*)(float,float))f;
-		r = qse_awk_makerealval (run, rf(rv0,rv1));
+		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -875,9 +875,9 @@ static int bfn_math_2 (
 	return 0;
 }
 
-static int bfn_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_SINL)
 		BFN_MATH_LD, (void*)sinl
@@ -891,9 +891,9 @@ static int bfn_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_COSL)
 		BFN_MATH_LD, (void*)cosl
@@ -907,9 +907,9 @@ static int bfn_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_TANL)
 		BFN_MATH_LD, (void*)tanl
@@ -923,9 +923,9 @@ static int bfn_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_ATANL)
 		BFN_MATH_LD, (void*)atanl
@@ -939,9 +939,9 @@ static int bfn_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_2 (
+	return fnc_math_2 (
 		run, fnm, fnl, 
 	#if defined(HAVE_ATAN2L)
 		BFN_MATH_LD, (void*)atan2l
@@ -955,9 +955,9 @@ static int bfn_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_LOGL)
 		BFN_MATH_LD, (void*)logl
@@ -971,9 +971,9 @@ static int bfn_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_EXPL)
 		BFN_MATH_LD, (void*)expl
@@ -987,9 +987,9 @@ static int bfn_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
-	return bfn_math_1 (
+	return fnc_math_1 (
 		run, fnm, fnl, 
 	#if defined(HAVE_SQRTL)
 		BFN_MATH_LD, (void*)sqrtl
@@ -1003,7 +1003,7 @@ static int bfn_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1017,14 +1017,14 @@ static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
 	a0 = qse_awk_rtx_getarg (run, 0);
 
-	n = qse_awk_valtonum (run, a0, &lv, &rv);
+	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
 	if (n == -1) return -1;
 	if (n == 1) lv = (qse_long_t)rv;
 
-	r = qse_awk_makeintval (run, lv);
+	r = qse_awk_rtx_makeintval (run, lv);
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1032,14 +1032,14 @@ static int bfn_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_awk_val_t* r;
 
-	r = qse_awk_makeintval (run, rand());
+	r = qse_awk_rtx_makeintval (run, rand());
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1047,7 +1047,7 @@ static int bfn_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1068,7 +1068,7 @@ static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	{
 		a0 = qse_awk_rtx_getarg (run, 0);
 
-		n = qse_awk_valtonum (run, a0, &lv, &rv);
+		n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
 		if (n == -1) return -1;
 		if (n == 1) lv = (qse_long_t)rv;
 
@@ -1084,10 +1084,10 @@ static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 
         srand (rxtn->seed);
 
-	r = qse_awk_makeintval (run, prev);
+	r = qse_awk_rtx_makeintval (run, prev);
 	if (r == QSE_NULL)
 	{
-		qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1095,7 +1095,7 @@ static int bfn_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int bfn_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
@@ -1114,7 +1114,7 @@ static int bfn_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl
 	}
 	else
 	{
-		str = qse_awk_valtostr (
+		str = qse_awk_rtx_valtostr (
 			run, v, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (str == QSE_NULL) return -1;
 	}
@@ -1173,10 +1173,10 @@ static int bfn_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl
 skip_system:
 	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
 
-	v = qse_awk_makeintval (run, (qse_long_t)n);
+	v = qse_awk_rtx_makeintval (run, (qse_long_t)n);
 	if (v == QSE_NULL)
 	{
-		/*qse_awk_setrunerrnum (run, QSE_AWK_ENOMEM);*/
+		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1184,24 +1184,24 @@ skip_system:
 	return 0;
 }
 
-#define ADD_FUNC(awk,name,min,max,bfn) \
-        if (qse_awk_addfunc (\
+#define ADD_FUNC(awk,name,min,max,fnc) \
+        if (qse_awk_addfnc (\
 		(awk), (name), qse_strlen(name), \
-		0, (min), (max), QSE_NULL, (bfn)) == QSE_NULL) return -1;
+		0, (min), (max), QSE_NULL, (fnc)) == QSE_NULL) return -1;
 
 static int add_functions (qse_awk_t* awk)
 {
-        ADD_FUNC (awk, QSE_T("sin"),        1, 1, bfn_sin);
-        ADD_FUNC (awk, QSE_T("cos"),        1, 1, bfn_cos);
-        ADD_FUNC (awk, QSE_T("tan"),        1, 1, bfn_tan);
-        ADD_FUNC (awk, QSE_T("atan"),       1, 1, bfn_atan);
-        ADD_FUNC (awk, QSE_T("atan2"),      2, 2, bfn_atan2);
-        ADD_FUNC (awk, QSE_T("log"),        1, 1, bfn_log);
-        ADD_FUNC (awk, QSE_T("exp"),        1, 1, bfn_exp);
-        ADD_FUNC (awk, QSE_T("sqrt"),       1, 1, bfn_sqrt);
-        ADD_FUNC (awk, QSE_T("int"),        1, 1, bfn_int);
-        ADD_FUNC (awk, QSE_T("rand"),       0, 0, bfn_rand);
-        ADD_FUNC (awk, QSE_T("srand"),      0, 1, bfn_srand);
-        ADD_FUNC (awk, QSE_T("system"),     1, 1, bfn_system);
+        ADD_FUNC (awk, QSE_T("sin"),        1, 1, fnc_sin);
+        ADD_FUNC (awk, QSE_T("cos"),        1, 1, fnc_cos);
+        ADD_FUNC (awk, QSE_T("tan"),        1, 1, fnc_tan);
+        ADD_FUNC (awk, QSE_T("atan"),       1, 1, fnc_atan);
+        ADD_FUNC (awk, QSE_T("atan2"),      2, 2, fnc_atan2);
+        ADD_FUNC (awk, QSE_T("log"),        1, 1, fnc_log);
+        ADD_FUNC (awk, QSE_T("exp"),        1, 1, fnc_exp);
+        ADD_FUNC (awk, QSE_T("sqrt"),       1, 1, fnc_sqrt);
+        ADD_FUNC (awk, QSE_T("int"),        1, 1, fnc_int);
+        ADD_FUNC (awk, QSE_T("rand"),       0, 0, fnc_rand);
+        ADD_FUNC (awk, QSE_T("srand"),      0, 1, fnc_srand);
+        ADD_FUNC (awk, QSE_T("system"),     1, 1, fnc_system);
 	return 0;
 }

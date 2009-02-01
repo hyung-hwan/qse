@@ -99,8 +99,10 @@ enum qse_awk_out_type_t
 	QSE_AWK_OUT_CONSOLE
 };
 
-/* afn (awk function defined with the keyword function) */
-typedef struct qse_awk_afn_t           qse_awk_afn_t;
+/* AWK function defined with the keyword function.
+ * note it is different from qse_awk_fnc_t */
+typedef struct qse_awk_fun_t           qse_awk_fun_t;
+
 typedef struct qse_awk_nde_t           qse_awk_nde_t;
 typedef struct qse_awk_nde_blk_t       qse_awk_nde_blk_t;
 typedef struct qse_awk_nde_grp_t       qse_awk_nde_grp_t;
@@ -139,10 +141,10 @@ typedef struct qse_awk_nde_delete_t    qse_awk_nde_delete_t;
 typedef struct qse_awk_nde_reset_t     qse_awk_nde_reset_t;
 typedef struct qse_awk_nde_print_t     qse_awk_nde_print_t;
 
-struct qse_awk_afn_t
+struct qse_awk_fun_t
 {
-	qse_xstr_t name;
-	qse_size_t nargs;
+	qse_xstr_t     name;
+	qse_size_t     nargs;
 	qse_awk_nde_t* body;
 };
 
@@ -265,7 +267,7 @@ struct qse_awk_nde_call_t
 		struct
 		{
 			qse_xstr_t name;
-		} afn;
+		} fun;
 
 		/* minimum information of a intrinsic function 
 		 * needed during run-time. */
@@ -286,7 +288,7 @@ struct qse_awk_nde_call_t
 
 			int (*handler) (
 				qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-		} bfn;
+		} fnc;
 	} what;
 	qse_awk_nde_t* args;
 	qse_size_t nargs;

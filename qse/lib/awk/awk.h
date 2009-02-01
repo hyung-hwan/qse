@@ -31,10 +31,11 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 #include <qse/awk/awk.h>
 #include "tree.h"
-#include "func.h"
+#include "fnc.h"
 #include "parse.h"
 #include "run.h"
 #include "eio.h"
+#include "val.h"
 #include "misc.h"
 
 #define QSE_AWK_MAX_GLOBALS 9999
@@ -66,8 +67,8 @@ struct qse_awk_tree_t
 {
 	qse_size_t nglobals; /* total number of globals */
 	qse_size_t nbglobals; /* number of intrinsic globals */
-	qse_cstr_t cur_afn;
-	qse_map_t* afns; /* awk function map */
+	qse_cstr_t cur_fun;
+	qse_map_t* funs; /* awk function map */
 
 	qse_awk_nde_t* begin;
 	qse_awk_nde_t* begin_tail;
@@ -131,7 +132,7 @@ struct qse_awk_t
 		} depth;
 
 		/* function calls */
-		qse_map_t* afns;
+		qse_map_t* funs;
 
 		/* named variables */
 		qse_map_t* named;
@@ -197,9 +198,9 @@ struct qse_awk_t
 	/* intrinsic functions */
 	struct
 	{
-		qse_awk_bfn_t* sys;
+		qse_awk_fnc_t* sys;
 		qse_map_t* user;
-	} bfn;
+	} fnc;
 
 	struct
 	{
