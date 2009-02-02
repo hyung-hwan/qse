@@ -63,12 +63,12 @@ enum qse_awk_nde_type_t
 	 * to change eval_incpre and eval_incpst in run.c as well as
 	 * QSE_AWK_VAL_REF_XXX in awk.h */
 	QSE_AWK_NDE_NAMED,
-	QSE_AWK_NDE_GLOBAL,
-	QSE_AWK_NDE_LOCAL,
+	QSE_AWK_NDE_GBL,
+	QSE_AWK_NDE_LCL,
 	QSE_AWK_NDE_ARG,
 	QSE_AWK_NDE_NAMEDIDX,
-	QSE_AWK_NDE_GLOBALIDX,
-	QSE_AWK_NDE_LOCALIDX,
+	QSE_AWK_NDE_GBLIDX,
+	QSE_AWK_NDE_LCLIDX,
 	QSE_AWK_NDE_ARGIDX,
 	QSE_AWK_NDE_POS,
 	/* ---------------------------------- */
@@ -162,7 +162,7 @@ struct qse_awk_nde_t
 struct qse_awk_nde_blk_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_size_t nlocals;
+	qse_size_t nlcls;
 	qse_awk_nde_t* body;
 };
 
@@ -243,10 +243,10 @@ struct qse_awk_nde_rex_t
 	void*       code;
 };
 
-/* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GLOBAL, 
- * QSE_AWK_NDE_LOCAL, QSE_AWK_NDE_ARG 
- * QSE_AWK_NDE_NAMEDIDX, QSE_AWK_NDE_GLOBALIDX, 
- * QSE_AWK_NDE_LOCALIDX, QSE_AWK_NDE_ARGIDX */
+/* QSE_AWK_NDE_NAMED, QSE_AWK_NDE_GBL, 
+ * QSE_AWK_NDE_LCL, QSE_AWK_NDE_ARG 
+ * QSE_AWK_NDE_NAMEDIDX, QSE_AWK_NDE_GBLIDX, 
+ * QSE_AWK_NDE_LCLIDX, QSE_AWK_NDE_ARGIDX */
 struct qse_awk_nde_var_t
 {
 	QSE_AWK_NDE_HDR;

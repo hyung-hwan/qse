@@ -204,7 +204,7 @@ int qse_awk_readeio (
 	qse_str_clear (buf);
 
 	/* get the record separator */
-	rs = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_RS);
+	rs = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_RS);
 	qse_awk_rtx_refupval (run, rs);
 
 	if (rs->type == QSE_AWK_VAL_NIL)
@@ -275,11 +275,11 @@ int qse_awk_readeio (
 					const qse_char_t* match_ptr;
 					qse_size_t match_len;
 
-					QSE_ASSERT (run->global.rs != QSE_NULL);
+					QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
 					n = QSE_AWK_MATCHREX (
-						run->awk, run->global.rs, 
-						((run->global.ignorecase)? QSE_REX_IGNORECASE: 0),
+						run->awk, run->gbl.rs, 
+						((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						&match_ptr, &match_len, &run->errnum);
 					if (n == -1)
@@ -363,11 +363,11 @@ int qse_awk_readeio (
 			const qse_char_t* match_ptr;
 			qse_size_t match_len;
 
-			QSE_ASSERT (run->global.rs != QSE_NULL);
+			QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
 			n = QSE_AWK_MATCHREX (
-				run->awk, run->global.rs, 
-				((run->global.ignorecase)? QSE_REX_IGNORECASE: 0),
+				run->awk, run->gbl.rs, 
+				((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				&match_ptr, &match_len, &run->errnum);
 			if (n == -1)

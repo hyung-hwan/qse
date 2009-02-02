@@ -37,8 +37,9 @@ remark end markers:
 ignore files:
 	.svn
 headertypes:
-	o     "Overview"       robo_overview    0
-	b     "Callbacks"      robo_callbacks    1
+	o     "Overview"       robo_overview     10
 options:
-	--nosort
 	--cmode
+	--nopre
+	--documenttitle "QSE"
+	--source_line_numbers

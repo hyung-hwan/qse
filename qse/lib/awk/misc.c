@@ -738,7 +738,7 @@ qse_char_t* qse_awk_strxntok (
 	{
 		/* each token is delimited by one of charaters 
 		 * in the delimeter set "delim". */
-		if (run->global.ignorecase)
+		if (run->gbl.ignorecase)
 		{
 			while (p < end) 
 			{
@@ -773,7 +773,7 @@ qse_char_t* qse_awk_strxntok (
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
 		while (p < end && QSE_AWK_ISSPACE(run->awk,*p)) p++;
-		if (run->global.ignorecase)
+		if (run->gbl.ignorecase)
 		{
 			while (p < end) 
 			{
@@ -846,7 +846,7 @@ qse_char_t* qse_awk_strxntokbyrex (
 	{
 		n = QSE_AWK_MATCHREX (
 			run->awk, rex, 
-			((run->global.ignorecase)? QSE_REX_IGNORECASE: 0),
+			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			ptr, left, (const qse_char_t**)&match_ptr, &match_len, 
 			errnum);
 		if (n == -1) return QSE_NULL;

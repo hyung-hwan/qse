@@ -68,15 +68,13 @@ qse_size_t qse_mblen (
 	qse_size_t mblen
 );
 
-/****f* qse.cmn.chr/qse_mbtowc
+/****f* Common/qse_mbtowc
  * NAME
  *  qse_mbtowc - convert a multibyte sequence to a wide character.
- * 
  * RETURN
  *  The qse_mbtowc() function returns 0 if an invalid multibyte sequence is
  *  detected, mblen + 1 if the sequence is incomplete. It returns the number
  *  of bytes processed to form a wide character.
- *
  * SYNOPSIS
  */
 qse_size_t qse_mbtowc (
@@ -86,15 +84,13 @@ qse_size_t qse_mbtowc (
 );
 /******/
 
-/****f* qse.cmn.chr/qse_wctomb
+/****f* Common/qse_wctomb
  * NAME
  *  qse_wctomb - convert a wide character to a multibyte sequence
- *
  * RETURN
  *  The qse_wctomb() functions returns 0 if the wide character is illegal, 
  *  mblen + 1 if mblen is not large enough to hold the multibyte sequence.
  *  On successful conversion, it returns the number of bytes in the sequence.
- * 
  * SYNOPSIS
  */
 qse_size_t qse_wctomb (

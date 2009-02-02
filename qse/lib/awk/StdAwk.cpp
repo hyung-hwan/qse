@@ -41,7 +41,7 @@ StdAwk::StdAwk ()
 {
 }
 
-#define ADD_FUNC(name,min,max,impl) \
+#define ADDFNC(name,min,max,impl) \
 	do { \
 		if (addFunction (name, min, max, \
 			(FunctionHandler)impl) == -1)  \
@@ -56,18 +56,18 @@ int StdAwk::open ()
 	int n = Awk::open ();
 	if (n == -1) return n;
 
-	ADD_FUNC (QSE_T("sin"),        1, 1, &StdAwk::sin);
-	ADD_FUNC (QSE_T("cos"),        1, 1, &StdAwk::cos);
-	ADD_FUNC (QSE_T("tan"),        1, 1, &StdAwk::tan);
-	ADD_FUNC (QSE_T("atan"),       1, 1, &StdAwk::atan);
-	ADD_FUNC (QSE_T("atan2"),      2, 2, &StdAwk::atan2);
-	ADD_FUNC (QSE_T("log"),        1, 1, &StdAwk::log);
-	ADD_FUNC (QSE_T("exp"),        1, 1, &StdAwk::exp);
-	ADD_FUNC (QSE_T("sqrt"),       1, 1, &StdAwk::sqrt);
-	ADD_FUNC (QSE_T("int"),        1, 1, &StdAwk::fnint);
-	ADD_FUNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
-	ADD_FUNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
-	ADD_FUNC (QSE_T("system"),     1, 1, &StdAwk::system);
+	ADDFNC (QSE_T("sin"),        1, 1, &StdAwk::sin);
+	ADDFNC (QSE_T("cos"),        1, 1, &StdAwk::cos);
+	ADDFNC (QSE_T("tan"),        1, 1, &StdAwk::tan);
+	ADDFNC (QSE_T("atan"),       1, 1, &StdAwk::atan);
+	ADDFNC (QSE_T("atan2"),      2, 2, &StdAwk::atan2);
+	ADDFNC (QSE_T("log"),        1, 1, &StdAwk::log);
+	ADDFNC (QSE_T("exp"),        1, 1, &StdAwk::exp);
+	ADDFNC (QSE_T("sqrt"),       1, 1, &StdAwk::sqrt);
+	ADDFNC (QSE_T("int"),        1, 1, &StdAwk::fnint);
+	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
+	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
+	ADDFNC (QSE_T("system"),     1, 1, &StdAwk::system);
 
 	return 0;
 }

@@ -114,7 +114,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (fio)
 
-/****f* qse.cmn.fio/qse_fio_open
+/****f* Common/qse_fio_open
  * NAME
  *  qse_fio_open - open a file
  *
@@ -133,7 +133,7 @@ qse_fio_t* qse_fio_open (
 );
 /******/
 
-/****f* qse.cmn.fio/qse_fio_close
+/****f* Common/qse_fio_close
  * NAME
  *  qse_fio_close - close a file
  *
@@ -156,7 +156,7 @@ void qse_fio_fini (
 	qse_fio_t* fio
 );
 
-/****f* qse.cmn.fio/qse_fio_gethandle
+/****f* Common/qse_fio_gethandle
  * NAME
  *  qse_fio_gethandle - get the native file handle
  * SYNOPSIS
@@ -166,7 +166,7 @@ qse_fio_hnd_t qse_fio_gethandle (
 );
 /******/
 
-/****f* qse.cmn.fio/qse_fio_sethandle
+/****f* Common/qse_fio_sethandle
  * NAME
  *  qse_fio_sethandle - set the file handle
  * WARNING
@@ -192,7 +192,7 @@ int qse_fio_truncate (
 	qse_fio_off_t size
 );
 
-/****f* qse.cmn.fio/qse_fio_read
+/****f* Common/qse_fio_read
  * NAME
  *  qse_fio_read - read data
  * SYNOPSIS
@@ -204,7 +204,7 @@ qse_ssize_t qse_fio_read (
 );
 /******/
 
-/****f* qse.cmn.fio/qse_fio_write
+/****f* Common/qse_fio_write
  * NAME
  *  qse_fio_write - write data
  *
@@ -223,7 +223,7 @@ qse_ssize_t qse_fio_write (
 /******/
 
 
-/****f* qse.cmn.fio/qse_fio_flush
+/****f* Common/qse_fio_flush
  * NAME
  *  qse_fio_flush - flush data
  *
@@ -238,7 +238,7 @@ qse_ssize_t qse_fio_flush (
 );
 /******/
 
-/****f* qse.cmn.fio/qse_fio_chmod
+/****f* Common/qse_fio_chmod
  * NAME
  *  qse_fio_chmod - change the file mode
  * SYNOPSIS
@@ -249,7 +249,7 @@ int qse_fio_chmod (
 );
 /******/
 
-/****f* qse.cmn.fio/qse_fio_sync
+/****f* Common/qse_fio_sync
  * NAME
  *  qse_fio_sync - synchronize file contents into storage media
  * DESCRIPTION

@@ -38,8 +38,8 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #include "val.h"
 #include "misc.h"
 
-#define QSE_AWK_MAX_GLOBALS 9999
-#define QSE_AWK_MAX_LOCALS  9999
+#define QSE_AWK_MAX_GBLS 9999
+#define QSE_AWK_MAX_LCLS  9999
 #define QSE_AWK_MAX_PARAMS  9999
 
 #define QSE_AWK_ALLOC(awk,size)       QSE_MMGR_ALLOC((awk)->mmgr,size)
@@ -65,8 +65,8 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 struct qse_awk_tree_t
 {
-	qse_size_t nglobals; /* total number of globals */
-	qse_size_t nbglobals; /* number of intrinsic globals */
+	qse_size_t ngbls; /* total number of gbls */
+	qse_size_t nbgbls; /* number of intrinsic gbls */
 	qse_cstr_t cur_fun;
 	qse_map_t* funs; /* awk function map */
 
@@ -138,16 +138,16 @@ struct qse_awk_t
 		qse_map_t* named;
 
 		/* global variables */
-		qse_lda_t* globals;
+		qse_lda_t* gbls;
 
 		/* local variables */
-		qse_lda_t* locals;
+		qse_lda_t* lcls;
 
 		/* parameters to a function */
 		qse_lda_t* params;
 
 		/* maximum number of local variables */
-		qse_size_t nlocals_max;
+		qse_size_t nlcls_max;
 
 		qse_awk_nde_t* (*parse_block) (
 			qse_awk_t*,qse_size_t,qse_bool_t);
@@ -331,7 +331,7 @@ struct qse_awk_rtx_t
 			qse_char_t* ptr;
 			qse_size_t len;
 		} subsep;
-	} global;
+	} gbl;
 
 	/* eio chain */
 	struct

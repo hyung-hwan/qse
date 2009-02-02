@@ -16,27 +16,10 @@
 #	define QSE_NULL ((void*)0)
 #endif
 
-/****d* qse/QSE_TRUE,qse/QSE_FALSE
- * NAME
- *  QSE_TRUE - represent a boolean true
- *  QSE_FALSE - represent a boolean false
- ******
- */
-#define QSE_TRUE  (0 == 0)
+
+/*#define QSE_TRUE  (0 == 0)
 #define QSE_FALSE (0 != 0)
-
-
-/****d* qse/QSE_ALIVE,qse/QSE_ZOMBIE,qse/QSE_DEAD
- * NAME
- *  QSE_ALIVE - represent a living state
- *  QSE_ZOMBIE - represent a zombie state
- *  QSE_DEAD - represent a dead state
- ******
- */
-#define QSE_ALIVE   1
-#define QSE_ZOMBIE  0
-#define QSE_DEAD   -1
-
+*/
 
 #define QSE_MCHAR_EOF ((qse_mcint_t)-1)
 #define QSE_WCHAR_EOF ((qse_wcint_t)-1)
@@ -157,7 +140,7 @@
 #	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
 
-/****d* qse/QSE_DEFINE_COMMON_FIELDS
+/****d* Base/QSE_DEFINE_COMMON_FIELDS
  * NAME
  *  QSE_DEFINE_COMMON_FIELDS - define common fields
  * SYNOPSIS
@@ -166,7 +149,7 @@
 	qse_mmgr_t* mmgr;
 /******/
 	
-/****d* qse/QSE_DEFINE_COMMON_FUNCTIONS
+/****d* Base/QSE_DEFINE_COMMON_FUNCTIONS
  * NAME
  *  QSE_DEFINE_COMMON_FUNCTIONS - define common functions
  * SYNOPSIS
@@ -177,7 +160,7 @@ qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 /******/
 
-/****d* qse/QSE_IMPLEMENT_COMMON_FUNCTIONS
+/****d* Base/QSE_IMPLEMENT_COMMON_FUNCTIONS
  * NAME
  *  QSE_IMPLEMENT_COMMON_FUNCTIONS - implement common functions
  * SYNOPSIS

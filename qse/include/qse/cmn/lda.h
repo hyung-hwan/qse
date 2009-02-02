@@ -22,12 +22,12 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* qse.cmn.lda/linear dynamic array
+/****o* Common/linear dynamic array
  * DESCRIPTION
- *  <qse/cmn/lda.h> provides a linear dynamic array. It grows as more items 
+ *  <Common.h> provides a linear dynamic array. It grows as more items 
  *  are added.
  *
- *  #include <qse/cmn/lda.h>
+ *  #include <Common.h>
  ******
  */
 
@@ -62,7 +62,7 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 
 
 
-/****b* qse.cmn.lda/qse_lda_copier_t
+/****t* Common/qse_lda_copier_t
  * NAME
  *  qse_lda_copier_t - define a node contruction callback
  *
@@ -91,7 +91,7 @@ typedef void* (*qse_lda_copier_t) (
 );
 /******/
 
-/****b* qse.cmn.lda/qse_lda_freeer_t
+/****t* Common/qse_lda_freeer_t
  * NAME
  *  qse_lda_freeer_t - define a node destruction callback
  * SYNOPSIS
@@ -103,7 +103,7 @@ typedef void (*qse_lda_freeer_t) (
 );
 /******/
 
-/****t* qse.cmn.lda/qse_lda_comper_t
+/****t* Common/qse_lda_comper_t
  * NAME
  *  qse_lda_comper_t - define a data comparator
  *
@@ -126,7 +126,7 @@ typedef int (*qse_lda_comper_t) (
 );
 /******/
 
-/****t* qse.cmn.lda/qse_lda_keeper_t
+/****t* Common/qse_lda_keeper_t
  * NAME
  *  qse_lda_keeper_t - define a value keeper
  *
@@ -145,7 +145,7 @@ typedef void (*qse_lda_keeper_t) (
 );
 /******/
 
-/****t* qse.cmn.lda/qse_lda_sizer_t
+/****t* Common/qse_lda_sizer_t
  * NAME
  *  qse_lda_sizer_t - define an array size calculator
  *
@@ -167,7 +167,7 @@ typedef qse_lda_walk_t (*qse_lda_walker_t) (
         void*           arg   /* user-defined data */
 );
 
-/****s* qse.cmn.lda/qse_lda_t
+/****s* Common/qse_lda_t
  * NAME
  *  qse_lda_t - define a linear dynamic array
  *
@@ -208,7 +208,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (lda)
 
-/****f* qse.cmn.lda/qse_lda_open
+/****f* Common/qse_lda_open
  * NAME
  *  qse_lda_open - create a linear dynamic array
  *
@@ -221,7 +221,7 @@ qse_lda_t* qse_lda_open (
 );
 /******/
 
-/****f* qse.cmn.lda/qse_lda_close
+/****f* Common/qse_lda_close
  * NAME
  *  qse_lda_close - destroy a linear dynamic array
  *
@@ -232,7 +232,7 @@ void qse_lda_close (
 );
 /******/
 
-/****f* qse.cmn.lda/qse_lda_init
+/****f* Common/qse_lda_init
  * NAME
  *  qse_lda_init - initialize a linear dynamic array
  *
@@ -245,7 +245,7 @@ qse_lda_t* qse_lda_init (
 );
 /******/
 
-/****f* qse.cmn.lda/qse_lda_fini
+/****f* Common/qse_lda_fini
  * NAME
  *  qse_lda_fini - deinitialize a linear dynamic array
  *
@@ -260,7 +260,7 @@ int qse_lda_getscale (
 	qse_lda_t* lda   /* a lda */
 );
 
-/****f* qse.cmn.lda/qse_lda_setscale
+/****f* Common/qse_lda_setscale
  * NAME
  *  qse_lda_setscale - set the scale factor
  *
@@ -285,7 +285,7 @@ qse_lda_copier_t qse_lda_getcopier (
 	qse_lda_t* lda   /* a lda */
 );
 
-/****f* qse.cmn.lda/qse_lda_setcopier
+/****f* Common/qse_lda_setcopier
  * NAME 
  *  qse_lda_setcopier - specify how to clone an element
  *
@@ -309,7 +309,7 @@ qse_lda_freeer_t qse_lda_getfreeer (
 	qse_lda_t*   lda  /* a lda */
 );
 
-/****f* qse.cmn.lda/qse_lda_setfreeer
+/****f* Common/qse_lda_setfreeer
  * NAME 
  *  qse_lda_setfreeer - specify how to destroy an element
  *
@@ -390,7 +390,7 @@ qse_size_t qse_lda_update (
 	qse_size_t dlen
 );
 
-/****f* qse.cmn.lda/qse_lda_delete
+/****f* Common/qse_lda_delete
  * NAME
  *  qse_lda_delete - delete data
  *
@@ -410,7 +410,7 @@ qse_size_t qse_lda_delete (
 );
 /******/
 
-/****f* qse.cmn.lda/qse_lda_uplete
+/****f* Common/qse_lda_uplete
  * NAME
  *  qse_lda_uplete - delete data node
  *

@@ -22,15 +22,15 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* qse.cmn.sll/singly linked list
+/****o* Common/Singly Linked List
  * DESCRIPTION
- *  <qse/cmn/sll.h> provides a singly linked list
+ *  <qse/cmn/sll.h> provides a singly linked list.
  *
  *  #include <qse/cmn/sll.h>
  ******
  */
 
-/****t* qse.cmn.sll/qse_sll_walk_t
+/****t* Common/qse_sll_walk_t
  * NAME
  *  qse_sll_walk_t - define return values for qse_sll_walker_t
  * SEE ALSO
@@ -48,7 +48,7 @@ typedef struct qse_sll_t      qse_sll_t;
 typedef struct qse_sll_node_t qse_sll_node_t;
 typedef enum   qse_sll_walk_t qse_sll_walk_t;
 
-/****b* qse.cmn.sll/qse_sll_copier_t
+/****t* Common/qse_sll_copier_t
  * NAME
  *  qse_sll_copier_t - define a node contruction callback
  * DESCRIPTION
@@ -74,7 +74,7 @@ typedef void* (*qse_sll_copier_t) (
 );
 /******/
 
-/****b* qse.cmn.sll/qse_sll_freeer_t
+/****t* Common/qse_sll_freeer_t
  * NAME
  *  qse_sll_freeer_t - define a node destruction callback
  * SYNOPSIS
@@ -86,7 +86,7 @@ typedef void (*qse_sll_freeer_t) (
 );
 /******/
 
-/****t* qse.cmn.sll/qse_sll_comper_t
+/****t* Common/qse_sll_comper_t
  * NAME
  *  qse_sll_comper_t - define a data comparator
  *
@@ -109,7 +109,7 @@ typedef int (*qse_sll_comper_t) (
 );
 /******/
 
-/****b* qse.cmn.sll/qse_sll_walker_t
+/****t* Common/qse_sll_walker_t
  * NAME
  *  qse_sll_walker_t - define a list traversal callback for each node
  *
@@ -132,7 +132,7 @@ typedef qse_sll_walk_t (*qse_sll_walker_t) (
 );
 /******/
 
-/****s* qse.cmn.sll/qse_sll_t
+/****s* Common/qse_sll_t
  * NAME
  *  qse_sll_t - define a singly linked list
  * 
@@ -156,7 +156,7 @@ struct qse_sll_t
 };
 /******/
 
-/****s* cmn/qse_sll_node_t
+/****s* Common/qse_sll_node_t
  * NAME
  *  qse_sll_node_t - define a list node
  * DESCRIPTION
@@ -186,7 +186,7 @@ struct qse_sll_node_t
 #define QSE_SLL_SIZE(sll)   ((sll)->size)
 #define QSE_SLL_SCALE(sll)  ((sll)->scale)
 
-/****d* cmn/QSE_SLL_DPTR
+/****d* Common/QSE_SLL_DPTR
  * NAME
  *  QSE_SLL_DPTR - get the data pointer in a node
  * SYNOPSIS
@@ -194,7 +194,7 @@ struct qse_sll_node_t
 #define QSE_SLL_DPTR(node)  ((node)->dptr)
 /******/
 
-/****d* cmn/QSE_SLL_DLEN
+/****d* Common/QSE_SLL_DLEN
  * NAME
  *  QSE_SLL_DLEN - get the length of data in a node
  * SYNOPSIS
@@ -202,7 +202,7 @@ struct qse_sll_node_t
 #define QSE_SLL_DLEN(node)  ((node)->dlen)
 /******/
 
-/****d* cmn/QSE_SLL_NEXT
+/****d* Common/QSE_SLL_NEXT
  * NAME
  *  QSE_SLL_NEXT - get the next node
  * SYNOPSIS
@@ -216,7 +216,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (sll)
 
-/****f* qse.cmn.sll/qse_sll_open
+/****f* Common/qse_sll_open
  * NAME
  *  qse_sll_open - create a singly linked list with extension area
  *
@@ -246,7 +246,7 @@ qse_sll_t* qse_sll_open (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_close
+/****f* Common/qse_sll_close
  * NAME
  *  qse_sll_close - destroy a singly linked list 
  *
@@ -261,7 +261,7 @@ void qse_sll_close (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_init
+/****f* Common/qse_sll_init
  * NAME
  *  qse_sll_init - initialize a singly linked list
  *
@@ -283,7 +283,7 @@ qse_sll_t* qse_sll_init (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_fini
+/****f* Common/qse_sll_fini
  * NAME
  *  qse_sll_init - deinitialize a singly linked list
  *
@@ -294,7 +294,7 @@ void qse_sll_fini (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_getsize
+/****f* Common/qse_sll_getsize
  * NAME
  *  qse_sll_getsize - get the number of nodes
  *
@@ -310,7 +310,7 @@ qse_size_t qse_sll_getsize (
 /******/
 
 
-/****f* qse.cmn.sll/qse_sll_getscale
+/****f* Common/qse_sll_getscale
  * NAME
  *  qse_sll_getscale - get the scale factor
  *
@@ -321,7 +321,7 @@ int qse_sll_getscale (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_setscale
+/****f* Common/qse_sll_setscale
  * NAME
  *  qse_sll_setscale - set the scale factor
  *
@@ -342,7 +342,7 @@ void qse_sll_setscale (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_getcopier
+/****f* Common/qse_sll_getcopier
  * NAME
  *  qse_sll_getfreeer - get the data copier
  *
@@ -353,7 +353,7 @@ qse_sll_copier_t qse_sll_getcopier (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_setcopier
+/****f* Common/qse_sll_setcopier
  * NAME 
  *  qse_sll_setcopier - set a data copier
  *
@@ -373,7 +373,7 @@ void qse_sll_setcopier (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_getfreeer
+/****f* Common/qse_sll_getfreeer
  * NAME
  *  qse_sll_getfreeer - get the data freeer
  *
@@ -384,7 +384,7 @@ qse_sll_freeer_t qse_sll_getfreeer (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_setfreeer
+/****f* Common/qse_sll_setfreeer
  * NAME
  *  qse_sll_setfreeer - set a data freeer
  *
@@ -399,7 +399,7 @@ void qse_sll_setfreeer (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_getcomper
+/****f* Common/qse_sll_getcomper
  * NAME
  *  qse_sll_getcomper - get the data comparator
  *
@@ -410,7 +410,7 @@ qse_sll_comper_t qse_sll_getcomper (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_setcomper
+/****f* Common/qse_sll_setcomper
  * NAME
  *  qse_sll_setcomper - set the data comparator
  *
@@ -422,7 +422,7 @@ void qse_sll_setcomper (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_gethead
+/****f* Common/qse_sll_gethead
  * NAME
  *  qse_sll_gethead - get the head node
  *
@@ -433,7 +433,7 @@ qse_sll_node_t* qse_sll_gethead (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_gettail
+/****f* Common/qse_sll_gettail
  * NAME
  *  qse_sll_gettail - get the tail node
  *
@@ -444,7 +444,7 @@ qse_sll_node_t* qse_sll_gettail (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_search
+/****f* Common/qse_sll_search
  * NAME
  *  qse_sll_search - find a node
  *
@@ -471,7 +471,7 @@ qse_sll_node_t* qse_sll_search (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_insert
+/****f* Common/qse_sll_insert
  * NAME
  *  qse_sll_insert - insert data to a new node
  *
@@ -494,7 +494,7 @@ qse_sll_node_t* qse_sll_insert (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_delete
+/****f* Common/qse_sll_delete
  * NAME
  *  qse_sll_delete - delete a node
  *
@@ -509,7 +509,7 @@ void qse_sll_delete (
 );
 /******/
 
-/****f* qse.cmn.sll/qse_sll_clear 
+/****f* Common/qse_sll_clear 
  * NAME 
  *  qse_sll_clear - delete all nodes
  *
@@ -545,7 +545,7 @@ void qse_sll_poptail (
 	qse_sll_t* sll
 );
 
-/****f* qse.cmn.sll/qse_sll_walk
+/****f* Common/qse_sll_walk
  * NAME
  *  qse_sll_walk - traverse s singly linked list 
  *
