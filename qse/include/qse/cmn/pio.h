@@ -101,15 +101,21 @@ struct qse_pio_pin_t
 	qse_pio_t*    self;	
 };
 
+/****s* cmn/qse_pio_t
+ * NAME 
+ *  qse_pio_t - define an pipe IO type
+ * SYNOPSIS
+ */
 struct qse_pio_t
 {
-	QSE_DEFINE_STD_FIELDS(pio)
+	QSE_DEFINE_COMMON_FIELDS(pio)
 
 	int           flags;
 	qse_pio_err_t errnum;
 	qse_pio_pid_t child;
 	qse_pio_pin_t pin[3];
 };
+/*****/
 
 #define QSE_PIO_ERRNUM(pio)     ((pio)->errnum)
 #define QSE_PIO_FLAGS(pio)      ((pio)->flags)
@@ -120,9 +126,9 @@ struct qse_pio_t
 extern "C" {
 #endif
 
-QSE_DEFINE_STD_FUNCTIONS (pio)
+QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
-/****f* qse.cmn.pio/qse_pio_open
+/****f* cmn/qse_pio_open
  * NAME
  *  qse_pio_open - open pipes to a child process
  *
@@ -140,7 +146,7 @@ qse_pio_t* qse_pio_open (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_close
+/****f* cmn/qse_pio_close
  * NAME
  *  qse_pio_close - close pipes to a child process
  *
@@ -151,7 +157,7 @@ void qse_pio_close (
 );
 /******/
 
-/****f* qse.cmn/pio/qse_pio_init
+/****f* cmn/qse_pio_init
  * NAME
  *  qse_pio_init - initialize pipes to a child process
  *
@@ -165,7 +171,7 @@ qse_pio_t* qse_pio_init (
 );
 /******/
 
-/****f* qse.cmn/pio/qse_pio_fini
+/****f* cmn/qse_pio_fini
  * NAME
  *  qse_pio_fini - finalize pipes to a child process
  *
@@ -186,7 +192,7 @@ void qse_pio_setflags (
 	int        op
 );
 
-/****f* qse.cmn.pio/qse_pio_geterrnum
+/****f* cmn/qse_pio_geterrnum
  * NAME
  *  qse_pio_geterrnum - get an error code
  *
@@ -197,7 +203,7 @@ qse_pio_err_t qse_pio_geterrnum (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_geterrstr
+/****f* cmn/qse_pio_geterrmsg
  * NAME
  *  qse_pio_geterrstr - transllate an error code to a string
  *
@@ -212,7 +218,7 @@ const qse_char_t* qse_pio_geterrstr (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_gethandle
+/****f* cmn/qse_pio_gethandle
  * NAME
  *  qse_pio_gethandle - get native handle
  *
@@ -224,7 +230,7 @@ qse_pio_hnd_t qse_pio_gethandle (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_getchild
+/****f* cmn/qse_pio_getchild
  * NAME
  *  qse_pio_getchild - get the PID of a child process
  *
@@ -235,10 +241,9 @@ qse_pio_pid_t qse_pio_getchild (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_read
+/****f* cmn/qse_pio_read
  * NAME
  *  qse_pio_read - read data
- * 
  * SYNOPSIS
  */
 qse_ssize_t qse_pio_read (
@@ -249,14 +254,12 @@ qse_ssize_t qse_pio_read (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_write
+/****f* cmn/qse_pio_write
  * NAME 
  *  qse_pio_write - write data
- *
  * DESCRIPTION
  *  If the parameter 'size' is zero, qse_pio_write() closes the the writing
  *  stream causing the child process reach the end of the stream.
- *
  * SYNOPSIS
  */
 qse_ssize_t qse_pio_write (
@@ -267,7 +270,7 @@ qse_ssize_t qse_pio_write (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_flush
+/****f* cmn/qse_pio_flush
  * NAME
  *  qse_pio_flush - flush data
  *
@@ -279,7 +282,7 @@ qse_ssize_t qse_pio_flush (
 );
 /*****/
 
-/****f* qse.cmn.pio/qse_pio_end
+/****f* cmn/qse_pio_end
  * NAME
  *  qse_pio_end - close native handle
  *
@@ -291,10 +294,9 @@ void qse_pio_end (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_wait
+/****f* cmn/qse_pio_wait
  * NAME
  *  qse_pio_wait - wait for a child process 
- *
  * DESCRIPTION
  *  QSE_PIO_WAIT_NORETRY causes the function to return an error and set the 
  *  errnum field to QSE_PIO_EINTR if the underlying system call is interrupted.
@@ -302,12 +304,10 @@ void qse_pio_end (
  *  When QSE_PIO_WAIT_NOBLOCK is used, the return value of 256 indicates that 
  *  the child process has not terminated. If the flag is not used, 256 is never 
  *  returned.
- * 
  * RETURN
  *  -1 on error, 256 if the child is alive and QSE_PIO_NOBLOCK is used,
  *  a number between 0 and 255 inclusive if the child process ends normally,
  *  256 + signal number if the child process is terminated by a signal.
- *   
  * SYNOPSIS
  */
 int qse_pio_wait (
@@ -315,15 +315,13 @@ int qse_pio_wait (
 );
 /******/
 
-/****f* qse.cmn.pio/qse_pio_kill
+/****f* cmn/qse_pio_kill
  * NAME
  *  qse_pio_kill - terminate the child process
- *
  * NOTES
  *  You should know the danger of calling this function as the function can
  *  kill a process that is not your child process if it has terminated but
  *  there is a new process with the same process handle.
- *
  * SYNOPSIS
  */ 
 int qse_pio_kill (

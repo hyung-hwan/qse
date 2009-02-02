@@ -25,7 +25,7 @@
 /****o* qse.cmn.lda/linear dynamic array
  * DESCRIPTION
  *  <qse/cmn/lda.h> provides a linear dynamic array. It grows as more items 
- *  are added. T
+ *  are added.
  *
  *  #include <qse/cmn/lda.h>
  ******
@@ -53,9 +53,6 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 #define QSE_LDA_NODE(lda,index)  ((lda)->node[index])
 #define QSE_LDA_DPTR(lda,index)  ((lda)->node[index]->dptr)
 #define QSE_LDA_DLEN(lda,index)  ((lda)->node[index]->dlen)
-
-#define QSE_LDA_MMGR(lda)        ((lda)->mmgr)
-#define QSE_LDA_XTN(lda)         ((void*)(((qse_lda_t*)lda) + 1))
 
 #define QSE_LDA_COPIER(lda)      ((lda)->copier)
 #define QSE_LDA_FREEER(lda)      ((lda)->freeer)
@@ -178,7 +175,7 @@ typedef qse_lda_walk_t (*qse_lda_walker_t) (
  */
 struct qse_lda_t
 {
-	qse_mmgr_t*      mmgr;   /* memory manager */
+	QSE_DEFINE_COMMON_FIELDS (lda)
 
 	qse_lda_copier_t copier; /* data copier */
 	qse_lda_freeer_t freeer; /* data freeer */
@@ -208,6 +205,8 @@ struct qse_lda_node_t
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+QSE_DEFINE_COMMON_FUNCTIONS (lda)
 
 /****f* qse.cmn.lda/qse_lda_open
  * NAME
@@ -254,43 +253,6 @@ qse_lda_t* qse_lda_init (
  */
 void qse_lda_fini (
 	qse_lda_t* lda
-);
-/******/
-
-/****f* qse.cmn.lda/qse_lda_getxtn
- * NAME
- *  qse_lda_getxtn - get the pointer to the extension
- *
- * DESCRIPTION
- *  The qse_lda_getxtn() function returns the pointer to the extension.
- *
- * SYNOPSIS
- */
-void* qse_lda_getxtn (
-	qse_lda_t* lda  /* a linear dynamic array */
-);
-/******/
-
-/****f* qse.cmn.lda/qse_lda_getmmgr
- * NAME
- *  qse_lda_getmmgr - get the memory manager
- *
- * SYNOPSIS
- */
-qse_mmgr_t* qse_lda_getmmgr (
-	qse_lda_t* lda  /* a linear dynamic array */
-);
-/******/
-
-/****f* qse.cmn.lda/qse_lda_setmmgr
- * NAME
- *  qse_lda_setmmgr - set the memory manager
- *
- * SYNOPSIS
- */
-void qse_lda_setmmgr (
-	qse_lda_t*  lda   /* a linear dynamic array */,
-	qse_mmgr_t* mmgr  /* a memory manager */
 );
 /******/
 

@@ -24,7 +24,7 @@
 #include <qse/cmn/map.h>
 #include <qse/cmn/str.h>
 
-/****o* qse.awk/awk interpreter
+/****o* awk/awk interpreter
  * DESCRIPTION
  *  The library includes an AWK interpreter that can be embedded into other
  *  applications or can run stand-alone.
@@ -36,7 +36,7 @@
 typedef struct qse_awk_t     qse_awk_t;
 typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 typedef struct qse_awk_val_t qse_awk_val_t;
-typedef struct qse_awk_eio_t qse_awk_eio_t; /* External IO */
+typedef struct qse_awk_eio_t qse_awk_eio_t; /* (E)xternal (IO) */
 
 typedef struct qse_awk_prmfns_t qse_awk_prmfns_t;
 typedef struct qse_awk_srcios_t qse_awk_srcios_t;
@@ -44,18 +44,31 @@ typedef struct qse_awk_runios_t qse_awk_runios_t;
 typedef struct qse_awk_runcbs_t qse_awk_runcbs_t;
 typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
-typedef qse_real_t (*qse_awk_pow_t) (void* data, qse_real_t x, qse_real_t y);
+typedef qse_real_t (*qse_awk_pow_t) (
+	void*      data, 
+	qse_real_t x, 
+	qse_real_t y
+);
+
 typedef int (*qse_awk_sprintf_t) (
-	void* data, qse_char_t* buf, qse_size_t size, 
-	const qse_char_t* fmt, ...);
+	void*             data,
+	qse_char_t*       buf,
+	qse_size_t        size, 
+	const qse_char_t* fmt,
+	...
+);
 
 typedef qse_ssize_t (*qse_awk_io_t) (
-	int cmd, void* arg, qse_char_t* data, qse_size_t count);
+	int         cmd, 
+	void*       arg,
+	qse_char_t* data,
+	qse_size_t  count
+);
 
 struct qse_awk_eio_t 
 {
 	qse_awk_rtx_t* rtx; /* [IN] */
-	int type;           /* [IN] console, file, coproc, pipe */
+	int type;           /* [IN] console, file, pipe */
 	int mode;           /* [IN] read, write, etc */
 	qse_char_t* name;   /* [IN] */
 	void* data;         /* [IN] */
@@ -100,7 +113,6 @@ struct qse_awk_srcios_t
 struct qse_awk_runios_t
 {
 	qse_awk_io_t pipe;
-	qse_awk_io_t coproc;
 	qse_awk_io_t file;
 	qse_awk_io_t console;
 	void* data;
@@ -128,19 +140,34 @@ struct qse_awk_runcbs_t
 
 struct qse_awk_rexfns_t
 {
+	/* TODO: implement functions to get/set rexfns */
 	void* (*build) (
-		qse_awk_t* awk, const qse_char_t* ptn, 
-		qse_size_t len, int* errnum);
+		qse_awk_t*        awk,
+		const qse_char_t* ptn, 
+		qse_size_t        len, 
+		int*              errnum
+	);
 
 	int (*match) (
-		qse_awk_t* awk, void* code, int option,
-		const qse_char_t* str, qse_size_t len, 
-		const qse_char_t** mptr, qse_size_t* mlen, 
-		int* errnum);
+		qse_awk_t*         awk,
+		void*              code,
+		int                option,
+		const qse_char_t*  str,
+		qse_size_t         len, 
+		const qse_char_t** mptr,
+		qse_size_t*        mlen, 
+		int* errnum
+	);
 
-	void (*free) (qse_awk_t* awk, void* code);
+	void (*free) (
+		qse_awk_t* awk,
+		void*      code
+	);
 
-	qse_bool_t (*isempty) (qse_awk_t* awk, void* code);
+	qse_bool_t (*isempty) (
+		qse_awk_t* awk,
+		void*      code
+	);
 };
 
 /* io function commands */
@@ -471,7 +498,7 @@ enum qse_awk_val_ref_id_t
 enum qse_awk_rtx_valtostr_opt_t
 {
 	QSE_AWK_VALTOSTR_CLEAR = (1 << 0),
-	QSE_AWK_VALTOSTR_FIXED = (1 << 1),/* this overrides CLEAR */
+	QSE_AWK_VALTOSTR_FIXED = (1 << 1), /* this overrides CLEAR */
 	QSE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
@@ -571,6 +598,7 @@ struct qse_awk_val_ref_t
 	 * directly. */
 	qse_awk_val_t** adr;
 };
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -590,75 +618,76 @@ extern qse_awk_val_t* qse_awk_val_zero;
 /** represents a numeric value 1 */
 extern qse_awk_val_t* qse_awk_val_one;
 
-/****f* qse.awk/qse_awk_open
+/****f* awk/qse_awk_open
  * NAME
  *  qse_awk_open - create an awk object
- * 
  * DESCRIPTION
  *  The qse_awk_open() function creates a new qse_awk_t instance.
  *  The instance created can be passed to other qse_awk_xxx() functions and
  *  is valid until it is successfully destroyed using the qse_qse_close() 
  *  function.
- *
  * RETURN
- *  The qse_awk_open() function returns the pointer to an qse_awk_t instance 
+ *  The qse_awk_open() function returns the pointer to a qse_awk_t instance 
  *  on success and QSE_NULL on failure.
- *
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_open ( 
 	qse_mmgr_t* mmgr    /* a memory manager */,
-	qse_size_t  xtnsize /* size of extension area in bytes */
+	qse_size_t  xtnsize /* the size of extension in bytes */
 );
 /******/
 
-/****f* qse.awk/qse_awk_close 
+/****f* awk/qse_awk_close 
  * NAME
  *  qse_awk_close - destroy an awk object
- *
- * An qse_awk_t instance should be destroyed using the qse_awk_close() function
- * when finished being used. The instance passed is not valid any more once 
- * the function returns success.
- *
+ * DESCRIPTION
+ *  A qse_awk_t instance must be destroyed using the qse_awk_close() function
+ *  when finished being used. The instance passed is not valid any more once 
+ *  the function returns success.
  * RETURN
  *  0 on success, -1 on failure 
- * 
  * SYNOPSIS
  */
 int qse_awk_close (
-	qse_awk_t* awk  /* an awk object */
+	qse_awk_t* awk
 );
 /******/
 
-/****f* qse.awk/qse_awk_getmmgr
+/****f* awk/qse_awk_getmmgr
  * NAME
  *  qse_awk_getmmgr - get the memory manager 
- *
  * DESCRIPTION
  *  The qse_awk_getmmgr() function returns the pointer to the memory manager.
- *
  * SYNOPSIS
  */
 qse_mmgr_t* qse_awk_getmmgr (
-	qse_awk_t* awk  /* an awk object */
+	qse_awk_t* awk 
 );
 /******/
 
+/****f* awk/qse_awk_setmmgr
+ * NAME
+ *  qse_awk_setmmgr - set the extension
+ * DESCRIPTION
+ *  The qse_awk_setmmgr() specify the memory manager to use. As the memory 
+ *  manager is specified into qse_awk_open(), you are not encouraged to change
+ *  it by calling this function. Doing so may cause a lot of problems.
+ * SYNOPSIS
+ */
 void qse_awk_setmmgr (
-	qse_awk_t* awk,
+	qse_awk_t*  awk,
 	qse_mmgr_t* mmgr
 );
+/******/
 
-/****f* qse.awk/qse_awk_getxtn
+/****f* awk/qse_awk_getxtn
  * NAME
  *  qse_awk_getxtn - get the extension
- *
  * DESCRIPTION
  *  The extension area is allocated in the qse_awk_open() function when it is 
  *  given a positive extension size. The pointer to the beginning of the area
  *  can be acquired using the qse_awk_getxtn() function and be utilized 
  *  for various purposes.
- *
  * SYNOPSIS
  */
 void* qse_awk_getxtn (
@@ -666,39 +695,53 @@ void* qse_awk_getxtn (
 );
 /******/
 
+/****f* awk/qse_awk_getccls
+ * NAME
+ *  qse_awk_getccls - get a character classifier
+ * SYNOPSIS
+ */
 qse_ccls_t* qse_awk_getccls (
 	qse_awk_t* awk
 );
+/******/
 
-/*
- * set the character classfier
+/****f* awk/qse_awk_setccls
+ * NAME
+ *  qse_awk_setccls - set the character classfier
+ * SYNOPSIS
  */
 void qse_awk_setccls (
-	/* the pointer to an qse_awk_t instance */
-	qse_awk_t* awk, 
-	/* the pointer to a character classfiler */
-	qse_ccls_t* ccls
+	qse_awk_t*  awk,
+	qse_ccls_t* ccls 
 );
+/******/
 
+/****f* awk/qse_awk_getprmfns
+ * NAME
+ *  qse_awk_getprmfns - get primitive functions
+ * SYNOPSIS
+ */
 qse_awk_prmfns_t* qse_awk_getprmfns (
 	qse_awk_t* awk
 );
+/******/
 
-/*
- * set primitive functions
+/****f* awk/qse_awk_setprmfns
+ * NAME
+ *  qse_awk_setprmfns - set primitive functions
+ * SYNOPSIS
  */
 void qse_awk_setprmfns (
-	/* the pointer to an qse_awk_t instance */
-	qse_awk_t* awk, 
-	/* the pointer to a primitive function structure */
+	qse_awk_t*        awk, 
 	qse_awk_prmfns_t* prmfns
 );
+/******/
 
-/****f* qse.awk/qse_awk_clear
+/****f* awk/qse_awk_clear
  * NAME
  *  qse_awk_clear - clear a qse_awk_t object
  * DESCRIPTION
- *  If you want to reuse an qse_awk_t instance that finished being used,
+ *  If you want to reuse a qse_awk_t instance that finished being used,
  *  you may call qse_awk_close instead of destroying and creating a new
  *  qse_awk_t instance using qse_awk_close() and qse_awk_open().
  * RETURN
@@ -710,7 +753,7 @@ int qse_awk_clear (
 );
 /******/
 
-/****f* qse.awk/qse_awk_geterrstr
+/****f* awk/qse_awk_geterrstr
  * NAME
  *  qse_awk_geterrstr - get a format string for an error
  * DESCRIPTION
@@ -724,7 +767,7 @@ const qse_char_t* qse_awk_geterrstr (
 );
 /******/
 
-/****f* qse.awk/qse_awk_seterrstr
+/****f* awk/qse_awk_seterrstr
  * NAME
  *  qse_awk_geterrstr - set a format string for an error
  * DESCRIPTION
@@ -779,11 +822,25 @@ void qse_awk_seterror (
 	qse_size_t        argcnt
 );
 
-int qse_awk_getoption (qse_awk_t* awk);
-void qse_awk_setoption (qse_awk_t* awk, int opt);
+int qse_awk_getoption (
+	qse_awk_t* awk
+);
 
-qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, int type);
-void qse_awk_setmaxdepth (qse_awk_t* awk, int types, qse_size_t depth);
+void qse_awk_setoption (
+	qse_awk_t* awk,
+	int        opt
+);
+
+qse_size_t qse_awk_getmaxdepth (
+	qse_awk_t* awk,
+	int        type
+);
+
+void qse_awk_setmaxdepth (
+	qse_awk_t* awk,
+	int        types,
+	qse_size_t depth
+);
 
 int qse_awk_getword (
 	qse_awk_t* awk, 
@@ -794,9 +851,9 @@ int qse_awk_getword (
 );
 
 int qse_awk_unsetword (
-	qse_awk_t* awk,
+	qse_awk_t*        awk,
 	const qse_char_t* kw,
-	qse_size_t len
+	qse_size_t        len
 );
 
 void qse_awk_unsetallwords (
@@ -817,7 +874,7 @@ void qse_awk_unsetallwords (
  * RETURN: 0 on success, -1 on failure
  */
 int qse_awk_setword (
-	/* the pointer to an qse_awk_t instance */
+	/* the pointer to a qse_awk_t instance */
 	qse_awk_t* awk, 
 	/* the pointer to an old keyword */
 	const qse_char_t* okw, 
@@ -829,21 +886,12 @@ int qse_awk_setword (
 	qse_size_t nlen
 );
 
-/*
- * set the customized regular processing routine. (TODO:  NOT YET IMPLEMENTED)
- *
- * RETURNS 0 on success, -1 on failure
- */
-int qse_awk_setrexfns (qse_awk_t* awk, qse_awk_rexfns_t* rexfns);
-
-/****f* qse.awk/qse_awk_addglobal
+/****f* awk/qse_awk_addglobal
  * NAME
  *  qse_awk_addglobal - add an intrinsic global variable.
- *
  * RETURN
- *  On success, the ID of the global variable added is returned.
- *  On failure, -1 is returned.
- *
+ *  The qse_awk_addglobal() function returns the ID of the global variable 
+ *  added on success and -1 on failure.
  * SYNOPSIS
  */
 int qse_awk_addglobal (
@@ -853,10 +901,9 @@ int qse_awk_addglobal (
 );
 /******/
 
-/****f* qse.awk/qse_awk_delglobal
+/****f* awk/qse_awk_delglobal
  * NAME
  *  qse_awk_delglobal - delete an instrinsic global variable. 
- *
  * SYNOPSIS
  */
 int qse_awk_delglobal (
@@ -866,10 +913,9 @@ int qse_awk_delglobal (
 );
 /******/
 
-/****f* qse.awk/qse_awk_parse
+/****f* awk/qse_awk_parse
  * NAME
  *  qse_awk_parse - parse source code
- *
  * SYNOPSIS
  */
 int qse_awk_parse (
@@ -879,10 +925,9 @@ int qse_awk_parse (
 /******/
 
 
-/****f* qse.awk/qse_awk_opensimple
+/****f* awk/qse_awk_opensimple
  * NAME
  *  qse_awk_opensimple - create an awk object
- *
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_opensimple (
@@ -890,10 +935,9 @@ qse_awk_t* qse_awk_opensimple (
 );
 /******/
 
-/****f* qse.awk/qse_awk_parsesimple
+/****f* awk/qse_awk_parsesimple
  * NAME
  *  qse_awk_parsesimple - parse source code
- *
  * SYNOPSIS
  */
 int qse_awk_parsesimple (
@@ -904,10 +948,9 @@ int qse_awk_parsesimple (
 );
 /******/
 
-/****f* qse.awk/qse_awk_runsimple
+/****f* awk/qse_awk_runsimple
  * NAME
  *  qse_awk_runsimple - run a parsed program
- *
  * SYNOPSIS
  */
 int qse_awk_runsimple (
@@ -917,11 +960,10 @@ int qse_awk_runsimple (
 );
 /******/
 
-/****f* qse.awk/qse_awk_run
+/****f* awk/qse_awk_run
  * NAME
  *  qse_awk_run - execute a parsed program
  * DESCRIPTION
- *  The qse_awk_run() function returns 0 on success and -1 on failure.
  *  A runtime context is required for it to start running the program.
  *  Once a runtime context is created, the program starts to run.
  *  The failure of context creation is reported by the return value of -1.
@@ -967,22 +1009,22 @@ void qse_awk_clrfnc (
 	qse_awk_t* awk
 );
 
-/****f* qse.awk/qse_awk_rtx_stopall
+/****f* awk/qse_awk_stopall
  * NAME
- *  qse_awk_rtx_stop - stop all runtime contexts
+ *  qse_awk_stopall - stop all runtime contexts
  * DESCRIPTION
- *  The qse_awk_rtx_stopall() function aborts all active qse_awk_run() functions
+ *  The qse_awk_stopall() function aborts all active qse_awk_run() functions
  *  invoked with the awk parameter.
  * SYNOPSIS
  */
-void qse_awk_rtx_stopall (
+void qse_awk_stopall (
 	qse_awk_t* awk
 );
 /******/
 
-/****f* qse.awk/qse_awk_shouldstop
+/****f* awk/qse_awk_shouldstop
  * NAME
- *  qse_awk_rtx_stop - test if qse_awk_rtx_stop() is called
+ *  qse_awk_shouldstop - test if qse_awk_rtx_stop() is called
  * SYNOPSIS
  */
 qse_bool_t qse_awk_rtx_shouldstop (
@@ -990,7 +1032,7 @@ qse_bool_t qse_awk_rtx_shouldstop (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_stop
+/****f* awk/qse_awk_rtx_stop
  * NAME
  *  qse_awk_rtx_stop - stop a runtime context
  * DESCRIPTION
@@ -1003,7 +1045,7 @@ void qse_awk_rtx_stop (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getnargs 
+/****f* awk/qse_awk_rtx_getnargs 
  * NAME
  *  qse_awk_rtx_getnargs - get the number of arguments passed to qse_awk_run()
  * SYNOPSIS
@@ -1013,7 +1055,7 @@ qse_size_t qse_awk_rtx_getnargs (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getarg 
+/****f* awk/qse_awk_rtx_getarg 
  * NAME
  *  qse_awk_rtx_getarg - get an argument passed to qse_awk_run
  * SYNOPSIS
@@ -1024,18 +1066,16 @@ qse_awk_val_t* qse_awk_rtx_getarg (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getglobal
+/****f* awk/qse_awk_rtx_getglobal
  * NAME
  *  qse_awk_rtx_getglobal - gets the value of a global variable
- *
- * PARAMETERS
- *  id - A global variable id. An ID is one of the predefined global 
- *       variable IDs or the value returned by qse_awk_addglobal().
- *
+ * INPUTS
+ *  * rtx - a runtime context
+ *  * id - a global variable ID. It is one of the predefined global 
+ *         variable IDs or a value returned by qse_awk_addglobal().
  * RETURN
  *  The pointer to a value is returned. This function never fails
- *  so long as id is valid. Otherwise, you may fall into trouble.
- *
+ *  so long as the ID is valid. Otherwise, you may fall into trouble.
  * SYNOPSIS
  */
 qse_awk_val_t* qse_awk_rtx_getglobal (
@@ -1044,10 +1084,9 @@ qse_awk_val_t* qse_awk_rtx_getglobal (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_setglobal
+/****f* awk/qse_awk_rtx_setglobal
  * NAME
  *  qse_awk_rtx_setglobal - set the value of a global variable
- *  
  * SYNOPSIS
  */
 int qse_awk_rtx_setglobal (
@@ -1057,7 +1096,7 @@ int qse_awk_rtx_setglobal (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_setretval
+/****f* awk/qse_awk_rtx_setretval
  * NAME
  *  qse_awk_rtx_setretval - set the return value
  * DESCRIPTION
@@ -1075,7 +1114,7 @@ void qse_awk_rtx_setretval (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_setfilename
+/****f* awk/qse_awk_rtx_setfilename
  * NAME
  *  qse_awk_rtx_setfilename - set FILENAME
  * SYNOPSIS
@@ -1087,7 +1126,7 @@ int qse_awk_rtx_setfilename (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_setofilename
+/****f* awk/qse_awk_rtx_setofilename
  * NAME
  *  qse_awk_rtx_setofilename - set OFILENAME
  * SYNOPSIS
@@ -1099,7 +1138,7 @@ int qse_awk_rtx_setofilename (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getawk
+/****f* awk/qse_awk_rtx_getawk
  * NAME
  *  qse_awk_rtx_getawk - get the owning awk object
  * SYNOPSIS
@@ -1109,7 +1148,7 @@ qse_awk_t* qse_awk_rtx_getawk (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getmmgr
+/****f* awk/qse_awk_rtx_getmmgr
  * NAME
  *  qse_awk_rtx_getmmgr - get the memory manager of a runtime context
  * SYNOPSIS
@@ -1119,7 +1158,7 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getdata
+/****f* awk/qse_awk_rtx_getdata
  * NAME
  *  qse_awk_rtx_getdata - get the user-specified data for a runtime context
  * SYNOPSIS
@@ -1129,7 +1168,7 @@ void* qse_awk_rtx_getdata (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_getnvmap
+/****f* awk/qse_awk_rtx_getnvmap
  * NAME
  *  qse_awk_rtx_getnvmap - get the map of named variables 
  * SYNOPSIS
@@ -1139,7 +1178,7 @@ qse_map_t* qse_awk_rtx_getnvmap (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_geterrnum
+/****f* awk/qse_awk_rtx_geterrnum
  * NAME
  *  qse_awk_rtx_geterrnum - get the error number of a runtime context
  * SYNOPSIS
@@ -1198,7 +1237,7 @@ int qse_awk_rtx_setrec (
 	qse_size_t        len
 );
 
-/****f* qse.awk/qse_awk_alloc
+/****f* awk/qse_awk_alloc
  * NAME 
  *  qse_awk_alloc - allocate dynamic memory
  * RETURN
@@ -1206,41 +1245,41 @@ int qse_awk_rtx_setrec (
  * SYNOPSIS
  */
 void* qse_awk_alloc (
-	qse_awk_t* awk /* the pointer to an qse_awk_t instance */,
+	qse_awk_t* awk /* the pointer to a qse_awk_t instance */,
 	qse_size_t size /* the size of memory to allocate in bytes */
 );
 /******/
 
-/****f* qse.awk/qse_awk_free
+/****f* awk/qse_awk_free
  * NAME 
  *  qse_awk_free - free dynamic memory
  * SYNOPSIS
  */
 void qse_awk_free (
-	qse_awk_t* awk /* the pointer to an qse_awk_t instance */,
+	qse_awk_t* awk /* the pointer to a qse_awk_t instance */,
 	void*      ptr /* the pointer to the memory area to free */
 );
 /******/
 
-/****f* qse.awk/qse_awk_strdup
+/****f* awk/qse_awk_strdup
  * NAME 
  *  qse_awk_strdup - duplicate a null-terminated string
  * DESCRIPTION
  *  The qse_awk_strdup() function is used to duplicate a string using
  *  the memory manager used by the associated qse_awk_t instance.
  *  The new string should be freed using the qse_awk_free() function.
- * RETURNS
+ * RETURN
  *  The qse_awk_strdup() function returns the pointer to a new string which
  *  is a duplicate of the string s. It returns QSE_NULL on failure.
  * SYNOPSIS
  */
 qse_char_t* qse_awk_strdup (
-	qse_awk_t*        awk /* the pointer to an qse_awk_t instance */,
+	qse_awk_t*        awk /* the pointer to a qse_awk_t instance */,
 	const qse_char_t* str /* the pointer to a string */
 );
 /******/
 
-/****f* qse.awk/qse_awk_strxdup 
+/****f* awk/qse_awk_strxdup 
  * NAME 
  *  qse_awk_strxdup - duplicate a length-delimited string
  * DESCRIPTION
@@ -1248,7 +1287,7 @@ qse_char_t* qse_awk_strdup (
  *  is as long as len characters using the memory manager used by the 
  *  qse_awk_t instance. The new string should be freed using the qse_awk_free()
  *  function.
- * RETURNS
+ * RETURN
  *  The qse_awk_strxdup() function returns the pointer to a new string which 
  *  is a duplicate of the string s on success. It returns QSE_NULL on failure.
  * SYNOPSIS
@@ -1374,7 +1413,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 	qse_size_t*    len
 );
 
-/****f* qse.awk/qse_awk_rtx_valtonum
+/****f* awk/qse_awk_rtx_valtonum
  * NAME
  *  qse_awk_rtx_valtonum - convert a value to a number
  * DESCRIPTION
@@ -1404,7 +1443,7 @@ int qse_awk_rtx_valtonum (
 );
 /******/
 
-/****f* qse.awk/qse_awk_rtx_strtonum
+/****f* awk/qse_awk_rtx_strtonum
  * NAME
  *  qse_awk_rtx_strtonum - convert a string to a number
  * SYNOPSIS

@@ -19,6 +19,8 @@
 #include <qse/cmn/map.h>
 #include "mem.h"
 
+QSE_IMPLEMENT_COMMON_FUNCTIONS (map)
+
 #define map_t    qse_map_t
 #define pair_t   qse_map_pair_t
 #define copier_t qse_map_copier_t
@@ -286,21 +288,6 @@ void qse_map_fini (map_t* map)
 	QSE_MMGR_FREE (map->mmgr, map->bucket);
 }
 
-void* qse_map_getxtn (map_t* map)
-{
-	return map + 1;
-}
-
-mmgr_t* qse_map_getmmgr (map_t* map)
-{
-	return map->mmgr;
-}
-
-void qse_map_setmmgr (map_t* map, mmgr_t* mmgr)
-{
-	map->mmgr = mmgr;
-}
-
 int qse_map_getscale (map_t* map, qse_map_id_t id)
 {
 	QSE_ASSERTX (id == QSE_MAP_KEY || id == QSE_MAP_VAL,
@@ -424,7 +411,7 @@ pair_t* qse_map_search (map_t* map, const void* kptr, size_t klen)
 	return QSE_NULL;
 }
 
-int qse_map_put (
+static int map_put (
 	map_t* map, void* kptr, size_t klen, 
 	void* vptr, size_t vlen, pair_t** px)
 {
@@ -487,7 +474,7 @@ pair_t* qse_map_upsert (
 	int n;
 	pair_t* px;
 
-	n = qse_map_put (map, kptr, klen, vptr, vlen, &px);
+	n = map_put (map, kptr, klen, vptr, vlen, &px);
 	if (n < 0) return QSE_NULL;
 	return px;
 }

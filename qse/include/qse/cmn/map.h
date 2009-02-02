@@ -28,11 +28,6 @@
  *  chained under the same bucket.
  *
  *  #include <qse/cmn/map.h>
- *
- * EXAMPLES
- *  void f (void)
- *  {
- *  }
  ******
  */
 
@@ -190,15 +185,16 @@ struct qse_map_pair_t
  */
 struct qse_map_t
 {
-        qse_mmgr_t*      mmgr;
+	QSE_DEFINE_COMMON_FIELDS (map)
+
         qse_map_copier_t copier[2];
         qse_map_freeer_t freeer[2];
-	qse_map_hasher_t hasher; /* key hasher */
-	qse_map_comper_t comper; /* key comparator */
-	qse_map_keeper_t keeper; /* value keeper */
-	qse_map_sizer_t  sizer;  /* bucket capacity recalculator */
-	qse_byte_t       scale[2];     /* length scale */
-	qse_byte_t       factor;       /* load factor */
+	qse_map_hasher_t hasher;   /* key hasher */
+	qse_map_comper_t comper;   /* key comparator */
+	qse_map_keeper_t keeper;   /* value keeper */
+	qse_map_sizer_t  sizer;    /* bucket capacity recalculator */
+	qse_byte_t       scale[2]; /* length scale */
+	qse_byte_t       factor;   /* load factor */
 	qse_byte_t       filler0;
 	qse_size_t       size;
 	qse_size_t       capa;
@@ -213,10 +209,8 @@ struct qse_map_t
 /****d* qse.cmn.map/QSE_MAP_SIZE
  * NAME
  *  QSE_MAP_SIZE - get the number of pairs
- * 
  * DESCRIPTION
  *  The QSE_MAP_SIZE() macro returns the number of pairs in a map.
- *
  * SYNOPSIS
  */
 #define QSE_MAP_SIZE(m) ((m)->size)
@@ -233,9 +227,6 @@ struct qse_map_t
  */
 #define QSE_MAP_CAPA(m) ((m)->capa)
 /*****/
-
-#define QSE_MAP_MMGR(m)      ((m)->mmgr)
-#define QSE_MAP_XTN(m)       ((void*)(((qse_map_t*)m) + 1))
 
 #define QSE_MAP_KCOPIER(m)   ((m)->copier[QSE_MAP_KEY])
 #define QSE_MAP_VCOPIER(m)   ((m)->copier[QSE_MAP_VAL])
@@ -260,33 +251,31 @@ struct qse_map_t
 extern "C" {
 #endif
 
+QSE_DEFINE_COMMON_FUNCTIONS (map)
+
 /****f* qse.cmn.map/qse_map_open
  * NAME
  *  qse_map_open - creates a hash map
- *
  * DESCRIPTION 
  *  The qse_map_open() function creates a hash map with a dynamic array 
  *  bucket and a list of values chained. The initial capacity should be larger
  *  than 0. The load factor should be between 0 and 100 inclusive and the load
  *  factor of 0 disables bucket resizing. If you need extra space associated
  *  with a map, you may pass a non-zero value as the second parameter. 
- *  The QSE_MAP_XTN() macro and the qse_map_getxtn() function 
- *  return the pointer to the beginning of the extension.
- *
+ *  The QSE_MAP_XTN() macro and the qse_map_getxtn() function return the 
+ *  pointer to the beginning of the extension.
  * RETURN
  *  The qse_map_open() function returns an qse_map_t pointer on success and 
  *  QSE_NULL on failure.
- *
  * SEE ALSO 
  *  QSE_MAP_XTN, qse_map_getxtn
- * 
  * SYNOPSIS
  */
 qse_map_t* qse_map_open (
-	qse_mmgr_t* mmgr /* a memory manager */,
-	qse_size_t ext   /* extension size in bytes */,
-	qse_size_t capa  /* initial capacity */,
-	int factor       /* load factor */
+	qse_mmgr_t* mmgr   /* a memory manager */,
+	qse_size_t  ext    /* extension size in bytes */,
+	qse_size_t  capa   /* initial capacity */,
+	int         factor /* load factor */
 );
 /******/
 
@@ -294,10 +283,8 @@ qse_map_t* qse_map_open (
 /****f* qse.cmn.map/qse_map_close 
  * NAME
  *  qse_map_close - destroy a hash map
- *  
  * DESCRIPTION 
  *  The qse_map_close() function destroys a hash map.
- *
  * SYNOPSIS
  */
 void qse_map_close (
@@ -306,27 +293,14 @@ void qse_map_close (
 /******/
 
 qse_map_t* qse_map_init (
-	qse_map_t* map,
+	qse_map_t*  map,
 	qse_mmgr_t* mmgr,
-	qse_size_t capa,
-	int factor
+	qse_size_t  capa,
+	int         factor
 );
 
 void qse_map_fini (
 	qse_map_t* map
-);
-
-void* qse_map_getxtn (
-	qse_map_t* map
-);
-
-qse_mmgr_t* qse_map_getmmgr (
-	qse_map_t* map
-);
-
-void qse_map_setmmgr (
-	qse_map_t* map,
-	qse_mmgr_t* mmgr
 );
 
 /* get the number of key/value pairs in a map */
@@ -450,58 +424,43 @@ void qse_map_setsizer (
 	qse_map_sizer_t sizer
 );
 
-int qse_map_put (
-	qse_map_t* map,
-	void* kptr,
-	qse_size_t klen,
-	void* vptr,
-	qse_size_t vlen,
-	qse_map_pair_t** px
-);
-
 /****f* qse.cmn.map/qse_map_search
  * NAME
  *  qse_map_search - find a pair with a matching key 
- * 
  * DESCRIPTION
  *  The qse_map_search() function searches a map to find a pair with a 
  *  matching key. It returns the pointer to the pair found. If it fails
  *  to find one, it returns QSE_NULL.
- *
  * RETURN
  *  The qse_map_search() function returns the pointer to the pair with a 
  *  maching key, and QSE_NULL if no match is found.
- * 
  * SYNOPSIS
  */
 qse_map_pair_t* qse_map_search (
-	qse_map_t* map   /* a map */,
-	const void* kptr /* the pointer to a key */,
-	qse_size_t klen  /* the size of the key in bytes */
+	qse_map_t*  map   /* a map */,
+	const void* kptr  /* the pointer to a key */,
+	qse_size_t  klen  /* the size of the key in bytes */
 );
 /******/
 
 /****f* qse.cmn.map/qse_map_upsert
  * NAME
  *  qse_map_upsert - update an existing pair or inesrt a new pair
- *
  * DESCRIPTION 
  *  The qse_map_upsert() function searches a map for the pair with a matching
  *  key. If one is found, it updates the pair. Otherwise, it inserts a new
  *  pair with a key and a value. It returns the pointer to the pair updated 
  *  or inserted.
- *
  * RETURN 
  *  The qse_map_upsert() function returns a pointer to the updated or inserted
  *  pair on success, and QSE_NULL on failure. 
- *
  * SYNOPSIS
  */
 qse_map_pair_t* qse_map_upsert (
 	qse_map_t* map   /* a map */,
-	void* kptr       /* the pointer to a key */,
+	void*      kptr  /* the pointer to a key */,
 	qse_size_t klen  /* the length of the key in bytes */,
-	void* vptr       /* the pointer to a value */,
+	void*      vptr  /* the pointer to a value */,
 	qse_size_t vlen  /* the length of the value in bytes */
 );
 /******/
@@ -509,23 +468,20 @@ qse_map_pair_t* qse_map_upsert (
 /****f* qse.cmn.map/qse_map_insert 
  * NAME
  *  qse_map_insert - insert a new pair with a key and a value 
- *
  * DESCRIPTION
  *  The qse_map_insert() function inserts a new pair with the key and the value
  *  given. If there exists a pair with the key given, the function returns 
  *  QSE_NULL without channging the value.
- *
  * RETURN 
  *  The qse_map_insert() function returns a pointer to the pair created on 
  *  success, and QSE_NULL on failure. 
- *
  * SYNOPSIS
  */
 qse_map_pair_t* qse_map_insert (
 	qse_map_t* map   /* a map */,
-	void* kptr       /* the pointer to a key */,
+	void*      kptr  /* the pointer to a key */,
 	qse_size_t klen  /* the length of the key in bytes */,
-	void* vptr       /* the pointer to a value */,
+	void*      vptr  /* the pointer to a value */,
 	qse_size_t vlen  /* the length of the value in bytes */
 );
 /******/

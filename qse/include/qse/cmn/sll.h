@@ -22,13 +22,19 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/****o* qse.cmn.sll/singly linked list
+ * DESCRIPTION
+ *  <qse/cmn/sll.h> provides a singly linked list
+ *
+ *  #include <qse/cmn/sll.h>
+ ******
+ */
+
 /****t* qse.cmn.sll/qse_sll_walk_t
  * NAME
  *  qse_sll_walk_t - define return values for qse_sll_walker_t
- *
  * SEE ALSO
- *  qse_sll_walk, qse_sll_walker_t
- *
+ *  qse_sll_walker_t
  * SYNOPSIS
  */
 enum qse_sll_walk_t
@@ -45,7 +51,6 @@ typedef enum   qse_sll_walk_t qse_sll_walk_t;
 /****b* qse.cmn.sll/qse_sll_copier_t
  * NAME
  *  qse_sll_copier_t - define a node contruction callback
- *
  * DESCRIPTION
  *  The qse_sll_copier_t defines a callback function for node construction.
  *  A node is contructed when a user adds data to a list. The user can
@@ -54,14 +59,12 @@ typedef enum   qse_sll_walk_t qse_sll_walk_t;
  *  the data length into a node. A special copier QSE_SLL_COPIER_INLINE copies 
  *  the contents of the data a user provided into the node. You can use the
  *  qse_sll_setcopier() function to change the copier. 
- * 
+ *
  *  A copier should return the pointer to the copied data. If it fails to copy
  *  data, it may return QSE_NULL. You need to set a proper freeer to free up
  *  memory allocated for copy.
- *
  * SEE ALSO
  *  qse_sll_setcopier, qse_sll_getcopier, QSE_SLL_COPIER
- *
  * SYNOPSIS
  */
 typedef void* (*qse_sll_copier_t) (
@@ -140,7 +143,7 @@ typedef qse_sll_walk_t (*qse_sll_walker_t) (
  */
 struct qse_sll_t
 {
-	qse_mmgr_t*      mmgr;   /* memory manager */
+	QSE_DEFINE_COMMON_FIELDS (sll)
 
 	qse_sll_copier_t copier; /* data copier */
 	qse_sll_freeer_t freeer; /* data freeer */
@@ -153,17 +156,14 @@ struct qse_sll_t
 };
 /******/
 
-/****s* qse.cmn.sll/qse_sll_node_t
+/****s* cmn/qse_sll_node_t
  * NAME
  *  qse_sll_node_t - define a list node
- *
  * DESCRIPTION
  *  The qse_sll_node_t type defines a list node containing a data pointer and 
  *  and data length. 
- *
  * SEE ALSO
  *  QSE_SLL_DPTR, QSE_SLL_DLEN, QSE_SLL_NEXT
- *
  * SYNOPSIS
  */
 struct qse_sll_node_t
@@ -177,8 +177,6 @@ struct qse_sll_node_t
 #define QSE_SLL_COPIER_SIMPLE ((qse_sll_copier_t)1)
 #define QSE_SLL_COPIER_INLINE ((qse_sll_copier_t)2)
 
-#define QSE_SLL_MMGR(sll)   ((sll)->mmgr)
-#define QSE_SLL_XTN(s)      ((void*)(((qse_sll_t*)s) + 1))
 #define QSE_SLL_COPIER(sll) ((sll)->copier)
 #define QSE_SLL_FREEER(sll) ((sll)->freeer)
 #define QSE_SLL_COMPER(sll) ((sll)->comper)
@@ -188,13 +186,35 @@ struct qse_sll_node_t
 #define QSE_SLL_SIZE(sll)   ((sll)->size)
 #define QSE_SLL_SCALE(sll)  ((sll)->scale)
 
+/****d* cmn/QSE_SLL_DPTR
+ * NAME
+ *  QSE_SLL_DPTR - get the data pointer in a node
+ * SYNOPSIS
+ */
 #define QSE_SLL_DPTR(node)  ((node)->dptr)
+/******/
+
+/****d* cmn/QSE_SLL_DLEN
+ * NAME
+ *  QSE_SLL_DLEN - get the length of data in a node
+ * SYNOPSIS
+ */
 #define QSE_SLL_DLEN(node)  ((node)->dlen)
+/******/
+
+/****d* cmn/QSE_SLL_NEXT
+ * NAME
+ *  QSE_SLL_NEXT - get the next node
+ * SYNOPSIS
+ */
 #define QSE_SLL_NEXT(node)  ((node)->next)
+/******/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+QSE_DEFINE_COMMON_FUNCTIONS (sll)
 
 /****f* qse.cmn.sll/qse_sll_open
  * NAME
@@ -271,43 +291,6 @@ qse_sll_t* qse_sll_init (
  */
 void qse_sll_fini (
 	qse_sll_t* sll  /* a singly linked list */
-);
-/******/
-
-/****f* qse.cmn.sll/qse_sll_getxtn
- * NAME
- *  qse_sll_getxtn - get the pointer to the extension
- *
- * DESCRIPTION
- *  The qse_sll_getxtn() function returns the pointer to the extension.
- *
- * SYNOPSIS
- */
-void* qse_sll_getxtn (
-	qse_sll_t* sll  /* a singly linked list */
-);
-/******/
-
-/****f* qse.cmn.sll/qse_sll_getmmgr
- * NAME
- *  qse_sll_getmmgr - get the memory manager
- *
- * SYNOPSIS
- */
-qse_mmgr_t* qse_sll_getmmgr (
-	qse_sll_t* sll  /* a singly linked list */
-);
-/******/
-
-/****f* qse.cmn.sll/qse_sll_setmmgr
- * NAME
- *  qse_sll_setmmgr - set the memory manager
- *
- * SYNOPSIS
- */
-void qse_sll_setmmgr (
-	qse_sll_t*  sll   /* a singly linked list */,
-	qse_mmgr_t* mmgr  /* a memory manager */
 );
 /******/
 

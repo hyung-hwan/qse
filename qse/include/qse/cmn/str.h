@@ -22,7 +22,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* qse.cmn.str/string
+/****o* cmn/string
  * DESCRIPTION
  *  <qse/cmn/str.h> defines various functions, types, macros to manipulate
  *  strings.
@@ -31,11 +31,6 @@
  *  dealing with a string pointer and length.
  *
  *  #include <qse/cmn/str.h>
- *
- * EXAMPLES
- *  void f (void)
- *  {
- *  }
  ******
  */
 
@@ -44,23 +39,26 @@
 #define QSE_STR_PTR(s)       ((s)->ptr)
 #define QSE_STR_CAPA(s)      ((s)->capa)
 #define QSE_STR_CHAR(s,idx)  ((s)->ptr[idx])
-
-#define QSE_STR_MMGR(s)      ((s)->mmgr)
-#define QSE_STR_XTN(s)       ((void*)(((qse_str_t*)s) + 1))
 #define QSE_STR_SIZER(s)     ((s)->sizer)
 
 typedef struct qse_str_t qse_str_t;
 typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
 
+/****s* cmn/qse_str_t
+ * NAME
+ *  qse_str_t - define a dynamically resizable string
+ * SYNOPSIS
+ */
 struct qse_str_t
 {
-	qse_mmgr_t* mmgr;
-	qse_str_sizer_t sizer;
+	QSE_DEFINE_COMMON_FIELDS (str)
 
-	qse_char_t* ptr;
-	qse_size_t  len;
-	qse_size_t  capa;
+	qse_str_sizer_t sizer;
+	qse_char_t*     ptr;
+	qse_size_t      len;
+	qse_size_t      capa;
 };
+/******/
 
 /* int qse_chartonum (qse_char_t c, int base) */
 #define QSE_CHARTONUM(c,base) \
@@ -145,10 +143,9 @@ int qse_strxncmp (
 int qse_strcasecmp (
 	const qse_char_t* s1, const qse_char_t* s2, qse_ccls_t* ccls);
 
-/****f* qse.cmn.str/qse_strxncasecmp
+/****f* cmn/qse_strxncasecmp
  * NAME
  *  qse_strxncasecmp - compare strings ignoring case
- *
  * DESCRIPTION
  *  The qse_strxncasecmp() function compares characters at the same position 
  *  in each string after converting them to the same case temporarily. 
@@ -160,22 +157,19 @@ int qse_strcasecmp (
  *  For two strings to be equal, they need to have the same length and all
  *  characters in the first string should be equal to their counterpart in the
  *  second string.
- *
  * RETURN
  *  The qse_strxncasecmp() returns 0 if two strings are equal, a positive
  *  number if the first string is larger, -1 if the second string is larger.
- *  
  * EXAMPLES
  *   qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3, QSE_CCLS_GETDFL());
- *
  * SYNOPSIS
  */
 int qse_strxncasecmp (
-	const qse_char_t* s1  /* the pointer to the first string */,
-	qse_size_t len1       /* the length of the first string */, 
-	const qse_char_t* s2  /* the pointer to the second string */,
-	qse_size_t len2       /* the length of the second string */,
-	qse_ccls_t* ccls      /* character class handler */
+	const qse_char_t* s1   /* the pointer to the first string */,
+	qse_size_t        len1 /* the length of the first string */, 
+	const qse_char_t* s2   /* the pointer to the second string */,
+	qse_size_t        len2 /* the length of the second string */,
+	qse_ccls_t*       ccls /* character class handler */
 );
 /******/
 
@@ -241,6 +235,8 @@ qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len);
 qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len);
 qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len);
 
+QSE_DEFINE_COMMON_FUNCTIONS (str)
+
 qse_str_t* qse_str_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t ext,
@@ -264,7 +260,7 @@ void qse_str_fini (
 	qse_str_t* str
 );
 
-/****f* qse.cmn.str/qse_str_yield
+/****f* cmn/qse_str_yield
  * NAME 
  *  qse_str_yield - yield the buffer 
  * 
@@ -279,52 +275,40 @@ void qse_str_fini (
  * SYNOPSIS
  */
 int qse_str_yield (
-	qse_str_t* str  /* a dynamic string */,
-	qse_xstr_t* buf /* the pointer to a qse_xstr_t variable */,
-	int new_capa    /* new capacity in number of characters */
+	qse_str_t*  str      /* a dynamic string */,
+	qse_xstr_t* buf      /* the pointer to a qse_xstr_t variable */,
+	int         new_capa /* new capacity in number of characters */
 );
 /******/
 
-void* qse_str_getxtn (
-	qse_str_t* str
-);
-
-qse_mmgr_t* qse_str_getmmgr (
-	qse_str_t* str
-);
-
-void qse_str_setmmgr (
-	qse_str_t* str,
-	qse_mmgr_t* mmgr
-);
-
-/*
- * NAME: get the sizer
- *
- * DESCRIPTION:
- *  The qse_str_getsizer() function returns the sizer specified.
- *
- * RETURNS: a sizer function set or QSE_NULL if no sizer is set.
+/****f* cmn/qse_str_getsizer
+ * NAME
+ *  qse_str_getsizer - get the sizer
+ * RETURN
+ *  a sizer function set or QSE_NULL if no sizer is set.
  */
 qse_str_sizer_t qse_str_getsizer (
-	qse_str_t* str  /* a dynamic string */
+	qse_str_t* str
 );
+/******/
 
-/*
- * NAME: specify a sizer
- *
- * DESCRIPTION:
+/****f* cmn/qse_str_setsizer
+ * NAME
+ *  qse_str_setsizer - specify a sizer
+ * DESCRIPTION
  *  The qse_str_setsizer() function specify a new sizer for a dynamic string.
  *  With no sizer specified, the dynamic string doubles the current buffer
  *  when it needs to increase its size. The sizer function is passed a dynamic
  *  string and the minimum capacity required to hold data after resizing.
  *  The string is truncated if the sizer function returns a smaller number
  *  than the hint passed.
+ * SYNOPSIS
  */
 void qse_str_setsizer (
-	qse_str_t* str         /* a dynamic string */,
-	qse_str_sizer_t sizer /* a sizer function */
+	qse_str_t*      str,
+	qse_str_sizer_t sizer
 );
+/******/
 
 /*
  * NAME: get capacity
@@ -396,10 +380,9 @@ qse_size_t qse_str_nccat (
 	qse_size_t len
 );
 
-/****f* qse.cmn.str/qse_strspl
+/****f* cmn/qse_strspl
  * NAME
  *  qse_strspl - split a string
- *
  * SYNOPSIS
  */
 int qse_strspl (
@@ -411,10 +394,9 @@ int qse_strspl (
 );
 /******/
 
-/****f* qse.cmn.str/qse_mbstowcs
+/****f* cmn/qse_mbstowcs
  * NAME
  *  qse_mbstowcs - convert a multibyte string to a wide character string
- *
  * SYNOPSIS
  */
 qse_size_t qse_mbstowcs (
@@ -424,13 +406,11 @@ qse_size_t qse_mbstowcs (
 );
 /******/
 
-/****f* qse.cmn.str/qse_mbsntowcsn
+/****f* cmn/qse_mbsntowcsn
  * NAME
  *  qse_mbsntowcsn - convert a multibyte string to a wide character string
- * 
  * RETURN
  *  The qse_mbstowcs() function returns the number of bytes handled.
- *
  * SYNOPSIS
  */
 qse_size_t qse_mbsntowcsn (
@@ -441,20 +421,17 @@ qse_size_t qse_mbsntowcsn (
 );
 /******/
 
-/****f* qse.cmn.str/qse_wcstombslen
+/****f* cmn/qse_wcstombslen
  * NAME
  *  qse_wcstombslen - get the length 
- *
  * DESCRIPTION
  *  The qse_wcstombslen() function scans a null-terminated wide character 
  *  string to get the total number of multibyte characters that it can be
  *  converted to. The resulting number of characters is stored into memory
  *  pointed to by mbslen.
- * 
  * RETURN
  *  The qse_wcstombslen() function returns the number of wide characters 
  *  handled.
- *
  * SYNOPSIS
  */
 qse_size_t qse_wcstombslen (
@@ -463,20 +440,17 @@ qse_size_t qse_wcstombslen (
 );
 /******/
 
-/****f* qse.cmn.str/qse_wcsntombsnlen
+/****f* cmn/qse_wcsntombsnlen
  * NAME
  *  qse_wcsntombsnlen - get the length 
- *
  * DESCRIPTION
  *  The qse_wcsntombsnlen() function scans a wide character wcs as long as
  *  wcslen characters to get the get the total number of multibyte characters 
  *  that it can be converted to. The resulting number of characters is stored 
  *  into memory pointed to by mbslen.
- * 
  * RETURN
  *  The qse_wcsntombsnlen() function returns the number of wide characters 
  *  handled.
- *
  * SYNOPSIS
  */
 qse_size_t qse_wcsntombsnlen (
@@ -486,10 +460,9 @@ qse_size_t qse_wcsntombsnlen (
 );
 /******/
 
-/****f* qse.cmn.str/qse_wcstombs
+/****f* cmn/qse_wcstombs
  * NAME
  *  qse_wcstombs - convert a wide character string to a multibyte string.
- *
  * DESCRIPTION
  *  The qse_wcstombs() function converts a null-terminated wide character 
  *  string to a multibyte string and stores it into the buffer pointed to
@@ -499,10 +472,8 @@ qse_size_t qse_wcsntombsnlen (
  *  It may not null-terminate the resulting multibyte string if the buffer
  *  is not large enough. You can check if the resulting mbslen is equal to 
  *  the input mbslen to know it.
- *
  * RETURN
  *  The qse_wcstombs() function returns the number of wide characters handled.
- *
  * SYNOPSIS
  */
 qse_size_t qse_wcstombs (
@@ -510,14 +481,13 @@ qse_size_t qse_wcstombs (
         qse_mchar_t*       mbs,
 	qse_size_t*        mbslen
 );
+/******/
 
-/****f* qse.cmn.str/qse_wcsntombsn
+/****f* cmn/qse_wcsntombsn
  * NAME
  *  qse_wcstombs - convert a wide character string to a multibyte string
- *
  * RETURN
  *  The qse_wcstombs() function returns the number of wide characters handled.
- *
  * SYNOPSIS
  */
 qse_size_t qse_wcsntombsn (
@@ -528,15 +498,13 @@ qse_size_t qse_wcsntombsn (
 );
 /******/
 
-/****f* qse.cmn.str/qse_wcstombs_strict
+/****f* cmn/qse_wcstombs_strict
  * NAME
  *  qse_wcstombs_strict - convert a wide character string to a multibyte string.
- *
  * DESCRIPTION
  *  The qse_wcstombs_strict() function performs the same as the qse_wcsmbs() 
  *  function except that it returns an error if it can't fully convert the
  *  input string and/or the buffer is not large enough.
- *
  * RETURN
  *  The qse_wcstombs_strict() function returns 0 on success and -1 on failure.
  * SYNOPSIS

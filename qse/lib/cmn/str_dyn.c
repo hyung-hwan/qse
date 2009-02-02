@@ -19,6 +19,8 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
+QSE_IMPLEMENT_COMMON_FUNCTIONS (str)
+
 qse_str_t* qse_str_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
 {
 	qse_str_t* str;
@@ -102,21 +104,6 @@ int qse_str_yield (qse_str_t* str, qse_xstr_t* buf, int new_capa)
 	str->capa = new_capa;
 
 	return 0;
-}
-
-void* qse_str_getxtn (qse_str_t* str)
-{
-	return str + 1;
-}
-
-qse_mmgr_t* qse_str_getmmgr (qse_str_t* str)
-{
-	return str->mmgr;
-}
-
-void qse_str_setmmgr (qse_str_t* str, qse_mmgr_t* mmgr)
-{
-	str->mmgr = mmgr;
 }
 
 qse_str_sizer_t qse_str_getsizer (qse_str_t* str)

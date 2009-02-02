@@ -60,32 +60,35 @@ enum
 	QSE_TIO_IO_DATA
 };
 
-
-#define QSE_TIO_MMGR(tio)   ((tio)->mmgr)
-#define QSE_TIO_XTN(s)      ((void*)(((qse_tio_t*)s) + 1))
 #define QSE_TIO_ERRNUM(tio) ((tio)->errnum)
 
-/*
- * TYPE: qse_tio_t
- *   Defines the tio type
- *
- * DESCRIPTION:
- *   <qse_tio_t> defines a generic type for text-based IO. When qse_char_t is
- *   qse_mchar_t, it handles any byte streams. When qse_char_t is qse_wchar_t,
- *   it handles utf-8 byte streams.
- */
 typedef struct qse_tio_t qse_tio_t;
 
-/*
- * TYPE: qse_tio_io_t
- *   Defines a user-defines IO handler
+/****t* cmn/qse_tio_io_t
+ * NAME
+ *  qse_tio_io_t - define a text IO handler type
+ * SYNOPSIS
  */
 typedef qse_ssize_t (*qse_tio_io_t) (
-	int cmd, void* arg, void* data, qse_size_t size);
+	int        cmd, 
+	void*      arg, 
+	void*      data, 
+	qse_size_t size
+);
+/******/
 
+/****s* cmn/qse_tio_t
+ * NAME
+ *  qse_tio_t - define a text IO type
+ * DESCRIPTION
+ *   The qse_tio_t type defines a generic type for text IO. When qse_char_t is
+ *   qse_mchar_t, it handles any byte streams. When qse_char_t is qse_wchar_t,
+ *   it handles a multi-byte stream converted to a wide character stream.
+ * SYNOPSIS
+ */
 struct qse_tio_t
 {
-	QSE_DEFINE_STD_FIELDS (tio)
+	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_tio_err_t errnum;
 
 	/* io functions */
@@ -103,38 +106,57 @@ struct qse_tio_t
         qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
         qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
 };
+/******/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-QSE_DEFINE_STD_FUNCTIONS (tio)
+QSE_DEFINE_COMMON_FUNCTIONS (tio)
 
-/*
- * FUNCTION: qse_tio_open
+/****f* cmn/qse_tio_open
+ * NAME
+ *  qse_tio_open - create an text IO processor
+ * SYNOPSIS
  */
 qse_tio_t* qse_tio_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_close
+/****f* cmn/qse_tio_close
+ * NAME
+ *  qse_tio_close - destroy an text IO processor
+ * SYNOPSIS
  */
 int qse_tio_close (
 	qse_tio_t* tio
 );
+/******/
 
+/****f* cmn/qse_tio_init
+ * NAME
+ *  qse_tio_init - initialize an text IO processor
+ * SYNOPSIS
+ */
 qse_tio_t* qse_tio_init (
 	qse_tio_t*  tip,
 	qse_mmgr_t* mmgr
 );
+/******/
 
+/****f* cmn/qse_tio_fini
+ * NAME
+ *  qse_tio_fini - finalize an text IO processor
+ * SYNOPSIS
+ */
 int qse_tio_fini (
 	qse_tio_t* tio
 );
+/******/
 
-/****f* qse.cmn.tio/qse_tio_geterrnum
+/****f* cmn/qse_tio_geterrnum
  * NAME
  *  qse_tio_geterrnum - get an error code
  *
@@ -145,92 +167,75 @@ qse_tio_err_t qse_tio_geterrnum (
 );
 /******/
 
-/*
- * FUNCTION: qse_tio_geterrstr
- *   Translates an error code to a string
- *
- * PARAMETERS:
- *   tio - a tio object
- *
- * RETURNS:
- *   A pointer to a constant string describing the last error occurred
+/****f* cmn/qse_tio_geterrmsg
+ * NAME
+ *  qse_tio_geterrmsg - translate an error code to a string
+ * RETURN
+ *   A pointer to a constant string describing the last error occurred.
  */
-const qse_char_t* qse_tio_geterrstr (
+const qse_char_t* qse_tio_geterrmsg (
 	qse_tio_t* tio
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_attachin
- *   Attaches an input handler function
- *
- * PARAMETERS:
- *   tio - a tio object
- *   input - input handler function
- *   arg - user data to be passed to the input handler
- * 
- * RETURNS:
+/****f* cmn/qse_tio_attachin
+ * NAME
+ *  qse_tio_attachin - attaches an input handler 
+ * RETURN
  *   0 on success, -1 on failure
+ * SYNOPSIS
  */
 int qse_tio_attachin (
 	qse_tio_t*   tio,
 	qse_tio_io_t input,
 	void*        arg
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_detachin
- *   Detaches an input handler function
- *
- * PARAMETERS:
- *   tio - a tio object
- * 
- * RETURNS:
+/****f* cmn/qse_tio_detachin
+ * NAME
+ *  qse_tio_detachin - detach an input handler 
+ * RETURN
  *   0 on success, -1 on failure
+ * SYNOPSIS
  */
 int qse_tio_detachin (
 	qse_tio_t* tio
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_attachout
- *   Attaches an output handler function
- *
- * PARAMETERS:
- *   tio - a tio object
- *   output - output handler function
- *   arg - user data to be passed to the output handler
- * 
- * RETURNS:
+/****f* cmn/qse_tio_attachout
+ * NAME
+ *  qse_tio_attachout - attaches an output handler 
+ * RETURN
  *   0 on success, -1 on failure
+ * SYNOPSIS
  */
 int qse_tio_attachout (
 	qse_tio_t* tio,
 	qse_tio_io_t output,
 	void* arg
 );
+/******/
 
-/*
- * FUNCTION: qse_tio_detachout
- *   Detaches an output handler function
- * 
- * PARAMETERS:
- *   tio - a tio object
- *
- * RETURNS:
+/****f* cmn/qse_tio_detachout
+ * NAME
+ *  qse_tio_detachout - detaches an output handler 
+ * RETURN
  *   0 on success, -1 on failure
+ * SYNOPSIS
  */
 int qse_tio_detachout (
 	qse_tio_t* tio
 );
+/******/
 
-/****f* qse.cmn.tio/qse_tio_flush
+/****f* cmn/qse_tio_flush
  * NAME
  *  qse_tio_flush - flush the output buffer
- *
  * RETURNS
  *  The qse_tio_flush() function return the number of bytes written on 
  *  success, -1 on failure.
- * 
  * SYNOPSIS
  */
 qse_ssize_t qse_tio_flush (
@@ -238,10 +243,9 @@ qse_ssize_t qse_tio_flush (
 );
 /******/
 
-/****f* qse.cmn.tio/qse_tio_purge
+/****f* cmn/qse_tio_purge
  * NAME 
- *  qse_tio_purge - erase input and output buffered 
- *
+ *  qse_tio_purge - empty input and output buffers
  * SYNOPSIS
  */
 void qse_tio_purge (
@@ -249,10 +253,9 @@ void qse_tio_purge (
 );
 /******/
 
-/****f* qse.cmn.tio/qse_tio_read
+/****f* cmn/qse_tio_read
  * NAME
  *  qse_tio_read - read text
- * 
  * SYNOPSIS
  */
 qse_ssize_t qse_tio_read (
@@ -262,14 +265,12 @@ qse_ssize_t qse_tio_read (
 );
 /******/
 
-/****f* qse.cmn.tio/qse_tio_write
+/****f* cmn/qse_tio_write
  * NAME
  *  qse_tio_write - write text
- * 
  * DESCRIPTION
  *  If the size paramenter is (qse_size_t)-1, the function treats the data 
  *  parameter as a pointer to a null-terminated string.
- *
  * SYNOPSIS
  */
 qse_ssize_t qse_tio_write (

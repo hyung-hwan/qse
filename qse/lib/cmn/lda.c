@@ -19,6 +19,8 @@
 #include <qse/cmn/lda.h>
 #include "mem.h"
 
+QSE_IMPLEMENT_COMMON_FUNCTIONS (lda)
+
 #define lda_t    qse_lda_t
 #define node_t   qse_lda_node_t
 #define copier_t qse_lda_copier_t
@@ -148,21 +150,6 @@ void qse_lda_fini (lda_t* lda)
 		lda->node = QSE_NULL;
 		lda->capa = 0;
 	}
-}
-
-void* qse_lda_getxtn (lda_t* lda)
-{
-	return lda + 1;
-}
-
-mmgr_t* qse_lda_getmmgr (lda_t* lda)
-{
-	return lda->mmgr;
-}
-
-void qse_lda_setmmgr (lda_t* lda, mmgr_t* mmgr)
-{
-	lda->mmgr = mmgr;
 }
 
 int qse_lda_getscale (lda_t* lda)

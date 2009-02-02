@@ -19,7 +19,7 @@
 #include <qse/cmn/tio.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_STD_FUNCTIONS (tio)
+QSE_IMPLEMENT_COMMON_FUNCTIONS (tio)
 
 qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t ext)
 {
@@ -90,9 +90,9 @@ qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio)
 	return tio->errnum;
 }
 
-const qse_char_t* qse_tio_geterrstr (qse_tio_t* tio)
+const qse_char_t* qse_tio_geterrmsg (qse_tio_t* tio)
 {
-	static const qse_char_t* __errstr[] =
+	static const qse_char_t* __errmsg[] =
 	{
 		QSE_T("no error"),
 		QSE_T("out of memory"),
@@ -111,9 +111,9 @@ const qse_char_t* qse_tio_geterrstr (qse_tio_t* tio)
 		QSE_T("unknown error")
 	};
 
-	return __errstr[
-		(tio->errnum < 0 || tio->errnum >= QSE_COUNTOF(__errstr))? 
-		QSE_COUNTOF(__errstr) - 1: tio->errnum];
+	return __errmsg[
+		(tio->errnum < 0 || tio->errnum >= QSE_COUNTOF(__errmsg))? 
+		QSE_COUNTOF(__errmsg) - 1: tio->errnum];
 }
 
 int qse_tio_attachin (qse_tio_t* tio, qse_tio_io_t input, void* arg)

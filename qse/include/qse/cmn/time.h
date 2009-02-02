@@ -72,10 +72,9 @@ struct qse_btime_t
 extern "C" {
 #endif
 
-/****f* qse.cmn/qse_gettime
+/****f* qse.cmn.time/qse_gettime
  * NAME
  *  qse_gettime - get the current time
- *
  * SYNPOSIS
  */
 int qse_gettime (
@@ -83,10 +82,9 @@ int qse_gettime (
 );
 /******/
 
-/****f* qse.cmn/qse_settime
+/****f* qse.cmn.time/qse_settime
  * NAME
  *  qse_settime - set the current time
- *
  * SYNOPSIS
  */
 int qse_settime (
@@ -95,10 +93,9 @@ int qse_settime (
 /******/
 
 
-/****f* qse.cmn/qse_gmtime
+/****f* qse.cmn.time/qse_gmtime
  * NAME
  *  qse_gmtime - convert numeric time to broken-down time 
- *
  * SYNOPSIS
  */
 int qse_gmtime (
@@ -107,10 +104,9 @@ int qse_gmtime (
 );
 /******/
 
-/****f* qse.cmn/qse_localtime
+/****f* qse.cmn.time/qse_localtime
  * NAME
  *  qse_localtime - convert numeric time to broken-down time 
- *
  * SYNOPSIS
  */
 int qse_localtime (
@@ -119,7 +115,7 @@ int qse_localtime (
 ); 
 /******/
 
-/****f* qse.cmn/qse_timegm
+/****f* qse.cmn.time/qse_timegm
  * NAME
  *  qse_timegm - convert broken-down time to numeric time
  *
@@ -131,7 +127,7 @@ int qse_timegm (
 );
 /******/
 
-/****f* qse.cmn/qse_timelocal
+/****f* qse.cmn.time/qse_timelocal
  * NAME
  *  qse_timelocal - convert broken-down time to numeric time
  *
@@ -143,7 +139,7 @@ int qse_timelcoal (
 );
 /******/
 
-/****f* qse.cmn/qse_strftime
+/****f* qse.cmn.time/qse_strftime
  * NAME
  *  qse_strftime - format time
  *

@@ -1,8 +1,15 @@
 
 QSE provides a script engine for various scripting languages. It aims to produce a script engine framework that can be embedded into an application. A hosting application can access various aspects of the embedded script engine and vice versa.
 
-[INSTALL]
+<< INSTALL >>
 
 Cross compiling for WIN32 with MINGW32
-./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
+
+  ./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
 make 
+
+<< DOCUMENTATION >>
+
+Generate the API documents with robodoc.
+	
+	robodoc --rc doc/robodoc.rc --src include/qse --doc ./doc/qse --multidoc --index --html --source_line_numbers --nopre

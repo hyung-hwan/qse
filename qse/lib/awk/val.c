@@ -445,7 +445,7 @@ static void same_mapval (void* run, void* v)
 */
 static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_MAP_XTN(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)qse_map_getxtn(map);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown in map free..."));
@@ -458,7 +458,7 @@ static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 
 static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_MAP_XTN(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)qse_map_getxtn(map);
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown nofree in map free..."));
 	qse_awk_dprintval (run, dptr);
@@ -516,7 +516,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* run)
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
-	*(qse_awk_rtx_t**)QSE_MAP_XTN(val->map) = run;
+	*(qse_awk_rtx_t**)qse_map_getxtn(val->map) = run;
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
@@ -1156,7 +1156,7 @@ static qse_map_walk_t print_pair (
 {
 	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
 
-	QSE_ASSERT (run == *(qse_awk_rtx_t**)QSE_MAP_XTN(map));
+	QSE_ASSERT (run == *(qse_awk_rtx_t**)qse_map_getxtn(map));
 
 	DPRINTF (DCUSTOM, QSE_T(" %.*s=>"),
 		(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
