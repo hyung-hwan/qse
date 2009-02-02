@@ -25,7 +25,7 @@
 typedef struct qse_opt_t qse_opt_t;
 typedef struct qse_opt_lng_t qse_opt_lng_t;
 
-/****t* qse.cmn.opt/qse_opt_lng_t
+/****t* Common/qse_opt_lng_t
  * NAME
  *  qse_opt_lng_t - define a long option
  * SYNOPSIS
@@ -37,7 +37,7 @@ struct qse_opt_lng_t
 };
 /*****/
 
-/****t* qse.cmn.opt/qse_opt_t
+/****t* Common/qse_opt_t
  * NAME
  *  qse_opt_t - define a command line option table
  * SYNOPSIS
@@ -67,7 +67,7 @@ struct qse_opt_t
 extern "C" {
 #endif
 
-/****f* qse.cmn.opt/qse_getopt
+/****f* Common/qse_getopt
  * NAME
  *  qse_getopt - process command line options
  * DESCRIPTION

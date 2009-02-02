@@ -114,21 +114,21 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	qse_map_setcopier (awk->parse.named, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
-	awk->parse.globals = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
-	awk->parse.locals = qse_lda_open (mmgr, QSE_SIZEOF(awk), 64);
+	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
+	awk->parse.lcls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 64);
 	awk->parse.params = qse_lda_open (mmgr, QSE_SIZEOF(awk), 32);
 
-	if (awk->parse.globals == QSE_NULL ||
-	    awk->parse.locals == QSE_NULL ||
+	if (awk->parse.gbls == QSE_NULL ||
+	    awk->parse.lcls == QSE_NULL ||
 	    awk->parse.params == QSE_NULL) goto oops;
 
-	*(qse_awk_t**)qse_lda_getxtn(awk->parse.globals) = awk;
-	qse_lda_setcopier (awk->parse.globals, QSE_LDA_COPIER_INLINE);
-	qse_lda_setscale (awk->parse.globals, QSE_SIZEOF(qse_char_t));
+	*(qse_awk_t**)qse_lda_getxtn(awk->parse.gbls) = awk;
+	qse_lda_setcopier (awk->parse.gbls, QSE_LDA_COPIER_INLINE);
+	qse_lda_setscale (awk->parse.gbls, QSE_SIZEOF(qse_char_t));
 
-	*(qse_awk_t**)qse_lda_getxtn(awk->parse.locals) = awk;
-	qse_lda_setcopier (awk->parse.locals, QSE_LDA_COPIER_INLINE);
-	qse_lda_setscale (awk->parse.locals, QSE_SIZEOF(qse_char_t));
+	*(qse_awk_t**)qse_lda_getxtn(awk->parse.lcls) = awk;
+	qse_lda_setcopier (awk->parse.lcls, QSE_LDA_COPIER_INLINE);
+	qse_lda_setscale (awk->parse.lcls, QSE_SIZEOF(qse_char_t));
 
 	*(qse_awk_t**)qse_lda_getxtn(awk->parse.params) = awk;
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
@@ -139,10 +139,10 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	awk->errlin = 0;
 	awk->stopall = QSE_FALSE;
 
-	awk->parse.nlocals_max = 0;
+	awk->parse.nlcls_max = 0;
 
-	awk->tree.nglobals = 0;
-	awk->tree.nbglobals = 0;
+	awk->tree.ngbls = 0;
+	awk->tree.nbgbls = 0;
 	awk->tree.begin = QSE_NULL;
 	awk->tree.begin_tail = QSE_NULL;
 	awk->tree.end = QSE_NULL;
@@ -186,7 +186,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 
 	awk->assoc_data = QSE_NULL;
 
-	if (qse_awk_initglobals (awk) == -1) goto oops;
+	if (qse_awk_initgbls (awk) == -1) goto oops;
 
 	return awk;
 
@@ -194,8 +194,8 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 oops:
 	if (awk->fnc.user) qse_map_close (awk->fnc.user);
 	if (awk->parse.params) qse_lda_close (awk->parse.params);
-	if (awk->parse.locals) qse_lda_close (awk->parse.locals);
-	if (awk->parse.globals) qse_lda_close (awk->parse.globals);
+	if (awk->parse.lcls) qse_lda_close (awk->parse.lcls);
+	if (awk->parse.gbls) qse_lda_close (awk->parse.gbls);
 	if (awk->parse.named) qse_map_close (awk->parse.named);
 	if (awk->parse.funs) qse_map_close (awk->parse.funs);
 	if (awk->tree.funs) qse_map_close (awk->tree.funs);
@@ -217,8 +217,8 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->fnc.user);
 
 	qse_lda_close (awk->parse.params);
-	qse_lda_close (awk->parse.locals);
-	qse_lda_close (awk->parse.globals);
+	qse_lda_close (awk->parse.lcls);
+	qse_lda_close (awk->parse.gbls);
 	qse_map_close (awk->parse.named);
 	qse_map_close (awk->parse.funs);
 
@@ -255,27 +255,27 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->src.shared.buf_pos = 0;
 	awk->src.shared.buf_len = 0;
 
-	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.globals) == awk->tree.nglobals);
+	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
 	qse_lda_delete (
-		awk->parse.globals, awk->tree.nbglobals, 
-		QSE_LDA_SIZE(awk->parse.globals) - awk->tree.nbglobals);
+		awk->parse.gbls, awk->tree.nbgbls, 
+		QSE_LDA_SIZE(awk->parse.gbls) - awk->tree.nbgbls);
 
-	qse_lda_clear (awk->parse.locals);
+	qse_lda_clear (awk->parse.lcls);
 	qse_lda_clear (awk->parse.params);
 	qse_map_clear (awk->parse.named);
 	qse_map_clear (awk->parse.funs);
 
-	awk->parse.nlocals_max = 0; 
+	awk->parse.nlcls_max = 0; 
 	awk->parse.depth.cur.block = 0;
 	awk->parse.depth.cur.loop = 0;
 	awk->parse.depth.cur.expr = 0;
 
 	/* clear parse trees */	
 	awk->tree.ok = 0;
-	/*awk->tree.nbglobals = 0;
-	awk->tree.nglobals = 0;	 */
-	awk->tree.nglobals = awk->tree.nbglobals;
+	/*awk->tree.nbgbls = 0;
+	awk->tree.ngbls = 0;	 */
+	awk->tree.ngbls = awk->tree.nbgbls;
 
 	awk->tree.cur_fun.ptr = QSE_NULL;
 	awk->tree.cur_fun.len = 0;

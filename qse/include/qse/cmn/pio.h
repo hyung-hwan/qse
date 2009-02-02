@@ -101,7 +101,7 @@ struct qse_pio_pin_t
 	qse_pio_t*    self;	
 };
 
-/****s* cmn/qse_pio_t
+/****s* Common/qse_pio_t
  * NAME 
  *  qse_pio_t - define an pipe IO type
  * SYNOPSIS
@@ -128,7 +128,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
-/****f* cmn/qse_pio_open
+/****f* Common/qse_pio_open
  * NAME
  *  qse_pio_open - open pipes to a child process
  *
@@ -146,7 +146,7 @@ qse_pio_t* qse_pio_open (
 );
 /******/
 
-/****f* cmn/qse_pio_close
+/****f* Common/qse_pio_close
  * NAME
  *  qse_pio_close - close pipes to a child process
  *
@@ -157,7 +157,7 @@ void qse_pio_close (
 );
 /******/
 
-/****f* cmn/qse_pio_init
+/****f* Common/qse_pio_init
  * NAME
  *  qse_pio_init - initialize pipes to a child process
  *
@@ -171,7 +171,7 @@ qse_pio_t* qse_pio_init (
 );
 /******/
 
-/****f* cmn/qse_pio_fini
+/****f* Common/qse_pio_fini
  * NAME
  *  qse_pio_fini - finalize pipes to a child process
  *
@@ -192,7 +192,7 @@ void qse_pio_setflags (
 	int        op
 );
 
-/****f* cmn/qse_pio_geterrnum
+/****f* Common/qse_pio_geterrnum
  * NAME
  *  qse_pio_geterrnum - get an error code
  *
@@ -203,7 +203,7 @@ qse_pio_err_t qse_pio_geterrnum (
 );
 /******/
 
-/****f* cmn/qse_pio_geterrmsg
+/****f* Common/qse_pio_geterrmsg
  * NAME
  *  qse_pio_geterrstr - transllate an error code to a string
  *
@@ -218,7 +218,7 @@ const qse_char_t* qse_pio_geterrstr (
 );
 /******/
 
-/****f* cmn/qse_pio_gethandle
+/****f* Common/qse_pio_gethandle
  * NAME
  *  qse_pio_gethandle - get native handle
  *
@@ -230,7 +230,7 @@ qse_pio_hnd_t qse_pio_gethandle (
 );
 /******/
 
-/****f* cmn/qse_pio_getchild
+/****f* Common/qse_pio_getchild
  * NAME
  *  qse_pio_getchild - get the PID of a child process
  *
@@ -241,7 +241,7 @@ qse_pio_pid_t qse_pio_getchild (
 );
 /******/
 
-/****f* cmn/qse_pio_read
+/****f* Common/qse_pio_read
  * NAME
  *  qse_pio_read - read data
  * SYNOPSIS
@@ -254,7 +254,7 @@ qse_ssize_t qse_pio_read (
 );
 /******/
 
-/****f* cmn/qse_pio_write
+/****f* Common/qse_pio_write
  * NAME 
  *  qse_pio_write - write data
  * DESCRIPTION
@@ -270,7 +270,7 @@ qse_ssize_t qse_pio_write (
 );
 /******/
 
-/****f* cmn/qse_pio_flush
+/****f* Common/qse_pio_flush
  * NAME
  *  qse_pio_flush - flush data
  *
@@ -282,7 +282,7 @@ qse_ssize_t qse_pio_flush (
 );
 /*****/
 
-/****f* cmn/qse_pio_end
+/****f* Common/qse_pio_end
  * NAME
  *  qse_pio_end - close native handle
  *
@@ -294,7 +294,7 @@ void qse_pio_end (
 );
 /******/
 
-/****f* cmn/qse_pio_wait
+/****f* Common/qse_pio_wait
  * NAME
  *  qse_pio_wait - wait for a child process 
  * DESCRIPTION
@@ -315,7 +315,7 @@ int qse_pio_wait (
 );
 /******/
 
-/****f* cmn/qse_pio_kill
+/****f* Common/qse_pio_kill
  * NAME
  *  qse_pio_kill - terminate the child process
  * NOTES

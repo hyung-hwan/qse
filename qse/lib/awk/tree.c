@@ -401,7 +401,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_GLOBAL:
+		case QSE_AWK_NDE_GBL:
 		{
 			qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)nde;
 
@@ -415,7 +415,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 					 * use the actual name */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
-				else if (px->id.idxa < awk->tree.nbglobals)
+				else if (px->id.idxa < awk->tree.nbgbls)
 				{
 					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
@@ -440,7 +440,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_GLOBALIDX:
+		case QSE_AWK_NDE_GBLIDX:
 		{
 			qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)nde;
 
@@ -453,7 +453,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 					 * use the actual name */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
-				else if (px->id.idxa < awk->tree.nbglobals)
+				else if (px->id.idxa < awk->tree.nbgbls)
 				{
 					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
@@ -482,7 +482,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_LOCAL:
+		case QSE_AWK_NDE_LCL:
 		{
 			qse_size_t n;
 			qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)nde;
@@ -503,7 +503,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
-		case QSE_AWK_NDE_LOCALIDX:
+		case QSE_AWK_NDE_LCLIDX:
 		{
 			qse_size_t n;
 			qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)nde;
@@ -636,14 +636,14 @@ static int print_statement (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			PUT_SRCSTR (awk, QSE_T("{"));
 			PUT_NEWLINE (awk);
 
-			if (px->nlocals > 0) 
+			if (px->nlcls > 0) 
 			{
 				PRINT_TABS (awk, depth + 1);
 				qse_awk_getkw (awk, KW_LOCAL, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 
-				for (i = 0; i < px->nlocals - 1; i++) 
+				for (i = 0; i < px->nlcls - 1; i++) 
 				{
 					PUT_SRCSTR (awk, QSE_T("__l"));
 					n = qse_awk_longtostr (
@@ -1223,8 +1223,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			}
 
 			case QSE_AWK_NDE_NAMED:
-			case QSE_AWK_NDE_GLOBAL:
-			case QSE_AWK_NDE_LOCAL:
+			case QSE_AWK_NDE_GBL:
+			case QSE_AWK_NDE_LCL:
 			case QSE_AWK_NDE_ARG:
 			{
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;
@@ -1236,8 +1236,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 			}
 
 			case QSE_AWK_NDE_NAMEDIDX:
-			case QSE_AWK_NDE_GLOBALIDX:
-			case QSE_AWK_NDE_LOCALIDX:
+			case QSE_AWK_NDE_GBLIDX:
+			case QSE_AWK_NDE_LCLIDX:
 			case QSE_AWK_NDE_ARGIDX:
 			{
 				qse_awk_nde_var_t* px = (qse_awk_nde_var_t*)p;

@@ -7,7 +7,7 @@
 #ifndef _QSE_TYPES_H_
 #define _QSE_TYPES_H_
 
-/****o* qse/basic types
+/****o* Base/Basic Types
  * DESCRIPTION
  *  <qse/types.h> defines various common basic types. They are designed to be
  *  cross-platform. These types are preferred over native data types in many
@@ -30,27 +30,40 @@
 #	error unsupported operating system
 #endif
 
-/****t* qse/qse_bool_t
+/****t* Base/qse_bool_t
  * NAME
  *  qse_bool_t - define a boolean type
  * DESCRIPTION
  *  The qse_bool_t type defines a boolean type that can represent QSE_TRUE 
  *  and QSE_FALSE.
- ******
+ * SYNOPSIS
  */
-typedef int qse_bool_t;
+enum qse_bool_t
+{
+	QSE_TRUE  = (0 == 0),
+	QSE_FALSE = (0 != 0)
+};
+/******/
+typedef enum qse_bool_t qse_bool_t;
 
-/****t* qse/qse_tri_t
+/****t* Base/qse_tri_t
  * NAME
  *  qse_tri_t - define a tri-state type
  * DESCRIPTION
  *  The qse_tri_t type defines a tri-state type that can represent QSE_ALIVE,
  *  QSE_ZOMBIE, and QSE_DEAD.
- ******
+ * SYNOPSIS
  */
-typedef int qse_tri_t;
+enum qse_tri_t
+{
+	QSE_ALIVE  = 1,
+	QSE_ZOMBIE = 0,
+	QSE_DEAD   = -1
+};
+/******/
+typedef enum qse_tri_t qse_tri_t;
 
-/****t* qse/qse_int_t,qse/qse_uint_t
+/****t* Base/qse_int_t,Base/qse_uint_t
  * NAME
  *  qse_int_t - define a signed integer type as large as a pointer type
  *  qse_uint_t - define an unsigned integer type as large as a pointer type
@@ -82,7 +95,7 @@ typedef int qse_tri_t;
 #	error unsupported pointer size
 #endif
 
-/****t* qse/qse_long_t,qse/qse_ulong_t
+/****t* Base/qse_long_t,Base/qse_ulong_t
  * NAME
  *  qse_long_t - define the largest signed integer type supported
  *  qse_ulong_t - define the largest unsigned integer type supported
@@ -99,7 +112,7 @@ typedef int qse_tri_t;
 	typedef unsigned long qse_ulong_t;
 #endif
 
-/****t* qse/qse_int8_t,qse/qse_uint8_t
+/****t* Base/qse_int8_t,Base/qse_uint8_t
  * NAME
  *  qse_int8_t - define an 8-bit signed integer type
  *  qse_uint8_t - define an 8-bit unsigned integer type
@@ -113,7 +126,7 @@ typedef int qse_tri_t;
 	typedef unsigned __int8 qse_uint8_t;
 #endif
 
-/****t* qse/qse_int16_t,qse/qse_uint16_t
+/****t* Base/qse_int16_t,Base/qse_uint16_t
  * NAME
  *  qse_int16_t - define a 16-bit signed integer type
  *  qse_uint16_t - define a 16-bit unsigned integer type
@@ -127,7 +140,7 @@ typedef int qse_tri_t;
 	typedef unsigned __int16 qse_uint16_t;
 #endif
 
-/****t* qse/qse_int32_t,qse/qse_uint32_t
+/****t* Base/qse_int32_t,Base/qse_uint32_t
  * NAME
  *  qse_int32_t - define a 32-bit signed integer type
  *  qse_uint32_t - define a 32-bit unsigned integer type
@@ -144,7 +157,7 @@ typedef int qse_tri_t;
 	typedef unsigned __int32 qse_uint32_t;
 #endif
 
-/****t* qse/qse_int64_t,qse/qse_uint64_t
+/****t* Base/qse_int64_t,Base/qse_uint64_t
  * NAME
  *  qse_int64_t - define a 64-bit signed integer type
  *  qse_uint64_t - define a 64-bit unsigned integer type
@@ -194,14 +207,14 @@ typedef int qse_tri_t;
 	typedef unsigned __int128 qse_uint128_t;
 #endif
 
-/****t* qse/qse_byte_t
+/****t* Base/qse_byte_t
  * NAME
  *  qse_byte_t - define a byte type
  ******
  */
 typedef qse_uint8_t qse_byte_t;
 
-/****t* qse/qse_size_t
+/****t* Base/qse_size_t
  * NAME
  *  qse_size_t - define an unsigned integer type that can hold a pointer value
  ******
@@ -212,14 +225,14 @@ typedef qse_uint8_t qse_byte_t;
 	typedef qse_uint_t  qse_size_t;
 #endif
 
-/****t* qse/qse_ssize_t
+/****t* Base/qse_ssize_t
  * NAME
  *  qse_ssize_t - define an signed integer type that can hold a pointer value
  ******
  */
 typedef qse_int_t   qse_ssize_t;
 
-/****t* qse/qse_word_t
+/****t* Base/qse_word_t
  * NAME
  *  qse_word_t - define an integer type identical to qse_uint_t 
  ******
@@ -240,7 +253,7 @@ typedef qse_uint_t  qse_word_t;
 	typedef double qse_real_t;
 #endif
 
-/****t* qse/qse_mchar_t,qse/qse_mcint_t
+/****t* Base/qse_mchar_t,Base/qse_mcint_t
  * NAME
  *  qse_mchar_t - define a multi-byte character
  *  qse_mcint_t - define a type that can hold qse_mchar_t and QSE_MCHAR_EOF
@@ -249,7 +262,7 @@ typedef qse_uint_t  qse_word_t;
 typedef char qse_mchar_t;
 typedef int  qse_mcint_t;
 
-/****t* qse/qse_wchar_t,qse/qse_wcint_t
+/****t* Base/qse_wchar_t,Base/qse_wcint_t
  * NAME
  *  qse_wchar_t - define a wide character
  *  qse_wcint_t - define a type that can hold qse_wchar_t and QSE_WCHAR_EOF
@@ -308,7 +321,7 @@ typedef int  qse_mcint_t;
 #	error unsupported size of wchar_t
 #endif
 
-/****t* qse/qse_char_t,qse/qse_cint_t
+/****t* Base/qse_char_t,Base/qse_cint_t
  * NAME
  *  qse_char_t - define a character
  *  qse_cint_t - define a type that can hold qse_char_t and QSE_CHAR_EOF
@@ -350,7 +363,7 @@ typedef struct qse_cstr_t qse_cstr_t;
 typedef struct qse_mmgr_t qse_mmgr_t;
 typedef struct qse_ccls_t qse_ccls_t;
 
-/****t* qse/qse_xstr_t
+/****t* Base/qse_xstr_t
  * NAME
  *  qse_xstr_t - combine a pointer and length 
  * SYNOPSIS
@@ -362,7 +375,7 @@ struct qse_xstr_t
 };
 /******/
 
-/****t* qse/qse_cstr_t
+/****t* Base/qse_cstr_t
  * NAME
  *  qse_cstr_t - combine a constant pointer and length 
  * SYNOPSIS
@@ -374,7 +387,7 @@ struct qse_cstr_t
 };
 /******/
 
-/****t* qse/qse_mmgr_t
+/****t* Base/qse_mmgr_t
  * NAME
  *  qse_mmgr_t - define a memory manager
  * SYNOPSIS
@@ -388,7 +401,7 @@ struct qse_mmgr_t
 };
 /******/
 
-/****t* qse/qse_ccls_type_t
+/****t* Base/qse_ccls_type_t
  * NAME
  *  qse_ccls_type_t - define character class types
  * SYNOPSIS
@@ -411,7 +424,7 @@ enum qse_ccls_type_t
 
 typedef enum qse_ccls_type_t qse_ccls_type_t;
 
-/****t* qse/qse_ccls_t
+/****t* Base/qse_ccls_t
  * NAME
  *  qse_mmgr_t - define a character classifier
  * SYNOPSIS

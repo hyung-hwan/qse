@@ -174,7 +174,7 @@ static int on_run_enter (qse_awk_rtx_t* run, void* data)
 		if (fs == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (run, fs);
-		qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_FS, fs);
+		qse_awk_rtx_setgbl (run, QSE_AWK_GBL_FS, fs);
 		qse_awk_rtx_refdownval (run, fs);
 	}
 

@@ -128,7 +128,7 @@ qse_ssize_t qse_sio_putsn (
 	qse_size_t        size
 );
 
-/****f* qse.cmn.sio/qse_sio_getpos
+/****f* Common/qse_sio_getpos
  * NAME
  *  qse_sio_getpos - get the stream position
  *

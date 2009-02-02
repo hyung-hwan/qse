@@ -671,8 +671,8 @@ static qse_ssize_t awk_eio_console (
 					return -1;
 				}
 
-				if (qse_awk_rtx_setglobal (
-					epa->rtx, QSE_AWK_GLOBAL_FNR, qse_awk_val_zero) == -1)
+				if (qse_awk_rtx_setgbl (
+					epa->rtx, QSE_AWK_GBL_FNR, qse_awk_val_zero) == -1)
 				{
 					/* need to reset FNR */
 					qse_sio_close (fp);
@@ -1184,24 +1184,24 @@ skip_system:
 	return 0;
 }
 
-#define ADD_FUNC(awk,name,min,max,fnc) \
+#define ADDFNC(awk,name,min,max,fnc) \
         if (qse_awk_addfnc (\
 		(awk), (name), qse_strlen(name), \
 		0, (min), (max), QSE_NULL, (fnc)) == QSE_NULL) return -1;
 
 static int add_functions (qse_awk_t* awk)
 {
-        ADD_FUNC (awk, QSE_T("sin"),        1, 1, fnc_sin);
-        ADD_FUNC (awk, QSE_T("cos"),        1, 1, fnc_cos);
-        ADD_FUNC (awk, QSE_T("tan"),        1, 1, fnc_tan);
-        ADD_FUNC (awk, QSE_T("atan"),       1, 1, fnc_atan);
-        ADD_FUNC (awk, QSE_T("atan2"),      2, 2, fnc_atan2);
-        ADD_FUNC (awk, QSE_T("log"),        1, 1, fnc_log);
-        ADD_FUNC (awk, QSE_T("exp"),        1, 1, fnc_exp);
-        ADD_FUNC (awk, QSE_T("sqrt"),       1, 1, fnc_sqrt);
-        ADD_FUNC (awk, QSE_T("int"),        1, 1, fnc_int);
-        ADD_FUNC (awk, QSE_T("rand"),       0, 0, fnc_rand);
-        ADD_FUNC (awk, QSE_T("srand"),      0, 1, fnc_srand);
-        ADD_FUNC (awk, QSE_T("system"),     1, 1, fnc_system);
+        ADDFNC (awk, QSE_T("sin"),        1, 1, fnc_sin);
+        ADDFNC (awk, QSE_T("cos"),        1, 1, fnc_cos);
+        ADDFNC (awk, QSE_T("tan"),        1, 1, fnc_tan);
+        ADDFNC (awk, QSE_T("atan"),       1, 1, fnc_atan);
+        ADDFNC (awk, QSE_T("atan2"),      2, 2, fnc_atan2);
+        ADDFNC (awk, QSE_T("log"),        1, 1, fnc_log);
+        ADDFNC (awk, QSE_T("exp"),        1, 1, fnc_exp);
+        ADDFNC (awk, QSE_T("sqrt"),       1, 1, fnc_sqrt);
+        ADDFNC (awk, QSE_T("int"),        1, 1, fnc_int);
+        ADDFNC (awk, QSE_T("rand"),       0, 0, fnc_rand);
+        ADDFNC (awk, QSE_T("srand"),      0, 1, fnc_srand);
+        ADDFNC (awk, QSE_T("system"),     1, 1, fnc_system);
 	return 0;
 }

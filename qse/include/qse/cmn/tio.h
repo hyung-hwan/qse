@@ -64,7 +64,7 @@ enum
 
 typedef struct qse_tio_t qse_tio_t;
 
-/****t* cmn/qse_tio_io_t
+/****t* Common/qse_tio_io_t
  * NAME
  *  qse_tio_io_t - define a text IO handler type
  * SYNOPSIS
@@ -77,7 +77,7 @@ typedef qse_ssize_t (*qse_tio_io_t) (
 );
 /******/
 
-/****s* cmn/qse_tio_t
+/****s* Common/qse_tio_t
  * NAME
  *  qse_tio_t - define a text IO type
  * DESCRIPTION
@@ -114,7 +114,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (tio)
 
-/****f* cmn/qse_tio_open
+/****f* Common/qse_tio_open
  * NAME
  *  qse_tio_open - create an text IO processor
  * SYNOPSIS
@@ -125,7 +125,7 @@ qse_tio_t* qse_tio_open (
 );
 /******/
 
-/****f* cmn/qse_tio_close
+/****f* Common/qse_tio_close
  * NAME
  *  qse_tio_close - destroy an text IO processor
  * SYNOPSIS
@@ -135,7 +135,7 @@ int qse_tio_close (
 );
 /******/
 
-/****f* cmn/qse_tio_init
+/****f* Common/qse_tio_init
  * NAME
  *  qse_tio_init - initialize an text IO processor
  * SYNOPSIS
@@ -146,7 +146,7 @@ qse_tio_t* qse_tio_init (
 );
 /******/
 
-/****f* cmn/qse_tio_fini
+/****f* Common/qse_tio_fini
  * NAME
  *  qse_tio_fini - finalize an text IO processor
  * SYNOPSIS
@@ -156,7 +156,7 @@ int qse_tio_fini (
 );
 /******/
 
-/****f* cmn/qse_tio_geterrnum
+/****f* Common/qse_tio_geterrnum
  * NAME
  *  qse_tio_geterrnum - get an error code
  *
@@ -167,7 +167,7 @@ qse_tio_err_t qse_tio_geterrnum (
 );
 /******/
 
-/****f* cmn/qse_tio_geterrmsg
+/****f* Common/qse_tio_geterrmsg
  * NAME
  *  qse_tio_geterrmsg - translate an error code to a string
  * RETURN
@@ -178,7 +178,7 @@ const qse_char_t* qse_tio_geterrmsg (
 );
 /******/
 
-/****f* cmn/qse_tio_attachin
+/****f* Common/qse_tio_attachin
  * NAME
  *  qse_tio_attachin - attaches an input handler 
  * RETURN
@@ -192,7 +192,7 @@ int qse_tio_attachin (
 );
 /******/
 
-/****f* cmn/qse_tio_detachin
+/****f* Common/qse_tio_detachin
  * NAME
  *  qse_tio_detachin - detach an input handler 
  * RETURN
@@ -204,7 +204,7 @@ int qse_tio_detachin (
 );
 /******/
 
-/****f* cmn/qse_tio_attachout
+/****f* Common/qse_tio_attachout
  * NAME
  *  qse_tio_attachout - attaches an output handler 
  * RETURN
@@ -218,7 +218,7 @@ int qse_tio_attachout (
 );
 /******/
 
-/****f* cmn/qse_tio_detachout
+/****f* Common/qse_tio_detachout
  * NAME
  *  qse_tio_detachout - detaches an output handler 
  * RETURN
@@ -230,7 +230,7 @@ int qse_tio_detachout (
 );
 /******/
 
-/****f* cmn/qse_tio_flush
+/****f* Common/qse_tio_flush
  * NAME
  *  qse_tio_flush - flush the output buffer
  * RETURNS
@@ -243,7 +243,7 @@ qse_ssize_t qse_tio_flush (
 );
 /******/
 
-/****f* cmn/qse_tio_purge
+/****f* Common/qse_tio_purge
  * NAME 
  *  qse_tio_purge - empty input and output buffers
  * SYNOPSIS
@@ -253,7 +253,7 @@ void qse_tio_purge (
 );
 /******/
 
-/****f* cmn/qse_tio_read
+/****f* Common/qse_tio_read
  * NAME
  *  qse_tio_read - read text
  * SYNOPSIS
@@ -265,7 +265,7 @@ qse_ssize_t qse_tio_read (
 );
 /******/
 
-/****f* cmn/qse_tio_write
+/****f* Common/qse_tio_write
  * NAME
  *  qse_tio_write - write text
  * DESCRIPTION

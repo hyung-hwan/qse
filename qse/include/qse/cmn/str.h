@@ -22,7 +22,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* cmn/string
+/****o* Common/String
  * DESCRIPTION
  *  <qse/cmn/str.h> defines various functions, types, macros to manipulate
  *  strings.
@@ -34,7 +34,6 @@
  ******
  */
 
-
 #define QSE_STR_LEN(s)       ((s)->len)
 #define QSE_STR_PTR(s)       ((s)->ptr)
 #define QSE_STR_CAPA(s)      ((s)->capa)
@@ -44,7 +43,7 @@
 typedef struct qse_str_t qse_str_t;
 typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
 
-/****s* cmn/qse_str_t
+/****s* Common/qse_str_t
  * NAME
  *  qse_str_t - define a dynamically resizable string
  * SYNOPSIS
@@ -143,7 +142,7 @@ int qse_strxncmp (
 int qse_strcasecmp (
 	const qse_char_t* s1, const qse_char_t* s2, qse_ccls_t* ccls);
 
-/****f* cmn/qse_strxncasecmp
+/****f* Common/qse_strxncasecmp
  * NAME
  *  qse_strxncasecmp - compare strings ignoring case
  * DESCRIPTION
@@ -260,7 +259,7 @@ void qse_str_fini (
 	qse_str_t* str
 );
 
-/****f* cmn/qse_str_yield
+/****f* Common/qse_str_yield
  * NAME 
  *  qse_str_yield - yield the buffer 
  * 
@@ -281,7 +280,7 @@ int qse_str_yield (
 );
 /******/
 
-/****f* cmn/qse_str_getsizer
+/****f* Common/qse_str_getsizer
  * NAME
  *  qse_str_getsizer - get the sizer
  * RETURN
@@ -292,7 +291,7 @@ qse_str_sizer_t qse_str_getsizer (
 );
 /******/
 
-/****f* cmn/qse_str_setsizer
+/****f* Common/qse_str_setsizer
  * NAME
  *  qse_str_setsizer - specify a sizer
  * DESCRIPTION
@@ -380,7 +379,7 @@ qse_size_t qse_str_nccat (
 	qse_size_t len
 );
 
-/****f* cmn/qse_strspl
+/****f* Common/qse_strspl
  * NAME
  *  qse_strspl - split a string
  * SYNOPSIS
@@ -394,7 +393,7 @@ int qse_strspl (
 );
 /******/
 
-/****f* cmn/qse_mbstowcs
+/****f* Common/qse_mbstowcs
  * NAME
  *  qse_mbstowcs - convert a multibyte string to a wide character string
  * SYNOPSIS
@@ -406,7 +405,7 @@ qse_size_t qse_mbstowcs (
 );
 /******/
 
-/****f* cmn/qse_mbsntowcsn
+/****f* Common/qse_mbsntowcsn
  * NAME
  *  qse_mbsntowcsn - convert a multibyte string to a wide character string
  * RETURN
@@ -421,7 +420,7 @@ qse_size_t qse_mbsntowcsn (
 );
 /******/
 
-/****f* cmn/qse_wcstombslen
+/****f* Common/qse_wcstombslen
  * NAME
  *  qse_wcstombslen - get the length 
  * DESCRIPTION
@@ -440,7 +439,7 @@ qse_size_t qse_wcstombslen (
 );
 /******/
 
-/****f* cmn/qse_wcsntombsnlen
+/****f* Common/qse_wcsntombsnlen
  * NAME
  *  qse_wcsntombsnlen - get the length 
  * DESCRIPTION
@@ -460,7 +459,7 @@ qse_size_t qse_wcsntombsnlen (
 );
 /******/
 
-/****f* cmn/qse_wcstombs
+/****f* Common/qse_wcstombs
  * NAME
  *  qse_wcstombs - convert a wide character string to a multibyte string.
  * DESCRIPTION
@@ -483,7 +482,7 @@ qse_size_t qse_wcstombs (
 );
 /******/
 
-/****f* cmn/qse_wcsntombsn
+/****f* Common/qse_wcsntombsn
  * NAME
  *  qse_wcstombs - convert a wide character string to a multibyte string
  * RETURN
@@ -498,7 +497,7 @@ qse_size_t qse_wcsntombsn (
 );
 /******/
 
-/****f* cmn/qse_wcstombs_strict
+/****f* Common/qse_wcstombs_strict
  * NAME
  *  qse_wcstombs_strict - convert a wide character string to a multibyte string.
  * DESCRIPTION

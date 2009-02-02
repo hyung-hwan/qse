@@ -652,7 +652,7 @@ static int fnc_split (
 	if (a2 == QSE_NULL)
 	{
 		/* get the value from FS */
-		t1 = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_FS);
+		t1 = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_FS);
 		if (t1->type == QSE_AWK_VAL_NIL)
 		{
 			fs_ptr = QSE_T(" ");
@@ -680,7 +680,7 @@ static int fnc_split (
 
 		if (fs_len > 1) 
 		{
-			fs_rex = run->global.fs;
+			fs_rex = run->gbl.fs;
 			fs_rex_free = QSE_NULL;
 		}
 	}
@@ -1072,7 +1072,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 	}
 
-	opt = (run->global.ignorecase)? QSE_REX_IGNORECASE: 0;
+	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
@@ -1291,7 +1291,7 @@ static int fnc_match (
 		if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str1);
 	}
 
-	opt = (run->global.ignorecase)? QSE_REX_IGNORECASE: 0;
+	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
 	n = QSE_AWK_MATCHREX (
 		run->awk, rex, opt, str0, len0,
 		&mat_ptr, &mat_len, &run->errnum);
@@ -1324,14 +1324,14 @@ static int fnc_match (
 
 	qse_awk_rtx_refupval (run, a1);
 
-	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_RSTART, a0) == -1)
+	if (qse_awk_rtx_setgbl (run, QSE_AWK_GBL_RSTART, a0) == -1)
 	{
 		qse_awk_rtx_refdownval (run, a1);
 		qse_awk_rtx_refdownval (run, a0);
 		return -1;
 	}
 
-	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_RLENGTH, a1) == -1)
+	if (qse_awk_rtx_setgbl (run, QSE_AWK_GBL_RLENGTH, a1) == -1)
 	{
 		qse_awk_rtx_refdownval (run, a1);
 		qse_awk_rtx_refdownval (run, a0);

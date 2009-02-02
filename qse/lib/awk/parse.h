@@ -55,12 +55,12 @@ int qse_awk_putsrcstr (qse_awk_t* awk, const qse_char_t* str);
 int qse_awk_putsrcstrx (
 	qse_awk_t* awk, const qse_char_t* str, qse_size_t len);
 
-const qse_char_t* qse_awk_rtx_getglobalname (
+const qse_char_t* qse_awk_rtx_getgblname (
 	qse_awk_t* awk, qse_size_t idx, qse_size_t* len);
 qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s);
 
 
-int qse_awk_initglobals (qse_awk_t* awk);
+int qse_awk_initgbls (qse_awk_t* awk);
 
 #ifdef __cplusplus
 }

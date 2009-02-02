@@ -1002,13 +1002,13 @@ static qse_char_t* val_real_to_str (
 
 	if (opt & QSE_AWK_VALTOSTR_PRINT)
 	{
-		tmp = run->global.ofmt.ptr;
-		tmp_len = run->global.ofmt.len;
+		tmp = run->gbl.ofmt.ptr;
+		tmp_len = run->gbl.ofmt.len;
 	}
 	else
 	{
-		tmp = run->global.convfmt.ptr;
-		tmp_len = run->global.convfmt.len;
+		tmp = run->gbl.convfmt.ptr;
+		tmp_len = run->gbl.convfmt.len;
 	}
 
 	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)

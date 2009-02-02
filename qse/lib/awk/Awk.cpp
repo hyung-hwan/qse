@@ -160,7 +160,7 @@ int Awk::Console::setFNR (long_t fnr)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (eio->rtx, tmp);
-	n = qse_awk_rtx_setglobal (eio->rtx, QSE_AWK_GLOBAL_FNR, tmp);
+	n = qse_awk_rtx_setgbl (eio->rtx, QSE_AWK_GBL_FNR, tmp);
 	qse_awk_rtx_refdownval (eio->rtx, tmp);
 
 	return n;
@@ -998,7 +998,7 @@ int Awk::Run::setGlobal (int id, long_t v)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (run, tmp);
-	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setgbl (this->run, id, tmp);
 	qse_awk_rtx_refdownval (run, tmp);
 	return n;
 }
@@ -1011,7 +1011,7 @@ int Awk::Run::setGlobal (int id, real_t v)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (run, tmp);
-	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setgbl (this->run, id, tmp);
 	qse_awk_rtx_refdownval (run, tmp);
 	return n;
 }
@@ -1024,24 +1024,24 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (run, tmp);
-	int n = qse_awk_rtx_setglobal (this->run, id, tmp);
+	int n = qse_awk_rtx_setgbl (this->run, id, tmp);
 	qse_awk_rtx_refdownval (run, tmp);
 	return n;
 }
 
-int Awk::Run::setGlobal (int id, const Return& global)
+int Awk::Run::setGlobal (int id, const Return& gbl)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 
-	return qse_awk_rtx_setglobal (this->run, id, global.toVal());
+	return qse_awk_rtx_setgbl (this->run, id, gbl.toVal());
 }
 
-int Awk::Run::getGlobal (int id, Argument& global) const
+int Awk::Run::getGlobal (int id, Argument& gbl) const
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 
-	global.clear ();
-	return global.init (qse_awk_rtx_getglobal(this->run,id));
+	gbl.clear ();
+	return gbl.init (qse_awk_rtx_getgbl(this->run,id));
 }
 
 void Awk::Run::setData (void* data)
@@ -1468,7 +1468,7 @@ int Awk::addGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	int n = qse_awk_addglobal (awk, name, qse_strlen(name));
+	int n = qse_awk_addgbl (awk, name, qse_strlen(name));
 	if (n == -1) retrieveError ();
 	return n;
 }
@@ -1476,7 +1476,7 @@ int Awk::addGlobal (const char_t* name)
 int Awk::deleteGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_delglobal (awk, name, qse_strlen(name));
+	int n = qse_awk_delgbl (awk, name, qse_strlen(name));
 	if (n == -1) retrieveError ();
 	return n;
 }

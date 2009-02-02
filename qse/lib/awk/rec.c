@@ -107,7 +107,7 @@ static int split_record (qse_awk_rtx_t* run)
 	QSE_ASSERT (run->inrec.nflds == 0);
 
 	/* get FS */
-	fs = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_FS);
+	fs = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_FS);
 	if (fs->type == QSE_AWK_VAL_NIL)
 	{
 		fs_ptr = QSE_T(" ");
@@ -143,7 +143,7 @@ static int split_record (qse_awk_rtx_t* run)
 		else
 		{
 			p = qse_awk_strxntokbyrex (run, p, len, 
-				run->global.fs, &tok, &tok_len, &errnum); 
+				run->gbl.fs, &tok, &tok_len, &errnum); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
 				if (fs_free != QSE_NULL) 
@@ -200,7 +200,7 @@ static int split_record (qse_awk_rtx_t* run)
 		else
 		{
 			p = qse_awk_strxntokbyrex (run, p, len, 
-				run->global.fs, &tok, &tok_len, &errnum); 
+				run->gbl.fs, &tok, &tok_len, &errnum); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
 				if (fs_free != QSE_NULL) 
@@ -237,7 +237,7 @@ static int split_record (qse_awk_rtx_t* run)
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (run, v);
-	if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
+	if (qse_awk_rtx_setgbl (run, QSE_AWK_GBL_NF, v) == -1) 
 	{
 		qse_awk_rtx_refdownval (run, v);
 		return -1;
@@ -270,8 +270,8 @@ int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
 		}
 		run->inrec.nflds = 0;
 
-		if (qse_awk_rtx_setglobal (
-			run, QSE_AWK_GLOBAL_NF, qse_awk_val_zero) == -1)
+		if (qse_awk_rtx_setgbl (
+			run, QSE_AWK_GBL_NF, qse_awk_val_zero) == -1)
 		{
 			/* first of all, this should never happen. 
 			 * if it happened, it would return an error
@@ -352,8 +352,8 @@ static int recomp_record_fields (
 		{
 			if (qse_str_ncat (
 				&run->inrec.line, 
-				run->global.ofs.ptr, 
-				run->global.ofs.len) == (qse_size_t)-1) 
+				run->gbl.ofs.ptr, 
+				run->gbl.ofs.len) == (qse_size_t)-1) 
 			{
 				qse_awk_rtx_seterror (
 					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
@@ -432,7 +432,7 @@ static int recomp_record_fields (
 		}
 	}
 
-	v = qse_awk_rtx_getglobal (run, QSE_AWK_GLOBAL_NF);
+	v = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_NF);
 	QSE_ASSERT (v->type == QSE_AWK_VAL_INT);
 
 	if (((qse_awk_val_int_t*)v)->val != max)
@@ -441,7 +441,7 @@ static int recomp_record_fields (
 		if (v == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (run, v);
-		if (qse_awk_rtx_setglobal (run, QSE_AWK_GLOBAL_NF, v) == -1) 
+		if (qse_awk_rtx_setgbl (run, QSE_AWK_GBL_NF, v) == -1) 
 		{
 			qse_awk_rtx_refdownval (run, v);
 			return -1;

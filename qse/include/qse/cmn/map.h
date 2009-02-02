@@ -22,7 +22,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* qse.cmn.map/hash map
+/****o* Common/Hash Map
  * DESCRIPTION
  *  A hash map maintains buckets for key/value pairs with the same key hash
  *  chained under the same bucket.
@@ -49,7 +49,7 @@ typedef struct qse_map_pair_t qse_map_pair_t;
 typedef enum qse_map_walk_t qse_map_walk_t;
 typedef enum qse_map_id_t   qse_map_id_t;
 
-/****b* qse.cmn.map/qse_map_copier_t
+/****t* Common/qse_map_copier_t
  * NAME
  *  qse_map_copier_t - define a pair contruction callback
  * SYNOPSIS
@@ -61,7 +61,7 @@ typedef void* (*qse_map_copier_t) (
 );
 /******/
 
-/****b* qse.cmn.map/qse_map_freeer_t
+/****t* Common/qse_map_freeer_t
  * NAME
  *  qse_map_freeer_t - define a key/value destruction callback
  * SYNOPSIS
@@ -80,7 +80,7 @@ typedef qse_size_t (*qse_map_hasher_t) (
 	qse_size_t klen  /* the length of a key in bytes */
 );
 
-/****t* qse.cmn.map/qse_map_comper_t
+/****t* Common/qse_map_comper_t
  * NAME
  *  qse_map_comper_t - define a key comparator
  *
@@ -103,7 +103,7 @@ typedef int (*qse_map_comper_t) (
 );
 /******/
 
-/****t* qse.cmn.map/qse_map_keeper_t
+/****t* Common/qse_map_keeper_t
  * NAME
  *  qse_map_keeper_t - define a value keeper
  *
@@ -122,7 +122,7 @@ typedef void (*qse_map_keeper_t) (
 );
 /******/
 
-/****t* qse.cmn.map/qse_map_sizer_t
+/****t* Common/qse_map_sizer_t
  * NAME
  *  qse_map_sizer_t - define a bucket size calculator
  *
@@ -139,7 +139,7 @@ typedef qse_size_t (*qse_map_sizer_t) (
 );
 /******/
 
-/****t* qse.cmn.map/qse_map_walker_t
+/****t* Common/qse_map_walker_t
  * NAME
  *  qse_map_walker_t - define a pair visitor
  *
@@ -152,7 +152,7 @@ typedef qse_map_walk_t (*qse_map_walker_t) (
 );
 /******/
 
-/****s* qse.cmn.map/qse_map_pair_t
+/****s* Common/qse_map_pair_t
  * NAME
  *  qse_map_pair_t - define a pair
  *
@@ -177,7 +177,7 @@ struct qse_map_pair_t
 };
 /*****/
 
-/****s* qse.cmn.map/qse_map_t
+/****s* Common/qse_map_t
  * NAME
  *  qse_map_t - define a hash map
  *
@@ -206,7 +206,7 @@ struct qse_map_t
 #define QSE_MAP_COPIER_SIMPLE ((qse_map_copier_t)1)
 #define QSE_MAP_COPIER_INLINE ((qse_map_copier_t)2)
 
-/****d* qse.cmn.map/QSE_MAP_SIZE
+/****d* Common/QSE_MAP_SIZE
  * NAME
  *  QSE_MAP_SIZE - get the number of pairs
  * DESCRIPTION
@@ -216,7 +216,7 @@ struct qse_map_t
 #define QSE_MAP_SIZE(m) ((m)->size)
 /*****/
 
-/****d* qse.cmn.map/QSE_MAP_CAPA
+/****d* Common/QSE_MAP_CAPA
  * NAME
  *  QSE_MAP_CAPA - get the capacity of a map
  *
@@ -253,7 +253,7 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (map)
 
-/****f* qse.cmn.map/qse_map_open
+/****f* Common/qse_map_open
  * NAME
  *  qse_map_open - creates a hash map
  * DESCRIPTION 
@@ -280,7 +280,7 @@ qse_map_t* qse_map_open (
 /******/
 
 
-/****f* qse.cmn.map/qse_map_close 
+/****f* Common/qse_map_close 
  * NAME
  *  qse_map_close - destroy a hash map
  * DESCRIPTION 
@@ -317,7 +317,7 @@ int qse_map_getscale (
 	qse_map_id_t id  /* QSE_MAP_KEY or QSE_MAP_VAL */
 );
 
-/****f* qse.cmn.map/qse_map_setscale
+/****f* Common/qse_map_setscale
  * NAME
  *  qse_map_setscale - set the scale factor
  *
@@ -344,7 +344,7 @@ qse_map_copier_t qse_map_getcopier (
 	qse_map_id_t id  /* QSE_MAP_KEY or QSE_MAP_VAL */
 );
 
-/****f* qse.cmn.map/qse_map_setcopier
+/****f* Common/qse_map_setcopier
  * NAME 
  *  qse_map_setcopier - specify how to clone an element
  *
@@ -370,7 +370,7 @@ qse_map_freeer_t qse_map_getfreeer (
 	qse_map_id_t id   /* QSE_MAP_KEY or QSE_MAP_VAL */
 );
 
-/****f* qse.cmn.map/qse_map_setfreeer
+/****f* Common/qse_map_setfreeer
  * NAME 
  *  qse_map_setfreeer - specify how to destroy an element
  *
@@ -424,7 +424,7 @@ void qse_map_setsizer (
 	qse_map_sizer_t sizer
 );
 
-/****f* qse.cmn.map/qse_map_search
+/****f* Common/qse_map_search
  * NAME
  *  qse_map_search - find a pair with a matching key 
  * DESCRIPTION
@@ -443,7 +443,7 @@ qse_map_pair_t* qse_map_search (
 );
 /******/
 
-/****f* qse.cmn.map/qse_map_upsert
+/****f* Common/qse_map_upsert
  * NAME
  *  qse_map_upsert - update an existing pair or inesrt a new pair
  * DESCRIPTION 
@@ -465,7 +465,7 @@ qse_map_pair_t* qse_map_upsert (
 );
 /******/
 
-/****f* qse.cmn.map/qse_map_insert 
+/****f* Common/qse_map_insert 
  * NAME
  *  qse_map_insert - insert a new pair with a key and a value 
  * DESCRIPTION
