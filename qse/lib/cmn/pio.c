@@ -29,7 +29,7 @@
 #	include <sys/wait.h>
 #endif
 
-QSE_IMPLEMENT_STD_FUNCTIONS (pio)
+QSE_IMPLEMENT_COMMON_FUNCTIONS (pio)
 
 static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
 static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
@@ -419,6 +419,8 @@ qse_pio_err_t qse_pio_geterrnum (qse_pio_t* pio)
 {
 	return pio->errnum;
 }
+
+/* TODO: qse_pio_geterrmsg (qse_pio_t* pio) */
 
 const qse_char_t* qse_pio_geterrstr (qse_pio_t* pio)
 {

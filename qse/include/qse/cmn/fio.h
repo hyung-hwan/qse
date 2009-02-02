@@ -91,7 +91,7 @@ struct qse_fio_t
 	/* note that qse_fio_t is instantiated statically 
 	 * in sio.c. make sure that you update the static instantiation
 	 * when you change the structure of qse_fio_t */
-	QSE_DEFINE_STD_FIELDS (fio)
+	QSE_DEFINE_COMMON_FIELDS (fio)
 	int           errnum;
 	qse_fio_hnd_t handle;
 	qse_tio_t*    tio;
@@ -112,9 +112,9 @@ struct qse_fio_lck_t
 extern "C" {
 #endif
 
-QSE_DEFINE_STD_FUNCTIONS (fio)
+QSE_DEFINE_COMMON_FUNCTIONS (fio)
 
-/****f* qse.fio/qse_fio_open
+/****f* qse.cmn.fio/qse_fio_open
  * NAME
  *  qse_fio_open - open a file
  *
@@ -133,7 +133,7 @@ qse_fio_t* qse_fio_open (
 );
 /******/
 
-/****f* qse.fio/qse_fio_close
+/****f* qse.cmn.fio/qse_fio_close
  * NAME
  *  qse_fio_close - close a file
  *

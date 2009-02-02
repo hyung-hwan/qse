@@ -31,7 +31,7 @@
 #	include <limits.h>
 #endif
 
-QSE_IMPLEMENT_STD_FUNCTIONS (fio)
+QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
 
 static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size);
 static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size);

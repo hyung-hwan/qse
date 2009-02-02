@@ -1445,7 +1445,7 @@ struct check_global_t
 static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
 {
 	qse_cstr_t tmp;
-	qse_awk_t* awk = *(qse_awk_t**)QSE_LDA_XTN(lda);
+	qse_awk_t* awk = *(qse_awk_t**)qse_lda_getxtn(lda);
 	check_global_t* cg = (check_global_t*)arg;
 
 	tmp.ptr = QSE_LDA_DPTR(lda,index);

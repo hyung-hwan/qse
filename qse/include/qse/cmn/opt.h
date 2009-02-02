@@ -25,31 +25,43 @@
 typedef struct qse_opt_t qse_opt_t;
 typedef struct qse_opt_lng_t qse_opt_lng_t;
 
+/****t* qse.cmn.opt/qse_opt_lng_t
+ * NAME
+ *  qse_opt_lng_t - define a long option
+ * SYNOPSIS
+ */
 struct qse_opt_lng_t
 {
 	const qse_char_t* str;
-	qse_cint_t val;
+	qse_cint_t        val;
 };
+/*****/
 
+/****t* qse.cmn.opt/qse_opt_t
+ * NAME
+ *  qse_opt_t - define a command line option table
+ * SYNOPSIS
+ */
 struct qse_opt_t
 {
 	/* input */
 	const qse_char_t* str; /* option string  */
-	qse_opt_lng_t* lng;    /* long options */
+	qse_opt_lng_t*    lng; /* long options */
 
 	/* output */
-	qse_cint_t opt;  /* character checked for validity */
-	qse_char_t* arg; /* argument associated with an option */
+	qse_cint_t        opt; /* character checked for validity */
+	qse_char_t*       arg; /* argument associated with an option */
 
 	/* output */
 	const qse_char_t* lngopt; 
 
 	/* input + output */
-	int ind;         /* index into parent argv vector */
+	int               ind; /* index into parent argv vector */
 
 	/* input + output - internal*/
-	qse_char_t* cur;
+	qse_char_t*        cur;
 };
+/******/
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,8 +69,10 @@ extern "C" {
 
 /****f* qse.cmn.opt/qse_getopt
  * NAME
- *  qse_getopt - parse command line options
- *
+ *  qse_getopt - process command line options
+ * DESCRIPTION
+ *  The qse_getopt() function returns QSE_CHAR_EOF when it finishes processing
+ *  command line options. The return values of QSE_T('?') indicates an error.
  * SYNOPSIS
  */
 qse_cint_t qse_getopt (

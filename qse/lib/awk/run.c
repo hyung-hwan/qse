@@ -740,13 +740,13 @@ qse_bool_t qse_awk_rtx_shouldstop (qse_awk_rtx_t* run)
 static void free_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval (
-		*(qse_awk_rtx_t**)QSE_MAP_XTN(map), dptr);
+		*(qse_awk_rtx_t**)qse_map_getxtn(map), dptr);
 }
 
 static void same_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval_nofree (
-		*(qse_awk_rtx_t**)QSE_MAP_XTN(map), dptr);
+		*(qse_awk_rtx_t**)qse_map_getxtn(map), dptr);
 }
 
 static int init_run (
@@ -813,7 +813,7 @@ static int init_run (
 		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
 		return -1;
 	}
-	*(qse_awk_rtx_t**)QSE_MAP_XTN(run->named) = run;
+	*(qse_awk_rtx_t**)qse_map_getxtn(run->named) = run;
 	qse_map_setcopier (run->named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (run->named, QSE_MAP_VAL, free_namedval);
 	qse_map_setkeeper (run->named, same_namedval);	

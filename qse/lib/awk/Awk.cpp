@@ -92,7 +92,7 @@ Awk::EIO::operator Awk::eio_t* () const
 
 Awk::EIO::operator Awk::run_t* () const
 {
-	return eio->run;
+	return eio->rtx;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -142,12 +142,12 @@ int Awk::Console::setFileName (const char_t* name)
 	if (eio->mode == READ)
 	{
 		return qse_awk_rtx_setfilename (
-			eio->run, name, qse_strlen(name));
+			eio->rtx, name, qse_strlen(name));
 	}
 	else
 	{
 		return qse_awk_rtx_setofilename (
-			eio->run, name, qse_strlen(name));
+			eio->rtx, name, qse_strlen(name));
 	}
 }
 
@@ -156,12 +156,12 @@ int Awk::Console::setFNR (long_t fnr)
 	qse_awk_val_t* tmp;
 	int n;
 
-	tmp = qse_awk_rtx_makeintval (eio->run, fnr);
+	tmp = qse_awk_rtx_makeintval (eio->rtx, fnr);
 	if (tmp == QSE_NULL) return -1;
 
-	qse_awk_rtx_refupval (eio->run, tmp);
-	n = qse_awk_rtx_setglobal (eio->run, QSE_AWK_GLOBAL_FNR, tmp);
-	qse_awk_rtx_refdownval (eio->run, tmp);
+	qse_awk_rtx_refupval (eio->rtx, tmp);
+	n = qse_awk_rtx_setglobal (eio->rtx, QSE_AWK_GLOBAL_FNR, tmp);
+	qse_awk_rtx_refdownval (eio->rtx, tmp);
 
 	return n;
 }
@@ -1204,7 +1204,7 @@ int Awk::open ()
 		return -1;
 	}
 
-	*(Awk**)QSE_MAP_XTN(functionMap) = this;
+	*(Awk**)qse_map_getxtn(functionMap) = this;
 	qse_map_setcopier (functionMap, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (functionMap, QSE_MAP_VAL, freeFunctionMapValue);
 	qse_map_setscale (functionMap, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -1402,7 +1402,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 void Awk::stop ()
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_rtx_stopall (awk);
+	qse_awk_stopall (awk);
 }
 
 int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
@@ -1717,7 +1717,7 @@ int Awk::functionHandler (
 void Awk::freeFunctionMapValue (map_t* map, void* dptr, size_t dlen)
 {
 	//Awk* awk = (Awk*)owner;
-	Awk* awk = *(Awk**)QSE_MAP_XTN(map);
+	Awk* awk = *(Awk**)qse_map_getxtn(map);
 	qse_awk_free (awk->awk, dptr);
 }
 

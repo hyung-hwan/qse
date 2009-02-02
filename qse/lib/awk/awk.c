@@ -35,7 +35,7 @@
 
 static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
 {
-	qse_awk_t* awk = *(qse_awk_t**)QSE_MAP_XTN(map);
+	qse_awk_t* awk = *(qse_awk_t**)qse_map_getxtn(map);
 	qse_awk_fun_t* f = (qse_awk_fun_t*)vptr;
 
 	/* f->name doesn't have to be freed */
@@ -47,7 +47,7 @@ static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
 
 static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
 {
-	qse_awk_t* awk = *(qse_awk_t**)QSE_MAP_XTN(map);
+	qse_awk_t* awk = *(qse_awk_t**)qse_map_getxtn(map);
 	qse_awk_fnc_t* f = (qse_awk_fnc_t*)vptr;
 
 	QSE_AWK_FREE (awk, f);
@@ -78,7 +78,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 
 	awk->wtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->wtab) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->wtab) = awk;
 	qse_map_setcopier (awk->wtab, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setcopier (awk->wtab, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (awk->wtab, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -86,7 +86,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 
 	awk->rwtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->rwtab == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->rwtab) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->rwtab) = awk;
 	qse_map_setcopier (awk->rwtab, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setcopier (awk->rwtab, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (awk->rwtab, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -95,21 +95,21 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	/* TODO: initial map size?? */
 	awk->tree.funs = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->tree.funs == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->tree.funs) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->tree.funs) = awk;
 	qse_map_setcopier (awk->tree.funs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (awk->tree.funs, QSE_MAP_VAL, free_fun);
 	qse_map_setscale (awk->tree.funs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
 	awk->parse.funs = qse_map_open (mmgr, QSE_SIZEOF(awk), 256, 70);
 	if (awk->parse.funs == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->parse.funs) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->parse.funs) = awk;
 	qse_map_setcopier (awk->parse.funs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setcopier (awk->parse.funs, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (awk->parse.funs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
 	awk->parse.named = qse_map_open (mmgr, QSE_SIZEOF(awk), 256, 70);
 	if (awk->parse.named == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->parse.named) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->parse.named) = awk;
 	qse_map_setcopier (awk->parse.named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setcopier (awk->parse.named, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -122,15 +122,15 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	    awk->parse.locals == QSE_NULL ||
 	    awk->parse.params == QSE_NULL) goto oops;
 
-	*(qse_awk_t**)QSE_LDA_XTN(awk->parse.globals) = awk;
+	*(qse_awk_t**)qse_lda_getxtn(awk->parse.globals) = awk;
 	qse_lda_setcopier (awk->parse.globals, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.globals, QSE_SIZEOF(qse_char_t));
 
-	*(qse_awk_t**)QSE_LDA_XTN(awk->parse.locals) = awk;
+	*(qse_awk_t**)qse_lda_getxtn(awk->parse.locals) = awk;
 	qse_lda_setcopier (awk->parse.locals, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.locals, QSE_SIZEOF(qse_char_t));
 
-	*(qse_awk_t**)QSE_LDA_XTN(awk->parse.params) = awk;
+	*(qse_awk_t**)qse_lda_getxtn(awk->parse.params) = awk;
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 
@@ -168,7 +168,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	awk->fnc.sys = QSE_NULL;
 	awk->fnc.user = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->fnc.user == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_MAP_XTN(awk->fnc.user) = awk;
+	*(qse_awk_t**)qse_map_getxtn(awk->fnc.user) = awk;
 	qse_map_setcopier (awk->fnc.user, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (awk->fnc.user, QSE_MAP_VAL, free_fnc); 
 	qse_map_setscale (awk->fnc.user, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -366,7 +366,7 @@ void qse_awk_setoption (qse_awk_t* awk, int opt)
 }
 
 
-void qse_awk_rtx_stopall (qse_awk_t* awk)
+void qse_awk_stopall (qse_awk_t* awk)
 {
 	awk->stopall = QSE_TRUE;
 }
@@ -448,7 +448,8 @@ int qse_awk_setword (qse_awk_t* awk,
 	return 0;
 }
 
-/* TODO: XXXX */
+#if 0
+/* TODO: qse_awk_setrexfns... */
 int qse_awk_setrexfns (qse_awk_t* awk, qse_awk_rexfns_t* rexfns)
 {
 	if (rexfns->build == QSE_NULL ||
@@ -463,3 +464,4 @@ int qse_awk_setrexfns (qse_awk_t* awk, qse_awk_rexfns_t* rexfns)
 	awk->rexfns = rexfns;
 	return 0;
 }
+#endif
