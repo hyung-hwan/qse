@@ -50,12 +50,12 @@ enum exit_level_t
 	EXIT_ABORT
 };
 
-#define DEFAULT_CONVFMT QSE_T("%.6g")
-#define DEFAULT_OFMT QSE_T("%.6g")
-#define DEFAULT_OFS QSE_T(" ")
-#define DEFAULT_ORS QSE_T("\n")
+#define DEFAULT_CONVFMT  QSE_T("%.6g")
+#define DEFAULT_OFMT     QSE_T("%.6g")
+#define DEFAULT_OFS      QSE_T(" ")
+#define DEFAULT_ORS      QSE_T("\n")
 #define DEFAULT_ORS_CRLF QSE_T("\r\n")
-#define DEFAULT_SUBSEP QSE_T("\034")
+#define DEFAULT_SUBSEP   QSE_T("\034")
 
 /* the index of a positional variable should be a positive interger
  * equal to or less than the maximum value of the type by which
@@ -183,7 +183,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
-static qse_awk_val_t* eval_fun_intrinsic (
+static qse_awk_val_t* eval_fun_ex (
 	qse_awk_rtx_t* run, qse_awk_nde_t* nde, 
 	void(*errhandler)(void*), void* eharg);
 
@@ -281,7 +281,7 @@ static int set_gbl (
 			/* qse_awk_rtx_setgbl has been called */
 			qse_cstr_t errarg;
 
-			errarg.ptr = qse_awk_rtx_getgblname (
+			errarg.ptr = qse_awk_getgblname (
 				run->awk, idx, &errarg.len);
 			qse_awk_rtx_seterror (run, 
 				QSE_AWK_EMAPTOSCALAR, 0, &errarg, 1);
@@ -1552,8 +1552,12 @@ static int qse_awk_runfunc (qse_awk_rtx_t* run, const qse_char_t* name)
 
 	crdata.run = run;
 	crdata.val = QSE_NULL;
-	v = eval_fun_intrinsic (run, (qse_awk_nde_t*)&nde, 
-		capture_retval_on_exit, &crdata);
+	v = eval_fun_ex (
+		run, 
+		(qse_awk_nde_t*)&nde, 
+		capture_retval_on_exit, 
+		&crdata
+	);
 	if (v == QSE_NULL) 
 	{
 		if (crdata.val == QSE_NULL) 
@@ -1770,8 +1774,12 @@ static int ____run_main_to_be_removed____ (
 
 		crdata.run = run;
 		crdata.val = QSE_NULL;
-		v = eval_fun_intrinsic (run, (qse_awk_nde_t*)&nde, 
-			capture_retval_on_exit, &crdata);
+		v = eval_fun_ex (
+			run,
+			(qse_awk_nde_t*)&nde, 
+			capture_retval_on_exit,
+			&crdata
+		);
 		if (v == QSE_NULL) 
 		{
 			if (crdata.val == QSE_NULL) 
@@ -3550,7 +3558,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
-	static eval_expr_t eval_func[] =
+	static eval_expr_t __evaluator[] =
 	{
 		/* the order of functions here should match the order
 		 * of node types declared in tree.h */
@@ -3581,11 +3589,10 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	qse_awk_val_t* v;
 
-
 	QSE_ASSERT (nde->type >= QSE_AWK_NDE_GRP &&
-		(nde->type - QSE_AWK_NDE_GRP) < QSE_COUNTOF(eval_func));
+		(nde->type - QSE_AWK_NDE_GRP) < QSE_COUNTOF(__evaluator));
 
-	v = eval_func[nde->type-QSE_AWK_NDE_GRP] (run, nde);
+	v = __evaluator[nde->type-QSE_AWK_NDE_GRP] (run, nde);
 
 	if (v != QSE_NULL && run->exit_level >= EXIT_GLOBAL)
 	{
@@ -5806,7 +5813,7 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		QSE_NULL, QSE_NULL, QSE_NULL);
 }
 
-static qse_awk_val_t* eval_fun_intrinsic (
+static qse_awk_val_t* eval_fun_ex (
 	qse_awk_rtx_t* run, qse_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
 {
 	qse_awk_nde_call_t* call = (qse_awk_nde_call_t*)nde;
@@ -5823,7 +5830,7 @@ static qse_awk_val_t* eval_fun_intrinsic (
 		errarg.len = call->what.fun.name.len,
 
 		qse_awk_rtx_seterror (run, 
-			QSE_AWK_EFNNONE, nde->line, &errarg, 1);
+			QSE_AWK_EFUNNONE, nde->line, &errarg, 1);
 		return QSE_NULL;
 	}
 
@@ -5844,7 +5851,7 @@ static qse_awk_val_t* eval_fun_intrinsic (
 
 static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
-	return eval_fun_intrinsic (run, nde, QSE_NULL, QSE_NULL);
+	return eval_fun_ex (run, nde, QSE_NULL, QSE_NULL);
 }
 
 /* run->stack_base has not been set for this  

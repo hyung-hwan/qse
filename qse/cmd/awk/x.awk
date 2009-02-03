@@ -1,4 +1,3 @@
-
 #main ()
 {
 	#print (("%f", 1.0));  # syntax error

@@ -65,8 +65,8 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 struct qse_awk_tree_t
 {
-	qse_size_t ngbls; /* total number of gbls */
-	qse_size_t nbgbls; /* number of intrinsic gbls */
+	qse_size_t ngbls; /* total number of globals */
+	qse_size_t ngbls_base; /* number of intrinsic globals */
 	qse_cstr_t cur_fun;
 	qse_map_t* funs; /* awk function map */
 

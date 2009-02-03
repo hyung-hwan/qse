@@ -1415,7 +1415,7 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 	pair = qse_map_search (functionMap, name, len);
 	if (pair == QSE_NULL) 
 	{
-		run->setError (ERR_FNNONE, 0, name, len);
+		run->setError (ERR_FUNNONE, 0, name, len);
 		return -1;
 	}
 
