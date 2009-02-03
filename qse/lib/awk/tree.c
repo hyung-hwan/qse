@@ -415,7 +415,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 					 * use the actual name */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
-				else if (px->id.idxa < awk->tree.nbgbls)
+				else if (px->id.idxa < awk->tree.ngbls_base)
 				{
 					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
@@ -453,7 +453,7 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 					 * use the actual name */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);
 				}
-				else if (px->id.idxa < awk->tree.nbgbls)
+				else if (px->id.idxa < awk->tree.ngbls_base)
 				{
 					/* static global variables */
 					PUT_SRCSTRX (awk, px->id.name.ptr, px->id.name.len);

@@ -5,8 +5,8 @@ QSE provides a script engine for various scripting languages. It aims to produce
 
 Cross compiling for WIN32 with MINGW32
 
-  ./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
-make 
+	./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
+	make 
 
 << DOCUMENTATION >>
 

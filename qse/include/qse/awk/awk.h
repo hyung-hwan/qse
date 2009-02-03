@@ -320,11 +320,11 @@ enum qse_awk_errnum_t
 	QSE_AWK_ENOTVAR,        /* not a variable name after 'in' */
 	QSE_AWK_EEXPRES,        /* expression expected */
 
-	QSE_AWK_EFUNC,          /* keyword 'func' is expected */
+	QSE_AWK_EFUNCTION,      /* keyword 'function' is expected */
 	QSE_AWK_EWHILE,         /* keyword 'while' is expected */
 	QSE_AWK_EASSIGN,        /* assignment statement expected */
 	QSE_AWK_EIDENT,         /* identifier expected */
-	QSE_AWK_EFNNAME,        /* not a valid function name */
+	QSE_AWK_EFUNNAME,       /* not a valid function name */
 	QSE_AWK_EBLKBEG,        /* BEGIN requires an action block */
 	QSE_AWK_EBLKEND,        /* END requires an action block */
 	QSE_AWK_EDUPBEG,        /* duplicate BEGIN */
@@ -362,7 +362,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPOSIDX,           /* wrong position index */
 	QSE_AWK_EARGTF,            /* too few arguments */
 	QSE_AWK_EARGTM,            /* too many arguments */
-	QSE_AWK_EFNNONE,           /* "function '%.*s' not found" */
+	QSE_AWK_EFUNNONE,          /* "function '%.*s' not found" */
 	QSE_AWK_ENOTIDX,           /* variable not indexable */
 	QSE_AWK_ENOTDEL,           /* variable not deletable */
 	QSE_AWK_ENOTMAP,           /* value not a map */

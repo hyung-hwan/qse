@@ -142,7 +142,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	awk->parse.nlcls_max = 0;
 
 	awk->tree.ngbls = 0;
-	awk->tree.nbgbls = 0;
+	awk->tree.ngbls_base = 0;
 	awk->tree.begin = QSE_NULL;
 	awk->tree.begin_tail = QSE_NULL;
 	awk->tree.end = QSE_NULL;
@@ -258,8 +258,8 @@ int qse_awk_clear (qse_awk_t* awk)
 	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
 	qse_lda_delete (
-		awk->parse.gbls, awk->tree.nbgbls, 
-		QSE_LDA_SIZE(awk->parse.gbls) - awk->tree.nbgbls);
+		awk->parse.gbls, awk->tree.ngbls_base, 
+		QSE_LDA_SIZE(awk->parse.gbls) - awk->tree.ngbls_base);
 
 	qse_lda_clear (awk->parse.lcls);
 	qse_lda_clear (awk->parse.params);
@@ -273,9 +273,9 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	/* clear parse trees */	
 	awk->tree.ok = 0;
-	/*awk->tree.nbgbls = 0;
+	/*awk->tree.ngbls_base = 0;
 	awk->tree.ngbls = 0;	 */
-	awk->tree.ngbls = awk->tree.nbgbls;
+	awk->tree.ngbls = awk->tree.ngbls_base;
 
 	awk->tree.cur_fun.ptr = QSE_NULL;
 	awk->tree.cur_fun.len = 0;
