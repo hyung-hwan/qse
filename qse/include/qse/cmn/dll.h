@@ -1,7 +1,7 @@
 /*
  * $Id: map.h 223 2008-06-26 06:44:41Z baconevi $
  *
-   Copyright 2006-2008 Chung, Hyung-Hwan.
+   Copyright 2006-2009 Chung, Hyung-Hwan.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

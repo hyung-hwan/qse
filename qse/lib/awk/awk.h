@@ -1,7 +1,7 @@
 /*
  * $Id: awk_i.h 332 2008-08-18 11:21:48Z baconevi $
  *
-   Copyright 2006-2008 Chung, Hyung-Hwan.
+   Copyright 2006-2009 Chung, Hyung-Hwan.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
