@@ -175,7 +175,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = cmn utl awk lsp tgp 
+SUBDIRS = cmn utl awk lsp 
 DIST_SUBDIRS = $(SUBDIRS) 
 all: all-recursive
 

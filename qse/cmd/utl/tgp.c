@@ -2,7 +2,7 @@
  * $Id: tgp.c,v 1.5 2007/05/16 09:15:14 bacon Exp $
  */
 
-#include <qse/tgp/tgp.h>
+#include <qse/utl/tgp.h>
 
 #include <qse/utl/stdio.h>
 #include <qse/utl/main.h>

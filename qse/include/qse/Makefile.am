@@ -1,6 +1,6 @@
 
 # EXTRA_DIST = README
-SUBDIRS = cmn awk lsp tgp utl
+SUBDIRS = cmn utl awk lsp 
 
 pkginclude_HEADERS = config.h.in conf_msw.h conf_vms.h types.h macros.h pack1.h unpack.h
 
