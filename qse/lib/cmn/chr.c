@@ -1,7 +1,7 @@
 /*
  * $Id: ctype.c 132 2008-03-17 10:27:02Z baconevi $
  *
-   Copyright 2006-2008 Chung, Hyung-Hwan.
+   Copyright 2006-2009 Chung, Hyung-Hwan.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
