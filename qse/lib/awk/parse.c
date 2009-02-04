@@ -246,55 +246,45 @@ struct kwent_t
 	int valid; /* the entry is valid when this option is set */
 };
 
-/* this table should match the kw_t enums in parse.h */
 static kwent_t kwtab[] = 
 {
-	/* operators */
-	{ QSE_T("in"),           2, TOKEN_IN,          0 },
-
-	/* top-level block starters */
+	/* keep this table in sync with the kw_t enums in <parse.h>.
+	 * also keep it sorted by the first field for binary search */
 	{ QSE_T("BEGIN"),        5, TOKEN_BEGIN,       QSE_AWK_PABLOCK },
 	{ QSE_T("END"),          3, TOKEN_END,         QSE_AWK_PABLOCK },
-	{ QSE_T("function"),     8, TOKEN_FUNCTION,    0 },
-
-	/* keywords for variable declaration */
-	{ QSE_T("local"),        5, TOKEN_LOCAL,       QSE_AWK_EXPLICIT },
-	{ QSE_T("global"),       6, TOKEN_GLOBAL,      QSE_AWK_EXPLICIT },
-
-	/* keywords that start statements excluding expression statements */
-	{ QSE_T("if"),           2, TOKEN_IF,          0 },
-	{ QSE_T("else"),         4, TOKEN_ELSE,        0 },
-	{ QSE_T("while"),        5, TOKEN_WHILE,       0 },
-	{ QSE_T("for"),          3, TOKEN_FOR,         0 },
-	{ QSE_T("do"),           2, TOKEN_DO,          0 },
 	{ QSE_T("break"),        5, TOKEN_BREAK,       0 },
 	{ QSE_T("continue"),     8, TOKEN_CONTINUE,    0 },
-	{ QSE_T("return"),       6, TOKEN_RETURN,      0 },
+	{ QSE_T("delete"),       6, TOKEN_DELETE,      0 },
+	{ QSE_T("do"),           2, TOKEN_DO,          0 },
+	{ QSE_T("else"),         4, TOKEN_ELSE,        0 },
 	{ QSE_T("exit"),         4, TOKEN_EXIT,        0 },
+	{ QSE_T("for"),          3, TOKEN_FOR,         0 },
+	{ QSE_T("function"),     8, TOKEN_FUNCTION,    0 },
+	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_EIO },
+	{ QSE_T("global"),       6, TOKEN_GLOBAL,      QSE_AWK_EXPLICIT },
+	{ QSE_T("if"),           2, TOKEN_IF,          0 },
+	{ QSE_T("in"),           2, TOKEN_IN,          0 },
+	{ QSE_T("local"),        5, TOKEN_LOCAL,       QSE_AWK_EXPLICIT },
 	{ QSE_T("next"),         4, TOKEN_NEXT,        QSE_AWK_PABLOCK },
 	{ QSE_T("nextfile"),     8, TOKEN_NEXTFILE,    QSE_AWK_PABLOCK },
 	{ QSE_T("nextofile"),    9, TOKEN_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
-	{ QSE_T("delete"),       6, TOKEN_DELETE,      0 },
-	{ QSE_T("reset"),        5, TOKEN_RESET,       QSE_AWK_RESET },
 	{ QSE_T("print"),        5, TOKEN_PRINT,       QSE_AWK_EIO },
 	{ QSE_T("printf"),       6, TOKEN_PRINTF,      QSE_AWK_EIO },
-
-	/* keywords that can start an expression */
-	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_EIO },
-
-	{ QSE_NULL,              0, 0,                 0 }
+	{ QSE_T("reset"),        5, TOKEN_RESET,       QSE_AWK_RESET },
+	{ QSE_T("return"),       6, TOKEN_RETURN,      0 },
+	{ QSE_T("while"),        5, TOKEN_WHILE,       0 }
 };
 
-typedef struct gbl_t gbl_t;
+typedef struct global_t global_t;
 
-struct gbl_t
+struct global_t
 {
 	const qse_char_t* name;
 	qse_size_t name_len;
 	int valid;
 };
 
-static gbl_t gtab[] =
+static global_t gtab[] =
 {
 	{ QSE_T("ARGC"),         4,  0 },
 	{ QSE_T("ARGV"),         4,  0 },
@@ -1422,20 +1412,20 @@ static void adjust_static_globals (qse_awk_t* awk)
 	}
 }
 
-typedef struct check_gbl_t check_gbl_t;
+typedef struct check_global_t check_global_t;
 
-struct check_gbl_t
+struct check_global_t
 {
 	qse_cstr_t name;
 	qse_size_t index;
 	qse_lda_walk_t walk;
 };
 
-static qse_lda_walk_t check_gbl (qse_lda_t* lda, qse_size_t index, void* arg)
+static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
 {
 	qse_cstr_t tmp;
 	qse_awk_t* awk = *(qse_awk_t**)qse_lda_getxtn(lda);
-	check_gbl_t* cg = (check_gbl_t*)arg;
+	check_global_t* cg = (check_global_t*)arg;
 
 	tmp.ptr = QSE_LDA_DPTR(lda,index);
 	tmp.len = QSE_LDA_DLEN(lda,index);
@@ -1464,28 +1454,28 @@ static qse_lda_walk_t check_gbl (qse_lda_t* lda, qse_size_t index, void* arg)
 static qse_size_t get_global (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	check_gbl_t cg;
+	check_global_t cg;
 
 	cg.name.ptr = name;
 	cg.name.len = len;
 	cg.index = QSE_LDA_NIL;
 	cg.walk = QSE_LDA_WALK_BACKWARD;
 
-	qse_lda_rwalk (awk->parse.gbls, check_gbl, &cg);
+	qse_lda_rwalk (awk->parse.gbls, check_global, &cg);
 	return cg.index;
 }
 
 static qse_size_t find_global (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	check_gbl_t cg;
+	check_global_t cg;
 
 	cg.name.ptr = name;
 	cg.name.len = len;
 	cg.index = QSE_LDA_NIL;
 	cg.walk = QSE_LDA_WALK_FORWARD;
 
-	qse_lda_walk (awk->parse.gbls, check_gbl, &cg);
+	qse_lda_walk (awk->parse.gbls, check_global, &cg);
 	return cg.index;
 }
 
@@ -5444,34 +5434,75 @@ static int skip_comment (qse_awk_t* awk)
 static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	kwent_t* kwp;
-	qse_map_pair_t* pair;
-
-	for (kwp = kwtab; kwp->name != QSE_NULL; kwp++) 
+	if (QSE_MAP_SIZE(awk->wtab) <= 0)
 	{
-		const qse_char_t* k;
-		qse_size_t l;
+		/* perform binary search if no custom words are specified */
 
-		if (kwp->valid != 0 && 
-		    (awk->option & kwp->valid) != kwp->valid) continue;
+		/* declaring left, right, mid to be of int is ok
+		 * because we know kwtab is small enough. */
+		int left = 0, right = QSE_COUNTOF(kwtab) - 1, mid;
 
-		pair = qse_map_search (awk->wtab, kwp->name, kwp->name_len);
-		if (pair != QSE_NULL)
+		while (left <= right)
 		{
-			k = ((qse_cstr_t*)(pair->vptr))->ptr;
-			l = ((qse_cstr_t*)(pair->vptr))->len;
-		}
-		else
-		{
-			k = kwp->name;
-			l = kwp->name_len;
-		}
+			int n;
+			kwent_t* kwp;
 
-		if (qse_strxncmp (k, l, name, len) == 0) 
-		{
-			return kwp->type;
+			mid = (left + right) / 2;	
+			kwp = &kwtab[mid];
+			n = qse_strxncmp (kwp->name, kwp->name_len, name, len);
+			if (n > 0) 
+			{
+				/* if left, right, mid were of qse_size_t,
+				 * you would need the following line. 
+				if (mid == 0) break;
+				 */
+				right = mid - 1;
+			}
+			else if (n < 0) left = mid + 1;
+			else
+			{
+				if (kwp->valid != 0 && 
+				    (awk->option & kwp->valid) != kwp->valid)
+					break;
+
+				return kwp->type;
+			}
 		}
 	}
+	else
+	{
+		/* perform linear search if there are any custom words set */
+		kwent_t* kwp, * end;
+		qse_map_pair_t* pair;
+
+		end = kwtab + QSE_COUNTOF(kwtab);
+		for (kwp = kwtab; kwp < end; kwp++) 
+		{
+			const qse_char_t* k;
+			qse_size_t l;
+
+			if (kwp->valid != 0 && 
+			    (awk->option & kwp->valid) != kwp->valid) continue;
+
+			pair = qse_map_search (awk->wtab, kwp->name, kwp->name_len);
+			if (pair != QSE_NULL)
+			{
+				k = ((qse_cstr_t*)(pair->vptr))->ptr;
+				l = ((qse_cstr_t*)(pair->vptr))->len;
+			}
+			else
+			{
+				k = kwp->name;
+				l = kwp->name_len;
+			}
+
+			if (qse_strxncmp (k, l, name, len) == 0) 
+			{
+				return kwp->type;
+			}
+		}
+
+	}	
 
 	return TOKEN_IDENT;
 }

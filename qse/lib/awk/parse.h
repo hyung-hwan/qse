@@ -22,29 +22,29 @@
 /* these enums should match kwtab in parse.c */
 enum kw_t
 {
-	KW_IN,
 	KW_BEGIN,
 	KW_END,
-	KW_FUNCTION,
-	KW_LOCAL,
-	KW_GLOBAL,
-	KW_IF,
-	KW_ELSE,
-	KW_WHILE,
-	KW_FOR,
-	KW_DO,
 	KW_BREAK,
 	KW_CONTINUE,
-	KW_RETURN,
+	KW_DELETE,
+	KW_DO,
+	KW_ELSE,
 	KW_EXIT,
+	KW_FOR,
+	KW_FUNCTION,
+	KW_GETLINE,
+	KW_GLOBAL,
+	KW_IF,
+	KW_IN,
+	KW_LOCAL,
 	KW_NEXT,
 	KW_NEXTFILE,
 	KW_NEXTOFILE,
-	KW_DELETE,
-	KW_RESET,
 	KW_PRINT,
 	KW_PRINTF,
-	KW_GETLINE,
+	KW_RESET,
+	KW_RETURN,
+	KW_WHILE
 };
 
 #ifdef __cplusplus
