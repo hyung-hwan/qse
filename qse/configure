@@ -29168,7 +29168,7 @@ then
 	CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"
 fi
 
-ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile include/qse/tgp/Makefile include/qse/utl/Makefile lib/Makefile lib/cmn/Makefile lib/awk/Makefile lib/lsp/Makefile lib/tgp/Makefile lib/utl/Makefile cmd/Makefile cmd/awk/Makefile cmd/lsp/Makefile cmd/tgp/Makefile test/Makefile test/cmn/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/utl/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile lib/Makefile lib/cmn/Makefile lib/utl/Makefile lib/awk/Makefile lib/lsp/Makefile cmd/Makefile cmd/utl/Makefile cmd/awk/Makefile cmd/lsp/Makefile test/Makefile test/cmn/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29788,20 +29788,18 @@ do
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "include/qse/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/Makefile" ;;
     "include/qse/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/cmn/Makefile" ;;
+    "include/qse/utl/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/utl/Makefile" ;;
     "include/qse/awk/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/awk/Makefile" ;;
     "include/qse/lsp/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/lsp/Makefile" ;;
-    "include/qse/tgp/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/tgp/Makefile" ;;
-    "include/qse/utl/Makefile") CONFIG_FILES="$CONFIG_FILES include/qse/utl/Makefile" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES lib/cmn/Makefile" ;;
+    "lib/utl/Makefile") CONFIG_FILES="$CONFIG_FILES lib/utl/Makefile" ;;
     "lib/awk/Makefile") CONFIG_FILES="$CONFIG_FILES lib/awk/Makefile" ;;
     "lib/lsp/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lsp/Makefile" ;;
-    "lib/tgp/Makefile") CONFIG_FILES="$CONFIG_FILES lib/tgp/Makefile" ;;
-    "lib/utl/Makefile") CONFIG_FILES="$CONFIG_FILES lib/utl/Makefile" ;;
     "cmd/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/Makefile" ;;
+    "cmd/utl/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/utl/Makefile" ;;
     "cmd/awk/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/Makefile" ;;
     "cmd/lsp/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/lsp/Makefile" ;;
-    "cmd/tgp/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/tgp/Makefile" ;;
     "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
     "test/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES test/cmn/Makefile" ;;
 
