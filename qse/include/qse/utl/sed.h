@@ -57,6 +57,27 @@ void qse_sed_close (
 );
 /******/
 
+/****f* Text Processor/qse_sed_init
+ * NAME
+ *  qse_sed_init - initialize a stream editor
+ * SYNOPSIS
+ */
+qse_sed_t* qse_sed_init (
+	qse_sed_t*  sed,
+	qse_mmgr_t* mmgr
+);
+/******/
+
+/****f* Text Processor/qse_sed_fini
+ * NAME
+ *  qse_sed_fini - finalize a stream editor
+ * SYNOPSIS
+ */
+void qse_sed_fini (
+	qse_sed_t* sed
+);
+/******/
+
 
 int qse_sed_execute (
 	qse_sed_t* sed
