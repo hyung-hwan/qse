@@ -219,7 +219,7 @@ map_t* qse_map_open (mmgr_t* mmgr, size_t ext, size_t capa, int factor)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	map = (qse_map_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_map_t) + ext);
+	map = (map_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(map_t) + ext);
 	if (map == QSE_NULL) return QSE_NULL;
 
 	if (qse_map_init (map, mmgr, capa, factor) == QSE_NULL)
