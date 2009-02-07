@@ -65,20 +65,88 @@ void qse_sed_fini (qse_sed_t* sed)
 {
 }
 
-static const qse_char_t* address (const qse_char_t* cp, qse_sed_a_t* a)
+static void compile (qse_sed_t* sed, const qse_char_t* cp, qse_char_t seof)
 {
 	qse_char_t c;
 
-	if ((c = *cp++) == QSE_T('$'))
+	if ((c = *cp++) == seof) return QSE_NULL; /* // */
+
+	do
+	{
+		if (c == QSE_T('\0') || c == QSE_T('\n'))
+		{
+			/* premature end of text */
+			return QSE_NULL; /* TODO: return an error..*/
+		}
+
+		if (c == QSE_T('\\')
+		{
+			if (ep >= end)
+			{
+				/* too many characters */
+				return QSE_NULL; /* TODO: return an error..*/
+			}
+
+			*ep++ = c;
+
+			/* TODO: more escaped characters */
+			if ((c = *cp++) == QSE_T('n') c = QSE_T('n');
+		}
+
+		if (ep >= end)
+		{
+			/* too many characters */
+			return QSE_NULL; /* TODO: return an error..*/
+		}
+
+		*ep++ = c;
+	}
+	while ((c = *cp++) != seof);
+
+	*ep = QSE_T('\0');
+	regcomp (expbuf);
+}
+
+static const qse_char_t* address (
+	qse_sed_t* sed, const qse_char_t* cp, qse_sed_a_t* a)
+{
+	qse_char_t c;
+
+	if ((c = *cp) == QSE_T('$'))
+	{
 		a->type = QSE_SED_A_DOL;
+		cp++;
+	}
 	else if (c == QSE_T('/'))
 	{
+		cp++;
+		a->type = (a->u.rex = compile(sed, c))? A_RE: A_LAST;
+	}
+	else if (c >= QSE_T('0') && c <= QSE_T('9'))
+	{
+		qse_sed_line_t lno = 0;
+		do
+		{
+			lno = lno * 10 + c - QSE_T('0');
+			cp++;
+		}
+		while ((c = *cp) >= QSE_T('0') && c <= QSE_T('9'))
+
+		/* line number 0 is illegal */
+		if (lno == 0) return QSE_NULL;
+
+		a->type = QSE_SED_A_LINE;
+		a->u.line = lno;
+	}
+	else
+	{
+		a->type = QSE_SED_A_NONE;
 	}
 
 	return cp;
 }
 
-static void compile (const qse_char_t* str)
+static void fcomp (const qse_char_t* str)
 {
 	const qse_char_t* cp = str;
 
@@ -98,7 +166,7 @@ static void compile (const qse_char_t* str)
 			continue;
 		}
 
-		cp = address (cp/*, &rep->ad1*/);
+		cp = address (sed, cp/*, &rep->ad1*/);
 	}
 
 }

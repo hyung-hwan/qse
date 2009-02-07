@@ -18,91 +18,52 @@
 
 #include <qse/utl/tgp.h>
 #include "../cmn/mem.h"
+#include "tgp.h"
 
-struct qse_tgp_t
-{
-	qse_mmgr_t mmgr;
-	void* assoc_data;
-	int errnum;
+QSE_IMPLEMENT_COMMON_FUNCTIONS (tgp)
 
-	struct
-	{
-		qse_tgp_io_t func;
-		void* arg;
-	} ih;
-
-	struct 
-	{
-		qse_tgp_io_t func;
-		void* arg;
-	} oh;
-
-	struct 
-	{
-		qse_tgp_io_t func;
-		void* arg;
-	} rh;
-
-	struct
-	{
-		qse_size_t pos;
-		qse_size_t len;
-		qse_char_t ptr[512];
-	} ib;
-
-	struct
-	{
-		qse_size_t len;
-		qse_char_t ptr[512];
-	} ob;
-
-	struct
-	{
-		qse_size_t len;
-		qse_char_t ptr[512];
-	} rb;
-
-	int (*read) (qse_tgp_t* tgp, qse_char_t* buf, int len);
-	int (*write) (qse_tgp_t* tgp, const qse_char_t* buf, int len);
-	int (*run) (qse_tgp_t* tgp, const qse_char_t* buf, int len);
-};
-
-qse_tgp_t* qse_tgp_open (qse_mmgr_t* mmgr)
+qse_tgp_t* qse_tgp_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 {
 	qse_tgp_t* tgp;
 
-	/*
-	if (mmgr == QSE_NULL) mmgr = QSE_GETMMGR();
 	if (mmgr == QSE_NULL) 
 	{
-		QSE_ASSERTX (mmgr != QSE_NULL, 
-			"Provide the memory manager or set the global memory manager with QSE_SETMMGR()");
-		return QSE_NULL;
-	}
-	*/
+		mmgr = QSE_MMGR_GETDFL();
 
-	tgp = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*tgp));
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
+
+		if (mmgr == QSE_NULL) return QSE_NULL;
+	}
+
+	tgp = (qse_tgp_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tgp_t) + xtn);
 	if (tgp == QSE_NULL) return QSE_NULL;
 
-	QSE_MEMSET (tgp, 0, QSE_SIZEOF(*tgp));
-	QSE_MEMCPY (&tgp->mmgr, mmgr, QSE_SIZEOF(*mmgr));
+	if (qse_tgp_init (tgp, mmgr) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (tgp->mmgr, tgp);
+		return QSE_NULL;
+	}
 
 	return tgp;
 }
 
 void qse_tgp_close (qse_tgp_t* tgp)
 {
-	QSE_MMGR_FREE (&tgp->mmgr, tgp);
+	qse_tgp_fini (tgp);
+	QSE_MMGR_FREE (tgp->mmgr, tgp);
 }
 
-void qse_tgp_setassocdata (qse_tgp_t* tgp, void* data)
+qse_tgp_t* qse_tgp_init (qse_tgp_t* tgp, qse_mmgr_t* mmgr)
 {
-	tgp->assoc_data = data;
+	QSE_MEMSET (tgp, 0, sizeof(*tgp));
+	tgp->mmgr = mmgr;
+
+	return tgp;
 }
 
-void* qse_tgp_getassocdata (qse_tgp_t* tgp)
+void qse_tgp_fini (qse_tgp_t* tgp)
 {
-	return tgp->assoc_data;
 }
 
 int qse_tgp_geterrnum (qse_tgp_t* tgp)

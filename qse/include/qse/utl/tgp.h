@@ -39,11 +39,25 @@ typedef qse_ssize_t (*qse_tgp_io_t) (
 extern "C" {
 #endif
 
-qse_tgp_t* qse_tgp_open (qse_mmgr_t* mmgr);
-void qse_tgp_close (qse_tgp_t* tgp);
+QSE_DEFINE_COMMON_FUNCTIONS (tgp)
 
-void qse_tgp_setassocdata (qse_tgp_t* tgp, void* data);
-void* qse_tgp_getassocdata (qse_tgp_t* tgp);
+qse_tgp_t* qse_tgp_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t xtn
+);
+
+void qse_tgp_close (
+	qse_tgp_t* tgp
+);
+
+qse_tgp_t* qse_tgp_init (
+	qse_tgp_t* tgp,
+	qse_mmgr_t* mmgr
+);
+
+void qse_tgp_fini (
+	qse_tgp_t* tgp
+);
 
 #ifdef __cplusplus
 }
