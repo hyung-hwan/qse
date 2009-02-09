@@ -21,12 +21,30 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/str.h>
+
+enum qse_sed_errnum_t
+{
+	QSE_SED_ENOERR, /* no error */
+	QSE_SED_ENOMEM, /* no memory */
+	QSE_SED_ETMTXT, /* too much text */
+	QSE_SED_ECMDNR, /* command not recognized */
+	QSE_SED_ECMDGB, /* command garbled */
+	QSE_SED_ELBLTL, /* label too long */
+	QSE_SED_EREXBL, /* regular expression build error */
+	QSE_SED_EA2NNC, /* address 2 not necessary */
+};
 
 typedef struct qse_sed_t qse_sed_t;
+typedef enum qse_sed_errnum_t qse_sed_errnum_t;
 
 struct qse_sed_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
+	qse_sed_errnum_t errnum;
+
+	void* lastrex;
+	qse_str_t rexbuf; /* temporary regular expression buffer */
 };
 
 
