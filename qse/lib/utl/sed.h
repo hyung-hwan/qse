@@ -32,10 +32,9 @@ struct qse_sed_a_t
 	enum
 	{
 		QSE_SED_A_NONE, /* no address */
-		QSE_SED_A_DOL,  /* $ */
-		QSE_SED_A_LINE, /* line # */
-		QSE_SED_A_REX,  /* regular expression */
-		QSE_SED_A_LAST  /* the last regular expression */
+		QSE_SED_A_DOL,  /* $ - last line */
+		QSE_SED_A_LINE, /* specified line */
+		QSE_SED_A_REX   /* lines matching regular expression */
 	} type;
 
 	union 
@@ -59,6 +58,37 @@ struct qse_sed_c_t
 	} u;	
 
 	qse_char_t* rhs; /* right-hand side of sustitution */
+
+	enum
+	{
+		QSE_SED_C_A,
+		QSE_SED_C_B,
+		QSE_SED_C_C,
+		QSE_SED_C_CD,
+		QSE_SED_C_CN,
+		QSE_SED_C_CO,
+		QSE_SED_C_CP,
+		QSE_SED_C_D,
+		QSE_SED_C_E,
+		QSE_SED_C_EQ,
+		QSE_SED_C_F,
+		QSE_SED_C_G,
+		QSE_SED_C_CG,
+		QSE_SED_C_H,
+		QSE_SED_C_CH,
+		QSE_SED_C_I,
+		QSE_SED_C_L,
+		QSE_SED_C_N,
+		QSE_SED_C_P,
+		QSE_SED_C_Q,
+		QSE_SED_C_R,
+		QSE_SED_C_S,
+		QSE_SED_C_T,
+		QSE_SED_C_W,
+		QSE_SED_C_CW,
+		QSE_SED_C_Y,
+		QSE_SED_C_X
+	} cmd;
 };
 
 struct qse_sed_l_t
@@ -68,6 +98,5 @@ struct qse_sed_l_t
 	qse_sed_c_t* address; /* command associated with label */
 
 };
-
 
 #endif

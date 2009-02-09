@@ -18,6 +18,7 @@
 
 #include "sed.h"
 #include "../cmn/mem.h"
+#include <qse/cmn/rex.h>
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
@@ -58,69 +59,101 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	QSE_MEMSET (sed, 0, sizeof(*sed));
 	sed->mmgr = mmgr;
 
+	if (qse_str_init (&sed->rexbuf, mmgr, 0) == QSE_NULL)
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		return QSE_NULL;	
+	}	
+
 	return sed;
 }
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+	qse_str_fini (&sed->rexbuf);
 }
 
-static void compile (qse_sed_t* sed, const qse_char_t* cp, qse_char_t seof)
+/* get the current character without advancing the pointer */
+#define CC(ptr,end) ((ptr < end)? *ptr: QSE_CHAR_EOF)
+/* get the current character advancing the pointer */
+#define NC(ptr,end) ((ptr < end)? *ptr++: QSE_CHAR_EOF)
+
+static const void* compile (
+	qse_sed_t* sed, const qse_char_t* ptr, 
+	const qse_char_t* end, qse_char_t seof)
 {
-	qse_char_t c;
+	void* code;
+	qse_cint_t c;
 
-	if ((c = *cp++) == seof) return QSE_NULL; /* // */
+	qse_str_clear (&sed->rexbuf);
 
-	do
+	for (;;)
 	{
-		if (c == QSE_T('\0') || c == QSE_T('\n'))
+		c = NC (ptr, end);
+		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
-			/* premature end of text */
-			return QSE_NULL; /* TODO: return an error..*/
+			sed->errnum = QSE_SED_ETMTXT;
+			return QSE_NULL;
 		}
 
-		if (c == QSE_T('\\')
+		if (c == seof) break;
+
+		if (c == QSE_T('\\'))
 		{
-			if (ep >= end)
+			c = NC (ptr, end);
+			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
-				/* too many characters */
-				return QSE_NULL; /* TODO: return an error..*/
+				sed->errnum = QSE_SED_ETMTXT;
+				return QSE_NULL;
 			}
 
-			*ep++ = c;
-
-			/* TODO: more escaped characters */
-			if ((c = *cp++) == QSE_T('n') c = QSE_T('n');
+			if (c == QSE_T('n')) c = QSE_T('\n');
+			// TODO: support more escaped characters??
 		}
 
-		if (ep >= end)
+		if (qse_str_ccat (&sed->rexbuf, c) == (qse_size_t)-1)
 		{
-			/* too many characters */
-			return QSE_NULL; /* TODO: return an error..*/
+			sed->errnum = QSE_SED_ENOMEM;
+			return QSE_NULL;
 		}
+	} 
 
-		*ep++ = c;
+	/* TODO: maximum depth - optionize the second  parameter */
+	code = qse_buildrex (
+		sed->mmgr, 0, 
+		QSE_STR_PTR(&sed->rexbuf), 
+		QSE_STR_LEN(&sed->rexbuf), 
+		QSE_NULL);
+	if (code == QSE_NULL)
+	{
+		sed->errnum = QSE_SED_EREXBL;
+		return QSE_NULL;
 	}
-	while ((c = *cp++) != seof);
 
-	*ep = QSE_T('\0');
-	regcomp (expbuf);
+	sed->lastrex = code;
+	return ptr;
 }
 
 static const qse_char_t* address (
-	qse_sed_t* sed, const qse_char_t* cp, qse_sed_a_t* a)
+	qse_sed_t* sed, const qse_char_t* ptr, 
+	const qse_char_t* end, qse_sed_a_t* a)
 {
-	qse_char_t c;
+	qse_cint_t c;
 
-	if ((c = *cp) == QSE_T('$'))
+	c = NC (ptr, end);
+	if ((c = *ptr) == QSE_T('$'))
 	{
 		a->type = QSE_SED_A_DOL;
-		cp++;
+		ptr++;
 	}
 	else if (c == QSE_T('/'))
 	{
-		cp++;
-		a->type = (a->u.rex = compile(sed, c))? A_RE: A_LAST;
+		ptr++;
+		if (compile (sed, ptr, end, c) == QSE_NULL) 
+			return QSE_NULL;
+
+		a->u.rex = sed->lastrex;
+		a->type = QSE_SED_A_REX;
 	}
 	else if (c >= QSE_T('0') && c <= QSE_T('9'))
 	{
@@ -128,9 +161,9 @@ static const qse_char_t* address (
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
-			cp++;
+			ptr++;
 		}
-		while ((c = *cp) >= QSE_T('0') && c <= QSE_T('9'))
+		while ((c = *ptr) >= QSE_T('0') && c <= QSE_T('9'));
 
 		/* line number 0 is illegal */
 		if (lno == 0) return QSE_NULL;
@@ -138,35 +171,186 @@ static const qse_char_t* address (
 		a->type = QSE_SED_A_LINE;
 		a->u.line = lno;
 	}
+	else if (c == QSE_T('\\'))
+	{
+		/* TODO */
+	}
 	else
 	{
 		a->type = QSE_SED_A_NONE;
 	}
 
-	return cp;
+	return ptr;
 }
 
-static void fcomp (const qse_char_t* str)
+static const qse_char_t* command (
+	qse_sed_t* sed, const qse_char_t* ptr, const qse_char_t* end)
 {
-	const qse_char_t* cp = str;
+	qse_cint_t c;
+
+	c = CC (ptr, end);
+	
+	switch (c)
+	{
+		default:
+			sed->errnum = QSE_SED_ECMDNR;
+			return QSE_NULL;
+
+#if 0
+		case QSE_T('{'):
+			cmd = QSE_SED_C_B;
+			break;
+
+		case QSE_T('}'):
+			break;
+
+		case QSE_T('='):
+			cmd = QSE_SED_C_EQ;
+			if (ad2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2NNC;
+				return QSE_NULL;
+			}
+			break;
+#endif
+
+		case QSE_T(':'):
+			break;
+
+		case QSE_T('a'):
+			break;
+
+		case QSE_T('c'):
+			break;
+
+		case QSE_T('i'):
+			break;
+
+		case QSE_T('g'):
+			break;
+
+		case QSE_T('G'):
+			break;
+
+		case QSE_T('h'):
+			break;
+
+		case QSE_T('H'):
+			break;
+
+		case QSE_T('t'):
+			break;
+
+		case QSE_T('b'):
+			break;
+
+		case QSE_T('n'):
+			break;
+
+		case QSE_T('N'):
+			break;
+
+		case QSE_T('p'):
+			break;
+
+		case QSE_T('P'):
+			break;
+
+		case QSE_T('r'):
+			break;
+
+		case QSE_T('d'):
+			break;
+
+		case QSE_T('D'):
+			break;
+
+		case QSE_T('q'):
+			break;
+
+		case QSE_T('l'):
+			break;
+
+		case QSE_T('s'):
+			break;
+
+		case QSE_T('w'):
+			break;
+
+		case QSE_T('x'):
+			break;
+
+		case QSE_T('y'):
+			break;
+	}
+
+	return ptr;
+}
+
+static const qse_char_t* fcomp (
+	qse_sed_t* sed, const qse_char_t* ptr, qse_size_t len)
+{
+	qse_cint_t c;
+	const qse_char_t* end = ptr + len;
+	qse_sed_a_t a1, a2;
 
 	while (1)
 	{
-		/* TODO: should use ISSPACE()?  or is it enough to
-		 *       check for a ' ' and '\t' because the input 'str'
-		 *       is just a line 
-		 */
-		while (*cp == QSE_T(' ') || *cp == QSE_T('\t')) cp++;
+		c = CC (ptr, end);
 
-		if (*cp == QSE_T('\0') || *cp == QSE_T('#')) break;
-
-		if (*cp == QSE_T(';'))
+		/* skip white spaces */
+		while (c == QSE_T(' ') || c == QSE_T('\t')) 
 		{
-			cp++;
+			ptr++;
+			c = CC (ptr, end);
+		}
+
+		/* check if it has reached the end or is commented */
+		if (c == QSE_CHAR_EOF || c == QSE_T('#')) break;
+
+		if (c == QSE_T(';')) 
+		{
+			ptr++;
 			continue;
 		}
 
-		cp = address (sed, cp/*, &rep->ad1*/);
+		/* process address */
+		ptr = address (sed, ptr, end, &a1);
+		if (ptr == QSE_NULL) return QSE_NULL;
+
+		c = CC (ptr, end);
+		if (a1.type != QSE_SED_A_NONE)
+		{
+			/* if (a1.type == QSE_SED_A_LAST)
+			{
+				 // TODO: ????
+			} */
+			if (c == QSE_T(',') || c == QSE_T(';'))
+			{
+				ptr++;
+				ptr = address (sed, ptr, end, &a2);
+				if (ptr == QSE_NULL) return QSE_NULL;
+				c = CC (ptr, end);
+			}
+			else a2.type = QSE_SED_A_NONE;
+		}
+
+		/* skip white spaces */
+		while (c == QSE_T(' ') || c == QSE_T('\t')) 
+		{
+			ptr++;
+			c = CC (ptr, end);
+		}
+
+
+		if (c == QSE_T('!'))
+		{
+			/* negate */
+		}
+
+		ptr = command (sed, ptr, end);
+		if (ptr == QSE_NULL) return QSE_NULL;
 	}
 
+	return ptr;
 }
