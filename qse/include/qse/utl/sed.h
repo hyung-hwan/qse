@@ -22,6 +22,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/lda.h>
 
 enum qse_sed_errnum_t
 {
@@ -45,6 +46,9 @@ struct qse_sed_t
 
 	void* lastrex;
 	qse_str_t rexbuf; /* temporary regular expression buffer */
+
+	/* command array */
+	qse_lda_t cmds;
 };
 
 

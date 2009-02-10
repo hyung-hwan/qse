@@ -198,7 +198,12 @@ static const qse_char_t* command (
 
 #if 0
 		case QSE_T('{'):
-			cmd = QSE_SED_C_B;
+			/* insert a negaited branch command at the beginning 
+			 * of a group. this way, all the commands in a group
+			 * can be skipped. the branch target is set once a
+			 * corresponding } is met. */
+			cmd.type = QSE_SED_C_BRANCH;
+			cmd.negfl = !cmd.negfl;
 			break;
 
 		case QSE_T('}'):

@@ -51,8 +51,8 @@ struct qse_sed_c_t
 
 	union
 	{
-		void* rex;          /* regular expression */
-		qse_char_t* text;   /* added text or file name */
+		void* rex;        /* regular expression */
+		qse_char_t* text; /* added text or file name */
 		qse_sed_c_t* lbl; /* destination command of branch */
 
 	} u;	
@@ -88,7 +88,10 @@ struct qse_sed_c_t
 		QSE_SED_C_CW,
 		QSE_SED_C_Y,
 		QSE_SED_C_X
-	} cmd;
+	} type;
+
+	/* TODO: change the data type to a shorter one to save space */
+	int negfl;
 };
 
 struct qse_sed_l_t
