@@ -171,7 +171,7 @@ int tgp_main (int argc, qse_char_t* argv[])
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
-	tgp = qse_tgp_open (QSE_MMGR_GETDFL());
+	tgp = qse_tgp_open (QSE_NULL, 0);
 	if (tgp == QSE_NULL) 
 	{
 		qse_fprintf (QSE_STDERR, 
