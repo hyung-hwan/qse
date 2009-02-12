@@ -716,7 +716,6 @@ static struct
 	{ QSE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
 	{ QSE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
 	{ QSE_T("crlf"),        TestAwk::OPT_CRLF },
-	{ QSE_T("argstomain"),  TestAwk::OPT_ARGSTOMAIN },
 	{ QSE_T("reset"),       TestAwk::OPT_RESET },
 	{ QSE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },
 	{ QSE_T("pablock"),     TestAwk::OPT_PABLOCK }

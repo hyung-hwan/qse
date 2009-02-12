@@ -246,7 +246,6 @@ static struct
 	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES },
 	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE },
 	{ QSE_T("crfl"),        QSE_AWK_CRLF },
-	{ QSE_T("argstomain"),  QSE_AWK_ARGSTOMAIN },
 	{ QSE_T("reset"),       QSE_AWK_RESET },
 	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR },
 	{ QSE_T("pablock"),     QSE_AWK_PABLOCK }
