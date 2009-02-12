@@ -465,21 +465,21 @@ qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s)
 	return s;
 }
 
-int qse_awk_parse (qse_awk_t* awk, qse_awk_srcios_t* srcios)
+int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 {
 	int n;
 
 	QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_setccls() first");
-	QSE_ASSERTX (awk->prmfns != QSE_NULL, "Call qse_setprmfns() first");
+	QSE_ASSERTX (awk->prm != QSE_NULL, "Call qse_setprm() first");
 
 	QSE_ASSERTX (
-		srcios != QSE_NULL && srcios->in != QSE_NULL,
+		sio != QSE_NULL && sio->in != QSE_NULL,
 		"the source code input stream must be provided at least");
 	QSE_ASSERT (awk->parse.depth.cur.loop == 0);
 	QSE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	qse_awk_clear (awk);
-	QSE_MEMCPY (&awk->src.ios, srcios, QSE_SIZEOF(awk->src.ios));
+	QSE_MEMCPY (&awk->src.ios, sio, QSE_SIZEOF(awk->src.ios));
 
 	n = parse (awk);
 

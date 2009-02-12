@@ -35,7 +35,7 @@ class StdAwk: public Awk
 public:
 	StdAwk ();
 	int open ();
-	int run (const char_t* main, const char_t** args, size_t nargs);
+	int run (const char_t** args, size_t nargs);
 
 protected:
 

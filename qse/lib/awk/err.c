@@ -261,8 +261,8 @@ void qse_awk_seterror (
 	switch (argcnt)
 	{
 		case 0:
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt);
@@ -289,8 +289,8 @@ void qse_awk_seterror (
 				qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt, (int)len, tmp);
@@ -298,8 +298,8 @@ void qse_awk_seterror (
 		}
 
 		case 2:
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -308,8 +308,8 @@ void qse_awk_seterror (
 			return;
 
 		case 3:
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -319,8 +319,8 @@ void qse_awk_seterror (
 			return;
 
 		case 4:
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -331,8 +331,8 @@ void qse_awk_seterror (
 			return;
 
 		case 5:
-			awk->prmfns->sprintf (
-				awk->prmfns->data,
+			awk->prm->sprintf (
+				awk->prm->data,
 				awk->errmsg, 
 				QSE_COUNTOF(awk->errmsg), 
 				errfmt,
@@ -413,8 +413,8 @@ void qse_awk_rtx_seterror (
 		case 0:
 			/* TODO: convert % to %% if the original % is not
 			 *       the first % of the %% sequence */
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt);
@@ -444,8 +444,8 @@ void qse_awk_rtx_seterror (
 				qse_strxncpy (tmp, QSE_COUNTOF(tmp), errarg[0].ptr, len);
 			}
 
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt, len, tmp);
@@ -453,8 +453,8 @@ void qse_awk_rtx_seterror (
 		}
 
 		case 2:
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -463,8 +463,8 @@ void qse_awk_rtx_seterror (
 			return;
 
 		case 3:
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -474,8 +474,8 @@ void qse_awk_rtx_seterror (
 			return;
 
 		case 4:
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt,
@@ -486,8 +486,8 @@ void qse_awk_rtx_seterror (
 			return;
 
 		case 5:
-			run->awk->prmfns->sprintf (
-				run->awk->prmfns->data,
+			run->awk->prm->sprintf (
+				run->awk->prm->data,
 				run->errmsg, 
 				QSE_COUNTOF(run->errmsg), 
 				errfmt,

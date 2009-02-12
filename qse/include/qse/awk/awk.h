@@ -52,10 +52,10 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 typedef struct qse_awk_val_t qse_awk_val_t;
 typedef struct qse_awk_eio_t qse_awk_eio_t; /* (E)xternal (IO) */
 
-typedef struct qse_awk_prmfns_t qse_awk_prmfns_t;
-typedef struct qse_awk_srcios_t qse_awk_srcios_t;
-typedef struct qse_awk_runios_t qse_awk_runios_t;
-typedef struct qse_awk_runcbs_t qse_awk_runcbs_t;
+typedef struct qse_awk_prm_t qse_awk_prm_t;
+typedef struct qse_awk_sio_t qse_awk_sio_t;
+typedef struct qse_awk_rio_t qse_awk_rio_t;
+typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (
@@ -108,7 +108,7 @@ struct qse_awk_eio_t
 	qse_awk_eio_t* next;
 };
 
-struct qse_awk_prmfns_t
+struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;         /* required */
 	qse_awk_sprintf_t sprintf;     /* required */
@@ -117,14 +117,14 @@ struct qse_awk_prmfns_t
 	void*             data; /* optional */
 };
 
-struct qse_awk_srcios_t
+struct qse_awk_sio_t
 {
 	qse_awk_io_t in;
 	qse_awk_io_t out;
 	void* data;
 };
 
-struct qse_awk_runios_t
+struct qse_awk_rio_t
 {
 	qse_awk_io_t pipe;
 	qse_awk_io_t file;
@@ -132,7 +132,7 @@ struct qse_awk_runios_t
 	void* data;
 };
 
-struct qse_awk_runcbs_t
+struct qse_awk_rcb_t
 {
 	int (*on_start) (
 		qse_awk_rtx_t* rtx, void* data);
@@ -730,24 +730,24 @@ void qse_awk_setccls (
 );
 /******/
 
-/****f* AWK/qse_awk_getprmfns
+/****f* AWK/qse_awk_getprm
  * NAME
- *  qse_awk_getprmfns - get primitive functions
+ *  qse_awk_getprm - get primitive functions
  * SYNOPSIS
  */
-qse_awk_prmfns_t* qse_awk_getprmfns (
+qse_awk_prm_t* qse_awk_getprm (
 	qse_awk_t* awk
 );
 /******/
 
-/****f* AWK/qse_awk_setprmfns
+/****f* AWK/qse_awk_setprm
  * NAME
- *  qse_awk_setprmfns - set primitive functions
+ *  qse_awk_setprm - set primitive functions
  * SYNOPSIS
  */
-void qse_awk_setprmfns (
-	qse_awk_t*        awk, 
-	qse_awk_prmfns_t* prmfns
+void qse_awk_setprm (
+	qse_awk_t*     awk, 
+	qse_awk_prm_t* prm
 );
 /******/
 
@@ -973,35 +973,8 @@ void qse_awk_clrfnc (
  * SYNOPSIS
  */
 int qse_awk_parse (
-	qse_awk_t*        awk,
-	qse_awk_srcios_t* srcios
-);
-/******/
-
-/****f* AWK/qse_awk_run
- * NAME
- *  qse_awk_run - execute a parsed program
- * DESCRIPTION
- *  A runtime context is required for it to start running the program.
- *  Once a runtime context is created, the program starts to run.
- *  The failure of context creation is reported by the return value of -1.
- *  However, the runtime error after context creation is reported differently
- *  depending on the callbacks specified. When no callback is specified 
- *  (i.e. runcbs is QSE_NULL), the qse_awk_run() function returns -1 on an 
- *  error and awk->errnum is set accordingly. If a callback is specified 
- *  (i.e. runcbs is not QSE_NULL), the qse_awk_run() returns 0 on both success
- *  and failure. Instead, the on_end handler of the callback is triggered with 
- *  the relevant error number. The third parameter to on_end is the error 
- *  number.
- * SYNOPSIS
- */
-int qse_awk_run (
-	qse_awk_t*        awk,
-	const qse_char_t* main,
-	qse_awk_runios_t* runios,
-	qse_awk_runcbs_t* runcbs, 
-	const qse_cstr_t* runarg,
-	void*             data
+	qse_awk_t*     awk,
+	qse_awk_sio_t* sio
 );
 /******/
 
@@ -1031,12 +1004,24 @@ int qse_awk_parsesimple (
 /****f* AWK/qse_awk_runsimple
  * NAME
  *  qse_awk_runsimple - run a parsed program
+ * DESCRIPTION
+ *  A runtime context is required for it to start running the program.
+ *  Once a runtime context is created, the program starts to run.
+ *  The failure of context creation is reported by the return value of -1.
+ *  However, the runtime error after context creation is reported differently
+ *  depending on the callbacks specified. When no callback is specified 
+ *  (i.e. rcb is QSE_NULL), the qse_awk_run() function returns -1 on an 
+ *  error and awk->errnum is set accordingly. If a callback is specified 
+ *  (i.e. rcb is not QSE_NULL), the qse_awk_run() returns 0 on both success
+ *  and failure. Instead, the on_end handler of the callback is triggered with 
+ *  the relevant error number. The third parameter to on_end is the error 
+ *  number.
  * SYNOPSIS
  */
 int qse_awk_runsimple (
 	qse_awk_t*        awk,
 	qse_char_t**      icf /* input console files */,
-	qse_awk_runcbs_t* cbs /* callbacks */
+	qse_awk_rcb_t* cbs /* callbacks */
 );
 /******/
 
@@ -1124,6 +1109,55 @@ qse_size_t qse_awk_longtostr (
 	qse_char_t*       buf,
 	qse_size_t        size
 );
+
+/****f* AWK/qse_awk_rtx_open
+ * NAME
+ *  qse_awk_rtx_open - create a runtime context
+ * SYNOPSIS
+ */
+qse_awk_rtx_t* qse_awk_rtx_open (
+	qse_awk_t*        awk,
+	qse_awk_rio_t*    ios,
+	qse_awk_rcb_t*    cbs,
+	const qse_cstr_t* arg,
+	void*             data
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_close
+ * NAME
+ *  qse_awk_rtx_close - destroy a runtime context
+ * SYNOPSIS
+ */
+void qse_awk_rtx_close (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_loop
+ * NAME
+ *  qse_awk_rtx_loop - run BEGIN/pattern-action/END blocks
+ * SYNOPSIS
+ */
+int qse_awk_rtx_loop (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_call
+ * NAME
+ *  qse_awk_rtx_call - call a function
+ * SYNOPSIS
+ */
+int qse_awk_rtx_call (
+	qse_awk_rtx_t*    rtx,
+	const qse_char_t* name,
+	qse_awk_val_t**   args,
+	qse_size_t        nargs
+);
+/******/
+
+
 /****f* AWK/qse_awk_stopall
  * NAME
  *  qse_awk_stopall - stop all runtime contexts
