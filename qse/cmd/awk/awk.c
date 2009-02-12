@@ -587,7 +587,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk;
 
-	qse_awk_runcbs_t runcbs;
+	qse_awk_rcb_t rcb;
 
 	int i;
 	int runarg_count = 0;
@@ -625,14 +625,14 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	runcbs.on_start = on_run_start;
-	runcbs.on_enter = on_run_enter;
-	runcbs.on_statement = on_run_statement;
-	runcbs.on_exit = on_run_exit;
-	runcbs.on_end = on_run_end;
-	runcbs.data = &ao;
+	rcb.on_start = on_run_start;
+	rcb.on_enter = on_run_enter;
+	rcb.on_statement = on_run_statement;
+	rcb.on_exit = on_run_exit;
+	rcb.on_end = on_run_end;
+	rcb.data = &ao;
 
-	if (qse_awk_runsimple (awk, ao.icf, &runcbs) == -1)
+	if (qse_awk_runsimple (awk, ao.icf, &rcb) == -1)
 	{
 		qse_printf (
 			QSE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),

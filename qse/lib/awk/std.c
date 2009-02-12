@@ -29,7 +29,7 @@
 
 typedef struct xtn_t
 {
-	qse_awk_prmfns_t prmfns;
+	qse_awk_prm_t prm;
 } xtn_t;
 
 typedef struct rxtn_t
@@ -76,10 +76,10 @@ qse_awk_t* qse_awk_opensimple (qse_size_t xtnsize)
 
 	xtn = (xtn_t*)((qse_byte_t*)qse_awk_getxtn(awk) + xtnsize);
 
-	xtn->prmfns.pow     = custom_awk_pow;
-	xtn->prmfns.sprintf = custom_awk_sprintf;
-	xtn->prmfns.data    = QSE_NULL;
-	qse_awk_setprmfns (awk, &xtn->prmfns);
+	xtn->prm.pow     = custom_awk_pow;
+	xtn->prm.sprintf = custom_awk_sprintf;
+	xtn->prm.data    = QSE_NULL;
+	qse_awk_setprm (awk, &xtn->prm);
 
 	qse_awk_setoption (awk, 
 		QSE_AWK_IMPLICIT | QSE_AWK_EIO | QSE_AWK_NEWLINE | 
@@ -288,7 +288,7 @@ int qse_awk_parsesimple (
 	qse_awk_t* awk, const void* isp, int ist, const qse_char_t* osf)
 {
 	sf_t sf;
-	qse_awk_srcios_t sio;
+	qse_awk_sio_t sio;
 
 	if (isp == QSE_NULL)
 	{
@@ -738,12 +738,14 @@ static qse_ssize_t awk_eio_console (
 	return -1;
 }
 
-int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_runcbs_t* cbs)
+int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb_t* rcb)
 {
-	qse_awk_runios_t ios;
+	qse_awk_rtx_t* rtx;
+	qse_awk_rio_t ios;
 	runio_data_t rd;
 	rxtn_t rxtn;
 	qse_ntime_t now;
+	int n;
 
 	rd.ic.files = icf;
 	rd.ic.index = 0;
@@ -757,14 +759,62 @@ int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_runcbs_t* cbs)
 	else rxtn.seed = (unsigned int)now;
 	srand (rxtn.seed);
 
-	return qse_awk_run (
+	rtx = qse_awk_rtx_open (
 		awk, 
-		QSE_NULL/*mfn*/,
 		&ios,
-		cbs,
+		rcb,
 		QSE_NULL/*runarg*/,
 		&rxtn/*QSE_NULL*/
 	);
+	if (rtx == QSE_NULL) return -1;
+
+	/* execute the start callback if it exists */
+	if (rcb != QSE_NULL && rcb->on_start != QSE_NULL)
+	{
+		n = rcb->on_start (rtx, rcb->data);
+		if (n <= -1) n = -1; // TODO: something doesn't make send here...
+	}
+
+	n = qse_awk_rtx_loop (rtx);
+	if (n == -1) 
+	{
+		/* if no callback is specified, awk's error number 
+		 * is updated with the run's error number */
+		if (rcb == QSE_NULL)
+		{
+			awk->errnum = rtx->errnum;
+			awk->errlin = rtx->errlin;
+
+			qse_strxcpy (
+				awk->errmsg, QSE_COUNTOF(awk->errmsg),
+				rtx->errmsg);
+		}
+		else
+		{
+			qse_awk_seterrnum (awk, QSE_AWK_ERUNTIME);
+		}
+	}
+
+	/* the run loop ended. execute the end callback if it exists */
+	if (rcb != QSE_NULL && rcb->on_end != QSE_NULL) 
+	{
+		if (n == 0) 
+		{
+			/* clear error if run is successful just in case */
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
+		}
+
+		rcb->on_end (rtx, 
+			((n == -1)? rtx->errnum: QSE_AWK_ENOERR), 
+			rcb->data);
+
+		/* when using callbacks, this function always returns 0 
+		 * after the start callbacks has been triggered */
+		n = 0;
+	}
+
+	qse_awk_rtx_close (rtx);
+	return n;
 }
 
 

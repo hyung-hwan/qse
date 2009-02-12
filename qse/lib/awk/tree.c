@@ -277,13 +277,13 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			if (((qse_awk_nde_real_t*)nde)->str == QSE_NULL)
 			{
 			#if (QSE_SIZEOF_LONG_DOUBLE != 0) && !defined(__MINGW32__)
-				awk->prmfns->sprintf (
-					awk->prmfns->data,
+				awk->prm->sprintf (
+					awk->prm->data,
 					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt), QSE_T("%Lf"), 
 					(long double)((qse_awk_nde_real_t*)nde)->val);
 			#elif (QSE_SIZEOF_DOUBLE != 0)
-				awk->prmfns->sprintf (
-					awk->prmfns->data,
+				awk->prm->sprintf (
+					awk->prm->data,
 					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt), QSE_T("%f"), 
 					(double)((qse_awk_nde_real_t*)nde)->val);
 			#else

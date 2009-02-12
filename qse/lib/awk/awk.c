@@ -342,17 +342,16 @@ void qse_awk_setccls (qse_awk_t* awk, qse_ccls_t* ccls)
 	awk->ccls = ccls;
 }
 
-qse_awk_prmfns_t* qse_awk_getprmfns (qse_awk_t* awk)
+qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
 {
-	return awk->prmfns;
+	return awk->prm;
 }
 
-void qse_awk_setprmfns (qse_awk_t* awk, qse_awk_prmfns_t* prmfns)
+void qse_awk_setprm (qse_awk_t* awk, qse_awk_prm_t* prm)
 {
-	QSE_ASSERT (prmfns->pow     != QSE_NULL);
-	QSE_ASSERT (prmfns->sprintf != QSE_NULL);
-
-	awk->prmfns = prmfns;
+	QSE_ASSERT (prm->pow     != QSE_NULL);
+	QSE_ASSERT (prm->sprintf != QSE_NULL);
+	awk->prm = prm;
 }
 
 int qse_awk_getoption (qse_awk_t* awk)

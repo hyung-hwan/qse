@@ -72,7 +72,7 @@ int StdAwk::open ()
 	return 0;
 }
 
-int StdAwk::run (const char_t* main, const char_t** args, size_t nargs)
+int StdAwk::run (const char_t** args, size_t nargs)
 {
 	qse_ntime_t now;
 
@@ -81,7 +81,7 @@ int StdAwk::run (const char_t* main, const char_t** args, size_t nargs)
 
 	::srand (this->seed);
 
-	return Awk::run (main, args, nargs);
+	return Awk::run (args, nargs);
 }
 
 int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs, 

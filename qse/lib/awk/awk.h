@@ -85,9 +85,9 @@ struct qse_awk_tree_t
 
 struct qse_awk_t
 {
-	qse_mmgr_t* mmgr;
-	qse_ccls_t* ccls;
-	qse_awk_prmfns_t* prmfns;
+	qse_mmgr_t*    mmgr;
+	qse_ccls_t*    ccls;
+	qse_awk_prm_t* prm;
 
 	void* assoc_data;
 
@@ -157,7 +157,7 @@ struct qse_awk_t
 	/* source code management */
 	struct
 	{
-		qse_awk_srcios_t ios;
+		qse_awk_sio_t ios;
 
 		struct
 		{
@@ -376,7 +376,7 @@ struct qse_awk_rtx_t
 	void* data;
 
 	qse_awk_t* awk;
-	qse_awk_runcbs_t* cbs;
+	qse_awk_rcb_t* cbs;
 };
 
 

@@ -731,8 +731,7 @@ static void print_usage (const qse_char_t* argv0)
 	if (base == QSE_NULL) base = qse_strrchr(argv0, QSE_T('\\'));
 	if (base == QSE_NULL) base = argv0; else base++;
 
-	qse_printf (QSE_T("Usage: %s [-m main] [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]* [-w o:n]* \n"), base);
-	qse_printf (QSE_T("    -m  main  Specify the main function name\n"));
+	qse_printf (QSE_T("Usage: %s [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]* [-w o:n]* \n"), base);
 	qse_printf (QSE_T("    -si file  Specify the input source file\n"));
 	qse_printf (QSE_T("              The source code is read from stdin when it is not specified\n"));
 	qse_printf (QSE_T("    -so file  Specify the output source file\n"));
@@ -758,7 +757,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 	TestAwk awk;
 
 	int mode = 0;
-	const qse_char_t* mainfn = NULL;
 	const qse_char_t* srcin = QSE_T("");
 	const qse_char_t* srcout = NULL;
 	const qse_char_t* args[256];
@@ -781,8 +779,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			else if (qse_strcmp(argv[i], QSE_T("-ci")) == 0) mode = 3;
 			else if (qse_strcmp(argv[i], QSE_T("-co")) == 0) mode = 4;
 			else if (qse_strcmp(argv[i], QSE_T("-a")) == 0) mode = 5;
-			else if (qse_strcmp(argv[i], QSE_T("-m")) == 0) mode = 6;
-			else if (qse_strcmp(argv[i], QSE_T("-w")) == 0) mode = 7;
+			else if (qse_strcmp(argv[i], QSE_T("-w")) == 0) mode = 6;
 			else if (qse_strcmp(argv[i], QSE_T("-v")) == 0)
 			{
 				verbose = true;
@@ -887,18 +884,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 				args[nargs++] = argv[i];
 				mode = 0;
 			}
-			else if (mode == 6) // entry point
-			{
-				if (mainfn != NULL) 
-				{
-					print_usage (argv[0]);
-					return -1;
-				}
-
-				mainfn = argv[i];
-				mode = 0;
-			}
-			else if (mode == 7) // word replacement
+			else if (mode == 6) // word replacement
 			{
 				const qse_char_t* p;
 				qse_size_t l;
@@ -938,7 +924,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	awk.enableRunCallback ();
 
-	if (awk.run (mainfn, args, nargs) == -1)
+	if (awk.run (args, nargs) == -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());

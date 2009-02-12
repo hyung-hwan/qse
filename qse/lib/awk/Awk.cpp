@@ -16,7 +16,6 @@
    limitations under the License.
  */
 
-
 #include <qse/awk/Awk.hpp>
 #include <qse/cmn/str.h>
 #include "../cmn/mem.h"
@@ -74,14 +73,14 @@ void Awk::EIO::setHandle (void* handle)
 Awk::EIO::operator Awk::Awk* () const 
 {
 	// it assumes that the Awk object is set to the data field.
-	// make sure that it happens in Awk::run () - runios.data = this;
+	// make sure that it happens in Awk::run () - rio.data = this;
 	return (Awk::Awk*)eio->data;
 }
 
 Awk::EIO::operator Awk::awk_t* () const 
 {
 	// it assumes that the Awk object is set to the data field.
-	// make sure that it happens in Awk::run () - runios.data = this;
+	// make sure that it happens in Awk::run () - rio.data = this;
 	return (Awk::awk_t*)(Awk::Awk*)eio->data;
 }
 
@@ -1074,9 +1073,9 @@ Awk::Awk (): awk (QSE_NULL), functionMap (QSE_NULL),
 	ccls.to   = transCase;
 	ccls.data = this;
 
-	prmfns.pow     = pow;
-	prmfns.sprintf = sprintf;
-	prmfns.data    = this;
+	prm.pow     = pow;
+	prm.sprintf = sprintf;
+	prm.data    = this;
 }
 
 Awk::~Awk ()
@@ -1187,7 +1186,7 @@ int Awk::open ()
 	}
 
 	qse_awk_setccls (awk, &ccls);
-	qse_awk_setprmfns (awk, &prmfns);
+	qse_awk_setprm (awk, &prm);
 
 	
 	//functionMap = qse_map_open (
@@ -1317,44 +1316,44 @@ int Awk::parse ()
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	qse_awk_srcios_t srcios;
+	qse_awk_sio_t sio;
 
-	srcios.in = sourceReader;
-	srcios.out = sourceWriter;
-	srcios.data = this;
+	sio.in = sourceReader;
+	sio.out = sourceWriter;
+	sio.data = this;
 
-	int n = qse_awk_parse (awk, &srcios);
+	int n = qse_awk_parse (awk, &sio);
 	if (n == -1) retrieveError ();
 	return n;
 }
 
-int Awk::run (const char_t* main, const char_t** args, size_t nargs)
+int Awk::run (const char_t** args, size_t nargs)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
 	size_t i;
-	qse_awk_runios_t runios;
-	qse_awk_runcbs_t runcbs;
+	qse_awk_rio_t rio;
+	qse_awk_rcb_t rcb;
 	qse_xstr_t* runarg = QSE_NULL;
 
 	// make sure that the run field is set in Awk::onRunStart.
 	Run runctx (this);
 
-	runios.pipe    = pipeHandler;
-	runios.file    = fileHandler;
-	runios.console = consoleHandler;
-	runios.data    = this;
+	rio.pipe    = pipeHandler;
+	rio.file    = fileHandler;
+	rio.console = consoleHandler;
+	rio.data    = this;
 
-	QSE_MEMSET (&runcbs, 0, QSE_SIZEOF(runcbs));
-	runcbs.on_start = onRunStart;
+	QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
+	rcb.on_start = onRunStart;
 	if (runCallback)
 	{
-		runcbs.on_end       = onRunEnd;
-		runcbs.on_enter     = onRunEnter;
-		runcbs.on_statement = onRunStatement;
-		runcbs.on_exit      = onRunExit;
+		rcb.on_end       = onRunEnd;
+		rcb.on_enter     = onRunEnter;
+		rcb.on_statement = onRunStatement;
+		rcb.on_exit      = onRunExit;
 	}
-	runcbs.data = &runctx;
+	rcb.data = &runctx;
 	
 	if (nargs > 0)
 	{
@@ -1385,7 +1384,7 @@ int Awk::run (const char_t* main, const char_t** args, size_t nargs)
 	}
 	
 	int n = qse_awk_run (
-		awk, main, &runios, &runcbs,
+		awk, &rio, &rcb,
 		(qse_cstr_t*)runarg, &runctx
 	);
 	if (n == -1) retrieveError ();

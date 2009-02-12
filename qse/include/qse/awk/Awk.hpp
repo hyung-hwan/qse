@@ -875,9 +875,6 @@ public:
 	 *
 	 * This method executes the parse tree formed by Awk::parse.
 	 *
-	 * @param main Name of an entry point.
-	 * 	If it is set, Awk::run executes the function of the specified 
-	 * 	name instead of entering BEGIN/pattern/END blocks.
 	 * @param args Pointer to an array of character strings.
 	 * 	If it is specified, the charater strings are passed to
 	 * 	an AWK program. The values can be accesed with ARGC & ARGV
@@ -897,8 +894,7 @@ public:
 	 * 	with Awk::enableRunCallback and Awk::disableRunCallback.
 	 * 	Call Awk::getErrorCode to get extended error information.
 	 */
-	virtual int run (const char_t* main = QSE_NULL, 
-	         const char_t** args = QSE_NULL, size_t nargs = 0);
+	virtual int run (const char_t** args = QSE_NULL, size_t nargs = 0);
 
 	/**
 	 * Requests aborting execution of the parse tree 
@@ -1128,7 +1124,7 @@ private:
 
 	mmgr_t mmgr;
 	ccls_t ccls;
-	qse_awk_prmfns_t prmfns;
+	qse_awk_prm_t prm;
 };
 
 /////////////////////////////////
