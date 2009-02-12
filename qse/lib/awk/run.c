@@ -1465,7 +1465,14 @@ int qse_awk_rtx_call (
 	struct pafv pafv = { args, nargs };
 	qse_awk_nde_call_t call;
 
-	rtx->exit_level = EXIT_NONE;
+	if (rtx->exit_level >= EXIT_NEXT) 
+	{
+		/* cannot call the function again when exit() is called
+		 * in an AWK program or qse_awk_rtx_stop() is invoked */
+		qse_awk_rtx_seterror (rtx, QSE_AWK_ENOPER, 0, QSE_NULL, 0);
+		return -1;
+	}
+	/*rtx->exit_level = EXIT_NONE;*/
 
 	/* forge a fake node containing a function call */
 	QSE_MEMSET (&call, 0, QSE_SIZEOF(call));
@@ -2292,7 +2299,9 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 
 		qse_awk_rtx_refdownval (run, STACK_RETVAL(run));
 		STACK_RETVAL(run) = val;
-		qse_awk_rtx_refupval (run, val); /* see eval_call for the trick */
+
+		/* NOTE: see eval_call() for the trick */
+		qse_awk_rtx_refupval (run, val); 
 	}
 	
 	run->exit_level = EXIT_FUNCTION;

@@ -247,17 +247,14 @@ enum qse_awk_option_t
 	/* cr + lf by default */
 	QSE_AWK_CRLF        = (1 << 13),
 
-	/* pass the arguments to the main function */
-	QSE_AWK_ARGSTOMAIN  = (1 << 14),
-
 	/* enable the non-standard keyword reset */
-	QSE_AWK_RESET       = (1 << 15),
+	QSE_AWK_RESET       = (1 << 14),
 
 	/* allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR    = (1 << 16),
+	QSE_AWK_MAPTOVAR    = (1 << 15),
 
 	/* allows BEGIN, END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 17)
+	QSE_AWK_PABLOCK     = (1 << 16)
 };
 
 /* error code */
@@ -1117,8 +1114,8 @@ qse_size_t qse_awk_longtostr (
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk,
-	qse_awk_rio_t*    ios,
-	qse_awk_rcb_t*    cbs,
+	qse_awk_rio_t*    rio,
+	qse_awk_rcb_t*    rcb,
 	const qse_cstr_t* arg,
 	void*             data
 );
@@ -1137,6 +1134,19 @@ void qse_awk_rtx_close (
 /****f* AWK/qse_awk_rtx_loop
  * NAME
  *  qse_awk_rtx_loop - run BEGIN/pattern-action/END blocks
+ * DESCRIPTION
+ *  The qse_awk_rtx_loop() function executes the BEGIN block, pattern-action
+ *  blocks and the END blocks in an AWk program. Multiple invocations of the
+ *  function for the lifetime of a runtime context is not desirable.
+ * RETURN
+ *  The qse_awk_rtx_loop() function returns 0 on success and -1 on failure.
+ * EXAMPLE
+ *  rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ *  if (rtx != QSE_NULL)
+ *  {
+ *    qse_awk_rtx_loop (rtx);
+ *    qse_awk_rtx_close (rtx);
+ *  }
  * SYNOPSIS
  */
 int qse_awk_rtx_loop (
@@ -1147,6 +1157,21 @@ int qse_awk_rtx_loop (
 /****f* AWK/qse_awk_rtx_call
  * NAME
  *  qse_awk_rtx_call - call a function
+ * DESCRIPTION
+ *  The qse_awk_rtx_call() function invokes an AWK function. However, it is
+ *  not able to invoke an intrinsic function such as split(). 
+ *  The QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
+ *  block, pattern-action blocks, and the END block.
+ * RETURN
+ *  The qse_awk_rtx_call() function returns 0 on success and -1 on failure.
+ * EXAMPLE
+ *  rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ *  if (rtx != QSE_NULL)
+ *  {
+ *    qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *    qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+ *    qse_awk_rtx_close (rtx);
+ *  }
  * SYNOPSIS
  */
 int qse_awk_rtx_call (
@@ -1156,7 +1181,6 @@ int qse_awk_rtx_call (
 	qse_size_t        nargs
 );
 /******/
-
 
 /****f* AWK/qse_awk_stopall
  * NAME

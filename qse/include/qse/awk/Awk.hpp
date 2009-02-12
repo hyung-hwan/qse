@@ -577,12 +577,6 @@ public:
 		OPT_NEXTOFILE = QSE_AWK_NEXTOFILE,
 		/** Use CR+LF instead of LF for line breaking. */
 		OPT_CRLF = QSE_AWK_CRLF,
-		/** 
-		 * When set, the values specified in a call to Awk::run 
-		 * as the second and the third parameter are passed to 
-		 * the function specified as the first parameter.
-		 */
-		OPT_ARGSTOMAIN = QSE_AWK_ARGSTOMAIN,
 		/** Enables the keyword 'reset' */
 		OPT_RESET = QSE_AWK_RESET,
 		/** Allows the assignment of a map value to a variable */
@@ -878,12 +872,7 @@ public:
 	 * @param args Pointer to an array of character strings.
 	 * 	If it is specified, the charater strings are passed to
 	 * 	an AWK program. The values can be accesed with ARGC & ARGV
-	 * 	inside the AWK program. If Awk::OPT_ARGSTOMAIN is set and 
-	 * 	the name of entry point is specified, the values are 
-	 * 	accessible as arguments to the entry point function.
-	 * 	In this case, the number of arguments specified in the 
-	 * 	function definition should not exceed the number of
-	 * 	character string passed here.
+	 * 	inside the AWK program. 
 	 * @param nargs Number of character strings in the array
 	 *
 	 * @return
