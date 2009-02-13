@@ -1399,7 +1399,7 @@ int Awk::run (const char_t** args, size_t nargs)
 		runctx.run = rtx;
 		*((Run**)qse_awk_rtx_getxtn(rtx)) = &runctx;
 
-		if (runCallback) qse_awk_rtx_cbs (rtx, &rcb);
+		if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
 		n = qse_awk_rtx_loop (rtx);
 		if (n == -1) retrieveError ();
 		qse_awk_rtx_close (rtx);
