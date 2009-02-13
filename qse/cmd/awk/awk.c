@@ -611,7 +611,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (awk == QSE_NULL) return -1;
 
 
-	if (qse_awk_parsesimple (awk, ao.isp, ao.ist, ao.osf) == -1)
+	if (qse_awk_parsesimple (awk, ao.ist, ao.isp, ao.osf) == -1)
 	{
 		qse_printf (
 			QSE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 

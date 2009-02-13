@@ -121,7 +121,7 @@ struct qse_awk_sio_t
 {
 	qse_awk_io_t in;
 	qse_awk_io_t out;
-	void* data;
+	void*        data;
 };
 
 struct qse_awk_rio_t
@@ -129,7 +129,7 @@ struct qse_awk_rio_t
 	qse_awk_io_t pipe;
 	qse_awk_io_t file;
 	qse_awk_io_t console;
-	void* data;
+	void*        data;
 };
 
 struct qse_awk_rcb_t
@@ -261,8 +261,9 @@ enum qse_awk_option_t
 enum qse_awk_errnum_t
 {
 	QSE_AWK_ENOERR,         /* no error */
-	QSE_AWK_ECUSTOM,        /* custom error */
+	QSE_AWK_EUNKNOWN,       /* unknown error */
 
+	/* common errors */
 	QSE_AWK_EINVAL,         /* invalid parameter or data */
 	QSE_AWK_ENOMEM,         /* out of memory */
 	QSE_AWK_ENOSUP,         /* not supported */
@@ -279,6 +280,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EISDIR,         /* is a directory */
 	QSE_AWK_EIOERR,         /* i/o error */
 
+	/* mostly parse errors */
 	QSE_AWK_EOPEN,          /* cannot open */
 	QSE_AWK_EREAD,          /* cannot read */
 	QSE_AWK_EWRITE,         /* cannot write */
@@ -643,8 +645,8 @@ extern qse_awk_val_t* qse_awk_val_one;
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t* mmgr    /* a memory manager */,
-	qse_size_t  xtnsize /* the size of extension in bytes */
+	qse_mmgr_t* mmgr  /* a memory manager */,
+	qse_size_t  xtn   /* the size of extension in bytes */
 );
 /******/
 
@@ -975,53 +977,6 @@ int qse_awk_parse (
 );
 /******/
 
-/****f* AWK/qse_awk_opensimple
- * NAME
- *  qse_awk_opensimple - create an awk object
- * SYNOPSIS
- */
-qse_awk_t* qse_awk_opensimple (
-	qse_size_t xtnsize /* size of extension area in bytes */
-);
-/******/
-
-/****f* AWK/qse_awk_parsesimple
- * NAME
- *  qse_awk_parsesimple - parse source code
- * SYNOPSIS
- */
-int qse_awk_parsesimple (
-	qse_awk_t*        awk,
-	const void*       isp /* source file names or source string */,
-	int               ist /* QSE_AWK_PARSE_FILES, QSE_AWK_PARSE_STRING */,
-	const qse_char_t* osf /* an output source file name */
-);
-/******/
-
-/****f* AWK/qse_awk_runsimple
- * NAME
- *  qse_awk_runsimple - run a parsed program
- * DESCRIPTION
- *  A runtime context is required for it to start running the program.
- *  Once a runtime context is created, the program starts to run.
- *  The failure of context creation is reported by the return value of -1.
- *  However, the runtime error after context creation is reported differently
- *  depending on the callbacks specified. When no callback is specified 
- *  (i.e. rcb is QSE_NULL), the qse_awk_run() function returns -1 on an 
- *  error and awk->errnum is set accordingly. If a callback is specified 
- *  (i.e. rcb is not QSE_NULL), the qse_awk_run() returns 0 on both success
- *  and failure. Instead, the on_end handler of the callback is triggered with 
- *  the relevant error number. The third parameter to on_end is the error 
- *  number.
- * SYNOPSIS
- */
-int qse_awk_runsimple (
-	qse_awk_t*        awk,
-	qse_char_t**      icf /* input console files */,
-	qse_awk_rcb_t* cbs /* callbacks */
-);
-/******/
-
 /****f* AWK/qse_awk_alloc
  * NAME 
  *  qse_awk_alloc - allocate dynamic memory
@@ -1114,10 +1069,10 @@ qse_size_t qse_awk_longtostr (
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk,
+	qse_size_t        xtn,
 	qse_awk_rio_t*    rio,
 	qse_awk_rcb_t*    rcb,
-	const qse_cstr_t* arg,
-	void*             data
+	const qse_cstr_t* arg
 );
 /******/
 
@@ -1331,12 +1286,12 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_getdata
+/****f* AWK/qse_awk_rtx_getxtn
  * NAME
- *  qse_awk_rtx_getdata - get the user-specified data for a runtime context
+ *  qse_awk_rtx_getxtn - get the pointer to extension space
  * SYNOPSIS
  */
-void* qse_awk_rtx_getdata (
+void* qse_awk_rtx_getxtn (
 	qse_awk_rtx_t* rtx
 );
 /******/
@@ -1544,6 +1499,59 @@ int qse_awk_rtx_strtonum (
 	qse_real_t*       r
 );
 /******/
+
+/****f* AWK/qse_awk_opensimple
+ * NAME
+ *  qse_awk_opensimple - create an awk object
+ * SYNOPSIS
+ */
+qse_awk_t* qse_awk_opensimple (
+	qse_size_t xtn /* size of extension area in bytes */
+);
+/******/
+
+/****f* AWK/qse_awk_parsesimple
+ * NAME
+ *  qse_awk_parsesimple - parse source code
+ * DESCRIPTION
+ *  If 'ist' is QSE_AWK_PARSE_STRING, 'isp' should be a null-terminated string
+ *  of the type 'const qse_char_t*'; If 'ist' is QSE_AWK_PARSE_FILES, 'isp'
+ *  should be an array of null-terminated strings whose last element is a 
+ *  null pointer.
+ * SYNOPSIS
+ */
+int qse_awk_parsesimple (
+	qse_awk_t*        awk,
+	int               ist /* QSE_AWK_PARSE_FILES, QSE_AWK_PARSE_STRING */,
+	const void*       isp /* source file names or source string */,
+	const qse_char_t* osf /* an output source file name */
+);
+/******/
+
+/****f* AWK/qse_awk_runsimple
+ * NAME
+ *  qse_awk_runsimple - run a parsed program
+ * DESCRIPTION
+ *  A runtime context is required for it to start running the program.
+ *  Once a runtime context is created, the program starts to run.
+ *  The failure of context creation is reported by the return value of -1.
+ *  However, the runtime error after context creation is reported differently
+ *  depending on the callbacks specified. When no callback is specified 
+ *  (i.e. rcb is QSE_NULL), the qse_awk_run() function returns -1 on an 
+ *  error and awk->errnum is set accordingly. If a callback is specified 
+ *  (i.e. rcb is not QSE_NULL), the qse_awk_run() returns 0 on both success
+ *  and failure. Instead, the on_end handler of the callback is triggered with 
+ *  the relevant error number. The third parameter to on_end is the error 
+ *  number.
+ * SYNOPSIS
+ */
+int qse_awk_runsimple (
+	qse_awk_t*     awk,
+	qse_char_t**   icf /* input console files */,
+	qse_awk_rcb_t* cbs /* callbacks */
+);
+/******/
+
 
 #ifdef __cplusplus
 }

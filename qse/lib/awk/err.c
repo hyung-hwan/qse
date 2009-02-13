@@ -23,7 +23,7 @@ static const qse_char_t* __geterrstr (int errnum)
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
-		QSE_T("custom error"),
+		QSE_T("unknown error"),
 
 		QSE_T("invalid parameter or data"),
 		QSE_T("out of memory"),
