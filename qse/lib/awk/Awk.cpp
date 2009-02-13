@@ -1383,11 +1383,32 @@ int Awk::run (const char_t** args, size_t nargs)
 		runarg[i].len = 0;
 	}
 	
+	int n = 0;
+	qse_awk_rtx_t* rtx = qse_awk_rtx_open (
+		awk, QSE_SIZEOF(Run*), &rio, &rcb, (qse_cstr_t*)runarg);
+	if (rtx == QSE_NULL) 
+	{
+		retrieveError();
+		n = -1;
+	}
+	else
+	{
+		Run** xtn = (Run**)qse_awk_rtx_getxtn (rtx);
+		*xtn = &runctx;
+		runctx.run = rtx;
+
+		n = qse_awk_rtx_loop (rtx);
+		if (n == -1) retrieveError ();
+		qse_awk_rtx_close (rtx);
+	}
+
+#if 0
 	int n = qse_awk_run (
 		awk, &rio, &rcb,
 		(qse_cstr_t*)runarg, &runctx
 	);
 	if (n == -1) retrieveError ();
+#endif
 
 	if (runarg != QSE_NULL) 
 	{
@@ -1708,7 +1729,7 @@ Awk::ssize_t Awk::consoleHandler (
 int Awk::functionHandler (
 	run_t* run, const char_t* name, size_t len)
 {
-	Run* ctx = (Run*) qse_awk_rtx_getdata (run);
+	Run* ctx = *(Run**)qse_awk_rtx_getxtn (run);
 	Awk* awk = ctx->awk;
 	return awk->dispatchFunction (ctx, name, len);
 }	

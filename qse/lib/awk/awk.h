@@ -373,8 +373,6 @@ struct qse_awk_rtx_t
 	qse_size_t errlin;
 	qse_char_t errmsg[256];
 
-	void* data;
-
 	qse_awk_t* awk;
 	qse_awk_rcb_t* cbs;
 };
