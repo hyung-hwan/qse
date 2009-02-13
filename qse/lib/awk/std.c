@@ -768,7 +768,7 @@ qse_awk_rtx_t* qse_awk_opensimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb
 	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
 
-	//qse_awk_rtx_setcb (rtx, rcb);
+	//qse_awk_rtx_setrcb (rtx, rcb);
 
 	return rtx;
 }
@@ -804,7 +804,7 @@ int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb_t* rcb)
 	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
 
-	qse_awk_rtx_setcb (rtx, rcb);
+	qse_awk_rtx_setrcb (rtx, rcb);
 
 	/* execute the start callback if it exists */
 	if (rcb != QSE_NULL && rcb->on_start != QSE_NULL)

@@ -1172,22 +1172,22 @@ void qse_awk_rtx_stop (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_getcb
+/****f* AWK/qse_awk_rtx_getrcb
  * NAME
- *  qse_awk_rtx_setcb - get callback
+ *  qse_awk_rtx_getrcb - get callback
  * SYNOPSIS
  */
-qse_awk_rcb_t* qse_awk_rtx_getcb (
+qse_awk_rcb_t* qse_awk_rtx_getrcb (
 	qse_awk_rtx_t* rtx
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_setcb
+/****f* AWK/qse_awk_rtx_setrcb
  * NAME
- *  qse_awk_rtx_setcb - set callback
+ *  qse_awk_rtx_setrcb - set callback
  * SYNOPSIS
  */
-void qse_awk_rtx_setcb (
+void qse_awk_rtx_setrcb (
 	qse_awk_rtx_t* rtx,
 	qse_awk_rcb_t* rcb
 );
