@@ -184,8 +184,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_BUILD, 0);
 	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_MATCH, 0);
 
-	awk->assoc_data = QSE_NULL;
-
 	if (qse_awk_initgbls (awk) == -1) goto oops;
 
 	return awk;

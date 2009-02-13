@@ -1336,7 +1336,8 @@ int Awk::run (const char_t** args, size_t nargs)
 	qse_awk_rcb_t rcb;
 	qse_xstr_t* runarg = QSE_NULL;
 
-	// make sure that the run field is set in Awk::onRunStart.
+	// note that the run field is set below after qse_awk_rtx_open() is
+	// executed.
 	Run runctx (this);
 
 	rio.pipe    = pipeHandler;
@@ -1344,16 +1345,16 @@ int Awk::run (const char_t** args, size_t nargs)
 	rio.console = consoleHandler;
 	rio.data    = this;
 
-	QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
-	rcb.on_start = onRunStart;
 	if (runCallback)
 	{
+		QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
+		rcb.on_start = onRunStart;
 		rcb.on_end       = onRunEnd;
 		rcb.on_enter     = onRunEnter;
 		rcb.on_statement = onRunStatement;
 		rcb.on_exit      = onRunExit;
+		rcb.data = &runctx;
 	}
-	rcb.data = &runctx;
 	
 	if (nargs > 0)
 	{
@@ -1385,7 +1386,9 @@ int Awk::run (const char_t** args, size_t nargs)
 	
 	int n = 0;
 	qse_awk_rtx_t* rtx = qse_awk_rtx_open (
-		awk, QSE_SIZEOF(Run*), &rio, &rcb, (qse_cstr_t*)runarg);
+		awk, QSE_SIZEOF(Run*), &rio, 
+		(qse_cstr_t*)runarg
+	);
 	if (rtx == QSE_NULL) 
 	{
 		retrieveError();
@@ -1393,22 +1396,14 @@ int Awk::run (const char_t** args, size_t nargs)
 	}
 	else
 	{
-		Run** xtn = (Run**)qse_awk_rtx_getxtn (rtx);
-		*xtn = &runctx;
 		runctx.run = rtx;
+		*((Run**)qse_awk_rtx_getxtn(rtx)) = &runctx;
 
+		if (runCallback) qse_awk_rtx_cbs (rtx, &rcb);
 		n = qse_awk_rtx_loop (rtx);
 		if (n == -1) retrieveError ();
 		qse_awk_rtx_close (rtx);
 	}
-
-#if 0
-	int n = qse_awk_run (
-		awk, &rio, &rcb,
-		(qse_cstr_t*)runarg, &runctx
-	);
-	if (n == -1) retrieveError ();
-#endif
 
 	if (runarg != QSE_NULL) 
 	{
@@ -1565,12 +1560,6 @@ void Awk::enableRunCallback ()
 void Awk::disableRunCallback ()
 {
 	runCallback = false;
-}
-
-bool Awk::triggerOnRunStart (Run& run)
-{
-	if (runCallback) return onRunStart (run);
-	return true;
 }
 
 bool Awk::onRunStart (Run& run)
@@ -1744,17 +1733,8 @@ void Awk::freeFunctionMapValue (map_t* map, void* dptr, size_t dlen)
 int Awk::onRunStart (run_t* run, void* data)
 {
 	Run* r = (Run*)data;
-
-	// the actual run_t value for the run-time callback is set here.
-	// r here refers to runctx declared in Awk::run. As onRunStart
-	// is executed immediately after the run method is invoked,
-	// the run field can be set safely here. This seems to be the 
-	// only place to acquire the run_t value safely as Awk::run 
-	// is blocking.
-	r->run = run; 
-
 	r->callbackFailed = false;
-	return r->awk->triggerOnRunStart(*r)? 0: -1;
+	return r->awk->onRunStart(*r)? 0: -1;
 }
 
 void Awk::onRunEnd (run_t* run, int errnum, void* data)
@@ -1782,14 +1762,8 @@ void Awk::onRunExit (run_t* run, val_t* ret, void* data)
 	if (r->callbackFailed) return;
 
 	Argument x (r);
-	if (x.init (ret) == -1)
-	{
-		r->callbackFailed = true;		
-	}
-	else
-	{
-		r->awk->onRunExit (*r, x);
-	}
+	if (x.init (ret) == -1) r->callbackFailed = true;		
+	else r->awk->onRunExit (*r, x);
 }
 
 void Awk::onRunStatement (run_t* run, size_t line, void* data)
