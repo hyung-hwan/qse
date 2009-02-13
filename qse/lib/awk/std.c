@@ -755,20 +755,20 @@ qse_awk_rtx_t* qse_awk_opensimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb
 	rio.console = awk_eio_console;
 	rio.data    = &rd;
 
-
 	rtx = qse_awk_rtx_open (
 		awk, 
-		QSE_SIZEOF(rxtn),
+		xtn + QSE_SIZEOF(rxtn),
 		&rio,
-		rcb,
 		QSE_NULL/*runarg*/
 	);
 	if (rtx == QSE_NULL) return QSE_NULL;
 
-	rxtn = (rxtn_t*)qse_awk_rtx_getxtn (rtx);
+	rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
 	if (qse_gettime (&now) == -1) rxtn->seed = 0;
-	else rxtn->seed = (unsigned int)now;
+	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
+
+	//qse_awk_rtx_setcb (rtx, rcb);
 
 	return rtx;
 }
@@ -795,15 +795,16 @@ int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb_t* rcb)
 		awk, 
 		QSE_SIZEOF(rxtn),
 		&rio,
-		rcb,
 		QSE_NULL/*runarg*/
 	);
 	if (rtx == QSE_NULL) return -1;
 
-	rxtn = (rxtn_t*)qse_awk_rtx_getxtn (rtx);
+	rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
 	if (qse_gettime (&now) == -1) rxtn->seed = 0;
-	else rxtn->seed = (unsigned int)now;
+	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
+
+	qse_awk_rtx_setcb (rtx, rcb);
 
 	/* execute the start callback if it exists */
 	if (rcb != QSE_NULL && rcb->on_start != QSE_NULL)

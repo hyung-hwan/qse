@@ -89,8 +89,6 @@ struct qse_awk_t
 	qse_ccls_t*    ccls;
 	qse_awk_prm_t* prm;
 
-	void* assoc_data;
-
 	/* options */
 	int option;
 

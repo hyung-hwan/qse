@@ -1071,7 +1071,6 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk,
 	qse_size_t        xtn,
 	qse_awk_rio_t*    rio,
-	qse_awk_rcb_t*    rcb,
 	const qse_cstr_t* arg
 );
 /******/
@@ -1170,6 +1169,27 @@ qse_bool_t qse_awk_rtx_shouldstop (
  */
 void qse_awk_rtx_stop (
 	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_getcb
+ * NAME
+ *  qse_awk_rtx_setcb - get callback
+ * SYNOPSIS
+ */
+qse_awk_rcb_t* qse_awk_rtx_getcb (
+	qse_awk_rtx_t* rtx
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_setcb
+ * NAME
+ *  qse_awk_rtx_setcb - set callback
+ * SYNOPSIS
+ */
+void qse_awk_rtx_setcb (
+	qse_awk_rtx_t* rtx,
+	qse_awk_rcb_t* rcb
 );
 /******/
 

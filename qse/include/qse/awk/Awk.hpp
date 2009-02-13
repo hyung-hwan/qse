@@ -1109,8 +1109,6 @@ private:
 	Awk (const Awk&);
 	Awk& operator= (const Awk&);
 
-	bool triggerOnRunStart (Run& run);
-
 	mmgr_t mmgr;
 	ccls_t ccls;
 	qse_awk_prm_t prm;

@@ -637,13 +637,13 @@ qse_map_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 }
 
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t* awk, qse_size_t xtn, qse_awk_rio_t* rio, 
-	qse_awk_rcb_t* cbs, const qse_cstr_t* arg)
+	qse_awk_t* awk, qse_size_t xtn, 
+	qse_awk_rio_t* rio, const qse_cstr_t* arg)
 {
 	qse_awk_rtx_t* rtx;
 
-        QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_setccls() first");
-        QSE_ASSERTX (awk->prm != QSE_NULL, "Call qse_setprm() first");
+        QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_awk_setccls() first");
+        QSE_ASSERTX (awk->prm != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
 	qse_awk_seterror (awk, QSE_AWK_ENOERR, 0, QSE_NULL, 0);
@@ -660,7 +660,8 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	}
 	
 	/* allocate the storage for the rtx object */
-	rtx = (qse_awk_rtx_t*) QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_rtx_t) + xtn);
+	rtx = (qse_awk_rtx_t*) QSE_AWK_ALLOC (
+		awk, QSE_SIZEOF(qse_awk_rtx_t) + xtn);
 	if (rtx == QSE_NULL)
 	{
 		/* if it fails, the failure is reported thru 
@@ -681,7 +682,6 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	rtx->errnum    = QSE_AWK_ENOERR;
 	rtx->errlin    = 0;
 	rtx->errmsg[0] = QSE_T('\0');
-	rtx->cbs       = cbs;
 
 	if (init_globals (rtx, arg) == -1)
 	{
@@ -710,6 +710,16 @@ qse_bool_t qse_awk_rtx_shouldstop (qse_awk_rtx_t* rtx)
 	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
 }
 
+qse_awk_rcb_t* qse_awk_rtx_getcb (qse_awk_rtx_t* rtx)
+{
+	return rtx->cbs;
+}
+
+void qse_awk_rtx_setcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
+{
+	rtx->cbs = rcb;
+}
+
 static void free_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval (
@@ -728,6 +738,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t));
 
 	rtx->awk = awk;
+	rtx->cbs = QSE_NULL;
 
 	rtx->stack = QSE_NULL;
 	rtx->stack_top = 0;
@@ -1836,13 +1847,13 @@ static int run_block0 (qse_awk_rtx_t* run, qse_awk_nde_blk_t* nde)
 	return n;
 }
 
-#define ON_STATEMENT(run,nde) \
-	if ((run)->awk->stopall) (run)->exit_level = EXIT_ABORT; \
-	if ((run)->cbs != QSE_NULL &&  \
-	    (run)->cbs->on_statement != QSE_NULL) \
+#define ON_STATEMENT(rtx,nde) \
+	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
+	if ((rtx)->cbs != QSE_NULL &&  \
+	    (rtx)->cbs->on_statement != QSE_NULL) \
 	{ \
-		(run)->cbs->on_statement ( \
-			run, (nde)->line, (run)->cbs->data); \
+		(rtx)->cbs->on_statement ( \
+			rtx, (nde)->line, (rtx)->cbs->data); \
 	} 
 
 static int run_statement (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
