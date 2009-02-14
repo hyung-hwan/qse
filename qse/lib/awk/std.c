@@ -32,9 +32,19 @@ typedef struct xtn_t
 	qse_awk_prm_t prm;
 } xtn_t;
 
+typedef struct rio_data_t
+{
+	struct
+	{
+		qse_char_t** files;
+		qse_size_t   index;
+	} ic; /* input console */
+} rio_data_t;
+
 typedef struct rxtn_t
 {
 	unsigned int seed;	
+	rio_data_t rd;
 } rxtn_t;
 
 static qse_real_t custom_awk_pow (void* custom, qse_real_t x, qse_real_t y)
@@ -326,15 +336,6 @@ int qse_awk_parsesimple (
 }
 
 /*** RUNSIMPLE ***/
-
-typedef struct rio_data_t
-{
-	struct
-	{
-		qse_char_t** files;
-		qse_size_t   index;
-	} ic; /* input console */
-} rio_data_t;
 
 static qse_ssize_t awk_eio_pipe (
 	int cmd, void* arg, qse_char_t* data, qse_size_t size)
@@ -738,26 +739,24 @@ static qse_ssize_t awk_eio_console (
 	return -1;
 }
 
-#if 0
-qse_awk_rtx_t* qse_awk_opensimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb_t* rcb)
+qse_awk_rtx_t* qse_awk_rtx_opensimple (qse_awk_t* awk, qse_char_t** icf)
 {
+	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
-	rio_data_t rd;
 	rxtn_t* rxtn;
 	qse_ntime_t now;
 	int n;
 
-	rd.ic.files = icf;
-	rd.ic.index = 0;
-
 	rio.pipe    = awk_eio_pipe;
 	rio.file    = awk_eio_file;
 	rio.console = awk_eio_console;
-	rio.data    = &rd;
+/* TODO: here.... */
+	//rio.data    = &rd;
+
 
 	rtx = qse_awk_rtx_open (
 		awk, 
-		xtn + QSE_SIZEOF(rxtn),
+		QSE_SIZEOF(rxtn_t),
 		&rio,
 		QSE_NULL/*runarg*/
 	);
@@ -768,101 +767,12 @@ qse_awk_rtx_t* qse_awk_opensimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb
 	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
 
-	//qse_awk_rtx_setrcb (rtx, rcb);
+	rxtn->rd.ic.files = icf;
+	rxtn->rd.ic.index = 0;
+	rtx->eio.data = &rxtn->rd;
 
 	return rtx;
 }
-#endif
-
-int qse_awk_runsimple (qse_awk_t* awk, qse_char_t** icf, qse_awk_rcb_t* rcb)
-{
-	qse_awk_rtx_t* rtx;
-	qse_awk_rio_t rio;
-	rio_data_t rd;
-	rxtn_t* rxtn;
-	qse_ntime_t now;
-	int n;
-
-	rd.ic.files = icf;
-	rd.ic.index = 0;
-
-	rio.pipe = awk_eio_pipe;
-	rio.file = awk_eio_file;
-	rio.console = awk_eio_console;
-	rio.data = &rd;
-
-	rtx = qse_awk_rtx_open (
-		awk, 
-		QSE_SIZEOF(rxtn),
-		&rio,
-		QSE_NULL/*runarg*/
-	);
-	if (rtx == QSE_NULL) return -1;
-
-	rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
-	if (qse_gettime (&now) == -1) rxtn->seed = 0;
-	else rxtn->seed = (unsigned int) now;
-	srand (rxtn->seed);
-
-	qse_awk_rtx_setrcb (rtx, rcb);
-
-	/* execute the start callback if it exists */
-	if (rcb != QSE_NULL && rcb->on_start != QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		n = rcb->on_start (rtx, rcb->data);
-		if (n <= -1) 
-		{
-			if (rtx->errnum == QSE_AWK_ENOERR)
-				qse_awk_seterrnum (awk, QSE_AWK_EUNKNOWN);
-			n = -1; 
-			goto oops;
-		}
-	}
-
-	n = qse_awk_rtx_loop (rtx);
-	if (n == -1) 
-	{
-		/* if no callback is specified, awk's error number 
-		 * is updated with the run's error number */
-		if (rcb == QSE_NULL)
-		{
-			awk->errnum = rtx->errnum;
-			awk->errlin = rtx->errlin;
-
-			qse_strxcpy (
-				awk->errmsg, QSE_COUNTOF(awk->errmsg),
-				rtx->errmsg);
-		}
-		else
-		{
-			qse_awk_seterrnum (awk, QSE_AWK_ERUNTIME);
-		}
-	}
-
-	/* the run loop ended. execute the end callback if it exists */
-	if (rcb != QSE_NULL && rcb->on_end != QSE_NULL) 
-	{
-		if (n == 0) 
-		{
-			/* clear error if run is successful just in case */
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		}
-
-		rcb->on_end (rtx, 
-			((n == -1)? rtx->errnum: QSE_AWK_ENOERR), 
-			rcb->data);
-
-		/* when using callbacks, this function always returns 0 
-		 * after the start callbacks has been triggered */
-		n = 0;
-	}
-
-oops:
-	qse_awk_rtx_close (rtx);
-	return n;
-}
-
 
 /*** EXTRA BUILTIN FUNCTIONS ***/
 enum

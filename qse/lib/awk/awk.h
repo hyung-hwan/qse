@@ -372,7 +372,7 @@ struct qse_awk_rtx_t
 	qse_char_t errmsg[256];
 
 	qse_awk_t* awk;
-	qse_awk_rcb_t* rcb;
+	qse_awk_rcb_t rcb;
 };
 
 

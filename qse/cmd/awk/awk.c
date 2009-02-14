@@ -32,7 +32,7 @@
 #	include <errno.h>
 #endif
 
-static qse_awk_rtx_t* app_run = NULL;
+static qse_awk_rtx_t* app_rtx = NULL;
 static int app_debug = 0;
 
 struct argout_t
@@ -65,7 +65,7 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	if (ctrl_type == CTRL_C_EVENT ||
 	    ctrl_type == CTRL_CLOSE_EVENT)
 	{
-		qse_awk_rtx_stop (app_run);
+		qse_awk_rtx_stop (app_rtx);
 		return TRUE;
 	}
 
@@ -100,7 +100,7 @@ static int setsignal (int sig, void(*handler)(int), int restart)
 static void stop_run (int sig)
 {
 	int e = errno;
-	qse_awk_rtx_stop (app_run);
+	qse_awk_rtx_stop (app_rtx);
 	errno = e;
 }
 
@@ -122,15 +122,6 @@ static void unset_intr_run (void)
 #else
 	setsignal (SIGINT, SIG_DFL, 1);
 #endif
-}
-
-static int on_run_start (qse_awk_rtx_t* run, void* data)
-{
-	app_run = run;
-	set_intr_run ();
-
-	dprint (QSE_T("[AWK ABOUT TO START]\n"));
-	return 0;
 }
 
 static qse_map_walk_t print_awk_value (
@@ -209,22 +200,6 @@ static void on_run_exit (
 	dprint (QSE_T("[NAMED VARIABLES]\n"));
 	qse_map_walk (qse_awk_rtx_getnvmap(run), print_awk_value, run);
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
-}
-
-static void on_run_end (qse_awk_rtx_t* run, int errnum, void* data)
-{
-	if (errnum != QSE_AWK_ENOERR)
-	{
-		dprint (QSE_T("[AWK ENDED WITH AN ERROR]\n"));
-		qse_printf (QSE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
-			errnum, 
-			(unsigned int)qse_awk_rtx_geterrlin(run),
-			qse_awk_rtx_geterrmsg(run));
-	}
-	else dprint (QSE_T("[AWK ENDED SUCCESSFULLY]\n"));
-
-	unset_intr_run ();
-	app_run = NULL;
 }
 
 /* TODO: remove otab... */
@@ -585,7 +560,7 @@ static qse_awk_t* open_awk (void)
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk;
-
+	qse_awk_rtx_t* rtx;
 	qse_awk_rcb_t rcb;
 
 	int i;
@@ -624,24 +599,43 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	rcb.on_start = on_run_start;
 	rcb.on_enter = on_run_enter;
 	rcb.on_statement = on_run_statement;
 	rcb.on_exit = on_run_exit;
-	rcb.on_end = on_run_end;
 	rcb.data = &ao;
 
-	if (qse_awk_runsimple (awk, ao.icf, &rcb) == -1)
+	rtx = qse_awk_rtx_opensimple (awk, ao.icf);
+	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
-			QSE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
+			QSE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
 			qse_awk_geterrnum(awk),
-			(unsigned int)qse_awk_geterrlin(awk),
+			(unsigned int)qse_awk_geterrlin(awk), 
 			qse_awk_geterrmsg(awk)
 		);
 
 		ret = -1;
-		goto oops;
+	}
+	else
+	{
+		app_rtx = rtx;
+		set_intr_run ();
+
+		qse_awk_rtx_setrcb (rtx, &rcb);
+		ret = qse_awk_rtx_loop (rtx);
+
+		unset_intr_run ();
+
+		if (ret == -1)
+		{
+			qse_printf (QSE_T("RUN ERROR: CODE [%d] LINE [%u] %s\n"),
+				(unsigned int)qse_awk_rtx_geterrnum(rtx),
+				(unsigned int)qse_awk_rtx_geterrlin(rtx),
+				qse_awk_rtx_geterrmsg(rtx)
+			);
+		}
+
+		qse_awk_rtx_close (rtx);
 	}
 
 oops:

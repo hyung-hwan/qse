@@ -630,7 +630,6 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx)
 	return rtx->awk->mmgr;
 }
 
-
 qse_map_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 {
 	return rtx->named;
@@ -712,12 +711,12 @@ qse_bool_t qse_awk_rtx_shouldstop (qse_awk_rtx_t* rtx)
 
 qse_awk_rcb_t* qse_awk_rtx_getrcb (qse_awk_rtx_t* rtx)
 {
-	return rtx->rcb;
+	return &rtx->rcb;
 }
 
 void qse_awk_rtx_setrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
 {
-	rtx->rcb = rcb;
+	rtx->rcb = *rcb;
 }
 
 static void free_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
@@ -738,7 +737,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t));
 
 	rtx->awk = awk;
-	rtx->rcb = QSE_NULL;
 
 	rtx->stack = QSE_NULL;
 	rtx->stack_top = 0;
@@ -859,124 +857,124 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	return 0;
 }
 
-static void fini_rtx (qse_awk_rtx_t* run)
+static void fini_rtx (qse_awk_rtx_t* rtx)
 {
-	if (run->pattern_range_state != QSE_NULL)
-		QSE_AWK_FREE (run->awk, run->pattern_range_state);
+	if (rtx->pattern_range_state != QSE_NULL)
+		QSE_AWK_FREE (rtx->awk, rtx->pattern_range_state);
 
 	/* close all pending eio's */
 	/* TODO: what if this operation fails? */
-	qse_awk_cleareio (run);
-	QSE_ASSERT (run->eio.chain == QSE_NULL);
+	qse_awk_cleareio (rtx);
+	QSE_ASSERT (rtx->eio.chain == QSE_NULL);
 
-	if (run->gbl.rs != QSE_NULL) 
+	if (rtx->gbl.rs != QSE_NULL) 
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.rs);
-		run->gbl.rs = QSE_NULL;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.rs);
+		rtx->gbl.rs = QSE_NULL;
 	}
-	if (run->gbl.fs != QSE_NULL)
+	if (rtx->gbl.fs != QSE_NULL)
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.fs);
-		run->gbl.fs = QSE_NULL;
-	}
-
-	if (run->gbl.convfmt.ptr != QSE_NULL &&
-	    run->gbl.convfmt.ptr != DEFAULT_CONVFMT)
-	{
-		QSE_AWK_FREE (run->awk, run->gbl.convfmt.ptr);
-		run->gbl.convfmt.ptr = QSE_NULL;
-		run->gbl.convfmt.len = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.fs);
+		rtx->gbl.fs = QSE_NULL;
 	}
 
-	if (run->gbl.ofmt.ptr != QSE_NULL && 
-	    run->gbl.ofmt.ptr != DEFAULT_OFMT)
+	if (rtx->gbl.convfmt.ptr != QSE_NULL &&
+	    rtx->gbl.convfmt.ptr != DEFAULT_CONVFMT)
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.ofmt.ptr);
-		run->gbl.ofmt.ptr = QSE_NULL;
-		run->gbl.ofmt.len = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.convfmt.ptr);
+		rtx->gbl.convfmt.ptr = QSE_NULL;
+		rtx->gbl.convfmt.len = 0;
 	}
 
-	if (run->gbl.ofs.ptr != QSE_NULL && 
-	    run->gbl.ofs.ptr != DEFAULT_OFS)
+	if (rtx->gbl.ofmt.ptr != QSE_NULL && 
+	    rtx->gbl.ofmt.ptr != DEFAULT_OFMT)
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.ofs.ptr);
-		run->gbl.ofs.ptr = QSE_NULL;
-		run->gbl.ofs.len = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.ofmt.ptr);
+		rtx->gbl.ofmt.ptr = QSE_NULL;
+		rtx->gbl.ofmt.len = 0;
 	}
 
-	if (run->gbl.ors.ptr != QSE_NULL && 
-	    run->gbl.ors.ptr != DEFAULT_ORS &&
-	    run->gbl.ors.ptr != DEFAULT_ORS_CRLF)
+	if (rtx->gbl.ofs.ptr != QSE_NULL && 
+	    rtx->gbl.ofs.ptr != DEFAULT_OFS)
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.ors.ptr);
-		run->gbl.ors.ptr = QSE_NULL;
-		run->gbl.ors.len = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.ofs.ptr);
+		rtx->gbl.ofs.ptr = QSE_NULL;
+		rtx->gbl.ofs.len = 0;
 	}
 
-	if (run->gbl.subsep.ptr != QSE_NULL && 
-	    run->gbl.subsep.ptr != DEFAULT_SUBSEP)
+	if (rtx->gbl.ors.ptr != QSE_NULL && 
+	    rtx->gbl.ors.ptr != DEFAULT_ORS &&
+	    rtx->gbl.ors.ptr != DEFAULT_ORS_CRLF)
 	{
-		QSE_AWK_FREE (run->awk, run->gbl.subsep.ptr);
-		run->gbl.subsep.ptr = QSE_NULL;
-		run->gbl.subsep.len = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.ors.ptr);
+		rtx->gbl.ors.ptr = QSE_NULL;
+		rtx->gbl.ors.len = 0;
 	}
 
-	QSE_AWK_FREE (run->awk, run->format.tmp.ptr);
-	run->format.tmp.ptr = QSE_NULL;
-	run->format.tmp.len = 0;
-	qse_str_fini (&run->format.fmt);
-	qse_str_fini (&run->format.out);
+	if (rtx->gbl.subsep.ptr != QSE_NULL && 
+	    rtx->gbl.subsep.ptr != DEFAULT_SUBSEP)
+	{
+		QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
+		rtx->gbl.subsep.ptr = QSE_NULL;
+		rtx->gbl.subsep.len = 0;
+	}
+
+	QSE_AWK_FREE (rtx->awk, rtx->format.tmp.ptr);
+	rtx->format.tmp.ptr = QSE_NULL;
+	rtx->format.tmp.len = 0;
+	qse_str_fini (&rtx->format.fmt);
+	qse_str_fini (&rtx->format.out);
 
 	/* destroy input record. qse_awk_rtx_clrrec should be called
-	 * before the run stack has been destroyed because it may try
+	 * before the rtx stack has been destroyed because it may try
 	 * to change the value to QSE_AWK_GBL_NF. */
-	qse_awk_rtx_clrrec (run, QSE_FALSE);  
-	if (run->inrec.flds != QSE_NULL) 
+	qse_awk_rtx_clrrec (rtx, QSE_FALSE);  
+	if (rtx->inrec.flds != QSE_NULL) 
 	{
-		QSE_AWK_FREE (run->awk, run->inrec.flds);
-		run->inrec.flds = QSE_NULL;
-		run->inrec.maxflds = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->inrec.flds);
+		rtx->inrec.flds = QSE_NULL;
+		rtx->inrec.maxflds = 0;
 	}
-	qse_str_fini (&run->inrec.line);
+	qse_str_fini (&rtx->inrec.line);
 
 	/* destroy the stack if necessary */
-	if (run->stack != QSE_NULL)
+	if (rtx->stack != QSE_NULL)
 	{
-		QSE_ASSERT (run->stack_top == 0);
+		QSE_ASSERT (rtx->stack_top == 0);
 
-		QSE_AWK_FREE (run->awk, run->stack);
-		run->stack = QSE_NULL;
-		run->stack_top = 0;
-		run->stack_base = 0;
-		run->stack_limit = 0;
+		QSE_AWK_FREE (rtx->awk, rtx->stack);
+		rtx->stack = QSE_NULL;
+		rtx->stack_top = 0;
+		rtx->stack_base = 0;
+		rtx->stack_limit = 0;
 	}
 
 	/* destroy named variables */
-	qse_map_close (run->named);
+	qse_map_close (rtx->named);
 
 	/* destroy values in free list */
-	while (run->fcache_count > 0)
+	while (rtx->fcache_count > 0)
 	{
-		qse_awk_val_ref_t* tmp = run->fcache[--run->fcache_count];
-		qse_awk_rtx_freeval (run, (qse_awk_val_t*)tmp, QSE_FALSE);
+		qse_awk_val_ref_t* tmp = rtx->fcache[--rtx->fcache_count];
+		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
 	}
 
-	/*while (run->scache32_count > 0)
+	/*while (rtx->scache32_count > 0)
 	{
-		qse_awk_val_str_t* tmp = run->scache32[--run->scache32_count];
-		qse_awk_rtx_freeval (run, (qse_awk_val_t*)tmp, QSE_FALSE);
+		qse_awk_val_str_t* tmp = rtx->scache32[--rtx->scache32_count];
+		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
 	}
 
-	while (run->scache64_count > 0)
+	while (rtx->scache64_count > 0)
 	{
-		qse_awk_val_str_t* tmp = run->scache64[--run->scache64_count];
-		qse_awk_rtx_freeval (run, (qse_awk_val_t*)tmp, QSE_FALSE);
+		qse_awk_val_str_t* tmp = rtx->scache64[--rtx->scache64_count];
+		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
 	}*/
 
-	qse_awk_rtx_freevalchunk (run, run->vmgr.ichunk);
-	qse_awk_rtx_freevalchunk (run, run->vmgr.rchunk);
-	run->vmgr.ichunk = QSE_NULL;
-	run->vmgr.rchunk = QSE_NULL;
+	qse_awk_rtx_freevalchunk (rtx, rtx->vmgr.ichunk);
+	qse_awk_rtx_freevalchunk (rtx, rtx->vmgr.rchunk);
+	rtx->vmgr.ichunk = QSE_NULL;
+	rtx->vmgr.rchunk = QSE_NULL;
 }
 
 static int build_runarg (
@@ -1336,10 +1334,10 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	STACK_NARGS(rtx) = (void*)nargs;
 
 	/* call the callback */
-	if (rtx->rcb != QSE_NULL && rtx->rcb->on_enter != QSE_NULL)
+	if (rtx->rcb.on_enter != QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		ret = rtx->rcb->on_enter (rtx, rtx->rcb->data);
+		ret = rtx->rcb.on_enter (rtx, rtx->rcb.data);
 		if (ret <= -1) 
 		{
 			if (rtx->errnum == QSE_AWK_ENOMEM)
@@ -1438,8 +1436,8 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	v = STACK_RETVAL(rtx);
 	if (ret == 0)
 	{
-		if (rtx->rcb != QSE_NULL && rtx->rcb->on_exit != QSE_NULL)
-			rtx->rcb->on_exit (rtx, v, rtx->rcb->data);
+		if (rtx->rcb.on_exit != QSE_NULL)
+			rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
 	}
 	/* end the life of the gbl return value */
 	qse_awk_rtx_refdownval (rtx, v);
@@ -1546,8 +1544,8 @@ int qse_awk_rtx_call (
 		{
 			if (rtx->errnum == QSE_AWK_ENOERR)
 			{
-				if (rtx->rcb != QSE_NULL && rtx->rcb->on_exit != QSE_NULL)
-					rtx->rcb->on_exit (rtx, crdata.val, rtx->rcb->data);
+				if (rtx->rcb.on_exit != QSE_NULL)
+					rtx->rcb.on_exit (rtx, crdata.val, rtx->rcb.data);
 			}
 			else ret = -1;
 			qse_awk_rtx_refdownval(rtx, crdata.val);
@@ -1557,8 +1555,8 @@ int qse_awk_rtx_call (
 	{
 		qse_awk_rtx_refupval (rtx, v);
 
-		if (rtx->rcb != QSE_NULL && rtx->rcb->on_exit != QSE_NULL)
-			rtx->rcb->on_exit (rtx, v, rtx->rcb->data);
+		if (rtx->rcb.on_exit != QSE_NULL)
+			rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
 
 		qse_awk_rtx_refdownval (rtx, v);
 	}
@@ -1849,11 +1847,10 @@ static int run_block0 (qse_awk_rtx_t* run, qse_awk_nde_blk_t* nde)
 
 #define ON_STATEMENT(rtx,nde) \
 	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
-	if ((rtx)->rcb != QSE_NULL &&  \
-	    (rtx)->rcb->on_statement != QSE_NULL) \
+	if ((rtx)->rcb.on_statement != QSE_NULL) \
 	{ \
-		(rtx)->rcb->on_statement ( \
-			rtx, (nde)->line, (rtx)->rcb->data); \
+		(rtx)->rcb.on_statement ( \
+			rtx, (nde)->line, (rtx)->rcb.data); \
 	} 
 
 static int run_statement (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
