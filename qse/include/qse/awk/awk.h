@@ -134,9 +134,6 @@ struct qse_awk_rio_t
 
 struct qse_awk_rcb_t
 {
-	int (*on_start) (
-		qse_awk_rtx_t* rtx, void* data);
-
 	int (*on_enter) (
 		qse_awk_rtx_t* rtx, void* data);
 
@@ -145,9 +142,6 @@ struct qse_awk_rcb_t
 
 	void (*on_exit) (
 		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
-
-	void (*on_end) (
-		qse_awk_rtx_t* rtx, int errnum, void* data);
 
 	void* data;
 };
@@ -1548,30 +1542,16 @@ int qse_awk_parsesimple (
 );
 /******/
 
-/****f* AWK/qse_awk_runsimple
+/****f* AWK/qse_awk_rtx_opensimple
  * NAME
- *  qse_awk_runsimple - run a parsed program
- * DESCRIPTION
- *  A runtime context is required for it to start running the program.
- *  Once a runtime context is created, the program starts to run.
- *  The failure of context creation is reported by the return value of -1.
- *  However, the runtime error after context creation is reported differently
- *  depending on the callbacks specified. When no callback is specified 
- *  (i.e. rcb is QSE_NULL), the qse_awk_run() function returns -1 on an 
- *  error and awk->errnum is set accordingly. If a callback is specified 
- *  (i.e. rcb is not QSE_NULL), the qse_awk_run() returns 0 on both success
- *  and failure. Instead, the on_end handler of the callback is triggered with 
- *  the relevant error number. The third parameter to on_end is the error 
- *  number.
+ *  qse_awk_rtx_opensimple - create a runtime context
  * SYNOPSIS
  */
-int qse_awk_runsimple (
-	qse_awk_t*     awk,
-	qse_char_t**   icf /* input console files */,
-	qse_awk_rcb_t* cbs /* callbacks */
+qse_awk_rtx_t* qse_awk_rtx_opensimple (
+	qse_awk_t*   awk,
+	qse_char_t** icf
 );
 /******/
-
 
 #ifdef __cplusplus
 }

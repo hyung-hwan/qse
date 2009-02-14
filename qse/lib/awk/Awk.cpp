@@ -1348,8 +1348,9 @@ int Awk::run (const char_t** args, size_t nargs)
 	if (runCallback)
 	{
 		QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
-		rcb.on_start = onRunStart;
-		rcb.on_end       = onRunEnd;
+		// TODO: deprecate onRunStart and onRunEnd
+		//rcb.on_start   = onRunStart;
+		//rcb.on_end       = onRunEnd;
 		rcb.on_enter     = onRunEnter;
 		rcb.on_statement = onRunStatement;
 		rcb.on_exit      = onRunExit;
