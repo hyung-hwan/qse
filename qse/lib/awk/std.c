@@ -469,7 +469,7 @@ static qse_ssize_t awk_eio_file (
 				errarg.ptr = epa->name;
 				errarg.len = qse_strlen(epa->name);
 
-				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
+				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg);
 				return -1;
 			}
 
@@ -557,7 +557,7 @@ static int open_eio_console (qse_awk_eio_t* epa)
 				errarg.ptr = rd->ic.files[rd->ic.index];
 				errarg.len = qse_strlen(rd->ic.files[rd->ic.index]);
 
-				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
+				qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg);
 				return -1;
 			}
 
@@ -660,7 +660,7 @@ static qse_ssize_t awk_eio_console (
 					errarg.ptr = rd->ic.files[rd->ic.index];
 					errarg.len = qse_strlen(rd->ic.files[rd->ic.index]);
 
-					qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg, 1);
+					qse_awk_rtx_seterror (epa->rtx, QSE_AWK_EOPEN, 0, &errarg);
 					return -1;
 				}
 

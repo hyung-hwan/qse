@@ -825,8 +825,7 @@ void qse_awk_seterror (
 	qse_awk_t*        awk,
 	int               errnum,
 	qse_size_t        errlin, 
-	const qse_cstr_t* errarg,
-	qse_size_t        argcnt
+	const qse_cstr_t* errarg
 );
 
 int qse_awk_getoption (
@@ -1361,8 +1360,7 @@ void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*    rtx,
 	int               errnum,
 	qse_size_t        errlin, 
-	const qse_cstr_t* errarg,
-	qse_size_t        argcnt
+	const qse_cstr_t* errarg
 );
 
 

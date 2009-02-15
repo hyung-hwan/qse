@@ -348,7 +348,7 @@ static global_t gtab[] =
 	do { \
 		if (qse_str_ccat((awk)->token.name,(c)) == (qse_size_t)-1) \
 		{ \
-			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL, 0); \
+			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
@@ -357,7 +357,7 @@ static global_t gtab[] =
 	do { \
 		if (qse_str_ncat((awk)->token.name,(s),(l)) == (qse_size_t)-1) \
 		{ \
-			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL, 0); \
+			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
@@ -367,16 +367,16 @@ static global_t gtab[] =
 #define CLRERR(awk) qse_awk_seterrnum(awk,QSE_AWK_ENOERR)
 #define ISNOERR(awk) ((awk)->errnum == QSE_AWK_ENOERR)
 #define SETERR(awk,code) qse_awk_seterrnum(awk,code)
-#define SETERRLIN(awk,code,line) qse_awk_seterror(awk,code,line,QSE_NULL,0)
+#define SETERRLIN(awk,code,line) qse_awk_seterror(awk,code,line,QSE_NULL);
 #define SETERRTOK(awk,code) \
 	do { \
 		qse_cstr_t errarg; \
 		errarg.len = QSE_STR_LEN((awk)->token.name); \
 		errarg.ptr = QSE_STR_PTR((awk)->token.name); \
 		if (MATCH(awk,TOKEN_EOF)) \
-			qse_awk_seterror (awk, code, (awk)->token.prev.line, &errarg, 1); \
+			qse_awk_seterror (awk, code, (awk)->token.prev.line, &errarg); \
 		else \
-			qse_awk_seterror (awk, code, (awk)->token.line, &errarg, 1); \
+			qse_awk_seterror (awk, code, (awk)->token.line, &errarg); \
 	} while (0)
 
 #define SETERRARG(awk,code,line,arg,leng) \
@@ -384,7 +384,7 @@ static global_t gtab[] =
 		qse_cstr_t errarg; \
 		errarg.len = (leng); \
 		errarg.ptr = (arg); \
-		qse_awk_seterror ((awk), (code), (line), &errarg, 1); \
+		qse_awk_seterror ((awk), (code), (line), &errarg); \
 	} while (0)
 
 #define MATCH_TERMINATOR(awk) \

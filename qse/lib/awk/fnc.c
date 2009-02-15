@@ -66,7 +66,7 @@ void* qse_awk_addfnc (
 
 	if (name_len <= 0)
 	{
-		qse_awk_seterror (awk, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
+		qse_awk_seterror (awk, QSE_AWK_EINVAL, 0, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -77,7 +77,7 @@ void* qse_awk_addfnc (
 		errarg.ptr = name;
 		errarg.len = name_len;
 
-		qse_awk_seterror (awk, QSE_AWK_EEXIST, 0, &errarg, 1);
+		qse_awk_seterror (awk, QSE_AWK_EEXIST, 0, &errarg);
 		return QSE_NULL;
 	}
 
@@ -131,7 +131,7 @@ int qse_awk_delfnc (
 		errarg.ptr = name;
 		errarg.len = name_len;
 
-		qse_awk_seterror (awk, QSE_AWK_ENOENT, 0, &errarg, 1);
+		qse_awk_seterror (awk, QSE_AWK_ENOENT, 0, &errarg);
 		return -1;
 	}
 
@@ -1387,7 +1387,7 @@ static int fnc_sprintf (
 		}
 	}
 
-	x.ptr = qse_awk_format (run, 
+	x.ptr = qse_awk_rtx_format (run, 
 		&out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, cs0.ptr);
 	if (x.ptr == QSE_NULL) 

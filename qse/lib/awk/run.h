@@ -95,7 +95,7 @@ enum qse_awk_incop_type_t
 extern "C" {
 #endif
 
-qse_char_t* qse_awk_format (
+qse_char_t* qse_awk_rtx_format (
 	qse_awk_rtx_t*    run, 
 	qse_str_t*        out, 
 	qse_str_t*        fbu,

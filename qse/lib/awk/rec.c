@@ -44,7 +44,7 @@ int qse_awk_rtx_setrec (
 			{
 				qse_awk_rtx_clrrec (run, QSE_FALSE);
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 		}
@@ -148,7 +148,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL, 0);
+				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL);
 				return -1;
 			}
 		}
@@ -176,7 +176,7 @@ static int split_record (qse_awk_rtx_t* run)
 		if (tmp == QSE_NULL) 
 		{
 			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
-			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return -1;
 		}
 
@@ -205,7 +205,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL, 0);
+				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL);
 				return -1;
 			}
 		}
@@ -316,7 +316,7 @@ static int recomp_record_fields (
 			if (tmp == QSE_NULL) 
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 		}
@@ -327,7 +327,7 @@ static int recomp_record_fields (
 			if (tmp == QSE_NULL)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 			if (run->inrec.flds != QSE_NULL)
@@ -356,7 +356,7 @@ static int recomp_record_fields (
 				run->gbl.ofs.len) == (qse_size_t)-1) 
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 		}
@@ -374,7 +374,7 @@ static int recomp_record_fields (
 				&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 
@@ -399,7 +399,7 @@ static int recomp_record_fields (
 				&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 
@@ -426,7 +426,7 @@ static int recomp_record_fields (
 				tmp->ptr, tmp->len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return -1;
 			}
 		}

@@ -181,11 +181,21 @@ qse_size_t qse_strfcpy (
 );
 /******/
 
+/****f* Common/qse_strfncpy
+ * NAME
+ *  qse_strfncpy - copy a string 
+ * SYNOPSIS
+ */
+qse_size_t qse_strfncpy (
+        qse_char_t*       buf,
+        const qse_char_t* fmt, 
+	const qse_cstr_t* str
+);
+/******/
+
 /****f* Common/qse_strxfcpy
  * NAME
  *  qse_strxfcpy - copy a string
- * DESCRIPTION
- *  "format $1 $3 $2 \\$1 string"
  * SYNOPSIS
  */
 qse_size_t qse_strxfcpy (
@@ -195,11 +205,32 @@ qse_size_t qse_strxfcpy (
 	...
 );
 /******/
-	
+
+/****f* Common/qse_strxfncpy
+ * NAME
+ *  qse_strxfncpy - copy a string
+ * SYNOPSIS
+ */
+qse_size_t qse_strxfncpy (
+        qse_char_t*       buf,
+	qse_size_t        bsz,
+        const qse_char_t* fmt,
+	const qse_cstr_t* str
+);
+/******/
+
 qse_size_t qse_strxcat (
-    qse_char_t* buf, qse_size_t bsz, const qse_char_t* str);
+	qse_char_t*       buf,
+	qse_size_t        bsz, 
+	const qse_char_t* str
+);
+
 qse_size_t qse_strxncat (
-    qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len);
+	qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* str,
+	qse_size_t        len
+);
 
 int qse_strcmp (const qse_char_t* s1, const qse_char_t* s2);
 int qse_strxcmp (const qse_char_t* s1, qse_size_t len1, const qse_char_t* s2);
