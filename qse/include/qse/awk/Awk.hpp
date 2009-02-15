@@ -64,6 +64,8 @@ public:
 	typedef qse_awk_rtx_t run_t;
 	/** Represents the underlying interpreter */
 	typedef qse_awk_t awk_t;
+	/** Represents the underlying runtime context */
+	typedef qse_awk_rtx_t rtx_t;
 
 	enum ccls_type_t
 	{
@@ -793,6 +795,7 @@ protected:
 
 	void clearError ();
 	void retrieveError ();
+	void retrieveError (rtx_t* rtx);
 
 public:
 	/**
@@ -1088,8 +1091,8 @@ protected:
 	static bool_t isType    (void* data, cint_t c, qse_ccls_type_t type);
 	static cint_t transCase (void* data, cint_t c, qse_ccls_type_t type);
 
-	static real_t pow     (void* data, real_t x, real_t y);
-	static int    sprintf (void* data, char_t* buf, size_t size,
+	static real_t pow     (awk_t* data, real_t x, real_t y);
+	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
 
 protected:

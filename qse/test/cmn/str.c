@@ -418,36 +418,48 @@ static int test9 (void)
 static int test10 (void)
 {
 	qse_char_t buf[1000];
-	qse_strfcpy (buf, QSE_T("${2}${1}${0}"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("${2}/${1}/${0}"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/$${2}/$${1}/$${0}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/${2/${1}/${0}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/$2}/${1}/${0}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
-	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/${3}/${4}/${5}/${6}/${7}/${8}/${9}/${10}/${11}/"), 
+	const qse_char_t* arg3[] = 
+	{
+		QSE_T("00000"),
+		QSE_T("11111"), 
+		QSE_T("22222")
+	};
+
+	const qse_char_t* arg12[] = 
+	{
 		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"),
 		QSE_T("33333"), QSE_T("44444"), QSE_T("55555"),
 		QSE_T("66666"), QSE_T("77777"), QSE_T("88888"),
-		QSE_T("99999"), QSE_T("aaaaa"), QSE_T("bbbbb"));
+		QSE_T("99999"), QSE_T("aaaaa"), QSE_T("bbbbb")
+	};
+
+	qse_strfcpy (buf, QSE_T("${2}${1}${0}"), arg3);
 	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/${2}/${1}/${0}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
+
+	qse_strfcpy (buf, QSE_T("${2}/${1}/${0}"), arg3);
 	qse_printf (QSE_T("buf=[%s]\n"), buf);
-	qse_strfcpy (buf, QSE_T("/${002}/${001}/${000}/"), 
-		QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
+
+	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/"), arg3);
 	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/$${2}/$${1}/$${0}/"), arg3);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/${2/${1}/${0}/"), arg3);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/$2}/${1}/${0}/"), arg3);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/${3}/${4}/${5}/${6}/${7}/${8}/${9}/${10}/${11}/"), arg12);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/${2}/${1}/${0}/${0}/${1}/${2}/"), arg3);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
+	qse_strfcpy (buf, QSE_T("/${002}/${001}/${000}/"), arg3);
+	qse_printf (QSE_T("buf=[%s]\n"), buf);
+
 	return 0;
 }
 
@@ -455,11 +467,18 @@ static int test11 (void)
 {
 	qse_char_t buf[20];
 	int i, j;
+
+	const qse_char_t* arg3[] = 
+	{
+		QSE_T("00000"),
+		QSE_T("11111"), 
+		QSE_T("22222")
+	};
+
 	for (i = 0; i <= QSE_COUNTOF(buf); i++)
 	{
 		qse_strcpy (buf, QSE_T("AAAAAAAAAAAAAAAAAAA"));	
-		qse_strxfcpy (buf, i, QSE_T("${2}${1}${0}"), 
-			QSE_T("00000"), QSE_T("11111"), QSE_T("22222"));
+		qse_strxfcpy (buf, i, QSE_T("${2}${1}${0}"), arg3);
 		qse_printf (QSE_T("bufsize=%02d, buf=[%-20s] "), i, buf);
 
 		qse_printf (QSE_T("["));

@@ -177,7 +177,7 @@ qse_size_t qse_strxncpy (
 qse_size_t qse_strfcpy (
 	qse_char_t*       buf,
 	const qse_char_t* fmt,
-	...
+	const qse_char_t* str[]
 );
 /******/
 
@@ -189,7 +189,7 @@ qse_size_t qse_strfcpy (
 qse_size_t qse_strfncpy (
         qse_char_t*       buf,
         const qse_char_t* fmt, 
-	const qse_cstr_t* str
+	const qse_cstr_t  str[]
 );
 /******/
 
@@ -202,7 +202,7 @@ qse_size_t qse_strxfcpy (
 	qse_char_t*       buf,
 	qse_size_t        bsz,
 	const qse_char_t* fmt,
-	...
+	const qse_char_t* str[]
 );
 /******/
 
@@ -215,7 +215,7 @@ qse_size_t qse_strxfncpy (
         qse_char_t*       buf,
 	qse_size_t        bsz,
         const qse_char_t* fmt,
-	const qse_cstr_t* str
+	const qse_cstr_t  str[]
 );
 /******/
 

@@ -342,14 +342,14 @@ void qse_awk_setccls (qse_awk_t* awk, qse_ccls_t* ccls)
 
 qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
 {
-	return awk->prm;
+	return &awk->prm;
 }
 
 void qse_awk_setprm (qse_awk_t* awk, qse_awk_prm_t* prm)
 {
 	QSE_ASSERT (prm->pow     != QSE_NULL);
 	QSE_ASSERT (prm->sprintf != QSE_NULL);
-	awk->prm = prm;
+	awk->prm = *prm;
 }
 
 int qse_awk_getoption (qse_awk_t* awk)

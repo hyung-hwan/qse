@@ -20,6 +20,7 @@
 #include <qse/cmn/str.h>
 #include "../cmn/mem.h"
 
+#include <qse/utl/stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -27,6 +28,11 @@ QSE_BEGIN_NAMESPACE(QSE)
 //////////////////////////////////////////////////////////////////
 // Awk::Source
 //////////////////////////////////////////////////////////////////
+
+struct xtn_t
+{
+	Awk* awk;
+};
 
 Awk::Source::Source (Mode mode): mode (mode), handle (QSE_NULL)
 {
@@ -464,7 +470,7 @@ int Awk::Argument::getIndexed (long_t idx, Argument& val) const
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
-		this->run->awk, ri, QSE_COUNTOF(ri), 
+		(awk_t*)this->run->awk, ri, QSE_COUNTOF(ri), 
 	#if QSE_SIZEOF_LONG_LONG > 0
 		QSE_T("%lld"), (long long)idx
 	#elif QSE_SIZEOF___INT64 > 0
@@ -811,7 +817,7 @@ int Awk::Return::setIndexed (long_t idx, long_t v)
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
-		this->run->awk, ri, QSE_COUNTOF(ri), 
+		(awk_t*)this->run->awk, ri, QSE_COUNTOF(ri), 
 	#if QSE_SIZEOF_LONG_LONG > 0
 		QSE_T("%lld"), (long long)idx
 	#elif QSE_SIZEOF___INT64 > 0
@@ -839,7 +845,7 @@ int Awk::Return::setIndexed (long_t idx, real_t v)
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
-		this->run->awk, ri, QSE_COUNTOF(ri), 
+		(awk_t*)this->run->awk, ri, QSE_COUNTOF(ri), 
 	#if QSE_SIZEOF_LONG_LONG > 0
 		QSE_T("%lld"), (long long)idx
 	#elif QSE_SIZEOF___INT64 > 0
@@ -867,7 +873,7 @@ int Awk::Return::setIndexed (long_t idx, const char_t* str, size_t sln)
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
-		this->run->awk, ri, QSE_COUNTOF(ri), 
+		(awk_t*)this->run->awk, ri, QSE_COUNTOF(ri), 
 	#if QSE_SIZEOF_LONG_LONG > 0
 		QSE_T("%lld"), (long long)idx
 	#elif QSE_SIZEOF___INT64 > 0
@@ -958,20 +964,20 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 void Awk::Run::setError (ErrorCode code)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	qse_awk_rtx_seterror (this->run, code, 0, QSE_NULL, 0);
+	qse_awk_rtx_seterror (this->run, code, 0, QSE_NULL);
 }
 
 void Awk::Run::setError (ErrorCode code, size_t line)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	qse_awk_rtx_seterror (this->run, code, line, QSE_NULL, 0);
+	qse_awk_rtx_seterror (this->run, code, line, QSE_NULL);
 }
 
 void Awk::Run::setError (ErrorCode code, size_t line, const char_t* arg)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_cstr_t x = { arg, qse_strlen(arg) };
-	qse_awk_rtx_seterror (this->run, code, line, &x, 1);
+	qse_awk_rtx_seterror (this->run, code, line, &x);
 }
 
 void Awk::Run::setError (
@@ -979,7 +985,7 @@ void Awk::Run::setError (
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_cstr_t x = { arg, len };
-	qse_awk_rtx_seterror (this->run, code, line, &x, 1);
+	qse_awk_rtx_seterror (this->run, code, line, &x);
 }
 
 void Awk::Run::setErrorWithMessage (
@@ -1075,7 +1081,6 @@ Awk::Awk (): awk (QSE_NULL), functionMap (QSE_NULL),
 
 	prm.pow     = pow;
 	prm.sprintf = sprintf;
-	prm.data    = this;
 }
 
 Awk::~Awk ()
@@ -1122,7 +1127,7 @@ void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
 	if (awk != QSE_NULL)
 	{
 		qse_cstr_t x = { arg, len };
-		qse_awk_seterror (awk, code, line, &x, 1);
+		qse_awk_seterror (awk, code, line, &x);
 		retrieveError ();
 	}
 	else
@@ -1174,21 +1179,34 @@ void Awk::retrieveError ()
 	}
 }
 
+void Awk::retrieveError (rtx_t* rtx)
+{
+	int num;
+	const char_t* msg;
+
+	qse_awk_rtx_geterror (rtx, &num, &this->errlin, &msg);
+	this->errnum = (ErrorCode)num;
+	qse_strxcpy (this->errmsg, QSE_COUNTOF(this->errmsg), msg);
+}
+
 int Awk::open ()
 {
 	QSE_ASSERT (awk == QSE_NULL && functionMap == QSE_NULL);
 
-	awk = qse_awk_open (&mmgr, 0);
+	awk = qse_awk_open (&mmgr, QSE_SIZEOF(xtn_t));
 	if (awk == QSE_NULL)
 	{
 		setError (ERR_NOMEM);
 		return -1;
 	}
 
+	// associate this Awk object with the underlying awk object
+	xtn_t* xtn = (xtn_t*)qse_awk_getxtn (awk);
+	xtn->awk = this;
+
 	qse_awk_setccls (awk, &ccls);
 	qse_awk_setprm (awk, &prm);
 
-	
 	//functionMap = qse_map_open (
 	//	this, 512, 70, freeFunctionMapValue, QSE_NULL, 
 	//	qse_awk_getmmgr(awk));
@@ -1386,7 +1404,7 @@ int Awk::run (const char_t** args, size_t nargs)
 	}
 	
 	int n = 0;
-	qse_awk_rtx_t* rtx = qse_awk_rtx_open (
+	rtx_t* rtx = qse_awk_rtx_open (
 		awk, QSE_SIZEOF(Run*), &rio, 
 		(qse_cstr_t*)runarg
 	);
@@ -1402,7 +1420,7 @@ int Awk::run (const char_t** args, size_t nargs)
 
 		if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
 		n = qse_awk_rtx_loop (rtx);
-		if (n == -1) retrieveError ();
+		if (n == -1) retrieveError (rtx);
 		qse_awk_rtx_close (rtx);
 	}
 
@@ -1799,17 +1817,20 @@ Awk::cint_t Awk::transCase (void* data, cint_t c, qse_ccls_type_t type)
 	return ((Awk*)data)->transCase (c, (ccls_type_t)type);
 }
 
-Awk::real_t Awk::pow (void* data, real_t x, real_t y)
+Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
 {
-	return ((Awk*)data)->pow (x, y);
+	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+	return xtn->awk->pow (x, y);
 }
 	
-int Awk::sprintf (void* data, char_t* buf, size_t size,
+int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
                   const char_t* fmt, ...)
 {
+	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+
 	va_list ap;
 	va_start (ap, fmt);
-	int n = ((Awk*)data)->vsprintf (buf, size, fmt, ap);
+	int n = xtn->awk->vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
 }

@@ -59,13 +59,13 @@ typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (
-	void*      data, 
+	qse_awk_t* awk,
 	qse_real_t x, 
 	qse_real_t y
 );
 
 typedef int (*qse_awk_sprintf_t) (
-	void*             data,
+	qse_awk_t*        awk,
 	qse_char_t*       buf,
 	qse_size_t        size, 
 	const qse_char_t* fmt,
@@ -112,9 +112,6 @@ struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;         /* required */
 	qse_awk_sprintf_t sprintf;     /* required */
-
-	/* user-defined data passed to the functions above */
-	void*             data; /* optional */
 };
 
 struct qse_awk_sio_t

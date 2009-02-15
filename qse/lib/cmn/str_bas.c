@@ -17,7 +17,6 @@
  */
 
 #include <qse/cmn/str.h>
-#include <stdarg.h>
 #include "chr.h"
 #include "mem.h"
 
@@ -107,7 +106,8 @@ qse_size_t qse_strxncpy (
 	return n;
 }
 
-qse_size_t qse_strfcpy (qse_char_t* buf, const qse_char_t* fmt, ...)
+qse_size_t qse_strfcpy (
+	qse_char_t* buf, const qse_char_t* fmt, const qse_char_t* str[])
 {
 	qse_char_t* b = buf;
 	const qse_char_t* f = fmt;
@@ -119,7 +119,6 @@ qse_size_t qse_strfcpy (qse_char_t* buf, const qse_char_t* fmt, ...)
 			if (f[1] == QSE_T('{') && 
 			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
 			{
-				va_list ap;
 				const qse_char_t* tmp;
 				qse_size_t idx = 0;
 
@@ -136,15 +135,8 @@ qse_size_t qse_strfcpy (qse_char_t* buf, const qse_char_t* fmt, ...)
 				}
 
 				f++;
-				
-				/* TODO: some optimization in getting the argument */
-				va_start (ap, fmt);
 
-				do tmp = va_arg(ap,const qse_char_t*);
-				while (idx-- > 0);
-
-				va_end (ap);
-
+				tmp = str[idx];
 				while (*tmp != QSE_T('\0')) *b++ = *tmp++;
 				continue;
 			}
@@ -159,7 +151,8 @@ qse_size_t qse_strfcpy (qse_char_t* buf, const qse_char_t* fmt, ...)
 	return b - buf;
 }
 
-qse_size_t qse_strfncpy (qse_char_t* buf, const qse_char_t* fmt, const qse_cstr_t* str)
+qse_size_t qse_strfncpy (
+	qse_char_t* buf, const qse_char_t* fmt, const qse_cstr_t str[])
 {
 	qse_char_t* b = buf;
 	const qse_char_t* f = fmt;
@@ -206,7 +199,8 @@ qse_size_t qse_strfncpy (qse_char_t* buf, const qse_char_t* fmt, const qse_cstr_
 }
 
 qse_size_t qse_strxfcpy (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* fmt, ...)
+	qse_char_t* buf, qse_size_t bsz, 
+	const qse_char_t* fmt, const qse_char_t* str[])
 {
 	qse_char_t* b = buf;
 	qse_char_t* end = buf + bsz - 1;
@@ -221,7 +215,6 @@ qse_size_t qse_strxfcpy (
 			if (f[1] == QSE_T('{') && 
 			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
 			{
-				va_list ap;
 				const qse_char_t* tmp;
 				qse_size_t idx = 0;
 
@@ -239,14 +232,7 @@ qse_size_t qse_strxfcpy (
 
 				f++;
 				
-				/* TODO: some optimization in getting the argument */
-				va_start (ap, fmt);
-
-				do tmp = va_arg(ap,const qse_char_t*);
-				while (idx-- > 0);
-
-				va_end (ap);
-
+				tmp = str[idx];
 				while (*tmp != QSE_T('\0')) 
 				{
 					if (b >= end) goto fini;
@@ -269,7 +255,7 @@ fini:
 
 qse_size_t qse_strxfncpy (
 	qse_char_t* buf, qse_size_t bsz, 
-	const qse_char_t* fmt, const qse_cstr_t* str)
+	const qse_char_t* fmt, const qse_cstr_t str[])
 {
 	qse_char_t* b = buf;
 	qse_char_t* end = buf + bsz - 1;

@@ -642,7 +642,8 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_rtx_t* rtx;
 
         QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_awk_setccls() first");
-        QSE_ASSERTX (awk->prm != QSE_NULL, "Call qse_awk_setprm() first");
+        QSE_ASSERTX (awk->prm.pow != QSE_NULL, "Call qse_awk_setprm() first");
+        QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
 	qse_awk_seterror (awk, QSE_AWK_ENOERR, 0, QSE_NULL);
@@ -4536,7 +4537,7 @@ static qse_awk_val_t* eval_binop_exp (
 	qse_real_t r1, r2;
 	qse_awk_val_t* res;
 
-	QSE_ASSERTX (run->awk->prm->pow != QSE_NULL,
+	QSE_ASSERTX (run->awk->prm.pow != QSE_NULL,
 		"the pow function should be provided when the awk object is created to make the exponentiation work properly.");
 
 	n1 = qse_awk_rtx_valtonum (run, left, &l1, &r1);
@@ -4597,18 +4598,20 @@ static qse_awk_val_t* eval_binop_exp (
 	{
 		/* left - int, right - real */
 		res = qse_awk_rtx_makerealval (run, 
-			run->awk->prm->pow (
-				run->awk->prm->data, 
-				(qse_real_t)l1,(qse_real_t)r2));
+			run->awk->prm.pow (
+				run->awk, (qse_real_t)l1, (qse_real_t)r2
+			)
+		);
 	}
 	else
 	{
 		/* left - real, right - real */
 		QSE_ASSERT (n3 == 3);
 		res = qse_awk_rtx_makerealval (run,
-			run->awk->prm->pow(
-				run->awk->prm->data, 
-				(qse_real_t)r1,(qse_real_t)r2));
+			run->awk->prm.pow (
+				run->awk, (qse_real_t)r1,(qse_real_t)r2
+			)
+		);
 	}
 
 	return res;
@@ -6729,8 +6732,8 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = run->awk->prm->sprintf (
-					run->awk->prm->data,
+				n = run->awk->prm.sprintf (
+					run->awk,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if QSE_SIZEOF_LONG_LONG > 0
@@ -6835,8 +6838,8 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = run->awk->prm->sprintf (
-					run->awk->prm->data,
+				n = run->awk->prm.sprintf (
+					run->awk,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 				#if QSE_SIZEOF_LONG_LONG > 0
@@ -6956,8 +6959,8 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = run->awk->prm->sprintf (
-					run->awk->prm->data,
+				n = run->awk->prm.sprintf (
+					run->awk,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					QSE_STR_PTR(fbu),
@@ -7044,8 +7047,8 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = run->awk->prm->sprintf (
-					run->awk->prm->data,
+				n = run->awk->prm.sprintf (
+					run->awk,
 					run->format.tmp.ptr, 
 					run->format.tmp.len,
 					QSE_STR_PTR(fbu),
