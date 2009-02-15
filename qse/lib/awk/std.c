@@ -88,7 +88,6 @@ qse_awk_t* qse_awk_opensimple (void)
 
 	x->prm.pow     = custom_awk_pow;
 	x->prm.sprintf = custom_awk_sprintf;
-	x->prm.data    = QSE_NULL;
 	qse_awk_setprm (awk, &x->prm);
 
 	qse_awk_setoption (awk, 

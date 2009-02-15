@@ -470,7 +470,6 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	int n;
 
 	QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_setccls() first");
-	QSE_ASSERTX (awk->prm != QSE_NULL, "Call qse_setprm() first");
 
 	QSE_ASSERTX (
 		sio != QSE_NULL && sio->in != QSE_NULL,
