@@ -111,7 +111,8 @@ static void set_intr_run (void)
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
 #else
-	setsignal (SIGINT, stop_run, 1);
+	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
+	setsignal (SIGINT, stop_run, 0);
 #endif
 }
 
@@ -524,7 +525,7 @@ static qse_awk_t* open_awk (void)
 {
 	qse_awk_t* awk;
 
-	awk = qse_awk_opensimple (0);
+	awk = qse_awk_opensimple ();
 	if (awk == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));

@@ -1520,7 +1520,7 @@ int qse_awk_rtx_strtonum (
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_opensimple (
-	qse_size_t xtn /* size of extension area in bytes */
+	void
 );
 /******/
 

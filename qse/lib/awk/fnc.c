@@ -747,12 +747,12 @@ static int fnc_split (
 	{
 		if (fs_len <= 1)
 		{
-			p = qse_awk_strxntok (run, 
+			p = qse_awk_rtx_strxntok (run, 
 				p, str_len, fs_ptr, fs_len, &tok, &tok_len);
 		}
 		else
 		{
-			p = qse_awk_strxntokbyrex (run, p, str_len, 
+			p = qse_awk_rtx_strxntokbyrex (run, p, str_len, 
 				fs_rex, &tok, &tok_len, &errnum); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
