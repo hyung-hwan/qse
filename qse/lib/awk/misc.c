@@ -610,36 +610,36 @@ qse_size_t qse_awk_longtostr (
 	return ret;
 }
 
-qse_char_t* qse_awk_strtok (
-	qse_awk_rtx_t* run, const qse_char_t* s, 
+qse_char_t* qse_awk_rtx_strtok (
+	qse_awk_rtx_t* rtx, const qse_char_t* s, 
 	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len)
 {
-	return qse_awk_strxntok (
-		run, s, qse_strlen(s), 
+	return qse_awk_rtx_strxntok (
+		rtx, s, qse_strlen(s), 
 		delim, qse_strlen(delim), tok, tok_len);
 }
 
-qse_char_t* qse_awk_strxtok (
-	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
+qse_char_t* qse_awk_rtx_strxtok (
+	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
 	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len)
 {
-	return qse_awk_strxntok (
-		run, s, len, 
+	return qse_awk_rtx_strxntok (
+		rtx, s, len, 
 		delim, qse_strlen(delim), tok, tok_len);
 }
 
-qse_char_t* qse_awk_strntok (
-	qse_awk_rtx_t* run, const qse_char_t* s, 
+qse_char_t* qse_awk_rtx_strntok (
+	qse_awk_rtx_t* rtx, const qse_char_t* s, 
 	const qse_char_t* delim, qse_size_t delim_len,
 	qse_char_t** tok, qse_size_t* tok_len)
 {
-	return qse_awk_strxntok (
-		run, s, qse_strlen(s), 
+	return qse_awk_rtx_strxntok (
+		rtx, s, qse_strlen(s), 
 		delim, delim_len, tok, tok_len);
 }
 
-qse_char_t* qse_awk_strxntok (
-	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
+qse_char_t* qse_awk_rtx_strxntok (
+	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
 	const qse_char_t* delim, qse_size_t delim_len, 
 	qse_char_t** tok, qse_size_t* tok_len)
 {
@@ -662,7 +662,7 @@ qse_char_t* qse_awk_strxntok (
 
 		for (d = delim; d < delim_end; d++) 
 		{
-			if (QSE_AWK_ISSPACE(run->awk,*d)) 
+			if (QSE_AWK_ISSPACE(rtx->awk,*d)) 
 			{
 				if (delim_mode == __DELIM_EMPTY)
 					delim_mode = __DELIM_SPACES;
@@ -696,12 +696,12 @@ qse_char_t* qse_awk_strxntok (
 		 * leading and trailing spaces characters off the source
 		 * string "s" eventually. */
 
-		while (p < end && QSE_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && QSE_AWK_ISSPACE(rtx->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
 
-			if (!QSE_AWK_ISSPACE(run->awk,c)) 
+			if (!QSE_AWK_ISSPACE(rtx->awk,c)) 
 			{
 				if (sp == QSE_NULL) sp = p;
 				ep = p;
@@ -724,28 +724,28 @@ qse_char_t* qse_awk_strxntok (
 		/* each token is delimited by space characters. all leading
 		 * and trailing spaces are removed. */
 
-		while (p < end && QSE_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && QSE_AWK_ISSPACE(rtx->awk,*p)) p++;
 		while (p < end) 
 		{
 			c = *p;
-			if (QSE_AWK_ISSPACE(run->awk,c)) break;
+			if (QSE_AWK_ISSPACE(rtx->awk,c)) break;
 			if (sp == QSE_NULL) sp = p;
 			ep = p++;
 		}
-		while (p < end && QSE_AWK_ISSPACE(run->awk,*p)) p++;
+		while (p < end && QSE_AWK_ISSPACE(rtx->awk,*p)) p++;
 	}
 	else if (delim_mode == __DELIM_NOSPACES)
 	{
 		/* each token is delimited by one of charaters 
 		 * in the delimeter set "delim". */
-		if (run->gbl.ignorecase)
+		if (rtx->gbl.ignorecase)
 		{
 			while (p < end) 
 			{
-				c = QSE_AWK_TOUPPER(run->awk, *p);
+				c = QSE_AWK_TOUPPER(rtx->awk, *p);
 				for (d = delim; d < delim_end; d++) 
 				{
-					if (c == QSE_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+					if (c == QSE_AWK_TOUPPER(rtx->awk,*d)) goto exit_loop;
 				}
 
 				if (sp == QSE_NULL) sp = p;
@@ -772,20 +772,20 @@ qse_char_t* qse_awk_strxntok (
 		/* each token is delimited by one of non-space charaters
 		 * in the delimeter set "delim". however, all space characters
 		 * surrounding the token are removed */
-		while (p < end && QSE_AWK_ISSPACE(run->awk,*p)) p++;
-		if (run->gbl.ignorecase)
+		while (p < end && QSE_AWK_ISSPACE(rtx->awk,*p)) p++;
+		if (rtx->gbl.ignorecase)
 		{
 			while (p < end) 
 			{
-				c = QSE_AWK_TOUPPER(run->awk, *p);
-				if (QSE_AWK_ISSPACE(run->awk,c)) 
+				c = QSE_AWK_TOUPPER(rtx->awk, *p);
+				if (QSE_AWK_ISSPACE(rtx->awk,c)) 
 				{
 					p++;
 					continue;
 				}
 				for (d = delim; d < delim_end; d++) 
 				{
-					if (c == QSE_AWK_TOUPPER(run->awk,*d)) goto exit_loop;
+					if (c == QSE_AWK_TOUPPER(rtx->awk,*d)) goto exit_loop;
 				}
 				if (sp == QSE_NULL) sp = p;
 				ep = p++;
@@ -796,7 +796,7 @@ qse_char_t* qse_awk_strxntok (
 			while (p < end) 
 			{
 				c = *p;
-				if (QSE_AWK_ISSPACE(run->awk,c)) 
+				if (QSE_AWK_ISSPACE(rtx->awk,c)) 
 				{
 					p++;
 					continue;
@@ -830,8 +830,8 @@ exit_loop:
 	return (qse_char_t*)++p;
 }
 
-qse_char_t* qse_awk_strxntokbyrex (
-	qse_awk_rtx_t* run, const qse_char_t* s, qse_size_t len,
+qse_char_t* qse_awk_rtx_strxntokbyrex (
+	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
 	void* rex, qse_char_t** tok, qse_size_t* tok_len, int* errnum)
 {
 	int n;
@@ -845,8 +845,8 @@ qse_char_t* qse_awk_strxntokbyrex (
 	while (len > 0)
 	{
 		n = QSE_AWK_MATCHREX (
-			run->awk, rex, 
-			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+			rtx->awk, rex, 
+			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			ptr, left, (const qse_char_t**)&match_ptr, &match_len, 
 			errnum);
 		if (n == -1) return QSE_NULL;
@@ -867,14 +867,14 @@ qse_char_t* qse_awk_strxntokbyrex (
 			ptr++;
 			left--;
 		}
-		else if (run->awk->option & QSE_AWK_STRIPSPACES)
+		else if (rtx->awk->option & QSE_AWK_STRIPSPACES)
 		{
 			/* match at the beginning of the input string */
 			if (match_ptr == s) 
 			{
 				for (i = 0; i < match_len; i++)
 				{
-					if (!QSE_AWK_ISSPACE(run->awk, match_ptr[i]))
+					if (!QSE_AWK_ISSPACE(rtx->awk, match_ptr[i]))
 						goto exit_loop;
 				}
 
@@ -904,7 +904,7 @@ exit_loop:
 
 	for (i = 0; i < match_len; i++)
 	{
-		if (!QSE_AWK_ISSPACE(run->awk, match_ptr[i]))
+		if (!QSE_AWK_ISSPACE(rtx->awk, match_ptr[i]))
 		{
 			*errnum = QSE_AWK_ENOERR;
 			return match_ptr+match_len;
@@ -913,7 +913,7 @@ exit_loop:
 
 	*errnum = QSE_AWK_ENOERR;
 
-	if (run->awk->option & QSE_AWK_STRIPSPACES)
+	if (rtx->awk->option & QSE_AWK_STRIPSPACES)
 	{
 		return (match_ptr+match_len >= s+len)? 
 			QSE_NULL: (match_ptr+match_len);

@@ -253,50 +253,19 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_INT:
 		{
-			if (((qse_awk_nde_int_t*)nde)->str == QSE_NULL)
-			{
-				qse_size_t n;
-
-				n = qse_awk_longtostr (
-					((qse_awk_nde_int_t*)nde)->val, 10, QSE_NULL, 
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
-
-				PUT_SRCSTRX (awk, awk->tmp.fmt, n);
-			}
-			else
-			{
-				PUT_SRCSTRX (awk,
-					((qse_awk_nde_int_t*)nde)->str,
-					((qse_awk_nde_int_t*)nde)->len);
-			}
+			QSE_ASSERT (((qse_awk_nde_int_t*)nde)->str != QSE_NULL);
+			PUT_SRCSTRX (awk,
+				((qse_awk_nde_int_t*)nde)->str,
+				((qse_awk_nde_int_t*)nde)->len);
 			break;
 		}
 
 		case QSE_AWK_NDE_REAL:
 		{
-			if (((qse_awk_nde_real_t*)nde)->str == QSE_NULL)
-			{
-			#if (QSE_SIZEOF_LONG_DOUBLE != 0) && !defined(__MINGW32__)
-				awk->prm->sprintf (
-					awk->prm->data,
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt), QSE_T("%Lf"), 
-					(long double)((qse_awk_nde_real_t*)nde)->val);
-			#elif (QSE_SIZEOF_DOUBLE != 0)
-				awk->prm->sprintf (
-					awk->prm->data,
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt), QSE_T("%f"), 
-					(double)((qse_awk_nde_real_t*)nde)->val);
-			#else
-				#error unsupported floating-point data type
-			#endif
-				PUT_SRCSTR (awk, awk->tmp.fmt);
-			}
-			else
-			{
-				PUT_SRCSTRX (awk,
-					((qse_awk_nde_real_t*)nde)->str,
-					((qse_awk_nde_real_t*)nde)->len);
-			}
+			QSE_ASSERT (((qse_awk_nde_real_t*)nde)->str != QSE_NULL);
+			PUT_SRCSTRX (awk,
+				((qse_awk_nde_real_t*)nde)->str,
+				((qse_awk_nde_real_t*)nde)->len);
 			break;
 		}
 

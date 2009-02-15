@@ -116,18 +116,86 @@ extern "C" {
 /* 
  * basic string functions
  */
-qse_size_t qse_strlen (const qse_char_t* str);
-qse_size_t qse_strbytes (const qse_char_t* str);
+
+/****f* Common/qse_strlen
+ * NAME
+ *  qse_strlen - get the number of characters
+ * DESCRIPTION
+ *  The qse_strlen() function returns the number of characters in a 
+ *  null-terminated string. The length returned excludes a terminating null.
+ * SYNOPSIS
+ */
+qse_size_t qse_strlen (
+	const qse_char_t* str
+);
+/******/
+
+/****f* Common/qse_strbytes
+ * NAME
+ *  qse_strbytes - get the length of a string in bytes
+ * DESCRIPTOIN
+ *  The qse_strbytes() function returns the number of bytes a null-terminated
+ *  string is holding excluding a terminating null.
+ * SYNOPSIS
+ */
+qse_size_t qse_strbytes (
+	const qse_char_t* str
+);
+/******/
 
 qse_size_t qse_strcpy (
-	qse_char_t* buf, const qse_char_t* str);
-qse_size_t qse_strxcpy (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str);
-qse_size_t qse_strncpy (
-	qse_char_t* buf, const qse_char_t* str, qse_size_t len);
-qse_size_t qse_strxncpy (
-    qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len);
+	qse_char_t*       buf,
+	const qse_char_t* str
+);
 
+qse_size_t qse_strxcpy (
+	qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* str
+);
+
+qse_size_t qse_strncpy (
+	qse_char_t*       buf, 
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+qse_size_t qse_strxncpy (
+	qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+/****f* Common/qse_strfcpy
+ * NAME
+ *  qse_strfcpy - copy a string
+ * DESCRIPTION
+ *  "format ${1} ${3} ${2} \\${1} string"
+ * SYNOPSIS
+ */
+qse_size_t qse_strfcpy (
+	qse_char_t*       buf,
+	const qse_char_t* fmt,
+	...
+);
+/******/
+
+/****f* Common/qse_strxfcpy
+ * NAME
+ *  qse_strxfcpy - copy a string
+ * DESCRIPTION
+ *  "format $1 $3 $2 \\$1 string"
+ * SYNOPSIS
+ */
+qse_size_t qse_strxfcpy (
+	qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* fmt,
+	...
+);
+/******/
+	
 qse_size_t qse_strxcat (
     qse_char_t* buf, qse_size_t bsz, const qse_char_t* str);
 qse_size_t qse_strxncat (

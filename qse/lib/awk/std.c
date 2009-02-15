@@ -76,15 +76,15 @@ static int custom_awk_sprintf (
 
 static int add_functions (qse_awk_t* awk);
 
-qse_awk_t* qse_awk_opensimple (qse_size_t xtn)
+qse_awk_t* qse_awk_opensimple (void)
 {
 	qse_awk_t* awk;
 	xtn_t* x;
 
-	awk = qse_awk_open (QSE_MMGR_GETDFL(), xtn + QSE_SIZEOF(xtn_t));
+	awk = qse_awk_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(xtn_t));
 	qse_awk_setccls (awk, QSE_CCLS_GETDFL());
 
-	x = (xtn_t*)((qse_byte_t*)qse_awk_getxtn(awk) + xtn);
+	x = (xtn_t*) qse_awk_getxtn (awk);
 
 	x->prm.pow     = custom_awk_pow;
 	x->prm.sprintf = custom_awk_sprintf;
@@ -745,7 +745,6 @@ qse_awk_rtx_t* qse_awk_rtx_opensimple (qse_awk_t* awk, qse_char_t** icf)
 	qse_awk_rio_t rio;
 	rxtn_t* rxtn;
 	qse_ntime_t now;
-	int n;
 
 	rio.pipe    = awk_eio_pipe;
 	rio.file    = awk_eio_file;

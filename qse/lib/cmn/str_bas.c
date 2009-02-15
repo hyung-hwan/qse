@@ -17,6 +17,7 @@
  */
 
 #include <qse/cmn/str.h>
+#include <stdarg.h>
 #include "chr.h"
 #include "mem.h"
 
@@ -104,6 +105,120 @@ qse_size_t qse_strxncpy (
 	buf[n] = QSE_T('\0');
 
 	return n;
+}
+
+qse_size_t qse_strfcpy (qse_char_t* buf, const qse_char_t* fmt, ...)
+{
+	qse_char_t* b = buf;
+	const qse_char_t* f = fmt;
+
+	while (*f != QSE_T('\0'))
+	{
+		if (*f == QSE_T('$'))
+		{
+			if (f[1] == QSE_T('{') && 
+			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
+			{
+				va_list ap;
+				const qse_char_t* tmp;
+				qse_size_t idx = 0;
+
+				tmp = f;
+				f += 2;
+
+				do idx = idx * 10 + (*f++ - QSE_T('0'));
+				while (*f >= QSE_T('0') && *f <= QSE_T('9'));
+	
+				if (*f != QSE_T('}'))
+				{
+					f = tmp;
+					goto normal;
+				}
+
+				f++;
+				
+				/* TODO: some optimization in getting the argument */
+				va_start (ap, fmt);
+
+				do tmp = va_arg(ap,const qse_char_t*);
+				while (idx-- > 0);
+
+				va_end (ap);
+
+				while (*tmp != QSE_T('\0')) *b++ = *tmp++;
+				continue;
+			}
+			else if (f[1] == QSE_T('$')) f++;
+		}
+
+	normal:
+		*b++ = *f++;
+	}
+
+	*b = QSE_T('\0');
+	return b - buf;
+}
+
+qse_size_t qse_strxfcpy (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* fmt, ...)
+{
+	qse_char_t* b = buf;
+	qse_char_t* end = buf + bsz - 1;
+	const qse_char_t* f = fmt;
+
+	if (bsz <= 0) return 0;
+
+	while (*f != QSE_T('\0'))
+	{
+		if (*f == QSE_T('$'))
+		{
+			if (f[1] == QSE_T('{') && 
+			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
+			{
+				va_list ap;
+				const qse_char_t* tmp;
+				qse_size_t idx = 0;
+
+				tmp = f;
+				f += 2;
+
+				do idx = idx * 10 + (*f++ - QSE_T('0'));
+				while (*f >= QSE_T('0') && *f <= QSE_T('9'));
+	
+				if (*f != QSE_T('}'))
+				{
+					f = tmp;
+					goto normal;
+				}
+
+				f++;
+				
+				/* TODO: some optimization in getting the argument */
+				va_start (ap, fmt);
+
+				do tmp = va_arg(ap,const qse_char_t*);
+				while (idx-- > 0);
+
+				va_end (ap);
+
+				while (*tmp != QSE_T('\0')) 
+				{
+					if (b >= end) goto fini;
+					*b++ = *tmp++;
+				}
+				continue;
+			}
+			else if (f[1] == QSE_T('$')) f++;
+		}
+
+	normal:
+		if (b >= end) break;
+		*b++ = *f++;
+	}
+
+fini:
+	*b = QSE_T('\0');
+	return b - buf;
 }
 
 qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
