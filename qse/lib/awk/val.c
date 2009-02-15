@@ -805,7 +805,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 		v->type);
 #endif
 
-	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL, 0);
+	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL);
 	return QSE_NULL;
 }
 
@@ -819,8 +819,7 @@ static qse_char_t* str_to_str (
 		tmp = QSE_AWK_STRXDUP (run->awk, str, str_len);
 		if (tmp == QSE_NULL) 
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -833,8 +832,7 @@ static qse_char_t* str_to_str (
 
 		if (str_len >= *len)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_EINVAL, 0, QSE_NULL);
 			*len = str_len + 1;
 			return QSE_NULL;
 		}
@@ -850,8 +848,7 @@ static qse_char_t* str_to_str (
 		n = qse_str_ncat (buf, str, str_len);
 		if (n == (qse_size_t)-1)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -879,7 +876,7 @@ static qse_char_t* val_int_to_str (
 			if (tmp == QSE_NULL)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return QSE_NULL;
 			}
 
@@ -895,7 +892,7 @@ static qse_char_t* val_int_to_str (
 			if (1 >= *len)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
+					run, QSE_AWK_EINVAL, 0, QSE_NULL);
 				*len = 2; /* buffer size required */
 				return QSE_NULL;
 			}
@@ -912,7 +909,7 @@ static qse_char_t* val_int_to_str (
 			if (qse_str_cat (buf, QSE_T("0")) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 				return QSE_NULL;
 			}
 
@@ -931,8 +928,7 @@ static qse_char_t* val_int_to_str (
 			run->awk, (rlen + 1) * QSE_SIZEOF(qse_char_t));
 		if (tmp == QSE_NULL)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -945,8 +941,7 @@ static qse_char_t* val_int_to_str (
 
 		if (rlen >= *len)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
+			qse_awk_rtx_seterror (run, QSE_AWK_EINVAL, 0, QSE_NULL);
 			*len = rlen + 1; /* buffer size required */
 			return QSE_NULL;
 		}
@@ -967,7 +962,7 @@ static qse_char_t* val_int_to_str (
 			buf, QSE_T(' '), rlen) == (qse_size_t)-1)
 		{
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return QSE_NULL;
 		}
 	}
@@ -1013,18 +1008,18 @@ static qse_char_t* val_real_to_str (
 
 	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)
 	{
-		qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 		return QSE_NULL;
 	}
 
 	if (qse_str_init (&fbu, run->awk->mmgr, 256) == QSE_NULL)
 	{
 		qse_str_fini (&out);
-		qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 		return QSE_NULL;
 	}
 
-	tmp = qse_awk_format (run, &out, &fbu, tmp, tmp_len, 
+	tmp = qse_awk_rtx_format (run, &out, &fbu, tmp, tmp_len, 
 		(qse_size_t)-1, (qse_awk_nde_t*)v, &tmp_len);
 	if (tmp == QSE_NULL) 
 	{
@@ -1049,7 +1044,7 @@ static qse_char_t* val_real_to_str (
 		if (tmp_len >= *len)
 		{
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_EINVAL, 0, QSE_NULL, 0);
+				run, QSE_AWK_EINVAL, 0, QSE_NULL);
 			*len = tmp_len + 1; /* buffer size required */
 			qse_str_close (&fbu);
 			qse_str_close (&out);
@@ -1072,7 +1067,7 @@ static qse_char_t* val_real_to_str (
 			qse_str_fini (&fbu);
 			qse_str_fini (&out);
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -1120,7 +1115,7 @@ int qse_awk_rtx_valtonum (
 		v->type);
 #endif
 
-	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL, 0);
+	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL);
 	return -1; /* error */
 }
 

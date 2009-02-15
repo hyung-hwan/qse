@@ -30,7 +30,7 @@
 		qse_cstr_t errarg; \
 		errarg.len = (leng); \
 		errarg.ptr = (arg); \
-		qse_awk_seterror ((awk), (code), (line), &errarg, 1); \
+		qse_awk_seterror ((awk), (code), (line), &errarg); \
 	} while (0)
 
 static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)

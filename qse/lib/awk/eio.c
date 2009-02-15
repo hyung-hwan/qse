@@ -394,7 +394,7 @@ int qse_awk_readeio (
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			ret = -1;
 			break;
 		}
@@ -491,7 +491,7 @@ int qse_awk_writeeio_str (
 		if (p == QSE_NULL)
 		{
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return -1;
 		}
 
@@ -500,7 +500,7 @@ int qse_awk_writeeio_str (
 		{
 			QSE_AWK_FREE (run->awk, p);
 			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL, 0);
+				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
 			return -1;
 		}
 
@@ -673,7 +673,7 @@ int qse_awk_nexteio_read (
 		/* something is totally wrong */
 		QSE_ASSERT (
 			!"should never happen - cannot find the relevant eio entry");
-		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
 		return -1;
 	}
 
@@ -751,7 +751,7 @@ int qse_awk_nexteio_write (
 		/* something is totally wrong */
 		QSE_ASSERT (!"should never happen - cannot find the relevant eio entry");
 
-		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
 		return -1;
 	}
 
@@ -824,7 +824,7 @@ int qse_awk_closeeio_read (
 				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					qse_awk_rtx_seterror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL, 0);
+					qse_awk_rtx_seterror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL);
 					return -1;
 				}
 			}
@@ -866,7 +866,7 @@ int qse_awk_closeeio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterror (run, QSE_AWK_EIOUSER, 0, QSE_NULL, 0);
+		qse_awk_rtx_seterror (run, QSE_AWK_EIOUSER, 0, QSE_NULL);
 		return -1;
 	}
 
