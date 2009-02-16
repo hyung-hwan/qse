@@ -327,7 +327,6 @@ protected:
 
 	int closeSource (Source& io)
 	{
-		Source::Mode mode = io.getMode();
 		FILE* fp = (FILE*)io.getHandle();
 		if (fp == stdout || fp == stderr) fflush (fp);
 		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
@@ -709,7 +708,7 @@ static struct
 	{ QSE_T("bxor"),        TestAwk::OPT_BXOR },
 	{ QSE_T("shift"),       TestAwk::OPT_SHIFT },
 	{ QSE_T("idiv"),        TestAwk::OPT_IDIV },
-	{ QSE_T("eio"),         TestAwk::OPT_EIO },
+	{ QSE_T("rio"),         TestAwk::OPT_RIO },
 	{ QSE_T("rwpipe"),      TestAwk::OPT_RWPIPE },
 	{ QSE_T("newline"),     TestAwk::OPT_NEWLINE },
 	{ QSE_T("baseone"),     TestAwk::OPT_BASEONE },

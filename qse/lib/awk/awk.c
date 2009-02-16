@@ -53,7 +53,7 @@ static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
 	QSE_AWK_FREE (awk, f);
 }
 
-qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
+qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_ccls_t* ccls)
 {
 	qse_awk_t* awk;
 
@@ -67,11 +67,12 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t ext)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	awk = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_awk_t) + ext);
+	awk = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_awk_t) + xtn);
 	if (awk == QSE_NULL) return QSE_NULL;
 
-	QSE_MEMSET (awk, 0, QSE_SIZEOF(qse_awk_t) + ext);
+	QSE_MEMSET (awk, 0, QSE_SIZEOF(qse_awk_t) + xtn);
 	awk->mmgr = mmgr;
+	awk->ccls = ccls;
 
 	awk->token.name = qse_str_open (mmgr, 0, 128);
 	if (awk->token.name == QSE_NULL) goto oops;

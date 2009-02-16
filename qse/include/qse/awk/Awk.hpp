@@ -58,14 +58,15 @@ public:
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
-	/** Represents the external I/O context */
-	typedef qse_awk_eio_t eio_t;
-	/** Represents the run-time context */
-	typedef qse_awk_rtx_t run_t;
-	/** Represents the underlying interpreter */
+
+	/** Represents a underlying interpreter */
 	typedef qse_awk_t awk_t;
-	/** Represents the underlying runtime context */
+
+	/** Represents a runtime context */
 	typedef qse_awk_rtx_t rtx_t;
+
+	/** Represents an runtime I/O data */
+	typedef qse_awk_riod_t riod_t;
 
 	enum ccls_type_t
 	{
@@ -216,12 +217,12 @@ public:
 	};
 
 	/**
-	 * EIO class 
+	 * RIO class 
 	 */
-	class EIO
+	class RIO
 	{
 	protected:
-		EIO (eio_t* eio);
+		RIO (rtx_t* rtx, riod_t* riod);
 
 	public:
 		const char_t* getName() const;
@@ -230,30 +231,31 @@ public:
 
 		operator Awk* () const;
 		operator awk_t* () const;
-		operator eio_t* () const;
-		operator run_t* () const;
+		operator riod_t* () const;
+		operator rtx_t* () const;
 
 	protected:
-		eio_t* eio;
+		rtx_t* rtx;
+		riod_t* riod;
 	};
 
 	/**
 	 * Pipe
 	 */
-	class Pipe: public EIO
+	class Pipe: public RIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EIO_PIPE_READ,
-			WRITE = QSE_AWK_EIO_PIPE_WRITE,
-			RW = QSE_AWK_EIO_PIPE_RW
+			READ = QSE_AWK_RIO_PIPE_READ,
+			WRITE = QSE_AWK_RIO_PIPE_WRITE,
+			RW = QSE_AWK_RIO_PIPE_RW
 		};
 
 	protected:
-		Pipe (eio_t* eio);
+		Pipe (rtx_t* rtx, riod_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -262,20 +264,20 @@ public:
 	/**
 	 * File
 	 */
-	class File: public EIO
+	class File: public RIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EIO_FILE_READ,
-			WRITE = QSE_AWK_EIO_FILE_WRITE,
-			APPEND = QSE_AWK_EIO_FILE_APPEND
+			READ = QSE_AWK_RIO_FILE_READ,
+			WRITE = QSE_AWK_RIO_FILE_WRITE,
+			APPEND = QSE_AWK_RIO_FILE_APPEND
 		};
 
 	protected:
-		File (eio_t* eio);
+		File (rtx_t* rtx, riod_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -284,19 +286,19 @@ public:
 	/**
 	 * Console
 	 */
-	class Console: public EIO
+	class Console: public RIO
 	{
 	public:
 		friend class Awk;
 
 		enum Mode
 		{
-			READ = QSE_AWK_EIO_CONSOLE_READ,
-			WRITE = QSE_AWK_EIO_CONSOLE_WRITE
+			READ = QSE_AWK_RIO_CONSOLE_READ,
+			WRITE = QSE_AWK_RIO_CONSOLE_WRITE
 		};
 
 	protected:
-		Console (eio_t* eio);
+		Console (rtx_t* rtx, riod_t* riod);
 		~Console ();
 
 	public:
@@ -441,7 +443,7 @@ public:
 		ERR_FTBIG = QSE_AWK_EFTBIG,
 		ERR_TBUSY = QSE_AWK_ETBUSY,
 		ERR_ISDIR = QSE_AWK_EISDIR,
-		ERR_IOERR = QSE_AWK_EIOERR,
+		ERR_IOERR = QSE_AWK_RIOERR,
 		ERR_OPEN = QSE_AWK_EOPEN,
 		ERR_READ = QSE_AWK_EREAD,
 		ERR_WRITE = QSE_AWK_EWRITE,
@@ -566,7 +568,7 @@ public:
 		OPT_BXOR = QSE_AWK_BXOR,
 		OPT_SHIFT = QSE_AWK_SHIFT,
 		OPT_IDIV = QSE_AWK_IDIV,
-		OPT_EIO = QSE_AWK_EIO,
+		OPT_RIO = QSE_AWK_RIO,
 		OPT_RWPIPE = QSE_AWK_RWPIPE,
 
 		/** Can terminate a statement with a new line */
@@ -618,12 +620,12 @@ public:
 		friend class Return;
 
 		Run (Awk* awk);
-		Run (Awk* awk, run_t* run);
+		Run (Awk* awk, rtx_t* run);
 		~Run ();
 
 	public:
 		operator Awk* () const;
-		operator run_t* () const;
+		operator rtx_t* () const;
 
 		void stop () const;
 		bool isStop () const;
@@ -742,7 +744,7 @@ public:
 
 	protected:
 		Awk* awk;
-		run_t* run;
+		rtx_t* run;
 		bool callbackFailed;
 		void* data;
 	};
@@ -1063,26 +1065,26 @@ protected:
 
 	// static glue members for various handlers
 	static ssize_t sourceReader (
-		int cmd, void* arg, char_t* data, size_t count);
+		awk_t* awk, int cmd, char_t* data, size_t count);
 	static ssize_t sourceWriter (
-		int cmd, void* arg, char_t* data, size_t count);
+		awk_t* awk, int cmd, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
-		int cmd, void* arg, char_t* data, size_t count);
+		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
 	static ssize_t fileHandler (
-		int cmd, void* arg, char_t* data, size_t count);
+		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
 	static ssize_t consoleHandler (
-		int cmd, void* arg, char_t* data, size_t count);
+		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
 
 	static int functionHandler (
-		run_t* run, const char_t* name, size_t len);
+		rtx_t* rtx, const char_t* name, size_t len);
 	static void freeFunctionMapValue (map_t* map, void* dptr, size_t dlen);
 
-	static int  onRunStart (run_t* run, void* data);
-	static void onRunEnd (run_t* run, int errnum, void* data);
-	static int  onRunEnter (run_t* run, void* data);
-	static void onRunExit (run_t* run, val_t* ret, void* data);
-	static void onRunStatement (run_t* run, size_t line, void* data);
+	static int  onRunStart (rtx_t* run, void* data);
+	static void onRunEnd (rtx_t* run, int errnum, void* data);
+	static int  onRunEnter (rtx_t* run, void* data);
+	static void onRunExit (rtx_t* run, val_t* ret, void* data);
+	static void onRunStatement (rtx_t* run, size_t line, void* data);
 
 	static void* allocMem   (void* data, size_t n);
 	static void* reallocMem (void* data, void* ptr, size_t n);

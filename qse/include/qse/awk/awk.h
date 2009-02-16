@@ -50,11 +50,13 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 /******/
 
 typedef struct qse_awk_val_t qse_awk_val_t;
-typedef struct qse_awk_eio_t qse_awk_eio_t; /* (E)xternal (IO) */
 
 typedef struct qse_awk_prm_t qse_awk_prm_t;
 typedef struct qse_awk_sio_t qse_awk_sio_t;
+
 typedef struct qse_awk_rio_t qse_awk_rio_t;
+typedef struct qse_awk_riod_t qse_awk_riod_t;
+
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
@@ -72,20 +74,43 @@ typedef int (*qse_awk_sprintf_t) (
 	...
 );
 
-typedef qse_ssize_t (*qse_awk_io_t) (
-	int         cmd, 
-	void*       arg,
-	qse_char_t* data,
-	qse_size_t  count
+/****t* AWK/qse_awk_siof_t
+ * NAME
+ *  qse_awk_siof_t - define a source IO function
+ * SYNOPSIS
+ */
+typedef qse_ssize_t (*qse_awk_siof_t) (
+	qse_awk_t*     awk,
+	int            cmd, 
+	qse_char_t*    data,
+	qse_size_t     count
 );
+/*****/
 
-struct qse_awk_eio_t 
+/****f* AWK/qse_awk_riof_t
+ * NAME
+ *  qse_awk_riof_t - define a runtime IO function
+ * SYNOPSIS
+ */
+typedef qse_ssize_t (*qse_awk_riof_t) (
+	qse_awk_rtx_t*  rtx,
+	int             cmd, 
+	qse_awk_riod_t* riod,
+	qse_char_t*     data,
+	qse_size_t      count
+);
+/******/
+
+/****f* AWK/qse_awk_riod_t
+ * NAME
+ *  qse_awk_riod_f - define a data passed to a rio function 
+ * SYNOPSIS
+ */
+struct qse_awk_riod_t 
 {
-	qse_awk_rtx_t* rtx; /* [IN] */
 	int type;           /* [IN] console, file, pipe */
 	int mode;           /* [IN] read, write, etc */
 	qse_char_t* name;   /* [IN] */
-	void* data;         /* [IN] */
 	void* handle;       /* [OUT] */
 
 	/* input */
@@ -105,7 +130,7 @@ struct qse_awk_eio_t
 		qse_bool_t eos;
 	} out;
 
-	qse_awk_eio_t* next;
+	qse_awk_riod_t* next;
 };
 
 struct qse_awk_prm_t
@@ -116,17 +141,15 @@ struct qse_awk_prm_t
 
 struct qse_awk_sio_t
 {
-	qse_awk_io_t in;
-	qse_awk_io_t out;
-	void*        data;
+	qse_awk_siof_t in;
+	qse_awk_siof_t out;
 };
 
 struct qse_awk_rio_t
 {
-	qse_awk_io_t pipe;
-	qse_awk_io_t file;
-	qse_awk_io_t console;
-	void*        data;
+	qse_awk_riof_t pipe;
+	qse_awk_riof_t file;
+	qse_awk_riof_t console;
 };
 
 struct qse_awk_rcb_t
@@ -206,9 +229,9 @@ enum qse_awk_option_t
 	QSE_AWK_IDIV        = (1 << 5), 
 
 	/* support getline and print */
-	QSE_AWK_EIO       = (1 << 7), 
+	QSE_AWK_RIO       = (1 << 7), 
 
-	/* support dual direction pipe. QSE_AWK_EIO must be on */
+	/* support dual direction pipe. QSE_AWK_RIO must be on */
 	QSE_AWK_RWPIPE      = (1 << 8),
 
 	/* can terminate a statement with a new line */
@@ -269,7 +292,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EFTBIG,         /* file or data too big */
 	QSE_AWK_ETBUSY,         /* system too busy */
 	QSE_AWK_EISDIR,         /* is a directory */
-	QSE_AWK_EIOERR,         /* i/o error */
+	QSE_AWK_RIOERR,         /* i/o error */
 
 	/* mostly parse errors */
 	QSE_AWK_EOPEN,          /* cannot open */
@@ -412,30 +435,30 @@ enum qse_awk_depth_t
 	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5)
 };
 
-/* eio types */
-enum qse_awk_eio_type_t
+/* rio types */
+enum qse_awk_rio_type_t
 {
-	/* eio types available */
-	QSE_AWK_EIO_PIPE,
-	QSE_AWK_EIO_FILE,
-	QSE_AWK_EIO_CONSOLE,
+	/* rio types available */
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_FILE,
+	QSE_AWK_RIO_CONSOLE,
 
 	/* reserved for internal use only */
-	QSE_AWK_EIO_NUM
+	QSE_AWK_RIO_NUM
 };
 
-enum qse_awk_eio_mode_t
+enum qse_awk_rio_mode_t
 {
-	QSE_AWK_EIO_PIPE_READ      = 0,
-	QSE_AWK_EIO_PIPE_WRITE     = 1,
-	QSE_AWK_EIO_PIPE_RW        = 2,
+	QSE_AWK_RIO_PIPE_READ      = 0,
+	QSE_AWK_RIO_PIPE_WRITE     = 1,
+	QSE_AWK_RIO_PIPE_RW        = 2,
 
-	QSE_AWK_EIO_FILE_READ      = 0,
-	QSE_AWK_EIO_FILE_WRITE     = 1,
-	QSE_AWK_EIO_FILE_APPEND    = 2,
+	QSE_AWK_RIO_FILE_READ      = 0,
+	QSE_AWK_RIO_FILE_WRITE     = 1,
+	QSE_AWK_RIO_FILE_APPEND    = 2,
 
-	QSE_AWK_EIO_CONSOLE_READ   = 0,
-	QSE_AWK_EIO_CONSOLE_WRITE  = 1
+	QSE_AWK_RIO_CONSOLE_READ   = 0,
+	QSE_AWK_RIO_CONSOLE_WRITE  = 1
 };
 
 enum qse_awk_gbl_id_t
@@ -637,7 +660,8 @@ extern qse_awk_val_t* qse_awk_val_one;
  */
 qse_awk_t* qse_awk_open ( 
 	qse_mmgr_t* mmgr  /* a memory manager */,
-	qse_size_t  xtn   /* the size of extension in bytes */
+	qse_size_t  xtn   /* the size of extension in bytes */,
+	qse_ccls_t* ccls
 );
 /******/
 

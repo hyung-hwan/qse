@@ -16,41 +16,41 @@
    limitations under the License.
  */
 
-#ifndef _QSE_LIB_AWK_EIO_H_
-#define _QSE_LIB_AWK_EIO_H_
+#ifndef _QSE_LIB_AWK_RIO_H_
+#define _QSE_LIB_AWK_RIO_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int qse_awk_readeio (
+int qse_awk_rtx_readio (
 	qse_awk_rtx_t* run, int in_type, 
 	const qse_char_t* name, qse_str_t* buf);
 
-int qse_awk_writeeio_val (
+int qse_awk_rtx_writeio_val (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_awk_val_t* v);
 
-int qse_awk_writeeio_str (
+int qse_awk_rtx_writeio_str (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_char_t* str, qse_size_t len);
 
-int qse_awk_flusheio (
+int qse_awk_rtx_flushio (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);
 
-int qse_awk_nexteio_read (
+int qse_awk_rtx_nextio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name);
 
-int qse_awk_nexteio_write (
+int qse_awk_rtx_nextio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);
 
-int qse_awk_closeeio_read (
+int qse_awk_rtx_closeio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name);
-int qse_awk_closeeio_write (
+int qse_awk_rtx_closeio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);
-int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name);
+int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name);
 
-void qse_awk_cleareio (qse_awk_rtx_t* run);
+void qse_awk_rtx_cleario (qse_awk_rtx_t* run);
 
 #ifdef __cplusplus
 }

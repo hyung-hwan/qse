@@ -172,12 +172,12 @@ static qse_awk_nde_t* parse_binary_expr (
 	qse_awk_nde_t*(*next_level_func)(qse_awk_t*,qse_size_t));
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_logical_or_with_eio (qse_awk_t* awk, qse_size_t line);
+static qse_awk_nde_t* parse_logical_or_with_io (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_bitwise_or_with_eio (qse_awk_t* awk, qse_size_t line);
+static qse_awk_nde_t* parse_bitwise_or_with_io (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_equality (qse_awk_t* awk, qse_size_t line);
@@ -260,7 +260,7 @@ static kwent_t kwtab[] =
 	{ QSE_T("exit"),         4, TOKEN_EXIT,        0 },
 	{ QSE_T("for"),          3, TOKEN_FOR,         0 },
 	{ QSE_T("function"),     8, TOKEN_FUNCTION,    0 },
-	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_EIO },
+	{ QSE_T("getline"),      7, TOKEN_GETLINE,     QSE_AWK_RIO },
 	{ QSE_T("global"),       6, TOKEN_GLOBAL,      QSE_AWK_EXPLICIT },
 	{ QSE_T("if"),           2, TOKEN_IF,          0 },
 	{ QSE_T("in"),           2, TOKEN_IN,          0 },
@@ -268,8 +268,8 @@ static kwent_t kwtab[] =
 	{ QSE_T("next"),         4, TOKEN_NEXT,        QSE_AWK_PABLOCK },
 	{ QSE_T("nextfile"),     8, TOKEN_NEXTFILE,    QSE_AWK_PABLOCK },
 	{ QSE_T("nextofile"),    9, TOKEN_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
-	{ QSE_T("print"),        5, TOKEN_PRINT,       QSE_AWK_EIO },
-	{ QSE_T("printf"),       6, TOKEN_PRINTF,      QSE_AWK_EIO },
+	{ QSE_T("print"),        5, TOKEN_PRINT,       QSE_AWK_RIO },
+	{ QSE_T("printf"),       6, TOKEN_PRINTF,      QSE_AWK_RIO },
 	{ QSE_T("reset"),        5, TOKEN_RESET,       QSE_AWK_RESET },
 	{ QSE_T("return"),       6, TOKEN_RETURN,      0 },
 	{ QSE_T("while"),        5, TOKEN_WHILE,       0 }
@@ -316,13 +316,13 @@ static global_t gtab[] =
 	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 
 	/* output real-to-str conversion format for 'print' */
-	{ QSE_T("OFMT"),         4,  QSE_AWK_EIO}, 
+	{ QSE_T("OFMT"),         4,  QSE_AWK_RIO}, 
 
 	/* output field separator for 'print' */
-	{ QSE_T("OFS"),          3,  QSE_AWK_EIO },
+	{ QSE_T("OFS"),          3,  QSE_AWK_RIO },
 
 	/* output record separator. used for 'print' and blockless output */
-	{ QSE_T("ORS"),          3,  QSE_AWK_EIO },
+	{ QSE_T("ORS"),          3,  QSE_AWK_RIO },
 
 	{ QSE_T("RLENGTH"),      7,  0 },
 	{ QSE_T("RS"),           2,  0 },
@@ -478,7 +478,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	QSE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	qse_awk_clear (awk);
-	QSE_MEMCPY (&awk->src.ios, sio, QSE_SIZEOF(awk->src.ios));
+	awk->src.ios = *sio;
 
 	n = parse (awk);
 
@@ -496,8 +496,7 @@ static int parse (qse_awk_t* awk)
 	QSE_ASSERT (awk->src.ios.in != QSE_NULL);
 
 	CLRERR (awk);
-	op = awk->src.ios.in (
-		QSE_AWK_IO_OPEN, awk->src.ios.data, QSE_NULL, 0);
+	op = awk->src.ios.in (awk, QSE_AWK_IO_OPEN, QSE_NULL, 0);
 	if (op <= -1)
 	{
 		/* cannot open the source file.
@@ -568,8 +567,7 @@ static int parse (qse_awk_t* awk)
 #undef EXIT_PARSE
 exit_parse:
 	if (n == 0) CLRERR (awk);
-	if (awk->src.ios.in (
-		QSE_AWK_IO_CLOSE, awk->src.ios.data, QSE_NULL, 0) != 0)
+	if (awk->src.ios.in (awk, QSE_AWK_IO_CLOSE, QSE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -774,7 +772,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 				}	
 			}
 
-			if ((awk->option & QSE_AWK_EIO) != QSE_AWK_EIO)
+			if ((awk->option & QSE_AWK_RIO) != QSE_AWK_RIO)
 			{
 				/* blockless pattern requires QSE_AWK_EIO
 				 * to be ON because the implicit block is
@@ -2146,10 +2144,10 @@ static qse_awk_nde_t* parse_binary_expr (
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 {
-	if ((awk->option & QSE_AWK_EIO) && 
+	if ((awk->option & QSE_AWK_RIO) && 
 	    (awk->option & QSE_AWK_RWPIPE))
 	{
-		return parse_logical_or_with_eio (awk, line);
+		return parse_logical_or_with_io (awk, line);
 	}
 	else
 	{
@@ -2163,7 +2161,7 @@ static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 	}
 }
 
-static qse_awk_nde_t* parse_logical_or_with_eio (qse_awk_t* awk, qse_size_t line)
+static qse_awk_nde_t* parse_logical_or_with_io (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_t* left, * right;
 
@@ -2353,9 +2351,9 @@ static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line)
 
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line)
 {
-	if (awk->option & QSE_AWK_EIO)
+	if (awk->option & QSE_AWK_RIO)
 	{
-		return parse_bitwise_or_with_eio (awk, line);
+		return parse_bitwise_or_with_io (awk, line);
 	}
 	else
 	{
@@ -2370,7 +2368,7 @@ static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line)
 	}
 }
 
-static qse_awk_nde_t* parse_bitwise_or_with_eio (qse_awk_t* awk, qse_size_t line)
+static qse_awk_nde_t* parse_bitwise_or_with_io (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_t* left, * right;
 
@@ -5278,8 +5276,9 @@ static int get_char (qse_awk_t* awk)
 	{
 		CLRERR (awk);
 		n = awk->src.ios.in (
-			QSE_AWK_IO_READ, awk->src.ios.data,
-			awk->src.shared.buf, QSE_COUNTOF(awk->src.shared.buf));
+			awk, QSE_AWK_IO_READ,
+			awk->src.shared.buf, QSE_COUNTOF(awk->src.shared.buf)
+		);
 		if (n <= -1)
 		{
 			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESINRD);
@@ -5579,8 +5578,7 @@ static int deparse (qse_awk_t* awk)
 	awk->src.shared.buf_pos = 0;
 
 	CLRERR (awk);
-	op = awk->src.ios.out (
-		QSE_AWK_IO_OPEN, awk->src.ios.data, QSE_NULL, 0);
+	op = awk->src.ios.out (awk, QSE_AWK_IO_OPEN, QSE_NULL, 0);
 	if (op <= -1)
 	{
 		if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTOP);
@@ -5785,8 +5783,7 @@ static int deparse (qse_awk_t* awk)
 
 exit_deparse:
 	if (n == 0) CLRERR (awk);
-	if (awk->src.ios.out (
-		QSE_AWK_IO_CLOSE, awk->src.ios.data, QSE_NULL, 0) != 0)
+	if (awk->src.ios.out (awk, QSE_AWK_IO_CLOSE, QSE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -5883,9 +5880,10 @@ static int flush_out (qse_awk_t* awk)
 		CLRERR (awk);
 
 		n = awk->src.ios.out (
-			QSE_AWK_IO_WRITE, awk->src.ios.data,
+			awk, QSE_AWK_IO_WRITE,
 			&awk->src.shared.buf[awk->src.shared.buf_pos], 
-			awk->src.shared.buf_len - awk->src.shared.buf_pos);
+			awk->src.shared.buf_len - awk->src.shared.buf_pos
+		);
 		if (n <= 0) 
 		{
 			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTWR);

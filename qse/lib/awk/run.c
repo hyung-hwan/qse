@@ -839,11 +839,10 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 
 	if (rio != QSE_NULL)
 	{
-		rtx->eio.handler[QSE_AWK_EIO_PIPE] = rio->pipe;
-		rtx->eio.handler[QSE_AWK_EIO_FILE] = rio->file;
-		rtx->eio.handler[QSE_AWK_EIO_CONSOLE] = rio->console;
-		rtx->eio.data = rio->data;
-		rtx->eio.chain = QSE_NULL;
+		rtx->rio.handler[QSE_AWK_RIO_PIPE] = rio->pipe;
+		rtx->rio.handler[QSE_AWK_RIO_FILE] = rio->file;
+		rtx->rio.handler[QSE_AWK_RIO_CONSOLE] = rio->console;
+		rtx->rio.chain = QSE_NULL;
 	}
 
 	rtx->gbl.rs = QSE_NULL;
@@ -863,10 +862,10 @@ static void fini_rtx (qse_awk_rtx_t* rtx)
 	if (rtx->pattern_range_state != QSE_NULL)
 		QSE_AWK_FREE (rtx->awk, rtx->pattern_range_state);
 
-	/* close all pending eio's */
+	/* close all pending io's */
 	/* TODO: what if this operation fails? */
-	qse_awk_cleareio (rtx);
-	QSE_ASSERT (rtx->eio.chain == QSE_NULL);
+	qse_awk_rtx_cleario (rtx);
+	QSE_ASSERT (rtx->rio.chain == QSE_NULL);
 
 	if (rtx->gbl.rs != QSE_NULL) 
 	{
@@ -1761,7 +1760,7 @@ static int run_block0 (qse_awk_rtx_t* run, qse_awk_nde_blk_t* nde)
 		/* blockless pattern - execute print $0*/
 		qse_awk_rtx_refupval (run, run->inrec.d0);
 
-		n = qse_awk_writeeio_str (run, 
+		n = qse_awk_rtx_writeio_str (run, 
 			QSE_AWK_OUT_CONSOLE, QSE_T(""),
 			QSE_STR_PTR(&run->inrec.line),
 			QSE_STR_LEN(&run->inrec.line));
@@ -1774,7 +1773,7 @@ static int run_block0 (qse_awk_rtx_t* run, qse_awk_nde_blk_t* nde)
 			return -1;
 		}
 
-		n = qse_awk_writeeio_str (
+		n = qse_awk_rtx_writeio_str (
 			run, QSE_AWK_OUT_CONSOLE, QSE_T(""),
 			run->gbl.ors.ptr, run->gbl.ors.len);
 		if (n == -1)
@@ -2383,7 +2382,7 @@ static int run_nextinfile (qse_awk_rtx_t* run, qse_awk_nde_nextfile_t* nde)
 		return -1;
 	}
 
-	n = qse_awk_nexteio_read (run, QSE_AWK_IN_CONSOLE, QSE_T(""));
+	n = qse_awk_rtx_nextio_read (run, QSE_AWK_IN_CONSOLE, QSE_T(""));
 	if (n == -1)
 	{
 		/* adjust the error line */
@@ -2416,7 +2415,7 @@ static int run_nextoutfile (qse_awk_rtx_t* run, qse_awk_nde_nextfile_t* nde)
 
 	/* nextofile can be called from BEGIN and END block unlike nextfile */
 
-	n = qse_awk_nexteio_write (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
+	n = qse_awk_rtx_nextio_write (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
 	if (n == -1)
 	{
 		/* adjust the error line */
@@ -2810,7 +2809,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 		}
 	}
 
-	/* transforms the destination to suit the usage with eio */
+	/* transforms the destination to suit the usage with io */
 	dst = (out == QSE_NULL)? QSE_T(""): out;
 
 	/* check if print is followed by any arguments */
@@ -2818,7 +2817,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 	{
 		/* if it doesn't have any arguments, print the entire 
 		 * input record */
-		n = qse_awk_writeeio_str (
+		n = qse_awk_rtx_writeio_str (
 			run, nde->out_type, dst,
 			QSE_STR_PTR(&run->inrec.line),
 			QSE_STR_LEN(&run->inrec.line));
@@ -2850,7 +2849,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 		{
 			if (np != head)
 			{
-				n = qse_awk_writeeio_str (
+				n = qse_awk_rtx_writeio_str (
 					run, nde->out_type, dst, 
 					run->gbl.ofs.ptr, 
 					run->gbl.ofs.len);
@@ -2874,7 +2873,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 			}
 			qse_awk_rtx_refupval (run, v);
 
-			n = qse_awk_writeeio_val (run, nde->out_type, dst, v);
+			n = qse_awk_rtx_writeio_val (run, nde->out_type, dst, v);
 			if (n <= -1 /*&& run->errnum != QSE_AWK_EIOIMPL*/) 
 			{
 				if (out != QSE_NULL) 
@@ -2891,7 +2890,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 	}
 
 	/* print the value ORS to terminate the operation */
-	n = qse_awk_writeeio_str (
+	n = qse_awk_rtx_writeio_str (
 		run, nde->out_type, dst, 
 		run->gbl.ors.ptr, run->gbl.ors.len);
 	if (n <= -1 /*&& run->errnum != QSE_AWK_EIOIMPL*/)
@@ -2995,7 +2994,7 @@ static int run_printf (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 	{
 		/* the remaining arguments are ignored as the format cannot 
 		 * contain any % characters */
-		n = qse_awk_writeeio_val (run, nde->out_type, dst, v);
+		n = qse_awk_rtx_writeio_val (run, nde->out_type, dst, v);
 		if (n <= -1 /*&& run->errnum != QSE_AWK_EIOIMPL*/)
 		{
 			if (out != QSE_NULL) QSE_AWK_FREE (run->awk, out);
@@ -3043,7 +3042,7 @@ static int output_formatted (
 		QSE_NULL, QSE_NULL, fmt, fmt_len, 0, args, &len);
 	if (ptr == QSE_NULL) return -1;
 
-	n = qse_awk_writeeio_str (run, out_type, dst, ptr, len);
+	n = qse_awk_rtx_writeio_str (run, out_type, dst, ptr, len);
 	if (n <= -1 /*&& run->errnum != QSE_AWK_EIOIMPL*/) return -1;
 
 	return 0;
@@ -6291,7 +6290,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		return QSE_NULL;
 	}
 
-	n = qse_awk_readeio (run, p->in_type, dst, &buf);
+	n = qse_awk_rtx_readio (run, p->in_type, dst, &buf);
 	if (in != QSE_NULL) QSE_AWK_FREE (run->awk, in);
 
 	if (n <= -1) 
@@ -6390,7 +6389,7 @@ static int read_record (qse_awk_rtx_t* run)
 
 	if (qse_awk_rtx_clrrec (run, QSE_FALSE) == -1) return -1;
 
-	n = qse_awk_readeio (
+	n = qse_awk_rtx_readio (
 		run, QSE_AWK_IN_CONSOLE, QSE_T(""), &run->inrec.line);
 	if (n <= -1) 
 	{

@@ -37,8 +37,8 @@ static int fnc_sprintf (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
 static qse_awk_fnc_t sys_fnc[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, QSE_AWK_EIO, {1, 1, QSE_NULL}, fnc_close},
-	{ {QSE_T("fflush"),  6}, QSE_AWK_EIO, {0, 1, QSE_NULL}, fnc_fflush},
+	{ {QSE_T("close"),   5}, QSE_AWK_RIO, {1, 1, QSE_NULL}, fnc_close},
+	{ {QSE_T("fflush"),  6}, QSE_AWK_RIO, {0, 1, QSE_NULL}, fnc_fflush},
 
 	/* string functions */
 	{ {QSE_T("index"),   5}, 0,  {2,   2, QSE_NULL},     fnc_index},
@@ -261,9 +261,9 @@ static int fnc_close (
 		 * it either.  
 		 * another reason for this is if close is called explicitly 
 		 * with an empty string, it may close the console that uses 
-		 * an empty string for its identification because closeeio
-		 * closes any eios that match the name given unlike 
-		 * closeeio_read or closeeio_write. */ 
+		 * an empty string for its identification because closeio
+		 * closes any ios that match the name given unlike 
+		 * closeio_read or closeio_write. */ 
 		n = -1;
 		goto skip_close;
 	}
@@ -279,7 +279,7 @@ static int fnc_close (
 		}
 	}	
 
-	n = qse_awk_closeeio (run, name);
+	n = qse_awk_rtx_closeio (run, name);
 	/*
 	if (n == -1 && run->errnum != QSE_AWK_EIONONE)
 	{
@@ -303,14 +303,14 @@ skip_close:
 	return 0;
 }
 
-static int flush_eio (
-	qse_awk_rtx_t* run, int eio, const qse_char_t* name, int n)
+static int flush_io (
+	qse_awk_rtx_t* run, int rio, const qse_char_t* name, int n)
 {
 	int n2;
 
-	if (run->eio.handler[eio] != QSE_NULL)
+	if (run->rio.handler[rio] != QSE_NULL)
 	{
-		n2 = qse_awk_flusheio (run, eio, name);
+		n2 = qse_awk_rtx_flushio (run, rio, name);
 		if (n2 == -1)
 		{
 			/*
@@ -349,7 +349,7 @@ static int fnc_fflush (
 	{
 		/* flush the console output.
 		 * fflush() should return -1 on errors */
-		n = qse_awk_flusheio (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
+		n = qse_awk_rtx_flushio (run, QSE_AWK_OUT_CONSOLE, QSE_T(""));
 	}
 	else
 	{
@@ -383,13 +383,13 @@ static int fnc_fflush (
 			ptr++;
 		}
 
-		/* flush the given eio */
-		n = flush_eio (
-			run, QSE_AWK_EIO_FILE, 
+		/* flush the given rio */
+		n = flush_io (
+			run, QSE_AWK_RIO_FILE, 
 			((len0 == 0)? QSE_NULL: str0), 1);
 		/*if (n == -99) return -1;*/
-		n = flush_eio (
-			run, QSE_AWK_EIO_PIPE,
+		n = flush_io (
+			run, QSE_AWK_RIO_PIPE,
 			((len0 == 0)? QSE_NULL: str0), n);
 		/*if (n == -99) return -1;*/
 

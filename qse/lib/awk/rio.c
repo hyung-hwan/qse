@@ -31,20 +31,20 @@ static int in_type_map[] =
 {
 	/* the order should match the order of the 
 	 * QSE_AWK_IN_XXX values in tree.h */
-	QSE_AWK_EIO_PIPE,
-	QSE_AWK_EIO_PIPE,
-	QSE_AWK_EIO_FILE,
-	QSE_AWK_EIO_CONSOLE
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_FILE,
+	QSE_AWK_RIO_CONSOLE
 };
 
 static int in_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * QSE_AWK_IN_XXX values in tree.h */
-	QSE_AWK_EIO_PIPE_READ,
-	QSE_AWK_EIO_PIPE_RW,
-	QSE_AWK_EIO_FILE_READ,
-	QSE_AWK_EIO_CONSOLE_READ
+	QSE_AWK_RIO_PIPE_READ,
+	QSE_AWK_RIO_PIPE_RW,
+	QSE_AWK_RIO_FILE_READ,
+	QSE_AWK_RIO_CONSOLE_READ
 };
 
 static int in_mask_map[] =
@@ -59,22 +59,22 @@ static int out_type_map[] =
 {
 	/* the order should match the order of the 
 	 * QSE_AWK_OUT_XXX values in tree.h */
-	QSE_AWK_EIO_PIPE,
-	QSE_AWK_EIO_PIPE,
-	QSE_AWK_EIO_FILE,
-	QSE_AWK_EIO_FILE,
-	QSE_AWK_EIO_CONSOLE
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_FILE,
+	QSE_AWK_RIO_FILE,
+	QSE_AWK_RIO_CONSOLE
 };
 
 static int out_mode_map[] =
 {
 	/* the order should match the order of the 
 	 * QSE_AWK_OUT_XXX values in tree.h */
-	QSE_AWK_EIO_PIPE_WRITE,
-	QSE_AWK_EIO_PIPE_RW,
-	QSE_AWK_EIO_FILE_WRITE,
-	QSE_AWK_EIO_FILE_APPEND,
-	QSE_AWK_EIO_CONSOLE_WRITE
+	QSE_AWK_RIO_PIPE_WRITE,
+	QSE_AWK_RIO_PIPE_RW,
+	QSE_AWK_RIO_FILE_WRITE,
+	QSE_AWK_RIO_FILE_APPEND,
+	QSE_AWK_RIO_CONSOLE_WRITE
 };
 
 static int out_mask_map[] =
@@ -86,13 +86,13 @@ static int out_mask_map[] =
 	MASK_WRITE
 };
 
-int qse_awk_readeio (
+int qse_awk_rtx_readio (
 	qse_awk_rtx_t* run, int in_type,
 	const qse_char_t* name, qse_str_t* buf)
 {
-	qse_awk_eio_t* p = run->eio.chain;
-	qse_awk_io_t handler;
-	int eio_type, eio_mode, eio_mask, ret, n;
+	qse_awk_riod_t* p = run->rio.chain;
+	qse_awk_riof_t handler;
+	int io_type, io_mode, io_mask, ret, n;
 	qse_ssize_t x;
 	qse_awk_val_t* rs;
 	qse_char_t* rs_ptr;
@@ -104,13 +104,13 @@ int qse_awk_readeio (
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
-	/* translate the in_type into the relevant eio type and mode */
-	eio_type = in_type_map[in_type];
-	eio_mode = in_mode_map[in_type];
-	eio_mask = in_mask_map[in_type];
+	/* translate the in_type into the relevant io type and mode */
+	io_type = in_type_map[in_type];
+	io_mode = in_mode_map[in_type];
+	io_mask = in_mask_map[in_type];
 
 	/* get the io handler provided by a user */
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -121,7 +121,7 @@ int qse_awk_readeio (
 	/* search the chain for exiting an existing io name */
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) &&
+		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
@@ -130,8 +130,8 @@ int qse_awk_readeio (
 	{
 		/* if the name doesn't exist in the chain, create an entry
 		 * to the chain */
-		p = (qse_awk_eio_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_eio_t));
+		p = (qse_awk_riod_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_riod_t));
 		if (p == QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
@@ -146,12 +146,11 @@ int qse_awk_readeio (
 			return -1;
 		}
 
-		p->rtx = run;
-		p->type = (eio_type | eio_mask);
-		p->mode = eio_mode;
+		/*p->rtx = run;*/
+		p->type = (io_type | io_mask);
+		p->mode = io_mode;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
-		p->data = run->eio.data;
 
 		p->in.buf[0] = QSE_T('\0');
 		p->in.pos = 0;
@@ -162,7 +161,7 @@ int qse_awk_readeio (
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 
 		/* request to open the stream */
-		x = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
+		x = handler (run, QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (x <= -1)
 		{
 			QSE_AWK_FREE (run->awk, p->name);
@@ -179,8 +178,8 @@ int qse_awk_readeio (
 		}
 
 		/* chain it */
-		p->next = run->eio.chain;
-		run->eio.chain = p;
+		p->next = run->rio.chain;
+		run->rio.chain = p;
 
 		/* usually, x == 0 indicates that it has reached the end 
 		 * of the input. the user io handler can return 0 for the 
@@ -245,7 +244,7 @@ int qse_awk_readeio (
 
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 
-			n = handler (QSE_AWK_IO_READ,
+			n = handler (run, QSE_AWK_IO_READ,
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
@@ -411,7 +410,7 @@ int qse_awk_readeio (
 	return ret;
 }
 
-int qse_awk_writeeio_val (
+int qse_awk_rtx_writeio_val (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_awk_val_t* v)
 {
@@ -433,31 +432,31 @@ int qse_awk_writeeio_val (
 		if (str == QSE_NULL) return -1;
 	}
 
-	n = qse_awk_writeeio_str (run, out_type, name, str, len);
+	n = qse_awk_rtx_writeio_str (run, out_type, name, str, len);
 
 	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
 	return n;
 }
 
-int qse_awk_writeeio_str (
+int qse_awk_rtx_writeio_str (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_char_t* str, qse_size_t len)
 {
-	qse_awk_eio_t* p = run->eio.chain;
-	qse_awk_io_t handler;
-	int eio_type, eio_mode, eio_mask; 
+	qse_awk_riod_t* p = run->rio.chain;
+	qse_awk_riof_t handler;
+	int io_type, io_mode, io_mask; 
 	qse_ssize_t n;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant eio type and mode */
-	eio_type = out_type_map[out_type];
-	eio_mode = out_mode_map[out_type];
-	eio_mask = out_mask_map[out_type];
+	/* translate the out_type into the relevant io type and mode */
+	io_type = out_type_map[out_type];
+	io_mode = out_mode_map[out_type];
+	io_mask = out_mask_map[out_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -465,29 +464,29 @@ int qse_awk_writeeio_str (
 		return -1;
 	}
 
-	/* look for the corresponding eio for name */
+	/* look for the corresponding rio for name */
 	while (p != QSE_NULL)
 	{
 		/* the file "1.tmp", in the following code snippets, 
 		 * would be opened by the first print statement, but not by
 		 * the second print statement. this is because
 		 * both QSE_AWK_OUT_FILE and QSE_AWK_OUT_APFILE are
-		 * translated to QSE_AWK_EIO_FILE and it is used to
+		 * translated to QSE_AWK_RIO_FILE and it is used to
 		 * keep track of file handles..
 		 *
 		 *    print "1111" >> "1.tmp"
 		 *    print "1111" > "1.tmp"
 		 */
-		if (p->type == (eio_type | eio_mask) && 
+		if (p->type == (io_type | io_mask) && 
 		    qse_strcmp (p->name, name) == 0) break;
 		p = p->next;
 	}
 
-	/* if there is not corresponding eio for name, create one */
+	/* if there is not corresponding rio for name, create one */
 	if (p == QSE_NULL)
 	{
-		p = (qse_awk_eio_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_eio_t));
+		p = (qse_awk_riod_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_riod_t));
 		if (p == QSE_NULL)
 		{
 			qse_awk_rtx_seterror (
@@ -504,18 +503,17 @@ int qse_awk_writeeio_str (
 			return -1;
 		}
 
-		p->rtx = run;
-		p->type = (eio_type | eio_mask);
-		p->mode = eio_mode;
+		/*p->rtx = run;*/
+		p->type = (io_type | io_mask);
+		p->mode = io_mode;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
-		p->data = run->eio.data;
 
 		p->out.eof = QSE_FALSE;
 		p->out.eos = QSE_FALSE;
 
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-		n = handler (QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
+		n = handler (run, QSE_AWK_IO_OPEN, p, QSE_NULL, 0);
 		if (n <= -1)
 		{
 			QSE_AWK_FREE (run->awk, p->name);
@@ -528,8 +526,8 @@ int qse_awk_writeeio_str (
 		}
 
 		/* chain it */
-		p->next = run->eio.chain;
-		run->eio.chain = p;
+		p->next = run->rio.chain;
+		run->rio.chain = p;
 
 		/* usually, n == 0 indicates that it has reached the end 
 		 * of the input. the user io handler can return 0 for the 
@@ -559,7 +557,7 @@ int qse_awk_writeeio_str (
 	while (len > 0)
 	{
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-		n = handler (QSE_AWK_IO_WRITE, p, str, len);
+		n = handler (run, QSE_AWK_IO_WRITE, p, str, len);
 		if (n <= -1) 
 		{
 			if (run->errnum == QSE_AWK_ENOERR)
@@ -581,12 +579,12 @@ int qse_awk_writeeio_str (
 	return 1;
 }
 
-int qse_awk_flusheio (
+int qse_awk_rtx_flushio (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain;
-	qse_awk_io_t handler;
-	int eio_type, /*eio_mode,*/ eio_mask;
+	qse_awk_riod_t* p = run->rio.chain;
+	qse_awk_riof_t handler;
+	int io_type, /*io_mode,*/ io_mask;
 	qse_ssize_t n;
 	qse_bool_t ok = QSE_FALSE;
 
@@ -594,12 +592,12 @@ int qse_awk_flusheio (
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant eio type and mode */
-	eio_type = out_type_map[out_type];
-	/*eio_mode = out_mode_map[out_type];*/
-	eio_mask = out_mask_map[out_type];
+	/* translate the out_type into the relevant io type and mode */
+	io_type = out_type_map[out_type];
+	/*io_mode = out_mode_map[out_type];*/
+	io_mask = out_mask_map[out_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -607,14 +605,14 @@ int qse_awk_flusheio (
 		return -1;
 	}
 
-	/* look for the corresponding eio for name */
+	/* look for the corresponding rio for name */
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) && 
+		if (p->type == (io_type | io_mask) && 
 		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-			n = handler (QSE_AWK_IO_FLUSH, p, QSE_NULL, 0);
+			n = handler (run, QSE_AWK_IO_FLUSH, p, QSE_NULL, 0);
 
 			if (n <= -1) 
 			{
@@ -631,29 +629,29 @@ int qse_awk_flusheio (
 
 	if (ok) return 0;
 
-	/* there is no corresponding eio for name */
+	/* there is no corresponding rio for name */
 	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
 	return -1;
 }
 
-int qse_awk_nexteio_read (
+int qse_awk_rtx_nextio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain;
-	qse_awk_io_t handler;
-	int eio_type, /*eio_mode,*/ eio_mask; 
+	qse_awk_riod_t* p = run->rio.chain;
+	qse_awk_riof_t handler;
+	int io_type, /*io_mode,*/ io_mask; 
 	qse_ssize_t n;
 
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
-	/* translate the in_type into the relevant eio type and mode */
-	eio_type = in_type_map[in_type];
-	/*eio_mode = in_mode_map[in_type];*/
-	eio_mask = in_mask_map[in_type];
+	/* translate the in_type into the relevant io type and mode */
+	io_type = in_type_map[in_type];
+	/*io_mode = in_mode_map[in_type];*/
+	io_mask = in_mask_map[in_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -663,7 +661,7 @@ int qse_awk_nexteio_read (
 
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) &&
+		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
@@ -672,7 +670,7 @@ int qse_awk_nexteio_read (
 	{
 		/* something is totally wrong */
 		QSE_ASSERT (
-			!"should never happen - cannot find the relevant eio entry");
+			!"should never happen - cannot find the relevant rio entry");
 		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
 		return -1;
 	}
@@ -684,7 +682,7 @@ int qse_awk_nexteio_read (
 	}
 
 	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
+	n = handler (run, QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errnum == QSE_AWK_ENOERR)
@@ -695,7 +693,7 @@ int qse_awk_nexteio_read (
 	if (n == 0) 
 	{
 		/* the next stream cannot be opened. 
-		 * set the eos flags so that the next call to nexteio_read
+		 * set the eos flags so that the next call to nextio_read
 		 * will return 0 without executing the handler */
 		p->in.eos = QSE_TRUE;
 		return 0;
@@ -714,24 +712,24 @@ int qse_awk_nexteio_read (
 	}
 }
 
-int qse_awk_nexteio_write (
+int qse_awk_rtx_nextio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain;
-	qse_awk_io_t handler;
-	int eio_type, /*eio_mode,*/ eio_mask; 
+	qse_awk_riod_t* p = run->rio.chain;
+	qse_awk_riof_t handler;
+	int io_type, /*io_mode,*/ io_mask; 
 	qse_ssize_t n;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant eio type and mode */
-	eio_type = out_type_map[out_type];
-	/*eio_mode = out_mode_map[out_type];*/
-	eio_mask = out_mask_map[out_type];
+	/* translate the out_type into the relevant io type and mode */
+	io_type = out_type_map[out_type];
+	/*io_mode = out_mode_map[out_type];*/
+	io_mask = out_mask_map[out_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -741,7 +739,7 @@ int qse_awk_nexteio_write (
 
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) &&
+		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name,name) == 0) break;
 		p = p->next;
 	}
@@ -749,7 +747,7 @@ int qse_awk_nexteio_write (
 	if (p == QSE_NULL)
 	{
 		/* something is totally wrong */
-		QSE_ASSERT (!"should never happen - cannot find the relevant eio entry");
+		QSE_ASSERT (!"should never happen - cannot find the relevant rio entry");
 
 		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
 		return -1;
@@ -762,7 +760,7 @@ int qse_awk_nexteio_write (
 	}
 
 	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-	n = handler (QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
+	n = handler (run, QSE_AWK_IO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errnum == QSE_AWK_ENOERR)
@@ -773,7 +771,7 @@ int qse_awk_nexteio_write (
 	if (n == 0) 
 	{
 		/* the next stream cannot be opened. 
-		 * set the eos flags so that the next call to nexteio_write
+		 * set the eos flags so that the next call to nextio_write
 		 * will return 0 without executing the handler */
 		p->out.eos = QSE_TRUE;
 		return 0;
@@ -787,23 +785,23 @@ int qse_awk_nexteio_write (
 	}
 }
 
-int qse_awk_closeeio_read (
+int qse_awk_rtx_closio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain, * px = QSE_NULL;
-	qse_awk_io_t handler;
-	int eio_type, /*eio_mode,*/ eio_mask;
+	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_riof_t handler;
+	int io_type, /*io_mode,*/ io_mask;
 
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
-	/* translate the in_type into the relevant eio type and mode */
-	eio_type = in_type_map[in_type];
-	/*eio_mode = in_mode_map[in_type];*/
-	eio_mask = in_mask_map[in_type];
+	/* translate the in_type into the relevant io type and mode */
+	io_type = in_type_map[in_type];
+	/*io_mode = in_mode_map[in_type];*/
+	io_mask = in_mask_map[in_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -813,15 +811,15 @@ int qse_awk_closeeio_read (
 
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) &&
+		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_io_t handler;
+			qse_awk_riof_t handler;
 		       
-			handler = run->eio.handler[p->type & MASK_CLEAR];
+			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
-				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
+				if (handler (run, QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					qse_awk_rtx_seterror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL);
@@ -830,7 +828,7 @@ int qse_awk_closeeio_read (
 			}
 
 			if (px != QSE_NULL) px->next = p->next;
-			else run->eio.chain = p->next;
+			else run->rio.chain = p->next;
 
 			QSE_AWK_FREE (run->awk, p->name);
 			QSE_AWK_FREE (run->awk, p);
@@ -846,23 +844,23 @@ int qse_awk_closeeio_read (
 	return -1;
 }
 
-int qse_awk_closeeio_write (
+int qse_awk_rtx_closio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain, * px = QSE_NULL;
-	qse_awk_io_t handler;
-	int eio_type, /*eio_mode,*/ eio_mask;
+	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_riof_t handler;
+	int io_type, /*io_mode,*/ io_mask;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant eio type and mode */
-	eio_type = out_type_map[out_type];
-	/*eio_mode = out_mode_map[out_type];*/
-	eio_mask = out_mask_map[out_type];
+	/* translate the out_type into the relevant io type and mode */
+	io_type = out_type_map[out_type];
+	/*io_mode = out_mode_map[out_type];*/
+	io_mask = out_mask_map[out_type];
 
-	handler = run->eio.handler[eio_type];
+	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
@@ -872,16 +870,16 @@ int qse_awk_closeeio_write (
 
 	while (p != QSE_NULL)
 	{
-		if (p->type == (eio_type | eio_mask) &&
+		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_io_t handler;
+			qse_awk_riof_t handler;
 		       
-			handler = run->eio.handler[p->type & MASK_CLEAR];
+			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
+				if (handler (run, QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					if (run->errnum == QSE_AWK_ENOERR)
 						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
@@ -890,7 +888,7 @@ int qse_awk_closeeio_write (
 			}
 
 			if (px != QSE_NULL) px->next = p->next;
-			else run->eio.chain = p->next;
+			else run->rio.chain = p->next;
 
 			QSE_AWK_FREE (run->awk, p->name);
 			QSE_AWK_FREE (run->awk, p);
@@ -905,23 +903,23 @@ int qse_awk_closeeio_write (
 	return -1;
 }
 
-int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name)
+int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 {
-	qse_awk_eio_t* p = run->eio.chain, * px = QSE_NULL;
+	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
 
 	while (p != QSE_NULL)
 	{
 		 /* it handles the first that matches the given name
-		  * regardless of the eio type */
+		  * regardless of the io type */
 		if (qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_io_t handler;
+			qse_awk_riof_t handler;
 		       
-			handler = run->eio.handler[p->type & MASK_CLEAR];
+			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-				if (handler (QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
+				if (handler (run, QSE_AWK_IO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					if (run->errnum == QSE_AWK_ENOERR)
@@ -931,7 +929,7 @@ int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name)
 			}
 
 			if (px != QSE_NULL) px->next = p->next;
-			else run->eio.chain = p->next;
+			else run->rio.chain = p->next;
 
 			QSE_AWK_FREE (run->awk, p->name);
 			QSE_AWK_FREE (run->awk, p);
@@ -947,22 +945,22 @@ int qse_awk_closeeio (qse_awk_rtx_t* run, const qse_char_t* name)
 	return -1;
 }
 
-void qse_awk_cleareio (qse_awk_rtx_t* run)
+void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 {
-	qse_awk_eio_t* next;
-	qse_awk_io_t handler;
+	qse_awk_riod_t* next;
+	qse_awk_riof_t handler;
 	qse_ssize_t n;
 
-	while (run->eio.chain != QSE_NULL)
+	while (run->rio.chain != QSE_NULL)
 	{
-		handler = run->eio.handler[
-			run->eio.chain->type & MASK_CLEAR];
-		next = run->eio.chain->next;
+		handler = run->rio.handler[
+			run->rio.chain->type & MASK_CLEAR];
+		next = run->rio.chain->next;
 
 		if (handler != QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
-			n = handler (QSE_AWK_IO_CLOSE, run->eio.chain, QSE_NULL, 0);
+			n = handler (run, QSE_AWK_IO_CLOSE, run->rio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
 				if (run->errnum == QSE_AWK_ENOERR)
@@ -971,9 +969,9 @@ void qse_awk_cleareio (qse_awk_rtx_t* run)
 			}
 		}
 
-		QSE_AWK_FREE (run->awk, run->eio.chain->name);
-		QSE_AWK_FREE (run->awk, run->eio.chain);
+		QSE_AWK_FREE (run->awk, run->rio.chain->name);
+		QSE_AWK_FREE (run->awk, run->rio.chain);
 
-		run->eio.chain = next;
+		run->rio.chain = next;
 	}
 }
