@@ -154,7 +154,7 @@ static void on_run_statement (
 	/*dprint (L"running %d\n", (int)line);*/
 }
 
-static int on_run_enter (qse_awk_rtx_t* run, void* data)
+static int on_run_enter (qse_awk_rtx_t* rtx, void* data)
 {
 	struct argout_t* ao = (struct argout_t*)data;
 
@@ -162,20 +162,21 @@ static int on_run_enter (qse_awk_rtx_t* run, void* data)
 	{
 		qse_awk_val_t* fs;
 
-		fs = qse_awk_rtx_makestrval0 (run, ao->fs);
+		/* compose a string value to use to set FS to */
+		fs = qse_awk_rtx_makestrval0 (rtx, ao->fs);
 		if (fs == QSE_NULL) return -1;
 
-		qse_awk_rtx_refupval (run, fs);
-		qse_awk_rtx_setgbl (run, QSE_AWK_GBL_FS, fs);
-		qse_awk_rtx_refdownval (run, fs);
+		/* change FS according to the command line argument */
+		qse_awk_rtx_refupval (rtx, fs);
+		qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_FS, fs);
+		qse_awk_rtx_refdownval (rtx, fs);
 	}
-
 
 	return 0;
 }
 
 static void on_run_exit (
-	qse_awk_rtx_t* run, qse_awk_val_t* ret, void* data)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data)
 {
 	qse_size_t len;
 	qse_char_t* str;
@@ -186,7 +187,7 @@ static void on_run_exit (
 	}
 	else
 	{
-		str = qse_awk_rtx_valtostr (run, ret, 0, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostr (rtx, ret, 0, QSE_NULL, &len);
 		if (str == QSE_NULL)
 		{
 			dprint (QSE_T("[RETURN] - ***OUT OF MEMORY***\n"));
@@ -194,12 +195,12 @@ static void on_run_exit (
 		else
 		{
 			dprint (QSE_T("[RETURN] - [%.*s]\n"), (int)len, str);
-			qse_awk_free (qse_awk_rtx_getawk(run), str);
+			qse_awk_free (qse_awk_rtx_getawk(rtx), str);
 		}
 	}
 
 	dprint (QSE_T("[NAMED VARIABLES]\n"));
-	qse_map_walk (qse_awk_rtx_getnvmap(run), print_awk_value, run);
+	qse_map_walk (qse_awk_rtx_getnvmap(rtx), print_awk_value, rtx);
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
@@ -215,7 +216,7 @@ static struct
 	{ QSE_T("bxor"),        QSE_AWK_BXOR },
 	{ QSE_T("shift"),       QSE_AWK_SHIFT },
 	{ QSE_T("idiv"),        QSE_AWK_IDIV },
-	{ QSE_T("eio"),         QSE_AWK_EIO },
+	{ QSE_T("rio"),         QSE_AWK_RIO },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE },
 	{ QSE_T("baseone"),     QSE_AWK_BASEONE },

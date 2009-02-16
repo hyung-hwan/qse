@@ -34,7 +34,7 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #include "fnc.h"
 #include "parse.h"
 #include "run.h"
-#include "eio.h"
+#include "rio.h"
 #include "val.h"
 #include "misc.h"
 
@@ -331,13 +331,12 @@ struct qse_awk_rtx_t
 		} subsep;
 	} gbl;
 
-	/* eio chain */
+	/* rio chain */
 	struct
 	{
-		qse_awk_io_t handler[QSE_AWK_EIO_NUM];
-		void* data;
-		qse_awk_eio_t* chain;
-	} eio;
+		qse_awk_riof_t handler[QSE_AWK_RIO_NUM];
+		qse_awk_riod_t* chain;
+	} rio;
 
 	struct
 	{
