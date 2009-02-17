@@ -165,6 +165,7 @@ struct qse_awk_riod_t
 
 	qse_awk_riod_t* next;
 };
+/******/
 
 struct qse_awk_prm_t
 {
@@ -558,6 +559,8 @@ enum qse_awk_parse_ist_t
 	QSE_AWK_PARSE_STRING = 1
 };
 
+typedef enum qse_awk_errnum_t qse_awk_errnum_t;
+
 typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 typedef struct qse_awk_val_int_t  qse_awk_val_int_t;
 typedef struct qse_awk_val_real_t qse_awk_val_real_t;
@@ -774,11 +777,16 @@ qse_awk_prm_t* qse_awk_getprm (
 
 /****f* AWK/qse_awk_getccls
  * NAME
- *  qse_awk_getcclas - get the character classifier
+ *  qse_awk_getccls - get the character classifier
+ * DESCRIPTION
+ *  The qse_awk_getccls() function returns the character classifier composed
+ *  from the primitive functions in a call to qse_awk_open(). The data field
+ *  is set to the awk object. The classifier returned is valid while the 
+ *  associated awk object is alive.
  * SYNOPSIS
  */
 qse_ccls_t* qse_awk_getccls (
-	qse_awk_t* ccls
+	qse_awk_t* awk
 );
 /******/
 
@@ -807,8 +815,8 @@ int qse_awk_clear (
  * SYNOPSIS
  */
 const qse_char_t* qse_awk_geterrstr (
-	qse_awk_t* awk,
-	int        num
+	qse_awk_t*       awk,
+	qse_awk_errnum_t num
 );
 /******/
 
@@ -823,7 +831,7 @@ const qse_char_t* qse_awk_geterrstr (
  */
 int qse_awk_seterrstr (
 	qse_awk_t*        awk,
-	int               num,
+	qse_awk_errnum_t  num,
 	const qse_char_t* str
 );
 /******/
@@ -1518,14 +1526,16 @@ qse_char_t* qse_awk_rtx_valtostr (
  *  The qse_awk_rtx_valtonum() function returns -1 on error, 0 if the converted
  *  number is a long number and 1 if it is a real number.
  * EXAMPLES
- *  qse_long_t l;
- *  qse_real_t r;
- *  int n;
+ *  The following example show how to convert a value to a number and
+ *  determine if it is an integer or a floating-point number.
+ *      qse_long_t l;
+ *      qse_real_t r;
+ *      int n;
  *
- *  n = qse_awk_rtx_valtonum (v, &l, &r);
- *  if (n == -1) error ();
- *  else if (n == 0) do_long (l);
- *  else if (n == 1) do_real (r);
+ *      n = qse_awk_rtx_valtonum (v, &l, &r);
+ *      if (n == -1) error ();
+ *      else if (n == 0) do_long (l);
+ *      else if (n == 1) do_real (r);
  * SYNOPSIS
  */
 int qse_awk_rtx_valtonum (

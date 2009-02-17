@@ -1,6 +1,7 @@
 items:
 	NAME
 	SYNOPSIS
+	SOURCE
 	DESCRIPTION
 	INPUT
 	INPUTS
@@ -30,6 +31,7 @@ item order:
 	NOTES
 	BUGS
 	SEE ALSO
+	SOURCE
 remark begin markers:
 	/*
 remark end markers:
@@ -37,7 +39,8 @@ remark end markers:
 ignore files:
 	.svn
 headertypes:
-	o     "Overview"       robo_overview     10
+	o     "Overview"    robo_overview     10
+	S     "Sample Code" robo_sample       11
 options:
 	--cmode
 	--nopre
