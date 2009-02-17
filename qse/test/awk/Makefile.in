@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = awk01$(EXEEXT)
+bin_PROGRAMS = awk01$(EXEEXT) awk03$(EXEEXT)
 subdir = test/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -50,6 +50,10 @@ awk01_OBJECTS = $(am_awk01_OBJECTS)
 awk01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 awk01_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_awk03_OBJECTS = awk03.$(OBJEXT)
+awk03_OBJECTS = $(am_awk03_OBJECTS)
+awk03_LDADD = $(LDADD)
+awk03_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -62,8 +66,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(awk01_SOURCES)
-DIST_SOURCES = $(awk01_SOURCES)
+SOURCES = $(awk01_SOURCES) $(awk03_SOURCES)
+DIST_SOURCES = $(awk01_SOURCES) $(awk03_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -191,6 +195,7 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 LDADD = -lqseawk -lqseutl -lqsecmn $(LIBM)
 awk01_SOURCES = awk01.c
+awk03_SOURCES = awk03.c
 all: all-am
 
 .SUFFIXES:
@@ -255,6 +260,9 @@ clean-binPROGRAMS:
 awk01$(EXEEXT): $(awk01_OBJECTS) $(awk01_DEPENDENCIES) 
 	@rm -f awk01$(EXEEXT)
 	$(LINK) $(awk01_OBJECTS) $(awk01_LDADD) $(LIBS)
+awk03$(EXEEXT): $(awk03_OBJECTS) $(awk03_DEPENDENCIES) 
+	@rm -f awk03$(EXEEXT)
+	$(LINK) $(awk03_OBJECTS) $(awk03_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -263,6 +271,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk03.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
