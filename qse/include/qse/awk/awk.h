@@ -58,7 +58,6 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 typedef struct qse_awk_riod_t qse_awk_riod_t;
 
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
-typedef struct qse_awk_rexfns_t qse_awk_rexfns_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (
 	qse_awk_t* awk,
@@ -74,18 +73,52 @@ typedef int (*qse_awk_sprintf_t) (
 	...
 );
 
+typedef qse_bool_t (*qse_awk_isccls_t) (
+	qse_awk_t*    awk,
+	qse_cint_t    c,
+	qse_ccls_id_t type
+);
+
+typedef qse_cint_t (*qse_awk_toccls_t) (
+	qse_awk_t*    awk,
+	qse_cint_t    c,
+	qse_ccls_id_t type
+);
+
+enum qse_awk_sio_cmd_t
+{
+	QSE_AWK_SIO_OPEN   = 0,
+	QSE_AWK_SIO_CLOSE  = 1,
+	QSE_AWK_SIO_READ   = 2,
+	QSE_AWK_SIO_WRITE  = 3
+};
+
+typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
+
 /****t* AWK/qse_awk_siof_t
  * NAME
  *  qse_awk_siof_t - define a source IO function
  * SYNOPSIS
  */
 typedef qse_ssize_t (*qse_awk_siof_t) (
-	qse_awk_t*     awk,
-	int            cmd, 
-	qse_char_t*    data,
-	qse_size_t     count
+	qse_awk_t*        awk,
+	qse_awk_sio_cmd_t cmd, 
+	qse_char_t*       data,
+	qse_size_t        count
 );
 /*****/
+
+enum qse_awk_rio_cmd_t
+{
+	QSE_AWK_RIO_OPEN   = 0,
+	QSE_AWK_RIO_CLOSE  = 1,
+	QSE_AWK_RIO_READ   = 2,
+	QSE_AWK_RIO_WRITE  = 3,
+	QSE_AWK_RIO_FLUSH  = 4,
+	QSE_AWK_RIO_NEXT   = 5  
+};
+
+typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
 /****f* AWK/qse_awk_riof_t
  * NAME
@@ -93,17 +126,17 @@ typedef qse_ssize_t (*qse_awk_siof_t) (
  * SYNOPSIS
  */
 typedef qse_ssize_t (*qse_awk_riof_t) (
-	qse_awk_rtx_t*  rtx,
-	int             cmd, 
-	qse_awk_riod_t* riod,
-	qse_char_t*     data,
-	qse_size_t      count
+	qse_awk_rtx_t*    rtx,
+	qse_awk_rio_cmd_t cmd, 
+	qse_awk_riod_t*   riod,
+	qse_char_t*       data,
+	qse_size_t        count
 );
 /******/
 
 /****f* AWK/qse_awk_riod_t
  * NAME
- *  qse_awk_riod_f - define a data passed to a rio function 
+ *  qse_awk_riod_f - define the data passed to a rio function 
  * SYNOPSIS
  */
 struct qse_awk_riod_t 
@@ -135,40 +168,13 @@ struct qse_awk_riod_t
 
 struct qse_awk_prm_t
 {
-	qse_awk_pow_t     pow;         /* required */
-	qse_awk_sprintf_t sprintf;     /* required */
-};
+	qse_awk_pow_t     pow;
+	qse_awk_sprintf_t sprintf;
+	qse_awk_isccls_t  isccls;
+	qse_awk_toccls_t  toccls;
 
-struct qse_awk_sio_t
-{
-	qse_awk_siof_t in;
-	qse_awk_siof_t out;
-};
-
-struct qse_awk_rio_t
-{
-	qse_awk_riof_t pipe;
-	qse_awk_riof_t file;
-	qse_awk_riof_t console;
-};
-
-struct qse_awk_rcb_t
-{
-	int (*on_enter) (
-		qse_awk_rtx_t* rtx, void* data);
-
-	void (*on_statement) (
-		qse_awk_rtx_t* rtx, qse_size_t line, void* data);
-
-	void (*on_exit) (
-		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
-
-	void* data;
-};
-
-struct qse_awk_rexfns_t
-{
-	/* TODO: implement functions to get/set rexfns */
+#if 0
+	/* TODO: accept regular expression handling functions */
 	void* (*build) (
 		qse_awk_t*        awk,
 		const qse_char_t* ptn, 
@@ -196,17 +202,34 @@ struct qse_awk_rexfns_t
 		qse_awk_t* awk,
 		void*      code
 	);
+#endif
 };
 
-/* io function commands */
-enum qse_awk_iocmd_t
+struct qse_awk_sio_t
 {
-	QSE_AWK_IO_OPEN   = 0,
-	QSE_AWK_IO_CLOSE  = 1,
-	QSE_AWK_IO_READ   = 2,
-	QSE_AWK_IO_WRITE  = 3,
-	QSE_AWK_IO_FLUSH  = 4,
-	QSE_AWK_IO_NEXT   = 5  
+	qse_awk_siof_t in;
+	qse_awk_siof_t out;
+};
+
+struct qse_awk_rio_t
+{
+	qse_awk_riof_t pipe;
+	qse_awk_riof_t file;
+	qse_awk_riof_t console;
+};
+
+struct qse_awk_rcb_t
+{
+	int (*on_enter) (
+		qse_awk_rtx_t* rtx, void* data);
+
+	void (*on_statement) (
+		qse_awk_rtx_t* rtx, qse_size_t line, void* data);
+
+	void (*on_exit) (
+		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
+
+	void* data;
 };
 
 /* various options */
@@ -649,19 +672,35 @@ extern qse_awk_val_t* qse_awk_val_one;
  * NAME
  *  qse_awk_open - create an awk object
  * DESCRIPTION
- *  The qse_awk_open() function creates a new qse_awk_t instance.
+ *  The qse_awk_open() function creates a new qse_awk_t object.
  *  The instance created can be passed to other qse_awk_xxx() functions and
  *  is valid until it is successfully destroyed using the qse_qse_close() 
- *  function.
+ *  function. The function save the memory manager pointer while it copies
+ *  the contents of the primitive function structures. Therefore, you should
+ *  keep the memory manager valid during the whole life cycle of an qse_awk_t
+ *  object.
+ *
+ *    qse_awk_t* dummy()
+ *    {
+ *       qse_mmgr_t mmgr;
+ *       qse_awk_prm_t prm;
+ *       return qse_awk_open (
+ *          &mmgr, // NOT OK because the contents of mmgr is 
+ *                 // invalidated when dummy() returns. 
+ *          0, 
+ *          &prm   // OK 
+ *       );
+ *    }
+ *
  * RETURN
- *  The qse_awk_open() function returns the pointer to a qse_awk_t instance 
+ *  The qse_awk_open() function returns the pointer to a qse_awk_t object 
  *  on success and QSE_NULL on failure.
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t* mmgr  /* a memory manager */,
-	qse_size_t  xtn   /* the size of extension in bytes */,
-	qse_ccls_t* ccls
+	qse_mmgr_t*     mmgr  /* a memory manager */,
+	qse_size_t      xtn   /* the size of extension in bytes */,
+	qse_awk_prm_t*  prm   /* primitive functoins */
 );
 /******/
 
@@ -723,27 +762,6 @@ void* qse_awk_getxtn (
 );
 /******/
 
-/****f* AWK/qse_awk_getccls
- * NAME
- *  qse_awk_getccls - get a character classifier
- * SYNOPSIS
- */
-qse_ccls_t* qse_awk_getccls (
-	qse_awk_t* awk
-);
-/******/
-
-/****f* AWK/qse_awk_setccls
- * NAME
- *  qse_awk_setccls - set the character classfier
- * SYNOPSIS
- */
-void qse_awk_setccls (
-	qse_awk_t*  awk,
-	qse_ccls_t* ccls 
-);
-/******/
-
 /****f* AWK/qse_awk_getprm
  * NAME
  *  qse_awk_getprm - get primitive functions
@@ -754,14 +772,13 @@ qse_awk_prm_t* qse_awk_getprm (
 );
 /******/
 
-/****f* AWK/qse_awk_setprm
+/****f* AWK/qse_awk_getccls
  * NAME
- *  qse_awk_setprm - set primitive functions
+ *  qse_awk_getcclas - get the character classifier
  * SYNOPSIS
  */
-void qse_awk_setprm (
-	qse_awk_t*     awk, 
-	qse_awk_prm_t* prm
+qse_ccls_t* qse_awk_getccls (
+	qse_awk_t* ccls
 );
 /******/
 
@@ -1450,7 +1467,7 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 	qse_awk_val_t** adr
 );
 
-qse_bool_t qse_awk_isstaticval (
+qse_bool_t qse_awk_rtx_isstaticval (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
 );

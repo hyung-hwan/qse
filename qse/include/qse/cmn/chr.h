@@ -53,15 +53,13 @@ extern qse_ccls_t* qse_ccls;
 
 qse_bool_t qse_ccls_is (
 	qse_cint_t      c,
-	qse_ccls_type_t type
+	qse_ccls_id_t type
 );
 
 qse_cint_t qse_ccls_to (
 	qse_cint_t      c,
-	qse_ccls_type_t type
+	qse_ccls_id_t type
 );
-
-
 
 qse_size_t qse_mblen (
 	const qse_mchar_t* mb,

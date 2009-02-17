@@ -412,14 +412,14 @@ void  StdAwk::freeMem (void* ptr)
 }
 
 // character handling primitive
-Awk::bool_t StdAwk::isType (cint_t c, ccls_type_t type)
+Awk::bool_t StdAwk::isType (cint_t c, ccls_id_t type)
 {
-	return qse_ccls_is (c, (qse_ccls_type_t)type);
+	return qse_ccls_is (c, (qse_ccls_id_t)type);
 }
 
-Awk::cint_t StdAwk::transCase (cint_t c, ccls_type_t type)
+Awk::cint_t StdAwk::transCase (cint_t c, ccls_id_t type)
 {
-	return qse_ccls_to (c, (qse_ccls_type_t)type);
+	return qse_ccls_to (c, (qse_ccls_id_t)type);
 }
 
 // miscellaneous primitive

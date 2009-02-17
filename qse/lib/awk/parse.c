@@ -469,8 +469,6 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 {
 	int n;
 
-	QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_setccls() first");
-
 	QSE_ASSERTX (
 		sio != QSE_NULL && sio->in != QSE_NULL,
 		"the source code input stream must be provided at least");
@@ -496,7 +494,7 @@ static int parse (qse_awk_t* awk)
 	QSE_ASSERT (awk->src.ios.in != QSE_NULL);
 
 	CLRERR (awk);
-	op = awk->src.ios.in (awk, QSE_AWK_IO_OPEN, QSE_NULL, 0);
+	op = awk->src.ios.in (awk, QSE_AWK_SIO_OPEN, QSE_NULL, 0);
 	if (op <= -1)
 	{
 		/* cannot open the source file.
@@ -567,7 +565,7 @@ static int parse (qse_awk_t* awk)
 #undef EXIT_PARSE
 exit_parse:
 	if (n == 0) CLRERR (awk);
-	if (awk->src.ios.in (awk, QSE_AWK_IO_CLOSE, QSE_NULL, 0) != 0)
+	if (awk->src.ios.in (awk, QSE_AWK_SIO_CLOSE, QSE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -1421,7 +1419,7 @@ struct check_global_t
 static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
 {
 	qse_cstr_t tmp;
-	qse_awk_t* awk = *(qse_awk_t**)qse_lda_getxtn(lda);
+	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(lda);
 	check_global_t* cg = (check_global_t*)arg;
 
 	tmp.ptr = QSE_LDA_DPTR(lda,index);
@@ -5276,7 +5274,7 @@ static int get_char (qse_awk_t* awk)
 	{
 		CLRERR (awk);
 		n = awk->src.ios.in (
-			awk, QSE_AWK_IO_READ,
+			awk, QSE_AWK_SIO_READ,
 			awk->src.shared.buf, QSE_COUNTOF(awk->src.shared.buf)
 		);
 		if (n <= -1)
@@ -5578,7 +5576,7 @@ static int deparse (qse_awk_t* awk)
 	awk->src.shared.buf_pos = 0;
 
 	CLRERR (awk);
-	op = awk->src.ios.out (awk, QSE_AWK_IO_OPEN, QSE_NULL, 0);
+	op = awk->src.ios.out (awk, QSE_AWK_SIO_OPEN, QSE_NULL, 0);
 	if (op <= -1)
 	{
 		if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTOP);
@@ -5783,7 +5781,7 @@ static int deparse (qse_awk_t* awk)
 
 exit_deparse:
 	if (n == 0) CLRERR (awk);
-	if (awk->src.ios.out (awk, QSE_AWK_IO_CLOSE, QSE_NULL, 0) != 0)
+	if (awk->src.ios.out (awk, QSE_AWK_SIO_CLOSE, QSE_NULL, 0) != 0)
 	{
 		if (n == 0)
 		{
@@ -5880,7 +5878,7 @@ static int flush_out (qse_awk_t* awk)
 		CLRERR (awk);
 
 		n = awk->src.ios.out (
-			awk, QSE_AWK_IO_WRITE,
+			awk, QSE_AWK_SIO_WRITE,
 			&awk->src.shared.buf[awk->src.shared.buf_pos], 
 			awk->src.shared.buf_len - awk->src.shared.buf_pos
 		);

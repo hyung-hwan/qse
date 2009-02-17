@@ -19,6 +19,7 @@
 #include <qse/awk/Awk.hpp>
 #include <qse/cmn/str.h>
 #include "../cmn/mem.h"
+#include "awk.h"
 
 #include <qse/utl/stdio.h>
 /////////////////////////////////
@@ -83,7 +84,7 @@ void Awk::RIO::setHandle (void* handle)
 
 Awk::RIO::operator Awk::Awk* () const 
 {
-	rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (this->rtx);
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (this->rtx);
 	return rxtn->run->awk;
 }
 
@@ -909,13 +910,11 @@ void Awk::Return::clear ()
 // Awk::Run
 //////////////////////////////////////////////////////////////////
 
-Awk::Run::Run (Awk* awk): 
-	awk (awk), run (QSE_NULL), callbackFailed (false)
+Awk::Run::Run (Awk* awk): awk (awk), run (QSE_NULL)
 {
 }
 
-Awk::Run::Run (Awk* awk, rtx_t* run): 
-	awk (awk), run (run), callbackFailed (false), data (QSE_NULL)
+Awk::Run::Run (Awk* awk, rtx_t* run): awk (awk), run (run), data (QSE_NULL)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 }
@@ -1077,13 +1076,6 @@ Awk::Awk (): awk (QSE_NULL), functionMap (QSE_NULL),
 	mmgr.realloc = reallocMem;
 	mmgr.free    = freeMem;
 	mmgr.data    = this;
-
-	ccls.is   = isType;
-	ccls.to   = transCase;
-	ccls.data = this;
-
-	prm.pow     = pow;
-	prm.sprintf = sprintf;
 }
 
 Awk::~Awk ()
@@ -1196,7 +1188,13 @@ int Awk::open ()
 {
 	QSE_ASSERT (awk == QSE_NULL && functionMap == QSE_NULL);
 
-	awk = qse_awk_open (&mmgr, QSE_SIZEOF(xtn_t), &ccls);
+	qse_awk_prm_t prm;
+	prm.pow     = pow;
+	prm.sprintf = sprintf;
+	prm.isccls  = isType;
+	prm.toccls  = transCase;
+
+	awk = qse_awk_open (&mmgr, QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
 	{
 		setError (ERR_NOMEM);
@@ -1204,10 +1202,8 @@ int Awk::open ()
 	}
 
 	// associate this Awk object with the underlying awk object
-	xtn_t* xtn = (xtn_t*)qse_awk_getxtn (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	xtn->awk = this;
-
-	qse_awk_setprm (awk, &prm);
 
 	//functionMap = qse_map_open (
 	//	this, 512, 70, freeFunctionMapValue, QSE_NULL, 
@@ -1223,7 +1219,7 @@ int Awk::open ()
 		return -1;
 	}
 
-	*(Awk**)qse_map_getxtn(functionMap) = this;
+	*(Awk**)QSE_XTN(functionMap) = this;
 	qse_map_setcopier (functionMap, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (functionMap, QSE_MAP_VAL, freeFunctionMapValue);
 	qse_map_setscale (functionMap, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
@@ -1415,7 +1411,7 @@ int Awk::run (const char_t** args, size_t nargs)
 	{
 		runctx.run = rtx;
 
-		rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
+		rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 		rxtn->run = &runctx;
 
 		if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
@@ -1581,15 +1577,6 @@ void Awk::disableRunCallback ()
 	runCallback = false;
 }
 
-bool Awk::onRunStart (Run& run)
-{
-	return true;
-}
-
-void Awk::onRunEnd (Run& run)
-{
-}
-
 bool Awk::onRunEnter (Run& run)
 {
 	return true;
@@ -1604,45 +1591,50 @@ void Awk::onRunStatement (Run& run, size_t line)
 }
 
 Awk::ssize_t Awk::sourceReader (
-	awk_t* awk, int cmd, char_t* data, size_t count)
+	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
 {
-	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 
 	switch (cmd)
 	{
-		case QSE_AWK_IO_OPEN:
+		case QSE_AWK_SIO_OPEN:
 			return xtn->awk->openSource (xtn->awk->sourceIn);
-		case QSE_AWK_IO_CLOSE:
+		case QSE_AWK_SIO_CLOSE:
 			return xtn->awk->closeSource (xtn->awk->sourceIn);
-		case QSE_AWK_IO_READ:
+		case QSE_AWK_SIO_READ:
 			return xtn->awk->readSource (xtn->awk->sourceIn, data, count);
+		case QSE_AWK_SIO_WRITE:
+			return -1;
 	}
 
 	return -1;
 }
 
 Awk::ssize_t Awk::sourceWriter (
-	awk_t* awk, int cmd, char_t* data, size_t count)
+	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
 {
-	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 
 	switch (cmd)
 	{
-		case QSE_AWK_IO_OPEN:
+		case QSE_AWK_SIO_OPEN:
 			return xtn->awk->openSource (xtn->awk->sourceOut);
-		case QSE_AWK_IO_CLOSE:
+		case QSE_AWK_SIO_CLOSE:
 			return xtn->awk->closeSource (xtn->awk->sourceOut);
-		case QSE_AWK_IO_WRITE:
+		case QSE_AWK_SIO_WRITE:
 			return xtn->awk->writeSource (xtn->awk->sourceOut, data, count);
+		case QSE_AWK_SIO_READ:
+			return -1;
 	}
 
 	return -1;
 }
 
 Awk::ssize_t Awk::pipeHandler (
-	rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count)
+	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	char_t* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_PIPE);
@@ -1651,20 +1643,20 @@ Awk::ssize_t Awk::pipeHandler (
 
 	switch (cmd)
 	{
-		case QSE_AWK_IO_OPEN:
+		case QSE_AWK_RIO_OPEN:
 			return awk->openPipe (pipe);
-		case QSE_AWK_IO_CLOSE:
+		case QSE_AWK_RIO_CLOSE:
 			return awk->closePipe (pipe);
 
-		case QSE_AWK_IO_READ:
+		case QSE_AWK_RIO_READ:
 			return awk->readPipe (pipe, data, count);
-		case QSE_AWK_IO_WRITE:
+		case QSE_AWK_RIO_WRITE:
 			return awk->writePipe (pipe, data, count);
 
-		case QSE_AWK_IO_FLUSH:
+		case QSE_AWK_RIO_FLUSH:
 			return awk->flushPipe (pipe);
 
-		case QSE_AWK_IO_NEXT:
+		case QSE_AWK_RIO_NEXT:
 			return -1;
 	}
 
@@ -1672,9 +1664,10 @@ Awk::ssize_t Awk::pipeHandler (
 }
 
 Awk::ssize_t Awk::fileHandler (
-	rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count)
+	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	char_t* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_FILE);
@@ -1683,20 +1676,20 @@ Awk::ssize_t Awk::fileHandler (
 
 	switch (cmd)
 	{
-		case QSE_AWK_IO_OPEN:
+		case QSE_AWK_RIO_OPEN:
 			return awk->openFile (file);
-		case QSE_AWK_IO_CLOSE:
+		case QSE_AWK_RIO_CLOSE:
 			return awk->closeFile (file);
 
-		case QSE_AWK_IO_READ:
+		case QSE_AWK_RIO_READ:
 			return awk->readFile (file, data, count);
-		case QSE_AWK_IO_WRITE:
+		case QSE_AWK_RIO_WRITE:
 			return awk->writeFile (file, data, count);
 
-		case QSE_AWK_IO_FLUSH:
+		case QSE_AWK_RIO_FLUSH:
 			return awk->flushFile (file);
 
-		case QSE_AWK_IO_NEXT:
+		case QSE_AWK_RIO_NEXT:
 			return -1;
 	}
 
@@ -1704,9 +1697,10 @@ Awk::ssize_t Awk::fileHandler (
 }
 
 Awk::ssize_t Awk::consoleHandler (
-	rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count)
+	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	char_t* data, size_t count)
 {
-	rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	Awk* awk = rxtn->run->awk;
 
 	QSE_ASSERT ((riod->type & 0xFF) == QSE_AWK_RIO_CONSOLE);
@@ -1715,19 +1709,19 @@ Awk::ssize_t Awk::consoleHandler (
 
 	switch (cmd)
 	{
-		case QSE_AWK_IO_OPEN:
+		case QSE_AWK_RIO_OPEN:
 			return awk->openConsole (console);
-		case QSE_AWK_IO_CLOSE:
+		case QSE_AWK_RIO_CLOSE:
 			return awk->closeConsole (console);
 
-		case QSE_AWK_IO_READ:
+		case QSE_AWK_RIO_READ:
 			return awk->readConsole (console, data, count);
-		case QSE_AWK_IO_WRITE:
+		case QSE_AWK_RIO_WRITE:
 			return awk->writeConsole (console, data, count);
 
-		case QSE_AWK_IO_FLUSH:
+		case QSE_AWK_RIO_FLUSH:
 			return awk->flushConsole (console);
-		case QSE_AWK_IO_NEXT:
+		case QSE_AWK_RIO_NEXT:
 			return awk->nextConsole (console);
 	}
 
@@ -1736,57 +1730,35 @@ Awk::ssize_t Awk::consoleHandler (
 
 int Awk::functionHandler (rtx_t* rtx, const char_t* name, size_t len)
 {
-	rxtn_t* rxtn = (rxtn_t*) qse_awk_rtx_getxtn (rtx);
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	return rxtn->run->awk->dispatchFunction (rxtn->run, name, len);
 }	
 
 void Awk::freeFunctionMapValue (map_t* map, void* dptr, size_t dlen)
 {
-	//Awk* awk = (Awk*)owner;
-	Awk* awk = *(Awk**)qse_map_getxtn(map);
+	Awk* awk = *(Awk**) QSE_XTN (map);
 	qse_awk_free (awk->awk, dptr);
-}
-
-int Awk::onRunStart (rtx_t* run, void* data)
-{
-	Run* r = (Run*)data;
-	r->callbackFailed = false;
-	return r->awk->onRunStart(*r)? 0: -1;
-}
-
-void Awk::onRunEnd (rtx_t* run, int errnum, void* data)
-{
-	Run* r = (Run*)data;
-
-	if (errnum == ERR_NOERR && r->callbackFailed)
-	{
-		qse_awk_rtx_seterrnum (r->run, ERR_NOMEM);
-	}
-
-	r->awk->onRunEnd (*r);
 }
 
 int Awk::onRunEnter (rtx_t* run, void* data)
 {
 	Run* r = (Run*)data;
-	if (r->callbackFailed) return false;
 	return r->awk->onRunEnter(*r)? 0: -1;
 }
 
 void Awk::onRunExit (rtx_t* run, val_t* ret, void* data)
 {
 	Run* r = (Run*)data;
-	if (r->callbackFailed) return;
 
 	Argument x (r);
-	if (x.init (ret) == -1) r->callbackFailed = true;		
+	if (x.init (ret) == -1) 
+		qse_awk_rtx_seterrnum (r->run, ERR_NOMEM);
 	else r->awk->onRunExit (*r, x);
 }
 
 void Awk::onRunStatement (rtx_t* run, size_t line, void* data)
 {
 	Run* r = (Run*)data;
-	if (r->callbackFailed) return;
 	r->awk->onRunStatement (*r, line);
 }
 
@@ -1805,26 +1777,28 @@ void Awk::freeMem (void* data, void* ptr)
 	((Awk*)data)->freeMem (ptr);
 }
 
-Awk::bool_t Awk::isType (void* data, cint_t c, qse_ccls_type_t type) 
+Awk::bool_t Awk::isType (awk_t* awk, cint_t c, qse_ccls_id_t type) 
 {
-	return ((Awk*)data)->isType (c, (ccls_type_t)type);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->isType (c, (ccls_id_t)type);
 }
 
-Awk::cint_t Awk::transCase (void* data, cint_t c, qse_ccls_type_t type) 
+Awk::cint_t Awk::transCase (awk_t* awk, cint_t c, qse_ccls_id_t type) 
 {
-	return ((Awk*)data)->transCase (c, (ccls_type_t)type);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->transCase (c, (ccls_id_t)type);
 }
 
 Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
 {
-	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->pow (x, y);
 }
 	
 int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
                   const char_t* fmt, ...)
 {
-	xtn_t* xtn = (xtn_t*) qse_awk_getxtn (awk);
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 
 	va_list ap;
 	va_start (ap, fmt);
