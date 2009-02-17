@@ -46,19 +46,19 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC((awk)->mmgr,ptr,size)
 #define QSE_AWK_FREE(awk,ptr)         QSE_MMGR_FREE((awk)->mmgr,ptr)
 
-#define QSE_AWK_ISUPPER(awk,c)  QSE_CCLS_ISUPPER((awk)->ccls,c)
-#define QSE_AWK_ISLOWER(awk,c)  QSE_CCLS_ISLOWER((awk)->ccls,c)
-#define QSE_AWK_ISALPHA(awk,c)  QSE_CCLS_ISALPHA((awk)->ccls,c)
-#define QSE_AWK_ISDIGIT(awk,c)  QSE_CCLS_ISDIGIT((awk)->ccls,c)
-#define QSE_AWK_ISXDIGIT(awk,c) QSE_CCLS_ISXDIGIT((awk)->ccls,c)
-#define QSE_AWK_ISALNUM(awk,c)  QSE_CCLS_ISALNUM((awk)->ccls,c)
-#define QSE_AWK_ISSPACE(awk,c)  QSE_CCLS_ISSPACE((awk)->ccls,c)
-#define QSE_AWK_ISPRINT(awk,c)  QSE_CCLS_ISPRINT((awk)->ccls,c)
-#define QSE_AWK_ISGRAPH(awk,c)  QSE_CCLS_ISGRAPH((awk)->ccls,c)
-#define QSE_AWK_ISCNTRL(awk,c)  QSE_CCLS_ISCNTRL((awk)->ccls,c)
-#define QSE_AWK_ISPUNCT(awk,c)  QSE_CCLS_ISPUNCT((awk)->ccls,c)
-#define QSE_AWK_TOUPPER(awk,c)  QSE_CCLS_TOUPPER((awk)->ccls,c)
-#define QSE_AWK_TOLOWER(awk,c)  QSE_CCLS_TOLOWER((awk)->ccls,c)
+#define QSE_AWK_ISUPPER(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_UPPER)
+#define QSE_AWK_ISLOWER(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_UPPER)
+#define QSE_AWK_ISALPHA(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_ALPHA)
+#define QSE_AWK_ISDIGIT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_DIGIT)
+#define QSE_AWK_ISXDIGIT(awk,c) awk->prm.isccls(awk,c,QSE_CCLS_XDIGIT)
+#define QSE_AWK_ISALNUM(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_ALNUM)
+#define QSE_AWK_ISSPACE(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_SPACE)
+#define QSE_AWK_ISPRINT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_PRINT)
+#define QSE_AWK_ISGRAPH(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_GRAPH)
+#define QSE_AWK_ISCNTRL(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_CNTRL)
+#define QSE_AWK_ISPUNCT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_PUNCT)
+#define QSE_AWK_TOUPPER(awk,c)  awk->prm.toccls(awk,c,QSE_CCLS_UPPER)
+#define QSE_AWK_TOLOWER(awk,c)  awk->prm.toccls(awk,c,QSE_CCLS_LOWER)
 
 #define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,(awk)->mmgr))
 #define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,(awk)->mmgr))
@@ -85,9 +85,16 @@ struct qse_awk_tree_t
 
 struct qse_awk_t
 {
+	/* memory manager */
 	qse_mmgr_t*    mmgr;
-	qse_ccls_t*    ccls;
+
+	/* primitive functions */
 	qse_awk_prm_t  prm;
+
+	/* character classifier composed from primitive functions.
+	 * it is used in calling some functions that require a character 
+	 * classifier */
+	qse_ccls_t     ccls; 
 
 	/* options */
 	int option;
@@ -96,9 +103,6 @@ struct qse_awk_t
 	qse_map_t* wtab;
 	/* reverse word table */
 	qse_map_t* rwtab;
-
-	/* regular expression processing routines */
-	qse_awk_rexfns_t* rexfns;
 
 	/* parse tree */
 	qse_awk_tree_t tree;

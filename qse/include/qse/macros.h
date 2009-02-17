@@ -172,6 +172,26 @@ qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 /******/
 
+/****d* Base/QSE_MMGR
+ * NAME
+ *  QSE_MMGR - get the memory manager field
+ * SYNOPSIS
+ */
+#define QSE_MMGR(obj) (obj->mmgr)
+/******/
+
+/****d* Base/QSE_XTN
+ * NAME
+ *  QSE_XTN - get a pointer to extension space
+ * DESCRIPTION
+ *  The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
+ *  extension space located at the end of an object. The type of the object
+ *  should be known in advance for it to work properly.
+ * SYNOPSIS
+ */
+#define QSE_XTN(obj) ((void*)(obj + 1))
+/******/
+
 /****d* Base/QSE_IMPLEMENT_COMMON_FUNCTIONS
  * NAME
  *  QSE_IMPLEMENT_COMMON_FUNCTIONS - implement common functions
@@ -180,16 +200,17 @@ void* qse_##name##_getxtn (qse_##name##_t* name);
 #define QSE_IMPLEMENT_COMMON_FUNCTIONS(name) \
 void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
 { \
-	name->mmgr = mmgr; \
+	QSE_MMGR(name) = mmgr; \
 } \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name) \
 { \
-	return name->mmgr; \
+	return QSE_MMGR(name); \
 } \
 void* qse_##name##_getxtn (qse_##name##_t* name) \
 { \
-	return (void*)(name + 1); \
+	return QSE_XTN(name); \
 }
 /******/
+
 
 #endif

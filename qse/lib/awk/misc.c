@@ -961,7 +961,7 @@ int qse_awk_matchrex (
 	int err, x;
 
 	x = qse_matchrex (
-		awk->mmgr, awk->ccls, awk->rex.depth.max.match,
+		awk->mmgr, &awk->ccls, awk->rex.depth.max.match,
 		code, option, str, len, match_ptr, match_len, &err);
 	if (x < 0) *errnum = QSE_AWK_REXERRTOERR(err);
 	return x;

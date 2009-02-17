@@ -413,12 +413,12 @@ struct qse_mmgr_t
 };
 /******/
 
-/****t* Base/qse_ccls_type_t
+/****t* Base/qse_ccls_id_t
  * NAME
- *  qse_ccls_type_t - define character class types
+ *  qse_ccls_id_t - define character class types
  * SYNOPSIS
  */
-enum qse_ccls_type_t
+enum qse_ccls_id_t
 {
         QSE_CCLS_UPPER,
         QSE_CCLS_LOWER,
@@ -434,7 +434,12 @@ enum qse_ccls_type_t
 };
 /******/
 
-typedef enum qse_ccls_type_t qse_ccls_type_t;
+typedef enum qse_ccls_id_t qse_ccls_id_t;
+
+typedef qse_bool_t (*qse_ccls_is_t) (
+	void* data, qse_cint_t c, qse_ccls_id_t type);
+typedef qse_cint_t (*qse_ccls_to_t) (
+	void* data, qse_cint_t c, qse_ccls_id_t type);
 
 /****t* Base/qse_ccls_t
  * NAME
@@ -443,9 +448,9 @@ typedef enum qse_ccls_type_t qse_ccls_type_t;
  */
 struct qse_ccls_t
 {
-	qse_bool_t (*is) (void* data, qse_cint_t c, qse_ccls_type_t type);
-	qse_cint_t (*to) (void* data, qse_cint_t c, qse_ccls_type_t type);
-	void*        data;
+	qse_ccls_is_t is;
+	qse_ccls_to_t to;
+	void*         data;
 };
 /******/
 

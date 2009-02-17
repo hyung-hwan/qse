@@ -29,7 +29,6 @@
 #define IDXBUFSIZE 64
 
 #define MMGR(run) ((run)->awk->mmgr)
-#define CCLS(run) ((run)->awk->ccls)
 
 #define STACK_AT(run,n) ((run)->stack[(run)->stack_base+(n)])
 #define STACK_NARGS(run) (STACK_AT(run,3))
@@ -617,7 +616,7 @@ int qse_awk_rtx_setofilename (
 
 void* qse_awk_rtx_getxtn (qse_awk_rtx_t* rtx)
 {
-	return (void*)(rtx + 1);
+	return QSE_XTN(rtx);
 }
 
 qse_awk_t* qse_awk_rtx_getawk (qse_awk_rtx_t* rtx)
@@ -627,7 +626,7 @@ qse_awk_t* qse_awk_rtx_getawk (qse_awk_rtx_t* rtx)
 
 qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx)
 {
-	return rtx->awk->mmgr;
+	return MMGR(rtx);
 }
 
 qse_map_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
@@ -641,9 +640,10 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 {
 	qse_awk_rtx_t* rtx;
 
-        QSE_ASSERTX (awk->ccls != QSE_NULL, "Call qse_awk_setccls() first");
         QSE_ASSERTX (awk->prm.pow != QSE_NULL, "Call qse_awk_setprm() first");
         QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
+        QSE_ASSERTX (awk->prm.isccls != QSE_NULL, "Call qse_awk_setprm() first");
+        QSE_ASSERTX (awk->prm.toccls != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
 	qse_awk_seterror (awk, QSE_AWK_ENOERR, 0, QSE_NULL);
@@ -723,13 +723,13 @@ void qse_awk_rtx_setrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
 static void free_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval (
-		*(qse_awk_rtx_t**)qse_map_getxtn(map), dptr);
+		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
 }
 
 static void same_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval_nofree (
-		*(qse_awk_rtx_t**)qse_map_getxtn(map), dptr);
+		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
 }
 
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
@@ -796,7 +796,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
 		return -1;
 	}
-	*(qse_awk_rtx_t**)qse_map_getxtn(rtx->named) = rtx;
+	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
 	qse_map_setcopier (rtx->named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
 	qse_map_setfreeer (rtx->named, QSE_MAP_VAL, free_namedval);
 	qse_map_setkeeper (rtx->named, same_namedval);	
@@ -1430,16 +1430,21 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	 * for BEGIN/pattern action/END block execution.*/
 	nargs = (qse_size_t)STACK_NARGS(rtx);
 	QSE_ASSERT (nargs == 0);
-	for (i = 0; i < nargs; i++) qse_awk_rtx_refdownval (rtx, STACK_ARG(rtx,i));
+	for (i = 0; i < nargs; i++) 
+		qse_awk_rtx_refdownval (rtx, STACK_ARG(rtx,i));
 
 	/* get the return value in the current stack frame */
 	v = STACK_RETVAL(rtx);
-	if (ret == 0)
+
+	if (rtx->rcb.on_exit != QSE_NULL)
 	{
-		if (rtx->rcb.on_exit != QSE_NULL)
-			rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
+		/* we call the on_exit handler regardless of ret. 
+		 * the return value passed is the global return value
+		 * in the stack. */
+		rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
 	}
-	/* end the life of the gbl return value */
+
+	/* end the life of the global return value */
 	qse_awk_rtx_refdownval (rtx, v);
 
 	return ret;
@@ -4042,7 +4047,7 @@ static int __cmp_int_str (
 			str, len,
 			((qse_awk_val_str_t*)right)->ptr, 
 			((qse_awk_val_str_t*)right)->len,
-			CCLS(run));
+			&run->awk->ccls);
 	}
 	else
 	{
@@ -4114,7 +4119,7 @@ static int __cmp_real_str (
 			str, len,
 			((qse_awk_val_str_t*)right)->ptr, 
 			((qse_awk_val_str_t*)right)->len,
-			CCLS(run));
+			&run->awk->ccls);
 	}
 	else
 	{
@@ -4158,7 +4163,8 @@ static int __cmp_str_str (
 	if (run->gbl.ignorecase)
 	{
 		n = qse_strxncasecmp (
-			ls->ptr, ls->len, rs->ptr, rs->len, CCLS(run));
+			ls->ptr, ls->len, rs->ptr, rs->len,
+			&run->awk->ccls);
 	}
 	else
 	{

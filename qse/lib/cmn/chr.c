@@ -34,7 +34,7 @@ static qse_bool_t is_graph (qse_cint_t c) { return isgraph(c); }
 static qse_bool_t is_cntrl (qse_cint_t c) { return iscntrl(c); }
 static qse_bool_t is_punct (qse_cint_t c) { return ispunct(c); }
 
-qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
+qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_id_t type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
 
@@ -54,11 +54,11 @@ qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
 	};
 
 	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_PUNCT,
-		"The character type should be one of qse_ccls_type_t values");
+		"The character type should be one of qse_ccls_id_t values");
 	return f[type] (c);
 }
 
-qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)  
+qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_id_t type)  
 { 
 	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_LOWER,
 		"The character type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
@@ -72,7 +72,7 @@ qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)
 
 #include <wctype.h>
 
-qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
+qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_id_t type)
 { 
 	static const char* name[] = 
 	{
@@ -105,13 +105,13 @@ qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_type_t type)
 	};
 
 	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_PUNCT,
-		"The character type should be one of qse_ccls_type_t values");
+		"The character type should be one of qse_ccls_id_t values");
 		
 	if (desc[type] == (wctype_t)0) desc[type] = wctype(name[type]);
 	return iswctype (c, desc[type]);
 }
 
-qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)  
+qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_id_t type)  
 { 
 	static const char* name[] = 
 	{
@@ -136,12 +136,12 @@ qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_type_t type)
 	#error unsupported character type
 #endif
 
-static qse_bool_t ccls_is (void* data, qse_cint_t c, qse_ccls_type_t type)
+static qse_bool_t ccls_is (void* data, qse_cint_t c, qse_ccls_id_t type)
 {
 	return qse_ccls_is (c, type);
 }
 
-static qse_cint_t ccls_to (void* data, qse_cint_t c, qse_ccls_type_t type)  
+static qse_cint_t ccls_to (void* data, qse_cint_t c, qse_ccls_id_t type)  
 {
 	return qse_ccls_to (c, type);
 }

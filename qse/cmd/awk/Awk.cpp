@@ -1,5 +1,19 @@
 /*
  * $Id: Awk.cpp 341 2008-08-20 10:58:19Z baconevi $
+ *
+   Copyright 2006-2009 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
  */
 
 #include <qse/awk/StdAwk.hpp>
@@ -33,6 +47,9 @@ static BOOL WINAPI stop_run (DWORD ctrl_type);
 #else
 static void stop_run (int sig);
 #endif
+
+static void set_intr_run (void);
+static void unset_intr_run (void);
 
 TestAwk* app_awk = QSE_NULL;
 static bool verbose = false;
@@ -232,57 +249,16 @@ public:
 
 protected:
 
-	bool onRunStart (Run& run)
-	{
-		if (verbose) qse_printf (QSE_T("*** awk run started ***\n"));
-
-		app_awk = this;
-	#ifdef _WIN32
-		SetConsoleCtrlHandler (stop_run, TRUE);
-	#else
-		struct sigaction sa_int;
-		sa_int.sa_handler = stop_run;
-		sigemptyset (&sa_int.sa_mask);
-		sa_int.sa_flags = 0;
-	#ifdef SA_RESTART
-		sa_int.sa_flags |= SA_RESTART;
-	#endif
-		sigaction (SIGINT, &sa_int, NULL);
-	#endif
-
-		return true;
-	}
-
-	void onRunEnd (Run& run)
-	{
-		ErrorCode err = run.getErrorCode();
-
-		if (err != ERR_NOERR)
-		{
-			qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
-				run.getErrorLine(), run.getErrorMessage());
-		}
-
-	#ifdef _WIN32
-		SetConsoleCtrlHandler (stop_run, FALSE);
-	#else
-		struct sigaction sa_int;
-		sa_int.sa_handler = SIG_DFL;
-		sigemptyset (&sa_int.sa_mask);
-		sa_int.sa_flags = 0;
-		sigaction (SIGINT, &sa_int, NULL);
-	#endif
-		app_awk = QSE_NULL;
-		if (verbose) qse_printf (QSE_T("*** awk run ended ***\n"));
-	}
-
 	bool onRunEnter (Run& run)
 	{
+		set_intr_run ();
 		return true;
 	}
 
-	void onRunReturn (Run& run, const Argument& ret)
+	void onRunExit (Run& run, const Argument& ret)
 	{
+		unset_intr_run ();
+
 		if (verbose)
 		{
 			size_t len;
@@ -290,6 +266,7 @@ protected:
 			qse_printf (QSE_T("*** return [%.*s] ***\n"), (int)len, ptr);
 		}
 	}
+	
 
 	int openSource (Source& io)
 	{
@@ -650,6 +627,31 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	return FALSE;
 }
 #else
+
+static int setsignal (int sig, void(*handler)(int), int restart)
+{
+	struct sigaction sa_int;
+
+	sa_int.sa_handler = handler;
+	sigemptyset (&sa_int.sa_mask);
+	
+	sa_int.sa_flags = 0;
+
+	if (restart)
+	{
+	#ifdef SA_RESTART
+		sa_int.sa_flags |= SA_RESTART;
+	#endif
+	}
+	else
+	{
+	#ifdef SA_INTERRUPT
+		sa_int.sa_flags |= SA_INTERRUPT;
+	#endif
+	}
+	return sigaction (sig, &sa_int, NULL);
+}
+
 static void stop_run (int sig)
 {
 	int e = errno;
@@ -658,6 +660,24 @@ static void stop_run (int sig)
 }
 #endif
 
+static void set_intr_run (void)
+{
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, TRUE);
+#else
+	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
+	setsignal (SIGINT, stop_run, 0);
+#endif
+}
+
+static void unset_intr_run (void)
+{
+#ifdef _WIN32
+	SetConsoleCtrlHandler (stop_run, FALSE);
+#else
+	setsignal (SIGINT, SIG_DFL, 1);
+#endif
+}
 
 #ifndef NDEBUG
 void qse_assert_abort (void)
@@ -921,6 +941,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	awk.enableRunCallback ();
+	app_awk = &awk;
 
 	if (awk.run (args, nargs) == -1)
 	{
@@ -930,6 +951,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
+	app_awk = QSE_NULL;
 	awk.close ();
 
 	return 0;

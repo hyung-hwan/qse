@@ -384,68 +384,41 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	qse_awk_rtx_t* run, const qse_char_t* buf, qse_size_t len, void* code)
 {
 	qse_awk_val_rex_t* val;
+	qse_size_t totsz;
 
-	val = (qse_awk_val_rex_t*) QSE_AWK_ALLOC (
-		run->awk, QSE_SIZEOF(qse_awk_val_rex_t) + 
-		(QSE_SIZEOF(*buf)*len+1) + QSE_REX_LEN(code));
-	if (val == QSE_NULL) return QSE_NULL;
+	/* the regular expression value holds:
+	 *   header
+	 *   a raw string plus with added a terminating '\0'
+	 *   a compiled regular expression 
+	 * the total size is just large enough for all these.
+	 */
+	totsz = QSE_SIZEOF(qse_awk_val_rex_t) +  
+	        (QSE_SIZEOF(*buf) * (len + 1)) + 
+	        QSE_REX_LEN(code); 
+		
+	val = (qse_awk_val_rex_t*) QSE_AWK_ALLOC (run->awk, totsz);
+	if (val == QSE_NULL) 
+	{
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		return QSE_NULL;
+	}
 
 	val->type = QSE_AWK_VAL_REX;
 	val->ref = 0;
 	val->len = len;
-	/*
-	val->ptr = QSE_AWK_STRXDUP (run->awk, buf, len);
-	if (val->ptr == QSE_NULL) 
-	{
-		QSE_AWK_FREE (run->awk, val);
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}*/
+
 	val->ptr = (qse_char_t*)(val + 1);
 	qse_strncpy (val->ptr, buf, len);
 
-	/*
-	val->code = QSE_AWK_ALLOC (run->awk, QSE_REX_LEN(code));
-	if (val->code == QSE_NULL)
-	{
-		QSE_AWK_FREE (run->awk, val->ptr);
-		QSE_AWK_FREE (run->awk, val);
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
-		return QSE_NULL;
-	}
-	*/
 	val->code = val->ptr + len + 1;
 	QSE_MEMCPY (val->code, code, QSE_REX_LEN(code));
 
 	return (qse_awk_val_t*)val;
 }
 
-/* CHECK */
-/*
-static void free_mapval (void* run, void* v)
-{
-#ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("refdown in map free..."));
-	qse_awk_dprintval (run, v);
-	qse_dprintf (QSE_T("\n"));
-#endif
-
-	qse_awk_rtx_refdownval (run, v);
-}
-
-static void same_mapval (void* run, void* v)
-{
-#ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("refdown nofree in map free..."));
-	qse_awk_dprintval (run, v);
-	qse_dprintf (QSE_T("\n"));
-#endif
-	qse_awk_rtx_refdownval_nofree (run, v);
-}
-*/
 static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)qse_map_getxtn(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_XTN(map);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown in map free..."));
@@ -458,7 +431,7 @@ static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 
 static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)qse_map_getxtn(map);
+	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_XTN(map);
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown nofree in map free..."));
 	qse_awk_dprintval (run, dptr);
@@ -466,7 +439,6 @@ static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 #endif
 	qse_awk_rtx_refdownval_nofree (run, dptr);
 }
-/* END CHECK */
 
 qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* run)
 {
@@ -516,7 +488,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* run)
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
-	*(qse_awk_rtx_t**)qse_map_getxtn(val->map) = run;
+	*(qse_awk_rtx_t**)QSE_XTN(val->map) = run;
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
@@ -569,7 +541,7 @@ qse_awk_val_t* qse_awk_rtx_makerefval (qse_awk_rtx_t* run, int id, qse_awk_val_t
 	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
 	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
 
-qse_bool_t qse_awk_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+qse_bool_t qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	return IS_STATICVAL(val);
 }
@@ -1151,7 +1123,7 @@ static qse_map_walk_t print_pair (
 {
 	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
 
-	QSE_ASSERT (run == *(qse_awk_rtx_t**)qse_map_getxtn(map));
+	QSE_ASSERT (run == *(qse_awk_rtx_t**)QSE_XTN(map));
 
 	DPRINTF (DCUSTOM, QSE_T(" %.*s=>"),
 		(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));

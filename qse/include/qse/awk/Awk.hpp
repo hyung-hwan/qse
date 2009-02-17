@@ -68,7 +68,7 @@ public:
 	/** Represents an runtime I/O data */
 	typedef qse_awk_riod_t riod_t;
 
-	enum ccls_type_t
+	enum ccls_id_t
 	{
 		CCLS_UPPER  = QSE_CCLS_UPPER,
 		CCLS_LOWER  = QSE_CCLS_LOWER,
@@ -743,10 +743,9 @@ public:
 		void free (void* ptr);
 
 	protected:
-		Awk* awk;
+		Awk*   awk;
 		rtx_t* run;
-		bool callbackFailed;
-		void* data;
+		void*  data;
 	};
 
 	/** Constructor */
@@ -1045,8 +1044,6 @@ protected:
 	/*@}*/
 
 	// run-time callbacks
-	virtual bool onRunStart (Run& run);
-	virtual void onRunEnd (Run& run);
 	virtual bool onRunEnter (Run& run);
 	virtual void onRunExit (Run& run, const Argument& ret);
 	virtual void onRunStatement (Run& run, size_t line);
@@ -1056,8 +1053,8 @@ protected:
 	virtual void* reallocMem (void* ptr, size_t n) = 0;
 	virtual void  freeMem    (void* ptr) = 0;
 
-	virtual bool_t isType    (cint_t c, ccls_type_t type) = 0;
-	virtual cint_t transCase (cint_t c, ccls_type_t type) = 0;
+	virtual bool_t isType    (cint_t c, ccls_id_t type) = 0;
+	virtual cint_t transCase (cint_t c, ccls_id_t type) = 0;
 
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
@@ -1065,23 +1062,24 @@ protected:
 
 	// static glue members for various handlers
 	static ssize_t sourceReader (
-		awk_t* awk, int cmd, char_t* data, size_t count);
+		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
 	static ssize_t sourceWriter (
-		awk_t* awk, int cmd, char_t* data, size_t count);
+		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
-		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
+		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		char_t* data, size_t count);
 	static ssize_t fileHandler (
-		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
+		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		char_t* data, size_t count);
 	static ssize_t consoleHandler (
-		rtx_t* rtx, int cmd, riod_t* riod, char_t* data, size_t count);
+		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		char_t* data, size_t count);
 
 	static int functionHandler (
 		rtx_t* rtx, const char_t* name, size_t len);
 	static void freeFunctionMapValue (map_t* map, void* dptr, size_t dlen);
 
-	static int  onRunStart (rtx_t* run, void* data);
-	static void onRunEnd (rtx_t* run, int errnum, void* data);
 	static int  onRunEnter (rtx_t* run, void* data);
 	static void onRunExit (rtx_t* run, val_t* ret, void* data);
 	static void onRunStatement (rtx_t* run, size_t line, void* data);
@@ -1090,8 +1088,8 @@ protected:
 	static void* reallocMem (void* data, void* ptr, size_t n);
 	static void  freeMem    (void* data, void* ptr);
 
-	static bool_t isType    (void* data, cint_t c, qse_ccls_type_t type);
-	static cint_t transCase (void* data, cint_t c, qse_ccls_type_t type);
+	static bool_t isType    (awk_t* awk, cint_t c, qse_ccls_id_t type);
+	static cint_t transCase (awk_t* awk, cint_t c, qse_ccls_id_t type);
 
 	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
@@ -1115,8 +1113,6 @@ private:
 	Awk& operator= (const Awk&);
 
 	mmgr_t mmgr;
-	ccls_t ccls;
-	qse_awk_prm_t prm;
 };
 
 /////////////////////////////////

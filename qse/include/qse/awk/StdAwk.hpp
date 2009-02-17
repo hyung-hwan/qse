@@ -84,8 +84,8 @@ protected:
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
 
-	bool_t isType    (cint_t c, ccls_type_t type);
-	cint_t transCase (cint_t c, ccls_type_t type);
+	bool_t isType    (cint_t c, ccls_id_t type);
+	cint_t transCase (cint_t c, ccls_id_t type);
 
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,
