@@ -1,3 +1,9 @@
+/****S* AWK/Basic Loop
+ * DESCRIPTION
+ *  This program demonstrates how to use qse_awk_rtx_loop().
+ * SOURCE
+ */
+
 #include <qse/awk/awk.h>
 #include <qse/utl/stdio.h>
 
@@ -61,3 +67,5 @@ oops:
 	if (awk != QSE_NULL) qse_awk_close (awk);
 	return -1;
 }
+
+/******/

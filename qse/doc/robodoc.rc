@@ -11,6 +11,7 @@ items:
 	RETURNS
 	EXAMPLE
 	EXAMPLES
+	NOTE
 	NOTES
 	BUGS
 	SEE ALSO
@@ -28,6 +29,7 @@ item order:
 	RETURNS
 	EXAMPLE
 	EXAMPLES
+	NOTE
 	NOTES
 	BUGS
 	SEE ALSO
@@ -40,9 +42,14 @@ ignore files:
 	.svn
 headertypes:
 	o     "Overview"    robo_overview     10
-	S     "Sample Code" robo_sample       11
+	d     "Definitions" robo_definitions  6 
+	t     "Types"       robo_types        5 
+	s     "Structures"  robo_structures   5 
+	f     "Functions"   robo_functions    4
+	S     "Samples"     robo_samples      0
 options:
 	--cmode
 	--nopre
 	--documenttitle "QSE"
 	--source_line_numbers
+	--tabsize 4

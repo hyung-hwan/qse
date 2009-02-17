@@ -1130,7 +1130,8 @@ void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
 		this->errnum = code;
 		this->errlin = line;
 
-		const char_t* es = qse_awk_geterrstr (QSE_NULL, code);
+		const char_t* es = qse_awk_geterrstr (
+			QSE_NULL, (qse_awk_errnum_t)code);
 		qse_strxcpy (this->errmsg, QSE_COUNTOF(this->errmsg), es);
 	}
 }
@@ -1281,13 +1282,13 @@ Awk::size_t Awk::getMaxDepth (int id) const
 const Awk::char_t* Awk::getErrorString (ErrorCode num) const
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_geterrstr (awk, (int)num);
+	return qse_awk_geterrstr (awk, (qse_awk_errnum_t)num);
 }
 
 int Awk::setErrorString (ErrorCode num, const char_t* str)
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_seterrstr (awk, (int)num, str);
+	return qse_awk_seterrstr (awk, (qse_awk_errnum_t)num, str);
 }
 
 int Awk::getWord (
