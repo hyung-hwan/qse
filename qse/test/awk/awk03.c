@@ -1,6 +1,26 @@
+/*
+ * $Id$
+ *
+   Copyright 2006-2009 Chung, Hyung-Hwan.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
+
 /****S* AWK/Calling Functions
  * DESCRIPTION
  *  This program demonstrates how to use qse_awk_rtx_call().
+ *  It parses the program stored in the string src and calls the functions
+ *  stated in the array fnc. If no errors occur, it should print 24.
  * SOURCE
  */
 
@@ -13,7 +33,7 @@ static const qse_char_t* src = QSE_T(
 	"function fini() { print a; }"
 );
 
-static const qse_char_t* f[] = 
+static const qse_char_t* fnc[] = 
 {
 	QSE_T("init"),
 	QSE_T("main"),
@@ -64,10 +84,10 @@ int main ()
 		ret = -1; goto oops;
 	}
 	
-	/* invoke functions as indicated in the array f */
-	for (i = 0; i < QSE_COUNTOF(f); i++)
+	/* invoke functions as indicated in the array fnc */
+	for (i = 0; i < QSE_COUNTOF(fnc); i++)
 	{
-		ret = qse_awk_rtx_call (rtx, f[i], QSE_NULL, 0);
+		ret = qse_awk_rtx_call (rtx, fnc[i], QSE_NULL, 0);
 		if (ret == -1)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
