@@ -594,6 +594,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_riod_t* riod)
 	{
 		/*dprint (QSE_T("    console(w) - <standard output>\n"));*/
 
+		/* TODO: open console file properly..... */
+
 		if (qse_awk_rtx_setofilename (rtx, QSE_T(""), 0) == -1)
 		{
 			return -1;
