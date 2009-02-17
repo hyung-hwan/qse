@@ -24,7 +24,7 @@
 #include <qse/cmn/map.h>
 #include <qse/cmn/str.h>
 
-/****o* AWK/AWK Interpreter
+/****o* AWK/Interpreter
  * DESCRIPTION
  *  The library includes an AWK interpreter that can be embedded into other
  *  applications or can run stand-alone.
@@ -1074,7 +1074,7 @@ qse_char_t* qse_awk_strdup (
 qse_char_t* qse_awk_strxdup (
 	qse_awk_t*        awk,
 	const qse_char_t* str,
-	qse_size_t len
+	qse_size_t        len
 );
 /******/
 
@@ -1134,12 +1134,13 @@ void qse_awk_rtx_close (
  * RETURN
  *  The qse_awk_rtx_loop() function returns 0 on success and -1 on failure.
  * EXAMPLE
- *  rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
- *  if (rtx != QSE_NULL)
- *  {
- *    qse_awk_rtx_loop (rtx);
- *    qse_awk_rtx_close (rtx);
- *  }
+ *  The example shows typical usage of the function.
+ *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ *    if (rtx != QSE_NULL)
+ *    {
+ *        qse_awk_rtx_loop (rtx);
+ *        qse_awk_rtx_close (rtx);
+ *    }
  * SYNOPSIS
  */
 int qse_awk_rtx_loop (
@@ -1158,13 +1159,14 @@ int qse_awk_rtx_loop (
  * RETURN
  *  The qse_awk_rtx_call() function returns 0 on success and -1 on failure.
  * EXAMPLE
- *  rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
- *  if (rtx != QSE_NULL)
- *  {
- *    qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
- *    qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
- *    qse_awk_rtx_close (rtx);
- *  }
+ *  The example shows typical usage of the function.
+ *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ *    if (rtx != QSE_NULL)
+ *    {
+ *        qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *        qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+ *        qse_awk_rtx_close (rtx);
+ *    }
  * SYNOPSIS
  */
 int qse_awk_rtx_call (
@@ -1308,7 +1310,7 @@ void qse_awk_rtx_setretval (
  */
 int qse_awk_rtx_setfilename (
 	qse_awk_rtx_t*    rtx,
-	const qse_char_t* name,
+	const qse_char_t* str,
 	qse_size_t        len
 );
 /******/
@@ -1320,7 +1322,7 @@ int qse_awk_rtx_setfilename (
  */
 int qse_awk_rtx_setofilename (
 	qse_awk_rtx_t*    rtx,
-	const qse_char_t* name,
+	const qse_char_t* str,
 	qse_size_t        len
 );
 /******/
@@ -1525,17 +1527,16 @@ qse_char_t* qse_awk_rtx_valtostr (
  * RETURN
  *  The qse_awk_rtx_valtonum() function returns -1 on error, 0 if the converted
  *  number is a long number and 1 if it is a real number.
- * EXAMPLES
- *  The following example show how to convert a value to a number and
- *  determine if it is an integer or a floating-point number.
- *      qse_long_t l;
- *      qse_real_t r;
- *      int n;
- *
- *      n = qse_awk_rtx_valtonum (v, &l, &r);
- *      if (n == -1) error ();
- *      else if (n == 0) do_long (l);
- *      else if (n == 1) do_real (r);
+ * EXAMPLE
+ *  The example show how to convert a value to a number and determine
+ *  if it is an integer or a floating-point number.
+ *    qse_long_t l;
+ *    qse_real_t r;
+ *    int n;
+ *    n = qse_awk_rtx_valtonum (v, &l, &r);
+ *    if (n == -1) error ();
+ *    else if (n == 0) print_long (l);
+ *    else if (n == 1) print_real (r);
  * SYNOPSIS
  */
 int qse_awk_rtx_valtonum (

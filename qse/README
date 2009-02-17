@@ -12,4 +12,4 @@ Cross compiling for WIN32 with MINGW32
 
 Generate the API documents with robodoc.
 	
-	robodoc --rc doc/robodoc.rc --css doc/robodoc.css --src include/qse --src test --doc ./doc/qse --multidoc --index --html --source_line_numbers --nopre
+	robodoc --rc doc/robodoc.rc --css doc/robodoc.css --src . --doc ./doc/qse --multidoc --index --html 
