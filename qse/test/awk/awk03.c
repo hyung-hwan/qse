@@ -1,25 +1,43 @@
+/****S* Sample/AWK
+ * DESCRIPTION
+ *  This program demonstrates how to use qse_awk_rtx_call().
+ * SOURCE
+ */
+
 #include <qse/awk/awk.h>
 #include <qse/utl/stdio.h>
 
 const qse_char_t* src = QSE_T(
 	"function init() { a = 20; }"
 	"function main() { a++; }"
-	"function fini() { output (a); }"
-	"function output(x) { print x; }"
+	"function fini() { print a; }"
 );
+
+const qse_char_t* f[] = 
+{
+	QSE_T("init"),
+	QSE_T("main"),
+	QSE_T("main"),
+	QSE_T("main"),
+	QSE_T("main"),
+	QSE_T("fini"),
+};
 
 int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
-	int ret;
+	int ret, i;
 
 	awk = qse_awk_opensimple ();
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		goto oops;
+		ret = -1; goto oops;
 	}
+
+	/* don't allow BEGIN, END, pattern-action blocks */
+	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
 
 	ret = qse_awk_parsesimple (
 		awk,
@@ -41,17 +59,23 @@ int main ()
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		goto oops;
+		ret = -1; goto oops;
 	}
 	
-	qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
-	qse_awk_rtx_call (rtx, QSE_T("main"), QSE_NULL, 0);
-	qse_awk_rtx_call (rtx, QSE_T("main"), QSE_NULL, 0);
-	qse_awk_rtx_call (rtx, QSE_T("main"), QSE_NULL, 0);
-	qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+	for (i = 0; i < QSE_COUNTOF(f); i++)
+	{
+		ret = qse_awk_rtx_call (rtx, f[i], QSE_NULL, 0);
+		if (ret == -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("%d error: %s\n"), 
+				i, qse_awk_rtx_geterrmsg(rtx));
+			goto oops;
+		}
+	}	
 
 oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	if (awk != QSE_NULL) qse_awk_close (awk);
-	return -1;
+	return ret;
 }
+/******/

@@ -1474,7 +1474,7 @@ int qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
 	qse_awk_val_t** args, qse_size_t nargs)
 {
-	int ret;
+	int ret = 0;
 	qse_map_pair_t* pair;
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
@@ -1543,28 +1543,36 @@ int qse_awk_rtx_call (
 		if (crdata.val == QSE_NULL) 
 		{
 			QSE_ASSERT (rtx->errnum != QSE_AWK_ENOERR);
+			v = qse_awk_val_nil; /* defaults to nil */
 			ret = -1;
 		}
 		else 
 		{
 			if (rtx->errnum == QSE_AWK_ENOERR)
 			{
-				if (rtx->rcb.on_exit != QSE_NULL)
-					rtx->rcb.on_exit (rtx, crdata.val, rtx->rcb.data);
+				/* exiting with exit() */
+				v = crdata.val;
+				/* no need to ref-up as it is done in 
+				 * capture_retval_on_exit() */
 			}
-			else ret = -1;
-			qse_awk_rtx_refdownval(rtx, crdata.val);
+			else 
+			{
+				v = qse_awk_val_nil; /* defaults to nil */
+				ret = -1;
+			}
 		}
 	}
-	else
-	{
+	else 
+	{	
+		/* the reference count of crdata.val is updated in 
+		 * capture_retval_on_exit(). update reference count of 
+		 * v here to balance it */
 		qse_awk_rtx_refupval (rtx, v);
-
-		if (rtx->rcb.on_exit != QSE_NULL)
-			rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
-
-		qse_awk_rtx_refdownval (rtx, v);
 	}
+
+	if (rtx->rcb.on_exit != QSE_NULL)
+		rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
+	qse_awk_rtx_refdownval (rtx, v);
 
 	return ret;
 }

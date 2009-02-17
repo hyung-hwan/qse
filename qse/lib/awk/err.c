@@ -172,14 +172,15 @@ static const qse_char_t* __geterrstr (int errnum)
 	return QSE_T("unknown error");
 }
 
-const qse_char_t* qse_awk_geterrstr (qse_awk_t* awk, int num)
+const qse_char_t* qse_awk_geterrstr (qse_awk_t* awk, qse_awk_errnum_t num)
 {
 	if (awk != QSE_NULL && 
 	    awk->errstr[num] != QSE_NULL) return awk->errstr[num];
 	return __geterrstr (num);
 }
 
-int qse_awk_seterrstr (qse_awk_t* awk, int num, const qse_char_t* str)
+int qse_awk_seterrstr (
+	qse_awk_t* awk, qse_awk_errnum_t num, const qse_char_t* str)
 {
 	qse_char_t* dup;
        
