@@ -619,7 +619,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.on_exit = on_run_exit;
 	rcb.data = &ao;
 
-	rtx = qse_awk_rtx_opensimple (awk, ao.icf, QSE_T(""));
+	rtx = qse_awk_rtx_opensimple (awk, ao.icf, QSE_AWK_CONSOLE_STDIO);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
