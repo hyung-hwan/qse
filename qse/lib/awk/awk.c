@@ -150,7 +150,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 
-	awk->option = 0;
+	awk->option = QSE_AWK_CLASSIC;
 	awk->errnum = QSE_AWK_ENOERR;
 	awk->errlin = 0;
 	awk->stopall = QSE_FALSE;
@@ -363,7 +363,6 @@ void qse_awk_setoption (qse_awk_t* awk, int opt)
 {
 	awk->option = opt;
 }
-
 
 void qse_awk_stopall (qse_awk_t* awk)
 {

@@ -232,7 +232,6 @@ static struct
 	{ QSE_T("rio"),         QSE_AWK_RIO },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE },
-	{ QSE_T("baseone"),     QSE_AWK_BASEONE },
 	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES },
 	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE },
 	{ QSE_T("crfl"),        QSE_AWK_CRLF },

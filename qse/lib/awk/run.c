@@ -1005,16 +1005,8 @@ static int build_runarg (
 				return -1;
 			}
 
-			if (qse_awk_getoption(run->awk) & QSE_AWK_BASEONE)
-			{
-				key_len = qse_awk_longtostr (argc+1, 
-					10, QSE_NULL, key, QSE_COUNTOF(key));
-			}
-			else
-			{
-				key_len = qse_awk_longtostr (argc, 
-					10, QSE_NULL, key, QSE_COUNTOF(key));
-			}
+			key_len = qse_awk_longtostr (argc+1, 
+				10, QSE_NULL, key, QSE_COUNTOF(key));
 			QSE_ASSERT (key_len != (qse_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 

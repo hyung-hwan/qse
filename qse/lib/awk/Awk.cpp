@@ -1225,14 +1225,6 @@ int Awk::open ()
 	qse_map_setfreeer (functionMap, QSE_MAP_VAL, freeFunctionMapValue);
 	qse_map_setscale (functionMap, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
-	int opt = 
-		OPT_IMPLICIT |
-		OPT_RIO | 
-		OPT_NEWLINE | 
-		OPT_BASEONE |
-		OPT_PABLOCK;
-	qse_awk_setoption (awk, opt);
-
 	runCallback = false;
 	return 0;
 }

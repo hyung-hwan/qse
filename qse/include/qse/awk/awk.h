@@ -261,9 +261,6 @@ enum qse_awk_option_t
 	/* can terminate a statement with a new line */
 	QSE_AWK_NEWLINE     = (1 << 9),
 
-	/* use 1 as the start index for string operations and ARGV */
-	QSE_AWK_BASEONE     = (1 << 10),
-
 	/* strip off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
 	 *
@@ -292,7 +289,11 @@ enum qse_awk_option_t
 	QSE_AWK_MAPTOVAR    = (1 << 15),
 
 	/* allows BEGIN, END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 16)
+	QSE_AWK_PABLOCK     = (1 << 16),
+
+	/* option aggregtes */
+	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
+	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
 };
 
 /* error code */
