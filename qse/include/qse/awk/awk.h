@@ -553,12 +553,6 @@ enum qse_awk_rtx_valtostr_opt_t
 	QSE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
-enum qse_awk_parse_ist_t
-{
-	QSE_AWK_PARSE_FILES = 0,
-	QSE_AWK_PARSE_STRING = 1
-};
-
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
 typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
@@ -651,6 +645,15 @@ struct qse_awk_val_ref_t
 	 * directly. */
 	qse_awk_val_t** adr;
 };
+
+enum qse_awk_parse_ist_t
+{
+	QSE_AWK_SOURCE_FILES  = 0,
+	QSE_AWK_SOURCE_STRING = 1
+};
+
+#define QSE_AWK_CONSOLE_STDIO  (qse_awk_console_stdio)
+extern const qse_char_t* qse_awk_console_stdio[];
 
 #ifdef __cplusplus
 extern "C" {
@@ -1592,11 +1595,17 @@ int qse_awk_parsesimple (
 /****f* AWK/qse_awk_rtx_opensimple
  * NAME
  *  qse_awk_rtx_opensimple - create a runtime context
+ * DESCRIPTION
+ *  The caller should keep the contents of icf and ocf valid throughout
+ *  the lifetime of the runtime context created. The runtime context 
+ *  remembers the pointers without copying in the contents.
+ *
  * SYNOPSIS
  */
 qse_awk_rtx_t* qse_awk_rtx_opensimple (
-	qse_awk_t*   awk,
-	qse_char_t** icf
+	qse_awk_t*        awk,
+	const qse_char_t* icf[],
+	const qse_char_t* ocf[]
 );
 /******/
 

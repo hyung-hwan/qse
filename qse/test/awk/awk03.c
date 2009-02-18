@@ -61,9 +61,11 @@ int main ()
 	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
 
 	ret = qse_awk_parsesimple (
-		awk,
-		QSE_AWK_PARSE_STRING, src, /* parse AWK source in a string */
-		QSE_NULL /* no parse output */
+		awk, 
+		/* parse AWK source in a string */
+		QSE_AWK_SOURCE_STRING, src,
+		/* no parse output */
+		QSE_NULL 
 	);
 	if (ret == -1)
 	{
@@ -75,7 +77,8 @@ int main ()
 	/* create a runtime context */
 	rtx = qse_awk_rtx_opensimple (
 		awk, 
-		QSE_NULL /* no console files */
+		QSE_NULL,              /* no console input */
+		QSE_AWK_CONSOLE_STDIO  /* console output */
 	);
 	if (rtx == QSE_NULL) 
 	{

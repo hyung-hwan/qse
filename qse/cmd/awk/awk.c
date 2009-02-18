@@ -488,14 +488,14 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 		}
 
 		/* the source code is the string, not from the file */
-		ao->ist = QSE_AWK_PARSE_STRING;
+		ao->ist = QSE_AWK_SOURCE_STRING;
 		ao->isp = argv[opt.ind++];
 
 		free (isf);
 	}
 	else
 	{
-		ao->ist = QSE_AWK_PARSE_FILES;
+		ao->ist = QSE_AWK_SOURCE_FILES;
 		ao->isp = isf;
 	}
 
@@ -619,7 +619,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.on_exit = on_run_exit;
 	rcb.data = &ao;
 
-	rtx = qse_awk_rtx_opensimple (awk, ao.icf);
+	rtx = qse_awk_rtx_opensimple (awk, ao.icf, QSE_T(""));
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
@@ -656,7 +656,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 oops:
 	qse_awk_close (awk);
 
-	if (ao.ist == QSE_AWK_PARSE_FILES && ao.isp != QSE_NULL) free (ao.isp);
+	if (ao.ist == QSE_AWK_SOURCE_FILES && ao.isp != QSE_NULL) free (ao.isp);
 	/*if (ao.osf != QSE_NULL) free (ao.osf);*/
 	if (ao.icf != QSE_NULL) free (ao.icf);
 	if (ao.vm != QSE_NULL) qse_map_close (ao.vm);
