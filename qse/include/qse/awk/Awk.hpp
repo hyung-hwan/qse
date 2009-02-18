@@ -574,7 +574,6 @@ public:
 		/** Can terminate a statement with a new line */
 		OPT_NEWLINE = QSE_AWK_NEWLINE,
 
-		OPT_BASEONE = QSE_AWK_BASEONE,
 		OPT_STRIPSPACES = QSE_AWK_STRIPSPACES,
 
 		/** Support the nextofile statement */

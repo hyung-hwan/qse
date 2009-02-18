@@ -459,9 +459,7 @@ static int fnc_index (
 	}
 
 	ptr = qse_strxnstr (str0, len0, str1, len1);
-	idx = (ptr == QSE_NULL)? -1: (qse_long_t)(ptr - str0);
-
-	if (qse_awk_getoption(run->awk) & QSE_AWK_BASEONE) idx = idx + 1;
+	idx = (ptr == QSE_NULL)? 0: ((qse_long_t)(ptr-str0) + 1);
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str0);
 	if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str1);
@@ -563,7 +561,7 @@ static int fnc_substr (
 		if (n == 1) lcount = (qse_long_t)rcount;
 	}
 
-	if (qse_awk_getoption(run->awk) & QSE_AWK_BASEONE) lindex = lindex - 1;
+	lindex = lindex - 1;
 	if (lindex >= (qse_long_t)len) lindex = (qse_long_t)len;
 	else if (lindex < 0) lindex = 0;
 
@@ -593,7 +591,7 @@ static int fnc_split (
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
 	qse_char_t* str, * str_free, * p, * tok;
 	qse_size_t str_len, str_left, tok_len;
-	qse_long_t sta, num;
+	qse_long_t num;
 	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
 	qse_size_t key_len;
 	qse_char_t* fs_ptr, * fs_free;
@@ -740,8 +738,7 @@ static int fnc_split (
 	qse_awk_rtx_refupval (run, *a1_ref);
 
 	p = str; str_left = str_len; 
-	sta = (qse_awk_getoption(run->awk) & QSE_AWK_BASEONE)? 1: 0;
-	num = sta;
+	num = 1;
 
 	while (p != QSE_NULL)
 	{
@@ -830,7 +827,7 @@ static int fnc_split (
 	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 	if (fs_rex_free != QSE_NULL) QSE_AWK_FREEREX (run->awk, fs_rex_free);
 
-	if (sta == 1) num--;
+	num--;
 
 	t1 = qse_awk_rtx_makeintval (run, num);
 	if (t1 == QSE_NULL)
@@ -1301,8 +1298,7 @@ static int fnc_match (
 
 	if (n == -1) return -1;
 
-	idx = (n == 0)? -1: (qse_long_t)(mat_ptr - str0);
-	if (qse_awk_getoption(run->awk) & QSE_AWK_BASEONE) idx = idx + 1;
+	idx = (n == 0)? 0: ((qse_long_t)(mat_ptr-str0) + 1);
 
 	a0 = qse_awk_rtx_makeintval (run, idx);
 	if (a0 == QSE_NULL)

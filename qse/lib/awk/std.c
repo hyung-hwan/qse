@@ -38,7 +38,7 @@ typedef struct xtn_t
 			{
 				const qse_char_t*const* files; 
 				const qse_char_t* str;
-			} p;
+			} u;
 			qse_size_t              index;  /* current file index */
 			qse_sio_t*              handle; /* the handle to an open file */
 		} in;
@@ -60,13 +60,13 @@ typedef struct rxtn_t
 	struct
 	{
 		struct {
-			const qse_char_t** files;
+			const qse_char_t*const* files;
 			qse_size_t index;
 		} in; 
 
 		struct 
 		{
-			const qse_char_t** files;
+			const qse_char_t*const* files;
 			qse_size_t index;
 		} out;
 	} c;  /* console */
@@ -142,9 +142,7 @@ qse_awk_t* qse_awk_opensimple (void)
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(xtn_t));
 
 	/* set default options */
-	qse_awk_setoption (awk, 
-		QSE_AWK_IMPLICIT | QSE_AWK_RIO | QSE_AWK_NEWLINE | 
-		QSE_AWK_BASEONE | QSE_AWK_PABLOCK);
+	qse_awk_setoption (awk, QSE_AWK_CLASSIC);
 
 	/* add intrinsic functions */
 	if (add_functions (awk) == -1)
@@ -168,9 +166,10 @@ static qse_ssize_t sf_in (
 	{
 		if (xtn->s.in.type == QSE_AWK_SOURCE_FILES)
 		{
-			if (xtn->s.in.p.files[xtn->s.in.index] == QSE_NULL) return 0;
+			if (xtn->s.in.u.files == QSE_NULL) return -1;
+			if (xtn->s.in.u.files[xtn->s.in.index] == QSE_NULL) return 0;
 
-			if (xtn->s.in.p.files[xtn->s.in.index][0] == QSE_T('\0'))
+			if (xtn->s.in.u.files[xtn->s.in.index][0] == QSE_T('\0'))
 			{
 				xtn->s.in.handle = qse_sio_in;
 			}
@@ -179,15 +178,13 @@ static qse_ssize_t sf_in (
 				xtn->s.in.handle = qse_sio_open (
 					awk->mmgr,
 					0,
-					xtn->s.in.p.files[xtn->s.in.index],
+					xtn->s.in.u.files[xtn->s.in.index],
 					QSE_SIO_READ
 				);
 				if (xtn->s.in.handle == QSE_NULL) return -1;
 			}
 
-			/*
-			qse_awk_setsinname ();
-			*/
+			//qse_awk_setsource (awk, xtn->s.in.u.files[xtn->s.in.index]);
 		}
 
 		return 1;
@@ -216,10 +213,10 @@ static qse_ssize_t sf_in (
 			sio = xtn->s.in.handle;
 
 			n = qse_sio_getsn (sio, data, size);
-			if (n == 0 && xtn->s.in.p.files[++xtn->s.in.index] != QSE_NULL)
+			if (n == 0 && xtn->s.in.u.files[++xtn->s.in.index] != QSE_NULL)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
-				if (xtn->s.in.p.files[xtn->s.in.index][0] == QSE_T('\0'))
+				if (xtn->s.in.u.files[xtn->s.in.index][0] == QSE_T('\0'))
 				{
 					xtn->s.in.handle = qse_sio_in;
 				}
@@ -228,7 +225,7 @@ static qse_ssize_t sf_in (
 					xtn->s.in.handle = qse_sio_open (
 						awk->mmgr,
 						0,
-						xtn->s.in.p.files[xtn->s.in.index],
+						xtn->s.in.u.files[xtn->s.in.index],
 						QSE_SIO_READ
 					);
 					if (xtn->s.in.handle == QSE_NULL) return -1;
@@ -244,9 +241,9 @@ static qse_ssize_t sf_in (
 		}
 		else
 		{
-			while (n < size && xtn->s.in.p.str[xtn->s.in.index] != QSE_T('\0'))
+			while (n < size && xtn->s.in.u.str[xtn->s.in.index] != QSE_T('\0'))
 			{
-				data[n++] = xtn->s.in.p.str[xtn->s.in.index++];
+				data[n++] = xtn->s.in.u.str[xtn->s.in.index++];
 			}
 		}
 
@@ -318,11 +315,11 @@ int qse_awk_parsesimple (
 
 	if (ist == QSE_AWK_SOURCE_FILES) 
 	{
-		xtn->s.in.p.files = (const qse_char_t* const*)isp;
+		xtn->s.in.u.files = (const qse_char_t*const*)isp;
 	}
 	else if (ist == QSE_AWK_SOURCE_STRING) 
 	{
-		xtn->s.in.p.str = (const qse_char_t*)isp;
+		xtn->s.in.u.str = (const qse_char_t*)isp;
 	}
 	else
 	{
