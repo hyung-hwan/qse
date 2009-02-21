@@ -731,7 +731,6 @@ static struct
 	{ QSE_T("rio"),         TestAwk::OPT_RIO },
 	{ QSE_T("rwpipe"),      TestAwk::OPT_RWPIPE },
 	{ QSE_T("newline"),     TestAwk::OPT_NEWLINE },
-	{ QSE_T("baseone"),     TestAwk::OPT_BASEONE },
 	{ QSE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
 	{ QSE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
 	{ QSE_T("crlf"),        TestAwk::OPT_CRLF },

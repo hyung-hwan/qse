@@ -1,38 +1,9 @@
-/****h* ROBODoc/ROBODoc Cascading Style Sheet
- * FUNCTION
- *   This is the default cascading style sheet for documentation
- *   generated with ROBODoc.
- *   You can edit this file to your own liking and then use
- *   it with the option
- *      --css <filename>
- *
- *   This style-sheet defines the following layout
- *      +----------------------------------------+
- *      |    logo                                |
- *      +----------------------------------------+
- *      |    extra                               |
- *      +----------------------------------------+
- *      |                              | navi-   |
- *      |                              | gation  |
- *      |      content                 |         |
- *      |                              |         |
- *      +----------------------------------------+
- *      |    footer                              |
- *      +----------------------------------------+
- *
- *   This style-sheet is based on a style-sheet that was automatically
- *   generated with the Strange Banana stylesheet generator.
- *   See http://www.strangebanana.com/generator.aspx
- *
- ******
- * $Id: html_generator.c,v 1.93 2008/03/13 10:34:50 thuffir Exp $
- */
 
 body
 {
     background-color:    rgb(255,255,255);
     color:               rgb(98,84,55);
-    //font-family:         Arial, serif;
+    font-family:         Arial, serif;
     border-color:        rgb(226,199,143);
 }
 
@@ -85,7 +56,8 @@ p.item_name
 {
     background-color: rgb(98,84,55);
     color:            rgb(230,221,202);
-    font-family:      "Times New Roman", serif;
+    //font-family:      "Times New Roman", serif;
+    font-family:      Georgia, serif;
     font-style:       normal;
     border-color:     rgb(0,0,0);
 }

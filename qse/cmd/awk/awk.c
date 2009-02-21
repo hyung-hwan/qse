@@ -53,6 +53,7 @@ struct argout_t
 	void*        isp;  /* input source files or string */
 	int          ist;  /* input source type */
 	qse_size_t   isfl; /* the number of input source files */
+	int          ost;  /* output source type */
 	qse_char_t*  osf;  /* output source file */
 	qse_char_t** icf;  /* input console files */
 	qse_size_t   icfl; /* the number of input console files */
@@ -487,14 +488,14 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 		}
 
 		/* the source code is the string, not from the file */
-		ao->ist = QSE_AWK_SOURCE_STRING;
+		ao->ist = QSE_AWK_PARSESIMPLE_STRING;
 		ao->isp = argv[opt.ind++];
 
 		free (isf);
 	}
 	else
 	{
-		ao->ist = QSE_AWK_SOURCE_FILES;
+		ao->ist = QSE_AWK_PARSESIMPLE_FILE;
 		ao->isp = isf;
 	}
 
@@ -519,7 +520,9 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	}
 	icf[icfl] = QSE_NULL;
 
+	ao->ost = QSE_AWK_PARSESIMPLE_FILE;
 	ao->osf = osf;
+
 	ao->icf = icf;
 	ao->icfl = icfl;
 	ao->vm = vm;
@@ -599,7 +602,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk = open_awk ();
 	if (awk == QSE_NULL) return -1;
 
-
 	if (qse_awk_parsesimple (awk, ao.ist, ao.isp, ao.osf) == -1)
 	{
 		qse_printf (
@@ -618,7 +620,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.on_exit = on_run_exit;
 	rcb.data = &ao;
 
-	rtx = qse_awk_rtx_opensimple (awk, ao.icf, QSE_AWK_CONSOLE_STDIO);
+	rtx = qse_awk_rtx_opensimple (
+		awk, ao.icf, QSE_AWK_RTX_OPENSIMPLE_STDIO);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (

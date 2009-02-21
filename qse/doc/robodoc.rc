@@ -39,17 +39,30 @@ remark begin markers:
 remark end markers:
 	*/
 ignore files:
-	.svn
+	autoconf
+	autom4te.cache
+	.*
+accept files:
+	*.c
+	*.h
 headertypes:
-	o     "Overview"    robo_overview     10
-	d     "Definitions" robo_definitions  6 
-	t     "Types"       robo_types        5 
-	s     "Structures"  robo_structures   5 
-	f     "Functions"   robo_functions    4
-	S     "Samples"     robo_samples      0
+	o     "Overview"     robo_overview     10
+	d     "Definitions"  robo_definitions  6 
+	t     "Types"        robo_types        5 
+	e     "Enumerations" robo_enumerations 6 
+	s     "Structures"   robo_structures   5 
+	f     "Functions"    robo_functions    4
+	S     "Samples"      robo_samples      0
 options:
 	--cmode
 	--nopre
 	--documenttitle "QSE"
 	--source_line_numbers
 	--tabsize 4
+	--sections
+	--toc "no"
+	--tell
+	--nosort
+	--index
+	--multidoc
+	--html
