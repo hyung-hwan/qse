@@ -38,6 +38,7 @@ typedef struct xtn_t
 			{
 				const qse_char_t*const* files; 
 				const qse_char_t* str;
+				qse_cstr_t cstr;
 			} u;
 			qse_size_t              index;  /* current file index */
 			qse_sio_t*              handle; /* the handle to an open file */
@@ -45,7 +46,12 @@ typedef struct xtn_t
 
 		struct
 		{
-			const qse_char_t*       file;
+			union
+			{
+				const qse_char_t* file;
+				qse_char_t*       str;
+				qse_cstr_t        cstr;
+			} u;
 			qse_sio_t*              handle;
 		} out;
 
@@ -73,7 +79,7 @@ typedef struct rxtn_t
 
 } rxtn_t;
 
-const qse_char_t* qse_awk_console_stdio[] = 
+const qse_char_t* qse_awk_rtx_opensimple_stdio[] = 
 { 
 	QSE_T(""), 
 	QSE_NULL 
@@ -164,7 +170,7 @@ static qse_ssize_t sf_in (
 
 	if (cmd == QSE_AWK_SIO_OPEN)
 	{
-		if (xtn->s.in.type == QSE_AWK_SOURCE_FILES)
+		if (xtn->s.in.type == QSE_AWK_PARSESIMPLE_FILE)
 		{
 			if (xtn->s.in.u.files == QSE_NULL) return -1;
 			if (xtn->s.in.u.files[xtn->s.in.index] == QSE_NULL) return 0;
@@ -205,7 +211,7 @@ static qse_ssize_t sf_in (
 	{
 		qse_ssize_t n = 0;
 
-		if (xtn->s.in.type == QSE_AWK_SOURCE_FILES)
+		if (xtn->s.in.type == QSE_AWK_PARSESIMPLE_FILE)
 		{
 			qse_sio_t* sio;
 
@@ -302,7 +308,11 @@ static qse_ssize_t sf_out (
 }
 
 int qse_awk_parsesimple (
-	qse_awk_t* awk, int ist, const void* isp, const qse_char_t* osf)
+	qse_awk_t* awk, 
+	qse_awk_parsesimple_type_t ist,
+	const void*                isp,
+	qse_awk_parsesimple_type_t ost,
+	const void*                osp)
 {
 	qse_awk_sio_t sio;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
@@ -313,13 +323,36 @@ int qse_awk_parsesimple (
 		return -1;
 	}
 
-	if (ist == QSE_AWK_SOURCE_FILES) 
+	if (ist == QSE_AWK_PARSESIMPLE_FILE) 
 	{
 		xtn->s.in.u.files = (const qse_char_t*const*)isp;
 	}
-	else if (ist == QSE_AWK_SOURCE_STRING) 
+	else if (ist == QSE_AWK_PARSESIMPLE_STR) 
 	{
 		xtn->s.in.u.str = (const qse_char_t*)isp;
+	}
+	else if (ist == QSE_AWK_PARSESIMPLE_STRL)
+	{
+		xtn->s.in.u.cstr.ptr = (const qse_cstr_t*)isp->ptr;
+		xtn->s.in.u.cstr.len = (const qse_cstr_t*)isp->len;
+	}
+	else
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
+	if (ost == QSE_AWK_PARSESIMPLE_FILE)
+	{
+	}
+	else if (ost == QSE_AWK_PARSESIMPLE_STR)
+	{
+	}
+	else if (ost == QSE_AWK_PARSESIMPLE_STRL)
+	{
+	}
+	else if (ost == QSE_AWK_PARSESIMPLE_NONE)
+	{
 	}
 	else
 	{

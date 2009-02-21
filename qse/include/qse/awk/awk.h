@@ -296,7 +296,11 @@ enum qse_awk_option_t
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
 };
 
-/* error code */
+/****e* AWK/qse_awk_errnum_t
+ * NAME
+ *  qse_awk_errnum_t - define an error code
+ * SYNOPSIS
+ */
 enum qse_awk_errnum_t
 {
 	QSE_AWK_ENOERR,         /* no error */
@@ -312,7 +316,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EMFILE,         /* too many open files */
 	QSE_AWK_EMLINK,         /* too many links */
 	QSE_AWK_EAGAIN,         /* resource temporarily unavailable */
-	QSE_AWK_ENOENT,         /* "'%.*s' not existing */
+	QSE_AWK_ENOENT,         /* '${1}' not existing */
 	QSE_AWK_EEXIST,         /* file or data exists */
 	QSE_AWK_EFTBIG,         /* file or data too big */
 	QSE_AWK_ETBUSY,         /* system too busy */
@@ -330,13 +334,13 @@ enum qse_awk_errnum_t
 	QSE_AWK_EBLKNST,        /* blocke nested too deeply */
 	QSE_AWK_EEXPRNST,       /* expression nested too deeply */
 
-	QSE_AWK_ESINOP,
-	QSE_AWK_ESINCL,
-	QSE_AWK_ESINRD, 
+	QSE_AWK_ESINOP,         /* failed to open source input */
+	QSE_AWK_ESINCL,         /* failed to close source output */
+	QSE_AWK_ESINRD,         /* failed to read source input */
 
-	QSE_AWK_ESOUTOP,
-	QSE_AWK_ESOUTCL,
-	QSE_AWK_ESOUTWR,
+	QSE_AWK_ESOUTOP,        /* failed to open source output */
+	QSE_AWK_ESOUTCL,        /* failed to close source output */
+	QSE_AWK_ESOUTWR,        /* failed to write source output */
 
 	QSE_AWK_ELXCHR,         /* lexer came accross an wrong character */
 	QSE_AWK_ELXDIG,         /* invalid digit */
@@ -400,7 +404,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPOSIDX,           /* wrong position index */
 	QSE_AWK_EARGTF,            /* too few arguments */
 	QSE_AWK_EARGTM,            /* too many arguments */
-	QSE_AWK_EFUNNONE,          /* "function '%.*s' not found" */
+	QSE_AWK_EFUNNONE,          /* function '${1}' not found */
 	QSE_AWK_ENOTIDX,           /* variable not indexable */
 	QSE_AWK_ENOTDEL,           /* variable not deletable */
 	QSE_AWK_ENOTMAP,           /* value not a map */
@@ -448,6 +452,9 @@ enum qse_awk_errnum_t
 	/* the number of error numbers, internal use only */
 	QSE_AWK_NUMERRNUM 
 };
+/******/
+
+typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
 /* depth types */
 enum qse_awk_depth_t
@@ -554,7 +561,6 @@ enum qse_awk_rtx_valtostr_opt_t
 	QSE_AWK_VALTOSTR_PRINT = (1 << 2)
 };
 
-typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
 typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 typedef struct qse_awk_val_int_t  qse_awk_val_int_t;
@@ -647,14 +653,24 @@ struct qse_awk_val_ref_t
 	qse_awk_val_t** adr;
 };
 
-enum qse_awk_parse_ist_t
+/****e* AWK/qse_awk_parsesimple_type_t
+ * NAME
+ *  qse_awk_parsesimple_type_t - define a source type
+ * SYNOPSIS
+ */
+enum qse_awk_parsesimple_type_t
 {
-	QSE_AWK_SOURCE_FILES  = 0,
-	QSE_AWK_SOURCE_STRING = 1
+	QSE_AWK_PARSESIMPLE_NONE = 0,
+	QSE_AWK_PARSESIMPLE_FILE = 1,
+	QSE_AWK_PARSESIMPLE_STR  = 2,
+	QSE_AWK_PARSESIMPLE_STRL = 3
 };
+/******/
 
-#define QSE_AWK_CONSOLE_STDIO  (qse_awk_console_stdio)
-extern const qse_char_t* qse_awk_console_stdio[];
+typedef enum qse_awk_parsesimple_type_t qse_awk_parsesimple_type_t;
+
+#define QSE_AWK_RTX_OPENSIMPLE_STDIO  (qse_awk_rtx_opensimple_stdio)
+extern const qse_char_t* qse_awk_rtx_opensimple_stdio[];
 
 #ifdef __cplusplus
 extern "C" {
@@ -812,7 +828,7 @@ int qse_awk_clear (
 
 /****f* AWK/qse_awk_geterrstr
  * NAME
- *  qse_awk_geterrstr - get a format string for an error
+ *  qse_awk_geterrstr - get a format string for an error code
  * DESCRIPTION
  *  The qse_awk_geterrstr() function returns a pointer to a format string for
  *  the error number num.
@@ -1578,18 +1594,49 @@ qse_awk_t* qse_awk_opensimple (
 /****f* AWK/qse_awk_parsesimple
  * NAME
  *  qse_awk_parsesimple - parse source code
+ *
  * DESCRIPTION
- *  If 'ist' is QSE_AWK_PARSE_STRING, 'isp' should be a null-terminated string
- *  of the type 'const qse_char_t*'; If 'ist' is QSE_AWK_PARSE_FILES, 'isp'
- *  should be an array of null-terminated strings whose last element is a 
- *  null pointer.
+ *  If 'ist' is QSE_AWK_PARSESIMPLE_STR, 'isp' should be a null-terminated
+ *  string of the type 'const qse_char_t*' holding the source code; If 'ist' 
+ *  is QSE_AWK_PARSESIMPLE_FILE, 'isp' should be a null-terminated string of
+ *  the type 'const qse_char_t*' holding the file name to read the source code 
+ *  from; If 'ist' is QSE_AWK_PARSESIMPLE_STRL, 'isp' should be a const pointer
+ *  to a variable of the type 'qse_cstr_t'. It holds the pointer to the source
+ *  code and its length.
+ *
+ *  If 'ost' is QSE_AWK_PARSESIMPLE_STR, 'osp' should be a pointer to a 
+ *  'qse_char_t' buffer whose end is marked with a null character. that is
+ *  the buffer should not contain a null character before its end; If 'ost'
+ *  is QSE_AWK_PARSESIMPLE_FILE, the deparsed source code is written to a file
+ *  indicated by 'osp' of the type 'const qse_char_t*'; 
+ *  If 'ost' is QSE_AWK_PARSESIMPLE_STRL, the buffer to be written is indicated
+ *  in the parameter 'osp' of the type 'qse_xstr_t*'. 
+ *
+ *  You can set 'ost' to QSE_AWK_PARSESIMPLE_NONE not to produce deparsed 
+ *  source code while setting 'ist' TO QSE_AWK_PARSESIMPLE_NONE is an error.
+ *
+ * EXAMPLE
+ *  The following example parses the literal string 'BEGIN { print 10; }' and
+ *  deparses it out to a buffer 'buf'.
+ *    int n;
+ *    qse_char_t buf[1000];
+ *    qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
+ *    buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
+ *    n = qse_awk_parsesimple (
+ *        awk, 
+ *        QSE_AWK_PARSESIMPLE_STR,
+ *        QSE_T("BEGIN { print 10; }"),
+ *        QSE_AWK_PARSESIMPLE_STR,
+ *        buf
+ *    );
  * SYNOPSIS
  */
 int qse_awk_parsesimple (
-	qse_awk_t*        awk,
-	int               ist /* QSE_AWK_PARSE_FILES, QSE_AWK_PARSE_STRING */,
-	const void*       isp /* source file names or source string */,
-	const qse_char_t* osf /* an output source file name */
+	qse_awk_t*                  awk,
+	qse_awk_parsesimple_type_t  ist,
+	const void*                 isp,
+	qse_awk_parsesimple_type_t  ost,
+	const void*                 osp 
 );
 /******/
 

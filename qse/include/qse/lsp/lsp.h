@@ -22,6 +22,15 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/****o* LISP/LISP Interpreter
+ * DESCRIPTION
+ *  The library includes a LISP interpreter that can be embedded into other
+ *  applications or can run stand-alone.
+ *
+ *  #include <qse/lsp/lsp.h>
+ ******
+ */
+
 typedef struct qse_lsp_t qse_lsp_t;
 typedef struct qse_lsp_obj_t qse_lsp_obj_t;
 typedef struct qse_lsp_prmfns_t qse_lsp_prmfns_t;
