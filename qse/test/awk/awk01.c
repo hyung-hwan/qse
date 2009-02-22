@@ -41,7 +41,6 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	int ret;
-	const qse_char_t* co[] = { QSE_T(""), QSE_NULL };
 
 	awk = qse_awk_opensimple ();
 	if (awk == QSE_NULL)  
@@ -52,8 +51,10 @@ int main ()
 
 	ret = qse_awk_parsesimple (
 		awk,
-		QSE_AWK_SOURCE_STRING, src, /* parse AWK source in a string */
-		QSE_NULL /* no parse output */
+		/* parse AWK source in a string */
+		QSE_AWK_PARSESIMPLE_STR, src, 
+		/* no deparse output */
+		QSE_AWK_PARSESIMPLE_NONE, QSE_NULL
 	);
 	if (ret == -1)
 	{
@@ -65,7 +66,7 @@ int main ()
 	rtx = qse_awk_rtx_opensimple (
 		awk, 
 		QSE_NULL,             /* no console input */
-		QSE_AWK_CONSOLE_STDIO /* use standard out for console output */
+		QSE_AWK_RTX_OPENSIMPLE_STDIO /* stdout for console output */
 	);
 	if (rtx == QSE_NULL) 
 	{

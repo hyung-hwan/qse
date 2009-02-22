@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = awk01$(EXEEXT) awk03$(EXEEXT)
+bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT)
 subdir = test/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -50,6 +50,10 @@ awk01_OBJECTS = $(am_awk01_OBJECTS)
 awk01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 awk01_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_awk02_OBJECTS = awk02.$(OBJEXT)
+awk02_OBJECTS = $(am_awk02_OBJECTS)
+awk02_LDADD = $(LDADD)
+awk02_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_awk03_OBJECTS = awk03.$(OBJEXT)
 awk03_OBJECTS = $(am_awk03_OBJECTS)
 awk03_LDADD = $(LDADD)
@@ -66,8 +70,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(awk01_SOURCES) $(awk03_SOURCES)
-DIST_SOURCES = $(awk01_SOURCES) $(awk03_SOURCES)
+SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES)
+DIST_SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -195,6 +199,7 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 LDADD = -lqseawk -lqseutl -lqsecmn $(LIBM)
 awk01_SOURCES = awk01.c
+awk02_SOURCES = awk02.c
 awk03_SOURCES = awk03.c
 all: all-am
 
@@ -260,6 +265,9 @@ clean-binPROGRAMS:
 awk01$(EXEEXT): $(awk01_OBJECTS) $(awk01_DEPENDENCIES) 
 	@rm -f awk01$(EXEEXT)
 	$(LINK) $(awk01_OBJECTS) $(awk01_LDADD) $(LIBS)
+awk02$(EXEEXT): $(awk02_OBJECTS) $(awk02_DEPENDENCIES) 
+	@rm -f awk02$(EXEEXT)
+	$(LINK) $(awk02_OBJECTS) $(awk02_LDADD) $(LIBS)
 awk03$(EXEEXT): $(awk03_OBJECTS) $(awk03_DEPENDENCIES) 
 	@rm -f awk03$(EXEEXT)
 	$(LINK) $(awk03_OBJECTS) $(awk03_LDADD) $(LIBS)
@@ -271,6 +279,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk03.Po@am__quote@
 
 .c.o:

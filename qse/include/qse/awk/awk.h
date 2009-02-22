@@ -660,16 +660,17 @@ struct qse_awk_val_ref_t
  */
 enum qse_awk_parsesimple_type_t
 {
-	QSE_AWK_PARSESIMPLE_NONE = 0,
-	QSE_AWK_PARSESIMPLE_FILE = 1,
-	QSE_AWK_PARSESIMPLE_STR  = 2,
-	QSE_AWK_PARSESIMPLE_STRL = 3
+	QSE_AWK_PARSESIMPLE_NONE  = 0,
+	QSE_AWK_PARSESIMPLE_FILE  = 1,
+	QSE_AWK_PARSESIMPLE_STR   = 2,
+	QSE_AWK_PARSESIMPLE_STRL  = 3,
+	QSE_AWK_PARSESIMPLE_STDIO = 4
 };
 /******/
 
 typedef enum qse_awk_parsesimple_type_t qse_awk_parsesimple_type_t;
 
-#define QSE_AWK_RTX_OPENSIMPLE_STDIO  (qse_awk_rtx_opensimple_stdio)
+#define QSE_AWK_RTX_OPENSIMPLE_STDIO (qse_awk_rtx_opensimple_stdio)
 extern const qse_char_t* qse_awk_rtx_opensimple_stdio[];
 
 #ifdef __cplusplus
@@ -1652,8 +1653,8 @@ int qse_awk_parsesimple (
  */
 qse_awk_rtx_t* qse_awk_rtx_opensimple (
 	qse_awk_t*        awk,
-	const qse_char_t* icf[],
-	const qse_char_t* ocf[]
+	const qse_char_t*const* icf,
+	const qse_char_t*const* ocf
 );
 /******/
 

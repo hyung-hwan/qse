@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: awk.c 501 2008-12-17 08:39:15Z baconevi $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -16,56 +16,51 @@
    limitations under the License.
  */
 
-/****S* AWK/Calling Functions
+/****S* AWK/Basic Loop
  * DESCRIPTION
- *  This program demonstrates how to use qse_awk_rtx_call().
- *  It parses the program stored in the string src and calls the functions
- *  stated in the array fnc. If no errors occur, it should print 24.
+ *  This program demonstrates how to use qse_awk_rtx_loop().
  * SOURCE
  */
 
 #include <qse/awk/awk.h>
+#include <qse/cmn/mem.h>
 #include <qse/utl/stdio.h>
 
 static const qse_char_t* src = QSE_T(
-	"function init() { a = 20; }"
-	"function main() { a++; }"
-	"function fini() { print a; }"
+	"BEGIN {"
+	"	for (i=2;i<=9;i++)"
+	"	{"
+	"		for (j=1;j<=9;j++)"
+	"			print i \"*\" j \"=\" i * j;"
+	"		print \"---------------------\";"
+	"	}"
+	"}"
 );
 
-static const qse_char_t* fnc[] = 
-{
-	QSE_T("init"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("fini"),
-};
+static qse_char_t srcout[5000];
 
 int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
-	int ret, i;
+	int ret;
 
-	/* create a main processor */
 	awk = qse_awk_opensimple ();
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		ret = -1; goto oops;
+		goto oops;
 	}
 
-	/* don't allow BEGIN, END, pattern-action blocks */
-	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
+	qse_memset (srcout, QSE_T(' '), QSE_COUNTOF(srcout)-1);
+	srcout[QSE_COUNTOF(srcout)-1] = QSE_T('\0');
 
 	ret = qse_awk_parsesimple (
-		awk, 
-		/* parse AWK source in a string */
-		QSE_AWK_PARSESIMPLE_STR, src,
-		/* no parse output */
-		QSE_AWK_PARSESIMPLE_NONE, QSE_NULL 
+		awk,
+		/* parse the source in src */
+		QSE_AWK_PARSESIMPLE_STR, src, 
+		/* deparse into srcout */
+		QSE_AWK_PARSESIMPLE_STR, srcout
 	);
 	if (ret == -1)
 	{
@@ -74,36 +69,34 @@ int main ()
 		goto oops;
 	}
 
-	/* create a runtime context */
+	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), srcout);
+	qse_printf (QSE_T("=================================\n"));
+	qse_fflush (QSE_STDOUT);
+
 	rtx = qse_awk_rtx_opensimple (
 		awk, 
-		QSE_NULL,                     /* no console input */
-		QSE_AWK_RTX_OPENSIMPLE_STDIO  /* stdout for console output */
+		QSE_NULL,             /* no console input */
+		QSE_AWK_RTX_OPENSIMPLE_STDIO /* stdout for console output */
 	);
 	if (rtx == QSE_NULL) 
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		goto oops;
 	}
 	
-	/* invoke functions as indicated in the array fnc */
-	for (i = 0; i < QSE_COUNTOF(fnc); i++)
+	ret = qse_awk_rtx_loop (rtx);
+	if (ret == -1)
 	{
-		ret = qse_awk_rtx_call (rtx, fnc[i], QSE_NULL, 0);
-		if (ret == -1)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			goto oops;
-		}
-	}	
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		goto oops;
+	}
 
 oops:
-	/* destroy a runtime context */
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
-	/* destroy the processor */
 	if (awk != QSE_NULL) qse_awk_close (awk);
-	return ret;
+	return -1;
 }
+
 /******/
