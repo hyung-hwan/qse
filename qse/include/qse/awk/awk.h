@@ -660,15 +660,52 @@ struct qse_awk_val_ref_t
  */
 enum qse_awk_parsesimple_type_t
 {
-	QSE_AWK_PARSESIMPLE_NONE  = 0,
-	QSE_AWK_PARSESIMPLE_FILE  = 1,
-	QSE_AWK_PARSESIMPLE_STR   = 2,
-	QSE_AWK_PARSESIMPLE_STRL  = 3,
-	QSE_AWK_PARSESIMPLE_STDIO = 4
+	QSE_AWK_PARSESIMPLE_FILE  = 0,
+	QSE_AWK_PARSESIMPLE_STR   = 1,
+	QSE_AWK_PARSESIMPLE_STRL  = 2,
+	QSE_AWK_PARSESIMPLE_STDIO = 3
 };
+typedef enum qse_awk_parsesimple_type_t qse_awk_parsesimple_type_t;
 /******/
 
-typedef enum qse_awk_parsesimple_type_t qse_awk_parsesimple_type_t;
+
+/****s* AWK/qse_awk_parsesimple_in_t
+ * NAME
+ *  qse_awk_parsesimple_in_t - define source input 
+ * SYNOPSIS
+ */
+struct qse_awk_parsesimple_in_t
+{
+	qse_awk_parsesimple_type_t type;
+
+	union
+	{
+		const qse_char_t* file; 
+		const qse_char_t* str;
+		qse_cstr_t        strl;
+	} u;
+};
+typedef struct qse_awk_parsesimple_in_t qse_awk_parsesimple_in_t;
+/******/
+
+/****s* AWK/qse_awk_parsesimple_out_t
+ * NAME
+ *  qse_awk_parsesimple_out_t - define source output
+ * SYNOPSIS
+ */
+struct qse_awk_parsesimple_out_t
+{
+	qse_awk_parsesimple_type_t type;
+
+	union
+	{
+		const qse_char_t* file; 
+		qse_char_t*       str;
+		qse_xstr_t        strl;
+	} u;
+};
+typedef struct qse_awk_parsesimple_out_t qse_awk_parsesimple_out_t;
+/******/
 
 #define QSE_AWK_RTX_OPENSIMPLE_STDIO (qse_awk_rtx_opensimple_stdio)
 extern const qse_char_t* qse_awk_rtx_opensimple_stdio[];
@@ -1595,49 +1632,28 @@ qse_awk_t* qse_awk_opensimple (
 /****f* AWK/qse_awk_parsesimple
  * NAME
  *  qse_awk_parsesimple - parse source code
- *
- * DESCRIPTION
- *  If 'ist' is QSE_AWK_PARSESIMPLE_STR, 'isp' should be a null-terminated
- *  string of the type 'const qse_char_t*' holding the source code; If 'ist' 
- *  is QSE_AWK_PARSESIMPLE_FILE, 'isp' should be a null-terminated string of
- *  the type 'const qse_char_t*' holding the file name to read the source code 
- *  from; If 'ist' is QSE_AWK_PARSESIMPLE_STRL, 'isp' should be a const pointer
- *  to a variable of the type 'qse_cstr_t'. It holds the pointer to the source
- *  code and its length.
- *
- *  If 'ost' is QSE_AWK_PARSESIMPLE_STR, 'osp' should be a pointer to a 
- *  'qse_char_t' buffer whose end is marked with a null character. that is
- *  the buffer should not contain a null character before its end; If 'ost'
- *  is QSE_AWK_PARSESIMPLE_FILE, the deparsed source code is written to a file
- *  indicated by 'osp' of the type 'const qse_char_t*'; 
- *  If 'ost' is QSE_AWK_PARSESIMPLE_STRL, the buffer to be written is indicated
- *  in the parameter 'osp' of the type 'qse_xstr_t*'. 
- *
- *  You can set 'ost' to QSE_AWK_PARSESIMPLE_NONE not to produce deparsed 
- *  source code while setting 'ist' TO QSE_AWK_PARSESIMPLE_NONE is an error.
- *
  * EXAMPLE
  *  The following example parses the literal string 'BEGIN { print 10; }' and
  *  deparses it out to a buffer 'buf'.
  *    int n;
+ *    qse_awk_parsesimple_in_t in;
+ *    qse_awk_parsesimple_out_t out;
  *    qse_char_t buf[1000];
+ *
  *    qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
  *    buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
- *    n = qse_awk_parsesimple (
- *        awk, 
- *        QSE_AWK_PARSESIMPLE_STR,
- *        QSE_T("BEGIN { print 10; }"),
- *        QSE_AWK_PARSESIMPLE_STR,
- *        buf
- *    );
+ *    in.type = QSE_AWK_PARSESIMPLE_STR;
+ *    in.u.str = QSE_T("BEGIN { print 10; }");
+ *    out.type = QSE_AWK_PARSESIMPLE_STR;
+ *    out.u.str = buf;
+ *
+ *    n = qse_awk_parsesimple (awk, &in, &out);
  * SYNOPSIS
  */
 int qse_awk_parsesimple (
-	qse_awk_t*                  awk,
-	qse_awk_parsesimple_type_t  ist,
-	const void*                 isp,
-	qse_awk_parsesimple_type_t  ost,
-	const void*                 osp 
+	qse_awk_t*                      awk,
+	const qse_awk_parsesimple_in_t* in,
+	qse_awk_parsesimple_out_t*      out
 );
 /******/
 

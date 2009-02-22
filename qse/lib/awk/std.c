@@ -347,27 +347,32 @@ static qse_ssize_t sf_out (
 
 int qse_awk_parsesimple (
 	qse_awk_t* awk, 
-	qse_awk_parsesimple_type_t ist,
-	const void*                isp,
-	qse_awk_parsesimple_type_t ost,
-	const void*                osp)
+        const qse_awk_parsesimple_in_t* in,
+        qse_awk_parsesimple_out_t* out)
 {
 	qse_awk_sio_t sio;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 
-	switch (ist)
+	if (in == QSE_NULL)
+	{
+		/* the input is a must */
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
+	switch (in->type)
 	{
 		case QSE_AWK_PARSESIMPLE_FILE:
-			xtn->s.in.u.file = (const qse_char_t*)isp;
+			xtn->s.in.u.file = in->u.file;
 			break;
 
 		case QSE_AWK_PARSESIMPLE_STR:
-			xtn->s.in.u.str = (const qse_char_t*)isp;
+			xtn->s.in.u.str = in->u.str;
 			break;
 
 		case QSE_AWK_PARSESIMPLE_STRL:
-			xtn->s.in.u.strl.ptr = ((const qse_cstr_t*)isp)->ptr;
-			xtn->s.in.u.strl.end = xtn->s.in.u.strl.ptr + ((const qse_cstr_t*)isp)->len;
+			xtn->s.in.u.strl.ptr = in->u.strl.ptr;
+			xtn->s.in.u.strl.end = in->u.strl.ptr + in->u.strl.len;
 			break;
 
 		case QSE_AWK_PARSESIMPLE_STDIO:
@@ -378,41 +383,41 @@ int qse_awk_parsesimple (
 			qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
 			return -1;
 	}
-
-	switch (ost)
-	{
-		case QSE_AWK_PARSESIMPLE_FILE:
-			xtn->s.out.u.file = (const qse_char_t*)osp;
-			break;
-
-		case QSE_AWK_PARSESIMPLE_STR:
-			xtn->s.out.u.str = (qse_char_t*)osp;
-			break;
-
-		case QSE_AWK_PARSESIMPLE_STRL:
-			xtn->s.out.u.strl.osp = (qse_xstr_t*)osp;
-			xtn->s.out.u.strl.ptr = ((qse_xstr_t*)osp)->ptr;
-			xtn->s.out.u.strl.end = xtn->s.out.u.strl.ptr + ((qse_xstr_t*)osp)->len;
-			break;
-
-		case QSE_AWK_PARSESIMPLE_NONE:
-		case QSE_AWK_PARSESIMPLE_STDIO:
-			/* nothing to do */
-			break;
-
-		default:
-			qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
-			return -1;
-	}
-		
-	xtn->s.in.type = ist;
+	xtn->s.in.type = in->type;
 	xtn->s.in.handle = QSE_NULL;
-
-	xtn->s.out.type = ost;
-	xtn->s.out.handle = QSE_NULL;
-	
         sio.in = sf_in;
-        sio.out = (ost == QSE_AWK_PARSESIMPLE_NONE)? QSE_NULL: sf_out;
+
+	if (out == QSE_NULL) sio.out = QSE_NULL;
+	else
+	{
+		switch (out->type)
+		{
+			case QSE_AWK_PARSESIMPLE_FILE:
+				xtn->s.out.u.file = out->u.file;
+				break;
+	
+			case QSE_AWK_PARSESIMPLE_STR:
+				xtn->s.out.u.str = out->u.str;
+				break;
+	
+			case QSE_AWK_PARSESIMPLE_STRL:
+				xtn->s.out.u.strl.osp = &out->u.strl;
+				xtn->s.out.u.strl.ptr = out->u.strl.ptr;
+				xtn->s.out.u.strl.end = out->u.strl.ptr + out->u.strl.len;
+				break;
+
+			case QSE_AWK_PARSESIMPLE_STDIO:
+				/* nothing to do */
+				break;
+	
+			default:
+				qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+				return -1;
+		}
+		xtn->s.out.type = out->type;
+		xtn->s.out.handle = QSE_NULL;
+		sio.out = sf_out;
+	}
 
 	return qse_awk_parse (awk, &sio);
 }

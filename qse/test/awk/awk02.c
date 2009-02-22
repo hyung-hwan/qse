@@ -43,6 +43,10 @@ int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
+
+	qse_awk_parsesimple_in_t psin;
+	qse_awk_parsesimple_out_t psout;
+
 	int ret;
 
 	awk = qse_awk_opensimple ();
@@ -55,13 +59,12 @@ int main ()
 	qse_memset (srcout, QSE_T(' '), QSE_COUNTOF(srcout)-1);
 	srcout[QSE_COUNTOF(srcout)-1] = QSE_T('\0');
 
-	ret = qse_awk_parsesimple (
-		awk,
-		/* parse the source in src */
-		QSE_AWK_PARSESIMPLE_STR, src, 
-		/* deparse into srcout */
-		QSE_AWK_PARSESIMPLE_STR, srcout
-	);
+	psin.type = QSE_AWK_PARSESIMPLE_STR;
+	psin.u.str  = src;
+	psout.type = QSE_AWK_PARSESIMPLE_STR;
+	psout.u.str  = srcout;
+
+	ret = qse_awk_parsesimple (awk, &psin, &psout);
 	if (ret == -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
