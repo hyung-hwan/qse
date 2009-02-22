@@ -47,6 +47,9 @@ int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
+
+	qse_awk_parsesimple_in_t psin;
+
 	int ret, i;
 
 	/* create a main processor */
@@ -60,13 +63,10 @@ int main ()
 	/* don't allow BEGIN, END, pattern-action blocks */
 	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
 
-	ret = qse_awk_parsesimple (
-		awk, 
-		/* parse AWK source in a string */
-		QSE_AWK_PARSESIMPLE_STR, src,
-		/* no parse output */
-		QSE_AWK_PARSESIMPLE_NONE, QSE_NULL 
-	);
+	psin.type = QSE_AWK_PARSESIMPLE_STR;
+	psin.u.str = src;
+
+	ret = qse_awk_parsesimple (awk, &psin, QSE_NULL);
 	if (ret == -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 

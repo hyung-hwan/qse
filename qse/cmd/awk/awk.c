@@ -50,11 +50,18 @@ static int app_debug = 0;
 
 struct argout_t
 {
-	void*        isp;  /* input source files or string */
 	qse_awk_parsesimple_type_t ist;  /* input source type */
+	union
+	{
+		const qse_char_t* str;
+		qse_char_t**      files;
+	} isp;
 	qse_size_t   isfl; /* the number of input source files */
+
 	qse_awk_parsesimple_type_t ost;  /* output source type */
 	qse_char_t*  osf;  /* output source file */
+
+
 	qse_char_t** icf;  /* input console files */
 	qse_size_t   icfl; /* the number of input console files */
 	qse_map_t*   vm;   /* global variable map */
@@ -489,14 +496,14 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 
 		/* the source code is the string, not from the file */
 		ao->ist = QSE_AWK_PARSESIMPLE_STR;
-		ao->isp = argv[opt.ind++];
+		ao->isp.str = argv[opt.ind++];
 
 		free (isf);
 	}
 	else
 	{
 		ao->ist = QSE_AWK_PARSESIMPLE_FILE;
-		ao->isp = isf;
+		ao->isp.files = isf;
 	}
 
 	/* the remaining arguments are input console file names */
@@ -520,8 +527,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	}
 	icf[icfl] = QSE_NULL;
 
-	ao->ost = (osf == QSE_NULL)? 
-		QSE_AWK_PARSESIMPLE_NONE: QSE_AWK_PARSESIMPLE_FILE;
+	ao->ost = QSE_AWK_PARSESIMPLE_FILE;
 	ao->osf = osf;
 
 	ao->icf = icf;
@@ -604,8 +610,21 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (awk == QSE_NULL) return -1;
 
 	/* TODO: change it to support multiple source files */
-	/*if (qse_awk_parsesimple (awk, ao.ist, ao.isp, ao.ost, ao.osf) == -1)*/
-	if (qse_awk_parsesimple (awk, ao.ist, ((qse_char_t**)ao.isp)[0], ao.ost, ao.osf) == -1)
+	qse_awk_parsesimple_in_t psin;
+	qse_awk_parsesimple_out_t psout;
+	
+	psin.type = ao.ist;
+	if (ao.ist == QSE_AWK_PARSESIMPLE_STR) psin.u.str = ao.isp.str;
+	else psin.u.file = ao.isp.files[0];
+
+	if (ao.osf != QSE_NULL)
+	{
+		psout.type = ao.ost;
+		psout.u.file = ao.osf;
+	}
+
+	if (qse_awk_parsesimple (awk, &psin, 
+		((ao.osf == QSE_NULL)? QSE_NULL: &psout)) == -1)
 	{
 		qse_printf (
 			QSE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
@@ -661,7 +680,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 oops:
 	qse_awk_close (awk);
 
-	if (ao.ist == QSE_AWK_PARSESIMPLE_FILE && ao.isp != QSE_NULL) free (ao.isp);
+	if (ao.ist == QSE_AWK_PARSESIMPLE_FILE && 
+	    ao.isp.files != QSE_NULL) free (ao.isp.files);
 	/*if (ao.osf != QSE_NULL) free (ao.osf);*/
 	if (ao.icf != QSE_NULL) free (ao.icf);
 	if (ao.vm != QSE_NULL) qse_map_close (ao.vm);
