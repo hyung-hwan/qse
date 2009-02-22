@@ -51,9 +51,9 @@ static int app_debug = 0;
 struct argout_t
 {
 	void*        isp;  /* input source files or string */
-	int          ist;  /* input source type */
+	qse_awk_parsesimple_type_t ist;  /* input source type */
 	qse_size_t   isfl; /* the number of input source files */
-	int          ost;  /* output source type */
+	qse_awk_parsesimple_type_t ost;  /* output source type */
 	qse_char_t*  osf;  /* output source file */
 	qse_char_t** icf;  /* input console files */
 	qse_size_t   icfl; /* the number of input console files */
@@ -347,7 +347,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	qse_size_t icfl = 0;  /* the number of input console files */
 
 	qse_char_t** isf = QSE_NULL; /* input source files */
-	qse_char_t* osf = QSE_NULL; /* output source file */
+	qse_char_t*  osf = QSE_NULL; /* output source file */
 	qse_char_t** icf = QSE_NULL; /* input console files */
 
 	qse_map_t* vm = QSE_NULL;  /* global variable map */
@@ -488,7 +488,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 		}
 
 		/* the source code is the string, not from the file */
-		ao->ist = QSE_AWK_PARSESIMPLE_STRING;
+		ao->ist = QSE_AWK_PARSESIMPLE_STR;
 		ao->isp = argv[opt.ind++];
 
 		free (isf);
@@ -520,7 +520,8 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	}
 	icf[icfl] = QSE_NULL;
 
-	ao->ost = QSE_AWK_PARSESIMPLE_FILE;
+	ao->ost = (osf == QSE_NULL)? 
+		QSE_AWK_PARSESIMPLE_NONE: QSE_AWK_PARSESIMPLE_FILE;
 	ao->osf = osf;
 
 	ao->icf = icf;
@@ -602,7 +603,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk = open_awk ();
 	if (awk == QSE_NULL) return -1;
 
-	if (qse_awk_parsesimple (awk, ao.ist, ao.isp, ao.osf) == -1)
+	/* TODO: change it to support multiple source files */
+	/*if (qse_awk_parsesimple (awk, ao.ist, ao.isp, ao.ost, ao.osf) == -1)*/
+	if (qse_awk_parsesimple (awk, ao.ist, ((qse_char_t**)ao.isp)[0], ao.ost, ao.osf) == -1)
 	{
 		qse_printf (
 			QSE_T("PARSE ERROR: CODE [%d] LINE [%u] %s\n"), 
@@ -658,7 +661,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 oops:
 	qse_awk_close (awk);
 
-	if (ao.ist == QSE_AWK_SOURCE_FILES && ao.isp != QSE_NULL) free (ao.isp);
+	if (ao.ist == QSE_AWK_PARSESIMPLE_FILE && ao.isp != QSE_NULL) free (ao.isp);
 	/*if (ao.osf != QSE_NULL) free (ao.osf);*/
 	if (ao.icf != QSE_NULL) free (ao.icf);
 	if (ao.vm != QSE_NULL) qse_map_close (ao.vm);
