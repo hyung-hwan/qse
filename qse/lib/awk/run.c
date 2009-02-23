@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: run.c 77 2009-02-23 00:57:18Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -5737,7 +5737,8 @@ static qse_awk_val_t* __eval_call (
 	return (n == -1)? QSE_NULL: v;
 }
 
-static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data)
+static qse_size_t push_arg_from_vals (
+	qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data)
 {
 	struct pafv* pafv = (struct pafv*)data;
 	qse_size_t nargs = 0;
@@ -5766,7 +5767,8 @@ static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_call_t* ca
 	return nargs; 
 }
 
-static qse_size_t push_arg_from_nde (qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data)
+static qse_size_t push_arg_from_nde (
+	qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data)
 {
 	qse_awk_nde_t* p;
 	qse_awk_val_t* v;
