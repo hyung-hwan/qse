@@ -1,5 +1,5 @@
 /*
- * $Id: eio.c 466 2008-12-09 09:50:40Z baconevi $
+ * $Id: rio.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -218,7 +218,7 @@ int qse_awk_rtx_readio (
 	else 
 	{
 		rs_ptr = qse_awk_rtx_valtostr (
-			run, rs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
+			run, rs, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
 		if (rs_ptr == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (run, rs);
@@ -426,7 +426,7 @@ int qse_awk_rtx_writeio_val (
 	{
 		str = qse_awk_rtx_valtostr (
 			run, v, 
-			QSE_AWK_VALTOSTR_CLEAR | QSE_AWK_VALTOSTR_PRINT, 
+			QSE_AWK_RTX_VALTOSTR_CLEAR | QSE_AWK_RTX_VALTOSTR_PRINT,
 			QSE_NULL, &len);
 		if (str == QSE_NULL) return -1;
 	}

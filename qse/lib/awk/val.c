@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 496 2008-12-15 09:56:48Z baconevi $
+ * $Id: val.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -617,10 +617,7 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cac
 	}
 	else if (val->type == QSE_AWK_VAL_MAP)
 	{
-		/* CHECK */
-		/* qse_map_close (((qse_awk_val_map_t*)val)->map);*/
 		qse_map_fini (((qse_awk_val_map_t*)val)->map);
-		/* END CHECK */
 		QSE_AWK_FREE (rtx->awk, val);
 	}
 	else if (val->type == QSE_AWK_VAL_REF)
@@ -798,7 +795,7 @@ static qse_char_t* str_to_str (
 		if (len != QSE_NULL) *len = str_len;
 		return tmp;
 	}
-	else if (opt & QSE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_RTX_VALTOSTR_FIXED)
 	{
 		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
@@ -816,7 +813,7 @@ static qse_char_t* str_to_str (
 	{
 		qse_size_t n;
 
-		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+		if (opt & QSE_AWK_RTX_VALTOSTR_CLEAR) qse_str_clear (buf);
 		n = qse_str_ncat (buf, str, str_len);
 		if (n == (qse_size_t)-1)
 		{
@@ -857,7 +854,7 @@ static qse_char_t* val_int_to_str (
 			if (len != QSE_NULL) *len = 1;
 			return tmp;
 		}
-		else if (opt & QSE_AWK_VALTOSTR_FIXED)
+		else if (opt & QSE_AWK_RTX_VALTOSTR_FIXED)
 		{
 			QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 	
@@ -877,7 +874,7 @@ static qse_char_t* val_int_to_str (
 		}
 		else
 		{
-			if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+			if (opt & QSE_AWK_RTX_VALTOSTR_CLEAR) qse_str_clear (buf);
 			if (qse_str_cat (buf, QSE_T("0")) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterror (
@@ -907,7 +904,7 @@ static qse_char_t* val_int_to_str (
 		tmp[rlen] = QSE_T('\0');
 		if (len != QSE_NULL) *len = rlen;
 	}
-	else if (opt & QSE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_RTX_VALTOSTR_FIXED)
 	{
 		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
@@ -925,7 +922,7 @@ static qse_char_t* val_int_to_str (
 	else
 	{
 		/* clear the buffer */
-		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+		if (opt & QSE_AWK_RTX_VALTOSTR_CLEAR) qse_str_clear (buf);
 
 		tmp = QSE_STR_PTR(buf) + QSE_STR_LEN(buf);
 
@@ -950,7 +947,7 @@ static qse_char_t* val_int_to_str (
 
 	if (v->val < 0) tmp[--rlen] = QSE_T('-');
 
-	if (buf != QSE_NULL && !(opt & QSE_AWK_VALTOSTR_FIXED))
+	if (buf != QSE_NULL && !(opt & QSE_AWK_RTX_VALTOSTR_FIXED))
 	{
 		tmp = QSE_STR_PTR(buf);
 		if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
@@ -967,7 +964,7 @@ static qse_char_t* val_real_to_str (
 	qse_size_t tmp_len;
 	qse_str_t out, fbu;
 
-	if (opt & QSE_AWK_VALTOSTR_PRINT)
+	if (opt & QSE_AWK_RTX_VALTOSTR_PRINT)
 	{
 		tmp = run->gbl.ofmt.ptr;
 		tmp_len = run->gbl.ofmt.len;
@@ -1009,7 +1006,7 @@ static qse_char_t* val_real_to_str (
 
 		if (len != QSE_NULL) *len = tmp_len;
 	}
-	else if (opt & QSE_AWK_VALTOSTR_FIXED)
+	else if (opt & QSE_AWK_RTX_VALTOSTR_FIXED)
 	{
 		QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
 
@@ -1032,7 +1029,7 @@ static qse_char_t* val_real_to_str (
 	}
 	else
 	{
-		if (opt & QSE_AWK_VALTOSTR_CLEAR) qse_str_clear (buf);
+		if (opt & QSE_AWK_RTX_VALTOSTR_CLEAR) qse_str_clear (buf);
 
 		if (qse_str_ncat (buf, tmp, tmp_len) == (qse_size_t)-1)
 		{

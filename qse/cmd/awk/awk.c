@@ -17,6 +17,7 @@
  */
 
 #include <qse/awk/awk.h>
+#include <qse/awk/std.h>
 #include <qse/cmn/sll.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
@@ -50,7 +51,7 @@ static int app_debug = 0;
 
 struct argout_t
 {
-	qse_awk_parsesimple_type_t ist;  /* input source type */
+	qse_awk_parsestd_type_t ist;  /* input source type */
 	union
 	{
 		const qse_char_t* str;
@@ -58,7 +59,7 @@ struct argout_t
 	} isp;
 	qse_size_t   isfl; /* the number of input source files */
 
-	qse_awk_parsesimple_type_t ost;  /* output source type */
+	qse_awk_parsestd_type_t ost;  /* output source type */
 	qse_char_t*  osf;  /* output source file */
 
 
@@ -495,14 +496,14 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 		}
 
 		/* the source code is the string, not from the file */
-		ao->ist = QSE_AWK_PARSESIMPLE_STR;
+		ao->ist = QSE_AWK_PARSESTD_CP;
 		ao->isp.str = argv[opt.ind++];
 
 		free (isf);
 	}
 	else
 	{
-		ao->ist = QSE_AWK_PARSESIMPLE_FILE;
+		ao->ist = QSE_AWK_PARSESTD_FILE;
 		ao->isp.files = isf;
 	}
 
@@ -527,7 +528,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	}
 	icf[icfl] = QSE_NULL;
 
-	ao->ost = QSE_AWK_PARSESIMPLE_FILE;
+	ao->ost = QSE_AWK_PARSESTD_FILE;
 	ao->osf = osf;
 
 	ao->icf = icf;
@@ -548,7 +549,7 @@ static qse_awk_t* open_awk (void)
 {
 	qse_awk_t* awk;
 
-	awk = qse_awk_opensimple ();
+	awk = qse_awk_openstd ();
 	if (awk == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));
@@ -610,11 +611,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (awk == QSE_NULL) return -1;
 
 	/* TODO: change it to support multiple source files */
-	qse_awk_parsesimple_in_t psin;
-	qse_awk_parsesimple_out_t psout;
+	qse_awk_parsestd_in_t psin;
+	qse_awk_parsestd_out_t psout;
 	
 	psin.type = ao.ist;
-	if (ao.ist == QSE_AWK_PARSESIMPLE_STR) psin.u.str = ao.isp.str;
+	if (ao.ist == QSE_AWK_PARSESTD_CP) psin.u.cp = ao.isp.str;
 	else psin.u.file = ao.isp.files[0];
 
 	if (ao.osf != QSE_NULL)
@@ -623,7 +624,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		psout.u.file = ao.osf;
 	}
 
-	if (qse_awk_parsesimple (awk, &psin, 
+	if (qse_awk_parsestd (awk, &psin, 
 		((ao.osf == QSE_NULL)? QSE_NULL: &psout)) == -1)
 	{
 		qse_printf (
@@ -642,8 +643,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.on_exit = on_run_exit;
 	rcb.data = &ao;
 
-	rtx = qse_awk_rtx_opensimple (
-		awk, ao.icf, QSE_AWK_RTX_OPENSIMPLE_STDIO);
+	rtx = qse_awk_rtx_openstd (
+		awk, ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
@@ -680,7 +681,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 oops:
 	qse_awk_close (awk);
 
-	if (ao.ist == QSE_AWK_PARSESIMPLE_FILE && 
+	if (ao.ist == QSE_AWK_PARSESTD_FILE && 
 	    ao.isp.files != QSE_NULL) free (ao.isp.files);
 	/*if (ao.osf != QSE_NULL) free (ao.osf);*/
 	if (ao.icf != QSE_NULL) free (ao.icf);

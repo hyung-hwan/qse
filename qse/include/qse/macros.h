@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 455 2008-11-26 09:05:00Z baconevi $
+ * $Id: macros.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

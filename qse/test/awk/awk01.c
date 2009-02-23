@@ -23,6 +23,7 @@
  */
 
 #include <qse/awk/awk.h>
+#include <qse/awk/std.h>
 #include <qse/utl/stdio.h>
 
 const qse_char_t* src = QSE_T(
@@ -40,20 +41,20 @@ int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
-	qse_awk_parsesimple_in_t psin;
+	qse_awk_parsestd_in_t psin;
 	int ret;
 
-	awk = qse_awk_opensimple ();
+	awk = qse_awk_openstd ();
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
 		goto oops;
 	}
 
-	psin.type = QSE_AWK_PARSESIMPLE_STR;
-	psin.u.str  = src;
+	psin.type = QSE_AWK_PARSESTD_CP;
+	psin.u.cp  = src;
 
-	ret = qse_awk_parsesimple (awk, &psin, QSE_NULL);
+	ret = qse_awk_parsestd (awk, &psin, QSE_NULL);
 	if (ret == -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -61,10 +62,10 @@ int main ()
 		goto oops;
 	}
 
-	rtx = qse_awk_rtx_opensimple (
+	rtx = qse_awk_rtx_openstd (
 		awk, 
-		QSE_NULL,             /* no console input */
-		QSE_AWK_RTX_OPENSIMPLE_STDIO /* stdout for console output */
+		QSE_NULL,                 /* no console input */
+		QSE_AWK_RTX_OPENSTD_STDIO /* stdout for console output */
 	);
 	if (rtx == QSE_NULL) 
 	{

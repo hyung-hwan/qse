@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 372 2008-09-23 09:51:24Z baconevi $
+ * $Id: rec.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -123,7 +123,7 @@ static int split_record (qse_awk_rtx_t* run)
 	else 
 	{
 		fs_ptr = qse_awk_rtx_valtostr (
-			run, fs, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
+			run, fs, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
 		if (fs_ptr == QSE_NULL) return -1;
 		fs_free = fs_ptr;
 	}

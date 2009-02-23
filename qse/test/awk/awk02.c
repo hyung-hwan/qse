@@ -23,6 +23,7 @@
  */
 
 #include <qse/awk/awk.h>
+#include <qse/awk/std.h>
 #include <qse/cmn/mem.h>
 #include <qse/utl/stdio.h>
 
@@ -44,12 +45,12 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 
-	qse_awk_parsesimple_in_t psin;
-	qse_awk_parsesimple_out_t psout;
+	qse_awk_parsestd_in_t psin;
+	qse_awk_parsestd_out_t psout;
 
 	int ret;
 
-	awk = qse_awk_opensimple ();
+	awk = qse_awk_openstd ();
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
@@ -59,12 +60,12 @@ int main ()
 	qse_memset (srcout, QSE_T(' '), QSE_COUNTOF(srcout)-1);
 	srcout[QSE_COUNTOF(srcout)-1] = QSE_T('\0');
 
-	psin.type = QSE_AWK_PARSESIMPLE_STR;
-	psin.u.str  = src;
-	psout.type = QSE_AWK_PARSESIMPLE_STR;
-	psout.u.str  = srcout;
+	psin.type = QSE_AWK_PARSESTD_CP;
+	psin.u.cp  = src;
+	psout.type = QSE_AWK_PARSESTD_CP;
+	psout.u.cp  = srcout;
 
-	ret = qse_awk_parsesimple (awk, &psin, &psout);
+	ret = qse_awk_parsestd (awk, &psin, &psout);
 	if (ret == -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -76,10 +77,10 @@ int main ()
 	qse_printf (QSE_T("=================================\n"));
 	qse_fflush (QSE_STDOUT);
 
-	rtx = qse_awk_rtx_opensimple (
+	rtx = qse_awk_rtx_openstd (
 		awk, 
-		QSE_NULL,             /* no console input */
-		QSE_AWK_RTX_OPENSIMPLE_STDIO /* stdout for console output */
+		QSE_NULL,                 /* no console input */
+		QSE_AWK_RTX_OPENSTD_STDIO /* stdout for console output */
 	);
 	if (rtx == QSE_NULL) 
 	{
