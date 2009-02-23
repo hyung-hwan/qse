@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c,v 1.30 2006/01/15 06:51:35 bacon Ease $
+ * $Id: sio.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

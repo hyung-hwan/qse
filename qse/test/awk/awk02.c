@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 501 2008-12-17 08:39:15Z baconevi $ 
+ * $Id: awk02.c 76 2009-02-22 14:18:06Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

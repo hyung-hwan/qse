@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 337 2008-08-20 09:17:25Z baconevi $
+ * $Id: lda.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
