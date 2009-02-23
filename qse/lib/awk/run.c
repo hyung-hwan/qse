@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 496 2008-12-15 09:56:48Z baconevi $
+ * $Id: run.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -315,7 +315,7 @@ static int set_global (
 		qse_size_t convfmt_len, i;
 
 		convfmt_ptr = qse_awk_rtx_valtostr (run, 
-			val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &convfmt_len);
+			val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &convfmt_len);
 		if (convfmt_ptr == QSE_NULL) return  -1;
 
 		for (i = 0; i < convfmt_len; i++)
@@ -362,7 +362,7 @@ static int set_global (
 			QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
 			fs_ptr = qse_awk_rtx_valtostr (
-				run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
+				run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
 			if (fs_ptr == QSE_NULL) return -1;
 		}
 
@@ -443,7 +443,7 @@ static int set_global (
 		qse_size_t ofmt_len, i;
 
 		ofmt_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &ofmt_len);
+			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ofmt_len);
 		if (ofmt_ptr == QSE_NULL) return  -1;
 
 		for (i = 0; i < ofmt_len; i++)
@@ -467,7 +467,7 @@ static int set_global (
 		qse_size_t ofs_len;
 
 		ofs_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &ofs_len);
+			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ofs_len);
 		if (ofs_ptr == QSE_NULL) return  -1;
 
 		if (run->gbl.ofs.ptr != QSE_NULL)
@@ -481,7 +481,7 @@ static int set_global (
 		qse_size_t ors_len;
 
 		ors_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &ors_len);
+			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ors_len);
 		if (ors_ptr == QSE_NULL) return  -1;
 
 		if (run->gbl.ors.ptr != QSE_NULL)
@@ -506,7 +506,7 @@ static int set_global (
 			QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
 			rs_ptr = qse_awk_rtx_valtostr (
-				run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
+				run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
 			if (rs_ptr == QSE_NULL) return -1;
 		}
 
@@ -540,7 +540,7 @@ static int set_global (
 		qse_size_t subsep_len;
 
 		subsep_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &subsep_len);
+			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &subsep_len);
 		if (subsep_ptr == QSE_NULL) return  -1;
 
 		if (run->gbl.subsep.ptr != QSE_NULL)
@@ -1271,7 +1271,6 @@ static void capture_retval_on_exit (void* arg)
 	qse_awk_rtx_refupval (data->rtx, data->val);
 }
 
-
 static int enter_stack_frame (qse_awk_rtx_t* run)
 {
 	qse_size_t saved_stack_top;
@@ -1462,11 +1461,13 @@ int qse_awk_rtx_loop (qse_awk_rtx_t* rtx)
 }
 
 /* call an AWK function */
-int qse_awk_rtx_call (
+qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
 	qse_awk_val_t** args, qse_size_t nargs)
 {
+#if 0
 	int ret = 0;
+#endif
 	qse_map_pair_t* pair;
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
@@ -1479,7 +1480,7 @@ int qse_awk_rtx_call (
 		/* cannot call the function again when exit() is called
 		 * in an AWK program or qse_awk_rtx_stop() is invoked */
 		qse_awk_rtx_seterror (rtx, QSE_AWK_ENOPER, 0, QSE_NULL);
-		return -1;
+		return QSE_NULL;
 	}
 	/*rtx->exit_level = EXIT_NONE;*/
 
@@ -1503,7 +1504,7 @@ int qse_awk_rtx_call (
 		errarg.len = call.what.fun.name.len;
 
 		qse_awk_rtx_seterror (rtx, QSE_AWK_EFUNNONE, 0, &errarg);
-		return -1;
+		return QSE_NULL;
 	}
 
 	fun = (qse_awk_fun_t*)QSE_MAP_VPTR(pair);
@@ -1515,7 +1516,7 @@ int qse_awk_rtx_call (
 		/* TODO: is this correct? what if i want to 
 		 *       allow arbitarary numbers of arguments? */
 		qse_awk_rtx_seterror (rtx, QSE_AWK_EARGTM, 0, QSE_NULL);
-		return -1;
+		return QSE_NULL;
 	}
 
 	/* now that the function is found and ok, let's execute it */
@@ -1530,10 +1531,46 @@ int qse_awk_rtx_call (
 		&crdata
 	);
 
+	if (v == QSE_NULL)
+	{
+		/* an error occurred. let's check if it is caused by exit().
+		 * if so, the return value should have been captured into
+		 * crdata.val. */
+		if (crdata.val != QSE_NULL) v = crdata.val; /* yet it is */
+	}
+	else
+	{
+		/* thr return value captured in termination by exit()
+		 * is reference-counted up in capture_retval_on_exit().
+		 * let's do the same thing for the return value normally
+		 * returned. */
+		qse_awk_rtx_refupval (rtx, v);
+	}
+
+	if (rtx->rcb.on_exit != QSE_NULL)
+	{
+		rtx->rcb.on_exit (
+			rtx, 
+			((v == QSE_NULL)? qse_awk_val_nil: v),
+			rtx->rcb.data
+		);
+	}
+
+	/* return the return value with its reference count at least 1.
+	 * the caller of this function should reference-count it down. */
+	return v;
+
+
+#if 0
 	if (v == QSE_NULL) 
 	{
+		/* an error occurred. but this might have been 
+		 * caused by exit(). so let's check it */
+
 		if (crdata.val == QSE_NULL) 
 		{
+			/* no return value has been caputured. this must
+			 * be an error */
 			QSE_ASSERT (rtx->errnum != QSE_AWK_ENOERR);
 			v = qse_awk_val_nil; /* defaults to nil */
 			ret = -1;
@@ -1556,17 +1593,19 @@ int qse_awk_rtx_call (
 	}
 	else 
 	{	
-		/* the reference count of crdata.val is updated in 
-		 * capture_retval_on_exit(). update reference count of 
-		 * v here to balance it */
+		/* the return value captured in termination by exit()
+		 * is reference-counted up in capture_retval_on_exit().
+		 * let's do the same thing for the return value normally
+		 * returned. */
 		qse_awk_rtx_refupval (rtx, v);
 	}
 
 	if (rtx->rcb.on_exit != QSE_NULL)
 		rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
-	qse_awk_rtx_refdownval (rtx, v);
 
+	qse_awk_rtx_refdownval (rtx, v);
 	return ret;
+#endif
 }
 
 static int run_pattern_blocks (qse_awk_rtx_t* run)
@@ -2534,13 +2573,13 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				/* try with a fixed-size buffer */
 				keylen = QSE_COUNTOF(buf);
 				key = qse_awk_rtx_valtostr (
-					run, idx, QSE_AWK_VALTOSTR_FIXED, 
+					run, idx, QSE_AWK_RTX_VALTOSTR_FIXED, 
 					(qse_str_t*)buf, &keylen);
 				if (key == QSE_NULL)
 				{
 					/* if it doesn't work, switch to dynamic mode */
 					key = qse_awk_rtx_valtostr (
-						run, idx, QSE_AWK_VALTOSTR_CLEAR,
+						run, idx, QSE_AWK_RTX_VALTOSTR_CLEAR,
 						QSE_NULL, &keylen);
 				}
 
@@ -2659,13 +2698,13 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				/* try with a fixed-size buffer */
 				keylen = QSE_COUNTOF(buf);
 				key = qse_awk_rtx_valtostr (
-					run, idx, QSE_AWK_VALTOSTR_FIXED, 
+					run, idx, QSE_AWK_RTX_VALTOSTR_FIXED, 
 					(qse_str_t*)buf, &keylen);
 				if (key == QSE_NULL)
 				{
 					/* if it doesn't work, switch to dynamic mode */
 					key = qse_awk_rtx_valtostr (
-						run, idx, QSE_AWK_VALTOSTR_CLEAR,
+						run, idx, QSE_AWK_RTX_VALTOSTR_CLEAR,
 						QSE_NULL, &keylen);
 				}
 
@@ -2779,7 +2818,7 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 
 		qse_awk_rtx_refupval (run, v);
 		out = qse_awk_rtx_valtostr (
-			run, v, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, v, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (out == QSE_NULL) 
 		{
 			qse_awk_rtx_refdownval (run, v);
@@ -2937,7 +2976,7 @@ static int run_printf (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 
 		qse_awk_rtx_refupval (run, v);
 		out = qse_awk_rtx_valtostr (
-			run, v, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, v, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (out == QSE_NULL) 
 		{
 			qse_awk_rtx_refdownval (run, v);
@@ -3585,7 +3624,7 @@ static qse_awk_val_t* do_assignment_pos (
 	else
 	{
 		str = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (str == QSE_NULL)
 		{
 			/* change error line */
@@ -4038,7 +4077,7 @@ static int __cmp_int_str (
 	}
 
 	str = qse_awk_rtx_valtostr (
-		run, left, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+		run, left, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 	if (str == QSE_NULL) return CMP_ERROR;
 
 	if (run->gbl.ignorecase)
@@ -4110,7 +4149,7 @@ static int __cmp_real_str (
 	}
 
 	str = qse_awk_rtx_valtostr (
-		run, left, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+		run, left, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 	if (str == QSE_NULL) return CMP_ERROR;
 
 	if (run->gbl.ignorecase)
@@ -4630,11 +4669,11 @@ static qse_awk_val_t* eval_binop_concat (
 	qse_awk_val_t* res;
 
 	strl = qse_awk_rtx_valtostr (
-		run, left, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &strl_len);
+		run, left, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &strl_len);
 	if (strl == QSE_NULL) return QSE_NULL;
 
 	strr = qse_awk_rtx_valtostr (
-		run, right, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &strr_len);
+		run, right, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &strr_len);
 	if (strr == QSE_NULL) 
 	{
 		QSE_AWK_FREE (run->awk, strl);
@@ -4739,7 +4778,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	else
 	{
 		str = qse_awk_rtx_valtostr (
-			run, right, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, right, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (str == QSE_NULL) return QSE_NULL;
 
 		rex_code = QSE_AWK_BUILDREX (run->awk, str, len, &errnum);
@@ -4785,7 +4824,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	else
 	{
 		str = qse_awk_rtx_valtostr (
-			run, left, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, left, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (str == QSE_NULL) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
@@ -5387,7 +5426,8 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 }
 
 static qse_awk_val_t* eval_fun_ex (
-	qse_awk_rtx_t* run, qse_awk_nde_t* nde, void(*errhandler)(void*), void* eharg)
+	qse_awk_rtx_t* run, qse_awk_nde_t* nde, 
+	void(*errhandler)(void*), void* eharg)
 {
 	qse_awk_nde_call_t* call = (qse_awk_nde_call_t*)nde;
 	qse_awk_fun_t* fun;
@@ -5435,8 +5475,7 @@ static qse_awk_val_t* eval_fun (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		while ((nargs) > 0) \
 		{ \
 			--(nargs); \
-			qse_awk_rtx_refdownval ((rtx), \
-				(rtx)->stack[(rtx)->stack_top-1]); \
+			qse_awk_rtx_refdownval ((rtx), (rtx)->stack[(rtx)->stack_top-1]); \
 			__raw_pop (rtx); \
 		} \
 	} while (0)
@@ -5707,11 +5746,11 @@ static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_call_t* ca
 	{
 		if (__raw_push (rtx, pafv->args[nargs]) == -1) 
 		{
-			/* ugly - v needs to be freed if it doesn't have
+			/* ugly - arg needs to be freed if it doesn't have
 			 * any reference. but its reference has not been 
-			 * updated yet as it is carried out after the 
-			 * successful stack push. so it adds up a reference 
-			 * and dereferences it */
+			 * updated yet as it is carried out after successful
+			 * stack push. so it adds up a reference and 
+			 * dereferences it */
 			qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
 			qse_awk_rtx_refdownval (rtx, pafv->args[nargs]);
 
@@ -5720,6 +5759,8 @@ static qse_size_t push_arg_from_vals (qse_awk_rtx_t* rtx, qse_awk_nde_call_t* ca
 				rtx, QSE_AWK_ENOMEM, call->line, QSE_NULL);
 			return (qse_size_t)-1;
 		}
+
+		qse_awk_rtx_refupval (rtx, pafv->args[nargs]);
 	}
 
 	return nargs; 
@@ -6255,7 +6296,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		 *       should not be called immediately below */
 		qse_awk_rtx_refupval (run, v);
 		in = qse_awk_rtx_valtostr (
-			run, v, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &len);
+			run, v, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
 		if (in == QSE_NULL) 
 		{
 			qse_awk_rtx_refdownval (run, v);
@@ -6450,7 +6491,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 		else
 		{
 			ofs = qse_awk_rtx_valtostr (
-				run, v, QSE_AWK_VALTOSTR_CLEAR, 
+				run, v, QSE_AWK_RTX_VALTOSTR_CLEAR, 
 				QSE_NULL, &ofs_len);
 			if (ofs == QSE_NULL) return -1;
 
@@ -6534,14 +6575,14 @@ static qse_char_t* idxnde_to_str (
 		{
 			/* try with a fixed-size buffer */
 			str = qse_awk_rtx_valtostr (
-				run, idx, QSE_AWK_VALTOSTR_FIXED, (qse_str_t*)buf, len);
+				run, idx, QSE_AWK_RTX_VALTOSTR_FIXED, (qse_str_t*)buf, len);
 		}
 
 		if (str == QSE_NULL)
 		{
 			/* if it doen't work, switch to the dynamic mode */
 			str = qse_awk_rtx_valtostr (
-				run, idx, QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, len);
+				run, idx, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, len);
 
 			if (str == QSE_NULL) 
 			{
@@ -7250,8 +7291,11 @@ qse_char_t* qse_awk_rtx_format (
 					return QSE_NULL;
 				}
 	
-				str = qse_awk_rtx_valtostr (run, v, 
-					QSE_AWK_VALTOSTR_CLEAR, QSE_NULL, &str_len);
+				str = qse_awk_rtx_valtostr (
+					run, v, 
+					QSE_AWK_RTX_VALTOSTR_CLEAR,
+					QSE_NULL, &str_len
+				);
 				if (str == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (run, v);

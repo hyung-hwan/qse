@@ -1,5 +1,5 @@
 /*
- * $Id: eio.h 363 2008-09-04 10:58:08Z baconevi $
+ * $Id: val.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void qse_awk_rtx_freeval (
+        qse_awk_rtx_t* rtx,
+        qse_awk_val_t* val,
+        qse_bool_t     cache
+);
 
 void qse_awk_rtx_freevalchunk (
 	qse_awk_rtx_t*       rtx,

@@ -44,7 +44,7 @@ CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
-am__pkginclude_HEADERS_DIST = awk.h Awk.hpp StdAwk.hpp
+am__pkginclude_HEADERS_DIST = awk.h std.h Awk.hpp StdAwk.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -179,7 +179,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = awk.h $(am__append_1)
+pkginclude_HEADERS = awk.h std.h $(am__append_1)
 CLEANFILES = *dist
 all: all-am
 

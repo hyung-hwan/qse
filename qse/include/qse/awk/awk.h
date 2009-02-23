@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 501 2008-12-17 08:39:15Z baconevi $
+ * $Id: awk.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -556,11 +556,31 @@ enum qse_awk_val_ref_id_t
 
 enum qse_awk_rtx_valtostr_opt_t
 {
-	QSE_AWK_VALTOSTR_CLEAR = (1 << 0),
-	QSE_AWK_VALTOSTR_FIXED = (1 << 1), /* this overrides CLEAR */
-	QSE_AWK_VALTOSTR_PRINT = (1 << 2)
+	QSE_AWK_RTX_VALTOSTR_CLEAR = (1 << 0),
+	QSE_AWK_RTX_VALTOSTR_FIXED = (1 << 1), /* this overrides CLEAR */
+	QSE_AWK_RTX_VALTOSTR_PRINT = (1 << 2)
 };
 
+#if 0
+/* TODO: change qse_awk_valtostr() according to the following structure... */
+struct qse_awk_valtostr_out_t
+{
+	enum
+	{
+		QSE_AWK_RTX_VALTOSTR_CP
+		QSE_AWK_RTX_VALTOSTR_CPL
+		QSE_AWK_RTX_VALTOSTR_STRP
+	} type;
+
+	union
+	{
+		qse_char_t* cp;
+		qse_xstr_t  cpl;
+		qse_str_t*  strp;
+	} u;
+};
+typedef struct qse_awk_valtostr_out_t qse_awk_valtostr_out_t;
+#endif
 
 typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 typedef struct qse_awk_val_int_t  qse_awk_val_int_t;
@@ -652,63 +672,6 @@ struct qse_awk_val_ref_t
 	 * directly. */
 	qse_awk_val_t** adr;
 };
-
-/****e* AWK/qse_awk_parsesimple_type_t
- * NAME
- *  qse_awk_parsesimple_type_t - define a source type
- * SYNOPSIS
- */
-enum qse_awk_parsesimple_type_t
-{
-	QSE_AWK_PARSESIMPLE_FILE  = 0,
-	QSE_AWK_PARSESIMPLE_STR   = 1,
-	QSE_AWK_PARSESIMPLE_STRL  = 2,
-	QSE_AWK_PARSESIMPLE_STDIO = 3
-};
-typedef enum qse_awk_parsesimple_type_t qse_awk_parsesimple_type_t;
-/******/
-
-
-/****s* AWK/qse_awk_parsesimple_in_t
- * NAME
- *  qse_awk_parsesimple_in_t - define source input 
- * SYNOPSIS
- */
-struct qse_awk_parsesimple_in_t
-{
-	qse_awk_parsesimple_type_t type;
-
-	union
-	{
-		const qse_char_t* file; 
-		const qse_char_t* str;
-		qse_cstr_t        strl;
-	} u;
-};
-typedef struct qse_awk_parsesimple_in_t qse_awk_parsesimple_in_t;
-/******/
-
-/****s* AWK/qse_awk_parsesimple_out_t
- * NAME
- *  qse_awk_parsesimple_out_t - define source output
- * SYNOPSIS
- */
-struct qse_awk_parsesimple_out_t
-{
-	qse_awk_parsesimple_type_t type;
-
-	union
-	{
-		const qse_char_t* file; 
-		qse_char_t*       str;
-		qse_xstr_t        strl;
-	} u;
-};
-typedef struct qse_awk_parsesimple_out_t qse_awk_parsesimple_out_t;
-/******/
-
-#define QSE_AWK_RTX_OPENSIMPLE_STDIO (qse_awk_rtx_opensimple_stdio)
-extern const qse_char_t* qse_awk_rtx_opensimple_stdio[];
 
 #ifdef __cplusplus
 extern "C" {
@@ -1221,13 +1184,15 @@ int qse_awk_rtx_loop (
  *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
  *    if (rtx != QSE_NULL)
  *    {
- *        qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *        v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *        if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
  *        qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+ *        if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
  *        qse_awk_rtx_close (rtx);
  *    }
  * SYNOPSIS
  */
-int qse_awk_rtx_call (
+qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* name,
 	qse_awk_val_t**   args,
@@ -1469,7 +1434,6 @@ void qse_awk_rtx_seterror (
 	const qse_cstr_t* errarg
 );
 
-
 /* record and field functions */
 int qse_awk_rtx_clrrec (
 	qse_awk_rtx_t* rtx,
@@ -1538,12 +1502,6 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 qse_bool_t qse_awk_rtx_isstaticval (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
-);
-
-void qse_awk_rtx_freeval (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val,
-	qse_bool_t     cache
 );
 
 void qse_awk_rtx_refupval (
@@ -1616,61 +1574,6 @@ int qse_awk_rtx_strtonum (
 	qse_size_t        len, 
 	qse_long_t*       l, 
 	qse_real_t*       r
-);
-/******/
-
-/****f* AWK/qse_awk_opensimple
- * NAME
- *  qse_awk_opensimple - create an awk object
- * SYNOPSIS
- */
-qse_awk_t* qse_awk_opensimple (
-	void
-);
-/******/
-
-/****f* AWK/qse_awk_parsesimple
- * NAME
- *  qse_awk_parsesimple - parse source code
- * EXAMPLE
- *  The following example parses the literal string 'BEGIN { print 10; }' and
- *  deparses it out to a buffer 'buf'.
- *    int n;
- *    qse_awk_parsesimple_in_t in;
- *    qse_awk_parsesimple_out_t out;
- *    qse_char_t buf[1000];
- *
- *    qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
- *    buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
- *    in.type = QSE_AWK_PARSESIMPLE_STR;
- *    in.u.str = QSE_T("BEGIN { print 10; }");
- *    out.type = QSE_AWK_PARSESIMPLE_STR;
- *    out.u.str = buf;
- *
- *    n = qse_awk_parsesimple (awk, &in, &out);
- * SYNOPSIS
- */
-int qse_awk_parsesimple (
-	qse_awk_t*                      awk,
-	const qse_awk_parsesimple_in_t* in,
-	qse_awk_parsesimple_out_t*      out
-);
-/******/
-
-/****f* AWK/qse_awk_rtx_opensimple
- * NAME
- *  qse_awk_rtx_opensimple - create a runtime context
- * DESCRIPTION
- *  The caller should keep the contents of icf and ocf valid throughout
- *  the lifetime of the runtime context created. The runtime context 
- *  remembers the pointers without copying in the contents.
- *
- * SYNOPSIS
- */
-qse_awk_rtx_t* qse_awk_rtx_opensimple (
-	qse_awk_t*        awk,
-	const qse_char_t*const* icf,
-	const qse_char_t*const* ocf
 );
 /******/
 

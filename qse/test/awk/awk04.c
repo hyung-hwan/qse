@@ -29,28 +29,18 @@
 #include <qse/utl/stdio.h>
 
 static const qse_char_t* src = QSE_T(
-	"function init() { a = 20; return a; }"
-	"function main() { return ++a; }"
-	"function fini() { print ++a; return a; }"
+	"function pow(x,y) { return x ** y; }"
 );
-
-static const qse_char_t* fnc[] = 
-{
-	QSE_T("init"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("main"),
-	QSE_T("fini"),
-};
 
 int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
-
 	qse_awk_parsestd_in_t psin;
-
+	qse_char_t buf[1000];
+	qse_size_t bufsize;
+	qse_awk_val_t* v;
+	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
 	int ret, i;
 
 	/* create a main processor */
@@ -88,31 +78,49 @@ int main ()
 		ret = -1; goto oops;
 	}
 	
-	/* invoke functions as indicated in the array fnc */
-	for (i = 0; i < QSE_COUNTOF(fnc); i++)
+	/* invoke the pow function */
+	arg[0] = qse_awk_rtx_makeintval (rtx, 50);
+	if (arg[0] == QSE_NULL)
 	{
-		qse_awk_val_t* v;
-		qse_char_t buf[1000];
-		qse_size_t bufsize;
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+	qse_awk_rtx_refupval (rtx, arg[0]);
 
-		v = qse_awk_rtx_call (rtx, fnc[i], QSE_NULL, 0);
-		if (v == QSE_NULL)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-				qse_awk_rtx_geterrmsg(rtx));
-			ret = -1; goto oops;
-		}
+	arg[1] = qse_awk_rtx_makeintval (rtx, 3);
+	if (arg[1] == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+	qse_awk_rtx_refupval (rtx, arg[1]);
 
-		bufsize = QSE_COUNTOF(buf);
-		qse_awk_rtx_valtostr (rtx, v, 
-			QSE_AWK_RTX_VALTOSTR_FIXED, buf, &bufsize);
-		qse_printf (QSE_T("return: [%.*s]\n"), (int)bufsize, buf);
+	v = qse_awk_rtx_call (rtx, QSE_T("pow"), arg, 2);
+	if (v == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
 
-		/* clear the return value */
-		qse_awk_rtx_refdownval (rtx, v);
-	}	
+	bufsize = QSE_COUNTOF(buf);
+	qse_awk_rtx_valtostr (rtx, v, 
+		QSE_AWK_RTX_VALTOSTR_FIXED, buf, &bufsize);
+	qse_printf (QSE_T("[%.*s]\n"), (int)bufsize, buf);
+
+	/* clear the return value */
+	qse_awk_rtx_refdownval (rtx, v);
 
 oops:
+	/* dereference all arguments */
+	for (i = 0; i < QSE_COUNTOF(arg); i++)
+	{
+		if (arg[i] != QSE_NULL) 
+			qse_awk_rtx_refdownval (rtx, arg[i]);
+	}
+
 	/* destroy a runtime context */
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
 	/* destroy the processor */
