@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: chr.h 76 2009-02-22 14:18:06Z hyunghwan.chung $
  * 
  * {License}
  */

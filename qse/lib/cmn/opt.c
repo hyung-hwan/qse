@@ -1,5 +1,5 @@
 /*
- * $Id: getopt.c 313 2008-08-03 14:06:43Z baconevi $
+ * $Id: opt.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  * 
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

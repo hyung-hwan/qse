@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 335 2008-08-20 08:22:07Z baconevi $
+ * $Id: mem.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

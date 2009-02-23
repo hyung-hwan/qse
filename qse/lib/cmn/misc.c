@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 191 2008-06-06 10:19:57Z baconevi $
+ * $Id: misc.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

@@ -1,5 +1,5 @@
 /*
- * $Id: ctype.c 132 2008-03-17 10:27:02Z baconevi $
+ * $Id: chr.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 470 2008-12-11 13:43:05Z baconevi $
+ * $Id: rex.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

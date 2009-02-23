@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 376 2008-09-24 07:18:50Z baconevi $
+ * $Id: str_bas.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 

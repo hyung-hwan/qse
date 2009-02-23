@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 496 2008-12-15 09:56:48Z baconevi $
+ * $Id: map.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
