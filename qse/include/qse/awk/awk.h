@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: awk.h 78 2009-02-23 14:03:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -583,9 +583,6 @@ typedef struct qse_awk_valtostr_out_t qse_awk_valtostr_out_t;
 #endif
 
 typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
-typedef struct qse_awk_val_int_t  qse_awk_val_int_t;
-typedef struct qse_awk_val_real_t qse_awk_val_real_t;
-typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
 typedef struct qse_awk_val_map_t  qse_awk_val_map_t;
 typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
@@ -605,40 +602,77 @@ typedef struct qse_awk_val_chunk_t qse_awk_val_chunk_t;
 
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)
 
+/****s* AWK/qse_awk_val_t
+ * NAME
+ *  qse_awk_val_t - define an abstract value type
+ * SYNOPSIS
+ */
 struct qse_awk_val_t
 {
 	QSE_AWK_VAL_HDR;	
 };
+/******/
 
-/* QSE_AWK_VAL_NIL */
+/****s* AWK/qse_awk_val_nil_t
+ * NAME
+ *  qse_awk_val_nil_t - define a nil value type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_NIL.
+ * SYNOPSIS
+ */
 struct qse_awk_val_nil_t
 {
 	QSE_AWK_VAL_HDR;
 };
+/******/
 
-/* QSE_AWK_VAL_INT */
+/****s* AWK/qse_awk_val_int_t
+ * NAME
+ *  qse_awk_val_int_t - define an integer number type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_INT.
+ * SYNOPSIS
+ */
 struct qse_awk_val_int_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_long_t val;
 	void*      nde;
 };
+typedef struct qse_awk_val_int_t qse_awk_val_int_t;
+/******/
 
-/* QSE_AWK_VAL_REAL */
+/****s* AWK/qse_awk_val_real_t
+ * NAME
+ *  qse_awk_val_real_t - define a floating-point number type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_REAL.
+ * SYNOPSIS
+ */
 struct qse_awk_val_real_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_real_t val;
 	void*      nde;
 };
+typedef struct qse_awk_val_real_t qse_awk_val_real_t;
+/******/
 
-/* QSE_AWK_VAL_STR */
+/****s* AWK/qse_awk_val_str_t
+ * NAME
+ *  qse_awk_val_str_t - define a string type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_STR.
+ * SYNOPSIS
+ */
 struct qse_awk_val_str_t
 {
 	QSE_AWK_VAL_HDR;
 	qse_char_t* ptr;
 	qse_size_t  len;
 };
+typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
+/******/
 
 /* QSE_AWK_VAL_REX */
 struct qse_awk_val_rex_t

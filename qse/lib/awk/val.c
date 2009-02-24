@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: val.c 78 2009-02-23 14:03:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -250,7 +250,8 @@ qse_awk_val_t* qse_awk_rtx_makerealval (qse_awk_rtx_t* run, qse_real_t v)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_rtx_makestrval0 (qse_awk_rtx_t* run, const qse_char_t* str)
+qse_awk_val_t* qse_awk_rtx_makestrval0 (
+	qse_awk_rtx_t* run, const qse_char_t* str)
 {
 	return qse_awk_rtx_makestrval (run, str, qse_strlen(str));
 }
