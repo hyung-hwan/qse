@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 78 2009-02-23 14:03:28Z hyunghwan.chung $
+ * $Id: awk.h 79 2009-02-24 03:57:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -49,14 +49,142 @@ typedef struct qse_awk_t     qse_awk_t;
 typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 /******/
 
+/* this is not a value. it is just a value holder */
+typedef struct qse_awk_val_chunk_t qse_awk_val_chunk_t;
+
+#if QSE_SIZEOF_INT == 2
+#	define QSE_AWK_VAL_HDR \
+		unsigned int type: 3; \
+		unsigned int ref: 13
+#else
+#	define QSE_AWK_VAL_HDR \
+		unsigned int type: 3; \
+		unsigned int ref: 29
+#endif
+
+#define QSE_AWK_VAL_TYPE(x) ((x)->type)
+
+/****s* AWK/qse_awk_val_t
+ * NAME
+ *  qse_awk_val_t - define an abstract value type
+ * SYNOPSIS
+ */
+struct qse_awk_val_t
+{
+	QSE_AWK_VAL_HDR;	
+};
 typedef struct qse_awk_val_t qse_awk_val_t;
+/******/
+
+/****s* AWK/qse_awk_val_nil_t
+ * NAME
+ *  qse_awk_val_nil_t - define a nil value type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_NIL.
+ * SYNOPSIS
+ */
+struct qse_awk_val_nil_t
+{
+	QSE_AWK_VAL_HDR;
+};
+typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
+/******/
+
+/****s* AWK/qse_awk_val_int_t
+ * NAME
+ *  qse_awk_val_int_t - define an integer number type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_INT.
+ * SYNOPSIS
+ */
+struct qse_awk_val_int_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_long_t val;
+	void*      nde;
+};
+typedef struct qse_awk_val_int_t qse_awk_val_int_t;
+/******/
+
+/****s* AWK/qse_awk_val_real_t
+ * NAME
+ *  qse_awk_val_real_t - define a floating-point number type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_REAL.
+ * SYNOPSIS
+ */
+struct qse_awk_val_real_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_real_t val;
+	void*      nde;
+};
+typedef struct qse_awk_val_real_t qse_awk_val_real_t;
+/******/
+
+/****s* AWK/qse_awk_val_str_t
+ * NAME
+ *  qse_awk_val_str_t - define a string type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_STR.
+ * SYNOPSIS
+ */
+struct qse_awk_val_str_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_char_t* ptr;
+	qse_size_t  len;
+};
+typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
+/******/
+
+/****s* AWK/qse_awk_val_rex_t
+ * NAME
+ *  qse_awk_val_rex_t - define a regular expression type
+ * DESCRIPTION
+ *  The type field is QSE_AWK_VAL_REX.
+ * SYNOPSIS
+ */
+struct qse_awk_val_rex_t
+{
+	QSE_AWK_VAL_HDR;
+	qse_char_t* ptr;
+	qse_size_t  len;
+	void*       code;
+};
+typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
+/******/
+
+/* QSE_AWK_VAL_MAP */
+struct qse_awk_val_map_t
+{
+	QSE_AWK_VAL_HDR;
+
+	/* TODO: make val_map to array if the indices used are all 
+	 *       integers switch to map dynamically once the 
+	 *       non-integral index is seen.
+	 */
+	qse_map_t* map; 
+};
+typedef struct qse_awk_val_map_t  qse_awk_val_map_t;
+
+/* QSE_AWK_VAL_REF */
+struct qse_awk_val_ref_t
+{
+	QSE_AWK_VAL_HDR;
+
+	int id;
+	/* if id is QSE_AWK_VAL_REF_POS, adr holds an index of the 
+	 * positional variable. Otherwise, adr points to the value 
+	 * directly. */
+	qse_awk_val_t** adr;
+};
+typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
 
 typedef struct qse_awk_prm_t qse_awk_prm_t;
 typedef struct qse_awk_sio_t qse_awk_sio_t;
-
 typedef struct qse_awk_rio_t qse_awk_rio_t;
 typedef struct qse_awk_riod_t qse_awk_riod_t;
-
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (
@@ -581,131 +709,6 @@ struct qse_awk_valtostr_out_t
 };
 typedef struct qse_awk_valtostr_out_t qse_awk_valtostr_out_t;
 #endif
-
-typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
-typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
-typedef struct qse_awk_val_map_t  qse_awk_val_map_t;
-typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
-
-/* this is not a value. it is just a value holder */
-typedef struct qse_awk_val_chunk_t qse_awk_val_chunk_t;
-
-#if QSE_SIZEOF_INT == 2
-#	define QSE_AWK_VAL_HDR \
-		unsigned int type: 3; \
-		unsigned int ref: 13
-#else
-#	define QSE_AWK_VAL_HDR \
-		unsigned int type: 3; \
-		unsigned int ref: 29
-#endif
-
-#define QSE_AWK_VAL_TYPE(x) ((x)->type)
-
-/****s* AWK/qse_awk_val_t
- * NAME
- *  qse_awk_val_t - define an abstract value type
- * SYNOPSIS
- */
-struct qse_awk_val_t
-{
-	QSE_AWK_VAL_HDR;	
-};
-/******/
-
-/****s* AWK/qse_awk_val_nil_t
- * NAME
- *  qse_awk_val_nil_t - define a nil value type
- * DESCRIPTION
- *  The type field is QSE_AWK_VAL_NIL.
- * SYNOPSIS
- */
-struct qse_awk_val_nil_t
-{
-	QSE_AWK_VAL_HDR;
-};
-/******/
-
-/****s* AWK/qse_awk_val_int_t
- * NAME
- *  qse_awk_val_int_t - define an integer number type
- * DESCRIPTION
- *  The type field is QSE_AWK_VAL_INT.
- * SYNOPSIS
- */
-struct qse_awk_val_int_t
-{
-	QSE_AWK_VAL_HDR;
-	qse_long_t val;
-	void*      nde;
-};
-typedef struct qse_awk_val_int_t qse_awk_val_int_t;
-/******/
-
-/****s* AWK/qse_awk_val_real_t
- * NAME
- *  qse_awk_val_real_t - define a floating-point number type
- * DESCRIPTION
- *  The type field is QSE_AWK_VAL_REAL.
- * SYNOPSIS
- */
-struct qse_awk_val_real_t
-{
-	QSE_AWK_VAL_HDR;
-	qse_real_t val;
-	void*      nde;
-};
-typedef struct qse_awk_val_real_t qse_awk_val_real_t;
-/******/
-
-/****s* AWK/qse_awk_val_str_t
- * NAME
- *  qse_awk_val_str_t - define a string type
- * DESCRIPTION
- *  The type field is QSE_AWK_VAL_STR.
- * SYNOPSIS
- */
-struct qse_awk_val_str_t
-{
-	QSE_AWK_VAL_HDR;
-	qse_char_t* ptr;
-	qse_size_t  len;
-};
-typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
-/******/
-
-/* QSE_AWK_VAL_REX */
-struct qse_awk_val_rex_t
-{
-	QSE_AWK_VAL_HDR;
-	qse_char_t* ptr;
-	qse_size_t  len;
-	void*       code;
-};
-
-/* QSE_AWK_VAL_MAP */
-struct qse_awk_val_map_t
-{
-	QSE_AWK_VAL_HDR;
-
-	/* TODO: make val_map to array if the indices used are all 
-	 *       integers switch to map dynamically once the 
-	 *       non-integral index is seen.
-	 */
-	qse_map_t* map; 
-};
-
-/* QSE_AWK_VAL_REF */
-struct qse_awk_val_ref_t
-{
-	QSE_AWK_VAL_HDR;
-
-	int id;
-	/* if id is QSE_AWK_VAL_REF_POS, adr holds an index of the 
-	 * positional variable. Otherwise, adr points to the value 
-	 * directly. */
-	qse_awk_val_t** adr;
-};
 
 #ifdef __cplusplus
 extern "C" {
@@ -1492,7 +1495,7 @@ qse_awk_val_t* qse_awk_rtx_makerealval (
 );
 
 qse_awk_val_t* qse_awk_rtx_makestrval0 (
-	qse_awk_rtx_t* rtx,
+	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str
 );
 
