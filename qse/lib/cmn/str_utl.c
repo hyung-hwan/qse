@@ -1,5 +1,5 @@
 /*
- * $Id: str_utl.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: str_utl.c 83 2009-02-24 14:05:17Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -19,9 +19,10 @@
 #include <qse/cmn/str.h>
 #include "chr.h"
 
-int qse_strspl (
+int qse_strspltr (
 	qse_char_t* s, const qse_char_t* delim,
-	qse_char_t lquote, qse_char_t rquote, qse_char_t escape)
+	qse_char_t lquote, qse_char_t rquote, 
+	qse_char_t escape, const qse_char_t* trset)
 {
 	qse_char_t* p = s, *d;
 	qse_char_t* sp = QSE_NULL, * ep = QSE_NULL;
@@ -53,6 +54,19 @@ int qse_strspl (
 
 				if (escape != QSE_T('\0') && *p == escape) 
 				{
+					if (trset != QSE_NULL && p[1] != QSE_T('\0'))
+					{
+						const qse_char_t* ep = trset;
+						while (*ep != QSE_T('\0'))
+						{
+							if (p[1] == *ep++) 
+							{
+								p[1] = *ep;
+								break;
+							}
+						}
+					}
+
 					qse_strcpy (p, p + 1);
 				}
 				else 
@@ -120,6 +134,18 @@ int qse_strspl (
 
 					if (escape != QSE_T('\0') && *p == escape) 
 					{
+						if (trset != QSE_NULL && p[1] != QSE_T('\0'))
+						{
+							const qse_char_t* ep = trset;
+							while (*ep != QSE_T('\0'))
+							{
+								if (p[1] == *ep++) 
+								{
+									p[1] = *ep;
+									break;
+								}
+							}
+						}
 						qse_strcpy (p, p + 1);
 					}
 					else 
@@ -176,6 +202,19 @@ int qse_strspl (
 
 					if (escape != QSE_T('\0') && *p == escape) 
 					{
+						if (trset != QSE_NULL && p[1] != QSE_T('\0'))
+						{
+							const qse_char_t* ep = trset;
+							while (*ep != QSE_T('\0'))
+							{
+								if (p[1] == *ep++) 
+								{
+									p[1] = *ep;
+									break;
+								}
+							}
+						}
+
 						qse_strcpy (p, p + 1);
 					}
 					else 
@@ -256,7 +295,12 @@ exit_point:
 		}
 	}
 
-
 	return cnt;
 }
 
+int qse_strspl (
+	qse_char_t* s, const qse_char_t* delim,
+	qse_char_t lquote, qse_char_t rquote, qse_char_t escape)
+{
+	return qse_strspltr (s, delim, lquote, rquote, escape, QSE_NULL);
+}
