@@ -1,5 +1,5 @@
 dnl AC_PREREQ(2.59)
-AC_INIT([qse],[0.5.0],[bacon@abiyo.net])
+AC_INIT([qse],[0.5.1],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR(autoconf)
 

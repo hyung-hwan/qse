@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: str.h 83 2009-02-24 14:05:17Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -477,6 +477,26 @@ qse_size_t qse_str_nccat (
 	qse_char_t c,
 	qse_size_t len
 );
+
+/****f* Common/qse_strspltr
+ * NAME
+ *  qse_strspltr - split a string translating special escane sequences
+ * DESCRIPTION
+ *  The argument trset is translation character set which is composed
+ *  of multiple character pairs. An escape character followed by the 
+ *  first character in a pair is translated into the second character
+ *  in the pair. If trset is QSE_NULL, no translation is performed. 
+ * SYNOPSIS
+ */
+int qse_strspltr (
+        qse_char_t*       str,
+	const qse_char_t* delim,
+        qse_char_t        lquote,
+	qse_char_t        rquote,
+        qse_char_t        escape,
+	const qse_char_t* trset
+);
+/******/
 
 /****f* Common/qse_strspl
  * NAME
