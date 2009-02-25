@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: types.h 82 2009-02-24 10:07:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -370,11 +370,6 @@ typedef int  qse_mcint_t;
 #	endif
 #endif
 
-typedef struct qse_xstr_t qse_xstr_t;
-typedef struct qse_cstr_t qse_cstr_t;
-typedef struct qse_mmgr_t qse_mmgr_t;
-typedef struct qse_ccls_t qse_ccls_t;
-
 /****t* Base/qse_xstr_t
  * NAME
  *  qse_xstr_t - combine a pointer and length 
@@ -387,6 +382,7 @@ struct qse_xstr_t
 	qse_char_t* ptr; /* this is not a const pointer */
 	qse_size_t  len; /* the number of characters */
 };
+typedef struct qse_xstr_t qse_xstr_t;
 /******/
 
 /****t* Base/qse_cstr_t
@@ -401,6 +397,7 @@ struct qse_cstr_t
 	const qse_char_t* ptr; /* this is a const pointer */
 	qse_size_t        len; /* the number of characters */
 };
+typedef struct qse_cstr_t qse_cstr_t;
 /******/
 
 /****t* Base/qse_mmgr_t
@@ -415,6 +412,7 @@ struct qse_mmgr_t
 	void  (*free)    (void* data, void* ptr);
 	void*   data;
 };
+typedef struct qse_mmgr_t qse_mmgr_t;
 /******/
 
 /****t* Base/qse_ccls_id_t
@@ -456,6 +454,7 @@ struct qse_ccls_t
 	qse_ccls_to_t to;
 	void*         data;
 };
+typedef struct qse_ccls_t qse_ccls_t;
 /******/
 
 #endif
