@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: std.c 84 2009-02-25 10:35:22Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -89,7 +89,7 @@ typedef struct rxtn_t
 
 } rxtn_t;
 
-const qse_char_t* qse_awk_rtx_openstd_stdio[] = 
+const qse_char_t*const qse_awk_rtx_openstd_stdio[] = 
 { 
 	QSE_T(""), 
 	QSE_NULL 
@@ -875,8 +875,8 @@ static qse_ssize_t awk_rio_console (
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t* awk,
-	const qse_char_t*const* icf,
-	const qse_char_t*const* ocf)
+	const qse_char_t*const icf[],
+	const qse_char_t*const ocf[])
 {
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
