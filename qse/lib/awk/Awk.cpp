@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: Awk.cpp 84 2009-02-25 10:35:22Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1413,8 +1413,9 @@ int Awk::run (const char_t** args, size_t nargs)
 		qse_awk_rtx_close (rtx);
 	}
 
-	if (runarg != QSE_NULL) 
+	if (nargs > 0)
 	{
+		QSE_ASSERT (runarg != QSE_NULL);
 		while (i > 0) qse_awk_free (awk, runarg[--i].ptr);
 		qse_awk_free (awk, runarg);
 	}
