@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 78 2009-02-23 14:03:28Z hyunghwan.chung $
+ * $Id: val.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,33 +22,7 @@
 #include <qse/utl/stdio.h>
 #endif
 
-#define CHUNKSIZE 100
-
-typedef struct qse_awk_val_ichunk_t qse_awk_val_ichunk_t;
-typedef struct qse_awk_val_rchunk_t qse_awk_val_rchunk_t;
-
-struct qse_awk_val_chunk_t
-{
-        qse_awk_val_chunk_t* next;
-};
-
-struct qse_awk_val_ichunk_t
-{
-	qse_awk_val_chunk_t* next;
-	/* make sure that it has the same fields as 
-	   qse_awk_val_chunk_t up to this point */
-
-	qse_awk_val_int_t slot[CHUNKSIZE];
-};
-
-struct qse_awk_val_rchunk_t
-{
-	qse_awk_val_chunk_t* next;
-	/* make sure that it has the same fields as 
-	   qse_awk_val_chunk_t up to this point */
-
-	qse_awk_val_real_t slot[CHUNKSIZE];
-};
+#define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
 
 static qse_char_t* str_to_str (
 	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t str_len,

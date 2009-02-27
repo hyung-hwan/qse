@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: parse.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -469,9 +469,16 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 {
 	int n;
 
-	QSE_ASSERTX (
-		sio != QSE_NULL && sio->in != QSE_NULL,
+	QSE_ASSERTX (sio != QSE_NULL ,
+		"the source code istream must be provided");
+	QSE_ASSERTX (sio->in != QSE_NULL,
 		"the source code input stream must be provided at least");
+	if (sio == QSE_NULL || sio->in == QSE_NULL)
+	{
+		SETERR (awk, QSE_AWK_EINVAL);
+		return -1;
+	}
+
 	QSE_ASSERT (awk->parse.depth.cur.loop == 0);
 	QSE_ASSERT (awk->parse.depth.cur.expr == 0);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: awk.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -549,7 +549,7 @@ static qse_awk_t* open_awk (void)
 {
 	qse_awk_t* awk;
 
-	awk = qse_awk_openstd ();
+	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));

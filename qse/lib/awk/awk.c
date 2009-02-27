@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 75 2009-02-22 14:10:34Z hyunghwan.chung $ 
+ * $Id: awk.c 85 2009-02-26 10:56:12Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -78,10 +78,20 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->mmgr = mmgr;
 
 	/* progagate the primitive functions */
+	QSE_ASSERT (prm          != QSE_NULL);
 	QSE_ASSERT (prm->pow     != QSE_NULL);
 	QSE_ASSERT (prm->sprintf != QSE_NULL);
 	QSE_ASSERT (prm->isccls  != QSE_NULL);
 	QSE_ASSERT (prm->toccls  != QSE_NULL);
+	if (prm          == QSE_NULL || 
+	    prm->pow     == QSE_NULL ||
+	    prm->sprintf == QSE_NULL ||
+	    prm->isccls  == QSE_NULL ||
+	    prm->toccls  == QSE_NULL)
+	{
+		QSE_AWK_FREE (awk, awk);
+		return QSE_NULL;
+	}
 	awk->prm = *prm;
 
 	/* build a character classifier from the primitive functions */
