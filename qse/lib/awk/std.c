@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: std.c 86 2009-02-26 12:55:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -881,6 +881,7 @@ static qse_ssize_t awk_rio_console (
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t* awk,
+	qse_size_t xtnsize,
 	const qse_char_t*const icf[],
 	const qse_char_t*const ocf[])
 {
@@ -895,7 +896,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	rtx = qse_awk_rtx_open (
 		awk, 
-		QSE_SIZEOF(rxtn_t),
+		QSE_SIZEOF(rxtn_t) + xtnsize,
 		&rio,
 		QSE_NULL/*runarg*/
 	);
@@ -914,6 +915,11 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.out.index = 0;
 
 	return rtx;
+}
+
+void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
+{
+	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
 }
 
 /*** EXTRA BUILTIN FUNCTIONS ***/

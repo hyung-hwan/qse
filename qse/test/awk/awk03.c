@@ -1,5 +1,5 @@
 /*
- * $Id: awk03.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: awk03.c 86 2009-02-26 12:55:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -77,7 +77,7 @@ int main ()
 
 	/* create a runtime context */
 	rtx = qse_awk_rtx_openstd (
-		awk, 
+		awk, 0,
 		QSE_NULL,                  /* no console input */
 		QSE_AWK_RTX_OPENSTD_STDIO  /* stdout for console output */
 	);

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: awk.c 86 2009-02-26 12:55:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -644,7 +644,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.data = &ao;
 
 	rtx = qse_awk_rtx_openstd (
-		awk, ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
+		awk, 0, ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
