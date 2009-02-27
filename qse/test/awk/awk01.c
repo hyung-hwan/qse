@@ -1,5 +1,5 @@
 /*
- * $Id: awk01.c 76 2009-02-22 14:18:06Z hyunghwan.chung $ 
+ * $Id: awk01.c 85 2009-02-26 10:56:12Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -44,7 +44,7 @@ int main ()
 	qse_awk_parsestd_in_t psin;
 	int ret;
 
-	awk = qse_awk_openstd ();
+	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));

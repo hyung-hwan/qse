@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 84 2009-02-25 10:35:22Z hyunghwan.chung $
+ * $Id: std.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -138,7 +138,7 @@ static qse_cint_t custom_awk_toccls (
 
 static int add_functions (qse_awk_t* awk);
 
-qse_awk_t* qse_awk_openstd (void)
+qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 {
 	qse_awk_t* awk;
 	qse_awk_prm_t prm;
@@ -150,7 +150,8 @@ qse_awk_t* qse_awk_openstd (void)
 	prm.toccls  = custom_awk_toccls;
 
 	/* create an object */
-	awk = qse_awk_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(xtn_t), &prm);
+	awk = qse_awk_open (
+		QSE_MMGR_GETDFL(), QSE_SIZEOF(xtn_t) + xtnsize, &prm);
 	if (awk == QSE_NULL) return QSE_NULL;
 
 	/* initialize extension */
@@ -165,6 +166,11 @@ qse_awk_t* qse_awk_openstd (void)
 	}
 
 	return awk;
+}
+
+void* qse_awk_getxtnstd (qse_awk_t* awk)
+{
+	return (void*)((xtn_t*)QSE_XTN(awk) + 1);
 }
 
 /*** PARSESTD ***/

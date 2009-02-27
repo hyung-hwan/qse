@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 79 2009-02-24 03:57:28Z hyunghwan.chung $
+ * $Id: awk.h 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -48,9 +48,6 @@ typedef struct qse_awk_t     qse_awk_t;
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 /******/
-
-/* this is not a value. it is just a value holder */
-typedef struct qse_awk_val_chunk_t qse_awk_val_chunk_t;
 
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
@@ -181,11 +178,6 @@ struct qse_awk_val_ref_t
 };
 typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
 
-typedef struct qse_awk_prm_t qse_awk_prm_t;
-typedef struct qse_awk_sio_t qse_awk_sio_t;
-typedef struct qse_awk_rio_t qse_awk_rio_t;
-typedef struct qse_awk_riod_t qse_awk_riod_t;
-typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 
 typedef qse_real_t (*qse_awk_pow_t) (
 	qse_awk_t* awk,
@@ -213,6 +205,11 @@ typedef qse_cint_t (*qse_awk_toccls_t) (
 	qse_ccls_id_t type
 );
 
+/****e* AWK/qse_awk_sio_cmd_t
+ * NAME
+ *  qse_awk_sio_cmd_t - define source IO commands
+ * SYNOPSIS
+ */
 enum qse_awk_sio_cmd_t
 {
 	QSE_AWK_SIO_OPEN   = 0,
@@ -220,8 +217,8 @@ enum qse_awk_sio_cmd_t
 	QSE_AWK_SIO_READ   = 2,
 	QSE_AWK_SIO_WRITE  = 3
 };
-
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
+/******/
 
 /****t* AWK/qse_awk_siof_t
  * NAME
@@ -245,22 +242,7 @@ enum qse_awk_rio_cmd_t
 	QSE_AWK_RIO_FLUSH  = 4,
 	QSE_AWK_RIO_NEXT   = 5  
 };
-
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
-
-/****f* AWK/qse_awk_riof_t
- * NAME
- *  qse_awk_riof_t - define a runtime IO function
- * SYNOPSIS
- */
-typedef qse_ssize_t (*qse_awk_riof_t) (
-	qse_awk_rtx_t*    rtx,
-	qse_awk_rio_cmd_t cmd, 
-	qse_awk_riod_t*   riod,
-	qse_char_t*       data,
-	qse_size_t        count
-);
-/******/
 
 /****f* AWK/qse_awk_riod_t
  * NAME
@@ -291,10 +273,31 @@ struct qse_awk_riod_t
 		qse_bool_t eos;
 	} out;
 
-	qse_awk_riod_t* next;
+	struct qse_awk_riod_t* next;
 };
+typedef struct qse_awk_riod_t qse_awk_riod_t;
 /******/
 
+/****f* AWK/qse_awk_riof_t
+ * NAME
+ *  qse_awk_riof_t - define a runtime IO function
+ * SYNOPSIS
+ */
+typedef qse_ssize_t (*qse_awk_riof_t) (
+	qse_awk_rtx_t*    rtx,
+	qse_awk_rio_cmd_t cmd, 
+	qse_awk_riod_t*   riod,
+	qse_char_t*       data,
+	qse_size_t        count
+);
+/******/
+
+
+/****s* AWK/qse_awk_prm_t
+ * NAME
+ *  qse_awk_prm_t - define primitive functions
+ * SYNOPSIS
+ */
 struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;
@@ -333,20 +336,41 @@ struct qse_awk_prm_t
 	);
 #endif
 };
+typedef struct qse_awk_prm_t qse_awk_prm_t;
+/******/
 
+/****s* AWK/qse_awk_sio_t
+ * NAME
+ *  qse_awk_sio_t - define source code IO
+ * SYNOPSIS
+ */
 struct qse_awk_sio_t
 {
 	qse_awk_siof_t in;
 	qse_awk_siof_t out;
 };
+typedef struct qse_awk_sio_t qse_awk_sio_t;
+/******/
 
+/****s* AWK/qse_awk_rio_t
+ * NAME
+ *  qse_awk_rio_t - define runtime IO
+ * SYNOPSIS
+ */
 struct qse_awk_rio_t
 {
 	qse_awk_riof_t pipe;
 	qse_awk_riof_t file;
 	qse_awk_riof_t console;
 };
+typedef struct qse_awk_rio_t qse_awk_rio_t;
+/******/
 
+/****s* AWK/qse_awk_rcb_t
+ * NAME
+ *  qse_awk_rcb_t - define runtime callbacks
+ * SYNOPSIS
+ */
 struct qse_awk_rcb_t
 {
 	int (*on_enter) (
@@ -360,6 +384,8 @@ struct qse_awk_rcb_t
 
 	void* data;
 };
+typedef struct qse_awk_rcb_t qse_awk_rcb_t;
+/******/
 
 /* various options */
 enum qse_awk_option_t

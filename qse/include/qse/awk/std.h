@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 84 2009-02-25 10:35:22Z hyunghwan.chung $
+ * $Id: std.h 85 2009-02-26 10:56:12Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -89,7 +89,17 @@ extern "C" {
  * SYNOPSIS
  */
 qse_awk_t* qse_awk_openstd (
-	void
+	qse_size_t xtnsize
+);
+/******/
+
+/****f* AWK/qse_awk_getxtnstd
+ * NAME
+ *  qse_awk_getxtnstd - get the pointer to extension space
+ * SYNOPSIS
+ */
+void* qse_awk_getxtnstd (
+	qse_awk_t* awk
 );
 /******/
 
