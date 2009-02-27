@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: std.h 86 2009-02-26 12:55:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -138,13 +138,23 @@ int qse_awk_parsestd (
  *  The caller should keep the contents of icf and ocf valid throughout
  *  the lifetime of the runtime context created. The runtime context 
  *  remembers the pointers without copying in the contents.
- *
  * SYNOPSIS
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*             awk,
+	qse_size_t             xtnsize,
 	const qse_char_t*const icf[],
 	const qse_char_t*const ocf[]
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_getxtnstd
+ * NAME
+ *  qse_awk_rtx_getxtnstd - get the pointer to extension space
+ * SYNOPSIS
+ */
+void* qse_awk_rtx_getxtnstd (
+	qse_awk_rtx_t* rtx
 );
 /******/
 
