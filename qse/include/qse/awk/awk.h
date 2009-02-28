@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: awk.h 87 2009-02-28 02:18:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -715,8 +715,6 @@ enum qse_awk_rtx_valtostr_opt_t
 	QSE_AWK_RTX_VALTOSTR_PRINT = (1 << 2)
 };
 
-#if 0
-/* TODO: change qse_awk_valtostr() according to the following structure... */
 struct qse_awk_valtostr_out_t
 {
 	enum
@@ -734,7 +732,6 @@ struct qse_awk_valtostr_out_t
 	} u;
 };
 typedef struct qse_awk_valtostr_out_t qse_awk_valtostr_out_t;
-#endif
 
 #ifdef __cplusplus
 extern "C" {

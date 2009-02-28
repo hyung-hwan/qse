@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: val.c 87 2009-02-28 02:18:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,18 +23,6 @@
 #endif
 
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
-
-static qse_char_t* str_to_str (
-	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t str_len,
-	int opt, qse_str_t* buf, qse_size_t* len);
-
-static qse_char_t* val_int_to_str (
-	qse_awk_rtx_t* run, qse_awk_val_int_t* v,
-	int opt, qse_str_t* buf, qse_size_t* len);
-
-static qse_char_t* val_real_to_str (
-	qse_awk_rtx_t* run, qse_awk_val_real_t* v,
-	int opt, qse_str_t* buf, qse_size_t* len);
 
 static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0 };
 static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, QSE_T(""), 0 };
@@ -692,67 +680,7 @@ qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, qse_awk_val_t* val)
 	return QSE_FALSE;
 }
 
-qse_char_t* qse_awk_rtx_valtostr (
-	qse_awk_rtx_t* run, qse_awk_val_t* v,
-	int opt, qse_str_t* buf, qse_size_t* len)
-{
-	if (v->type == QSE_AWK_VAL_NIL)
-	{
-		return str_to_str (run, QSE_T(""), 0, opt, buf, len);
-	}
-
-	if (v->type == QSE_AWK_VAL_INT)
-	{
-		qse_awk_val_int_t* vi = (qse_awk_val_int_t*)v;
-
-		/*
-		if (vi->nde != QSE_NULL && vi->nde->str != QSE_NULL)
-		{
-			return str_to_str (
-				run, vi->nde->str, vi->nde->len, 
-				opt, buf, len);
-		}
-		else
-		{*/
-			return val_int_to_str (run, vi, opt, buf, len);
-		/*}*/
-	}
-
-	if (v->type == QSE_AWK_VAL_REAL)
-	{
-		qse_awk_val_real_t* vr = (qse_awk_val_real_t*)v;
-
-		/*
-		if (vr->nde != QSE_NULL && vr->nde->str != QSE_NULL)
-		{
-			return str_to_str (
-				run, vr->nde->str, vr->nde->len, 
-				opt, buf, len);
-		}
-		else
-		{*/
-			return val_real_to_str (run, vr, opt, buf, len);
-		/*}*/
-	}
-
-	if (v->type == QSE_AWK_VAL_STR) 
-	{
-		qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
-
-		return str_to_str (
-			run, vs->ptr, vs->len, opt, buf, len);
-	}
-
-#ifdef DEBUG_VAL
-	qse_dprintf (
-		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtostr\n"), 
-		v->type);
-#endif
-
-	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL);
-	return QSE_NULL;
-}
-
+#if 0
 static qse_char_t* str_to_str (
 	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t str_len,
 	int opt, qse_str_t* buf, qse_size_t* len)
@@ -799,6 +727,85 @@ static qse_char_t* str_to_str (
 		if (len != QSE_NULL) *len = QSE_STR_LEN(buf);
 		return QSE_STR_PTR(buf);
 	}
+}
+#endif
+
+/* TODO: current combination
+no buffer => indicated by NULL, option (PRINT)
+fixed buffer => indicated by FIXED, option (PRINT) => USE CPL INSTEAD, PRINT made an option
+dynamic buffer => option (CLEAR, PRINT) =>
+
+ PRINT OPTION applies to real_to_str only.
+how to handle CLEAR...
+ */
+
+static qse_char_t* str_to_str (
+	qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t str_len,
+	qse_awk_valtostr_out_t* out);
+{
+	switch (out->type)
+	{
+		case QSE_AWK_VALTOSTR_CPL:
+		{
+			QSE_ASSERT (buf != QSE_NULL && len != QSE_NULL);
+
+			if (str_len >= out.u.cpl.len)
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_EINVAL, 0, QSE_NULL);
+				*len = str_len + 1;
+				return QSE_NULL;
+			}
+
+			out->u.cpl.len = qse_strncpy (out->u.cpl.ptr, str, str_len);
+			return (qse_char_t*)buf;
+		}
+
+		case QSE_AWK_VALTOSTR_STR:
+		{
+			qse_size_t n;
+
+			qse_str_clear (buf);
+			n = qse_str_ncat (out->u.cpl.str, str, str_len);
+			if (n == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			return QSE_STR_PTR(buf);
+		}
+
+		case QSE_AWK_VALTOSTR_CAT:
+		{
+			qse_size_t n;
+
+			n = qse_str_ncat (out->u.cpl.str, str, str_len);
+			if (n == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			return QSE_STR_PTR(buf);
+		}
+
+		case QSE_AWK_VALTOSTR_NEW:
+		{
+			qse_char_t* tmp;
+			tmp = QSE_AWK_STRXDUP (rtx->awk, str, str_len);
+			if (tmp == QSE_NULL) 
+			{
+				qse_awk_rtx_seterror (rtx, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				return QSE_NULL;
+			}
+
+			if (len != QSE_NULL) *len = str_len;
+			return tmp;
+		}
+	}
+
+	qse_awk_rtx_seterror (rtx, QSE_AWK_EINVAL, 0, QSE_NULL);
+	return ASE_NULL;
 }
 
 static qse_char_t* val_int_to_str (
@@ -1024,6 +1031,42 @@ static qse_char_t* val_real_to_str (
 
 	return tmp;
 }
+
+qse_char_t* qse_awk_rtx_valtostr (
+	qse_awk_rtx_t* run, qse_awk_val_t* v, 
+	qse_awk_rtx_valtostr_opt_t opt, qse_awk_rtx_valtostr_out_t* out)
+{
+	switch (v->type)
+	{
+		case QSE_AWK_VAL_NIL:
+			return str_to_str (run, QSE_T(""), 0, opt, buf, len);
+
+		case QSE_AWK_VAL_INT:
+			return val_int_to_str (
+				run, (qse_awk_val_int_t*)vi, opt, buf, len);
+
+		case QSE_AWK_VAL_REAL:
+			return val_real_to_str (
+				run, (qse_awk_val_real_t*)v, opt, buf, len);
+
+		case QSE_AWK_VAL_STR:
+		{
+			qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
+			return str_to_str (
+				run, vs->ptr, vs->len, opt, buf, len);
+		}
+	}
+
+#ifdef DEBUG_VAL
+	qse_dprintf (
+		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtostr\n"), 
+		v->type);
+#endif
+
+	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL);
+	return QSE_NULL;
+}
+
 
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* run, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
