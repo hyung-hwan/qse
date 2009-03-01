@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 86 2009-02-26 12:55:05Z hyunghwan.chung $
+ * $Id: awk04.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,8 +37,8 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_parsestd_in_t psin;
-	qse_char_t buf[1000];
-	qse_size_t bufsize;
+	qse_char_t* str;
+	qse_size_t len;
 	qse_awk_val_t* v;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
 	int ret, i;
@@ -105,10 +105,16 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	bufsize = QSE_COUNTOF(buf);
-	qse_awk_rtx_valtostr (rtx, v, 
-		QSE_AWK_RTX_VALTOSTR_FIXED, buf, &bufsize);
-	qse_printf (QSE_T("[%.*s]\n"), (int)bufsize, buf);
+	str = qse_awk_rtx_valtostrdup (rtx, v, &len);
+	if (str == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+
+	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
+	qse_awk_rtx_free (rtx, str);
 
 	/* clear the return value */
 	qse_awk_rtx_refdownval (rtx, v);

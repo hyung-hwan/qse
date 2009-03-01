@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: fnc.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -249,8 +249,7 @@ static int fnc_close (
 	}
 	else
 	{
-		name = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
+		name = qse_awk_rtx_valtostrdup (run, a0, &len);
 		if (name == QSE_NULL) return -1;
 	}
 
@@ -363,10 +362,8 @@ static int fnc_fflush (
 		}
 		else
 		{
-			str0 = qse_awk_rtx_valtostr (
-				run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len0);
+			str0 = qse_awk_rtx_valtostrdup (run, a0, &len0);
 			if (str0 == QSE_NULL) return -1;
-
 		}
 
 		/* the target name contains a null character.
@@ -436,8 +433,7 @@ static int fnc_index (
 	}
 	else
 	{
-		str0 = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len0);
+		str0 = qse_awk_rtx_valtostrdup (run, a0, &len0);
 		if (str0 == QSE_NULL) return -1;
 	}
 
@@ -448,8 +444,7 @@ static int fnc_index (
 	}
 	else
 	{
-		str1 = qse_awk_rtx_valtostr (
-			run, a1, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len1);
+		str1 = qse_awk_rtx_valtostrdup (run, a1, &len1);
 		if (str1 == QSE_NULL)
 		{
 			if (a0->type != QSE_AWK_VAL_STR) 
@@ -493,8 +488,7 @@ static int fnc_length (
 	}
 	else
 	{
-		str = qse_awk_rtx_valtostr (
-			run, v, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostrdup (run, v, &len);
 		if (str == QSE_NULL) return -1;
 		QSE_AWK_FREE (run->awk, str);
 	}
@@ -535,8 +529,7 @@ static int fnc_substr (
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostrdup (run, a0, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -641,8 +634,7 @@ static int fnc_split (
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &str_len);
+		str = qse_awk_rtx_valtostrdup (run, a0, &str_len);
 		if (str == QSE_NULL) return -1;
 		str_free = str;
 	}
@@ -665,8 +657,7 @@ static int fnc_split (
 		}
 		else
 		{
-			fs_ptr = qse_awk_rtx_valtostr (
-				run, t1, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
+			fs_ptr = qse_awk_rtx_valtostrdup (run, t1, &fs_len);
 			if (fs_ptr == QSE_NULL)
 			{
 				if (str_free != QSE_NULL) 
@@ -692,8 +683,7 @@ static int fnc_split (
 		}
 		else
 		{
-			fs_ptr = qse_awk_rtx_valtostr (
-				run, a2, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
+			fs_ptr = qse_awk_rtx_valtostrdup (run, a2, &fs_len);
 			if (fs_ptr == QSE_NULL)
 			{
 				if (str_free != QSE_NULL) 
@@ -860,8 +850,7 @@ static int fnc_tolower (
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostrdup (run, a0, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -900,8 +889,7 @@ static int fnc_toupper (
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len);
+		str = qse_awk_rtx_valtostrdup (run, a0, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -967,8 +955,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 	else
 	{
-		a0_ptr = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &a0_len);
+		a0_ptr = qse_awk_rtx_valtostrdup (run, a0, &a0_len);
 		if (a0_ptr == QSE_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
@@ -984,8 +971,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 	else
 	{
-		a1_ptr = qse_awk_rtx_valtostr (
-			run, a1, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &a1_len);
+		a1_ptr = qse_awk_rtx_valtostrdup (run, a1, &a1_len);
 		if (a1_ptr == QSE_NULL) 
 		{
 			FREE_A_PTRS (run->awk);
@@ -1040,8 +1026,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 		else
 		{
-			a2_ptr = qse_awk_rtx_valtostr (
-				run, *a2_ref, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &a2_len);
+			a2_ptr = qse_awk_rtx_valtostrdup (run, *a2_ref, &a2_len);
 			if (a2_ptr == QSE_NULL) 
 			{
 				FREE_A_PTRS (run->awk);
@@ -1249,8 +1234,7 @@ static int fnc_match (
 	}
 	else
 	{
-		str0 = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len0);
+		str0 = qse_awk_rtx_valtostrdup (run, a0, &len0);
 		if (str0 == QSE_NULL) return -1;
 	}
 
@@ -1267,8 +1251,7 @@ static int fnc_match (
 		}
 		else
 		{
-			str1 = qse_awk_rtx_valtostr (
-				run, a1, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &len1);
+			str1 = qse_awk_rtx_valtostrdup (run, a1, &len1);
 			if (str1 == QSE_NULL)
 			{
 				if (a0->type != QSE_AWK_VAL_STR) 
@@ -1373,8 +1356,7 @@ static int fnc_sprintf (
 	}
 	else
 	{
-		cs0.ptr = qse_awk_rtx_valtostr (
-			run, a0, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &cs0.len);
+		cs0.ptr = qse_awk_rtx_valtostrdup (run, a0, &cs0.len);
 		if (cs0.ptr == QSE_NULL) 
 		{
 			qse_str_fini (&fbu);

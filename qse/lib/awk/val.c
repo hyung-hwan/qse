@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 88 2009-02-28 08:44:21Z hyunghwan.chung $
+ * $Id: val.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1127,6 +1127,18 @@ qse_char_t* qse_awk_rtx_valtostr (
 
 	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE);
 	return QSE_NULL;
+}
+
+qse_char_t* qse_awk_rtx_valtostrdup (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_size_t* len)
+{
+	qse_awk_rtx_valtostr_out_t out;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+	if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return QSE_NULL;
+
+	*len = out.u.cpldup.len;
+	return out.u.cpldup.ptr;
 }
 
 int qse_awk_rtx_valtonum (
