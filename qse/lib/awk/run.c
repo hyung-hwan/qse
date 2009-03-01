@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 77 2009-02-23 00:57:18Z hyunghwan.chung $
+ * $Id: run.c 88 2009-02-28 08:44:21Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -311,18 +311,18 @@ static int set_global (
 
 	if (idx == QSE_AWK_GBL_CONVFMT)
 	{
-		qse_char_t* convfmt_ptr;
-		qse_size_t convfmt_len, i;
+		qse_size_t i;
+		qse_awk_rtx_valtostr_out_t out;
 
-		convfmt_ptr = qse_awk_rtx_valtostr (run, 
-			val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &convfmt_len);
-		if (convfmt_ptr == QSE_NULL) return  -1;
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
 
-		for (i = 0; i < convfmt_len; i++)
+		for (i = 0; i < out.u.cpldup.len; i++)
 		{
-			if (convfmt_ptr[i] == QSE_T('\0'))
+			if (out.u.cpldup.ptr[i] == QSE_T('\0'))
 			{
-				QSE_AWK_FREE (run->awk, convfmt_ptr);
+				/* '\0' is included in the value */
+				QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ECONVFMTCHR);
 				return -1;
 			}
@@ -330,8 +330,8 @@ static int set_global (
 
 		if (run->gbl.convfmt.ptr != QSE_NULL)
 			QSE_AWK_FREE (run->awk, run->gbl.convfmt.ptr);
-		run->gbl.convfmt.ptr = convfmt_ptr;
-		run->gbl.convfmt.len = convfmt_len;
+		run->gbl.convfmt.ptr = out.u.cpldup.ptr;
+		run->gbl.convfmt.len = out.u.cpldup.len;
 	}
 	else if (idx == QSE_AWK_GBL_FNR)
 	{
@@ -357,13 +357,16 @@ static int set_global (
 		}
 		else
 		{
+			qse_awk_rtx_valtostr_out_t out;
+
 			/* due to the expression evaluation rule, the 
 			 * regular expression can not be an assigned value */
 			QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
-			fs_ptr = qse_awk_rtx_valtostr (
-				run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
-			if (fs_ptr == QSE_NULL) return -1;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
+			fs_ptr = out.u.cpldup.ptr;
+			fs_len = out.u.cpldup.len;
 		}
 
 		if (fs_len > 1)
@@ -439,18 +442,17 @@ static int set_global (
 	}
 	else if (idx == QSE_AWK_GBL_OFMT)
 	{
-		qse_char_t* ofmt_ptr;
-		qse_size_t ofmt_len, i;
+		qse_size_t i;
+		qse_awk_rtx_valtostr_out_t out;
 
-		ofmt_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ofmt_len);
-		if (ofmt_ptr == QSE_NULL) return  -1;
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
 
-		for (i = 0; i < ofmt_len; i++)
+		for (i = 0; i < out.u.cpldup.len; i++)
 		{
-			if (ofmt_ptr[i] == QSE_T('\0'))
+			if (out.u.cpldup.ptr[i] == QSE_T('\0'))
 			{
-				QSE_AWK_FREE (run->awk, ofmt_ptr);
+				QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_EOFMTCHR);
 				return -1;
 			}
@@ -458,36 +460,32 @@ static int set_global (
 
 		if (run->gbl.ofmt.ptr != QSE_NULL)
 			QSE_AWK_FREE (run->awk, run->gbl.ofmt.ptr);
-		run->gbl.ofmt.ptr = ofmt_ptr;
-		run->gbl.ofmt.len = ofmt_len;
+		run->gbl.ofmt.ptr = out.u.cpldup.ptr;
+		run->gbl.ofmt.len = out.u.cpldup.len;
 	}
 	else if (idx == QSE_AWK_GBL_OFS)
 	{	
-		qse_char_t* ofs_ptr;
-		qse_size_t ofs_len;
+		qse_awk_rtx_valtostr_out_t out;
 
-		ofs_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ofs_len);
-		if (ofs_ptr == QSE_NULL) return  -1;
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
 
 		if (run->gbl.ofs.ptr != QSE_NULL)
 			QSE_AWK_FREE (run->awk, run->gbl.ofs.ptr);
-		run->gbl.ofs.ptr = ofs_ptr;
-		run->gbl.ofs.len = ofs_len;
+		run->gbl.ofs.ptr = out.u.cpldup.ptr;
+		run->gbl.ofs.len = out.u.cpldup.len;
 	}
 	else if (idx == QSE_AWK_GBL_ORS)
 	{	
-		qse_char_t* ors_ptr;
-		qse_size_t ors_len;
+		qse_awk_rtx_valtostr_out_t out;
 
-		ors_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &ors_len);
-		if (ors_ptr == QSE_NULL) return  -1;
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
 
 		if (run->gbl.ors.ptr != QSE_NULL)
 			QSE_AWK_FREE (run->awk, run->gbl.ors.ptr);
-		run->gbl.ors.ptr = ors_ptr;
-		run->gbl.ors.len = ors_len;
+		run->gbl.ors.ptr = out.u.cpldup.ptr;
+		run->gbl.ors.len = out.u.cpldup.len;
 	}
 	else if (idx == QSE_AWK_GBL_RS)
 	{
@@ -501,13 +499,16 @@ static int set_global (
 		}
 		else
 		{
+			qse_awk_rtx_valtostr_out_t out;
+
 			/* due to the expression evaluation rule, the 
 			 * regular expression can not be an assigned value */
 			QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
-			rs_ptr = qse_awk_rtx_valtostr (
-				run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
-			if (rs_ptr == QSE_NULL) return -1;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
+			rs_ptr = out.u.cpldup.ptr;
+			rs_len = out.u.cpldup.len;
 		}
 
 		if (rs_len > 1)
@@ -536,17 +537,15 @@ static int set_global (
 	}
 	else if (idx == QSE_AWK_GBL_SUBSEP)
 	{
-		qse_char_t* subsep_ptr;
-		qse_size_t subsep_len;
+		qse_awk_rtx_valtostr_out_t out;
 
-		subsep_ptr = qse_awk_rtx_valtostr (
-			run, val, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &subsep_len);
-		if (subsep_ptr == QSE_NULL) return  -1;
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL) return -1;
 
 		if (run->gbl.subsep.ptr != QSE_NULL)
 			QSE_AWK_FREE (run->awk, run->gbl.subsep.ptr);
-		run->gbl.subsep.ptr = subsep_ptr;
-		run->gbl.subsep.len = subsep_len;
+		run->gbl.subsep.ptr = out.u.cpldup.ptr;
+		run->gbl.subsep.len = out.u.cpldup.len;
 	}
 
 	qse_awk_rtx_refdownval (run, old);
@@ -2562,6 +2561,7 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				qse_size_t keylen;
 				qse_awk_val_t* idx;
 				qse_char_t buf[IDXBUFSIZE];
+				qse_awk_rtx_valtostr_out_t out;
 
 				QSE_ASSERT (var->idx != QSE_NULL);
 
@@ -2571,16 +2571,16 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				qse_awk_rtx_refupval (run, idx);
 
 				/* try with a fixed-size buffer */
-				keylen = QSE_COUNTOF(buf);
-				key = qse_awk_rtx_valtostr (
-					run, idx, QSE_AWK_RTX_VALTOSTR_FIXED, 
-					(qse_str_t*)buf, &keylen);
+				out.type = QSE_AWK_RTX_VALTOSTR_CPL;
+				out.u.cpl.ptr = buf;
+				out.u.cpl.len = QSE_COUNTOF(buf);
+				
+				key = qse_awk_rtx_valtostr (run, idx, &out);
 				if (key == QSE_NULL)
 				{
 					/* if it doesn't work, switch to dynamic mode */
-					key = qse_awk_rtx_valtostr (
-						run, idx, QSE_AWK_RTX_VALTOSTR_CLEAR,
-						QSE_NULL, &keylen);
+					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+					key = qse_awk_rtx_valtostr (run, idx, &out);
 				}
 
 				qse_awk_rtx_refdownval (run, idx);
@@ -2592,8 +2592,15 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 					return -1;
 				}
 
+				if (out.type == QSE_AWK_RTX_VALTOSTR_CPL)
+					keylen = out.u.cpl.len;
+				else
+					keylen = out.u.cpldup.len;
+
 				qse_map_delete (map, key, keylen);
-				if (key != buf) QSE_AWK_FREE (run->awk, key);
+
+				if (out.type == QSE_AWK_RTX_VALTOSTR_CPLDUP)
+					QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
 			}
 			else
 			{
