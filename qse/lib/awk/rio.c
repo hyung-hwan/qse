@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: rio.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -217,8 +217,7 @@ int qse_awk_rtx_readio (
 	}
 	else 
 	{
-		rs_ptr = qse_awk_rtx_valtostr (
-			run, rs, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &rs_len);
+		rs_ptr = qse_awk_rtx_valtostrdup (run, rs, &rs_len);
 		if (rs_ptr == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (run, rs);
@@ -424,11 +423,14 @@ int qse_awk_rtx_writeio_val (
 	}
 	else
 	{
-		str = qse_awk_rtx_valtostr (
-			run, v, 
-			QSE_AWK_RTX_VALTOSTR_CLEAR | QSE_AWK_RTX_VALTOSTR_PRINT,
-			QSE_NULL, &len);
-		if (str == QSE_NULL) return -1;
+		qse_awk_rtx_valtostr_out_t out;
+
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP |
+		           QSE_AWK_RTX_VALTOSTR_PRINT;
+		if (qse_awk_rtx_valtostr (run, v, &out) == QSE_NULL) return -1;
+
+		str = out.u.cpldup.ptr;
+		len = out.u.cpldup.len;
 	}
 
 	n = qse_awk_rtx_writeio_str (run, out_type, name, str, len);

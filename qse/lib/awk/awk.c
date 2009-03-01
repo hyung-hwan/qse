@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 85 2009-02-26 10:56:12Z hyunghwan.chung $ 
+ * $Id: awk.c 89 2009-02-28 15:27:03Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -49,7 +49,6 @@ static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
 {
 	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(map);
 	qse_awk_fnc_t* f = (qse_awk_fnc_t*)vptr;
-
 	QSE_AWK_FREE (awk, f);
 }
 

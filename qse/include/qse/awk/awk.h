@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 88 2009-02-28 08:44:21Z hyunghwan.chung $
+ * $Id: awk.h 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1590,16 +1590,6 @@ qse_bool_t qse_awk_rtx_valtobool (
 	qse_awk_val_t* val
 );
 
-#if 0
-qse_char_t* qse_awk_rtx_valtostr (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val, 
-	int            opt, 
-	qse_str_t*     buf,
-	qse_size_t*    len
-);
-#endif
-
 /****f* AWK/qse_awk_rtx_valtostr
  * NAME
  *  qse_awk_rtx_valtostr - convert a value to a string
@@ -1609,6 +1599,18 @@ qse_char_t* qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx,
 	qse_awk_val_t*              val, 
 	qse_awk_rtx_valtostr_out_t* out
+);
+/******/
+
+/****f* AWK/qse_awk_rtx_valtostrdup
+ * NAME
+ *  qse_awk_rtx_valtostrdup - convert a value to a duplicated string 
+ * SYNOPSIS
+ */
+qse_char_t* qse_awk_rtx_valtostrdup (
+        qse_awk_rtx_t* rtx,
+	qse_awk_val_t* v,
+	qse_size_t*    len
 );
 /******/
 
@@ -1656,6 +1658,16 @@ int qse_awk_rtx_strtonum (
 	qse_real_t*       r
 );
 /******/
+
+void* qse_awk_rtx_alloc (
+	qse_awk_rtx_t* rtx,
+	qse_size_t     size 
+);
+
+void qse_awk_rtx_free (
+	qse_awk_rtx_t* rtx,
+	void*          ptr
+);
 
 #ifdef __cplusplus
 }

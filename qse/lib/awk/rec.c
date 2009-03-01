@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: rec.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -122,9 +122,13 @@ static int split_record (qse_awk_rtx_t* run)
 	}
 	else 
 	{
-		fs_ptr = qse_awk_rtx_valtostr (
-			run, fs, QSE_AWK_RTX_VALTOSTR_CLEAR, QSE_NULL, &fs_len);
-		if (fs_ptr == QSE_NULL) return -1;
+		qse_awk_rtx_valtostr_out_t out;
+
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (run, fs, &out) == QSE_NULL) return -1;
+		
+		fs_ptr = out.u.cpldup.ptr;
+		fs_len = out.u.cpldup.len;
 		fs_free = fs_ptr;
 	}
 

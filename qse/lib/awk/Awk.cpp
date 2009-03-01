@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 84 2009-02-25 10:35:22Z hyunghwan.chung $
+ * $Id: Awk.cpp 89 2009-02-28 15:27:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -340,8 +340,8 @@ int Awk::Argument::init (val_t* v)
 		this->inum = ((qse_awk_val_int_t*)v)->val;
 		this->rnum = (qse_real_t)((qse_awk_val_int_t*)v)->val;
 
-		this->str.ptr = qse_awk_rtx_valtostr (
-			this->run->run, v, 0, QSE_NULL, &this->str.len);
+		this->str.ptr = qse_awk_rtx_valtostrdup (
+			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}
 	else if (QSE_AWK_VAL_TYPE(v) == QSE_AWK_VAL_REAL)
@@ -349,8 +349,8 @@ int Awk::Argument::init (val_t* v)
 		this->inum = (qse_long_t)((qse_awk_val_real_t*)v)->val;
 		this->rnum = ((qse_awk_val_real_t*)v)->val;
 
-		this->str.ptr = qse_awk_rtx_valtostr (
-			this->run->run, v, 0, QSE_NULL, &this->str.len);
+		this->str.ptr = qse_awk_rtx_valtostrdup (
+			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}
 	else if (QSE_AWK_VAL_TYPE(v) == QSE_AWK_VAL_NIL)
@@ -358,8 +358,8 @@ int Awk::Argument::init (val_t* v)
 		this->inum = 0;
 		this->rnum = 0.0;
 
-		this->str.ptr = qse_awk_rtx_valtostr (
-			this->run->run, v, 0, QSE_NULL, &this->str.len);
+		this->str.ptr = qse_awk_rtx_valtostrdup (
+			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}
 	else if (QSE_AWK_VAL_TYPE(v) == QSE_AWK_VAL_MAP)
