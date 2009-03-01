@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 87 2009-02-28 02:18:00Z hyunghwan.chung $
+ * $Id: awk.h 88 2009-02-28 08:44:21Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -708,30 +708,36 @@ enum qse_awk_val_ref_id_t
 	QSE_AWK_VAL_REF_POS
 };
 
-enum qse_awk_rtx_valtostr_opt_t
+enum qse_awk_valtostr_type_t
 {
-	QSE_AWK_RTX_VALTOSTR_CLEAR = (1 << 0),
-	QSE_AWK_RTX_VALTOSTR_FIXED = (1 << 1), /* this overrides CLEAR */
-	QSE_AWK_RTX_VALTOSTR_PRINT = (1 << 2)
+	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00,
+	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x01,
+	QSE_AWK_RTX_VALTOSTR_STRP      = 0x02,
+	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x03,
+
+	/* can be ORed with one of the values above */
+	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10
 };
 
-struct qse_awk_valtostr_out_t
+/****s* AWK/qse_rtx_awk_valtostr_out_t
+ * NAME
+ *  qse_awk_rtx_valtostr_out_t - define a value-to-string converion output type
+ * SYNOPSIS
+ */
+struct qse_awk_rtx_valtostr_out_t
 {
-	enum
-	{
-		QSE_AWK_RTX_VALTOSTR_CP
-		QSE_AWK_RTX_VALTOSTR_CPL
-		QSE_AWK_RTX_VALTOSTR_STRP
-	} type;
+	int type;
 
 	union
 	{
-		qse_char_t* cp;
 		qse_xstr_t  cpl;
+		qse_xstr_t  cpldup;  /* need to free cpldup.ptr */
 		qse_str_t*  strp;
+		qse_str_t*  strpcat;
 	} u;
 };
-typedef struct qse_awk_valtostr_out_t qse_awk_valtostr_out_t;
+typedef struct qse_awk_rtx_valtostr_out_t qse_awk_rtx_valtostr_out_t;
+/******/
 
 #ifdef __cplusplus
 extern "C" {
@@ -1584,6 +1590,7 @@ qse_bool_t qse_awk_rtx_valtobool (
 	qse_awk_val_t* val
 );
 
+#if 0
 qse_char_t* qse_awk_rtx_valtostr (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val, 
@@ -1591,6 +1598,19 @@ qse_char_t* qse_awk_rtx_valtostr (
 	qse_str_t*     buf,
 	qse_size_t*    len
 );
+#endif
+
+/****f* AWK/qse_awk_rtx_valtostr
+ * NAME
+ *  qse_awk_rtx_valtostr - convert a value to a string
+ * SYNOPSIS
+ */
+qse_char_t* qse_awk_rtx_valtostr (
+	qse_awk_rtx_t*              rtx,
+	qse_awk_val_t*              val, 
+	qse_awk_rtx_valtostr_out_t* out
+);
+/******/
 
 /****f* AWK/qse_awk_rtx_valtonum
  * NAME
