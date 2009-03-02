@@ -16,10 +16,39 @@
    limitations under the License.
  */
 
+/****S* SED/Simple Example
+ * SOURCE
+ */
+
 #include <qse/utl/sed.h>
 #include <qse/utl/stdio.h>
 
 int main ()
 {
-	return 0;
+	qse_sed_t* sed = QSE_NULL;
+	int ret = -1;
+
+	sed = qse_sed_open (QSE_NULL, 0);
+	if (sed == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("cannot open a stream editor\n"));
+		goto oops;
+	}
+	
+	//if (qse_sed_compile (sed, QSE_T("1,20"), 4) == -1)
+	//{
+		//qse_fprintf (QSE_STDERR, QSE_T("cannot compile - %s\n"), qse_sed_geterrstr(sed));
+	//	goto oops;
+	//}
+
+	//if (qse_sed_execute (sed, io) == -1)
+	//{
+	//}
+	ret = 0;
+
+oops:
+	if (sed != QSE_NULL) qse_sed_close (sed);
+	return ret;
 }
+
+/******/

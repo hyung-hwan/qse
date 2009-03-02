@@ -229,6 +229,7 @@ AC_CONFIG_FILES([
 	cmd/lsp/Makefile
 	test/Makefile 
 	test/cmn/Makefile 
+	test/utl/Makefile 
 	test/awk/Makefile 
 ])
 AC_OUTPUT
