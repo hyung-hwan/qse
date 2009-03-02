@@ -29168,7 +29168,7 @@ then
 	CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"
 fi
 
-ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/utl/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile lib/Makefile lib/cmn/Makefile lib/utl/Makefile lib/awk/Makefile lib/lsp/Makefile cmd/Makefile cmd/utl/Makefile cmd/awk/Makefile cmd/lsp/Makefile test/Makefile test/cmn/Makefile test/awk/Makefile"
+ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/utl/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile lib/Makefile lib/cmn/Makefile lib/utl/Makefile lib/awk/Makefile lib/lsp/Makefile cmd/Makefile cmd/utl/Makefile cmd/awk/Makefile cmd/lsp/Makefile test/Makefile test/cmn/Makefile test/utl/Makefile test/awk/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29802,6 +29802,7 @@ do
     "cmd/lsp/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/lsp/Makefile" ;;
     "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
     "test/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES test/cmn/Makefile" ;;
+    "test/utl/Makefile") CONFIG_FILES="$CONFIG_FILES test/utl/Makefile" ;;
     "test/awk/Makefile") CONFIG_FILES="$CONFIG_FILES test/awk/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
