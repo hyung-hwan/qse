@@ -1,1 +1,1 @@
-SUBDIRS = cmn awk
+SUBDIRS = cmn utl awk 

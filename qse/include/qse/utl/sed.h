@@ -48,6 +48,14 @@ struct qse_sed_t
 	QSE_DEFINE_COMMON_FIELDS (sed)
 	qse_sed_errnum_t errnum;
 
+	/* source code pointers */
+	struct
+	{
+		const qse_char_t* ptr;
+		const qse_char_t* end;
+		const qse_char_t* cur;
+	} src;
+
 	void* lastrex;
 	qse_str_t rexbuf; /* temporary regular expression buffer */
 
@@ -56,8 +64,8 @@ struct qse_sed_t
 	struct
 	{
 		qse_sed_c_t* buf;
-		qse_sed_c_t* cur;
 		qse_sed_c_t* end;
+		qse_sed_c_t* cur;
 	} cmd;
 };
 
