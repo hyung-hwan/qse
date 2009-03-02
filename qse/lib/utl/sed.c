@@ -83,14 +83,13 @@ void qse_sed_fini (qse_sed_t* sed)
 	qse_str_fini (&sed->rexbuf);
 }
 
-/* get the current character without advancing the pointer */
-#define CC(ptr,end) ((ptr < end)? *ptr: QSE_CHAR_EOF)
-/* get the current character advancing the pointer */
-#define NC(ptr,end) ((ptr < end)? *ptr++: QSE_CHAR_EOF)
+/* get the current charanter of the source code */
+#define CURSC(sed) \
+	(((sed)->src.cur < (sed)->src.end)? *(sed)->src.cur: QSE_CHAR_EOF)
+/* advance the current pointer of the source code */
+#define ADVSCP(sed) ((sed)->src.cur++)
 
-static const void* compile (
-	qse_sed_t* sed, const qse_char_t* ptr, 
-	const qse_char_t* end, qse_char_t seof)
+static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
 {
 	void* code;
 	qse_cint_t c;
@@ -99,7 +98,8 @@ static const void* compile (
 
 	for (;;)
 	{
-		c = NC (ptr, end);
+		ADVSCP (sed);
+		c = CURSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
 			sed->errnum = QSE_SED_ETMTXT;
@@ -110,7 +110,8 @@ static const void* compile (
 
 		if (c == QSE_T('\\'))
 		{
-			c = NC (ptr, end);
+			ADVSCP (sed);
+			c = CURSC (sed);
 			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
 				sed->errnum = QSE_SED_ETMTXT;
@@ -141,25 +142,23 @@ static const void* compile (
 	}
 
 	sed->lastrex = code;
-	return ptr;
+	return code;
 }
 
-static const qse_char_t* address (
-	qse_sed_t* sed, const qse_char_t* ptr, 
-	const qse_char_t* end, qse_sed_a_t* a)
+static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 {
 	qse_cint_t c;
 
-	c = NC (ptr, end);
-	if ((c = *ptr) == QSE_T('$'))
+	c = CURSC (sed);
+	if (c == QSE_T('$'))
 	{
 		a->type = QSE_SED_A_DOL;
-		ptr++;
+		ADVSCP (sed);
 	}
 	else if (c == QSE_T('/'))
 	{
-		ptr++;
-		if (compile (sed, ptr, end, c) == QSE_NULL) 
+		ADVSCP (sed);
+		if (compile_regex (sed, c) == QSE_NULL) 
 			return QSE_NULL;
 
 		a->u.rex = sed->lastrex;
@@ -171,9 +170,9 @@ static const qse_char_t* address (
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
-			ptr++;
+			ADVSCP (sed);
 		}
-		while ((c = *ptr) >= QSE_T('0') && c <= QSE_T('9'));
+		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
 
 		/* line number 0 is illegal */
 		if (lno == 0) return QSE_NULL;
@@ -190,22 +189,21 @@ static const qse_char_t* address (
 		a->type = QSE_SED_A_NONE;
 	}
 
-	return ptr;
+	return a;
 }
 
-static const qse_char_t* command (
-	qse_sed_t* sed, const qse_char_t* ptr, const qse_char_t* end)
+static int command (qse_sed_t* sed)
 {
 	qse_cint_t c;
 	qse_sed_c_t* cmd = sed->cmd.cur;
 
-	c = NC (ptr, end);
+	c = CURSC (sed);
 	
 	switch (c)
 	{
 		default:
 			sed->errnum = QSE_SED_ECMDNR;
-			return QSE_NULL;
+			return -1;
 
 		case QSE_T('{'):
 			/* insert a negated branch command at the beginning 
@@ -224,7 +222,7 @@ static const qse_char_t* command (
 			{
 				/* label cannot have an address */
 				sed->errnum = QSE_SED_EA1PHB;
-				return QSE_NULL;
+				return -1;
 			}
 
 			/* skip white spaces */
@@ -237,7 +235,7 @@ static const qse_char_t* command (
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
-				return QSE_NULL;
+				return -1;
 			}
 			break;
 
@@ -246,16 +244,24 @@ static const qse_char_t* command (
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
-				return QSE_NULL;
+				return -1;
 			}
 
-			c = CC (ptr, end);
-			if (c == QSE_T('\\')) c = NC (ptr, end);
+			c = CURSC (sed);
+			if (c == QSE_T('\\')) 
+			{
+				ADVSCP (sed);
+				c = CURSC (sed);
+
+
+				/* TODO: something wrong??? */
+			}
+
 			if (c != QSE_T('\n')) /* TODO: handle \r\n or others */
 			{
 				/* new line is expected */
 				sed->errnum = QSE_SED_ENEWLN;
-				return QSE_NULL;
+				return -1;
 			}
 
 			/* TODO: get the next line... */
@@ -325,17 +331,20 @@ static const qse_char_t* command (
 			break;
 	}
 
-	return ptr;
+	return 0;
 }
 
-static const qse_char_t* fcomp (
+static int compile_source (
 	qse_sed_t* sed, const qse_char_t* ptr, qse_size_t len)
 {
 	qse_cint_t c;
-	const qse_char_t* end = ptr + len;
-
 	qse_sed_c_t* cmd = sed->cmd.cur;
 
+	/* store the source code pointers */
+	sed->src.ptr = ptr;
+	sed->src.end = ptr + len;
+	sed->src.cur = ptr;
+	
 	/* 
 	 * # comment
 	 * :label
@@ -345,13 +354,13 @@ static const qse_char_t* fcomp (
 	 */
 	while (1)
 	{
-		c = CC (ptr, end);
+		c = CURSC (sed);
 
 		/* skip white spaces */
 		while (c == QSE_T(' ') || c == QSE_T('\t')) 
 		{
-			ptr++;
-			c = CC (ptr, end);
+			ADVSCP (sed);
+			c = CURSC (sed);
 		}
 
 		/* check if it has reached the end or is commented */
@@ -359,8 +368,8 @@ static const qse_char_t* fcomp (
 
 		if (c == QSE_T(';')) 
 		{
-			/* semicolon without a meaningful address-command pair */
-			ptr++;
+			/* semicolon without a address-command pair */
+			ADVSCP (sed);
 			continue;
 		}
 
@@ -368,10 +377,9 @@ static const qse_char_t* fcomp (
 		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
 
 		/* process address */
-		ptr = address (sed, ptr, end, &cmd->a1);
-		if (ptr == QSE_NULL) return QSE_NULL;
+		if (address (sed, &cmd->a1) == QSE_NULL) return -1;
 
-		c = CC (ptr, end);
+		c = CURSC (sed);
 		if (cmd->a1.type != QSE_SED_A_NONE)
 		{
 			/* if (cmd->a1.type == QSE_SED_A_LAST)
@@ -381,12 +389,13 @@ static const qse_char_t* fcomp (
 			if (c == QSE_T(',') || c == QSE_T(';'))
 			{
 				/* maybe an address range */
-				ptr++;
+				ADVSCP (sed);
 
 				/* TODO: skip white spaces??? */
-				ptr = address (sed, ptr, end, &cmd->a2);
-				if (ptr == QSE_NULL) return QSE_NULL;
-				c = CC (ptr, end);
+				if (address (sed, &cmd->a2) == QSE_NULL) 
+					return -1;
+
+				c = CURSC (sed);
 			}
 			else cmd->a2.type = QSE_SED_A_NONE;
 		}
@@ -394,8 +403,8 @@ static const qse_char_t* fcomp (
 		/* skip white spaces */
 		while (c == QSE_T(' ') || c == QSE_T('\t')) 
 		{
-			ptr++;
-			c = CC (ptr, end);
+			ADVSCP (sed);
+			c = CURSC (sed);
 		}
 
 		if (c == QSE_T('!'))
@@ -404,8 +413,7 @@ static const qse_char_t* fcomp (
 			cmd->negfl = 1;
 		}
 
-		ptr = command (sed, ptr, end);
-		if (ptr == QSE_NULL) return QSE_NULL;
+		if (command (sed) == -1) return -1;
 
 		if (sed->cmd.cur >= sed->cmd.end)
 		{
@@ -415,5 +423,5 @@ static const qse_char_t* fcomp (
 		cmd = ++sed->cmd.cur;
 	}
 
-	return ptr;
+	return 0;
 }

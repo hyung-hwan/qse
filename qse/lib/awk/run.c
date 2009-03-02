@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 91 2009-03-01 14:54:28Z hyunghwan.chung $
+ * $Id: run.c 92 2009-03-02 03:34:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2574,11 +2574,10 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				out.type = QSE_AWK_RTX_VALTOSTR_CPL;
 				out.u.cpl.ptr = buf;
 				out.u.cpl.len = QSE_COUNTOF(buf);
-				
 				key = qse_awk_rtx_valtostr (run, idx, &out);
 				if (key == QSE_NULL)
 				{
-					/* if it doesn't work, switch to dynamic mode */
+					/* retry it in dynamic mode */
 					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 					key = qse_awk_rtx_valtostr (run, idx, &out);
 				}
@@ -2592,15 +2591,12 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 					return -1;
 				}
 
-				if (out.type == QSE_AWK_RTX_VALTOSTR_CPL)
-					keylen = out.u.cpl.len;
-				else
-					keylen = out.u.cpldup.len;
+				keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
+					out.u.cpl.len: out.u.cpldup.len;
 
 				qse_map_delete (map, key, keylen);
 
-				if (out.type == QSE_AWK_RTX_VALTOSTR_CPLDUP)
-					QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
+				if (key != buf) QSE_AWK_FREE (run->awk, key);
 			}
 			else
 			{
@@ -2707,21 +2703,12 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 				out.type = QSE_AWK_RTX_VALTOSTR_CPL;
 				out.u.cpl.ptr = buf;
 				out.u.cpl.len = QSE_COUNTOF(buf);
-				if (qse_awk_rtx_valtostr (run, idx, &out) == QSE_NULL)
+				key = qse_awk_rtx_valtostr (run, idx, &out);
+				if (key == QSE_NULL)
 				{
-					/* if it doesn't work, switch to dynamic mode */
+					/* retry it in the dynamic mode */
 					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-					if (qse_awk_rtx_valtostr (run, idx, &out) != QSE_NULL)
-					{
-						key = out.u.cpldup.ptr;
-						keylen = out.u.cpldup.len;
-					}
-				}
-				else
-				{
-					key = out.u.cpl.ptr;
-					keylen = out.u.cpl.len;
-					QSE_ASSERT (key == buf);
+					key = qse_awk_rtx_valtostr (run, idx, &out);
 				}
 
 				qse_awk_rtx_refdownval (run, idx);
@@ -2732,7 +2719,11 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 					return -1;
 				}
 
+				keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
+					out.u.cpl.len: out.u.cpldup.len;
+
 				qse_map_delete (map, key, keylen);
+
 				if (key != buf) QSE_AWK_FREE (run->awk, key);
 			}
 			else
