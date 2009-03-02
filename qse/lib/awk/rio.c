@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: rio.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -217,7 +217,7 @@ int qse_awk_rtx_readio (
 	}
 	else 
 	{
-		rs_ptr = qse_awk_rtx_valtostrdup (run, rs, &rs_len);
+		rs_ptr = qse_awk_rtx_valtocpldup (run, rs, &rs_len);
 		if (rs_ptr == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (run, rs);

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: val.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -730,15 +730,6 @@ static qse_char_t* str_to_str (
 }
 #endif
 
-/* TODO: current combination
-no buffer => indicated by NULL, option (PRINT)
-fixed buffer => indicated by FIXED, option (PRINT) => USE CPL INSTEAD, PRINT made an option
-dynamic buffer => option (CLEAR, PRINT) =>
-
- PRINT OPTION applies to real_to_str only.
-how to handle CLEAR...
- */
-
 static qse_char_t* str_to_str (
 	qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t str_len,
 	qse_awk_rtx_valtostr_out_t* out)
@@ -1129,7 +1120,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 	return QSE_NULL;
 }
 
-qse_char_t* qse_awk_rtx_valtostrdup (
+qse_char_t* qse_awk_rtx_valtocpldup (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_size_t* len)
 {
 	qse_awk_rtx_valtostr_out_t out;

@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: std.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1268,7 +1268,7 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl
 	}
 	else
 	{
-		str = qse_awk_rtx_valtostrdup (run, v, &len);
+		str = qse_awk_rtx_valtocpldup (run, v, &len);
 		if (str == QSE_NULL) return -1;
 	}
 

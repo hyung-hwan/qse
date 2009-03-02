@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: sll.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -186,7 +186,7 @@ struct qse_sll_node_t
 #define QSE_SLL_SIZE(sll)   ((sll)->size)
 #define QSE_SLL_SCALE(sll)  ((sll)->scale)
 
-/****d* Common/QSE_SLL_DPTR
+/****m* Common/QSE_SLL_DPTR
  * NAME
  *  QSE_SLL_DPTR - get the data pointer in a node
  * SYNOPSIS
@@ -194,7 +194,7 @@ struct qse_sll_node_t
 #define QSE_SLL_DPTR(node)  ((node)->dptr)
 /******/
 
-/****d* Common/QSE_SLL_DLEN
+/****m* Common/QSE_SLL_DLEN
  * NAME
  *  QSE_SLL_DLEN - get the length of data in a node
  * SYNOPSIS
@@ -202,7 +202,7 @@ struct qse_sll_node_t
 #define QSE_SLL_DLEN(node)  ((node)->dlen)
 /******/
 
-/****d* Common/QSE_SLL_NEXT
+/****m* Common/QSE_SLL_NEXT
  * NAME
  *  QSE_SLL_NEXT - get the next node
  * SYNOPSIS

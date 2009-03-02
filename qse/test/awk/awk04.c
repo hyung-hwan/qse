@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: awk04.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -105,7 +105,7 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	str = qse_awk_rtx_valtostrdup (rtx, v, &len);
+	str = qse_awk_rtx_valtocpldup (rtx, v, &len);
 	if (str == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 

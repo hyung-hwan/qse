@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: map.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -206,7 +206,7 @@ struct qse_map_t
 #define QSE_MAP_COPIER_SIMPLE ((qse_map_copier_t)1)
 #define QSE_MAP_COPIER_INLINE ((qse_map_copier_t)2)
 
-/****d* Common/QSE_MAP_SIZE
+/****m* Common/QSE_MAP_SIZE
  * NAME
  *  QSE_MAP_SIZE - get the number of pairs
  * DESCRIPTION
@@ -216,7 +216,7 @@ struct qse_map_t
 #define QSE_MAP_SIZE(m) ((m)->size)
 /*****/
 
-/****d* Common/QSE_MAP_CAPA
+/****m* Common/QSE_MAP_CAPA
  * NAME
  *  QSE_MAP_CAPA - get the capacity of a map
  *

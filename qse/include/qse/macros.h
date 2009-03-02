@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: macros.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,8 +37,22 @@
 #define QSE_WCHAR_EOF ((qse_wcint_t)-1)
 #define QSE_CHAR_EOF  ((qse_cint_t)-1)
 
+/****m* Base/QSE_SIZEOF
+ * NAME
+ *  QSE_SIZEOF - get data size in bytes
+ * SYNOPSIS
+ */
 #define QSE_SIZEOF(n)  (sizeof(n))
+/******/
+
+/****m* Base/QSE_COUNTOF
+ * NAME
+ *  QSE_COUNTOF - get the number elements in a array
+ * SYNOPSIS
+ */
 #define QSE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
+/******/
+
 #define QSE_OFFSETOF(type,member) ((qse_size_t)&((type*)0)->member)
 
 #define QSE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
@@ -152,7 +166,7 @@
 #	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
 
-/****d* Base/QSE_DEFINE_COMMON_FIELDS
+/****m* Base/QSE_DEFINE_COMMON_FIELDS
  * NAME
  *  QSE_DEFINE_COMMON_FIELDS - define common fields
  * SYNOPSIS
@@ -161,7 +175,7 @@
 	qse_mmgr_t* mmgr;
 /******/
 	
-/****d* Base/QSE_DEFINE_COMMON_FUNCTIONS
+/****m* Base/QSE_DEFINE_COMMON_FUNCTIONS
  * NAME
  *  QSE_DEFINE_COMMON_FUNCTIONS - define common functions
  * SYNOPSIS
@@ -172,7 +186,7 @@ qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 /******/
 
-/****d* Base/QSE_MMGR
+/****m* Base/QSE_MMGR
  * NAME
  *  QSE_MMGR - get the memory manager field
  * SYNOPSIS
@@ -180,7 +194,7 @@ void* qse_##name##_getxtn (qse_##name##_t* name);
 #define QSE_MMGR(obj) (obj->mmgr)
 /******/
 
-/****d* Base/QSE_XTN
+/****m* Base/QSE_XTN
  * NAME
  *  QSE_XTN - get a pointer to extension space
  * DESCRIPTION
@@ -192,7 +206,7 @@ void* qse_##name##_getxtn (qse_##name##_t* name);
 #define QSE_XTN(obj) ((void*)(obj + 1))
 /******/
 
-/****d* Base/QSE_IMPLEMENT_COMMON_FUNCTIONS
+/****m* Base/QSE_IMPLEMENT_COMMON_FUNCTIONS
  * NAME
  *  QSE_IMPLEMENT_COMMON_FUNCTIONS - implement common functions
  * SYNOPSIS
