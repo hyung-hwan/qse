@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: Awk.cpp 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -340,7 +340,7 @@ int Awk::Argument::init (val_t* v)
 		this->inum = ((qse_awk_val_int_t*)v)->val;
 		this->rnum = (qse_real_t)((qse_awk_val_int_t*)v)->val;
 
-		this->str.ptr = qse_awk_rtx_valtostrdup (
+		this->str.ptr = qse_awk_rtx_valtocpldup (
 			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}
@@ -349,7 +349,7 @@ int Awk::Argument::init (val_t* v)
 		this->inum = (qse_long_t)((qse_awk_val_real_t*)v)->val;
 		this->rnum = ((qse_awk_val_real_t*)v)->val;
 
-		this->str.ptr = qse_awk_rtx_valtostrdup (
+		this->str.ptr = qse_awk_rtx_valtocpldup (
 			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}
@@ -358,7 +358,7 @@ int Awk::Argument::init (val_t* v)
 		this->inum = 0;
 		this->rnum = 0.0;
 
-		this->str.ptr = qse_awk_rtx_valtostrdup (
+		this->str.ptr = qse_awk_rtx_valtocpldup (
 			this->run->run, v, &this->str.len);
 		if (this->str.ptr != QSE_NULL) return 0;
 	}

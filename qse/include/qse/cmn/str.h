@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 83 2009-02-24 14:05:17Z hyunghwan.chung $
+ * $Id: str.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -345,18 +345,30 @@ void qse_str_close (
 	qse_str_t* str
 );
 
-/* 
- * If capa is 0, it doesn't allocate the buffer in advance. 
+/****f* Common/qse_str_init
+ * NAME
+ *  qse_str_init - initialize a dynamically resizable string
+ * NOTE
+ *  If the parameter capa is 0, it doesn't allocate the internal buffer 
+ *  in advance.
+ * SYNOPSIS
  */
 qse_str_t* qse_str_init (
-	qse_str_t* str,
+	qse_str_t*  str,
 	qse_mmgr_t* mmgr,
-	qse_size_t capa
+	qse_size_t  capa
 );
+/******/
 
+/****f* Common/qse_str_fini
+ * NAME
+ *  qse_str_fini - finialize a dynamically resizable string
+ * SYNOPSIS
+ */
 void qse_str_fini (
 	qse_str_t* str
 );
+/******/
 
 /****f* Common/qse_str_yield
  * NAME 

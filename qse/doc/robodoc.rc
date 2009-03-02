@@ -46,13 +46,13 @@ accept files:
 	*.c
 	*.h
 headertypes:
-	o     "Overview"     robo_overview     10
-	d     "Definitions"  robo_definitions  6 
-	t     "Types"        robo_types        5 
-	e     "Enumerations" robo_enumerations 6 
-	s     "Structures"   robo_structures   5 
-	f     "Functions"    robo_functions    4
-	S     "Samples"      robo_samples      0
+	o     "Overview"         robo_overview     10
+	m     "Macros"           robo_macros       6
+	t     "Types"            robo_types        5 
+	e     "Enumerations"     robo_enumerations 6 
+	s     "Structures"       robo_structures   5 
+	f     "Functions"        robo_functions    4
+	S     "Sample Programs"  robo_samples      0
 options:
 	--cmode
 	--nopre

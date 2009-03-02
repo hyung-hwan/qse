@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 82 2009-02-24 10:07:01Z hyunghwan.chung $
+ * $Id: types.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -251,7 +251,11 @@ typedef qse_int_t   qse_ssize_t;
  */
 typedef qse_uint_t  qse_word_t;
 
-/* floating-point number */
+/****t* Base/qse_real_t
+ * NAME
+ *  qse_real_t - define a largest floating-pointer number type supported
+ ******
+ */
 #if defined(__FreeBSD__)
 	/* TODO: check if the support for long double is complete.
 	 *       if so, use long double for qse_real_t */

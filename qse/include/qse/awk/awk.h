@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: awk.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -49,6 +49,11 @@ typedef struct qse_awk_t     qse_awk_t;
 typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 /******/
 
+/****m* AWK/QSE_AWK_VAL_HDR
+ * NAME
+ *  QSE_AWK_VAL_HDR - define the common header of a value
+ * SYNOPSIS
+ */
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
@@ -58,6 +63,7 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 		unsigned int type: 3; \
 		unsigned int ref: 29
 #endif
+/******/
 
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)
 
@@ -708,20 +714,37 @@ enum qse_awk_val_ref_id_t
 	QSE_AWK_VAL_REF_POS
 };
 
-enum qse_awk_valtostr_type_t
+/****e* AWK/qse_awk_rtx_valtostr_type_t
+ * NAME
+ *  qse_awk_rtx_valtostr_type_t - define a value-to-string conversion type
+ * DESCRIPTION
+ *  The values defined are used to set the type field of the 
+ *  qse_awk_rtx_valtostr_out_t structure. The field should be one of the 
+ *  following values:
+ *  * QSE_AWK_RTX_VALTOSTR_CPL
+ *  * QSE_AWK_RTX_VALTOSTR_CPLDUP
+ *  * QSE_AWK_RTX_VALTOSTR_STRP
+ *  * QSE_AWK_RTX_VALTOSTR_STRPCAT
+ *  and it can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT.
+ * SYNOPSIS
+ */
+enum qse_awk_rtx_valtostr_type_t
 {
 	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00,
 	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x01,
 	QSE_AWK_RTX_VALTOSTR_STRP      = 0x02,
 	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x03,
-
-	/* can be ORed with one of the values above */
 	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10
 };
+/******/
 
-/****s* AWK/qse_rtx_awk_valtostr_out_t
+/****s* AWK/qse_awk_rtx_valtostr_out_t
  * NAME
- *  qse_awk_rtx_valtostr_out_t - define a value-to-string converion output type
+ *  qse_awk_rtx_valtostr_out_t - define a output structure for value-to-string 
+ *  conversion
+ * DESCRIPTION
+ *  The qse_awk_rtx_valtostr() function converts a value to a string as 
+ *  indicated in a parameter of the qse_awk_rtx_valtostr_out_t type.
  * SYNOPSIS
  */
 struct qse_awk_rtx_valtostr_out_t
@@ -1570,15 +1593,30 @@ qse_bool_t qse_awk_rtx_isstaticval (
 	qse_awk_val_t* val
 );
 
+/****f* AWK/qse_awk_rtx_refupval
+ * NAME
+ *  qse_awk_rtx_refupval - increment a reference count
+ * SYNOPSIS
+ */
 void qse_awk_rtx_refupval (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
 );
+/******/
 
+/****f* AWK/qse_awk_rtx_refdownval
+ * NAME
+ *  qse_awk_rtx_refdownval - decrement a reference count
+ * DESCRIPTION
+ *  The qse_awk_rtx_refdownval() function decrements a reference count of
+ *  a value. It destroys the value if it has reached the count of 0.
+ * SYNOPSIS
+ */
 void qse_awk_rtx_refdownval (
 	qse_awk_rtx_t* rtx,
 	qse_awk_val_t* val
 );
+/******/
 
 void qse_awk_rtx_refdownval_nofree (
 	qse_awk_rtx_t* rtx,
@@ -1593,6 +1631,62 @@ qse_bool_t qse_awk_rtx_valtobool (
 /****f* AWK/qse_awk_rtx_valtostr
  * NAME
  *  qse_awk_rtx_valtostr - convert a value to a string
+ * DESCRIPTION
+ *  The qse_awk_rtx_valtostr() function convers a value val to a string as 
+ *  instructed in the parameter out. Before the call to the function, you 
+ *  should initialize a variable of the qse_awk_rtx_valtostr_out_t type.
+ *
+ *  The type field is one of the following qse_awk_rtx_valtostr_type_t values:
+ *  * QSE_AWK_RTX_VALTOSTR_CPL
+ *  * QSE_AWK_RTX_VALTOSTR_CPLDUP
+ *  * QSE_AWK_RTX_VALTOSTR_STRP
+ *  * QSE_AWK_RTX_VALTOSTR_STRPCAT
+ *  It can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT. The option
+ *  causes the function to use OFMT for real number conversion. Otherwise,
+ *  it uses CONVFMT.
+ *
+ *  You should initialize or free other fields before and after the call 
+ *  depending on the type field as shown in EXAMPLES.
+ *  
+ * RETURN
+ *  The qse_awk_rtx_valtostr() function returns the pointer to the string
+ *  converted on success, and QSE_NULL on failure.
+ *
+ * EXAMPLES
+ *  If you have a static buffer, use QSE_AWK_RTX_VALTOSTR_CPL.
+ *   qse_awk_rtx_valtostr_out_t out;
+ *   qse_char_t buf[100];
+ *   out.type = QSE_AWK_RTX_VALTOSTR_CPL;
+ *   out.u.cpl.ptr = buf;
+ *   out.u.cpl.len = QSE_COUNTOF(buf);
+ *   if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ *   qse_printf (QSE_T("%.*s\n"), (int)out.u.cpl.len, out.u.cpl.ptr);
+ *
+ *  When unsure of the size of the string after conversion, you can use
+ *  QSE_AWK_RTX_VALTOSTR_CPLDUP. However, you should free the memory block
+ *  pointed to by the u.cpldup.ptr field after use.
+ *   qse_awk_rtx_valtostr_out_t out;
+ *   out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+ *   if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ *   qse_printf (QSE_T("%.*s\n"), (int)out.u.cpldup.len, out.u.cpldup.ptr);
+ *   qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+ *
+ *  You may like to store the result in a dynamically resizable string.
+ *  Consider QSE_AWK_RTX_VALTOSTR_STRP.
+ *   qse_awk_rtx_valtostr_out_t out;
+ *   qse_str_t str;
+ *   qse_str_init (&str, qse_awk_rtx_getmmgr(rtx), 100);
+ *   out.type = QSE_AWK_RTX_VALTOSTR_STRP;
+ *   out.u.strp = str;
+ *   if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ *   qse_printf (QSE_T("%.*s\n"), 
+ *   	(int)QSE_STR_LEN(out.u.strp), QSE_STR_PTR(out.u.strp));
+ *   qse_str_fini (&str);
+ * 
+ *  If you want to append the converted string to an existing dynamically 
+ *  resizable string, QSE_AWK_RTX_VALTOSTR_STRPCAT is the answer. The usage is
+ *  the same as QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
+ *  u.strpcat field instead of the u.strp field.
  * SYNOPSIS
  */
 qse_char_t* qse_awk_rtx_valtostr (
@@ -1602,14 +1696,29 @@ qse_char_t* qse_awk_rtx_valtostr (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_valtostrdup
+/****f* AWK/qse_awk_rtx_valtocpldup
  * NAME
- *  qse_awk_rtx_valtostrdup - convert a value to a duplicated string 
+ *  qse_awk_rtx_valtocpldup - convert a value to a string 
+ * DESCRIPTION
+ *  The qse_awk_rtx_valtocpldup() function provides a shortcut to the 
+ *  qse_awk_rtx_valtostr() function with the QSE_AWK_RTX_VALTOSTR_CPLDUP type.
+ *  It returns the pointer to the string converted and stores the length
+ *  to memory pointed to by the parameter len. You should free the returned
+ *  memory block after use. 
+ * RETURN
+ *  It returns the pointer to the string converted on success, and 
+ *  QSE_NULL on failure.
+ * EXAMPLE
+ *  The example shows a simple usage of the function.
+ *   ptr = qse_awk_rtx_valtocpldup (rtx, v, &len);
+ *   if (str == QSE_NULL) goto oops;
+ *   qse_printf (QSE_T("%.*s\n"), (int)len, ptr);
+ *   qse_awk_rtx_free (rtx, ptr);
  * SYNOPSIS
  */
-qse_char_t* qse_awk_rtx_valtostrdup (
-        qse_awk_rtx_t* rtx,
-	qse_awk_val_t* v,
+qse_char_t* qse_awk_rtx_valtocpldup (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* val,
 	qse_size_t*    len
 );
 /******/
@@ -1639,9 +1748,9 @@ qse_char_t* qse_awk_rtx_valtostrdup (
  */
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* v   /* the value to convert to a number */,
-	qse_long_t*    l   /* a pointer to a long number */, 
-	qse_real_t*    r   /* a pointer to a qse_real_t */
+	qse_awk_val_t* val,
+	qse_long_t*    l,
+	qse_real_t*    r
 );
 /******/
 
@@ -1659,15 +1768,30 @@ int qse_awk_rtx_strtonum (
 );
 /******/
 
+/****f* AWK/qse_awk_rtx_alloc
+ * NAME
+ *  qse_awk_rtx_alloc - allocate memory
+ * RETURN
+ *  The qse_awk_rtx_alloc() function returns a pointer to the memory block 
+ *  allocated on success, and QSE_NULL on failure.
+ * SYNOPSIS
+ */
 void* qse_awk_rtx_alloc (
 	qse_awk_rtx_t* rtx,
 	qse_size_t     size 
 );
+/******/
 
+/****f* AWK/qse_awk_rtx_free
+ * NAME
+ *  qse_awk_rtx_free - free memory
+ * SYNOPSIS
+ */
 void qse_awk_rtx_free (
 	qse_awk_rtx_t* rtx,
 	void*          ptr
 );
+/******/
 
 #ifdef __cplusplus
 }

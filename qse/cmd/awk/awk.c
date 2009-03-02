@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: awk.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -154,7 +154,7 @@ static qse_map_walk_t print_awk_value (
 	qse_char_t* str;
 	qse_size_t len;
 
-	str = qse_awk_rtx_valtostrdup (run, QSE_MAP_VPTR(pair), &len);
+	str = qse_awk_rtx_valtocpldup (run, QSE_MAP_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
 		dprint (QSE_T("***OUT OF MEMORY***\n"));
@@ -209,7 +209,7 @@ static void on_run_exit (
 	}
 	else
 	{
-		str = qse_awk_rtx_valtostrdup (rtx, ret, &len);
+		str = qse_awk_rtx_valtocpldup (rtx, ret, &len);
 		if (str == QSE_NULL)
 		{
 			dprint (QSE_T("[RETURN] - ***OUT OF MEMORY***\n"));

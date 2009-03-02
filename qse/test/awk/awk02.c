@@ -1,5 +1,5 @@
 /*
- * $Id: awk02.c 86 2009-02-26 12:55:05Z hyunghwan.chung $ 
+ * $Id: awk02.c 90 2009-03-01 09:58:19Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -16,9 +16,9 @@
    limitations under the License.
  */
 
-/****S* AWK/Basic Loop
+/****S* AWK/Basic Loop With Deparsing
  * DESCRIPTION
- *  This program demonstrates how to use qse_awk_rtx_loop().
+ *  The program deparses the source code and prints it before executing it.
  * SOURCE
  */
 
