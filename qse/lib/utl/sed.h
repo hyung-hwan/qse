@@ -24,7 +24,6 @@
 typedef qse_int_t qse_sed_line_t;
 
 typedef struct qse_sed_a_t qse_sed_a_t; /* address */
-typedef struct qse_sed_c_t qse_sed_c_t; /* command */
 typedef struct qse_sed_l_t qse_sed_l_t; /* label */
 
 struct qse_sed_a_t
@@ -61,7 +60,9 @@ struct qse_sed_c_t
 
 	enum
 	{
-		QSE_SED_C_A,
+		QSE_SED_C_JMP,
+
+		QSE_SED_C_A, /* append text */
 		QSE_SED_C_B,
 		QSE_SED_C_C,
 		QSE_SED_C_CD,
@@ -70,7 +71,7 @@ struct qse_sed_c_t
 		QSE_SED_C_CP,
 		QSE_SED_C_D,
 		QSE_SED_C_E,
-		QSE_SED_C_EQ,
+		QSE_SED_C_EQ, /* print the current line number */
 		QSE_SED_C_F,
 		QSE_SED_C_G,
 		QSE_SED_C_CG,

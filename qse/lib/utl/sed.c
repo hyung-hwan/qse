@@ -65,6 +65,16 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;	
 	}	
 
+	/* TODO: use different data structure... */
+	sed->cmd.buf = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(qse_sed_c_t) * 1000);
+	if (sed->cmd.buf == QSE_NULL)
+	{
+		qse_str_fini (&sed->rexbuf);
+		return QSE_NULL;
+	}
+	sed->cmd.cur = sed->cmd.buf;
+	sed->cmd.end = sed->cmd.buf + 1000 - 1;
+
 	return sed;
 }
 
@@ -187,8 +197,9 @@ static const qse_char_t* command (
 	qse_sed_t* sed, const qse_char_t* ptr, const qse_char_t* end)
 {
 	qse_cint_t c;
+	qse_sed_c_t* cmd = sed->cmd.cur;
 
-	c = CC (ptr, end);
+	c = NC (ptr, end);
 	
 	switch (c)
 	{
@@ -196,33 +207,58 @@ static const qse_char_t* command (
 			sed->errnum = QSE_SED_ECMDNR;
 			return QSE_NULL;
 
-#if 0
 		case QSE_T('{'):
-			/* insert a negaited branch command at the beginning 
+			/* insert a negated branch command at the beginning 
 			 * of a group. this way, all the commands in a group
 			 * can be skipped. the branch target is set once a
 			 * corresponding } is met. */
-			cmd.type = QSE_SED_C_BRANCH;
-			cmd.negfl = !cmd.negfl;
+			cmd->type = QSE_SED_C_JMP;
+			cmd->negfl = !cmd->negfl;
 			break;
 
 		case QSE_T('}'):
 			break;
 
-		case QSE_T('='):
-			cmd = QSE_SED_C_EQ;
-			if (ad2.type != QSE_SED_A_NONE)
+		case QSE_T(':'):
+			if (cmd->a1.type != QSE_SED_A_NONE)
 			{
-				sed->errnum = QSE_SED_EA2NNC;
+				/* label cannot have an address */
+				sed->errnum = QSE_SED_EA1PHB;
+				return QSE_NULL;
+			}
+
+			/* skip white spaces */
+
+			/* TODO: ... */
+			break;
+
+		case QSE_T('='):
+			cmd->type = QSE_SED_C_EQ; 
+			if (cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
 				return QSE_NULL;
 			}
 			break;
-#endif
-
-		case QSE_T(':'):
-			break;
 
 		case QSE_T('a'):
+			cmd->type = QSE_SED_C_A;
+			if (cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return QSE_NULL;
+			}
+
+			c = CC (ptr, end);
+			if (c == QSE_T('\\')) c = NC (ptr, end);
+			if (c != QSE_T('\n')) /* TODO: handle \r\n or others */
+			{
+				/* new line is expected */
+				sed->errnum = QSE_SED_ENEWLN;
+				return QSE_NULL;
+			}
+
+			/* TODO: get the next line... */
 			break;
 
 		case QSE_T('c'):
@@ -297,8 +333,16 @@ static const qse_char_t* fcomp (
 {
 	qse_cint_t c;
 	const qse_char_t* end = ptr + len;
-	qse_sed_a_t a1, a2;
 
+	qse_sed_c_t* cmd = sed->cmd.cur;
+
+	/* 
+	 * # comment
+	 * :label
+	 * zero-address-command
+	 * address[!] one-address-command
+	 * address-range[!] address-range-command
+	 */
 	while (1)
 	{
 		c = CC (ptr, end);
@@ -315,29 +359,36 @@ static const qse_char_t* fcomp (
 
 		if (c == QSE_T(';')) 
 		{
+			/* semicolon without a meaningful address-command pair */
 			ptr++;
 			continue;
 		}
 
+		/* initialize the current command */
+		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
+
 		/* process address */
-		ptr = address (sed, ptr, end, &a1);
+		ptr = address (sed, ptr, end, &cmd->a1);
 		if (ptr == QSE_NULL) return QSE_NULL;
 
 		c = CC (ptr, end);
-		if (a1.type != QSE_SED_A_NONE)
+		if (cmd->a1.type != QSE_SED_A_NONE)
 		{
-			/* if (a1.type == QSE_SED_A_LAST)
+			/* if (cmd->a1.type == QSE_SED_A_LAST)
 			{
 				 // TODO: ????
 			} */
 			if (c == QSE_T(',') || c == QSE_T(';'))
 			{
+				/* maybe an address range */
 				ptr++;
-				ptr = address (sed, ptr, end, &a2);
+
+				/* TODO: skip white spaces??? */
+				ptr = address (sed, ptr, end, &cmd->a2);
 				if (ptr == QSE_NULL) return QSE_NULL;
 				c = CC (ptr, end);
 			}
-			else a2.type = QSE_SED_A_NONE;
+			else cmd->a2.type = QSE_SED_A_NONE;
 		}
 
 		/* skip white spaces */
@@ -347,14 +398,21 @@ static const qse_char_t* fcomp (
 			c = CC (ptr, end);
 		}
 
-
 		if (c == QSE_T('!'))
 		{
 			/* negate */
+			cmd->negfl = 1;
 		}
 
 		ptr = command (sed, ptr, end);
 		if (ptr == QSE_NULL) return QSE_NULL;
+
+		if (sed->cmd.cur >= sed->cmd.end)
+		{
+			/* TODO: too many commands */
+		}
+
+		cmd = ++sed->cmd.cur;
 	}
 
 	return ptr;

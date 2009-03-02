@@ -33,11 +33,15 @@ enum qse_sed_errnum_t
 	QSE_SED_ECMDGB, /* command garbled */
 	QSE_SED_ELBLTL, /* label too long */
 	QSE_SED_EREXBL, /* regular expression build error */
-	QSE_SED_EA2NNC, /* address 2 not necessary */
+	QSE_SED_EA1PHB, /* address 1 prohibited */
+	QSE_SED_EA2PHB, /* address 2 prohibited */
+	QSE_SED_ENEWLN  /* a new line is expected */
 };
 
 typedef struct qse_sed_t qse_sed_t;
+typedef struct qse_sed_c_t qse_sed_c_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
+
 
 struct qse_sed_t
 {
@@ -48,7 +52,13 @@ struct qse_sed_t
 	qse_str_t rexbuf; /* temporary regular expression buffer */
 
 	/* command array */
-	qse_lda_t cmds;
+	/*qse_lda_t cmds;*/
+	struct
+	{
+		qse_sed_c_t* buf;
+		qse_sed_c_t* cur;
+		qse_sed_c_t* end;
+	} cmd;
 };
 
 

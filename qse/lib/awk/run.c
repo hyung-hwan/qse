@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: run.c 91 2009-03-01 14:54:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -3584,15 +3584,7 @@ static qse_awk_val_t* do_assignment_map (
 
 	len = QSE_COUNTOF(idxbuf);
 	str = idxnde_to_str (run, var->idx, idxbuf, &len);
-/* TODO: VERIFY
-	if (str == QSE_NULL) 
-	{
-		str = idxnde_to_str (run, var->idx, QSE_NULL, &len);
-*/
-		if (str == QSE_NULL) return QSE_NULL;
-/*
-	}
-*/
+	if (str == QSE_NULL) return QSE_NULL;
 
 #ifdef DEBUG_RUN
 	qse_dprintf (QSE_T("**** index str=>%s, map->ref=%d, map->type=%d\n"), 
@@ -3896,17 +3888,7 @@ static qse_awk_val_t* eval_binop_in (
 	str = (left->type == QSE_AWK_NDE_GRP)?
 		idxnde_to_str (run, ((qse_awk_nde_grp_t*)left)->body, idxbuf, &len):
 		idxnde_to_str (run, left, idxbuf, &len);
-/* TODO: VERIFY
-	if (str == QSE_NULL)
-	{
-		str = (left->type == QSE_AWK_NDE_GRP)?
-			idxnde_to_str (run, ((qse_awk_nde_grp_t*)left)->body, QSE_NULL, &len):
-			idxnde_to_str (run, left, QSE_NULL, &len);
-*/
-		if (str == QSE_NULL) return QSE_NULL;
-/*
-	}
-*/
+	if (str == QSE_NULL) return QSE_NULL;
 
 	/* evaluate the right-hand side of the operator */
 	QSE_ASSERT (right->next == QSE_NULL);
@@ -6081,15 +6063,7 @@ static qse_awk_val_t** get_reference_indexed (
 
 	len = QSE_COUNTOF(idxbuf);
 	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
-/* TODO: VERIFY
-	if (str == QSE_NULL)
-	{
-		str = idxnde_to_str (run, nde->idx, QSE_NULL, &len);
-*/
-		if (str == QSE_NULL) return QSE_NULL;
-/*
-	}
-*/
+	if (str == QSE_NULL) return QSE_NULL;
 
 	pair = qse_map_search ((*(qse_awk_val_map_t**)val)->map, str, len);
 	if (pair == QSE_NULL)
@@ -6237,15 +6211,7 @@ static qse_awk_val_t* eval_indexed (
 
 	len = QSE_COUNTOF(idxbuf);
 	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
-/* TODO: VERIFY
-	if (str == QSE_NULL) 
-	{
-		str = idxnde_to_str (run, nde->idx, QSE_NULL, &len);
-*/
-		if (str == QSE_NULL) return QSE_NULL;
-/*
-	}
-*/
+	if (str == QSE_NULL) return QSE_NULL;
 
 	pair = qse_map_search ((*(qse_awk_val_map_t**)val)->map, str, len);
 	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
