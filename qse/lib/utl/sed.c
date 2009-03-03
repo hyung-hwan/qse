@@ -88,6 +88,10 @@ void qse_sed_fini (qse_sed_t* sed)
 	(((sed)->src.cur < (sed)->src.end)? *(sed)->src.cur: QSE_CHAR_EOF)
 /* advance the current pointer of the source code */
 #define ADVSCP(sed) ((sed)->src.cur++)
+#define NXTSC(sed) \
+	(((++(sed)->src.cur) < (sed)->src.end)? *(sed)->src.cur: QSE_CHAR_EOF)
+
+#define ISSPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
 
 static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
 {
@@ -198,7 +202,6 @@ static int command (qse_sed_t* sed)
 	qse_sed_c_t* cmd = sed->cmd.cur;
 
 	c = CURSC (sed);
-	
 	switch (c)
 	{
 		default:
@@ -247,24 +250,42 @@ static int command (qse_sed_t* sed)
 				return -1;
 			}
 
-			c = CURSC (sed);
-			if (c == QSE_T('\\')) 
+			c = NXTSC (sed);
+			while (ISSPACE(c)) c = NXTSC (sed);
+
+			if (c == QSE_CHAR_EOF)
 			{
-				ADVSCP (sed);
-				c = CURSC (sed);
-
-
-				/* TODO: something wrong??? */
+				/* expected \ after 'a' */
+				sed->errnum = QSE_SED_EBASLA;
+				return -1;	
 			}
 
-			if (c != QSE_T('\n')) /* TODO: handle \r\n or others */
+			do
 			{
-				/* new line is expected */
-				sed->errnum = QSE_SED_ENEWLN;
-				return -1;
-			}
+				if (c == QSE_T('\n'))
+				{
+					ADVSCP (sed);
+					break;
+				}
 
-			/* TODO: get the next line... */
+				if (c == QSE_T('\\'))
+				{
+					c = NXTSC (sed);
+					if (c == QSE_CHAR_EOF) break;
+
+					if (c == QSE_T('\n'))
+					{
+						/* TODO: support different line end scheme... */
+						c = NXTSC (sed);
+						continue;
+					}
+				}
+
+				/* TODO: add c to cmd->u.text */
+
+				c = NXTSC (sed);
+			}
+			while (c != QSE_CHAR_EOF);
 			break;
 
 		case QSE_T('c'):
@@ -357,11 +378,7 @@ static int compile_source (
 		c = CURSC (sed);
 
 		/* skip white spaces */
-		while (c == QSE_T(' ') || c == QSE_T('\t')) 
-		{
-			ADVSCP (sed);
-			c = CURSC (sed);
-		}
+		while (ISSPACE(c)) c = NXTSC (sed);
 
 		/* check if it has reached the end or is commented */
 		if (c == QSE_CHAR_EOF || c == QSE_T('#')) break;
@@ -401,11 +418,7 @@ static int compile_source (
 		}
 
 		/* skip white spaces */
-		while (c == QSE_T(' ') || c == QSE_T('\t')) 
-		{
-			ADVSCP (sed);
-			c = CURSC (sed);
-		}
+		while (ISSPACE(c)) c = NXTSC (sed);
 
 		if (c == QSE_T('!'))
 		{
