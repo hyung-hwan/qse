@@ -36,7 +36,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EA1PHB, /* address 1 prohibited */
 	QSE_SED_EA2PHB, /* address 2 prohibited */
 	QSE_SED_ENEWLN, /* a new line is expected */
-	QSE_SED_EBASLA  /* \ is expected */
+	QSE_SED_EBSEXP  /* \ is expected */
 };
 
 typedef struct qse_sed_t qse_sed_t;

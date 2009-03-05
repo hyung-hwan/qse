@@ -213,7 +213,7 @@ static int command (qse_sed_t* sed)
 			 * of a group. this way, all the commands in a group
 			 * can be skipped. the branch target is set once a
 			 * corresponding } is met. */
-			cmd->type = QSE_SED_C_JMP;
+			cmd->type = QSE_SED_CMD_B;
 			cmd->negfl = !cmd->negfl;
 			break;
 
@@ -233,8 +233,8 @@ static int command (qse_sed_t* sed)
 			/* TODO: ... */
 			break;
 
-		case QSE_T('='):
-			cmd->type = QSE_SED_C_EQ; 
+		case QSE_SED_CMD_EQ:
+			cmd->type = c;
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
@@ -242,21 +242,22 @@ static int command (qse_sed_t* sed)
 			}
 			break;
 
-		case QSE_T('a'):
-			cmd->type = QSE_SED_C_A;
+		case QSE_SED_CMD_A:
+		case QSE_SED_CMD_I:
+			cmd->type = c;
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
 				return -1;
 			}
 
+			/* get the first non-space character */
 			c = NXTSC (sed);
 			while (ISSPACE(c)) c = NXTSC (sed);
 
 			if (c == QSE_CHAR_EOF)
 			{
-				/* expected \ after 'a' */
-				sed->errnum = QSE_SED_EBASLA;
+				sed->errnum = QSE_SED_EBSEXP;
 				return -1;	
 			}
 
@@ -289,9 +290,6 @@ static int command (qse_sed_t* sed)
 			break;
 
 		case QSE_T('c'):
-			break;
-
-		case QSE_T('i'):
 			break;
 
 		case QSE_T('g'):
