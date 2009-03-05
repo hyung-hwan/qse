@@ -165,4 +165,9 @@
 #	define QSE_GETEGID() getegid()
 #endif
 
+#ifdef SYS_chroot
+#	define QSE_CHROOT(path) syscall(SYS_chroot,path)
+#else
+#	define QSE_cHROOT(path) chroot(path)
+#endif
 #endif
