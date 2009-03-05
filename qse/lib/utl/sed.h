@@ -59,35 +59,11 @@ struct qse_sed_c_t
 
 	enum
 	{
-		QSE_SED_C_JMP,
+		QSE_SED_CMD_B   = QSE_T('b'), /* branch */
+		QSE_SED_CMD_EQ  = QSE_T('='), /* print current line number */
 
-		QSE_SED_C_A, /* append text */
-		QSE_SED_C_B,
-		QSE_SED_C_C,
-		QSE_SED_C_CD,
-		QSE_SED_C_CN,
-		QSE_SED_C_CO,
-		QSE_SED_C_CP,
-		QSE_SED_C_D,
-		QSE_SED_C_E,
-		QSE_SED_C_EQ, /* print the current line number */
-		QSE_SED_C_F,
-		QSE_SED_C_G,
-		QSE_SED_C_CG,
-		QSE_SED_C_H,
-		QSE_SED_C_CH,
-		QSE_SED_C_I,
-		QSE_SED_C_L,
-		QSE_SED_C_N,
-		QSE_SED_C_P,
-		QSE_SED_C_Q,
-		QSE_SED_C_R,
-		QSE_SED_C_S,
-		QSE_SED_C_T,
-		QSE_SED_C_W,
-		QSE_SED_C_CW,
-		QSE_SED_C_Y,
-		QSE_SED_C_X
+		QSE_SED_CMD_A   = QSE_T('a'), /* append text */
+		QSE_SED_CMD_I   = QSE_T('i')  /* insert text */
 	} type;
 
 	/* TODO: change the data type to a shorter one to save space */
