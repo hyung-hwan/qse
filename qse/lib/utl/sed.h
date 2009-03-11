@@ -20,6 +20,7 @@
 #define _QSE_LIB_UTL_SED_H_
 
 #include <qse/utl/sed.h>
+#include <qse/cmn/str.h>
 
 typedef qse_int_t qse_sed_line_t;
 
@@ -50,9 +51,9 @@ struct qse_sed_c_t
 
 	union
 	{
-		void* rex;        /* regular expression */
-		qse_char_t* text; /* added text or file name */
-		qse_sed_c_t* lbl; /* destination command of branch */
+		qse_str_t* text;  
+		void* rex;
+		qse_sed_c_t* lbl; /* branch destination */
 	} u;	
 
 	qse_char_t* rhs; /* right-hand side of sustitution */

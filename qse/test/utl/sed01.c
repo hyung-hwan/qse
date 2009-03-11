@@ -22,11 +22,18 @@
 
 #include <qse/utl/sed.h>
 #include <qse/utl/stdio.h>
+#include <qse/utl/main.h>
 
-int main ()
+int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
 	int ret = -1;
+
+	if (argc != 2)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("usage: %s string\n"), argv[0]);
+		return -1;
+	}
 
 	sed = qse_sed_open (QSE_NULL, 0);
 	if (sed == QSE_NULL)
@@ -35,11 +42,14 @@ int main ()
 		goto oops;
 	}
 	
-	//if (qse_sed_compile (sed, QSE_T("1,20"), 4) == -1)
-	//{
+	qse_sed_setoption (sed, QSE_SED_STRIPLS);
+
+	if (qse_sed_compile (sed, argv[1], qse_strlen(argv[1])) == -1)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("cannot compile - %d\n"), sed->errnum);
 		//qse_fprintf (QSE_STDERR, QSE_T("cannot compile - %s\n"), qse_sed_geterrstr(sed));
-	//	goto oops;
-	//}
+		goto oops;
+	}
 
 	//if (qse_sed_execute (sed, io) == -1)
 	//{
@@ -49,6 +59,11 @@ int main ()
 oops:
 	if (sed != QSE_NULL) qse_sed_close (sed);
 	return ret;
+}
+
+int qse_main (int argc, char* argv[])
+{
+	return qse_runmain (argc, argv, sed_main);
 }
 
 /******/

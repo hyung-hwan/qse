@@ -20,6 +20,14 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/rex.h>
 
+/* TODO: delete stdio.h */
+#include <qse/utl/stdio.h>
+
+/* POSIX http://www.opengroup.org/onlinepubs/009695399/utilities/sed.html 
+ * ALSO READ
+    http://www.freebsd.org/cgi/cvsweb.cgi/src/usr.bin/sed/POSIX?rev=1.4.6.1;content-type=text%2Fplain 
+ */
+
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
@@ -83,13 +91,23 @@ void qse_sed_fini (qse_sed_t* sed)
 	qse_str_fini (&sed->rexbuf);
 }
 
+void qse_sed_setoption (qse_sed_t* sed, int option)
+{
+	sed->option = option;
+}
+
+int qse_sed_getoption (qse_sed_t* sed)
+{
+	return sed->option;
+}
+
 /* get the current charanter of the source code */
 #define CURSC(sed) \
-	(((sed)->src.cur < (sed)->src.end)? *(sed)->src.cur: QSE_CHAR_EOF)
+	(((sed)->src.cur < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
 /* advance the current pointer of the source code */
 #define ADVSCP(sed) ((sed)->src.cur++)
 #define NXTSC(sed) \
-	(((++(sed)->src.cur) < (sed)->src.end)? *(sed)->src.cur: QSE_CHAR_EOF)
+	(((++(sed)->src.cur) < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
 
 #define ISSPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
 
@@ -196,6 +214,76 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 	return a;
 }
 
+/* get the text following 'a' and 'i' command.
+ * POSIX:
+ *  The argument text shall consist of one or more lines. Each embedded 
+ *  <newline> in the text shall be preceded by a backslash. Other backslashes
+ *  in text shall be removed, and the following character shall be treated
+ *  literally. */
+static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
+{
+	qse_cint_t c;
+	qse_str_t* text = QSE_NULL;
+
+	text = qse_str_open (sed->mmgr, 0, 128);
+	if (text == QSE_NULL) goto oops;
+
+	do 
+	{
+		c = CURSC (sed);
+
+		if (sed->option & QSE_SED_STRIPLS)
+		{
+			/* get the first non-space character */
+			while (ISSPACE(c)) c = NXTSC (sed);
+		}
+
+		while (c != QSE_CHAR_EOF)
+		{
+			int nl = 0;
+
+			if (c == QSE_T('\\'))
+			{
+				c = NXTSC (sed);
+				if (c == QSE_CHAR_EOF) break;
+				/* TODO: alternate bahavior - add \ to text. */
+		
+			}
+			else if (c == QSE_T('\n')) nl = 1;
+
+			if (qse_str_ccat (text, c) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				goto oops;
+			}
+
+			if (c == QSE_T('\n'))
+			{
+				ADVSCP (sed);
+				if (nl) break;
+			}
+
+			c = NXTSC (sed);
+		} 
+	}
+	while (c != QSE_CHAR_EOF);
+
+	if (/*(sed->option & QSE_SED_ENSURENL) &&*/ QSE_STR_LEN(text) == 0)
+	{
+		if (qse_str_ccat (text, QSE_T('\n')) == (qse_size_t)-1)
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		}
+	}
+
+	return text;
+
+oops:
+	if (text != QSE_NULL) qse_str_close (text);
+	return QSE_NULL;
+}
+
 static int command (qse_sed_t* sed)
 {
 	qse_cint_t c;
@@ -205,6 +293,7 @@ static int command (qse_sed_t* sed)
 	switch (c)
 	{
 		default:
+qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			sed->errnum = QSE_SED_ECMDNR;
 			return -1;
 
@@ -244,50 +333,49 @@ static int command (qse_sed_t* sed)
 
 		case QSE_SED_CMD_A:
 		case QSE_SED_CMD_I:
+		{
 			cmd->type = c;
+			/*
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
 				return -1;
 			}
+			*/
 
-			/* get the first non-space character */
 			c = NXTSC (sed);
 			while (ISSPACE(c)) c = NXTSC (sed);
 
-			if (c == QSE_CHAR_EOF)
+			if (c != QSE_T('\\'))
 			{
 				sed->errnum = QSE_SED_EBSEXP;
-				return -1;	
+				return -1;
 			}
+		
+			c = NXTSC (sed);
+			while (ISSPACE(c)) c = NXTSC (sed);
 
-			do
+			if (c != QSE_T('\n'))
 			{
-				if (c == QSE_T('\n'))
-				{
-					ADVSCP (sed);
-					break;
-				}
-
-				if (c == QSE_T('\\'))
-				{
-					c = NXTSC (sed);
-					if (c == QSE_CHAR_EOF) break;
-
-					if (c == QSE_T('\n'))
-					{
-						/* TODO: support different line end scheme... */
-						c = NXTSC (sed);
-						continue;
-					}
-				}
-
-				/* TODO: add c to cmd->u.text */
-
-				c = NXTSC (sed);
+				/* TODO: change error code. garbage after
+				 * backslash... */
+				sed->errnum = QSE_SED_EBSEXP;
+				return -1;
 			}
-			while (c != QSE_CHAR_EOF);
+			
+			ADVSCP (sed); /* skip the new line */
+
+			/* get_text() starts from the next line */
+			cmd->u.text = get_text (sed, cmd);
+			if (cmd->u.text == QSE_NULL) return -1;
+
+{
+qse_char_t ttt[1000];
+fgets (ttt, QSE_COUNTOF(ttt), stdin);
+qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
+}
 			break;
+		}
 
 		case QSE_T('c'):
 			break;
@@ -429,10 +517,17 @@ static int compile_source (
 		if (sed->cmd.cur >= sed->cmd.end)
 		{
 			/* TODO: too many commands */
+			sed->errnum = QSE_SED_ENOMEM; /* TODO change it. */
+			return -1;
 		}
 
 		cmd = ++sed->cmd.cur;
 	}
 
 	return 0;
+}
+
+int qse_sed_compile (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
+{
+	return compile_source (sed, sptr, slen);	
 }

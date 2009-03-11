@@ -11,15 +11,15 @@
 #include <qse/macros.h>
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-	#if defined(QSE_CHAR_IS_MCHAR)
-		#define qse_main main
+#	if defined(QSE_CHAR_IS_MCHAR)
+#		define qse_main main
 		typedef qse_mchar_t qse_achar_t;
-	#else
-		#define qse_main wmain
+#	else
+#		define qse_main wmain
 		typedef qse_wchar_t qse_achar_t;
-	#endif
+#	endif
 #else
-	#define qse_main main
+#	define qse_main main
 	typedef qse_mchar_t qse_achar_t;
 #endif
 
@@ -27,7 +27,12 @@
 extern "C" {
 #endif
 
-int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]));
+int qse_runmain (
+	int          argc, 
+	qse_achar_t* argv[],
+	int        (*mf)(int,qse_char_t*[])
+);
+
 /* TODO - qse_runmain with env, namely, qse_runmaine */
 
 #ifdef __cplusplus
