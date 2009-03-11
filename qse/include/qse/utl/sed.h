@@ -39,15 +39,20 @@ enum qse_sed_errnum_t
 	QSE_SED_EBSEXP  /* \ is expected */
 };
 
+enum qse_sed_option_t
+{
+	QSE_SED_STRIPLS = (1 << 0)  /* strip leading spaces from text*/
+};
+
 typedef struct qse_sed_t qse_sed_t;
 typedef struct qse_sed_c_t qse_sed_c_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
-
 
 struct qse_sed_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
 	qse_sed_errnum_t errnum;
+	int option;
 
 	/* source code pointers */
 	struct
@@ -119,9 +124,32 @@ void qse_sed_fini (
 );
 /******/
 
-
-int qse_sed_execute (
+/****f* Text Processor/qse_sed_getoption
+ * NAME
+ *  qse_sed_getoption - get option
+ * SYNOPSIS
+ */
+int qse_sed_getoption (
 	qse_sed_t* sed
+);
+/******/
+
+/****f* Text Processor/qse_sed_setoption
+ * NAME
+ *  qse_sed_setoption - set option
+ * SYNOPSIS
+ */
+void qse_sed_setoption (
+	qse_sed_t* sed,
+	int        option
+);
+/*****/
+
+
+int qse_sed_compile (
+	qse_sed_t*        sed,
+	const qse_char_t* sptr,
+	qse_size_t        slen
 );
 
 #ifdef __cplusplus
