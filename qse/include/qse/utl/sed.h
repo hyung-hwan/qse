@@ -41,7 +41,9 @@ enum qse_sed_errnum_t
 
 enum qse_sed_option_t
 {
-	QSE_SED_STRIPLS = (1 << 0)  /* strip leading spaces from text*/
+	QSE_SED_STRIPLS  = (1 << 0),  /* strip leading spaces from text*/
+	QSE_SED_KEEPTBS  = (1 << 1),  /* keep an trailing backslash */
+	QSE_SED_ENSURENL = (1 << 2)   /* ensure NL at the text end */
 };
 
 typedef struct qse_sed_t qse_sed_t;
