@@ -23,13 +23,14 @@
 #include <qse/utl/sed.h>
 #include <qse/utl/stdio.h>
 #include <qse/utl/main.h>
+#include <qse/cmn/str.h>
 
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
 	int ret = -1;
 
-	if (argc != 2)
+	if (argc != 2 && argc != 3)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("usage: %s string\n"), argv[0]);
 		return -1;
@@ -42,7 +43,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 	
-	qse_sed_setoption (sed, QSE_SED_STRIPLS);
+	if (argc == 3) qse_sed_setoption (sed, qse_strtoi(argv[2]));
 
 	if (qse_sed_compile (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{

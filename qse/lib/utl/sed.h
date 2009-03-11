@@ -64,7 +64,8 @@ struct qse_sed_c_t
 		QSE_SED_CMD_EQ  = QSE_T('='), /* print current line number */
 
 		QSE_SED_CMD_A   = QSE_T('a'), /* append text */
-		QSE_SED_CMD_I   = QSE_T('i')  /* insert text */
+		QSE_SED_CMD_I   = QSE_T('i'), /* insert text */
+		QSE_SED_CMD_C   = QSE_T('c')  /* change text */
 	} type;
 
 	/* TODO: change the data type to a shorter one to save space */

@@ -214,7 +214,7 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 	return a;
 }
 
-/* get the text following 'a' and 'i' command.
+/* get the text for the 'a', 'i', and 'c' commands.
  * POSIX:
  *  The argument text shall consist of one or more lines. Each embedded 
  *  <newline> in the text shall be preceded by a backslash. Other backslashes
@@ -223,10 +223,19 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
 {
 	qse_cint_t c;
-	qse_str_t* text = QSE_NULL;
+	qse_str_t* t = QSE_NULL;
 
-	text = qse_str_open (sed->mmgr, 0, 128);
-	if (text == QSE_NULL) goto oops;
+#define ADD(sed,str,c,errlabel) \
+do { \
+	if (qse_str_ccat (str, c) == (qse_size_t)-1) \
+	{ \
+		sed->errnum = QSE_SED_ENOMEM; \
+		goto errlabel; \
+	} \
+} while (0)
+
+	t = qse_str_open (sed->mmgr, 0, 128);
+	if (t == QSE_NULL) goto oops;
 
 	do 
 	{
@@ -245,22 +254,23 @@ static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
 			if (c == QSE_T('\\'))
 			{
 				c = NXTSC (sed);
-				if (c == QSE_CHAR_EOF) break;
-				/* TODO: alternate bahavior - add \ to text. */
-		
+				if (c == QSE_CHAR_EOF) 
+				{
+					if (sed->option & QSE_SED_KEEPTBS) 
+						ADD (sed, t, QSE_T('\\'), oops);
+
+					break;
+				}
 			}
 			else if (c == QSE_T('\n')) nl = 1;
 
-			if (qse_str_ccat (text, c) == (qse_size_t)-1)
-			{
-				sed->errnum = QSE_SED_ENOMEM;
-				goto oops;
-			}
+			ADD (sed, t, c, oops);
 
 			if (c == QSE_T('\n'))
 			{
 				ADVSCP (sed);
-				if (nl) break;
+				if (nl) goto done;
+				break;
 			}
 
 			c = NXTSC (sed);
@@ -268,20 +278,19 @@ static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
 	}
 	while (c != QSE_CHAR_EOF);
 
-	if (/*(sed->option & QSE_SED_ENSURENL) &&*/ QSE_STR_LEN(text) == 0)
+done:
+	if ((sed->option & QSE_SED_ENSURENL) && c != QSE_T('\n'))
 	{
-		if (qse_str_ccat (text, QSE_T('\n')) == (qse_size_t)-1)
-		{
-			sed->errnum = QSE_SED_ENOMEM;
-			goto oops;
-		}
+		ADD (sed, t, QSE_T('\n'), oops);
 	}
 
-	return text;
+	return t;
 
 oops:
-	if (text != QSE_NULL) qse_str_close (text);
+	if (t != QSE_NULL) qse_str_close (t);
 	return QSE_NULL;
+
+#undef ADD
 }
 
 static int command (qse_sed_t* sed)
@@ -333,9 +342,10 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 
 		case QSE_SED_CMD_A:
 		case QSE_SED_CMD_I:
+		case QSE_SED_CMD_C:
 		{
 			cmd->type = c;
-			/*
+			/* TODO: this check for  A and I
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
 				sed->errnum = QSE_SED_EA2PHB;
@@ -371,14 +381,11 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 
 {
 qse_char_t ttt[1000];
-fgets (ttt, QSE_COUNTOF(ttt), stdin);
+qse_fgets (ttt, QSE_COUNTOF(ttt), QSE_STDIN);
 qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 }
 			break;
 		}
-
-		case QSE_T('c'):
-			break;
 
 		case QSE_T('g'):
 			break;
