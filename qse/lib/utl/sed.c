@@ -319,6 +319,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			break;
 
 		case QSE_T(':'):
+			cmd->type = c;
 			if (cmd->a1.type != QSE_SED_A_NONE)
 			{
 				/* label cannot have an address */
@@ -331,7 +332,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			/* TODO: ... */
 			break;
 
-		case QSE_SED_CMD_EQ:
+		case QSE_T('='):
 			cmd->type = c;
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
@@ -340,11 +341,12 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			}
 			break;
 
-		case QSE_SED_CMD_A:
-		case QSE_SED_CMD_I:
-		case QSE_SED_CMD_C:
+		case QSE_T('a'):
+		case QSE_T('i'):
+		case QSE_T('c'):
 		{
 			cmd->type = c;
+
 			/* TODO: this check for  A and I
 			if (cmd->a2.type != QSE_SED_A_NONE)
 			{
@@ -387,60 +389,54 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 			break;
 		}
 
-		case QSE_T('g'):
-			break;
-
-		case QSE_T('G'):
+		case QSE_T('D'):
+			//cmd->u.label = pspace;
+		case QSE_T('d'):
+			cmd->type = c;
 			break;
 
 		case QSE_T('h'):
-			break;
-
 		case QSE_T('H'):
+		case QSE_T('g'):
+		case QSE_T('G'):
+		case QSE_T('l'):
+		case QSE_T('n'):
+		case QSE_T('N'):
+		case QSE_T('p'):
+		case QSE_T('P'):
+		case QSE_T('x'):
+			cmd->type = c;
 			break;
 
-		case QSE_T('t'):
-			break;
 
 		case QSE_T('b'):
 			break;
-
-		case QSE_T('n'):
+		case QSE_T('t'):
 			break;
 
-		case QSE_T('N'):
-			break;
-
-		case QSE_T('p'):
-			break;
-
-		case QSE_T('P'):
-			break;
 
 		case QSE_T('r'):
 			break;
-
-		case QSE_T('d'):
-			break;
-
-		case QSE_T('D'):
-			break;
-
-		case QSE_T('q'):
-			break;
-
-		case QSE_T('l'):
-			break;
-
-		case QSE_T('s'):
+		case QSE_T('R'):
 			break;
 
 		case QSE_T('w'):
 			break;
-
-		case QSE_T('x'):
+		case QSE_T('W'):
 			break;
 
+		case QSE_T('q'):
+		case QSE_T('Q'):
+			cmd->type = c;
+			if (cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return -1;
+			}
+			break;
+
+		case QSE_T('s'):
+			break;
 		case QSE_T('y'):
 			break;
 	}
