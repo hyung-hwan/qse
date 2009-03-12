@@ -53,7 +53,7 @@ struct qse_sed_c_t
 	{
 		qse_str_t* text;  
 		void* rex;
-		qse_sed_c_t* lbl; /* branch destination */
+		qse_sed_c_t* label; /* branch destination */
 	} u;	
 
 	qse_char_t* rhs; /* right-hand side of sustitution */
@@ -61,11 +61,48 @@ struct qse_sed_c_t
 	enum
 	{
 		QSE_SED_CMD_B   = QSE_T('b'), /* branch */
+		/* print current line number */
 		QSE_SED_CMD_EQ  = QSE_T('='), /* print current line number */
 
-		QSE_SED_CMD_A   = QSE_T('a'), /* append text */
-		QSE_SED_CMD_I   = QSE_T('i'), /* insert text */
-		QSE_SED_CMD_C   = QSE_T('c')  /* change text */
+		/* a \<\n> text - append text */
+		QSE_SED_CMD_A   = QSE_T('a'),
+		/* i \<\n> text - insert text */
+		QSE_SED_CMD_I   = QSE_T('i'),
+		/* c \<\n> text - change text */
+		QSE_SED_CMD_C   = QSE_T('c'),
+
+		QSE_SED_CMD_D   = QSE_T('d'), /* delete pattern space */
+		QSE_SED_CMD_DD  = QSE_T('D'),
+
+		QSE_SED_CMD_H   = QSE_T('h'),
+		QSE_SED_CMD_HH  = QSE_T('H'),
+		QSE_SED_CMD_G   = QSE_T('g'),
+		QSE_SED_CMD_GG  = QSE_T('G'),
+		/* list out current line */
+		QSE_SED_CMD_L   = QSE_T('l'),
+		QSE_SED_CMD_N   = QSE_T('n'),
+		QSE_SED_CMD_NN  = QSE_T('N'),
+		QSE_SED_CMD_P   = QSE_T('p'),
+		QSE_SED_CMD_PP  = QSE_T('P'),
+		/* exchange hold space and pattern space */
+		QSE_SED_CMD_X   = QSE_T('x'), 
+
+		/* r filename - append a text from a file */
+		QSE_SED_CMD_R   = QSE_T('r'),
+		/* R filename - append a line from a file */
+		QSE_SED_CMD_RR  = QSE_T('R'),
+
+		/* w filename - write pattern space to a file */
+		QSE_SED_CMD_W   = QSE_T('r'),
+		/* W filename - write first line of pattern space to a file */
+		QSE_SED_CMD_WW  = QSE_T('R'),
+
+		QSE_SED_CMD_Q   = QSE_T('q'),
+		QSE_SED_CMD_QQ  = QSE_T('Q'),
+
+		QSE_SED_CMD_S   = QSE_T('s'),
+		QSE_SED_CMD_Y   = QSE_T('y')
+
 	} type;
 
 	/* TODO: change the data type to a shorter one to save space */
