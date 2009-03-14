@@ -109,7 +109,11 @@ int qse_sed_getoption (qse_sed_t* sed)
 #define NXTSC(sed) \
 	(((++(sed)->src.cur) < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
 
-#define ISSPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
+#define IS_SPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
+#define IS_WHITE_SPACE(c) (IS_SPACE(c) || c == QSE_T('\n') || c == QSE_T('\r'))
+#define IS_LABEL_TERMINATOR(c) \
+	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
+	 c == QSE_T(';') || IS_WHITE_SPACE(c))
 
 static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
 {
@@ -214,6 +218,7 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 	return a;
 }
 
+
 /* get the text for the 'a', 'i', and 'c' commands.
  * POSIX:
  *  The argument text shall consist of one or more lines. Each embedded 
@@ -222,9 +227,6 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
  *  literally. */
 static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
 {
-	qse_cint_t c;
-	qse_str_t* t = QSE_NULL;
-
 #define ADD(sed,str,c,errlabel) \
 do { \
 	if (qse_str_ccat (str, c) == (qse_size_t)-1) \
@@ -233,6 +235,9 @@ do { \
 		goto errlabel; \
 	} \
 } while (0)
+
+	qse_cint_t c;
+	qse_str_t* t = QSE_NULL;
 
 	t = qse_str_open (sed->mmgr, 0, 128);
 	if (t == QSE_NULL) goto oops;
@@ -244,7 +249,7 @@ do { \
 		if (sed->option & QSE_SED_STRIPLS)
 		{
 			/* get the first non-space character */
-			while (ISSPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) c = NXTSC (sed);
 		}
 
 		while (c != QSE_CHAR_EOF)
@@ -293,6 +298,57 @@ oops:
 #undef ADD
 }
 
+static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
+{
+	qse_cint_t c;
+	qse_str_t* t = QSE_NULL;
+
+	/* skip white spaces */
+	c = CURSC(sed);
+	while (IS_SPACE(c)) c = NXTSC (sed);
+
+	if (IS_LABEL_TERMINATER(c))
+	{
+		/* label name is empty */
+		sed->errnum = QSE_SED_ELBLEM;
+		return QSE_NULL;
+	}
+
+	t = qse_str_open (sed->mmgr, 0, 32);
+	if (t == QSE_NULL) goto oops;
+
+	do
+	{
+		if (qse_str_ccat (t, c) == (qse_size_t)-1) 
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		} 
+	}
+	while (!IS_LABEL_TERMINATOR(c));
+
+	search_label_table (c);
+	return t;
+
+oops:
+	if (t != QSE_NULL) qse_str_close (t);
+	return QSE_NULL;
+}
+
+static qse_str_t* get_target (qse_sed_t* sed, qse_sed_c_t* cmd)
+{
+	qse_cint_t c;
+	qse_str_t* t = QSE_NULL;
+
+	t = qse_str_open (sed->mmgr, 0, 32);
+	if (t == QSE_NULL) goto oops;
+	
+	return t;
+oops:
+	if (t != QSE_NULL) qse_str_close (t);
+	return QSE_NULL;
+}
+
 static int command (qse_sed_t* sed)
 {
 	qse_cint_t c;
@@ -319,6 +375,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			break;
 
 		case QSE_T(':'):
+			/* label */
 			cmd->type = c;
 			if (cmd->a1.type != QSE_SED_A_NONE)
 			{
@@ -327,7 +384,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 				return -1;
 			}
 
-			/* skip white spaces */
+			ADVSCP (sed);
 
 			/* TODO: ... */
 			break;
@@ -356,7 +413,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			*/
 
 			c = NXTSC (sed);
-			while (ISSPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) c = NXTSC (sed);
 
 			if (c != QSE_T('\\'))
 			{
@@ -365,7 +422,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			}
 		
 			c = NXTSC (sed);
-			while (ISSPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) c = NXTSC (sed);
 
 			if (c != QSE_T('\n'))
 			{
@@ -410,8 +467,13 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 
 
 		case QSE_T('b'):
-			break;
 		case QSE_T('t'):
+			cmd->type = c;
+			ADVSCP (sed); /* skip the new line */
+
+			//cmd->u.label = get_target (sed, cmd);
+			if (cmd->u.label == QSE_NULL) return -1;
+
 			break;
 
 
@@ -467,7 +529,7 @@ static int compile_source (
 		c = CURSC (sed);
 
 		/* skip white spaces */
-		while (ISSPACE(c)) c = NXTSC (sed);
+		while (IS_SPACE(c)) c = NXTSC (sed);
 
 		/* check if it has reached the end or is commented */
 		if (c == QSE_CHAR_EOF || c == QSE_T('#')) break;
@@ -507,7 +569,7 @@ static int compile_source (
 		}
 
 		/* skip white spaces */
-		while (ISSPACE(c)) c = NXTSC (sed);
+		while (IS_SPACE(c)) c = NXTSC (sed);
 
 		if (c == QSE_T('!'))
 		{

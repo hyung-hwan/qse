@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: awk.h 100 2009-03-14 03:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1293,7 +1293,7 @@ qse_awk_val_t* qse_awk_rtx_call (
  * NAME
  *  qse_awk_stopall - stop all runtime contexts
  * DESCRIPTION
- *  The qse_awk_stopall() function aborts all active qse_awk_run() functions
+ *  The qse_awk_stopall() function aborts all active runtime contexts
  *  invoked with the awk parameter.
  * SYNOPSIS
  */
