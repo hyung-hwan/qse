@@ -109,12 +109,4 @@ struct qse_sed_c_t
 	int negfl;
 };
 
-struct qse_sed_l_t
-{
-	qse_char_t name[9];   /* label name */
-	qse_sed_c_t* chain;   
-	qse_sed_c_t* address; /* command associated with label */
-
-};
-
 #endif

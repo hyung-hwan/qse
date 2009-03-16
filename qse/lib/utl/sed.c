@@ -73,10 +73,21 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;	
 	}	
 
+	if (qse_map_init (&sed->labs, mmgr, 128, 70) == QSE_NULL)
+	{
+		qse_str_fini (&sed->rexbuf);
+		sed->errnum = QSE_SED_ENOMEM;
+		return QSE_NULL;	
+	}
+	qse_map_setcopier (&sed->labs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+        qse_map_setscale (&sed->labs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+
 	/* TODO: use different data structure... */
-	sed->cmd.buf = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(qse_sed_c_t) * 1000);
+	sed->cmd.buf = QSE_MMGR_ALLOC (
+		sed->mmgr, QSE_SIZEOF(qse_sed_c_t) * 1000);
 	if (sed->cmd.buf == QSE_NULL)
 	{
+		qse_map_fini (&sed->labs);
 		qse_str_fini (&sed->rexbuf);
 		return QSE_NULL;
 	}
@@ -88,6 +99,7 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+	qse_map_fini (&sed->labs);
 	qse_str_fini (&sed->rexbuf);
 }
 
@@ -301,7 +313,7 @@ oops:
 static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 {
 	qse_cint_t c;
-	qse_str_t* t = QSE_NULL;
+	qse_str_t* t = QSE_NULL; /* TODO: move this buffer to sed */
 
 	/* skip white spaces */
 	c = CURSC(sed);
@@ -310,7 +322,7 @@ static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 	if (IS_LABEL_TERMINATER(c))
 	{
 		/* label name is empty */
-		sed->errnum = QSE_SED_ELBLEM;
+		sed->errnum = QSE_SED_ELABEM;
 		return QSE_NULL;
 	}
 
@@ -327,7 +339,11 @@ static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 	}
 	while (!IS_LABEL_TERMINATOR(c));
 
+/* TODO: */
 	search_label_table (c);
+	qse_map_insert (&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t), cmd, 0);
+
+	ADVSCP (sed);
 	return t;
 
 oops:

@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: map.h 101 2009-03-15 14:36:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -292,57 +292,96 @@ void qse_map_close (
 );
 /******/
 
+/****f* Common/qse_map_init
+ * NAME
+ *  qse_map_init - initialize a hash map
+ * SYNOPSIS
+ */
 qse_map_t* qse_map_init (
 	qse_map_t*  map,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa,
 	int         factor
 );
+/******/
 
+/****f* Common/qse_map_fini
+ * NAME
+ *  qse_map_fini - finalize a hash map
+ * SYNOPSIS
+ */
 void qse_map_fini (
 	qse_map_t* map
 );
+/******/
 
-/* get the number of key/value pairs in a map */
+/****f* Common/qse_map_getsize
+ * NAME
+ *  qse_map_getsize  - get the number of pairs in a map
+ * SYNOPSIS
+ */
 qse_size_t qse_map_getsize (
-	qse_map_t* map /* a map */
+	qse_map_t* map
 );
+/******/
 
+/****f* Common/qse_map_getcapa
+ * NAME
+ *  qse_map_getcapa  - get the number of slots in a hash bucket
+ * SYNOPSIS
+ */
 qse_size_t qse_map_getcapa (
-	qse_map_t* map /* a map */
+	qse_map_t* map
 );
+/******/
 
+/****f* Common/qse_map_getscale
+ * NAME
+ *  qse_map_getscale - get the scale factor
+ * PARAMETERS
+ *  * id - QSE_MAP_KEY or QSE_MAP_VAL
+ * SYNOPSIS
+ */
 int qse_map_getscale (
-	qse_map_t* map   /* a map */,
+	qse_map_t*   map,
 	qse_map_id_t id  /* QSE_MAP_KEY or QSE_MAP_VAL */
 );
+/******/
 
 /****f* Common/qse_map_setscale
  * NAME
  *  qse_map_setscale - set the scale factor
- *
  * DESCRIPTION 
  *  The qse_map_setscale() function sets the scale factor of the length
  *  of a key and a value. A scale factor determines the actual length of
  *  a key and a value in bytes. A map is created with a scale factor of 1.
  *  The scale factor should be larger than 0 and less than 256.
- *
+ * PARAMETERS
+ *  * id - QSE_MAP_KEY or QSE_MAP_VAL
+ *  * scale - a scale factor in bytes
  * NOTES
  *  It is a bad idea to change the scale factor when a map is not empty.
- *  
  * SYNOPSIS
  */
 void qse_map_setscale (
-	qse_map_t* map   /* a map */,
-	qse_map_id_t id  /* QSE_MAP_KEY or QSE_MAP_VAL */,
-	int scale        /* a scale factor */
+	qse_map_t*   map,
+	qse_map_id_t id,
+	int          scale
 );
 /******/
 
+/****f* Common/qse_map_getcopier
+ * NAME
+ *  qse_map_getcopier - get a data copier
+ * PARAMETERS
+ *  * id - QSE_MAP_KEY or QSE_MAP_VAL
+ * SYNOPSIS
+ */
 qse_map_copier_t qse_map_getcopier (
-	qse_map_t* map   /* a map */,
-	qse_map_id_t id  /* QSE_MAP_KEY or QSE_MAP_VAL */
+	qse_map_t*   map,
+	qse_map_id_t id
 );
+/*****/
 
 /****f* Common/qse_map_setcopier
  * NAME 
