@@ -122,10 +122,12 @@ int qse_sed_getoption (qse_sed_t* sed)
 	(((++(sed)->src.cur) < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
 
 #define IS_SPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
-#define IS_WHITE_SPACE(c) (IS_SPACE(c) || c == QSE_T('\n') || c == QSE_T('\r'))
-#define IS_LABEL_TERMINATOR(c) \
+/* check if c is a white space */
+#define IS_WSPACE(c) (IS_SPACE(c) || c == QSE_T('\n') || c == QSE_T('\r'))
+/* check if c is a label terminator */
+#define IS_LABTERM(c) \
 	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
-	 c == QSE_T(';') || IS_WHITE_SPACE(c))
+	 c == QSE_T(';') || IS_WSPACE(c))
 
 static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
 {
@@ -310,7 +312,7 @@ oops:
 #undef ADD
 }
 
-static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
+static int get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL; /* TODO: move this buffer to sed */
@@ -319,11 +321,11 @@ static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 	c = CURSC(sed);
 	while (IS_SPACE(c)) c = NXTSC (sed);
 
-	if (IS_LABEL_TERMINATER(c))
+	if (IS_LABTERM(c))
 	{
 		/* label name is empty */
 		sed->errnum = QSE_SED_ELABEM;
-		return QSE_NULL;
+		return -1;
 	}
 
 	t = qse_str_open (sed->mmgr, 0, 32);
@@ -336,33 +338,90 @@ static qse_str_t* get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 			sed->errnum = QSE_SED_ENOMEM;
 			goto oops;
 		} 
-	}
-	while (!IS_LABEL_TERMINATOR(c));
 
-/* TODO: */
-	search_label_table (c);
-	qse_map_insert (&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t), cmd, 0);
+		c = NXTSC (sed);
+	}
+	while (!IS_LABTERM(c));
+	
+	if (qse_map_search (
+		&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t)) != QSE_NULL)
+	{
+		sed->errnum = QSE_SED_ELABDU;
+		goto oops;
+	}
+
+	if (qse_map_insert (
+		&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t), cmd, 0) == QSE_NULL)
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;;
+	}
 
 	ADVSCP (sed);
-	return t;
+	qse_str_close (t);
+	return 0;
 
 oops:
 	if (t != QSE_NULL) qse_str_close (t);
-	return QSE_NULL;
+	return -1;
 }
 
-static qse_str_t* get_target (qse_sed_t* sed, qse_sed_c_t* cmd)
+static int get_target_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
+	qse_map_pair_t* pair;
+
+	/* skip white spaces */
+	c = CURSC(sed);
+	while (IS_SPACE(c)) c = NXTSC (sed);
+
+	if (IS_LABTERM(c))
+	{
+		/* label name is empty */
+		sed->errnum = QSE_SED_ELABEM;
+		return -1;
+	}
 
 	t = qse_str_open (sed->mmgr, 0, 32);
 	if (t == QSE_NULL) goto oops;
+
+	do
+	{
+		if (qse_str_ccat (t, c) == (qse_size_t)-1) 
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		} 
+
+		c = NXTSC (sed);
+	}
+	while (!IS_LABTERM(c));
+
+/* TODO: what happend for something like b xxx yyy; 
+ * SHOULD y be a command? or an error ->
+ *   b xxx ; yyy; => should force ; or new line at the end?
+*/
+
+	pair = qse_map_search (&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t));
+	if (pair == QSE_NULL)
+	{
+		/* label not resolved yet */
+		cmd->u.branch.text = t;
+		cmd->u.branch.target = QSE_NULL;
+	}
+	else
+	{
+		cmd->u.branch.text = QSE_NULL;
+		cmd->u.branch.target = QSE_MAP_VPTR(pair);
+		qse_str_close (t);
+	}
 	
-	return t;
+	return 0;
+
 oops:
 	if (t != QSE_NULL) qse_str_close (t);
-	return QSE_NULL;
+	return -1;
 }
 
 static int command (qse_sed_t* sed)
@@ -370,6 +429,7 @@ static int command (qse_sed_t* sed)
 	qse_cint_t c;
 	qse_sed_c_t* cmd = sed->cmd.cur;
 
+handle_command:
 	c = CURSC (sed);
 	switch (c)
 	{
@@ -377,18 +437,6 @@ static int command (qse_sed_t* sed)
 qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			sed->errnum = QSE_SED_ECMDNR;
 			return -1;
-
-		case QSE_T('{'):
-			/* insert a negated branch command at the beginning 
-			 * of a group. this way, all the commands in a group
-			 * can be skipped. the branch target is set once a
-			 * corresponding } is met. */
-			cmd->type = QSE_SED_CMD_B;
-			cmd->negfl = !cmd->negfl;
-			break;
-
-		case QSE_T('}'):
-			break;
 
 		case QSE_T(':'):
 			/* label */
@@ -401,8 +449,19 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			}
 
 			ADVSCP (sed);
+			if (get_label (sed, cmd) == -1) return -1;
+			goto handle_command;
 
-			/* TODO: ... */
+		case QSE_T('{'):
+			/* insert a negated branch command at the beginning 
+			 * of a group. this way, all the commands in a group
+			 * can be skipped. the branch target is set once a
+			 * corresponding } is met. */
+			cmd->type = QSE_SED_CMD_B;
+			cmd->negfl = !cmd->negfl;
+			break;
+
+		case QSE_T('}'):
 			break;
 
 		case QSE_T('='):
@@ -485,13 +544,9 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 		case QSE_T('b'):
 		case QSE_T('t'):
 			cmd->type = c;
-			ADVSCP (sed); /* skip the new line */
-
-			//cmd->u.label = get_target (sed, cmd);
-			if (cmd->u.label == QSE_NULL) return -1;
-
+			ADVSCP (sed);
+			if (get_target_label (sed, cmd) == -1) return -1;
 			break;
-
 
 		case QSE_T('r'):
 			break;

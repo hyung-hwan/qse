@@ -27,18 +27,19 @@
 
 enum qse_sed_errnum_t
 {
-	QSE_SED_ENOERR, /* no error */
-	QSE_SED_ENOMEM, /* no memory */
-	QSE_SED_ETMTXT, /* too much text */
-	QSE_SED_ECMDNR, /* command not recognized */
-	QSE_SED_ECMDGB, /* command garbled */
-	QSE_SED_EREXBL, /* regular expression build error */
-	QSE_SED_EA1PHB, /* address 1 prohibited */
-	QSE_SED_EA2PHB, /* address 2 prohibited */
-	QSE_SED_ENEWLN, /* a new line is expected */
-	QSE_SED_EBSEXP, /* \ is expected */
-	QSE_SED_ELABTL, /* label too long */
-	QSE_SED_ELABEM  /* label name is empty */
+	QSE_SED_ENOERR,  /* no error */
+	QSE_SED_ENOMEM,  /* no memory */
+	QSE_SED_ETMTXT,  /* too much text */
+	QSE_SED_ECMDNR,  /* command not recognized */
+	QSE_SED_ECMDGB,  /* command garbled */
+	QSE_SED_EREXBL,  /* regular expression build error */
+	QSE_SED_EA1PHB,  /* address 1 prohibited */
+	QSE_SED_EA2PHB,  /* address 2 prohibited */
+	QSE_SED_ENEWLN,  /* a new line is expected */
+	QSE_SED_EBSEXP,  /* \ is expected */
+	QSE_SED_ELABTL,  /* label too long */
+	QSE_SED_ELABEM,  /* label name is empty */
+	QSE_SED_ELABDU   /* duplicate label name */
 };
 
 enum qse_sed_option_t

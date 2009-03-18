@@ -53,7 +53,11 @@ struct qse_sed_c_t
 	{
 		qse_str_t* text;  
 		void* rex;
-		qse_sed_c_t* label; /* branch destination */
+		struct
+		{
+			qse_str_t* text;
+			qse_sed_c_t* target;
+		} branch;
 	} u;	
 
 	qse_char_t* rhs; /* right-hand side of sustitution */
