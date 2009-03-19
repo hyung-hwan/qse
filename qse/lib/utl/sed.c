@@ -363,7 +363,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	{
 		/* label name is empty */
 		sed->errnum = QSE_SED_ELABEM;
-		return -1;
+		goto oops;
 	}
 
 /* TODO: change t to qse_str_t t; and ues qse_str_yield(t) to remember
