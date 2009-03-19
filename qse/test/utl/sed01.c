@@ -47,8 +47,10 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (qse_sed_compile (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("cannot compile - %d\n"), sed->errnum);
-		//qse_fprintf (QSE_STDERR, QSE_T("cannot compile - %s\n"), qse_sed_geterrstr(sed));
+		qse_fprintf (QSE_STDERR, 
+			QSE_T("cannot compile - %s\n"),
+			qse_sed_geterrmsg(sed)
+		);
 		goto oops;
 	}
 
