@@ -132,7 +132,8 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("a semicolon expected"),
 		QSE_T("label name too long"),
 		QSE_T("empty label name"),
-		QSE_T("duplicate label name")
+		QSE_T("duplicate label name"),
+		QSE_T("invalid translation set")
 	};
 
 	return (sed->errnum > 0 && sed->errnum < QSE_COUNTOF(errmsg))?
@@ -499,31 +500,77 @@ oops:
 
 static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
-	qse_str_t* t1 = QSE_NULL;
-	qse_str_t* t2 = QSE_NULL;
+	qse_cint_t c, delim;
+	qse_str_t* t = QSE_NULL;
 
-	t1 = qse_str_open (sed->mmgr, 0, 32);
-	if (t1 == QSE_NULL) 
+	c = CURSC (sed);
+	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+	{
+		/* invalid translation set */
+		sed->errnum = QSE_SED_ETSINV;
+		goto oops;
+	}
+
+	delim = c;	
+
+	t = qse_str_open (sed->mmgr, 0, 32);
+	if (t == QSE_NULL) 
 	{
 		sed->errnum = QSE_SED_ENOMEM;
 		goto oops;
 	}
 
-	t2 = qse_str_open (sed->mmgr, 0, 32);
-	if (t2 == QSE_NULL) 
+	c = NXTSC (sed);
+	while (c != delim)
 	{
-		sed->errnum = QSE_SED_ENOMEM;
-		goto oops;
+		qse_char_t b[2];
+
+		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+		{
+			/* invalid translation set */
+			sed->errnum = QSE_SED_ETSINV;
+			goto oops;
+		}
+
+		if (c == QSE_T('\\'))
+		{
+			c = NXTSC (sed);
+			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+			{
+				/* invalid translation set */
+				sed->errnum = QSE_SED_ETSINV;
+				goto oops;
+			}
+		}
+
+		b[0] = c;
+		if (qse_str_ncat (t, b, 2) == (qse_size_t)-1)
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		}
+	}	
+
+	c = NXTSC (sed);
+	while (c != delim)
+	{
+		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+		{
+			/* invalid translation set */
+			sed->errnum = QSE_SED_ETSINV;
+			goto oops;
+		}
+
+		if (c == QSE_T('\n'))
+		{
+		}
 	}
 
-	qse_str_close (t2);
-	qse_str_close (t1);
-
+	qse_str_close (t);
 	return 0;
 
 oops:
-	if (t2 != QSE_NULL) qse_str_close (t2);
-	if (t1 != QSE_NULL) qse_str_close (t1);
+	if (t != QSE_NULL) qse_str_close (t);
 	return -1;
 }
 
@@ -660,11 +707,11 @@ printf ("command %c\n", cmd->type);
 			if (get_branch_target (sed, cmd) == -1) return -1;
 if (cmd->u.branch.text != NULL)
 {
-printf ("cmd->u.branch.text = [%s]\n", cmd->u.branch.text->ptr);
+qse_printf (QSE_T("cmd->u.branch.text = [%s]\n"), cmd->u.branch.text->ptr);
 }
 else
 {
-printf ("cmd->u.branch.target = [%p]\n", cmd->u.branch.target);
+qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 }
 			break;
 
