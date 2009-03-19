@@ -37,6 +37,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EA2PHB,  /* address 2 prohibited */
 	QSE_SED_ENEWLN,  /* a new line is expected */
 	QSE_SED_EBSEXP,  /* \ is expected */
+	QSE_SED_ESCEXP,  /* ; is expected */
 	QSE_SED_ELABTL,  /* label too long */
 	QSE_SED_ELABEM,  /* label name is empty */
 	QSE_SED_ELABDU   /* duplicate label name */
@@ -50,7 +51,7 @@ enum qse_sed_option_t
 };
 
 typedef struct qse_sed_t qse_sed_t;
-typedef struct qse_sed_c_t qse_sed_c_t; /* command */
+typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
 
 struct qse_sed_t
@@ -74,9 +75,9 @@ struct qse_sed_t
 	/*qse_lda_t cmds;*/
 	struct
 	{
-		qse_sed_c_t* buf;
-		qse_sed_c_t* end;
-		qse_sed_c_t* cur;
+		qse_sed_cmd_t* buf;
+		qse_sed_cmd_t* end;
+		qse_sed_cmd_t* cur;
 	} cmd;
 
 	qse_map_t labs; /* label map */
@@ -152,6 +153,15 @@ void qse_sed_setoption (
 );
 /*****/
 
+/****f* Text Processor/qse_sed_geterrmsg
+ * NAME
+ *  qse_sed_geterrmsg - get an error message
+ * SYNOPSIS
+ */
+const qse_char_t* qse_sed_geterrmsg (
+	qse_sed_t* sed
+);
+/******/
 
 int qse_sed_compile (
 	qse_sed_t*        sed,

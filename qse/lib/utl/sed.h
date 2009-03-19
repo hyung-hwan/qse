@@ -44,7 +44,7 @@ struct qse_sed_a_t
 	} u;
 };
 
-struct qse_sed_c_t
+struct qse_sed_cmd_t
 {
 	qse_sed_a_t a1; /* optional start address */
 	qse_sed_a_t a2; /* optional end address */
@@ -56,7 +56,7 @@ struct qse_sed_c_t
 		struct
 		{
 			qse_str_t* text;
-			qse_sed_c_t* target;
+			qse_sed_cmd_t* target;
 		} branch;
 	} u;	
 
@@ -65,6 +65,8 @@ struct qse_sed_c_t
 	enum
 	{
 		QSE_SED_CMD_B   = QSE_T('b'), /* branch */
+		QSE_SED_CMD_T   = QSE_T('t'), /* branch */
+
 		/* print current line number */
 		QSE_SED_CMD_EQ  = QSE_T('='), /* print current line number */
 
@@ -105,6 +107,7 @@ struct qse_sed_c_t
 		QSE_SED_CMD_QQ  = QSE_T('Q'),
 
 		QSE_SED_CMD_S   = QSE_T('s'),
+		/* y/s/d/ - translate characters in s to characters in d */
 		QSE_SED_CMD_Y   = QSE_T('y')
 
 	} type;

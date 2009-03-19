@@ -84,7 +84,7 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 
 	/* TODO: use different data structure... */
 	sed->cmd.buf = QSE_MMGR_ALLOC (
-		sed->mmgr, QSE_SIZEOF(qse_sed_c_t) * 1000);
+		sed->mmgr, QSE_SIZEOF(qse_sed_cmd_t) * 1000);
 	if (sed->cmd.buf == QSE_NULL)
 	{
 		qse_map_fini (&sed->labs);
@@ -99,8 +99,44 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+/* TODO: use different data sturect -> look at qse_sed_init */
+qse_sed_cmd_t* c;
+for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
+{
+	if (c->type == QSE_SED_CMD_B || c->type == QSE_SED_CMD_T)
+	{
+		if (c->u.branch.text != QSE_NULL) 
+			qse_str_close (c->u.branch.text);
+	}
+}
+QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
+
 	qse_map_fini (&sed->labs);
 	qse_str_fini (&sed->rexbuf);
+}
+
+const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
+{
+	static const qse_char_t* errmsg[] =
+	{
+		QSE_T("no error"),
+		QSE_T("out of memory"),
+		QSE_T("too much text"),
+		QSE_T("command not recognized"),
+		QSE_T("command garbled"),
+		QSE_T("regular expression build error"),
+		QSE_T("address 1 prohibited"),
+		QSE_T("address 2 prohibited"),
+		QSE_T("a new line expected"),
+		QSE_T("a backslash expected"),
+		QSE_T("a semicolon expected"),
+		QSE_T("label name too long"),
+		QSE_T("empty label name"),
+		QSE_T("duplicate label name")
+	};
+
+	return (sed->errnum > 0 && sed->errnum < QSE_COUNTOF(errmsg))?
+		errmsg[sed->errnum]: QSE_T("unknown error");	
 }
 
 void qse_sed_setoption (qse_sed_t* sed, int option)
@@ -121,15 +157,17 @@ int qse_sed_getoption (qse_sed_t* sed)
 #define NXTSC(sed) \
 	(((++(sed)->src.cur) < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
 
+/* check if c is a space character */
 #define IS_SPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
-/* check if c is a white space */
-#define IS_WSPACE(c) (IS_SPACE(c) || c == QSE_T('\n') || c == QSE_T('\r'))
-/* check if c is a label terminator */
-#define IS_LABTERM(c) \
-	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
-	 c == QSE_T(';') || IS_WSPACE(c))
+#define IS_LINTERM(c) (c == QSE_T('\n') || c == QSE_T('\r'))
+#define IS_WSPACE(c) (IS_SPACE(c) || IS_LINTERM(c))
 
-static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
+/* check if c is a label terminator excluding a space character */
+#define IS_CMDTERM(c) \
+	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
+	 c == QSE_T(';') || IS_LINTERM(c))
+
+static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 {
 	void* code;
 	qse_cint_t c;
@@ -146,7 +184,7 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t seof)
 			return QSE_NULL;
 		}
 
-		if (c == seof) break;
+		if (c == rxend) break;
 
 		if (c == QSE_T('\\'))
 		{
@@ -239,7 +277,7 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
  *  <newline> in the text shall be preceded by a backslash. Other backslashes
  *  in text shall be removed, and the following character shall be treated
  *  literally. */
-static qse_str_t* get_text (qse_sed_t* sed, qse_sed_c_t* cmd)
+static qse_str_t* get_text (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 #define ADD(sed,str,c,errlabel) \
 do { \
@@ -312,24 +350,31 @@ oops:
 #undef ADD
 }
 
-static int get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
+static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL; /* TODO: move this buffer to sed */
 
 	/* skip white spaces */
-	c = CURSC(sed);
+	c = CURSC (sed);
 	while (IS_SPACE(c)) c = NXTSC (sed);
 
-	if (IS_LABTERM(c))
+	if (IS_CMDTERM(c))
 	{
 		/* label name is empty */
 		sed->errnum = QSE_SED_ELABEM;
 		return -1;
 	}
 
+/* TODO: change t to qse_str_t t; and ues qse_str_yield(t) to remember
+ * branch text - in that case make '\0' an illegal character for the label 
+ * name or can remember the length for the text for '\0' to be legal */
 	t = qse_str_open (sed->mmgr, 0, 32);
-	if (t == QSE_NULL) goto oops;
+	if (t == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
 
 	do
 	{
@@ -338,11 +383,10 @@ static int get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 			sed->errnum = QSE_SED_ENOMEM;
 			goto oops;
 		} 
-
 		c = NXTSC (sed);
 	}
-	while (!IS_LABTERM(c));
-	
+	while (!IS_CMDTERM(c) && !IS_SPACE(c));
+
 	if (qse_map_search (
 		&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t)) != QSE_NULL)
 	{
@@ -357,7 +401,10 @@ static int get_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 		goto oops;;
 	}
 
-	ADVSCP (sed);
+	/* the label can be followed by a command on the same line without 
+	 * a semicolon as in ':label p'. */
+	if (c != QSE_T('#') && c != QSE_CHAR_EOF) ADVSCP (sed);	
+
 	qse_str_close (t);
 	return 0;
 
@@ -366,7 +413,25 @@ oops:
 	return -1;
 }
 
-static int get_target_label (qse_sed_t* sed, qse_sed_c_t* cmd)
+static int terminate_command (qse_sed_t* sed)
+{
+	qse_cint_t c;
+
+	c = CURSC (sed);
+	while (IS_SPACE(c)) c = NXTSC (sed);
+	if (!IS_CMDTERM(c))
+	{
+		sed->errnum = QSE_SED_ESCEXP;
+		return -1;
+	}
+
+	/* if the target is terminated by #, it should let the caller 
+	 * to skip the comment text. so don't read in the next character */
+	if (c != QSE_T('#') && c != QSE_CHAR_EOF) ADVSCP (sed);	
+	return 0;
+}
+
+static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
@@ -376,15 +441,26 @@ static int get_target_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 	c = CURSC(sed);
 	while (IS_SPACE(c)) c = NXTSC (sed);
 
-	if (IS_LABTERM(c))
+	if (IS_CMDTERM(c))
 	{
-		/* label name is empty */
-		sed->errnum = QSE_SED_ELABEM;
-		return -1;
+		/* no branch target is given -
+		 * a branch command without a target should cause 
+		 * sed to jump to the end of a script.
+		 */
+		cmd->u.branch.text = QSE_NULL;
+		cmd->u.branch.target = QSE_NULL;
+		return terminate_command (sed);
 	}
 
+/* TODO: change t to qse_str_t t; and ues qse_str_yield(t) to remember
+ * branch text - in that case make '\0' an illegal character for the label 
+ * name or can remember the length for the text for '\0' to be legal */
 	t = qse_str_open (sed->mmgr, 0, 32);
-	if (t == QSE_NULL) goto oops;
+	if (t == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
 
 	do
 	{
@@ -396,12 +472,9 @@ static int get_target_label (qse_sed_t* sed, qse_sed_c_t* cmd)
 
 		c = NXTSC (sed);
 	}
-	while (!IS_LABTERM(c));
+	while (!IS_CMDTERM(c) && !IS_SPACE(c));
 
-/* TODO: what happend for something like b xxx yyy; 
- * SHOULD y be a command? or an error ->
- *   b xxx ; yyy; => should force ; or new line at the end?
-*/
+	if (terminate_command (sed) == -1) goto oops;
 
 	pair = qse_map_search (&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t));
 	if (pair == QSE_NULL)
@@ -424,12 +497,42 @@ oops:
 	return -1;
 }
 
+static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	qse_str_t* t1 = QSE_NULL;
+	qse_str_t* t2 = QSE_NULL;
+
+	t1 = qse_str_open (sed->mmgr, 0, 32);
+	if (t1 == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
+
+	t2 = qse_str_open (sed->mmgr, 0, 32);
+	if (t2 == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
+
+	qse_str_close (t2);
+	qse_str_close (t1);
+
+	return 0;
+
+oops:
+	if (t2 != QSE_NULL) qse_str_close (t2);
+	if (t1 != QSE_NULL) qse_str_close (t1);
+	return -1;
+}
+
 static int command (qse_sed_t* sed)
 {
 	qse_cint_t c;
-	qse_sed_c_t* cmd = sed->cmd.cur;
+	qse_sed_cmd_t* cmd = sed->cmd.cur;
 
-handle_command:
+restart:
 	c = CURSC (sed);
 	switch (c)
 	{
@@ -450,7 +553,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 
 			ADVSCP (sed);
 			if (get_label (sed, cmd) == -1) return -1;
-			goto handle_command;
+			goto restart;
 
 		case QSE_T('{'):
 			/* insert a negated branch command at the beginning 
@@ -462,15 +565,6 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			break;
 
 		case QSE_T('}'):
-			break;
-
-		case QSE_T('='):
-			cmd->type = c;
-			if (cmd->a2.type != QSE_SED_A_NONE)
-			{
-				sed->errnum = QSE_SED_EA2PHB;
-				return -1;
-			}
 			break;
 
 		case QSE_T('a'):
@@ -522,9 +616,24 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 		}
 
 		case QSE_T('D'):
-			//cmd->u.label = pspace;
 		case QSE_T('d'):
 			cmd->type = c;
+			ADVSCP (sed);
+			if (terminate_command (sed) == -1) return -1;
+printf ("command %c\n", cmd->type);
+			break;
+
+		case QSE_T('='):
+			cmd->type = c;
+			if (cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return -1;
+			}
+
+			ADVSCP (sed);
+			if (terminate_command (sed) == -1) return -1;
+printf ("command %c\n", cmd->type);
 			break;
 
 		case QSE_T('h'):
@@ -538,6 +647,9 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 		case QSE_T('P'):
 		case QSE_T('x'):
 			cmd->type = c;
+			ADVSCP (sed);
+			if (terminate_command (sed) == -1) return -1;
+printf ("command %c\n", cmd->type);
 			break;
 
 
@@ -545,7 +657,15 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 		case QSE_T('t'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_target_label (sed, cmd) == -1) return -1;
+			if (get_branch_target (sed, cmd) == -1) return -1;
+if (cmd->u.branch.text != NULL)
+{
+printf ("cmd->u.branch.text = [%s]\n", cmd->u.branch.text->ptr);
+}
+else
+{
+printf ("cmd->u.branch.target = [%p]\n", cmd->u.branch.target);
+}
 			break;
 
 		case QSE_T('r'):
@@ -571,6 +691,9 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 		case QSE_T('s'):
 			break;
 		case QSE_T('y'):
+			cmd->type = c;
+			ADVSCP (sed);
+			if (get_trans_set (sed, cmd) == -1) return -1;
 			break;
 	}
 
@@ -581,7 +704,7 @@ static int compile_source (
 	qse_sed_t* sed, const qse_char_t* ptr, qse_size_t len)
 {
 	qse_cint_t c;
-	qse_sed_c_t* cmd = sed->cmd.cur;
+	qse_sed_cmd_t* cmd = sed->cmd.cur;
 
 	/* store the source code pointers */
 	sed->src.ptr = ptr;
@@ -598,12 +721,18 @@ static int compile_source (
 	while (1)
 	{
 		c = CURSC (sed);
-
-		/* skip white spaces */
-		while (IS_SPACE(c)) c = NXTSC (sed);
+		
+		/* skip white spaces and comments*/
+		while (IS_WSPACE(c)) c = NXTSC (sed);
+		if (c == QSE_T('#'))
+		{
+			do c = NXTSC (sed); while (!IS_LINTERM(c));
+			ADVSCP (sed);
+			continue;
+		}
 
 		/* check if it has reached the end or is commented */
-		if (c == QSE_CHAR_EOF || c == QSE_T('#')) break;
+		if (c == QSE_CHAR_EOF) break;
 
 		if (c == QSE_T(';')) 
 		{
