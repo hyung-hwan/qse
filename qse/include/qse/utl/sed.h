@@ -40,7 +40,8 @@ enum qse_sed_errnum_t
 	QSE_SED_ESCEXP,  /* ; is expected */
 	QSE_SED_ELABTL,  /* label too long */
 	QSE_SED_ELABEM,  /* label name is empty */
-	QSE_SED_ELABDU   /* duplicate label name */
+	QSE_SED_ELABDU,  /* duplicate label name */
+	QSE_SED_ETSINV   /* invalid translation set */
 };
 
 enum qse_sed_option_t
