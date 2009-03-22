@@ -51,13 +51,19 @@ struct qse_sed_cmd_t
 
 	union
 	{
+		/* text for the a, i, c commands */
 		qse_str_t* text;  
-		void* rex;
+
+		/* translation set for the y command */
+		qse_xstr_t transet;
+
 		struct
 		{
 			qse_str_t* text;
 			qse_sed_cmd_t* target;
 		} branch;
+
+		void* rex;
 	} u;	
 
 	qse_char_t* rhs; /* right-hand side of sustitution */

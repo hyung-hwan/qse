@@ -37,11 +37,15 @@ enum qse_sed_errnum_t
 	QSE_SED_EA2PHB,  /* address 2 prohibited */
 	QSE_SED_ENEWLN,  /* a new line is expected */
 	QSE_SED_EBSEXP,  /* \ is expected */
+	QSE_SED_EGBABS,  /* garbage after \ */
 	QSE_SED_ESCEXP,  /* ; is expected */
 	QSE_SED_ELABTL,  /* label too long */
 	QSE_SED_ELABEM,  /* label name is empty */
 	QSE_SED_ELABDU,  /* duplicate label name */
-	QSE_SED_ETSINV   /* invalid translation set */
+	QSE_SED_ETSNTR,  /* translation set not terminated */
+	QSE_SED_ETSNSL,  /* translation set not the same length*/
+	QSE_SED_EGRNBA,  /* group brackets not balanced */
+	QSE_SED_EGRNTD   /* group nested too deeply */
 };
 
 enum qse_sed_option_t
@@ -82,6 +86,11 @@ struct qse_sed_t
 	} cmd;
 
 	qse_map_t labs; /* label map */
+
+	/* current level of command group nesting */
+	int grplvl;
+	/* temporary storage to keep track of the begining of a command group */
+	qse_sed_cmd_t* grpcmd[128];
 };
 
 
