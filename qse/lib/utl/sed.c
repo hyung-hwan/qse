@@ -108,6 +108,11 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 		if (c->u.branch.text != QSE_NULL) 
 			qse_str_close (c->u.branch.text);
 	}
+	else if (c->type == QSE_SED_CMD_Y)
+	{
+		if (c->u.transet.ptr != QSE_NULL)
+			QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
+	}
 }
 QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
 
@@ -129,11 +134,15 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("address 2 prohibited"),
 		QSE_T("a new line expected"),
 		QSE_T("a backslash expected"),
+		QSE_T("garbage after a backslash"),
 		QSE_T("a semicolon expected"),
 		QSE_T("label name too long"),
 		QSE_T("empty label name"),
 		QSE_T("duplicate label name"),
-		QSE_T("invalid translation set")
+		QSE_T("translation set not terminated"),
+		QSE_T("strings in translation set not the same length"),
+		QSE_T("group brackets not balanced"),
+		QSE_T("group nesting too deep")
 	};
 
 	return (sed->errnum > 0 && sed->errnum < QSE_COUNTOF(errmsg))?
@@ -498,16 +507,17 @@ oops:
 	return -1;
 }
 
-static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
 	qse_str_t* t = QSE_NULL;
+	qse_size_t pos;
 
 	c = CURSC (sed);
 	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 	{
-		/* invalid translation set */
-		sed->errnum = QSE_SED_ETSINV;
+		/* translation set terminated prematurely*/
+		sed->errnum = QSE_SED_ETSNTR;
 		goto oops;
 	}
 
@@ -527,8 +537,7 @@ static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
-			/* invalid translation set */
-			sed->errnum = QSE_SED_ETSINV;
+			sed->errnum = QSE_SED_ETSNTR;
 			goto oops;
 		}
 
@@ -537,10 +546,11 @@ static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			c = NXTSC (sed);
 			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 			{
-				/* invalid translation set */
-				sed->errnum = QSE_SED_ETSINV;
+				sed->errnum = QSE_SED_ETSNTR;
 				goto oops;
 			}
+
+			if (c == QSE_T('n')) c = QSE_T('\n');
 		}
 
 		b[0] = c;
@@ -549,23 +559,53 @@ static int get_trans_set (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			sed->errnum = QSE_SED_ENOMEM;
 			goto oops;
 		}
+
+		c = NXTSC (sed);
 	}	
 
 	c = NXTSC (sed);
-	while (c != delim)
+	for (pos = 1; c != delim; pos += 2)
 	{
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
-			/* invalid translation set */
-			sed->errnum = QSE_SED_ETSINV;
+			sed->errnum = QSE_SED_ETSNTR;
 			goto oops;
 		}
 
-		if (c == QSE_T('\n'))
+		if (c == QSE_T('\\'))
 		{
+			c = NXTSC (sed);
+			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+			{
+				sed->errnum = QSE_SED_ETSNTR;
+				goto oops;
+			}
+
+			if (c == QSE_T('n')) c = QSE_T('\n');
 		}
+
+		if (pos >= QSE_STR_LEN(t))
+		{
+			/* source and target not the same length */
+			sed->errnum = QSE_SED_ETSNSL;
+			goto oops;
+		}
+
+		QSE_STR_CHAR(t,pos) = c;
+		c = NXTSC (sed);
 	}
 
+	if (pos < QSE_STR_LEN(t))
+	{
+		/* source and target not the same length */
+		sed->errnum = QSE_SED_ETSNSL;
+		goto oops;
+	}
+
+	ADVSCP (sed);
+	if (terminate_command (sed) == -1) goto oops;
+
+	qse_str_yield (t, &cmd->u.transet, 0);
 	qse_str_close (t);
 	return 0;
 
@@ -609,10 +649,29 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			 * corresponding } is met. */
 			cmd->type = QSE_SED_CMD_B;
 			cmd->negfl = !cmd->negfl;
+
+			if (sed->grplvl >= QSE_COUNTOF(sed->grpcmd))
+			{
+				/* group nesting too deep */
+				sed->errnum = QSE_SED_EGRNTD;	
+				return -1;
+			}
+
+			sed->grpcmd[sed->grplvl++] = cmd;
+			ADVSCP (sed);
 			break;
 
 		case QSE_T('}'):
-			break;
+			if (sed->grplvl <= 0) 
+			{
+				/* group not balanced */
+				sed->errnum = QSE_SED_EGRNBA;
+				return -1;
+			}
+
+			sed->grpcmd[--sed->grplvl]->u.branch.target = cmd;
+			ADVSCP (sed);
+			return 0;
 
 		case QSE_T('a'):
 		case QSE_T('i'):
@@ -640,11 +699,9 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			c = NXTSC (sed);
 			while (IS_SPACE(c)) c = NXTSC (sed);
 
-			if (c != QSE_T('\n'))
+			if (c != QSE_CHAR_EOF && c != QSE_T('\n'))
 			{
-				/* TODO: change error code. garbage after
-				 * backslash... */
-				sed->errnum = QSE_SED_EBSEXP;
+				sed->errnum = QSE_SED_EGBABS;
 				return -1;
 			}
 			
@@ -699,7 +756,6 @@ printf ("command %c\n", cmd->type);
 printf ("command %c\n", cmd->type);
 			break;
 
-
 		case QSE_T('b'):
 		case QSE_T('t'):
 			cmd->type = c;
@@ -716,13 +772,17 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 			break;
 
 		case QSE_T('r'):
+			/* TODO */
 			break;
 		case QSE_T('R'):
+			/* TODO */
 			break;
 
 		case QSE_T('w'):
+			/* TODO */
 			break;
 		case QSE_T('W'):
+			/* TODO */
 			break;
 
 		case QSE_T('q'):
@@ -740,11 +800,11 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 		case QSE_T('y'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_trans_set (sed, cmd) == -1) return -1;
+			if (get_transet (sed, cmd) == -1) return -1;
 			break;
 	}
 
-	return 0;
+	return 1;
 }
 
 static int compile_source (
@@ -767,6 +827,8 @@ static int compile_source (
 	 */
 	while (1)
 	{
+		int n;
+
 		c = CURSC (sed);
 		
 		/* skip white spaces and comments*/
@@ -824,16 +886,27 @@ static int compile_source (
 			cmd->negfl = 1;
 		}
 
-		if (command (sed) == -1) return -1;
-
-		if (sed->cmd.cur >= sed->cmd.end)
+		n = command (sed);
+		if (n == -1) return -1;
+		if (n > 0)
 		{
-			/* TODO: too many commands */
-			sed->errnum = QSE_SED_ENOMEM; /* TODO change it. */
-			return -1;
-		}
+			QSE_ASSERT (n == 1);
 
-		cmd = ++sed->cmd.cur;
+			if (sed->cmd.cur >= sed->cmd.end)
+			{
+				/* TODO: too many commands. change errnum */
+				sed->errnum = QSE_SED_ENOMEM; 
+				return -1;
+			}
+
+			cmd = ++sed->cmd.cur;
+		}
+	}
+
+	if (sed->grplvl != 0)
+	{
+		sed->errnum = QSE_SED_EGRNBA;	
+		return -1;
 	}
 
 	return 0;
