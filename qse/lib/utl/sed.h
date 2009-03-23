@@ -101,13 +101,13 @@ struct qse_sed_cmd_t
 
 		/* r filename - append a text from a file */
 		QSE_SED_CMD_R   = QSE_T('r'),
-		/* R filename - append a line from a file */
+		/* R filename - append a text from a file */
 		QSE_SED_CMD_RR  = QSE_T('R'),
 
 		/* w filename - write pattern space to a file */
-		QSE_SED_CMD_W   = QSE_T('r'),
+		QSE_SED_CMD_W   = QSE_T('w'),
 		/* W filename - write first line of pattern space to a file */
-		QSE_SED_CMD_WW  = QSE_T('R'),
+		QSE_SED_CMD_WW  = QSE_T('W'),
 
 		QSE_SED_CMD_Q   = QSE_T('q'),
 		QSE_SED_CMD_QQ  = QSE_T('Q'),
