@@ -772,16 +772,11 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 			break;
 
 		case QSE_T('r'):
-			/* TODO */
-			break;
 		case QSE_T('R'):
-			/* TODO */
-			break;
-
 		case QSE_T('w'):
-			/* TODO */
-			break;
 		case QSE_T('W'):
+			cmd->type = c;
+			
 			/* TODO */
 			break;
 
@@ -796,6 +791,7 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 			break;
 
 		case QSE_T('s'):
+			/* TODO */
 			break;
 		case QSE_T('y'):
 			cmd->type = c;
