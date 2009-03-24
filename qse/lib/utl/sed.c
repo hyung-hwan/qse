@@ -580,11 +580,7 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	if (trailing_spaces > 0)
 	{
-		qse_str_delete (
-			t, 
-			QSE_STR_LEN(t) - trailing_spaces,
-			trailing_spaces
-		);
+		qse_str_setlen (t, QSE_STR_LEN(t) - trailing_spaces);
 	}
 
 	qse_str_yield (t, &cmd->u.filename, 0);

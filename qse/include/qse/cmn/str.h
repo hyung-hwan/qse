@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: str.h 110 2009-03-24 05:52:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -420,37 +420,68 @@ void qse_str_setsizer (
 );
 /******/
 
-/*
- * NAME: get capacity
- *
- * DESCRIPTION:
+/****f* Common/qse_str_getcapa
+ * NAME
+ *  qse_str_getcapa - get capacity
+ * DESCRIPTION
  *  The qse_str_getcapa() function returns the current capacity.
  *  You may use QSE_STR_CAPA(str) macro for performance sake.
- *
- * RETURNS: the current capacity in number of characters.
+ * RETURNS
+ *  current capacity in number of characters.
  */
 qse_size_t qse_str_getcapa (
-	qse_str_t* str /* a dynamic string */
+	qse_str_t* str
 );
+/******/
 
-/*
- * NAME: set new capacity
- *
- * DESCRIPTION:
- *  The qse_str_setcapa() function set new capacity. If the new capacity
+/****f* Common/qse_str_setcapa
+ * NAME
+ *  qse_str_setcapa - set new capacity
+ * DESCRIPTION
+ *  The qse_str_setcapa() function sets the new capacity. If the new capacity
  *  is smaller than the old, the overflowing characters are removed from
  *  from the buffer.
- * 
- * RETURNS: -1 on failure, a new capacity on success 
+ * RETURNS
+ *  (qse_size_t)-1 on failure, new capacity on success 
  */
 qse_size_t qse_str_setcapa (
-	qse_str_t* str  /* a dynamic string */,
-	qse_size_t capa /* a new capacity */
+	qse_str_t* str,
+	qse_size_t capa
 );
+/******/
 
+/****f* Common/qse_str_getlen
+ * NAME
+ *  qse_str_getlen - get length
+ */
+qse_size_t qse_str_getlen (
+	qse_str_t* str
+);
+/******/
+
+/****f* Common/qse_str_setlen
+ * NAME
+ *  qse_str_setlen - change length
+ * RETURNS
+ *  (qse_size_t)-1 on failure, new length on success 
+ */
+qse_size_t qse_str_setlen (
+	qse_str_t* str,
+	qse_size_t len
+);
+/******/
+
+/****f* Common/qse_str_clear
+ * NAME
+ *  qse_str_clear - clear a string
+ * DESCRIPTION
+ *  The qse_str_clear() funtion deletes all characters in a string and sets
+ *  the length to 0. It doesn't resize the internal buffer.
+ */
 void qse_str_clear (
 	qse_str_t* str
 );
+/******/
 
 void qse_str_swap (
 	qse_str_t* str,
