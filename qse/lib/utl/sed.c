@@ -215,6 +215,7 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
+			else if (c == QSE_T('r')) c = QSE_T('\r');
 			// TODO: support more escaped characters??
 		}
 
@@ -403,7 +404,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		} 
 		c = NXTSC (sed);
 	}
-	while (!IS_CMDTERM(c) && !IS_SPACE(c));
+	while (!IS_CMDTERM(c) && !IS_SPACE(c)) ;
 
 	if (qse_map_search (
 		&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t)) != QSE_NULL)
@@ -519,6 +520,7 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
+	qse_size_t trailing_spaces = 0;
 
 	/* skip white spaces */
 	c = CURSC(sed);
@@ -546,6 +548,24 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			goto oops;
 		}
 
+		if (IS_SPACE(c)) trailing_spaces++;
+		else trailing_spaces = 0;
+
+		if (c == QSE_T('\\'))
+		{
+			c = NXTSC (sed);
+			if (c == QSE_T('\0') ||
+			    c == QSE_CHAR_EOF || 
+			    IS_LINTERM(c))
+			{
+				sed->errnum = QSE_SED_EFILIL;
+				goto oops;
+			}
+
+			if (c == QSE_T('n')) c = QSE_T('\n');
+			else if (c == QSE_T('r')) c = QSE_T('\r');
+		}
+
 		if (qse_str_ccat (t, c) == (qse_size_t)-1) 
 		{
 			sed->errnum = QSE_SED_ENOMEM;
@@ -554,9 +574,18 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		c = NXTSC (sed);
 	}
-	while (!IS_CMDTERM(c) && !IS_SPACE(c));
+	while (!IS_CMDTERM(c));
 
 	if (terminate_command (sed) == -1) goto oops;
+
+	if (trailing_spaces > 0)
+	{
+		qse_str_delete (
+			t, 
+			QSE_STR_LEN(t) - trailing_spaces,
+			trailing_spaces
+		);
+	}
 
 	qse_str_yield (t, &cmd->u.filename, 0);
 	qse_str_close (t);
@@ -611,6 +640,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
+			else if (c == QSE_T('r')) c = QSE_T('\r');
 		}
 
 		b[0] = c;
@@ -642,6 +672,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
+			else if (c == QSE_T('r')) c = QSE_T('\r');
 		}
 
 		if (pos >= QSE_STR_LEN(t))
