@@ -54,6 +54,9 @@ struct qse_sed_cmd_t
 		/* text for the a, i, c commands */
 		qse_str_t* text;  
 
+		/* file name for r, w, R, W */
+		qse_xstr_t filename;
+
 		/* translation set for the y command */
 		qse_xstr_t transet;
 
@@ -62,6 +65,7 @@ struct qse_sed_cmd_t
 			qse_str_t* text;
 			qse_sed_cmd_t* target;
 		} branch;
+
 
 		void* rex;
 	} u;	
@@ -101,7 +105,7 @@ struct qse_sed_cmd_t
 
 		/* r filename - append a text from a file */
 		QSE_SED_CMD_R   = QSE_T('r'),
-		/* R filename - append a text from a file */
+		/* R filename - append a line from a file */
 		QSE_SED_CMD_RR  = QSE_T('R'),
 
 		/* w filename - write pattern space to a file */
