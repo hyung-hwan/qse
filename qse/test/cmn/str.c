@@ -28,7 +28,19 @@ static int test1 ()
 	qse_printf (QSE_T("LEN=%u CAPA=%u [%.*s]\n"), 
 		(unsigned)QSE_STR_LEN(s1), (unsigned)QSE_STR_CAPA(s1), 
 		(int)QSE_STR_LEN(s1), QSE_STR_PTR(s1));
-		
+
+	qse_printf (QSE_T("LEN=%u\n"),
+		(unsigned int)qse_str_setlen (s1, QSE_STR_LEN(s1)-1));
+	qse_printf (QSE_T("LEN=%u CAPA=%u [%.*s]\n"), 
+		(unsigned)QSE_STR_LEN(s1), (unsigned)QSE_STR_CAPA(s1), 
+		(int)QSE_STR_LEN(s1), QSE_STR_PTR(s1));
+
+	qse_printf (QSE_T("LEN=%u\n"),
+		(unsigned int)qse_str_setlen (s1, QSE_STR_CAPA(s1) + 5));
+	qse_printf (QSE_T("LEN=%u CAPA=%u [%.*s]\n"), 
+		(unsigned)QSE_STR_LEN(s1), (unsigned)QSE_STR_CAPA(s1), 
+		(int)QSE_STR_LEN(s1), QSE_STR_PTR(s1));
+
 	qse_str_close (s1);
 	return 0;
 }
@@ -215,7 +227,11 @@ static int test6 (void)
 		qse_size_t wlen = QSE_COUNTOF(buf);
 		n = qse_mbstowcs (x[i], buf, &wlen);
 
-		qse_printf (QSE_T("[%S]=>"),x[i]);
+	#ifdef QSE_CHAR_IS_MCHAR
+		qse_printf (QSE_T("[%s]=>"), x[i]);
+	#else
+		qse_printf (QSE_T("[%S]=>"), x[i]);
+	#endif
 
 	#ifdef QSE_CHAR_IS_MCHAR
 		qse_printf (QSE_T("[%S] %d chars %d bytes\n"), buf, (int)wlen, (int)n);

@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 109 2009-03-24 01:44:31Z hyunghwan.chung $
+ * $Id: str_dyn.c 110 2009-03-24 05:52:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -157,6 +157,31 @@ qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
 	str->ptr = tmp;
 
 	return str->capa;
+}
+
+qse_size_t qse_str_getlen (qse_str_t* str)
+{
+	return QSE_STR_LEN (str);
+}
+
+qse_size_t qse_str_setlen (qse_str_t* str, qse_size_t len)
+{
+	if (len == str->len) return len;
+	if (len < str->len) 
+	{
+		str->len = len;
+		str->ptr[len] = QSE_T('\0');	
+		return len;
+	}
+
+	if (len > str->capa)
+	{
+		if (qse_str_setcapa (str, len) == (qse_size_t)-1) 
+			return (qse_size_t)-1;
+	}
+
+	while (str->len < len) str->ptr[str->len++] = QSE_T(' ');
+	return str->len;
 }
 
 void qse_str_clear (qse_str_t* str)
