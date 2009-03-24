@@ -113,6 +113,12 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 		if (c->u.transet.ptr != QSE_NULL)
 			QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
 	}
+	else if (c->type == QSE_SED_CMD_R || c->type == QSE_SED_CMD_RR ||
+	         c->type == QSE_SED_CMD_W || c->type == QSE_SED_CMD_WW)
+	{
+		if (c->u.filename.ptr != QSE_NULL)
+			QSE_MMGR_FREE (sed->mmgr, c->u.filename.ptr);
+	}
 }
 QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
 
@@ -139,6 +145,8 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("label name too long"),
 		QSE_T("empty label name"),
 		QSE_T("duplicate label name"),
+		QSE_T("empty file name"),
+		QSE_T("illegal file name"),
 		QSE_T("translation set not terminated"),
 		QSE_T("strings in translation set not the same length"),
 		QSE_T("group brackets not balanced"),
@@ -507,6 +515,58 @@ oops:
 	return -1;
 }
 
+static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	qse_cint_t c;
+	qse_str_t* t = QSE_NULL;
+
+	/* skip white spaces */
+	c = CURSC(sed);
+	while (IS_SPACE(c)) c = NXTSC (sed);
+
+	if (IS_CMDTERM(c))
+	{
+		sed->errnum = QSE_SED_EFILEM;
+		goto oops;	
+	}
+
+	t = qse_str_open (sed->mmgr, 0, 32);
+	if (t == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
+
+	do
+	{
+		if (c == QSE_T('\0'))
+		{
+			/* the file name should not contain '\0' */
+			sed->errnum = QSE_SED_EFILIL;
+			goto oops;
+		}
+
+		if (qse_str_ccat (t, c) == (qse_size_t)-1) 
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		} 
+
+		c = NXTSC (sed);
+	}
+	while (!IS_CMDTERM(c) && !IS_SPACE(c));
+
+	if (terminate_command (sed) == -1) goto oops;
+
+	qse_str_yield (t, &cmd->u.filename, 0);
+	qse_str_close (t);
+	return 0;
+
+oops:
+	if (t != QSE_NULL) qse_str_close (t);
+	return -1;
+}
+
 static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
@@ -776,8 +836,10 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 		case QSE_T('w'):
 		case QSE_T('W'):
 			cmd->type = c;
-			
-			/* TODO */
+			ADVSCP (sed);
+			if (get_file_name (sed, cmd) == -1) return -1;
+
+qse_printf (QSE_T("cmd->u.filename= [%.*s]\n"), (int)cmd->u.filename.len, cmd->u.filename.ptr);
 			break;
 
 		case QSE_T('q'):
