@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: str_dyn.c 109 2009-03-24 01:44:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -216,7 +216,6 @@ qse_size_t qse_str_cat (qse_str_t* str, const qse_char_t* s)
 	/* TODO: improve it */
 	return qse_str_ncat (str, s, qse_strlen(s));
 }
-
 
 qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 {
