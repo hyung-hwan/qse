@@ -52,7 +52,7 @@ struct qse_sed_cmd_t
 	union
 	{
 		/* text for the a, i, c commands */
-		qse_str_t* text;  
+		qse_xstr_t text;  
 
 		/* file name for r, w, R, W */
 		qse_xstr_t filename;
@@ -62,10 +62,9 @@ struct qse_sed_cmd_t
 
 		struct
 		{
-			qse_str_t* text;
+			qse_xstr_t label;
 			qse_sed_cmd_t* target;
 		} branch;
-
 
 		void* rex;
 	} u;	

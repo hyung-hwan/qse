@@ -105,10 +105,17 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 {
 	switch (c->type)
 	{
+		case QSE_SED_CMD_A:
+		case QSE_SED_CMD_C:
+		case QSE_SED_CMD_I:
+			if (c->u.text.ptr != QSE_NULL) 
+				QSE_MMGR_FREE (sed->mmgr, c->u.text.ptr);
+			break;
+
 		case QSE_SED_CMD_B:
 		case QSE_SED_CMD_T:
-			if (c->u.branch.text != QSE_NULL) 
-				qse_str_close (c->u.branch.text);
+			if (c->u.branch.label.ptr != QSE_NULL) 
+				QSE_MMGR_FREE (sed->mmgr, c->u.branch.label.ptr);
 			break;
 	
 		case QSE_SED_CMD_Y:
@@ -301,7 +308,7 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
  *  <newline> in the text shall be preceded by a backslash. Other backslashes
  *  in text shall be removed, and the following character shall be treated
  *  literally. */
-static qse_str_t* get_text (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int get_text (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 #define ADD(sed,str,c,errlabel) \
 do { \
@@ -365,11 +372,13 @@ done:
 		ADD (sed, t, QSE_T('\n'), oops);
 	}
 
-	return t;
+	qse_str_yield (t, &cmd->u.text, 0);
+	qse_str_close (t);
+	return 0;
 
 oops:
 	if (t != QSE_NULL) qse_str_close (t);
-	return QSE_NULL;
+	return -1;
 
 #undef ADD
 }
@@ -471,14 +480,12 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		 * a branch command without a target should cause 
 		 * sed to jump to the end of a script.
 		 */
-		cmd->u.branch.text = QSE_NULL;
+		cmd->u.branch.label.ptr = QSE_NULL;
+		cmd->u.branch.label.len = 0;
 		cmd->u.branch.target = QSE_NULL;
 		return terminate_command (sed);
 	}
 
-/* TODO: change t to qse_str_t t; and ues qse_str_yield(t) to remember
- * branch text - in that case make '\0' an illegal character for the label 
- * name or can remember the length for the text for '\0' to be legal */
 	t = qse_str_open (sed->mmgr, 0, 32);
 	if (t == QSE_NULL) 
 	{
@@ -504,16 +511,17 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (pair == QSE_NULL)
 	{
 		/* label not resolved yet */
-		cmd->u.branch.text = t;
+		qse_str_yield (t, &cmd->u.branch.label, 0);
 		cmd->u.branch.target = QSE_NULL;
 	}
 	else
 	{
-		cmd->u.branch.text = QSE_NULL;
+		cmd->u.branch.label.ptr = QSE_NULL;
+		cmd->u.branch.label.len = 0;
 		cmd->u.branch.target = QSE_MAP_VPTR(pair);
-		qse_str_close (t);
 	}
 	
+	qse_str_close (t);
 	return 0;
 
 oops:
@@ -599,8 +607,38 @@ oops:
 
 static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
+	qse_cint_t c, delim;
+	qse_str_t* t = QSE_NULL;
+
+	c = CURSC (sed);
+	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+	{
+		//sed->errnum = QSE_SED_ESUNTR;
+		goto oops;
+	}
+
+	delim = c;	
+	if (delim == QSE_T('\\'))
+	{
+		/* illegal delimiter */
+		//sed->errnum = QSE_SED_ESUILD;
+		goto oops;
+	}
+
+	t = qse_str_open (sed->mmgr, 0, 32);
+	if (t == QSE_NULL) 
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		goto oops;
+	}
+
+	c = NXTSC (sed);
+	while (c != delim)
+	{
+	}
 
 oops:
+	if (t != QSE_NULL) qse_str_close (t);
 	return -1;
 }
 
@@ -823,13 +861,12 @@ printf ("command %c\n", cmd->type);
 			ADVSCP (sed); /* skip the new line */
 
 			/* get_text() starts from the next line */
-			cmd->u.text = get_text (sed, cmd);
-			if (cmd->u.text == QSE_NULL) return -1;
+			if (get_text (sed, cmd) == -1) return -1;
 
 {
 qse_char_t ttt[1000];
 qse_fgets (ttt, QSE_COUNTOF(ttt), QSE_STDIN);
-qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
+qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 }
 			break;
 		}
@@ -858,9 +895,10 @@ printf ("command %c\n", cmd->type);
 			cmd->type = c;
 			ADVSCP (sed);
 			if (get_branch_target (sed, cmd) == -1) return -1;
-if (cmd->u.branch.text != NULL)
+if (cmd->u.branch.label.ptr != NULL)
 {
-qse_printf (QSE_T("cmd->u.branch.text = [%s]\n"), cmd->u.branch.text->ptr);
+qse_printf (QSE_T("cmd->u.branch.label = [%.*s]\n"), 
+	cmd->u.branch.label.len, cmd->u.branch.label.ptr);
 }
 else
 {
