@@ -103,21 +103,26 @@ void qse_sed_fini (qse_sed_t* sed)
 qse_sed_cmd_t* c;
 for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 {
-	if (c->type == QSE_SED_CMD_B || c->type == QSE_SED_CMD_T)
+	switch (c->type)
 	{
-		if (c->u.branch.text != QSE_NULL) 
-			qse_str_close (c->u.branch.text);
-	}
-	else if (c->type == QSE_SED_CMD_Y)
-	{
-		if (c->u.transet.ptr != QSE_NULL)
-			QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
-	}
-	else if (c->type == QSE_SED_CMD_R || c->type == QSE_SED_CMD_RR ||
-	         c->type == QSE_SED_CMD_W || c->type == QSE_SED_CMD_WW)
-	{
-		if (c->u.filename.ptr != QSE_NULL)
-			QSE_MMGR_FREE (sed->mmgr, c->u.filename.ptr);
+		case QSE_SED_CMD_B:
+		case QSE_SED_CMD_T:
+			if (c->u.branch.text != QSE_NULL) 
+				qse_str_close (c->u.branch.text);
+			break;
+	
+		case QSE_SED_CMD_Y:
+			if (c->u.transet.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
+			break;
+
+		case QSE_SED_CMD_R:
+		case QSE_SED_CMD_RR:
+		case QSE_SED_CMD_W:
+		case QSE_SED_CMD_WW:
+			if (c->u.filename.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.filename.ptr);
+			break;
 	}
 }
 QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
@@ -592,6 +597,13 @@ oops:
 	return -1;
 }
 
+static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+
+oops:
+	return -1;
+}
+
 static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
@@ -716,7 +728,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			return -1;
 
 		case QSE_T(':'):
-			/* label */
+			/* label - this is not a command */
 			cmd->type = c;
 			if (cmd->a1.type != QSE_SED_A_NONE)
 			{
@@ -759,6 +771,22 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			sed->grpcmd[--sed->grplvl]->u.branch.target = cmd;
 			ADVSCP (sed);
 			return 0;
+
+		case QSE_T('='):
+		case QSE_T('q'):
+		case QSE_T('Q'):
+			cmd->type = c;
+			if (cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return -1;
+			}
+
+			ADVSCP (sed);
+			if (terminate_command (sed) == -1) return -1;
+printf ("command %c\n", cmd->type);
+			break;
+
 
 		case QSE_T('a'):
 		case QSE_T('i'):
@@ -806,27 +834,9 @@ qse_printf (QSE_T("%s%s"), ttt, QSE_STR_PTR(cmd->u.text));
 			break;
 		}
 
-		case QSE_T('D'):
+
 		case QSE_T('d'):
-			cmd->type = c;
-			ADVSCP (sed);
-			if (terminate_command (sed) == -1) return -1;
-printf ("command %c\n", cmd->type);
-			break;
-
-		case QSE_T('='):
-			cmd->type = c;
-			if (cmd->a2.type != QSE_SED_A_NONE)
-			{
-				sed->errnum = QSE_SED_EA2PHB;
-				return -1;
-			}
-
-			ADVSCP (sed);
-			if (terminate_command (sed) == -1) return -1;
-printf ("command %c\n", cmd->type);
-			break;
-
+		case QSE_T('D'):
 		case QSE_T('h'):
 		case QSE_T('H'):
 		case QSE_T('g'):
@@ -869,19 +879,13 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 qse_printf (QSE_T("cmd->u.filename= [%.*s]\n"), (int)cmd->u.filename.len, cmd->u.filename.ptr);
 			break;
 
-		case QSE_T('q'):
-		case QSE_T('Q'):
-			cmd->type = c;
-			if (cmd->a2.type != QSE_SED_A_NONE)
-			{
-				sed->errnum = QSE_SED_EA2PHB;
-				return -1;
-			}
-			break;
 
 		case QSE_T('s'):
-			/* TODO */
+			cmd->type = c;
+			ADVSCP (sed);
+			if (get_subst (sed, cmd) == -1) return -1;
 			break;
+
 		case QSE_T('y'):
 			cmd->type = c;
 			ADVSCP (sed);

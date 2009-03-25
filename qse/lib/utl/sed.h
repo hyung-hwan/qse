@@ -74,11 +74,15 @@ struct qse_sed_cmd_t
 
 	enum
 	{
-		QSE_SED_CMD_B   = QSE_T('b'), /* branch */
-		QSE_SED_CMD_T   = QSE_T('t'), /* branch */
 
 		/* print current line number */
-		QSE_SED_CMD_EQ  = QSE_T('='), /* print current line number */
+		QSE_SED_CMD_EQ  = QSE_T('='),
+		QSE_SED_CMD_Q   = QSE_T('q'),
+		QSE_SED_CMD_QQ  = QSE_T('Q'),
+
+		/* delete pattern space */
+		QSE_SED_CMD_D   = QSE_T('d'),
+		QSE_SED_CMD_DD  = QSE_T('D'),
 
 		/* a \<\n> text - append text */
 		QSE_SED_CMD_A   = QSE_T('a'),
@@ -86,9 +90,6 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_I   = QSE_T('i'),
 		/* c \<\n> text - change text */
 		QSE_SED_CMD_C   = QSE_T('c'),
-
-		QSE_SED_CMD_D   = QSE_T('d'), /* delete pattern space */
-		QSE_SED_CMD_DD  = QSE_T('D'),
 
 		QSE_SED_CMD_H   = QSE_T('h'),
 		QSE_SED_CMD_HH  = QSE_T('H'),
@@ -103,6 +104,10 @@ struct qse_sed_cmd_t
 		/* exchange hold space and pattern space */
 		QSE_SED_CMD_X   = QSE_T('x'), 
 
+		/* branch */
+		QSE_SED_CMD_B   = QSE_T('b'), 
+		QSE_SED_CMD_T   = QSE_T('t'),
+
 		/* r filename - append a text from a file */
 		QSE_SED_CMD_R   = QSE_T('r'),
 		/* R filename - append a line from a file */
@@ -113,9 +118,7 @@ struct qse_sed_cmd_t
 		/* W filename - write first line of pattern space to a file */
 		QSE_SED_CMD_WW  = QSE_T('W'),
 
-		QSE_SED_CMD_Q   = QSE_T('q'),
-		QSE_SED_CMD_QQ  = QSE_T('Q'),
-
+		/* s/regex/str/ - replace matching pattern with a new string */
 		QSE_SED_CMD_S   = QSE_T('s'),
 		/* y/s/d/ - translate characters in s to characters in d */
 		QSE_SED_CMD_Y   = QSE_T('y')
