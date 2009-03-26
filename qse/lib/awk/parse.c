@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 85 2009-02-26 10:56:12Z hyunghwan.chung $
+ * $Id: parse.c 113 2009-03-25 14:53:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -220,7 +220,7 @@ static int get_charstr (qse_awk_t* awk);
 static int get_rexstr (qse_awk_t* awk);
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char,
-	qse_char_t esc_char, qse_bool_t keep_esc_char);
+	qse_char_t esc_char, qse_bool_t keep_esc_char, int preescaped);
 static int get_char (qse_awk_t* awk);
 static int unget_char (qse_awk_t* awk, qse_cint_t c);
 static int skip_spaces (qse_awk_t* awk);
@@ -2930,7 +2930,9 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		int errnum;
 
 		/* the regular expression is tokenized here because 
-		 * of the context-sensitivity of the slash symbol */
+		 * of the context-sensitivity of the slash symbol.
+		 * if TOKEN_DIV is seen as a primary, it tries to compile
+		 * it as a regular expression */
 		SET_TOKEN_TYPE (awk, TOKEN_REX);
 
 		qse_str_clear (awk->token.name);
@@ -4567,7 +4569,6 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 	return (qse_awk_nde_t*)nde;
 }
 
-
 static int get_token (qse_awk_t* awk)
 {
 	qse_cint_t c;
@@ -5091,7 +5092,7 @@ static int get_charstr (qse_awk_t* awk)
 		 * has been called */
 		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
 	}
-	return get_string (awk, QSE_T('\"'), QSE_T('\\'), QSE_FALSE);
+	return get_string (awk, QSE_T('\"'), QSE_T('\\'), QSE_FALSE, 0);
 }
 
 static int get_rexstr (qse_awk_t* awk)
@@ -5099,23 +5100,44 @@ static int get_rexstr (qse_awk_t* awk)
 	if (awk->src.lex.curc == QSE_T('/')) 
 	{
 		/* this part of the function is different from get_charstr
-		 * because of the way this function is called */
+		 * because of the way this function is called. 
+		 * this condition is met when the input is //.
+		 * the first / has been tokenized to TOKEN_DIV already.
+		 * if TOKEN_DIV is seen as a primary, this function is called.
+		 * as the token buffer has been cleared by the caller and
+		 * the token type is set to TOKEN_REX, this function can
+		 * just return after reading the next character */
 		GET_CHAR (awk);
 		return 0;
 	}
 	else 
 	{
-		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
-		return get_string (awk, QSE_T('/'), QSE_T('\\'), QSE_TRUE);
+		int escaped = 0;
+		if (awk->src.lex.curc == QSE_T('\\')) 
+		{		
+			/* for input like /\//, this condition is met. 
+			 * the initial escape character is added when the
+			 * second charater is handled in get_string() */
+			escaped = 1;
+		}
+		else 
+		{
+			/* add other initial characters here as get_string()
+			 * begins with reading the next character */
+			ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
+		}
+		return get_string (awk, 
+			QSE_T('/'), QSE_T('\\'), QSE_TRUE, escaped);
 	}
 }
 
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
-	qse_char_t esc_char, qse_bool_t keep_esc_char)
+	qse_char_t esc_char, qse_bool_t keep_esc_char,
+	int preescaped)
 {
 	qse_cint_t c;
-	int escaped = 0;
+	int escaped = preescaped;
 	int digit_count = 0;
 	qse_cint_t c_acc = 0;
 

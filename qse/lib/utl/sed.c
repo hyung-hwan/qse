@@ -152,6 +152,7 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("address 2 prohibited"),
 		QSE_T("a new line expected"),
 		QSE_T("a backslash expected"),
+		QSE_T("a backslash used as a delimiter"),
 		QSE_T("garbage after a backslash"),
 		QSE_T("a semicolon expected"),
 		QSE_T("label name too long"),
@@ -159,7 +160,7 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("duplicate label name"),
 		QSE_T("empty file name"),
 		QSE_T("illegal file name"),
-		QSE_T("translation set not terminated"),
+		QSE_T("command not terminated properly"),
 		QSE_T("strings in translation set not the same length"),
 		QSE_T("group brackets not balanced"),
 		QSE_T("group nesting too deep")
@@ -227,7 +228,6 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
-			else if (c == QSE_T('r')) c = QSE_T('\r');
 			// TODO: support more escaped characters??
 		}
 
@@ -576,7 +576,6 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
-			else if (c == QSE_T('r')) c = QSE_T('\r');
 		}
 
 		if (qse_str_ccat (t, c) == (qse_size_t)-1) 
@@ -613,15 +612,16 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	c = CURSC (sed);
 	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 	{
-		//sed->errnum = QSE_SED_ESUNTR;
+		/* not terminated properly */
+		sed->errnum = QSE_SED_ENOTRM;
 		goto oops;
 	}
 
 	delim = c;	
 	if (delim == QSE_T('\\'))
 	{
-		/* illegal delimiter */
-		//sed->errnum = QSE_SED_ESUILD;
+		/* backspace is an illegal delimiter */
+		sed->errnum = QSE_SED_EBSDEL;
 		goto oops;
 	}
 
@@ -635,7 +635,32 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	c = NXTSC (sed);
 	while (c != delim)
 	{
-	}
+		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+		{
+			sed->errnum = QSE_SED_ENOTRM;
+			goto oops;
+		}
+
+		if (c == QSE_T('\\'))
+		{
+			c = NXTSC (sed);
+			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+			{
+				sed->errnum = QSE_SED_ENOTRM;
+				goto oops;
+			}
+
+			if (c == QSE_T('n')) c = QSE_T('\n');
+		}
+
+		if (qse_str_ccat (t, c) == (qse_size_t)-1)
+		{
+			sed->errnum = QSE_SED_ENOMEM;
+			goto oops;
+		}
+
+		c = NXTSC (sed);
+	}	
 
 oops:
 	if (t != QSE_NULL) qse_str_close (t);
@@ -652,11 +677,17 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 	{
 		/* translation set terminated prematurely*/
-		sed->errnum = QSE_SED_ETSNTR;
+		sed->errnum = QSE_SED_ENOTRM;
 		goto oops;
 	}
 
 	delim = c;	
+	if (delim == QSE_T('\\'))
+	{
+		/* backspace is an illegal delimiter */
+		sed->errnum = QSE_SED_EBSDEL;
+		goto oops;
+	}
 
 	t = qse_str_open (sed->mmgr, 0, 32);
 	if (t == QSE_NULL) 
@@ -672,7 +703,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
-			sed->errnum = QSE_SED_ETSNTR;
+			sed->errnum = QSE_SED_ENOTRM;
 			goto oops;
 		}
 
@@ -681,12 +712,11 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			c = NXTSC (sed);
 			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 			{
-				sed->errnum = QSE_SED_ETSNTR;
+				sed->errnum = QSE_SED_ENOTRM;
 				goto oops;
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
-			else if (c == QSE_T('r')) c = QSE_T('\r');
 		}
 
 		b[0] = c;
@@ -704,7 +734,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	{
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
-			sed->errnum = QSE_SED_ETSNTR;
+			sed->errnum = QSE_SED_ENOTRM;
 			goto oops;
 		}
 
@@ -713,12 +743,11 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			c = NXTSC (sed);
 			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 			{
-				sed->errnum = QSE_SED_ETSNTR;
+				sed->errnum = QSE_SED_ENOTRM;
 				goto oops;
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
-			else if (c == QSE_T('r')) c = QSE_T('\r');
 		}
 
 		if (pos >= QSE_STR_LEN(t))
