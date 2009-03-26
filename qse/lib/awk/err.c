@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: err.c 113 2009-03-25 14:53:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -65,7 +65,7 @@ static const qse_char_t* __geterrstr (int errnum)
 
 		QSE_T("unexpected end of source"),
 		QSE_T("a comment not closed properly"),
-		QSE_T("a string not closed with a quote"),
+		QSE_T("a string or a regular expression not closed"),
 		QSE_T("unexpected end of a regular expression"),
 		QSE_T("a left brace expected in place of '${0}'"),
 		QSE_T("a left parenthesis expected in place of '${0}'"),
