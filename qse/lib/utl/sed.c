@@ -118,6 +118,15 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 				QSE_MMGR_FREE (sed->mmgr, c->u.branch.label.ptr);
 			break;
 	
+		case QSE_SED_CMD_S:
+			if (c->u.subst.file.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.subst.file.ptr);
+			if (c->u.subst.rpl.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.subst.rpl.ptr);
+			if (c->u.subst.rex.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.subst.rex.ptr);
+			break;
+
 		case QSE_SED_CMD_Y:
 			if (c->u.transet.ptr != QSE_NULL)
 				QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
@@ -127,8 +136,8 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 		case QSE_SED_CMD_RR:
 		case QSE_SED_CMD_W:
 		case QSE_SED_CMD_WW:
-			if (c->u.filename.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.filename.ptr);
+			if (c->u.file.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, c->u.file.ptr);
 			break;
 	}
 }
@@ -595,7 +604,7 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		qse_str_setlen (t, QSE_STR_LEN(t) - trailing_spaces);
 	}
 
-	qse_str_yield (t, &cmd->u.filename, 0);
+	qse_str_yield (t, &cmd->u.file, 0);
 	qse_str_close (t);
 	return 0;
 
@@ -607,7 +616,8 @@ oops:
 static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
-	qse_str_t* t = QSE_NULL;
+	qse_str_t* t[2] = { QSE_NULL, QSE_NULL };
+	int i;
 
 	c = CURSC (sed);
 	if (c == QSE_CHAR_EOF || IS_LINTERM(c))
@@ -625,45 +635,68 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	t = qse_str_open (sed->mmgr, 0, 32);
-	if (t == QSE_NULL) 
-	{
-		sed->errnum = QSE_SED_ENOMEM;
-		goto oops;
-	}
-
-	c = NXTSC (sed);
-	while (c != delim)
-	{
-		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+	for (i = 0; i < 2; i++)
+	{	
+		t[i] = qse_str_open (sed->mmgr, 0, 32);
+		if (t[i] == QSE_NULL) 
 		{
-			sed->errnum = QSE_SED_ENOTRM;
+			sed->errnum = QSE_SED_ENOMEM;
 			goto oops;
 		}
+	}
 
-		if (c == QSE_T('\\'))
+
+	for (i = 0; i < 2; i++)
+	{
+		c = NXTSC (sed);
+
+		while (c != delim)
 		{
-			c = NXTSC (sed);
 			if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 			{
 				sed->errnum = QSE_SED_ENOTRM;
 				goto oops;
 			}
 
-			if (c == QSE_T('n')) c = QSE_T('\n');
-		}
+			if (c == QSE_T('\\'))
+			{
+				c = NXTSC (sed);
+				if (c == QSE_CHAR_EOF || IS_LINTERM(c))
+				{
+					sed->errnum = QSE_SED_ENOTRM;
+					goto oops;
+				}
+	
+				if (c == QSE_T('n')) c = QSE_T('\n');
+			}
 
-		if (qse_str_ccat (t, c) == (qse_size_t)-1)
-		{
-			sed->errnum = QSE_SED_ENOMEM;
-			goto oops;
-		}
+			if (qse_str_ccat (t[i], c) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				goto oops;
+			}
 
-		c = NXTSC (sed);
-	}	
+			c = NXTSC (sed);
+		}	
+	}
+
+	c = NXTSC (sed);
+
+
+	ADVSCP (sed);
+	if (terminate_command (sed) == -1) goto oops;
+
+	qse_str_yield (t[1], &cmd->u.subst.rex, 0);
+	qse_str_yield (t[0], &cmd->u.subst.rpl, 0);
+
+	qse_str_close (t[1]);
+	qse_str_close (t[0]);
+
+	return 0;
 
 oops:
-	if (t != QSE_NULL) qse_str_close (t);
+	if (t[1] != QSE_NULL) qse_str_close (t[1]);
+	if (t[0] != QSE_NULL) qse_str_close (t[0]);
 	return -1;
 }
 
@@ -814,7 +847,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			 * can be skipped. the branch target is set once a
 			 * corresponding } is met. */
 			cmd->type = QSE_SED_CMD_B;
-			cmd->negfl = !cmd->negfl;
+			cmd->negated = !cmd->negated;
 
 			if (sed->grplvl >= QSE_COUNTOF(sed->grpcmd))
 			{
@@ -943,7 +976,7 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 			ADVSCP (sed);
 			if (get_file_name (sed, cmd) == -1) return -1;
 
-qse_printf (QSE_T("cmd->u.filename= [%.*s]\n"), (int)cmd->u.filename.len, cmd->u.filename.ptr);
+qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.ptr);
 			break;
 
 
@@ -951,6 +984,8 @@ qse_printf (QSE_T("cmd->u.filename= [%.*s]\n"), (int)cmd->u.filename.len, cmd->u
 			cmd->type = c;
 			ADVSCP (sed);
 			if (get_subst (sed, cmd) == -1) return -1;
+qse_printf (QSE_T("rex= [%.*s]\n"), (int)cmd->u.subst.rex.len, cmd->u.subst.rex.ptr);
+qse_printf (QSE_T("rpl= [%.*s]\n"), (int)cmd->u.subst.rpl.len, cmd->u.subst.rpl.ptr);
 			break;
 
 		case QSE_T('y'):
@@ -1039,7 +1074,7 @@ static int compile_source (
 		if (c == QSE_T('!'))
 		{
 			/* negate */
-			cmd->negfl = 1;
+			cmd->negated = 1;
 		}
 
 		n = command (sed);
