@@ -46,34 +46,8 @@ struct qse_sed_a_t
 
 struct qse_sed_cmd_t
 {
-	qse_sed_a_t a1; /* optional start address */
-	qse_sed_a_t a2; /* optional end address */
-
-	union
-	{
-		/* text for the a, i, c commands */
-		qse_xstr_t text;  
-
-		/* file name for r, w, R, W */
-		qse_xstr_t filename;
-
-		/* translation set for the y command */
-		qse_xstr_t transet;
-
-		struct
-		{
-			qse_xstr_t label;
-			qse_sed_cmd_t* target;
-		} branch;
-
-		void* rex;
-	} u;	
-
-	qse_char_t* rhs; /* right-hand side of sustitution */
-
 	enum
 	{
-
 		/* print current line number */
 		QSE_SED_CMD_EQ  = QSE_T('='),
 		QSE_SED_CMD_Q   = QSE_T('q'),
@@ -124,8 +98,44 @@ struct qse_sed_cmd_t
 
 	} type;
 
-	/* TODO: change the data type to a shorter one to save space */
-	int negfl;
+	int negated;
+
+	qse_sed_a_t a1; /* optional start address */
+	qse_sed_a_t a2; /* optional end address */
+
+	union
+	{
+		/* text for the a, i, c commands */
+		qse_xstr_t text;  
+
+		/* file name for r, w, R, W */
+		qse_xstr_t file;
+
+		/* data for the s command */
+		struct
+		{
+			qse_xstr_t rex;  /* regular expression */
+			qse_xstr_t rpl;  /* replacement */
+
+			/* flags */
+			qse_xstr_t file; /* file name for w */
+			int pos: 16;
+			int p: 1; /* print */
+			int i: 1; /* case insensitive */
+		} subst;
+
+		/* translation set for the y command */
+		qse_xstr_t transet;
+
+		struct
+		{
+			qse_xstr_t label;
+			qse_sed_cmd_t* target;
+		} branch;
+
+		void* rex;
+	} u;	
+
 };
 
 #endif
