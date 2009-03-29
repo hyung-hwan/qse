@@ -119,9 +119,10 @@ struct qse_sed_cmd_t
 
 			/* flags */
 			qse_xstr_t file; /* file name for w */
-			int pos: 16;
-			int p: 1; /* print */
-			int i: 1; /* case insensitive */
+			unsigned short occ;
+			unsigned short g: 1; /* global */
+			unsigned short p: 1; /* print */
+			unsigned short i: 1; /* case insensitive */
 		} subst;
 
 		/* translation set for the y command */
