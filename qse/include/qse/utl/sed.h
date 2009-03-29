@@ -48,7 +48,10 @@ enum qse_sed_errnum_t
 	QSE_SED_ENOTRM,  /* not terminated properly */
 	QSE_SED_ETSNSL,  /* translation set not the same length*/
 	QSE_SED_EGRNBA,  /* group brackets not balanced */
-	QSE_SED_EGRNTD   /* group nested too deeply */
+	QSE_SED_EGRNTD,  /* group nested too deeply */
+	QSE_SED_EOCSDU,  /* multiple occurrence specifiers */
+	QSE_SED_EOCSZE,  /* occurrence specifier to s is zero */
+	QSE_SED_EOCSTL   /* occurrence specifier too large */
 };
 
 enum qse_sed_option_t

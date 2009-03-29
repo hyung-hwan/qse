@@ -172,7 +172,10 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("command not terminated properly"),
 		QSE_T("strings in translation set not the same length"),
 		QSE_T("group brackets not balanced"),
-		QSE_T("group nesting too deep")
+		QSE_T("group nesting too deep"),
+		QSE_T("multiple occurrence specifier"),
+		QSE_T("occurrence specifier is zero"),
+		QSE_T("occurrence specifier too large")
 	};
 
 	return (sed->errnum > 0 && sed->errnum < QSE_COUNTOF(errmsg))?
@@ -538,7 +541,7 @@ oops:
 	return -1;
 }
 
-static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int get_file (qse_sed_t* sed, qse_xstr_t* xstr)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
@@ -604,7 +607,7 @@ static int get_file_name (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		qse_str_setlen (t, QSE_STR_LEN(t) - trailing_spaces);
 	}
 
-	qse_str_yield (t, &cmd->u.file, 0);
+	qse_str_yield (t, xstr, 0);
 	qse_str_close (t);
 	return 0;
 
@@ -680,14 +683,74 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}	
 	}
 
-	c = NXTSC (sed);
+	/* skip spaces before options */
+	do { c = NXTSC(sed); } while (IS_SPACE(c));
 
+	/* get options */
+	do
+	{
+		if (c == QSE_T('p')) 
+		{
+			cmd->u.subst.p = 1;
+			c = NXTSC (sed);
+		}
+		else if (c == QSE_T('i')) 
+		{
+			cmd->u.subst.i = 1;
+			c = NXTSC (sed);
+		}
+		else if (c == QSE_T('g')) 
+		{
+			cmd->u.subst.g = 1;
+			c = NXTSC (sed);
+		}
+		else if (c >= QSE_T('0') && c <= QSE_T('9'))
+		{
+			unsigned long occ;
 
-	ADVSCP (sed);
+			if (cmd->u.subst.occ != 0)
+			{
+				sed->errnum = QSE_SED_EOCSDU;
+				goto oops;
+			}
+
+			occ = 0;
+
+			do 
+			{
+				occ = occ * 10 + (c - QSE_T('0')); 
+				if (occ > QSE_TYPE_MAX(unsigned short))
+				{
+					sed->errnum = QSE_SED_EOCSTL;
+					goto oops;
+				}
+				c = NXTSC (sed); 
+			}
+			while (c >= QSE_T('0') && c <= QSE_T('9'));
+
+			if (occ == 0)
+			{
+				sed->errnum = QSE_SED_EOCSZE;
+				goto oops;
+			}
+
+			cmd->u.subst.occ = occ;
+		}
+		else if (c == QSE_T('w'))
+		{
+			ADVSCP (sed);
+			if (get_file (sed, &cmd->u.subst.file) == -1) return -1;
+			break;
+		}
+		else break;
+	}
+	while (1);
+
 	if (terminate_command (sed) == -1) goto oops;
 
 	qse_str_yield (t[1], &cmd->u.subst.rex, 0);
 	qse_str_yield (t[0], &cmd->u.subst.rpl, 0);
+	if (cmd->u.subst.g == 0 && cmd->u.subst.occ == 0) cmd->u.subst.occ = 1;
 
 	qse_str_close (t[1]);
 	qse_str_close (t[0]);
@@ -974,7 +1037,7 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 		case QSE_T('W'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_file_name (sed, cmd) == -1) return -1;
+			if (get_file (sed, &cmd->u.file) == -1) return -1;
 
 qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.ptr);
 			break;
@@ -986,6 +1049,12 @@ qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.pt
 			if (get_subst (sed, cmd) == -1) return -1;
 qse_printf (QSE_T("rex= [%.*s]\n"), (int)cmd->u.subst.rex.len, cmd->u.subst.rex.ptr);
 qse_printf (QSE_T("rpl= [%.*s]\n"), (int)cmd->u.subst.rpl.len, cmd->u.subst.rpl.ptr);
+qse_printf (QSE_T("g=%u p=%u i=%u occ=%d\n"), 
+	cmd->u.subst.g,
+	cmd->u.subst.p,
+	cmd->u.subst.i,
+	cmd->u.subst.occ
+);
 			break;
 
 		case QSE_T('y'):
