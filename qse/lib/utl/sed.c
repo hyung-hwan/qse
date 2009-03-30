@@ -746,7 +746,10 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 	while (1);
 
-	if (terminate_command (sed) == -1) goto oops;
+	/* call terminate_command() if the 'w' option is not specified.
+	 * if the 'w' option is given, it is called in get_file(). */
+	if (cmd->u.subst.file.ptr == QSE_NULL &&
+	    terminate_command (sed) == -1) goto oops;
 
 	qse_str_yield (t[1], &cmd->u.subst.rex, 0);
 	qse_str_yield (t[0], &cmd->u.subst.rpl, 0);
@@ -947,7 +950,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 
 			ADVSCP (sed);
 			if (terminate_command (sed) == -1) return -1;
-printf ("command %c\n", cmd->type);
+qse_printf (QSE_T("command %c\n"), cmd->type);
 			break;
 
 
@@ -1012,7 +1015,7 @@ qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 			cmd->type = c;
 			ADVSCP (sed);
 			if (terminate_command (sed) == -1) return -1;
-printf ("command %c\n", cmd->type);
+qse_printf (QSE_T("command %c\n"), cmd->type);
 			break;
 
 		case QSE_T('b'):
@@ -1054,6 +1057,10 @@ qse_printf (QSE_T("g=%u p=%u i=%u occ=%d\n"),
 	cmd->u.subst.p,
 	cmd->u.subst.i,
 	cmd->u.subst.occ
+);
+qse_printf (QSE_T("w=[%.*s]\n"), 
+	(int)cmd->u.subst.file.len,
+	cmd->u.subst.file.ptr
 );
 			break;
 
