@@ -114,7 +114,7 @@ struct qse_sed_cmd_t
 		/* data for the s command */
 		struct
 		{
-			qse_xstr_t rex;  /* regular expression */
+			void* rex; /* regular expression */
 			qse_xstr_t rpl;  /* replacement */
 
 			/* flags */
