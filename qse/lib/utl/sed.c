@@ -123,8 +123,8 @@ for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 				QSE_MMGR_FREE (sed->mmgr, c->u.subst.file.ptr);
 			if (c->u.subst.rpl.ptr != QSE_NULL)
 				QSE_MMGR_FREE (sed->mmgr, c->u.subst.rpl.ptr);
-			if (c->u.subst.rex.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.subst.rex.ptr);
+			if (c->u.subst.rex != QSE_NULL)
+				qse_freerex (sed->mmgr, c->u.subst.rex);
 			break;
 
 		case QSE_SED_CMD_Y:
@@ -255,7 +255,8 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 		sed->mmgr, 0, 
 		QSE_STR_PTR(&sed->rexbuf), 
 		QSE_STR_LEN(&sed->rexbuf), 
-		QSE_NULL);
+		QSE_NULL
+	);
 	if (code == QSE_NULL)
 	{
 		sed->errnum = QSE_SED_EREXBL;
@@ -751,8 +752,20 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (cmd->u.subst.file.ptr == QSE_NULL &&
 	    terminate_command (sed) == -1) goto oops;
 
-	qse_str_yield (t[1], &cmd->u.subst.rex, 0);
-	qse_str_yield (t[0], &cmd->u.subst.rpl, 0);
+	QSE_ASSERT (cmd->u.subst.rex == QSE_NULL);
+	cmd->u.subst.rex = qse_buildrex (
+		sed->mmgr, 0, 
+		QSE_STR_PTR(t[0]),
+		QSE_STR_LEN(t[0]),
+		QSE_NULL
+	);
+	if (cmd->u.subst.rex == QSE_NULL)
+	{
+		sed->errnum = QSE_SED_EREXBL;
+		goto oops;
+	}	
+
+	qse_str_yield (t[1], &cmd->u.subst.rpl, 0);
 	if (cmd->u.subst.g == 0 && cmd->u.subst.occ == 0) cmd->u.subst.occ = 1;
 
 	qse_str_close (t[1]);
@@ -1050,7 +1063,7 @@ qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.pt
 			cmd->type = c;
 			ADVSCP (sed);
 			if (get_subst (sed, cmd) == -1) return -1;
-qse_printf (QSE_T("rex= [%.*s]\n"), (int)cmd->u.subst.rex.len, cmd->u.subst.rex.ptr);
+//qse_printf (QSE_T("rex= [%.*s]\n"), (int)cmd->u.subst.rex.len, cmd->u.subst.rex.ptr);
 qse_printf (QSE_T("rpl= [%.*s]\n"), (int)cmd->u.subst.rpl.len, cmd->u.subst.rpl.ptr);
 qse_printf (QSE_T("g=%u p=%u i=%u occ=%d\n"), 
 	cmd->u.subst.g,
