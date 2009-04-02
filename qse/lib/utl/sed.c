@@ -1196,3 +1196,16 @@ int qse_sed_compile (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 {
 	return compile_source (sed, sptr, slen);	
 }
+
+int qse_sed_execute (qse_sed_t* sed)
+{
+	qse_sed_cmd_t* c = sed->cmd.buf;
+	
+	while (c < sed->cmd.cur)
+	{
+		qse_printf (QSE_T(">>> %c\n"), c->type);
+		c++;
+	}
+
+	return 0;
+}

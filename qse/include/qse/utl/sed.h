@@ -185,6 +185,10 @@ int qse_sed_compile (
 	qse_size_t        slen
 );
 
+int qse_sed_execute (
+	qse_sed_t* sed
+);
+
 #ifdef __cplusplus
 }
 #endif
