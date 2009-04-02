@@ -54,9 +54,10 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	//if (qse_sed_execute (sed, io) == -1)
-	//{
-	//}
+	if (qse_sed_execute (sed/*, io*/) == -1)
+	{
+	}
+
 	ret = 0;
 
 oops:
