@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: macros.h 119 2009-04-02 07:09:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,16 +22,18 @@
 #include <qse/types.h>
 
 #ifdef __cplusplus
-	/*#define QSE_NULL ((qse_uint_t)0)*/
-#	define QSE_NULL (0)
+#	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
+#		define QSE_NULL (0)
+#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
+#		define QSE_NULL (0l)
+#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG_LONG
+#		define QSE_NULL (0ll)
+#	else
+#		define QSE_NULL (0)
+#	endif
 #else
 #	define QSE_NULL ((void*)0)
 #endif
-
-
-/*#define QSE_TRUE  (0 == 0)
-#define QSE_FALSE (0 != 0)
-*/
 
 #define QSE_MCHAR_EOF ((qse_mcint_t)-1)
 #define QSE_WCHAR_EOF ((qse_wcint_t)-1)
