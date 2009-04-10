@@ -23,11 +23,6 @@
 /* TODO: delete stdio.h */
 #include <qse/utl/stdio.h>
 
-/* POSIX http://www.opengroup.org/onlinepubs/009695399/utilities/sed.html 
- * ALSO READ
-    http://www.freebsd.org/cgi/cvsweb.cgi/src/usr.bin/sed/POSIX?rev=1.4.6.1;content-type=text%2Fplain 
- */
-
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
@@ -1197,15 +1192,47 @@ int qse_sed_compile (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	return compile_source (sed, sptr, slen);	
 }
 
-int qse_sed_execute (qse_sed_t* sed)
+static int read_line (qse_sed_t* sed, qse_sed_iof_t* iof)
+{
+}
+
+int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t* iof)
 {
 	qse_sed_cmd_t* c = sed->cmd.buf;
-	
+	qse_ssize_t n;
+	int ret = 0;
+
+	n = iof (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
+	if (n == 0) goto done; /* EOF reached upon opening a stream */
+	if (n == -1)
+	{
+		ret = -1;
+		sed->errnum = QSE_SED_EIO;
+		goto done;
+	}
+
+	while (1)
+	{
+	}
+
+done:
+	iof (sed, QSE_SED_IO_CLOSE, QSE_NULL< 0);
+	return ret;
+
+#if 0
 	while (c < sed->cmd.cur)
 	{
 		qse_printf (QSE_T(">>> %c\n"), c->type);
+
+		switch (c->type)
+		{
+			case QSE_CMD_
+		}
+
 		c++;
 	}
 
 	return 0;
+#endif
+
 }
