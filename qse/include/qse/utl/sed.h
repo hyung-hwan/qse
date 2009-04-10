@@ -61,6 +61,23 @@ enum qse_sed_option_t
 	QSE_SED_ENSURENL = (1 << 2)   /* ensure NL at the text end */
 };
 
+enum qse_sed_io_cmd_t
+{
+	QSE_SED_IO_OPEN  = 0,
+	QSE_SED_IO_CLOSE = 1,
+	QSE_SED_IO_READ  = 2,
+	QSE_SED_IO_WRITE = 3
+};
+
+typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
+
+typedef qse_ssize_t (*qse_sed_iof_t) (
+        qse_sed_t*       sed,
+        qse_sed_io_cmd_t cmd,
+        qse_char_t*      data,
+        qse_size_t       count
+);
+
 typedef struct qse_sed_t qse_sed_t;
 typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
@@ -186,7 +203,8 @@ int qse_sed_compile (
 );
 
 int qse_sed_execute (
-	qse_sed_t* sed
+	qse_sed_t*     sed,
+	qse_sed_iof_t* iof
 );
 
 #ifdef __cplusplus

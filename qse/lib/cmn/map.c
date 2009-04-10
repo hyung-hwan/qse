@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: map.c 120 2009-04-10 05:00:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -411,9 +411,8 @@ pair_t* qse_map_search (map_t* map, const void* kptr, size_t klen)
 	return QSE_NULL;
 }
 
-static int map_put (
-	map_t* map, void* kptr, size_t klen, 
-	void* vptr, size_t vlen, pair_t** px)
+pair_t* qse_map_upsert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
@@ -429,7 +428,7 @@ static int map_put (
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			p = change_pair_val (map, pair, vptr, vlen);
-			if (p == QSE_NULL) return -1; /* change error */
+			if (p == QSE_NULL) return QSE_NULL; /* change error */
 			if (p != pair) 
 			{
 				/* the pair has been reallocated. relink it */
@@ -438,8 +437,7 @@ static int map_put (
 				NEXT(p) = next;
 			}
 
-			if (px != QSE_NULL) *px = p;
-			return 0; /* value changed for the existing key */
+			return p; /* value changed for the existing key */
 		}
 
 		prev = pair;
@@ -457,26 +455,13 @@ static int map_put (
 	QSE_ASSERT (pair == QSE_NULL);
 
 	pair = alloc_pair (map, kptr, klen, vptr, vlen);
-	if (pair == QSE_NULL) return -1; /* error */
+	if (pair == QSE_NULL) return QSE_NULL; /* error */
 
 	NEXT(pair) = map->bucket[hc];
 	map->bucket[hc] = pair;
 	map->size++;
 
-	if (px != QSE_NULL) *px = pair;
-	return 1; /* new key added */
-}
-
-pair_t* qse_map_upsert (
-	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
-{
-	/* update if the key exists, otherwise insert a new pair */
-	int n;
-	pair_t* px;
-
-	n = map_put (map, kptr, klen, vptr, vlen, &px);
-	if (n < 0) return QSE_NULL;
-	return px;
+	return pair; /* new key added */
 }
 
 pair_t* qse_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
