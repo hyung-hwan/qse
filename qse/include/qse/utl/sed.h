@@ -51,7 +51,8 @@ enum qse_sed_errnum_t
 	QSE_SED_EGRNTD,  /* group nested too deeply */
 	QSE_SED_EOCSDU,  /* multiple occurrence specifiers */
 	QSE_SED_EOCSZE,  /* occurrence specifier to s is zero */
-	QSE_SED_EOCSTL   /* occurrence specifier too large */
+	QSE_SED_EOCSTL,  /* occurrence specifier too large */
+	QSE_SED_EIOUSR   /* user io error */
 };
 
 enum qse_sed_option_t
@@ -71,6 +72,8 @@ enum qse_sed_io_cmd_t
 
 typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
 
+typedef struct qse_sed_t qse_sed_t;
+
 typedef qse_ssize_t (*qse_sed_iof_t) (
         qse_sed_t*       sed,
         qse_sed_io_cmd_t cmd,
@@ -78,7 +81,6 @@ typedef qse_ssize_t (*qse_sed_iof_t) (
         qse_size_t       count
 );
 
-typedef struct qse_sed_t qse_sed_t;
 typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
 
@@ -114,6 +116,17 @@ struct qse_sed_t
 	int grplvl;
 	/* temporary storage to keep track of the begining of a command group */
 	qse_sed_cmd_t* grpcmd[128];
+
+
+	/* io data for execution */
+	struct
+	{
+		qse_sed_iof_t f;
+		qse_char_t buf[2048];
+		qse_size_t len;
+		qse_size_t pos;
+		qse_str_t line;
+	} eio;
 };
 
 
@@ -203,8 +216,8 @@ int qse_sed_compile (
 );
 
 int qse_sed_execute (
-	qse_sed_t*     sed,
-	qse_sed_iof_t* iof
+	qse_sed_t*    sed,
+	qse_sed_iof_t iof
 );
 
 #ifdef __cplusplus

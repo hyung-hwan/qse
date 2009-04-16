@@ -170,7 +170,8 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("group nesting too deep"),
 		QSE_T("multiple occurrence specifier"),
 		QSE_T("occurrence specifier is zero"),
-		QSE_T("occurrence specifier too large")
+		QSE_T("occurrence specifier too large"),
+		QSE_T("error returned by user io handler")
 	};
 
 	return (sed->errnum > 0 && sed->errnum < QSE_COUNTOF(errmsg))?
@@ -1192,34 +1193,92 @@ int qse_sed_compile (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	return compile_source (sed, sptr, slen);	
 }
 
-static int read_line (qse_sed_t* sed, qse_sed_iof_t* iof)
+static int read_char (qse_sed_t* sed, qse_char_t* c)
 {
+	qse_ssize_t n;
+
+	if (sed->eio.pos >= sed->eio.len)
+	{
+		n = sed->eio.f (
+			sed, QSE_SED_IO_READ, 
+			sed->eio.buf, QSE_COUNTOF(sed->eio.buf)
+		);
+
+		if (n <= -1) 
+		{
+			sed->errnum = QSE_SED_EIOUSR;
+			return -1;
+		}
+
+		if (n == 0) return 0; /* end of file */
+
+		sed->eio.len = n;
+		sed->eio.pos = 0;
+	}
+
+	*c = sed->eio.buf[sed->eio.pos++];
+	return 1;
 }
 
-int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t* iof)
+static int read_line (qse_sed_t* sed)
 {
-	qse_sed_cmd_t* c = sed->cmd.buf;
+	qse_char_t c;
+	int n;
+
+	qse_str_clear (&sed->eio.line);
+
+	while (1)
+	{
+		n = read_char (sed, &c);
+		if (n == -1) return -1;
+		if (n == 0)
+		{
+		}
+
+		if (c == QSE_T('\n'))
+		{
+		}
+	}
+
+	return 0;	
+}
+
+int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t iof)
+{
 	qse_ssize_t n;
 	int ret = 0;
+
+	if (qse_str_init (&sed->eio.line, QSE_MMGR(sed), 256) == QSE_NULL)
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		return -1;
+	}
 
 	n = iof (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
 	if (n == 0) goto done; /* EOF reached upon opening a stream */
 	if (n == -1)
 	{
 		ret = -1;
-		sed->errnum = QSE_SED_EIO;
+		sed->errnum = QSE_SED_EIOUSR;
 		goto done;
 	}
+
+	sed->eio.f = iof;
+	sed->eio.len = 0;
+	sed->eio.pos = 0;
 
 	while (1)
 	{
 	}
 
 done:
-	iof (sed, QSE_SED_IO_CLOSE, QSE_NULL< 0);
+	iof (sed, QSE_SED_IO_CLOSE, QSE_NULL, 0);
+	qse_str_fini (&sed->eio.line);
 	return ret;
 
 #if 0
+	qse_sed_cmd_t* c = sed->cmd.buf;
+
 	while (c < sed->cmd.cur)
 	{
 		qse_printf (QSE_T(">>> %c\n"), c->type);

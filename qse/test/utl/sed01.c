@@ -25,6 +25,12 @@
 #include <qse/utl/main.h>
 #include <qse/cmn/str.h>
 
+static qse_ssize_t io (
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
+{
+	return 0;
+}
+
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
@@ -54,7 +60,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (qse_sed_execute (sed/*, io*/) == -1)
+	if (qse_sed_execute (sed, io) == -1)
 	{
 	}
 
