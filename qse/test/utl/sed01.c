@@ -25,10 +25,51 @@
 #include <qse/utl/main.h>
 #include <qse/cmn/str.h>
 
-static qse_ssize_t io (
+static qse_ssize_t in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
 {
-	return 0;
+	switch (cmd)
+	{
+		case QSE_SED_IO_OPEN:
+			return 1;
+
+		case QSE_SED_IO_CLOSE:
+			return 0;
+
+		case QSE_SED_IO_READ:
+		{
+			qse_cint_t c;
+			c = qse_fgetc (QSE_STDIN);
+			if (c == QSE_CHAR_EOF) return 0;
+			buf[0] = c;
+			return 1;
+		}
+	}
+	
+	return -1;
+}
+
+static qse_ssize_t out (
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
+{
+	switch (cmd)
+	{
+		case QSE_SED_IO_OPEN:
+			return 1;
+
+		case QSE_SED_IO_CLOSE:
+			return 0;
+
+		case QSE_SED_IO_WRITE:
+		{
+			qse_size_t i = 0;
+			for (i = 0; i < len; i++) 
+				qse_fputc (buf[i], QSE_STDOUT);
+			return len;
+		}
+	}
+	
+	return -1;
 }
 
 int sed_main (int argc, qse_char_t* argv[])
@@ -60,8 +101,13 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (qse_sed_execute (sed, io) == -1)
+	if (qse_sed_execute (sed, in, out) == -1)
 	{
+		qse_fprintf (QSE_STDERR, 
+			QSE_T("cannot execute - %s\n"),
+			qse_sed_geterrmsg(sed)
+		);
+		goto oops;
 	}
 
 	ret = 0;
