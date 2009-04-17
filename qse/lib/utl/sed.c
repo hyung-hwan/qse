@@ -1197,11 +1197,11 @@ static int read_char (qse_sed_t* sed, qse_char_t* c)
 {
 	qse_ssize_t n;
 
-	if (sed->eio.pos >= sed->eio.len)
+	if (sed->eio.in.pos >= sed->eio.in.len)
 	{
-		n = sed->eio.f (
+		n = sed->eio.in.f (
 			sed, QSE_SED_IO_READ, 
-			sed->eio.buf, QSE_COUNTOF(sed->eio.buf)
+			sed->eio.in.buf, QSE_COUNTOF(sed->eio.in.buf)
 		);
 
 		if (n <= -1) 
@@ -1212,11 +1212,11 @@ static int read_char (qse_sed_t* sed, qse_char_t* c)
 
 		if (n == 0) return 0; /* end of file */
 
-		sed->eio.len = n;
-		sed->eio.pos = 0;
+		sed->eio.in.len = n;
+		sed->eio.in.pos = 0;
 	}
 
-	*c = sed->eio.buf[sed->eio.pos++];
+	*c = sed->eio.in.buf[sed->eio.in.pos++];
 	return 1;
 }
 
@@ -1225,7 +1225,16 @@ static int read_line (qse_sed_t* sed)
 	qse_char_t c;
 	int n;
 
-	qse_str_clear (&sed->eio.line);
+	qse_str_clear (&sed->eio.in.line);
+	if (sed->eio.in.eof) 
+	{
+		/* no more input detected in the previous read.
+		 * set eof back to 0 here so that read_char() is called
+		 * if read_line() is called again. that way, the result
+		 * of subsequent calls counts on read_char(). */
+		sed->eio.in.eof = 0; 
+		return 0;
+	}
 
 	while (1)
 	{
@@ -1233,65 +1242,206 @@ static int read_line (qse_sed_t* sed)
 		if (n == -1) return -1;
 		if (n == 0)
 		{
+			if (QSE_STR_LEN(&sed->eio.in.line) == 0) return 0;
+			sed->eio.in.eof = 1;
+			break;
 		}
 
-		if (c == QSE_T('\n'))
+		if (qse_str_ccat (&sed->eio.in.line, c) == -1)
 		{
+			sed->errnum = QSE_SED_ENOMEM;
+			return -1;
 		}
+
+		if (c == QSE_T('\n')) break;
 	}
 
+	sed->eio.in.num++;
 	return 0;	
 }
 
-int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t iof)
+static int flush (qse_sed_t* sed)
+{
+	qse_size_t pos = 0;
+	qse_ssize_t n;
+
+	while (sed->eio.out.len > 0)
+	{
+		n = sed->eio.out.f (
+			sed, QSE_SED_IO_WRITE, 
+			&sed->eio.out.buf[pos], sed->eio.out.len
+		);
+
+		if (n <= -1)
+		{
+			sed->errnum = QSE_SED_EIOUSR;
+			return -1;
+		}
+
+		if (n == 0)
+		{
+			/* reached the end of file */
+		}
+
+		pos += n;
+		sed->eio.out.len -= n;
+	}
+
+	return 0;
+}
+
+static int write_char (qse_sed_t* sed, qse_char_t c)
+{
+	sed->eio.out.buf[sed->eio.out.len++] = c;
+	if (c == QSE_T('\n') ||
+	    sed->eio.out.len >= QSE_COUNTOF(sed->eio.out.buf))
+	{
+		return flush (sed);
+	}
+
+	return 0;
+}
+
+static int write_num (qse_sed_t* sed, qse_size_t x)
+{
+	qse_size_t last = x % 10;
+	qse_size_t y = 0, dig = 0;
+
+	if (x < 0) 
+	{
+		if (write_char (sed, QSE_T('-')) == -1) return -1;
+	}
+
+	x = x / 10;
+	if (x < 0) x = -x;
+
+	while (x > 0)
+	{
+		y = y * 10 + (x % 10);
+		x = x / 10;
+		dig++;
+	}
+
+	while (y > 0)
+	{
+		if (write_char (sed, (y % 10) + QSE_T('0')) == -1) return -1;
+		y = y / 10;
+		dig--;
+	}
+
+	while (dig > 0) 
+	{ 
+		dig--; 
+		if (write_char (sed, QSE_T('0')) == -1) return -1;
+	}
+	if (last < 0) last = -last;
+	if (write_char (sed, last + QSE_T('0')) == -1) return -1;
+
+	return 0;
+}
+
+static int test_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	return 1;
+}
+
+int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	switch (cmd->type)
+	{
+		case QSE_SED_CMD_EQ:
+			if (write_num (sed, sed->eio.in.num) == -1) return -1;
+			if (write_char (sed, QSE_T('\n')) == -1) return -1;
+			break;
+
+		case QSE_SED_CMD_Q:
+			break;
+
+		case QSE_SED_CMD_QQ:
+			break;
+	}
+
+	return 0;
+}
+
+int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 {
 	qse_ssize_t n;
 	int ret = 0;
 
-	if (qse_str_init (&sed->eio.line, QSE_MMGR(sed), 256) == QSE_NULL)
+	sed->eio.out.f = outf;
+	sed->eio.out.eof = 0;
+	sed->eio.out.len = 0;
+
+	sed->eio.in.f = inf;
+	sed->eio.in.eof = 0;
+	sed->eio.in.len = 0;
+	sed->eio.in.pos = 0;
+	sed->eio.in.num = 0;
+	if (qse_str_init (&sed->eio.in.line, QSE_MMGR(sed), 256) == QSE_NULL)
 	{
 		sed->errnum = QSE_SED_ENOMEM;
 		return -1;
 	}
 
-	n = iof (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
-	if (n == 0) goto done; /* EOF reached upon opening a stream */
+	n = sed->eio.in.f (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
 	if (n == -1)
 	{
 		ret = -1;
 		sed->errnum = QSE_SED_EIOUSR;
-		goto done;
+		goto done3;
 	}
-
-	sed->eio.f = iof;
-	sed->eio.len = 0;
-	sed->eio.pos = 0;
+	if (n == 0) 
+	{
+		/* EOF reached upon opening an input stream.
+		 * no data to process. this is success */
+		goto done2;
+	}
+	
+	n = sed->eio.out.f (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
+	if (n == -1)
+	{
+		ret = -1;
+		sed->errnum = QSE_SED_EIOUSR;
+		goto done2;
+	}
+	if (n == 0) 
+	{
+		/* still don't know if we will write something.
+		 * just mark EOF on the output stream and continue */
+		sed->eio.out.eof = 1;
+	}
 
 	while (1)
 	{
+		qse_sed_cmd_t* c;
+
+		if (read_line (sed) == -1) { ret = -1; goto done; }
+
+		c = sed->cmd.buf;
+		while (c < sed->cmd.cur)
+		{
+			n = test_address (sed, c);
+			if (n <= -1) { ret = -1; goto done; }
+	
+			if (n == 0)
+			{
+				c++;
+				continue;
+			}
+
+			if (exec_cmd (sed, c) == -1) { ret = -1; goto done; }
+
+			/* TODO: if exec_cmd jumped change c.... */
+			c++;
+		}
 	}
 
 done:
-	iof (sed, QSE_SED_IO_CLOSE, QSE_NULL, 0);
-	qse_str_fini (&sed->eio.line);
+	sed->eio.out.f (sed, QSE_SED_IO_CLOSE, QSE_NULL, 0);
+done2:
+	sed->eio.in.f (sed, QSE_SED_IO_CLOSE, QSE_NULL, 0);
+done3:
+	qse_str_fini (&sed->eio.in.line);
 	return ret;
-
-#if 0
-	qse_sed_cmd_t* c = sed->cmd.buf;
-
-	while (c < sed->cmd.cur)
-	{
-		qse_printf (QSE_T(">>> %c\n"), c->type);
-
-		switch (c->type)
-		{
-			case QSE_CMD_
-		}
-
-		c++;
-	}
-
-	return 0;
-#endif
-
 }

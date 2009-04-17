@@ -121,11 +121,27 @@ struct qse_sed_t
 	/* io data for execution */
 	struct
 	{
-		qse_sed_iof_t f;
-		qse_char_t buf[2048];
-		qse_size_t len;
-		qse_size_t pos;
-		qse_str_t line;
+		struct
+		{
+			qse_sed_iof_t f;
+
+			qse_char_t buf[2048];
+			qse_size_t len;
+			int        eof;
+		} out;
+
+		struct
+		{
+			qse_sed_iof_t f;
+
+			qse_char_t buf[2048];
+			qse_size_t len;
+			qse_size_t pos;
+			int        eof;
+
+			qse_str_t line;
+			qse_size_t num;
+		} in;
 	} eio;
 };
 
@@ -217,7 +233,8 @@ int qse_sed_compile (
 
 int qse_sed_execute (
 	qse_sed_t*    sed,
-	qse_sed_iof_t iof
+	qse_sed_iof_t inf,
+	qse_sed_iof_t outf
 );
 
 #ifdef __cplusplus
