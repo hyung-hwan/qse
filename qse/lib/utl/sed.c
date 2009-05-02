@@ -1257,7 +1257,7 @@ static int read_line (qse_sed_t* sed)
 	}
 
 	sed->eio.in.num++;
-	return 0;	
+	return 1;	
 }
 
 static int flush (qse_sed_t* sed)
@@ -1299,6 +1299,16 @@ static int write_char (qse_sed_t* sed, qse_char_t c)
 		return flush (sed);
 	}
 
+	return 0;
+}
+
+static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
+{
+	qse_size_t i;
+	for (i = 0; i < len; i++)
+	{
+		if (write_char (sed, str[i]) == -1) return -1;
+	}
 	return 0;
 }
 
@@ -1345,23 +1355,27 @@ static int test_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	return 1;
 }
 
-int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
+	int n;
+
 	switch (cmd->type)
 	{
+		case QSE_SED_CMD_Q:
+			n = write_str (sed, 
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line));
+			if (n == -1) return -1;
+		case QSE_SED_CMD_QQ:
+			return 0;
+
 		case QSE_SED_CMD_EQ:
 			if (write_num (sed, sed->eio.in.num) == -1) return -1;
 			if (write_char (sed, QSE_T('\n')) == -1) return -1;
 			break;
-
-		case QSE_SED_CMD_Q:
-			break;
-
-		case QSE_SED_CMD_QQ:
-			break;
 	}
 
-	return 0;
+	return 1;
 }
 
 int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
@@ -1416,7 +1430,9 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	{
 		qse_sed_cmd_t* c;
 
-		if (read_line (sed) == -1) { ret = -1; goto done; }
+		n = read_line (sed);
+		if (n <= -1) { ret = -1; goto done; }
+		if (n == 0) goto done;
 
 		c = sed->cmd.buf;
 		while (c < sed->cmd.cur)
@@ -1430,7 +1446,9 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 				continue;
 			}
 
-			if (exec_cmd (sed, c) == -1) { ret = -1; goto done; }
+			n = exec_cmd (sed, c);
+			if (n <= -1) { ret = -1; goto done; }
+			if (n == 0) goto done;
 
 			/* TODO: if exec_cmd jumped change c.... */
 			c++;
