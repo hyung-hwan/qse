@@ -25,7 +25,9 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
-qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
+static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
+
+qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_sed_prm_t* prm)
 {
 	qse_sed_t* sed;
 
@@ -42,7 +44,7 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtn);
 	if (sed == QSE_NULL) return QSE_NULL;
 
-	if (qse_sed_init (sed, mmgr) == QSE_NULL)
+	if (qse_sed_init (sed, mmgr, prm) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (sed->mmgr, sed);
 		return QSE_NULL;
@@ -57,7 +59,7 @@ void qse_sed_close (qse_sed_t* sed)
 	QSE_MMGR_FREE (sed->mmgr, sed);
 }
 
-qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
+qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr, qse_sed_prm_t* prm)
 {
 	QSE_MEMSET (sed, 0, sizeof(*sed));
 	sed->mmgr = mmgr;
@@ -89,6 +91,11 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	sed->cmd.cur = sed->cmd.buf;
 	sed->cmd.end = sed->cmd.buf + 1000 - 1;
 
+	/* build a character classifier from the primitive functions */
+	sed->ccls.is = (qse_ccls_is_t) prm->isccls;
+	sed->ccls.to = (qse_ccls_to_t) prm->toccls;
+	sed->ccls.data = sed;
+
 	return sed;
 }
 
@@ -98,43 +105,7 @@ void qse_sed_fini (qse_sed_t* sed)
 qse_sed_cmd_t* c;
 for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
 {
-	switch (c->type)
-	{
-		case QSE_SED_CMD_A:
-		case QSE_SED_CMD_C:
-		case QSE_SED_CMD_I:
-			if (c->u.text.ptr != QSE_NULL) 
-				QSE_MMGR_FREE (sed->mmgr, c->u.text.ptr);
-			break;
-
-		case QSE_SED_CMD_B:
-		case QSE_SED_CMD_T:
-			if (c->u.branch.label.ptr != QSE_NULL) 
-				QSE_MMGR_FREE (sed->mmgr, c->u.branch.label.ptr);
-			break;
-	
-		case QSE_SED_CMD_S:
-			if (c->u.subst.file.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.subst.file.ptr);
-			if (c->u.subst.rpl.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.subst.rpl.ptr);
-			if (c->u.subst.rex != QSE_NULL)
-				qse_freerex (sed->mmgr, c->u.subst.rex);
-			break;
-
-		case QSE_SED_CMD_Y:
-			if (c->u.transet.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.transet.ptr);
-			break;
-
-		case QSE_SED_CMD_R:
-		case QSE_SED_CMD_RR:
-		case QSE_SED_CMD_W:
-		case QSE_SED_CMD_WW:
-			if (c->u.file.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, c->u.file.ptr);
-			break;
-	}
+	free_command (sed, c);
 }
 QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
 
@@ -150,8 +121,10 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("out of memory"),
 		QSE_T("too much text"),
 		QSE_T("command not recognized"),
+		QSE_T("command missing"),
 		QSE_T("command garbled"),
 		QSE_T("regular expression build error"),
+		QSE_T("regular expression match error"),
 		QSE_T("address 1 prohibited"),
 		QSE_T("address 2 prohibited"),
 		QSE_T("a new line expected"),
@@ -188,6 +161,11 @@ int qse_sed_getoption (qse_sed_t* sed)
 	return sed->option;
 }
 
+qse_ccls_t* qse_sed_getccls (qse_sed_t* sed)
+{
+	return &sed->ccls;
+}
+
 /* get the current charanter of the source code */
 #define CURSC(sed) \
 	(((sed)->src.cur < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
@@ -206,7 +184,66 @@ int qse_sed_getoption (qse_sed_t* sed)
 	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
 	 c == QSE_T(';') || IS_LINTERM(c))
 
-static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
+static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	if (cmd->a2.type == QSE_SED_A_REX)
+	{
+		QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
+		qse_freerex (sed->mmgr, cmd->a2.u.rex);
+		cmd->a2.type = QSE_SED_A_NONE;
+	}
+	if (cmd->a1.type == QSE_SED_A_REX)
+	{
+		QSE_ASSERT (cmd->a1.u.rex != QSE_NULL);
+		qse_freerex (sed->mmgr, cmd->a1.u.rex);
+		cmd->a1.type = QSE_SED_A_NONE;
+	}
+}
+
+static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	free_address (sed, cmd);
+
+	switch (cmd->type)
+	{
+		case QSE_SED_CMD_A:
+		case QSE_SED_CMD_C:
+		case QSE_SED_CMD_I:
+			if (cmd->u.text.ptr != QSE_NULL) 
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
+			break;
+
+		case QSE_SED_CMD_B:
+		case QSE_SED_CMD_T:
+			if (cmd->u.branch.label.ptr != QSE_NULL) 
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.branch.label.ptr);
+			break;
+	
+		case QSE_SED_CMD_S:
+			if (cmd->u.subst.file.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.file.ptr);
+			if (cmd->u.subst.rpl.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.rpl.ptr);
+			if (cmd->u.subst.rex != QSE_NULL)
+				qse_freerex (sed->mmgr, cmd->u.subst.rex);
+			break;
+
+		case QSE_SED_CMD_Y:
+			if (cmd->u.transet.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.transet.ptr);
+			break;
+
+		case QSE_SED_CMD_R:
+		case QSE_SED_CMD_RR:
+		case QSE_SED_CMD_W:
+		case QSE_SED_CMD_WW:
+			if (cmd->u.file.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.file.ptr);
+			break;
+	}
+}
+
+static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 {
 	void* code;
 	qse_cint_t c;
@@ -215,8 +252,7 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 
 	for (;;)
 	{
-		ADVSCP (sed);
-		c = CURSC (sed);
+		c = NXTSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
 			sed->errnum = QSE_SED_ETMTXT;
@@ -247,6 +283,10 @@ static void* compile_regex (qse_sed_t* sed, qse_char_t rxend)
 	} 
 
 	/* TODO: maximum depth - optionize the second  parameter */
+qse_printf (QSE_T("rexbuff=>[%.*s]\n"), 
+(int)QSE_STR_LEN(&sed->rexbuf),
+QSE_STR_PTR(&sed->rexbuf));
+
 	code = qse_buildrex (
 		sed->mmgr, 0, 
 		QSE_STR_PTR(&sed->rexbuf), 
@@ -275,12 +315,12 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 	}
 	else if (c == QSE_T('/'))
 	{
-		ADVSCP (sed);
-		if (compile_regex (sed, c) == QSE_NULL) 
+		if (compile_rex (sed, c) == QSE_NULL) 
 			return QSE_NULL;
 
 		a->u.rex = sed->lastrex;
 		a->type = QSE_SED_A_REX;
+		ADVSCP (sed);
 	}
 	else if (c >= QSE_T('0') && c <= QSE_T('9'))
 	{
@@ -300,7 +340,21 @@ static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
 	}
 	else if (c == QSE_T('\\'))
 	{
-		/* TODO */
+		c = NXTSC (sed);
+		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
+		{
+			/* TODO: change error code - 
+			 *       unterminated address regular expression */
+			sed->errnum = QSE_SED_ETMTXT;
+			return QSE_NULL;
+		}
+
+		if (compile_rex (sed, c) == QSE_NULL) 
+			return QSE_NULL;
+
+		a->u.rex = sed->lastrex;
+		a->type = QSE_SED_A_REX;
+		ADVSCP (sed);
 	}
 	else
 	{
@@ -514,7 +568,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 	while (!IS_CMDTERM(c) && !IS_SPACE(c));
 
-	if (terminate_command (sed) == -1) goto oops;
+	if (terminate_command (sed) <= -1) goto oops;
 
 	pair = qse_map_search (&sed->labs, QSE_STR_PTR(t), QSE_STR_LEN(t));
 	if (pair == QSE_NULL)
@@ -597,7 +651,7 @@ static int get_file (qse_sed_t* sed, qse_xstr_t* xstr)
 	}
 	while (!IS_CMDTERM(c));
 
-	if (terminate_command (sed) == -1) goto oops;
+	if (terminate_command (sed) <= -1) goto oops;
 
 	if (trailing_spaces > 0)
 	{
@@ -736,7 +790,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		else if (c == QSE_T('w'))
 		{
 			ADVSCP (sed);
-			if (get_file (sed, &cmd->u.subst.file) == -1) return -1;
+			if (get_file (sed, &cmd->u.subst.file) <= -1) return -1;
 			break;
 		}
 		else break;
@@ -746,9 +800,10 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	/* call terminate_command() if the 'w' option is not specified.
 	 * if the 'w' option is given, it is called in get_file(). */
 	if (cmd->u.subst.file.ptr == QSE_NULL &&
-	    terminate_command (sed) == -1) goto oops;
+	    terminate_command (sed) <= -1) goto oops;
 
 	QSE_ASSERT (cmd->u.subst.rex == QSE_NULL);
+qse_printf (QSE_T("buildrex 222222\n"));
 	cmd->u.subst.rex = qse_buildrex (
 		sed->mmgr, 0, 
 		QSE_STR_PTR(t[0]),
@@ -877,7 +932,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 
 	ADVSCP (sed);
-	if (terminate_command (sed) == -1) goto oops;
+	if (terminate_command (sed) <= -1) goto oops;
 
 	qse_str_yield (t, &cmd->u.transet, 0);
 	qse_str_close (t);
@@ -901,6 +956,9 @@ restart:
 qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			sed->errnum = QSE_SED_ECMDNR;
 			return -1;
+		case QSE_CHAR_EOF:
+			sed->errnum = QSE_SED_ECMDMS;
+			return -1;	
 
 		case QSE_T(':'):
 			/* label - this is not a command */
@@ -913,7 +971,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			}
 
 			ADVSCP (sed);
-			if (get_label (sed, cmd) == -1) return -1;
+			if (get_label (sed, cmd) <= -1) return -1;
 			goto restart;
 
 		case QSE_T('{'):
@@ -948,6 +1006,19 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			return 0;
 
 		case QSE_T('='):
+			cmd->type = c;
+			if (sed->option & QSE_SED_CLASSIC &&
+			    cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return -1;
+			}
+
+			ADVSCP (sed);
+			if (terminate_command (sed) <= -1) return -1;
+qse_printf (QSE_T("command %c\n"), cmd->type);
+			break;
+
 		case QSE_T('q'):
 		case QSE_T('Q'):
 			cmd->type = c;
@@ -958,7 +1029,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			}
 
 			ADVSCP (sed);
-			if (terminate_command (sed) == -1) return -1;
+			if (terminate_command (sed) <= -1) return -1;
 qse_printf (QSE_T("command %c\n"), cmd->type);
 			break;
 
@@ -998,7 +1069,7 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 			ADVSCP (sed); /* skip the new line */
 
 			/* get_text() starts from the next line */
-			if (get_text (sed, cmd) == -1) return -1;
+			if (get_text (sed, cmd) <= -1) return -1;
 
 {
 qse_char_t ttt[1000];
@@ -1023,7 +1094,7 @@ qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 		case QSE_T('x'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (terminate_command (sed) == -1) return -1;
+			if (terminate_command (sed) <= -1) return -1;
 qse_printf (QSE_T("command %c\n"), cmd->type);
 			break;
 
@@ -1031,7 +1102,7 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 		case QSE_T('t'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_branch_target (sed, cmd) == -1) return -1;
+			if (get_branch_target (sed, cmd) <= -1) return -1;
 if (cmd->u.branch.label.ptr != NULL)
 {
 qse_printf (QSE_T("cmd->u.branch.label = [%.*s]\n"), 
@@ -1049,7 +1120,7 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 		case QSE_T('W'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_file (sed, &cmd->u.file) == -1) return -1;
+			if (get_file (sed, &cmd->u.file) <= -1) return -1;
 
 qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.ptr);
 			break;
@@ -1058,7 +1129,7 @@ qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.pt
 		case QSE_T('s'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_subst (sed, cmd) == -1) return -1;
+			if (get_subst (sed, cmd) <= -1) return -1;
 //qse_printf (QSE_T("rex= [%.*s]\n"), (int)cmd->u.subst.rex.len, cmd->u.subst.rex.ptr);
 qse_printf (QSE_T("rpl= [%.*s]\n"), (int)cmd->u.subst.rpl.len, cmd->u.subst.rpl.ptr);
 qse_printf (QSE_T("g=%u p=%u i=%u occ=%d\n"), 
@@ -1076,7 +1147,7 @@ qse_printf (QSE_T("w=[%.*s]\n"),
 		case QSE_T('y'):
 			cmd->type = c;
 			ADVSCP (sed);
-			if (get_transet (sed, cmd) == -1) return -1;
+			if (get_transet (sed, cmd) <= -1) return -1;
 			break;
 	}
 
@@ -1146,7 +1217,11 @@ static int compile_source (
 
 				/* TODO: skip white spaces??? */
 				if (address (sed, &cmd->a2) == QSE_NULL) 
+				{
+					QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
+					free_address (sed, cmd);
 					return -1;
+				}
 
 				c = CURSC (sed);
 			}
@@ -1163,7 +1238,11 @@ static int compile_source (
 		}
 
 		n = command (sed);
-		if (n == -1) return -1;
+		if (n <= -1) 
+		{
+			free_address (sed, cmd);
+			return -1;
+		}
 		if (n > 0)
 		{
 			QSE_ASSERT (n == 1);
@@ -1171,6 +1250,7 @@ static int compile_source (
 			if (sed->cmd.cur >= sed->cmd.end)
 			{
 				/* TODO: too many commands. change errnum */
+				free_command (sed, cmd);
 				sed->errnum = QSE_SED_ENOMEM; 
 				return -1;
 			}
@@ -1239,7 +1319,7 @@ static int read_line (qse_sed_t* sed)
 	while (1)
 	{
 		n = read_char (sed, &c);
-		if (n == -1) return -1;
+		if (n <= -1) return -1;
 		if (n == 0)
 		{
 			if (QSE_STR_LEN(&sed->eio.in.line) == 0) return 0;
@@ -1247,7 +1327,7 @@ static int read_line (qse_sed_t* sed)
 			break;
 		}
 
-		if (qse_str_ccat (&sed->eio.in.line, c) == -1)
+		if (qse_str_ccat (&sed->eio.in.line, c) == (qse_size_t)-1)
 		{
 			sed->errnum = QSE_SED_ENOMEM;
 			return -1;
@@ -1280,7 +1360,7 @@ static int flush (qse_sed_t* sed)
 
 		if (n == 0)
 		{
-			/* reached the end of file */
+			/* reached the end of file - anything to do? */
 		}
 
 		pos += n;
@@ -1307,7 +1387,7 @@ static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
 	qse_size_t i;
 	for (i = 0; i < len; i++)
 	{
-		if (write_char (sed, str[i]) == -1) return -1;
+		if (write_char (sed, str[i]) <= -1) return -1;
 	}
 	return 0;
 }
@@ -1319,7 +1399,7 @@ static int write_num (qse_sed_t* sed, qse_size_t x)
 
 	if (x < 0) 
 	{
-		if (write_char (sed, QSE_T('-')) == -1) return -1;
+		if (write_char (sed, QSE_T('-')) <= -1) return -1;
 	}
 
 	x = x / 10;
@@ -1334,7 +1414,7 @@ static int write_num (qse_sed_t* sed, qse_size_t x)
 
 	while (y > 0)
 	{
-		if (write_char (sed, (y % 10) + QSE_T('0')) == -1) return -1;
+		if (write_char (sed, (y % 10) + QSE_T('0')) <= -1) return -1;
 		y = y / 10;
 		dig--;
 	}
@@ -1342,17 +1422,110 @@ static int write_num (qse_sed_t* sed, qse_size_t x)
 	while (dig > 0) 
 	{ 
 		dig--; 
-		if (write_char (sed, QSE_T('0')) == -1) return -1;
+		if (write_char (sed, QSE_T('0')) <= -1) return -1;
 	}
 	if (last < 0) last = -last;
-	if (write_char (sed, last + QSE_T('0')) == -1) return -1;
+	if (write_char (sed, last + QSE_T('0')) <= -1) return -1;
 
 	return 0;
 }
 
-static int test_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
-	return 1;
+	switch (cmd->a1.type)
+	{
+		case QSE_SED_A_LINE:
+			return (sed->eio.in.num >= cmd->a1.u.line)? 1: 0;
+		case QSE_SED_A_REX:
+		{
+			qse_str_t match;
+			int errnum, n;
+
+			QSE_ASSERT (cmd->a1.u.rex != QSE_NULL);
+
+/*
+// TODO: trim off trailing newline....
+			if (QSE_STR_LEN(&sed->eio.in.line) > 1 &&
+			    QSE_STR_CHAR(&sed->eio.in.line,
+				QSE_STR_LEN(&sed->eio.in.line))
+*/
+
+			n = qse_matchrex (
+				sed->mmgr,
+				&sed->ccls,
+				0,
+				cmd->a1.u.rex,
+				0,
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line),
+				&match.ptr, &match.len, &errnum);
+			if (n <= -1)
+			{
+				sed->errnum = QSE_SED_EREXMA;
+				return -1;
+			}			
+
+qse_printf (QSE_T("matchrex=>%d [%s]\n"), n, QSE_STR_PTR(&sed->eio.in.line));
+			return n;
+		}
+		case QSE_SED_A_DOL:
+			return 0;
+	}
+
+	QSE_ASSERT (cmd->a1.type == QSE_SED_A_NONE);
+	return 1; /* match */
+}
+
+static int match_a2 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	switch (cmd->a2.type)
+	{
+		case QSE_SED_A_LINE:
+			return (sed->eio.in.num <= cmd->a2.u.line)? 1: 0;
+		case QSE_SED_A_REX:
+		{
+			qse_str_t match;
+			int errnum, n;
+
+			QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
+			n = qse_matchrex (
+				sed->mmgr,
+				&sed->ccls,
+				0,
+				cmd->a2.u.rex,
+				0,
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line),
+				&match.ptr, &match.len, &errnum);
+			if (n <= -1)
+			{
+				sed->errnum = QSE_SED_EREXMA;
+				return -1;
+			}			
+
+			return n;
+		}
+		case QSE_SED_A_DOL:
+			return 0;
+	}
+
+	QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
+	return 1; /* match */
+}
+
+/* match an address against input.
+ * return -1 on error, 0 on no match, 1 on match. */
+static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	int a1, a2;
+
+	a1 = match_a1 (sed, cmd);
+	if (a1 <= -1) return -1;
+	a2 = match_a2 (sed, cmd);
+	if (a2 <= -1) return -1;
+
+qse_printf (QSE_T("a1 = %d, a2 = %d\n"), a1, a2);
+	return (a1 >= 1 && a2 >= 1)? 1: 0;
 }
 
 static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
@@ -1365,13 +1538,19 @@ static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			n = write_str (sed, 
 				QSE_STR_PTR(&sed->eio.in.line),
 				QSE_STR_LEN(&sed->eio.in.line));
-			if (n == -1) return -1;
+			if (n <= -1) return -1;
 		case QSE_SED_CMD_QQ:
 			return 0;
 
 		case QSE_SED_CMD_EQ:
-			if (write_num (sed, sed->eio.in.num) == -1) return -1;
-			if (write_char (sed, QSE_T('\n')) == -1) return -1;
+			if (write_num (sed, sed->eio.in.num) <= -1) return -1;
+			if (write_char (sed, QSE_T('\n')) <= -1) return -1;
+			break;
+
+		case QSE_SED_CMD_A:
+			break;
+
+		case QSE_SED_CMD_I:
 			break;
 	}
 
@@ -1399,7 +1578,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	}
 
 	n = sed->eio.in.f (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
-	if (n == -1)
+	if (n <= -1)
 	{
 		ret = -1;
 		sed->errnum = QSE_SED_EIOUSR;
@@ -1413,7 +1592,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	}
 	
 	n = sed->eio.out.f (sed, QSE_SED_IO_OPEN, QSE_NULL, 0);
-	if (n == -1)
+	if (n <= -1)
 	{
 		ret = -1;
 		sed->errnum = QSE_SED_EIOUSR;
@@ -1437,7 +1616,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		c = sed->cmd.buf;
 		while (c < sed->cmd.cur)
 		{
-			n = test_address (sed, c);
+			n = match_address (sed, c);
 			if (n <= -1) { ret = -1; goto done; }
 	
 			if (n == 0)
@@ -1452,6 +1631,14 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 
 			/* TODO: if exec_cmd jumped change c.... */
 			c++;
+		}
+
+		if (!(sed->option & QSE_SED_QUIET))
+		{
+			n = write_str (sed, 
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line));
+			if (n <= -1) { ret = -1; goto done; }
 		}
 	}
 
