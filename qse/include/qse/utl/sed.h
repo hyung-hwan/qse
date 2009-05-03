@@ -31,8 +31,10 @@ enum qse_sed_errnum_t
 	QSE_SED_ENOMEM,  /* no memory */
 	QSE_SED_ETMTXT,  /* too much text */
 	QSE_SED_ECMDNR,  /* command not recognized */
+	QSE_SED_ECMDMS,  /* command missing */
 	QSE_SED_ECMDGB,  /* command garbled */
 	QSE_SED_EREXBL,  /* regular expression build error */
+	QSE_SED_EREXMA,  /* regular expression match error */
 	QSE_SED_EA1PHB,  /* address 1 prohibited */
 	QSE_SED_EA2PHB,  /* address 2 prohibited */
 	QSE_SED_ENEWLN,  /* a new line is expected */
@@ -59,7 +61,9 @@ enum qse_sed_option_t
 {
 	QSE_SED_STRIPLS  = (1 << 0),  /* strip leading spaces from text*/
 	QSE_SED_KEEPTBS  = (1 << 1),  /* keep an trailing backslash */
-	QSE_SED_ENSURENL = (1 << 2)   /* ensure NL at the text end */
+	QSE_SED_ENSURENL = (1 << 2),  /* ensure NL at the text end */
+	QSE_SED_QUIET    = (1 << 3),  /* do not print pattern space */
+	QSE_SED_CLASSIC  = (1 << 4)
 };
 
 enum qse_sed_io_cmd_t
@@ -81,14 +85,41 @@ typedef qse_ssize_t (*qse_sed_iof_t) (
         qse_size_t       count
 );
 
+typedef qse_bool_t (*qse_sed_isccls_t) (
+	qse_sed_t*    sed,
+	qse_cint_t    c,
+	qse_ccls_id_t type
+);
+
+typedef qse_cint_t (*qse_sed_toccls_t) (
+	qse_sed_t*    sed,
+	qse_cint_t    c,
+	qse_ccls_id_t type
+);
+
 typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
+
+/****f* Text Processor/qse_sed_prm_t
+ * NAME
+ *  qse_sed_prm_t - define primitive functions
+ * SYNOPSIS
+ */
+struct qse_sed_prm_t
+{
+	qse_sed_isccls_t isccls;
+	qse_sed_toccls_t toccls;
+};
+typedef struct qse_sed_prm_t qse_sed_prm_t;
+/******/
 
 struct qse_sed_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
 	qse_sed_errnum_t errnum;
 	int option;
+
+	qse_ccls_t ccls;
 
 	/* source code pointers */
 	struct
@@ -158,8 +189,9 @@ QSE_DEFINE_COMMON_FUNCTIONS (sed)
  * SYNOPSIS
  */
 qse_sed_t* qse_sed_open (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtn
+	qse_mmgr_t*    mmgr,
+	qse_size_t     xtn,
+	qse_sed_prm_t* prm
 );
 /******/
 
@@ -179,8 +211,9 @@ void qse_sed_close (
  * SYNOPSIS
  */
 qse_sed_t* qse_sed_init (
-	qse_sed_t*  sed,
-	qse_mmgr_t* mmgr
+	qse_sed_t*     sed,
+	qse_mmgr_t*    mmgr,
+	qse_sed_prm_t* prm
 );
 /******/
 
