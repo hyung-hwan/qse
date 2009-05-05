@@ -91,6 +91,14 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr, qse_sed_prm_t* prm)
 	sed->cmd.cur = sed->cmd.buf;
 	sed->cmd.end = sed->cmd.buf + 1000 - 1;
 
+	if (qse_lda_init (&sed->text_appended, mmgr, 32) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);
+		qse_map_fini (&sed->labs);
+		qse_str_fini (&sed->rexbuf);
+		return QSE_NULL;
+	}
+
 	/* build a character classifier from the primitive functions */
 	sed->ccls.is = (qse_ccls_is_t) prm->isccls;
 	sed->ccls.to = (qse_ccls_to_t) prm->toccls;
@@ -101,6 +109,8 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr, qse_sed_prm_t* prm)
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+	qse_lda_fini (&sed->text_appended);
+
 /* TODO: use different data sturect -> look at qse_sed_init */
 qse_sed_cmd_t* c;
 for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
@@ -1071,11 +1081,13 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 			/* get_text() starts from the next line */
 			if (get_text (sed, cmd) <= -1) return -1;
 
+/*
 {
 qse_char_t ttt[1000];
 qse_fgets (ttt, QSE_COUNTOF(ttt), QSE_STDIN);
 qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 }
+*/
 			break;
 		}
 
@@ -1524,7 +1536,7 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	a2 = match_a2 (sed, cmd);
 	if (a2 <= -1) return -1;
 
-qse_printf (QSE_T("a1 = %d, a2 = %d\n"), a1, a2);
+//qse_printf (QSE_T("a1 = %d, a2 = %d\n"), a1, a2);
 	return (a1 >= 1 && a2 >= 1)? 1: 0;
 }
 
@@ -1548,9 +1560,21 @@ static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_A:
+			if (qse_lda_insert (
+				&sed->text_appended,
+				QSE_LDA_SIZE(&sed->text_appended),	
+				&cmd->u.text, 0) == (qse_size_t)-1) 
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return -1;
+			}
 			break;
 
 		case QSE_SED_CMD_I:
+			n = write_str (sed,
+				QSE_STR_PTR(&cmd->u.text),
+				QSE_STR_LEN(&cmd->u.text));
+			if (n <= -1) return -1;
 			break;
 	}
 
@@ -1608,10 +1632,13 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	while (1)
 	{
 		qse_sed_cmd_t* c;
+		qse_size_t i;
 
 		n = read_line (sed);
 		if (n <= -1) { ret = -1; goto done; }
 		if (n == 0) goto done;
+
+		qse_lda_clear (&sed->text_appended);
 
 		c = sed->cmd.buf;
 		while (c < sed->cmd.cur)
@@ -1639,6 +1666,15 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 				QSE_STR_PTR(&sed->eio.in.line),
 				QSE_STR_LEN(&sed->eio.in.line));
 			if (n <= -1) { ret = -1; goto done; }
+		}
+
+		for (i = 0; i < QSE_LDA_SIZE(&sed->text_appended); i++)
+		{
+			qse_xstr_t* t = QSE_LDA_DPTR(&sed->text_appended, i);
+			n = write_str (sed, t->ptr, t->len);
+			if (n <= -1) { ret = -1; goto done; }
+			//n = write_str (sed, QSE_T("\n"), 1);
+			//if (n <= -1) { ret = -1; goto done; }
 		}
 	}
 
