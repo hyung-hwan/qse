@@ -148,7 +148,6 @@ struct qse_sed_t
 	/* temporary storage to keep track of the begining of a command group */
 	qse_sed_cmd_t* grpcmd[128];
 
-
 	/* io data for execution */
 	struct
 	{
@@ -174,6 +173,8 @@ struct qse_sed_t
 			qse_size_t num;
 		} in;
 	} eio;
+
+	qse_lda_t text_appended;
 };
 
 
