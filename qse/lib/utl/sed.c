@@ -217,8 +217,8 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	switch (cmd->type)
 	{
 		case QSE_SED_CMD_A:
-		case QSE_SED_CMD_C:
 		case QSE_SED_CMD_I:
+		case QSE_SED_CMD_C:
 			if (cmd->u.text.ptr != QSE_NULL) 
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
 			break;
@@ -1576,6 +1576,20 @@ static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_STR_LEN(&cmd->u.text));
 			if (n <= -1) return -1;
 			break;
+
+		case QSE_SED_CMD_C:
+			// TODO: this behavior is wrong....
+			//       fix this....
+			n = qse_str_ncpy (
+				&sed->eio.in.line,
+				QSE_STR_PTR(&cmd->u.text),
+				QSE_STR_LEN(&cmd->u.text));
+			if (n == (qse_size_t)-1) 
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return -1;
+			}
+			break;
 	}
 
 	return 1;
@@ -1673,9 +1687,12 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 			qse_xstr_t* t = QSE_LDA_DPTR(&sed->text_appended, i);
 			n = write_str (sed, t->ptr, t->len);
 			if (n <= -1) { ret = -1; goto done; }
-			//n = write_str (sed, QSE_T("\n"), 1);
-			//if (n <= -1) { ret = -1; goto done; }
 		}
+
+		/* flush the output stream in case it's not flushed 
+		 * in write functions */
+		n = flush (sed);
+		if (n <= -1) goto done;
 	}
 
 done:

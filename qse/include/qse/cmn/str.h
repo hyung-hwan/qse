@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 110 2009-03-24 05:52:27Z hyunghwan.chung $
+ * $Id: str.h 126 2009-05-05 02:12:38Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -483,10 +483,18 @@ void qse_str_clear (
 );
 /******/
 
+/****f* Common/qse_str_swap
+ * NAME
+ *  qse_str_swap - swap buffers of two dynamic string
+ * DESCRIPTION
+ *  The qse_str_swap() function exchanges the pointers to a buffer between
+ *  two strings. It updates the length and the capacity accordingly.
+ */
 void qse_str_swap (
-	qse_str_t* str,
+	qse_str_t* str1,
 	qse_str_t* str2
 );
+/******/
 
 qse_size_t qse_str_cpy (
 	qse_str_t*        str,

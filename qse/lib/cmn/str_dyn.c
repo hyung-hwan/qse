@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 124 2009-05-02 12:16:24Z hyunghwan.chung $
+ * $Id: str_dyn.c 126 2009-05-05 02:12:38Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -222,10 +222,10 @@ qse_size_t qse_str_cpy (qse_str_t* str, const qse_char_t* s)
 
 qse_size_t qse_str_ncpy (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 {
-	qse_char_t* buf;
-
 	if (len > str->capa || str->ptr == QSE_NULL) 
 	{
+		qse_char_t* buf;
+
 		buf = (qse_char_t*) QSE_MMGR_ALLOC (
 			str->mmgr, QSE_SIZEOF(qse_char_t) * (len + 1));
 		if (buf == QSE_NULL) return (qse_size_t)-1;
