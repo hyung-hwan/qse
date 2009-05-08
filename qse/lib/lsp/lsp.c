@@ -25,20 +25,6 @@ qse_lsp_t* qse_lsp_open (
 	if (prmfns->mmgr.malloc == QSE_NULL || 
 	    prmfns->mmgr.realloc == QSE_NULL || 
 	    prmfns->mmgr.free == QSE_NULL) return QSE_NULL;
-
-	if (prmfns->ccls.is_upper  == QSE_NULL ||
-	    prmfns->ccls.is_lower  == QSE_NULL ||
-	    prmfns->ccls.is_alpha  == QSE_NULL ||
-	    prmfns->ccls.is_digit  == QSE_NULL ||
-	    prmfns->ccls.is_xdigit == QSE_NULL ||
-	    prmfns->ccls.is_alnum  == QSE_NULL ||
-	    prmfns->ccls.is_space  == QSE_NULL ||
-	    prmfns->ccls.is_print  == QSE_NULL ||
-	    prmfns->ccls.is_graph  == QSE_NULL ||
-	    prmfns->ccls.is_cntrl  == QSE_NULL ||
-	    prmfns->ccls.is_punct  == QSE_NULL ||
-	    prmfns->ccls.to_upper  == QSE_NULL ||
-	    prmfns->ccls.to_lower  == QSE_NULL) return QSE_NULL;
 */
 
 	if (prmfns->misc.sprintf == QSE_NULL || 

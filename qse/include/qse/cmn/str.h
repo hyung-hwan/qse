@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 126 2009-05-05 02:12:38Z hyunghwan.chung $
+ * $Id: str.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -108,6 +108,12 @@ struct qse_str_t
 	if (endptr != QSE_NULL) *((const qse_char_t**)endptr) = __ston_ptr; \
 	if (__ston_f > 0) value *= -1; \
 }
+
+enum qse_strtrm_opt_t
+{
+	QSE_STRTRM_LEFT  = (1 << 0),
+	QSE_STRTRM_RIGHT = (1 << 1)
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -238,8 +244,7 @@ int qse_strxncmp (
 	const qse_char_t* s1, qse_size_t len1, 
 	const qse_char_t* s2, qse_size_t len2);
 
-int qse_strcasecmp (
-	const qse_char_t* s1, const qse_char_t* s2, qse_ccls_t* ccls);
+int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
 
 /****f* Common/qse_strxncasecmp
  * NAME
@@ -248,9 +253,7 @@ int qse_strcasecmp (
  *  The qse_strxncasecmp() function compares characters at the same position 
  *  in each string after converting them to the same case temporarily. 
  *  It accepts two strings and a character class handler. A string is 
- *  represented by its beginning pointer and length. You can write your own
- *  character class handler or use QSE_CCLS_GETDFL() to get the default 
- *  character class handler.
+ *  represented by its beginning pointer and length. 
  *
  *  For two strings to be equal, they need to have the same length and all
  *  characters in the first string should be equal to their counterpart in the
@@ -259,15 +262,15 @@ int qse_strcasecmp (
  *  The qse_strxncasecmp() returns 0 if two strings are equal, a positive
  *  number if the first string is larger, -1 if the second string is larger.
  * EXAMPLES
- *   qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3, QSE_CCLS_GETDFL());
+ *  The example compares "foo" and "FoO" case-insenstively.
+ *   qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3);
  * SYNOPSIS
  */
 int qse_strxncasecmp (
 	const qse_char_t* s1   /* the pointer to the first string */,
 	qse_size_t        len1 /* the length of the first string */, 
 	const qse_char_t* s2   /* the pointer to the second string */,
-	qse_size_t        len2 /* the length of the second string */,
-	qse_ccls_t*       ccls /* character class handler */
+	qse_size_t        len2 /* the length of the second string */
 );
 /******/
 
@@ -396,6 +399,7 @@ int qse_str_yield (
  *  qse_str_getsizer - get the sizer
  * RETURN
  *  a sizer function set or QSE_NULL if no sizer is set.
+ * SYNOPSIS
  */
 qse_str_sizer_t qse_str_getsizer (
 	qse_str_t* str
@@ -428,6 +432,7 @@ void qse_str_setsizer (
  *  You may use QSE_STR_CAPA(str) macro for performance sake.
  * RETURNS
  *  current capacity in number of characters.
+ * SYNOPSIS
  */
 qse_size_t qse_str_getcapa (
 	qse_str_t* str
@@ -443,6 +448,7 @@ qse_size_t qse_str_getcapa (
  *  from the buffer.
  * RETURNS
  *  (qse_size_t)-1 on failure, new capacity on success 
+ * SYNOPSIS
  */
 qse_size_t qse_str_setcapa (
 	qse_str_t* str,
@@ -453,6 +459,7 @@ qse_size_t qse_str_setcapa (
 /****f* Common/qse_str_getlen
  * NAME
  *  qse_str_getlen - get length
+ * SYNOPSIS
  */
 qse_size_t qse_str_getlen (
 	qse_str_t* str
@@ -464,6 +471,7 @@ qse_size_t qse_str_getlen (
  *  qse_str_setlen - change length
  * RETURNS
  *  (qse_size_t)-1 on failure, new length on success 
+ * SYNOPSIS
  */
 qse_size_t qse_str_setlen (
 	qse_str_t* str,
@@ -477,6 +485,7 @@ qse_size_t qse_str_setlen (
  * DESCRIPTION
  *  The qse_str_clear() funtion deletes all characters in a string and sets
  *  the length to 0. It doesn't resize the internal buffer.
+ * SYNOPSIS
  */
 void qse_str_clear (
 	qse_str_t* str
@@ -489,6 +498,7 @@ void qse_str_clear (
  * DESCRIPTION
  *  The qse_str_swap() function exchanges the pointers to a buffer between
  *  two strings. It updates the length and the capacity accordingly.
+ * SYNOPSIS
  */
 void qse_str_swap (
 	qse_str_t* str1,
@@ -529,37 +539,77 @@ qse_size_t qse_str_nccat (
 	qse_size_t len
 );
 
-/****f* Common/qse_strspltr
+/****f* Common/qse_strspl
  * NAME
- *  qse_strspltr - split a string translating special escane sequences
+ *  qse_strspl - split a string into fields
+ * SEE ALSO
+ *  qse_strspltrn
+ * SYNOPSIS
+ */
+int qse_strspl (
+	qse_char_t*       str,
+	const qse_char_t* delim,
+	qse_char_t        lquote,
+	qse_char_t        rquote,
+	qse_char_t        escape
+);
+/******/
+
+/****f* Common/qse_strspltrn
+ * NAME
+ *  qse_strspltrn - split a string translating special escape sequences 
  * DESCRIPTION
- *  The argument trset is translation character set which is composed
+ *  The argument trset is a translation character set which is composed
  *  of multiple character pairs. An escape character followed by the 
  *  first character in a pair is translated into the second character
  *  in the pair. If trset is QSE_NULL, no translation is performed. 
+ * EXAMPLES
+ *  Let's translate a sequence of '\n' and '\r' to a new line and a carriage
+ *  return respectively.
+ *   qse_strspltrn (str, QSE_T(':'), QSE_T('['), QSE_T(']'), QSE_T('\\'), QSE_T("n\nr\r"), &nfields);
+ *  Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
+ *  fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
+ *  new line.
+ * SEE ALSO
+ *  If you don't need any translation, you may call qse_strspl() alternatively.
  * SYNOPSIS
  */
-int qse_strspltr (
-        qse_char_t*       str,
+int qse_strspltrn (
+	qse_char_t*       str,
 	const qse_char_t* delim,
-        qse_char_t        lquote,
+	qse_char_t        lquote,
 	qse_char_t        rquote,
-        qse_char_t        escape,
+	qse_char_t        escape,
 	const qse_char_t* trset
 );
 /******/
 
-/****f* Common/qse_strspl
+/****f* Common/qse_strtrm
  * NAME
- *  qse_strspl - split a string
+ *  qse_strtrm - remove leading and/or trailing spaces from a string
+ * DESCRIPTION
+ *  The qse_strtrm() function removes leading spaces and/or trailing
+ *  spaces from a string depending on the opt parameter. You can form
+ *  the opt parameter by bitwise-OR'ing one or more of the following
+ *  values.
+ *   * QSE_STRTRM_LEFT - remove leading spaces
+ *   * QSE_STRTRM_RIGHT - remove trailing spaces
+ *  It returns the pointer to the trimmed string.
+ * NOTE
+ *  Should it remove leading spaces, it just returns the pointer to
+ *  the first non-space character in the string. Should it remove trailing
+ *  spaces, it inserts a QSE_T('\0') character after the last non-space
+ *  characters.
+ * EXAMPLES
+ *  The example removes leading and trailing spaces from the string a.
+ *   qse_char_t a[] = QSE_T("   this is a test string   ");
+ *   qse_printf (QSE_T("[%s]\n"), a);
+ *   qse_printf (QSE_T("[%s]\n"), qse_strtrm (a, QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
  * SYNOPSIS
  */
-int qse_strspl (
-        qse_char_t*       str,
-	const qse_char_t* delim,
-        qse_char_t        lquote,
-	qse_char_t        rquote,
-        qse_char_t        escape
+qse_char_t* qse_strtrm (
+	qse_char_t* str,
+	int         opt
 );
 /******/
 
@@ -569,8 +619,8 @@ int qse_strspl (
  * SYNOPSIS
  */
 qse_size_t qse_mbstowcs (
-        const qse_mchar_t* mbs,
-        qse_wchar_t*       wcs,
+	const qse_mchar_t* mbs,
+	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
 /******/
@@ -583,9 +633,9 @@ qse_size_t qse_mbstowcs (
  * SYNOPSIS
  */
 qse_size_t qse_mbsntowcsn (
-        const qse_mchar_t* mbs,
+	const qse_mchar_t* mbs,
 	qse_size_t         mbslen,
-        qse_wchar_t*       wcs,
+	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
 /******/
@@ -646,8 +696,8 @@ qse_size_t qse_wcsntombsnlen (
  * SYNOPSIS
  */
 qse_size_t qse_wcstombs (
-        const qse_wchar_t* wcs,
-        qse_mchar_t*       mbs,
+	const qse_wchar_t* wcs,
+	qse_mchar_t*       mbs,
 	qse_size_t*        mbslen
 );
 /******/
@@ -660,9 +710,9 @@ qse_size_t qse_wcstombs (
  * SYNOPSIS
  */
 qse_size_t qse_wcsntombsn (
-        const qse_wchar_t* wcs,
+	const qse_wchar_t* wcs,
 	qse_size_t         wcslen,
-        qse_mchar_t*       mbs,
+	qse_mchar_t*       mbs,
 	qse_size_t*        mbslen
 );
 /******/
@@ -679,8 +729,8 @@ qse_size_t qse_wcsntombsn (
  * SYNOPSIS
  */
 int qse_wcstombs_strict (
-        const qse_wchar_t* wcs,
-        qse_mchar_t*       mbs,
+	const qse_wchar_t* wcs,
+	qse_mchar_t*       mbs,
 	qse_size_t         mbslen
 );
 /******/

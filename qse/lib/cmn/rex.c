@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: rex.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -17,8 +17,8 @@
  */
 
 #include <qse/cmn/rex.h>
+#include <qse/cmn/chr.h>
 #include "mem.h"
-#include "chr.h"
 
 #ifdef DEBUG_REX
 #include <qse/bas/sio.h>
@@ -113,7 +113,6 @@ struct builder_t
 struct matcher_t
 {
 	qse_mmgr_t* mmgr;
-	qse_ccls_t* ccls;
 
 	struct
 	{
@@ -230,18 +229,66 @@ static const qse_byte_t* match_occurrences (
 static qse_bool_t __test_charset (
 	matcher_t* matcher, const qse_byte_t* p, qse_size_t csc, qse_char_t c);
 
-static qse_bool_t cc_isalnum (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isalpha (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isblank (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_iscntrl (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isdigit (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isgraph (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_islower (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isprint (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_ispunct (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isspace (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isupper (qse_ccls_t* ccls, qse_char_t c);
-static qse_bool_t cc_isxdigit (qse_ccls_t* ccls, qse_char_t c);
+static qse_bool_t cc_isalnum (qse_char_t c)
+{
+	return QSE_ISALNUM (c);
+}
+
+static qse_bool_t cc_isalpha (qse_char_t c)
+{
+	return QSE_ISALPHA (c);
+}
+
+static qse_bool_t cc_isblank (qse_char_t c)
+{
+	return c == QSE_T(' ') || c == QSE_T('\t');
+}
+
+static qse_bool_t cc_iscntrl (qse_char_t c)
+{
+	return QSE_ISCNTRL (c);
+}
+
+static qse_bool_t cc_isdigit (qse_char_t c)
+{
+	return QSE_ISDIGIT (c);
+}
+
+static qse_bool_t cc_isgraph (qse_char_t c)
+{
+	return QSE_ISGRAPH (c);
+}
+
+static qse_bool_t cc_islower (qse_char_t c)
+{
+	return QSE_ISLOWER (c);
+}
+
+static qse_bool_t cc_isprint (qse_char_t c)
+{
+	return QSE_ISPRINT (c);
+}
+
+static qse_bool_t cc_ispunct (qse_char_t c)
+{
+	return QSE_ISPUNCT (c);
+}
+
+static qse_bool_t cc_isspace (qse_char_t c)
+{
+	return QSE_ISSPACE (c);
+}
+
+static qse_bool_t cc_isupper (qse_char_t c)
+{
+	return QSE_ISUPPER (c);
+}
+
+static qse_bool_t cc_isxdigit (qse_char_t c)
+{
+	return QSE_ISXDIGIT (c);
+}
+
 
 #if 0
 XXX
@@ -254,7 +301,7 @@ struct __char_class_t
 {
 	const qse_char_t* name;
 	qse_size_t name_len;
-	qse_bool_t (*func) (qse_ccls_t* ccls, qse_char_t c);
+	qse_bool_t (*func) (qse_char_t c);
 }; 
 
 static struct __char_class_t __char_class[] =
@@ -349,7 +396,7 @@ void* qse_buildrex (
 }
 
 int qse_matchrex (
-	qse_mmgr_t* mmgr, qse_ccls_t* ccls, qse_size_t depth,
+	qse_mmgr_t* mmgr, qse_size_t depth,
 	void* code, int option,
 	const qse_char_t* str, qse_size_t len, 
 	const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum)
@@ -360,7 +407,6 @@ int qse_matchrex (
 	/*const qse_char_t* match_ptr_zero = QSE_NULL;*/
 
 	matcher.mmgr = mmgr;
-	matcher.ccls = ccls;
 
 	/* store the source string */
 	matcher.match.str.ptr = str;
@@ -1393,7 +1439,7 @@ static const qse_byte_t* match_ord_char (
 	ubound = cp->ubound;
 
 	cc = *(qse_char_t*)p; p += QSE_SIZEOF(cc);
-	if (matcher->ignorecase) cc = QSE_CCLS_TOUPPER(matcher->ccls, cc);
+	if (matcher->ignorecase) cc = QSE_TOUPPER(cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
@@ -1402,7 +1448,7 @@ static const qse_byte_t* match_ord_char (
 		while (p < mat->branch_end &&
 		       cp->cmd == ((const code_t*)p)->cmd)
 		{
-			if (QSE_CCLS_TOUPPER (matcher->ccls, *(qse_char_t*)(p+QSE_SIZEOF(*cp))) != cc) break;
+			if (QSE_TOUPPER (*(qse_char_t*)(p+QSE_SIZEOF(*cp))) != cc) break;
 
 			lbound += ((const code_t*)p)->lbound;
 			ubound += ((const code_t*)p)->ubound;
@@ -1444,7 +1490,7 @@ static const qse_byte_t* match_ord_char (
 				QSE_T("match_ord_char: <ignorecase> %c %c\n"),
 				cc, mat->match_ptr[si]);
 		#endif
-			if (cc != QSE_CCLS_TOUPPER (matcher->ccls, mat->match_ptr[si])) break;
+			if (cc != QSE_TOUPPER (mat->match_ptr[si])) break;
 			si++;
 		}
 	}
@@ -1507,7 +1553,7 @@ static const qse_byte_t* match_charset (
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
 		c = mat->match_ptr[si];
-		if (matcher->ignorecase) c = QSE_CCLS_TOUPPER(matcher->ccls, c);
+		if (matcher->ignorecase) c = QSE_TOUPPER(c);
 
 		n = __test_charset (matcher, p, cshdr->csc, c);
 		if (cp->negate) n = !n;
@@ -1772,7 +1818,7 @@ static qse_bool_t __test_charset (
 		{
 			c1 = *(const qse_char_t*)p;
 			if (matcher->ignorecase) 
-				c1 = QSE_CCLS_TOUPPER(matcher->ccls, c1);
+				c1 = QSE_TOUPPER(c1);
 		#ifdef DEBUG_REX
 			qse_dprintf (
 				QSE_T("match_charset: <one> %c %c\n"), c, c1);
@@ -1787,8 +1833,8 @@ static qse_bool_t __test_charset (
 
 			if (matcher->ignorecase) 
 			{
-				c1 = QSE_CCLS_TOUPPER(matcher->ccls, c1);
-				c2 = QSE_CCLS_TOUPPER(matcher->ccls, c2);
+				c1 = QSE_TOUPPER(c1);
+				c2 = QSE_TOUPPER(c2);
 			}
 		#ifdef DEBUG_REX
 			qse_dprintf (
@@ -1804,8 +1850,7 @@ static qse_bool_t __test_charset (
 				QSE_T("match_charset: <class> %c %s\n"), 
 				c, __char_class[c1].name);
 		#endif
-			if (__char_class[c1].func (
-				matcher->ccls, c)) return QSE_TRUE;
+			if (__char_class[c1].func(c)) return QSE_TRUE;
 		}
 		else
 		{
@@ -1817,66 +1862,6 @@ static qse_bool_t __test_charset (
 	}
 
 	return QSE_FALSE;
-}
-
-static qse_bool_t cc_isalnum (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISALNUM (ccls, c);
-}
-
-static qse_bool_t cc_isalpha (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISALPHA (ccls, c);
-}
-
-static qse_bool_t cc_isblank (qse_ccls_t* ccls, qse_char_t c)
-{
-	return c == QSE_T(' ') || c == QSE_T('\t');
-}
-
-static qse_bool_t cc_iscntrl (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISCNTRL (ccls, c);
-}
-
-static qse_bool_t cc_isdigit (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISDIGIT (ccls, c);
-}
-
-static qse_bool_t cc_isgraph (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISGRAPH (ccls, c);
-}
-
-static qse_bool_t cc_islower (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISLOWER (ccls, c);
-}
-
-static qse_bool_t cc_isprint (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISPRINT (ccls, c);
-}
-
-static qse_bool_t cc_ispunct (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISPUNCT (ccls, c);
-}
-
-static qse_bool_t cc_isspace (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISSPACE (ccls, c);
-}
-
-static qse_bool_t cc_isupper (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISUPPER (ccls, c);
-}
-
-static qse_bool_t cc_isxdigit (qse_ccls_t* ccls, qse_char_t c)
-{
-	return QSE_CCLS_ISXDIGIT (ccls, c);
 }
 
 #if 0

@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: types.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -417,48 +417,6 @@ struct qse_mmgr_t
 	void*   data;
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
-/******/
-
-/****t* Base/qse_ccls_id_t
- * NAME
- *  qse_ccls_id_t - define character class types
- * SYNOPSIS
- */
-enum qse_ccls_id_t
-{
-        QSE_CCLS_UPPER,
-        QSE_CCLS_LOWER,
-        QSE_CCLS_ALPHA,
-        QSE_CCLS_DIGIT,
-        QSE_CCLS_XDIGIT,
-        QSE_CCLS_ALNUM,
-        QSE_CCLS_SPACE,
-        QSE_CCLS_PRINT,
-        QSE_CCLS_GRAPH,
-        QSE_CCLS_CNTRL,
-        QSE_CCLS_PUNCT
-};
-/******/
-
-typedef enum qse_ccls_id_t qse_ccls_id_t;
-
-typedef qse_bool_t (*qse_ccls_is_t) (
-	void* data, qse_cint_t c, qse_ccls_id_t type);
-typedef qse_cint_t (*qse_ccls_to_t) (
-	void* data, qse_cint_t c, qse_ccls_id_t type);
-
-/****t* Base/qse_ccls_t
- * NAME
- *  qse_mmgr_t - define a character classifier
- * SYNOPSIS
- */
-struct qse_ccls_t
-{
-	qse_ccls_is_t is;
-	qse_ccls_to_t to;
-	void*         data;
-};
-typedef struct qse_ccls_t qse_ccls_t;
 /******/
 
 #endif

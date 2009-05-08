@@ -1,5 +1,5 @@
 /*
- * $Id: chr.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: chr.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -136,22 +136,4 @@ qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_id_t type)
 	#error unsupported character type
 #endif
 
-static qse_bool_t ccls_is (void* data, qse_cint_t c, qse_ccls_id_t type)
-{
-	return qse_ccls_is (c, type);
-}
-
-static qse_cint_t ccls_to (void* data, qse_cint_t c, qse_ccls_id_t type)  
-{
-	return qse_ccls_to (c, type);
-}
-
-static qse_ccls_t ccls =
-{
-	ccls_is,
-	ccls_to,
-	QSE_NULL
-};
-
-qse_ccls_t* qse_ccls = &ccls;
 

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 92 2009-03-02 03:34:43Z hyunghwan.chung $
+ * $Id: run.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -641,8 +641,6 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 
         QSE_ASSERTX (awk->prm.pow != QSE_NULL, "Call qse_awk_setprm() first");
         QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
-        QSE_ASSERTX (awk->prm.isccls != QSE_NULL, "Call qse_awk_setprm() first");
-        QSE_ASSERTX (awk->prm.toccls != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
 	qse_awk_seterror (awk, QSE_AWK_ENOERR, 0, QSE_NULL);
@@ -1354,7 +1352,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret == -1 && rtx->errnum == QSE_AWK_ENOERR) 
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression to
+		 * this feature is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1374,7 +1372,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret == -1 && rtx->errnum == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression to
+		 * this feature is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1407,7 +1405,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret == -1 && rtx->errnum == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression to
+		 * this feature is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1556,55 +1554,8 @@ qse_awk_val_t* qse_awk_rtx_call (
 	}
 
 	/* return the return value with its reference count at least 1.
-	 * the caller of this function should reference-count it down. */
+	 * the caller of this function should count down its reference. */
 	return v;
-
-
-#if 0
-	if (v == QSE_NULL) 
-	{
-		/* an error occurred. but this might have been 
-		 * caused by exit(). so let's check it */
-
-		if (crdata.val == QSE_NULL) 
-		{
-			/* no return value has been caputured. this must
-			 * be an error */
-			QSE_ASSERT (rtx->errnum != QSE_AWK_ENOERR);
-			v = qse_awk_val_nil; /* defaults to nil */
-			ret = -1;
-		}
-		else 
-		{
-			if (rtx->errnum == QSE_AWK_ENOERR)
-			{
-				/* exiting with exit() */
-				v = crdata.val;
-				/* no need to ref-up as it is done in 
-				 * capture_retval_on_exit() */
-			}
-			else 
-			{
-				v = qse_awk_val_nil; /* defaults to nil */
-				ret = -1;
-			}
-		}
-	}
-	else 
-	{	
-		/* the return value captured in termination by exit()
-		 * is reference-counted up in capture_retval_on_exit().
-		 * let's do the same thing for the return value normally
-		 * returned. */
-		qse_awk_rtx_refupval (rtx, v);
-	}
-
-	if (rtx->rcb.on_exit != QSE_NULL)
-		rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
-
-	qse_awk_rtx_refdownval (rtx, v);
-	return ret;
-#endif
 }
 
 static int run_pattern_blocks (qse_awk_rtx_t* run)
@@ -2376,7 +2327,7 @@ static int run_exit (qse_awk_rtx_t* run, qse_awk_nde_exit_t* nde)
 		if (val == QSE_NULL) return -1;
 
 		qse_awk_rtx_refdownval (run, STACK_RETVAL_GBL(run));
-		STACK_RETVAL_GBL(run) = val; /* gbl return value */
+		STACK_RETVAL_GBL(run) = val; /* global return value */
 
 		qse_awk_rtx_refupval (run, val);
 	}
@@ -4099,8 +4050,7 @@ static int __cmp_int_str (
 			out.u.cpldup.ptr,
 			out.u.cpldup.len,
 			((qse_awk_val_str_t*)right)->ptr, 
-			((qse_awk_val_str_t*)right)->len,
-			&run->awk->ccls
+			((qse_awk_val_str_t*)right)->len
 		);
 	}
 	else
@@ -4177,8 +4127,7 @@ static int __cmp_real_str (
 			out.u.cpldup.ptr,
 			out.u.cpldup.len,
 			((qse_awk_val_str_t*)right)->ptr, 
-			((qse_awk_val_str_t*)right)->len,
-			&run->awk->ccls
+			((qse_awk_val_str_t*)right)->len
 		);
 	}
 	else
@@ -4224,14 +4173,11 @@ static int __cmp_str_str (
 
 	if (run->gbl.ignorecase)
 	{
-		n = qse_strxncasecmp (
-			ls->ptr, ls->len, rs->ptr, rs->len,
-			&run->awk->ccls);
+		n = qse_strxncasecmp (ls->ptr, ls->len, rs->ptr, rs->len);
 	}
 	else
 	{
-		n = qse_strxncmp (
-			ls->ptr, ls->len, rs->ptr, rs->len);
+		n = qse_strxncmp (ls->ptr, ls->len, rs->ptr, rs->len);
 	}
 
 	return n;
@@ -5579,10 +5525,8 @@ static qse_awk_val_t* __eval_call (
 	 * ---------------------
 	 */
 
-	QSE_ASSERT (
-		QSE_SIZEOF(void*) >= QSE_SIZEOF(run->stack_top));
-	QSE_ASSERT (
-		QSE_SIZEOF(void*) >= QSE_SIZEOF(run->stack_base));
+	QSE_ASSERT (QSE_SIZEOF(void*) >= QSE_SIZEOF(run->stack_top));
+	QSE_ASSERT (QSE_SIZEOF(void*) >= QSE_SIZEOF(run->stack_base));
 
 	saved_stack_top = run->stack_top;
 
@@ -5729,11 +5673,29 @@ static qse_awk_val_t* __eval_call (
 	v = STACK_RETVAL(run);
 	if (n == -1)
 	{
-		if (errhandler != QSE_NULL) 
+		if (run->errnum == QSE_AWK_ENOERR && errhandler != QSE_NULL) 
 		{
-			/* capture_retval_on_exit takes advantage of 
-			 * this handler to retrieve the return value
-			 * when exit() is used to terminate the program. */
+			/* errhandler is passed only when __eval_call() is
+			 * invoked from qse_awk_rtx_call(). Under this 
+			 * circumstance, this stack frame is the first
+			 * activated and the stack base is the first element
+			 * after the global variables. so STACK_RETVAL(run)
+			 * effectively becomes STACK_RETVAL_GBL(run).
+			 * As __eval_call() returns QSE_NULL on error and
+			 * the reference count of STACK_RETVAL(run) should be
+			 * decremented, it can't get the return value
+			 * if it turns out to be terminated by exit().
+			 * The return value could be destroyed by then.
+			 * Unlikely, run_bpae_loop() just checks if run->errnum
+			 * is QSE_AWK_ENOERR and gets STACK_RETVAL_GBL(run)
+			 * to determine if it is terminated by exit().
+			 *
+			 * The handler capture_retval_on_exit() 
+			 * increments the reference of STACK_RETVAL(run)
+			 * and stores the pointer into accompanying space.
+			 * This way, the return value is preserved upon
+			 * termination by exit() out to the caller.
+			 */
 			errhandler (eharg);
 		}
 

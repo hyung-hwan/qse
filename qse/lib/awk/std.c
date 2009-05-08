@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: std.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -122,20 +122,6 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-static qse_bool_t custom_awk_isccls (
-	qse_awk_t* awk, qse_cint_t c, qse_ccls_id_t id)
-{
-	qse_ccls_t* ccls = QSE_CCLS_GETDFL();
-	return ccls->is (ccls->data, c, id);
-}
-
-static qse_cint_t custom_awk_toccls (
-	qse_awk_t* awk, qse_cint_t c, qse_ccls_id_t id)
-{
-	qse_ccls_t* ccls = QSE_CCLS_GETDFL();
-	return ccls->to (ccls->data, c, id);
-}
-
 static int add_functions (qse_awk_t* awk);
 
 qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
@@ -146,8 +132,6 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 
 	prm.pow     = custom_awk_pow;
 	prm.sprintf = custom_awk_sprintf;
-	prm.isccls  = custom_awk_isccls;
-	prm.toccls  = custom_awk_toccls;
 
 	/* create an object */
 	awk = qse_awk_open (

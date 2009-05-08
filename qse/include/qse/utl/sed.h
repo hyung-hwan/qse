@@ -85,41 +85,14 @@ typedef qse_ssize_t (*qse_sed_iof_t) (
         qse_size_t       count
 );
 
-typedef qse_bool_t (*qse_sed_isccls_t) (
-	qse_sed_t*    sed,
-	qse_cint_t    c,
-	qse_ccls_id_t type
-);
-
-typedef qse_cint_t (*qse_sed_toccls_t) (
-	qse_sed_t*    sed,
-	qse_cint_t    c,
-	qse_ccls_id_t type
-);
-
 typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
-
-/****f* Text Processor/qse_sed_prm_t
- * NAME
- *  qse_sed_prm_t - define primitive functions
- * SYNOPSIS
- */
-struct qse_sed_prm_t
-{
-	qse_sed_isccls_t isccls;
-	qse_sed_toccls_t toccls;
-};
-typedef struct qse_sed_prm_t qse_sed_prm_t;
-/******/
 
 struct qse_sed_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
 	qse_sed_errnum_t errnum;
 	int option;
-
-	qse_ccls_t ccls;
 
 	/* source code pointers */
 	struct
@@ -191,8 +164,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (sed)
  */
 qse_sed_t* qse_sed_open (
 	qse_mmgr_t*    mmgr,
-	qse_size_t     xtn,
-	qse_sed_prm_t* prm
+	qse_size_t     xtn
 );
 /******/
 
@@ -213,8 +185,7 @@ void qse_sed_close (
  */
 qse_sed_t* qse_sed_init (
 	qse_sed_t*     sed,
-	qse_mmgr_t*    mmgr,
-	qse_sed_prm_t* prm
+	qse_mmgr_t*    mmgr
 );
 /******/
 

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: rex.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -86,7 +86,7 @@ void* qse_buildrex (
 	const qse_char_t* ptn, qse_size_t len, int* errnum);
 
 int qse_matchrex (
-	qse_mmgr_t* mmgr, qse_ccls_t* ccls, qse_size_t depth,
+	qse_mmgr_t* mmgr, qse_size_t depth,
 	void* code, int option,
 	const qse_char_t* str, qse_size_t len, 
 	const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum);

@@ -16,11 +16,10 @@
 static int test1 (void)
 {
 	qse_char_t c;
-	qse_ccls_t* ccls = QSE_CCLS_GETDFL();
 
 	for (c = QSE_T('a'); c <= QSE_T('z'); c++)
 	{
-		qse_printf (QSE_T("%c => %c\n"), c, QSE_CCLS_TOUPPER(ccls,c));
+		qse_printf (QSE_T("%c => %c\n"), c, QSE_TOUPPER(c));
 	}
 
 	return 0;

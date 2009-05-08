@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -83,9 +83,6 @@ protected:
 	void* allocMem   (size_t n);
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
-
-	bool_t isType    (cint_t c, ccls_id_t type);
-	cint_t transCase (cint_t c, ccls_id_t type);
 
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,

@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: str_bas.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -17,7 +17,7 @@
  */
 
 #include <qse/cmn/str.h>
-#include "chr.h"
+#include <qse/cmn/chr.h>
 #include "mem.h"
 
 qse_size_t qse_strlen (const qse_char_t* str)
@@ -401,21 +401,20 @@ int qse_strxncmp (
 	return (s2 < end2)? -1: 0;
 }
 
-int qse_strcasecmp (
-	const qse_char_t* s1, const qse_char_t* s2, qse_ccls_t* ccls)
+int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2)
 {
-	while (QSE_CCLS_TOUPPER(ccls,*s1) == QSE_CCLS_TOUPPER(ccls,*s2)) 
+	while (QSE_TOUPPER(*s1) == QSE_TOUPPER(*s2)) 
 	{
 		if (*s1 == QSE_C('\0')) return 0;
 		s1++, s2++;
 	}
 
-	return (QSE_CCLS_TOUPPER(ccls,*s1) > QSE_CCLS_TOUPPER(ccls,*s2))? 1: -1;
+	return (QSE_TOUPPER(*s1) > QSE_TOUPPER(*s2))? 1: -1;
 }
 
 int qse_strxncasecmp (
 	const qse_char_t* s1, qse_size_t len1, 
-	const qse_char_t* s2, qse_size_t len2, qse_ccls_t* ccls)
+	const qse_char_t* s2, qse_size_t len2)
 {
 	qse_char_t c1, c2;
 	const qse_char_t* end1 = s1 + len1;
@@ -423,10 +422,10 @@ int qse_strxncasecmp (
 
 	while (s1 < end1)
 	{
-		c1 = QSE_CCLS_TOUPPER (ccls, *s1); 
+		c1 = QSE_TOUPPER (*s1); 
 		if (s2 < end2) 
 		{
-			c2 = QSE_CCLS_TOUPPER (ccls, *s2);
+			c2 = QSE_TOUPPER (*s2);
 			if (c1 > c2) return 1;
 			if (c1 < c2) return -1;
 		}

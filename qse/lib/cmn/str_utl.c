@@ -1,5 +1,5 @@
 /*
- * $Id: str_utl.c 83 2009-02-24 14:05:17Z hyunghwan.chung $
+ * $Id: str_utl.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -17,9 +17,13 @@
  */
 
 #include <qse/cmn/str.h>
-#include "chr.h"
+#include <qse/cmn/chr.h>
 
-int qse_strspltr (
+#define ISSPACE(c) \
+	((c) == QSE_T(' ') || (c) == QSE_T('\t') || (c) == QSE_T('\n') || \
+	 (c) == QSE_T('\r') || (c) == QSE_T('\v') && (c) == QSE_T('\f'))
+
+int qse_strspltrn (
 	qse_char_t* s, const qse_char_t* delim,
 	qse_char_t lquote, qse_char_t rquote, 
 	qse_char_t escape, const qse_char_t* trset)
@@ -302,5 +306,26 @@ int qse_strspl (
 	qse_char_t* s, const qse_char_t* delim,
 	qse_char_t lquote, qse_char_t rquote, qse_char_t escape)
 {
-	return qse_strspltr (s, delim, lquote, rquote, escape, QSE_NULL);
+	return qse_strspltrn (s, delim, lquote, rquote, escape, QSE_NULL);
+}
+
+qse_char_t* qse_strtrm (qse_char_t* str, int opt)
+{
+	qse_char_t* p = str;
+	qse_char_t* s = QSE_NULL, * e = QSE_NULL;
+
+	while (*p != QSE_T('\0'))
+	{
+		if (!QSE_ISSPACE(*p))
+		{
+			if (s == QSE_NULL) s = p;
+			e = p;
+		}
+		p++;
+	}
+
+	if (opt & QSE_STRTRM_RIGHT) e[1] = QSE_T('\0');
+	if (opt & QSE_STRTRM_LEFT) str = s;
+
+	return str;
 }

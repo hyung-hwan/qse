@@ -48,7 +48,6 @@ typedef void (*qse_lsp_dprintf_t) (void* data, const qse_char_t* fmt, ...);
 struct qse_lsp_prmfns_t
 {
 	qse_mmgr_t mmgr;
-	qse_ccls_t ccls;
 
 	/* utilities */
 	struct

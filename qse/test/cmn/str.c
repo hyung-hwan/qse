@@ -508,6 +508,25 @@ static int test11 (void)
 	return 0;
 }
 
+static int test12 (void)
+{
+	qse_char_t a1[] = QSE_T("   this is a test string    ");
+	qse_char_t a2[] = QSE_T("   this is a test string    ");
+	qse_char_t a3[] = QSE_T("   this is a test string    ");
+
+	qse_printf (QSE_T("[%s] =>"), a1);
+	qse_printf (QSE_T("[%s]\n"), qse_strtrm (a1, QSE_STRTRM_LEFT));
+
+	qse_printf (QSE_T("[%s] =>"), a2);
+	qse_printf (QSE_T("[%s]\n"), qse_strtrm (a2, QSE_STRTRM_RIGHT));
+
+	qse_printf (QSE_T("[%s] =>"), a3);
+	qse_printf (QSE_T("[%s]\n"), 
+		qse_strtrm (a3, QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
+
+	return 0;
+}
+
 int main ()
 {
 	setlocale (LC_ALL, "");
@@ -527,6 +546,7 @@ int main ()
 	R (test9);
 	R (test10);
 	R (test11);
+	R (test12);
 
 	return 0;
 }

@@ -193,7 +193,7 @@ static int comp_key (qse_map_t* map,
 	const void* kptr1, qse_size_t klen1,
 	const void* kptr2, qse_size_t klen2)
 {
-	return qse_strxncasecmp (kptr1, klen1, kptr2, klen2, QSE_CCLS_GETDFL());
+	return qse_strxncasecmp (kptr1, klen1, kptr2, klen2);
 }
 
 qse_map_walk_t print_map_pair_3 (qse_map_t* map, qse_map_pair_t* pair, void* arg)

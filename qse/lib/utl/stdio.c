@@ -5,7 +5,7 @@
  */
 
 #include <qse/utl/stdio.h>
-#include "../cmn/chr.h"
+#include <qse/cmn/chr.h>
 
 #include <wchar.h>
 #include <stdlib.h>

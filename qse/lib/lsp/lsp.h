@@ -8,7 +8,7 @@
 #define _QSE_LIB_LSP_LSP_H_
 
 #include "../cmn/mem.h"
-#include "../cmn/chr.h"
+#include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 
 #include <qse/lsp/lsp.h>
@@ -27,19 +27,19 @@
 #define QSE_LSP_REALLOC(lsp,ptr,size) QSE_MMGR_REALLOC(&(lsp)->prmfns.mmgr,ptr,size)
 #define QSE_LSP_FREE(lsp,ptr)         QSE_MMGR_FREE(&(lsp)->prmfns.mmgr,ptr)
 
-#define QSE_LSP_ISUPPER(lsp,c)  QSE_CCLS_ISUPPER(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISLOWER(lsp,c)  QSE_CCLS_ISLOWER(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISALPHA(lsp,c)  QSE_CCLS_ISALPHA(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISDIGIT(lsp,c)  QSE_CCLS_ISDIGIT(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISXDIGIT(lsp,c) QSE_CCLS_ISXDIGIT(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISALNUM(lsp,c)  QSE_CCLS_ISALNUM(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISSPACE(lsp,c)  QSE_CCLS_ISSPACE(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISPRINT(lsp,c)  QSE_CCLS_ISPRINT(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISGRAPH(lsp,c)  QSE_CCLS_ISGRAPH(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISCNTRL(lsp,c)  QSE_CCLS_ISCNTRL(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_ISPUNCT(lsp,c)  QSE_CCLS_ISPUNCT(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_TOUPPER(lsp,c)  QSE_CCLS_TOUPPER(&(lsp)->prmfns.ccls,c)
-#define QSE_LSP_TOLOWER(lsp,c)  QSE_CCLS_TOLOWER(&(lsp)->prmfns.ccls,c)
+#define QSE_LSP_ISUPPER(lsp,c)  QSE_ISUPPER(c)
+#define QSE_LSP_ISLOWER(lsp,c)  QSE_ISLOWER(c)
+#define QSE_LSP_ISALPHA(lsp,c)  QSE_ISALPHA(c)
+#define QSE_LSP_ISDIGIT(lsp,c)  QSE_ISDIGIT(c)
+#define QSE_LSP_ISXDIGIT(lsp,c) QSE_ISXDIGIT(c)
+#define QSE_LSP_ISALNUM(lsp,c)  QSE_ISALNUM(c)
+#define QSE_LSP_ISSPACE(lsp,c)  QSE_ISSPACE(c)
+#define QSE_LSP_ISPRINT(lsp,c)  QSE_ISPRINT(c)
+#define QSE_LSP_ISGRAPH(lsp,c)  QSE_ISGRAPH(c)
+#define QSE_LSP_ISCNTRL(lsp,c)  QSE_ISCNTRL(c)
+#define QSE_LSP_ISPUNCT(lsp,c)  QSE_ISPUNCT(c)
+#define QSE_LSP_TOUPPER(lsp,c)  QSE_TOUPPER(c)
+#define QSE_LSP_TOLOWER(lsp,c)  QSE_TOLOWER(c)
 
 struct qse_lsp_t 
 {

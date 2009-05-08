@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: misc.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -961,7 +961,7 @@ int qse_awk_matchrex (
 	int err, x;
 
 	x = qse_matchrex (
-		awk->mmgr, &awk->ccls, awk->rex.depth.max.match,
+		awk->mmgr, awk->rex.depth.max.match,
 		code, option, str, len, match_ptr, match_len, &err);
 	if (x < 0) *errnum = QSE_AWK_REXERRTOERR(err);
 	return x;
