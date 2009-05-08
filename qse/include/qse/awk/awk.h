@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 100 2009-03-14 03:14:39Z hyunghwan.chung $
+ * $Id: awk.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -199,18 +199,6 @@ typedef int (*qse_awk_sprintf_t) (
 	...
 );
 
-typedef qse_bool_t (*qse_awk_isccls_t) (
-	qse_awk_t*    awk,
-	qse_cint_t    c,
-	qse_ccls_id_t type
-);
-
-typedef qse_cint_t (*qse_awk_toccls_t) (
-	qse_awk_t*    awk,
-	qse_cint_t    c,
-	qse_ccls_id_t type
-);
-
 /****e* AWK/qse_awk_sio_cmd_t
  * NAME
  *  qse_awk_sio_cmd_t - define source IO commands
@@ -308,8 +296,6 @@ struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;
 	qse_awk_sprintf_t sprintf;
-	qse_awk_isccls_t  isccls;
-	qse_awk_toccls_t  toccls;
 
 #if 0
 	/* TODO: accept regular expression handling functions */
@@ -881,21 +867,6 @@ void* qse_awk_getxtn (
  * SYNOPSIS
  */
 qse_awk_prm_t* qse_awk_getprm (
-	qse_awk_t* awk
-);
-/******/
-
-/****f* AWK/qse_awk_getccls
- * NAME
- *  qse_awk_getccls - get the character classifier
- * DESCRIPTION
- *  The qse_awk_getccls() function returns the character classifier composed
- *  from the primitive functions in a call to qse_awk_open(). The data field
- *  is set to the awk object. The classifier returned is valid while the 
- *  associated awk object is alive.
- * SYNOPSIS
- */
-qse_ccls_t* qse_awk_getccls (
 	qse_awk_t* awk
 );
 /******/

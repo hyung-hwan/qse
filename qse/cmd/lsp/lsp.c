@@ -247,9 +247,6 @@ int lsp_main (int argc, qse_char_t* argv[])
 	prmfns.mmgr.data = QSE_NULL;
 #endif
 
-	/* TODO: change prmfns ...... lsp_oepn... etc */
-	qse_memcpy (&prmfns.ccls, QSE_CCLS_GETDFL(), QSE_SIZEOF(prmfns.ccls));
-
 	prmfns.misc.sprintf = custom_lsp_sprintf;
 	prmfns.misc.dprintf = custom_lsp_dprintf;
 	prmfns.misc.data = QSE_NULL;

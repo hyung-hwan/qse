@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 89 2009-02-28 15:27:03Z hyunghwan.chung $ 
+ * $Id: awk.c 127 2009-05-07 13:15:04Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -80,23 +80,14 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	QSE_ASSERT (prm          != QSE_NULL);
 	QSE_ASSERT (prm->pow     != QSE_NULL);
 	QSE_ASSERT (prm->sprintf != QSE_NULL);
-	QSE_ASSERT (prm->isccls  != QSE_NULL);
-	QSE_ASSERT (prm->toccls  != QSE_NULL);
 	if (prm          == QSE_NULL || 
 	    prm->pow     == QSE_NULL ||
-	    prm->sprintf == QSE_NULL ||
-	    prm->isccls  == QSE_NULL ||
-	    prm->toccls  == QSE_NULL)
+	    prm->sprintf == QSE_NULL)
 	{
 		QSE_AWK_FREE (awk, awk);
 		return QSE_NULL;
 	}
 	awk->prm = *prm;
-
-	/* build a character classifier from the primitive functions */
-	awk->ccls.is = (qse_ccls_is_t) prm->isccls;
-	awk->ccls.to = (qse_ccls_to_t) prm->toccls;
-	awk->ccls.data = awk;
 
 	awk->token.name = qse_str_open (mmgr, 0, 128);
 	if (awk->token.name == QSE_NULL) goto oops;
@@ -356,11 +347,6 @@ void qse_awk_setmmgr (qse_awk_t* awk, qse_mmgr_t* mmgr)
 qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
 {
 	return &awk->prm;
-}
-
-qse_ccls_t* qse_awk_getccls (qse_awk_t* awk)
-{
-	return &awk->ccls;
 }
 
 int qse_awk_getoption (qse_awk_t* awk)

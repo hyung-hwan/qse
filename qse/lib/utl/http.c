@@ -5,8 +5,8 @@
  */
 
 #include <qse/utl/http.h>
+#include <qse/cmn/chr.h>
 #include "../cmn/mem.h"
-#include "../cmn/chr.h"
 
 static int is_http_space (qse_char_t c)
 {

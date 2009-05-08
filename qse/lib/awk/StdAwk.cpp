@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -409,17 +409,6 @@ void* StdAwk::reallocMem (void* ptr, size_t n)
 void  StdAwk::freeMem (void* ptr) 
 { 
 	::free (ptr); 
-}
-
-// character handling primitive
-Awk::bool_t StdAwk::isType (cint_t c, ccls_id_t type)
-{
-	return qse_ccls_is (c, (qse_ccls_id_t)type);
-}
-
-Awk::cint_t StdAwk::transCase (cint_t c, ccls_id_t type)
-{
-	return qse_ccls_to (c, (qse_ccls_id_t)type);
 }
 
 // miscellaneous primitive

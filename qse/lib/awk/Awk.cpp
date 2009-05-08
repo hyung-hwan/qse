@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: Awk.cpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1192,8 +1192,6 @@ int Awk::open ()
 	qse_awk_prm_t prm;
 	prm.pow     = pow;
 	prm.sprintf = sprintf;
-	prm.isccls  = isType;
-	prm.toccls  = transCase;
 
 	awk = qse_awk_open (&mmgr, QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
@@ -1769,18 +1767,6 @@ void* Awk::reallocMem (void* data, void* ptr, size_t n)
 void Awk::freeMem (void* data, void* ptr)
 {
 	((Awk*)data)->freeMem (ptr);
-}
-
-Awk::bool_t Awk::isType (awk_t* awk, cint_t c, qse_ccls_id_t type) 
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->isType (c, (ccls_id_t)type);
-}
-
-Awk::cint_t Awk::transCase (awk_t* awk, cint_t c, qse_ccls_id_t type) 
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->transCase (c, (ccls_id_t)type);
 }
 
 Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)

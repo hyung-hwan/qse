@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: chr.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,34 +22,81 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/* gets a pointer to the default memory manager */
-#define QSE_CCLS_GETDFL()  (qse_ccls)
+/****t* Common/qse_ccls_id_t
+ * NAME
+ *  qse_ccls_id_t - define character class types
+ * SYNOPSIS
+ */
+enum qse_ccls_id_t
+{
+        QSE_CCLS_UPPER,
+        QSE_CCLS_LOWER,
+        QSE_CCLS_ALPHA,
+        QSE_CCLS_DIGIT,
+        QSE_CCLS_XDIGIT,
+        QSE_CCLS_ALNUM,
+        QSE_CCLS_SPACE,
+        QSE_CCLS_PRINT,
+        QSE_CCLS_GRAPH,
+        QSE_CCLS_CNTRL,
+        QSE_CCLS_PUNCT
+};
+typedef enum qse_ccls_id_t qse_ccls_id_t;
+/******/
 
-/* sets a pointer to the default memory manager */
-#define QSE_CCLS_SETDFL(m) ((qse_ccls)=(m))
-
-#define QSE_CCLS_IS(ccls,c,type) ((ccls)->is((ccls)->data,c,type))
-#define QSE_CCLS_TO(ccls,c,type) ((ccls)->to((ccls)->data,c,type))
-
-#define QSE_CCLS_ISUPPER(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_UPPER)
-#define QSE_CCLS_ISLOWER(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_LOWER)
-#define QSE_CCLS_ISALPHA(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_ALPHA)
-#define QSE_CCLS_ISDIGIT(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_DIGIT)
-#define QSE_CCLS_ISXDIGIT(ccls,c) QSE_CCLS_IS(ccls,c,QSE_CCLS_XDIGIT)
-#define QSE_CCLS_ISALNUM(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_ALNUM)
-#define QSE_CCLS_ISSPACE(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_SPACE)
-#define QSE_CCLS_ISPRINT(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_PRINT)
-#define QSE_CCLS_ISGRAPH(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_GRAPH)
-#define QSE_CCLS_ISCNTRL(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_CNTRL)
-#define QSE_CCLS_ISPUNCT(ccls,c)  QSE_CCLS_IS(ccls,c,QSE_CCLS_PUNCT)
-#define QSE_CCLS_TOUPPER(ccls,c)  QSE_CCLS_TO(ccls,c,QSE_CCLS_UPPER)
-#define QSE_CCLS_TOLOWER(ccls,c)  QSE_CCLS_TO(ccls,c,QSE_CCLS_LOWER)
+#ifdef USE_STDC
+#	if defined(QSE_CHAR_IS_MCHAR)
+#		include <ctype.h>
+#		define QSE_ISUPPER(c) isupper(c)
+#		define QSE_ISLOWER(c) islower(c)
+#		define QSE_ISALPHA(c) isalpha(c)
+#		define QSE_ISDIGIT(c) isdigit(c)
+#		define QSE_ISXDIGIT(c) isxdigit(c)
+#		define QSE_ISALNUM(c) isalnum(c)
+#		define QSE_ISSPACE(c) isspace(c)
+#		define QSE_ISPRINT(c) isprint(c)
+#		define QSE_ISGRAPH(c) isgraph(c)
+#		define QSE_ISCNTRL(c) iscntrl(c)
+#		define QSE_ISPUNCT(c) ispunct(c)
+#		define QSE_TOUPPER(c) toupper(c)
+#		define QSE_TOLOWER(c) tolower(c)
+#	elif defined(QSE_CHAR_IS_WCHAR)
+#		include <wctype.h>
+#		define QSE_ISUPPER(c) iswupper(c)
+#		define QSE_ISLOWER(c) iswlower(c)
+#		define QSE_ISALPHA(c) iswalpha(c)
+#		define QSE_ISDIGIT(c) iswdigit(c)
+#		define QSE_ISXDIGIT(c) iswxdigit(c)
+#		define QSE_ISALNUM(c) iswalnum(c)
+#		define QSE_ISSPACE(c) iswspace(c)
+#		define QSE_ISPRINT(c) iswprint(c)
+#		define QSE_ISGRAPH(c) iswgraph(c)
+#		define QSE_ISCNTRL(c) iswcntrl(c)
+#		define QSE_ISPUNCT(c) iswpunct(c)
+#		define QSE_TOUPPER(c) towupper(c)
+#		define QSE_TOLOWER(c) towlower(c)
+#	else
+#		error Unsupported character type
+#	endif
+#else
+#	define QSE_ISUPPER(c) (qse_ccls_is(c,QSE_CCLS_UPPER))
+#	define QSE_ISLOWER(c) (qse_ccls_is(c,QSE_CCLS_LOWER))
+#	define QSE_ISALPHA(c) (qse_ccls_is(c,QSE_CCLS_ALPHA))
+#	define QSE_ISDIGIT(c) (qse_ccls_is(c,QSE_CCLS_DIGIT))
+#	define QSE_ISXDIGIT(c) (qse_ccls_is(c,QSE_CCLS_XDIGIT))
+#	define QSE_ISALNUM(c) (qse_ccls_is(c,QSE_CCLS_ALNUM))
+#	define QSE_ISSPACE(c) (qse_ccls_is(c,QSE_CCLS_SPACE))
+#	define QSE_ISPRINT(c) (qse_ccls_is(c,QSE_CCLS_PRINT))
+#	define QSE_ISGRAPH(c) (qse_ccls_is(c,QSE_CCLS_GRAPH))
+#	define QSE_ISCNTRL(c) (qse_ccls_is(c,QSE_CCLS_CNTRL))
+#	define QSE_ISPUNCT(c) (qse_ccls_is(c,QSE_CCLS_PUNCT))
+#	define QSE_TOUPPER(c) (qse_ccls_to(c,QSE_CCLS_UPPER))
+#	define QSE_TOLOWER(c) (qse_ccls_to(c,QSE_CCLS_LOWER))
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-extern qse_ccls_t* qse_ccls;
 
 qse_bool_t qse_ccls_is (
 	qse_cint_t      c,

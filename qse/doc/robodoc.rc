@@ -57,7 +57,7 @@ options:
 	--cmode
 	--nopre
 	--documenttitle "QSE"
-	--source_line_numbers
+#	--source_line_numbers
 	--tabsize 4
 	--sections
 	--toc "no"

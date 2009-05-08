@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: awk.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -20,7 +20,7 @@
 #define _QSE_LIB_AWK_AWK_H_
 
 #include "../cmn/mem.h"
-#include "../cmn/chr.h"
+#include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/map.h>
 #include <qse/cmn/lda.h>
@@ -30,6 +30,7 @@ typedef struct qse_awk_chain_t qse_awk_chain_t;
 typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 #include <qse/awk/awk.h>
+#include <qse/cmn/chr.h>
 #include "tree.h"
 #include "fnc.h"
 #include "parse.h"
@@ -46,19 +47,19 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #define QSE_AWK_REALLOC(awk,ptr,size) QSE_MMGR_REALLOC((awk)->mmgr,ptr,size)
 #define QSE_AWK_FREE(awk,ptr)         QSE_MMGR_FREE((awk)->mmgr,ptr)
 
-#define QSE_AWK_ISUPPER(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_UPPER)
-#define QSE_AWK_ISLOWER(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_UPPER)
-#define QSE_AWK_ISALPHA(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_ALPHA)
-#define QSE_AWK_ISDIGIT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_DIGIT)
-#define QSE_AWK_ISXDIGIT(awk,c) awk->prm.isccls(awk,c,QSE_CCLS_XDIGIT)
-#define QSE_AWK_ISALNUM(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_ALNUM)
-#define QSE_AWK_ISSPACE(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_SPACE)
-#define QSE_AWK_ISPRINT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_PRINT)
-#define QSE_AWK_ISGRAPH(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_GRAPH)
-#define QSE_AWK_ISCNTRL(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_CNTRL)
-#define QSE_AWK_ISPUNCT(awk,c)  awk->prm.isccls(awk,c,QSE_CCLS_PUNCT)
-#define QSE_AWK_TOUPPER(awk,c)  awk->prm.toccls(awk,c,QSE_CCLS_UPPER)
-#define QSE_AWK_TOLOWER(awk,c)  awk->prm.toccls(awk,c,QSE_CCLS_LOWER)
+#define QSE_AWK_ISUPPER(awk,c)  QSE_ISUPPER(c)
+#define QSE_AWK_ISLOWER(awk,c)  QSE_ISLOWER(c)
+#define QSE_AWK_ISALPHA(awk,c)  QSE_ISALPHA(c)
+#define QSE_AWK_ISDIGIT(awk,c)  QSE_ISDIGIT(c)
+#define QSE_AWK_ISXDIGIT(awk,c) QSE_ISXDIGIT(c)
+#define QSE_AWK_ISALNUM(awk,c)  QSE_ISALNUM(c)
+#define QSE_AWK_ISSPACE(awk,c)  QSE_ISSPACE(c)
+#define QSE_AWK_ISPRINT(awk,c)  QSE_ISPRINT(c)
+#define QSE_AWK_ISGRAPH(awk,c)  QSE_ISGRAPH(c)
+#define QSE_AWK_ISCNTRL(awk,c)  QSE_ISCNTRL(c)
+#define QSE_AWK_ISPUNCT(awk,c)  QSE_ISPUNCT(c)
+#define QSE_AWK_TOUPPER(awk,c)  QSE_TOUPPER(c)
+#define QSE_AWK_TOLOWER(awk,c)  QSE_TOLOWER(c)
 
 #define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,(awk)->mmgr))
 #define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,(awk)->mmgr))
@@ -90,11 +91,6 @@ struct qse_awk_t
 
 	/* primitive functions */
 	qse_awk_prm_t  prm;
-
-	/* character classifier composed from primitive functions.
-	 * it is used in calling some functions that require a character 
-	 * classifier */
-	qse_ccls_t     ccls; 
 
 	/* options */
 	int option;

@@ -27,7 +27,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 
-qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_sed_prm_t* prm)
+qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 {
 	qse_sed_t* sed;
 
@@ -44,7 +44,7 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_sed_prm_t* prm)
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtn);
 	if (sed == QSE_NULL) return QSE_NULL;
 
-	if (qse_sed_init (sed, mmgr, prm) == QSE_NULL)
+	if (qse_sed_init (sed, mmgr) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (sed->mmgr, sed);
 		return QSE_NULL;
@@ -59,7 +59,7 @@ void qse_sed_close (qse_sed_t* sed)
 	QSE_MMGR_FREE (sed->mmgr, sed);
 }
 
-qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr, qse_sed_prm_t* prm)
+qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (sed, 0, sizeof(*sed));
 	sed->mmgr = mmgr;
@@ -98,11 +98,6 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr, qse_sed_prm_t* prm)
 		qse_str_fini (&sed->rexbuf);
 		return QSE_NULL;
 	}
-
-	/* build a character classifier from the primitive functions */
-	sed->ccls.is = (qse_ccls_is_t) prm->isccls;
-	sed->ccls.to = (qse_ccls_to_t) prm->toccls;
-	sed->ccls.data = sed;
 
 	return sed;
 }
@@ -169,11 +164,6 @@ void qse_sed_setoption (qse_sed_t* sed, int option)
 int qse_sed_getoption (qse_sed_t* sed)
 {
 	return sed->option;
-}
-
-qse_ccls_t* qse_sed_getccls (qse_sed_t* sed)
-{
-	return &sed->ccls;
 }
 
 /* get the current charanter of the source code */
@@ -1464,7 +1454,6 @@ static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			n = qse_matchrex (
 				sed->mmgr,
-				&sed->ccls,
 				0,
 				cmd->a1.u.rex,
 				0,
@@ -1502,7 +1491,6 @@ static int match_a2 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
 			n = qse_matchrex (
 				sed->mmgr,
-				&sed->ccls,
 				0,
 				cmd->a2.u.rex,
 				0,

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: Awk.hpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -54,7 +54,6 @@ public:
 	typedef qse_map_pair_t pair_t;
 
 	typedef qse_mmgr_t mmgr_t;
-	typedef qse_ccls_t ccls_t;
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
@@ -67,21 +66,6 @@ public:
 
 	/** Represents an runtime I/O data */
 	typedef qse_awk_riod_t riod_t;
-
-	enum ccls_id_t
-	{
-		CCLS_UPPER  = QSE_CCLS_UPPER,
-		CCLS_LOWER  = QSE_CCLS_LOWER,
-		CCLS_ALPHA  = QSE_CCLS_ALPHA,
-		CCLS_DIGIT  = QSE_CCLS_DIGIT,
-		CCLS_XDIGIT = QSE_CCLS_XDIGIT,
-		CCLS_ALNUM  = QSE_CCLS_ALNUM,
-		CCLS_SPACE  = QSE_CCLS_SPACE,
-		CCLS_PRINT  = QSE_CCLS_PRINT,
-		CCLS_GRAPH  = QSE_CCLS_GRAPH,
-		CCLS_CNTRL  = QSE_CCLS_CNTRL,
-		CCLS_PUNCT  = QSE_CCLS_PUNCT
-	};
 
 	/**
 	 * Represents the source code I/O context for Awk::parse.
@@ -774,16 +758,6 @@ public:
 		return qse_awk_getmmgr (awk);
 	}
 
-	ccls_t* getCcls()
-	{
-		return qse_awk_getccls (awk);
-	}
-
-	const ccls_t* getCcls() const
-	{
-		return qse_awk_getccls (awk);
-	}
-
 protected:
 	void setError (ErrorCode code);
 	void setError (ErrorCode code, size_t line);
@@ -1052,9 +1026,6 @@ protected:
 	virtual void* reallocMem (void* ptr, size_t n) = 0;
 	virtual void  freeMem    (void* ptr) = 0;
 
-	virtual bool_t isType    (cint_t c, ccls_id_t type) = 0;
-	virtual cint_t transCase (cint_t c, ccls_id_t type) = 0;
-
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
 	                         const char_t* fmt, va_list arg) = 0;
@@ -1086,9 +1057,6 @@ protected:
 	static void* allocMem   (void* data, size_t n);
 	static void* reallocMem (void* data, void* ptr, size_t n);
 	static void  freeMem    (void* data, void* ptr);
-
-	static bool_t isType    (awk_t* awk, cint_t c, qse_ccls_id_t type);
-	static cint_t transCase (awk_t* awk, cint_t c, qse_ccls_id_t type);
 
 	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
