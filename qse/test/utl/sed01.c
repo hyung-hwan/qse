@@ -26,20 +26,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 
-static qse_bool_t custom_sed_isccls (
-	qse_sed_t* sed, qse_cint_t c, qse_ccls_id_t id)
-{
-	qse_ccls_t* ccls = QSE_CCLS_GETDFL();
-	return ccls->is (ccls->data, c, id);
-}
-
-static qse_cint_t custom_sed_toccls (
-	qse_sed_t* sed, qse_cint_t c, qse_ccls_id_t id)
-{
-	qse_ccls_t* ccls = QSE_CCLS_GETDFL();
-	return ccls->to (ccls->data, c, id);
-
-}
 static qse_ssize_t in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
 {
@@ -90,7 +76,6 @@ static qse_ssize_t out (
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
-	qse_sed_prm_t prm;
 	int ret = -1;
 
 	if (argc != 2 && argc != 3)
@@ -99,9 +84,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	prm.isccls = custom_sed_isccls;
-	prm.toccls = custom_sed_toccls;
-	sed = qse_sed_open (QSE_NULL, 0, &prm);
+	sed = qse_sed_open (QSE_NULL, 0);
 	if (sed == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("cannot open a stream editor\n"));

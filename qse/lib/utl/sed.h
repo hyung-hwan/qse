@@ -99,6 +99,7 @@ struct qse_sed_cmd_t
 	} type;
 
 	int negated;
+	int a1_matched;
 
 	qse_sed_a_t a1; /* optional start address */
 	qse_sed_a_t a2; /* optional end address */
