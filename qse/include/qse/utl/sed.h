@@ -137,6 +137,9 @@ struct qse_sed_t
 		{
 			qse_sed_iof_t f;
 
+			qse_char_t xbuf[1];
+			int xbuf_len;
+
 			qse_char_t buf[2048];
 			qse_size_t len;
 			qse_size_t pos;
