@@ -48,21 +48,20 @@ struct qse_sed_cmd_t
 {
 	enum
 	{
-		/* print current line number */
-		QSE_SED_CMD_EQ  = QSE_T('='),
-		QSE_SED_CMD_Q   = QSE_T('q'),
-		QSE_SED_CMD_QQ  = QSE_T('Q'),
+		QSE_SED_CMD_PRINT_LNUM = QSE_T('='),
+		QSE_SED_CMD_QUIT       = QSE_T('q'),
+		QSE_SED_CMD_QUIT_QUIET = QSE_T('Q'),
 
 		/* delete pattern space */
-		QSE_SED_CMD_D   = QSE_T('d'),
-		QSE_SED_CMD_DD  = QSE_T('D'),
+		QSE_SED_CMD_DELETE = QSE_T('d'),
+		QSE_SED_CMD_DD     = QSE_T('D'),
 
 		/* a \<\n> text - append text */
-		QSE_SED_CMD_A   = QSE_T('a'),
+		QSE_SED_CMD_APPEND = QSE_T('a'),
 		/* i \<\n> text - insert text */
-		QSE_SED_CMD_I   = QSE_T('i'),
+		QSE_SED_CMD_INSERT = QSE_T('i'),
 		/* c \<\n> text - change text */
-		QSE_SED_CMD_C   = QSE_T('c'),
+		QSE_SED_CMD_CHANGE = QSE_T('c'),
 
 		QSE_SED_CMD_H   = QSE_T('h'),
 		QSE_SED_CMD_HH  = QSE_T('H'),
@@ -99,7 +98,6 @@ struct qse_sed_cmd_t
 	} type;
 
 	int negated;
-	int a1_matched;
 
 	qse_sed_a_t a1; /* optional start address */
 	qse_sed_a_t a2; /* optional end address */
@@ -138,6 +136,10 @@ struct qse_sed_cmd_t
 		void* rex;
 	} u;	
 
+	struct
+	{
+		int a1_matched;
+	} state;
 };
 
 #endif

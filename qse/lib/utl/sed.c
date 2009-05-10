@@ -206,9 +206,9 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	switch (cmd->type)
 	{
-		case QSE_SED_CMD_A:
-		case QSE_SED_CMD_I:
-		case QSE_SED_CMD_C:
+		case QSE_SED_CMD_APPEND:
+		case QSE_SED_CMD_INSERT:
+		case QSE_SED_CMD_CHANGE:
 			if (cmd->u.text.ptr != QSE_NULL) 
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
 			break;
@@ -1449,12 +1449,12 @@ static int write_num (qse_sed_t* sed, qse_size_t x)
 	return 0;
 }
 
-static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static int match_a (qse_sed_t* sed, qse_sed_a_t* a)
 {
-	switch (cmd->a1.type)
+	switch (a->type)
 	{
 		case QSE_SED_A_LINE:
-			return (sed->eio.in.num == cmd->a1.u.line)? 1: 0;
+			return (sed->eio.in.num == a->u.line)? 1: 0;
 
 		case QSE_SED_A_REX:
 		{
@@ -1463,7 +1463,7 @@ static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			qse_str_t* line;
 			qse_size_t llen;
 
-			QSE_ASSERT (cmd->a1.u.rex != QSE_NULL);
+			QSE_ASSERT (a->u.rex != QSE_NULL);
 
 			line = &sed->eio.in.line;
 			llen = QSE_STR_LEN(line);
@@ -1475,7 +1475,7 @@ static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			n = qse_matchrex (
 				sed->mmgr,
 				0,
-				cmd->a1.u.rex,
+				a->u.rex,
 				0,
 				QSE_STR_PTR(line),
 				llen,
@@ -1492,6 +1492,13 @@ static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			qse_char_t c;
 			int n;
+
+			if (sed->eio.in.xbuf_len < 0)
+			{
+				/* we know that we've reached eof as it has
+				 * been done so previously */
+				return 1;
+			}
 
 			n = read_char (sed, &c);
 			if (n <= -1) return -1;
@@ -1511,155 +1518,112 @@ static int match_a1 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 	}
 
-	QSE_ASSERT (cmd->a1.type == QSE_SED_A_NONE);
+	QSE_ASSERT (a->type == QSE_SED_A_NONE);
 	return 1; /* match */
-}
-
-static int match_a2 (qse_sed_t* sed, qse_sed_cmd_t* cmd)
-{
-	switch (cmd->a2.type)
-	{
-		case QSE_SED_A_LINE:
-			return (sed->eio.in.num == cmd->a2.u.line)? 1: 
-			       (sed->eio.in.num < cmd->a2.u.line)? 2: 0;
-
-		case QSE_SED_A_REX:
-		{
-			qse_str_t match;
-			int errnum, n;
-			qse_str_t* line;
-			qse_size_t llen;
-
-			QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
-
-			line = &sed->eio.in.line;
-			llen = QSE_STR_LEN(line);
-
-			/* TODO: support different line end scheme */
-			if (llen > 0 && 
-			    QSE_STR_CHAR(line,llen-1) == QSE_T('\n')) llen--;
-
-			n = qse_matchrex (
-				sed->mmgr,
-				0,
-				cmd->a2.u.rex,
-				0,
-				QSE_STR_PTR(line),
-				llen,
-				&match.ptr, &match.len, &errnum);
-			if (n <= -1)
-			{
-				sed->errnum = QSE_SED_EREXMA;
-				return -1;
-			}			
-
-			return (n == 0)? 2: 1;
-		}
-		case QSE_SED_A_DOL:
-		{
-			qse_char_t c;
-			int n;
-
-			n = read_char (sed, &c);
-			if (n <= -1) return -1;
-
-			QSE_ASSERT (sed->eio.in.xbuf_len == 0);
-			if (n == 0) 
-			{	
-				/* eof has been reached */
-				sed->eio.in.xbuf_len--;
-				return 1;
-			}
-			else
-			{
-				sed->eio.in.xbuf[sed->eio.in.xbuf_len++] = c;
-				return 2;
-			}
-		}
-	}
-
-	QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
-	return 0; /* no match unlike a1 */
 }
 
 /* match an address against input.
  * return -1 on error, 0 on no match, 1 on match. */
 static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
-	int a1, a2;
+	int n;
 
 	if (cmd->a1.type == QSE_SED_A_NONE)
 	{
 		QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
 		return 1;
 	}
-
-	if (cmd->a1_matched == 0)
+	else if (cmd->a2.type != QSE_SED_A_NONE)
 	{
-		a1 = match_a1 (sed, cmd);
-		if (a1 <= -1) return -1;
-
-		if (a1 == 0) return 0;
-		else
+		/* two addresses */
+		if (cmd->state.a1_matched)
 		{
-			cmd->a1_matched = 1;
+			n = match_a (sed, &cmd->a2);
+			if (n <= -1) return -1;
+			if (n == 0)
+			{
+				if (cmd->a2.type == QSE_SED_A_LINE &&
+				    sed->eio.in.num > cmd->a2.u.line)
+				{
+					cmd->state.a1_matched = 0;
+					return 0;
+				}
+
+				return 1;
+			}
+
+			cmd->state.a1_matched = 0;
+			//lastaddr = 1;
+			return 1;
+		}
+		else 
+		{
+			n = match_a (sed, &cmd->a1);
+			if (n <= -1) return -1;
+			if (n == 0) return 0;
+
+			if (cmd->a2.type == QSE_SED_A_LINE &&
+			    sed->eio.in.num >= cmd->a2.u.line) 
+			{
+				//lastaddr = 1;
+			}
+			else
+			{
+				cmd->state.a1_matched = 1;
+			}
 			return 1;
 		}
 	}
 	else
 	{
-		a2 = match_a2 (sed, cmd);
-		if (a2 <= -1) return -1;
-
-		if (a2 == 0) return 0;
-		else 
-		{
-			if (a2 == 1) cmd->a1_matched = 0;
-			return 1;
-		}
+		/* single address */
+		n = match_a (sed, &cmd->a1);
+		return (n <= -1)? -1:
+		       (n ==  0)? 0: 1;
 	}
 }
 
-static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	int n;
+	qse_sed_cmd_t* jumpto = QSE_NULL;
 
 	switch (cmd->type)
 	{
-		case QSE_SED_CMD_Q:
+		case QSE_SED_CMD_QUIT:
 			n = write_str (sed, 
 				QSE_STR_PTR(&sed->eio.in.line),
 				QSE_STR_LEN(&sed->eio.in.line));
-			if (n <= -1) return -1;
-		case QSE_SED_CMD_QQ:
-			return 0;
-
-		case QSE_SED_CMD_EQ:
-			if (write_num (sed, sed->eio.in.num) <= -1) return -1;
-			if (write_char (sed, QSE_T('\n')) <= -1) return -1;
+			if (n <= -1) return QSE_NULL;
+		case QSE_SED_CMD_QUIT_QUIET:
+			jumpto = sed->cmd.cur + 1;
 			break;
 
-		case QSE_SED_CMD_A:
+		case QSE_SED_CMD_PRINT_LNUM:
+			if (write_num (sed, sed->eio.in.num) <= -1) return QSE_NULL;
+			if (write_char (sed, QSE_T('\n')) <= -1) return QSE_NULL;
+			break;
+
+		case QSE_SED_CMD_APPEND:
 			if (qse_lda_insert (
 				&sed->text_appended,
 				QSE_LDA_SIZE(&sed->text_appended),	
 				&cmd->u.text, 0) == (qse_size_t)-1) 
 			{
 				sed->errnum = QSE_SED_ENOMEM;
-				return -1;
+				return QSE_NULL;
 			}
 			break;
 
-		case QSE_SED_CMD_I:
+		case QSE_SED_CMD_INSERT:
 			n = write_str (sed,
 				QSE_STR_PTR(&cmd->u.text),
 				QSE_STR_LEN(&cmd->u.text));
-			if (n <= -1) return -1;
+			if (n <= -1) return QSE_NULL;
 			break;
 
-		case QSE_SED_CMD_C:
-			// TODO: this behavior is wrong....
-			//       fix this....
+		case QSE_SED_CMD_CHANGE:
+			/* change the input space */
 			n = qse_str_ncpy (
 				&sed->eio.in.line,
 				QSE_STR_PTR(&cmd->u.text),
@@ -1667,16 +1631,30 @@ static int exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (n == (qse_size_t)-1) 
 			{
 				sed->errnum = QSE_SED_ENOMEM;
-				return -1;
+				return QSE_NULL;
 			}
+
+			/* move past the last command so as to start 
+			 * the next cycle */
+			jumpto = sed->cmd.cur;
+			break;
+
+		case QSE_SED_CMD_DELETE:
+			/* delete the input space */
+			qse_str_clear (&sed->eio.in.line);
+			/* move past the last command so as to start 
+			 * the next cycle */
+			jumpto = sed->cmd.cur;
 			break;
 	}
 
-	return 1;
-}
+	if (jumpto == NULL) jumpto = cmd + 1;
+	return jumpto;
+} 
 
 int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 {
+	qse_sed_cmd_t* c, * j;
 	qse_ssize_t n;
 	int ret = 0;
 
@@ -1723,9 +1701,11 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		sed->eio.out.eof = 1;
 	}
 
+	/* clear states */
+	for (c = sed->cmd.buf; c < sed->cmd.cur; c++) c->state.a1_matched = 0;
+
 	while (1)
 	{
-		qse_sed_cmd_t* c;
 		qse_size_t i;
 
 		n = read_line (sed);
@@ -1747,12 +1727,17 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 				continue;
 			}
 
-			n = exec_cmd (sed, c);
-			if (n <= -1) { ret = -1; goto done; }
-			if (n == 0) goto done;
+			j = exec_cmd (sed, c);
+			if (j == QSE_NULL) { ret = -1; goto done; }
+			if (j > sed->cmd.cur) 
+			{
+				/* finish the current cycle */
+				QSE_ASSERT (j == sed->cmd.cur + 1);
+				goto done;
+			}
 
-			/* TODO: if exec_cmd jumped change c.... */
-			c++;
+			/* go to the next command */
+			c = j;
 		}
 
 		if (!(sed->option & QSE_SED_QUIET))
