@@ -140,6 +140,7 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("label name too long"),
 		QSE_T("empty label name"),
 		QSE_T("duplicate label name"),
+		QSE_T("label not found"),
 		QSE_T("empty file name"),
 		QSE_T("illegal file name"),
 		QSE_T("command not terminated properly"),
@@ -213,7 +214,7 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
 			break;
 
-		case QSE_SED_CMD_B:
+		case QSE_SED_CMD_BRANCH:
 		case QSE_SED_CMD_T:
 			if (cmd->u.branch.label.ptr != QSE_NULL) 
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.branch.label.ptr);
@@ -979,7 +980,7 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			 * of a group. this way, all the commands in a group
 			 * can be skipped. the branch target is set once a
 			 * corresponding } is met. */
-			cmd->type = QSE_SED_CMD_B;
+			cmd->type = QSE_SED_CMD_BRANCH;
 			cmd->negated = !cmd->negated;
 
 			if (sed->grplvl >= QSE_COUNTOF(sed->grpcmd))
@@ -1004,20 +1005,6 @@ qse_printf (QSE_T("command not recognized [%c]\n"), c);
 			sed->grpcmd[--sed->grplvl]->u.branch.target = cmd;
 			ADVSCP (sed);
 			return 0;
-
-		case QSE_T('='):
-			cmd->type = c;
-			if (sed->option & QSE_SED_CLASSIC &&
-			    cmd->a2.type != QSE_SED_A_NONE)
-			{
-				sed->errnum = QSE_SED_EA2PHB;
-				return -1;
-			}
-
-			ADVSCP (sed);
-			if (terminate_command (sed) <= -1) return -1;
-qse_printf (QSE_T("command %c\n"), cmd->type);
-			break;
 
 		case QSE_T('q'):
 		case QSE_T('Q'):
@@ -1081,7 +1068,15 @@ qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 			break;
 		}
 
-
+		case QSE_T('='):
+			if (sed->option & QSE_SED_CLASSIC &&
+			    cmd->a2.type != QSE_SED_A_NONE)
+			{
+				sed->errnum = QSE_SED_EA2PHB;
+				return -1;
+			}
+		case QSE_T('p'):
+		case QSE_T('P'):
 		case QSE_T('d'):
 		case QSE_T('D'):
 		case QSE_T('h'):
@@ -1091,8 +1086,6 @@ qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 		case QSE_T('l'):
 		case QSE_T('n'):
 		case QSE_T('N'):
-		case QSE_T('p'):
-		case QSE_T('P'):
 		case QSE_T('x'):
 			cmd->type = c;
 			ADVSCP (sed);
@@ -1235,9 +1228,14 @@ static int compile_source (
 
 		if (c == QSE_T('!'))
 		{
-			/* negate */
-			cmd->negated = 1;
-			do { ADVSCP (sed); } while (IS_SPACE(c));
+			/* allow any number of the negation indicators */
+			do { 
+				cmd->negated = !cmd->negated; 
+				c = NXTSC(sed);
+			} 
+			while (c== QSE_T('!'));
+
+			while (IS_SPACE(c)) c = NXTSC (sed);
 		}
 	
 
@@ -1528,9 +1526,11 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	int n;
 
+	cmd->state.c_ready = 0;
 	if (cmd->a1.type == QSE_SED_A_NONE)
 	{
 		QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
+		cmd->state.c_ready = 1;
 		return 1;
 	}
 	else if (cmd->a2.type != QSE_SED_A_NONE)
@@ -1545,38 +1545,53 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				if (cmd->a2.type == QSE_SED_A_LINE &&
 				    sed->eio.in.num > cmd->a2.u.line)
 				{
+					/* exit the range */
 					cmd->state.a1_matched = 0;
 					return 0;
 				}
 
+				/* still in the range. return match 
+				 * despite the actual mismatch */
 				return 1;
 			}
 
+			/* exit the range */
 			cmd->state.a1_matched = 0;
-			//lastaddr = 1;
+			cmd->state.c_ready = 1;
 			return 1;
 		}
 		else 
 		{
 			n = match_a (sed, &cmd->a1);
 			if (n <= -1) return -1;
-			if (n == 0) return 0;
+			if (n == 0) 
+			{
+				return 0;
+			}
 
 			if (cmd->a2.type == QSE_SED_A_LINE &&
 			    sed->eio.in.num >= cmd->a2.u.line) 
 			{
-				//lastaddr = 1;
+				/* the line number specified in the second 
+				 * address is equal to or less than the current
+				 * line number. */
+				cmd->state.c_ready = 1;
 			}
 			else
 			{
+				/* mark that the first is matched so as to
+				 * move on to the range test */
 				cmd->state.a1_matched = 1;
 			}
+
 			return 1;
 		}
 	}
 	else
 	{
 		/* single address */
+		cmd->state.c_ready = 1;
+
 		n = match_a (sed, &cmd->a1);
 		return (n <= -1)? -1:
 		       (n ==  0)? 0: 1;
@@ -1599,10 +1614,6 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			jumpto = sed->cmd.cur + 1;
 			break;
 
-		case QSE_SED_CMD_PRINT_LNUM:
-			if (write_num (sed, sed->eio.in.num) <= -1) return QSE_NULL;
-			if (write_char (sed, QSE_T('\n')) <= -1) return QSE_NULL;
-			break;
 
 		case QSE_SED_CMD_APPEND:
 			if (qse_lda_insert (
@@ -1623,20 +1634,30 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_CHANGE:
-			/* change the input space */
-			n = qse_str_ncpy (
-				&sed->eio.in.line,
-				QSE_STR_PTR(&cmd->u.text),
-				QSE_STR_LEN(&cmd->u.text));
-			if (n == (qse_size_t)-1) 
+			if (cmd->state.c_ready)
 			{
-				sed->errnum = QSE_SED_ENOMEM;
-				return QSE_NULL;
+				/* change the input space */
+				n = qse_str_ncpy (
+					&sed->eio.in.line,
+					QSE_STR_PTR(&cmd->u.text),
+					QSE_STR_LEN(&cmd->u.text));
+				if (n == (qse_size_t)-1) 
+				{
+					sed->errnum = QSE_SED_ENOMEM;
+					return QSE_NULL;
+				}
+
+				/* move past the last command so as to start 
+				 * the next cycle */
+				jumpto = sed->cmd.cur;
+			}
+			else 
+			{		
+/* TODO: prearrange for  CHANGE to be executed on the lastline wihtout
+         matchng the second address */
+				qse_str_clear (&sed->eio.in.line);
 			}
 
-			/* move past the last command so as to start 
-			 * the next cycle */
-			jumpto = sed->cmd.cur;
 			break;
 
 		case QSE_SED_CMD_DELETE:
@@ -1645,6 +1666,39 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			/* move past the last command so as to start 
 			 * the next cycle */
 			jumpto = sed->cmd.cur;
+			break;
+
+		case QSE_SED_CMD_PRINT_LNUM:
+			if (write_num (sed, sed->eio.in.num) <= -1) return QSE_NULL;
+			if (write_char (sed, QSE_T('\n')) <= -1) return QSE_NULL;
+			break;
+
+		case QSE_SED_CMD_PRINT:
+			n = write_str (sed, 
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line));
+			if (n <= -1) return QSE_NULL;
+			break;
+
+		case QSE_SED_CMD_BRANCH:
+			if (cmd->u.branch.target == QSE_NULL)
+			{
+				qse_map_pair_t* pair;
+				qse_xstr_t* lab = &cmd->u.branch.label;
+
+				QSE_ASSERT (lab->ptr != QSE_NULL && lab->len > 0);
+				pair = qse_map_search (
+					&sed->labs, lab->ptr, lab->len);
+				if (pair == QSE_NULL)
+				{
+					sed->errnum = QSE_SED_ELABNF;
+					return QSE_NULL;
+				}
+
+				cmd->u.branch.target = QSE_MAP_VPTR(pair);
+			}
+
+			jumpto = cmd->u.branch.target;
 			break;
 	}
 

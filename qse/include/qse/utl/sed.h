@@ -45,6 +45,7 @@ enum qse_sed_errnum_t
 	QSE_SED_ELABTL,  /* label too long */
 	QSE_SED_ELABEM,  /* label name is empty */
 	QSE_SED_ELABDU,  /* duplicate label name */
+	QSE_SED_ELABNF,  /* label not found */
 	QSE_SED_EFILEM,  /* file name is empty */
 	QSE_SED_EFILIL,  /* illegal file name */
 	QSE_SED_ENOTRM,  /* not terminated properly */

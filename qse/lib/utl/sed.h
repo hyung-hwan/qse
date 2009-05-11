@@ -71,13 +71,13 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_L   = QSE_T('l'),
 		QSE_SED_CMD_N   = QSE_T('n'),
 		QSE_SED_CMD_NN  = QSE_T('N'),
-		QSE_SED_CMD_P   = QSE_T('p'),
+		QSE_SED_CMD_PRINT   = QSE_T('p'),
 		QSE_SED_CMD_PP  = QSE_T('P'),
 		/* exchange hold space and pattern space */
 		QSE_SED_CMD_X   = QSE_T('x'), 
 
 		/* branch */
-		QSE_SED_CMD_B   = QSE_T('b'), 
+		QSE_SED_CMD_BRANCH = QSE_T('b'), 
 		QSE_SED_CMD_T   = QSE_T('t'),
 
 		/* r filename - append a text from a file */
@@ -139,6 +139,7 @@ struct qse_sed_cmd_t
 	struct
 	{
 		int a1_matched;
+		int c_ready;
 	} state;
 };
 
