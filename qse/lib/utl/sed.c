@@ -1408,13 +1408,15 @@ static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
 static int write_num (qse_sed_t* sed, qse_size_t x, int base, int width)
 {
 	qse_size_t last = x % base;
-	qse_size_t y = 0, dig = 0;
+	qse_size_t y = 0; 
+	int dig = 0;
 
 	QSE_ASSERT (base >= 2 && base <= 10);
 
 	if (x < 0) 
 	{
 		if (write_char (sed, QSE_T('-')) <= -1) return -1;
+		if (width > 0) width--;
 	}
 
 	x = x / base;
