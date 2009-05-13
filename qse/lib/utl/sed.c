@@ -19,6 +19,7 @@
 #include "sed.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/rex.h>
+#include <qse/cmn/chr.h>
 
 /* TODO: delete stdio.h */
 #include <qse/utl/stdio.h>
@@ -91,7 +92,7 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	sed->cmd.cur = sed->cmd.buf;
 	sed->cmd.end = sed->cmd.buf + 1000 - 1;
 
-	if (qse_lda_init (&sed->text_appended, mmgr, 32) == QSE_NULL)
+	if (qse_lda_init (&sed->text.appended, mmgr, 32) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);
 		qse_map_fini (&sed->labs);
@@ -99,12 +100,23 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;
 	}
 
+	if (qse_str_init (&sed->text.held, mmgr, 256) == QSE_NULL)
+	{
+		qse_lda_fini (&sed->text.appended);
+		QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);
+		qse_map_fini (&sed->labs);
+		qse_str_fini (&sed->rexbuf);
+		return QSE_NULL;
+	
+	}
+
 	return sed;
 }
 
 void qse_sed_fini (qse_sed_t* sed)
 {
-	qse_lda_fini (&sed->text_appended);
+	qse_str_fini (&sed->text.held);
+	qse_lda_fini (&sed->text.appended);
 
 /* TODO: use different data sturect -> look at qse_sed_init */
 qse_sed_cmd_t* c;
@@ -1058,13 +1070,6 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 			/* get_text() starts from the next line */
 			if (get_text (sed, cmd) <= -1) return -1;
 
-/*
-{
-qse_char_t ttt[1000];
-qse_fgets (ttt, QSE_COUNTOF(ttt), QSE_STDIN);
-qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
-}
-*/
 			break;
 		}
 
@@ -1077,20 +1082,22 @@ qse_printf (QSE_T("%s%s"), ttt, cmd->u.text.ptr);
 			}
 		case QSE_T('p'):
 		case QSE_T('P'):
+		case QSE_T('l'):
+
 		case QSE_T('d'):
 		case QSE_T('D'):
+
 		case QSE_T('h'):
 		case QSE_T('H'):
 		case QSE_T('g'):
 		case QSE_T('G'):
-		case QSE_T('l'):
+		case QSE_T('x'):
+
 		case QSE_T('n'):
 		case QSE_T('N'):
-		case QSE_T('x'):
 			cmd->type = c;
 			ADVSCP (sed);
 			if (terminate_command (sed) <= -1) return -1;
-qse_printf (QSE_T("command %c\n"), cmd->type);
 			break;
 
 		case QSE_T('b'):
@@ -1098,15 +1105,6 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 			cmd->type = c;
 			ADVSCP (sed);
 			if (get_branch_target (sed, cmd) <= -1) return -1;
-if (cmd->u.branch.label.ptr != NULL)
-{
-qse_printf (QSE_T("cmd->u.branch.label = [%.*s]\n"), 
-	cmd->u.branch.label.len, cmd->u.branch.label.ptr);
-}
-else
-{
-qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
-}
 			break;
 
 		case QSE_T('r'):
@@ -1116,8 +1114,6 @@ qse_printf (QSE_T("cmd->u.branch.target = [%p]\n"), cmd->u.branch.target);
 			cmd->type = c;
 			ADVSCP (sed);
 			if (get_file (sed, &cmd->u.file) <= -1) return -1;
-
-qse_printf (QSE_T("cmd->u.file= [%.*s]\n"), (int)cmd->u.file.len, cmd->u.file.ptr);
 			break;
 
 
@@ -1409,30 +1405,40 @@ static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
 	return 0;
 }
 
-static int write_num (qse_sed_t* sed, qse_size_t x)
+static int write_num (qse_sed_t* sed, qse_size_t x, int base, int width)
 {
-	qse_size_t last = x % 10;
+	qse_size_t last = x % base;
 	qse_size_t y = 0, dig = 0;
+
+	QSE_ASSERT (base >= 2 && base <= 10);
 
 	if (x < 0) 
 	{
 		if (write_char (sed, QSE_T('-')) <= -1) return -1;
 	}
 
-	x = x / 10;
+	x = x / base;
 	if (x < 0) x = -x;
 
 	while (x > 0)
 	{
-		y = y * 10 + (x % 10);
-		x = x / 10;
+		y = y * base + (x % base);
+		x = x / base;
 		dig++;
+	}
+
+	if (width > 0)
+	{
+		while (--width > dig)
+		{
+			if (write_char (sed, QSE_T('0')) <= -1) return -1;
+		}
 	}
 
 	while (y > 0)
 	{
-		if (write_char (sed, (y % 10) + QSE_T('0')) <= -1) return -1;
-		y = y / 10;
+		if (write_char (sed, (y % base) + QSE_T('0')) <= -1) return -1;
+		y = y / base;
 		dig--;
 	}
 
@@ -1443,6 +1449,76 @@ static int write_num (qse_sed_t* sed, qse_size_t x)
 	}
 	if (last < 0) last = -last;
 	if (write_char (sed, last + QSE_T('0')) <= -1) return -1;
+
+	return 0;
+}
+
+#define WRITE_CHAR(sed,c) \
+	do { if (write_char(sed,c) <= -1) return -1; } while (0)
+#define WRITE_STR(sed,str,len) \
+	do { if (write_str(sed,str,len) <= -1) return -1; } while (0)
+#define WRITE_NUM(sed,num,base,width) \
+	do { if (write_num(sed,num,base,width) <= -1) return -1; } while (0)
+
+static int write_str_clearly (
+	qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
+{
+	const qse_char_t* p = str;
+	const qse_char_t* end = str + len;
+
+/* TODO: break down long lines.... */
+	while (p < end)
+	{
+		qse_char_t c = *p++;
+
+		switch (c)
+		{
+			case QSE_T('\\'):
+				WRITE_STR (sed, QSE_T("\\\\"), 2);
+				break;
+			/*case QSE_T('\0'):
+				WRITE_STR (sed, QSE_T("\\0"), 2);
+				break;*/
+			case QSE_T('\n'):
+				WRITE_STR (sed, QSE_T("$\n"), 2);
+				break;
+			case QSE_T('\a'):
+				WRITE_STR (sed, QSE_T("\\a"), 2);
+				break;
+			case QSE_T('\b'):
+				WRITE_STR (sed, QSE_T("\\b"), 2);
+				break;
+			case QSE_T('\f'):
+				WRITE_STR (sed, QSE_T("\\f"), 2);
+				break;
+			case QSE_T('\r'):
+				WRITE_STR (sed, QSE_T("\\r"), 2);
+				break;
+			case QSE_T('\t'):
+				WRITE_STR (sed, QSE_T("\\t"), 2);
+				break;
+			case QSE_T('\v'):
+				WRITE_STR (sed, QSE_T("\\v"), 2);
+				break;
+			default:
+			{
+				if (QSE_ISPRINT(c)) WRITE_CHAR (sed, c);
+				else
+				{
+					qse_size_t i;
+					qse_byte_t* b = (qse_byte_t*)&c;
+					WRITE_CHAR (sed, QSE_T('\\'));
+					for (i = 0; i < QSE_SIZEOF(c)/QSE_SIZEOF(*b); i++)
+					{
+						WRITE_NUM (sed, b[i], 8, 3);
+					}
+				}
+			}
+		}
+	}		
+
+	if (len > 1 && end[-1] != QSE_T('\n')) 
+		WRITE_STR (sed, QSE_T("$\n"), 2);
 
 	return 0;
 }
@@ -1614,11 +1690,10 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			jumpto = sed->cmd.cur + 1;
 			break;
 
-
 		case QSE_SED_CMD_APPEND:
 			if (qse_lda_insert (
-				&sed->text_appended,
-				QSE_LDA_SIZE(&sed->text_appended),	
+				&sed->text.appended,
+				QSE_LDA_SIZE(&sed->text.appended),	
 				&cmd->u.text, 0) == (qse_size_t)-1) 
 			{
 				sed->errnum = QSE_SED_ENOMEM;
@@ -1669,17 +1744,72 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_PRINT_LNUM:
-			if (write_num (sed, sed->eio.in.num) <= -1) return QSE_NULL;
+			if (write_num (sed, sed->eio.in.num, 10, 0) <= -1) return QSE_NULL;
 			if (write_char (sed, QSE_T('\n')) <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_PRINT:
-			n = write_str (sed, 
+			n = write_str (
+				sed, 
 				QSE_STR_PTR(&sed->eio.in.line),
-				QSE_STR_LEN(&sed->eio.in.line));
+				QSE_STR_LEN(&sed->eio.in.line)
+			);
 			if (n <= -1) return QSE_NULL;
 			break;
 
+		case QSE_SED_CMD_PRINT_CLEARLY:
+			n = write_str_clearly (
+				sed,
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line)
+			);
+			if (n <= -1) return QSE_NULL;
+			break;
+
+		case QSE_SED_CMD_HOLD:
+			if (qse_str_ncpy (&sed->text.held, 	
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line)) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return QSE_NULL;	
+			}
+			break;
+				
+		case QSE_SED_CMD_HOLD_APPEND:
+			if (qse_str_ncat (&sed->text.held, 	
+				QSE_STR_PTR(&sed->eio.in.line),
+				QSE_STR_LEN(&sed->eio.in.line)) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return QSE_NULL;	
+			}
+			break;
+
+		case QSE_SED_CMD_RELEASE:
+			if (qse_str_ncpy (&sed->eio.in.line,
+				QSE_STR_PTR(&sed->text.held),
+				QSE_STR_LEN(&sed->text.held)) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return QSE_NULL;	
+			}
+			break;
+
+		case QSE_SED_CMD_EXCHANGE:
+			qse_str_swap (&sed->eio.in.line, &sed->text.held);
+			break;
+
+		case QSE_SED_CMD_RELEASE_APPEND:
+			if (qse_str_ncat (&sed->eio.in.line,
+				QSE_STR_PTR(&sed->text.held),
+				QSE_STR_LEN(&sed->text.held)) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_ENOMEM;
+				return QSE_NULL;	
+			}
+			break;
+				
 		case QSE_SED_CMD_BRANCH:
 			if (cmd->u.branch.target == QSE_NULL)
 			{
@@ -1711,6 +1841,14 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	qse_sed_cmd_t* c, * j;
 	qse_ssize_t n;
 	int ret = 0;
+
+	qse_lda_clear (&sed->text.appended);
+	qse_str_clear (&sed->text.held);
+	if (qse_str_ccat (&sed->text.held, QSE_T('\n')) == (qse_size_t)-1)
+	{
+		sed->errnum = QSE_SED_ENOMEM;
+		return -1;
+	}
 
 	sed->eio.out.f = outf;
 	sed->eio.out.eof = 0;
@@ -1766,7 +1904,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		if (n <= -1) { ret = -1; goto done; }
 		if (n == 0) goto done;
 
-		qse_lda_clear (&sed->text_appended);
+		qse_lda_clear (&sed->text.appended);
 
 		c = sed->cmd.buf;
 		while (c < sed->cmd.cur)
@@ -1802,9 +1940,9 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 			if (n <= -1) { ret = -1; goto done; }
 		}
 
-		for (i = 0; i < QSE_LDA_SIZE(&sed->text_appended); i++)
+		for (i = 0; i < QSE_LDA_SIZE(&sed->text.appended); i++)
 		{
-			qse_xstr_t* t = QSE_LDA_DPTR(&sed->text_appended, i);
+			qse_xstr_t* t = QSE_LDA_DPTR(&sed->text.appended, i);
 			n = write_str (sed, t->ptr, t->len);
 			if (n <= -1) { ret = -1; goto done; }
 		}

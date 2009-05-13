@@ -48,13 +48,8 @@ struct qse_sed_cmd_t
 {
 	enum
 	{
-		QSE_SED_CMD_PRINT_LNUM = QSE_T('='),
 		QSE_SED_CMD_QUIT       = QSE_T('q'),
 		QSE_SED_CMD_QUIT_QUIET = QSE_T('Q'),
-
-		/* delete pattern space */
-		QSE_SED_CMD_DELETE = QSE_T('d'),
-		QSE_SED_CMD_DD     = QSE_T('D'),
 
 		/* a \<\n> text - append text */
 		QSE_SED_CMD_APPEND = QSE_T('a'),
@@ -63,18 +58,23 @@ struct qse_sed_cmd_t
 		/* c \<\n> text - change text */
 		QSE_SED_CMD_CHANGE = QSE_T('c'),
 
-		QSE_SED_CMD_H   = QSE_T('h'),
-		QSE_SED_CMD_HH  = QSE_T('H'),
-		QSE_SED_CMD_G   = QSE_T('g'),
-		QSE_SED_CMD_GG  = QSE_T('G'),
-		/* list out current line */
-		QSE_SED_CMD_L   = QSE_T('l'),
+		/* delete pattern space */
+		QSE_SED_CMD_DELETE = QSE_T('d'),
+		QSE_SED_CMD_DD     = QSE_T('D'),
+
+		QSE_SED_CMD_PRINT_LNUM     = QSE_T('='),
+		QSE_SED_CMD_PRINT          = QSE_T('p'),
+		QSE_SED_CMD_PP             = QSE_T('P'),
+		QSE_SED_CMD_PRINT_CLEARLY  = QSE_T('l'),
+
+		QSE_SED_CMD_HOLD           = QSE_T('h'),
+		QSE_SED_CMD_HOLD_APPEND    = QSE_T('H'),
+		QSE_SED_CMD_RELEASE        = QSE_T('g'),
+		QSE_SED_CMD_RELEASE_APPEND = QSE_T('G'),
+		QSE_SED_CMD_EXCHANGE       = QSE_T('x'), 
+
 		QSE_SED_CMD_N   = QSE_T('n'),
 		QSE_SED_CMD_NN  = QSE_T('N'),
-		QSE_SED_CMD_PRINT   = QSE_T('p'),
-		QSE_SED_CMD_PP  = QSE_T('P'),
-		/* exchange hold space and pattern space */
-		QSE_SED_CMD_X   = QSE_T('x'), 
 
 		/* branch */
 		QSE_SED_CMD_BRANCH = QSE_T('b'), 

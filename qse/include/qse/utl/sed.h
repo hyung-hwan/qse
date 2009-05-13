@@ -151,7 +151,11 @@ struct qse_sed_t
 		} in;
 	} eio;
 
-	qse_lda_t text_appended;
+	struct
+	{
+		qse_lda_t appended;
+		qse_str_t held;
+	} text;
 };
 
 
