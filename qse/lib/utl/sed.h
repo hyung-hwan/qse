@@ -62,9 +62,9 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_DELETE = QSE_T('d'),
 		QSE_SED_CMD_DD     = QSE_T('D'),
 
-		QSE_SED_CMD_PRINT_LNUM     = QSE_T('='),
+		QSE_SED_CMD_PRINT_LNNUM    = QSE_T('='),
 		QSE_SED_CMD_PRINT          = QSE_T('p'),
-		QSE_SED_CMD_PP             = QSE_T('P'),
+		QSE_SED_CMD_PRINT_FIRSTLN  = QSE_T('P'),
 		QSE_SED_CMD_PRINT_CLEARLY  = QSE_T('l'),
 
 		QSE_SED_CMD_HOLD           = QSE_T('h'),
@@ -73,22 +73,17 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_RELEASE_APPEND = QSE_T('G'),
 		QSE_SED_CMD_EXCHANGE       = QSE_T('x'), 
 
-		QSE_SED_CMD_N   = QSE_T('n'),
-		QSE_SED_CMD_NN  = QSE_T('N'),
+		QSE_SED_CMD_NEXT           = QSE_T('n'),
+		QSE_SED_CMD_NEXT_APPEND    = QSE_T('N'),
 
 		/* branch */
 		QSE_SED_CMD_BRANCH = QSE_T('b'), 
 		QSE_SED_CMD_T   = QSE_T('t'),
 
-		/* r filename - append a text from a file */
-		QSE_SED_CMD_R   = QSE_T('r'),
-		/* R filename - append a line from a file */
-		QSE_SED_CMD_RR  = QSE_T('R'),
-
-		/* w filename - write pattern space to a file */
-		QSE_SED_CMD_W   = QSE_T('w'),
-		/* W filename - write first line of pattern space to a file */
-		QSE_SED_CMD_WW  = QSE_T('W'),
+		QSE_SED_CMD_READ_FILE     = QSE_T('r'),
+		QSE_SED_CMD_READ_FILELN   = QSE_T('R'),
+		QSE_SED_CMD_WRITE_FILE    = QSE_T('w'),
+		QSE_SED_CMD_WRITE_FILELN  = QSE_T('W'),
 
 		/* s/regex/str/ - replace matching pattern with a new string */
 		QSE_SED_CMD_S   = QSE_T('s'),

@@ -27,22 +27,34 @@
 #include <qse/cmn/chr.h>
 
 static qse_ssize_t in (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
 {
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
+			if (arg->open.path == QSE_NULL ||
+			    arg->open.path[0] == QSE_T('\0'))
+			{
+				arg->open.handle = QSE_STDIN;
+			}
+			else
+			{
+				arg->open.handle = qse_fopen (arg->open.path, QSE_T("r"));
+				if (arg->open.handle == QSE_NULL) return -1;
+			}
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
+			if (arg->close.handle != QSE_STDIN) 
+				qse_fclose (arg->close.handle);
 			return 0;
 
 		case QSE_SED_IO_READ:
 		{
 			qse_cint_t c;
-			c = qse_fgetc (QSE_STDIN);
+			c = qse_fgetc (arg->read.handle);
 			if (c == QSE_CHAR_EOF) return 0;
-			buf[0] = c;
+			arg->read.buf[0] = c;
 			return 1;
 		}
 	}
@@ -51,22 +63,34 @@ static qse_ssize_t in (
 }
 
 static qse_ssize_t out (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_char_t* buf, qse_size_t len)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
 {
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
+			if (arg->open.path == QSE_NULL ||
+			    arg->open.path[0] == QSE_T('\0'))
+			{
+				arg->open.handle = QSE_STDOUT;
+			}
+			else
+			{
+				arg->open.handle = qse_fopen (arg->open.path, QSE_T("w"));
+				if (arg->open.handle == QSE_NULL) return -1;
+			}
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
+			if (arg->close.handle != QSE_STDIN) 
+				qse_fclose (arg->close.handle);
 			return 0;
 
 		case QSE_SED_IO_WRITE:
 		{
 			qse_size_t i = 0;
-			for (i = 0; i < len; i++) 
-				qse_fputc (buf[i], QSE_STDOUT);
-			return len;
+			for (i = 0; i < arg->write.len; i++) 
+				qse_fputc (arg->write.data[i], arg->write.handle);
+			return arg->write.len;
 		}
 	}
 	

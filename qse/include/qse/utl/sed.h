@@ -67,6 +67,11 @@ enum qse_sed_option_t
 	QSE_SED_CLASSIC  = (1 << 4)
 };
 
+/****e* AWK/qse_sed_io_cmd_t
+ * NAME
+ *  qse_sed_io_cmd_t - define IO commands
+ * SYNOPSIS
+ */
 enum qse_sed_io_cmd_t
 {
 	QSE_SED_IO_OPEN  = 0,
@@ -74,16 +79,44 @@ enum qse_sed_io_cmd_t
 	QSE_SED_IO_READ  = 2,
 	QSE_SED_IO_WRITE = 3
 };
-
 typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
+/******/
+
+union qse_sed_io_arg_t
+{
+	struct
+	{
+		void*             handle; /* out */
+		const qse_char_t* path;   /* in */
+	} open;
+
+	struct
+	{
+		void*             handle; /* in */
+		qse_char_t*       buf;    /* out */
+		qse_size_t        len;    /* in */
+	} read;
+
+	struct
+	{
+		void*             handle;  /* in */
+		const qse_char_t* data;    /* in */
+		qse_size_t        len;     /* in */
+	} write;
+
+	struct
+	{
+		void*             handle;  /* in */
+	} close;
+};
+typedef union qse_sed_io_arg_t qse_sed_io_arg_t;
 
 typedef struct qse_sed_t qse_sed_t;
 
 typedef qse_ssize_t (*qse_sed_iof_t) (
-        qse_sed_t*       sed,
-        qse_sed_io_cmd_t cmd,
-        qse_char_t*      data,
-        qse_size_t       count
+        qse_sed_t*        sed,
+        qse_sed_io_cmd_t  cmd,
+	qse_sed_io_arg_t* arg
 );
 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t; /* command */
@@ -128,15 +161,19 @@ struct qse_sed_t
 		struct
 		{
 			qse_sed_iof_t f;
+			qse_sed_io_arg_t arg;
 
 			qse_char_t buf[2048];
 			qse_size_t len;
 			int        eof;
+
+			qse_map_t files;
 		} out;
 
 		struct
 		{
 			qse_sed_iof_t f;
+			qse_sed_io_arg_t arg;
 
 			qse_char_t xbuf[1];
 			int xbuf_len;
@@ -149,6 +186,7 @@ struct qse_sed_t
 			qse_str_t line;
 			qse_size_t num;
 		} in;
+
 	} eio;
 
 	struct
