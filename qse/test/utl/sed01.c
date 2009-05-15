@@ -81,7 +81,7 @@ static qse_ssize_t out (
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
-			if (arg->close.handle != QSE_STDIN) 
+			if (arg->close.handle != QSE_STDOUT) 
 				qse_fclose (arg->close.handle);
 			return 0;
 

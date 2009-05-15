@@ -167,7 +167,12 @@ struct qse_sed_t
 			qse_size_t len;
 			int        eof;
 
-			qse_map_t files;
+			/*****************************************************/
+			/* the following two fields are very tightly-coupled.
+			 * don't make any partial changes */
+			qse_map_t  files;
+			qse_sed_t* files_ext;
+			/*****************************************************/
 		} out;
 
 		struct

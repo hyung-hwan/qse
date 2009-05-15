@@ -1119,7 +1119,6 @@ qse_printf (QSE_T("command %c\n"), cmd->type);
 			if (get_file (sed, &cmd->u.file) <= -1) return -1;
 			break;
 
-
 		case QSE_T('s'):
 			cmd->type = c;
 			ADVSCP (sed);
@@ -1313,6 +1312,75 @@ static int read_char (qse_sed_t* sed, qse_char_t* c)
 		QSE_ASSERT (sed->eio.in.xbuf_len == -1);
 		return 0;
 	}	
+}
+
+static int read_file (qse_sed_t* sed, const qse_char_t* path, int line)
+{
+	qse_ssize_t n;
+	qse_sed_io_arg_t arg;
+	qse_char_t buf[256];
+
+	arg.open.path = path;
+	n = sed->eio.in.f (sed, QSE_SED_IO_OPEN, &arg);
+	if (n <= -1)
+	{
+		/*sed->errnum = QSE_SED_EIOUSR;
+		return -1;*/
+		/* it is ok if it is not able to open a file */
+		return 0;	
+	}
+	if (n == 0) 
+	{
+		/* EOF - no data */
+		sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &arg);
+		return 0;
+	}
+
+	while (1)
+	{
+		arg.read.buf = buf;
+		arg.read.len = QSE_COUNTOF(buf);
+
+		n = sed->eio.in.f (sed, QSE_SED_IO_READ, &arg);
+		if (n <= -1)
+		{
+			sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &arg);
+			sed->errnum = QSE_SED_EIOUSR;
+			return -1;
+		}
+		if (n == 0) break;
+
+		if (line)
+		{
+			qse_size_t i;
+
+			for (i = 0; i < n; i++)
+			{
+				if (qse_str_ccat (&sed->eio.in.line, buf[i]) == (qse_size_t)-1)
+				{
+					sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &arg);
+					sed->errnum = QSE_SED_ENOMEM;
+					return -1;
+				}
+
+				/* TODO: support different line ending scheme */
+				if (buf[i] == QSE_T('\n')) goto done;
+			}
+		}
+		else
+		{
+			if (qse_str_ncat (&sed->eio.in.line, buf, n) == (qse_size_t)-1)
+			{
+				sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &arg);
+				sed->errnum = QSE_SED_ENOMEM;
+				return -1;
+			}
+		}
+	}
+
+done:
+	sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &arg);
+	return 0;
 }
 
 static int read_line (qse_sed_t* sed, int append)
@@ -1583,7 +1651,15 @@ static int write_str_to_file (
 			sed->errnum = QSE_SED_EIOUSR;
 			return -1;
 		}
-// TOOD: what if n is 0???
+		if (n == 0)
+		{
+			/* EOF is returned upon opening a write stream.
+			 * it is also an error as it can't write any more */
+			sed->eio.out.f (sed, QSE_SED_IO_CLOSE, ap);
+			ap->close.handle = QSE_NULL;
+			sed->errnum = QSE_SED_EIOUSR;
+			return -1;
+		}
 	}
 
 	while (len > 0)
@@ -1593,10 +1669,21 @@ static int write_str_to_file (
 		n = sed->eio.out.f (sed, QSE_SED_IO_WRITE, ap);
 		if (n <= -1) 
 		{
+			sed->eio.out.f (sed, QSE_SED_IO_CLOSE, ap);
+			ap->close.handle = QSE_NULL;
 			sed->errnum = QSE_SED_EIOUSR;
 			return -1;
 		}
-// TODO: what if n is 0???
+
+		if (n == 0)
+		{
+			/* eof is returned on the write stream. 
+			 * it is also an error as it can't write any more */
+			sed->eio.out.f (sed, QSE_SED_IO_CLOSE, ap);
+			ap->close.handle = QSE_NULL;
+			sed->errnum = QSE_SED_EIOUSR;
+			return -1;
+		}
 
 		len -= n;
 	}
@@ -1937,9 +2024,13 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 				
 		case QSE_SED_CMD_READ_FILE:
+			n = read_file (sed, cmd->u.file.ptr, 0);
+			if (n <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_READ_FILELN:
+			n = read_file (sed, cmd->u.file.ptr, 1);
+			if (n <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_WRITE_FILE:
@@ -1954,15 +2045,29 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_WRITE_FILELN:
+		{
+			const qse_char_t* ptr = QSE_STR_PTR(&sed->eio.in.line);
+			const qse_char_t* len = QSE_STR_LEN(&sed->eio.in.line);
+			qse_size_t i;
+			for (i = 0; i < len; i++)
+			{	
+				/* TODO: handle different line end scheme */
+				if (ptr[i] == QSE_T('\n')) 
+				{
+					i++;
+					break;
+				}
+			}
+
 			n = write_str_to_file (
 				sed,
-				QSE_STR_PTR(&sed->eio.in.line),
-				QSE_STR_LEN(&sed->eio.in.line),
+				ptr, i,
 				cmd->u.file.ptr,
 				cmd->u.file.len
 			);
 			if (n <= -1) return QSE_NULL;
 			break;
+		}
 			
 		case QSE_SED_CMD_BRANCH:
 			if (cmd->u.branch.target == QSE_NULL)
@@ -1993,11 +2098,12 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 static void close_outfile (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_sed_io_arg_t* arg = dptr;
-	QSE_ASSERT (dlen = QSE_SIZEOF(*arg));
+	QSE_ASSERT (dlen == QSE_SIZEOF(*arg));
 
 	if (arg->close.handle != QSE_NULL)
 	{
-		map->eio.out.f (map, QSE_SED_IO_CLOSE, arg);
+		qse_sed_t* sed = *(qse_sed_t**)QSE_XTN(map);
+		sed->eio.out.f (sed, QSE_SED_IO_CLOSE, arg);
 		arg->close.handle = QSE_NULL;
 	}
 }
@@ -2024,6 +2130,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		sed->errnum = QSE_SED_ENOMEM;
 		return -1;
 	}
+	*(qse_sed_t**)QSE_XTN(&sed->eio.out.files) = sed;
 	qse_map_setcopier (
 		&sed->eio.out.files, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
         qse_map_setscale (
@@ -2075,11 +2182,27 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		sed->eio.out.eof = 1;
 	}
 
-	/* clear states */
 	for (c = sed->cmd.buf; c < sed->cmd.cur; c++) 
 	{
+		/* clear states */
 		c->state.a1_matched = 0;
 		c->state.c_ready = 0;
+
+		if (c->type == QSE_SED_CMD_WRITE_FILE ||
+		    c->type == QSE_SED_CMD_WRITE_FILELN)
+		{
+			/* call this function to open output files */
+			n = write_str_to_file (
+				sed, QSE_NULL, 0, 
+				c->u.file.ptr, c->u.file.len
+			);
+			if (n <= -1) 
+			{
+				/* TODO: set the error code more specific.
+				 *       cannot open file */
+				return -1;
+			}
+		}
 	}
 
 	while (1)
@@ -2140,6 +2263,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 	}
 
 done:
+	qse_map_clear (&sed->eio.out.files);
 	sed->eio.out.f (sed, QSE_SED_IO_CLOSE, &sed->eio.out.arg);
 done2:
 	sed->eio.in.f (sed, QSE_SED_IO_CLOSE, &sed->eio.in.arg);
