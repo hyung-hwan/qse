@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: run.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -3099,7 +3099,9 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				((((qse_awk_rtx_t*)run)->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 				((qse_awk_val_str_t*)run->inrec.d0)->ptr,
 				((qse_awk_val_str_t*)run->inrec.d0)->len,
-				QSE_NULL, QSE_NULL, &errnum);
+				((qse_awk_val_str_t*)run->inrec.d0)->ptr,
+				((qse_awk_val_str_t*)run->inrec.d0)->len,
+				QSE_NULL, &errnum);
 	
 			if (n == -1) 
 			{
@@ -4773,7 +4775,9 @@ static qse_awk_val_t* eval_binop_match0 (
 			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			((qse_awk_val_str_t*)left)->ptr,
 			((qse_awk_val_str_t*)left)->len,
-			QSE_NULL, QSE_NULL, &errnum);
+			((qse_awk_val_str_t*)left)->ptr,
+			((qse_awk_val_str_t*)left)->len,
+			QSE_NULL, &errnum);
 		if (n == -1) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
@@ -4810,7 +4814,8 @@ static qse_awk_val_t* eval_binop_match0 (
 			run->awk, rex_code, 
 			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			out.u.cpldup.ptr, out.u.cpldup.len, 
-			QSE_NULL, QSE_NULL, &errnum);
+			out.u.cpldup.ptr, out.u.cpldup.len, 
+			QSE_NULL, &errnum);
 		if (n == -1) 
 		{
 			QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);

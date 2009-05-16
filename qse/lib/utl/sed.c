@@ -110,11 +110,22 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	
 	}
 
+	if (qse_str_init (&sed->text.subst, mmgr, 256) == QSE_NULL)
+	{
+		qse_str_fini (&sed->text.held);
+		qse_lda_fini (&sed->text.appended);
+		QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);
+		qse_map_fini (&sed->labs);
+		qse_str_fini (&sed->rexbuf);
+		return QSE_NULL;
+	}
+
 	return sed;
 }
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+	qse_str_fini (&sed->text.subst);
 	qse_str_fini (&sed->text.held);
 	qse_lda_fini (&sed->text.appended);
 
@@ -232,7 +243,7 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.branch.label.ptr);
 			break;
 	
-		case QSE_SED_CMD_S:
+		case QSE_SED_CMD_SUBSTITUTE:
 			if (cmd->u.subst.file.ptr != QSE_NULL)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.file.ptr);
 			if (cmd->u.subst.rpl.ptr != QSE_NULL)
@@ -241,7 +252,7 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				qse_freerex (sed->mmgr, cmd->u.subst.rex);
 			break;
 
-		case QSE_SED_CMD_Y:
+		case QSE_SED_CMD_TRANSLATE:
 			if (cmd->u.transet.ptr != QSE_NULL)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.transet.ptr);
 			break;
@@ -1691,6 +1702,110 @@ static int write_str_to_file (
 	return 0;
 }
 
+static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	qse_cstr_t mat;
+	int opt = 0;
+	qse_rex_errnum_t errnum;
+	const qse_char_t* cur_ptr, * str_ptr;
+	qse_size_t cur_len, str_len, m, i;
+	qse_size_t max_count, sub_count;
+
+	QSE_ASSERT (cmd->type == QSE_SED_CMD_SUBSTITUTE);
+
+	qse_str_clear (&sed->text.subst);
+	if (cmd->u.subst.i) opt = QSE_REX_IGNORECASE;
+
+	str_ptr = QSE_STR_PTR(&sed->eio.in.line);
+	str_len = QSE_STR_LEN(&sed->eio.in.line);
+
+	/* TODO: support different line end scheme */
+	if (str_len > 0 && str_ptr[str_len-1] == QSE_T('\n')) str_len--;
+
+	cur_ptr = str_ptr;
+	cur_len = str_len;
+
+	sub_count = 0;
+	max_count = (cmd->u.subst.g)? 0: cmd->u.subst.occ;
+
+	while (1)
+	{
+		int n;
+
+		if (max_count == 0 || sub_count < max_count)
+		{
+			/* TODO: maximum match depth... */
+			n = qse_matchrex (
+				sed->mmgr, 0, cmd->u.subst.rex, opt,
+				str_ptr, str_len,
+				cur_ptr, cur_len,
+				&mat, &errnum
+			);
+		}
+		else n = 0;
+
+		if (n == -1)
+		{
+			sed->errnum = QSE_SED_EREXMA;
+			return -1;
+		}
+
+		if (n == 0) 
+		{
+			/* no more match found */
+			if (qse_str_ncat (
+				&sed->text.subst,
+				cur_ptr, cur_len) == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_EREXMA;
+				return -1;
+			}
+			break;
+		}
+
+		m = qse_str_ncat (&sed->text.subst, cur_ptr, mat.ptr-cur_ptr);
+		if (m == (qse_size_t)-1)
+		{
+			sed->errnum = QSE_SED_EREXMA;
+			return -1;
+		}
+
+		for (i = 0; i < cmd->u.subst.rpl.len; i++)
+		{
+			if ((i+1) < cmd->u.subst.rpl.len && 
+			    cmd->u.subst.rpl.ptr[i] == QSE_T('\\') && 
+			    cmd->u.subst.rpl.ptr[i+1] == QSE_T('&'))
+			{
+				m = qse_str_ccat (&sed->text.subst, QSE_T('&'));
+				i++;
+			}
+			else if (cmd->u.subst.rpl.ptr[i] == QSE_T('&'))
+			{
+				m = qse_str_ncat (
+					&sed->text.subst, mat.ptr, mat.len);
+			}
+			else 
+			{
+				m = qse_str_ccat (
+					&sed->text.subst, cmd->u.subst.rpl.ptr[i]);
+			}
+
+			if (m == (qse_size_t)-1)
+			{
+				sed->errnum = QSE_SED_EREXMA;
+				return -1;
+			}
+		}
+
+		sub_count++;
+		cur_len = cur_len - ((mat.ptr - cur_ptr) + mat.len);
+		cur_ptr = mat.ptr + mat.len;
+	}
+
+	qse_str_swap (&sed->eio.in.line, &sed->text.subst);
+	return 0;
+}
+
 static int match_a (qse_sed_t* sed, qse_sed_a_t* a)
 {
 	switch (a->type)
@@ -1700,10 +1815,11 @@ static int match_a (qse_sed_t* sed, qse_sed_a_t* a)
 
 		case QSE_SED_A_REX:
 		{
-			qse_str_t match;
-			int errnum, n;
+			int n;
+			qse_cstr_t match;
 			qse_str_t* line;
 			qse_size_t llen;
+			qse_rex_errnum_t errnum;
 
 			QSE_ASSERT (a->u.rex != QSE_NULL);
 
@@ -1715,13 +1831,10 @@ static int match_a (qse_sed_t* sed, qse_sed_a_t* a)
 			    QSE_STR_CHAR(line,llen-1) == QSE_T('\n')) llen--;
 
 			n = qse_matchrex (
-				sed->mmgr,
-				0,
-				a->u.rex,
-				0,
-				QSE_STR_PTR(line),
-				llen,
-				&match.ptr, &match.len, &errnum);
+				sed->mmgr, 0, a->u.rex, 0,
+				QSE_STR_PTR(line), llen, 
+				QSE_STR_PTR(line), llen, 
+				&match, &errnum);
 			if (n <= -1)
 			{
 				sed->errnum = QSE_SED_EREXMA;
@@ -2047,8 +2160,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_WRITE_FILELN:
 		{
 			const qse_char_t* ptr = QSE_STR_PTR(&sed->eio.in.line);
-			const qse_char_t* len = QSE_STR_LEN(&sed->eio.in.line);
-			qse_size_t i;
+			qse_size_t i, len = QSE_STR_LEN(&sed->eio.in.line);
 			for (i = 0; i < len; i++)
 			{	
 				/* TODO: handle different line end scheme */
@@ -2088,6 +2200,37 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			jumpto = cmd->u.branch.target;
+			break;
+
+		case QSE_SED_CMD_TRANSLATE:
+		{
+			qse_char_t* ptr = QSE_STR_PTR(&sed->eio.in.line);
+			qse_size_t i, len = QSE_STR_LEN(&sed->eio.in.line);
+
+		/* TODO: sort cmd->u.transset and do binary search 
+		 * when sorted, you can, before binary search, check if ptr[i] < transet[0] || ptr[i] > transset[transset_size-1]. if so, it has not mathing translation */
+			/* TODO: support different line end scheme */
+			if (len > 0 && ptr[len-1] == QSE_T('\n')) len--;
+
+			for (i = 0; i < len; i++)
+			{
+				const qse_char_t* tptr = cmd->u.transet.ptr;
+				qse_size_t j, tlen = cmd->u.transet.len;
+				for (j = 0; j < tlen; j += 2)
+				{
+					if (ptr[i] == tptr[j])
+					{
+						ptr[i] = tptr[j+1];
+						break;
+					}
+				}
+			}
+			break;
+		}
+
+		case QSE_SED_CMD_SUBSTITUTE:
+			n = do_subst (sed, cmd);
+			if (n <= -1) return QSE_NULL;
 			break;
 	}
 

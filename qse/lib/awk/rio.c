@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: rio.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -269,8 +269,7 @@ int qse_awk_rtx_readio (
 					 * the buffer has been appened with the last character
 					 * after the previous matchrex has failed */
 
-					const qse_char_t* match_ptr;
-					qse_size_t match_len;
+					qse_cstr_t match;
 
 					QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
@@ -278,7 +277,8 @@ int qse_awk_rtx_readio (
 						run->awk, run->gbl.rs, 
 						((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-						&match_ptr, &match_len, &run->errnum);
+						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
+						&match, &run->errnum);
 					if (n == -1)
 					{
 						ret = -1;
@@ -291,9 +291,9 @@ int qse_awk_rtx_readio (
 						 * the current buffer */
 						QSE_ASSERT (
 							QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
-							match_ptr + match_len);
+							match.ptr + match.len);
 
-						QSE_STR_LEN(buf) -= match_len;
+						QSE_STR_LEN(buf) -= match.len;
 						break;
 					}
 				}
@@ -357,8 +357,7 @@ int qse_awk_rtx_readio (
 		}
 		else
 		{
-			const qse_char_t* match_ptr;
-			qse_size_t match_len;
+			qse_cstr_t match;
 
 			QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
@@ -366,7 +365,8 @@ int qse_awk_rtx_readio (
 				run->awk, run->gbl.rs, 
 				((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-				&match_ptr, &match_len, &run->errnum);
+				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
+				&match, &run->errnum);
 			if (n == -1)
 			{
 				ret = -1;
@@ -380,9 +380,9 @@ int qse_awk_rtx_readio (
 				 * the current buffer */
 				QSE_ASSERT (
 					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
-					match_ptr + match_len);
+					match.ptr + match.len);
 
-				QSE_STR_LEN(buf) -= match_len;
+				QSE_STR_LEN(buf) -= match.len;
 				p->in.pos--; /* unread the character in c */
 				break;
 			}

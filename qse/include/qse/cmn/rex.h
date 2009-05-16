@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: rex.h 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -76,24 +76,84 @@ enum qse_rex_errnum_t
         QSE_REX_EEND,          /* unexpected end of the pattern */
         QSE_REX_EGARBAGE       /* garbage after the pattern */
 };
+typedef enum qse_rex_errnum_t qse_rex_errnum_t;
+
+typedef struct qse_rex_t qse_rex_t;
+
+struct qse_rex_t
+{
+	QSE_DEFINE_COMMON_FIELDS (rex)
+	qse_rex_errnum_t errnum;
+	int option;
+
+	struct
+	{
+		int build;
+		int match;
+	} depth;
+
+	void* code;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+QSE_DEFINE_COMMON_FUNCTIONS (rex)
+
+qse_rex_t* qse_rex_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtn
+);
+
+void qse_rex_close (
+	qse_rex_t* rex
+);
+
+int qse_rex_build (
+	qse_rex_t*        rex,
+	const qse_char_t* ptn,
+	qse_size_t        len
+);
+
+int qse_rex_match (
+	qse_rex_t*        rex,
+	const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* substr,
+	qse_size_t        sublen,
+        qse_cstr_t*       match
+);
+
 void* qse_buildrex (
-	qse_mmgr_t* mmgr, qse_size_t depth,
-	const qse_char_t* ptn, qse_size_t len, int* errnum);
+	qse_mmgr_t*       mmgr,
+	qse_size_t        depth,
+	const qse_char_t* ptn,
+	qse_size_t        len,
+	qse_rex_errnum_t* errnum
+);
 
 int qse_matchrex (
-	qse_mmgr_t* mmgr, qse_size_t depth,
-	void* code, int option,
-	const qse_char_t* str, qse_size_t len, 
-	const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum);
+	qse_mmgr_t*        mmgr,
+	qse_size_t         depth,
+	void*              code, 
+	int                option,
+	const qse_char_t*  str, 
+	qse_size_t         len, 
+	const qse_char_t*  substr, 
+	qse_size_t         sublen, 
+	qse_cstr_t*        match,	
+	qse_rex_errnum_t*  errnum
+);
 
-void qse_freerex (qse_mmgr_t* mmgr, void* code);
+void qse_freerex (
+	qse_mmgr_t* mmgr,
+	void*       code
+);
 
-qse_bool_t qse_isemptyrex (void* code);
+qse_bool_t qse_isemptyrex (
+	void* code
+);
 
 #if 0
 void qse_dprintrex (qse_rex_t* rex, void* rex);

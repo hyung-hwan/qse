@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: misc.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -831,24 +831,24 @@ exit_loop:
 }
 
 qse_char_t* qse_awk_rtx_strxntokbyrex (
-	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
+	qse_awk_rtx_t* rtx, 
+	const qse_char_t* str, qse_size_t len,
+	const qse_char_t* substr, qse_size_t sublen,
 	void* rex, qse_char_t** tok, qse_size_t* tok_len, int* errnum)
 {
 	int n;
-	qse_char_t* match_ptr;
-	qse_size_t match_len, i;
-	qse_size_t left = len;
-	const qse_char_t* ptr = s;
-	const qse_char_t* str_ptr = s;
-	qse_size_t str_len = len;
+	qse_size_t i, left = sublen;
+	const qse_char_t* ptr = substr;
+	const qse_char_t* str_ptr = substr;
+	qse_size_t str_len = sublen;
+	qse_cstr_t match;
 
-	while (len > 0)
+	while (sublen > 0)
 	{
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex, 
 			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-			ptr, left, (const qse_char_t**)&match_ptr, &match_len, 
-			errnum);
+			str, len, ptr, left, &match, errnum);
 		if (n == -1) return QSE_NULL;
 		if (n == 0)
 		{
@@ -862,7 +862,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 
 		QSE_ASSERT (n == 1);
 
-		if (match_len == 0)
+		if (match.len == 0)
 		{
 			ptr++;
 			left--;
@@ -870,28 +870,28 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 		else if (rtx->awk->option & QSE_AWK_STRIPSPACES)
 		{
 			/* match at the beginning of the input string */
-			if (match_ptr == s) 
+			if (match.ptr == substr) 
 			{
-				for (i = 0; i < match_len; i++)
+				for (i = 0; i < match.len; i++)
 				{
-					if (!QSE_AWK_ISSPACE(rtx->awk, match_ptr[i]))
+					if (!QSE_AWK_ISSPACE(rtx->awk, match.ptr[i]))
 						goto exit_loop;
 				}
 
 				/* the match that are all spaces at the 
 				 * beginning of the input string is skipped */
-				ptr += match_len;
-				left -= match_len;
-				str_ptr = s + match_len;
-				str_len -= match_len;
+				ptr += match.len;
+				left -= match.len;
+				str_ptr = substr + match.len;
+				str_len -= match.len;
 			}
-			else  break;
+			else break;
 		}
 		else break;
 	}
 
 exit_loop:
-	if (len == 0)
+	if (sublen == 0)
 	{
 		*tok = (qse_char_t*)str_ptr;
 		*tok_len = str_len;
@@ -900,14 +900,14 @@ exit_loop:
 	}
 
 	*tok = (qse_char_t*)str_ptr;
-	*tok_len = match_ptr - str_ptr;
+	*tok_len = match.ptr - str_ptr;
 
-	for (i = 0; i < match_len; i++)
+	for (i = 0; i < match.len; i++)
 	{
-		if (!QSE_AWK_ISSPACE(rtx->awk, match_ptr[i]))
+		if (!QSE_AWK_ISSPACE(rtx->awk, match.ptr[i]))
 		{
 			*errnum = QSE_AWK_ENOERR;
-			return match_ptr+match_len;
+			return (qse_char_t*)match.ptr+match.len;
 		}
 	}
 
@@ -915,13 +915,13 @@ exit_loop:
 
 	if (rtx->awk->option & QSE_AWK_STRIPSPACES)
 	{
-		return (match_ptr+match_len >= s+len)? 
-			QSE_NULL: (match_ptr+match_len);
+		return (match.ptr+match.len >= substr+sublen)? 
+			QSE_NULL: ((qse_char_t*)match.ptr+match.len);
 	}
 	else
 	{
-		return (match_ptr+match_len > s+len)? 
-			QSE_NULL: (match_ptr+match_len);
+		return (match.ptr+match.len > substr+sublen)? 
+			QSE_NULL: ((qse_char_t*)match.ptr+match.len);
 	}
 }
 
@@ -944,7 +944,7 @@ exit_loop:
 void* qse_awk_buildrex (
 	qse_awk_t* awk, const qse_char_t* ptn, qse_size_t len, int* errnum)
 {
-	int err;
+	qse_rex_errnum_t err;
 	void* p;
 
 	p = qse_buildrex (
@@ -956,13 +956,15 @@ void* qse_awk_buildrex (
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int option,
         const qse_char_t* str, qse_size_t len,
-        const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum)
+        const qse_char_t* substr, qse_size_t sublen,
+	qse_cstr_t* match, int* errnum)
 {
-	int err, x;
+	int x;
+	qse_rex_errnum_t err;
 
 	x = qse_matchrex (
 		awk->mmgr, awk->rex.depth.max.match,
-		code, option, str, len, match_ptr, match_len, &err);
+		code, option, str, len, substr, sublen, match, &err);
 	if (x < 0) *errnum = QSE_AWK_REXERRTOERR(err);
 	return x;
 }

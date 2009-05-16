@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: rex.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -107,7 +107,7 @@ struct builder_t
 		qse_size_t cur;
 	} depth;
 
-	int errnum;
+	qse_rex_errnum_t errnum;
 };
 
 struct matcher_t
@@ -121,6 +121,12 @@ struct matcher_t
 			const qse_char_t* ptr;
 			const qse_char_t* end;
 		} str;
+
+		struct
+		{
+			const qse_char_t* ptr;
+			const qse_char_t* end;
+		} realstr;
 	} match;
 
 	struct
@@ -130,7 +136,7 @@ struct matcher_t
 	} depth;
 
 	int ignorecase;
-	int errnum;
+	qse_rex_errnum_t errnum;
 };
 
 struct match_t
@@ -331,9 +337,63 @@ static struct __char_class_t __char_class[] =
 	{ QSE_NULL,        0, QSE_NULL }
 };
 
+qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn)
+{
+	qse_rex_t* rex;
+
+	if (mmgr == QSE_NULL) 
+	{
+		mmgr = QSE_MMGR_GETDFL();
+
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
+
+		if (mmgr == QSE_NULL) return QSE_NULL;
+	}
+
+	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
+	if (rex == QSE_NULL) return QSE_NULL;
+
+	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
+	rex->mmgr = mmgr;
+
+	return rex;
+}
+
+void qse_rex_close (qse_rex_t* rex)
+{
+	if (rex->code != QSE_NULL) qse_freerex (rex->mmgr, rex->code);
+	QSE_MMGR_FREE (rex->mmgr, rex);
+}
+
+int qse_rex_build (qse_rex_t* rex, const qse_char_t* ptn, qse_size_t len)
+{
+	void* code;
+
+	code = qse_buildrex (
+		rex->mmgr, rex->depth.build,
+		ptn, len, &rex->errnum);
+	if (code == QSE_NULL) return -1;
+
+	if (rex->code != QSE_NULL) qse_freerex (rex->mmgr, rex->code);
+	rex->code = code;
+
+	return 0;
+}
+
+int qse_rex_match (
+	qse_rex_t* rex,
+	const qse_char_t* str, qse_size_t len,
+	const qse_char_t* substr, qse_size_t sublen, qse_cstr_t* match)
+{
+	return qse_matchrex (
+		rex->mmgr, rex->depth.match, rex->code, rex->option,
+		str, len, substr, sublen, match, &rex->errnum);
+}
+
 void* qse_buildrex (
 	qse_mmgr_t* mmgr, qse_size_t depth, 
-	const qse_char_t* ptn, qse_size_t len, int* errnum)
+	const qse_char_t* ptn, qse_size_t len, qse_rex_errnum_t* errnum)
 {
 	builder_t builder;
 
@@ -399,7 +459,8 @@ int qse_matchrex (
 	qse_mmgr_t* mmgr, qse_size_t depth,
 	void* code, int option,
 	const qse_char_t* str, qse_size_t len, 
-	const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum)
+	const qse_char_t* substr, qse_size_t sublen, 
+	qse_cstr_t* match, qse_rex_errnum_t* errnum)
 {
 	matcher_t matcher;
 	match_t mat;
@@ -409,8 +470,11 @@ int qse_matchrex (
 	matcher.mmgr = mmgr;
 
 	/* store the source string */
-	matcher.match.str.ptr = str;
-	matcher.match.str.end = str + len;
+	matcher.match.str.ptr = substr;
+	matcher.match.str.end = substr + sublen;
+
+	matcher.match.realstr.ptr = str;
+	matcher.match.realstr.end = str + len;
 
 	matcher.depth.max = depth;
 	matcher.depth.cur = 0;
@@ -418,7 +482,7 @@ int qse_matchrex (
 
 	mat.matched = QSE_FALSE;
 	/* TODO: should it allow an offset here??? */
-	mat.match_ptr = str + offset;
+	mat.match_ptr = substr + offset;
 
 	/*while (mat.match_ptr < matcher.match.str.end)*/
 	while (mat.match_ptr <= matcher.match.str.end)
@@ -441,8 +505,11 @@ int qse_matchrex (
 			}
 			*/
 
-			if (match_ptr != QSE_NULL) *match_ptr = mat.match_ptr;
-			if (match_len != QSE_NULL) *match_len = mat.match_len;
+			if (match != QSE_NULL) 
+			{
+				match->ptr = mat.match_ptr;
+				match->len = mat.match_len;
+			}
 
 			/*match_ptr_zero = QSE_NULL;*/
 			break;
@@ -454,8 +521,11 @@ int qse_matchrex (
 	/*
 	if (match_ptr_zero != QSE_NULL) 
 	{
-		if (match_ptr != QSE_NULL) *match_ptr = match_ptr_zero;
-		if (match_len != QSE_NULL) *match_len = 0;
+		if (match != QSE_NULL) 
+		{
+			match->ptr = match_ptr_zero;
+			match->len = 0;
+		}
 		return 1;
 	}
 	*/
@@ -1349,7 +1419,9 @@ static const qse_byte_t* match_bol (
 	cp = (const code_t*)p; p += QSE_SIZEOF(*cp);
 	QSE_ASSERT (cp->cmd == CMD_BOL);
 
-	mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
+	/*mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
+	               (cp->lbound == cp->ubound && cp->lbound == 0));*/
+	mat->matched = (mat->match_ptr == matcher->match.realstr.ptr ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
 	mat->match_len = 0;
 
@@ -1365,7 +1437,9 @@ static const qse_byte_t* match_eol (
 	cp = (const code_t*)p; p += QSE_SIZEOF(*cp);
 	QSE_ASSERT (cp->cmd == CMD_EOL);
 
-	mat->matched = (mat->match_ptr == matcher->match.str.end ||
+	/*mat->matched = (mat->match_ptr == matcher->match.str.end ||
+	               (cp->lbound == cp->ubound && cp->lbound == 0));*/
+	mat->matched = (mat->match_ptr == matcher->match.realstr.end ||
 	               (cp->lbound == cp->ubound && cp->lbound == 0));
 	mat->match_len = 0;
 
