@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 89 2009-02-28 15:27:03Z hyunghwan.chung $
+ * $Id: rec.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -146,8 +146,13 @@ static int split_record (qse_awk_rtx_t* run)
 		}
 		else
 		{
-			p = qse_awk_rtx_strxntokbyrex (run, p, len, 
-				run->gbl.fs, &tok, &tok_len, &errnum); 
+			p = qse_awk_rtx_strxntokbyrex (
+				run, 
+				QSE_STR_PTR(&run->inrec.line),
+				QSE_STR_LEN(&run->inrec.line),
+				p, len, 
+				run->gbl.fs, &tok, &tok_len, &errnum
+			); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
 				if (fs_free != QSE_NULL) 
@@ -203,8 +208,13 @@ static int split_record (qse_awk_rtx_t* run)
 		}
 		else
 		{
-			p = qse_awk_rtx_strxntokbyrex (run, p, len, 
-				run->gbl.fs, &tok, &tok_len, &errnum); 
+			p = qse_awk_rtx_strxntokbyrex (
+				run, 
+				QSE_STR_PTR(&run->inrec.line),
+				QSE_STR_LEN(&run->inrec.line),
+				p, len,
+				run->gbl.fs, &tok, &tok_len, &errnum
+			); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
 				if (fs_free != QSE_NULL) 

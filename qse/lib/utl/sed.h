@@ -77,18 +77,16 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_NEXT_APPEND    = QSE_T('N'),
 
 		/* branch */
-		QSE_SED_CMD_BRANCH = QSE_T('b'), 
-		QSE_SED_CMD_T   = QSE_T('t'),
+		QSE_SED_CMD_BRANCH         = QSE_T('b'), 
+		QSE_SED_CMD_T              = QSE_T('t'),
 
-		QSE_SED_CMD_READ_FILE     = QSE_T('r'),
-		QSE_SED_CMD_READ_FILELN   = QSE_T('R'),
-		QSE_SED_CMD_WRITE_FILE    = QSE_T('w'),
-		QSE_SED_CMD_WRITE_FILELN  = QSE_T('W'),
+		QSE_SED_CMD_READ_FILE      = QSE_T('r'),
+		QSE_SED_CMD_READ_FILELN    = QSE_T('R'),
+		QSE_SED_CMD_WRITE_FILE     = QSE_T('w'),
+		QSE_SED_CMD_WRITE_FILELN   = QSE_T('W'),
 
-		/* s/regex/str/ - replace matching pattern with a new string */
-		QSE_SED_CMD_S   = QSE_T('s'),
-		/* y/s/d/ - translate characters in s to characters in d */
-		QSE_SED_CMD_Y   = QSE_T('y')
+		QSE_SED_CMD_SUBSTITUTE     = QSE_T('s'),
+		QSE_SED_CMD_TRANSLATE      = QSE_T('y')
 
 	} type;
 

@@ -198,6 +198,7 @@ struct qse_sed_t
 	{
 		qse_lda_t appended;
 		qse_str_t held;
+		qse_str_t subst;
 	} text;
 };
 

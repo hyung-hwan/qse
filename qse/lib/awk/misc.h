@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: misc.h 135 2009-05-15 13:31:43Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -42,8 +42,16 @@ qse_char_t* qse_awk_rtx_strxntok (
 	qse_char_t** tok, qse_size_t* tok_len);
 
 qse_char_t* qse_awk_rtx_strxntokbyrex (
-	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	void* rex, qse_char_t** tok, qse_size_t* tok_len, int* errnum);
+	qse_awk_rtx_t*    rtx, 
+	const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* substr,
+	qse_size_t        sublen,
+	void*             rex,
+	qse_char_t**      tok,
+	qse_size_t*       tok_len,
+	int*              errnum
+);
 
 
 void* qse_awk_buildrex (
@@ -52,7 +60,8 @@ void* qse_awk_buildrex (
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int option,
         const qse_char_t* str, qse_size_t len,
-        const qse_char_t** match_ptr, qse_size_t* match_len, int* errnum);
+        const qse_char_t* substr, qse_size_t sublen,
+	qse_cstr_t* match, int* errnum);
 
 #ifdef __cplusplus
 }
