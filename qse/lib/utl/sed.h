@@ -76,9 +76,8 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_NEXT           = QSE_T('n'),
 		QSE_SED_CMD_NEXT_APPEND    = QSE_T('N'),
 
-		/* branch */
 		QSE_SED_CMD_BRANCH         = QSE_T('b'), 
-		QSE_SED_CMD_T              = QSE_T('t'),
+		QSE_SED_CMD_BRANCH_COND    = QSE_T('t'),
 
 		QSE_SED_CMD_READ_FILE      = QSE_T('r'),
 		QSE_SED_CMD_READ_FILELN    = QSE_T('R'),
