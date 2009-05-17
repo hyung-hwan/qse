@@ -57,9 +57,10 @@ static qse_ssize_t in (
 			arg->read.buf[0] = c;
 			return 1;
 		}
+
+		default:
+			return -1;
 	}
-	
-	return -1;
 }
 
 static qse_ssize_t out (
@@ -92,9 +93,10 @@ static qse_ssize_t out (
 				qse_fputc (arg->write.data[i], arg->write.handle);
 			return arg->write.len;
 		}
+
+		default:
+			return -1;
 	}
-	
-	return -1;
 }
 
 int sed_main (int argc, qse_char_t* argv[])
