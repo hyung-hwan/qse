@@ -51,14 +51,10 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_QUIT       = QSE_T('q'),
 		QSE_SED_CMD_QUIT_QUIET = QSE_T('Q'),
 
-		/* a \<\n> text - append text */
 		QSE_SED_CMD_APPEND = QSE_T('a'),
-		/* i \<\n> text - insert text */
 		QSE_SED_CMD_INSERT = QSE_T('i'),
-		/* c \<\n> text - change text */
 		QSE_SED_CMD_CHANGE = QSE_T('c'),
 
-		/* delete pattern space */
 		QSE_SED_CMD_DELETE = QSE_T('d'),
 		QSE_SED_CMD_DD     = QSE_T('D'),
 
@@ -119,13 +115,12 @@ struct qse_sed_cmd_t
 		/* translation set for the y command */
 		qse_xstr_t transet;
 
+		/* branch target for b and t */
 		struct
 		{
 			qse_xstr_t label;
 			qse_sed_cmd_t* target;
 		} branch;
-
-		void* rex;
 	} u;	
 
 	struct

@@ -201,7 +201,7 @@ struct qse_sed_t
 			qse_str_t read;
 			qse_str_t held;
 			qse_str_t subst;
-		} text;
+		} txt;
 
 		int subst_done;
 	} e;
