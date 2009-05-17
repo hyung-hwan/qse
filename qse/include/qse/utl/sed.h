@@ -150,12 +150,15 @@ struct qse_sed_t
 
 	qse_map_t labs; /* label map */
 
-	/* current level of command group nesting */
-	int grplvl;
-	/* temporary storage to keep track of the begining of a command group */
-	qse_sed_cmd_t* grpcmd[128];
+	struct
+	{
+		/* current level of command group nesting */
+		int level;
+		/* temporary storage to keep track of the begining of a command group */
+		qse_sed_cmd_t* cmd[128];
+	} grp;
 
-	/* io data for execution */
+	/* data for execution */
 	struct
 	{
 		struct
@@ -192,14 +195,16 @@ struct qse_sed_t
 			qse_size_t num;
 		} in;
 
-	} eio;
+		struct
+		{
+			qse_lda_t appended;
+			qse_str_t read;
+			qse_str_t held;
+			qse_str_t subst;
+		} text;
 
-	struct
-	{
-		qse_lda_t appended;
-		qse_str_t held;
-		qse_str_t subst;
-	} text;
+		int subst_done;
+	} e;
 };
 
 
