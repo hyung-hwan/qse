@@ -48,15 +48,15 @@ struct qse_sed_cmd_t
 {
 	enum
 	{
-		QSE_SED_CMD_QUIT       = QSE_T('q'),
-		QSE_SED_CMD_QUIT_QUIET = QSE_T('Q'),
+		QSE_SED_CMD_QUIT           = QSE_T('q'),
+		QSE_SED_CMD_QUIT_QUIET     = QSE_T('Q'),
 
-		QSE_SED_CMD_APPEND = QSE_T('a'),
-		QSE_SED_CMD_INSERT = QSE_T('i'),
-		QSE_SED_CMD_CHANGE = QSE_T('c'),
+		QSE_SED_CMD_APPEND         = QSE_T('a'),
+		QSE_SED_CMD_INSERT         = QSE_T('i'),
+		QSE_SED_CMD_CHANGE         = QSE_T('c'),
 
-		QSE_SED_CMD_DELETE = QSE_T('d'),
-		QSE_SED_CMD_DD     = QSE_T('D'),
+		QSE_SED_CMD_DELETE         = QSE_T('d'),
+		QSE_SED_CMD_DELETE_FIRSTLN = QSE_T('D'),
 
 		QSE_SED_CMD_PRINT_LNNUM    = QSE_T('='),
 		QSE_SED_CMD_PRINT          = QSE_T('p'),
@@ -72,13 +72,13 @@ struct qse_sed_cmd_t
 		QSE_SED_CMD_NEXT           = QSE_T('n'),
 		QSE_SED_CMD_NEXT_APPEND    = QSE_T('N'),
 
-		QSE_SED_CMD_BRANCH         = QSE_T('b'), 
-		QSE_SED_CMD_BRANCH_COND    = QSE_T('t'),
-
 		QSE_SED_CMD_READ_FILE      = QSE_T('r'),
 		QSE_SED_CMD_READ_FILELN    = QSE_T('R'),
 		QSE_SED_CMD_WRITE_FILE     = QSE_T('w'),
 		QSE_SED_CMD_WRITE_FILELN   = QSE_T('W'),
+
+		QSE_SED_CMD_BRANCH         = QSE_T('b'), 
+		QSE_SED_CMD_BRANCH_COND    = QSE_T('t'),
 
 		QSE_SED_CMD_SUBSTITUTE     = QSE_T('s'),
 		QSE_SED_CMD_TRANSLATE      = QSE_T('y')

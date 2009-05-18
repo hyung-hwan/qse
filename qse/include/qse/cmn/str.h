@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: str.h 138 2009-05-17 09:35:16Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -537,6 +537,12 @@ qse_size_t qse_str_nccat (
 	qse_str_t* str,
 	qse_char_t c,
 	qse_size_t len
+);
+
+qse_size_t qse_str_del (
+	qse_str_t* str,
+	qse_size_t index,
+	qse_size_t size
 );
 
 /****f* Common/qse_strspl

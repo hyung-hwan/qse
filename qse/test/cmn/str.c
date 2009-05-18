@@ -527,6 +527,29 @@ static int test12 (void)
 	return 0;
 }
 
+static int test13 (void)
+{
+	qse_char_t a1[] = QSE_T("abcdefghijklmnopqrstuvwxyz");
+	qse_str_t x;
+	int i;
+
+	qse_str_init (&x, QSE_MMGR_GETDFL(), 5);
+
+	for (i = 1; i < 20; i++)
+	{
+		qse_str_cpy (&x, a1);
+		qse_str_del (&x, 10, i);
+		qse_printf (QSE_T("deleleted %d from 10 => %llu [%s]\n"), 
+			i,
+			(unsigned long long)QSE_STR_LEN(&x),
+			QSE_STR_PTR(&x));
+	}
+
+	qse_str_fini (&x);
+	return 0;
+}
+
+
 int main ()
 {
 	setlocale (LC_ALL, "");
@@ -547,6 +570,7 @@ int main ()
 	R (test10);
 	R (test11);
 	R (test12);
+	R (test13);
 
 	return 0;
 }
