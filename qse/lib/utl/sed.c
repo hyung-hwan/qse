@@ -2080,6 +2080,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				/* if a new line is found */
 				qse_str_del (&sed->e.in.line, 0, 
 					nl - QSE_STR_PTR(&sed->e.in.line) + 1);	
+
+				/* arrange to start the the next cycle */
+				jumpto = sed->cmd.cur;
 				break;
 			}
 
