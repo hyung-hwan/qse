@@ -246,6 +246,14 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
 			break;
 
+		case QSE_SED_CMD_READ_FILE:
+		case QSE_SED_CMD_READ_FILELN:
+		case QSE_SED_CMD_WRITE_FILE:
+		case QSE_SED_CMD_WRITE_FILELN:
+			if (cmd->u.file.ptr != QSE_NULL)
+				QSE_MMGR_FREE (sed->mmgr, cmd->u.file.ptr);
+			break;
+
 		case QSE_SED_CMD_BRANCH:
 		case QSE_SED_CMD_BRANCH_COND:
 			if (cmd->u.branch.label.ptr != QSE_NULL) 
@@ -264,14 +272,6 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_TRANSLATE:
 			if (cmd->u.transet.ptr != QSE_NULL)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.transet.ptr);
-			break;
-
-		case QSE_SED_CMD_READ_FILE:
-		case QSE_SED_CMD_READ_FILELN:
-		case QSE_SED_CMD_WRITE_FILE:
-		case QSE_SED_CMD_WRITE_FILELN:
-			if (cmd->u.file.ptr != QSE_NULL)
-				QSE_MMGR_FREE (sed->mmgr, cmd->u.file.ptr);
 			break;
 
 		default: 
@@ -1848,9 +1848,10 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			);
 			if (n <= -1) return -1;
 		}
+
+		sed->e.subst_done = 1;
 	}
 
-	sed->e.subst_done = 1;
 	return 0;
 }
 
@@ -2065,6 +2066,25 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			break;
 
+		case QSE_SED_CMD_DELETE_FIRSTLN:
+		{
+			qse_char_t* nl;
+
+			/* delete the first line from the pattern space */
+			nl = qse_strxchr (
+				QSE_STR_PTR(&sed->e.in.line),
+				QSE_STR_LEN(&sed->e.in.line),
+				QSE_T('\n'));
+			if (nl != QSE_NULL) 
+			{
+				/* if a new line is found */
+				qse_str_del (&sed->e.in.line, 0, 
+					nl - QSE_STR_PTR(&sed->e.in.line) + 1);	
+				break;
+			}
+
+			/* otherwise clear the entire pattern space below */
+		}
 		case QSE_SED_CMD_DELETE:
 			/* delete the pattern space */
 			qse_str_clear (&sed->e.in.line);
@@ -2261,6 +2281,11 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			jumpto = cmd->u.branch.target;
 			break;
 
+		case QSE_SED_CMD_SUBSTITUTE:
+			n = do_subst (sed, cmd);
+			if (n <= -1) return QSE_NULL;
+			break;
+
 		case QSE_SED_CMD_TRANSLATE:
 		{
 			qse_char_t* ptr = QSE_STR_PTR(&sed->e.in.line);
@@ -2286,11 +2311,6 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 			break;
 		}
-
-		case QSE_SED_CMD_SUBSTITUTE:
-			n = do_subst (sed, cmd);
-			if (n <= -1) return QSE_NULL;
-			break;
 	}
 
 	if (jumpto == QSE_NULL) jumpto = cmd + 1;

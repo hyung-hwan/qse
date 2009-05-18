@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 126 2009-05-05 02:12:38Z hyunghwan.chung $
+ * $Id: str_dyn.c 138 2009-05-17 09:35:16Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -311,3 +311,24 @@ qse_size_t qse_str_nccat (qse_str_t* str, qse_char_t c, qse_size_t len)
 	return str->len;
 }
 
+qse_size_t qse_str_del (qse_str_t* str, qse_size_t index, qse_size_t size)
+{
+	if (str->ptr != QSE_NULL && index < str->len && size > 0)
+	{
+		qse_size_t nidx = index + size;
+		if (nidx >= str->len)
+		{
+			str->ptr[index] = QSE_T('\0');
+			str->len = index;
+		}
+		else
+		{
+			qse_strncpy (
+				&str->ptr[index], &str->ptr[nidx],
+				str->len - nidx);
+			str->len -= size;
+		}
+	}
+
+	return str->len;
+}
