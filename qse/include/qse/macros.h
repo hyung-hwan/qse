@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 119 2009-04-02 07:09:10Z hyunghwan.chung $
+ * $Id: macros.h 140 2009-05-18 12:55:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -18,6 +18,10 @@
 
 #ifndef _QSE_MACROS_H_
 #define _QSE_MACROS_H_
+
+/** @file
+ * <qse/macros.h> contains various useful macro definitions.
+ */
 
 #include <qse/types.h>
 
@@ -39,25 +43,48 @@
 #define QSE_WCHAR_EOF ((qse_wcint_t)-1)
 #define QSE_CHAR_EOF  ((qse_cint_t)-1)
 
-/****m* Base/QSE_SIZEOF
- * NAME
- *  QSE_SIZEOF - get data size in bytes
- * SYNOPSIS
+/**
+ * The QSE_SIZEOF() macro gets data size in bytes. It is equivalent to the
+ * sizeof operator. The following code snippet should print sizeof(int)*128.
+ * @code
+ * int x[128];
+ * printf ("%d\n", (int)QSE_SIZEOF(x));
+ * @endcode
  */
 #define QSE_SIZEOF(n)  (sizeof(n))
-/******/
 
-/****m* Base/QSE_COUNTOF
- * NAME
- *  QSE_COUNTOF - get the number elements in a array
- * SYNOPSIS
+/**
+ * The QSE_COUNTOF() macro gets the number elements in a array.
+ * The following code snippet should print 128.
+ * @code
+ * int x[128];
+ * printf ("%d\n", (int)QSE_COUNTOF(x));
+ * @endcode
  */
 #define QSE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
-/******/
 
+/**
+ * The QSE_OFFSETOF() macro get the offset of a fields from the beginning
+ * of a structure.
+ */
 #define QSE_OFFSETOF(type,member) ((qse_size_t)&((type*)0)->member)
 
+/**
+ * The QSE_TYPE_IS_SIGNED() macro determines if a type is signed. 
+ * @code
+ * printf ("%d\n", QSE_TYPE_IS_SIGNED(int));
+ * printf ("%d\n", QSE_TYPE_IS_SIGNED(unsigned int));
+ * @endcode
+ */
 #define QSE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))
+
+/**
+ * The QSE_TYPE_IS_SIGNED() macro determines if a type is unsigned. 
+ * @code
+ * printf ("%d\n", QSE_TYPE_IS_UNSIGNED(int));
+ * printf ("%d\n", QSE_TYPE_IS_UNSIGNED(unsigned int));
+ * @endcode
+ */
 #define QSE_TYPE_IS_UNSIGNED(type) (((type)0) < ((type)-1))
 
 #define QSE_TYPE_SIGNED_MAX(type) \
@@ -168,50 +195,35 @@
 #	define QSE_END_NAMESPACE2(y,x)   }}
 #endif
 
-/****m* Base/QSE_DEFINE_COMMON_FIELDS
- * NAME
- *  QSE_DEFINE_COMMON_FIELDS - define common fields
- * SYNOPSIS
+/**
+ * The QSE_DEFINE_COMMON_FIELDS() macro defines common object fields.
  */
 #define QSE_DEFINE_COMMON_FIELDS(name) \
 	qse_mmgr_t* mmgr;
-/******/
 	
-/****m* Base/QSE_DEFINE_COMMON_FUNCTIONS
- * NAME
- *  QSE_DEFINE_COMMON_FUNCTIONS - define common functions
- * SYNOPSIS
+/**
+ * The QSE_DEFINE_COMMON_FUNcTIONS() macro defines common object functions.
  */
 #define QSE_DEFINE_COMMON_FUNCTIONS(name) \
 void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
-/******/
 
-/****m* Base/QSE_MMGR
- * NAME
- *  QSE_MMGR - get the memory manager field
- * SYNOPSIS
+/**
+ * The QSE_MMGR() macro gets the memory manager field from an object.
  */
-#define QSE_MMGR(obj) (obj->mmgr)
-/******/
+#define QSE_MMGR(obj) ((obj)->mmgr)
 
-/****m* Base/QSE_XTN
- * NAME
- *  QSE_XTN - get a pointer to extension space
- * DESCRIPTION
- *  The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
- *  extension space located at the end of an object. The type of the object
- *  should be known in advance for it to work properly.
- * SYNOPSIS
+/**
+ * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
+ * extension space located at the end of an object. The type of the object
+ * should be known in advance for it to work properly.
  */
 #define QSE_XTN(obj) ((void*)(obj + 1))
-/******/
 
-/****m* Base/QSE_IMPLEMENT_COMMON_FUNCTIONS
- * NAME
- *  QSE_IMPLEMENT_COMMON_FUNCTIONS - implement common functions
- * SYNOPSIS
+/**
+ * The QSE_IMPLEMENT_COMMON_FUNCTIONS() implement common functions for 
+ * an object.
  */
 #define QSE_IMPLEMENT_COMMON_FUNCTIONS(name) \
 void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
@@ -226,7 +238,5 @@ void* qse_##name##_getxtn (qse_##name##_t* name) \
 { \
 	return QSE_XTN(name); \
 }
-/******/
-
 
 #endif

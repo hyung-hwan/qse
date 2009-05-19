@@ -1,15 +1,28 @@
+/** @mainpage 
+
+@section INTRODUCTION
 
 QSE provides a script engine for various scripting languages and utility programs. It aims to produce a flexible script engine framework that can be embedded into an application. A hosting application can access various aspects of the embedded script engine and vice versa.
 
-<< INSTALL >>
+The library is licended under the Apache License, Version 2.0.
 
+The project webpage: http://qse.googlecode.com/
+
+For furthur information, contact: Chung, Hyung-Hwan <b a c o n e v i @ g m a i l . c o m>
+
+@section INSTALLATION
 Cross compiling for WIN32 with MINGW32
 
 	./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
 	make 
 
-<< DOCUMENTATION >>
-
+@section DOCUMENTATION
 Generate the API documents with robodoc.
 	
 	robodoc --rc doc/robodoc.rc --css doc/robodoc.css --src . --doc ./doc/qse 
+
+@section MODULES
+QSE includes various modules:
+- AWK: awk.h
+- SED: sed.h
+*/

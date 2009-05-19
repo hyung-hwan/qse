@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 138 2009-05-17 09:35:16Z hyunghwan.chung $
+ * $Id: str.h 140 2009-05-18 12:55:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,16 +22,14 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* Common/String
- * DESCRIPTION
+/** @file
  *  <qse/cmn/str.h> defines various functions, types, macros to manipulate
- *  strings.
+ *  a string.
  *
- *  The qse_cstr_t type and the qse_xstr_t defined in ase/types.h helps you
+ *  The qse_cstr_t type and the qse_xstr_t defined in <qse/types.h> helps you
  *  dealing with a string pointer and length.
  *
- *  #include <qse/cmn/str.h>
- ******
+ * @example str.c
  */
 
 #define QSE_STR_LEN(s)       ((s)->len)
@@ -43,21 +41,17 @@
 typedef struct qse_str_t qse_str_t;
 typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
 
-/****s* Common/qse_str_t
- * NAME
- *  qse_str_t - define a dynamically resizable string
- * SYNOPSIS
+/**
+ * The qse_str_t type defines a dynamically resizable string.
  */
 struct qse_str_t
 {
 	QSE_DEFINE_COMMON_FIELDS (str)
-
 	qse_str_sizer_t sizer;
 	qse_char_t*     ptr;
 	qse_size_t      len;
 	qse_size_t      capa;
 };
-/******/
 
 /* int qse_chartonum (qse_char_t c, int base) */
 #define QSE_CHARTONUM(c,base) \
@@ -109,10 +103,13 @@ struct qse_str_t
 	if (__ston_f > 0) value *= -1; \
 }
 
-enum qse_strtrm_opt_t
+/**
+ * The qse_strtrm_op_t defines a string trimming operation. 
+ */
+enum qse_strtrm_op_t
 {
-	QSE_STRTRM_LEFT  = (1 << 0),
-	QSE_STRTRM_RIGHT = (1 << 1)
+	QSE_STRTRM_LEFT  = (1 << 0), /**< trim leading spaces */
+	QSE_STRTRM_RIGHT = (1 << 1)  /**< trim trailing spaces */
 };
 
 #ifdef __cplusplus
@@ -246,25 +243,25 @@ int qse_strxncmp (
 
 int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
 
-/****f* Common/qse_strxncasecmp
- * NAME
- *  qse_strxncasecmp - compare strings ignoring case
- * DESCRIPTION
- *  The qse_strxncasecmp() function compares characters at the same position 
- *  in each string after converting them to the same case temporarily. 
- *  It accepts two strings and a character class handler. A string is 
- *  represented by its beginning pointer and length. 
+/**
+ * The qse_strxncasecmp() function compares characters at the same position 
+ * in each string after converting them to the same case temporarily. 
+ * It accepts two strings and a character class handler. A string is 
+ * represented by its beginning pointer and length. 
  *
- *  For two strings to be equal, they need to have the same length and all
- *  characters in the first string should be equal to their counterpart in the
- *  second string.
- * RETURN
- *  The qse_strxncasecmp() returns 0 if two strings are equal, a positive
- *  number if the first string is larger, -1 if the second string is larger.
- * EXAMPLES
- *  The example compares "foo" and "FoO" case-insenstively.
- *   qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3);
- * SYNOPSIS
+ * For two strings to be equal, they need to have the same length and all
+ * characters in the first string should be equal to their counterpart in the
+ * second string.
+ *
+ * The following code snippet compares "foo" and "FoO" case-insenstively.
+ * @code
+ * qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3);
+ * @endcode
+ *
+ * @return
+ * The qse_strxncasecmp() returns 0 if two strings are equal, a positive
+ * number if the first string is larger, -1 if the second string is larger.
+ *
  */
 int qse_strxncasecmp (
 	const qse_char_t* s1   /* the pointer to the first string */,
@@ -272,7 +269,6 @@ int qse_strxncasecmp (
 	const qse_char_t* s2   /* the pointer to the second string */,
 	qse_size_t        len2 /* the length of the second string */
 );
-/******/
 
 qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr);
 qse_char_t* qse_strxdup (
@@ -303,15 +299,49 @@ qse_char_t* qse_strxnbeg (
 	const qse_char_t* str, qse_size_t len1, 
 	const qse_char_t* sub, qse_size_t len2);
 
-/* Checks if a string ends with a substring */
-qse_char_t* qse_strend (const qse_char_t* str, const qse_char_t* sub);
+/**
+ * The qse_strend() function checks if the a string ends with a substring.
+ * @return the pointer to a beginning of a matching end, 
+ *         QSE_NULL if no match is found.
+ */
+qse_char_t* qse_strend (
+	const qse_char_t* str, /**< a string */
+	const qse_char_t* sub  /**< a substring */
+);
+
+/**
+ * The qse_strxend function checks if the a string ends with a substring.
+ * @return the pointer to a beginning of a matching end, 
+ *         QSE_NULL if no match is found.
+ */
 qse_char_t* qse_strxend (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* sub);
+	const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* sub
+);
+
+/**
+ * The qse_strnend() function checks if the a string ends with a substring.
+ * @return the pointer to a beginning of a matching end, 
+ *         QSE_NULL if no match is found.
+ */
 qse_char_t* qse_strnend (
-	const qse_char_t* str, const qse_char_t* sub, qse_size_t len);
+	const qse_char_t* str,
+	const qse_char_t* sub,
+	qse_size_t len
+);
+
+/**
+ * The qse_strxnend() function checks if the a string ends with a substring.
+ * @return the pointer to a beginning of a matching end, 
+ *         QSE_NULL if no match is found.
+ */
 qse_char_t* qse_strxnend (
-	const qse_char_t* str, qse_size_t len1, 
-	const qse_char_t* sub, qse_size_t len2);
+	const qse_char_t* str,
+	qse_size_t        len1, 
+	const qse_char_t* sub,
+	qse_size_t        len2
+);
 
 /* 
  * string conversion
@@ -335,6 +365,191 @@ qse_int_t qse_strxtoint (const qse_char_t* str, qse_size_t len);
 qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len);
 qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len);
 qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len);
+
+/****f* Common/qse_strspl
+ * NAME
+ *  qse_strspl - split a string into fields
+ * SEE ALSO
+ *  qse_strspltrn
+ * SYNOPSIS
+ */
+int qse_strspl (
+	qse_char_t*       str,
+	const qse_char_t* delim,
+	qse_char_t        lquote,
+	qse_char_t        rquote,
+	qse_char_t        escape
+);
+/******/
+
+/****f* Common/qse_strspltrn
+ * NAME
+ *  qse_strspltrn - split a string translating special escape sequences 
+ * DESCRIPTION
+ *  The argument trset is a translation character set which is composed
+ *  of multiple character pairs. An escape character followed by the 
+ *  first character in a pair is translated into the second character
+ *  in the pair. If trset is QSE_NULL, no translation is performed. 
+ * EXAMPLES
+ *  Let's translate a sequence of '\n' and '\r' to a new line and a carriage
+ *  return respectively.
+ *   qse_strspltrn (str, QSE_T(':'), QSE_T('['), QSE_T(']'), QSE_T('\\'), QSE_T("n\nr\r"), &nfields);
+ *  Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
+ *  fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
+ *  new line.
+ * SEE ALSO
+ *  If you don't need any translation, you may call qse_strspl() alternatively.
+ * SYNOPSIS
+ */
+int qse_strspltrn (
+	qse_char_t*       str,
+	const qse_char_t* delim,
+	qse_char_t        lquote,
+	qse_char_t        rquote,
+	qse_char_t        escape,
+	const qse_char_t* trset
+);
+/******/
+
+/**
+ * The qse_strtrm() function removes leading spaces and/or trailing
+ * spaces from a string depending on the opt parameter. You can form
+ * the op parameter by bitwise-OR'ing one or more of the following
+ * values:
+ *
+ * - QSE_STRTRM_LEFT - trim leading spaces
+ * - QSE_STRTRM_RIGHT - trim trailing spaces
+ *
+ * Should it remove leading spaces, it just returns the pointer to
+ * the first non-space character in the string. Should it remove trailing
+ * spaces, it inserts a QSE_T('\0') character after the last non-space
+ * characters. Take note of this behavior.
+ *
+ * @code
+ * qse_char_t a[] = QSE_T("   this is a test string   ");
+ * qse_printf (QSE_T("[%s]\n"), qse_strtrm(a,QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
+ * @endcode
+ *
+ * @return the pointer to a trimmed string.
+ */
+qse_char_t* qse_strtrm (
+	qse_char_t* str, /**< a string */
+	int         op   /**< operation code XOR'ed of qse_strtrm_op_t values */
+);
+
+
+/****f* Common/qse_mbstowcs
+ * NAME
+ *  qse_mbstowcs - convert a multibyte string to a wide character string
+ * SYNOPSIS
+ */
+qse_size_t qse_mbstowcs (
+	const qse_mchar_t* mbs,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen
+);
+/******/
+
+/****f* Common/qse_mbsntowcsn
+ * NAME
+ *  qse_mbsntowcsn - convert a multibyte string to a wide character string
+ * RETURN
+ *  The qse_mbstowcs() function returns the number of bytes handled.
+ * SYNOPSIS
+ */
+qse_size_t qse_mbsntowcsn (
+	const qse_mchar_t* mbs,
+	qse_size_t         mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen
+);
+/******/
+
+/****f* Common/qse_wcstombslen
+ * NAME
+ *  qse_wcstombslen - get the length 
+ * DESCRIPTION
+ *  The qse_wcstombslen() function scans a null-terminated wide character 
+ *  string to get the total number of multibyte characters that it can be
+ *  converted to. The resulting number of characters is stored into memory
+ *  pointed to by mbslen.
+ * RETURN
+ *  The qse_wcstombslen() function returns the number of wide characters 
+ *  handled.
+ * SYNOPSIS
+ */
+qse_size_t qse_wcstombslen (
+	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen
+);
+/******/
+
+/****f* Common/qse_wcsntombsnlen
+ * NAME
+ *  qse_wcsntombsnlen - get the length 
+ * DESCRIPTION
+ *  The qse_wcsntombsnlen() function scans a wide character wcs as long as
+ *  wcslen characters to get the get the total number of multibyte characters 
+ *  that it can be converted to. The resulting number of characters is stored 
+ *  into memory pointed to by mbslen.
+ * RETURN
+ *  The qse_wcsntombsnlen() function returns the number of wide characters 
+ *  handled.
+ * SYNOPSIS
+ */
+qse_size_t qse_wcsntombsnlen (
+	const qse_wchar_t* wcs,
+	qse_size_t         wcslen,
+	qse_size_t*        mbslen
+);
+/******/
+
+/****f* Common/qse_wcstombs
+ * NAME
+ *  qse_wcstombs - convert a wide character string to a multibyte string.
+ * DESCRIPTION
+ *  The qse_wcstombs() function converts a null-terminated wide character 
+ *  string to a multibyte string and stores it into the buffer pointed to
+ *  by mbs. The pointer to a variable holding the buffer length should be
+ *  passed to the function as the third parameter. After conversion, it holds 
+ *  the length of the multibyte string excluding the terminating-null.
+ *  It may not null-terminate the resulting multibyte string if the buffer
+ *  is not large enough. You can check if the resulting mbslen is equal to 
+ *  the input mbslen to know it.
+ * RETURN
+ *  The qse_wcstombs() function returns the number of wide characters handled.
+ * SYNOPSIS
+ */
+qse_size_t qse_wcstombs (
+	const qse_wchar_t* wcs,
+	qse_mchar_t*       mbs,
+	qse_size_t*        mbslen
+);
+/******/
+
+/**
+ * The qse_wcsntombsn() function converts a wide character string to a
+ * multibyte string.
+ * @return the number of wide characters
+ */
+qse_size_t qse_wcsntombsn (
+	const qse_wchar_t* wcs,    /**< a wide string */
+	qse_size_t         wcslen, /**< wide string length */
+	qse_mchar_t*       mbs,    /**< a multibyte string buffer */
+	qse_size_t*        mbslen  /**< the buffer size */
+);
+
+/**
+ * The qse_wcstombs_strict() function performs the same as the qse_wcsmbs() 
+ * function except that it returns an error if it can't fully convert the
+ * input string and/or the buffer is not large enough.
+ * @return 0 on success, -1 on failure.
+ */
+int qse_wcstombs_strict (
+	const qse_wchar_t* wcs,
+	qse_mchar_t*       mbs,
+	qse_size_t         mbslen
+);
 
 QSE_DEFINE_COMMON_FUNCTIONS (str)
 
@@ -545,201 +760,6 @@ qse_size_t qse_str_del (
 	qse_size_t size
 );
 
-/****f* Common/qse_strspl
- * NAME
- *  qse_strspl - split a string into fields
- * SEE ALSO
- *  qse_strspltrn
- * SYNOPSIS
- */
-int qse_strspl (
-	qse_char_t*       str,
-	const qse_char_t* delim,
-	qse_char_t        lquote,
-	qse_char_t        rquote,
-	qse_char_t        escape
-);
-/******/
-
-/****f* Common/qse_strspltrn
- * NAME
- *  qse_strspltrn - split a string translating special escape sequences 
- * DESCRIPTION
- *  The argument trset is a translation character set which is composed
- *  of multiple character pairs. An escape character followed by the 
- *  first character in a pair is translated into the second character
- *  in the pair. If trset is QSE_NULL, no translation is performed. 
- * EXAMPLES
- *  Let's translate a sequence of '\n' and '\r' to a new line and a carriage
- *  return respectively.
- *   qse_strspltrn (str, QSE_T(':'), QSE_T('['), QSE_T(']'), QSE_T('\\'), QSE_T("n\nr\r"), &nfields);
- *  Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
- *  fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
- *  new line.
- * SEE ALSO
- *  If you don't need any translation, you may call qse_strspl() alternatively.
- * SYNOPSIS
- */
-int qse_strspltrn (
-	qse_char_t*       str,
-	const qse_char_t* delim,
-	qse_char_t        lquote,
-	qse_char_t        rquote,
-	qse_char_t        escape,
-	const qse_char_t* trset
-);
-/******/
-
-/****f* Common/qse_strtrm
- * NAME
- *  qse_strtrm - remove leading and/or trailing spaces from a string
- * DESCRIPTION
- *  The qse_strtrm() function removes leading spaces and/or trailing
- *  spaces from a string depending on the opt parameter. You can form
- *  the opt parameter by bitwise-OR'ing one or more of the following
- *  values.
- *   * QSE_STRTRM_LEFT - remove leading spaces
- *   * QSE_STRTRM_RIGHT - remove trailing spaces
- *  It returns the pointer to the trimmed string.
- * NOTE
- *  Should it remove leading spaces, it just returns the pointer to
- *  the first non-space character in the string. Should it remove trailing
- *  spaces, it inserts a QSE_T('\0') character after the last non-space
- *  characters.
- * EXAMPLES
- *  The example removes leading and trailing spaces from the string a.
- *   qse_char_t a[] = QSE_T("   this is a test string   ");
- *   qse_printf (QSE_T("[%s]\n"), a);
- *   qse_printf (QSE_T("[%s]\n"), qse_strtrm (a, QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
- * SYNOPSIS
- */
-qse_char_t* qse_strtrm (
-	qse_char_t* str,
-	int         opt
-);
-/******/
-
-/****f* Common/qse_mbstowcs
- * NAME
- *  qse_mbstowcs - convert a multibyte string to a wide character string
- * SYNOPSIS
- */
-qse_size_t qse_mbstowcs (
-	const qse_mchar_t* mbs,
-	qse_wchar_t*       wcs,
-	qse_size_t*        wcslen
-);
-/******/
-
-/****f* Common/qse_mbsntowcsn
- * NAME
- *  qse_mbsntowcsn - convert a multibyte string to a wide character string
- * RETURN
- *  The qse_mbstowcs() function returns the number of bytes handled.
- * SYNOPSIS
- */
-qse_size_t qse_mbsntowcsn (
-	const qse_mchar_t* mbs,
-	qse_size_t         mbslen,
-	qse_wchar_t*       wcs,
-	qse_size_t*        wcslen
-);
-/******/
-
-/****f* Common/qse_wcstombslen
- * NAME
- *  qse_wcstombslen - get the length 
- * DESCRIPTION
- *  The qse_wcstombslen() function scans a null-terminated wide character 
- *  string to get the total number of multibyte characters that it can be
- *  converted to. The resulting number of characters is stored into memory
- *  pointed to by mbslen.
- * RETURN
- *  The qse_wcstombslen() function returns the number of wide characters 
- *  handled.
- * SYNOPSIS
- */
-qse_size_t qse_wcstombslen (
-	const qse_wchar_t* wcs,
-	qse_size_t*        mbslen
-);
-/******/
-
-/****f* Common/qse_wcsntombsnlen
- * NAME
- *  qse_wcsntombsnlen - get the length 
- * DESCRIPTION
- *  The qse_wcsntombsnlen() function scans a wide character wcs as long as
- *  wcslen characters to get the get the total number of multibyte characters 
- *  that it can be converted to. The resulting number of characters is stored 
- *  into memory pointed to by mbslen.
- * RETURN
- *  The qse_wcsntombsnlen() function returns the number of wide characters 
- *  handled.
- * SYNOPSIS
- */
-qse_size_t qse_wcsntombsnlen (
-	const qse_wchar_t* wcs,
-	qse_size_t         wcslen,
-	qse_size_t*        mbslen
-);
-/******/
-
-/****f* Common/qse_wcstombs
- * NAME
- *  qse_wcstombs - convert a wide character string to a multibyte string.
- * DESCRIPTION
- *  The qse_wcstombs() function converts a null-terminated wide character 
- *  string to a multibyte string and stores it into the buffer pointed to
- *  by mbs. The pointer to a variable holding the buffer length should be
- *  passed to the function as the third parameter. After conversion, it holds 
- *  the length of the multibyte string excluding the terminating-null.
- *  It may not null-terminate the resulting multibyte string if the buffer
- *  is not large enough. You can check if the resulting mbslen is equal to 
- *  the input mbslen to know it.
- * RETURN
- *  The qse_wcstombs() function returns the number of wide characters handled.
- * SYNOPSIS
- */
-qse_size_t qse_wcstombs (
-	const qse_wchar_t* wcs,
-	qse_mchar_t*       mbs,
-	qse_size_t*        mbslen
-);
-/******/
-
-/****f* Common/qse_wcsntombsn
- * NAME
- *  qse_wcstombs - convert a wide character string to a multibyte string
- * RETURN
- *  The qse_wcstombs() function returns the number of wide characters handled.
- * SYNOPSIS
- */
-qse_size_t qse_wcsntombsn (
-	const qse_wchar_t* wcs,
-	qse_size_t         wcslen,
-	qse_mchar_t*       mbs,
-	qse_size_t*        mbslen
-);
-/******/
-
-/****f* Common/qse_wcstombs_strict
- * NAME
- *  qse_wcstombs_strict - convert a wide character string to a multibyte string.
- * DESCRIPTION
- *  The qse_wcstombs_strict() function performs the same as the qse_wcsmbs() 
- *  function except that it returns an error if it can't fully convert the
- *  input string and/or the buffer is not large enough.
- * RETURN
- *  The qse_wcstombs_strict() function returns 0 on success and -1 on failure.
- * SYNOPSIS
- */
-int qse_wcstombs_strict (
-	const qse_wchar_t* wcs,
-	qse_mchar_t*       mbs,
-	qse_size_t         mbslen
-);
-/******/
 
 #ifdef __cplusplus
 }
