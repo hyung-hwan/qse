@@ -1,2 +1,2 @@
-SUBDIRS = cmn utl awk lsp 
+SUBDIRS = cmn utl sed awk lsp 
 DIST_SUBDIRS = $(SUBDIRS) 

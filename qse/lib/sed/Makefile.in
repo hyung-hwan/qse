@@ -32,10 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
-	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT)
-subdir = test/cmn
+subdir = lib/sed
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -44,45 +41,21 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(bin_PROGRAMS)
-am_chr_OBJECTS = chr.$(OBJEXT)
-chr_OBJECTS = $(am_chr_OBJECTS)
-chr_LDADD = $(LDADD)
-chr_DEPENDENCIES =
-am_fio_OBJECTS = fio.$(OBJEXT)
-fio_OBJECTS = $(am_fio_OBJECTS)
-fio_LDADD = $(LDADD)
-fio_DEPENDENCIES =
-am_lda_OBJECTS = lda.$(OBJEXT)
-lda_OBJECTS = $(am_lda_OBJECTS)
-lda_LDADD = $(LDADD)
-lda_DEPENDENCIES =
-am_map_OBJECTS = map.$(OBJEXT)
-map_OBJECTS = $(am_map_OBJECTS)
-map_LDADD = $(LDADD)
-map_DEPENDENCIES =
-am_pio_OBJECTS = pio.$(OBJEXT)
-pio_OBJECTS = $(am_pio_OBJECTS)
-pio_LDADD = $(LDADD)
-pio_DEPENDENCIES =
-am_sio_OBJECTS = sio.$(OBJEXT)
-sio_OBJECTS = $(am_sio_OBJECTS)
-sio_LDADD = $(LDADD)
-sio_DEPENDENCIES =
-am_sll_OBJECTS = sll.$(OBJEXT)
-sll_OBJECTS = $(am_sll_OBJECTS)
-sll_LDADD = $(LDADD)
-sll_DEPENDENCIES =
-am_str_OBJECTS = str.$(OBJEXT)
-str_OBJECTS = $(am_str_OBJECTS)
-str_LDADD = $(LDADD)
-str_DEPENDENCIES =
-am_time_OBJECTS = time.$(OBJEXT)
-time_OBJECTS = $(am_time_OBJECTS)
-time_LDADD = $(LDADD)
-time_DEPENDENCIES =
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+am__installdirs = "$(DESTDIR)$(libdir)"
+libLTLIBRARIES_INSTALL = $(INSTALL)
+LTLIBRARIES = $(lib_LTLIBRARIES)
+libqsesed_la_DEPENDENCIES =
+am_libqsesed_la_OBJECTS = sed.lo
+libqsesed_la_OBJECTS = $(am_libqsesed_la_OBJECTS)
+libqsesed_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqsesed_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -95,12 +68,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
-	$(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES)
+SOURCES = $(libqsesed_la_SOURCES)
+DIST_SOURCES = $(libqsesed_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -141,7 +110,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
-LDFLAGS = -L../../lib/cmn -L../../lib/utl
+LDFLAGS = @LDFLAGS@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -229,17 +198,11 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(top_srcdir)/include
-LDADD = -lqseutl -lqsecmn 
-chr_SOURCES = chr.c
-str_SOURCES = str.c
-sll_SOURCES = sll.c
-map_SOURCES = map.c
-lda_SOURCES = lda.c
-fio_SOURCES = fio.c
-pio_SOURCES = pio.c
-sio_SOURCES = sio.c
-time_SOURCES = time.c
+AM_CFLAGS = -I$(top_builddir)/include
+lib_LTLIBRARIES = libqsesed.la
+libqsesed_la_SOURCES = sed.c sed.h
+libqsesed_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L../utl
+libqsesed_la_LIBADD = -lqsecmn -lqseutl
 all: all-am
 
 .SUFFIXES:
@@ -253,9 +216,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  test/cmn/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  lib/sed/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  test/cmn/Makefile
+	  $(AUTOMAKE) --foreign  lib/sed/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -273,61 +236,35 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  if test -f $$p \
-	     || test -f $$p1 \
-	  ; then \
-	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	test -z "$(libdir)" || $(MKDIR_P) "$(DESTDIR)$(libdir)"
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    f=$(am__strip_dir) \
+	    echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(libLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(libdir)/$$f'"; \
+	    $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(libLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(libdir)/$$f"; \
 	  else :; fi; \
 	done
 
-uninstall-binPROGRAMS:
+uninstall-libLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  p=$(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libdir)/$$p'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$p"; \
 	done
 
-clean-binPROGRAMS:
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
+clean-libLTLIBRARIES:
+	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
 	done
-chr$(EXEEXT): $(chr_OBJECTS) $(chr_DEPENDENCIES) 
-	@rm -f chr$(EXEEXT)
-	$(LINK) $(chr_OBJECTS) $(chr_LDADD) $(LIBS)
-fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
-	@rm -f fio$(EXEEXT)
-	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
-lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) 
-	@rm -f lda$(EXEEXT)
-	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
-map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES) 
-	@rm -f map$(EXEEXT)
-	$(LINK) $(map_OBJECTS) $(map_LDADD) $(LIBS)
-pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
-	@rm -f pio$(EXEEXT)
-	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
-sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
-	@rm -f sio$(EXEEXT)
-	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
-sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) 
-	@rm -f sll$(EXEEXT)
-	$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
-str$(EXEEXT): $(str_OBJECTS) $(str_DEPENDENCIES) 
-	@rm -f str$(EXEEXT)
-	$(LINK) $(str_OBJECTS) $(str_LDADD) $(LIBS)
-time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) 
-	@rm -f time$(EXEEXT)
-	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
+libqsesed.la: $(libqsesed_la_OBJECTS) $(libqsesed_la_DEPENDENCIES) 
+	$(libqsesed_la_LINK) -rpath $(libdir) $(libqsesed_la_OBJECTS) $(libqsesed_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -335,15 +272,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -447,9 +376,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -478,7 +407,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -500,7 +430,7 @@ install-data-am:
 
 install-dvi: install-dvi-am
 
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -532,23 +462,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-libLTLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-binPROGRAMS install-data install-data-am install-dvi \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libLTLIBRARIES clean-libtool ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-libLTLIBRARIES
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

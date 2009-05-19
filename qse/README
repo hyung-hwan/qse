@@ -23,6 +23,6 @@ Generate the API documents with robodoc.
 
 @section MODULES
 QSE includes various modules:
-- AWK: awk.h
-- SED: sed.h
+- AWK: ::qse_awk_t
+- SED: ::qse_sed_t
 */

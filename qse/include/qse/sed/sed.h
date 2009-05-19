@@ -16,8 +16,8 @@
    limitations under the License.
  */
 
-#ifndef _QSE_UTL_SED_H_
-#define _QSE_UTL_SED_H_
+#ifndef _QSE_SED_SED_H_
+#define _QSE_SED_SED_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -39,8 +39,24 @@
  * This example shows how to embed a basic stream editor.
  */
 
+/** @class qse_sed_t
+ * The qse_sed_t type defines a stream editor. The structural details are 
+ * hidden as it is a relatively complex data type and fragile to external
+ * changes. To use a stream editor, you typically can:
+ *
+ * - create a stream editor object with qse_sed_open().
+ * - compile stream editor commands with qse_sed_comp().
+ * - execute them over input and output streams with qse_sed_exec().
+ * - destroy it with qse_sed_close() when done.
+ *
+ * The input and output streams needed by qse_sed_exec() are implemented in
+ * the form of callback functions. You should implement two functions 
+ * conforming to the ::qse_sed_io_fun_t type.
+ */
+typedef struct qse_sed_t qse_sed_t;
+
 /**
- * defines error numbers 
+ * the qse_sed_errnum_t type defines error numbers.
  */
 enum qse_sed_errnum_t
 {
@@ -136,117 +152,15 @@ union qse_sed_io_arg_t
 };
 typedef union qse_sed_io_arg_t qse_sed_io_arg_t;
 
-typedef struct qse_sed_t qse_sed_t;
-
-/**
- * The qse_sed_cmd_t type represents a compiled form of a stream editor
- * command. The details are hidden.
- */
-typedef struct qse_sed_cmd_t qse_sed_cmd_t; 
-
-/**
- * The qse_sed_iof_t type defines an IO handler. An IO handler is called by
+/** 
+ * The qse_sed_io_fun_t type defines an IO handler. An IO handler is called by
  * qse_sed_execute().
  */
-typedef qse_ssize_t (*qse_sed_iof_t) (
+typedef qse_ssize_t (*qse_sed_io_fun_t) (
         qse_sed_t*        sed,
         qse_sed_io_cmd_t  cmd,
 	qse_sed_io_arg_t* arg
 );
-
-/** 
- * The qse_sed_t type defines a stream editor 
- */
-struct qse_sed_t
-{
-	QSE_DEFINE_COMMON_FIELDS (sed)
-
-	qse_sed_errnum_t errnum; /**< stores an error number */
-	int option;              /**< stores options */
-
-	/** source text pointers */
-	struct
-	{
-		const qse_char_t* ptr; /**< beginning of the source text */
-		const qse_char_t* end; /**< end of the source text */
-		const qse_char_t* cur; /**< current source text pointer */
-	} src;
-
-	qse_str_t rexbuf; /**< temporary regular expression buffer */
-
-	/* command array */
-	struct
-	{
-		qse_sed_cmd_t* buf;
-		qse_sed_cmd_t* end;
-		qse_sed_cmd_t* cur;
-	} cmd;
-
-	/** a table storing labels seen */
-	qse_map_t labs; 
-
-	struct
-	{
-		/** current level of command group nesting */
-		int level;
-		/** keeps track of the begining of a command group */
-		qse_sed_cmd_t* cmd[128];
-	} grp;
-
-	/** data for execution */
-	struct
-	{
-		/** data needed for output streams and files */
-		struct
-		{
-			qse_sed_iof_t f; /**< an output handler */
-			qse_sed_io_arg_t arg; /**< output handling data */
-
-			qse_char_t buf[2048];
-			qse_size_t len;
-			int        eof;
-
-			/*****************************************************/
-			/* the following two fields are very tightly-coupled.
-			 * don't make any partial changes */
-			qse_map_t  files;
-			qse_sed_t* files_ext;
-			/*****************************************************/
-		} out;
-
-		/** data needed for input streams */
-		struct
-		{
-			qse_sed_iof_t f; /**< an input handler */
-			qse_sed_io_arg_t arg; /**< input handling data */
-
-			qse_char_t xbuf[1]; /**< a read-ahead buffer */
-			int xbuf_len; /**< data length in the buffer */
-
-			qse_char_t buf[2048]; /**< input buffer */
-			qse_size_t len; /**< data length in the buffer */
-			qse_size_t pos; /**< current position in the buffer */
-			int        eof; /**< EOF indicator */
-
-			qse_str_t line; /**< pattern space */
-			qse_size_t num; /**< current line number */
-		} in;
-
-		/** text buffers */
-		struct
-		{
-			qse_lda_t appended;
-			qse_str_t read;
-			qse_str_t held;
-			qse_str_t subst;
-		} txt;
-
-		/** indicates if a successful substitution has been made 
-		 *  since the last read on the input stream.
-		 */
-		int subst_done;
-	} e;
-};
 
 #ifdef __cplusplus
 extern "C" {
@@ -264,24 +178,9 @@ qse_sed_t* qse_sed_open (
 );
 
 /**
- * The qse_sed_close() function destroyes a stream editor.
+ * The qse_sed_close() function destroys a stream editor.
  */
 void qse_sed_close (
-	qse_sed_t* sed /**< a stream editor */
-);
-
-/**
- * The qse_sed_init() function initializes a stream editor.
- */
-qse_sed_t* qse_sed_init (
-	qse_sed_t*     sed, /**< a stream editor */
-	qse_mmgr_t*    mmgr /**< a memory manager */
-);
-
-/**
- * The qse_sed_init() function finalizes a stream editor.
- */
-void qse_sed_fini (
 	qse_sed_t* sed /**< a stream editor */
 );
 
@@ -311,8 +210,7 @@ const qse_char_t* qse_sed_geterrmsg (
 );
 
 /**
- * The qse_sed_comp() function compiles stream editor commands into an 
- * internal form.
+ * The qse_sed_comp() function compiles editing commands into an internal form.
  * @return 0 on success, -1 on error 
  */
 int qse_sed_comp (
@@ -326,9 +224,9 @@ int qse_sed_comp (
  * @return 0 on success, -1 on error
  */
 int qse_sed_exec (
-	qse_sed_t*    sed, /**< a stream editor */
-	qse_sed_iof_t in,  /**< stream reader */
-	qse_sed_iof_t out  /**< stream writer */
+	qse_sed_t*       sed, /**< a stream editor */
+	qse_sed_io_fun_t in,  /**< stream reader */
+	qse_sed_io_fun_t out  /**< stream writer */
 );
 
 #ifdef __cplusplus

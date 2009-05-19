@@ -216,11 +216,13 @@ AC_CONFIG_FILES([
 	include/qse/Makefile
 	include/qse/cmn/Makefile
 	include/qse/utl/Makefile
+	include/qse/sed/Makefile
 	include/qse/awk/Makefile
 	include/qse/lsp/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/utl/Makefile 
+	lib/sed/Makefile 
 	lib/awk/Makefile 
 	lib/lsp/Makefile 
 	cmd/Makefile 
@@ -230,6 +232,7 @@ AC_CONFIG_FILES([
 	test/Makefile 
 	test/cmn/Makefile 
 	test/utl/Makefile 
+	test/sed/Makefile 
 	test/awk/Makefile 
 ])
 AC_OUTPUT
