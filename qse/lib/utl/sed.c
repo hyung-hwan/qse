@@ -1268,7 +1268,7 @@ static int compile_source (
 	return 0;
 }
 
-int qse_sed_compile (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
+int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 {
 	return compile_source (sed, sptr, slen);	
 }
@@ -1392,11 +1392,13 @@ static int read_line (qse_sed_t* sed, int append)
 	if (!append) qse_str_clear (&sed->e.in.line);
 	if (sed->e.in.eof) 
 	{
+	#if 0
 		/* no more input detected in the previous read.
 		 * set eof back to 0 here so that read_char() is called
 		 * if read_line() is called again. that way, the result
 		 * of subsequent calls counts on read_char(). */
 		sed->e.in.eof = 0; 
+	#endif
 		return 0;
 	}
 
@@ -1406,8 +1408,9 @@ static int read_line (qse_sed_t* sed, int append)
 		if (n <= -1) return -1;
 		if (n == 0)
 		{
-			if (len == 0) return 0;
 			sed->e.in.eof = 1;
+			if (len == 0) return 0;
+			/*sed->e.in.eof = 1;*/
 			break;
 		}
 
@@ -2052,18 +2055,15 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 					sed->errnum = QSE_SED_ENOMEM;
 					return QSE_NULL;
 				}
-
-				/* move past the last command so as to start 
-				 * the next cycle */
-				jumpto = sed->cmd.cur;
 			}
 			else 
 			{		
-/* TODO: prearrange for  CHANGE to be executed on the lastline wihtout
-         matchng the second address */
 				qse_str_clear (&sed->e.in.line);
 			}
 
+			/* move past the last command so as to start 
+			 * the next cycle */
+			jumpto = sed->cmd.cur;
 			break;
 
 		case QSE_SED_CMD_DELETE_FIRSTLN:
@@ -2077,12 +2077,22 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_T('\n'));
 			if (nl != QSE_NULL) 
 			{
-				/* if a new line is found */
+				/* if a new line is found. delete up to it  */
 				qse_str_del (&sed->e.in.line, 0, 
 					nl - QSE_STR_PTR(&sed->e.in.line) + 1);	
 
-				/* arrange to start the the next cycle */
-				jumpto = sed->cmd.cur;
+				if (QSE_STR_LEN(&sed->e.in.line) > 0)
+				{
+					/* if the pattern space is not empty,
+					 * arrange to execute from the first
+					 * command */
+					jumpto = sed->cmd.cur + 2;	
+				}
+				else
+				{
+					/* arrange to start the the next cycle */
+					jumpto = sed->cmd.cur;
+				}
 				break;
 			}
 
@@ -2191,8 +2201,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (n <= -1) return QSE_NULL;
 			if (n == 0) 
 			{
-				/* eof is reached. quit */
-				jumpto = sed->cmd.cur + 1;
+				/* EOF is reached. */
+				/*jumpto = sed->cmd.cur + 1;*/
+				jumpto = sed->cmd.cur;
 			}
 			break;
 
@@ -2202,8 +2213,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (n <= -1) return QSE_NULL;
 			if (n == 0)
 			{
-				/* eof is reached. quit */
-				jumpto = sed->cmd.cur + 1;
+				/* EOF is reached. */
+				/*jumpto = sed->cmd.cur + 1;*/
+				jumpto = sed->cmd.cur;
 			}
 			break;
 				
@@ -2333,7 +2345,7 @@ static void close_outfile (qse_map_t* map, void* dptr, qse_size_t dlen)
 	}
 }
 
-int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
+int qse_sed_exec (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 {
 	qse_sed_cmd_t* c, * j;
 	qse_ssize_t n;
@@ -2455,6 +2467,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		qse_lda_clear (&sed->e.txt.appended);
 		qse_str_clear (&sed->e.txt.read);
 
+	again:
 		c = sed->cmd.buf;
 		while (c < sed->cmd.cur)
 		{
@@ -2470,25 +2483,24 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 
 			j = exec_cmd (sed, c);
 			if (j == QSE_NULL) { ret = -1; goto done; }
-			if (j > sed->cmd.cur) 
-			{
-				/* finish the current cycle */
-				QSE_ASSERT (j == sed->cmd.cur + 1);
-				goto done;
-			}
+			if (j == sed->cmd.cur + 1) goto done;
+			if (j == sed->cmd.cur + 2) goto again;
 
+			QSE_ASSERT (j <= sed->cmd.cur);
 			/* go to the next command */
 			c = j;
 		}
 
 		if (!(sed->option & QSE_SED_QUIET))
 		{
+			/* write the pattern space */
 			n = write_str (sed, 
 				QSE_STR_PTR(&sed->e.in.line),
 				QSE_STR_LEN(&sed->e.in.line));
 			if (n <= -1) { ret = -1; goto done; }
 		}
 
+		/* write text read in by the r command */
 		n = write_str (
 			sed, 
 			QSE_STR_PTR(&sed->e.txt.read),
@@ -2496,6 +2508,7 @@ int qse_sed_execute (qse_sed_t* sed, qse_sed_iof_t inf, qse_sed_iof_t outf)
 		);
 		if (n <= -1) { ret = -1; goto done; }
 
+		/* write appeneded text by the a command */
 		for (i = 0; i < QSE_LDA_SIZE(&sed->e.txt.appended); i++)
 		{
 			qse_xstr_t* t = QSE_LDA_DPTR(&sed->e.txt.appended, i);

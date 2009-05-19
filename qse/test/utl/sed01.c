@@ -16,10 +16,6 @@
    limitations under the License.
  */
 
-/****S* SED/Simple Example
- * SOURCE
- */
-
 #include <qse/utl/sed.h>
 #include <qse/utl/stdio.h>
 #include <qse/utl/main.h>
@@ -119,7 +115,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	
 	if (argc == 3) qse_sed_setoption (sed, qse_strtoi(argv[2]));
 
-	if (qse_sed_compile (sed, argv[1], qse_strlen(argv[1])) == -1)
+	if (qse_sed_comp (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("cannot compile - %s\n"),
@@ -128,7 +124,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (qse_sed_execute (sed, in, out) == -1)
+	if (qse_sed_exec (sed, in, out) == -1)
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("cannot execute - %s\n"),
@@ -148,5 +144,3 @@ int qse_main (int argc, char* argv[])
 {
 	return qse_runmain (argc, argv, sed_main);
 }
-
-/******/
