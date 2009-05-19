@@ -54,6 +54,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EREXMA,  /**< regular expression match error */
 	QSE_SED_EA1PHB,  /**< address 1 prohibited */
 	QSE_SED_EA2PHB,  /**< address 2 prohibited */
+	QSE_SED_EASTEP,  /**< invalid step address */
 	QSE_SED_ENEWLN,  /**< a new line is expected */
 	QSE_SED_EBSEXP,  /**< \ is expected */
 	QSE_SED_EBSDEL,  /**< \ used a delimiter */
