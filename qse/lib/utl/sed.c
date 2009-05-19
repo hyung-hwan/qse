@@ -133,18 +133,16 @@ qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 
 void qse_sed_fini (qse_sed_t* sed)
 {
+	qse_sed_cmd_t* c;
+
 	qse_str_fini (&sed->e.txt.subst);
 	qse_str_fini (&sed->e.txt.held);
 	qse_str_fini (&sed->e.txt.read);
 	qse_lda_fini (&sed->e.txt.appended);
 
-/* TODO: use different data sturect -> look at qse_sed_init */
-qse_sed_cmd_t* c;
-for (c = sed->cmd.buf; c != sed->cmd.cur; c++)
-{
-	free_command (sed, c);
-}
-QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
+	/* TODO: use different data structure -> look at qse_sed_init */
+	for (c = sed->cmd.buf; c != sed->cmd.cur; c++) free_command (sed, c);
+	QSE_MMGR_FREE (sed->mmgr, sed->cmd.buf);	
 
 	qse_map_fini (&sed->labs);
 	qse_str_fini (&sed->rexbuf);
@@ -164,6 +162,7 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 		QSE_T("regular expression match error"),
 		QSE_T("address 1 prohibited"),
 		QSE_T("address 2 prohibited"),
+		QSE_T("invalid step address"),
 		QSE_T("a new line expected"),
 		QSE_T("a backslash expected"),
 		QSE_T("a backslash used as a delimiter"),
@@ -308,7 +307,7 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 			}
 
 			if (c == QSE_T('n')) c = QSE_T('\n');
-			// TODO: support more escaped characters??
+			/* TODO: support more escaped characters??  */
 		}
 
 		if (qse_str_ccat (&sed->rexbuf, c) == (qse_size_t)-1)
@@ -334,7 +333,7 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	return code;
 }
 
-static qse_sed_a_t* address (qse_sed_t* sed, qse_sed_a_t* a)
+static qse_sed_a_t* get_address (qse_sed_t* sed, qse_sed_a_t* a)
 {
 	qse_cint_t c;
 
@@ -459,6 +458,7 @@ do { \
 done:
 	if ((sed->option & QSE_SED_ENSURENL) && c != QSE_T('\n'))
 	{
+		/* TODO: support different line end scheme */
 		ADD (sed, t, QSE_T('\n'), oops);
 	}
 
@@ -1193,27 +1193,37 @@ static int compile_source (
 		/* initialize the current command */
 		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
 
-		/* process address */
-		if (address (sed, &cmd->a1) == QSE_NULL) return -1;
+		/* process the first address */
+		if (get_address (sed, &cmd->a1) == QSE_NULL) return -1;
 
 		c = CURSC (sed);
 		if (cmd->a1.type != QSE_SED_A_NONE)
 		{
-			/* if (cmd->a1.type == QSE_SED_A_LAST)
+			if (c == QSE_T(',') || c == QSE_T('~'))
 			{
-				 // TODO: ????
-			} */
-			if (c == QSE_T(',') || c == QSE_T(';'))
-			{
-				/* maybe an address range */
-				ADVSCP (sed);
+				qse_char_t delim = c;
 
-				/* TODO: skip white spaces??? */
-				if (address (sed, &cmd->a2) == QSE_NULL) 
+				/* maybe an address range */
+				do { c = NXTSC (sed); } while (IS_SPACE(c));
+
+				if (get_address (sed, &cmd->a2) == QSE_NULL) 
 				{
 					QSE_ASSERT (cmd->a2.type == QSE_SED_A_NONE);
 					free_address (sed, cmd);
 					return -1;
+				}
+
+				if (delim == QSE_T('~'))
+				{
+					if (cmd->a1.type != QSE_SED_A_LINE || 
+					    cmd->a2.type != QSE_SED_A_LINE)
+					{
+						sed->errnum = QSE_SED_EASTEP;
+						free_address(sed, cmd);
+						return -1;
+					}
+
+					/* TODO; support step... */
 				}
 
 				c = CURSC (sed);
