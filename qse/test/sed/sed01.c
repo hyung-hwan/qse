@@ -16,7 +16,7 @@
    limitations under the License.
  */
 
-#include <qse/utl/sed.h>
+#include <qse/sed/sed.h>
 #include <qse/utl/stdio.h>
 #include <qse/utl/main.h>
 #include <qse/cmn/str.h>

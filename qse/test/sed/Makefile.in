@@ -32,10 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
-	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT)
-subdir = test/cmn
+bin_PROGRAMS = sed01$(EXEEXT)
+subdir = test/sed
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -47,42 +45,11 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_chr_OBJECTS = chr.$(OBJEXT)
-chr_OBJECTS = $(am_chr_OBJECTS)
-chr_LDADD = $(LDADD)
-chr_DEPENDENCIES =
-am_fio_OBJECTS = fio.$(OBJEXT)
-fio_OBJECTS = $(am_fio_OBJECTS)
-fio_LDADD = $(LDADD)
-fio_DEPENDENCIES =
-am_lda_OBJECTS = lda.$(OBJEXT)
-lda_OBJECTS = $(am_lda_OBJECTS)
-lda_LDADD = $(LDADD)
-lda_DEPENDENCIES =
-am_map_OBJECTS = map.$(OBJEXT)
-map_OBJECTS = $(am_map_OBJECTS)
-map_LDADD = $(LDADD)
-map_DEPENDENCIES =
-am_pio_OBJECTS = pio.$(OBJEXT)
-pio_OBJECTS = $(am_pio_OBJECTS)
-pio_LDADD = $(LDADD)
-pio_DEPENDENCIES =
-am_sio_OBJECTS = sio.$(OBJEXT)
-sio_OBJECTS = $(am_sio_OBJECTS)
-sio_LDADD = $(LDADD)
-sio_DEPENDENCIES =
-am_sll_OBJECTS = sll.$(OBJEXT)
-sll_OBJECTS = $(am_sll_OBJECTS)
-sll_LDADD = $(LDADD)
-sll_DEPENDENCIES =
-am_str_OBJECTS = str.$(OBJEXT)
-str_OBJECTS = $(am_str_OBJECTS)
-str_LDADD = $(LDADD)
-str_DEPENDENCIES =
-am_time_OBJECTS = time.$(OBJEXT)
-time_OBJECTS = $(am_time_OBJECTS)
-time_LDADD = $(LDADD)
-time_DEPENDENCIES =
+am_sed01_OBJECTS = sed01.$(OBJEXT)
+sed01_OBJECTS = $(am_sed01_OBJECTS)
+sed01_LDADD = $(LDADD)
+am__DEPENDENCIES_1 =
+sed01_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -95,12 +62,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
-	$(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES)
+SOURCES = $(sed01_SOURCES)
+DIST_SOURCES = $(sed01_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -141,7 +104,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
-LDFLAGS = -L../../lib/cmn -L../../lib/utl
+LDFLAGS = -L../../lib/cmn -L../../lib/utl -L../../lib/sed
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -230,16 +193,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-LDADD = -lqseutl -lqsecmn 
-chr_SOURCES = chr.c
-str_SOURCES = str.c
-sll_SOURCES = sll.c
-map_SOURCES = map.c
-lda_SOURCES = lda.c
-fio_SOURCES = fio.c
-pio_SOURCES = pio.c
-sio_SOURCES = sio.c
-time_SOURCES = time.c
+LDADD = -lqsesed -lqseutl -lqsecmn $(LIBM)
+sed01_SOURCES = sed01.c
 all: all-am
 
 .SUFFIXES:
@@ -253,9 +208,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  test/cmn/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  test/sed/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  test/cmn/Makefile
+	  $(AUTOMAKE) --foreign  test/sed/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -301,33 +256,9 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
-chr$(EXEEXT): $(chr_OBJECTS) $(chr_DEPENDENCIES) 
-	@rm -f chr$(EXEEXT)
-	$(LINK) $(chr_OBJECTS) $(chr_LDADD) $(LIBS)
-fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
-	@rm -f fio$(EXEEXT)
-	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
-lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) 
-	@rm -f lda$(EXEEXT)
-	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
-map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES) 
-	@rm -f map$(EXEEXT)
-	$(LINK) $(map_OBJECTS) $(map_LDADD) $(LIBS)
-pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
-	@rm -f pio$(EXEEXT)
-	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
-sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
-	@rm -f sio$(EXEEXT)
-	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
-sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) 
-	@rm -f sll$(EXEEXT)
-	$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
-str$(EXEEXT): $(str_OBJECTS) $(str_DEPENDENCIES) 
-	@rm -f str$(EXEEXT)
-	$(LINK) $(str_OBJECTS) $(str_LDADD) $(LIBS)
-time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) 
-	@rm -f time$(EXEEXT)
-	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
+sed01$(EXEEXT): $(sed01_OBJECTS) $(sed01_DEPENDENCIES) 
+	@rm -f sed01$(EXEEXT)
+	$(LINK) $(sed01_OBJECTS) $(sed01_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -335,15 +266,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

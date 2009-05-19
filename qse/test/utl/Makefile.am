@@ -1,8 +1,7 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = sed01 
+bin_PROGRAMS = 
 
 LDFLAGS = -L../../lib/cmn -L../../lib/utl 
 LDADD = -lqseutl -lqsecmn $(LIBM)
 
-sed01_SOURCES = sed01.c
