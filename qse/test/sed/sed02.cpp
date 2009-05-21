@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 127 2009-05-07 13:15:04Z baconevi $
+ * $Id$
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -16,35 +16,25 @@
    limitations under the License.
  */
 
-#ifndef _QSE_SED_SED_HPP_
-#define _QSE_SED_SED_HPP_
+#include <qse/sed/StdSed.hpp>
+#include <qse/utl/main.h>
+#include <qse/utl/stdio.h>
 
-#include <qse/Mmgr.hpp>
-#include <qse/sed/sed.h>
-
-/////////////////////////////////
-QSE_BEGIN_NAMESPACE(QSE)
-/////////////////////////////////
-
-/** 
- * The Sed class implements a stream editor.
- */
-class Sed: public Mmgr
+int sed_main (int argc, qse_char_t* argv[])
 {
-public:
-	Sed () throw (): sed (QSE_NULL) {}
+	QSE::StdSed sed;
 
-	int open () throw ();
-	void close () throw ();
-	int compile () throw ();
-	int execute () throw ();
+	if (sed.open () == -1)
+	{
+		qse_printf (QSE_T("cannot open a stream editor\n"));
+		return -1;
+	}
 
-protected:
-	qse_sed_t* sed;
-};
+	sed.close ();
+	return 0;
+}
 
-/////////////////////////////////
-QSE_END_NAMESPACE(QSE)
-/////////////////////////////////
-
-#endif
+int qse_main (int argc, char* argv[])
+{
+	return qse_runmain (argc, argv, sed_main);
+}

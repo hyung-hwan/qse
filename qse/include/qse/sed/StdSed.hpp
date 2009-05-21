@@ -16,31 +16,23 @@
    limitations under the License.
  */
 
-#ifndef _QSE_SED_SED_HPP_
-#define _QSE_SED_SED_HPP_
+#ifndef _QSE_SED_STDSED_HPP_
+#define _QSE_SED_STDSED_HPP_
 
-#include <qse/Mmgr.hpp>
-#include <qse/sed/sed.h>
+#include <qse/sed/Sed.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/** 
- * The Sed class implements a stream editor.
- */
-class Sed: public Mmgr
+class StdSed: public Sed
 {
 public:
-	Sed () throw (): sed (QSE_NULL) {}
-
-	int open () throw ();
-	void close () throw ();
-	int compile () throw ();
-	int execute () throw ();
 
 protected:
-	qse_sed_t* sed;
+	void* allocMem   (qse_size_t n)            throw ();
+	void* reallocMem (void* ptr, qse_size_t n) throw ();
+	void  freeMem    (void* ptr)               throw ();
 };
 
 /////////////////////////////////

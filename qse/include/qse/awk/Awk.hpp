@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: Awk.hpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,7 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/map.h>
 #include <qse/cmn/chr.h>
+#include <qse/Mmgr.hpp>
 #include <stdarg.h>
 
 /////////////////////////////////
@@ -31,7 +32,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /** 
  * Represents the AWK interpreter engine
  */
-class Awk
+class Awk: public Mmgr
 {
 public:
 	/** Boolean data type */
@@ -732,9 +733,7 @@ public:
 	};
 
 	/** Constructor */
-	Awk ();
-	/** Destructor */
-	virtual ~Awk ();
+	Awk () throw ();
 
 	/** Returns the underlying handle */
 	operator awk_t* () const;
@@ -1022,10 +1021,6 @@ protected:
 	virtual void onRunStatement (Run& run, size_t line);
 	
 	// primitive handlers 
-	virtual void* allocMem   (size_t n) = 0;
-	virtual void* reallocMem (void* ptr, size_t n) = 0;
-	virtual void  freeMem    (void* ptr) = 0;
-
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
 	                         const char_t* fmt, va_list arg) = 0;
@@ -1054,10 +1049,6 @@ protected:
 	static void onRunExit (rtx_t* run, val_t* ret, void* data);
 	static void onRunStatement (rtx_t* run, size_t line, void* data);
 
-	static void* allocMem   (void* data, size_t n);
-	static void* reallocMem (void* data, void* ptr, size_t n);
-	static void  freeMem    (void* data, void* ptr);
-
 	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
@@ -1078,8 +1069,6 @@ protected:
 private:
 	Awk (const Awk&);
 	Awk& operator= (const Awk&);
-
-	mmgr_t mmgr;
 };
 
 /////////////////////////////////

@@ -561,7 +561,7 @@ protected:
 		return 1;
 	}
 
-	void* allocMem (size_t n) 
+	void* allocMem (size_t n) throw ()
 	{ 
 	#ifdef _WIN32
 		return ::HeapAlloc (heap, 0, n);
@@ -570,7 +570,7 @@ protected:
 	#endif
 	}
 
-	void* reallocMem (void* ptr, size_t n) 
+	void* reallocMem (void* ptr, size_t n) throw ()
 	{ 
 	#ifdef _WIN32
 		if (ptr == NULL)
@@ -582,7 +582,7 @@ protected:
 	#endif
 	}
 
-	void freeMem (void* ptr) 
+	void freeMem (void* ptr) throw ()
 	{ 
 	#ifdef _WIN32
 		::HeapFree (heap, 0, ptr);

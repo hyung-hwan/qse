@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -33,7 +33,6 @@ QSE_BEGIN_NAMESPACE(QSE)
 class StdAwk: public Awk
 {
 public:
-	StdAwk ();
 	int open ();
 	int run (const char_t** args, size_t nargs);
 
@@ -80,9 +79,9 @@ protected:
 	int flushFile (File& io);
 
 	// primitive handlers 
-	void* allocMem   (size_t n);
-	void* reallocMem (void* ptr, size_t n);
-	void  freeMem    (void* ptr);
+	void* allocMem   (size_t n) throw ();
+	void* reallocMem (void* ptr, size_t n) throw ();
+	void  freeMem    (void* ptr) throw ();
 
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,

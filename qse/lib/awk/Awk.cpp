@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: Awk.cpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1065,21 +1065,12 @@ void* Awk::Run::getData () const
 // Awk
 //////////////////////////////////////////////////////////////////
 
-Awk::Awk (): awk (QSE_NULL), functionMap (QSE_NULL),
+Awk::Awk () throw (): awk (QSE_NULL), functionMap (QSE_NULL),
 	sourceIn (Source::READ), sourceOut (Source::WRITE),
 	errnum (ERR_NOERR), errlin (0), runCallback (false)
 
 {
 	this->errmsg[0] = QSE_T('\0');
-
-	mmgr.alloc   = allocMem;
-	mmgr.realloc = reallocMem;
-	mmgr.free    = freeMem;
-	mmgr.data    = this;
-}
-
-Awk::~Awk ()
-{
 }
 
 Awk::operator Awk::awk_t* () const
@@ -1193,7 +1184,7 @@ int Awk::open ()
 	prm.pow     = pow;
 	prm.sprintf = sprintf;
 
-	awk = qse_awk_open (&mmgr, QSE_SIZEOF(xtn_t), &prm);
+	awk = qse_awk_open (this, QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
 	{
 		setError (ERR_NOMEM);
@@ -1752,21 +1743,6 @@ void Awk::onRunStatement (rtx_t* run, size_t line, void* data)
 {
 	Run* r = (Run*)data;
 	r->awk->onRunStatement (*r, line);
-}
-
-void* Awk::allocMem (void* data, size_t n)
-{
-	return ((Awk*)data)->allocMem (n);
-}
-
-void* Awk::reallocMem (void* data, void* ptr, size_t n)
-{
-	return ((Awk*)data)->reallocMem (ptr, n);
-}
-
-void Awk::freeMem (void* data, void* ptr)
-{
-	((Awk*)data)->freeMem (ptr);
 }
 
 Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
