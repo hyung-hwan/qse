@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,10 +36,6 @@
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
-
-StdAwk::StdAwk ()
-{
-}
 
 #define ADDFNC(name,min,max,impl) \
 	do { \
@@ -396,17 +392,17 @@ int StdAwk::flushFile (File& io)
 }
 
 // memory allocation primitives
-void* StdAwk::allocMem (size_t n) 
+void* StdAwk::allocMem (size_t n) throw ()
 { 
 	return ::malloc (n); 
 }
 
-void* StdAwk::reallocMem (void* ptr, size_t n) 
+void* StdAwk::reallocMem (void* ptr, size_t n) throw ()
 { 
 	return ::realloc (ptr, n); 
 }
 
-void  StdAwk::freeMem (void* ptr) 
+void  StdAwk::freeMem (void* ptr) throw ()
 { 
 	::free (ptr); 
 }

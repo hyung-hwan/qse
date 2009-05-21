@@ -1,6 +1,6 @@
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CFLAGS = -I$(top_builddir)/include
+AM_CPPFLAGS = -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
@@ -11,7 +11,7 @@ libqsecmn_la_SOURCES = \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \
 	time.c \
-	misc.c
+	misc.c 
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 
 if WIN32 

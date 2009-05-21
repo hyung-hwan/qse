@@ -17,22 +17,26 @@
  */
 
 #include <qse/sed/Sed.hpp>
+#include "sed.h"
+
+#include <qse/utl/stdio.h>
+#include <stdlib.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-Sed::Sed () throw () : sed (QSE_NULL)
+int Sed::open () throw ()
 {
-}
+	sed = qse_sed_open (this, QSE_SIZEOF(Sed*));
+	if (sed == QSE_NULL)
+	{
+		// TODO: set error...
+		return -1;
+	}
 
-Sed::~Sed () throw ()
-{
-	close ();
-}
-
-int Sed::open () throw()
-{
+	*(Sed**)QSE_XTN(sed) = this;
+	return 0;
 }
 
 void Sed::close () throw()
@@ -44,8 +48,17 @@ void Sed::close () throw()
 	}
 }
 
+int Sed::compile () throw ()
+{
+	return 0;
+}
+
+int Sed::execute () throw ()
+{
+	return 0;
+}
 
 /////////////////////////////////
-QSE_BEGIN_NAMESPACE(QSE)
+QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
 

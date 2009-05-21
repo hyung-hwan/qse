@@ -1,5 +1,5 @@
 
-pkginclude_HEADERS = sed.h
+pkginclude_HEADERS = sed.h Sed.hpp StdSed.hpp
 
 pkgincludedir= $(includedir)/qse/sed
 

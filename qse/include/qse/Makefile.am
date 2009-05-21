@@ -4,6 +4,10 @@ SUBDIRS = cmn utl awk lsp
 
 pkginclude_HEADERS = config.h.in conf_msw.h conf_vms.h types.h macros.h pack1.h unpack.h
 
+if ENABLE_CXX
+pkginclude_HEADERS += Mmgr.hpp
+endif
+
 pkgincludedir= $(includedir)/qse
 
 CLEANFILES = *dist

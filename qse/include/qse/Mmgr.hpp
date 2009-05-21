@@ -16,31 +16,48 @@
    limitations under the License.
  */
 
-#ifndef _QSE_SED_SED_HPP_
-#define _QSE_SED_SED_HPP_
+#ifndef _QSE_MMGR_HPP_
+#define _QSE_MMGR_HPP_
 
-#include <qse/Mmgr.hpp>
-#include <qse/sed/sed.h>
+#include <qse/types.h>
+#include <qse/macros.h>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/** 
- * The Sed class implements a stream editor.
- */
-class Sed: public Mmgr
+class Mmgr: public qse_mmgr_t
 {
 public:
-	Sed () throw (): sed (QSE_NULL) {}
+	Mmgr () throw ()
+	{
+		this->alloc = alloc_mem;
+		this->realloc = realloc_mem;
+		this->free = free_mem;
+		this->data = this;
+	}
 
-	int open () throw ();
-	void close () throw ();
-	int compile () throw ();
-	int execute () throw ();
+	virtual ~Mmgr () {}
 
 protected:
-	qse_sed_t* sed;
+	virtual void* allocMem (qse_size_t n) throw () = 0;
+	virtual void* reallocMem (void* ptr, qse_size_t n) throw () = 0;
+	virtual void  freeMem (void* ptr) throw () = 0;
+
+	static void* alloc_mem (void* data, qse_size_t n) throw ()
+	{
+		return ((Mmgr*)data)->allocMem (n);
+	}
+
+	static void* realloc_mem (void* data, void* ptr, qse_size_t n) throw ()
+	{
+		return ((Mmgr*)data)->reallocMem (ptr, n);
+	}
+
+	static void  free_mem (void* data, void* ptr) throw ()
+	{
+		return ((Mmgr*)data)->freeMem (ptr);
+	}
 };
 
 /////////////////////////////////
