@@ -31,8 +31,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_CXX_TRUE@am__append_1 = Mmgr.hpp
 subdir = include/qse
-DIST_COMMON = $(pkginclude_HEADERS) $(srcdir)/Makefile.am \
+DIST_COMMON = $(am__pkginclude_HEADERS_DIST) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -50,6 +51,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
+am__pkginclude_HEADERS_DIST = config.h.in conf_msw.h conf_vms.h \
+	types.h macros.h pack1.h unpack.h Mmgr.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -194,7 +197,8 @@ top_srcdir = @top_srcdir@
 
 # EXTRA_DIST = README
 SUBDIRS = cmn utl awk lsp 
-pkginclude_HEADERS = config.h.in conf_msw.h conf_vms.h types.h macros.h pack1.h unpack.h
+pkginclude_HEADERS = config.h.in conf_msw.h conf_vms.h types.h \
+	macros.h pack1.h unpack.h $(am__append_1)
 CLEANFILES = *dist
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

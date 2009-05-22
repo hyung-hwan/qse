@@ -1,5 +1,5 @@
 /*
- * $Id: awk01.c 86 2009-02-26 12:55:05Z hyunghwan.chung $ 
+ * $Id: awk01.c 151 2009-05-21 06:50:02Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -14,12 +14,6 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
-
-/****S* AWK/Basic Loop
- * DESCRIPTION
- *  This program demonstrates how to use qse_awk_rtx_loop().
- * SOURCE
  */
 
 #include <qse/awk/awk.h>
@@ -88,4 +82,3 @@ oops:
 	return -1;
 }
 
-/******/

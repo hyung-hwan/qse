@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 127 2009-05-07 13:15:04Z hyunghwan.chung $ 
+ * $Id: awk.c 151 2009-05-21 06:50:02Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,8 @@
 #endif
 
 #include "awk.h"
+
+QSE_IMPLEMENT_COMMON_FUNCTIONS (awk)
 
 #define SETERR(awk,code) qse_awk_seterrnum(awk,code)
 
@@ -221,7 +223,6 @@ oops:
 	return QSE_NULL;
 }
 
-
 int qse_awk_close (qse_awk_t* awk)
 {
 	qse_size_t i;
@@ -327,21 +328,6 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->tree.chain_size = 0;
 
 	return 0;
-}
-
-void* qse_awk_getxtn (qse_awk_t* awk)
-{
-	return (void*)(awk + 1);
-}
-
-qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk)
-{
-	return awk->mmgr;
-}
-
-void qse_awk_setmmgr (qse_awk_t* awk, qse_mmgr_t* mmgr)
-{
-	awk->mmgr = mmgr;
 }
 
 qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)

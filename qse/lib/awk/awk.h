@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: awk.h 151 2009-05-21 06:50:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -86,8 +86,7 @@ struct qse_awk_tree_t
 
 struct qse_awk_t
 {
-	/* memory manager */
-	qse_mmgr_t*    mmgr;
+	QSE_DEFINE_COMMON_FIELDS (sed)
 
 	/* primitive functions */
 	qse_awk_prm_t  prm;
