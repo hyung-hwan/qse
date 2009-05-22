@@ -1,5 +1,5 @@
 /*
- * $Id: awk02.c 90 2009-03-01 09:58:19Z hyunghwan.chung $ 
+ * $Id: awk02.c 151 2009-05-21 06:50:02Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -14,12 +14,6 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
-
-/****S* AWK/Basic Loop With Deparsing
- * DESCRIPTION
- *  The program deparses the source code and prints it before executing it.
- * SOURCE
  */
 
 #include <qse/awk/awk.h>
@@ -103,4 +97,3 @@ oops:
 	return -1;
 }
 
-/******/

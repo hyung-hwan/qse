@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: awk.h 151 2009-05-21 06:50:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,22 +24,23 @@
 #include <qse/cmn/map.h>
 #include <qse/cmn/str.h>
 
-/****o* AWK/Interpreter
- * DESCRIPTION
- *  The library includes an AWK interpreter that can be embedded into other
- *  applications or can run stand-alone.
+/** @file
+ * An embeddable AWK interpreter is defined in this header files.
  *
- *  #include <qse/awk/awk.h>
- ******
+ * @example awk01.c
+ * This program demonstrates how to use qse_awk_rtx_loop().
+ * @example awk02.c
+ * The program deparses the source code and prints it before executing it.
+ * @example awk03.c
+ * This program demonstrates how to use qse_awk_rtx_call().
+ * It parses the program stored in the string src and calls the functions
+ * stated in the array fnc. If no errors occur, it should print 24.
  */
 
-/****t* AWK/qse_awk_t
- * NAME
- *  qse_awk_t - define an AWK type
- * SYNOPSIS
+/** @class qse_awk_t
+ * The qse_awk_t type defines an AWK interpreter.
  */
 typedef struct qse_awk_t     qse_awk_t;
-/******/
 
 /****t* AWK/qse_awk_rtx_t
  * NAME
@@ -700,19 +701,17 @@ enum qse_awk_val_ref_id_t
 	QSE_AWK_VAL_REF_POS
 };
 
-/****e* AWK/qse_awk_rtx_valtostr_type_t
- * NAME
- *  qse_awk_rtx_valtostr_type_t - define a value-to-string conversion type
- * DESCRIPTION
- *  The values defined are used to set the type field of the 
- *  qse_awk_rtx_valtostr_out_t structure. The field should be one of the 
- *  following values:
- *  * QSE_AWK_RTX_VALTOSTR_CPL
- *  * QSE_AWK_RTX_VALTOSTR_CPLDUP
- *  * QSE_AWK_RTX_VALTOSTR_STRP
- *  * QSE_AWK_RTX_VALTOSTR_STRPCAT
- *  and it can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT.
- * SYNOPSIS
+/**
+ * The values defined are used to set the type field of the 
+ * qse_awk_rtx_valtostr_out_t structure. The field should be one of the 
+ * following values:
+ *
+ * - QSE_AWK_RTX_VALTOSTR_CPL
+ * - QSE_AWK_RTX_VALTOSTR_CPLDUP
+ * - QSE_AWK_RTX_VALTOSTR_STRP
+ * - QSE_AWK_RTX_VALTOSTR_STRPCAT
+ *
+ * and it can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT.
  */
 enum qse_awk_rtx_valtostr_type_t
 {
@@ -722,16 +721,10 @@ enum qse_awk_rtx_valtostr_type_t
 	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x03,
 	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10
 };
-/******/
 
-/****s* AWK/qse_awk_rtx_valtostr_out_t
- * NAME
- *  qse_awk_rtx_valtostr_out_t - define a output structure for value-to-string 
- *  conversion
- * DESCRIPTION
- *  The qse_awk_rtx_valtostr() function converts a value to a string as 
- *  indicated in a parameter of the qse_awk_rtx_valtostr_out_t type.
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_valtostr() function converts a value to a string as 
+ * indicated in a parameter of the qse_awk_rtx_valtostr_out_t type.
  */
 struct qse_awk_rtx_valtostr_out_t
 {
@@ -746,13 +739,14 @@ struct qse_awk_rtx_valtostr_out_t
 	} u;
 };
 typedef struct qse_awk_rtx_valtostr_out_t qse_awk_rtx_valtostr_out_t;
-/******/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** represents the nil value */
+QSE_DEFINE_COMMON_FUNCTIONS (awk)
+
+/** represents a nil value */
 extern qse_awk_val_t* qse_awk_val_nil;
 
 /** represents an empty string  */
@@ -767,58 +761,45 @@ extern qse_awk_val_t* qse_awk_val_zero;
 /** represents a numeric value 1 */
 extern qse_awk_val_t* qse_awk_val_one;
 
-/****f* AWK/qse_awk_open
- * NAME
- *  qse_awk_open - create an awk object
- * DESCRIPTION
- *  The qse_awk_open() function creates a new qse_awk_t object.
- *  The instance created can be passed to other qse_awk_xxx() functions and
- *  is valid until it is successfully destroyed using the qse_qse_close() 
- *  function. The function save the memory manager pointer while it copies
- *  the contents of the primitive function structures. Therefore, you should
- *  keep the memory manager valid during the whole life cycle of an qse_awk_t
- *  object.
+/**
+ * The qse_awk_open() function creates a new qse_awk_t object. The object 
+ * created can be passed to other qse_awk_xxx() functions and is valid until 
+ * it is destroyed iwth the qse_qse_close() function. The function saves the 
+ * memory manager pointer while it copies the contents of the primitive 
+ * function structures. Therefore, you should keep the memory manager valid 
+ * during the whole life cycle of an qse_awk_t object.
  *
- *    qse_awk_t* dummy()
- *    {
- *       qse_mmgr_t mmgr;
- *       qse_awk_prm_t prm;
- *       return qse_awk_open (
- *          &mmgr, // NOT OK because the contents of mmgr is 
- *                 // invalidated when dummy() returns. 
- *          0, 
- *          &prm   // OK 
- *       );
- *    }
+ * @code
+ * qse_awk_t* dummy()
+ * {
+ *     qse_mmgr_t mmgr;
+ *     qse_awk_prm_t prm;
+ *     return qse_awk_open (
+ *        &mmgr, // NOT OK because the contents of mmgr is 
+ *               // invalidated when dummy() returns. 
+ *        0, 
+ *        &prm   // OK 
+ *     );
+ * }
+ * @endcode
  *
- * RETURN
- *  The qse_awk_open() function returns the pointer to a qse_awk_t object 
- *  on success and QSE_NULL on failure.
- * SYNOPSIS
+ * @return a pointer to a qse_awk_t object on success, QSE_NULL on failure.
  */
 qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t*     mmgr  /* a memory manager */,
-	qse_size_t      xtn   /* the size of extension in bytes */,
-	qse_awk_prm_t*  prm   /* primitive functoins */
+	qse_mmgr_t*    mmgr, /**< a memory manager */
+	qse_size_t     xtn,  /**< extension size in bytes */
+	qse_awk_prm_t* prm   /**< a pointer to a primitive function structure */
 );
-/******/
 
-/****f* AWK/qse_awk_close 
- * NAME
- *  qse_awk_close - destroy an awk object
- * DESCRIPTION
- *  A qse_awk_t instance must be destroyed using the qse_awk_close() function
- *  when finished being used. The instance passed is not valid any more once 
- *  the function returns success.
- * RETURN
- *  0 on success, -1 on failure 
- * SYNOPSIS
+/**
+ *  The qse_awk_close() function destroys a qse_awk_t object.
+ * @return 0 on success, -1 on failure 
  */
 int qse_awk_close (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< an awk object */
 );
-/******/
 
+#if 0
 /****f* AWK/qse_awk_getmmgr
  * NAME
  *  qse_awk_getmmgr - get the memory manager 
@@ -860,6 +841,7 @@ void* qse_awk_getxtn (
 	qse_awk_t* awk  /* an awk object */
 );
 /******/
+#endif
 
 /****f* AWK/qse_awk_getprm
  * NAME

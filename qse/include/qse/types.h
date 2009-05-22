@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 150 2009-05-21 06:17:17Z hyunghwan.chung $
+ * $Id: types.h 151 2009-05-21 06:50:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -374,35 +374,27 @@ typedef int  qse_mcint_t;
 #	endif
 #endif
 
-/****t* Base/qse_xstr_t
- * NAME
- *  qse_xstr_t - combine a pointer and length 
- * SEE ALSO
- *  qse_cstr_t
- * SYNOPSIS
+/**
+ * The qse_xstr_t type defines a structure combining a pointer to a character
+ * string and the number of characters.
  */
 struct qse_xstr_t
 {
-	qse_char_t* ptr; /* this is not a const pointer */
-	qse_size_t  len; /* the number of characters */
+	qse_char_t* ptr; /**< a pointer to a character string */
+	qse_size_t  len; /**< the number of characters */
 };
 typedef struct qse_xstr_t qse_xstr_t;
-/******/
 
-/****t* Base/qse_cstr_t
- * NAME
- *  qse_cstr_t - combine a constant pointer and length 
- * SEE ALSO
- *  qse_xstr_t
- * SYNOPSIS
+/**
+ * The qse_cstr_t type defines a structure combining a pointer to
+ * a constant character string and the number of characters.
  */
 struct qse_cstr_t
 {
-	const qse_char_t* ptr; /* this is a const pointer */
-	qse_size_t        len; /* the number of characters */
+	const qse_char_t* ptr; /**< a pointer to a const character string */
+	qse_size_t        len; /**< the number of characters */
 };
 typedef struct qse_cstr_t qse_cstr_t;
-/******/
 
 /**
  * The qse_mmgr_t type defines a set type of functions for memory management.

@@ -1,5 +1,5 @@
 /*
- * $Id: awk03.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: awk03.c 151 2009-05-21 06:50:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -14,14 +14,6 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- */
-
-/****S* AWK/Calling Functions
- * DESCRIPTION
- *  This program demonstrates how to use qse_awk_rtx_call().
- *  It parses the program stored in the string src and calls the functions
- *  stated in the array fnc. If no errors occur, it should print 24.
- * SOURCE
  */
 
 #include <qse/awk/awk.h>
@@ -125,4 +117,3 @@ oops:
 	if (awk != QSE_NULL) qse_awk_close (awk);
 	return ret;
 }
-/******/
