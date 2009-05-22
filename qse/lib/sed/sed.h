@@ -34,6 +34,9 @@ struct qse_sed_t
 	QSE_DEFINE_COMMON_FIELDS (sed)
 
 	qse_sed_errnum_t errnum; /**< stores an error number */
+	qse_char_t errmsg[128];  /**< error message holder */
+	qse_size_t errlin;       /**< no of the line where an error occurred */
+
 	int option;              /**< stores options */
 
 	/** source text pointers */
@@ -139,46 +142,36 @@ struct qse_sed_adr_t
 	} u;
 };
 
+#define QSE_SED_CMD_QUIT            QSE_T('q')
+#define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
+#define QSE_SED_CMD_APPEND          QSE_T('a')
+#define QSE_SED_CMD_INSERT          QSE_T('i')
+#define QSE_SED_CMD_CHANGE          QSE_T('c')
+#define QSE_SED_CMD_DELETE          QSE_T('d')
+#define QSE_SED_CMD_DELETE_FIRSTLN  QSE_T('D')
+#define QSE_SED_CMD_PRINT_LNNUM     QSE_T('=')
+#define QSE_SED_CMD_PRINT           QSE_T('p')
+#define QSE_SED_CMD_PRINT_FIRSTLN   QSE_T('P')
+#define QSE_SED_CMD_PRINT_CLEARLY   QSE_T('l')
+#define QSE_SED_CMD_HOLD            QSE_T('h')
+#define QSE_SED_CMD_HOLD_APPEND     QSE_T('H')
+#define QSE_SED_CMD_RELEASE         QSE_T('g')
+#define QSE_SED_CMD_RELEASE_APPEND  QSE_T('G')
+#define QSE_SED_CMD_EXCHANGE        QSE_T('x') 
+#define QSE_SED_CMD_NEXT            QSE_T('n')
+#define QSE_SED_CMD_NEXT_APPEND     QSE_T('N')
+#define QSE_SED_CMD_READ_FILE       QSE_T('r')
+#define QSE_SED_CMD_READ_FILELN     QSE_T('R')
+#define QSE_SED_CMD_WRITE_FILE      QSE_T('w')
+#define QSE_SED_CMD_WRITE_FILELN    QSE_T('W')
+#define QSE_SED_CMD_BRANCH          QSE_T('b') 
+#define QSE_SED_CMD_BRANCH_COND     QSE_T('t')
+#define QSE_SED_CMD_SUBSTITUTE      QSE_T('s')
+#define QSE_SED_CMD_TRANSLATE       QSE_T('y')
+
 struct qse_sed_cmd_t
 {
-	enum
-	{
-		QSE_SED_CMD_QUIT           = QSE_T('q'),
-		QSE_SED_CMD_QUIT_QUIET     = QSE_T('Q'),
-
-		QSE_SED_CMD_APPEND         = QSE_T('a'),
-		QSE_SED_CMD_INSERT         = QSE_T('i'),
-		QSE_SED_CMD_CHANGE         = QSE_T('c'),
-
-		QSE_SED_CMD_DELETE         = QSE_T('d'),
-		QSE_SED_CMD_DELETE_FIRSTLN = QSE_T('D'),
-
-		QSE_SED_CMD_PRINT_LNNUM    = QSE_T('='),
-		QSE_SED_CMD_PRINT          = QSE_T('p'),
-		QSE_SED_CMD_PRINT_FIRSTLN  = QSE_T('P'),
-		QSE_SED_CMD_PRINT_CLEARLY  = QSE_T('l'),
-
-		QSE_SED_CMD_HOLD           = QSE_T('h'),
-		QSE_SED_CMD_HOLD_APPEND    = QSE_T('H'),
-		QSE_SED_CMD_RELEASE        = QSE_T('g'),
-		QSE_SED_CMD_RELEASE_APPEND = QSE_T('G'),
-		QSE_SED_CMD_EXCHANGE       = QSE_T('x'), 
-
-		QSE_SED_CMD_NEXT           = QSE_T('n'),
-		QSE_SED_CMD_NEXT_APPEND    = QSE_T('N'),
-
-		QSE_SED_CMD_READ_FILE      = QSE_T('r'),
-		QSE_SED_CMD_READ_FILELN    = QSE_T('R'),
-		QSE_SED_CMD_WRITE_FILE     = QSE_T('w'),
-		QSE_SED_CMD_WRITE_FILELN   = QSE_T('W'),
-
-		QSE_SED_CMD_BRANCH         = QSE_T('b'), 
-		QSE_SED_CMD_BRANCH_COND    = QSE_T('t'),
-
-		QSE_SED_CMD_SUBSTITUTE     = QSE_T('s'),
-		QSE_SED_CMD_TRANSLATE      = QSE_T('y')
-
-	} type;
+	qse_char_t type;
 
 	int negated;
 

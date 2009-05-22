@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: types.h 150 2009-05-21 06:17:17Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -404,16 +404,37 @@ struct qse_cstr_t
 typedef struct qse_cstr_t qse_cstr_t;
 /******/
 
-/****t* Base/qse_mmgr_t
- * NAME
- *  qse_mmgr_t - define a memory manager
- * SYNOPSIS
+/**
+ * The qse_mmgr_t type defines a set type of functions for memory management.
+ * As the type is merely a structure, it is just used as a single container
+ * for memory management functions with a pointer to user-defined data. 
+ * The user-defined \a data is passed to each memory management function
+ * whenever it is called. You can allocate, reallocate, and free a memory
+ * chunk.
+ *
+ * For example, a qse_xxx_open() function accepts a pointer of the qse_mmgr_t *
+ * type and the xxx object uses it to manage dynamic data within the object. 
  */
 struct qse_mmgr_t
 {
+	/** 
+	 * allocate a memory chunk of the size \a n.
+	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+	 */
 	void* (*alloc)   (void* data, qse_size_t n);
+	/** 
+	 * resize a memory chunk pointed to by \a ptr to the size \a n.
+	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+	 */
 	void* (*realloc) (void* data, void* ptr, qse_size_t n);
+	/**
+	 * frees a memory chunk pointed to by \a ptr.
+	 */
 	void  (*free)    (void* data, void* ptr);
+	/** 
+	 * a pointer to user-defined data passed as the first parameter to
+	 * alloc(), realloc(), and free().
+	 */
 	void*   data;
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
