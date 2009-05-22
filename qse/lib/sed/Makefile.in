@@ -60,7 +60,7 @@ libqsesed___la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(CXXFLAGS) $(libqsesed___la_LDFLAGS) $(LDFLAGS) -o $@
 @ENABLE_CXX_TRUE@am_libqsesed___la_rpath = -rpath $(libdir)
 libqsesed_la_DEPENDENCIES =
-am_libqsesed_la_OBJECTS = sed.lo
+am_libqsesed_la_OBJECTS = sed.lo err.lo
 libqsesed_la_OBJECTS = $(am_libqsesed_la_OBJECTS)
 libqsesed_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -219,7 +219,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libqsesed.la $(am__append_1)
-libqsesed_la_SOURCES = sed.c sed.h
+libqsesed_la_SOURCES = sed.c err.c sed.h
 libqsesed_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L../utl
 libqsesed_la_LIBADD = -lqsecmn -lqseutl
 @ENABLE_CXX_TRUE@libqsesed___la_SOURCES = Sed.cpp StdSed.cpp
@@ -298,6 +298,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Sed.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdSed.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed.Plo@am__quote@
 
 .c.o:

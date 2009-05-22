@@ -65,7 +65,7 @@ enum qse_sed_errnum_t
 	QSE_SED_ETMTXT,  /**< too much text */
 	QSE_SED_ECMDNR,  /**< a command is not recognized */
 	QSE_SED_ECMDMS,  /**< a command is missing */
-	QSE_SED_ECMDGB,  /**< command garbled */
+	QSE_SED_ECMDIC,  /**< a command is incomplete */
 	QSE_SED_EREXBL,  /**< regular expression build error */
 	QSE_SED_EREXMA,  /**< regular expression match error */
 	QSE_SED_EA1PHB,  /**< address 1 prohibited */
@@ -76,13 +76,11 @@ enum qse_sed_errnum_t
 	QSE_SED_EBSDEL,  /**< \ used a delimiter */
 	QSE_SED_EGBABS,  /**< garbage after \ */
 	QSE_SED_ESCEXP,  /**< ; is expected */
-	QSE_SED_ELABTL,  /**< label too long */
 	QSE_SED_ELABEM,  /**< label name is empty */
 	QSE_SED_ELABDU,  /**< duplicate label name */
 	QSE_SED_ELABNF,  /**< label not found */
 	QSE_SED_EFILEM,  /**< file name is empty */
 	QSE_SED_EFILIL,  /**< illegal file name */
-	QSE_SED_ENOTRM,  /**< not terminated properly */
 	QSE_SED_ETSNSL,  /**< translation set not the same length*/
 	QSE_SED_EGRNBA,  /**< group brackets not balanced */
 	QSE_SED_EGRNTD,  /**< group nested too deeply */
@@ -169,8 +167,15 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (sed)
 
 /**
- * The qse_sed_open() function creates a stream editor.
- * @return A pointer to a stream editor on success, QSE_NULL on a failure
+ * The qse_sed_open() function creates a stream editor object. A memory
+ * manager provided is used to allocate and destory the object and any dynamic
+ * data through out its lifetime. An extension area is allocated if an
+ * extension size greater than 0 is specified. You can access it with the
+ * qse_sed_getxtn() function and use it to store arbitrary data associated
+ * with the object. See #QSE_DEFINE_COMMON_FUNCTIONS() for qse_sed_getxtn().
+ * When done, you should destroy the object with the qse_sed_close() function
+ * to avoid any resource leaks including memory. 
+ * @return A pointer to a stream editor on success, QSE_NULL on failure
  */
 qse_sed_t* qse_sed_open (
 	qse_mmgr_t*    mmgr, /**< a memory manager */
@@ -202,11 +207,52 @@ void qse_sed_setoption (
 );
 
 /**
- * The qse_sed_geterrmsg() function retrieves an error message
- * @return a pointer to a string describing an error occurred 
+ * The qse_sed_geterrnum() function gets the number of the last error.
+ * @return the number of the last error
+ */
+int qse_sed_geterrnum (
+	qse_sed_t* sed /**< a stream editor */
+);
+
+/**
+ * The qse_sed_geterrlin() function gets the number of the line where
+ * the last error has occurred.
+ * @return the line number of the last error
+ */
+qse_size_t qse_sed_geterrlin (
+	qse_sed_t* sed /**< a stream editor */
+);
+
+/**
+ * The qse_sed_geterrmsg() function gets a string describing the last error.
+ * @return a pointer to an error message
  */
 const qse_char_t* qse_sed_geterrmsg (
 	qse_sed_t* sed /**< a stream editor */
+);
+
+/**
+ * The qse_sed_geterror() function gets an error number, an error line, and 
+ * an error message. The information is set to the memory area pointed to by
+ * each parameter.
+ */
+void qse_sed_geterror (
+	qse_sed_t*         sed,    /**< a stream editor */
+	int*               errnum, /**< a pointer to an error number holder */
+	qse_size_t*        errlin, /**< a pointer to an error line holder */
+	const qse_char_t** errmsg  /**< a pointer to an error message */
+);
+
+/**
+ * The qse_sed_seterror() function sets an error number, an error line, and
+ * an error message. An error string is composed of a formatting string
+ * and an array of formatting parameters.
+ */
+void qse_sed_seterror (
+	qse_sed_t*        sed,    /**< a stream editor */
+	int               errnum, /**< an error number */
+	qse_size_t        errlin, /**< an error line */
+	const qse_cstr_t* errarg  /**< a string array for formatting an error message */
 );
 
 /**

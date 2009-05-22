@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 140 2009-05-18 12:55:01Z hyunghwan.chung $
+ * $Id: macros.h 150 2009-05-21 06:17:17Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -202,12 +202,22 @@
 	qse_mmgr_t* mmgr;
 	
 /**
- * The QSE_DEFINE_COMMON_FUNcTIONS() macro defines common object functions.
+ * The QSE_DEFINE_COMMON_FUNCTIONS() macro defines common object functions.
+ * - @code void qse_xxx_setmmgr (qse_xxx_t* xxx, qse_mmgr_t* mmgr); @endcode
+ *   The qse_xxx_setmmgr() function change the memory manager of a relevant
+ *   object. Take extreme care if you want to use this function.
+ * - @code qse_mmgr_t* qse_xxx_getmmgr (qse_xxx_t* xxx); @endcode
+ *   The qse_xxx_getmmgr() function returns the memory manager of a relevant
+ *   object.
+ * - @code void qse_xxx_getxtn (qse_xxx_t* xxx); @endcode
+ *   The qse_xxx_getxtn() function returns the pointer to an extension area
+ *   of a relevant object created with an extension size greater than 0.
  */
 #define QSE_DEFINE_COMMON_FUNCTIONS(name) \
 void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
+
 
 /**
  * The QSE_MMGR() macro gets the memory manager field from an object.
