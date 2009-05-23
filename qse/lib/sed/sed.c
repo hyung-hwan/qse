@@ -262,7 +262,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 		c = NXTSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
-			sed->errnum = QSE_SED_ETMTXT;
+			SETERR1 (sed, QSE_SED_EREXIC, 0, 
+				QSE_STR_PTR(&sed->rexbuf),
+				QSE_STR_LEN(&sed->rexbuf)
+			);
 			return QSE_NULL;
 		}
 
@@ -274,7 +277,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 			c = CURSC (sed);
 			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
-				sed->errnum = QSE_SED_ETMTXT;
+				SETERR1 (sed, QSE_SED_EREXIC, 0, 
+					QSE_STR_PTR(&sed->rexbuf),
+					QSE_STR_LEN(&sed->rexbuf)
+				);
 				return QSE_NULL;
 			}
 
@@ -298,7 +304,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	);
 	if (code == QSE_NULL)
 	{
-		sed->errnum = QSE_SED_EREXBL;
+		SETERR1 (sed, QSE_SED_EREXBL, 0, 
+			QSE_STR_PTR(&sed->rexbuf),
+			QSE_STR_LEN(&sed->rexbuf)
+		);
 		return QSE_NULL;
 	}
 
@@ -343,9 +352,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 		c = NXTSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
-			/* TODO: change error code - 
-			 *       unterminated address regular expression */
-			sed->errnum = QSE_SED_ETMTXT;
+			SETERR1 (sed, QSE_SED_EREXIC, 0, QSE_T(""), 0);
 			return QSE_NULL;
 		}
 
@@ -811,7 +818,10 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	);
 	if (cmd->u.subst.rex == QSE_NULL)
 	{
-		sed->errnum = QSE_SED_EREXBL;
+		SETERR1 (sed, QSE_SED_EREXBL, 0, 
+			QSE_STR_PTR(t[0]),
+			QSE_STR_LEN(t[0])
+		);
 		goto oops;
 	}	
 
@@ -968,7 +978,7 @@ restart:
 			if (cmd->a1.type != QSE_SED_ADR_NONE)
 			{
 				/* label cannot have an address */
-				sed->errnum = QSE_SED_EA1PHB;
+				SETERR1 (sed, QSE_SED_EA1PHB, 0, &cmd->type, 1);
 				return -1;
 			}
 
