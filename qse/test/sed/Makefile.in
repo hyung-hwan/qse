@@ -32,7 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = sed01$(EXEEXT) sed02$(EXEEXT)
+bin_PROGRAMS = sed01$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_CXX_TRUE@am__append_1 = sed02
 subdir = test/sed
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -42,6 +43,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = sed02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -50,10 +52,11 @@ sed01_OBJECTS = $(am_sed01_OBJECTS)
 sed01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
 sed01_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_sed02_OBJECTS = sed02.$(OBJEXT)
+am__sed02_SOURCES_DIST = sed02.cpp
+@ENABLE_CXX_TRUE@am_sed02_OBJECTS = sed02.$(OBJEXT)
 sed02_OBJECTS = $(am_sed02_OBJECTS)
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-sed02_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@sed02_DEPENDENCIES = $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
@@ -76,7 +79,7 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(sed01_SOURCES) $(sed02_SOURCES)
-DIST_SOURCES = $(sed01_SOURCES) $(sed02_SOURCES)
+DIST_SOURCES = $(sed01_SOURCES) $(am__sed02_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -208,8 +211,8 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 LDADD = -lqsesed -lqseutl -lqsecmn $(LIBM)
 sed01_SOURCES = sed01.c
-sed02_SOURCES = sed02.cpp
-sed02_LDADD = -lqsesed++ $(LDADD)
+@ENABLE_CXX_TRUE@sed02_SOURCES = sed02.cpp
+@ENABLE_CXX_TRUE@sed02_LDADD = -lqsesed++ $(LDADD)
 all: all-am
 
 .SUFFIXES:

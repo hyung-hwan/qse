@@ -118,8 +118,9 @@ int sed_main (int argc, qse_char_t* argv[])
 	if (qse_sed_comp (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{
 		qse_fprintf (QSE_STDERR, 
-			QSE_T("cannot compile - %s\n"),
-			qse_sed_geterrmsg(sed)
+			QSE_T("cannot compile - %s at line %lu\n"),
+			qse_sed_geterrmsg(sed),
+			(unsigned long)qse_sed_geterrlin(sed)
 		);
 		goto oops;
 	}

@@ -59,7 +59,7 @@ protected:
 	/**
 	 * The reallocMem() function resizes a chunk of memory previously
 	 * allocated with the allocMem() function. When resized, the contents
-	 * of a surviving memory chunk is left untouched. If it fails to
+	 * of the surviving part of a memory chunk is preserved. If it fails to
 	 * resize memory, it should return QSE_NULL.
 	 */
 	virtual void* reallocMem (
