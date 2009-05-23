@@ -62,10 +62,10 @@ enum qse_sed_errnum_t
 {
 	QSE_SED_ENOERR,  /**< no error occurred */
 	QSE_SED_ENOMEM,  /**< insufficient memory is available */
-	QSE_SED_ETMTXT,  /**< too much text */
 	QSE_SED_ECMDNR,  /**< a command is not recognized */
 	QSE_SED_ECMDMS,  /**< a command is missing */
 	QSE_SED_ECMDIC,  /**< a command is incomplete */
+	QSE_SED_EREXIC,  /**< regular expression incomplete */
 	QSE_SED_EREXBL,  /**< regular expression build error */
 	QSE_SED_EREXMA,  /**< regular expression match error */
 	QSE_SED_EA1PHB,  /**< address 1 prohibited */
