@@ -988,6 +988,9 @@ restart:
 		case QSE_CHAR_EOF:
 			SETERR0 (sed, QSE_SED_ECMDMS, sed->src.lnum);
 			return -1;	
+		case QSE_T('\n'):
+			SETERR0 (sed, QSE_SED_ECMDMS, sed->src.lnum-1);
+			return -1;	
 
 		case QSE_T(':'):
 			/* label - this is not a command */
@@ -995,7 +998,10 @@ restart:
 			if (cmd->a1.type != QSE_SED_ADR_NONE)
 			{
 				/* label cannot have an address */
-				SETERR1 (sed, QSE_SED_EA1PHB, 0, &cmd->type, 1);
+				SETERR1 (
+					sed, QSE_SED_EA1PHB, sed->src.lnum, 
+					&cmd->type, 1
+				);
 				return -1;
 			}
 
