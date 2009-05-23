@@ -170,14 +170,6 @@ int qse_sed_getoption (qse_sed_t* sed)
 	return sed->option;
 }
 
-/* get the current charanter of the source code */
-#define CURSC(sed) \
-	(((sed)->src.cur < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
-/* advance the current pointer of the source code */
-#define ADVSCP(sed) ((sed)->src.cur++)
-#define NXTSC(sed) \
-	(((++(sed)->src.cur) < (sed)->src.end)? (*(sed)->src.cur): QSE_CHAR_EOF)
-
 /* check if c is a space character */
 #define IS_SPACE(c) (c == QSE_T(' ') || c == QSE_T('\t'))
 #define IS_LINTERM(c) (c == QSE_T('\n') || c == QSE_T('\r'))
@@ -187,6 +179,22 @@ int qse_sed_getoption (qse_sed_t* sed)
 #define IS_CMDTERM(c) \
 	(c == QSE_CHAR_EOF || c == QSE_T('#') || \
 	 c == QSE_T(';') || IS_LINTERM(c))
+
+#define CURSC(sed) ((sed)->src.cc)
+#define NXTSC(sed)  getnextsc(sed)
+
+static qse_cint_t getnextsc (qse_sed_t* sed)
+{
+	if (++sed->src.cur < sed->src.end) 
+	{
+		sed->src.cc = *(sed)->src.cur;
+		/* TODO: support different line end convension */
+		if (sed->src.cc == QSE_T('\n')) sed->src.lnum++;
+	}
+	else sed->src.cc = QSE_CHAR_EOF;
+
+	return sed->src.cc;
+}
 
 static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
@@ -262,7 +270,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 		c = NXTSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
-			SETERR1 (sed, QSE_SED_EREXIC, 0, 
+			qse_size_t lnum = sed->src.lnum;
+			if (c == QSE_T('\n')) lnum--;
+			SETERR1 (
+				sed, QSE_SED_EREXIC, lnum,
 				QSE_STR_PTR(&sed->rexbuf),
 				QSE_STR_LEN(&sed->rexbuf)
 			);
@@ -273,11 +284,13 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 
 		if (c == QSE_T('\\'))
 		{
-			ADVSCP (sed);
-			c = CURSC (sed);
+			c = NXTSC (sed);
 			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 			{
-				SETERR1 (sed, QSE_SED_EREXIC, 0, 
+				qse_size_t lnum = sed->src.lnum;
+				if (c == QSE_T('\n')) lnum--;
+				SETERR1 (
+					sed, QSE_SED_EREXIC, lnum,
 					QSE_STR_PTR(&sed->rexbuf),
 					QSE_STR_LEN(&sed->rexbuf)
 				);
@@ -304,7 +317,8 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	);
 	if (code == QSE_NULL)
 	{
-		SETERR1 (sed, QSE_SED_EREXBL, 0, 
+		SETERR1 (
+			sed, QSE_SED_EREXBL, sed->src.lnum,
 			QSE_STR_PTR(&sed->rexbuf),
 			QSE_STR_LEN(&sed->rexbuf)
 		);
@@ -322,14 +336,14 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 	if (c == QSE_T('$'))
 	{
 		a->type = QSE_SED_ADR_DOL;
-		ADVSCP (sed);
+		NXTSC (sed);
 	}
 	else if (c == QSE_T('/'))
 	{
 		a->u.rex = compile_rex (sed, c);
 		if (a->u.rex == QSE_NULL) return QSE_NULL;
 		a->type = QSE_SED_ADR_REX;
-		ADVSCP (sed);
+		NXTSC (sed);
 	}
 	else if (c >= QSE_T('0') && c <= QSE_T('9'))
 	{
@@ -337,7 +351,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
-			ADVSCP (sed);
+			NXTSC (sed);
 		}
 		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
 
@@ -352,14 +366,16 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 		c = NXTSC (sed);
 		if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
 		{
-			SETERR1 (sed, QSE_SED_EREXIC, 0, QSE_T(""), 0);
+			qse_size_t lnum = sed->src.lnum;
+			if (c == QSE_T('\n')) lnum--;
+			SETERR1 (sed, QSE_SED_EREXIC, lnum, QSE_T(""), 0);
 			return QSE_NULL;
 		}
 
 		a->u.rex = compile_rex (sed, c);
 		if (a->u.rex == QSE_NULL) return QSE_NULL;
 		a->type = QSE_SED_ADR_REX;
-		ADVSCP (sed);
+		NXTSC (sed);
 	}
 	else
 	{
@@ -424,7 +440,7 @@ do { \
 
 			if (c == QSE_T('\n'))
 			{
-				ADVSCP (sed);
+				NXTSC (sed);
 				if (nl) goto done;
 				break;
 			}
@@ -506,7 +522,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	/* the label can be followed by a command on the same line without 
 	 * a semicolon as in ':label p'. */
-	if (c != QSE_T('#') && c != QSE_CHAR_EOF) ADVSCP (sed);	
+	if (c != QSE_T('#') && c != QSE_CHAR_EOF) NXTSC (sed);	
 
 	qse_str_close (t);
 	return 0;
@@ -530,7 +546,7 @@ static int terminate_command (qse_sed_t* sed)
 
 	/* if the target is terminated by #, it should let the caller 
 	 * to skip the comment e.txt. so don't read in the next character */
-	if (c != QSE_T('#') && c != QSE_CHAR_EOF) ADVSCP (sed);	
+	if (c != QSE_T('#') && c != QSE_CHAR_EOF) NXTSC (sed);	
 	return 0;
 }
 
@@ -796,7 +812,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 		else if (c == QSE_T('w'))
 		{
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_file (sed, &cmd->u.subst.file) <= -1) return -1;
 			break;
 		}
@@ -818,7 +834,8 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	);
 	if (cmd->u.subst.rex == QSE_NULL)
 	{
-		SETERR1 (sed, QSE_SED_EREXBL, 0, 
+		SETERR1 (
+			sed, QSE_SED_EREXBL, sed->src.lnum,
 			QSE_STR_PTR(t[0]),
 			QSE_STR_LEN(t[0])
 		);
@@ -940,7 +957,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	ADVSCP (sed);
+	NXTSC (sed);
 	if (terminate_command (sed) <= -1) goto oops;
 
 	qse_str_yield (t, &cmd->u.transet, 0);
@@ -964,12 +981,12 @@ restart:
 		default:
 		{
 			qse_char_t cc = c;
-			SETERR1 (sed, QSE_SED_ECMDNR, 0, &cc, 1);
+			SETERR1 (sed, QSE_SED_ECMDNR, sed->src.lnum, &cc, 1);
 			return -1;
 		}
 
 		case QSE_CHAR_EOF:
-			SETERR0 (sed, QSE_SED_ECMDMS, 0);
+			SETERR0 (sed, QSE_SED_ECMDMS, sed->src.lnum);
 			return -1;	
 
 		case QSE_T(':'):
@@ -982,7 +999,7 @@ restart:
 				return -1;
 			}
 
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_label (sed, cmd) <= -1) return -1;
 
 			c = CURSC (sed);
@@ -1006,7 +1023,7 @@ restart:
 			}
 
 			sed->grp.cmd[sed->grp.level++] = cmd;
-			ADVSCP (sed);
+			NXTSC (sed);
 			break;
 
 		case QSE_T('}'):
@@ -1018,7 +1035,7 @@ restart:
 			}
 
 			sed->grp.cmd[--sed->grp.level]->u.branch.target = cmd;
-			ADVSCP (sed);
+			NXTSC (sed);
 			return 0;
 
 		case QSE_T('q'):
@@ -1030,7 +1047,7 @@ restart:
 				return -1;
 			}
 
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (terminate_command (sed) <= -1) return -1;
 			break;
 
@@ -1066,7 +1083,7 @@ restart:
 				return -1;
 			}
 			
-			ADVSCP (sed); /* skip the new line */
+			NXTSC (sed); /* skip the new line */
 
 			/* get_text() starts from the next line */
 			if (get_text (sed, cmd) <= -1) return -1;
@@ -1097,14 +1114,14 @@ restart:
 		case QSE_T('n'):
 		case QSE_T('N'):
 			cmd->type = c;
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (terminate_command (sed) <= -1) return -1;
 			break;
 
 		case QSE_T('b'):
 		case QSE_T('t'):
 			cmd->type = c;
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_branch_target (sed, cmd) <= -1) return -1;
 			break;
 
@@ -1113,19 +1130,19 @@ restart:
 		case QSE_T('w'):
 		case QSE_T('W'):
 			cmd->type = c;
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_file (sed, &cmd->u.file) <= -1) return -1;
 			break;
 
 		case QSE_T('s'):
 			cmd->type = c;
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_subst (sed, cmd) <= -1) return -1;
 			break;
 
 		case QSE_T('y'):
 			cmd->type = c;
-			ADVSCP (sed);
+			NXTSC (sed);
 			if (get_transet (sed, cmd) <= -1) return -1;
 			break;
 	}
@@ -1140,9 +1157,11 @@ static int compile_source (
 	qse_sed_cmd_t* cmd = sed->cmd.cur;
 
 	/* store the source code pointers */
-	sed->src.ptr = ptr;
-	sed->src.end = ptr + len;
-	sed->src.cur = ptr;
+	sed->src.ptr  = ptr;
+	sed->src.end  = ptr + len;
+	sed->src.cur  = ptr;
+	sed->src.lnum = 1;
+	sed->src.cc = (len > 0)? (*ptr): QSE_CHAR_EOF;
 	
 	/* 
 	 * # comment
@@ -1162,7 +1181,7 @@ static int compile_source (
 		if (c == QSE_T('#'))
 		{
 			do c = NXTSC (sed); while (!IS_LINTERM(c));
-			ADVSCP (sed);
+			NXTSC (sed);
 			continue;
 		}
 
@@ -1172,7 +1191,7 @@ static int compile_source (
 		if (c == QSE_T(';')) 
 		{
 			/* semicolon without a address-command pair */
-			ADVSCP (sed);
+			NXTSC (sed);
 			continue;
 		}
 

@@ -42,6 +42,8 @@ struct qse_sed_t
 	/** source text pointers */
 	struct
 	{
+		qse_size_t lnum;       /**< line number */
+		qse_cint_t cc;         /**< last character read */
 		const qse_char_t* ptr; /**< beginning of the source text */
 		const qse_char_t* end; /**< end of the source text */
 		const qse_char_t* cur; /**< current source text pointer */
