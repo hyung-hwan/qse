@@ -26,7 +26,7 @@ static const qse_char_t* geterrstr (int errnum)
 		QSE_T("out of memory"),
 		QSE_T("command '${0}' not recognized"),
 		QSE_T("command code missing"),
-		QSE_T("command '${0}' not terminated properly"),
+		QSE_T("command '${0}' incomplete"),
 		QSE_T("regular expression '${0}' incomplete"),
 		QSE_T("failed to compile regular expression '${0}'"),
 		QSE_T("failed to match regular expression"),
@@ -49,6 +49,7 @@ static const qse_char_t* geterrstr (int errnum)
 		QSE_T("multiple occurrence specifier"),
 		QSE_T("occurrence specifier is zero"),
 		QSE_T("occurrence specifier too large"),
+		QSE_T("io error with file '${0}'"),
 		QSE_T("error returned by user io handler")
 	};
 

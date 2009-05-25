@@ -49,8 +49,24 @@ struct qse_sed_t
 		const qse_char_t* cur; /**< current source text pointer */
 	} src;
 
-	/** temporary regular expression buffer */
-	qse_str_t rexbuf;
+	/** temporary data for compiling */
+	struct
+	{
+		qse_str_t rex; /**< regular expression buffer */
+		qse_str_t lab; /**< label name buffer */
+
+		/** data structure to compile command groups */
+		struct
+		{
+			/** current level of command group nesting */
+			int level;
+			/** keeps track of the begining of nested groups */
+			qse_sed_cmd_t* cmd[128];
+		} grp;
+
+		/** a table storing labels seen */
+		qse_map_t labs; 
+	} tmp;
 
 	/** compiled commands */
 	struct
@@ -59,18 +75,6 @@ struct qse_sed_t
 		qse_sed_cmd_t* end; /**< end of the buffer */
 		qse_sed_cmd_t* cur; /**< points next to the last command */
 	} cmd;
-
-	/** a table storing labels seen */
-	qse_map_t labs; 
-
-	/** data structure to compile command groups */
-	struct
-	{
-		/** current level of command group nesting */
-		int level;
-		/** keeps track of the begining of nested command groups */
-		qse_sed_cmd_t* cmd[128];
-	} grp;
 
 	/** data for execution */
 	struct
@@ -174,6 +178,7 @@ struct qse_sed_adr_t
 struct qse_sed_cmd_t
 {
 	qse_char_t type;
+	qse_size_t lnum;
 
 	int negated;
 
