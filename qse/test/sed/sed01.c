@@ -22,6 +22,8 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 
+const qse_char_t* instream = QSE_NULL;
+
 static qse_ssize_t in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
 {
@@ -31,7 +33,19 @@ static qse_ssize_t in (
 			if (arg->open.path == QSE_NULL ||
 			    arg->open.path[0] == QSE_T('\0'))
 			{
-				arg->open.handle = QSE_STDIN;
+				if (instream)
+				{
+					arg->open.handle = qse_fopen (instream, QSE_T("r"));
+					if (arg->open.handle == QSE_NULL) 
+					{
+						qse_cstr_t errarg;
+						errarg.ptr = instream;
+						errarg.len = qse_strlen(instream);
+						qse_sed_seterror (sed, QSE_SED_EIOFIL, 0, &errarg);
+						return -1;
+					}
+				}
+				else arg->open.handle = QSE_STDIN;
 			}
 			else
 			{
@@ -102,9 +116,11 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (argc != 2 && argc != 3)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("usage: %s string\n"), argv[0]);
+		qse_fprintf (QSE_STDERR, QSE_T("usage: %s string [file]\n"), argv[0]);
 		return -1;
 	}
+
+	if (argc == 3) instream = argv[2];
 
 	sed = qse_sed_open (QSE_NULL, 0);
 	if (sed == QSE_NULL)
@@ -117,20 +133,43 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (qse_sed_comp (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{
-		qse_fprintf (QSE_STDERR, 
-			QSE_T("cannot compile - %s at line %lu\n"),
-			qse_sed_geterrmsg(sed),
-			(unsigned long)qse_sed_geterrlin(sed)
-		);
+		qse_size_t errlin = qse_sed_geterrlin(sed);
+		if (errlin > 0)
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("cannot compile - %s at line %lu\n"),
+				qse_sed_geterrmsg(sed),
+				(unsigned long)errlin
+			);
+		}
+		else
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("cannot compile - %s\n"),
+				qse_sed_geterrmsg(sed)
+			);
+		}
 		goto oops;
 	}
 
 	if (qse_sed_exec (sed, in, out) == -1)
 	{
-		qse_fprintf (QSE_STDERR, 
-			QSE_T("cannot execute - %s\n"),
-			qse_sed_geterrmsg(sed)
-		);
+		qse_size_t errlin = qse_sed_geterrlin(sed);
+		if (errlin > 0)
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("cannot execute - %s at line %lu\n"),
+				qse_sed_geterrmsg(sed),
+				(unsigned long)errlin
+			);
+		}
+		else
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("cannot execute - %s\n"),
+				qse_sed_geterrmsg(sed)
+			);
+		}
 		goto oops;
 	}
 

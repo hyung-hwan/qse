@@ -87,6 +87,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EOCSDU,  /**< multiple occurrence specifiers */
 	QSE_SED_EOCSZE,  /**< occurrence specifier to s is zero */
 	QSE_SED_EOCSTL,  /**< occurrence specifier too large */
+	QSE_SED_EIOFIL,  /**< file io error */
 	QSE_SED_EIOUSR   /**< user io error */
 };
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
@@ -270,9 +271,9 @@ int qse_sed_comp (
  * @return 0 on success, -1 on error
  */
 int qse_sed_exec (
-	qse_sed_t*       sed, /**< a stream editor */
-	qse_sed_io_fun_t in,  /**< stream reader */
-	qse_sed_io_fun_t out  /**< stream writer */
+	qse_sed_t*        sed,  /**< a stream editor */
+	qse_sed_io_fun_t  inf,  /**< stream reader */
+	qse_sed_io_fun_t  outf  /**< stream writer */
 );
 
 #ifdef __cplusplus
