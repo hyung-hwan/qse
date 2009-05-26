@@ -48,14 +48,64 @@ void Sed::close () throw()
 	}
 }
 
-int Sed::compile () throw ()
+int Sed::compile (const char_t* sptr, size_t slen) throw ()
 {
-	return 0;
+	QSE_ASSERT (sed != QSE_NULL);
+	return qse_sed_comp (sed, sptr, slen);
 }
 
 int Sed::execute () throw ()
 {
-	return 0;
+	QSE_ASSERT (sed != QSE_NULL);
+	return qse_sed_exec (sed, xin, xout);
+}
+
+int Sed::xin (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg)
+{
+	Sed* sed = *(Sed**)QSE_XTN(s);
+
+	try
+	{
+		switch (cmd)	
+		{
+			case QSE_SED_IO_OPEN:
+				return sed->openIn (arg->open.path);
+			case QSE_SED_IO_CLOSE:
+				return sed->closeIn ();
+			case QSE_SED_IO_READ:
+				return sed->readIn (arg->read.buf, arg->read.len);
+			default:
+				return -1;
+		}
+	}
+	catch (...)
+	{
+		return -1;
+	}
+}
+
+int Sed::xout (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg)
+{
+	Sed* sed = *(Sed**)QSE_XTN(s);
+
+	try
+	{
+		switch (cmd)	
+		{
+			case QSE_SED_IO_OPEN:
+				return sed->openOut (arg->open.path);
+			case QSE_SED_IO_CLOSE:
+				return sed->closeOut ();
+			case QSE_SED_IO_READ:
+				return sed->writeOut (arg->write.data, arg->write.len);
+			default:
+				return -1;
+		}
+	}
+	catch (...)
+	{
+		return -1;
+	}
 }
 
 /////////////////////////////////

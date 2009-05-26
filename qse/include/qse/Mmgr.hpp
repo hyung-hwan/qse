@@ -19,8 +19,7 @@
 #ifndef _QSE_MMGR_HPP_
 #define _QSE_MMGR_HPP_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/Types.hpp>
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -33,9 +32,16 @@ QSE_BEGIN_NAMESPACE(QSE)
  * write code in more object-oriented fashion. An inheriting class should 
  * implement three pure virtual functions.
  */ 
-class Mmgr: public qse_mmgr_t
+class Mmgr: public Types, public qse_mmgr_t
 {
 public:
+	/** defines an alias type to qse_mmgr_t */
+	typedef qse_mmgr_t mmgr_t;
+
+	/**
+	 * The Mmgr() function builds a memory manager composed of bridge
+	 * functions connecting itself with it.
+	 */
 	Mmgr () throw ()
 	{
 		this->alloc = alloc_mem;
@@ -44,6 +50,9 @@ public:
 		this->data = this;
 	}
 
+	/**
+	 * The ~Mmgr() function finalizes a memory manager.
+	 */
 	virtual ~Mmgr () {}
 
 protected:
