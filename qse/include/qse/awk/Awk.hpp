@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
+ * $Id: Awk.hpp 156 2009-05-25 13:39:18Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -35,26 +35,9 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Awk: public Mmgr
 {
 public:
-	/** Boolean data type */
-	typedef qse_bool_t  bool_t;
-	/** Data type that can hold any character */
-	typedef qse_char_t  char_t;
-	/** Data type that can hold any character or an end-of-file value */
-	typedef qse_cint_t  cint_t;
-	/** Represents an unsigned integer number of the same size as void* */
-	typedef qse_size_t  size_t;
-	/** Signed version of size_t */
-	typedef qse_ssize_t ssize_t;
-	/** Represents an integer */
-	typedef qse_long_t  long_t;
-	/** Represents a floating-point number */
-	typedef qse_real_t  real_t;
-	/** Represents the internal hash table */
 	typedef qse_map_t   map_t;
 	/** Represents a key/value pair */
 	typedef qse_map_pair_t pair_t;
-
-	typedef qse_mmgr_t mmgr_t;
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
