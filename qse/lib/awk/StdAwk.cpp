@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 158 2009-05-26 13:29:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -343,16 +343,16 @@ int StdAwk::openFile (File& io)
 	switch (mode)
 	{
 		case Awk::File::READ:
-			flags = QSE_SIO_READ;
+			flags = QSE_FIO_READ;
 			break;
 		case Awk::File::WRITE:
-			flags = QSE_SIO_WRITE | 
-			        QSE_SIO_CREATE | 
-			        QSE_SIO_TRUNCATE;
+			flags = QSE_FIO_WRITE | 
+			        QSE_FIO_CREATE | 
+			        QSE_FIO_TRUNCATE;
 			break;
 		case Awk::File::APPEND:
-			flags = QSE_SIO_APPEND |
-			        QSE_SIO_CREATE;
+			flags = QSE_FIO_APPEND |
+			        QSE_FIO_CREATE;
 			break;
 	}
 
@@ -360,7 +360,7 @@ int StdAwk::openFile (File& io)
 		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
-		flags,
+		flags | QSE_FIO_TEXT,
 		QSE_FIO_RUSR | QSE_FIO_WUSR |
 		QSE_FIO_RGRP | QSE_FIO_ROTH
 	);	

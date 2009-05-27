@@ -1295,8 +1295,8 @@ static int read_char (qse_sed_t* sed, qse_char_t* c)
 		if (sed->e.in.pos >= sed->e.in.len)
 		{
 			sed->errnum = QSE_SED_ENOERR;
-			sed->e.in.arg.read.buf = sed->e.in.buf;
-			sed->e.in.arg.read.len = QSE_COUNTOF(sed->e.in.buf);
+			sed->e.in.arg.u.r.buf = sed->e.in.buf;
+			sed->e.in.arg.u.r.len = QSE_COUNTOF(sed->e.in.buf);
 			n = sed->e.in.fun (
 				sed, QSE_SED_IO_READ, &sed->e.in.arg
 			);
@@ -1337,7 +1337,7 @@ static int read_file (
 	qse_sed_io_arg_t arg;
 	qse_char_t buf[256];
 
-	arg.open.path = path;
+	arg.path = path;
 	sed->errnum = QSE_SED_ENOERR;
 	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &arg);
 	if (n <= -1)
@@ -1356,8 +1356,8 @@ static int read_file (
 
 	while (1)
 	{
-		arg.read.buf = buf;
-		arg.read.len = QSE_COUNTOF(buf);
+		arg.u.r.buf = buf;
+		arg.u.r.len = QSE_COUNTOF(buf);
 
 		sed->errnum = QSE_SED_ENOERR;
 		n = sed->e.in.fun (sed, QSE_SED_IO_READ, &arg);
@@ -1459,8 +1459,8 @@ static int flush (qse_sed_t* sed)
 	while (sed->e.out.len > 0)
 	{
 		sed->errnum = QSE_SED_ENOERR;
-		sed->e.out.arg.write.data = &sed->e.out.buf[pos];
-		sed->e.out.arg.write.len = sed->e.out.len;
+		sed->e.out.arg.u.w.data = &sed->e.out.buf[pos];
+		sed->e.out.arg.u.w.len = sed->e.out.len;
 		n = sed->e.out.fun (sed, QSE_SED_IO_WRITE, &sed->e.out.arg);
 
 		if (n <= -1)
@@ -1670,10 +1670,10 @@ static int write_str_to_file (
 	}
 
 	ap = QSE_MAP_VPTR(pair);
-	if (ap->open.handle == QSE_NULL)
+	if (ap->handle == QSE_NULL)
 	{
 		sed->errnum = QSE_SED_ENOERR;
-		ap->open.path = path;
+		ap->path = path;
 		n = sed->e.out.fun (sed, QSE_SED_IO_OPEN, ap);
 		if (n <= -1)
 		{
@@ -1687,7 +1687,7 @@ static int write_str_to_file (
 			/* EOF is returned upon opening a write stream.
 			 * it is also an error as it can't write any more */
 			sed->e.out.fun (sed, QSE_SED_IO_CLOSE, ap);
-			ap->close.handle = QSE_NULL;
+			ap->handle = QSE_NULL;
 			SETERR1 (sed, QSE_SED_EIOFIL, cmd->lnum, path, plen);
 			return -1;
 		}
@@ -1696,13 +1696,13 @@ static int write_str_to_file (
 	while (len > 0)
 	{
 		sed->errnum = QSE_SED_ENOERR;
-		ap->write.data = str;
-		ap->write.len = len;
+		ap->u.w.data = str;
+		ap->u.w.len = len;
 		n = sed->e.out.fun (sed, QSE_SED_IO_WRITE, ap);
 		if (n <= -1) 
 		{
 			sed->e.out.fun (sed, QSE_SED_IO_CLOSE, ap);
-			ap->close.handle = QSE_NULL;
+			ap->handle = QSE_NULL;
 			if (sed->errnum == QSE_SED_ENOERR)
 				SETERR1 (sed, QSE_SED_EIOFIL, 0, path, plen);
 			sed->errlin = cmd->lnum;
@@ -1714,7 +1714,7 @@ static int write_str_to_file (
 			/* eof is returned on the write stream. 
 			 * it is also an error as it can't write any more */
 			sed->e.out.fun (sed, QSE_SED_IO_CLOSE, ap);
-			ap->close.handle = QSE_NULL;
+			ap->handle = QSE_NULL;
 			SETERR1 (sed, QSE_SED_EIOFIL, cmd->lnum, path, plen);
 			return -1;
 		}
@@ -2357,11 +2357,11 @@ static void close_outfile (qse_map_t* map, void* dptr, qse_size_t dlen)
 	qse_sed_io_arg_t* arg = dptr;
 	QSE_ASSERT (dlen == QSE_SIZEOF(*arg));
 
-	if (arg->close.handle != QSE_NULL)
+	if (arg->handle != QSE_NULL)
 	{
 		qse_sed_t* sed = *(qse_sed_t**)QSE_XTN(map);
 		sed->e.out.fun (sed, QSE_SED_IO_CLOSE, arg);
-		arg->close.handle = QSE_NULL;
+		arg->handle = QSE_NULL;
 	}
 }
 
@@ -2413,7 +2413,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	}
 
 	sed->errnum = QSE_SED_ENOERR;
-	sed->e.in.arg.open.path = QSE_NULL;
+	sed->e.in.arg.path = QSE_NULL;
 	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &sed->e.in.arg);
 	if (n <= -1)
 	{
@@ -2430,7 +2430,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	}
 	
 	sed->errnum = QSE_SED_ENOERR;
-	sed->e.out.arg.open.path = QSE_NULL;
+	sed->e.out.arg.path = QSE_NULL;
 	n = sed->e.out.fun (sed, QSE_SED_IO_OPEN, &sed->e.out.arg);
 	if (n <= -1)
 	{

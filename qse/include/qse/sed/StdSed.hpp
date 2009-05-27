@@ -27,12 +27,18 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 class StdSed: public Sed
 {
-public:
-
 protected:
 	void* allocMem   (qse_size_t n)            throw ();
 	void* reallocMem (void* ptr, qse_size_t n) throw ();
 	void  freeMem    (void* ptr)               throw ();
+
+	int openInput (IO& io);
+	int closeInput (IO& io);
+	ssize_t readInput (IO& io, char_t* buf, size_t len);
+
+	int openOutput (IO& io);
+	int closeOutput (IO& io);
+	ssize_t writeOutput (IO& io, const char_t* data, size_t len);
 };
 
 /////////////////////////////////

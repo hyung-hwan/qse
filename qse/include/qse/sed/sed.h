@@ -122,34 +122,27 @@ typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
 /**
  * The qse_sed_io_arg_t type defines a data structure required by an IO handler.
  */
-union qse_sed_io_arg_t
+struct qse_sed_io_arg_t
 {
-	struct
-	{
-		void*             handle; /* out */
-		const qse_char_t* path;   /* in */
-	} open;
+	void*             handle;
+	const qse_char_t* path;
 
-	struct
+	union 
 	{
-		void*             handle; /* in */
-		qse_char_t*       buf;    /* out */
-		qse_size_t        len;    /* in */
-	} read;
+		struct
+		{
+			qse_char_t*       buf;
+			qse_size_t        len;
+		} r;
 
-	struct
-	{
-		void*             handle;  /* in */
-		const qse_char_t* data;    /* in */
-		qse_size_t        len;     /* in */
-	} write;
-
-	struct
-	{
-		void*             handle;  /* in */
-	} close;
+		struct
+		{
+			const qse_char_t* data;
+			qse_size_t        len;
+		} w;
+	} u;
 };
-typedef union qse_sed_io_arg_t qse_sed_io_arg_t;
+typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 
 /** 
  * The qse_sed_io_fun_t type defines an IO handler. An IO handler is called by

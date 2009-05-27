@@ -30,6 +30,19 @@ int sed_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
+	if (sed.compile (argv[1]) == -1)
+	{
+		qse_printf (QSE_T("cannot compile\n"));
+		sed.close ();
+	}
+
+	if (sed.execute () == -1)
+	{
+		qse_printf (QSE_T("cannot execute\n"));
+		sed.close ();
+		return -1;
+	}
+
 	sed.close ();
 	return 0;
 }

@@ -40,19 +40,51 @@ public:
 
 	int open () throw ();
 	void close () throw ();
+
+	int compile (const char_t* sptr) throw ();
 	int compile (const char_t* sptr, size_t slen) throw ();
+
 	int execute () throw ();
+
+	class IO
+	{
+	public:
+		friend class Sed;
+
+	protected:
+		IO (sed_io_arg_t* arg): arg(arg) {}
+
+	public:
+		const char_t* getPath () const
+		{
+			return arg->path;
+		}
+
+		const void* getHandle () const
+		{
+			return arg->handle;
+		}
+
+		void setHandle (void* handle)
+		{
+			arg->handle = handle;
+		}		
+
+	protected:
+		sed_io_arg_t* arg;
+	};
 
 protected:
 	sed_t* sed;
 
-	virtual int openIn (const char_t* path) = 0;
-	virtual int closeIn () = 0;
-	virtual ssize_t readIn (char_t* buf, size_t len) = 0;
+	virtual int openInput (IO& io) = 0;
+	virtual int closeInput (IO& io) = 0;
+	virtual ssize_t readInput (IO& io, char_t* buf, size_t len) = 0;
 
-	virtual int openOut (const char_t* path) = 0;
-	virtual int closeOut () = 0;
-	virtual ssize_t writeOut (const char_t* buf, size_t len) = 0;
+	virtual int openOutput (IO& io) = 0;
+	virtual int closeOutput (IO& io) = 0;
+	virtual ssize_t writeOutput (
+		IO& io, const char_t* data, size_t len) = 0;
 
 private:
 	static int xin (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg);
