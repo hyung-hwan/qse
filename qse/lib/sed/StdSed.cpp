@@ -17,6 +17,8 @@
  */
 
 #include <qse/sed/StdSed.hpp>
+#include <qse/cmn/fio.h>
+#include <qse/cmn/sio.h>
 #include <stdlib.h>
 
 /////////////////////////////////
@@ -38,7 +40,83 @@ void StdSed::freeMem (void* ptr) throw ()
 	::free (ptr); 
 }
 
+int StdSed::openInput (IO& io)
+{
+	int flags;
+	const qse_char_t* path = io.getPath ();
+
+	if (path == QSE_NULL) io.setHandle (qse_sio_in);
+	else
+	{
+		qse_fio_t* fio;
+		fio = qse_fio_open (
+			this, 0, path,
+			QSE_FIO_READ | QSE_FIO_TEXT,
+			QSE_FIO_RUSR | QSE_FIO_WUSR |
+			QSE_FIO_RGRP | QSE_FIO_ROTH
+		);	
+		if (fio == NULL) return -1;
+
+		io.setHandle (fio);
+	}
+
+	return 1;
+}
+
+int StdSed::closeInput (IO& io)
+{
+	if (io.getPath() != QSE_NULL) 
+		qse_fio_close ((qse_fio_t*)io.getHandle());
+	return 0;
+}
+
+ssize_t StdSed::readInput (IO& io, char_t* buf, size_t len)
+{
+	if (io.getPath() == QSE_NULL)
+		return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	else
+		return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
+}
+
+int StdSed::openOutput (IO& io) 
+{
+	int flags;
+	const qse_char_t* path = io.getPath ();
+
+	if (path == QSE_NULL) io.setHandle (qse_sio_out);
+	else
+	{
+		qse_fio_t* fio;
+		fio = qse_fio_open (
+			this, 0, path,
+			QSE_FIO_WRITE | QSE_FIO_CREATE |
+			QSE_FIO_TRUNCATE | QSE_FIO_TEXT,
+			QSE_FIO_RUSR | QSE_FIO_WUSR |
+			QSE_FIO_RGRP | QSE_FIO_ROTH
+		);	
+		if (fio == NULL) return -1;
+
+		io.setHandle (fio);
+	}
+
+	return 1;
+}
+
+int StdSed::closeOutput (IO& io) 
+{
+	if (io.getPath() != QSE_NULL)
+		qse_fio_close ((qse_fio_t*)io.getHandle());
+	return 0;
+}
+
+ssize_t StdSed::writeOutput (IO& io, const char_t* data, size_t len) 
+{
+	if (io.getPath() == QSE_NULL)
+		return qse_sio_putsn ((qse_sio_t*)io.getHandle(), data, len);
+	else
+		return qse_fio_write ((qse_fio_t*)io.getHandle(), data, len);
+}
+
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
-

@@ -30,13 +30,13 @@ static qse_ssize_t in (
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
-			if (arg->open.path == QSE_NULL ||
-			    arg->open.path[0] == QSE_T('\0'))
+			if (arg->path == QSE_NULL ||
+			    arg->path[0] == QSE_T('\0'))
 			{
 				if (instream)
 				{
-					arg->open.handle = qse_fopen (instream, QSE_T("r"));
-					if (arg->open.handle == QSE_NULL) 
+					arg->handle = qse_fopen (instream, QSE_T("r"));
+					if (arg->handle == QSE_NULL) 
 					{
 						qse_cstr_t errarg;
 						errarg.ptr = instream;
@@ -45,26 +45,26 @@ static qse_ssize_t in (
 						return -1;
 					}
 				}
-				else arg->open.handle = QSE_STDIN;
+				else arg->handle = QSE_STDIN;
 			}
 			else
 			{
-				arg->open.handle = qse_fopen (arg->open.path, QSE_T("r"));
-				if (arg->open.handle == QSE_NULL) return -1;
+				arg->handle = qse_fopen (arg->path, QSE_T("r"));
+				if (arg->handle == QSE_NULL) return -1;
 			}
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
-			if (arg->close.handle != QSE_STDIN) 
-				qse_fclose (arg->close.handle);
+			if (arg->handle != QSE_STDIN) 
+				qse_fclose (arg->handle);
 			return 0;
 
 		case QSE_SED_IO_READ:
 		{
 			qse_cint_t c;
-			c = qse_fgetc (arg->read.handle);
+			c = qse_fgetc (arg->handle);
 			if (c == QSE_CHAR_EOF) return 0;
-			arg->read.buf[0] = c;
+			arg->u.r.buf[0] = c;
 			return 1;
 		}
 
@@ -79,29 +79,29 @@ static qse_ssize_t out (
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
-			if (arg->open.path == QSE_NULL ||
-			    arg->open.path[0] == QSE_T('\0'))
+			if (arg->path == QSE_NULL ||
+			    arg->path[0] == QSE_T('\0'))
 			{
-				arg->open.handle = QSE_STDOUT;
+				arg->handle = QSE_STDOUT;
 			}
 			else
 			{
-				arg->open.handle = qse_fopen (arg->open.path, QSE_T("w"));
-				if (arg->open.handle == QSE_NULL) return -1;
+				arg->handle = qse_fopen (arg->path, QSE_T("w"));
+				if (arg->handle == QSE_NULL) return -1;
 			}
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
-			if (arg->close.handle != QSE_STDOUT) 
-				qse_fclose (arg->close.handle);
+			if (arg->handle != QSE_STDOUT) 
+				qse_fclose (arg->handle);
 			return 0;
 
 		case QSE_SED_IO_WRITE:
 		{
 			qse_size_t i = 0;
-			for (i = 0; i < arg->write.len; i++) 
-				qse_fputc (arg->write.data[i], arg->write.handle);
-			return arg->write.len;
+			for (i = 0; i < arg->u.w.len; i++) 
+				qse_fputc (arg->u.w.data[i], arg->handle);
+			return arg->u.w.len;
 		}
 
 		default:
