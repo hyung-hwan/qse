@@ -37,8 +37,9 @@ class Sed: public Mmgr
 {
 public:
 	typedef qse_sed_t sed_t;
-	typedef qse_sed_io_cmd_t sed_io_cmd_t;
-	typedef qse_sed_io_arg_t sed_io_arg_t;
+	typedef qse_sed_errnum_t errnum_t;
+	typedef qse_sed_io_cmd_t io_cmd_t;
+	typedef qse_sed_io_arg_t io_arg_t;
 
 	/**
 	 * The Sed() function creates a uninitialized stream editor.
@@ -102,7 +103,7 @@ public:
 	 * error occurred. It returns 0 if the stream editor has not been
 	 * initialized with the open function.
 	 */
-	int getErrorNumber () const;
+	errnum_t getErrorNumber () const;
 
 protected:
 	/**
@@ -123,7 +124,7 @@ protected:
 		};
 
 	protected:
-		IO (sed_io_arg_t* arg, Mode mode): arg(arg), mode (mode) {}
+		IO (io_arg_t* arg, Mode mode): arg(arg), mode (mode) {}
 
 	public:
 		/**
@@ -159,7 +160,7 @@ protected:
 		}
 
 	protected:
-		sed_io_arg_t* arg;
+		io_arg_t* arg;
 		Mode mode;
 	};
 
@@ -171,7 +172,7 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		Console (sed_io_arg_t* arg, Mode mode): IO (arg, mode) {}
+		Console (io_arg_t* arg, Mode mode): IO (arg, mode) {}
 	};
 
 	/**
@@ -182,7 +183,7 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		File (sed_io_arg_t* arg, Mode mode): IO (arg, mode) {}
+		File (io_arg_t* arg, Mode mode): IO (arg, mode) {}
 
 	public:
 		/**
@@ -218,10 +219,8 @@ protected:
 	sed_t* sed;
 
 private:
-	static ssize_t xin (
-		sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg) throw ();
-	static ssize_t xout (
-		sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg) throw ();
+	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
+	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
 };
 
 /////////////////////////////////

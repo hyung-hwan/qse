@@ -70,7 +70,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EREXMA,  /**< regular expression match error */
 	QSE_SED_EA1PHB,  /**< address 1 prohibited */
 	QSE_SED_EA2PHB,  /**< address 2 prohibited */
-	QSE_SED_EASTEP,  /**< invalid step address */
+	QSE_SED_EA2MOI,  /**< address 2 missing or invalid */
 	QSE_SED_ENEWLN,  /**< a new line is expected */
 	QSE_SED_EBSEXP,  /**< \ is expected */
 	QSE_SED_EBSDEL,  /**< \ used a delimiter */
@@ -91,6 +91,13 @@ enum qse_sed_errnum_t
 	QSE_SED_EIOUSR   /**< user io error */
 };
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
+
+/**
+ * The qse_sed_errstr_t type defines a prototype for an error string getter.
+ */
+typedef const qse_char_t* (*qse_sed_errstr_t) (
+	qse_sed_t* sed, qse_sed_errnum_t errnum
+);
 
 /** 
  * The qse_sed_option_t type defines various option codes for a stream editor.
@@ -201,10 +208,25 @@ void qse_sed_setoption (
 );
 
 /**
+ * The qse_sed_geterrstr() gets an error string getter.
+ */
+qse_sed_errstr_t qse_sed_geterrstr (
+	qse_sed_t*       sed    /**< a stream editor */
+);
+
+/**
+ * The qse_sed_seterrstr() sets an error string getter.
+ */
+void qse_sed_seterrstr (
+	qse_sed_t*       sed,   /**< a stream editor */
+	qse_sed_errstr_t errstr /**< an error string getter */
+);
+
+/**
  * The qse_sed_geterrnum() function gets the number of the last error.
  * @return the number of the last error
  */
-int qse_sed_geterrnum (
+qse_sed_errnum_t qse_sed_geterrnum (
 	qse_sed_t* sed /**< a stream editor */
 );
 
@@ -232,7 +254,7 @@ const qse_char_t* qse_sed_geterrmsg (
  */
 void qse_sed_geterror (
 	qse_sed_t*         sed,    /**< a stream editor */
-	int*               errnum, /**< a pointer to an error number holder */
+	qse_sed_errnum_t*  errnum, /**< a pointer to an error number holder */
 	qse_size_t*        errlin, /**< a pointer to an error line holder */
 	const qse_char_t** errmsg  /**< a pointer to an error message */
 );
@@ -244,7 +266,7 @@ void qse_sed_geterror (
  */
 void qse_sed_seterror (
 	qse_sed_t*        sed,    /**< a stream editor */
-	int               errnum, /**< an error number */
+	qse_sed_errnum_t  errnum, /**< an error number */
 	qse_size_t        errlin, /**< an error line */
 	const qse_cstr_t* errarg  /**< a string array for formatting an error message */
 );
