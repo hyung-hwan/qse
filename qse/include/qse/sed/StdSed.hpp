@@ -21,24 +21,40 @@
 
 #include <qse/sed/Sed.hpp>
 
+/** @file
+ * A standard stream editor
+ *
+ * @example sed02.cpp
+ * The example shows a simple usage of the StdSed class.
+ */
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+/**
+ * The StdSed class inherits the Sed class and implements the standard
+ * IO handlers and memory manager for easier use.
+ */
 class StdSed: public Sed
 {
 protected:
+	/** allocate a memory chunk */
 	void* allocMem   (qse_size_t n)            throw ();
+	/** resize a memory chunk */
 	void* reallocMem (void* ptr, qse_size_t n) throw ();
+	/** free a memory chunk */
 	void  freeMem    (void* ptr)               throw ();
 
-	int openInput (IO& io);
-	int closeInput (IO& io);
-	ssize_t readInput (IO& io, char_t* buf, size_t len);
+	int openConsole (Console& io);
+	int closeConsole (Console& io);
+	ssize_t readConsole (Console& io, char_t* buf, size_t len);
+	ssize_t writeConsole (Console& io, const char_t* data, size_t len);
 
-	int openOutput (IO& io);
-	int closeOutput (IO& io);
-	ssize_t writeOutput (IO& io, const char_t* data, size_t len);
+	int openFile (File& io);
+	int closeFile (File& io);
+	ssize_t readFile (File& io, char_t* buf, size_t len);
+	ssize_t writeFile (File& io, const char_t* data, size_t len);
 };
 
 /////////////////////////////////

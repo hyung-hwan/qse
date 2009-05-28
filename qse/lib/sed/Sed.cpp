@@ -19,9 +19,6 @@
 #include <qse/sed/Sed.hpp>
 #include "sed.h"
 
-#include <qse/utl/stdio.h>
-#include <stdlib.h>
-
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
@@ -66,55 +63,126 @@ int Sed::execute () throw ()
 	return qse_sed_exec (sed, xin, xout);
 }
 
-int Sed::xin (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg)
+const Sed::char_t* Sed::getErrorMessage () const
+{
+	return (sed == QSE_NULL)? QSE_T(""): qse_sed_geterrmsg (sed);
+}
+
+Sed::size_t Sed::getErrorLine () const
+{
+	return (sed == QSE_NULL)? 0: qse_sed_geterrlin (sed);
+}
+
+int Sed::getErrorNumber () const
+{
+	return (sed == QSE_NULL)? 0: qse_sed_geterrnum (sed);
+}
+
+Sed::ssize_t Sed::xin (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg) throw ()
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
-	IO io (arg);
 
-	try
+	if (arg->path == QSE_NULL)
 	{
-		switch (cmd)	
+		Console io (arg, Console::READ);
+
+		try
 		{
-			case QSE_SED_IO_OPEN:
-				return sed->openInput (io);
-			case QSE_SED_IO_CLOSE:
-				return sed->closeInput (io);
-			case QSE_SED_IO_READ:
-				return sed->readInput (
-					io, arg->u.r.buf, arg->u.w.len);
-			default:
-				return -1;
+			switch (cmd)	
+			{
+				case QSE_SED_IO_OPEN:
+					return sed->openConsole (io);
+				case QSE_SED_IO_CLOSE:
+					return sed->closeConsole (io);
+				case QSE_SED_IO_READ:
+					return sed->readConsole (
+						io, arg->u.r.buf, arg->u.r.len);
+				default:
+					return -1;
+			}
+		}
+		catch (...)
+		{
+			return -1;
 		}
 	}
-	catch (...)
+	else
 	{
-		return -1;
+		File io (arg, File::READ);
+
+		try
+		{
+			switch (cmd)
+			{
+				case QSE_SED_IO_OPEN:
+					return sed->openFile (io);
+				case QSE_SED_IO_CLOSE:
+					return sed->closeFile (io);
+				case QSE_SED_IO_READ:
+					return sed->readFile (
+						io, arg->u.r.buf, arg->u.r.len);
+				default:
+					return -1;
+			}
+		}
+		catch (...)
+		{
+			return -1;
+		}
 	}
 }
 
-int Sed::xout (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg)
+Sed::ssize_t Sed::xout (sed_t* s, sed_io_cmd_t cmd, sed_io_arg_t* arg) throw ()
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
-	IO io (arg);
 
-	try
+	if (arg->path == QSE_NULL)
 	{
-		switch (cmd)	
+		Console io (arg, Console::WRITE);
+
+		try
 		{
-			case QSE_SED_IO_OPEN:
-				return sed->openOutput (io);
-			case QSE_SED_IO_CLOSE:
-				return sed->closeOutput (io);
-			case QSE_SED_IO_READ:
-				return sed->writeOutput (
-					io, arg->u.w.data, arg->u.w.len);
-			default:
-				return -1;
+			switch (cmd)	
+			{
+				case QSE_SED_IO_OPEN:
+					return sed->openConsole (io);
+				case QSE_SED_IO_CLOSE:
+					return sed->closeConsole (io);
+				case QSE_SED_IO_WRITE:
+					return sed->writeConsole (
+						io, arg->u.w.data, arg->u.w.len);
+				default:
+					return -1;
+			}
+		}
+		catch (...)
+		{
+			return -1;
 		}
 	}
-	catch (...)
+	else
 	{
-		return -1;
+		File io (arg, File::WRITE);
+
+		try
+		{
+			switch (cmd)
+			{
+				case QSE_SED_IO_OPEN:
+					return sed->openFile (io);
+				case QSE_SED_IO_CLOSE:
+					return sed->closeFile (io);
+				case QSE_SED_IO_WRITE:
+					return sed->writeFile (
+						io, arg->u.w.data, arg->u.w.len);
+				default:
+					return -1;
+			}
+		}
+		catch (...)
+		{
+			return -1;
+		}
 	}
 }
 

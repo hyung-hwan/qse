@@ -26,19 +26,23 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (sed.open () == -1)
 	{
-		qse_printf (QSE_T("cannot open a stream editor\n"));
+		qse_printf (QSE_T("cannot open a stream editor - %s\n"), 
+			sed.getErrorMessage());
 		return -1;
 	}
 
 	if (sed.compile (argv[1]) == -1)
 	{
-		qse_printf (QSE_T("cannot compile\n"));
+		qse_printf (QSE_T("cannot compile - %s\n"), 
+			sed.getErrorMessage());
 		sed.close ();
+		return -1;
 	}
 
 	if (sed.execute () == -1)
 	{
-		qse_printf (QSE_T("cannot execute\n"));
+		qse_printf (QSE_T("cannot execute - %s\n"),
+			sed.getErrorMessage());
 		sed.close ();
 		return -1;
 	}
