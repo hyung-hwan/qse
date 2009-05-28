@@ -37,6 +37,45 @@ do { \
 	qse_sed_seterror (sed, num, line, &__qse__err__arg__); \
 } while (0)
 
+static const qse_char_t* dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
+{
+	static const qse_char_t* errstr[] =
+ 	{
+		QSE_T("no error"),
+		QSE_T("out of memory"),
+		QSE_T("command '${0}' not recognized"),
+		QSE_T("command code missing"),
+		QSE_T("command '${0}' incomplete"),
+		QSE_T("regular expression '${0}' incomplete"),
+		QSE_T("failed to compile regular expression '${0}'"),
+		QSE_T("failed to match regular expression"),
+		QSE_T("address 1 prohibited for '${0}'"),
+		QSE_T("address 2 prohibited"),
+		QSE_T("address 2 missing or invalid"),
+		QSE_T("a new line expected"),
+		QSE_T("a backslash expected"),
+		QSE_T("a backslash used as a delimiter"),
+		QSE_T("garbage after a backslash"),
+		QSE_T("a semicolon expected"),
+		QSE_T("empty label name"),
+		QSE_T("duplicate label name '${0}'"),
+		QSE_T("label '${0}' not found"),
+		QSE_T("empty file name"),
+		QSE_T("illegal file name"),
+		QSE_T("strings in translation set not the same length"),
+		QSE_T("group brackets not balanced"),
+		QSE_T("group nesting too deep"),
+		QSE_T("multiple occurrence specifier"),
+		QSE_T("occurrence specifier is zero"),
+		QSE_T("occurrence specifier too large"),
+		QSE_T("io error with file '${0}'"),
+		QSE_T("error returned by user io handler")
+	};
+
+	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?
+		errstr[errnum]: QSE_T("unknown error");
+}
+
 qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 {
 	qse_sed_t* sed;
@@ -73,6 +112,7 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (sed, 0, QSE_SIZEOF(*sed));
 	sed->mmgr = mmgr;
+	sed->errstr = dflerrstr;
 
 	if (qse_str_init (&sed->tmp.rex, mmgr, 0) == QSE_NULL)
 	{
@@ -1221,12 +1261,21 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 					return -1;
 				}
 
-				if (delim == QSE_T('~'))
+				if (delim == QSE_T(','))
+				{
+					if (cmd->a2.type == QSE_SED_ADR_NONE)
+					{
+						SETERR0 (sed, QSE_SED_EA2MOI, sed->src.lnum);
+						free_address(sed, cmd);
+						return -1;
+					}
+				}
+				else if (delim == QSE_T('~'))
 				{
 					if (cmd->a1.type != QSE_SED_ADR_LINE || 
 					    cmd->a2.type != QSE_SED_ADR_LINE)
 					{
-						SETERR0 (sed, QSE_SED_EASTEP, sed->src.lnum);
+						SETERR0 (sed, QSE_SED_EA2MOI, sed->src.lnum);
 						free_address(sed, cmd);
 						return -1;
 					}

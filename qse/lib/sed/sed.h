@@ -33,6 +33,7 @@ struct qse_sed_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
 
+	qse_sed_errstr_t errstr; /**< error string getter */
 	qse_sed_errnum_t errnum; /**< stores an error number */
 	qse_char_t errmsg[128];  /**< error message holder */
 	qse_size_t errlin;       /**< no of the line where an error occurred */
