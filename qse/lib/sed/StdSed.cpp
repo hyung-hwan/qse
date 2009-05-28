@@ -40,81 +40,58 @@ void StdSed::freeMem (void* ptr) throw ()
 	::free (ptr); 
 }
 
-int StdSed::openInput (IO& io)
+int StdSed::openConsole (Console& io)
 {
-	int flags;
-	const qse_char_t* path = io.getPath ();
-
-	if (path == QSE_NULL) io.setHandle (qse_sio_in);
-	else
-	{
-		qse_fio_t* fio;
-		fio = qse_fio_open (
-			this, 0, path,
-			QSE_FIO_READ | QSE_FIO_TEXT,
-			QSE_FIO_RUSR | QSE_FIO_WUSR |
-			QSE_FIO_RGRP | QSE_FIO_ROTH
-		);	
-		if (fio == NULL) return -1;
-
-		io.setHandle (fio);
-	}
-
+	io.setHandle ((io.getMode() == Console::READ)?  qse_sio_in: qse_sio_out);
 	return 1;
 }
 
-int StdSed::closeInput (IO& io)
+int StdSed::closeConsole (Console& io)
 {
-	if (io.getPath() != QSE_NULL) 
-		qse_fio_close ((qse_fio_t*)io.getHandle());
 	return 0;
 }
 
-ssize_t StdSed::readInput (IO& io, char_t* buf, size_t len)
+StdSed::ssize_t StdSed::readConsole (Console& io, char_t* buf, size_t len)
 {
-	if (io.getPath() == QSE_NULL)
-		return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
-	else
-		return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
+	return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
-int StdSed::openOutput (IO& io) 
+StdSed::ssize_t StdSed::writeConsole (Console& io, const char_t* data, size_t len) 
 {
-	int flags;
-	const qse_char_t* path = io.getPath ();
+	return qse_sio_putsn ((qse_sio_t*)io.getHandle(), data, len);
+}
 
-	if (path == QSE_NULL) io.setHandle (qse_sio_out);
-	else
-	{
-		qse_fio_t* fio;
-		fio = qse_fio_open (
-			this, 0, path,
-			QSE_FIO_WRITE | QSE_FIO_CREATE |
-			QSE_FIO_TRUNCATE | QSE_FIO_TEXT,
-			QSE_FIO_RUSR | QSE_FIO_WUSR |
-			QSE_FIO_RGRP | QSE_FIO_ROTH
-		);	
-		if (fio == NULL) return -1;
+int StdSed::openFile (File& io) 
+{
+	int flags = (io.getMode() == File::READ)?
+		QSE_FIO_READ: (QSE_FIO_WRITE|QSE_FIO_CREATE|QSE_FIO_TRUNCATE);
 
-		io.setHandle (fio);
-	}
+	qse_fio_t* fio = qse_fio_open (
+		this, 0, io.getName(),
+		flags | QSE_FIO_TEXT,
+		QSE_FIO_RUSR | QSE_FIO_WUSR |
+		QSE_FIO_RGRP | QSE_FIO_ROTH
+	);	
+	if (fio == QSE_NULL) return -1;
 
+	io.setHandle (fio);
 	return 1;
 }
 
-int StdSed::closeOutput (IO& io) 
+int StdSed::closeFile (File& io) 
 {
-	if (io.getPath() != QSE_NULL)
-		qse_fio_close ((qse_fio_t*)io.getHandle());
+	qse_fio_close ((qse_fio_t*)io.getHandle());
 	return 0;
 }
 
-ssize_t StdSed::writeOutput (IO& io, const char_t* data, size_t len) 
+StdSed::ssize_t StdSed::readFile (File& io, char_t* buf, size_t len) 
 {
-	if (io.getPath() == QSE_NULL)
-		return qse_sio_putsn ((qse_sio_t*)io.getHandle(), data, len);
-	else
-		return qse_fio_write ((qse_fio_t*)io.getHandle(), data, len);
+	return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
+}
+
+StdSed::ssize_t StdSed::writeFile (File& io, const char_t* data, size_t len) 
+{
+	return qse_fio_write ((qse_fio_t*)io.getHandle(), data, len);
 }
 
 /////////////////////////////////

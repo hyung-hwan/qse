@@ -1,0 +1,9 @@
+/** @page sed SED
+
+STREAM EDITOR
+a stream editor is provided
+
+@section sed_io_handler How to write an IO handler
+IO handler has the following prototype...
+
+*/
