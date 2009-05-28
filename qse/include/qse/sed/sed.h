@@ -60,48 +60,53 @@ typedef struct qse_sed_t qse_sed_t;
  */
 enum qse_sed_errnum_t
 {
-	QSE_SED_ENOERR,  /**< no error occurred */
-	QSE_SED_ENOMEM,  /**< insufficient memory is available */
-	QSE_SED_ECMDNR,  /**< a command is not recognized */
-	QSE_SED_ECMDMS,  /**< a command is missing */
-	QSE_SED_ECMDIC,  /**< a command is incomplete */
-	QSE_SED_EREXIC,  /**< regular expression incomplete */
-	QSE_SED_EREXBL,  /**< regular expression build error */
-	QSE_SED_EREXMA,  /**< regular expression match error */
-	QSE_SED_EA1PHB,  /**< address 1 prohibited */
+	QSE_SED_ENOERR,  /**< no error */
+	QSE_SED_ENOMEM,  /**< out of memory */
+	QSE_SED_ECMDNR,  /**< command '${0}' not recognized */
+	QSE_SED_ECMDMS,  /**< command code missing */
+	QSE_SED_ECMDIC,  /**< command '${0}' incomplete */
+	QSE_SED_EREXIC,  /**< regular expression '${0}' incomplete */
+	QSE_SED_EREXBL,  /**< failed to compile regular expression '${0}' */
+	QSE_SED_EREXMA,  /**< failed to match regular expression */
+	QSE_SED_EA1PHB,  /**< address 1 prohibited for '${0}' */
 	QSE_SED_EA2PHB,  /**< address 2 prohibited */
 	QSE_SED_EA2MOI,  /**< address 2 missing or invalid */
-	QSE_SED_ENEWLN,  /**< a new line is expected */
-	QSE_SED_EBSEXP,  /**< \ is expected */
-	QSE_SED_EBSDEL,  /**< \ used a delimiter */
-	QSE_SED_EGBABS,  /**< garbage after \ */
-	QSE_SED_ESCEXP,  /**< ; is expected */
-	QSE_SED_ELABEM,  /**< label name is empty */
-	QSE_SED_ELABDU,  /**< duplicate label name */
-	QSE_SED_ELABNF,  /**< label not found */
-	QSE_SED_EFILEM,  /**< file name is empty */
+	QSE_SED_ENEWLN,  /**< newline expected */
+	QSE_SED_EBSEXP,  /**< backslash expected */
+	QSE_SED_EBSDEL,  /**< backslash used as delimiter */
+	QSE_SED_EGBABS,  /**< garbage after backslash */
+	QSE_SED_ESCEXP,  /**< semicolon expected */
+	QSE_SED_ELABEM,  /**< empty label name */
+	QSE_SED_ELABDU,  /**< duplicate label name '${0}' */
+	QSE_SED_ELABNF,  /**< label '${0}' not found */
+	QSE_SED_EFILEM,  /**< empty file name */
 	QSE_SED_EFILIL,  /**< illegal file name */
-	QSE_SED_ETSNSL,  /**< translation set not the same length*/
+	QSE_SED_ETSNSL,  /**< strings in translation set not the same length*/
 	QSE_SED_EGRNBA,  /**< group brackets not balanced */
-	QSE_SED_EGRNTD,  /**< group nested too deeply */
+	QSE_SED_EGRNTD,  /**< group nesting too deep */
 	QSE_SED_EOCSDU,  /**< multiple occurrence specifiers */
-	QSE_SED_EOCSZE,  /**< occurrence specifier to s is zero */
+	QSE_SED_EOCSZE,  /**< occurrence specifier zero */
 	QSE_SED_EOCSTL,  /**< occurrence specifier too large */
-	QSE_SED_EIOFIL,  /**< file io error */
-	QSE_SED_EIOUSR   /**< user io error */
+	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
+	QSE_SED_EIOUSR   /**< error returned by user io handler */
 };
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
 
 /**
- * The qse_sed_errstr_t type defines a prototype for an error string getter.
+ * The qse_sed_errstr_t type defines a error string getter. It should return 
+ * an error formatting string for an error number requested. A new string
+ * should contain the same number of positional parameters (${X}) as in the
+ * default error formatting string. You can set a new getter into a stream
+ * editor with the qse_sed_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_sed_errstr_t) (
-	qse_sed_t* sed, qse_sed_errnum_t errnum
+	qse_sed_t* sed,         /**< a stream editor */
+	qse_sed_errnum_t num    /**< an error number */
 );
 
 /** 
  * The qse_sed_option_t type defines various option codes for a stream editor.
- * Options can be XOR'ed with each other and be passed to a stream editor with
+ * Options can be OR'ed with each other and be passed to a stream editor with
  * the qse_sed_setoption() function.
  */
 enum qse_sed_option_t
@@ -112,6 +117,7 @@ enum qse_sed_option_t
 	QSE_SED_QUIET    = (1 << 3),  /**< do not print pattern space */
 	QSE_SED_CLASSIC  = (1 << 4)   /**< disable extended features */
 };
+typedef enum qse_sed_option_t qse_sed_option_t;
 
 /**
  * The qse_sed_io_cmd_t type defines IO command codes. The code indicates 
@@ -131,21 +137,23 @@ typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
  */
 struct qse_sed_io_arg_t
 {
-	void*             handle;
-	const qse_char_t* path;
+	void*             handle; /**< IO handle */
+	const qse_char_t* path;   /**< file path. QSE_NULL for a console */
 
 	union 
 	{
+		/** read buffer */
 		struct
 		{
-			qse_char_t*       buf;
-			qse_size_t        len;
+			qse_char_t*       buf; /**< buffer pointer */
+			qse_size_t        len; /**< buffer size */
 		} r;
 
+		/** data to write */
 		struct
 		{
-			const qse_char_t* data;
-			qse_size_t        len;
+			const qse_char_t* data; /**< data pointer */
+			qse_size_t        len;  /**< data length */
 		} w;
 	} u;
 };
@@ -193,7 +201,7 @@ void qse_sed_close (
 /**
  * The qse_sed_getoption() function retrieves the current options set in
  * a stream editor.
- * @return 0 or a number XOR'ed of qse_sed_option_t values 
+ * @return 0 or a number OR'ed of qse_sed_option_t values 
  */
 int qse_sed_getoption (
 	qse_sed_t* sed /**< a stream editor */
@@ -204,7 +212,7 @@ int qse_sed_getoption (
  */
 void qse_sed_setoption (
 	qse_sed_t* sed, /**< a stream editor */
-	int        opt  /**< 0 or a number XOR'ed of qse_sed_option_t values */
+	int        opt  /**< 0 or a number OR'ed of qse_sed_option_t values */
 );
 
 /**
@@ -215,7 +223,28 @@ qse_sed_errstr_t qse_sed_geterrstr (
 );
 
 /**
- * The qse_sed_seterrstr() sets an error string getter.
+ * The qse_sed_seterrstr() sets an error string getter that is called to
+ * compose an error message when its retrieval is requested.
+ *
+ * Here is an example of changing the formatting string for the #QSE_SED_ECMDNR 
+ * error.
+ * @code
+ * qse_sed_errstr_t orgerrstr;
+ *
+ * const qse_char_t* myerrstr (qse_sed_t* sed, qse_sed_errnum_t num)
+ * {
+ *   if (num == QSE_SED_ECMDNR) return QSE_T("unrecognized command ${0}");
+ *   return orgerrstr (sed, num);
+ * }
+ * int main ()
+ * {
+ *    qse_sed_t* sed;
+ *    ...
+ *    orgerrstr = qse_sed_geterrstr (sed);
+ *    qse_sed_seterrstr (sed, myerrstr);
+ *    ...
+ * }
+ * @endcode
  */
 void qse_sed_seterrstr (
 	qse_sed_t*       sed,   /**< a stream editor */

@@ -17,11 +17,6 @@ Cross compiling for WIN32 with MINGW32
 	./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
 	make 
 
-@section DOCUMENTATION
-Generate the API documents with robodoc.
-	
-	robodoc --rc doc/robodoc.rc --css doc/robodoc.css --src . --doc ./doc/qse 
-
 @section MODULES
 QSE includes various modules:
 - @ref awk "AWK"

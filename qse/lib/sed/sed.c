@@ -52,11 +52,11 @@ static const qse_char_t* dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		QSE_T("address 1 prohibited for '${0}'"),
 		QSE_T("address 2 prohibited"),
 		QSE_T("address 2 missing or invalid"),
-		QSE_T("a new line expected"),
-		QSE_T("a backslash expected"),
-		QSE_T("a backslash used as a delimiter"),
-		QSE_T("garbage after a backslash"),
-		QSE_T("a semicolon expected"),
+		QSE_T("newline expected"),
+		QSE_T("backslash expected"),
+		QSE_T("backslash used as delimiter"),
+		QSE_T("garbage after backslash"),
+		QSE_T("semicolon expected"),
 		QSE_T("empty label name"),
 		QSE_T("duplicate label name '${0}'"),
 		QSE_T("label '${0}' not found"),
@@ -65,8 +65,8 @@ static const qse_char_t* dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		QSE_T("strings in translation set not the same length"),
 		QSE_T("group brackets not balanced"),
 		QSE_T("group nesting too deep"),
-		QSE_T("multiple occurrence specifier"),
-		QSE_T("occurrence specifier is zero"),
+		QSE_T("multiple occurrence specifiers"),
+		QSE_T("occurrence specifier zero"),
 		QSE_T("occurrence specifier too large"),
 		QSE_T("io error with file '${0}'"),
 		QSE_T("error returned by user io handler")
@@ -998,7 +998,7 @@ oops:
 	return -1;
 }
 
-static int command (qse_sed_t* sed)
+static int get_command (qse_sed_t* sed)
 {
 	qse_cint_t c;
 	qse_sed_cmd_t* cmd = sed->cmd.cur;
@@ -1304,7 +1304,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		}
 	
 
-		n = command (sed);
+		n = get_command (sed);
 		if (n <= -1) 
 		{
 			free_address (sed, cmd);
@@ -1734,7 +1734,8 @@ static int write_str_to_file (
 		if (n == 0)
 		{
 			/* EOF is returned upon opening a write stream.
-			 * it is also an error as it can't write any more */
+			 * it is also an error as it can't write 
+			 * a requested string */
 			sed->e.out.fun (sed, QSE_SED_IO_CLOSE, ap);
 			ap->handle = QSE_NULL;
 			SETERR1 (sed, QSE_SED_EIOFIL, cmd->lnum, path, plen);
