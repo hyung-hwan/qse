@@ -181,7 +181,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = sed.h
+pkginclude_HEADERS = sed.h Sed.hpp StdSed.hpp
 CLEANFILES = *dist
 all: all-am
 
