@@ -334,7 +334,7 @@ qse_size_t qse_sed_getlinnum (
 
 /**
  * The qse_sed_setlinnum() function changes the current input line number.
- * It affects the '=' command.
+ * It the address matching and the '=' command.
  */
 void qse_sed_setlinnum (
 	qse_sed_t* sed,   /**< a stream editor */

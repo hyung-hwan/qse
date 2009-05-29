@@ -55,6 +55,15 @@ public:
 	Sed () throw (): sed (QSE_NULL), dflerrstr (QSE_NULL) {}
 
 	/**
+	 * The ~Sed() function destroys a stream editor. 
+	 * @note The close() function is not called by this destructor.
+	 *       To avoid resource leaks, You should call close() before
+	 *       a stream editor is destroyed if it has been initialized
+	 *       with open().
+	 */
+	~Sed () {}
+
+	/**
 	 * The open() function initializes a stream editor and makes it
 	 * ready for subsequent use.
 	 * @return 0 on success, -1 on failure.
@@ -161,7 +170,8 @@ protected:
 		};
 
 	protected:
-		IOBase (io_arg_t* arg, Mode mode): arg(arg), mode (mode) {}
+		IOBase (io_arg_t* arg, Mode mode) throw (): 
+			arg(arg), mode (mode) {}
 
 	public:
 		/**
@@ -170,7 +180,7 @@ protected:
 		 * an assoicated IO handler closes it or changes it with
 		 * another call to setHandle().
 		 */
-		const void* getHandle () const
+		const void* getHandle () const throw ()
 		{
 			return arg->handle;
 		}
@@ -181,7 +191,7 @@ protected:
 		 * and Sed::openFile(). You can get the handle with the 
 		 * getHandle() function as needed.
 		 */
-		void setHandle (void* handle)
+		void setHandle (void* handle) throw ()
 		{
 			arg->handle = handle;
 		}		
@@ -191,7 +201,7 @@ protected:
 		 * A stream opening function can inspect the mode requested and
 		 * open a stream properly 
 		 */
-		Mode getMode ()
+		Mode getMode () throw ()
 		{
 			return this->mode;
 		}
@@ -210,7 +220,8 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		Console (io_arg_t* arg, Mode mode): IOBase (arg, mode) {}
+		Console (io_arg_t* arg, Mode mode) throw ():
+			IOBase (arg, mode) {}
 	};
 
 	/**
@@ -221,7 +232,8 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		File (io_arg_t* arg, Mode mode): IOBase (arg, mode) {}
+		File (io_arg_t* arg, Mode mode) throw ():
+			IOBase (arg, mode) {}
 
 	public:
 		/**
@@ -229,7 +241,7 @@ protected:
 		 * You can call this function from the openFile() function
 		 * to determine a file to open.
 		 */
-		const char_t* getName () const
+		const char_t* getName () const throw ()
 		{
 			return arg->path;
 		}
