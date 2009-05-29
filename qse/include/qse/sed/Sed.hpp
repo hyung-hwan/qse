@@ -127,6 +127,21 @@ public:
 	 */
 	errnum_t getErrorNumber () const throw ();
 
+	/**
+	 * The getConsoleLine() function returns the current line
+	 * number from an input console. 
+	 * @return current line number
+	 */
+	size_t getConsoleLine () throw ();
+
+	/**
+	 * The setConsoleLine() function changes the current line
+	 * number from an input console. 
+	 */
+	void setConsoleLine (
+		size_t num ///< a line number
+	) throw ();
+
 protected:
 	/**
 	 * The IOBase class is a base class for IO operation. It wraps around
@@ -182,8 +197,9 @@ protected:
 		}
 
 	protected:
+		Sed*      sed;
 		io_arg_t* arg;
-		Mode mode;
+		Mode      mode;
 	};
 
 	/**
