@@ -35,6 +35,10 @@
  * qse_sed_close (sed);
  * @endcode
  *
+ * @todo 
+ * - to allow flexible numbers of commands
+ * - to allow configurable recursion depth for a regular expression
+ *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
  */
@@ -318,6 +322,23 @@ int qse_sed_exec (
 	qse_sed_t*        sed,  /**< a stream editor */
 	qse_sed_io_fun_t  inf,  /**< stream reader */
 	qse_sed_io_fun_t  outf  /**< stream writer */
+);
+
+/**
+ * The qse_sed_getlinnum() function gets the current input line number.
+ * @return current input line number
+ */
+qse_size_t qse_sed_getlinnum (
+	qse_sed_t* sed /**< a stream editor */
+);
+
+/**
+ * The qse_sed_setlinnum() function changes the current input line number.
+ * It affects the '=' command.
+ */
+void qse_sed_setlinnum (
+	qse_sed_t* sed,   /**< a stream editor */
+	qse_size_t num    /**< a line number */
 );
 
 #ifdef __cplusplus
