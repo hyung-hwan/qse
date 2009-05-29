@@ -2643,12 +2643,12 @@ done3:
 	return ret;
 }
 
-qse_size_t qse_sed_getlinenum (qse_sed_t* sed)
+qse_size_t qse_sed_getlinnum (qse_sed_t* sed)
 {
 	return sed->e.in.num;
 }
 
-void qse_sed_setlinenum (qse_sed_t* sed, qse_size_t num)
+void qse_sed_setlinnum (qse_sed_t* sed, qse_size_t num)
 {
 	sed->e.in.num = num;
 }
