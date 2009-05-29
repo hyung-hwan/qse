@@ -234,6 +234,10 @@ AC_CONFIG_FILES([
 	test/utl/Makefile 
 	test/sed/Makefile 
 	test/awk/Makefile 
+	doc/Makefile
+	doc/page/Makefile
+	doc/page.ko/Makefile
+	doc/Doxyfile
 ])
 AC_OUTPUT
 

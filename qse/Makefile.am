@@ -3,7 +3,7 @@ AUTOMAKE_OPTION = foreign
 # EXTRA_DIST = 
 
 SUBDIRS = lib cmd
-DIST_SUBDIRS = $(SUBDIRS) include test
+DIST_SUBDIRS = $(SUBDIRS) include test doc
 
 install-data-hook:
 	cd include && $(MAKE) install

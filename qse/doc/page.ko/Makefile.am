@@ -1,4 +1,5 @@
 
 AUTOMAKE_OPTIONS = no-dependencies
 
-SUBDIRS = qse
+EXTRA_DIST = \
+	main.doc 
