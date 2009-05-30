@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: pio.c 168 2009-05-30 01:19:46Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -415,7 +415,7 @@ void qse_pio_setflags (qse_pio_t* pio, int flags, int op)
 	else /*if (op < 0)*/ pio->flags &= ~flags;
 }
 
-qse_pio_err_t qse_pio_geterrnum (qse_pio_t* pio)
+qse_pio_errnum_t qse_pio_geterrnum (qse_pio_t* pio)
 {
 	return pio->errnum;
 }

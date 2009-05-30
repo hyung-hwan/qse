@@ -3,7 +3,9 @@
 STREAM EDITOR
 a stream editor is provided
 
-@section sed_io_handler How to write an IO handler
-IO handler has the following prototype...
-
+@section COMMAND
+- : label  label for b and t commands. a label can be composed of an 
+           alpha-numeric character, an underscope, and an underline.
+- # comment
+- = print the current line number
 */

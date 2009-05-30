@@ -137,9 +137,9 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	qse_map_setcopier (&sed->tmp.labs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
         qse_map_setscale (&sed->tmp.labs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
-	/* TODO: use different data structure... */
+	sed->cmd.len = 256; /* TODO: parameterize this value */
 	sed->cmd.buf = QSE_MMGR_ALLOC (
-		sed->mmgr, QSE_SIZEOF(qse_sed_cmd_t) * 1000);
+		sed->mmgr, QSE_SIZEOF(qse_sed_cmd_t) * sed->cmd.len);
 	if (sed->cmd.buf == QSE_NULL)
 	{
 		qse_map_fini (&sed->tmp.labs);
@@ -148,7 +148,12 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;
 	}
 	sed->cmd.cur = sed->cmd.buf;
-	sed->cmd.end = sed->cmd.buf + 1000 - 1;
+	sed->cmd.end = sed->cmd.buf + sed->cmd.len - 1;
+
+#if 0
+	sed->cmd.lb = &sed->cmd.fb; /* on init, the last points to the first */
+	sed->fb.len = 0; /* the block has no data yet */
+#endif
 
 	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) == QSE_NULL)
 	{
@@ -405,7 +410,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 	}
 	else if (c >= QSE_T('0') && c <= QSE_T('9'))
 	{
-		qse_sed_line_t lno = 0;
+		qse_size_t lno = 0;
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
@@ -417,7 +422,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 		if (lno == 0) return QSE_NULL;
 
 		a->type = QSE_SED_ADR_LINE;
-		a->u.line = lno;
+		a->u.lno = lno;
 	}
 	else if (c == QSE_T('\\'))
 	{
@@ -1947,7 +1952,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 	switch (a->type)
 	{
 		case QSE_SED_ADR_LINE:
-			return (sed->e.in.num == a->u.line)? 1: 0;
+			return (sed->e.in.num == a->u.lno)? 1: 0;
 
 		case QSE_SED_ADR_REX:
 		{
@@ -2033,8 +2038,8 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		/* stepping address */
 		cmd->state.c_ready = 1;
-		if (sed->e.in.num < cmd->a1.u.line) return 0;
-		if ((sed->e.in.num - cmd->a1.u.line) % cmd->a2.u.line == 0) return 1;
+		if (sed->e.in.num < cmd->a1.u.lno) return 0;
+		if ((sed->e.in.num - cmd->a1.u.lno) % cmd->a2.u.lno == 0) return 1;
 		return 0;
 	}
 	else if (cmd->a2.type != QSE_SED_ADR_NONE)
@@ -2047,7 +2052,7 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (n == 0)
 			{
 				if (cmd->a2.type == QSE_SED_ADR_LINE &&
-				    sed->e.in.num > cmd->a2.u.line)
+				    sed->e.in.num > cmd->a2.u.lno)
 				{
 					/* exit the range */
 					cmd->state.a1_matched = 0;
@@ -2074,7 +2079,7 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			if (cmd->a2.type == QSE_SED_ADR_LINE &&
-			    sed->e.in.num >= cmd->a2.u.line) 
+			    sed->e.in.num >= cmd->a2.u.lno) 
 			{
 				/* the line number specified in the second 
 				 * address is equal to or less than the current

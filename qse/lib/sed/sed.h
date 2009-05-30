@@ -22,114 +22,9 @@
 #include <qse/sed/sed.h>
 #include <qse/cmn/str.h>
 
-typedef qse_int_t qse_sed_line_t;
 typedef struct qse_sed_adr_t qse_sed_adr_t; 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t;
-
-/** 
- * The qse_sed_t type defines a stream editor 
- */
-struct qse_sed_t
-{
-	QSE_DEFINE_COMMON_FIELDS (sed)
-
-	qse_sed_errstr_t errstr; /**< error string getter */
-	qse_sed_errnum_t errnum; /**< stores an error number */
-	qse_char_t errmsg[128];  /**< error message holder */
-	qse_size_t errlin;       /**< no of the line where an error occurred */
-
-	int option;              /**< stores options */
-
-	/** source text pointers */
-	struct
-	{
-		qse_size_t lnum;       /**< line number */
-		qse_cint_t cc;         /**< last character read */
-		const qse_char_t* ptr; /**< beginning of the source text */
-		const qse_char_t* end; /**< end of the source text */
-		const qse_char_t* cur; /**< current source text pointer */
-	} src;
-
-	/** temporary data for compiling */
-	struct
-	{
-		qse_str_t rex; /**< regular expression buffer */
-		qse_str_t lab; /**< label name buffer */
-
-		/** data structure to compile command groups */
-		struct
-		{
-			/** current level of command group nesting */
-			int level;
-			/** keeps track of the begining of nested groups */
-			qse_sed_cmd_t* cmd[128];
-		} grp;
-
-		/** a table storing labels seen */
-		qse_map_t labs; 
-	} tmp;
-
-	/** compiled commands */
-	struct
-	{
-		qse_sed_cmd_t* buf; /**< buffer holding compiled commands */
-		qse_sed_cmd_t* end; /**< end of the buffer */
-		qse_sed_cmd_t* cur; /**< points next to the last command */
-	} cmd;
-
-	/** data for execution */
-	struct
-	{
-		/** data needed for output streams and files */
-		struct
-		{
-			qse_sed_io_fun_t fun; /**< an output handler */
-			qse_sed_io_arg_t arg; /**< output handling data */
-
-			qse_char_t buf[2048];
-			qse_size_t len;
-			int        eof;
-
-			/*****************************************************/
-			/* the following two fields are very tightly-coupled.
-			 * don't make any partial changes */
-			qse_map_t  files;
-			qse_sed_t* files_ext;
-			/*****************************************************/
-		} out;
-
-		/** data needed for input streams */
-		struct
-		{
-			qse_sed_io_fun_t fun; /**< an input handler */
-			qse_sed_io_arg_t arg; /**< input handling data */
-
-			qse_char_t xbuf[1]; /**< a read-ahead buffer */
-			int xbuf_len; /**< data length in the buffer */
-
-			qse_char_t buf[2048]; /**< input buffer */
-			qse_size_t len; /**< data length in the buffer */
-			qse_size_t pos; /**< current position in the buffer */
-			int        eof; /**< EOF indicator */
-
-			qse_str_t line; /**< pattern space */
-			qse_size_t num; /**< current line number */
-		} in;
-
-		/** text buffers */
-		struct
-		{
-			qse_lda_t appended;
-			qse_str_t read;
-			qse_str_t held;
-			qse_str_t subst;
-		} txt;
-
-		/** indicates if a successful substitution has been made 
-		 *  since the last read on the input stream. */
-		int subst_done;
-	} e;
-};
+typedef struct qse_sed_cmd_blk_t qse_sed_cmd_blk_t;
 
 struct qse_sed_adr_t
 {
@@ -144,8 +39,8 @@ struct qse_sed_adr_t
 
 	union 
 	{
-		qse_sed_line_t line;
-		void*  rex;
+		qse_size_t lno;
+		void*      rex;
 	} u;
 };
 
@@ -224,6 +119,127 @@ struct qse_sed_cmd_t
 		int a1_matched;
 		int c_ready;
 	} state;
+};
+
+struct qse_sed_cmd_blk_t
+{
+	qse_size_t         len;	
+	qse_sed_cmd_t      buf[512];
+	qse_sed_cmd_blk_t* next;
+};
+
+/** 
+ * The qse_sed_t type defines a stream editor 
+ */
+struct qse_sed_t
+{
+	QSE_DEFINE_COMMON_FIELDS (sed)
+
+	qse_sed_errstr_t errstr; /**< error string getter */
+	qse_sed_errnum_t errnum; /**< stores an error number */
+	qse_char_t errmsg[128];  /**< error message holder */
+	qse_size_t errlin;       /**< no of the line where an error occurred */
+
+	int option;              /**< stores options */
+
+	/** source text pointers */
+	struct
+	{
+		qse_size_t lnum;       /**< line number */
+		qse_cint_t cc;         /**< last character read */
+		const qse_char_t* ptr; /**< beginning of the source text */
+		const qse_char_t* end; /**< end of the source text */
+		const qse_char_t* cur; /**< current source text pointer */
+	} src;
+
+	/** temporary data for compiling */
+	struct
+	{
+		qse_str_t rex; /**< regular expression buffer */
+		qse_str_t lab; /**< label name buffer */
+
+		/** data structure to compile command groups */
+		struct
+		{
+			/** current level of command group nesting */
+			int level;
+			/** keeps track of the begining of nested groups */
+			qse_sed_cmd_t* cmd[128];
+		} grp;
+
+		/** a table storing labels seen */
+		qse_map_t labs; 
+	} tmp;
+
+	/** compiled commands */
+	struct
+	{
+		qse_size_t     len; /**< buffer size */
+		qse_sed_cmd_t* buf; /**< buffer holding compiled commands */
+		qse_sed_cmd_t* end; /**< end of the buffer */
+		qse_sed_cmd_t* cur; /**< points next to the last command */
+	} cmd;
+
+#if 0
+	struct
+	{
+		qse_sed_cmd_blk_t  fb; /**< the first block is static */
+		qse_sed_cmd_blk_t* lb; /**< points to the last block */
+	} cmd;
+#endif
+
+	/** data for execution */
+	struct
+	{
+		/** data needed for output streams and files */
+		struct
+		{
+			qse_sed_io_fun_t fun; /**< an output handler */
+			qse_sed_io_arg_t arg; /**< output handling data */
+
+			qse_char_t buf[2048];
+			qse_size_t len;
+			int        eof;
+
+			/*****************************************************/
+			/* the following two fields are very tightly-coupled.
+			 * don't make any partial changes */
+			qse_map_t  files;
+			qse_sed_t* files_ext;
+			/*****************************************************/
+		} out;
+
+		/** data needed for input streams */
+		struct
+		{
+			qse_sed_io_fun_t fun; /**< an input handler */
+			qse_sed_io_arg_t arg; /**< input handling data */
+
+			qse_char_t xbuf[1]; /**< a read-ahead buffer */
+			int xbuf_len; /**< data length in the buffer */
+
+			qse_char_t buf[2048]; /**< input buffer */
+			qse_size_t len; /**< data length in the buffer */
+			qse_size_t pos; /**< current position in the buffer */
+			int        eof; /**< EOF indicator */
+
+			qse_str_t line; /**< pattern space */
+			qse_size_t num; /**< current line number */
+		} in;
+
+		/** text buffers */
+		struct
+		{
+			qse_lda_t appended;
+			qse_str_t read;
+			qse_str_t held;
+			qse_str_t subst;
+		} txt;
+
+		/** indicates if a successful substitution has been made 
+		 *  since the last read on the input stream. */
+		int subst_done;
+	} e;
 };
 
 #endif

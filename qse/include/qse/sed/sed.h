@@ -36,8 +36,8 @@
  * @endcode
  *
  * @todo 
- * - to allow flexible numbers of commands
- * - to allow configurable recursion depth for a regular expression
+ * - allow flexible numbers of commands
+ * - allow configurable recursion depth for a regular expression
  *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
