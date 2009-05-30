@@ -1,4 +1,4 @@
-/*
+/**
  * $Id$
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.

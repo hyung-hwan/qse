@@ -1391,8 +1391,9 @@ static int read_file (
 	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &arg);
 	if (n <= -1)
 	{
-		/*SETERR0 (sed, QSE_SED_EIOUSR, cmd->lnum);
-		return -1;*/
+		/*if (sed->errnum != QSE_SED_ENOERR)
+		 *	SETERR0 (sed, QSE_SED_EIOUSR, cmd->lnum);
+		 *return -1;*/
 		/* it is ok if it is not able to open a file */
 		return 0;	
 	}
@@ -1521,7 +1522,10 @@ static int flush (qse_sed_t* sed)
 
 		if (n == 0)
 		{
-			/* reached the end of file - anything to do? */
+			/* reached the end of file - this is also an error */
+			if (sed->errnum == QSE_SED_ENOERR)
+				SETERR0 (sed, QSE_SED_EIOUSR, 0);
+			return -1;
 		}
 
 		pos += n;
@@ -2629,7 +2633,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 		/* flush the output stream in case it's not flushed 
 		 * in write functions */
 		n = flush (sed);
-		if (n <= -1) goto done;
+		if (n <= -1) { ret = -1; goto done; }
 	}
 
 done:

@@ -89,6 +89,12 @@ Sed::errnum_t Sed::getErrorNumber () const throw ()
 	return (sed == QSE_NULL)? QSE_SED_ENOERR: qse_sed_geterrnum (sed);
 }
 
+void Sed::setError (errnum_t err, size_t lin, const cstr_t* args)
+{
+	QSE_ASSERT (sed != QSE_NULL);
+	qse_sed_seterror (sed, err, lin, args);
+}
+
 Sed::size_t Sed::getConsoleLine () throw ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
