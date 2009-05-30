@@ -44,6 +44,7 @@ struct qse_sed_adr_t
 	} u;
 };
 
+#define QSE_SED_CMD_NOOP            QSE_T('\0')
 #define QSE_SED_CMD_QUIT            QSE_T('q')
 #define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
 #define QSE_SED_CMD_APPEND          QSE_T('a')
@@ -118,13 +119,17 @@ struct qse_sed_cmd_t
 	{
 		int a1_matched;
 		int c_ready;
+
+		/* points to the next command for fast traversal and 
+		 * fast random jumps */
+		qse_sed_cmd_t* next; 
 	} state;
 };
 
 struct qse_sed_cmd_blk_t
 {
 	qse_size_t         len;	
-	qse_sed_cmd_t      buf[512];
+	qse_sed_cmd_t      buf[256];
 	qse_sed_cmd_blk_t* next;
 };
 
@@ -141,6 +146,15 @@ struct qse_sed_t
 	qse_size_t errlin;       /**< no of the line where an error occurred */
 
 	int option;              /**< stores options */
+
+	struct
+	{
+		struct
+		{
+			qse_size_t build;
+			qse_size_t match; 
+		} rex;
+	} depth;
 
 	/** source text pointers */
 	struct
@@ -172,6 +186,7 @@ struct qse_sed_t
 	} tmp;
 
 	/** compiled commands */
+#if 0
 	struct
 	{
 		qse_size_t     len; /**< buffer size */
@@ -179,14 +194,17 @@ struct qse_sed_t
 		qse_sed_cmd_t* end; /**< end of the buffer */
 		qse_sed_cmd_t* cur; /**< points next to the last command */
 	} cmd;
+#endif
 
-#if 0
 	struct
 	{
 		qse_sed_cmd_blk_t  fb; /**< the first block is static */
 		qse_sed_cmd_blk_t* lb; /**< points to the last block */
+
+		qse_sed_cmd_t      quit; 
+		qse_sed_cmd_t      again;
+		qse_sed_cmd_t      over;
 	} cmd;
-#endif
 
 	/** data for execution */
 	struct

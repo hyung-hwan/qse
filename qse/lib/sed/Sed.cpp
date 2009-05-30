@@ -74,6 +74,18 @@ void Sed::setOption (int opt) throw ()
 	qse_sed_setoption (sed, opt);
 }
 
+Sed::size_t Sed::getMaxDepth (depth_t id) const throw ()
+{
+	QSE_ASSERT (sed != QSE_NULL);
+	return qse_sed_getmaxdepth (sed, id);
+}
+
+void Sed::setMaxDepth (int ids, size_t depth) throw ()
+{
+	QSE_ASSERT (sed != QSE_NULL);
+	qse_sed_setmaxdepth (sed, ids, depth);
+}
+
 const Sed::char_t* Sed::getErrorMessage () const throw ()
 {
 	return (sed == QSE_NULL)? QSE_T(""): qse_sed_geterrmsg (sed);

@@ -48,6 +48,8 @@ public:
 	typedef qse_sed_io_arg_t io_arg_t;
 	/// The option_t type redefines an option type
 	typedef qse_sed_option_t option_t;
+	/// The depth_t type redefines an depth IDs
+	typedef qse_sed_depth_t depth_t;
 
 	/**
 	 * The Sed() function creates an uninitialized stream editor.
@@ -113,6 +115,19 @@ public:
 	 */
 	void setOption (
 		int opt ///< option code
+	) throw ();
+
+	/**
+	 * The getMaxDepth() function gets the maximum processing depth.
+	 */
+	size_t getMaxDepth (depth_t id) const throw ();
+
+	/**
+	 * The setMaxDepth() function gets the maximum processing depth.
+	 */
+	void setMaxDepth (
+		int    ids,  ///< 0 or a number OR'ed of depth_t values
+		size_t depth ///< 0 maximum depth
 	) throw ();
 
 	/**

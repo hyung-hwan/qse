@@ -35,10 +35,6 @@
  * qse_sed_close (sed);
  * @endcode
  *
- * @todo 
- * - allow flexible numbers of commands
- * - allow configurable recursion depth for a regular expression
- *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
  */
@@ -122,6 +118,18 @@ enum qse_sed_option_t
 	QSE_SED_CLASSIC  = (1 << 4)   /**< disable extended features */
 };
 typedef enum qse_sed_option_t qse_sed_option_t;
+
+
+/**
+ * The qse_sed_depth_t type defines IDs for qse_sed_getmaxdepth() and 
+ * qse_sed_setmaxdepth().
+ */
+enum qse_sed_depth_t
+{
+	QSE_SED_DEPTH_REX_BUILD = (1 << 0),
+	QSE_SED_DEPTH_REX_MATCH = (1 << 1)
+};
+typedef enum qse_sed_depth_t qse_sed_depth_t;
 
 /**
  * The qse_sed_io_cmd_t type defines IO command codes. The code indicates 
@@ -217,6 +225,23 @@ int qse_sed_getoption (
 void qse_sed_setoption (
 	qse_sed_t* sed, /**< a stream editor */
 	int        opt  /**< 0 or a number OR'ed of qse_sed_option_t values */
+);
+
+/**
+ * The qse_sed_getmaxdepth() gets the maximum processing depth.
+ */
+qse_size_t qse_sed_getmaxdepth (
+	qse_sed_t*      sed, /**< a stream editor */
+	qse_sed_depth_t id   /**< one of qse_sed_depth_t values */
+);
+
+/**
+ * The qse_sed_setmaxdepth() sets the maximum processing depth.
+ */
+void qse_sed_setmaxdepth (
+	qse_sed_t* sed,  /**< a stream editor */
+	int        ids,  /**< 0 or a number OR'ed of qse_sed_depth_t values */
+	qse_size_t depth /**< maximum depth level */
 );
 
 /**
