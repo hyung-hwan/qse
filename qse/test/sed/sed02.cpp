@@ -1,4 +1,4 @@
-/*
+/**
  * $Id$
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
@@ -22,6 +22,13 @@
 
 int sed_main (int argc, qse_char_t* argv[])
 {
+	if (argc !=  2)
+	{
+		qse_fprintf (QSE_STDERR, 
+			QSE_T("usage: %s command-string\n"), argv[0]);
+		return -1;
+	}
+
 	QSE::StdSed sed;
 
 	if (sed.open () == -1)

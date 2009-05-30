@@ -38,14 +38,18 @@ public:
 	typedef qse_char_t  char_t;
 	/** data type that can hold any character or an end-of-file value */
 	typedef qse_cint_t  cint_t;
-	/** represents an unsigned integer number of the same size as void* */
+	/** redefines an unsigned integer number of the same size as void* */
 	typedef qse_size_t  size_t;
 	/** signed version of size_t */
 	typedef qse_ssize_t ssize_t;
-	/** represents an integer */
+	/** redefines an integer */
 	typedef qse_long_t  long_t;
-	/** represents a floating-point number */
+	/** redefines a floating-point number */
 	typedef qse_real_t  real_t;
+	/** redefines a structure of a constant character pointer and length */
+	typedef qse_cstr_t cstr_t;
+	/** redefines a structure of a character pointer and length */
+	typedef qse_xstr_t xstr_t;
 };
 
 /////////////////////////////////

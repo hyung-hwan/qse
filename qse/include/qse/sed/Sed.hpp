@@ -144,6 +144,15 @@ public:
 	size_t getConsoleLine () throw ();
 
 	/**
+	 * The setError() function sets information on an error occurred.
+	 */
+	void setError (
+		errnum_t      err,            ///< an error number
+		size_t        lin = 0,        ///< a line number
+		const cstr_t* args = QSE_NULL ///< strings for formatting an error message
+	);
+
+	/**
 	 * The setConsoleLine() function changes the current line
 	 * number from an input console. 
 	 */
