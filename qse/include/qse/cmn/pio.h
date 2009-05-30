@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: pio.h 168 2009-05-30 01:19:46Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,13 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/tio.h>
+
+/** @file 
+ * Pipe I/O
+ * @todo 
+ * - rename flags to option
+ * - write code for win32
+ */
 
 enum qse_pio_open_flag_t
 {
@@ -65,7 +72,7 @@ enum qse_pio_io_flag_t
 	QSE_PIO_WAIT_NORETRY   = (1 << 5)
 };
 
-enum qse_pio_err_t
+enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0,
 	QSE_PIO_ENOMEM,     /* out of memory */
@@ -76,7 +83,7 @@ enum qse_pio_err_t
 };
 
 typedef enum qse_pio_hid_t qse_pio_hid_t;
-typedef enum qse_pio_err_t qse_pio_err_t;
+typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 
 #ifdef _WIN32
 	/* <winnt.h> => typedef PVOID HANDLE; */
@@ -101,21 +108,18 @@ struct qse_pio_pin_t
 	qse_pio_t*    self;	
 };
 
-/****s* Common/qse_pio_t
- * NAME 
- *  qse_pio_t - define an pipe IO type
- * SYNOPSIS
+/**
+ * The qse_pio_t type defines a pipe I/O type
  */
 struct qse_pio_t
 {
 	QSE_DEFINE_COMMON_FIELDS(pio)
 
-	int           flags;
-	qse_pio_err_t errnum;
-	qse_pio_pid_t child;
-	qse_pio_pin_t pin[3];
+	int              flags;
+	qse_pio_errnum_t errnum;
+	qse_pio_pid_t    child;
+	qse_pio_pin_t    pin[3];
 };
-/*****/
 
 #define QSE_PIO_ERRNUM(pio)     ((pio)->errnum)
 #define QSE_PIO_FLAGS(pio)      ((pio)->flags)
@@ -128,40 +132,27 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
-/****f* Common/qse_pio_open
- * NAME
- *  qse_pio_open - open pipes to a child process
- *
- * DESCRIPTION
- *  QSE_PIO_SHELL drives the funcpion to execute the command via /bin/sh.
- *  If flags is clear of QSE_PIO_SHELL, you should pass the full program path.
- *
- * SYNOPSIS
+/**
+ * The qse_pio_open() function opens pipes to a child process.
+ * QSE_PIO_SHELL drives the function to execute the command via /bin/sh.
+ * If flags is clear of QSE_PIO_SHELL, you should pass the full program path.
  */
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t*       mmgr,
-	qse_size_t        ext,
-	const qse_char_t* cmd,
-	int               flags
+	qse_mmgr_t*       mmgr,  /**< a memory manager */
+	qse_size_t        ext,   /**< extension size */
+	const qse_char_t* cmd,   /**< a command to execute */
+	int               flags  /**< options */
 );
-/******/
 
-/****f* Common/qse_pio_close
- * NAME
- *  qse_pio_close - close pipes to a child process
- *
- * SYNOPSIS
+/**
+ * The qse_pio_close() function closes pipes to a child process.
  */
 void qse_pio_close (
 	qse_pio_t* pio
 );
-/******/
 
-/****f* Common/qse_pio_init
- * NAME
- *  qse_pio_init - initialize pipes to a child process
- *
- * SYNOPSIS
+/**
+ * The qse_pio_init() function initializes pipes to a child process.
  */
 qse_pio_t* qse_pio_init (
 	qse_pio_t*        pio,
@@ -169,18 +160,13 @@ qse_pio_t* qse_pio_init (
 	const qse_char_t* path,
 	int               flags
 );
-/******/
 
-/****f* Common/qse_pio_fini
- * NAME
- *  qse_pio_fini - finalize pipes to a child process
- *
- * SYNOPSIS
+/**
+ * The qse_pio_fini() function finalizes pipes to a child process.
  */
 void qse_pio_fini (
 	qse_pio_t* pio
 );
-/******/
 
 int qse_pio_getflags (
 	qse_pio_t* pio
@@ -189,7 +175,7 @@ int qse_pio_getflags (
 void qse_pio_setflags (
 	qse_pio_t* pio,
 	int        flags,
-	int        op
+	int        opt
 );
 
 /****f* Common/qse_pio_geterrnum
@@ -198,7 +184,7 @@ void qse_pio_setflags (
  *
  * SYNOPSIS
  */
-qse_pio_err_t qse_pio_geterrnum (
+qse_pio_errnum_t qse_pio_geterrnum (
 	qse_pio_t* pio
 );
 /******/
