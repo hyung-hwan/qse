@@ -61,7 +61,7 @@ typedef struct qse_sed_t qse_sed_t;
 enum qse_sed_errnum_t
 {
 	QSE_SED_ENOERR,  /**< no error */
-	QSE_SED_ENOMEM,  /**< out of memory */
+	QSE_SED_ENOMEM,  /**< insufficient memory */
 	QSE_SED_ECMDNR,  /**< command '${0}' not recognized */
 	QSE_SED_ECMDMS,  /**< command code missing */
 	QSE_SED_ECMDIC,  /**< command '${0}' incomplete */

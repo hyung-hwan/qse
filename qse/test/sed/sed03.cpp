@@ -22,6 +22,12 @@
 #include <string>
 #include <iostream>
 
+#ifdef QSE_CHAR_IS_MCHAR
+#	define xcout std::cout
+#else
+#	define xcout std::wcout
+#endif
+
 typedef std::basic_string<QSE::StdSed::char_t> xstring;
 typedef QSE::StdSed StdSed; // added for doxygen cross-reference
 
@@ -108,11 +114,11 @@ int sed_main (int argc, qse_char_t* argv[])
 		sed.run (
 			QSE_T("y/ABC/abc/;s/abc/def/g"),
 			QSE_T("ABCDEFabcdef"), out);
-		std::cout << QSE_T("OUTPUT: ") << out << std::endl;
+		xcout << QSE_T("OUTPUT: ") << out << std::endl;
 	}
 	catch (MySed::Error& err)
 	{
-		std::cout << QSE_T("ERROR: ") << err.getMessage() << std::endl;
+		xcout << QSE_T("ERROR: ") << err.getMessage() << std::endl;
 		return -1;
 	}
 
