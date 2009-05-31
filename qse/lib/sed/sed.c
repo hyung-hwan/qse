@@ -44,7 +44,7 @@ static const qse_char_t* dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
-		QSE_T("out of memory"),
+		QSE_T("insufficient memory"),
 		QSE_T("command '${0}' not recognized"),
 		QSE_T("command code missing"),
 		QSE_T("command '${0}' incomplete"),
