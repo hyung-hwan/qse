@@ -11,14 +11,61 @@ The project webpage: http://qse.googlecode.com/
 For furthur information, contact:
 Chung, Hyung-Hwan <bacon@abiyo.net>
 
-@section INSTALLATION
-Cross compiling for WIN32 with MINGW32
+@section installation INSTALLATION
 
-	./configure --host=i586-mingw32msvc --target=i586-mingw32msvc --enable-syscall
-	make 
+@subsection bulid_tarball_unix BUILINDG FROM A SOURCE TARBALL UNDER LINUX/UNIX
+
+Download the latest source tarball from:
+- http://code.google.com/p/qse/downloads/list
+
+Unpack the tarball and run configure and make to compile it:
+
+@code
+$ ./configure
+$ make	
+$ make install
+@endcode
+
+To cross-comiple it for WIN32 with MINGW32, run configure as shown below:
+
+@code
+$ ./configure --host=i586-mingw32msvc --target=i586-mingw32msvc 
+$ make
+$ make install
+@endcode
+
+@note For cross-compilation, get a cross-compiler installed first.
+
+@subsection build_mchar BUILING FOR MULTI-BYTE CHARACTER MODE
+
+The library can be built for two different character modes:
+- multi-byte character mode
+- wide character mode
+
+Under the multi-byte character mode:
+- #QSE_CHAR_IS_MCHAR is defined.
+- #qse_char_t maps to #qse_mchar_t.
+- #QSE_T("x") becomes "x".
+
+Under the wide character mode:
+- #QSE_CHAR_IS_WCHAR is defined.
+- #qse_char_t maps to #qse_wchar_t.
+- #QSE_T("x") becomes L"x".
+
+Typically, #qse_mchar_t maps char and #qse_wchar_t is maps to wchar_t in both modes.
+
+By default, the library is built for the wide character mode. To compile it
+for the multi-byte character mode, run configure with the @b --disable-wchar option
+specified explicitly.
+
+@code
+$ ./configure --disable-wchar
+$ make
+$ make install
+@endcode
 
 @section MODULES
 QSE includes various modules:
-- @ref awk "AWK"
-- @ref sed "SED"
+- @subpage awk "AWK"
+- @subpage sed "SED"
 */

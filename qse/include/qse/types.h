@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 172 2009-06-01 13:33:01Z hyunghwan.chung $
+ * $Id: types.h 173 2009-06-02 01:40:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -223,12 +223,12 @@ typedef qse_uint8_t qse_byte_t;
  * The qse_ssize_t type defines a signed integer type that is as large as
  * to hold a pointer value.
  */
-typedef qse_int_t   qse_ssize_t;
+typedef qse_int_t qse_ssize_t;
 
 /** 
  * The qse_word_t type redefines qse_uint_t. 
  */
-typedef qse_uint_t  qse_word_t;
+typedef qse_uint_t qse_word_t;
 
 /** @typedef qse_real_t
  * The qse_real_t type defines the largest floating-pointer number type
