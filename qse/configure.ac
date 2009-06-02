@@ -210,6 +210,17 @@ then
 	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
+AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
+AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
+AC_SUBST(QSE_SIZEOF_LONG, $ac_cv_sizeof_long)
+AC_SUBST(QSE_SIZEOF_INT, $ac_cv_sizeof_int)
+AC_SUBST(QSE_SIZEOF_SHORT, $ac_cv_sizeof_short)
+AC_SUBST(QSE_SIZEOF_CHAR, $ac_cv_sizeof_char)
+AC_SUBST(QSE_SIZEOF_VOID_P, $ac_cv_sizeof_void_p)
+AC_SUBST(QSE_SIZEOF_FLOAT, $ac_cv_sizeof_float)
+AC_SUBST(QSE_SIZEOF_DOUBLE, $ac_cv_sizeof_double)
+AC_SUBST(QSE_SIZEOF_LONG_DOUBLE, $ac_cv_sizeof_long_double)
+
 AC_CONFIG_FILES([
 	Makefile 
 	include/Makefile
