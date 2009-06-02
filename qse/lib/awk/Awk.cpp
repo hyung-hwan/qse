@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: Awk.cpp 172 2009-06-01 13:33:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -945,10 +945,10 @@ bool Awk::Run::isStop () const
 	return qse_awk_rtx_shouldstop (this->run)? true: false;
 }
 
-Awk::ErrorCode Awk::Run::getErrorCode () const
+Awk::ErrorNumber Awk::Run::getErrorNumber () const
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	return (ErrorCode)qse_awk_rtx_geterrnum (this->run);
+	return (ErrorNumber)qse_awk_rtx_geterrnum (this->run);
 }
 
 Awk::size_t Awk::Run::getErrorLine () const
@@ -963,19 +963,19 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->run);
 }
 
-void Awk::Run::setError (ErrorCode code)
+void Awk::Run::setError (ErrorNumber code)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_awk_rtx_seterror (this->run, (errnum_t)code, 0, QSE_NULL);
 }
 
-void Awk::Run::setError (ErrorCode code, size_t line)
+void Awk::Run::setError (ErrorNumber code, size_t line)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_awk_rtx_seterror (this->run, (errnum_t)code, line, QSE_NULL);
 }
 
-void Awk::Run::setError (ErrorCode code, size_t line, const char_t* arg)
+void Awk::Run::setError (ErrorNumber code, size_t line, const char_t* arg)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_cstr_t x = { arg, qse_strlen(arg) };
@@ -983,7 +983,7 @@ void Awk::Run::setError (ErrorCode code, size_t line, const char_t* arg)
 }
 
 void Awk::Run::setError (
-	ErrorCode code, size_t line, const char_t* arg, size_t len)
+	ErrorNumber code, size_t line, const char_t* arg, size_t len)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_cstr_t x = { arg, len };
@@ -991,7 +991,7 @@ void Awk::Run::setError (
 }
 
 void Awk::Run::setErrorWithMessage (
-	ErrorCode code, size_t line, const char_t* msg)
+	ErrorNumber code, size_t line, const char_t* msg)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
 	qse_awk_rtx_seterrmsg (this->run, (errnum_t)code, line, msg);
@@ -1078,7 +1078,7 @@ Awk::operator Awk::awk_t* () const
 	return this->awk;
 }
 
-Awk::ErrorCode Awk::getErrorCode () const
+Awk::ErrorNumber Awk::getErrorNumber () const
 {
 	return this->errnum;
 }
@@ -1093,22 +1093,22 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errmsg;
 }
 
-void Awk::setError (ErrorCode code)
+void Awk::setError (ErrorNumber code)
 {
 	setError (code, 0, QSE_NULL, 0);
 }
 
-void Awk::setError (ErrorCode code, size_t line)
+void Awk::setError (ErrorNumber code, size_t line)
 {
 	setError (code, line, QSE_NULL, 0);
 }
 
-void Awk::setError (ErrorCode code, size_t line, const char_t* arg)
+void Awk::setError (ErrorNumber code, size_t line, const char_t* arg)
 {
 	setError (code, line, arg, qse_strlen(arg));
 }
 
-void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
+void Awk::setError (ErrorNumber code, size_t line, const char_t* arg, size_t len)
 {
 	if (awk != QSE_NULL)
 	{
@@ -1125,7 +1125,7 @@ void Awk::setError (ErrorCode code, size_t line, const char_t* arg, size_t len)
 	}
 }
 
-void Awk::setErrorWithMessage (ErrorCode code, size_t line, const char_t* msg)
+void Awk::setErrorWithMessage (ErrorNumber code, size_t line, const char_t* msg)
 {
 	if (awk != QSE_NULL)
 	{
@@ -1159,7 +1159,7 @@ void Awk::retrieveError ()
 		const char_t* msg;
 
 		qse_awk_geterror (this->awk, &num, &this->errlin, &msg);
-		this->errnum = (ErrorCode)num;
+		this->errnum = (ErrorNumber)num;
 		qse_strxcpy (this->errmsg, QSE_COUNTOF(this->errmsg), msg);
 	}
 }
@@ -1170,7 +1170,7 @@ void Awk::retrieveError (rtx_t* rtx)
 	const char_t* msg;
 
 	qse_awk_rtx_geterror (rtx, &num, &this->errlin, &msg);
-	this->errnum = (ErrorCode)num;
+	this->errnum = (ErrorNumber)num;
 	qse_strxcpy (this->errmsg, QSE_COUNTOF(this->errmsg), msg);
 }
 
@@ -1261,7 +1261,7 @@ Awk::size_t Awk::getMaxDepth (int id) const
 	return qse_awk_getmaxdepth (awk, id);
 }
 
-const Awk::char_t* Awk::getErrorString (ErrorCode num) const
+const Awk::char_t* Awk::getErrorString (ErrorNumber num) const
 {
 	QSE_ASSERT (dflerrstr != QSE_NULL);
 	return dflerrstr (awk, (errnum_t)num);
@@ -1272,7 +1272,7 @@ const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) throw ()
 	Awk* awk = *(Awk**)QSE_XTN(a);
 	try
 	{
-		return awk->getErrorString ((ErrorCode)num);
+		return awk->getErrorString ((ErrorNumber)num);
 	}
 	catch (...)
 	{

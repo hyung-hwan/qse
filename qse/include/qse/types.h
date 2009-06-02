@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 151 2009-05-21 06:50:02Z hyunghwan.chung $
+ * $Id: types.h 172 2009-06-01 13:33:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -19,14 +19,9 @@
 #ifndef _QSE_TYPES_H_
 #define _QSE_TYPES_H_
 
-/****o* Base/Basic Types
- * DESCRIPTION
- *  <qse/types.h> defines various common basic types. They are designed to be
- *  cross-platform. These types are preferred over native data types in many
- *  contexts.
- *
- *  #include <qse/types.h>
- ******
+/**@file
+ * The <qse/types.h> file defines various common basic types designed to be
+ * cross-platform. These types are preferred over native data types.
  */
 
 /* WARNING: NEVER CHANGE/DELETE THE FOLLOWING LINE */
@@ -42,29 +37,20 @@
 #	error unsupported operating system
 #endif
 
-/****t* Base/qse_bool_t
- * NAME
- *  qse_bool_t - define a boolean type
- * DESCRIPTION
- *  The qse_bool_t type defines a boolean type that can represent QSE_TRUE 
- *  and QSE_FALSE.
- * SYNOPSIS
+/**
+ * The qse_bool_t type defines a boolean type that can represent #QSE_TRUE 
+ * and #QSE_FALSE.
  */
 enum qse_bool_t
 {
 	QSE_TRUE  = (0 == 0),
 	QSE_FALSE = (0 != 0)
 };
-/******/
 typedef enum qse_bool_t qse_bool_t;
 
-/****t* Base/qse_tri_t
- * NAME
- *  qse_tri_t - define a tri-state type
- * DESCRIPTION
- *  The qse_tri_t type defines a tri-state type that can represent QSE_ALIVE,
- *  QSE_ZOMBIE, and QSE_DEAD.
- * SYNOPSIS
+/**
+ * The qse_tri_t type defines a tri-state type that can represent #QSE_ALIVE,
+ * #QSE_ZOMBIE, and #QSE_DEAD.
  */
 enum qse_tri_t
 {
@@ -72,14 +58,13 @@ enum qse_tri_t
 	QSE_ZOMBIE = 0,
 	QSE_DEAD   = -1
 };
-/******/
 typedef enum qse_tri_t qse_tri_t;
 
-/****t* Base/qse_int_t,Base/qse_uint_t
- * NAME
- *  * qse_int_t - define a signed integer type as large as a pointer type
- *  * qse_uint_t - define an unsigned integer type as large as a pointer type
- ******
+/** @typedef qse_int_t
+ * The qse_int_t type defines a signed integer type as large as a pointer.
+ */
+/** @typedef qse_uint_t
+ * The qse_uint_t type defines an unsigned integer type as large as a pointer.
  */
 #if (defined(hpux) || defined(__hpux) || defined(__hpux__)) && \
     (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
@@ -107,11 +92,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	error unsupported pointer size
 #endif
 
-/****t* Base/qse_long_t,Base/qse_ulong_t
- * NAME
- *  * qse_long_t - define the largest signed integer type supported
- *  * qse_ulong_t - define the largest unsigned integer type supported
- ******
+/** @typedef qse_long_t
+ * The qse_long_t type defines the largest signed integer type supported
+ */
+/** @typedef qse_ulong_t
+ * The qse_ulong_t type defines the largest unsigned integer type supported
  */
 #if QSE_SIZEOF_LONG_LONG > 0
 	typedef long long qse_long_t;
@@ -124,11 +109,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned long qse_ulong_t;
 #endif
 
-/****t* Base/qse_int8_t,Base/qse_uint8_t
- * NAME
- *  * qse_int8_t - define an 8-bit signed integer type
- *  * qse_uint8_t - define an 8-bit unsigned integer type
- ******
+/** @typedef qse_int8_t
+ * The qse_int8_t defines an 8-bit signed integer type.
+ */
+/** @typedef qse_uint8_t
+ * The qse_uint8_t type defines an 8-bit unsigned integer type.
  */
 #if QSE_SIZEOF_CHAR == 1
 	typedef char qse_int8_t;
@@ -138,11 +123,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int8 qse_uint8_t;
 #endif
 
-/****t* Base/qse_int16_t,Base/qse_uint16_t
- * NAME
- *  * qse_int16_t - define a 16-bit signed integer type
- *  * qse_uint16_t - define a 16-bit unsigned integer type
- ******
+/** @typedef qse_int16_t
+ * The qse_int16_t defines an 16-bit signed integer type.
+ */
+/** @typedef qse_uint16_t
+ * The qse_uint16_t type defines an 16-bit unsigned integer type.
  */
 #if QSE_SIZEOF_SHORT == 2
 	typedef short qse_int16_t;
@@ -152,11 +137,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int16 qse_uint16_t;
 #endif
 
-/****t* Base/qse_int32_t,Base/qse_uint32_t
- * NAME
- *  * qse_int32_t - define a 32-bit signed integer type
- *  * qse_uint32_t - define a 32-bit unsigned integer type
- ******
+/** @typedef qse_int32_t
+ * The qse_int32_t defines an 32-bit signed integer type.
+ */
+/** @typedef qse_uint32_t
+ * The qse_uint32_t type defines an 32-bit unsigned integer type.
  */
 #if QSE_SIZEOF_INT == 4
 	typedef int qse_int32_t;
@@ -169,11 +154,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int32 qse_uint32_t;
 #endif
 
-/****t* Base/qse_int64_t,Base/qse_uint64_t
- * NAME
- *  * qse_int64_t - define a 64-bit signed integer type
- *  * qse_uint64_t - define a 64-bit unsigned integer type
- ******
+/** @typedef qse_int64_t
+ * The qse_int64_t defines an 64-bit signed integer type.
+ */
+/** @typedef qse_uint64_t
+ * The qse_uint64_t type defines an 64-bit unsigned integer type.
  */
 #if QSE_SIZEOF_INT == 8
 #	define QSE_HAVE_INT64_T
@@ -219,17 +204,14 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int128 qse_uint128_t;
 #endif
 
-/****t* Base/qse_byte_t
- * NAME
- *  qse_byte_t - define a byte type
- ******
+/**
+ * The qse_byte_t defines a byte type.
  */
 typedef qse_uint8_t qse_byte_t;
 
-/****t* Base/qse_size_t
- * NAME
- *  qse_size_t - define an unsigned integer type that can hold a pointer value
- ******
+/**
+ * The qse_size_t type defines an unsigned integer type that is as large as
+ * to hold a pointer value.
  */
 #ifdef __SIZE_TYPE__
 	typedef __SIZE_TYPE__ qse_size_t;
@@ -237,24 +219,20 @@ typedef qse_uint8_t qse_byte_t;
 	typedef qse_uint_t  qse_size_t;
 #endif
 
-/****t* Base/qse_ssize_t
- * NAME
- *  qse_ssize_t - define an signed integer type that can hold a pointer value
- ******
+/**
+ * The qse_ssize_t type defines a signed integer type that is as large as
+ * to hold a pointer value.
  */
 typedef qse_int_t   qse_ssize_t;
 
-/****t* Base/qse_word_t
- * NAME
- *  qse_word_t - define an integer type identical to qse_uint_t 
- ******
+/** 
+ * The qse_word_t type redefines qse_uint_t. 
  */
 typedef qse_uint_t  qse_word_t;
 
-/****t* Base/qse_real_t
- * NAME
- *  qse_real_t - define a largest floating-pointer number type supported
- ******
+/** @typedef qse_real_t
+ * The qse_real_t type defines the largest floating-pointer number type
+ * supported.
  */
 #if defined(__FreeBSD__)
 	/* TODO: check if the support for long double is complete.
@@ -269,20 +247,22 @@ typedef qse_uint_t  qse_word_t;
 	typedef double qse_real_t;
 #endif
 
-/****t* Base/qse_mchar_t,Base/qse_mcint_t
- * NAME
- *  * qse_mchar_t - define a multi-byte character
- *  * qse_mcint_t - define a type that can hold qse_mchar_t and QSE_MCHAR_EOF
- ******
+/** 
+ * The qse_mchar_t type defines a multi-byte character type.
  */
 typedef char qse_mchar_t;
+/**
+ * The qse_mcint_t defines a type that can hold a qse_mchar_t value and 
+ * #QSE_MCHAR_EOF.
+ */
 typedef int  qse_mcint_t;
 
-/****t* Base/qse_wchar_t,Base/qse_wcint_t
- * NAME
- *  * qse_wchar_t - define a wide character
- *  * qse_wcint_t - define a type that can hold qse_wchar_t and QSE_WCHAR_EOF
- ******
+/** @typedef qse_wchar_t
+ * The qse_wchar_t type defines a wide character type. 
+ */
+/** @typedef qse_wcint_t
+ * The qse_wcint_t type defines a type that can hold a qse_wchar_t value and 
+ * #QSE_WCHAR_EOF.
  */
 #if defined(__cplusplus) && \
     (!defined(_MSC_VER) || \
@@ -337,11 +317,12 @@ typedef int  qse_mcint_t;
 #	error unsupported size of wchar_t
 #endif
 
-/****t* Base/qse_char_t,Base/qse_cint_t
- * NAME
- *  * qse_char_t - define a character
- *  * qse_cint_t - define a type that can hold qse_char_t and QSE_CHAR_EOF
- ******
+/** @typedef qse_char_t
+ * The qse_char_t type defines a character type.
+ */
+/** @typedef qse_cint_t
+ * The qse_cint_t typep defines a type that can hold a qse_char_t value and 
+ * #QSE_CHAR_EOF.
  */
 #if defined(_WIN32) && (defined(UNICODE)||defined(_UNICODE))
 #	define QSE_CHAR_IS_WCHAR
