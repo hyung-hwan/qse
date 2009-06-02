@@ -1,9 +1,9 @@
 /*
- * $Id: err.c 113 2009-03-25 14:53:10Z hyunghwan.chung $
+ * $Id: err.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
+   Licenawk under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
@@ -18,7 +18,7 @@
 
 #include "awk.h"
 
-static const qse_char_t* __geterrstr (int errnum)
+const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 {
 	static const qse_char_t* errstr[] =
  	{
@@ -26,7 +26,7 @@ static const qse_char_t* __geterrstr (int errnum)
 		QSE_T("unknown error"),
 
 		QSE_T("invalid parameter or data"),
-		QSE_T("out of memory"),
+		QSE_T("insufficient memory"),
 		QSE_T("not supported"),
 		QSE_T("operation not allowed"),
 		QSE_T("no such device"),
@@ -64,8 +64,8 @@ static const qse_char_t* __geterrstr (int errnum)
 		QSE_T("cannot unget character"),
 
 		QSE_T("unexpected end of source"),
-		QSE_T("a comment not closed properly"),
-		QSE_T("a string or a regular expression not closed"),
+		QSE_T("a comment not cloawk properly"),
+		QSE_T("a string or a regular expression not cloawk"),
 		QSE_T("unexpected end of a regular expression"),
 		QSE_T("a left brace expected in place of '${0}'"),
 		QSE_T("a left parenthesis expected in place of '${0}'"),
@@ -164,37 +164,18 @@ static const qse_char_t* __geterrstr (int errnum)
 		QSE_T("garbage after the regular expression")
 	};
 
-	if (errnum >= 0 && errnum < QSE_COUNTOF(errstr)) 
-	{
-		return errstr[errnum];
-	}
-
-	return QSE_T("unknown error");
+	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?
+		errstr[errnum]: QSE_T("unknown error");
 }
 
-const qse_char_t* qse_awk_geterrstr (qse_awk_t* awk, qse_awk_errnum_t num)
+qse_awk_errstr_t qse_awk_geterrstr (qse_awk_t* awk)
 {
-	if (awk != QSE_NULL && 
-	    awk->errstr[num] != QSE_NULL) return awk->errstr[num];
-	return __geterrstr (num);
+	return awk->errstr;
 }
 
-int qse_awk_seterrstr (
-	qse_awk_t* awk, qse_awk_errnum_t num, const qse_char_t* str)
+void qse_awk_seterrstr (qse_awk_t* awk, qse_awk_errstr_t errstr)
 {
-	qse_char_t* dup;
-       
-	if (str == QSE_NULL) dup = QSE_NULL;
-	else
-	{
-		dup = QSE_AWK_STRDUP (awk, str);
-		if (dup == QSE_NULL) return -1;
-	}
-
-	if (awk->errstr[num] != QSE_NULL) 
-		QSE_AWK_FREE (awk, awk->errstr[num]);
-	else awk->errstr[num] = dup;
-	return 0;
+	awk->errstr = errstr;
 }
 
 int qse_awk_geterrnum (qse_awk_t* awk)
@@ -209,13 +190,12 @@ qse_size_t qse_awk_geterrlin (qse_awk_t* awk)
 
 const qse_char_t* qse_awk_geterrmsg (qse_awk_t* awk)
 {
-	if (awk->errmsg[0] == QSE_T('\0')) 
-		return qse_awk_geterrstr (awk, awk->errnum);
-	return awk->errmsg;
+	return (awk->errmsg[0] == QSE_T('\0'))?
+		qse_awk_geterrstr(awk)(awk,awk->errnum): awk->errmsg;
 }
 
 void qse_awk_geterror (
-	qse_awk_t* awk, int* errnum, 
+	qse_awk_t* awk, qse_awk_errnum_t* errnum, 
 	qse_size_t* errlin, const qse_char_t** errmsg)
 {
 	if (errnum != QSE_NULL) *errnum = awk->errnum;
@@ -223,12 +203,12 @@ void qse_awk_geterror (
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (awk->errmsg[0] == QSE_T('\0'))?
-			qse_awk_geterrstr (awk, awk->errnum):
+			qse_awk_geterrstr(awk)(awk,awk->errnum):
 			awk->errmsg;
 	}
 }
 
-void qse_awk_seterrnum (qse_awk_t* awk, int errnum)
+void qse_awk_seterrnum (qse_awk_t* awk, qse_awk_errnum_t errnum)
 {
 	awk->errnum = errnum;
 	awk->errlin = 0;
@@ -236,7 +216,7 @@ void qse_awk_seterrnum (qse_awk_t* awk, int errnum)
 }
 
 void qse_awk_seterrmsg (qse_awk_t* awk, 
-	int errnum, qse_size_t errlin, const qse_char_t* errmsg)
+	qse_awk_errnum_t errnum, qse_size_t errlin, const qse_char_t* errmsg)
 {
 	awk->errnum = errnum;
 	awk->errlin = errlin;
@@ -244,7 +224,7 @@ void qse_awk_seterrmsg (qse_awk_t* awk,
 }
 
 void qse_awk_seterror (
-	qse_awk_t* awk, int errnum,
+	qse_awk_t* awk, qse_awk_errnum_t errnum,
 	qse_size_t errlin, const qse_cstr_t* errarg)
 {
 	const qse_char_t* errfmt;
@@ -252,30 +232,28 @@ void qse_awk_seterror (
 	awk->errnum = errnum;
 	awk->errlin = errlin;
 
-	errfmt = qse_awk_geterrstr (awk, errnum);
+	errfmt = qse_awk_geterrstr(awk)(awk,errnum);
 	QSE_ASSERT (errfmt != QSE_NULL);
 	qse_strxfncpy (awk->errmsg, QSE_COUNTOF(awk->errmsg), errfmt, errarg);
 }
 
-int qse_awk_rtx_geterrnum (qse_awk_rtx_t* run)
+int qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
 {
-	return run->errnum;
+	return rtx->errnum;
 }
 
-qse_size_t qse_awk_rtx_geterrlin (qse_awk_rtx_t* run)
+qse_size_t qse_awk_rtx_geterrlin (qse_awk_rtx_t* rtx)
 {
-	return run->errlin;
+	return rtx->errlin;
 }
 
-const qse_char_t* qse_awk_rtx_geterrmsg (qse_awk_rtx_t* run)
+const qse_char_t* qse_awk_rtx_geterrmsg (qse_awk_rtx_t* rtx)
 {
-	if (run->errmsg[0] == QSE_T('\0')) 
-		return qse_awk_geterrstr (run->awk, run->errnum);
-
-	return run->errmsg;
+	return (rtx->errmsg[0] == QSE_T('\0')) ?
+		qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errnum): rtx->errmsg;
 }
 
-void qse_awk_rtx_seterrnum (qse_awk_rtx_t* rtx, int errnum)
+void qse_awk_rtx_seterrnum (qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum)
 {
 	rtx->errnum = errnum;
 	rtx->errlin = 0;
@@ -283,7 +261,7 @@ void qse_awk_rtx_seterrnum (qse_awk_rtx_t* rtx, int errnum)
 }
 
 void qse_awk_rtx_seterrmsg (qse_awk_rtx_t* rtx, 
-	int errnum, qse_size_t errlin, const qse_char_t* errmsg)
+	qse_awk_errnum_t errnum, qse_size_t errlin, const qse_char_t* errmsg)
 {
 	rtx->errnum = errnum;
 	rtx->errlin = errlin;
@@ -291,7 +269,7 @@ void qse_awk_rtx_seterrmsg (qse_awk_rtx_t* rtx,
 }
 
 void qse_awk_rtx_geterror (
-	qse_awk_rtx_t* rtx, int* errnum, 
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t* errnum, 
 	qse_size_t* errlin, const qse_char_t** errmsg)
 {
 	if (errnum != QSE_NULL) *errnum = rtx->errnum;
@@ -299,12 +277,12 @@ void qse_awk_rtx_geterror (
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (rtx->errmsg[0] == QSE_T('\0'))?
-			qse_awk_geterrstr (rtx->awk, rtx->errnum): rtx->errmsg;
+			qse_awk_geterrstr(rtx->awk)(rtx->awk,rtx->errnum): rtx->errmsg;
 	}
 }
 
 void qse_awk_rtx_seterror (
-	qse_awk_rtx_t* rtx, int errnum, 
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, 
 	qse_size_t errlin, const qse_cstr_t* errarg)
 {
 	const qse_char_t* errfmt;
@@ -312,7 +290,7 @@ void qse_awk_rtx_seterror (
 	rtx->errnum = errnum;
 	rtx->errlin = errlin;
 
-	errfmt = qse_awk_geterrstr (rtx->awk, errnum);
+	errfmt = qse_awk_geterrstr(rtx->awk)(rtx->awk,errnum);
 	QSE_ASSERT (errfmt != QSE_NULL);
 	qse_strxfncpy (rtx->errmsg, QSE_COUNTOF(rtx->errmsg), errfmt, errarg);
 }

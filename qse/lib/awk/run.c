@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: run.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1486,6 +1486,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	call.type = QSE_AWK_NDE_FUN;
 	call.what.fun.name.ptr = (qse_char_t*)name;
 	call.what.fun.name.len = qse_strlen(name);
+	call.nargs = nargs;
 
 	/* find the function */
 	pair = qse_map_search (
@@ -3059,7 +3060,8 @@ static int output_formatted (
 static qse_awk_val_t* eval_expression (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
 	qse_awk_val_t* v;
-	int n, errnum;
+	int n;
+	qse_awk_errnum_t errnum;	
 
 #if 0
 	if (run->exit_level >= EXIT_GLOBAL) 
@@ -3267,7 +3269,7 @@ static qse_awk_val_t* do_assignment (
 	qse_awk_rtx_t* run, qse_awk_nde_t* var, qse_awk_val_t* val)
 {
 	qse_awk_val_t* ret;
-	int errnum;
+	qse_awk_errnum_t errnum;
 
 	if (var->type == QSE_AWK_NDE_NAMED ||
 	    var->type == QSE_AWK_NDE_GBL ||
@@ -4729,7 +4731,8 @@ static qse_awk_val_t* eval_binop_match0 (
 	qse_size_t lline, qse_size_t rline, int ret)
 {
 	qse_awk_val_t* res;
-	int n, errnum;
+	int n;
+	qse_awk_errnum_t errnum;
 	void* rex_code;
 
 	if (right->type == QSE_AWK_VAL_REX)

@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: fnc.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -591,7 +591,7 @@ static int fnc_split (
 	qse_size_t fs_len;
 	void* fs_rex = QSE_NULL; 
 	void* fs_rex_free = QSE_NULL;
-	int errnum;
+	qse_awk_errnum_t errnum;
 
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs >= 2 && nargs <= 3);

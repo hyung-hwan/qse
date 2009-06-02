@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: rec.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -101,7 +101,7 @@ static int split_record (qse_awk_rtx_t* run)
 	qse_awk_val_t* v, * fs;
 	qse_char_t* fs_ptr, * fs_free;
 	qse_size_t fs_len;
-	int errnum;
+	qse_awk_errnum_t errnum;
        
 	/* inrec should be cleared before split_record is called */
 	QSE_ASSERT (run->inrec.nflds == 0);
