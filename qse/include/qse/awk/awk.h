@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 168 2009-05-30 01:19:46Z hyunghwan.chung $
+ * $Id: awk.h 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -26,9 +26,6 @@
 
 /** @file
  * An embeddable AWK interpreter is defined in this header files.
- *
- * @todo
- * - change the way to set a custom error string: follow qse_sed_errstr_t
  *
  * @example awk01.c
  * This program demonstrates how to use qse_awk_rtx_loop().
@@ -291,7 +288,7 @@ struct qse_awk_prm_t
 		qse_size_t         len, 
 		const qse_char_t** mptr,
 		qse_size_t*        mlen, 
-		int* errnum
+		int*               errnum
 	);
 
 	void (*free) (
@@ -419,10 +416,8 @@ enum qse_awk_option_t
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
 };
 
-/****e* AWK/qse_awk_errnum_t
- * NAME
- *  qse_awk_errnum_t - define an error code
- * SYNOPSIS
+/**
+ * The qse_awk_errnum_t type defines error codes.
  */
 enum qse_awk_errnum_t
 {
@@ -575,9 +570,20 @@ enum qse_awk_errnum_t
 	/* the number of error numbers, internal use only */
 	QSE_AWK_NUMERRNUM 
 };
-/******/
 
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
+
+/**
+ * The qse_awk_errstr_t type defines a error string getter. It should return 
+ * an error formatting string for an error number requested. A new string
+ * should contain the same number of positional parameters (${X}) as in the
+ * default error formatting string. You can set a new getter into an awk
+ * object with the qse_awk_seterrstr() function to customize an error string.
+ */
+typedef const qse_char_t* (*qse_awk_errstr_t) (
+	qse_awk_t*       awk,   /**< an awk object */
+	qse_awk_errnum_t num    /**< an error number */
+);
 
 /* depth types */
 enum qse_awk_depth_t
@@ -845,35 +851,41 @@ int qse_awk_clear (
 );
 /******/
 
-/****f* AWK/qse_awk_geterrstr
- * NAME
- *  qse_awk_geterrstr - get a format string for an error code
- * DESCRIPTION
- *  The qse_awk_geterrstr() function returns a pointer to a format string for
- *  the error number num.
- * SYNOPSIS
+/**
+ * The qse_awk_geterrstr() gets an error string getter.
  */
-const qse_char_t* qse_awk_geterrstr (
-	qse_awk_t*       awk,
-	qse_awk_errnum_t num
+qse_awk_errstr_t qse_awk_geterrstr (
+	qse_awk_t*       awk    /**< an awk object */
 );
-/******/
 
-/****f* AWK/qse_awk_seterrstr
- * NAME
- *  qse_awk_geterrstr - set a format string for an error
- * DESCRIPTION
- *  The qse_awk_seterrstr() function sets a format string for an error. The 
- *  format string is used to compose an actual error message to be returned
- *  by qse_awk_geterrmsg() and qse_awk_geterror().
- * SYNOPSIS
+/**
+ * The qse_awk_seterrstr() sets an error string getter that is called to
+ * compose an error message when its retrieval is requested.
+ *
+ * Here is an example of changing the formatting string for the #QSE_SED_ECMDNR 
+ * error.
+ * @code
+ * qse_awk_errstr_t orgerrstr;
+ *
+ * const qse_char_t* myerrstr (qse_awk_t* awk, qse_awk_errnum_t num)
+ * {
+ *   if (num == QSE_SED_ECMDNR) return QSE_T("unrecognized command ${0}");
+ *   return orgerrstr (awk, num);
+ * }
+ * int main ()
+ * {
+ *    qse_awk_t* awk;
+ *    ...
+ *    orgerrstr = qse_awk_geterrstr (awk);
+ *    qse_awk_seterrstr (awk, myerrstr);
+ *    ...
+ * }
+ * @endcode
  */
-int qse_awk_seterrstr (
-	qse_awk_t*        awk,
-	qse_awk_errnum_t  num,
-	const qse_char_t* str
+void qse_awk_seterrstr (
+	qse_awk_t*       awk,   /**< an awk object */
+	qse_awk_errstr_t errstr /**< an error string getter */
 );
-/******/
 
 int qse_awk_geterrnum (
 	qse_awk_t* awk
@@ -888,27 +900,27 @@ const qse_char_t* qse_awk_geterrmsg (
 );
 
 void qse_awk_seterrnum (
-	qse_awk_t* awk,
-	int        errnum
+	qse_awk_t*       awk,
+	qse_awk_errnum_t errnum
 );
 
 void qse_awk_seterrmsg (
 	qse_awk_t*        awk, 
-	int               errnum, 
+	qse_awk_errnum_t  errnum, 
 	qse_size_t        errlin,
 	const qse_char_t* errmsg
 );
 
 void qse_awk_geterror (
-	qse_awk_t*          awk,
-	int*               errnum, 
+	qse_awk_t*         awk,
+	qse_awk_errnum_t*  errnum, 
 	qse_size_t*        errlin,
 	const qse_char_t** errmsg
 );
 
 void qse_awk_seterror (
 	qse_awk_t*        awk,
-	int               errnum,
+	qse_awk_errnum_t  errnum,
 	qse_size_t        errlin, 
 	const qse_cstr_t* errarg
 );
@@ -1427,27 +1439,27 @@ const qse_char_t* qse_awk_rtx_geterrmsg (
 );
 
 void qse_awk_rtx_seterrnum (
-	qse_awk_rtx_t* rtx,
-	int            errnum
+	qse_awk_rtx_t*   rtx,
+	qse_awk_errnum_t errnum
 );
 
 void qse_awk_rtx_seterrmsg (
 	qse_awk_rtx_t*    rtx, 
-	int               errnum,
+	qse_awk_errnum_t  errnum,
 	qse_size_t        errlin,
 	const qse_char_t* errmsg
 );
 
 void qse_awk_rtx_geterror (
 	qse_awk_rtx_t*     rtx,
-	int*               errnum, 
+	qse_awk_errnum_t*  errnum, 
 	qse_size_t*        errlin,
 	const qse_char_t** errmsg
 );
 
 void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*    rtx,
-	int               errnum,
+	qse_awk_errnum_t  errnum,
 	qse_size_t        errlin, 
 	const qse_cstr_t* errarg
 );

@@ -386,7 +386,7 @@ protected:
 	 */ 
 	virtual const char_t* getErrorString (
 		errnum_t num ///< an error number
-	);
+	) const;
 
 protected:
 	/// handle to a primitive sed object
@@ -398,6 +398,10 @@ private:
 	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
 	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
 	static const char_t* xerrstr (sed_t* s, errnum_t num) throw ();
+
+private:
+	Sed (const Sed&);
+	Sed& operator= (const Sed&);
 };
 
 /////////////////////////////////

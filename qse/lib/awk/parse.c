@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 113 2009-03-25 14:53:10Z hyunghwan.chung $
+ * $Id: parse.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2927,7 +2927,7 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 	else if (MATCH(awk,TOKEN_DIV))
 	{
 		qse_awk_nde_rex_t* nde;
-		int errnum;
+		qse_awk_errnum_t errnum;
 
 		/* the regular expression is tokenized here because 
 		 * of the context-sensitivity of the slash symbol.

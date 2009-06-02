@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 151 2009-05-21 06:50:02Z hyunghwan.chung $
+ * $Id: awk.h 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,6 +37,7 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #include "run.h"
 #include "rio.h"
 #include "val.h"
+#include "err.h"
 #include "misc.h"
 
 #define QSE_AWK_MAX_GBLS 9999
@@ -229,10 +230,11 @@ struct qse_awk_t
 	} tmp;
 
 	/* housekeeping */
-	int errnum;
-	qse_size_t errlin;
-	qse_char_t errmsg[256];
-	qse_char_t* errstr[QSE_AWK_NUMERRNUM];
+	qse_awk_errstr_t errstr;
+
+	qse_awk_errnum_t errnum;
+	qse_size_t       errlin;
+	qse_char_t       errmsg[256];
 
 	qse_bool_t stopall;
 };
@@ -365,9 +367,9 @@ struct qse_awk_rtx_t
 		} max;
 	} depth;
 
-	int errnum;
-	qse_size_t errlin;
-	qse_char_t errmsg[256];
+	qse_awk_errnum_t errnum;
+	qse_size_t       errlin;
+	qse_char_t       errmsg[256];
 
 	qse_awk_t* awk;
 	qse_awk_rcb_t rcb;

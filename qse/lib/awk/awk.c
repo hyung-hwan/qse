@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 151 2009-05-21 06:50:02Z hyunghwan.chung $ 
+ * $Id: awk.c 171 2009-06-01 09:34:34Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -155,6 +155,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->option = QSE_AWK_CLASSIC;
 	awk->errnum = QSE_AWK_ENOERR;
 	awk->errlin = 0;
+	awk->errstr = qse_awk_dflerrstr;
 	awk->stopall = QSE_FALSE;
 
 	awk->parse.nlcls_max = 0;
@@ -242,15 +243,6 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->wtab);
 
 	qse_str_close (awk->token.name);
-
-	for (i = 0; i < QSE_COUNTOF(awk->errstr); i++)
-	{
-		if (awk->errstr[i] != QSE_NULL)
-		{
-			QSE_AWK_FREE (awk, awk->errstr[i]);
-			awk->errstr[i] = QSE_NULL;
-		}
-	}
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */

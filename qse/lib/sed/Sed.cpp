@@ -227,7 +227,7 @@ Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ()
 	}
 }
 
-const Sed::char_t* Sed::getErrorString (errnum_t num)
+const Sed::char_t* Sed::getErrorString (errnum_t num) const
 {
 	QSE_ASSERT (dflerrstr != QSE_NULL);
 	return dflerrstr (sed, num);

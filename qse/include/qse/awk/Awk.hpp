@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 156 2009-05-25 13:39:18Z hyunghwan.chung $
+ * $Id: Awk.hpp 171 2009-06-01 09:34:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,14 +36,16 @@ class Awk: public Mmgr
 {
 public:
 	typedef qse_map_t   map_t;
-	/** Represents a key/value pair */
 	typedef qse_map_pair_t pair_t;
-
-	/** Represents an internal awk value */
-	typedef qse_awk_val_t val_t;
 
 	/** Represents a underlying interpreter */
 	typedef qse_awk_t awk_t;
+
+	typedef qse_awk_errnum_t errnum_t;
+	typedef qse_awk_errstr_t errstr_t;
+
+	/** Represents an internal awk value */
+	typedef qse_awk_val_t val_t;
 
 	/** Represents a runtime context */
 	typedef qse_awk_rtx_t rtx_t;
@@ -792,8 +794,9 @@ public:
 	/** Gets the maximum depth */
 	virtual size_t getMaxDepth (int id) const;
 
-	virtual const char_t* getErrorString (ErrorCode num) const;
-	virtual int setErrorString (ErrorCode num, const char_t* str);
+	virtual const char_t* getErrorString (
+		ErrorCode num
+	) const;
 
 	virtual int getWord (
 		const char_t* ow, qse_size_t owl,
@@ -1038,6 +1041,7 @@ protected:
 
 protected:
 	awk_t* awk;
+	errstr_t dflerrstr;
 	map_t* functionMap;
 
 	Source sourceIn;
@@ -1048,6 +1052,9 @@ protected:
 	char_t    errmsg[256];
 
 	bool      runCallback;
+
+private:
+	static const char_t* xerrstr (awk_t* a, errnum_t num) throw ();
 
 private:
 	Awk (const Awk&);
