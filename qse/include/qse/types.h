@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 173 2009-06-02 01:40:23Z hyunghwan.chung $
+ * $Id: types.h 174 2009-06-02 02:16:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -255,7 +255,7 @@ typedef char qse_mchar_t;
  * The qse_mcint_t defines a type that can hold a qse_mchar_t value and 
  * #QSE_MCHAR_EOF.
  */
-typedef int  qse_mcint_t;
+typedef int qse_mcint_t;
 
 /** @typedef qse_wchar_t
  * The qse_wchar_t type defines a wide character type. 
