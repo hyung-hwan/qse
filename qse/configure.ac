@@ -159,8 +159,10 @@ test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
 then
 	AC_DEFINE([QSE_CHAR_IS_WCHAR],[],[char is wchar])
+	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_WCHAR")
 else
 	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[char is mchar])
+	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
 
 AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],

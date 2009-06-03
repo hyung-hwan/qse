@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 174 2009-06-02 02:16:27Z hyunghwan.chung $
+ * $Id: types.h 176 2009-06-02 14:13:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -20,7 +20,7 @@
 #define _QSE_TYPES_H_
 
 /**@file
- * The <qse/types.h> file defines various common basic types designed to be
+ * <qse/types.h> defines various common basic types designed to be
  * cross-platform. These types are preferred over native data types.
  */
 
