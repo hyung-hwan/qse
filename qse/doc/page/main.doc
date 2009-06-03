@@ -38,31 +38,29 @@ $ make install
 
 @subsection build_mchar BUILING FOR MULTI-BYTE CHARACTER MODE
 
-The library can be built for two different character modes:
-- multi-byte character mode
-- wide character mode
-
-Under the multi-byte character mode:
-- #QSE_CHAR_IS_MCHAR is defined.
-- #qse_char_t maps to #qse_mchar_t.
-- #QSE_T("x") becomes "x".
-
-Under the wide character mode:
-- #QSE_CHAR_IS_WCHAR is defined.
-- #qse_char_t maps to #qse_wchar_t.
-- #QSE_T("x") becomes L"x".
-
-Typically, #qse_mchar_t maps char and #qse_wchar_t is maps to wchar_t in both modes.
-
-By default, the library is built for the wide character mode. To compile it
-for the multi-byte character mode, run configure with the @b --disable-wchar option
-specified explicitly.
+While the library is built for wide character mode by default, you can build
+it for multi-byte character mode by running @b configure with the 
+@b --disable-wchar option specified explicitly. 
 
 @code
 $ ./configure --disable-wchar
 $ make
 $ make install
 @endcode
+
+Under the multi-byte character mode:
+- #QSE_CHAR_IS_MCHAR is defined
+- #qse_char_t maps to #qse_mchar_t.
+- #QSE_T("x") becomes "x"
+
+Under the wide character mode:
+- #QSE_CHAR_IS_WCHAR is defined
+- #qse_char_t maps to #qse_wchar_t
+- #QSE_T("x") becomes L"x"
+
+Typically, #qse_mchar_t maps @b char and #qse_wchar_t maps to @b wchar_t or 
+equivalent. It is not advised to build the library for both modes and have
+them installed on the same system as doing so results in name collision.
 
 @section MODULES
 QSE includes various modules:

@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 150 2009-05-21 06:17:17Z hyunghwan.chung $
+ * $Id: macros.h 175 2009-06-02 07:42:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -140,14 +140,25 @@
 #define QSE_MQ(val)   QSE_MQ_I(val)
 #define QSE_MC(ch)    ((qse_mchar_t)ch)
 #define QSE_MS(str)   ((const qse_mchar_t*)str)
+/** 
+ * The #QSE_MT macro maps a multi-byte literal string literal as it is. 
+ */
 #define QSE_MT(txt)   (txt)
 
 #define QSE_WQ_I(val)  (L ## #val)
 #define QSE_WQ(val)    QSE_WQ_I(val)
 #define QSE_WC(ch)     ((qse_wchar_t)L ## ch)
 #define QSE_WS(str)    ((const qse_wchar_t*)L ## str)
+/** 
+ * The #QSE_WT macro maps a multi-byte literal string to a wide character 
+ * string by prefixing it with @b L.
+ */
 #define QSE_WT(txt)    (L ## txt)
 
+/** @def QSE_T
+ * The #QSE_T macro maps to #QSE_MT if #QSE_CHAR_IS_MCHAR is defined, and to
+ * #QSE_WT if #QSE_CHAR_IS_WCHAR is defined.
+ */
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define QSE_Q(val) QSE_MQ(val)
 #	define QSE_C(ch)  QSE_MC(ch)
