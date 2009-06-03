@@ -13,12 +13,16 @@ Chung, Hyung-Hwan <bacon@abiyo.net>
 
 @section installation INSTALLATION
 
-@subsection bulid_tarball_unix BUILINDG FROM A SOURCE TARBALL UNDER LINUX/UNIX
+@subsection build_from_source BUILINDG FROM A SOURCE PACKAGE
 
-Download the latest source tarball from:
+The package uses the standard autoconf build systems. Briefly, you can run 
+@b configure and @b make to compile and install it. Here is the simple 
+instruction.
+
+Download the latest source package from:
 - http://code.google.com/p/qse/downloads/list
 
-Unpack the tarball and run configure and make to compile it:
+Unpack the package and run @b configure and @b make to compile and install it:
 
 @code
 $ ./configure
@@ -26,7 +30,15 @@ $ make
 $ make install
 @endcode
 
-To cross-comiple it for WIN32 with MINGW32, run configure as shown below:
+For additional command line options to @b configure, run @b configure @b --help.
+
+@subsection crosscompile_win32 CROSS-COMPILING FOR WIN32
+
+While the package does not provide any build files for native WIN32 compilers,
+you can cross-compile it for WIN32 with a cross-compiler. Get a cross-compiler 
+installed first and run @b configure with a host and a target.
+
+With MINGW32, you may run @b configure as shown below:
 
 @code
 $ ./configure --host=i586-mingw32msvc --target=i586-mingw32msvc 
@@ -34,13 +46,14 @@ $ make
 $ make install
 @endcode
 
-@note For cross-compilation, get a cross-compiler installed first.
+The actual host and target names may vary depending on the cross-compiler 
+installed.
 
-@subsection build_mchar BUILING FOR MULTI-BYTE CHARACTER MODE
+@subsection mchar_mode MULTI-BYTE CHARACTER MODE
 
-While the library is built for wide character mode by default, you can build
-it for multi-byte character mode by running @b configure with the 
-@b --disable-wchar option specified explicitly. 
+By default, the package is compiled for wide character mode. However, 
+you can compile it for multi-byte character mode by running @b configure 
+@b --disable-wchar.
 
 @code
 $ ./configure --disable-wchar
@@ -49,21 +62,22 @@ $ make install
 @endcode
 
 Under the multi-byte character mode:
-- #QSE_CHAR_IS_MCHAR is defined
+- #QSE_CHAR_IS_MCHAR is defined.
 - #qse_char_t maps to #qse_mchar_t.
-- #QSE_T("x") becomes "x"
 
 Under the wide character mode:
-- #QSE_CHAR_IS_WCHAR is defined
-- #qse_char_t maps to #qse_wchar_t
-- #QSE_T("x") becomes L"x"
+- #QSE_CHAR_IS_WCHAR is defined.
+- #qse_char_t maps to #qse_wchar_t.
 
-Typically, #qse_mchar_t maps @b char and #qse_wchar_t maps to @b wchar_t or 
-equivalent. It is not advised to build the library for both modes and have
-them installed on the same system as doing so results in name collision.
+#qse_mchar_t maps @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
+It is not advised to build the package for both modes and have them installed
+on the same system as doing so results in name collision.
 
 @section MODULES
-QSE includes various modules:
-- @subpage awk "AWK"
-- @subpage sed "SED"
+The package contains a set of APIs. Each set is organized into a library 
+module and its interface is exported via relevant header files.
+
+- @subpage cmn "Common Routines"
+- @subpage awk "AWK Interpreter"
+- @subpage sed "SED Stream Editor"
 */

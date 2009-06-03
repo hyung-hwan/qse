@@ -1258,7 +1258,9 @@ PREDEFINED             =  \
 	"QSE_SIZEOF_VOID_P=@QSE_SIZEOF_VOID_P@" \
 	"QSE_SIZEOF_FLOAT=@QSE_SIZEOF_FLOAT@" \
 	"QSE_SIZEOF_DOUBLE=@QSE_SIZEOF_DOUBLE@" \
-	"QSE_SIZEOF_LONG_DOUBLE=@QSE_SIZEOF_LONG_DOUBLE@"
+	"QSE_SIZEOF_LONG_DOUBLE=@QSE_SIZEOF_LONG_DOUBLE@" \
+	"@CHAR_MODE@"
+	
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 
