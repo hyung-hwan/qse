@@ -2,7 +2,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/map.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 
 #include <string.h>
 #include <locale.h>

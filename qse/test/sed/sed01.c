@@ -17,8 +17,8 @@
  */
 
 #include <qse/sed/sed.h>
-#include <qse/utl/stdio.h>
-#include <qse/utl/main.h>
+#include <qse/cmn/stdio.h>
+#include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 

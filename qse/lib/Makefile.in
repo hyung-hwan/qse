@@ -186,7 +186,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = cmn utl sed awk lsp 
+SUBDIRS = cmn sed awk lsp utl
 DIST_SUBDIRS = $(SUBDIRS) 
 all: all-recursive
 

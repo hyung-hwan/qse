@@ -3,7 +3,7 @@ AM_CPPFLAGS = -I$(top_builddir)/include
 
 lib_LTLIBRARIES = libqseutl.la
 libqseutl_la_SOURCES = \
-	assert.c http.c main.c stdio.c \
+	http.c \
 	tgp.c \
 	tgp.h
 libqseutl_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 158 2009-05-26 13:29:47Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,7 +22,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 
 #include <stdlib.h>
 #include <math.h>

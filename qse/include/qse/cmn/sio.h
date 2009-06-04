@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: sio.h 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -60,6 +60,10 @@ extern "C" {
 extern qse_sio_t* qse_sio_in;
 extern qse_sio_t* qse_sio_out;
 extern qse_sio_t* qse_sio_err;
+
+#define QSE_SIO_IN  qse_sio_in
+#define QSE_SIO_OUT qse_sio_out
+#define QSE_SIO_ERR qse_sio_err
 
 qse_sio_t* qse_sio_open (
         qse_mmgr_t*       mmgr,

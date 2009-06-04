@@ -1,1 +1,1 @@
-SUBDIRS = cmn utl sed awk 
+SUBDIRS = cmn sed awk utl

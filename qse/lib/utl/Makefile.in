@@ -51,7 +51,7 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqseutl_la_DEPENDENCIES =
-am_libqseutl_la_OBJECTS = assert.lo http.lo main.lo stdio.lo tgp.lo
+am_libqseutl_la_OBJECTS = http.lo tgp.lo
 libqseutl_la_OBJECTS = $(am_libqseutl_la_OBJECTS)
 libqseutl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -208,7 +208,7 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_builddir)/include
 lib_LTLIBRARIES = libqseutl.la
 libqseutl_la_SOURCES = \
-	assert.c http.c main.c stdio.c \
+	http.c \
 	tgp.c \
 	tgp.h
 
@@ -283,10 +283,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tgp.Plo@am__quote@
 
 .c.o:

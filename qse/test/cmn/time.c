@@ -1,5 +1,5 @@
 #include <qse/cmn/time.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 #include <locale.h>
 
 #include <sys/time.h>

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: run.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -19,7 +19,7 @@
 #include "awk.h"
 
 #ifdef DEBUG_RUN
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 #endif
 
 #define CMP_ERROR -99

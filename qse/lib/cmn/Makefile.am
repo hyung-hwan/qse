@@ -11,7 +11,10 @@ libqsecmn_la_SOURCES = \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \
 	time.c \
-	misc.c 
+	misc.c \
+	assert.c \
+	main.c \
+	stdio.c
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 
 if WIN32 

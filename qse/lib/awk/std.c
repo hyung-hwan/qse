@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: std.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,7 +22,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
-#include <qse/utl/stdio.h> /* TODO: remove dependency on qse_vsprintf */
+#include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 
 #include <math.h>
 #include <stdarg.h>

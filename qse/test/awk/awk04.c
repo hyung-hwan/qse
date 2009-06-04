@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: awk04.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -26,7 +26,7 @@
 
 #include <qse/awk/awk.h>
 #include <qse/awk/std.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 
 static const qse_char_t* src = QSE_T(
 	"function pow(x,y) { return x ** y; }"

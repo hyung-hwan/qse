@@ -1,5 +1,5 @@
 #include <qse/cmn/pio.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 
 #include <string.h>
 #include <locale.h>

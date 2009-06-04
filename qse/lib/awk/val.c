@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: val.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -19,7 +19,7 @@
 #include "awk.h"
 
 #ifdef DEBUG_VAL
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 #endif
 
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
