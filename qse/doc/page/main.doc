@@ -2,13 +2,24 @@
 
 @section INTRODUCTION
 
-QSE provides a script engine for various scripting languages and utility programs. It aims to produce a flexible script engine framework that can be embedded into an application. A hosting application can access various aspects of the embedded script engine and vice versa.
+@b QSE is a code library that implements various Unix utilities in an 
+embeddable form and provides a set of APIs to embed them into an application. 
+The APIs have been designed to be flexible enough to access various aspects of 
+a hosting application and an embedded object from each other. By embedding 
+a Unix utility into an application, a developer is relieved of the need to 
+invoke an external command and is given tighter control over it.
 
-The library is licended under the Apache License, Version 2.0.
+Currently the library implements the following utilities:
+- @subpage sed "SED Stream Editor"
+- @subpage awk "AWK Interpreter"
+
+As the library grows, more utilities will be added.
+
+The library is licensed under the Apache License, Version 2.0.
 
 The project webpage: http://qse.googlecode.com/
 
-For furthur information, contact:
+For further information, contact:
 Chung, Hyung-Hwan <bacon@abiyo.net>
 
 @section installation INSTALLATION
@@ -70,14 +81,20 @@ Under the wide character mode:
 - #qse_char_t maps to #qse_wchar_t.
 
 #qse_mchar_t maps @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
-It is not advised to build the package for both modes and have them installed
-on the same system as doing so results in name collision.
 
-@section MODULES
-The package contains a set of APIs. Each set is organized into a library 
-module and its interface is exported via relevant header files.
+@section library_modules LIBRARY MODULES
+@b QSE contains a set of APIs. Each set is organized into a library module 
+and its interface is exported via header files.  Commonly used functions and 
+data structures are organized into a common functions library and forms the 
+foundation for other modules. Specialized functions and data structures are
+organized to dedicated modules.  See relevant subpages for more information 
+on each module.
 
-- @subpage cmn "Common Routines"
-- @subpage awk "AWK Interpreter"
+- @subpage cmn "Common Functions"
 - @subpage sed "SED Stream Editor"
+- @subpage awk "AWK Interpreter"
+
+@section design_model DESIGN MODEL
+The design of a data structure is usually derived from object-oriented model.
+<<MORE>>>
 */
