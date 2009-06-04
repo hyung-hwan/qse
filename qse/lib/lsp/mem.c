@@ -326,7 +326,7 @@ static void __mark_objs_in_use (qse_lsp_mem_t* mem)
 	if (mem->macro  != QSE_NULL) __mark_obj (mem->lsp, mem->macro);
 }
 
-//#include <qse/utl/stdio.h>
+//#include <qse/cmn/stdio.h>
 static void __sweep_unmarked_objs (qse_lsp_mem_t* mem)
 {
 	qse_lsp_obj_t* obj, * prev, * next;

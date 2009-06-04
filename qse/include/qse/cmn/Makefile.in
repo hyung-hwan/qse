@@ -192,7 +192,11 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-pkginclude_HEADERS = mem.h chr.h str.h lda.h map.h rex.h sll.h dll.h opt.h tio.h fio.h pio.h sio.h time.h 
+pkginclude_HEADERS = \
+	mem.h chr.h str.h lda.h map.h \
+	rex.h sll.h dll.h opt.h tio.h \
+	fio.h pio.h sio.h time.h main.h stdio.h
+
 CLEANFILES = *dist
 all: all-am
 

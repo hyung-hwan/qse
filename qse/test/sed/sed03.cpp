@@ -17,7 +17,7 @@
  */
 
 #include <qse/sed/StdSed.hpp>
-#include <qse/utl/main.h>
+#include <qse/cmn/main.h>
 
 #include <string>
 #include <iostream>

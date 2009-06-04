@@ -9,8 +9,8 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/opt.h>
 
-#include <qse/utl/stdio.h>
-#include <qse/utl/main.h>
+#include <qse/cmn/stdio.h>
+#include <qse/cmn/main.h>
 
 #include <string.h>
 #include <stdlib.h>

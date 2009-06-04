@@ -16,8 +16,8 @@
    limitations under the License.
  */
 
-#ifndef _QSE_UTL_MAIN_H_
-#define _QSE_UTL_MAIN_H_
+#ifndef _QSE_CMN_MAIN_H_
+#define _QSE_CMN_MAIN_H_
 
 #include <qse/types.h>
 #include <qse/macros.h>

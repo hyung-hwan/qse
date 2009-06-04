@@ -2,8 +2,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 
 bin_PROGRAMS = chr str sll map lda fio pio sio time
 
-LDFLAGS = -L../../lib/cmn -L../../lib/utl
-LDADD = -lqseutl -lqsecmn 
+LDFLAGS = -L../../lib/cmn 
+LDADD = -lqsecmn 
 
 chr_SOURCES = chr.c
 str_SOURCES = str.c

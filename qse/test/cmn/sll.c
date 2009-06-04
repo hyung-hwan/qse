@@ -1,7 +1,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/sll.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/stdio.h>
 
 
 #define R(f) \

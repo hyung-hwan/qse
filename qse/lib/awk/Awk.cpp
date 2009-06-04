@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 172 2009-06-01 13:33:01Z hyunghwan.chung $
+ * $Id: Awk.cpp 182 2009-06-03 21:50:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -21,7 +21,6 @@
 #include "../cmn/mem.h"
 #include "awk.h"
 
-#include <qse/utl/stdio.h>
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////

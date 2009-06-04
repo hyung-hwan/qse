@@ -17,8 +17,8 @@
  */
 
 #include <qse/sed/StdSed.hpp>
-#include <qse/utl/main.h>
-#include <qse/utl/stdio.h>
+#include <qse/cmn/main.h>
+#include <qse/cmn/stdio.h>
 
 int sed_main (int argc, qse_char_t* argv[])
 {
