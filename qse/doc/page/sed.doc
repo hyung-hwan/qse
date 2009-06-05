@@ -1,11 +1,70 @@
-/** @page sed SED
+/** @page sed SED STREAM EDITOR
 
-STREAM EDITOR
-a stream editor is provided
+@section sed_intro INTRODUCTION
 
-@section COMMAND
-- : label  label for b and t commands. a label can be composed of an 
-           alpha-numeric character, an underscope, and an underline.
+The sed stream editor is a non-interactive text editing tool commonly used
+on Unix environment. Sed reads text from an input stream, applies a set of 
+editing commands, and writes the results to an output stream. Typically, 
+the input and output streams are a console or a file. 
+
+@b QSE provides an embeddable stream editor that supports most of 
+the conventional sed commands and implements input and output streams as a 
+callback function: 
+
+- #qse_sed_t - C type that encapsulates a stream editor
+- QSE::Sed - C++ class that wraps #qse_sed_t
+- QSE::StdSed - C++ child class of QSE::Sed that implements standard input and output streams
+
+@section sed_command COMMAND
+
+A sed command is composed of:
+
+- line selector (optional)
+- ! (optional)
+- command code
+- command arguments (optional, dependent on command code)
+
+A line selector selects input lines to apply a command to and has the following
+forms:
+- address - specify a single address
+- address,address - specify an address range 
+- start~step - specify a starting line and a step
+
+An @b address is a line number, a regular expression, or a dollar sign ($) 
+while a @b start and a @b step is a line number. 
+
+A regular expression for an address has the following form:
+- /rex/ - a regular expression @b rex is enclosed in slashes
+- \\CrexC - a regular expression @b rex is enclosed in @b \\C and @b C 
+            where @b C can be any character.
+
+It treats the @b \\n sequence specially to match a newline character.
+
+Here are examples of line selectors:
+- 10 - match the 10th line
+- 10,20 - match lines from the 10th to the 20th.
+- /^[[:space:]]*$/ - match an empty line 
+- /^abc$/,/^def$/ - match all lines between @b abc and @b def inclusive
+- 10,$ - match the 10th line down to the last line.
+- 3~4 - match every 4th line from the 3rd line.
+
+Note that an address range always selects the line matching the first address
+regardless of the second address; For example, 8,6 selects the 8th line.
+
+The exclamation mark @b !, when used after the line selector and before
+the command code, negates the line selection; For example, 1! selects all
+lines except the first line.
+
+A command without a line selector is applied to all input lines; 
+A command with a single address is applied to an input line that matches 
+the address; A command with an address range is applied to all input 
+lines within the range, inclusive; A command with a starting line and 
+a step is applied to every @b step'th line starting from the line @b start.
+
+Here is the summary of the commands.
+
+- : label  label for b and t commands. a label can be composed of letters,
+           digits, periods, hyphens, and underlines.
 - # comment
 - = print the current line number
 */

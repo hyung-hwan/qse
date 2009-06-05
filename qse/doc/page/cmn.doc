@@ -1,0 +1,5 @@
+/** @page cmn COMMON FUNCTIONS
+
+@section rex REGULAR EXPRESSION
+QSE provides regular expression handling functions.
+*/

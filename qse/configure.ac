@@ -83,7 +83,7 @@ AC_SUBST(LIBM, $LIBM)
 
 dnl check header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h sys/syscall.h])
+AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h sys/syscall.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 

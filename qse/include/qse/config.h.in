@@ -87,6 +87,9 @@
 /* Define to 1 if you have the `powl' function. */
 #undef HAVE_POWL
 
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
 /* Define to 1 if you have the `sin' function. */
 #undef HAVE_SIN
 
