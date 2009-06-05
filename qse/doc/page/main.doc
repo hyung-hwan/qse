@@ -94,7 +94,4 @@ on each module.
 - @subpage sed "SED Stream Editor"
 - @subpage awk "AWK Interpreter"
 
-@section design_model DESIGN MODEL
-The design of a data structure is derived from object-oriented model.
-<<MORE>>>
 */

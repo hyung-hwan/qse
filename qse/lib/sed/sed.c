@@ -2676,7 +2676,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 				if (c->negated) n = !n;
 				if (n == 0)
 				{
-					c++;
+					c = c->state.next;
 					continue;
 				}
 
