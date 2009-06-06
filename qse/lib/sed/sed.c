@@ -1065,8 +1065,6 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			return -1;	
 
 		case QSE_T(':'):
-			/* label - this is not a command */
-			cmd->type = QSE_SED_CMD_NOOP;
 			if (cmd->a1.type != QSE_SED_ADR_NONE)
 			{
 				/* label cannot have an address */
@@ -1076,6 +1074,8 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				);
 				return -1;
 			}
+
+			cmd->type = QSE_SED_CMD_NOOP;
 
 			c = NXTSC (sed);
 			if (get_label (sed, cmd) <= -1) return -1;
@@ -1107,6 +1107,16 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			qse_sed_cmd_t* tc;
 
+			if (cmd->a1.type != QSE_SED_ADR_NONE)
+			{
+				qse_char_t tmpc = c;
+				SETERR1 (
+					sed, QSE_SED_EA1PHB,
+					sed->src.lnum, &tmpc, 1
+				);
+				return -1;
+			}
+
 			cmd->type = QSE_SED_CMD_NOOP;
 
 			if (sed->tmp.grp.level <= 0) 
@@ -1126,7 +1136,8 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_T('q'):
 		case QSE_T('Q'):
 			cmd->type = c;
-			if (cmd->a2.type != QSE_SED_ADR_NONE)
+			if (sed->option & QSE_SED_CLASSIC &&
+			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				SETERR0 (sed, QSE_SED_EA2PHB, sed->src.lnum);
 				return -1;
@@ -2153,10 +2164,13 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 			
 		case QSE_SED_CMD_QUIT:
-			n = write_str (sed, 
-				QSE_STR_PTR(&sed->e.in.line),
-				QSE_STR_LEN(&sed->e.in.line));
-			if (n <= -1) return QSE_NULL;
+			if (!(sed->option && QSE_SED_QUIET))
+			{
+				n = write_str (sed, 
+					QSE_STR_PTR(&sed->e.in.line),
+					QSE_STR_LEN(&sed->e.in.line));
+				if (n <= -1) return QSE_NULL;
+			}
 		case QSE_SED_CMD_QUIT_QUIET:
 			jumpto = &sed->cmd.quit;
 			break;

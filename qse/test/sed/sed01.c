@@ -129,7 +129,8 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 	
-	if (argc == 3) qse_sed_setoption (sed, qse_strtoi(argv[2]));
+	//if (argc == 3) qse_sed_setoption (sed, qse_strtoi(argv[2]));
+	qse_sed_setoption (sed, QSE_SED_QUIET);
 
 	if (qse_sed_comp (sed, argv[1], qse_strlen(argv[1])) == -1)
 	{
