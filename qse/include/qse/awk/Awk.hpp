@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 172 2009-06-01 13:33:01Z hyunghwan.chung $
+ * $Id: Awk.hpp 185 2009-06-05 12:48:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -587,6 +587,7 @@ public:
 		friend class Awk;
 		friend class Argument;
 		friend class Return;
+		friend class RIO;
 
 		Run (Awk* awk);
 		Run (Awk* awk, rtx_t* run);
