@@ -63,8 +63,17 @@ a step is applied to every @b step'th line starting from the line @b start.
 
 Here is the summary of the commands.
 
-- : label  label for b and t commands. a label can be composed of letters,
-           digits, periods, hyphens, and underlines.
-- # comment
-- = print the current line number
+- <b># comment text</b>
+The text beginning from # to the line end is ignored by @b sed;
+# in a line following <b>a \\</b>, <b>i \\</b>, and <b>c \\</b> is treated
+literally and does not introduce a comment.
+- <b>: label</b>
+A label can be composed of letters, digits, periods, hyphens, and underlines.
+It remembers a target label for @b b and @b t commands and prohibits a line
+selector.
+- <b>{</b>
+The left curly bracket forms a command group where you can nest other 
+commands. It should be paired with an ending }.
+- <b>q, Q</b>
+Both commands terminates the exection of commands. 
 */

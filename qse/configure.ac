@@ -1,7 +1,8 @@
 dnl AC_PREREQ(2.59)
 AC_INIT([qse],[0.5.1],[bacon@abiyo.net])
 AC_CONFIG_HEADER([include/qse/config.h])
-AC_CONFIG_AUX_DIR(autoconf)
+AC_CONFIG_AUX_DIR([ac/au])
+AC_CONFIG_MACRO_DIR([ac/m4])
 
 dnl use CC and CPP for compilation tests with .c test programs.
 AC_LANG(C)
@@ -34,6 +35,9 @@ AC_CHECK_TOOL(LD, ld)
 AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(SED, sed)
+
+dnl avoid "'/bin/rm: cannot remove `libtoolT': No such file or directory"
+RM="$RM -f"
 
 dnl initialize libtool
 AC_PROG_LIBTOOL

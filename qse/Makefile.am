@@ -1,4 +1,5 @@
 
+ACLOCAL_AMFLAGS = -I ac/m4
 AUTOMAKE_OPTION = foreign
 # EXTRA_DIST = 
 
