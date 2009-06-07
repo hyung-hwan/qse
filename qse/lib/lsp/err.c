@@ -64,7 +64,7 @@ void qse_lsp_seterror (
 	{
 		case 0:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt);
@@ -72,7 +72,7 @@ void qse_lsp_seterror (
 
 		case 1:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -81,7 +81,7 @@ void qse_lsp_seterror (
 
 		case 2:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -91,7 +91,7 @@ void qse_lsp_seterror (
 
 		case 3:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -102,7 +102,7 @@ void qse_lsp_seterror (
 
 		case 4:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,
@@ -114,7 +114,7 @@ void qse_lsp_seterror (
 
 		case 5:
 			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.data,
+				lsp->prmfns.misc.udd,
 				lsp->errmsg, 
 				QSE_COUNTOF(lsp->errmsg), 
 				errfmt,

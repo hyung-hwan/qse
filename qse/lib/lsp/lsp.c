@@ -34,7 +34,7 @@ qse_lsp_t* qse_lsp_open (
 	lsp = (qse_lsp_t*) malloc (QSE_SIZEOF(qse_lsp_t));
 #else
 	lsp = (qse_lsp_t*) prmfns->mmgr.alloc (
-		prmfns->mmgr.data, QSE_SIZEOF(qse_lsp_t));
+		prmfns->mmgr.udd, QSE_SIZEOF(qse_lsp_t));
 #endif
 	if (lsp == QSE_NULL) return QSE_NULL;
 

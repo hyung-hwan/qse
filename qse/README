@@ -1,9 +1,19 @@
-QSE provides a script engine for various scripting languages and utility programs. It aims to produce a flexible script engine framework that can be embedded into an application. A hosting application can access various aspects of the embedded script engine and vice versa.
+QSE is a code library that implements various Unix utilities in an
+embeddable form and provides a set of APIs to embed them into an application.
+The APIs have been designed to be flexible enough to access various aspects of
+a hosting application and an embedded object from each other. By embedding
+a Unix utility into an application, a developer is relieved of the need to
+invoke an external command and is given tighter control over it.
 
-The library is licended under the Apache License, Version 2.0.
+Currently the library implements the following utilities:
+- SED Stream Editor
+- AWK Interpreter
+
+As the library grows, more utilities will be added.
+
+The library is licensed under the Apache License, Version 2.0.
 
 The project webpage: http://qse.googlecode.com/
 
-For furthur information, contact: 
+For further information, contact:
 Chung, Hyung-Hwan <bacon@abiyo.net>
-

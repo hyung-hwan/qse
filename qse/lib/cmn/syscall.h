@@ -1,5 +1,5 @@
 /*
- * $Id: syscall.h 97 2009-03-10 10:39:18Z hyunghwan.chung $
+ * $Id: syscall.h 187 2009-06-07 05:03:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -35,6 +35,12 @@
 #endif
 #ifdef HAVE_ERRNO_H
 #	include <errno.h>
+#endif
+#ifdef HAVE_TIME_H
+#	include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#	include <sys/time.h>
 #endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
@@ -188,5 +194,18 @@
 #else
 #	define QSE_cHROOT(path) chroot(path)
 #endif
+
+#ifdef SYS_gettimeofday
+#	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday, tv, tz)
+#else
+#	define QSE_GETTIMEOFDAY(tv,tz) gettimeofday(tv,tz)
+#endif
+
+#ifdef SYS_settimeofday
+#	define QSE_SETTIMEOFDAY(tv,tz) syscall(SYS_settimeofday, tv, tz)
+#else
+#	define QSE_SETTIMEOFDAY(tv,tz) settimeofday(tv,tz)
+#endif
+
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 186 2009-06-06 13:42:57Z hyunghwan.chung $
+ * $Id: time.c 187 2009-06-07 05:03:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -52,13 +52,22 @@ static const int mdays_tot[2][QSE_MONS_PER_YEAR] =
 	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
 };
 
-/* number of days from the beginning of the year to the end of of
- * a previous month. adjust for leap years in the code. */
+/* number of days from beginning of a previous month to the end of 
+ * the year. adjust for leap years in the code. */
 static const int mdays_rtot[2][QSE_MONS_PER_YEAR] =
 {
 	{ 334, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31, 0 },
 	{ 335, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31, 0 }
 };
+
+/* get number of extra days for leap years between fy and ty inclusive */
+static int get_leap_days (int fy, int ty)
+{
+	fy--; ty--;
+	return (ty / 4 - fy / 4) - 
+	       (ty / 100 - fy / 100) +
+	       (ty / 400 - fy / 400);
+}
 
 int qse_gettime (qse_ntime_t* t)
 {
@@ -80,11 +89,7 @@ int qse_gettime (qse_ntime_t* t)
 	struct timeval tv;
 	int n;
 
-#ifdef SYS_gettimeofday
-	n = syscall (SYS_gettimeofday, &tv, QSE_NULL);
-#else
-	n = gettimeofday (&tv, QSE_NULL);
-#endif
+	n = QSE_GETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 
 	*t = (qse_ntime_t)tv.tv_sec*QSE_MSECS_PER_SEC + 
@@ -112,24 +117,16 @@ int qse_settime (qse_ntime_t t)
 
 /*
 #if defined CLOCK_REALTIME && HAVE_CLOCK_SETTIME
-  {
-    int r = clock_settime (CLOCK_REALTIME, ts);
-    if (r == 0 || errno == EPERM)
-      return r;
-  }
+	{
+		int r = clock_settime (CLOCK_REALTIME, ts);
+		if (r == 0 || errno == EPERM)
+		return r;
+	}
 #elif HAVE_STIME
-  / * This fails to compile on OSF1 V5.1, due to stime requiring
-     a `long int*' and tv_sec is `int'.  But that system does provide
-     settimeofday.  * /
-  return stime (&ts->tv_sec);
+	return stime (&ts->tv_sec);
 #else
 */
-
-#ifdef SYS_settimeofday
-	n = syscall (SYS_settimeofday, &tv, QSE_NULL);
-#else
-	n = settimeofday (&tv, QSE_NULL);
-#endif
+	n = QSE_SETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 	return 0;
 #endif
@@ -294,14 +291,20 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	int y = bt->year + QSE_BTIME_YEAR_BASE;
 	int midx = QSE_IS_LEAPYEAR(y)? 1: 0;
 
+	QSE_ASSERT (bt->mon >= 0 && bt->mon < QSE_MONS_PER_YEAR);
+
 	if (y < QSE_EPOCH_YEAR)
 	{
 		int x;
 
-		for (x = y; x < QSE_EPOCH_YEAR - 1; x++)
-			n += QSE_DAYS_PER_YEAR(x);
-		for (x = bt->mon + 1; x < QSE_MONS_PER_YEAR; x++)
-			n += mdays[midx][x];
+		/*for (x = y; x < QSE_EPOCH_YEAR - 1; x++)
+			n += QSE_DAYS_PER_YEAR(x);*/
+		n = QSE_DAYS_PER_NORMYEAR * (QSE_EPOCH_YEAR - 1 - y) + 
+		    get_leap_days (y, QSE_EPOCH_YEAR - 1);
+
+		/*for (x = bt->mon + 1; x < QSE_MONS_PER_YEAR; x++)
+			n += mdays[midx][x];*/
+		n += mdays_rtot[midx][bt->mon];
 
 		n += mdays[midx][bt->mon] - bt->mday;
 		if (midx == 1) n -= 1;
@@ -318,8 +321,10 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	{
 		int x;
 
-		for (x = QSE_EPOCH_YEAR; x < y; x++) 
-			n += QSE_DAYS_PER_YEAR(x);
+		/*for (x = QSE_EPOCH_YEAR; x < y; x++) 
+			n += QSE_DAYS_PER_YEAR(x);*/
+		n = QSE_DAYS_PER_NORMYEAR * (y - QSE_EPOCH_YEAR) + 
+		    get_leap_days (QSE_EPOCH_YEAR, y);
 
 		/*for (x = 0; x < bt->mon; x++) n += mdays[midx][x];*/
 		n += mdays_tot[midx][bt->mon];
