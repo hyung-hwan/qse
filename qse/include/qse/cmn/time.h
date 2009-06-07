@@ -1,5 +1,5 @@
 /*
- * $Id: time.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
+ * $Id: time.h 187 2009-06-07 05:03:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -29,6 +29,9 @@
 
 #define QSE_BTIME_YEAR_BASE (1900)
 
+#define QSE_DAYS_PER_NORMYEAR  (365)
+#define QSE_DAYS_PER_LEAPYEAR  (366)
+
 #define QSE_DAYS_PER_WEEK  (7)
 #define QSE_MONS_PER_YEAR  (12)
 #define QSE_HOURS_PER_DAY  (24)
@@ -47,7 +50,8 @@
 #define QSE_USECS_PER_SEC  (QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
 
 #define QSE_IS_LEAPYEAR(year) ((!((year)%4) && ((year)%100)) || !((year)%400))
-#define QSE_DAYS_PER_YEAR(year) (QSE_IS_LEAPYEAR(year)? 366: 365)
+#define QSE_DAYS_PER_YEAR(year) \
+	(QSE_IS_LEAPYEAR(year)? QSE_DAYS_PER_LEAPYEAR: QSE_DAYS_PER_NORMYEAR)
 
 /* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
 typedef qse_long_t qse_ntime_t;

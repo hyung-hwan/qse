@@ -242,14 +242,14 @@ int lsp_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	prmfns.mmgr.data = &prmfns_data;
+	prmfns.mmgr.udd = &prmfns_data;
 #else
-	prmfns.mmgr.data = QSE_NULL;
+	prmfns.mmgr.udd = QSE_NULL;
 #endif
 
 	prmfns.misc.sprintf = custom_lsp_sprintf;
 	prmfns.misc.dprintf = custom_lsp_dprintf;
-	prmfns.misc.data = QSE_NULL;
+	prmfns.misc.udd = QSE_NULL;
 
 	lsp = qse_lsp_open (&prmfns, opt_memsize, opt_meminc);
 	if (lsp == QSE_NULL) 

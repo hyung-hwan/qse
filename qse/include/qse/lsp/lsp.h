@@ -54,7 +54,7 @@ struct qse_lsp_prmfns_t
 	{
 		qse_lsp_sprintf_t sprintf;
 		qse_lsp_dprintf_t dprintf;
-		void* data;
+		void* udd;
 	} misc;
 };
 
