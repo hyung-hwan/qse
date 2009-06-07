@@ -1762,7 +1762,7 @@ static int write_str_to_file (
 
 		QSE_MEMSET (&arg, 0, QSE_SIZEOF(arg));
 		pair = qse_map_insert (&sed->e.out.files,
-			path, plen, &arg, QSE_SIZEOF(arg));
+			(void*)path, plen, &arg, QSE_SIZEOF(arg));
 		if (pair == QSE_NULL)
 		{
 			SETERR0 (sed, QSE_SED_ENOMEM, cmd->lnum);

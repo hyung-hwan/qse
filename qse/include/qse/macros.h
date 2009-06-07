@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 176 2009-06-02 14:13:50Z hyunghwan.chung $
+ * $Id: macros.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -149,7 +149,7 @@
  */
 #define QSE_MT(txt)   (txt)
 
-#define QSE_WQ_I(val)  (L ## #val)
+#define QSE_WQ_I(val)  (L ## QSE_MQ_I(val))
 #define QSE_WQ(val)    QSE_WQ_I(val)
 #define QSE_WC(ch)     ((qse_wchar_t)L ## ch)
 #define QSE_WS(str)    ((const qse_wchar_t*)L ## str)
