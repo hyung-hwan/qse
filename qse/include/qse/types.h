@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 176 2009-06-02 14:13:50Z hyunghwan.chung $
+ * $Id: types.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -394,21 +394,21 @@ struct qse_mmgr_t
 	 * allocate a memory chunk of the size \a n.
 	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
 	 */
-	void* (*alloc)   (void* data, qse_size_t n);
+	void* (*alloc)   (void* udd, qse_size_t n);
 	/** 
 	 * resize a memory chunk pointed to by \a ptr to the size \a n.
 	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
 	 */
-	void* (*realloc) (void* data, void* ptr, qse_size_t n);
+	void* (*realloc) (void* udd, void* ptr, qse_size_t n);
 	/**
 	 * frees a memory chunk pointed to by \a ptr.
 	 */
-	void  (*free)    (void* data, void* ptr);
+	void  (*free)    (void* udd, void* ptr);
 	/** 
 	 * a pointer to user-defined data passed as the first parameter to
 	 * alloc(), realloc(), and free().
 	 */
-	void*   data;
+	void*   udd;
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
 /******/

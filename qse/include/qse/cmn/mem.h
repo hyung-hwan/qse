@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: mem.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -30,15 +30,15 @@
 
 /* allocate a memory block */
 #define QSE_MMGR_ALLOC(mmgr,size) \
-	((mmgr)->alloc((mmgr)->data,size))
+	((mmgr)->alloc((mmgr)->udd,size))
 
 /* reallocate a memory block */
 #define QSE_MMGR_REALLOC(mmgr,ptr,size) \
-	((mmgr)->realloc((mmgr)->data,ptr,size))
+	((mmgr)->realloc((mmgr)->udd,ptr,size))
 
 /* free a memory block */
 #define QSE_MMGR_FREE(mmgr,ptr) \
-	((mmgr)->free((mmgr)->data,ptr))
+	((mmgr)->free((mmgr)->udd,ptr))
 
 #ifdef __cplusplus
 extern "C" {

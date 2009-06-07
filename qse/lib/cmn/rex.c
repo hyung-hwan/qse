@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: rex.c 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -334,7 +334,7 @@ static struct __char_class_t __char_class[] =
 	{ QSE_T("thai"),     4, cc_isthai }, 
 	*/
 
-	{ QSE_NULL,        0, QSE_NULL }
+	{ QSE_NULL,          0, QSE_NULL }
 };
 
 qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn)

@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: time.c 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -38,10 +38,26 @@
 	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*QSE_MSECS_PER_SEC)
 #endif
 
-static int mdays[2][QSE_MONS_PER_YEAR] = 
+static const int mdays[2][QSE_MONS_PER_YEAR] = 
 {
 	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
 	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+};
+
+/* number of days from the beginning of the year to the end of of
+ * a previous month. adjust for leap years in the code. */
+static const int mdays_tot[2][QSE_MONS_PER_YEAR] =
+{
+	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
+	{ 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
+};
+
+/* number of days from the beginning of the year to the end of of
+ * a previous month. adjust for leap years in the code. */
+static const int mdays_rtot[2][QSE_MONS_PER_YEAR] =
+{
+	{ 334, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31, 0 },
+	{ 335, 306, 275, 245, 214, 184, 153, 122, 92, 61, 31, 0 }
 };
 
 int qse_gettime (qse_ntime_t* t)
@@ -227,6 +243,8 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 
 int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 {
+#if 0
+
 #ifdef _WIN32
 	/* TODO: verify qse_timegm for WIN32 */
 	SYSTEMTIME st;
@@ -247,6 +265,7 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	
 	return 0;
 #else
+
 	/* TODO: qse_timegm - remove dependency on timegm */
 	struct tm tm;
 
@@ -269,6 +288,51 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 #endif
 
 #endif
+#endif
+
+	qse_ntime_t n = 0;
+	int y = bt->year + QSE_BTIME_YEAR_BASE;
+	int midx = QSE_IS_LEAPYEAR(y)? 1: 0;
+
+	if (y < QSE_EPOCH_YEAR)
+	{
+		int x;
+
+		for (x = y; x < QSE_EPOCH_YEAR - 1; x++)
+			n += QSE_DAYS_PER_YEAR(x);
+		for (x = bt->mon + 1; x < QSE_MONS_PER_YEAR; x++)
+			n += mdays[midx][x];
+
+		n += mdays[midx][bt->mon] - bt->mday;
+		if (midx == 1) n -= 1;
+		n *= QSE_HOURS_PER_DAY;
+
+		n = (n + QSE_HOURS_PER_DAY - bt->hour - 1) * QSE_MINS_PER_HOUR;
+		n = (n + QSE_MINS_PER_HOUR - bt->min - 1) * QSE_SECS_PER_MIN;
+		n = (n + QSE_SECS_PER_MIN - bt->sec) * QSE_MSECS_PER_SEC;
+
+		if (bt->msec > 0) n += QSE_MSECS_PER_SEC - bt->msec;
+		*nt = -n;
+	} 
+	else
+	{
+		int x;
+
+		for (x = QSE_EPOCH_YEAR; x < y; x++) 
+			n += QSE_DAYS_PER_YEAR(x);
+
+		/*for (x = 0; x < bt->mon; x++) n += mdays[midx][x];*/
+		n += mdays_tot[midx][bt->mon];
+
+		n = (n + bt->mday - 1) * QSE_HOURS_PER_DAY;
+		n = (n + bt->hour) * QSE_MINS_PER_HOUR;
+		n = (n + bt->min) * QSE_SECS_PER_MIN;
+		n = (n + bt->sec) * QSE_MSECS_PER_SEC;
+
+		*nt = n + bt->msec;
+	}
+
+	return 0;
 }
 
 int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
@@ -290,7 +354,7 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	*nt = ((qse_ntime_t)timelocal(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
 	return 0;
 #else
-	#warning #### timelocal() is not available on this platform ####
+	*nt = ((qse_ntime_t)mktime(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
 	return -1;
 #endif
 }

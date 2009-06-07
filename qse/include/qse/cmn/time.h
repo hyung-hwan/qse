@@ -1,5 +1,5 @@
 /*
- * $Id: time.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: time.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -46,7 +46,7 @@
 #define QSE_NSECS_PER_USEC (1000)
 #define QSE_USECS_PER_SEC  (QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
 
-#define QSE_IS_LEAPYEAR(year) (!((year)%4) && (((year)%100) || !((year)%400)))
+#define QSE_IS_LEAPYEAR(year) ((!((year)%4) && ((year)%100)) || !((year)%400))
 #define QSE_DAYS_PER_YEAR(year) (QSE_IS_LEAPYEAR(year)? 366: 365)
 
 /* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
@@ -93,21 +93,16 @@ int qse_settime (
 /******/
 
 
-/****f* Common/qse_gmtime
- * NAME
- *  qse_gmtime - convert numeric time to broken-down time 
- * SYNOPSIS
+/**
+ * The qse_gmtime() function converts numeric time to broken-down time.
  */
 int qse_gmtime (
 	qse_ntime_t  nt, 
 	qse_btime_t* bt
 );
-/******/
 
-/****f* Common/qse_localtime
- * NAME
- *  qse_localtime - convert numeric time to broken-down time 
- * SYNOPSIS
+/**
+ * The qse_localtime() converts numeric time to broken-down time 
  */
 int qse_localtime (
 	qse_ntime_t  nt, 
@@ -115,11 +110,10 @@ int qse_localtime (
 ); 
 /******/
 
-/****f* Common/qse_timegm
- * NAME
- *  qse_timegm - convert broken-down time to numeric time
- *
- * SYNOPSIS
+/**
+ * The qse_timegm() converts broken-down time to numeric time. It is the 
+ * inverse of qse_gmtime(). It is useful if the broken-down time is in UTC
+ * and the local environment is not.
  */
 int qse_timegm (
 	const qse_btime_t* bt,
@@ -127,11 +121,9 @@ int qse_timegm (
 );
 /******/
 
-/****f* Common/qse_timelocal
- * NAME
- *  qse_timelocal - convert broken-down time to numeric time
- *
- * SYNOPSIS
+/**
+ * The qse_timelocal() converts broken-down time to numeric time. It is the
+ * inverse of qse_localtime();
  */
 int qse_timelcoal (
 	const qse_btime_t* bt,

@@ -4,6 +4,7 @@
 
 #include <sys/time.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define R(f) \
 	do { \
@@ -63,12 +64,16 @@ static int test1 (void)
 	     nt <= (qse_ntime_t)QSE_TYPE_MAX(int); nt += QSE_SECS_PER_DAY)
 	{
 		time_t t = (time_t)nt;
+		qse_ntime_t qnt = nt * 1000;
 		struct tm* tm;
+		
+		if (qnt >= 0) qnt += rand() % 1000;
+		else qnt -= rand() % 1000;
 
 		tm = gmtime (&t);
-		qse_gmtime (nt * 1000, &bt);
 
-		qse_printf (QSE_T(">>> time %lld: "), (long long)nt*1000);
+		qse_gmtime (qnt, &bt);
+		qse_printf (QSE_T(">>> time %lld: "), (long long)qnt);
 
 		if (tm->tm_year != bt.year ||
 		    tm->tm_mon != bt.mon ||
@@ -78,14 +83,28 @@ static int test1 (void)
 		    tm->tm_min != bt.min ||
 		    tm->tm_sec != bt.sec) 
 		{
-			qse_printf (QSE_T("[ERROR]\n"));
-			print_time (nt, &bt);
+			qse_printf (QSE_T("[GMTIME ERROR %lld]\n"), (long long)t);
+			print_time (qnt, &bt);
 			qse_printf (QSE_T("-------------------------------\n"));
 		}	
 		else
 		{
-			qse_printf (QSE_T("[OK]\n"));
+			qse_ntime_t xx;
+
+			qse_printf (QSE_T("[GMTIME OK]"));
+
+			if (qse_timegm (&bt, &xx) == -1)
+			{
+				qse_printf (QSE_T("[TIMEGM FAIL]\n"));
+			}
+			else
+			{
+				if (xx == qnt) 
+					qse_printf (QSE_T("[TIMEGM OK %d/%d/%d %d:%d:%d]\n"), bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+				else qse_printf (QSE_T("[TIMEGM ERROR %lld, %d/%d/%d %d:%d:%d]\n"), (long long)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+			}
 		}
+
 	}
 
 	return 0;
