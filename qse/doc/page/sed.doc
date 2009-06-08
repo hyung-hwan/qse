@@ -65,7 +65,7 @@ applied to every @b step'th line starting from the line @b start.
 
 Here is the summary of the commands.
 
-- <b># comment text</b>
+- <b># comment</b>
 The text beginning from # to the line end is ignored; # in a line following
 <b>a \\</b>, <b>i \\</b>, and <b>c \\</b> is treated literally and does not
 introduce a comment.
