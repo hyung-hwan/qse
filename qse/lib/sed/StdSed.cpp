@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 127 2009-05-07 13:15:04Z baconevi $
+ * $Id: StdSed.cpp 191 2009-06-07 13:09:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
