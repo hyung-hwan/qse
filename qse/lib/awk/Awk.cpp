@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: Awk.cpp 189 2009-06-07 06:23:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -81,7 +81,7 @@ void Awk::RIO::setHandle (void* handle)
 	this->riod->handle = handle;
 }
 
-Awk::RIO::operator Awk::Awk* () const 
+Awk::RIO::operator Awk* () const 
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (this->rtx);
 	return rxtn->run->awk;

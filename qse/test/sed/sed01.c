@@ -21,8 +21,11 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/opt.h>
 
-const qse_char_t* instream = QSE_NULL;
+static const qse_char_t* g_script = QSE_NULL;
+static const qse_char_t* g_infile = QSE_NULL;
+static int g_option = 0;
 
 static qse_ssize_t in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
@@ -33,14 +36,14 @@ static qse_ssize_t in (
 			if (arg->path == QSE_NULL ||
 			    arg->path[0] == QSE_T('\0'))
 			{
-				if (instream)
+				if (g_infile)
 				{
-					arg->handle = qse_fopen (instream, QSE_T("r"));
+					arg->handle = qse_fopen (g_infile, QSE_T("r"));
 					if (arg->handle == QSE_NULL) 
 					{
 						qse_cstr_t errarg;
-						errarg.ptr = instream;
-						errarg.len = qse_strlen(instream);
+						errarg.ptr = g_infile;
+						errarg.len = qse_strlen(g_infile);
 						qse_sed_seterror (sed, QSE_SED_EIOFIL, 0, &errarg);
 						return -1;
 					}
@@ -109,18 +112,69 @@ static qse_ssize_t out (
 	}
 }
 
+static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
+{
+	qse_fprintf (out, QSE_T("%s [options] script [file]\n"), argv[0]);
+	qse_fprintf (out, QSE_T("options as follows:\n"));
+	qse_fprintf (out, QSE_T(" -h    show this message\n"));
+	qse_fprintf (out, QSE_T(" -n    disable auto-print\n"));
+	qse_fprintf (out, QSE_T(" -c    enable the classic mode\n"));
+}
+
+static int handle_args (int argc, qse_char_t* argv[])
+{
+	static qse_opt_t opt = 
+	{
+		QSE_T("hnc"),
+		QSE_NULL
+	};
+	qse_cint_t c;
+
+	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			default:
+				print_usage (QSE_STDERR, argc, argv);
+				return -1;
+
+			case QSE_T('h'):
+				print_usage (QSE_STDOUT, argc, argv);
+				return 0;
+
+			case QSE_T('n'):
+				g_option |= QSE_SED_QUIET;
+				break;
+
+			case QSE_T('c'):
+				g_option |= QSE_SED_CLASSIC;
+				break;
+		}
+	}
+
+
+	if (opt.ind < argc) g_script = argv[opt.ind++];
+	if (opt.ind < argc) g_infile = argv[opt.ind++];
+
+	if (g_script == QSE_NULL)
+	{
+		print_usage (QSE_STDERR, argc, argv);
+		return -1;
+	}
+
+	return 1;
+}
+
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
 	int ret = -1;
 
-	if (argc != 2 && argc != 3)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("usage: %s string [file]\n"), argv[0]);
-		return -1;
-	}
+	ret = handle_args (argc, argv);
+	if (ret <= -1) return -1;
+	if (ret == 0) return 0;
 
-	if (argc == 3) instream = argv[2];
+	ret = -1;
 
 	sed = qse_sed_open (QSE_NULL, 0);
 	if (sed == QSE_NULL)
@@ -129,10 +183,9 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 	
-	//if (argc == 3) qse_sed_setoption (sed, qse_strtoi(argv[2]));
-	qse_sed_setoption (sed, QSE_SED_QUIET);
+	qse_sed_setoption (sed, g_option);
 
-	if (qse_sed_comp (sed, argv[1], qse_strlen(argv[1])) == -1)
+	if (qse_sed_comp (sed, g_script, qse_strlen(g_script)) == -1)
 	{
 		qse_size_t errlin = qse_sed_geterrlin(sed);
 		if (errlin > 0)
