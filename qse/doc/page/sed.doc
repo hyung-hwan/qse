@@ -92,15 +92,15 @@ is not allowed in the line selector.
 - <b>c \\ \n text</b>
 If a single line is selected for the command (i.e. no line selector, a single
 address line selector, or a start~step line selector is specified), it changes
-pattern space to @b text and skips all subsequent commands for the line.
-If an address range is specified, it deletes pattern space and skips 
-subsequent commands for all input lines but the last, and changes pattern
-space to @b text and skips subsequent commands for the last line.
+pattern space to @b text and branches to the end of commands for the line.
+If an address range is specified, it deletes pattern space and branches 
+to the end of commands for all input lines but the last, and changes pattern
+space to @b text and branches to the end of commands.
 - <b>d</b>
-Deletes pattern space and skips subsequent commands for each selected line.
+Deletes pattern space and branches to the end of commands.
 - <b>D</b>
 Deletes the first line of pattern space. If the pattern space is emptied,
-subsequent commands are skipped. Otherwise, the commands from the first are 
+it branches to the end of script. Otherwise, the commands from the first are 
 reapplied to the current pattern space.
 - <b>=</b>
 Prints the current line number. If #QSE_SED_CLASSIC is speccified, an address
@@ -127,4 +127,30 @@ pattern space.
 - <b>N</b>
 Prints pattern space and read the next line from the input stream to append it
 to pattern space with a newline inserted.
+- <b>b/b>
+Branches to the end of commands.
+- <b>b label</b>
+Branches to @b label
+- <b>t</b>
+Branches to the end of commands if substitution(s//) has been made 
+successfully since the last reading of an input line or the last @b t command.
+- <b>t label</b>
+Branches to @b label if substitution(s//) has been made successfully 
+since the last reading of an input line or the last @b t command.
+- <b>r file</b>
+Reads text from @ file and prints it after printing pattern space but before
+printing append buffer. Failure to read @ file does not cause an error.
+- <b>R file</b>
+Reads a line of text from @ file and prints it after printing pattern space 
+but before printing append buffer. Failure to read @ file does not cause an
+error.
+- <b>w file</b>
+
+- <b>W file</b>
+
+- <b>s/rex/repl/opt</b>
+
+- <b>y/src/dst/</b>
+Replaces all occurrences of characters in @b src with characters in @b dst.
+@b src and @b dst must contain equal number of characters.
 */

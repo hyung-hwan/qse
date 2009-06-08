@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 113 2009-03-25 14:53:10Z baconevi $
+ * $Id: err.c 191 2009-06-07 13:09:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
