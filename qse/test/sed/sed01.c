@@ -138,6 +138,22 @@ static int handle_args (int argc, qse_char_t* argv[])
 				print_usage (QSE_STDERR, argc, argv);
 				return -1;
 
+			case QSE_T('?'):
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: bad option - %c\n"),
+					opt.opt
+				);
+				print_usage (QSE_STDERR, argc, argv);
+				return -1;
+
+			case QSE_T(':'):
+				qse_fprintf (QSE_STDERR, 
+					QSE_T("ERROR: bad parameter for %c\n"),
+					opt.opt
+				);
+				print_usage (QSE_STDERR, argc, argv);
+				return -1;
+
 			case QSE_T('h'):
 				print_usage (QSE_STDOUT, argc, argv);
 				return 0;
@@ -156,11 +172,12 @@ static int handle_args (int argc, qse_char_t* argv[])
 	if (opt.ind < argc) g_script = argv[opt.ind++];
 	if (opt.ind < argc) g_infile = argv[opt.ind++];
 
-	if (g_script == QSE_NULL)
+	if (g_script == QSE_NULL || opt.ind < argc)
 	{
 		print_usage (QSE_STDERR, argc, argv);
 		return -1;
 	}
+
 
 	return 1;
 }
