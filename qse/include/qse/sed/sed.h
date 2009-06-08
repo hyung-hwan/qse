@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: sed.h 192 2009-06-07 13:33:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,6 +37,8 @@
  *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
+ *
+ * @todo enhance execution of the l command. 
  */
 
 /** @class qse_sed_t
