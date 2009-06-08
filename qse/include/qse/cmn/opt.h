@@ -1,5 +1,5 @@
 /*
- * $Id: opt.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: opt.h 189 2009-06-07 06:23:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -25,23 +25,12 @@
 typedef struct qse_opt_t qse_opt_t;
 typedef struct qse_opt_lng_t qse_opt_lng_t;
 
-/****t* Common/qse_opt_lng_t
- * NAME
- *  qse_opt_lng_t - define a long option
- * SYNOPSIS
- */
 struct qse_opt_lng_t
 {
 	const qse_char_t* str;
 	qse_cint_t        val;
 };
-/*****/
 
-/****t* Common/qse_opt_t
- * NAME
- *  qse_opt_t - define a command line option table
- * SYNOPSIS
- */
 struct qse_opt_t
 {
 	/* input */
@@ -61,26 +50,20 @@ struct qse_opt_t
 	/* input + output - internal*/
 	qse_char_t*        cur;
 };
-/******/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/****f* Common/qse_getopt
- * NAME
- *  qse_getopt - process command line options
- * DESCRIPTION
- *  The qse_getopt() function returns QSE_CHAR_EOF when it finishes processing
- *  command line options. The return values of QSE_T('?') indicates an error.
- * SYNOPSIS
+/**
+ * The qse_getopt() function returns QSE_CHAR_EOF when it finishes processing
+ * command line options. The return values of QSE_T('?') indicates an error.
  */
 qse_cint_t qse_getopt (
 	int                argc  /* argument count */, 
 	qse_char_t* const* argv  /* argument array */,
 	qse_opt_t*         opt   /* option configuration */
 );
-/******/
 
 #ifdef __cplusplus
 }
