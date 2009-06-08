@@ -1,5 +1,5 @@
 /*
- * $Id: opt.h 189 2009-06-07 06:23:53Z hyunghwan.chung $
+ * $Id: opt.h 190 2009-06-07 12:11:56Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -21,6 +21,11 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+
+/** @file
+ * <qse/cmn/opt.h> defines functions and data structures to process 
+ * command-line arguments. 
+ */
 
 typedef struct qse_opt_t qse_opt_t;
 typedef struct qse_opt_lng_t qse_opt_lng_t;
@@ -56,12 +61,24 @@ extern "C" {
 #endif
 
 /**
- * The qse_getopt() function returns QSE_CHAR_EOF when it finishes processing
- * command line options. The return values of QSE_T('?') indicates an error.
+ * The qse_getopt() function processes the @a argc command-line arguments
+ * pointed to by @a argv as configured in @a opt. It can process two 
+ * different option styles: a single character starting with '-', and a 
+ * long name starting with '--'. 
+ *
+ * A character in @a opt.str is treated as a single character option. Should
+ * it require a parameter, specify ':' after it.
+ *
+ * Two special returning option characters indicate special error conditions. 
+ * - @b ? indicates a bad option stored in the @a opt->opt field.
+ * - @b : indicates a bad parameter for an option stored in the 
+ *      @a opt->opt field.
+ *
+ * @return an option character on success, QSE_CHAR_EOF on no more options.
  */
 qse_cint_t qse_getopt (
-	int                argc  /* argument count */, 
-	qse_char_t* const* argv  /* argument array */,
+	int                argc, /* argument count */ 
+	qse_char_t* const* argv, /* argument array */
 	qse_opt_t*         opt   /* option configuration */
 );
 

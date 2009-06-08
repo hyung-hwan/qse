@@ -52,7 +52,7 @@ static const qse_char_t* dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		QSE_T("failed to compile regular expression '${0}'"),
 		QSE_T("failed to match regular expression"),
 		QSE_T("address 1 prohibited for '${0}'"),
-		QSE_T("address 2 prohibited"),
+		QSE_T("address 2 prohibited for '${0}'"),
 		QSE_T("address 2 missing or invalid"),
 		QSE_T("newline expected"),
 		QSE_T("backslash expected"),
@@ -1139,7 +1139,10 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (sed->option & QSE_SED_CLASSIC &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
-				SETERR0 (sed, QSE_SED_EA2PHB, sed->src.lnum);
+				SETERR1 (
+					sed, QSE_SED_EA2PHB,
+					sed->src.lnum, &cmd->type, 1
+				);
 				return -1;
 			}
 
@@ -1149,6 +1152,16 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_T('a'):
 		case QSE_T('i'):
+			if (sed->option & QSE_SED_CLASSIC &&
+			    cmd->a2.type != QSE_SED_ADR_NONE)
+			{
+				qse_char_t tmpc = c;
+				SETERR1 (
+					sed, QSE_SED_EA2PHB,
+					sed->src.lnum, &tmpc, 1
+				);
+				return -1;
+			}
 		case QSE_T('c'):
 		{
 			cmd->type = c;
@@ -1186,15 +1199,20 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (sed->option & QSE_SED_CLASSIC &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
-				SETERR0 (sed, QSE_SED_EA2PHB, sed->src.lnum);
+				qse_char_t tmpc = c;
+				SETERR1 (
+					sed, QSE_SED_EA2PHB,
+					sed->src.lnum, &tmpc, 1
+				);
 				return -1;
 			}
-		case QSE_T('p'):
-		case QSE_T('P'):
-		case QSE_T('l'):
 
 		case QSE_T('d'):
 		case QSE_T('D'):
+
+		case QSE_T('p'):
+		case QSE_T('P'):
+		case QSE_T('l'):
 
 		case QSE_T('h'):
 		case QSE_T('H'):
@@ -1326,7 +1344,8 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 						return -1;
 					}
 				}
-				else if (delim == QSE_T('~'))
+				else if (!(sed->option & QSE_SED_CLASSIC) && 
+				         (delim == QSE_T('~')))
 				{
 					if (cmd->a1.type != QSE_SED_ADR_LINE || 
 					    cmd->a2.type != QSE_SED_ADR_LINE)

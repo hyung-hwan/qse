@@ -3,9 +3,10 @@
 @section sed_intro INTRODUCTION
 
 The sed stream editor is a non-interactive text editing tool commonly used
-on Unix environment. Sed reads text from an input stream, applies a set of 
-editing commands, and writes the results to an output stream. Typically, 
-the input and output streams are a console or a file. 
+on Unix environment. Sed reads text from an input stream, stores it to
+pattern space, manipulates the pattern space by applying a set of editing
+commands, and writes the pattern space to an output stream. Typically, the
+input and output streams are a console or a file. 
 
 @b QSE provides an embeddable stream editor that supports most of 
 the conventional sed commands and implements input and output streams as a 
@@ -28,7 +29,8 @@ A line selector selects input lines to apply a command to and has the following
 forms:
 - address - specify a single address
 - address,address - specify an address range 
-- start~step - specify a starting line and a step
+- start~step - specify a starting line and a step. 
+               #QSE_SED_CLASSIC disables this form.
 
 An @b address is a line number, a regular expression, or a dollar sign ($) 
 while a @b start and a @b step is a line number. 
@@ -58,15 +60,15 @@ lines except the first line.
 A command without a line selector is applied to all input lines; 
 A command with a single address is applied to an input line that matches 
 the address; A command with an address range is applied to all input 
-lines within the range, inclusive; A command with a starting line and 
-a step is applied to every @b step'th line starting from the line @b start.
+lines within the range, inclusive; A command with a start and a step is
+applied to every @b step'th line starting from the line @b start.
 
 Here is the summary of the commands.
 
 - <b># comment text</b>
-The text beginning from # to the line end is ignored by @b sed;
-# in a line following <b>a \\</b>, <b>i \\</b>, and <b>c \\</b> is treated
-literally and does not introduce a comment.
+The text beginning from # to the line end is ignored; # in a line following
+<b>a \\</b>, <b>i \\</b>, and <b>c \\</b> is treated literally and does not
+introduce a comment.
 - <b>: label</b>
 A label can be composed of letters, digits, periods, hyphens, and underlines.
 It remembers a target label for @b b and @b t commands and prohibits a line
@@ -74,6 +76,55 @@ selector.
 - <b>{</b>
 The left curly bracket forms a command group where you can nest other 
 commands. It should be paired with an ending }.
-- <b>q, Q</b>
-Both commands terminates the exection of commands. 
+- <b>q</b>
+Terminates the exection of commands. Upon termination, it prints the pattern
+space if #QSE_SED_QUIET is not set.
+- <b>Q</b>
+Terminates the exection of commands quietly.
+- <b>a \\ \n text</b>
+Stores @b text into an append buffer which is printed after the pattern 
+space for each input line. If #QSE_SED_CLASSIC is specified, an address range
+is not allowed in the line selector.
+- <b>i \\ \n text</b>
+Inserts @b text into an insert buffer which is printed before the pattern
+space for each input line. If #QSE_SED_CLASSIC is specified, an address range
+is not allowed in the line selector.
+- <b>c \\ \n text</b>
+If a single line is selected for the command (i.e. no line selector, a single
+address line selector, or a start~step line selector is specified), it changes
+pattern space to @b text and skips all subsequent commands for the line.
+If an address range is specified, it deletes pattern space and skips 
+subsequent commands for all input lines but the last, and changes pattern
+space to @b text and skips subsequent commands for the last line.
+- <b>d</b>
+Deletes pattern space and skips subsequent commands for each selected line.
+- <b>D</b>
+Deletes the first line of pattern space. If the pattern space is emptied,
+subsequent commands are skipped. Otherwise, the commands from the first are 
+reapplied to the current pattern space.
+- <b>=</b>
+Prints the current line number. If #QSE_SED_CLASSIC is speccified, an address
+range is not allowed in the line selector.
+- <b>p</b>
+Prints pattern space.
+- <b>P</b>
+Prints the first line of pattern space.
+- <b>l</b>
+Prints pattern space in a visually unambiguous form.
+- <b>h</b> 
+Copies pattern space to hold space
+- <b>H</b> 
+Appends pattern space to hold space
+- <b>g</b> 
+Copies hold space to pattern space
+- <b>G</b> 
+Appends hold space to pattern space
+- <b>x</b> 
+Exchanges pattern space and hold space
+- <b>n</b>
+Prints pattern space and read the next line from the input stream to fill
+pattern space.
+- <b>N</b>
+Prints pattern space and read the next line from the input stream to append it
+to pattern space with a newline inserted.
 */
