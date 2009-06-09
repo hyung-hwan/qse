@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: fio.c 193 2009-06-08 13:09:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -267,7 +267,7 @@ qse_fio_off_t qse_fio_seek (
 	};
 	LARGE_INTEGER x, y;
 
-	QSE_ASSERT (AES_SIZEOF(offset) <= AES_SIZEOF(x.QuadPart));
+	QSE_ASSERT (QSE_SIZEOF(offset) <= QSE_SIZEOF(x.QuadPart));
 
 	x.QuadPart = offset;
 	if (SetFilePointerEx (fio->handle, x, &y, seek_map[origin]) == FALSE)

@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 192 2009-06-07 13:33:07Z hyunghwan.chung $
+ * $Id: sed.h 193 2009-06-08 13:09:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -361,7 +361,6 @@ qse_size_t qse_sed_getlinnum (
 
 /**
  * The qse_sed_setlinnum() function changes the current input line number.
- * It the address matching and the '=' command.
  */
 void qse_sed_setlinnum (
 	qse_sed_t* sed,   /**< a stream editor */

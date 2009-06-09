@@ -1,5 +1,5 @@
 /*
- * $Id: syscall.h 187 2009-06-07 05:03:44Z hyunghwan.chung $
+ * $Id: syscall.h 193 2009-06-08 13:09:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -41,6 +41,9 @@
 #endif
 #ifdef HAVE_SYS_TIME_H
 #	include <sys/time.h>
+#endif
+#ifdef HAVE_UTIME_H
+#	include <utime.h>
 #endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
@@ -196,15 +199,27 @@
 #endif
 
 #ifdef SYS_gettimeofday
-#	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday, tv, tz)
+#	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday,tv,tz)
 #else
 #	define QSE_GETTIMEOFDAY(tv,tz) gettimeofday(tv,tz)
 #endif
 
 #ifdef SYS_settimeofday
-#	define QSE_SETTIMEOFDAY(tv,tz) syscall(SYS_settimeofday, tv, tz)
+#	define QSE_SETTIMEOFDAY(tv,tz) syscall(SYS_settimeofday,tv,tz)
 #else
 #	define QSE_SETTIMEOFDAY(tv,tz) settimeofday(tv,tz)
+#endif
+
+#ifdef SYS_utime
+#	define QSE_UTIME(file,t) syscall(SYS_utime,file,t)
+#else
+#	define QSE_UTIME(file,t) utime(file,t)
+#endif
+
+#ifdef SYS_utimes
+#	define QSE_UTIMES(file,t) syscall(SYS_utimes,file,t)
+#else
+#	define QSE_UTIMES(file,t) utimes(file,t)
 #endif
 
 

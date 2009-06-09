@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 168 2009-05-30 01:19:46Z hyunghwan.chung $
+ * $Id: pio.c 193 2009-06-08 13:09:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -89,12 +89,59 @@ qse_pio_t* qse_pio_init (
 	};
 	int i, minidx = -1, maxidx = -1;
 
+#ifdef _WIN32
+	SECURITY_ATTRIBUTES secattr; 
+#endif
+
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;
 
 #ifdef _WIN32
-	/* TODO: XXXXXXXXXXXXXXXXX */
-http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
+	/* http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx */
+
+	secattr.nLength = QSE_SIZEOF(secattr);
+	secattr.bInheritHandle = TRUE;
+	secattr.lpSecurityDescriptor = NULL;
+
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		if (CreatePipe (
+			&handle[0], &handle[1], 
+			&secattr, 0) == FALSE) goto oops;
+
+		if (SetHandleInformation (
+			handle[0], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+
+		minidx = 0; maxidx = 1;
+	}
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		if (CreatePipe (
+			&handle[2], &handle[3],
+			&secattr, 0) == FALSE) goto oops;
+
+		if (SetHandleInformation (
+			handle[3], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+
+		if (minidx == -1) minidx = 2;
+		maxidx = 3;
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		if (CreatePipe (
+			&handle[4], &handle[5],
+			&secattr, 0) == FALSE) goto oops;
+
+		if (SetHandleInformation (
+			handle[5], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+
+		if (minidx == -1) minidx = 4;
+		maxidx = 5;
+	}
+
+	/* TODO: .... */
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -383,7 +430,11 @@ http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx
 
 oops:
 	for (i = 0; i < QSE_COUNTOF(tio); i++) qse_tio_close (tio[i]);
+#if _WIN32
+	for (i = minidx; i < maxidx; i++) CloseHandle (handle[i]);
+#else
 	for (i = minidx; i < maxidx; i++) QSE_CLOSE (handle[i]);
+#endif
 	return QSE_NULL;
 }
 
@@ -571,7 +622,11 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 
 	if (pio->pin[hid].handle != QSE_PIO_HND_NIL)
 	{
+#ifdef _WIN32
+		CloseHandle (pio->pin[hid].handle);
+#else
 		QSE_CLOSE (pio->pin[hid].handle);
+#endif
 		pio->pin[hid].handle = QSE_PIO_HND_NIL;
 	}
 }
@@ -579,7 +634,7 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 int qse_pio_wait (qse_pio_t* pio)
 {
 #ifdef _WIN32
-	DWORD ec;
+	DWORD ecode, w;
 
 	if (pio->child == QSE_PIO_PID_NIL) 
 	{
@@ -588,12 +643,48 @@ int qse_pio_wait (qse_pio_t* pio)
 		return -1;
 	}
 
-	WaitForSingleObject (pio->child, -1);
-	if (GetExitCodeProcess (pio->child, &ec) == FALSE) ....
+	w = WaitForSingleObject (pio->child, 
+		((pio->flags & QSE_PIO_WAIT_NOBLOCK)? 0: INFINITE)
+	);
+	if (w == WAIT_TIMEOUT)
+	{
+		/* the child process is still alive */
+		return 255 + 1;
+	}
+	if (w != WAIT_OBJECT_0)
+	{
+		/* WAIT_FAILED, WAIT_ABANDONED */
+		pio->errnum = QSE_PIO_ESUBSYS;
+		return -1;
+	}
+
+	QSE_ASSERT (w == WAIT_OBJECT_0);
+	
+	if (GetExitCodeProcess (pio->child, &ecode) == FALSE) 
+	{
+		/* close the handle anyway to prevent further 
+		 * errors when this function is called again */
+		CloseHandle (pio->child); 
+		pio->child = QSE_PIO_PID_NIL;
+
+		pio->errnum = QSE_PIO_ESUBSYS;
+		return -1;
+	}
+
 	/* close handle here to emulate waitpid() as much as possible. */
 	CloseHandle (pio->child); 
 	pio->child = QSE_PIO_PID_NIL;
 
+	if (ecode == STILL_ACTIVE)
+	{
+		/* this should not happen as the control reaches here
+		 * only when WaitforSingleObject() is successful.
+		 * if it happends,  close the handle and return an error */
+		pio->errnum = QSE_PIO_ESUBSYS;
+		return -1;
+	}
+
+	return ecode;
 #else
 	int opt = 0;
 	int ret = -1;
@@ -656,7 +747,7 @@ int qse_pio_wait (qse_pio_t* pio)
 			else
 			{
 				/* not interested in WIFSTOPPED & WIFCONTINUED.
-				 * in fact, this else block should not be reached
+				 * in fact, this else-block should not be reached
 				 * as WIFEXITED or WIFSIGNALED must be true.
 				 * anyhow, just set the return value to 0. */
 				ret = 0;
@@ -690,7 +781,7 @@ int qse_pio_kill (qse_pio_t* pio)
 	n = TerminateProcess (pio->child, 255 + 1 + 9);
 	if (n == FALSE) 
 	{
-		pio->errnum = QSE_PIO_SYSCALL;
+		pio->errnum = QSE_PIO_ESUBSYS;
 		return -1;
 	}
 	return 0;
