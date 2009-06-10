@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: parse.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -3759,6 +3759,17 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, test);
 		return QSE_NULL;
 	}
+
+	/* skip any new lines before the else block */
+	while (MATCH(awk,TOKEN_NEWLINE))
+	{
+		if (get_token(awk) == -1) 
+		{
+			qse_awk_clrpt (awk, then_part);
+			qse_awk_clrpt (awk, test);
+			return QSE_NULL;
+		}
+	} 
 
 	if (MATCH(awk,TOKEN_ELSE)) 
 	{

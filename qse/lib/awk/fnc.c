@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: fnc.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -584,7 +584,7 @@ static int fnc_split (
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
 	qse_char_t* str, * str_free, * p, * tok;
 	qse_size_t str_len, str_left, tok_len, org_len;
-	qse_long_t num;
+	qse_long_t nflds;
 	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
 	qse_size_t key_len;
 	qse_char_t* fs_ptr, * fs_free;
@@ -727,7 +727,7 @@ static int fnc_split (
 	qse_awk_rtx_refupval (run, *a1_ref);
 
 	p = str; str_left = str_len; org_len = str_len;
-	num = 1;
+	nflds = 0;
 
 	while (p != QSE_NULL)
 	{
@@ -755,14 +755,13 @@ static int fnc_split (
 			}
 		}
 
-		if (num == 0 && p == QSE_NULL && tok_len == 0) 
+		if (nflds == 0 && p == QSE_NULL && tok_len == 0) 
 		{
 			/* no field at all*/
 			break; 
 		}	
 
-		QSE_ASSERT (
-			(tok != QSE_NULL && tok_len > 0) || tok_len == 0);
+		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
 
 		/* create the field string */
 		t2 = qse_awk_rtx_makestrval (run, tok, tok_len);
@@ -780,7 +779,7 @@ static int fnc_split (
 
 		/* put it into the map */
 		key_len = qse_awk_longtostr (
-			num, 10, QSE_NULL, key, QSE_COUNTOF(key));
+			++nflds, 10, QSE_NULL, key, QSE_COUNTOF(key));
 		QSE_ASSERT (key_len != (qse_size_t)-1);
 
 		/* don't forget to update the reference count when you 
@@ -810,7 +809,6 @@ static int fnc_split (
 			return -1;
 		}
 
-		num++;
 		str_len = str_left - (p - str);
 	}
 
@@ -818,9 +816,9 @@ static int fnc_split (
 	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
 	if (fs_rex_free != QSE_NULL) QSE_AWK_FREEREX (run->awk, fs_rex_free);
 
-	num--;
+	/*nflds--;*/
 
-	t1 = qse_awk_rtx_makeintval (run, num);
+	t1 = qse_awk_rtx_makeintval (run, nflds);
 	if (t1 == QSE_NULL)
 	{
 		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/

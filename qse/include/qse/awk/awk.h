@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: awk.h 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -413,7 +413,8 @@ enum qse_awk_option_t
 
 	/* option aggregtes */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
-	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
+	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
+	                   QSE_AWK_STRIPSPACES
 };
 
 /**
