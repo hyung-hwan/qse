@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: run.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1002,8 +1002,8 @@ static int build_runarg (
 				return -1;
 			}
 
-			key_len = qse_awk_longtostr (argc+1, 
-				10, QSE_NULL, key, QSE_COUNTOF(key));
+			key_len = qse_awk_longtostr (
+				argc, 10, QSE_NULL, key, QSE_COUNTOF(key));
 			QSE_ASSERT (key_len != (qse_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 

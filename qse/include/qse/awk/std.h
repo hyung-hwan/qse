@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 86 2009-02-26 12:55:05Z hyunghwan.chung $
+ * $Id: std.h 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -20,6 +20,10 @@
 #define _QSE_AWK_STD_H_
 
 #include <qse/awk/awk.h>
+
+/** @file
+ * Standard AWK Interpreter
+ */
 
 /****e* AWK/qse_awk_parsestd_type_t
  * NAME
@@ -131,22 +135,19 @@ int qse_awk_parsestd (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_openstd
- * NAME
- *  qse_awk_rtx_openstd - create a runtime context
+/**
  * DESCRIPTION
- *  The caller should keep the contents of icf and ocf valid throughout
- *  the lifetime of the runtime context created. The runtime context 
- *  remembers the pointers without copying in the contents.
- * SYNOPSIS
+ * The qse_awk_rtx_openstd() function creates a standard runtime context.
+ * The caller should keep the contents of icf and ocf valid throughout
+ * the lifetime of the runtime context created. The runtime context 
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*             awk,
-	qse_size_t             xtnsize,
-	const qse_char_t*const icf[],
-	const qse_char_t*const ocf[]
+	qse_awk_t*              awk,
+	qse_size_t              xtn,
+	const qse_char_t*       id,
+	const qse_char_t*const* icf,
+	const qse_char_t*const* ocf
 );
-/******/
 
 /****f* AWK/qse_awk_rtx_getxtnstd
  * NAME

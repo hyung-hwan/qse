@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: awk.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -63,6 +63,7 @@ struct argout_t
 	qse_char_t*  osf;  /* output source file */
 
 
+	qse_char_t** arg;
 	qse_char_t** icf;  /* input console files */
 	qse_size_t   icfl; /* the number of input console files */
 	qse_map_t*   vm;   /* global variable map */
@@ -351,8 +352,9 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 	qse_size_t isfc = 16; /* the capacity of isf */
 	qse_size_t isfl = 0; /* number of input source files */
 
+	qse_size_t argl = 0;
 	qse_size_t icfc = 0; /* the capacity of icf */
-	qse_size_t icfl = 0;  /* the number of input console files */
+	qse_size_t icfl = 0; /* the number of input console files */
 
 	qse_char_t** isf = QSE_NULL; /* input source files */
 	qse_char_t*  osf = QSE_NULL; /* output source file */
@@ -509,7 +511,7 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 
 	/* the remaining arguments are input console file names */
 	icfc = (opt.ind >= argc)? 2: (argc - opt.ind + 1);
-	icf = (qse_char_t**) malloc (QSE_SIZEOF(*icf)*icfc);
+	icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
 	if (icf == QSE_NULL)
 	{
 		out_of_memory ();
@@ -644,7 +646,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.data = &ao;
 
 	rtx = qse_awk_rtx_openstd (
-		awk, 0, ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
+		awk, 0, QSE_T("qseawk"), ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
