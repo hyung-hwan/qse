@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: err.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -156,6 +156,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("a right bracket expected in the regular expression"),
 		QSE_T("a right brace expected in the regular expression"),
 		QSE_T("unbalanced parenthesis in the regular expression"),
+		QSE_T("invalid brace in the regular expression"),
 		QSE_T("a colon expected in the regular expression"),
 		QSE_T("invalid character range in the regular expression"),
 		QSE_T("invalid character class in the regular expression"),

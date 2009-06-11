@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 186 2009-06-06 13:42:57Z hyunghwan.chung $
+ * $Id: rex.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -107,6 +107,7 @@ struct builder_t
 		qse_size_t cur;
 	} depth;
 
+	int option;
 	qse_rex_errnum_t errnum;
 };
 
@@ -135,7 +136,7 @@ struct matcher_t
 		qse_size_t cur;
 	} depth;
 
-	int ignorecase;
+	int option;
 	qse_rex_errnum_t errnum;
 };
 
@@ -371,7 +372,7 @@ int qse_rex_build (qse_rex_t* rex, const qse_char_t* ptn, qse_size_t len)
 	void* code;
 
 	code = qse_buildrex (
-		rex->mmgr, rex->depth.build,
+		rex->mmgr, rex->depth.build, 0,
 		ptn, len, &rex->errnum);
 	if (code == QSE_NULL) return -1;
 
@@ -392,7 +393,7 @@ int qse_rex_match (
 }
 
 void* qse_buildrex (
-	qse_mmgr_t* mmgr, qse_size_t depth, 
+	qse_mmgr_t* mmgr, qse_size_t depth, int option,
 	const qse_char_t* ptn, qse_size_t len, qse_rex_errnum_t* errnum)
 {
 	builder_t builder;
@@ -418,6 +419,7 @@ void* qse_buildrex (
 
 	builder.depth.max = depth;
 	builder.depth.cur = 0;
+	builder.option = option;
 
 	if (next_char (&builder, LEVEL_TOP) == -1) 
 	{
@@ -440,7 +442,12 @@ void* qse_buildrex (
 			if (builder.ptn.curc.type ==  CT_SPECIAL &&
 			    builder.ptn.curc.value == QSE_T(')'))
 			{
-				*errnum = QSE_REX_EUNBALPAR;
+				*errnum = QSE_REX_EUNBALPAREN;
+			}
+			else if (builder.ptn.curc.type ==  CT_SPECIAL &&
+			         builder.ptn.curc.value == QSE_T('{'))
+			{
+				*errnum = QSE_REX_EINVALBRACE;
 			}
 			else
 			{
@@ -478,7 +485,7 @@ int qse_matchrex (
 
 	matcher.depth.max = depth;
 	matcher.depth.cur = 0;
-	matcher.ignorecase = (option & QSE_REX_IGNORECASE)? 1: 0;
+	matcher.option = option;
 
 	mat.matched = QSE_FALSE;
 	/* TODO: should it allow an offset here??? */
@@ -1175,7 +1182,8 @@ static int next_char (builder_t* builder, int level)
 			    builder->ptn.curc.value == QSE_T('|') ||
 			    builder->ptn.curc.value == QSE_T('^') ||
 			    builder->ptn.curc.value == QSE_T('$') ||
-			    builder->ptn.curc.value == QSE_T('{') ||
+			    (!(builder->option & QSE_REX_BUILD_NOBOUND) &&
+			     builder->ptn.curc.value == QSE_T('{')) ||
 			    builder->ptn.curc.value == QSE_T('+') ||
 			    builder->ptn.curc.value == QSE_T('?') ||
 			    builder->ptn.curc.value == QSE_T('*') ||
@@ -1513,11 +1521,11 @@ static const qse_byte_t* match_ord_char (
 	ubound = cp->ubound;
 
 	cc = *(qse_char_t*)p; p += QSE_SIZEOF(cc);
-	if (matcher->ignorecase) cc = QSE_TOUPPER(cc);
+	if (matcher->option & QSE_REX_MATCH_IGNORECASE) cc = QSE_TOUPPER(cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
-	if (matcher->ignorecase) 
+	if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
 	{
 		while (p < mat->branch_end &&
 		       cp->cmd == ((const code_t*)p)->cmd)
@@ -1554,7 +1562,7 @@ static const qse_byte_t* match_ord_char (
 	mat->match_len = 0;
 
 	/* find the longest match */
-	if (matcher->ignorecase) 
+	if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
 	{
 		while (si < ubound)
 		{
@@ -1627,7 +1635,7 @@ static const qse_byte_t* match_charset (
 		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
 
 		c = mat->match_ptr[si];
-		if (matcher->ignorecase) c = QSE_TOUPPER(c);
+		if (matcher->option & QSE_REX_MATCH_IGNORECASE) c = QSE_TOUPPER(c);
 
 		n = __test_charset (matcher, p, cshdr->csc, c);
 		if (cp->negate) n = !n;
@@ -1891,7 +1899,7 @@ static qse_bool_t __test_charset (
 		if (c0 == CHARSET_ONE)
 		{
 			c1 = *(const qse_char_t*)p;
-			if (matcher->ignorecase) 
+			if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
 				c1 = QSE_TOUPPER(c1);
 		#ifdef DEBUG_REX
 			qse_dprintf (
@@ -1905,7 +1913,7 @@ static qse_bool_t __test_charset (
 			p += QSE_SIZEOF(c1);
 			c2 = *(const qse_char_t*)p;
 
-			if (matcher->ignorecase) 
+			if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
 			{
 				c1 = QSE_TOUPPER(c1);
 				c2 = QSE_TOUPPER(c2);

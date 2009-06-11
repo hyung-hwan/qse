@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 193 2009-06-08 13:09:01Z hyunghwan.chung $
+ * $Id: sed.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -113,11 +113,13 @@ typedef const qse_char_t* (*qse_sed_errstr_t) (
  */
 enum qse_sed_option_t
 {
-	QSE_SED_STRIPLS  = (1 << 0),  /**< strip leading spaces from text */
-	QSE_SED_KEEPTBS  = (1 << 1),  /**< keep an trailing backslash */
-	QSE_SED_ENSURENL = (1 << 2),  /**< ensure NL at the text end */
-	QSE_SED_QUIET    = (1 << 3),  /**< do not print pattern space */
-	QSE_SED_CLASSIC  = (1 << 4)   /**< disable extended features */
+	QSE_SED_STRIPLS   = (1 << 0),  /**< strip leading spaces from text */
+	QSE_SED_KEEPTBS   = (1 << 1),  /**< keep an trailing backslash */
+	QSE_SED_ENSURENL  = (1 << 2),  /**< ensure NL at the text end */
+	QSE_SED_QUIET     = (1 << 3),  /**< do not print pattern space */
+	QSE_SED_STRICT    = (1 << 4),  /**< do strict address check */
+	QSE_SED_STARTSTEP = (1 << 5),  /**< allow start~step */
+	QSE_SED_REXBOUND  = (1 << 6)   /**< allow {n,m} in regular expression */
 };
 typedef enum qse_sed_option_t qse_sed_option_t;
 

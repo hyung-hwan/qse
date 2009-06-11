@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: fnc.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1054,7 +1054,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 	}
 
-	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
+	opt = (run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
@@ -1272,7 +1272,7 @@ static int fnc_match (
 		if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str1);
 	}
 
-	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
+	opt = (run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0;
 	n = QSE_AWK_MATCHREX (
 		run->awk, rex, opt,
 		str0, len0, str0, len0,

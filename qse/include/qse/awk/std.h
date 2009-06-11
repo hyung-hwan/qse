@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: std.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -78,10 +78,6 @@ struct qse_awk_parsestd_out_t
 };
 typedef struct qse_awk_parsestd_out_t qse_awk_parsestd_out_t;
 /******/
-
-#define QSE_AWK_RTX_OPENSTD_STDIO (qse_awk_rtx_openstd_stdio)
-extern const qse_char_t*const qse_awk_rtx_openstd_stdio[];
-
 
 #ifdef __cplusplus
 extern "C" {

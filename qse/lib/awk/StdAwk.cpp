@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -217,7 +217,7 @@ int StdAwk::fnint (Run& run, Return& ret, const Argument* args, size_t nargs,
 int StdAwk::rand (Run& run, Return& ret, const Argument* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((long_t)::rand());
+	return ret.set ((real_t)(::rand() % RAND_MAX) / RAND_MAX);
 }
 
 int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,

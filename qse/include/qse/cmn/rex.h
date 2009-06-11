@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: rex.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -57,18 +57,20 @@
 
 enum qse_rex_option_t
 {
-	QSE_REX_IGNORECASE = (1 << 0)
+	QSE_REX_BUILD_NOBOUND    = (1 << 0),
+	QSE_REX_MATCH_IGNORECASE = (1 << 8)
 };
 
 enum qse_rex_errnum_t
 {
 	QSE_REX_ENOERR = 0,
-	QSE_REX_ENOMEM,
+	QSE_REX_ENOMEM,        /* no sufficient memory available */
         QSE_REX_ERECUR,        /* recursion too deep */
         QSE_REX_ERPAREN,       /* a right parenthesis is expected */
         QSE_REX_ERBRACKET,     /* a right bracket is expected */
         QSE_REX_ERBRACE,       /* a right brace is expected */
-        QSE_REX_EUNBALPAR,     /* unbalanced parenthesis */
+        QSE_REX_EUNBALPAREN,   /* unbalanced parenthesis */
+        QSE_REX_EINVALBRACE,   /* invalid brace */
         QSE_REX_ECOLON,        /* a colon is expected */
         QSE_REX_ECRANGE,       /* invalid character range */
         QSE_REX_ECCLASS,       /* invalid character class */
@@ -128,6 +130,7 @@ int qse_rex_match (
 void* qse_buildrex (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        depth,
+	int               option,
 	const qse_char_t* ptn,
 	qse_size_t        len,
 	qse_rex_errnum_t* errnum

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: awk.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,10 +37,6 @@
 #	include <windows.h>
 #	include <tchar.h>
 #	include <process.h>
-#	if defined(_MSC_VER) && defined(_DEBUG)
-#		define _CRTDBG_MAP_ALLOC
-#		include <crtdbg.h>
-#	endif
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -80,7 +76,6 @@ static void dprint (const qse_char_t* fmt, ...)
 		va_end (ap);
 	}
 }
-
 
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type)
@@ -509,26 +504,30 @@ static int handle_args (int argc, qse_char_t* argv[], struct argout_t* ao)
 		ao->isp.files = isf;
 	}
 
-	/* the remaining arguments are input console file names */
-	icfc = (opt.ind >= argc)? 2: (argc - opt.ind + 1);
-	icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
-	if (icf == QSE_NULL)
+	if (opt.ind < argc) 
 	{
-		out_of_memory ();
-		ABORT (oops);
-	}
+		/* the remaining arguments are input console file names */
 
-	if (opt.ind >= argc)
-	{
-		/* no input(console) file names are specified.
-		 * the standard input becomes the input console */
-		icf[icfl++] = QSE_T("");
+		icfc = argc - opt.ind + 1;
+		icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
+		if (icf == QSE_NULL)
+		{
+			out_of_memory ();
+			ABORT (oops);
+		}
+
+		if (opt.ind >= argc)
+		{
+			/* no input(console) file names are specified.
+			 * the standard input becomes the input console */
+			icf[icfl++] = QSE_T("");
+		}
+		else
+		{	
+			do { icf[icfl++] = argv[opt.ind++]; } while (opt.ind < argc);
+		}
+		icf[icfl] = QSE_NULL;
 	}
-	else
-	{	
-		do { icf[icfl++] = argv[opt.ind++]; } while (opt.ind < argc);
-	}
-	icf[icfl] = QSE_NULL;
 
 	ao->ost = QSE_AWK_PARSESTD_FILE;
 	ao->osf = osf;
@@ -563,14 +562,6 @@ static qse_awk_t* open_awk (void)
 		awk, QSE_AWK_DEPTH_BLOCK_PARSE | QSE_AWK_DEPTH_EXPR_PARSE, 50);
 	qse_awk_setmaxdepth (
 		awk, QSE_AWK_DEPTH_BLOCK_RUN | QSE_AWK_DEPTH_EXPR_RUN, 500);
-
-	/*
-	qse_awk_seterrstr (awk, QSE_AWK_EGBLRED, 
-		QSE_T("\uC804\uC5ED\uBCC0\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
-	qse_awk_seterrstr (awk, QSE_AWK_EFUNRED, 
-		QSE_T("\uD568\uC218 \'%.*s\'\uAC00 \uC7AC\uC815\uC758 \uB418\uC5C8\uC2B5\uB2C8\uB2E4"));
-	*/
-	/*qse_awk_setkeyword (awk, QSE_T("func"), 4, QSE_T("FX"), 2);*/
 
 	if (qse_awk_addfnc (awk, 
 		QSE_T("sleep"), 5, 0,
@@ -645,8 +636,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	rcb.on_exit = on_run_exit;
 	rcb.data = &ao;
 
-	rtx = qse_awk_rtx_openstd (
-		awk, 0, QSE_T("qseawk"), ao.icf, QSE_AWK_RTX_OPENSTD_STDIO);
+	rtx = qse_awk_rtx_openstd (awk, 0, QSE_T("qseawk"), ao.icf, QSE_NULL);
 	if (rtx == QSE_NULL) 
 	{
 		qse_printf (
@@ -694,19 +684,5 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-	int n;
-
-#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
-	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
-#endif
-
-	n = qse_runmain (argc, argv, awk_main);
-
-#if defined(_WIN32) && defined(_DEBUG)
-	/*#if defined(_MSC_VER)
-	_CrtDumpMemoryLeaks ();
-	#endif*/
-#endif
-
-	return n;
+	return qse_runmain (argc, argv, awk_main);
 }
