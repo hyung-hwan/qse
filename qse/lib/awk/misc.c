@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: misc.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -848,7 +848,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	{
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex, 
-			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 			str, len, ptr, left, &match, errnum);
 		if (n == -1) return QSE_NULL;
 		if (n == 0)
@@ -927,20 +927,21 @@ exit_loop:
 }
 
 #define QSE_AWK_REXERRTOERR(err) \
-	((err == QSE_REX_ENOERR)?    QSE_AWK_ENOERR: \
-	 (err == QSE_REX_ENOMEM)?    QSE_AWK_ENOMEM: \
-	 (err == QSE_REX_ERECUR)?    QSE_AWK_EREXRECUR: \
-	 (err == QSE_REX_ERPAREN)?   QSE_AWK_EREXRPAREN: \
-	 (err == QSE_REX_ERBRACKET)? QSE_AWK_EREXRBRACKET: \
-	 (err == QSE_REX_ERBRACE)?   QSE_AWK_EREXRBRACE: \
-	 (err == QSE_REX_EUNBALPAR)? QSE_AWK_EREXUNBALPAR: \
-	 (err == QSE_REX_ECOLON)?    QSE_AWK_EREXCOLON: \
-	 (err == QSE_REX_ECRANGE)?   QSE_AWK_EREXCRANGE: \
-	 (err == QSE_REX_ECCLASS)?   QSE_AWK_EREXCCLASS: \
-	 (err == QSE_REX_EBRANGE)?   QSE_AWK_EREXBRANGE: \
-	 (err == QSE_REX_EEND)?      QSE_AWK_EREXEND: \
-	 (err == QSE_REX_EGARBAGE)?  QSE_AWK_EREXGARBAGE: \
-	                             QSE_AWK_EINTERN)
+	((err == QSE_REX_ENOERR)?      QSE_AWK_ENOERR: \
+	 (err == QSE_REX_ENOMEM)?      QSE_AWK_ENOMEM: \
+	 (err == QSE_REX_ERECUR)?      QSE_AWK_EREXRECUR: \
+	 (err == QSE_REX_ERPAREN)?     QSE_AWK_EREXRPAREN: \
+	 (err == QSE_REX_ERBRACKET)?   QSE_AWK_EREXRBRACKET: \
+	 (err == QSE_REX_ERBRACE)?     QSE_AWK_EREXRBRACE: \
+	 (err == QSE_REX_EUNBALPAREN)? QSE_AWK_EREXUNBALPAREN: \
+	 (err == QSE_REX_EINVALBRACE)? QSE_AWK_EREXINVALBRACE: \
+	 (err == QSE_REX_ECOLON)?      QSE_AWK_EREXCOLON: \
+	 (err == QSE_REX_ECRANGE)?     QSE_AWK_EREXCRANGE: \
+	 (err == QSE_REX_ECCLASS)?     QSE_AWK_EREXCCLASS: \
+	 (err == QSE_REX_EBRANGE)?     QSE_AWK_EREXBRANGE: \
+	 (err == QSE_REX_EEND)?        QSE_AWK_EREXEND: \
+	 (err == QSE_REX_EGARBAGE)?    QSE_AWK_EREXGARBAGE: \
+	                               QSE_AWK_EINTERN)
 
 void* qse_awk_buildrex (
 	qse_awk_t* awk, const qse_char_t* ptn, 
@@ -950,7 +951,10 @@ void* qse_awk_buildrex (
 	void* p;
 
 	p = qse_buildrex (
-		awk->mmgr, awk->rex.depth.max.build, ptn, len, &err);
+		awk->mmgr, awk->rex.depth.max.build, 
+		((awk->option&QSE_AWK_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
+		ptn, len, &err
+	);
 	if (p == QSE_NULL) *errnum = QSE_AWK_REXERRTOERR(err);
 	return p;
 }

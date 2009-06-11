@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: awk.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -411,6 +411,9 @@ enum qse_awk_option_t
 	/* allows BEGIN, END, pattern-action blocks */
 	QSE_AWK_PABLOCK     = (1 << 16),
 
+	/* allow {n,m} in a regular expression */
+	QSE_AWK_REXBOUND    = (1 << 17),
+
 	/* option aggregtes */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
@@ -560,7 +563,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
 	QSE_AWK_EREXRBRACKET,     /* a right bracket is expected */
 	QSE_AWK_EREXRBRACE,       /* a right brace is expected */
-	QSE_AWK_EREXUNBALPAR,     /* unbalanced parenthesis */
+	QSE_AWK_EREXUNBALPAREN,   /* unbalanced parenthesis */
+	QSE_AWK_EREXINVALBRACE,   /* invalid brace */
 	QSE_AWK_EREXCOLON,        /* a colon is expected */
 	QSE_AWK_EREXCRANGE,       /* invalid character range */
 	QSE_AWK_EREXCCLASS,       /* invalid character class */

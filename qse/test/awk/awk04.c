@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: awk04.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -67,9 +67,11 @@ int main ()
 
 	/* create a runtime context */
 	rtx = qse_awk_rtx_openstd (
-		awk, 0,
-		QSE_NULL,                  /* no console input */
-		QSE_AWK_RTX_OPENSTD_STDIO  /* stdout for console output */
+		awk, 
+		0,
+		QSE_T("awk04"),
+		QSE_NULL, /* stdin */
+		QSE_NULL  /* stdout */
 	);
 	if (rtx == QSE_NULL) 
 	{

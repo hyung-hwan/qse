@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 185 2009-06-05 12:48:15Z hyunghwan.chung $
+ * $Id: Awk.hpp 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -518,7 +518,8 @@ public:
 		ERR_REXRPAREN = QSE_AWK_EREXRPAREN,
 		ERR_REXRBRACKET = QSE_AWK_EREXRBRACKET,
 		ERR_REXRBRACE = QSE_AWK_EREXRBRACE,
-		ERR_REXUNBALPAR = QSE_AWK_EREXUNBALPAR,
+		ERR_REXUNBALPAREN = QSE_AWK_EREXUNBALPAREN,
+		ERR_REXINVALBRACE = QSE_AWK_EREXINVALBRACE,
 		ERR_REXCOLON = QSE_AWK_EREXCOLON,
 		ERR_REXCRANGE = QSE_AWK_EREXCRANGE,
 		ERR_REXCCLASS = QSE_AWK_EREXCCLASS,
@@ -555,7 +556,9 @@ public:
 		/** Allows the assignment of a map value to a variable */
 		OPT_MAPTOVAR = QSE_AWK_MAPTOVAR,
 		/** Allows BEGIN, END, pattern-action blocks */
-		OPT_PABLOCK = QSE_AWK_PABLOCK
+		OPT_PABLOCK = QSE_AWK_PABLOCK,
+		/** Allows {n,m} in a regular expression */
+		OPT_REXBOUND = QSE_AWK_REXBOUND
 	};
 	// end of enum Option
 	

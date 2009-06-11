@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: run.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2101,7 +2101,7 @@ static int run_while (qse_awk_rtx_t* run, qse_awk_nde_while_t* nde)
 	return 0;
 }
 
-static int run_for (qse_awk_rtx_t* run, qse_awk_nde_for_t* nde)
+static int run_for (qse_awk_rtx_t* rtx, qse_awk_nde_for_t* nde)
 {
 	qse_awk_val_t* val;
 
@@ -2109,12 +2109,12 @@ static int run_for (qse_awk_rtx_t* run, qse_awk_nde_for_t* nde)
 	{
 		QSE_ASSERT (nde->init->next == QSE_NULL);
 
-		ON_STATEMENT (run, nde->init);
-		val = eval_expression(run,nde->init);
+		ON_STATEMENT (rtx, nde->init);
+		val = eval_expression(rtx,nde->init);
 		if (val == QSE_NULL) return -1;
 
-		qse_awk_rtx_refupval (run, val);
-		qse_awk_rtx_refdownval (run, val);
+		qse_awk_rtx_refupval (rtx, val);
+		qse_awk_rtx_refdownval (rtx, val);
 	}
 
 	while (1)
@@ -2127,53 +2127,53 @@ static int run_for (qse_awk_rtx_t* run, qse_awk_nde_for_t* nde)
 			 * the for statement are allowed */
 			QSE_ASSERT (nde->test->next == QSE_NULL);
 
-			ON_STATEMENT (run, nde->test);
-			test = eval_expression (run, nde->test);
+			ON_STATEMENT (rtx, nde->test);
+			test = eval_expression (rtx, nde->test);
 			if (test == QSE_NULL) return -1;
 
-			qse_awk_rtx_refupval (run, test);
-			if (qse_awk_rtx_valtobool (run, test))
+			qse_awk_rtx_refupval (rtx, test);
+			if (qse_awk_rtx_valtobool (rtx, test))
 			{
-				if (run_statement(run,nde->body) == -1)
+				if (run_statement(rtx,nde->body) == -1)
 				{
-					qse_awk_rtx_refdownval (run, test);
+					qse_awk_rtx_refdownval (rtx, test);
 					return -1;
 				}
 			}
 			else
 			{
-				qse_awk_rtx_refdownval (run, test);
+				qse_awk_rtx_refdownval (rtx, test);
 				break;
 			}
 
-			qse_awk_rtx_refdownval (run, test);
+			qse_awk_rtx_refdownval (rtx, test);
 		}	
 		else
 		{
-			if (run_statement(run,nde->body) == -1) return -1;
+			if (run_statement(rtx,nde->body) == -1) return -1;
 		}
 
-		if (run->exit_level == EXIT_BREAK)
+		if (rtx->exit_level == EXIT_BREAK)
 		{	
-			run->exit_level = EXIT_NONE;
+			rtx->exit_level = EXIT_NONE;
 			break;
 		}
-		else if (run->exit_level == EXIT_CONTINUE)
+		else if (rtx->exit_level == EXIT_CONTINUE)
 		{
-			run->exit_level = EXIT_NONE;
+			rtx->exit_level = EXIT_NONE;
 		}
-		else if (run->exit_level != EXIT_NONE) break;
+		else if (rtx->exit_level != EXIT_NONE) break;
 
 		if (nde->incr != QSE_NULL)
 		{
 			QSE_ASSERT (nde->incr->next == QSE_NULL);
 
-			ON_STATEMENT (run, nde->incr);
-			val = eval_expression (run, nde->incr);
+			ON_STATEMENT (rtx, nde->incr);
+			val = eval_expression (rtx, nde->incr);
 			if (val == QSE_NULL) return -1;
 
-			qse_awk_rtx_refupval (run, val);
-			qse_awk_rtx_refdownval (run, val);
+			qse_awk_rtx_refupval (rtx, val);
+			qse_awk_rtx_refdownval (rtx, val);
 		}
 	}
 
@@ -2182,7 +2182,7 @@ static int run_for (qse_awk_rtx_t* run, qse_awk_nde_for_t* nde)
 
 struct foreach_walker_t
 {
-	qse_awk_rtx_t* run;
+	qse_awk_rtx_t* rtx;
 	qse_awk_nde_t* var;
 	qse_awk_nde_t* body;
 	int ret;
@@ -2195,35 +2195,50 @@ static qse_map_walk_t walk_foreach (
 	qse_awk_val_t* str;
 
 	str = (qse_awk_val_t*) qse_awk_rtx_makestrval (
-		w->run, QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair));
+		w->rtx, QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair));
 	if (str == QSE_NULL) 
 	{
 		/* adjust the error line */
-		w->run->errlin = w->var->line;
+		w->rtx->errlin = w->var->line;
 		w->ret = -1;
 		return QSE_MAP_WALK_STOP;
 	}
 
-	qse_awk_rtx_refupval (w->run, str);
-	if (do_assignment (w->run, w->var, str) == QSE_NULL)
+	qse_awk_rtx_refupval (w->rtx, str);
+	if (do_assignment (w->rtx, w->var, str) == QSE_NULL)
 	{
-		qse_awk_rtx_refdownval (w->run, str);
+		qse_awk_rtx_refdownval (w->rtx, str);
 		w->ret = -1;
 		return QSE_MAP_WALK_STOP;
 	}
 
-	if (run_statement (w->run, w->body) == -1)
+	if (run_statement (w->rtx, w->body) == -1)
 	{
-		qse_awk_rtx_refdownval (w->run, str);
+		qse_awk_rtx_refdownval (w->rtx, str);
 		w->ret = -1;
 		return QSE_MAP_WALK_STOP;
 	}
 	
-	qse_awk_rtx_refdownval (w->run, str);
+	qse_awk_rtx_refdownval (w->rtx, str);
+
+	if (w->rtx->exit_level == EXIT_BREAK)
+	{	
+		w->rtx->exit_level = EXIT_NONE;
+		return QSE_MAP_WALK_STOP;
+	}
+	else if (w->rtx->exit_level == EXIT_CONTINUE)
+	{
+		w->rtx->exit_level = EXIT_NONE;
+	}
+	else if (w->rtx->exit_level != EXIT_NONE) 
+	{
+		return QSE_MAP_WALK_STOP;
+	}
+
 	return QSE_MAP_WALK_FORWARD;
 }
 
-static int run_foreach (qse_awk_rtx_t* run, qse_awk_nde_foreach_t* nde)
+static int run_foreach (qse_awk_rtx_t* rtx, qse_awk_nde_foreach_t* nde)
 {
 	qse_awk_nde_exp_t* test;
 	qse_awk_val_t* rv;
@@ -2239,27 +2254,27 @@ static int run_foreach (qse_awk_rtx_t* run, qse_awk_nde_foreach_t* nde)
 	 * by the parser first of all */
 	QSE_ASSERT (test->right->next == QSE_NULL); 
 
-	rv = eval_expression (run, test->right);
+	rv = eval_expression (rtx, test->right);
 	if (rv == QSE_NULL) return -1;
 
-	qse_awk_rtx_refupval (run, rv);
+	qse_awk_rtx_refupval (rtx, rv);
 	if (rv->type != QSE_AWK_VAL_MAP)
 	{
-		qse_awk_rtx_refdownval (run, rv);
+		qse_awk_rtx_refdownval (rtx, rv);
 
 		qse_awk_rtx_seterror (
-			run, QSE_AWK_ENOTMAPIN, test->right->line, QSE_NULL);
+			rtx, QSE_AWK_ENOTMAPIN, test->right->line, QSE_NULL);
 		return -1;
 	}
 	map = ((qse_awk_val_map_t*)rv)->map;
 
-	walker.run = run;
+	walker.rtx = rtx;
 	walker.var = test->left;
 	walker.body = nde->body;
 	walker.ret = 0;
 	qse_map_walk (map, walk_foreach, &walker);
 
-	qse_awk_rtx_refdownval (run, rv);
+	qse_awk_rtx_refdownval (rtx, rv);
 	return walker.ret;
 }
 
@@ -3098,7 +3113,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			n = QSE_AWK_MATCHREX (
 				((qse_awk_rtx_t*)run)->awk, 
 				((qse_awk_val_rex_t*)v)->code,
-				((((qse_awk_rtx_t*)run)->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+				((((qse_awk_rtx_t*)run)->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 				((qse_awk_val_str_t*)run->inrec.d0)->ptr,
 				((qse_awk_val_str_t*)run->inrec.d0)->len,
 				((qse_awk_val_str_t*)run->inrec.d0)->ptr,
@@ -4775,7 +4790,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	{
 		n = QSE_AWK_MATCHREX (
 			run->awk, rex_code,
-			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+			((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 			((qse_awk_val_str_t*)left)->ptr,
 			((qse_awk_val_str_t*)left)->len,
 			((qse_awk_val_str_t*)left)->ptr,
@@ -4815,7 +4830,7 @@ static qse_awk_val_t* eval_binop_match0 (
 
 		n = QSE_AWK_MATCHREX (
 			run->awk, rex_code, 
-			((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+			((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 			out.u.cpldup.ptr, out.u.cpldup.len, 
 			out.u.cpldup.ptr, out.u.cpldup.len, 
 			QSE_NULL, &errnum);

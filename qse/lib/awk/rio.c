@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 135 2009-05-15 13:31:43Z hyunghwan.chung $
+ * $Id: rio.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -275,7 +275,7 @@ int qse_awk_rtx_readio (
 
 					n = QSE_AWK_MATCHREX (
 						run->awk, run->gbl.rs, 
-						((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+						((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						&match, &run->errnum);
@@ -363,7 +363,7 @@ int qse_awk_rtx_readio (
 
 			n = QSE_AWK_MATCHREX (
 				run->awk, run->gbl.rs, 
-				((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+				((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				&match, &run->errnum);

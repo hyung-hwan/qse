@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: sed.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -409,6 +409,7 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	code = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
+		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
 		QSE_STR_PTR(&sed->tmp.rex), 
 		QSE_STR_LEN(&sed->tmp.rex), 
 		QSE_NULL
@@ -927,6 +928,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	cmd->u.subst.rex = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
+		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
 		QSE_STR_PTR(t[0]),
 		QSE_STR_LEN(t[0]),
 		QSE_NULL
@@ -1136,7 +1138,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_T('q'):
 		case QSE_T('Q'):
 			cmd->type = c;
-			if (sed->option & QSE_SED_CLASSIC &&
+			if (sed->option & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				SETERR1 (
@@ -1152,7 +1154,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_T('a'):
 		case QSE_T('i'):
-			if (sed->option & QSE_SED_CLASSIC &&
+			if (sed->option & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				qse_char_t tmpc = c;
@@ -1196,7 +1198,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 
 		case QSE_T('='):
-			if (sed->option & QSE_SED_CLASSIC &&
+			if (sed->option & QSE_SED_STRICT &&
 			    cmd->a2.type != QSE_SED_ADR_NONE)
 			{
 				qse_char_t tmpc = c;
@@ -1321,7 +1323,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 			while (IS_SPACE(c)) c = NXTSC (sed);
 
 			if (c == QSE_T(',') ||
-			    (!(sed->option&QSE_SED_CLASSIC) && c == QSE_T('~')))
+			    ((sed->option&QSE_SED_STARTSTEP) && c==QSE_T('~')))
 			{
 				qse_char_t delim = c;
 
@@ -1344,7 +1346,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 						return -1;
 					}
 				}
-				else if (!(sed->option & QSE_SED_CLASSIC) && 
+				else if ((sed->option&QSE_SED_STARTSTEP) && 
 				         (delim == QSE_T('~')))
 				{
 					if (cmd->a1.type != QSE_SED_ADR_LINE || 
@@ -1858,7 +1860,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	QSE_ASSERT (cmd->type == QSE_SED_CMD_SUBSTITUTE);
 
 	qse_str_clear (&sed->e.txt.subst);
-	if (cmd->u.subst.i) opt = QSE_REX_IGNORECASE;
+	if (cmd->u.subst.i) opt = QSE_REX_MATCH_IGNORECASE;
 
 	str_ptr = QSE_STR_PTR(&sed->e.in.line);
 	str_len = QSE_STR_LEN(&sed->e.in.line);
