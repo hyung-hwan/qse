@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 189 2009-06-07 06:23:53Z hyunghwan.chung $
+ * $Id: Awk.cpp 197 2009-06-12 02:59:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -383,7 +383,8 @@ int Awk::Argument::init (const char_t* str, size_t len)
 	this->str.ptr = (char_t*)str;
 	this->str.len = len;
 
-	if (qse_awk_rtx_strtonum (this->run->run, 
+	if (qse_awk_rtx_strtonum (
+		this->run->run, 0, 
 		str, len, &this->inum, &this->rnum) == 0)
 	{
 		this->rnum = (real_t)this->inum;

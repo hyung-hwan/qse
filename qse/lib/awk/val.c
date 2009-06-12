@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 182 2009-06-03 21:50:32Z hyunghwan.chung $
+ * $Id: val.c 197 2009-06-12 02:59:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1155,9 +1155,12 @@ int qse_awk_rtx_valtonum (
 
 	if (v->type == QSE_AWK_VAL_STR)
 	{
-		return qse_awk_rtx_strtonum (run,
+		return qse_awk_rtx_strtonum (
+			run, 0,
 			((qse_awk_val_str_t*)v)->ptr, 
-			((qse_awk_val_str_t*)v)->len, l, r);
+			((qse_awk_val_str_t*)v)->len, 
+			l, r
+		);
 	}
 
 #ifdef DEBUG_VAL
@@ -1171,24 +1174,24 @@ int qse_awk_rtx_valtonum (
 }
 
 int qse_awk_rtx_strtonum (
-	qse_awk_rtx_t* run, const qse_char_t* ptr, qse_size_t len, 
+	qse_awk_rtx_t* rtx, int strict,
+	const qse_char_t* ptr, qse_size_t len, 
 	qse_long_t* l, qse_real_t* r)
 {
 	const qse_char_t* endptr;
 
-	*l = qse_awk_strxtolong (run->awk, ptr, len, 0, &endptr);
-	if (*endptr == QSE_T('.') ||
-	    *endptr == QSE_T('E') ||
-	    *endptr == QSE_T('e'))
+	*l = qse_awk_strxtolong (rtx->awk, ptr, len, 0, &endptr);
+	if (endptr < ptr + len &&
+	    (*endptr == QSE_T('.') ||
+	     *endptr == QSE_T('E') ||
+	     *endptr == QSE_T('e')))
 	{
-		*r = qse_awk_strxtoreal (run->awk, ptr, len, QSE_NULL);
-		/* TODO: need to check if it is a valid number using 
-		 *       endptr for strxtoreal? */
+		*r = qse_awk_strxtoreal (rtx->awk, ptr, len, &endptr);
+		if (strict && endptr < ptr + len) return -1;
 		return 1; /* real */
 	}
 
-	/* TODO: do should i handle strings ending with invalid number 
-	 *       characters like "123xx" or "dkdkdkd"? */
+	if (strict && endptr < ptr + len) return -1;
 	return 0; /* long */
 }
 

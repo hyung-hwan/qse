@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
+ * $Id: awk.h 197 2009-06-12 02:59:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1690,19 +1690,28 @@ int qse_awk_rtx_valtonum (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_strtonum
- * NAME
- *  qse_awk_rtx_strtonum - convert a string to a number
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_strtonum() function converts a string to a number.
+ * A numeric string in the valid decimal, hexadecimal(0x), binary(0b), 
+ * octal(0) notation is converted to an integer and it is stored into
+ * memory pointed to by @a l; A string containng '.', 'E', or 'e' is 
+ * converted to a floating-pointer number and it is stored into memory
+ * pointed to by @a r. If @a strict is 0, the function takes up to the last
+ * valid character and never fails. If @a strict is non-zero, an invalid 
+ * character causes the function to return an error.
+ *
+ * @return 0 if converted to an integer,
+ *         1 if converted to a floating-point number
+ *         -1 on error.
  */
 int qse_awk_rtx_strtonum (
-	qse_awk_rtx_t*    run,
-	const qse_char_t* ptr,
-	qse_size_t        len, 
-	qse_long_t*       l, 
-	qse_real_t*       r
+	qse_awk_rtx_t*    rtx, /**< runtime context */
+	int               strict, /**< determines to perform strict check */
+	const qse_char_t* ptr, /**< points to a string to convert */
+	qse_size_t        len, /**< number of characters in a string */
+	qse_long_t*       l,   /**< stores a converted integer */
+	qse_real_t*       r    /**< stores a converted floating-poing number */
 );
-/******/
 
 /**
  * The qse_awk_rtx_alloc() function allocats a memory block of @a size bytes
