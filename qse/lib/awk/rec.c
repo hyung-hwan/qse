@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: rec.c 197 2009-06-12 02:59:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -201,6 +201,10 @@ static int split_record (qse_awk_rtx_t* run)
 
 	while (p != QSE_NULL)
 	{
+		qse_long_t l;
+		qse_real_t r;
+		int x;
+
 		if (fs_len <= 1)
 		{
 			p = qse_awk_rtx_strxntok (
@@ -228,8 +232,12 @@ static int split_record (qse_awk_rtx_t* run)
 
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
+
+		x = qse_awk_rtx_strtonum (run, 1, tok, tok_len, &l, &r);
 		run->inrec.flds[run->inrec.nflds].val = 
-			qse_awk_rtx_makestrval (run, tok, tok_len);
+			(x <= -1)? qse_awk_rtx_makestrval (run, tok, tok_len):
+			(x == 0)? qse_awk_rtx_makeintval (run, l):
+			/*(x >= 1)?*/ qse_awk_rtx_makerealval (run, r);
 
 		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
 		{
