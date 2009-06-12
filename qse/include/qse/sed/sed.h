@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: sed.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -41,7 +41,7 @@
  * @todo enhance execution of the l command. 
  */
 
-/** @class qse_sed_t
+/** @struct qse_sed_t
  * The qse_sed_t type defines a stream editor. The structural details are 
  * hidden as it is a relatively complex data type and fragile to external
  * changes. To use a stream editor, you typically can:
@@ -177,7 +177,7 @@ typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 
 /** 
  * The qse_sed_io_fun_t type defines an IO handler. An IO handler is called by
- * qse_sed_execute().
+ * qse_sed_exec().
  */
 typedef qse_ssize_t (*qse_sed_io_fun_t) (
         qse_sed_t*        sed,

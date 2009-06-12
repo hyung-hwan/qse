@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 193 2009-06-08 13:09:01Z hyunghwan.chung $
+ * $Id: pio.c 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -66,6 +66,18 @@ void qse_pio_close (qse_pio_t* pio)
 {
 	qse_pio_fini (pio);
 	QSE_MMGR_FREE (pio->mmgr, pio);
+}
+
+static int closefile (void* arg, int fd)
+{
+	qse_pio_hnd_t* handle = (qse_pio_hnd_t*)arg;
+	if (fd != 0 && fd != 1 && fd != 2 &&
+	    fd != handle[0] && fd != handle[1] && fd != handle[2] &&
+	    fd != handle[3] && fd != handle[4] && fd != handle[5]) 
+	{
+		QSE_CLOSE (fd);
+	}
+	return 0;
 }
 
 qse_pio_t* qse_pio_init (
@@ -172,6 +184,7 @@ qse_pio_t* qse_pio_init (
 	if (pid == 0)
 	{
 		/* child */
+
 		qse_pio_hnd_t devnull;
 		qse_mchar_t* mcmd;
 		extern char** environ; 
@@ -182,18 +195,48 @@ qse_pio_t* qse_pio_init (
 		qse_mchar_t buf[64];
 	#endif
 
+		/* TODO: consider if reading from /proc/self/fd is 
+		 *       a better idea. */
+
+		struct rlimit rlim;
+		int fd;
+
+		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) == -1 ||
+		    rlim.rlim_max == RLIM_INFINITY) 
+		{
+		#ifdef HAVE_SYSCONF
+			fd = sysconf (_SC_OPEN_MAX);
+			if (fd <= 0)
+		#endif
+				fd = 1024;
+		}
+		else fd = rlim.rlim_max;
+
+		while (--fd > 2)
+		{
+			if (fd != handle[0] &&
+			    fd != handle[1] &&
+			    fd != handle[2] &&
+			    fd != handle[3] &&
+			    fd != handle[4] &&
+			    fd != handle[5]) QSE_CLOSE (fd);
+		}
+
 		if (flags & QSE_PIO_WRITEIN)
 		{
 			/* child should read */
 			QSE_CLOSE (handle[1]);
+			handle[1] = QSE_PIO_HND_NIL;
 			if (QSE_DUP2 (handle[0], 0) == -1) goto child_oops;
 			QSE_CLOSE (handle[0]);
+			handle[0] = QSE_PIO_HND_NIL;
 		}
 
 		if (flags & QSE_PIO_READOUT)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[2]);
+			handle[2] = QSE_PIO_HND_NIL;
 			if (QSE_DUP2 (handle[3], 1) == -1) goto child_oops;
 
 			if (flags & QSE_PIO_ERRTOOUT)
@@ -201,13 +244,15 @@ qse_pio_t* qse_pio_init (
 				if (QSE_DUP2 (handle[3], 2) == -1) goto child_oops;
 			}
 
-			QSE_CLOSE (handle[3]);
+			QSE_CLOSE (handle[3]); 
+			handle[3] = QSE_PIO_HND_NIL;
 		}
 
 		if (flags & QSE_PIO_READERR)
 		{
 			/* child should write */
-			QSE_CLOSE (handle[4]);
+			QSE_CLOSE (handle[4]); 
+			handle[4] = QSE_PIO_HND_NIL;
 			if (QSE_DUP2 (handle[5], 2) == -1) goto child_oops;
 
 			if (flags & QSE_PIO_OUTTOERR)
@@ -216,6 +261,7 @@ qse_pio_t* qse_pio_init (
 			}
 
 			QSE_CLOSE (handle[5]);
+			handle[5] = QSE_PIO_HND_NIL;
 		}
 
 		if ((flags & QSE_PIO_INTONUL) || 
@@ -440,9 +486,9 @@ oops:
 
 void qse_pio_fini (qse_pio_t* pio)
 {
-	qse_pio_end (pio, QSE_PIO_IN);
-	qse_pio_end (pio, QSE_PIO_OUT);
 	qse_pio_end (pio, QSE_PIO_ERR);
+	qse_pio_end (pio, QSE_PIO_OUT);
+	qse_pio_end (pio, QSE_PIO_IN);
 
 	qse_pio_setflags (pio, QSE_PIO_WAIT_NOBLOCK|QSE_PIO_WAIT_NORETRY, -1);
 	qse_pio_wait (pio);

@@ -1,5 +1,5 @@
 /*
- * $Id: syscall.h 193 2009-06-08 13:09:01Z hyunghwan.chung $
+ * $Id: syscall.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -44,6 +44,9 @@
 #endif
 #ifdef HAVE_UTIME_H
 #	include <utime.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#	include <sys/resource.h>
 #endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
@@ -222,5 +225,16 @@
 #	define QSE_UTIMES(file,t) utimes(file,t)
 #endif
 
+#ifdef SYS_getrlimit
+#	define QSE_GETRLIMIT(res,lim) syscall(SYS_getrlimit,res,lim)
+#else
+#	define QSE_GETRLIMIT(res,lim) getrlimit(res,lim)
+#endif
+
+#ifdef SYS_setrlimit
+#	define QSE_SETRLIMIT(res,lim) syscall(SYS_setrlimit,res,lim)
+#else
+#	define QSE_SETRLIMIT(res,lim) setrlimit(res,lim)
+#endif
 
 #endif

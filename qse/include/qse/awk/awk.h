@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: awk.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,13 +37,13 @@
  * stated in the array fnc. If no errors occur, it should print 24.
  */
 
-/** @class qse_awk_t
+/** @struct qse_awk_t
  * The qse_awk_t type defines an AWK interpreter. The details are hidden as
  * it is a complex type susceptible to misuse.
  */
 typedef struct qse_awk_t qse_awk_t;
 
-/** @class qse_awk_rtx_t
+/** @struct qse_awk_rtx_t
  * The qse_awk_rtx_t type defines a runtime context. The details are hidden
  * as it is a complex type susceptible to misuse.
  */

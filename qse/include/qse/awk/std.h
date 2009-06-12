@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: std.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,12 +23,13 @@
 
 /** @file
  * Standard AWK Interpreter
+ * @todo
+ * - console name handling an empty string("") and assignment (v=yyyy)
+ * - StdAwk ARGV and console name handling
  */
 
-/****e* AWK/qse_awk_parsestd_type_t
- * NAME
- *  qse_awk_parsestd_type_t - define a source type
- * SYNOPSIS
+/**
+ * The qse_awk_parsestd_type_t type defines a source script type
  */
 enum qse_awk_parsestd_type_t
 {
@@ -38,13 +39,9 @@ enum qse_awk_parsestd_type_t
 	QSE_AWK_PARSESTD_STDIO = 3  /* standard input/output */
 };
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
-/******/
 
-
-/****s* AWK/qse_awk_parsestd_in_t
- * NAME
- *  qse_awk_parsestd_in_t - define source input 
- * SYNOPSIS
+/**
+ * The qse_awk_parsestd_in_t type defines a source input.
  */
 struct qse_awk_parsestd_in_t
 {
@@ -58,12 +55,9 @@ struct qse_awk_parsestd_in_t
 	} u;
 };
 typedef struct qse_awk_parsestd_in_t qse_awk_parsestd_in_t;
-/******/
 
-/****s* AWK/qse_awk_parsestd_out_t
- * NAME
- *  qse_awk_parsestd_out_t - define source output
- * SYNOPSIS
+/**
+ * The qse_awk_parsestd_out_t type defines a source output.
  */
 struct qse_awk_parsestd_out_t
 {
@@ -77,52 +71,46 @@ struct qse_awk_parsestd_out_t
 	} u;
 };
 typedef struct qse_awk_parsestd_out_t qse_awk_parsestd_out_t;
-/******/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/****f* AWK/qse_awk_openstd
- * NAME
- *  qse_awk_openstd - create an awk object
- * SYNOPSIS
+/**
+ * The qse_awk_openstd() function creates an awk object.
  */
 qse_awk_t* qse_awk_openstd (
-	qse_size_t xtnsize
+	qse_size_t xtnsize /**< size of extension in bytes */
 );
-/******/
 
-/****f* AWK/qse_awk_getxtnstd
- * NAME
- *  qse_awk_getxtnstd - get the pointer to extension space
- * SYNOPSIS
+/**
+ * The qse_awk_getxtnstd() gets the pointer to extension space. 
+ * Note that you must not call qse_awk_getxtn() for an awk object
+ * created with qse_awk_openstd().
  */
 void* qse_awk_getxtnstd (
 	qse_awk_t* awk
 );
-/******/
 
-/****f* AWK/qse_awk_parsestd
- * NAME
- *  qse_awk_parsestd - parse source code
- * EXAMPLE
- *  The following example parses the literal string 'BEGIN { print 10; }' and
- *  deparses it out to a buffer 'buf'.
- *    int n;
- *    qse_awk_parsestd_in_t in;
- *    qse_awk_parsestd_out_t out;
- *    qse_char_t buf[1000];
+/**
+ * The qse_awk_parsestd() functions parses source script.
+ * The code below shows how to parse a literal string 'BEGIN { print 10; }' 
+ * and deparses it out to a buffer 'buf'.
+ * @code
+ * int n;
+ * qse_awk_parsestd_in_t in;
+ * qse_awk_parsestd_out_t out;
+ * qse_char_t buf[1000];
  *
- *    qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
- *    buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
- *    in.type = QSE_AWK_PARSESTD_CP;
- *    in.u.cp = QSE_T("BEGIN { print 10; }");
- *    out.type = QSE_AWK_PARSESTD_CP;
- *    out.u.cp = buf;
+ * qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
+ * buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
+ * in.type = QSE_AWK_PARSESTD_CP;
+ * in.u.cp = QSE_T("BEGIN { print 10; }");
+ * out.type = QSE_AWK_PARSESTD_CP;
+ * out.u.cp = buf;
  *
- *    n = qse_awk_parsestd (awk, &in, &out);
- * SYNOPSIS
+ * n = qse_awk_parsestd (awk, &in, &out);
+ * @endcode
  */
 int qse_awk_parsestd (
 	qse_awk_t*                      awk,
@@ -132,7 +120,6 @@ int qse_awk_parsestd (
 /******/
 
 /**
- * DESCRIPTION
  * The qse_awk_rtx_openstd() function creates a standard runtime context.
  * The caller should keep the contents of icf and ocf valid throughout
  * the lifetime of the runtime context created. The runtime context 
