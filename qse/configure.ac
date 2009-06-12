@@ -88,7 +88,7 @@ AC_SUBST(LIBM, $LIBM)
 dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h])
-AC_CHECK_HEADERS([time.h sys/time.h utime.h sys/syscall.h])
+AC_CHECK_HEADERS([time.h sys/time.h utime.h sys/resource.h sys/syscall.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -104,6 +104,7 @@ AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
+AC_CHECK_FUNCS([sysconf])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"

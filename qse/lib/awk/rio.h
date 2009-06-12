@@ -1,5 +1,5 @@
 /*
- * $Id: rio.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: rio.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -44,12 +44,7 @@ int qse_awk_rtx_nextio_read (
 int qse_awk_rtx_nextio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);
 
-int qse_awk_rtx_closeio_read (
-	qse_awk_rtx_t* run, int in_type, const qse_char_t* name);
-int qse_awk_rtx_closeio_write (
-	qse_awk_rtx_t* run, int out_type, const qse_char_t* name);
 int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name);
-
 void qse_awk_rtx_cleario (qse_awk_rtx_t* run);
 
 #ifdef __cplusplus
