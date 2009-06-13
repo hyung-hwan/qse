@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 197 2009-06-12 02:59:59Z hyunghwan.chung $
+ * $Id: rec.c 198 2009-06-12 12:58:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -233,11 +233,15 @@ static int split_record (qse_awk_rtx_t* run)
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 
+		/* this way of handling a record distorts a value. 
 		x = qse_awk_rtx_strtonum (run, 1, tok, tok_len, &l, &r);
 		run->inrec.flds[run->inrec.nflds].val = 
 			(x <= -1)? qse_awk_rtx_makestrval (run, tok, tok_len):
-			(x == 0)? qse_awk_rtx_makeintval (run, l):
-			/*(x >= 1)?*/ qse_awk_rtx_makerealval (run, r);
+			(x == 0)?  qse_awk_rtx_makeintval (run, l):
+			           qse_awk_rtx_makerealval (run, r);
+		*/
+		run->inrec.flds[run->inrec.nflds].val =
+			qse_awk_rtx_makestrval (run, tok, tok_len);
 
 		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
 		{
