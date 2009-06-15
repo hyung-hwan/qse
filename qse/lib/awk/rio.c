@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: rio.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -166,7 +166,7 @@ int qse_awk_rtx_readio (
 			QSE_AWK_FREE (run->awk, p->name);
 			QSE_AWK_FREE (run->awk, p);
 
-			if (run->errnum == QSE_AWK_ENOERR)
+			if (run->errinf.num == QSE_AWK_ENOERR)
 			{
 				/* if the error number has not been 
 				 * set by the user handler */
@@ -246,7 +246,7 @@ int qse_awk_rtx_readio (
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
 			if (n <= -1) 
 			{
-				if (run->errnum == QSE_AWK_ENOERR)
+				if (run->errinf.num == QSE_AWK_ENOERR)
 				{
 					/* if the error number has not been 
 				 	 * set by the user handler */
@@ -278,7 +278,7 @@ int qse_awk_rtx_readio (
 						((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-						&match, &run->errnum);
+						&match, &run->errinf.num);
 					if (n == -1)
 					{
 						ret = -1;
@@ -366,7 +366,7 @@ int qse_awk_rtx_readio (
 				((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-				&match, &run->errnum);
+				&match, &run->errinf.num);
 			if (n == -1)
 			{
 				ret = -1;
@@ -519,7 +519,7 @@ int qse_awk_rtx_writeio_str (
 			QSE_AWK_FREE (run->awk, p->name);
 			QSE_AWK_FREE (run->awk, p);
 
-			if (run->errnum == QSE_AWK_ENOERR)
+			if (run->errinf.num == QSE_AWK_ENOERR)
 				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
@@ -560,7 +560,7 @@ int qse_awk_rtx_writeio_str (
 		n = handler (run, QSE_AWK_RIO_WRITE, p, str, len);
 		if (n <= -1) 
 		{
-			if (run->errnum == QSE_AWK_ENOERR)
+			if (run->errinf.num == QSE_AWK_ENOERR)
 				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 
 			return -1;
@@ -616,7 +616,7 @@ int qse_awk_rtx_flushio (
 
 			if (n <= -1) 
 			{
-				if (run->errnum == QSE_AWK_ENOERR)
+				if (run->errinf.num == QSE_AWK_ENOERR)
 					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 				return -1;
 			}
@@ -685,7 +685,7 @@ int qse_awk_rtx_nextio_read (
 	n = handler (run, QSE_AWK_RIO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (run->errnum == QSE_AWK_ENOERR)
+		if (run->errinf.num == QSE_AWK_ENOERR)
 			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
@@ -763,7 +763,7 @@ int qse_awk_rtx_nextio_write (
 	n = handler (run, QSE_AWK_RIO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
-		if (run->errnum == QSE_AWK_ENOERR)
+		if (run->errinf.num == QSE_AWK_ENOERR)
 			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 		return -1;
 	}
@@ -881,7 +881,7 @@ int qse_awk_rtx_closio_write (
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
-					if (run->errnum == QSE_AWK_ENOERR)
+					if (run->errinf.num == QSE_AWK_ENOERR)
 						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
@@ -922,7 +922,7 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					if (run->errnum == QSE_AWK_ENOERR)
+					if (run->errinf.num == QSE_AWK_ENOERR)
 						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
@@ -963,7 +963,7 @@ void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 			n = handler (run, QSE_AWK_RIO_CLOSE, run->rio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
-				if (run->errnum == QSE_AWK_ENOERR)
+				if (run->errinf.num == QSE_AWK_ENOERR)
 					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 				/* TODO: some warnings need to be shown??? */
 			}

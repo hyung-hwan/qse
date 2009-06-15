@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 197 2009-06-12 02:59:59Z hyunghwan.chung $
+ * $Id: Awk.cpp 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -994,7 +994,14 @@ void Awk::Run::setErrorWithMessage (
 	ErrorNumber code, size_t line, const char_t* msg)
 {
 	QSE_ASSERT (this->run != QSE_NULL);
-	qse_awk_rtx_seterrmsg (this->run, (errnum_t)code, line, msg);
+
+	qse_awk_errinf_t errinf;
+
+	errinf.num = (errnum_t)code;
+	errinf.lin = line;
+	qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
+
+	qse_awk_rtx_seterrinf (this->run, &errinf);
 }
 
 int Awk::Run::setGlobal (int id, long_t v)
@@ -1129,7 +1136,13 @@ void Awk::setErrorWithMessage (ErrorNumber code, size_t line, const char_t* msg)
 {
 	if (awk != QSE_NULL)
 	{
-		qse_awk_seterrmsg (awk, (errnum_t)code, line, msg);
+		qse_awk_errinf_t errinf;
+
+		errinf.num = (errnum_t)code;
+		errinf.lin = line;
+		qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
+
+		qse_awk_seterrinf (awk, &errinf);
 		retrieveError ();
 	}
 	else

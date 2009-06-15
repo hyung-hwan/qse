@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: fnc.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -29,6 +29,8 @@ struct qse_awk_fnc_t
 		qse_size_t  len;
 	} name;
 
+	int dfl0; /* if set, ($0) is assumed if () is missing. 
+	           * this ia mainly for the weird length() function */
 	int valid; /* the entry is valid when this option is set */
 
 	struct
