@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: awk.h 200 2009-06-14 13:22:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -55,11 +55,13 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
-		unsigned int ref: 13
+		unsigned int ref: 11 \
+		unsigned int nstr: 2;
 #else
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
-		unsigned int ref: 29
+		unsigned int ref: 27; \
+		unsigned int nstr: 2;
 #endif
 
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)
