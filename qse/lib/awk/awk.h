@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: awk.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -231,10 +231,7 @@ struct qse_awk_t
 
 	/* housekeeping */
 	qse_awk_errstr_t errstr;
-
-	qse_awk_errnum_t errnum;
-	qse_size_t       errlin;
-	qse_char_t       errmsg[256];
+	qse_awk_errinf_t errinf;
 
 	qse_bool_t stopall;
 };
@@ -367,9 +364,7 @@ struct qse_awk_rtx_t
 		} max;
 	} depth;
 
-	qse_awk_errnum_t errnum;
-	qse_size_t       errlin;
-	qse_char_t       errmsg[256];
+	qse_awk_errinf_t errinf;
 
 	qse_awk_t* awk;
 	qse_awk_rcb_t rcb;

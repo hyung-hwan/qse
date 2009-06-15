@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 197 2009-06-12 02:59:59Z hyunghwan.chung $
+ * $Id: awk.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -173,10 +173,8 @@ typedef int (*qse_awk_sprintf_t) (
 	...
 );
 
-/****e* AWK/qse_awk_sio_cmd_t
- * NAME
- *  qse_awk_sio_cmd_t - define source IO commands
- * SYNOPSIS
+/**
+ * The qse_awk_sio_cmd_t type defines source IO commands
  */
 enum qse_awk_sio_cmd_t
 {
@@ -186,7 +184,6 @@ enum qse_awk_sio_cmd_t
 	QSE_AWK_SIO_WRITE  = 3
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
-/******/
 
 /****t* AWK/qse_awk_siof_t
  * NAME
@@ -539,7 +536,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EMAPTOSCALAR,      /* cannot change a map to a scalar value */
 	QSE_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
 	QSE_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
-	QSE_AWK_EVALTYPE,          /* wrong value type */
+	QSE_AWK_EVALTYPE,          /* invalid value type */
 	QSE_AWK_ERDELETE,          /* delete called with a wrong target */
 	QSE_AWK_ERRESET,           /* reset called with a wrong target */
 	QSE_AWK_ERNEXTBEG,         /* next called from BEGIN */
@@ -577,6 +574,16 @@ enum qse_awk_errnum_t
 };
 
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
+
+
+struct qse_awk_errinf_t
+{
+	qse_awk_errnum_t num;
+	qse_size_t       lin;
+	qse_char_t       msg[256];
+};
+
+typedef struct qse_awk_errinf_t qse_awk_errinf_t;
 
 /**
  * The qse_awk_errstr_t type defines a error string getter. It should return 
@@ -904,16 +911,19 @@ const qse_char_t* qse_awk_geterrmsg (
 	qse_awk_t* awk
 );
 
+void qse_awk_geterrinf (
+	qse_awk_t*        awk,
+	qse_awk_errinf_t* errinf
+);
+
 void qse_awk_seterrnum (
 	qse_awk_t*       awk,
 	qse_awk_errnum_t errnum
 );
 
-void qse_awk_seterrmsg (
-	qse_awk_t*        awk, 
-	qse_awk_errnum_t  errnum, 
-	qse_size_t        errlin,
-	const qse_char_t* errmsg
+void qse_awk_seterrinf (
+	qse_awk_t*              awk, 
+	const qse_awk_errinf_t* errinf
 );
 
 void qse_awk_geterror (
@@ -1415,25 +1425,19 @@ void* qse_awk_rtx_getxtn (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_getnvmap
- * NAME
- *  qse_awk_rtx_getnvmap - get the map of named variables 
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getnvmap() gets the map of named variables 
  */
 qse_map_t* qse_awk_rtx_getnvmap (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_geterrnum
- * NAME
- *  qse_awk_rtx_geterrnum - get an error code of a runtime context
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_geterrnum() function gets an error code of a runtime context
  */
 int qse_awk_rtx_geterrnum (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
 qse_size_t qse_awk_rtx_geterrlin (
 	qse_awk_rtx_t* rtx
@@ -1443,16 +1447,9 @@ const qse_char_t* qse_awk_rtx_geterrmsg (
 	qse_awk_rtx_t* rtx
 );
 
-void qse_awk_rtx_seterrnum (
-	qse_awk_rtx_t*   rtx,
-	qse_awk_errnum_t errnum
-);
-
-void qse_awk_rtx_seterrmsg (
-	qse_awk_rtx_t*    rtx, 
-	qse_awk_errnum_t  errnum,
-	qse_size_t        errlin,
-	const qse_char_t* errmsg
+void qse_awk_rtx_geterrinf (
+	qse_awk_rtx_t*    rtx,
+	qse_awk_errinf_t* errinf
 );
 
 void qse_awk_rtx_geterror (
@@ -1460,6 +1457,16 @@ void qse_awk_rtx_geterror (
 	qse_awk_errnum_t*  errnum, 
 	qse_size_t*        errlin,
 	const qse_char_t** errmsg
+);
+
+void qse_awk_rtx_seterrnum (
+	qse_awk_rtx_t*   rtx,
+	qse_awk_errnum_t errnum
+);
+
+void qse_awk_rtx_seterrinf (
+	qse_awk_rtx_t*          rtx, 
+	const qse_awk_errinf_t* errinf
 );
 
 void qse_awk_rtx_seterror (

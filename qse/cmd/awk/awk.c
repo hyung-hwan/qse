@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: awk.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -146,21 +146,34 @@ static void unset_intr_run (void)
 static qse_map_walk_t print_awk_value (
 	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
-	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
+	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	qse_char_t* str;
 	qse_size_t len;
+	qse_awk_errinf_t oerrinf;
 
-	str = qse_awk_rtx_valtocpldup (run, QSE_MAP_VPTR(pair), &len);
+	qse_awk_rtx_geterrinf (rtx, &oerrinf);
+
+	str = qse_awk_rtx_valtocpldup (rtx, QSE_MAP_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
-		dprint (QSE_T("***OUT OF MEMORY***\n"));
+		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTYPE)
+		{
+			dprint (QSE_T("%.*s = [not printable]\n"), 
+				(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
+
+			qse_awk_rtx_seterrinf (rtx, &oerrinf);
+		}
+		else
+		{
+			dprint (QSE_T("***OUT OF MEMORY***\n"));
+		}	
 	}
 	else
 	{
 		dprint (QSE_T("%.*s = %.*s\n"), 
 			(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair), 
 			(int)len, str);
-		qse_awk_free (qse_awk_rtx_getawk(run), str);
+		qse_awk_free (qse_awk_rtx_getawk(rtx), str);
 	}
 
 	return QSE_MAP_WALK_FORWARD;

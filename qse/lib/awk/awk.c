@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 171 2009-06-01 09:34:34Z hyunghwan.chung $ 
+ * $Id: awk.c 199 2009-06-14 08:40:52Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -153,8 +153,8 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 
 	awk->option = QSE_AWK_CLASSIC;
-	awk->errnum = QSE_AWK_ENOERR;
-	awk->errlin = 0;
+	awk->errinf.num = QSE_AWK_ENOERR;
+	awk->errinf.lin = 0;
 	awk->errstr = qse_awk_dflerrstr;
 	awk->stopall = QSE_FALSE;
 

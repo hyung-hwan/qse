@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 194 2009-06-09 13:07:42Z hyunghwan.chung $
+ * $Id: parse.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -199,7 +199,7 @@ static qse_awk_nde_t* parse_hashidx (
 	qse_size_t line);
 static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, qse_char_t* name, qse_size_t name_len, 
-	qse_awk_fnc_t* fnc, qse_size_t line);
+	qse_awk_fnc_t* fnc, qse_size_t line, int noarg);
 static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_while (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_for (qse_awk_t* awk, qse_size_t line);
@@ -365,7 +365,7 @@ static global_t gtab[] =
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
 
 #define CLRERR(awk) qse_awk_seterrnum(awk,QSE_AWK_ENOERR)
-#define ISNOERR(awk) ((awk)->errnum == QSE_AWK_ENOERR)
+#define ISNOERR(awk) ((awk)->errinf.num == QSE_AWK_ENOERR)
 #define SETERR(awk,code) qse_awk_seterrnum(awk,code)
 #define SETERRLIN(awk,code,line) qse_awk_seterror(awk,code,line,QSE_NULL);
 #define SETERRTOK(awk,code) \
@@ -3200,6 +3200,17 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 
 		if (!MATCH(awk,TOKEN_LPAREN))
 		{
+			if (fnc->dfl0)
+			{
+				/* handles a function that assumes () 
+				 * when () is missing */
+				nde = parse_fncall (
+					awk, name_dup, name_len, fnc, line, 1);
+				if (nde == QSE_NULL) 
+					QSE_AWK_FREE (awk, name_dup);
+				return (qse_awk_nde_t*)nde;
+			}
+
 			/* an intrinsic function should be in the form 
 		 	 * of the function call */
 			QSE_AWK_FREE (awk, name_dup);
@@ -3207,7 +3218,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 			return QSE_NULL;
 		}
 
-		nde = parse_fncall (awk, name_dup, name_len, fnc, line);
+		nde = parse_fncall (awk, name_dup, name_len, fnc, line, 0);
 		if (nde == QSE_NULL) QSE_AWK_FREE (awk, name_dup);
 		return (qse_awk_nde_t*)nde;
 	}
@@ -3339,7 +3350,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 			}
 		}
 
-		nde = parse_fncall (awk, name_dup, name_len, QSE_NULL, line);
+		nde = parse_fncall (awk, name_dup, name_len, QSE_NULL, line,  0);
 		if (nde == QSE_NULL) QSE_AWK_FREE (awk, name_dup);
 		return (qse_awk_nde_t*)nde;
 	}	
@@ -3597,16 +3608,17 @@ exit_func:
 
 static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, qse_char_t* name, qse_size_t name_len, 
-	qse_awk_fnc_t* fnc, qse_size_t line)
+	qse_awk_fnc_t* fnc, qse_size_t line, int noarg)
 {
 	qse_awk_nde_t* head, * curr, * nde;
 	qse_awk_nde_call_t* call;
 	qse_size_t nargs;
 
-	if (get_token(awk) == -1) return QSE_NULL;
-	
 	head = curr = QSE_NULL;
 	nargs = 0;
+
+	if (noarg) goto make_node;
+	if (get_token(awk) == -1) return QSE_NULL;
 
 	if (MATCH(awk,TOKEN_RPAREN)) 
 	{
@@ -3660,6 +3672,7 @@ static qse_awk_nde_t* parse_fncall (
 
 	}
 
+make_node:
 	call = (qse_awk_nde_call_t*) 
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_call_t));
 	if (call == QSE_NULL) 
