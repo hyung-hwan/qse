@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 197 2009-06-12 02:59:59Z hyunghwan.chung $
+ * $Id: val.c 200 2009-06-14 13:22:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,36 +24,36 @@
 
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
 
-static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0 };
-static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, QSE_T(""), 0 };
+static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 0 };
+static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 0, QSE_T(""), 0 };
 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
 static qse_awk_val_int_t awk_int[] =
 {
-	{ QSE_AWK_VAL_INT, 0, -1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  0, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  2, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  3, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  4, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  5, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  6, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  7, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  8, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0,  9, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 10, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 11, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 12, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 13, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 14, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 15, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 16, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 17, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 18, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 19, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 20, QSE_NULL }
+	{ QSE_AWK_VAL_INT, 0, 0, -1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  0, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  2, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  3, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  4, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  5, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  6, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  7, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  8, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0,  9, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 10, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 11, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 12, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 13, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 14, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 15, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 16, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 17, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 18, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 19, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 0, 20, QSE_NULL }
 };
 
 qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
@@ -132,6 +132,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* run, qse_long_t v)
 
 	val->type = QSE_AWK_VAL_INT;
 	val->ref = 0;
+	val->nstr = 0;
 	val->val = v;
 	val->nde = QSE_NULL;
 
@@ -203,6 +204,7 @@ qse_awk_val_t* qse_awk_rtx_makerealval (qse_awk_rtx_t* run, qse_real_t v)
 
 	val->type = QSE_AWK_VAL_REAL;
 	val->ref = 0;
+	val->nstr = 0;
 	val->val = v;
 	val->nde = QSE_NULL;
 
@@ -257,6 +259,7 @@ init:
 */
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
+	val->nstr = 0;
 	val->len = len;
 	val->ptr = (qse_char_t*)(val + 1);
 	/*qse_strxncpy (val->ptr, len+1, str, len);*/
@@ -283,6 +286,7 @@ qse_awk_val_t* qse_awk_rtx_makestrval_nodup (
 
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
+	val->nstr = 0;
 	val->len = len;
 	val->ptr = str;
 	return (qse_awk_val_t*)val;
@@ -330,6 +334,7 @@ init:
 */
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
+	val->nstr = 0;
 	val->len = len1 + len2;
 	val->ptr = (qse_char_t*)(val + 1);
 	/*qse_strxncpy (val->ptr, len1+1, str1, len1);
@@ -368,6 +373,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 
 	val->type = QSE_AWK_VAL_REX;
 	val->ref = 0;
+	val->nstr = 0;
 	val->len = len;
 
 	val->ptr = (qse_char_t*)(val + 1);
@@ -419,6 +425,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* run)
 
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
+	val->nstr = 0;
 	val->map = qse_map_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == QSE_NULL)
@@ -442,6 +449,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* run)
 
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
+	val->nstr = 0;
 	val->map = (qse_map_t*)(val + 1);
 
 	val->map = qse_map_init (val->map, run->awk->mmgr, 256, 70);
@@ -489,6 +497,7 @@ qse_awk_val_t* qse_awk_rtx_makerefval (qse_awk_rtx_t* run, int id, qse_awk_val_t
 
 	val->type = QSE_AWK_VAL_REF;
 	val->ref = 0;
+	val->nstr = 0;
 	val->id = id;
 	val->adr = adr;
 
@@ -560,11 +569,13 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cac
 			    rtx->scache32_count<QSE_COUNTOF(rtx->scache32))
 			{
 				rtx->scache32[rtx->scache32_count++] = v;
+				v->nstr = 0;
 			}
 			else if (v->len <= 64 && 
 			         rtx->scache64_count<QSE_COUNTOF(rtx->scache64))
 			{
 				rtx->scache64[rtx->scache64_count++] = v;
+				v->nstr = 0;
 			}
 			else QSE_AWK_FREE (rtx->awk, val);
 		}
