@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: run.c 201 2009-06-15 08:22:48Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -4182,24 +4182,35 @@ static int __cmp_str_real (
 }
 
 static int __cmp_str_str (
-	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n;
+	int n1, n2;
+	qse_long_t l1, l2;
+	qse_real_t r1, r2;
 	qse_awk_val_str_t* ls, * rs;
 
 	ls = (qse_awk_val_str_t*)left;
 	rs = (qse_awk_val_str_t*)right;
 
-	if (run->gbl.ignorecase)
+	if (ls->nstr == 0 && rs->nstr == 0)
 	{
-		n = qse_strxncasecmp (ls->ptr, ls->len, rs->ptr, rs->len);
+		/* nother are definitely a string */
+		return (rtx->gbl.ignorecase)?
+			qse_strxncasecmp (ls->ptr, ls->len, rs->ptr, rs->len):
+			qse_strxncmp (ls->ptr, ls->len, rs->ptr, rs->len);
+	}
+
+	n1 = qse_awk_rtx_strtonum (rtx, 0, ls->ptr, ls->len, &l1, &r1);
+	n2 = qse_awk_rtx_strtonum (rtx, 0, rs->ptr, rs->len, &l2, &r2);
+
+	if (n1 == 0)
+	{
+		return (n2 == 0)? (l1 - l2): ((qse_real_t)l1 - r2);
 	}
 	else
 	{
-		n = qse_strxncmp (ls->ptr, ls->len, rs->ptr, rs->len);
-	}
-
-	return n;
+		return (n2 == 0)? (r1 - (qse_real_t)l2): (r1 - r2);
+	}	
 }
 
 static int __cmp_val (
