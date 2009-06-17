@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: Awk.cpp 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -62,7 +62,7 @@ void Awk::Source::setHandle (void* handle)
 // Awk::RIO
 //////////////////////////////////////////////////////////////////
 
-Awk::RIO::RIO (rtx_t* rtx, riod_t* riod): rtx (rtx), riod (riod)
+Awk::RIO::RIO (rtx_t* rtx, rio_arg_t* riod): rtx (rtx), riod (riod)
 {
 }
 
@@ -92,7 +92,7 @@ Awk::RIO::operator Awk::awk_t* () const
 	return qse_awk_rtx_getawk (this->rtx);
 }
 
-Awk::RIO::operator Awk::riod_t* () const
+Awk::RIO::operator Awk::rio_arg_t* () const
 {
 	return this->riod;
 }
@@ -106,7 +106,7 @@ Awk::RIO::operator Awk::rtx_t* () const
 // Awk::Pipe
 //////////////////////////////////////////////////////////////////
 
-Awk::Pipe::Pipe (rtx_t* rtx, riod_t* riod): RIO (rtx, riod)
+Awk::Pipe::Pipe (rtx_t* rtx, rio_arg_t* riod): RIO (rtx, riod)
 {
 }
 
@@ -119,7 +119,7 @@ Awk::Pipe::Mode Awk::Pipe::getMode () const
 // Awk::File
 //////////////////////////////////////////////////////////////////
 
-Awk::File::File (rtx_t* rtx, riod_t* riod): RIO (rtx, riod)
+Awk::File::File (rtx_t* rtx, rio_arg_t* riod): RIO (rtx, riod)
 {
 }
 
@@ -132,7 +132,7 @@ Awk::File::Mode Awk::File::getMode () const
 // Awk::Console
 //////////////////////////////////////////////////////////////////
 
-Awk::Console::Console (rtx_t* rtx, riod_t* riod): 
+Awk::Console::Console (rtx_t* rtx, rio_arg_t* riod): 
 	RIO (rtx, riod), filename(QSE_NULL)
 {
 }
@@ -1635,7 +1635,7 @@ Awk::ssize_t Awk::sourceWriter (
 }
 
 Awk::ssize_t Awk::pipeHandler (
-	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 	char_t* data, size_t count)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -1668,7 +1668,7 @@ Awk::ssize_t Awk::pipeHandler (
 }
 
 Awk::ssize_t Awk::fileHandler (
-	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 	char_t* data, size_t count)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -1701,7 +1701,7 @@ Awk::ssize_t Awk::fileHandler (
 }
 
 Awk::ssize_t Awk::consoleHandler (
-	rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+	rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 	char_t* data, size_t count)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);

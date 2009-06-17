@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: std.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -406,7 +406,7 @@ int qse_awk_parsestd (
 
 /*** RTX_OPENSTD ***/
 static qse_ssize_t awk_rio_pipe (
-	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_riod_t* riod,
+	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
 	qse_char_t* data, qse_size_t size)
 {
 	switch (cmd)
@@ -489,7 +489,7 @@ static qse_ssize_t awk_rio_pipe (
 }
 
 static qse_ssize_t awk_rio_file (
-	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_riod_t* riod,
+	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
 	qse_char_t* data, qse_size_t size)
 {
 	switch (cmd)
@@ -579,7 +579,7 @@ static qse_ssize_t awk_rio_file (
 	return -1;
 }
 
-static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_riod_t* riod)
+static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 
@@ -696,7 +696,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_riod_t* riod)
 }
 
 static qse_ssize_t awk_rio_console (
-	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_riod_t* riod,
+	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
 	qse_char_t* data, qse_size_t size)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);

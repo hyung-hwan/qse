@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: Awk.hpp 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -51,7 +51,9 @@ public:
 	typedef qse_awk_rtx_t rtx_t;
 
 	/** Represents an runtime I/O data */
-	typedef qse_awk_riod_t riod_t;
+	typedef qse_awk_rio_arg_t rio_arg_t;
+
+	typedef qse_awk_rio_cmd_t rio_cmd_t;
 
 	/**
 	 * Represents the source code I/O context for Awk::parse.
@@ -192,7 +194,7 @@ public:
 	class RIO
 	{
 	protected:
-		RIO (rtx_t* rtx, riod_t* riod);
+		RIO (rtx_t* rtx, rio_arg_t* riod);
 
 	public:
 		const char_t* getName() const;
@@ -201,12 +203,12 @@ public:
 
 		operator Awk* () const;
 		operator awk_t* () const;
-		operator riod_t* () const;
+		operator rio_arg_t* () const;
 		operator rtx_t* () const;
 
 	protected:
 		rtx_t* rtx;
-		riod_t* riod;
+		rio_arg_t* riod;
 	};
 
 	/**
@@ -225,7 +227,7 @@ public:
 		};
 
 	protected:
-		Pipe (rtx_t* rtx, riod_t* riod);
+		Pipe (rtx_t* rtx, rio_arg_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -247,7 +249,7 @@ public:
 		};
 
 	protected:
-		File (rtx_t* rtx, riod_t* riod);
+		File (rtx_t* rtx, rio_arg_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -268,7 +270,7 @@ public:
 		};
 
 	protected:
-		Console (rtx_t* rtx, riod_t* riod);
+		Console (rtx_t* rtx, rio_arg_t* riod);
 		~Console ();
 
 	public:
@@ -558,7 +560,16 @@ public:
 		/** Allows BEGIN, END, pattern-action blocks */
 		OPT_PABLOCK = QSE_AWK_PABLOCK,
 		/** Allows {n,m} in a regular expression */
-		OPT_REXBOUND = QSE_AWK_REXBOUND
+		OPT_REXBOUND = QSE_AWK_REXBOUND,
+	        /**
+		 * Performs numeric comparison when a string convertable
+		 * to a number is compared with a number or vice versa.
+		 *
+		 * For an expression (9 > "10.9"),
+		 * - 9 is greater if #QSE_AWK_NUMCMPONSTR is off;
+		 * - "10.9" is greater if #QSE_AWK_NUMCMPONSTR is on
+		 */
+		OPT_NUMCMPONSTR = QSE_AWK_NUMCMPONSTR 
 	};
 	// end of enum Option
 	
@@ -1022,13 +1033,13 @@ protected:
 		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
-		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 		char_t* data, size_t count);
 	static ssize_t fileHandler (
-		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 		char_t* data, size_t count);
 	static ssize_t consoleHandler (
-		rtx_t* rtx, qse_awk_rio_cmd_t cmd, riod_t* riod,
+		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 		char_t* data, size_t count);
 
 	static int functionHandler (

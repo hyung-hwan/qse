@@ -30,7 +30,7 @@ forms:
 - address - specify a single address
 - address,address - specify an address range 
 - start~step - specify a starting line and a step. 
-               #QSE_SED_CLASSIC disables this form.
+               #QSE_SED_STARTSTEP enables this form.
 
 An @b address is a line number, a regular expression, or a dollar sign ($) 
 while a @b start and a @b step is a line number. 
@@ -83,11 +83,11 @@ space if #QSE_SED_QUIET is not set.
 Terminates the exection of commands quietly.
 - <b>a \\ \n text</b>
 Stores @b text into an append buffer which is printed after the pattern 
-space for each input line. If #QSE_SED_CLASSIC is specified, an address range
+space for each input line. If #QSE_SED_STRICT is specified, an address range
 is not allowed in the line selector.
 - <b>i \\ \n text</b>
 Inserts @b text into an insert buffer which is printed before the pattern
-space for each input line. If #QSE_SED_CLASSIC is specified, an address range
+space for each input line. If #QSE_SED_STRICT is specified, an address range
 is not allowed in the line selector.
 - <b>c \\ \n text</b>
 If a single line is selected for the command (i.e. no line selector, a single
@@ -103,7 +103,7 @@ Deletes the first line of pattern space. If the pattern space is emptied,
 it branches to the end of script. Otherwise, the commands from the first are 
 reapplied to the current pattern space.
 - <b>=</b>
-Prints the current line number. If #QSE_SED_CLASSIC is speccified, an address
+Prints the current line number. If #QSE_SED_STRICT is speccified, an address
 range is not allowed in the line selector.
 - <b>p</b>
 Prints pattern space.
@@ -127,7 +127,7 @@ pattern space.
 - <b>N</b>
 Prints pattern space and read the next line from the input stream to append it
 to pattern space with a newline inserted.
-- <b>b/b>
+- <b>b</b>
 Branches to the end of commands.
 - <b>b label</b>
 Branches to @b label
@@ -138,11 +138,11 @@ successfully since the last reading of an input line or the last @b t command.
 Branches to @b label if substitution(s//) has been made successfully 
 since the last reading of an input line or the last @b t command.
 - <b>r file</b>
-Reads text from @ file and prints it after printing pattern space but before
-printing append buffer. Failure to read @ file does not cause an error.
+Reads text from @b file and prints it after printing pattern space but before
+printing append buffer. Failure to read @b file does not cause an error.
 - <b>R file</b>
-Reads a line of text from @ file and prints it after printing pattern space 
-but before printing append buffer. Failure to read @ file does not cause an
+Reads a line of text from @b file and prints it after printing pattern space 
+but before printing append buffer. Failure to read @b file does not cause an
 error.
 - <b>w file</b>
 

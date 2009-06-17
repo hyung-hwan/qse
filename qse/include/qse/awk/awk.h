@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 200 2009-06-14 13:22:00Z hyunghwan.chung $
+ * $Id: awk.h 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -187,19 +187,19 @@ enum qse_awk_sio_cmd_t
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
-/****t* AWK/qse_awk_siof_t
- * NAME
- *  qse_awk_siof_t - define a source IO function
- * SYNOPSIS
+/**
+ * The qse_awk_sio_fun_t type defines a source IO function
  */
-typedef qse_ssize_t (*qse_awk_siof_t) (
+typedef qse_ssize_t (*qse_awk_sio_fun_t) (
 	qse_awk_t*        awk,
 	qse_awk_sio_cmd_t cmd, 
 	qse_char_t*       data,
 	qse_size_t        count
 );
-/*****/
 
+/**
+ * The qse_awk_rio_cmd_t type defines runtime IO commands.
+ */
 enum qse_awk_rio_cmd_t
 {
 	QSE_AWK_RIO_OPEN   = 0,
@@ -211,12 +211,10 @@ enum qse_awk_rio_cmd_t
 };
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
-/****f* AWK/qse_awk_riod_t
- * NAME
- *  qse_awk_riod_f - define the data passed to a rio function 
- * SYNOPSIS
+/**
+ * The qse_awk_rio_arg_t defines the data passed to a rio function 
  */
-struct qse_awk_riod_t 
+struct qse_awk_rio_arg_t 
 {
 	int type;           /* [IN] console, file, pipe */
 	int mode;           /* [IN] read, write, etc */
@@ -240,30 +238,23 @@ struct qse_awk_riod_t
 		qse_bool_t eos;
 	} out;
 
-	struct qse_awk_riod_t* next;
+	struct qse_awk_rio_arg_t* next;
 };
-typedef struct qse_awk_riod_t qse_awk_riod_t;
-/******/
+typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 
-/****f* AWK/qse_awk_riof_t
- * NAME
- *  qse_awk_riof_t - define a runtime IO function
- * SYNOPSIS
+/**
+ * The qse_awk_rio_fun_t type defines a runtime IO function
  */
-typedef qse_ssize_t (*qse_awk_riof_t) (
-	qse_awk_rtx_t*    rtx,
-	qse_awk_rio_cmd_t cmd, 
-	qse_awk_riod_t*   riod,
-	qse_char_t*       data,
-	qse_size_t        count
+typedef qse_ssize_t (*qse_awk_rio_fun_t) (
+	qse_awk_rtx_t*      rtx,
+	qse_awk_rio_cmd_t   cmd,
+	qse_awk_rio_arg_t*  riod,
+	qse_char_t*         data,
+	qse_size_t          count
 );
-/******/
 
-
-/****s* AWK/qse_awk_prm_t
- * NAME
- *  qse_awk_prm_t - define primitive functions
- * SYNOPSIS
+/**
+ * The qse_awk_prm_t type defines primitive functions
  */
 struct qse_awk_prm_t
 {
@@ -302,39 +293,30 @@ struct qse_awk_prm_t
 #endif
 };
 typedef struct qse_awk_prm_t qse_awk_prm_t;
-/******/
 
-/****s* AWK/qse_awk_sio_t
- * NAME
- *  qse_awk_sio_t - define source code IO
- * SYNOPSIS
+/**
+ * The qse_awk_sio_t type defines source script IO.
  */
 struct qse_awk_sio_t
 {
-	qse_awk_siof_t in;
-	qse_awk_siof_t out;
+	qse_awk_sio_fun_t in;
+	qse_awk_sio_fun_t out;
 };
 typedef struct qse_awk_sio_t qse_awk_sio_t;
-/******/
 
-/****s* AWK/qse_awk_rio_t
- * NAME
- *  qse_awk_rio_t - define runtime IO
- * SYNOPSIS
+/**
+ * The qse_awk_rio_t type defines a runtime IO set.
  */
 struct qse_awk_rio_t
 {
-	qse_awk_riof_t pipe;
-	qse_awk_riof_t file;
-	qse_awk_riof_t console;
+	qse_awk_rio_fun_t pipe;
+	qse_awk_rio_fun_t file;
+	qse_awk_rio_fun_t console;
 };
 typedef struct qse_awk_rio_t qse_awk_rio_t;
-/******/
 
-/****s* AWK/qse_awk_rcb_t
- * NAME
- *  qse_awk_rcb_t - define runtime callbacks
- * SYNOPSIS
+/**
+ * The qse_awk_rcb_t type defines runtime callbacks
  */
 struct qse_awk_rcb_t
 {
@@ -350,70 +332,90 @@ struct qse_awk_rcb_t
 	void* data;
 };
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
-/******/
 
-/* various options */
+/**
+ * The qse_awk_option_t type defines various options to change the behavior
+ * of #qse_awk_t.
+ */
 enum qse_awk_option_t
 { 
-	/* allow undeclared variables and implicit concatenation */
+	/**
+	 * allows undeclared variables and implicit concatenation 
+	 **/
 	QSE_AWK_IMPLICIT    = (1 << 0),
 
-	/* allow explicit variable declaration, the concatenation
-	 * operator(.), and a parse-time function check. */
+	/** 
+	 * allows explicit variable declaration, the concatenation
+	 * operator, a period, and performs the parse-time function check. 
+	 */
 	QSE_AWK_EXPLICIT    = (1 << 1), 
 
-	/* change ^ from exponentation to bitwise xor */
+	/** changes @b ^ from exponentation to bitwise xor */
 	QSE_AWK_BXOR        = (1 << 3),
 
-	/* support shift operators */
+	/** supports shift operators: @b << and @b >> */
 	QSE_AWK_SHIFT       = (1 << 4), 
 
-	/* enable the idiv operator (double slashes) */
+	/** enables the idiv operator: @b // */
 	QSE_AWK_IDIV        = (1 << 5), 
 
-	/* support getline and print */
-	QSE_AWK_RIO       = (1 << 7), 
+	/** supports @b getline and @b print */
+	QSE_AWK_RIO         = (1 << 7), 
 
-	/* support dual direction pipe. QSE_AWK_RIO must be on */
+	/** supports dual direction pipe if QSE_AWK_RIO is on */
 	QSE_AWK_RWPIPE      = (1 << 8),
 
-	/* can terminate a statement with a new line */
+	/** a new line can terminate a statement */
 	QSE_AWK_NEWLINE     = (1 << 9),
 
-	/* strip off leading and trailing spaces when splitting a record
+	/** 
+	 * strips off leading and trailing spaces when splitting a record
 	 * into fields with a regular expression.
 	 *
-	 * Consider the following program.
-	 *  BEGIN { FS="[:[:space:]]+"; } 
-	 *  { 
-	 *  	print "NF=" NF; 
-	 *  	for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
-	 *  }
-	 *
-	 * The program splits " a b c " into [a], [b], [c] when this
-	 * option is on while into [], [a], [b], [c], [] when it is off.
+	 * @code
+	 * BEGIN { FS="[:[:space:]]+"; } 
+	 * { 
+	 *    print "NF=" NF; 
+	 *    for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
+	 * }
+	 * @endcode
+	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPSPACES is on.
+	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 */
 	QSE_AWK_STRIPSPACES = (1 << 11),
 
-	/* enable the nextoutfile keyword */
+	/** enables @b nextofile */
 	QSE_AWK_NEXTOFILE   = (1 << 12),
 
-	/* cr + lf by default */
+	/** CR + LF by default */
 	QSE_AWK_CRLF        = (1 << 13),
 
-	/* enable the non-standard keyword reset */
+	/** enables @b reset */
 	QSE_AWK_RESET       = (1 << 14),
 
-	/* allows the assignment of a map value to a variable */
+	/** allows the assignment of a map value to a variable */
 	QSE_AWK_MAPTOVAR    = (1 << 15),
 
-	/* allows BEGIN, END, pattern-action blocks */
+	/** allows @b BEGIN, @b END, pattern-action blocks */
 	QSE_AWK_PABLOCK     = (1 << 16),
 
-	/* allow {n,m} in a regular expression */
+	/** allows {n,m} in a regular expression. */
 	QSE_AWK_REXBOUND    = (1 << 17),
 
-	/* option aggregtes */
+	/** 
+	 * performs numeric comparison when a string convertable
+	 * to a number is compared with a number or vice versa.
+	 *
+	 * For an expression (9 > "10.9"),
+	 * - 9 is greater if #QSE_AWK_NUMCMPONSTR is off;
+	 * - "10.9" is greater if #QSE_AWK_NUMCMPONSTR is on
+	 */
+	QSE_AWK_NUMCMPONSTR = (1 << 18),
+
+	/** 
+	 * makes #qse_awk_t to behave as compatibly as classical AWK
+	 * implementations 
+	 */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
 	                   QSE_AWK_STRIPSPACES
@@ -795,70 +797,21 @@ int qse_awk_close (
 	qse_awk_t* awk /**< an awk object */
 );
 
-#if 0
-/****f* AWK/qse_awk_getmmgr
- * NAME
- *  qse_awk_getmmgr - get the memory manager 
- * DESCRIPTION
- *  The qse_awk_getmmgr() function returns the pointer to the memory manager.
- * SYNOPSIS
- */
-qse_mmgr_t* qse_awk_getmmgr (
-	qse_awk_t* awk 
-);
-/******/
-
-/****f* AWK/qse_awk_setmmgr
- * NAME
- *  qse_awk_setmmgr - set the extension
- * DESCRIPTION
- *  The qse_awk_setmmgr() specify the memory manager to use. As the memory 
- *  manager is specified into qse_awk_open(), you are not encouraged to change
- *  it by calling this function. Doing so may cause a lot of problems.
- * SYNOPSIS
- */
-void qse_awk_setmmgr (
-	qse_awk_t*  awk,
-	qse_mmgr_t* mmgr
-);
-/******/
-
-/****f* AWK/qse_awk_getxtn
- * NAME
- *  qse_awk_getxtn - get the extension
- * DESCRIPTION
- *  The extension area is allocated in the qse_awk_open() function when it is 
- *  given a positive extension size. The pointer to the beginning of the area
- *  can be acquired using the qse_awk_getxtn() function and be utilized 
- *  for various purposes.
- * SYNOPSIS
- */
-void* qse_awk_getxtn (
-	qse_awk_t* awk  /* an awk object */
-);
-/******/
-#endif
-
-/****f* AWK/qse_awk_getprm
- * NAME
- *  qse_awk_getprm - get primitive functions
- * SYNOPSIS
+/**
+ * The qse_awk_getprm() function gets primitive functions
  */
 qse_awk_prm_t* qse_awk_getprm (
 	qse_awk_t* awk
 );
 /******/
 
-/****f* AWK/qse_awk_clear
- * NAME
- *  qse_awk_clear - clear a qse_awk_t object
- * DESCRIPTION
- *  If you want to reuse a qse_awk_t instance that finished being used,
- *  you may call qse_awk_close instead of destroying and creating a new
- *  qse_awk_t instance using qse_awk_close() and qse_awk_open().
- * RETURN
- *  0 on success, -1 on failure
- * SYNOPSIS
+/**
+ * The qse_awk_clear() clears the internal state of @a awk. If you want to
+ * reuse a qse_awk_t instance that finished being used, you may call 
+ * qse_awk_clear() instead of destroying and creating a new
+ * #qse_awk_t instance using qse_awk_close() and qse_awk_open().
+ *
+ * @return 0 on success, -1 on failure
  */
 int qse_awk_clear (
 	qse_awk_t* awk 
@@ -980,18 +933,17 @@ void qse_awk_unsetallwords (
 	qse_awk_t* awk
 );
 
-/*
- * NAME:
- *  enable replacement of a name of a keyword, intrinsic global variables, 
- *  and intrinsic functions.
+/**
+ * The qse_awk_setword() function enables replacement of a name of a keyword,
+ * intrinsic global variables, and intrinsic functions.
  *
- * DESCRIPTION:
- *  If nkw is QSE_NULL or nlen is zero and okw is QSE_NULL or olen is zero,
- *  it unsets all word replacements. If nkw is QSE_NULL or nlen is zero,
- *  it unsets the replacement for okw and olen. If all of them are valid,
- *  it sets the word replace for okw and olen to nkw and nlen.
+ * If @a nkw is QSE_NULL or @a nlen is zero and @a okw is QSE_NULL or 
+ * @a olen is zero, it unsets all word replacements; If @a nkw is QSE_NULL or 
+ * @a nlen is zero, it unsets the replacement for @a okw and @a olen; If 
+ * all of them are valid, it sets the word replace for @a okw and @a olen 
+ * to @a nkw and @a nlen.
  *
- * RETURN: 0 on success, -1 on failure
+ * @return 0 on success, -1 on failure
  */
 int qse_awk_setword (
 	/* the pointer to a qse_awk_t instance */
@@ -1216,28 +1168,26 @@ int qse_awk_rtx_loop (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_call
- * NAME
- *  qse_awk_rtx_call - call a function
- * DESCRIPTION
- *  The qse_awk_rtx_call() function invokes an AWK function. However, it is
- *  not able to invoke an intrinsic function such as split(). 
- *  The QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
- *  block, pattern-action blocks, and the END block.
- * RETURN
- *  The qse_awk_rtx_call() function returns 0 on success and -1 on failure.
- * EXAMPLE
- *  The example shows typical usage of the function.
- *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
- *    if (rtx != QSE_NULL)
- *    {
- *        v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
- *        if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
- *        qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
- *        if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
- *        qse_awk_rtx_close (rtx);
- *    }
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_call() function invokes an AWK function. However, it is
+ * not able to invoke an intrinsic function such as split(). 
+ * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
+ * block, pattern-action blocks, and the END block.
+ *
+ * The example shows typical usage of the function.
+ * @code
+ * rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ * if (rtx != QSE_NULL)
+ * {
+ *     v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
+ *     if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
+ *     qse_awk_rtx_call (rtx, QSE_T("fini"), QSE_NULL, 0);
+ *     if (v != QSE_NULL) qse_awk_rtx_refdownval (rtx, v);
+ *     qse_awk_rtx_close (rtx);
+ * }
+ * @endcode
+ *
+ * @return 0 on success, -1 on failure
  */
 qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t*    rtx,
@@ -1245,7 +1195,6 @@ qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_val_t**   args,
 	qse_size_t        nargs
 );
-/******/
 
 /****f* AWK/qse_awk_stopall
  * NAME

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 201 2009-06-15 08:22:48Z hyunghwan.chung $
+ * $Id: run.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -4019,51 +4019,42 @@ static int __cmp_int_real (
 }
 
 static int __cmp_int_str (
-	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	const qse_char_t* end;
 	qse_awk_rtx_valtostr_out_t out;
-	qse_long_t r;
 	int n;
 
-	r = qse_awk_strxtolong (
-		run->awk, 
-		((qse_awk_val_str_t*)right)->ptr,
-		((qse_awk_val_str_t*)right)->len, 0, 
-		&end
-	);
-	if (end == ((qse_awk_val_str_t*)right)->ptr + 
-		   ((qse_awk_val_str_t*)right)->len)
+	if (rtx->awk->option & QSE_AWK_NUMCMPONSTR)
 	{
-		if (((qse_awk_val_int_t*)left)->val > r) return 1;
-		if (((qse_awk_val_int_t*)left)->val < r) return -1;
-		return 0;
-	}
-	/* TODO: should i conver it to real and compare? */
-	else if (*end == QSE_T('.') || *end == QSE_T('E') || *end == QSE_T('e'))
-	{
+		const qse_char_t* end;
+		qse_long_t ll;
 		qse_real_t rr;
 
-		rr = qse_awk_strxtoreal (
-			run->awk,
+		n = qse_awk_rtx_strtonum (
+			rtx, 1, 
 			((qse_awk_val_str_t*)right)->ptr,
 			((qse_awk_val_str_t*)right)->len, 
-			&end
+			&ll, &rr
 		);
-		if (end == ((qse_awk_val_str_t*)right)->ptr + 
-			   ((qse_awk_val_str_t*)right)->len)
+		if (n == 0)
 		{
-			if (((qse_awk_val_int_t*)left)->val > rr) return 1;
-			if (((qse_awk_val_int_t*)left)->val < rr) return -1;
-			return 0;
+			/* a numeric integral string */
+			return (((qse_awk_val_int_t*)left)->val > ll)? 1:
+			       (((qse_awk_val_int_t*)left)->val < ll)? -1: 0;
+		}
+		else if (n > 0)
+		{
+			/* a numeric floating-point string */
+			return (((qse_awk_val_int_t*)left)->val > rr)? 1:
+			       (((qse_awk_val_int_t*)left)->val < rr)? -1: 0;
 		}
 	}
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (run, left, &out) == QSE_NULL) 
+	if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL) 
 		return CMP_ERROR;
 
-	if (run->gbl.ignorecase)
+	if (rtx->gbl.ignorecase)
 	{
 		n = qse_strxncasecmp (
 			out.u.cpldup.ptr,
@@ -4082,7 +4073,7 @@ static int __cmp_int_str (
 		);
 	}
 
-	QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
+	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	return n;
 }
 
@@ -4115,32 +4106,35 @@ static int __cmp_real_real (
 }
 
 static int __cmp_real_str (
-	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	qse_awk_rtx_valtostr_out_t out;
-	const qse_char_t* end;
-	qse_real_t rr;
 	int n;
 
-	rr = qse_awk_strxtoreal (
-		run->awk,
-		((qse_awk_val_str_t*)right)->ptr,
-		((qse_awk_val_str_t*)right)->len, 
-		&end
-	);
-	if (end == ((qse_awk_val_str_t*)right)->ptr + 
-		   ((qse_awk_val_str_t*)right)->len)
+	if (rtx->awk->option & QSE_AWK_NUMCMPONSTR)
 	{
-		if (((qse_awk_val_real_t*)left)->val > rr) return 1;
-		if (((qse_awk_val_real_t*)left)->val < rr) return -1;
-		return 0;
+		const qse_char_t* end;
+		qse_real_t rr;
+
+		rr = qse_awk_strxtoreal (
+			rtx->awk,
+			((qse_awk_val_str_t*)right)->ptr,
+			((qse_awk_val_str_t*)right)->len, 
+			&end
+		);
+		if (end == ((qse_awk_val_str_t*)right)->ptr + 
+			   ((qse_awk_val_str_t*)right)->len)
+		{
+			return (((qse_awk_val_real_t*)left)->val > rr)? 1:
+			       (((qse_awk_val_real_t*)left)->val < rr)? -1: 0;
+		}
 	}
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (run, left, &out) == QSE_NULL) 
+	if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL) 
 		return CMP_ERROR;
 
-	if (run->gbl.ignorecase)
+	if (rtx->gbl.ignorecase)
 	{
 		n = qse_strxncasecmp (
 			out.u.cpldup.ptr,
@@ -4159,7 +4153,7 @@ static int __cmp_real_str (
 		);
 	}
 
-	QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
+	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	return n;
 }
 
@@ -4192,7 +4186,7 @@ static int __cmp_str_str (
 	ls = (qse_awk_val_str_t*)left;
 	rs = (qse_awk_val_str_t*)right;
 
-	if (ls->nstr == 0 && rs->nstr == 0)
+	if (ls->nstr == 0 || rs->nstr == 0)
 	{
 		/* nother are definitely a string */
 		return (rtx->gbl.ignorecase)?
@@ -4200,17 +4194,68 @@ static int __cmp_str_str (
 			qse_strxncmp (ls->ptr, ls->len, rs->ptr, rs->len);
 	}
 
-	n1 = qse_awk_rtx_strtonum (rtx, 0, ls->ptr, ls->len, &l1, &r1);
-	n2 = qse_awk_rtx_strtonum (rtx, 0, rs->ptr, rs->len, &l2, &r2);
-
-	if (n1 == 0)
+	if (ls->nstr == 1)
 	{
-		return (n2 == 0)? (l1 - l2): ((qse_real_t)l1 - r2);
+		qse_long_t ll;
+
+		ll = qse_awk_strxtolong (
+			rtx->awk, ls->ptr, ls->len, 0, QSE_NULL);
+
+		if (rs->nstr == 1)
+		{
+			qse_long_t rr;
+			
+			rr = qse_awk_strxtolong (
+				rtx->awk, rs->ptr, rs->len, 0, QSE_NULL);
+
+			return (ll > rr)? 1:
+			       (ll < rr)? -1: 0;
+		}
+		else 
+		{
+			qse_real_t rr;
+
+			QSE_ASSERT (rs->nstr == 2);
+
+			rr = qse_awk_strxtoreal (
+				rtx->awk, rs->ptr, rs->len, QSE_NULL);
+
+			return (ll > rr)? 1:
+			       (ll < rr)? -1: 0;
+		}
 	}
 	else
 	{
-		return (n2 == 0)? (r1 - (qse_real_t)l2): (r1 - r2);
-	}	
+		qse_real_t ll;
+
+		QSE_ASSERT (ls->nstr == 2);
+
+		ll = qse_awk_strxtoreal (
+			rtx->awk, ls->ptr, ls->len, QSE_NULL);
+		
+		if (rs->nstr == 1)
+		{
+			qse_long_t rr;
+			
+			rr = qse_awk_strxtolong (
+				rtx->awk, rs->ptr, rs->len, 0, QSE_NULL);
+
+			return (ll > rr)? 1:
+			       (ll < rr)? -1: 0;
+		}
+		else 
+		{
+			qse_real_t rr;
+
+			QSE_ASSERT (rs->nstr == 2);
+
+			rr = qse_awk_strxtoreal (
+				rtx->awk, rs->ptr, rs->len, QSE_NULL);
+
+			return (ll > rr)? 1:
+			       (ll < rr)? -1: 0;
+		}
+	}
 }
 
 static int __cmp_val (

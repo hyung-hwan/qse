@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: rio.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -90,8 +90,8 @@ int qse_awk_rtx_readio (
 	qse_awk_rtx_t* run, int in_type,
 	const qse_char_t* name, qse_str_t* buf)
 {
-	qse_awk_riod_t* p = run->rio.chain;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_fun_t handler;
 	int io_type, io_mode, io_mask, ret, n;
 	qse_ssize_t x;
 	qse_awk_val_t* rs;
@@ -130,8 +130,8 @@ int qse_awk_rtx_readio (
 	{
 		/* if the name doesn't exist in the chain, create an entry
 		 * to the chain */
-		p = (qse_awk_riod_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_riod_t));
+		p = (qse_awk_rio_arg_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
@@ -443,8 +443,8 @@ int qse_awk_rtx_writeio_str (
 	qse_awk_rtx_t* run, int out_type, 
 	const qse_char_t* name, qse_char_t* str, qse_size_t len)
 {
-	qse_awk_riod_t* p = run->rio.chain;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_fun_t handler;
 	int io_type, io_mode, io_mask; 
 	qse_ssize_t n;
 
@@ -486,8 +486,8 @@ int qse_awk_rtx_writeio_str (
 	/* if there is not corresponding rio for name, create one */
 	if (p == QSE_NULL)
 	{
-		p = (qse_awk_riod_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_riod_t));
+		p = (qse_awk_rio_arg_t*) QSE_AWK_ALLOC (
+			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
 			qse_awk_rtx_seterror (
@@ -582,8 +582,8 @@ int qse_awk_rtx_writeio_str (
 int qse_awk_rtx_flushio (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask;
 	qse_ssize_t n;
 	qse_bool_t ok = QSE_FALSE;
@@ -637,8 +637,8 @@ int qse_awk_rtx_flushio (
 int qse_awk_rtx_nextio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask; 
 	qse_ssize_t n;
 
@@ -715,8 +715,8 @@ int qse_awk_rtx_nextio_read (
 int qse_awk_rtx_nextio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain;
+	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask; 
 	qse_ssize_t n;
 
@@ -788,8 +788,8 @@ int qse_awk_rtx_nextio_write (
 int qse_awk_rtx_closio_read (
 	qse_awk_rtx_t* run, int in_type, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask;
 
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
@@ -814,7 +814,7 @@ int qse_awk_rtx_closio_read (
 		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_riof_t handler;
+			qse_awk_rio_fun_t handler;
 		       
 			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
@@ -847,8 +847,8 @@ int qse_awk_rtx_closio_read (
 int qse_awk_rtx_closio_write (
 	qse_awk_rtx_t* run, int out_type, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
@@ -873,7 +873,7 @@ int qse_awk_rtx_closio_write (
 		if (p->type == (io_type | io_mask) &&
 		    qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_riof_t handler;
+			qse_awk_rio_fun_t handler;
 		       
 			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
@@ -905,7 +905,7 @@ int qse_awk_rtx_closio_write (
 
 int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 {
-	qse_awk_riod_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_rio_arg_t* p = run->rio.chain, * px = QSE_NULL;
 
 	while (p != QSE_NULL)
 	{
@@ -913,7 +913,7 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 		  * regardless of the io type */
 		if (qse_strcmp (p->name, name) == 0) 
 		{
-			qse_awk_riof_t handler;
+			qse_awk_rio_fun_t handler;
 		       
 			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
@@ -947,8 +947,8 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 
 void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 {
-	qse_awk_riod_t* next;
-	qse_awk_riof_t handler;
+	qse_awk_rio_arg_t* next;
+	qse_awk_rio_fun_t handler;
 	qse_ssize_t n;
 
 	while (run->rio.chain != QSE_NULL)
