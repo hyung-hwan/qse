@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: awk.h 202 2009-06-16 06:05:40Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -332,8 +332,8 @@ struct qse_awk_rtx_t
 	/* rio chain */
 	struct
 	{
-		qse_awk_riof_t handler[QSE_AWK_RIO_NUM];
-		qse_awk_riod_t* chain;
+		qse_awk_rio_fun_t handler[QSE_AWK_RIO_NUM];
+		qse_awk_rio_arg_t* chain;
 	} rio;
 
 	struct
