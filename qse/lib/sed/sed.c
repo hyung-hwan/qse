@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: sed.c 203 2009-06-17 12:43:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1850,10 +1850,10 @@ static int write_str_to_file (
 
 static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
-	qse_cstr_t mat;
+	qse_cstr_t mat, pmat;
 	int opt = 0, repl = 0, n;
 	qse_rex_errnum_t errnum;
-	const qse_char_t* cur_ptr, * str_ptr;
+	const qse_char_t* cur_ptr, * str_ptr, * str_end;
 	qse_size_t cur_len, str_len, m, i;
 	qse_size_t max_count, sub_count;
 
@@ -1868,13 +1868,19 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	/* TODO: support different line end convension */
 	if (str_len > 0 && str_ptr[str_len-1] == QSE_T('\n')) str_len--;
 
+	str_end = str_ptr + str_len;
 	cur_ptr = str_ptr;
 	cur_len = str_len;
 
 	sub_count = 0;
 	max_count = (cmd->u.subst.g)? 0: cmd->u.subst.occ;
 
-	while (1)
+	pmat.ptr = QSE_NULL;
+	pmat.len = 0;
+
+	/* perform test when cur_ptr == str_end also because
+	 * end of string($) needs to be tested */
+	while (cur_ptr <= str_end)
 	{
 		if (max_count == 0 || sub_count < max_count)
 		{
@@ -1906,6 +1912,15 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				return -1;
 			}
 			break;
+		}
+
+		if (mat.len == 0 && 
+		    pmat.ptr != QSE_NULL && 
+		    mat.ptr == pmat.ptr + pmat.len)
+		{
+			/* match length is 0 and the match is still at the
+			 * end of the previous match */
+			goto skip_one_char;
 		}
 
 		if (max_count > 0 && sub_count + 1 != max_count)
@@ -1967,6 +1982,23 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		sub_count++;
 		cur_len = cur_len - ((mat.ptr - cur_ptr) + mat.len);
 		cur_ptr = mat.ptr + mat.len;
+
+		pmat = mat;
+
+		if (mat.len == 0)
+		{
+		skip_one_char:
+			/* special treament is need if the match length is 0 */
+
+			m = qse_str_ncat (&sed->e.txt.subst, cur_ptr, 1);
+			if (m == (qse_size_t)-1)
+			{
+				SETERR0 (sed, QSE_SED_ENOMEM, 0);
+				return -1;
+			}
+
+			cur_ptr++; cur_len--;
+		}
 	}
 
 	if (str_len < QSE_STR_LEN(&sed->e.in.line))

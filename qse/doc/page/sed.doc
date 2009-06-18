@@ -1,5 +1,10 @@
 /** @page sed SED STREAM EDITOR
 
+@section sed_contents CONTENTS
+- \ref sed_intro
+- \ref sed_command
+- \ref sed_embed
+
 @section sed_intro INTRODUCTION
 
 The sed stream editor is a non-interactive text editing tool commonly used
@@ -61,7 +66,7 @@ A command without a line selector is applied to all input lines;
 A command with a single address is applied to an input line that matches 
 the address; A command with an address range is applied to all input 
 lines within the range, inclusive; A command with a start and a step is
-applied to every @b step'th line starting from the line @b start.
+applied to every <b>step</b>'th line starting from the line @b start.
 
 Here is the summary of the commands.
 
@@ -69,88 +74,151 @@ Here is the summary of the commands.
 The text beginning from # to the line end is ignored; # in a line following
 <b>a \\</b>, <b>i \\</b>, and <b>c \\</b> is treated literally and does not
 introduce a comment.
+
 - <b>: label</b>
 A label can be composed of letters, digits, periods, hyphens, and underlines.
 It remembers a target label for @b b and @b t commands and prohibits a line
 selector.
+
 - <b>{</b>
 The left curly bracket forms a command group where you can nest other 
-commands. It should be paired with an ending }.
+commands. It should be paired with an ending @b }.
+
 - <b>q</b>
 Terminates the exection of commands. Upon termination, it prints the pattern
 space if #QSE_SED_QUIET is not set.
+
 - <b>Q</b>
 Terminates the exection of commands quietly.
+
 - <b>a \\ \n text</b>
-Stores @b text into an append buffer which is printed after the pattern 
-space for each input line. If #QSE_SED_STRICT is specified, an address range
-is not allowed in the line selector.
+Stores @b text into the append buffer which is printed after the pattern 
+space for each input line. If #QSE_SED_STRICT is specified, a line selector 
+of an address range is not allowed.
+
 - <b>i \\ \n text</b>
 Inserts @b text into an insert buffer which is printed before the pattern
-space for each input line. If #QSE_SED_STRICT is specified, an address range
-is not allowed in the line selector.
+space for each input line. If #QSE_SED_STRICT is specified, a line selector
+of an address range is not allowed.
+
 - <b>c \\ \n text</b>
 If a single line is selected for the command (i.e. no line selector, a single
 address line selector, or a start~step line selector is specified), it changes
-pattern space to @b text and branches to the end of commands for the line.
-If an address range is specified, it deletes pattern space and branches 
+the pattern space to @b text and branches to the end of commands for the line.
+If an address range is specified, it deletes the pattern space and branches 
 to the end of commands for all input lines but the last, and changes pattern
 space to @b text and branches to the end of commands.
+
 - <b>d</b>
-Deletes pattern space and branches to the end of commands.
+Deletes the pattern space and branches to the end of commands.
+
 - <b>D</b>
-Deletes the first line of pattern space. If the pattern space is emptied,
+Deletes the first line of the pattern space. If the pattern space is emptied,
 it branches to the end of script. Otherwise, the commands from the first are 
 reapplied to the current pattern space.
+
 - <b>=</b>
 Prints the current line number. If #QSE_SED_STRICT is speccified, an address
 range is not allowed in the line selector.
+
 - <b>p</b>
-Prints pattern space.
+Prints the pattern space.
+
 - <b>P</b>
-Prints the first line of pattern space.
+Prints the first line of the pattern space.
+
 - <b>l</b>
-Prints pattern space in a visually unambiguous form.
+Prints the pattern space in a visually unambiguous form.
+
 - <b>h</b> 
-Copies pattern space to hold space
+Copies the pattern space to the hold space
+
 - <b>H</b> 
-Appends pattern space to hold space
+Appends the pattern space to the hold space
+
 - <b>g</b> 
-Copies hold space to pattern space
+Copies the hold space to the pattern space
+
 - <b>G</b> 
-Appends hold space to pattern space
+Appends the hold space to the pattern space
+
 - <b>x</b> 
-Exchanges pattern space and hold space
+Exchanges the pattern space and the hold space
+
 - <b>n</b>
-Prints pattern space and read the next line from the input stream to fill
-pattern space.
+Prints the pattern space and read the next line from the input stream to fill
+the pattern space.
+
 - <b>N</b>
-Prints pattern space and read the next line from the input stream to append it
-to pattern space with a newline inserted.
+Prints the pattern space and read the next line from the input stream 
+to append it to the pattern space with a newline inserted.
+
 - <b>b</b>
 Branches to the end of commands.
+
 - <b>b label</b>
 Branches to @b label
+
 - <b>t</b>
 Branches to the end of commands if substitution(s//) has been made 
 successfully since the last reading of an input line or the last @b t command.
+
 - <b>t label</b>
 Branches to @b label if substitution(s//) has been made successfully 
 since the last reading of an input line or the last @b t command.
+
 - <b>r file</b>
-Reads text from @b file and prints it after printing pattern space but before
-printing append buffer. Failure to read @b file does not cause an error.
+Reads text from @b file and prints it after printing the pattern space but 
+before printing the append buffer. Failure to read @b file does not cause an
+error.
+
 - <b>R file</b>
 Reads a line of text from @b file and prints it after printing pattern space 
-but before printing append buffer. Failure to read @b file does not cause an
+but before printing the append buffer. Failure to read @b file does not cause an
 error.
+
 - <b>w file</b>
+Writes the pattern space to @b file
 
 - <b>W file</b>
+Writes the first line of the pattern space to @b file
 
-- <b>s/rex/repl/opt</b>
+- <b>s/rex/repl/opts</b>
+Finds a matching substring with @b rex in pattern space and replaces it 
+with @repl. @b & in @b repl refers to the matching substring. @b opts may 
+be empty; You can combine the following options into @opts:
+ - @b g replaces all occurrences of a matching substring with @b rex
+ - @b number replaces the <b>number</b>'th occurrence of a matching substring 
+      with @b rex
+ - @b p prints pattern space if a successful replacement was made
+ - @b w file writes pattern space to @b file if a successful replacement 
+      was made. It, if specified, should be the last option.
 
 - <b>y/src/dst/</b>
 Replaces all occurrences of characters in @b src with characters in @b dst.
 @b src and @b dst must contain equal number of characters.
+
+Let's see actual examples:
+- <b>G;G;G</b>
+Triple spaces input lines. If #QSE_SED_QUIET is on, <b>G;G;G;p</b>. 
+It works because the hold space is empty unless something is copied to it.
+
+- <b>$!d</b>
+Prints the last line. If #QSE_SED_QUIET is on, try <b>$p</b>.
+
+- <b>1!G;h;$!d</b>
+Prints input lines in the reverse order. That is, it prints the last line 
+first and the first line last.
+
+- <b>s/[[:space:]]{2,}/ /g</b>
+Compacts whitespaces if #QSE_SED_REXBOUND is on.
+
+@section sed_embed HOW TO EMBED
+
+In the simplest form, 
+- Create a stream editor - qse_sed_open()
+- Compile editing commands - qse_sed_comp()
+- Executes compiled commands - qse_sed_exec()
+- Destroy the stream editor - qse_sed_close()
+
 */

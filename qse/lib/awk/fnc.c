@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: fnc.c 203 2009-06-17 12:43:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -919,14 +919,14 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, ** a2_ref, * v;
-	qse_char_t* a0_ptr, * a1_ptr, * a2_ptr;
+	qse_char_t* a0_ptr, * a1_ptr, * a2_ptr, * a2_end;
 	qse_size_t a0_len, a1_len, a2_len;
 	qse_char_t* a0_ptr_free = QSE_NULL;
 	qse_char_t* a1_ptr_free = QSE_NULL;
 	qse_char_t* a2_ptr_free = QSE_NULL;
 	void* rex = QSE_NULL;
 	int opt, n;
-	qse_cstr_t mat;
+	qse_cstr_t mat, pmat;
 	const qse_char_t* cur_ptr;
 	qse_size_t cur_len, i, m;
 	qse_str_t new;
@@ -1053,7 +1053,8 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 	if (a0->type != QSE_AWK_VAL_REX)
 	{
-		rex = QSE_AWK_BUILDREX (run->awk, a0_ptr, a0_len, &run->errinf.num);
+		rex = QSE_AWK_BUILDREX (
+			run->awk, a0_ptr, a0_len, &run->errinf.num);
 		if (rex == QSE_NULL)
 		{
 			qse_str_fini (&new);
@@ -1063,11 +1064,18 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 
 	opt = (run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0;
+
+	a2_end = a2_ptr + a2_len;
 	cur_ptr = a2_ptr;
 	cur_len = a2_len;
 	sub_count = 0;
 
-	while (1)
+	pmat.ptr = QSE_NULL;
+	pmat.len = 0;
+
+	/* perform test when cur_ptr == a2_end also because
+	 * end of string($) needs to be tested */
+	while (cur_ptr <= a2_end)
 	{
 		if (max_count == 0 || sub_count < max_count)
 		{
@@ -1096,9 +1104,19 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				FREE_A0_REX (run->awk, rex);
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 				return -1;
 			}
 			break;
+		}
+
+		if (mat.len == 0 &&
+		    pmat.ptr != QSE_NULL &&
+		    mat.ptr == pmat.ptr + pmat.len)
+		{
+			/* match length is 0 and the match is still at the
+			 * end of the previous match */
+			goto skip_one_char;
 		}
 
 		if (qse_str_ncat (
@@ -1107,6 +1125,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			FREE_A0_REX (run->awk, rex);
 			qse_str_fini (&new);
 			FREE_A_PTRS (run->awk);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -1133,6 +1152,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				FREE_A0_REX (run->awk, rex);
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 				return -1;
 			}
 		}
@@ -1140,6 +1160,26 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		sub_count++;
 		cur_len = cur_len - ((mat.ptr - cur_ptr) + mat.len);
 		cur_ptr = mat.ptr + mat.len;
+
+		pmat = mat;
+
+		if (mat.len == 0)
+		{
+		skip_one_char:
+			/* special treatment is needed if match length is 0 */
+
+			m = qse_str_ncat (&new, cur_ptr, 1);
+			if (m == (qse_size_t)-1)
+			{
+				FREE_A0_REX (run->awk, rex);
+				qse_str_fini (&new);
+				FREE_A_PTRS (run->awk);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+				return -1;
+			}
+
+			cur_ptr++; cur_len--;
+		}
 	}
 
 	FREE_A0_REX (run->awk, rex);
@@ -1179,7 +1219,6 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			{
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
-				/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 				return -1;
 			}
 
@@ -1196,11 +1235,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 #undef FREE_A_PTRS
 
 	v = qse_awk_rtx_makeintval (run, sub_count);
-	if (v == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, v);
 	return 0;
