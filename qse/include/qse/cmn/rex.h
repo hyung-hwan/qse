@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: rex.h 203 2009-06-17 12:43:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,7 +22,8 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/*
+/** @file
+ *
  * Regular Esseression Syntax
  *   A regular expression is zero or more branches, separated by '|'.
  *   ......
@@ -30,24 +31,29 @@
  *
  * Compiled form of a regular expression:
  *
- *   | expression                                                                      |
- *   | header  | branch                          | branch              | branch        |
- *   | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
+ * | expression                                                                      |
+ * | header  | branch                          | branch              | branch        |
+ * | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
  *
- *   nb: the number of branches
- *   el: the length of a expression including the length of nb and el
- *   na: the number of atoms
- *   bl: the length of a branch including the length of na and bl
- *   cmd: The command and repetition info encoded together. 
- *      Some commands require an argument to follow them but some other don't.
- *      It is encoded as follows:
+ * - nb: the number of branches
+ * -  el: the length of a expression including the length of nb and el
+ * -  na: the number of atoms
+ * -  bl: the length of a branch including the length of na and bl
+ * -  cmd: The command and repetition info encoded together. 
  *
- *   Subexpressions can be nested by having the command "GROUP" 
- *   and a subexpression as its argument.
+ * Some commands require an argument to follow them but some other don't.
+ * It is encoded as follows:
+ * .................
+ * 
+ * Subexpressions can be nested by having the command "GROUP" 
+ * and a subexpression as its argument.
  *
  * Examples:
- *   a.c -> |1|6|5|ORD_CHAR(no bound)|a|ANY_CHAR(no bound)|ORD_CHAR(no bound)|c|
- *   ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
+ * a.c -> |1|6|5|ORD_CHAR(no bound)|a|ANY_CHAR(no bound)|ORD_CHAR(no bound)|c|
+ * ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
+ *
+ * @todo
+ * - support \\n to refer to the nth matching substring
  */
 
 #define QSE_REX_NA(code) (*(qse_size_t*)(code))

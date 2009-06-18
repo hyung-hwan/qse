@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: rex.c 203 2009-06-17 12:43:50Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1014,18 +1014,26 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	{
 		NEXT_CHAR (builder, LEVEL_RANGE);
 
-		bound = 0;
-		while (builder->ptn.curc.type == CT_NORMAL &&
-		       (builder->ptn.curc.value >= QSE_T('0') && 
-		        builder->ptn.curc.value <= QSE_T('9')))
+		if (builder->ptn.curc.type == CT_NORMAL &&
+		    (builder->ptn.curc.value >= QSE_T('0') && 
+		     builder->ptn.curc.value <= QSE_T('9')))
 		{
-			bound = bound * 10 + builder->ptn.curc.value - QSE_T('0');
-			NEXT_CHAR (builder, LEVEL_RANGE);
-		}
+			bound = 0;
 
-		cmd->ubound = bound;
+			do
+			{
+				bound = bound * 10 + builder->ptn.curc.value - QSE_T('0');
+				NEXT_CHAR (builder, LEVEL_RANGE);
+			}
+			while (builder->ptn.curc.type == CT_NORMAL &&
+			       (builder->ptn.curc.value >= QSE_T('0') && 
+			        builder->ptn.curc.value <= QSE_T('9')));
+
+			cmd->ubound = bound;
+		}
+		else cmd->ubound = BOUND_MAX;
 	}
-	else cmd->ubound = BOUND_MAX;
+	else cmd->ubound = cmd->lbound;
 
 	if (cmd->lbound > cmd->ubound)
 	{

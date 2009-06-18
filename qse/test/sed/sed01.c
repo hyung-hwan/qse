@@ -119,13 +119,14 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -h    show this message\n"));
 	qse_fprintf (out, QSE_T(" -n    disable auto-print\n"));
 	qse_fprintf (out, QSE_T(" -a    perform strict address check\n"));
+	qse_fprintf (out, QSE_T(" -r    allows {n,m} in a regular expression\n"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hna"),
+		QSE_T("hnar"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -164,6 +165,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('a'):
 				g_option |= QSE_SED_STRICT;
+				break;
+
+			case QSE_T('r'):
+				g_option |= QSE_SED_REXBOUND;
 				break;
 		}
 	}
