@@ -32,15 +32,6 @@
 #	include <errno.h>
 #endif
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_DEBUG)
-#	define _CRTDBG_MAP_ALLOC
-#	include <crtdbg.h>
-#endif
-
-#if defined(__linux) && defined(_DEBUG)
-#	include <mcheck.h>
-#endif
-
 class TestAwk;
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type);
@@ -78,11 +69,7 @@ public:
 		if (heap == QSE_NULL) return -1;
 	#endif
 
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		int n = StdAwk::open ();
-	#else
-		int n = QSE::StdAwk::open ();
-	#endif
 		if (n == -1)
 		{
 	#ifdef _WIN32
@@ -106,11 +93,7 @@ public:
 		return 0;
 
 	failure:
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::close ();
-	#else
-		QSE::StdAwk::close ();
-	#endif
 
 	#ifdef _WIN32
 		HeapDestroy (heap); 
@@ -121,11 +104,7 @@ public:
 
 	void close ()
 	{
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::close ();
-	#else
-		QSE::StdAwk::close ();
-	#endif
 
 		numConInFiles = 0;
 		numConOutFiles = 0;
@@ -240,11 +219,7 @@ public:
 	{
 		srcInName = in;
 		srcOutName = out;
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		return StdAwk::parse ();
-	#else
-		return QSE::StdAwk::parse ();
-	#endif
 	}
 
 protected:
@@ -359,21 +334,15 @@ protected:
 	// console io handlers 
 	int openConsole (Console& io) 
 	{ 
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::Console::Mode mode = io.getMode();
-	#else
-		QSE::StdAwk::Console::Mode mode = io.getMode();
-	#endif
+
 		FILE* fp = QSE_NULL;
 		const char_t* fn = QSE_NULL;
 
 		switch (mode)
 		{
-		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::READ:
-		#else
-			case QSE::StdAwk::Console::READ:
-		#endif
+
 				if (numConInFiles == 0) fp = stdin;
 				else
 				{
@@ -382,11 +351,8 @@ protected:
 				}
 				break;
 
-		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::WRITE:
-		#else
-			case QSE::StdAwk::Console::WRITE:
-		#endif
+
 				if (numConOutFiles == 0) fp = stdout;
 				else
 				{
@@ -509,11 +475,8 @@ protected:
 
 	int nextConsole (Console& io) 
 	{ 
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
 		StdAwk::Console::Mode mode = io.getMode();
-	#else
-		QSE::StdAwk::Console::Mode mode = io.getMode();
-	#endif
+
 		ConTrack* t = (ConTrack*)io.getHandle();
 		FILE* ofp = t->handle;
 		FILE* nfp = QSE_NULL;
@@ -521,21 +484,15 @@ protected:
 
 		switch (mode)
 		{
-		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::READ:
-		#else
-			case QSE::StdAwk::Console::READ:
-		#endif
+
 				if (t->nextConIdx >= numConInFiles) return 0;
 				fn = conInFile[t->nextConIdx];
 				nfp = qse_fopen (fn, QSE_T("r"));
 				break;
 
-		#if defined(_MSC_VER) && (_MSC_VER<1400)
 			case StdAwk::Console::WRITE:
-		#else
-			case QSE::StdAwk::Console::WRITE:
-		#endif
+
 				if (t->nextConIdx >= numConOutFiles) return 0;
 				fn = conOutFile[t->nextConIdx];
 				nfp = qse_fopen (fn, QSE_T("w"));
@@ -678,39 +635,6 @@ static void unset_intr_run (void)
 	setsignal (SIGINT, SIG_DFL, 1);
 #endif
 }
-
-#ifndef NDEBUG
-void qse_assert_abort (void)
-{
-	abort ();
-}
-
-void qse_assert_printf (const qse_char_t* fmt, ...)
-{
-	va_list ap;
-#ifdef _WIN32
-	int n;
-	qse_char_t buf[1024];
-#endif
-
-	va_start (ap, fmt);
-#if defined(_WIN32)
-	n = _vsntprintf (buf, QSE_COUNTOF(buf), fmt, ap);
-	if (n < 0) buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
-
-	#if defined(_MSC_VER) && (_MSC_VER<1400)
-	MessageBox (NULL, buf, 
-		QSE_T("Assertion Failure"), MB_OK|MB_ICONERROR);
-	#else
-	MessageBox (NULL, buf, 
-		QSE_T("\uB2DD\uAE30\uB9AC \uC870\uB610"), MB_OK|MB_ICONERROR);
-	#endif
-#else
-	qse_vprintf (fmt, ap);
-#endif
-	va_end (ap);
-}
-#endif
 
 static void print_error (const qse_char_t* msg)
 {
@@ -956,29 +880,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	return 0;
 }
 
-extern "C" int qse_main (int argc, qse_achar_t* argv[])
+int qse_main (int argc, qse_achar_t* argv[])
 {
-	int n;
-
-#if defined(__linux) && defined(_DEBUG)
-	mtrace ();
-#endif
-#if defined(_WIN32) && defined(_DEBUG) && defined(_MSC_VER)
-	_CrtSetDbgFlag (_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
-#endif
-
-	n = qse_runmain (argc,argv,awk_main);
-
-#if defined(__linux) && defined(_DEBUG)
-	muntrace ();
-#endif
-#if defined(_WIN32) && defined(_DEBUG)
-	/* #if defined(_MSC_VER)
-	_CrtDumpMemoryLeaks ();
-	#endif */
-	_tprintf (_T("Press ENTER to quit\n"));
-	getchar ();
-#endif
-
-	return n;
+	return qse_runmain (argc,argv,awk_main);
 }

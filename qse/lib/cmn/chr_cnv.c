@@ -1,5 +1,5 @@
 /*
- * $Id: chr_cnv.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: chr_cnv.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -79,6 +79,15 @@ qse_size_t qse_wctomb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mblen)
  * mbrtowc(3) do produce non-initial states when interrupted in the middle
  * of a character.
  */
+
+#ifdef _SCO_DS
+/* SCO defines MB_CUR_MAX as shown below:
+ * extern unsigned char __ctype[];
+ * #define MB_CUR_MAX	((int)__ctype[520])
+ * Some hacks are needed for compilation with a C89 compiler. */
+#	undef MB_CUR_MAX
+#	define MB_CUR_MAX 32
+#endif
 
 	if (mblen < MB_CUR_MAX)
 	{

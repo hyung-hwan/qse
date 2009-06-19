@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
+ * $Id: types.h 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -116,9 +116,13 @@ typedef enum qse_tri_t qse_tri_t;
  * The qse_uint8_t type defines an 8-bit unsigned integer type.
  */
 #if QSE_SIZEOF_CHAR == 1
+#	define QSE_HAVE_INT8_T
+#	define QSE_HAVE_UINT8_T
 	typedef char qse_int8_t;
 	typedef unsigned char qse_uint8_t;
 #elif QSE_SIZEOF___INT8 == 1
+#	define QSE_HAVE_INT8_T
+#	define QSE_HAVE_UINT8_T
 	typedef __int8 qse_int8_t;
 	typedef unsigned __int8 qse_uint8_t;
 #endif
@@ -130,9 +134,13 @@ typedef enum qse_tri_t qse_tri_t;
  * The qse_uint16_t type defines an 16-bit unsigned integer type.
  */
 #if QSE_SIZEOF_SHORT == 2
+#	define QSE_HAVE_INT16_T
+#	define QSE_HAVE_UINT16_T
 	typedef short qse_int16_t;
 	typedef unsigned short qse_uint16_t;
 #elif QSE_SIZEOF___INT16 == 2
+#	define QSE_HAVE_INT16_T
+#	define QSE_HAVE_UINT16_T
 	typedef __int16 qse_int16_t;
 	typedef unsigned __int16 qse_uint16_t;
 #endif
@@ -144,12 +152,18 @@ typedef enum qse_tri_t qse_tri_t;
  * The qse_uint32_t type defines an 32-bit unsigned integer type.
  */
 #if QSE_SIZEOF_INT == 4
+#	define QSE_HAVE_INT32_T
+#	define QSE_HAVE_UINT32_T
 	typedef int qse_int32_t;
 	typedef unsigned int qse_uint32_t;
 #elif QSE_SIZEOF_LONG == 4
+#	define QSE_HAVE_INT32_T
+#	define QSE_HAVE_UINT32_T
 	typedef long qse_int32_t;
 	typedef unsigned long qse_uint32_t;
 #elif QSE_SIZEOF___INT32 == 4
+#	define QSE_HAVE_INT32_T
+#	define QSE_HAVE_UINT32_T
 	typedef __int32 qse_int32_t;
 	typedef unsigned __int32 qse_uint32_t;
 #endif
@@ -265,7 +279,7 @@ typedef int qse_mcint_t;
  * #QSE_WCHAR_EOF.
  */
 #if defined(__cplusplus) && \
-    (!defined(_MSC_VER) || \
+    (!(defined(_MSC_VER) || defined(_SCO_DS)) || \
      (defined(_MSC_VER) && defined(_NATIVE_WCHAR_T_DEFINED)))
 	/* C++ */
 

@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 193 2009-06-08 13:09:01Z hyunghwan.chung $
+ * $Id: fio.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -29,6 +29,9 @@
 #	include <sys/types.h>
 #	include <fcntl.h>
 #	include <limits.h>
+#	ifndef PATH_MAX
+#		define PATH_MAX 2048
+#	endif
 #endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)

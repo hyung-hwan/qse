@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: awk.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -600,6 +600,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 	struct argout_t ao;
 	int ret = 0;
 
+	/* TODO: change it to support multiple source files */
+	qse_awk_parsestd_in_t psin;
+	qse_awk_parsestd_out_t psout;
+
 	qse_memset (&ao, 0, QSE_SIZEOF(ao));
 
 	i = handle_args (argc, argv, &ao);
@@ -615,10 +619,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	awk = open_awk ();
 	if (awk == QSE_NULL) return -1;
-
-	/* TODO: change it to support multiple source files */
-	qse_awk_parsestd_in_t psin;
-	qse_awk_parsestd_out_t psout;
 	
 	psin.type = ao.ist;
 	if (ao.ist == QSE_AWK_PARSESTD_CP) psin.u.cp = ao.isp.str;
