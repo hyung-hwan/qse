@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: run.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1469,8 +1469,11 @@ qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
 	qse_awk_val_t* v;
-	struct pafv pafv = { args, nargs };
+	struct pafv pafv/*= { args, nargs }*/;
 	qse_awk_nde_call_t call;
+
+	pafv.args = args;
+	pafv.nargs = nargs;
 
 	if (rtx->exit_level >= EXIT_NEXT) 
 	{

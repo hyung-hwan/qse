@@ -165,6 +165,9 @@
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
 
+/* Define to 1 if you have the `towctrans' function. */
+#undef HAVE_TOWCTRANS
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -194,6 +197,9 @@
 
 /* Define to 1 if you have the `wcsrtombs' function. */
 #undef HAVE_WCSRTOMBS
+
+/* Define to 1 if you have the `wctrans' function. */
+#undef HAVE_WCTRANS
 
 /* Define to 1 if you have the <wctype.h> header file. */
 #undef HAVE_WCTYPE_H
@@ -259,6 +265,12 @@
 /* sizeof(long long) */
 #undef QSE_SIZEOF_LONG_LONG
 
+/* sizeof(off64_t) */
+#undef QSE_SIZEOF_OFF64_T
+
+/* sizeof(off_t) */
+#undef QSE_SIZEOF_OFF_T
+
 /* sizeof(short) */
 #undef QSE_SIZEOF_SHORT
 
@@ -318,6 +330,12 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `off64_t', as computed by sizeof. */
+#undef SIZEOF_OFF64_T
+
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

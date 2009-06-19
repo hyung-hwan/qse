@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: awk.h 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -27,6 +27,8 @@
 /** @file
  * An embeddable AWK interpreter is defined in this header files.
  *
+ * @example awk.c
+ * This program demonstrates how to build a complete awk interpreter.
  * @example awk01.c
  * This program demonstrates how to use qse_awk_rtx_loop().
  * @example awk02.c
@@ -55,13 +57,13 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
-		unsigned int ref: 11 \
-		unsigned int nstr: 2;
+		unsigned int ref: 11; \
+		unsigned int nstr: 2
 #else
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
 		unsigned int ref: 27; \
-		unsigned int nstr: 2;
+		unsigned int nstr: 2
 #endif
 
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)
@@ -159,7 +161,6 @@ struct qse_awk_val_ref_t
 	qse_awk_val_t** adr;
 };
 typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
-
 
 typedef qse_real_t (*qse_awk_pow_t) (
 	qse_awk_t* awk,

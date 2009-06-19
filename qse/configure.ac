@@ -68,10 +68,15 @@ AC_SUBST(LIBTOOL_DEPS)
 #	fi
 #fi
 
+dnl indicate the existence of config.h
+CFLAGS="$CFLAGS -DQSE_HAVE_CONFIG_H"
+OBJCFLAGS="$OBJCFLAGS -DQSE_HAVE_CONFIG_H"
+CXXFLAGS="$CXXFLAGS -DQSE_HAVE_CONFIG_H"
+
 dnl make visible the 64-bit interface to the file system
-CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
-OBJCFLAGS="$OBJCFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
-CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -DQSE_HAVE_CONFIG_H"
+CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+OBJCFLAGS="$OBJCFLAGS -D_LARGEFILE64_SOURCE"
+CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
 
 dnl define the WIN32 conditional if necessary
 case "$host" in
@@ -101,6 +106,7 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
+AC_CHECK_FUNCS([wctrans towctrans])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
@@ -130,6 +136,8 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
 AC_CHECK_SIZEOF(wchar_t)
+AC_CHECK_SIZEOF(off_t)
+AC_CHECK_SIZEOF(off64_t)
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
@@ -146,6 +154,8 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_FLOAT, ${ac_cv_sizeof_float}, [sizeof(float)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_DOUBLE, ${ac_cv_sizeof_double}, [sizeof(double)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(long double)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
 
 AC_DEFINE_UNQUOTED(QSE_VERSION, "${VERSION}", [package version])
 AC_DEFINE_UNQUOTED(QSE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [major version number])

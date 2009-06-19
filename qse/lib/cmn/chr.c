@@ -1,5 +1,5 @@
 /*
- * $Id: chr.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: chr.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -113,6 +113,7 @@ qse_bool_t qse_ccls_is (qse_cint_t c, qse_ccls_id_t type)
 
 qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_id_t type)  
 { 
+#ifdef HAVE_WCTRANS
 	static const char* name[] = 
 	{
 		"toupper",
@@ -126,10 +127,16 @@ qse_cint_t qse_ccls_to (qse_cint_t c, qse_ccls_id_t type)
 	};
 
 	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_LOWER,
-		"The character type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
+		"The type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
 
 	if (desc[type] == (wctrans_t)0) desc[type] = wctrans(name[type]);
 	return towctrans (c, desc[type]);
+
+#else
+	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_LOWER,
+		"The type should be one of QSE_CCLS_UPPER and QSE_CCLS_LOWER");
+	return (type == QSE_CCLS_UPPER)? towupper(c): towlower(c);
+#endif
 }
 
 #else

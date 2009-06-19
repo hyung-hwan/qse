@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: fio.h 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -80,7 +80,18 @@ enum qse_fio_mode_t
 #endif
 
 /* file offset */
-typedef qse_int64_t qse_fio_off_t;
+#if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF64_T==8)
+	typedef qse_int64_t qse_fio_off_t;
+#elif defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF_T==8)
+	typedef qse_int64_t qse_fio_off_t;
+#elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_OFF_T==4)
+	typedef qse_int32_t qse_fio_off_t;
+#elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_OFF_T==2)
+	typedef qse_int16_t qse_fio_off_t;
+#else
+#	error Unsupported platform
+#endif
+
 typedef enum qse_fio_seek_origin_t qse_fio_ori_t;
 
 typedef struct qse_fio_t qse_fio_t;

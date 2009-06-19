@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 203 2009-06-17 12:43:50Z hyunghwan.chung $
+ * $Id: rex.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1726,7 +1726,12 @@ static const qse_byte_t* match_group (
 	mat2.match_ptr = mat->match_ptr;
 	while (si < cp->ubound)
 	{
-		if (mat2.match_ptr >= matcher->match.str.end) break;
+		/* for eol($) check, it should not break when 
+		 * mat2.match_ptr == matcher->match.str.end.
+		 * matcher->match.str.end is one character past the 
+		 * actual end */
+		/*if (mat2.match_ptr >= matcher->match.str.end) break;*/
+		if (mat2.match_ptr > matcher->match.str.end) break; 
 
 		if (match_pattern (matcher, p, &mat2) == QSE_NULL) 
 		{

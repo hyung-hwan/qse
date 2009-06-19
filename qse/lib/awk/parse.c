@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: parse.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -4516,10 +4516,12 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 			{
 				if (ep->opcode == tab[i].opc)
 				{
+					qse_awk_nde_t* tmp;
+
 					if (tab[i].opt && 
 					    !(awk->option&tab[i].opt)) break;
 
-					qse_awk_nde_t* tmp = args_tail;
+					tmp = args_tail;
 
 					if (tail_prev != QSE_NULL) 
 						tail_prev->next = ep->left;
@@ -4963,6 +4965,7 @@ static int get_token (qse_awk_t* awk)
 	else 
 	{
 		int i;
+		qse_char_t cc;
 		static struct 
 		{
 			qse_char_t c;
@@ -4995,7 +4998,7 @@ static int get_token (qse_awk_t* awk)
 			}
 		}
 
-		qse_char_t cc = (qse_char_t)c;
+		cc = (qse_char_t)c;
 		SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, &cc, 1);
 		return -1;
 	}

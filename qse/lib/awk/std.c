@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: std.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -956,8 +956,9 @@ static int fnc_math_1 (
 	}
 	else 
 	{
+		float (*rf) (float);
 		QSE_ASSERT (type == FNC_MATH_F);
-		float (*rf) (float) = (float(*)(float))f;
+		rf = (float(*)(float))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	
@@ -1008,8 +1009,9 @@ static int fnc_math_2 (
 	}
 	else 
 	{
+		float (*rf) (float,float);
 		QSE_ASSERT (type == FNC_MATH_F);
-		float (*rf) (float,float) = (float(*)(float,float))f;
+		rf = (float(*)(float,float))f;
 		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	
