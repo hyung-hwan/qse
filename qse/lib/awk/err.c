@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: err.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -88,6 +88,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("END not followed by a left bracket on the same line"),
 		QSE_T("duplicate BEGIN"),
 		QSE_T("duplicate END"),
+		QSE_T("keyword '${0}' redefined"),
 		QSE_T("intrinsic function '${0}' redefined"),
 		QSE_T("function '${0}' redefined"),
 		QSE_T("global variable '${0}' redefined"),

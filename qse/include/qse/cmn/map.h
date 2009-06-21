@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 101 2009-03-15 14:36:05Z hyunghwan.chung $
+ * $Id: map.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,13 +22,9 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* Common/Hash Map
- * DESCRIPTION
- *  A hash map maintains buckets for key/value pairs with the same key hash
- *  chained under the same bucket.
- *
- *  #include <qse/cmn/map.h>
- ******
+/**@file
+ * A hash map maintains buckets for key/value pairs with the same key hash
+ * chained under the same bucket.
  */
 
 /* values that can be returned by qse_map_walker_t */
@@ -49,29 +45,23 @@ typedef struct qse_map_pair_t qse_map_pair_t;
 typedef enum qse_map_walk_t qse_map_walk_t;
 typedef enum qse_map_id_t   qse_map_id_t;
 
-/****t* Common/qse_map_copier_t
- * NAME
- *  qse_map_copier_t - define a pair contruction callback
- * SYNOPSIS
+/**
+ * The qse_map_copier_t type defines a pair contruction callback
  */
 typedef void* (*qse_map_copier_t) (
 	qse_map_t* map  /* a map */,
 	void*      dptr /* the pointer to a key or a value */, 
 	qse_size_t dlen /* the length of a key or a value */
 );
-/******/
 
-/****t* Common/qse_map_freeer_t
- * NAME
- *  qse_map_freeer_t - define a key/value destruction callback
- * SYNOPSIS
+/**
+ * The qse_map_freeer_t defines a key/value destruction callback
  */
 typedef void (*qse_map_freeer_t) (
 	qse_map_t* map  /* a map */,
 	void*      dptr /* the pointer to a key or a value */, 
 	qse_size_t dlen /* the length of a key or a value */
 );
-/******/
 
 /* key hasher */
 typedef qse_size_t (*qse_map_hasher_t) (
@@ -80,108 +70,70 @@ typedef qse_size_t (*qse_map_hasher_t) (
 	qse_size_t klen  /* the length of a key in bytes */
 );
 
-/****t* Common/qse_map_comper_t
- * NAME
- *  qse_map_comper_t - define a key comparator
+/**
+ * The qse_map_comper_t type defines a key comparator that is called when
+ * the map needs to compare keys. A map is created with a default comparator
+ * which performs bitwise comparison between two keys.
  *
- * DESCRIPTION
- *  The qse_map_comper_t type defines a key comparator that is called when
- *  the map needs to compare keys. A map is created with a default comparator
- *  which performs bitwise comparison between two keys.
- *
- *  The comparator should return 0 if the keys are the same and a non-zero
- *  integer otherwise.
- *
- * SYNOPSIS
+ * The comparator should return 0 if the keys are the same and a non-zero
+ * integer otherwise.
  */
 typedef int (*qse_map_comper_t) (
-	qse_map_t*  map    /* a map */, 
-	const void* kptr1  /* the pointer to a key */, 
-	qse_size_t  klen1  /* the length of a key */, 
-	const void* kptr2  /* the pointer to a key */, 
-	qse_size_t  klen2  /* the length of a key */
+	qse_map_t*  map,    /**< a map */ 
+	const void* kptr1,  /**< the pointer to a key */
+	qse_size_t  klen1,  /**< the length of a key */ 
+	const void* kptr2,  /**< the pointer to a key */ 
+	qse_size_t  klen2   /**< the length of a key */
 );
-/******/
 
-/****t* Common/qse_map_keeper_t
- * NAME
- *  qse_map_keeper_t - define a value keeper
- *
- * DESCRIPTION
- *  The qse_map_keeper_t type defines a value keeper that is called when 
- *  a value is retained in the context that it should be destroyed because
- *  it is identical to a new value. Two values are identical if their beginning
- *  pointers and their lengths are equal.
- *
- * SYNOPSIS
+/**
+ * The qse_map_keeper_t type defines a value keeper that is called when 
+ * a value is retained in the context that it should be destroyed because
+ * it is identical to a new value. Two values are identical if their beginning
+ * pointers and their lengths are equal.
  */
 typedef void (*qse_map_keeper_t) (
-	qse_map_t* map     /* a map */,
-	void*      vptr    /* the pointer to a value */,
-	qse_size_t vlen    /* the length of a value */	
+	qse_map_t* map,    /**< a map */
+	void*      vptr,   /**< value pointer */
+	qse_size_t vlen    /**< value length */
 );
-/******/
 
-/****t* Common/qse_map_sizer_t
- * NAME
- *  qse_map_sizer_t - define a bucket size calculator
- *
- * DESCRIPTION
- *  The qse_map_sizer_T type defines a bucket size claculator that is called
- *  when a map should resize the bucket. The current bucket size +1 is passed
- *  as the hint.
- * 
- * SYNOPSIS
+/**
+ * The qse_map_sizer_T type defines a bucket size claculator that is called
+ * when a map should resize the bucket. The current bucket size +1 is passed
+ * as the hint.
  */
 typedef qse_size_t (*qse_map_sizer_t) (
-	qse_map_t* map,  /* a map */
-	qse_size_t hint  /* a sizing hint */
+	qse_map_t* map,  /**< a map */
+	qse_size_t hint  /**< a sizing hint */
 );
-/******/
 
-/****t* Common/qse_map_walker_t
- * NAME
- *  qse_map_walker_t - define a pair visitor
- *
- * SYNOPSIS
+/**
+ * The qse_map_walker_t defines a pair visitor.
  */
 typedef qse_map_walk_t (*qse_map_walker_t) (
-	qse_map_t*      map   /* a map */, 
-	qse_map_pair_t* pair  /* the pointer to a key/value pair */, 
-	void*           arg   /* the pointer to user-defined data */
+	qse_map_t*      map,   /**< a map */
+	qse_map_pair_t* pair,  /**< the pointer to a key/value pair */
+	void*           arg    /**< the pointer to user-defined data */
 );
-/******/
 
-/****s* Common/qse_map_pair_t
- * NAME
- *  qse_map_pair_t - define a pair
- *
- * DESCRIPTION
- *  A pair is composed of a key and a value. It maintains pointers to the 
- *  beginning of a key and a value plus their length. The length is scaled
- *  down with the scale factor specified in an owning map. Use macros defined
- *  in the SEE ALSO section below to access individual fields.
- *
- * SEE ALSO
- *  QSE_MAP_KPTR, QSE_MAP_KLEN, QSE_MAP_VPTR, QSE_MAP_VLEN
- *
- * SYNOPSIS
+/**
+ * The qse_map_pair_t type defines a map pair. A pair is composed of a key
+ * and a value. It maintains pointers to the beginning of a key and a value
+ * plus their length. The length is scaled down with the scale factor 
+ * specified in an owning map. Use macros defined in the 
  */
 struct qse_map_pair_t
 {
-	void*           kptr;  /* the pointer to a key */
-	qse_size_t      klen;  /* the length of a key */
-	void*           vptr;  /* the pointer to a value */
-	qse_size_t      vlen;  /* the length of a value */
-	qse_map_pair_t* next;  /* the next pair under the same slot */
+	void*           kptr;  /**< the pointer to a key */
+	qse_size_t      klen;  /**< the length of a key */
+	void*           vptr;  /**< the pointer to a value */
+	qse_size_t      vlen;  /**< the length of a value */
+	qse_map_pair_t* next;  /**< the next pair under the same slot */
 };
-/*****/
 
-/****s* Common/qse_map_t
- * NAME
- *  qse_map_t - define a hash map
- *
- * SYNOPSIS
+/**
+ * The qse_map_t type defines a hash map.
  */
 struct qse_map_t
 {
@@ -201,7 +153,6 @@ struct qse_map_t
 	qse_size_t       threshold;
 	qse_map_pair_t** bucket;
 };
-/******/
 
 #define QSE_MAP_COPIER_SIMPLE ((qse_map_copier_t)1)
 #define QSE_MAP_COPIER_INLINE ((qse_map_copier_t)2)

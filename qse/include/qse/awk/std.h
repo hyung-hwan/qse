@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
+ * $Id: std.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,9 +22,15 @@
 #include <qse/awk/awk.h>
 
 /** @file
- * Standard AWK Interpreter
+ * This file defines functions and data types that help you create
+ * an awk interpreter with less effort. It is designed to be as close
+ * to conventional awk implementations as possible.
+ * 
+ * The source script handler does not evaluate a file name of the "var=val"
+ * form as an assignment expression. Instead, it just treats it as a
+ * normal file name.
+ *
  * @todo
- * - console name handling an empty string("") and assignment (v=yyyy)
  * - StdAwk ARGV and console name handling
  */
 
@@ -121,8 +127,8 @@ int qse_awk_parsestd (
 
 /**
  * The qse_awk_rtx_openstd() function creates a standard runtime context.
- * The caller should keep the contents of icf and ocf valid throughout
- * the lifetime of the runtime context created. The runtime context 
+ * The caller should keep the contents of @a icf and @a ocf valid throughout
+ * the lifetime of the runtime context created. 
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*              awk,
@@ -132,15 +138,12 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	const qse_char_t*const* ocf
 );
 
-/****f* AWK/qse_awk_rtx_getxtnstd
- * NAME
- *  qse_awk_rtx_getxtnstd - get the pointer to extension space
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getxtnstd() gets the pointer to extension space.
  */
 void* qse_awk_rtx_getxtnstd (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
 #ifdef __cplusplus
 }
