@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 200 2009-06-14 13:22:00Z hyunghwan.chung $
+ * $Id: val.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -346,6 +346,30 @@ init:
 	qse_dprintf (QSE_T("makestrval2 => %p\n"), val);
 #endif
 	return (qse_awk_val_t*)val;
+}
+
+qse_awk_val_t* qse_awk_rtx_makenstrval (
+	qse_awk_rtx_t* run, const qse_char_t* str, qse_size_t len)
+{
+	int x;
+	qse_awk_val_t* v;
+	qse_long_t l;
+	qse_real_t r;
+
+	x = qse_awk_rtx_strtonum (run, 1, str, len, &l, &r);
+	v = qse_awk_rtx_makestrval (run, str, len);
+
+	if (v == QSE_NULL) return QSE_NULL;
+
+	if (x >= 0) 
+	{
+		/* set the numeric string flag if a string
+		 * can be converted to a number */
+		QSE_ASSERT (x == 0 || x == 1);
+		v->nstr = x + 1; /* long -> 1, real -> 2 */
+	}
+
+	return v;
 }
 
 qse_awk_val_t* qse_awk_rtx_makerexval (

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: parse.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1403,12 +1403,10 @@ static void adjust_static_globals (qse_awk_t* awk)
 		if (gtab[id].valid != 0 && 
 		    (awk->option & gtab[id].valid) != gtab[id].valid)
 		{
-			/*awk->parse.gbls.buf[id].name.len = 0;*/
 			QSE_LDA_DLEN(awk->parse.gbls,id) = 0;
 		}
 		else
 		{
-			/*awk->parse.gbls.buf[id].name.len = gtab[id].name_len;*/
 			QSE_LDA_DLEN(awk->parse.gbls,id) = gtab[id].name_len;
 		}
 	}
@@ -1487,6 +1485,15 @@ static int add_global (
 {
 	qse_size_t ngbls;
 
+	/* check if it is a keyword */
+	if (classify_ident (awk, name, len) != TOKEN_IDENT)
+	{
+		SETERRARG (
+			awk, QSE_AWK_EKWRED, awk->token.line,
+			name, len);
+		return -1;
+	}
+
 	/* check if it conflict with a builtin function name */
 	if (qse_awk_getfnc (awk, name, len) != QSE_NULL)
 	{
@@ -1563,14 +1570,14 @@ int qse_awk_addgbl (
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
-		/* this function is not allow after qse_awk_parse is called */
+		/* this function is not allowed after qse_awk_parse is called */
 		SETERR (awk, QSE_AWK_ENOPER);
 		return -1;
 	}
 
 	n = add_global (awk, name, len, 0, 0);
 
-	/* update the count of the static gbls. 
+	/* update the count of the static globals. 
 	 * the total global count has been updated inside add_global. */
 	if (n >= 0) awk->tree.ngbls_base++; 
 
@@ -4662,7 +4669,7 @@ static int get_token (qse_awk_t* awk)
 		}
 		*/
 	}
-	else if (QSE_AWK_ISALPHA (awk, c) || c == QSE_T('_')) 
+	else if (c == QSE_T('_') || QSE_AWK_ISALPHA (awk, c))
 	{
 		int type;
 
@@ -4672,8 +4679,9 @@ static int get_token (qse_awk_t* awk)
 			ADD_TOKEN_CHAR (awk, c);
 			GET_CHAR_TO (awk, c);
 		} 
-		while (QSE_AWK_ISALPHA (awk, c) || 
-		       c == QSE_T('_') || QSE_AWK_ISDIGIT(awk,c));
+		while (c == QSE_T('_') || 
+		       QSE_AWK_ISALPHA (awk, c) || 
+		       QSE_AWK_ISDIGIT (awk, c));
 
 		type = classify_ident (awk, 
 			QSE_STR_PTR(awk->token.name), 

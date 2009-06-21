@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: Awk.hpp 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -462,6 +462,7 @@ public:
 		ERR_BLKEND = QSE_AWK_EBLKEND,
 		ERR_DUPBEG = QSE_AWK_EDUPBEG,
 		ERR_DUPEND = QSE_AWK_EDUPEND,
+		ERR_KWRED = QSE_AWK_EKWRED,
 		ERR_FNCRED = QSE_AWK_EFNCRED,
 		ERR_FUNRED = QSE_AWK_EFUNRED,
 		ERR_GBLRED = QSE_AWK_EGBLRED,

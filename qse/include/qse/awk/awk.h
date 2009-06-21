@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: awk.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -495,6 +495,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EBLKEND,        /* END requires an action block */
 	QSE_AWK_EDUPBEG,        /* duplicate BEGIN */
 	QSE_AWK_EDUPEND,        /* duplicate END */
+	QSE_AWK_EKWRED,         /* keyword redefined */
 	QSE_AWK_EFNCRED,        /* intrinsic function redefined */
 	QSE_AWK_EFUNRED,        /* function redefined */
 	QSE_AWK_EGBLRED,        /* global variable redefined */
@@ -1026,78 +1027,59 @@ void qse_awk_clrfnc (
 /*****/
 
 
-/****f* AWK/qse_awk_parse
- * NAME
- *  qse_awk_parse - parse source code
- * SYNOPSIS
+/**
+ * The qse_awk_parse() function parses the source script.
+ * @return 0 on success, -1 on failure.
  */
 int qse_awk_parse (
-	qse_awk_t*     awk,
-	qse_awk_sio_t* sio
+	qse_awk_t*     awk, /**< an awk object */
+	qse_awk_sio_t* sio  /**< source stream I/O handler */
 );
-/******/
 
-/****f* AWK/qse_awk_alloc
- * NAME 
- *  qse_awk_alloc - allocate dynamic memory
- * RETURN
- *   the pointer to the memory space allocated on success, QSE_NULL on failure
- * SYNOPSIS
+/**
+ * The qse_awk_alloc() function allocates dynamic memory.
+ * @return a pointer to memory space allocated on success, QSE_NULL on failure
  */
 void* qse_awk_alloc (
-	qse_awk_t* awk /* the pointer to a qse_awk_t instance */,
-	qse_size_t size /* the size of memory to allocate in bytes */
+	qse_awk_t* awk,  /**< an awk object */
+	qse_size_t size  /**< size of memory to allocate in bytes */
 );
-/******/
 
-/****f* AWK/qse_awk_free
- * NAME 
- *  qse_awk_free - free dynamic memory
- * SYNOPSIS
+/**
+ * The qse_awk_free() function frees dynamic memory allocated.
  */
 void qse_awk_free (
-	qse_awk_t* awk /* the pointer to a qse_awk_t instance */,
-	void*      ptr /* the pointer to the memory space to free */
+	qse_awk_t* awk, /**< an awk object */
+	void*      ptr  /**< memory space to free */
 );
-/******/
 
-/****f* AWK/qse_awk_strdup
- * NAME 
- *  qse_awk_strdup - duplicate a null-terminated string
- * DESCRIPTION
- *  The qse_awk_strdup() function is used to duplicate a string using
- *  the memory manager used by the associated qse_awk_t instance.
- *  The new string should be freed using the qse_awk_free() function.
- * RETURN
- *  The qse_awk_strdup() function returns the pointer to a new string which
- *  is a duplicate of the string s. It returns QSE_NULL on failure.
- * SYNOPSIS
+/**
+ * The qse_awk_strdup() function is used to duplicate a string using
+ * the memory manager used by the associated qse_awk_t instance.
+ * The new string should be freed using the qse_awk_free() function.
+ *
+ * @return a pointer to a new string duplicated of @a s on success, 
+ *         QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strdup (
-	qse_awk_t*        awk /* the pointer to a qse_awk_t instance */,
-	const qse_char_t* str /* the pointer to a string */
+	qse_awk_t*        awk, /**< an awk object */
+	const qse_char_t* str  /**< a string pointer */
 );
-/******/
 
-/****f* AWK/qse_awk_strxdup 
- * NAME 
- *  qse_awk_strxdup - duplicate a length-delimited string
- * DESCRIPTION
- *  The qse_awk_strxdup() function is used to duplicate a string whose length
- *  is as long as len characters using the memory manager used by the 
- *  qse_awk_t instance. The new string should be freed using the qse_awk_free()
- *  function.
- * RETURN
- *  The qse_awk_strxdup() function returns the pointer to a new string which 
- *  is a duplicate of the string s on success. It returns QSE_NULL on failure.
- * SYNOPSIS
+/**
+ * The qse_awk_strxdup() function is used to duplicate a string whose length
+ * is as long as len characters using the memory manager used by the 
+ * qse_awk_t instance. The new string should be freed using the qse_awk_free()
+ * function.
+ *
+ * @return a pointer to a new string duplicated of @a s on success, 
+ *         QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strxdup (
-	qse_awk_t*        awk,
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_awk_t*        awk, /**< an awk object */
+	const qse_char_t* str, /**< a string pointer */
+	qse_size_t        len  /**< the number of character in a string */
 );
-/******/
 
 qse_long_t qse_awk_strxtolong (
 	qse_awk_t*         awk,
@@ -1474,6 +1456,12 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_size_t        len1, 
 	const qse_char_t* str2,
 	qse_size_t        len2
+);
+
+qse_awk_val_t* qse_awk_rtx_makenstrval (
+	qse_awk_rtx_t*    rtx,
+	const qse_char_t* str,
+	qse_size_t        len
 );
 
 qse_awk_val_t* qse_awk_rtx_makerexval (

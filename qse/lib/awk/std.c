@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: std.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -599,6 +599,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			qse_sio_t* sio;
 			const qse_char_t* file;
 
+		retry:
 			file = rxtn->c.in.files[rxtn->c.in.index];
 
 			if (file == QSE_NULL)
@@ -726,6 +727,7 @@ static qse_ssize_t awk_rio_console (
 			qse_sio_t* sio;
 			const qse_char_t* file;
 
+		retry:
 			/* it has reached the end of the current file.
 			 * open the next file if available */
 			if (rxtn->c.in.files == QSE_NULL ||

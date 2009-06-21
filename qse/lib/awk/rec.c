@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 200 2009-06-14 13:22:00Z hyunghwan.chung $
+ * $Id: rec.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -31,10 +31,6 @@ int qse_awk_rtx_setrec (
 
 	if (idx == 0)
 	{
-		qse_long_t l;
-		qse_real_t r;
-		int x;
-
 		if (str == QSE_STR_PTR(&run->inrec.line) &&
 		    len == QSE_STR_LEN(&run->inrec.line))
 		{
@@ -53,21 +49,12 @@ int qse_awk_rtx_setrec (
 			}
 		}
 
-		x = qse_awk_rtx_strtonum (run, 1, str, len, &l, &r);
-		v = qse_awk_rtx_makestrval (run, str, len);
+		v = qse_awk_rtx_makenstrval (run, str, len);
 
 		if (v == QSE_NULL)
 		{
 			qse_awk_rtx_clrrec (run, QSE_FALSE);
 			return -1;
-		}
-
-		if (x >= 0) 
-		{
-			/* set the numeric string flag if a string
-			 * can be converted to a number */
-			QSE_ASSERT (x == 0 || x == 1);
-			v->nstr = x + 1; /* long -> 1, real -> 2 */
 		}
 
 		QSE_ASSERT (run->inrec.d0->type == QSE_AWK_VAL_NIL);
@@ -215,10 +202,6 @@ static int split_record (qse_awk_rtx_t* run)
 
 	while (p != QSE_NULL)
 	{
-		qse_long_t l;
-		qse_real_t r;
-		int x;
-
 		if (fs_len <= 1)
 		{
 			p = qse_awk_rtx_strxntok (
@@ -247,25 +230,18 @@ static int split_record (qse_awk_rtx_t* run)
 		run->inrec.flds[run->inrec.nflds].ptr = tok;
 		run->inrec.flds[run->inrec.nflds].len = tok_len;
 
-		x = qse_awk_rtx_strtonum (run, 1, tok, tok_len, &l, &r);
 		run->inrec.flds[run->inrec.nflds].val =
-			qse_awk_rtx_makestrval (run, tok, tok_len);
+			qse_awk_rtx_makenstrval (run, tok, tok_len);
 
 		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
 		{
-			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
+			if (fs_free != QSE_NULL) 
+				QSE_AWK_FREE (run->awk, fs_free);
 			return -1;
 		}
 
-		if (x >= 0)
-		{
-			/* set the numeric string flags if a string
-			 * can be converted to a number */
-			QSE_ASSERT (x == 0 || x == 1);
-			run->inrec.flds[run->inrec.nflds].val->nstr = x + 1;
-		}
-
-		qse_awk_rtx_refupval (run, run->inrec.flds[run->inrec.nflds].val);
+		qse_awk_rtx_refupval (
+			run, run->inrec.flds[run->inrec.nflds].val);
 		run->inrec.nflds++;
 
 		len = QSE_STR_LEN(&run->inrec.line) - 
