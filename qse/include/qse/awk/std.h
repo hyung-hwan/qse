@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: std.h 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -32,6 +32,7 @@
  *
  * @todo
  * - StdAwk ARGV and console name handling
+ * - add RQ and LQ for more powerful record splitting
  */
 
 /**

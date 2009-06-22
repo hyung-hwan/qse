@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: Awk.hpp 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -572,10 +572,10 @@ public:
 		 * to a number is compared with a number or vice versa.
 		 *
 		 * For an expression (9 > "10.9"),
-		 * - 9 is greater if #QSE_AWK_NUMCMPONSTR is off;
-		 * - "10.9" is greater if #QSE_AWK_NUMCMPONSTR is on
+		 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
+		 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 		 */
-		OPT_NUMCMPONSTR = QSE_AWK_NUMCMPONSTR 
+		OPT_NCMPONSTR = QSE_AWK_NCMPONSTR 
 	};
 	// end of enum Option
 	

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: run.c 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1322,10 +1322,10 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	STACK_NARGS(rtx) = (void*)nargs;
 
 	/* call the callback */
-	if (rtx->rcb.on_enter != QSE_NULL)
+	if (rtx->rcb.on_loop_enter != QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		ret = rtx->rcb.on_enter (rtx, rtx->rcb.data);
+		ret = rtx->rcb.on_loop_enter (rtx, rtx->rcb.data);
 		if (ret <= -1) 
 		{
 			if (rtx->errinf.num == QSE_AWK_ENOMEM)
@@ -1424,12 +1424,12 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	/* get the return value in the current stack frame */
 	v = STACK_RETVAL(rtx);
 
-	if (rtx->rcb.on_exit != QSE_NULL)
+	if (rtx->rcb.on_loop_exit != QSE_NULL)
 	{
 		/* we call the on_exit handler regardless of ret. 
 		 * the return value passed is the global return value
 		 * in the stack. */
-		rtx->rcb.on_exit (rtx, v, rtx->rcb.data);
+		rtx->rcb.on_loop_exit (rtx, v, rtx->rcb.data);
 	}
 
 	/* end the life of the global return value */
@@ -1462,9 +1462,6 @@ qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
 	qse_awk_val_t** args, qse_size_t nargs)
 {
-#if 0
-	int ret = 0;
-#endif
 	qse_map_pair_t* pair;
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
@@ -1475,7 +1472,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	pafv.args = args;
 	pafv.nargs = nargs;
 
-	if (rtx->exit_level >= EXIT_NEXT) 
+	if (rtx->exit_level >= EXIT_GLOBAL) 
 	{
 		/* cannot call the function again when exit() is called
 		 * in an AWK program or qse_awk_rtx_stop() is invoked */
@@ -1548,14 +1545,16 @@ qse_awk_val_t* qse_awk_rtx_call (
 		qse_awk_rtx_refupval (rtx, v);
 	}
 
-	if (rtx->rcb.on_exit != QSE_NULL)
+#if 0
+	if (rtx->rcb.on_loop_exit != QSE_NULL)
 	{
-		rtx->rcb.on_exit (
+		rtx->rcb.on_loop_exit (
 			rtx, 
 			((v == QSE_NULL)? qse_awk_val_nil: v),
 			rtx->rcb.data
 		);
 	}
+#endif
 
 	/* return the return value with its reference count at least 1.
 	 * the caller of this function should count down its reference. */
@@ -4027,7 +4026,7 @@ static int __cmp_int_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NUMCMPONSTR)
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR)
 	{
 		const qse_char_t* end;
 		qse_long_t ll;
@@ -4114,7 +4113,7 @@ static int __cmp_real_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NUMCMPONSTR)
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR)
 	{
 		const qse_char_t* end;
 		qse_real_t rr;
