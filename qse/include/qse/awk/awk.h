@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: awk.h 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -321,14 +321,14 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
  */
 struct qse_awk_rcb_t
 {
-	int (*on_enter) (
+	int (*on_loop_enter) (
 		qse_awk_rtx_t* rtx, void* data);
+
+	void (*on_loop_exit) (
+		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
 
 	void (*on_statement) (
 		qse_awk_rtx_t* rtx, qse_size_t line, void* data);
-
-	void (*on_exit) (
-		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
 
 	void* data;
 };
@@ -408,10 +408,10 @@ enum qse_awk_option_t
 	 * to a number is compared with a number or vice versa.
 	 *
 	 * For an expression (9 > "10.9"),
-	 * - 9 is greater if #QSE_AWK_NUMCMPONSTR is off;
-	 * - "10.9" is greater if #QSE_AWK_NUMCMPONSTR is on
+	 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
+	 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 	 */
-	QSE_AWK_NUMCMPONSTR = (1 << 18),
+	QSE_AWK_NCMPONSTR = (1 << 18),
 
 	/** 
 	 * makes #qse_awk_t to behave as compatibly as classical AWK

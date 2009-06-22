@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: awk.c 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -62,6 +62,10 @@ struct arg_t
 	qse_size_t   icfl; /* the number of input console files */
 	qse_map_t*   gvm;  /* global variable map */
 	qse_char_t*  fs;   /* field separator */
+	qse_char_t*  call; /* function to call */
+
+	int          opton;
+	int          optoff;
 };
 
 struct gvmv_t
@@ -184,12 +188,6 @@ static qse_map_walk_t print_awk_value (
 	return QSE_MAP_WALK_FORWARD;
 }
 
-static void on_run_statement (
-	qse_awk_rtx_t* run, qse_size_t line, void* data)
-{
-	/*dprint (L"running %d\n", (int)line);*/
-}
-
 static qse_map_walk_t set_global (
 	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
@@ -207,10 +205,8 @@ static qse_map_walk_t set_global (
 	return QSE_MAP_WALK_FORWARD;
 }
 
-static int on_run_enter (qse_awk_rtx_t* rtx, void* data)
+static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 {
-	struct arg_t* arg = (struct arg_t*)data;
-
 	if (arg->fs != QSE_NULL)
 	{
 		qse_awk_val_t* fs;
@@ -237,7 +233,13 @@ static int on_run_enter (qse_awk_rtx_t* rtx, void* data)
 	return 0;
 }
 
-static void on_run_exit (
+static int on_loop_enter (qse_awk_rtx_t* rtx, void* data)
+{
+	/* TODO: anything to do? */
+	return 0;
+}
+
+static void on_loop_exit (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data)
 {
 	qse_size_t len;
@@ -266,48 +268,10 @@ static void on_run_exit (
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
-/* TODO: remove otab... */
-static struct
+static void on_statement (
+	qse_awk_rtx_t* run, qse_size_t line, void* data)
 {
-	const qse_char_t* name;
-	int opt;
-} otab[] =
-{
-	{ QSE_T("implicit"),    QSE_AWK_IMPLICIT },
-	{ QSE_T("explicit"),    QSE_AWK_EXPLICIT },
-	{ QSE_T("bxor"),        QSE_AWK_BXOR },
-	{ QSE_T("shift"),       QSE_AWK_SHIFT },
-	{ QSE_T("idiv"),        QSE_AWK_IDIV },
-	{ QSE_T("rio"),         QSE_AWK_RIO },
-	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE },
-	{ QSE_T("newline"),     QSE_AWK_NEWLINE },
-	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES },
-	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE },
-	{ QSE_T("crfl"),        QSE_AWK_CRLF },
-	{ QSE_T("reset"),       QSE_AWK_RESET },
-	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR },
-	{ QSE_T("pablock"),     QSE_AWK_PABLOCK }
-};
-
-static void print_usage (const qse_char_t* argv0)
-{
-	int j;
-
-	qse_printf (QSE_T("Usage: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
-	qse_printf (QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
-	qse_printf (QSE_T("Where options are:\n"));
-	qse_printf (QSE_T(" -h                                print this message\n"));
-	qse_printf (QSE_T(" -d                                show extra information\n"));
-	qse_printf (QSE_T(" -f/--file            sourcefile   set the source script file\n"));
-	qse_printf (QSE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
-	qse_printf (QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
-	qse_printf (QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
-
-	qse_printf (QSE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
-	for (j = 0; j < QSE_COUNTOF(otab); j++)
-	{
-		qse_printf (QSE_T("    --%-20s --no%-20s\n"), otab[j].name, otab[j].name);
-	}
+	/*dprint (L"running %d\n", (int)line);*/
 }
 
 static int fnc_sleep (
@@ -347,30 +311,87 @@ static int fnc_sleep (
 	return 0;
 }
 
-static void out_of_memory (void)
+static void print_err (const qse_char_t* fmt, ...)
 {
-	qse_fprintf (QSE_STDERR, QSE_T("Error: out of memory\n"));	
+	va_list va;
+
+	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
+
+	va_start (va, fmt);
+	qse_vfprintf (QSE_STDERR, fmt, va);
+	va_end (va);
+}
+
+struct opttab_t
+{
+	const qse_char_t* name;
+	int opt;
+	const qse_char_t* desc;
+} opttab[] =
+{
+	{ QSE_T("implicit"),    QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
+	{ QSE_T("explicit"),    QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
+	{ QSE_T("bxor"),        QSE_AWK_BXOR,           QSE_T("enable bit-wise xor operator(^)") },
+	{ QSE_T("shift"),       QSE_AWK_SHIFT,          QSE_T("enable shift operators(<<,>>)") },
+	{ QSE_T("idiv"),        QSE_AWK_IDIV,           QSE_T("enable idiv operator(//)") },
+	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("") },
+	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
+	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("") },
+	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES,    QSE_T("") },
+	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE,      QSE_T("") },
+	{ QSE_T("crfl"),        QSE_AWK_CRLF,           QSE_T("") },
+	{ QSE_T("reset"),       QSE_AWK_RESET,          QSE_T("") },
+	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR,       QSE_T("") },
+	{ QSE_T("pablock"),     QSE_AWK_PABLOCK,        QSE_T("") },
+	{ QSE_T("rexbound"),    QSE_AWK_REXBOUND,       QSE_T("") },
+	{ QSE_T("ncmponstr"),   QSE_AWK_NCMPONSTR,      QSE_T("") },
+	{ QSE_NULL,             0 }
+};
+
+static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
+{
+	int j;
+
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
+	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
+	qse_fprintf (out, QSE_T("Where options are:\n"));
+	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
+	qse_fprintf (out, QSE_T(" -d                                show extra information\n"));
+	qse_fprintf (out, QSE_T(" -c/--call            name         calls a function instead of entering\n"));
+	qse_fprintf (out, QSE_T("                                   the pattern-action loop\n"));
+	qse_fprintf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
+	qse_fprintf (out, QSE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
+	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
+
+	for (j = 0; opttab[j].name != QSE_NULL; j++)
+	{
+		qse_fprintf (out, QSE_T(" --%-18s on/off       %s\n"), opttab[j].name, opttab[j].desc);
+	}
 }
 
 static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 {
 	static qse_opt_lng_t lng[] = 
 	{
-		{ QSE_T("implicit"),         0 },
-		{ QSE_T("explicit"),         0 },
-		{ QSE_T("bxor"),             0 },
-		{ QSE_T("shift"),            0 },
-		{ QSE_T("idiv"),             0 },
-		{ QSE_T("extio"),            0 },
-		{ QSE_T("newline"),          0 },
-		{ QSE_T("stripspaces"),      0 },
-		{ QSE_T("nextofile"),        0 },
-		{ QSE_T("crlf"),             0 },
-		{ QSE_T("reset"),            0 },
-		{ QSE_T("maptovar"),         0 },
-		{ QSE_T("pablock"),          0 },
+		{ QSE_T(":implicit"),        QSE_T('\0') },
+		{ QSE_T(":explicit"),        QSE_T('\0') },
+		{ QSE_T(":bxor"),            QSE_T('\0') },
+		{ QSE_T(":shift"),           QSE_T('\0') },
+		{ QSE_T(":idiv"),            QSE_T('\0') },
+		{ QSE_T(":rio"),             QSE_T('\0') },
+		{ QSE_T(":rwpipe"),          QSE_T('\0') },
+		{ QSE_T(":newline"),         QSE_T('\0') },
+		{ QSE_T(":stripspaces"),     QSE_T('\0') },
+		{ QSE_T(":nextofile"),       QSE_T('\0') },
+		{ QSE_T(":crlf"),            QSE_T('\0') },
+		{ QSE_T(":reset"),           QSE_T('\0') },
+		{ QSE_T(":maptovar"),        QSE_T('\0') },
+		{ QSE_T(":pablock"),         QSE_T('\0') },
+		{ QSE_T(":rexbound"),        QSE_T('\0') },
+		{ QSE_T(":ncmponstr"),       QSE_T('\0') },
 
-		{ QSE_T(":main"),            QSE_T('m') },
+		{ QSE_T(":call"),            QSE_T('c') },
 		{ QSE_T(":file"),            QSE_T('f') },
 		{ QSE_T(":field-separator"), QSE_T('F') },
 		{ QSE_T(":deparsed-file"),   QSE_T('o') },
@@ -381,7 +402,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 	static qse_opt_t opt = 
 	{
-		QSE_T("hdm:f:F:o:v:"),
+		QSE_T("dc:f:F:o:v:h"),
 		lng
 	};
 
@@ -400,20 +421,21 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 	qse_map_t* gvm = QSE_NULL;  /* global variable map */
 	qse_char_t* fs = QSE_NULL; /* field separator */
+	qse_char_t* call = QSE_NULL; /* function to call */
 
 	memset (arg, 0, QSE_SIZEOF(*arg));
 
 	isf = (qse_char_t**) malloc (QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
 	{
-		out_of_memory ();
+		print_err (QSE_T("out of memory\n"));
 		goto oops;
 	}
 
 	gvm = qse_map_open (QSE_NULL, 0, 30, 70); 
 	if (gvm == QSE_NULL)
 	{
-		out_of_memory ();
+		print_err (QSE_T("out of memory\n"));
 		goto oops;
 	}
 	/*qse_map_setcopier (gvm, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);*/
@@ -425,13 +447,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	{
 		switch (c)
 		{
-			case 0:
-				/* TODO: handle long options ... */
-				qse_printf (QSE_T(">>> [%s] [%s]\n"), opt.lngopt, opt.arg);
-				break;
-
 			case QSE_T('h'):
-				print_usage (argv[0]);
 				if (isf != QSE_NULL) free (isf);
 				if (gvm != QSE_NULL) qse_map_close (gvm);
 				return 0;
@@ -442,6 +458,12 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				break;
 			}
 
+			case QSE_T('c'):
+			{
+				call = opt.arg;
+				break;
+			}
+			
 			case QSE_T('f'):
 			{
 				if (isfl >= isfc-1) /* -1 for last QSE_NULL */
@@ -450,7 +472,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					tmp = (qse_char_t**) realloc (isf, QSE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == QSE_NULL)
 					{
-						out_of_memory ();
+						print_err (QSE_T("out of memory\n"));
 						goto oops;
 					}
 
@@ -480,9 +502,12 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				qse_char_t* eq;
 
 				eq = qse_strchr(opt.arg, QSE_T('='));
-				if (eq == QSE_NULL)
+				if (eq == QSE_NULL) 
 				{
-					/* INVALID VALUE... */
+					if (opt.lngopt)
+						print_err (QSE_T("no value for '%s' in '%s'\n"), opt.arg, opt.lngopt);
+					else
+						print_err (QSE_T("no value for '%s' in '%c'\n"), opt.arg, opt.opt);
 					goto oops;
 				}
 
@@ -494,22 +519,36 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 				if (qse_map_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
 				{
-					out_of_memory ();
+					print_err (QSE_T("out of memory\n"));
 					goto oops;
 				}
 				break;
 			}
 
+			case QSE_T('\0'):
+			{
+				/* a long option with no corresponding short option */
+				qse_size_t i;
+				for (i = 0; opttab[i].name != QSE_NULL; i++)
+				{
+					if (qse_strcmp (opt.lngopt, opttab[i].name) == 0)
+					{
+						if (qse_strcmp (opt.arg, QSE_T("off")) == 0)
+							arg->optoff |= opttab[i].opt;
+						else
+							arg->opton |= opttab[i].opt;
+						break;
+					}
+				}
+				break;
+			}
+			
 			case QSE_T('?'):
 			{
 				if (opt.lngopt)
-				{
-					qse_printf (QSE_T("Error: illegal option - %s\n"), opt.lngopt);
-				}
+					print_err (QSE_T("illegal option - '%s'\n"), opt.lngopt);
 				else
-				{
-					qse_printf (QSE_T("Error: illegal option - %c\n"), opt.opt);
-				}
+					print_err (QSE_T("illegal option - '%c'\n"), opt.opt);
 
 				goto oops;
 			}
@@ -517,13 +556,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			case QSE_T(':'):
 			{
 				if (opt.lngopt)
-				{
-					qse_printf (QSE_T("Error: bad argument for %s\n"), opt.lngopt);
-				}
+					print_err (QSE_T("bad argument for '%s'\n"), opt.lngopt);
 				else
-				{
-					qse_printf (QSE_T("Error: bad argument for %c\n"), opt.opt);
-				}
+					print_err (QSE_T("bad argument for '%c'\n"), opt.opt);
 
 				goto oops;
 			}
@@ -563,7 +598,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
 		if (icf == QSE_NULL)
 		{
-			out_of_memory ();
+			print_err (QSE_T("out of memory\n"));
 			goto oops;
 		}
 
@@ -587,6 +622,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	arg->icfl = icfl;
 	arg->gvm = gvm;
 	arg->fs = fs;
+	arg->call = call;
 
 	return 1;
 
@@ -608,8 +644,8 @@ static void freearg (struct arg_t* arg)
 
 static void print_awkerr (qse_awk_t* awk)
 {
-	qse_printf (
-		QSE_T("ERROR: CODE [%d] LINE [%u] %s\n"), 
+	print_err ( 
+		QSE_T("CODE [%d] LINE [%u] %s\n"), 
 		qse_awk_geterrnum(awk),
 		(unsigned int)qse_awk_geterrlin(awk), 
 		qse_awk_geterrmsg(awk)
@@ -618,8 +654,8 @@ static void print_awkerr (qse_awk_t* awk)
 
 static void print_rtxerr (qse_awk_rtx_t* rtx)
 {
-	qse_printf (
-		QSE_T("ERROR: CODE [%d] LINE [%u] %s\n"),
+	print_err (
+		QSE_T("CODE [%d] LINE [%u] %s\n"),
 		qse_awk_rtx_geterrnum(rtx),
 		(unsigned int)qse_awk_rtx_geterrlin(rtx),
 		qse_awk_rtx_geterrmsg(rtx)
@@ -657,12 +693,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_memset (&arg, 0, QSE_SIZEOF(arg));
 
 	i = comparg (argc, argv, &arg);
-	if (i <= -1)
+	if (i <= 0)
 	{
-		print_usage (argv[0]);
-		return -1;
+		print_usage (((i == 0)? QSE_STDOUT: QSE_STDERR), argv[0]);
+		return i;
 	}
-	if (i == 0) return 0;
 
 	psin.type = arg.ist;
 	if (arg.ist == QSE_AWK_PARSESTD_CP) psin.u.cp = arg.isp.str;
@@ -680,6 +715,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));
 		goto oops;
 	}
+
+	i = qse_awk_getoption (awk);
+	if (arg.opton) i |= arg.opton;
+	if (arg.optoff) i &= ~arg.optoff;
+	qse_awk_setoption (awk, i);
 
 	/* TODO: get depth from command line */
 	qse_awk_setmaxdepth (
@@ -710,9 +750,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	rcb.on_enter = on_run_enter;
-	rcb.on_statement = on_run_statement;
-	rcb.on_exit = on_run_exit;
+	rcb.on_loop_enter = on_loop_enter;
+	rcb.on_loop_exit = on_loop_exit;
+	rcb.on_statement = on_statement;
 	rcb.data = &arg;
 
 	rtx = qse_awk_rtx_openstd (awk, 0, QSE_T("qseawk"), arg.icf, QSE_NULL);
@@ -722,14 +762,31 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+	if (apply_fs_and_gvm (rtx, &arg) <= -1)
+	{
+		print_awkerr (awk);
+		goto oops;
+	}
+
 	app_rtx = rtx;
 	qse_awk_rtx_setrcb (rtx, &rcb);
 
 	set_intr_run ();
-	ret = qse_awk_rtx_loop (rtx);
+	if (arg.call == QSE_NULL)
+	{
+		ret = qse_awk_rtx_loop (rtx);
+	}
+	else
+	{
+		qse_awk_val_t* rv;
+		
+		rv = qse_awk_rtx_call (rtx, arg.call, QSE_NULL, 0);
+		ret = (rv == QSE_NULL)? -1: 0;
+		qse_awk_rtx_refdownval (rtx, rv);
+	}
 	unset_intr_run ();
 
-	if (ret == -1)
+	if (ret <= -1)
 	{
 		print_rtxerr (rtx);
 		goto oops;

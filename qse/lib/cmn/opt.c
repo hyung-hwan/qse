@@ -1,5 +1,5 @@
 /*
- * $Id: opt.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: opt.c 206 2009-06-21 13:33:05Z hyunghwan.chung $
  * 
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -131,6 +131,10 @@ qse_cint_t qse_getopt (int argc, qse_char_t* const* argv, qse_opt_t* opt)
 			/* match */
 			opt->cur = EMSG;
 			opt->lngopt = o->str;
+
+			/* for a long matching option, remove the leading colon */
+			if (opt->lngopt[0] == QSE_T(':')) opt->lngopt++;
+
 			if (*end == QSE_T('=')) opt->arg = end + 1;
 
 			if (*o->str != QSE_T(':'))
@@ -140,7 +144,7 @@ qse_cint_t qse_getopt (int argc, qse_char_t* const* argv, qse_opt_t* opt)
 			}
 			else if (opt->arg == QSE_NULL)
 			{
-				/* Check if it has a remaining argument 
+				/* check if it has a remaining argument 
 				 * available */
 				if (argc <= ++opt->ind) return BADARG; 
 				/* If so, the next available argument is 
@@ -153,7 +157,7 @@ qse_cint_t qse_getopt (int argc, qse_char_t* const* argv, qse_opt_t* opt)
 		}
 
 		/*if (*end == QSE_T('=')) *end = QSE_T('\0');*/
-		opt->lngopt = opt->cur;
+		opt->lngopt = opt->cur; 
 		return BADCH;
 	}
 

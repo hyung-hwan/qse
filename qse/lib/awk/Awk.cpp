@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: Awk.cpp 206 2009-06-21 13:33:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1366,12 +1366,10 @@ int Awk::run (const char_t** args, size_t nargs)
 	{
 		QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
 		// TODO: deprecate onRunStart and onRunEnd
-		//rcb.on_start   = onRunStart;
-		//rcb.on_end     = onRunEnd;
-		rcb.on_enter     = onRunEnter;
-		rcb.on_statement = onRunStatement;
-		rcb.on_exit      = onRunExit;
-		rcb.data         = &runctx;
+		rcb.on_loop_enter = onRunEnter;
+		rcb.on_loop_exit  = onRunExit;
+		rcb.on_statement  = onRunStatement;
+		rcb.data          = &runctx;
 	}
 	
 	if (nargs > 0)
