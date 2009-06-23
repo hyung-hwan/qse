@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: parse.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2558,6 +2558,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, qse_size_t line)
 			 MATCH(awk,TOKEN_MINUS) ||
 			 MATCH(awk,TOKEN_PLUSPLUS) ||
 			 MATCH(awk,TOKEN_MINUSMINUS) ||
+			 MATCH(awk,TOKEN_LNOT) ||
 			 awk->token.type >= TOKEN_GETLINE)
 		{
 			/* TODO: is the check above sufficient? */
@@ -5041,7 +5042,6 @@ static int get_number (qse_awk_t* awk)
 
 			return 0;
 		}
-		#if 0
 		else if (c == QSE_T('b') || c == QSE_T('B'))
 		{
 			/* binary number */
@@ -5054,7 +5054,6 @@ static int get_number (qse_awk_t* awk)
 
 			return 0;
 		}
-		#endif
 		else if (c != '.')
 		{
 			/* octal number */

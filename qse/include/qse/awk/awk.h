@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 206 2009-06-21 13:33:05Z hyunghwan.chung $
+ * $Id: awk.h 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -388,11 +388,11 @@ enum qse_awk_option_t
 	/** enables @b nextofile */
 	QSE_AWK_NEXTOFILE   = (1 << 12),
 
-	/** CR + LF by default */
-	QSE_AWK_CRLF        = (1 << 13),
-
 	/** enables @b reset */
-	QSE_AWK_RESET       = (1 << 14),
+	QSE_AWK_RESET       = (1 << 13),
+
+	/** CR + LF by default */
+	QSE_AWK_CRLF        = (1 << 14),
 
 	/** allows the assignment of a map value to a variable */
 	QSE_AWK_MAPTOVAR    = (1 << 15),

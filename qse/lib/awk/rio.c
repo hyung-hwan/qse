@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: rio.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -279,13 +279,13 @@ int qse_awk_rtx_readio (
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						&match, &run->errinf.num);
-					if (n == -1)
+					if (n <= -1)
 					{
 						ret = -1;
 						break;
 					}
 
-					if (n == 1)
+					if (n >= 1)
 					{
 						/* the match should be found at the end of
 						 * the current buffer */
@@ -359,6 +359,10 @@ int qse_awk_rtx_readio (
 		{
 			qse_cstr_t match;
 
+/* TODO: minimize the number of regular expressoin match here...
+ *       currently matchrex is called for each character added to buf.
+ *       this is a very bad way of doing the job.
+ */
 			QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
 			n = QSE_AWK_MATCHREX (
@@ -367,14 +371,14 @@ int qse_awk_rtx_readio (
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				&match, &run->errinf.num);
-			if (n == -1)
+			if (n <= -1)
 			{
 				ret = -1;
 				p->in.pos--; /* unread the character in c */
 				break;
 			}
 
-			if (n == 1)
+			if (n >= 1)
 			{
 				/* the match should be found at the end of
 				 * the current buffer */

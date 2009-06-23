@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: sed.h 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -260,4 +260,13 @@ struct qse_sed_t
 	} e;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

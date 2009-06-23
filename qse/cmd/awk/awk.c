@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 206 2009-06-21 13:33:05Z hyunghwan.chung $
+ * $Id: awk.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -331,20 +331,20 @@ struct opttab_t
 {
 	{ QSE_T("implicit"),    QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
 	{ QSE_T("explicit"),    QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
-	{ QSE_T("bxor"),        QSE_AWK_BXOR,           QSE_T("enable bit-wise xor operator(^)") },
+	{ QSE_T("bxor"),        QSE_AWK_BXOR,           QSE_T("enable bit-wise XOR operator(^)") },
 	{ QSE_T("shift"),       QSE_AWK_SHIFT,          QSE_T("enable shift operators(<<,>>)") },
 	{ QSE_T("idiv"),        QSE_AWK_IDIV,           QSE_T("enable idiv operator(//)") },
-	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("") },
+	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
-	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("") },
-	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES,    QSE_T("") },
-	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE,      QSE_T("") },
-	{ QSE_T("crfl"),        QSE_AWK_CRLF,           QSE_T("") },
-	{ QSE_T("reset"),       QSE_AWK_RESET,          QSE_T("") },
-	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR,       QSE_T("") },
-	{ QSE_T("pablock"),     QSE_AWK_PABLOCK,        QSE_T("") },
-	{ QSE_T("rexbound"),    QSE_AWK_REXBOUND,       QSE_T("") },
-	{ QSE_T("ncmponstr"),   QSE_AWK_NCMPONSTR,      QSE_T("") },
+	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
+	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES,    QSE_T("strip leading and trailing space of a record") },
+	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE,      QSE_T("enable 'nextofile'") },
+	{ QSE_T("reset"),       QSE_AWK_RESET,          QSE_T("enable 'reset'") },
+	{ QSE_T("crlf"),        QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
+	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
+	{ QSE_T("pablock"),     QSE_AWK_PABLOCK,        QSE_T("enable pattern-action loop") },
+	{ QSE_T("rexbound"),    QSE_AWK_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
+	{ QSE_T("ncmponstr"),   QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
 	{ QSE_NULL,             0 }
 };
 
@@ -357,7 +357,7 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T("Where options are:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
 	qse_fprintf (out, QSE_T(" -d                                show extra information\n"));
-	qse_fprintf (out, QSE_T(" -c/--call            name         calls a function instead of entering\n"));
+	qse_fprintf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
 	qse_fprintf (out, QSE_T("                                   the pattern-action loop\n"));
 	qse_fprintf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
 	qse_fprintf (out, QSE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
@@ -384,8 +384,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":newline"),         QSE_T('\0') },
 		{ QSE_T(":stripspaces"),     QSE_T('\0') },
 		{ QSE_T(":nextofile"),       QSE_T('\0') },
-		{ QSE_T(":crlf"),            QSE_T('\0') },
 		{ QSE_T(":reset"),           QSE_T('\0') },
+		{ QSE_T(":crlf"),            QSE_T('\0') },
 		{ QSE_T(":maptovar"),        QSE_T('\0') },
 		{ QSE_T(":pablock"),         QSE_T('\0') },
 		{ QSE_T(":rexbound"),        QSE_T('\0') },
@@ -411,7 +411,6 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	qse_size_t isfc = 16; /* the capacity of isf */
 	qse_size_t isfl = 0; /* number of input source files */
 
-	qse_size_t argl = 0;
 	qse_size_t icfc = 0; /* the capacity of icf */
 	qse_size_t icfl = 0; /* the number of input console files */
 
@@ -678,8 +677,8 @@ qse_map_walk_t add_global (qse_map_t* map, qse_map_pair_t* pair, void* arg)
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
-	qse_awk_t* awk;
-	qse_awk_rtx_t* rtx;
+	qse_awk_t* awk = QSE_NULL;
+	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_rcb_t rcb;
 
 	int i;

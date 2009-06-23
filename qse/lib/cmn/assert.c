@@ -71,7 +71,7 @@ void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
 
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("FILE "));
 	qse_sio_puts (QSE_SIO_ERR, file);
@@ -89,7 +89,7 @@ void qse_assert_failed (
 		qse_sio_puts (QSE_SIO_ERR, desc);
 		qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
 	}
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("================================================================================"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("================================================================================\n"));
 	qse_sio_flush (QSE_SIO_ERR);
 
 #ifdef _WIN32
