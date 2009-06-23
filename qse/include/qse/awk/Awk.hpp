@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 206 2009-06-21 13:33:05Z hyunghwan.chung $
+ * $Id: Awk.hpp 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -557,10 +557,10 @@ public:
 
 		/** Support the nextofile statement */
 		OPT_NEXTOFILE = QSE_AWK_NEXTOFILE,
-		/** Use CR+LF instead of LF for line breaking. */
-		OPT_CRLF = QSE_AWK_CRLF,
 		/** Enables the keyword 'reset' */
 		OPT_RESET = QSE_AWK_RESET,
+		/** Use CR+LF instead of LF for line breaking. */
+		OPT_CRLF = QSE_AWK_CRLF,
 		/** Allows the assignment of a map value to a variable */
 		OPT_MAPTOVAR = QSE_AWK_MAPTOVAR,
 		/** Allows BEGIN, END, pattern-action blocks */

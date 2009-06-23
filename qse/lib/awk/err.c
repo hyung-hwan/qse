@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: err.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -64,8 +64,8 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("cannot unget character"),
 
 		QSE_T("unexpected end of source"),
-		QSE_T("a comment not cloawk properly"),
-		QSE_T("a string or a regular expression not cloawk"),
+		QSE_T("a comment not closed properly"),
+		QSE_T("a string or a regular expression not closed"),
 		QSE_T("unexpected end of a regular expression"),
 		QSE_T("a left brace expected in place of '${0}'"),
 		QSE_T("a left parenthesis expected in place of '${0}'"),

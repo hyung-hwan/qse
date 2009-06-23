@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: err.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -17,6 +17,45 @@
  */
 
 #include "sed.h"
+
+const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
+{
+	static const qse_char_t* errstr[] =
+ 	{
+		QSE_T("no error"),
+		QSE_T("insufficient memory"),
+		QSE_T("command '${0}' not recognized"),
+		QSE_T("command code missing"),
+		QSE_T("command '${0}' incomplete"),
+		QSE_T("regular expression '${0}' incomplete"),
+		QSE_T("failed to compile regular expression '${0}'"),
+		QSE_T("failed to match regular expression"),
+		QSE_T("address 1 prohibited for '${0}'"),
+		QSE_T("address 2 prohibited for '${0}'"),
+		QSE_T("address 2 missing or invalid"),
+		QSE_T("newline expected"),
+		QSE_T("backslash expected"),
+		QSE_T("backslash used as delimiter"),
+		QSE_T("garbage after backslash"),
+		QSE_T("semicolon expected"),
+		QSE_T("empty label name"),
+		QSE_T("duplicate label name '${0}'"),
+		QSE_T("label '${0}' not found"),
+		QSE_T("empty file name"),
+		QSE_T("illegal file name"),
+		QSE_T("strings in translation set not the same length"),
+		QSE_T("group brackets not balanced"),
+		QSE_T("group nesting too deep"),
+		QSE_T("multiple occurrence specifiers"),
+		QSE_T("occurrence specifier zero"),
+		QSE_T("occurrence specifier too large"),
+		QSE_T("io error with file '${0}'"),
+		QSE_T("error returned by user io handler")
+	};
+
+	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?
+		errstr[errnum]: QSE_T("unknown error");
+}
 
 qse_sed_errstr_t qse_sed_geterrstr (qse_sed_t* sed)
 {

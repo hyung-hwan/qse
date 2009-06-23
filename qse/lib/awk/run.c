@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 206 2009-06-21 13:33:05Z hyunghwan.chung $
+ * $Id: run.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -77,10 +77,10 @@ static qse_size_t push_arg_from_vals (
 	qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data);
 
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio);
-static void fini_rtx (qse_awk_rtx_t* rtx);
+static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals);
 
 static int init_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* arg);
-static void fini_globals (qse_awk_rtx_t* rtx);
+static void refdown_globals (qse_awk_rtx_t* run, int pop);
 
 static int run_pattern_blocks  (qse_awk_rtx_t* run);
 static int run_pattern_block_chain (
@@ -415,7 +415,7 @@ static int set_global (
 		qse_real_t rv;
 
 		n = qse_awk_rtx_valtonum (run, val, &lv, &rv);
-		if (n == -1) return -1;
+		if (n <= -1) return -1;
 		if (n == 1) lv = (qse_long_t)rv;
 
 		if (lv < (qse_long_t)run->inrec.nflds)
@@ -682,7 +682,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 
 	if (init_globals (rtx, arg) == -1)
 	{
-		fini_rtx (rtx);
+		fini_rtx (rtx, 0);
 		QSE_AWK_FREE (awk, rtx);
 		return QSE_NULL;
 	}
@@ -692,8 +692,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 
 void qse_awk_rtx_close (qse_awk_rtx_t* rtx)
 {
-	fini_globals (rtx);
-	fini_rtx (rtx);
+	fini_rtx (rtx, 1);
 	QSE_AWK_FREE (rtx->awk, rtx);
 }
 
@@ -854,7 +853,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	return 0;
 }
 
-static void fini_rtx (qse_awk_rtx_t* rtx)
+static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 {
 	if (rtx->pattern_range_state != QSE_NULL)
 		QSE_AWK_FREE (rtx->awk, rtx->pattern_range_state);
@@ -922,8 +921,8 @@ static void fini_rtx (qse_awk_rtx_t* rtx)
 	qse_str_fini (&rtx->format.fmt);
 	qse_str_fini (&rtx->format.out);
 
-	/* destroy input record. qse_awk_rtx_clrrec should be called
-	 * before the rtx stack has been destroyed because it may try
+	/* destroy input record. qse_awk_rtx_clrrec() should be called
+	 * before the stack has been destroyed because it may try
 	 * to change the value to QSE_AWK_GBL_NF. */
 	qse_awk_rtx_clrrec (rtx, QSE_FALSE);  
 	if (rtx->inrec.flds != QSE_NULL) 
@@ -933,6 +932,8 @@ static void fini_rtx (qse_awk_rtx_t* rtx)
 		rtx->inrec.maxflds = 0;
 	}
 	qse_str_fini (&rtx->inrec.line);
+
+	if (fini_globals) refdown_globals (rtx, 1);
 
 	/* destroy the stack if necessary */
 	if (rtx->stack != QSE_NULL)
@@ -1246,11 +1247,6 @@ static int init_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* arg)
 oops:
 	refdown_globals (rtx, 1);
 	return -1;
-}
-
-static void fini_globals (qse_awk_rtx_t* rtx)
-{
-	refdown_globals (rtx, 1);
 }
 
 struct capture_retval_data_t
@@ -4028,7 +4024,6 @@ static int __cmp_int_str (
 
 	if (rtx->awk->option & QSE_AWK_NCMPONSTR)
 	{
-		const qse_char_t* end;
 		qse_long_t ll;
 		qse_real_t rr;
 
@@ -4180,9 +4175,6 @@ static int __cmp_str_real (
 static int __cmp_str_str (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2;
-	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 	qse_awk_val_str_t* ls, * rs;
 
 	ls = (qse_awk_val_str_t*)left;
