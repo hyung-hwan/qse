@@ -23,6 +23,12 @@
 
 #include <qse/cmn/sio.h>
 
+#ifdef HAVE_EXECINFO_H
+#	include <execinfo.h>
+#	include <stdlib.h>
+#	include <qse/cmn/str.h>
+#endif
+
 #ifdef _WIN32
 #       include <windows.h>
 #else
@@ -71,6 +77,15 @@ void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
+#ifdef HAVE_BACKTRACE
+	void *btarray[128];
+	qse_size_t btsize, i;
+	char **btsyms;
+#ifdef QSE_CHAR_IS_WCHAR
+	qse_wchar_t wcs[256];
+#endif
+#endif
+
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
 
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("FILE "));
@@ -89,6 +104,30 @@ void qse_assert_failed (
 		qse_sio_puts (QSE_SIO_ERR, desc);
 		qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
 	}
+
+#ifdef HAVE_BACKTRACE
+	btsize = backtrace (btarray, QSE_COUNTOF(btarray));
+	btsyms = backtrace_symbols (btarray, btsize);
+	if (btsyms != QSE_NULL)
+	{
+		qse_sio_puts (QSE_SIO_ERR, QSE_T("=[BACKTRACES]===================================================================\n"));
+
+		for (i = 0; i < btsize; i++)
+		{
+		#ifdef QSE_CHAR_IS_MCHAR
+			qse_sio_puts (QSE_SIO_ERR, btsyms[i]);
+		#else
+			qse_size_t wcslen = QSE_COUNTOF(wcs);
+			qse_mbstowcs (btsyms[i], wcs, &wcslen);
+			qse_sio_puts (QSE_SIO_ERR, wcs);
+		#endif
+			qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
+		}
+
+		free (btsyms);
+	}
+#endif
+
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("================================================================================\n"));
 	qse_sio_flush (QSE_SIO_ERR);
 
