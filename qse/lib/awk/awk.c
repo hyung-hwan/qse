@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 199 2009-06-14 08:40:52Z hyunghwan.chung $ 
+ * $Id: awk.c 209 2009-06-23 13:29:18Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -226,8 +226,6 @@ oops:
 
 int qse_awk_close (qse_awk_t* awk)
 {
-	qse_size_t i;
-
 	if (qse_awk_clear (awk) == -1) return -1;
 	/*qse_awk_clrfnc (awk);*/
 	qse_map_close (awk->fnc.user);

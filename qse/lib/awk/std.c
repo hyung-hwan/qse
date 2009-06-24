@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: std.c 209 2009-06-23 13:29:18Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -166,13 +166,22 @@ static qse_ssize_t sf_in (
 			case QSE_AWK_PARSESTD_FILE:
 				if (xtn->s.in.u.file == QSE_NULL) return -1;
 
-				xtn->s.in.handle = qse_sio_open (
-					awk->mmgr,
-					0,
-					xtn->s.in.u.file,
-					QSE_SIO_READ
-				);
-				if (xtn->s.in.handle == QSE_NULL) return -1;
+				if (xtn->s.in.u.file[0] == QSE_T('-') &&
+				    xtn->s.in.u.file[1] == QSE_T('\0'))
+				{
+					/* special file name '-' */
+					xtn->s.in.handle = qse_sio_in;
+				}
+				else
+				{
+					xtn->s.in.handle = qse_sio_open (
+						awk->mmgr,
+						0,
+						xtn->s.in.u.file,
+						QSE_SIO_READ
+					);
+					if (xtn->s.in.handle == QSE_NULL) return -1;
+				}
 				return 1;
 
 			case QSE_AWK_PARSESTD_STDIO:
@@ -245,15 +254,24 @@ static qse_ssize_t sf_out (
 			case QSE_AWK_PARSESTD_FILE:
 				if (xtn->s.out.u.file == QSE_NULL) return -1;
 
-				xtn->s.out.handle = qse_sio_open (
-					awk->mmgr,
-					0,
-					xtn->s.out.u.file, 
-					QSE_SIO_WRITE | 
-					QSE_SIO_CREATE | 
-					QSE_SIO_TRUNCATE
-				);
-				if (xtn->s.out.handle == QSE_NULL) return -1;
+				if (xtn->s.out.u.file[0] == QSE_T('-') &&
+				    xtn->s.out.u.file[1] == QSE_T('\0'))
+				{
+					/* special file name '-' */
+					xtn->s.out.handle = qse_sio_out;
+				}
+				else
+				{
+					xtn->s.out.handle = qse_sio_open (
+						awk->mmgr,
+						0,
+						xtn->s.out.u.file, 
+						QSE_SIO_WRITE | 
+						QSE_SIO_CREATE | 
+						QSE_SIO_TRUNCATE
+					);
+					if (xtn->s.out.handle == QSE_NULL) return -1;
+				}
 				return 1;
 
 			case QSE_AWK_PARSESTD_STDIO:
@@ -599,7 +617,6 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			qse_sio_t* sio;
 			const qse_char_t* file;
 
-		retry:
 			file = rxtn->c.in.files[rxtn->c.in.index];
 
 			if (file == QSE_NULL)
@@ -665,19 +682,28 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				return 0;
 			}
 
-			sio = qse_sio_open (
-				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
-			if (sio == QSE_NULL)
+			if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
 			{
-				qse_cstr_t errarg;
-
-				errarg.ptr = file;
-				errarg.len = qse_strlen(file);
-
-				qse_awk_rtx_seterror (
-					rtx, QSE_AWK_EOPEN, 0, &errarg);
-				return -1;
+				/* special file name '-' */
+				sio = qse_sio_out;
 			}
+			else
+			{
+				sio = qse_sio_open (
+					rtx->awk->mmgr, 0, file, QSE_SIO_READ);
+				if (sio == QSE_NULL)
+				{
+					qse_cstr_t errarg;
+
+					errarg.ptr = file;
+					errarg.len = qse_strlen(file);
+
+					qse_awk_rtx_seterror (
+						rtx, QSE_AWK_EOPEN, 0, &errarg);
+					return -1;
+				}
+			}
+			
 
 			if (qse_awk_rtx_setofilename (
 				rtx, file, qse_strlen(file)) == -1)
@@ -727,7 +753,6 @@ static qse_ssize_t awk_rio_console (
 			qse_sio_t* sio;
 			const qse_char_t* file;
 
-		retry:
 			/* it has reached the end of the current file.
 			 * open the next file if available */
 			if (rxtn->c.in.files == QSE_NULL ||
