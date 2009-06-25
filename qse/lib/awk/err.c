@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: err.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -146,7 +146,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("no such io name found"),
 		QSE_T("i/o handler returned an error"),
 		QSE_T("i/o name empty"),
-		QSE_T("i/o name containing a null character"),
+		QSE_T("i/o name '${0}' containing a null character"),
 		QSE_T("not sufficient arguments to formatting sequence"),
 		QSE_T("recursion detected in format conversion"),
 		QSE_T("invalid character in CONVFMT"),

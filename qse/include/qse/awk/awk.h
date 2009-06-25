@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: awk.h 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -418,8 +418,7 @@ enum qse_awk_option_t
 	 * implementations 
 	 */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
-	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
-	                   QSE_AWK_STRIPSPACES
+	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
 };
 
 /**
@@ -1097,6 +1096,7 @@ qse_real_t qse_awk_strxtoreal (
 );
 
 qse_size_t qse_awk_longtostr (
+	qse_awk_t*        awk,
 	qse_long_t        value,
 	int               radix,
 	const qse_char_t* prefix,
@@ -1257,23 +1257,19 @@ qse_awk_val_t* qse_awk_rtx_getarg (
 );
 /******/
 
-/****f* AWK/qse_awk_rtx_getgbl
- * NAME
- *  qse_awk_rtx_getgbl - gets the value of a global variable
- * INPUTS
- *  * rtx - a runtime context
- *  * id - a global variable ID. It is one of the predefined global 
- *         variable IDs or a value returned by qse_awk_addgbl().
- * RETURN
- *  The pointer to a value is returned. This function never fails
- *  so long as the ID is valid. Otherwise, you may fall into trouble.
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getgbl() gets the value of a global variable.
+ * The global variable ID @a id is one of the predefined global 
+ * variable IDs or a value returned by qse_awk_addgbl().
+ * This function never fails so long as the ID is valid. Otherwise, 
+ * you may get into trouble.
+ *
+ * @return a value pointer
  */
 qse_awk_val_t* qse_awk_rtx_getgbl (
-	qse_awk_rtx_t* rtx,
-	int            id
+	qse_awk_rtx_t* rtx, /**< a runtime context */
+	int            id   /**< a global variable ID */
 );
-/******/
 
 /****f* AWK/qse_awk_rtx_setgbl
  * NAME

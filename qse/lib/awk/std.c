@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 209 2009-06-23 13:29:18Z hyunghwan.chung $
+ * $Id: std.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -78,6 +78,7 @@ typedef struct rxtn_t
 		struct {
 			const qse_char_t*const* files;
 			qse_size_t index;
+			qse_size_t count;
 		} in; 
 
 		struct 
@@ -616,14 +617,91 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			 * any fields of riod when the open operation fails */
 			qse_sio_t* sio;
 			const qse_char_t* file;
+			qse_awk_val_t* argv;
+			qse_map_t* map;
+			qse_map_pair_t* pair;
+			qse_char_t ibuf[128];
+			qse_size_t ibuflen;
+			qse_awk_val_t* v;
+			qse_awk_rtx_valtostr_out_t out;
 
+		nextfile:
 			file = rxtn->c.in.files[rxtn->c.in.index];
 
 			if (file == QSE_NULL)
 			{
 				/* no more input file */
+
+				if (rxtn->c.in.count == 0)
+				{
+					/* all ARGVs are empty strings. 
+					 * so no console files were opened.
+					 * open the standard input here.
+					 *
+					 * 'BEGIN { ARGV[1]=""; ARGV[2]=""; }
+					 *        { print $0; }' file1 file2
+					 */
+					riod->handle = qse_sio_in;
+					rxtn->c.in.count++;
+					return 1;
+				}
+
 				return 0;
 			}
+
+			/* handle special case when ARGV[x] has been altered.
+			 * so from here down, the file name gotten from 
+			 * rxtn->c.in.files is not important and is overridden 
+			 * from ARGV.
+			 * 'BEGIN { ARGV[1]="file3"; } 
+			 *        { print $0; }' file1 file2
+			 */
+			argv = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_ARGV);
+			QSE_ASSERT (argv != QSE_NULL);
+			QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
+
+			map = ((qse_awk_val_map_t*)argv)->map;
+			QSE_ASSERT (map != QSE_NULL);
+			
+			ibuflen = qse_awk_longtostr (
+				rtx->awk, rxtn->c.in.index + 1, 10, QSE_NULL,
+				ibuf, QSE_COUNTOF(ibuf));
+
+			pair = qse_map_search (map, ibuf, ibuflen);
+			QSE_ASSERT (pair != QSE_NULL);
+
+			v = QSE_MAP_VPTR(pair);
+			QSE_ASSERT (v != QSE_NULL);
+
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return -1;
+
+			if (out.u.cpldup.len == 0)
+			{
+				/* the name is empty */
+				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				rxtn->c.in.index++;
+				goto nextfile;
+			}
+
+			if (qse_strlen(out.u.cpldup.ptr) < out.u.cpldup.len)
+			{
+				/* the name contains one or more '\0' */
+				qse_cstr_t errarg;
+
+				errarg.ptr = out.u.cpldup.ptr;
+				/* use this length not to contains '\0'
+				 * in an error message */
+				errarg.len = qse_strlen(out.u.cpldup.ptr);
+
+				qse_awk_rtx_seterror (
+					rtx, QSE_AWK_EIONMNL, 0, &errarg);
+
+				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				return -1;
+			}
+
+			file = out.u.cpldup.ptr;
 
 			if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
 			{
@@ -643,6 +721,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 
 					qse_awk_rtx_seterror (
 						rtx, QSE_AWK_EOPEN, 0, &errarg);
+
+					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 					return -1;
 				}
 			}
@@ -651,10 +731,15 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				rtx, file, qse_strlen(file)) == -1)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
+				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
 
+			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 			riod->handle = sio;
+
+			/* increment the counter of files successfully opened */
+			rxtn->c.in.count++;
 		}
 
 		rxtn->c.in.index++;
@@ -704,7 +789,6 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				}
 			}
 			
-
 			if (qse_awk_rtx_setofilename (
 				rtx, file, qse_strlen(file)) == -1)
 			{
@@ -932,6 +1016,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	rxtn->c.in.files = icf;
 	rxtn->c.in.index = 0;
+	rxtn->c.in.count = 0;
 	rxtn->c.out.files = ocf;
 	rxtn->c.out.index = 0;
 

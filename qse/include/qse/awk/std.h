@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: std.h 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -34,6 +34,7 @@
  * - StdAwk ARGV and console name handling
  * - add RQ and LQ for more powerful record splitting
  * - improve performance in qse_awk_rtx_readio() if RS is logner than 2 chars.
+ * - change the message for EIONMNL
  */
 
 /**

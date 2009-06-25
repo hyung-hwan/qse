@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 203 2009-06-17 12:43:50Z hyunghwan.chung $
+ * $Id: fnc.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -787,7 +787,7 @@ static int fnc_split (
 
 		/* put it into the map */
 		key_len = qse_awk_longtostr (
-			++nflds, 10, QSE_NULL, key, QSE_COUNTOF(key));
+			run->awk, ++nflds, 10, QSE_NULL, key, QSE_COUNTOF(key));
 		QSE_ASSERT (key_len != (qse_size_t)-1);
 
 		/* don't forget to update the reference count when you 

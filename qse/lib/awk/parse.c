@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: parse.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -5697,7 +5697,8 @@ static int deparse (qse_awk_t* awk)
 			}
 			else
 			{
-				len = qse_awk_longtostr ((qse_long_t)i, 
+				len = qse_awk_longtostr (
+					awk, (qse_long_t)i, 
 					10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 				QSE_ASSERT (len != (qse_size_t)-1);
 				if (qse_awk_putsrcstrx (awk, tmp, len) == -1)
@@ -5722,7 +5723,8 @@ static int deparse (qse_awk_t* awk)
 		}
 		else
 		{
-			len = qse_awk_longtostr ((qse_long_t)i, 
+			len = qse_awk_longtostr (	
+				awk, (qse_long_t)i, 
 				10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 			QSE_ASSERT (len != (qse_size_t)-1);
 			if (qse_awk_putsrcstrx (awk, tmp, len) == -1)
@@ -5858,7 +5860,8 @@ exit_deparse:
 
 
 
-static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_map_walk_t deparse_func (
+	qse_map_t* map, qse_map_pair_t* pair, void* arg)
 {
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
 /* CHECK: */
@@ -5892,7 +5895,8 @@ static qse_map_walk_t deparse_func (qse_map_t* map, qse_map_pair_t* pair, void* 
 
 	for (i = 0; i < fun->nargs; ) 
 	{
-		n = qse_awk_longtostr (i++, 10, 
+		n = qse_awk_longtostr (
+			df->awk, i++, 10, 
 			QSE_T("__p"), df->tmp, df->tmp_len);
 		QSE_ASSERT (n != (qse_size_t)-1);
 		PUT_SX (df, df->tmp, n);

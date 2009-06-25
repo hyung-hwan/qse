@@ -261,11 +261,11 @@ AC_CONFIG_FILES([
 	cmd/utl/Makefile
 	cmd/awk/Makefile 
 	cmd/lsp/Makefile
-	test/Makefile 
-	test/cmn/Makefile 
-	test/utl/Makefile 
-	test/sed/Makefile 
-	test/awk/Makefile 
+	samples/Makefile 
+	samples/cmn/Makefile 
+	samples/utl/Makefile 
+	samples/sed/Makefile 
+	samples/awk/Makefile 
 	doc/Makefile
 	doc/page/Makefile
 	doc/page.ko/Makefile

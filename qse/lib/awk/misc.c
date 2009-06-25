@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 195 2009-06-10 13:18:25Z hyunghwan.chung $
+ * $Id: misc.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -533,8 +533,8 @@ done:
 }
 
 qse_size_t qse_awk_longtostr (
-	qse_long_t value, int radix, const qse_char_t* prefix, 
-	qse_char_t* buf, qse_size_t size)
+	qse_awk_t* awk, qse_long_t value, 
+	int radix, const qse_char_t* prefix, qse_char_t* buf, qse_size_t size)
 {
 	qse_long_t t, rem;
 	qse_size_t len, ret, i;

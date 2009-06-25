@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: tree.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -320,7 +320,10 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			QSE_ASSERT (px->id.idxa != (qse_size_t)-1);
 
 			n = qse_awk_longtostr (
-				px->id.idxa, 10, QSE_NULL, tmp, QSE_COUNTOF(tmp));
+				awk,
+				px->id.idxa, 
+				10, QSE_NULL, tmp, QSE_COUNTOF(tmp)
+			);
 
 			PUT_SRCSTR (awk, QSE_T("__p"));
 			PUT_SRCSTRX (awk, tmp, n);
@@ -338,8 +341,10 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			PUT_SRCSTR (awk, QSE_T("__p"));
 			n = qse_awk_longtostr (
+				awk,
 				px->id.idxa, 10, QSE_NULL,
-				awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
+				awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt)
+			);
 			PUT_SRCSTRX (awk, awk->tmp.fmt, n);
 			PUT_SRCSTR (awk, QSE_T("["));
 			PRINT_EXPRESSION_LIST (awk, px->idx);
@@ -396,8 +401,12 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 					PUT_SRCSTR (awk, QSE_T("__g"));
 					n = qse_awk_longtostr (
-						px->id.idxa, 10, 
-						QSE_NULL, tmp, QSE_COUNTOF(tmp));
+						awk,
+						px->id.idxa, 
+						10, 
+						QSE_NULL, 
+						tmp, QSE_COUNTOF(tmp)
+					);
 					PUT_SRCSTRX (awk, tmp, n);
 				}
 			}
@@ -434,8 +443,12 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 					PUT_SRCSTR (awk, QSE_T("__g"));
 					n = qse_awk_longtostr (
-						px->id.idxa, 10, 
-						QSE_NULL, tmp, QSE_COUNTOF(tmp));
+						awk,
+						px->id.idxa, 
+						10, 
+						QSE_NULL,
+						tmp, QSE_COUNTOF(tmp)
+					);
 					PUT_SRCSTRX (awk, tmp, n);
 				}
 				PUT_SRCSTR (awk, QSE_T("["));
@@ -460,8 +473,13 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			{
 				PUT_SRCSTR (awk, QSE_T("__l"));
 				n = qse_awk_longtostr (
-					px->id.idxa, 10, QSE_NULL, 
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
+					awk,
+					px->id.idxa,
+					10, 
+					QSE_NULL, 
+					awk->tmp.fmt,
+					QSE_COUNTOF(awk->tmp.fmt)
+				);
 				PUT_SRCSTRX (awk, awk->tmp.fmt, n);
 			}
 			else 
@@ -481,8 +499,13 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 			{
 				PUT_SRCSTR (awk, QSE_T("__l"));
 				n = qse_awk_longtostr (
-					px->id.idxa, 10, QSE_NULL, 
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
+					awk,
+					px->id.idxa,
+					10,
+					QSE_NULL, 
+					awk->tmp.fmt,
+					QSE_COUNTOF(awk->tmp.fmt)
+				);
 				PUT_SRCSTRX (awk, awk->tmp.fmt, n);
 				PUT_SRCSTR (awk, QSE_T("["));
 			}
@@ -616,16 +639,26 @@ static int print_statement (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 				{
 					PUT_SRCSTR (awk, QSE_T("__l"));
 					n = qse_awk_longtostr (
-						i, 10, QSE_NULL, 
-						awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
+						awk,
+						i, 
+						10,
+						QSE_NULL, 
+						awk->tmp.fmt,
+						QSE_COUNTOF(awk->tmp.fmt)
+					);
 					PUT_SRCSTRX (awk, awk->tmp.fmt, n);
 					PUT_SRCSTR (awk, QSE_T(", "));
 				}
 
 				PUT_SRCSTR (awk, QSE_T("__l"));
 				n = qse_awk_longtostr (
-					i, 10, QSE_NULL, 
-					awk->tmp.fmt, QSE_COUNTOF(awk->tmp.fmt));
+					awk,
+					i, 
+					10,
+					QSE_NULL, 
+					awk->tmp.fmt,
+					QSE_COUNTOF(awk->tmp.fmt)
+				);
 				PUT_SRCSTRX (awk, awk->tmp.fmt, n);
 				PUT_SRCSTR (awk, QSE_T(";"));
 				PUT_NEWLINE (awk);
