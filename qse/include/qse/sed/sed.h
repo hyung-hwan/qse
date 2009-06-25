@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 196 2009-06-11 07:44:44Z hyunghwan.chung $
+ * $Id: sed.h 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -35,10 +35,11 @@
  * qse_sed_close (sed);
  * @endcode
  *
+ * @todo 
+ * - enhance execution of the l command. 
+ *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
- *
- * @todo enhance execution of the l command. 
  */
 
 /** @struct qse_sed_t

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: Awk.hpp 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -28,11 +28,6 @@
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
-
-/**
- * @example Awk.cpp
- * This program demonstrates how to build a complete awk interpreter in C++.
- */
 
 /** 
  * Represents the AWK interpreter engine
