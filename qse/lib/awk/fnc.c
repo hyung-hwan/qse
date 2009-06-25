@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: fnc.c 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -56,10 +56,12 @@ static qse_awk_fnc_t sys_fnc[] =
 };
 
 void* qse_awk_addfnc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len, 
-	int when_valid, qse_size_t min_args, qse_size_t max_args, 
+	qse_awk_t* awk,
+	const qse_char_t* name, qse_size_t name_len, 
+	int when_valid, 
+	qse_size_t min_args, qse_size_t max_args, 
 	const qse_char_t* arg_spec, 
-	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t))
+	qse_awk_fnc_fun_t handler)
 {
 	qse_awk_fnc_t* fnc;
 	qse_size_t spec_len;

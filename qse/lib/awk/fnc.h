@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.h 199 2009-06-14 08:40:52Z hyunghwan.chung $
+ * $Id: fnc.h 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -40,7 +40,7 @@ struct qse_awk_fnc_t
 		qse_char_t* spec;
 	} arg;
 
-	int (*handler) (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+	qse_awk_fnc_fun_t handler;
 
 	/*qse_awk_fnc_t* next;*/
 };

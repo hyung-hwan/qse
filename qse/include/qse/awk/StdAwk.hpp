@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 148 2009-05-20 10:44:47Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -21,9 +21,14 @@
 
 #include <qse/awk/Awk.hpp>
 
+/**
+ * @example awk05.cpp
+ * This program demonstrates how to embed QSE::StdAwk in C++.
+ */
+
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
-/////////////////////////////////
+////////////////////////////////
 
 /**
  * Provides a more useful AWK interpreter by overriding primitive methods,

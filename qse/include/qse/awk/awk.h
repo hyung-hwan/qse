@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: awk.h 211 2009-06-24 09:50:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,6 +37,8 @@
  * This program demonstrates how to use qse_awk_rtx_call().
  * It parses the program stored in the string src and calls the functions
  * stated in the array fnc. If no errors occur, it should print 24.
+ * @example awk04.c
+ * This programs shows how to qse_awk_rtx_call().
  */
 
 /** @struct qse_awk_t
@@ -174,6 +176,15 @@ typedef int (*qse_awk_sprintf_t) (
 	qse_size_t        size, 
 	const qse_char_t* fmt,
 	...
+);
+
+/**
+ * The #qse_awk_fnc_fun_t type defines a intrinsic function handler.
+ */
+typedef int (*qse_awk_fnc_fun_t) (
+	qse_awk_rtx_t*    rtx,  /**< runtime context */
+	const qse_char_t* name, /**< function name */
+	qse_size_t        len   /**< name length */
 );
 
 /**
@@ -598,7 +609,7 @@ typedef struct qse_awk_errinf_t qse_awk_errinf_t;
  * object with the qse_awk_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_awk_errstr_t) (
-	qse_awk_t*       awk,   /**< an awk object */
+	qse_awk_t*       awk,   /**< awk object */
 	qse_awk_errnum_t num    /**< an error number */
 );
 
@@ -795,7 +806,7 @@ qse_awk_t* qse_awk_open (
  * @return 0 on success, -1 on failure 
  */
 int qse_awk_close (
-	qse_awk_t* awk /**< an awk object */
+	qse_awk_t* awk /**< awk object */
 );
 
 /**
@@ -804,7 +815,6 @@ int qse_awk_close (
 qse_awk_prm_t* qse_awk_getprm (
 	qse_awk_t* awk
 );
-/******/
 
 /**
  * The qse_awk_clear() clears the internal state of @a awk. If you want to
@@ -817,13 +827,12 @@ qse_awk_prm_t* qse_awk_getprm (
 int qse_awk_clear (
 	qse_awk_t* awk 
 );
-/******/
 
 /**
  * The qse_awk_geterrstr() gets an error string getter.
  */
 qse_awk_errstr_t qse_awk_geterrstr (
-	qse_awk_t*       awk    /**< an awk object */
+	qse_awk_t*       awk    /**< awk object */
 );
 
 /**
@@ -851,7 +860,7 @@ qse_awk_errstr_t qse_awk_geterrstr (
  * @endcode
  */
 void qse_awk_seterrstr (
-	qse_awk_t*       awk,   /**< an awk object */
+	qse_awk_t*       awk,   /**< awk object */
 	qse_awk_errstr_t errstr /**< an error string getter */
 );
 
@@ -959,37 +968,28 @@ int qse_awk_setword (
 	qse_size_t nlen
 );
 
-/****f* AWK/qse_awk_addgbl
- * NAME
- *  qse_awk_addgbl - add an intrinsic global variable.
- * RETURN
- *  The qse_awk_addgbl() function returns the ID of the global variable 
- *  added on success and -1 on failure.
- * SYNOPSIS
+/**
+ * The qse_awk_addgbl() function adds an intrinsic global variable.
+ * @return the ID of the global variable added on success, -1 on failure.
  */
 int qse_awk_addgbl (
-	qse_awk_t*        awk,
-	const qse_char_t* name,
-	qse_size_t        len
+	qse_awk_t*        awk,   /**< awk object */
+	const qse_char_t* name,  /**< a variable name */
+	qse_size_t        len    /**< name length */
 );
-/******/
 
-/****f* AWK/qse_awk_delgbl
- * NAME
- *  qse_awk_delgbl - delete an instrinsic global variable. 
- * SYNOPSIS
+/**
+ * The qse_awk_delgbl() function deletes an instrinsic global variable. 
+ * @return 0 on success, -1 on failure
  */
 int qse_awk_delgbl (
-	qse_awk_t*        awk,
-	const qse_char_t* name,
-	qse_size_t        len
+	qse_awk_t*        awk,  /**< awk object */
+	const qse_char_t* name, /**< a variable name */
+	qse_size_t        len   /**< name length */
 );
-/******/
 
-/****f* AWK/qse_awk_addfnc
- * NAME
- *  qse_awk_addfnc - add an intrinsic function
- * SYNOPSIS
+/**
+ * The qse_awk_addfnc() function adds an intrinsic function.
  */
 void* qse_awk_addfnc (
 	qse_awk_t*        awk,
@@ -999,39 +999,31 @@ void* qse_awk_addfnc (
 	qse_size_t        min_args,
 	qse_size_t        max_args, 
 	const qse_char_t* arg_spec, 
-	int (*handler)(qse_awk_rtx_t*,const qse_char_t*,qse_size_t)
+	qse_awk_fnc_fun_t handler
 );
-/******/
 
-/****f* AWK/qse_awk_delfnc
- * NAME
- *  qse_awk_delfnc - delete an intrinsic function
- * SYNOPSIS
+/**
+ * The qse_awk_delfnc() function deletes an intrinsic function.
  */
 int qse_awk_delfnc (
-	qse_awk_t*        awk,
-	const qse_char_t* name,
-	qse_size_t        len
+	qse_awk_t*        awk,  /**< awk object */
+	const qse_char_t* name, /**< function name */
+	qse_size_t        len   /**< name length */
 );
-/******/
 
-/****f* AWK/qse_awk_clrfnc
- * NAME
- *  qse_awk_clrfnc - delete all intrinsic functions
- * SYNOPSIS
+/**
+ * The qse_awk_clrfnc() function deletes all intrinsic functions
  */
 void qse_awk_clrfnc (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< awk object */
 );
-/*****/
-
 
 /**
  * The qse_awk_parse() function parses the source script.
  * @return 0 on success, -1 on failure.
  */
 int qse_awk_parse (
-	qse_awk_t*     awk, /**< an awk object */
+	qse_awk_t*     awk, /**< awk object */
 	qse_awk_sio_t* sio  /**< source stream I/O handler */
 );
 
@@ -1040,7 +1032,7 @@ int qse_awk_parse (
  * @return a pointer to memory space allocated on success, QSE_NULL on failure
  */
 void* qse_awk_alloc (
-	qse_awk_t* awk,  /**< an awk object */
+	qse_awk_t* awk,  /**< awk object */
 	qse_size_t size  /**< size of memory to allocate in bytes */
 );
 
@@ -1048,7 +1040,7 @@ void* qse_awk_alloc (
  * The qse_awk_free() function frees dynamic memory allocated.
  */
 void qse_awk_free (
-	qse_awk_t* awk, /**< an awk object */
+	qse_awk_t* awk, /**< awk object */
 	void*      ptr  /**< memory space to free */
 );
 
@@ -1061,7 +1053,7 @@ void qse_awk_free (
  *         QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strdup (
-	qse_awk_t*        awk, /**< an awk object */
+	qse_awk_t*        awk, /**< awk object */
 	const qse_char_t* str  /**< a string pointer */
 );
 
@@ -1075,7 +1067,7 @@ qse_char_t* qse_awk_strdup (
  *         QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strxdup (
-	qse_awk_t*        awk, /**< an awk object */
+	qse_awk_t*        awk, /**< awk object */
 	const qse_char_t* str, /**< a string pointer */
 	qse_size_t        len  /**< the number of character in a string */
 );
@@ -1104,39 +1096,31 @@ qse_size_t qse_awk_longtostr (
 	qse_size_t        size
 );
 
-/****f* AWK/qse_awk_rtx_open
- * NAME
- *  qse_awk_rtx_open - create a runtime context
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_open() creates a runtime context.
+ * @return a runtime context on success, QSE_NULL on failure
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t*        awk,
-	qse_size_t        xtn,
-	qse_awk_rio_t*    rio,
-	const qse_cstr_t* arg
+	qse_awk_t*        awk, /**< awk object */
+	qse_size_t        xtn, /**< size of extension in bytes */
+	qse_awk_rio_t*    rio, /**< runtime IO handlers */
+	const qse_cstr_t* arg  /**< arguments to set ARGV */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_close
- * NAME
- *  qse_awk_rtx_close - destroy a runtime context
+/**
+ * The qse_awk_rtx_close() function destroys a runtime context
  * SYNOPSIS
  */
 void qse_awk_rtx_close (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_loop
- * NAME
- *  qse_awk_rtx_loop - run BEGIN/pattern-action/END blocks
- * DESCRIPTION
- *  The qse_awk_rtx_loop() function executes the BEGIN block, pattern-action
- *  blocks and the END blocks in an AWk program. Multiple invocations of the
- *  function for the lifetime of a runtime context is not desirable.
- * RETURN
- *  The qse_awk_rtx_loop() function returns 0 on success and -1 on failure.
- * EXAMPLE
+/**
+ * The qse_awk_rtx_loop() function executes the BEGIN block, pattern-action
+ * blocks and the END blocks in an AWk program. Multiple invocations of the
+ * function for the lifetime of a runtime context is not desirable.
+ *
+ * @code
  *  The example shows typical usage of the function.
  *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
  *    if (rtx != QSE_NULL)
@@ -1144,12 +1128,13 @@ void qse_awk_rtx_close (
  *        qse_awk_rtx_loop (rtx);
  *        qse_awk_rtx_close (rtx);
  *    }
- * SYNOPSIS
+ * @endcode
+ *
+ * @return 0 on success, -1 on failure.
  */
 int qse_awk_rtx_loop (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
-/******/
 
 /**
  * The qse_awk_rtx_call() function invokes an AWK function. However, it is
@@ -1173,89 +1158,65 @@ int qse_awk_rtx_loop (
  * @return 0 on success, -1 on failure
  */
 qse_awk_val_t* qse_awk_rtx_call (
-	qse_awk_rtx_t*    rtx,
-	const qse_char_t* name,
-	qse_awk_val_t**   args,
-	qse_size_t        nargs
+	qse_awk_rtx_t*    rtx,  /**< runtime context */
+	const qse_char_t* name, /**< function name */
+	qse_awk_val_t**   args, /**< arguments to the function */
+	qse_size_t        nargs /**< the number of arguments */
 );
 
-/****f* AWK/qse_awk_stopall
- * NAME
- *  qse_awk_stopall - stop all runtime contexts
- * DESCRIPTION
- *  The qse_awk_stopall() function aborts all active runtime contexts
- *  invoked with the awk parameter.
- * SYNOPSIS
+/**
+ * The qse_awk_stopall() function aborts all active runtime contexts
+ * invoked with the awk parameter.
  */
 void qse_awk_stopall (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< awk object */
 );
-/******/
 
-/****f* AWK/qse_awk_shouldstop
- * NAME
- *  qse_awk_shouldstop - test if qse_awk_rtx_stop() is called
- * SYNOPSIS
+/**
+ * The qse_awk_shouldstop function tests if qse_awk_rtx_stop() has been called.
  */
 qse_bool_t qse_awk_rtx_shouldstop (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_stop
- * NAME
- *  qse_awk_rtx_stop - stop a runtime context
- * DESCRIPTION
- *  The qse_awk_rtx_stop() function causes the active qse_awk_run() function to 
- *  be aborted. 
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_stop() function causes the active qse_awk_run() function to 
+ * be aborted. 
  */
 void qse_awk_rtx_stop (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getrcb
- * NAME
- *  qse_awk_rtx_getrcb - get callback
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setrcb() function gets runtime callback.
  */
 qse_awk_rcb_t* qse_awk_rtx_getrcb (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_setrcb
- * NAME
- *  qse_awk_rtx_setrcb - set callback
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setrcb() function sets runtime callback.
  */
 void qse_awk_rtx_setrcb (
 	qse_awk_rtx_t* rtx,
 	qse_awk_rcb_t* rcb
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getnargs 
- * NAME
- *  qse_awk_rtx_getnargs - get the number of arguments passed to qse_awk_run()
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getnargs() gets the number of arguments passed to 
+ * qse_awk_run().
  */
 qse_size_t qse_awk_rtx_getnargs (
 	qse_awk_rtx_t* rtx
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getarg 
- * NAME
- *  qse_awk_rtx_getarg - get an argument passed to qse_awk_run
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getarg() function gets an argument passed to qse_awk_run().
  */
 qse_awk_val_t* qse_awk_rtx_getarg (
 	qse_awk_rtx_t* rtx,
 	qse_size_t     idx
 );
-/******/
 
 /**
  * The qse_awk_rtx_getgbl() gets the value of a global variable.
@@ -1267,99 +1228,77 @@ qse_awk_val_t* qse_awk_rtx_getarg (
  * @return a value pointer
  */
 qse_awk_val_t* qse_awk_rtx_getgbl (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
+	qse_awk_rtx_t* rtx, /**< runtime context */
 	int            id   /**< a global variable ID */
 );
 
-/****f* AWK/qse_awk_rtx_setgbl
- * NAME
- *  qse_awk_rtx_setgbl - set the value of a global variable
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setgbl() sets the value of a global variable.
  */
 int qse_awk_rtx_setgbl (
 	qse_awk_rtx_t* rtx, 
 	int            id,
 	qse_awk_val_t* val
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_setretval
- * NAME
- *  qse_awk_rtx_setretval - set the return value
- * DESCRIPTION
- *  The qse_awk_rtx_setretval() sets the return value of a function
- *  when called from within a function handlers. The caller doesn't
- *  have to invoke qse_awk_rtx_refupval() and qse_awk_rtx_refdownval() 
- *  with the value to be passed to qse_awk_rtx_setretval(). 
- *  The qse_awk_rtx_setretval() will update its reference count properly
- *  once the return value is set. 
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setretval() sets the return value of a function
+ * when called from within a function handler. The caller doesn't
+ * have to invoke qse_awk_rtx_refupval() and qse_awk_rtx_refdownval() 
+ * with the value to be passed to qse_awk_rtx_setretval(). 
+ * The qse_awk_rtx_setretval() will update its reference count properly
+ * once the return value is set. 
  */
 void qse_awk_rtx_setretval (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val  /**< return value */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_setfilename
- * NAME
- *  qse_awk_rtx_setfilename - set FILENAME
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setfilename() function sets FILENAME.
  */
 int qse_awk_rtx_setfilename (
-	qse_awk_rtx_t*    rtx,
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_awk_rtx_t*    rtx, /**< runtime context */
+	const qse_char_t* str, /**< name pointer */
+	qse_size_t        len  /**< name length */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_setofilename
- * NAME
- *  qse_awk_rtx_setofilename - set OFILENAME
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_setofilename() function sets OFILENAME.
  */
 int qse_awk_rtx_setofilename (
-	qse_awk_rtx_t*    rtx,
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_awk_rtx_t*    rtx, /**< runtime context */
+	const qse_char_t* str, /**< name pointer */
+	qse_size_t        len  /**< name length */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getawk
- * NAME
- *  qse_awk_rtx_getawk - get the owning awk object
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getawk() function gets the owning awk object.
  */
 qse_awk_t* qse_awk_rtx_getawk (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getmmgr
- * NAME
- *  qse_awk_rtx_getmmgr - get the memory manager of a runtime context
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getmmgr() function gets the memory manager of a runtime
+ * context.
  */
 qse_mmgr_t* qse_awk_rtx_getmmgr (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_getxtn
- * NAME
- *  qse_awk_rtx_getxtn - get the pointer to extension space
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_getxtn() function gets the pointer to extension space.
  */
 void* qse_awk_rtx_getxtn (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
-/******/
 
 /**
  * The qse_awk_rtx_getnvmap() gets the map of named variables 
  */
 qse_map_t* qse_awk_rtx_getnvmap (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -1487,7 +1426,7 @@ qse_bool_t qse_awk_rtx_isstaticval (
  * value @a val.
  */
 void qse_awk_rtx_refupval (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
+	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_awk_val_t* val  /**< a value */
 );
 
@@ -1496,22 +1435,31 @@ void qse_awk_rtx_refupval (
  * a value @a val. It destroys the value if it has reached the count of 0.
  */
 void qse_awk_rtx_refdownval (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
-	qse_awk_val_t* val  /**< a value */
-);
-
-void qse_awk_rtx_refdownval_nofree (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val
-);
-
-qse_bool_t qse_awk_rtx_valtobool (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val  /**< value pointer */
 );
 
 /**
- * The qse_awk_rtx_valtostr() function convers a value val to a string as 
+ * The qse_awk_rtx_refdownval() function decrements a reference count of
+ * a value @a val. It does not destroy the value if it has reached the 
+ * count of 0.
+ */
+void qse_awk_rtx_refdownval_nofree (
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val  /**< value pointer */
+);
+
+/**
+ * The qse_awk_rtx_valtobool() function converts a value @a val to a boolean
+ * value.
+ */
+qse_bool_t qse_awk_rtx_valtobool (
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val  /**< value pointer */
+);
+
+/**
+ * The qse_awk_rtx_valtostr() function converts a value @a val to a string as 
  * instructed in the parameter out. Before the call to the function, you 
  * should initialize a variable of the qse_awk_rtx_valtostr_out_t type.
  *
@@ -1573,11 +1521,10 @@ qse_bool_t qse_awk_rtx_valtobool (
  * @return the pointer to a string converted on success, QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtostr (
-	qse_awk_rtx_t*              rtx, /**< a runtime context */
-	qse_awk_val_t*              val, /**< a vlaue */
-	qse_awk_rtx_valtostr_out_t* out  /**< a output buffer */
+	qse_awk_rtx_t*              rtx, /**< runtime context */
+	qse_awk_val_t*              val, /**< value to convert */
+	qse_awk_rtx_valtostr_out_t* out  /**< output buffer */
 );
-/******/
 
 /**
  * The qse_awk_rtx_valtocpldup() function provides a shortcut to the 
@@ -1596,34 +1543,32 @@ qse_char_t* qse_awk_rtx_valtostr (
  * @return the pointer to a string converted on success, QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtocpldup (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
-	qse_awk_val_t* val, /**< a value to convert */
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val, /**< value to convert */
 	qse_size_t*    len  /**< result length */
 );
-/******/
 
-/****f* AWK/qse_awk_rtx_valtonum
- * NAME
- *  qse_awk_rtx_valtonum - convert a value to a number
- * DESCRIPTION
- *  The qse_awk_rtx_valtonum() function converts a value to a number. 
- *  If the value is converted to a long number, it is stored in the memory
- *  pointed to by l and 0 is returned. If the value is converted to a real 
- *  number, it is stored in the memory pointed to by r and 1 is returned.
- * RETURN
- *  The qse_awk_rtx_valtonum() function returns -1 on error, 0 if the converted
- *  number is a long number and 1 if it is a real number.
- * EXAMPLE
- *  The example show how to convert a value to a number and determine
- *  if it is an integer or a floating-point number.
- *    qse_long_t l;
- *    qse_real_t r;
- *    int n;
- *    n = qse_awk_rtx_valtonum (v, &l, &r);
- *    if (n == -1) error ();
- *    else if (n == 0) print_long (l);
- *    else if (n == 1) print_real (r);
- * SYNOPSIS
+/**
+ * The qse_awk_rtx_valtonum() function converts a value to a number. 
+ * If the value is converted to a long number, it is stored in the memory
+ * pointed to by l and 0 is returned. If the value is converted to a real 
+ * number, it is stored in the memory pointed to by r and 1 is returned.
+ *
+ * The code below shows how to convert a value to a number and determine
+ * if it is an integer or a floating-point number.
+ *
+ * @code
+ * qse_long_t l;
+ * qse_real_t r;
+ * int n;
+ * n = qse_awk_rtx_valtonum (v, &l, &r);
+ * if (n == -1) error ();
+ * else if (n == 0) print_long (l);
+ * else if (n == 1) print_real (r);
+ * @endcode
+ *
+ * @return -1 on failure, 0 if converted to a long number, 1 if converted to 
+ *         a floating-point number.
  */
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx,
@@ -1631,7 +1576,6 @@ int qse_awk_rtx_valtonum (
 	qse_long_t*    l,
 	qse_real_t*    r
 );
-/******/
 
 /**
  * The qse_awk_rtx_strtonum() function converts a string to a number.
@@ -1662,7 +1606,7 @@ int qse_awk_rtx_strtonum (
  * @return the pointer to a memory block on success, QSE_NULL on failure.
  */
 void* qse_awk_rtx_alloc (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
+	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_size_t     size /**< block size in bytes */
 );
 
@@ -1671,8 +1615,8 @@ void* qse_awk_rtx_alloc (
  * using the memory manager of a runtime ocntext @a rtx.
  */
 void qse_awk_rtx_free (
-	qse_awk_rtx_t* rtx, /**< a runtime context */
-	void*          ptr  /**< a memory block pointer */
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	void*          ptr  /**< memory block pointer */
 );
 
 #ifdef __cplusplus
