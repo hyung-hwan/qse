@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: run.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1004,7 +1004,8 @@ static int build_runarg (
 			}
 
 			key_len = qse_awk_longtostr (
-				argc, 10, QSE_NULL, key, QSE_COUNTOF(key));
+				run->awk, argc, 10,
+				QSE_NULL, key, QSE_COUNTOF(key));
 			QSE_ASSERT (key_len != (qse_size_t)-1);
 
 			/* increment reference count of v_tmp in advance as if 
@@ -2820,10 +2821,21 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 		{
 			if (out[--len] == QSE_T('\0'))
 			{
+				qse_cstr_t errarg;
+
+				errarg.ptr = out;
+				/* provide length up to one character before 
+				 * the first null not to contains a null
+				 * in an error message */
+				errarg.len = qse_strlen(out); 
+
+				qse_awk_rtx_seterror (
+					run, QSE_AWK_EIONMNL, 
+					nde->line, &errarg
+				);
+
 				/* if so, it skips writing */
 				QSE_AWK_FREE (run->awk, out);
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_EIONMNL, nde->line, QSE_NULL);
 				return -1;
 			}
 		}
@@ -2978,11 +2990,22 @@ static int run_printf (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 		{
 			if (out[--len] == QSE_T('\0'))
 			{
+				qse_cstr_t errarg;
+
+				errarg.ptr = out;
+				/* provide length up to one character before 
+				 * the first null not to contains a null
+				 * in an error message */
+				errarg.len = qse_strlen(out); 
+
+				qse_awk_rtx_seterror (
+					run, QSE_AWK_EIONMNL,
+					nde->line, &errarg
+				);
+
 				/* the output destination name contains a null 
 				 * character. */
 				QSE_AWK_FREE (run->awk, out);
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_EIONMNL, nde->line, QSE_NULL);
 				return -1;
 			}
 		}
@@ -6380,7 +6403,9 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (in[--len] == QSE_T('\0'))
 			{
 				/* the input source name contains a null 
-				 * character. make getline return -1 */
+				 * character. make getline return -1.
+				 * unlike print & printf, it is not a hard
+				 * error  */
 				QSE_AWK_FREE (run->awk, in);
 				n = -1;
 				goto skip_read;

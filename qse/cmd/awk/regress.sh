@@ -39,11 +39,6 @@ run_init()
 		run_script_for_init_main "$script"
 	done
 
-	for script in emp-???.awk
-	do
-		run_script_for_init "$script" "emp-en.data"
-	done
-
 	for script in cou-???.awk
 	do
 		run_script_for_init "$script" "cou-en.data"
@@ -142,20 +137,6 @@ run_test()
 	for script in main-???.awk
 	do
 		run_script_for_test_main "$script"
-		[ $? -ne 0 ] && {
-			echo "###################################"
-			echo "PROBLEM(S) DETECTED IN $script.".
-			echo "###################################"
-
-			echo "Do you want to abort? [y/n]"
-			read ans
-			[ "$ans" = "y" -o "$ans" = "Y" ] && return 1
-		}
-	done
-
-	for script in emp-???.awk
-	do
-		run_script_for_test "$script" "emp-en.data"
 		[ $? -ne 0 ] && {
 			echo "###################################"
 			echo "PROBLEM(S) DETECTED IN $script.".

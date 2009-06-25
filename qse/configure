@@ -25648,7 +25648,7 @@ QSE_SIZEOF_DOUBLE=$ac_cv_sizeof_double
 QSE_SIZEOF_LONG_DOUBLE=$ac_cv_sizeof_long_double
 
 
-ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/utl/Makefile include/qse/sed/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile lib/Makefile lib/cmn/Makefile lib/utl/Makefile lib/sed/Makefile lib/awk/Makefile lib/lsp/Makefile cmd/Makefile cmd/utl/Makefile cmd/awk/Makefile cmd/lsp/Makefile test/Makefile test/cmn/Makefile test/utl/Makefile test/sed/Makefile test/awk/Makefile doc/Makefile doc/page/Makefile doc/page.ko/Makefile doc/Doxyfile"
+ac_config_files="$ac_config_files Makefile include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/utl/Makefile include/qse/sed/Makefile include/qse/awk/Makefile include/qse/lsp/Makefile lib/Makefile lib/cmn/Makefile lib/utl/Makefile lib/sed/Makefile lib/awk/Makefile lib/lsp/Makefile cmd/Makefile cmd/utl/Makefile cmd/awk/Makefile cmd/lsp/Makefile samples/Makefile samples/cmn/Makefile samples/utl/Makefile samples/sed/Makefile samples/awk/Makefile doc/Makefile doc/page/Makefile doc/page.ko/Makefile doc/Doxyfile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -26684,11 +26684,11 @@ do
     "cmd/utl/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/utl/Makefile" ;;
     "cmd/awk/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/Makefile" ;;
     "cmd/lsp/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/lsp/Makefile" ;;
-    "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
-    "test/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES test/cmn/Makefile" ;;
-    "test/utl/Makefile") CONFIG_FILES="$CONFIG_FILES test/utl/Makefile" ;;
-    "test/sed/Makefile") CONFIG_FILES="$CONFIG_FILES test/sed/Makefile" ;;
-    "test/awk/Makefile") CONFIG_FILES="$CONFIG_FILES test/awk/Makefile" ;;
+    "samples/Makefile") CONFIG_FILES="$CONFIG_FILES samples/Makefile" ;;
+    "samples/cmn/Makefile") CONFIG_FILES="$CONFIG_FILES samples/cmn/Makefile" ;;
+    "samples/utl/Makefile") CONFIG_FILES="$CONFIG_FILES samples/utl/Makefile" ;;
+    "samples/sed/Makefile") CONFIG_FILES="$CONFIG_FILES samples/sed/Makefile" ;;
+    "samples/awk/Makefile") CONFIG_FILES="$CONFIG_FILES samples/awk/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/page/Makefile") CONFIG_FILES="$CONFIG_FILES doc/page/Makefile" ;;
     "doc/page.ko/Makefile") CONFIG_FILES="$CONFIG_FILES doc/page.ko/Makefile" ;;
