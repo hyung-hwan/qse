@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: std.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1037,7 +1037,8 @@ enum
 };
 
 static int fnc_math_1 (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
+	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl,
+	int type, void* f)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;

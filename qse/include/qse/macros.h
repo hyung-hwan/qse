@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 186 2009-06-06 13:42:57Z hyunghwan.chung $
+ * $Id: macros.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -27,7 +27,7 @@
 
 /** 
  * The #QSE_NULL macro defines a special pointer value to indicate an error or
- * it does not point to an object.
+ * that it does not point to anything.
  */
 #ifdef __cplusplus
 #	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT

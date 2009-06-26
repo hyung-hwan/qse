@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 209 2009-06-23 13:29:18Z hyunghwan.chung $ 
+ * $Id: awk.c 212 2009-06-25 07:39:27Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -203,7 +203,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_BUILD, 0);
 	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_MATCH, 0);
 
-	if (qse_awk_initgbls (awk) == -1) goto oops;
+	if (qse_awk_initgbls (awk) <= -1) goto oops;
 
 	return awk;
 
@@ -226,7 +226,7 @@ oops:
 
 int qse_awk_close (qse_awk_t* awk)
 {
-	if (qse_awk_clear (awk) == -1) return -1;
+	if (qse_awk_clear (awk) <= -1) return -1;
 	/*qse_awk_clrfnc (awk);*/
 	qse_map_close (awk->fnc.user);
 

@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 196 2009-06-11 07:44:44Z hyunghwan.chung $
+ * $Id: pio.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -66,18 +66,6 @@ void qse_pio_close (qse_pio_t* pio)
 {
 	qse_pio_fini (pio);
 	QSE_MMGR_FREE (pio->mmgr, pio);
-}
-
-static int closefile (void* arg, int fd)
-{
-	qse_pio_hnd_t* handle = (qse_pio_hnd_t*)arg;
-	if (fd != 0 && fd != 1 && fd != 2 &&
-	    fd != handle[0] && fd != handle[1] && fd != handle[2] &&
-	    fd != handle[3] && fd != handle[4] && fd != handle[5]) 
-	{
-		QSE_CLOSE (fd);
-	}
-	return 0;
 }
 
 qse_pio_t* qse_pio_init (

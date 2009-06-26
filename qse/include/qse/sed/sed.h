@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 211 2009-06-24 09:50:10Z hyunghwan.chung $
+ * $Id: sed.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,7 +36,7 @@
  * @endcode
  *
  * @todo 
- * - enhance execution of the l command. 
+ * - enhance execution of the l(ell) command - consider adding a callback
  *
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
@@ -218,7 +218,7 @@ void qse_sed_close (
 /**
  * The qse_sed_getoption() function retrieves the current options set in
  * a stream editor.
- * @return 0 or a number OR'ed of qse_sed_option_t values 
+ * @return 0 or a number OR'ed of #qse_sed_option_t values 
  */
 int qse_sed_getoption (
 	qse_sed_t* sed /**< a stream editor */
@@ -229,7 +229,7 @@ int qse_sed_getoption (
  */
 void qse_sed_setoption (
 	qse_sed_t* sed, /**< a stream editor */
-	int        opt  /**< 0 or a number OR'ed of qse_sed_option_t values */
+	int        opt  /**< 0 or a number OR'ed of #qse_sed_option_t values */
 );
 
 /**
@@ -245,7 +245,7 @@ qse_size_t qse_sed_getmaxdepth (
  */
 void qse_sed_setmaxdepth (
 	qse_sed_t* sed,  /**< a stream editor */
-	int        ids,  /**< 0 or a number OR'ed of qse_sed_depth_t values */
+	int        ids,  /**< 0 or a number OR'ed of #qse_sed_depth_t values */
 	qse_size_t depth /**< maximum depth level */
 );
 

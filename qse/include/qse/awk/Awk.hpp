@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 211 2009-06-24 09:50:10Z hyunghwan.chung $
+ * $Id: Awk.hpp 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -191,10 +191,10 @@ public:
 	/**
 	 * RIO class 
 	 */
-	class RIO
+	class RIOBase
 	{
 	protected:
-		RIO (rtx_t* rtx, rio_arg_t* riod);
+		RIOBase (rtx_t* rtx, rio_arg_t* riod);
 
 	public:
 		const char_t* getName() const;
@@ -214,7 +214,7 @@ public:
 	/**
 	 * Pipe
 	 */
-	class Pipe: public RIO
+	class Pipe: public RIOBase
 	{
 	public:
 		friend class Awk;
@@ -236,7 +236,7 @@ public:
 	/**
 	 * File
 	 */
-	class File: public RIO
+	class File: public RIOBase
 	{
 	public:
 		friend class Awk;
@@ -258,7 +258,7 @@ public:
 	/**
 	 * Console
 	 */
-	class Console: public RIO
+	class Console: public RIOBase
 	{
 	public:
 		friend class Awk;
