@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 211 2009-06-24 09:50:10Z hyunghwan.chung $
+ * $Id: awk.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -42,16 +42,47 @@
  */
 
 /** @struct qse_awk_t
- * The qse_awk_t type defines an AWK interpreter. The details are hidden as
- * it is a complex type susceptible to misuse.
+ * The #qse_awk_t type defines an AWK interpreter. It provides an interface
+ * to parse an AWK script and run it to manipulate input and output data.
+ *
+ * In brief, you need to call APIs with user-defined handlers to run a typical
+ * AWK script as shown below:
+ * 
+ * @code
+ * qse_awk_t* awk;
+ * qse_awk_rtx_t* rtx;
+ *
+ * awk = qse_awk_open (mmgr, 0, prm); // create an interpreter 
+ * qse_awk_parse (awk, sio);          // parse a script 
+ * rtx = qse_awk_rtx_open (awk, 0, rio, args); // create a runtime context 
+ * qse_awk_rtx_loop (rtx);            // run a standard AWK loop 
+ * qse_awk_rtx_close (rtx);           // destroy the runtime context
+ * qse_awk_close (awk);               // destroy the interpreter
+ * @endcode
+ *
+ * It provides an interface to change the conventional behavior of the 
+ * interpreter; most notably, you can call a particular function with 
+ * qse_awk_rtx_call() instead of entering the BEGIN,pattern-action blocks,END
+ * loop. By doing this, you may utilize a script in an event-driven way.
+ *
+ * @sa qse_awk_rtx_t qse_awk_open qse_awk_close
  */
 typedef struct qse_awk_t qse_awk_t;
 
 /** @struct qse_awk_rtx_t
- * The qse_awk_rtx_t type defines a runtime context. The details are hidden
- * as it is a complex type susceptible to misuse.
+ * The #qse_awk_rtx_t type defines a runtime context. A runtime context 
+ * maintains runtime state for a running script. You can create multiple
+ * runtime contexts out of a single AWK interpreter; in other words, you 
+ * can run the same script with different input and output data by providing
+ * customized I/O handlers when creating a runtime context with 
+ * qse_awk_rtx_open().
+ *
+ * I/O handlers are categoriezed into three kinds: console, file, pipe.
+ * The #qse_awk_rio_t type defines a set of I/O handlers as a callback.
+ *
+ * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
-typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
+typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 
 /**
  * The QSE_AWK_VAL_HDR defines the common header of a value type.
@@ -71,7 +102,10 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t; /* (R)untime con(T)e(X)t */
 #define QSE_AWK_VAL_TYPE(x) ((x)->type)
 
 /**
- * The qse_awk_val_t type is an abstract value type
+ * The qse_awk_val_t type is an abstract value type. A value commonly contains:
+ * - type of a value
+ * - reference count
+ * - indicator for a numeric string
  */
 struct qse_awk_val_t
 {
@@ -81,7 +115,7 @@ typedef struct qse_awk_val_t qse_awk_val_t;
 
 /**
  * The qse_awk_val_nil_t type is a nil value type. The type field is 
- * QSE_AWK_VAL_NIL.
+ * #QSE_AWK_VAL_NIL.
  */
 struct qse_awk_val_nil_t
 {
@@ -91,7 +125,7 @@ typedef struct qse_awk_val_nil_t  qse_awk_val_nil_t;
 
 /**
  * The qse_awk_val_int_t type is an integer number type. The type field is
- * QSE_AWK_VAL_INT.
+ * #QSE_AWK_VAL_INT.
  */
 struct qse_awk_val_int_t
 {
@@ -103,7 +137,7 @@ typedef struct qse_awk_val_int_t qse_awk_val_int_t;
 
 /**
  * The qse_awk_val_real_t type is a floating-point number type. The type field
- * is QSE_AWK_VAL_REAL.
+ * is #QSE_AWK_VAL_REAL.
  */
 struct qse_awk_val_real_t
 {
@@ -115,7 +149,7 @@ typedef struct qse_awk_val_real_t qse_awk_val_real_t;
 
 /**
  * The qse_awk_val_str_t type is a string type. The type field is
- * QSE_AWK_VAL_STR.
+ * #QSE_AWK_VAL_STR.
  */
 struct qse_awk_val_str_t
 {
@@ -127,7 +161,7 @@ typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 
 /**
  * The qse_awk_val_rex_t type is a regular expression type.  The type field 
- * is QSE_AWK_VAL_REX.
+ * is #QSE_AWK_VAL_REX.
  */
 struct qse_awk_val_rex_t
 {
@@ -138,7 +172,10 @@ struct qse_awk_val_rex_t
 };
 typedef struct qse_awk_val_rex_t  qse_awk_val_rex_t;
 
-/* QSE_AWK_VAL_MAP */
+/**
+ * The qse_awk_val_map_t type defines a map type. The type field is 
+ * #QSE_AWK_VAL_MAP.
+ */
 struct qse_awk_val_map_t
 {
 	QSE_AWK_VAL_HDR;
@@ -151,7 +188,10 @@ struct qse_awk_val_map_t
 };
 typedef struct qse_awk_val_map_t  qse_awk_val_map_t;
 
-/* QSE_AWK_VAL_REF */
+/**
+ * The qse_awk_val_ref_t type defines a reference type that is used
+ * internally only. The type field is #QSE_AWK_VAL_REF.
+ */
 struct qse_awk_val_ref_t
 {
 	QSE_AWK_VAL_HDR;
@@ -179,7 +219,7 @@ typedef int (*qse_awk_sprintf_t) (
 );
 
 /**
- * The #qse_awk_fnc_fun_t type defines a intrinsic function handler.
+ * The qse_awk_fnc_fun_t type defines a intrinsic function handler.
  */
 typedef int (*qse_awk_fnc_fun_t) (
 	qse_awk_rtx_t*    rtx,  /**< runtime context */
@@ -188,14 +228,14 @@ typedef int (*qse_awk_fnc_fun_t) (
 );
 
 /**
- * The qse_awk_sio_cmd_t type defines source IO commands
+ * The qse_awk_sio_cmd_t type defines I/O commands for a script stream.
  */
 enum qse_awk_sio_cmd_t
 {
-	QSE_AWK_SIO_OPEN   = 0,
-	QSE_AWK_SIO_CLOSE  = 1,
-	QSE_AWK_SIO_READ   = 2,
-	QSE_AWK_SIO_WRITE  = 3
+	QSE_AWK_SIO_OPEN   = 0, /**< open a script stream */
+	QSE_AWK_SIO_CLOSE  = 1, /**< close a script stream */
+	QSE_AWK_SIO_READ   = 2, /**< read text from an input script stream */
+	QSE_AWK_SIO_WRITE  = 3  /**< write text to an output script stream */
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
@@ -223,17 +263,34 @@ enum qse_awk_rio_cmd_t
 };
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
+enum qse_awk_rio_mode_t
+{
+	QSE_AWK_RIO_PIPE_READ      = 0,
+	QSE_AWK_RIO_PIPE_WRITE     = 1,
+	QSE_AWK_RIO_PIPE_RW        = 2,
+
+	QSE_AWK_RIO_FILE_READ      = 0,
+	QSE_AWK_RIO_FILE_WRITE     = 1,
+	QSE_AWK_RIO_FILE_APPEND    = 2,
+
+	QSE_AWK_RIO_CONSOLE_READ   = 0,
+	QSE_AWK_RIO_CONSOLE_WRITE  = 1
+};
+typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
+
 /**
  * The qse_awk_rio_arg_t defines the data passed to a rio function 
  */
 struct qse_awk_rio_arg_t 
 {
-	int type;           /* [IN] console, file, pipe */
-	int mode;           /* [IN] read, write, etc */
-	qse_char_t* name;   /* [IN] */
-	void* handle;       /* [OUT] */
+	qse_awk_rio_mode_t mode;  /**< [IN] I/O mode */
+	qse_char_t* name;         /**< [IN] name of I/O object */
+	void* handle;             /**< [OUT] I/O handle set by a handler */
 
-	/* input */
+	/*--  from here down, internal use only --*/
+
+	int type; 
+
 	struct
 	{
 		qse_char_t buf[2048];
@@ -243,7 +300,6 @@ struct qse_awk_rio_arg_t
 		qse_bool_t eos;
 	} in;
 
-	/* output */
 	struct
 	{
 		qse_bool_t eof;
@@ -255,7 +311,7 @@ struct qse_awk_rio_arg_t
 typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 
 /**
- * The qse_awk_rio_fun_t type defines a runtime IO function
+ * The qse_awk_rio_fun_t type defines a runtime I/O handler.
  */
 typedef qse_ssize_t (*qse_awk_rio_fun_t) (
 	qse_awk_rtx_t*      rtx,
@@ -307,17 +363,54 @@ struct qse_awk_prm_t
 typedef struct qse_awk_prm_t qse_awk_prm_t;
 
 /**
- * The qse_awk_sio_t type defines source script IO.
+ * The qse_awk_sio_t type defines a script stream handler set.
+ * The qse_awk_parse() function calls the input and output handler to parse
+ * a script and optionally deparse it. Typical input and output handlers 
+ * are shown below:
+ *
+ * @code
+ * qse_ssize_t in (
+ *    qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
+ *    qse_char_t* buf, qse_size_t size)
+ * {
+ *    if (cmd == QSE_AWK_SIO_OPEN) open input stream;
+ *    else if (cmd == QSE_AWK_SIO_CLOSE) close input stream;
+ *    else read input stream and fill buf up to size characters;
+ * }
+ *
+ * qse_ssize_t out (
+ *    qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
+ *    qse_char_t* data, qse_size_t size)
+ * {
+ *    if (cmd == QSE_AWK_SIO_OPEN) open_output_stream;
+ *    else if (cmd == QSE_AWK_SIO_CLOSE) close_output_stream;
+ *    else write data of size characters to output stream;
+ * }
+ * @endcode
+ *
+ * For #QSE_AWK_SIO_OPEN, a handler must return:
+ * - -1 if it failed to open a stream.
+ * - 0 if it has opened a stream but has reached the end.
+ * - 1 if it has successfully opened a stream.
+ * 
+ * For #QSE_AWK_SIO_CLOSE, a handler must return:
+ * - -1 if it failed to close a stream.
+ * - 0 if it has closed a stream.
+ *
+ * For #QSE_AWK_SIO_READ and #QSE_AWK_SIO_WRITE, a handler must return:
+ * - -1 if there was an error occurred during operation.
+ * - 0 if it has reached the end.
+ * - the number of characters read or written on success.
  */
 struct qse_awk_sio_t
 {
-	qse_awk_sio_fun_t in;
-	qse_awk_sio_fun_t out;
+	qse_awk_sio_fun_t in;  /**< input script stream handler */
+	qse_awk_sio_fun_t out; /**< output script stream handler */
 };
 typedef struct qse_awk_sio_t qse_awk_sio_t;
 
 /**
- * The qse_awk_rio_t type defines a runtime IO set.
+ * The qse_awk_rio_t type defines a runtime I/O handler set.
  */
 struct qse_awk_rio_t
 {
@@ -588,17 +681,18 @@ enum qse_awk_errnum_t
 	/* the number of error numbers, internal use only */
 	QSE_AWK_NUMERRNUM 
 };
-
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
 
+/** 
+ * The qse_awk_errinf_t type defines a placeholder for error information.
+ */
 struct qse_awk_errinf_t
 {
-	qse_awk_errnum_t num;
-	qse_size_t       lin;
-	qse_char_t       msg[256];
+	qse_awk_errnum_t num;      /**< error number */
+	qse_size_t       lin;      /**< line number where an error occurred */
+	qse_char_t       msg[256]; /**< error message */
 };
-
 typedef struct qse_awk_errinf_t qse_awk_errinf_t;
 
 /**
@@ -610,7 +704,7 @@ typedef struct qse_awk_errinf_t qse_awk_errinf_t;
  */
 typedef const qse_char_t* (*qse_awk_errstr_t) (
 	qse_awk_t*       awk,   /**< awk object */
-	qse_awk_errnum_t num    /**< an error number */
+	qse_awk_errnum_t num    /**< error number */
 );
 
 /* depth types */
@@ -624,32 +718,9 @@ enum qse_awk_depth_t
 	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5)
 };
 
-/* rio types */
-enum qse_awk_rio_type_t
-{
-	/* rio types available */
-	QSE_AWK_RIO_PIPE,
-	QSE_AWK_RIO_FILE,
-	QSE_AWK_RIO_CONSOLE,
-
-	/* reserved for internal use only */
-	QSE_AWK_RIO_NUM
-};
-
-enum qse_awk_rio_mode_t
-{
-	QSE_AWK_RIO_PIPE_READ      = 0,
-	QSE_AWK_RIO_PIPE_WRITE     = 1,
-	QSE_AWK_RIO_PIPE_RW        = 2,
-
-	QSE_AWK_RIO_FILE_READ      = 0,
-	QSE_AWK_RIO_FILE_WRITE     = 1,
-	QSE_AWK_RIO_FILE_APPEND    = 2,
-
-	QSE_AWK_RIO_CONSOLE_READ   = 0,
-	QSE_AWK_RIO_CONSOLE_WRITE  = 1
-};
-
+/**
+ * The qse_awk_gbl_id_t type defines intrinsic globals variable IDs.
+ */
 enum qse_awk_gbl_id_t
 {
 	/* this table should match gtab in parse.c.
@@ -774,7 +845,7 @@ extern qse_awk_val_t* qse_awk_val_one;
 /**
  * The qse_awk_open() function creates a new qse_awk_t object. The object 
  * created can be passed to other qse_awk_xxx() functions and is valid until 
- * it is destroyed iwth the qse_qse_close() function. The function saves the 
+ * it is destroyed with the qse_awk_close() function. The function saves the 
  * memory manager pointer while it copies the contents of the primitive 
  * function structures. Therefore, you should keep the memory manager valid 
  * during the whole life cycle of an qse_awk_t object.
@@ -793,7 +864,7 @@ extern qse_awk_val_t* qse_awk_val_one;
  * }
  * @endcode
  *
- * @return a pointer to a qse_awk_t object on success, QSE_NULL on failure.
+ * @return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
  */
 qse_awk_t* qse_awk_open ( 
 	qse_mmgr_t*    mmgr, /**< a memory manager */
@@ -861,28 +932,47 @@ qse_awk_errstr_t qse_awk_geterrstr (
  */
 void qse_awk_seterrstr (
 	qse_awk_t*       awk,   /**< awk object */
-	qse_awk_errstr_t errstr /**< an error string getter */
+	qse_awk_errstr_t errstr /**< error string getter */
 );
 
-int qse_awk_geterrnum (
-	qse_awk_t* awk
+/**
+ * The qse_awk_geterrnum() function returns the number of the last error 
+ * occurred.
+ * @return error number
+ */
+qse_awk_errnum_t qse_awk_geterrnum (
+	qse_awk_t* awk /**< awk object */
 );
 
+/**
+ * The qse_awk_geterrlin() function returns the line number where the
+ * last error has occurred.
+ * @return line number
+ */
 qse_size_t qse_awk_geterrlin (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< awk object */
 );
 
+/**
+ * The qse_awk_geterrmsg() function returns the error message describing
+ * the last error occurred.
+ * @return error message
+ */
 const qse_char_t* qse_awk_geterrmsg (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< awk object */
 );
 
+/**
+ * The qse_awk_geterrinf() function copies error information into memory
+ * pointed to by @a errinf.
+ */
 void qse_awk_geterrinf (
-	qse_awk_t*        awk,
-	qse_awk_errinf_t* errinf
+	qse_awk_t*        awk,   /**< awk object */
+	qse_awk_errinf_t* errinf /**< error information buffer */
 );
 
 void qse_awk_seterrnum (
-	qse_awk_t*       awk,
+	qse_awk_t*       awk, 
 	qse_awk_errnum_t errnum
 );
 
@@ -947,8 +1037,8 @@ void qse_awk_unsetallwords (
  * The qse_awk_setword() function enables replacement of a name of a keyword,
  * intrinsic global variables, and intrinsic functions.
  *
- * If @a nkw is QSE_NULL or @a nlen is zero and @a okw is QSE_NULL or 
- * @a olen is zero, it unsets all word replacements; If @a nkw is QSE_NULL or 
+ * If @a nkw is #QSE_NULL or @a nlen is zero and @a okw is #QSE_NULL or 
+ * @a olen is zero, it unsets all word replacements; If @a nkw is #QSE_NULL or 
  * @a nlen is zero, it unsets the replacement for @a okw and @a olen; If 
  * all of them are valid, it sets the word replace for @a okw and @a olen 
  * to @a nkw and @a nlen.
@@ -979,7 +1069,7 @@ int qse_awk_addgbl (
 );
 
 /**
- * The qse_awk_delgbl() function deletes an instrinsic global variable. 
+ * The qse_awk_delgbl() function deletes an instrinsic global variable by name.
  * @return 0 on success, -1 on failure
  */
 int qse_awk_delgbl (
@@ -1003,7 +1093,8 @@ void* qse_awk_addfnc (
 );
 
 /**
- * The qse_awk_delfnc() function deletes an intrinsic function.
+ * The qse_awk_delfnc() function deletes an intrinsic function by name.
+ * @return 0 on success, -1 on failure
  */
 int qse_awk_delfnc (
 	qse_awk_t*        awk,  /**< awk object */
@@ -1019,17 +1110,54 @@ void qse_awk_clrfnc (
 );
 
 /**
- * The qse_awk_parse() function parses the source script.
+ * The qse_awk_parse() function parses a source script, and optionally 
+ * deparses it back. 
+ *
+ * It reads a source script by calling @a sio->in as shown in the pseudo code 
+ * below:
+ *
+ * @code
+ * n = sio->in (awk, QSE_AWK_SIO_OPEN);
+ * if (n >= 0)
+ * {
+ *    while (n > 0)
+ *       n = sio->in (awk, QSE_AWK_SIO_READ, buf, buf_size);
+ *    sio->in (awk, QSE_AWK_SIO_CLOSE);
+ * }
+ * @endcode
+ *
+ * A negative number returned causes qse_awk_parse() to return failure;
+ * 0 returned indicates the end of a stream; A positive number returned 
+ * indicates successful opening of a stream or the length of the text read.
+ *
+ * If @a sio->out is not #QSE_NULL, it deparses the internal parse tree
+ * composed of a source script and writes back the deparsing result by 
+ * calling @a sio->out as shown below:
+ *
+ * @code
+ * n = sio->out (awk, QSE_AWK_SIO_OPEN);
+ * if (n >= 0)
+ * {
+ *    while (n > 0)
+ *       n = sio->out (awk, QSE_AWK_SIO_WRITE, text, text_size);
+ *    sio->out (awk, QSE_AWK_SIO_CLOSE);
+ * }
+ * @endcode
+ * 
+ * Unlike @a sf->in, the return value of 0 from @a sf->out is treated as
+ * premature end of a stream; therefore, it causes qse_awk_parse() to return
+ * failure.
+ *
  * @return 0 on success, -1 on failure.
  */
 int qse_awk_parse (
 	qse_awk_t*     awk, /**< awk object */
-	qse_awk_sio_t* sio  /**< source stream I/O handler */
+	qse_awk_sio_t* sio  /**< source script I/O handler */
 );
 
 /**
  * The qse_awk_alloc() function allocates dynamic memory.
- * @return a pointer to memory space allocated on success, QSE_NULL on failure
+ * @return a pointer to memory space allocated on success, #QSE_NULL on failure
  */
 void* qse_awk_alloc (
 	qse_awk_t* awk,  /**< awk object */
@@ -1050,7 +1178,7 @@ void qse_awk_free (
  * The new string should be freed using the qse_awk_free() function.
  *
  * @return a pointer to a new string duplicated of @a s on success, 
- *         QSE_NULL on failure.
+ *         #QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strdup (
 	qse_awk_t*        awk, /**< awk object */
@@ -1064,7 +1192,7 @@ qse_char_t* qse_awk_strdup (
  * function.
  *
  * @return a pointer to a new string duplicated of @a s on success, 
- *         QSE_NULL on failure.
+ *         #QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strxdup (
 	qse_awk_t*        awk, /**< awk object */
@@ -1098,7 +1226,7 @@ qse_size_t qse_awk_longtostr (
 
 /**
  * The qse_awk_rtx_open() creates a runtime context.
- * @return a runtime context on success, QSE_NULL on failure
+ * @return a runtime context on success, #QSE_NULL on failure
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk, /**< awk object */
@@ -1122,7 +1250,7 @@ void qse_awk_rtx_close (
  *
  * @code
  *  The example shows typical usage of the function.
- *    rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ *    rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
  *    if (rtx != QSE_NULL)
  *    {
  *        qse_awk_rtx_loop (rtx);
@@ -1144,7 +1272,7 @@ int qse_awk_rtx_loop (
  *
  * The example shows typical usage of the function.
  * @code
- * rtx = qse_awk_rtx_open (awk, rio, rcb, QSE_NULL, QSE_NULL);
+ * rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
  * if (rtx != QSE_NULL)
  * {
  *     v = qse_awk_rtx_call (rtx, QSE_T("init"), QSE_NULL, 0);
@@ -1302,50 +1430,55 @@ qse_map_t* qse_awk_rtx_getnvmap (
 );
 
 /**
- * The qse_awk_rtx_geterrnum() function gets an error code of a runtime context
+ * The qse_awk_rtx_geterrnum() function gets the number of the last error
+ * occurred in a runtime context.
+ * @return error number
  */
-int qse_awk_rtx_geterrnum (
-	qse_awk_rtx_t* rtx
+qse_awk_errnum_t qse_awk_rtx_geterrnum (
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 qse_size_t qse_awk_rtx_geterrlin (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 const qse_char_t* qse_awk_rtx_geterrmsg (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 void qse_awk_rtx_geterrinf (
-	qse_awk_rtx_t*    rtx,
-	qse_awk_errinf_t* errinf
+	qse_awk_rtx_t*    rtx,   /**< runtime context */
+	qse_awk_errinf_t* errinf /**< error information */
 );
 
 void qse_awk_rtx_geterror (
-	qse_awk_rtx_t*     rtx,
-	qse_awk_errnum_t*  errnum, 
-	qse_size_t*        errlin,
-	const qse_char_t** errmsg
+	qse_awk_rtx_t*     rtx,    /**< runtime context */
+	qse_awk_errnum_t*  errnum, /**< error number */
+	qse_size_t*        errlin, /**< error line */
+	const qse_char_t** errmsg  /**< error message */
 );
 
 void qse_awk_rtx_seterrnum (
-	qse_awk_rtx_t*   rtx,
-	qse_awk_errnum_t errnum
+	qse_awk_rtx_t*   rtx,   /**< runtime context */
+	qse_awk_errnum_t errnum /**< error number */
 );
 
 void qse_awk_rtx_seterrinf (
-	qse_awk_rtx_t*          rtx, 
-	const qse_awk_errinf_t* errinf
+	qse_awk_rtx_t*          rtx,   /**< runtime context */
+	const qse_awk_errinf_t* errinf /**< error information */
 );
 
 void qse_awk_rtx_seterror (
-	qse_awk_rtx_t*    rtx,
-	qse_awk_errnum_t  errnum,
-	qse_size_t        errlin, 
-	const qse_cstr_t* errarg
+	qse_awk_rtx_t*    rtx,    /**< runtime context */
+	qse_awk_errnum_t  errnum, /**< error number */
+	qse_size_t        errlin, /**< error line */
+	const qse_cstr_t* errarg  /**< error message formatting argument */
 );
 
-/* record and field functions */
+/**
+ * The qse_awk_rtx_clrrec() function clears the input record ($0) 
+ * and fields ($1 to $N).
+ */
 int qse_awk_rtx_clrrec (
 	qse_awk_rtx_t* rtx,
 	qse_bool_t     skip_inrec_line
@@ -1475,7 +1608,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * it uses CONVFMT. 
  *
  * You should initialize or free other fields before and after the call 
- * depending on the type field as shown below.
+ * depending on the type field as shown below:
  *  
  * If you have a static buffer, use QSE_AWK_RTX_VALTOSTR_CPL.
  * @code
@@ -1518,7 +1651,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * the same as QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
  * u.strpcat field instead of the u.strp field.
  *
- * @return the pointer to a string converted on success, QSE_NULL on failure
+ * @return the pointer to a string converted on success, #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx, /**< runtime context */
@@ -1540,7 +1673,7 @@ qse_char_t* qse_awk_rtx_valtostr (
  * qse_awk_rtx_free (rtx, ptr);
  * @endcode
  *
- * @return the pointer to a string converted on success, QSE_NULL on failure
+ * @return the pointer to a string converted on success, #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtocpldup (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -1562,9 +1695,9 @@ qse_char_t* qse_awk_rtx_valtocpldup (
  * qse_real_t r;
  * int n;
  * n = qse_awk_rtx_valtonum (v, &l, &r);
- * if (n == -1) error ();
+ * if (n <= -1) error ();
  * else if (n == 0) print_long (l);
- * else if (n == 1) print_real (r);
+ * else if (n >= 1) print_real (r);
  * @endcode
  *
  * @return -1 on failure, 0 if converted to a long number, 1 if converted to 
@@ -1603,7 +1736,7 @@ int qse_awk_rtx_strtonum (
 /**
  * The qse_awk_rtx_alloc() function allocats a memory block of @a size bytes
  * using the memory manager associated with a runtime context @a rtx. 
- * @return the pointer to a memory block on success, QSE_NULL on failure.
+ * @return the pointer to a memory block on success, #QSE_NULL on failure.
  */
 void* qse_awk_rtx_alloc (
 	qse_awk_rtx_t* rtx, /**< runtime context */

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 206 2009-06-21 13:33:05Z hyunghwan.chung $
+ * $Id: Awk.cpp 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -62,42 +62,42 @@ void Awk::Source::setHandle (void* handle)
 // Awk::RIO
 //////////////////////////////////////////////////////////////////
 
-Awk::RIO::RIO (rtx_t* rtx, rio_arg_t* riod): rtx (rtx), riod (riod)
+Awk::RIOBase::RIOBase (rtx_t* rtx, rio_arg_t* riod): rtx (rtx), riod (riod)
 {
 }
 
-const Awk::char_t* Awk::RIO::getName () const
+const Awk::char_t* Awk::RIOBase::getName () const
 {
 	return this->riod->name;
 }
 
-const void* Awk::RIO::getHandle () const
+const void* Awk::RIOBase::getHandle () const
 {
 	return this->riod->handle;
 }
 
-void Awk::RIO::setHandle (void* handle)
+void Awk::RIOBase::setHandle (void* handle)
 {
 	this->riod->handle = handle;
 }
 
-Awk::RIO::operator Awk* () const 
+Awk::RIOBase::operator Awk* () const 
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (this->rtx);
 	return rxtn->run->awk;
 }
 
-Awk::RIO::operator Awk::awk_t* () const 
+Awk::RIOBase::operator Awk::awk_t* () const 
 {
 	return qse_awk_rtx_getawk (this->rtx);
 }
 
-Awk::RIO::operator Awk::rio_arg_t* () const
+Awk::RIOBase::operator Awk::rio_arg_t* () const
 {
 	return this->riod;
 }
 
-Awk::RIO::operator Awk::rtx_t* () const
+Awk::RIOBase::operator Awk::rtx_t* () const
 {
 	return this->rtx;
 }
@@ -106,7 +106,7 @@ Awk::RIO::operator Awk::rtx_t* () const
 // Awk::Pipe
 //////////////////////////////////////////////////////////////////
 
-Awk::Pipe::Pipe (rtx_t* rtx, rio_arg_t* riod): RIO (rtx, riod)
+Awk::Pipe::Pipe (rtx_t* rtx, rio_arg_t* riod): RIOBase (rtx, riod)
 {
 }
 
@@ -119,7 +119,7 @@ Awk::Pipe::Mode Awk::Pipe::getMode () const
 // Awk::File
 //////////////////////////////////////////////////////////////////
 
-Awk::File::File (rtx_t* rtx, rio_arg_t* riod): RIO (rtx, riod)
+Awk::File::File (rtx_t* rtx, rio_arg_t* riod): RIOBase (rtx, riod)
 {
 }
 
@@ -133,7 +133,7 @@ Awk::File::Mode Awk::File::getMode () const
 //////////////////////////////////////////////////////////////////
 
 Awk::Console::Console (rtx_t* rtx, rio_arg_t* riod): 
-	RIO (rtx, riod), filename(QSE_NULL)
+	RIOBase (rtx, riod), filename(QSE_NULL)
 {
 }
 

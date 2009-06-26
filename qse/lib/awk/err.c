@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: err.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -180,7 +180,7 @@ void qse_awk_seterrstr (qse_awk_t* awk, qse_awk_errstr_t errstr)
 	awk->errstr = errstr;
 }
 
-int qse_awk_geterrnum (qse_awk_t* awk)
+qse_awk_errnum_t qse_awk_geterrnum (qse_awk_t* awk)
 {
 	return awk->errinf.num;
 }
@@ -249,7 +249,7 @@ void qse_awk_seterror (
 	);
 }
 
-int qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
+qse_awk_errnum_t qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
 {
 	return rtx->errinf.num;
 }

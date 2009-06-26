@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 202 2009-06-16 06:05:40Z hyunghwan.chung $
+ * $Id: awk.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -64,6 +64,17 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 
 #define QSE_AWK_STRDUP(awk,str) (qse_strdup(str,(awk)->mmgr))
 #define QSE_AWK_STRXDUP(awk,str,len) (qse_strxdup(str,len,(awk)->mmgr))
+
+enum qse_awk_rio_type_t
+{
+	/* rio types available */
+	QSE_AWK_RIO_PIPE,
+	QSE_AWK_RIO_FILE,
+	QSE_AWK_RIO_CONSOLE,
+
+	/* reserved for internal use only */
+	QSE_AWK_RIO_NUM
+};
 
 struct qse_awk_tree_t
 {
