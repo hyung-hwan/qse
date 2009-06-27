@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: run.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2934,6 +2934,9 @@ static int run_print (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 		return -1;
 	}
 
+	/* unlike printf, flushio() is not needed here as print 
+	 * inserts <NL> that triggers auto-flush */
+
 	if (out != QSE_NULL) QSE_AWK_FREE (run->awk, out);
 
 /*skip_write:*/
@@ -3069,10 +3072,13 @@ static int run_printf (qse_awk_rtx_t* run, qse_awk_nde_print_t* nde)
 	}
 	qse_awk_rtx_refdownval (run, v);
 
-	if (out != QSE_NULL) QSE_AWK_FREE (run->awk, out);
 
 /*skip_write:*/
-	return qse_awk_rtx_flushio (run, nde->out_type, dst);
+	n = qse_awk_rtx_flushio (run, nde->out_type, dst);
+
+	if (out != QSE_NULL) QSE_AWK_FREE (run->awk, out);
+
+	return n;
 }
 
 static int output_formatted (
@@ -4045,7 +4051,7 @@ static int __cmp_int_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR)
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr > 0)
 	{
 		qse_long_t ll;
 		qse_real_t rr;
@@ -4131,7 +4137,7 @@ static int __cmp_real_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR)
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr > 0)
 	{
 		const qse_char_t* end;
 		qse_real_t rr;

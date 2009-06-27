@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: err.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -39,7 +39,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("file or data too big"),
 		QSE_T("system too busy"),
 		QSE_T("is a directory"),
-		QSE_T("i/o error"),
+		QSE_T("IO error"),
 
 		QSE_T("cannot open '${0}'"),
 		QSE_T("cannot read '${0}'"),
@@ -143,10 +143,10 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("wrong implementation of intrinsic function handler"),
 		QSE_T("intrinsic function handler returned an error"),
 		QSE_T("wrong implementation of user-defined io handler"),
-		QSE_T("no such io name found"),
-		QSE_T("i/o handler returned an error"),
-		QSE_T("i/o name empty"),
-		QSE_T("i/o name '${0}' containing a null character"),
+		QSE_T("IO handler returned an error"),
+		QSE_T("no such IO name found"),
+		QSE_T("IO name empty"),
+		QSE_T("IO name '${0}' containing a null character"),
 		QSE_T("not sufficient arguments to formatting sequence"),
 		QSE_T("recursion detected in format conversion"),
 		QSE_T("invalid character in CONVFMT"),

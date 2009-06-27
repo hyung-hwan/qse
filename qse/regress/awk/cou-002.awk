@@ -1,6 +1,6 @@
 BEGIN { 
 	FS = "\t";
-	printf ("%10s %6s %5s    %s\n\n",
+	printf  ("%10s %6s %5s    %s\n\n", 
 		"COUNTRY", "AREA", "POP", "CONTINENT");
 }
 

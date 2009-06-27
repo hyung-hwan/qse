@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: awk.h 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -655,8 +655,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EFNCUSER,          /* wrong intrinsic function implementation */
 	QSE_AWK_EFNCIMPL,          /* intrinsic function handler failed */
 	QSE_AWK_EIOUSER,           /* wrong user io handler implementation */
-	QSE_AWK_EIONONE,           /* no such io name found */
 	QSE_AWK_EIOIMPL,           /* i/o callback returned an error */
+	QSE_AWK_EIONMNF,           /* no such io name found */
 	QSE_AWK_EIONMEM,           /* i/o name empty */
 	QSE_AWK_EIONMNL,           /* i/o name contains '\0' */
 	QSE_AWK_EFMTARG,           /* arguments to format string not sufficient */
