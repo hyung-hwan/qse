@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 214 2009-06-27 02:50:54Z hyunghwan.chung $
+ * $Id: parse.c 215 2009-06-27 05:52:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -930,13 +930,16 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 			/* NOTE: the following is not a conflict. 
 			 *       so the parameter is not checked against
 			 *       global variables.
-			 *  gbl x; 
+			 *  global x; 
 			 *  function f (x) { print x; } 
 			 *  x in print x is a parameter
 			 */
 
-			/* check if a parameter conflicts with other parameters */
-			if (qse_lda_search (awk->parse.params, 
+			/* check if a parameter conflicts with the function 
+			 * name or other parameters */
+			if (qse_strxncmp (
+				param, param_len, name_dup, name_len) == 0 ||
+			    qse_lda_search (awk->parse.params, 
 				0, param, param_len) != QSE_LDA_NIL)
 			{
 				QSE_AWK_FREE (awk, name_dup);
@@ -989,12 +992,16 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 				return QSE_NULL;
 			}
 
-			if (get_token(awk) <= -1) 
+			do
 			{
-				QSE_AWK_FREE (awk, name_dup);
-				qse_lda_clear (awk->parse.params);
-				return QSE_NULL;
+				if (get_token(awk) <= -1) 
+				{
+					QSE_AWK_FREE (awk, name_dup);
+					qse_lda_clear (awk->parse.params);
+					return QSE_NULL;
+				}
 			}
+			while (MATCH(awk,TOKEN_NEWLINE));
 		}
 
 		if (get_token(awk) <= -1) 
@@ -3723,17 +3730,22 @@ static qse_awk_nde_t* parse_fncall (
 
 			if (!MATCH(awk,TOKEN_COMMA)) 
 			{
-				if (head != QSE_NULL) qse_awk_clrpt (awk, head);
-
+				if (head != QSE_NULL)
+					qse_awk_clrpt (awk, head);
 				SETERRTOK (awk, QSE_AWK_ECOMMA);
 				return QSE_NULL;
 			}
 
-			if (get_token(awk) <= -1) 
+			do
 			{
-				if (head != QSE_NULL) qse_awk_clrpt (awk, head);
-				return QSE_NULL;
+				if (get_token(awk) <= -1) 
+				{
+					if (head != QSE_NULL)
+						qse_awk_clrpt (awk, head);
+					return QSE_NULL;
+				}
 			}
+			while (MATCH(awk,TOKEN_NEWLINE));
 		}
 
 	}
