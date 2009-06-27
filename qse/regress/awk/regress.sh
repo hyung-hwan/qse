@@ -23,6 +23,7 @@ print_usage()
 ###################
 
 QSEAWK=${QSEAWK:=../../cmd/awk/qseawk}
+TMPFILE="${TMPFILE:=./regress.temp}"
 
 PROGS="
 	cou-001.awk/cou.dat//
@@ -81,6 +82,16 @@ PROGS="
 	emp-026.awk/emp.dat//
 	emp-027.awk/emp.dat//
 
+	lang-001.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-002.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-003.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-004.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-005.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-006.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-007.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-008.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-009.awk/lang-009.awk//--implicit=off --explicit=on --newline=on -o-
+
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//
 	asm.awk/asm.s/asm.dat/
@@ -96,12 +107,23 @@ PROGS="
 	exit 1;
 }
 
-for prog in ${PROGS}
+echo "${PROGS}" > "${TMPFILE}"
+
+while read prog
 do
+	[ -z "${prog}" ] && continue
+
 	script="`echo ${prog} | cut -d/ -f1`"
 	datafile="`echo ${prog} | cut -d/ -f2`"
 	redinfile="`echo ${prog} | cut -d/ -f3`"
 	awkopts="`echo ${prog} | cut -d/ -f4`"
+
+	[ -z "${script}" ] && continue
+	[ -f "${script}" ] || 
+	{
+		echo_so "${script} not found"
+		continue
+	}
 
 	if [ -n "${redinfile}" ]
 	then
@@ -111,6 +133,9 @@ do
 		echo_so "${QSEAWK} ${awkopts} -f ${script} ${datafile}"
 		${QSEAWK} ${awkopts} -f ${script} ${datafile} 
 	fi
-done
+
+done < "${TMPFILE}"
+
+rm -f "${TMPFILE}"
 
 exit 0
