@@ -1,2 +1,0 @@
-global a;
-function a () { }
