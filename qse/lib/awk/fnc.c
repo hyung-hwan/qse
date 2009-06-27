@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 211 2009-06-24 09:50:10Z hyunghwan.chung $
+ * $Id: fnc.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -282,7 +282,7 @@ static int fnc_close (
 
 	n = qse_awk_rtx_closeio (run, name);
 	/*
-	if (n == -1 && run->errinf.num != QSE_AWK_EIONONE)
+	if (n == -1 && run->errinf.num != QSE_AWK_EIONMNF)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) 
 			QSE_AWK_FREE (run->awk, name);
@@ -316,13 +316,13 @@ static int flush_io (
 		{
 			/*
 			if (run->errinf.num == QSE_AWK_EIOIMPL) n = -1;
-			else if (run->errinf.num == QSE_AWK_EIONONE) 
+			else if (run->errinf.num == QSE_AWK_EIONMNF) 
 			{
 				if (n != 0) n = -2;
 			}
 			else n = -99; 
 			*/	
-			if (run->errinf.num == QSE_AWK_EIONONE) 
+			if (run->errinf.num == QSE_AWK_EIONMNF) 
 			{
 				if (n != 0) n = -2;
 			}

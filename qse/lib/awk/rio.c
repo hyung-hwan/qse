@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: rio.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -634,7 +634,7 @@ int qse_awk_rtx_flushio (
 	if (ok) return 0;
 
 	/* there is no corresponding rio for name */
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
 	return -1;
 }
 
@@ -844,7 +844,7 @@ int qse_awk_rtx_closio_read (
 	}
 
 	/* the name given is not found */
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
 	return -1;
 }
 
@@ -903,7 +903,7 @@ int qse_awk_rtx_closio_write (
 		p = p->next;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
 	return -1;
 }
 
@@ -945,7 +945,7 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 		p = p->next;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONONE);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
 	return -1;
 }
 

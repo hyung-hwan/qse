@@ -16,5 +16,3 @@ END {
 	for (word in freq)
 		print word, freq[word];
 }
-     
-

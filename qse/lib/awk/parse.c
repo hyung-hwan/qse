@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: parse.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -3039,11 +3039,15 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		{
 			qse_awk_nde_t* tmp;
 
-			if (get_token(awk) <= -1) 
+			do
 			{
-				qse_awk_clrpt (awk, nde);
-				return QSE_NULL;
-			}	
+				if (get_token(awk) <= -1) 
+				{
+					qse_awk_clrpt (awk, nde);
+					return QSE_NULL;
+				}	
+			}
+			while (MATCH(awk,TOKEN_NEWLINE));
 
 			tmp = parse_expression (awk, awk->token.line);
 			if (tmp == QSE_NULL) 
@@ -4635,7 +4639,8 @@ static int get_token (qse_awk_t* awk)
 	}	
 	else if (c == QSE_T('\n')) 
 	{
-		ADD_TOKEN_CHAR (awk, QSE_T('\n'));
+		/*ADD_TOKEN_CHAR (awk, QSE_T('\n'));*/
+		ADD_TOKEN_STR (awk, QSE_T("<NL>"), 4);
 		SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
 		GET_CHAR (awk);
 	}
