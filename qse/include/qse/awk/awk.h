@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: awk.h 214 2009-06-27 02:50:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -609,6 +609,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EDUPLCL,        /* duplicate local variable name */
 	QSE_AWK_EBADPAR,        /* not a valid parameter name */
 	QSE_AWK_EBADVAR,        /* not a valid variable name */
+	QSE_AWK_EVARMS,         /* variable name missing */
 	QSE_AWK_EUNDEF,         /* undefined identifier */
 	QSE_AWK_ELVALUE,        /* l-value required */
 	QSE_AWK_EGBLTM,         /* too many global variables */

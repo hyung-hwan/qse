@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: err.c 214 2009-06-27 02:50:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -99,6 +99,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("duplicate local variable '${0}'"),
 		QSE_T("'${0}' not a valid parameter name"),
 		QSE_T("'${0}' not a valid variable name"),
+		QSE_T("variable name missing"),
 		QSE_T("undefined identifier '${0}'"),
 		QSE_T("l-value required"),
 		QSE_T("too many global variables"),

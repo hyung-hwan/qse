@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: parse.c 214 2009-06-27 02:50:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -387,10 +387,14 @@ static global_t gtab[] =
 		qse_awk_seterror ((awk), (code), (line), &errarg); \
 	} while (0)
 
+#define MATCH_TERMINATOR_NORMAL(awk) \
+	(MATCH((awk),TOKEN_SEMICOLON) || MATCH((awk),TOKEN_NEWLINE))
+
+#define MATCH_TERMINATOR_RBRACE(awk) \
+	((awk->option & QSE_AWK_NEWLINE) && MATCH((awk),TOKEN_RBRACE))
+
 #define MATCH_TERMINATOR(awk) \
-	(MATCH((awk),TOKEN_SEMICOLON) || \
-	 MATCH((awk),TOKEN_NEWLINE) || \
-	 ((awk->option & QSE_AWK_NEWLINE) && MATCH((awk),TOKEN_RBRACE)))
+	(MATCH_TERMINATOR_NORMAL(awk) || MATCH_TERMINATOR_RBRACE(awk))
 
 qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, int type)
 {
@@ -592,7 +596,7 @@ exit_parse:
 static qse_awk_t* parse_progunit (qse_awk_t* awk)
 {
 	/*
-	gbl xxx, xxxx;
+	global xxx, xxxx;
 	BEGIN { action }
 	END { action }
 	pattern { action }
@@ -1204,6 +1208,12 @@ static qse_awk_nde_t* parse_block (
 	{
 		while (1) 
 		{
+			/* skip new lines before local declaration in a block*/
+			while (MATCH(awk,TOKEN_NEWLINE))
+			{
+				if (get_token(awk) <= -1) return QSE_NULL;
+			}
+
 			if (!MATCH(awk,TOKEN_LOCAL)) break;
 
 			if (get_token(awk) <= -1) 
@@ -1624,6 +1634,14 @@ int qse_awk_delgbl (
 
 static qse_awk_t* collect_globals (qse_awk_t* awk)
 {
+	if (MATCH(awk,TOKEN_NEWLINE))
+	{
+		/* special check if the first name is on the 
+		 * same line when QSE_AWK_NEWLINE is on */
+		SETERR (awk, QSE_AWK_EVARMS);
+		return QSE_NULL;
+	}
+
 	while (1) 
 	{
 		if (!MATCH(awk,TOKEN_IDENT)) 
@@ -1640,7 +1658,19 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 
 		if (get_token(awk) <= -1) return QSE_NULL;
 
-		if (MATCH_TERMINATOR(awk)) break;
+		if (MATCH_TERMINATOR_NORMAL(awk)) 
+		{
+			/* skip a terminator (;, <NL>) */
+			if (get_token(awk) <= -1) return QSE_NULL;
+			break;
+		}
+
+		/*
+		 * unlike collect_locals(), the right brace cannot
+		 * terminate a global declaration as it can never be
+		 * placed within a block. 
+		 * so do not perform MATCH_TERMINATOR_RBRACE(awk))
+		 */
 
 		if (!MATCH(awk,TOKEN_COMMA)) 
 		{
@@ -1648,11 +1678,13 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 			return QSE_NULL;
 		}
 
-		if (get_token(awk) <= -1) return QSE_NULL;
+		do
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+		} 
+		while (MATCH(awk,TOKEN_NEWLINE));
 	}
 
-	/* skip a semicolon */
-	if (get_token(awk) <= -1) return QSE_NULL;
 
 	return awk;
 }
@@ -1660,11 +1692,19 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 static qse_awk_t* collect_locals (
 	qse_awk_t* awk, qse_size_t nlcls, qse_bool_t istop)
 {
-	qse_xstr_t lcl;
-	qse_size_t n;
+	if (MATCH(awk,TOKEN_NEWLINE))
+	{
+		/* special check if the first name is on the 
+		 * same line when QSE_AWK_NEWLINE is on */
+		SETERR (awk, QSE_AWK_EVARMS);
+		return QSE_NULL;
+	}
 
 	while (1) 
 	{
+		qse_xstr_t lcl;
+		qse_size_t n;
+
 		if (!MATCH(awk,TOKEN_IDENT)) 
 		{
 			SETERRTOK (awk, QSE_AWK_EBADVAR);
@@ -1741,7 +1781,18 @@ static qse_awk_t* collect_locals (
 
 		if (get_token(awk) <= -1) return QSE_NULL;
 
-		if (MATCH_TERMINATOR(awk)) break;
+		if (MATCH_TERMINATOR_NORMAL(awk)) 
+		{
+			/* skip the terminator (;, <NL>) */
+			if (get_token(awk) <= -1) return QSE_NULL;
+			break;
+		}
+
+		if (MATCH_TERMINATOR_RBRACE(awk))
+		{
+			/* should not skip } */
+			break;
+		}
 
 		if (!MATCH(awk,TOKEN_COMMA))
 		{
@@ -1749,11 +1800,12 @@ static qse_awk_t* collect_locals (
 			return QSE_NULL;
 		}
 
-		if (get_token(awk) <= -1) return QSE_NULL;
+		do
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+		}
+		while (MATCH(awk,TOKEN_NEWLINE));
 	}
-
-	/* skip a semicolon */
-	if (get_token(awk) <= -1) return QSE_NULL;
 
 	return awk;
 }
@@ -1924,17 +1976,19 @@ static qse_awk_nde_t* parse_statement_nb (qse_awk_t* awk, qse_size_t line)
 
 	if (nde == QSE_NULL) return QSE_NULL;
 
-	/* check if a statement ends with a semicolon */
-	if (MATCH_TERMINATOR(awk)) 
+	if (MATCH_TERMINATOR_NORMAL(awk))
 	{
-		/* eat up the semicolon or a new line and read in the next token
-		 * when QSE_AWK_NEWLINE is set, a statement may end with }.
-		 * it should not be eaten up here. */
-		if (!MATCH(awk,TOKEN_RBRACE) && get_token(awk) <= -1) 
+		/* check if a statement ends with a semicolon or <NL> */
+		if (get_token(awk) <= -1)
 		{
 			if (nde != QSE_NULL) qse_awk_clrpt (awk, nde);
 			return QSE_NULL;
 		}
+	}
+	else if (MATCH_TERMINATOR_RBRACE(awk))
+	{
+		/* do not skip the right brace as a statement terminator. 
+		 * is there anything to do here? */
 	}
 	else
 	{
@@ -4240,7 +4294,7 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, qse_size_t line)
 	nde->line = line;
 	nde->next = QSE_NULL;
 
-	if (MATCH_TERMINATOR(awk)) 
+	if (MATCH_TERMINATOR(awk))
 	{
 		/* no return value */
 		val = QSE_NULL;
@@ -5992,4 +6046,3 @@ int qse_awk_putsrcstrx (
 
 	return 0;
 }
-
