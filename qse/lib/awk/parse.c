@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 215 2009-06-27 05:52:54Z hyunghwan.chung $
+ * $Id: parse.c 216 2009-06-27 12:42:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -845,11 +845,21 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 		return QSE_NULL;
 	}
 
-	if (qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL) 
+	/* check if it has already been defined as a function */
+	if (qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL)
 	{
 		/* the function is defined previously */
 		SETERRARG (
 			awk, QSE_AWK_EFUNRED, awk->token.line, 
+			name, name_len);
+		return QSE_NULL;
+	}
+
+	/* check if it conflicts with a named variable */
+	if (qse_map_search (awk->parse.named, name, name_len) != QSE_NULL)
+	{
+		SETERRARG (
+			awk, QSE_AWK_EVARRED, awk->token.line, 
 			name, name_len);
 		return QSE_NULL;
 	}

@@ -1,6 +1,6 @@
-function f(f)
+function f(x)
 {
-	print f;
+	print x;
 	f("my hello");
 }
 
