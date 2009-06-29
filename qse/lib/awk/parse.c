@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 216 2009-06-27 12:42:53Z hyunghwan.chung $
+ * $Id: parse.c 217 2009-06-28 13:41:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -947,8 +947,9 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 			/* check if a parameter conflicts with the function 
 			 * name or other parameters */
-			if (qse_strxncmp (
-				param, param_len, name_dup, name_len) == 0 ||
+			if (((awk->option & QSE_AWK_STRICTNAMING) &&
+			     qse_strxncmp (
+				param, param_len, name_dup, name_len) == 0) ||
 			    qse_lda_search (awk->parse.params, 
 				0, param, param_len) != QSE_LDA_NIL)
 			{
@@ -1732,7 +1733,7 @@ static qse_awk_t* collect_locals (
 		lcl.len = QSE_STR_LEN(awk->token.name);
 
 		/* check if it conflict with a builtin function name 
-		 * function f() { lcl length; } */
+		 * function f() { local length; } */
 		if (qse_awk_getfnc (awk, lcl.ptr, lcl.len) != QSE_NULL)
 		{
 			SETERRARG (
@@ -1743,14 +1744,36 @@ static qse_awk_t* collect_locals (
 
 		if (istop)
 		{
-			/* check if it conflicts with a paremeter name */
-			n = qse_lda_search (awk->parse.params, 0, lcl.ptr, lcl.len);
+			/* check if it conflicts with a parameter name.
+			 * the first level declaration is treated as the same
+			 * scope as the parameter list */
+			n = qse_lda_search (
+				awk->parse.params, 0, lcl.ptr, lcl.len);
 			if (n != QSE_LDA_NIL)
 			{
 				SETERRARG (
 					awk, QSE_AWK_EPARRED, awk->token.line,
 					lcl.ptr, lcl.len);
 				return QSE_NULL;
+			}
+		}
+
+		if (awk->option & QSE_AWK_STRICTNAMING)
+		{
+			/* check if it conflicts with the owning function */
+			if (awk->tree.cur_fun.ptr != QSE_NULL)
+			{
+				if (qse_strxncmp (
+					lcl.ptr, lcl.len,
+					awk->tree.cur_fun.ptr,
+					awk->tree.cur_fun.len) == 0)
+				{
+					SETERRARG (
+						awk, QSE_AWK_EFUNRED,
+						awk->token.line,
+						lcl.ptr, lcl.len);
+					return QSE_NULL;
+				}
 			}
 		}
 
@@ -1771,9 +1794,10 @@ static qse_awk_t* collect_locals (
 		n = find_global (awk, lcl.ptr, lcl.len);
 		if (n != QSE_LDA_NIL)
 		{
- 			if (n < awk->tree.ngbls_base)
+			if (n < awk->tree.ngbls_base)
 			{
-				/* conflicting with a static global variable */
+				/* it is a conflict only if it is one of a 
+				 * static global variable */
 				SETERRARG (
 					awk, QSE_AWK_EDUPLCL, awk->token.line, 
 					lcl.ptr, lcl.len);
