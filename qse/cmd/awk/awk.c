@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: awk.c 217 2009-06-28 13:41:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -345,6 +345,7 @@ struct opttab_t
 	{ QSE_T("pablock"),     QSE_AWK_PABLOCK,        QSE_T("enable pattern-action loop") },
 	{ QSE_T("rexbound"),    QSE_AWK_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
 	{ QSE_T("ncmponstr"),   QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
+	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,  QSE_T("enable the strict naming rule") },
 	{ QSE_NULL,             0 }
 };
 
@@ -390,6 +391,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":pablock"),         QSE_T('\0') },
 		{ QSE_T(":rexbound"),        QSE_T('\0') },
 		{ QSE_T(":ncmponstr"),       QSE_T('\0') },
+		{ QSE_T(":strictnaming"),    QSE_T('\0') },
 
 		{ QSE_T(":call"),            QSE_T('c') },
 		{ QSE_T(":file"),            QSE_T('f') },

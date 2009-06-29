@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 214 2009-06-27 02:50:54Z hyunghwan.chung $
+ * $Id: awk.h 217 2009-06-28 13:41:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -487,25 +487,25 @@ enum qse_awk_option_t
 	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPSPACES is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 */
-	QSE_AWK_STRIPSPACES = (1 << 11),
+	QSE_AWK_STRIPSPACES = (1 << 10),
 
 	/** enables @b nextofile */
-	QSE_AWK_NEXTOFILE   = (1 << 12),
+	QSE_AWK_NEXTOFILE   = (1 << 11),
 
 	/** enables @b reset */
-	QSE_AWK_RESET       = (1 << 13),
+	QSE_AWK_RESET       = (1 << 12),
 
 	/** CR + LF by default */
-	QSE_AWK_CRLF        = (1 << 14),
+	QSE_AWK_CRLF        = (1 << 13),
 
 	/** allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR    = (1 << 15),
+	QSE_AWK_MAPTOVAR    = (1 << 14),
 
 	/** allows @b BEGIN, @b END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 16),
+	QSE_AWK_PABLOCK     = (1 << 15),
 
 	/** allows {n,m} in a regular expression. */
-	QSE_AWK_REXBOUND    = (1 << 17),
+	QSE_AWK_REXBOUND    = (1 << 16),
 
 	/** 
 	 * performs numeric comparison when a string convertable
@@ -515,14 +515,22 @@ enum qse_awk_option_t
 	 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
 	 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 	 */
-	QSE_AWK_NCMPONSTR = (1 << 18),
+	QSE_AWK_NCMPONSTR = (1 << 17),
+
+	/**
+	 * strict naming rule
+	 * - a parameter can not be the same as the owning function name.
+	 * - a local variable can not be the same as the owning function name.
+	 */
+	QSE_AWK_STRICTNAMING = (1 << 18),
 
 	/** 
 	 * makes #qse_awk_t to behave as compatibly as classical AWK
 	 * implementations 
 	 */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
-	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK
+	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
+	                   QSE_AWK_STRICTNAMING
 };
 
 /**
