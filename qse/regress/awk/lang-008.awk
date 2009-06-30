@@ -1,4 +1,9 @@
+#
+# a local variable can shade a global variable
+#
+
 global x;
+
 BEGIN {
 	x = 1;
 	{
@@ -13,4 +18,4 @@ BEGIN {
 	}
 	print x;
 }
-  
+

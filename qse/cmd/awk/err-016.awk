@@ -1,5 +1,0 @@
-
-BEGIN
-{
-	print "hello world";
-}
