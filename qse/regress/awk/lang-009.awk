@@ -1,4 +1,6 @@
-function a (a) { print a; } 
+function a (a) { 
+	print a; 
+}
 
 BEGIN {
 	local a;

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 217 2009-06-28 13:41:47Z hyunghwan.chung $
+ * $Id: parse.c 218 2009-06-29 10:17:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -5079,7 +5079,6 @@ static int get_token (qse_awk_t* awk)
 	else 
 	{
 		int i;
-		qse_char_t cc;
 		static struct 
 		{
 			qse_char_t c;
@@ -5112,8 +5111,15 @@ static int get_token (qse_awk_t* awk)
 			}
 		}
 
-		cc = (qse_char_t)c;
-		SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, &cc, 1);
+		if (c == QSE_T('\0'))
+		{
+			SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, QSE_T("<NUL>"), 5);
+		}
+		else
+		{
+			qse_char_t cc = (qse_char_t)c;
+			SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, &cc, 1);
+		}
 		return -1;
 	}
 

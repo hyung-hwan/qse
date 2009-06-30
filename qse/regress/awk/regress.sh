@@ -2,14 +2,16 @@
 
 echo_so()
 {
-	tput smso
+	echo "--------------------------------------------------------------------------------"
+	#tput smso
 	while [ $# -gt 0 ]
 	do
 		echo -n "$1 "
 		shift
 	done		
 	echo
-	tput rmso
+	#tput rmso
+	echo "--------------------------------------------------------------------------------"
 }
 
 print_usage()
@@ -82,23 +84,51 @@ PROGS="
 	emp-026.awk/emp.dat//
 	emp-027.awk/emp.dat//
 
-	lang-001.awk///--implicit=off --explicit=on --newline=on -o-
-	lang-002.awk///--implicit=off --explicit=on --newline=on -o-
-	lang-003.awk///--implicit=off --explicit=on --newline=on -o-
-	lang-004.awk///--implicit=off --explicit=on --newline=on -o-
+	adr-001.awk/adr.dat//
+	adr-002.awk/adr.dat//
+
+	unr-001.awk/unr.dat//
+
+	lang-001.awk///--strictnaming=off --newline=on -o-
+	lang-002.awk///--newline=on -o-
+	lang-003.awk///--newline=on -o-
+	lang-004.awk///--newline=on -o-
 	lang-005.awk///--implicit=off --explicit=on --newline=on -o-
 	lang-006.awk///--implicit=off --explicit=on --newline=on -o-
-	lang-007.awk///--implicit=off --explicit=on --newline=on -o-
+	lang-007.awk///--implicit=on --explicit=on --newline=on -o-
 	lang-008.awk///--implicit=off --explicit=on --newline=on -o-
-	lang-009.awk/lang-009.awk//--implicit=off --explicit=on --newline=on -o-
+	lang-009.awk/lang-009.awk//--implicit=off --explicit=on --newline=on --strictnaming=off -o-
+	lang-010.awk/this is just a test//--newline=on -o-
+	lang-011.awk///--newline=on -o-
+	lang-012.awk///--newline=on -o-
+	lang-013.awk///--newline=on -o-
+	lang-014.awk///--newline=on -o-
+	lang-015.awk///--newline=on -o-
+	lang-016.awk///--newline=on -o-
+	lang-017.awk///--newline=on -o-
+	lang-017.awk///--call main --newline=on -o-
+	lang-018.awk///--explicit=on --newline=on -o-
+	lang-019.awk///--explicit=on --newline=on -o-
+	lang-020.awk///--explicit=on --newline=on -o-
+	lang-021.awk///--explicit=on --newline=on -o-
+	lang-022.awk///--newline=on -o-
+	lang-023.awk///--explicit=on --newline=on -o-
+	lang-024.awk///--explicit=on --newline=on -o-
+	lang-025.awk///--newline=on -o-
+	lang-026.awk///--newline=on -o-
+	lang-027.awk///--newline=on -o-
+	lang-028.awk///--newline=on -o-
+	lang-029.awk///--explicit=on --newline=on -o-
+	lang-030.awk///--newline=on -o-
+	lang-031.awk///--newline=on -o-
 
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//
 	asm.awk/asm.s/asm.dat/
 	stripcomment.awk/stripcomment.dat//
 	wordfreq.awk/wordfreq.awk//
-	hanoi.awk//
-	indent.awk/regress.sh/
+	hanoi.awk///
+	indent.awk/indent.dat//
 "
 
 [ -x "${QSEAWK}" ] || 
@@ -125,14 +155,10 @@ do
 		continue
 	}
 
-	if [ -n "${redinfile}" ]
-	then
-		echo_so "${QSEAWK} ${awkopts} -f ${script} ${datafile} < ${redinfile}"
-		${QSEAWK} ${awkopts} -f ${script} ${datafile} < ${redinfile}
-	else
-		echo_so "${QSEAWK} ${awkopts} -f ${script} ${datafile}"
-		${QSEAWK} ${awkopts} -f ${script} ${datafile} 
-	fi
+	[ -z "${redinfile}" ] && redinfile="/dev/stdin"
+
+	echo_so "${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1"
+	${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
 
 done < "${TMPFILE}"
 
