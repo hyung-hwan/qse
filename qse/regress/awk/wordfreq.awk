@@ -10,7 +10,6 @@
 
 	for (i = 1; i <= NF; i++) freq[$i]++;
 }
-#/[^kkka-bcx-dd-y]|abc|def/
   
 END {
 	for (word in freq)

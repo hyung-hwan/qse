@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: misc.c 219 2009-06-30 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -57,7 +57,6 @@ qse_long_t qse_awk_strxtolong (
 	/*while (QSE_AWK_ISSPACE(awk,*p)) p++;*/
 
 	/* check for a sign */
-	/*while (*p != QSE_T('\0')) */
 	while (p < end)
 	{
 		if (*p == QSE_T('-')) 
@@ -102,7 +101,6 @@ qse_long_t qse_awk_strxtolong (
 	}
 
 	/* process the digits */
-	/*while (*p != QSE_T('\0'))*/
 	while (p < end)
 	{
 		if (*p >= QSE_T('0') && *p <= QSE_T('9'))
