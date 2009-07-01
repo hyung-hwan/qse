@@ -35,7 +35,6 @@ function qsort(A, left, right,   i, last) {
 	last = left
 	for (i = left+1; i <= right; i++)
 	{
-#		print A[i] "/" A[left] "....." (A[i] < A[left])
 		if (A[i] < A[left])
 		{
 			swap(A, ++last, i)

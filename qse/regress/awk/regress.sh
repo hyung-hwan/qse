@@ -2,22 +2,34 @@
 
 echo_so()
 {
-	echo "--------------------------------------------------------------------------------"
-	#tput smso
+	tput smso
 	while [ $# -gt 0 ]
 	do
 		echo -n "$1 "
 		shift
 	done		
 	echo
-	#tput rmso
+	tput rmso
+}
+
+echo_title()
+{
+	echo "--------------------------------------------------------------------------------"
+	while [ $# -gt 0 ]
+	do
+		echo -n "$1 "
+		echo -n "$1 " >/dev/stderr
+		shift
+	done		
+	echo
+	echo > /dev/stderr
 	echo "--------------------------------------------------------------------------------"
 }
 
 print_usage()
 {
-	echo "Usage: $0 init"
-	echo "       $0 test"
+	echo_so "Usage: $0 init"
+	echo_so "       $0 test"
 }
 
 ###################
@@ -26,6 +38,7 @@ print_usage()
 
 QSEAWK=${QSEAWK:=../../cmd/awk/qseawk}
 TMPFILE="${TMPFILE:=./regress.temp}"
+OUTFILE="${OUTFILE:=./regress.out}"
 
 PROGS="
 	cou-001.awk/cou.dat//
@@ -137,31 +150,54 @@ PROGS="
 	exit 1;
 }
 
-echo "${PROGS}" > "${TMPFILE}"
+run_scripts() 
+{
+	echo "${PROGS}" > "${TMPFILE}"
+	
+	while read prog
+	do
+		[ -z "${prog}" ] && continue
+	
+		script="`echo ${prog} | cut -d/ -f1`"
+		datafile="`echo ${prog} | cut -d/ -f2`"
+		redinfile="`echo ${prog} | cut -d/ -f3`"
+		awkopts="`echo ${prog} | cut -d/ -f4`"
+	
+		[ -z "${script}" ] && continue
+		[ -f "${script}" ] || 
+		{
+			echo_so "${script} not found"
+			continue
+		}
+	
+		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
+	
+		echo_title "${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1"
+		${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
+	
+	done < "${TMPFILE}" 
+	
+	rm -f "${TMPFILE}"
+}
 
-while read prog
-do
-	[ -z "${prog}" ] && continue
-
-	script="`echo ${prog} | cut -d/ -f1`"
-	datafile="`echo ${prog} | cut -d/ -f2`"
-	redinfile="`echo ${prog} | cut -d/ -f3`"
-	awkopts="`echo ${prog} | cut -d/ -f4`"
-
-	[ -z "${script}" ] && continue
-	[ -f "${script}" ] || 
-	{
-		echo_so "${script} not found"
-		continue
+case $1 in
+init)
+	run_scripts > "${OUTFILE}"
+	;;
+test)
+	run_scripts > "${OUTFILE}.temp"
+	diff -q "${OUTFILE}" "${OUTFILE}.temp" || {
+		echo_so "ERROR: ${OUTFILE} differs from ${OUTFILE}.temp."
+		echo_so "       Check the scripts and output files for any errors."
+		exit 1
 	}
-
-	[ -z "${redinfile}" ] && redinfile="/dev/stdin"
-
-	echo_so "${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1"
-	${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
-
-done < "${TMPFILE}"
-
-rm -f "${TMPFILE}"
-
+	rm -f "${OUTFILE}.temp"
+	;;
+*)
+	echo_so "USAGE: $0 init"
+	echo_so "       $0 test"
+	exit 1
+	;;
+esac
+	
 exit 0
