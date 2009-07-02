@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: run.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1322,7 +1322,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (rtx->rcb.on_loop_enter != QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		ret = rtx->rcb.on_loop_enter (rtx, rtx->rcb.data);
+		ret = rtx->rcb.on_loop_enter (rtx, rtx->rcb.udd);
 		if (ret <= -1) 
 		{
 			if (rtx->errinf.num == QSE_AWK_ENOMEM)
@@ -1426,7 +1426,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 		/* we call the on_exit handler regardless of ret. 
 		 * the return value passed is the global return value
 		 * in the stack. */
-		rtx->rcb.on_loop_exit (rtx, v, rtx->rcb.data);
+		rtx->rcb.on_loop_exit (rtx, v, rtx->rcb.udd);
 	}
 
 	/* end the life of the global return value */
@@ -1498,7 +1498,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 		errarg.ptr = call.what.fun.name.ptr;
 		errarg.len = call.what.fun.name.len;
 
-		qse_awk_rtx_seterror (rtx, QSE_AWK_EFUNNONE, 0, &errarg);
+		qse_awk_rtx_seterror (rtx, QSE_AWK_EFUNNF, 0, &errarg);
 		return QSE_NULL;
 	}
 
@@ -1541,17 +1541,6 @@ qse_awk_val_t* qse_awk_rtx_call (
 		 * returned. */
 		qse_awk_rtx_refupval (rtx, v);
 	}
-
-#if 0
-	if (rtx->rcb.on_loop_exit != QSE_NULL)
-	{
-		rtx->rcb.on_loop_exit (
-			rtx, 
-			((v == QSE_NULL)? qse_awk_val_nil: v),
-			rtx->rcb.data
-		);
-	}
-#endif
 
 	/* return the return value with its reference count at least 1.
 	 * the caller of this function should count down its reference. */
@@ -1844,7 +1833,7 @@ static int run_block0 (qse_awk_rtx_t* run, qse_awk_nde_blk_t* nde)
 	if ((rtx)->rcb.on_statement != QSE_NULL) \
 	{ \
 		(rtx)->rcb.on_statement ( \
-			rtx, (nde)->line, (rtx)->rcb.data); \
+			rtx, (nde)->line, (rtx)->rcb.udd); \
 	} 
 
 static int run_statement (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
@@ -5520,7 +5509,7 @@ static qse_awk_val_t* eval_fun_ex (
 		errarg.len = call->what.fun.name.len,
 
 		qse_awk_rtx_seterror (run, 
-			QSE_AWK_EFUNNONE, nde->line, &errarg);
+			QSE_AWK_EFUNNF, nde->line, &errarg);
 		return QSE_NULL;
 	}
 

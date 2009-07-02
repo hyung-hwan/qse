@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 219 2009-06-30 13:14:39Z hyunghwan.chung $
+ * $Id: misc.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -21,6 +21,11 @@
 void* qse_awk_alloc (qse_awk_t* awk, qse_size_t size)
 {
 	return QSE_AWK_ALLOC (awk, size);
+}
+
+void* qse_awk_realloc (qse_awk_t* awk, void* ptr, qse_size_t size)
+{
+	return QSE_AWK_REALLOC (awk, ptr, size);
 }
 
 void qse_awk_free (qse_awk_t* awk, void* ptr)

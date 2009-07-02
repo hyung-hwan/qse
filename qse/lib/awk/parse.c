@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 218 2009-06-29 10:17:39Z hyunghwan.chung $
+ * $Id: parse.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -553,7 +553,7 @@ static int parse (qse_awk_t* awk)
 					QSE_MAP_KPTR(p), QSE_MAP_KLEN(p)) == QSE_NULL)
 				{
 					/* TODO: set better error no & line */
-					SETERRARG (awk, QSE_AWK_EFUNNONE, 
+					SETERRARG (awk, QSE_AWK_EFUNNF, 
 						*(qse_size_t*)QSE_MAP_VPTR(p),
 						QSE_MAP_KPTR(p),
 						QSE_MAP_KLEN(p));

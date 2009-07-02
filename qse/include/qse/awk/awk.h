@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 217 2009-06-28 13:41:47Z hyunghwan.chung $
+ * $Id: awk.h 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -25,7 +25,7 @@
 #include <qse/cmn/str.h>
 
 /** @file
- * An embeddable AWK interpreter is defined in this header files.
+ * An embeddable AWK interpreter is defined in this header file.
  *
  * @example awk.c
  * This program demonstrates how to build a complete awk interpreter.
@@ -51,10 +51,13 @@
  * @code
  * qse_awk_t* awk;
  * qse_awk_rtx_t* rtx;
+ * qse_awk_sio_t sio; // need to initialize it with callback functions
+ * qse_awk_rio_t rio; // need to initialize it with callback functions
+ * qse_cstr_t args[5]; // need to initialize it with strings
  *
  * awk = qse_awk_open (mmgr, 0, prm); // create an interpreter 
- * qse_awk_parse (awk, sio);          // parse a script 
- * rtx = qse_awk_rtx_open (awk, 0, rio, args); // create a runtime context 
+ * qse_awk_parse (awk, &sio);          // parse a script 
+ * rtx = qse_awk_rtx_open (awk, 0, &rio, args); // create a runtime context 
  * qse_awk_rtx_loop (rtx);            // run a standard AWK loop 
  * qse_awk_rtx_close (rtx);           // destroy the runtime context
  * qse_awk_close (awk);               // destroy the interpreter
@@ -78,14 +81,30 @@ typedef struct qse_awk_t qse_awk_t;
  * qse_awk_rtx_open().
  *
  * I/O handlers are categoriezed into three kinds: console, file, pipe.
- * The #qse_awk_rio_t type defines a set of I/O handlers as a callback.
+ * The #qse_awk_rio_t type defines as a callback a set of I/O handlers 
+ * to handle runtime I/O:
+ * - getline piped in from a command reads from a pipe.
+ *   ("ls -l" | getline line)
+ * - print and printf piped out to a command writes to a pipe.
+ *   (print 2 | "sort")
+ * - getline redirected in reads from a file.
+ *   (getline line < "file")
+ * - print and printf redirected out writes to a file.
+ *   (print num > "file")
+ * - The pattern-action loop and getline with no redirected input
+ *   reads from a console. (/susie/ { ... })
+ * - print and printf writes to a console. (print "hello, world")
  *
  * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 
 /**
- * The QSE_AWK_VAL_HDR defines the common header of a value type.
+ * The QSE_AWK_VAL_HDR defines the common header for a value.
+ * Three common fields are:
+ * - type - type of a value from #qse_awk_val_type_t
+ * - ref - reference count
+ * - nstr - numeric string marker
  */
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
@@ -98,8 +117,6 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t;
 		unsigned int ref: 27; \
 		unsigned int nstr: 2
 #endif
-
-#define QSE_AWK_VAL_TYPE(x) ((x)->type)
 
 /**
  * The qse_awk_val_t type is an abstract value type. A value commonly contains:
@@ -196,7 +213,21 @@ struct qse_awk_val_ref_t
 {
 	QSE_AWK_VAL_HDR;
 
-	int id;
+	enum
+	{
+		/* keep these items in the same order as corresponding items
+		 * in tree.h */
+		QSE_AWK_VAL_REF_NAMED,    /**< plain named variable */
+		QSE_AWK_VAL_REF_GBL,      /**< plain global variable */
+		QSE_AWK_VAL_REF_LCL,      /**< plain local variable */
+		QSE_AWK_VAL_REF_ARG,      /**< plain function argument */
+		QSE_AWK_VAL_REF_NAMEDIDX, /**< member of named map variable */
+		QSE_AWK_VAL_REF_GBLIDX,   /**< member of global map variable */
+		QSE_AWK_VAL_REF_LCLIDX,   /**< member of local map variable */
+		QSE_AWK_VAL_REF_ARGIDX,   /**< member of map argument */
+		QSE_AWK_VAL_REF_POS       /**< positional variable */
+	} id;
+
 	/* if id is QSE_AWK_VAL_REF_POS, adr holds an index of the 
 	 * positional variable. Otherwise, adr points to the value 
 	 * directly. */
@@ -250,36 +281,46 @@ typedef qse_ssize_t (*qse_awk_sio_fun_t) (
 );
 
 /**
- * The qse_awk_rio_cmd_t type defines runtime IO commands.
+ * The qse_awk_rio_cmd_t type defines runtime I/O request types.
  */
 enum qse_awk_rio_cmd_t
 {
-	QSE_AWK_RIO_OPEN   = 0,
-	QSE_AWK_RIO_CLOSE  = 1,
-	QSE_AWK_RIO_READ   = 2,
-	QSE_AWK_RIO_WRITE  = 3,
-	QSE_AWK_RIO_FLUSH  = 4,
-	QSE_AWK_RIO_NEXT   = 5  
+	QSE_AWK_RIO_OPEN   = 0, /**< open a stream */
+	QSE_AWK_RIO_CLOSE  = 1, /**< close a stream */
+	QSE_AWK_RIO_READ   = 2, /**< read a stream */
+	QSE_AWK_RIO_WRITE  = 3, /**< write a stream */
+	QSE_AWK_RIO_FLUSH  = 4, /**< write buffered data to a stream */
+	QSE_AWK_RIO_NEXT   = 5  /**< close the current stream and 
+	                             open the next stream. only for console */
 };
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
+/**
+ * The qse_awk_rio_mode_t type defines the I/O modes used by I/O handlers.
+ * Each I/O handler should inspect the requested mode and open an I/O
+ * stream accordingly for subsequent operations.
+ */
 enum qse_awk_rio_mode_t
 {
-	QSE_AWK_RIO_PIPE_READ      = 0,
-	QSE_AWK_RIO_PIPE_WRITE     = 1,
-	QSE_AWK_RIO_PIPE_RW        = 2,
+	QSE_AWK_RIO_PIPE_READ      = 0, /**< open a pipe for read */
+	QSE_AWK_RIO_PIPE_WRITE     = 1, /**< open a pipe for write */
+	QSE_AWK_RIO_PIPE_RW        = 2, /**< open a pipe for read and write */
 
-	QSE_AWK_RIO_FILE_READ      = 0,
-	QSE_AWK_RIO_FILE_WRITE     = 1,
-	QSE_AWK_RIO_FILE_APPEND    = 2,
+	QSE_AWK_RIO_FILE_READ      = 0, /**< open a file for read */
+	QSE_AWK_RIO_FILE_WRITE     = 1, /**< open a file for write */
+	QSE_AWK_RIO_FILE_APPEND    = 2, /**< open a file for append */
 
-	QSE_AWK_RIO_CONSOLE_READ   = 0,
-	QSE_AWK_RIO_CONSOLE_WRITE  = 1
+	QSE_AWK_RIO_CONSOLE_READ   = 0, /**< open a console for read */
+	QSE_AWK_RIO_CONSOLE_WRITE  = 1  /**< open a console for write */
 };
 typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
 
 /**
- * The qse_awk_rio_arg_t defines the data passed to a rio function 
+ * The qse_awk_rio_arg_t defines the data structure passed to a runtime 
+ * I/O handler. An I/O handler should inspect the @a mode field and the 
+ * @a name field and store an open handle to the @handle field when 
+ * #QSE_AWK_RIO_OPEN is requested. For other request type, it can refer
+ * to the handle field set previously.
  */
 struct qse_awk_rio_arg_t 
 {
@@ -288,7 +329,6 @@ struct qse_awk_rio_arg_t
 	void* handle;             /**< [OUT] I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
-
 	int type; 
 
 	struct
@@ -411,30 +451,47 @@ typedef struct qse_awk_sio_t qse_awk_sio_t;
 
 /**
  * The qse_awk_rio_t type defines a runtime I/O handler set.
+ * @sa qse_awk_rtx_t
  */
 struct qse_awk_rio_t
 {
-	qse_awk_rio_fun_t pipe;
-	qse_awk_rio_fun_t file;
-	qse_awk_rio_fun_t console;
+	qse_awk_rio_fun_t pipe;    /**< pipe handler */
+	qse_awk_rio_fun_t file;    /**< file handler */
+	qse_awk_rio_fun_t console; /**< console handler */
 };
 typedef struct qse_awk_rio_t qse_awk_rio_t;
 
 /**
- * The qse_awk_rcb_t type defines runtime callbacks
+ * The qse_awk_rcb_t type defines runtime callbacks. You may set callbacks
+ * with qse_awk_rtx_setrcb() to be informed of important events during runtime.
  */
 struct qse_awk_rcb_t
 {
+	/** 
+	 * called by qse_awk_rtx_loop() before entering pattern-action loop.
+	 * A @b BEGIN block is executed after this callback.
+	 */
 	int (*on_loop_enter) (
-		qse_awk_rtx_t* rtx, void* data);
+		qse_awk_rtx_t* rtx, void* udd);
 
+	/**
+	 * called by qse_awk_rtx_loop() when exiting pattern-action loop.
+	 * An @b END block is executed before this callback.
+	 */
 	void (*on_loop_exit) (
-		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data);
+		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* udd);
 
+	/**
+	 * called by qse_awk_rtx_loop() and qse_awk_rtx_call() for
+	 * each statement executed.
+	 */
 	void (*on_statement) (
-		qse_awk_rtx_t* rtx, qse_size_t line, void* data);
+		qse_awk_rtx_t* rtx, qse_size_t line, void* udd);
 
-	void* data;
+	/**
+	 * A caller may store a custom data pointer into this field.
+	 */
+	void* udd;
 };
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 
@@ -467,7 +524,7 @@ enum qse_awk_option_t
 	/** supports @b getline and @b print */
 	QSE_AWK_RIO         = (1 << 7), 
 
-	/** supports dual direction pipe if QSE_AWK_RIO is on */
+	/** supports dual direction pipe if #QSE_AWK_RIO is on */
 	QSE_AWK_RWPIPE      = (1 << 8),
 
 	/** a new line can terminate a statement */
@@ -518,7 +575,7 @@ enum qse_awk_option_t
 	QSE_AWK_NCMPONSTR = (1 << 17),
 
 	/**
-	 * strict naming rule
+	 * enables the strict naming rule.
 	 * - a parameter can not be the same as the owning function name.
 	 * - a local variable can not be the same as the owning function name.
 	 */
@@ -538,154 +595,145 @@ enum qse_awk_option_t
  */
 enum qse_awk_errnum_t
 {
-	QSE_AWK_ENOERR,         /* no error */
-	QSE_AWK_EUNKNOWN,       /* unknown error */
+	QSE_AWK_ENOERR,  /**< no error */
+	QSE_AWK_EUNKNOWN,/**< unknown error */
 
 	/* common errors */
-	QSE_AWK_EINVAL,         /* invalid parameter or data */
-	QSE_AWK_ENOMEM,         /* out of memory */
-	QSE_AWK_ENOSUP,         /* not supported */
-	QSE_AWK_ENOPER,         /* operation not allowed */
-	QSE_AWK_ENODEV,         /* no such device */
-	QSE_AWK_ENOSPC,         /* no space left on device */
-	QSE_AWK_EMFILE,         /* too many open files */
-	QSE_AWK_EMLINK,         /* too many links */
-	QSE_AWK_EAGAIN,         /* resource temporarily unavailable */
-	QSE_AWK_ENOENT,         /* '${1}' not existing */
-	QSE_AWK_EEXIST,         /* file or data exists */
-	QSE_AWK_EFTBIG,         /* file or data too big */
-	QSE_AWK_ETBUSY,         /* system too busy */
-	QSE_AWK_EISDIR,         /* is a directory */
-	QSE_AWK_RIOERR,         /* i/o error */
+	QSE_AWK_EINVAL,  /**< invalid parameter or data */
+	QSE_AWK_ENOMEM,  /**< insufficient memory */
+	QSE_AWK_ENOSUP,  /**< not supported */
+	QSE_AWK_ENOPER,  /**< operation not allowed */
+	QSE_AWK_ENOENT,  /**< '${0}' not found */
+	QSE_AWK_EEXIST,  /**< '${0}' already exists */
+	QSE_AWK_EIOERR,  /**< I/O error */
 
 	/* mostly parse errors */
-	QSE_AWK_EOPEN,          /* cannot open */
-	QSE_AWK_EREAD,          /* cannot read */
-	QSE_AWK_EWRITE,         /* cannot write */
-	QSE_AWK_ECLOSE,         /* cannot close */
+	QSE_AWK_EOPEN,   /**< cannot open '${0}' */
+	QSE_AWK_EREAD,   /**< cannot read '${0}' */
+	QSE_AWK_EWRITE,  /**< cannot write '${0}' */
+	QSE_AWK_ECLOSE,  /**< cannot close '${0}' */
 
-	QSE_AWK_EINTERN,        /* internal error */
-	QSE_AWK_ERUNTIME,       /* run-time error */
-	QSE_AWK_EBLKNST,        /* blocke nested too deeply */
-	QSE_AWK_EEXPRNST,       /* expression nested too deeply */
+	QSE_AWK_EINTERN, /**< internal error */
+	QSE_AWK_ERUNTIME,/**< general run-time error */
+	QSE_AWK_EBLKNST, /**< block nested too deeply */
+	QSE_AWK_EEXPRNST,/**< expression nested too deeply */
 
-	QSE_AWK_ESINOP,         /* failed to open source input */
-	QSE_AWK_ESINCL,         /* failed to close source output */
-	QSE_AWK_ESINRD,         /* failed to read source input */
+	QSE_AWK_ESINOP,  /**< failed to open source input */
+	QSE_AWK_ESINCL,  /**< failed to close source output */
+	QSE_AWK_ESINRD,  /**< failed to read source input */
 
-	QSE_AWK_ESOUTOP,        /* failed to open source output */
-	QSE_AWK_ESOUTCL,        /* failed to close source output */
-	QSE_AWK_ESOUTWR,        /* failed to write source output */
+	QSE_AWK_ESOUTOP, /**< failed to open source output */
+	QSE_AWK_ESOUTCL, /**< failed to close source output */
+	QSE_AWK_ESOUTWR, /**< failed to write source output */
 
-	QSE_AWK_ELXCHR,         /* lexer came accross an wrong character */
-	QSE_AWK_ELXDIG,         /* invalid digit */
-	QSE_AWK_ELXUNG,         /* lexer failed to unget a character */
+	QSE_AWK_ELXCHR,  /**< invalid character '${0}' */
+	QSE_AWK_ELXDIG,  /**< invalid digit '${0}' */
+	QSE_AWK_ELXUNG,  /**< failed to unget character */
 
-	QSE_AWK_EENDSRC,        /* unexpected end of source */
-	QSE_AWK_EENDCMT,        /* a comment not closed properly */
-	QSE_AWK_EENDSTR,        /* a string not closed with a quote */
-	QSE_AWK_EENDREX,        /* unexpected end of a regular expression */
-	QSE_AWK_ELBRACE,        /* left brace expected */
-	QSE_AWK_ELPAREN,        /* left parenthesis expected */
-	QSE_AWK_ERPAREN,        /* right parenthesis expected */
-	QSE_AWK_ERBRACK,        /* right bracket expected */
-	QSE_AWK_ECOMMA,         /* comma expected */
-	QSE_AWK_ESCOLON,        /* semicolon expected */
-	QSE_AWK_ECOLON,         /* colon expected */
-	QSE_AWK_ESTMEND,        /* statement not ending with a semicolon */
-	QSE_AWK_EIN,            /* keyword 'in' is expected */
-	QSE_AWK_ENOTVAR,        /* not a variable name after 'in' */
-	QSE_AWK_EEXPRES,        /* expression expected */
+	QSE_AWK_EENDSRC, /**< unexpected end of source */
+	QSE_AWK_EENDCMT, /**< comment not closed properly */
+	QSE_AWK_EENDSTR, /**< string or regular expression not closed */
+	QSE_AWK_EENDREX, /**< unexpected end of regular expression */
+	QSE_AWK_ELBRACE, /**< left brace expected in place of '${0}' */
+	QSE_AWK_ELPAREN, /**< left parenthesis expected in place of '${0}' */
+	QSE_AWK_ERPAREN, /**< right parenthesis expected in place of '${0}' */
+	QSE_AWK_ERBRACK, /**< right bracket expected in place of '${0}' */
+	QSE_AWK_ECOMMA,  /**< comma expected in place of '${0}' */
+	QSE_AWK_ESCOLON, /**< semicolon expected in place of '${0}' */
+	QSE_AWK_ECOLON,  /**< colon expected in place of '${0}' */
+	QSE_AWK_ESTMEND, /**< statement not ending with a semicolon */
+	QSE_AWK_EIN,     /**< 'in' expected in place of '${0}' */
+	QSE_AWK_ENOTVAR, /**< right-hand side of 'in' not a variable */
+	QSE_AWK_EEXPRES, /**< invalid expression */
 
-	QSE_AWK_EFUNCTION,      /* keyword 'function' is expected */
-	QSE_AWK_EWHILE,         /* keyword 'while' is expected */
-	QSE_AWK_EASSIGN,        /* assignment statement expected */
-	QSE_AWK_EIDENT,         /* identifier expected */
-	QSE_AWK_EFUNNAME,       /* not a valid function name */
-	QSE_AWK_EBLKBEG,        /* BEGIN requires an action block */
-	QSE_AWK_EBLKEND,        /* END requires an action block */
-	QSE_AWK_EDUPBEG,        /* duplicate BEGIN */
-	QSE_AWK_EDUPEND,        /* duplicate END */
-	QSE_AWK_EKWRED,         /* keyword redefined */
-	QSE_AWK_EFNCRED,        /* intrinsic function redefined */
-	QSE_AWK_EFUNRED,        /* function redefined */
-	QSE_AWK_EGBLRED,        /* global variable redefined */
-	QSE_AWK_EPARRED,        /* parameter redefined */
-	QSE_AWK_EVARRED,        /* named variable redefined */
-	QSE_AWK_EDUPPAR,        /* duplicate parameter name */
-	QSE_AWK_EDUPGBL,        /* duplicate global variable name */
-	QSE_AWK_EDUPLCL,        /* duplicate local variable name */
-	QSE_AWK_EBADPAR,        /* not a valid parameter name */
-	QSE_AWK_EBADVAR,        /* not a valid variable name */
-	QSE_AWK_EVARMS,         /* variable name missing */
-	QSE_AWK_EUNDEF,         /* undefined identifier */
-	QSE_AWK_ELVALUE,        /* l-value required */
-	QSE_AWK_EGBLTM,         /* too many global variables */
-	QSE_AWK_ELCLTM,         /* too many local variables */
-	QSE_AWK_EPARTM,         /* too many parameters */
-	QSE_AWK_EDELETE,        /* delete not followed by a variable */
-	QSE_AWK_ERESET,         /* reset not followed by a variable */
-	QSE_AWK_EBREAK,         /* break outside a loop */
-	QSE_AWK_ECONTINUE,      /* continue outside a loop */
-	QSE_AWK_ENEXTBEG,       /* next illegal in BEGIN block */
-	QSE_AWK_ENEXTEND,       /* next illegal in END block */
-	QSE_AWK_ENEXTFBEG,      /* nextfile illegal in BEGIN block */
-	QSE_AWK_ENEXTFEND,      /* nextfile illegal in END block */
-	QSE_AWK_EPRINTFARG,     /* printf not followed by any arguments */
-	QSE_AWK_EPREPST,        /* both prefix and postfix increment/decrement 
-	                           operator present */
+	QSE_AWK_EFUNCTION, /**< 'function' is expected in place of '${0}' */
+	QSE_AWK_EWHILE,    /**< 'while' is expected in place of '${0}' */
+	QSE_AWK_EASSIGN,   /**< assignment statement expected */
+	QSE_AWK_EIDENT,    /**< identifier expected in place of '${0}' */
+	QSE_AWK_EFUNNAME,  /**< '${0}' not a valid function name */
+	QSE_AWK_EBLKBEG,   /**< BEGIN not followed by left bracket on the same line */
+	QSE_AWK_EBLKEND,   /**< END not followed by left bracket on the same line */
+	QSE_AWK_EDUPBEG,   /**< duplicate BEGIN */
+	QSE_AWK_EDUPEND,   /**< duplicate END */
+	QSE_AWK_EKWRED,    /**< keyword '${0}' redefined */
+	QSE_AWK_EFNCRED,   /**< intrinsic function '${0}' redefined */
+	QSE_AWK_EFUNRED,   /**< function '${0}' redefined */
+	QSE_AWK_EGBLRED,   /**< global variable '${0}' redefined */
+	QSE_AWK_EPARRED,   /**< parameter '${0}' redefined */
+	QSE_AWK_EVARRED,   /**< variable '${0}' redefined */
+	QSE_AWK_EDUPPAR,   /**< duplicate parameter name '${0}' */
+	QSE_AWK_EDUPGBL,   /**< duplicate global variable name '${0}' */
+	QSE_AWK_EDUPLCL,   /**< duplicate local variable name '${0}' */
+	QSE_AWK_EBADPAR,   /**< '${0}' not a valid parameter name */
+	QSE_AWK_EBADVAR,   /**< '${0}' not a valid variable name */
+	QSE_AWK_EVARMS,    /**< variable name missing */
+	QSE_AWK_EUNDEF,    /**< undefined identifier '${0}' */
+	QSE_AWK_ELVALUE,   /**< l-value required */
+	QSE_AWK_EGBLTM,    /**< too many global variables */
+	QSE_AWK_ELCLTM,    /**< too many local variables */
+	QSE_AWK_EPARTM,    /**< too many parameters */
+	QSE_AWK_EDELETE,   /**< 'delete' not followed by variable */
+	QSE_AWK_ERESET,    /**< 'reset' not followed by variable */
+	QSE_AWK_EBREAK,    /**< 'break' outside a loop */
+	QSE_AWK_ECONTINUE, /**< 'continue' outside a loop */
+	QSE_AWK_ENEXTBEG,  /**< 'next' illegal in BEGIN block */
+	QSE_AWK_ENEXTEND,  /**< 'next' illegal in END block */
+	QSE_AWK_ENEXTFBEG, /**< 'nextfile' illegal in BEGIN block */
+	QSE_AWK_ENEXTFEND, /**< 'nextfile' illegal in END block */
+	QSE_AWK_EPRINTFARG,/**< 'printf' not followed by argument */
+	QSE_AWK_EPREPST,   /**< both prefix and postfix incr/decr operator present */
 
 	/* run time error */
-	QSE_AWK_EDIVBY0,           /* divide by zero */
-	QSE_AWK_EOPERAND,          /* invalid operand */
-	QSE_AWK_EPOSIDX,           /* wrong position index */
-	QSE_AWK_EARGTF,            /* too few arguments */
-	QSE_AWK_EARGTM,            /* too many arguments */
-	QSE_AWK_EFUNNONE,          /* function '${1}' not found */
-	QSE_AWK_ENOTIDX,           /* variable not indexable */
-	QSE_AWK_ENOTDEL,           /* variable not deletable */
-	QSE_AWK_ENOTMAP,           /* value not a map */
-	QSE_AWK_ENOTMAPIN,         /* right-hand side of 'in' not a map */
-	QSE_AWK_ENOTMAPNILIN,      /* right-hand side of 'in' not a map nor nil */
-	QSE_AWK_ENOTREF,           /* value not referenceable */
-	QSE_AWK_ENOTASS,           /* value not assignable */
-	QSE_AWK_EIDXVALASSMAP,     /* indexed value cannot be assigned a map */
-	QSE_AWK_EPOSVALASSMAP,     /* a positional cannot be assigned a map */
-	QSE_AWK_EMAPTOSCALAR,      /* cannot change a map to a scalar value */
-	QSE_AWK_ESCALARTOMAP,      /* cannot change a scalar value to a map */
-	QSE_AWK_EMAPNOTALLOWED,    /* a map is not allowed */
-	QSE_AWK_EVALTYPE,          /* invalid value type */
-	QSE_AWK_ERDELETE,          /* delete called with a wrong target */
-	QSE_AWK_ERRESET,           /* reset called with a wrong target */
-	QSE_AWK_ERNEXTBEG,         /* next called from BEGIN */
-	QSE_AWK_ERNEXTEND,         /* next called from END */
-	QSE_AWK_ERNEXTFBEG,        /* nextfile called from BEGIN */
-	QSE_AWK_ERNEXTFEND,        /* nextfile called from END */
-	QSE_AWK_EFNCUSER,          /* wrong intrinsic function implementation */
-	QSE_AWK_EFNCIMPL,          /* intrinsic function handler failed */
-	QSE_AWK_EIOUSER,           /* wrong user io handler implementation */
-	QSE_AWK_EIOIMPL,           /* i/o callback returned an error */
-	QSE_AWK_EIONMNF,           /* no such io name found */
-	QSE_AWK_EIONMEM,           /* i/o name empty */
-	QSE_AWK_EIONMNL,           /* i/o name contains '\0' */
-	QSE_AWK_EFMTARG,           /* arguments to format string not sufficient */
-	QSE_AWK_EFMTCNV,           /* recursion detected in format conversion */
-	QSE_AWK_ECONVFMTCHR,       /* an invalid character found in CONVFMT */
-	QSE_AWK_EOFMTCHR,          /* an invalid character found in OFMT */
+	QSE_AWK_EDIVBY0,       /**< divide by zero */
+	QSE_AWK_EOPERAND,      /**< invalid operand */
+	QSE_AWK_EPOSIDX,       /**< wrong position index */
+	QSE_AWK_EARGTF,        /**< too few arguments */
+	QSE_AWK_EARGTM,        /**< too many arguments */
+	QSE_AWK_EFUNNF,        /**< function '${0}' not found */
+	QSE_AWK_ENOTIDX,       /**< variable not indexable */
+	QSE_AWK_ENOTDEL,       /**< variable '${0}' not deletable */
+	QSE_AWK_ENOTMAP,       /**< value not a map */
+	QSE_AWK_ENOTMAPIN,     /**< right-hand side of 'in' not a map */
+	QSE_AWK_ENOTMAPNILIN,  /**< right-hand side of 'in' not a map nor nil */
+	QSE_AWK_ENOTREF,       /**< value not referenceable */
+	QSE_AWK_ENOTASS,       /**< value not assignable */
+	QSE_AWK_EIDXVALASSMAP, /**< an indexed value cannot be assigned a map */
+	QSE_AWK_EPOSVALASSMAP, /**< a positional cannot be assigned a map */
+	QSE_AWK_EMAPTOSCALAR,  /**< map '${0}' not assignable with a scalar */
+	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
+	QSE_AWK_EMAPNOTALLOWED,/**< map not allowed */
+	QSE_AWK_EVALTYPE,      /**< invalid value type */
+	QSE_AWK_ERDELETE,      /**< 'delete' called with wrong target */
+	QSE_AWK_ERRESET,       /**< 'reset' called with wrong target */
+	QSE_AWK_ERNEXTBEG,     /**< 'next' called from BEGIN block */
+	QSE_AWK_ERNEXTEND,     /**< 'next' called from END block */
+	QSE_AWK_ERNEXTFBEG,    /**< 'nextfile' called from BEGIN block */
+	QSE_AWK_ERNEXTFEND,    /**< 'nextfile' called from END block */
+	QSE_AWK_EFNCUSER,      /**< wrong intrinsic function implementation */
+	QSE_AWK_EFNCIMPL,      /**< intrinsic function handler failed */
+	QSE_AWK_EIOUSER,       /**< wrong user io handler implementation */
+	QSE_AWK_EIOIMPL,       /**< I/O callback returned an error */
+	QSE_AWK_EIONMNF,       /**< no such I/O name found */
+	QSE_AWK_EIONMEM,       /**< I/O name empty */
+	QSE_AWK_EIONMNL,       /**< I/O name '${0}' containing '\\0' */
+	QSE_AWK_EFMTARG,       /**< not sufficient arguments to formatting sequence */
+	QSE_AWK_EFMTCNV,       /**< recursion detected in format conversion */
+	QSE_AWK_ECONVFMTCHR,   /**< invalid character in CONVFMT */
+	QSE_AWK_EOFMTCHR,      /**< invalid character in OFMT */
 
 	/* regular expression error */
-	QSE_AWK_EREXRECUR,        /* recursion too deep */
-	QSE_AWK_EREXRPAREN,       /* a right parenthesis is expected */
-	QSE_AWK_EREXRBRACKET,     /* a right bracket is expected */
-	QSE_AWK_EREXRBRACE,       /* a right brace is expected */
-	QSE_AWK_EREXUNBALPAREN,   /* unbalanced parenthesis */
-	QSE_AWK_EREXINVALBRACE,   /* invalid brace */
-	QSE_AWK_EREXCOLON,        /* a colon is expected */
-	QSE_AWK_EREXCRANGE,       /* invalid character range */
-	QSE_AWK_EREXCCLASS,       /* invalid character class */
-	QSE_AWK_EREXBRANGE,       /* invalid boundary range */
-	QSE_AWK_EREXEND,          /* unexpected end of the pattern */
-	QSE_AWK_EREXGARBAGE,      /* garbage after the pattern */
+	QSE_AWK_EREXRECUR,     /**< recursion too deep */
+	QSE_AWK_EREXRPAREN,    /**< a right parenthesis is expected */
+	QSE_AWK_EREXRBRACKET,  /**< a right bracket is expected */
+	QSE_AWK_EREXRBRACE,    /**< a right brace is expected */
+	QSE_AWK_EREXUNBALPAREN,/**< unbalanced parenthesis */
+	QSE_AWK_EREXINVALBRACE,/**< invalid brace */
+	QSE_AWK_EREXCOLON,     /**< a colon is expected */
+	QSE_AWK_EREXCRANGE,    /**< invalid character range */
+	QSE_AWK_EREXCCLASS,    /**< invalid character class */
+	QSE_AWK_EREXBRANGE,    /**< invalid boundary range */
+	QSE_AWK_EREXEND,       /**< unexpected end of the pattern */
+	QSE_AWK_EREXGARBAGE,   /**< garbage after the pattern */
 
 	/* the number of error numbers, internal use only */
 	QSE_AWK_NUMERRNUM 
@@ -705,7 +753,7 @@ struct qse_awk_errinf_t
 typedef struct qse_awk_errinf_t qse_awk_errinf_t;
 
 /**
- * The qse_awk_errstr_t type defines a error string getter. It should return 
+ * The qse_awk_errstr_t type defines an error string getter. It should return 
  * an error formatting string for an error number requested. A new string
  * should contain the same number of positional parameters (${X}) as in the
  * default error formatting string. You can set a new getter into an awk
@@ -761,34 +809,24 @@ enum qse_awk_gbl_id_t
 	QSE_AWK_MAX_GBL_ID = QSE_AWK_GBL_SUBSEP
 };
 
+/**
+ * The qse_awk_val_type_t type defines types of AWK values. Each value 
+ * allocated is tagged with a value type in the @a type field.
+ * @sa qse_awk_val_t QSE_AWK_VAL_HDR
+ */
 enum qse_awk_val_type_t
 {
 	/* the values between QSE_AWK_VAL_NIL and QSE_AWK_VAL_STR inclusive
 	 * must be synchronized with an internal table of the __cmp_val 
 	 * function in run.c */
-	QSE_AWK_VAL_NIL  = 0,
-	QSE_AWK_VAL_INT  = 1,
-	QSE_AWK_VAL_REAL = 2,
-	QSE_AWK_VAL_STR  = 3,
+	QSE_AWK_VAL_NIL  = 0, /**< nil */
+	QSE_AWK_VAL_INT  = 1, /**< integer */
+	QSE_AWK_VAL_REAL = 2, /**< floating-pointer number */
+	QSE_AWK_VAL_STR  = 3, /**< string */
 
-	QSE_AWK_VAL_REX  = 4,
-	QSE_AWK_VAL_MAP  = 5,
-	QSE_AWK_VAL_REF  = 6
-};
-
-enum qse_awk_val_ref_id_t
-{
-	/* keep these items in the same order as corresponding items
-	 * in tree.h */
-	QSE_AWK_VAL_REF_NAMED,
-	QSE_AWK_VAL_REF_GBL,
-	QSE_AWK_VAL_REF_LCL,
-	QSE_AWK_VAL_REF_ARG,
-	QSE_AWK_VAL_REF_NAMEDIDX,
-	QSE_AWK_VAL_REF_GBLIDX,
-	QSE_AWK_VAL_REF_LCLIDX,
-	QSE_AWK_VAL_REF_ARGIDX,
-	QSE_AWK_VAL_REF_POS
+	QSE_AWK_VAL_REX  = 4, /**< regular expression */
+	QSE_AWK_VAL_MAP  = 5, /**< map */
+	QSE_AWK_VAL_REF  = 6  /**< reference to other types */
 };
 
 /**
@@ -1166,7 +1204,7 @@ int qse_awk_parse (
 
 /**
  * The qse_awk_alloc() function allocates dynamic memory.
- * @return a pointer to memory space allocated on success, #QSE_NULL on failure
+ * @return a pointer to a memory block on success, #QSE_NULL on failure
  */
 void* qse_awk_alloc (
 	qse_awk_t* awk,  /**< awk object */
@@ -1174,11 +1212,22 @@ void* qse_awk_alloc (
 );
 
 /**
+ * The qse_awk_realloc() function resizes a dynamic memory block.
+ * @return a pointer to a memory block on success, #QSE_NULL on failure
+ */
+void* qse_awk_realloc (
+	qse_awk_t* awk,  /**< awk object */
+	void*      ptr,  /**< memory block */
+	qse_size_t size  /**< new block size in bytes */
+);
+
+
+/**
  * The qse_awk_free() function frees dynamic memory allocated.
  */
 void qse_awk_free (
 	qse_awk_t* awk, /**< awk object */
-	void*      ptr  /**< memory space to free */
+	void*      ptr  /**< memory block to free */
 );
 
 /**
@@ -1245,8 +1294,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 );
 
 /**
- * The qse_awk_rtx_close() function destroys a runtime context
- * SYNOPSIS
+ * The qse_awk_rtx_close() function destroys a runtime context.
  */
 void qse_awk_rtx_close (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1325,18 +1373,22 @@ void qse_awk_rtx_stop (
 );
 
 /**
- * The qse_awk_rtx_setrcb() function gets runtime callback.
+ * The qse_awk_rtx_setrcb() function gets runtime callbacks.
+ * @return #QSE_NULL if no callback is set. Otherwise, the pointer to a 
+ *         callback set.
+ * @sa qse_awk_rtx_setrcb
  */
 qse_awk_rcb_t* qse_awk_rtx_getrcb (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
- * The qse_awk_rtx_setrcb() function sets runtime callback.
+ * The qse_awk_rtx_setrcb() function sets runtime callbacks.
+ * @sa qse_awk_rtx_getrcb
  */
 void qse_awk_rtx_setrcb (
-	qse_awk_rtx_t* rtx,
-	qse_awk_rcb_t* rcb
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_rcb_t* rcb  /**< callback set */
 );
 
 /**

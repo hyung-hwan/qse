@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: types.h 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -371,11 +371,12 @@ typedef int qse_mcint_t;
 
 /**
  * The qse_xstr_t type defines a structure combining a pointer to a character
- * string and the number of characters.
+ * string and the number of characters. It is designed to be interchangeable
+ * with the #qse_cstr_t type except the constness on the @a ptr field.
  */
 struct qse_xstr_t
 {
-	qse_char_t* ptr; /**< a pointer to a character string */
+	qse_char_t* ptr; /**< pointer to a character string */
 	qse_size_t  len; /**< the number of characters */
 };
 typedef struct qse_xstr_t qse_xstr_t;
@@ -383,10 +384,12 @@ typedef struct qse_xstr_t qse_xstr_t;
 /**
  * The qse_cstr_t type defines a structure combining a pointer to
  * a constant character string and the number of characters.
+ * It is designed to be interchangeable with the #qse_xstr_t type
+ * except the constness on the @a ptr field.
  */
 struct qse_cstr_t
 {
-	const qse_char_t* ptr; /**< a pointer to a const character string */
+	const qse_char_t* ptr; /**< pointer to a const character string */
 	qse_size_t        len; /**< the number of characters */
 };
 typedef struct qse_cstr_t qse_cstr_t;
