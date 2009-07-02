@@ -266,6 +266,8 @@ AC_CONFIG_FILES([
 	samples/utl/Makefile 
 	samples/sed/Makefile 
 	samples/awk/Makefile 
+	regress/Makefile
+	regress/awk/Makefile
 	doc/Makefile
 	doc/page/Makefile
 	doc/page.ko/Makefile

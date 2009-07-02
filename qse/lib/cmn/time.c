@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 187 2009-06-07 05:03:44Z hyunghwan.chung $
+ * $Id: time.c 221 2009-07-02 01:26:57Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -295,9 +295,9 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 
 	if (y < QSE_EPOCH_YEAR)
 	{
-		int x;
+		/*int x;
 
-		/*for (x = y; x < QSE_EPOCH_YEAR - 1; x++)
+		for (x = y; x < QSE_EPOCH_YEAR - 1; x++)
 			n += QSE_DAYS_PER_YEAR(x);*/
 		n = QSE_DAYS_PER_NORMYEAR * (QSE_EPOCH_YEAR - 1 - y) + 
 		    get_leap_days (y, QSE_EPOCH_YEAR - 1);
@@ -319,9 +319,9 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	} 
 	else
 	{
-		int x;
+		/*int x;
 
-		/*for (x = QSE_EPOCH_YEAR; x < y; x++) 
+		for (x = QSE_EPOCH_YEAR; x < y; x++) 
 			n += QSE_DAYS_PER_YEAR(x);*/
 		n = QSE_DAYS_PER_NORMYEAR * (y - QSE_EPOCH_YEAR) + 
 		    get_leap_days (QSE_EPOCH_YEAR, y);
