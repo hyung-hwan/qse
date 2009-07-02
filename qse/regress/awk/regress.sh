@@ -183,6 +183,7 @@ run_scripts()
 case $1 in
 init)
 	run_scripts > "${OUTFILE}"
+	echo_so "INIT OK"
 	;;
 test)
 	run_scripts > "${OUTFILE}.temp"
@@ -192,6 +193,7 @@ test)
 		exit 1
 	}
 	rm -f "${OUTFILE}.temp"
+	echo_so "TEST OK"
 	;;
 *)
 	echo_so "USAGE: $0 init"

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: Awk.hpp 220 2009-07-01 13:14:39Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -405,17 +405,9 @@ public:
 		ERR_NOMEM = QSE_AWK_ENOMEM,
 		ERR_NOSUP = QSE_AWK_ENOSUP,
 		ERR_NOPER = QSE_AWK_ENOPER,
-		ERR_NODEV = QSE_AWK_ENODEV,
-		ERR_NOSPC = QSE_AWK_ENOSPC,
-		ERR_MFILE = QSE_AWK_EMFILE,
-		ERR_MLINK = QSE_AWK_EMLINK,
-		ERR_AGAIN = QSE_AWK_EAGAIN,
 		ERR_NOENT = QSE_AWK_ENOENT,
 		ERR_EXIST = QSE_AWK_EEXIST,
-		ERR_FTBIG = QSE_AWK_EFTBIG,
-		ERR_TBUSY = QSE_AWK_ETBUSY,
-		ERR_ISDIR = QSE_AWK_EISDIR,
-		ERR_IOERR = QSE_AWK_RIOERR,
+		ERR_IOERR = QSE_AWK_EIOERR,
 		ERR_OPEN = QSE_AWK_EOPEN,
 		ERR_READ = QSE_AWK_EREAD,
 		ERR_WRITE = QSE_AWK_EWRITE,
@@ -487,7 +479,7 @@ public:
 		ERR_POSIDX = QSE_AWK_EPOSIDX,
 		ERR_ARGTF = QSE_AWK_EARGTF,
 		ERR_ARGTM = QSE_AWK_EARGTM,
-		ERR_FUNNONE = QSE_AWK_EFUNNONE,
+		ERR_FUNNF = QSE_AWK_EFUNNF,
 		ERR_NOTIDX = QSE_AWK_ENOTIDX,
 		ERR_NOTDEL = QSE_AWK_ENOTDEL,
 		ERR_NOTMAP = QSE_AWK_ENOTMAP,
@@ -835,38 +827,37 @@ public:
 	 * override Awk::openSource, Awk::closeSource, Awk::readSource, 
 	 * Awk::writeSource to implement the source code stream.
 	 *
-	 * @return 
-	 * 	On success, 0 is returned. On failure, -1 is returned and 
-	 * 	extended error information is set. Call Awk::getErrorNumber
-	 * 	to get it.
+	 * @return 0 on success, -1 on failure
 	 */
 	virtual int parse ();
 
 	/**
-	 * Executes the parse tree.
-	 *
-	 * This method executes the parse tree formed by Awk::parse.
-	 *
-	 * @param args Pointer to an array of character strings.
-	 * 	If it is specified, the charater strings are passed to
-	 * 	an AWK program. The values can be accesed with ARGC & ARGV
-	 * 	inside the AWK program. 
-	 * @param nargs Number of character strings in the array
-	 *
-	 * @return
-	 * 	On success, 0 is returned. On failure, -1 is returned if 
-	 * 	the run-time callback is not enabled. If the run-time callback
-	 * 	is enabled, 0 is returned and the error is indicated through
-	 * 	Awk::onRunEnd. The run-time callback is enabled and disbaled 
-	 * 	with Awk::enableRunCallback and Awk::disableRunCallback.
-	 * 	Call Awk::getErrorNumber to get extended error information.
+	 * Executes the BEGIN block, pattern-action blocks, and the END block.
+	 * @return 0 on succes, -1 on failure
 	 */
-	virtual int run (const char_t** args = QSE_NULL, size_t nargs = 0);
+	virtual int loop ();
 
 	/**
-	 * Requests aborting execution of the parse tree 
+	 * Makes request to abort execution
 	 */
 	virtual void stop ();
+
+	/**
+	 * Adds a string for ARGV. loop() and call() makes a string added 
+	 * available to a script through ARGV. Note this is not related to
+	 * the Awk::Argument class.
+	 */
+	virtual int addArgument (
+		const char_t* arg, 
+		size_t        len
+	);
+
+	virtual int addArgument (const char_t* arg);
+
+	/**
+	 * Deletes all ARGV strings.
+	 */
+	virtual void clearArguments ();
 
 	/**
 	 * Adds a intrinsic global variable. 
@@ -1018,9 +1009,9 @@ protected:
 	/*@}*/
 
 	// run-time callbacks
-	virtual bool onRunEnter (Run& run);
-	virtual void onRunExit (Run& run, const Argument& ret);
-	virtual void onRunStatement (Run& run, size_t line);
+	virtual bool onLoopEnter (Run& run);
+	virtual void onLoopExit (Run& run, const Argument& ret);
+	virtual void onStatement (Run& run, size_t line);
 	
 	// primitive handlers 
 	virtual real_t pow (real_t x, real_t y) = 0;
@@ -1047,9 +1038,9 @@ protected:
 		rtx_t* rtx, const char_t* name, size_t len);
 	static void freeFunctionMapValue (map_t* map, void* dptr, size_t dlen);
 
-	static int  onRunEnter (rtx_t* run, void* data);
-	static void onRunExit (rtx_t* run, val_t* ret, void* data);
-	static void onRunStatement (rtx_t* run, size_t line, void* data);
+	static int  onLoopEnter (rtx_t* run, void* data);
+	static void onLoopExit (rtx_t* run, val_t* ret, void* data);
+	static void onStatement (rtx_t* run, size_t line, void* data);
 
 	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
@@ -1068,6 +1059,13 @@ protected:
 	char_t      errmsg[256];
 
 	bool        runCallback;
+
+	struct
+	{
+		qse_xstr_t* ptr;
+		size_t      len;
+		size_t      capa;
+	} runarg;
 
 private:
 	static const char_t* xerrstr (awk_t* a, errnum_t num) throw ();

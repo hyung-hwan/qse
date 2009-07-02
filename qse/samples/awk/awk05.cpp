@@ -70,7 +70,7 @@ public:
 	#endif
 
 		int n = StdAwk::open ();
-		if (n == -1)
+		if (n <= -1)
 		{
 	#ifdef _WIN32
 			HeapDestroy (heap); 
@@ -80,16 +80,16 @@ public:
 		}
 
 		idLastSleep = addGlobal (QSE_T("LAST_SLEEP"));
-		if (idLastSleep == -1) goto failure;
+		if (idLastSleep <= -1) goto failure;
 
 		if (addFunction (QSE_T("sleep"), 1, 1,
-		    	(FunctionHandler)&TestAwk::sleep) == -1) goto failure;
+		    	(FunctionHandler)&TestAwk::sleep) <= -1) goto failure;
 
 		if (addFunction (QSE_T("sumintarray"), 1, 1,
-		    	(FunctionHandler)&TestAwk::sumintarray) == -1) goto failure;
+		    	(FunctionHandler)&TestAwk::sumintarray) <= -1) goto failure;
 
 		if (addFunction (QSE_T("arrayindices"), 1, 1,
-		    	(FunctionHandler)&TestAwk::arrayindices) == -1) goto failure;
+		    	(FunctionHandler)&TestAwk::arrayindices) <= -1) goto failure;
 		return 0;
 
 	failure:
@@ -135,7 +135,7 @@ public:
 		else { qse_printf (QSE_T("BAD:\n")); }
 		*/
 
-		if (run.setGlobal (idLastSleep, x) == -1) return -1;
+		if (run.setGlobal (idLastSleep, x) <= -1) return -1;
 
 	#ifdef _WIN32
 		::Sleep ((DWORD)(x * 1000));
@@ -160,7 +160,7 @@ public:
 				size_t len;
 				const char_t* ptr = idx.toStr(&len);
 
-				if (args[0].getIndexed(ptr, len, val) == -1) return -1;
+				if (args[0].getIndexed(ptr, len, val) <= -1) return -1;
 				x += val.toInt ();
 
 				n = args[0].getNextIndex (idx);
@@ -186,7 +186,7 @@ public:
 			size_t len;
 			const char_t* ptr = idx.toStr(&len);
 			n = args[0].getNextIndex (idx);
-			if (ret.setIndexed (i, ptr, len) == -1) return -1;
+			if (ret.setIndexed (i, ptr, len) <= -1) return -1;
 		}
 		if (n != 0) return -1;
 	
@@ -377,7 +377,7 @@ protected:
 
 		if (fn != QSE_NULL) 
 		{
-			if (io.setFileName(fn) == -1)
+			if (io.setFileName(fn) <= -1)
 			{
 				if (fp != stdin && fp != stdout) fclose (fp);
 				qse_awk_free (awk, t);
@@ -419,7 +419,7 @@ protected:
 				FILE* nfp = qse_fopen (fn, QSE_T("r"));
 				if (nfp == QSE_NULL) return -1;
 
-				if (io.setFileName(fn) == -1 || io.setFNR(0) == -1)
+				if (io.setFileName(fn) <= -1 || io.setFNR(0) <= -1)
 				{
 					fclose (nfp);
 					return -1;
@@ -503,7 +503,7 @@ protected:
 
 		if (fn != QSE_NULL)
 		{
-			if (io.setFileName (fn) == -1)
+			if (io.setFileName (fn) <= -1)
 			{
 				fclose (nfp);
 				return -1;
@@ -705,7 +705,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_size_t nsrcins = 0;
 	qse_size_t nsrcouts = 0;
 
-	if (awk.open() == -1)
+	if (awk.open() <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot open awk\n"));
 		return -1;
@@ -796,7 +796,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			}
 			else if (mode == 3) // console input
 			{
-				if (awk.addConsoleInput (argv[i]) == -1)
+				if (awk.addConsoleInput (argv[i]) <= -1)
 				{
 					print_error (QSE_T("too many console inputs"));
 					return -1;
@@ -806,7 +806,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			}
 			else if (mode == 4) // console output
 			{
-				if (awk.addConsoleOutput (argv[i]) == -1)
+				if (awk.addConsoleOutput (argv[i]) <= -1)
 				{
 					print_error (QSE_T("too many console outputs"));
 					return -1;
@@ -855,7 +855,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (awk.parse (srcin, srcout) == -1)
+	if (awk.parse (srcin, srcout) <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
@@ -866,7 +866,20 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk.enableRunCallback ();
 	app_awk = &awk;
 
-	if (awk.run (args, nargs) == -1)
+	for (qse_size_t i = 0; i < nargs; i++)
+	{
+		if (awk.addArgument (args[i]) <= -1)
+		{
+			qse_fprintf (stderr, 
+				QSE_T("ERROR: %s\n"), 
+				awk.getErrorMessage()
+			);
+			awk.close ();
+			return -1;
+		}
+	}
+
+	if (awk.loop () <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
