@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: Awk.hpp 223 2009-07-06 12:37:25Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -188,13 +188,15 @@ public:
 		void* handle;
 	};
 
+	class Run;
+
 	/**
 	 * RIO class 
 	 */
 	class RIOBase
 	{
 	protected:
-		RIOBase (rtx_t* rtx, rio_arg_t* riod);
+		RIOBase (Run* run, rio_arg_t* riod);
 
 	public:
 		const char_t* getName() const;
@@ -207,7 +209,7 @@ public:
 		operator rtx_t* () const;
 
 	protected:
-		rtx_t* rtx;
+		Run* run;
 		rio_arg_t* riod;
 	};
 
@@ -227,7 +229,7 @@ public:
 		};
 
 	protected:
-		Pipe (rtx_t* rtx, rio_arg_t* riod);
+		Pipe (Run* run, rio_arg_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -249,7 +251,7 @@ public:
 		};
 
 	protected:
-		File (rtx_t* rtx, rio_arg_t* riod);
+		File (Run* run, rio_arg_t* riod);
 
 	public:
 		Mode getMode () const;
@@ -270,7 +272,7 @@ public:
 		};
 
 	protected:
-		Console (rtx_t* rtx, rio_arg_t* riod);
+		Console (Run* run, rio_arg_t* riod);
 		~Console ();
 
 	public:
@@ -282,7 +284,6 @@ public:
 		char_t* filename;
 	};
 
-	class Run;
 	class Argument;
 	class Return;
 
@@ -721,7 +722,7 @@ public:
 
 	protected:
 		Awk*   awk;
-		rtx_t* run;
+		rtx_t* rtx;
 		void*  data;
 	};
 
