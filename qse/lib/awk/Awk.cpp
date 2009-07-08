@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 223 2009-07-06 12:37:25Z hyunghwan.chung $
+ * $Id: Awk.cpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -88,12 +88,18 @@ Awk::RIOBase::operator Awk* () const
 
 Awk::RIOBase::operator Awk::awk_t* () const 
 {
-	return qse_awk_rtx_getawk (this->run->rtx);
+	QSE_ASSERT (qse_awk_rtx_getawk(this->run->rtx) == this->run->awk->awk);
+	return this->run->awk->awk;
 }
 
 Awk::RIOBase::operator Awk::rio_arg_t* () const
 {
 	return this->riod;
+}
+
+Awk::RIOBase::operator Awk::Run* () const
+{
+	return this->run;
 }
 
 Awk::RIOBase::operator Awk::rtx_t* () const
@@ -146,7 +152,7 @@ Awk::Console::~Console ()
 
 int Awk::Console::setFileName (const char_t* name)
 {
-	if (riod->mode == READ)
+	if (this->getMode() == READ)
 	{
 		return qse_awk_rtx_setfilename (
 			this->run->rtx, name, qse_strlen(name));
@@ -395,7 +401,6 @@ int Awk::Argument::init (const char_t* str, size_t len)
 
 	return 0;
 }
-
 
 Awk::long_t Awk::Argument::toInt () const
 {
@@ -1077,10 +1082,6 @@ Awk::Awk () throw (): awk (QSE_NULL), functionMap (QSE_NULL),
 
 {
 	this->errmsg[0] = QSE_T('\0');
-
-	this->runarg.ptr = QSE_NULL;
-	this->runarg.len = 0;
-	this->runarg.capa = 0;
 }
 
 Awk::operator Awk::awk_t* () const
@@ -1463,41 +1464,50 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 	return 0;
 }
 
-int Awk::addArgument (const char_t* arg, size_t len)
+int Awk::xstrs_t::add (awk_t* awk, const char_t* arg, size_t len)
 {
-	QSE_ASSERT (awk != QSE_NULL);
-
-	if (runarg.len >= runarg.capa)
+	if (this->len >= this->capa)
 	{
 		qse_xstr_t* ptr;
-		size_t capa = runarg.capa;
+		size_t capa = this->capa;
 
 		capa += 64;
 		ptr = (qse_xstr_t*) qse_awk_realloc (
-			awk, runarg.ptr, QSE_SIZEOF(qse_xstr_t)*(capa+1));
-		if (ptr == QSE_NULL)
-		{
-			setError (ERR_NOMEM);
-			return -1;
-		}
+			awk, this->ptr, QSE_SIZEOF(qse_xstr_t)*(capa+1));
+		if (ptr == QSE_NULL) return -1;
 
-		runarg.ptr = ptr;
-		runarg.capa = capa;
+		this->ptr = ptr;
+		this->capa = capa;
 	}
 
-	runarg.ptr[runarg.len].len = len;
-	runarg.ptr[runarg.len].ptr = qse_awk_strxdup (awk, arg, len);
-	if (runarg.ptr[runarg.len].ptr == QSE_NULL)
-	{
-		setError (ERR_NOMEM);
-		return -1;
-	}
+	this->ptr[this->len].len = len;
+	this->ptr[this->len].ptr = qse_awk_strxdup (awk, arg, len);
+	if (this->ptr[this->len].ptr == QSE_NULL) return -1;
 
-	runarg.len++;
-	runarg.ptr[runarg.len].len = 0;
-	runarg.ptr[runarg.len].ptr = QSE_NULL;
+	this->len++;
+	this->ptr[this->len].len = 0;
+	this->ptr[this->len].ptr = QSE_NULL;
 
 	return 0;
+}
+
+void Awk::xstrs_t::clear (awk_t* awk)
+{
+	if (this->ptr != QSE_NULL)
+	{
+		qse_awk_free (awk, this->ptr);
+		this->ptr = QSE_NULL;
+		this->len = 0;
+		this->capa = 0;
+	}
+}
+
+int Awk::addArgument (const char_t* arg, size_t len)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = runarg.add (awk, arg, len);
+	if (n <= -1) setError (ERR_NOMEM);
+	return n;
 }
 
 int Awk::addArgument (const char_t* arg)
@@ -1507,14 +1517,7 @@ int Awk::addArgument (const char_t* arg)
 
 void Awk::clearArguments ()
 {
-	if (runarg.ptr != QSE_NULL)
-	{
-		QSE_ASSERT (awk != QSE_NULL);
-		qse_awk_free (awk, runarg.ptr);
-		runarg.ptr = QSE_NULL;
-		runarg.len = 0;
-		runarg.capa = 0;
-	}
+	runarg.clear (awk);
 }
 
 int Awk::addGlobal (const char_t* name)

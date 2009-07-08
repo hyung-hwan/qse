@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,6 +23,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/stdio.h>
+#include "awk.h"
 
 #include <stdlib.h>
 #include <math.h>
@@ -72,6 +73,30 @@ int StdAwk::open ()
 
 	::srand (this->seed);
 	return 0;
+}
+
+void StdAwk::close ()
+{
+	clearConsoleOutputs ();
+	Awk::close ();
+}
+
+int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = ofile.add (awk, arg, len);
+	if (n <= -1) setError (ERR_NOMEM);
+	return n;
+}
+
+int StdAwk::addConsoleOutput (const char_t* arg)
+{
+	return addConsoleOutput (arg, qse_strlen(arg));
+}
+
+void StdAwk::clearConsoleOutputs ()
+{
+	ofile.clear (awk);
 }
 
 int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
@@ -385,345 +410,314 @@ int StdAwk::flushFile (File& io)
 	return qse_fio_flush ((qse_fio_t*)io.getHandle());
 }
 
-#if 0
 // console io handlers 
-int StdAwk::openConsole (Console& io) 
+int StdAwk::open_console_in (Console& io) 
 { 
-	qse_sio_t* fp;
-	Console::Mode mode = io.getMode();
+	qse_awk_rtx_t* rtx = (rtx_t*)io;
 
-	switch (mode)
+	if (runarg.ptr == QSE_NULL) 
 	{
-		case Console::READ:
+		QSE_ASSERT (runarg.len == 0 && runarg.capa == 0);
+
+		if (runarg_count == 0) 
 		{
-			if (runarg.ptr == QSE_NULL) 
+			io.setHandle (qse_sio_in);
+			runarg_count++;
+			return 1;
+		}
+
+		return 0;
+	}
+	else
+	{
+		qse_sio_t* sio;
+		const qse_char_t* file;
+		qse_awk_val_t* argv;
+		qse_map_t* map;
+		qse_map_pair_t* pair;
+		qse_char_t ibuf[128];
+		qse_size_t ibuflen;
+		qse_awk_val_t* v;
+		qse_awk_rtx_valtostr_out_t out;
+
+	nextfile:
+		file = runarg.ptr[runarg_index].ptr;
+
+		if (file == QSE_NULL)
+		{
+			/* no more input file */
+
+			if (runarg_count == 0)
 			{
-				io.setHandle (qse_sio_in);
-				return 1;
-			}
-			else
-			{
-				qse_sio_t* sio;
-				const qse_char_t* file;
-				qse_awk_val_t* argv;
-				qse_map_t* map;
-				qse_map_pair_t* pair;
-				qse_char_t ibuf[128];
-				qse_size_t ibuflen;
-				qse_awk_val_t* v;
-				qse_awk_rtx_valtostr_out_t out;
-	
-			nextfile:
-				file = runarg.ptr[runarg_index];
-	
-				if (file == QSE_NULL)
-				{
-					/* no more input file */
-	
-					if (runarg_count == 0)
-					{
-						/* all ARGVs are empty strings. 
-						 * so no console files were opened.
-						 * open the standard input here.
-						 *
-						 * 'BEGIN { ARGV[1]=""; ARGV[2]=""; }
-						 *        { print $0; }' file1 file2
-						 */
-						io.setHandle (qse_sio_in);
-						runarg_count++;
-						return 1;
-					}
-	
-					return 0;
-				}
-	
-				/* handle special case when ARGV[x] has been altered.
-				 * so from here down, the file name gotten from 
-				 * rxtn->c.in.files is not important and is overridden 
-				 * from ARGV.
-				 * 'BEGIN { ARGV[1]="file3"; } 
+				/* all ARGVs are empty strings. 
+				 * so no console files were opened.
+				 * open the standard input here.
+				 *
+				 * 'BEGIN { ARGV[1]=""; ARGV[2]=""; }
 				 *        { print $0; }' file1 file2
 				 */
-				argv = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_ARGV);
-				QSE_ASSERT (argv != QSE_NULL);
-				QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
-	
-				map = ((qse_awk_val_map_t*)argv)->map;
-				QSE_ASSERT (map != QSE_NULL);
-				
-				ibuflen = qse_awk_longtostr (
-					rtx->awk, rxtn->c.in.index + 1, 10, QSE_NULL,
-					ibuf, QSE_COUNTOF(ibuf));
-	
-				pair = qse_map_search (map, ibuf, ibuflen);
-				QSE_ASSERT (pair != QSE_NULL);
-	
-				v = QSE_MAP_VPTR(pair);
-				QSE_ASSERT (v != QSE_NULL);
-	
-				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return -1;
-	
-				if (out.u.cpldup.len == 0)
-				{
-					/* the name is empty */
-					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
-					rxtn->c.in.index++;
-					goto nextfile;
-				}
-	
-				if (qse_strlen(out.u.cpldup.ptr) < out.u.cpldup.len)
-				{
-					/* the name contains one or more '\0' */
-					qse_cstr_t errarg;
-	
-					errarg.ptr = out.u.cpldup.ptr;
-					/* use this length not to contains '\0'
-					 * in an error message */
-					errarg.len = qse_strlen(out.u.cpldup.ptr);
-	
-					qse_awk_rtx_seterror (
-						rtx, QSE_AWK_EIONMNL, 0, &errarg);
-	
-					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
-					return -1;
-				}
-	
-				file = out.u.cpldup.ptr;
-	
-				if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
-				{
-					/* special file name '-' */
-					sio = qse_sio_in;
-				}
-				else
-				{
-					sio = qse_sio_open (
-						rtx->awk->mmgr, 0, file, QSE_SIO_READ);
-					if (sio == QSE_NULL)
-					{
-						qse_cstr_t errarg;
-	
-						errarg.ptr = file;
-						errarg.len = qse_strlen(file);
-	
-						qse_awk_rtx_seterror (
-							rtx, QSE_AWK_EOPEN, 0, &errarg);
-	
-						qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
-						return -1;
-					}
-				}
-	
-				if (qse_awk_rtx_setfilename (
-					rtx, file, qse_strlen(file)) == -1)
-				{
-					if (sio != qse_sio_in) qse_sio_close (sio);
-					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
-					return -1;
-				}
-	
-				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
-				riod->handle = sio;
-	
-				/* increment the counter of files successfully opened */
-				rxtn->c.in.count++;
-			}
-	
-			rxtn->c.in.index++;
+				io.setHandle (qse_sio_in);
+				runarg_count++;
+				return 1;
 			}
 
-			break;
+			return 0;
 		}
 
-		case Console::WRITE:
-			break;	
-	}
+		// TODO: need to check for '\0' contained???
+
+		/* handle special case when ARGV[x] has been altered.
+		 * so from here down, the file name gotten from 
+		 * rxtn->c.in.files is not important and is overridden 
+		 * from ARGV.
+		 * 'BEGIN { ARGV[1]="file3"; } 
+		 *        { print $0; }' file1 file2
+		 */
+		argv = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_ARGV);
+		QSE_ASSERT (argv != QSE_NULL);
+		QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
+
+		map = ((qse_awk_val_map_t*)argv)->map;
+		QSE_ASSERT (map != QSE_NULL);
 		
-#if 0
-	FILE* fp = QSE_NULL;
-	const char_t* fn = QSE_NULL;
+		ibuflen = qse_awk_longtostr (
+			rtx->awk, runarg_index + 1, 
+			10, QSE_NULL,
+			ibuf, QSE_COUNTOF(ibuf)
+		);
 
-	switch (mode)
-	{
-		case StdAwk::Console::READ:
+		pair = qse_map_search (map, ibuf, ibuflen);
+		QSE_ASSERT (pair != QSE_NULL);
 
-			if (numConInFiles == 0) fp = stdin;
-			else
-			{
-				fn = conInFile[0];
-				fp = qse_fopen (fn, QSE_T("r"));
-			}
-			break;
+		v = (qse_awk_val_t*)QSE_MAP_VPTR(pair);
+		QSE_ASSERT (v != QSE_NULL);
 
-		case StdAwk::Console::WRITE:
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return -1;
 
-			if (numConOutFiles == 0) fp = stdout;
-			else
-			{
-				fn = conOutFile[0];
-				fp = qse_fopen (fn, QSE_T("w"));
-			}
-			break;
-	}
-
-	if (fp == NULL) return -1;
-
-	ConTrack* t = (ConTrack*) 
-		qse_awk_alloc (awk, QSE_SIZEOF(ConTrack));
-	if (t == QSE_NULL)
-	{
-		if (fp != stdin && fp != stdout) fclose (fp);
-		return -1;
-	}
-
-	t->handle = fp;
-	t->nextConIdx = 1;
-
-	if (fn != QSE_NULL) 
-	{
-		if (io.setFileName(fn) == -1)
+		if (out.u.cpldup.len == 0)
 		{
-			if (fp != stdin && fp != stdout) fclose (fp);
-			qse_awk_free (awk, t);
+			/* the name is empty */
+			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			runarg_index++;
+			goto nextfile;
+		}
+
+		if (qse_strlen(out.u.cpldup.ptr) < out.u.cpldup.len)
+		{
+			/* the name contains one or more '\0' */
+			((Run*)io)->setError (ERR_IONMNL, 0, out.u.cpldup.ptr);
+			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
+
+		file = out.u.cpldup.ptr;
+
+		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
+		{
+			/* special file name '-' */
+			sio = qse_sio_in;
+		}
+		else
+		{
+			sio = qse_sio_open (
+				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
+			if (sio == QSE_NULL)
+			{
+				((Run*)io)->setError (ERR_OPEN, 0, file);
+				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				return -1;
+			}
+		}
+
+		if (qse_awk_rtx_setfilename (
+			rtx, file, qse_strlen(file)) == -1)
+		{
+			if (sio != qse_sio_in) qse_sio_close (sio);
+			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			return -1;
+		}
+
+		qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+		io.setHandle (sio);
+
+		/* increment the counter of files successfully opened */
+		runarg_count++;
+		runarg_index++;
+		return 1;
 	}
 
-	io.setHandle (t);
-	return 1;
-#endif
+}
+
+int StdAwk::open_console_out (Console& io) 
+{
+	qse_awk_rtx_t* rtx = (rtx_t*)io;
+
+	if (ofile.ptr == QSE_NULL)
+	{
+		QSE_ASSERT (ofile.len == 0 && ofile.capa == 0);
+
+		if (ofile_count == 0) 
+		{
+			io.setHandle (qse_sio_out);
+			ofile_count++;
+			return 1;
+		}
+
+		return 0;
+	}
+	else
+	{
+		/* a temporary variable sio is used here not to change 
+		 * any fields of riod when the open operation fails */
+		qse_sio_t* sio;
+		const qse_char_t* file;
+
+		file = ofile.ptr[ofile_index].ptr;
+
+		if (file == QSE_NULL)
+		{
+			/* no more input file */
+			return 0;
+		}
+
+		// TODO: need to check for '\0' contained???
+
+		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
+		{
+			/* special file name '-' */
+			sio = qse_sio_out;
+		}
+		else
+		{
+			sio = qse_sio_open (
+				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
+			if (sio == QSE_NULL)
+			{
+				((Run*)io)->setError (ERR_OPEN, 0, file);
+				return -1;
+			}
+		}
+		
+		if (qse_awk_rtx_setofilename (
+			rtx, file, qse_strlen(file)) == -1)
+		{
+			qse_sio_close (sio);
+			return -1;
+		}
+
+		io.setHandle (sio);
+
+		ofile_index++;
+		ofile_count++;
+		return 1;
+	}
+}
+
+int StdAwk::openConsole (Console& io) 
+{
+	Console::Mode mode = io.getMode();
+
+	if (mode == Console::READ)
+	{
+		runarg_count = 0;
+		runarg_index = 0;
+		return open_console_in (io);
+	}
+	else
+	{
+		QSE_ASSERT (mode == Console::WRITE);
+
+		ofile_count = 0;
+		ofile_index = 0;
+		return open_console_out (io);
+	}
 }
 
 int StdAwk::closeConsole (Console& io) 
 { 
-	ConTrack* t = (ConTrack*)io.getHandle();
-	FILE* fp = t->handle;
+	qse_sio_t* sio;
 
-	if (fp == stdout || fp == stderr) fflush (fp);
-	if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
+	sio = (qse_sio_t*)io.getHandle();
+	if (sio != qse_sio_in &&
+	    sio != qse_sio_out &&
+	    sio != qse_sio_err)
+	{
+		qse_sio_close (sio);
+	}
 
-	qse_awk_free (awk, t);
 	return 0;
 }
 
-ssize_t StdAwk::readConsole (Console& io, char_t* buf, size_t len) 
+ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size) 
 {
-	ConTrack* t = (ConTrack*)io.getHandle();
-	FILE* fp = t->handle;
-	ssize_t n = 0;
+	qse_ssize_t nn;
 
-	while (n < (ssize_t)len)
+	while ((nn = qse_sio_getsn((qse_sio_t*)io.getHandle(),data,size)) == 0)
 	{
-		qse_cint_t c = qse_fgetc (fp);
-		if (c == QSE_CHAR_EOF) 
+		int n;
+		qse_sio_t* sio = (qse_sio_t*)io.getHandle();
+
+		n = open_console_in (io);
+		if (n == -1) return -1;
+
+		if (n == 0) 
 		{
-			if (qse_ferror(fp)) return -1;
-			if (t->nextConIdx >= numConInFiles) break;
-
-			const char_t* fn = conInFile[t->nextConIdx];
-			FILE* nfp = qse_fopen (fn, QSE_T("r"));
-			if (nfp == QSE_NULL) return -1;
-
-			if (io.setFileName(fn) == -1 || io.setFNR(0) == -1)
-			{
-				fclose (nfp);
-				return -1;
-			}
-
-			fclose (fp);
-			fp = nfp;
-			t->nextConIdx++;
-			t->handle = fp;
-
-			if (n == 0) continue;
-			else break;
+			/* no more input console */
+			return 0;
 		}
 
-		buf[n++] = c;
-		if (c == QSE_T('\n')) break;
+		if (sio != QSE_NULL && 
+		    sio != qse_sio_in && 
+		    sio != qse_sio_out &&
+		    sio != qse_sio_err) 
+		{
+			qse_sio_close (sio);
+		}
 	}
 
-	return n;
+	return nn;
 }
 
-ssize_t StdAwk::writeConsole (Console& io, const char_t* buf, size_t len) 
+ssize_t StdAwk::writeConsole (Console& io, const char_t* data, size_t size) 
 {
-	ConTrack* t = (ConTrack*)io.getHandle();
-	FILE* fp = t->handle;
-	size_t left = len;
-
-	while (left > 0)
-	{
-		if (*buf == QSE_T('\0')) 
-		{
-			if (qse_fputc(*buf,fp) == QSE_CHAR_EOF) return -1;
-			left -= 1; buf += 1;
-		}
-		else
-		{
-			int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;
-			int n = qse_fprintf (fp, QSE_T("%.*s"), chunk, buf);
-			if (n < 0 || n > chunk) return -1;
-			left -= n; buf += n;
-		}
-	}
-
-	return len;
+	return qse_sio_putsn (
+		(qse_sio_t*)io.getHandle(),
+		data,
+		size
+	);
 }
 
 int StdAwk::flushConsole (Console& io) 
 { 
-	ConTrack* t = (ConTrack*)io.getHandle();
-	FILE* fp = t->handle;
-	return ::fflush (fp);
+	return qse_sio_flush ((qse_sio_t*)io.getHandle());
 }
 
 int StdAwk::nextConsole (Console& io) 
 { 
-	StdAwk::Console::Mode mode = io.getMode();
+	int n;
+	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
 
-	ConTrack* t = (ConTrack*)io.getHandle();
-	FILE* ofp = t->handle;
-	FILE* nfp = QSE_NULL;
-	const char_t* fn = QSE_NULL;
+	n = (io.getMode() == Console::READ)? 
+		open_console_in(io): open_console_out(io);
+	if (n == -1) return -1;
 
-	switch (mode)
+	if (n == 0) 
 	{
-		case StdAwk::Console::READ:
-
-			if (t->nextConIdx >= numConInFiles) return 0;
-			fn = conInFile[t->nextConIdx];
-			nfp = qse_fopen (fn, QSE_T("r"));
-			break;
-
-		case StdAwk::Console::WRITE:
-
-			if (t->nextConIdx >= numConOutFiles) return 0;
-			fn = conOutFile[t->nextConIdx];
-			nfp = qse_fopen (fn, QSE_T("w"));
-			break;
+		/* if there is no more file, keep the previous handle */
+		return 0;
 	}
 
-	if (nfp == QSE_NULL) return -1;
-
-	if (fn != QSE_NULL)
+	if (sio != QSE_NULL && 
+	    sio != qse_sio_in && 
+	    sio != qse_sio_out &&
+	    sio != qse_sio_err)
 	{
-		if (io.setFileName (fn) == -1)
-		{
-			fclose (nfp);
-			return -1;
-		}
+		qse_sio_close (sio);
 	}
 
-	fclose (ofp);
-
-	t->nextConIdx++;
-	t->handle = nfp;
-
-	return 1;
+	return n;
 }
-#endif
 
 // memory allocation primitives
 void* StdAwk::allocMem (size_t n) throw ()

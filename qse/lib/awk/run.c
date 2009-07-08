@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: run.c 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -666,7 +666,6 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
 		return QSE_NULL;
 	}
-
 
 	/* initialize the run object */
 	if (init_rtx (rtx, awk, rio) == -1) 
