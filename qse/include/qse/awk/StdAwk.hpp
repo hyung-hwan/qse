@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -39,6 +39,11 @@ class StdAwk: public Awk
 {
 public:
 	int open ();
+	void close ();
+
+	virtual int addConsoleOutput (const char_t* arg, size_t len);
+	virtual int addConsoleOutput (const char_t* arg);
+	virtual void clearConsoleOutputs ();
 
 protected:
 
@@ -82,7 +87,6 @@ protected:
 	ssize_t writeFile (File& io, const char_t* buf, size_t len);
 	int flushFile (File& io);
 
-#if 0
 	// console io handlers 
 	int openConsole (Console& io);
 	int closeConsole (Console& io);
@@ -90,7 +94,6 @@ protected:
 	ssize_t writeConsole (Console& io, const char_t* buf, size_t len);
 	int flushConsole (Console& io);
 	int nextConsole (Console& io);
-#endif
 
 	// primitive handlers 
 	void* allocMem   (size_t n) throw ();
@@ -103,7 +106,19 @@ protected:
 
 protected:
 	unsigned int seed; 
+
+	/* standard input console - reuse runarg */
 	size_t runarg_index;
+	size_t runarg_count;
+
+	/* standard output console */
+	xstrs_t ofile;
+	size_t ofile_index;
+	size_t ofile_count;
+
+private:
+	int open_console_in (Console& io);
+	int open_console_out (Console& io);
 };
 
 /////////////////////////////////

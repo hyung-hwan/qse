@@ -48,8 +48,8 @@ static bool verbose = false;
 class TestAwk: public QSE::StdAwk
 {
 public:
-	TestAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL), 
-	            numConInFiles(0), numConOutFiles(0)
+	TestAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL)
+	            
 	{
 	#ifdef _WIN32
 		heap = QSE_NULL;
@@ -105,9 +105,6 @@ public:
 	void close ()
 	{
 		StdAwk::close ();
-
-		numConInFiles = 0;
-		numConOutFiles = 0;
 
 	#ifdef _WIN32
 		if (heap != QSE_NULL)
@@ -193,28 +190,6 @@ public:
 		return 0;
 	}
 	
-	int addConsoleInput (const char_t* file)
-	{
-		if (numConInFiles < QSE_COUNTOF(conInFile))
-		{
-			conInFile[numConInFiles++] = file;
-			return 0;
-		}
-
-		return -1;
-	}
-
-	int addConsoleOutput (const char_t* file)
-	{
-		if (numConOutFiles < QSE_COUNTOF(conOutFile))
-		{
-			conOutFile[numConOutFiles++] = file;
-			return 0;
-		}
-
-		return -1;
-	}
-
 	int parse (const char_t* in, const char_t* out)
 	{
 		srcInName = in;
@@ -331,193 +306,6 @@ protected:
 		return len;
 	}
 
-	// console io handlers 
-	int openConsole (Console& io) 
-	{ 
-		StdAwk::Console::Mode mode = io.getMode();
-
-		FILE* fp = QSE_NULL;
-		const char_t* fn = QSE_NULL;
-
-		switch (mode)
-		{
-			case StdAwk::Console::READ:
-
-				if (numConInFiles == 0) fp = stdin;
-				else
-				{
-					fn = conInFile[0];
-					fp = qse_fopen (fn, QSE_T("r"));
-				}
-				break;
-
-			case StdAwk::Console::WRITE:
-
-				if (numConOutFiles == 0) fp = stdout;
-				else
-				{
-					fn = conOutFile[0];
-					fp = qse_fopen (fn, QSE_T("w"));
-				}
-				break;
-		}
-
-		if (fp == NULL) return -1;
-
-		ConTrack* t = (ConTrack*) 
-			qse_awk_alloc (awk, QSE_SIZEOF(ConTrack));
-		if (t == QSE_NULL)
-		{
-			if (fp != stdin && fp != stdout) fclose (fp);
-			return -1;
-		}
-
-		t->handle = fp;
-		t->nextConIdx = 1;
-
-		if (fn != QSE_NULL) 
-		{
-			if (io.setFileName(fn) <= -1)
-			{
-				if (fp != stdin && fp != stdout) fclose (fp);
-				qse_awk_free (awk, t);
-				return -1;
-			}
-		}
-
-		io.setHandle (t);
-		return 1;
-	}
-
-	int closeConsole (Console& io) 
-	{ 
-		ConTrack* t = (ConTrack*)io.getHandle();
-		FILE* fp = t->handle;
-
-		if (fp == stdout || fp == stderr) fflush (fp);
-		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
-
-		qse_awk_free (awk, t);
-		return 0;
-	}
-
-	ssize_t readConsole (Console& io, char_t* buf, size_t len) 
-	{
-		ConTrack* t = (ConTrack*)io.getHandle();
-		FILE* fp = t->handle;
-		ssize_t n = 0;
-
-		while (n < (ssize_t)len)
-		{
-			qse_cint_t c = qse_fgetc (fp);
-			if (c == QSE_CHAR_EOF) 
-			{
-				if (qse_ferror(fp)) return -1;
-				if (t->nextConIdx >= numConInFiles) break;
-
-				const char_t* fn = conInFile[t->nextConIdx];
-				FILE* nfp = qse_fopen (fn, QSE_T("r"));
-				if (nfp == QSE_NULL) return -1;
-
-				if (io.setFileName(fn) <= -1 || io.setFNR(0) <= -1)
-				{
-					fclose (nfp);
-					return -1;
-				}
-
-				fclose (fp);
-				fp = nfp;
-				t->nextConIdx++;
-				t->handle = fp;
-
-				if (n == 0) continue;
-				else break;
-			}
-
-			buf[n++] = c;
-			if (c == QSE_T('\n')) break;
-		}
-
-		return n;
-	}
-
-	ssize_t writeConsole (Console& io, const char_t* buf, size_t len) 
-	{
-		ConTrack* t = (ConTrack*)io.getHandle();
-		FILE* fp = t->handle;
-		size_t left = len;
-
-		while (left > 0)
-		{
-			if (*buf == QSE_T('\0')) 
-			{
-				if (qse_fputc(*buf,fp) == QSE_CHAR_EOF) return -1;
-				left -= 1; buf += 1;
-			}
-			else
-			{
-				int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;
-				int n = qse_fprintf (fp, QSE_T("%.*s"), chunk, buf);
-				if (n < 0 || n > chunk) return -1;
-				left -= n; buf += n;
-			}
-		}
-
-		return len;
-	}
-
-	int flushConsole (Console& io) 
-	{ 
-		ConTrack* t = (ConTrack*)io.getHandle();
-		FILE* fp = t->handle;
-		return ::fflush (fp);
-	}
-
-	int nextConsole (Console& io) 
-	{ 
-		StdAwk::Console::Mode mode = io.getMode();
-
-		ConTrack* t = (ConTrack*)io.getHandle();
-		FILE* ofp = t->handle;
-		FILE* nfp = QSE_NULL;
-		const char_t* fn = QSE_NULL;
-
-		switch (mode)
-		{
-			case StdAwk::Console::READ:
-
-				if (t->nextConIdx >= numConInFiles) return 0;
-				fn = conInFile[t->nextConIdx];
-				nfp = qse_fopen (fn, QSE_T("r"));
-				break;
-
-			case StdAwk::Console::WRITE:
-
-				if (t->nextConIdx >= numConOutFiles) return 0;
-				fn = conOutFile[t->nextConIdx];
-				nfp = qse_fopen (fn, QSE_T("w"));
-				break;
-		}
-
-		if (nfp == QSE_NULL) return -1;
-
-		if (fn != QSE_NULL)
-		{
-			if (io.setFileName (fn) <= -1)
-			{
-				fclose (nfp);
-				return -1;
-			}
-		}
-
-		fclose (ofp);
-
-		t->nextConIdx++;
-		t->handle = nfp;
-
-		return 1;
-	}
-
 	void* allocMem (size_t n) throw ()
 	{ 
 	#ifdef _WIN32
@@ -552,18 +340,6 @@ private:
 	const char_t* srcInName;
 	const char_t* srcOutName;
 	
-	struct ConTrack
-	{
-		FILE* handle;
-		size_t nextConIdx;
-	};
-
-	size_t        numConInFiles;
-	const char_t* conInFile[128];
-
-	size_t        numConOutFiles;
-	const char_t* conOutFile[128];
-
 	int idLastSleep;
 
 #ifdef _WIN32
@@ -672,14 +448,13 @@ static void print_usage (const qse_char_t* argv0)
 	if (base == QSE_NULL) base = qse_strrchr(argv0, QSE_T('\\'));
 	if (base == QSE_NULL) base = argv0; else base++;
 
-	qse_printf (QSE_T("Usage: %s [-si file]? [-so file]? [-ci file]* [-co file]* [-a arg]* [-w o:n]* \n"), base);
+	qse_printf (QSE_T("Usage: %s [-si file]? [-so file]? [-ci file]* [-co file]* [-w o:n]* \n"), base);
 	qse_printf (QSE_T("    -si file  Specify the input source file\n"));
 	qse_printf (QSE_T("              The source code is read from stdin when it is not specified\n"));
 	qse_printf (QSE_T("    -so file  Specify the output source file\n"));
 	qse_printf (QSE_T("              The deparsed code is not output when is it not specified\n"));
 	qse_printf (QSE_T("    -ci file  Specify the input console file\n"));
 	qse_printf (QSE_T("    -co file  Specify the output console file\n"));
-	qse_printf (QSE_T("    -a  str   Specify an argument\n"));
 	qse_printf (QSE_T("    -w  o:n   Specify an old and new word pair\n"));
 	qse_printf (QSE_T("              o - an original word\n"));
 	qse_printf (QSE_T("              n - the new word to replace the original\n"));
@@ -700,8 +475,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int mode = 0;
 	const qse_char_t* srcin = QSE_T("");
 	const qse_char_t* srcout = NULL;
-	const qse_char_t* args[256];
-	qse_size_t nargs = 0;
 	qse_size_t nsrcins = 0;
 	qse_size_t nsrcouts = 0;
 
@@ -719,8 +492,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			else if (qse_strcmp(argv[i], QSE_T("-so")) == 0) mode = 2;
 			else if (qse_strcmp(argv[i], QSE_T("-ci")) == 0) mode = 3;
 			else if (qse_strcmp(argv[i], QSE_T("-co")) == 0) mode = 4;
-			else if (qse_strcmp(argv[i], QSE_T("-a")) == 0) mode = 5;
-			else if (qse_strcmp(argv[i], QSE_T("-w")) == 0) mode = 6;
+			else if (qse_strcmp(argv[i], QSE_T("-w")) == 0) mode = 5;
 			else if (qse_strcmp(argv[i], QSE_T("-v")) == 0)
 			{
 				verbose = true;
@@ -796,7 +568,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			}
 			else if (mode == 3) // console input
 			{
-				if (awk.addConsoleInput (argv[i]) <= -1)
+				if (awk.addArgument (argv[i]) <= -1)
 				{
 					print_error (QSE_T("too many console inputs"));
 					return -1;
@@ -814,18 +586,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 				mode = 0;
 			}
-			else if (mode == 5) // argument mode
-			{
-				if (nargs >= QSE_COUNTOF(args))
-				{
-					print_usage (argv[0]);
-					return -1;
-				}
-
-				args[nargs++] = argv[i];
-				mode = 0;
-			}
-			else if (mode == 6) // word replacement
+			else if (mode == 5) // word replacement
 			{
 				const qse_char_t* p;
 				qse_size_t l;
@@ -865,19 +626,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	awk.enableRunCallback ();
 	app_awk = &awk;
-
-	for (qse_size_t i = 0; i < nargs; i++)
-	{
-		if (awk.addArgument (args[i]) <= -1)
-		{
-			qse_fprintf (stderr, 
-				QSE_T("ERROR: %s\n"), 
-				awk.getErrorMessage()
-			);
-			awk.close ();
-			return -1;
-		}
-	}
 
 	if (awk.loop () <= -1)
 	{

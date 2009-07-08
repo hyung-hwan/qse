@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 223 2009-07-06 12:37:25Z hyunghwan.chung $
+ * $Id: Awk.hpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -206,6 +206,7 @@ public:
 		operator Awk* () const;
 		operator awk_t* () const;
 		operator rio_arg_t* () const;
+		operator Run* () const;
 		operator rtx_t* () const;
 
 	protected:
@@ -1061,12 +1062,19 @@ protected:
 
 	bool        runCallback;
 
-	struct
+	struct xstrs_t
 	{
+		xstrs_t (): ptr (QSE_NULL), len (0), capa (0) {}
+
+		int add (awk_t* awk, const char_t* arg, size_t len);
+		void clear (awk_t* awk);
+
 		qse_xstr_t* ptr;
 		size_t      len;
 		size_t      capa;
-	} runarg;
+	};
+
+	xstrs_t runarg;
 
 private:
 	static const char_t* xerrstr (awk_t* a, errnum_t num) throw ();

@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: std.c 224 2009-07-07 13:05:10Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -85,6 +85,7 @@ typedef struct rxtn_t
 		{
 			const qse_char_t*const* files;
 			qse_size_t index;
+			qse_size_t count;
 		} out;
 	} c;  /* console */
 
@@ -609,7 +610,15 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			/* if no input files is specified, 
 			 * open the standard input */
 			QSE_ASSERT (rxtn->c.in.index == 0);
-			riod->handle = qse_sio_in;
+
+			if (rxtn->c.in.count == 0)
+			{
+				riod->handle = qse_sio_in;
+				rxtn->c.in.count++;
+				return 1;
+			}
+
+			return 0;
 		}
 		else
 		{
@@ -740,17 +749,25 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 
 			/* increment the counter of files successfully opened */
 			rxtn->c.in.count++;
+			rxtn->c.in.index++;
+			return 1;
 		}
 
-		rxtn->c.in.index++;
-		return 1;
 	}
 	else if (riod->mode == QSE_AWK_RIO_CONSOLE_WRITE)
 	{
 		if (rxtn->c.out.files == QSE_NULL)
 		{
 			QSE_ASSERT (rxtn->c.out.index == 0);
-			riod->handle = qse_sio_out;
+
+			if (rxtn->c.out.count == 0)
+			{
+				riod->handle = qse_sio_out;
+				rxtn->c.out.count++;
+				return 1;
+			}
+
+			return 0;
 		}
 		else
 		{
@@ -797,10 +814,12 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			}
 
 			riod->handle = sio;
+
+			rxtn->c.out.index++;
+			rxtn->c.out.count++;
+			return 1;
 		}
 
-		rxtn->c.out.index++;
-		return 1;
 	}
 
 	return -1;
@@ -810,8 +829,6 @@ static qse_ssize_t awk_rio_console (
 	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
 	qse_char_t* data, qse_size_t size)
 {
-	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
-
 	if (cmd == QSE_AWK_RIO_OPEN)
 	{
 		return open_rio_console (rtx, riod);
@@ -830,73 +847,32 @@ static qse_ssize_t awk_rio_console (
 	}
 	else if (cmd == QSE_AWK_RIO_READ)
 	{
-		qse_ssize_t n;
+		qse_ssize_t nn;
 
-		while ((n = qse_sio_getsn((qse_sio_t*)riod->handle,data,size)) == 0)
+		while ((nn = qse_sio_getsn((qse_sio_t*)riod->handle,data,size)) == 0)
 		{
-			qse_sio_t* sio;
-			const qse_char_t* file;
+			int n;
+			qse_sio_t* sio = (qse_sio_t*)riod->handle;
 
-			/* it has reached the end of the current file.
-			 * open the next file if available */
-			if (rxtn->c.in.files == QSE_NULL ||
-			    rxtn->c.in.files[rxtn->c.in.index] == QSE_NULL)
+			n = open_rio_console (rtx, riod);
+			if (n == -1) return -1;
+
+			if (n == 0) 
 			{
 				/* no more input console */
 				return 0;
 			}
 
-			file = rxtn->c.in.files[rxtn->c.in.index];
-
-			if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
+			if (sio != QSE_NULL && 
+			    sio != qse_sio_in && 
+			    sio != qse_sio_out &&
+			    sio != qse_sio_err) 
 			{
-				sio = qse_sio_in;
+				qse_sio_close (sio);
 			}
-			else
-			{
-				sio = qse_sio_open (
-					rtx->awk->mmgr, 0, file, QSE_SIO_READ);
-				if (sio == QSE_NULL)
-				{
-					qse_cstr_t errarg;
-	
-					errarg.ptr = file;
-					errarg.len = qse_strlen(file);
-	
-					qse_awk_rtx_seterror (
-						rtx, QSE_AWK_EOPEN, 0, &errarg);
-					return -1;
-				}
-			}
-
-			if (qse_awk_rtx_setfilename (
-				rtx, file, qse_strlen(file)) == -1)
-			{
-				if (sio != qse_sio_in) qse_sio_close (sio);
-				return -1;
-			}
-
-			if (qse_awk_rtx_setgbl (
-				rtx, QSE_AWK_GBL_FNR, qse_awk_val_zero) == -1)
-			{
-				/* need to reset FNR */
-				if (sio != qse_sio_in) qse_sio_close (sio);
-				return -1;
-			}
-
-			if (riod->handle != QSE_NULL &&
-			    riod->handle != qse_sio_in &&
-			    riod->handle != qse_sio_out &&
-			    riod->handle != qse_sio_err) 
-			{
-				qse_sio_close ((qse_sio_t*)riod->handle);
-			}
-
-			riod->handle = sio;
-			rxtn->c.in.index++;	
 		}
 
-		return n;
+		return nn;
 	}
 	else if (cmd == QSE_AWK_RIO_WRITE)
 	{
@@ -1019,6 +995,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.in.count = 0;
 	rxtn->c.out.files = ocf;
 	rxtn->c.out.index = 0;
+	rxtn->c.out.count = 0;
 
 	return rtx;
 }
