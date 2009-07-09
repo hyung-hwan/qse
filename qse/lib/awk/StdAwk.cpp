@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 225 2009-07-08 13:01:45Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -480,8 +480,10 @@ int StdAwk::open_console_in (Console& io)
 		map = ((qse_awk_val_map_t*)argv)->map;
 		QSE_ASSERT (map != QSE_NULL);
 		
+		// ok to find ARGV[runarg_index] as ARGV[0]
+		// has been skipped.
 		ibuflen = qse_awk_longtostr (
-			rtx->awk, runarg_index + 1, 
+			rtx->awk, runarg_index, 
 			10, QSE_NULL,
 			ibuf, QSE_COUNTOF(ibuf)
 		);
@@ -622,6 +624,11 @@ int StdAwk::openConsole (Console& io)
 	{
 		runarg_count = 0;
 		runarg_index = 0;
+		if (runarg.len > 0) 
+		{
+			// skip ARGV[0]
+			runarg_index++;
+		}
 		return open_console_in (io);
 	}
 	else

@@ -32,7 +32,7 @@
 #	include <errno.h>
 #endif
 
-class TestAwk;
+class MyAwk;
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type);
 #else
@@ -42,13 +42,13 @@ static void stop_run (int sig);
 static void set_intr_run (void);
 static void unset_intr_run (void);
 
-TestAwk* app_awk = QSE_NULL;
+MyAwk* app_awk = QSE_NULL;
 static bool verbose = false;
 
-class TestAwk: public QSE::StdAwk
+class MyAwk: public QSE::StdAwk
 {
 public:
-	TestAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL)
+	MyAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL)
 	            
 	{
 	#ifdef _WIN32
@@ -56,7 +56,7 @@ public:
 	#endif
 	}
 
-	~TestAwk ()
+	~MyAwk ()
 	{
 		close ();
 	}
@@ -83,13 +83,13 @@ public:
 		if (idLastSleep <= -1) goto failure;
 
 		if (addFunction (QSE_T("sleep"), 1, 1,
-		    	(FunctionHandler)&TestAwk::sleep) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::sleep) <= -1) goto failure;
 
 		if (addFunction (QSE_T("sumintarray"), 1, 1,
-		    	(FunctionHandler)&TestAwk::sumintarray) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::sumintarray) <= -1) goto failure;
 
 		if (addFunction (QSE_T("arrayindices"), 1, 1,
-		    	(FunctionHandler)&TestAwk::arrayindices) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::arrayindices) <= -1) goto failure;
 		return 0;
 
 	failure:
@@ -190,7 +190,7 @@ public:
 		return 0;
 	}
 	
-	int parse (const char_t* in, const char_t* out)
+	Run* parse (const char_t* in, const char_t* out)
 	{
 		srcInName = in;
 		srcOutName = out;
@@ -199,13 +199,13 @@ public:
 
 protected:
 
-	bool onRunEnter (Run& run)
+	bool onLoopEnter (Run& run)
 	{
 		set_intr_run ();
 		return true;
 	}
 
-	void onRunExit (Run& run, const Argument& ret)
+	void onLoopExit (Run& run, const Argument& ret)
 	{
 		unset_intr_run ();
 
@@ -414,29 +414,29 @@ static void unset_intr_run (void)
 
 static void print_error (const qse_char_t* msg)
 {
-	qse_printf (QSE_T("Error: %s\n"), msg);
+	qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), msg);
 }
 
 static struct
 {
 	const qse_char_t* name;
-	TestAwk::Option   opt;
+	MyAwk::Option   opt;
 } otab[] =
 {
-	{ QSE_T("implicit"),    TestAwk::OPT_IMPLICIT },
-	{ QSE_T("explicit"),    TestAwk::OPT_EXPLICIT },
-	{ QSE_T("bxor"),        TestAwk::OPT_BXOR },
-	{ QSE_T("shift"),       TestAwk::OPT_SHIFT },
-	{ QSE_T("idiv"),        TestAwk::OPT_IDIV },
-	{ QSE_T("rio"),         TestAwk::OPT_RIO },
-	{ QSE_T("rwpipe"),      TestAwk::OPT_RWPIPE },
-	{ QSE_T("newline"),     TestAwk::OPT_NEWLINE },
-	{ QSE_T("stripspaces"), TestAwk::OPT_STRIPSPACES },
-	{ QSE_T("nextofile"),   TestAwk::OPT_NEXTOFILE },
-	{ QSE_T("crlf"),        TestAwk::OPT_CRLF },
-	{ QSE_T("reset"),       TestAwk::OPT_RESET },
-	{ QSE_T("maptovar"),    TestAwk::OPT_MAPTOVAR },
-	{ QSE_T("pablock"),     TestAwk::OPT_PABLOCK }
+	{ QSE_T("implicit"),    MyAwk::OPT_IMPLICIT },
+	{ QSE_T("explicit"),    MyAwk::OPT_EXPLICIT },
+	{ QSE_T("bxor"),        MyAwk::OPT_BXOR },
+	{ QSE_T("shift"),       MyAwk::OPT_SHIFT },
+	{ QSE_T("idiv"),        MyAwk::OPT_IDIV },
+	{ QSE_T("rio"),         MyAwk::OPT_RIO },
+	{ QSE_T("rwpipe"),      MyAwk::OPT_RWPIPE },
+	{ QSE_T("newline"),     MyAwk::OPT_NEWLINE },
+	{ QSE_T("stripspaces"), MyAwk::OPT_STRIPSPACES },
+	{ QSE_T("nextofile"),   MyAwk::OPT_NEXTOFILE },
+	{ QSE_T("crlf"),        MyAwk::OPT_CRLF },
+	{ QSE_T("reset"),       MyAwk::OPT_RESET },
+	{ QSE_T("maptovar"),    MyAwk::OPT_MAPTOVAR },
+	{ QSE_T("pablock"),     MyAwk::OPT_PABLOCK }
 };
 
 static void print_usage (const qse_char_t* argv0)
@@ -470,7 +470,8 @@ static void print_usage (const qse_char_t* argv0)
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
-	TestAwk awk;
+	MyAwk awk;
+	MyAwk::Run* run;
 
 	int mode = 0;
 	const qse_char_t* srcin = QSE_T("");
@@ -480,7 +481,15 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	if (awk.open() <= -1)
 	{
-		qse_fprintf (stderr, QSE_T("cannot open awk\n"));
+		print_error (awk.getErrorMessage());
+		return -1;
+	}
+
+	// ARGV[0]
+	if (awk.addArgument (QSE_T("awk05")) <= -1)
+	{
+		print_error (awk.getErrorMessage());
+		awk.close ();
 		return -1;
 	}
 
@@ -616,7 +625,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (awk.parse (srcin, srcout) <= -1)
+	run = awk.parse (srcin, srcout);
+	if (run == QSE_NULL)
 	{
 		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
@@ -634,6 +644,20 @@ static int awk_main (int argc, qse_char_t* argv[])
 		awk.close ();
 		return -1;
 	}
+
+#if 0
+	MyAwk::Return args[2];
+
+	args[0].setRun (run);
+	args[1].setRun (run);
+
+	if (awk.call (QSE_T("add"), args, 2) <= -1)
+	{
+		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
+			awk.getErrorLine(), awk.getErrorMessage());
+		awk.close ();
+	}
+#endif
 
 	app_awk = QSE_NULL;
 	awk.close ();
