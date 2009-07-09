@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
+ * $Id: Awk.cpp 225 2009-07-08 13:01:45Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -226,8 +226,8 @@ void Awk::Argument::clear ()
 	{
 		/* case 1. not initialized.
 		 * case 2. initialized with the second init.
-		 * none of the cases creates a new string so the sttring
-		 * that str.ptr is pointing at doesn't have to be freed */
+		 * none of the cases. create a new string so the sttring
+		 * that str.ptr is pointing to doesn't have to be freed */
 		this->str.ptr = QSE_NULL;
 		this->str.len = 0;
 	}
@@ -918,7 +918,7 @@ Awk::Run::Run (Awk* awk): awk (awk), rtx (QSE_NULL)
 {
 }
 
-Awk::Run::Run (Awk* awk, rtx_t* rtx): awk (awk), rtx (rtx), data (QSE_NULL)
+Awk::Run::Run (Awk* awk, rtx_t* rtx): awk (awk), rtx (rtx)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 }
@@ -1062,23 +1062,14 @@ int Awk::Run::getGlobal (int id, Argument& gbl) const
 	return gbl.init (qse_awk_rtx_getgbl (this->rtx, id));
 }
 
-void Awk::Run::setData (void* data)
-{
-	this->data = data;
-}
-
-void* Awk::Run::getData () const
-{
-	return this->data;
-}
-
 //////////////////////////////////////////////////////////////////
 // Awk
 //////////////////////////////////////////////////////////////////
 
 Awk::Awk () throw (): awk (QSE_NULL), functionMap (QSE_NULL),
 	sourceIn (Source::READ), sourceOut (Source::WRITE),
-	errnum (ERR_NOERR), errlin (0), runCallback (false)
+	errnum (ERR_NOERR), errlin (0), runCallback (false), 
+	runctx (this)
 
 {
 	this->errmsg[0] = QSE_T('\0');
@@ -1238,6 +1229,7 @@ int Awk::open ()
 
 void Awk::close ()
 {
+	fini_runctx ();
 	clearArguments ();
 
 	if (functionMap != QSE_NULL)
@@ -1337,30 +1329,33 @@ int Awk::unsetAllWords ()
 	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
 }
 
-int Awk::parse ()
+Awk::Run* Awk::parse ()
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	qse_awk_sio_t sio;
+	fini_runctx ();
 
+	qse_awk_sio_t sio;
 	sio.in = sourceReader;
 	sio.out = sourceWriter;
 
 	int n = qse_awk_parse (awk, &sio);
-	if (n == -1) retrieveError ();
-	return n;
+	if (n <= -1) 
+	{
+		retrieveError ();
+		return QSE_NULL;
+	}
+
+	if (init_runctx () <= -1) return QSE_NULL;
+	return &runctx;
 }
 
-int Awk::loop ()
+int Awk::init_runctx ()
 {
-	QSE_ASSERT (awk != QSE_NULL);
+	if (runctx.rtx != QSE_NULL) return 0;
 
 	qse_awk_rio_t rio;
 	qse_awk_rcb_t rcb;
-
-	// note that the run field is set below after qse_awk_rtx_open() is
-	// executed.
-	Run runctx (this);
 
 	rio.pipe    = pipeHandler;
 	rio.file    = fileHandler;
@@ -1374,29 +1369,75 @@ int Awk::loop ()
 		rcb.on_statement  = onStatement;
 		rcb.udd           = &runctx;
 	}
-	
-	int n = 0;
+
 	rtx_t* rtx = qse_awk_rtx_open (
 		awk, QSE_SIZEOF(rxtn_t), &rio, (qse_cstr_t*)runarg.ptr);
 	if (rtx == QSE_NULL) 
 	{
 		retrieveError();
-		n = -1;
+		return -1;
 	}
-	else
+
+	runctx.rtx = rtx;
+
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	rxtn->run = &runctx;
+
+	if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
+	return 0;
+}
+
+void Awk::fini_runctx ()
+{
+	if (runctx.rtx != QSE_NULL)
 	{
-		runctx.rtx = rtx;
+		qse_awk_rtx_close (runctx.rtx);
+		runctx.rtx = QSE_NULL;
+	}
+}
 
-		rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
-		rxtn->run = &runctx;
+int Awk::loop ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	QSE_ASSERT (runctx.rtx != QSE_NULL);
 
-		if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
-		n = qse_awk_rtx_loop (rtx);
-		if (n == -1) retrieveError (rtx);
-		qse_awk_rtx_close (rtx);
+	int n = qse_awk_rtx_loop (runctx.rtx);
+	if (n <= -1) retrieveError (runctx.rtx);
+	return n;
+}
+
+int Awk::call (const char_t* name, const Return* args, size_t nargs)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	QSE_ASSERT (runctx.rtx != QSE_NULL);
+
+	val_t** ptr = QSE_NULL;
+
+	if (args != QSE_NULL)
+	{
+		ptr = (val_t**) qse_awk_alloc (awk, QSE_SIZEOF(val_t*) * nargs);
+		if (ptr == QSE_NULL)
+		{
+			runctx.setError (ERR_NOMEM);
+			return -1;
+		}
+
+		for (size_t i = 0; i < nargs; i++) ptr[i] = args[i].val;
 	}
 
-	return n;
+	val_t* ret = qse_awk_rtx_call (runctx.rtx, name, ptr, nargs);
+
+	if (ptr != QSE_NULL) qse_awk_free (awk, ptr);
+
+	if (ret == QSE_NULL) 
+	{
+		retrieveError (runctx.rtx);
+		return -1;
+	}
+
+// TODO: how can i store it???
+	qse_awk_rtx_refdownval (runctx.rtx, ret);
+	return 0;
 }
 
 void Awk::stop ()
@@ -1409,8 +1450,6 @@ int Awk::dispatchFunction (Run* run, const char_t* name, size_t len)
 {
 	pair_t* pair;
 	awk_t* awk = run->awk->awk;
-
-	//awk = qse_awk_rtx_getawk (run);
 
 	pair = qse_map_search (functionMap, name, len);
 	if (pair == QSE_NULL) 
@@ -1495,9 +1534,11 @@ void Awk::xstrs_t::clear (awk_t* awk)
 {
 	if (this->ptr != QSE_NULL)
 	{
+		while (this->len > 0)
+			qse_awk_free (awk, this->ptr[--this->len].ptr);
+
 		qse_awk_free (awk, this->ptr);
 		this->ptr = QSE_NULL;
-		this->len = 0;
 		this->capa = 0;
 	}
 }
