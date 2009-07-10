@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 225 2009-07-08 13:01:45Z hyunghwan.chung $
+ * $Id: Awk.cpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -38,25 +38,6 @@ struct rxtn_t
 {
 	Awk::Run* run;
 };
-
-Awk::Source::Source (Mode mode): mode (mode), handle (QSE_NULL)
-{
-}
-
-Awk::Source::Mode Awk::Source::getMode () const
-{
-	return this->mode;
-}
-
-const void* Awk::Source::getHandle () const
-{
-	return this->handle;
-}
-
-void Awk::Source::setHandle (void* handle)
-{
-	this->handle = handle;
-}
 
 //////////////////////////////////////////////////////////////////
 // Awk::RIO
@@ -1067,7 +1048,7 @@ int Awk::Run::getGlobal (int id, Argument& gbl) const
 //////////////////////////////////////////////////////////////////
 
 Awk::Awk () throw (): awk (QSE_NULL), functionMap (QSE_NULL),
-	sourceIn (Source::READ), sourceOut (Source::WRITE),
+	sourceIn (this, Source::READ), sourceOut (this, Source::WRITE),
 	errnum (ERR_NOERR), errlin (0), runCallback (false), 
 	runctx (this)
 
@@ -1329,15 +1310,18 @@ int Awk::unsetAllWords ()
 	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
 }
 
-Awk::Run* Awk::parse ()
+Awk::Run* Awk::parse (Source* in, Source* out)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
 	fini_runctx ();
 
+	sourceReader = in;
+	sourceWriter = out;
+
 	qse_awk_sio_t sio;
-	sio.in = sourceReader;
-	sio.out = sourceWriter;
+	sio.in = readSource;
+	sio.out = (sourceWriter == QSE_NULL)? QSE_NULL: writeSource;
 
 	int n = qse_awk_parse (awk, &sio);
 	if (n <= -1) 
@@ -1657,7 +1641,7 @@ void Awk::onStatement (Run& run, size_t line)
 {
 }
 
-Awk::ssize_t Awk::sourceReader (
+Awk::ssize_t Awk::readSource (
 	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
@@ -1665,19 +1649,17 @@ Awk::ssize_t Awk::sourceReader (
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
-			return xtn->awk->openSource (xtn->awk->sourceIn);
+			return xtn->awk->sourceReader->open (xtn->awk->sourceIn);
 		case QSE_AWK_SIO_CLOSE:
-			return xtn->awk->closeSource (xtn->awk->sourceIn);
+			return xtn->awk->sourceReader->close (xtn->awk->sourceIn);
 		case QSE_AWK_SIO_READ:
-			return xtn->awk->readSource (xtn->awk->sourceIn, data, count);
-		case QSE_AWK_SIO_WRITE:
+			return xtn->awk->sourceReader->read (xtn->awk->sourceIn, data, count);
+		default:
 			return -1;
 	}
-
-	return -1;
 }
 
-Awk::ssize_t Awk::sourceWriter (
+Awk::ssize_t Awk::writeSource (
 	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
@@ -1685,16 +1667,14 @@ Awk::ssize_t Awk::sourceWriter (
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
-			return xtn->awk->openSource (xtn->awk->sourceOut);
+			return xtn->awk->sourceWriter->open (xtn->awk->sourceOut);
 		case QSE_AWK_SIO_CLOSE:
-			return xtn->awk->closeSource (xtn->awk->sourceOut);
+			return xtn->awk->sourceWriter->close (xtn->awk->sourceOut);
 		case QSE_AWK_SIO_WRITE:
-			return xtn->awk->writeSource (xtn->awk->sourceOut, data, count);
-		case QSE_AWK_SIO_READ:
+			return xtn->awk->sourceWriter->write (xtn->awk->sourceOut, data, count);
+		default:
 			return -1;
 	}
-
-	return -1;
 }
 
 Awk::ssize_t Awk::pipeHandler (
