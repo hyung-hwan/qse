@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 224 2009-07-07 13:05:10Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,6 +24,8 @@
 /**
  * @example awk05.cpp
  * This program demonstrates how to embed QSE::StdAwk in C++.
+ * @example awk06.cpp
+ * This program demonstrates how to embed QSE::StdAwk in C++.
  */
 
 /////////////////////////////////
@@ -38,6 +40,35 @@ QSE_BEGIN_NAMESPACE(QSE)
 class StdAwk: public Awk
 {
 public:
+	class SourceFile: public Source 
+	{
+	public:
+		SourceFile (const char_t* name): name (name) {}
+
+		int open (Data& io);
+		int close (Data& io);
+		ssize_t read (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, char_t* buf, size_t len);
+
+	protected:
+		const char_t* name;
+	};
+
+	class SourceString: public Source
+	{
+	public:
+		SourceString (const char_t* str): str (str) {}
+
+		int open (Data& io);
+		int close (Data& io);
+		ssize_t read (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, char_t* buf, size_t len);
+
+	protected:
+		const char_t* str;
+		const char_t* ptr;
+	};
+        
 	int open ();
 	void close ();
 
@@ -46,7 +77,6 @@ public:
 	virtual void clearConsoleOutputs ();
 
 protected:
-
 	// intrinsic functions 
 	int sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
 		const char_t* name, size_t len);

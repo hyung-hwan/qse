@@ -11,8 +11,13 @@ awk03_SOURCES = awk03.c
 awk04_SOURCES = awk04.c
 
 if ENABLE_CXX
-bin_PROGRAMS += awk05
+bin_PROGRAMS += awk05 awk06 awk07
 
 awk05_SOURCES = awk05.cpp
+awk06_SOURCES = awk06.cpp
+awk07_SOURCES = awk07.cpp
+
 awk05_LDADD = -lqseawk++ $(LDADD)
+awk06_LDADD = -lqseawk++ $(LDADD)
+awk07_LDADD = -lqseawk++ $(LDADD)
 endif

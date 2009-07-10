@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 225 2009-07-08 13:01:45Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -79,24 +79,6 @@ void StdAwk::close ()
 {
 	clearConsoleOutputs ();
 	Awk::close ();
-}
-
-int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	int n = ofile.add (awk, arg, len);
-	if (n <= -1) setError (ERR_NOMEM);
-	return n;
-}
-
-int StdAwk::addConsoleOutput (const char_t* arg)
-{
-	return addConsoleOutput (arg, qse_strlen(arg));
-}
-
-void StdAwk::clearConsoleOutputs ()
-{
-	ofile.clear (awk);
 }
 
 int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
@@ -300,22 +282,22 @@ int StdAwk::openPipe (Pipe& io)
 { 
 	Awk::Pipe::Mode mode = io.getMode();
 	qse_pio_t* pio = QSE_NULL;
-	int flags;
+	int flags = QSE_PIO_TEXT | QSE_PIO_SHELL;
 
 	switch (mode)
 	{
 		case Awk::Pipe::READ:
 			/* TODO: should we specify ERRTOOUT? */
-			flags = QSE_PIO_READOUT |
-			        QSE_PIO_ERRTOOUT;
+			flags |= QSE_PIO_READOUT |
+			         QSE_PIO_ERRTOOUT;
 			break;
 		case Awk::Pipe::WRITE:
-			flags = QSE_PIO_WRITEIN;
+			flags |= QSE_PIO_WRITEIN;
 			break;
 		case Awk::Pipe::RW:
-			flags = QSE_PIO_READOUT |
-			        QSE_PIO_ERRTOOUT |
-			        QSE_PIO_WRITEIN;
+			flags |= QSE_PIO_READOUT |
+			         QSE_PIO_ERRTOOUT |
+			         QSE_PIO_WRITEIN;
 			break;
 	}
 
@@ -323,7 +305,7 @@ int StdAwk::openPipe (Pipe& io)
 		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
-		flags|QSE_PIO_TEXT|QSE_PIO_SHELL
+		flags
 	);
 	if (pio == QSE_NULL) return -1;
 
@@ -352,26 +334,25 @@ int StdAwk::flushPipe (Pipe& io)
 	return qse_pio_flush ((qse_pio_t*)io.getHandle(), QSE_PIO_IN); 
 }
 
-// file io handlers 
 int StdAwk::openFile (File& io) 
 { 
 	Awk::File::Mode mode = io.getMode();
 	qse_fio_t* fio = QSE_NULL;
-	int flags;
+	int flags = QSE_FIO_TEXT;
 
 	switch (mode)
 	{
 		case Awk::File::READ:
-			flags = QSE_FIO_READ;
+			flags |= QSE_FIO_READ;
 			break;
 		case Awk::File::WRITE:
-			flags = QSE_FIO_WRITE | 
-			        QSE_FIO_CREATE | 
-			        QSE_FIO_TRUNCATE;
+			flags |= QSE_FIO_WRITE | 
+			         QSE_FIO_CREATE | 
+			         QSE_FIO_TRUNCATE;
 			break;
 		case Awk::File::APPEND:
-			flags = QSE_FIO_APPEND |
-			        QSE_FIO_CREATE;
+			flags |= QSE_FIO_APPEND |
+			         QSE_FIO_CREATE;
 			break;
 	}
 
@@ -379,7 +360,7 @@ int StdAwk::openFile (File& io)
 		((Awk*)io)->getMmgr(),
 		0, 
 		io.getName(), 
-		flags | QSE_FIO_TEXT,
+		flags,
 		QSE_FIO_RUSR | QSE_FIO_WUSR |
 		QSE_FIO_RGRP | QSE_FIO_ROTH
 	);	
@@ -410,7 +391,24 @@ int StdAwk::flushFile (File& io)
 	return qse_fio_flush ((qse_fio_t*)io.getHandle());
 }
 
-// console io handlers 
+int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = ofile.add (awk, arg, len);
+	if (n <= -1) setError (ERR_NOMEM);
+	return n;
+}
+
+int StdAwk::addConsoleOutput (const char_t* arg)
+{
+	return addConsoleOutput (arg, qse_strlen(arg));
+}
+
+void StdAwk::clearConsoleOutputs ()
+{
+	ofile.clear (awk);
+}
+
 int StdAwk::open_console_in (Console& io) 
 { 
 	qse_awk_rtx_t* rtx = (rtx_t*)io;
@@ -752,6 +750,81 @@ int StdAwk::vsprintf (
 	char_t* buf, size_t size, const char_t* fmt, va_list arg) 
 {
 	return qse_vsprintf (buf, size, fmt, arg);
+}
+
+int StdAwk::SourceFile::open (Data& io)
+{
+	qse_sio_t* sio;
+
+	if (name[0] == QSE_T('-') &&
+	    name[1] == QSE_T('\0'))
+	{
+		sio = (io.getMode() == READ)? qse_sio_in: qse_sio_out;
+	}
+	else
+	{
+		sio = qse_sio_open (
+			((awk_t*)io)->mmgr,
+			0,
+			name,
+			(io.getMode() == READ? 
+				QSE_SIO_READ: 
+				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+		);
+		if (sio == QSE_NULL) return -1;
+	}
+
+	io.setHandle (sio);
+	return 1;
+}
+
+int StdAwk::SourceFile::close (Data& io)
+{
+	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
+
+	qse_sio_flush (sio);
+
+	if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
+	{
+		qse_sio_close (sio);
+	}
+
+	return 0;
+}
+
+StdAwk::ssize_t StdAwk::SourceFile::read (Data& io, char_t* buf, size_t len)
+{
+	return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+}
+
+StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, char_t* buf, size_t len)
+{
+	return qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+}
+
+int StdAwk::SourceString::open (Data& io)
+{
+	/* SourceString does not support writing */
+	if (io.getMode() == WRITE) return -1;
+	ptr = str;
+	return 1;
+}
+
+int StdAwk::SourceString::close (Data& io)
+{
+	return 0;
+}
+
+StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
+{
+	qse_size_t n = 0;
+	while (*ptr != QSE_T('\0') && n < len) buf[n++] = *ptr++;
+	return n;
+}
+
+StdAwk::ssize_t StdAwk::SourceString::write (Data& io, char_t* buf, size_t len)
+{
+	return -1;
 }
 
 /////////////////////////////////

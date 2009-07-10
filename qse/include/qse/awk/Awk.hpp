@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 225 2009-07-08 13:01:45Z hyunghwan.chung $
+ * $Id: Awk.hpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -55,137 +55,67 @@ public:
 
 	typedef qse_awk_rio_cmd_t rio_cmd_t;
 
-	/**
-	 * Represents the source code I/O context for Awk::parse.
-	 * An instance of Awk::Source is passed to Awk::openSource, 
-	 * Awk::readSource, Awk::writeSource, Awk::closeSource
-	 * when Awk::parse calls them to read the source code and write the 
-	 * internal parse tree. It indicates the mode of the context and
-	 * provides space for data that may be needed for the I/O operation.
-	 */
 	class Source
 	{
 	public:
-		friend class Awk;
-
-		/** Mode of source code I/O. */
 		enum Mode
 		{	
 			READ,   /**< source code read. */
 			WRITE   /**< source code write. */
 		};
 
-	protected:
-		Source (Mode mode);
+		class Data
+		{
+		public:
+			friend class Awk;
 
-	public:
-		/**
-		 * Returns the mode of the source code I/O. 
-		 * You may call this method in Awk::openSource and 
-		 * Awk::closeSource to determine the mode as shown in 
-		 * the example below. This method always returns Source::READ 
-		 * and Source::WRITE respectively when called from 
-		 * Awk::readSource and Awk::writeSource.
-		 *
-		 * @code
-		 * int openSource (Source& io)
-		 * {
-		 * 	if (io.getMode() == Source::READ)
-		 * 	{
-		 * 		// open for reading 
-		 * 		return 1;
-		 * 	}
-		 * 	else (io.getMode() == Source::WRITE)
-		 * 	{
-		 *		// open for writing
-		 *		return 1;
-		 * 	}
-		 * 	return -1;
-		 * }
-		 *
-		 * int closeSource (Source& io)
-		 * {
-		 * 	if (io.getMode() == Source::READ)
-		 * 	{
-		 * 		// close for reading 
-		 * 		return 0;
-		 * 	}
-		 * 	else (io.getMode() == Source::WRITE)
-		 * 	{
-		 *		// close for writing
-		 *		return 0;
-		 * 	}
-		 * 	return -1;
-		 * }
-		 * @endcode
-		 *
-		 * @return Awk::Source::READ or Awk::Source::WRITE
-		 */
-		Mode getMode() const;
+		protected:
+			Data (Awk* awk, Mode mode): 
+				awk (awk), mode (mode), handle (QSE_NULL) {}
 
-		/**
-		 * Returns the value set with Source::setHandle. 
-		 * QSE_NULL is returned if it has not been set with 
-		 * Source::setHandle. You usually call this method
-		 * from Awk::readSource, Awk::writeSource, and 
-		 * Awk::closeSource to get the value set in Awk::openSource
-		 * as shown in the example below.
-		 *
-		 * @code
-		 * int closeSource (Source& io)
-		 * {
-		 * 	if (io.getMode() == Source::READ)
-		 * 	{
-		 * 		fclose ((FILE*)io.getHandle());
-		 * 		return 0;
-		 * 	}
-		 * 	else (io.getMode() == Source::WRITE)
-		 * 	{
-		 * 		fclose ((FILE*)io.getHandle());
-		 * 		return 0;
-		 * 	}
-		 * 	return -1;
-		 * }
-		 * @endcode
-		 *
-		 * @return an arbitrary value of type void* set with 
-		 *         Source::setHandle() or QSE_NULL
-		 */
-		const void* getHandle () const;
+		public:
+			Mode getMode() const
+			{
+				return mode;
+			}
 
-		/**
-		 * Sets the handle value. Source::getHandle can retrieve
-		 * the value set with Source::setHandle. You usually call 
-		 * this from Awk::openSource as shown in the example below.
-		 *
-		 * <pre>
-		 * int openSource (Source& io)
-		 * {
-		 * 	if (io.getMode() == Source::READ)
-		 * 	{
-		 * 		FILE* fp = fopen ("t.awk", "r");
-		 * 		if (fp == NULL) return -1;
-		 * 		io.setHandle (fp);
-		 * 		return 1;
-		 * 	}
-		 * 	else (io.getMode() == Source::WRITE)
-		 * 	{
-		 * 		FILE* fp = fopen ("t.out", "w");
-		 * 		if (fp == NULL) return -1;
-		 * 		io.setHandle (fp);
-		 *		return 1;
-		 * 	}
-		 * 	return -1;
-		 * }
-		 * </pre>
-		 *
-		 * @param handle an arbitrary value of the type void*
-		 */
-		void  setHandle (void* handle);
+			const void* getHandle () const
+			{
+				return handle;
+			}
 
-	protected:
-		Mode  mode;
-		void* handle;
+			void  setHandle (void* handle)
+			{
+				this->handle = handle;
+			}
+
+			operator Awk* () const
+			{
+				return awk;
+			}
+
+			operator awk_t* () const
+			{
+				return awk->awk;
+			}
+
+		protected:
+			Awk* awk;
+			Mode  mode;
+			void* handle;
+		};
+
+		Source () {}
+		virtual ~Source () {}
+
+		virtual int open (Data& io) = 0;
+		virtual int close (Data& io) = 0;
+		virtual ssize_t read (Data& io, char_t* buf, size_t len) = 0;
+		virtual ssize_t write (Data& io, char_t* buf, size_t len) = 0;
+
+	private:
+		Source (const Source&);
+		Source& operator= (const Source&);
 	};
 
 	class Run;
@@ -212,6 +142,10 @@ public:
 	protected:
 		Run* run;
 		rio_arg_t* riod;
+
+	private:
+		RIOBase (const RIOBase&);
+		RIOBase& operator= (const RIOBase&);
 	};
 
 	/**
@@ -819,7 +753,7 @@ public:
 	 *
 	 * @return a Run object on success, QSE_NULL on failure
 	 */
-	virtual Awk::Run* parse ();
+	virtual Awk::Run* parse (Source* in, Source* out);
 
 	/**
 	 * Executes the BEGIN block, pattern-action blocks, and the END block.
@@ -901,77 +835,6 @@ protected:
 	virtual int dispatchFunction (Run* run, const char_t* name, size_t len);
 
 	/** 
-	 * @name Source code I/O handlers
-	 * A subclass should override the following methods to support the 
-	 * source code input and output. The awk interpreter calls the 
-	 * following methods when the parse method is invoked.
-	 *
-	 * To read the source code, Awk::parse calls Awk::openSource, 
-	 * Awk::readSource, and Awk::closeSource as shown in the diagram below.
-	 * Any failures wll cause Awk::parse to return an error.
-	 *
-	 * \image html awk-srcio-read.png
-	 *
-	 * Awk::parse is able to write back the internal parse tree by
-	 * calling Awk::openSource, Awk::writeSource, and Awk::closeSource
-	 * as shown in the diagram below. Any failures will cause Awk::parse
-	 * to return an error.
-	 *
-	 * \image html awk-srcio-write.png
-	 *
-	 * Awk::parse passes an instance of Awk::Source when invoking these
-	 * methods. You can determine the context of the method by calling
-	 * Awk::Source::getMode and inspecting its return value. You may use
-	 * Awk::Source::getHandle and Awk::Source::setHandle to store and
-	 * retrieve the data information needed to complete the operation.
-	 */
-	/*@{*/
-	/** 
-	 * Opens the source code stream. 
-	 * A subclass should override this method. It should return 1 on
-	 * success, -1 on failure, and 0 if the opening operation
-	 * is successful but has reached the end of the stream.
-	 * @param io  I/O context passed from Awk::parse
-	 * @see Awk::Source::getMode, Awk::Source::setHandle
-	 */
-	virtual int openSource  (Source& io) = 0;
-
-	/** 
-	 * Closes the source code stream.
-	 * A subclass should override this method. It should return 0 on
-	 * success and -1 on failure.
-	 * @param io  I/O context passed from Awk::parse
-	 * @see Awk::Source::getMode, Awk::Source::getHandle
-	 */
-	virtual int closeSource (Source& io) = 0;
-
-	/** 
-	 * Reads from the source code input stream.
-	 * A subclass should override this method. It should return 0 when
-	 * it has reached the end of the stream and -1 on falure.
-	 * When it has data to return, it should read characters not longer
-	 * than len characters, fill the buffer pointed at by buf with them,
-	 * and return the number of the charaters read.
-	 * @param io  I/O context passed from Awk::parse
-	 * @param buf pointer to a character buffer
-	 * @param len number of characters in the buffer
-	 */
-	virtual ssize_t readSource  (Source& io, char_t* buf, size_t len) = 0;
-
-	/** 
-	 * Writes to the source code output stream.
-	 * A subclass should override this method. It should return 0 when
-	 * it has reachedthe end of the stream and -1 on failure.
-	 * It should write up to len characters from the buffer pointed at
-	 * by buf and return the number of characters written.
-	 * @param io  I/O context passed from Awk::parse
-	 * @param buf pointer to a character buffer
-	 * @param len size of the buffer in characters
-	 */
-	virtual ssize_t writeSource (Source& io, char_t* buf, size_t len) = 0;
-	/*@}*/
-	
-	/** 
 	 * @name Pipe I/O handlers
 	 * Pipe operations are achieved through the following methods.
 	 */
@@ -1018,9 +881,9 @@ protected:
 	                         const char_t* fmt, va_list arg) = 0;
 
 	// static glue members for various handlers
-	static ssize_t sourceReader (
+	static ssize_t readSource (
 		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
-	static ssize_t sourceWriter (
+	static ssize_t writeSource (
 		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
@@ -1050,8 +913,11 @@ protected:
 	errstr_t dflerrstr;
 	map_t* functionMap;
 
-	Source sourceIn;
-	Source sourceOut;
+	Source::Data sourceIn;
+	Source::Data sourceOut;
+
+	Source* sourceReader;
+	Source* sourceWriter;
 
 	ErrorNumber errnum;
 	size_t      errlin;
