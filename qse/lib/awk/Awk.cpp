@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
+ * $Id: Awk.cpp 227 2009-07-10 14:05:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -147,7 +147,7 @@ int Awk::Console::setFileName (const char_t* name)
 
 int Awk::Console::setFNR (long_t fnr)
 {
-	qse_awk_val_t* tmp;
+	val_t* tmp;
 	int n;
 
 	tmp = qse_awk_rtx_makeintval (this->run->rtx, fnr);
@@ -163,6 +163,271 @@ int Awk::Console::setFNR (long_t fnr)
 Awk::Console::Mode Awk::Console::getMode () const
 {
 	return (Mode)riod->mode;
+}
+
+//////////////////////////////////////////////////////////////////
+// Awk::Value
+//////////////////////////////////////////////////////////////////
+
+Awk::Value::Value (const Value& v): run (v.run), val (v.val)
+{
+	if (run != QSE_NULL)
+		qse_awk_rtx_refupval (run->rtx, val);
+}
+
+Awk::Value::~Value ()
+{
+	if (run != QSE_NULL)
+		qse_awk_rtx_refdownval (run->rtx, val);
+}
+
+Awk::Value& Awk::Value::operator= (const Value& v)
+{
+	if (run != QSE_NULL)
+		qse_awk_rtx_refdownval (run->rtx, val);
+
+	run = v.run;
+	val = v.val;
+
+	if (run != QSE_NULL)
+		qse_awk_rtx_refupval (run->rtx, val);
+
+	return *this;
+}
+	
+void Awk::Value::clear ()
+{
+	if (run != QSE_NULL)
+	{
+		qse_awk_rtx_refdownval (run->rtx, val);
+
+		run = QSE_NULL;
+		val = qse_awk_val_nil;
+	}
+}
+
+int Awk::Value::setValue (val_t* v)
+{
+	if (run == QSE_NULL) return -1;
+	return setValue (run, v);
+}
+
+int Awk::Value::setValue (Run* r, val_t* v)
+{
+	if (run != QSE_NULL)
+		qse_awk_rtx_refdownval (run->rtx, val);
+	qse_awk_rtx_refupval (r->rtx, v);
+
+	run = r;
+	val = v;
+
+	return 0;
+}
+
+int Awk::Value::setInt (long_t v)
+{
+	if (run == QSE_NULL) return -1;
+	return setInt (run, v);
+}
+
+int Awk::Value::setInt (Run* r, long_t v)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makeintval (r->rtx, v);
+	if (tmp == QSE_NULL) return -1;
+
+	int n = setValue (r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+int Awk::Value::setReal (real_t v)
+{
+	if (run == QSE_NULL) return -1;
+	return setReal (run, v);
+}
+
+int Awk::Value::setReal (Run* r, real_t v)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makerealval (r->rtx, v);
+	if (tmp == QSE_NULL) return -1;
+			
+	int n = setValue (r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+int Awk::Value::setStr (const char_t* str, size_t len)
+{
+	if (run == QSE_NULL) return -1;
+	return setStr (run, str, len);
+}
+
+int Awk::Value::setStr (Run* r, const char_t* str, size_t len)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
+	if (tmp == QSE_NULL) return -1;
+
+	int n = setValue (r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+int Awk::Value::setIndexed (const char_t* idx, size_t isz, val_t* v)
+{
+	if (run == QSE_NULL) return -1;
+	return setIndexed (run, idx, isz, v);
+}
+
+int Awk::Value::setIndexed (Run* r, const char_t* idx, size_t isz, val_t* v)
+{
+	if (val->type != QSE_AWK_VAL_MAP)
+	{
+		/* the previous value is not a map. 
+		 * a new map value needs to be created first */
+		val_t* map = qse_awk_rtx_makemapval (run->rtx);
+		if (map == QSE_NULL) return -1;
+
+		qse_awk_rtx_refupval (r->rtx, map);
+		qse_awk_rtx_refupval (r->rtx, v);
+
+		/* update the map with a given value */
+		pair_t* pair = qse_map_upsert (
+			((qse_awk_val_map_t*)map)->map, 
+			(char_t*)idx, isz, v, 0);
+		if (pair == QSE_NULL)
+		{
+			qse_awk_rtx_refdownval (r->rtx, v);
+			qse_awk_rtx_refdownval (r->rtx, map);
+			run->setError (ERR_NOMEM, 0, QSE_NULL, 0);
+			return -1;
+		}
+
+		if (run != QSE_NULL)
+			qse_awk_rtx_refdownval (run->rtx, val);
+
+		run = r;
+		val = map;
+	}
+	else
+	{
+		QSE_ASSERT (run != QSE_NULL);
+
+		// if the previous value is a map, things are a bit simpler 
+		// however it needs to check if the runtime context matches
+		// with the previous one.
+		if (run != r) 
+		{
+			// it can't span across multiple runtime contexts
+			run->setError (ERR_INVAL);
+			return -1;
+		}
+
+		qse_awk_rtx_refupval (r->rtx, v);
+
+		pair_t* pair = qse_map_upsert (
+			((qse_awk_val_map_t*)val)->map, 
+			(char_t*)idx, isz, v, 0);
+		if (pair == QSE_NULL)
+		{
+			qse_awk_rtx_refdownval (r->rtx, v);
+			run->setError (ERR_NOMEM);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+int Awk::Value::setIndexed (const char_t* idx, size_t isz, long_t v)
+{
+	if (run == QSE_NULL) return -1;
+	return setIndexed (run, idx, isz, v);
+}
+
+int Awk::Value::setIndexed (Run* r, const char_t* idx, size_t isz, long_t v)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makeintval (r->rtx, v);
+	if (tmp == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (r->rtx, tmp);
+	int n = setIndexed (r, idx, isz, tmp);
+	qse_awk_rtx_refdownval (r->rtx, tmp);
+
+	return n;
+}
+
+int Awk::Value::setIndexed (const char_t* idx, size_t isz, real_t v)
+{
+	if (run == QSE_NULL) return -1;
+	return setIndexed (run, idx, isz, v);
+}
+
+int Awk::Value::setIndexed (Run* r, const char_t* idx, size_t isz, real_t v)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makerealval (r->rtx, v);
+	if (tmp == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (r->rtx, tmp);
+	int n = setIndexed (r, idx, isz, tmp);
+	qse_awk_rtx_refdownval (r->rtx, tmp);
+
+	return n;
+}
+
+int Awk::Value::setIndexed (const char_t* idx, size_t isz, const char_t* str, size_t len)
+{
+	if (run == QSE_NULL) return -1;
+	return setIndexed (run, idx, isz, str, len);
+}
+
+int Awk::Value::setIndexed (Run* r, const char_t* idx, size_t isz, const char_t* str, size_t len)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
+	if (tmp == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (r->rtx, tmp);
+	int n = setIndexed (r, idx, isz, tmp);
+	qse_awk_rtx_refdownval (r->rtx, tmp);
+
+	return n;
+}
+
+bool Awk::Value::isIndexed () const
+{
+	QSE_ASSERT (val != QSE_NULL);
+	return val->type == QSE_AWK_VAL_MAP;
+}
+
+int Awk::Value::getIndexed (const char_t* idx, size_t isz, Value& v) const
+{
+	QSE_ASSERT (val != QSE_NULL);
+
+	// not a map. v is just nil. not an error 
+	if (val->type != QSE_AWK_VAL_MAP) 
+	{	
+		v.clear ();
+		return 0;
+	}
+
+	// get the value from the map.
+	qse_awk_val_map_t* m = (qse_awk_val_map_t*)val;
+	pair_t* pair = qse_map_search (m->map, idx, isz);
+
+	// the key is not found. it is not an error. v is just nil 
+	if (pair == QSE_NULL) 
+	{
+		v.clear ();
+		return 0; 
+	}
+
+	// if v.set fails, it should return an error 
+	return v.setValue (run, (val_t*)QSE_MAP_VPTR(pair));
 }
 
 //////////////////////////////////////////////////////////////////
@@ -567,9 +832,9 @@ Awk::Return::operator Awk::val_t* () const
 
 int Awk::Return::set (long_t v)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
-	qse_awk_val_t* x = qse_awk_rtx_makeintval (this->run->rtx, v);
+	val_t* x = qse_awk_rtx_makeintval (this->run->rtx, v);
 	if (x == QSE_NULL) return -1;
 
 	qse_awk_rtx_refdownval (this->run->rtx, this->val);
@@ -581,9 +846,9 @@ int Awk::Return::set (long_t v)
 
 int Awk::Return::set (real_t v)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
-	qse_awk_val_t* x = qse_awk_rtx_makerealval (this->run->rtx, v);
+	val_t* x = qse_awk_rtx_makerealval (this->run->rtx, v);
 	if (x == QSE_NULL) return -1;
 
 	qse_awk_rtx_refdownval (this->run->rtx, this->val);
@@ -595,9 +860,9 @@ int Awk::Return::set (real_t v)
 
 int Awk::Return::set (const char_t* ptr, size_t len)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
-	qse_awk_val_t* x = qse_awk_rtx_makestrval (this->run->rtx, ptr, len);
+	val_t* x = qse_awk_rtx_makestrval (this->run->rtx, ptr, len);
 	if (x == QSE_NULL) return -1;
 
 	qse_awk_rtx_refdownval (this->run->rtx, this->val);
@@ -614,7 +879,7 @@ bool Awk::Return::isIndexed () const
 
 int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
 	int opt = this->run->awk->getOption();
 	if ((opt & OPT_MAPTOVAR) == 0)
@@ -626,12 +891,12 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 
 	if (this->val->type != QSE_AWK_VAL_MAP)
 	{
-		qse_awk_val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
+		val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
 		if (x == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x);
 
-		qse_awk_val_t* x2 = qse_awk_rtx_makeintval (this->run->rtx, v);
+		val_t* x2 = qse_awk_rtx_makeintval (this->run->rtx, v);
 		if (x2 == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (this->run->rtx, x);
@@ -656,7 +921,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 	}
 	else
 	{
-		qse_awk_val_t* x2 = qse_awk_rtx_makeintval (this->run->rtx, v);
+		val_t* x2 = qse_awk_rtx_makeintval (this->run->rtx, v);
 		if (x2 == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x2);
@@ -677,7 +942,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, long_t v)
 
 int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
 	int opt = this->run->awk->getOption();
 	if ((opt & OPT_MAPTOVAR) == 0)
@@ -689,12 +954,12 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 
 	if (this->val->type != QSE_AWK_VAL_MAP)
 	{
-		qse_awk_val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
+		val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
 		if (x == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x);
 
-		qse_awk_val_t* x2 = qse_awk_rtx_makerealval (this->run->rtx, v);
+		val_t* x2 = qse_awk_rtx_makerealval (this->run->rtx, v);
 		if (x2 == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (this->run->rtx, x);
@@ -719,7 +984,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 	}
 	else
 	{
-		qse_awk_val_t* x2 = qse_awk_rtx_makerealval (this->run->rtx, v);
+		val_t* x2 = qse_awk_rtx_makerealval (this->run->rtx, v);
 		if (x2 == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x2);
@@ -740,7 +1005,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, real_t v)
 
 int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, size_t sln)
 {
-	QSE_ASSERT (this->run != QSE_NULL);
+	if (this->run == QSE_NULL) return -1;
 
 	int opt = this->run->awk->getOption();
 	if ((opt & OPT_MAPTOVAR) == 0)
@@ -752,12 +1017,12 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 
 	if (this->val->type != QSE_AWK_VAL_MAP)
 	{
-		qse_awk_val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
+		val_t* x = qse_awk_rtx_makemapval (this->run->rtx);
 		if (x == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x);
 
-		qse_awk_val_t* x2 = qse_awk_rtx_makestrval (this->run->rtx, str, sln);
+		val_t* x2 = qse_awk_rtx_makestrval (this->run->rtx, str, sln);
 		if (x2 == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (this->run->rtx, x);
@@ -782,7 +1047,7 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 	}
 	else
 	{
-		qse_awk_val_t* x2 = qse_awk_rtx_makestrval (this->run->rtx, str, sln);
+		val_t* x2 = qse_awk_rtx_makestrval (this->run->rtx, str, sln);
 		if (x2 == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (this->run->rtx, x2);
@@ -803,6 +1068,8 @@ int Awk::Return::setIndexed (const char_t* idx, size_t iln, const char_t* str, s
 
 int Awk::Return::setIndexed (long_t idx, long_t v)
 {
+	if (this->run == QSE_NULL) return -1;
+
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
@@ -831,6 +1098,8 @@ int Awk::Return::setIndexed (long_t idx, long_t v)
 
 int Awk::Return::setIndexed (long_t idx, real_t v)
 {
+	if (this->run == QSE_NULL) return -1;
+
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
@@ -859,6 +1128,8 @@ int Awk::Return::setIndexed (long_t idx, real_t v)
 
 int Awk::Return::setIndexed (long_t idx, const char_t* str, size_t sln)
 {
+	if (this->run == QSE_NULL) return -1;
+
 	char_t ri[128];
 
 	int rl = Awk::sprintf (
@@ -993,7 +1264,7 @@ int Awk::Run::setGlobal (int id, long_t v)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
-	qse_awk_val_t* tmp = qse_awk_rtx_makeintval (this->rtx, v);
+	val_t* tmp = qse_awk_rtx_makeintval (this->rtx, v);
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (this->rtx, tmp);
@@ -1006,7 +1277,7 @@ int Awk::Run::setGlobal (int id, real_t v)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
-	qse_awk_val_t* tmp = qse_awk_rtx_makerealval (this->rtx, v);
+	val_t* tmp = qse_awk_rtx_makerealval (this->rtx, v);
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (this->rtx, tmp);
@@ -1019,7 +1290,7 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
-	qse_awk_val_t* tmp = qse_awk_rtx_makestrval (this->rtx, ptr, len);
+	val_t* tmp = qse_awk_rtx_makestrval (this->rtx, ptr, len);
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (this->rtx, tmp);

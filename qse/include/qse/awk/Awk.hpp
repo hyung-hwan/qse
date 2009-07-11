@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
+ * $Id: Awk.hpp 227 2009-07-10 14:05:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -225,6 +225,76 @@ public:
 	friend class Run;
 	friend class Argument;
 	friend class Return;
+
+	class Value
+	{
+	public:
+		Value (): run (QSE_NULL), val (qse_awk_val_nil) {}
+		Value (Run& run): run (&run), val (qse_awk_val_nil) {}
+		Value (Run* run): run (run), val (qse_awk_val_nil) {}
+
+		Value (const Value& v);
+		~Value ();
+
+		Value& operator= (const Value& v);
+
+		void clear ();
+
+		int setValue (val_t* v);
+		int setValue (Run* r, val_t* v);
+
+		int setInt (long_t v);
+		int setInt (Run* r, long_t v);
+		int setReal (real_t v);
+		int setReal (Run* r, real_t v);
+		int setStr (const char_t* str, size_t len);
+		int setStr (Run* r, const char_t* str, size_t len);
+
+		int setIndexed (const char_t* idx, size_t isz, val_t* v);
+		int setIndexed (Run* r, const char_t* idx, size_t isz, val_t* v);
+
+		int setIndexed (const char_t* idx, size_t isz, long_t v);
+		int setIndexed (Run* r, const char_t* idx, size_t isz, long_t v);
+		int setIndexed (
+			const char_t* idx,
+			size_t        isz,
+			real_t        v
+		);
+
+		int setIndexed (
+			Run*          r,
+			const char_t* idx,
+			size_t        isz,
+			real_t        v
+		);
+
+		int setIndexed (
+			const char_t* idx,
+			size_t        isz,
+			const char_t* str,
+			size_t        len
+		);
+
+		int setIndexed (
+			Run*          r,
+			const char_t* idx,
+			size_t        isz,
+			const char_t* str,
+			size_t        len
+		);
+
+		bool isIndexed () const;
+
+		int getIndexed (
+			const char_t* idx,
+			size_t        isz,
+			Value&        val
+		) const;
+
+	protected:
+		Run* run;
+		val_t* val;
+	};
 
 	/**
 	 * Represents an argument to an intrinsic function
