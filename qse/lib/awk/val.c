@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: val.c 228 2009-07-11 03:01:36Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1168,7 +1168,7 @@ qse_char_t* qse_awk_rtx_valtocpldup (
 }
 
 int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* run, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
 {
 	if (v->type == QSE_AWK_VAL_NIL) 
 	{
@@ -1191,7 +1191,7 @@ int qse_awk_rtx_valtonum (
 	if (v->type == QSE_AWK_VAL_STR)
 	{
 		return qse_awk_rtx_strtonum (
-			run, 0,
+			rtx, 0,
 			((qse_awk_val_str_t*)v)->ptr, 
 			((qse_awk_val_str_t*)v)->len, 
 			l, r
@@ -1200,11 +1200,11 @@ int qse_awk_rtx_valtonum (
 
 #ifdef DEBUG_VAL
 	qse_dprintf (
-		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum\n"), 
+		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum\n"),
 		v->type);
 #endif
 
-	qse_awk_rtx_seterror (run, QSE_AWK_EVALTYPE, 0, QSE_NULL);
+	qse_awk_rtx_seterror (rtx, QSE_AWK_EVALTYPE, 0, QSE_NULL);
 	return -1; /* error */
 }
 

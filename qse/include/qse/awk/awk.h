@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: awk.h 228 2009-07-11 03:01:36Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1712,6 +1712,10 @@ qse_bool_t qse_awk_rtx_valtobool (
  * the same as QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
  * u.strpcat field instead of the u.strp field.
  *
+ * In the context where @a val is determined to be of the type
+ * #QSE_AWK_VAL_STR, you may access its string pointer and length directly
+ * instead of calling this function.
+ *
  * @return the pointer to a string converted on success, #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtostr (
@@ -1747,6 +1751,7 @@ qse_char_t* qse_awk_rtx_valtocpldup (
  * If the value is converted to a long number, it is stored in the memory
  * pointed to by l and 0 is returned. If the value is converted to a real 
  * number, it is stored in the memory pointed to by r and 1 is returned.
+ * The function never fails as long as @a val points to a valid value.
  *
  * The code below shows how to convert a value to a number and determine
  * if it is an integer or a floating-point number.

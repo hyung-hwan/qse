@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 227 2009-07-10 14:05:51Z hyunghwan.chung $
+ * $Id: Awk.cpp 228 2009-07-11 03:01:36Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -206,13 +206,88 @@ void Awk::Value::clear ()
 	}
 }
 
-int Awk::Value::setValue (val_t* v)
+Awk::Value::operator Awk::long_t () const
 {
-	if (run == QSE_NULL) return -1;
-	return setValue (run, v);
+	long_t v;
+	if (get (&v) <= -1) v = 0;
+	return v;
 }
 
-int Awk::Value::setValue (Run* r, val_t* v)
+Awk::Value::operator Awk::real_t () const
+{
+	real_t v;
+	if (get (&v) <= -1) v = 0.0;
+	return v;
+}
+
+Awk::Value::operator const Awk::char_t* () const
+{
+	const char_t* ptr;
+	size_t len;
+	if (get (&ptr, &len) <= -1) ptr = QSE_T("");
+	return ptr;
+}
+
+int Awk::Value::get (long_t* v) const
+{
+	long_t lv = 0;
+
+	if (run != QSE_NULL)
+	{
+		real_t rv;
+		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
+		if (n <= -1) return -1;
+		if (n >= 1) lv = rv;
+	}
+
+	*v = lv;
+	return 0;
+}
+
+int Awk::Value::get (real_t* v) const
+{
+	real_t rv = 0;
+
+	if (run != QSE_NULL)
+	{
+		long_t lv;
+		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
+		if (n <= -1) return -1;
+		if (n == 0) rv = lv;
+	}
+
+	*v = rv;
+	return 0;
+}
+
+int Awk::Value::get (const char_t** str, size_t* len) const
+{
+#if 0
+if v is a string, return the pointer and the length.
+otherwise call valtostr.... how can i handle free then???
+
+	real_t rv = 0;
+
+	if (run != QSE_NULL)
+	{
+		long_t lv;
+		int n = qse_awk_rtx_valtostr (run->rtx, val, &lv, &rv);
+		if (n <= -1) return -1;
+		if (n == 0) rv = lv;
+	}
+
+	*v = rv;
+	return 0;
+#endif
+}
+
+int Awk::Value::set (val_t* v)
+{
+	if (run == QSE_NULL) return -1;
+	return set (run, v);
+}
+
+int Awk::Value::set (Run* r, val_t* v)
 {
 	if (run != QSE_NULL)
 		qse_awk_rtx_refdownval (run->rtx, val);
@@ -224,53 +299,70 @@ int Awk::Value::setValue (Run* r, val_t* v)
 	return 0;
 }
 
-int Awk::Value::setInt (long_t v)
+int Awk::Value::set (long_t v)
 {
 	if (run == QSE_NULL) return -1;
-	return setInt (run, v);
+	return set (run, v);
 }
 
-int Awk::Value::setInt (Run* r, long_t v)
+int Awk::Value::set (Run* r, long_t v)
 {
 	val_t* tmp;
 	tmp = qse_awk_rtx_makeintval (r->rtx, v);
 	if (tmp == QSE_NULL) return -1;
 
-	int n = setValue (r, tmp);
+	int n = set (r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
 
-int Awk::Value::setReal (real_t v)
+int Awk::Value::set (real_t v)
 {
 	if (run == QSE_NULL) return -1;
-	return setReal (run, v);
+	return set (run, v);
 }
 
-int Awk::Value::setReal (Run* r, real_t v)
+int Awk::Value::set (Run* r, real_t v)
 {
 	val_t* tmp;
 	tmp = qse_awk_rtx_makerealval (r->rtx, v);
 	if (tmp == QSE_NULL) return -1;
 			
-	int n = setValue (r, tmp);
+	int n = set (r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
 
-int Awk::Value::setStr (const char_t* str, size_t len)
+int Awk::Value::set (const char_t* str, size_t len)
 {
 	if (run == QSE_NULL) return -1;
-	return setStr (run, str, len);
+	return set (run, str, len);
 }
 
-int Awk::Value::setStr (Run* r, const char_t* str, size_t len)
+int Awk::Value::set (Run* r, const char_t* str, size_t len)
 {
 	val_t* tmp;
 	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
 	if (tmp == QSE_NULL) return -1;
 
-	int n = setValue (r, tmp);
+	int n = set (r, tmp);
+	QSE_ASSERT (n == 0);
+	return n;
+}
+
+int Awk::Value::set (const char_t* str)
+{
+	if (run == QSE_NULL) return -1;
+	return set (run, str);
+}
+
+int Awk::Value::set (Run* r, const char_t* str)
+{
+	val_t* tmp;
+	tmp = qse_awk_rtx_makestrval0 (r->rtx, str);
+	if (tmp == QSE_NULL) return -1;
+
+	int n = set (r, tmp);
 	QSE_ASSERT (n == 0);
 	return n;
 }
@@ -427,7 +519,7 @@ int Awk::Value::getIndexed (const char_t* idx, size_t isz, Value& v) const
 	}
 
 	// if v.set fails, it should return an error 
-	return v.setValue (run, (val_t*)QSE_MAP_VPTR(pair));
+	return v.set (run, (val_t*)QSE_MAP_VPTR(pair));
 }
 
 //////////////////////////////////////////////////////////////////
