@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 227 2009-07-10 14:05:51Z hyunghwan.chung $
+ * $Id: Awk.hpp 228 2009-07-11 03:01:36Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -238,17 +238,28 @@ public:
 
 		Value& operator= (const Value& v);
 
+		operator val_t* () const { return val; }
+		operator long_t () const;
+		operator real_t () const;
+		operator const char_t* () const;
+
 		void clear ();
 
-		int setValue (val_t* v);
-		int setValue (Run* r, val_t* v);
+		int get (long_t* v) const;
+		int get (real_t* v) const;
+		int get (const char_t** str, size_t* len) const;
 
-		int setInt (long_t v);
-		int setInt (Run* r, long_t v);
-		int setReal (real_t v);
-		int setReal (Run* r, real_t v);
-		int setStr (const char_t* str, size_t len);
-		int setStr (Run* r, const char_t* str, size_t len);
+		int set (val_t* v);
+		int set (Run* r, val_t* v);
+
+		int set (long_t v);
+		int set (Run* r, long_t v);
+		int set (real_t v);
+		int set (Run* r, real_t v);
+		int set (const char_t* str, size_t len);
+		int set (Run* r, const char_t* str, size_t len);
+		int set (const char_t* str);
+		int set (Run* r, const char_t* str);
 
 		int setIndexed (const char_t* idx, size_t isz, val_t* v);
 		int setIndexed (Run* r, const char_t* idx, size_t isz, val_t* v);

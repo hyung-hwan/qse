@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 224 2009-07-07 13:05:10Z hyunghwan.chung $
+ * $Id: run.c 228 2009-07-11 03:01:36Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -243,6 +243,16 @@ typedef qse_awk_val_t* (*binop_func_t) (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
+static qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
+{
+	/* i use this function to typecast qse_cstr_t* to 
+	 * qse_xstr_t* instead of direct typecasting.
+	 * it is just to let the compiler emit some warnings 
+	 * if the data type of the actual parameter happened to
+	 * haved changed to something else. */ 
+	return (qse_cstr_t*)xstr;
+}
+
 qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
 {
 	return (qse_size_t) STACK_NARGS (run);
@@ -277,13 +287,11 @@ static int set_global (
 		if (var != QSE_NULL)
 		{
 			/* global variable */
-			qse_cstr_t errarg;
-
-			errarg.ptr = var->id.name.ptr; 
-			errarg.len = var->id.name.len;
-
-			qse_awk_rtx_seterror (run, 
-				QSE_AWK_EMAPTOSCALAR, var->line, &errarg);
+			qse_awk_rtx_seterror (
+				run, 
+				QSE_AWK_EMAPTOSCALAR, 
+				var->line, xstr_to_cstr(&var->id.name)
+			);
 		}
 		else
 		{
@@ -1492,12 +1500,9 @@ qse_awk_val_t* qse_awk_rtx_call (
 	);
 	if (pair == QSE_NULL) 
 	{
-		qse_cstr_t errarg;
-
-		errarg.ptr = call.what.fun.name.ptr;
-		errarg.len = call.what.fun.name.len;
-
-		qse_awk_rtx_seterror (rtx, QSE_AWK_EFUNNF, 0, &errarg);
+		qse_awk_rtx_seterror (
+			rtx, QSE_AWK_EFUNNF, 
+			0, xstr_to_cstr(&call.what.fun.name));
 		return QSE_NULL;
 	}
 
@@ -2439,6 +2444,70 @@ static int run_nextfile (qse_awk_rtx_t* run, qse_awk_nde_nextfile_t* nde)
 		run_nextinfile (run, nde);
 }
 
+static int delete_indexed (
+	qse_awk_rtx_t* rtx, qse_map_t* map, qse_awk_nde_var_t* var)
+{
+	qse_awk_val_t* idx;
+
+	QSE_ASSERT (var->idx != QSE_NULL);
+
+	idx = eval_expression (rtx, var->idx);
+	if (idx == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (rtx, idx);
+
+	if (idx->type == QSE_AWK_VAL_STR)
+	{
+		/* delete x["abc"] */
+
+		qse_map_delete (
+			map, 
+			((qse_awk_val_str_t*)idx)->ptr,
+			((qse_awk_val_str_t*)idx)->len
+		);
+		qse_awk_rtx_refdownval (rtx, idx);
+	}
+	else
+	{
+		/* delete x[20] */
+
+		qse_char_t* key;
+		qse_size_t keylen;
+		qse_char_t buf[IDXBUFSIZE];
+		qse_awk_rtx_valtostr_out_t out;
+
+		/* try with a fixed-size buffer */
+		out.type = QSE_AWK_RTX_VALTOSTR_CPL;
+		out.u.cpl.ptr = buf;
+		out.u.cpl.len = QSE_COUNTOF(buf);
+		key = qse_awk_rtx_valtostr (rtx, idx, &out);
+		if (key == QSE_NULL)
+		{
+			/* retry it in dynamic mode */
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			key = qse_awk_rtx_valtostr (rtx, idx, &out);
+		}
+
+		qse_awk_rtx_refdownval (rtx, idx);
+
+		if (key == QSE_NULL) 
+		{
+			/* change the error line */
+			rtx->errinf.lin = var->line;
+			return -1;
+		}
+
+		keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
+			out.u.cpl.len: out.u.cpldup.len;
+
+		qse_map_delete (map, key, keylen);
+
+		if (key != buf) QSE_AWK_FREE (rtx->awk, key);
+	}
+
+	return 0;
+}
+
 static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 {
 	qse_awk_nde_var_t* var;
@@ -2498,59 +2567,19 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 
 			if (val->type != QSE_AWK_VAL_MAP)
 			{
-				qse_cstr_t errarg;
-
-				errarg.ptr = var->id.name.ptr; 
-				errarg.len = var->id.name.len;
-
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOTDEL, var->line, &errarg);
+					run, QSE_AWK_ENOTDEL, 
+					var->line, xstr_to_cstr(&var->id.name));
 				return -1;
 			}
 
 			map = ((qse_awk_val_map_t*)val)->map;
 			if (var->type == QSE_AWK_NDE_NAMEDIDX)
 			{
-				qse_char_t* key;
-				qse_size_t keylen;
-				qse_awk_val_t* idx;
-				qse_char_t buf[IDXBUFSIZE];
-				qse_awk_rtx_valtostr_out_t out;
-
-				QSE_ASSERT (var->idx != QSE_NULL);
-
-				idx = eval_expression (run, var->idx);
-				if (idx == QSE_NULL) return -1;
-
-				qse_awk_rtx_refupval (run, idx);
-
-				/* try with a fixed-size buffer */
-				out.type = QSE_AWK_RTX_VALTOSTR_CPL;
-				out.u.cpl.ptr = buf;
-				out.u.cpl.len = QSE_COUNTOF(buf);
-				key = qse_awk_rtx_valtostr (run, idx, &out);
-				if (key == QSE_NULL)
+				if (delete_indexed (run, map, var) <= -1)
 				{
-					/* retry it in dynamic mode */
-					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-					key = qse_awk_rtx_valtostr (run, idx, &out);
-				}
-
-				qse_awk_rtx_refdownval (run, idx);
-
-				if (key == QSE_NULL) 
-				{
-					/* change the error line */
-					run->errinf.lin = var->line;
 					return -1;
 				}
-
-				keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
-					out.u.cpl.len: out.u.cpldup.len;
-
-				qse_map_delete (map, key, keylen);
-
-				if (key != buf) QSE_AWK_FREE (run->awk, key);
 			}
 			else
 			{
@@ -2625,13 +2654,9 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 
 			if (val->type != QSE_AWK_VAL_MAP)
 			{
-				qse_cstr_t errarg;
-
-				errarg.ptr = var->id.name.ptr; 
-				errarg.len = var->id.name.len;
-
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOTDEL, var->line, &errarg);
+					run, QSE_AWK_ENOTDEL,
+					var->line, xstr_to_cstr(&var->id.name));
 				return -1;
 			}
 
@@ -2640,45 +2665,10 @@ static int run_delete (qse_awk_rtx_t* run, qse_awk_nde_delete_t* nde)
 			    var->type == QSE_AWK_NDE_LCLIDX ||
 			    var->type == QSE_AWK_NDE_ARGIDX)
 			{
-				qse_char_t* key;
-				qse_size_t keylen;
-				qse_awk_val_t* idx;
-				qse_char_t buf[IDXBUFSIZE];
-				qse_awk_rtx_valtostr_out_t out;
-
-				QSE_ASSERT (var->idx != QSE_NULL);
-
-				idx = eval_expression (run, var->idx);
-				if (idx == QSE_NULL) return -1;
-
-				qse_awk_rtx_refupval (run, idx);
-
-				/* try with a fixed-size buffer */
-				out.type = QSE_AWK_RTX_VALTOSTR_CPL;
-				out.u.cpl.ptr = buf;
-				out.u.cpl.len = QSE_COUNTOF(buf);
-				key = qse_awk_rtx_valtostr (run, idx, &out);
-				if (key == QSE_NULL)
+				if (delete_indexed (run, map, var) <= -1)
 				{
-					/* retry it in the dynamic mode */
-					out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-					key = qse_awk_rtx_valtostr (run, idx, &out);
-				}
-
-				qse_awk_rtx_refdownval (run, idx);
-
-				if (key == QSE_NULL)
-				{
-					run->errinf.lin = var->line;
 					return -1;
 				}
-
-				keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
-					out.u.cpl.len: out.u.cpldup.len;
-
-				qse_map_delete (map, key, keylen);
-
-				if (key != buf) QSE_AWK_FREE (run->awk, key);
 			}
 			else
 			{
@@ -3379,13 +3369,9 @@ static qse_awk_val_t* do_assignment_scalar (
 		{
 			/* once a variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			qse_cstr_t errarg;
-
-			errarg.ptr = var->id.name.ptr; 
-			errarg.len = var->id.name.len;
-
-			qse_awk_rtx_seterror (run,
-				QSE_AWK_EMAPTOSCALAR, var->line, &errarg);
+			qse_awk_rtx_seterror (
+				run, QSE_AWK_EMAPTOSCALAR, 
+				var->line, xstr_to_cstr(&var->id.name));
 			return QSE_NULL;
 		}
 
@@ -3415,13 +3401,9 @@ static qse_awk_val_t* do_assignment_scalar (
 		{	
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			qse_cstr_t errarg;
-
-			errarg.ptr = var->id.name.ptr; 
-			errarg.len = var->id.name.len;
-
-			qse_awk_rtx_seterror (run,
-				QSE_AWK_EMAPTOSCALAR, var->line, &errarg);
+			qse_awk_rtx_seterror (
+				run, QSE_AWK_EMAPTOSCALAR, 
+				var->line, xstr_to_cstr(&var->id.name));
 			return QSE_NULL;
 		}
 
@@ -3436,13 +3418,9 @@ static qse_awk_val_t* do_assignment_scalar (
 		{	
 			/* once the variable becomes a map,
 			 * it cannot be changed to a scalar variable */
-			qse_cstr_t errarg;
-
-			errarg.ptr = var->id.name.ptr; 
-			errarg.len = var->id.name.len;
-
-			qse_awk_rtx_seterror (run,
-				QSE_AWK_EMAPTOSCALAR, var->line, &errarg);
+			qse_awk_rtx_seterror (
+				run, QSE_AWK_EMAPTOSCALAR, 
+				var->line, xstr_to_cstr(&var->id.name));
 			return QSE_NULL;
 		}
 
@@ -3516,7 +3494,8 @@ static qse_awk_val_t* do_assignment_map (
 				qse_awk_rtx_refdownval (run, tmp);
 
 				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, var->line, QSE_NULL);
+					run, QSE_AWK_ENOMEM, 
+					var->line, QSE_NULL);
 				return QSE_NULL;
 			}
 
@@ -5502,13 +5481,9 @@ static qse_awk_val_t* eval_fun_ex (
 		call->what.fun.name.ptr, call->what.fun.name.len);
 	if (pair == QSE_NULL) 
 	{
-		qse_cstr_t errarg;
-
-		errarg.ptr = call->what.fun.name.ptr;
-		errarg.len = call->what.fun.name.len,
-
-		qse_awk_rtx_seterror (run, 
-			QSE_AWK_EFUNNF, nde->line, &errarg);
+		qse_awk_rtx_seterror (
+			run, QSE_AWK_EFUNNF,
+			nde->line, xstr_to_cstr(&call->what.fun.name));
 		return QSE_NULL;
 	}
 
