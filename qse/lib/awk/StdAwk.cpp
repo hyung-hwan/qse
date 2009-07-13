@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -81,10 +81,10 @@ void StdAwk::close ()
 	Awk::close ();
 }
 
-int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
+int StdAwk::sin (Run& run, Value& ret, const Value* args, size_t nargs, 
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_SINL)
 		(real_t)::sinl(args[0].toReal())
 	#elif defined(HAVE_SIN)
@@ -97,10 +97,10 @@ int StdAwk::sin (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::cos (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::cos (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_COSL)
 		(real_t)::cosl(args[0].toReal())
 	#elif defined(HAVE_COS)
@@ -113,10 +113,10 @@ int StdAwk::cos (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::tan (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::tan (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_TANL)
 		(real_t)::tanl(args[0].toReal())
 	#elif defined(HAVE_TAN)
@@ -129,10 +129,10 @@ int StdAwk::tan (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::atan (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::atan (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_ATANL)
 		(real_t)::atanl(args[0].toReal())
 	#elif defined(HAVE_ATAN)
@@ -145,10 +145,10 @@ int StdAwk::atan (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::atan2 (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::atan2 (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_ATAN2L)
 		(real_t)::atan2l(args[0].toReal(), args[1].toReal())
 	#elif defined(HAVE_ATAN2)
@@ -161,10 +161,10 @@ int StdAwk::atan2 (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::log (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::log (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_LOGL)
 		(real_t)::logl(args[0].toReal())
 	#elif defined(HAVE_LOG)
@@ -177,10 +177,10 @@ int StdAwk::log (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::exp (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::exp (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_EXPL)
 		(real_t)::expl(args[0].toReal())
 	#elif defined(HAVE_EXP)
@@ -193,10 +193,10 @@ int StdAwk::exp (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::sqrt (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::sqrt (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (
+	return ret.setReal (
 	#if defined(HAVE_SQRTL)
 		(real_t)::sqrtl(args[0].toReal())
 	#elif defined(HAVE_SQRT)
@@ -209,19 +209,19 @@ int StdAwk::sqrt (Run& run, Return& ret, const Argument* args, size_t nargs,
 	);
 }
 
-int StdAwk::fnint (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::fnint (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set (args[0].toInt());
+	return ret.setInt (args[0].toInt());
 }
 
-int StdAwk::rand (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.set ((real_t)(::rand() % RAND_MAX) / RAND_MAX);
+	return ret.setReal ((real_t)(::rand() % RAND_MAX) / RAND_MAX);
 }
 
-int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	unsigned int prevSeed = this->seed;
@@ -240,19 +240,19 @@ int StdAwk::srand (Run& run, Return& ret, const Argument* args, size_t nargs,
 	}
 
 	::srand (this->seed);
-	return ret.set ((long_t)prevSeed);
+	return ret.setInt ((long_t)prevSeed);
 }
 
-int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
+int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	size_t l;
 	const char_t* ptr = args[0].toStr(&l);
 
 #ifdef _WIN32
-	return ret.set ((long_t)::_tsystem(ptr));
+	return ret.setInt ((long_t)::_tsystem(ptr));
 #elif defined(QSE_CHAR_IS_MCHAR)
-	return ret.set ((long_t)::system(ptr));
+	return ret.setInt ((long_t)::system(ptr));
 #else
 	char* mbs = (char*) qse_awk_alloc ((awk_t*)(Awk*)run, l*5+1);
 	if (mbs == QSE_NULL) return -1;
@@ -271,7 +271,7 @@ int StdAwk::system (Run& run, Return& ret, const Argument* args, size_t nargs,
 	}
 
 	mbs[mbl] = '\0';
-	int n = ret.set ((long_t)::system(mbs));
+	int n = ret.setInt ((long_t)::system(mbs));
 
 	qse_awk_free ((awk_t*)(Awk*)run, mbs);
 	return n;

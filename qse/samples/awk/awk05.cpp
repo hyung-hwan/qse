@@ -34,33 +34,13 @@ static void print_error (const qse_char_t* msg)
 	print_error (0, msg);
 }
 
-static int awk_main (int argc, qse_char_t* argv[])
+static int run_awk (QSE::StdAwk& awk)
 {
-	QSE::StdAwk awk;
-	QSE::StdAwk::Run* run;
-
-	// initialize awk
-	if (awk.open() <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		return -1;
-	}
-
 	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk05")) <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
+	if (awk.addArgument (QSE_T("awk05")) <= -1) return -1;
 
 	// ARGV[1] and/or the first console input file
-	if (awk.addArgument (QSE_T("awk05.cpp")) <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
+	if (awk.addArgument (QSE_T("awk05.cpp")) <= -1) return -1;
 
 	const qse_char_t* script = QSE_T(
 		"BEGIN { print \">> PRINT ALL LINES WHOSE LENGTH IS GREATER THAN 0\"; }\n" 
@@ -72,24 +52,23 @@ static int awk_main (int argc, qse_char_t* argv[])
 	QSE::StdAwk::SourceFile out (QSE_T("awk05.out"));
 
 	// parse the script string and deparse it to awk05.out.
-	run = awk.parse (&in, &out);
-	if (run == QSE_NULL)
-	{
-		print_error (awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
+	if (awk.parse (&in, &out) == QSE_NULL) return -1;
 
 	// execute the BEGIN, pattern-action, END blocks.
-	if (awk.loop () <= -1)
-	{
-		print_error (awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
+	return awk.loop ();
+}
+
+static int awk_main (int argc, qse_char_t* argv[])
+{
+	QSE::StdAwk awk;
+
+	int ret = awk.open ();
+	if (ret >= 0) ret = run_awk (awk);
+
+	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
 
 	awk.close ();
-	return 0;
+	return ret;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])

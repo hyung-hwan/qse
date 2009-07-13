@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 226 2009-07-09 12:46:14Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -78,29 +78,29 @@ public:
 
 protected:
 	// intrinsic functions 
-	int sin (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int sin (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int cos (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int cos (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int tan (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int tan (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len);
-	int atan (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int atan (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int atan2 (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int atan2 (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int log (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int log (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int exp (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int exp (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int sqrt (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int sqrt (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int fnint (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int fnint (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int rand (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int srand (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int srand (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int system (Run& run, Return& ret, const Argument* args, size_t nargs,
+	int system (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 
 	// pipe io handlers 
