@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 228 2009-07-11 03:01:36Z hyunghwan.chung $
+ * $Id: Awk.hpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -54,6 +54,9 @@ public:
 	typedef qse_awk_rio_arg_t rio_arg_t;
 
 	typedef qse_awk_rio_cmd_t rio_cmd_t;
+
+	class Run;
+	friend class Run;
 
 	class Source
 	{
@@ -118,10 +121,10 @@ public:
 		Source& operator= (const Source&);
 	};
 
-	class Run;
-
 	/**
-	 * RIO class 
+	 * The RIOBase class is a base class to represent runtime I/O context.
+	 * The Console, File, Pipe classes inherit this class to implement
+	 * an actual I/O context.
 	 */
 	class RIOBase
 	{
@@ -219,79 +222,134 @@ public:
 		char_t* filename;
 	};
 
-	class Argument;
-	class Return;
-
-	friend class Run;
-	friend class Argument;
-	friend class Return;
-
 	class Value
 	{
 	public:
-		Value (): run (QSE_NULL), val (qse_awk_val_nil) {}
-		Value (Run& run): run (&run), val (qse_awk_val_nil) {}
-		Value (Run* run): run (run), val (qse_awk_val_nil) {}
+		// initialization
+		void* operator new (size_t n, Run* run) throw ();
+		void* operator new[] (size_t n, Run* run) throw ();
+
+	#if !defined(__BORLANDC__) 
+		// deletion when initialization fails
+		void operator delete (void* p, Run* run) throw ();
+		void operator delete[] (void* p, Run* run) throw ();
+	#endif
+
+		// normal deletion
+		void operator delete (void* p) throw ();
+		void operator delete[] (void* p) throw ();
+
+		Value ();
+		Value (Run& run);
+		Value (Run* run);
 
 		Value (const Value& v);
 		~Value ();
 
 		Value& operator= (const Value& v);
 
+		void clear ();
+
 		operator val_t* () const { return val; }
 		operator long_t () const;
 		operator real_t () const;
 		operator const char_t* () const;
 
-		void clear ();
+		val_t* toVal () const
+		{
+			return operator val_t* ();
+		}
 
-		int get (long_t* v) const;
-		int get (real_t* v) const;
-		int get (const char_t** str, size_t* len) const;
+		long_t toInt () const
+		{
+			return operator long_t ();
+		}
 
-		int set (val_t* v);
-		int set (Run* r, val_t* v);
+		real_t toReal () const
+		{
+			return operator real_t ();
+		}
 
-		int set (long_t v);
-		int set (Run* r, long_t v);
-		int set (real_t v);
-		int set (Run* r, real_t v);
-		int set (const char_t* str, size_t len);
-		int set (Run* r, const char_t* str, size_t len);
-		int set (const char_t* str);
-		int set (Run* r, const char_t* str);
+		const char_t* toStr (size_t* len) const
+		{
+			const char_t* p;
+			size_t l;
 
-		int setIndexed (const char_t* idx, size_t isz, val_t* v);
-		int setIndexed (Run* r, const char_t* idx, size_t isz, val_t* v);
+			if (getStr (&p, &l) == -1) 
+			{
+				p = EMPTY_STRING;
+				l = 0;
+			}
+			
+			if (len != QSE_NULL) *len = l;
+			return p;
+		}
 
-		int setIndexed (const char_t* idx, size_t isz, long_t v);
-		int setIndexed (Run* r, const char_t* idx, size_t isz, long_t v);
-		int setIndexed (
+		int getInt (long_t* v) const;
+		int getReal (real_t* v) const;
+		int getStr (const char_t** str, size_t* len) const;
+
+		int setVal (val_t* v);
+		int setVal (Run* r, val_t* v);
+
+		int setInt (long_t v);
+		int setInt (Run* r, long_t v);
+		int setReal (real_t v);
+		int setReal (Run* r, real_t v);
+		int setStr (const char_t* str, size_t len);
+		int setStr (Run* r, const char_t* str, size_t len);
+		int setStr (const char_t* str);
+		int setStr (Run* r, const char_t* str);
+
+		int setIndexedVal (
+			const char_t* idx, size_t isz, val_t* v);
+		int setIndexedVal (
+			Run* r, const char_t* idx, size_t isz, val_t* v);
+
+		int setIndexedInt (
+			const char_t* idx, size_t isz, long_t v);
+		int setIndexedInt (
+			Run* r, const char_t* idx, size_t isz, long_t v);
+
+		int setIndexedReal (
 			const char_t* idx,
 			size_t        isz,
 			real_t        v
 		);
 
-		int setIndexed (
+		int setIndexedReal (
 			Run*          r,
 			const char_t* idx,
 			size_t        isz,
 			real_t        v
 		);
 
-		int setIndexed (
+		int setIndexedStr (
 			const char_t* idx,
 			size_t        isz,
 			const char_t* str,
 			size_t        len
 		);
 
-		int setIndexed (
+		int setIndexedStr (
 			Run*          r,
 			const char_t* idx,
 			size_t        isz,
 			const char_t* str,
 			size_t        len
+		);
+
+		int setIndexedStr (
+			const char_t* idx,
+			size_t        isz,
+			const char_t* str
+		);
+
+		int setIndexedStr (
+			Run*          r,
+			const char_t* idx,
+			size_t        isz,
+			const char_t* str
 		);
 
 		bool isIndexed () const;
@@ -305,111 +363,13 @@ public:
 	protected:
 		Run* run;
 		val_t* val;
-	};
 
-	/**
-	 * Represents an argument to an intrinsic function
-	 */
-	class Argument
-	{
-	public:
-		friend class Awk;
-		friend class Run;
+		mutable struct
+		{	
+			qse_xstr_t str;
+		} cached;
 
-		Argument (Run& run);
-		Argument (Run* run);
-		~Argument ();
-
-	protected:
-		Argument ();
-		void clear ();
-
-	public:
-		// initialization
-		void* operator new (size_t n, awk_t* awk) throw ();
-		void* operator new[] (size_t n, awk_t* awk) throw ();
-
-	#if !defined(__BORLANDC__) 
-		// deletion when initialization fails
-		void operator delete (void* p, awk_t* awk);
-		void operator delete[] (void* p, awk_t* awk);
-	#endif
-
-		// normal deletion
-		void operator delete (void* p);
-		void operator delete[] (void* p);
-
-	private:
-		Argument (const Argument&);
-		Argument& operator= (const Argument&);
-
-	protected:
-		int init (val_t* v);
-		int init (const char_t* str, size_t len);
-
-	public:
-		long_t toInt () const;
-		real_t toReal () const;
-		const char_t* toStr (size_t* len) const;
-
-		bool isIndexed () const;
-
-		int getIndexed (const char_t* idxptr, Argument& val) const;
-		int getIndexed (const char_t* idxptr, size_t idxlen, Argument& val) const;
-		int getIndexed (long_t idx, Argument& val) const;
-
-		int getFirstIndex (Argument& val) const;
-		int getNextIndex (Argument& val) const;
-
-	protected:
-		Run* run;
-		val_t* val;
-
-		qse_long_t inum;
-		qse_real_t rnum;
-		mutable qse_str_t str;
-	};
-
-	/**
-	 * Represents a return value of an intrinsic function
-	 */
-	class Return
-	{
-	public:
-		friend class Awk;
-		friend class Run;
-
-		Return (Run& run);
-		Return (Run* run);
-		~Return ();
-
-	private:
-		Return (const Return&);
-		Return& operator= (const Return&);
-
-	protected:
-		val_t* toVal () const;
-		operator val_t* () const;
-
-	public:
-		int set (long_t v);
-		int set (real_t v); 
-		int set (const char_t* ptr, size_t len);
-
-		bool isIndexed () const;
-
-		int setIndexed (const char_t* idx, size_t iln, long_t v);
-		int setIndexed (const char_t* idx, size_t iln, real_t v);
-		int setIndexed (const char_t* idx, size_t iln, const char_t* str, size_t sln);
-		int setIndexed (long_t idx, long_t v);
-		int setIndexed (long_t idx, real_t v);
-		int setIndexed (long_t idx, const char_t* str, size_t sln);
-
-		void clear ();
-
-	protected:
-		Run* run;
-		val_t* val;
+		static const char_t* EMPTY_STRING;
 	};
 
 	// generated by generrcode.awk
@@ -608,9 +568,7 @@ public:
 	{
 	protected:
 		friend class Awk;
-		friend class Argument;
-		friend class Return;
-		friend class RIO;
+		friend class Value;
 
 		Run (Awk* awk);
 		Run (Awk* awk, rtx_t* run);
@@ -702,7 +660,7 @@ public:
 		 *  	On success, 0 is returned.
 		 *  	On failure, -1 is returned.
 		 */
-		int setGlobal (int id, const Return& global);
+		int setGlobal (int id, const Value& global);
 
 		/**
 		 * Gets the value of a global variable.
@@ -720,7 +678,7 @@ public:
 		 * 	On success, 0 is returned.
 		 * 	On failure, -1 is returned.
 		 */
-		int getGlobal (int id, Argument& global) const;
+		int getGlobal (int id, Value& global) const;
 
 		void* alloc (size_t size);
 		void free (void* ptr);
@@ -847,8 +805,9 @@ public:
 	 */
 	virtual int call (
 		const char_t* name,
-		const Return* args,
-		size_t nargs
+		Value*        ret,
+		const Value*  args,
+		size_t        nargs
 	);
 
 	/**
@@ -887,7 +846,7 @@ public:
 	 * Represents a user-defined intrinsic function.
 	 */
 	typedef int (Awk::*FunctionHandler) (
-		Run& run, Return& ret, const Argument* args, size_t nargs, 
+		Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len);
 
 	/**
@@ -953,7 +912,7 @@ protected:
 
 	// run-time callbacks
 	virtual bool onLoopEnter (Run& run);
-	virtual void onLoopExit (Run& run, const Argument& ret);
+	virtual void onLoopExit (Run& run, const Value& ret);
 	virtual void onStatement (Run& run, size_t line);
 	
 	// primitive handlers 

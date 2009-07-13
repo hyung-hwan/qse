@@ -29,67 +29,59 @@ static void print_error (unsigned long line, const qse_char_t* msg)
 	
 }
 
-static void print_error (const qse_char_t* msg)
+static int run_awk (QSE::StdAwk& awk)
 {
-	print_error (0, msg);
+	QSE::StdAwk::Run* run;
+
+	const qse_char_t* script = QSE_T(
+		"function add (a, b) { return a + b }\n"
+		"function mul (a, b) { return a * b }\n"
+		"function div (a, b) { return a / b }\n"
+	);
+
+	QSE::StdAwk::SourceString in (script);
+	QSE::StdAwk::SourceFile out (QSE_T("awk06.out"));
+
+	// parse the script and deparse it to awk06.out
+	run = awk.parse (&in, &out);
+	if (run == QSE_NULL) return -1;
+
+	QSE::StdAwk::Value arg[2];
+	if (arg[0].setInt (run, -20) <= -1) return -1;
+	if (arg[1].setStr (run, QSE_T("51")) <= -1) return -1;
+
+	// ret = add (-20, 51) 
+	QSE::StdAwk::Value ret;
+	if (awk.call (QSE_T("add"), &ret, arg, 2) <= -1) return -1;
+
+	// ret = mul (ret, 51);
+	arg[0] = ret;
+	if (awk.call (QSE_T("mul"), &ret, arg, 2) <= -1) return -1;
+
+	// ret = div (ret, 2);
+	arg[0] = ret;
+	if (arg[1].setReal (run, 2) <= -1) return -1;
+	if (awk.call (QSE_T("div"), &ret, arg, 2) <= -1) return -1;
+
+	// output the result in various types
+	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
+	qse_printf (QSE_T("        (real) [%Lf]\n"), (long double)ret.toReal());
+	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
+
+	return 0;
 }
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	QSE::StdAwk awk;
-	QSE::StdAwk::Run* run;
 
-	// initialize awk
-	if (awk.open() <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		return -1;
-	}
+	int ret = awk.open();
 
-	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk05")) <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
-
-	// ARGV[1] and/or the first console input file
-	if (awk.addArgument (QSE_T("awk05.cpp")) <= -1)
-	{
-		print_error (awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
-
-	const qse_char_t* script = QSE_T(
-		"BEGIN { print \">> PRINT ALL LINES WHOSE LENGTH IS GREATER THAN 0\"; }\n" 
-		"length($0) > 0 { print $0; count++; }\n"
-		"END { print \">> TOTAL\", count, \"LINES\"; }\n"
-	);
-
-	QSE::StdAwk::SourceString in (script);
-	QSE::StdAwk::SourceFile out (QSE_T("awk05.out"));
-
-	// parse the script string and deparse it to awk05.out.
-	run = awk.parse (&in, &out);
-	if (run == QSE_NULL)
-	{
-		print_error (awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
-
-	// execute the BEGIN, pattern-action, END blocks.
-	if (awk.loop () <= -1)
-	{
-		print_error (awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-		return -1;
-	}
+	if (ret >= 0) ret = run_awk (awk);
+	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
 
 	awk.close ();
-	return 0;
+	return -1;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
