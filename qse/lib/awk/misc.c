@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: misc.c 230 2009-07-13 08:51:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -981,6 +981,11 @@ int qse_awk_matchrex (
 void* qse_awk_rtx_alloc (qse_awk_rtx_t* rtx, qse_size_t size)
 {
 	return qse_awk_alloc (rtx->awk, size);
+}
+
+void* qse_awk_rtx_realloc (qse_awk_rtx_t* rtx, void* ptr, qse_size_t size)
+{
+	return qse_awk_realloc (rtx->awk, ptr, size);
 }
 
 void qse_awk_rtx_free (qse_awk_rtx_t* rtx, void* ptr)

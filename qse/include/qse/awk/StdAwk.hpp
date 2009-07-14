@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 230 2009-07-13 08:51:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,9 +23,11 @@
 
 /**
  * @example awk05.cpp
- * This program demonstrates how to embed QSE::StdAwk in C++.
+ * This program demonstrates how to embed QSE::StdAwk::loop().
  * @example awk06.cpp
- * This program demonstrates how to embed QSE::StdAwk in C++.
+ * This program demonstrates how to use QSE::StdAwk::call().
+ * @example awk07.cpp
+ * This program demonstrates how to handle an indexed value.
  */
 
 /////////////////////////////////

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 228 2009-07-11 03:01:36Z hyunghwan.chung $
+ * $Id: run.c 230 2009-07-13 08:51:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -243,6 +243,9 @@ typedef qse_awk_val_t* (*binop_func_t) (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
+#ifdef NDEBUG
+#define xstr_to_cstr(x) ((qse_cstr_t*)x)
+#else
 static qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
 {
 	/* i use this function to typecast qse_cstr_t* to 
@@ -252,6 +255,7 @@ static qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
 	 * haved changed to something else. */ 
 	return (qse_cstr_t*)xstr;
 }
+#endif
 
 qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
 {
@@ -3328,7 +3332,6 @@ static qse_awk_val_t* do_assignment (
 			goto exit_on_error;
 		}
 	
-
 		ret = do_assignment_pos (run, (qse_awk_nde_pos_t*)var, val);
 	}
 	else
@@ -3463,7 +3466,7 @@ static qse_awk_val_t* do_assignment_map (
 		      (var->type == QSE_AWK_NDE_LCLIDX)? 
 		      	(qse_awk_val_map_t*)STACK_LCL(run,var->id.idxa):
 		      	(qse_awk_val_map_t*)STACK_ARG(run,var->id.idxa);
-	}
+	} 
 
 	if (map->type == QSE_AWK_VAL_NIL)
 	{
