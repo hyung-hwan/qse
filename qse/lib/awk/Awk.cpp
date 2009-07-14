@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: Awk.cpp 231 2009-07-13 10:03:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -38,6 +38,8 @@ struct rxtn_t
 {
 	Awk::Run* run;
 };
+
+Awk::NoSource Awk::Source::NONE;
 
 //////////////////////////////////////////////////////////////////
 // Awk::RIO
@@ -1275,14 +1277,20 @@ int Awk::unsetAllWords ()
 	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
 }
 
-Awk::Run* Awk::parse (Source* in, Source* out)
+Awk::Run* Awk::parse (Source& in, Source& out)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
+	if (&in == &Source::NONE) 
+	{
+		setError (ERR_INVAL);
+		return QSE_NULL;
+	}
+
 	fini_runctx ();
 
-	sourceReader = in;
-	sourceWriter = out;
+	sourceReader = &in;
+	sourceWriter = (&out == &Source::NONE)? QSE_NULL: &out;
 
 	qse_awk_sio_t sio;
 	sio.in = readSource;

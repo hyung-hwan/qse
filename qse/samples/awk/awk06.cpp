@@ -43,7 +43,7 @@ static int run_awk (QSE::StdAwk& awk)
 	QSE::StdAwk::SourceFile out (QSE_T("awk06.out"));
 
 	// parse the script and deparse it to awk06.out
-	run = awk.parse (&in, &out);
+	run = awk.parse (in, out);
 	if (run == QSE_NULL) return -1;
 
 	QSE::StdAwk::Value arg[2];
@@ -52,16 +52,16 @@ static int run_awk (QSE::StdAwk& awk)
 
 	// ret = add (-20, 51) 
 	QSE::StdAwk::Value ret;
-	if (awk.call (QSE_T("add"), &ret, arg, 2) <= -1) return -1;
+	if (awk.call (QSE_T("add"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
 
 	// ret = mul (ret, 51);
 	arg[0] = ret;
-	if (awk.call (QSE_T("mul"), &ret, arg, 2) <= -1) return -1;
+	if (awk.call (QSE_T("mul"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
 
 	// ret = div (ret, 2);
 	arg[0] = ret;
 	if (arg[1].setReal (run, 2) <= -1) return -1;
-	if (awk.call (QSE_T("div"), &ret, arg, 2) <= -1) return -1;
+	if (awk.call (QSE_T("div"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
 
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());

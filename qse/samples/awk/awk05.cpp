@@ -52,7 +52,7 @@ static int run_awk (QSE::StdAwk& awk)
 	QSE::StdAwk::SourceFile out (QSE_T("awk05.out"));
 
 	// parse the script string and deparse it to awk05.out.
-	if (awk.parse (&in, &out) == QSE_NULL) return -1;
+	if (awk.parse (in, out) == QSE_NULL) return -1;
 
 	// execute the BEGIN, pattern-action, END blocks.
 	return awk.loop ();
