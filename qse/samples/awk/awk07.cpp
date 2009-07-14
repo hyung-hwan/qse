@@ -33,7 +33,7 @@ static int run_awk (QSE::StdAwk& awk)
 {
 	QSE::StdAwk::Run* run;
 
-	const qse_char_t* script = QSE_T(
+	QSE::StdAwk::SourceString in (QSE_T(
 		"function pa (x) {\n"
 		"	reset ret;\n"
 		"	for (i in x) { print i, \"=>\", x[i]; ret += x[i]; }\n"
@@ -44,15 +44,13 @@ static int run_awk (QSE::StdAwk& awk)
 		"	for (i in x) { ret[-i] = -x[i]; }\n"
 		"	return ret;\n"
 		"}"
-	);
+	));
 
-	QSE::StdAwk::SourceString in (script);
-	QSE::StdAwk::SourceFile out (QSE_T("awk07.out"));
-
-	// parse the script and deparse it to awk07.out
-	run = awk.parse (&in, &out);
+	// parse the script and perform no deparsing
+	run = awk.parse (in, QSE::StdAwk::Source::NONE);
 	if (run == QSE_NULL) return -1;
 
+	// prepare an indexed parameter 
 	QSE::StdAwk::Value arg[1];
 
 	for (int i = 1; i <= 5; i++)

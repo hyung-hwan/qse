@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: Awk.hpp 231 2009-07-13 10:03:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -58,6 +58,15 @@ public:
 	class Run;
 	friend class Run;
 
+protected:
+	class NoSource;
+
+public:
+	/** 
+	 * The Awk::Source class is an abstract class to encapsulate
+	 * source script I/O. The Awk::parse function requires a concrete
+	 * object instantiated from its child class.
+	 */
 	class Source
 	{
 	public:
@@ -67,6 +76,10 @@ public:
 			WRITE   /**< source code write. */
 		};
 
+		/**
+		 * The Awk::Source::Data class is used to deliver information
+		 * needed for source script I/O. 
+		 */
 		class Data
 		{
 		public:
@@ -116,11 +129,27 @@ public:
 		virtual ssize_t read (Data& io, char_t* buf, size_t len) = 0;
 		virtual ssize_t write (Data& io, char_t* buf, size_t len) = 0;
 
+		/**
+		 * special value to indicate no source
+		 */
+		static NoSource NONE;
+
 	private:
 		Source (const Source&);
 		Source& operator= (const Source&);
 	};
 
+protected:
+	class NoSource: public Source
+	{
+	public:
+		int open (Data& io) { return -1; }
+		int close (Data& io) { return 0; }
+		ssize_t read (Data& io, char_t* buf, size_t len) { return 0; }
+		ssize_t write (Data& io, char_t* buf, size_t len) { return 0; }
+	};
+
+public:
 	/**
 	 * The RIOBase class is a base class to represent runtime I/O context.
 	 * The Console, File, Pipe classes inherit this class to implement
@@ -861,14 +890,14 @@ public:
 	/**
 	 * Parses the source code.
 	 *
-	 * Awk::parse parses the source code read from the input stream and 
-	 * writes the parse tree to the output stream. A child class should
-	 * override Awk::openSource, Awk::closeSource, Awk::readSource, 
-	 * Awk::writeSource to implement the source code stream.
+	 * Awk::parse parses the source code read from the input stream @a in
+	 * and writes the parse tree to the output stream @out. To disable
+	 * deparsing, you may set @a out to Awk::Source::NONE. However, it 
+	 * is not legal to specify Awk::Source::NONE for @a in.
 	 *
-	 * @return a Run object on success, QSE_NULL on failure
+	 * @return a Run object on success, #QSE_NULL on failure
 	 */
-	virtual Awk::Run* parse (Source* in, Source* out);
+	virtual Awk::Run* parse (Source& in, Source& out);
 
 	/**
 	 * Executes the BEGIN block, pattern-action blocks, and the END block.
