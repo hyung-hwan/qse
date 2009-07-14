@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 228 2009-07-11 03:01:36Z hyunghwan.chung $
+ * $Id: awk.h 230 2009-07-13 08:51:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1806,6 +1806,18 @@ int qse_awk_rtx_strtonum (
  */
 void* qse_awk_rtx_alloc (
 	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_size_t     size /**< block size in bytes */
+);
+
+/**
+ * The qse_awk_rtx_realloc() function resizes a memory block pointed to
+ * by @a ptr to @a size bytes using the memory manager associated with 
+ * a runtime context @a rtx. 
+ * @return the pointer to a memory block on success, #QSE_NULL on failure.
+ */
+void* qse_awk_rtx_realloc (
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	void*          ptr, /**< memory block */
 	qse_size_t     size /**< block size in bytes */
 );
 

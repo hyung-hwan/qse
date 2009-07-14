@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
+ * $Id: Awk.hpp 230 2009-07-13 08:51:23Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -239,6 +239,69 @@ public:
 		void operator delete (void* p) throw ();
 		void operator delete[] (void* p) throw ();
 
+		class Index
+		{
+		public:
+			friend class Value;
+
+			Index (): ptr (EMPTY_STRING), len (0) {}
+			Index (const char_t* ptr, size_t len):
+				ptr (ptr), len (len) {}
+
+			const char_t* ptr;
+			size_t        len;
+		};
+
+		class IntIndex: public Index
+		{
+		public:
+			IntIndex (long_t num);
+
+		protected:
+			// 2^32: 4294967296
+			// 2^64: 18446744073709551616
+			// 2^128: 340282366920938463463374607431768211456 
+			// -(2^32/2): -2147483648
+			// -(2^64/2): -9223372036854775808
+			// -(2^128/2): -170141183460469231731687303715884105728
+		#if QSE_SIZEOF_LONG_T > 16
+		#	error SIZEOF(qse_long_t) TOO LARGE. 
+		#	error INCREASE THE BUFFER SIZE TO SUPPORT IT.
+		#elif QSE_SIZEOF_LONG_T == 16
+			char_t buf[41];
+		#elif QSE_SIZEOF_LONG_T == 8
+			char_t buf[21];
+		#else
+			char_t buf[12];
+		#endif
+		};
+
+		class IndexIterator
+		{
+		public:
+			friend class Value;
+
+			static IndexIterator END;
+
+			IndexIterator (): pair (QSE_NULL), buckno (0) {}
+			IndexIterator (pair_t* pair, size_t buckno): 
+				pair (pair), buckno (buckno) {}
+
+			bool operator==  (const IndexIterator& ii) const
+			{
+				return pair == ii.pair && buckno == ii.buckno;
+			}
+
+			bool operator!=  (const IndexIterator& ii) const
+			{
+				return !operator== (ii);
+			}
+
+		protected:
+			pair_t* pair;
+			size_t  buckno;
+		};
+
 		Value ();
 		Value (Run& run);
 		Value (Run* run);
@@ -302,62 +365,75 @@ public:
 		int setStr (Run* r, const char_t* str);
 
 		int setIndexedVal (
-			const char_t* idx, size_t isz, val_t* v);
+			const Index& idx,
+			val_t*       v
+		);
+
 		int setIndexedVal (
-			Run* r, const char_t* idx, size_t isz, val_t* v);
+			Run*         r, 
+			const Index& idx, 
+			val_t*       v
+		);
 
 		int setIndexedInt (
-			const char_t* idx, size_t isz, long_t v);
+			const Index& idx,
+			long_t       v
+		);
+
 		int setIndexedInt (
-			Run* r, const char_t* idx, size_t isz, long_t v);
+			Run* r,
+			const Index& idx,
+			long_t v);
 
 		int setIndexedReal (
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			real_t        v
 		);
 
 		int setIndexedReal (
 			Run*          r,
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			real_t        v
 		);
 
 		int setIndexedStr (
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			const char_t* str,
 			size_t        len
 		);
 
 		int setIndexedStr (
 			Run*          r,
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			const char_t* str,
 			size_t        len
 		);
 
 		int setIndexedStr (
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			const char_t* str
 		);
 
 		int setIndexedStr (
 			Run*          r,
-			const char_t* idx,
-			size_t        isz,
+			const Index&  idx,
 			const char_t* str
 		);
 
 		bool isIndexed () const;
 
 		int getIndexed (
-			const char_t* idx,
-			size_t        isz,
-			Value&        val
+			const Index&  idx,
+			Value*        val
+		) const;
+
+		IndexIterator getFirstIndex (
+			Index* idx
+		) const;
+
+		IndexIterator getNextIndex (
+			Index* idx,
+			const IndexIterator& iter
 		) const;
 
 	protected:
