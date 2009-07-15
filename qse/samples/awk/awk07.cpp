@@ -123,7 +123,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		QSE::StdAwk::OPT_RESET);
 
 	if (ret >= 0) ret = run_awk (awk);
-	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
+	if (ret <= -1) print_error (awk.errorLine(), awk.errorMessage());
 
 	awk.close ();
 	return -1;

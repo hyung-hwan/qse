@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: Awk.cpp 234 2009-07-14 14:08:48Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -375,7 +375,7 @@ int Awk::Value::getInt (long_t* v) const
 		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
 		if (n <= -1) 
 		{
-			run->awk->retrieveError (run->rtx);
+			run->awk->retrieveError (run);
 			return -1;
 		}
 		if (n >= 1) lv = rv;
@@ -399,7 +399,7 @@ int Awk::Value::getReal (real_t* v) const
 		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
 		if (n <= -1)
 		{
-			run->awk->retrieveError (run->rtx);
+			run->awk->retrieveError (run);
 			return -1;
 		}
 		if (n == 0) rv = lv;
@@ -434,7 +434,7 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 				if (qse_awk_rtx_valtostr (
 					run->rtx, val, &out) == QSE_NULL)
 				{
-					run->awk->retrieveError (run->rtx);
+					run->awk->retrieveError (run);
 					return -1;
 				}
 
@@ -498,7 +498,7 @@ int Awk::Value::setInt (Run* r, long_t v)
 	tmp = qse_awk_rtx_makeintval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -519,7 +519,7 @@ int Awk::Value::setReal (Run* r, real_t v)
 	tmp = qse_awk_rtx_makerealval (r->rtx, v);
 	if (tmp == QSE_NULL)
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 			
@@ -540,7 +540,7 @@ int Awk::Value::setStr (Run* r, const char_t* str, size_t len)
 	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
 	if (tmp == QSE_NULL)
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -561,7 +561,7 @@ int Awk::Value::setStr (Run* r, const char_t* str)
 	tmp = qse_awk_rtx_makestrval0 (r->rtx, str);
 	if (tmp == QSE_NULL) 
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -587,7 +587,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		val_t* map = qse_awk_rtx_makemapval (r->rtx);
 		if (map == QSE_NULL) 
 		{
-			r->awk->retrieveError (r->rtx);
+			r->awk->retrieveError (r);
 			return -1;
 		}
 
@@ -603,7 +603,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 			qse_awk_rtx_refdownval (r->rtx, v);
 			qse_awk_rtx_refdownval (r->rtx, map);
 			r->setError (ERR_NOMEM, 0, QSE_NULL, 0);
-			r->awk->retrieveError (r->rtx);
+			r->awk->retrieveError (r);
 			return -1;
 		}
 
@@ -624,7 +624,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		{
 			// it can't span across multiple runtime contexts
 			run->setError (ERR_INVAL);
-			run->awk->retrieveError (run->rtx);
+			run->awk->retrieveError (run);
 			return -1;
 		}
 
@@ -637,7 +637,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		{
 			qse_awk_rtx_refdownval (r->rtx, v);
 			run->setError (ERR_NOMEM);
-			run->awk->retrieveError (run->rtx);
+			run->awk->retrieveError (run);
 			return -1;
 		}
 	}
@@ -657,7 +657,7 @@ int Awk::Value::setIndexedInt (Run* r, const Index& idx, long_t v)
 	tmp = qse_awk_rtx_makeintval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -680,7 +680,7 @@ int Awk::Value::setIndexedReal (Run* r, const Index& idx, real_t v)
 	tmp = qse_awk_rtx_makerealval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -704,7 +704,7 @@ int Awk::Value::setIndexedStr (
 	tmp = qse_awk_rtx_makestrval (r->rtx, str, len);
 	if (tmp == QSE_NULL) 
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -727,7 +727,7 @@ int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str)
 	tmp = qse_awk_rtx_makestrval0 (r->rtx, str);
 	if (tmp == QSE_NULL)
 	{
-		r->awk->retrieveError (r->rtx);
+		r->awk->retrieveError (r);
 		return -1;
 	}
 
@@ -899,19 +899,19 @@ bool Awk::Run::isStop () const
 	return qse_awk_rtx_shouldstop (this->rtx)? true: false;
 }
 
-Awk::ErrorNumber Awk::Run::getErrorNumber () const
+Awk::ErrorNumber Awk::Run::errorNumber () const throw ()
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 	return (ErrorNumber)qse_awk_rtx_geterrnum (this->rtx);
 }
 
-Awk::size_t Awk::Run::getErrorLine () const
+Awk::size_t Awk::Run::errorLine () const throw ()
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 	return qse_awk_rtx_geterrlin (this->rtx);
 }
 
-const Awk::char_t* Awk::Run::getErrorMessage () const
+const Awk::char_t* Awk::Run::errorMessage () const throw () 
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 	return qse_awk_rtx_geterrmsg (this->rtx);
@@ -1027,17 +1027,31 @@ Awk::operator Awk::awk_t* () const
 	return this->awk;
 }
 
-Awk::ErrorNumber Awk::getErrorNumber () const
+const Awk::char_t* Awk::errorString (ErrorNumber num) const throw ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	QSE_ASSERT (dflerrstr != QSE_NULL);
+	return dflerrstr (awk, (errnum_t)num);
+}
+
+const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) throw ()
+{
+	Awk* awk = *(Awk**)QSE_XTN(a);
+	return awk->errorString ((ErrorNumber)num);
+}
+
+
+Awk::ErrorNumber Awk::errorNumber () const throw ()
 {
 	return this->errnum;
 }
 
-Awk::size_t Awk::getErrorLine () const
+Awk::size_t Awk::errorLine () const throw ()
 {
 	return this->errlin;
 }
 
-const Awk::char_t* Awk::getErrorMessage () const
+const Awk::char_t* Awk::errorMessage () const throw ()
 {
 	return this->errmsg;
 }
@@ -1119,12 +1133,15 @@ void Awk::retrieveError ()
 	}
 }
 
-void Awk::retrieveError (rtx_t* rtx)
+void Awk::retrieveError (Run* run)
 {
 	errnum_t num;
 	const char_t* msg;
 
-	qse_awk_rtx_geterror (rtx, &num, &this->errlin, &msg);
+	QSE_ASSERT (run != QSE_NULL);
+	if (run->rtx == QSE_NULL) return;
+
+	qse_awk_rtx_geterror (run->rtx, &num, &this->errlin, &msg);
 	this->errnum = (ErrorNumber)num;
 	qse_strxcpy (this->errmsg, QSE_COUNTOF(this->errmsg), msg);
 }
@@ -1137,7 +1154,7 @@ int Awk::open ()
 	prm.pow     = pow;
 	prm.sprintf = sprintf;
 
-	awk = qse_awk_open (this, QSE_SIZEOF(xtn_t), &prm);
+	awk = qse_awk_open ((qse_mmgr_t*)this, QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
 	{
 		setError (ERR_NOMEM);
@@ -1151,9 +1168,6 @@ int Awk::open ()
 	dflerrstr = qse_awk_geterrstr (awk);
 	qse_awk_seterrstr (awk, xerrstr);
 
-	//functionMap = qse_map_open (
-	//	this, 512, 70, freeFunctionMapValue, QSE_NULL, 
-	//	qse_awk_getmmgr(awk));
 	functionMap = qse_map_open (
 		qse_awk_getmmgr(awk), QSE_SIZEOF(this), 512, 70);
 	if (functionMap == QSE_NULL)
@@ -1217,63 +1231,6 @@ Awk::size_t Awk::getMaxDepth (int id) const
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	return qse_awk_getmaxdepth (awk, id);
-}
-
-const Awk::char_t* Awk::getErrorString (ErrorNumber num) const
-{
-	QSE_ASSERT (dflerrstr != QSE_NULL);
-	return dflerrstr (awk, (errnum_t)num);
-}
-
-const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) throw ()
-{
-	Awk* awk = *(Awk**)QSE_XTN(a);
-	try
-	{
-		return awk->getErrorString ((ErrorNumber)num);
-	}
-	catch (...)
-	{
-		return awk->dflerrstr (a, num);
-	}
-}
-
-int Awk::getWord (
-	const char_t* ow, qse_size_t owl,
-	const char_t** nw, qse_size_t* nwl)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_getword (awk, ow, owl, nw, nwl);
-}
-
-int Awk::setWord (const char_t* ow, const char_t* nw)
-{
-	return setWord (ow, qse_strlen(ow), nw, qse_strlen(nw));
-}
-
-int Awk::setWord (
-	const char_t* ow, qse_size_t owl,
-	const char_t* nw, qse_size_t nwl)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, ow, owl, nw, nwl);
-}
-
-int Awk::unsetWord (const char_t* ow)
-{
-	return unsetWord (ow, qse_strlen(ow));
-}
-
-int Awk::unsetWord (const char_t* ow, qse_size_t owl)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, ow, owl, QSE_NULL, 0);
-}
-
-int Awk::unsetAllWords ()
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
 }
 
 Awk::Run* Awk::parse (Source& in, Source& out)
@@ -1358,7 +1315,7 @@ int Awk::loop ()
 	QSE_ASSERT (runctx.rtx != QSE_NULL);
 
 	int n = qse_awk_rtx_loop (runctx.rtx);
-	if (n <= -1) retrieveError (runctx.rtx);
+	if (n <= -1) retrieveError (&runctx);
 	return n;
 }
 
@@ -1380,7 +1337,7 @@ int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
 			if (ptr == QSE_NULL)
 			{
 				runctx.setError (ERR_NOMEM);
-				retrieveError (runctx.rtx);
+				retrieveError (&runctx);
 				return -1;
 			}
 		}
@@ -1394,7 +1351,7 @@ int Awk::call (const char_t* name, Value* ret, const Value* args, size_t nargs)
 
 	if (rv == QSE_NULL) 
 	{
-		retrieveError (runctx.rtx);
+		retrieveError (&runctx);
 		return -1;
 	}
 
@@ -1633,6 +1590,45 @@ void Awk::disableRunCallback ()
 {
 	runCallback = false;
 }
+
+int Awk::getWord (
+	const char_t* ow, qse_size_t owl,
+	const char_t** nw, qse_size_t* nwl) throw ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	return qse_awk_getword (awk, ow, owl, nw, nwl);
+}
+
+int Awk::setWord (const char_t* ow, const char_t* nw) throw ()
+{
+	return setWord (ow, qse_strlen(ow), nw, qse_strlen(nw));
+}
+
+int Awk::setWord (
+	const char_t* ow, qse_size_t owl,
+	const char_t* nw, qse_size_t nwl) throw ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	return qse_awk_setword (awk, ow, owl, nw, nwl);
+}
+
+int Awk::unsetWord (const char_t* ow) throw ()
+{
+	return unsetWord (ow, qse_strlen(ow));
+}
+
+int Awk::unsetWord (const char_t* ow, qse_size_t owl) throw ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	return qse_awk_setword (awk, ow, owl, QSE_NULL, 0);
+}
+
+int Awk::unsetAllWords () throw ()
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
+}
+
 
 bool Awk::onLoopEnter (Run& run)
 {

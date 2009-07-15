@@ -481,14 +481,14 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	if (awk.open() <= -1)
 	{
-		print_error (awk.getErrorMessage());
+		print_error (awk.errorMessage());
 		return -1;
 	}
 
 	// ARGV[0]
 	if (awk.addArgument (QSE_T("awk05")) <= -1)
 	{
-		print_error (awk.getErrorMessage());
+		print_error (awk.errorMessage());
 		awk.close ();
 		return -1;
 	}
@@ -629,7 +629,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (run == QSE_NULL)
 	{
 		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
+			awk.errorLine(), awk.errorMessage());
 		awk.close ();
 		return -1;
 	}
@@ -640,7 +640,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (awk.loop () <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
+			awk.errorLine(), awk.errorMessage());
 		awk.close ();
 		return -1;
 	}
@@ -654,7 +654,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (awk.call (QSE_T("add"), args, 2) <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
+			awk.errorLine(), awk.errorMessage());
 		awk.close ();
 	}
 #endif

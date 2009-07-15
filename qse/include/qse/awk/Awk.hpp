@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: Awk.hpp 234 2009-07-14 14:08:48Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -30,7 +30,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 /** 
- * Represents the AWK interpreter engine
+ * Represents the AWK interpreter engine.
  */
 class Awk: public Mmgr
 {
@@ -63,8 +63,8 @@ protected:
 
 public:
 	/** 
-	 * The Awk::Source class is an abstract class to encapsulate
-	 * source script I/O. The Awk::parse function requires a concrete
+	 * The Source class is an abstract class to encapsulate
+	 * source script I/O. The Awk::parse() function requires a concrete
 	 * object instantiated from its child class.
 	 */
 	class Source
@@ -251,6 +251,9 @@ public:
 		char_t* filename;
 	};
 
+	/**
+	 * Represents a value.
+	 */
 	class Value
 	{
 	public:
@@ -489,7 +492,7 @@ public:
 		ERR_NOMEM = QSE_AWK_ENOMEM,
 		ERR_NOSUP = QSE_AWK_ENOSUP,
 		ERR_NOPER = QSE_AWK_ENOPER,
-		ERR_NOENT = QSE_AWK_ENOENT,
+		ERR_NOENT = QSE_AWK_ENOENT, 
 		ERR_EXIST = QSE_AWK_EEXIST,
 		ERR_IOERR = QSE_AWK_EIOERR,
 		ERR_OPEN = QSE_AWK_EOPEN,
@@ -693,9 +696,9 @@ public:
 		void stop () const;
 		bool isStop () const;
 
-		ErrorNumber getErrorNumber () const;
-		size_t getErrorLine () const;
-		const char_t* getErrorMessage () const;
+		ErrorNumber errorNumber () const throw ();
+		size_t errorLine () const throw ();
+		const char_t* errorMessage () const throw ();
 
 		void setError (ErrorNumber code);
 		void setError (ErrorNumber code, size_t line);
@@ -750,50 +753,89 @@ public:
 
 	/** Returns the underlying handle */
 	operator awk_t* () const;
-	
-	/** Returns the error code */
-	ErrorNumber getErrorNumber () const;
 
-	/** Returns the line of the source code where the error occurred */
-	size_t getErrorLine () const ;
-
-	/** Returns the error message */
-	const char_t* getErrorMessage () const;
-
-	mmgr_t* getMmgr() 
-	{
-		return qse_awk_getmmgr (awk);
-	}
-
-	const mmgr_t* getMmgr() const
-	{
-		return qse_awk_getmmgr (awk);
-	}
-
+	/**
+	 * @name Error Handling
+	 */
+	/*@{*/
 protected:
-	void setError (ErrorNumber code);
-	void setError (ErrorNumber code, size_t line);
-	void setError (ErrorNumber code, size_t line, const char_t* arg);
-	void setError (ErrorNumber code, size_t line, const char_t* arg, size_t len);
+	/**
+	 * The Awk::errorString() function returns a formatting string
+	 * for an error code @a num. You can override this function
+	 * to customize an error message. You must include the same numbers
+	 * of ${X}'s as the orginal formatting string. Their order may be
+	 * different. The example below changes the formatting string for
+	 * ERR_NOENT.
+	 * @code
+	 * const MyAwk::char_t* MyAwk::errorString (ErrorNumber num) const throw ()
+	 * {
+	 *    if (num == ERR_NOENT) return QSE_T("cannot find '${0}'");
+	 *    return Awk::errorString (num);
+	 * }
+	 * @endcode
+	 */
+	virtual const char_t* errorString (
+		ErrorNumber num
+	) const throw ();
+
+public:
+	/** 
+	 * The Awk::errorNumber() function returns the number of the last
+	 * error occurred.
+	 */
+	ErrorNumber errorNumber () const throw ();
+
+	/** 
+	 * The Awk::errorLine() function returns the line number of the last
+	 * error occurred.
+	 */
+	size_t errorLine () const throw ();
+
+	/** 
+	 * The Awk::errorMessage() function returns a message describing
+	 * the last error occurred.
+	 */
+	const char_t* errorMessage () const throw ();
+
+	void setError (
+		ErrorNumber code
+	);
+
+	void setError (
+		ErrorNumber code, size_t line
+	);
+
+	void setError (
+		ErrorNumber   code,
+		size_t        line, 
+		const char_t* arg
+	);
+
+	void setError (
+		ErrorNumber   code, 
+		size_t        line, 
+		const char_t* arg, 
+		size_t        len
+	);
 
 	void setErrorWithMessage (
-		ErrorNumber code, size_t line, const char_t* msg);
+		ErrorNumber   code,
+		size_t        line,
+		const char_t* msg
+	);
 
 	void clearError ();
+
+protected:
 	void retrieveError ();
-	void retrieveError (rtx_t* rtx);
+	void retrieveError (Run* run);
+	/*@}*/
 
 public:
 	/**
-	 * Opens the interpreter. 
-	 *
-	 * An application should call this method before doing anything 
-	 * meaningful to the instance of this class.
-	 *
-	 * @return
-	 * 	On success, 0 is returned. On failure -1 is returned and
-	 * 	extended error information is set. Call Awk::getErrorNumber
-	 * 	to get it.
+	 * The Awk::open() function initializes an interpreter. 
+	 * You must call this function before doing anything meaningful.
+	 * @return 0 on success, -1 on failure
 	 */
 	virtual int open ();
 
@@ -804,7 +846,7 @@ public:
 	virtual void setOption (int opt);
 
 	/** Gets the option */
-	virtual int  getOption () const;
+	virtual int getOption () const;
 
 	/** Defines the depth ID */
 	enum Depth
@@ -822,30 +864,11 @@ public:
 	/** Gets the maximum depth */
 	virtual size_t getMaxDepth (int id) const;
 
-	virtual const char_t* getErrorString (
-		ErrorNumber num
-	) const;
-
-	virtual int getWord (
-		const char_t* ow, qse_size_t owl,
-		const char_t** nw, qse_size_t* nwl);
-	virtual int setWord (
-		const char_t* ow, const char_t* nw);
-	virtual int setWord (
-		const char_t* ow, qse_size_t owl,
-		const char_t* nw, qse_size_t nwl);
-
-	virtual int unsetWord (const char_t* ow);
-	virtual int unsetWord (const char_t* ow, qse_size_t owl);
-	virtual int unsetAllWords ();
-
 	/**
-	 * Parses the source code.
-	 *
-	 * Awk::parse parses the source code read from the input stream @a in
-	 * and writes the parse tree to the output stream @out. To disable
-	 * deparsing, you may set @a out to Awk::Source::NONE. However, it 
-	 * is not legal to specify Awk::Source::NONE for @a in.
+	 * The Awk::parse() function parses the source code read from the input 
+	 * stream @a in and writes the parse tree to the output stream @out.
+	 * To disable deparsing, you may set @a out to Awk::Source::NONE. 
+	 * However, it is not legal to specify Awk::Source::NONE for @a in.
 	 *
 	 * @return a Run object on success, #QSE_NULL on failure
 	 */
@@ -873,15 +896,21 @@ public:
 	virtual void stop ();
 
 	/**
-	 * Adds a string for ARGV. loop() and call() makes a string added 
-	 * available to a script through ARGV. Note this is not related to
-	 * the Awk::Argument class.
+	 * Adds an ARGV string as long as @a len characters pointed to 
+	 * by @a arg. loop() and call() make a string added available 
+	 * to a script through ARGV. 
+	 * @return 0 on success, -1 on failure
 	 */
 	virtual int addArgument (
 		const char_t* arg, 
 		size_t        len
 	);
 
+	/**
+	 * Adds a null-terminated string @a arg. loop() and call() 
+	 * make a string added available to a script through ARGV. 
+	 * @return 0 on success, -1 on failure
+	 */
 	virtual int addArgument (const char_t* arg);
 
 	/**
@@ -902,17 +931,17 @@ public:
 
 	/**
 	 * Sets the value of a global variable identified by @a id.
-	 * The @a id is either a value returned by Awk::addGlobal or one of 
+	 * The @a id is either a value returned by Awk::addGlobal() or one of 
 	 * Awk::Global enumerations. It is not legal to call this function
-	 * prior to Awk::parse.
+	 * prior to Awk::parse().
 	 * @return 0 on success, -1 on failure
 	 */
 	virtual int setGlobal (int id, const Value& v);
 	/**
 	 * Gets the value of a global riable identified by @a id.
-	 * The @a id is either a value returned by Awk::addGlobal or one of 
+	 * The @a id is either a value returned by Awk::addGlobal() or one of 
 	 * Awk::Global enumerations. It is not legal to call this function
-	 * prior to Awk::parse.
+	 * prior to Awk::parse().
 	 * @return 0 on success, -1 on failure
 	 */
 	virtual int getGlobal (int id, Value& v);
@@ -946,12 +975,41 @@ public:
 	 */
 	virtual void disableRunCallback ();
 
+	/**
+	 * @name Word Substitution
+	 */
+	/*@{*/
+	virtual int getWord (
+		const char_t* ow, qse_size_t owl,
+		const char_t** nw, qse_size_t* nwl
+	) throw ();
+
+	virtual int setWord (
+		const char_t* ow, const char_t* nw
+	) throw ();
+
+	virtual int setWord (
+		const char_t* ow, qse_size_t owl,
+		const char_t* nw, qse_size_t nwl
+	) throw ();
+
+	virtual int unsetWord (
+		const char_t* ow
+	) throw ();
+
+	virtual int unsetWord (
+		const char_t* ow, qse_size_t owl
+	) throw ();
+
+	virtual int unsetAllWords () throw ();
+	/*@}*/
+
 protected:
 	virtual int dispatchFunction (Run* run, const char_t* name, size_t len);
 
 	/** 
 	 * @name Pipe I/O handlers
-	 * Pipe operations are achieved through the following methods.
+	 * Pipe operations are achieved through the following functions.
 	 */
 	/*@{*/
 	virtual int     openPipe  (Pipe& io) = 0;
@@ -963,7 +1021,7 @@ protected:
 
 	/** 
 	 * @name File I/O handlers
-	 * File operations are achieved through the following methods.
+	 * File operations are achieved through the following functions.
 	 */
 	/*@{*/
 	virtual int     openFile  (File& io) = 0;
@@ -975,7 +1033,7 @@ protected:
 
 	/** 
 	 * @name Console I/O handlers
-	 * Console operations are achieved through the following methods.
+	 * Console operations are achieved through the following functions.
 	 */
 	virtual int     openConsole  (Console& io) = 0;
 	virtual int     closeConsole (Console& io) = 0;
