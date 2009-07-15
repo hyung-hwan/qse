@@ -279,6 +279,8 @@ EXTRA_DIST = \
 	lang-029.awk \
 	lang-030.awk \
 	lang-031.awk \
+	lang-032.awk \
+	lang-033.awk \
 	quicksort2.awk \
 	quicksort.awk \
 	stripcomment.awk \
