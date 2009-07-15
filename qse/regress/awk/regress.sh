@@ -134,6 +134,8 @@ PROGS="
 	lang-029.awk///--explicit=on --newline=on -o-
 	lang-030.awk///--newline=on -o-
 	lang-031.awk///--newline=on -o-
+	lang-032.awk///--newline=on -o-
+	lang-033.awk///--newline=on -o-
 
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//

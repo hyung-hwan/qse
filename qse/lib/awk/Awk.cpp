@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 231 2009-07-13 10:03:53Z hyunghwan.chung $
+ * $Id: Awk.cpp 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1000,7 +1000,6 @@ int Awk::Run::setGlobal (int id, const char_t* ptr, size_t len)
 int Awk::Run::setGlobal (int id, const Value& gbl)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-
 	return qse_awk_rtx_setgbl (this->rtx, id, (val_t*)gbl);
 }
 
@@ -1531,7 +1530,7 @@ int Awk::addGlobal (const char_t* name)
 	QSE_ASSERT (awk != QSE_NULL);
 
 	int n = qse_awk_addgbl (awk, name, qse_strlen(name));
-	if (n == -1) retrieveError ();
+	if (n <= -1) retrieveError ();
 	return n;
 }
 
@@ -1539,7 +1538,33 @@ int Awk::deleteGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = qse_awk_delgbl (awk, name, qse_strlen(name));
-	if (n == -1) retrieveError ();
+	if (n <= -1) retrieveError ();
+	return n;
+}
+
+int Awk::setGlobal (int id, const Value& v)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	QSE_ASSERT (runctx.rtx != QSE_NULL);
+
+	if (v.run != &runctx) 
+	{
+		setError (ERR_INVAL);
+		return -1;
+	}
+
+	int n = runctx.setGlobal (id, v);
+	if (n <= -1) retrieveError ();
+	return n;
+}
+
+int Awk::getGlobal (int id, Value& v)
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	QSE_ASSERT (runctx.rtx != QSE_NULL);
+
+	int n = runctx.getGlobal (id, v);
+	if (n <= -1) retrieveError ();
 	return n;
 }
 
