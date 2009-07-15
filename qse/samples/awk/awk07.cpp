@@ -37,7 +37,7 @@ static int run_awk (QSE::StdAwk& awk)
 		"function pa (x) {\n"
 		"	reset ret;\n"
 		"	for (i in x) { print i, \"=>\", x[i]; ret += x[i]; }\n"
-		"	return ret;\n"
+		"	return ret + DAMN++;\n"
 		"}\n"
 		"function pb (x) {\n"
 		"	reset ret;\n"
@@ -45,6 +45,10 @@ static int run_awk (QSE::StdAwk& awk)
 		"	return ret;\n"
 		"}"
 	));
+
+	// add a global variable 'DAMN'
+	int damn = awk.addGlobal (QSE_T("DAMN"));
+	if (damn <= -1) return -1;
 
 	// parse the script and perform no deparsing
 	run = awk.parse (in, QSE::StdAwk::Source::NONE);
@@ -59,6 +63,11 @@ static int run_awk (QSE::StdAwk& awk)
 			run, QSE::StdAwk::Value::IntIndex(i), i*20) <= -1) return -1;
 	}
 
+	// set 'DAMN' to 100000
+	QSE::StdAwk::Value damnv (run);
+	if (damnv.setInt (100000) <= -1) return -1;
+	if (awk.setGlobal (damn, damnv) <= -1) return -1;
+
 	QSE::StdAwk::Value r;
 
 	// call the 'pa' function
@@ -68,6 +77,12 @@ static int run_awk (QSE::StdAwk& awk)
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)r.toInt());
 	qse_printf (QSE_T("        (real) [%Lf]\n"), (long double)r.toReal());
 	qse_printf (QSE_T("        (str) [%s]\n"), r.toStr(QSE_NULL));
+
+	// get the value of 'DAMN'
+	if (awk.getGlobal (damn, damnv) <= -1) return -1;
+	qse_printf (QSE_T("DAMN: (int) [%lld]\n"), (long long)damnv.toInt());
+	qse_printf (QSE_T("      (real) [%Lf]\n"), (long double)damnv.toReal());
+	qse_printf (QSE_T("      (str) [%s]\n"), damnv.toStr(QSE_NULL));
 
 	// call the 'pb' function
 	if (awk.call (QSE_T("pb"), &r, arg, QSE_COUNTOF(arg)) <= -1) return -1;

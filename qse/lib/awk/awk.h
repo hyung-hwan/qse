@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: awk.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -96,6 +96,15 @@ struct qse_awk_tree_t
 	int ok;
 };
 
+typedef struct qse_awk_token_t qse_awk_token_t;
+struct qse_awk_token_t
+{
+	int        type;
+	qse_str_t* name;
+	qse_size_t line;
+	qse_size_t column;
+};
+
 struct qse_awk_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
@@ -188,21 +197,17 @@ struct qse_awk_t
 		} shared;	
 	} src;
 
-	/* token */
-	struct 
+	/* previous token info excluding name */
+	struct
 	{
-		struct
-		{
-			int type;
-			qse_size_t line;
-			qse_size_t column;
-		} prev;
-
-		int        type;
-		qse_str_t* name;
+		int type;
 		qse_size_t line;
 		qse_size_t column;
-	} token;
+	} ptoken; 
+
+	/* current token */
+	qse_awk_token_t token;
+	qse_awk_token_t atoken;
 
 	/* intrinsic functions */
 	struct

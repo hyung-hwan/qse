@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE [110] LINE [3] recursion detected in format conversion
+ERROR: CODE [111] LINE [3] recursion detected in format conversion
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1520,7 +1520,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE [84] LINE [3] variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE [85] LINE [3] variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1532,7 +1532,7 @@ BEGIN {
 }
 
 abc
-ERROR: CODE [92] LINE [4] map 'abc' not assignable with a scalar
+ERROR: CODE [93] LINE [4] map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1631,6 +1631,40 @@ BEGIN {
 0
 0 -1
 --------------------------
+--------------------------------------------------------------------------------
+../../cmd/awk/qseawk --newline=on -o- -f lang-032.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	a = 91;
+	print ((a)++   10);
+	print ((a)++   10);
+	print ((a)++   10);
+	print ((a)++   10);
+	print ((a)++   10);
+	print "---------------------";
+	a = 91;
+	print (++(a)   10);
+}
+
+9110
+9210
+9310
+9410
+9510
+---------------------
+9210
+--------------------------------------------------------------------------------
+../../cmd/awk/qseawk --newline=on -o- -f lang-033.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	while ((("cat lang-033.awk" | getline x) > 0))
+		print x;
+}
+
+BEGIN {
+	while ("cat lang-033.awk" | getline x > 0) 
+		print x
+}
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

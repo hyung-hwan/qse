@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 210 2009-06-24 08:29:33Z hyunghwan.chung $
+ * $Id: tree.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -552,6 +552,9 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 		case QSE_AWK_NDE_GETLINE:
 		{
 			qse_awk_nde_getline_t* px = (qse_awk_nde_getline_t*)nde;
+
+			PUT_SRCSTR (awk, QSE_T("("));
+
 			if (px->in != QSE_NULL &&
 			    (px->in_type == QSE_AWK_IN_PIPE ||
 			     px->in_type == QSE_AWK_IN_RWPIPE))
@@ -578,6 +581,8 @@ static int print_expression (qse_awk_t* awk, qse_awk_nde_t* nde)
 				PUT_SRCSTR (awk, QSE_T(" "));
 				PRINT_EXPRESSION (awk, px->in);
 			}	  
+
+			PUT_SRCSTR (awk, QSE_T(")"));
 			break;
 		}
 

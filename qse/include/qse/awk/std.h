@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: std.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -32,7 +32,6 @@
  *
  * @todo
  * - add code to treat a function as a value 
- * - StdAwk ARGV and console name handling
  * - add RQ and LQ for more powerful record splitting
  * - improve performance in qse_awk_rtx_readio() if RS is logner than 2 chars.
  */

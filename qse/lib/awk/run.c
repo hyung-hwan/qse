@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: run.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -4021,7 +4021,8 @@ static int __cmp_int_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr > 0)
+	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		qse_long_t ll;
 		qse_real_t rr;
@@ -4107,7 +4108,8 @@ static int __cmp_real_str (
 	qse_awk_rtx_valtostr_out_t out;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr > 0)
+	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
+	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		const qse_char_t* end;
 		qse_real_t rr;

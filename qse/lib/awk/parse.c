@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: parse.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -172,12 +172,10 @@ static qse_awk_nde_t* parse_binary_expr (
 	qse_awk_nde_t*(*next_level_func)(qse_awk_t*,qse_size_t));
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_logical_or_with_io (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line);
-static qse_awk_nde_t* parse_bitwise_or_with_io (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_bitwise_and (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_equality (qse_awk_t* awk, qse_size_t line);
@@ -215,12 +213,17 @@ static qse_awk_nde_t* parse_reset (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type);
 
 static int get_token (qse_awk_t* awk);
-static int get_number (qse_awk_t* awk);
-static int get_charstr (qse_awk_t* awk);
-static int get_rexstr (qse_awk_t* awk);
+static int preget_token (qse_awk_t* awk);
+
+static int get_number (qse_awk_t* awk, qse_awk_token_t* token);
+static int get_charstr (qse_awk_t* awk, qse_awk_token_t* token);
+static int get_rexstr (qse_awk_t* awk, qse_awk_token_t* token);
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char,
-	qse_char_t esc_char, qse_bool_t keep_esc_char, int preescaped);
+	qse_char_t esc_char, qse_bool_t keep_esc_char, int preescaped,
+	qse_awk_token_t* token
+);
+
 static int get_char (qse_awk_t* awk);
 static int unget_char (qse_awk_t* awk, qse_cint_t c);
 static int skip_spaces (qse_awk_t* awk);
@@ -342,22 +345,23 @@ static global_t gtab[] =
 #define UNGET_CHAR(awk,c) \
 	do { if (unget_char (awk, c) <= -1) return -1; } while(0)
 
-#define SET_TOKEN_TYPE(awk,code) do { (awk)->token.type = (code); } while (0)
+#define SET_TOKEN_TYPE(awk,token,code) \
+	do { (token)->type = (code); } while (0)
 
-#define ADD_TOKEN_CHAR(awk,c) \
+#define ADD_TOKEN_CHAR(awk,token,c) \
 	do { \
-		if (qse_str_ccat((awk)->token.name,(c)) == (qse_size_t)-1) \
+		if (qse_str_ccat((token)->name,(c)) == (qse_size_t)-1) \
 		{ \
-			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL); \
+			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (token)->line, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
 
-#define ADD_TOKEN_STR(awk,s,l) \
+#define ADD_TOKEN_STR(awk,token,s,l) \
 	do { \
-		if (qse_str_ncat((awk)->token.name,(s),(l)) == (qse_size_t)-1) \
+		if (qse_str_ncat((token)->name,(s),(l)) == (qse_size_t)-1) \
 		{ \
-			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (awk)->token.line, QSE_NULL); \
+			qse_awk_seterror (awk, QSE_AWK_ENOMEM, (token)->line, QSE_NULL); \
 			return -1; \
 		} \
 	} while (0)
@@ -374,7 +378,7 @@ static global_t gtab[] =
 		errarg.len = QSE_STR_LEN((awk)->token.name); \
 		errarg.ptr = QSE_STR_PTR((awk)->token.name); \
 		if (MATCH(awk,TOKEN_EOF)) \
-			qse_awk_seterror (awk, code, (awk)->token.prev.line, &errarg); \
+			qse_awk_seterror (awk, code, (awk)->ptoken.line, &errarg); \
 		else \
 			qse_awk_seterror (awk, code, (awk)->token.line, &errarg); \
 	} while (0)
@@ -640,7 +644,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 		/*
 		if (awk->tree.begin != QSE_NULL)
 		{
-			SETERRLIN (awk, QSE_AWK_EDUPBEG, awk->token.prev.line);
+			SETERRLIN (awk, QSE_AWK_EDUPBEG, awk->ptoken.line);
 			return QSE_NULL;
 		}
 		*/
@@ -652,7 +656,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * BEGIN and { should be located on the same line */
-			SETERRLIN (awk, QSE_AWK_EBLKBEG, awk->token.prev.line);
+			SETERRLIN (awk, QSE_AWK_EBLKBEG, awk->ptoken.line);
 			return QSE_NULL;
 		}
 
@@ -676,7 +680,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 		/*
 		if (awk->tree.end != QSE_NULL)
 		{
-			SETERRLIN (awk, QSE_AWK_EDUPEND, awk->token.prev.line);
+			SETERRLIN (awk, QSE_AWK_EDUPEND, awk->ptoken.line);
 			return QSE_NULL;
 		}
 		*/
@@ -688,7 +692,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * END and { should be located on the same line */
-			SETERRLIN (awk, QSE_AWK_EBLKEND, awk->token.prev.line);
+			SETERRLIN (awk, QSE_AWK_EBLKEND, awk->ptoken.line);
 			return QSE_NULL;
 		}
 
@@ -760,7 +764,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 		{
 			/* blockless pattern */
 			qse_bool_t newline = MATCH(awk,TOKEN_NEWLINE);
-			qse_size_t tline = awk->token.prev.line;
+			qse_size_t tline = awk->ptoken.line;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_pattern_block(awk,ptn,QSE_TRUE) == QSE_NULL) 
@@ -1059,7 +1063,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	awk->tree.cur_fun.len = name_len;
 
 	/* actual function body */
-	body = awk->parse.parse_block (awk, awk->token.prev.line, QSE_TRUE);
+	body = awk->parse.parse_block (awk, awk->ptoken.line, QSE_TRUE);
 
 	/* clear the current function name remembered */
 	awk->tree.cur_fun.ptr = QSE_NULL;
@@ -1125,7 +1129,7 @@ static qse_awk_nde_t* parse_begin (qse_awk_t* awk)
 	QSE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
-	nde = awk->parse.parse_block (awk, awk->token.prev.line, QSE_TRUE);
+	nde = awk->parse.parse_block (awk, awk->ptoken.line, QSE_TRUE);
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	if (awk->tree.begin == QSE_NULL)
@@ -1149,7 +1153,7 @@ static qse_awk_nde_t* parse_end (qse_awk_t* awk)
 	QSE_ASSERT (MATCH(awk,TOKEN_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
-	nde = awk->parse.parse_block (awk, awk->token.prev.line, QSE_TRUE);
+	nde = awk->parse.parse_block (awk, awk->ptoken.line, QSE_TRUE);
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	if (awk->tree.end == QSE_NULL)
@@ -1271,7 +1275,7 @@ static qse_awk_nde_t* parse_block (
 				QSE_LDA_SIZE(awk->parse.lcls) - nlcls);
 			if (head != QSE_NULL) qse_awk_clrpt (awk, head);
 
-			SETERRLIN (awk, QSE_AWK_EENDSRC, awk->token.prev.line);
+			SETERRLIN (awk, QSE_AWK_EENDSRC, awk->ptoken.line);
 			return QSE_NULL;
 		}
 
@@ -1375,7 +1379,7 @@ static qse_awk_nde_t* parse_block_dc (
 
 	if (awk->parse.depth.cur.block >= awk->parse.depth.max.block)
 	{
-		SETERRLIN (awk, QSE_AWK_EBLKNST, awk->token.prev.line);
+		SETERRLIN (awk, QSE_AWK_EBLKNST, awk->ptoken.line);
 		return QSE_NULL;
 	}
 
@@ -1585,8 +1589,7 @@ static int add_global (
 	return (int)ngbls;
 }
 
-int qse_awk_addgbl (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
 	int n;
 
@@ -1887,7 +1890,7 @@ static qse_awk_nde_t* parse_statement (qse_awk_t* awk, qse_size_t line)
 		/* a block statemnt { ... } */
 		if (get_token(awk) <= -1) return QSE_NULL; 
 		nde = awk->parse.parse_block (
-			awk, awk->token.prev.line, QSE_FALSE);
+			awk, awk->ptoken.line, QSE_FALSE);
 	}
 	else 
 	{
@@ -2034,7 +2037,7 @@ static qse_awk_nde_t* parse_statement_nb (qse_awk_t* awk, qse_size_t line)
 	else
 	{
 		if (nde != QSE_NULL) qse_awk_clrpt (awk, nde);
-		SETERRLIN (awk, QSE_AWK_ESTMEND, awk->token.prev.line);
+		SETERRLIN (awk, QSE_AWK_ESTMEND, awk->ptoken.line);
 		return QSE_NULL;
 	}
 
@@ -2251,115 +2254,13 @@ static qse_awk_nde_t* parse_binary_expr (
 
 static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, qse_size_t line)
 {
-	if ((awk->option & QSE_AWK_RIO) && 
-	    (awk->option & QSE_AWK_RWPIPE))
+	static binmap_t map[] = 
 	{
-		return parse_logical_or_with_io (awk, line);
-	}
-	else
-	{
-		static binmap_t map[] = 
-		{
-			{ TOKEN_LOR, QSE_AWK_BINOP_LOR },
-			{ TOKEN_EOF, 0 }
-		};
+		{ TOKEN_LOR, QSE_AWK_BINOP_LOR },
+		{ TOKEN_EOF, 0 }
+	};
 
-		return parse_binary_expr (awk, line, 1, map, parse_logical_and);
-	}
-}
-
-static qse_awk_nde_t* parse_logical_or_with_io (qse_awk_t* awk, qse_size_t line)
-{
-	qse_awk_nde_t* left, * right;
-
-	left = parse_logical_and (awk, line);
-	if (left == QSE_NULL) return QSE_NULL;
-
-	while (MATCH(awk,TOKEN_LOR))
-	{
-		if (get_token(awk) <= -1)
-		{
-			qse_awk_clrpt (awk, left);
-			return QSE_NULL;
-		}
-
-		if (MATCH(awk,TOKEN_GETLINE))
-		{
-			qse_awk_nde_getline_t* nde;
-			qse_awk_nde_t* var = QSE_NULL;
-
-			if (get_token(awk) <= -1)
-			{
-				qse_awk_clrpt (awk, left);
-				return QSE_NULL;
-			}
-
-			/* TODO: is this correct? */
-			if (MATCH(awk,TOKEN_IDENT))
-			{
-				/* command | getline var */
-
-				var = parse_primary (awk, awk->token.line);
-				if (var == QSE_NULL) 
-				{
-					qse_awk_clrpt (awk, left);
-					return QSE_NULL;
-				}
-			}
-
-			nde = (qse_awk_nde_getline_t*) QSE_AWK_ALLOC (
-				awk, QSE_SIZEOF(qse_awk_nde_getline_t));
-			if (nde == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, left);
-
-				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
-				return QSE_NULL;
-			}
-
-			nde->type = QSE_AWK_NDE_GETLINE;
-			nde->line = line;
-			nde->next = QSE_NULL;
-			nde->var = var;
-			nde->in_type = QSE_AWK_IN_RWPIPE;
-			nde->in = left;
-
-			left = (qse_awk_nde_t*)nde;
-		}
-		else
-		{
-			qse_awk_nde_exp_t* nde;
-
-			right = parse_logical_and (awk, awk->token.line);
-			if (right == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, left);
-				return QSE_NULL;
-			}
-
-			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
-				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
-			if (nde == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, right);
-				qse_awk_clrpt (awk, left);
-
-				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
-				return QSE_NULL;
-			}
-
-			nde->type = QSE_AWK_NDE_EXP_BIN;
-			nde->line = line;
-			nde->next = QSE_NULL;
-			nde->opcode = QSE_AWK_BINOP_LOR;
-			nde->left = left;
-			nde->right = right;
-
-			left = (qse_awk_nde_t*)nde;
-		}
-	}
-
-	return left;
+	return parse_binary_expr (awk, line, 1, map, parse_logical_and);
 }
 
 static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, qse_size_t line)
@@ -2458,117 +2359,14 @@ static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, qse_size_t line)
 
 static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, qse_size_t line)
 {
-	if (awk->option & QSE_AWK_RIO)
+	static binmap_t map[] = 
 	{
-		return parse_bitwise_or_with_io (awk, line);
-	}
-	else
-	{
-		static binmap_t map[] = 
-		{
-			{ TOKEN_BOR, QSE_AWK_BINOP_BOR },
-			{ TOKEN_EOF, 0 }
-		};
+		{ TOKEN_BOR, QSE_AWK_BINOP_BOR },
+		{ TOKEN_EOF, 0 }
+	};
 
-		return parse_binary_expr (
-			awk, line, 0, map, parse_bitwise_xor);
-	}
-}
-
-static qse_awk_nde_t* parse_bitwise_or_with_io (qse_awk_t* awk, qse_size_t line)
-{
-	qse_awk_nde_t* left, * right;
-
-	left = parse_bitwise_xor (awk, line);
-	if (left == QSE_NULL) return QSE_NULL;
-
-	while (MATCH(awk,TOKEN_BOR))
-	{
-		if (get_token(awk) <= -1)
-		{
-			qse_awk_clrpt (awk, left);
-			return QSE_NULL;
-		}
-
-		if (MATCH(awk,TOKEN_GETLINE))
-		{
-			qse_awk_nde_getline_t* nde;
-			qse_awk_nde_t* var = QSE_NULL;
-
-			/* piped getline */
-			if (get_token(awk) <= -1)
-			{
-				qse_awk_clrpt (awk, left);
-				return QSE_NULL;
-			}
-
-			/* TODO: is this correct? */
-
-			if (MATCH(awk,TOKEN_IDENT))
-			{
-				/* command | getline var */
-
-				var = parse_primary (awk, awk->token.line);
-				if (var == QSE_NULL) 
-				{
-					qse_awk_clrpt (awk, left);
-					return QSE_NULL;
-				}
-			}
-
-			nde = (qse_awk_nde_getline_t*) QSE_AWK_ALLOC (
-				awk, QSE_SIZEOF(qse_awk_nde_getline_t));
-			if (nde == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, left);
-
-				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
-				return QSE_NULL;
-			}
-
-			nde->type = QSE_AWK_NDE_GETLINE;
-			nde->line = line;
-			nde->next = QSE_NULL;
-			nde->var = var;
-			nde->in_type = QSE_AWK_IN_PIPE;
-			nde->in = left;
-
-			left = (qse_awk_nde_t*)nde;
-		}
-		else
-		{
-			qse_awk_nde_exp_t* nde;
-
-			right = parse_bitwise_xor (awk, awk->token.line);
-			if (right == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, left);
-				return QSE_NULL;
-			}
-
-			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
-				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
-			if (nde == QSE_NULL)
-			{
-				qse_awk_clrpt (awk, right);
-				qse_awk_clrpt (awk, left);
-
-				SETERRLIN (awk, QSE_AWK_ENOMEM, line);
-				return QSE_NULL;
-			}
-
-			nde->type = QSE_AWK_NDE_EXP_BIN;
-			nde->line = line;
-			nde->next = QSE_NULL;
-			nde->opcode = QSE_AWK_BINOP_BOR;
-			nde->left = left;
-			nde->right = right;
-
-			left = (qse_awk_nde_t*)nde;
-		}
-	}
-
-	return left;
+	return parse_binary_expr (
+		awk, line, 0, map, parse_bitwise_xor);
 }
 
 static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, qse_size_t line)
@@ -2841,17 +2639,6 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 	left = parse_primary (awk, line);
 	if (left == QSE_NULL) return QSE_NULL;
 
-	if (awk->option & QSE_AWK_IMPLICIT)
-	{
-		/* concatenation operation by whitepaces are allowed 
-		 * if this option is set. the ++/-- operator following
-		 * the primary should be treated specially. 
-		 * for example, "abc" ++  10 => "abc" . ++10
-		 */
-		/*if (!is_var(left)) return left; XXX */
-		if (!is_var(left) && left->type != QSE_AWK_NDE_POS) return left;
-	}
-
 	/* check for postfix increment operator */
 	opcode2 = MATCH(awk,TOKEN_PLUSPLUS)? QSE_AWK_INCOP_PLUS:
 	          MATCH(awk,TOKEN_MINUSMINUS)? QSE_AWK_INCOP_MINUS: -1;
@@ -2882,7 +2669,18 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 		type = QSE_AWK_NDE_EXP_INCPST;
 		opcode = opcode2;
 
-		if (get_token(awk) <= -1) return QSE_NULL;
+		if (get_token(awk) <= -1) 
+		{
+			qse_awk_clrpt (awk, left);
+			return QSE_NULL;
+		}
+	}
+
+	if (!is_var(left) && left->type != QSE_AWK_NDE_POS)
+	{
+		qse_awk_clrpt (awk, left);
+		SETERRLIN (awk, QSE_AWK_EINCDECOPR, line);
+		return QSE_NULL;
 	}
 
 	nde = (qse_awk_nde_exp_t*) 
@@ -2890,7 +2688,6 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 	if (nde == QSE_NULL)
 	{
 		qse_awk_clrpt (awk, left);
-
 		SETERRLIN (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
@@ -2905,7 +2702,7 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 	return (qse_awk_nde_t*)nde;
 }
 
-static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
+static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 {
 	if (MATCH(awk,TOKEN_IDENT))  
 	{
@@ -3036,10 +2833,10 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		 * of the context-sensitivity of the slash symbol.
 		 * if TOKEN_DIV is seen as a primary, it tries to compile
 		 * it as a regular expression */
-		SET_TOKEN_TYPE (awk, TOKEN_REX);
-
+		SET_TOKEN_TYPE (awk, &awk->token, TOKEN_REX);
 		qse_str_clear (awk->token.name);
-		if (get_rexstr (awk) <= -1) return QSE_NULL;
+		if (get_rexstr (awk, &awk->token) <= -1) return QSE_NULL;
+
 		QSE_ASSERT (MATCH(awk,TOKEN_REX));
 
 		nde = (qse_awk_nde_rex_t*) QSE_AWK_ALLOC (
@@ -3270,8 +3067,93 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 
 	/* valid expression introducer is expected */
 	SETERRLIN (awk, QSE_AWK_EEXPRES, 
-		(MATCH(awk,TOKEN_EOF)? awk->token.prev.line: line));
+		(MATCH(awk,TOKEN_EOF)? awk->ptoken.line: line));
 	return QSE_NULL;
+}
+
+static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
+{
+	qse_awk_nde_t* left;
+	qse_awk_nde_getline_t* nde;
+	qse_awk_nde_t* var;
+
+	left = parse_primary_nogetline (awk, line);
+
+	do
+	{
+		int intype = -1;
+
+		if (awk->option & QSE_AWK_RIO)
+		{
+			if (MATCH(awk,TOKEN_BOR)) 
+			{
+				intype = QSE_AWK_IN_PIPE;
+			}
+			else if (MATCH(awk,TOKEN_LOR)) 
+			{
+				if (awk->option & QSE_AWK_RWPIPE) 
+					intype = QSE_AWK_IN_RWPIPE;
+			}
+		}
+		
+		if (intype == -1) break;
+
+		if (preget_token(awk) <= -1) 
+		{
+			qse_awk_clrpt (awk, left);
+			return QSE_NULL;
+		}
+	
+		if (awk->atoken.type != TOKEN_GETLINE) break;
+
+		var = QSE_NULL;
+
+		/* consume atoken */
+		get_token (awk);
+
+		/* get the next token */
+		if (get_token(awk) <= -1)
+		{
+			qse_awk_clrpt (awk, left);
+			return QSE_NULL;
+		}
+
+		/* TODO: is this correct? */
+		if (MATCH(awk,TOKEN_IDENT))
+		{
+			/* command | getline var 
+			 * command || getline var */
+
+			var = parse_primary_ident (awk, awk->token.line);
+			if (var == QSE_NULL) 
+			{
+				qse_awk_clrpt (awk, left);
+				return QSE_NULL;
+			}
+		}
+
+		nde = (qse_awk_nde_getline_t*) QSE_AWK_ALLOC (
+			awk, QSE_SIZEOF(qse_awk_nde_getline_t));
+		if (nde == QSE_NULL)
+		{
+			qse_awk_clrpt (awk, left);
+
+			SETERRLIN (awk, QSE_AWK_ENOMEM, line);
+			return QSE_NULL;
+		}
+
+		nde->type = QSE_AWK_NDE_GETLINE;
+		nde->line = line;
+		nde->next = QSE_NULL;
+		nde->var = var;
+		nde->in_type = intype;
+		nde->in = left;
+
+		left = (qse_awk_nde_t*)nde;
+	}
+	while (1);
+
+	return left;
 }
 
 static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
@@ -3905,7 +3787,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line)
 			return QSE_NULL;
 		}
 
-		else_part = parse_statement (awk, awk->token.prev.line);
+		else_part = parse_statement (awk, awk->ptoken.line);
 		if (else_part == QSE_NULL) 
 		{
 			qse_awk_clrpt (awk, then_part);
@@ -4184,7 +4066,7 @@ static qse_awk_nde_t* parse_dowhile (qse_awk_t* awk, qse_size_t line)
 	qse_awk_nde_t* test, * body;
 	qse_awk_nde_while_t* nde;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_DO);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_DO);
 
 	body = parse_statement (awk, awk->token.line);
 	if (body == QSE_NULL) return QSE_NULL;
@@ -4273,7 +4155,7 @@ static qse_awk_nde_t* parse_break (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_break_t* nde;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_BREAK);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_BREAK);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
 		SETERRLIN (awk, QSE_AWK_EBREAK, line);
@@ -4299,7 +4181,7 @@ static qse_awk_nde_t* parse_continue (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_continue_t* nde;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_CONTINUE);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_CONTINUE);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
 		SETERRLIN (awk, QSE_AWK_ECONTINUE, line);
@@ -4326,7 +4208,7 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, qse_size_t line)
 	qse_awk_nde_return_t* nde;
 	qse_awk_nde_t* val;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_RETURN);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_RETURN);
 
 	nde = (qse_awk_nde_return_t*) QSE_AWK_ALLOC (
 		awk, QSE_SIZEOF(qse_awk_nde_return_t));
@@ -4364,7 +4246,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, qse_size_t line)
 	qse_awk_nde_exit_t* nde;
 	qse_awk_nde_t* val;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_EXIT);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_EXIT);
 
 	nde = (qse_awk_nde_exit_t*) 
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_exit_t));
@@ -4401,7 +4283,7 @@ static qse_awk_nde_t* parse_next (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_next_t* nde;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_NEXT);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_NEXT);
 
 	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
@@ -4464,7 +4346,7 @@ static qse_awk_nde_t* parse_delete (qse_awk_t* awk, qse_size_t line)
 	qse_awk_nde_delete_t* nde;
 	qse_awk_nde_t* var;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_DELETE);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_DELETE);
 	if (!MATCH(awk,TOKEN_IDENT)) 
 	{
 		SETERRTOK (awk, QSE_AWK_EIDENT);
@@ -4503,7 +4385,7 @@ static qse_awk_nde_t* parse_reset (qse_awk_t* awk, qse_size_t line)
 	qse_awk_nde_reset_t* nde;
 	qse_awk_nde_t* var;
 
-	QSE_ASSERT (awk->token.prev.type == TOKEN_RESET);
+	QSE_ASSERT (awk->ptoken.type == TOKEN_RESET);
 	if (!MATCH(awk,TOKEN_IDENT)) 
 	{
 		SETERRTOK (awk, QSE_AWK_EIDENT);
@@ -4590,7 +4472,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 
 		/* print 1 > 2 would print 1 to the file named 2. 
 		 * print (1 > 2) would print (1 > 2) on the console */
-		if (awk->token.prev.type != TOKEN_RPAREN &&
+		if (awk->ptoken.type != TOKEN_RPAREN &&
 		    args_tail->type == QSE_AWK_NDE_EXP_BIN)
 		{
 			int i;
@@ -4707,17 +4589,10 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 	return (qse_awk_nde_t*)nde;
 }
 
-static int get_token (qse_awk_t* awk)
+static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 {
 	qse_cint_t c;
-	qse_size_t line;
 	int n;
-
-	line = awk->token.line;
-
-	awk->token.prev.type = awk->token.type;
-	awk->token.prev.line = awk->token.line;
-	awk->token.prev.column = awk->token.column;
 
 	do 
 	{
@@ -4726,27 +4601,27 @@ static int get_token (qse_awk_t* awk)
 	} 
 	while (n >= 1);
 
-	qse_str_clear (awk->token.name);
-	awk->token.line = awk->src.lex.line;
-	awk->token.column = awk->src.lex.column;
+	qse_str_clear (token->name);
+	token->line = awk->src.lex.line;
+	token->column = awk->src.lex.column;
 
 	c = awk->src.lex.curc;
 
 	if (c == QSE_CHAR_EOF) 
 	{
-		ADD_TOKEN_STR (awk, QSE_T("<EOF>"), 5);
-		SET_TOKEN_TYPE (awk, TOKEN_EOF);
+		ADD_TOKEN_STR (awk, token, QSE_T("<EOF>"), 5);
+		SET_TOKEN_TYPE (awk, token, TOKEN_EOF);
 	}	
 	else if (c == QSE_T('\n')) 
 	{
-		/*ADD_TOKEN_CHAR (awk, QSE_T('\n'));*/
-		ADD_TOKEN_STR (awk, QSE_T("<NL>"), 4);
-		SET_TOKEN_TYPE (awk, TOKEN_NEWLINE);
+		/*ADD_TOKEN_CHAR (awk, token, QSE_T('\n'));*/
+		ADD_TOKEN_STR (awk, token, QSE_T("<NL>"), 4);
+		SET_TOKEN_TYPE (awk, token, TOKEN_NEWLINE);
 		GET_CHAR (awk);
 	}
 	else if (QSE_AWK_ISDIGIT (awk, c)/*|| c == QSE_T('.')*/)
 	{
-		if (get_number (awk) <= -1) return -1;
+		if (get_number (awk, token) <= -1) return -1;
 	}
 	else if (c == QSE_T('.'))
 	{
@@ -4757,19 +4632,19 @@ static int get_token (qse_awk_t* awk)
 		{
 			awk->src.lex.curc = QSE_T('.');
 			UNGET_CHAR (awk, c);	
-			if (get_number (awk) <= -1) return -1;
+			if (get_number (awk, token) <= -1) return -1;
 
 		}
 		else /*if (QSE_AWK_ISSPACE (awk, c) || c == QSE_CHAR_EOF)*/
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_PERIOD);
-			ADD_TOKEN_CHAR (awk, QSE_T('.'));
+			SET_TOKEN_TYPE (awk, token, TOKEN_PERIOD);
+			ADD_TOKEN_CHAR (awk, token, QSE_T('.'));
 		}
 		/*
 		else
 		{
 			qse_awk_seterror (
-				awk, QSE_AWK_ELXCHR, awk->token.line,
+				awk, QSE_AWK_ELXCHR, token->line,
 				QSE_T("floating point not followed by any valid digits"));
 			return -1;
 		}
@@ -4782,7 +4657,7 @@ static int get_token (qse_awk_t* awk)
 		/* identifier */
 		do 
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 		} 
 		while (c == QSE_T('_') || 
@@ -4790,290 +4665,294 @@ static int get_token (qse_awk_t* awk)
 		       QSE_AWK_ISDIGIT (awk, c));
 
 		type = classify_ident (awk, 
-			QSE_STR_PTR(awk->token.name), 
-			QSE_STR_LEN(awk->token.name));
-		SET_TOKEN_TYPE (awk, type);
+			QSE_STR_PTR(token->name), 
+			QSE_STR_LEN(token->name));
+		SET_TOKEN_TYPE (awk, token, type);
 	}
 	else if (c == QSE_T('\"')) 
 	{
-		SET_TOKEN_TYPE (awk, TOKEN_STR);
-		if (get_charstr(awk) <= -1) return -1;
+		SET_TOKEN_TYPE (awk, token, TOKEN_STR);
+		if (get_charstr(awk, token) <= -1) return -1;
 	}
 	else if (c == QSE_T('=')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_EQ);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_EQ);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_ASSIGN);
+			SET_TOKEN_TYPE (awk, token, TOKEN_ASSIGN);
 		}
 	}
 	else if (c == QSE_T('!')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_NE);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_NE);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('~'))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_NM);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_NM);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LNOT);
+			SET_TOKEN_TYPE (awk, token, TOKEN_LNOT);
 		}
 	}
 	else if (c == QSE_T('>')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('>')) 
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 			if ((awk->option & QSE_AWK_SHIFT) && c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_RSHIFT_ASSIGN);
-				ADD_TOKEN_CHAR (awk, c);
+				SET_TOKEN_TYPE (awk, token, TOKEN_RSHIFT_ASSIGN);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_RSHIFT);
+				SET_TOKEN_TYPE (awk, token, TOKEN_RSHIFT);
 			}
 		}
 		else if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_GE);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_GE);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_GT);
+			SET_TOKEN_TYPE (awk, token, TOKEN_GT);
 		}
 	}
 	else if (c == QSE_T('<')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if ((awk->option & QSE_AWK_SHIFT) && c == QSE_T('<')) 
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 			if (c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_LSHIFT_ASSIGN);
-				ADD_TOKEN_CHAR (awk, c);
+				SET_TOKEN_TYPE (awk, token, TOKEN_LSHIFT_ASSIGN);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_LSHIFT);
+				SET_TOKEN_TYPE (awk, token, TOKEN_LSHIFT);
 			}
 		}
 		else if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LE);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_LE);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LT);
+			SET_TOKEN_TYPE (awk, token, TOKEN_LT);
 		}
 	}
 	else if (c == QSE_T('|'))
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('|'))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LOR);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_LOR);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BOR_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_BOR_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BOR);
+			SET_TOKEN_TYPE (awk, token, TOKEN_BOR);
 		}
 	}
 	else if (c == QSE_T('&'))
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('&'))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_LAND);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_LAND);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BAND_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_BAND_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_BAND);
+			SET_TOKEN_TYPE (awk, token, TOKEN_BAND);
 		}
 	}
 	else if (c == QSE_T('^'))
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, ((awk->option & QSE_AWK_BXOR)? 
-				TOKEN_BXOR_ASSIGN: TOKEN_EXP_ASSIGN));
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, 
+				((awk->option & QSE_AWK_BXOR)? 
+					TOKEN_BXOR_ASSIGN: TOKEN_EXP_ASSIGN)
+			);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, ((awk->option & QSE_AWK_BXOR)? 
-				TOKEN_BXOR: TOKEN_EXP));
+			SET_TOKEN_TYPE (awk, token,
+				((awk->option & QSE_AWK_BXOR)? 
+					TOKEN_BXOR: TOKEN_EXP)
+			);
 		}
 	}
 	else if (c == QSE_T('+')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('+')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_PLUSPLUS);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_PLUSPLUS);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_PLUS_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_PLUS_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_PLUS);
+			SET_TOKEN_TYPE (awk, token, TOKEN_PLUS);
 		}
 	}
 	else if (c == QSE_T('-')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 		if (c == QSE_T('-')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MINUSMINUS);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MINUSMINUS);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('=')) 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MINUS_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MINUS_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else 
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MINUS);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MINUS);
 		}
 	}
 	else if (c == QSE_T('*')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MUL_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MUL_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if (c == QSE_T('*'))
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 			if (c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_EXP_ASSIGN);
-				ADD_TOKEN_CHAR (awk, c);
+				SET_TOKEN_TYPE (awk, token, TOKEN_EXP_ASSIGN);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else 
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_EXP);
+				SET_TOKEN_TYPE (awk, token, TOKEN_EXP);
 			}
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MUL);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MUL);
 		}
 	}
 	else if (c == QSE_T('/')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_DIV_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_DIV_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else if ((awk->option & QSE_AWK_IDIV) && c == QSE_T('/'))
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 			if (c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_IDIV_ASSIGN);
-				ADD_TOKEN_CHAR (awk, c);
+				SET_TOKEN_TYPE (awk, token, TOKEN_IDIV_ASSIGN);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else 
 			{
-				SET_TOKEN_TYPE (awk, TOKEN_IDIV);
+				SET_TOKEN_TYPE (awk, token, TOKEN_IDIV);
 			}
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_DIV);
+			SET_TOKEN_TYPE (awk, token, TOKEN_DIV);
 		}
 	}
 	else if (c == QSE_T('%')) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('='))
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MOD_ASSIGN);
-			ADD_TOKEN_CHAR (awk, c);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MOD_ASSIGN);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, TOKEN_MOD);
+			SET_TOKEN_TYPE (awk, token, TOKEN_MOD);
 		}
 	}
 	else 
@@ -5104,8 +4983,8 @@ static int get_token (qse_awk_t* awk)
 		{
 			if (c == tab[i].c) 
 			{
-				SET_TOKEN_TYPE (awk, tab[i].t);
-				ADD_TOKEN_CHAR (awk, c);
+				SET_TOKEN_TYPE (awk, token, tab[i].t);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 				goto get_token_ok;
 			}
@@ -5113,12 +4992,12 @@ static int get_token (qse_awk_t* awk)
 
 		if (c == QSE_T('\0'))
 		{
-			SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, QSE_T("<NUL>"), 5);
+			SETERRARG (awk, QSE_AWK_ELXCHR, token->line, QSE_T("<NUL>"), 5);
 		}
 		else
 		{
 			qse_char_t cc = (qse_char_t)c;
-			SETERRARG (awk, QSE_AWK_ELXCHR, awk->token.line, &cc, 1);
+			SETERRARG (awk, QSE_AWK_ELXCHR, token->line, &cc, 1);
 		}
 		return -1;
 	}
@@ -5127,18 +5006,44 @@ get_token_ok:
 	return 0;
 }
 
-static int get_number (qse_awk_t* awk)
+static int get_token (qse_awk_t* awk)
+{
+	awk->ptoken.type = awk->token.type;
+	awk->ptoken.line = awk->token.line;
+	awk->ptoken.column = awk->token.column;
+
+	if (QSE_STR_LEN(awk->atoken.name) > 0)
+	{
+		awk->token.type = awk->atoken.type;
+		awk->token.line = awk->atoken.line;
+		awk->token.column = awk->token.column;	
+
+		qse_str_swap (awk->token.name, awk->atoken.name);
+		qse_str_clear (awk->atoken.name);
+
+		return 0;
+	}
+
+	return get_token_into (awk, &awk->token);
+}
+
+static int preget_token (qse_awk_t* awk)
+{
+	return get_token_into (awk, &awk->atoken);
+}
+
+static int get_number (qse_awk_t* awk, qse_awk_token_t* token)
 {
 	qse_cint_t c;
 
-	QSE_ASSERT (QSE_STR_LEN(awk->token.name) == 0);
-	SET_TOKEN_TYPE (awk, TOKEN_INT);
+	QSE_ASSERT (QSE_STR_LEN(token->name) == 0);
+	SET_TOKEN_TYPE (awk, token, TOKEN_INT);
 
 	c = awk->src.lex.curc;
 
 	if (c == QSE_T('0'))
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('x') || c == QSE_T('X'))
@@ -5146,7 +5051,7 @@ static int get_number (qse_awk_t* awk)
 			/* hexadecimal number */
 			do 
 			{
-				ADD_TOKEN_CHAR (awk, c);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR_TO (awk, c);
 			} 
 			while (QSE_AWK_ISXDIGIT (awk, c));
@@ -5158,7 +5063,7 @@ static int get_number (qse_awk_t* awk)
 			/* binary number */
 			do
 			{
-				ADD_TOKEN_CHAR (awk, c);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR_TO (awk, c);
 			} 
 			while (c == QSE_T('0') || c == QSE_T('1'));
@@ -5170,7 +5075,7 @@ static int get_number (qse_awk_t* awk)
 			/* octal number */
 			while (c >= QSE_T('0') && c <= QSE_T('7'))
 			{
-				ADD_TOKEN_CHAR (awk, c);
+				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR_TO (awk, c);
 			}
 
@@ -5187,41 +5092,41 @@ static int get_number (qse_awk_t* awk)
 
 	while (QSE_AWK_ISDIGIT (awk, c)) 
 	{
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 	} 
 
 	if (c == QSE_T('.'))
 	{
 		/* floating-point number */
-		SET_TOKEN_TYPE (awk, TOKEN_REAL);
+		SET_TOKEN_TYPE (awk, token, TOKEN_REAL);
 
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		while (QSE_AWK_ISDIGIT (awk, c))
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 		}
 	}
 
 	if (c == QSE_T('E') || c == QSE_T('e'))
 	{
-		SET_TOKEN_TYPE (awk, TOKEN_REAL);
+		SET_TOKEN_TYPE (awk, token, TOKEN_REAL);
 
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
 		if (c == QSE_T('+') || c == QSE_T('-'))
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 		}
 
 		while (QSE_AWK_ISDIGIT (awk, c))
 		{
-			ADD_TOKEN_CHAR (awk, c);
+			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 		}
 	}
@@ -5229,18 +5134,18 @@ static int get_number (qse_awk_t* awk)
 	return 0;
 }
 
-static int get_charstr (qse_awk_t* awk)
+static int get_charstr (qse_awk_t* awk, qse_awk_token_t* token)
 {
 	if (awk->src.lex.curc != QSE_T('\"')) 
 	{
 		/* the starting quote has been consumed before this function
 		 * has been called */
-		ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
+		ADD_TOKEN_CHAR (awk, token, awk->src.lex.curc);
 	}
-	return get_string (awk, QSE_T('\"'), QSE_T('\\'), QSE_FALSE, 0);
+	return get_string (awk, QSE_T('\"'), QSE_T('\\'), QSE_FALSE, 0, token);
 }
 
-static int get_rexstr (qse_awk_t* awk)
+static int get_rexstr (qse_awk_t* awk, qse_awk_token_t* token)
 {
 	if (awk->src.lex.curc == QSE_T('/')) 
 	{
@@ -5269,17 +5174,17 @@ static int get_rexstr (qse_awk_t* awk)
 		{
 			/* add other initial characters here as get_string()
 			 * begins with reading the next character */
-			ADD_TOKEN_CHAR (awk, awk->src.lex.curc);
+			ADD_TOKEN_CHAR (awk, token, awk->src.lex.curc);
 		}
-		return get_string (awk, 
-			QSE_T('/'), QSE_T('\\'), QSE_TRUE, escaped);
+		return get_string (
+			awk, QSE_T('/'), QSE_T('\\'), QSE_TRUE, escaped, token);
 	}
 }
 
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
 	qse_char_t esc_char, qse_bool_t keep_esc_char,
-	int preescaped)
+	int preescaped, qse_awk_token_t* token)
 {
 	qse_cint_t c;
 	int escaped = preescaped;
@@ -5304,14 +5209,14 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, c_acc);
+					ADD_TOKEN_CHAR (awk, token, c_acc);
 					escaped = 0;
 				}
 				continue;
 			}
 			else
 			{
-				ADD_TOKEN_CHAR (awk, c_acc);
+				ADD_TOKEN_CHAR (awk, token, c_acc);
 				escaped = 0;
 			}
 		}
@@ -5323,7 +5228,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, c_acc);
+					ADD_TOKEN_CHAR (awk, token, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5334,7 +5239,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, c_acc);
+					ADD_TOKEN_CHAR (awk, token, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5345,7 +5250,7 @@ static int get_string (
 				digit_count++;
 				if (digit_count >= escaped) 
 				{
-					ADD_TOKEN_CHAR (awk, c_acc);
+					ADD_TOKEN_CHAR (awk, token, c_acc);
 					escaped = 0;
 				}
 				continue;
@@ -5357,8 +5262,9 @@ static int get_string (
 				rc = (escaped == 2)? QSE_T('x'):
 				     (escaped == 4)? QSE_T('u'): QSE_T('U');
 
-				if (digit_count == 0) ADD_TOKEN_CHAR (awk, rc);
-				else ADD_TOKEN_CHAR (awk, c_acc);
+				if (digit_count == 0) 
+					ADD_TOKEN_CHAR (awk, token, rc);
+				else ADD_TOKEN_CHAR (awk, token, c_acc);
 
 				escaped = 0;
 			}
@@ -5419,13 +5325,13 @@ static int get_string (
 		#endif
 			else if (keep_esc_char) 
 			{
-				ADD_TOKEN_CHAR (awk, esc_char);
+				ADD_TOKEN_CHAR (awk, token, esc_char);
 			}
 
 			escaped = 0;
 		}
 
-		ADD_TOKEN_CHAR (awk, c);
+		ADD_TOKEN_CHAR (awk, token, c);
 	}
 
 	return 0;
@@ -5968,8 +5874,6 @@ exit_deparse:
 
 	return n;
 }
-
-
 
 static qse_map_walk_t deparse_func (
 	qse_map_t* map, qse_map_pair_t* pair, void* arg)

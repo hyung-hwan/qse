@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 212 2009-06-25 07:39:27Z hyunghwan.chung $ 
+ * $Id: awk.c 232 2009-07-14 08:06:14Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -54,6 +54,27 @@ static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
 	QSE_AWK_FREE (awk, f);
 }
 
+static int init_token (qse_mmgr_t* mmgr, qse_awk_token_t* token)
+{
+	token->name = qse_str_open (mmgr, 0, 128);
+	if (token->name == QSE_NULL) return -1;
+	
+	token->type = 0;
+	token->line = 0;
+	token->column = 0;
+
+	return 0;
+}
+
+static void fini_token (qse_awk_token_t* token)
+{
+	if (token->name != QSE_NULL)
+	{
+		qse_str_close (token->name);
+		token->name = QSE_NULL;
+	}
+}
+
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 {
 	qse_awk_t* awk;
@@ -91,8 +112,8 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	}
 	awk->prm = *prm;
 
-	awk->token.name = qse_str_open (mmgr, 0, 128);
-	if (awk->token.name == QSE_NULL) goto oops;
+	if (init_token (mmgr, &awk->token) == -1) goto oops;
+	if (init_token (mmgr, &awk->atoken) == -1) goto oops;
 
 	awk->wtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == QSE_NULL) goto oops;
@@ -170,12 +191,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->tree.chain_tail = QSE_NULL;
 	awk->tree.chain_size = 0;
 
-	awk->token.prev.type = 0;
-	awk->token.prev.line = 0;
-	awk->token.prev.column = 0;
-	awk->token.type = 0;
-	awk->token.line = 0;
-	awk->token.column = 0;
+	awk->ptoken.type = 0;
+	awk->ptoken.line = 0;
+	awk->ptoken.column = 0;
 
 	awk->src.lex.curc = QSE_CHAR_EOF;
 	awk->src.lex.ungotc_count = 0;
@@ -218,7 +236,8 @@ oops:
 	if (awk->tree.funs) qse_map_close (awk->tree.funs);
 	if (awk->rwtab) qse_map_close (awk->rwtab);
 	if (awk->wtab) qse_map_close (awk->wtab);
-	if (awk->token.name) qse_str_close (awk->token.name);
+	fini_token (&awk->atoken);
+	fini_token (&awk->token);
 	QSE_AWK_FREE (awk, awk);
 
 	return QSE_NULL;
@@ -240,7 +259,8 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->rwtab);
 	qse_map_close (awk->wtab);
 
-	qse_str_close (awk->token.name);
+	fini_token (&awk->atoken);
+	fini_token (&awk->token);
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */

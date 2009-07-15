@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 231 2009-07-13 10:03:53Z hyunghwan.chung $
+ * $Id: Awk.hpp 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -254,6 +254,8 @@ public:
 	class Value
 	{
 	public:
+		friend class Awk;
+
 		// initialization
 		void* operator new (size_t n, Run* run) throw ();
 		void* operator new[] (size_t n, Run* run) throw ();
@@ -556,6 +558,7 @@ public:
 		ERR_NEXTFEND = QSE_AWK_ENEXTFEND,
 		ERR_PRINTFARG = QSE_AWK_EPRINTFARG,
 		ERR_PREPST = QSE_AWK_EPREPST,
+		ERR_INCDECOPR = QSE_AWK_EINCDECOPR,
 		ERR_DIVBY0 = QSE_AWK_EDIVBY0,
 		ERR_OPERAND = QSE_AWK_EOPERAND,
 		ERR_POSIDX = QSE_AWK_EPOSIDX,
@@ -647,25 +650,29 @@ public:
 	};
 	// end of enum Option
 	
+	/**
+	 * Defines an identifier of predefined global variables.
+	 * Awk::setGlobal and Awk::getGlobal can take one of these enumeration.
+	 */
 	enum Global
 	{
-		GBL_ARGC = QSE_AWK_GBL_ARGC,
-		GBL_ARGV = QSE_AWK_GBL_ARGV,
-		GBL_CONVFMT = QSE_AWK_GBL_CONVFMT,
-		GBL_FILENAME = QSE_AWK_GBL_FILENAME,
-		GBL_FNR = QSE_AWK_GBL_FNR,
-		GBL_FS = QSE_AWK_GBL_FS,
-		GBL_IGNORECASE = QSE_AWK_GBL_IGNORECASE,
-		GBL_NF = QSE_AWK_GBL_NF,
-		GBL_NR = QSE_AWK_GBL_NR,
-		GBL_OFILENAME = QSE_AWK_GBL_OFILENAME,
-		GBL_OFMT = QSE_AWK_GBL_OFMT,
-		GBL_OFS = QSE_AWK_GBL_OFS,
-		GBL_ORS = QSE_AWK_GBL_ORS,
-		GBL_RLENGTH = QSE_AWK_GBL_RLENGTH,
-		GBL_RS = QSE_AWK_GBL_RS,
-		GBL_RSTART = QSE_AWK_GBL_RSTART,
-		GBL_SUBSEP = QSE_AWK_GBL_SUBSEP
+		GBL_ARGC = QSE_AWK_GBL_ARGC,           /**< ARGC */
+		GBL_ARGV = QSE_AWK_GBL_ARGV,           /**< ARGV */
+		GBL_CONVFMT = QSE_AWK_GBL_CONVFMT,     /**< CONVFMT */
+		GBL_FILENAME = QSE_AWK_GBL_FILENAME,   /**< FILENAME */
+		GBL_FNR = QSE_AWK_GBL_FNR,             /**< FNR */
+		GBL_FS = QSE_AWK_GBL_FS,               /**< FS */
+		GBL_IGNORECASE = QSE_AWK_GBL_IGNORECASE, /**< IGNORECASE */
+		GBL_NF = QSE_AWK_GBL_NF,               /**< NF */
+		GBL_NR = QSE_AWK_GBL_NR,               /**< NR */
+		GBL_OFILENAME = QSE_AWK_GBL_OFILENAME, /**< OFILENAME */
+		GBL_OFMT = QSE_AWK_GBL_OFMT,           /**< OFMT */
+		GBL_OFS = QSE_AWK_GBL_OFS,             /**< OFS */
+		GBL_ORS = QSE_AWK_GBL_ORS,             /**< ORS */
+		GBL_RLENGTH = QSE_AWK_GBL_RLENGTH,     /**< RLENGTH */
+		GBL_RS = QSE_AWK_GBL_RS,               /**< RS */
+		GBL_RSTART = QSE_AWK_GBL_RSTART,       /**< RSTART */
+		GBL_SUBSEP = QSE_AWK_GBL_SUBSEP        /**< SUBSEP */
 	};
 
 	/** Represents the execution context */
@@ -699,94 +706,39 @@ public:
 			ErrorNumber code, size_t line, const char_t* msg);
 
 		/** 
-		 * Sets the value of a global variable. The global variable
-		 * is indicated by the first parameter. 
-		 *
-		 * @param id
-		 * 	The ID to a global variable. This value corresponds
-		 * 	to the predefined global variable IDs or the value
-		 * 	returned by Awk::addGlobal.
-		 * @param v
-		 * 	The value to assign to the global variable.
-		 *
-		 * @return
-		 * 	On success, 0 is returned.
-		 * 	On failure, -1 is returned.
+		 * Sets the value of a global variable identified by @a id
+		 * to @a v.
+		 * @return 0 on success, -1 on failure
 		 */
 		int setGlobal (int id, long_t v);
 
 		/** 
-		 * Sets the value of a global variable. The global variable
-		 * is indicated by the first parameter. 
-		 *
-		 * @param id
-		 * 	The ID to a global variable. This value corresponds
-		 * 	to the predefined global variable IDs or the value
-		 * 	returned by Awk::addGlobal.
-		 * @param v
-		 * 	The value to assign to the global variable.
-		 *
-		 * @return
-		 * 	On success, 0 is returned.
-		 * 	On failure, -1 is returned.
+		 * Sets the value of a global variable identified by @a id
+		 * to @a v.
+		 * @return 0 on success, -1 on failure
 		 */
 		int setGlobal (int id, real_t v); 
 
 		/** 
-		 * Sets the value of a global variable. The global variable
-		 * is indicated by the first parameter. 
-		 *
-		 * @param id
-		 * 	The ID to a global variable. This value corresponds
-		 * 	to the predefined global variable IDs or the value
-		 * 	returned by Awk::addGlobal.
-		 * @param ptr The pointer to a character array
-		 * @param len The number of characters in the array
-		 *
-		 * @return
-		 *  	On success, 0 is returned.
-		 *  	On failure, -1 is returned.
+		 * Sets the value of a global variable identified by @a id
+		 * to a string as long as @a len characters pointed to by 
+		 * @a ptr.
+		 * @return 0 on success, -1 on failure
 		 */
 		int setGlobal (int id, const char_t* ptr, size_t len);
 
-
 		/** 
-		 * Sets the value of a global variable. The global variable
-		 * is indicated by the first parameter. 
-		 *
-		 * @param id
-		 * 	The ID to a global variable. This value corresponds
-		 * 	to the predefined global variable IDs or the value
-		 * 	returned by Awk::addGlobal.
-		 * @param global 
-		 * 	The reference to the value holder 
-		 *
-		 * @return
-		 *  	On success, 0 is returned.
-		 *  	On failure, -1 is returned.
+		 * Sets a global variable identified by @a id to a value @a v.
+		 * @return 0 on success, -1 on failure
 		 */
-		int setGlobal (int id, const Value& global);
+		int setGlobal (int id, const Value& v);
 
 		/**
-		 * Gets the value of a global variable.
-		 *
-		 * @param id
-		 * 	The ID to a global variable. This value corresponds
-		 * 	to the predefined global variable IDs or the value
-		 * 	returned by Awk::addGlobal.
-		 * @param global
-		 * 	The reference to the value holder of a global variable
-		 * 	indicated by id. The parameter is set if this method
-		 * 	returns 0.
-		 *
-		 * @return 
-		 * 	On success, 0 is returned.
-		 * 	On failure, -1 is returned.
+		 * Gets the value of a global variable identified by @a id 
+		 * and store it in @a v.
+		 * @return 0 on success, -1 on failure
 		 */
-		int getGlobal (int id, Value& global) const;
-
-		void* alloc (size_t size);
-		void free (void* ptr);
+		int getGlobal (int id, Value& v) const;
 
 	protected:
 		Awk*   awk;
@@ -939,6 +891,7 @@ public:
 
 	/**
 	 * Adds a intrinsic global variable. 
+	 * @return integer >= 0 on success, -1 on failure.
 	 */
 	virtual int addGlobal (const char_t* name);
 
@@ -946,6 +899,23 @@ public:
 	 * Deletes a intrinsic global variable. 
 	 */
 	virtual int deleteGlobal (const char_t* name);
+
+	/**
+	 * Sets the value of a global variable identified by @a id.
+	 * The @a id is either a value returned by Awk::addGlobal or one of 
+	 * Awk::Global enumerations. It is not legal to call this function
+	 * prior to Awk::parse.
+	 * @return 0 on success, -1 on failure
+	 */
+	virtual int setGlobal (int id, const Value& v);
+	/**
+	 * Gets the value of a global riable identified by @a id.
+	 * The @a id is either a value returned by Awk::addGlobal or one of 
+	 * Awk::Global enumerations. It is not legal to call this function
+	 * prior to Awk::parse.
+	 * @return 0 on success, -1 on failure
+	 */
+	virtual int getGlobal (int id, Value& v);
 
 	/**
 	 * Represents a user-defined intrinsic function.

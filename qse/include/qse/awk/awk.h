@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: awk.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -291,7 +291,7 @@ enum qse_awk_rio_cmd_t
 	QSE_AWK_RIO_WRITE  = 3, /**< write a stream */
 	QSE_AWK_RIO_FLUSH  = 4, /**< write buffered data to a stream */
 	QSE_AWK_RIO_NEXT   = 5  /**< close the current stream and 
-	                             open the next stream. only for console */
+	                             open the next stream (only for console) */
 };
 typedef enum qse_awk_rio_cmd_t qse_awk_rio_cmd_t;
 
@@ -682,6 +682,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_ENEXTFEND, /**< 'nextfile' illegal in END block */
 	QSE_AWK_EPRINTFARG,/**< 'printf' not followed by argument */
 	QSE_AWK_EPREPST,   /**< both prefix and postfix incr/decr operator present */
+	QSE_AWK_EINCDECOPR,/**< illegal operand for incr/decr operator */
 
 	/* run time error */
 	QSE_AWK_EDIVBY0,       /**< divide by zero */
