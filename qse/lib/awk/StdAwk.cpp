@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 229 2009-07-12 13:06:01Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 234 2009-07-14 14:08:48Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -302,7 +302,7 @@ int StdAwk::openPipe (Pipe& io)
 	}
 
 	pio = qse_pio_open (
-		((Awk*)io)->getMmgr(),
+		(qse_mmgr_t*)this,
 		0, 
 		io.getName(), 
 		flags
@@ -357,7 +357,7 @@ int StdAwk::openFile (File& io)
 	}
 
 	fio = qse_fio_open (
-		((Awk*)io)->getMmgr(),
+		(qse_mmgr_t*)this,
 		0, 
 		io.getName(), 
 		flags,
