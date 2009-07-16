@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 224 2009-07-07 13:05:10Z hyunghwan.chung $
+ * $Id: std.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1014,7 +1014,7 @@ enum
 };
 
 static int fnc_math_1 (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl,
+	qse_awk_rtx_t* run, const qse_cstr_t* fnm,
 	int type, void* f)
 {
 	qse_size_t nargs;
@@ -1063,7 +1063,7 @@ static int fnc_math_1 (
 }
 
 static int fnc_math_2 (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl, int type, void* f)
+	qse_awk_rtx_t* run, const qse_cstr_t* fnm, int type, void* f)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -1115,10 +1115,10 @@ static int fnc_math_2 (
 	return 0;
 }
 
-static int fnc_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sin (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_SINL)
 		FNC_MATH_LD, (void*)sinl
 	#elif defined(HAVE_SIN)
@@ -1131,10 +1131,10 @@ static int fnc_sin (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_cos (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_COSL)
 		FNC_MATH_LD, (void*)cosl
 	#elif defined(HAVE_COS)
@@ -1147,10 +1147,10 @@ static int fnc_cos (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_tan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_TANL)
 		FNC_MATH_LD, (void*)tanl
 	#elif defined(HAVE_TAN)
@@ -1163,10 +1163,10 @@ static int fnc_tan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_atan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_ATANL)
 		FNC_MATH_LD, (void*)atanl
 	#elif defined(HAVE_ATAN)
@@ -1179,10 +1179,10 @@ static int fnc_atan (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_atan2 (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_2 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_ATAN2L)
 		FNC_MATH_LD, (void*)atan2l
 	#elif defined(HAVE_ATAN2)
@@ -1195,10 +1195,10 @@ static int fnc_atan2 (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_log (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_LOGL)
 		FNC_MATH_LD, (void*)logl
 	#elif defined(HAVE_LOG)
@@ -1211,10 +1211,10 @@ static int fnc_log (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_exp (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm,
 	#if defined(HAVE_EXPL)
 		FNC_MATH_LD, (void*)expl
 	#elif defined(HAVE_EXP)
@@ -1227,10 +1227,10 @@ static int fnc_exp (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sqrt (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
-		run, fnm, fnl, 
+		run, fnm, 
 	#if defined(HAVE_SQRTL)
 		FNC_MATH_LD, (void*)sqrtl
 	#elif defined(HAVE_SQRT)
@@ -1243,7 +1243,7 @@ static int fnc_sqrt (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	);
 }
 
-static int fnc_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1272,7 +1272,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int fnc_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_rand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_awk_val_t* r;
 
@@ -1294,7 +1294,7 @@ static int fnc_rand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int fnc_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1342,7 +1342,7 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
 	return 0;
 }
 
-static int fnc_system (qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;

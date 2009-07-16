@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: tree.h 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -286,8 +286,7 @@ struct qse_awk_nde_call_t
 				const qse_char_t* spec;
 			} arg;
 
-			int (*handler) (
-				qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+			qse_awk_fnc_fun_t handler;
 		} fnc;
 	} what;
 	qse_awk_nde_t* args;

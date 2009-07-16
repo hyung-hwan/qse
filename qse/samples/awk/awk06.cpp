@@ -78,7 +78,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int ret = awk.open();
 
 	if (ret >= 0) ret = run_awk (awk);
-	if (ret <= -1) print_error (awk.errorLine(), awk.errorMessage());
+	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
 
 	awk.close ();
 	return -1;

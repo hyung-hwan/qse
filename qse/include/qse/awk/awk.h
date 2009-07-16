@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: awk.h 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -254,8 +254,7 @@ typedef int (*qse_awk_sprintf_t) (
  */
 typedef int (*qse_awk_fnc_fun_t) (
 	qse_awk_rtx_t*    rtx,  /**< runtime context */
-	const qse_char_t* name, /**< function name */
-	qse_size_t        len   /**< name length */
+	const qse_cstr_t* name  /**< function name */
 );
 
 /**
@@ -710,8 +709,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_ERNEXTEND,     /**< 'next' called from END block */
 	QSE_AWK_ERNEXTFBEG,    /**< 'nextfile' called from BEGIN block */
 	QSE_AWK_ERNEXTFEND,    /**< 'nextfile' called from END block */
-	QSE_AWK_EFNCUSER,      /**< wrong intrinsic function implementation */
-	QSE_AWK_EFNCIMPL,      /**< intrinsic function handler failed */
+	QSE_AWK_EFNCIMPL,      /**< intrinsic function handler for '${0}' failed */
 	QSE_AWK_EIOUSER,       /**< wrong user io handler implementation */
 	QSE_AWK_EIOIMPL,       /**< I/O callback returned an error */
 	QSE_AWK_EIONMNF,       /**< no such I/O name found */
@@ -1036,6 +1034,9 @@ void qse_awk_geterror (
 	const qse_char_t** errmsg
 );
 
+/**
+ * The qse_awk_seterror() functon sets 
+ */
 void qse_awk_seterror (
 	qse_awk_t*        awk,
 	qse_awk_errnum_t  errnum,

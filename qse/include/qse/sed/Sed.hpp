@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: Sed.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -54,7 +54,7 @@ public:
 	/**
 	 * The Sed() function creates an uninitialized stream editor.
 	 */
-	Sed () throw (): sed (QSE_NULL), dflerrstr (QSE_NULL) {}
+	Sed (): sed (QSE_NULL), dflerrstr (QSE_NULL) {}
 
 	/**
 	 * The ~Sed() function destroys a stream editor. 
@@ -70,12 +70,12 @@ public:
 	 * ready for subsequent use.
 	 * @return 0 on success, -1 on failure.
 	 */
-	int open () throw ();
+	int open ();
 
 	/**
 	 * The close() function finalizes a stream editor.
 	 */
-	void close () throw ();
+	void close ();
 
 	/**
 	 * The compile() function compiles a null-terminated string pointed
@@ -84,7 +84,7 @@ public:
 	 */
 	int compile (
 		const char_t* sptr ///< a pointer to a null-terminated string
-	) throw ();
+	);
 
 	/**
 	 * The compile() function compiles a string pointed to by @a sptr
@@ -94,20 +94,20 @@ public:
 	int compile (
 		const char_t* sptr, ///< a pointer to a string 
 		size_t slen         ///< the number of characters in the string
-	) throw ();
+	);
 
 	/**
 	 * The execute() function executes compiled commands over the IO
 	 * streams defined through IO handlers
 	 * @return 0 on success, -1 on failure
 	 */
-	int execute () throw ();
+	int execute ();
 
 	/**
 	 * The getOption() function gets the current options.
 	 * @return current option code
 	 */
-	int getOption () const throw ();
+	int getOption () const;
 
 	/**
 	 * The setOption() function sets options for a stream editor.
@@ -115,12 +115,12 @@ public:
 	 */
 	void setOption (
 		int opt ///< option code
-	) throw ();
+	);
 
 	/**
 	 * The getMaxDepth() function gets the maximum processing depth.
 	 */
-	size_t getMaxDepth (depth_t id) const throw ();
+	size_t getMaxDepth (depth_t id) const;
 
 	/**
 	 * The setMaxDepth() function gets the maximum processing depth.
@@ -128,35 +128,28 @@ public:
 	void setMaxDepth (
 		int    ids,  ///< 0 or a number OR'ed of depth_t values
 		size_t depth ///< 0 maximum depth
-	) throw ();
+	);
 
 	/**
 	 * The getErrorMessage() function gets the description of the last 
 	 * error occurred. It returns an empty string if the stream editor
 	 * has not been initialized with the open() function.
 	 */
-	const char_t* getErrorMessage() const throw ();
+	const char_t* getErrorMessage() const;
 
 	/**
 	 * The getErrorLine() function gets the number of the line where
 	 * the last error occurred. It returns 0 if the stream editor has 
 	 * not been initialized with the open() function.
 	 */
-	size_t getErrorLine () const throw ();
+	size_t getErrorLine () const;
 
 	/**
 	 * The getErrorNumber() function gets the number of the last 
 	 * error occurred. It returns QSE_SED_ENOERR if the stream editor
 	 * has not been initialized with the open() function.
 	 */
-	errnum_t getErrorNumber () const throw ();
-
-	/**
-	 * The getConsoleLine() function returns the current line
-	 * number from an input console. 
-	 * @return current line number
-	 */
-	size_t getConsoleLine () throw ();
+	errnum_t getErrorNumber () const;
 
 	/**
 	 * The setError() function sets information on an error occurred.
@@ -168,12 +161,19 @@ public:
 	);
 
 	/**
+	 * The getConsoleLine() function returns the current line
+	 * number from an input console. 
+	 * @return current line number
+	 */
+	size_t getConsoleLine ();
+
+	/**
 	 * The setConsoleLine() function changes the current line
 	 * number from an input console. 
 	 */
 	void setConsoleLine (
 		size_t num ///< a line number
-	) throw ();
+	);
 
 protected:
 	/**
@@ -194,7 +194,7 @@ protected:
 		};
 
 	protected:
-		IOBase (io_arg_t* arg, Mode mode) throw (): 
+		IOBase (io_arg_t* arg, Mode mode): 
 			arg(arg), mode (mode) {}
 
 	public:
@@ -204,7 +204,7 @@ protected:
 		 * an assoicated IO handler closes it or changes it with
 		 * another call to setHandle().
 		 */
-		const void* getHandle () const throw ()
+		const void* getHandle () const
 		{
 			return arg->handle;
 		}
@@ -215,7 +215,7 @@ protected:
 		 * and Sed::openFile(). You can get the handle with the 
 		 * getHandle() function as needed.
 		 */
-		void setHandle (void* handle) throw ()
+		void setHandle (void* handle)
 		{
 			arg->handle = handle;
 		}		
@@ -225,7 +225,7 @@ protected:
 		 * A stream opening function can inspect the mode requested and
 		 * open a stream properly 
 		 */
-		Mode getMode () throw ()
+		Mode getMode ()
 		{
 			return this->mode;
 		}
@@ -244,7 +244,7 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		Console (io_arg_t* arg, Mode mode) throw ():
+		Console (io_arg_t* arg, Mode mode):
 			IOBase (arg, mode) {}
 	};
 
@@ -256,7 +256,7 @@ protected:
 	{
 	protected:
 		friend class Sed;
-		File (io_arg_t* arg, Mode mode) throw ():
+		File (io_arg_t* arg, Mode mode):
 			IOBase (arg, mode) {}
 
 	public:
@@ -265,7 +265,7 @@ protected:
 		 * You can call this function from the openFile() function
 		 * to determine a file to open.
 		 */
-		const char_t* getName () const throw ()
+		const char_t* getName () const
 		{
 			return arg->path;
 		}
@@ -395,9 +395,9 @@ protected:
 	errstr_t dflerrstr; 
 
 private:
-	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
-	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ();
-	static const char_t* xerrstr (sed_t* s, errnum_t num) throw ();
+	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg);
+	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg);
+	static const char_t* xerrstr (sed_t* s, errnum_t num);
 
 private:
 	Sed (const Sed&);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: run.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -5701,8 +5701,8 @@ static qse_awk_val_t* __eval_call (
 			 *       qse_awk_setword has been used */
 			n = call->what.fnc.handler (
 				run,
-				call->what.fnc.oname.ptr, 
-				call->what.fnc.oname.len);
+				xstr_to_cstr(&call->what.fnc.oname)
+			);
 
 			if (n <= -1)
 			{
@@ -5712,7 +5712,9 @@ static qse_awk_val_t* __eval_call (
 					 * fix it */ 
 					qse_awk_rtx_seterror (
 						run, QSE_AWK_EFNCIMPL, 
-						nde->line, QSE_NULL);
+						nde->line, 
+						xstr_to_cstr(&call->what.fnc.oname)
+					);
 				}
 				else
 				{

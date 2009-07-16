@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: Sed.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,7 +23,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-int Sed::open () throw ()
+int Sed::open ()
 {
 	sed = qse_sed_open (this, QSE_SIZEOF(Sed*));
 	if (sed == QSE_NULL) return -1;
@@ -35,7 +35,7 @@ int Sed::open () throw ()
 	return 0;
 }
 
-void Sed::close () throw()
+void Sed::close ()
 {
 	if (sed != QSE_NULL)
 	{
@@ -44,59 +44,59 @@ void Sed::close () throw()
 	}
 }
 
-int Sed::compile (const char_t* sptr) throw ()
+int Sed::compile (const char_t* sptr)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_comp (sed, sptr, qse_strlen(sptr));
 }
 
-int Sed::compile (const char_t* sptr, size_t slen) throw ()
+int Sed::compile (const char_t* sptr, size_t slen)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_comp (sed, sptr, slen);
 }
 
-int Sed::execute () throw ()
+int Sed::execute ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_exec (sed, xin, xout);
 }
 
-int Sed::getOption() const throw ()
+int Sed::getOption() const
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_getoption (sed);
 }
 
-void Sed::setOption (int opt) throw ()
+void Sed::setOption (int opt)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_setoption (sed, opt);
 }
 
-Sed::size_t Sed::getMaxDepth (depth_t id) const throw ()
+Sed::size_t Sed::getMaxDepth (depth_t id) const
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_getmaxdepth (sed, id);
 }
 
-void Sed::setMaxDepth (int ids, size_t depth) throw ()
+void Sed::setMaxDepth (int ids, size_t depth)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_setmaxdepth (sed, ids, depth);
 }
 
-const Sed::char_t* Sed::getErrorMessage () const throw ()
+const Sed::char_t* Sed::getErrorMessage () const
 {
 	return (sed == QSE_NULL)? QSE_T(""): qse_sed_geterrmsg (sed);
 }
 
-Sed::size_t Sed::getErrorLine () const throw ()
+Sed::size_t Sed::getErrorLine () const
 {
 	return (sed == QSE_NULL)? 0: qse_sed_geterrlin (sed);
 }
 
-Sed::errnum_t Sed::getErrorNumber () const throw ()
+Sed::errnum_t Sed::getErrorNumber () const
 {
 	return (sed == QSE_NULL)? QSE_SED_ENOERR: qse_sed_geterrnum (sed);
 }
@@ -107,19 +107,19 @@ void Sed::setError (errnum_t err, size_t lin, const cstr_t* args)
 	qse_sed_seterror (sed, err, lin, args);
 }
 
-Sed::size_t Sed::getConsoleLine () throw ()
+Sed::size_t Sed::getConsoleLine ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	return qse_sed_getlinnum (sed);
 }
 
-void Sed::setConsoleLine (size_t num) throw ()
+void Sed::setConsoleLine (size_t num)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_setlinnum (sed, num);
 }
 
-Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ()
+Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
@@ -173,7 +173,7 @@ Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ()
 	}
 }
 
-Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg) throw ()
+Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
@@ -233,7 +233,7 @@ const Sed::char_t* Sed::getErrorString (errnum_t num) const
 	return dflerrstr (sed, num);
 }
 
-const Sed::char_t* Sed::xerrstr (sed_t* s, errnum_t num) throw ()
+const Sed::char_t* Sed::xerrstr (sed_t* s, errnum_t num)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 	try

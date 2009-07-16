@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: err.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -134,8 +134,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("'next' called from END block"),
 		QSE_T("'nextfile' called from BEGIN block"),
 		QSE_T("'nextfile' called from END block"),
-		QSE_T("wrong implementation of intrinsic function handler"),
-		QSE_T("intrinsic function handler returned an error"),
+		QSE_T("intrinsic function handler for '${0}' failed"),
 		QSE_T("wrong implementation of user-defined io handler"),
 		QSE_T("I/O handler returned an error"),
 		QSE_T("no such I/O name found"),
