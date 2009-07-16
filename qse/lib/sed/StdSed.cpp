@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.cpp 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: StdSed.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -25,17 +25,17 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* StdSed::allocMem (qse_size_t n) throw ()
+void* StdSed::allocMem (qse_size_t n)
 { 
 	return ::malloc (n); 
 }
 
-void* StdSed::reallocMem (void* ptr, qse_size_t n) throw ()
+void* StdSed::reallocMem (void* ptr, qse_size_t n)
 { 
 	return ::realloc (ptr, n); 
 }
 
-void StdSed::freeMem (void* ptr) throw ()
+void StdSed::freeMem (void* ptr)
 { 
 	::free (ptr); 
 }

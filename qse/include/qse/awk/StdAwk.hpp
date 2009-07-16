@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -74,9 +74,9 @@ public:
 	int open ();
 	void close ();
 
-	virtual int addConsoleOutput (const char_t* arg, size_t len);
-	virtual int addConsoleOutput (const char_t* arg);
-	virtual void clearConsoleOutputs ();
+	int addConsoleOutput (const char_t* arg, size_t len);
+	int addConsoleOutput (const char_t* arg);
+	void clearConsoleOutputs ();
 
 protected:
 	// intrinsic functions 
@@ -128,9 +128,9 @@ protected:
 	int nextConsole (Console& io);
 
 	// primitive handlers 
-	void* allocMem   (size_t n) throw ();
-	void* reallocMem (void* ptr, size_t n) throw ();
-	void  freeMem    (void* ptr) throw ();
+	void* allocMem   (size_t n);
+	void* reallocMem (void* ptr, size_t n);
+	void  freeMem    (void* ptr);
 
 	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,

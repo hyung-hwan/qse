@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 191 2009-06-07 13:09:14Z hyunghwan.chung $
+ * $Id: StdSed.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -33,9 +33,9 @@ QSE_BEGIN_NAMESPACE(QSE)
 class StdSed: public Sed
 {
 protected:
-	void* allocMem   (qse_size_t n)            throw ();
-	void* reallocMem (void* ptr, qse_size_t n) throw ();
-	void  freeMem    (void* ptr)               throw ();
+	void* allocMem   (qse_size_t n);
+	void* reallocMem (void* ptr, qse_size_t n);
+	void  freeMem    (void* ptr);
 
 	int openConsole (Console& io);
 	int closeConsole (Console& io);

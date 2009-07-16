@@ -42,7 +42,7 @@ public:
 	 * The Mmgr() function builds a memory manager composed of bridge
 	 * functions connecting itself with it.
 	 */
-	Mmgr () throw ()
+	Mmgr () 
 	{
 		this->alloc = alloc_mem;
 		this->realloc = realloc_mem;
@@ -63,7 +63,7 @@ protected:
 	 */
 	virtual void* allocMem (
 		qse_size_t n /**< the size of allocate in bytes */
-	) throw () = 0;
+	) = 0;
 
 	/**
 	 * The reallocMem() function resizes a chunk of memory previously
@@ -74,7 +74,7 @@ protected:
 	virtual void* reallocMem (
 		void* ptr,   /**< a pointer to a memory chunk to resize */
 		qse_size_t n /**< new size in bytes */
-	) throw () = 0;
+	) = 0;
 
 	/**
 	 * The freeMem() function frees a chunk of memory allocated with
@@ -82,13 +82,13 @@ protected:
 	 */
 	virtual void freeMem (
 		void* ptr /**< a pointer to a memory chunk to free */
-	) throw () = 0;
+	) = 0;
 
 protected:
 	/**
 	 * a bridge function from the qse_mmgr_t type the allocMem() function.
 	 */
-	static void* alloc_mem (void* udd, qse_size_t n) throw ()
+	static void* alloc_mem (void* udd, qse_size_t n) 
 	{
 		return ((Mmgr*)udd)->allocMem (n);
 	}
@@ -96,7 +96,7 @@ protected:
 	/**
 	 * a bridge function from the qse_mmgr_t type the reallocMem() function.
 	 */
-	static void* realloc_mem (void* udd, void* ptr, qse_size_t n) throw ()
+	static void* realloc_mem (void* udd, void* ptr, qse_size_t n) 
 	{
 		return ((Mmgr*)udd)->reallocMem (ptr, n);
 	}
@@ -104,7 +104,7 @@ protected:
 	/**
 	 * a bridge function from the qse_mmgr_t type the freeMem() function.
 	 */
-	static void  free_mem (void* udd, void* ptr) throw ()
+	static void  free_mem (void* udd, void* ptr) 
 	{
 		return ((Mmgr*)udd)->freeMem (ptr);
 	}

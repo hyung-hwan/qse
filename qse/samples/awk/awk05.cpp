@@ -29,11 +29,6 @@ static void print_error (unsigned long line, const qse_char_t* msg)
 	
 }
 
-static void print_error (const qse_char_t* msg)
-{
-	print_error (0, msg);
-}
-
 static int run_awk (QSE::StdAwk& awk)
 {
 	// ARGV[0]
@@ -65,7 +60,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int ret = awk.open ();
 	if (ret >= 0) ret = run_awk (awk);
 
-	if (ret <= -1) print_error (awk.errorLine(), awk.errorMessage());
+	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
 
 	awk.close ();
 	return ret;

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 234 2009-07-14 14:08:48Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -48,7 +48,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 		} \
 	} while (0)
 
-int StdAwk::open ()
+int StdAwk::open () 
 {
 	int n = Awk::open ();
 	if (n == -1) return n;
@@ -75,7 +75,7 @@ int StdAwk::open ()
 	return 0;
 }
 
-void StdAwk::close ()
+void StdAwk::close () 
 {
 	clearConsoleOutputs ();
 	Awk::close ();
@@ -391,7 +391,7 @@ int StdAwk::flushFile (File& io)
 	return qse_fio_flush ((qse_fio_t*)io.getHandle());
 }
 
-int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
+int StdAwk::addConsoleOutput (const char_t* arg, size_t len) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = ofile.add (awk, arg, len);
@@ -399,12 +399,12 @@ int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
 	return n;
 }
 
-int StdAwk::addConsoleOutput (const char_t* arg)
+int StdAwk::addConsoleOutput (const char_t* arg) 
 {
 	return addConsoleOutput (arg, qse_strlen(arg));
 }
 
-void StdAwk::clearConsoleOutputs ()
+void StdAwk::clearConsoleOutputs () 
 {
 	ofile.clear (awk);
 }
@@ -462,7 +462,14 @@ int StdAwk::open_console_in (Console& io)
 			return 0;
 		}
 
-		// TODO: need to check for '\0' contained???
+		if (qse_strlen(file) != runarg.ptr[runarg_index].len)
+		{
+			cstr_t arg;
+			arg.ptr = file;
+			arg.len = qse_strlen (arg.ptr);
+			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
+			return -1;
+		}
 
 		/* handle special case when ARGV[x] has been altered.
 		 * so from here down, the file name gotten from 
@@ -506,7 +513,10 @@ int StdAwk::open_console_in (Console& io)
 		if (qse_strlen(out.u.cpldup.ptr) < out.u.cpldup.len)
 		{
 			/* the name contains one or more '\0' */
-			((Run*)io)->setError (ERR_IONMNL, 0, out.u.cpldup.ptr);
+			cstr_t arg;
+			arg.ptr = out.u.cpldup.ptr;
+			arg.len = qse_strlen (arg.ptr);
+			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
 			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
@@ -524,7 +534,10 @@ int StdAwk::open_console_in (Console& io)
 				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
 			if (sio == QSE_NULL)
 			{
-				((Run*)io)->setError (ERR_OPEN, 0, file);
+				cstr_t arg;
+				arg.ptr = file;
+				arg.len = qse_strlen (arg.ptr);
+				((Run*)io)->setError (ERR_OPEN, 0, &arg);
 				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
@@ -581,7 +594,14 @@ int StdAwk::open_console_out (Console& io)
 			return 0;
 		}
 
-		// TODO: need to check for '\0' contained???
+		if (qse_strlen(file) != ofile.ptr[ofile_index].len)
+		{	
+			cstr_t arg;
+			arg.ptr = file;
+			arg.len = qse_strlen (arg.ptr);
+			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
+			return -1;
+		}
 
 		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
 		{
@@ -594,7 +614,10 @@ int StdAwk::open_console_out (Console& io)
 				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
 			if (sio == QSE_NULL)
 			{
-				((Run*)io)->setError (ERR_OPEN, 0, file);
+				cstr_t arg;
+				arg.ptr = file;
+				arg.len = qse_strlen (arg.ptr);
+				((Run*)io)->setError (ERR_OPEN, 0, &arg);
 				return -1;
 			}
 		}
@@ -725,17 +748,17 @@ int StdAwk::nextConsole (Console& io)
 }
 
 // memory allocation primitives
-void* StdAwk::allocMem (size_t n) throw ()
+void* StdAwk::allocMem (size_t n) 
 { 
 	return ::malloc (n); 
 }
 
-void* StdAwk::reallocMem (void* ptr, size_t n) throw ()
+void* StdAwk::reallocMem (void* ptr, size_t n) 
 { 
 	return ::realloc (ptr, n); 
 }
 
-void  StdAwk::freeMem (void* ptr) throw ()
+void  StdAwk::freeMem (void* ptr) 
 { 
 	::free (ptr); 
 }

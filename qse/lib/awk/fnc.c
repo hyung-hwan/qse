@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: fnc.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -18,18 +18,18 @@
 
 #include "awk.h"
 
-static int fnc_close   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_fflush  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_index   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_length  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_substr  (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_split   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_tolower (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_toupper (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_gsub    (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_sub     (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_match   (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
-static int fnc_sprintf (qse_awk_rtx_t*, const qse_char_t*, qse_size_t);
+static int fnc_close   (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_fflush  (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_index   (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_length  (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_substr  (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_split   (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_tolower (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_toupper (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_gsub    (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_sub     (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_match   (qse_awk_rtx_t*, const qse_cstr_t*);
+static int fnc_sprintf (qse_awk_rtx_t*, const qse_cstr_t*);
 
 #undef MAX
 #define MAX QSE_TYPE_UNSIGNED_MAX(qse_size_t)
@@ -227,8 +227,7 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	return fnc;
 }
 
-static int fnc_close (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_close (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v, * a0;
@@ -334,8 +333,7 @@ static int flush_io (
 	return n;
 }
 
-static int fnc_fflush (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_fflush (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -413,8 +411,7 @@ static int fnc_fflush (
 	return 0;
 }
 
-static int fnc_index (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_index (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -472,8 +469,7 @@ static int fnc_index (
 	return 0;
 }
 
-static int fnc_length (
-	qse_awk_rtx_t* rtx, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_length (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
@@ -514,8 +510,7 @@ static int fnc_length (
 	return 0;
 }
 
-static int fnc_substr (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_substr (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * r;
@@ -587,8 +582,7 @@ static int fnc_substr (
 	return 0;
 }
 
-static int fnc_split (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
@@ -839,8 +833,7 @@ static int fnc_split (
 	return 0;
 }
 
-static int fnc_tolower (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_tolower (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_char_t* str;
@@ -878,8 +871,7 @@ static int fnc_tolower (
 	return 0;
 }
 
-static int fnc_toupper (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_toupper (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_char_t* str;
@@ -1243,20 +1235,17 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	return 0;
 }
 
-static int fnc_gsub (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_gsub (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return __substitute (run, 0);
 }
 
-static int fnc_sub (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sub (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return __substitute (run, 1);
 }
 
-static int fnc_match (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_match (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
@@ -1372,8 +1361,7 @@ static int fnc_match (
 	return 0;
 }
 
-static int fnc_sprintf (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {	
 	qse_size_t nargs;
 	qse_awk_val_t* a0;

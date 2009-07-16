@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE [111] LINE [3] recursion detected in format conversion
+ERROR: CODE [110] LINE [3] recursion detected in format conversion
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
