@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: run.c 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1318,29 +1318,16 @@ static void exit_stack_frame (qse_awk_rtx_t* run)
 	run->stack_base = (qse_size_t)run->stack[run->stack_base+0];
 }
 
-static int run_bpae_loop (qse_awk_rtx_t* rtx)
+static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
 {
 	qse_awk_nde_t* nde;
 	qse_size_t nargs, i;
-	qse_awk_val_t* v;
+	qse_awk_val_t* retv;
 	int ret = 0;
 
 	/* set nargs to zero */
 	nargs = 0;
 	STACK_NARGS(rtx) = (void*)nargs;
-
-	/* call the callback */
-	if (rtx->rcb.on_loop_enter != QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
-		ret = rtx->rcb.on_loop_enter (rtx, rtx->rcb.udd);
-		if (ret <= -1) 
-		{
-			if (rtx->errinf.num == QSE_AWK_ENOMEM)
-				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EUNKNOWN);
-			ret = -1;
-		}
-	}
 
 	/* execute the BEGIN block */
 	for (nde = rtx->awk->tree.begin; 
@@ -1357,7 +1344,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 		if (run_block (rtx, blk) == -1) ret = -1;
 	}
 
-	if (ret == -1 && rtx->errinf.num == QSE_AWK_ENOERR) 
+	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR) 
 	{
 		/* an error is returned with no error number set.
 		 * this feature is used by eval_expression() to
@@ -1374,10 +1361,10 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 	     rtx->awk->tree.end != QSE_NULL) && 
 	     rtx->exit_level < EXIT_GLOBAL)
 	{
-		if (run_pattern_blocks(rtx) == -1) ret = -1;
+		if (run_pattern_blocks(rtx) <= -1) ret = -1;
 	}
 
-	if (ret == -1 && rtx->errinf.num == QSE_AWK_ENOERR)
+	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
 		 * this feature is used by eval_expression() to
@@ -1401,7 +1388,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 
 		rtx->active_block = blk;
 		rtx->exit_level = EXIT_NONE;
-		if (run_block (rtx, blk) == -1) ret = -1;
+		if (run_block (rtx, blk) <= -1) ret = -1;
 		else if (rtx->exit_level >= EXIT_GLOBAL) 
 		{
 			/* once exit is called inside one of END blocks,
@@ -1410,7 +1397,7 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 		}
 	}
 
-	if (ret == -1 && rtx->errinf.num == QSE_AWK_ENOERR)
+	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
 		 * this feature is used by eval_expression() to
@@ -1430,39 +1417,34 @@ static int run_bpae_loop (qse_awk_rtx_t* rtx)
 		qse_awk_rtx_refdownval (rtx, STACK_ARG(rtx,i));
 
 	/* get the return value in the current stack frame */
-	v = STACK_RETVAL(rtx);
+	retv = STACK_RETVAL(rtx);
 
-	if (rtx->rcb.on_loop_exit != QSE_NULL)
+	if (ret <= -1)
 	{
-		/* we call the on_exit handler regardless of ret. 
-		 * the return value passed is the global return value
-		 * in the stack. */
-		rtx->rcb.on_loop_exit (rtx, v, rtx->rcb.udd);
+		/* end the life of the global return value upon error */
+		qse_awk_rtx_refdownval (rtx, retv);
+		retv = QSE_NULL;
 	}
 
-	/* end the life of the global return value */
-	qse_awk_rtx_refdownval (rtx, v);
-
-	return ret;
+	return retv;
 }
 
 /* start the BEGIN-pattern block-END loop */
-int qse_awk_rtx_loop (qse_awk_rtx_t* rtx)
+qse_awk_val_t* qse_awk_rtx_loop (qse_awk_rtx_t* rtx)
 {
-	int ret;
+	qse_awk_val_t* retv = QSE_NULL;
 
 	rtx->exit_level = EXIT_NONE;
 
-	ret = enter_stack_frame (rtx);
-	if (ret == 0)
+	if (enter_stack_frame (rtx) == 0)
 	{
-		ret = run_bpae_loop (rtx);
+		retv = run_bpae_loop (rtx);
 		exit_stack_frame (rtx);
 	}
 
 	/* reset the exit level */
 	rtx->exit_level = EXIT_NONE;
-	return ret;
+	return retv;
 }
 
 /* call an AWK function */
@@ -5846,7 +5828,8 @@ static qse_size_t push_arg_from_nde (
 			 qse_strlen(fnc_arg_spec) > nargs));
 
 		if (fnc_arg_spec != QSE_NULL && 
-		    fnc_arg_spec[nargs] == QSE_T('r'))
+		    (fnc_arg_spec[nargs] == QSE_T('r') ||
+		     fnc_arg_spec[0] == QSE_T('R')))
 		{
 			qse_awk_val_t** ref;
 			      
@@ -5872,6 +5855,7 @@ static qse_size_t push_arg_from_nde (
 		{
 			v = eval_expression (rtx, p);
 		}
+
 		if (v == QSE_NULL)
 		{
 			UNWIND_RTX_STACK_ARG (rtx, nargs);

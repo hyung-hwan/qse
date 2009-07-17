@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: awk.h 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -58,7 +58,9 @@
  * awk = qse_awk_open (mmgr, 0, prm); // create an interpreter 
  * qse_awk_parse (awk, &sio);          // parse a script 
  * rtx = qse_awk_rtx_open (awk, 0, &rio, args); // create a runtime context 
- * qse_awk_rtx_loop (rtx);            // run a standard AWK loop 
+ * retv = qse_awk_rtx_loop (rtx);     // run a standard AWK loop 
+ * if (retv != QSE_NULL) 
+ *    qse_awk_rtx_refdownval (rtx, retv); // free return value
  * qse_awk_rtx_close (rtx);           // destroy the runtime context
  * qse_awk_close (awk);               // destroy the interpreter
  * @endcode
@@ -466,20 +468,6 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
  */
 struct qse_awk_rcb_t
 {
-	/** 
-	 * called by qse_awk_rtx_loop() before entering pattern-action loop.
-	 * A @b BEGIN block is executed after this callback.
-	 */
-	int (*on_loop_enter) (
-		qse_awk_rtx_t* rtx, void* udd);
-
-	/**
-	 * called by qse_awk_rtx_loop() when exiting pattern-action loop.
-	 * An @b END block is executed before this callback.
-	 */
-	void (*on_loop_exit) (
-		qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* udd);
-
 	/**
 	 * called by qse_awk_rtx_loop() and qse_awk_rtx_call() for
 	 * each statement executed.
@@ -1304,22 +1292,25 @@ void qse_awk_rtx_close (
 
 /**
  * The qse_awk_rtx_loop() function executes the BEGIN block, pattern-action
- * blocks and the END blocks in an AWk program. Multiple invocations of the
- * function for the lifetime of a runtime context is not desirable.
+ * blocks and the END blocks in an AWk program. It returns the global return 
+ * value of which the reference count must be decremented when not necessary. 
+ * Multiple invocations of the function for the lifetime of a runtime context 
+ * is not desirable.
  *
+ * The example shows typical usage of the function.
  * @code
- *  The example shows typical usage of the function.
- *    rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
- *    if (rtx != QSE_NULL)
- *    {
- *        qse_awk_rtx_loop (rtx);
- *        qse_awk_rtx_close (rtx);
- *    }
+ * rtx = qse_awk_rtx_open (awk, 0, rio, QSE_NULL);
+ * if (rtx != QSE_NULL)
+ * {
+ *    retv = qse_awk_rtx_loop (rtx);
+ *    if (retv != QSE_NULL) qse_awk_rtx_refdownval (rtx, retv);
+ *    qse_awk_rtx_close (rtx);
+ * }
  * @endcode
  *
- * @return 0 on success, -1 on failure.
+ * @return return value on success, QSE_NULL on failure.
  */
-int qse_awk_rtx_loop (
+qse_awk_val_t* qse_awk_rtx_loop (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 

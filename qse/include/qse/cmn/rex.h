@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 203 2009-06-17 12:43:50Z hyunghwan.chung $
+ * $Id: rex.h 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -54,6 +54,7 @@
  *
  * @todo
  * - support \\n to refer to the nth matching substring
+ * - change to adopt Thomson's NFA (http://swtch.com/~rsc/regexp/regexp1.html)
  */
 
 #define QSE_REX_NA(code) (*(qse_size_t*)(code))
