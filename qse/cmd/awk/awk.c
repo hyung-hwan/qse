@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: awk.c 237 2009-07-16 12:43:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -261,11 +261,13 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
+#if 0
 static void on_statement (
 	qse_awk_rtx_t* run, qse_size_t line, void* data)
 {
 	/*dprint (L"running %d\n", (int)line);*/
 }
+#endif
 
 static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
@@ -329,7 +331,8 @@ struct opttab_t
 	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
-	{ QSE_T("stripspaces"), QSE_AWK_STRIPSPACES,    QSE_T("strip leading and trailing space of a record") },
+	{ QSE_T("striprecspc"), QSE_AWK_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
+	{ QSE_T("stripstrspc"), QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
 	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE,      QSE_T("enable 'nextofile'") },
 	{ QSE_T("reset"),       QSE_AWK_RESET,          QSE_T("enable 'reset'") },
 	{ QSE_T("crlf"),        QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
@@ -674,7 +677,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
+#if 0
 	qse_awk_rcb_t rcb;
+#endif
 
 	int i;
 	struct arg_t arg;
@@ -744,8 +749,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+#if 0
 	rcb.on_statement = on_statement;
 	rcb.udd = &arg;
+#endif
 
 	rtx = qse_awk_rtx_openstd (awk, 0, QSE_T("qseawk"), arg.icf, QSE_NULL);
 	if (rtx == QSE_NULL) 
@@ -761,7 +768,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	app_rtx = rtx;
+#if 0
 	qse_awk_rtx_setrcb (rtx, &rcb);
+#endif
 
 	set_intr_run ();
 

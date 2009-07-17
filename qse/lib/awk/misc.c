@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 230 2009-07-13 08:51:23Z hyunghwan.chung $
+ * $Id: misc.c 237 2009-07-16 12:43:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -58,8 +58,11 @@ qse_long_t qse_awk_strxtolong (
 	p = str; 
 	end = str + len;
 	
-	/* strip off leading spaces */
-	/*while (QSE_AWK_ISSPACE(awk,*p)) p++;*/
+	if (awk->option & QSE_AWK_STRIPSTRSPC)
+	{
+		/* strip off leading spaces */
+		while (QSE_AWK_ISSPACE(awk,*p)) p++;
+	}
 
 	/* check for a sign */
 	while (p < end)
@@ -182,8 +185,11 @@ qse_real_t qse_awk_strtoreal (qse_awk_t* awk, const qse_char_t* str)
 
 	p = str;
 
-	/* strip off leading blanks */ 
-	/*while (QSE_AWK_ISSPACE(awk,*p)) p++;*/
+	if (awk->option & QSE_AWK_STRIPSTRSPC)
+	{
+		/* strip off leading spaces */ 
+		while (QSE_AWK_ISSPACE(awk,*p)) p++;
+	}
 
 	/* check for a sign */
 	while (*p != QSE_T('\0')) 
@@ -871,7 +877,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 			ptr++;
 			left--;
 		}
-		else if (rtx->awk->option & QSE_AWK_STRIPSPACES)
+		else if (rtx->awk->option & QSE_AWK_STRIPRECSPC)
 		{
 			/* match at the beginning of the input string */
 			if (match.ptr == substr) 
@@ -917,7 +923,7 @@ exit_loop:
 
 	*errnum = QSE_AWK_ENOERR;
 
-	if (rtx->awk->option & QSE_AWK_STRIPSPACES)
+	if (rtx->awk->option & QSE_AWK_STRIPRECSPC)
 	{
 		return (match.ptr+match.len >= substr+sublen)? 
 			QSE_NULL: ((qse_char_t*)match.ptr+match.len);
