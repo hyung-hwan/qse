@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: tree.h 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -76,6 +76,8 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_GETLINE
 };
 
+typedef enum qse_awk_nde_type_t qse_awk_nde_type_t;
+
 enum qse_awk_in_type_t
 {
 	/* the order of these values match 
@@ -149,7 +151,7 @@ struct qse_awk_fun_t
 };
 
 #define QSE_AWK_NDE_HDR \
-	int type; \
+	qse_awk_nde_type_t type; \
 	qse_size_t line; \
 	qse_awk_nde_t* next
 
@@ -162,7 +164,7 @@ struct qse_awk_nde_t
 struct qse_awk_nde_blk_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_size_t nlcls;
+	qse_size_t nlcls; /* number of local variables */
 	qse_awk_nde_t* body;
 };
 

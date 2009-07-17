@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: Awk.cpp 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -20,6 +20,9 @@
 #include <qse/cmn/str.h>
 #include "../cmn/mem.h"
 #include "awk.h"
+
+// enable this once addFunction() is extended with argument spec (rxv...).
+//#define PASS_BY_REFERENCE
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -994,7 +997,7 @@ int Awk::Run::getGlobal (int id, Value& g) const
 
 Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL),
 	sourceIn (this, Source::READ), sourceOut (this, Source::WRITE),
-	runCallback (false), runctx (this)
+	runctx (this)
 
 {
 	errinf.num = (errnum_t)ERR_NOERR;
@@ -1140,7 +1143,6 @@ int Awk::open ()
 	qse_map_setfreeer (functionMap, QSE_MAP_VAL, free_function_map_value);
 	qse_map_setscale (functionMap, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
-	runCallback = false;
 	return 0;
 }
 
@@ -1162,7 +1164,6 @@ void Awk::close ()
 	}
 
 	clearError ();
-	runCallback = false;
 }
 
 Awk::Run* Awk::parse (Source& in, Source& out) 
@@ -1195,19 +1196,27 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 	return &runctx;
 }
 
-int Awk::loop () 
+int Awk::loop (Value* ret)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	QSE_ASSERT (runctx.rtx != QSE_NULL);
 
-	int n = qse_awk_rtx_loop (runctx.rtx);
-	if (n <= -1) retrieveError (&runctx);
-	return n;
+	val_t* rv = qse_awk_rtx_loop (runctx.rtx);
+	if (rv == QSE_NULL) 
+	{
+		retrieveError (&runctx);
+		return -1;
+	}
+
+	ret->setVal (&runctx, rv);
+	qse_awk_rtx_refdownval (runctx.rtx, rv);
+	
+	return 0;
 }
 
 int Awk::call (
 	const char_t* name, Value* ret,
-	const Value* args, size_t nargs) 
+	const Value* args, size_t nargs)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	QSE_ASSERT (runctx.rtx != QSE_NULL);
@@ -1260,20 +1269,10 @@ int Awk::init_runctx ()
 	if (runctx.rtx != QSE_NULL) return 0;
 
 	qse_awk_rio_t rio;
-	qse_awk_rcb_t rcb;
 
 	rio.pipe    = pipeHandler;
 	rio.file    = fileHandler;
 	rio.console = consoleHandler;
-
-	if (runCallback)
-	{
-		QSE_MEMSET (&rcb, 0, QSE_SIZEOF(rcb));
-		rcb.on_loop_enter = onLoopEnter;
-		rcb.on_loop_exit  = onLoopExit;
-		rcb.on_statement  = onStatement;
-		rcb.udd           = &runctx;
-	}
 
 	rtx_t* rtx = qse_awk_rtx_open (
 		awk, QSE_SIZEOF(rxtn_t), &rio, (qse_cstr_t*)runarg.ptr);
@@ -1288,7 +1287,6 @@ int Awk::init_runctx ()
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	rxtn->run = &runctx;
 
-	if (runCallback) qse_awk_rtx_setrcb (rtx, &rcb);
 	return 0;
 }
 
@@ -1357,12 +1355,23 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 	for (i = 0; i < nargs; i++)
 	{
 		val_t* v = qse_awk_rtx_getarg (run->rtx, i);
+#ifdef PASS_BY_REFERENCE
+		QSE_ASSERT (v->type == QSE_AWK_VAL_REF);
+		val_t** ref = (val_t**)((qse_awk_val_ref_t*)v)->adr;
+		if (args[i].setVal (run, *ref) == -1)
+		{
+			run->setError (ERR_NOMEM);
+			if (args != buf) delete[] args;
+			return -1;
+		}
+#else
 		if (args[i].setVal (run, v) == -1)
 		{
 			run->setError (ERR_NOMEM);
 			if (args != buf) delete[] args;
 			return -1;
 		}
+#endif
 	}
 	
 	Value ret (run);
@@ -1372,6 +1381,28 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 	try { n = (this->*handler) (*run, ret, args, nargs, name); }
 	catch (...) { n = -1; }
 
+#ifdef PASS_BY_REFERENCE
+	if (n >= 0)
+	{
+		for (i = 0; i < nargs; i++)
+		{
+			QSE_ASSERTX (args[i].run == run, 
+				"Do NOT change Run from function handler");
+
+			val_t* v = qse_awk_rtx_getarg (run->rtx, i);
+			val_t* nv = args[i].toVal();
+
+			if (nv == v) continue;
+
+			QSE_ASSERT (v->type == QSE_AWK_VAL_REF);
+			val_t** ref = (val_t**)((qse_awk_val_ref_t*)v)->adr;
+	
+			qse_awk_rtx_refdownval (run->rtx, *ref);
+			*ref = nv;
+			qse_awk_rtx_refupval (run->rtx, *ref);
+		}
+	}
+#endif
 	if (args != buf) delete[] args;
 
 	if (n <= -1) 
@@ -1505,9 +1536,15 @@ int Awk::addFunction (
 	
 	size_t nameLen = qse_strlen(name);
 
-	void* p = qse_awk_addfnc (awk, name, nameLen,
-	                          0, minArgs, maxArgs, QSE_NULL, 
-	                          functionHandler);
+	void* p = qse_awk_addfnc (
+		awk, name, nameLen,
+		0, minArgs, maxArgs,
+#ifdef PASS_BY_REFERENCE
+		QSE_T("R"), // pass all arguments by reference
+#else
+		QSE_NULL,
+#endif
+		functionHandler);
 	if (p == QSE_NULL) 
 	{
 		qse_awk_free (awk, tmp);
@@ -1540,16 +1577,6 @@ int Awk::deleteFunction (const char_t* name)
 	else retrieveError ();
 
 	return n;
-}
-
-void Awk::enableRunCallback () 
-{
-	runCallback = true;
-}
-
-void Awk::disableRunCallback () 
-{
-	runCallback = false;
 }
 
 int Awk::getWord (
@@ -1588,20 +1615,6 @@ int Awk::unsetAllWords ()
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
-}
-
-
-bool Awk::onLoopEnter (Run& run)
-{
-	return true;
-}
-
-void Awk::onLoopExit (Run& run, const Value& ret)
-{
-}
-
-void Awk::onStatement (Run& run, size_t line)
-{
 }
 
 Awk::ssize_t Awk::readSource (
@@ -1761,28 +1774,6 @@ int Awk::functionHandler (rtx_t* rtx, const cstr_t* name)
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	return rxtn->run->awk->dispatch_function (rxtn->run, name);
 }	
-
-int Awk::onLoopEnter (rtx_t* rtx, void* data)
-{
-	Run* run = (Run*)data;
-	return run->awk->onLoopEnter(*run)? 0: -1;
-}
-
-void Awk::onLoopExit (rtx_t* rtx, val_t* ret, void* data)
-{
-	Run* run = (Run*)data;
-
-	Value x;
-	if (x.setVal (run, ret) == -1) 
-		qse_awk_rtx_seterrnum (run->rtx, (errnum_t)ERR_NOMEM);
-	else run->awk->onLoopExit (*run, x);
-}
-
-void Awk::onStatement (rtx_t* rtx, size_t line, void* data)
-{
-	Run* run = (Run*)data;
-	run->awk->onStatement (*run, line);
-}
 
 Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
 {

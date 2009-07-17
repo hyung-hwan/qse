@@ -1,5 +1,5 @@
 /*
- * $Id: awk02.c 195 2009-06-10 13:18:25Z hyunghwan.chung $ 
+ * $Id: awk02.c 236 2009-07-16 08:27:53Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -38,6 +38,7 @@ int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
+	qse_awk_val_t* retv;
 
 	qse_awk_parsestd_in_t psin;
 	qse_awk_parsestd_out_t psout;
@@ -47,8 +48,8 @@ int main ()
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: cannot open awk\n"));
-		goto oops;
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open awk\n"));
+		ret = -1; goto oops;
 	}
 
 	qse_memset (srcout, QSE_T(' '), QSE_COUNTOF(srcout)-1);
@@ -60,11 +61,11 @@ int main ()
 	psout.u.cp  = srcout;
 
 	ret = qse_awk_parsestd (awk, &psin, &psout);
-	if (ret == -1)
+	if (ret <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		goto oops;
+		ret = -1; goto oops;
 	}
 
 	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), srcout);
@@ -80,18 +81,21 @@ int main ()
 	);
 	if (rtx == QSE_NULL) 
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		goto oops;
+		ret = -1; goto oops;
 	}
 	
-	ret = qse_awk_rtx_loop (rtx);
-	if (ret == -1)
+	retv = qse_awk_rtx_loop (rtx);
+	if (retv == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));
-		goto oops;
+		ret = -1; goto oops;
 	}
+
+	qse_awk_rtx_refdownval (rtx, retv);
+	ret = 0;
 
 oops:
 	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);

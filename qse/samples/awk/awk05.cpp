@@ -49,8 +49,9 @@ static int run_awk (QSE::StdAwk& awk)
 	// parse the script string and deparse it to awk05.out.
 	if (awk.parse (in, out) == QSE_NULL) return -1;
 
+	QSE::StdAwk::Value r;
 	// execute the BEGIN, pattern-action, END blocks.
-	return awk.loop ();
+	return awk.loop (&r);
 }
 
 static int awk_main (int argc, qse_char_t* argv[])

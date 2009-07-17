@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: Awk.hpp 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -255,7 +255,9 @@ protected:
 	void retrieveError (Run* run);
 	/*@}*/
 
+protected:
 	class NoSource;
+
 public:
 	/** 
 	 * The Source class is an abstract class to encapsulate
@@ -677,6 +679,7 @@ public:
 		static const char_t* EMPTY_STRING;
 	};
 
+public:
 	/**
 	 * Defines an identifier of predefined global variables.
 	 * Awk::setGlobal and Awk::getGlobal can take one of these enumerators.
@@ -802,24 +805,26 @@ public:
 	 * @return a Run object on success, #QSE_NULL on failure
 	 */
 	Awk::Run* parse (
-		Source& in,  /**< script to parse */
-		Source& out  /**< deparsing target */
+		Source& in,  ///< script to parse 
+		Source& out  ///< deparsing target 
 	);
 
 	/**
 	 * Executes the BEGIN block, pattern-action blocks, and the END block.
 	 * @return 0 on succes, -1 on failure
 	 */
-	int loop ();
+	int loop (
+		Value* ret  ///< return value holder
+	);
 
 	/**
 	 * Calls a function
 	 */
 	int call (
-		const char_t* name,
-		Value*        ret,
-		const Value*  args,
-		size_t        nargs
+		const char_t* name,  ///< function name
+		Value*        ret,   ///< return value holder
+		const Value*  args,  ///< argument array
+		size_t        nargs  ///< number of arguments
 	);
 
 	/**
@@ -983,16 +988,6 @@ public:
 	/*@}*/
 
 	/**
-	 * Enables the run-time callback
-	 */
-	void enableRunCallback ();
-
-	/**
-	 * Disables the run-time callback
-	 */
-	void disableRunCallback ();
-
-	/**
 	 * @name Word Substitution
 	 */
 	/*@{*/
@@ -1058,11 +1053,6 @@ protected:
 	virtual int     nextConsole  (Console& io) = 0;
 	/*@}*/
 
-	// run-time callbacks
-	virtual bool onLoopEnter (Run& run);
-	virtual void onLoopExit (Run& run, const Value& ret);
-	virtual void onStatement (Run& run, size_t line);
-	
 	// primitive handlers 
 	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
@@ -1086,10 +1076,6 @@ protected:
 
 	static int functionHandler (rtx_t* rtx, const cstr_t* name);
 
-	static int  onLoopEnter (rtx_t* run, void* data);
-	static void onLoopExit (rtx_t* run, val_t* ret, void* data);
-	static void onStatement (rtx_t* run, size_t line, void* data);
-
 	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
@@ -1107,8 +1093,6 @@ protected:
 
 	Source* sourceReader;
 	Source* sourceWriter;
-
-	bool     runCallback;
 
 	struct xstrs_t
 	{

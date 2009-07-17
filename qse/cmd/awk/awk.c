@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 220 2009-07-01 13:14:39Z hyunghwan.chung $
+ * $Id: awk.c 236 2009-07-16 08:27:53Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -233,14 +233,7 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 	return 0;
 }
 
-static int on_loop_enter (qse_awk_rtx_t* rtx, void* data)
-{
-	/* TODO: anything to do? */
-	return 0;
-}
-
-static void on_loop_exit (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* ret, void* data)
+static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 {
 	qse_size_t len;
 	qse_char_t* str;
@@ -274,8 +267,7 @@ static void on_statement (
 	/*dprint (L"running %d\n", (int)line);*/
 }
 
-static int fnc_sleep (
-	qse_awk_rtx_t* run, const qse_char_t* fnm, qse_size_t fnl)
+static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -681,6 +673,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
+	qse_awk_val_t* retv;
 	qse_awk_rcb_t rcb;
 
 	int i;
@@ -751,8 +744,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	rcb.on_loop_enter = on_loop_enter;
-	rcb.on_loop_exit = on_loop_exit;
 	rcb.on_statement = on_statement;
 	rcb.udd = &arg;
 
@@ -773,18 +764,18 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_rtx_setrcb (rtx, &rcb);
 
 	set_intr_run ();
-	if (arg.call == QSE_NULL)
+
+	retv = (arg.call == QSE_NULL)?
+		qse_awk_rtx_loop (rtx):
+		qse_awk_rtx_call (rtx, arg.call, QSE_NULL, 0);
+	if (retv != QSE_NULL)
 	{
-		ret = qse_awk_rtx_loop (rtx);
+		qse_awk_rtx_refdownval (rtx, retv);
+		ret = 0;
+
+		dprint_return (rtx, retv);
 	}
-	else
-	{
-		qse_awk_val_t* rv;
-		
-		rv = qse_awk_rtx_call (rtx, arg.call, QSE_NULL, 0);
-		ret = (rv == QSE_NULL)? -1: 0;
-		qse_awk_rtx_refdownval (rtx, rv);
-	}
+
 	unset_intr_run ();
 
 	if (ret <= -1)

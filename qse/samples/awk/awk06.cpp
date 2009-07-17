@@ -37,6 +37,7 @@ static int run_awk (QSE::StdAwk& awk)
 		"function add (a, b) { return a + b }\n"
 		"function mul (a, b) { return a * b }\n"
 		"function div (a, b) { return a / b }\n"
+		"function sine (a) { return sin(a) }\n"
 	);
 
 	QSE::StdAwk::SourceString in (script);
@@ -52,16 +53,25 @@ static int run_awk (QSE::StdAwk& awk)
 
 	// ret = add (-20, 51) 
 	QSE::StdAwk::Value ret;
-	if (awk.call (QSE_T("add"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
+	if (awk.call (QSE_T("add"), &ret, arg, 2) <= -1) return -1;
 
 	// ret = mul (ret, 51);
 	arg[0] = ret;
-	if (awk.call (QSE_T("mul"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
+	if (awk.call (QSE_T("mul"), &ret, arg, 2) <= -1) return -1;
 
 	// ret = div (ret, 2);
 	arg[0] = ret;
 	if (arg[1].setReal (run, 2) <= -1) return -1;
-	if (awk.call (QSE_T("div"), &ret, arg, QSE_COUNTOF(arg)) <= -1) return -1;
+	if (awk.call (QSE_T("div"), &ret, arg, 2) <= -1) return -1;
+
+	// output the result in various types
+	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
+	qse_printf (QSE_T("        (real) [%Lf]\n"), (long double)ret.toReal());
+	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
+
+	// ret = sine (ret);
+	arg[0] = ret;
+	if (awk.call (QSE_T("sine"), &ret, arg, 1) <= -1) return -1;
 
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
