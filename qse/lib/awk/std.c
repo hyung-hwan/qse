@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: std.c 237 2009-07-16 12:43:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1316,8 +1316,8 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		a0 = qse_awk_rtx_getarg (run, 0);
 
 		n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
-		if (n == -1) return -1;
-		if (n == 1) lv = (qse_long_t)rv;
+		if (n <= -1) return -1;
+		if (n >= 1) lv = (qse_long_t)rv;
 
 		rxtn->seed = lv;
 	}
@@ -1325,7 +1325,7 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	{
 		qse_ntime_t now;
 
-		if (qse_gettime(&now) == -1) rxtn->seed >>= 1;
+		if (qse_gettime(&now) <= -1) rxtn->seed >>= 1;
 		else rxtn->seed = (unsigned int)now;
 	}
 

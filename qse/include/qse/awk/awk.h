@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: awk.h 237 2009-07-16 12:43:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -519,7 +519,7 @@ enum qse_awk_option_t
 
 	/** 
 	 * strips off leading and trailing spaces when splitting a record
-	 * into fields with a regular expression.
+	 * into fields with a regular expression. 
 	 *
 	 * @code
 	 * BEGIN { FS="[:[:space:]]+"; } 
@@ -528,28 +528,33 @@ enum qse_awk_option_t
 	 *    for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
 	 * }
 	 * @endcode
-	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPSPACES is on.
+	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRSPC is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 */
-	QSE_AWK_STRIPSPACES = (1 << 10),
+	QSE_AWK_STRIPRECSPC    = (1 << 10),
+
+	/**
+	 * strips off leading spaces when converting a string to a number.
+	 */
+	QSE_AWK_STRIPSTRSPC    = (1 << 11),
 
 	/** enables @b nextofile */
-	QSE_AWK_NEXTOFILE   = (1 << 11),
+	QSE_AWK_NEXTOFILE   = (1 << 12),
 
 	/** enables @b reset */
-	QSE_AWK_RESET       = (1 << 12),
+	QSE_AWK_RESET       = (1 << 13),
 
 	/** CR + LF by default */
-	QSE_AWK_CRLF        = (1 << 13),
+	QSE_AWK_CRLF        = (1 << 14),
 
 	/** allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR    = (1 << 14),
+	QSE_AWK_MAPTOVAR    = (1 << 15),
 
 	/** allows @b BEGIN, @b END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 15),
+	QSE_AWK_PABLOCK     = (1 << 16),
 
 	/** allows {n,m} in a regular expression. */
-	QSE_AWK_REXBOUND    = (1 << 16),
+	QSE_AWK_REXBOUND    = (1 << 17),
 
 	/** 
 	 * performs numeric comparison when a string convertable
@@ -559,14 +564,14 @@ enum qse_awk_option_t
 	 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
 	 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 	 */
-	QSE_AWK_NCMPONSTR = (1 << 17),
+	QSE_AWK_NCMPONSTR = (1 << 18),
 
 	/**
 	 * enables the strict naming rule.
 	 * - a parameter can not be the same as the owning function name.
 	 * - a local variable can not be the same as the owning function name.
 	 */
-	QSE_AWK_STRICTNAMING = (1 << 18),
+	QSE_AWK_STRICTNAMING = (1 << 19),
 
 	/** 
 	 * makes #qse_awk_t to behave as compatibly as classical AWK
@@ -574,7 +579,7 @@ enum qse_awk_option_t
 	 */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
-	                   QSE_AWK_STRICTNAMING
+	                   QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: Awk.hpp 237 2009-07-16 12:43:47Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -852,7 +852,8 @@ public:
 		/** Can terminate a statement with a new line */
 		OPT_NEWLINE = QSE_AWK_NEWLINE,
 
-		OPT_STRIPSPACES = QSE_AWK_STRIPSPACES,
+		OPT_STRIPRECSPC = QSE_AWK_STRIPRECSPC,
+		OPT_STRIPSTRSPC = QSE_AWK_STRIPSTRSPC,
 
 		/** Support the nextofile statement */
 		OPT_NEXTOFILE = QSE_AWK_NEXTOFILE,
