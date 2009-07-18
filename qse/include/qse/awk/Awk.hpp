@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 237 2009-07-16 12:43:47Z hyunghwan.chung $
+ * $Id: Awk.hpp 238 2009-07-17 12:42:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -843,9 +843,7 @@ public:
 	{
 		OPT_IMPLICIT = QSE_AWK_IMPLICIT,
 		OPT_EXPLICIT = QSE_AWK_EXPLICIT,
-		OPT_BXOR = QSE_AWK_BXOR,
-		OPT_SHIFT = QSE_AWK_SHIFT,
-		OPT_IDIV = QSE_AWK_IDIV,
+		OPT_EXTRAOPS = QSE_AWK_EXTRAOPS,
 		OPT_RIO = QSE_AWK_RIO,
 		OPT_RWPIPE = QSE_AWK_RWPIPE,
 

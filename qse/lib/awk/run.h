@@ -1,5 +1,5 @@
 /*
- * $Id: run.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: run.h 238 2009-07-17 12:42:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -31,8 +31,8 @@ enum qse_awk_assop_type_t
 	QSE_AWK_ASSOP_IDIV,   /* //= */
 	QSE_AWK_ASSOP_MOD,    /* %= */
 	QSE_AWK_ASSOP_EXP,    /* **= */
-	QSE_AWK_ASSOP_RSHIFT, /* >>= */
-	QSE_AWK_ASSOP_LSHIFT, /* <<= */
+	QSE_AWK_ASSOP_RS,     /* >>= */
+	QSE_AWK_ASSOP_LS,     /* <<= */
 	QSE_AWK_ASSOP_BAND,   /* &= */
 	QSE_AWK_ASSOP_BXOR,   /* ^= */
 	QSE_AWK_ASSOP_BOR     /* |= */
@@ -57,8 +57,8 @@ enum  qse_awk_binop_type_t
 	QSE_AWK_BINOP_LT,
 	QSE_AWK_BINOP_LE,
 
-	QSE_AWK_BINOP_LSHIFT,
-	QSE_AWK_BINOP_RSHIFT,
+	QSE_AWK_BINOP_LS,
+	QSE_AWK_BINOP_RS,
 
 	QSE_AWK_BINOP_PLUS,
 	QSE_AWK_BINOP_MINUS,
