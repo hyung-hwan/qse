@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: parse.c 238 2009-07-17 12:42:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -33,8 +33,8 @@ enum token_t
 	TOKEN_IDIV_ASSIGN,
 	TOKEN_MOD_ASSIGN,
 	TOKEN_EXP_ASSIGN,
-	TOKEN_RSHIFT_ASSIGN,
-	TOKEN_LSHIFT_ASSIGN,
+	TOKEN_RS_ASSIGN,
+	TOKEN_LS_ASSIGN,
 	TOKEN_BAND_ASSIGN,
 	TOKEN_BXOR_ASSIGN,
 	TOKEN_BOR_ASSIGN,
@@ -61,8 +61,8 @@ enum token_t
 	TOKEN_BXOR,
 	TOKEN_BAND,
 	TOKEN_TILDE, /* used for unary bitwise-not and regex match */
-	TOKEN_RSHIFT,
-	TOKEN_LSHIFT,
+	TOKEN_RS,
+	TOKEN_LS,
 	TOKEN_IN,
 	TOKEN_EXP,
 
@@ -2415,15 +2415,15 @@ static qse_awk_nde_t* parse_relational (qse_awk_t* awk, qse_size_t line)
 	};
 
 	return parse_binary_expr (awk, line, 0, map, 
-		((awk->option & QSE_AWK_SHIFT)? parse_shift: parse_concat));
+		((awk->option & QSE_AWK_EXTRAOPS)? parse_shift: parse_concat));
 }
 
 static qse_awk_nde_t* parse_shift (qse_awk_t* awk, qse_size_t line)
 {
 	static binmap_t map[] = 
 	{
-		{ TOKEN_LSHIFT, QSE_AWK_BINOP_LSHIFT },
-		{ TOKEN_RSHIFT, QSE_AWK_BINOP_RSHIFT },
+		{ TOKEN_LS, QSE_AWK_BINOP_LS },
+		{ TOKEN_RS, QSE_AWK_BINOP_RS },
 		{ TOKEN_EOF, 0 }
 	};
 
@@ -2526,7 +2526,8 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, qse_size_t line)
 	opcode = (MATCH(awk,TOKEN_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOKEN_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOKEN_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOKEN_TILDE))? QSE_AWK_UNROP_BNOT: -1;
+	         ((awk->option & QSE_AWK_EXTRAOPS) && MATCH(awk,TOKEN_TILDE))? 
+	                                   QSE_AWK_UNROP_BNOT: -1;
 
 	/*if (opcode <= -1) return parse_increment (awk);*/
 	if (opcode <= -1) return parse_exponent (awk, line);
@@ -2584,7 +2585,8 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, qse_size_t line)
 	opcode = (MATCH(awk,TOKEN_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOKEN_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOKEN_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOKEN_TILDE))? QSE_AWK_UNROP_BNOT: -1;
+	         ((awk->option & QSE_AWK_EXTRAOPS) && MATCH(awk,TOKEN_TILDE))? 
+	                                   QSE_AWK_UNROP_BNOT: -1;
 
 	if (opcode <= -1) return parse_increment (awk, line);
 
@@ -4429,7 +4431,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 
 	if (!MATCH_TERMINATOR(awk) &&
 	    !MATCH(awk,TOKEN_GT) &&
-	    !MATCH(awk,TOKEN_RSHIFT) &&
+	    !MATCH(awk,TOKEN_RS) &&
 	    !MATCH(awk,TOKEN_BOR) &&
 	    !MATCH(awk,TOKEN_LOR)) 
 	{
@@ -4490,7 +4492,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 					0
 				},
 				{ 
-					QSE_AWK_BINOP_RSHIFT, 
+					QSE_AWK_BINOP_RS, 
 					QSE_AWK_OUT_APFILE,
 					0
 				},
@@ -4534,7 +4536,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 	if (out == QSE_NULL)
 	{
 		out_type = MATCH(awk,TOKEN_GT)?       QSE_AWK_OUT_FILE:
-		           MATCH(awk,TOKEN_RSHIFT)?   QSE_AWK_OUT_APFILE:
+		           MATCH(awk,TOKEN_RS)?   QSE_AWK_OUT_APFILE:
 		           MATCH(awk,TOKEN_BOR)?      QSE_AWK_OUT_PIPE:
 		           ((awk->option & QSE_AWK_RWPIPE) &&
 			    MATCH(awk,TOKEN_LOR))?    QSE_AWK_OUT_RWPIPE:
@@ -4674,6 +4676,61 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 		SET_TOKEN_TYPE (awk, token, TOKEN_STR);
 		if (get_charstr(awk, token) <= -1) return -1;
 	}
+
+/*
+// TODO: compacct the code with this table
+{ QSE_T("=="),  TOKEN_EQ,           0 },
+{ QSE_T("="),   TOKEN_ASSIGN,       0 },
+{ QSE_T("!=")   TOKEN_NE,           0 },
+{ QSE_T("!~")   TOKEN_NM,           0 },
+{ QSE_T("!")    TOKEN_LNOT,         0 },
+{ QSE_T(">>=")  TOKEN_RS_ASSIGN,    QSE_AWK_EXTRAOPS },
+{ QSE_T(">>")   TOKEN_RS,           0 },
+{ QSE_T(">=")   TOKEN_GE,           0 },
+{ QSE_T(">")    TOKEN_GT,           0 },
+{ QSE_T(">>=")  TOKEN_LS_ASSIGN,    QSE_AWK_EXTRAOPS },
+{ QSE_T(">>")   TOKEN_LS,           0 },
+{ QSE_T(">=")   TOKEN_LE,           0 },
+{ QSE_T(">")    TOKEN_LT,           0 },
+{ QSE_T("||")   TOKEN_LOR,          0 },
+{ QSE_T("|=")   TOKEN_BOR_ASSIGN,   0 },
+{ QSE_T("|")    TOKEN_BOR,          0 },
+{ QSE_T("&&")   TOKEN_LAND,         0 },
+{ QSE_T("&=")   TOKEN_BAND_ASSIGN,  0 },
+{ QSE_T("&")    TOKEN_BAND,         0 },
+{ QSE_T("^^=")  TOKEN_BXOR_ASSIGN,  QSE_AWK_EXTRAOPS },
+{ QSE_T("^^")   TOKEN_BXOR,         QSE_AWK_EXTRAOPS },
+{ QSE_T("^=")   TOKEN_EXP_ASSIGN,   0 },
+{ QSE_T("^")    TOKEN_EXP,          0 },
+{ QSE_T("++")   TOKEN_PLUSPLUS,     0 },
+{ QSE_T("+=")   TOKEN_PLUS_ASSIGN,  0 },
+{ QSE_T("+")    TOKEN_PLUS,         0 },
+{ QSE_T("--")   TOKEN_MINUSMINUS,   0 },
+{ QSE_T("-=")   TOKEN_MINUS_ASSIGN, 0 },
+{ QSE_T("-")    TOKEN_MINUS,        0 },
+{ QSE_T("**=")  TOKEN_EXP_ASSIGN,   QSE_AWK_EXTRAOPS },
+{ QSE_T("**")   TOKEN_EXP,          QSE_AWK_EXTRAOPS },
+{ QSE_T("*=")   TOKEN_MUL_ASSIGN,   0 },
+{ QSE_T("*")    TOKEN_MUL,          0 },
+{ QSE_T("//=")  TOKEN_IDIV_ASSIGN,  0 },
+{ QSE_T("//")   TOKEN_IDIV,         QSE_AWK_EXTRAOPS },
+{ QSE_T("/=")   TOKEN_DIV_ASSIGN,   QSE_AWK_EXTRAOPS },
+{ QSE_T("/")    TOKEN_DIV,          0 },
+{ QSE_T("%=")   TOKEN_MOD_ASSIGN,   0 },
+{ QSE_T("%")    TOKEN_MOD,          0 },
+{ QSE_T("~"),   TOKEN_TILDE,        0 },
+{ QSE_T("("),   TOKEN_LPAREN,       0 },
+{ QSE_T(")"),   TOKEN_RPAREN,       0 },
+{ QSE_T("{"),   TOKEN_LBRACE,       0 },
+{ QSE_T("}"),   TOKEN_RBRACE,       0 },
+{ QSE_T("["),   TOKEN_LBRACK,       0 },
+{ QSE_T("]"),   TOKEN_RBRACK,       0 },
+{ QSE_T("$"),   TOKEN_DOLLAR,       0 },
+{ QSE_T(","),   TOKEN_COMMA,        0 },
+{ QSE_T(";"),   TOKEN_SEMICOLON,    0 },
+{ QSE_T(":"),   TOKEN_COLON,        0 },
+{ QSE_T("?"),   TOKEN_QUEST,        0 },
+ */
 	else if (c == QSE_T('=')) 
 	{
 		ADD_TOKEN_CHAR (awk, token, c);
@@ -4718,15 +4775,15 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 		{
 			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
-			if ((awk->option & QSE_AWK_SHIFT) && c == QSE_T('='))
+			if ((awk->option & QSE_AWK_EXTRAOPS) && c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, token, TOKEN_RSHIFT_ASSIGN);
+				SET_TOKEN_TYPE (awk, token, TOKEN_RS_ASSIGN);
 				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else
 			{
-				SET_TOKEN_TYPE (awk, token, TOKEN_RSHIFT);
+				SET_TOKEN_TYPE (awk, token, TOKEN_RS);
 			}
 		}
 		else if (c == QSE_T('=')) 
@@ -4745,19 +4802,19 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
-		if ((awk->option & QSE_AWK_SHIFT) && c == QSE_T('<')) 
+		if ((awk->option & QSE_AWK_EXTRAOPS) && c == QSE_T('<')) 
 		{
 			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
 			if (c == QSE_T('='))
 			{
-				SET_TOKEN_TYPE (awk, token, TOKEN_LSHIFT_ASSIGN);
+				SET_TOKEN_TYPE (awk, token, TOKEN_LS_ASSIGN);
 				ADD_TOKEN_CHAR (awk, token, c);
 				GET_CHAR (awk);
 			}
 			else
 			{
-				SET_TOKEN_TYPE (awk, token, TOKEN_LSHIFT);
+				SET_TOKEN_TYPE (awk, token, TOKEN_LS);
 			}
 		}
 		else if (c == QSE_T('=')) 
@@ -4818,21 +4875,30 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 		ADD_TOKEN_CHAR (awk, token, c);
 		GET_CHAR_TO (awk, c);
 
-		if (c == QSE_T('='))
+		if ((awk->option & QSE_AWK_EXTRAOPS) && c == QSE_T('^'))
 		{
-			SET_TOKEN_TYPE (awk, token, 
-				((awk->option & QSE_AWK_BXOR)? 
-					TOKEN_BXOR_ASSIGN: TOKEN_EXP_ASSIGN)
-			);
+			ADD_TOKEN_CHAR (awk, token, c);
+			GET_CHAR_TO (awk, c);
+			if (c == QSE_T('='))
+			{
+				SET_TOKEN_TYPE (awk, token, TOKEN_BXOR_ASSIGN);
+				ADD_TOKEN_CHAR (awk, token, c);
+				GET_CHAR (awk);
+			}
+			else 
+			{
+				SET_TOKEN_TYPE (awk, token, TOKEN_BXOR);
+			}
+		}
+		else if (c == QSE_T('='))
+		{
+			SET_TOKEN_TYPE (awk, token, TOKEN_EXP_ASSIGN);
 			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
 		else
 		{
-			SET_TOKEN_TYPE (awk, token,
-				((awk->option & QSE_AWK_BXOR)? 
-					TOKEN_BXOR: TOKEN_EXP)
-			);
+			SET_TOKEN_TYPE (awk, token, TOKEN_EXP);
 		}
 	}
 	else if (c == QSE_T('+')) 
@@ -4919,7 +4985,7 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR (awk);
 		}
-		else if ((awk->option & QSE_AWK_IDIV) && c == QSE_T('/'))
+		else if ((awk->option & QSE_AWK_EXTRAOPS) && c == QSE_T('/'))
 		{
 			ADD_TOKEN_CHAR (awk, token, c);
 			GET_CHAR_TO (awk, c);
@@ -5596,8 +5662,8 @@ static int assign_to_opcode (qse_awk_t* awk)
 		QSE_AWK_ASSOP_IDIV,
 		QSE_AWK_ASSOP_MOD,
 		QSE_AWK_ASSOP_EXP,
-		QSE_AWK_ASSOP_RSHIFT,
-		QSE_AWK_ASSOP_LSHIFT,
+		QSE_AWK_ASSOP_RS,
+		QSE_AWK_ASSOP_LS,
 		QSE_AWK_ASSOP_BAND,
 		QSE_AWK_ASSOP_BXOR,
 		QSE_AWK_ASSOP_BOR

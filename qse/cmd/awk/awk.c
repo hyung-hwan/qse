@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 237 2009-07-16 12:43:47Z hyunghwan.chung $
+ * $Id: awk.c 238 2009-07-17 12:42:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -325,9 +325,7 @@ struct opttab_t
 {
 	{ QSE_T("implicit"),    QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
 	{ QSE_T("explicit"),    QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
-	{ QSE_T("bxor"),        QSE_AWK_BXOR,           QSE_T("enable bit-wise XOR operator(^)") },
-	{ QSE_T("shift"),       QSE_AWK_SHIFT,          QSE_T("enable shift operators(<<,>>)") },
-	{ QSE_T("idiv"),        QSE_AWK_IDIV,           QSE_T("enable idiv operator(//)") },
+	{ QSE_T("extraops"),    QSE_AWK_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
 	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
@@ -372,13 +370,12 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	{
 		{ QSE_T(":implicit"),        QSE_T('\0') },
 		{ QSE_T(":explicit"),        QSE_T('\0') },
-		{ QSE_T(":bxor"),            QSE_T('\0') },
-		{ QSE_T(":shift"),           QSE_T('\0') },
-		{ QSE_T(":idiv"),            QSE_T('\0') },
+		{ QSE_T(":extraops"),        QSE_T('\0') },
 		{ QSE_T(":rio"),             QSE_T('\0') },
 		{ QSE_T(":rwpipe"),          QSE_T('\0') },
 		{ QSE_T(":newline"),         QSE_T('\0') },
-		{ QSE_T(":stripspaces"),     QSE_T('\0') },
+		{ QSE_T(":striprecspc"),     QSE_T('\0') },
+		{ QSE_T(":stripstrspc"),     QSE_T('\0') },
 		{ QSE_T(":nextofile"),       QSE_T('\0') },
 		{ QSE_T(":reset"),           QSE_T('\0') },
 		{ QSE_T(":crlf"),            QSE_T('\0') },
@@ -531,8 +528,13 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					{
 						if (qse_strcmp (opt.arg, QSE_T("off")) == 0)
 							arg->optoff |= opttab[i].opt;
-						else
+						else if (qse_strcmp (opt.arg, QSE_T("on")) == 0)
 							arg->opton |= opttab[i].opt;
+						else
+						{
+							print_err (QSE_T("invalid value for '%s' - '%s'\n"), opt.lngopt, opt.arg);
+							goto oops;
+						}
 						break;
 					}
 				}

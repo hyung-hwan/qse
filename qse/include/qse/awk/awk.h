@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 237 2009-07-16 12:43:47Z hyunghwan.chung $
+ * $Id: awk.h 238 2009-07-17 12:42:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -499,23 +499,24 @@ enum qse_awk_option_t
 	 */
 	QSE_AWK_EXPLICIT    = (1 << 1), 
 
-	/** changes @b ^ from exponentation to bitwise xor */
-	QSE_AWK_BXOR        = (1 << 3),
-
-	/** supports shift operators: @b << and @b >> */
-	QSE_AWK_SHIFT       = (1 << 4), 
-
-	/** enables the idiv operator: @b // */
-	QSE_AWK_IDIV        = (1 << 5), 
+	/** 
+	 * supports extra operators:
+	 * - @b <<, <<= left-shift
+	 * - @b >>, >>= right-shiftt
+	 * - @b ^^, ^^= xor
+	 * - @b ~  bitwise-not
+	 * - @b // idiv (get quotient)
+	 */
+	QSE_AWK_EXTRAOPS    = (1 << 2), 
 
 	/** supports @b getline and @b print */
-	QSE_AWK_RIO         = (1 << 7), 
+	QSE_AWK_RIO         = (1 << 3), 
 
 	/** supports dual direction pipe if #QSE_AWK_RIO is on */
-	QSE_AWK_RWPIPE      = (1 << 8),
+	QSE_AWK_RWPIPE      = (1 << 4),
 
 	/** a new line can terminate a statement */
-	QSE_AWK_NEWLINE     = (1 << 9),
+	QSE_AWK_NEWLINE     = (1 << 5),
 
 	/** 
 	 * strips off leading and trailing spaces when splitting a record
@@ -531,30 +532,30 @@ enum qse_awk_option_t
 	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRSPC is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 */
-	QSE_AWK_STRIPRECSPC    = (1 << 10),
+	QSE_AWK_STRIPRECSPC    = (1 << 6),
 
 	/**
 	 * strips off leading spaces when converting a string to a number.
 	 */
-	QSE_AWK_STRIPSTRSPC    = (1 << 11),
+	QSE_AWK_STRIPSTRSPC    = (1 << 7),
 
 	/** enables @b nextofile */
-	QSE_AWK_NEXTOFILE   = (1 << 12),
+	QSE_AWK_NEXTOFILE   = (1 << 8),
 
 	/** enables @b reset */
-	QSE_AWK_RESET       = (1 << 13),
+	QSE_AWK_RESET       = (1 << 9),
 
 	/** CR + LF by default */
-	QSE_AWK_CRLF        = (1 << 14),
+	QSE_AWK_CRLF        = (1 << 10),
 
 	/** allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR    = (1 << 15),
+	QSE_AWK_MAPTOVAR    = (1 << 11),
 
 	/** allows @b BEGIN, @b END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 16),
+	QSE_AWK_PABLOCK     = (1 << 12),
 
 	/** allows {n,m} in a regular expression. */
-	QSE_AWK_REXBOUND    = (1 << 17),
+	QSE_AWK_REXBOUND    = (1 << 13),
 
 	/** 
 	 * performs numeric comparison when a string convertable
@@ -564,14 +565,14 @@ enum qse_awk_option_t
 	 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
 	 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 	 */
-	QSE_AWK_NCMPONSTR = (1 << 18),
+	QSE_AWK_NCMPONSTR = (1 << 14),
 
 	/**
 	 * enables the strict naming rule.
 	 * - a parameter can not be the same as the owning function name.
 	 * - a local variable can not be the same as the owning function name.
 	 */
-	QSE_AWK_STRICTNAMING = (1 << 19),
+	QSE_AWK_STRICTNAMING = (1 << 15),
 
 	/** 
 	 * makes #qse_awk_t to behave as compatibly as classical AWK
