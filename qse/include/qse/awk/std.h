@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: std.h 239 2009-07-18 12:02:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -34,6 +34,7 @@
  * - add code to treat a function as a value 
  * - add RQ and LQ for more powerful record splitting
  * - improve performance in qse_awk_rtx_readio() if RS is logner than 2 chars.
+ * - implement 'include'
  */
 
 /**

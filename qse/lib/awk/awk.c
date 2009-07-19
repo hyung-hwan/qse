@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 232 2009-07-14 08:06:14Z hyunghwan.chung $ 
+ * $Id: awk.c 239 2009-07-18 12:02:24Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -26,14 +26,6 @@
 QSE_IMPLEMENT_COMMON_FUNCTIONS (awk)
 
 #define SETERR(awk,code) qse_awk_seterrnum(awk,code)
-
-#define SETERRARG(awk,code,line,arg,leng) \
-	do { \
-		qse_cstr_t errarg; \
-		errarg.len = (leng); \
-		errarg.ptr = (arg); \
-		qse_awk_seterror ((awk), (code), (line), &errarg); \
-	} while (0)
 
 static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
 {
@@ -360,34 +352,34 @@ void qse_awk_stopall (qse_awk_t* awk)
 	awk->stopall = QSE_TRUE;
 }
 
-int qse_awk_getword (qse_awk_t* awk, 
-	const qse_char_t* okw, qse_size_t olen,
-	const qse_char_t** nkw, qse_size_t* nlen)
+int qse_awk_getword (qse_awk_t* awk, const qse_cstr_t* okw, qse_cstr_t* nkw)
 {
 	qse_map_pair_t* p;
 
-	p = qse_map_search (awk->wtab, okw, olen);
+	p = qse_map_search (awk->wtab, okw->ptr, okw->len);
 	if (p == QSE_NULL) return -1;
 
-	*nkw = ((qse_cstr_t*)p->vptr)->ptr;
-	*nlen = ((qse_cstr_t*)p->vptr)->len;
+	nkw->ptr = ((qse_cstr_t*)p->vptr)->ptr;
+	nkw->len = ((qse_cstr_t*)p->vptr)->len;
 
 	return 0;
 }
 
-int qse_awk_unsetword (qse_awk_t* awk, const qse_char_t* kw, qse_size_t len)
+int qse_awk_unsetword (qse_awk_t* awk, const qse_cstr_t* kw)
 {
 	qse_map_pair_t* p;
 
-	p = qse_map_search (awk->wtab, kw, len);
+	QSE_ASSERT (kw->ptr != QSE_NULL);
+
+	p = qse_map_search (awk->wtab, kw->ptr, kw->len);
 	if (p == QSE_NULL)
 	{
-		SETERRARG (awk, QSE_AWK_ENOENT, 0, kw, len);
+		qse_awk_seterror (awk, QSE_AWK_ENOENT, 0, kw);
 		return -1;
 	}
 
 	qse_map_delete (awk->rwtab, QSE_MAP_VPTR(p), QSE_MAP_VLEN(p));
-	qse_map_delete (awk->wtab, kw, len);
+	qse_map_delete (awk->wtab, kw->ptr, kw->len);
 	return 0;
 }
 
@@ -397,39 +389,45 @@ void qse_awk_unsetallwords (qse_awk_t* awk)
 	qse_map_clear (awk->rwtab);
 }
 
-int qse_awk_setword (qse_awk_t* awk, 
-	const qse_char_t* okw, qse_size_t olen,
-	const qse_char_t* nkw, qse_size_t nlen)
+int qse_awk_setword (
+	qse_awk_t* awk, const qse_cstr_t* okw, const qse_cstr_t* nkw)
 {
-	if (nkw == QSE_NULL || nlen == 0)
+	if (nkw == QSE_NULL)
 	{
-		if (okw == QSE_NULL || olen == 0)
+		if (okw == QSE_NULL)
 		{
 			/* clear the entire table */
 			qse_awk_unsetallwords (awk);
 			return 0;
 		}
 
-		return qse_awk_unsetword (awk, okw, olen);
+		return qse_awk_unsetword (awk, okw);
 	}
-	else if (okw == QSE_NULL || olen == 0)
+	else if (okw == QSE_NULL)
 	{
 		SETERR (awk, QSE_AWK_EINVAL);
 		return -1;
 	}
 
+	QSE_ASSERT (okw->ptr != QSE_NULL);
+	QSE_ASSERT (nkw->ptr != QSE_NULL);
+
 	/* set the word */
-	if (qse_map_upsert (awk->wtab, 
-		(qse_char_t*)okw, olen, (qse_char_t*)nkw, nlen) == QSE_NULL)
+	if (qse_map_upsert (
+		awk->wtab, 
+		(qse_char_t*)okw->ptr, okw->len, 
+		(qse_char_t*)nkw->ptr, nkw->len) == QSE_NULL)
 	{
 		SETERR (awk, QSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	if (qse_map_upsert (awk->rwtab, 
-		(qse_char_t*)nkw, nlen, (qse_char_t*)okw, olen) == QSE_NULL)
+	if (qse_map_upsert (
+		awk->rwtab,
+		(qse_char_t*)nkw->ptr, nkw->len,
+		(qse_char_t*)okw->ptr, okw->len) == QSE_NULL)
 	{
-		qse_map_delete (awk->wtab, okw, olen);
+		qse_map_delete (awk->wtab, okw->ptr, okw->len);
 		SETERR (awk, QSE_AWK_ENOMEM);
 		return -1;
 	}

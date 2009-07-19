@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: Awk.cpp 239 2009-07-18 12:02:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1579,42 +1579,28 @@ int Awk::deleteFunction (const char_t* name)
 	return n;
 }
 
-int Awk::getWord (
-	const char_t* ow, qse_size_t owl,
-	const char_t** nw, qse_size_t* nwl) 
+int Awk::getWord (const cstr_t* ow, cstr_t* nw)
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_getword (awk, ow, owl, nw, nwl);
+	return qse_awk_getword (awk, ow, nw);
 }
 
-int Awk::setWord (const char_t* ow, const char_t* nw) 
-{
-	return setWord (ow, qse_strlen(ow), nw, qse_strlen(nw));
-}
-
-int Awk::setWord (
-	const char_t* ow, qse_size_t owl,
-	const char_t* nw, qse_size_t nwl) 
+int Awk::setWord (const cstr_t* ow, const cstr_t* nw)
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, ow, owl, nw, nwl);
+	return qse_awk_setword (awk, ow, nw);
 }
 
-int Awk::unsetWord (const char_t* ow) 
-{
-	return unsetWord (ow, qse_strlen(ow));
-}
-
-int Awk::unsetWord (const char_t* ow, qse_size_t owl) 
+int Awk::unsetWord (const cstr_t* w)
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, ow, owl, QSE_NULL, 0);
+	return qse_awk_unsetword (awk, w);
 }
 
-int Awk::unsetAllWords () 
+void Awk::unsetAllWords () 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, QSE_NULL, 0, QSE_NULL, 0);
+	qse_awk_unsetallwords (awk);
 }
 
 Awk::ssize_t Awk::readSource (
