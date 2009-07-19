@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 238 2009-07-17 12:42:02Z hyunghwan.chung $
+ * $Id: awk.h 239 2009-07-18 12:02:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -574,6 +574,11 @@ enum qse_awk_option_t
 	 */
 	QSE_AWK_STRICTNAMING = (1 << 15),
 
+	/**
+	 * supports file inclusion by enabling a keyword 'include'
+	 */
+	QSE_AWK_INCLUDE = (1 << 16),
+
 	/** 
 	 * makes #qse_awk_t to behave as compatibly as classical AWK
 	 * implementations 
@@ -1059,17 +1064,14 @@ void qse_awk_setmaxdepth (
 );
 
 int qse_awk_getword (
-	qse_awk_t* awk, 
-	const qse_char_t* okw,
-	qse_size_t olen,
-	const qse_char_t** nkw,
-	qse_size_t* nlen
+	qse_awk_t*        awk, 
+	const qse_cstr_t* okw,
+	qse_cstr_t*       nkw
 );
 
 int qse_awk_unsetword (
 	qse_awk_t*        awk,
-	const qse_char_t* kw,
-	qse_size_t        len
+	const qse_cstr_t* kw
 );
 
 void qse_awk_unsetallwords (
@@ -1089,16 +1091,9 @@ void qse_awk_unsetallwords (
  * @return 0 on success, -1 on failure
  */
 int qse_awk_setword (
-	/* the pointer to a qse_awk_t instance */
-	qse_awk_t* awk, 
-	/* the pointer to an old keyword */
-	const qse_char_t* okw, 
-	/* the length of the old keyword */
-	qse_size_t olen,
-	/* the pointer to an new keyword */
-	const qse_char_t* nkw, 
-	/* the length of the new keyword */
-	qse_size_t nlen
+	qse_awk_t*        awk,  /**< awk object */
+	const qse_cstr_t* okw,  /**< old keyword */
+	const qse_cstr_t* nkw   /**< new keyword */
 );
 
 /**

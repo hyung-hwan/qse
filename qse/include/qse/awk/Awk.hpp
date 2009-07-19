@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 238 2009-07-17 12:42:02Z hyunghwan.chung $
+ * $Id: Awk.hpp 239 2009-07-18 12:02:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -873,7 +873,10 @@ public:
 		 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
 		 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 		 */
-		OPT_NCMPONSTR = QSE_AWK_NCMPONSTR 
+		OPT_NCMPONSTR = QSE_AWK_NCMPONSTR,
+
+		/** Enables 'include' */
+		OPT_INCLUDE = QSE_AWK_INCLUDE
 	};
 	/** Gets the option */
 	int getOption () const;
@@ -991,28 +994,20 @@ public:
 	 */
 	/*@{*/
 	int getWord (
-		const char_t* ow, qse_size_t owl,
-		const char_t** nw, qse_size_t* nwl
+		const cstr_t* ow,
+		cstr_t*       nw
 	);
 
 	int setWord (
-		const char_t* ow, const char_t* nw
-	);
-
-	int setWord (
-		const char_t* ow, qse_size_t owl,
-		const char_t* nw, qse_size_t nwl
+		const cstr_t* ow,
+		const cstr_t* nw
 	);
 
 	int unsetWord (
-		const char_t* ow
+		const cstr_t* ow
 	);
 
-	int unsetWord (
-		const char_t* ow, qse_size_t owl
-	);
-
-	int unsetAllWords ();
+	void unsetAllWords ();
 	/*@}*/
 
 protected:

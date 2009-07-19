@@ -1,5 +1,5 @@
 /*
- * $Id: parse.h 75 2009-02-22 14:10:34Z hyunghwan.chung $
+ * $Id: parse.h 239 2009-07-18 12:02:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,6 +36,7 @@ enum kw_t
 	KW_GLOBAL,
 	KW_IF,
 	KW_IN,
+	KW_INCLUDE,
 	KW_LOCAL,
 	KW_NEXT,
 	KW_NEXTFILE,
