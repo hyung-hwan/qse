@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 239 2009-07-18 12:02:24Z hyunghwan.chung $
+ * $Id: awk.h 240 2009-07-19 13:02:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -681,6 +681,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPRINTFARG,/**< 'printf' not followed by argument */
 	QSE_AWK_EPREPST,   /**< both prefix and postfix incr/decr operator present */
 	QSE_AWK_EINCDECOPR,/**< illegal operand for incr/decr operator */
+	QSE_AWK_EINCLSTR,  /**< 'include' not followed by a string */
 
 	/* run time error */
 	QSE_AWK_EDIVBY0,       /**< divide by zero */
