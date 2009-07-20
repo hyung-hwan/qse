@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: err.c 240 2009-07-19 13:02:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -108,6 +108,7 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("'printf' not followed by argument"),
 		QSE_T("both prefix and postfix increment/decrement operator present"),
 		QSE_T("illegal operand for increment/decrement operator"),
+		QSE_T("'include' not followed by a string"),
 
 		QSE_T("divide by zero"),
 		QSE_T("invalid operand"),

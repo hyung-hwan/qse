@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 239 2009-07-18 12:02:24Z hyunghwan.chung $
+ * $Id: parse.c 240 2009-07-19 13:02:33Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -592,10 +592,31 @@ exit_parse:
 	return n;
 }
 
+static int begin_include  (qse_awk_t* awk)
+{
+	if (qse_strlen(awk->token.name->ptr) != awk->token.name->len)
+	{
+		qse_cstr_t errarg;
+		SETERRARG (
+			awk, 
+			QSE_AWK_EIONMNL,
+			awk->token.line,
+			awk->token.name->ptr,
+			qse_strlen(awk->token.name->ptr)
+		);
+		return -1;
+	}
+
+/* TODO: implement this */
+	SETERRLIN (awk, QSE_AWK_ENOSUP, awk->ptoken.line);
+	return -1;
+}
+
 static qse_awk_t* parse_progunit (qse_awk_t* awk)
 {
 	/*
 	global xxx, xxxx;
+	include "xxxx";
 	BEGIN { action }
 	END { action }
 	pattern { action }
@@ -604,6 +625,7 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 
 	QSE_ASSERT (awk->parse.depth.cur.loop == 0);
 
+retry:
 	if ((awk->option & QSE_AWK_EXPLICIT) && MATCH(awk,TOKEN_GLOBAL)) 
 	{
 		qse_size_t ngbls;
@@ -622,6 +644,19 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 			awk->tree.ngbls = ngbls;
 			return QSE_NULL;
 		}
+	}
+	else if (MATCH(awk,TOKEN_INCLUDE))
+	{
+		if (get_token(awk) <= -1) return QSE_NULL;
+
+		if (!MATCH(awk,TOKEN_STR))
+		{
+			SETERRLIN (awk, QSE_AWK_EINCLSTR, awk->ptoken.line);
+			return QSE_NULL;
+		}
+
+		if (begin_include (awk) <= -1) return QSE_NULL;
+		goto retry;
 	}
 	else if (MATCH(awk,TOKEN_FUNCTION)) 
 	{
@@ -1943,13 +1978,7 @@ static qse_awk_nde_t* parse_statement_nb (qse_awk_t* awk, qse_size_t line)
 	}
 
 	/* keywords that require a terminating semicolon */
-	if (MATCH(awk,TOKEN_INCLUDE))
-	{
-/* TODO: implement include */
-		SETERRLIN (awk, QSE_AWK_ENOSUP, line);
-		return QSE_NULL;
-	}
-	else if (MATCH(awk,TOKEN_DO)) 
+	if (MATCH(awk,TOKEN_DO)) 
 	{
 		if (get_token(awk) <= -1) return QSE_NULL;
 
