@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -677,7 +677,7 @@ int StdAwk::closeConsole (Console& io)
 	return 0;
 }
 
-ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size) 
+StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size) 
 {
 	qse_ssize_t nn;
 
@@ -707,7 +707,7 @@ ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 	return nn;
 }
 
-ssize_t StdAwk::writeConsole (Console& io, const char_t* data, size_t size) 
+StdAwk::ssize_t StdAwk::writeConsole (Console& io, const char_t* data, size_t size) 
 {
 	return qse_sio_putsn (
 		(qse_sio_t*)io.getHandle(),

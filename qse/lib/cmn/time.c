@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 221 2009-07-02 01:26:57Z hyunghwan.chung $
+ * $Id: time.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -33,9 +33,9 @@
 	#define WIN_EPOCH_DAY    (1)
 
 	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-WIN_EPOCH_YEAR)
-	#define EPOCH_DIFF_DAYS  (EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
-	#define EPOCH_DIFF_SECS  (EPOCH_DIFF_DAYS*24*60*60)
-	#define EPOCH_DIFF_MSECS (EPOCH_DIFF_SECS*QSE_MSECS_PER_SEC)
+	#define EPOCH_DIFF_DAYS  ((qse_ntime_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
+	#define EPOCH_DIFF_SECS  ((qse_ntime_t)EPOCH_DIFF_DAYS*24*60*60)
+	#define EPOCH_DIFF_MSECS ((qse_ntime_t)EPOCH_DIFF_SECS*QSE_MSECS_PER_SEC)
 #endif
 
 static const int mdays[2][QSE_MONS_PER_YEAR] = 
