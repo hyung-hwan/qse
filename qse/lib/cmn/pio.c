@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: pio.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -72,6 +72,7 @@ qse_pio_t* qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
 {
 	qse_pio_pid_t pid;
+
 	qse_pio_hnd_t handle[6] = 
 	{ 
 		QSE_PIO_HND_NIL, 
@@ -81,16 +82,22 @@ qse_pio_t* qse_pio_init (
 		QSE_PIO_HND_NIL,
 		QSE_PIO_HND_NIL
 	};
+
 	qse_tio_t* tio[3] = 
 	{ 
 		QSE_NULL, 
 		QSE_NULL, 
 		QSE_NULL 
 	};
+
 	int i, minidx = -1, maxidx = -1;
 
 #ifdef _WIN32
 	SECURITY_ATTRIBUTES secattr; 
+	PROCESS_INFORMATION procinfo;
+	STARTUPINFO startup;
+	qse_char_t* dup = QSE_NULL;
+	BOOL x;
 #endif
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
@@ -105,24 +112,28 @@ qse_pio_t* qse_pio_init (
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
+		/* child reads, parent writes */
 		if (CreatePipe (
 			&handle[0], &handle[1], 
 			&secattr, 0) == FALSE) goto oops;
 
+		/* don't inherit write handle */
 		if (SetHandleInformation (
-			handle[0], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+			handle[1], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
 
 		minidx = 0; maxidx = 1;
 	}
 
 	if (flags & QSE_PIO_READOUT)
 	{
+		/* child writes, parent reads */
 		if (CreatePipe (
 			&handle[2], &handle[3],
 			&secattr, 0) == FALSE) goto oops;
 
+		/* don't inherit read handle */
 		if (SetHandleInformation (
-			handle[3], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+			handle[2], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
 
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
@@ -130,18 +141,79 @@ qse_pio_t* qse_pio_init (
 
 	if (flags & QSE_PIO_READERR)
 	{
+		/* child writes, parent reads */
 		if (CreatePipe (
 			&handle[4], &handle[5],
 			&secattr, 0) == FALSE) goto oops;
 
+		/* don't inherit read handle */
 		if (SetHandleInformation (
-			handle[5], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+			handle[4], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
 
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
 	}
 
-	/* TODO: .... */
+	/* TODO: handle QSE_PIO_DROPXXX , QSE_PIO_XXXTONUL 
+	if (flags & QSE_PIO_INTONUL) ...
+	if (flags & QSE_PIO_OUTTONUL) ...
+	if (flags & QSE_PIO_ERRTONUL) ...
+	if (flags & QSE_PIO_DROPIN) ...
+	if (flags & QSE_PIO_DROPOUT) ...
+	if (flags & QSE_PIO_DROPERR) ...
+	*/
+
+	QSE_MEMSET (&procinfo, 0, QSE_SIZEOF(procinfo));
+	QSE_MEMSET (&startup, 0, QSE_SIZEOF(startup));
+
+	startup.cb = QSE_SIZEOF(startup);
+	startup.hStdInput = 
+		(flags & QSE_PIO_WRITEIN)? handle[0]: INVALID_HANDLE_VALUE;
+	startup.hStdOutput = 
+		(flags & QSE_PIO_READOUT)? handle[3]: INVALID_HANDLE_VALUE;
+	startup.hStdError = 
+		(flags & QSE_PIO_READERR)? handle[5]: INVALID_HANDLE_VALUE;
+	startup.dwFlags |= STARTF_USESTDHANDLES;
+
+	/* there is nothing to do for QSE_PIO_SHELL as CreateProcess
+	 * takes the entire command line */
+
+	dup = qse_strdup (cmd, mmgr);
+	if (dup == QSE_NULL) goto oops;
+
+	x = CreateProcess (
+		NULL, /* LPCTSTR lpApplicationName */
+		dup,  /* LPTSTR lpCommandLine */
+		NULL, /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
+		NULL, /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
+		TRUE, /* BOOL bInheritHandles */
+		0,    /* DWORD dwCreationFlags */
+		NULL, /* LPVOID lpEnvironment */
+		NULL, /* LPCTSTR lpCurrentDirectory */
+		&startup, /* LPSTARTUPINFO lpStartupInfo */
+		&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
+	);
+
+	if (x == FALSE) goto oops;
+
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		CloseHandle (handle[0]);
+		handle[0] = QSE_PIO_HND_NIL;
+	}
+	if (flags & QSE_PIO_READOUT)
+	{
+		CloseHandle (handle[3]);
+		handle[3] = QSE_PIO_HND_NIL;
+	}
+	if (flags & QSE_PIO_READERR)
+	{
+		CloseHandle (handle[5]);
+		handle[5] = QSE_PIO_HND_NIL;
+	}
+
+	CloseHandle (procinfo.hThread);
+	pid = procinfo.hProcess;
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -463,8 +535,15 @@ qse_pio_t* qse_pio_init (
 	return pio;
 
 oops:
-	for (i = 0; i < QSE_COUNTOF(tio); i++) qse_tio_close (tio[i]);
-#if _WIN32
+#ifdef _WIN32
+	if (dup != QSE_NULL) QSE_MMGR_FREE (mmgr, dup);
+#endif
+
+	for (i = 0; i < QSE_COUNTOF(tio); i++) 
+	{
+		if (tio[i] != QSE_NULL) qse_tio_close (tio[i]);
+	}
+#ifdef _WIN32
 	for (i = minidx; i < maxidx; i++) CloseHandle (handle[i]);
 #else
 	for (i = minidx; i < maxidx; i++) QSE_CLOSE (handle[i]);
@@ -507,7 +586,7 @@ qse_pio_errnum_t qse_pio_geterrnum (qse_pio_t* pio)
 
 /* TODO: qse_pio_geterrmsg (qse_pio_t* pio) */
 
-const qse_char_t* qse_pio_geterrstr (qse_pio_t* pio)
+const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
 {
 	static const qse_char_t* __errstr[] =
 	{
@@ -516,6 +595,7 @@ const qse_char_t* qse_pio_geterrstr (qse_pio_t* pio)
 		QSE_T("no handle available"),
 		QSE_T("child process not valid"),
 		QSE_T("interruped"),
+		QSE_T("broken pipe"),
 		QSE_T("systeam call error"),
 		QSE_T("unknown error")
 	};
@@ -553,7 +633,12 @@ static qse_ssize_t pio_read (
 
 #ifdef _WIN32
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (ReadFile(hnd, buf, size, &count, QSE_NULL) == FALSE) return -1;
+	if (ReadFile(hnd, buf, size, &count, QSE_NULL) == FALSE) 
+	{
+		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
+			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS;
+		return -1;
+	}
 	return (qse_ssize_t)count;
 #else
 
@@ -568,6 +653,10 @@ reread:
 			if (pio->flags & QSE_PIO_READ_NORETRY) 
 				pio->errnum = QSE_PIO_EINTR;
 			else goto reread;
+		}
+		else if (errno == EPIPE)
+		{
+			pio->errnum = QSE_PIO_EPIPE;
 		}
 		else
 		{
@@ -606,7 +695,12 @@ static qse_ssize_t pio_write (
 
 #ifdef _WIN32
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (WriteFile (hnd, data, size, &count, QSE_NULL) == FALSE) return -1;
+	if (WriteFile (hnd, data, size, &count, QSE_NULL) == FALSE)
+	{
+		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
+			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS;
+		return -1;
+	}
 	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
@@ -620,6 +714,10 @@ rewrite:
 			if (pio->flags & QSE_PIO_WRITE_NORETRY)
 				pio->errnum = QSE_PIO_EINTR;
 			else goto rewrite;
+		}
+		else if (errno == EPIPE)
+		{
+			pio->errnum = QSE_PIO_EPIPE;
 		}
 		else
 		{

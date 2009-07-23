@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 240 2009-07-19 13:02:33Z hyunghwan.chung $
+ * $Id: parse.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -596,7 +596,6 @@ static int begin_include  (qse_awk_t* awk)
 {
 	if (qse_strlen(awk->token.name->ptr) != awk->token.name->len)
 	{
-		qse_cstr_t errarg;
 		SETERRARG (
 			awk, 
 			QSE_AWK_EIONMNL,
@@ -5123,7 +5122,7 @@ static int skip_comment (qse_awk_t* awk)
 	return 0;
 }
 
-static int get_operators (qse_awk_t* awk, qse_cint_t c, qse_awk_token_t* token)
+static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_token_t* token)
 {
 	struct ops_t
 	{
@@ -5307,7 +5306,7 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 	}
 	else
 	{
-		n = get_operators (awk, c, token);
+		n = get_symbols (awk, c, token);
 		if (n <= -1) return -1;
 		if (n == 0)
 		{
@@ -5331,7 +5330,6 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 		}
 	}
 
-/*get_token_ok:*/
 	return 0;
 }
 
@@ -5360,7 +5358,6 @@ static int preget_token (qse_awk_t* awk)
 {
 	return get_token_into (awk, &awk->atoken);
 }
-
 
 static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)

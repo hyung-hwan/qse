@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 168 2009-05-30 01:19:46Z hyunghwan.chung $
+ * $Id: pio.h 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -75,11 +75,12 @@ enum qse_pio_io_flag_t
 enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0,
-	QSE_PIO_ENOMEM,     /* out of memory */
-	QSE_PIO_ENOHND,     /* no handle available */
-	QSE_PIO_ECHILD,     /* the child is not valid */
-	QSE_PIO_EINTR,      /* interrupted */
-	QSE_PIO_ESUBSYS     /* subsystem(system call) error */
+	QSE_PIO_ENOMEM,     /**< out of memory */
+	QSE_PIO_ENOHND,     /**< no handle available */
+	QSE_PIO_ECHILD,     /**< the child is not valid */
+	QSE_PIO_EINTR,      /**< interrupted */
+	QSE_PIO_EPIPE,      /**< broken pipe */
+	QSE_PIO_ESUBSYS     /**< subsystem(system call) error */
 };
 
 typedef enum qse_pio_hid_t qse_pio_hid_t;
@@ -191,15 +192,15 @@ qse_pio_errnum_t qse_pio_geterrnum (
 
 /****f* Common/qse_pio_geterrmsg
  * NAME
- *  qse_pio_geterrstr - transllate an error code to a string
+ *  qse_pio_geterrmsg - transllate an error code to a string
  *
  * DESCRIPTION
- *  The qse_pio_geterrstr() funcpion returns the pointer to a constant string 
+ *  The qse_pio_geterrmsg() function returns the pointer to a constant string 
  *  describing the last error occurred.
  *
  * SYNOPSIS
  */
-const qse_char_t* qse_pio_geterrstr (
+const qse_char_t* qse_pio_geterrmsg (
 	qse_pio_t* pio
 );
 /******/

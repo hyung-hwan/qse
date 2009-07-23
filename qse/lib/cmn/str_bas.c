@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 127 2009-05-07 13:15:04Z hyunghwan.chung $
+ * $Id: str_bas.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -440,7 +440,7 @@ qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
 {
 	qse_char_t* tmp;
 
-	tmp = (qse_char_t*) QSE_MALLOC (
+	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
 		mmgr, (qse_strlen(str)+1)*QSE_SIZEOF(qse_char_t));
 	if (tmp == QSE_NULL) return QSE_NULL;
 
@@ -453,7 +453,7 @@ qse_char_t* qse_strxdup (
 {
 	qse_char_t* tmp;
 
-	tmp = (qse_char_t*) QSE_MALLOC (
+	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
 		mmgr, (len+1)*QSE_SIZEOF(qse_char_t));
 	if (tmp == QSE_NULL) return QSE_NULL;
 
@@ -467,7 +467,7 @@ qse_char_t* qse_strxdup2 (
 {
 	qse_char_t* tmp;
 
-	tmp = (qse_char_t*) QSE_MALLOC (
+	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
 		mmgr, (len1+len2+1) * QSE_SIZEOF(qse_char_t));
 	if (tmp == QSE_NULL) return QSE_NULL;
 
