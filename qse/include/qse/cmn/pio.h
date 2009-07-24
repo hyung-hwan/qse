@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 242 2009-07-23 13:01:52Z hyunghwan.chung $
+ * $Id: pio.h 243 2009-07-24 04:11:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,34 +24,49 @@
 #include <qse/cmn/tio.h>
 
 /** @file 
- * Pipe I/O
+ * This file defines a piped interface to a child process. It provides more
+ * advanced interface than popen() and pclose().
+ *
  * @todo 
  * - rename flags to option
- * - write code for win32
  */
 
+/**
+ * Open flags 
+ */
 enum qse_pio_open_flag_t
 {
-	/* enable ase_char_t based IO */
+	/** enable text based IO. */
 	QSE_PIO_TEXT       = (1 << 0),
 
-	/* invoke the command through a system shell 
+	/** invoke the command through a system shell 
 	 * (/bin/sh on *nix, cmd.exe on windows) */
 	QSE_PIO_SHELL      = (1 << 1),
 
+	/** write to stdin of a child process */
 	QSE_PIO_WRITEIN    = (1 << 8),
+	/** read stdout of a child process */
 	QSE_PIO_READOUT    = (1 << 9),
+	/** read stderr of a child process */
 	QSE_PIO_READERR    = (1 << 10),
 
-	QSE_PIO_ERRTOOUT   = (1 << 11),	/* require QSE_PIO_READOUT */
-	QSE_PIO_OUTTOERR   = (1 << 12),	/* require QSE_PIO_READERR */
+	/** redirect stderr to stdout(2>&1). require QSE_PIO_READOUT */
+	QSE_PIO_ERRTOOUT   = (1 << 11),	
+	/** redirect stdout to stderr(1>&2). require QSE_PIO_READERR */
+	QSE_PIO_OUTTOERR   = (1 << 12),
 
+	/** redirect stdin to the null device (</dev/null, <NUL) */
 	QSE_PIO_INTONUL    = (1 << 13),
+	/** redirect stdin to the null device (>/dev/null, >NUL) */
 	QSE_PIO_ERRTONUL   = (1 << 14),
+	/** redirect stderr to the null device (2>/dev/null, 2>NUL) */
 	QSE_PIO_OUTTONUL   = (1 << 15),
 
-	QSE_PIO_DROPIN     = (1 << 16),
+	/** drop stdin */
+	QSE_PIO_DROPIN     = (1 << 16), 
+	/** drop stdout */
 	QSE_PIO_DROPOUT    = (1 << 17),
+	/** drop stderr */
 	QSE_PIO_DROPERR    = (1 << 18),
 };
 
@@ -65,16 +80,24 @@ enum qse_pio_hid_t
 enum qse_pio_io_flag_t
 {
 	/*QSE_PIO_READ_NOBLOCK   = (1 << 0),*/
-	QSE_PIO_READ_NORETRY   = (1 << 1),
+
+	/** do not reread if read has been interrupted */
+	QSE_PIO_READ_NORETRY   = (1 << 1), 
+
 	/*QSE_PIO_WRITE_NOBLOCK  = (1 << 2),*/
+
+	/** do not rewrite if write has been interrupted */
 	QSE_PIO_WRITE_NORETRY  = (1 << 3),
+
 	QSE_PIO_WAIT_NOBLOCK   = (1 << 4),
+
+	/** do not wait again if waitpid has been interrupted */
 	QSE_PIO_WAIT_NORETRY   = (1 << 5)
 };
 
 enum qse_pio_errnum_t
 {
-	QSE_PIO_ENOERR = 0,
+	QSE_PIO_ENOERR = 0, /**< no error */
 	QSE_PIO_ENOMEM,     /**< out of memory */
 	QSE_PIO_ENOHND,     /**< no handle available */
 	QSE_PIO_ECHILD,     /**< the child is not valid */
@@ -135,8 +158,9 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
 /**
  * The qse_pio_open() function opens pipes to a child process.
- * QSE_PIO_SHELL drives the function to execute the command via /bin/sh.
- * If flags is clear of QSE_PIO_SHELL, you should pass the full program path.
+ * QSE_PIO_SHELL drives the function to execute the command via the default
+ * shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
+ * If @a flags is clear of QSE_PIO_SHELL, you should pass the full program path.
  */
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t*       mmgr,  /**< a memory manager */

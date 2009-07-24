@@ -125,7 +125,7 @@ static int test1 (void)
 
 	return pio1 (
 #ifdef _WIN32
-		QSE_T("sll.exe"), 
+		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
@@ -138,7 +138,7 @@ static int test2 (void)
 {
 	return pio1 (
 #ifdef _WIN32
-		QSE_T("sll.exe"), 
+		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
@@ -164,7 +164,7 @@ static int test4 (void)
 {
 	return pio2 (
 #ifdef _WIN32
-		QSE_T("sll.exe"), 
+		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
@@ -177,7 +177,7 @@ static int test5 (void)
 {
 	return pio2 (
 #ifdef _WIN32
-		QSE_T("sll.exe"), 
+		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"), 
 #endif
