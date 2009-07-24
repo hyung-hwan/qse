@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 204 2009-06-18 12:08:06Z hyunghwan.chung $
+ * $Id: fio.c 242 2009-07-23 13:01:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -392,7 +392,6 @@ qse_ssize_t qse_fio_flush (qse_fio_t* fio)
 static int get_devname_from_handle (
 	HANDLE handle, qse_char_t* buf, qse_size_t len) 
 {
-	BOOL bSuccess = FALSE;
 	HANDLE map = NULL;
 	void* mem = NULL;
 	DWORD olen;

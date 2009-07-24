@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 241 2009-07-22 12:47:13Z hyunghwan.chung $
+ * $Id: pio.h 242 2009-07-23 13:01:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,15 +36,15 @@ enum qse_pio_open_flag_t
 	QSE_PIO_TEXT       = (1 << 0),
 
 	/* invoke the command through a system shell 
-	 * (/bin/sh on *nix, command.com on windows) */
+	 * (/bin/sh on *nix, cmd.exe on windows) */
 	QSE_PIO_SHELL      = (1 << 1),
 
 	QSE_PIO_WRITEIN    = (1 << 8),
 	QSE_PIO_READOUT    = (1 << 9),
 	QSE_PIO_READERR    = (1 << 10),
 
-	QSE_PIO_ERRTOOUT   = (1 << 11),	
-	QSE_PIO_OUTTOERR   = (1 << 12),	
+	QSE_PIO_ERRTOOUT   = (1 << 11),	/* require QSE_PIO_READOUT */
+	QSE_PIO_OUTTOERR   = (1 << 12),	/* require QSE_PIO_READERR */
 
 	QSE_PIO_INTONUL    = (1 << 13),
 	QSE_PIO_ERRTONUL   = (1 << 14),
