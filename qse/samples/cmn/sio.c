@@ -54,7 +54,7 @@ static int test2 (void)
 	qse_ssize_t n;
 	qse_char_t buf[20];
 	
-	qse_sio_puts (qse_sio_out, QSE_T("type somthing...\n"));
+	qse_sio_puts (qse_sio_out, QSE_T("type something...\n"));
 	while (1)
 	{
 		n = qse_sio_gets (qse_sio_in, buf, QSE_COUNTOF(buf));

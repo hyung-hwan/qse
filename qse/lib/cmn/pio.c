@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
+ * $Id: pio.c 242 2009-07-23 13:01:52Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -71,7 +71,6 @@ void qse_pio_close (qse_pio_t* pio)
 qse_pio_t* qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
 {
-	qse_pio_pid_t pid;
 
 	qse_pio_hnd_t handle[6] = 
 	{ 
@@ -97,7 +96,10 @@ qse_pio_t* qse_pio_init (
 	PROCESS_INFORMATION procinfo;
 	STARTUPINFO startup;
 	qse_char_t* dup = QSE_NULL;
+	HANDLE windevnul = INVALID_HANDLE_VALUE;
 	BOOL x;
+#else
+	qse_pio_pid_t pid;
 #endif
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
@@ -108,7 +110,7 @@ qse_pio_t* qse_pio_init (
 
 	secattr.nLength = QSE_SIZEOF(secattr);
 	secattr.bInheritHandle = TRUE;
-	secattr.lpSecurityDescriptor = NULL;
+	secattr.lpSecurityDescriptor = QSE_NULL;
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
@@ -154,32 +156,68 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
-	/* TODO: handle QSE_PIO_DROPXXX , QSE_PIO_XXXTONUL 
-	if (flags & QSE_PIO_INTONUL) ...
-	if (flags & QSE_PIO_OUTTONUL) ...
-	if (flags & QSE_PIO_ERRTONUL) ...
-	if (flags & QSE_PIO_DROPIN) ...
-	if (flags & QSE_PIO_DROPOUT) ...
-	if (flags & QSE_PIO_DROPERR) ...
-	*/
+	if ((flags & QSE_PIO_INTONUL) || 
+	    (flags & QSE_PIO_OUTTONUL) ||
+	    (flags & QSE_PIO_ERRTONUL))
+	{
+		windevnul = CreateFile(
+			QSE_T("NUL"), GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, 
+			&secattr, OPEN_EXISTING, 0, NULL
+		);
+		if (windevnul == INVALID_HANDLE_VALUE) goto oops;
+	}
 
 	QSE_MEMSET (&procinfo, 0, QSE_SIZEOF(procinfo));
 	QSE_MEMSET (&startup, 0, QSE_SIZEOF(startup));
 
 	startup.cb = QSE_SIZEOF(startup);
-	startup.hStdInput = 
-		(flags & QSE_PIO_WRITEIN)? handle[0]: INVALID_HANDLE_VALUE;
-	startup.hStdOutput = 
-		(flags & QSE_PIO_READOUT)? handle[3]: INVALID_HANDLE_VALUE;
-	startup.hStdError = 
-		(flags & QSE_PIO_READERR)? handle[5]: INVALID_HANDLE_VALUE;
+
+	startup.hStdInput = INVALID_HANDLE_VALUE;
+	startup.hStdOutput = INVALID_HANDLE_VALUE;
+	startup.hStdOutput = INVALID_HANDLE_VALUE;
+
+	if (flags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		startup.hStdOutput = handle[3];
+		if (flags & QSE_PIO_ERRTOOUT) startup.hStdError = handle[3];
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		startup.hStdError = handle[5];
+		if (flags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
+	}
+
+	if (flags & QSE_PIO_INTONUL) startup.hStdOutput = windevnul;
+	if (flags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
+	if (flags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
+
+	if (flags & QSE_PIO_DROPIN) startup.hStdInput = INVALID_HANDLE_VALUE;
+	if (flags & QSE_PIO_DROPOUT) startup.hStdOutput = INVALID_HANDLE_VALUE;
+	if (flags & QSE_PIO_DROPERR) startup.hStdError = INVALID_HANDLE_VALUE;
+
 	startup.dwFlags |= STARTF_USESTDHANDLES;
 
 	/* there is nothing to do for QSE_PIO_SHELL as CreateProcess
 	 * takes the entire command line */
 
-	dup = qse_strdup (cmd, mmgr);
-	if (dup == QSE_NULL) goto oops;
+	if (flags & QSE_PIO_SHELL) 
+	{
+		dup = QSE_MMGR_ALLOC (
+			mmgr, (11+qse_strlen(cmd)+1 )*QSE_SIZEOF(qse_char_t));
+		if (dup == QSE_NULL) goto oops;
+
+		qse_strcpy (dup, QSE_T("cmd.exe /c "));
+		qse_strcpy (&dup[11], cmd);
+	}
+	else
+	{
+		dup = qse_strdup (cmd, mmgr);
+		if (dup == QSE_NULL) goto oops;
+	}
 
 	x = CreateProcess (
 		NULL, /* LPCTSTR lpApplicationName */
@@ -193,6 +231,9 @@ qse_pio_t* qse_pio_init (
 		&startup, /* LPSTARTUPINFO lpStartupInfo */
 		&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
 	);
+
+	QSE_MMGR_FREE (mmgr, dup); dup = QSE_NULL;
+	CloseHandle (windevnul); windevnul = INVALID_HANDLE_VALUE;
 
 	if (x == FALSE) goto oops;
 
@@ -213,7 +254,7 @@ qse_pio_t* qse_pio_init (
 	}
 
 	CloseHandle (procinfo.hThread);
-	pid = procinfo.hProcess;
+	pio->child = procinfo.hProcess;
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -333,7 +374,7 @@ qse_pio_t* qse_pio_init (
 		#else
 			devnull = QSE_OPEN ("/dev/null", O_RDWR, 0);
 		#endif
-			if (devnull == -1) goto oops;
+			if (devnull == -1) goto child_oops;
 		}
 
 		if ((flags & QSE_PIO_INTONUL)  &&
@@ -536,6 +577,7 @@ qse_pio_t* qse_pio_init (
 
 oops:
 #ifdef _WIN32
+	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
 	if (dup != QSE_NULL) QSE_MMGR_FREE (mmgr, dup);
 #endif
 
@@ -635,8 +677,10 @@ static qse_ssize_t pio_read (
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (ReadFile(hnd, buf, size, &count, QSE_NULL) == FALSE) 
 	{
-		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
-			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS;
+		/* ReadFile receives ERROR_BROKEN_PIPE when the write end
+		 * is closed in the child process */
+		if (GetLastError() == ERROR_BROKEN_PIPE) return 0;
+		pio->errnum = QSE_PIO_ESUBSYS;
 		return -1;
 	}
 	return (qse_ssize_t)count;

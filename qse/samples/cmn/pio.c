@@ -34,27 +34,32 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	while (1)
 	{
 		qse_byte_t buf[128];
+		qse_ssize_t i;
 
 		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
 		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), rhid);
 		if (n == 0) break;
-		if (n < 0)
+		if (n <= -1)
 		{
 			qse_printf (QSE_T("qse_pio_read() returned error - %s\n"), qse_pio_geterrmsg(pio));
 			break;
 		}	
 
-		qse_printf (QSE_T("N===> %d\n"), (int)n);
+		qse_printf (QSE_T("N===> %d buf => ["), (int)n);
+		for (i = 0; i < n; i++)
+		{
 		#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n, buf);
+			qse_printf (QSE_T("%c"), buf[i]);
 		#else
-		qse_printf (QSE_T("buf => [%.*S]\n"), (int)n, buf);
+			qse_printf (QSE_T("%C"), buf[i]);
 		#endif
+		}	
+		qse_printf (QSE_T("]\n"));
 	}
 
 	x = qse_pio_wait (pio);
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
-	if (x == -1)
+	if (x <= -1)
 	{
 		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
 	}
@@ -84,6 +89,7 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	while (1)
 	{
 		qse_char_t buf[128];
+		qse_ssize_t i;
 
 		qse_ssize_t n = qse_pio_read (pio, buf, QSE_COUNTOF(buf), rhid);
 		if (n == 0) break;
@@ -93,13 +99,17 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 			break;
 		}	
 
-		qse_printf (QSE_T("N===> %d\n"), (int)n);
-		qse_printf (QSE_T("buf => [%.*s]\n"), (int)n, buf);
+		qse_printf (QSE_T("N===> %d buf => ["), (int)n);
+		for (i = 0; i < n; i++)
+		{
+			qse_printf (QSE_T("%c"), buf[i]);
+		}
+		qse_printf (QSE_T("]\n"));
 	}
 
 	x = qse_pio_wait (pio);
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
-	if (x == -1)
+	if (x <= -1)
 	{
 		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
 	}
@@ -115,7 +125,7 @@ static int test1 (void)
 
 	return pio1 (
 #ifdef _WIN32
-		QSE_T("lda.exe"), 
+		QSE_T("sll.exe"), 
 #else
 		QSE_T("ls -laF"),
 #endif
@@ -128,7 +138,7 @@ static int test2 (void)
 {
 	return pio1 (
 #ifdef _WIN32
-		QSE_T("lda.exe"), 
+		QSE_T("sll.exe"), 
 #else
 		QSE_T("ls -laF"),
 #endif
@@ -139,67 +149,84 @@ static int test2 (void)
 
 static int test3 (void)
 {
-	return pio1 (QSE_T("/bin/ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
+	return pio1 (
+#ifdef _WIN32
+		QSE_T(".\\sll.exe"), 
+#else
+		QSE_T("/bin/ls -laF"), 
+#endif
+		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN,
+		QSE_PIO_ERR
+	);
 }
 
 static int test4 (void)
 {
-	return pio2 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_OUT);
+	return pio2 (
+#ifdef _WIN32
+		QSE_T("sll.exe"), 
+#else
+		QSE_T("ls -laF"),
+#endif
+		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, 
+		QSE_PIO_OUT
+	);
 }
 
 static int test5 (void)
 {
-	return pio2 (QSE_T("ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_ERR);
+	return pio2 (
+#ifdef _WIN32
+		QSE_T("sll.exe"), 
+#else
+		QSE_T("ls -laF"), 
+#endif
+		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
+		QSE_PIO_ERR
+	);
 }
 
 static int test6 (void)
 {
-	return pio2 (QSE_T("/bin/ls -laF"), QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN, QSE_PIO_ERR);
+	return pio2 (
+#ifdef _WIN32
+		QSE_T(".\\sll.exe"), 
+#else
+		QSE_T("/bin/ls -laF"),
+#endif
+		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN,
+		QSE_PIO_ERR
+	);
 }
 
 static int test7 (void)
 {
-	qse_pio_t* pio;
-	int x;
-
-	pio = qse_pio_open (
-		QSE_NULL,
-		0,
-		QSE_T("/bin/ls -laF"),
-		QSE_PIO_READOUT|QSE_PIO_ERRTOOUT|QSE_PIO_WRITEIN
+	return pio1 (
+#ifdef _WIN32
+		QSE_T(".\\sll.exe"), 
+#else
+		QSE_T("/bin/ls -laF"), 
+#endif
+		QSE_PIO_READOUT|QSE_PIO_ERRTOOUT|QSE_PIO_WRITEIN,
+		QSE_PIO_OUT
 	);
-	if (pio == QSE_NULL)
-	{
-		qse_printf (QSE_T("cannot open program through pipe\n"));
-		return -1;
-	}
-
-	while (1)
-	{
-		qse_byte_t buf[128];
-
-		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), QSE_PIO_OUT);
-		if (n == 0) break;
-		if (n < 0)
-		{
-			qse_printf (QSE_T("qse_pio_read() returned error - %s\n"), qse_pio_geterrmsg(pio));
-			break;
-		}	
-	}
-
-	x = qse_pio_wait (pio);
-	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
-	if (x == -1)
-	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)QSE_PIO_ERRNUM(pio), qse_pio_geterrmsg(pio));
-	}
-
-	qse_pio_close (pio);
-	return 0;
 }
 
 static int test8 (void)
+{
+	return pio1 (
+#ifdef _WIN32
+		QSE_T("sll.exe"), 
+#else
+		QSE_T("ls -laF"), 
+#endif
+		QSE_PIO_READOUT|QSE_PIO_WRITEIN|
+		QSE_PIO_OUTTONUL|QSE_PIO_ERRTONUL|QSE_PIO_INTONUL,
+		QSE_PIO_OUT
+	);
+}
+
+static int test9 (void)
 {
 	qse_pio_t* pio;
 	int x;
@@ -207,7 +234,11 @@ static int test8 (void)
 	pio = qse_pio_open (
 		QSE_NULL,
 		0,
+#ifdef _WIN32
+		QSE_T(".\\sll.exe"),
+#else
 		QSE_T("/bin/ls -laF"),
+#endif
 		QSE_PIO_READOUT|QSE_PIO_READERR|QSE_PIO_WRITEIN
 	);
 	if (pio == QSE_NULL)
@@ -263,6 +294,7 @@ int main ()
 	R (test6);
 	R (test7);
 	R (test8);
+	R (test9);
 
 	return 0;
 }
