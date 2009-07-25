@@ -6,6 +6,9 @@
 
 #ifdef _WIN32
 #	include <windows.h>
+#else
+#	include <unistd.h>
+#	include <sys/wait.h>
 #endif
 
 #define R(f) \
@@ -41,7 +44,10 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		if (n == 0) break;
 		if (n <= -1)
 		{
-			qse_printf (QSE_T("qse_pio_read() returned error - %s\n"), qse_pio_geterrmsg(pio));
+			qse_printf (
+				QSE_T("qse_pio_read() returned error - %s\n"),
+				qse_pio_geterrmsg(pio)
+			);
 			break;
 		}	
 
@@ -61,7 +67,8 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x <= -1)
 	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
+		qse_printf (QSE_T("error code : %d, error string: %s\n"),
+			(int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
 	}
 
 	qse_pio_close (pio);
@@ -95,7 +102,10 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		if (n == 0) break;
 		if (n < 0)
 		{
-			qse_printf (QSE_T("qse_pio_read() returned error - %s\n"), qse_pio_geterrmsg(pio));
+			qse_printf (
+				QSE_T("qse_pio_read() returned error - %s\n"),
+				qse_pio_geterrmsg(pio)
+			);
 			break;
 		}	
 
@@ -111,7 +121,8 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x <= -1)
 	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
+		qse_printf (QSE_T("error code : %d, error string: %s\n"),
+			(int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
 	}
 
 	qse_pio_close (pio);
@@ -216,9 +227,9 @@ static int test8 (void)
 {
 	return pio1 (
 #ifdef _WIN32
-		QSE_T("sll.exe"), 
+		QSE_T(".\\sll.exe"), 
 #else
-		QSE_T("ls -laF"), 
+		QSE_T("/bin/ls -laF"), 
 #endif
 		QSE_PIO_READOUT|QSE_PIO_WRITEIN|
 		QSE_PIO_OUTTONUL|QSE_PIO_ERRTONUL|QSE_PIO_INTONUL,

@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 243 2009-07-24 04:11:07Z hyunghwan.chung $
+ * $Id: pio.h 244 2009-07-24 12:22:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,22 +24,22 @@
 #include <qse/cmn/tio.h>
 
 /** @file 
- * This file defines a piped interface to a child process. It provides more
- * advanced interface than popen() and pclose().
+ * This file defines a piped interface to a child process. You can execute
+ * a child process, read and write to its stdin, stdout, stderr, and terminate
+ * it. It provides more advanced interface than popen() and pclose().
  *
- * @todo 
- * - rename flags to option
+ * @example pio.c
  */
 
 /**
- * Open flags 
+ * The qse_pio_oflag_t defines enumerators to compose flags to qse_pio_open().
  */
-enum qse_pio_open_flag_t
+enum qse_pio_oflag_t
 {
-	/** enable text based IO. */
+	/** enable text based I/O. */
 	QSE_PIO_TEXT       = (1 << 0),
 
-	/** invoke the command through a system shell 
+	/** execute the command via a system shell 
 	 * (/bin/sh on *nix, cmd.exe on windows) */
 	QSE_PIO_SHELL      = (1 << 1),
 
@@ -50,9 +50,9 @@ enum qse_pio_open_flag_t
 	/** read stderr of a child process */
 	QSE_PIO_READERR    = (1 << 10),
 
-	/** redirect stderr to stdout(2>&1). require QSE_PIO_READOUT */
+	/** redirect stderr to stdout (2>&1, require QSE_PIO_READOUT) */
 	QSE_PIO_ERRTOOUT   = (1 << 11),	
-	/** redirect stdout to stderr(1>&2). require QSE_PIO_READERR */
+	/** redirect stdout to stderr (1>&2, require QSE_PIO_READERR) */
 	QSE_PIO_OUTTOERR   = (1 << 12),
 
 	/** redirect stdin to the null device (</dev/null, <NUL) */
@@ -67,17 +67,26 @@ enum qse_pio_open_flag_t
 	/** drop stdout */
 	QSE_PIO_DROPOUT    = (1 << 17),
 	/** drop stderr */
-	QSE_PIO_DROPERR    = (1 << 18),
+	QSE_PIO_DROPERR    = (1 << 18)
 };
 
+
+/**
+ * The qse_pio_hid_t type defines pipe IDs established to a child process.
+ */
 enum qse_pio_hid_t
 {
-	QSE_PIO_IN  = 0,
-	QSE_PIO_OUT = 1,
-	QSE_PIO_ERR = 2
+	QSE_PIO_IN  = 0, /**< stdin of a child process */ 
+	QSE_PIO_OUT = 1, /**< stdout of a child process */
+	QSE_PIO_ERR = 2  /**< stderr of a child process */
 };
+typedef enum qse_pio_hid_t qse_pio_hid_t;
 
-enum qse_pio_io_flag_t
+/** 
+ * The qse_pio_option_t type defines options to change the behavior of
+ * qse_pio_xxx functions.
+ */
+enum qse_pio_option_t
 {
 	/*QSE_PIO_READ_NOBLOCK   = (1 << 0),*/
 
@@ -89,12 +98,16 @@ enum qse_pio_io_flag_t
 	/** do not rewrite if write has been interrupted */
 	QSE_PIO_WRITE_NORETRY  = (1 << 3),
 
+	/** return immediately from qse_pio_wait() if a child has not exited */
 	QSE_PIO_WAIT_NOBLOCK   = (1 << 4),
 
 	/** do not wait again if waitpid has been interrupted */
 	QSE_PIO_WAIT_NORETRY   = (1 << 5)
 };
 
+/**
+ * The qse_pio_errnum_t type defines error numbers.
+ */
 enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0, /**< no error */
@@ -105,21 +118,19 @@ enum qse_pio_errnum_t
 	QSE_PIO_EPIPE,      /**< broken pipe */
 	QSE_PIO_ESUBSYS     /**< subsystem(system call) error */
 };
-
-typedef enum qse_pio_hid_t qse_pio_hid_t;
 typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 
 #ifdef _WIN32
 	/* <winnt.h> => typedef PVOID HANDLE; */
-	typedef void* qse_pio_hnd_t;
-	typedef void* qse_pio_pid_t;
+	typedef void* qse_pio_hnd_t; /**< defines a pipe handle type */
+	typedef void* qse_pio_pid_t; /**< defines a process handle type */
 #	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)QSE_NULL)
 #	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)QSE_NULL)
 #else
-	typedef int qse_pio_hnd_t;
-	typedef int qse_pio_pid_t;
+	typedef int qse_pio_hnd_t; /**< defines a pipe handle type */
+	typedef int qse_pio_pid_t; /**< defines a process handle type */
 #	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
-#	define  QSE_PIO_PID_NIL ((qse_pio_hnd_t)-1)
+#	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)-1)
 #endif
 
 typedef struct qse_pio_t qse_pio_t;
@@ -133,21 +144,26 @@ struct qse_pio_pin_t
 };
 
 /**
- * The qse_pio_t type defines a pipe I/O type
+ * The qse_pio_t type defines a structure to store status for piped I/O
+ * to a child process. The qse_pio_xxx() funtions are written around this
+ * type. Do not change the value of each field directly. 
  */
 struct qse_pio_t
 {
 	QSE_DEFINE_COMMON_FIELDS(pio)
-
-	int              flags;
-	qse_pio_errnum_t errnum;
-	qse_pio_pid_t    child;
+	int              option;  /**< options */
+	qse_pio_errnum_t errnum;  /**< error number */
+	qse_pio_pid_t    child;   /**< handle to a child process */
 	qse_pio_pin_t    pin[3];
 };
 
-#define QSE_PIO_ERRNUM(pio)     ((pio)->errnum)
-#define QSE_PIO_FLAGS(pio)      ((pio)->flags)
-#define QSE_PIO_CHILD(pio)      ((pio)->child)
+/** access the @a errnum field of the #qse_pio_t structure */
+#define QSE_PIO_ERRNUM(pio)    ((pio)->errnum)
+/** access the @a option field of the #qse_pio_t structure */
+#define QSE_PIO_OPTION(pio)    ((pio)->option)
+/** access the @a child field of the #qse_pio_t structure */
+#define QSE_PIO_CHILD(pio)     ((pio)->child)
+/** get the native handle from the #qse_pio_t structure */
 #define QSE_PIO_HANDLE(pio,hid) ((pio)->pin[hid].handle)
 
 #ifdef __cplusplus
@@ -157,188 +173,172 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
 /**
- * The qse_pio_open() function opens pipes to a child process.
- * QSE_PIO_SHELL drives the function to execute the command via the default
- * shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
- * If @a flags is clear of QSE_PIO_SHELL, you should pass the full program path.
+ * The qse_pio_open() function executes a command @cmd and establishes
+ * pipes to it. #QSE_PIO_SHELL causes the function to execute @a cmd via 
+ * the default shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
+ * On *nix systems, a full path to the command is needed if it is not specified.
+ * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t*       mmgr,  /**< a memory manager */
+	qse_mmgr_t*       mmgr,  /**< memory manager */
 	qse_size_t        ext,   /**< extension size */
-	const qse_char_t* cmd,   /**< a command to execute */
-	int               flags  /**< options */
+	const qse_char_t* cmd,   /**< command to execute */
+	int               oflags  /**< 0 or a number OR'ed of the
+	                              #qse_pio_oflag_t enumerators*/
 );
 
 /**
- * The qse_pio_close() function closes pipes to a child process.
+ * The qse_pio_close() function closes pipes to a child process and waits for
+ * the child process to exit.
  */
 void qse_pio_close (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
 
 /**
- * The qse_pio_init() function initializes pipes to a child process.
+ * The qse_pio_init() functions performs the same task as the qse_pio_open()
+ * except that you need to allocate a #qse_pio_t structure and pass it to the
+ * function.
+ * @return @a pio on success, #QSE_NULL on failure
  */
 qse_pio_t* qse_pio_init (
-	qse_pio_t*        pio,
-	qse_mmgr_t*       mmgr,
-	const qse_char_t* path,
-	int               flags
+	qse_pio_t*        pio,    /**< pio object */
+	qse_mmgr_t*       mmgr,   /**< memory manager */
+	const qse_char_t* cmd,    /**< command to execute */
+	int               oflags  /**< 0 or a number OR'ed of the
+	                              #qse_pio_oflag_t enumerators*/
 );
 
 /**
- * The qse_pio_fini() function finalizes pipes to a child process.
+ * The qse_pio_fini() function performs the same task as qse_pio_close()
+ * except that it does not destroy a #qse_pio_t structure pointed to by @a pio.
  */
 void qse_pio_fini (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
 
-int qse_pio_getflags (
-	qse_pio_t* pio
+/**
+ * The qse_pio_getoption() function gets the current option.
+ * @return option number OR'ed of #qse_pio_option_t enumerators
+ */
+int qse_pio_getoption (
+	qse_pio_t* pio    /**< pio object */
 );
 
-void qse_pio_setflags (
-	qse_pio_t* pio,
-	int        flags,
-	int        opt
+/**
+ * The qse_pio_setoption() function sets the option.
+ */ 
+void qse_pio_setoption (
+	qse_pio_t* pio, /**< pio object */
+	int        opt  /**< 0 or a number OR'ed of #qse_pio_option_t
+	                     enumerators */
 );
 
-/****f* Common/qse_pio_geterrnum
- * NAME
- *  qse_pio_geterrnum - get an error code
- *
- * SYNOPSIS
+/**
+ * The qse_pio_geterrnum() function returns the number of the last error 
+ * occurred. 
+ * @return error number
  */
 qse_pio_errnum_t qse_pio_geterrnum (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
-/******/
 
-/****f* Common/qse_pio_geterrmsg
- * NAME
- *  qse_pio_geterrmsg - transllate an error code to a string
- *
- * DESCRIPTION
- *  The qse_pio_geterrmsg() function returns the pointer to a constant string 
- *  describing the last error occurred.
- *
- * SYNOPSIS
+/**
+ * The qse_pio_geterrmsg() function returns the pointer to a constant string 
+ * describing the last error occurred.
+ * @return error message
  */
 const qse_char_t* qse_pio_geterrmsg (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
-/******/
 
-/****f* Common/qse_pio_gethandle
- * NAME
- *  qse_pio_gethandle - get native handle
- *
- * SYNOPSIS
+/**
+ * The qse_pio_gethandle() function gets a pipe handle.
+ * @return pipe handle
  */
 qse_pio_hnd_t qse_pio_gethandle (
-	qse_pio_t*    pio,
-	qse_pio_hid_t hid
+	qse_pio_t*    pio, /**< pio object */
+	qse_pio_hid_t hid  /**< handle ID */
 );
-/******/
 
-/****f* Common/qse_pio_getchild
- * NAME
- *  qse_pio_getchild - get the PID of a child process
- *
- * SYNOPSIS
+/**
+ * The qse_pio_getchild() function gets a process handle.
+ * @return process handle
  */
 qse_pio_pid_t qse_pio_getchild (
-	qse_pio_t*    pio
+	qse_pio_t*    pio /**< pio object */
 );
-/******/
 
-/****f* Common/qse_pio_read
- * NAME
- *  qse_pio_read - read data
- * SYNOPSIS
+/**
+ * The qse_pio_read() fucntion reads data.
+ * @return -1 on failure, 0 on EOF, data length read on success
  */
 qse_ssize_t qse_pio_read (
-	qse_pio_t*    pio,
-	void*         buf,
-	qse_size_t    size,
-	qse_pio_hid_t hid
+	qse_pio_t*    pio,  /**< pio object */
+	void*         buf,  /**< buffer to fill */
+	qse_size_t    size, /**< buffer size */
+	qse_pio_hid_t hid   /**< handle ID */
 );
 /******/
 
-/****f* Common/qse_pio_write
- * NAME 
- *  qse_pio_write - write data
- * DESCRIPTION
- *  If the parameter 'size' is zero, qse_pio_write() closes the the writing
- *  stream causing the child process reach the end of the stream.
- * SYNOPSIS
+/**
+ * The qse_pio_write() function writes data.
+ * If @a size is zero, qse_pio_write() closes the the writing
+ * stream causing the child process reach the end of the stream.
+ * @return -1 on failure, data length written on success
  */
 qse_ssize_t qse_pio_write (
-	qse_pio_t*    pio,
-	const void*   data,
-	qse_size_t    size,
-	qse_pio_hid_t hid
+	qse_pio_t*    pio,   /**< pio object */
+	const void*   data,  /**< data to write */
+	qse_size_t    size,  /**< data size */
+	qse_pio_hid_t hid    /**< handle ID */
 );
 /******/
 
-/****f* Common/qse_pio_flush
- * NAME
- *  qse_pio_flush - flush data
- *
- * SYNOPSIS
+/**
+ * The qse_pio_flush() flushes buffered data if #QSE_PIO_TEXT has been 
+ * specified to qse_pio_open() and qse_pio_init().
  */
 qse_ssize_t qse_pio_flush (
-	qse_pio_t*    pio,
-	qse_pio_hid_t hid
+	qse_pio_t*    pio, /**< pio object */
+	qse_pio_hid_t hid  /**< handle ID */
 );
-/*****/
 
-/****f* Common/qse_pio_end
- * NAME
- *  qse_pio_end - close native handle
- *
- * SYNOPSIS
+/**
+ * The qse_pio_end() function closes a pipe to a child process
  */
 void qse_pio_end (
-	qse_pio_t*    pio,
-	qse_pio_hid_t hid
+	qse_pio_t*    pio, /**< pio object */
+	qse_pio_hid_t hid  /**< handle ID */
 );
-/******/
 
-/****f* Common/qse_pio_wait
- * NAME
- *  qse_pio_wait - wait for a child process 
- * DESCRIPTION
- *  QSE_PIO_WAIT_NORETRY causes the function to return an error and set the 
- *  errnum field to QSE_PIO_EINTR if the underlying system call is interrupted.
+/**
+ * The qse_pio_wait() function waits for a child process to terminate.
+ * #QSE_PIO_WAIT_NORETRY causes the function to return an error and set the 
+ * @a pio->errnum field to #QSE_PIO_EINTR if the underlying system call has
+ * been interrupted. If #QSE_PIO_WAIT_NOBLOCK is used, the return value of 256
+ * indicates that the child process has not terminated. Otherwise, 256 is never
+ * returned.
  *
- *  When QSE_PIO_WAIT_NOBLOCK is used, the return value of 256 indicates that 
- *  the child process has not terminated. If the flag is not used, 256 is never 
- *  returned.
- * RETURN
- *  -1 on error, 256 if the child is alive and QSE_PIO_NOBLOCK is used,
+ * @return
+ *  -1 on error, 256 if the child is alive and #QSE_PIO_WAIT_NOBLOCK is used,
  *  a number between 0 and 255 inclusive if the child process ends normally,
  *  256 + signal number if the child process is terminated by a signal.
- * SYNOPSIS
  */
 int qse_pio_wait (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
-/******/
 
-/****f* Common/qse_pio_kill
- * NAME
- *  qse_pio_kill - terminate the child process
- * NOTES
- *  You should know the danger of calling this function as the function can
- *  kill a process that is not your child process if it has terminated but
- *  there is a new process with the same process handle.
- * SYNOPSIS
+/**
+ * The qse_pio_kill() function terminates a child process by force.
+ * You should know the danger of calling this function as the function can
+ * kill a process that is not your child process if it has terminated but
+ * there is a new process with the same process handle.
+ * @return 0 on success, -1 on failure
  */ 
 int qse_pio_kill (
-	qse_pio_t* pio
+	qse_pio_t* pio /**< pio object */
 );
-/******/
 
 #ifdef __cplusplus
 }

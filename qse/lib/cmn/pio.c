@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 242 2009-07-23 13:01:52Z hyunghwan.chung $
+ * $Id: pio.c 244 2009-07-24 12:22:00Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -35,8 +35,7 @@ static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
 static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t* mmgr, qse_size_t ext,
-	const qse_char_t* path, int flags)
+	qse_mmgr_t* mmgr, qse_size_t ext, const qse_char_t* path, int oflags)
 {
 	qse_pio_t* pio;
 
@@ -53,7 +52,7 @@ qse_pio_t* qse_pio_open (
 	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
 	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pio_init (pio, mmgr, path, flags) == QSE_NULL)
+	if (qse_pio_init (pio, mmgr, path, oflags) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
@@ -69,7 +68,7 @@ void qse_pio_close (qse_pio_t* pio)
 }
 
 qse_pio_t* qse_pio_init (
-	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int flags)
+	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int oflags)
 {
 
 	qse_pio_hnd_t handle[6] = 
@@ -112,7 +111,7 @@ qse_pio_t* qse_pio_init (
 	secattr.bInheritHandle = TRUE;
 	secattr.lpSecurityDescriptor = QSE_NULL;
 
-	if (flags & QSE_PIO_WRITEIN)
+	if (oflags & QSE_PIO_WRITEIN)
 	{
 		/* child reads, parent writes */
 		if (CreatePipe (
@@ -126,7 +125,7 @@ qse_pio_t* qse_pio_init (
 		minidx = 0; maxidx = 1;
 	}
 
-	if (flags & QSE_PIO_READOUT)
+	if (oflags & QSE_PIO_READOUT)
 	{
 		/* child writes, parent reads */
 		if (CreatePipe (
@@ -141,7 +140,7 @@ qse_pio_t* qse_pio_init (
 		maxidx = 3;
 	}
 
-	if (flags & QSE_PIO_READERR)
+	if (oflags & QSE_PIO_READERR)
 	{
 		/* child writes, parent reads */
 		if (CreatePipe (
@@ -156,9 +155,9 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
-	if ((flags & QSE_PIO_INTONUL) || 
-	    (flags & QSE_PIO_OUTTONUL) ||
-	    (flags & QSE_PIO_ERRTONUL))
+	if ((oflags & QSE_PIO_INTONUL) || 
+	    (oflags & QSE_PIO_OUTTONUL) ||
+	    (oflags & QSE_PIO_ERRTONUL))
 	{
 		windevnul = CreateFile(
 			QSE_T("NUL"), GENERIC_READ | GENERIC_WRITE,
@@ -177,34 +176,34 @@ qse_pio_t* qse_pio_init (
 	startup.hStdOutput = INVALID_HANDLE_VALUE;
 	startup.hStdOutput = INVALID_HANDLE_VALUE;
 
-	if (flags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
+	if (oflags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
 
-	if (flags & QSE_PIO_READOUT)
+	if (oflags & QSE_PIO_READOUT)
 	{
 		startup.hStdOutput = handle[3];
-		if (flags & QSE_PIO_ERRTOOUT) startup.hStdError = handle[3];
+		if (oflags & QSE_PIO_ERRTOOUT) startup.hStdError = handle[3];
 	}
 
-	if (flags & QSE_PIO_READERR)
+	if (oflags & QSE_PIO_READERR)
 	{
 		startup.hStdError = handle[5];
-		if (flags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
+		if (oflags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
 	}
 
-	if (flags & QSE_PIO_INTONUL) startup.hStdOutput = windevnul;
-	if (flags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
-	if (flags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
+	if (oflags & QSE_PIO_INTONUL) startup.hStdOutput = windevnul;
+	if (oflags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
+	if (oflags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
 
-	if (flags & QSE_PIO_DROPIN) startup.hStdInput = INVALID_HANDLE_VALUE;
-	if (flags & QSE_PIO_DROPOUT) startup.hStdOutput = INVALID_HANDLE_VALUE;
-	if (flags & QSE_PIO_DROPERR) startup.hStdError = INVALID_HANDLE_VALUE;
+	if (oflags & QSE_PIO_DROPIN) startup.hStdInput = INVALID_HANDLE_VALUE;
+	if (oflags & QSE_PIO_DROPOUT) startup.hStdOutput = INVALID_HANDLE_VALUE;
+	if (oflags & QSE_PIO_DROPERR) startup.hStdError = INVALID_HANDLE_VALUE;
 
 	startup.dwFlags |= STARTF_USESTDHANDLES;
 
 	/* there is nothing to do for QSE_PIO_SHELL as CreateProcess
 	 * takes the entire command line */
 
-	if (flags & QSE_PIO_SHELL) 
+	if (oflags & QSE_PIO_SHELL) 
 	{
 		dup = QSE_MMGR_ALLOC (
 			mmgr, (11+qse_strlen(cmd)+1 )*QSE_SIZEOF(qse_char_t));
@@ -237,17 +236,17 @@ qse_pio_t* qse_pio_init (
 
 	if (x == FALSE) goto oops;
 
-	if (flags & QSE_PIO_WRITEIN)
+	if (oflags & QSE_PIO_WRITEIN)
 	{
 		CloseHandle (handle[0]);
 		handle[0] = QSE_PIO_HND_NIL;
 	}
-	if (flags & QSE_PIO_READOUT)
+	if (oflags & QSE_PIO_READOUT)
 	{
 		CloseHandle (handle[3]);
 		handle[3] = QSE_PIO_HND_NIL;
 	}
-	if (flags & QSE_PIO_READERR)
+	if (oflags & QSE_PIO_READERR)
 	{
 		CloseHandle (handle[5]);
 		handle[5] = QSE_PIO_HND_NIL;
@@ -257,22 +256,22 @@ qse_pio_t* qse_pio_init (
 	pio->child = procinfo.hProcess;
 #else
 
-	if (flags & QSE_PIO_WRITEIN)
+	if (oflags & QSE_PIO_WRITEIN)
 	{
-		if (QSE_PIPE(&handle[0]) == -1) goto oops;
+		if (QSE_PIPE(&handle[0]) <= -1) goto oops;
 		minidx = 0; maxidx = 1;
 	}
 
-	if (flags & QSE_PIO_READOUT)
+	if (oflags & QSE_PIO_READOUT)
 	{
-		if (QSE_PIPE(&handle[2]) == -1) goto oops;
+		if (QSE_PIPE(&handle[2]) <= -1) goto oops;
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
 	}
 
-	if (flags & QSE_PIO_READERR)
+	if (oflags & QSE_PIO_READERR)
 	{
-		if (QSE_PIPE(&handle[4]) == -1) goto oops;
+		if (QSE_PIPE(&handle[4]) <= -1) goto oops;
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
 	}
@@ -280,7 +279,7 @@ qse_pio_t* qse_pio_init (
 	if (maxidx == -1) goto oops;
 
 	pid = QSE_FORK();
-	if (pid == -1) goto oops;
+	if (pid <= -1) goto oops;
 
 	if (pid == 0)
 	{
@@ -302,7 +301,7 @@ qse_pio_t* qse_pio_init (
 		struct rlimit rlim;
 		int fd;
 
-		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) == -1 ||
+		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
 		    rlim.rlim_max == RLIM_INFINITY) 
 		{
 		#ifdef HAVE_SYSCONF
@@ -323,77 +322,77 @@ qse_pio_t* qse_pio_init (
 			    fd != handle[5]) QSE_CLOSE (fd);
 		}
 
-		if (flags & QSE_PIO_WRITEIN)
+		if (oflags & QSE_PIO_WRITEIN)
 		{
 			/* child should read */
 			QSE_CLOSE (handle[1]);
 			handle[1] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[0], 0) == -1) goto child_oops;
+			if (QSE_DUP2 (handle[0], 0) <= -1) goto child_oops;
 			QSE_CLOSE (handle[0]);
 			handle[0] = QSE_PIO_HND_NIL;
 		}
 
-		if (flags & QSE_PIO_READOUT)
+		if (oflags & QSE_PIO_READOUT)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[2]);
 			handle[2] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[3], 1) == -1) goto child_oops;
+			if (QSE_DUP2 (handle[3], 1) <= -1) goto child_oops;
 
-			if (flags & QSE_PIO_ERRTOOUT)
+			if (oflags & QSE_PIO_ERRTOOUT)
 			{
-				if (QSE_DUP2 (handle[3], 2) == -1) goto child_oops;
+				if (QSE_DUP2 (handle[3], 2) <= -1) goto child_oops;
 			}
 
 			QSE_CLOSE (handle[3]); 
 			handle[3] = QSE_PIO_HND_NIL;
 		}
 
-		if (flags & QSE_PIO_READERR)
+		if (oflags & QSE_PIO_READERR)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[4]); 
 			handle[4] = QSE_PIO_HND_NIL;
-			if (QSE_DUP2 (handle[5], 2) == -1) goto child_oops;
+			if (QSE_DUP2 (handle[5], 2) <= -1) goto child_oops;
 
-			if (flags & QSE_PIO_OUTTOERR)
+			if (oflags & QSE_PIO_OUTTOERR)
 			{
-				if (QSE_DUP2 (handle[5], 1) == -1) goto child_oops;
+				if (QSE_DUP2 (handle[5], 1) <= -1) goto child_oops;
 			}
 
 			QSE_CLOSE (handle[5]);
 			handle[5] = QSE_PIO_HND_NIL;
 		}
 
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL))
+		if ((oflags & QSE_PIO_INTONUL) || 
+		    (oflags & QSE_PIO_OUTTONUL) ||
+		    (oflags & QSE_PIO_ERRTONUL))
 		{
 		#ifdef O_LARGEFILE
 			devnull = QSE_OPEN ("/dev/null", O_RDWR|O_LARGEFILE, 0);
 		#else
 			devnull = QSE_OPEN ("/dev/null", O_RDWR, 0);
 		#endif
-			if (devnull == -1) goto child_oops;
+			if (devnull <= -1) goto child_oops;
 		}
 
-		if ((flags & QSE_PIO_INTONUL)  &&
-		    QSE_DUP2(devnull,0) == -1) goto child_oops;
-		if ((flags & QSE_PIO_OUTTONUL) &&
-		    QSE_DUP2(devnull,1) == -1) goto child_oops;
-		if ((flags & QSE_PIO_ERRTONUL) &&
-		    QSE_DUP2(devnull,2) == -1) goto child_oops;
+		if ((oflags & QSE_PIO_INTONUL)  &&
+		    QSE_DUP2(devnull,0) <= -1) goto child_oops;
+		if ((oflags & QSE_PIO_OUTTONUL) &&
+		    QSE_DUP2(devnull,1) <= -1) goto child_oops;
+		if ((oflags & QSE_PIO_ERRTONUL) &&
+		    QSE_DUP2(devnull,2) <= -1) goto child_oops;
 
-		if ((flags & QSE_PIO_INTONUL) || 
-		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
+		if ((oflags & QSE_PIO_INTONUL) || 
+		    (oflags & QSE_PIO_OUTTONUL) ||
+		    (oflags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
 
-		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
-		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
-		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
+		if (oflags & QSE_PIO_DROPIN) QSE_CLOSE(0);
+		if (oflags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
+		if (oflags & QSE_PIO_DROPERR) QSE_CLOSE(2);
 
 	#ifdef QSE_CHAR_IS_MCHAR
-		if (flags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
+		if (oflags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
 		else
 		{
 			mcmd =  qse_strdup (cmd, pio->mmgr);
@@ -408,7 +407,7 @@ qse_pio_t* qse_pio_init (
 			}
 		}
 	#else	
-		if (flags & QSE_PIO_SHELL)
+		if (oflags & QSE_PIO_SHELL)
 		{
        			n = qse_wcstombslen (cmd, &mn);
 			if (cmd[n] != QSE_WT('\0')) 
@@ -453,7 +452,7 @@ qse_pio_t* qse_pio_init (
 			if (mcmd == QSE_NULL) goto child_oops;
 		}
 
-		if (flags & QSE_PIO_SHELL)
+		if (oflags & QSE_PIO_SHELL)
 		{
 			/* qse_wcstombs() should succeed as 
 			 * qse_wcstombslen() was successful above */
@@ -471,7 +470,7 @@ qse_pio_t* qse_pio_init (
 		}
 	#endif
 
-		if (flags & QSE_PIO_SHELL)
+		if (oflags & QSE_PIO_SHELL)
 		{
 			const qse_mchar_t* argv[4];
 
@@ -508,7 +507,7 @@ qse_pio_t* qse_pio_init (
 	/* parent */
 	pio->child = pid;
 
-	if (flags & QSE_PIO_WRITEIN)
+	if (oflags & QSE_PIO_WRITEIN)
 	{
 		/* 
 		 * 012345
@@ -519,7 +518,7 @@ qse_pio_t* qse_pio_init (
 		QSE_CLOSE (handle[0]); handle[0] = QSE_PIO_HND_NIL;
 	}
 
-	if (flags & QSE_PIO_READOUT)
+	if (oflags & QSE_PIO_READOUT)
 	{
 		/* 
 		 * 012345
@@ -530,7 +529,7 @@ qse_pio_t* qse_pio_init (
 		QSE_CLOSE (handle[3]); handle[3] = QSE_PIO_HND_NIL;
 	}
 
-	if (flags & QSE_PIO_READERR)
+	if (oflags & QSE_PIO_READERR)
 	{
 		/* 
 		 * 012345
@@ -553,7 +552,7 @@ qse_pio_t* qse_pio_init (
 	pio->pin[QSE_PIO_OUT].handle = handle[2];
 	pio->pin[QSE_PIO_ERR].handle = handle[4];
 
-	if (flags & QSE_PIO_TEXT)
+	if (oflags & QSE_PIO_TEXT)
 	{
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{
@@ -566,13 +565,13 @@ qse_pio_t* qse_pio_init (
 				qse_tio_attachout (tio[i], pio_output, &pio->pin[i]):
 				qse_tio_attachin (tio[i], pio_input, &pio->pin[i]);
 
-			if (r == -1) goto oops;
+			if (r <= -1) goto oops;
 
 			pio->pin[i].tio = tio[i];
 		}
 	}
 
-	pio->flags = 0;
+	pio->option = 0;
 	return pio;
 
 oops:
@@ -599,34 +598,25 @@ void qse_pio_fini (qse_pio_t* pio)
 	qse_pio_end (pio, QSE_PIO_OUT);
 	qse_pio_end (pio, QSE_PIO_IN);
 
-	qse_pio_setflags (pio, QSE_PIO_WAIT_NOBLOCK|QSE_PIO_WAIT_NORETRY, -1);
+	pio->option &= ~QSE_PIO_WAIT_NOBLOCK;
+	pio->option &= ~QSE_PIO_WAIT_NORETRY;
 	qse_pio_wait (pio);
 }
 
-int qse_pio_getflags (qse_pio_t* pio)
+int qse_pio_getoption (qse_pio_t* pio)
 {
-	return pio->flags;
+	return pio->option;
 }
 
-void qse_pio_setflags (qse_pio_t* pio, int flags, int op)
+void qse_pio_setoption (qse_pio_t* pio, int opt)
 {
-	/*
-	op => set
-	op => off
-	op => on
-	*/
-
-	if (op == 0) pio->flags = flags;
-	else if (op > 0) pio->flags |= flags;
-	else /*if (op < 0)*/ pio->flags &= ~flags;
+	pio->option = opt;
 }
 
 qse_pio_errnum_t qse_pio_geterrnum (qse_pio_t* pio)
 {
 	return pio->errnum;
 }
-
-/* TODO: qse_pio_geterrmsg (qse_pio_t* pio) */
 
 const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
 {
@@ -694,7 +684,7 @@ reread:
 	{
 		if (errno == EINTR)
 		{
-			if (pio->flags & QSE_PIO_READ_NORETRY) 
+			if (pio->option & QSE_PIO_READ_NORETRY) 
 				pio->errnum = QSE_PIO_EINTR;
 			else goto reread;
 		}
@@ -755,7 +745,7 @@ rewrite:
 	{
 		if (errno == EINTR)
 		{
-			if (pio->flags & QSE_PIO_WRITE_NORETRY)
+			if (pio->option & QSE_PIO_WRITE_NORETRY)
 				pio->errnum = QSE_PIO_EINTR;
 			else goto rewrite;
 		}
@@ -820,7 +810,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	w = WaitForSingleObject (pio->child, 
-		((pio->flags & QSE_PIO_WAIT_NOBLOCK)? 0: INFINITE)
+		((pio->option & QSE_PIO_WAIT_NOBLOCK)? 0: INFINITE)
 	);
 	if (w == WAIT_TIMEOUT)
 	{
@@ -871,14 +861,14 @@ int qse_pio_wait (qse_pio_t* pio)
 		return -1;
 	}
 
-	if (pio->flags & QSE_PIO_WAIT_NOBLOCK) opt |= WNOHANG;
+	if (pio->option & QSE_PIO_WAIT_NOBLOCK) opt |= WNOHANG;
 
 	while (1)
 	{
 		int status, n;
 
 		n = QSE_WAITPID (pio->child, &status, opt);
-		if (n == -1)
+		if (n <= -1)
 		{
 			if (errno == ECHILD)
 			{
@@ -889,7 +879,7 @@ int qse_pio_wait (qse_pio_t* pio)
 			}
 			else if (errno == EINTR)
 			{
-				if (pio->flags & QSE_PIO_WAIT_NORETRY) 
+				if (pio->option & QSE_PIO_WAIT_NORETRY) 
 					pio->errnum = QSE_PIO_EINTR;
 				else continue;
 			}
@@ -901,7 +891,7 @@ int qse_pio_wait (qse_pio_t* pio)
 		if (n == 0) 
 		{
 			/* when WNOHANG is not specified, 0 can't be returned */
-			QSE_ASSERT (pio->flags & QSE_PIO_WAIT_NOBLOCK);
+			QSE_ASSERT (pio->option & QSE_PIO_WAIT_NOBLOCK);
 
 			ret = 255 + 1;
 			/* the child process is still alive */
@@ -963,7 +953,7 @@ int qse_pio_kill (qse_pio_t* pio)
 	return 0;
 #else
 	n = QSE_KILL (pio->child, SIGKILL);
-	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
+	if (n <= -1) pio->errnum = QSE_PIO_ESUBSYS;
 	return n;
 #endif
 }
