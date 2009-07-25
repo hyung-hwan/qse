@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 241 2009-07-22 12:47:13Z hyunghwan.chung $
+ * $Id: parse.c 245 2009-07-25 05:18:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -509,7 +509,8 @@ static int parse (qse_awk_t* awk)
 	{
 		/* cannot open the source file.
 		 * it doesn't even have to call CLOSE */
-		if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESINOP);
+		if (ISNOERR(awk)) 
+			SETERRARG (awk, QSE_AWK_EOPEN, 0, QSE_T("<SIN>"), 5);
 		return -1;
 	}
 
@@ -581,7 +582,8 @@ exit_parse:
 		{
 			/* this is to keep the earlier error above
 			 * that might be more critical than this */
-			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESINCL);
+			if (ISNOERR(awk)) 
+				SETERRARG (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SIN>"), 5);
 			n = -1;
 		}
 	}
@@ -603,6 +605,14 @@ static int begin_include  (qse_awk_t* awk)
 			awk->token.name->ptr,
 			qse_strlen(awk->token.name->ptr)
 		);
+		return -1;
+	}
+
+	CLRERR (awk);
+	op = awk->src.ios.in (awk, QSE_AWK_SIO_OPEN, QSE_NULL, 0);
+	if (op <= -1)
+	{
+		if (ISNOERR(awk)) SETERRTOK (awk, QSE_AWK_EOPEN);
 		return -1;
 	}
 
@@ -4977,7 +4987,8 @@ static int get_char (qse_awk_t* awk)
 		);
 		if (n <= -1)
 		{
-			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESINRD);
+			if (ISNOERR(awk))
+				SETERRARG (awk, QSE_AWK_EREAD, 0, QSE_T("<SIN>"), 5);
 			return -1;
 		}
 
@@ -5482,7 +5493,8 @@ static int deparse (qse_awk_t* awk)
 	op = awk->src.ios.out (awk, QSE_AWK_SIO_OPEN, QSE_NULL, 0);
 	if (op <= -1)
 	{
-		if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTOP);
+		if (ISNOERR(awk)) 
+			SETERRARG (awk, QSE_AWK_EOPEN, 0, QSE_T("<SOUT>"), 6);
 		return -1;
 	}
 
@@ -5690,7 +5702,8 @@ exit_deparse:
 	{
 		if (n == 0)
 		{
-			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTCL);
+			if (ISNOERR(awk)) 
+				SETERRARG (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SOUT>"), 6);
 			n = -1;
 		}
 	}
@@ -5781,7 +5794,6 @@ static int flush_out (qse_awk_t* awk)
 	while (awk->src.shared.buf_pos < awk->src.shared.buf_len)
 	{
 		CLRERR (awk);
-
 		n = awk->src.ios.out (
 			awk, QSE_AWK_SIO_WRITE,
 			&awk->src.shared.buf[awk->src.shared.buf_pos], 
@@ -5789,7 +5801,8 @@ static int flush_out (qse_awk_t* awk)
 		);
 		if (n <= 0) 
 		{
-			if (ISNOERR(awk)) SETERR (awk, QSE_AWK_ESOUTWR);
+			if (ISNOERR(awk)) 
+				SETERRARG (awk, QSE_AWK_EWRITE, 0, QSE_T("<SOUT>"), 6);
 			return -1;
 		}
 

@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 237 2009-07-16 12:43:47Z hyunghwan.chung $
+ * $Id: std.c 245 2009-07-25 05:18:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -157,7 +157,7 @@ void* qse_awk_getxtnstd (qse_awk_t* awk)
 
 static qse_ssize_t sf_in (
 	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
-	qse_char_t* data, qse_size_t size)
+	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
 	xtn_t* xtn = QSE_XTN (awk);
 
@@ -182,7 +182,17 @@ static qse_ssize_t sf_in (
 						xtn->s.in.u.file,
 						QSE_SIO_READ
 					);
-					if (xtn->s.in.handle == QSE_NULL) return -1;
+					if (xtn->s.in.handle == QSE_NULL) 
+					{
+						qse_cstr_t arg;
+						arg.ptr = xtn->s.in.u.file;
+						arg.len = qse_strlen(arg.ptr);
+						qse_awk_seterror (
+							awk, QSE_AWK_EOPEN,
+							0, &arg
+						);
+						return -1;
+					}
 				}
 				return 1;
 
@@ -214,8 +224,21 @@ static qse_ssize_t sf_in (
 		{
 			case QSE_AWK_PARSESTD_FILE:
 			case QSE_AWK_PARSESTD_STDIO:
+			{
+				qse_ssize_t n;
+
 				QSE_ASSERT (xtn->s.in.handle != QSE_NULL);
-				return qse_sio_getsn (xtn->s.in.handle, data, size);
+				n = qse_sio_getsn (xtn->s.in.handle, data, size);
+				if (n == -1)
+				{
+					qse_cstr_t arg;
+					arg.ptr = xtn->s.in.u.file;
+					arg.len = qse_strlen(arg.ptr);
+					qse_awk_seterror (
+						awk, QSE_AWK_EREAD, 0, &arg);
+				}
+				return n;
+			}
 
 			case QSE_AWK_PARSESTD_CP:
 			{
@@ -244,8 +267,8 @@ static qse_ssize_t sf_in (
 }
 
 static qse_ssize_t sf_out (
-	qse_awk_t* awk, qse_awk_sio_cmd_t cmd,
-	qse_char_t* data, qse_size_t size)
+	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
+	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
 {
 	xtn_t* xtn = QSE_XTN (awk);
 
@@ -272,7 +295,17 @@ static qse_ssize_t sf_out (
 						QSE_SIO_CREATE | 
 						QSE_SIO_TRUNCATE
 					);
-					if (xtn->s.out.handle == QSE_NULL) return -1;
+					if (xtn->s.out.handle == QSE_NULL) 
+					{
+						qse_cstr_t arg;
+						arg.ptr = xtn->s.out.u.file;
+						arg.len = qse_strlen(arg.ptr);
+						qse_awk_seterror (
+							awk, QSE_AWK_EOPEN,
+							0, &arg
+						);
+						return -1;
+					}
 				}
 				return 1;
 
@@ -319,8 +352,21 @@ static qse_ssize_t sf_out (
 		{
 			case QSE_AWK_PARSESTD_FILE:
 			case QSE_AWK_PARSESTD_STDIO:
+			{
+				qse_ssize_t n;
 				QSE_ASSERT (xtn->s.out.handle != QSE_NULL);
-				return qse_sio_putsn (xtn->s.out.handle, data, size);
+				n = qse_sio_putsn (xtn->s.out.handle, data, size);
+				if (n == -1)
+				{
+					qse_cstr_t arg;
+					arg.ptr = xtn->s.in.u.file;
+					arg.len = qse_strlen(arg.ptr);
+					qse_awk_seterror (
+						awk, QSE_AWK_EWRITE, 0, &arg);
+				}
+
+				return n;
+			}
 
 			case QSE_AWK_PARSESTD_CP:
 			{

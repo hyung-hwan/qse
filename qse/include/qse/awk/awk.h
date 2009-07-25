@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 240 2009-07-19 13:02:33Z hyunghwan.chung $
+ * $Id: awk.h 245 2009-07-25 05:18:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -271,14 +271,24 @@ enum qse_awk_sio_cmd_t
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
+struct qse_awk_sio_arg_t 
+{
+	qse_char_t* name;         /**< [IN] name of I/O object */
+	void* handle;             /**< [OUT] I/O handle set by a handler */
+
+	struct qse_awk_sio_arg_t* next;
+};
+typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
+
 /**
  * The qse_awk_sio_fun_t type defines a source IO function
  */
 typedef qse_ssize_t (*qse_awk_sio_fun_t) (
-	qse_awk_t*        awk,
-	qse_awk_sio_cmd_t cmd, 
-	qse_char_t*       data,
-	qse_size_t        count
+	qse_awk_t*         awk,
+	qse_awk_sio_cmd_t  cmd, 
+	qse_awk_sio_arg_t* arg,
+	qse_char_t*        data,
+	qse_size_t         count
 );
 
 /**
@@ -615,14 +625,6 @@ enum qse_awk_errnum_t
 	QSE_AWK_ERUNTIME,/**< general run-time error */
 	QSE_AWK_EBLKNST, /**< block nested too deeply */
 	QSE_AWK_EEXPRNST,/**< expression nested too deeply */
-
-	QSE_AWK_ESINOP,  /**< failed to open source input */
-	QSE_AWK_ESINCL,  /**< failed to close source output */
-	QSE_AWK_ESINRD,  /**< failed to read source input */
-
-	QSE_AWK_ESOUTOP, /**< failed to open source output */
-	QSE_AWK_ESOUTCL, /**< failed to close source output */
-	QSE_AWK_ESOUTWR, /**< failed to write source output */
 
 	QSE_AWK_ELXCHR,  /**< invalid character '${0}' */
 	QSE_AWK_ELXDIG,  /**< invalid digit '${0}' */
