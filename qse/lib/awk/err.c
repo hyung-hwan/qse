@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 240 2009-07-19 13:02:33Z hyunghwan.chung $
+ * $Id: err.c 245 2009-07-25 05:18:42Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -42,14 +42,6 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("general runtime error"),
 		QSE_T("block nested too deeply"),
 		QSE_T("expression nested too deeply"),
-
-		QSE_T("failed to open source input"),
-		QSE_T("failed to close source input"),
-		QSE_T("failed to read source input"),
-
-		QSE_T("failed to open source output"),
-		QSE_T("failed to close source output"),
-		QSE_T("failed to write source output"),
 
 		QSE_T("invalid character '${0}'"),
 		QSE_T("invalid digit '${0}'"),
