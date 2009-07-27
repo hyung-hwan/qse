@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 245 2009-07-25 05:18:42Z hyunghwan.chung $
+ * $Id: Awk.hpp 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -56,6 +56,10 @@ public:
 
 	typedef qse_awk_rio_cmd_t rio_cmd_t;
 
+	typedef qse_awk_sio_arg_t sio_arg_t;
+
+	typedef qse_awk_sio_cmd_t sio_cmd_t;
+
 	class Run;
 	friend class Run;
 
@@ -111,8 +115,6 @@ public:
 		ERR_FUNNAME = QSE_AWK_EFUNNAME,
 		ERR_BLKBEG = QSE_AWK_EBLKBEG,
 		ERR_BLKEND = QSE_AWK_EBLKEND,
-		ERR_DUPBEG = QSE_AWK_EDUPBEG,
-		ERR_DUPEND = QSE_AWK_EDUPEND,
 		ERR_KWRED = QSE_AWK_EKWRED,
 		ERR_FNCRED = QSE_AWK_EFNCRED,
 		ERR_FUNRED = QSE_AWK_EFUNRED,
@@ -140,6 +142,8 @@ public:
 		ERR_PREPST = QSE_AWK_EPREPST,
 		ERR_INCDECOPR = QSE_AWK_EINCDECOPR,
 		ERR_INCLSTR = QSE_AWK_EINCLSTR,
+		ERR_INCLTD = QSE_AWK_EINCLTD,
+		ERR_DIRECNR = QSE_AWK_EDIRECNR,
 		ERR_DIVBY0 = QSE_AWK_EDIVBY0,
 		ERR_OPERAND = QSE_AWK_EOPERAND,
 		ERR_POSIDX = QSE_AWK_EPOSIDX,
@@ -1049,9 +1053,11 @@ protected:
 
 	// static glue members for various handlers
 	static ssize_t readSource (
-		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
+		awk_t* awk, sio_cmd_t cmd, sio_arg_t* arg,
+		char_t* data, size_t count);
 	static ssize_t writeSource (
-		awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count);
+		awk_t* awk, sio_cmd_t cmd, sio_arg_t* arg,
+		char_t* data, size_t count);
 
 	static ssize_t pipeHandler (
 		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 232 2009-07-14 08:06:14Z hyunghwan.chung $
+ * $Id: awk.h 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -140,12 +140,14 @@ struct qse_awk_t
 				qse_size_t block;
 				qse_size_t loop;
 				qse_size_t expr; /* expression */
+				qse_size_t incl;
 			} cur;
 
 			struct
 			{
 				qse_size_t block;
 				qse_size_t expr;
+				qse_size_t incl;
 			} max;
 		} depth;
 
@@ -175,7 +177,8 @@ struct qse_awk_t
 	/* source code management */
 	struct
 	{
-		qse_awk_sio_t ios;
+		qse_awk_sio_fun_t inf;
+		qse_awk_sio_fun_t outf;
 
 		struct
 		{
@@ -189,13 +192,9 @@ struct qse_awk_t
 			qse_size_t column;
 		} lex;
 
-		struct
-		{
-			qse_char_t buf[512];
-			qse_size_t buf_pos;
-			qse_size_t buf_len;
-		} shared;	
-	} src;
+		qse_awk_sio_arg_t arg; 
+		qse_awk_sio_arg_t* inp; /* current input */
+	} sio;
 
 	/* previous token info excluding name */
 	struct
@@ -207,7 +206,7 @@ struct qse_awk_t
 
 	/* current token */
 	qse_awk_token_t token;
-	qse_awk_token_t atoken;
+	qse_awk_token_t ntoken;
 
 	/* intrinsic functions */
 	struct
