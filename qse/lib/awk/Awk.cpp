@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 239 2009-07-18 12:02:24Z hyunghwan.chung $
+ * $Id: Awk.cpp 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1604,7 +1604,8 @@ void Awk::unsetAllWords ()
 }
 
 Awk::ssize_t Awk::readSource (
-	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
+	awk_t* awk, sio_cmd_t cmd, sio_arg_t* arg,
+	char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 
@@ -1622,7 +1623,8 @@ Awk::ssize_t Awk::readSource (
 }
 
 Awk::ssize_t Awk::writeSource (
-	awk_t* awk, qse_awk_sio_cmd_t cmd, char_t* data, size_t count)
+	awk_t* awk, qse_awk_sio_cmd_t cmd, sio_arg_t* arg,
+	char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 

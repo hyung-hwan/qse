@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 239 2009-07-18 12:02:24Z hyunghwan.chung $ 
+ * $Id: awk.c 246 2009-07-27 02:31:58Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -67,6 +67,14 @@ static void fini_token (qse_awk_token_t* token)
 	}
 }
 
+static void clear_token (qse_awk_token_t* token)
+{
+	if (token->name != QSE_NULL) qse_str_clear (token->name);
+	token->type = 0;
+	token->line = 0;
+	token->column = 0;
+}
+
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 {
 	qse_awk_t* awk;
@@ -105,7 +113,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->prm = *prm;
 
 	if (init_token (mmgr, &awk->token) == -1) goto oops;
-	if (init_token (mmgr, &awk->atoken) == -1) goto oops;
+	if (init_token (mmgr, &awk->ntoken) == -1) goto oops;
 
 	awk->wtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == QSE_NULL) goto oops;
@@ -165,13 +173,14 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 
+	awk->parse.nlcls_max = 0;
+	awk->sio.inp = &awk->sio.arg;
+
 	awk->option = QSE_AWK_CLASSIC;
 	awk->errinf.num = QSE_AWK_ENOERR;
 	awk->errinf.lin = 0;
 	awk->errstr = qse_awk_dflerrstr;
 	awk->stopall = QSE_FALSE;
-
-	awk->parse.nlcls_max = 0;
 
 	awk->tree.ngbls = 0;
 	awk->tree.ngbls_base = 0;
@@ -183,17 +192,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->tree.chain_tail = QSE_NULL;
 	awk->tree.chain_size = 0;
 
-	awk->ptoken.type = 0;
-	awk->ptoken.line = 0;
-	awk->ptoken.column = 0;
-
-	awk->src.lex.curc = QSE_CHAR_EOF;
-	awk->src.lex.ungotc_count = 0;
-	awk->src.lex.line = 1;
-	awk->src.lex.column = 1;
-	awk->src.shared.buf_pos = 0;
-	awk->src.shared.buf_len = 0;
-
 	awk->fnc.sys = QSE_NULL;
 	awk->fnc.user = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->fnc.user == QSE_NULL) goto oops;
@@ -202,21 +200,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_map_setfreeer (awk->fnc.user, QSE_MAP_VAL, free_fnc); 
 	qse_map_setscale (awk->fnc.user, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
-	awk->parse.depth.cur.block = 0;
-	awk->parse.depth.cur.loop = 0;
-	awk->parse.depth.cur.expr = 0;
-
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_BLOCK_PARSE, 0);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_BLOCK_RUN, 0);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_EXPR_PARSE, 0);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_EXPR_RUN, 0);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_BUILD, 0);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_REX_MATCH, 0);
-
 	if (qse_awk_initgbls (awk) <= -1) goto oops;
 
 	return awk;
-
 
 oops:
 	if (awk->fnc.user) qse_map_close (awk->fnc.user);
@@ -228,7 +214,7 @@ oops:
 	if (awk->tree.funs) qse_map_close (awk->tree.funs);
 	if (awk->rwtab) qse_map_close (awk->rwtab);
 	if (awk->wtab) qse_map_close (awk->wtab);
-	fini_token (&awk->atoken);
+	fini_token (&awk->ntoken);
 	fini_token (&awk->token);
 	QSE_AWK_FREE (awk, awk);
 
@@ -251,7 +237,7 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->rwtab);
 	qse_map_close (awk->wtab);
 
-	fini_token (&awk->atoken);
+	fini_token (&awk->ntoken);
 	fini_token (&awk->token);
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
@@ -264,13 +250,21 @@ int qse_awk_clear (qse_awk_t* awk)
 {
 	awk->stopall = QSE_FALSE;
 
-	QSE_MEMSET (&awk->src.ios, 0, QSE_SIZEOF(awk->src.ios));
-	awk->src.lex.curc = QSE_CHAR_EOF;
-	awk->src.lex.ungotc_count = 0;
-	awk->src.lex.line = 1;
-	awk->src.lex.column = 1;
-	awk->src.shared.buf_pos = 0;
-	awk->src.shared.buf_len = 0;
+	awk->sio.lex.curc = QSE_CHAR_EOF;
+	awk->sio.lex.ungotc_count = 0;
+	awk->sio.lex.line = 1;
+	awk->sio.lex.column = 1;
+	awk->sio.arg.b.pos = 0;
+	awk->sio.arg.b.len = 0;
+
+	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
+
+	awk->ptoken.type = 0;
+	awk->ptoken.line = 0;
+	awk->ptoken.column = 0;
+	
+	clear_token (&awk->token);
+	clear_token (&awk->ntoken);
 
 	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
@@ -287,9 +281,9 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->parse.depth.cur.block = 0;
 	awk->parse.depth.cur.loop = 0;
 	awk->parse.depth.cur.expr = 0;
+	awk->parse.depth.cur.incl = 0;
 
 	/* clear parse trees */	
-	awk->tree.ok = 0;
 	/*awk->tree.ngbls_base = 0;
 	awk->tree.ngbls = 0;	 */
 	awk->tree.ngbls = awk->tree.ngbls_base;

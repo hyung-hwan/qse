@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 245 2009-07-25 05:18:42Z hyunghwan.chung $
+ * $Id: std.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -155,13 +155,10 @@ void* qse_awk_getxtnstd (qse_awk_t* awk)
 
 /*** PARSESTD ***/
 
-static qse_ssize_t sf_in (
-	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
-	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
+static qse_ssize_t sf_in_open (
+	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
 {
-	xtn_t* xtn = QSE_XTN (awk);
-
-	if (cmd == QSE_AWK_SIO_OPEN)
+	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
 		switch (xtn->s.in.type)
 		{
@@ -184,12 +181,12 @@ static qse_ssize_t sf_in (
 					);
 					if (xtn->s.in.handle == QSE_NULL) 
 					{
-						qse_cstr_t arg;
-						arg.ptr = xtn->s.in.u.file;
-						arg.len = qse_strlen(arg.ptr);
+						qse_cstr_t ea;
+						ea.ptr = xtn->s.in.u.file;
+						ea.len = qse_strlen(ea.ptr);
 						qse_awk_seterror (
 							awk, QSE_AWK_EOPEN,
-							0, &arg
+							0, &ea
 						);
 						return -1;
 					}
@@ -206,7 +203,29 @@ static qse_ssize_t sf_in (
 				return 1;
 		}
 	}
-	else if (cmd == QSE_AWK_SIO_CLOSE)
+	else
+	{
+/* TODO: standard include path */
+		arg->handle = qse_sio_open (
+			awk->mmgr, 0, arg->name, QSE_SIO_READ
+		);
+		if (arg->handle == QSE_NULL) 
+		{
+			qse_cstr_t ea;
+			ea.ptr = arg->name;
+			ea.len = qse_strlen(ea.ptr);
+			qse_awk_seterror (awk, QSE_AWK_EOPEN, 0, &ea);
+			return -1;
+		}
+
+		return 1;
+	}
+}
+
+static qse_ssize_t sf_in_close (
+	qse_awk_t* awk, qse_awk_sio_arg_t* arg, xtn_t* xtn)
+{
+	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
 		if (xtn->s.in.handle != QSE_NULL && 
 		    xtn->s.in.handle != qse_sio_in &&
@@ -215,10 +234,20 @@ static qse_ssize_t sf_in (
 		{
 			qse_sio_close (xtn->s.in.handle);
 		}
-
-		return 0;
 	}
-	else if (cmd == QSE_AWK_SIO_READ)
+	else
+	{
+		qse_sio_close (arg->handle);
+	}
+
+	return 0;
+}
+
+static qse_ssize_t sf_in_read (
+	qse_awk_t* awk, qse_awk_sio_arg_t* arg,
+	qse_char_t* data, qse_size_t size, xtn_t* xtn)
+{
+	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
 		switch (xtn->s.in.type)
 		{
@@ -231,11 +260,11 @@ static qse_ssize_t sf_in (
 				n = qse_sio_getsn (xtn->s.in.handle, data, size);
 				if (n == -1)
 				{
-					qse_cstr_t arg;
-					arg.ptr = xtn->s.in.u.file;
-					arg.len = qse_strlen(arg.ptr);
+					qse_cstr_t ea;
+					ea.ptr = xtn->s.in.u.file;
+					ea.len = qse_strlen(ea.ptr);
 					qse_awk_seterror (
-						awk, QSE_AWK_EREAD, 0, &arg);
+						awk, QSE_AWK_EREAD, 0, &ea);
 				}
 				return n;
 			}
@@ -259,11 +288,45 @@ static qse_ssize_t sf_in (
 				}
 				return n;
 			}
-		
 		}
 	}
+	else
+	{
+		qse_ssize_t n;
 
-	return -1;
+		QSE_ASSERT (arg->handle != QSE_NULL);
+		n = qse_sio_getsn (arg->handle, data, size);
+		if (n == -1)
+		{
+			qse_cstr_t ea;
+			ea.ptr = arg->name;
+			ea.len = qse_strlen(ea.ptr);
+			qse_awk_seterror (awk, QSE_AWK_EREAD, 0, &ea);
+		}
+		return n;
+	}
+}
+
+static qse_ssize_t sf_in (
+	qse_awk_t* awk, qse_awk_sio_cmd_t cmd, 
+	qse_awk_sio_arg_t* arg, qse_char_t* data, qse_size_t size)
+{
+	xtn_t* xtn = QSE_XTN (awk);
+
+	switch (cmd)
+	{
+		case QSE_AWK_SIO_OPEN:
+			return sf_in_open (awk, arg, xtn);
+
+		case QSE_AWK_SIO_CLOSE:
+			return sf_in_close (awk, arg, xtn);
+
+		case QSE_AWK_SIO_READ:
+			return sf_in_read (awk, arg, data, size, xtn);
+
+		default:
+			return -1;
+	}
 }
 
 static qse_ssize_t sf_out (
@@ -297,12 +360,12 @@ static qse_ssize_t sf_out (
 					);
 					if (xtn->s.out.handle == QSE_NULL) 
 					{
-						qse_cstr_t arg;
-						arg.ptr = xtn->s.out.u.file;
-						arg.len = qse_strlen(arg.ptr);
+						qse_cstr_t ea;
+						ea.ptr = xtn->s.out.u.file;
+						ea.len = qse_strlen(ea.ptr);
 						qse_awk_seterror (
 							awk, QSE_AWK_EOPEN,
-							0, &arg
+							0, &ea
 						);
 						return -1;
 					}
@@ -358,11 +421,11 @@ static qse_ssize_t sf_out (
 				n = qse_sio_putsn (xtn->s.out.handle, data, size);
 				if (n == -1)
 				{
-					qse_cstr_t arg;
-					arg.ptr = xtn->s.in.u.file;
-					arg.len = qse_strlen(arg.ptr);
+					qse_cstr_t ea;
+					ea.ptr = xtn->s.in.u.file;
+					ea.len = qse_strlen(ea.ptr);
 					qse_awk_seterror (
-						awk, QSE_AWK_EWRITE, 0, &arg);
+						awk, QSE_AWK_EWRITE, 0, &ea);
 				}
 
 				return n;

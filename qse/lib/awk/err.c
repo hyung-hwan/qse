@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 245 2009-07-25 05:18:42Z hyunghwan.chung $
+ * $Id: err.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -70,8 +70,6 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("'${0}' not a valid function name"),
 		QSE_T("BEGIN not followed by left bracket on the same line"),
 		QSE_T("END not followed by left bracket on the same line"),
-		QSE_T("duplicate BEGIN"),
-		QSE_T("duplicate END"),
 		QSE_T("keyword '${0}' redefined"),
 		QSE_T("intrinsic function '${0}' redefined"),
 		QSE_T("function '${0}' redefined"),
@@ -101,6 +99,8 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("both prefix and postfix increment/decrement operator present"),
 		QSE_T("illegal operand for increment/decrement operator"),
 		QSE_T("'include' not followed by a string"),
+		QSE_T("include level too deep"),
+		QSE_T("directive '${0}' not recognized"),
 
 		QSE_T("divide by zero"),
 		QSE_T("invalid operand"),

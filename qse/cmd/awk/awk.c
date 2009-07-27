@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 239 2009-07-18 12:02:24Z hyunghwan.chung $
+ * $Id: awk.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -729,6 +729,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		awk, QSE_AWK_DEPTH_BLOCK_PARSE | QSE_AWK_DEPTH_EXPR_PARSE, 50);
 	qse_awk_setmaxdepth (
 		awk, QSE_AWK_DEPTH_BLOCK_RUN | QSE_AWK_DEPTH_EXPR_RUN, 500);
+	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_INCLUDE, 32);
 
 	if (qse_awk_addfnc (awk, 
 		QSE_T("sleep"), 5, 0,

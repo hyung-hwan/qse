@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 245 2009-07-25 05:18:42Z hyunghwan.chung $
+ * $Id: awk.h 246 2009-07-27 02:31:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -275,6 +275,14 @@ struct qse_awk_sio_arg_t
 {
 	qse_char_t* name;         /**< [IN] name of I/O object */
 	void* handle;             /**< [OUT] I/O handle set by a handler */
+
+	/*--  from here down, internal use only --*/
+	struct
+	{
+		qse_char_t buf[1024];
+		qse_size_t pos;
+		qse_size_t len;
+	} b;
 
 	struct qse_awk_sio_arg_t* next;
 };
@@ -653,8 +661,6 @@ enum qse_awk_errnum_t
 	QSE_AWK_EFUNNAME,  /**< '${0}' not a valid function name */
 	QSE_AWK_EBLKBEG,   /**< BEGIN not followed by left bracket on the same line */
 	QSE_AWK_EBLKEND,   /**< END not followed by left bracket on the same line */
-	QSE_AWK_EDUPBEG,   /**< duplicate BEGIN */
-	QSE_AWK_EDUPEND,   /**< duplicate END */
 	QSE_AWK_EKWRED,    /**< keyword '${0}' redefined */
 	QSE_AWK_EFNCRED,   /**< intrinsic function '${0}' redefined */
 	QSE_AWK_EFUNRED,   /**< function '${0}' redefined */
@@ -684,6 +690,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPREPST,   /**< both prefix and postfix incr/decr operator present */
 	QSE_AWK_EINCDECOPR,/**< illegal operand for incr/decr operator */
 	QSE_AWK_EINCLSTR,  /**< 'include' not followed by a string */
+	QSE_AWK_EINCLTD,   /**< include level too deep */
+	QSE_AWK_EDIRECNR,  /**< directive '${0}' not recognized */
 
 	/* run time error */
 	QSE_AWK_EDIVBY0,       /**< divide by zero */
@@ -773,7 +781,8 @@ enum qse_awk_depth_t
 	QSE_AWK_DEPTH_EXPR_PARSE  = (1 << 2),
 	QSE_AWK_DEPTH_EXPR_RUN    = (1 << 3),
 	QSE_AWK_DEPTH_REX_BUILD   = (1 << 4),
-	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5)
+	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5),
+	QSE_AWK_DEPTH_INCLUDE     = (1 << 6)
 };
 
 /**
