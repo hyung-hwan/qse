@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: parse.c 247 2009-07-31 13:01:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -379,7 +379,10 @@ static global_t gtab[] =
 			qse_awk_seterror (awk, code, (awk)->token.line, &errarg); \
 	} while (0)
 
-#define SETERRARG(awk,code,line,arg,leng) \
+#define SETERRARG(awk,code,line,arg) \
+	qse_awk_seterror ((awk), (code), (line), (arg))
+
+#define SETERRARGL(awk,code,line,arg,leng) \
 	do { \
 		qse_cstr_t errarg; \
 		errarg.len = (leng); \
@@ -519,7 +522,7 @@ static int parse (qse_awk_t* awk)
 		/* cannot open the source file.
 		 * it doesn't even have to call CLOSE */
 		if (ISNOERR(awk)) 
-			SETERRARG (awk, QSE_AWK_EOPEN, 0, QSE_T("<SIN>"), 5);
+			SETERRARGL (awk, QSE_AWK_EOPEN, 0, QSE_T("<SIN>"), 5);
 		return -1;
 	}
 
@@ -560,7 +563,7 @@ static int parse (qse_awk_t* awk)
 					QSE_MAP_KPTR(p), QSE_MAP_KLEN(p)) == QSE_NULL)
 				{
 					/* TODO: set better error no & line */
-					SETERRARG (
+					SETERRARGL (
 						awk, QSE_AWK_EFUNNF, 
 						*(qse_size_t*)QSE_MAP_VPTR(p),
 						QSE_MAP_KPTR(p),
@@ -618,7 +621,7 @@ oops:
 			/* this is to keep the earlier error above
 			 * that might be more critical than this */
 			if (ISNOERR(awk)) 
-				SETERRARG (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SIN>"), 5);
+				SETERRARGL (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SIN>"), 5);
 			ret = -1;
 		}
 	}
@@ -632,16 +635,15 @@ oops:
 	return ret;
 }
 
-static int begin_include  (qse_awk_t* awk)
+static int begin_include (qse_awk_t* awk)
 {
-	int level;
 	qse_ssize_t op;
 	qse_char_t* file = QSE_NULL;
 	qse_awk_sio_arg_t* arg = QSE_NULL;
 
 	if (qse_strlen(awk->token.name->ptr) != awk->token.name->len)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, 
 			QSE_AWK_EIONMNL,
 			awk->token.line,
@@ -691,6 +693,11 @@ static int begin_include  (qse_awk_t* awk)
 	awk->sio.inp = arg;
 	awk->parse.depth.cur.incl++;
 
+	arg->saved.line = awk->sio.lex.line;
+	arg->saved.column = awk->sio.lex.column;
+	awk->sio.lex.line = 1;
+	awk->sio.lex.column = 1;
+
 	return 0;
 
 oops:
@@ -738,6 +745,13 @@ retry:
 
 		if (MATCH(awk,TOKEN_INCLUDE))
 		{
+			if (awk->parse.depth.max.incl > 0 &&
+			    awk->parse.depth.cur.incl >=  awk->parse.depth.max.incl)
+			{
+				SETERRLIN (awk, QSE_AWK_EINCLTD, awk->ptoken.line);
+				return QSE_NULL;
+			}
+
 			if (get_token(awk) <= -1) return QSE_NULL;
 
 			if (!MATCH(awk,TOKEN_STR))
@@ -746,17 +760,10 @@ retry:
 				return QSE_NULL;
 			}
 
-			if (awk->parse.depth.max.incl > 0 &&
-			    awk->parse.depth.cur.incl >=  awk->parse.depth.max.incl)
-			{
-				SETERRLIN (awk, QSE_AWK_EINCLTD, awk->ptoken.line);
-				return QSE_NULL;
-			}
-
 			if (begin_include (awk) <= -1) return QSE_NULL;
-
+			
 			/* read the first meaningful token from the included file 
-			 * and rematch it by jumping to retry */
+			 * and recheck it by jumping to retry: */
 			do
 			{
 				if (get_token(awk) <= -1) return QSE_NULL; 
@@ -780,7 +787,7 @@ retry:
 	{
 		if ((awk->option & QSE_AWK_PABLOCK) == 0)
 		{
-			SETERRTOK (awk, QSE_AWK_EFUNCTION);
+			SETERRTOK (awk, QSE_AWK_EKWFNC);
 			return QSE_NULL;
 		}
 
@@ -808,7 +815,7 @@ retry:
 	{
 		if ((awk->option & QSE_AWK_PABLOCK) == 0)
 		{
-			SETERRTOK (awk, QSE_AWK_EFUNCTION);
+			SETERRTOK (awk, QSE_AWK_EKWFNC);
 			return QSE_NULL;
 		}
 
@@ -837,7 +844,7 @@ retry:
 		/* patternless block */
 		if ((awk->option & QSE_AWK_PABLOCK) == 0)
 		{
-			SETERRTOK (awk, QSE_AWK_EFUNCTION);
+			SETERRTOK (awk, QSE_AWK_EKWFNC);
 			return QSE_NULL;
 		}
 
@@ -860,7 +867,7 @@ retry:
 
 		if ((awk->option & QSE_AWK_PABLOCK) == 0)
 		{
-			SETERRTOK (awk, QSE_AWK_EFUNCTION);
+			SETERRTOK (awk, QSE_AWK_EKWFNC);
 			return QSE_NULL;
 		}
 
@@ -972,7 +979,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* check if it is a builtin function */
 	if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
 	{
-		SETERRARG (awk, QSE_AWK_EFNCRED, awk->token.line, name, name_len);
+		SETERRARGL (awk, QSE_AWK_EFNCRED, awk->token.line, name, name_len);
 		return QSE_NULL;
 	}
 
@@ -980,7 +987,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	if (qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL)
 	{
 		/* the function is defined previously */
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EFUNRED, awk->token.line, 
 			name, name_len);
 		return QSE_NULL;
@@ -989,7 +996,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* check if it conflicts with a named variable */
 	if (qse_map_search (awk->parse.named, name, name_len) != QSE_NULL)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EVARRED, awk->token.line, 
 			name, name_len);
 		return QSE_NULL;
@@ -999,7 +1006,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	g = find_global (awk, name, name_len);
 	if (g != QSE_LDA_NIL)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EGBLRED, awk->token.line, 
 			name, name_len);
 		return QSE_NULL;
@@ -1087,7 +1094,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 				QSE_AWK_FREE (awk, name_dup);
 				qse_lda_clear (awk->parse.params);
 
-				SETERRARG (
+				SETERRARGL (
 					awk, QSE_AWK_EDUPPAR, awk->token.line,
 					param, param_len);
 
@@ -1647,7 +1654,7 @@ static int add_global (
 	/* check if it is a keyword */
 	if (classify_ident (awk, name, len) != TOKEN_IDENT)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EKWRED, awk->token.line,
 			name, len);
 		return -1;
@@ -1656,7 +1663,7 @@ static int add_global (
 	/* check if it conflict with a builtin function name */
 	if (qse_awk_getfnc (awk, name, len) != QSE_NULL)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EFNCRED, awk->token.line,
 			name, len);
 		return -1;
@@ -1665,7 +1672,7 @@ static int add_global (
 	/* check if it conflict with a function name */
 	if (qse_map_search (awk->tree.funs, name, len) != QSE_NULL) 
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EFUNRED, line, 
 			name, len);
 		return -1;
@@ -1675,7 +1682,7 @@ static int add_global (
 	 * caught in the function call table */
 	if (qse_map_search (awk->parse.funs, name, len) != QSE_NULL)
 	{
-		SETERRARG (
+		SETERRARGL (
 			awk, QSE_AWK_EFUNRED, line, 
 			name, len);
 		return -1;
@@ -1684,7 +1691,7 @@ static int add_global (
 	/* check if it conflicts with other global variable names */
 	if (find_global (awk, name, len) != QSE_LDA_NIL)
 	{ 
-		SETERRARG (awk, QSE_AWK_EDUPGBL, line, name, len);
+		SETERRARGL (awk, QSE_AWK_EDUPGBL, line, name, len);
 		return -1;
 	}
 
@@ -1761,7 +1768,7 @@ int qse_awk_delgbl (
 		QSE_AWK_NUM_STATIC_GBLS, name, len);
 	if (n == QSE_LDA_NIL)
 	{
-		SETERRARG (awk, QSE_AWK_ENOENT, 0, name, len);
+		SETERRARGL (awk, QSE_AWK_ENOENT, 0, name, len);
 		return -1;
 	}
 
@@ -1866,7 +1873,7 @@ static qse_awk_t* collect_locals (
 		 * function f() { local length; } */
 		if (qse_awk_getfnc (awk, lcl.ptr, lcl.len) != QSE_NULL)
 		{
-			SETERRARG (
+			SETERRARGL (
 				awk, QSE_AWK_EFNCRED, awk->token.line,
 				lcl.ptr, lcl.len);
 			return QSE_NULL;
@@ -1881,7 +1888,7 @@ static qse_awk_t* collect_locals (
 				awk->parse.params, 0, lcl.ptr, lcl.len);
 			if (n != QSE_LDA_NIL)
 			{
-				SETERRARG (
+				SETERRARGL (
 					awk, QSE_AWK_EPARRED, awk->token.line,
 					lcl.ptr, lcl.len);
 				return QSE_NULL;
@@ -1898,7 +1905,7 @@ static qse_awk_t* collect_locals (
 					awk->tree.cur_fun.ptr,
 					awk->tree.cur_fun.len) == 0)
 				{
-					SETERRARG (
+					SETERRARGL (
 						awk, QSE_AWK_EFUNRED,
 						awk->token.line,
 						lcl.ptr, lcl.len);
@@ -1914,7 +1921,7 @@ static qse_awk_t* collect_locals (
 			lcl.ptr, lcl.len);
 		if (n != QSE_LDA_NIL)
 		{
-			SETERRARG (
+			SETERRARGL (
 				awk, QSE_AWK_EDUPLCL, awk->token.line, 
 				lcl.ptr, lcl.len);
 			return QSE_NULL;
@@ -1928,7 +1935,7 @@ static qse_awk_t* collect_locals (
 			{
 				/* it is a conflict only if it is one of a 
 				 * static global variable */
-				SETERRARG (
+				SETERRARGL (
 					awk, QSE_AWK_EDUPLCL, awk->token.line, 
 					lcl.ptr, lcl.len);
 				return QSE_NULL;
@@ -3143,8 +3150,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 				if (!MATCH(awk,TOKEN_IN))
 				{
 					qse_awk_clrpt (awk, nde);
-
-					SETERRTOK (awk, QSE_AWK_EIN);
+					SETERRTOK (awk, QSE_AWK_EKWIN);
 					return QSE_NULL;
 				}
 			}
@@ -3225,8 +3231,15 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 	}
 
 	/* valid expression introducer is expected */
-	SETERRLIN (awk, QSE_AWK_EEXPRES, 
-		(MATCH(awk,TOKEN_EOF)? awk->ptoken.line: line));
+	if (MATCH(awk,TOKEN_NEWLINE))
+	{
+		SETERRARGL (
+			awk, QSE_AWK_EEXPRNR, awk->ptoken.line, 
+			QSE_STR_PTR(awk->ptoken.name), 
+			QSE_STR_LEN(awk->ptoken.name));
+	}
+	else SETERRTOK (awk, QSE_AWK_EEXPRNR);
+
 	return QSE_NULL;
 }
 
@@ -3388,7 +3401,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (MATCH(awk,TOKEN_LPAREN))
 		{
 			/* a local variable is not a function */
-			SETERRARG (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
+			SETERRARGL (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
 			QSE_AWK_FREE (awk, name_dup);
 			return QSE_NULL;
 		}
@@ -3422,7 +3435,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (MATCH(awk,TOKEN_LPAREN))
 		{
 			/* a parameter is not a function */
-			SETERRARG (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
+			SETERRARGL (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
 			QSE_AWK_FREE (awk, name_dup);
 			return QSE_NULL;
 		}
@@ -3456,7 +3469,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (MATCH(awk,TOKEN_LPAREN))
 		{
 			/* a global variable is not a function */
-			SETERRARG (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
+			SETERRARGL (awk, QSE_AWK_EFUNNAME, line, name_dup, name_len);
 			QSE_AWK_FREE (awk, name_dup);
 			return QSE_NULL;
 		}
@@ -3492,7 +3505,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 				name_dup, name_len) != QSE_NULL)
 			{
 				/* a function call conflicts with a named variable */
-				SETERRARG (awk, QSE_AWK_EVARRED, line, name_dup, name_len);
+				SETERRARGL (awk, QSE_AWK_EVARRED, line, name_dup, name_len);
 				QSE_AWK_FREE (awk, name_dup);
 				return QSE_NULL;
 			}
@@ -3524,7 +3537,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 			/* check if it is a builtin function */
 			if (qse_awk_getfnc (awk, name_dup, name_len) != QSE_NULL)
 			{
-				SETERRARG (awk, QSE_AWK_EFNCRED, line, name_dup, name_len);
+				SETERRARGL (awk, QSE_AWK_EFNCRED, line, name_dup, name_len);
 				goto exit_func;
 			}
 
@@ -3539,7 +3552,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 			if (iscur || qse_map_search (awk->tree.funs, name_dup, name_len) != QSE_NULL) 
 			{
 				/* the function is defined previously */
-				SETERRARG (awk, QSE_AWK_EFUNRED, line, name_dup, name_len);
+				SETERRARGL (awk, QSE_AWK_EFUNRED, line, name_dup, name_len);
 				goto exit_func;
 			}
 
@@ -3547,7 +3560,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 				name_dup, name_len) != QSE_NULL)
 			{
 				/* is it one of the function calls found so far? */
-				SETERRARG (awk, QSE_AWK_EFUNRED, line, name_dup, name_len);
+				SETERRARGL (awk, QSE_AWK_EFUNRED, line, name_dup, name_len);
 				goto exit_func;
 			}
 
@@ -3572,7 +3585,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		}
 
 		/* undefined variable */
-		SETERRARG (awk, QSE_AWK_EUNDEF, line, name_dup, name_len);
+		SETERRARGL (awk, QSE_AWK_EUNDEF, line, name_dup, name_len);
 
 	exit_func:
 		QSE_AWK_FREE (awk, name_dup);
@@ -3705,7 +3718,7 @@ static qse_awk_nde_t* parse_hashidx (
 		/* check if it is a builtin function */
 		if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
 		{
-			SETERRARG (awk, QSE_AWK_EFNCRED, line, name, name_len);
+			SETERRARGL (awk, QSE_AWK_EFNCRED, line, name, name_len);
 			goto exit_func;
 		}
 
@@ -3720,7 +3733,7 @@ static qse_awk_nde_t* parse_hashidx (
 		if (iscur || qse_map_search (awk->tree.funs, name, name_len) != QSE_NULL) 
 		{
 			/* the function is defined previously */
-			SETERRARG (awk, QSE_AWK_EFUNRED, line, name, name_len);
+			SETERRARGL (awk, QSE_AWK_EFUNRED, line, name, name_len);
 			goto exit_func;
 		}
 
@@ -3728,7 +3741,7 @@ static qse_awk_nde_t* parse_hashidx (
 			awk->parse.funs, name, name_len) != QSE_NULL)
 		{
 			/* is it one of the function calls found so far? */
-			SETERRARG (awk, QSE_AWK_EFUNRED, line, name, name_len);
+			SETERRARGL (awk, QSE_AWK_EFUNRED, line, name, name_len);
 			goto exit_func;
 		}
 
@@ -3744,7 +3757,7 @@ static qse_awk_nde_t* parse_hashidx (
 	}
 
 	/* undefined variable */
-	SETERRARG (awk, QSE_AWK_EUNDEF, line, name, name_len);
+	SETERRARGL (awk, QSE_AWK_EUNDEF, line, name, name_len);
 
 
 exit_func:
@@ -4243,7 +4256,7 @@ static qse_awk_nde_t* parse_dowhile (qse_awk_t* awk, qse_size_t line)
 	{
 		qse_awk_clrpt (awk, body);
 
-		SETERRTOK (awk, QSE_AWK_EWHILE);
+		SETERRTOK (awk, QSE_AWK_EKWWHL);
 		return QSE_NULL;
 	}
 
@@ -4798,7 +4811,7 @@ static int get_number (qse_awk_t* awk, qse_awk_token_t* token)
 			if (c == QSE_T('8') || c == QSE_T('9'))
 			{
 				qse_char_t cc = (qse_char_t)c;
-				SETERRARG (awk, QSE_AWK_ELXDIG, awk->token.line, &cc, 1);
+				SETERRARGL (awk, QSE_AWK_ELXDIG, awk->token.line, &cc, 1);
 				return -1;
 			}
 
@@ -5076,34 +5089,52 @@ retry:
 		if (n <= -1)
 		{
 			if (ISNOERR(awk))
-				SETERRARG (awk, QSE_AWK_EREAD, 0, QSE_T("<SIN>"), 5);
+				SETERRARGL (awk, QSE_AWK_EREAD, 0, QSE_T("<SIN>"), 5);
 			return -1;
 		}
 
 		if (n == 0)
 		{
+			/* EOF reached on an input script */
 			if (awk->sio.inp != &awk->sio.arg)
 			{
-				qse_awk_sio_arg_t* next;
+				int x;
+
+				/* if it is an included file, close it and
+				 * retry to read a character from an outer file */
+				qse_awk_sio_arg_t* cur;
 
 				CLRERR (awk);
-				if (awk->sio.inf (
+				x = awk->sio.inf (
 					awk, QSE_AWK_SIO_CLOSE, 
-					awk->sio.inp, QSE_NULL, 0) != 0)
+					awk->sio.inp, QSE_NULL, 0);
+
+				/* if closing has failed, still destroy the
+				 * sio structure first as normal and return
+				 * the failure below. this way, the caller 
+				 * does not call QSE_AWK_SIO_CLOSE on 
+				 * awk->sio.inp again. */
+
+				cur = awk->sio.inp;
+				awk->sio.inp = awk->sio.inp->next;
+
+				/* restore the previous line and column */
+				awk->sio.lex.line = cur->saved.line;
+				awk->sio.lex.column = cur->saved.column;
+
+				QSE_ASSERT (cur->name != QSE_NULL);
+				QSE_MMGR_FREE (awk->mmgr, cur->name);
+				QSE_MMGR_FREE (awk->mmgr, cur);
+				awk->parse.depth.cur.incl--;
+
+				if (x != 0)
 				{
+					/* the failure mentioned above is returned here */
 					if (ISNOERR(awk))
-						SETERRARG (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SIN>"), 5);
+						SETERRARGL (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SIN>"), 5);
 					return -1;
 				}
 
-				next = awk->sio.inp->next;	
-
-				QSE_ASSERT (awk->sio.inp->name != QSE_NULL);
-				QSE_MMGR_FREE (awk->mmgr, awk->sio.inp->name);
-				QSE_MMGR_FREE (awk->mmgr, awk->sio.inp);
-				awk->parse.depth.cur.incl--;
-
-				awk->sio.inp = next;
 				goto retry;
 			}			
 
@@ -5438,7 +5469,7 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 			/* not handled yet */
 			if (c == QSE_T('\0'))
 			{
-				SETERRARG (
+				SETERRARGL (
 					awk, QSE_AWK_ELXCHR, token->line, 
 					QSE_T("<NUL>"), 5
 				);
@@ -5446,7 +5477,7 @@ static int get_token_into (qse_awk_t* awk, qse_awk_token_t* token)
 			else
 			{
 				qse_char_t cc = (qse_char_t)c;
-				SETERRARG (
+				SETERRARGL (
 					awk, QSE_AWK_ELXCHR, token->line, 
 					&cc, 1
 				);
@@ -5463,6 +5494,7 @@ static int get_token (qse_awk_t* awk)
 	awk->ptoken.type = awk->token.type;
 	awk->ptoken.line = awk->token.line;
 	awk->ptoken.column = awk->token.column;
+	qse_str_swap (awk->ptoken.name, awk->token.name);
 
 	if (QSE_STR_LEN(awk->ntoken.name) > 0)
 	{
@@ -5611,7 +5643,7 @@ static int deparse (qse_awk_t* awk)
 	if (op <= -1)
 	{
 		if (ISNOERR(awk)) 
-			SETERRARG (awk, QSE_AWK_EOPEN, 0, QSE_T("<SOUT>"), 6);
+			SETERRARGL (awk, QSE_AWK_EOPEN, 0, QSE_T("<SOUT>"), 6);
 		return -1;
 	}
 
@@ -5821,7 +5853,7 @@ exit_deparse:
 		if (n == 0)
 		{
 			if (ISNOERR(awk)) 
-				SETERRARG (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SOUT>"), 6);
+				SETERRARGL (awk, QSE_AWK_ECLOSE, 0, QSE_T("<SOUT>"), 6);
 			n = -1;
 		}
 	}
@@ -5918,7 +5950,7 @@ static int flush_out (qse_awk_t* awk)
 		if (n <= 0) 
 		{
 			if (ISNOERR(awk)) 
-				SETERRARG (awk, QSE_AWK_EWRITE, 0, QSE_T("<SOUT>"), 6);
+				SETERRARGL (awk, QSE_AWK_EWRITE, 0, QSE_T("<SOUT>"), 6);
 			return -1;
 		}
 

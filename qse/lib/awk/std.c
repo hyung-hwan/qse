@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: std.c 247 2009-07-31 13:01:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -201,6 +201,9 @@ static qse_ssize_t sf_in_open (
 			case QSE_AWK_PARSESTD_CPL:
 				xtn->s.in.handle = QSE_NULL;
 				return 1;
+
+			default:
+				return -1;
 		}
 	}
 	else
@@ -288,6 +291,9 @@ static qse_ssize_t sf_in_read (
 				}
 				return n;
 			}
+
+			default:
+				return -1;
 		}
 	}
 	else

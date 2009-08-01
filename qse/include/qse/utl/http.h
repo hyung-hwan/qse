@@ -39,17 +39,8 @@ struct qse_http_req_t
 
 struct qse_http_hdr_t
 {
-	struct
-	{
-		qse_char_t* ptr;
-		qse_size_t len;
-	} name;
-
-	struct
-	{
-		qse_char_t* ptr;
-		qse_size_t len;
-	} value;
+	qse_cstr_t name;
+	qse_cstr_t value;
 };
 
 #ifdef __cplusplus

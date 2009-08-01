@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 246 2009-07-27 02:31:58Z hyunghwan.chung $ 
+ * $Id: awk.c 247 2009-07-31 13:01:04Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -112,6 +112,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	}
 	awk->prm = *prm;
 
+	if (init_token (mmgr, &awk->ptoken) == -1) goto oops;
 	if (init_token (mmgr, &awk->token) == -1) goto oops;
 	if (init_token (mmgr, &awk->ntoken) == -1) goto oops;
 
@@ -216,6 +217,7 @@ oops:
 	if (awk->wtab) qse_map_close (awk->wtab);
 	fini_token (&awk->ntoken);
 	fini_token (&awk->token);
+	fini_token (&awk->ptoken);
 	QSE_AWK_FREE (awk, awk);
 
 	return QSE_NULL;
@@ -239,6 +241,7 @@ int qse_awk_close (qse_awk_t* awk)
 
 	fini_token (&awk->ntoken);
 	fini_token (&awk->token);
+	fini_token (&awk->ptoken);
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
@@ -259,12 +262,9 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
 
-	awk->ptoken.type = 0;
-	awk->ptoken.line = 0;
-	awk->ptoken.column = 0;
-	
 	clear_token (&awk->token);
 	clear_token (&awk->ntoken);
+	clear_token (&awk->ptoken);
 
 	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
