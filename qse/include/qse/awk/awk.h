@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: awk.h 247 2009-07-31 13:01:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -283,6 +283,12 @@ struct qse_awk_sio_arg_t
 		qse_size_t pos;
 		qse_size_t len;
 	} b;
+
+	struct
+	{
+		qse_size_t line;
+		qse_size_t column;
+	} saved;
 
 	struct qse_awk_sio_arg_t* next;
 };
@@ -650,12 +656,12 @@ enum qse_awk_errnum_t
 	QSE_AWK_ESCOLON, /**< semicolon expected in place of '${0}' */
 	QSE_AWK_ECOLON,  /**< colon expected in place of '${0}' */
 	QSE_AWK_ESTMEND, /**< statement not ending with a semicolon */
-	QSE_AWK_EIN,     /**< 'in' expected in place of '${0}' */
+	QSE_AWK_EKWIN,   /**< keyword 'in' expected in place of '${0}' */
 	QSE_AWK_ENOTVAR, /**< right-hand side of 'in' not a variable */
-	QSE_AWK_EEXPRES, /**< invalid expression */
+	QSE_AWK_EEXPRNR, /**< expression not recognized around '${0}' */
 
-	QSE_AWK_EFUNCTION, /**< 'function' is expected in place of '${0}' */
-	QSE_AWK_EWHILE,    /**< 'while' is expected in place of '${0}' */
+	QSE_AWK_EKWFNC,    /**< keyword 'function' expected in place of '${0}' */
+	QSE_AWK_EKWWHL,    /**< keyword 'while' expected in place of '${0}' */
 	QSE_AWK_EASSIGN,   /**< assignment statement expected */
 	QSE_AWK_EIDENT,    /**< identifier expected in place of '${0}' */
 	QSE_AWK_EFUNNAME,  /**< '${0}' not a valid function name */

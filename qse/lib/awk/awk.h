@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: awk.h 247 2009-07-31 13:01:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -196,16 +196,11 @@ struct qse_awk_t
 		qse_awk_sio_arg_t* inp; /* current input */
 	} sio;
 
-	/* previous token info excluding name */
-	struct
-	{
-		int type;
-		qse_size_t line;
-		qse_size_t column;
-	} ptoken; 
-
+	/* previous token */
+	qse_awk_token_t ptoken;
 	/* current token */
 	qse_awk_token_t token;
+	/* look-ahead token */
 	qse_awk_token_t ntoken;
 
 	/* intrinsic functions */

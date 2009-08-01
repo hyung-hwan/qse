@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: err.c 247 2009-07-31 13:01:04Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -59,12 +59,12 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("semicolon expected in place of '${0}'"),
 		QSE_T("colon expected in place of '${0}'"),
 		QSE_T("statement not ending with a semicolon"),
-		QSE_T("'in' expected in place of '${0}'"),
+		QSE_T("keyword 'in' expected in place of '${0}'"),
 		QSE_T("right-hand side of 'in' not a variable"),
-		QSE_T("invalid expression"),
+		QSE_T("expression not recognized around '${0}'"),
 
-		QSE_T("'function' expected in place of '${0}'"),
-		QSE_T("'while' expected in place of '${0}'"),
+		QSE_T("keyword 'function' expected in place of '${0}'"),
+		QSE_T("keyword 'while' expected in place of '${0}'"),
 		QSE_T("invalid assignment statement"),
 		QSE_T("identifier expected in place of '${0}'"),
 		QSE_T("'${0}' not a valid function name"),
