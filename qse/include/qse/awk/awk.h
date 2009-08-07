@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 247 2009-07-31 13:01:04Z hyunghwan.chung $
+ * $Id: awk.h 248 2009-08-06 08:27:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -273,7 +273,7 @@ typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
 struct qse_awk_sio_arg_t 
 {
-	qse_char_t* name;         /**< [IN] name of I/O object */
+	const qse_char_t* name;   /**< [IN] name of I/O object */
 	void* handle;             /**< [OUT] I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
@@ -284,12 +284,8 @@ struct qse_awk_sio_arg_t
 		qse_size_t len;
 	} b;
 
-	struct
-	{
-		qse_size_t line;
-		qse_size_t column;
-	} saved;
-
+	qse_size_t lin;
+	qse_size_t col;
 	struct qse_awk_sio_arg_t* next;
 };
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
@@ -642,10 +638,9 @@ enum qse_awk_errnum_t
 
 	QSE_AWK_ELXCHR,  /**< invalid character '${0}' */
 	QSE_AWK_ELXDIG,  /**< invalid digit '${0}' */
-	QSE_AWK_ELXUNG,  /**< failed to unget character */
 
 	QSE_AWK_EENDSRC, /**< unexpected end of source */
-	QSE_AWK_EENDCMT, /**< comment not closed properly */
+	QSE_AWK_ECMNTNC, /**< comment not closed properly */
 	QSE_AWK_EENDSTR, /**< string or regular expression not closed */
 	QSE_AWK_EENDREX, /**< unexpected end of regular expression */
 	QSE_AWK_ELBRACE, /**< left brace expected in place of '${0}' */

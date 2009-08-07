@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 247 2009-07-31 13:01:04Z hyunghwan.chung $
+ * $Id: awk.h 248 2009-08-06 08:27:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -99,10 +99,20 @@ struct qse_awk_tree_t
 typedef struct qse_awk_token_t qse_awk_token_t;
 struct qse_awk_token_t
 {
-	int        type;
-	qse_str_t* name;
-	qse_size_t line;
-	qse_size_t column;
+	int               type;
+	qse_str_t*        name;
+	const qse_char_t* file;
+	qse_size_t        lin;
+	qse_size_t        col;
+};
+
+typedef struct qse_awk_lxc_t qse_awk_lxc_t;
+struct qse_awk_lxc_t 
+{
+	qse_cint_t        c;
+	qse_size_t        lin;
+	qse_size_t        col;
+	const qse_char_t* file;
 };
 
 struct qse_awk_t
@@ -168,10 +178,6 @@ struct qse_awk_t
 
 		/* maximum number of local variables */
 		qse_size_t nlcls_max;
-
-		qse_awk_nde_t* (*parse_block) (
-			qse_awk_t*,qse_size_t,qse_bool_t);
-
 	} parse;
 
 	/* source code management */
@@ -180,20 +186,14 @@ struct qse_awk_t
 		qse_awk_sio_fun_t inf;
 		qse_awk_sio_fun_t outf;
 
-		struct
-		{
-			qse_cint_t curc;
-			qse_cint_t ungotc[5];
-			qse_size_t ungotc_line[5];
-			qse_size_t ungotc_column[5];
-			qse_size_t ungotc_count;
+		qse_awk_lxc_t last; 
 
-			qse_size_t line;
-			qse_size_t column;
-		} lex;
+		qse_size_t nungots;
+		qse_awk_lxc_t ungot[5];
 
-		qse_awk_sio_arg_t arg; 
+		qse_awk_sio_arg_t arg; /* for the top level source */
 		qse_awk_sio_arg_t* inp; /* current input */
+		qse_map_t* names; 
 	} sio;
 
 	/* previous token */

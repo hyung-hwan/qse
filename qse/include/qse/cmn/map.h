@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: map.h 248 2009-08-06 08:27:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -360,21 +360,15 @@ qse_map_freeer_t qse_map_getfreeer (
 	qse_map_id_t id   /* QSE_MAP_KEY or QSE_MAP_VAL */
 );
 
-/****f* Common/qse_map_setfreeer
- * NAME 
- *  qse_map_setfreeer - specify how to destroy an element
- *
- * DESCRIPTION
- *  The freeer is called when a node containing the element is destroyed.
- *
- * SYNOPSIS
+/**
+ * The qse_map_setfreeer() function specifies how to destroy an element.
+ * The @a freeer is called when a node containing the element is destroyed.
  */
 void qse_map_setfreeer (
-	qse_map_t* map           /* a map */,
-	qse_map_id_t id          /* QSE_MAP_KEY or QSE_MAP_VAL */,
-	qse_map_freeer_t freeer  /* an element freeer */
+	qse_map_t* map,          /**< a map */
+	qse_map_id_t id,         /**< QSE_MAP_KEY or QSE_MAP_VAL */
+	qse_map_freeer_t freeer  /**< an element freeer */
 );
-/******/
 
 
 qse_map_hasher_t qse_map_gethasher (
@@ -414,75 +408,75 @@ void qse_map_setsizer (
 	qse_map_sizer_t sizer
 );
 
-/****f* Common/qse_map_search
- * NAME
- *  qse_map_search - find a pair with a matching key 
- * DESCRIPTION
- *  The qse_map_search() function searches a map to find a pair with a 
- *  matching key. It returns the pointer to the pair found. If it fails
- *  to find one, it returns QSE_NULL.
- * RETURN
- *  The qse_map_search() function returns the pointer to the pair with a 
- *  maching key, and QSE_NULL if no match is found.
- * SYNOPSIS
+/**
+ * The qse_map_search() function searches a map to find a pair with a 
+ * matching key. It returns the pointer to the pair found. If it fails
+ * to find one, it returns QSE_NULL.
+ * @return pointer to the pair with a maching key, 
+ *         or QSE_NULL if no match is found.
  */
 qse_map_pair_t* qse_map_search (
-	qse_map_t*  map   /* a map */,
-	const void* kptr  /* the pointer to a key */,
-	qse_size_t  klen  /* the size of the key in bytes */
+	qse_map_t*  map,   /**< a map */
+	const void* kptr,  /**< the pointer to a key */
+	qse_size_t  klen   /**< the size of the key */
 );
-/******/
 
-/****f* Common/qse_map_upsert
- * NAME
- *  qse_map_upsert - update an existing pair or inesrt a new pair
- * DESCRIPTION 
- *  The qse_map_upsert() function searches a map for the pair with a matching
- *  key. If one is found, it updates the pair. Otherwise, it inserts a new
- *  pair with a key and a value. It returns the pointer to the pair updated 
- *  or inserted.
- * RETURN 
- *  The qse_map_upsert() function returns a pointer to the updated or inserted
- *  pair on success, and QSE_NULL on failure. 
+/**
+ * The qse_map_upsert() function searches a map for the pair with a matching
+ * key. If one is found, it updates the pair. Otherwise, it inserts a new
+ * pair with a key and a value. It returns the pointer to the pair updated 
+ * or inserted.
+ * @return a pointer to the updated or inserted pair on success, 
+ *         QSE_NULL on failure. 
  * SYNOPSIS
  */
 qse_map_pair_t* qse_map_upsert (
-	qse_map_t* map   /* a map */,
-	void*      kptr  /* the pointer to a key */,
-	qse_size_t klen  /* the length of the key in bytes */,
-	void*      vptr  /* the pointer to a value */,
-	qse_size_t vlen  /* the length of the value in bytes */
+	qse_map_t* map,   /**< a map */
+	void*      kptr,  /**< the pointer to a key */
+	qse_size_t klen,  /**< the length of the key */
+	void*      vptr,  /**< the pointer to a value */
+	qse_size_t vlen   /**< the length of the value */
 );
-/******/
 
-/****f* Common/qse_map_insert 
- * NAME
- *  qse_map_insert - insert a new pair with a key and a value 
- * DESCRIPTION
- *  The qse_map_insert() function inserts a new pair with the key and the value
- *  given. If there exists a pair with the key given, the function returns 
- *  QSE_NULL without channging the value.
- * RETURN 
- *  The qse_map_insert() function returns a pointer to the pair created on 
- *  success, and QSE_NULL on failure. 
- * SYNOPSIS
+/**
+ * The qse_map_ensert() function inserts a new pair with the key and the value
+ * given. If there exists a pair with the key given, the function returns 
+ * the pair containing the key.
+ * @return pointer to a pair on success, QSE_NULL on failure. 
+ */
+qse_map_pair_t* qse_map_ensert (
+	qse_map_t* map,   /**< a map */
+	void*      kptr,  /**< the pointer to a key */
+	qse_size_t klen,  /**< the length of the key */
+	void*      vptr,  /**< the pointer to a value */
+	qse_size_t vlen   /**< the length of the value */
+);
+
+/**
+ * The qse_map_insert() function inserts a new pair with the key and the value
+ * given. If there exists a pair with the key given, the function returns 
+ * QSE_NULL without channging the value.
+ * @return pointer to the pair created on success, QSE_NULL on failure. 
  */
 qse_map_pair_t* qse_map_insert (
-	qse_map_t* map   /* a map */,
-	void*      kptr  /* the pointer to a key */,
-	qse_size_t klen  /* the length of the key in bytes */,
-	void*      vptr  /* the pointer to a value */,
-	qse_size_t vlen  /* the length of the value in bytes */
+	qse_map_t* map,   /**< a map */
+	void*      kptr,  /**< the pointer to a key */
+	qse_size_t klen,  /**< the length of the key */
+	void*      vptr,  /**< the pointer to a value */
+	qse_size_t vlen   /**< the length of the value */
 );
-/******/
 
-/* update the value of a existing pair with a matching key */
+/**
+ * The qse_map_update() function updates the value of an existing pair
+ * with a matching key.
+ * @return pointer to the pair on success, QSE_NULL on no matching pair
+ */
 qse_map_pair_t* qse_map_update (
-	qse_map_t* map   /* a map */,
-	void* kptr       /* the pointer to a key */,
-	qse_size_t klen  /* the length of the key in bytes */,
-	void* vptr       /* the pointer to a value */,
-	qse_size_t vlen  /* the length of the value in bytes */
+	qse_map_t* map,   /**< a map */
+	void*      kptr,  /**< the pointer to a key */
+	qse_size_t klen,  /**< the length of the key */
+	void*      vptr,  /**< the pointer to a value */
+	qse_size_t vlen   /**< the length of the value */
 );
 
 /* delete a pair with a matching key */

@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 120 2009-04-10 05:00:00Z hyunghwan.chung $
+ * $Id: map.c 248 2009-08-06 08:27:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -45,6 +45,11 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (map)
 
 #define KTOB(map,len) ((len)*(map)->scale[QSE_MAP_KEY])
 #define VTOB(map,len) ((len)*(map)->scale[QSE_MAP_VAL])
+
+#define UPSERT 1
+#define UPDATE 2
+#define ENSERT 3
+#define INSERT 4
 
 static int reorganize (map_t* map);
 
@@ -411,8 +416,8 @@ pair_t* qse_map_search (map_t* map, const void* kptr, size_t klen)
 	return QSE_NULL;
 }
 
-pair_t* qse_map_upsert (
-	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+static pair_t* insert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen, int opt)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
@@ -427,22 +432,43 @@ pair_t* qse_map_upsert (
 
 		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
-			p = change_pair_val (map, pair, vptr, vlen);
-			if (p == QSE_NULL) return QSE_NULL; /* change error */
-			if (p != pair) 
+			/* found a pair with a matching key */
+			switch (opt)
 			{
-				/* the pair has been reallocated. relink it */
-				if (prev == QSE_NULL) map->bucket[hc] = p;
-				else NEXT(prev) = p;
-				NEXT(p) = next;
-			}
+				case UPSERT:
+				case UPDATE:
+					p = change_pair_val (map, pair, vptr, vlen);
+					if (p == QSE_NULL) 
+					{
+						/* error in change the value */
+						return QSE_NULL; 
+					}
+					if (p != pair) 
+					{
+						/* pair reallocated. 
+						 * relink it */
+						if (prev == QSE_NULL) 
+							map->bucket[hc] = p;
+						else NEXT(prev) = p;
+						NEXT(p) = next;
+					}
+					return p;
 
-			return p; /* value changed for the existing key */
+				case ENSERT:
+					/* return existing pair */
+					return pair; 
+
+				case INSERT:
+					/* return failure */
+					return QSE_NULL;
+			}
 		}
 
 		prev = pair;
 		pair = next;
 	}
+
+	if (opt == UPDATE) return QSE_NULL;
 
 	if (map->threshold > 0 && map->size >= map->threshold)
 	{
@@ -464,78 +490,29 @@ pair_t* qse_map_upsert (
 	return pair; /* new key added */
 }
 
-pair_t* qse_map_insert (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* qse_map_upsert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
-	pair_t* pair;
-	size_t hc;
-
-	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->bucket[hc];
-
-	while (pair != QSE_NULL) 
-	{
-		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
-		{
-			return QSE_NULL;
-		}
-
-		pair = NEXT(pair);
-	}
-
-	if (map->threshold > 0 && map->size >= map->threshold)
-	{
-		if (reorganize(map) == 0) /* ignore the error */
-		{
-			hc = map->hasher(map,kptr,klen) % map->capa;
-		}
-	}
-
-	QSE_ASSERT (pair == QSE_NULL);
-
-	pair = alloc_pair (map, kptr, klen, vptr, vlen);
-	if (pair == QSE_NULL) return QSE_NULL;
-
-	NEXT(pair) = map->bucket[hc];
-	map->bucket[hc] = pair;
-	map->size++;
-
-	return pair;
+	return insert (map, kptr, klen, vptr, vlen, UPSERT);
 }
 
-pair_t* qse_map_update (map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+pair_t* qse_map_ensert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
-	pair_t* pair, * p, * prev, * next;
-	size_t hc;
+	return insert (map, kptr, klen, vptr, vlen, ENSERT);
+}
 
-	hc = map->hasher(map,kptr,klen) % map->capa;
-	pair = map->bucket[hc];
-	prev = QSE_NULL;
+pair_t* qse_map_insert (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	return insert (map, kptr, klen, vptr, vlen, INSERT);
+}
 
-	while (pair != QSE_NULL) 
-	{
-		next = NEXT(pair);
 
-		if (map->comper (map, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
-		{
-			p = change_pair_val (map, pair, vptr, vlen);
-
-			if (p == QSE_NULL) return QSE_NULL; /* change error */
-			if (p != pair) 
-			{
-				/* the pair has been reallocated. relink it */
-				if (prev == QSE_NULL) map->bucket[hc] = p;
-				else NEXT(prev) = p;
-				NEXT(p) = next;
-			}
-
-			return p; /* value changed for the existing key */
-		}
-
-		prev = pair;
-		pair = next;
-	}
-
-	return QSE_NULL;
+pair_t* qse_map_update (
+	map_t* map, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	return insert (map, kptr, klen, vptr, vlen, UPDATE);
 }
 
 int qse_map_delete (map_t* map, const void* kptr, size_t klen)

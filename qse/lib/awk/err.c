@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 247 2009-07-31 13:01:04Z hyunghwan.chung $
+ * $Id: err.c 248 2009-08-06 08:27:14Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -45,7 +45,6 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 
 		QSE_T("invalid character '${0}'"),
 		QSE_T("invalid digit '${0}'"),
-		QSE_T("failed to unget character"),
 
 		QSE_T("unexpected end of source"),
 		QSE_T("comment not closed properly"),
