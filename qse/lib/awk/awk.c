@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 247 2009-07-31 13:01:04Z hyunghwan.chung $ 
+ * $Id: awk.c 248 2009-08-06 08:27:14Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -51,9 +51,10 @@ static int init_token (qse_mmgr_t* mmgr, qse_awk_token_t* token)
 	token->name = qse_str_open (mmgr, 0, 128);
 	if (token->name == QSE_NULL) return -1;
 	
+	token->file = QSE_NULL;
 	token->type = 0;
-	token->line = 0;
-	token->column = 0;
+	token->lin = 0;
+	token->col = 0;
 
 	return 0;
 }
@@ -70,9 +71,10 @@ static void fini_token (qse_awk_token_t* token)
 static void clear_token (qse_awk_token_t* token)
 {
 	if (token->name != QSE_NULL) qse_str_clear (token->name);
+	token->file = QSE_NULL;
 	token->type = 0;
-	token->line = 0;
-	token->column = 0;
+	token->lin = 0;
+	token->col = 0;
 }
 
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
@@ -132,6 +134,13 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_map_setscale (awk->rwtab, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 	qse_map_setscale (awk->rwtab, QSE_MAP_VAL, QSE_SIZEOF(qse_char_t));
 
+	awk->sio.names = qse_map_open (mmgr, QSE_SIZEOF(awk), 128, 70);
+	if (awk->sio.names == QSE_NULL) goto oops;
+	*(qse_awk_t**)QSE_XTN(awk->sio.names) = awk;
+	qse_map_setcopier (awk->sio.names, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+	qse_map_setscale (awk->sio.names, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	awk->sio.inp = &awk->sio.arg;
+
 	/* TODO: initial map size?? */
 	awk->tree.funs = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->tree.funs == QSE_NULL) goto oops;
@@ -150,9 +159,12 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->parse.named = qse_map_open (mmgr, QSE_SIZEOF(awk), 256, 70);
 	if (awk->parse.named == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.named) = awk;
-	qse_map_setcopier (awk->parse.named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setcopier (awk->parse.named, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_map_setcopier (
+		awk->parse.named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+	qse_map_setcopier (
+		awk->parse.named, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
+	qse_map_setscale (
+		awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
 	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
 	awk->parse.lcls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 64);
@@ -173,9 +185,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	*(qse_awk_t**)QSE_XTN(awk->parse.params) = awk;
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
-
-	awk->parse.nlcls_max = 0;
-	awk->sio.inp = &awk->sio.arg;
 
 	awk->option = QSE_AWK_CLASSIC;
 	awk->errinf.num = QSE_AWK_ENOERR;
@@ -213,6 +222,7 @@ oops:
 	if (awk->parse.named) qse_map_close (awk->parse.named);
 	if (awk->parse.funs) qse_map_close (awk->parse.funs);
 	if (awk->tree.funs) qse_map_close (awk->tree.funs);
+	if (awk->sio.names) qse_map_close (awk->sio.names);
 	if (awk->rwtab) qse_map_close (awk->rwtab);
 	if (awk->wtab) qse_map_close (awk->wtab);
 	fini_token (&awk->ntoken);
@@ -236,6 +246,8 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->parse.funs);
 
 	qse_map_close (awk->tree.funs);
+	qse_map_close (awk->sio.names);
+
 	qse_map_close (awk->rwtab);
 	qse_map_close (awk->wtab);
 
@@ -252,15 +264,6 @@ int qse_awk_close (qse_awk_t* awk)
 int qse_awk_clear (qse_awk_t* awk)
 {
 	awk->stopall = QSE_FALSE;
-
-	awk->sio.lex.curc = QSE_CHAR_EOF;
-	awk->sio.lex.ungotc_count = 0;
-	awk->sio.lex.line = 1;
-	awk->sio.lex.column = 1;
-	awk->sio.arg.b.pos = 0;
-	awk->sio.arg.b.len = 0;
-
-	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
 
 	clear_token (&awk->token);
 	clear_token (&awk->ntoken);
@@ -322,6 +325,20 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	awk->tree.chain_tail = QSE_NULL;	
 	awk->tree.chain_size = 0;
+
+	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
+	qse_map_clear (awk->sio.names);
+
+	awk->sio.last.c = QSE_CHAR_EOF;
+	awk->sio.last.lin = 0;
+	awk->sio.last.col = 0;
+	awk->sio.last.file = QSE_NULL;
+	awk->sio.nungots = 0;
+
+	awk->sio.arg.lin = 1;
+	awk->sio.arg.col = 1;
+	awk->sio.arg.b.pos = 0;
+	awk->sio.arg.b.len = 0;
 
 	return 0;
 }
@@ -429,3 +446,51 @@ int qse_awk_setword (
 	return 0;
 }
 
+qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, int type)
+{
+	return (type == QSE_AWK_DEPTH_BLOCK_PARSE)? awk->parse.depth.max.block:
+	       (type == QSE_AWK_DEPTH_BLOCK_RUN)? awk->run.depth.max.block:
+	       (type == QSE_AWK_DEPTH_EXPR_PARSE)? awk->parse.depth.max.expr:
+	       (type == QSE_AWK_DEPTH_EXPR_RUN)? awk->run.depth.max.expr:
+	       (type == QSE_AWK_DEPTH_REX_BUILD)? awk->rex.depth.max.build:
+	       (type == QSE_AWK_DEPTH_REX_MATCH)? awk->rex.depth.max.match: 
+	       (type == QSE_AWK_DEPTH_INCLUDE)? awk->parse.depth.max.incl: 0;
+}
+
+void qse_awk_setmaxdepth (qse_awk_t* awk, int types, qse_size_t depth)
+{
+	if (types & QSE_AWK_DEPTH_BLOCK_PARSE)
+	{
+		awk->parse.depth.max.block = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_EXPR_PARSE)
+	{
+		awk->parse.depth.max.expr = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_BLOCK_RUN)
+	{
+		awk->run.depth.max.block = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_EXPR_RUN)
+	{
+		awk->run.depth.max.expr = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_REX_BUILD)
+	{
+		awk->rex.depth.max.build = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_REX_MATCH)
+	{
+		awk->rex.depth.max.match = depth;
+	}
+
+	if (types & QSE_AWK_DEPTH_INCLUDE)
+	{
+		awk->parse.depth.max.incl = depth;
+	}
+}
