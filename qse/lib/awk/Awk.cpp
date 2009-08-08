@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: Awk.cpp 249 2009-08-07 13:35:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1612,6 +1612,7 @@ Awk::ssize_t Awk::readSource (
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
+			xtn->awk->sourceIn.name = arg->name;
 			return xtn->awk->sourceReader->open (xtn->awk->sourceIn);
 		case QSE_AWK_SIO_CLOSE:
 			return xtn->awk->sourceReader->close (xtn->awk->sourceIn);
@@ -1631,6 +1632,7 @@ Awk::ssize_t Awk::writeSource (
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
+			xtn->awk->sourceOut.name = arg->name;
 			return xtn->awk->sourceWriter->open (xtn->awk->sourceOut);
 		case QSE_AWK_SIO_CLOSE:
 			return xtn->awk->sourceWriter->close (xtn->awk->sourceOut);
