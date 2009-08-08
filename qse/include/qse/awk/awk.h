@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 248 2009-08-06 08:27:14Z hyunghwan.chung $
+ * $Id: awk.h 249 2009-08-07 13:35:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -286,6 +286,7 @@ struct qse_awk_sio_arg_t
 
 	qse_size_t lin;
 	qse_size_t col;
+
 	struct qse_awk_sio_arg_t* next;
 };
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;

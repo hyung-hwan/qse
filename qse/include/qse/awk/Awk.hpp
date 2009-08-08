@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 248 2009-08-06 08:27:14Z hyunghwan.chung $
+ * $Id: Awk.hpp 249 2009-08-07 13:35:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -275,14 +275,18 @@ public:
 		 * The Awk::Source::Data class is used to deliver information
 		 * needed for source script I/O. 
 		 */
-		class Data
+		class Data: protected qse_awk_sio_arg_t
 		{
 		public:
 			friend class Awk;
 
 		protected:
 			Data (Awk* awk, Mode mode): 
-				awk (awk), mode (mode), handle (QSE_NULL) {}
+				awk (awk), mode (mode)
+			{
+				this->name = QSE_NULL;
+				this->handle = QSE_NULL;
+			}
 
 		public:
 			Mode getMode() const
@@ -290,9 +294,14 @@ public:
 				return mode;
 			}
 
+			const char_t* getName() const
+			{
+				return this->name;
+			}
+
 			const void* getHandle () const
 			{
-				return handle;
+				return this->handle;
 			}
 
 			void  setHandle (void* handle)
@@ -313,7 +322,6 @@ public:
 		protected:
 			Awk* awk;
 			Mode  mode;
-			void* handle;
 		};
 
 		Source () {}
