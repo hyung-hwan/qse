@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 241 2009-07-22 12:47:13Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -778,22 +778,78 @@ int StdAwk::vsprintf (
 int StdAwk::SourceFile::open (Data& io)
 {
 	qse_sio_t* sio;
+	const qse_char_t* ioname = io.getName();
 
-	if (name[0] == QSE_T('-') &&
-	    name[1] == QSE_T('\0'))
+	if (ioname == QSE_NULL)
 	{
-		sio = (io.getMode() == READ)? qse_sio_in: qse_sio_out;
+		if (name[0] == QSE_T('-') && name[1] == QSE_T('\0'))
+		{
+			sio = (io.getMode() == READ)? qse_sio_in: qse_sio_out;
+		}
+		else
+		{
+			const qse_char_t* base;
+
+			sio = qse_sio_open (
+				((awk_t*)io)->mmgr,
+				0,
+				name,
+				(io.getMode() == READ? 
+					QSE_SIO_READ: 
+					(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+			);
+			if (sio == QSE_NULL) return -1;
+
+			base = qse_awk_basename ((awk_t*)io, name);
+			if (base != name)
+			{
+				dir.ptr = name;
+				dir.len = base - name;
+			}
+		}
 	}
 	else
 	{
+		const char_t* file = name;
+		char_t fbuf[64];
+		char_t* dbuf = QSE_NULL;
+	
+		if (dir.len > 0)
+		{
+			size_t tmplen, totlen;
+			
+			totlen = qse_strlen(ioname) + dir.len;
+			if (totlen >= QSE_COUNTOF(fbuf))
+			{
+				dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
+					((awk_t*)io)->mmgr,
+					QSE_SIZEOF(qse_char_t) * (totlen + 1)
+				);
+				if (dbuf == QSE_NULL)
+				{
+					((Awk*)io)->setError (ERR_NOMEM);
+					return -1;
+				}
+
+				file = dbuf;
+			}
+			else file = fbuf;
+
+			tmplen = qse_strncpy (
+				(char_t*)file, dir.ptr, dir.len);
+			qse_strcpy ((char_t*)file + tmplen, ioname);
+		}
+
 		sio = qse_sio_open (
 			((awk_t*)io)->mmgr,
 			0,
-			name,
+			file,
 			(io.getMode() == READ? 
 				QSE_SIO_READ: 
 				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
 		);
+
+		if (dbuf != QSE_NULL) QSE_MMGR_FREE (((awk_t*)io)->mmgr, dbuf);
 		if (sio == QSE_NULL) return -1;
 	}
 
@@ -827,27 +883,67 @@ StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, char_t* buf, size_t len)
 
 int StdAwk::SourceString::open (Data& io)
 {
-	/* SourceString does not support writing */
-	if (io.getMode() == WRITE) return -1;
-	ptr = str;
+	qse_sio_t* sio;
+	const char_t* ioname = io.getName();
+
+	if (ioname == QSE_NULL)
+	{
+		/* SourceString does not support writing */
+		if (io.getMode() == WRITE) return -1;
+		ptr = str;
+	}
+	else
+	{
+		/* open an included file */
+		sio = qse_sio_open (
+			((awk_t*)io)->mmgr,
+			0,
+			ioname,
+			(io.getMode() == READ? 
+				QSE_SIO_READ: 
+				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+		);
+		if (sio == QSE_NULL) return -1;
+		io.setHandle (sio);
+	}
+
 	return 1;
 }
 
 int StdAwk::SourceString::close (Data& io)
 {
+	if (io.getName() != QSE_NULL)
+		qse_sio_close ((qse_sio_t*)io.getHandle());
+
 	return 0;
 }
 
 StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
 {
-	qse_size_t n = 0;
-	while (*ptr != QSE_T('\0') && n < len) buf[n++] = *ptr++;
-	return n;
+	if (io.getName() == QSE_NULL)
+	{
+		qse_size_t n = 0;
+		while (*ptr != QSE_T('\0') && n < len) buf[n++] = *ptr++;
+		return n;
+	}
+	else
+	{
+		return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	}
 }
 
 StdAwk::ssize_t StdAwk::SourceString::write (Data& io, char_t* buf, size_t len)
 {
-	return -1;
+	if (io.getName() == QSE_NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		// in fact, this block will never be reached as
+		// there is no included file concept for deparsing 
+		return qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+	}
 }
 
 /////////////////////////////////

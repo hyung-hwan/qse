@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 249 2009-08-07 13:35:24Z hyunghwan.chung $
+ * $Id: Awk.cpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -995,9 +995,7 @@ int Awk::Run::getGlobal (int id, Value& g) const
 // Awk
 //////////////////////////////////////////////////////////////////
 
-Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL),
-	sourceIn (this, Source::READ), sourceOut (this, Source::WRITE),
-	runctx (this)
+Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL), runctx (this)
 
 {
 	errinf.num = (errnum_t)ERR_NOERR;
@@ -1608,16 +1606,16 @@ Awk::ssize_t Awk::readSource (
 	char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	Source::Data sdat (xtn->awk, Source::READ, arg);
 
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
-			xtn->awk->sourceIn.name = arg->name;
-			return xtn->awk->sourceReader->open (xtn->awk->sourceIn);
+			return xtn->awk->sourceReader->open (sdat);
 		case QSE_AWK_SIO_CLOSE:
-			return xtn->awk->sourceReader->close (xtn->awk->sourceIn);
+			return xtn->awk->sourceReader->close (sdat);
 		case QSE_AWK_SIO_READ:
-			return xtn->awk->sourceReader->read (xtn->awk->sourceIn, data, count);
+			return xtn->awk->sourceReader->read (sdat, data, count);
 		default:
 			return -1;
 	}
@@ -1628,16 +1626,16 @@ Awk::ssize_t Awk::writeSource (
 	char_t* data, size_t count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	Source::Data sdat (xtn->awk, Source::WRITE, arg);
 
 	switch (cmd)
 	{
 		case QSE_AWK_SIO_OPEN:
-			xtn->awk->sourceOut.name = arg->name;
-			return xtn->awk->sourceWriter->open (xtn->awk->sourceOut);
+			return xtn->awk->sourceWriter->open (sdat);
 		case QSE_AWK_SIO_CLOSE:
-			return xtn->awk->sourceWriter->close (xtn->awk->sourceOut);
+			return xtn->awk->sourceWriter->close (sdat);
 		case QSE_AWK_SIO_WRITE:
-			return xtn->awk->sourceWriter->write (xtn->awk->sourceOut, data, count);
+			return xtn->awk->sourceWriter->write (sdat, data, count);
 		default:
 			return -1;
 	}

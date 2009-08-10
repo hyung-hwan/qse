@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h 171 2009-06-01 09:34:34Z hyunghwan.chung $
+ * $Id: misc.h 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -65,6 +65,11 @@ int qse_awk_matchrex (
         const qse_char_t* str, qse_size_t len,
         const qse_char_t* substr, qse_size_t sublen,
 	qse_cstr_t* match, qse_awk_errnum_t* errnum
+);
+
+const qse_char_t* qse_awk_basename (
+	qse_awk_t* awk, 
+	const qse_char_t* path
 );
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -45,7 +45,10 @@ public:
 	class SourceFile: public Source 
 	{
 	public:
-		SourceFile (const char_t* name): name (name) {}
+		SourceFile (const char_t* name): name (name) 
+		{
+			dir.ptr = QSE_NULL; dir.len = 0; 
+		}
 
 		int open (Data& io);
 		int close (Data& io);
@@ -54,6 +57,7 @@ public:
 
 	protected:
 		const char_t* name;
+		qse_cstr_t dir;
 	};
 
 	class SourceString: public Source

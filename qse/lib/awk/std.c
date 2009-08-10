@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 247 2009-07-31 13:01:04Z hyunghwan.chung $
+ * $Id: std.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -45,6 +45,7 @@ typedef struct xtn_t
 					const qse_char_t* end;	
 				} cpl;
 			} u;
+			qse_cstr_t dir;
 			qse_sio_t* handle; /* the handle to an open file */
 		} in;
 
@@ -173,6 +174,8 @@ static qse_ssize_t sf_in_open (
 				}
 				else
 				{
+					const qse_char_t* base;
+
 					xtn->s.in.handle = qse_sio_open (
 						awk->mmgr,
 						0,
@@ -189,6 +192,13 @@ static qse_ssize_t sf_in_open (
 							0, &ea
 						);
 						return -1;
+					}
+
+					base = qse_awk_basename (awk, xtn->s.in.u.file);
+					if (base != xtn->s.in.u.file)
+					{
+						xtn->s.in.dir.ptr = xtn->s.in.u.file;
+						xtn->s.in.dir.len = base - xtn->s.in.u.file;
 					}
 				}
 				return 1;
@@ -208,11 +218,45 @@ static qse_ssize_t sf_in_open (
 	}
 	else
 	{
-/* TODO: standard include path */
+		const qse_char_t* file = arg->name;
+		qse_char_t fbuf[64];
+		qse_char_t* dbuf = QSE_NULL;
+	
+		if (xtn->s.in.dir.len > 0)
+		{
+			qse_size_t tmplen, totlen;
+			
+			totlen = qse_strlen(arg->name) + xtn->s.in.dir.len;
+			if (totlen >= QSE_COUNTOF(fbuf))
+			{
+				dbuf = QSE_MMGR_ALLOC (
+					awk->mmgr,
+					QSE_SIZEOF(qse_char_t) * (totlen + 1)
+				);
+				if (dbuf == QSE_NULL)
+				{
+					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM);
+					return -1;
+				}
+
+				file = dbuf;
+			}
+			else file = fbuf;
+
+			tmplen = qse_strncpy (
+				(qse_char_t*)file,
+				xtn->s.in.dir.ptr,
+				xtn->s.in.dir.len
+			);
+			qse_strcpy ((qse_char_t*)file + tmplen, arg->name);
+		}
+
 		arg->handle = qse_sio_open (
-			awk->mmgr, 0, arg->name, QSE_SIO_READ
+			awk->mmgr, 0, file, QSE_SIO_READ
 		);
-		if (arg->handle == QSE_NULL) 
+
+		if (dbuf != QSE_NULL) QSE_MMGR_FREE (awk->mmgr, dbuf);
+		if (arg->handle == QSE_NULL)
 		{
 			qse_cstr_t ea;
 			ea.ptr = arg->name;

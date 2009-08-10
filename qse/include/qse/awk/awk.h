@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 249 2009-08-07 13:35:24Z hyunghwan.chung $
+ * $Id: awk.h 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -271,12 +271,21 @@ enum qse_awk_sio_cmd_t
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
+typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
+struct qse_awk_sio_lxc_t
+{
+	qse_cint_t        c;
+	qse_size_t        lin;
+	qse_size_t        col;
+	const qse_char_t* file;
+};
+
 struct qse_awk_sio_arg_t 
 {
 	const qse_char_t* name;   /**< [IN] name of I/O object */
 	void* handle;             /**< [OUT] I/O handle set by a handler */
 
-	/*--  from here down, internal use only --*/
+	/*-- from here down, internal use only --*/
 	struct
 	{
 		qse_char_t buf[1024];
@@ -287,6 +296,7 @@ struct qse_awk_sio_arg_t
 	qse_size_t lin;
 	qse_size_t col;
 
+	qse_awk_sio_lxc_t last;
 	struct qse_awk_sio_arg_t* next;
 };
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;

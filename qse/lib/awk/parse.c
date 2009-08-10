@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 248 2009-08-06 08:27:14Z hyunghwan.chung $
+ * $Id: parse.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -398,11 +398,7 @@ static int get_char (qse_awk_t* awk)
 	if (awk->sio.nungots > 0) 
 	{
 		/* there are something in the unget buffer */
-		QSE_MEMCPY (
-			&awk->sio.last,
-			&awk->sio.ungot[--awk->sio.nungots], 
-			QSE_SIZEOF(awk->sio.last)
-		);
+		awk->sio.last = awk->sio.ungot[--awk->sio.nungots];
 		return 0;
 	}
 
@@ -433,31 +429,28 @@ static int get_char (qse_awk_t* awk)
 		awk->sio.inp->b.len = n;	
 	}
 
-	awk->sio.last.c = awk->sio.inp->b.buf[awk->sio.inp->b.pos++];
-	awk->sio.last.lin = awk->sio.inp->lin;
-	awk->sio.last.col = awk->sio.inp->col;
-	awk->sio.last.file = awk->sio.inp->name;
+	awk->sio.inp->last.c = awk->sio.inp->b.buf[awk->sio.inp->b.pos++];
+	awk->sio.inp->last.lin = awk->sio.inp->lin;
+	awk->sio.inp->last.col = awk->sio.inp->col;
+	awk->sio.inp->last.file = awk->sio.inp->name;
 
-	if (awk->sio.last.c == QSE_T('\n'))
+	if (awk->sio.inp->last.c == QSE_T('\n'))
 	{
 		awk->sio.inp->lin++;
 		awk->sio.inp->col = 1;
 	}
 	else awk->sio.inp->col++;
 
+	awk->sio.last = awk->sio.inp->last;
 	return 0;
 }
 
-static void unget_char (qse_awk_t* awk, const qse_awk_lxc_t* c)
+static void unget_char (qse_awk_t* awk, const qse_awk_sio_lxc_t* c)
 {
 	/* Make sure that the unget buffer is large enough */
 	QSE_ASSERTX (awk->sio.nungots < QSE_COUNTOF(awk->sio.ungot), 
 		"Make sure that you have increased the size of sio.ungot large enough");
-
-	QSE_MEMCPY (
-		&awk->sio.ungot[awk->sio.nungots++], 
-		c, QSE_SIZEOF(*c)
-	);
+	awk->sio.ungot[awk->sio.nungots++] = *c;
 }
 
 const qse_char_t* qse_awk_getgblname (
@@ -762,8 +755,8 @@ static int end_include (qse_awk_t* awk)
 static qse_awk_t* parse_progunit (qse_awk_t* awk)
 {
 	/*
+	@include "xxxx"
 	global xxx, xxxx;
-	include "xxxx";
 	BEGIN { action }
 	END { action }
 	pattern { action }
@@ -5132,16 +5125,16 @@ static int skip_spaces (qse_awk_t* awk)
 
 			if (c == QSE_T('\\'))
 			{
-				qse_awk_lxc_t bs;
-				qse_awk_lxc_t cr;
+				qse_awk_sio_lxc_t bs;
+				qse_awk_sio_lxc_t cr;
 				int hascr = 0;
 
-				QSE_MEMCPY (&bs, &awk->sio.last, QSE_SIZEOF(bs));
+				bs = awk->sio.last;
 				GET_CHAR_TO (awk, c);
 				if (c == QSE_T('\r')) 
 				{
 					hascr = 1;
-					QSE_MEMCPY (&cr, &awk->sio.last, QSE_SIZEOF(cr));
+					cr = awk->sio.last;
 					GET_CHAR_TO (awk, c);
 				}
 
@@ -5157,7 +5150,7 @@ static int skip_spaces (qse_awk_t* awk)
 					/* push CR if any */
 					if (hascr) unget_char (awk, &cr);
 					/* restore the orginal backslash */
-					QSE_MEMCPY (&awk->sio.last, &bs, QSE_SIZEOF(bs));
+					awk->sio.last = bs;
 				}
 			}
 
@@ -5176,7 +5169,7 @@ static int skip_spaces (qse_awk_t* awk)
 static int skip_comment (qse_awk_t* awk)
 {
 	qse_cint_t c = awk->sio.last.c;
-	qse_awk_lxc_t lc;
+	qse_awk_sio_lxc_t lc;
 
 	if (c == QSE_T('#'))
 	{
@@ -5192,7 +5185,7 @@ static int skip_comment (qse_awk_t* awk)
 	if (c != QSE_T('/')) return 0; /* not a comment */
 
 	/* save the last character */
-	QSE_MEMCPY (&lc, &awk->sio.last, QSE_SIZEOF(lc));
+	lc = awk->sio.last;
 	/* read a new character */
 	GET_CHAR_TO (awk, c);
 
@@ -5232,7 +5225,7 @@ static int skip_comment (qse_awk_t* awk)
 	/* unget '*' */
 	unget_char (awk, &awk->sio.last);
 	/* restore the previous state */
-	QSE_MEMCPY (&awk->sio.last, &lc, QSE_SIZEOF(lc));
+	awk->sio.last = lc;
 
 	return 0;
 }
@@ -5359,7 +5352,11 @@ retry:
 	{
 		n = end_include (awk);
 		if (n <= -1) return -1;
-		if (n >= 1) goto retry;
+		if (n >= 1) 
+		{
+			awk->sio.last = awk->sio.inp->last;
+			goto retry;
+		}
 
 		ADD_TOKEN_STR (awk, token, QSE_T("<EOF>"), 5);
 		SET_TOKEN_TYPE (awk, token, TOKEN_EOF);
@@ -5377,9 +5374,9 @@ retry:
 	}
 	else if (c == QSE_T('.'))
 	{
-		qse_awk_lxc_t lc;
+		qse_awk_sio_lxc_t lc;
 
-		QSE_MEMCPY (&lc, &awk->sio.last, QSE_SIZEOF(lc));
+		lc = awk->sio.last;
 		GET_CHAR_TO (awk, c);
 
 		if (!(awk->option & QSE_AWK_EXPLICIT) && 
@@ -5387,7 +5384,7 @@ retry:
 		{
 			/* for a token such as .123 */
 			unget_char (awk, &awk->sio.last);	
-			QSE_MEMCPY (&awk->sio.last, &lc, QSE_SIZEOF(lc));
+			awk->sio.last = lc;
 			if (get_number (awk, token) <= -1) return -1;
 
 		}
