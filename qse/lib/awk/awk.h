@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 248 2009-08-06 08:27:14Z hyunghwan.chung $
+ * $Id: awk.h 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -106,15 +106,6 @@ struct qse_awk_token_t
 	qse_size_t        col;
 };
 
-typedef struct qse_awk_lxc_t qse_awk_lxc_t;
-struct qse_awk_lxc_t 
-{
-	qse_cint_t        c;
-	qse_size_t        lin;
-	qse_size_t        col;
-	const qse_char_t* file;
-};
-
 struct qse_awk_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sed)
@@ -186,10 +177,10 @@ struct qse_awk_t
 		qse_awk_sio_fun_t inf;
 		qse_awk_sio_fun_t outf;
 
-		qse_awk_lxc_t last; 
+		qse_awk_sio_lxc_t last; 
 
 		qse_size_t nungots;
-		qse_awk_lxc_t ungot[5];
+		qse_awk_sio_lxc_t ungot[5];
 
 		qse_awk_sio_arg_t arg; /* for the top level source */
 		qse_awk_sio_arg_t* inp; /* current input */

@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 211 2009-06-24 09:50:10Z hyunghwan.chung $
+ * $Id: awk04.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -33,7 +33,7 @@ int main ()
 	qse_size_t len;
 	qse_awk_val_t* v;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
-	int ret, i;
+	int ret, i, opt;
 
 	/* create a main processor */
 	awk = qse_awk_openstd (0);
@@ -43,8 +43,14 @@ int main ()
 		ret = -1; goto oops;
 	}
 
+	opt = qse_awk_getoption(awk);
+
 	/* don't allow BEGIN, END, pattern-action blocks */
-	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
+	opt &= ~QSE_AWK_PABLOCK;
+	/* enable ** */
+	opt |= QSE_AWK_EXTRAOPS;
+
+	qse_awk_setoption (awk, opt);
 
 	psin.type = QSE_AWK_PARSESTD_CP;
 	psin.u.cp = src;
