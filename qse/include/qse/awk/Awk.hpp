@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: Awk.hpp 251 2009-08-10 07:11:16Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -879,6 +879,16 @@ public:
 		 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
 		 */
 		OPT_NCMPONSTR = QSE_AWK_NCMPONSTR,
+
+		/**
+		 * Enables the strict naming rule.
+		 * - a parameter name can not be the same as the owning
+		 *   function name.
+		 * - a local variable name can not be the same as the 
+		 *   owning function name.
+		 */
+
+		OPT_STRICTNAMING = QSE_AWK_STRICTNAMING,
 
 		/** Enables 'include' */
 		OPT_INCLUDE = QSE_AWK_INCLUDE

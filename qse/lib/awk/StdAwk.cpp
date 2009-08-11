@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 251 2009-08-10 07:11:16Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -778,7 +778,7 @@ int StdAwk::vsprintf (
 int StdAwk::SourceFile::open (Data& io)
 {
 	qse_sio_t* sio;
-	const qse_char_t* ioname = io.getName();
+	const char_t* ioname = io.getName();
 
 	if (ioname == QSE_NULL)
 	{
