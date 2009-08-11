@@ -115,7 +115,7 @@ public:
 	#endif
 	}
 
-	int sleep (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int sleep (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		if (args[0].isIndexed()) 
@@ -126,7 +126,7 @@ public:
 
 		long_t x = args[0].toInt();
 
-		/*Argument arg;
+		/*Value arg;
 		if (run.getGlobal(idLastSleep, arg) == 0)
 			qse_printf (QSE_T("GOOD: [%d]\n"), (int)arg.toInt());
 		else { qse_printf (QSE_T("BAD:\n")); }
@@ -136,56 +136,54 @@ public:
 
 	#ifdef _WIN32
 		::Sleep ((DWORD)(x * 1000));
-		return ret.set ((long_t)0);
+		return ret.setInt (0);
 	#else
-		return ret.set ((long_t)::sleep (x));
+		return ret.setInt (::sleep (x));
 	#endif
 	}
 
-	int sumintarray (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int sumintarray (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		long_t x = 0;
 
 		if (args[0].isIndexed()) 
 		{
-			Argument idx(run), val(run);
+			Value val(run);
+			Value::Index idx;
+			Value::IndexIterator ii;
 
-			int n = args[0].getFirstIndex (idx);
-			while (n > 0)
+			ii = args[0].getFirstIndex (&idx);
+			while (ii != ii.END)
 			{
-				size_t len;
-				const char_t* ptr = idx.toStr(&len);
-
-				if (args[0].getIndexed(ptr, len, val) <= -1) return -1;
+				if (args[0].getIndexed(idx, &val) <= -1) return -1;
 				x += val.toInt ();
 
-				n = args[0].getNextIndex (idx);
+				ii = args[0].getNextIndex (&idx, ii);
 			}
-			if (n != 0) return -1;
 		}
 		else x += args[0].toInt();
 
-		return ret.set (x);
+		return ret.setInt (x);
 	}
 
-	int arrayindices (Run& run, Return& ret, const Argument* args, size_t nargs, 
+	int arrayindices (Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		if (!args[0].isIndexed()) return 0;
 
-		Argument idx (run);
+		Value::Index idx;
+		Value::IndexIterator ii;
 		long_t i;
 
-		int n = args[0].getFirstIndex (idx);
-		for (i = 0; n > 0; i++)
+		ii = args[0].getFirstIndex (&idx);
+		for (i = 0; ii != ii.END ; i++)
 		{
-			size_t len;
-			const char_t* ptr = idx.toStr(&len);
-			n = args[0].getNextIndex (idx);
-			if (ret.setIndexed (i, ptr, len) <= -1) return -1;
+			Value::IntIndex iidx (i);
+			if (ret.setIndexedStr (
+				iidx, idx.ptr, idx.len) <= -1) return -1;
+			ii = args[0].getNextIndex (&idx, ii);
 		}
-		if (n != 0) return -1;
 	
 		return 0;
 	}
@@ -205,7 +203,7 @@ protected:
 		return true;
 	}
 
-	void onLoopExit (Run& run, const Argument& ret)
+	void onLoopExit (Run& run, const Value& ret)
 	{
 		unset_intr_run ();
 
@@ -417,26 +415,32 @@ static void print_error (const qse_char_t* msg)
 	qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), msg);
 }
 
-static struct
+
+struct opttab_t
 {
 	const qse_char_t* name;
-	MyAwk::Option   opt;
-} otab[] =
+	int opt;
+	const qse_char_t* desc;
+} opttab[] =
 {
-	{ QSE_T("implicit"),    MyAwk::OPT_IMPLICIT },
-	{ QSE_T("explicit"),    MyAwk::OPT_EXPLICIT },
-	{ QSE_T("bxor"),        MyAwk::OPT_BXOR },
-	{ QSE_T("shift"),       MyAwk::OPT_SHIFT },
-	{ QSE_T("idiv"),        MyAwk::OPT_IDIV },
-	{ QSE_T("rio"),         MyAwk::OPT_RIO },
-	{ QSE_T("rwpipe"),      MyAwk::OPT_RWPIPE },
-	{ QSE_T("newline"),     MyAwk::OPT_NEWLINE },
-	{ QSE_T("stripspaces"), MyAwk::OPT_STRIPSPACES },
-	{ QSE_T("nextofile"),   MyAwk::OPT_NEXTOFILE },
-	{ QSE_T("crlf"),        MyAwk::OPT_CRLF },
-	{ QSE_T("reset"),       MyAwk::OPT_RESET },
-	{ QSE_T("maptovar"),    MyAwk::OPT_MAPTOVAR },
-	{ QSE_T("pablock"),     MyAwk::OPT_PABLOCK }
+	{ QSE_T("implicit"),    MyAwk::OPT_IMPLICIT,       QSE_T("allow undeclared variables") },
+	{ QSE_T("explicit"),    MyAwk::OPT_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
+	{ QSE_T("extraops"),    MyAwk::OPT_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
+	{ QSE_T("rio"),         MyAwk::OPT_RIO,            QSE_T("enable builtin I/O including getline & print") },
+	{ QSE_T("rwpipe"),      MyAwk::OPT_RWPIPE,         QSE_T("allow a dual-directional pipe") },
+	{ QSE_T("newline"),     MyAwk::OPT_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
+	{ QSE_T("striprecspc"), MyAwk::OPT_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
+	{ QSE_T("stripstrspc"), MyAwk::OPT_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
+	{ QSE_T("nextofile"),   MyAwk::OPT_NEXTOFILE,      QSE_T("enable 'nextofile'") },
+	{ QSE_T("reset"),       MyAwk::OPT_RESET,          QSE_T("enable 'reset'") },
+	{ QSE_T("crlf"),        MyAwk::OPT_CRLF,           QSE_T("use CRLF for a newline") },
+	{ QSE_T("maptovar"),    MyAwk::OPT_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
+	{ QSE_T("pablock"),     MyAwk::OPT_PABLOCK,        QSE_T("enable pattern-action loop") },
+	{ QSE_T("rexbound"),    MyAwk::OPT_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
+	{ QSE_T("ncmponstr"),   MyAwk::OPT_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
+	{ QSE_T("strictnaming"), MyAwk::OPT_STRICTNAMING,  QSE_T("enable the strict naming rule") },
+	{ QSE_T("include"),     MyAwk::OPT_INCLUDE,        QSE_T("enable 'include'") },
+	{ QSE_NULL,             0 }
 };
 
 static void print_usage (const qse_char_t* argv0)
@@ -462,9 +466,9 @@ static void print_usage (const qse_char_t* argv0)
 
 
 	qse_printf (QSE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
-	for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
+	for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
 	{
-		qse_printf (QSE_T("    -%-20s -no%-20s\n"), otab[j].name, otab[j].name);
+		qse_printf (QSE_T("    -%-20s -no%-20s\n"), opttab[j].name, opttab[j].name);
 	}
 }
 
@@ -514,22 +518,22 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 					if (argv[i][1] == QSE_T('n') && argv[i][2] == QSE_T('o'))
 					{
-						for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
+						for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
 						{
-							if (qse_strcmp(&argv[i][3], otab[j].name) == 0)
+							if (qse_strcmp(&argv[i][3], opttab[j].name) == 0)
 							{
-								awk.setOption (awk.getOption() & ~otab[j].opt);
+								awk.setOption (awk.getOption() & ~opttab[j].opt);
 								goto ok_valid;
 							}
 						}
 					}
 					else
 					{
-						for (j = 0; j < (int)QSE_COUNTOF(otab); j++)
+						for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
 						{
-							if (qse_strcmp(&argv[i][1], otab[j].name) == 0)
+							if (qse_strcmp(&argv[i][1], opttab[j].name) == 0)
 							{
-								awk.setOption (awk.getOption() | otab[j].opt);
+								awk.setOption (awk.getOption() | opttab[j].opt);
 								goto ok_valid;
 							}
 						}
@@ -646,7 +650,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 #if 0
-	MyAwk::Return args[2];
+	MyAwk::Value args[2];
 
 	args[0].setRun (run);
 	args[1].setRun (run);

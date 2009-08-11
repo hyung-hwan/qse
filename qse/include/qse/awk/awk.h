@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: awk.h 251 2009-08-10 07:11:16Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -600,8 +600,9 @@ enum qse_awk_option_t
 
 	/**
 	 * enables the strict naming rule.
-	 * - a parameter can not be the same as the owning function name.
-	 * - a local variable can not be the same as the owning function name.
+	 * - a parameter name can not be the same as the owning function name.
+	 * - a local variable name can not be the same as the owning 
+	 *   function name.
 	 */
 	QSE_AWK_STRICTNAMING = (1 << 15),
 
