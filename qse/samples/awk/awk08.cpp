@@ -48,36 +48,12 @@ static bool verbose = false;
 class MyAwk: public QSE::StdAwk
 {
 public:
-	MyAwk (): srcInName(QSE_NULL), srcOutName(QSE_NULL)
-	            
-	{
-	#ifdef _WIN32
-		heap = QSE_NULL;
-	#endif
-	}
-
-	~MyAwk ()
-	{
-		close ();
-	}
+	MyAwk () { }
+	~MyAwk () { close (); }
 
 	int open ()
 	{
-	#ifdef _WIN32
-		QSE_ASSERT (heap == QSE_NULL);
-		heap = ::HeapCreate (0, 1000000, 1000000);
-		if (heap == QSE_NULL) return -1;
-	#endif
-
-		int n = StdAwk::open ();
-		if (n <= -1)
-		{
-	#ifdef _WIN32
-			HeapDestroy (heap); 
-			heap = QSE_NULL;
-	#endif
-			return -1;
-		}
+		if (StdAwk::open () <= -1) return -1;
 
 		idLastSleep = addGlobal (QSE_T("LAST_SLEEP"));
 		if (idLastSleep <= -1) goto failure;
@@ -94,25 +70,7 @@ public:
 
 	failure:
 		StdAwk::close ();
-
-	#ifdef _WIN32
-		HeapDestroy (heap); 
-		heap = QSE_NULL;
-	#endif
 		return -1;
-	}
-
-	void close ()
-	{
-		StdAwk::close ();
-
-	#ifdef _WIN32
-		if (heap != QSE_NULL)
-		{
-			HeapDestroy (heap); 
-			heap = QSE_NULL;
-		}
-	#endif
 	}
 
 	int sleep (Run& run, Value& ret, const Value* args, size_t nargs, 
@@ -188,15 +146,9 @@ public:
 		return 0;
 	}
 	
-	Run* parse (const char_t* in, const char_t* out)
-	{
-		srcInName = in;
-		srcOutName = out;
-		return StdAwk::parse ();
-	}
-
 protected:
 
+#if 0
 	bool onLoopEnter (Run& run)
 	{
 		set_intr_run ();
@@ -214,135 +166,10 @@ protected:
 			qse_printf (QSE_T("*** return [%.*s] ***\n"), (int)len, ptr);
 		}
 	}
-	
-
-	int openSource (Source& io)
-	{
-		Source::Mode mode = io.getMode();
-		FILE* fp = QSE_NULL;
-
-		// TODO: use sio instead of stdio
-		if (mode == Source::READ)
-		{
-			if (srcInName == QSE_NULL) 
-			{
-				io.setHandle (stdin);
-				return 0;
-			}
-
-			if (srcInName[0] == QSE_T('\0')) fp = stdin;
-			else fp = qse_fopen (srcInName, QSE_T("r"));
-		}
-		else if (mode == Source::WRITE)
-		{
-			if (srcOutName == QSE_NULL)
-			{
-				io.setHandle (stdout);
-				return 0;
-			}
-
-			if (srcOutName[0] == QSE_T('\0')) fp = stdout;
-			else fp = qse_fopen (srcOutName, QSE_T("w"));
-		}
-
-		if (fp == QSE_NULL) return -1;
-		io.setHandle (fp);
-		return 1;
-	}
-
-	int closeSource (Source& io)
-	{
-		FILE* fp = (FILE*)io.getHandle();
-		if (fp == stdout || fp == stderr) fflush (fp);
-		if (fp != stdin && fp != stdout && fp != stderr) fclose (fp);
-		io.setHandle (QSE_NULL);
-		return 0;
-	}
-
-	ssize_t readSource (Source& io, char_t* buf, size_t len)
-	{
-		FILE* fp = (FILE*)io.getHandle();
-		ssize_t n = 0;
-
-		while (n < (ssize_t)len)
-		{
-			qse_cint_t c = qse_fgetc (fp);
-			if (c == QSE_CHAR_EOF) 
-			{
-				if (qse_ferror(fp)) n = -1;
-				break;
-			}
-
-			buf[n++] = c;
-			if (c == QSE_T('\n')) break;
-		}
-
-		return n;
-	}
-
-	ssize_t writeSource (Source& io, char_t* buf, size_t len)
-	{
-		FILE* fp = (FILE*)io.getHandle();
-		size_t left = len;
-
-		while (left > 0)
-		{
-			if (*buf == QSE_T('\0')) 
-			{
-				if (qse_fputc(*buf,fp) == QSE_CHAR_EOF) return -1;
-				left -= 1; buf += 1;
-			}
-			else
-			{
-				int chunk = (left > QSE_TYPE_MAX(int))? QSE_TYPE_MAX(int): (int)left;
-				int n = qse_fprintf (fp, QSE_T("%.*s"), chunk, buf);
-				if (n < 0 || n > chunk) return -1;
-				left -= n; buf += n;
-			}
-		}
-
-		return len;
-	}
-
-	void* allocMem (size_t n) throw ()
-	{ 
-	#ifdef _WIN32
-		return ::HeapAlloc (heap, 0, n);
-	#else
-		return ::malloc (n);
-	#endif
-	}
-
-	void* reallocMem (void* ptr, size_t n) throw ()
-	{ 
-	#ifdef _WIN32
-		if (ptr == NULL)
-			return ::HeapAlloc (heap, 0, n);
-		else
-			return ::HeapReAlloc (heap, 0, ptr, n);
-	#else
-		return ::realloc (ptr, n);
-	#endif
-	}
-
-	void freeMem (void* ptr) throw ()
-	{ 
-	#ifdef _WIN32
-		::HeapFree (heap, 0, ptr);
-	#else
-		::free (ptr);
-	#endif
-	}
-
-private:
-	const char_t* srcInName;
-	const char_t* srcOutName;
-	
-	int idLastSleep;
-
-#ifdef _WIN32
-	void* heap;
 #endif
+	
+private:
+	int idLastSleep;
 };
 
 #ifdef _WIN32
@@ -603,6 +430,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 			{
 				const qse_char_t* p;
 				qse_size_t l;
+				qse_cstr_t ow, nw;
 
 				p = qse_strchr(argv[i], QSE_T(':'));
 				if (p == QSE_NULL)
@@ -613,10 +441,13 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 				l = qse_strlen (argv[i]);
 
-				awk.setWord (
-					argv[i], p - argv[i], 
-					p + 1, l - (p - argv[i] + 1));
+				ow.ptr = argv[i];
+				ow.len = p - argv[i];
 
+				nw.ptr = p + 1;
+				nw.len = l - (ow.len + 1);
+
+				awk.setWord (&ow, &nw);
 				mode = 0;
 			}
 		}
@@ -629,7 +460,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	run = awk.parse (srcin, srcout);
+	MyAwk::SourceFile sin (srcin); 
+	MyAwk::SourceFile sout (srcout);
+
+	run = awk.parse (sin, sout);
 	if (run == QSE_NULL)
 	{
 		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
@@ -638,30 +472,16 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	awk.enableRunCallback ();
 	app_awk = &awk;
 
-	if (awk.loop () <= -1)
+	MyAwk::Value ret;
+	if (awk.loop (&ret) <= -1)
 	{
 		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
 		awk.close ();
 		return -1;
 	}
-
-#if 0
-	MyAwk::Value args[2];
-
-	args[0].setRun (run);
-	args[1].setRun (run);
-
-	if (awk.call (QSE_T("add"), args, 2) <= -1)
-	{
-		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-	}
-#endif
 
 	app_awk = QSE_NULL;
 	awk.close ();

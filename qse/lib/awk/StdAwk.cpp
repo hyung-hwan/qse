@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 251 2009-08-10 07:11:16Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 252 2009-08-11 01:28:32Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -798,7 +798,14 @@ int StdAwk::SourceFile::open (Data& io)
 					QSE_SIO_READ: 
 					(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
 			);
-			if (sio == QSE_NULL) return -1;
+			if (sio == QSE_NULL) 
+			{
+				qse_cstr_t ea;
+				ea.ptr = name;
+				ea.len = qse_strlen(name);
+				((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+				return -1;
+			}
 
 			base = qse_awk_basename ((awk_t*)io, name);
 			if (base != name)
@@ -850,7 +857,14 @@ int StdAwk::SourceFile::open (Data& io)
 		);
 
 		if (dbuf != QSE_NULL) QSE_MMGR_FREE (((awk_t*)io)->mmgr, dbuf);
-		if (sio == QSE_NULL) return -1;
+		if (sio == QSE_NULL)
+		{
+			qse_cstr_t ea;
+			ea.ptr = file;
+			ea.len = qse_strlen(file);
+			((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+			return -1;
+		}
 	}
 
 	io.setHandle (sio);
@@ -903,7 +917,14 @@ int StdAwk::SourceString::open (Data& io)
 				QSE_SIO_READ: 
 				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
 		);
-		if (sio == QSE_NULL) return -1;
+		if (sio == QSE_NULL)
+		{
+			qse_cstr_t ea;
+			ea.ptr = ioname;
+			ea.len = qse_strlen(ioname);
+			((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+			return -1;
+		}
 		io.setHandle (sio);
 	}
 
@@ -914,7 +935,6 @@ int StdAwk::SourceString::close (Data& io)
 {
 	if (io.getName() != QSE_NULL)
 		qse_sio_close ((qse_sio_t*)io.getHandle());
-
 	return 0;
 }
 
