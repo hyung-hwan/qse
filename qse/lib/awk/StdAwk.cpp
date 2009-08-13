@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 252 2009-08-11 01:28:32Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 253 2009-08-12 13:39:37Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -817,7 +817,7 @@ int StdAwk::SourceFile::open (Data& io)
 	}
 	else
 	{
-		const char_t* file = name;
+		const char_t* file = ioname;
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
 	
