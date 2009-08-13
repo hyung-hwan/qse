@@ -20,8 +20,11 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/opt.h>
+#include <qse/cmn/mem.h>
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 
 #if defined(_WIN32)
@@ -43,7 +46,17 @@ static void set_intr_run (void);
 static void unset_intr_run (void);
 
 MyAwk* app_awk = QSE_NULL;
-static bool verbose = false;
+
+static void print_error (const qse_char_t* fmt, ...)
+{
+	va_list va;
+
+	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
+
+	va_start (va, fmt);
+	qse_vfprintf (QSE_STDERR, fmt, va);
+	va_end (va);
+}
 
 class MyAwk: public QSE::StdAwk
 {
@@ -237,239 +250,133 @@ static void unset_intr_run (void)
 #endif
 }
 
-static void print_error (const qse_char_t* msg)
+static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 {
-	qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), msg);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
+	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
+	qse_fprintf (out, QSE_T("Where options are:\n"));
+	qse_fprintf (out, QSE_T(" -h                print this message\n"));
+	qse_fprintf (out, QSE_T(" -f sourcefile     set the source script file\n"));
+	qse_fprintf (out, QSE_T(" -o deparsedfile   set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -F string         set a field separator(FS)\n"));
 }
 
-
-struct opttab_t
+struct cmdline_t
 {
-	const qse_char_t* name;
-	int opt;
-	const qse_char_t* desc;
-} opttab[] =
-{
-	{ QSE_T("implicit"),    MyAwk::OPT_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("explicit"),    MyAwk::OPT_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
-	{ QSE_T("extraops"),    MyAwk::OPT_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
-	{ QSE_T("rio"),         MyAwk::OPT_RIO,            QSE_T("enable builtin I/O including getline & print") },
-	{ QSE_T("rwpipe"),      MyAwk::OPT_RWPIPE,         QSE_T("allow a dual-directional pipe") },
-	{ QSE_T("newline"),     MyAwk::OPT_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
-	{ QSE_T("striprecspc"), MyAwk::OPT_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
-	{ QSE_T("stripstrspc"), MyAwk::OPT_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
-	{ QSE_T("nextofile"),   MyAwk::OPT_NEXTOFILE,      QSE_T("enable 'nextofile'") },
-	{ QSE_T("reset"),       MyAwk::OPT_RESET,          QSE_T("enable 'reset'") },
-	{ QSE_T("crlf"),        MyAwk::OPT_CRLF,           QSE_T("use CRLF for a newline") },
-	{ QSE_T("maptovar"),    MyAwk::OPT_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
-	{ QSE_T("pablock"),     MyAwk::OPT_PABLOCK,        QSE_T("enable pattern-action loop") },
-	{ QSE_T("rexbound"),    MyAwk::OPT_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
-	{ QSE_T("ncmponstr"),   MyAwk::OPT_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
-	{ QSE_T("strictnaming"), MyAwk::OPT_STRICTNAMING,  QSE_T("enable the strict naming rule") },
-	{ QSE_T("include"),     MyAwk::OPT_INCLUDE,        QSE_T("enable 'include'") },
-	{ QSE_NULL,             0 }
+	qse_char_t* ins;
+	qse_char_t* inf;
+	qse_char_t* outf;
+	qse_char_t* fs;
 };
 
-static void print_usage (const qse_char_t* argv0)
+static int handle_cmdline (MyAwk& awk, int argc, qse_char_t* argv[], cmdline_t* cmdline)
 {
-	const qse_char_t* base;
-	int j;
-	
-	base = qse_strrchr(argv0, QSE_T('/'));
-	if (base == QSE_NULL) base = qse_strrchr(argv0, QSE_T('\\'));
-	if (base == QSE_NULL) base = argv0; else base++;
-
-	qse_printf (QSE_T("Usage: %s [-si file]? [-so file]? [-ci file]* [-co file]* [-w o:n]* \n"), base);
-	qse_printf (QSE_T("    -si file  Specify the input source file\n"));
-	qse_printf (QSE_T("              The source code is read from stdin when it is not specified\n"));
-	qse_printf (QSE_T("    -so file  Specify the output source file\n"));
-	qse_printf (QSE_T("              The deparsed code is not output when is it not specified\n"));
-	qse_printf (QSE_T("    -ci file  Specify the input console file\n"));
-	qse_printf (QSE_T("    -co file  Specify the output console file\n"));
-	qse_printf (QSE_T("    -w  o:n   Specify an old and new word pair\n"));
-	qse_printf (QSE_T("              o - an original word\n"));
-	qse_printf (QSE_T("              n - the new word to replace the original\n"));
-	qse_printf (QSE_T("    -v        Print extra messages\n"));
-
-
-	qse_printf (QSE_T("\nYou may specify the following options to change the behavior of the interpreter.\n"));
-	for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
+	static qse_opt_t opt =
 	{
-		qse_printf (QSE_T("    -%-20s -no%-20s\n"), opttab[j].name, opttab[j].name);
+		QSE_T("hF:f:o:"),
+		QSE_NULL
+	};
+	qse_cint_t c;
+
+	memset (cmdline, 0, QSE_SIZEOF(*cmdline));
+	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
+	{
+		switch (c)
+		{
+			case QSE_T('h'):
+				print_usage (QSE_STDOUT, argv[0]);
+				return 0;
+
+			case QSE_T('F'):
+				cmdline->fs = opt.arg;
+				break;
+
+			case QSE_T('f'):
+				cmdline->inf = opt.arg;
+				break;
+
+			case QSE_T('o'):
+				cmdline->outf = opt.arg;
+				break;
+
+			case QSE_T('?'):
+				print_error (QSE_T("illegal option - '%c'\n"), opt.opt);
+				return -1;
+
+			case QSE_T(':'):
+				print_error (QSE_T("bad argument for '%c'\n"), opt.opt);
+				return -1;
+
+			default:
+				print_usage (QSE_STDERR, argv[0]);
+				return -1;
+		}
 	}
+
+	if (opt.ind < argc && !cmdline->inf)
+		cmdline->ins = argv[opt.ind++];
+
+	while (opt.ind < argc)
+	{
+		if (awk.addArgument (argv[opt.ind++]) <= -1) return -1;
+	}
+
+	return 1;
 }
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	MyAwk awk;
 	MyAwk::Run* run;
-
-	int mode = 0;
-	const qse_char_t* srcin = QSE_T("");
-	const qse_char_t* srcout = NULL;
-	qse_size_t nsrcins = 0;
-	qse_size_t nsrcouts = 0;
+	cmdline_t cmdline;
+	int n;
 
 	if (awk.open() <= -1)
 	{
-		print_error (awk.getErrorMessage());
+		print_error (QSE_T("%s\n"), awk.getErrorMessage());
 		return -1;
 	}
+
+	awk.setOption (awk.getOption() | awk.OPT_INCLUDE);
 
 	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk05")) <= -1)
+	if (awk.addArgument (QSE_T("awk08")) <= -1)
 	{
-		print_error (awk.getErrorMessage());
+		print_error (QSE_T("%s\n"), awk.getErrorMessage());
 		awk.close ();
 		return -1;
 	}
 
-	for (int i = 1; i < argc; i++)
+	if ((n = handle_cmdline (awk, argc, argv, &cmdline)) <= 0)
 	{
-		if (mode == 0)
-		{
-			if (qse_strcmp(argv[i], QSE_T("-si")) == 0) mode = 1;
-			else if (qse_strcmp(argv[i], QSE_T("-so")) == 0) mode = 2;
-			else if (qse_strcmp(argv[i], QSE_T("-ci")) == 0) mode = 3;
-			else if (qse_strcmp(argv[i], QSE_T("-co")) == 0) mode = 4;
-			else if (qse_strcmp(argv[i], QSE_T("-w")) == 0) mode = 5;
-			else if (qse_strcmp(argv[i], QSE_T("-v")) == 0)
-			{
-				verbose = true;
-			}
-			else 
-			{
-				if (argv[i][0] == QSE_T('-'))
-				{
-					int j;
-
-					if (argv[i][1] == QSE_T('n') && argv[i][2] == QSE_T('o'))
-					{
-						for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
-						{
-							if (qse_strcmp(&argv[i][3], opttab[j].name) == 0)
-							{
-								awk.setOption (awk.getOption() & ~opttab[j].opt);
-								goto ok_valid;
-							}
-						}
-					}
-					else
-					{
-						for (j = 0; j < (int)QSE_COUNTOF(opttab); j++)
-						{
-							if (qse_strcmp(&argv[i][1], opttab[j].name) == 0)
-							{
-								awk.setOption (awk.getOption() | opttab[j].opt);
-								goto ok_valid;
-							}
-						}
-					}
-				}
-
-				print_usage (argv[0]);
-				return -1;
-
-			ok_valid:
-				;
-			}
-		}
-		else
-		{
-			if (argv[i][0] == QSE_T('-'))
-			{
-				print_usage (argv[0]);
-				return -1;
-			}
-
-			if (mode == 1) // source input 
-			{
-				if (nsrcins != 0) 
-				{
-					print_usage (argv[0]);
-					return -1;
-				}
-	
-				srcin = argv[i];
-				nsrcins++;
-				mode = 0;
-			}
-			else if (mode == 2) // source output 
-			{
-				if (nsrcouts != 0) 
-				{
-					print_usage (argv[0]);
-					return -1;
-				}
-	
-				srcout = argv[i];
-				nsrcouts++;
-				mode = 0;
-			}
-			else if (mode == 3) // console input
-			{
-				if (awk.addArgument (argv[i]) <= -1)
-				{
-					print_error (QSE_T("too many console inputs"));
-					return -1;
-				}
-
-				mode = 0;
-			}
-			else if (mode == 4) // console output
-			{
-				if (awk.addConsoleOutput (argv[i]) <= -1)
-				{
-					print_error (QSE_T("too many console outputs"));
-					return -1;
-				}
-
-				mode = 0;
-			}
-			else if (mode == 5) // word replacement
-			{
-				const qse_char_t* p;
-				qse_size_t l;
-				qse_cstr_t ow, nw;
-
-				p = qse_strchr(argv[i], QSE_T(':'));
-				if (p == QSE_NULL)
-				{
-					print_usage (argv[0]);
-					return -1;
-				}
-
-				l = qse_strlen (argv[i]);
-
-				ow.ptr = argv[i];
-				ow.len = p - argv[i];
-
-				nw.ptr = p + 1;
-				nw.len = l - (ow.len + 1);
-
-				awk.setWord (&ow, &nw);
-				mode = 0;
-			}
-		}
-	}
-
-	if (mode != 0)
-	{
-		print_usage (argv[0]);
 		awk.close ();
-		return -1;
+		return n;
 	}
 
-	MyAwk::SourceFile sin (srcin); 
-	MyAwk::SourceFile sout (srcout);
 
-	run = awk.parse (sin, sout);
+	MyAwk::Source* in, * out;
+	MyAwk::SourceString in_str (cmdline.ins);
+	MyAwk::SourceFile in_file (cmdline.inf); 
+	MyAwk::SourceFile out_file (cmdline.outf);
+
+	in = (cmdline.ins)? (MyAwk::Source*)&in_str: (MyAwk::Source*)&in_file;
+	out = (cmdline.outf)? (MyAwk::Source*)&out_file: &MyAwk::Source::NONE;
+	run = awk.parse (*in, *out);
 	if (run == QSE_NULL)
 	{
-		qse_fprintf (stderr, QSE_T("cannot parse: LINE[%d] %s\n"), 
+		print_error (
+			QSE_T("ERROR: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
 		awk.close ();
 		return -1;
+	}
+
+	if (cmdline.fs)
+	{
+// TODO: print error.... handle error properly
+		MyAwk::Value fs (run);
+		if (fs.setStr (cmdline.fs) <= -1) return -1;
+		if (awk.setGlobal (awk.GBL_FS, fs) <= -1) return -1;
 	}
 
 	app_awk = &awk;
@@ -477,7 +384,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	MyAwk::Value ret;
 	if (awk.loop (&ret) <= -1)
 	{
-		qse_fprintf (stderr, QSE_T("cannot run: LINE[%d] %s\n"), 
+		print_error (
+			QSE_T("ERROR: LINE[%d] %s\n"), 
 			awk.getErrorLine(), awk.getErrorMessage());
 		awk.close ();
 		return -1;
