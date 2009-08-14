@@ -17,15 +17,10 @@
  */
 
 #include <qse/awk/StdAwk.hpp>
-#include <qse/cmn/str.h>
-#include <qse/cmn/stdio.h>
-#include <qse/cmn/main.h>
 #include <qse/cmn/opt.h>
-#include <qse/cmn/mem.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include <qse/cmn/main.h>
+#include <qse/cmn/stdio.h>
+#include <cstring>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -35,30 +30,12 @@
 #	include <errno.h>
 #endif
 
-class MyAwk;
-#ifdef _WIN32
-static BOOL WINAPI stop_run (DWORD ctrl_type);
-#else
-static void stop_run (int sig);
-#endif
+/* these three definitions for doxygen cross-reference */
+typedef QSE::StdAwk StdAwk;
+typedef QSE::StdAwk::Run Run;
+typedef QSE::StdAwk::Value Value;
 
-static void set_intr_run (void);
-static void unset_intr_run (void);
-
-MyAwk* app_awk = QSE_NULL;
-
-static void print_error (const qse_char_t* fmt, ...)
-{
-	va_list va;
-
-	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
-
-	va_start (va, fmt);
-	qse_vfprintf (QSE_STDERR, fmt, va);
-	va_end (va);
-}
-
-class MyAwk: public QSE::StdAwk
+class MyAwk: public StdAwk
 {
 public:
 	MyAwk () { }
@@ -69,24 +46,26 @@ public:
 		if (StdAwk::open () <= -1) return -1;
 
 		idLastSleep = addGlobal (QSE_T("LAST_SLEEP"));
-		if (idLastSleep <= -1) goto failure;
+		if (idLastSleep <= -1) goto oops;
 
 		if (addFunction (QSE_T("sleep"), 1, 1,
-		    	(FunctionHandler)&MyAwk::sleep) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::sleep) <= -1) goto oops;
 
 		if (addFunction (QSE_T("sumintarray"), 1, 1,
-		    	(FunctionHandler)&MyAwk::sumintarray) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::sumintarray) <= -1) goto oops;
 
 		if (addFunction (QSE_T("arrayindices"), 1, 1,
-		    	(FunctionHandler)&MyAwk::arrayindices) <= -1) goto failure;
+		    	(FunctionHandler)&MyAwk::arrayindices) <= -1) goto oops;
+
 		return 0;
 
-	failure:
+	oops:
 		StdAwk::close ();
 		return -1;
 	}
 
-	int sleep (Run& run, Value& ret, const Value* args, size_t nargs, 
+	int sleep (
+		Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
 		if (args[0].isIndexed()) 
@@ -113,9 +92,14 @@ public:
 	#endif
 	}
 
-	int sumintarray (Run& run, Value& ret, const Value* args, size_t nargs, 
+	int sumintarray (
+		Run& run, Value& ret, const Value* args, size_t nargs, 
 		const char_t* name, size_t len)
 	{
+		// BEGIN { 
+		//   for(i=0;i<=10;i++) x[i]=i; 
+		//   print sumintarray(x);
+		// }
 		long_t x = 0;
 
 		if (args[0].isIndexed()) 
@@ -138,9 +122,20 @@ public:
 		return ret.setInt (x);
 	}
 
-	int arrayindices (Run& run, Value& ret, const Value* args, size_t nargs, 
-		const char_t* name, size_t len)
+	int arrayindices (
+		Run& run, 
+		Value& ret,
+		const Value* args,
+		size_t nargs, 
+		const char_t* name, 
+		size_t len)
 	{
+		// create another array composed of array indices
+		// BEGIN { 
+		//   for(i=0;i<=10;i++) x[i]=i; 
+		//   y=arrayindices(x); 
+		//   for (i in y) print y[i]; 
+		// }
 		if (!args[0].isIndexed()) return 0;
 
 		Value::Index idx;
@@ -159,31 +154,31 @@ public:
 		return 0;
 	}
 	
-protected:
-
-#if 0
-	bool onLoopEnter (Run& run)
-	{
-		set_intr_run ();
-		return true;
-	}
-
-	void onLoopExit (Run& run, const Value& ret)
-	{
-		unset_intr_run ();
-
-		if (verbose)
-		{
-			size_t len;
-			const char_t* ptr = ret.toStr (&len);
-			qse_printf (QSE_T("*** return [%.*s] ***\n"), (int)len, ptr);
-		}
-	}
-#endif
-	
 private:
 	int idLastSleep;
 };
+
+static MyAwk* app_awk = QSE_NULL;
+
+static void print_error (const qse_char_t* fmt, ...)
+{
+	va_list va;
+
+	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
+
+	va_start (va, fmt);
+	qse_vfprintf (QSE_STDERR, fmt, va);
+	va_end (va);
+}
+
+static void print_error (MyAwk& awk)
+{
+	print_error ( 
+		QSE_T("LINE [%u] %s\n"), 
+		(unsigned)awk.getErrorLine(),
+		awk.getErrorMessage()
+	);
+}
 
 #ifdef _WIN32
 static BOOL WINAPI stop_run (DWORD ctrl_type)
@@ -231,7 +226,7 @@ static void stop_run (int sig)
 }
 #endif
 
-static void set_intr_run (void)
+static void set_signal (void)
 {
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, TRUE);
@@ -241,7 +236,7 @@ static void set_intr_run (void)
 #endif
 }
 
-static void unset_intr_run (void)
+static void unset_signal (void)
 {
 #ifdef _WIN32
 	SetConsoleCtrlHandler (stop_run, FALSE);
@@ -269,7 +264,8 @@ struct cmdline_t
 	qse_char_t* fs;
 };
 
-static int handle_cmdline (MyAwk& awk, int argc, qse_char_t* argv[], cmdline_t* cmdline)
+static int handle_cmdline (
+	MyAwk& awk, int argc, qse_char_t* argv[], cmdline_t* cmdline)
 {
 	static qse_opt_t opt =
 	{
@@ -278,7 +274,7 @@ static int handle_cmdline (MyAwk& awk, int argc, qse_char_t* argv[], cmdline_t* 
 	};
 	qse_cint_t c;
 
-	memset (cmdline, 0, QSE_SIZEOF(*cmdline));
+	std::memset (cmdline, 0, QSE_SIZEOF(*cmdline));
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
 	{
 		switch (c)
@@ -318,41 +314,39 @@ static int handle_cmdline (MyAwk& awk, int argc, qse_char_t* argv[], cmdline_t* 
 
 	while (opt.ind < argc)
 	{
-		if (awk.addArgument (argv[opt.ind++]) <= -1) return -1;
+		if (awk.addArgument (argv[opt.ind++]) <= -1) 
+		{
+			print_error (awk);
+			return -1;
+		}
+	}
+
+	if (!cmdline->ins && !cmdline->inf)
+	{
+		print_usage (QSE_STDERR, argv[0]);
+		return -1;
 	}
 
 	return 1;
 }
 
-static int awk_main (int argc, qse_char_t* argv[])
+
+static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 {
-	MyAwk awk;
 	MyAwk::Run* run;
 	cmdline_t cmdline;
 	int n;
 
-	if (awk.open() <= -1)
-	{
-		print_error (QSE_T("%s\n"), awk.getErrorMessage());
-		return -1;
-	}
-
-	awk.setOption (awk.getOption() | awk.OPT_INCLUDE);
+	awk.setOption (awk.getOption() | awk.OPT_INCLUDE | awk.OPT_MAPTOVAR);
 
 	// ARGV[0]
 	if (awk.addArgument (QSE_T("awk08")) <= -1)
 	{
-		print_error (QSE_T("%s\n"), awk.getErrorMessage());
-		awk.close ();
-		return -1;
+		print_error (awk); 
+		return -1; 
 	}
 
-	if ((n = handle_cmdline (awk, argc, argv, &cmdline)) <= 0)
-	{
-		awk.close ();
-		return n;
-	}
-
+	if ((n = handle_cmdline (awk, argc, argv, &cmdline)) <= 0) return n;
 
 	MyAwk::Source* in, * out;
 	MyAwk::SourceString in_str (cmdline.ins);
@@ -362,39 +356,55 @@ static int awk_main (int argc, qse_char_t* argv[])
 	in = (cmdline.ins)? (MyAwk::Source*)&in_str: (MyAwk::Source*)&in_file;
 	out = (cmdline.outf)? (MyAwk::Source*)&out_file: &MyAwk::Source::NONE;
 	run = awk.parse (*in, *out);
-	if (run == QSE_NULL)
+	if (run == QSE_NULL) 
 	{
-		print_error (
-			QSE_T("ERROR: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
-		return -1;
+		print_error (awk); 
+		return -1; 
 	}
 
 	if (cmdline.fs)
 	{
-// TODO: print error.... handle error properly
 		MyAwk::Value fs (run);
-		if (fs.setStr (cmdline.fs) <= -1) return -1;
-		if (awk.setGlobal (awk.GBL_FS, fs) <= -1) return -1;
+		if (fs.setStr (cmdline.fs) <= -1) 
+		{
+			print_error (awk); 
+			return -1; 
+		}
+		if (awk.setGlobal (awk.GBL_FS, fs) <= -1) 
+		{
+			print_error (awk); 
+			return -1; 
+		}
 	}
-
-	app_awk = &awk;
 
 	MyAwk::Value ret;
-	if (awk.loop (&ret) <= -1)
+	if (awk.loop (&ret) <= -1) 
+	{ 
+		print_error (awk); 
+		return -1; 
+	}
+
+	return 0;
+}
+
+static int awk_main (int argc, qse_char_t* argv[])
+{
+	MyAwk awk;
+
+	if (awk.open() <= -1)
 	{
-		print_error (
-			QSE_T("ERROR: LINE[%d] %s\n"), 
-			awk.getErrorLine(), awk.getErrorMessage());
-		awk.close ();
+		print_error (awk);
 		return -1;
 	}
+	app_awk = &awk;
+
+	set_signal ();
+	int n = awk_main_2 (awk, argc, argv);
+	unset_signal ();
 
 	app_awk = QSE_NULL;
 	awk.close ();
-
-	return 0;
+	return n;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
