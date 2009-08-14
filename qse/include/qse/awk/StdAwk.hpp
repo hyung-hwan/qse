@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 254 2009-08-13 13:26:46Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -21,13 +21,16 @@
 
 #include <qse/awk/Awk.hpp>
 
-/**
+/** @file
+ *
  * @example awk05.cpp
- * This program demonstrates how to embed QSE::StdAwk::loop().
+ * This program demonstrates how to use QSE::StdAwk::loop().
  * @example awk06.cpp
  * This program demonstrates how to use QSE::StdAwk::call().
  * @example awk07.cpp
  * This program demonstrates how to handle an indexed value.
+ * @example awk08.cpp
+ * This program shows how to add intrinsic functions.
  */
 
 /////////////////////////////////
@@ -35,13 +38,16 @@ QSE_BEGIN_NAMESPACE(QSE)
 ////////////////////////////////
 
 /**
- * Provides a more useful AWK interpreter by overriding primitive methods,
- * the file handler, the pipe handler and implementing common AWK intrinsic 
+ * Provides a more useful interpreter by overriding primitive methods,
+ * the file handler, the pipe handler and implementing common intrinsic 
  * functions.
  */
 class StdAwk: public Awk
 {
 public:
+	/**
+	 * Implements script input from a file and deparsing into a file.
+	 */
 	class SourceFile: public Source 
 	{
 	public:
@@ -60,6 +66,10 @@ public:
 		qse_cstr_t dir;
 	};
 
+	/**
+	 * Implements script input from a string. The deparsing is not
+	 * supported.
+	 */
 	class SourceString: public Source
 	{
 	public:

@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: StdSed.hpp 254 2009-08-13 13:26:46Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -20,6 +20,10 @@
 #define _QSE_SED_STDSED_HPP_
 
 #include <qse/sed/Sed.hpp>
+
+/** @file
+ * standard sed
+ */
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)

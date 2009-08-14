@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 251 2009-08-10 07:11:16Z hyunghwan.chung $
+ * $Id: Awk.hpp 254 2009-08-13 13:26:46Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,6 +24,11 @@
 #include <qse/cmn/chr.h>
 #include <qse/Mmgr.hpp>
 #include <stdarg.h>
+
+
+/** @file
+ * AWK Interpreter
+ */
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -475,6 +480,9 @@ public:
 		void operator delete (void* p);
 		void operator delete[] (void* p);
 
+		/**
+		 * Represents an index of an arrayed value
+		 */
 		class Index
 		{
 		public:
@@ -488,6 +496,9 @@ public:
 			size_t        len;
 		};
 
+		/**
+		 * Represents a numeric index of an arrayed value
+		 */
 		class IntIndex: public Index
 		{
 		public:
@@ -512,6 +523,9 @@ public:
 		#endif
 		};
 
+		/**
+		 * helper class to iterate over array elements
+		 */
 		class IndexIterator
 		{
 		public:
@@ -656,6 +670,7 @@ public:
 			const char_t* str
 		);
 
+		/** determines if a value is arrayed */
 		bool isIndexed () const;
 
 		int getIndexed (
