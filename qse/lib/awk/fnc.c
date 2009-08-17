@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
+ * $Id: fnc.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -79,7 +79,7 @@ void* qse_awk_addfnc (
 		errarg.ptr = name;
 		errarg.len = name_len;
 
-		qse_awk_seterror (awk, QSE_AWK_EEXIST, 0, &errarg);
+		qse_awk_seterrnum (awk, QSE_AWK_EEXIST, &errarg);
 		return QSE_NULL;
 	}
 
@@ -133,7 +133,7 @@ int qse_awk_delfnc (
 		errarg.ptr = name;
 		errarg.len = name_len;
 
-		qse_awk_seterror (awk, QSE_AWK_ENOENT, 0, &errarg);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &errarg);
 		return -1;
 	}
 
