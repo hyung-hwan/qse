@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: std.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -187,10 +187,7 @@ static qse_ssize_t sf_in_open (
 						qse_cstr_t ea;
 						ea.ptr = xtn->s.in.u.file;
 						ea.len = qse_strlen(ea.ptr);
-						qse_awk_seterror (
-							awk, QSE_AWK_EOPEN,
-							0, &ea
-						);
+						qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
 						return -1;
 					}
 
@@ -235,7 +232,7 @@ static qse_ssize_t sf_in_open (
 				);
 				if (dbuf == QSE_NULL)
 				{
-					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM);
+					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 					return -1;
 				}
 
@@ -261,7 +258,7 @@ static qse_ssize_t sf_in_open (
 			qse_cstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
-			qse_awk_seterror (awk, QSE_AWK_EOPEN, 0, &ea);
+			qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
 			return -1;
 		}
 
@@ -310,8 +307,7 @@ static qse_ssize_t sf_in_read (
 					qse_cstr_t ea;
 					ea.ptr = xtn->s.in.u.file;
 					ea.len = qse_strlen(ea.ptr);
-					qse_awk_seterror (
-						awk, QSE_AWK_EREAD, 0, &ea);
+					qse_awk_seterrnum (awk, QSE_AWK_EREAD, &ea);
 				}
 				return n;
 			}
@@ -351,7 +347,7 @@ static qse_ssize_t sf_in_read (
 			qse_cstr_t ea;
 			ea.ptr = arg->name;
 			ea.len = qse_strlen(ea.ptr);
-			qse_awk_seterror (awk, QSE_AWK_EREAD, 0, &ea);
+			qse_awk_seterrnum (awk, QSE_AWK_EREAD, &ea);
 		}
 		return n;
 	}
@@ -413,10 +409,7 @@ static qse_ssize_t sf_out (
 						qse_cstr_t ea;
 						ea.ptr = xtn->s.out.u.file;
 						ea.len = qse_strlen(ea.ptr);
-						qse_awk_seterror (
-							awk, QSE_AWK_EOPEN,
-							0, &ea
-						);
+						qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
 						return -1;
 					}
 				}
@@ -474,8 +467,7 @@ static qse_ssize_t sf_out (
 					qse_cstr_t ea;
 					ea.ptr = xtn->s.in.u.file;
 					ea.len = qse_strlen(ea.ptr);
-					qse_awk_seterror (
-						awk, QSE_AWK_EWRITE, 0, &ea);
+					qse_awk_seterrnum (awk, QSE_AWK_EWRITE, &ea);
 				}
 
 				return n;
@@ -517,7 +509,7 @@ int qse_awk_parsestd (
 	if (in == QSE_NULL)
 	{
 		/* the input is a must */
-		qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return -1;
 	}
 
@@ -541,7 +533,7 @@ int qse_awk_parsestd (
 			break;
 
 		default:
-			qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+			qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 			return -1;
 	}
 	xtn->s.in.type = in->type;
@@ -572,7 +564,7 @@ int qse_awk_parsestd (
 				break;
 	
 			default:
-				qse_awk_seterrnum (awk, QSE_AWK_EINVAL);
+				qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 				return -1;
 		}
 		xtn->s.out.type = out->type;
@@ -710,7 +702,7 @@ static qse_ssize_t awk_rio_file (
 				errarg.ptr = riod->name;
 				errarg.len = qse_strlen(riod->name);
 
-				qse_awk_rtx_seterror (rtx, QSE_AWK_EOPEN, 0, &errarg);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &errarg);
 				return -1;
 			}
 
@@ -862,8 +854,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				 * in an error message */
 				errarg.len = qse_strlen(out.u.cpldup.ptr);
 
-				qse_awk_rtx_seterror (
-					rtx, QSE_AWK_EIONMNL, 0, &errarg);
+				qse_awk_rtx_seterrnum (
+					rtx, QSE_AWK_EIONMNL, &errarg);
 
 				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 				return -1;
@@ -887,8 +879,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					errarg.ptr = file;
 					errarg.len = qse_strlen(file);
 
-					qse_awk_rtx_seterror (
-						rtx, QSE_AWK_EOPEN, 0, &errarg);
+					qse_awk_rtx_seterrnum (
+						rtx, QSE_AWK_EOPEN, &errarg);
 
 					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 					return -1;
@@ -959,8 +951,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					errarg.ptr = file;
 					errarg.len = qse_strlen(file);
 
-					qse_awk_rtx_seterror (
-						rtx, QSE_AWK_EOPEN, 0, &errarg);
+					qse_awk_rtx_seterrnum (
+						rtx, QSE_AWK_EOPEN, &errarg);
 					return -1;
 				}
 			}
@@ -1109,7 +1101,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 			awk, QSE_SIZEOF(*argvp) * (argc + 1));
 		if (argvp == QSE_NULL)
 		{
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM);
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return QSE_NULL;
 		}
 	}
@@ -1213,7 +1205,7 @@ static int fnc_math_1 (
 	
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1266,7 +1258,7 @@ static int fnc_math_2 (
 	
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1423,7 +1415,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	r = qse_awk_rtx_makeintval (run, lv);
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1445,7 +1437,7 @@ static int fnc_rand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		run, (qse_real_t)(rand() % RAND_MAX) / RAND_MAX);
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1493,7 +1485,7 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	r = qse_awk_rtx_makeintval (run, prev);
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1579,11 +1571,7 @@ skip_system:
 	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
 
 	v = qse_awk_rtx_makeintval (run, (qse_long_t)n);
-	if (v == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, v);
 	return 0;

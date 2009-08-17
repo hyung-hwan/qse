@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
+ * $Id: rio.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -114,7 +114,7 @@ int qse_awk_rtx_readio (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -134,7 +134,7 @@ int qse_awk_rtx_readio (
 			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -142,7 +142,7 @@ int qse_awk_rtx_readio (
 		if (p->name == QSE_NULL)
 		{
 			QSE_AWK_FREE (run->awk, p);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -157,7 +157,7 @@ int qse_awk_rtx_readio (
 		p->in.eof = QSE_FALSE;
 		p->in.eos = QSE_FALSE;
 
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 
 		/* request to open the stream */
 		x = handler (run, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);
@@ -170,7 +170,7 @@ int qse_awk_rtx_readio (
 			{
 				/* if the error number has not been 
 				 * set by the user handler */
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 			}
 
 			return -1;
@@ -240,7 +240,7 @@ int qse_awk_rtx_readio (
 				break;
 			}
 
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 
 			n = handler (run, QSE_AWK_RIO_READ,
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
@@ -250,7 +250,7 @@ int qse_awk_rtx_readio (
 				{
 					/* if the error number has not been 
 				 	 * set by the user handler */
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 				}
 
 				ret = -1;
@@ -394,7 +394,7 @@ int qse_awk_rtx_readio (
 
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			ret = -1;
 			break;
 		}
@@ -464,7 +464,7 @@ int qse_awk_rtx_writeio_str (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -493,7 +493,7 @@ int qse_awk_rtx_writeio_str (
 			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -501,7 +501,7 @@ int qse_awk_rtx_writeio_str (
 		if (p->name == QSE_NULL)
 		{
 			QSE_AWK_FREE (run->awk, p);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -513,7 +513,7 @@ int qse_awk_rtx_writeio_str (
 		p->out.eof = QSE_FALSE;
 		p->out.eos = QSE_FALSE;
 
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 		n = handler (run, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);
 		if (n <= -1)
 		{
@@ -521,7 +521,7 @@ int qse_awk_rtx_writeio_str (
 			QSE_AWK_FREE (run->awk, p);
 
 			if (run->errinf.num == QSE_AWK_ENOERR)
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 
 			return -1;
 		}
@@ -557,12 +557,12 @@ int qse_awk_rtx_writeio_str (
 
 	while (len > 0)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 		n = handler (run, QSE_AWK_RIO_WRITE, p, str, len);
 		if (n <= -1) 
 		{
 			if (run->errinf.num == QSE_AWK_ENOERR)
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 
 			return -1;
 		}
@@ -602,7 +602,7 @@ int qse_awk_rtx_flushio (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -612,13 +612,13 @@ int qse_awk_rtx_flushio (
 		if (p->type == (io_type | io_mask) && 
 		    (name == QSE_NULL || qse_strcmp(p->name,name) == 0)) 
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 			n = handler (run, QSE_AWK_RIO_FLUSH, p, QSE_NULL, 0);
 
 			if (n <= -1) 
 			{
 				if (run->errinf.num == QSE_AWK_ENOERR)
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 				return -1;
 			}
 
@@ -631,7 +631,7 @@ int qse_awk_rtx_flushio (
 	if (ok) return 0;
 
 	/* there is no corresponding rio for name */
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF, QSE_NULL);
 	return -1;
 }
 
@@ -656,7 +656,7 @@ int qse_awk_rtx_nextio_read (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -672,7 +672,7 @@ int qse_awk_rtx_nextio_read (
 		/* something is totally wrong */
 		QSE_ASSERT (
 			!"should never happen - cannot find the relevant rio entry");
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN, QSE_NULL);
 		return -1;
 	}
 
@@ -682,12 +682,12 @@ int qse_awk_rtx_nextio_read (
 		return 0;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 	n = handler (run, QSE_AWK_RIO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errinf.num == QSE_AWK_ENOERR)
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 		return -1;
 	}
 
@@ -734,7 +734,7 @@ int qse_awk_rtx_nextio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -750,7 +750,7 @@ int qse_awk_rtx_nextio_write (
 		/* something is totally wrong */
 		QSE_ASSERT (!"should never happen - cannot find the relevant rio entry");
 
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN, QSE_NULL);
 		return -1;
 	}
 
@@ -760,12 +760,12 @@ int qse_awk_rtx_nextio_write (
 		return 0;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 	n = handler (run, QSE_AWK_RIO_NEXT, p, QSE_NULL, 0);
 	if (n <= -1)
 	{
 		if (run->errinf.num == QSE_AWK_ENOERR)
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 		return -1;
 	}
 
@@ -806,7 +806,7 @@ int qse_awk_rtx_closio_read (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -823,7 +823,7 @@ int qse_awk_rtx_closio_read (
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 					return -1;
 				}
 			}
@@ -841,7 +841,7 @@ int qse_awk_rtx_closio_read (
 	}
 
 	/* the name given is not found */
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF, QSE_NULL);
 	return -1;
 }
 
@@ -865,7 +865,7 @@ int qse_awk_rtx_closio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
 
@@ -879,11 +879,11 @@ int qse_awk_rtx_closio_write (
 			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					if (run->errinf.num == QSE_AWK_ENOERR)
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 					return -1;
 				}
 			}
@@ -900,7 +900,7 @@ int qse_awk_rtx_closio_write (
 		p = p->next;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF, QSE_NULL);
 	return -1;
 }
 
@@ -919,12 +919,12 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 			handler = run->rio.handler[p->type & MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
 					if (run->errinf.num == QSE_AWK_ENOERR)
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 					return -1;
 				}
 			}
@@ -942,7 +942,7 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 		p = p->next;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF, QSE_NULL);
 	return -1;
 }
 
@@ -960,12 +960,12 @@ void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 
 		if (handler != QSE_NULL)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 			n = handler (run, QSE_AWK_RIO_CLOSE, run->rio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
 				if (run->errinf.num == QSE_AWK_ENOERR)
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 				/* TODO: some warnings need to be shown??? */
 			}
 		}

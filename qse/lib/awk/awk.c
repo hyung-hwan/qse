@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 255 2009-08-16 08:08:58Z hyunghwan.chung $ 
+ * $Id: awk.c 256 2009-08-16 13:44:20Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -383,7 +383,7 @@ int qse_awk_unsetword (qse_awk_t* awk, const qse_cstr_t* kw)
 	p = qse_map_search (awk->wtab, kw->ptr, kw->len);
 	if (p == QSE_NULL)
 	{
-		qse_awk_seterror (awk, QSE_AWK_ENOENT, 0, kw);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, kw);
 		return -1;
 	}
 

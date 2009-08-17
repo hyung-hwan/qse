@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 246 2009-07-27 02:31:58Z hyunghwan.chung $
+ * $Id: awk.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -225,7 +225,7 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 	{
 		/* set the value of user-defined global variables 
 		 * to a runtime context */
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
 		qse_map_walk (arg->gvm, set_global, rtx);
 		if (qse_awk_rtx_geterrnum(rtx) != QSE_AWK_ENOERR) return -1;
 	}
@@ -297,7 +297,7 @@ static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	r = qse_awk_rtx_makeintval (run, n);
 	if (r == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -739,7 +739,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	qse_awk_seterrnum (awk, QSE_AWK_ENOERR);
+	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
 	qse_map_walk (arg.gvm, add_global, awk);
 	if (qse_awk_geterrnum(awk) != QSE_AWK_ENOERR)
 	{
