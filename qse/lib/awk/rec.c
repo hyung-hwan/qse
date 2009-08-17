@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 205 2009-06-20 12:47:34Z hyunghwan.chung $
+ * $Id: rec.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -43,8 +43,7 @@ int qse_awk_rtx_setrec (
 			if (qse_str_ncpy (&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_clrrec (run, QSE_FALSE);
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}
@@ -158,7 +157,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 				return -1;
 			}
 		}
@@ -186,7 +185,7 @@ static int split_record (qse_awk_rtx_t* run)
 		if (tmp == QSE_NULL) 
 		{
 			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
-			qse_awk_rtx_seterror (run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -220,7 +219,7 @@ static int split_record (qse_awk_rtx_t* run)
 			{
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterror (run, errnum, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 				return -1;
 			}
 		}
@@ -333,8 +332,7 @@ static int recomp_record_fields (
 				QSE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == QSE_NULL) 
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}
@@ -344,8 +342,7 @@ static int recomp_record_fields (
 				run->awk, QSE_SIZEOF(*run->inrec.flds) * max);
 			if (tmp == QSE_NULL)
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 			if (run->inrec.flds != QSE_NULL)
@@ -373,8 +370,7 @@ static int recomp_record_fields (
 				run->gbl.ofs.ptr, 
 				run->gbl.ofs.len) == (qse_size_t)-1) 
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}
@@ -391,8 +387,7 @@ static int recomp_record_fields (
 			if (qse_str_ncat (
 				&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 
@@ -416,8 +411,7 @@ static int recomp_record_fields (
 			if (qse_str_cat (
 				&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 
@@ -443,8 +437,7 @@ static int recomp_record_fields (
 			if (qse_str_ncat (&run->inrec.line, 
 				tmp->ptr, tmp->len) == (qse_size_t)-1)
 			{
-				qse_awk_rtx_seterror (
-					run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}

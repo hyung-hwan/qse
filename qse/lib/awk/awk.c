@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 248 2009-08-06 08:27:14Z hyunghwan.chung $ 
+ * $Id: awk.c 255 2009-08-16 08:08:58Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,8 +24,6 @@
 #include "awk.h"
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (awk)
-
-#define SETERR(awk,code) qse_awk_seterrnum(awk,code)
 
 static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
 {
@@ -416,7 +414,7 @@ int qse_awk_setword (
 	}
 	else if (okw == QSE_NULL)
 	{
-		SETERR (awk, QSE_AWK_EINVAL);
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return -1;
 	}
 
@@ -429,7 +427,7 @@ int qse_awk_setword (
 		(qse_char_t*)okw->ptr, okw->len, 
 		(qse_char_t*)nkw->ptr, nkw->len) == QSE_NULL)
 	{
-		SETERR (awk, QSE_AWK_ENOMEM);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -439,7 +437,7 @@ int qse_awk_setword (
 		(qse_char_t*)okw->ptr, okw->len) == QSE_NULL)
 	{
 		qse_map_delete (awk->wtab, okw->ptr, okw->len);
-		SETERR (awk, QSE_AWK_ENOMEM);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
  
