@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: fnc.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -68,7 +68,7 @@ void* qse_awk_addfnc (
 
 	if (name_len <= 0)
 	{
-		qse_awk_seterror (awk, QSE_AWK_EINVAL, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -91,7 +91,7 @@ void* qse_awk_addfnc (
 		(spec_len+1) * QSE_SIZEOF(qse_char_t));
 	if (fnc == QSE_NULL)
 	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -116,7 +116,7 @@ void* qse_awk_addfnc (
 		(qse_char_t*)name, name_len, fnc, 0) == QSE_NULL)
 	{
 		QSE_AWK_FREE (awk, fnc);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -293,11 +293,7 @@ skip_close:
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, name);
 
 	v = qse_awk_rtx_makeintval (run, (qse_long_t)n);
-	if (v == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, v);
 	return 0;
@@ -401,11 +397,7 @@ static int fnc_fflush (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	}
 
 	a0 = qse_awk_rtx_makeintval (run, (qse_long_t)n);
-	if (a0 == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (a0 == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, a0);
 	return 0;
@@ -459,11 +451,7 @@ static int fnc_index (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str1);
 
 	a0 = qse_awk_rtx_makeintval (run, idx);
-	if (a0 == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (a0 == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, a0);
 	return 0;
@@ -500,11 +488,7 @@ static int fnc_length (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	}
 
 	v = qse_awk_rtx_makeintval (rtx, len);
-	if (v == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, v);
 	return 0;
@@ -573,7 +557,6 @@ static int fnc_substr (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (r == QSE_NULL)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -610,14 +593,14 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	    ((qse_awk_val_ref_t*)a1)->id <= QSE_AWK_VAL_REF_ARGIDX)
 	{
 		/* an indexed value should not be assigned another map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIDXVALASSMAP);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIDXVALASSMAP, QSE_NULL);
 		return -1;
 	}
 
 	if (((qse_awk_val_ref_t*)a1)->id == QSE_AWK_VAL_REF_POS)
 	{
 		/* a positional should not be assigned a map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EPOSVALASSMAP);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EPOSVALASSMAP, QSE_NULL);
 		return -1;
 	}
 
@@ -626,7 +609,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	    (*a1_ref)->type != QSE_AWK_VAL_MAP)
 	{
 		/* cannot change a scalar value to a map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
 		return -1;
 	}
 
@@ -707,7 +690,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 					QSE_AWK_FREE (run->awk, str_free);
 				if (fs_free != QSE_NULL) 
 					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterrnum (run, errnum);
+				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 				return -1;
 			}
 			fs_rex_free = fs_rex;
@@ -754,7 +737,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 					QSE_AWK_FREE (run->awk, fs_free);
 				if (fs_rex_free != QSE_NULL) 
 					QSE_AWK_FREEREX (run->awk, fs_rex_free);
-				qse_awk_rtx_seterrnum (run, errnum);
+				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 				return -1;
 			}
 		}
@@ -777,7 +760,6 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 				QSE_AWK_FREE (run->awk, fs_free);
 			if (fs_rex_free != QSE_NULL)
 				QSE_AWK_FREEREX (run->awk, fs_rex_free);
-			/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 			return -1;
 		}
 
@@ -809,7 +791,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 			/* qse_map_insert() fails if the key exists.
 			 * that can't happen here. so set the error code
 			 * to ENOMEM */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -823,11 +805,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	/*nflds--;*/
 
 	t1 = qse_awk_rtx_makeintval (run, nflds);
-	if (t1 == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (t1 == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, t1);
 	return 0;
@@ -862,7 +840,6 @@ static int fnc_tolower (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (r == QSE_NULL)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -900,7 +877,6 @@ static int fnc_toupper (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (r == QSE_NULL)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1017,7 +993,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		{
 			FREE_A_PTRS (run->awk);
 			/* a map is not allowed as the third parameter */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNOTALLOWED);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNOTALLOWED, QSE_NULL);
 			return -1;
 		}
 
@@ -1041,7 +1017,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	if (qse_str_init (&new, run->awk->mmgr, a2_len) == QSE_NULL)
 	{
 		FREE_A_PTRS (run->awk);
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1098,7 +1074,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				FREE_A0_REX (run->awk, rex);
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 			break;
@@ -1119,7 +1095,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			FREE_A0_REX (run->awk, rex);
 			qse_str_fini (&new);
 			FREE_A_PTRS (run->awk);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -1146,7 +1122,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				FREE_A0_REX (run->awk, rex);
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}
@@ -1168,7 +1144,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				FREE_A0_REX (run->awk, rex);
 				qse_str_fini (&new);
 				FREE_A_PTRS (run->awk);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 
@@ -1321,11 +1297,7 @@ static int fnc_match (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	idx = (n == 0)? 0: ((qse_long_t)(mat.ptr-str0) + 1);
 
 	a0 = qse_awk_rtx_makeintval (run, idx);
-	if (a0 == QSE_NULL)
-	{
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
-		return -1;
-	}
+	if (a0 == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (run, a0);
 
@@ -1334,7 +1306,6 @@ static int fnc_match (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (a1 == QSE_NULL)
 	{
 		qse_awk_rtx_refdownval (run, a0);
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 
@@ -1374,13 +1345,13 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 
 	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	if (qse_str_init (&fbu, run->awk->mmgr, 256) == QSE_NULL)
 	{
 		qse_str_fini (&out);
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -1417,7 +1388,6 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	{
 		qse_str_fini (&fbu);
 		qse_str_fini (&out);
-		/*qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);*/
 		return -1;
 	}
 

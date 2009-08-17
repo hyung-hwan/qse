@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: run.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -317,7 +317,7 @@ static int set_global (
 	    idx != QSE_AWK_GBL_ARGV)
 	{
 		/* TODO: better error code */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
 		return -1;
 	}
 
@@ -335,7 +335,8 @@ static int set_global (
 			{
 				/* '\0' is included in the value */
 				QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ECONVFMTCHR);
+				qse_awk_rtx_seterrnum (
+					run, QSE_AWK_ECONVFMTCHR, QSE_NULL);
 				return -1;
 			}
 		}
@@ -465,7 +466,8 @@ static int set_global (
 			if (out.u.cpldup.ptr[i] == QSE_T('\0'))
 			{
 				QSE_AWK_FREE (run->awk, out.u.cpldup.ptr);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EOFMTCHR);
+				qse_awk_rtx_seterrnum (
+					run, QSE_AWK_EOFMTCHR, QSE_NULL);
 				return -1;
 			}
 		}
@@ -655,7 +657,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
         QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
-	qse_awk_seterror (awk, QSE_AWK_ENOERR, 0, QSE_NULL);
+	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
 
 	/* check if the code has ever been parsed */
 	if (awk->tree.ngbls == 0 && 
@@ -664,7 +666,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	    awk->tree.chain_size == 0 &&
 	    qse_map_getsize(awk->tree.funs) == 0)
 	{
-		qse_awk_seterror (awk, QSE_AWK_ENOPER, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOPER, QSE_NULL);
 		return QSE_NULL;
 	}
 	
@@ -675,7 +677,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	{
 		/* if it fails, the failure is reported thru 
 		 * the awk object */
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -774,14 +776,14 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	if (qse_str_init (
 		&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) == QSE_NULL)
 	{
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
 	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) == QSE_NULL)
 	{
 		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -789,7 +791,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	{
 		qse_str_fini (&rtx->format.out);
 		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -800,7 +802,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		qse_str_fini (&rtx->format.fmt);
 		qse_str_fini (&rtx->format.out);
 		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
@@ -817,7 +819,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		qse_str_fini (&rtx->format.fmt);
 		qse_str_fini (&rtx->format.out);
 		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	rtx->format.tmp.len = 4096;
@@ -834,7 +836,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 			qse_str_fini (&rtx->format.fmt);
 			qse_str_fini (&rtx->format.out);
 			qse_str_fini (&rtx->inrec.line);
-			qse_awk_seterror (awk, QSE_AWK_ENOMEM, 0, QSE_NULL);
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -1035,7 +1037,8 @@ static int build_runarg (
 				 * map will be freeed when v_argv is freed */
 				qse_awk_rtx_refdownval (run, v_argv);
 
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+				qse_awk_rtx_seterrnum (
+					run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 		}
@@ -1142,7 +1145,7 @@ static int prepare_globals (qse_awk_rtx_t* run, const qse_cstr_t* runarg)
 		--ngbls;
 		if (__raw_push(run,qse_awk_val_nil) == -1)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			goto oops;
 		}
 	}	
@@ -1304,7 +1307,7 @@ oops:
 	 * it is ok to do so as the values pushed are
 	 * nils and binary numbers. */
 	run->stack_top = saved_stack_top;
-	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+	qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 	return -1;
 }
 
@@ -1466,7 +1469,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	{
 		/* cannot call the function again when exit() is called
 		 * in an AWK program or qse_awk_rtx_stop() is invoked */
-		qse_awk_rtx_seterror (rtx, QSE_AWK_ENOPER, 0, QSE_NULL);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOPER, QSE_NULL);
 		return QSE_NULL;
 	}
 	/*rtx->exit_level = EXIT_NONE;*/
@@ -1500,7 +1503,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	{
 		/* TODO: is this correct? what if i want to 
 		 *       allow arbitarary numbers of arguments? */
-		qse_awk_rtx_seterror (rtx, QSE_AWK_EARGTM, 0, QSE_NULL);
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EARGTM, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -3881,7 +3884,7 @@ static qse_awk_val_t* eval_binop_bor (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -3905,7 +3908,7 @@ static qse_awk_val_t* eval_binop_bxor (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -3929,7 +3932,7 @@ static qse_awk_val_t* eval_binop_band (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4253,7 +4256,7 @@ static int __cmp_val (
 	if (left->type == QSE_AWK_VAL_MAP || right->type == QSE_AWK_VAL_MAP)
 	{
 		/* a map can't be compared againt other values */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return CMP_ERROR; 
 	}
 
@@ -4327,7 +4330,7 @@ static qse_awk_val_t* eval_binop_lshift (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4338,7 +4341,7 @@ static qse_awk_val_t* eval_binop_lshift (
 	}
 	else
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 }
@@ -4355,7 +4358,7 @@ static qse_awk_val_t* eval_binop_rshift (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4367,7 +4370,7 @@ static qse_awk_val_t* eval_binop_rshift (
 	}
 	else
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 }
@@ -4384,7 +4387,7 @@ static qse_awk_val_t* eval_binop_plus (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 	/*
@@ -4415,7 +4418,7 @@ static qse_awk_val_t* eval_binop_minus (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4439,7 +4442,7 @@ static qse_awk_val_t* eval_binop_mul (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4464,7 +4467,7 @@ static qse_awk_val_t* eval_binop_div (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4473,7 +4476,7 @@ static qse_awk_val_t* eval_binop_div (
 	{
 		if  (l2 == 0) 
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -4521,7 +4524,7 @@ static qse_awk_val_t* eval_binop_idiv (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4530,7 +4533,7 @@ static qse_awk_val_t* eval_binop_idiv (
 	{
 		if (l2 == 0) 
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0, QSE_NULL);
 			return QSE_NULL;
 		}
 		res = qse_awk_rtx_makeintval (
@@ -4570,7 +4573,7 @@ static qse_awk_val_t* eval_binop_mod (
 
 	if (n1 == -1 || n2 == -1)
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4579,7 +4582,7 @@ static qse_awk_val_t* eval_binop_mod (
 	{
 		if  (l2 == 0) 
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0, QSE_NULL);
 			return QSE_NULL;
 		}
 		res = qse_awk_rtx_makeintval (
@@ -4587,7 +4590,7 @@ static qse_awk_val_t* eval_binop_mod (
 	}
 	else 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4610,7 +4613,7 @@ static qse_awk_val_t* eval_binop_exp (
 
 	if (n1 == -1 || n2 == -1) 
 	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EOPERAND, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -4626,7 +4629,7 @@ static qse_awk_val_t* eval_binop_exp (
 		}
 		else if (l1 == 0)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0, QSE_NULL);
 			return QSE_NULL;
 		}
 		else
@@ -4648,7 +4651,7 @@ static qse_awk_val_t* eval_binop_exp (
 		}
 		else if (r1 == 0.0)
 		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EDIVBY0, QSE_NULL);
 			return QSE_NULL;
 		}
 		else
@@ -6557,7 +6560,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 		if (ofs_free != QSE_NULL) 
 			QSE_AWK_FREE (run->awk, ofs_free);
 		if (nflds > 1) qse_awk_rtx_refdownval (run, v);
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
@@ -6569,7 +6572,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 			if (ofs_free != QSE_NULL) 
 				QSE_AWK_FREE (run->awk, ofs_free);
 			if (nflds > 1) qse_awk_rtx_refdownval (run, v);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
@@ -6581,7 +6584,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 			if (ofs_free != QSE_NULL) 
 				QSE_AWK_FREE (run->awk, ofs_free);
 			if (nflds > 1) qse_awk_rtx_refdownval (run, v);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 	}
@@ -6742,7 +6745,7 @@ qse_char_t* qse_awk_rtx_format (
 	do { \
 		if (qse_str_ccat (out, (c)) == -1) \
 		{ \
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM); \
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL); \
 			return QSE_NULL; \
 		} \
 	} while (0)
@@ -6751,7 +6754,7 @@ qse_char_t* qse_awk_rtx_format (
 	do { \
 		if (qse_str_ccat (fbu, (c)) == -1) \
 		{ \
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM); \
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL); \
 			return QSE_NULL; \
 		} \
 	} while (0)
@@ -6820,7 +6823,7 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -6831,7 +6834,7 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -6873,7 +6876,7 @@ qse_char_t* qse_awk_rtx_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == QSE_NULL)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL;
 					}
 
@@ -6926,7 +6929,7 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -6937,7 +6940,7 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -6977,7 +6980,7 @@ qse_char_t* qse_awk_rtx_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == QSE_NULL)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL;
 					}
 
@@ -7047,7 +7050,7 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -7058,7 +7061,7 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -7100,7 +7103,7 @@ qse_char_t* qse_awk_rtx_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == QSE_NULL)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL;
 					}
 
@@ -7135,7 +7138,7 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -7146,7 +7149,7 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -7184,7 +7187,7 @@ qse_char_t* qse_awk_rtx_format (
 					GROW (&run->format.tmp);
 					if (run->format.tmp.ptr == QSE_NULL)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL;
 					}
 
@@ -7212,7 +7215,7 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -7223,7 +7226,7 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -7264,7 +7267,7 @@ qse_char_t* qse_awk_rtx_format (
 			else
 			{
 				qse_awk_rtx_refdownval (run, v);
-				qse_awk_rtx_seterrnum (run, QSE_AWK_EVALTYPE);
+				qse_awk_rtx_seterrnum (run, QSE_AWK_EVALTYPE, QSE_NULL);
 				return QSE_NULL;
 			}
 
@@ -7278,7 +7281,8 @@ qse_char_t* qse_awk_rtx_format (
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
 						qse_awk_rtx_refdownval (run, v);
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (
+							run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL; 
 					} 
 					width--;
@@ -7290,7 +7294,8 @@ qse_char_t* qse_awk_rtx_format (
 				if (qse_str_ccat (out, ch) == -1) 
 				{ 
 					qse_awk_rtx_refdownval (run, v);
-					qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+					qse_awk_rtx_seterrnum (
+						run, QSE_AWK_ENOMEM, QSE_NULL);
 					return QSE_NULL; 
 				} 
 			}
@@ -7302,7 +7307,8 @@ qse_char_t* qse_awk_rtx_format (
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
 						qse_awk_rtx_refdownval (run, v);
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (
+							run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL; 
 					} 
 					width--;
@@ -7322,7 +7328,8 @@ qse_char_t* qse_awk_rtx_format (
 			{
 				if (stack_arg_idx >= nargs_on_stack)
 				{
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+					qse_awk_rtx_seterrnum (
+						run, QSE_AWK_EFMTARG, QSE_NULL);
 					return QSE_NULL;
 				}
 				v = qse_awk_rtx_getarg (run, stack_arg_idx);
@@ -7333,7 +7340,8 @@ qse_char_t* qse_awk_rtx_format (
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTARG);
+						qse_awk_rtx_seterrnum (
+							run, QSE_AWK_EFMTARG, QSE_NULL);
 						return QSE_NULL;
 					}
 					v = val;
@@ -7363,7 +7371,8 @@ qse_char_t* qse_awk_rtx_format (
 				if (v == val)
 				{
 					qse_awk_rtx_refdownval (run, v);
-					qse_awk_rtx_seterrnum (run, QSE_AWK_EFMTCNV);
+					qse_awk_rtx_seterrnum (
+						run, QSE_AWK_EFMTCNV, QSE_NULL);
 					return QSE_NULL;
 				}
 	
@@ -7391,7 +7400,8 @@ qse_char_t* qse_awk_rtx_format (
 						if (str_free != QSE_NULL) 
 							QSE_AWK_FREE (run->awk, str_free);
 						qse_awk_rtx_refdownval (run, v);
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (
+							run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL; 
 					} 
 					width--;
@@ -7405,7 +7415,8 @@ qse_char_t* qse_awk_rtx_format (
 					if (str_free != QSE_NULL) 
 						QSE_AWK_FREE (run->awk, str_free);
 					qse_awk_rtx_refdownval (run, v);
-					qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+					qse_awk_rtx_seterrnum (
+						run, QSE_AWK_ENOMEM, QSE_NULL);
 					return QSE_NULL; 
 				} 
 			}
@@ -7419,7 +7430,8 @@ qse_char_t* qse_awk_rtx_format (
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
 						qse_awk_rtx_refdownval (run, v);
-						qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
+						qse_awk_rtx_seterrnum (
+							run, QSE_AWK_ENOMEM, QSE_NULL);
 						return QSE_NULL; 
 					} 
 					width--;

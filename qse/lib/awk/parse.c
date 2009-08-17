@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: parse.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -356,9 +356,9 @@ static global_t gtab[] =
 
 #define MATCH(awk,token_type) ((awk)->token.type == (token_type))
 
-#define CLRERR(awk) qse_awk_seterrnum(awk,QSE_AWK_ENOERR)
+#define CLRERR(awk) qse_awk_seterrnum(awk,QSE_AWK_ENOERR,QSE_NULL)
 #define ISNOERR(awk) ((awk)->errinf.num == QSE_AWK_ENOERR)
-#define SETERR(awk,code) qse_awk_seterrnum(awk,code)
+#define SETERR(awk,code) qse_awk_seterrnum(awk,code,QSE_NULL)
 #define SETERRLIN(awk,code,line) qse_awk_seterror(awk,code,line,QSE_NULL);
 #define SETERRTOK(awk,code) \
 	do { \

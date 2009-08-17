@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 251 2009-08-10 07:11:16Z hyunghwan.chung $
+ * $Id: awk.h 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1041,9 +1041,16 @@ void qse_awk_geterrinf (
 	qse_awk_errinf_t* errinf /**< error information buffer */
 );
 
+/**
+ * The qse_awk_seterrnum() function sets the error information omitting 
+ * error location. You must pass a non-NULL for @a errarg if the specified
+ * error number @a errnum requires one or more arguments to format an
+ * error message.
+ */
 void qse_awk_seterrnum (
-	qse_awk_t*       awk, 
-	qse_awk_errnum_t errnum
+	qse_awk_t*        awk,    /**< awk object */
+	qse_awk_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg  /**< arguments to format error message */
 );
 
 void qse_awk_seterrinf (
@@ -1059,7 +1066,7 @@ void qse_awk_geterror (
 );
 
 /**
- * The qse_awk_seterror() functon sets 
+ * The qse_awk_seterror() functon sets error information.
  */
 void qse_awk_seterror (
 	qse_awk_t*        awk,
@@ -1539,8 +1546,9 @@ void qse_awk_rtx_geterror (
 );
 
 void qse_awk_rtx_seterrnum (
-	qse_awk_rtx_t*   rtx,   /**< runtime context */
-	qse_awk_errnum_t errnum /**< error number */
+	qse_awk_rtx_t*    rtx,    /**< runtime context */
+	qse_awk_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg  /**< arguments to format error message */
 );
 
 void qse_awk_rtx_seterrinf (

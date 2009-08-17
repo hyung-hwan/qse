@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 213 2009-06-26 13:05:19Z hyunghwan.chung $
+ * $Id: rio.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -394,8 +394,7 @@ int qse_awk_rtx_readio (
 
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			ret = -1;
 			break;
 		}
@@ -494,8 +493,7 @@ int qse_awk_rtx_writeio_str (
 			run->awk, QSE_SIZEOF(qse_awk_rio_arg_t));
 		if (p == QSE_NULL)
 		{
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -503,8 +501,7 @@ int qse_awk_rtx_writeio_str (
 		if (p->name == QSE_NULL)
 		{
 			QSE_AWK_FREE (run->awk, p);
-			qse_awk_rtx_seterror (
-				run, QSE_AWK_ENOMEM, 0, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM);
 			return -1;
 		}
 
@@ -675,7 +672,7 @@ int qse_awk_rtx_nextio_read (
 		/* something is totally wrong */
 		QSE_ASSERT (
 			!"should never happen - cannot find the relevant rio entry");
-		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN);
 		return -1;
 	}
 
@@ -753,7 +750,7 @@ int qse_awk_rtx_nextio_write (
 		/* something is totally wrong */
 		QSE_ASSERT (!"should never happen - cannot find the relevant rio entry");
 
-		qse_awk_rtx_seterror (run, QSE_AWK_EINTERN, 0, QSE_NULL);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EINTERN);
 		return -1;
 	}
 
@@ -826,7 +823,7 @@ int qse_awk_rtx_closio_read (
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
-					qse_awk_rtx_seterror (run, QSE_AWK_EIOIMPL, 0, QSE_NULL);
+					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL);
 					return -1;
 				}
 			}
@@ -868,7 +865,7 @@ int qse_awk_rtx_closio_write (
 	if (handler == QSE_NULL)
 	{
 		/* no io handler provided */
-		qse_awk_rtx_seterror (run, QSE_AWK_EIOUSER, 0, QSE_NULL);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER);
 		return -1;
 	}
 

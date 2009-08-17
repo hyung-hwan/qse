@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 248 2009-08-06 08:27:14Z hyunghwan.chung $
+ * $Id: err.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -205,11 +205,10 @@ void qse_awk_geterror (
 	}
 }
 
-void qse_awk_seterrnum (qse_awk_t* awk, qse_awk_errnum_t errnum)
+void qse_awk_seterrnum (
+	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	awk->errinf.num = errnum;
-	awk->errinf.lin = 0;
-	awk->errinf.msg[0] = QSE_T('\0');
+	qse_awk_seterror (awk, errnum, 0, errarg);
 }
 
 void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
@@ -224,7 +223,6 @@ void qse_awk_seterror (
 	const qse_char_t* errfmt;
 
 	awk->errinf.num = errnum;
-	awk->errinf.lin = errlin;
 
 	errfmt = qse_awk_geterrstr(awk)(awk,errnum);
 	QSE_ASSERT (errfmt != QSE_NULL);
@@ -232,6 +230,8 @@ void qse_awk_seterror (
 		awk->errinf.msg, QSE_COUNTOF(awk->errinf.msg),
 		errfmt, errarg
 	);
+
+	awk->errinf.lin = errlin;
 }
 
 qse_awk_errnum_t qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
@@ -273,11 +273,10 @@ void qse_awk_rtx_geterror (
 	}
 }
 
-void qse_awk_rtx_seterrnum (qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum)
+void qse_awk_rtx_seterrnum (
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	rtx->errinf.num = errnum;
-	rtx->errinf.lin = 0;
-	rtx->errinf.msg[0] = QSE_T('\0');
+	qse_awk_rtx_seterror (rtx, errnum, 0, errarg);
 }
 
 void qse_awk_rtx_seterrinf (qse_awk_rtx_t* rtx, const qse_awk_errinf_t* errinf)
