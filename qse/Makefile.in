@@ -212,8 +212,8 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I ac/m4
 AUTOMAKE_OPTION = foreign
 EXTRA_DIST = ac/au ac/m4
-SUBDIRS = lib cmd
-DIST_SUBDIRS = $(SUBDIRS) include regress samples doc
+SUBDIRS = lib cmd include
+DIST_SUBDIRS = $(SUBDIRS) regress samples doc
 all: all-recursive
 
 .SUFFIXES:
@@ -588,8 +588,6 @@ info: info-recursive
 info-am:
 
 install-data-am:
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 
 install-dvi: install-dvi-recursive
 
@@ -626,11 +624,9 @@ ps: ps-recursive
 ps-am:
 
 uninstall-am:
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
-	install-data-am install-strip uninstall-am
+	install-strip
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am am--refresh check check-am clean clean-generic \
@@ -639,22 +635,21 @@ uninstall-am:
 	distclean distclean-generic distclean-libtool distclean-local \
 	distclean-tags distcleancheck distdir distuninstallcheck dvi \
 	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-data-hook install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	installdirs-am maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
-	ps ps-am tags tags-recursive uninstall uninstall-am \
-	uninstall-hook
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am
 
 
-install-data-hook:
-	cd include && $(MAKE) install
+#install-data-hook:
+#	cd include && $(MAKE) install
 
-uninstall-hook:
-	cd include && $(MAKE) uninstall
+#uninstall-hook:
+#	cd include && $(MAKE) uninstall
 
 distclean-local:
 	$(RM) -r autom4te.cache

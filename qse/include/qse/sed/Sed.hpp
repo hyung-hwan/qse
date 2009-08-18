@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 254 2009-08-13 13:26:46Z hyunghwan.chung $
+ * $Id: Sed.hpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -155,9 +155,9 @@ public:
 	 * The setError() function sets information on an error occurred.
 	 */
 	void setError (
-		errnum_t      err,            ///< an error number
-		size_t        lin = 0,        ///< a line number
-		const cstr_t* args = QSE_NULL ///< strings for formatting an error message
+		errnum_t      err,             ///< an error number
+		const cstr_t* args = QSE_NULL, ///< strings for formatting an error message
+		size_t        lin = 0          ///< a line number
 	);
 
 	/**

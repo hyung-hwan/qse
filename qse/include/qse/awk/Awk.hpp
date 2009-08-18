@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 254 2009-08-13 13:26:46Z hyunghwan.chung $
+ * $Id: Awk.hpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -240,14 +240,14 @@ public:
 	 */
 	void setError (
 		ErrorNumber   code,
-		size_t        line  = 0,
-		const cstr_t* args  = QSE_NULL
+		const cstr_t* args  = QSE_NULL,
+		size_t        line  = 0
 	);
 
 	void setErrorWithMessage (
 		ErrorNumber   code,
-		size_t        line,
-		const char_t* msg
+		const char_t* msg,
+		size_t        line
 	);
 
 	/** clears error information */
@@ -749,12 +749,15 @@ public:
 
 		void setError (
 			ErrorNumber   code, 
-			size_t        line = 0, 
-			const cstr_t* args = QSE_NULL
+			const cstr_t* args = QSE_NULL,
+			size_t        line = 0
 		);
 
 		void setErrorWithMessage (
-			ErrorNumber code, size_t line, const char_t* msg);
+			ErrorNumber   code, 
+			const char_t* msg,
+			size_t        line
+		);
 
 		/** 
 		 * Sets the value of a global variable identified by @a id

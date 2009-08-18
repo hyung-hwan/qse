@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 235 2009-07-15 10:43:31Z hyunghwan.chung $
+ * $Id: Sed.cpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -101,10 +101,10 @@ Sed::errnum_t Sed::getErrorNumber () const
 	return (sed == QSE_NULL)? QSE_SED_ENOERR: qse_sed_geterrnum (sed);
 }
 
-void Sed::setError (errnum_t err, size_t lin, const cstr_t* args)
+void Sed::setError (errnum_t err, const cstr_t* args, size_t lin)
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	qse_sed_seterror (sed, err, lin, args);
+	qse_sed_seterror (sed, err, args, lin);
 }
 
 Sed::size_t Sed::getConsoleLine ()

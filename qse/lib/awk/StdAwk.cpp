@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 253 2009-08-12 13:39:37Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -467,7 +467,7 @@ int StdAwk::open_console_in (Console& io)
 			cstr_t arg;
 			arg.ptr = file;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
+			((Run*)io)->setError (ERR_IONMNL, &arg);
 			return -1;
 		}
 
@@ -516,7 +516,7 @@ int StdAwk::open_console_in (Console& io)
 			cstr_t arg;
 			arg.ptr = out.u.cpldup.ptr;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
+			((Run*)io)->setError (ERR_IONMNL, &arg);
 			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
@@ -537,7 +537,7 @@ int StdAwk::open_console_in (Console& io)
 				cstr_t arg;
 				arg.ptr = file;
 				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (ERR_OPEN, 0, &arg);
+				((Run*)io)->setError (ERR_OPEN, &arg);
 				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
@@ -599,7 +599,7 @@ int StdAwk::open_console_out (Console& io)
 			cstr_t arg;
 			arg.ptr = file;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, 0, &arg);
+			((Run*)io)->setError (ERR_IONMNL, &arg);
 			return -1;
 		}
 
@@ -617,7 +617,7 @@ int StdAwk::open_console_out (Console& io)
 				cstr_t arg;
 				arg.ptr = file;
 				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (ERR_OPEN, 0, &arg);
+				((Run*)io)->setError (ERR_OPEN, &arg);
 				return -1;
 			}
 		}
@@ -803,7 +803,7 @@ int StdAwk::SourceFile::open (Data& io)
 				qse_cstr_t ea;
 				ea.ptr = name;
 				ea.len = qse_strlen(name);
-				((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+				((Awk*)io)->setError (ERR_OPEN, &ea);
 				return -1;
 			}
 
@@ -862,7 +862,7 @@ int StdAwk::SourceFile::open (Data& io)
 			qse_cstr_t ea;
 			ea.ptr = file;
 			ea.len = qse_strlen(file);
-			((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+			((Awk*)io)->setError (ERR_OPEN, &ea);
 			return -1;
 		}
 	}
@@ -922,7 +922,7 @@ int StdAwk::SourceString::open (Data& io)
 			qse_cstr_t ea;
 			ea.ptr = ioname;
 			ea.len = qse_strlen(ioname);
-			((Awk*)io)->setError (ERR_OPEN, 0, &ea);
+			((Awk*)io)->setError (ERR_OPEN, &ea);
 			return -1;
 		}
 		io.setHandle (sio);

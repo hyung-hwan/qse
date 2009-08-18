@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: sed.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -30,13 +30,13 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr);
 static void qse_sed_fini (qse_sed_t* sed);
 
 #define SETERR0(sed,num,line) \
-do { qse_sed_seterror (sed, num, line, QSE_NULL); } while (0)
+do { qse_sed_seterror (sed, num, QSE_NULL, line); } while (0)
 
 #define SETERR1(sed,num,line,argp,argl) \
 do { \
-	qse_cstr_t __qse__err__arg__; \
-	__qse__err__arg__.ptr = argp; __qse__err__arg__.len = argl; \
-	qse_sed_seterror (sed, num, line, &__qse__err__arg__); \
+	qse_cstr_t __ea__; \
+	__ea__.ptr = argp; __ea__.len = argl; \
+	qse_sed_seterror (sed, num, &__ea__, line); \
 } while (0)
 
 qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
