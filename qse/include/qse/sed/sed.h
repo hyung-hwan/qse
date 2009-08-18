@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 212 2009-06-25 07:39:27Z hyunghwan.chung $
+ * $Id: sed.h 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -103,7 +103,7 @@ typedef enum qse_sed_errnum_t qse_sed_errnum_t;
  * editor with the qse_sed_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_sed_errstr_t) (
-	qse_sed_t* sed,         /**< a stream editor */
+	qse_sed_t* sed,         /**< stream editor */
 	qse_sed_errnum_t num    /**< an error number */
 );
 
@@ -212,7 +212,7 @@ qse_sed_t* qse_sed_open (
  * The qse_sed_close() function destroys a stream editor.
  */
 void qse_sed_close (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -221,14 +221,14 @@ void qse_sed_close (
  * @return 0 or a number OR'ed of #qse_sed_option_t values 
  */
 int qse_sed_getoption (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
  * The qse_sed_setoption() function sets the option code.
  */
 void qse_sed_setoption (
-	qse_sed_t* sed, /**< a stream editor */
+	qse_sed_t* sed, /**< stream editor */
 	int        opt  /**< 0 or a number OR'ed of #qse_sed_option_t values */
 );
 
@@ -236,7 +236,7 @@ void qse_sed_setoption (
  * The qse_sed_getmaxdepth() gets the maximum processing depth.
  */
 qse_size_t qse_sed_getmaxdepth (
-	qse_sed_t*      sed, /**< a stream editor */
+	qse_sed_t*      sed, /**< stream editor */
 	qse_sed_depth_t id   /**< one of qse_sed_depth_t values */
 );
 
@@ -244,7 +244,7 @@ qse_size_t qse_sed_getmaxdepth (
  * The qse_sed_setmaxdepth() sets the maximum processing depth.
  */
 void qse_sed_setmaxdepth (
-	qse_sed_t* sed,  /**< a stream editor */
+	qse_sed_t* sed,  /**< stream editor */
 	int        ids,  /**< 0 or a number OR'ed of #qse_sed_depth_t values */
 	qse_size_t depth /**< maximum depth level */
 );
@@ -253,7 +253,7 @@ void qse_sed_setmaxdepth (
  * The qse_sed_geterrstr() gets an error string getter.
  */
 qse_sed_errstr_t qse_sed_geterrstr (
-	qse_sed_t*       sed    /**< a stream editor */
+	qse_sed_t*       sed    /**< stream editor */
 );
 
 /**
@@ -281,7 +281,7 @@ qse_sed_errstr_t qse_sed_geterrstr (
  * @endcode
  */
 void qse_sed_seterrstr (
-	qse_sed_t*       sed,   /**< a stream editor */
+	qse_sed_t*       sed,   /**< stream editor */
 	qse_sed_errstr_t errstr /**< an error string getter */
 );
 
@@ -290,7 +290,7 @@ void qse_sed_seterrstr (
  * @return the number of the last error
  */
 qse_sed_errnum_t qse_sed_geterrnum (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -299,7 +299,7 @@ qse_sed_errnum_t qse_sed_geterrnum (
  * @return the line number of the last error
  */
 qse_size_t qse_sed_geterrlin (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -307,7 +307,7 @@ qse_size_t qse_sed_geterrlin (
  * @return a pointer to an error message
  */
 const qse_char_t* qse_sed_geterrmsg (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -316,10 +316,31 @@ const qse_char_t* qse_sed_geterrmsg (
  * each parameter.
  */
 void qse_sed_geterror (
-	qse_sed_t*         sed,    /**< a stream editor */
-	qse_sed_errnum_t*  errnum, /**< a pointer to an error number holder */
-	qse_size_t*        errlin, /**< a pointer to an error line holder */
-	const qse_char_t** errmsg  /**< a pointer to an error message */
+	qse_sed_t*         sed,    /**< stream editor */
+	qse_sed_errnum_t*  errnum, /**< pointer to an error number holder */
+	qse_size_t*        errlin, /**< pointer to an error line holder */
+	const qse_char_t** errmsg  /**< pointer to an error message */
+);
+
+/**
+ * The qse_sed_seterrnum() function sets error information omitting error
+ * location.
+ */
+void qse_sed_seterrnum (
+        qse_sed_t*        sed,    /**< stream editor */
+	qse_sed_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg  /**< argument for formatting error message */
+);
+
+/**
+ * The qse_sed_seterrmsg() function sets error information with a customized 
+ * message for a given error number.
+ */
+void qse_sed_seterrmsg (
+        qse_sed_t*        sed,    /**< stream editor */
+	qse_sed_errnum_t  errnum, /**< error number */
+        const qse_char_t* errmsg, /**< error message */
+	qse_size_t errlin         /**< error line */
 );
 
 /**
@@ -328,10 +349,10 @@ void qse_sed_geterror (
  * and an array of formatting parameters.
  */
 void qse_sed_seterror (
-	qse_sed_t*        sed,    /**< a stream editor */
-	qse_sed_errnum_t  errnum, /**< an error number */
-	qse_size_t        errlin, /**< an error line */
-	const qse_cstr_t* errarg  /**< a string array for formatting an error message */
+	qse_sed_t*        sed,    /**< stream editor */
+	qse_sed_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg, /**< argument array for formatting error message */
+	qse_size_t        errlin  /**< error line */
 );
 
 /**
@@ -339,8 +360,8 @@ void qse_sed_seterror (
  * @return 0 on success, -1 on error 
  */
 int qse_sed_comp (
-	qse_sed_t*        sed, /**< a stream editor */
-	const qse_char_t* ptr, /**< a pointer to a string containing commands */
+	qse_sed_t*        sed, /**< stream editor */
+	const qse_char_t* ptr, /**< pointer to a string containing commands */
 	qse_size_t        len  /**< the number of characters in the string */ 
 );
 
@@ -349,7 +370,7 @@ int qse_sed_comp (
  * @return 0 on success, -1 on error
  */
 int qse_sed_exec (
-	qse_sed_t*        sed,  /**< a stream editor */
+	qse_sed_t*        sed,  /**< stream editor */
 	qse_sed_io_fun_t  inf,  /**< stream reader */
 	qse_sed_io_fun_t  outf  /**< stream writer */
 );
@@ -359,14 +380,14 @@ int qse_sed_exec (
  * @return current input line number
  */
 qse_size_t qse_sed_getlinnum (
-	qse_sed_t* sed /**< a stream editor */
+	qse_sed_t* sed /**< stream editor */
 );
 
 /**
  * The qse_sed_setlinnum() function changes the current input line number.
  */
 void qse_sed_setlinnum (
-	qse_sed_t* sed,   /**< a stream editor */
+	qse_sed_t* sed,   /**< stream editor */
 	qse_size_t num    /**< a line number */
 );
 

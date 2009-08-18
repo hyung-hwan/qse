@@ -1,6 +1,8 @@
 
-pkginclude_HEADERS = sed.h Sed.hpp StdSed.hpp
+pkginclude_HEADERS = sed.h
+
+if ENABLE_CXX
+pkginclude_HEADERS += Sed.hpp StdSed.hpp
+endif
 
 pkgincludedir= $(includedir)/qse/sed
-
-CLEANFILES = *dist

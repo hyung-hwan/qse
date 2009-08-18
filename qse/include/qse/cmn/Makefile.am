@@ -10,5 +10,3 @@ pkginclude_HEADERS = \
 
 pkgincludedir = $(includedir)/qse/cmn
 
-CLEANFILES = *dist
-

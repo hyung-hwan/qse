@@ -1,11 +1,9 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-bin_PROGRAMS = sed01
+bin_PROGRAMS = 
 
 LDFLAGS = -L../../lib/cmn -L../../lib/sed
 LDADD = -lqsesed -lqsecmn $(LIBM)
-
-sed01_SOURCES = sed01.c
 
 if ENABLE_CXX
 bin_PROGRAMS += sed02 sed03 

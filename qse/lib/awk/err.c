@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 255 2009-08-16 08:08:58Z hyunghwan.chung $
+ * $Id: err.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -193,7 +193,7 @@ void qse_awk_geterrinf (qse_awk_t* awk, qse_awk_errinf_t* errinf)
 
 void qse_awk_geterror (
 	qse_awk_t* awk, qse_awk_errnum_t* errnum, 
-	qse_size_t* errlin, const qse_char_t** errmsg)
+	const qse_char_t** errmsg, qse_size_t* errlin)
 {
 	if (errnum != QSE_NULL) *errnum = awk->errinf.num;
 	if (errlin != QSE_NULL) *errlin = awk->errinf.lin;
@@ -208,7 +208,7 @@ void qse_awk_geterror (
 void qse_awk_seterrnum (
 	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	qse_awk_seterror (awk, errnum, 0, errarg);
+	qse_awk_seterror (awk, errnum, errarg, 0);
 }
 
 void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
@@ -217,8 +217,8 @@ void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
 }
 
 void qse_awk_seterror (
-	qse_awk_t* awk, qse_awk_errnum_t errnum,
-	qse_size_t errlin, const qse_cstr_t* errarg)
+	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
+	qse_size_t errlin)
 {
 	const qse_char_t* errfmt;
 
@@ -262,7 +262,7 @@ void qse_awk_rtx_geterrinf (qse_awk_rtx_t* rtx, qse_awk_errinf_t* errinf)
 
 void qse_awk_rtx_geterror (
 	qse_awk_rtx_t* rtx, qse_awk_errnum_t* errnum, 
-	qse_size_t* errlin, const qse_char_t** errmsg)
+	const qse_char_t** errmsg, qse_size_t* errlin)
 {
 	if (errnum != QSE_NULL) *errnum = rtx->errinf.num;
 	if (errlin != QSE_NULL) *errlin = rtx->errinf.lin;
@@ -276,7 +276,7 @@ void qse_awk_rtx_geterror (
 void qse_awk_rtx_seterrnum (
 	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	qse_awk_rtx_seterror (rtx, errnum, 0, errarg);
+	qse_awk_rtx_seterror (rtx, errnum, errarg, 0);
 }
 
 void qse_awk_rtx_seterrinf (qse_awk_rtx_t* rtx, const qse_awk_errinf_t* errinf)
@@ -285,8 +285,8 @@ void qse_awk_rtx_seterrinf (qse_awk_rtx_t* rtx, const qse_awk_errinf_t* errinf)
 }
 
 void qse_awk_rtx_seterror (
-	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, 
-	qse_size_t errlin, const qse_cstr_t* errarg)
+	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
+	qse_size_t errlin)
 {
 	const qse_char_t* errfmt;
 

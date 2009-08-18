@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 255 2009-08-16 08:08:58Z hyunghwan.chung $
+ * $Id: awk.h 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -769,8 +769,8 @@ typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 struct qse_awk_errinf_t
 {
 	qse_awk_errnum_t num;      /**< error number */
-	qse_size_t       lin;      /**< line number where an error occurred */
 	qse_char_t       msg[256]; /**< error message */
+	qse_size_t       lin;      /**< line number where an error occurred */
 };
 typedef struct qse_awk_errinf_t qse_awk_errinf_t;
 
@@ -1061,18 +1061,18 @@ void qse_awk_seterrinf (
 void qse_awk_geterror (
 	qse_awk_t*         awk,
 	qse_awk_errnum_t*  errnum, 
-	qse_size_t*        errlin,
-	const qse_char_t** errmsg
+	const qse_char_t** errmsg,
+	qse_size_t*        errlin
 );
 
 /**
  * The qse_awk_seterror() functon sets error information.
  */
 void qse_awk_seterror (
-	qse_awk_t*        awk,
-	qse_awk_errnum_t  errnum,
-	qse_size_t        errlin, 
-	const qse_cstr_t* errarg
+	qse_awk_t*        awk,    /**< awk object */
+	qse_awk_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg, /**< argument array for formatting error message */
+	qse_size_t        errlin  /**< line number */
 );
 
 int qse_awk_getoption (
@@ -1541,8 +1541,8 @@ void qse_awk_rtx_geterrinf (
 void qse_awk_rtx_geterror (
 	qse_awk_rtx_t*     rtx,    /**< runtime context */
 	qse_awk_errnum_t*  errnum, /**< error number */
-	qse_size_t*        errlin, /**< error line */
-	const qse_char_t** errmsg  /**< error message */
+	const qse_char_t** errmsg, /**< error message */
+	qse_size_t*        errlin  /**< error line */
 );
 
 void qse_awk_rtx_seterrnum (
@@ -1559,8 +1559,8 @@ void qse_awk_rtx_seterrinf (
 void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*    rtx,    /**< runtime context */
 	qse_awk_errnum_t  errnum, /**< error number */
-	qse_size_t        errlin, /**< error line */
-	const qse_cstr_t* errarg  /**< error message formatting argument */
+	const qse_cstr_t* errarg, /**< argument array for formatting error message */
+	qse_size_t        errlin  /**< error line */
 );
 
 /**

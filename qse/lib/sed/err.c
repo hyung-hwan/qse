@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: err.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -97,16 +97,15 @@ void qse_sed_geterror (
 	}
 }
 
-void qse_sed_seterrnum (qse_sed_t* sed, qse_sed_errnum_t errnum)
+void qse_sed_seterrnum (
+	qse_sed_t* sed, qse_sed_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	sed->errnum = errnum;
-	sed->errlin = 0;
-	sed->errmsg[0] = QSE_T('\0');
+	qse_sed_seterror (sed, errnum, errarg, 0);
 }
 
 void qse_sed_seterrmsg (
 	qse_sed_t* sed, qse_sed_errnum_t errnum,
-	qse_size_t errlin, const qse_char_t* errmsg)
+	const qse_char_t* errmsg, qse_size_t errlin)
 {
 	sed->errnum = errnum;
 	sed->errlin = errlin;
@@ -115,7 +114,7 @@ void qse_sed_seterrmsg (
 
 void qse_sed_seterror (
 	qse_sed_t* sed, qse_sed_errnum_t errnum,
-	qse_size_t errlin, const qse_cstr_t* errarg)
+	const qse_cstr_t* errarg, qse_size_t errlin)
 {
 	const qse_char_t* errfmt;
 

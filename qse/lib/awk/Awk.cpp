@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: Awk.cpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -920,14 +920,14 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->rtx);
 }
 
-void Awk::Run::setError (ErrorNumber code, size_t line, const cstr_t* args)
+void Awk::Run::setError (ErrorNumber code, const cstr_t* args, size_t line)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	qse_awk_rtx_seterror (this->rtx, (errnum_t)code, line, args);
+	qse_awk_rtx_seterror (this->rtx, (errnum_t)code, args, line);
 }
 
 void Awk::Run::setErrorWithMessage (
-	ErrorNumber code, size_t line, const char_t* msg)
+	ErrorNumber code, const char_t* msg, size_t line)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
@@ -1037,11 +1037,11 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errinf.msg;
 }
 
-void Awk::setError (ErrorNumber code, size_t line, const cstr_t* args)
+void Awk::setError (ErrorNumber code, const cstr_t* args, size_t line)
 {
 	if (awk != QSE_NULL)
 	{
-		qse_awk_seterror (awk, (errnum_t)code, line, args);
+		qse_awk_seterror (awk, (errnum_t)code, args, line);
 		retrieveError ();
 	}
 	else
@@ -1053,7 +1053,7 @@ void Awk::setError (ErrorNumber code, size_t line, const cstr_t* args)
 	}
 }
 
-void Awk::setErrorWithMessage (ErrorNumber code, size_t line, const char_t* msg)
+void Awk::setErrorWithMessage (ErrorNumber code, const char_t* msg, size_t line)
 {
 	if (awk != QSE_NULL)
 	{
@@ -1328,7 +1328,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 	pair = qse_map_search (functionMap, name->ptr, name->len);
 	if (pair == QSE_NULL) 
 	{
-		run->setError (ERR_FUNNF, 0, name);
+		run->setError (ERR_FUNNF, name);
 		return -1;
 	}
 
