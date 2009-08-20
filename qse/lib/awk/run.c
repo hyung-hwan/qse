@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: run.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -435,7 +435,8 @@ static int set_global (
 			if (shorten_record (run, (qse_size_t)lv) == -1)
 			{
 				/* adjust the error line */
-				if (var != QSE_NULL) run->errinf.lin = var->line;
+				if (var != QSE_NULL) 
+					run->errinf.lin = var->line;
 				return -1;
 			}
 		}
@@ -1543,7 +1544,7 @@ static int run_pattern_blocks (qse_awk_rtx_t* run)
 {
 	int n;
 
-#define ADJUST_ERROR_LINE(run) \
+#define ADJUST_ERROR(run) \
 	if (run->awk->tree.chain != QSE_NULL) \
 	{ \
 		if (run->awk->tree.chain->pattern != QSE_NULL) \
@@ -1568,14 +1569,14 @@ static int run_pattern_blocks (qse_awk_rtx_t* run)
 		n = read_record (run);
 		if (n == -1) 
 		{
-			ADJUST_ERROR_LINE (run);
+			ADJUST_ERROR (run);
 			return -1; /* error */
 		}
 		if (n == 0) break; /* end of input */
 
 		if (update_fnr (run, run->gbl.fnr+1, run->gbl.nr+1) == -1) 
 		{
-			ADJUST_ERROR_LINE (run);
+			ADJUST_ERROR (run);
 			return -1;
 		}
 
@@ -1586,7 +1587,7 @@ static int run_pattern_blocks (qse_awk_rtx_t* run)
 		}
 	}
 
-#undef ADJUST_ERROR_LINE
+#undef ADJUST_ERROR
 	return 0;
 }
 

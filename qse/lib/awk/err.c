@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: err.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -46,10 +46,9 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("invalid character '${0}'"),
 		QSE_T("invalid digit '${0}'"),
 
-		QSE_T("unexpected end of source"),
+		QSE_T("unexpected end of input"),
 		QSE_T("comment not closed properly"),
 		QSE_T("string or regular expression not closed"),
-		QSE_T("unexpected end of regular expression"),
 		QSE_T("left brace expected in place of '${0}'"),
 		QSE_T("left parenthesis expected in place of '${0}'"),
 		QSE_T("right parenthesis expected in place of '${0}'"),

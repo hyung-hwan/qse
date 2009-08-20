@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
+ * $Id: std.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -219,7 +219,7 @@ static qse_ssize_t sf_in_open (
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
 	
-		if (xtn->s.in.dir.len > 0)
+		if (xtn->s.in.dir.len > 0 && arg->name[0] != QSE_T('/'))
 		{
 			qse_size_t tmplen, totlen;
 			
@@ -1066,11 +1066,11 @@ static qse_ssize_t awk_rio_console (
 }
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*              awk,
-	qse_size_t              xtnsize,
-	const qse_char_t*       id,
-	const qse_char_t*const* icf,
-	const qse_char_t*const* ocf)
+	qse_awk_t*         awk,
+	qse_size_t         xtnsize,
+	const qse_char_t*  id,
+	const qse_char_t** icf,
+	const qse_char_t** ocf)
 {
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;

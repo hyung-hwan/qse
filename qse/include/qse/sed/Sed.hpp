@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: Sed.hpp 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -23,7 +23,7 @@
 #include <qse/sed/sed.h>
 
 /** @file
- * A stream editor
+ * Stream Editor
  */
 
 /////////////////////////////////
