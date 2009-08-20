@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -821,7 +821,7 @@ int StdAwk::SourceFile::open (Data& io)
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
 	
-		if (dir.len > 0)
+		if (dir.len > 0 && ioname[0] != QSE_T('/'))
 		{
 			size_t tmplen, totlen;
 			

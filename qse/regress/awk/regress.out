@@ -956,7 +956,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [43] LINE [3] function 'a' redefined
+ERROR: CODE [42] LINE [3] function 'a' redefined
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -984,7 +984,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [44] LINE [5] global variable 'a' redefined
+ERROR: CODE [43] LINE [5] global variable 'a' redefined
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --implicit=on --explicit=on --newline=on -o- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE [104] LINE [3] recursion detected in format conversion
+ERROR: CODE [103] LINE [3] recursion detected in format conversion
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1481,27 +1481,27 @@ END {
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [48] LINE [1] duplicate global variable 'ARGV'
+ERROR: CODE [47] LINE [1] duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [50] LINE [1] '+' not a valid parameter name
+ERROR: CODE [49] LINE [1] '+' not a valid parameter name
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [51] LINE [1] '+' not a valid variable name
+ERROR: CODE [50] LINE [1] '+' not a valid variable name
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [51] LINE [3] '+' not a valid variable name
+ERROR: CODE [50] LINE [3] '+' not a valid variable name
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [24] LINE [2] left parenthesis expected in place of '='
+ERROR: CODE [23] LINE [2] left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [29] LINE [5] colon expected in place of ';'
+ERROR: CODE [28] LINE [5] colon expected in place of ';'
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1520,7 +1520,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE [79] LINE [3] variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE [78] LINE [3] variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1532,7 +1532,7 @@ BEGIN {
 }
 
 abc
-ERROR: CODE [87] LINE [4] map 'abc' not assignable with a scalar
+ERROR: CODE [86] LINE [4] map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1540,11 +1540,11 @@ ERROR: CODE [17] LINE [2] invalid character '<NUL>'
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [42] LINE [2] intrinsic function 'substr' redefined
+ERROR: CODE [41] LINE [2] intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE [43] LINE [9] function 'abc' redefined
+ERROR: CODE [42] LINE [9] function 'abc' redefined
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk --newline=on -o- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

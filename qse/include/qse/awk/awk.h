@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: awk.h 258 2009-08-19 14:04:15Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -651,10 +651,9 @@ enum qse_awk_errnum_t
 	QSE_AWK_ELXCHR,  /**< invalid character '${0}' */
 	QSE_AWK_ELXDIG,  /**< invalid digit '${0}' */
 
-	QSE_AWK_EENDSRC, /**< unexpected end of source */
-	QSE_AWK_ECMNTNC, /**< comment not closed properly */
-	QSE_AWK_EENDSTR, /**< string or regular expression not closed */
-	QSE_AWK_EENDREX, /**< unexpected end of regular expression */
+	QSE_AWK_EEOF,    /**< unexpected end of source */
+	QSE_AWK_ECMTNC,  /**< comment not closed properly */
+	QSE_AWK_ESTRNC,  /**< string or regular expression not closed */
 	QSE_AWK_ELBRACE, /**< left brace expected in place of '${0}' */
 	QSE_AWK_ELPAREN, /**< left parenthesis expected in place of '${0}' */
 	QSE_AWK_ERPAREN, /**< right parenthesis expected in place of '${0}' */
@@ -1034,7 +1033,7 @@ const qse_char_t* qse_awk_geterrmsg (
 
 /**
  * The qse_awk_geterrinf() function copies error information into memory
- * pointed to by @a errinf.
+ * pointed to by @a errinf from @a awk.
  */
 void qse_awk_geterrinf (
 	qse_awk_t*        awk,   /**< awk object */
@@ -1533,11 +1532,21 @@ const qse_char_t* qse_awk_rtx_geterrmsg (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
+/**
+ * The qse_awk_rtx_geterrinf() function copies error information into memory
+ * pointed to by @a errinf from a runtime context @a rtx.
+ */
 void qse_awk_rtx_geterrinf (
 	qse_awk_rtx_t*    rtx,   /**< runtime context */
 	qse_awk_errinf_t* errinf /**< error information */
 );
 
+/**
+ * The qse_awk_rtx_geterror() function retrieves error information from a 
+ * runtime context @rtx. The error number is stored into memory pointed
+ * to by @a errnum; the error message pointer into memory pointed to by 
+ * @a errmsg; the error line into memory pointed to by @a errlin.
+ */
 void qse_awk_rtx_geterror (
 	qse_awk_rtx_t*     rtx,    /**< runtime context */
 	qse_awk_errnum_t*  errnum, /**< error number */
