@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 259 2009-08-20 11:28:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -40,14 +40,14 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 /**
  * Provides a more useful interpreter by overriding primitive methods,
- * the file handler, the pipe handler and implementing common intrinsic 
+ * and implementing the file handler, the pipe handler, and common intrinsic
  * functions.
  */
 class StdAwk: public Awk
 {
 public:
 	/**
-	 * Implements script input from a file and deparsing into a file.
+	 * Implements script I/O from and to a file.
 	 */
 	class SourceFile: public Source 
 	{

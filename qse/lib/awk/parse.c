@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: parse.c 259 2009-08-20 11:28:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -382,20 +382,20 @@ static global_t gtab[] =
 #define SETERR_CODE(awk,code) \
 	qse_awk_seterror (awk, code, QSE_NULL, 0)
 
-#define SETERR_LIN(awk,code,line) \
+#define SETERR_LOC(awk,code,line) \
 	qse_awk_seterror (awk, code, QSE_NULL, line)
 
-#define SETERR_ARG(awk,code,arg,leng) \
+#define SETERR_ARG(awk,code,ep,el) \
 	do { \
 		qse_cstr_t __ea; \
-		__ea.len = (leng); __ea.ptr = (arg); \
+		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_seterror ((awk), (code), &__ea, 0); \
 	} while (0)
 
-#define SETERR_ARG_LOC(awk,code,arg,leng,line) \
+#define SETERR_ARG_LOC(awk,code,ep,el,line) \
 	do { \
 		qse_cstr_t __ea; \
-		__ea.len = (leng); __ea.ptr = (arg); \
+		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_seterror ((awk), (code), &__ea, (line)); \
 	} while (0)
 
@@ -674,7 +674,7 @@ static int begin_include (qse_awk_t* awk)
 	);
 	if (pair == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->ptoken.lin);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->ptoken.lin);
 		goto oops;
 	}
 
@@ -684,7 +684,7 @@ static int begin_include (qse_awk_t* awk)
 	arg = (qse_awk_sio_arg_t*) QSE_MMGR_ALLOC (awk->mmgr, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->ptoken.lin);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->ptoken.lin);
 		goto oops;
 	}
 
@@ -807,7 +807,7 @@ retry:
 			if (awk->parse.depth.max.incl > 0 &&
 			    awk->parse.depth.cur.incl >=  awk->parse.depth.max.incl)
 			{
-				SETERR_LIN (awk, QSE_AWK_EINCLTD, awk->ptoken.lin);
+				SETERR_LOC (awk, QSE_AWK_EINCLTD, awk->ptoken.lin);
 				return QSE_NULL;
 			}
 
@@ -815,7 +815,7 @@ retry:
 
 			if (!MATCH(awk,TOKEN_STR))
 			{
-				SETERR_LIN (awk, QSE_AWK_EINCLSTR, awk->ptoken.lin);
+				SETERR_LOC (awk, QSE_AWK_EINCLSTR, awk->ptoken.lin);
 				return QSE_NULL;
 			}
 
@@ -857,7 +857,7 @@ retry:
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * BEGIN and { should be located on the same line */
-			SETERR_LIN (awk, QSE_AWK_EBLKBEG, awk->ptoken.lin);
+			SETERR_LOC (awk, QSE_AWK_EBLKBEG, awk->ptoken.lin);
 			return QSE_NULL;
 		}
 
@@ -885,7 +885,7 @@ retry:
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * END and { should be located on the same line */
-			SETERR_LIN (awk, QSE_AWK_EBLKEND, awk->ptoken.lin);
+			SETERR_LOC (awk, QSE_AWK_EBLKEND, awk->ptoken.lin);
 			return QSE_NULL;
 		}
 
@@ -983,7 +983,7 @@ retry:
 				/* blockless pattern requires QSE_AWK_RIO
 				 * to be ON because the implicit block is
 				 * "print $0" */
-				SETERR_LIN (awk, QSE_AWK_ENOSUP, tline);
+				SETERR_LOC (awk, QSE_AWK_ENOSUP, tline);
 				return QSE_NULL;
 			}
 		}
@@ -1069,7 +1069,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	name_dup = QSE_AWK_STRXDUP (awk, name, name_len);
 	if (name_dup == QSE_NULL) 
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->token.lin);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->token.lin);
 		return QSE_NULL;
 	}
 
@@ -1155,7 +1155,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 			{
 				QSE_AWK_FREE (awk, name_dup);
 				qse_lda_clear (awk->parse.params);
-				SETERR_LIN (awk, QSE_AWK_EPARTM, awk->token.lin);
+				SETERR_LOC (awk, QSE_AWK_EPARTM, awk->token.lin);
 				return QSE_NULL;
 			}
 
@@ -1167,7 +1167,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 				QSE_AWK_FREE (awk, name_dup);
 				qse_lda_clear (awk->parse.params);
 
-				SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->token.lin);
+				SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->token.lin);
 				return QSE_NULL;
 			}	
 
@@ -1270,7 +1270,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 		QSE_AWK_FREE (awk, name_dup);
 		qse_awk_clrpt (awk, body);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->token.lin);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->token.lin);
 		return QSE_NULL;
 	}
 
@@ -1289,7 +1289,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 		qse_awk_clrpt (awk, body);
 		QSE_AWK_FREE (awk, fun);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->token.lin);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->token.lin);
 		return QSE_NULL;
 	}
 
@@ -1373,7 +1373,7 @@ static qse_awk_chain_t* parse_pattern_block (
 	{
 		qse_awk_clrpt (awk, nde);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -1457,8 +1457,8 @@ static qse_awk_nde_t* parse_block (
 				QSE_LDA_SIZE(awk->parse.lcls) - nlcls);
 			if (head != QSE_NULL) qse_awk_clrpt (awk, head);
 
-			/*SETERR_LIN (awk, QSE_AWK_EEOF, awk->ptoken.lin);*/
-			SETERR_LIN (awk, QSE_AWK_EEOF, awk->token.lin);
+			/*SETERR_LOC (awk, QSE_AWK_EEOF, awk->ptoken.lin);*/
+			SETERR_LOC (awk, QSE_AWK_EEOF, awk->token.lin);
 			return QSE_NULL;
 		}
 
@@ -1516,7 +1516,7 @@ static qse_awk_nde_t* parse_block (
 			QSE_LDA_SIZE(awk->parse.lcls)-nlcls);
 		qse_awk_clrpt (awk, head);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -1561,7 +1561,7 @@ static qse_awk_nde_t* parse_block_dc (
 	if (awk->parse.depth.max.block > 0 &&
 	    awk->parse.depth.cur.block >= awk->parse.depth.max.block)
 	{
-		SETERR_LIN (awk, QSE_AWK_EBLKNST, awk->ptoken.lin);
+		SETERR_LOC (awk, QSE_AWK_EBLKNST, awk->ptoken.lin);
 		return QSE_NULL;
 	}
 
@@ -1738,7 +1738,7 @@ static int add_global (
 	ngbls = QSE_LDA_SIZE (awk->parse.gbls);
 	if (ngbls >= QSE_AWK_MAX_GBLS)
 	{
-		SETERR_LIN (awk, QSE_AWK_EGBLTM, line);
+		SETERR_LOC (awk, QSE_AWK_EGBLTM, line);
 		return -1;
 	}
 
@@ -1746,7 +1746,7 @@ static int add_global (
 		QSE_LDA_SIZE(awk->parse.gbls), 
 		(qse_char_t*)name, len) == QSE_LDA_NIL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return -1;
 	}
 
@@ -1973,7 +1973,7 @@ static qse_awk_t* collect_locals (
 
 		if (QSE_LDA_SIZE(awk->parse.lcls) >= QSE_AWK_MAX_LCLS)
 		{
-			SETERR_LIN (awk, QSE_AWK_ELCLTM, awk->token.lin);
+			SETERR_LOC (awk, QSE_AWK_ELCLTM, awk->token.lin);
 			return QSE_NULL;
 		}
 
@@ -1982,7 +1982,7 @@ static qse_awk_t* collect_locals (
 			QSE_LDA_SIZE(awk->parse.lcls),
 			lcl.ptr, lcl.len) == QSE_LDA_NIL)
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, awk->token.lin);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, awk->token.lin);
 			return QSE_NULL;
 		}
 
@@ -2034,7 +2034,7 @@ static qse_awk_nde_t* parse_statement (qse_awk_t* awk, qse_size_t line)
 			QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_t));
 		if (nde == QSE_NULL) 
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2200,7 +2200,7 @@ static qse_awk_nde_t* parse_statement_nb (qse_awk_t* awk, qse_size_t line)
 	else
 	{
 		if (nde != QSE_NULL) qse_awk_clrpt (awk, nde);
-		SETERR_LIN (awk, QSE_AWK_ESTMEND, awk->ptoken.lin);
+		SETERR_LOC (awk, QSE_AWK_ESTMEND, awk->ptoken.lin);
 		return QSE_NULL;
 	}
 
@@ -2214,7 +2214,7 @@ static qse_awk_nde_t* parse_expression (qse_awk_t* awk, qse_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		SETERR_LIN (awk, QSE_AWK_EEXPRNST, line);
+		SETERR_LOC (awk, QSE_AWK_EEXPRNST, line);
 		return QSE_NULL;
 	}
 
@@ -2275,7 +2275,7 @@ static qse_awk_nde_t* parse_expression0 (qse_awk_t* awk, qse_size_t line)
 	if (!is_var(x) && x->type != QSE_AWK_NDE_POS) 
 	{
 		qse_awk_clrpt (awk, x);
-		SETERR_LIN (awk, QSE_AWK_EASSIGN, line);
+		SETERR_LOC (awk, QSE_AWK_EASSIGN, line);
 		return QSE_NULL;
 	}
 
@@ -2300,7 +2300,7 @@ static qse_awk_nde_t* parse_expression0 (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, x);
 		qse_awk_clrpt (awk, y);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -2359,7 +2359,7 @@ static qse_awk_nde_t* parse_basic_expr (qse_awk_t* awk, qse_size_t line)
 			qse_awk_clrpt (awk, n1);
 			qse_awk_clrpt (awk, n2);
 
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2428,7 +2428,7 @@ static qse_awk_nde_t* parse_binary_expr (
 			qse_awk_clrpt (awk, right);
 			qse_awk_clrpt (awk, left);
 
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2510,7 +2510,7 @@ static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line)
 			qse_awk_clrpt (awk, right);
 			qse_awk_clrpt (awk, left);
 
-			SETERR_LIN (awk, QSE_AWK_ENOTVAR, line2);
+			SETERR_LOC (awk, QSE_AWK_ENOTVAR, line2);
 			return QSE_NULL;
 		}
 
@@ -2521,7 +2521,7 @@ static qse_awk_nde_t* parse_in (qse_awk_t* awk, qse_size_t line)
 			qse_awk_clrpt (awk, right);
 			qse_awk_clrpt (awk, left);
 
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2666,7 +2666,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, qse_size_t line)
 			qse_awk_clrpt (awk, left);
 			qse_awk_clrpt (awk, right);
 
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2730,7 +2730,7 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, qse_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		SETERR_LIN (awk, QSE_AWK_EEXPRNST, awk->token.lin);
+		SETERR_LOC (awk, QSE_AWK_EEXPRNST, awk->token.lin);
 		return QSE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2744,7 +2744,7 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, qse_size_t line)
 	{
 		qse_awk_clrpt (awk, left);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -2788,7 +2788,7 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, qse_size_t line)
 	if (awk->parse.depth.max.expr > 0 &&
 	    awk->parse.depth.cur.expr >= awk->parse.depth.max.expr)
 	{
-		SETERR_LIN (awk, QSE_AWK_EEXPRNST, awk->token.lin);
+		SETERR_LOC (awk, QSE_AWK_EEXPRNST, awk->token.lin);
 		return QSE_NULL;
 	}
 	awk->parse.depth.cur.expr++;
@@ -2802,7 +2802,7 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, qse_size_t line)
 	{
 		qse_awk_clrpt (awk, left);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -2844,7 +2844,7 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 		 * not allowed */
 		qse_awk_clrpt (awk, left);
 
-		SETERR_LIN (awk, QSE_AWK_EPREPST, line);
+		SETERR_LOC (awk, QSE_AWK_EPREPST, line);
 		return QSE_NULL;
 	}
 	else if (opcode1 == -1 && opcode2 == -1)
@@ -2874,7 +2874,7 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 	if (!is_var(left) && left->type != QSE_AWK_NDE_POS)
 	{
 		qse_awk_clrpt (awk, left);
-		SETERR_LIN (awk, QSE_AWK_EINCDECOPR, line);
+		SETERR_LOC (awk, QSE_AWK_EINCDECOPR, line);
 		return QSE_NULL;
 	}
 
@@ -2883,7 +2883,7 @@ static qse_awk_nde_t* parse_increment (qse_awk_t* awk, qse_size_t line)
 	if (nde == QSE_NULL)
 	{
 		qse_awk_clrpt (awk, left);
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -2911,7 +2911,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			awk, QSE_SIZEOF(qse_awk_nde_int_t));
 		if (nde == QSE_NULL)
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2952,7 +2952,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			awk, QSE_SIZEOF(qse_awk_nde_real_t));
 		if (nde == QSE_NULL)
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -2993,7 +2993,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			awk, QSE_SIZEOF(qse_awk_nde_str_t));
 		if (nde == QSE_NULL)
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3006,7 +3006,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 		if (nde->ptr == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, nde);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3038,7 +3038,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			awk, QSE_SIZEOF(qse_awk_nde_rex_t));
 		if (nde == QSE_NULL)
 		{
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3053,7 +3053,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 		if (nde->ptr == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, nde);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3066,7 +3066,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			QSE_AWK_FREE (awk, nde->ptr);
 			QSE_AWK_FREE (awk, nde);
 
-			SETERR_LIN (awk, errnum, line);
+			SETERR_LOC (awk, errnum, line);
 			return QSE_NULL;
 		}
 
@@ -3095,7 +3095,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) 
 		{
 			qse_awk_clrpt (awk, prim);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3189,7 +3189,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 			if (tmp == QSE_NULL)
 			{
 				qse_awk_clrpt (awk, nde);
-				SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+				SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 				return QSE_NULL;
 			}	
 
@@ -3244,7 +3244,7 @@ static qse_awk_nde_t* parse_primary_nogetline (qse_awk_t* awk, qse_size_t line)
 		{
 			if (var != QSE_NULL) qse_awk_clrpt (awk, var);
 			if (in != QSE_NULL) qse_awk_clrpt (awk, in);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3341,7 +3341,7 @@ static qse_awk_nde_t* parse_primary (qse_awk_t* awk, qse_size_t line)
 		{
 			qse_awk_clrpt (awk, left);
 
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3373,7 +3373,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		QSE_STR_LEN(awk->token.name));
 	if (name_dup == QSE_NULL) 
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 	name_len = QSE_STR_LEN(awk->token.name);
@@ -3442,7 +3442,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, name_dup);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3476,7 +3476,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, name_dup);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3510,7 +3510,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, name_dup);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3556,7 +3556,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 		if (nde == QSE_NULL) 
 		{
 			QSE_AWK_FREE (awk, name_dup);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 
@@ -3608,7 +3608,7 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 				name_dup, name_len, 
 				&line, QSE_SIZEOF(line)) == QSE_NULL)
 			{
-				  SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+				  SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 				  goto exit_func;
 			}
 
@@ -3685,7 +3685,7 @@ static qse_awk_nde_t* parse_hashidx (
 	if (nde == QSE_NULL) 
 	{
 		qse_awk_clrpt (awk, idx);
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -3876,7 +3876,7 @@ make_node:
 	{
 		if (head != QSE_NULL) qse_awk_clrpt (awk, head);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -3923,7 +3923,7 @@ make_node:
 		{
 			QSE_AWK_FREE (awk, call);
 			if (head != QSE_NULL) qse_awk_clrpt (awk, head);
-			SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 			return QSE_NULL;
 		}
 	}
@@ -4008,7 +4008,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, then_part);
 		qse_awk_clrpt (awk, test);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4065,7 +4065,7 @@ static qse_awk_nde_t* parse_while (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, body);
 		qse_awk_clrpt (awk, test);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4135,7 +4135,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, qse_size_t line)
 				qse_awk_clrpt (awk, init);
 				qse_awk_clrpt (awk, body);
 
-				SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+				SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 				return QSE_NULL;
 			}
 
@@ -4249,7 +4249,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, incr);
 		qse_awk_clrpt (awk, body);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4341,7 +4341,7 @@ static qse_awk_nde_t* parse_dowhile (qse_awk_t* awk, qse_size_t line)
 		qse_awk_clrpt (awk, body);
 		qse_awk_clrpt (awk, test);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4361,7 +4361,7 @@ static qse_awk_nde_t* parse_break (qse_awk_t* awk, qse_size_t line)
 	QSE_ASSERT (awk->ptoken.type == TOKEN_BREAK);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
-		SETERR_LIN (awk, QSE_AWK_EBREAK, line);
+		SETERR_LOC (awk, QSE_AWK_EBREAK, line);
 		return QSE_NULL;
 	}
 
@@ -4369,7 +4369,7 @@ static qse_awk_nde_t* parse_break (qse_awk_t* awk, qse_size_t line)
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_break_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4387,7 +4387,7 @@ static qse_awk_nde_t* parse_continue (qse_awk_t* awk, qse_size_t line)
 	QSE_ASSERT (awk->ptoken.type == TOKEN_CONTINUE);
 	if (awk->parse.depth.cur.loop <= 0) 
 	{
-		SETERR_LIN (awk, QSE_AWK_ECONTINUE, line);
+		SETERR_LOC (awk, QSE_AWK_ECONTINUE, line);
 		return QSE_NULL;
 	}
 
@@ -4395,7 +4395,7 @@ static qse_awk_nde_t* parse_continue (qse_awk_t* awk, qse_size_t line)
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_continue_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4417,7 +4417,7 @@ static qse_awk_nde_t* parse_return (qse_awk_t* awk, qse_size_t line)
 		awk, QSE_SIZEOF(qse_awk_nde_return_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4455,7 +4455,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, qse_size_t line)
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_exit_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4490,12 +4490,12 @@ static qse_awk_nde_t* parse_next (qse_awk_t* awk, qse_size_t line)
 
 	if (awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENEXTBEG, line);
+		SETERR_LOC (awk, QSE_AWK_ENEXTBEG, line);
 		return QSE_NULL;
 	}
 	if (awk->parse.id.block == PARSE_END_BLOCK)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENEXTEND, line);
+		SETERR_LOC (awk, QSE_AWK_ENEXTEND, line);
 		return QSE_NULL;
 	}
 
@@ -4503,7 +4503,7 @@ static qse_awk_nde_t* parse_next (qse_awk_t* awk, qse_size_t line)
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_next_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 	nde->type = QSE_AWK_NDE_NEXT;
@@ -4519,12 +4519,12 @@ static qse_awk_nde_t* parse_nextfile (qse_awk_t* awk, qse_size_t line, int out)
 
 	if (!out && awk->parse.id.block == PARSE_BEGIN_BLOCK)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENEXTFBEG, line);
+		SETERR_LOC (awk, QSE_AWK_ENEXTFBEG, line);
 		return QSE_NULL;
 	}
 	if (!out && awk->parse.id.block == PARSE_END_BLOCK)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENEXTFEND, line);
+		SETERR_LOC (awk, QSE_AWK_ENEXTFEND, line);
 		return QSE_NULL;
 	}
 
@@ -4532,7 +4532,7 @@ static qse_awk_nde_t* parse_nextfile (qse_awk_t* awk, qse_size_t line, int out)
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_nextfile_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4563,7 +4563,7 @@ static qse_awk_nde_t* parse_delete (qse_awk_t* awk, qse_size_t line)
 	{
 		/* a normal identifier is expected */
 		qse_awk_clrpt (awk, var);
-		SETERR_LIN (awk, QSE_AWK_EDELETE, line);
+		SETERR_LOC (awk, QSE_AWK_EDELETE, line);
 		return QSE_NULL;
 	}
 
@@ -4571,7 +4571,7 @@ static qse_awk_nde_t* parse_delete (qse_awk_t* awk, qse_size_t line)
 		awk, QSE_SIZEOF(qse_awk_nde_delete_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4603,7 +4603,7 @@ static qse_awk_nde_t* parse_reset (qse_awk_t* awk, qse_size_t line)
 	{
 		/* a normal identifier is expected */
 		qse_awk_clrpt (awk, var);
-		SETERR_LIN (awk, QSE_AWK_ERESET, line);
+		SETERR_LOC (awk, QSE_AWK_ERESET, line);
 		return QSE_NULL;
 	}
 
@@ -4611,7 +4611,7 @@ static qse_awk_nde_t* parse_reset (qse_awk_t* awk, qse_size_t line)
 		awk, QSE_SIZEOF(qse_awk_nde_reset_t));
 	if (nde == QSE_NULL)
 	{
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4767,7 +4767,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 		if (args != QSE_NULL) qse_awk_clrpt (awk, args);
 		if (out != QSE_NULL) qse_awk_clrpt (awk, out);
 
-		SETERR_LIN (awk, QSE_AWK_ENOMEM, line);
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, line);
 		return QSE_NULL;
 	}
 
@@ -4778,7 +4778,7 @@ static qse_awk_nde_t* parse_print (qse_awk_t* awk, qse_size_t line, int type)
 	if (type == QSE_AWK_NDE_PRINTF && args == QSE_NULL)
 	{
 		if (out != QSE_NULL) qse_awk_clrpt (awk, out);
-		SETERR_LIN (awk, QSE_AWK_EPRINTFARG, line);
+		SETERR_LOC (awk, QSE_AWK_EPRINTFARG, line);
 		return QSE_NULL;
 	}
 
@@ -5181,7 +5181,7 @@ static int skip_comment (qse_awk_t* awk)
 			GET_CHAR_TO (awk, c);
 			if (c == QSE_CHAR_EOF)
 			{
-				SETERR_LIN (awk, QSE_AWK_ECMTNC, awk->sio.inp->lin);
+				SETERR_LOC (awk, QSE_AWK_ECMTNC, awk->sio.inp->lin);
 				return -1;
 			}
 
@@ -5190,7 +5190,7 @@ static int skip_comment (qse_awk_t* awk)
 				GET_CHAR_TO (awk, c);
 				if (c == QSE_CHAR_EOF)
 				{
-					SETERR_LIN (awk, QSE_AWK_ECMTNC, awk->sio.inp->lin);
+					SETERR_LOC (awk, QSE_AWK_ECMTNC, awk->sio.inp->lin);
 					return -1;
 				}
 

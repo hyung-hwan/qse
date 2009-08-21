@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
+ * $Id: fnc.c 259 2009-08-20 11:28:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -993,7 +993,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		{
 			FREE_A_PTRS (run->awk);
 			/* a map is not allowed as the third parameter */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNOTALLOWED, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNA, QSE_NULL);
 			return -1;
 		}
 
