@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: awk.h 259 2009-08-20 11:28:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -723,7 +723,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EPOSVALASSMAP, /**< a positional cannot be assigned a map */
 	QSE_AWK_EMAPTOSCALAR,  /**< map '${0}' not assignable with a scalar */
 	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
-	QSE_AWK_EMAPNOTALLOWED,/**< map not allowed */
+	QSE_AWK_EMAPNA,        /**< map not allowed */
 	QSE_AWK_EVALTYPE,      /**< invalid value type */
 	QSE_AWK_ERDELETE,      /**< 'delete' called with wrong target */
 	QSE_AWK_ERRESET,       /**< 'reset' called with wrong target */

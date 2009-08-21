@@ -1,4 +1,3 @@
-
 pkginclude_HEADERS = awk.h std.h
 
 if ENABLE_CXX

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: Awk.cpp 259 2009-08-20 11:28:03Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -358,9 +358,9 @@ Awk::Value::operator Awk::real_t () const
 
 Awk::Value::operator const Awk::char_t* () const
 {
-	const char_t* ptr;
+	const Awk::char_t* ptr;
 	size_t len;
-	if (getStr (&ptr, &len) <= -1) ptr = QSE_T("");
+	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = QSE_T("");
 	return ptr;
 }
 
@@ -1784,4 +1784,3 @@ int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
-
