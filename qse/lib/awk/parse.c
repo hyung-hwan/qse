@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: parse.c 260 2009-08-20 13:04:24Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -379,18 +379,11 @@ static global_t gtab[] =
 	} while (0)
 
 
-#define SETERR_CODE(awk,code) \
+#define SETERR_COD(awk,code) \
 	qse_awk_seterror (awk, code, QSE_NULL, 0)
 
 #define SETERR_LOC(awk,code,line) \
 	qse_awk_seterror (awk, code, QSE_NULL, line)
-
-#define SETERR_ARG(awk,code,ep,el) \
-	do { \
-		qse_cstr_t __ea; \
-		__ea.len = (el); __ea.ptr = (ep); \
-		qse_awk_seterror ((awk), (code), &__ea, 0); \
-	} while (0)
 
 #define SETERR_ARG_LOC(awk,code,ep,el,line) \
 	do { \
@@ -398,6 +391,8 @@ static global_t gtab[] =
 		__ea.len = (el); __ea.ptr = (ep); \
 		qse_awk_seterror ((awk), (code), &__ea, (line)); \
 	} while (0)
+
+#define SETERR_ARG(awk,code,ep,el) SETERR_ARG_LOC(awk,code,ep,el,0)
 
 static int get_char (qse_awk_t* awk)
 {
@@ -627,7 +622,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 		"the source code input stream must be provided at least");
 	if (sio == QSE_NULL || sio->in == QSE_NULL)
 	{
-		SETERR_CODE (awk, QSE_AWK_EINVAL);
+		SETERR_COD (awk, QSE_AWK_EINVAL);
 		return -1;
 	}
 
@@ -1769,14 +1764,14 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 
 	if (len <= 0)
 	{
-		SETERR_CODE (awk, QSE_AWK_EINVAL);
+		SETERR_COD (awk, QSE_AWK_EINVAL);
 		return -1;
 	}
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
 		/* this function is not allowed after qse_awk_parse is called */
-		SETERR_CODE (awk, QSE_AWK_ENOPER);
+		SETERR_COD (awk, QSE_AWK_ENOPER);
 		return -1;
 	}
 
@@ -1800,7 +1795,7 @@ int qse_awk_delgbl (
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
 		/* this function is not allow after qse_awk_parse is called */
-		SETERR_CODE (awk, QSE_AWK_ENOPER);
+		SETERR_COD (awk, QSE_AWK_ENOPER);
 		return -1;
 	}
 
@@ -1833,7 +1828,7 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 	{
 		/* special check if the first name is on the 
 		 * same line when QSE_AWK_NEWLINE is on */
-		SETERR_CODE (awk, QSE_AWK_EVARMS);
+		SETERR_COD (awk, QSE_AWK_EVARMS);
 		return QSE_NULL;
 	}
 
@@ -1891,7 +1886,7 @@ static qse_awk_t* collect_locals (
 	{
 		/* special check if the first name is on the 
 		 * same line when QSE_AWK_NEWLINE is on */
-		SETERR_CODE (awk, QSE_AWK_EVARMS);
+		SETERR_COD (awk, QSE_AWK_EVARMS);
 		return QSE_NULL;
 	}
 
