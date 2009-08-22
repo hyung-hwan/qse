@@ -1,5 +1,5 @@
 
-AM_CPPFLAGS = -I$(top_builddir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libqsesed.la
 libqsesed_la_SOURCES = sed.c err.c sed.h

@@ -1,4 +1,2 @@
-
-AUTOMAKE_OPTIONS = no-dependencies
-
+#AUTOMAKE_OPTIONS = no-dependencies
 SUBDIRS = qse

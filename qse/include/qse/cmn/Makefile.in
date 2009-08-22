@@ -59,10 +59,6 @@ HEADERS = $(pkginclude_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-
-#if ENABLE_CXX
-#pkginclude_HEADERS += 
-#endif
 pkgincludedir = $(includedir)/qse/cmn
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -434,6 +430,10 @@ uninstall-am: uninstall-pkgincludeHEADERS
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-pkgincludeHEADERS
 
+
+#if ENABLE_CXX
+#pkginclude_HEADERS += 
+#endif
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
