@@ -1,3 +1,4 @@
+pkgincludedir = $(includedir)/qse/cmn
 
 pkginclude_HEADERS = \
 	mem.h chr.h str.h lda.h map.h \
@@ -7,6 +8,4 @@ pkginclude_HEADERS = \
 #if ENABLE_CXX
 #pkginclude_HEADERS += 
 #endif
-
-pkgincludedir = $(includedir)/qse/cmn
 
