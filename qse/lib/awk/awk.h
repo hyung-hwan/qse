@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: awk.h 264 2009-08-23 12:56:45Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -96,14 +96,20 @@ struct qse_awk_tree_t
 	int ok;
 };
 
-typedef struct qse_awk_token_t qse_awk_token_t;
-struct qse_awk_token_t
+typedef struct qse_awk_tok_loc_t qse_awk_tok_loc_t;
+struct qse_awk_tok_loc_t
 {
-	int               type;
-	qse_str_t*        name;
-	const qse_char_t* file;
+	const qse_char_t* fil;
 	qse_size_t        lin;
 	qse_size_t        col;
+};
+
+typedef struct qse_awk_tok_t qse_awk_tok_t;
+struct qse_awk_tok_t
+{
+	int                 type;
+	qse_str_t*          name;
+	qse_awk_tok_loc_t loc;
 };
 
 struct qse_awk_t
@@ -188,11 +194,11 @@ struct qse_awk_t
 	} sio;
 
 	/* previous token */
-	qse_awk_token_t ptoken;
+	qse_awk_tok_t ptok;
 	/* current token */
-	qse_awk_token_t token;
+	qse_awk_tok_t tok;
 	/* look-ahead token */
-	qse_awk_token_t ntoken;
+	qse_awk_tok_t ntok;
 
 	/* intrinsic functions */
 	struct

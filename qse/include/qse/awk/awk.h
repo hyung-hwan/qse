@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: awk.h 264 2009-08-23 12:56:45Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -271,13 +271,17 @@ enum qse_awk_sio_cmd_t
 };
 typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
 
+/**
+ * The qse_awk_sio_lxc_t type defines a structure to store a character
+ * with its location information.
+ */
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 struct qse_awk_sio_lxc_t
 {
-	qse_cint_t        c;
-	qse_size_t        lin;
-	qse_size_t        col;
-	const qse_char_t* file;
+	qse_cint_t        c;   /**< character */
+	qse_size_t        lin; /**< line */
+	qse_size_t        col; /**< column */
+	const qse_char_t* fil; /**< file */
 };
 
 struct qse_awk_sio_arg_t 
