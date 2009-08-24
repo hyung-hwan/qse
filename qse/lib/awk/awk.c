@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 263 2009-08-23 08:48:02Z hyunghwan.chung $ 
+ * $Id: awk.c 264 2009-08-23 12:56:45Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -44,35 +44,35 @@ static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
 	QSE_AWK_FREE (awk, f);
 }
 
-static int init_token (qse_mmgr_t* mmgr, qse_awk_token_t* token)
+static int init_token (qse_mmgr_t* mmgr, qse_awk_tok_t* tok)
 {
-	token->name = qse_str_open (mmgr, 0, 128);
-	if (token->name == QSE_NULL) return -1;
+	tok->name = qse_str_open (mmgr, 0, 128);
+	if (tok->name == QSE_NULL) return -1;
 	
-	token->file = QSE_NULL;
-	token->type = 0;
-	token->lin = 0;
-	token->col = 0;
+	tok->type = 0;
+	tok->loc.fil = QSE_NULL;
+	tok->loc.lin = 0;
+	tok->loc.col = 0;
 
 	return 0;
 }
 
-static void fini_token (qse_awk_token_t* token)
+static void fini_token (qse_awk_tok_t* tok)
 {
-	if (token->name != QSE_NULL)
+	if (tok->name != QSE_NULL)
 	{
-		qse_str_close (token->name);
-		token->name = QSE_NULL;
+		qse_str_close (tok->name);
+		tok->name = QSE_NULL;
 	}
 }
 
-static void clear_token (qse_awk_token_t* token)
+static void clear_token (qse_awk_tok_t* tok)
 {
-	if (token->name != QSE_NULL) qse_str_clear (token->name);
-	token->file = QSE_NULL;
-	token->type = 0;
-	token->lin = 0;
-	token->col = 0;
+	if (tok->name != QSE_NULL) qse_str_clear (tok->name);
+	tok->type = 0;
+	tok->loc.fil = QSE_NULL;
+	tok->loc.lin = 0;
+	tok->loc.col = 0;
 }
 
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
@@ -112,9 +112,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	}
 	awk->prm = *prm;
 
-	if (init_token (mmgr, &awk->ptoken) == -1) goto oops;
-	if (init_token (mmgr, &awk->token) == -1) goto oops;
-	if (init_token (mmgr, &awk->ntoken) == -1) goto oops;
+	if (init_token (mmgr, &awk->ptok) == -1) goto oops;
+	if (init_token (mmgr, &awk->tok) == -1) goto oops;
+	if (init_token (mmgr, &awk->ntok) == -1) goto oops;
 
 	awk->wtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == QSE_NULL) goto oops;
@@ -222,9 +222,9 @@ oops:
 	if (awk->sio.names) qse_map_close (awk->sio.names);
 	if (awk->rwtab) qse_map_close (awk->rwtab);
 	if (awk->wtab) qse_map_close (awk->wtab);
-	fini_token (&awk->ntoken);
-	fini_token (&awk->token);
-	fini_token (&awk->ptoken);
+	fini_token (&awk->ntok);
+	fini_token (&awk->tok);
+	fini_token (&awk->ptok);
 	QSE_AWK_FREE (awk, awk);
 
 	return QSE_NULL;
@@ -248,9 +248,9 @@ int qse_awk_close (qse_awk_t* awk)
 	qse_map_close (awk->rwtab);
 	qse_map_close (awk->wtab);
 
-	fini_token (&awk->ntoken);
-	fini_token (&awk->token);
-	fini_token (&awk->ptoken);
+	fini_token (&awk->ntok);
+	fini_token (&awk->tok);
+	fini_token (&awk->ptok);
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
@@ -262,9 +262,9 @@ int qse_awk_clear (qse_awk_t* awk)
 {
 	awk->stopall = QSE_FALSE;
 
-	clear_token (&awk->token);
-	clear_token (&awk->ntoken);
-	clear_token (&awk->ptoken);
+	clear_token (&awk->tok);
+	clear_token (&awk->ntok);
+	clear_token (&awk->ptok);
 
 	QSE_ASSERT (QSE_LDA_SIZE(awk->parse.gbls) == awk->tree.ngbls);
 	/* delete all non-builtin global variables */
@@ -329,7 +329,7 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->sio.last.c = QSE_CHAR_EOF;
 	awk->sio.last.lin = 0;
 	awk->sio.last.col = 0;
-	awk->sio.last.file = QSE_NULL;
+	awk->sio.last.fil = QSE_NULL;
 	awk->sio.nungots = 0;
 
 	awk->sio.arg.lin = 1;
