@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 260 2009-08-20 13:04:24Z hyunghwan.chung $
+ * $Id: parse.c 263 2009-08-23 08:48:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -199,6 +199,7 @@ static qse_awk_nde_t* parse_hashidx (
 static qse_awk_nde_t* parse_fncall (
 	qse_awk_t* awk, qse_char_t* name, qse_size_t name_len, 
 	qse_awk_fnc_t* fnc, qse_size_t line, int noarg);
+
 static qse_awk_nde_t* parse_if (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_while (qse_awk_t* awk, qse_size_t line);
 static qse_awk_nde_t* parse_for (qse_awk_t* awk, qse_size_t line);
@@ -531,6 +532,9 @@ static int parse (qse_awk_t* awk)
 		if ((awk->option & QSE_AWK_EXPLICIT) &&
 		    !(awk->option & QSE_AWK_IMPLICIT))
 		{
+			/* ensure that all functions called are defined 
+			 * in the EXPLICIT-only mode */
+
 			qse_map_pair_t* p;
 			qse_size_t buckno;
 
@@ -540,20 +544,23 @@ static int parse (qse_awk_t* awk)
 				if (qse_map_search (awk->tree.funs, 
 					QSE_MAP_KPTR(p), QSE_MAP_KLEN(p)) == QSE_NULL)
 				{
-					/* TODO: set better error no & line */
+					qse_awk_nde_call_t* call;
+
+					/* see parse_fncall() for what is
+					 * stored into awk->tree.funs */
+					call = (qse_awk_nde_call_t*)QSE_MAP_VPTR(p);
 					SETERR_ARG_LOC (
 						awk, 
 						QSE_AWK_EFUNNF, 
 						QSE_MAP_KPTR(p),
 						QSE_MAP_KLEN(p),
-						*(qse_size_t*)QSE_MAP_VPTR(p)
+						call->line
 					);
 					goto oops;
 				}
 
 				p = qse_map_getnextpair (awk->parse.funs, p, &buckno);
 			}
-
 		}
 	}
 
@@ -2249,7 +2256,6 @@ static int assign_to_opcode (qse_awk_t* awk)
 	return -1;
 }
 
-
 static qse_awk_nde_t* parse_expression0 (qse_awk_t* awk, qse_size_t line)
 {
 	qse_awk_nde_t* x, * y;
@@ -3582,7 +3588,8 @@ static qse_awk_nde_t* parse_primary_ident (qse_awk_t* awk, qse_size_t line)
 				goto exit_func;
 			}
 
-			if (qse_map_search (awk->parse.funs, 
+			if (qse_map_search (
+				awk->parse.funs, 
 				name_dup, name_len) != QSE_NULL)
 			{
 				/* is it one of the function calls found so far? */
@@ -3911,10 +3918,10 @@ make_node:
 		call->args = head;
 		call->nargs = nargs;
 
-		/* store a non-builtin function call into the parse.funs table */
+		/* store a non-builtin function call into the awk->parse.funs 
+		 * table */
 		if (qse_map_upsert (
-			awk->parse.funs, name, name_len,
-			&line, QSE_SIZEOF(line)) == QSE_NULL)
+			awk->parse.funs, name, name_len, call, 0) == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, call);
 			if (head != QSE_NULL) qse_awk_clrpt (awk, head);
