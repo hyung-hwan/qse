@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 264 2009-08-23 12:56:45Z hyunghwan.chung $ 
+ * $Id: awk.c 266 2009-08-24 12:15:56Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -158,8 +158,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	*(qse_awk_t**)QSE_XTN(awk->parse.named) = awk;
 	qse_map_setcopier (
 		awk->parse.named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setcopier (
-		awk->parse.named, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
 	qse_map_setscale (
 		awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
