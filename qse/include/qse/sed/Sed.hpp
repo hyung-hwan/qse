@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: Sed.hpp 269 2009-08-26 03:03:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -36,8 +36,10 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Sed: public Mmgr
 {
 public:
-	/// Type sed_t type redefines a stream editor type
+	/// The sed_t type redefines a stream editor type
 	typedef qse_sed_t sed_t;
+	/// The loc_t type redefines the location type	
+	typedef qse_sed_loc_t loc_t;
 	/// The errnum_t type redefines an error number type
 	typedef qse_sed_errnum_t errnum_t; 
 	/// The errstr_t type redefines an error formattering string getter type
@@ -138,11 +140,12 @@ public:
 	const char_t* getErrorMessage() const;
 
 	/**
-	 * The getErrorLine() function gets the number of the line where
-	 * the last error occurred. It returns 0 if the stream editor has 
-	 * not been initialized with the open() function.
+	 * The getErrorLocation() function gets the location where
+	 * the last error occurred. The line and the column of the ::loc_t 
+	 * structure retruend are 0 if the stream editor has not been 
+	 * initialized with the open() function.
 	 */
-	size_t getErrorLine () const;
+	loc_t getErrorLocation () const;
 
 	/**
 	 * The getErrorNumber() function gets the number of the last 
@@ -155,9 +158,10 @@ public:
 	 * The setError() function sets information on an error occurred.
 	 */
 	void setError (
-		errnum_t      err,             ///< an error number
-		const cstr_t* args = QSE_NULL, ///< strings for formatting an error message
-		size_t        lin = 0          ///< a line number
+		errnum_t      num,             ///< error number
+		const cstr_t* args = QSE_NULL, ///< string array for formatting
+		                               ///  an error message
+		const loc_t*  loc = QSE_NULL   ///< error location
 	);
 
 	/**

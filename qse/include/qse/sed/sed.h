@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 268 2009-08-25 13:07:54Z hyunghwan.chung $
+ * $Id: sed.h 269 2009-08-26 03:03:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -304,11 +304,11 @@ qse_sed_errnum_t qse_sed_geterrnum (
 );
 
 /**
- * The qse_sed_geterrlin() function gets the number of the line where
- * the last error has occurred.
- * @return the line number of the last error
+ * The qse_sed_geterrloc() function gets the location where the last error 
+ * has occurred.
+ * @return error location
  */
-qse_size_t qse_sed_geterrlin (
+const qse_sed_loc_t* qse_sed_geterrloc (
 	qse_sed_t* sed /**< stream editor */
 );
 
@@ -321,15 +321,15 @@ const qse_char_t* qse_sed_geterrmsg (
 );
 
 /**
- * The qse_sed_geterror() function gets an error number, an error line, and 
- * an error message. The information is set to the memory area pointed to by
- * each parameter.
+ * The qse_sed_geterror() function gets an error number, an error location, 
+ * and an error message. The information is set to the memory area pointed 
+ * to by each parameter.
  */
 void qse_sed_geterror (
 	qse_sed_t*         sed,    /**< stream editor */
-	qse_sed_errnum_t*  errnum, /**< pointer to an error number holder */
-	qse_size_t*        errlin, /**< pointer to an error line holder */
-	const qse_char_t** errmsg  /**< pointer to an error message */
+	qse_sed_errnum_t*  errnum, /**< error number */
+	const qse_char_t** errmsg, /**< error message */
+	qse_sed_loc_t*     errloc  /**< error location */
 );
 
 /**
@@ -347,22 +347,23 @@ void qse_sed_seterrnum (
  * message for a given error number.
  */
 void qse_sed_seterrmsg (
-        qse_sed_t*        sed,    /**< stream editor */
-	qse_sed_errnum_t  errnum, /**< error number */
-        const qse_char_t* errmsg, /**< error message */
-	qse_size_t errlin         /**< error line */
+        qse_sed_t*        sed,      /**< stream editor */
+	qse_sed_errnum_t  errnum,   /**< error number */
+        const qse_char_t* errmsg,   /**< error message */
+	const qse_sed_loc_t* errloc /**< error location */
 );
 
 /**
- * The qse_sed_seterror() function sets an error number, an error line, and
+ * The qse_sed_seterror() function sets an error number, an error location, and
  * an error message. An error string is composed of a formatting string
  * and an array of formatting parameters.
  */
 void qse_sed_seterror (
-	qse_sed_t*        sed,    /**< stream editor */
-	qse_sed_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg, /**< argument array for formatting error message */
-	qse_size_t        errlin  /**< error line */
+	qse_sed_t*           sed,    /**< stream editor */
+	qse_sed_errnum_t     errnum, /**< error number */
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	                              *   an error message */
+	const qse_sed_loc_t* errloc  /**< error location */
 );
 
 /**
