@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: sed.h 268 2009-08-25 13:07:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -75,7 +75,7 @@ struct qse_sed_adr_t
 struct qse_sed_cmd_t
 {
 	qse_char_t type;
-	qse_size_t lnum;
+	qse_sed_loc_t loc;
 
 	int negated;
 
@@ -159,7 +159,7 @@ struct qse_sed_t
 	/** source text pointers */
 	struct
 	{
-		qse_size_t lnum;       /**< line number */
+		qse_sed_loc_t loc;     /**< location */
 		qse_cint_t cc;         /**< last character read */
 		const qse_char_t* ptr; /**< beginning of the source text */
 		const qse_char_t* end; /**< end of the source text */

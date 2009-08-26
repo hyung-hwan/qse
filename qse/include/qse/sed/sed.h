@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: sed.h 268 2009-08-25 13:07:54Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -57,6 +57,16 @@
  * conforming to the ::qse_sed_io_fun_t type.
  */
 typedef struct qse_sed_t qse_sed_t;
+
+/** 
+ * The qse_sed_loc_t defines a structure to store location information.
+ */
+typedef struct qse_sed_loc_t qse_sed_loc_t;
+struct qse_sed_loc_t
+{
+	qse_size_t lin; /**< line  */
+	qse_size_t col; /**< column */
+};
 
 /**
  * the qse_sed_errnum_t type defines error numbers.
