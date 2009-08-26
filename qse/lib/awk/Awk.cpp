@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: Awk.cpp 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -908,10 +908,10 @@ Awk::ErrorNumber Awk::Run::getErrorNumber () const
 	return (ErrorNumber)qse_awk_rtx_geterrnum (this->rtx);
 }
 
-Awk::size_t Awk::Run::getErrorLine () const 
+Awk::loc_t Awk::Run::getErrorLocation () const 
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	return qse_awk_rtx_geterrlin (this->rtx);
+	return *qse_awk_rtx_geterrloc (this->rtx);
 }
 
 const Awk::char_t* Awk::Run::getErrorMessage () const  
@@ -920,21 +920,22 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->rtx);
 }
 
-void Awk::Run::setError (ErrorNumber code, const cstr_t* args, size_t line)
+void Awk::Run::setError (ErrorNumber code, const cstr_t* args, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	qse_awk_rtx_seterror (this->rtx, (errnum_t)code, args, line);
+	qse_awk_rtx_seterror (this->rtx, (errnum_t)code, args, loc);
 }
 
 void Awk::Run::setErrorWithMessage (
-	ErrorNumber code, const char_t* msg, size_t line)
+	ErrorNumber code, const char_t* msg, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
 	errinf_t errinf;
 
+	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
 	errinf.num = (errnum_t)code;
-	errinf.lin = line;
+	if (loc == QSE_NULL) errinf.loc = *loc;
 	qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
 
 	qse_awk_rtx_seterrinf (this->rtx, &errinf);
@@ -998,9 +999,8 @@ int Awk::Run::getGlobal (int id, Value& g) const
 Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL), runctx (this)
 
 {
+	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
 	errinf.num = (errnum_t)ERR_NOERR;
-	errinf.lin = 0;
-	errinf.msg[0] = QSE_T('\0');
 }
 
 Awk::operator Awk::awk_t* () const 
@@ -1027,9 +1027,9 @@ Awk::ErrorNumber Awk::getErrorNumber () const
 	return (ErrorNumber)this->errinf.num;
 }
 
-Awk::size_t Awk::getErrorLine () const 
+Awk::loc_t Awk::getErrorLocation () const 
 {
-	return this->errinf.lin;
+	return this->errinf.loc;
 }
 
 const Awk::char_t* Awk::getErrorMessage () const 
@@ -1037,44 +1037,38 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errinf.msg;
 }
 
-void Awk::setError (ErrorNumber code, const cstr_t* args, size_t line)
+void Awk::setError (ErrorNumber code, const cstr_t* args, const loc_t* loc)
 {
 	if (awk != QSE_NULL)
 	{
-		qse_awk_seterror (awk, (errnum_t)code, args, line);
+		qse_awk_seterror (awk, (errnum_t)code, args, loc);
 		retrieveError ();
 	}
 	else
 	{
+		QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
 		errinf.num = (errnum_t)code;
-		errinf.lin = line;
+		if (loc != QSE_NULL) errinf.loc = *loc;
 		qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), 
 			QSE_T("not ready to set an error message"));
 	}
 }
 
-void Awk::setErrorWithMessage (ErrorNumber code, const char_t* msg, size_t line)
+void Awk::setErrorWithMessage (ErrorNumber code, const char_t* msg, const loc_t* loc)
 {
-	if (awk != QSE_NULL)
-	{
-		errinf.num = (errnum_t)code;
-		errinf.lin = line;
-		qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
-		qse_awk_seterrinf (awk, &errinf);
-	}
-	else
-	{
-		errinf.num = (errnum_t)code;
-		errinf.lin = line;
-		qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
-	}
+	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
+
+	errinf.num = (errnum_t)code;
+	if (loc != QSE_NULL) errinf.loc = *loc;
+	qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
+
+	if (awk != QSE_NULL) qse_awk_seterrinf (awk, &errinf);
 }
 
 void Awk::clearError ()
 {
+	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
 	errinf.num = (errnum_t)ERR_NOERR;
-	errinf.lin = 0;
-	errinf.msg[0] = QSE_T('\0');
 }
 
 void Awk::retrieveError ()

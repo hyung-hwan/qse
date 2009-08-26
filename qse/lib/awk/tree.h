@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 236 2009-07-16 08:27:53Z hyunghwan.chung $
+ * $Id: tree.h 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -152,7 +152,7 @@ struct qse_awk_fun_t
 
 #define QSE_AWK_NDE_HDR \
 	qse_awk_nde_type_t type; \
-	qse_size_t line; \
+	qse_awk_loc_t loc; \
 	qse_awk_nde_t* next
 
 struct qse_awk_nde_t

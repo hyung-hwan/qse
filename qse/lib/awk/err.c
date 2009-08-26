@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: err.c 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -169,9 +169,9 @@ qse_awk_errnum_t qse_awk_geterrnum (qse_awk_t* awk)
 	return awk->errinf.num;
 }
 
-qse_size_t qse_awk_geterrlin (qse_awk_t* awk)
+const qse_awk_loc_t* qse_awk_geterrloc (qse_awk_t* awk)
 {
-	return awk->errinf.lin;
+	return &awk->errinf.loc;
 }
 
 const qse_char_t* qse_awk_geterrmsg (qse_awk_t* awk)
@@ -192,10 +192,10 @@ void qse_awk_geterrinf (qse_awk_t* awk, qse_awk_errinf_t* errinf)
 
 void qse_awk_geterror (
 	qse_awk_t* awk, qse_awk_errnum_t* errnum, 
-	const qse_char_t** errmsg, qse_size_t* errlin)
+	const qse_char_t** errmsg, qse_awk_loc_t* errloc)
 {
 	if (errnum != QSE_NULL) *errnum = awk->errinf.num;
-	if (errlin != QSE_NULL) *errlin = awk->errinf.lin;
+	if (errloc != QSE_NULL) *errloc = awk->errinf.loc;
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (awk->errinf.msg[0] == QSE_T('\0'))?
@@ -207,7 +207,7 @@ void qse_awk_geterror (
 void qse_awk_seterrnum (
 	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	qse_awk_seterror (awk, errnum, errarg, 0);
+	qse_awk_seterror (awk, errnum, errarg, QSE_NULL);
 }
 
 void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
@@ -217,10 +217,11 @@ void qse_awk_seterrinf (qse_awk_t* awk, const qse_awk_errinf_t* errinf)
 
 void qse_awk_seterror (
 	qse_awk_t* awk, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
-	qse_size_t errlin)
+	const qse_awk_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
 
+	QSE_MEMSET (&awk->errinf, 0, QSE_SIZEOF(awk->errinf));
 	awk->errinf.num = errnum;
 
 	errfmt = qse_awk_geterrstr(awk)(awk,errnum);
@@ -230,7 +231,7 @@ void qse_awk_seterror (
 		errfmt, errarg
 	);
 
-	awk->errinf.lin = errlin;
+	if (errloc != QSE_NULL) awk->errinf.loc = *errloc;
 }
 
 qse_awk_errnum_t qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
@@ -238,9 +239,9 @@ qse_awk_errnum_t qse_awk_rtx_geterrnum (qse_awk_rtx_t* rtx)
 	return rtx->errinf.num;
 }
 
-qse_size_t qse_awk_rtx_geterrlin (qse_awk_rtx_t* rtx)
+const qse_awk_loc_t* qse_awk_rtx_geterrloc (qse_awk_rtx_t* rtx)
 {
-	return rtx->errinf.lin;
+	return &rtx->errinf.loc;
 }
 
 const qse_char_t* qse_awk_rtx_geterrmsg (qse_awk_rtx_t* rtx)
@@ -261,10 +262,10 @@ void qse_awk_rtx_geterrinf (qse_awk_rtx_t* rtx, qse_awk_errinf_t* errinf)
 
 void qse_awk_rtx_geterror (
 	qse_awk_rtx_t* rtx, qse_awk_errnum_t* errnum, 
-	const qse_char_t** errmsg, qse_size_t* errlin)
+	const qse_char_t** errmsg, qse_awk_loc_t* errloc)
 {
 	if (errnum != QSE_NULL) *errnum = rtx->errinf.num;
-	if (errlin != QSE_NULL) *errlin = rtx->errinf.lin;
+	if (errloc != QSE_NULL) *errloc = rtx->errinf.loc;
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (rtx->errinf.msg[0] == QSE_T('\0'))?
@@ -285,12 +286,12 @@ void qse_awk_rtx_seterrinf (qse_awk_rtx_t* rtx, const qse_awk_errinf_t* errinf)
 
 void qse_awk_rtx_seterror (
 	qse_awk_rtx_t* rtx, qse_awk_errnum_t errnum, const qse_cstr_t* errarg,
-	qse_size_t errlin)
+	const qse_awk_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
 
+	QSE_MEMSET (&rtx->errinf, 0, QSE_SIZEOF(rtx->errinf));
 	rtx->errinf.num = errnum;
-	rtx->errinf.lin = errlin;
 
 	errfmt = qse_awk_geterrstr(rtx->awk)(rtx->awk,errnum);
 	QSE_ASSERT (errfmt != QSE_NULL);
@@ -298,4 +299,6 @@ void qse_awk_rtx_seterror (
 		rtx->errinf.msg, QSE_COUNTOF(rtx->errinf.msg),
 		errfmt, errarg
 	);
+
+	if (errloc != QSE_NULL) rtx->errinf.loc = *errloc;
 }

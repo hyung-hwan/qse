@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 264 2009-08-23 12:56:45Z hyunghwan.chung $
+ * $Id: awk.h 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -358,6 +358,7 @@ typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
  * #QSE_AWK_RIO_OPEN is requested. For other request type, it can refer
  * to the handle field set previously.
  */
+typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 struct qse_awk_rio_arg_t 
 {
 	qse_awk_rio_mode_t mode;  /**< [IN] I/O mode */
@@ -384,7 +385,6 @@ struct qse_awk_rio_arg_t
 
 	struct qse_awk_rio_arg_t* next;
 };
-typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 
 /**
  * The qse_awk_rio_fun_t type defines a runtime I/O handler.
@@ -400,6 +400,7 @@ typedef qse_ssize_t (*qse_awk_rio_fun_t) (
 /**
  * The qse_awk_prm_t type defines primitive functions
  */
+typedef struct qse_awk_prm_t qse_awk_prm_t;
 struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;
@@ -436,7 +437,17 @@ struct qse_awk_prm_t
 	);
 #endif
 };
-typedef struct qse_awk_prm_t qse_awk_prm_t;
+
+/**
+ * The qse_awk_loc_t type defines a structure to hold location.
+ */
+typedef struct qse_awk_loc_t qse_awk_loc_t;
+struct qse_awk_loc_t
+{
+	const qse_char_t* fil; /**< file */
+	qse_size_t        lin; /**< line */
+	qse_size_t        col; /**< column */
+};
 
 /**
  * The qse_awk_sio_t type defines a script stream handler set.
@@ -508,7 +519,7 @@ struct qse_awk_rcb_t
 	 * each statement executed.
 	 */
 	void (*on_statement) (
-		qse_awk_rtx_t* rtx, qse_size_t line, void* udd);
+		qse_awk_rtx_t* rtx, const qse_awk_loc_t* loc, void* udd);
 
 	/**
 	 * A caller may store a custom data pointer into this field.
@@ -765,7 +776,6 @@ enum qse_awk_errnum_t
 };
 typedef enum qse_awk_errnum_t qse_awk_errnum_t;
 
-
 /** 
  * The qse_awk_errinf_t type defines a placeholder for error information.
  */
@@ -773,7 +783,7 @@ struct qse_awk_errinf_t
 {
 	qse_awk_errnum_t num;      /**< error number */
 	qse_char_t       msg[256]; /**< error message */
-	qse_size_t       lin;      /**< line number where an error occurred */
+	qse_awk_loc_t    loc;      /**< error location */
 };
 typedef struct qse_awk_errinf_t qse_awk_errinf_t;
 
@@ -1018,11 +1028,10 @@ qse_awk_errnum_t qse_awk_geterrnum (
 );
 
 /**
- * The qse_awk_geterrlin() function returns the line number where the
+ * The qse_awk_geterrloc() function returns the location where the
  * last error has occurred.
- * @return line number
  */
-qse_size_t qse_awk_geterrlin (
+const qse_awk_loc_t* qse_awk_geterrloc (
 	qse_awk_t* awk /**< awk object */
 );
 
@@ -1065,17 +1074,18 @@ void qse_awk_geterror (
 	qse_awk_t*         awk,
 	qse_awk_errnum_t*  errnum, 
 	const qse_char_t** errmsg,
-	qse_size_t*        errlin
+	qse_awk_loc_t*     errloc
 );
 
 /**
  * The qse_awk_seterror() functon sets error information.
  */
 void qse_awk_seterror (
-	qse_awk_t*        awk,    /**< awk object */
-	qse_awk_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg, /**< argument array for formatting error message */
-	qse_size_t        errlin  /**< line number */
+	qse_awk_t*           awk,    /**< awk object */
+	qse_awk_errnum_t     errnum, /**< error number */
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	                              *   an error message */
+	const qse_awk_loc_t* errloc  /**< error location */
 );
 
 int qse_awk_getoption (
@@ -1528,7 +1538,7 @@ qse_awk_errnum_t qse_awk_rtx_geterrnum (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
-qse_size_t qse_awk_rtx_geterrlin (
+const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
@@ -1555,7 +1565,7 @@ void qse_awk_rtx_geterror (
 	qse_awk_rtx_t*     rtx,    /**< runtime context */
 	qse_awk_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
-	qse_size_t*        errlin  /**< error line */
+	qse_awk_loc_t*     errloc  /**< error location */
 );
 
 void qse_awk_rtx_seterrnum (
@@ -1570,10 +1580,11 @@ void qse_awk_rtx_seterrinf (
 );
 
 void qse_awk_rtx_seterror (
-	qse_awk_rtx_t*    rtx,    /**< runtime context */
-	qse_awk_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg, /**< argument array for formatting error message */
-	qse_size_t        errlin  /**< error line */
+	qse_awk_rtx_t*       rtx,    /**< runtime context */
+	qse_awk_errnum_t     errnum, /**< error number */
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	                              *   an error message */
+	const qse_awk_loc_t* errloc  /**< error line */
 );
 
 /**
