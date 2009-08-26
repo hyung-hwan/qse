@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 268 2009-08-25 13:07:54Z hyunghwan.chung $
+ * $Id: sed.h 269 2009-08-26 03:03:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -143,7 +143,7 @@ struct qse_sed_t
 	qse_sed_errstr_t errstr; /**< error string getter */
 	qse_sed_errnum_t errnum; /**< stores an error number */
 	qse_char_t errmsg[128];  /**< error message holder */
-	qse_size_t errlin;       /**< no of the line where an error occurred */
+	qse_sed_loc_t errloc;    /**< location of the last error */
 
 	int option;              /**< stores options */
 

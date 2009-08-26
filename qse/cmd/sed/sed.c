@@ -44,7 +44,7 @@ static qse_ssize_t in (
 						qse_cstr_t errarg;
 						errarg.ptr = g_infile;
 						errarg.len = qse_strlen(g_infile);
-						qse_sed_seterror (sed, QSE_SED_EIOFIL, 0, &errarg);
+						qse_sed_seterror (sed, QSE_SED_EIOFIL, &errarg, QSE_NULL);
 						return -1;
 					}
 				}
@@ -209,13 +209,14 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (qse_sed_comp (sed, g_script, qse_strlen(g_script)) == -1)
 	{
-		qse_size_t errlin = qse_sed_geterrlin(sed);
-		if (errlin > 0)
+		const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
+		if (errloc->lin > 0 || errloc->col > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot compile - %s at line %lu\n"),
+				QSE_T("cannot compile - %s at line %lu column %lu\n"),
 				qse_sed_geterrmsg(sed),
-				(unsigned long)errlin
+				(unsigned long)errloc->lin,
+				(unsigned long)errloc->col
 			);
 		}
 		else
@@ -230,13 +231,14 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (qse_sed_exec (sed, in, out) == -1)
 	{
-		qse_size_t errlin = qse_sed_geterrlin(sed);
-		if (errlin > 0)
+		const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
+		if (errloc->lin > 0 || errloc->col > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot execute - %s at line %lu\n"),
+				QSE_T("cannot execute - %s at line %lu column %lu\n"),
 				qse_sed_geterrmsg(sed),
-				(unsigned long)errlin
+				(unsigned long)errloc->lin,
+				(unsigned long)errloc->col
 			);
 		}
 		else

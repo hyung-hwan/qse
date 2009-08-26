@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 257 2009-08-17 12:10:30Z hyunghwan.chung $
+ * $Id: err.c 269 2009-08-26 03:03:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -17,6 +17,7 @@
  */
 
 #include "sed.h"
+#include "../cmn/mem.h"
 
 const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 {
@@ -72,9 +73,9 @@ qse_sed_errnum_t qse_sed_geterrnum (qse_sed_t* sed)
 	return sed->errnum;
 }
 
-qse_size_t qse_sed_geterrlin (qse_sed_t* sed)
+const qse_sed_loc_t* qse_sed_geterrloc (qse_sed_t* sed)
 {
-	return sed->errlin;
+	return &sed->errloc;
 }
 
 const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
@@ -85,44 +86,47 @@ const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
 
 void qse_sed_geterror (
 	qse_sed_t* sed, qse_sed_errnum_t* errnum, 
-	qse_size_t* errlin, const qse_char_t** errmsg)
+	const qse_char_t** errmsg, qse_sed_loc_t* errloc)
 {
 	if (errnum != QSE_NULL) *errnum = sed->errnum;
-	if (errlin != QSE_NULL) *errlin = sed->errlin;
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (sed->errmsg[0] == QSE_T('\0'))?
 			qse_sed_geterrstr(sed)(sed,sed->errnum):
 			sed->errmsg;
 	}
+	if (errloc != QSE_NULL) *errloc = sed->errloc;
 }
 
 void qse_sed_seterrnum (
 	qse_sed_t* sed, qse_sed_errnum_t errnum, const qse_cstr_t* errarg)
 {
-	qse_sed_seterror (sed, errnum, errarg, 0);
+	qse_sed_seterror (sed, errnum, errarg, QSE_NULL);
 }
 
 void qse_sed_seterrmsg (
 	qse_sed_t* sed, qse_sed_errnum_t errnum,
-	const qse_char_t* errmsg, qse_size_t errlin)
+	const qse_char_t* errmsg, const qse_sed_loc_t* errloc)
 {
 	sed->errnum = errnum;
-	sed->errlin = errlin;
 	qse_strxcpy (sed->errmsg, QSE_COUNTOF(sed->errmsg), errmsg);
+	if (errloc != QSE_NULL) sed->errloc = *errloc;
+	else QSE_MEMSET (&sed->errloc, 0, QSE_SIZEOF(sed->errloc));
 }
 
 void qse_sed_seterror (
 	qse_sed_t* sed, qse_sed_errnum_t errnum,
-	const qse_cstr_t* errarg, qse_size_t errlin)
+	const qse_cstr_t* errarg, const qse_sed_loc_t* errloc)
 {
 	const qse_char_t* errfmt;
 
 	sed->errnum = errnum;
-	sed->errlin = errlin;
 
 	errfmt = qse_sed_geterrstr(sed)(sed,sed->errnum);
 	QSE_ASSERT (errfmt != QSE_NULL);
 	qse_strxfncpy (sed->errmsg, QSE_COUNTOF(sed->errmsg), errfmt, errarg);
+
+	if (errloc != QSE_NULL) sed->errloc = *errloc;
+	else QSE_MEMSET (&sed->errloc, 0, QSE_SIZEOF(sed->errloc));
 }
 

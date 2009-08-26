@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 267 2009-08-25 09:50:07Z hyunghwan.chung $
+ * $Id: err.c 269 2009-08-26 03:03:51Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -195,13 +195,13 @@ void qse_awk_geterror (
 	const qse_char_t** errmsg, qse_awk_loc_t* errloc)
 {
 	if (errnum != QSE_NULL) *errnum = awk->errinf.num;
-	if (errloc != QSE_NULL) *errloc = awk->errinf.loc;
 	if (errmsg != QSE_NULL) 
 	{
 		*errmsg = (awk->errinf.msg[0] == QSE_T('\0'))?
 			qse_awk_geterrstr(awk)(awk,awk->errinf.num):
 			awk->errinf.msg;
 	}
+	if (errloc != QSE_NULL) *errloc = awk->errinf.loc;
 }
 
 void qse_awk_seterrnum (
