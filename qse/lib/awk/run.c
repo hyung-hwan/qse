@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 262 2009-08-22 05:43:44Z hyunghwan.chung $
+ * $Id: run.c 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -73,25 +73,24 @@ struct pafv
 	 (idx) < QSE_TYPE_MAX(qse_long_t) && \
 	 (idx) < QSE_TYPE_MAX(qse_size_t))
 
+#define SETERR_ARGX_LOC(rtx,code,ea,loc) \
+	qse_awk_rtx_seterror ((rtx), (code), (ea), (loc))
 
-#define SETERR_ARGX_LOC(rtx,code,ea,line) \
-	qse_awk_rtx_seterror ((rtx), (code), (ea), (line))
+#define CLRERR(rtx) SETERR_ARGX_LOC(rtx,QSE_AWK_ENOERR,QSE_NULL,QSE_NULL)
 
-#define CLRERR(rtx) SETERR_ARGX_LOC(rtx,QSE_AWK_ENOERR,QSE_NULL,0)
-
-#define SETERR_ARG_LOC(rtx,code,ep,el,line) \
+#define SETERR_ARG_LOC(rtx,code,ep,el,loc) \
 	do { \
 		qse_cstr_t __ea; \
 		__ea.len = (el); __ea.ptr = (ep); \
-		qse_awk_rtx_seterror ((rtx), (code), &__ea, (line)); \
+		qse_awk_rtx_seterror ((rtx), (code), &__ea, (loc)); \
 	} while (0)
 
-#define SETERR_ARGX(rtx,code,ea) SETERR_ARGX_LOC(rtx,code,ea,0)
-#define SETERR_ARG(rtx,code,ep,el) SETERR_ARG_LOC(rtx,code,ep,el,0)
-#define SETERR_LOC(rtx,code,line) SETERR_ARGX_LOC(rtx,code,QSE_NULL,line)
-#define SETERR_COD(rtx,code) SETERR_ARGX_LOC(rtx,code,QSE_NULL,0)
+#define SETERR_ARGX(rtx,code,ea) SETERR_ARGX_LOC(rtx,code,ea,QSE_NULL)
+#define SETERR_ARG(rtx,code,ep,el) SETERR_ARG_LOC(rtx,code,ep,el,QSE_NULL)
+#define SETERR_LOC(rtx,code,loc) SETERR_ARGX_LOC(rtx,code,QSE_NULL,loc)
+#define SETERR_COD(rtx,code) SETERR_ARGX_LOC(rtx,code,QSE_NULL,QSE_NULL)
 
-#define ADJERR_LOC(rtx,line) do { (rtx)->errinf.lin = line; } while (0)
+#define ADJERR_LOC(rtx,l) do { (rtx)->errinf.loc = *(l); } while (0)
 
 static qse_size_t push_arg_from_vals (
 	qse_awk_rtx_t* rtx, qse_awk_nde_call_t* call, void* data);
@@ -193,9 +192,6 @@ static qse_awk_val_t* eval_binop_ma (
 	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right);
 static qse_awk_val_t* eval_binop_nm (
 	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right);
-static qse_awk_val_t* eval_binop_match0 (
-	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right,
-	qse_size_t lline, qse_size_t rline, int ret);
 
 static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
@@ -313,7 +309,7 @@ static int set_global (
 				rtx,
 				QSE_AWK_EMAPTOSCALAR, 
 				xstr_to_cstr(&var->id.name),
-				var->line
+				&var->loc
 			);
 		}
 		else
@@ -456,7 +452,7 @@ static int set_global (
 				{
 					/* adjust the error line */
 					if (var != QSE_NULL) 
-						ADJERR_LOC (rtx, var->line);
+						ADJERR_LOC (rtx, &var->loc);
 					return -1;
 				}
 			}
@@ -1583,13 +1579,13 @@ static int run_pblocks (qse_awk_rtx_t* run)
 	if (run->awk->tree.chain != QSE_NULL) \
 	{ \
 		if (run->awk->tree.chain->pattern != QSE_NULL) \
-			ADJERR_LOC (run, run->awk->tree.chain->pattern->line); \
+			ADJERR_LOC (run, &run->awk->tree.chain->pattern->loc); \
 		else if (run->awk->tree.chain->action != QSE_NULL) \
-			ADJERR_LOC (run, run->awk->tree.chain->action->line); \
+			ADJERR_LOC (run, &run->awk->tree.chain->action->loc); \
 	} \
 	else if (run->awk->tree.end != QSE_NULL) \
 	{ \
-		ADJERR_LOC (run, run->awk->tree.end->line); \
+		ADJERR_LOC (run, &run->awk->tree.end->loc); \
 	} 
 
 	run->inrec.buf_pos = 0;
@@ -1746,7 +1742,7 @@ static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	if (rtx->depth.max.block > 0 &&
 	    rtx->depth.cur.block >= rtx->depth.max.block)
 	{
-		SETERR_LOC (rtx, QSE_AWK_EBLKNST, nde->line);
+		SETERR_LOC (rtx, QSE_AWK_EBLKNST, &nde->loc);
 		return -1;;
 	}
 
@@ -1776,7 +1772,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 		if (n == -1)
 		{
 			qse_awk_rtx_refdownval (rtx, rtx->inrec.d0);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 
@@ -1786,7 +1782,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 		if (n == -1)
 		{
 			qse_awk_rtx_refdownval (rtx, rtx->inrec.d0);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 
@@ -1855,7 +1851,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	if ((rtx)->rcb.on_statement != QSE_NULL) \
 	{ \
 		(rtx)->rcb.on_statement ( \
-			rtx, (nde)->line, (rtx)->rcb.udd); \
+			rtx, &(nde)->loc, (rtx)->rcb.udd); \
 	} 
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
@@ -2208,7 +2204,7 @@ static qse_map_walk_t walk_foreach (
 		w->rtx, QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair));
 	if (str == QSE_NULL) 
 	{
-		ADJERR_LOC (w->rtx, w->var->line);
+		ADJERR_LOC (w->rtx, &w->var->loc);
 		w->ret = -1;
 		return QSE_MAP_WALK_STOP;
 	}
@@ -2270,7 +2266,7 @@ static int run_foreach (qse_awk_rtx_t* rtx, qse_awk_nde_foreach_t* nde)
 	if (rv->type != QSE_AWK_VAL_MAP)
 	{
 		qse_awk_rtx_refdownval (rtx, rv);
-		SETERR_LOC (rtx, QSE_AWK_ENOTMAPIN, test->right->line);
+		SETERR_LOC (rtx, QSE_AWK_ENOTMAPIN, &test->right->loc);
 		return -1;
 	}
 	map = ((qse_awk_val_map_t*)rv)->map;
@@ -2318,7 +2314,7 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 				qse_awk_rtx_refupval (run, val);
 				qse_awk_rtx_refdownval (run, val);
 
-				SETERR_LOC (run, QSE_AWK_EMAPNA, nde->line);
+				SETERR_LOC (run, QSE_AWK_EMAPNA, &nde->loc);
 				return -1;
 			}
 		}
@@ -2364,12 +2360,12 @@ static int run_next (qse_awk_rtx_t* run, qse_awk_nde_next_t* nde)
 	 * check that explicitly */
 	if  (run->active_block == (qse_awk_nde_blk_t*)run->awk->tree.begin)
 	{
-		SETERR_LOC (run, QSE_AWK_ERNEXTBEG, nde->line);
+		SETERR_LOC (run, QSE_AWK_ERNEXTBEG, &nde->loc);
 		return -1;
 	}
 	else if (run->active_block == (qse_awk_nde_blk_t*)run->awk->tree.end)
 	{
-		SETERR_LOC (run, QSE_AWK_ERNEXTEND, nde->line);
+		SETERR_LOC (run, QSE_AWK_ERNEXTEND, &nde->loc);
 		return -1;
 	}
 
@@ -2384,19 +2380,19 @@ static int run_nextinfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 	/* normal nextfile statement */
 	if  (rtx->active_block == (qse_awk_nde_blk_t*)rtx->awk->tree.begin)
 	{
-		SETERR_LOC (rtx, QSE_AWK_ERNEXTFBEG, nde->line);
+		SETERR_LOC (rtx, QSE_AWK_ERNEXTFBEG, &nde->loc);
 		return -1;
 	}
 	else if (rtx->active_block == (qse_awk_nde_blk_t*)rtx->awk->tree.end)
 	{
-		SETERR_LOC (rtx, QSE_AWK_ERNEXTFEND, nde->line);
+		SETERR_LOC (rtx, QSE_AWK_ERNEXTFEND, &nde->loc);
 		return -1;
 	}
 
 	n = qse_awk_rtx_nextio_read (rtx, QSE_AWK_IN_CONSOLE, QSE_T(""));
 	if (n == -1)
 	{
-		ADJERR_LOC (rtx, nde->line);
+		ADJERR_LOC (rtx, &nde->loc);
 		return -1;
 	}
 
@@ -2410,7 +2406,7 @@ static int run_nextinfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 	/* FNR resets to 0, NR remains the same */
 	if (update_fnr (rtx, 0, rtx->gbl.nr) == -1) 
 	{
-		ADJERR_LOC (rtx, nde->line);
+		ADJERR_LOC (rtx, &nde->loc);
 		return -1;
 	}
 
@@ -2429,7 +2425,7 @@ static int run_nextoutfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 	if (n == -1)
 	{
 		/* adjust the error line */
-		ADJERR_LOC (rtx, nde->line);
+		ADJERR_LOC (rtx, &nde->loc);
 		return -1;
 	}
 
@@ -2501,7 +2497,7 @@ static int delete_indexed (
 		if (key == QSE_NULL) 
 		{
 			/* change the error line */
-			ADJERR_LOC (rtx, var->line);
+			ADJERR_LOC (rtx, &var->loc);
 			return -1;
 		}
 
@@ -2545,7 +2541,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			if (tmp == QSE_NULL) 
 			{
 				/* adjust error line */
-				ADJERR_LOC (rtx, nde->line);
+				ADJERR_LOC (rtx, &nde->loc);
 				return -1;
 			}
 
@@ -2555,7 +2551,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			{
 				qse_awk_rtx_refupval (rtx, tmp);
 				qse_awk_rtx_refdownval (rtx, tmp);
-				SETERR_LOC (rtx, QSE_AWK_ENOMEM, var->line);
+				SETERR_LOC (rtx, QSE_AWK_ENOMEM, &var->loc);
 				return -1;
 			}
 
@@ -2575,7 +2571,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			{
 				SETERR_ARGX_LOC (
 					rtx, QSE_AWK_ENOTDEL, 
-					xstr_to_cstr(&var->id.name), var->line);
+					xstr_to_cstr(&var->id.name), &var->loc);
 				return -1;
 			}
 
@@ -2622,7 +2618,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			tmp = qse_awk_rtx_makemapval (rtx);
 			if (tmp == QSE_NULL) 
 			{
-				ADJERR_LOC (rtx, nde->line);
+				ADJERR_LOC (rtx, &nde->loc);
 				return -1;
 			}
 
@@ -2636,7 +2632,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 				{
 					qse_awk_rtx_refupval (rtx, tmp);
 					qse_awk_rtx_refdownval (rtx, tmp);
-					ADJERR_LOC (rtx, var->line);
+					ADJERR_LOC (rtx, &var->loc);
 					return -1;
 				}
 			}
@@ -2660,7 +2656,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			{
 				SETERR_ARGX_LOC (
 					rtx, QSE_AWK_ENOTDEL,
-					xstr_to_cstr(&var->id.name), var->line);
+					xstr_to_cstr(&var->id.name), &var->loc);
 				return -1;
 			}
 
@@ -2686,7 +2682,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			!"should never happen - wrong target for delete",
 			"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
 
-		SETERR_LOC (rtx, QSE_AWK_ERDELETE, var->line);
+		SETERR_LOC (rtx, QSE_AWK_ERDELETE, &var->loc);
 		return -1;
 	}
 
@@ -2740,7 +2736,7 @@ static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
 			!"should never happen - wrong target for reset",
 			"the reset statement can only be called with plain variables");
 
-		SETERR_LOC (rtx, QSE_AWK_ERRESET, var->line);
+		SETERR_LOC (rtx, QSE_AWK_ERRESET, &var->loc);
 		return -1;
 	}
 
@@ -2777,7 +2773,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		if (qse_awk_rtx_valtostr (rtx, v, &vsout) == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 		out = vsout.u.cpldup.ptr;
@@ -2789,7 +2785,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			/* the destination name is empty */
 			QSE_AWK_FREE (rtx->awk, out);
-			SETERR_LOC (rtx, QSE_AWK_EIONMEM, nde->line);
+			SETERR_LOC (rtx, QSE_AWK_EIONMEM, &nde->loc);
 			return -1;
 		}
 
@@ -2804,7 +2800,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				 * in an error message */
 				SETERR_ARG_LOC (
 					rtx, QSE_AWK_EIONMNL, 
-					out, qse_strlen(out), nde->line);
+					out, qse_strlen(out), &nde->loc);
 
 				/* if so, it skips writing */
 				QSE_AWK_FREE (rtx->awk, out);
@@ -2829,7 +2825,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			if (out != QSE_NULL) 
 				QSE_AWK_FREE (rtx->awk, out);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 	}
@@ -2859,7 +2855,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				{
 					if (out != QSE_NULL)
 						QSE_AWK_FREE (rtx->awk, out);
-					ADJERR_LOC (rtx, nde->line);
+					ADJERR_LOC (rtx, &nde->loc);
 					return -1;
 				}
 			}
@@ -2881,7 +2877,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 					QSE_AWK_FREE (rtx->awk, out);
 
 				qse_awk_rtx_refdownval (rtx, v);
-				ADJERR_LOC (rtx, nde->line);
+				ADJERR_LOC (rtx, &nde->loc);
 				return -1;
 			}
 
@@ -2896,7 +2892,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 	{
 		if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
-		ADJERR_LOC (rtx, nde->line);
+		ADJERR_LOC (rtx, &nde->loc);
 		return -1;
 	}
 
@@ -2938,7 +2934,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		if (qse_awk_rtx_valtostr (rtx, v, &vsout) == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 		out = vsout.u.cpldup.ptr;
@@ -2950,7 +2946,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			/* the output destination name is empty. */
 			QSE_AWK_FREE (rtx->awk, out);
-			SETERR_LOC (rtx, QSE_AWK_EIONMEM, nde->line);
+			SETERR_LOC (rtx, QSE_AWK_EIONMEM, &nde->loc);
 			return -1;
 		}
 
@@ -2963,7 +2959,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				 * in an error message */
 				SETERR_ARG_LOC (
 					rtx, QSE_AWK_EIONMNL,
-					out, qse_strlen(out), nde->line);
+					out, qse_strlen(out), &nde->loc);
 
 				/* the output destination name contains a null 
 				 * character. */
@@ -3006,7 +3002,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
 			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 	}
@@ -3021,7 +3017,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		{
 			if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
 			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
 	}
@@ -3110,7 +3106,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 				 * whose message contains a formatting 
 				 * character. otherwise, the following way of
 				 * setting the error information may not work */
-				SETERR_LOC (rtx, errnum, nde->line);
+				SETERR_LOC (rtx, errnum, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -3121,7 +3117,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		if (v == QSE_NULL) 
 		{
 			/* adjust error line */
-			ADJERR_LOC (rtx, nde->line);
+			ADJERR_LOC (rtx, &nde->loc);
 			return QSE_NULL;
 		}
 	}
@@ -3188,7 +3184,7 @@ static qse_awk_val_t* eval_group (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 	/* eval_binop_in evaluates the QSE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	QSE_ASSERT (!"should never happen - NDE_GRP only for in");
-	SETERR_LOC (rtx, QSE_AWK_EINTERN, nde->line);
+	SETERR_LOC (rtx, QSE_AWK_EINTERN, &nde->loc);
 	return QSE_NULL;
 }
 
@@ -3316,7 +3312,7 @@ static qse_awk_val_t* do_assignment (
 	return ret;
 
 exit_on_error:
-	SETERR_LOC (run, errnum, var->line);
+	SETERR_LOC (run, errnum, &var->loc);
 	return QSE_NULL;
 }
 
@@ -3346,14 +3342,14 @@ static qse_awk_val_t* do_assignment_scalar (
 			 * it cannot be changed to a scalar variable */
 			SETERR_ARGX_LOC (
 				run, QSE_AWK_EMAPTOSCALAR,
-				xstr_to_cstr(&var->id.name), var->line);
+				xstr_to_cstr(&var->id.name), &var->loc);
 			return QSE_NULL;
 		}
 
 		if (qse_map_upsert (run->named, 
 			var->id.name.ptr, var->id.name.len, val, 0) == QSE_NULL)
 		{
-			SETERR_LOC (run, QSE_AWK_ENOMEM, var->line);
+			SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
 			return QSE_NULL;
 		}
 
@@ -3363,7 +3359,7 @@ static qse_awk_val_t* do_assignment_scalar (
 	{
 		if (set_global (run, var->id.idxa, var, val) == -1) 
 		{
-			ADJERR_LOC (run, var->line);
+			ADJERR_LOC (run, &var->loc);
 			return QSE_NULL;
 		}
 	}
@@ -3376,7 +3372,7 @@ static qse_awk_val_t* do_assignment_scalar (
 			 * it cannot be changed to a scalar variable */
 			SETERR_ARGX_LOC (
 				run, QSE_AWK_EMAPTOSCALAR, 
-				xstr_to_cstr(&var->id.name), var->line);
+				xstr_to_cstr(&var->id.name), &var->loc);
 			return QSE_NULL;
 		}
 
@@ -3393,7 +3389,7 @@ static qse_awk_val_t* do_assignment_scalar (
 			 * it cannot be changed to a scalar variable */
 			SETERR_ARGX_LOC (
 				run, QSE_AWK_EMAPTOSCALAR, 
-				xstr_to_cstr(&var->id.name), var->line);
+				xstr_to_cstr(&var->id.name), &var->loc);
 			return QSE_NULL;
 		}
 
@@ -3446,7 +3442,7 @@ static qse_awk_val_t* do_assignment_map (
 		tmp = qse_awk_rtx_makemapval (run);
 		if (tmp == QSE_NULL) 
 		{
-			ADJERR_LOC (run, var->line);
+			ADJERR_LOC (run, &var->loc);
 			return QSE_NULL;
 		}
 
@@ -3465,7 +3461,7 @@ static qse_awk_val_t* do_assignment_map (
 				qse_awk_rtx_refupval (run, tmp);
 				qse_awk_rtx_refdownval (run, tmp);
 
-				SETERR_LOC (run, QSE_AWK_ENOMEM, var->line);
+				SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
 				return QSE_NULL;
 			}
 
@@ -3477,7 +3473,7 @@ static qse_awk_val_t* do_assignment_map (
 			if (qse_awk_rtx_setgbl (run, (int)var->id.idxa, tmp) == -1)
 			{
 				qse_awk_rtx_refdownval (run, tmp);
-				ADJERR_LOC (run, var->line);
+				ADJERR_LOC (run, &var->loc);
 				return QSE_NULL;
 			}
 			qse_awk_rtx_refdownval (run, tmp);
@@ -3500,7 +3496,7 @@ static qse_awk_val_t* do_assignment_map (
 	else if (map->type != QSE_AWK_VAL_MAP)
 	{
 		/* variable assigned is not a map */
-		SETERR_LOC (run, QSE_AWK_ENOTIDX, var->line);
+		SETERR_LOC (run, QSE_AWK_ENOTIDX, &var->loc);
 		return QSE_NULL;
 	}
 
@@ -3516,7 +3512,7 @@ static qse_awk_val_t* do_assignment_map (
 	if (qse_map_upsert (map->map, str, len, val, 0) == QSE_NULL)
 	{
 		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, var->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
 		return QSE_NULL;
 	}
 
@@ -3544,13 +3540,13 @@ static qse_awk_val_t* do_assignment_pos (
 
 	if (n == -1) 
 	{
-		SETERR_LOC (run, QSE_AWK_EPOSIDX, pos->line);
+		SETERR_LOC (run, QSE_AWK_EPOSIDX, &pos->loc);
 		return QSE_NULL;
 	}
 	if (n == 1) lv = (qse_long_t)rv;
 	if (!IS_VALID_POSIDX(lv)) 
 	{
-		SETERR_LOC (run, QSE_AWK_EPOSIDX, pos->line);
+		SETERR_LOC (run, QSE_AWK_EPOSIDX, &pos->loc);
 		return QSE_NULL;
 	}
 
@@ -3566,7 +3562,7 @@ static qse_awk_val_t* do_assignment_pos (
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL)
 		{
-			ADJERR_LOC (run, pos->line);
+			ADJERR_LOC (run, &pos->loc);
 			return QSE_NULL;
 		}
 
@@ -3669,7 +3665,7 @@ static qse_awk_val_t* eval_binary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		QSE_ASSERT (binop_func[exp->opcode] != QSE_NULL);
 
 		res = binop_func[exp->opcode] (run, left, right);
-		if (res == QSE_NULL) ADJERR_LOC (run, nde->line);
+		if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 
 		qse_awk_rtx_refdownval (run, left);
 		qse_awk_rtx_refdownval (run, right);
@@ -3691,7 +3687,7 @@ static qse_awk_val_t* eval_binop_lor (
 	);
 	if (res == QSE_NULL)
 	{
-		ADJERR_LOC (run, left->line);
+		ADJERR_LOC (run, &left->loc);
 		return QSE_NULL;
 	}
 
@@ -3744,7 +3740,7 @@ static qse_awk_val_t* eval_binop_land (
 	);
 	if (res == QSE_NULL) 
 	{
-		ADJERR_LOC (run, left->line);
+		ADJERR_LOC (run, &left->loc);
 		return QSE_NULL;
 	}
 
@@ -3798,7 +3794,7 @@ static qse_awk_val_t* eval_binop_in (
 	{
 		/* the compiler should have handled this case */
 		QSE_ASSERT (!"should never happen - it needs a plain variable");
-		SETERR_LOC (run, QSE_AWK_EINTERN, right->line);
+		SETERR_LOC (run, QSE_AWK_EINTERN, &right->loc);
 		return QSE_NULL;
 	}
 
@@ -3844,7 +3840,7 @@ static qse_awk_val_t* eval_binop_in (
 	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
 	qse_awk_rtx_refdownval (run, rv);
 
-	SETERR_LOC (run, QSE_AWK_ENOTMAPNILIN, right->line);
+	SETERR_LOC (run, QSE_AWK_ENOTMAPNILIN, &right->loc);
 	return QSE_NULL;
 }
 
@@ -4702,6 +4698,126 @@ static qse_awk_val_t* eval_binop_concat (
 	return res;
 }
 
+static qse_awk_val_t* eval_binop_match0 (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right,
+	const qse_awk_loc_t* lloc, const qse_awk_loc_t* rloc, int ret)
+{
+	qse_awk_val_t* res;
+	int n;
+	qse_awk_errnum_t errnum;
+	void* rex_code;
+
+	if (right->type == QSE_AWK_VAL_REX)
+	{
+		rex_code = ((qse_awk_val_rex_t*)right)->code;
+	}
+	else if (right->type == QSE_AWK_VAL_STR)
+	{
+		rex_code = QSE_AWK_BUILDREX ( 
+			rtx->awk,
+			((qse_awk_val_str_t*)right)->ptr,
+			((qse_awk_val_str_t*)right)->len, &errnum);
+		if (rex_code == QSE_NULL)
+		{
+			SETERR_LOC (rtx, errnum, rloc);
+			return QSE_NULL;
+		}
+	}
+	else
+	{
+		qse_awk_rtx_valtostr_out_t out;
+
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (rtx, right, &out) == QSE_NULL)
+			return QSE_NULL;
+
+		rex_code = QSE_AWK_BUILDREX (
+			rtx->awk, out.u.cpldup.ptr, out.u.cpldup.len, &errnum);
+		if (rex_code == QSE_NULL)
+		{
+			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+			SETERR_LOC (rtx, errnum, rloc);
+			return QSE_NULL;
+		}
+
+		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	}
+
+	if (left->type == QSE_AWK_VAL_STR)
+	{
+		n = QSE_AWK_MATCHREX (
+			rtx->awk, rex_code,
+			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
+			((qse_awk_val_str_t*)left)->ptr,
+			((qse_awk_val_str_t*)left)->len,
+			((qse_awk_val_str_t*)left)->ptr,
+			((qse_awk_val_str_t*)left)->len,
+			QSE_NULL, &errnum);
+		if (n == -1) 
+		{
+			if (right->type != QSE_AWK_VAL_REX) 
+				QSE_AWK_FREE (rtx->awk, rex_code);
+
+			SETERR_LOC (rtx, errnum, lloc);
+			return QSE_NULL;
+		}
+
+		res = qse_awk_rtx_makeintval (rtx, (n == ret));
+		if (res == QSE_NULL) 
+		{
+			if (right->type != QSE_AWK_VAL_REX) 
+				QSE_AWK_FREE (rtx->awk, rex_code);
+
+			ADJERR_LOC (rtx, lloc);
+			return QSE_NULL;
+		}
+	}
+	else
+	{
+		qse_awk_rtx_valtostr_out_t out;
+
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+		if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL)
+		{
+			if (right->type != QSE_AWK_VAL_REX) 
+				QSE_AWK_FREE (rtx->awk, rex_code);
+			return QSE_NULL;
+		}
+
+		n = QSE_AWK_MATCHREX (
+			rtx->awk, rex_code,
+			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
+			out.u.cpldup.ptr, out.u.cpldup.len, 
+			out.u.cpldup.ptr, out.u.cpldup.len, 
+			QSE_NULL, &errnum);
+		if (n == -1) 
+		{
+			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+			if (right->type != QSE_AWK_VAL_REX) 
+				QSE_AWK_FREE (rtx->awk, rex_code);
+
+			SETERR_LOC (rtx, errnum, lloc);
+			return QSE_NULL;
+		}
+
+		res = qse_awk_rtx_makeintval (rtx, (n == ret));
+		if (res == QSE_NULL) 
+		{
+			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+			if (right->type != QSE_AWK_VAL_REX) 
+				QSE_AWK_FREE (rtx->awk, rex_code);
+
+			ADJERR_LOC (rtx, lloc);
+			return QSE_NULL;
+		}
+
+		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	}
+
+	if (right->type != QSE_AWK_VAL_REX) QSE_AWK_FREE (rtx->awk, rex_code);
+	return res;
+}
+
 static qse_awk_val_t* eval_binop_ma (
 	qse_awk_rtx_t* run, qse_awk_nde_t* left, qse_awk_nde_t* right)
 {
@@ -4724,7 +4840,7 @@ static qse_awk_val_t* eval_binop_ma (
 
 	qse_awk_rtx_refupval (run, rv);
 
-	res = eval_binop_match0 (run, lv, rv, left->line, right->line, 1);
+	res = eval_binop_match0 (run, lv, rv, &left->loc, &right->loc, 1);
 
 	qse_awk_rtx_refdownval (run, rv);
 	qse_awk_rtx_refdownval (run, lv);
@@ -4754,132 +4870,11 @@ static qse_awk_val_t* eval_binop_nm (
 
 	qse_awk_rtx_refupval (run, rv);
 
-	res = eval_binop_match0 (
-		run, lv, rv, left->line, right->line, 0);
+	res = eval_binop_match0 (run, lv, rv, &left->loc, &right->loc, 0);
 
 	qse_awk_rtx_refdownval (run, rv);
 	qse_awk_rtx_refdownval (run, lv);
 
-	return res;
-}
-
-static qse_awk_val_t* eval_binop_match0 (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right,
-	qse_size_t lline, qse_size_t rline, int ret)
-{
-	qse_awk_val_t* res;
-	int n;
-	qse_awk_errnum_t errnum;
-	void* rex_code;
-
-	if (right->type == QSE_AWK_VAL_REX)
-	{
-		rex_code = ((qse_awk_val_rex_t*)right)->code;
-	}
-	else if (right->type == QSE_AWK_VAL_STR)
-	{
-		rex_code = QSE_AWK_BUILDREX ( 
-			rtx->awk,
-			((qse_awk_val_str_t*)right)->ptr,
-			((qse_awk_val_str_t*)right)->len, &errnum);
-		if (rex_code == QSE_NULL)
-		{
-			SETERR_LOC (rtx, errnum, rline);
-			return QSE_NULL;
-		}
-	}
-	else
-	{
-		qse_awk_rtx_valtostr_out_t out;
-
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, right, &out) == QSE_NULL)
-			return QSE_NULL;
-
-		rex_code = QSE_AWK_BUILDREX (
-			rtx->awk, out.u.cpldup.ptr, out.u.cpldup.len, &errnum);
-		if (rex_code == QSE_NULL)
-		{
-			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
-			SETERR_LOC (rtx, errnum, rline);
-			return QSE_NULL;
-		}
-
-		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
-	}
-
-	if (left->type == QSE_AWK_VAL_STR)
-	{
-		n = QSE_AWK_MATCHREX (
-			rtx->awk, rex_code,
-			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
-			((qse_awk_val_str_t*)left)->ptr,
-			((qse_awk_val_str_t*)left)->len,
-			((qse_awk_val_str_t*)left)->ptr,
-			((qse_awk_val_str_t*)left)->len,
-			QSE_NULL, &errnum);
-		if (n == -1) 
-		{
-			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
-
-			SETERR_LOC (rtx, errnum, lline);
-			return QSE_NULL;
-		}
-
-		res = qse_awk_rtx_makeintval (rtx, (n == ret));
-		if (res == QSE_NULL) 
-		{
-			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
-
-			ADJERR_LOC (rtx, lline);
-			return QSE_NULL;
-		}
-	}
-	else
-	{
-		qse_awk_rtx_valtostr_out_t out;
-
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL)
-		{
-			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
-			return QSE_NULL;
-		}
-
-		n = QSE_AWK_MATCHREX (
-			rtx->awk, rex_code,
-			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
-			out.u.cpldup.ptr, out.u.cpldup.len, 
-			out.u.cpldup.ptr, out.u.cpldup.len, 
-			QSE_NULL, &errnum);
-		if (n == -1) 
-		{
-			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
-			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
-
-			SETERR_LOC (rtx, errnum, lline);
-			return QSE_NULL;
-		}
-
-		res = qse_awk_rtx_makeintval (rtx, (n == ret));
-		if (res == QSE_NULL) 
-		{
-			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
-			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
-
-			ADJERR_LOC (rtx, lline);
-			return QSE_NULL;
-		}
-
-		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
-	}
-
-	if (right->type != QSE_AWK_VAL_REX) QSE_AWK_FREE (rtx->awk, rex_code);
 	return res;
 }
 
@@ -4950,7 +4945,7 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 exit_func:
 	qse_awk_rtx_refdownval (run, left);
-	if (res == QSE_NULL) ADJERR_LOC (run, nde->line);
+	if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 	return res;
 }
 
@@ -4969,7 +4964,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	    /*exp->left->type > QSE_AWK_NDE_ARGIDX) XXX */
 	    exp->left->type > QSE_AWK_NDE_POS)
 	{
-		SETERR_LOC (run, QSE_AWK_EOPERAND, nde->line);
+		SETERR_LOC (run, QSE_AWK_EOPERAND, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -4988,7 +4983,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -4999,7 +4994,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5013,7 +5008,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (n == -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5030,7 +5025,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5044,7 +5039,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5055,7 +5050,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5069,7 +5064,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (n == -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5086,7 +5081,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5095,7 +5090,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	{
 		QSE_ASSERT (!"should never happen - invalid opcode");
 		qse_awk_rtx_refdownval (run, left);
-		SETERR_LOC (run, QSE_AWK_EINTERN, nde->line);
+		SETERR_LOC (run, QSE_AWK_EINTERN, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5124,7 +5119,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	    /*exp->left->type > QSE_AWK_NDE_ARGIDX) XXX */
 	    exp->left->type > QSE_AWK_NDE_POS)
 	{
-		SETERR_LOC (run, QSE_AWK_EOPERAND, nde->line);
+		SETERR_LOC (run, QSE_AWK_EOPERAND, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5143,7 +5138,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5152,7 +5147,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				qse_awk_rtx_freeval (run, res, QSE_TRUE);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5163,7 +5158,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5172,7 +5167,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				qse_awk_rtx_freeval (run, res, QSE_TRUE);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5186,7 +5181,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (n == -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5196,7 +5191,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				if (res == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (run, left);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 
@@ -5205,7 +5200,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				{
 					qse_awk_rtx_refdownval (run, left);
 					qse_awk_rtx_freeval (run, res, QSE_TRUE);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 			}
@@ -5216,7 +5211,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				if (res == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (run, left);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 
@@ -5225,7 +5220,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				{
 					qse_awk_rtx_refdownval (run, left);
 					qse_awk_rtx_freeval (run, res, QSE_TRUE);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 			}
@@ -5240,7 +5235,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5249,7 +5244,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				qse_awk_rtx_freeval (run, res, QSE_TRUE);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5260,7 +5255,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (res == QSE_NULL) 
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5269,7 +5264,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				qse_awk_rtx_freeval (run, res, QSE_TRUE);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 		}
@@ -5283,7 +5278,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			if (n == -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5293,7 +5288,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				if (res == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (run, left);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 
@@ -5302,7 +5297,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				{
 					qse_awk_rtx_refdownval (run, left);
 					qse_awk_rtx_freeval (run, res, QSE_TRUE);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 			}
@@ -5313,7 +5308,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				if (res == QSE_NULL)
 				{
 					qse_awk_rtx_refdownval (run, left);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 
@@ -5322,7 +5317,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 				{
 					qse_awk_rtx_refdownval (run, left);
 					qse_awk_rtx_freeval (run, res, QSE_TRUE);
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 					return QSE_NULL;
 				}
 			}
@@ -5332,7 +5327,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	{
 		QSE_ASSERT (!"should never happen - invalid opcode");
 		qse_awk_rtx_refdownval (run, left);
-		SETERR_LOC (run, QSE_AWK_EINTERN, nde->line);
+		SETERR_LOC (run, QSE_AWK_EINTERN, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5376,13 +5371,13 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	/* intrinsic function */
 	if (call->nargs < call->what.fnc.arg.min)
 	{
-		SETERR_LOC (run, QSE_AWK_EARGTF, nde->line);
+		SETERR_LOC (run, QSE_AWK_EARGTF, &nde->loc);
 		return QSE_NULL;
 	}
 
 	if (call->nargs > call->what.fnc.arg.max)
 	{
-		SETERR_LOC (run, QSE_AWK_EARGTM, nde->line);
+		SETERR_LOC (run, QSE_AWK_EARGTM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5405,7 +5400,7 @@ static qse_awk_val_t* eval_fun_ex (
 	{
 		SETERR_ARGX_LOC (
 			rtx, QSE_AWK_EFUNNF,
-			xstr_to_cstr(&call->what.fun.name), nde->line);
+			xstr_to_cstr(&call->what.fun.name), &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5416,7 +5411,7 @@ static qse_awk_val_t* eval_fun_ex (
 	{
 		/* TODO: is this correct? what if i want to 
 		 *       allow arbitarary numbers of arguments? */
-		SETERR_LOC (rtx, QSE_AWK_EARGTM, nde->line);
+		SETERR_LOC (rtx, QSE_AWK_EARGTM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5522,14 +5517,14 @@ static qse_awk_val_t* __eval_call (
 #endif
 	if (__raw_push(run,(void*)run->stack_base) == -1) 
 	{
-		SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
 	if (__raw_push(run,(void*)saved_stack_top) == -1) 
 	{
 		__raw_pop (run);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5538,7 +5533,7 @@ static qse_awk_val_t* __eval_call (
 	{
 		__raw_pop (run);
 		__raw_pop (run);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5548,7 +5543,7 @@ static qse_awk_val_t* __eval_call (
 		__raw_pop (run);
 		__raw_pop (run);
 		__raw_pop (run);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -5572,7 +5567,7 @@ static qse_awk_val_t* __eval_call (
 			if (__raw_push(run,qse_awk_val_nil) == -1)
 			{
 				UNWIND_RTX_STACK (run, nargs);
-				SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -5623,12 +5618,12 @@ static qse_awk_val_t* __eval_call (
 					SETERR_ARGX_LOC (
 						run, QSE_AWK_EFNCIMPL, 
 						xstr_to_cstr(&call->what.fnc.oname),
-						nde->line
+						&nde->loc
 					);
 				}
 				else
 				{
-					ADJERR_LOC (run, nde->line);
+					ADJERR_LOC (run, &nde->loc);
 				}
 
 				/* correct the return code just in case */
@@ -5728,7 +5723,7 @@ static qse_size_t push_arg_from_vals (
 			qse_awk_rtx_refdownval (rtx, pafv->args[nargs]);
 
 			UNWIND_RTX_STACK_ARG (rtx, nargs);
-			SETERR_LOC (rtx, QSE_AWK_ENOMEM, call->line);
+			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
 			return (qse_size_t)-1;
 		}
 
@@ -5799,7 +5794,7 @@ static qse_size_t push_arg_from_nde (
 			qse_awk_rtx_refdownval (rtx, v);
 
 			UNWIND_RTX_STACK_ARG (rtx, nargs);
-			SETERR_LOC (rtx, QSE_AWK_ENOMEM, call->line);
+			SETERR_LOC (rtx, QSE_AWK_ENOMEM, &call->loc);
 			return (qse_size_t)-1;
 		}
 
@@ -5844,7 +5839,7 @@ static int get_reference (
 				tgt->id.name.len, qse_awk_val_nil, 0);
 			if (pair == QSE_NULL) 
 			{
-				SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 				return -1;
 			}
 		}
@@ -5884,7 +5879,7 @@ static int get_reference (
 				tgt->id.name.len, qse_awk_val_nil, 0);
 			if (pair == QSE_NULL) 
 			{
-				SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 				return -1;
 			}
 		}
@@ -5937,13 +5932,13 @@ static int get_reference (
 
 		if (n == -1) 
 		{
-			SETERR_LOC (run, QSE_AWK_EPOSIDX, nde->line);
+			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 			return -1;
 		}
 		if (n == 1) lv = (qse_long_t)rv;
 		if (!IS_VALID_POSIDX(lv)) 
 		{
-			SETERR_LOC (run, QSE_AWK_EPOSIDX, nde->line);
+			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 			return -1;
 		}
 
@@ -5951,7 +5946,7 @@ static int get_reference (
 		return 0;
 	}
 
-	SETERR_LOC (run, QSE_AWK_ENOTREF, nde->line);
+	SETERR_LOC (run, QSE_AWK_ENOTREF, &nde->loc);
 	return -1;
 }
 
@@ -5972,7 +5967,7 @@ static qse_awk_val_t** get_reference_indexed (
 		tmp = qse_awk_rtx_makemapval (run);
 		if (tmp == QSE_NULL)
 		{
-			ADJERR_LOC (run, nde->line);
+			ADJERR_LOC (run, &nde->loc);
 			return QSE_NULL;
 		}
 
@@ -5982,7 +5977,7 @@ static qse_awk_val_t** get_reference_indexed (
 	}
 	else if ((*val)->type != QSE_AWK_VAL_MAP) 
 	{
-		SETERR_LOC (run, QSE_AWK_ENOTMAP, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOTMAP, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -6001,7 +5996,7 @@ static qse_awk_val_t** get_reference_indexed (
 		if (pair == QSE_NULL)
 		{
 			if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-			SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
@@ -6019,7 +6014,7 @@ static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	val = qse_awk_rtx_makeintval (run, ((qse_awk_nde_int_t*)nde)->val);
 	if (val == QSE_NULL)
 	{
-		ADJERR_LOC (run, nde->line);
+		ADJERR_LOC (run, &nde->loc);
 		return QSE_NULL;
 	}
 	((qse_awk_val_int_t*)val)->nde = nde;
@@ -6034,7 +6029,7 @@ static qse_awk_val_t* eval_real (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	val = qse_awk_rtx_makerealval (run, ((qse_awk_nde_real_t*)nde)->val);
 	if (val == QSE_NULL) 
 	{
-		ADJERR_LOC (run, nde->line);
+		ADJERR_LOC (run, &nde->loc);
 		return QSE_NULL;
 	}
 	((qse_awk_val_real_t*)val)->nde = nde;
@@ -6051,7 +6046,7 @@ static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		((qse_awk_nde_str_t*)nde)->len);
 	if (val == QSE_NULL)
 	{
-		ADJERR_LOC (run, nde->line);
+		ADJERR_LOC (run, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -6068,7 +6063,7 @@ static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		((qse_awk_nde_rex_t*)nde)->code);
 	if (val == QSE_NULL) 
 	{
-		ADJERR_LOC (run, nde->line);
+		ADJERR_LOC (run, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -6118,7 +6113,7 @@ static qse_awk_val_t* eval_indexed (
 		tmp = qse_awk_rtx_makemapval (run);
 		if (tmp == QSE_NULL)
 		{
-			ADJERR_LOC (run, nde->line);
+			ADJERR_LOC (run, &nde->loc);
 			return QSE_NULL;
 		}
 
@@ -6128,7 +6123,7 @@ static qse_awk_val_t* eval_indexed (
 	}
 	else if ((*val)->type != QSE_AWK_VAL_MAP) 
 	{
-		SETERR_LOC (run, QSE_AWK_ENOTMAP, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOTMAP, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -6157,7 +6152,7 @@ static qse_awk_val_t* eval_namedidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
 		if (pair == QSE_NULL) 
 		{
-			SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
@@ -6201,14 +6196,14 @@ static qse_awk_val_t* eval_pos (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_rtx_refdownval (run, v);
 	if (n == -1) 
 	{
-		SETERR_LOC (run, QSE_AWK_EPOSIDX, nde->line);
+		SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 		return QSE_NULL;
 	}
 	if (n == 1) lv = (qse_long_t)rv;
 
 	if (lv < 0)
 	{
-		SETERR_LOC (run, QSE_AWK_EPOSIDX, nde->line);
+		SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 		return QSE_NULL;
 	}
 	if (lv == 0) v = run->inrec.d0;
@@ -6292,7 +6287,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	if (qse_str_init (&buf, MMGR(run), DEF_BUF_CAPA) == QSE_NULL)
 	{
 		if (in != QSE_NULL) QSE_AWK_FREE (run->awk, in);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 		return QSE_NULL;
 	}
 
@@ -6329,7 +6324,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			qse_str_fini (&buf);
 			if (v == QSE_NULL)
 			{
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -6349,7 +6344,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	
 skip_read:
 	res = qse_awk_rtx_makeintval (run, n);
-	if (res == QSE_NULL) ADJERR_LOC (run, nde->line);
+	if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 	return res;
 }
 
@@ -6568,7 +6563,7 @@ static qse_char_t* idxnde_to_str (
 			if (qse_awk_rtx_valtostr (run, idx, &out) == QSE_NULL)
 			{
 				qse_awk_rtx_refdownval (run, idx);
-				ADJERR_LOC (run, nde->line);
+				ADJERR_LOC (run, &nde->loc);
 				return QSE_NULL;
 			}
 
@@ -6590,7 +6585,7 @@ static qse_char_t* idxnde_to_str (
 
 		if (qse_str_init (&idxstr, MMGR(run), DEF_BUF_CAPA) == QSE_NULL) 
 		{
-			SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;
 		}
 
@@ -6612,7 +6607,7 @@ static qse_char_t* idxnde_to_str (
 			{
 				qse_awk_rtx_refdownval (run, idx);
 				qse_str_fini (&idxstr);
-				SETERR_LOC (run, QSE_AWK_ENOMEM, nde->line);
+				SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 				return QSE_NULL;
 			}
 

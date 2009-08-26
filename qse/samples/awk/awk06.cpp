@@ -20,10 +20,10 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
-static void print_error (unsigned long line, const qse_char_t* msg)
+static void print_error (const qse_awk_loc_t& loc, const qse_char_t* msg)
 {
-	if (line > 0)
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s at LINE %lu\n"), msg, line);
+	if (loc.lin > 0 || loc.col > 0)
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s at LINE %lu COLUMN %lu\n"), msg, loc.lin, loc.col);
 	else
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), msg);
 	
@@ -88,7 +88,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int ret = awk.open();
 
 	if (ret >= 0) ret = run_awk (awk);
-	if (ret <= -1) print_error (awk.getErrorLine(), awk.getErrorMessage());
+	if (ret <= -1) 
+	{
+		qse_awk_loc_t loc = awk.getErrorLocation();
+		print_error (loc, awk.getErrorMessage());
+	}
 
 	awk.close ();
 	return -1;

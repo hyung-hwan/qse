@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 266 2009-08-24 12:15:56Z hyunghwan.chung $ 
+ * $Id: awk.c 267 2009-08-25 09:50:07Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -183,7 +183,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 
 	awk->option = QSE_AWK_CLASSIC;
 	awk->errinf.num = QSE_AWK_ENOERR;
-	awk->errinf.lin = 0;
+	awk->errinf.loc.lin = 0;
+	awk->errinf.loc.col = 0;
+	awk->errinf.loc.fil = QSE_NULL;
 	awk->errstr = qse_awk_dflerrstr;
 	awk->stopall = QSE_FALSE;
 
@@ -322,7 +324,11 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->tree.chain_size = 0;
 
 	QSE_ASSERT (awk->sio.inp == &awk->sio.arg);
-	qse_map_clear (awk->sio.names);
+	/* this table must not be cleared here as there can be a reference
+	 * to an entry of this table from errinf.fil when qse_awk_parse() 
+	 * failed. this table is cleared in qse_awk_parse().
+	 * qse_map_clear (awk->sio.names);
+	 */
 
 	awk->sio.last.c = QSE_CHAR_EOF;
 	awk->sio.last.lin = 0;

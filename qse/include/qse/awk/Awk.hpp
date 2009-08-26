@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: Awk.hpp 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -46,6 +46,7 @@ public:
 	/** Defines a primitive handle */
 	typedef qse_awk_t awk_t;
 
+	typedef qse_awk_loc_t loc_t;
 	typedef qse_awk_errnum_t errnum_t;
 	typedef qse_awk_errstr_t errstr_t;
 	typedef qse_awk_errinf_t errinf_t;
@@ -224,10 +225,10 @@ public:
 	ErrorNumber getErrorNumber () const;
 
 	/** 
-	 * The Awk::getErrorLine() function returns the line number of the last
-	 * error occurred.
+	 * The Awk::getErrorLocation() function returns the location of the 
+	 * last error occurred.
 	 */
-	size_t getErrorLine () const;
+	loc_t getErrorLocation () const;
 
 	/** 
 	 * The Awk::getErrorMessage() function returns a message describing
@@ -241,13 +242,13 @@ public:
 	void setError (
 		ErrorNumber   code,
 		const cstr_t* args  = QSE_NULL,
-		size_t        line  = 0
+		const loc_t*  loc   = QSE_NULL
 	);
 
 	void setErrorWithMessage (
 		ErrorNumber   code,
 		const char_t* msg,
-		size_t        line
+		const loc_t*  loc
 	);
 
 	/** clears error information */
@@ -744,19 +745,19 @@ public:
 		bool shouldStop () const;
 
 		ErrorNumber getErrorNumber () const;
-		size_t getErrorLine () const;
+		loc_t getErrorLocation () const;
 		const char_t* getErrorMessage () const;
 
 		void setError (
 			ErrorNumber   code, 
 			const cstr_t* args = QSE_NULL,
-			size_t        line = 0
+			const loc_t*  loc  = QSE_NULL
 		);
 
 		void setErrorWithMessage (
 			ErrorNumber   code, 
 			const char_t* msg,
-			size_t        line
+			const loc_t*  loc
 		);
 
 		/** 

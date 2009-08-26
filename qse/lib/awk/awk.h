@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 265 2009-08-24 01:50:38Z hyunghwan.chung $
+ * $Id: awk.h 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -94,14 +94,6 @@ struct qse_awk_tree_t
 	qse_size_t chain_size; /* number of nodes in the chain */
 
 	int ok;
-};
-
-typedef struct qse_awk_loc_t qse_awk_loc_t;
-struct qse_awk_loc_t
-{
-	const qse_char_t* fil;
-	qse_size_t        lin;
-	qse_size_t        col;
 };
 
 typedef struct qse_awk_tok_t qse_awk_tok_t;

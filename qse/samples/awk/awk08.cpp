@@ -173,9 +173,11 @@ static void print_error (const qse_char_t* fmt, ...)
 
 static void print_error (MyAwk& awk)
 {
+	MyAwk::loc_t loc = awk.getErrorLocation();
+
 	print_error ( 
 		QSE_T("LINE [%u] %s\n"), 
-		(unsigned)awk.getErrorLine(),
+		(unsigned)loc.lin,
 		awk.getErrorMessage()
 	);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
+ * $Id: awk.c 267 2009-08-25 09:50:07Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -644,20 +644,32 @@ static void freearg (struct arg_t* arg)
 
 static void print_awkerr (qse_awk_t* awk)
 {
+	const qse_awk_loc_t* loc = qse_awk_geterrloc (awk);
+
 	print_err ( 
-		QSE_T("CODE [%d] LINE [%u] %s\n"), 
+		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"), 
 		qse_awk_geterrnum(awk),
-		(unsigned int)qse_awk_geterrlin(awk), 
+		(unsigned int)loc->lin,
+		(unsigned int)loc->col,
+		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
+		((loc->fil == QSE_NULL)? QSE_T(""): loc->fil),
+		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T(" ")),
 		qse_awk_geterrmsg(awk)
 	);
 }
 
 static void print_rtxerr (qse_awk_rtx_t* rtx)
 {
+	const qse_awk_loc_t* loc = qse_awk_rtx_geterrloc (rtx);
+
 	print_err (
-		QSE_T("CODE [%d] LINE [%u] %s\n"),
+		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"),
 		qse_awk_rtx_geterrnum(rtx),
-		(unsigned int)qse_awk_rtx_geterrlin(rtx),
+		(unsigned int)loc->lin,
+		(unsigned int)loc->col,
+		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
+		((loc->fil == QSE_NULL)? QSE_T(""): loc->fil),
+		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T(" ")),
 		qse_awk_rtx_geterrmsg(rtx)
 	);
 }
