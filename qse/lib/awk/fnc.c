@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: fnc.c 270 2009-08-26 12:59:08Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -37,7 +37,7 @@ static int fnc_sprintf (qse_awk_rtx_t*, const qse_cstr_t*);
 static qse_awk_fnc_t sys_fnc[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, 0, QSE_AWK_RIO, {1, 1, QSE_NULL}, fnc_close},
+	{ {QSE_T("close"),   5}, 0, QSE_AWK_RIO, {1, 2, QSE_NULL}, fnc_close},
 	{ {QSE_T("fflush"),  6}, 0, QSE_AWK_RIO, {0, 1, QSE_NULL}, fnc_fflush},
 
 	/* string functions */
@@ -227,20 +227,20 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	return fnc;
 }
 
-static int fnc_close (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
+static int fnc_close (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* v, * a0;
+	qse_awk_val_t* v, * a0, * a1 = QSE_NULL;
 	int n;
 
-	qse_char_t* name;
-	qse_size_t len;
+	qse_char_t* name, * opt = QSE_NULL;
+	qse_size_t len, optlen = 0;
        
-	nargs = qse_awk_rtx_getnargs (run);
-	QSE_ASSERT (nargs == 1);
-/* TODO: support close (xxx, "to"/"from"/"rw"/"r"/"w"/????) */
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 1 || nargs == 2);
 
-	a0 = qse_awk_rtx_getarg (run, 0);
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+	a1 = qse_awk_rtx_getarg (rtx, 1);
 	QSE_ASSERT (a0 != QSE_NULL);
 
 	if (a0->type == QSE_AWK_VAL_STR)
@@ -250,8 +250,27 @@ static int fnc_close (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	}
 	else
 	{
-		name = qse_awk_rtx_valtocpldup (run, a0, &len);
+		name = qse_awk_rtx_valtocpldup (rtx, a0, &len);
 		if (name == QSE_NULL) return -1;
+	}
+
+	if (a1 != QSE_NULL)
+	{
+		if (a1->type == QSE_AWK_VAL_STR)
+		{
+			opt = ((qse_awk_val_str_t*)a1)->ptr;
+			optlen = ((qse_awk_val_str_t*)a1)->len;
+		}
+		else
+		{
+			opt = qse_awk_rtx_valtocpldup (rtx, a1, &optlen);
+			if (opt == QSE_NULL) 
+			{
+				if (a1->type != QSE_AWK_VAL_STR)
+					QSE_AWK_FREE (rtx->awk, name);
+				return -1;
+			}
+		}
 	}
 
 	if (len == 0)
@@ -272,30 +291,44 @@ static int fnc_close (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	{
 		if (name[--len] == QSE_T('\0'))
 		{
-			/* the name contains a null string. 
+			/* the name contains a null charater. 
 			 * make close return -1 */
 			n = -1;
 			goto skip_close;
 		}
 	}	
 
-	n = qse_awk_rtx_closeio (run, name);
-	/*
-	if (n == -1 && run->errinf.num != QSE_AWK_EIONMNF)
+	if (opt != QSE_NULL)
+	{
+		if (optlen != 1 || 
+		    (opt[0] != QSE_T('r') && opt[0] != QSE_T('w')))
+		{
+			n = -1;
+			goto skip_close;
+		}
+	}
+
+	n = qse_awk_rtx_closeio (rtx, name, opt);
+	/* failure to close is not a critical error. instead, that is
+	 * flagged by the return value of close().
+	if (n == -1 && rtx->errinf.num != QSE_AWK_EIONMNF)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) 
-			QSE_AWK_FREE (run->awk, name);
+			QSE_AWK_FREE (rtx->awk, name);
 		return -1;
 	}
 	*/
 
 skip_close:
-	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, name);
+	if (a1 != QSE_NULL && a1->type != QSE_AWK_VAL_STR) 
+		QSE_AWK_FREE (rtx->awk, opt);
 
-	v = qse_awk_rtx_makeintval (run, (qse_long_t)n);
+	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, name);
+
+	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)n);
 	if (v == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (run, v);
+	qse_awk_rtx_setretval (rtx, v);
 	return 0;
 }
 

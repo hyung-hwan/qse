@@ -1,4 +1,68 @@
 /** @page awk AWK
 
 AWK Interpreter
+
+VARIABLE DECLARATION
+
+QSE_AWK_EXPLICIT enables variable declaration. Variables declared are accessed
+directly bypassing the global named map that stores undeclared variables.
+The keyword global introduces a global variable and the keyword local introduces
+a local variable. Local variable declaraion in a block should be located before
+an expression or a statement appears.
+
+@code
+global g1, g2; #declares two global variables g1 and g2
+
+BEGIN {
+	local a1, a2, a3; # declares three local variables 
+
+	g1 = 300; a1 = 200;
+
+	{
+		local a1; # this a1 hides the a1 at the outer scope
+		local g1; # this g1 hides the global g1
+		a1 = 10; g1 = 5;
+		print a1, g1; # it prints 10 and 5
+	}
+
+	print a1, g1; # it prints 200 and 300
+}
+
+@endcode
+
+However, turning on QSE_AWK_EXPLICIT does not disable named variables.
+To disable named variables, you must turn off QSE_AWK_IMPLICIT.
+
+INCLUDE
+
+The \@include directive inserts the contents of the object specified in the
+following string, typically a file name, as if they appeared in the source
+stream being processed. The directive can only be used at the outmost scope 
+where global variable declarations, BEGIN, END, and/or pattern-action blocks
+appear. To use @include, you must turn on QSE_AWK_INCLUDE.
+
+@code
+@include "abc.awk"
+BEGIN { func_in_abc (); }
+@endcode
+
+TWO-WAY PIPE
+
+The two-way pipe indicated by '||' is supproted, in addition to the one-way 
+pipe indicated by '|'. Turn on QSE_AWK_RWPIPE to enable the two-way pipe.
+
+@code
+BEGIN {
+	print "15" || "sort";
+	print "14" || "sort";
+	print "13" || "sort";
+	print "12" || "sort";
+	print "11" || "sort";
+	#close the input as sort emits when the input is closed
+	close ("sort", "r");
+	while (("sort" || getline x) > 0) print x; 
+}
+@endcode
+
 */
+
