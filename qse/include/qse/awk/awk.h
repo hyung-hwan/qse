@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 267 2009-08-25 09:50:07Z hyunghwan.chung $
+ * $Id: awk.h 270 2009-08-26 12:59:08Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -351,6 +351,12 @@ enum qse_awk_rio_mode_t
 };
 typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
 
+enum qse_awk_rio_close_opt_t
+{
+	QSE_AWK_RIO_CLOSE_R = (1 << 0),
+	QSE_AWK_RIO_CLOSE_W = (1 << 1)
+};
+
 /**
  * The qse_awk_rio_arg_t defines the data structure passed to a runtime 
  * I/O handler. An I/O handler should inspect the @a mode field and the 
@@ -361,9 +367,10 @@ typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
 typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 struct qse_awk_rio_arg_t 
 {
-	qse_awk_rio_mode_t mode;  /**< [IN] I/O mode */
-	qse_char_t* name;         /**< [IN] name of I/O object */
-	void* handle;             /**< [OUT] I/O handle set by a handler */
+	qse_awk_rio_mode_t      mode;   /**< [IN] I/O mode */
+	qse_char_t*             name;   /**< [IN] name of I/O object */
+	int                     copt;   /**< [IN] closing option */
+	void*                   handle; /**< [OUT] I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 

@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 256 2009-08-16 13:44:20Z hyunghwan.chung $
+ * $Id: rio.c 270 2009-08-26 12:59:08Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -904,9 +904,10 @@ int qse_awk_rtx_closio_write (
 	return -1;
 }
 
-int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
+int qse_awk_rtx_closeio (
+	qse_awk_rtx_t* rtx, const qse_char_t* name, const qse_char_t* opt)
 {
-	qse_awk_rio_arg_t* p = run->rio.chain, * px = QSE_NULL;
+	qse_awk_rio_arg_t* p = rtx->rio.chain, * px = QSE_NULL;
 
 	while (p != QSE_NULL)
 	{
@@ -915,34 +916,58 @@ int qse_awk_rtx_closeio (qse_awk_rtx_t* run, const qse_char_t* name)
 		if (qse_strcmp (p->name, name) == 0) 
 		{
 			qse_awk_rio_fun_t handler;
-		       
-			handler = run->rio.handler[p->type & MASK_CLEAR];
-			if (handler != QSE_NULL)
+			int copt = QSE_AWK_RIO_CLOSE_R | QSE_AWK_RIO_CLOSE_W;
+
+			if (opt != QSE_NULL)
 			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
-				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
+				if (opt[0] == QSE_T('r'))
 				{
-					/* this is not a run-time error.*/
-					if (run->errinf.num == QSE_AWK_ENOERR)
-						qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
-					return -1;
+					if (p->type & MASK_RDWR) copt = QSE_AWK_RIO_CLOSE_R;
+					else if (!(p->type & MASK_READ)) goto skip;
+				}
+				else
+				{
+					QSE_ASSERT (opt[0] == QSE_T('w'));
+					if (p->type & MASK_RDWR) copt = QSE_AWK_RIO_CLOSE_W;
+					else if (!(p->type & MASK_WRITE)) goto skip;
 				}
 			}
 
-			if (px != QSE_NULL) px->next = p->next;
-			else run->rio.chain = p->next;
+			handler = rtx->rio.handler[p->type & MASK_CLEAR];
+			if (handler != QSE_NULL)
+			{
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
+				p->copt = copt;
+				if (handler (rtx, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
+				{
+					/* this is not a run-time error.*/
+					if (rtx->errinf.num == QSE_AWK_ENOERR)
+						qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIOIMPL, QSE_NULL);
+					return -1;
+				}
+			}
+/* TODO:
+if (p->type & MASK_RDWR)
+{
+	if partially closed don't destroy it yet...
+}
+*/
 
-			QSE_AWK_FREE (run->awk, p->name);
-			QSE_AWK_FREE (run->awk, p);
+			if (px != QSE_NULL) px->next = p->next;
+			else rtx->rio.chain = p->next;
+
+			QSE_AWK_FREE (rtx->awk, p->name);
+			QSE_AWK_FREE (rtx->awk, p);
 
 			return 0;
 		}
 
+	skip:
 		px = p;
 		p = p->next;
 	}
 
-	qse_awk_rtx_seterrnum (run, QSE_AWK_EIONMNF, QSE_NULL);
+	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EIONMNF, QSE_NULL);
 	return -1;
 }
 
