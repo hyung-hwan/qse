@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 270 2009-08-26 12:59:08Z hyunghwan.chung $
+ * $Id: rio.c 271 2009-08-27 12:52:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -148,14 +148,16 @@ int qse_awk_rtx_readio (
 
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
+		p->rwcopt = QSE_AWK_RIO_CLOSE_A;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
+		p->rwcstate = 0;
 
 		p->in.buf[0] = QSE_T('\0');
 		p->in.pos = 0;
 		p->in.len = 0;
-		p->in.eof = QSE_FALSE;
-		p->in.eos = QSE_FALSE;
+		p->in.eof = 0;
+		p->in.eos = 0;
 
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 
@@ -187,12 +189,12 @@ int qse_awk_rtx_readio (
 		 * entire pattern-block matching and exeuction. */
 		if (x == 0) 
 		{
-			p->in.eos = QSE_TRUE;
+			p->in.eos = 1;
 			return 0;
 		}
 	}
 
-	if (p->in.eos) 
+	if (p->in.eos)
 	{
 		/* no more streams. */
 		return 0;
@@ -259,7 +261,7 @@ int qse_awk_rtx_readio (
 
 			if (n == 0) 
 			{
-				p->in.eof = QSE_TRUE;
+				p->in.eof = 1;
 
 				if (QSE_STR_LEN(buf) == 0) ret = 0;
 				else if (rs_len >= 2)
@@ -507,11 +509,13 @@ int qse_awk_rtx_writeio_str (
 
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
+		p->rwcopt = QSE_AWK_RIO_CLOSE_A;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
+		p->rwcstate = 0;
 
-		p->out.eof = QSE_FALSE;
-		p->out.eos = QSE_FALSE;
+		p->out.eof = 0;
+		p->out.eos = 0;
 
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 		n = handler (run, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);
@@ -537,7 +541,7 @@ int qse_awk_rtx_writeio_str (
 		 * entire pattern-block matching and exeuction. */
 		if (n == 0) 
 		{
-			p->out.eos = QSE_TRUE;
+			p->out.eos = 1;
 			return 0;
 		}
 	}
@@ -569,7 +573,7 @@ int qse_awk_rtx_writeio_str (
 
 		if (n == 0) 
 		{
-			p->out.eof = QSE_TRUE;
+			p->out.eof = 1;
 			return 0;
 		}
 
@@ -587,7 +591,7 @@ int qse_awk_rtx_flushio (
 	qse_awk_rio_fun_t handler;
 	int io_type, /*io_mode,*/ io_mask;
 	qse_ssize_t n;
-	qse_bool_t ok = QSE_FALSE;
+	int ok = 0;
 
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_type_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
@@ -622,7 +626,7 @@ int qse_awk_rtx_flushio (
 				return -1;
 			}
 
-			ok = QSE_TRUE;
+			ok = 1;
 		}
 
 		p = p->next;
@@ -696,14 +700,14 @@ int qse_awk_rtx_nextio_read (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextio_read
 		 * will return 0 without executing the handler */
-		p->in.eos = QSE_TRUE;
+		p->in.eos = 1;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->in.eof = QSE_FALSE;
+		p->in.eof = 0;
 
 		/* also the previous input buffer must be reset */
 		p->in.pos = 0;
@@ -774,14 +778,14 @@ int qse_awk_rtx_nextio_write (
 		/* the next stream cannot be opened. 
 		 * set the eos flags so that the next call to nextio_write
 		 * will return 0 without executing the handler */
-		p->out.eos = QSE_TRUE;
+		p->out.eos = 1;
 		return 0;
 	}
 	else 
 	{
 		/* as the next stream has been opened successfully,
 		 * the eof flag should be cleared if set */
-		p->out.eof = QSE_FALSE;
+		p->out.eof = 0;
 		return 1;
 	}
 }
@@ -916,19 +920,37 @@ int qse_awk_rtx_closeio (
 		if (qse_strcmp (p->name, name) == 0) 
 		{
 			qse_awk_rio_fun_t handler;
-			int copt = QSE_AWK_RIO_CLOSE_R | QSE_AWK_RIO_CLOSE_W;
+			qse_awk_rio_rwcopt_t rwcopt = QSE_AWK_RIO_CLOSE_A;
 
 			if (opt != QSE_NULL)
 			{
 				if (opt[0] == QSE_T('r'))
 				{
-					if (p->type & MASK_RDWR) copt = QSE_AWK_RIO_CLOSE_R;
+					if (p->type & MASK_RDWR) 
+					{
+						if (p->rwcstate != QSE_AWK_RIO_CLOSE_W)
+						{
+							/* if the write end is not
+							 * closed, let io handler close
+							 * the read end only. */
+							rwcopt = QSE_AWK_RIO_CLOSE_R;
+						}
+					}
 					else if (!(p->type & MASK_READ)) goto skip;
 				}
 				else
 				{
 					QSE_ASSERT (opt[0] == QSE_T('w'));
-					if (p->type & MASK_RDWR) copt = QSE_AWK_RIO_CLOSE_W;
+					if (p->type & MASK_RDWR)
+					{
+						if (p->rwcstate != QSE_AWK_RIO_CLOSE_R)
+						{
+							/* if the read end is not 
+							 * closed, let io handler close
+							 * the write end only. */
+							rwcopt = QSE_AWK_RIO_CLOSE_W;
+						}
+					}
 					else if (!(p->type & MASK_WRITE)) goto skip;
 				}
 			}
@@ -937,7 +959,7 @@ int qse_awk_rtx_closeio (
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
-				p->copt = copt;
+				p->rwcopt = rwcopt;
 				if (handler (rtx, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
@@ -946,12 +968,20 @@ int qse_awk_rtx_closeio (
 					return -1;
 				}
 			}
-/* TODO:
-if (p->type & MASK_RDWR)
-{
-	if partially closed don't destroy it yet...
-}
-*/
+
+			if (p->type & MASK_RDWR) 
+			{
+				p->rwcopt = rwcopt;
+				if (p->rwcstate == 0 && rwcopt != 0)
+				{
+					/* if either end has not been closed.
+					 * return success without destroying 
+					 * the internal node. rwcstate keeps 
+					 * what has been successfully closed */
+					p->rwcstate = rwcopt;
+					return 0;
+				}
+			}
 
 			if (px != QSE_NULL) px->next = p->next;
 			else rtx->rio.chain = p->next;
@@ -986,6 +1016,7 @@ void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 		if (handler != QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
+			run->rio.chain->rwcopt = 0;
 			n = handler (run, QSE_AWK_RIO_CLOSE, run->rio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{

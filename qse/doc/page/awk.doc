@@ -60,7 +60,7 @@ BEGIN {
 	print "11" || "sort";
 	#close the input as sort emits when the input is closed
 	close ("sort", "r");
-	while (("sort" || getline x) > 0) print x; 
+	while (("sort" || getline x) > 0) print "xx:", x; 
 }
 @endcode
 

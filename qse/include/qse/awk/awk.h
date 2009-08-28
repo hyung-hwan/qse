@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 270 2009-08-26 12:59:08Z hyunghwan.chung $
+ * $Id: awk.h 271 2009-08-27 12:52:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -351,11 +351,13 @@ enum qse_awk_rio_mode_t
 };
 typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
 
-enum qse_awk_rio_close_opt_t
+enum qse_awk_rio_rwcopt_t
 {
-	QSE_AWK_RIO_CLOSE_R = (1 << 0),
-	QSE_AWK_RIO_CLOSE_W = (1 << 1)
+	QSE_AWK_RIO_CLOSE_A = 0,
+	QSE_AWK_RIO_CLOSE_R = 1,
+	QSE_AWK_RIO_CLOSE_W = 2
 };
+typedef enum qse_awk_rio_rwcopt_t qse_awk_rio_rwcopt_t;
 
 /**
  * The qse_awk_rio_arg_t defines the data structure passed to a runtime 
@@ -367,27 +369,28 @@ enum qse_awk_rio_close_opt_t
 typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 struct qse_awk_rio_arg_t 
 {
-	qse_awk_rio_mode_t      mode;   /**< [IN] I/O mode */
-	qse_char_t*             name;   /**< [IN] name of I/O object */
-	int                     copt;   /**< [IN] closing option */
-	void*                   handle; /**< [OUT] I/O handle set by a handler */
+	qse_awk_rio_mode_t   mode;   /**< [IN] I/O mode */
+	qse_char_t*          name;   /**< [IN] name of I/O object */
+	qse_awk_rio_rwcopt_t rwcopt; /**< [IN] closing option for rwpipe */
+	void*                handle; /**< [OUT] I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 
+	int rwcstate;   /** closing state for rwpipe */
 
 	struct
 	{
 		qse_char_t buf[2048];
 		qse_size_t pos;
 		qse_size_t len;
-		qse_bool_t eof;
-		qse_bool_t eos;
+		int        eof;
+		int        eos;
 	} in;
 
 	struct
 	{
-		qse_bool_t eof;
-		qse_bool_t eos;
+		int eof;
+		int eos;
 	} out;
 
 	struct qse_awk_rio_arg_t* next;
