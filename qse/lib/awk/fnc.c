@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 270 2009-08-26 12:59:08Z hyunghwan.chung $
+ * $Id: fnc.c 271 2009-08-27 12:52:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -310,7 +310,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	n = qse_awk_rtx_closeio (rtx, name, opt);
 	/* failure to close is not a critical error. instead, that is
-	 * flagged by the return value of close().
+	 * flagged by the return value of close(). 
 	if (n == -1 && rtx->errinf.num != QSE_AWK_EIONMNF)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) 

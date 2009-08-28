@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: std.c 271 2009-08-27 12:52:20Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -619,7 +619,25 @@ static qse_ssize_t awk_rio_pipe (
 
 		case QSE_AWK_RIO_CLOSE:
 		{
-			qse_pio_close ((qse_pio_t*)riod->handle);
+			qse_pio_t* pio = (qse_pio_t*)riod->handle;
+			if (riod->mode == QSE_AWK_RIO_PIPE_RW)
+			{
+				/* specialy treatment is needef for rwpipe.
+				 * inspect rwcopt to see if partial closing is
+				 * requested. */
+				if (riod->rwcopt == QSE_AWK_RIO_CLOSE_R)
+				{
+					qse_pio_end (pio, QSE_PIO_IN);
+					return 0;
+				}
+				else if (riod->rwcopt == QSE_AWK_RIO_CLOSE_W)
+				{
+					qse_pio_end (pio, QSE_PIO_OUT);
+					return 0;
+				}
+			}
+
+			qse_pio_close (pio);
 			riod->handle = QSE_NULL;
 			return 0;
 		}
