@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 271 2009-08-27 12:52:20Z hyunghwan.chung $
+ * $Id: fnc.c 274 2009-08-28 12:47:09Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -240,7 +240,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	QSE_ASSERT (nargs == 1 || nargs == 2);
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
-	a1 = qse_awk_rtx_getarg (rtx, 1);
+	if (nargs >= 2) a1 = qse_awk_rtx_getarg (rtx, 1);
 	QSE_ASSERT (a0 != QSE_NULL);
 
 	if (a0->type == QSE_AWK_VAL_STR)
