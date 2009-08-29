@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 271 2009-08-27 12:52:20Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -318,20 +318,17 @@ int StdAwk::closePipe (Pipe& io)
 	qse_pio_t* pio = (qse_pio_t*)io.getHandle();
 	if (io.getMode() == Awk::Pipe::RW)
 	{
-#if 0
-TODO: support partial close....
-		rwcopt = io.getCloseRW();
-		if (rwcopt == Awk::Pipe::CLOSE_R)
+		Pipe::CloseMode rwcopt = io.getCloseMode();
+		if (rwcopt == Awk::Pipe::CLOSE_READ)
 		{
 			qse_pio_end (pio, QSE_PIO_IN);
 			return 0;
 		}
-		else if (rwcopt == Awk::Pipe::CLOSE_W)
+		else if (rwcopt == Awk::Pipe::CLOSE_WRITE)
 		{
 			qse_pio_end (pio, QSE_PIO_OUT);
 			return 0;
 		}
-#endif
 	}
 
 	qse_pio_close (pio);

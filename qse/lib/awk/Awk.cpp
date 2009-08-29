@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 267 2009-08-25 09:50:07Z hyunghwan.chung $
+ * $Id: Awk.cpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -104,6 +104,11 @@ Awk::Pipe::Pipe (Run* run, rio_arg_t* riod): RIOBase (run, riod)
 Awk::Pipe::Mode Awk::Pipe::getMode () const
 {
 	return (Mode)riod->mode;
+}
+
+Awk::Pipe::CloseMode Awk::Pipe::getCloseMode () const
+{
+	return (CloseMode)riod->rwcmode;
 }
 
 //////////////////////////////////////////////////////////////////

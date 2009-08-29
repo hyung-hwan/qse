@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 267 2009-08-25 09:50:07Z hyunghwan.chung $
+ * $Id: Awk.hpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -403,11 +403,23 @@ public:
 			RW = QSE_AWK_RIO_PIPE_RW
 		};
 
+		enum CloseMode
+		{
+			CLOSE_FULL = QSE_AWK_RIO_CLOSE_FULL,
+			CLOSE_READ = QSE_AWK_RIO_CLOSE_READ,
+			CLOSE_WRITE = QSE_AWK_RIO_CLOSE_WRITE
+		};
+
 	protected:
 		Pipe (Run* run, rio_arg_t* riod);
 
 	public:
+		/// The function returns the requested opening mode.
 		Mode getMode () const;
+
+		/// The getCloseMode() function returns the requested closing
+		/// mode. The returned value is valid if getMode() returns RW.
+		CloseMode getCloseMode () const;
 	};
 
 	/**

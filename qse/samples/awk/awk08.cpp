@@ -339,7 +339,8 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 	cmdline_t cmdline;
 	int n;
 
-	awk.setOption (awk.getOption() | awk.OPT_INCLUDE | awk.OPT_MAPTOVAR);
+	awk.setOption (awk.getOption() | awk.OPT_INCLUDE | 
+		awk.OPT_MAPTOVAR | awk.OPT_RWPIPE | awk.OPT_EXTRAOPS);
 
 	// ARGV[0]
 	if (awk.addArgument (QSE_T("awk08")) <= -1)
