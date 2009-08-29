@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 271 2009-08-27 12:52:20Z hyunghwan.chung $
+ * $Id: rio.c 272 2009-08-28 09:48:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -148,7 +148,7 @@ int qse_awk_rtx_readio (
 
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
-		p->rwcopt = QSE_AWK_RIO_CLOSE_A;
+		p->rwcmode = QSE_AWK_RIO_CLOSE_FULL;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
 		p->rwcstate = 0;
@@ -509,7 +509,7 @@ int qse_awk_rtx_writeio_str (
 
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
-		p->rwcopt = QSE_AWK_RIO_CLOSE_A;
+		p->rwcmode = QSE_AWK_RIO_CLOSE_FULL;
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
 		p->rwcstate = 0;
@@ -920,7 +920,7 @@ int qse_awk_rtx_closeio (
 		if (qse_strcmp (p->name, name) == 0) 
 		{
 			qse_awk_rio_fun_t handler;
-			qse_awk_rio_rwcopt_t rwcopt = QSE_AWK_RIO_CLOSE_A;
+			qse_awk_rio_rwcmode_t rwcmode = QSE_AWK_RIO_CLOSE_FULL;
 
 			if (opt != QSE_NULL)
 			{
@@ -928,12 +928,12 @@ int qse_awk_rtx_closeio (
 				{
 					if (p->type & MASK_RDWR) 
 					{
-						if (p->rwcstate != QSE_AWK_RIO_CLOSE_W)
+						if (p->rwcstate != QSE_AWK_RIO_CLOSE_WRITE)
 						{
 							/* if the write end is not
 							 * closed, let io handler close
 							 * the read end only. */
-							rwcopt = QSE_AWK_RIO_CLOSE_R;
+							rwcmode = QSE_AWK_RIO_CLOSE_READ;
 						}
 					}
 					else if (!(p->type & MASK_READ)) goto skip;
@@ -943,12 +943,12 @@ int qse_awk_rtx_closeio (
 					QSE_ASSERT (opt[0] == QSE_T('w'));
 					if (p->type & MASK_RDWR)
 					{
-						if (p->rwcstate != QSE_AWK_RIO_CLOSE_R)
+						if (p->rwcstate != QSE_AWK_RIO_CLOSE_READ)
 						{
 							/* if the read end is not 
 							 * closed, let io handler close
 							 * the write end only. */
-							rwcopt = QSE_AWK_RIO_CLOSE_W;
+							rwcmode = QSE_AWK_RIO_CLOSE_WRITE;
 						}
 					}
 					else if (!(p->type & MASK_WRITE)) goto skip;
@@ -959,7 +959,7 @@ int qse_awk_rtx_closeio (
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
-				p->rwcopt = rwcopt;
+				p->rwcmode = rwcmode;
 				if (handler (rtx, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
 				{
 					/* this is not a run-time error.*/
@@ -971,14 +971,14 @@ int qse_awk_rtx_closeio (
 
 			if (p->type & MASK_RDWR) 
 			{
-				p->rwcopt = rwcopt;
-				if (p->rwcstate == 0 && rwcopt != 0)
+				p->rwcmode = rwcmode;
+				if (p->rwcstate == 0 && rwcmode != 0)
 				{
 					/* if either end has not been closed.
 					 * return success without destroying 
 					 * the internal node. rwcstate keeps 
 					 * what has been successfully closed */
-					p->rwcstate = rwcopt;
+					p->rwcstate = rwcmode;
 					return 0;
 				}
 			}
@@ -1016,7 +1016,7 @@ void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 		if (handler != QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
-			run->rio.chain->rwcopt = 0;
+			run->rio.chain->rwcmode = 0;
 			n = handler (run, QSE_AWK_RIO_CLOSE, run->rio.chain, QSE_NULL, 0);
 			if (n <= -1)
 			{
