@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: std.c 273 2009-08-28 11:58:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,9 +24,9 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 
-#include <math.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef struct xtn_t
 {
@@ -1087,8 +1087,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*         awk,
 	qse_size_t         xtnsize,
 	const qse_char_t*  id,
-	const qse_char_t** icf,
-	const qse_char_t** ocf)
+	const qse_char_t*const icf[],
+	const qse_char_t*const ocf[])
 {
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
@@ -1099,7 +1099,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_size_t argc = 0;
 	qse_cstr_t argv[16];
 	qse_cstr_t* argvp = QSE_NULL, * p2;
-
+	
 	rio.pipe    = awk_rio_pipe;
 	rio.file    = awk_rio_file;
 	rio.console = awk_rio_console;

@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: std.h 273 2009-08-28 11:58:05Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -134,11 +134,11 @@ int qse_awk_parsestd (
  * the lifetime of the runtime context created. 
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*         awk,
-	qse_size_t         xtn,
-	const qse_char_t*  id,
-	const qse_char_t** icf,
-	const qse_char_t** ocf
+	qse_awk_t*             awk,
+	qse_size_t             xtn,
+	const qse_char_t*      id,
+	const qse_char_t*const icf[],
+	const qse_char_t*const ocf[]
 );
 
 /**
