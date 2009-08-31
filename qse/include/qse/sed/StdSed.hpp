@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 258 2009-08-19 14:04:15Z hyunghwan.chung $
+ * $Id: StdSed.hpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -56,7 +56,9 @@ protected:
  * @example sed02.cpp 
  * The example shows how to use the QSE::StdSed class to write a simple stream
  * editor that reads from a standard input and writes to a standard output.
- *
+ */
+
+/**
  * @example sed03.cpp 
  * The example shows how to extend the QSE::StdSed class to read from and 
  * write to a string.

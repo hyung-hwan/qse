@@ -185,8 +185,8 @@ Writes the first line of the pattern space to @b file
 
 - <b>s/rex/repl/opts</b>
 Finds a matching substring with @b rex in pattern space and replaces it 
-with @repl. @b & in @b repl refers to the matching substring. @b opts may 
-be empty; You can combine the following options into @opts:
+with @b repl. @b & in @b repl refers to the matching substring. @b opts may 
+be empty; You can combine the following options into @b opts:
  - @b g replaces all occurrences of a matching substring with @b rex
  - @b number replaces the <b>number</b>'th occurrence of a matching substring 
       with @b rex

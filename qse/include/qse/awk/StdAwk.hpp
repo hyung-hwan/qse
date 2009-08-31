@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 259 2009-08-20 11:28:03Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,12 +24,24 @@
 /** @file
  * Standard AWK Interpreter
  *
+ */
+
+/**
  * @example awk05.cpp
  * This program demonstrates how to use QSE::StdAwk::loop().
+ */
+
+/**
  * @example awk06.cpp
  * This program demonstrates how to use QSE::StdAwk::call().
+ */
+
+/**
  * @example awk07.cpp
  * This program demonstrates how to handle an indexed value.
+ */
+
+/**
  * @example awk08.cpp
  * This program shows how to add intrinsic functions.
  */

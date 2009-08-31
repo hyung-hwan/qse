@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 244 2009-07-24 12:22:00Z hyunghwan.chung $
+ * $Id: pio.h 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -173,7 +173,7 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (pio)
 
 /**
- * The qse_pio_open() function executes a command @cmd and establishes
+ * The qse_pio_open() function executes a command @a cmd and establishes
  * pipes to it. #QSE_PIO_SHELL causes the function to execute @a cmd via 
  * the default shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
  * On *nix systems, a full path to the command is needed if it is not specified.
