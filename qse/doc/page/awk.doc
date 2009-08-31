@@ -39,7 +39,7 @@ The \@include directive inserts the contents of the object specified in the
 following string, typically a file name, as if they appeared in the source
 stream being processed. The directive can only be used at the outmost scope 
 where global variable declarations, BEGIN, END, and/or pattern-action blocks
-appear. To use @include, you must turn on QSE_AWK_INCLUDE.
+appear. To use \@include, you must turn on QSE_AWK_INCLUDE.
 
 @code
 @include "abc.awk"

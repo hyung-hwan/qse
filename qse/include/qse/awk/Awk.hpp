@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: Awk.hpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -74,9 +74,10 @@ public:
 	 */
 	/*@{*/
 
-	/** 
-	 * Defines error numbers.
-	 */
+	///
+	/// The ErrorNumber defines error numbers by redefining enumerators
+	/// of the #qse_awk_errnum_t type.
+	///
 	enum ErrorNumber
 	{
 		ERR_NOERR = QSE_AWK_ENOERR,
@@ -198,60 +199,67 @@ public:
 	};
 
 protected:
-	/**
-	 * The Awk::getErrorString() function returns a formatting string
-	 * for an error code @a num. You can override this function
-	 * to customize an error message. You must include the same numbers
-	 * of ${X}'s as the orginal formatting string. Their order may be
-	 * different. The example below changes the formatting string for
-	 * ERR_NOENT.
-	 * @code
-	 * const MyAwk::char_t* MyAwk::getErrorString (ErrorNumber num) const 
-	 * {
-	 *    if (num == ERR_NOENT) return QSE_T("cannot find '${0}'");
-	 *    return Awk::getErrorString (num);
-	 * }
-	 * @endcode
-	 */
+	///
+	/// The getErrorString() function returns a formatting string
+	/// for an error code @a num. You can override this function
+	/// to customize an error message. You must include the same numbers
+	/// of ${X}'s as the orginal formatting string. Their order may be
+	/// different. The example below changes the formatting string for
+	/// ERR_NOENT.
+	/// @code
+	/// const MyAwk::char_t* MyAwk::getErrorString (ErrorNumber num) const 
+	/// {
+	///    if (num == ERR_NOENT) return QSE_T("cannot find '${0}'");
+	///    return Awk::getErrorString (num);
+	/// }
+	/// @endcode
+	///
 	virtual const char_t* getErrorString (
 		ErrorNumber num
 	) const;
 
 public:
-	/** 
-	 * The Awk::getErrorNumber() function returns the number of the last
-	 * error occurred.
-	 */
+	///
+	/// The getErrorNumber() function returns the number of the last
+	/// error occurred.
+	///
 	ErrorNumber getErrorNumber () const;
 
-	/** 
-	 * The Awk::getErrorLocation() function returns the location of the 
-	 * last error occurred.
-	 */
+	///
+	/// The getErrorLocation() function returns the location of the 
+	/// last error occurred.
+	///
 	loc_t getErrorLocation () const;
 
-	/** 
-	 * The Awk::getErrorMessage() function returns a message describing
-	 * the last error occurred.
-	 */
+	///
+	/// The Awk::getErrorMessage() function returns a message describing
+	/// the last error occurred.
+	///
 	const char_t* getErrorMessage () const;
 
-	/**
-	 * Set error information.
-	 */
+	///
+	/// The setError() function sets error information.
+	///
 	void setError (
-		ErrorNumber   code,
-		const cstr_t* args  = QSE_NULL,
-		const loc_t*  loc   = QSE_NULL
+		ErrorNumber   code, ///< error code
+		const cstr_t* args  = QSE_NULL, ///< message formatting 
+		                                ///  argument array
+		const loc_t*  loc   = QSE_NULL  ///< error location
 	);
 
+	///
+	/// The setErrorWithMessage() functions sets error information
+	/// with a customized error message.
+	///
 	void setErrorWithMessage (
-		ErrorNumber   code,
-		const char_t* msg,
-		const loc_t*  loc
+		ErrorNumber   code, ///< error code
+		const char_t* msg,  ///< error message
+		const loc_t*  loc   ///< error location
 	);
 
-	/** clears error information */
+	///
+	/// The clearError() function clears error information 
+	///
 	void clearError ();
 
 protected:
@@ -389,24 +397,34 @@ public:
 	};
 
 	/**
-	 * Pipe
+	 * The Pipe class encapsulates the pipe operations indicated by
+	 * the | and || operators.
 	 */
 	class Pipe: public RIOBase
 	{
 	public:
 		friend class Awk;
 
+		/// The Mode type defines the opening mode.
 		enum Mode
 		{
+			/// open for read-only access
 			READ = QSE_AWK_RIO_PIPE_READ,
+			/// open for write-only access
 			WRITE = QSE_AWK_RIO_PIPE_WRITE,
+			/// open for read and write
 			RW = QSE_AWK_RIO_PIPE_RW
 		};
 
+		/// The CloseMode type defines the closing mode for a pipe
+		/// opened in the #RW mode.
 		enum CloseMode
 		{
-			CLOSE_FULL = QSE_AWK_RIO_CLOSE_FULL,
+			/// close both read and write ends
+			CLOSE_FULL = QSE_AWK_RIO_CLOSE_FULL, 
+			/// close the read end only
 			CLOSE_READ = QSE_AWK_RIO_CLOSE_READ,
+			/// close the write end only
 			CLOSE_WRITE = QSE_AWK_RIO_CLOSE_WRITE
 		};
 
@@ -414,11 +432,16 @@ public:
 		Pipe (Run* run, rio_arg_t* riod);
 
 	public:
-		/// The function returns the requested opening mode.
+		/// The getMode() function returns the opening mode requested.
+		/// You can inspect the opening mode, typically in the 
+		/// openPipe() function, to create a pipe with proper 
+		/// access mode. It is harmless to call this function from
+		/// other pipe handling functions.
 		Mode getMode () const;
 
-		/// The getCloseMode() function returns the requested closing
-		/// mode. The returned value is valid if getMode() returns RW.
+		/// The getCloseMode() function returns the closing mode 
+		/// requested. The returned value is valid if getMode() 
+		/// returns #RW.
 		CloseMode getCloseMode () const;
 	};
 
@@ -743,7 +766,9 @@ public:
 	{
 	protected:
 		friend class Awk;
-		friend class Value;
+		friend class Value; 
+		friend class RIOBase;
+		friend class Console;
 
 		Run (Awk* awk);
 		Run (Awk* awk, rtx_t* run);
@@ -834,11 +859,11 @@ public:
 
 	/**
 	 * The Awk::parse() function parses the source code read from the input 
-	 * stream @a in and writes the parse tree to the output stream @out.
+	 * stream @a in and writes the parse tree to the output stream @a out.
 	 * To disable deparsing, you may set @a out to Awk::Source::NONE. 
-	 * However, it is not legal to specify Awk::Source::NONE for @a in.
+	 * However, it is not allowed to specify Awk::Source::NONE for @a in.
 	 *
-	 * @return a Run object on success, #QSE_NULL on failure
+	 * @return Run object on success, #QSE_NULL on failure
 	 */
 	Awk::Run* parse (
 		Source& in,  ///< script to parse 
@@ -990,7 +1015,7 @@ public:
 	/**
 	 * Sets the value of a global variable identified by @a id.
 	 * The @a id is either a value returned by Awk::addGlobal or one of 
-	 * Awk::Global enumerators. It is not legal to call this function
+	 * Awk::Global enumerators. It is not allowed to call this function
 	 * prior to Awk::parse.
 	 * @return 0 on success, -1 on failure
 	 */
@@ -1002,7 +1027,7 @@ public:
 	/**
 	 * Gets the value of a global riable identified by @a id.
 	 * The @a id is either a value returned by Awk::addGlobal or one of 
-	 * Awk::::Global enumerators. It is not legal to call this function
+	 * Awk::::Global enumerators. It is not allowed to call this function
 	 * prior to Awk::parse.
 	 * @return 0 on success, -1 on failure
 	 */
@@ -1062,8 +1087,17 @@ protected:
 	 * Pipe operations are achieved through the following functions.
 	 */
 	/*@{*/
+
+	/// The openPipe() function is a pure virtual function that must be
+	/// overridden by a child class to open a pipe. It must return 1
+	/// on success, 0 on end of a pipe, and -1 on failure.
 	virtual int     openPipe  (Pipe& io) = 0;
+
+	/// The closePipe() function is a pure virtual function that must be
+	/// overridden by a child class to close a pipe. It must return 0
+	/// on success and -1 on failure.
 	virtual int     closePipe (Pipe& io) = 0;
+
 	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) = 0;
 	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushPipe (Pipe& io) = 0;

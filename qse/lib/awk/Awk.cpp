@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: Awk.cpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -386,7 +386,7 @@ int Awk::Value::getInt (long_t* v) const
 			run->awk->retrieveError (run);
 			return -1;
 		}
-		if (n >= 1) lv = rv;
+		if (n >= 1) lv = (long_t)rv;
 	}
 
 	*v = lv;
@@ -410,7 +410,7 @@ int Awk::Value::getReal (real_t* v) const
 			run->awk->retrieveError (run);
 			return -1;
 		}
-		if (n == 0) rv = lv;
+		if (n == 0) rv = (real_t)lv;
 	}
 
 	*v = rv;

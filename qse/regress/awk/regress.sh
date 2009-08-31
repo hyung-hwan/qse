@@ -136,6 +136,7 @@ PROGS="
 	lang-031.awk///--newline=on -o-
 	lang-032.awk///--newline=on -o-
 	lang-033.awk///--newline=on -o-
+	lang-034.awk///--newline=on --rwpipe=on -o-
 
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//
@@ -189,7 +190,9 @@ init)
 	;;
 test)
 	run_scripts > "${OUTFILE}.temp"
-	diff -q "${OUTFILE}" "${OUTFILE}.temp" || {
+	# diff -q is not supported on old platforms.
+	# redirect output to /dev/null instead.
+	diff "${OUTFILE}" "${OUTFILE}.temp" > /dev/null || {
 		echo_so "ERROR: ${OUTFILE} differs from ${OUTFILE}.temp."
 		echo_so "       Check the scripts and output files for any errors."
 		exit 1

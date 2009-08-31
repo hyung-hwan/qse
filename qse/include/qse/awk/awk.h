@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: awk.h 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -26,17 +26,31 @@
 
 /** @file
  * An embeddable AWK interpreter is defined in this header file.
- *
+ */
+
+/**
  * @example awk.c
  * This program demonstrates how to build a complete awk interpreter.
+ */
+
+/**
  * @example awk01.c
  * This program demonstrates how to use qse_awk_rtx_loop().
+ */
+
+/**
  * @example awk02.c
  * The program deparses the source code and prints it before executing it.
+ */
+
+/**
  * @example awk03.c
  * This program demonstrates how to use qse_awk_rtx_call().
  * It parses the program stored in the string src and calls the functions
  * stated in the array fnc. If no errors occur, it should print 24.
+ */
+
+/**
  * @example awk04.c
  * This programs shows how to qse_awk_rtx_call().
  */
@@ -362,7 +376,7 @@ typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
 /**
  * The qse_awk_rio_arg_t defines the data structure passed to a runtime 
  * I/O handler. An I/O handler should inspect the @a mode field and the 
- * @a name field and store an open handle to the @handle field when 
+ * @a name field and store an open handle to the @a handle field when 
  * #QSE_AWK_RIO_OPEN is requested. For other request type, it can refer
  * to the handle field set previously.
  */
@@ -1567,7 +1581,7 @@ void qse_awk_rtx_geterrinf (
 
 /**
  * The qse_awk_rtx_geterror() function retrieves error information from a 
- * runtime context @rtx. The error number is stored into memory pointed
+ * runtime context @a rtx. The error number is stored into memory pointed
  * to by @a errnum; the error message pointer into memory pointed to by 
  * @a errmsg; the error line into memory pointed to by @a errlin.
  */

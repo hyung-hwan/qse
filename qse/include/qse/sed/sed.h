@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 269 2009-08-26 03:03:51Z hyunghwan.chung $
+ * $Id: sed.h 275 2009-08-30 13:19:02Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -38,6 +38,9 @@
  * @todo 
  * - enhance execution of the l(ell) command - consider adding a callback
  *
+ */
+
+/**
  * @example sed01.c
  * This example shows how to embed a basic stream editor.
  */
