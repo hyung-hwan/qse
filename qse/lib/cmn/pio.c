@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 244 2009-07-24 12:22:00Z hyunghwan.chung $
+ * $Id: pio.c 276 2009-08-31 13:24:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -479,7 +479,9 @@ qse_pio_t* qse_pio_init (
 			argv[2] = mcmd;
 			argv[3] = QSE_NULL;
 
-			QSE_EXECVE (QSE_MT("/bin/sh"), argv, environ);
+			QSE_EXECVE (
+				QSE_MT("/bin/sh"),
+				(qse_mchar_t*const*)argv, environ);
 		}
 		else
 		{

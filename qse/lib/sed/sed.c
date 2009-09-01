@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 269 2009-08-26 03:03:51Z hyunghwan.chung $
+ * $Id: sed.c 276 2009-08-31 13:24:06Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1142,12 +1142,16 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			if (c != QSE_CHAR_EOF && c != QSE_T('\n'))
 			{
+				if (sed->option & QSE_SED_SAMELINE) 
+					goto sameline_ok;
+
 				SETERR0 (sed, QSE_SED_EGBABS, &sed->src.loc);
 				return -1;
 			}
 			
 			NXTSC (sed); /* skip the new line */
 
+		sameline_ok:
 			/* get_text() starts from the next line */
 			if (get_text (sed, cmd) <= -1) return -1;
 
