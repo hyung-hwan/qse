@@ -120,13 +120,15 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -n    disable auto-print\n"));
 	qse_fprintf (out, QSE_T(" -a    perform strict address check\n"));
 	qse_fprintf (out, QSE_T(" -r    allows {n,m} in a regular expression\n"));
+	qse_fprintf (out, QSE_T(" -s    allows text on the same line as c, a, i\n"));
+	qse_fprintf (out, QSE_T(" -l    ensures a newline at the text end"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnar"),
+		QSE_T("hnarsl"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -169,6 +171,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('r'):
 				g_option |= QSE_SED_REXBOUND;
+				break;
+
+			case QSE_T('s'):
+				g_option |= QSE_SED_SAMELINE;
+				break;
+
+			case QSE_T('l'):
+				g_option |= QSE_SED_ENSURENL;
 				break;
 		}
 	}

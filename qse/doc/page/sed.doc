@@ -93,13 +93,15 @@ Terminates the exection of commands quietly.
 
 - <b>a \\ \n text</b>
 Stores @b text into the append buffer which is printed after the pattern 
-space for each input line. If #QSE_SED_STRICT is specified, a line selector 
-of an address range is not allowed.
+space for each input line. If #QSE_SED_STRICT is on, an address range is not
+allowed for a line selector. If #QSE_SED_NEWLINE is specified, the backslash
+and the text can be located on the same line without a line break.
 
 - <b>i \\ \n text</b>
 Inserts @b text into an insert buffer which is printed before the pattern
-space for each input line. If #QSE_SED_STRICT is specified, a line selector
-of an address range is not allowed.
+space for each input line. If #QSE_SED_STRICT is on, an address range is not
+allowed for a line selector. If #QSE_SED_NEWLINE is specified, the backslash
+and the text can be located on the same line without a line break.
 
 - <b>c \\ \n text</b>
 If a single line is selected for the command (i.e. no line selector, a single
@@ -107,7 +109,9 @@ address line selector, or a start~step line selector is specified), it changes
 the pattern space to @b text and branches to the end of commands for the line.
 If an address range is specified, it deletes the pattern space and branches 
 to the end of commands for all input lines but the last, and changes pattern
-space to @b text and branches to the end of commands.
+space to @b text and branches to the end of commands. If #QSE_SED_NEWLINE is
+on, the backlash and the text can be located on the same line without a line
+break.
 
 - <b>d</b>
 Deletes the pattern space and branches to the end of commands.
