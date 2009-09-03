@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 265 2009-08-24 01:50:38Z hyunghwan.chung $
+ * $Id: tree.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -295,6 +295,10 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 					PUT_SRCSTR (awk, QSE_T("\\a"));
 				else if (ptr[i] == QSE_T('\0'))
 					PUT_SRCSTR (awk, QSE_T("\\0"));
+				else if (ptr[i] == QSE_T('\"'))
+					PUT_SRCSTR (awk, QSE_T("\\\""));
+				else if (ptr[i] == QSE_T('\\'))
+					PUT_SRCSTR (awk, QSE_T("\\\\"));
 				else
 					PUT_SRCSTRX (awk, &ptr[i], 1);
 			}

@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 276 2009-08-31 13:24:06Z hyunghwan.chung $
+ * $Id: sed.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1704,10 +1704,10 @@ static int write_str_clearly (
 				if (QSE_ISPRINT(c)) WRITE_CHAR (sed, c);
 				else
 				{
-#				ifdef QSE_CHAR_IS_MCHAR
+				#ifdef QSE_CHAR_IS_MCHAR
 					WRITE_CHAR (sed, QSE_T('\\'));
 					WRITE_NUM (sed, c, 8, QSE_SIZEOF(qse_char_t)*3);
-#				else
+				#else
 					if (QSE_SIZEOF(qse_char_t) <= 2)
 					{
 						WRITE_STR (sed, QSE_T("\\u"), 2);
@@ -1717,7 +1717,7 @@ static int write_str_clearly (
 						WRITE_STR (sed, QSE_T("\\U"), 2);
 					}
 					WRITE_NUM (sed, c, 16, QSE_SIZEOF(qse_char_t)*2);
-#				endif
+				#endif
 				}
 			}
 		}
@@ -2296,11 +2296,22 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_PRINT_CLEARLY:
-			n = write_str_clearly (
-				sed,
-				QSE_STR_PTR(&sed->e.in.line),
-				QSE_STR_LEN(&sed->e.in.line)
-			);
+			if (sed->lformatter)
+			{
+				n = sed->lformatter (
+					sed,
+					QSE_STR_PTR(&sed->e.in.line),
+					QSE_STR_LEN(&sed->e.in.line),
+					write_char
+				);
+			}
+			else {
+				n = write_str_clearly (
+					sed,
+					QSE_STR_PTR(&sed->e.in.line),
+					QSE_STR_LEN(&sed->e.in.line)
+				);
+			}
 			if (n <= -1) return QSE_NULL;
 			break;
 
@@ -2759,6 +2770,16 @@ done3:
 	qse_str_fini (&sed->e.in.line);
 	qse_map_fini (&sed->e.out.files);
 	return ret;
+}
+
+qse_sed_lformatter_t qse_sed_getlformatter (qse_sed_t* sed)
+{
+	return sed->lformatter;
+}
+
+void qse_sed_setlformatter (qse_sed_t* sed, qse_sed_lformatter_t lf)
+{
+	sed->lformatter = lf;
 }
 
 qse_size_t qse_sed_getlinnum (qse_sed_t* sed)

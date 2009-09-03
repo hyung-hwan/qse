@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 275 2009-08-30 13:19:02Z hyunghwan.chung $
+ * $Id: awk.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -338,8 +338,8 @@ enum qse_awk_rio_cmd_t
 	QSE_AWK_RIO_OPEN   = 0, /**< open a stream */
 	QSE_AWK_RIO_CLOSE  = 1, /**< close a stream */
 	QSE_AWK_RIO_READ   = 2, /**< read a stream */
-	QSE_AWK_RIO_WRITE  = 3, /**< write a stream */
-	QSE_AWK_RIO_FLUSH  = 4, /**< write buffered data to a stream */
+	QSE_AWK_RIO_WRITE  = 3, /**< write to a stream */
+	QSE_AWK_RIO_FLUSH  = 4, /**< flush buffered data to a stream */
 	QSE_AWK_RIO_NEXT   = 5  /**< close the current stream and 
 	                             open the next stream (only for console) */
 };
@@ -582,7 +582,7 @@ enum qse_awk_option_t
 	/** supports @b getline and @b print */
 	QSE_AWK_RIO         = (1 << 3), 
 
-	/** supports dual direction pipe if #QSE_AWK_RIO is on */
+	/** enables the two-way pipe if #QSE_AWK_RIO is on */
 	QSE_AWK_RWPIPE      = (1 << 4),
 
 	/** a new line can terminate a statement */
@@ -891,23 +891,28 @@ enum qse_awk_val_type_t
 
 /**
  * The values defined are used to set the type field of the 
- * qse_awk_rtx_valtostr_out_t structure. The field should be one of the 
+ * #qse_awk_rtx_valtostr_out_t structure. The field should be one of the 
  * following values:
  *
- * - QSE_AWK_RTX_VALTOSTR_CPL
- * - QSE_AWK_RTX_VALTOSTR_CPLDUP
- * - QSE_AWK_RTX_VALTOSTR_STRP
- * - QSE_AWK_RTX_VALTOSTR_STRPCAT
+ * - #QSE_AWK_RTX_VALTOSTR_CPL
+ * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
+ * - #QSE_AWK_RTX_VALTOSTR_STRP
+ * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
  *
- * and it can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT.
+ * and it can optionally be ORed with #QSE_AWK_RTX_VALTOSTR_PRINT.
  */
 enum qse_awk_rtx_valtostr_type_t
-{
-	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00,
+{ 
+	/** use u.cpl of #qse_awk_rtx_valtostr_out_t */
+	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00, 
+	/** use u.cpldup of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x01,
+	/** use u.strp of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_STRP      = 0x02,
+	/** use u.strpcat of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x03,
-	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10
+	/** convert for print */
+	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10   
 };
 
 /**
@@ -916,7 +921,7 @@ enum qse_awk_rtx_valtostr_type_t
  */
 struct qse_awk_rtx_valtostr_out_t
 {
-	int type;
+	int type; /**< enum #qse_awk_rtx_valtostr_type_t */
 
 	union
 	{
@@ -1086,7 +1091,8 @@ void qse_awk_geterrinf (
 void qse_awk_seterrnum (
 	qse_awk_t*        awk,    /**< awk object */
 	qse_awk_errnum_t  errnum, /**< error number */
-	const qse_cstr_t* errarg  /**< arguments to format error message */
+	const qse_cstr_t* errarg  /**< argument array for formatting 
+	                           *   an error message */
 );
 
 void qse_awk_seterrinf (
@@ -1107,7 +1113,7 @@ void qse_awk_geterror (
 void qse_awk_seterror (
 	qse_awk_t*           awk,    /**< awk object */
 	qse_awk_errnum_t     errnum, /**< error number */
-	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	const qse_cstr_t*    errarg, /**< argument array for formatting 
 	                              *   an error message */
 	const qse_awk_loc_t* errloc  /**< error location */
 );
@@ -1171,7 +1177,7 @@ int qse_awk_setword (
  */
 int qse_awk_addgbl (
 	qse_awk_t*        awk,   /**< awk object */
-	const qse_char_t* name,  /**< a variable name */
+	const qse_char_t* name,  /**< variable name */
 	qse_size_t        len    /**< name length */
 );
 
@@ -1181,7 +1187,7 @@ int qse_awk_addgbl (
  */
 int qse_awk_delgbl (
 	qse_awk_t*        awk,  /**< awk object */
-	const qse_char_t* name, /**< a variable name */
+	const qse_char_t* name, /**< variable name */
 	qse_size_t        len   /**< name length */
 );
 
@@ -1300,7 +1306,7 @@ void qse_awk_free (
  */
 qse_char_t* qse_awk_strdup (
 	qse_awk_t*        awk, /**< awk object */
-	const qse_char_t* str  /**< a string pointer */
+	const qse_char_t* str  /**< string pointer */
 );
 
 /**
@@ -1314,8 +1320,8 @@ qse_char_t* qse_awk_strdup (
  */
 qse_char_t* qse_awk_strxdup (
 	qse_awk_t*        awk, /**< awk object */
-	const qse_char_t* str, /**< a string pointer */
-	qse_size_t        len  /**< the number of character in a string */
+	const qse_char_t* str, /**< string pointer */
+	qse_size_t        len  /**< string length */
 );
 
 qse_long_t qse_awk_strxtolong (
@@ -1343,14 +1349,21 @@ qse_size_t qse_awk_longtostr (
 );
 
 /**
- * The qse_awk_rtx_open() creates a runtime context.
- * @return a runtime context on success, #QSE_NULL on failure
+ * The qse_awk_rtx_open() creates a runtime context associated with @a awk.
+ * It also allocates an extra memory block as large as the @a xtn bytes.
+ * You can get the pointer to the beginning of the block with 
+ * qse_awk_rtx_getxtn(). The block is destroyed when the runtime context is
+ * destroyed. The argument array @a arg, if not #QSE_NULL, is used to set 
+ * @b ARGV. The @b ptr field and the @b len field of the last member of the
+ * array must be set to #QSE_NULL and 0 respectively.
+ *
+ * @return new runtime context on success, #QSE_NULL on failure
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk, /**< awk object */
 	qse_size_t        xtn, /**< size of extension in bytes */
 	qse_awk_rio_t*    rio, /**< runtime IO handlers */
-	const qse_cstr_t* arg  /**< arguments to set ARGV */
+	const qse_cstr_t* arg  /**< argument array to set ARGV */
 );
 
 /**
@@ -1378,7 +1391,7 @@ void qse_awk_rtx_close (
  * }
  * @endcode
  *
- * @return return value on success, QSE_NULL on failure.
+ * @return return value on success, #QSE_NULL on failure.
  */
 qse_awk_val_t* qse_awk_rtx_loop (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1439,7 +1452,6 @@ void qse_awk_rtx_stop (
  * The qse_awk_rtx_setrcb() function gets runtime callbacks.
  * @return #QSE_NULL if no callback is set. Otherwise, the pointer to a 
  *         callback set.
- * @sa qse_awk_rtx_setrcb
  */
 qse_awk_rcb_t* qse_awk_rtx_getrcb (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1447,7 +1459,6 @@ qse_awk_rcb_t* qse_awk_rtx_getrcb (
 
 /**
  * The qse_awk_rtx_setrcb() function sets runtime callbacks.
- * @sa qse_awk_rtx_getrcb
  */
 void qse_awk_rtx_setrcb (
 	qse_awk_rtx_t* rtx, /**< runtime context */
@@ -1540,7 +1551,7 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (
 );
 
 /**
- * The qse_awk_rtx_getxtn() function gets the pointer to extension space.
+ * The qse_awk_rtx_getxtn() function gets the pointer to the extension block.
  */
 void* qse_awk_rtx_getxtn (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1606,7 +1617,7 @@ void qse_awk_rtx_seterrinf (
 void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*       rtx,    /**< runtime context */
 	qse_awk_errnum_t     errnum, /**< error number */
-	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	const qse_cstr_t*    errarg, /**< argument array for formatting 
 	                              *   an error message */
 	const qse_awk_loc_t* errloc  /**< error line */
 );
@@ -1730,23 +1741,23 @@ qse_bool_t qse_awk_rtx_valtobool (
 /**
  * The qse_awk_rtx_valtostr() function converts a value @a val to a string as 
  * instructed in the parameter out. Before the call to the function, you 
- * should initialize a variable of the qse_awk_rtx_valtostr_out_t type.
+ * should initialize a variable of the #qse_awk_rtx_valtostr_out_t type.
  *
  * The type field is one of the following qse_awk_rtx_valtostr_type_t values:
  *
- * - QSE_AWK_RTX_VALTOSTR_CPL
- * - QSE_AWK_RTX_VALTOSTR_CPLDUP
- * - QSE_AWK_RTX_VALTOSTR_STRP
- * - QSE_AWK_RTX_VALTOSTR_STRPCAT
+ * - #QSE_AWK_RTX_VALTOSTR_CPL
+ * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
+ * - #QSE_AWK_RTX_VALTOSTR_STRP
+ * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
  *
- * It can optionally be ORed with QSE_AWK_RTX_VALTOSTR_PRINT. The option
+ * It can optionally be ORed with #QSE_AWK_RTX_VALTOSTR_PRINT. The option
  * causes the function to use OFMT for real number conversion. Otherwise,
- * it uses CONVFMT. 
+ * it uses @b CONVFMT. 
  *
  * You should initialize or free other fields before and after the call 
  * depending on the type field as shown below:
  *  
- * If you have a static buffer, use QSE_AWK_RTX_VALTOSTR_CPL.
+ * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPL.
  * @code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_char_t buf[100];
@@ -1758,7 +1769,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * @endcode
  * 
  * When unsure of the size of the string after conversion, you can use
- * QSE_AWK_RTX_VALTOSTR_CPLDUP. However, you should free the memory block
+ * #QSE_AWK_RTX_VALTOSTR_CPLDUP. However, you should free the memory block
  * pointed to by the u.cpldup.ptr field after use.
  * @code
  * qse_awk_rtx_valtostr_out_t out;
@@ -1769,7 +1780,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * @endcode
  *
  * You may like to store the result in a dynamically resizable string.
- * Consider QSE_AWK_RTX_VALTOSTR_STRP.
+ * Consider #QSE_AWK_RTX_VALTOSTR_STRP.
  * @code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_str_t str;
@@ -1783,15 +1794,16 @@ qse_bool_t qse_awk_rtx_valtobool (
  * @endcode
  * 
  * If you want to append the converted string to an existing dynamically 
- * resizable string, QSE_AWK_RTX_VALTOSTR_STRPCAT is the answer. The usage is
- * the same as QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
+ * resizable string, #QSE_AWK_RTX_VALTOSTR_STRPCAT is the answer. The usage is
+ * the same as #QSE_AWK_RTX_VALTOSTR_STRP except that you have to use the 
  * u.strpcat field instead of the u.strp field.
  *
  * In the context where @a val is determined to be of the type
  * #QSE_AWK_VAL_STR, you may access its string pointer and length directly
  * instead of calling this function.
  *
- * @return the pointer to a string converted on success, #QSE_NULL on failure
+ * @return character pointer to a string converted on success, 
+ *         #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx, /**< runtime context */
@@ -1801,7 +1813,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 
 /**
  * The qse_awk_rtx_valtocpldup() function provides a shortcut to the 
- * qse_awk_rtx_valtostr() function with the QSE_AWK_RTX_VALTOSTR_CPLDUP type.
+ * qse_awk_rtx_valtostr() function with the #QSE_AWK_RTX_VALTOSTR_CPLDUP type.
  * It returns the pointer to a string converted from @a val and stores its 
  * length to memory pointed to by @a len. You should free the returned
  * memory block after use. See the code snippet below for a simple usage.
@@ -1813,7 +1825,8 @@ qse_char_t* qse_awk_rtx_valtostr (
  * qse_awk_rtx_free (rtx, ptr);
  * @endcode
  *
- * @return the pointer to a string converted on success, #QSE_NULL on failure
+ * @return character pointer to a string converted on success,
+ *         #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtocpldup (
 	qse_awk_rtx_t* rtx, /**< runtime context */

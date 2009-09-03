@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 275 2009-08-30 13:19:02Z hyunghwan.chung $
+ * $Id: pio.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -27,8 +27,6 @@
  * This file defines a piped interface to a child process. You can execute
  * a child process, read and write to its stdin, stdout, stderr, and terminate
  * it. It provides more advanced interface than popen() and pclose().
- *
- * @example pio.c
  */
 
 /**

@@ -94,14 +94,14 @@ Terminates the exection of commands quietly.
 - <b>a \\ \n text</b>
 Stores @b text into the append buffer which is printed after the pattern 
 space for each input line. If #QSE_SED_STRICT is on, an address range is not
-allowed for a line selector. If #QSE_SED_NEWLINE is specified, the backslash
-and the text can be located on the same line without a line break.
+allowed for a line selector. If #QSE_SED_SAMELINE is on, the backslash and the 
+text can be located on the same line without a line break.
 
 - <b>i \\ \n text</b>
 Inserts @b text into an insert buffer which is printed before the pattern
 space for each input line. If #QSE_SED_STRICT is on, an address range is not
-allowed for a line selector. If #QSE_SED_NEWLINE is specified, the backslash
-and the text can be located on the same line without a line break.
+allowed for a line selector. If #QSE_SED_SAMELINE is on, the backslash and the
+text can be located on the same line without a line break.
 
 - <b>c \\ \n text</b>
 If a single line is selected for the command (i.e. no line selector, a single
@@ -109,7 +109,7 @@ address line selector, or a start~step line selector is specified), it changes
 the pattern space to @b text and branches to the end of commands for the line.
 If an address range is specified, it deletes the pattern space and branches 
 to the end of commands for all input lines but the last, and changes pattern
-space to @b text and branches to the end of commands. If #QSE_SED_NEWLINE is
+space to @b text and branches to the end of commands. If #QSE_SED_SAMELINE is
 on, the backlash and the text can be located on the same line without a line
 break.
 
@@ -122,8 +122,8 @@ it branches to the end of script. Otherwise, the commands from the first are
 reapplied to the current pattern space.
 
 - <b>=</b>
-Prints the current line number. If #QSE_SED_STRICT is speccified, an address
-range is not allowed in the line selector.
+Prints the current line number. If #QSE_SED_STRICT is on, an address range is 
+not allowed as a line selector.
 
 - <b>p</b>
 Prints the pattern space.
@@ -178,8 +178,8 @@ error.
 
 - <b>R file</b>
 Reads a line of text from @b file and prints it after printing pattern space 
-but before printing the append buffer. Failure to read @b file does not cause an
-error.
+but before printing the append buffer. Failure to read @b file does not cause
+an error.
 
 - <b>w file</b>
 Writes the pattern space to @b file

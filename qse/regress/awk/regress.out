@@ -1154,88 +1154,88 @@ BEGIN {
 	print "1.1==1 :",(1.1 == 1);
 	print "1.0!=1 :",(1.0 != 1);
 	print "1.1!=1 :",(1.1 != 1);
-	print ""abc" == "abc"",("abc" == "abc");
-	print ""abc" != "abc"",("abc" != "abc");
+	print "\"abc\" == \"abc\"",("abc" == "abc");
+	print "\"abc\" != \"abc\"",("abc" != "abc");
 	print "--------------------------";
-	print "a == "" :",(a == "");
-	print "a >= "" :",(a >= "");
-	print "a <= "" :",(a <= "");
-	print "a >  "" :",(a > "");
-	print "a <  "" :",(a < "");
+	print "a == \"\" :",(a == "");
+	print "a >= \"\" :",(a >= "");
+	print "a <= \"\" :",(a <= "");
+	print "a >  \"\" :",(a > "");
+	print "a <  \"\" :",(a < "");
 	print "--------------------------";
-	print "a == " " :",(a == " ");
-	print "a >= " " :",(a >= " ");
-	print "a <= " " :",(a <= " ");
-	print "a >  " " :",(a > " ");
-	print "a <  " " :",(a < " ");
+	print "a == \" \" :",(a == " ");
+	print "a >= \" \" :",(a >= " ");
+	print "a <= \" \" :",(a <= " ");
+	print "a >  \" \" :",(a > " ");
+	print "a <  \" \" :",(a < " ");
 	print "--------------------------";
-	print """ == a :",("" == a);
-	print """ >= a:",("" >= a);
-	print """ <= a:",("" <= a);
-	print """ >  a:",("" > a);
-	print """ <  a:",("" < a);
+	print "\"\" == a :",("" == a);
+	print "\"\" >= a:",("" >= a);
+	print "\"\" <= a:",("" <= a);
+	print "\"\" >  a:",("" > a);
+	print "\"\" <  a:",("" < a);
 	print "--------------------------";
-	print "" " == a :",(" " == a);
-	print "" " >= a:",(" " >= a);
-	print "" " <= a:",(" " <= a);
-	print "" " >  a:",(" " > a);
-	print "" " <  a:",(" " < a);
+	print "\" \" == a :",(" " == a);
+	print "\" \" >= a:",(" " >= a);
+	print "\" \" <= a:",(" " <= a);
+	print "\" \" >  a:",(" " > a);
+	print "\" \" <  a:",(" " < a);
 	print "--------------------------";
-	print "10 == "10"",(10 == "10");
-	print "10 != "10"",(10 != "10");
-	print "10 >= "10"",(10 >= "10");
-	print "10 <= "10"",(10 <= "10");
-	print "10 >  "10"",(10 > "10");
-	print "10 <  "10"",(10 < "10");
+	print "10 == \"10\"",(10 == "10");
+	print "10 != \"10\"",(10 != "10");
+	print "10 >= \"10\"",(10 >= "10");
+	print "10 <= \"10\"",(10 <= "10");
+	print "10 >  \"10\"",(10 > "10");
+	print "10 <  \"10\"",(10 < "10");
 	print "--------------------------";
-	print "10 == "11"",(10 == "11");
-	print "10 != "11"",(10 != "11");
-	print "10 >= "11"",(10 >= "11");
-	print "10 <= "11"",(10 <= "11");
-	print "10 >  "11"",(10 > "11");
-	print "10 <  "11"",(10 < "11");
+	print "10 == \"11\"",(10 == "11");
+	print "10 != \"11\"",(10 != "11");
+	print "10 >= \"11\"",(10 >= "11");
+	print "10 <= \"11\"",(10 <= "11");
+	print "10 >  \"11\"",(10 > "11");
+	print "10 <  \"11\"",(10 < "11");
 	print "--------------------------";
-	print "11 == "10"",(11 == "10");
-	print "11 != "10"",(11 != "10");
-	print "11 >= "10"",(11 >= "10");
-	print "11 <= "10"",(11 <= "10");
-	print "11 >  "10"",(11 > "10");
-	print "11 <  "10"",(11 < "10");
+	print "11 == \"10\"",(11 == "10");
+	print "11 != \"10\"",(11 != "10");
+	print "11 >= \"10\"",(11 >= "10");
+	print "11 <= \"10\"",(11 <= "10");
+	print "11 >  \"10\"",(11 > "10");
+	print "11 <  \"10\"",(11 < "10");
 	print "--------------------------";
-	print "010 == "8"",(010 == "8");
-	print "010 != "8"",(010 != "8");
-	print "010 >= "8"",(010 >= "8");
-	print "010 <= "8"",(010 <= "8");
-	print "010 >  "8"",(010 > "8");
-	print "010 <  "8"",(010 < "8");
+	print "010 == \"8\"",(010 == "8");
+	print "010 != \"8\"",(010 != "8");
+	print "010 >= \"8\"",(010 >= "8");
+	print "010 <= \"8\"",(010 <= "8");
+	print "010 >  \"8\"",(010 > "8");
+	print "010 <  \"8\"",(010 < "8");
 	print "--------------------------";
-	print "10 == "10.0"",(10 == "10.0");
-	print "10 != "10.0"",(10 != "10.0");
-	print "10 >= "10.0"",(10 >= "10.0");
-	print "10 <= "10.0"",(10 <= "10.0");
-	print "10 >  "10.0"",(10 > "10.0");
-	print "10 <  "10.0"",(10 < "10.0");
+	print "10 == \"10.0\"",(10 == "10.0");
+	print "10 != \"10.0\"",(10 != "10.0");
+	print "10 >= \"10.0\"",(10 >= "10.0");
+	print "10 <= \"10.0\"",(10 <= "10.0");
+	print "10 >  \"10.0\"",(10 > "10.0");
+	print "10 <  \"10.0\"",(10 < "10.0");
 	print "--------------------------";
-	print "10.0 == "10"",(10.0 == "10");
-	print "10.0 != "10"",(10.0 != "10");
-	print "10.0 >= "10"",(10.0 >= "10");
-	print "10.0 <= "10"",(10.0 <= "10");
-	print "10.0 >  "10"",(10.0 > "10");
-	print "10.0 <  "10"",(10.0 < "10");
+	print "10.0 == \"10\"",(10.0 == "10");
+	print "10.0 != \"10\"",(10.0 != "10");
+	print "10.0 >= \"10\"",(10.0 >= "10");
+	print "10.0 <= \"10\"",(10.0 <= "10");
+	print "10.0 >  \"10\"",(10.0 > "10");
+	print "10.0 <  \"10\"",(10.0 < "10");
 	print "--------------------------";
-	print ""10" == 10.0",("10" == 10.0);
-	print ""10" != 10.0",("10" != 10.0);
-	print ""10" >= 10.0",("10" >= 10.0);
-	print ""10" <= 10.0",("10" <= 10.0);
-	print ""10" >  10.0",("10" > 10.0);
-	print ""10" <  10.0",("10" < 10.0);
+	print "\"10\" == 10.0",("10" == 10.0);
+	print "\"10\" != 10.0",("10" != 10.0);
+	print "\"10\" >= 10.0",("10" >= 10.0);
+	print "\"10\" <= 10.0",("10" <= 10.0);
+	print "\"10\" >  10.0",("10" > 10.0);
+	print "\"10\" <  10.0",("10" < 10.0);
 	print "--------------------------";
-	print ""10" == 10.1",("10" == 10.1);
-	print ""10" != 10.1",("10" != 10.1);
-	print ""10" >= 10.1",("10" >= 10.1);
-	print ""10" <= 10.1",("10" <= 10.1);
-	print ""10" >  10.1",("10" > 10.1);
-	print ""10" <  10.1",("10" < 10.1);
+	print "\"10\" == 10.1",("10" == 10.1);
+	print "\"10\" != 10.1",("10" != 10.1);
+	print "\"10\" >= 10.1",("10" >= 10.1);
+	print "\"10\" <= 10.1",("10" <= 10.1);
+	print "\"10\" >  10.1",("10" > 10.1);
+	print "\"10\" <  10.1",("10" < 10.1);
 	print (0.234 + 1.01123);
 	print 12345678901234567890E20;
 	print .123;
@@ -1686,6 +1686,250 @@ xx: 12
 xx: 13
 xx: 14
 xx: 15
+--------------------------------------------------------------------------------
+../../cmd/awk/qseawk --newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	max_cid_vars = 100;
+	first = 1;
+	while (((getline x < datafile) > 0))
+	{
+		if (first)
+		{
+			first = 0;
+			continue;
+		}
+		n = split (x,f,",");
+		if ((n < 3))
+			continue;
+		if ((f[3] == ""))
+			continue;
+		for (suffix = 0; (suffix < max_cid_vars); (suffix)++)
+		{
+			oldval = tab[f[2],suffix];
+			if ((oldval == ""))
+			{
+				tab[f[2],suffix] = f[3];
+				break;
+			}
+		}
+	}
+}
+
+/^lease[[:space:]]+.+[[:space:]]*{[[:space:]]*$/ {
+	voice_no = 0;
+}
+
+{
+	if ((($1 == "option") && ($2 == "agent.circuit-id")))
+	{
+		pos = index ($0,"agent.circuit-id ");
+		len = length ($0);
+		last = substr ($0,len,1);
+		adj = 0;
+		if ((last != ";"))
+			(adj)++;
+		cid = substr ($0,(pos + 17),(length ($0) - ((pos + 17) + adj)));
+		for (suffix = 0; (suffix < max_cid_vars); (suffix)++)
+		{
+			val = tab[cid,suffix];
+			if ((val == ""))
+				break;
+			print (((("  info awk.voice-no-"   voice_no)   " ")   val)   ";");
+			(voice_no)++;
+		}
+	}
+	print $0;
+	if ((($1 == "hardware") && ($2 == "ethernet")))
+	{
+		print (("  info awk.groupname \""   groupname)   "\";");
+	}
+}
+
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-V3.1.1
+
+lease 20.1.20.52 {
+  starts 5 2009/08/07 08:33:03;
+  ends 5 2009/08/07 08:38:14;
+  tstp 5 2009/08/07 08:38:14;
+  cltt 5 2009/08/07 08:33:03;
+  binding state free;
+  hardware ethernet 00:13:5e:4f:d2:d3;
+  info awk.groupname "lang-035";
+}
+lease 20.1.20.57 {
+  starts 1 2009/08/10 09:04:12;
+  ends 2 2009/08/11 09:04:12;
+  cltt 1 2009/08/10 09:04:12;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:23:6b;
+  info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599021";
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/1 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.54 {
+  starts 1 2009/08/10 09:04:16;
+  ends 2 2009/08/11 09:04:16;
+  cltt 1 2009/08/10 09:04:16;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:25:aa;
+  info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599011";
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/2 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.55 {
+  starts 1 2009/08/10 13:53:08;
+  ends 2 2009/08/11 13:53:08;
+  cltt 1 2009/08/10 13:53:08;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:20:af;
+  info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599012";
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/1 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.56 {
+  starts 1 2009/08/10 13:53:42;
+  ends 2 2009/08/11 13:53:42;
+  cltt 1 2009/08/10 13:53:42;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:20:29;
+  info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599022";
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/2 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 10.218.255.53 {
+  starts 5 2009/08/07 08:18:04;
+  ends 5 2009/08/07 08:28:04;
+  tstp 5 2009/08/07 08:28:04;
+  cltt 5 2009/08/07 08:18:04;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:4f:7d;
+  info awk.groupname "lang-035";
+  uid "\001\000\033[\234O}";
+}
+lease 10.218.255.54 {
+  starts 5 2009/08/07 08:32:37;
+  ends 5 2009/08/07 08:42:37;
+  tstp 5 2009/08/07 08:42:37;
+  cltt 5 2009/08/07 08:32:37;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:1b:35;
+  info awk.groupname "lang-035";
+  uid "\001\000\033[\234\0335";
+}
+lease 10.218.255.59 {
+  starts 5 2009/08/07 10:39:01;
+  ends 6 2009/08/08 10:29:45;
+  tstp 6 2009/08/08 10:29:45;
+  cltt 5 2009/08/07 10:39:01;
+  binding state free;
+  hardware ethernet 00:1f:b3:79:7e:30;
+  info awk.groupname "lang-035";
+  uid "\001\000\037\263y~0";
+}
+lease 10.218.255.58 {
+  starts 0 2009/08/09 14:21:00;
+  ends 1 2009/08/10 09:13:42;
+  tstp 1 2009/08/10 09:13:42;
+  cltt 0 2009/08/09 14:21:00;
+  binding state free;
+  hardware ethernet 00:19:e4:43:0e:c8;
+  info awk.groupname "lang-035";
+  uid "\001\000\031\344C\016\310";
+}
+lease 10.218.255.55 {
+  starts 1 2009/08/10 09:02:31;
+  ends 2 2009/08/11 09:02:31;
+  cltt 1 2009/08/10 09:02:31;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1b:5b:9c:90:00;
+  info awk.groupname "lang-035";
+  uid "\001\000\033[\234\220\000";
+  info awk.voice-no-0 "68599019";
+  info awk.voice-no-1 "68599014";
+  option agent.circuit-id "AR_Remote atm 1/1/03/12:2.100";
+  option agent.remote-id "22M-fast";
+}
+lease 10.218.255.52 {
+  starts 1 2009/08/10 09:04:04;
+  ends 2 2009/08/11 09:04:04;
+  cltt 1 2009/08/10 09:04:04;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1b:5b:9c:81:35;
+  info awk.groupname "lang-035";
+  uid "\001\000\033[\234\2015";
+}
+lease 10.218.255.56 {
+  starts 1 2009/08/10 09:06:09;
+  ends 2 2009/08/11 09:06:09;
+  cltt 1 2009/08/10 09:06:09;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:7d;
+  info awk.groupname "lang-035";
+  uid "\001\000\036\307\373)}";
+}
+lease 10.218.255.57 {
+  starts 1 2009/08/10 09:14:33;
+  ends 2 2009/08/11 09:14:33;
+  cltt 1 2009/08/10 09:14:33;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:4d;
+  info awk.groupname "lang-035";
+  uid "\001\000\036\307\373)M";
+}
+lease 10.218.255.66 {
+  starts 1 2009/08/10 13:57:24;
+  ends 2 2009/08/11 13:57:24;
+  cltt 1 2009/08/10 13:57:24;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1a:04:f9:e2:90;
+  info awk.groupname "lang-035";
+  uid "\001\000\032\004\371\342\220";
+  info awk.voice-no-0 "68599018";
+  option agent.circuit-id "AR_Remote atm 1/1/03/02:2.100";
+  option agent.remote-id "3play";
+}
+lease 10.218.255.60 {
+  starts 1 2009/08/10 17:25:17;
+  ends 2 2009/08/11 17:25:17;
+  cltt 1 2009/08/10 17:25:17;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:1d;
+  info awk.groupname "lang-035";
+  uid "\001\000\036\307\373)\035";
+  info awk.voice-no-0 "68599017";
+  info awk.voice-no-1 "68599013";
+  option agent.circuit-id "AL_AM3_LAB atm 1/1/01/01:2.100";
+  option agent.remote-id "Testing DHCP";
+}
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-V3.1.1
+
+lease 10.218.255.151 {
+  starts 5 2009/08/07 08:09:38;
+  ends 5 2009/08/07 08:13:59;
+  tstp 5 2009/08/07 08:13:59;
+  cltt 5 2009/08/07 08:09:38;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:90:00;
+  info awk.groupname "lang-035";
+  uid "\001\000\033[\234\220\000";
+}
 --------------------------------------------------------------------------------
 ../../cmd/awk/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

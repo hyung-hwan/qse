@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 140 2009-05-18 12:55:01Z hyunghwan.chung $
+ * $Id: str.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -28,8 +28,6 @@
  *
  *  The qse_cstr_t type and the qse_xstr_t defined in <qse/types.h> helps you
  *  dealing with a string pointer and length.
- *
- * @example str.c
  */
 
 #define QSE_STR_LEN(s)       ((s)->len)

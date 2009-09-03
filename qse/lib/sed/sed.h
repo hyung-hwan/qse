@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 269 2009-08-26 03:03:51Z hyunghwan.chung $
+ * $Id: sed.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -146,6 +146,8 @@ struct qse_sed_t
 	qse_sed_loc_t errloc;    /**< location of the last error */
 
 	int option;              /**< stores options */
+
+	qse_sed_lformatter_t lformatter;
 
 	struct
 	{

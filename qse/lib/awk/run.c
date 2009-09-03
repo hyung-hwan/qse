@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 267 2009-08-25 09:50:07Z hyunghwan.chung $
+ * $Id: run.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -403,11 +403,13 @@ static int set_global (
 			if (fs_len > 1)
 			{
 				void* rex;
+				qse_awk_errnum_t errnum;
 
 				rex = QSE_AWK_BUILDREX (
-					rtx->awk, fs_ptr, fs_len, &rtx->errinf.num);
+					rtx->awk, fs_ptr, fs_len, &errnum);
 				if (rex == QSE_NULL)
 				{
+					SETERR_COD (rtx, errnum);
 					if (val->type != QSE_AWK_VAL_STR) 
 						QSE_AWK_FREE (rtx->awk, fs_ptr);
 					return -1;
@@ -564,11 +566,14 @@ static int set_global (
 			if (rs_len > 1)
 			{
 				void* rex;
+				qse_awk_errnum_t errnum;
+				
 				/* compile the regular expression */
 				rex = QSE_AWK_BUILDREX (
-					rtx->awk, rs_ptr, rs_len, &rtx->errinf.num);
+					rtx->awk, rs_ptr, rs_len, &errnum);
 				if (rex == QSE_NULL)
 				{
+					SETERR_COD (rtx, errnum);
 					if (val->type != QSE_AWK_VAL_STR) 
 						QSE_AWK_FREE (rtx->awk, rs_ptr);
 					return -1;

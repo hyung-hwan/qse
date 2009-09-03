@@ -2,10 +2,10 @@ BEGIN {
 	RS = "/\\*([^*]|\\*+[^/*])*\\*+/"
 	# comment is record separator
 	ORS = " "
-	getline  hold
+	getline hold
 }
 
 { print hold ; hold = $0 }
 
-END { printf "%s" , hold }
+END { print hold }
 
