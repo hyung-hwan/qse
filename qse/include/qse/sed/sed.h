@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 276 2009-08-31 13:24:06Z hyunghwan.chung $
+ * $Id: sed.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -41,8 +41,8 @@
  */
 
 /**
- * @example sed01.c
- * This example shows how to embed a basic stream editor.
+ * @example sed.c
+ * This example shows how to write a basic stream editor.
  */
 
 /** @struct qse_sed_t
@@ -198,6 +198,16 @@ typedef qse_ssize_t (*qse_sed_io_fun_t) (
         qse_sed_t*        sed,
         qse_sed_io_cmd_t  cmd,
 	qse_sed_io_arg_t* arg
+);
+
+/**
+ * The qse_sed_lformatter_t type defines a text formatter for the 'l' command.
+ */
+typedef int (*qse_sed_lformatter_t) (
+	qse_sed_t*        sed,
+	const qse_char_t* str,
+	qse_size_t        len,
+	int (*cwriter) (qse_sed_t*, qse_char_t)
 );
 
 #ifdef __cplusplus
@@ -388,6 +398,24 @@ int qse_sed_exec (
 	qse_sed_t*        sed,  /**< stream editor */
 	qse_sed_io_fun_t  inf,  /**< stream reader */
 	qse_sed_io_fun_t  outf  /**< stream writer */
+);
+
+/**
+ * The qse_sed_getlformatter() function gets the text formatter for the 'l'
+ * command.
+ */
+qse_sed_lformatter_t qse_sed_getlformatter (
+	qse_sed_t* sed /**< stream editor */
+);
+
+/**
+ * The qse_sed_setlformatter() function sets the text formatter for the 'l'
+ * command. The text formatter must output the text with a character writer
+ * provided and return -1 on failure and 0 on success.
+ */
+void qse_sed_setlformatter (
+	qse_sed_t*           sed,       /**< stream editor */
+	qse_sed_lformatter_t lformatter /**< text formatter */
 );
 
 /**

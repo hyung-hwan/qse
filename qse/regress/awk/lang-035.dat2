@@ -1,0 +1,159 @@
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-V3.1.1
+
+lease 20.1.20.52 {
+  starts 5 2009/08/07 08:33:03;
+  ends 5 2009/08/07 08:38:14;
+  tstp 5 2009/08/07 08:38:14;
+  cltt 5 2009/08/07 08:33:03;
+  binding state free;
+  hardware ethernet 00:13:5e:4f:d2:d3;
+}
+lease 20.1.20.57 {
+  starts 1 2009/08/10 09:04:12;
+  ends 2 2009/08/11 09:04:12;
+  cltt 1 2009/08/10 09:04:12;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:23:6b;
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/1 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.54 {
+  starts 1 2009/08/10 09:04:16;
+  ends 2 2009/08/11 09:04:16;
+  cltt 1 2009/08/10 09:04:16;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:25:aa;
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/2 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.55 {
+  starts 1 2009/08/10 13:53:08;
+  ends 2 2009/08/11 13:53:08;
+  cltt 1 2009/08/10 13:53:08;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:20:af;
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/1 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 20.1.20.56 {
+  starts 1 2009/08/10 13:53:42;
+  ends 2 2009/08/11 13:53:42;
+  cltt 1 2009/08/10 13:53:42;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:13:5e:50:20:29;
+  option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/2 /0.0";
+  option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
+}
+lease 10.218.255.53 {
+  starts 5 2009/08/07 08:18:04;
+  ends 5 2009/08/07 08:28:04;
+  tstp 5 2009/08/07 08:28:04;
+  cltt 5 2009/08/07 08:18:04;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:4f:7d;
+  uid "\001\000\033[\234O}";
+}
+lease 10.218.255.54 {
+  starts 5 2009/08/07 08:32:37;
+  ends 5 2009/08/07 08:42:37;
+  tstp 5 2009/08/07 08:42:37;
+  cltt 5 2009/08/07 08:32:37;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:1b:35;
+  uid "\001\000\033[\234\0335";
+}
+lease 10.218.255.59 {
+  starts 5 2009/08/07 10:39:01;
+  ends 6 2009/08/08 10:29:45;
+  tstp 6 2009/08/08 10:29:45;
+  cltt 5 2009/08/07 10:39:01;
+  binding state free;
+  hardware ethernet 00:1f:b3:79:7e:30;
+  uid "\001\000\037\263y~0";
+}
+lease 10.218.255.58 {
+  starts 0 2009/08/09 14:21:00;
+  ends 1 2009/08/10 09:13:42;
+  tstp 1 2009/08/10 09:13:42;
+  cltt 0 2009/08/09 14:21:00;
+  binding state free;
+  hardware ethernet 00:19:e4:43:0e:c8;
+  uid "\001\000\031\344C\016\310";
+}
+lease 10.218.255.55 {
+  starts 1 2009/08/10 09:02:31;
+  ends 2 2009/08/11 09:02:31;
+  cltt 1 2009/08/10 09:02:31;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1b:5b:9c:90:00;
+  uid "\001\000\033[\234\220\000";
+  option agent.circuit-id "AR_Remote atm 1/1/03/12:2.100";
+  option agent.remote-id "22M-fast";
+}
+lease 10.218.255.52 {
+  starts 1 2009/08/10 09:04:04;
+  ends 2 2009/08/11 09:04:04;
+  cltt 1 2009/08/10 09:04:04;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1b:5b:9c:81:35;
+  uid "\001\000\033[\234\2015";
+}
+lease 10.218.255.56 {
+  starts 1 2009/08/10 09:06:09;
+  ends 2 2009/08/11 09:06:09;
+  cltt 1 2009/08/10 09:06:09;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:7d;
+  uid "\001\000\036\307\373)}";
+}
+lease 10.218.255.57 {
+  starts 1 2009/08/10 09:14:33;
+  ends 2 2009/08/11 09:14:33;
+  cltt 1 2009/08/10 09:14:33;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:4d;
+  uid "\001\000\036\307\373)M";
+}
+lease 10.218.255.66 {
+  starts 1 2009/08/10 13:57:24;
+  ends 2 2009/08/11 13:57:24;
+  cltt 1 2009/08/10 13:57:24;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1a:04:f9:e2:90;
+  uid "\001\000\032\004\371\342\220";
+  option agent.circuit-id "AR_Remote atm 1/1/03/02:2.100";
+  option agent.remote-id "3play";
+}
+lease 10.218.255.60 {
+  starts 1 2009/08/10 17:25:17;
+  ends 2 2009/08/11 17:25:17;
+  cltt 1 2009/08/10 17:25:17;
+  binding state active;
+  next binding state free;
+  hardware ethernet 00:1e:c7:fb:29:1d;
+  uid "\001\000\036\307\373)\035";
+  option agent.circuit-id "AL_AM3_LAB atm 1/1/01/01:2.100";
+  option agent.remote-id "Testing DHCP";
+}
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-V3.1.1
+
+lease 10.218.255.151 {
+  starts 5 2009/08/07 08:09:38;
+  ends 5 2009/08/07 08:13:59;
+  tstp 5 2009/08/07 08:13:59;
+  cltt 5 2009/08/07 08:09:38;
+  binding state free;
+  hardware ethernet 00:1b:5b:9c:90:00;
+  uid "\001\000\033[\234\220\000";
+}

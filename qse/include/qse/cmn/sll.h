@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 90 2009-03-01 09:58:19Z hyunghwan.chung $
+ * $Id: sll.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,149 +22,102 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* Common/Singly Linked List
- * DESCRIPTION
- *  <qse/cmn/sll.h> provides a singly linked list.
- *
- *  #include <qse/cmn/sll.h>
- ******
+/** @file
+ * Singly linked list
  */
 
-/****t* Common/qse_sll_walk_t
- * NAME
- *  qse_sll_walk_t - define return values for qse_sll_walker_t
- * SEE ALSO
- *  qse_sll_walker_t
- * SYNOPSIS
+/**
+ * The qse_sll_walk_t type defines a value that qse_sll_walker_t can return.
  */
 enum qse_sll_walk_t
 {
-	QSE_SLL_WALK_STOP    = 0,   
-	QSE_SLL_WALK_FORWARD = 1
+	QSE_SLL_WALK_STOP    = 0,  /**< stop traversal */
+	QSE_SLL_WALK_FORWARD = 1   /**< traverse to the next node */
 };
-/******/
 
 typedef struct qse_sll_t      qse_sll_t;
 typedef struct qse_sll_node_t qse_sll_node_t;
 typedef enum   qse_sll_walk_t qse_sll_walk_t;
 
-/****t* Common/qse_sll_copier_t
- * NAME
- *  qse_sll_copier_t - define a node contruction callback
- * DESCRIPTION
- *  The qse_sll_copier_t defines a callback function for node construction.
- *  A node is contructed when a user adds data to a list. The user can
- *  define how the data to add can be maintained in the list. A singly
- *  linked list not specified with any copiers stores the data pointer and
- *  the data length into a node. A special copier QSE_SLL_COPIER_INLINE copies 
- *  the contents of the data a user provided into the node. You can use the
- *  qse_sll_setcopier() function to change the copier. 
+/**
+ * The qse_sll_copier_t type defines a callback function for node construction.
+ * A node is contructed when a user adds data to a list. The user can
+ * define how the data to add can be maintained in the list. A singly
+ * linked list not specified with any copiers stores the data pointer and
+ * the data length into a node. A special copier QSE_SLL_COPIER_INLINE copies 
+ * the contents of the data a user provided into the node. You can use the
+ * qse_sll_setcopier() function to change the copier. 
  *
- *  A copier should return the pointer to the copied data. If it fails to copy
- *  data, it may return QSE_NULL. You need to set a proper freeer to free up
- *  memory allocated for copy.
- * SEE ALSO
- *  qse_sll_setcopier, qse_sll_getcopier, QSE_SLL_COPIER
- * SYNOPSIS
+ * A copier should return the pointer to the copied data. If it fails to copy
+ * data, it may return QSE_NULL. You need to set a proper freeer to free up
+ * memory allocated for copy.
  */
 typedef void* (*qse_sll_copier_t) (
-	qse_sll_t* sll    /* a map */,
-	void*      dptr   /* the pointer to data to copy */,
-	qse_size_t dlen   /* the length of data to copy */
+	qse_sll_t* sll,   /**< singly linked list */
+	void*      dptr,  /**< pointer to data to copy */
+	qse_size_t dlen   /**< length of data to copy */
 );
-/******/
 
-/****t* Common/qse_sll_freeer_t
- * NAME
- *  qse_sll_freeer_t - define a node destruction callback
- * SYNOPSIS
+/**
+ * The qse_sll_freeer_t type defines a node destruction callback.
  */
 typedef void (*qse_sll_freeer_t) (
-	qse_sll_t* sll    /* a map */,
-	void*      dptr   /* the pointer to data to free */,
-	qse_size_t dlen   /* the length of data to free */
+	qse_sll_t* sll,   /**< singly linked list */
+	void*      dptr,  /**< pointer to data to free */
+	qse_size_t dlen   /**< length of data to free */
 );
-/******/
 
-/****t* Common/qse_sll_comper_t
- * NAME
- *  qse_sll_comper_t - define a data comparator
+/**
+ * The qse_sll_comper_t type defines a key comparator that is called when
+ * the list needs to compare data. A singly linked list is created with a
+ * default comparator that performs bitwise comparison.
  *
- * DESCRIPTION
- *  The qse_sll_comper_t type defines a key comparator that is called when
- *  the list needs to compare data. A singly linked list is created with a
- *  default comparator that performs bitwise comparison.
- *
- *  The comparator should return 0 if the data are the same and a non-zero
- *  integer otherwise.
- *
- * SYNOPSIS
+ * The comparator must return 0 if the data are the same and a non-zero
+ * integer otherwise.
  */
 typedef int (*qse_sll_comper_t) (
-	qse_sll_t*  sll    /* a singly linked list */, 
-	const void* dptr1  /* a data pointer */,
-	qse_size_t  dlen1  /* a data length */,
-	const void* dptr2  /* a data pointer */,
-	qse_size_t  dlen2  /* a data length */
+	qse_sll_t*  sll,   /**< singly linked list */
+	const void* dptr1, /**< data pointer */
+	qse_size_t  dlen1, /**< data length */
+	const void* dptr2, /**< data pointer */
+	qse_size_t  dlen2  /**< data length */
 );
-/******/
 
-/****t* Common/qse_sll_walker_t
- * NAME
- *  qse_sll_walker_t - define a list traversal callback for each node
- *
- * DESCRIPTION
- *  The qse_sll_walk() calls a callback function of the type qse_sll_walker_t
- *  for each node until it returns QSE_SLL_WALK_STOP. The walker should return
- *  QSE_SLL_WALK_FORWARD to let qse_sll_walk() continue visiting the next node.
- *  The third parameter to qse_sll_walk() is passed to the walker as the third
- *  parameter.
- *
- * SEE ALSO
- *  qse_sll_walk, qse_sll_walk_t
- *
- * SYNOPSIS
+/**
+ * The qse_sll_walker_t type defines a list traversal callback for each node.
+ * The qse_sll_walk() calls a callback function of the type qse_sll_walker_t
+ * for each node until it returns QSE_SLL_WALK_STOP. The walker should return
+ * QSE_SLL_WALK_FORWARD to let qse_sll_walk() continue visiting the next node.
+ * The third parameter to qse_sll_walk() is passed to the walker as the third
+ * parameter.
  */
 typedef qse_sll_walk_t (*qse_sll_walker_t) (
-	qse_sll_t*      sll   /* a map */,
-	qse_sll_node_t* node  /* a visited node */,
-	void*           arg   /* user-defined data */
+	qse_sll_t*      sll,   /* singly linked list */
+	qse_sll_node_t* node,  /* visited node */
+	void*           arg    /* user-defined data */
 );
 /******/
 
-/****s* Common/qse_sll_t
- * NAME
- *  qse_sll_t - define a singly linked list
- * 
- * DESCRPTION
- *  The qse_sll_t type defines a singly lnked list.
- *
- * SYNOPSIS
+/**
+ * The qse_sll_t type defines a singly lnked list.
  */
 struct qse_sll_t
 {
 	QSE_DEFINE_COMMON_FIELDS (sll)
 
-	qse_sll_copier_t copier; /* data copier */
-	qse_sll_freeer_t freeer; /* data freeer */
-	qse_sll_comper_t comper; /* data comparator */
-	qse_byte_t       scale;  /* scale factor */
+	qse_sll_copier_t copier; /**< data copier */
+	qse_sll_freeer_t freeer; /**< data freeer */
+	qse_sll_comper_t comper; /**< data comparator */
+	qse_byte_t       scale;  /**< scale factor */
 
-	qse_size_t       size;   /* the number of nodes */
-	qse_sll_node_t*  head;   /* the head node */
-	qse_sll_node_t*  tail;   /* the tail node */
+	qse_size_t       size;   /**< number of nodes */
+	qse_sll_node_t*  head;   /**< head node */
+	qse_sll_node_t*  tail;   /**< tail node */
 };
-/******/
 
-/****s* Common/qse_sll_node_t
- * NAME
- *  qse_sll_node_t - define a list node
- * DESCRIPTION
- *  The qse_sll_node_t type defines a list node containing a data pointer and 
- *  and data length. 
- * SEE ALSO
- *  QSE_SLL_DPTR, QSE_SLL_DLEN, QSE_SLL_NEXT
- * SYNOPSIS
+/**
+ * The qse_sll_node_t type defines a list node containing a data pointer and 
+ * and data length. 
  */
 struct qse_sll_node_t
 {
@@ -172,7 +125,6 @@ struct qse_sll_node_t
 	qse_size_t      dlen; /* the length of data */
 	qse_sll_node_t* next; /* the pointer to the next node */
 };
-/******/
 
 #define QSE_SLL_COPIER_SIMPLE ((qse_sll_copier_t)1)
 #define QSE_SLL_COPIER_INLINE ((qse_sll_copier_t)2)
@@ -186,29 +138,20 @@ struct qse_sll_node_t
 #define QSE_SLL_SIZE(sll)   ((sll)->size)
 #define QSE_SLL_SCALE(sll)  ((sll)->scale)
 
-/****m* Common/QSE_SLL_DPTR
- * NAME
- *  QSE_SLL_DPTR - get the data pointer in a node
- * SYNOPSIS
+/**
+ * The QSE_SLL_DPTR macro gets the data pointer in a node.
  */
 #define QSE_SLL_DPTR(node)  ((node)->dptr)
-/******/
 
-/****m* Common/QSE_SLL_DLEN
- * NAME
- *  QSE_SLL_DLEN - get the length of data in a node
- * SYNOPSIS
+/**
+ * The QSE_SLL_DLEN macro gets the length of data in a node.
  */
 #define QSE_SLL_DLEN(node)  ((node)->dlen)
-/******/
 
-/****m* Common/QSE_SLL_NEXT
- * NAME
- *  QSE_SLL_NEXT - get the next node
- * SYNOPSIS
+/**
+ * The QSE_SLL_NEXT macro gets the next node.
  */
 #define QSE_SLL_NEXT(node)  ((node)->next)
-/******/
 
 #ifdef __cplusplus
 extern "C" {
@@ -216,35 +159,27 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (sll)
 
-/****f* Common/qse_sll_open
- * NAME
- *  qse_sll_open - create a singly linked list with extension area
+/**
+ * The qse_sll_open() function creates an empty singly linked list.
+ * If the memory manager mmgr is QSE_NULL, the function gets the default
+ * memory manager with QSE_MMGR_GETDFL() and uses it if it is not QSE_NULL.
+ * The extension area is allocated when the positive extension size extension 
+ * is specified. It calls the extension initialization function initializer 
+ * after initializing the main area. The extension initializer is passed
+ * the pointer to the singly linked list created.
  *
- * DESCRIPTION
- *  The qse_sll_open() function creates an empty singly linked list.
- *  If the memory manager mmgr is QSE_NULL, the function gets the default
- *  memory manager with QSE_MMGR_GETMMGR() and uses it if it is not QSE_NULL.
- *  The extension area is allocated when the positive extension size extension 
- *  is specified. It calls the extension initialization function initializer 
- *  after initializing the main area. The extension initializer is passed
- *  the pointer to the singly linked list created.
+ * @return pointer to a new singly linked list on success,
+ *         QSE_NULL on failure
  *
- * RETURN
- *  The qse_sll_open() function returns the pointer to a new singly linked 
- *  list on success and QSE_NULL on failure.
- *
- * NOTES
- *  In the debug build, it fails an assertion if QSE_MMGR_GETMMGR() returns
- *  QSE_NULL when QSE_NULL is passed as the first parameter. In the release
- *  build, it returns QSE_NULL if such a thing happens. 
- *
- * SYNOPSIS
+ * @note
+ *  In the debug build, it fails an assertion if QSE_MMGR_GETDFL() returns
+ *  QSE_NULL and @a mmgr is QSE_NULL. In the release build, it returns QSE_NULL
+ *  in such case.
  */
 qse_sll_t* qse_sll_open (
-	qse_mmgr_t* mmgr  /* memory manager */ , 
+	qse_mmgr_t* mmgr, /* memory manager */ 
 	qse_size_t  ext   /* size of extension area in bytes */
 );
-/******/
 
 /****f* Common/qse_sll_close
  * NAME

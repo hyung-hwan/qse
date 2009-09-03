@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 274 2009-08-28 12:47:09Z hyunghwan.chung $
+ * $Id: fnc.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1080,18 +1080,22 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	 * end of string($) needs to be tested */
 	while (cur_ptr <= a2_end)
 	{
+		qse_awk_errnum_t errnum;
+
 		if (max_count == 0 || sub_count < max_count)
 		{
 			n = QSE_AWK_MATCHREX (
 				run->awk, rex, opt,
 				a2_ptr, a2_len,
 				cur_ptr, cur_len,
-				&mat, &run->errinf.num);
+				&mat, &errnum
+			);
 		}
 		else n = 0;
 
-		if (n == -1)
+		if (n <= -1)
 		{
+			qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 			FREE_A0_REX (run->awk, rex);
 			qse_str_fini (&new);
 			FREE_A_PTRS (run->awk);
@@ -1262,8 +1266,9 @@ static int fnc_match (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	qse_size_t len0, len1;
 	qse_long_t idx;
 	void* rex;
-	int opt, n;
+	int n;
 	qse_cstr_t mat;
+	qse_awk_errnum_t errnum;
 
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs == 2);
@@ -1315,17 +1320,21 @@ static int fnc_match (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str1);
 	}
 
-	opt = (run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0;
 	n = QSE_AWK_MATCHREX (
-		run->awk, rex, opt,
+		run->awk, rex, 
+		(run->gbl.ignorecase? QSE_REX_MATCH_IGNORECASE: 0),
 		str0, len0, str0, len0,
-		&mat, &run->errinf.num
+		&mat, &errnum
 	);
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str0);
 	if (a1->type != QSE_AWK_VAL_REX) QSE_AWK_FREEREX (run->awk, rex);
 
-	if (n == -1) return -1;
+	if (n <= -1) 
+	{
+		qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
+		return -1;
+	}
 
 	idx = (n == 0)? 0: ((qse_long_t)(mat.ptr-str0) + 1);
 

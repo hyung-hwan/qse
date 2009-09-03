@@ -121,7 +121,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -a    perform strict address check\n"));
 	qse_fprintf (out, QSE_T(" -r    allows {n,m} in a regular expression\n"));
 	qse_fprintf (out, QSE_T(" -s    allows text on the same line as c, a, i\n"));
-	qse_fprintf (out, QSE_T(" -l    ensures a newline at the text end"));
+	qse_fprintf (out, QSE_T(" -l    ensures a newline at text end"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])

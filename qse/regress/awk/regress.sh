@@ -137,6 +137,7 @@ PROGS="
 	lang-032.awk///--newline=on -o-
 	lang-033.awk///--newline=on -o-
 	lang-034.awk///--newline=on --rwpipe=on -o-
+	lang-035.awk/lang-035.dat2//--newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035
 
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//
@@ -161,12 +162,15 @@ run_scripts()
 	do
 		[ -z "${prog}" ] && continue
 	
-		script="`echo ${prog} | cut -d/ -f1`"
-		datafile="`echo ${prog} | cut -d/ -f2`"
-		redinfile="`echo ${prog} | cut -d/ -f3`"
-		awkopts="`echo ${prog} | cut -d/ -f4`"
+		local script="`echo ${prog} | cut -d/ -f1`"
+		local datafile="`echo ${prog} | cut -d/ -f2`"
+		local redinfile="`echo ${prog} | cut -d/ -f3`"
+		local awkopts="`echo ${prog} | cut -d/ -f4`"
+		local orgscript="${script}"
 	
 		[ -z "${script}" ] && continue
+
+		[ -f "${script}".dp ] && script="${script}.dp"
 		[ -f "${script}" ] || 
 		{
 			echo_so "${script} not found"
@@ -174,9 +178,9 @@ run_scripts()
 		}
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
-	
-		echo_title "${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1"
-		${QSEAWK} ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
+
+		echo_title "${QSEAWK} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
+		${QSEAWK} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
 	
@@ -185,19 +189,39 @@ run_scripts()
 
 case $1 in
 init)
+	rm -f *.dp
 	run_scripts > "${OUTFILE}"
+	rm -f *.dp
 	echo_so "INIT OK"
 	;;
 test)
-	run_scripts > "${OUTFILE}.temp"
-	# diff -q is not supported on old platforms.
-	# redirect output to /dev/null instead.
-	diff "${OUTFILE}" "${OUTFILE}.temp" > /dev/null || {
-		echo_so "ERROR: ${OUTFILE} differs from ${OUTFILE}.temp."
-		echo_so "       Check the scripts and output files for any errors."
+	rm -f *.dp
+	echo_so "FIRST RUN WITH ORIGINAL SOURCE"
+	run_scripts > "${OUTFILE}.test"
+	echo_so "SECOND RUN WITH DEPARSED SOURCE"
+	run_scripts > "${OUTFILE}.test2"
+	rm -f *.dp
+
+	diff "${OUTFILE}.test" "${OUTFILE}.test2" > /dev/null || {
+		echo_so "ERROR: Difference is found between the first run and the second run."
+		echo_so "       The output of the first run is stored in '${OUTFILE}.test'."
+		echo_so "       The output of the seconds run is stored in '${OUTFILE}.test2'."
+		echo_so "       You may execute 'diff ${OUTFILE}.test ${OUTFILE}.test2' for more info."
 		exit 1
 	}
-	rm -f "${OUTFILE}.temp"
+
+	rm -f "${OUTFILE}.test2"
+
+	# diff -q is not supported on old platforms.
+	# redirect output to /dev/null instead.
+	diff "${OUTFILE}" "${OUTFILE}.test" > /dev/null || {
+		echo_so "ERROR: Difference is found between expected output and actual output."
+		echo_so "       The expected output is stored in '${OUTFILE}'."
+		echo_so "       The actual output is stored in '${OUTFILE}.test'."
+		echo_so "       You may execute 'diff ${OUTFILE} ${OUTFILE}.test' for more info."
+		exit 1
+	}
+	rm -f "${OUTFILE}.test"
 	echo_so "TEST OK"
 	;;
 *)

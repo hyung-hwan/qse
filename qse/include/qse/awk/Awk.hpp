@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
+ * $Id: Awk.hpp 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -24,7 +24,6 @@
 #include <qse/cmn/chr.h>
 #include <qse/Mmgr.hpp>
 #include <stdarg.h>
-
 
 /** @file
  * AWK Interpreter
@@ -271,24 +270,27 @@ protected:
 	class NoSource;
 
 public:
-	/** 
-	 * The Source class is an abstract class to encapsulate
-	 * source script I/O. The Awk::parse function requires a concrete
-	 * object instantiated from its child class.
-	 */
+	/// 
+	/// The Source class is an abstract class to encapsulate
+	/// source script I/O. The Awk::parse function requires a concrete
+	/// object instantiated from its child class.
+	///
 	class Source
 	{
 	public:
+		///
+		/// The Mode type defines opening mode.
+		///
 		enum Mode
 		{	
-			READ,   /**< source code read. */
-			WRITE   /**< source code write. */
+			READ,   ///< open for read
+			WRITE   ///< open for write
 		};
 
-		/**
-		 * The Awk::Source::Data class is used to deliver information
-		 * needed for source script I/O. 
-		 */
+		///
+		/// The Data class encapsulates information passed in and out
+		/// for source script I/O. 
+		///
 		class Data: protected sio_arg_t
 		{
 		public:
@@ -345,9 +347,9 @@ public:
 		virtual ssize_t read (Data& io, char_t* buf, size_t len) = 0;
 		virtual ssize_t write (Data& io, char_t* buf, size_t len) = 0;
 
-		/**
-		 * special value to indicate no source
-		 */
+		///
+		/// The NONE object indicates no source.
+		///
 		static NoSource NONE;
 
 	private:

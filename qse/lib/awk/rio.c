@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: rio.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -272,6 +272,7 @@ int qse_awk_rtx_readio (
 					 * after the previous matchrex has failed */
 
 					qse_cstr_t match;
+					qse_awk_errnum_t errnum;
 
 					QSE_ASSERT (run->gbl.rs != QSE_NULL);
 
@@ -280,9 +281,10 @@ int qse_awk_rtx_readio (
 						((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-						&match, &run->errinf.num);
+						&match, &errnum);
 					if (n <= -1)
 					{
+						qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 						ret = -1;
 						break;
 					}
@@ -360,6 +362,7 @@ int qse_awk_rtx_readio (
 		else
 		{
 			qse_cstr_t match;
+			qse_awk_errnum_t errnum;
 
 /* TODO: minimize the number of regular expressoin match here...
  *       currently matchrex is called for each character added to buf.
@@ -372,9 +375,10 @@ int qse_awk_rtx_readio (
 				((run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
 				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-				&match, &run->errinf.num);
+				&match, &errnum);
 			if (n <= -1)
 			{
+				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
 				ret = -1;
 				p->in.pos--; /* unread the character in c */
 				break;
