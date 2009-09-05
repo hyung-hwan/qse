@@ -7,9 +7,9 @@ libqsesed_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn
 libqsesed_la_LIBADD = -lqsecmn 
 
 if ENABLE_CXX
-lib_LTLIBRARIES += libqsesed++.la
-libqsesed___la_SOURCES = Sed.cpp StdSed.cpp
-libqsesed___la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
-libqsesed___la_LIBADD = -lqsesed  -lqsecmn 
+lib_LTLIBRARIES += libqsesedxx.la
+libqsesedxx_la_SOURCES = Sed.cpp StdSed.cpp
+libqsesedxx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
+libqsesedxx_la_LIBADD = -lqsesed  -lqsecmn 
 endif
 

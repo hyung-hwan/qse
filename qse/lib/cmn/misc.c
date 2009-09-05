@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 76 2009-02-22 14:18:06Z hyunghwan.chung $
+ * $Id: misc.c 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -16,8 +16,19 @@
    limitations under the License.
  */
 
-#if defined(__BORLANDC__)
-#pragma hdrstop
-#define Library
-#endif
+#include <qse/cmn/misc.h>
 
+const qse_char_t* qse_basename (const qse_char_t* path)
+{
+	const qse_char_t* p, * last = QSE_NULL;
+
+	for (p = path; *p != QSE_T('\0'); p++)
+	{
+		if (*p == QSE_T('/')) last = p;
+	#ifdef _WIN32
+		else if (*p == QSE_T('\\')) last = p;
+	#endif
+	}
+
+	return (last == QSE_NULL)? path: (last + 1);
+}

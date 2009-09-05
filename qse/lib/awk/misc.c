@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 250 2009-08-10 03:29:59Z hyunghwan.chung $
+ * $Id: misc.c 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -999,17 +999,3 @@ void qse_awk_rtx_free (qse_awk_rtx_t* rtx, void* ptr)
 	qse_awk_free (rtx->awk, ptr);
 }
 
-const qse_char_t* qse_awk_basename (qse_awk_t* awk, const qse_char_t* path)
-{
-	const qse_char_t* p, * last = QSE_NULL;
-
-	for (p = path; *p != QSE_T('\0'); p++)
-	{
-		if (*p == QSE_T('/')) last = p;
-#ifdef _WIN32
-		else if (*p == QSE_T('\\')) last = p;
-#endif
-	}
-
-	return (last == QSE_NULL)? path: (last + 1);
-}

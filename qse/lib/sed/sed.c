@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 277 2009-09-02 12:55:55Z hyunghwan.chung $
+ * $Id: sed.c 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -2365,13 +2365,16 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_NEXT:
-			/* output the current pattern space */
-			n = write_str (
-				sed, 
-				QSE_STR_PTR(&sed->e.in.line),
-				QSE_STR_LEN(&sed->e.in.line)
-			);
-			if (n <= -1) return QSE_NULL;
+			if (!(sed->option & QSE_SED_QUIET))
+			{
+				/* output the current pattern space */
+				n = write_str (
+					sed, 
+					QSE_STR_PTR(&sed->e.in.line),
+					QSE_STR_LEN(&sed->e.in.line)
+				);
+				if (n <= -1) return QSE_NULL;
+			}
 
 			/* read the next line and fill the pattern space */
 			n = read_line (sed, 0);

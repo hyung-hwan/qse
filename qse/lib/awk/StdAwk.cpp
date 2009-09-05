@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 272 2009-08-28 09:48:02Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
+#include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include "awk.h"
 
@@ -823,7 +824,7 @@ int StdAwk::SourceFile::open (Data& io)
 				return -1;
 			}
 
-			base = qse_awk_basename ((awk_t*)io, name);
+			base = qse_basename (name);
 			if (base != name)
 			{
 				dir.ptr = name;

@@ -217,9 +217,9 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 LDADD = -lqsesed -lqsecmn $(LIBM)
 @ENABLE_CXX_TRUE@sed02_SOURCES = sed02.cpp
-@ENABLE_CXX_TRUE@sed02_LDADD = -lqsesed++ $(LDADD)
+@ENABLE_CXX_TRUE@sed02_LDADD = -lqsesedxx $(LDADD)
 @ENABLE_CXX_TRUE@sed03_SOURCES = sed03.cpp
-@ENABLE_CXX_TRUE@sed03_LDADD = -lqsesed++ $(LDADD)
+@ENABLE_CXX_TRUE@sed03_LDADD = -lqsesedxx $(LDADD)
 all: all-am
 
 .SUFFIXES:

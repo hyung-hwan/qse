@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 273 2009-08-28 11:58:05Z hyunghwan.chung $
+ * $Id: awk.c 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,7 +22,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
-
+#include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
@@ -346,9 +346,10 @@ struct opttab_t
 static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 {
 	int j;
+	const qse_char_t* b = qse_basename (argv0);
 
-	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), argv0);
-	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), argv0);
+	qse_fprintf (out, QSE_T("USAGE: %s [options] -f sourcefile [ -- ] [datafile]*\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), b);
 	qse_fprintf (out, QSE_T("Where options are:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
 	qse_fprintf (out, QSE_T(" -d                                show extra information\n"));

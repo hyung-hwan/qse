@@ -9,8 +9,8 @@ libqseawk_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqseawk_la_LIBADD = -lqsecmn $(LIBM)
 
 if ENABLE_CXX
-lib_LTLIBRARIES += libqseawk++.la
-libqseawk___la_SOURCES = Awk.cpp StdAwk.cpp
-libqseawk___la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
-libqseawk___la_LIBADD = -lqseawk  -lqsecmn $(LIBM)
+lib_LTLIBRARIES += libqseawkxx.la
+libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
+libqseawkxx_la_LDFLAGS = -L. -L../cmn -version-info 1:0:0 -no-undefined
+libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM)
 endif

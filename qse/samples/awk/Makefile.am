@@ -18,8 +18,8 @@ awk06_SOURCES = awk06.cpp
 awk07_SOURCES = awk07.cpp
 awk08_SOURCES = awk08.cpp
 
-awk05_LDADD = -lqseawk++ $(LDADD)
-awk06_LDADD = -lqseawk++ $(LDADD)
-awk07_LDADD = -lqseawk++ $(LDADD)
-awk08_LDADD = -lqseawk++ $(LDADD)
+awk05_LDADD = -lqseawkxx $(LDADD)
+awk06_LDADD = -lqseawkxx $(LDADD)
+awk07_LDADD = -lqseawkxx $(LDADD)
+awk08_LDADD = -lqseawkxx $(LDADD)
 endif
