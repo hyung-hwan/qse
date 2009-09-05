@@ -17,13 +17,16 @@
  */
 
 #include <qse/sed/sed.h>
-#include <qse/cmn/stdio.h>
-#include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
+#include <qse/cmn/misc.h>
+#include <qse/cmn/stdio.h>
+#include <qse/cmn/main.h>
+#include <stdlib.h>
 
-static const qse_char_t* g_script = QSE_NULL;
+static const qse_char_t* g_script_file = QSE_NULL;
+static qse_char_t* g_script = QSE_NULL;
 static const qse_char_t* g_infile = QSE_NULL;
 static int g_option = 0;
 
@@ -114,21 +117,26 @@ static qse_ssize_t out (
 
 static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 {
-	qse_fprintf (out, QSE_T("%s [options] script [file]\n"), argv[0]);
+	const qse_char_t* b = qse_basename (argv[0]);
+
+	qse_fprintf (out, QSE_T("USAGE: %s [options] script [file]\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] -f script-file [file]\n"), b);
+
 	qse_fprintf (out, QSE_T("options as follows:\n"));
-	qse_fprintf (out, QSE_T(" -h    show this message\n"));
-	qse_fprintf (out, QSE_T(" -n    disable auto-print\n"));
-	qse_fprintf (out, QSE_T(" -a    perform strict address check\n"));
-	qse_fprintf (out, QSE_T(" -r    allows {n,m} in a regular expression\n"));
-	qse_fprintf (out, QSE_T(" -s    allows text on the same line as c, a, i\n"));
-	qse_fprintf (out, QSE_T(" -l    ensures a newline at text end"));
+	qse_fprintf (out, QSE_T(" -h        show this message\n"));
+	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
+	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
+	qse_fprintf (out, QSE_T(" -r        allow {n,m} in a regular expression\n"));
+	qse_fprintf (out, QSE_T(" -s        allow text on the same line as c, a, i\n"));
+	qse_fprintf (out, QSE_T(" -l        ensure a newline at text end\n"));
+	qse_fprintf (out, QSE_T(" -f file   specifie a s script file\n"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnarsl"),
+		QSE_T("hnarslf:"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -180,14 +188,20 @@ static int handle_args (int argc, qse_char_t* argv[])
 			case QSE_T('l'):
 				g_option |= QSE_SED_ENSURENL;
 				break;
+
+			case QSE_T('f'):
+				g_script_file = opt.arg;
+				break;
 		}
 	}
 
 
-	if (opt.ind < argc) g_script = argv[opt.ind++];
+	if (opt.ind < argc && g_script_file == QSE_NULL) 
+		g_script = argv[opt.ind++];
 	if (opt.ind < argc) g_infile = argv[opt.ind++];
 
-	if (g_script == QSE_NULL || opt.ind < argc)
+	if ((g_script_file == QSE_NULL && g_script == QSE_NULL) || 
+	    opt.ind < argc)
 	{
 		print_usage (QSE_STDERR, argc, argv);
 		return -1;
@@ -216,6 +230,14 @@ int sed_main (int argc, qse_char_t* argv[])
 	}
 	
 	qse_sed_setoption (sed, g_option);
+
+	if (g_script_file != QSE_NULL)
+	{
+		QSE_ASSERT (g_script == QSE_NULL);
+		qse_fprintf (QSE_STDERR, QSE_T("-f file not implemented yet\n"));
+		goto oops;
+		/* TODO: load script from a file */
+	}
 
 	if (qse_sed_comp (sed, g_script, qse_strlen(g_script)) == -1)
 	{
@@ -265,6 +287,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (sed != QSE_NULL) qse_sed_close (sed);
+	if (g_script_file != QSE_NULL && g_script != QSE_NULL) free (g_script);
 	return ret;
 }
 

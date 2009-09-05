@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 273 2009-08-28 11:58:05Z hyunghwan.chung $
+ * $Id: std.c 278 2009-09-04 13:08:19Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -22,6 +22,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 
 #include <stdarg.h>
@@ -191,7 +192,7 @@ static qse_ssize_t sf_in_open (
 						return -1;
 					}
 
-					base = qse_awk_basename (awk, xtn->s.in.u.file);
+					base = qse_basename (xtn->s.in.u.file);
 					if (base != xtn->s.in.u.file)
 					{
 						xtn->s.in.dir.ptr = xtn->s.in.u.file;

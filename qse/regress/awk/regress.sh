@@ -138,6 +138,8 @@ PROGS="
 	lang-033.awk///--newline=on -o-
 	lang-034.awk///--newline=on --rwpipe=on -o-
 	lang-035.awk/lang-035.dat2//--newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035
+	lang-036.awk/lang-036.dat//--newline=on -o-
+	lang-037.awk/lang-037.dat//--newline=on -o-
 
 	quicksort.awk/quicksort.dat//
 	quicksort2.awk/quicksort2.dat//
