@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 207 2009-06-22 13:01:28Z hyunghwan.chung $
+ * $Id: rex.c 279 2009-09-06 13:18:08Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1483,16 +1483,25 @@ static const qse_byte_t* match_any_char (
 	while (p < mat->branch_end &&
 	       cp->cmd == ((const atom_t*)p)->cmd)
 	{
-		lbound += ((const atom_t*)p)->lbound;
-		ubound += ((const atom_t*)p)->ubound;
+		qse_size_t lb, ub;
+
+		lb = ((const atom_t*)p)->lbound;
+		ub = ((const atom_t*)p)->ubound;
+
+		/* perform minimal overflow check as this implementation
+		 * uses the maximum value to mean infinite.
+		 * consider the upper bound of '+' and '*'. */
+		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
+		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
+		ubound = (BOUND_MAX-ub >= ubound)? (ubound + ub): BOUND_MAX;
 
 		p += QSE_SIZEOF(*cp);
 	}
 
 #ifdef DEBUG_REX
 	qse_dprintf (
-		QSE_T("match_any_char: lbound = %u, ubound = %u\n"), 
-		(unsigned int)lbound, (unsigned int)ubound);
+		QSE_T("match_any_char: lbound = %lu, ubound = %lu\n"), 
+		(unsigned long)lbound, (unsigned long)ubound);
 #endif
 
 	/* find the longest match */
@@ -1504,7 +1513,7 @@ static const qse_byte_t* match_any_char (
 
 #ifdef DEBUG_REX
 	qse_dprintf (
-		QSE_T("match_any_char: max si = %u\n"), (unsigned)si);
+		QSE_T("match_any_char: max si = %lu\n"), (unsigned long)si);
 #endif
 
 	if (si >= lbound && si <= ubound)
@@ -1529,42 +1538,45 @@ static const qse_byte_t* match_ord_char (
 	lbound = cp->lbound; 
 	ubound = cp->ubound;
 
+#ifdef DEBUG_REX
+	qse_dprintf (
+		QSE_T("match_ord_char: cc=%c, lbound=%lu, ubound=%lu\n"), 
+		cc, (unsigned long)lbound, (unsigned long)ubound);
+#endif
+
 	cc = *(qse_char_t*)p; p += QSE_SIZEOF(cc);
 	if (matcher->option & QSE_REX_MATCH_IGNORECASE) cc = QSE_TOUPPER(cc);
 
 	/* merge the same consecutive codes 
 	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
-	if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
+	while (p < mat->branch_end &&
+	       cp->cmd == ((const atom_t*)p)->cmd)
 	{
-		while (p < mat->branch_end &&
-		       cp->cmd == ((const atom_t*)p)->cmd)
-		{
-			if (QSE_TOUPPER (*(qse_char_t*)(p+QSE_SIZEOF(*cp))) != cc) break;
+		qse_size_t lb, ub;
+		qse_char_t xc;
 
-			lbound += ((const atom_t*)p)->lbound;
-			ubound += ((const atom_t*)p)->ubound;
+		xc = *(qse_char_t*)(p+QSE_SIZEOF(*cp));
+		if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
+			xc = QSE_TOUPPER(xc);
 
-			p += QSE_SIZEOF(*cp) + QSE_SIZEOF(cc);
-		}
-	}
-	else
-	{
-		while (p < mat->branch_end &&
-		       cp->cmd == ((const atom_t*)p)->cmd)
-		{
-			if (*(qse_char_t*)(p+QSE_SIZEOF(*cp)) != cc) break;
+		if (xc != cc) break;
 
-			lbound += ((const atom_t*)p)->lbound;
-			ubound += ((const atom_t*)p)->ubound;
+		lb = ((const atom_t*)p)->lbound;
+		ub = ((const atom_t*)p)->ubound;
 
-			p += QSE_SIZEOF(*cp) + QSE_SIZEOF(cc);
-		}
+		/* perform minimal overflow check as this implementation
+		 * uses the maximum value to mean infinite.
+		 * consider the upper bound of '+' and '*'. */
+		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
+		ubound = (BOUND_MAX-ub >= ubound)? (ubound + ub): BOUND_MAX;
+
+		p += QSE_SIZEOF(*cp) + QSE_SIZEOF(cc);
 	}
 	
 #ifdef DEBUG_REX
 	qse_dprintf (
-		QSE_T("match_ord_char: cc = %c, lbound = %u, ubound = %u\n"), 
-		cc, (unsigned int)lbound, (unsigned int)ubound);
+		QSE_T("match_ord_char(after merging): cc=%c, lbound=%lu, ubound=%lu\n"), 
+		cc, (unsigned long)lbound, (unsigned long)ubound);
 #endif
 
 	mat->matched = QSE_FALSE;
@@ -1602,8 +1614,8 @@ static const qse_byte_t* match_ord_char (
 
 #ifdef DEBUG_REX
 	qse_dprintf (
-		QSE_T("match_ord_char: max occurrences=%u, lbound=%u, ubound=%u\n"), 
-		(unsigned)si, (unsigned)lbound, (unsigned)ubound);
+		QSE_T("match_ord_char: cc=%c, max occ=%lu, lbound=%lu, ubound=%lu\n"), 
+		cc, (unsigned long)si, (unsigned long)lbound, (unsigned long)ubound);
 #endif
 
 	if (si >= lbound && si <= ubound)
@@ -1632,8 +1644,8 @@ static const qse_byte_t* match_charset (
 
 #ifdef DEBUG_REX
 	qse_dprintf (
-		QSE_T("match_charset: lbound = %u, ubound = %u\n"), 
-		(unsigned int)cp->lbound, (unsigned int)cp->ubound);
+		QSE_T("match_charset: lbound=%lu, ubound=%lu\n"), 
+		(unsigned long)cp->lbound, (unsigned long)cp->ubound);
 #endif
 
 	mat->matched = QSE_FALSE;
