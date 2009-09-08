@@ -18,12 +18,12 @@
 
 #include <qse/sed/sed.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
 #include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
-#include <stdlib.h>
 
 static const qse_char_t* g_script_file = QSE_NULL;
 static qse_char_t* g_script = QSE_NULL;
@@ -31,7 +31,7 @@ static const qse_char_t* g_infile = QSE_NULL;
 static int g_option = 0;
 
 static qse_ssize_t in (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg, qse_char_t* buf, qse_size_t size)
 {
 	switch (cmd)
 	{
@@ -68,9 +68,10 @@ static qse_ssize_t in (
 		case QSE_SED_IO_READ:
 		{
 			qse_cint_t c;
+			/* TODO: read more characters */
 			c = qse_fgetc (arg->handle);
 			if (c == QSE_CHAR_EOF) return 0;
-			arg->u.r.buf[0] = c;
+			buf[0] = c;
 			return 1;
 		}
 
@@ -80,7 +81,7 @@ static qse_ssize_t in (
 }
 
 static qse_ssize_t out (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg, qse_char_t* data, qse_size_t len)
 {
 	switch (cmd)
 	{
@@ -105,9 +106,9 @@ static qse_ssize_t out (
 		case QSE_SED_IO_WRITE:
 		{
 			qse_size_t i = 0;
-			for (i = 0; i < arg->u.w.len; i++) 
-				qse_fputc (arg->u.w.data[i], arg->handle);
-			return arg->u.w.len;
+			for (i = 0; i < len; i++) 
+				qse_fputc (data[i], arg->handle);
+			return len;
 		}
 
 		default:
@@ -211,6 +212,40 @@ static int handle_args (int argc, qse_char_t* argv[])
 	return 1;
 }
 
+qse_char_t* load_script_file (const qse_char_t* file)
+{
+	qse_cint_t c;
+	qse_str_t script;
+	QSE_FILE* fp;
+	qse_xstr_t xstr;
+
+	fp = qse_fopen (file, QSE_T("r"));
+	if (fp == QSE_NULL) return QSE_NULL;
+
+	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) == QSE_NULL)
+	{
+		qse_fclose (fp);
+		return QSE_NULL;
+	}
+
+
+	while ((c = qse_fgetc (fp)) != QSE_CHAR_EOF)
+	{
+		if (qse_str_ccat (&script, c) == (qse_size_t)-1)
+		{
+			qse_fclose (fp);
+			qse_str_fini (&script);
+			return QSE_NULL;
+		}		
+	}
+
+	qse_fclose (fp);
+	qse_str_yield (&script, &xstr, 0);
+	qse_str_fini (&script);
+
+	return xstr.ptr;
+}
+
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
@@ -234,8 +269,13 @@ int sed_main (int argc, qse_char_t* argv[])
 	if (g_script_file != QSE_NULL)
 	{
 		QSE_ASSERT (g_script == QSE_NULL);
-		qse_fprintf (QSE_STDERR, QSE_T("-f file not implemented yet\n"));
-		goto oops;
+
+		g_script = load_script_file (g_script_file);
+		if (g_script == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot load %s\n"), g_script_file);
+			goto oops;
+		}	
 		/* TODO: load script from a file */
 	}
 
@@ -287,7 +327,8 @@ int sed_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (sed != QSE_NULL) qse_sed_close (sed);
-	if (g_script_file != QSE_NULL && g_script != QSE_NULL) free (g_script);
+	if (g_script_file != QSE_NULL && g_script != QSE_NULL) 
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_script);
 	return ret;
 }
 

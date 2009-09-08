@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 269 2009-08-26 03:03:51Z hyunghwan.chung $
+ * $Id: Sed.cpp 280 2009-09-07 13:34:49Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -125,7 +125,8 @@ void Sed::setConsoleLine (size_t num)
 	qse_sed_setlinnum (sed, num);
 }
 
-Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
+Sed::ssize_t Sed::xin (
+	sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
@@ -142,8 +143,7 @@ Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 				case QSE_SED_IO_CLOSE:
 					return sed->closeConsole (io);
 				case QSE_SED_IO_READ:
-					return sed->readConsole (
-						io, arg->u.r.buf, arg->u.r.len);
+					return sed->readConsole (io, buf, len);
 				default:
 					return -1;
 			}
@@ -166,8 +166,7 @@ Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 				case QSE_SED_IO_CLOSE:
 					return sed->closeFile (io);
 				case QSE_SED_IO_READ:
-					return sed->readFile (
-						io, arg->u.r.buf, arg->u.r.len);
+					return sed->readFile (io, buf, len);
 				default:
 					return -1;
 			}
@@ -179,7 +178,8 @@ Sed::ssize_t Sed::xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 	}
 }
 
-Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
+Sed::ssize_t Sed::xout (
+	sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
@@ -196,8 +196,7 @@ Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 				case QSE_SED_IO_CLOSE:
 					return sed->closeConsole (io);
 				case QSE_SED_IO_WRITE:
-					return sed->writeConsole (
-						io, arg->u.w.data, arg->u.w.len);
+					return sed->writeConsole (io, dat, len);
 				default:
 					return -1;
 			}
@@ -220,8 +219,7 @@ Sed::ssize_t Sed::xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg)
 				case QSE_SED_IO_CLOSE:
 					return sed->closeFile (io);
 				case QSE_SED_IO_WRITE:
-					return sed->writeFile (
-						io, arg->u.w.data, arg->u.w.len);
+					return sed->writeFile (io, dat, len);
 				default:
 					return -1;
 			}

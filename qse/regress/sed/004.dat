@@ -1,0 +1,9 @@
+linux {
+Host: hellow.com
+Address: 3.32.22.22
+}
+
+linux {
+Host: ip.com
+Address: 99.32.22.22
+}
