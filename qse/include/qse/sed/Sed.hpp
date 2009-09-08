@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 269 2009-08-26 03:03:51Z hyunghwan.chung $
+ * $Id: Sed.hpp 280 2009-09-07 13:34:49Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -399,8 +399,10 @@ protected:
 	errstr_t dflerrstr; 
 
 private:
-	static ssize_t xin (sed_t* s, io_cmd_t cmd, io_arg_t* arg);
-	static ssize_t xout (sed_t* s, io_cmd_t cmd, io_arg_t* arg);
+	static ssize_t xin (
+		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
+	static ssize_t xout (
+		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len);
 	static const char_t* xerrstr (sed_t* s, errnum_t num);
 
 private:

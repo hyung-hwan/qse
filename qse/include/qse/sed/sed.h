@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
+ * $Id: sed.h 280 2009-09-07 13:34:49Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -170,23 +170,6 @@ struct qse_sed_io_arg_t
 {
 	void*             handle; /**< IO handle */
 	const qse_char_t* path;   /**< file path. QSE_NULL for a console */
-
-	union 
-	{
-		/** read buffer */
-		struct
-		{
-			qse_char_t*       buf; /**< buffer pointer */
-			qse_size_t        len; /**< buffer size */
-		} r;
-
-		/** data to write */
-		struct
-		{
-			const qse_char_t* data; /**< data pointer */
-			qse_size_t        len;  /**< data length */
-		} w;
-	} u;
 };
 typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 
@@ -197,7 +180,9 @@ typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 typedef qse_ssize_t (*qse_sed_io_fun_t) (
         qse_sed_t*        sed,
         qse_sed_io_cmd_t  cmd,
-	qse_sed_io_arg_t* arg
+	qse_sed_io_arg_t* arg,
+	qse_char_t*       data,
+	qse_size_t        count
 );
 
 /**
