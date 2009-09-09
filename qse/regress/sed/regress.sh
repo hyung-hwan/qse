@@ -117,7 +117,7 @@ test)
 	;;
 leakcheck)
 	bin_valgrind="`which valgrind 2> /dev/null || echo ""`"
-	[ -z "${bin_valgrind}" ] && {
+	[ -n "${bin_valgrind}" -a -f "${bin_valgrind}" ] || {
 		echo_so "valgrind not found. cannot perform this test"
 		exit 1
 	}
