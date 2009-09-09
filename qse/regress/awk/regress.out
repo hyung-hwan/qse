@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-001.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-001.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR 275
 Canada 25
@@ -13,7 +13,7 @@ Japan 120
 Germany 61
 England 56
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-002.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-002.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
    COUNTRY   AREA   POP    CONTINENT
 
@@ -31,44 +31,44 @@ England 56
 
      TOTAL  25681  2819
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-003.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-003.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 India	1267	746	Asia
 Japan	144	120	Asia
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-004.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-004.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 USA	3615	237	North America
 Mexico	762	78	North America
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-005.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-005.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Canada	3852	25	North America
 Brazil	3286	134	South America
 Mexico	762	78	North America
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-006.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-006.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-007.awk cou.dat </dev/stdin 2>&1 
---------------------------------------------------------------------------------
-USSR	8649	275	Asia
-China	3705	1032	Asia
-India	1267	746	Asia
-Japan	144	120	Asia
---------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-008.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-007.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 China	3705	1032	Asia
 India	1267	746	Asia
 Japan	144	120	Asia
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-009.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-008.awk cou.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+USSR	8649	275	Asia
+China	3705	1032	Asia
+India	1267	746	Asia
+Japan	144	120	Asia
+--------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk  -f cou-009.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Canada	3852	25	North America
 USA	3615	237	North America
@@ -78,32 +78,22 @@ France	211	55	Europe
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-010.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-010.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 China	3705	1032	Asia
 India	1267	746	Asia
 Japan	144	120	Asia
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-011.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-011.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-012.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-012.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 China	3705	1032	Asia
 India	1267	746	Asia
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-013.awk cou.dat </dev/stdin 2>&1 
---------------------------------------------------------------------------------
-USSR	8649	275	Asia
-China	3705	1032	Asia
-India	1267	746	Asia
-France	211	55	Europe
-Japan	144	120	Asia
-Germany	96	61	Europe
-England	94	56	Europe
---------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-014.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-013.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 China	3705	1032	Asia
@@ -113,7 +103,7 @@ Japan	144	120	Asia
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-015.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-014.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 China	3705	1032	Asia
@@ -123,7 +113,7 @@ Japan	144	120	Asia
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-016.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-015.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 China	3705	1032	Asia
@@ -133,16 +123,26 @@ Japan	144	120	Asia
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-017.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-016.awk cou.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+USSR	8649	275	Asia
+China	3705	1032	Asia
+India	1267	746	Asia
+France	211	55	Europe
+Japan	144	120	Asia
+Germany	96	61	Europe
+England	94	56	Europe
+--------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk  -f cou-017.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Canada	3852	25	North America
 China	3705	1032	Asia
 USA	3615	237	North America
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-018.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-018.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-019.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-019.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 cou.dat: USSR	8649	275	Asia
 cou.dat: Canada	3852	25	North America
@@ -150,7 +150,7 @@ cou.dat: China	3705	1032	Asia
 cou.dat: USA	3615	237	North America
 cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-020.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-020.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 cou.dat: USSR	8649	275	Asia
 cou.dat: Canada	3852	25	North America
@@ -158,14 +158,14 @@ cou.dat: China	3705	1032	Asia
 cou.dat: USA	3615	237	North America
 cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-021.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-021.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR 8649000
 China 3705000
 India 1267000
 Japan 144000
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-022.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-022.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia
 Canada	3852	25	NA
@@ -179,7 +179,7 @@ Japan	144	120	Asia
 Germany	96	61	Europe
 England	94	56	Europe
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-023.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-023.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 USSR	8649	275	Asia	31.7956
 Canada	3852	25	North America	6.49013
@@ -193,42 +193,42 @@ Japan	144	120	Asia	833.333
 Germany	96	61	Europe	635.417
 England	94	56	Europe	595.745
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-024.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-024.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Total population of the 4 Asian countries is 2173 million.
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-025.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-025.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Asian population is 2173 million.
 European population is 172 million.
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-026.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-026.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Asia 2173
 Europe 172
 North America 340
 South America 134
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f cou-027.awk cou.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f cou-027.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
            Asia	  2173
   North America	   340
          Europe	   172
   South America	   134
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-001.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-001.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Kathy 40
 Mark 100
 Mary 121
 Susie 76.5
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-002.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-002.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth
 Dan
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-003.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-003.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 3 Beth 0
 3 Dan 0
@@ -237,7 +237,7 @@ Dan
 3 Mary 22
 3 Susie 18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-004.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-004.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 1 Beth	4.00	0
 2 Dan	3.74	0
@@ -246,7 +246,7 @@ Dan
 5 Mary	5.50	22
 6 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-005.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-005.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 total pay for Beth is 0
 total pay for Dan is 0
@@ -255,7 +255,7 @@ total pay for Mark is 100
 total pay for Mary is 121
 total pay for Susie is 76.5
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-006.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-006.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 total pay for Beth is $0.00
 total pay for Dan is $0.00
@@ -264,7 +264,7 @@ total pay for Mark is $100.00
 total pay for Mary is $121.00
 total pay for Susie is $76.50
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-007.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-007.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth     $  0.00
 Dan      $  0.00
@@ -273,26 +273,26 @@ Mark     $100.00
 Mary     $121.00
 Susie    $ 76.50
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-008.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-008.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Mark	5.00	20
 Mary	5.50	22
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-009.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-009.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 $100.00 for Mark
 $121.00 for Mary
 $76.50 for Susie
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-010.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-010.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-011.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-011.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-012.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-012.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth	4.00	0
 Kathy	4.00	10
@@ -300,7 +300,7 @@ Mark	5.00	20
 Mary	5.50	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-013.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-013.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth	4.00	0
 Kathy	4.00	10
@@ -310,7 +310,7 @@ Mary	5.50	22
 Mary	5.50	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-014.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-014.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth	4.00	0
 Kathy	4.00	10
@@ -318,10 +318,10 @@ Mark	5.00	20
 Mary	5.50	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-015.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-015.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-016.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-016.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 NAME    RATE    HOURS
 
@@ -332,33 +332,33 @@ Mark	5.00	20
 Mary	5.50	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-017.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-017.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 3 employees worked more than 15 hours
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-018.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-018.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 6 employees
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-019.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-019.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 6 employees
 total pay is 337.5
 average pay is 56.25
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-020.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-020.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 highest hourly rage: 5.50 for Mary
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-021.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-021.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth Dan Kathy Mark Mary Susie 
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-022.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-022.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-023.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-023.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth 4
 Dan 3
@@ -367,15 +367,15 @@ Mark 4
 Mary 4
 Susie 5
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-024.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-024.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 6 lines, 18 words, 77 characters
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-025.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-025.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 no employees are paid more than $6/hour
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-026.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-026.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Susie	4.25	18
 Mary	5.50	22
@@ -384,7 +384,7 @@ Kathy	4.00	10
 Dan	3.74	0
 Beth	4.00	0
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f emp-027.awk emp.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f emp-027.awk emp.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Susie	4.25	18
 Mary	5.50	22
@@ -393,18 +393,18 @@ Kathy	4.00	10
 Dan	3.74	0
 Beth	4.00	0
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f adr-001.awk adr.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f adr-001.awk adr.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 James Brown 012-345-678
 Richie Ren 02-3473-9192
 Toh WeeKung 9102-1203
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f adr-002.awk adr.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f adr-002.awk adr.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 James Brown Somewhere over the rainbow 012-345-678
 Toh WeeKung Singapore 9102-1203
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f unr-001.awk unr.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f unr-001.awk unr.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 Beth	4	0
 Dan	3.74	0
@@ -413,7 +413,7 @@ Mark	5.00	20
 Mary	5.5	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --strictnaming=off --newline=on -o- -f lang-001.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --strictnaming=off --newline=on -o- -f lang-001.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -426,7 +426,7 @@ BEGIN {
 
 hello
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-002.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-002.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -939,7 +939,7 @@ my hello
 my hello
 ERROR: CODE 15 LINE 6 COLUMN 1 - block nested too deeply
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-003.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function fn (__p0)
 {
@@ -954,11 +954,11 @@ BEGIN {
 
 50
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-004.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 42 LINE 3 COLUMN 9 - function 'a' redefined
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-005.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -982,11 +982,11 @@ BEGIN {
 50
 100
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-006.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 43 LINE 5 COLUMN 10 - global variable 'a' redefined
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --implicit=on --explicit=on --newline=on -o- -f lang-007.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --implicit=on --explicit=on --newline=on -o- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global __g17;
 
@@ -1005,7 +1005,7 @@ BEGIN {
 20
 30
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-008.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --implicit=off --explicit=on --newline=on -o- -f lang-008.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global x;
 
@@ -1027,7 +1027,7 @@ BEGIN {
 2
 1
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --implicit=off --explicit=on --newline=on --strictnaming=off -o- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --implicit=off --explicit=on --newline=on --strictnaming=off -o- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -1044,7 +1044,7 @@ END {
 }
 1000
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-010.awk this is just a test </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-010.awk this is just a test </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "ARGC=",ARGC;
@@ -1101,7 +1101,7 @@ ARGC [+10124.1123000000] is positive
 [A         ] [-000000000000000000000000000000000000000000000001]
 abc10 000000000000000000000000000040 g good K
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-011.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-011.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a[1,2,3] = 20;
@@ -1144,7 +1144,7 @@ BEGIN {
 (1,2,3) in a ==> 20
 (4,5) not in a
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-012.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-012.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	OFS = "		";
@@ -1345,7 +1345,7 @@ a <  " " :		1
 -0.123
 122.877
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-013.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-013.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	CONVFMT = "%s";
@@ -1354,7 +1354,7 @@ BEGIN {
 
 ERROR: CODE 103 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a = (10 + 20);
@@ -1365,11 +1365,11 @@ BEGIN {
 
 30 30 30
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-015.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 15 LINE 3 COLUMN 50 - block nested too deeply
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-016.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	printf "[[[[[%s]]]]\n",sprintf ("abc %s abc",sprintf ("def %s %s",sprintf ("%s %s %s","xyz",1.2342,"xyz"),sprintf ("ttt %s tttt",123.12)));
@@ -1379,7 +1379,7 @@ BEGIN {
 [[[[[abc def xyz 1.2342 xyz ttt 123.12 tttt abc]]]]
 [[[[ttt 123.12 tttt]]]]
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1430,7 +1430,7 @@ END {
 END OF PROGRAM
 END OF PROGRAM 2
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --call main --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --call main --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1479,31 +1479,31 @@ END {
 0
 2
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-018.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 47 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-019.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 49 LINE 1 COLUMN 15 - '+' not a valid parameter name
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-020.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 50 LINE 1 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-021.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 50 LINE 3 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-022.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 23 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-023.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 28 LINE 5 COLUMN 20 - colon expected in place of ';'
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-024.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	local __l0;
@@ -1513,7 +1513,7 @@ BEGIN {
 
 1
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-025.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-025.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix = 20;
@@ -1522,7 +1522,7 @@ BEGIN {
 
 ERROR: CODE 78 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	abc[20] = "abc";
@@ -1534,19 +1534,19 @@ BEGIN {
 abc
 ERROR: CODE 86 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 17 LINE 2 COLUMN 1 - invalid character '<NUL>'
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-028.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 41 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --explicit=on --newline=on -o- -f lang-029.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --explicit=on --newline=on -o- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 42 LINE 9 COLUMN 9 - function 'abc' redefined
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-030.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print (1 + 0);
@@ -1598,7 +1598,7 @@ BEGIN {
 0
 0
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-031.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-031.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print match ("hhhheeeo",/e+/);
@@ -1632,7 +1632,7 @@ BEGIN {
 0 -1
 --------------------------
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-032.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-032.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a = 91;
@@ -1654,7 +1654,7 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-033.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	while ((("cat lang-033.awk" | getline x) > 0))
@@ -1666,7 +1666,7 @@ BEGIN {
 		print x
 }
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on --rwpipe=on -o- -f lang-034.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on --rwpipe=on -o- -f lang-034.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "15" || "sort";
@@ -1687,7 +1687,7 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
@@ -1931,7 +1931,7 @@ lease 10.218.255.151 {
   uid "\001\000\033[\234\220\000";
 }
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 {
 	if (($0 ~ /^-+$/))
@@ -1963,7 +1963,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk --newline=on -o- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "\n-+\n";
@@ -1991,7 +1991,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000
 0.11111111111111111111111111111
@@ -2010,7 +2010,7 @@ dif cccc
 1.E12
 99X
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000
 0.11111111111111111111111111111
@@ -2029,11 +2029,11 @@ dif cccc
 1.E12
 99X
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f asm.awk asm.s <asm.dat 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f asm.awk asm.s <asm.dat 2>&1 
 --------------------------------------------------------------------------------
 549
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f stripcomment.awk stripcomment.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f stripcomment.awk stripcomment.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
  
 
@@ -2045,7 +2045,7 @@ int main ()
 	return 0;
 }
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f wordfreq.awk wordfreq.awk </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f wordfreq.awk wordfreq.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 distinctions 1
 list 1
@@ -2073,7 +2073,7 @@ print 2
 frequencies 1
 case 1
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f hanoi.awk  </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f hanoi.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0 54321
 1 
@@ -2204,7 +2204,7 @@ case 1
 2 
 
 --------------------------------------------------------------------------------
-../../cmd/awk/qseawk  -f indent.awk indent.dat </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk  -f indent.awk indent.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 #!/bin/sh
 

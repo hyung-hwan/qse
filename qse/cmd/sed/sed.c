@@ -21,6 +21,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
+#include <qse/cmn/sio.h>
 #include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
@@ -36,44 +37,38 @@ static qse_ssize_t in (
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
-			if (arg->path == QSE_NULL ||
-			    arg->path[0] == QSE_T('\0'))
+		{
+			const qse_char_t* file;
+
+			if (arg->path == QSE_NULL || arg->path[0] == QSE_T('\0'))
 			{
-				if (g_infile)
-				{
-					arg->handle = qse_fopen (g_infile, QSE_T("r"));
-					if (arg->handle == QSE_NULL) 
-					{
-						qse_cstr_t errarg;
-						errarg.ptr = g_infile;
-						errarg.len = qse_strlen(g_infile);
-						qse_sed_seterror (sed, QSE_SED_EIOFIL, &errarg, QSE_NULL);
-						return -1;
-					}
-				}
-				else arg->handle = QSE_STDIN;
+				file = (g_infile == QSE_NULL)? QSE_NULL: g_infile;
 			}
+			else file = arg->path;
+
+
+			if (file == QSE_NULL) arg->handle = qse_sio_in;
 			else
 			{
-				arg->handle = qse_fopen (arg->path, QSE_T("r"));
+				arg->handle = qse_sio_open (
+					qse_sed_getmmgr(sed),
+					0,
+					file,
+					QSE_SIO_READ
+				);	
+
 				if (arg->handle == QSE_NULL) return -1;
 			}
+
 			return 1;
+		}
 
 		case QSE_SED_IO_CLOSE:
-			if (arg->handle != QSE_STDIN) 
-				qse_fclose (arg->handle);
+			if (arg->handle != qse_sio_in) qse_sio_close (arg->handle);
 			return 0;
 
 		case QSE_SED_IO_READ:
-		{
-			qse_cint_t c;
-			/* TODO: read more characters */
-			c = qse_fgetc (arg->handle);
-			if (c == QSE_CHAR_EOF) return 0;
-			buf[0] = c;
-			return 1;
-		}
+			return qse_sio_getsn (arg->handle, buf, size);
 
 		default:
 			return -1;
@@ -86,30 +81,31 @@ static qse_ssize_t out (
 	switch (cmd)
 	{
 		case QSE_SED_IO_OPEN:
-			if (arg->path == QSE_NULL ||
-			    arg->path[0] == QSE_T('\0'))
+			if (arg->path == QSE_NULL || arg->path[0] == QSE_T('\0'))
 			{
-				arg->handle = QSE_STDOUT;
+				arg->handle = qse_sio_out;
 			}
 			else
 			{
-				arg->handle = qse_fopen (arg->path, QSE_T("w"));
+				arg->handle = qse_sio_open (
+					qse_sed_getmmgr(sed),
+					0,
+					arg->path,
+					QSE_SIO_WRITE |
+					QSE_SIO_CREATE |
+					QSE_SIO_TRUNCATE
+				);	
+
 				if (arg->handle == QSE_NULL) return -1;
 			}
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
-			if (arg->handle != QSE_STDOUT) 
-				qse_fclose (arg->handle);
+			if (arg->handle != qse_sio_out) qse_sio_close (arg->handle);
 			return 0;
 
 		case QSE_SED_IO_WRITE:
-		{
-			qse_size_t i = 0;
-			for (i = 0; i < len; i++) 
-				qse_fputc (data[i], arg->handle);
-			return len;
-		}
+			return qse_sio_putsn (arg->handle, data, len);
 
 		default:
 			return -1;

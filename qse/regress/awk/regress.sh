@@ -36,7 +36,15 @@ print_usage()
 # MAIN            #
 ###################
 
-QSEAWK=${QSEAWK:=../../cmd/awk/qseawk}
+[ -z "${QSEAWK}" ] && {
+	QSEAWK=../../cmd/awk/.libs/qseawk
+	[ -f "${QSEAWK}" ] || QSEAWK=../../cmd/awk/qseawk
+}
+[ -f "${QSEAWK}" -a -x "${QSEAWK}" ] || {
+	echo_so "the executable '${QSEAWK}' is not found or not executable"
+	exit 1
+}
+
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
 
@@ -158,6 +166,7 @@ PROGS="
 
 run_scripts() 
 {
+	local valgrind="${1}"
 	echo "${PROGS}" > "${TMPFILE}"
 	
 	while read prog
@@ -181,8 +190,8 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${QSEAWK} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
-		${QSEAWK} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
+		echo_title "${valgrind} ${QSEAWK} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
+		${valgrind} ${QSEAWK} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
 	
@@ -225,6 +234,15 @@ test)
 	}
 	rm -f "${OUTFILE}.test"
 	echo_so "TEST OK"
+	;;
+leakcheck)
+	valgrind="`which valgrind 2> /dev/null || echo ""`"
+	[ -z "${valgrind}" ] && {
+		echo_so "valgrind not found. cannot perform this test"
+		exit 1
+	}
+	run_scripts "${valgrind} --leak-check=full --show-reachable=yes --track-fds=yes" 2>&1 > "${OUTFILE}.test"
+	echo_so "Inspect the '${OUTFILE}.test' file for any memory and file descriptor leaks."
 	;;
 *)
 	echo_so "USAGE: $0 init"
