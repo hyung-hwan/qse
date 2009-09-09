@@ -166,18 +166,18 @@ PROGS="
 
 run_scripts() 
 {
-	local valgrind="${1}"
+	valgrind="${1}"
 	echo "${PROGS}" > "${TMPFILE}"
 	
 	while read prog
 	do
 		[ -z "${prog}" ] && continue
 	
-		local script="`echo ${prog} | cut -d/ -f1`"
-		local datafile="`echo ${prog} | cut -d/ -f2`"
-		local redinfile="`echo ${prog} | cut -d/ -f3`"
-		local awkopts="`echo ${prog} | cut -d/ -f4`"
-		local orgscript="${script}"
+		script="`echo ${prog} | cut -d/ -f1`"
+		datafile="`echo ${prog} | cut -d/ -f2`"
+		redinfile="`echo ${prog} | cut -d/ -f3`"
+		awkopts="`echo ${prog} | cut -d/ -f4`"
+		orgscript="${script}"
 	
 		[ -z "${script}" ] && continue
 
@@ -236,17 +236,18 @@ test)
 	echo_so "TEST OK"
 	;;
 leakcheck)
-	valgrind="`which valgrind 2> /dev/null || echo ""`"
-	[ -z "${valgrind}" ] && {
+	bin_valgrind="`which valgrind 2> /dev/null || echo ""`"
+	[ -z "${bin_valgrind}" ] && {
 		echo_so "valgrind not found. cannot perform this test"
 		exit 1
 	}
-	run_scripts "${valgrind} --leak-check=full --show-reachable=yes --track-fds=yes" 2>&1 > "${OUTFILE}.test"
+	run_scripts "${bin_valgrind} --leak-check=full --show-reachable=yes --track-fds=yes" 2>&1 > "${OUTFILE}.test"
 	echo_so "Inspect the '${OUTFILE}.test' file for any memory and file descriptor leaks."
 	;;
 *)
 	echo_so "USAGE: $0 init"
 	echo_so "       $0 test"
+	echo_so "       $0 leakcheck"
 	exit 1
 	;;
 esac
