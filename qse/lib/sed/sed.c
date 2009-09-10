@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 280 2009-09-07 13:34:49Z hyunghwan.chung $
+ * $Id: sed.c 285 2009-09-10 03:05:13Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -203,7 +203,7 @@ void qse_sed_setmaxdepth (qse_sed_t* sed, int ids, qse_size_t depth)
 
 static qse_cint_t getnextsc (qse_sed_t* sed)
 {
-	if (++sed->src.cur < sed->src.end) 
+	if (sed->src.cur < sed->src.end) 
 	{
 		if (sed->src.cc == QSE_T('\n')) 
 		{
@@ -211,7 +211,8 @@ static qse_cint_t getnextsc (qse_sed_t* sed)
 			sed->src.loc.col = 1;
 		}
 		else sed->src.loc.col++;
-		sed->src.cc = *(sed)->src.cur;
+
+		sed->src.cc = *sed->src.cur++;
 		/* TODO: support different line end convension */
 		/*if (sed->src.cc == QSE_T('\n')) sed->src.loc.lin++;*/
 	}
@@ -1225,20 +1226,21 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 {
 	qse_cint_t c;
-	qse_sed_cmd_t* cmd;
+	qse_sed_cmd_t* cmd = QSE_NULL;
 
 	/* store the source code pointers */
-	sed->src.ptr  = sptr;
-	sed->src.end  = sptr + slen;
-	sed->src.cur  = sptr;
+	sed->src.ptr = sptr;
+	sed->src.end = sptr + slen;
+	sed->src.cur = sptr;
 	sed->src.loc.lin = 1;
-	sed->src.loc.col = 1;
-	sed->src.cc = (slen > 0)? (*sptr): QSE_CHAR_EOF;
+	sed->src.loc.col = 0;
+	sed->src.cc = QSE_CHAR_EOF;
 	
+	c = NXTSC (sed);
+
 	/* free all the commands previously compiled */
 	free_all_command_blocks (sed);
 	QSE_ASSERT (sed->cmd.lb == &sed->cmd.fb && sed->cmd.lb->len == 0);
-	cmd = &sed->cmd.lb->buf[sed->cmd.lb->len];
 
 	/* clear the label table */
 	qse_map_clear (&sed->tmp.labs);
@@ -1251,15 +1253,13 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	{
 		int n;
 
-		c = CURSC (sed);
-		
 		/* skip white spaces and comments*/
 		while (IS_WSPACE(c)) c = NXTSC (sed);
 		if (c == QSE_T('#'))
 		{
 			do c = NXTSC (sed); 
-			while (!IS_LINTERM(c) && c != QSE_CHAR_EOF);
-			NXTSC (sed);
+			while (!IS_LINTERM(c) && c != QSE_CHAR_EOF) ;
+			c = NXTSC (sed);
 			continue;
 		}
 
@@ -1269,15 +1269,20 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		if (c == QSE_T(';')) 
 		{
 			/* semicolon without a address-command pair */
-			NXTSC (sed);
+			c = NXTSC (sed);
 			continue;
 		}
 
 		/* initialize the current command */
+		cmd = &sed->cmd.lb->buf[sed->cmd.lb->len];
 		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
 
 		/* process the first address */
-		if (get_address (sed, &cmd->a1) == QSE_NULL) return -1;
+		if (get_address (sed, &cmd->a1) == QSE_NULL) 
+		{
+			cmd = QSE_NULL;
+			goto oops;
+		}
 
 		c = CURSC (sed);
 		if (cmd->a1.type != QSE_SED_ADR_NONE)
@@ -1285,7 +1290,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 			while (IS_SPACE(c)) c = NXTSC (sed);
 
 			if (c == QSE_T(',') ||
-			    ((sed->option&QSE_SED_STARTSTEP) && c==QSE_T('~')))
+			    ((sed->option & QSE_SED_STARTSTEP) && c == QSE_T('~')))
 			{
 				qse_char_t delim = c;
 
@@ -1295,8 +1300,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 				if (get_address (sed, &cmd->a2) == QSE_NULL) 
 				{
 					QSE_ASSERT (cmd->a2.type == QSE_SED_ADR_NONE);
-					free_address (sed, cmd);
-					return -1;
+					goto oops;
 				}
 
 				if (delim == QSE_T(','))
@@ -1304,8 +1308,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 					if (cmd->a2.type == QSE_SED_ADR_NONE)
 					{
 						SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
-						free_address(sed, cmd);
-						return -1;
+						goto oops;
 					}
 				}
 				else if ((sed->option&QSE_SED_STARTSTEP) && 
@@ -1315,8 +1318,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 					    cmd->a2.type != QSE_SED_ADR_LINE)
 					{
 						SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
-						free_address(sed, cmd);
-						return -1;
+						goto oops;
 					}
 
 					cmd->a2.type = QSE_SED_ADR_STEP;	
@@ -1337,24 +1339,26 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 				cmd->negated = !cmd->negated; 
 				c = NXTSC(sed);
 			} 
-			while (c== QSE_T('!'));
+			while (c == QSE_T('!'));
 
 			while (IS_SPACE(c)) c = NXTSC (sed);
 		}
 	
 		n = get_command (sed, cmd);
-		if (n <= -1) 
-		{
-			free_address (sed, cmd);
-			return -1;
-		}
+		if (n <= -1) goto oops;
 
+		c = CURSC (sed);
+
+		/* cmd's end of life */
+		cmd = QSE_NULL;
+
+		/* increment the total numbers of complete commands */
 		sed->cmd.lb->len++;
 		if (sed->cmd.lb->len >= QSE_COUNTOF(sed->cmd.lb->buf))
 		{
-			if (add_command_block (sed) <= -1) return -1;
+			/* increase a command buffer block as necessary */
+			if (add_command_block (sed) <= -1) goto oops;
 		}
-		cmd = &sed->cmd.lb->buf[sed->cmd.lb->len];
 	}
 
 	if (sed->tmp.grp.level != 0)
@@ -1364,6 +1368,10 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	}
 
 	return 0;
+
+oops:
+	if (cmd != QSE_NULL) free_address (sed, cmd);
+	return -1;
 }
 
 static int read_char (qse_sed_t* sed, qse_char_t* c)

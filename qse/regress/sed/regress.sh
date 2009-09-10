@@ -49,10 +49,10 @@ TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
 
 PROGS="
-	001.sed/001.dat//-n
-	002.sed/002.dat//
-	003.sed/003.dat//
-	004.sed/004.dat//
+	s001.sed/s001.dat//-n
+	s002.sed/s002.dat//
+	s003.sed/s003.dat//
+	s004.sed/s004.dat//
 "
 
 [ -x "${QSESED}" ] || 
@@ -122,7 +122,15 @@ leakcheck)
 		exit 1
 	}
 	run_scripts "${bin_valgrind} --leak-check=full --show-reachable=yes --track-fds=yes" 2>&1 > "${OUTFILE}.test"
-	echo_so "Inspect the '${OUTFILE}.test' file for any memory and file descriptor leaks."
+	x=`grep -Fic "no leaks are possible" "${OUTFILE}.test"`
+	y=`grep -Fic "${bin_valgrind}" "${OUTFILE}.test"`
+	if [ ${x} -eq ${y} ] 
+	then
+		echo_so "(POSSIBLY) no memory leaks detected".
+	else
+		echo_so "(POSSIBLY) some memory leaks detected".
+	fi
+	echo_so "Inspect the '${OUTFILE}.test' file for details"
 	;;
 *)
 	echo_so "USAGE: $0 init"
