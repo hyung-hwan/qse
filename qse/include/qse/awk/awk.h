@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 277 2009-09-02 12:55:55Z hyunghwan.chung $
+ * $Id: awk.h 286 2009-09-14 13:29:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -819,7 +819,7 @@ typedef struct qse_awk_errinf_t qse_awk_errinf_t;
  * object with the qse_awk_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_awk_errstr_t) (
-	qse_awk_t*       awk,   /**< awk object */
+	qse_awk_t*       awk,   /**< awk */
 	qse_awk_errnum_t num    /**< error number */
 );
 
@@ -834,6 +834,7 @@ enum qse_awk_depth_t
 	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5),
 	QSE_AWK_DEPTH_INCLUDE     = (1 << 6)
 };
+typedef enum qse_awk_depth_t qse_awk_depth_t;
 
 /**
  * The qse_awk_gbl_id_t type defines intrinsic globals variable IDs.
@@ -979,9 +980,9 @@ extern qse_awk_val_t* qse_awk_val_one;
  * @return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
  */
 qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t*    mmgr, /**< a memory manager */
+	qse_mmgr_t*    mmgr, /**< memory manager */
 	qse_size_t     xtn,  /**< extension size in bytes */
-	qse_awk_prm_t* prm   /**< a pointer to a primitive function structure */
+	qse_awk_prm_t* prm   /**< pointer to a primitive function structure */
 );
 
 /**
@@ -989,7 +990,7 @@ qse_awk_t* qse_awk_open (
  * @return 0 on success, -1 on failure 
  */
 int qse_awk_close (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1015,7 +1016,7 @@ int qse_awk_clear (
  * The qse_awk_geterrstr() gets an error string getter.
  */
 qse_awk_errstr_t qse_awk_geterrstr (
-	qse_awk_t*       awk    /**< awk object */
+	qse_awk_t*       awk    /**< awk */
 );
 
 /**
@@ -1043,7 +1044,7 @@ qse_awk_errstr_t qse_awk_geterrstr (
  * @endcode
  */
 void qse_awk_seterrstr (
-	qse_awk_t*       awk,   /**< awk object */
+	qse_awk_t*       awk,   /**< awk */
 	qse_awk_errstr_t errstr /**< error string getter */
 );
 
@@ -1053,7 +1054,7 @@ void qse_awk_seterrstr (
  * @return error number
  */
 qse_awk_errnum_t qse_awk_geterrnum (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1061,16 +1062,17 @@ qse_awk_errnum_t qse_awk_geterrnum (
  * last error has occurred.
  */
 const qse_awk_loc_t* qse_awk_geterrloc (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
  * The qse_awk_geterrmsg() function returns the error message describing
- * the last error occurred.
+ * the last error occurred. The @b fil field of the location returned is
+ * #QSE_NULL if the error occurred in the main script.
  * @return error message
  */
 const qse_char_t* qse_awk_geterrmsg (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1078,7 +1080,7 @@ const qse_char_t* qse_awk_geterrmsg (
  * pointed to by @a errinf from @a awk.
  */
 void qse_awk_geterrinf (
-	qse_awk_t*        awk,   /**< awk object */
+	qse_awk_t*        awk,   /**< awk */
 	qse_awk_errinf_t* errinf /**< error information buffer */
 );
 
@@ -1089,53 +1091,78 @@ void qse_awk_geterrinf (
  * error message.
  */
 void qse_awk_seterrnum (
-	qse_awk_t*        awk,    /**< awk object */
+	qse_awk_t*        awk,    /**< awk */
 	qse_awk_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument array for formatting 
 	                           *   an error message */
 );
 
+/**
+ * The qse_awk_seterrinf() function sets the error information. This function
+ * may be useful if you want to set a custom error message rather than letting
+ * it automatically formatted.
+ */
 void qse_awk_seterrinf (
-	qse_awk_t*              awk, 
-	const qse_awk_errinf_t* errinf
-);
-
-void qse_awk_geterror (
-	qse_awk_t*         awk,
-	qse_awk_errnum_t*  errnum, 
-	const qse_char_t** errmsg,
-	qse_awk_loc_t*     errloc
+	qse_awk_t*              awk,   /**< awk */
+	const qse_awk_errinf_t* errinf /**< error information */
 );
 
 /**
- * The qse_awk_seterror() functon sets error information.
+ * The qse_awk_geterror() function gets error information via parameters.
+ */
+void qse_awk_geterror (
+	qse_awk_t*         awk,    /**< awk */
+	qse_awk_errnum_t*  errnum, /**< error number */
+	const qse_char_t** errmsg, /**< error message */
+	qse_awk_loc_t*     errloc  /**< error location */
+);
+
+/**
+ * The qse_awk_seterror() function sets error information.
  */
 void qse_awk_seterror (
-	qse_awk_t*           awk,    /**< awk object */
+	qse_awk_t*           awk,    /**< awk */
 	qse_awk_errnum_t     errnum, /**< error number */
 	const qse_cstr_t*    errarg, /**< argument array for formatting 
 	                              *   an error message */
 	const qse_awk_loc_t* errloc  /**< error location */
 );
 
+/**
+ * The qse_awk_getoption() function gets the current options set.
+ * @return 0 or a number ORed of #qse_awk_option_t enumerators.
+ */
 int qse_awk_getoption (
-	qse_awk_t* awk
+	qse_awk_t* awk /**< awk */
 );
 
+/**
+ * The qse_awk_setoption() function sets the options.
+ */
 void qse_awk_setoption (
-	qse_awk_t* awk,
-	int        opt
+	qse_awk_t* awk, /**< awk */
+	int        opt  /**< 0 or a number ORed of 
+	                 *   #qse_awk_option_t enumerators */
 );
 
+/**
+ * The qse_awk_getmaxdepth() function gets the current maximum recursing depth 
+ * for a specified operation @a type.
+ * @return maximum depth
+ */
 qse_size_t qse_awk_getmaxdepth (
-	qse_awk_t* awk,
-	int        type
+	qse_awk_t*      awk, /**< awk */
+	qse_awk_depth_t type /**< operation type */
 );
 
+/**
+ * The qse_awk_setmaxdepth() function sets the maximum recursing depth for
+ * operations indicated by @a types.
+ */
 void qse_awk_setmaxdepth (
-	qse_awk_t* awk,
-	int        types,
-	qse_size_t depth
+	qse_awk_t* awk,   /**< awk */
+	int        types, /**< number ORed of #qse_awk_depth_t enumerators */
+	qse_size_t depth  /**< maximum depth */
 );
 
 int qse_awk_getword (
@@ -1166,7 +1193,7 @@ void qse_awk_unsetallwords (
  * @return 0 on success, -1 on failure
  */
 int qse_awk_setword (
-	qse_awk_t*        awk,  /**< awk object */
+	qse_awk_t*        awk,  /**< awk */
 	const qse_cstr_t* okw,  /**< old keyword */
 	const qse_cstr_t* nkw   /**< new keyword */
 );
@@ -1176,7 +1203,7 @@ int qse_awk_setword (
  * @return the ID of the global variable added on success, -1 on failure.
  */
 int qse_awk_addgbl (
-	qse_awk_t*        awk,   /**< awk object */
+	qse_awk_t*        awk,   /**< awk */
 	const qse_char_t* name,  /**< variable name */
 	qse_size_t        len    /**< name length */
 );
@@ -1186,7 +1213,7 @@ int qse_awk_addgbl (
  * @return 0 on success, -1 on failure
  */
 int qse_awk_delgbl (
-	qse_awk_t*        awk,  /**< awk object */
+	qse_awk_t*        awk,  /**< awk */
 	const qse_char_t* name, /**< variable name */
 	qse_size_t        len   /**< name length */
 );
@@ -1210,7 +1237,7 @@ void* qse_awk_addfnc (
  * @return 0 on success, -1 on failure
  */
 int qse_awk_delfnc (
-	qse_awk_t*        awk,  /**< awk object */
+	qse_awk_t*        awk,  /**< awk */
 	const qse_char_t* name, /**< function name */
 	qse_size_t        len   /**< name length */
 );
@@ -1219,7 +1246,7 @@ int qse_awk_delfnc (
  * The qse_awk_clrfnc() function deletes all intrinsic functions
  */
 void qse_awk_clrfnc (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1264,7 +1291,7 @@ void qse_awk_clrfnc (
  * @return 0 on success, -1 on failure.
  */
 int qse_awk_parse (
-	qse_awk_t*     awk, /**< awk object */
+	qse_awk_t*     awk, /**< awk */
 	qse_awk_sio_t* sio  /**< source script I/O handler */
 );
 
@@ -1273,7 +1300,7 @@ int qse_awk_parse (
  * @return a pointer to a memory block on success, #QSE_NULL on failure
  */
 void* qse_awk_alloc (
-	qse_awk_t* awk,  /**< awk object */
+	qse_awk_t* awk,  /**< awk */
 	qse_size_t size  /**< size of memory to allocate in bytes */
 );
 
@@ -1282,17 +1309,16 @@ void* qse_awk_alloc (
  * @return a pointer to a memory block on success, #QSE_NULL on failure
  */
 void* qse_awk_realloc (
-	qse_awk_t* awk,  /**< awk object */
+	qse_awk_t* awk,  /**< awk */
 	void*      ptr,  /**< memory block */
 	qse_size_t size  /**< new block size in bytes */
 );
-
 
 /**
  * The qse_awk_free() function frees dynamic memory allocated.
  */
 void qse_awk_free (
-	qse_awk_t* awk, /**< awk object */
+	qse_awk_t* awk, /**< awk */
 	void*      ptr  /**< memory block to free */
 );
 
@@ -1305,7 +1331,7 @@ void qse_awk_free (
  *         #QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strdup (
-	qse_awk_t*        awk, /**< awk object */
+	qse_awk_t*        awk, /**< awk */
 	const qse_char_t* str  /**< string pointer */
 );
 
@@ -1319,11 +1345,14 @@ qse_char_t* qse_awk_strdup (
  *         #QSE_NULL on failure.
  */
 qse_char_t* qse_awk_strxdup (
-	qse_awk_t*        awk, /**< awk object */
+	qse_awk_t*        awk, /**< awk */
 	const qse_char_t* str, /**< string pointer */
 	qse_size_t        len  /**< string length */
 );
 
+/**
+ * The qse_awk_strxtolong() function converts a string to an integer.
+ */
 qse_long_t qse_awk_strxtolong (
 	qse_awk_t*         awk,
 	const qse_char_t*  str,
@@ -1332,6 +1361,10 @@ qse_long_t qse_awk_strxtolong (
 	const qse_char_t** endptr
 );
 
+/**
+ * The qse_awk_strxtoreal() function converts a string to a floating-point
+ * number.
+ */
 qse_real_t qse_awk_strxtoreal (
 	qse_awk_t*         awk,
 	const qse_char_t*  str,
@@ -1339,6 +1372,9 @@ qse_real_t qse_awk_strxtoreal (
 	const qse_char_t** endptr
 );
 
+/**
+ * The qse_awk_longtostr() functon convers an integer to a string.
+ */
 qse_size_t qse_awk_longtostr (
 	qse_awk_t*        awk,
 	qse_long_t        value,
@@ -1360,7 +1396,7 @@ qse_size_t qse_awk_longtostr (
  * @return new runtime context on success, #QSE_NULL on failure
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t*        awk, /**< awk object */
+	qse_awk_t*        awk, /**< awk */
 	qse_size_t        xtn, /**< size of extension in bytes */
 	qse_awk_rio_t*    rio, /**< runtime IO handlers */
 	const qse_cstr_t* arg  /**< argument array to set ARGV */
@@ -1430,7 +1466,7 @@ qse_awk_val_t* qse_awk_rtx_call (
  * invoked with the awk parameter.
  */
 void qse_awk_stopall (
-	qse_awk_t* awk /**< awk object */
+	qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1466,8 +1502,8 @@ void qse_awk_rtx_setrcb (
 );
 
 /**
- * The qse_awk_rtx_getnargs() gets the number of arguments passed to 
- * qse_awk_run().
+ * The qse_awk_rtx_getnargs() gets the number of arguments passed to an 
+ * intrinsic functon.
  */
 qse_size_t qse_awk_rtx_getnargs (
 	qse_awk_rtx_t* rtx
@@ -1492,7 +1528,7 @@ qse_awk_val_t* qse_awk_rtx_getarg (
  */
 qse_awk_val_t* qse_awk_rtx_getgbl (
 	qse_awk_rtx_t* rtx, /**< runtime context */
-	int            id   /**< a global variable ID */
+	int            id   /**< global variable ID */
 );
 
 /**
@@ -1566,17 +1602,27 @@ qse_map_t* qse_awk_rtx_getnvmap (
 
 /**
  * The qse_awk_rtx_geterrnum() function gets the number of the last error
- * occurred in a runtime context.
+ * occurred during runtime.
  * @return error number
  */
 qse_awk_errnum_t qse_awk_rtx_geterrnum (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
+/**
+ * The qse_awk_rtx_geterrloc() function gets the location of the last error
+ * occurred during runtime. The 
+ * @return error location
+ */
 const qse_awk_loc_t* qse_awk_rtx_geterrloc (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
+/**
+ * The qse_awk_rtx_geterrmsg() function gets the string describing the last 
+ * error occurred during runtime.
+ * @return error message
+ */
 const qse_char_t* qse_awk_rtx_geterrmsg (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
@@ -1603,17 +1649,27 @@ void qse_awk_rtx_geterror (
 	qse_awk_loc_t*     errloc  /**< error location */
 );
 
+/** 
+ * The qse_awk_rtx_seterrnum() function sets the error information omitting
+ * the error location.
+ */
 void qse_awk_rtx_seterrnum (
 	qse_awk_rtx_t*    rtx,    /**< runtime context */
 	qse_awk_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< arguments to format error message */
 );
 
+/** 
+ * The qse_awk_rtx_seterrinf() function sets error information.
+ */
 void qse_awk_rtx_seterrinf (
 	qse_awk_rtx_t*          rtx,   /**< runtime context */
 	const qse_awk_errinf_t* errinf /**< error information */
 );
 
+/**
+ * The qse_awk_rtx_seterror() function sets error information.
+ */
 void qse_awk_rtx_seterror (
 	qse_awk_rtx_t*       rtx,    /**< runtime context */
 	qse_awk_errnum_t     errnum, /**< error number */
@@ -1627,44 +1683,75 @@ void qse_awk_rtx_seterror (
  * and fields ($1 to $N).
  */
 int qse_awk_rtx_clrrec (
-	qse_awk_rtx_t* rtx,
+	qse_awk_rtx_t* rtx, /** runtime context */
 	qse_bool_t     skip_inrec_line
 );
 
+/**
+ * The qse_awk_rtx_setrec() function sets the input record ($0) or 
+ * input fields ($1 to $N).
+ */
 int qse_awk_rtx_setrec (
-	qse_awk_rtx_t*    rtx,
-	qse_size_t        idx,
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_awk_rtx_t*    rtx, /**< runtime context */
+	qse_size_t        idx, /**< 0 for $0, N for $N */
+	const qse_char_t* str, /**< string pointer */
+	qse_size_t        len  /**< string length */
 );
 
-/* value manipulation functions */
+/**
+ * The qse_awk_rtx_makeintval() function creates an integer value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makeintval (
 	qse_awk_rtx_t* rtx,
 	qse_long_t     v
 );
+
+/**
+ * The qse_awk_rtx_makerealval() function creates a floating-point value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makerealval (
 	qse_awk_rtx_t* rtx,
 	qse_real_t     v
 );
 
+/**
+ * The qse_awk_rtx_makestrval0() function creates a string value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makestrval0 (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str
 );
 
+/**
+ * The qse_awk_rtx_makestrval() function creates a string value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makestrval (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
+/**
+ * The qse_awk_rtx_makestrval_nodup() function creates a string value. 
+ * The @a len character array pointed to by @a str is not duplicated. 
+ * Instead the pointer and the lengh are just reused.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makestrval_nodup (
 	qse_awk_rtx_t* rtx,
 	qse_char_t*    str,
 	qse_size_t     len
 );
 
+/**
+ * The qse_awk_rtx_makestrval2() function creates a string value combining
+ * two strings.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str1,
@@ -1673,12 +1760,22 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_size_t        len2
 );
 
+/**
+ * The qse_awk_rtx_makenstrval() function creates a numeric string value.
+ * A numeric string is a string value whose one of the header fields @b nstr
+ * is 1.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makenstrval (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
+/**
+ * The qse_awk_rtx_makerexval() function creates a regular expression value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makerexval (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* buf,
@@ -1686,19 +1783,33 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	void*             code
 );
 
+/**
+ * The qse_awk_rtx_makemapval() function creates an empty map value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makemapval (
 	qse_awk_rtx_t* rtx
 );
 
+/**
+ * The qse_awk_rtx_makerefval() function creates a reference value.
+ * @return value on success, QSE_NULL on failure
+ */
 qse_awk_val_t* qse_awk_rtx_makerefval (
 	qse_awk_rtx_t*  rtx,
 	int             id,
 	qse_awk_val_t** adr
 );
 
+/**
+ * The qse_awk_rtx_isstaticval() function determines if a value is static.
+ * A static value is allocated once and reused until a runtime context @ rtx 
+ * is closed.
+ * @return QSE_TRUE if @a val is static, QSE_FALSE if @a val is false
+ */
 qse_bool_t qse_awk_rtx_isstaticval (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_val_t* val  /**< value to check */
 );
 
 /**
@@ -1707,7 +1818,7 @@ qse_bool_t qse_awk_rtx_isstaticval (
  */
 void qse_awk_rtx_refupval (
 	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_awk_val_t* val  /**< a value */
+	qse_awk_val_t* val  /**< value */
 );
 
 /**

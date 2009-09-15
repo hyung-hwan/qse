@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 277 2009-09-02 12:55:55Z hyunghwan.chung $
+ * $Id: Awk.hpp 286 2009-09-14 13:29:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -49,6 +49,8 @@ public:
 	typedef qse_awk_errnum_t errnum_t;
 	typedef qse_awk_errstr_t errstr_t;
 	typedef qse_awk_errinf_t errinf_t;
+
+	typedef qse_awk_depth_t depth_t;
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
@@ -973,7 +975,7 @@ public:
 	/** Sets the maximum depth */
 	void setMaxDepth (int ids, size_t depth);
 	/** Gets the maximum depth */
-	size_t getMaxDepth (int id) const;
+	size_t getMaxDepth (depth_t id) const;
 
 	/**
 	 * Adds an ARGV string as long as @a len characters pointed to 
