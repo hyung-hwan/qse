@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
+ * $Id: Awk.cpp 286 2009-09-14 13:29:55Z hyunghwan.chung $
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -1314,7 +1314,7 @@ void Awk::setMaxDepth (int ids, size_t depth)
 	qse_awk_setmaxdepth (awk, ids, depth);
 }
 
-Awk::size_t Awk::getMaxDepth (int id) const 
+Awk::size_t Awk::getMaxDepth (depth_t id) const 
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	return qse_awk_getmaxdepth (awk, id);

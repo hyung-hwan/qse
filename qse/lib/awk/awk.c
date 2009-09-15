@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 267 2009-08-25 09:50:07Z hyunghwan.chung $ 
+ * $Id: awk.c 286 2009-09-14 13:29:55Z hyunghwan.chung $ 
  *
    Copyright 2006-2009 Chung, Hyung-Hwan.
 
@@ -447,7 +447,7 @@ int qse_awk_setword (
 	return 0;
 }
 
-qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, int type)
+qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, qse_awk_depth_t type)
 {
 	return (type == QSE_AWK_DEPTH_BLOCK_PARSE)? awk->parse.depth.max.block:
 	       (type == QSE_AWK_DEPTH_BLOCK_RUN)? awk->run.depth.max.block:
