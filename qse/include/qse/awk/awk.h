@@ -1,19 +1,21 @@
 /*
- * $Id: awk.h 286 2009-09-14 13:29:55Z hyunghwan.chung $
+ * $Id: awk.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_AWK_AWK_H_
@@ -26,31 +28,29 @@
 
 /** @file
  * An embeddable AWK interpreter is defined in this header file.
+ *
+ * @todo
+ * - make enhancement to treat a function as a value
+ * - add RQ (right quote), LQ (left quote), ES (escaper) for more powerful 
+ *   record splitting
+ * - improve performance of qse_awk_rtx_readio() if RS is logner than 2 chars.
  */
 
 /**
  * @example awk.c
  * This program demonstrates how to build a complete awk interpreter.
- */
-
-/**
+ *
  * @example awk01.c
  * This program demonstrates how to use qse_awk_rtx_loop().
- */
-
-/**
+ *
  * @example awk02.c
  * The program deparses the source code and prints it before executing it.
- */
-
-/**
+ *
  * @example awk03.c
  * This program demonstrates how to use qse_awk_rtx_call().
  * It parses the program stored in the string src and calls the functions
  * stated in the array fnc. If no errors occur, it should print 24.
- */
-
-/**
+ *
  * @example awk04.c
  * This programs shows how to qse_awk_rtx_call().
  */
@@ -81,7 +81,7 @@
  *
  * It provides an interface to change the conventional behavior of the 
  * interpreter; most notably, you can call a particular function with 
- * qse_awk_rtx_call() instead of entering the BEGIN,pattern-action blocks,END
+ * qse_awk_rtx_call() instead of entering the BEGIN, pattern-action blocks, END
  * loop. By doing this, you may utilize a script in an event-driven way.
  *
  * @sa qse_awk_rtx_t qse_awk_open qse_awk_close
@@ -289,7 +289,6 @@ typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
  * The qse_awk_sio_lxc_t type defines a structure to store a character
  * with its location information.
  */
-typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 struct qse_awk_sio_lxc_t
 {
 	qse_cint_t        c;   /**< character */
@@ -297,6 +296,7 @@ struct qse_awk_sio_lxc_t
 	qse_size_t        col; /**< column */
 	const qse_char_t* fil; /**< file */
 };
+typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
 struct qse_awk_sio_arg_t 
 {
@@ -365,11 +365,15 @@ enum qse_awk_rio_mode_t
 };
 typedef enum qse_awk_rio_mode_t qse_awk_rio_mode_t;
 
+/*
+ * The qse_awk_rio_rwcmode_t type defines I/O closing modes, especially for 
+ * a two-way pipe.
+ */
 enum qse_awk_rio_rwcmode_t
 {
-	QSE_AWK_RIO_CLOSE_FULL = 0,
-	QSE_AWK_RIO_CLOSE_READ = 1,
-	QSE_AWK_RIO_CLOSE_WRITE = 2
+	QSE_AWK_RIO_CLOSE_FULL  = 0, /**< close both read and write end */
+	QSE_AWK_RIO_CLOSE_READ  = 1, /**< close the read end */
+	QSE_AWK_RIO_CLOSE_WRITE = 2  /**< close the write end */
 };
 typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
 
@@ -378,19 +382,18 @@ typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
  * I/O handler. An I/O handler should inspect the @a mode field and the 
  * @a name field and store an open handle to the @a handle field when 
  * #QSE_AWK_RIO_OPEN is requested. For other request type, it can refer
- * to the handle field set previously.
+ * to the @a handle field set previously.
  */
-typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 struct qse_awk_rio_arg_t 
 {
-	qse_awk_rio_mode_t    mode;    /**< [IN] opening mode */
-	qse_char_t*           name;    /**< [IN] name of I/O object */
-	qse_awk_rio_rwcmode_t rwcmode; /**< [IN] closing mode for rwpipe */
-	void*                 handle;  /**< [OUT] I/O handle set by a handler */
+	qse_awk_rio_mode_t    mode;    /**< opening mode */
+	qse_char_t*           name;    /**< name of I/O object */
+	qse_awk_rio_rwcmode_t rwcmode; /**< closing mode for rwpipe */
+	void*                 handle;  /**< I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 
-	int rwcstate;   /** closing state for rwpipe */
+	int rwcstate;   /* closing state for rwpipe */
 
 	struct
 	{
@@ -409,6 +412,7 @@ struct qse_awk_rio_arg_t
 
 	struct qse_awk_rio_arg_t* next;
 };
+typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 
 /**
  * The qse_awk_rio_fun_t type defines a runtime I/O handler.
@@ -424,7 +428,6 @@ typedef qse_ssize_t (*qse_awk_rio_fun_t) (
 /**
  * The qse_awk_prm_t type defines primitive functions
  */
-typedef struct qse_awk_prm_t qse_awk_prm_t;
 struct qse_awk_prm_t
 {
 	qse_awk_pow_t     pow;
@@ -461,17 +464,18 @@ struct qse_awk_prm_t
 	);
 #endif
 };
+typedef struct qse_awk_prm_t qse_awk_prm_t;
 
 /**
  * The qse_awk_loc_t type defines a structure to hold location.
  */
-typedef struct qse_awk_loc_t qse_awk_loc_t;
 struct qse_awk_loc_t
 {
 	const qse_char_t* fil; /**< file */
 	qse_size_t        lin; /**< line */
 	qse_size_t        col; /**< column */
 };
+typedef struct qse_awk_loc_t qse_awk_loc_t;
 
 /**
  * The qse_awk_sio_t type defines a script stream handler set.
@@ -599,7 +603,7 @@ enum qse_awk_option_t
 	 *    for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
 	 * }
 	 * @endcode
-	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRSPC is on.
+	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRECSPC is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
 	 */
 	QSE_AWK_STRIPRECSPC    = (1 << 6),
@@ -658,6 +662,7 @@ enum qse_awk_option_t
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
 	                   QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
 };
+typedef enum qse_awk_option_t qse_awk_option_t;
 
 /**
  * The qse_awk_errnum_t type defines error codes.
@@ -823,7 +828,10 @@ typedef const qse_char_t* (*qse_awk_errstr_t) (
 	qse_awk_errnum_t num    /**< error number */
 );
 
-/* depth types */
+/**
+ * The qse_awk_depth_t type defines operation types requiring recursion depth
+ * control.
+ */
 enum qse_awk_depth_t
 {
 	QSE_AWK_DEPTH_BLOCK_PARSE = (1 << 0),
@@ -869,6 +877,7 @@ enum qse_awk_gbl_id_t
 	QSE_AWK_MIN_GBL_ID = QSE_AWK_GBL_ARGC,
 	QSE_AWK_MAX_GBL_ID = QSE_AWK_GBL_SUBSEP
 };
+typedef enum qse_awk_gbl_id_t qse_awk_gbl_id_t;
 
 /**
  * The qse_awk_val_type_t type defines types of AWK values. Each value 
@@ -1411,7 +1420,7 @@ void qse_awk_rtx_close (
 
 /**
  * The qse_awk_rtx_loop() function executes the BEGIN block, pattern-action
- * blocks and the END blocks in an AWk program. It returns the global return 
+ * blocks and the END blocks in an AWK program. It returns the global return 
  * value of which the reference count must be decremented when not necessary. 
  * Multiple invocations of the function for the lifetime of a runtime context 
  * is not desirable.
@@ -1437,7 +1446,7 @@ qse_awk_val_t* qse_awk_rtx_loop (
  * The qse_awk_rtx_call() function invokes an AWK function. However, it is
  * not able to invoke an intrinsic function such as split(). 
  * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
- * block, pattern-action blocks, and the END block.
+ * block, the pattern-action blocks, and the END block.
  *
  * The example shows typical usage of the function.
  * @code
@@ -1463,25 +1472,26 @@ qse_awk_val_t* qse_awk_rtx_call (
 
 /**
  * The qse_awk_stopall() function aborts all active runtime contexts
- * invoked with the awk parameter.
+ * associated with @a awk.
  */
 void qse_awk_stopall (
 	qse_awk_t* awk /**< awk */
 );
 
 /**
- * The qse_awk_shouldstop function tests if qse_awk_rtx_stop() has been called.
+ * The qse_awk_isstopreq() function tests if qse_awk_rtx_stop() has been 
+ * called.
  */
-qse_bool_t qse_awk_rtx_shouldstop (
-	qse_awk_rtx_t* rtx
+qse_bool_t qse_awk_rtx_isstopreq (
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
- * The qse_awk_rtx_stop() function causes the active qse_awk_run() function to 
+ * The qse_awk_rtx_stop() function causes an active runtime context @a rtx to 
  * be aborted. 
  */
 void qse_awk_rtx_stop (
-	qse_awk_rtx_t* rtx
+	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -1572,7 +1582,8 @@ int qse_awk_rtx_setofilename (
 );
 
 /**
- * The qse_awk_rtx_getawk() function gets the owning awk object.
+ * The qse_awk_rtx_getawk() function gets the owner of a runtime context @a rtx.
+ * @return owner of a runtime context @a rtx.
  */
 qse_awk_t* qse_awk_rtx_getawk (
 	qse_awk_rtx_t* rtx /**< runtime context */
@@ -1683,8 +1694,8 @@ void qse_awk_rtx_seterror (
  * and fields ($1 to $N).
  */
 int qse_awk_rtx_clrrec (
-	qse_awk_rtx_t* rtx, /** runtime context */
-	qse_bool_t     skip_inrec_line
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_bool_t     skip_inrec_line 
 );
 
 /**

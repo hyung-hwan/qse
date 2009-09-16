@@ -1,19 +1,21 @@
 /*
- * $Id: Sed.hpp 280 2009-09-07 13:34:49Z hyunghwan.chung $
+ * $Id: Sed.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_SED_SED_HPP_
@@ -31,7 +33,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 /**
- * The Sed class implements a stream editor.
+ * The Sed class implements a stream editor by wrapping around #qse_sed_t.
  */
 class Sed: public Mmgr
 {
@@ -53,110 +55,113 @@ public:
 	/// The depth_t type redefines an depth IDs
 	typedef qse_sed_depth_t depth_t;
 
-	/**
-	 * The Sed() function creates an uninitialized stream editor.
-	 */
+	///
+	/// The Sed() function creates an uninitialized stream editor.
+	///
 	Sed (): sed (QSE_NULL), dflerrstr (QSE_NULL) {}
 
-	/**
-	 * The ~Sed() function destroys a stream editor. 
-	 * @note The close() function is not called by this destructor.
-	 *       To avoid resource leaks, You should call close() before
-	 *       a stream editor is destroyed if it has been initialized
-	 *       with open().
-	 */
+	///
+	/// The ~Sed() function destroys a stream editor. 
+	/// @note The close() function is not called by this destructor.
+	///       To avoid resource leaks, You should call close() before
+	///       a stream editor is destroyed if it has been initialized
+	///       with open().
+	///
 	~Sed () {}
 
-	/**
-	 * The open() function initializes a stream editor and makes it
-	 * ready for subsequent use.
-	 * @return 0 on success, -1 on failure.
-	 */
+	///
+	/// The open() function initializes a stream editor and makes it
+	/// ready for subsequent use.
+	/// @return 0 on success, -1 on failure.
+	///
 	int open ();
 
-	/**
-	 * The close() function finalizes a stream editor.
-	 */
+	///
+	/// The close() function finalizes a stream editor.
+	///
 	void close ();
 
-	/**
-	 * The compile() function compiles a null-terminated string pointed
-	 * to by @a sptr.
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The compile() function compiles a null-terminated string pointed
+	/// to by @a sptr.
+	/// @return 0 on success, -1 on failure
+	///
 	int compile (
 		const char_t* sptr ///< a pointer to a null-terminated string
 	);
 
-	/**
-	 * The compile() function compiles a string pointed to by @a sptr
-	 * and of the length @a slen.
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The compile() function compiles a string pointed to by @a sptr
+	/// and of the length @a slen.
+	///  @return 0 on success, -1 on failure
+	///
 	int compile (
 		const char_t* sptr, ///< a pointer to a string 
 		size_t slen         ///< the number of characters in the string
 	);
 
-	/**
-	 * The execute() function executes compiled commands over the IO
-	 * streams defined through IO handlers
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The execute() function executes compiled commands over the I/O
+	/// streams defined through I/O handlers
+	/// @return 0 on success, -1 on failure
+	///
 	int execute ();
 
-	/**
-	 * The getOption() function gets the current options.
-	 * @return current option code
-	 */
+	///
+	/// The getOption() function gets the current options.
+	/// @return 0 or current options ORed of #option_t enumerators.
+	///
 	int getOption () const;
 
-	/**
-	 * The setOption() function sets options for a stream editor.
-	 * The option code @a opt is 0 or OR'ed of #option_t enumerators.
-	 */
+	///
+	/// The setOption() function sets options for a stream editor.
+	/// The option code @a opt is 0 or OR'ed of #option_t enumerators.
+	///
 	void setOption (
 		int opt ///< option code
 	);
 
-	/**
-	 * The getMaxDepth() function gets the maximum processing depth.
-	 */
-	size_t getMaxDepth (depth_t id) const;
+	///
+	/// The getMaxDepth() function gets the maximum processing depth for
+	/// an operation type identified by @a id.
+	///
+	size_t getMaxDepth (
+		depth_t id ///< operation type
+	) const;
 
-	/**
-	 * The setMaxDepth() function gets the maximum processing depth.
-	 */
+	///
+	/// The setMaxDepth() function gets the maximum processing depth.
+	///
 	void setMaxDepth (
 		int    ids,  ///< 0 or a number OR'ed of depth_t values
 		size_t depth ///< 0 maximum depth
 	);
 
-	/**
-	 * The getErrorMessage() function gets the description of the last 
-	 * error occurred. It returns an empty string if the stream editor
-	 * has not been initialized with the open() function.
-	 */
+	///
+	/// The getErrorMessage() function gets the description of the last 
+	/// error occurred. It returns an empty string if the stream editor
+	/// has not been initialized with the open() function.
+	///
 	const char_t* getErrorMessage() const;
 
-	/**
-	 * The getErrorLocation() function gets the location where
-	 * the last error occurred. The line and the column of the ::loc_t 
-	 * structure retruend are 0 if the stream editor has not been 
-	 * initialized with the open() function.
-	 */
+	///
+	/// The getErrorLocation() function gets the location where
+	/// the last error occurred. The line and the column of the #loc_t 
+	/// structure retruend are 0 if the stream editor has not been 
+	/// initialized with the open() function.
+	///
 	loc_t getErrorLocation () const;
 
-	/**
-	 * The getErrorNumber() function gets the number of the last 
-	 * error occurred. It returns QSE_SED_ENOERR if the stream editor
-	 * has not been initialized with the open() function.
-	 */
+	///
+	/// The getErrorNumber() function gets the number of the last 
+	/// error occurred. It returns QSE_SED_ENOERR if the stream editor
+	/// has not been initialized with the open() function.
+	///
 	errnum_t getErrorNumber () const;
 
-	/**
-	 * The setError() function sets information on an error occurred.
-	 */
+	///
+	/// The setError() function sets information on an error occurred.
+	///
 	void setError (
 		errnum_t      num,             ///< error number
 		const cstr_t* args = QSE_NULL, ///< string array for formatting
@@ -164,32 +169,32 @@ public:
 		const loc_t*  loc = QSE_NULL   ///< error location
 	);
 
-	/**
-	 * The getConsoleLine() function returns the current line
-	 * number from an input console. 
-	 * @return current line number
-	 */
+	///
+	/// The getConsoleLine() function returns the current line
+	/// number from an input console. 
+	/// @return current line number
+	///
 	size_t getConsoleLine ();
 
-	/**
-	 * The setConsoleLine() function changes the current line
-	 * number from an input console. 
-	 */
+	///
+	/// The setConsoleLine() function changes the current line
+	/// number from an input console. 
+	///
 	void setConsoleLine (
 		size_t num ///< a line number
 	);
 
 protected:
-	/**
-	 * The IOBase class is a base class for IO operation. It wraps around
-	 * the primitive Sed::io_arg_t type and exposes relevant information to
-	 * an IO handler 
-	 */
+	///
+	/// The IOBase class is a base class for I/O operations. It wraps around
+	/// the primitive #io_arg_t type and exposes relevant information to
+	/// an I/O handler.
+	///
 	class IOBase
 	{
 	public:
 		/** 
-		 * The Mode enumerator defines IO operation modes.
+		 * The Mode enumerator defines I/O operation modes.
 		 */
 		enum Mode
 		{
@@ -202,33 +207,33 @@ protected:
 			arg(arg), mode (mode) {}
 
 	public:
-		/**
-		 * The getHandle() function gets an IO handle set with the
-		 * setHandle() function. Once set, it is maintained until
-		 * an assoicated IO handler closes it or changes it with
-		 * another call to setHandle().
-		 */
+		///
+		/// The getHandle() function gets an I/O handle set with the
+		/// setHandle() function. Once set, it is maintained until
+		/// an assoicated I/O handler closes it or changes it with
+		/// another call to setHandle().
+		///
 		const void* getHandle () const
 		{
 			return arg->handle;
 		}
 
-		/**
-		 * The setHandle() function sets an IO handle and is typically
-		 * called in stream opening functions such as Sed::openConsole()
-		 * and Sed::openFile(). You can get the handle with the 
-		 * getHandle() function as needed.
-		 */
+		///
+		/// The setHandle() function sets an I/O handle and is typically
+		/// called in stream opening functions such as openConsole()
+		/// and openFile(). You can get the handle with getHandle() 
+		// as needed.
+		///
 		void setHandle (void* handle)
 		{
 			arg->handle = handle;
 		}		
 
-		/**
-		 * The getMode() function gets the IO operation mode requested.
-		 * A stream opening function can inspect the mode requested and
-		 * open a stream properly 
-		 */
+		///
+		/// The getMode() function gets the I/O mode requested.
+		/// A stream opening function can inspect the mode requested and
+		/// open a stream properly 
+		///
 		Mode getMode ()
 		{
 			return this->mode;
@@ -240,10 +245,10 @@ protected:
 		Mode      mode;
 	};
 
-	/**
-	 * The Console class inherits the IO class and provides functionality 
-	 * for console IO operations.
-	 */
+	///
+	/// The Console class inherits the IOBase class and provides 
+	/// functionality for console I/O operations.
+	///
 	class Console: public IOBase
 	{
 	protected:
@@ -252,10 +257,10 @@ protected:
 			IOBase (arg, mode) {}
 	};
 
-	/**
-	 * The File class inherits the IO class and provides functionality
-	 * for file IO operations.
-	 */
+	///
+	/// The File class inherits the IOBase class and provides functionality
+	/// for file I/O operations.
+	///
 	class File: public IOBase
 	{
 	protected:
@@ -264,130 +269,130 @@ protected:
 			IOBase (arg, mode) {}
 
 	public:
-		/**
-		 * The getName() function gets the file path requested.
-		 * You can call this function from the openFile() function
-		 * to determine a file to open.
-		 */
+		///
+		/// The getName() function gets the file path requested.
+		/// You can call this function from the openFile() function
+		/// to determine a file to open.
+		///
 		const char_t* getName () const
 		{
 			return arg->path;
 		}
 	};
 
-	/**
-	 * The openConsole() function should be implemented by a subclass
-	 * to open a console. It can get the mode requested by invoking
-	 * the Console::getMode() function over the console object @a io.
-	 *
-	 * When it comes to the meaning of the return value, 0 may look
-	 * a bit tricky. Easygoers can just return 1 on success and never
-	 * return 0 from openConsole().
-	 * - If 0 is returned for a Console::READ console, the execute()
-	 * function returns success after having calle closeConsole() as it 
-	 * has opened a console but has reached EOF.
-	 * - If 0 is returned for a Console::WRITE console and there are any
-	 * following writeConsole() requests, the execute() function
-	 * returns failure after having called closeConsole() as it cannot
-	 * write further on EOF.
-	 *
-	 * @return -1 on failure, 1 on success, 0 on success but reached EOF.
-	 */
+	///
+	/// The openConsole() function should be implemented by a subclass
+	/// to open a console. It can get the mode requested by invoking
+	/// the Console::getMode() function over the console object @a io.
+	///
+	/// When it comes to the meaning of the return value, 0 may look
+	/// a bit tricky. Easygoers can just return 1 on success and never
+	/// return 0 from openConsole().
+	/// - If 0 is returned for a Console::READ console, the execute()
+	/// function returns success after having calle closeConsole() as it 
+	/// has opened a console but has reached EOF.
+	/// - If 0 is returned for a Console::WRITE console and there are any
+	/// following writeConsole() requests, the execute() function
+	/// returns failure after having called closeConsole() as it cannot
+	/// write further on EOF.
+	///
+	/// @return -1 on failure, 1 on success, 0 on success but reached EOF.
+	///
 	virtual int openConsole (
 		Console& io ///< a console object
 	) = 0;
 
-	/**
-	 * The closeConsole() function should be implemented by a subclass
-	 * to close a console.
-	 */
+	///
+	/// The closeConsole() function should be implemented by a subclass
+	/// to close a console.
+	///
 	virtual int closeConsole (
 		Console& io ///< a console object
 	) = 0;
 
-	/**
-	 * The readConsole() function should be implemented by a subclass
-	 * to read from a console. It should fill the memory area pointed to
-	 * by @a buf, but at most \a len characters.
-	 * @return the number of characters read on success, 
-	 *         0 on EOF, -1 on failure
-	 */
+	///
+	/// The readConsole() function should be implemented by a subclass
+	/// to read from a console. It should fill the memory area pointed to
+	/// by @a buf, but at most \a len characters.
+	/// @return the number of characters read on success, 
+	///        0 on EOF, -1 on failure
+	///
 	virtual ssize_t readConsole (
 		Console& io,  ///< a console object
 		char_t*  buf, ///< a buffer pointer 
 		size_t   len  ///< the size of a buffer
 	) = 0;
 
-	/**
-	 * The writeConsole() function should be implemented by a subclass
-	 * to write to a console. It should write up to @a len characters
-	 * from the memory are pointed to by @a data.
-	 * @return the number of characters written on success
-	 *         0 on EOF, -1 on failure
-	 * @note The number of characters written may be less than @a len.
-	 *       But the return value 0 causes execute() to fail as
-	 *       writeConsole() is called when there are data to write and
-	 *       it has indicated EOF.
-	 */
+	///
+	/// The writeConsole() function should be implemented by a subclass
+	/// to write to a console. It should write up to @a len characters
+	/// from the memory are pointed to by @a data.
+	/// @return the number of characters written on success
+	///         0 on EOF, -1 on failure
+	/// @note The number of characters written may be less than @a len.
+	///       But the return value 0 causes execute() to fail as
+	///       writeConsole() is called when there are data to write and
+	///       it has indicated EOF.
+	///
 	virtual ssize_t writeConsole (
 		Console&      io,    ///< a console object
 		const char_t* data,  ///< a pointer to data to write
 		size_t        len    ///< the length of data
 	) = 0;
 
-	/**
-	 * The openFile() function should be implemented by a subclass
-	 * to open a file. It can get the mode requested by invoking
-	 * the File::getMode() function over the file object @a io.
-	 * @return -1 on failure, 1 on success, 0 on success but reached EOF.
-	 */
+	///
+	/// The openFile() function should be implemented by a subclass
+	/// to open a file. It can get the mode requested by invoking
+	/// the File::getMode() function over the file object @a io.
+	/// @return -1 on failure, 1 on success, 0 on success but reached EOF.
+	///
 	virtual int openFile (
 		File& io    ///< a file object
 	) = 0;
 
-	/**
-	 * The closeFile() function should be implemented by a subclass
-	 * to close a file.
-	 */
+	///
+	/// The closeFile() function should be implemented by a subclass
+	/// to close a file.
+	///
 	virtual int closeFile (
 		File& io    ///< a file object
 	) = 0;
 
-	/**
-	 * The readFile() function should be implemented by a subclass
-	 * to read from a file. It should fill the memory area pointed to
-	 * by @a buf, but at most \a len characters.
-	 * @return the number of characters read on success, 
-	 *         0 on EOF, -1 on failure
-	 */
+	///
+	/// The readFile() function should be implemented by a subclass
+	/// to read from a file. It should fill the memory area pointed to
+	/// by @a buf, but at most \a len characters.
+	/// @return the number of characters read on success, 
+	///         0 on EOF, -1 on failure
+	///
 	virtual ssize_t readFile (
 		File& io,     ///< a file object
 		char_t*  buf, ///< a buffer pointer 
 		size_t   len  ///< the size of a buffer
 	) = 0;
 
-	/**
-	 * The writeFile() function should be implemented by a subclass
-	 * to write to a file. It should write up to @a len characters
-	 * from the memory are pointed to by @a data.
-	 * @return the number of characters written on success
-	 *         0 on EOF, -1 on failure
-	 * @note The number of characters written may be less than @a len.
-	 *       But the return value 0 causes execute() to fail as
-	 *       writeFile() is called when there are data to write and
-	 *       it has indicated EOF.
-	 */
+	///
+	/// The writeFile() function should be implemented by a subclass
+	/// to write to a file. It should write up to @a len characters
+	/// from the memory are pointed to by @a data.
+	/// @return the number of characters written on success
+	///         0 on EOF, -1 on failure
+	/// @note The number of characters written may be less than @a len.
+	///       But the return value 0 causes execute() to fail as
+	///       writeFile() is called when there are data to write and
+	///       it has indicated EOF.
+	///
 	virtual ssize_t writeFile (
 		File& io,            ///< a file object
 		const char_t* data,  ///< a pointer to data to write
 		size_t        len    ///< the length of data
 	) = 0;
 
-	/**
-	 * The getErrorString() function returns an error formatting string
-	 * for the error number @a num. A subclass wishing to customize
-	 * an error formatting string may override this function.
-	 */ 
+	///
+	/// The getErrorString() function returns an error formatting string
+	/// for the error number @a num. A subclass wishing to customize
+	/// an error formatting string may override this function.
+	/// 
 	virtual const char_t* getErrorString (
 		errnum_t num ///< an error number
 	) const;

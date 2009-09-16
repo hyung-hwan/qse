@@ -1,19 +1,21 @@
 /*
- * $Id: Awk.hpp 286 2009-09-14 13:29:55Z hyunghwan.chung $
+ * $Id: Awk.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_AWK_AWK_HPP_
@@ -33,9 +35,10 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-/** 
- * Represents the AWK interpreter engine.
- */
+/// 
+/// The Awk class implements an AWK interpreter by wrapping around 
+/// #qse_awk_t and #qse_awk_rtx_t.
+///
 class Awk: public Mmgr
 {
 public:
@@ -50,7 +53,14 @@ public:
 	typedef qse_awk_errstr_t errstr_t;
 	typedef qse_awk_errinf_t errinf_t;
 
+	/// The depth_t type redefines #qse_awk_depth_t.
 	typedef qse_awk_depth_t depth_t;
+
+	/// The option_t type redefines #qse_awk_option_t.
+	typedef qse_awk_option_t option_t;
+
+	/// The gbl_id_t type redefines #qse_awk_gbl_id_t.
+	typedef qse_awk_gbl_id_t gbl_id_t;
 
 	/** Represents an internal awk value */
 	typedef qse_awk_val_t val_t;
@@ -70,153 +80,30 @@ public:
 	class Run;
 	friend class Run;
 
-	/**
-	 * @name Error Handling
-	 */
-	/*@{*/
-
-	///
-	/// The ErrorNumber defines error numbers by redefining enumerators
-	/// of the #qse_awk_errnum_t type.
-	///
-	enum ErrorNumber
-	{
-		ERR_NOERR = QSE_AWK_ENOERR,
-		ERR_UNKNOWN = QSE_AWK_EUNKNOWN,
-		ERR_INVAL = QSE_AWK_EINVAL,
-		ERR_NOMEM = QSE_AWK_ENOMEM,
-		ERR_NOSUP = QSE_AWK_ENOSUP,
-		ERR_NOPER = QSE_AWK_ENOPER,
-		ERR_NOENT = QSE_AWK_ENOENT, 
-		ERR_EXIST = QSE_AWK_EEXIST,
-		ERR_IOERR = QSE_AWK_EIOERR,
-		ERR_OPEN = QSE_AWK_EOPEN,
-		ERR_READ = QSE_AWK_EREAD,
-		ERR_WRITE = QSE_AWK_EWRITE,
-		ERR_CLOSE = QSE_AWK_ECLOSE,
-		ERR_INTERN = QSE_AWK_EINTERN,
-		ERR_RUNTIME = QSE_AWK_ERUNTIME,
-		ERR_BLKNST = QSE_AWK_EBLKNST,
-		ERR_EXPRNST = QSE_AWK_EEXPRNST,
-		ERR_LXCHR = QSE_AWK_ELXCHR,
-		ERR_LXDIG = QSE_AWK_ELXDIG,
-		ERR_EOF = QSE_AWK_EEOF,
-		ERR_CMTNC = QSE_AWK_ECMTNC,
-		ERR_STRNC = QSE_AWK_ESTRNC,
-		ERR_LBRACE = QSE_AWK_ELBRACE,
-		ERR_LPAREN = QSE_AWK_ELPAREN,
-		ERR_RPAREN = QSE_AWK_ERPAREN,
-		ERR_RBRACK = QSE_AWK_ERBRACK,
-		ERR_COMMA = QSE_AWK_ECOMMA,
-		ERR_SCOLON = QSE_AWK_ESCOLON,
-		ERR_COLON = QSE_AWK_ECOLON,
-		ERR_STMEND = QSE_AWK_ESTMEND,
-		ERR_KWIN = QSE_AWK_EKWIN,
-		ERR_NOTVAR = QSE_AWK_ENOTVAR,
-		ERR_EXPRNR = QSE_AWK_EEXPRNR,
-		ERR_KWFNC = QSE_AWK_EKWFNC,
-		ERR_KWWHL = QSE_AWK_EKWWHL,
-		ERR_ASSIGN = QSE_AWK_EASSIGN,
-		ERR_IDENT = QSE_AWK_EIDENT,
-		ERR_FUNNAME = QSE_AWK_EFUNNAME,
-		ERR_BLKBEG = QSE_AWK_EBLKBEG,
-		ERR_BLKEND = QSE_AWK_EBLKEND,
-		ERR_KWRED = QSE_AWK_EKWRED,
-		ERR_FNCRED = QSE_AWK_EFNCRED,
-		ERR_FUNRED = QSE_AWK_EFUNRED,
-		ERR_GBLRED = QSE_AWK_EGBLRED,
-		ERR_PARRED = QSE_AWK_EPARRED,
-		ERR_VARRED = QSE_AWK_EVARRED,
-		ERR_DUPPAR = QSE_AWK_EDUPPAR,
-		ERR_DUPGBL = QSE_AWK_EDUPGBL,
-		ERR_DUPLCL = QSE_AWK_EDUPLCL,
-		ERR_BADPAR = QSE_AWK_EBADPAR,
-		ERR_BADVAR = QSE_AWK_EBADVAR,
-		ERR_UNDEF = QSE_AWK_EUNDEF,
-		ERR_LVALUE = QSE_AWK_ELVALUE,
-		ERR_GBLTM = QSE_AWK_EGBLTM,
-		ERR_LCLTM = QSE_AWK_ELCLTM,
-		ERR_PARTM = QSE_AWK_EPARTM,
-		ERR_DELETE = QSE_AWK_EDELETE,
-		ERR_BREAK = QSE_AWK_EBREAK,
-		ERR_CONTINUE = QSE_AWK_ECONTINUE,
-		ERR_NEXTBEG = QSE_AWK_ENEXTBEG,
-		ERR_NEXTEND = QSE_AWK_ENEXTEND,
-		ERR_NEXTFBEG = QSE_AWK_ENEXTFBEG,
-		ERR_NEXTFEND = QSE_AWK_ENEXTFEND,
-		ERR_PRINTFARG = QSE_AWK_EPRINTFARG,
-		ERR_PREPST = QSE_AWK_EPREPST,
-		ERR_INCDECOPR = QSE_AWK_EINCDECOPR,
-		ERR_INCLSTR = QSE_AWK_EINCLSTR,
-		ERR_INCLTD = QSE_AWK_EINCLTD,
-		ERR_DIRECNR = QSE_AWK_EDIRECNR,
-		ERR_DIVBY0 = QSE_AWK_EDIVBY0,
-		ERR_OPERAND = QSE_AWK_EOPERAND,
-		ERR_POSIDX = QSE_AWK_EPOSIDX,
-		ERR_ARGTF = QSE_AWK_EARGTF,
-		ERR_ARGTM = QSE_AWK_EARGTM,
-		ERR_FUNNF = QSE_AWK_EFUNNF,
-		ERR_NOTIDX = QSE_AWK_ENOTIDX,
-		ERR_NOTDEL = QSE_AWK_ENOTDEL,
-		ERR_NOTMAP = QSE_AWK_ENOTMAP,
-		ERR_NOTMAPIN = QSE_AWK_ENOTMAPIN,
-		ERR_NOTMAPNILIN = QSE_AWK_ENOTMAPNILIN,
-		ERR_NOTREF = QSE_AWK_ENOTREF,
-		ERR_NOTASS = QSE_AWK_ENOTASS,
-		ERR_IDXVALASSMAP = QSE_AWK_EIDXVALASSMAP,
-		ERR_POSVALASSMAP = QSE_AWK_EPOSVALASSMAP,
-		ERR_MAPTOSCALAR = QSE_AWK_EMAPTOSCALAR,
-		ERR_SCALARTOMAP = QSE_AWK_ESCALARTOMAP,
-		ERR_MAPNA = QSE_AWK_EMAPNA,
-		ERR_VALTYPE = QSE_AWK_EVALTYPE,
-		ERR_RDELETE = QSE_AWK_ERDELETE,
-		ERR_RRESET = QSE_AWK_ERRESET,
-		ERR_RNEXTBEG = QSE_AWK_ERNEXTBEG,
-		ERR_RNEXTEND = QSE_AWK_ERNEXTEND,
-		ERR_RNEXTFBEG = QSE_AWK_ERNEXTFBEG,
-		ERR_RNEXTFEND = QSE_AWK_ERNEXTFEND,
-		ERR_FNCIMPL = QSE_AWK_EFNCIMPL,
-		ERR_IOUSER = QSE_AWK_EIOUSER,
-		ERR_IOIMPL = QSE_AWK_EIOIMPL,
-		ERR_IONMNF = QSE_AWK_EIONMNF,
-		ERR_IONMEM = QSE_AWK_EIONMEM,
-		ERR_IONMNL = QSE_AWK_EIONMNL,
-		ERR_FMTARG = QSE_AWK_EFMTARG,
-		ERR_FMTCNV = QSE_AWK_EFMTCNV,
-		ERR_CONVFMTCHR = QSE_AWK_ECONVFMTCHR,
-		ERR_OFMTCHR = QSE_AWK_EOFMTCHR,
-		ERR_REXRECUR = QSE_AWK_EREXRECUR,
-		ERR_REXRPAREN = QSE_AWK_EREXRPAREN,
-		ERR_REXRBRACKET = QSE_AWK_EREXRBRACKET,
-		ERR_REXRBRACE = QSE_AWK_EREXRBRACE,
-		ERR_REXUNBALPAREN = QSE_AWK_EREXUNBALPAREN,
-		ERR_REXINVALBRACE = QSE_AWK_EREXINVALBRACE,
-		ERR_REXCOLON = QSE_AWK_EREXCOLON,
-		ERR_REXCRANGE = QSE_AWK_EREXCRANGE,
-		ERR_REXCCLASS = QSE_AWK_EREXCCLASS,
-		ERR_REXBRANGE = QSE_AWK_EREXBRANGE,
-		ERR_REXEND = QSE_AWK_EREXEND,
-		ERR_REXGARBAGE = QSE_AWK_EREXGARBAGE,
-	};
 
 protected:
+	///
+	/// @name Error Handling
+	///
+	/// @{
+
 	///
 	/// The getErrorString() function returns a formatting string
 	/// for an error code @a num. You can override this function
 	/// to customize an error message. You must include the same numbers
 	/// of ${X}'s as the orginal formatting string. Their order may be
 	/// different. The example below changes the formatting string for
-	/// ERR_NOENT.
+	/// #QSE_AWK_ENOENT.
 	/// @code
-	/// const MyAwk::char_t* MyAwk::getErrorString (ErrorNumber num) const 
+	/// const MyAwk::char_t* MyAwk::getErrorString (errnum_t num) const 
 	/// {
-	///    if (num == ERR_NOENT) return QSE_T("cannot find '${0}'");
+	///    if (num == QSE_AWK_ENOENT) return QSE_T("cannot find '${0}'");
 	///    return Awk::getErrorString (num);
 	/// }
 	/// @endcode
 	///
 	virtual const char_t* getErrorString (
-		ErrorNumber num
+		errnum_t num
 	) const;
 
 public:
@@ -224,7 +111,7 @@ public:
 	/// The getErrorNumber() function returns the number of the last
 	/// error occurred.
 	///
-	ErrorNumber getErrorNumber () const;
+	errnum_t getErrorNumber () const;
 
 	///
 	/// The getErrorLocation() function returns the location of the 
@@ -242,7 +129,7 @@ public:
 	/// The setError() function sets error information.
 	///
 	void setError (
-		ErrorNumber   code, ///< error code
+		errnum_t      code, ///< error code
 		const cstr_t* args  = QSE_NULL, ///< message formatting 
 		                                ///  argument array
 		const loc_t*  loc   = QSE_NULL  ///< error location
@@ -253,7 +140,7 @@ public:
 	/// with a customized error message.
 	///
 	void setErrorWithMessage (
-		ErrorNumber   code, ///< error code
+		errnum_t      code, ///< error code
 		const char_t* msg,  ///< error message
 		const loc_t*  loc   ///< error location
 	);
@@ -266,7 +153,7 @@ public:
 protected:
 	void retrieveError ();
 	void retrieveError (Run* run);
-	/*@}*/
+	/// @}
 
 protected:
 	class NoSource;
@@ -370,11 +257,11 @@ protected:
 	};
 
 public:
-	/**
-	 * The RIOBase class is a base class to represent runtime I/O context.
-	 * The Console, File, Pipe classes inherit this class to implement
-	 * an actual I/O context.
-	 */
+	///
+	/// The RIOBase class is a base class to represent runtime I/O 
+	/// operations. The Console, File, Pipe classes implement more specific
+	/// I/O operations by inheriting this class.
+	///
 	class RIOBase
 	{
 	protected:
@@ -400,10 +287,10 @@ public:
 		RIOBase& operator= (const RIOBase&);
 	};
 
-	/**
-	 * The Pipe class encapsulates the pipe operations indicated by
-	 * the | and || operators.
-	 */
+	///
+	/// The Pipe class encapsulates the pipe operations indicated by
+	/// the | and || operators.
+	///
 	class Pipe: public RIOBase
 	{
 	public:
@@ -449,9 +336,9 @@ public:
 		CloseMode getCloseMode () const;
 	};
 
-	/**
-	 * File
-	 */
+	///
+	/// The File class encapsulates file operations by inheriting RIOBase.
+	///
 	class File: public RIOBase
 	{
 	public:
@@ -471,9 +358,10 @@ public:
 		Mode getMode () const;
 	};
 
-	/**
-	 * Console
-	 */
+	///
+	/// The Console class encapsulates the console operations by 
+	/// inheriting RIOBase.
+	///
 	class Console: public RIOBase
 	{
 	public:
@@ -498,9 +386,10 @@ public:
 		char_t* filename;
 	};
 
-	/**
-	 * Represents a value.
-	 */
+	///
+	/// The Value class wraps around #qse_awk_val_t to provide a more 
+	/// comprehensive interface.
+	///
 	class Value
 	{
 	public:
@@ -520,15 +409,18 @@ public:
 		void operator delete (void* p);
 		void operator delete[] (void* p);
 
-		/**
-		 * Represents an index of an arrayed value
-		 */
+		///
+		/// The Index class encapsulates an index of an arrayed value.
+		///
 		class Index
 		{
 		public:
 			friend class Value;
 
+			/// The Index() function creates an empty array index.
 			Index (): ptr (EMPTY_STRING), len (0) {}
+
+			/// The Index() function creates a string array index.
 			Index (const char_t* ptr, size_t len):
 				ptr (ptr), len (len) {}
 
@@ -536,9 +428,9 @@ public:
 			size_t        len;
 		};
 
-		/**
-		 * Represents a numeric index of an arrayed value
-		 */
+		///
+		/// Represents a numeric index of an arrayed value
+		///
 		class IntIndex: public Index
 		{
 		public:
@@ -563,20 +455,32 @@ public:
 		#endif
 		};
 
-		/**
-		 * helper class to iterate over array elements
-		 */
+		///
+		/// The IndexIterator class is a helper class to make simple
+		/// iteration over array elements.
+		///
 		class IndexIterator
 		{
 		public:
 			friend class Value;
 
+			///
+			/// The END variable is a special variable to 
+			/// represent the end of iteration.
+			///
 			static IndexIterator END;
 
+			///
+			/// The IndexIterator() function creates an iterator 
+			/// for an arrayed value.
+			///
 			IndexIterator (): pair (QSE_NULL), buckno (0) {}
+
+		protected:
 			IndexIterator (pair_t* pair, size_t buckno): 
 				pair (pair), buckno (buckno) {}
 
+		public:
 			bool operator==  (const IndexIterator& ii) const
 			{
 				return pair == ii.pair && buckno == ii.buckno;
@@ -592,8 +496,24 @@ public:
 			size_t  buckno;
 		};
 
+		///
+		/// The Value() function creates an empty value associated
+		/// with no runtime context. To set an actual inner value, 
+		/// you must specify a context when calling setXXX() functions.
+		/// i.e., use setInt(run,10) instead of setInt(10).
+		/// 
 		Value ();
+
+		///
+		/// The Value() function creates an empty value associated
+		/// with a runtime context.
+		///
 		Value (Run& run);
+
+		///
+		/// The Value() function creates an empty value associated
+		/// with a runtime context.
+		///
 		Value (Run* run);
 
 		Value (const Value& v);
@@ -710,21 +630,42 @@ public:
 			const char_t* str
 		);
 
-		/** determines if a value is arrayed */
+		///
+		/// The isIndexed() function determines if a value is arrayed.
+		/// @return true if indexed, false if not.
+		///
 		bool isIndexed () const;
 
+		/// 
+		/// The getIndexed() function gets a value at the given 
+		/// index @a idx and sets it to @a val.
+		/// @return 0 on success, -1 on failure
+		///
 		int getIndexed (
-			const Index&  idx,
-			Value*        val
+			const Index&  idx, ///< array index
+			Value*        val  ///< value holder
 		) const;
 
+		///
+		/// The getFirstIndex() function stores the first index of
+		/// an arrayed value into @a idx. 
+		/// @return IndexIterator::END if the arrayed value is empty,
+		///         iterator that can be passed to getNextIndex() if not
+		///
 		IndexIterator getFirstIndex (
-			Index* idx
+			Index* idx ///< index holder
 		) const;
 
+		///
+		/// The getNextIndex() function stores into @a idx the next 
+		/// index of an array value from the position indicated by 
+		/// @a iter.
+		/// @return IndexIterator::END if the arrayed value is empty,
+		///         iterator that can be passed to getNextIndex() if not
+		///
 		IndexIterator getNextIndex (
-			Index* idx,
-			const IndexIterator& iter
+			Index* idx,               ///< index holder
+			const IndexIterator& iter ///< current position
 		) const;
 
 	protected:
@@ -740,32 +681,10 @@ public:
 	};
 
 public:
-	/**
-	 * Defines an identifier of predefined global variables.
-	 * Awk::setGlobal and Awk::getGlobal can take one of these enumerators.
-	 */
-	enum Global
-	{
-		GBL_ARGC = QSE_AWK_GBL_ARGC,           /**< ARGC */
-		GBL_ARGV = QSE_AWK_GBL_ARGV,           /**< ARGV */
-		GBL_CONVFMT = QSE_AWK_GBL_CONVFMT,     /**< CONVFMT */
-		GBL_FILENAME = QSE_AWK_GBL_FILENAME,   /**< FILENAME */
-		GBL_FNR = QSE_AWK_GBL_FNR,             /**< FNR */
-		GBL_FS = QSE_AWK_GBL_FS,               /**< FS */
-		GBL_IGNORECASE = QSE_AWK_GBL_IGNORECASE, /**< IGNORECASE */
-		GBL_NF = QSE_AWK_GBL_NF,               /**< NF */
-		GBL_NR = QSE_AWK_GBL_NR,               /**< NR */
-		GBL_OFILENAME = QSE_AWK_GBL_OFILENAME, /**< OFILENAME */
-		GBL_OFMT = QSE_AWK_GBL_OFMT,           /**< OFMT */
-		GBL_OFS = QSE_AWK_GBL_OFS,             /**< OFS */
-		GBL_ORS = QSE_AWK_GBL_ORS,             /**< ORS */
-		GBL_RLENGTH = QSE_AWK_GBL_RLENGTH,     /**< RLENGTH */
-		GBL_RS = QSE_AWK_GBL_RS,               /**< RS */
-		GBL_RSTART = QSE_AWK_GBL_RSTART,       /**< RSTART */
-		GBL_SUBSEP = QSE_AWK_GBL_SUBSEP        /**< SUBSEP */
-	};
-
-	/** Represents the execution context */
+	///
+	/// The Run class wraps around #qse_awk_rtx_t to represent the
+	/// runtime context.
+	///
 	class Run
 	{
 	protected:
@@ -783,20 +702,20 @@ public:
 		operator rtx_t* () const;
 
 		void stop () const;
-		bool shouldStop () const;
+		bool isStopReq () const;
 
-		ErrorNumber getErrorNumber () const;
+		errnum_t getErrorNumber () const;
 		loc_t getErrorLocation () const;
 		const char_t* getErrorMessage () const;
 
 		void setError (
-			ErrorNumber   code, 
+			errnum_t      code, 
 			const cstr_t* args = QSE_NULL,
 			const loc_t*  loc  = QSE_NULL
 		);
 
 		void setErrorWithMessage (
-			ErrorNumber   code, 
+			errnum_t      code, 
 			const char_t* msg,
 			const loc_t*  loc
 		);
@@ -841,50 +760,56 @@ public:
 		rtx_t* rtx;
 	};
 
-	/** Returns the primitive handle */
+	///
+	/// Returns the primitive handle 
+	///
 	operator awk_t* () const;
 
-	/**
-	 * @name Basic Functions
-	 */
-	/*@{*/
-	/** Constructor */
+	///
+	/// @name Basic Functions
+	/// @{
+	///
+
+	/// Constructor 
 	Awk ();
 
-	/**
-	 * The Awk::open() function initializes an interpreter. 
-	 * You must call this function before doing anything meaningful.
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The open() function initializes an interpreter. 
+	/// You must call this function before doing anything meaningful.
+	/// @return 0 on success, -1 on failure
+	///
 	int open ();
 
-	/** Closes the interpreter. */
+	///
+	/// The cloase() function closes the interpreter. 
+	///
 	void close ();
 
-	/**
-	 * The Awk::parse() function parses the source code read from the input 
-	 * stream @a in and writes the parse tree to the output stream @a out.
-	 * To disable deparsing, you may set @a out to Awk::Source::NONE. 
-	 * However, it is not allowed to specify Awk::Source::NONE for @a in.
-	 *
-	 * @return Run object on success, #QSE_NULL on failure
-	 */
+	///
+	/// The parse() function parses the source code read from the input
+	/// stream @a in and writes the parse tree to the output stream @a out.
+	/// To disable deparsing, you may set @a out to Awk::Source::NONE. 
+	/// However, it is not allowed to specify Awk::Source::NONE for @a in.
+	///
+	/// @return Run object on success, #QSE_NULL on failure
+	///
 	Awk::Run* parse (
 		Source& in,  ///< script to parse 
 		Source& out  ///< deparsing target 
 	);
 
-	/**
-	 * Executes the BEGIN block, pattern-action blocks, and the END block.
-	 * @return 0 on succes, -1 on failure
-	 */
+	///
+	/// The loop() function executes the BEGIN block, pattern-action blocks,
+	/// and the END block. The return value is stored into @a ret.
+	/// @return 0 on succes, -1 on failure
+	///
 	int loop (
 		Value* ret  ///< return value holder
 	);
 
-	/**
-	 * Calls a function
-	 */
+	///
+	/// The call() function invokes a function named @a name.
+	///
 	int call (
 		const char_t* name,  ///< function name
 		Value*        ret,   ///< return value holder
@@ -892,149 +817,110 @@ public:
 		size_t        nargs  ///< number of arguments
 	);
 
-	/**
-	 * Makes request to abort execution
-	 */
+	///
+	/// The stop() function makes request to abort execution
+	///
 	void stop ();
-	/*@}*/
+	/// @}
 
-	/**
-	 * @name Configuration
-	 */
-	/*@{*/
+	///
+	/// @name Configuration
+	/// @{
+	///
 
-	/** Defines options */
-	enum Option
-	{
-		OPT_IMPLICIT = QSE_AWK_IMPLICIT,
-		OPT_EXPLICIT = QSE_AWK_EXPLICIT,
-		OPT_EXTRAOPS = QSE_AWK_EXTRAOPS,
-		OPT_RIO = QSE_AWK_RIO,
-		OPT_RWPIPE = QSE_AWK_RWPIPE,
-
-		/** Can terminate a statement with a new line */
-		OPT_NEWLINE = QSE_AWK_NEWLINE,
-
-		OPT_STRIPRECSPC = QSE_AWK_STRIPRECSPC,
-		OPT_STRIPSTRSPC = QSE_AWK_STRIPSTRSPC,
-
-		/** Support the nextofile statement */
-		OPT_NEXTOFILE = QSE_AWK_NEXTOFILE,
-		/** Enables the keyword 'reset' */
-		OPT_RESET = QSE_AWK_RESET,
-		/** Use CR+LF instead of LF for line breaking. */
-		OPT_CRLF = QSE_AWK_CRLF,
-		/** Allows the assignment of a map value to a variable */
-		OPT_MAPTOVAR = QSE_AWK_MAPTOVAR,
-		/** Allows BEGIN, END, pattern-action blocks */
-		OPT_PABLOCK = QSE_AWK_PABLOCK,
-		/** Allows {n,m} in a regular expression */
-		OPT_REXBOUND = QSE_AWK_REXBOUND,
-	        /**
-		 * Performs numeric comparison when a string convertable
-		 * to a number is compared with a number or vice versa.
-		 *
-		 * For an expression (9 > "10.9"),
-		 * - 9 is greater if #QSE_AWK_NCMPONSTR is off;
-		 * - "10.9" is greater if #QSE_AWK_NCMPONSTR is on
-		 */
-		OPT_NCMPONSTR = QSE_AWK_NCMPONSTR,
-
-		/**
-		 * Enables the strict naming rule.
-		 * - a parameter name can not be the same as the owning
-		 *   function name.
-		 * - a local variable name can not be the same as the 
-		 *   owning function name.
-		 */
-
-		OPT_STRICTNAMING = QSE_AWK_STRICTNAMING,
-
-		/** Enables 'include' */
-		OPT_INCLUDE = QSE_AWK_INCLUDE
-	};
-	/** Gets the option */
+	///
+	/// The getOption() function gets the current options.
+	/// @return 0 or current options ORed of #option_t enumerators.
+	///
 	int getOption () const;
 
-	/** Sets the option */
+	///
+	/// The setOption() function changes the current options.
+	///
 	void setOption (
-		int opt
+		int opt ///< options ORed of #option_t enumerators.
 	);
 
-	/** Defines the depth ID */
-	enum Depth
-	{
-		DEPTH_BLOCK_PARSE = QSE_AWK_DEPTH_BLOCK_PARSE,
-		DEPTH_BLOCK_RUN   = QSE_AWK_DEPTH_BLOCK_RUN,
-		DEPTH_EXPR_PARSE  = QSE_AWK_DEPTH_EXPR_PARSE,
-		DEPTH_EXPR_RUN    = QSE_AWK_DEPTH_EXPR_RUN,
-		DEPTH_REX_BUILD   = QSE_AWK_DEPTH_REX_BUILD,
-		DEPTH_REX_MATCH   = QSE_AWK_DEPTH_REX_MATCH
-	};
+	/// 
+	/// The setMaxDepth() function sets the maximum processing depth
+	/// for operations identified by @a ids.
+	///
+	void setMaxDepth (
+		int ids,     ///< number ORed of #depth_t enumerators
+		size_t depth ///< new depth
+	);
 
-	/** Sets the maximum depth */
-	void setMaxDepth (int ids, size_t depth);
-	/** Gets the maximum depth */
-	size_t getMaxDepth (depth_t id) const;
+	///
+	/// The getMaxDepth() function gets the maximum depth for an operation
+	/// type identified by @a id.
+	///
+	size_t getMaxDepth (
+		depth_t id   ///< operation identifier
+	) const;
 
-	/**
-	 * Adds an ARGV string as long as @a len characters pointed to 
-	 * by @a arg. loop() and call() make a string added available 
-	 * to a script through ARGV. 
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The addArgument() function adds an ARGV string as long as @a len 
+	/// characters pointed to 
+	/// by @a arg. loop() and call() make a string added available 
+	/// to a script through ARGV. 
+	/// @return 0 on success, -1 on failure
+	///
 	int addArgument (
-		const char_t* arg, 
-		size_t        len
+		const char_t* arg,  ///< string pointer
+		size_t        len   ///< string length
 	);
 
-	/**
-	 * Adds a null-terminated string @a arg. loop() and call() 
-	 * make a string added available to a script through ARGV. 
-	 * @return 0 on success, -1 on failure
-	 */
-	int addArgument (const char_t* arg);
+	///
+	/// The addArgument() function adds a null-terminated string @a arg. 
+	/// loop() and call() make a string added available to a script 
+	/// through ARGV. 
+	/// @return 0 on success, -1 on failure
+	///
+	int addArgument (
+		const char_t* arg ///< string pointer
+	);
 
-	/**
-	 * Deletes all ARGV strings.
-	 */
+	///
+	/// The clearArguments() function deletes all ARGV strings.
+	///
 	void clearArguments ();
 
-	/**
-	 * Registers an intrinsic global variable. 
-	 * @return integer >= 0 on success, -1 on failure.
-	 */
+	///
+	/// The addGlobal() function registers an intrinsic global variable. 
+	/// @return integer >= 0 on success, -1 on failure.
+	///
 	int addGlobal (
 		const char_t* name ///< variable name
 	);
 
-	/**
-	 * Unregisters an intrinsic global variable. 
-	 * @return 0 on success, -1 on failure.
-	 */
+	///
+	/// The deleteGlobal() function unregisters an intrinsic global 
+	/// variable by name.
+	/// @return 0 on success, -1 on failure.
+	///
 	int deleteGlobal (
 		const char_t* name ///< variable name
 	);
 
-	/**
-	 * Sets the value of a global variable identified by @a id.
-	 * The @a id is either a value returned by Awk::addGlobal or one of 
-	 * Awk::Global enumerators. It is not allowed to call this function
-	 * prior to Awk::parse.
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The setGlobal() function sets the value of a global variable 
+	/// identified by @a id. The @a id is either a value returned by 
+	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
+	/// to call this function prior to parse().
+	/// @return 0 on success, -1 on failure
+	///
 	int setGlobal (
 		int          id,  ///< numeric identifier
 		const Value& v    ///< value
 	);
 
-	/**
-	 * Gets the value of a global riable identified by @a id.
-	 * The @a id is either a value returned by Awk::addGlobal or one of 
-	 * Awk::::Global enumerators. It is not allowed to call this function
-	 * prior to Awk::parse.
-	 * @return 0 on success, -1 on failure
-	 */
+	///
+	/// The getGlobal() function gets the value of a global variable 
+	/// identified by @a id. The @a id is either a value returned by 
+	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
+	/// to call this function before Awk::parse().
+	/// @return 0 on success, -1 on failure
+	///
 	int getGlobal (
 		int    id, ///< numeric identifier 
 		Value& v   ///< value store 
@@ -1051,23 +937,30 @@ public:
 		const cstr_t* name
 	);
 
-	/**
-	 * Adds a new user-defined intrinsic function.
-	 */
+	/// 
+	/// The addFunction() function adds a new user-defined intrinsic 
+	/// function.
+	///
 	int addFunction (
-		const char_t* name, size_t minArgs, size_t maxArgs, 
-		FunctionHandler handler);
+		const char_t* name,     ///< function name
+		size_t minArgs,         ///< minimum numbers of arguments
+		size_t maxArgs,         ///< maximum numbers of arguments
+		FunctionHandler handler ///< function handler
+	);
 
-	/**
-	 * Deletes a user-defined intrinsic function
-	 */
-	int deleteFunction (const char_t* name);
-	/*@}*/
+	///
+	/// The deleteFunction() function deletes a user-defined intrinsic 
+	/// function by name.
+	///
+	int deleteFunction (
+		const char_t* name ///< function name
+	);
+	/// @}
 
-	/**
-	 * @name Word Substitution
-	 */
-	/*@{*/
+	///
+	/// @name Word Substitution
+	/// @{
+	///
 	int getWord (
 		const cstr_t* ow,
 		cstr_t*       nw
@@ -1083,14 +976,13 @@ public:
 	);
 
 	void unsetAllWords ();
-	/*@}*/
+	/// @}
 
 protected:
-	/** 
-	 * @name Pipe I/O handlers
-	 * Pipe operations are achieved through the following functions.
-	 */
-	/*@{*/
+	/// 
+	/// @name Pipe I/O handlers
+	/// Pipe operations are achieved through the following functions.
+	/// @{
 
 	/// The openPipe() function is a pure virtual function that must be
 	/// overridden by a child class to open a pipe. It must return 1
@@ -1105,31 +997,32 @@ protected:
 	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) = 0;
 	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushPipe (Pipe& io) = 0;
-	/*@}*/
+	/// @}
 
-	/** 
-	 * @name File I/O handlers
-	 * File operations are achieved through the following functions.
-	 */
-	/*@{*/
+	/// 
+	/// @name File I/O handlers
+	/// File operations are achieved through the following functions.
+	/// @{
+	///
 	virtual int     openFile  (File& io) = 0;
 	virtual int     closeFile (File& io) = 0;
 	virtual ssize_t readFile  (File& io, char_t* buf, size_t len) = 0;
 	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushFile (File& io) = 0;
-	/*@}*/
+	/// @}
 
-	/** 
-	 * @name Console I/O handlers
-	 * Console operations are achieved through the following functions.
-	 */
+	/// 
+	/// @name Console I/O handlers
+	/// Console operations are achieved through the following functions.
+	/// @{
+	///
 	virtual int     openConsole  (Console& io) = 0;
 	virtual int     closeConsole (Console& io) = 0;
 	virtual ssize_t readConsole  (Console& io, char_t* buf, size_t len) = 0;
 	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len) = 0;
 	virtual int     flushConsole (Console& io) = 0;
 	virtual int     nextConsole  (Console& io) = 0;
-	/*@}*/
+	/// @}
 
 	// primitive handlers 
 	virtual real_t pow (real_t x, real_t y) = 0;

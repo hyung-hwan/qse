@@ -15,7 +15,8 @@ Currently the library implements the following utilities:
 
 As the library grows, more utilities will be added.
 
-The library is licensed under the Apache License, Version 2.0.
+The library is licensed under the GNU Lesser General Public License version 3:
+http://www.gnu.org/licenses/
 
 The project webpage: http://qse.googlecode.com/
 

@@ -1,19 +1,21 @@
 /*
- * $Id: StdAwk.cpp 278 2009-09-04 13:08:19Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <qse/awk/StdAwk.hpp>
@@ -412,7 +414,7 @@ int StdAwk::addConsoleOutput (const char_t* arg, size_t len)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = ofile.add (awk, arg, len);
-	if (n <= -1) setError (ERR_NOMEM);
+	if (n <= -1) setError (QSE_AWK_ENOMEM);
 	return n;
 }
 
@@ -484,7 +486,7 @@ int StdAwk::open_console_in (Console& io)
 			cstr_t arg;
 			arg.ptr = file;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, &arg);
+			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
 			return -1;
 		}
 
@@ -533,7 +535,7 @@ int StdAwk::open_console_in (Console& io)
 			cstr_t arg;
 			arg.ptr = out.u.cpldup.ptr;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, &arg);
+			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
 			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
@@ -554,7 +556,7 @@ int StdAwk::open_console_in (Console& io)
 				cstr_t arg;
 				arg.ptr = file;
 				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (ERR_OPEN, &arg);
+				((Run*)io)->setError (QSE_AWK_EOPEN, &arg);
 				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
@@ -616,7 +618,7 @@ int StdAwk::open_console_out (Console& io)
 			cstr_t arg;
 			arg.ptr = file;
 			arg.len = qse_strlen (arg.ptr);
-			((Run*)io)->setError (ERR_IONMNL, &arg);
+			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
 			return -1;
 		}
 
@@ -634,7 +636,7 @@ int StdAwk::open_console_out (Console& io)
 				cstr_t arg;
 				arg.ptr = file;
 				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (ERR_OPEN, &arg);
+				((Run*)io)->setError (QSE_AWK_EOPEN, &arg);
 				return -1;
 			}
 		}
@@ -820,7 +822,7 @@ int StdAwk::SourceFile::open (Data& io)
 				qse_cstr_t ea;
 				ea.ptr = name;
 				ea.len = qse_strlen(name);
-				((Awk*)io)->setError (ERR_OPEN, &ea);
+				((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
 				return -1;
 			}
 
@@ -851,7 +853,7 @@ int StdAwk::SourceFile::open (Data& io)
 				);
 				if (dbuf == QSE_NULL)
 				{
-					((Awk*)io)->setError (ERR_NOMEM);
+					((Awk*)io)->setError (QSE_AWK_ENOMEM);
 					return -1;
 				}
 
@@ -879,7 +881,7 @@ int StdAwk::SourceFile::open (Data& io)
 			qse_cstr_t ea;
 			ea.ptr = file;
 			ea.len = qse_strlen(file);
-			((Awk*)io)->setError (ERR_OPEN, &ea);
+			((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
 			return -1;
 		}
 	}
@@ -939,7 +941,7 @@ int StdAwk::SourceString::open (Data& io)
 			qse_cstr_t ea;
 			ea.ptr = ioname;
 			ea.len = qse_strlen(ioname);
-			((Awk*)io)->setError (ERR_OPEN, &ea);
+			((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
 			return -1;
 		}
 		io.setHandle (sio);

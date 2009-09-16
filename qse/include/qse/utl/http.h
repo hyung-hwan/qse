@@ -1,7 +1,5 @@
 /*
  * $Id: http.h 223 2008-06-26 06:44:41Z baconevi $
- *
- * {License}
  */
 
 #ifndef _QSE_UTL_HTTP_H_
