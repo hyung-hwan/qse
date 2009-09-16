@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: run.c 288 2009-09-15 14:03:15Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -758,7 +758,7 @@ void qse_awk_rtx_stop (qse_awk_rtx_t* rtx)
 	rtx->exit_level = EXIT_ABORT;
 }
 
-qse_bool_t qse_awk_rtx_isstopreq (qse_awk_rtx_t* rtx)
+qse_bool_t qse_awk_rtx_pendingstop (qse_awk_rtx_t* rtx)
 {
 	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
 }

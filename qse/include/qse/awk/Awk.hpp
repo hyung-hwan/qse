@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: Awk.hpp 288 2009-09-15 14:03:15Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,9 +27,9 @@
 #include <qse/Mmgr.hpp>
 #include <stdarg.h>
 
-/** @file
- * AWK Interpreter
- */
+/// @file
+/// AWK Interpreter
+///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
@@ -702,7 +702,7 @@ public:
 		operator rtx_t* () const;
 
 		void stop () const;
-		bool isStopReq () const;
+		bool pendingStop () const;
 
 		errnum_t getErrorNumber () const;
 		loc_t getErrorLocation () const;
@@ -720,39 +720,43 @@ public:
 			const loc_t*  loc
 		);
 
-		/** 
-		 * Sets the value of a global variable identified by @a id
-		 * to @a v.
-		 * @return 0 on success, -1 on failure
-		 */
+		/// 
+		/// The setGlobal() function sets the value of a global 
+		/// variable identified by @a id
+		/// to @a v.
+		/// @return 0 on success, -1 on failure
+		///
 		int setGlobal (int id, long_t v);
 
-		/** 
-		 * Sets the value of a global variable identified by @a id
-		 * to @a v.
-		 * @return 0 on success, -1 on failure
-		 */
+		/// 
+		/// The setGlobal() function sets the value of a global 
+		/// variable identified by @a id
+		/// to @a v.
+		/// @return 0 on success, -1 on failure
+		///
 		int setGlobal (int id, real_t v); 
 
-		/** 
-		 * Sets the value of a global variable identified by @a id
-		 * to a string as long as @a len characters pointed to by 
-		 * @a ptr.
-		 * @return 0 on success, -1 on failure
-		 */
+		/// 
+		/// The setGlobal() function sets the value of a global 
+		/// variable identified by @a id
+		/// to a string as long as @a len characters pointed to by 
+		/// @a ptr.
+		/// @return 0 on success, -1 on failure
+		///
 		int setGlobal (int id, const char_t* ptr, size_t len);
 
-		/** 
-		 * Sets a global variable identified by @a id to a value @a v.
-		 * @return 0 on success, -1 on failure
-		 */
+		/// 
+		/// The setGlobal() function sets a global variable 
+		/// identified by @a id to a value @a v.
+		/// @return 0 on success, -1 on failure
+		///	
 		int setGlobal (int id, const Value& v);
 
-		/**
-		 * Gets the value of a global variable identified by @a id 
-		 * and store it in @a v.
-		 * @return 0 on success, -1 on failure
-		 */
+		///
+		/// The getGlobal() function gets the value of a global 
+		/// variable identified by @a id and stores it in @a v.
+		/// @return 0 on success, -1 on failure
+		///	
 		int getGlobal (int id, Value& v) const;
 
 	protected:
@@ -918,7 +922,7 @@ public:
 	/// The getGlobal() function gets the value of a global variable 
 	/// identified by @a id. The @a id is either a value returned by 
 	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
-	/// to call this function before Awk::parse().
+	/// to call this function before parse().
 	/// @return 0 on success, -1 on failure
 	///
 	int getGlobal (
@@ -926,9 +930,9 @@ public:
 		Value& v   ///< value store 
 	);
 
-	/**
-	 * Defines a intrinsic function handler.
-	 */
+	///
+	/// The FunctionHandler type defines a intrinsic function handler.
+	///
 	typedef int (Awk::*FunctionHandler) (
 		Run&          run,
 		Value&        ret,

@@ -1,6 +1,20 @@
 /** @page awk AWK
 
-AWK Interpreter
+@section awk_intro INTRODUCTION
+
+QSE includes an implementaion of an AWK interpreter that can be embedded
+into an application written in C and/or C++. A hosting application can
+- add new awk global variables and functions.
+- get and set the value of a global variable.
+- call an awk function.
+- customize I/O handlers for file, pipe, console I/O.
+- embed multiple interpreters independent of each other.
+- run a single script with different I/O streams independently.
+- change language features supported by setting options.
+
+The interpreter implements the language described in the book 
+The AWK Programming Language (http://cm.bell-labs.com/cm/cs/awkbook/) with
+some extensions.
 
 @section awk_ext EXTENSION
 Some language extensions are implemented and they can be enabled by setting the
@@ -62,11 +76,21 @@ BEGIN {
 	print "13" || "sort";
 	print "12" || "sort";
 	print "11" || "sort";
-	#close the input as sort emits when the input is closed
+	# close the input side of the pipe as 'sort' starts emitting result 
+	# once the input is closed.
 	close ("sort", "r");
 	while (("sort" || getline x) > 0) print "xx:", x; 
 }
 @endcode
 
-*/
+@subsectin awk_ext_fnc EXTENDED FUNCTIONS
+index() and match() can accept the third parameter indicating the position
+where the search should begin. The negative position enables backward search.
 
+@code
+BEGIN {
+
+}
+@endcode
+
+*/
