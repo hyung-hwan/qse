@@ -1,19 +1,21 @@
 /*
- * $Id: StdAwk.hpp 275 2009-08-30 13:19:02Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_AWK_STDAWK_HPP_
@@ -21,46 +23,37 @@
 
 #include <qse/awk/Awk.hpp>
 
-/** @file
- * Standard AWK Interpreter
- *
- */
-
-/**
- * @example awk05.cpp
- * This program demonstrates how to use QSE::StdAwk::loop().
- */
-
-/**
- * @example awk06.cpp
- * This program demonstrates how to use QSE::StdAwk::call().
- */
-
-/**
- * @example awk07.cpp
- * This program demonstrates how to handle an indexed value.
- */
-
-/**
- * @example awk08.cpp
- * This program shows how to add intrinsic functions.
- */
+/// @file
+/// Standard AWK Interpreter
+///
+/// @example awk05.cpp
+/// This program demonstrates how to use QSE::StdAwk::loop().
+///
+/// @example awk06.cpp
+/// This program demonstrates how to use QSE::StdAwk::call().
+///
+/// @example awk07.cpp
+/// This program demonstrates how to handle an indexed value.
+///
+/// @example awk08.cpp
+/// This program shows how to add intrinsic functions.
+///
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 ////////////////////////////////
 
-/**
- * Provides a more useful interpreter by overriding primitive methods,
- * and implementing the file handler, the pipe handler, and common intrinsic
- * functions.
- */
+///
+/// The StdAwk class provides an easier-to-use interface by overriding 
+/// primitive methods, and implementing the file handler, the pipe handler, 
+/// and common intrinsic functions.
+///
 class StdAwk: public Awk
 {
 public:
-	/**
-	 * Implements script I/O from and to a file.
-	 */
+	///
+	/// The SourceFile class implements script I/O from and to a file.
+	///
 	class SourceFile: public Source 
 	{
 	public:
@@ -79,10 +72,10 @@ public:
 		qse_cstr_t dir;
 	};
 
-	/**
-	 * Implements script input from a string. The deparsing is not
-	 * supported.
-	 */
+	///
+	/// The SourceString class implements script input from a string. 
+	/// Deparsing is not supported.
+	///
 	class SourceString: public Source
 	{
 	public:

@@ -1,19 +1,21 @@
 /*
- * $Id: Awk.cpp 286 2009-09-14 13:29:55Z hyunghwan.chung $
- *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+ * $Id: Awk.cpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * 
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <qse/awk/Awk.hpp>
@@ -610,7 +612,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		{
 			qse_awk_rtx_refdownval (r->rtx, v);
 			qse_awk_rtx_refdownval (r->rtx, map);
-			r->setError (ERR_NOMEM);
+			r->setError (QSE_AWK_ENOMEM);
 			r->awk->retrieveError (r);
 			return -1;
 		}
@@ -631,7 +633,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		if (run != r) 
 		{
 			// it can't span across multiple runtime contexts
-			run->setError (ERR_INVAL);
+			run->setError (QSE_AWK_EINVAL);
 			run->awk->retrieveError (run);
 			return -1;
 		}
@@ -644,7 +646,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		if (pair == QSE_NULL)
 		{
 			qse_awk_rtx_refdownval (r->rtx, v);
-			run->setError (ERR_NOMEM);
+			run->setError (QSE_AWK_ENOMEM);
 			run->awk->retrieveError (run);
 			return -1;
 		}
@@ -901,16 +903,16 @@ void Awk::Run::stop () const
 	qse_awk_rtx_stop (this->rtx);
 }
 
-bool Awk::Run::shouldStop () const
+bool Awk::Run::isStopReq () const
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	return qse_awk_rtx_shouldstop (this->rtx)? true: false;
+	return qse_awk_rtx_isstopreq (this->rtx)? true: false;
 }
 
-Awk::ErrorNumber Awk::Run::getErrorNumber () const 
+Awk::errnum_t Awk::Run::getErrorNumber () const 
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	return (ErrorNumber)qse_awk_rtx_geterrnum (this->rtx);
+	return qse_awk_rtx_geterrnum (this->rtx);
 }
 
 Awk::loc_t Awk::Run::getErrorLocation () const 
@@ -925,21 +927,21 @@ const Awk::char_t* Awk::Run::getErrorMessage () const
 	return qse_awk_rtx_geterrmsg (this->rtx);
 }
 
-void Awk::Run::setError (ErrorNumber code, const cstr_t* args, const loc_t* loc)
+void Awk::Run::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	qse_awk_rtx_seterror (this->rtx, (errnum_t)code, args, loc);
+	qse_awk_rtx_seterror (this->rtx, code, args, loc);
 }
 
 void Awk::Run::setErrorWithMessage (
-	ErrorNumber code, const char_t* msg, const loc_t* loc)
+	errnum_t code, const char_t* msg, const loc_t* loc)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
 	errinf_t errinf;
 
 	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
-	errinf.num = (errnum_t)code;
+	errinf.num = code;
 	if (loc == QSE_NULL) errinf.loc = *loc;
 	qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
 
@@ -1005,7 +1007,7 @@ Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL), runctx (this)
 
 {
 	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
-	errinf.num = (errnum_t)ERR_NOERR;
+	errinf.num = QSE_AWK_ENOERR;
 }
 
 Awk::operator Awk::awk_t* () const 
@@ -1013,23 +1015,23 @@ Awk::operator Awk::awk_t* () const
 	return this->awk;
 }
 
-const Awk::char_t* Awk::getErrorString (ErrorNumber num) const 
+const Awk::char_t* Awk::getErrorString (errnum_t num) const 
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	QSE_ASSERT (dflerrstr != QSE_NULL);
-	return dflerrstr (awk, (errnum_t)num);
+	return dflerrstr (awk, num);
 }
 
 const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) 
 {
 	Awk* awk = *(Awk**)QSE_XTN(a);
-	return awk->getErrorString ((ErrorNumber)num);
+	return awk->getErrorString (num);
 }
 
 
-Awk::ErrorNumber Awk::getErrorNumber () const 
+Awk::errnum_t Awk::getErrorNumber () const 
 {
-	return (ErrorNumber)this->errinf.num;
+	return this->errinf.num;
 }
 
 Awk::loc_t Awk::getErrorLocation () const 
@@ -1042,28 +1044,28 @@ const Awk::char_t* Awk::getErrorMessage () const
 	return this->errinf.msg;
 }
 
-void Awk::setError (ErrorNumber code, const cstr_t* args, const loc_t* loc)
+void Awk::setError (errnum_t code, const cstr_t* args, const loc_t* loc)
 {
 	if (awk != QSE_NULL)
 	{
-		qse_awk_seterror (awk, (errnum_t)code, args, loc);
+		qse_awk_seterror (awk, code, args, loc);
 		retrieveError ();
 	}
 	else
 	{
 		QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
-		errinf.num = (errnum_t)code;
+		errinf.num = code;
 		if (loc != QSE_NULL) errinf.loc = *loc;
 		qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), 
 			QSE_T("not ready to set an error message"));
 	}
 }
 
-void Awk::setErrorWithMessage (ErrorNumber code, const char_t* msg, const loc_t* loc)
+void Awk::setErrorWithMessage (errnum_t code, const char_t* msg, const loc_t* loc)
 {
 	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
 
-	errinf.num = (errnum_t)code;
+	errinf.num = code;
 	if (loc != QSE_NULL) errinf.loc = *loc;
 	qse_strxcpy (errinf.msg, QSE_COUNTOF(errinf.msg), msg);
 
@@ -1073,7 +1075,7 @@ void Awk::setErrorWithMessage (ErrorNumber code, const char_t* msg, const loc_t*
 void Awk::clearError ()
 {
 	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
-	errinf.num = (errnum_t)ERR_NOERR;
+	errinf.num = QSE_AWK_ENOERR;
 }
 
 void Awk::retrieveError ()
@@ -1113,7 +1115,7 @@ int Awk::open ()
 	awk = qse_awk_open ((qse_mmgr_t*)this, QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
 	{
-		setError (ERR_NOMEM);
+		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1131,7 +1133,7 @@ int Awk::open ()
 		qse_awk_close (awk);
 		awk = QSE_NULL;
 
-		setError (ERR_NOMEM);
+		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1169,7 +1171,7 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 
 	if (&in == &Source::NONE) 
 	{
-		setError (ERR_INVAL);
+		setError (QSE_AWK_EINVAL);
 		return QSE_NULL;
 	}
 
@@ -1230,7 +1232,7 @@ int Awk::call (
 				awk, QSE_SIZEOF(val_t*) * nargs);
 			if (ptr == QSE_NULL)
 			{
-				runctx.setError (ERR_NOMEM);
+				runctx.setError (QSE_AWK_ENOMEM);
 				retrieveError (&runctx);
 				return -1;
 			}
@@ -1327,7 +1329,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 	pair = qse_map_search (functionMap, name->ptr, name->len);
 	if (pair == QSE_NULL) 
 	{
-		run->setError (ERR_FUNNF, name);
+		run->setError (QSE_AWK_EFUNNF, name);
 		return -1;
 	}
 
@@ -1344,7 +1346,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 		args = new(run) Value[nargs];
 		if (args == QSE_NULL) 
 		{
-			run->setError (ERR_NOMEM);
+			run->setError (QSE_AWK_ENOMEM);
 			return -1;
 		}
 	}
@@ -1357,14 +1359,14 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 		val_t** ref = (val_t**)((qse_awk_val_ref_t*)v)->adr;
 		if (args[i].setVal (run, *ref) == -1)
 		{
-			run->setError (ERR_NOMEM);
+			run->setError (QSE_AWK_ENOMEM);
 			if (args != buf) delete[] args;
 			return -1;
 		}
 #else
 		if (args[i].setVal (run, v) == -1)
 		{
-			run->setError (ERR_NOMEM);
+			run->setError (QSE_AWK_ENOMEM);
 			if (args != buf) delete[] args;
 			return -1;
 		}
@@ -1457,7 +1459,7 @@ int Awk::addArgument (const char_t* arg, size_t len)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 	int n = runarg.add (awk, arg, len);
-	if (n <= -1) setError (ERR_NOMEM);
+	if (n <= -1) setError (QSE_AWK_ENOMEM);
 	return n;
 }
 
@@ -1495,7 +1497,7 @@ int Awk::setGlobal (int id, const Value& v)
 
 	if (v.run != &runctx) 
 	{
-		setError (ERR_INVAL);
+		setError (QSE_AWK_EINVAL);
 		return -1;
 	}
 
@@ -1524,7 +1526,7 @@ int Awk::addFunction (
 		qse_awk_alloc (awk, QSE_SIZEOF(handler));
 	if (tmp == QSE_NULL)
 	{
-		setError (ERR_NOMEM);
+		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
@@ -1556,7 +1558,7 @@ int Awk::addFunction (
 		qse_awk_delfnc (awk, name, nameLen);
 		qse_awk_free (awk, tmp);
 
-		setError (ERR_NOMEM);
+		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 

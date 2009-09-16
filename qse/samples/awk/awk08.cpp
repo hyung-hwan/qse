@@ -1,19 +1,21 @@
 /*
- * $Id: Awk.cpp 341 2008-08-20 10:58:19Z baconevi $
+ * $Id$
  *
-   Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <qse/awk/StdAwk.hpp>
@@ -70,7 +72,7 @@ public:
 	{
 		if (args[0].isIndexed()) 
 		{
-			run.setError (ERR_INVAL);
+			run.setError (QSE_AWK_EINVAL);
 			return -1;
 		}
 
@@ -339,8 +341,8 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 	cmdline_t cmdline;
 	int n;
 
-	awk.setOption (awk.getOption() | awk.OPT_INCLUDE | 
-		awk.OPT_MAPTOVAR | awk.OPT_RWPIPE | awk.OPT_EXTRAOPS);
+	awk.setOption (awk.getOption() | QSE_AWK_INCLUDE | 
+		QSE_AWK_MAPTOVAR | QSE_AWK_RWPIPE | QSE_AWK_EXTRAOPS);
 
 	// ARGV[0]
 	if (awk.addArgument (QSE_T("awk08")) <= -1)
@@ -373,7 +375,7 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 			print_error (awk); 
 			return -1; 
 		}
-		if (awk.setGlobal (awk.GBL_FS, fs) <= -1) 
+		if (awk.setGlobal (QSE_AWK_GBL_FS, fs) <= -1) 
 		{
 			print_error (awk); 
 			return -1; 
