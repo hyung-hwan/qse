@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: awk.h 288 2009-09-15 14:03:15Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -101,15 +101,15 @@ typedef struct qse_awk_t qse_awk_t;
  * to handle runtime I/O:
  * - getline piped in from a command reads from a pipe.
  *   ("ls -l" | getline line)
- * - print and printf piped out to a command writes to a pipe.
+ * - print and printf piped out to a command write to a pipe.
  *   (print 2 | "sort")
  * - getline redirected in reads from a file.
  *   (getline line < "file")
- * - print and printf redirected out writes to a file.
+ * - print and printf redirected out write to a file.
  *   (print num > "file")
  * - The pattern-action loop and getline with no redirected input
- *   reads from a console. (/susie/ { ... })
- * - print and printf writes to a console. (print "hello, world")
+ *   read from a console. (/susie/ { ... })
+ * - print and printf write to a console. (print "hello, world")
  *
  * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
@@ -1479,10 +1479,10 @@ void qse_awk_stopall (
 );
 
 /**
- * The qse_awk_isstopreq() function tests if qse_awk_rtx_stop() has been 
+ * The qse_awk_pendingstop() function tests if qse_awk_rtx_stop() has been 
  * called.
  */
-qse_bool_t qse_awk_rtx_isstopreq (
+qse_bool_t qse_awk_rtx_pendingstop (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
