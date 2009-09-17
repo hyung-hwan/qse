@@ -13,10 +13,10 @@ into an application written in C and/or C++. A hosting application can
 - change language features supported by setting options.
 
 The interpreter implements the language described in the book 
-The AWK Programming Language (http://cm.bell-labs.com/cm/cs/awkbook/) with
+The AWK Programming Language(http://cm.bell-labs.com/cm/cs/awkbook/) with
 some extensions.
 
-@section awk_ext EXTENSION
+@section awk_ext EXTENSIONS
 Some language extensions are implemented and they can be enabled by setting the
 corresponding options.
 
@@ -83,13 +83,30 @@ BEGIN {
 }
 @endcode
 
-@subsectin awk_ext_fnc EXTENDED FUNCTIONS
-index() and match() can accept the third parameter indicating the position
-where the search should begin. The negative position enables backward search.
+@subsection awk_ext_return RETURN
+The return statement is valid in BEGIN blocks, END blocks, and pattern-action 
+blocks as well as in functions. The execution of a calling block is aborted
+once the return statement is executed.
+
+@subsection awk_ext_comment COMMENT
+You can use the C-style comment as well as the pound comment.
+
+@subsection awk_ext_fnc EXTENDED FUNCTIONS
+index() and match() can accept the third parameter indicating the position 
+where the search begins. A negative value indicates a position from the back.
 
 @code
 BEGIN {
+	xstr = "abcdefabcdefabcdef";
+	xsub = "abc";
+	xlen = length(xsub);
 
+	i = 1;
+	while ((i = index(xstr, xsub, i)) > 0)
+	{
+		print i, substr(xstr, i, xlen);
+		i += xlen;
+	}
 }
 @endcode
 

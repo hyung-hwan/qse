@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: macros.h 289 2009-09-16 06:35:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,8 +45,19 @@
 #	define QSE_NULL ((void*)0)
 #endif
 
+/**
+ * The QSE_MCHAR_EOF macro defines an EOF character.
+ */
 #define QSE_MCHAR_EOF ((qse_mcint_t)-1)
+
+/**
+ * The QSE_WCHAR_EOF macro defines an EOF character.
+ */
 #define QSE_WCHAR_EOF ((qse_wcint_t)-1)
+
+/**
+ * The QSE_CHAR_EOF macro defines an EOF character.
+ */
 #define QSE_CHAR_EOF  ((qse_cint_t)-1)
 
 /**
