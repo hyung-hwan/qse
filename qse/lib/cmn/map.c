@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: map.c 289 2009-09-16 06:35:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -57,17 +57,20 @@ static int reorganize (map_t* map);
 
 static size_t hash_key (map_t* map, const void* kptr, size_t klen)
 {
-	size_t n = 0;
+	/*size_t h = 2166136261;*/
+	/*size_t h = 0;*/
+	size_t h = 5381;
 	const byte_t* p = (const byte_t*)kptr;
 	const byte_t* bound = p + klen;
 
 	while (p < bound)
 	{
-		n = n * 31 + *p++;
-		p++;
+		/*h = (h * 16777619) ^ *p++;*/
+		/*h = h * 31 + *p++;*/
+		h = ((h << 5) + h) + *p++;
 	}	
 
-	return n;
+	return h ; 
 }
 
 static int comp_key (map_t* map, 

@@ -1991,6 +1991,35 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-038.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	xstr = "abcdefabcdefabcdef";
+	xsub = "abc";
+	xlen = length (xsub);
+	i = 1;
+	while ((i = index (xstr,xsub,i) > 0))
+	{
+		print i,substr (xstr,i,xlen);
+		i += xlen;
+	}
+	print "----------------";
+	i = 1;
+	while ((match (xstr,xsub,i) > 0))
+	{
+		print RSTART,substr (xstr,RSTART,RLENGTH);
+		i = (RSTART + RLENGTH);
+	}
+}
+
+1 abc
+7 abc
+13 abc
+----------------
+1 abc
+7 abc
+13 abc
+--------------------------------------------------------------------------------
  ../../cmd/awk/.libs/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000

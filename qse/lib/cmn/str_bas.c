@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: str_bas.c 289 2009-09-16 06:35:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -540,6 +540,47 @@ qse_char_t* qse_strxnstr (
 		str++;
 	}
 		
+	return QSE_NULL;
+}
+
+qse_char_t* qse_strrstr (const qse_char_t* str, const qse_char_t* sub)
+{
+	return qse_strxnrstr (str, qse_strlen(str), sub, qse_strlen(sub));
+}
+
+qse_char_t* qse_strxrstr (
+	const qse_char_t* str, qse_size_t size, const qse_char_t* sub)
+{
+	return qse_strxnrstr (str, size, sub, qse_strlen(sub));
+}
+
+qse_char_t* qse_strxnrstr (
+	const qse_char_t* str, qse_size_t strsz, 
+	const qse_char_t* sub, qse_size_t subsz)
+{
+	const qse_char_t* p = str + strsz;
+	const qse_char_t* subp = sub + subsz;
+
+	if (subsz == 0) return (qse_char_t*)p;
+	if (strsz < subsz) return QSE_NULL;
+
+	p = p - subsz;
+
+	while (p >= str) 
+	{
+		const qse_char_t* x = p;
+		const qse_char_t* y = sub;
+
+		while (1) 
+		{
+			if (y >= subp) return (qse_char_t*)p;
+			if (*x != *y) break;
+			x++; y++;
+		}	
+
+		p--;
+	}
+
 	return QSE_NULL;
 }
 

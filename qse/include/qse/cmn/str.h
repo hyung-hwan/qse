@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: str.h 289 2009-09-16 06:35:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -250,7 +250,7 @@ int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
  * represented by its beginning pointer and length. 
  *
  * For two strings to be equal, they need to have the same length and all
- * characters in the first string should be equal to their counterpart in the
+ * characters in the first string must be equal to their counterpart in the
  * second string.
  *
  * The following code snippet compares "foo" and "FoO" case-insenstively.
@@ -258,31 +258,84 @@ int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
  * qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3);
  * @endcode
  *
- * @return
- * The qse_strxncasecmp() returns 0 if two strings are equal, a positive
- * number if the first string is larger, -1 if the second string is larger.
+ * @return 0 if two strings are equal, 
+ *         a positive number if the first string is larger, 
+ *         -1 if the second string is larger.
  *
  */
 int qse_strxncasecmp (
-	const qse_char_t* s1   /* the pointer to the first string */,
-	qse_size_t        len1 /* the length of the first string */, 
-	const qse_char_t* s2   /* the pointer to the second string */,
-	qse_size_t        len2 /* the length of the second string */
+	const qse_char_t* s1,   /**< pointer to the first string */
+	qse_size_t        len1, /**< length of the first string */ 
+	const qse_char_t* s2,   /**< pointer to the second string */
+	qse_size_t        len2  /**< length of the second string */
 );
 
-qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr);
-qse_char_t* qse_strxdup (
-	const qse_char_t* str, qse_size_t len, qse_mmgr_t* mmgr);
-qse_char_t* qse_strxdup2 (
-	const qse_char_t* str1, qse_size_t len1,
-	const qse_char_t* str2, qse_size_t len2, qse_mmgr_t* mmgr);
+qse_char_t* qse_strdup (
+	const qse_char_t* str,
+	qse_mmgr_t*       mmgr
+);
 
-qse_char_t* qse_strstr (const qse_char_t* str, const qse_char_t* sub);
+qse_char_t* qse_strxdup (
+	const qse_char_t* str,
+	qse_size_t        len, 
+	qse_mmgr_t*       mmgr
+);
+
+qse_char_t* qse_strxdup2 (
+	const qse_char_t* str1,
+	qse_size_t        len1,
+	const qse_char_t* str2,
+	qse_size_t        len2,
+	qse_mmgr_t*       mmgr
+);
+
+/**
+ * The qse_strstr() function searchs a string @a str for the first occurrence 
+ * of a substring @a sub
+ * @return pointer to the first occurrence in @a str if @a sub is found, 
+ *         QSE_NULL if not.
+ */
+qse_char_t* qse_strstr (
+	const qse_char_t* str, 
+	const qse_char_t* sub
+);
+
 qse_char_t* qse_strxstr (
-	const qse_char_t* str, qse_size_t size, const qse_char_t* sub);
+	const qse_char_t* str,
+	qse_size_t        size,
+	const qse_char_t* sub
+);
+
 qse_char_t* qse_strxnstr (
-	const qse_char_t* str, qse_size_t strsz, 
-	const qse_char_t* sub, qse_size_t subsz);
+	const qse_char_t* str,
+	qse_size_t        strsz, 
+	const qse_char_t* sub,
+	qse_size_t        subsz
+);
+
+/**
+ * The qse_strstr() function searchs a string @a str for the last occurrence 
+ * of a substring @a sub
+ * @return pointer to the last occurrence in @a str if @a sub is found, 
+ *         QSE_NULL if not.
+ */
+qse_char_t* qse_strrstr (
+	const qse_char_t* str,
+	const qse_char_t* sub
+);
+
+qse_char_t* qse_strxrstr (
+	const qse_char_t* str,
+	qse_size_t        size,
+	const qse_char_t* sub
+);
+
+qse_char_t* qse_strxnrstr (
+	const qse_char_t* str,
+	qse_size_t        strsz, 
+	const qse_char_t* sub,
+	qse_size_t        subsz
+);
 
 qse_char_t* qse_strchr (const qse_char_t* str, qse_cint_t c);
 qse_char_t* qse_strxchr (const qse_char_t* str, qse_size_t len, qse_cint_t c);

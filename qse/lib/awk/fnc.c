@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 288 2009-09-15 14:03:15Z hyunghwan.chung $
+ * $Id: fnc.c 289 2009-09-16 06:35:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -462,7 +462,6 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		n = qse_awk_rtx_valtonum (rtx, a2, &start, &rv);
 		if (n <= -1) return -1;
 		if (n >= 1) start = (qse_long_t)rv;
-		if (start < 1) start = 1;
 	}
 
 	if (a0->type == QSE_AWK_VAL_STR)
@@ -492,9 +491,14 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		}
 	}
 
-	ptr = (start > len0)? 
+/* TODO: ignorecase... */
+	if (start == 0) start = 1;
+	else if (start < 0) start = len0 + start + 1;
+
+	ptr = (start > len0 || start <= 0)? 
 		QSE_NULL:
 		qse_strxnstr (&str0[start-1], len0-start+1, str1, len1);
+
 	idx = (ptr == QSE_NULL)? 0: ((qse_long_t)(ptr-str0) + 1);
 
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str0);
@@ -1305,9 +1309,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		n = qse_awk_rtx_valtonum (rtx, a2, &start, &rv);
 		if (n <= -1) return -1;
 		if (n >= 1) start = (qse_long_t)rv;
-		if (start < 1) start = 1;
 	}
-
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
@@ -1356,7 +1358,10 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		if (a1->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str1);
 	}
 
-	if (start > len0) n = 0;
+	if (start == 0) start = 1;
+	else if (start < 0) start = len0 + start + 1;
+
+	if (start > len0 || start <= 0) n = 0;
 	else
 	{
 		n = QSE_AWK_MATCHREX (
