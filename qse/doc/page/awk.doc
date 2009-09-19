@@ -88,6 +88,24 @@ The return statement is valid in BEGIN blocks, END blocks, and pattern-action
 blocks as well as in functions. The execution of a calling block is aborted
 once the return statement is executed.
 
+If #QSE_AWK_MAPTOVAR is on, you can return an arrayed value from a function.
+@code
+function getarray() {
+	local a;
+	a["one"] = 1;
+	a["two"] = 2;
+	a["three"] = 3;
+	return a;
+}
+
+BEGIN {
+	local x;
+
+	x = getarray();
+	for (i in x) print i, x[i];
+}
+@endcode
+
 @subsection awk_ext_comment COMMENT
 You can use the C-style comment as well as the pound comment.
 
@@ -110,4 +128,19 @@ BEGIN {
 }
 @endcode
 
+@subsection awk_ext_binnum BINARY NUMBER
+Use 0b to begin a binary number sequence.
+
+@code 
+BEGIN { print 0b1101; }
+@endcode
+
+@subsection awk_ext_unicode UNICODE ESCAPE SEQUENCE 
+
+If QSE is compiled for #QSE_CHAR_IS_WCHAR, you can use \\u and \\U in a 
+string to specify a character by unicode.
+
+@code
+BEGIN { print "string=>[\uB313\U0000B313]"; }
+@endcode
 */

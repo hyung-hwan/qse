@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: awk.h 290 2009-09-19 04:28:49Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,6 +41,11 @@ typedef struct qse_awk_tree_t qse_awk_tree_t;
 #include "val.h"
 #include "err.h"
 #include "misc.h"
+
+#define ENABLE_FEATURE_SCACHE
+#define FEATURE_SCACHE_NUM_BLOCKS 16
+#define FEATURE_SCACHE_BLOCK_UNIT 16
+#define FEATURE_SCACHE_BLOCK_SIZE 128
 
 #define QSE_AWK_MAX_GBLS 9999
 #define QSE_AWK_MAX_LCLS  9999
@@ -256,11 +261,13 @@ struct qse_awk_rtx_t
 	int exit_level;
 
 	qse_awk_val_ref_t* fcache[128];
-	/*qse_awk_val_str_t* scache32[128];
-	qse_awk_val_str_t* scache64[128];*/
 	qse_size_t fcache_count;
-	/*qse_size_t scache32_count;
-	qse_size_t scache64_count;*/
+
+#ifdef ENABLE_FEATURE_SCACHE
+	qse_awk_val_str_t* scache
+		[FEATURE_SCACHE_NUM_BLOCKS][FEATURE_SCACHE_BLOCK_SIZE];
+	qse_size_t scache_count[FEATURE_SCACHE_NUM_BLOCKS];
+#endif
 
 	struct
 	{

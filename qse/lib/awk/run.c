@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 288 2009-09-15 14:03:15Z hyunghwan.chung $
+ * $Id: run.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -801,9 +801,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 
 	rtx->exit_level = EXIT_NONE;
 
-	rtx->fcache_count = 0;
-	/*rtx->scache32_count = 0;
-	rtx->scache64_count = 0;*/
 	rtx->vmgr.ichunk = QSE_NULL;
 	rtx->vmgr.ifree = QSE_NULL;
 	rtx->vmgr.rchunk = QSE_NULL;
@@ -910,6 +907,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 
 static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 {
+
 	if (rtx->pattern_range_state != QSE_NULL)
 		QSE_AWK_FREE (rtx->awk, rtx->pattern_range_state);
 
@@ -1012,17 +1010,21 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
 	}
 
-	/*while (rtx->scache32_count > 0)
+#ifdef ENABLE_FEATURE_SCACHE
 	{
-		qse_awk_val_str_t* tmp = rtx->scache32[--rtx->scache32_count];
-		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
+		int i;
+		for (i = 0; i < QSE_COUNTOF(rtx->scache_count); i++)
+		{
+			while (rtx->scache_count[i] > 0)
+			{
+				qse_awk_val_str_t* t = 
+					rtx->scache[i][--rtx->scache_count[i]];
+				qse_awk_rtx_freeval (
+					rtx, (qse_awk_val_t*)t, QSE_FALSE);
+			}
+		}
 	}
-
-	while (rtx->scache64_count > 0)
-	{
-		qse_awk_val_str_t* tmp = rtx->scache64[--rtx->scache64_count];
-		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, QSE_FALSE);
-	}*/
+#endif
 
 	qse_awk_rtx_freevalchunk (rtx, rtx->vmgr.ichunk);
 	qse_awk_rtx_freevalchunk (rtx, rtx->vmgr.rchunk);

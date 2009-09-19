@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 289 2009-09-16 06:35:29Z hyunghwan.chung $
+ * $Id: str.h 290 2009-09-19 04:28:49Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,11 +32,11 @@
  *  dealing with a string pointer and length.
  */
 
-#define QSE_STR_LEN(s)       ((s)->len)
-#define QSE_STR_PTR(s)       ((s)->ptr)
-#define QSE_STR_CAPA(s)      ((s)->capa)
-#define QSE_STR_CHAR(s,idx)  ((s)->ptr[idx])
-#define QSE_STR_SIZER(s)     ((s)->sizer)
+#define QSE_STR_LEN(s)       ((s)->len)      /**< string length */
+#define QSE_STR_PTR(s)       ((s)->ptr)      /**< string/buffer pointer */
+#define QSE_STR_CAPA(s)      ((s)->capa)     /**< buffer capacity */
+#define QSE_STR_CHAR(s,idx)  ((s)->ptr[idx]) /**< character at given position */
+#define QSE_STR_SIZER(s)     ((s)->sizer)    /**< buffer resizer function */
 
 typedef struct qse_str_t qse_str_t;
 typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
@@ -47,10 +47,10 @@ typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
 struct qse_str_t
 {
 	QSE_DEFINE_COMMON_FIELDS (str)
-	qse_str_sizer_t sizer;
-	qse_char_t*     ptr;
-	qse_size_t      len;
-	qse_size_t      capa;
+	qse_str_sizer_t sizer; /**< buffer resizer function */
+	qse_char_t*     ptr;   /**< buffer/string pointer */
+	qse_size_t      len;   /**< string length */
+	qse_size_t      capa;  /**< buffer capacity */
 };
 
 /* int qse_chartonum (qse_char_t c, int base) */
@@ -291,7 +291,7 @@ qse_char_t* qse_strxdup2 (
 
 /**
  * The qse_strstr() function searchs a string @a str for the first occurrence 
- * of a substring @a sub
+ * of a substring @a sub.
  * @return pointer to the first occurrence in @a str if @a sub is found, 
  *         QSE_NULL if not.
  */
@@ -313,9 +313,27 @@ qse_char_t* qse_strxnstr (
 	qse_size_t        subsz
 );
 
+qse_char_t* qse_strcasestr (
+	const qse_char_t* str, 
+	const qse_char_t* sub
+);
+
+qse_char_t* qse_strxcasestr (
+	const qse_char_t* str,
+	qse_size_t        size,
+	const qse_char_t* sub
+);
+
+qse_char_t* qse_strxncasestr (
+	const qse_char_t* str,
+	qse_size_t        strsz, 
+	const qse_char_t* sub,
+	qse_size_t        subsz
+);
+
 /**
- * The qse_strstr() function searchs a string @a str for the last occurrence 
- * of a substring @a sub
+ * The qse_strrstr() function searchs a string @a str for the last occurrence 
+ * of a substring @a sub.
  * @return pointer to the last occurrence in @a str if @a sub is found, 
  *         QSE_NULL if not.
  */
