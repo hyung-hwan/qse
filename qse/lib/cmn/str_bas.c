@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 289 2009-09-16 06:35:29Z hyunghwan.chung $
+ * $Id: str_bas.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -534,6 +534,72 @@ qse_char_t* qse_strxnstr (
 		{
 			if (y >= subp) return (qse_char_t*)str;
 			if (*x != *y) break;
+			x++; y++;
+		}	
+
+		str++;
+	}
+		
+	return QSE_NULL;
+}
+
+qse_char_t* qse_strcasestr (const qse_char_t* str, const qse_char_t* sub)
+{
+	const qse_char_t* x, * y;
+
+	y = sub;
+	if (*y == QSE_T('\0')) return (qse_char_t*)str;
+
+	while (*str != QSE_T('\0')) 
+	{
+		if (QSE_TOUPPER(*str) != QSE_TOUPPER(*y)) 
+		{
+			str++;
+			continue;
+		}
+
+		x = str;
+		while (1)
+		{
+			if (*y == QSE_T('\0')) return (qse_char_t*)str;
+			if (QSE_TOUPPER(*x) != QSE_TOUPPER(*y)) break;
+			x++; y++;
+		}
+
+		y = sub;
+		str++;
+	}
+
+	return QSE_NULL;
+}
+
+qse_char_t* qse_strxcasestr (
+	const qse_char_t* str, qse_size_t size, const qse_char_t* sub)
+{
+	return qse_strxncasestr (str, size, sub, qse_strlen(sub));
+}
+
+qse_char_t* qse_strxncasestr (
+	const qse_char_t* str, qse_size_t strsz, 
+	const qse_char_t* sub, qse_size_t subsz)
+{
+	const qse_char_t* end, * subp;
+
+	if (subsz == 0) return (qse_char_t*)str;
+	if (strsz < subsz) return QSE_NULL;
+	
+	end = str + strsz - subsz;
+	subp = sub + subsz;
+
+	while (str <= end) 
+	{
+		const qse_char_t* x = str;
+		const qse_char_t* y = sub;
+
+		while (1)
+		{
+			if (y >= subp) return (qse_char_t*)str;
+			if (QSE_TOUPPER(*x) != QSE_TOUPPER(*y)) break;
 			x++; y++;
 		}	
 

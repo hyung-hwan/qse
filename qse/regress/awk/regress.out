@@ -1133,13 +1133,13 @@ BEGIN {
 	}
 }
 
-1
-2
-3
--------------------
 4
 5
 6
+-------------------
+1
+2
+3
 -------------------
 (1,2,3) in a ==> 20
 (4,5) not in a
@@ -2076,31 +2076,31 @@ int main ()
 --------------------------------------------------------------------------------
  ../../cmd/awk/.libs/qseawk  -f wordfreq.awk wordfreq.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-distinctions 1
-list 1
-0 3
-1 1
-end 1
-punctuation 1
-blank 2
-remove 2
-freq 3
-for 2
 _ 2
 a 2
-in 1
-i 4
-word 4
-nf 1
-of 1
-gsub 2
-tolower 1
-alnum 2
-wordfreq 1
-awk 1
 print 2
-frequencies 1
 case 1
+tolower 1
+i 4
+freq 3
+distinctions 1
+frequencies 1
+list 1
+alnum 2
+nf 1
+punctuation 1
+remove 2
+awk 1
+end 1
+gsub 2
+of 1
+word 4
+wordfreq 1
+for 2
+in 1
+0 3
+1 1
+blank 2
 --------------------------------------------------------------------------------
  ../../cmd/awk/.libs/qseawk  -f hanoi.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

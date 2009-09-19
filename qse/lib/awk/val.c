@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: val.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,23 +72,6 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 		return (qse_awk_val_t*)&awk_int[v-awk_int[0].val];
 	}
 
-	/*
-	if (run->icache_count > 0)
-	{
-		val = run->icache[--run->icache_count];
-	}
-	else
-	{
-		val = (qse_awk_val_int_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_val_int_t));
-		if (val == QSE_NULL) 
-		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
-	}
-	*/
-
 	if (rtx->vmgr.ifree == QSE_NULL)
 	{
 		qse_awk_val_ichunk_t* c;
@@ -147,23 +130,6 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 qse_awk_val_t* qse_awk_rtx_makerealval (qse_awk_rtx_t* rtx, qse_real_t v)
 {
 	qse_awk_val_real_t* val;
-
-	/*
-	if (run->rcache_count > 0)
-	{
-		val = run->rcache[--run->rcache_count];
-	}
-	else
-	{
-		val = (qse_awk_val_real_t*) QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(qse_awk_val_real_t));
-		if (val == QSE_NULL)
-		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
-	}
-	*/
 
 	if (rtx->vmgr.rfree == QSE_NULL)
 	{
@@ -225,28 +191,24 @@ qse_awk_val_t* qse_awk_rtx_makestrval0 (
 qse_awk_val_t* qse_awk_rtx_makestrval (
 	qse_awk_rtx_t* rtx, const qse_char_t* str, qse_size_t len)
 {
-	qse_awk_val_str_t* val;
+	qse_awk_val_str_t* val = QSE_NULL;
 	qse_size_t rlen = len;
 
-	/*if (rlen <= 32)
+#ifdef ENABLE_FEATURE_SCACHE
+	qse_size_t i;
+
+	i = rlen / FEATURE_SCACHE_BLOCK_UNIT;
+	if (i < QSE_COUNTOF(rtx->scache_count))
 	{
-		if (run->scache32_count > 0)
+		rlen = (i + 1) * FEATURE_SCACHE_BLOCK_UNIT - 1;
+		if (rtx->scache_count[i] > 0)
 		{
-			val = run->scache32[--run->scache32_count];
+			val = rtx->scache[i][--rtx->scache_count[i]];
 			goto init;
 		}
-		rlen = 32;
 	}
-	else if (rlen <= 64)
-	{
-		if (run->scache64_count > 0)
-		{
-			val = run->scache64[--run->scache64_count];
-			goto init;
-		}
-		rlen = 64;
-	}*/
-	
+#endif
+
 	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
 		rtx->awk,
 		QSE_SIZEOF(qse_awk_val_str_t) + 
@@ -256,15 +218,15 @@ qse_awk_val_t* qse_awk_rtx_makestrval (
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
-/*
+
+#ifdef ENABLE_FEATURE_SCACHE
 init:
-*/
+#endif
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->nstr = 0;
 	val->len = len;
 	val->ptr = (qse_char_t*)(val + 1);
-	/*qse_strxncpy (val->ptr, len+1, str, len);*/
 	qse_strncpy (val->ptr, str, len);
 
 #ifdef DEBUG_VAL
@@ -302,24 +264,20 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
 	qse_awk_val_str_t* val;
 	qse_size_t rlen = len1 + len2;
 
-	/*if (rlen <= 32)
+#ifdef ENABLE_FEATURE_SCACHE
+	int i;
+
+	i = rlen / FEATURE_SCACHE_BLOCK_UNIT;
+	if (i < QSE_COUNTOF(rtx->scache_count))
 	{
-		if (run->scache32_count > 0)
+		rlen = (i + 1) * FEATURE_SCACHE_BLOCK_UNIT - 1;
+		if (rtx->scache_count[i] > 0)
 		{
-			val = run->scache32[--run->scache32_count];
+			val = rtx->scache[i][--rtx->scache_count[i]];
 			goto init;
 		}
-		rlen = 32;
 	}
-	else if (rlen <= 64)
-	{
-		if (run->scache64_count > 0)
-		{
-			val = run->scache64[--run->scache64_count];
-			goto init;
-		}
-		rlen = 64;
-	}*/
+#endif
 
 	val = (qse_awk_val_str_t*) QSE_AWK_ALLOC (
 		rtx->awk,
@@ -331,16 +289,14 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
 		return QSE_NULL;
 	}
 
-/*
+#ifdef ENABLE_FEATURE_SCACHE
 init:
-*/
+#endif
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->nstr = 0;
 	val->len = len1 + len2;
 	val->ptr = (qse_char_t*)(val + 1);
-	/*qse_strxncpy (val->ptr, len1+1, str1, len1);
-	qse_strxncpy (val->ptr[len1], len2+1, str2, len2);*/
 	qse_strncpy (val->ptr, str1, len1);
 	qse_strncpy (&val->ptr[len1], str2, len2);
 
@@ -413,15 +369,15 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 
 static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
-	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_XTN(map);
+	qse_awk_rtx_t* rtx = *(qse_awk_rtx_t**)QSE_XTN(map);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("refdown in map free..."));
-	qse_awk_dprintval (run, dptr);
+	qse_awk_dprintval (rtx, dptr);
 	qse_dprintf (QSE_T("\n"));
 #endif
 
-	qse_awk_rtx_refdownval (run, dptr);
+	qse_awk_rtx_refdownval (rtx, dptr);
 }
 
 static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
@@ -545,7 +501,8 @@ qse_bool_t qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	return IS_STATICVAL(val);
 }
 
-void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cache)
+void qse_awk_rtx_freeval (	
+	qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cache)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -561,52 +518,36 @@ void qse_awk_rtx_freeval (qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cac
 	}
 	else if (val->type == QSE_AWK_VAL_INT)
 	{
-		/*
-		if (cache && rtx->icache_count < QSE_COUNTOF(rtx->icache))
-		{
-			rtx->icache[rtx->icache_count++] = 
-				(qse_awk_val_int_t*)val;	
-		}
-		else QSE_AWK_FREE (rtx->awk, val);
-		*/
-			
-		((qse_awk_val_int_t*)val)->nde = (qse_awk_nde_int_t*)rtx->vmgr.ifree;
+		((qse_awk_val_int_t*)val)->nde = 
+			(qse_awk_nde_int_t*)rtx->vmgr.ifree;
 		rtx->vmgr.ifree = (qse_awk_val_int_t*)val;
 	}
 	else if (val->type == QSE_AWK_VAL_REAL)
 	{
-		/*
-		if (cache && rtx->rcache_count < QSE_COUNTOF(rtx->rcache))
-		{
-			rtx->rcache[rtx->rcache_count++] = 
-				(qse_awk_val_real_t*)val;	
-		}
-		else QSE_AWK_FREE (rtx->awk, val);
-		*/
-		((qse_awk_val_real_t*)val)->nde = (qse_awk_nde_real_t*)rtx->vmgr.rfree;
+		((qse_awk_val_real_t*)val)->nde =
+			(qse_awk_nde_real_t*)rtx->vmgr.rfree;
 		rtx->vmgr.rfree = (qse_awk_val_real_t*)val;
 	}
 	else if (val->type == QSE_AWK_VAL_STR)
 	{
-		/*
+#ifdef ENABLE_FEATURE_SCACHE
 		if (cache)
 		{
 			qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
-			if (v->len <= 32 && 
-			    rtx->scache32_count<QSE_COUNTOF(rtx->scache32))
+			int i;
+
+			i = v->len / FEATURE_SCACHE_BLOCK_UNIT;
+			if (i < QSE_COUNTOF(rtx->scache_count) &&
+			    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
 			{
-				rtx->scache32[rtx->scache32_count++] = v;
-				v->nstr = 0;
-			}
-			else if (v->len <= 64 && 
-			         rtx->scache64_count<QSE_COUNTOF(rtx->scache64))
-			{
-				rtx->scache64[rtx->scache64_count++] = v;
+				rtx->scache[i][rtx->scache_count[i]++] = v;
 				v->nstr = 0;
 			}
 			else QSE_AWK_FREE (rtx->awk, val);
 		}
-		else*/ QSE_AWK_FREE (rtx->awk, val);
+		else 
+#endif
+			QSE_AWK_FREE (rtx->awk, val);
 	}
 	else if (val->type == QSE_AWK_VAL_REX)
 	{
