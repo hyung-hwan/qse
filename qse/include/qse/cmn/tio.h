@@ -1,5 +1,5 @@
 /*
- * $Id: tio.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: tio.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -66,10 +66,8 @@ enum
 
 typedef struct qse_tio_t qse_tio_t;
 
-/****t* Common/qse_tio_io_t
- * NAME
- *  qse_tio_io_t - define a text IO handler type
- * SYNOPSIS
+/**
+ * The qse_tio_io_t types define a text I/O handler.
  */
 typedef qse_ssize_t (*qse_tio_io_t) (
 	int        cmd, 
@@ -77,16 +75,11 @@ typedef qse_ssize_t (*qse_tio_io_t) (
 	void*      data, 
 	qse_size_t size
 );
-/******/
 
-/****s* Common/qse_tio_t
- * NAME
- *  qse_tio_t - define a text IO type
- * DESCRIPTION
- *   The qse_tio_t type defines a generic type for text IO. When qse_char_t is
- *   qse_mchar_t, it handles any byte streams. When qse_char_t is qse_wchar_t,
- *   it handles a multi-byte stream converted to a wide character stream.
- * SYNOPSIS
+/**
+ * The qse_tio_t type defines a generic type for text IO. If #qse_char_t is
+ * #qse_mchar_t, it handles any byte streams. If qse_char_t is #qse_wchar_t,
+ * it handles a multi-byte stream converted to a wide character stream.
  */
 struct qse_tio_t
 {
@@ -108,7 +101,6 @@ struct qse_tio_t
         qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
         qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
 };
-/******/
 
 #ifdef __cplusplus
 extern "C" {
@@ -116,26 +108,20 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (tio)
 
-/****f* Common/qse_tio_open
- * NAME
- *  qse_tio_open - create an text IO processor
- * SYNOPSIS
+/**
+ * The qse_tio_open() function creates an text stream processoor.
  */
 qse_tio_t* qse_tio_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext
 );
-/******/
 
-/****f* Common/qse_tio_close
- * NAME
- *  qse_tio_close - destroy an text IO processor
- * SYNOPSIS
+/**
+ * The qse_tio_close() function destroys an text stream processor.
  */
 int qse_tio_close (
 	qse_tio_t* tio
 );
-/******/
 
 /****f* Common/qse_tio_init
  * NAME

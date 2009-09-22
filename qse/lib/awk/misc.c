@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: misc.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -796,7 +796,8 @@ qse_char_t* qse_awk_rtx_strxntok (
 				}
 				for (d = delim; d < delim_end; d++) 
 				{
-					if (c == QSE_AWK_TOUPPER(rtx->awk,*d)) goto exit_loop;
+					if (c == QSE_AWK_TOUPPER(rtx->awk,*d))
+						goto exit_loop;
 				}
 				if (sp == QSE_NULL) sp = p;
 				ep = p++;
@@ -834,7 +835,7 @@ exit_loop:
 		*tok_len = ep - sp + 1;
 	}
 
-	/* if QSE_NULL is returned, this function should not be called anymore */
+	/* if QSE_NULL is returned, this function should not be called again */
 	if (p >= end) return QSE_NULL;
 	if (delim_mode == __DELIM_EMPTY || 
 	    delim_mode == __DELIM_SPACES) return (qse_char_t*)p;
@@ -935,6 +936,15 @@ exit_loop:
 		return (match.ptr+match.len > substr+sublen)? 
 			QSE_NULL: ((qse_char_t*)match.ptr+match.len);
 	}
+}
+
+qse_char_t* qse_awk_rtx_strxnfld (
+	qse_awk_rtx_t* rtx, qse_char_t* str, qse_size_t len,
+	qse_char_t fs, qse_char_t lq, qse_char_t rq, qse_char_t ec,
+	qse_char_t** tok, qse_size_t* tok_len)
+{
+/* TODO: */
+	return QSE_NULL;
 }
 
 #define QSE_AWK_REXERRTOERR(err) \
