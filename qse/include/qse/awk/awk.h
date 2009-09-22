@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 288 2009-09-15 14:03:15Z hyunghwan.chung $
+ * $Id: awk.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -31,9 +31,8 @@
  *
  * @todo
  * - make enhancement to treat a function as a value
- * - add RQ (right quote), LQ (left quote), ES (escaper) for more powerful 
- *   record splitting
  * - improve performance of qse_awk_rtx_readio() if RS is logner than 2 chars.
+ * - consider something like ${1:3,5} => $1, $2, $3, and $5 concatenated
  */
 
 /**

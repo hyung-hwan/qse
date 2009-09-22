@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: parse.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -326,6 +326,7 @@ static global_t gtab[] =
 
 	{ QSE_T("RLENGTH"),      7,  0 },
 	{ QSE_T("RS"),           2,  0 },
+
 	{ QSE_T("RSTART"),       6,  0 },
 	{ QSE_T("SUBSEP"),       6,  0 }
 };

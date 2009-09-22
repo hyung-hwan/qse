@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: awk.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,6 +21,7 @@
 #ifndef _QSE_LIB_AWK_AWK_H_
 #define _QSE_LIB_AWK_AWK_H_
 
+#define USE_STDC
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
@@ -287,7 +288,9 @@ struct qse_awk_rtx_t
 		qse_size_t buf_len;
 		qse_bool_t eof;
 
-		qse_str_t line;
+		qse_str_t line; /* entire line */
+		qse_str_t linew; /* line for manipulation, if necessary */
+
 		qse_awk_val_t* d0; /* $0 */
 
 		qse_size_t maxflds;

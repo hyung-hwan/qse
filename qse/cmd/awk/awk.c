@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: awk.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -708,7 +708,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_parsestd_in_t psin;
 	qse_awk_parsestd_out_t psout;
 
-	qse_memset (&arg, 0, QSE_SIZEOF(arg));
+	memset (&arg, 0, QSE_SIZEOF(arg));
 
 	i = comparg (argc, argv, &arg);
 	if (i <= 0)

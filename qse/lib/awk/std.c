@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: std.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -66,7 +66,7 @@ typedef struct xtn_t
 					qse_char_t* end;	
 				} cpl;
 			} u;
-			qse_sio_t*              handle;
+			qse_sio_t* handle;
 		} out;
 
 	} s;

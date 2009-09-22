@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: run.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -819,8 +819,17 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		return -1;
 	}
 
+	if (qse_str_init (
+		&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) == QSE_NULL)
+	{
+		qse_str_fini (&rtx->inrec.line);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+
 	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) == QSE_NULL)
 	{
+		qse_str_fini (&rtx->inrec.linew);
 		qse_str_fini (&rtx->inrec.line);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
@@ -829,6 +838,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) == QSE_NULL)
 	{
 		qse_str_fini (&rtx->format.out);
+		qse_str_fini (&rtx->inrec.linew);
 		qse_str_fini (&rtx->inrec.line);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
@@ -840,6 +850,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	{
 		qse_str_fini (&rtx->format.fmt);
 		qse_str_fini (&rtx->format.out);
+		qse_str_fini (&rtx->inrec.linew);
 		qse_str_fini (&rtx->inrec.line);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
@@ -857,6 +868,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		qse_map_close (rtx->named);
 		qse_str_fini (&rtx->format.fmt);
 		qse_str_fini (&rtx->format.out);
+		qse_str_fini (&rtx->inrec.linew);
 		qse_str_fini (&rtx->inrec.line);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
@@ -874,6 +886,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 			qse_map_close (rtx->named);
 			qse_str_fini (&rtx->format.fmt);
 			qse_str_fini (&rtx->format.out);
+			qse_str_fini (&rtx->inrec.linew);
 			qse_str_fini (&rtx->inrec.line);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
@@ -907,7 +920,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 
 static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 {
-
 	if (rtx->pattern_range_state != QSE_NULL)
 		QSE_AWK_FREE (rtx->awk, rtx->pattern_range_state);
 
@@ -984,6 +996,7 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 		rtx->inrec.flds = QSE_NULL;
 		rtx->inrec.maxflds = 0;
 	}
+	qse_str_fini (&rtx->inrec.linew);
 	qse_str_fini (&rtx->inrec.line);
 
 	if (fini_globals) refdown_globals (rtx, 1);

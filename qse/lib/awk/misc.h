@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: misc.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -53,6 +53,18 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	qse_char_t**      tok,
 	qse_size_t*       tok_len,
 	qse_awk_errnum_t* errnum
+);
+
+qse_char_t* qse_awk_rtx_strxnfld (
+	qse_awk_rtx_t* rtx,
+	qse_char_t*    str,
+	qse_size_t     len,
+	qse_char_t     fs,
+	qse_char_t     lq,
+	qse_char_t     rq,
+	qse_char_t     ec,
+	qse_char_t**   tok,
+	qse_size_t*    tok_len
 );
 
 void* qse_awk_buildrex (

@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: rec.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -96,7 +96,7 @@ int qse_awk_rtx_setrec (
 	return 0;
 }
 
-static int split_record (qse_awk_rtx_t* run)
+static int split_record (qse_awk_rtx_t* rtx)
 {
 	qse_char_t* p, * tok;
 	qse_size_t len, tok_len, nflds;
@@ -104,12 +104,13 @@ static int split_record (qse_awk_rtx_t* run)
 	qse_char_t* fs_ptr, * fs_free;
 	qse_size_t fs_len;
 	qse_awk_errnum_t errnum;
+	int how;
        
 	/* inrec should be cleared before split_record is called */
-	QSE_ASSERT (run->inrec.nflds == 0);
+	QSE_ASSERT (rtx->inrec.nflds == 0);
 
 	/* get FS */
-	fs = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_FS);
+	fs = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_FS);
 	if (fs->type == QSE_AWK_VAL_NIL)
 	{
 		fs_ptr = QSE_T(" ");
@@ -127,7 +128,7 @@ static int split_record (qse_awk_rtx_t* run)
 		qse_awk_rtx_valtostr_out_t out;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (run, fs, &out) == QSE_NULL) return -1;
+		if (qse_awk_rtx_valtostr (rtx, fs, &out) == QSE_NULL) return -1;
 		
 		fs_ptr = out.u.cpldup.ptr;
 		fs_len = out.u.cpldup.len;
@@ -135,135 +136,226 @@ static int split_record (qse_awk_rtx_t* run)
 	}
 
 	/* scan the input record to count the fields */
-	p = QSE_STR_PTR(&run->inrec.line);
-	len = QSE_STR_LEN(&run->inrec.line);
 
+	len = QSE_STR_LEN(&rtx->inrec.line);
+
+	if (fs_len == 5 && fs_ptr[0] ==  QSE_T('?'))
+	{
+		if (qse_str_ncpy (
+			&rtx->inrec.linew, 
+			QSE_STR_PTR(&rtx->inrec.line),
+			QSE_STR_LEN(&rtx->inrec.line)) == (qse_size_t)-1)
+		{
+			if (fs_free != QSE_NULL) 
+				QSE_AWK_FREE (rtx->awk, fs_free);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			return -1;
+		}
+
+		p = QSE_STR_PTR(&rtx->inrec.linew);
+		how = 1;
+	}
+	else
+	{
+		p = QSE_STR_PTR(&rtx->inrec.line);
+		how = (fs_len <= 1)? 0: 2;
+	}
+
+#if 0
 	nflds = 0;
 	while (p != QSE_NULL)
 	{
-		if (fs_len <= 1)
+		switch (how)
 		{
-			p = qse_awk_rtx_strxntok (run,
-				p, len, fs_ptr, fs_len, &tok, &tok_len);
-		}
-		else
-		{
-			p = qse_awk_rtx_strxntokbyrex (
-				run, 
-				QSE_STR_PTR(&run->inrec.line),
-				QSE_STR_LEN(&run->inrec.line),
-				p, len, 
-				run->gbl.fs, &tok, &tok_len, &errnum
-			); 
-			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
-			{
-				if (fs_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-				return -1;
-			}
+			case 0:
+				p = qse_awk_rtx_strxntok (rtx,
+					p, len, fs_ptr, fs_len, &tok, &tok_len);
+				break;
+
+			case 1:
+				break;
+
+			default:
+				p = qse_awk_rtx_strxntokbyrex (
+					rtx, 
+					QSE_STR_PTR(&rtx->inrec.line),
+					QSE_STR_LEN(&rtx->inrec.line),
+					p, len, 
+					rtx->gbl.fs, &tok, &tok_len, &errnum
+				); 
+				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
+				{
+					if (fs_free != QSE_NULL) 
+						QSE_AWK_FREE (rtx->awk, fs_free);
+					qse_awk_rtx_seterrnum (rtx, errnum, QSE_NULL);
+					return -1;
+				}
 		}
 
 		if (nflds == 0 && p == QSE_NULL && tok_len == 0)
 		{
 			/* there are no fields. it can just return here
 			 * as qse_awk_rtx_clrrec has been called before this */
-			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
 			return 0;
 		}
 
 		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
 
 		nflds++;
-		len = QSE_STR_LEN(&run->inrec.line) - 
-			(p - QSE_STR_PTR(&run->inrec.line));
+		len = QSE_STR_LEN(&rtx->inrec.line) - 
+			(p - QSE_STR_PTR(&rtx->inrec.line));
 	}
 
 	/* allocate space */
-	if (nflds > run->inrec.maxflds)
+	if (nflds > rtx->inrec.maxflds)
 	{
 		void* tmp = QSE_AWK_ALLOC (
-			run->awk, QSE_SIZEOF(*run->inrec.flds) * nflds);
+			rtx->awk, QSE_SIZEOF(*rtx->inrec.flds) * nflds);
 		if (tmp == QSE_NULL) 
 		{
-			if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
-		if (run->inrec.flds != QSE_NULL) 
-			QSE_AWK_FREE (run->awk, run->inrec.flds);
-		run->inrec.flds = tmp;
-		run->inrec.maxflds = nflds;
+		if (rtx->inrec.flds != QSE_NULL) 
+			QSE_AWK_FREE (rtx->awk, rtx->inrec.flds);
+		rtx->inrec.flds = tmp;
+		rtx->inrec.maxflds = nflds;
 	}
 
 	/* scan again and split it */
-	p = QSE_STR_PTR(&run->inrec.line);
-	len = QSE_STR_LEN(&run->inrec.line);
+	if (how == 1)
+	{
+		if (qse_str_ncpy (
+			&rtx->inrec.linew, 
+			QSE_STR_PTR(&rtx->inrec.line),
+			QSE_STR_LEN(&rtx->inrec.line)) == (qse_size_t)-1)
+		{
+			if (fs_free != QSE_NULL) 
+				QSE_AWK_FREE (rtx->awk, fs_free);
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			return -1;
+		}
+		p = QSE_STR_PTR(&rtx->inrec.linew):
+	}
+	else
+	{
+		p = QSE_STR_PTR(&rtx->inrec.line);
+	}
+	len = QSE_STR_LEN(&rtx->inrec.line);
+#endif
 
 	while (p != QSE_NULL)
 	{
-		if (fs_len <= 1)
+		switch (how)
 		{
-			p = qse_awk_rtx_strxntok (
-				run, p, len, fs_ptr, fs_len, &tok, &tok_len);
+			case 0:
+				p = qse_awk_rtx_strxntok (
+					rtx, p, len, fs_ptr, fs_len,
+					&tok, &tok_len);
+				break;
+
+			case 1:
+				p = qse_awk_rtx_strxnfld (
+					rtx, p, len, 
+					fs_ptr[1], fs_ptr[2],
+					fs_ptr[3], fs_ptr[4],
+					&tok, &tok_len);
+				break;
+
+			default:
+				p = qse_awk_rtx_strxntokbyrex (
+					rtx, 
+					QSE_STR_PTR(&rtx->inrec.line),
+					QSE_STR_LEN(&rtx->inrec.line),
+					p, len,
+					rtx->gbl.fs, &tok, &tok_len, &errnum
+				); 
+				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
+				{
+					if (fs_free != QSE_NULL) 
+						QSE_AWK_FREE (rtx->awk, fs_free);
+					qse_awk_rtx_seterrnum (rtx, errnum, QSE_NULL);
+					return -1;
+				}
 		}
-		else
+
+#if 1
+		if (rtx->inrec.nflds == 0 && p == QSE_NULL && tok_len == 0)
 		{
-			p = qse_awk_rtx_strxntokbyrex (
-				run, 
-				QSE_STR_PTR(&run->inrec.line),
-				QSE_STR_LEN(&run->inrec.line),
-				p, len,
-				run->gbl.fs, &tok, &tok_len, &errnum
-			); 
-			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
-			{
-				if (fs_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, fs_free);
-				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-				return -1;
-			}
+			/* there are no fields. it can just return here
+			 * as qse_awk_rtx_clrrec has been called before this */
+			if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
+			return 0;
 		}
+#endif
 
 		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
 
-		run->inrec.flds[run->inrec.nflds].ptr = tok;
-		run->inrec.flds[run->inrec.nflds].len = tok_len;
+#if 1
+		if (rtx->inrec.nflds >= rtx->inrec.maxflds)
+		{
+			if (rtx->inrec.nflds < 16) nflds = 32;
+			else nflds = rtx->inrec.nflds * 2;
 
-		run->inrec.flds[run->inrec.nflds].val =
-			qse_awk_rtx_makenstrval (run, tok, tok_len);
+			void* tmp = QSE_AWK_ALLOC (
+				rtx->awk, QSE_SIZEOF(*rtx->inrec.flds) * nflds);
+			if (tmp == QSE_NULL) 
+			{
+				if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}
 
-		if (run->inrec.flds[run->inrec.nflds].val == QSE_NULL)
+			if (rtx->inrec.flds != QSE_NULL) 
+			{
+				QSE_MEMCPY (tmp, rtx->inrec.flds, 
+					QSE_SIZEOF(*rtx->inrec.flds) * rtx->inrec.nflds);
+				QSE_AWK_FREE (rtx->awk, rtx->inrec.flds);
+			}
+
+			rtx->inrec.flds = tmp;
+			rtx->inrec.maxflds = nflds;
+		}
+#endif
+
+		rtx->inrec.flds[rtx->inrec.nflds].ptr = tok;
+		rtx->inrec.flds[rtx->inrec.nflds].len = tok_len;
+
+		rtx->inrec.flds[rtx->inrec.nflds].val =
+			qse_awk_rtx_makenstrval (rtx, tok, tok_len);
+
+		if (rtx->inrec.flds[rtx->inrec.nflds].val == QSE_NULL)
 		{
 			if (fs_free != QSE_NULL) 
-				QSE_AWK_FREE (run->awk, fs_free);
+				QSE_AWK_FREE (rtx->awk, fs_free);
 			return -1;
 		}
 
 		qse_awk_rtx_refupval (
-			run, run->inrec.flds[run->inrec.nflds].val);
-		run->inrec.nflds++;
+			rtx, rtx->inrec.flds[rtx->inrec.nflds].val);
+		rtx->inrec.nflds++;
 
-		len = QSE_STR_LEN(&run->inrec.line) - 
-			(p - QSE_STR_PTR(&run->inrec.line));
+		len = QSE_STR_LEN(&rtx->inrec.line) - 
+			(p - QSE_STR_PTR(&rtx->inrec.line));
 	}
 
-	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
+	if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
 
 	/* set the number of fields */
-	v = qse_awk_rtx_makeintval (run, (qse_long_t)nflds);
+	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)rtx->inrec.nflds);
 	if (v == QSE_NULL) return -1;
 
-	qse_awk_rtx_refupval (run, v);
-	if (qse_awk_rtx_setgbl (run, QSE_AWK_GBL_NF, v) == -1) 
+	qse_awk_rtx_refupval (rtx, v);
+	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_NF, v) == -1) 
 	{
-		qse_awk_rtx_refdownval (run, v);
+		qse_awk_rtx_refdownval (rtx, v);
 		return -1;
 	}
 
-	qse_awk_rtx_refdownval (run, v);
-	QSE_ASSERT (nflds == run->inrec.nflds);
+	qse_awk_rtx_refdownval (rtx, v);
 	return 0;
 }
 
