@@ -128,6 +128,12 @@ BEGIN {
 }
 @endcode
 
+@subsection awk_ext_fs EXTENDED FS
+@code
+BEGIN { FS="?:\\\"\""; }
+@endcode
+
+
 @subsection awk_ext_binnum BINARY NUMBER
 Use 0b to begin a binary number sequence.
 
