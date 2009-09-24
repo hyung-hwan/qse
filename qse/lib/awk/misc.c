@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: misc.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -940,10 +940,90 @@ exit_loop:
 
 qse_char_t* qse_awk_rtx_strxnfld (
 	qse_awk_rtx_t* rtx, qse_char_t* str, qse_size_t len,
-	qse_char_t fs, qse_char_t lq, qse_char_t rq, qse_char_t ec,
+	qse_char_t fs, qse_char_t ec, qse_char_t lq, qse_char_t rq,
 	qse_char_t** tok, qse_size_t* tok_len)
 {
-/* TODO: */
+	qse_char_t* p = str;
+	qse_char_t* end = str + len;
+	int escaped = 0, quoted = 0;
+	qse_char_t* ts; /* token start */
+	qse_char_t* tp; /* points to one char past the last token char */
+	qse_char_t* xp; /* points to one char past the last effective char */
+
+	/* skip leading spaces */
+	while (p < end && QSE_ISSPACE(*p)) p++;
+
+	/* initialize token pointers */
+	ts = tp = xp = p; 
+
+	while (p < end)
+	{
+		char c = *p;
+
+		if (escaped)
+		{
+			*tp++ = c; xp = tp; p++;
+			escaped = 0;
+		}
+		else
+		{
+			if (c == ec)
+			{
+				escaped = 1;
+				p++;
+			}
+			else if (quoted)
+			{
+				if (c == rq)
+				{
+					quoted = 0;
+					p++;
+				}
+				else
+				{
+					*tp++ = c; xp = tp; p++;
+				}
+			}
+			else 
+			{
+				if (c == fs)
+				{
+					*tok = ts;
+					*tok_len = xp - ts;
+					p++;
+
+					if (QSE_ISSPACE(fs))
+					{
+						while (p < end && *p == fs) p++;
+						if (p >= end) return QSE_NULL;
+					}
+
+					return p;
+				}
+		
+				if (c == lq)
+				{
+					quoted = 1;
+					p++;
+				}
+				else
+				{
+					*tp++ = c; p++;
+					if (!QSE_ISSPACE(c)) xp = tp; 
+				}
+			}
+		}
+	}
+
+	if (escaped) 
+	{
+		/* if it is still escaped, the last character must be 
+		 * the escaper itself. treat it as a normal character */
+		*xp++ = ec;
+	}
+	
+	*tok = ts;
+	*tok_len = xp - ts;
 	return QSE_NULL;
 }
 

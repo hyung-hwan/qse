@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: run.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -402,7 +402,7 @@ static int set_global (
 				fs_len = out.u.cpldup.len;
 			}
 
-			if (fs_len > 1)
+			if (fs_len > 1 && !(fs_len == 5 && fs_ptr[0] == QSE_T('?')))
 			{
 				void* rex;
 				qse_awk_errnum_t errnum;

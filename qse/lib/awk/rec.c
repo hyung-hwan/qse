@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: rec.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -98,7 +98,7 @@ int qse_awk_rtx_setrec (
 
 static int split_record (qse_awk_rtx_t* rtx)
 {
-	qse_char_t* p, * tok;
+	qse_char_t* p, * px, * tok;
 	qse_size_t len, tok_len, nflds;
 	qse_awk_val_t* v, * fs;
 	qse_char_t* fs_ptr, * fs_free;
@@ -136,9 +136,6 @@ static int split_record (qse_awk_rtx_t* rtx)
 	}
 
 	/* scan the input record to count the fields */
-
-	len = QSE_STR_LEN(&rtx->inrec.line);
-
 	if (fs_len == 5 && fs_ptr[0] ==  QSE_T('?'))
 	{
 		if (qse_str_ncpy (
@@ -152,14 +149,17 @@ static int split_record (qse_awk_rtx_t* rtx)
 			return -1;
 		}
 
-		p = QSE_STR_PTR(&rtx->inrec.linew);
+		px = QSE_STR_PTR(&rtx->inrec.linew);
 		how = 1;
 	}
 	else
 	{
-		p = QSE_STR_PTR(&rtx->inrec.line);
+		px = QSE_STR_PTR(&rtx->inrec.line);
 		how = (fs_len <= 1)? 0: 2;
 	}
+
+	p = px; 
+	len = QSE_STR_LEN(&rtx->inrec.line);
 
 #if 0
 	nflds = 0;
@@ -238,12 +238,14 @@ static int split_record (qse_awk_rtx_t* rtx)
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
-		p = QSE_STR_PTR(&rtx->inrec.linew):
+		px = QSE_STR_PTR(&rtx->inrec.linew):
 	}
 	else
 	{
-		p = QSE_STR_PTR(&rtx->inrec.line);
+		px = QSE_STR_PTR(&rtx->inrec.line);
 	}
+
+	p = px; 
 	len = QSE_STR_LEN(&rtx->inrec.line);
 #endif
 
@@ -338,8 +340,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 			rtx, rtx->inrec.flds[rtx->inrec.nflds].val);
 		rtx->inrec.nflds++;
 
-		len = QSE_STR_LEN(&rtx->inrec.line) - 
-			(p - QSE_STR_PTR(&rtx->inrec.line));
+		len = QSE_STR_LEN(&rtx->inrec.line) - (p - px);
 	}
 
 	if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
