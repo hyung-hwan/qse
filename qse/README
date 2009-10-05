@@ -2,8 +2,8 @@ QSE is a code library that implements various Unix utilities in an
 embeddable form and provides a set of APIs to embed them into an application.
 The APIs have been designed to be flexible enough to access various aspects of
 a hosting application and an embedded object from each other. By embedding
-a Unix utility into an application, a developer is relieved of the need to
-invoke an external command and is given tighter control over it.
+a Unix utility into an application, a developer is relieved of problems caused
+by interacting with external programs and is given tighter control over it.
 
 Currently the library implements the following utilities:
 - SED Stream Editor
