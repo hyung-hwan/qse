@@ -34,7 +34,8 @@ static const qse_char_t* g_infile = QSE_NULL;
 static int g_option = 0;
 
 static qse_ssize_t in (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg, qse_char_t* buf, qse_size_t size)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd,
+	qse_sed_io_arg_t* arg, qse_char_t* buf, qse_size_t size)
 {
 	switch (cmd)
 	{
@@ -78,7 +79,8 @@ static qse_ssize_t in (
 }
 
 static qse_ssize_t out (
-	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg, qse_char_t* data, qse_size_t len)
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd,
+	qse_sed_io_arg_t* arg, qse_char_t* data, qse_size_t len)
 {
 	switch (cmd)
 	{

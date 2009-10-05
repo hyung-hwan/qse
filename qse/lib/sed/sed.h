@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sed.h 293 2009-10-04 14:08:27Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -190,16 +190,6 @@ struct qse_sed_t
 	} tmp;
 
 	/** compiled commands */
-#if 0
-	struct
-	{
-		qse_size_t     len; /**< buffer size */
-		qse_sed_cmd_t* buf; /**< buffer holding compiled commands */
-		qse_sed_cmd_t* end; /**< end of the buffer */
-		qse_sed_cmd_t* cur; /**< points next to the last command */
-	} cmd;
-#endif
-
 	struct
 	{
 		qse_sed_cmd_blk_t  fb; /**< the first block is static */
@@ -273,4 +263,5 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum);
 #ifdef __cplusplus
 }
 #endif
+
 #endif
