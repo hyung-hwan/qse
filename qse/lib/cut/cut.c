@@ -58,6 +58,7 @@ static int add_selector_block (qse_cut_t* cut)
 	cut->sel.lb->next = b;
 	cut->sel.lb = b;
 	cut->sel.count = 0;
+	cut->sel.fcount = 0;
 
 	return 0;
 }
@@ -77,6 +78,7 @@ static void free_all_selector_blocks (qse_cut_t* cut)
 	cut->sel.lb->len = 0;
 	cut->sel.lb->next = QSE_NULL;
 	cut->sel.count = 0;
+	cut->sel.fcount = 0;
 }
 
 qse_cut_t* qse_cut_open (qse_mmgr_t* mmgr, qse_size_t xtn)
@@ -154,12 +156,13 @@ void qse_cut_setmaxdepth (qse_cut_t* cut, int ids, qse_size_t depth)
 	if (ids & QSE_CUT_DEPTH_REX_MATCH) cut->depth.rex.match = depth;
 }
 
-int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
+int qse_cut_comp (
+	qse_cut_t* cut, qse_cut_sel_id_t sel, 
+	const qse_char_t* str, qse_size_t len)
 {
 	const qse_char_t* p = str;
 	const qse_char_t* xnd = str + len;
 	qse_cint_t c;
-	int type = CHAR;
 
 #define CC(x,y) (((x) <= (y))? ((qse_cint_t)*(x)): QSE_CHAR_EOF)
 #define NC(x,y) (((x) < (y))? ((qse_cint_t)*(++(x))): QSE_CHAR_EOF)
@@ -191,13 +194,13 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 
 		if (c == QSE_T('c'))
 		{
-			type = CHAR;
+			sel = QSE_CUT_SEL_CHAR;
 			c = NC (p, xnd);
 			while (QSE_ISSPACE(c)) c = NC (p, xnd);
 		}
 		else if (c == QSE_T('f'))
 		{
-			type = FIELD;
+			sel = QSE_CUT_SEL_FIELD;
 			c = NC (p, xnd);
 			while (QSE_ISSPACE(c)) c = NC (p, xnd);
 		}
@@ -251,11 +254,12 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 			}
 		}
 
-		cut->sel.lb->range[cut->sel.lb->len].type = type;
+		cut->sel.lb->range[cut->sel.lb->len].id = sel;
 		cut->sel.lb->range[cut->sel.lb->len].start = start;
 		cut->sel.lb->range[cut->sel.lb->len].end = end;
 		cut->sel.lb->len++;
 		cut->sel.count++;
+		if (sel == QSE_CUT_SEL_FIELD) cut->sel.fcount++;
 
 		if (EOF(c)) break;
 		if (c == QSE_T(',')) c = NC (p, xnd);
@@ -264,24 +268,270 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 	return 0;
 }
 
-int qse_cut_exec (qse_cut_t* cut, qse_cut_io_fun_t inf, qse_cut_io_fun_t outf)
+static int read_char (qse_cut_t* cut, qse_char_t* c)
+{
+	qse_ssize_t n;
 
-{
-	/* selector: c12-30, b30-40, f1-3,6-7,10
-	 * default input field delimiter: TAB
-	 * default output field delimiter: same as input delimiter 
-	 * option: QSE_CUT_ONLYDELIMITED
-	 */
+	if (cut->e.in.pos >= cut->e.in.len)
+	{
+		cut->errnum = QSE_CUT_ENOERR;
+		n = cut->e.in.fun (
+			cut, QSE_CUT_IO_READ, &cut->e.in.arg, 
+			cut->e.in.buf, QSE_COUNTOF(cut->e.in.buf)
+		);
+		if (n <= -1) 
+		{
+			if (cut->errnum == QSE_CUT_ENOERR)
+				SETERR0 (cut, QSE_CUT_EIOUSR);
+			return -1;
+		}
 
-{
-int i;
-for (i = 0; i < cut->sel.count; i++)
-{
-qse_printf (QSE_T("%d start = %llu, end = %llu\n"), 
-	cut->sel.fb.range[i].type, 
-	(unsigned long long)cut->sel.fb.range[i].start, 
-	(unsigned long long)cut->sel.fb.range[i].end);
+		if (n == 0) return 0; /* end of file */
+
+		cut->e.in.len = n;
+		cut->e.in.pos = 0;
+	}
+
+	*c = cut->e.in.buf[cut->e.in.pos++];
+	return 1;
 }
+
+static int read_line (qse_cut_t* cut)
+{
+	qse_size_t len = 0;
+	qse_char_t c;
+	int n;
+
+	qse_str_clear (&cut->e.in.line);
+	if (cut->e.in.eof) return 0;
+
+	while (1)
+	{
+		n = read_char (cut, &c);
+		if (n <= -1) return -1;
+		if (n == 0)
+		{
+			cut->e.in.eof = 1;
+			if (len == 0) return 0;
+			break;
+		}
+
+		if (c == QSE_T('\n')) 
+		{
+			/* don't include the line terminater to a line */
+			/* TODO: support different line end convension */
+			break;
+		}
+
+		if (qse_str_ccat (&cut->e.in.line, c) == (qse_size_t)-1)
+		{
+			SETERR0 (cut, QSE_CUT_ENOMEM);
+			return -1;
+		}
+		len++;	
+	}
+
+	cut->e.in.num++;
+	return 1;	
 }
+
+static int flush (qse_cut_t* cut)
+{
+	qse_size_t pos = 0;
+	qse_ssize_t n;
+
+	while (cut->e.out.len > 0)
+	{
+		cut->errnum = QSE_CUT_ENOERR;
+		n = cut->e.out.fun (
+			cut, QSE_CUT_IO_WRITE, &cut->e.out.arg,
+			&cut->e.out.buf[pos], cut->e.out.len);
+
+		if (n <= -1)
+		{
+			if (cut->errnum == QSE_CUT_ENOERR)
+				SETERR0 (cut, QSE_CUT_EIOUSR);
+			return -1;
+		}
+
+		if (n == 0)
+		{
+			/* reached the end of file - this is also an error */
+			if (cut->errnum == QSE_CUT_ENOERR)
+				SETERR0 (cut, QSE_CUT_EIOUSR);
+			return -1;
+		}
+
+		pos += n;
+		cut->e.out.len -= n;
+	}
+
+	return 0;
+}
+
+static int write_char (qse_cut_t* cut, qse_char_t c)
+{
+	cut->e.out.buf[cut->e.out.len++] = c;
+	if (c == QSE_T('\n') ||
+		cut->e.out.len >= QSE_COUNTOF(cut->e.out.buf))
+	{
+		return flush (cut);
+	}
+
+	return 0;
+}
+
+static int write_str (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
+{
+	qse_size_t i;
+	for (i = 0; i < len; i++)
+	{
+		if (write_char (cut, str[i]) <= -1) return -1;
+	}
+		return 0;
+}
+
+int cut_chars (qse_cut_t* cut, qse_size_t start, qse_size_t end)
+{
+	const qse_char_t* ptr = QSE_STR_PTR(&cut->e.in.line);
+	qse_size_t len = QSE_STR_LEN(&cut->e.in.line);
+
+	if (len <= 0) 
+	{
+		/* TODO: delimited only */
+		if (write_char (cut, QSE_T('\n')) <= -1) return -1;
+	}
+	else if (start <= end)
+	{
+		if (start <= len && end > 0)
+		{
+			if (start >= 1) start--;
+			if (end >= 1) end--;
+
+			if (end >= len) end = len - 1;
+
+			if (write_str (cut, &ptr[start], end-start+1) <= -1)
+				return -1;
+		}
+
+		/* TODO: DELIMTIED ONLY */
+		if (write_char (cut, QSE_T('\n')) <= -1) return -1;
+	}
+	else
+	{
+		if (start > 0 && end <= len)
+		{
+			qse_size_t i;
+
+			if (start >= 1) start--;
+			if (end >= 1) end--;
+
+			if (start >= len) start = len - 1;
+
+			for (i = start; i >= end; i--)
+			{
+				if (write_char (cut, ptr[i]) <= -1)
+					return -1;
+			}
+		}
+
+		/* TODO: DELIMTIED ONLY */
+		if (write_char (cut, QSE_T('\n')) <= -1) return -1;
+	}
+
+	return 0;
+}
+
+int cut_fields (qse_cut_t* cut, qse_size_t start, qse_size_t end)
+{
+/* TODO: field splitting... delimited only */
 	return -1;
+}
+
+int qse_cut_exec (qse_cut_t* cut, qse_cut_io_fun_t inf, qse_cut_io_fun_t outf)
+{
+	int ret = 0;
+	qse_ssize_t n;
+
+	cut->e.out.fun = outf;
+	cut->e.out.eof = 0;
+	cut->e.out.len = 0;
+	
+	cut->e.in.fun = inf;
+	cut->e.in.eof = 0;
+	cut->e.in.len = 0;
+	cut->e.in.pos = 0;
+	cut->e.in.num = 0;
+	if (qse_str_init (&cut->e.in.line, QSE_MMGR(cut), 256) == QSE_NULL)
+	{
+		SETERR0 (cut, QSE_CUT_ENOMEM);
+		return -1;
+	}
+
+	cut->errnum = QSE_CUT_ENOERR;
+	n = cut->e.in.fun (cut, QSE_CUT_IO_OPEN, &cut->e.in.arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		ret = -1;
+		if (cut->errnum == QSE_CUT_ENOERR)
+			SETERR0 (cut, QSE_CUT_EIOUSR);
+		goto done3;
+	}
+	if (n == 0)
+	{
+		/* EOF reached upon opening an input stream.
+		* no data to process. this is success */
+		goto done2;
+	}
+
+	cut->errnum = QSE_CUT_ENOERR;
+	n = cut->e.out.fun (cut, QSE_CUT_IO_OPEN, &cut->e.out.arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		ret = -1;
+		if (cut->errnum == QSE_CUT_ENOERR)
+			SETERR0 (cut, QSE_CUT_EIOUSR);
+		goto done2;
+	}
+	if (n == 0)
+	{
+		/* still don't know if we will write something.
+		 * just mark EOF on the output stream and continue */
+		cut->e.out.eof = 1;
+	}
+
+		
+	while (1)
+	{
+		qse_cut_sel_blk_t* b;
+		qse_size_t i;
+
+		n = read_line (cut);
+		if (n <= -1) { ret = -1; goto done; }
+		if (n == 0) goto done;
+
+		if (cut->sel.fcount > 0)
+		{
+/* split the line into fields */
+		}
+
+		for (b = &cut->sel.fb; b != QSE_NULL; b = b->next)
+		{
+			for (i = 0; i < b->len; i++)
+			{
+				ret = (b->range[i].id == QSE_CUT_SEL_CHAR)?
+					cut_chars (cut, b->range[i].start, b->range[i].end):
+					cut_fields (cut, b->range[i].start, b->range[i].end);
+				if (ret <= -1) goto done;
+			}
+		}
+	}
+
+done:
+	cut->e.out.fun (cut, QSE_CUT_IO_CLOSE, &cut->e.out.arg, QSE_NULL, 0);
+done2:
+	cut->e.in.fun (cut, QSE_CUT_IO_CLOSE, &cut->e.in.arg, QSE_NULL, 0);
+done3:
+	qse_str_fini (&cut->e.in.line);
+	return ret;
 }
