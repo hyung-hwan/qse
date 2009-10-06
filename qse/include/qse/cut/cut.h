@@ -44,26 +44,6 @@ enum qse_cut_errnum_t
 	QSE_CUT_EREXIC,  /**< regular expression '${0}' incomplete */
 	QSE_CUT_EREXBL,  /**< failed to compile regular expression '${0}' */
 	QSE_CUT_EREXMA,  /**< failed to match regular expression */
-	QSE_CUT_EA1PHB,  /**< address 1 prohibited for '${0}' */
-	QSE_CUT_EA2PHB,  /**< address 2 prohibited */
-	QSE_CUT_EA2MOI,  /**< address 2 missing or invalid */
-	QSE_CUT_ENEWLN,  /**< newline expected */
-	QSE_CUT_EBSEXP,  /**< backslash expected */
-	QSE_CUT_EBSDEL,  /**< backslash used as delimiter */
-	QSE_CUT_EGBABS,  /**< garbage after backslash */
-	QSE_CUT_ESCEXP,  /**< semicolon expected */
-	QSE_CUT_ELABEM,  /**< empty label name */
-	QSE_CUT_ELABDU,  /**< duplicate label name '${0}' */
-	QSE_CUT_ELABNF,  /**< label '${0}' not found */
-	QSE_CUT_EFILEM,  /**< empty file name */
-	QSE_CUT_EFILIL,  /**< illegal file name */
-	QSE_CUT_ETSNSL,  /**< strings in translation set not the same length*/
-	QSE_CUT_EGRNBA,  /**< group brackets not balanced */
-	QSE_CUT_EGRNTD,  /**< group nesting too deep */
-	QSE_CUT_EOCSDU,  /**< multiple occurrence specifiers */
-	QSE_CUT_EOCSZE,  /**< occurrence specifier zero */
-	QSE_CUT_EOCSTL,  /**< occurrence specifier too large */
-	QSE_CUT_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_CUT_EIOUSR   /**< error returned by user io handler */
 };
 typedef enum qse_cut_errnum_t qse_cut_errnum_t;
@@ -98,6 +78,15 @@ enum qse_cut_option_t
 };
 typedef enum qse_cut_option_t qse_cut_option_t;
 
+/**
+ * The qse_cut_sel_id_t type defines selector types.
+ */
+enum qse_cut_sel_id_t
+{
+	QSE_CUT_SEL_CHAR, /**< character */
+	QSE_CUT_SEL_FIELD /**< field */
+};
+typedef enum qse_cut_sel_id_t qse_cut_sel_id_t;
 
 /**
  * The qse_cut_depth_t type defines IDs for qse_cut_getmaxdepth() and 
@@ -129,7 +118,6 @@ typedef enum qse_cut_io_cmd_t qse_cut_io_cmd_t;
 struct qse_cut_io_arg_t
 {
 	void*             handle; /**< IO handle */
-	const qse_char_t* path;   /**< file path. QSE_NULL for a console */
 };
 typedef struct qse_cut_io_arg_t qse_cut_io_arg_t;
 
@@ -309,6 +297,7 @@ void qse_cut_seterror (
  */
 int qse_cut_comp (
 	qse_cut_t*        cut, /**< stream editor */
+	qse_cut_sel_id_t  sel, /**< initial selector type */
 	const qse_char_t* ptr, /**< pointer to a string containing commands */
 	qse_size_t        len  /**< the number of characters in the string */ 
 );

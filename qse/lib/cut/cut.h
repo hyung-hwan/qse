@@ -28,14 +28,10 @@ typedef struct qse_cut_sel_blk_t qse_cut_sel_blk_t;
 
 struct qse_cut_sel_blk_t
 {
-	qse_size_t         len;
+	qse_size_t len;
 	struct
 	{
-		enum
-		{
-			CHAR,
-			FIELD
-		} type;
+		qse_cut_sel_id_t id;
 		qse_size_t start;
 		qse_size_t end;
 	} range[256];
@@ -66,7 +62,41 @@ struct qse_cut_t
 		qse_cut_sel_blk_t  fb; /**< the first block is static */
 		qse_cut_sel_blk_t* lb; /**< points to the last block */
 		qse_size_t         count; 
+		qse_size_t         fcount; 
         } sel;
+
+	struct
+	{
+		/** data needed for output streams */
+		struct
+		{
+			qse_cut_io_fun_t fun; /**< an output handler */
+			qse_cut_io_arg_t arg; /**< output handling data */
+
+			qse_char_t buf[2048];
+			qse_size_t len;
+			int        eof;
+                } out;
+		
+		/** data needed for input streams */
+		struct
+                {
+                        qse_cut_io_fun_t fun; /**< an input handler */
+                        qse_cut_io_arg_t arg; /**< input handling data */
+
+                        qse_char_t xbuf[1]; /**< a read-ahead buffer */
+                        int xbuf_len; /**< data length in the buffer */
+
+                        qse_char_t buf[2048]; /**< input buffer */
+                        qse_size_t len; /**< data length in the buffer */
+                        qse_size_t pos; /**< current position in the buffer */
+                        int        eof; /**< EOF indicator */
+
+                        qse_str_t line; /**< pattern space */
+                        qse_size_t num; /**< current line number */
+                } in;
+
+	} e;
 };
 
 #ifdef __cplusplus
