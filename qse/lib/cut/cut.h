@@ -34,7 +34,7 @@ struct qse_cut_sel_blk_t
 		qse_cut_sel_id_t id;
 		qse_size_t start;
 		qse_size_t end;
-	} range[256];
+	} range[128];
 	qse_cut_sel_blk_t* next;
 };
 
@@ -61,8 +61,13 @@ struct qse_cut_t
 	{
 		qse_cut_sel_blk_t  fb; /**< the first block is static */
 		qse_cut_sel_blk_t* lb; /**< points to the last block */
+
+		qse_char_t         din; /**< input field delimiter */
+		qse_char_t         dout; /**< output field delimiter */
+
 		qse_size_t         count; 
 		qse_size_t         fcount; 
+		qse_size_t         ccount; 
         } sel;
 
 	struct
@@ -94,6 +99,12 @@ struct qse_cut_t
 
                         qse_str_t line; /**< pattern space */
                         qse_size_t num; /**< current line number */
+
+			qse_size_t  nflds; /**< the number of fields */
+			qse_size_t  cflds; /**< capacity of flds field */
+			qse_cstr_t  sflds[128]; /**< static field buffer */
+			qse_cstr_t* flds;
+			int delimited;
                 } in;
 
 	} e;

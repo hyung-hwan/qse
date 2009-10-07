@@ -27,6 +27,12 @@
 
 /** @file
  * cut utility
+ *
+ */
+
+/**
+ * @example cut.c
+ * This example implements a simple cut utility.
  */
 
 /** @struct qse_cut_t
@@ -41,9 +47,7 @@ enum qse_cut_errnum_t
 	QSE_CUT_ENOERR,  /**< no error */
 	QSE_CUT_ENOMEM,  /**< insufficient memory */
 	QSE_CUT_ESELNV,  /**< selector not valid */
-	QSE_CUT_EREXIC,  /**< regular expression '${0}' incomplete */
-	QSE_CUT_EREXBL,  /**< failed to compile regular expression '${0}' */
-	QSE_CUT_EREXMA,  /**< failed to match regular expression */
+	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_CUT_EIOUSR   /**< error returned by user io handler */
 };
 typedef enum qse_cut_errnum_t qse_cut_errnum_t;
@@ -56,25 +60,30 @@ typedef enum qse_cut_errnum_t qse_cut_errnum_t;
  * editor with the qse_cut_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_cut_errstr_t) (
-	qse_cut_t* sed,         /**< stream editor */
+	qse_cut_t* sed,         /**< cut object */
 	qse_cut_errnum_t num    /**< an error number */
 );
 
 /** 
- * The qse_cut_option_t type defines various option codes for a stream editor.
- * Options can be OR'ed with each other and be passed to a stream editor with
+ * The qse_cut_option_t type defines various option codes for a cut object.
+ * Options can be OR'ed with each other and be passed to a cut object with
  * the qse_cut_setoption() function.
  */
 enum qse_cut_option_t
 {
-	QSE_CUT_STRIPLS   = (1 << 0), /**< strip leading spaces from text */
-	QSE_CUT_KEEPTBS   = (1 << 1), /**< keep an trailing backslash */
-	QSE_CUT_ENSURENL  = (1 << 2), /**< ensure NL at the text end */
-	QSE_CUT_QUIET     = (1 << 3), /**< do not print pattern space */
-	QSE_CUT_STRICT    = (1 << 4), /**< do strict address check */
-	QSE_CUT_STARTSTEP = (1 << 5), /**< allow start~step */
-	QSE_CUT_REXBOUND  = (1 << 6), /**< allow {n,m} in regular expression */
-	QSE_CUT_SAMELINE  = (1 << 7), /**< allow text on the same line as c, a, i */
+	/** show delimited line only. if not set, undelimited lines are 
+	 *  shown in its entirety */
+	QSE_CUT_DELIMONLY    = (1 << 0),
+	/** support mixing of c and f selectors */
+	QSE_CUT_HYBRIDSEL    = (1 << 1),
+	/** treat any whitespaces as an input delimiter */
+	QSE_CUT_WHITESPACE   = (1 << 2),
+	/** fold adjacent delimiters */
+	QSE_CUT_FOLDDELIMS   = (1 << 3),
+	/** trim leading and trailing whitespaces off the input line */
+	QSE_CUT_TRIMSPACE    = (1 << 4),
+	/** normalize whitespaces in the input line */
+	QSE_CUT_NORMSPACE    = (1 << 5)
 };
 typedef enum qse_cut_option_t qse_cut_option_t;
 
@@ -87,17 +96,6 @@ enum qse_cut_sel_id_t
 	QSE_CUT_SEL_FIELD /**< field */
 };
 typedef enum qse_cut_sel_id_t qse_cut_sel_id_t;
-
-/**
- * The qse_cut_depth_t type defines IDs for qse_cut_getmaxdepth() and 
- * qse_cut_setmaxdepth().
- */
-enum qse_cut_depth_t
-{
-	QSE_CUT_DEPTH_REX_BUILD = (1 << 0),
-	QSE_CUT_DEPTH_REX_MATCH = (1 << 1)
-};
-typedef enum qse_cut_depth_t qse_cut_depth_t;
 
 /**
  * The qse_cut_io_cmd_t type defines IO command codes. The code indicates 
@@ -140,7 +138,7 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (cut)
 
 /**
- * The qse_cut_open() function creates a stream editor object. A memory
+ * The qse_cut_open() function creates a cut object object. A memory
  * manager provided is used to allocate and destory the object and any dynamic
  * data through out its lifetime. An extension area is allocated if an
  * extension size greater than 0 is specified. You can access it with the
@@ -148,7 +146,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (cut)
  * with the object. See #QSE_DEFINE_COMMON_FUNCTIONS() for qse_cut_getxtn().
  * When done, you should destroy the object with the qse_cut_close() function
  * to avoid any resource leaks including memory. 
- * @return A pointer to a stream editor on success, QSE_NULL on failure
+ * @return A pointer to a cut object on success, QSE_NULL on failure
  */
 qse_cut_t* qse_cut_open (
 	qse_mmgr_t*    mmgr, /**< a memory manager */
@@ -156,51 +154,34 @@ qse_cut_t* qse_cut_open (
 );
 
 /**
- * The qse_cut_close() function destroys a stream editor.
+ * The qse_cut_close() function destroys a cut object.
  */
 void qse_cut_close (
-	qse_cut_t* cut /**< stream editor */
+	qse_cut_t* cut /**< cut object */
 );
 
 /**
  * The qse_cut_getoption() function retrieves the current options set in
- * a stream editor.
+ * a cut object.
  * @return 0 or a number OR'ed of #qse_cut_option_t values 
  */
 int qse_cut_getoption (
-	qse_cut_t* cut /**< stream editor */
+	qse_cut_t* cut /**< cut object */
 );
 
 /**
  * The qse_cut_setoption() function sets the option code.
  */
 void qse_cut_setoption (
-	qse_cut_t* cut, /**< stream editor */
+	qse_cut_t* cut, /**< cut object */
 	int        opt  /**< 0 or a number OR'ed of #qse_cut_option_t values */
-);
-
-/**
- * The qse_cut_getmaxdepth() gets the maximum processing depth.
- */
-qse_size_t qse_cut_getmaxdepth (
-	qse_cut_t*      cut, /**< stream editor */
-	qse_cut_depth_t id   /**< one of qse_cut_depth_t values */
-);
-
-/**
- * The qse_cut_setmaxdepth() sets the maximum processing depth.
- */
-void qse_cut_setmaxdepth (
-	qse_cut_t* cut,  /**< stream editor */
-	int        ids,  /**< 0 or a number OR'ed of #qse_cut_depth_t values */
-	qse_size_t depth /**< maximum depth level */
 );
 
 /**
  * The qse_cut_geterrstr() gets an error string getter.
  */
 qse_cut_errstr_t qse_cut_geterrstr (
-	qse_cut_t*       cut    /**< stream editor */
+	qse_cut_t*       cut    /**< cut object */
 );
 
 /**
@@ -228,7 +209,7 @@ qse_cut_errstr_t qse_cut_geterrstr (
  * @endcode
  */
 void qse_cut_seterrstr (
-	qse_cut_t*       cut,   /**< stream editor */
+	qse_cut_t*       cut,   /**< cut object */
 	qse_cut_errstr_t errstr /**< an error string getter */
 );
 
@@ -237,7 +218,7 @@ void qse_cut_seterrstr (
  * @return the number of the last error
  */
 qse_cut_errnum_t qse_cut_geterrnum (
-	qse_cut_t* cut /**< stream editor */
+	qse_cut_t* cut /**< cut object */
 );
 
 /**
@@ -245,7 +226,7 @@ qse_cut_errnum_t qse_cut_geterrnum (
  * @return a pointer to an error message
  */
 const qse_char_t* qse_cut_geterrmsg (
-	qse_cut_t* cut /**< stream editor */
+	qse_cut_t* cut /**< cut object */
 );
 
 /**
@@ -254,7 +235,7 @@ const qse_char_t* qse_cut_geterrmsg (
  * to by each parameter.
  */
 void qse_cut_geterror (
-	qse_cut_t*         cut,    /**< stream editor */
+	qse_cut_t*         cut,    /**< cut object */
 	qse_cut_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg  /**< error message */
 );
@@ -264,7 +245,7 @@ void qse_cut_geterror (
  * location.
  */
 void qse_cut_seterrnum (
-        qse_cut_t*        cut,    /**< stream editor */
+        qse_cut_t*        cut,    /**< cut object */
 	qse_cut_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument for formatting error message */
 );
@@ -274,7 +255,7 @@ void qse_cut_seterrnum (
  * message for a given error number.
  */
 void qse_cut_seterrmsg (
-        qse_cut_t*        cut,      /**< stream editor */
+        qse_cut_t*        cut,      /**< cut object */
 	qse_cut_errnum_t  errnum,   /**< error number */
         const qse_char_t* errmsg    /**< error message */
 );
@@ -285,10 +266,17 @@ void qse_cut_seterrmsg (
  * and an array of formatting parameters.
  */
 void qse_cut_seterror (
-	qse_cut_t*           cut,    /**< stream editor */
+	qse_cut_t*           cut,    /**< cut object */
 	qse_cut_errnum_t     errnum, /**< error number */
 	const qse_cstr_t*    errarg  /**< array of arguments for formatting 
 	                              *   an error message */
+);
+
+/**
+ * The qse_cut_clear() function clears memory buffers internally allocated.
+ */
+void qse_cut_clear (
+	qse_cut_t* cut /**< cut object */
 );
 
 /**
@@ -296,10 +284,12 @@ void qse_cut_seterror (
  * @return 0 on success, -1 on error 
  */
 int qse_cut_comp (
-	qse_cut_t*        cut, /**< stream editor */
+	qse_cut_t*        cut, /**< cut object */
 	qse_cut_sel_id_t  sel, /**< initial selector type */
-	const qse_char_t* ptr, /**< pointer to a string containing commands */
-	qse_size_t        len  /**< the number of characters in the string */ 
+	const qse_char_t* str, /**< selector pointer */
+	qse_size_t        len, /**< selector length */ 
+	qse_char_t        din, /**< input field delimiter */
+	qse_char_t        dout /**< output field delimiter */
 );
 
 /**
@@ -307,7 +297,7 @@ int qse_cut_comp (
  * @return 0 on success, -1 on error
  */
 int qse_cut_exec (
-	qse_cut_t*        cut,  /**< stream editor */
+	qse_cut_t*        cut,  /**< cut object */
 	qse_cut_io_fun_t  inf,  /**< stream reader */
 	qse_cut_io_fun_t  outf  /**< stream writer */
 );

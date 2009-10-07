@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: str.h 295 2009-10-06 13:47:16Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -104,12 +104,12 @@ struct qse_str_t
 }
 
 /**
- * The qse_strtrm_op_t defines a string trimming operation. 
+ * The qse_strtrmc_op_t defines a string trimming operation. 
  */
-enum qse_strtrm_op_t
+enum qse_strtrmc_op_t
 {
-	QSE_STRTRM_LEFT  = (1 << 0), /**< trim leading spaces */
-	QSE_STRTRM_RIGHT = (1 << 1)  /**< trim trailing spaces */
+	QSE_STRTRMC_LEFT  = (1 << 0), /**< trim leading spaces */
+	QSE_STRTRMC_RIGHT = (1 << 1)  /**< trim trailing spaces */
 };
 
 #ifdef __cplusplus
@@ -483,13 +483,13 @@ int qse_strspltrn (
 /******/
 
 /**
- * The qse_strtrm() function removes leading spaces and/or trailing
+ * The qse_strtrmc() function removes leading spaces and/or trailing
  * spaces from a string depending on the opt parameter. You can form
  * the op parameter by bitwise-OR'ing one or more of the following
  * values:
  *
- * - QSE_STRTRM_LEFT - trim leading spaces
- * - QSE_STRTRM_RIGHT - trim trailing spaces
+ * - QSE_STRTRMC_LEFT - trim leading spaces
+ * - QSE_STRTRMC_RIGHT - trim trailing spaces
  *
  * Should it remove leading spaces, it just returns the pointer to
  * the first non-space character in the string. Should it remove trailing
@@ -498,16 +498,33 @@ int qse_strspltrn (
  *
  * @code
  * qse_char_t a[] = QSE_T("   this is a test string   ");
- * qse_printf (QSE_T("[%s]\n"), qse_strtrm(a,QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
+ * qse_printf (QSE_T("[%s]\n"), qse_strtrmc(a,QSE_STRTRMC_LEFT|QSE_STRTRMC_RIGHT));
  * @endcode
  *
  * @return the pointer to a trimmed string.
  */
-qse_char_t* qse_strtrm (
+qse_char_t* qse_strtrmc (
 	qse_char_t* str, /**< a string */
-	int         op   /**< operation code XOR'ed of qse_strtrm_op_t values */
+	int         op   /**< operation code XOR'ed of qse_strtrmc_op_t values */
 );
 
+qse_size_t qse_strtrm (
+	qse_char_t* str
+);
+
+qse_size_t qse_strxtrm (
+	qse_char_t* str,
+	qse_size_t len
+);
+
+qse_size_t qse_strpac (
+	qse_char_t* str
+);
+
+qse_size_t qse_strxpac (
+	qse_char_t* str, 
+	qse_size_t len
+);
 
 /****f* Common/qse_mbstowcs
  * NAME
@@ -831,6 +848,13 @@ qse_size_t qse_str_del (
 	qse_size_t size
 );
 
+qse_size_t qse_str_trm (
+	qse_str_t* str
+);
+
+qse_size_t qse_str_pac (
+	qse_str_t* str
+);
 
 #ifdef __cplusplus
 }

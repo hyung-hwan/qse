@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: str_dyn.c 295 2009-10-06 13:47:16Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -334,3 +334,24 @@ qse_size_t qse_str_del (qse_str_t* str, qse_size_t index, qse_size_t size)
 
 	return str->len;
 }
+
+qse_size_t qse_str_trm (qse_str_t* str)
+{
+	if (str->ptr != QSE_NULL)
+	{
+		str->len = qse_strxtrm (str->ptr, str->len);
+	}
+
+	return str->len;
+}
+
+qse_size_t qse_str_pac (qse_str_t* str)
+{
+	if (str->ptr != QSE_NULL)
+	{
+		str->len = qse_strxpac (str->ptr, str->len);
+	}
+
+	return str->len;
+}
+
