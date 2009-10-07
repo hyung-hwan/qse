@@ -515,14 +515,14 @@ static int test12 (void)
 	qse_char_t a3[] = QSE_T("   this is a test string    ");
 
 	qse_printf (QSE_T("[%s] =>"), a1);
-	qse_printf (QSE_T("[%s]\n"), qse_strtrm (a1, QSE_STRTRM_LEFT));
+	qse_printf (QSE_T("[%s]\n"), qse_strtrmc (a1, QSE_STRTRMC_LEFT));
 
 	qse_printf (QSE_T("[%s] =>"), a2);
-	qse_printf (QSE_T("[%s]\n"), qse_strtrm (a2, QSE_STRTRM_RIGHT));
+	qse_printf (QSE_T("[%s]\n"), qse_strtrmc (a2, QSE_STRTRMC_RIGHT));
 
 	qse_printf (QSE_T("[%s] =>"), a3);
 	qse_printf (QSE_T("[%s]\n"), 
-		qse_strtrm (a3, QSE_STRTRM_LEFT|QSE_STRTRM_RIGHT));
+		qse_strtrmc (a3, QSE_STRTRMC_LEFT|QSE_STRTRMC_RIGHT));
 
 	return 0;
 }
