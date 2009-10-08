@@ -11,6 +11,7 @@ by interacting with external programs and is given tighter control over it.
 
 Currently the library implements the following utilities:
 - @subpage sed "SED Stream Editor"
+- @subpage cut "CUT Text Cutter"
 - @subpage awk "AWK Interpreter"
 
 As the library grows, more utilities will be added.
@@ -93,6 +94,7 @@ on each module.
 
 - @subpage cmn "Common Functions"
 - @subpage sed "SED Stream Editor"
+- @subpage cut "CUT Text Cutter"
 - @subpage awk "AWK Interpreter"
 
 */
