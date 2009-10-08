@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sed.h 296 2009-10-07 12:39:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -153,8 +153,8 @@ enum qse_sed_depth_t
 typedef enum qse_sed_depth_t qse_sed_depth_t;
 
 /**
- * The qse_sed_io_cmd_t type defines IO command codes. The code indicates 
- * the action to take in an IO handler.
+ * The qse_sed_io_cmd_t type defines I/O command codes. The code indicates 
+ * the action to take in an I/O handler.
  */
 enum qse_sed_io_cmd_t
 {
@@ -166,17 +166,18 @@ enum qse_sed_io_cmd_t
 typedef enum qse_sed_io_cmd_t qse_sed_io_cmd_t;
 
 /**
- * The qse_sed_io_arg_t type defines a data structure required by an IO handler.
+ * The qse_sed_io_arg_t type defines a data structure required by 
+ * an I/O handler.
  */
 struct qse_sed_io_arg_t
 {
-	void*             handle; /**< IO handle */
+	void*             handle; /**< I/O handle */
 	const qse_char_t* path;   /**< file path. QSE_NULL for a console */
 };
 typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 
 /** 
- * The qse_sed_io_fun_t type defines an IO handler. An IO handler is called by
+ * The qse_sed_io_fun_t type defines an I/O handler. I/O handlers are called by
  * qse_sed_exec().
  */
 typedef qse_ssize_t (*qse_sed_io_fun_t) (

@@ -27,7 +27,6 @@
 
 /** @file
  * cut utility
- *
  */
 
 /**
@@ -60,13 +59,13 @@ typedef enum qse_cut_errnum_t qse_cut_errnum_t;
  * editor with the qse_cut_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_cut_errstr_t) (
-	qse_cut_t* sed,         /**< cut object */
+	qse_cut_t* sed,         /**< text cutter */
 	qse_cut_errnum_t num    /**< an error number */
 );
 
 /** 
- * The qse_cut_option_t type defines various option codes for a cut object.
- * Options can be OR'ed with each other and be passed to a cut object with
+ * The qse_cut_option_t type defines various option codes for a text cutter.
+ * Options can be OR'ed with each other and be passed to a text cutter with
  * the qse_cut_setoption() function.
  */
 enum qse_cut_option_t
@@ -98,8 +97,8 @@ enum qse_cut_sel_id_t
 typedef enum qse_cut_sel_id_t qse_cut_sel_id_t;
 
 /**
- * The qse_cut_io_cmd_t type defines IO command codes. The code indicates 
- * the action to take in an IO handler.
+ * The qse_cut_io_cmd_t type defines I/O command codes. The code indicates 
+ * the action to take in an I/O handler.
  */
 enum qse_cut_io_cmd_t
 {
@@ -111,17 +110,18 @@ enum qse_cut_io_cmd_t
 typedef enum qse_cut_io_cmd_t qse_cut_io_cmd_t;
 
 /**
- * The qse_cut_io_arg_t type defines a data structure required by an IO handler.
+ * The qse_cut_io_arg_t type defines a data structure required by 
+ * an I/O handler.
  */
 struct qse_cut_io_arg_t
 {
-	void*             handle; /**< IO handle */
+	void*             handle; /**< I/O handle */
 };
 typedef struct qse_cut_io_arg_t qse_cut_io_arg_t;
 
 /** 
- * The qse_cut_io_fun_t type defines an IO handler. An IO handler is called by
- * qse_cut_exec().
+ * The qse_cut_io_fun_t type defines an I/O handler. qse_cut_exec() calls
+ * I/O handlers to read from and write to a text stream.
  */
 typedef qse_ssize_t (*qse_cut_io_fun_t) (
         qse_cut_t*        sed,
@@ -138,15 +138,8 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (cut)
 
 /**
- * The qse_cut_open() function creates a cut object object. A memory
- * manager provided is used to allocate and destory the object and any dynamic
- * data through out its lifetime. An extension area is allocated if an
- * extension size greater than 0 is specified. You can access it with the
- * qse_cut_getxtn() function and use it to store arbitrary data associated
- * with the object. See #QSE_DEFINE_COMMON_FUNCTIONS() for qse_cut_getxtn().
- * When done, you should destroy the object with the qse_cut_close() function
- * to avoid any resource leaks including memory. 
- * @return A pointer to a cut object on success, QSE_NULL on failure
+ * The qse_cut_open() function creates a text cutter object.
+ * @return A pointer to a text cutter on success, QSE_NULL on failure
  */
 qse_cut_t* qse_cut_open (
 	qse_mmgr_t*    mmgr, /**< a memory manager */
@@ -154,26 +147,26 @@ qse_cut_t* qse_cut_open (
 );
 
 /**
- * The qse_cut_close() function destroys a cut object.
+ * The qse_cut_close() function destroys a text cutter.
  */
 void qse_cut_close (
-	qse_cut_t* cut /**< cut object */
+	qse_cut_t* cut /**< text cutter */
 );
 
 /**
  * The qse_cut_getoption() function retrieves the current options set in
- * a cut object.
+ * a text cutter.
  * @return 0 or a number OR'ed of #qse_cut_option_t values 
  */
 int qse_cut_getoption (
-	qse_cut_t* cut /**< cut object */
+	qse_cut_t* cut /**< text cutter */
 );
 
 /**
  * The qse_cut_setoption() function sets the option code.
  */
 void qse_cut_setoption (
-	qse_cut_t* cut, /**< cut object */
+	qse_cut_t* cut, /**< text cutter */
 	int        opt  /**< 0 or a number OR'ed of #qse_cut_option_t values */
 );
 
@@ -181,35 +174,15 @@ void qse_cut_setoption (
  * The qse_cut_geterrstr() gets an error string getter.
  */
 qse_cut_errstr_t qse_cut_geterrstr (
-	qse_cut_t*       cut    /**< cut object */
+	qse_cut_t*       cut    /**< text cutter */
 );
 
 /**
  * The qse_cut_seterrstr() sets an error string getter that is called to
  * compose an error message when its retrieval is requested.
- *
- * Here is an example of changing the formatting string for the #QSE_CUT_ECMDNR 
- * error.
- * @code
- * qse_cut_errstr_t orgerrstr;
- *
- * const qse_char_t* myerrstr (qse_cut_t* cut, qse_cut_errnum_t num)
- * {
- *   if (num == QSE_CUT_ECMDNR) return QSE_T("unrecognized command ${0}");
- *   return orgerrstr (cut, num);
- * }
- * int main ()
- * {
- *    qse_cut_t* cut;
- *    ...
- *    orgerrstr = qse_cut_geterrstr (cut);
- *    qse_cut_seterrstr (cut, myerrstr);
- *    ...
- * }
- * @endcode
  */
 void qse_cut_seterrstr (
-	qse_cut_t*       cut,   /**< cut object */
+	qse_cut_t*       cut,   /**< text cutter */
 	qse_cut_errstr_t errstr /**< an error string getter */
 );
 
@@ -218,7 +191,7 @@ void qse_cut_seterrstr (
  * @return the number of the last error
  */
 qse_cut_errnum_t qse_cut_geterrnum (
-	qse_cut_t* cut /**< cut object */
+	qse_cut_t* cut /**< text cutter */
 );
 
 /**
@@ -226,7 +199,7 @@ qse_cut_errnum_t qse_cut_geterrnum (
  * @return a pointer to an error message
  */
 const qse_char_t* qse_cut_geterrmsg (
-	qse_cut_t* cut /**< cut object */
+	qse_cut_t* cut /**< text cutter */
 );
 
 /**
@@ -235,7 +208,7 @@ const qse_char_t* qse_cut_geterrmsg (
  * to by each parameter.
  */
 void qse_cut_geterror (
-	qse_cut_t*         cut,    /**< cut object */
+	qse_cut_t*         cut,    /**< text cutter */
 	qse_cut_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg  /**< error message */
 );
@@ -245,7 +218,7 @@ void qse_cut_geterror (
  * location.
  */
 void qse_cut_seterrnum (
-        qse_cut_t*        cut,    /**< cut object */
+        qse_cut_t*        cut,    /**< text cutter */
 	qse_cut_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument for formatting error message */
 );
@@ -255,7 +228,7 @@ void qse_cut_seterrnum (
  * message for a given error number.
  */
 void qse_cut_seterrmsg (
-        qse_cut_t*        cut,      /**< cut object */
+        qse_cut_t*        cut,      /**< text cutter */
 	qse_cut_errnum_t  errnum,   /**< error number */
         const qse_char_t* errmsg    /**< error message */
 );
@@ -266,7 +239,7 @@ void qse_cut_seterrmsg (
  * and an array of formatting parameters.
  */
 void qse_cut_seterror (
-	qse_cut_t*           cut,    /**< cut object */
+	qse_cut_t*           cut,    /**< text cutter */
 	qse_cut_errnum_t     errnum, /**< error number */
 	const qse_cstr_t*    errarg  /**< array of arguments for formatting 
 	                              *   an error message */
@@ -276,7 +249,7 @@ void qse_cut_seterror (
  * The qse_cut_clear() function clears memory buffers internally allocated.
  */
 void qse_cut_clear (
-	qse_cut_t* cut /**< cut object */
+	qse_cut_t* cut /**< text cutter */
 );
 
 /**
@@ -284,7 +257,7 @@ void qse_cut_clear (
  * @return 0 on success, -1 on error 
  */
 int qse_cut_comp (
-	qse_cut_t*        cut, /**< cut object */
+	qse_cut_t*        cut, /**< text cutter */
 	qse_cut_sel_id_t  sel, /**< initial selector type */
 	const qse_char_t* str, /**< selector pointer */
 	qse_size_t        len, /**< selector length */ 
@@ -297,9 +270,9 @@ int qse_cut_comp (
  * @return 0 on success, -1 on error
  */
 int qse_cut_exec (
-	qse_cut_t*        cut,  /**< cut object */
-	qse_cut_io_fun_t  inf,  /**< stream reader */
-	qse_cut_io_fun_t  outf  /**< stream writer */
+	qse_cut_t*        cut,  /**< text cutter */
+	qse_cut_io_fun_t  inf,  /**< input text stream */
+	qse_cut_io_fun_t  outf  /**< output text stream */
 );
 
 #ifdef __cplusplus
