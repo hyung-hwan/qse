@@ -50,15 +50,6 @@ struct qse_cut_t
 
 	struct
 	{
-		struct
-		{
-			qse_size_t build;
-			qse_size_t match; 
-		} rex;
-	} depth;
-
-	struct
-	{
 		qse_cut_sel_blk_t  fb; /**< the first block is static */
 		qse_cut_sel_blk_t* lb; /**< points to the last block */
 
