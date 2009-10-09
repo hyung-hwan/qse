@@ -1,5 +1,5 @@
 /*
- * $Id: str_utl.c 295 2009-10-06 13:47:16Z hyunghwan.chung $
+ * $Id: str_utl.c 297 2009-10-08 13:09:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -312,7 +312,7 @@ int qse_strspl (
 	return qse_strspltrn (s, delim, lquote, rquote, escape, QSE_NULL);
 }
 
-qse_char_t* qse_strtrmc (qse_char_t* str, int opt)
+qse_char_t* qse_strtrmx (qse_char_t* str, int opt)
 {
 	qse_char_t* p = str;
 	qse_char_t* s = QSE_NULL, * e = QSE_NULL;
@@ -327,8 +327,8 @@ qse_char_t* qse_strtrmc (qse_char_t* str, int opt)
 		p++;
 	}
 
-	if (opt & QSE_STRTRMC_RIGHT) e[1] = QSE_T('\0');
-	if (opt & QSE_STRTRMC_LEFT) str = s;
+	if (opt & QSE_STRTRMX_RIGHT) e[1] = QSE_T('\0');
+	if (opt & QSE_STRTRMX_LEFT) str = s;
 
 	return str;
 }

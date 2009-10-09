@@ -28,7 +28,9 @@ static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr);
 static void qse_cut_fini (qse_cut_t* cut);
 
 #define SETERR0(cut,num) \
-do { qse_cut_seterror (cut, num, QSE_NULL); } while (0)
+	do { qse_cut_seterror (cut, num, QSE_NULL); } while (0)
+
+#define DFL_LINE_CAPA 256
 
 static int add_selector_block (qse_cut_t* cut)
 {
@@ -120,6 +122,13 @@ static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
 	cut->e.in.cflds = QSE_COUNTOF(cut->e.in.sflds);
 	cut->e.in.flds = cut->e.in.sflds;
 
+	if (qse_str_init (
+		&cut->e.in.line, QSE_MMGR(cut), DFL_LINE_CAPA) == QSE_NULL)
+	{
+		SETERR0 (cut, QSE_CUT_ENOMEM);
+		return QSE_NULL;
+	}
+
 	return cut;
 }
 
@@ -128,6 +137,7 @@ static void qse_cut_fini (qse_cut_t* cut)
 	free_all_selector_blocks (cut);
 	if (cut->e.in.flds != cut->e.in.sflds)
 		QSE_MMGR_FREE (cut->mmgr, cut->e.in.flds);
+	qse_str_fini (&cut->e.in.line);
 }
 
 void qse_cut_setoption (qse_cut_t* cut, int option)
@@ -147,6 +157,9 @@ void qse_cut_clear (qse_cut_t* cut)
 		QSE_MMGR_FREE (cut->mmgr, cut->e.in.flds);
 	cut->e.in.cflds = QSE_COUNTOF(cut->e.in.sflds);
 	cut->e.in.flds = cut->e.in.sflds;
+
+	qse_str_clear (&cut->e.in.line);
+	qse_str_setcapa (&cut->e.in.line, DFL_LINE_CAPA);
 }
 
 int qse_cut_comp (
@@ -589,11 +602,6 @@ int qse_cut_exec (qse_cut_t* cut, qse_cut_io_fun_t inf, qse_cut_io_fun_t outf)
 	cut->e.in.len = 0;
 	cut->e.in.pos = 0;
 	cut->e.in.num = 0;
-	if (qse_str_init (&cut->e.in.line, QSE_MMGR(cut), 256) == QSE_NULL)
-	{
-		SETERR0 (cut, QSE_CUT_ENOMEM);
-		return -1;
-	}
 
 	cut->errnum = QSE_CUT_ENOERR;
 	n = cut->e.in.fun (cut, QSE_CUT_IO_OPEN, &cut->e.in.arg, QSE_NULL, 0);
@@ -727,6 +735,5 @@ done:
 done2:
 	cut->e.in.fun (cut, QSE_CUT_IO_CLOSE, &cut->e.in.arg, QSE_NULL, 0);
 done3:
-	qse_str_fini (&cut->e.in.line);
 	return ret;
 }

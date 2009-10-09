@@ -27,6 +27,8 @@
 
 /** @file
  * cut utility
+ * 
+ * @todo QSE_CUT_ORDEREDSEL - A selector 5,3,1 is ordered to 1,3,5
  */
 
 /**

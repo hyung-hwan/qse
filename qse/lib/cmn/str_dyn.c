@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 295 2009-10-06 13:47:16Z hyunghwan.chung $
+ * $Id: str_dyn.c 297 2009-10-08 13:09:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -126,6 +126,8 @@ qse_size_t qse_str_getcapa (qse_str_t* str)
 qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
 {
 	qse_char_t* tmp;
+
+	if (capa == str->capa) return capa;
 
 	if (str->mmgr->realloc != QSE_NULL && str->ptr != QSE_NULL)
 	{
