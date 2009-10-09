@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 295 2009-10-06 13:47:16Z hyunghwan.chung $
+ * $Id: str.h 297 2009-10-08 13:09:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -104,12 +104,12 @@ struct qse_str_t
 }
 
 /**
- * The qse_strtrmc_op_t defines a string trimming operation. 
+ * The qse_strtrmx_op_t defines a string trimming operation. 
  */
-enum qse_strtrmc_op_t
+enum qse_strtrmx_op_t
 {
-	QSE_STRTRMC_LEFT  = (1 << 0), /**< trim leading spaces */
-	QSE_STRTRMC_RIGHT = (1 << 1)  /**< trim trailing spaces */
+	QSE_STRTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
+	QSE_STRTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
 };
 
 #ifdef __cplusplus
@@ -483,13 +483,13 @@ int qse_strspltrn (
 /******/
 
 /**
- * The qse_strtrmc() function removes leading spaces and/or trailing
- * spaces from a string depending on the opt parameter. You can form
+ * The qse_strtrmx() function strips leading spaces and/or trailing
+ * spaces off a string depending on the opt parameter. You can form
  * the op parameter by bitwise-OR'ing one or more of the following
  * values:
  *
- * - QSE_STRTRMC_LEFT - trim leading spaces
- * - QSE_STRTRMC_RIGHT - trim trailing spaces
+ * - QSE_STRTRMX_LEFT - trim leading spaces
+ * - QSE_STRTRMX_RIGHT - trim trailing spaces
  *
  * Should it remove leading spaces, it just returns the pointer to
  * the first non-space character in the string. Should it remove trailing
@@ -498,52 +498,72 @@ int qse_strspltrn (
  *
  * @code
  * qse_char_t a[] = QSE_T("   this is a test string   ");
- * qse_printf (QSE_T("[%s]\n"), qse_strtrmc(a,QSE_STRTRMC_LEFT|QSE_STRTRMC_RIGHT));
+ * qse_printf (QSE_T("[%s]\n"), qse_strtrmx(a,QSE_STRTRMX_LEFT|QSE_STRTRMX_RIGHT));
  * @endcode
  *
- * @return the pointer to a trimmed string.
+ * @return pointer to a trimmed string.
  */
-qse_char_t* qse_strtrmc (
+qse_char_t* qse_strtrmx (
 	qse_char_t* str, /**< a string */
-	int         op   /**< operation code XOR'ed of qse_strtrmc_op_t values */
+	int         op   /**< operation code XOR'ed of qse_strtrmx_op_t values */
 );
 
+/*
+ * The qse_strtrm() function strips leading spaces and/or trailing
+ * spaces off a string. All characters between the first and the last non-space
+ * character inclusive are relocated to the beginning of memory pointed to 
+ * by @a str; QSE_T('\0') is inserted after the last non-space character.
+ * @return length of the string without leading and trailing spaces.
+ */
 qse_size_t qse_strtrm (
-	qse_char_t* str
+	qse_char_t* str /**< string */
 );
 
+/*
+ * The qse_strxtrm() function strips leading spaces and/or trailing
+ * spaces off a string. All characters between the first and the last non-space
+ * character inclusive are relocated to the beginning of memory pointed to 
+ * by @a str; QSE_T('\0') is inserted after the last non-space character.
+ * @return length of the string without leading and trailing spaces.
+ */
 qse_size_t qse_strxtrm (
-	qse_char_t* str,
-	qse_size_t len
+	qse_char_t* str, /**< string */
+	qse_size_t  len  /**< length */
 );
 
+/**
+ * The qse_strpac() function folds repeated whitespaces into one as well
+ * as stripping leading whitespaces and trailing whitespaces.
+ * @return length of the string without leading and trailing spaces.
+ */
 qse_size_t qse_strpac (
-	qse_char_t* str
+	qse_char_t* str /**< string */
 );
 
+/**
+ * The qse_strxpac() function folds repeated whitespaces into one as well
+ * as stripping leading whitespaces and trailing whitespaces.
+ * @return length of the string without leading and trailing spaces.
+ */
 qse_size_t qse_strxpac (
-	qse_char_t* str, 
-	qse_size_t len
+	qse_char_t* str, /**< string */
+	qse_size_t  len  /**< length */
 );
 
-/****f* Common/qse_mbstowcs
- * NAME
- *  qse_mbstowcs - convert a multibyte string to a wide character string
- * SYNOPSIS
+/**
+ * The qse_mbstowcs() function converts a multibyte string to a wide 
+ * character string.
  */
 qse_size_t qse_mbstowcs (
 	const qse_mchar_t* mbs,
 	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
-/******/
 
-/****f* Common/qse_mbsntowcsn
- * NAME
- *  qse_mbsntowcsn - convert a multibyte string to a wide character string
- * RETURN
- *  The qse_mbstowcs() function returns the number of bytes handled.
- * SYNOPSIS
+/**
+ * The qse_mbsntowcsn() function converts a multibyte string to a 
+ * wide character string.
+ * @return number of bytes handled.
  */
 qse_size_t qse_mbsntowcsn (
 	const qse_mchar_t* mbs,
@@ -551,61 +571,42 @@ qse_size_t qse_mbsntowcsn (
 	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
-/******/
 
 /****f* Common/qse_wcstombslen
- * NAME
- *  qse_wcstombslen - get the length 
- * DESCRIPTION
- *  The qse_wcstombslen() function scans a null-terminated wide character 
- *  string to get the total number of multibyte characters that it can be
- *  converted to. The resulting number of characters is stored into memory
- *  pointed to by mbslen.
- * RETURN
- *  The qse_wcstombslen() function returns the number of wide characters 
- *  handled.
- * SYNOPSIS
+ * The qse_wcstombslen() function scans a null-terminated wide character 
+ * string @a wcs to get the total number of multibyte characters that it can be
+ * converted to. The resulting number of characters is stored into memory
+ * pointed to by @a mbslen.
+ * @return number of wide characters handled
  */
 qse_size_t qse_wcstombslen (
 	const qse_wchar_t* wcs,
 	qse_size_t*        mbslen
 );
-/******/
 
-/****f* Common/qse_wcsntombsnlen
- * NAME
- *  qse_wcsntombsnlen - get the length 
- * DESCRIPTION
- *  The qse_wcsntombsnlen() function scans a wide character wcs as long as
- *  wcslen characters to get the get the total number of multibyte characters 
- *  that it can be converted to. The resulting number of characters is stored 
- *  into memory pointed to by mbslen.
- * RETURN
- *  The qse_wcsntombsnlen() function returns the number of wide characters 
- *  handled.
- * SYNOPSIS
+/**
+ * The qse_wcsntombsnlen() function scans a wide character wcs as long as
+ * wcslen characters to get the get the total number of multibyte characters 
+ * that it can be converted to. The resulting number of characters is stored 
+ * into memory pointed to by @a mbslen.
+ * @return number of wide characters handled
  */
 qse_size_t qse_wcsntombsnlen (
 	const qse_wchar_t* wcs,
 	qse_size_t         wcslen,
 	qse_size_t*        mbslen
 );
-/******/
 
-/****f* Common/qse_wcstombs
- * NAME
- *  qse_wcstombs - convert a wide character string to a multibyte string.
- * DESCRIPTION
- *  The qse_wcstombs() function converts a null-terminated wide character 
- *  string to a multibyte string and stores it into the buffer pointed to
- *  by mbs. The pointer to a variable holding the buffer length should be
- *  passed to the function as the third parameter. After conversion, it holds 
- *  the length of the multibyte string excluding the terminating-null.
- *  It may not null-terminate the resulting multibyte string if the buffer
- *  is not large enough. You can check if the resulting mbslen is equal to 
- *  the input mbslen to know it.
- * RETURN
- *  The qse_wcstombs() function returns the number of wide characters handled.
+/**
+ * The qse_wcstombs() function converts a null-terminated wide character 
+ * string to a multibyte string and stores it into the buffer pointed to
+ * by mbs. The pointer to a variable holding the buffer length should be
+ * passed to the function as the third parameter. After conversion, it holds 
+ * the length of the multibyte string excluding the terminating-null.
+ * It may not null-terminate the resulting multibyte string if the buffer
+ * is not large enough. You can check if the resulting mbslen is equal to 
+ * the input mbslen to know it.
+ * @return number of wide characters handled
  * SYNOPSIS
  */
 qse_size_t qse_wcstombs (
@@ -613,7 +614,6 @@ qse_size_t qse_wcstombs (
 	qse_mchar_t*       mbs,
 	qse_size_t*        mbslen
 );
-/******/
 
 /**
  * The qse_wcsntombsn() function converts a wide character string to a
