@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: awk.h 299 2009-10-19 13:33:40Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -713,7 +713,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EKWWHL,    /**< keyword 'while' expected in place of '${0}' */
 	QSE_AWK_EASSIGN,   /**< assignment statement expected */
 	QSE_AWK_EIDENT,    /**< identifier expected in place of '${0}' */
-	QSE_AWK_EFUNNAME,  /**< '${0}' not a valid function name */
+	QSE_AWK_EFUNNAM,   /**< '${0}' not a valid function name */
 	QSE_AWK_EBLKBEG,   /**< BEGIN not followed by left bracket on the same line */
 	QSE_AWK_EBLKEND,   /**< END not followed by left bracket on the same line */
 	QSE_AWK_EKWRED,    /**< keyword '${0}' redefined */

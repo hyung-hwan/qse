@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: tree.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -538,7 +538,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)nde;
 			PUT_SRCSTRX (awk, 
 				px->what.fnc.name.ptr, px->what.fnc.name.len);
-			PUT_SRCSTR (awk, QSE_T(" ("));
+			PUT_SRCSTR (awk, QSE_T("("));
 			PRINT_EXPR_LIST (awk, px->args);
 			PUT_SRCSTR (awk, QSE_T(")"));
 			break;
@@ -549,7 +549,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)nde;
 			PUT_SRCSTRX (awk, 
 				px->what.fun.name.ptr, px->what.fun.name.len);
-			PUT_SRCSTR (awk, QSE_T(" ("));
+			PUT_SRCSTR (awk, QSE_T("("));
 			PRINT_EXPR_LIST (awk, px->args);
 			PUT_SRCSTR (awk, QSE_T(")"));
 			break;
