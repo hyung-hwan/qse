@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
+ * $Id: run.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2285,7 +2285,13 @@ static int run_foreach (qse_awk_rtx_t* rtx, qse_awk_nde_foreach_t* nde)
 	if (rv == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (rtx, rv);
-	if (rv->type != QSE_AWK_VAL_MAP)
+	if (rv->type == QSE_AWK_VAL_NIL) 
+	{
+		/* just return without excuting the loop body */
+		qse_awk_rtx_refdownval (rtx, rv);
+		return 0;
+	}
+	else if (rv->type != QSE_AWK_VAL_MAP)
 	{
 		qse_awk_rtx_refdownval (rtx, rv);
 		SETERR_LOC (rtx, QSE_AWK_ENOTMAPIN, &test->right->loc);
@@ -3100,7 +3106,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		if (rtx->inrec.d0->type == QSE_AWK_VAL_NIL)
 		{
 			/* the record has never been read. 
-			 * probably, this functions has been triggered
+			 * probably, this function has been triggered
 			 * by the statements in the BEGIN block */
 			n = QSE_AWK_ISEMPTYREX(rtx->awk,((qse_awk_val_rex_t*)v)->code)? 1: 0;
 		}

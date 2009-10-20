@@ -421,7 +421,7 @@ function f (__p0)
 }
 
 BEGIN {
-	f ("hello");
+	f("hello");
 }
 
 hello
@@ -431,11 +431,11 @@ hello
 function f (__p0)
 {
 	print __p0;
-	f ("my hello");
+	f("my hello");
 }
 
 BEGIN {
-	f (10);
+	f(10);
 }
 
 10
@@ -948,7 +948,7 @@ function fn (__p0)
 
 BEGIN {
 	f = 50;
-	fn (100);
+	fn(100);
 	print f;
 }
 
@@ -975,7 +975,7 @@ BEGIN {
 		}
 		print __l0;
 	}
-	a (100);
+	a(100);
 }
 
 30
@@ -998,7 +998,7 @@ function fn ()
 
 BEGIN {
 	__g17 = 30;
-	print fn ();
+	print fn();
 	print __g17;
 }
 
@@ -1040,7 +1040,7 @@ BEGIN {
 }
 
 END {
-	a (1000);
+	a(1000);
 }
 1000
 --------------------------------------------------------------------------------
@@ -1054,7 +1054,7 @@ BEGIN {
 	}
 	print "----------------------";
 	print "ARGC=",ARGC;
-	split ("111 22 333 555 666 777",ARGV);
+	split("111 22 333 555 666 777",ARGV);
 	for (i in ARGV)
 	{
 		print (("ARGV["   i)   "]"),ARGV[i];
@@ -1073,7 +1073,7 @@ BEGIN {
 		printf ("ARGC [%++#10.10f] is positive\n",10124.1123);
 	printf ("[%d], [%f], [%s]\n",10124.1123,10124.1123,10124.1123);
 	printf ("[%-10c] [% 0*.*d]\n",65,45,48,(-(1)));
-	print sprintf ("abc%d %*.*d %c %s %c",10,20,30,40,"good","good",75.34);
+	print sprintf("abc%d %*.*d %c %s %c",10,20,30,40,"good","good",75.34);
 }
 
 ARGC= 6
@@ -1108,7 +1108,7 @@ BEGIN {
 	a[4,5,6] = 30;
 	for (i in a)
 	{
-		n = split (i,k,SUBSEP);
+		n = split(i,k,SUBSEP);
 		for (j = 1; (j <= n); (j)++)
 		{
 			print k[j];
@@ -1372,8 +1372,8 @@ ERROR: CODE 15 LINE 3 COLUMN 50 - block nested too deeply
  ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	printf "[[[[[%s]]]]\n",sprintf ("abc %s abc",sprintf ("def %s %s",sprintf ("%s %s %s","xyz",1.2342,"xyz"),sprintf ("ttt %s tttt",123.12)));
-	printf "[[[[%s]]]]\n",sprintf ("ttt %s tttt",123.12);
+	printf "[[[[[%s]]]]\n",sprintf("abc %s abc",sprintf("def %s %s",sprintf("%s %s %s","xyz",1.2342,"xyz"),sprintf("ttt %s tttt",123.12)));
+	printf "[[[[%s]]]]\n",sprintf("ttt %s tttt",123.12);
 }
 
 [[[[[abc def xyz 1.2342 xyz ttt 123.12 tttt abc]]]]
@@ -1389,7 +1389,7 @@ function gety ()
 function getx ()
 {
 	if ((x == 2))
-		error ();
+		error();
 	return (x)++;
 }
 
@@ -1397,10 +1397,10 @@ function main ()
 {
 	x = 0;
 	y = 0;
-	print (getx () + gety ());
-	print (getx () + gety ());
-	print (getx () + gety ());
-	print (getx () + gety ());
+	print (getx() + gety());
+	print (getx() + gety());
+	print (getx() + gety());
+	print (getx() + gety());
 	return 999;
 }
 
@@ -1410,7 +1410,7 @@ function error ()
 }
 
 BEGIN {
-	main ();
+	main();
 }
 
 END {
@@ -1440,7 +1440,7 @@ function gety ()
 function getx ()
 {
 	if ((x == 2))
-		error ();
+		error();
 	return (x)++;
 }
 
@@ -1448,10 +1448,10 @@ function main ()
 {
 	x = 0;
 	y = 0;
-	print (getx () + gety ());
-	print (getx () + gety ());
-	print (getx () + gety ());
-	print (getx () + gety ());
+	print (getx() + gety());
+	print (getx() + gety());
+	print (getx() + gety());
+	print (getx() + gety());
 	return 999;
 }
 
@@ -1461,7 +1461,7 @@ function error ()
 }
 
 BEGIN {
-	main ();
+	main();
 }
 
 END {
@@ -1601,18 +1601,18 @@ BEGIN {
  ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-031.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	print match ("hhhheeeo",/e+/);
+	print match("hhhheeeo",/e+/);
 	print RSTART,RLENGTH;
-	print match ("heeeo",/e/);
+	print match("heeeo",/e/);
 	print RSTART,RLENGTH;
-	print match ("heeeo",/t/);
+	print match("heeeo",/t/);
 	print RSTART,RLENGTH;
 	print "--------------------------";
-	print match ("hhhheeeo","e+");
+	print match("hhhheeeo","e+");
 	print RSTART,RLENGTH;
-	print match ("heeeo","e");
+	print match("heeeo","e");
 	print RSTART,RLENGTH;
-	print match ("heeeo","t");
+	print match("heeeo","t");
 	print RSTART,RLENGTH;
 	print "--------------------------";
 }
@@ -1674,7 +1674,7 @@ BEGIN {
 	print "13" || "sort";
 	print "12" || "sort";
 	print "11" || "sort";
-	close ("sort","r");
+	close("sort","r");
 	print "-----";
 	while ((("sort" || getline x) > 0))
 		print "xx:",x;
@@ -1699,7 +1699,7 @@ BEGIN {
 			first = 0;
 			continue;
 		}
-		n = split (x,f,",");
+		n = split(x,f,",");
 		if ((n < 3))
 			continue;
 		if ((f[3] == ""))
@@ -1723,13 +1723,13 @@ BEGIN {
 {
 	if ((($1 == "option") && ($2 == "agent.circuit-id")))
 	{
-		pos = index ($0,"agent.circuit-id ");
-		len = length ($0);
-		last = substr ($0,len,1);
+		pos = index($0,"agent.circuit-id ");
+		len = length($0);
+		last = substr($0,len,1);
 		adj = 0;
 		if ((last != ";"))
 			(adj)++;
-		cid = substr ($0,(pos + 17),(length ($0) - ((pos + 17) + adj)));
+		cid = substr($0,(pos + 17),(length($0) - ((pos + 17) + adj)));
 		for (suffix = 0; (suffix < max_cid_vars); (suffix)++)
 		{
 			val = tab[cid,suffix];
@@ -1996,18 +1996,18 @@ dif cccc
 BEGIN {
 	xstr = "abcdefabcdefabcdef";
 	xsub = "abc";
-	xlen = length (xsub);
+	xlen = length(xsub);
 	i = 1;
-	while ((i = index (xstr,xsub,i) > 0))
+	while ((i = index(xstr,xsub,i) > 0))
 	{
-		print i,substr (xstr,i,xlen);
+		print i,substr(xstr,i,xlen);
 		i += xlen;
 	}
 	print "----------------";
 	i = 1;
-	while ((match (xstr,xsub,i) > 0))
+	while ((match(xstr,xsub,i) > 0))
 	{
-		print RSTART,substr (xstr,RSTART,RLENGTH);
+		print RSTART,substr(xstr,RSTART,RLENGTH);
 		i = (RSTART + RLENGTH);
 	}
 }
@@ -2019,6 +2019,33 @@ BEGIN {
 1 abc
 7 abc
 13 abc
+--------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-039.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	print (length()   11);
+	print length(11);
+}
+
+011
+2
+--------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-040.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	for (x in y)
+		print x;
+}
+
+--------------------------------------------------------------------------------
+ ../../cmd/awk/.libs/qseawk --newline=on -o- -f lang-041.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	abc = 20;
+	print (abc   10);
+}
+
+2010
 --------------------------------------------------------------------------------
  ../../cmd/awk/.libs/qseawk  -f quicksort.awk quicksort.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: fnc.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,6 +20,8 @@
 
 #include "awk.h"
 
+#include <qse/cmn/stdio.h>
+
 static int fnc_close   (qse_awk_rtx_t*, const qse_cstr_t*);
 static int fnc_fflush  (qse_awk_rtx_t*, const qse_cstr_t*);
 static int fnc_index   (qse_awk_rtx_t*, const qse_cstr_t*);
@@ -36,6 +38,19 @@ static int fnc_sprintf (qse_awk_rtx_t*, const qse_cstr_t*);
 #undef MAX
 #define MAX QSE_TYPE_UNSIGNED_MAX(qse_size_t)
 
+/* Argument Specifier 
+ *
+ * Each character in the specifier indicates how a parameter
+ * of the corresponding postion should be passed to a function.
+ *
+ * - v: value. pass it after normal evaluation.
+ * - r: pass a variable by reference
+ * - x: regular expression as it it. not evaluated as /rex/ ~ $0.
+ *
+ * If the first character of the specifer is 'R', all
+ * parameters are passed by reference regarless of the remaining
+ * chracters.
+ */
 static qse_awk_fnc_t sys_fnc[] = 
 {
 	/* io functions */
@@ -46,7 +61,7 @@ static qse_awk_fnc_t sys_fnc[] =
 	{ {QSE_T("index"),   5}, 0, 0,  {2,   3, QSE_NULL},     fnc_index},
 	{ {QSE_T("substr"),  6}, 0, 0,  {2,   3, QSE_NULL},     fnc_substr},
 	{ {QSE_T("length"),  6}, 1, 0,  {0,   1, QSE_NULL},     fnc_length},
-	{ {QSE_T("split"),   5}, 0, 0,  {2,   3, QSE_T("vrv")}, fnc_split},
+	{ {QSE_T("split"),   5}, 0, 0,  {2,   3, QSE_T("vrx")}, fnc_split},
 	{ {QSE_T("tolower"), 7}, 0, 0,  {1,   1, QSE_NULL},     fnc_tolower},
 	{ {QSE_T("toupper"), 7}, 0, 0,  {1,   1, QSE_NULL},     fnc_toupper},
 	{ {QSE_T("gsub"),    4}, 0, 0,  {2,   3, QSE_T("xvr")}, fnc_gsub},
@@ -714,7 +729,20 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 			fs_rex_free = QSE_NULL;
 		}
 	}
-	else
+	else if (a2->type == QSE_AWK_VAL_REX)
+	{
+		/* the third parameter is a regular expression */
+
+		fs_rex = ((qse_awk_val_rex_t*)a2)->code;
+		fs_rex_free = QSE_NULL;
+
+		/* make the loop below to take fs_rex by 
+		 * setting fs_len greater than 1*/
+		fs_ptr = QSE_NULL;
+		fs_free = QSE_NULL;
+		fs_len = 2;
+	}
+	else 
 	{
 		if (a2->type == QSE_AWK_VAL_STR)
 		{

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: rex.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,7 +23,7 @@
 #include "mem.h"
 
 #ifdef DEBUG_REX
-#include <qse/bas/sio.h>
+#include <qse/cmn/sio.h>
 #define DPUTS(x) qse_sio_puts(&qse_sio_err,x)
 #endif
 
@@ -475,7 +475,6 @@ int qse_matchrex (
 	matcher_t matcher;
 	match_t mat;
 	qse_size_t offset = 0;
-	/*const qse_char_t* match_ptr_zero = QSE_NULL;*/
 
 	matcher.mmgr = mmgr;
 
@@ -494,7 +493,6 @@ int qse_matchrex (
 	/* TODO: should it allow an offset here??? */
 	mat.match_ptr = substr + offset;
 
-	/*while (mat.match_ptr < matcher.match.str.end)*/
 	while (mat.match_ptr <= matcher.match.str.end)
 	{
 		if (match_pattern (&matcher, code, &mat) == QSE_NULL) 
@@ -505,40 +503,17 @@ int qse_matchrex (
 
 		if (mat.matched)
 		{
-			/*
-			if (mat.match_len == 0)
-			{
-				if (match_ptr_zero == QSE_NULL)
-					match_ptr_zero = mat.match_ptr;
-				mat.match_ptr++;
-				continue;
-			}
-			*/
-
 			if (match != QSE_NULL) 
 			{
 				match->ptr = mat.match_ptr;
 				match->len = mat.match_len;
 			}
 
-			/*match_ptr_zero = QSE_NULL;*/
 			break;
 		}
 
 		mat.match_ptr++;
 	}
-
-	/*
-	if (match_ptr_zero != QSE_NULL) 
-	{
-		if (match != QSE_NULL) 
-		{
-			match->ptr = match_ptr_zero;
-			match->len = 0;
-		}
-		return 1;
-	}
-	*/
 
 	return (mat.matched)? 1: 0;
 }
@@ -1364,18 +1339,10 @@ static const qse_byte_t* match_branch_body0 (
 	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
 {
 	const qse_byte_t* p;
-/*	match_t mat2;*/
 	qse_size_t match_len = 0;
 
 	mat->matched = QSE_FALSE;
 	mat->match_len = 0;
-
-/* TODO: is mat2 necessary here ? */
-/*
-	mat2.match_ptr = mat->match_ptr;
-	mat2.branch = mat->branch;
-	mat2.branch_end = mat->branch_end;
-*/
 
 	p = base;
 
@@ -1388,21 +1355,6 @@ static const qse_byte_t* match_branch_body0 (
 
 		mat->match_ptr = &mat->match_ptr[mat->match_len];
 		match_len += mat->match_len;
-#if 0
-		p = match_atom (matcher, p, &mat2);
-		if (p == QSE_NULL) return QSE_NULL;
-
-		if (!mat2.matched) 
-		{
-			mat->matched = QSE_FALSE;
-			break; /* stop matching */
-		}
-
-		mat->matched = QSE_TRUE;
-		mat->match_len += mat2.match_len;
-
-		mat2.match_ptr = &mat2.match_ptr[mat2.match_len];
-#endif
 	}
 
 	if (mat->matched) mat->match_len = match_len;
@@ -1493,7 +1445,6 @@ static const qse_byte_t* match_any_char (
 		/* perform minimal overflow check as this implementation
 		 * uses the maximum value to mean infinite.
 		 * consider the upper bound of '+' and '*'. */
-		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
 		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
 		ubound = (BOUND_MAX-ub >= ubound)? (ubound + ub): BOUND_MAX;
 
@@ -1782,7 +1733,19 @@ static const qse_byte_t* match_group (
 			grp_len_capa += 256;
 		}
 
+
 		grp_len[si+1] = grp_len[si] + mat2.match_len;
+
+		if (mat2.match_len == 0) 
+		{
+/* TODO: verify this.... */
+			/* Advance to the next in case the match lengh is zero 
+			 * for (1*)*, 1* can match zero-length. 
+			 * A zero-length inner match results in zero-length no
+			 * matter how many times the outer group is requested
+			 * to match */
+			break;
+		}
 
 		mat2.match_ptr += mat2.match_len;
 		mat2.match_len = 0;
