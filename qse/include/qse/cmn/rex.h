@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: rex.h 300 2009-11-13 14:01:57Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -91,6 +91,7 @@ typedef enum qse_rex_errnum_t qse_rex_errnum_t;
 
 typedef struct qse_rex_t qse_rex_t;
 
+#if 0
 struct qse_rex_t
 {
 	QSE_DEFINE_COMMON_FIELDS (rex)
@@ -105,6 +106,63 @@ struct qse_rex_t
 
 	void* code;
 };
+#endif
+
+enum qse_rex_node_id_t
+{
+	QSE_REX_NODE_START,
+	QSE_REX_NODE_END,
+	QSE_REX_NODE_NOP,
+	QSE_REX_NODE_ANYCHAR, /* dot */
+	QSE_REX_NODE_CHAR,    /* single character */
+	QSE_REX_NODE_CHARSET, /* character set */
+	QSE_REX_NODE_BRANCH,
+	QSE_REX_NODE_GROUP,
+	QSE_REX_NODE_GROUPEND
+};
+typedef enum qse_rex_node_id_t qse_rex_node_id_t;
+
+typedef struct qse_rex_node_t qse_rex_node_t;
+struct qse_rex_node_t
+{
+	qse_rex_node_t* link; /* link for management. not used for startnode */
+	qse_rex_node_t* next;
+
+	qse_rex_node_id_t id;
+	union
+	{
+		struct
+		{
+			qse_mmgr_t* mmgr;
+			qse_rex_node_t* link;
+		} s;
+
+		qse_char_t c;
+		qse_char_t* cs; /* charset */
+
+		struct
+		{
+			qse_rex_node_t* left;
+			qse_rex_node_t* right;
+		} b;
+
+		struct
+		{
+			qse_rex_node_t* head;
+		} g;
+
+		struct
+		{
+			qse_rex_node_t* group;
+		} ge;
+	} u;
+
+	struct
+	{
+		qse_size_t min;
+		qse_size_t max;
+	} occ;
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,26 +172,26 @@ QSE_DEFINE_COMMON_FUNCTIONS (rex)
 
 qse_rex_t* qse_rex_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t  xtn
+	qse_size_t  xtn,
+	void*       code
 );
 
 void qse_rex_close (
 	qse_rex_t* rex
 );
 
-int qse_rex_build (
+qse_rex_node_t* qse_rex_comp (
 	qse_rex_t*        rex,
 	const qse_char_t* ptn,
 	qse_size_t        len
 );
 
-int qse_rex_match (
+int qse_rex_exec (
 	qse_rex_t*        rex,
 	const qse_char_t* str,
 	qse_size_t        len,
 	const qse_char_t* substr,
-	qse_size_t        sublen,
-        qse_cstr_t*       match
+	qse_size_t        sublen
 );
 
 void* qse_buildrex (

@@ -34,7 +34,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
 	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT)
+	time$(EXEEXT) rex$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -71,6 +71,13 @@ am_pio_OBJECTS = pio.$(OBJEXT)
 pio_OBJECTS = $(am_pio_OBJECTS)
 pio_LDADD = $(LDADD)
 pio_DEPENDENCIES =
+am_rex_OBJECTS = rex-rex.$(OBJEXT)
+rex_OBJECTS = $(am_rex_OBJECTS)
+rex_LDADD = $(LDADD)
+rex_DEPENDENCIES =
+rex_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(rex_CXXFLAGS) $(CXXFLAGS) \
+	$(rex_LDFLAGS) $(LDFLAGS) -o $@
 am_sio_OBJECTS = sio.$(OBJEXT)
 sio_OBJECTS = $(am_sio_OBJECTS)
 sio_LDADD = $(LDADD)
@@ -99,12 +106,21 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
-	$(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
+	$(pio_SOURCES) $(rex_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
 	$(str_SOURCES) $(time_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
+	$(map_SOURCES) $(pio_SOURCES) $(rex_SOURCES) $(sio_SOURCES) \
+	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -244,7 +260,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -DNDEBUG
 LDADD = -lqsecmn 
 chr_SOURCES = chr.c
 str_SOURCES = str.c
@@ -255,10 +271,15 @@ fio_SOURCES = fio.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
+rex_SOURCES = rex.cpp
+rex_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
+
+#rex_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2u_richtext-2.8 -lwx_gtk2u_aui-2.8 -lwx_gtk2u_xrc-2.8 -lwx_gtk2u_qa-2.8 -lwx_gtk2u_html-2.8 -lwx_gtk2u_adv-2.8 -lwx_gtk2u_core-2.8 -lwx_baseu_xml-2.8 -lwx_baseu_net-2.8 -lwx_baseu-2.8
+rex_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -331,6 +352,9 @@ map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
 	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
+rex$(EXEEXT): $(rex_OBJECTS) $(rex_DEPENDENCIES) 
+	@rm -f rex$(EXEEXT)
+	$(rex_LINK) $(rex_OBJECTS) $(rex_LDADD) $(LIBS)
 sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
 	@rm -f sio$(EXEEXT)
 	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
@@ -355,6 +379,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex-rex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
@@ -380,6 +405,41 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
+
+rex-rex.o: rex.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -MT rex-rex.o -MD -MP -MF $(DEPDIR)/rex-rex.Tpo -c -o rex-rex.o `test -f 'rex.cpp' || echo '$(srcdir)/'`rex.cpp
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/rex-rex.Tpo $(DEPDIR)/rex-rex.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex.cpp' object='rex-rex.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -c -o rex-rex.o `test -f 'rex.cpp' || echo '$(srcdir)/'`rex.cpp
+
+rex-rex.obj: rex.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -MT rex-rex.obj -MD -MP -MF $(DEPDIR)/rex-rex.Tpo -c -o rex-rex.obj `if test -f 'rex.cpp'; then $(CYGPATH_W) 'rex.cpp'; else $(CYGPATH_W) '$(srcdir)/rex.cpp'; fi`
+@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/rex-rex.Tpo $(DEPDIR)/rex-rex.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex.cpp' object='rex-rex.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -c -o rex-rex.obj `if test -f 'rex.cpp'; then $(CYGPATH_W) 'rex.cpp'; else $(CYGPATH_W) '$(srcdir)/rex.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

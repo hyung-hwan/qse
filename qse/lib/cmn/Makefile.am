@@ -1,11 +1,11 @@
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include 
 
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
-	mem.c chr.c chr_cnv.c rex.c \
+	mem.c chr.c chr_cnv.c rex.c rex1.c \
 	str_bas.c str_cnv.c str_dyn.c str_utl.c \
 	lda.c map.c sll.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
