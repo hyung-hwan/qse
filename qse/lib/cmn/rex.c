@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: rex.c 300 2009-11-13 14:01:57Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -341,6 +341,7 @@ static struct __char_class_t __char_class[] =
 	{ QSE_NULL,          0, QSE_NULL }
 };
 
+#if 0
 qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 {
 	qse_rex_t* rex;
@@ -394,6 +395,7 @@ int qse_rex_match (
 		rex->mmgr, rex->depth.match, rex->code, rex->option,
 		str, len, substr, sublen, match, &rex->errnum);
 }
+#endif
 
 void* qse_buildrex (
 	qse_mmgr_t* mmgr, qse_size_t depth, int option,
