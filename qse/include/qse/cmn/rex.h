@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 300 2009-11-13 14:01:57Z hyunghwan.chung $
+ * $Id: rex.h 302 2009-11-18 13:47:12Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -113,6 +113,8 @@ enum qse_rex_node_id_t
 	QSE_REX_NODE_START,
 	QSE_REX_NODE_END,
 	QSE_REX_NODE_NOP,
+	QSE_REX_NODE_BOL, /* beginning of line */
+	QSE_REX_NODE_EOL, /* end of line */
 	QSE_REX_NODE_ANYCHAR, /* dot */
 	QSE_REX_NODE_CHAR,    /* single character */
 	QSE_REX_NODE_CHARSET, /* character set */
@@ -125,7 +127,7 @@ typedef enum qse_rex_node_id_t qse_rex_node_id_t;
 typedef struct qse_rex_node_t qse_rex_node_t;
 struct qse_rex_node_t
 {
-	qse_rex_node_t* link; /* link for management. not used for startnode */
+	qse_rex_node_t* link; /* for internal management. not used for startnode */
 	qse_rex_node_t* next;
 
 	qse_rex_node_id_t id;

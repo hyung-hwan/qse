@@ -248,6 +248,18 @@ void MyFrame::drawNode (wxDC& dc, qse_rex_node_t* n)
 	{
 		dc.DrawText (_T("<BR>"), nodex, nodey);
 	}
+	else if (n->id == QSE_REX_NODE_BOL)
+	{
+		dc.DrawText (_T("<^>"), nodex, nodey);
+	}
+	else if (n->id == QSE_REX_NODE_EOL)
+	{
+		dc.DrawText (_T("<$>"), nodex, nodey);
+	}
+	else if (n->id == QSE_REX_NODE_ANYCHAR)
+	{
+		dc.DrawText (_T("<AY>"), nodex, nodey);
+	}
 	else if (n->id == QSE_REX_NODE_CHAR)
 	{
 		qse_char_t x[2];
@@ -274,7 +286,7 @@ void MyFrame::drawNode (wxDC& dc, qse_rex_node_t* n)
 	}
 	else if (n->id == QSE_REX_NODE_NOP)
 	{
-		dc.DrawText (_T("<NOP>"), nodex, nodey);
+		dc.DrawText (_T("<NP>"), nodex, nodey);
 	}
 }
 
@@ -287,19 +299,19 @@ void MyFrame::drawChain (wxDC& dc, qse_rex_node_t* n)
 		if (t->id == QSE_REX_NODE_BRANCH)
 		{	
 			drawNode (dc, t);
-			nodex += 50;
+			nodex += 40;
 
 			int oldx = nodex;
 			drawChain (dc, t->u.b.left);
 
 			nodex = oldx;
-			nodey += 50;
+			nodey += 40;
 			drawChain (dc, t->u.b.right);
 		}
 		else
 		{
 			drawNode (dc, t);
-			nodex += 50;
+			nodex += 40;
 		}
 
 		if (t->id == QSE_REX_NODE_GROUP)
