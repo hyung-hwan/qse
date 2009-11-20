@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 300 2009-11-13 14:01:57Z hyunghwan.chung $
+ * $Id: rex.c 304 2009-11-20 05:12:27Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -340,62 +340,6 @@ static struct __char_class_t __char_class[] =
 
 	{ QSE_NULL,          0, QSE_NULL }
 };
-
-#if 0
-qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn)
-{
-	qse_rex_t* rex;
-
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
-	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
-	if (rex == QSE_NULL) return QSE_NULL;
-
-	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
-	rex->mmgr = mmgr;
-
-	return rex;
-}
-
-void qse_rex_close (qse_rex_t* rex)
-{
-	if (rex->code != QSE_NULL) qse_freerex (rex->mmgr, rex->code);
-	QSE_MMGR_FREE (rex->mmgr, rex);
-}
-
-int qse_rex_build (qse_rex_t* rex, const qse_char_t* ptn, qse_size_t len)
-{
-	void* code;
-
-	code = qse_buildrex (
-		rex->mmgr, rex->depth.build, 0,
-		ptn, len, &rex->errnum);
-	if (code == QSE_NULL) return -1;
-
-	if (rex->code != QSE_NULL) qse_freerex (rex->mmgr, rex->code);
-	rex->code = code;
-
-	return 0;
-}
-
-int qse_rex_match (
-	qse_rex_t* rex,
-	const qse_char_t* str, qse_size_t len,
-	const qse_char_t* substr, qse_size_t sublen, qse_cstr_t* match)
-{
-	return qse_matchrex (
-		rex->mmgr, rex->depth.match, rex->code, rex->option,
-		str, len, substr, sublen, match, &rex->errnum);
-}
-#endif
 
 void* qse_buildrex (
 	qse_mmgr_t* mmgr, qse_size_t depth, int option,

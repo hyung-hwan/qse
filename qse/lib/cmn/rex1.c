@@ -25,14 +25,6 @@
 
 #define OCC_MAX QSE_TYPE_MAX(qse_size_t)
 
-struct qse_rex_t
-{
-	QSE_DEFINE_COMMON_FIELDS (rex)
-
-	int errnum;
-	qse_rex_node_t* code;
-};
-
 typedef struct comp_t comp_t;
 struct comp_t
 {
@@ -45,11 +37,6 @@ struct comp_t
 
 	struct
 	{
-		enum
-		{
-			CT_NORMAL,
-			CT_SPECIAL
-		} type;
 		qse_cint_t value;
 		int escaped;
 	} c;
@@ -105,6 +92,8 @@ typedef struct cand_t cand_t;
 struct cand_t
 {
 	qse_rex_node_t*   node;
+
+	/* occurrence */
 	qse_size_t        occ;
 
 	/* the stack of groups that this candidate belongs to. 
@@ -118,7 +107,7 @@ struct cand_t
 	const qse_char_t* mptr; 
 };
 
-qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, void* code)
+qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
 {
 	qse_rex_t* rex;
 
@@ -137,7 +126,15 @@ qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, void* code)
 
 	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
 	rex->mmgr = mmgr;
+
 	/* TODO: must duplicate? */
+	if (code && code->id != QSE_REX_NODE_START)
+	{
+		/* check if the first node is the start node */
+		QSE_MMGR_FREE (mmgr, rex);	
+		return QSE_NULL;
+	}
+
 	rex->code = code;
 
 	return rex;
@@ -179,6 +176,16 @@ void qse_rex_close (qse_rex_t* rex)
 	QSE_MMGR_FREE (rex->mmgr, rex);
 }
 
+int qse_rex_getoption (qse_rex_t* rex)
+{
+	return rex->option;
+}
+
+void qse_rex_setoption (qse_rex_t* rex, int opts)
+{
+	rex->option = opts;
+}
+
 static qse_rex_node_t* newnode (comp_t* c, qse_rex_node_id_t id)
 {
 	qse_rex_node_t* node;
@@ -187,7 +194,7 @@ static qse_rex_node_t* newnode (comp_t* c, qse_rex_node_id_t id)
 		QSE_MMGR_ALLOC (c->rex->mmgr, QSE_SIZEOF(qse_rex_node_t));
 	if (node == QSE_NULL) 
 	{
-// TODO set error code
+		c->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
@@ -281,24 +288,15 @@ static qse_rex_node_t* newbranchnode (
 #define IS_ESC(com) ((com)->c.escaped)
 #define IS_EOF(com) ((com)->c.value == QSE_CHAR_EOF)
 
-enum
-{
-	LEVEL_NORMAL,
-	LEVEL_CHARSET,
-	LEVEL_RANGE
-};
-
-static int getc (comp_t* com, int level)
+static int getc (comp_t* com)
 {
 	if (com->ptr >= com->end)
 	{
-		com->c.type = CT_NORMAL;
 		com->c.value = QSE_CHAR_EOF;
 		com->c.escaped = 0;
 		return 0;
 	}
 
-	com->c.type = CT_NORMAL;
 	com->c.value = *com->ptr++;
 	com->c.escaped = QSE_FALSE;
 
@@ -403,45 +401,8 @@ static int getc (comp_t* com, int level)
 
 		com->c.value = c;
 		com->c.escaped = QSE_TRUE;
+	}
 
-		return 0;
-	}
-	else
-	{
-		if (level == LEVEL_NORMAL)
-		{
-			if (com->c.value == QSE_T('[') ||
-			    com->c.value == QSE_T('|') ||
-			    com->c.value == QSE_T('^') ||
-			    com->c.value == QSE_T('$') ||
-			    (/*!(com->option & QSE_REX_BUILD_NOBOUND) && TODO:*/
-			     com->c.value == QSE_T('{')) ||
-			    com->c.value == QSE_T('+') ||
-			    com->c.value == QSE_T('?') ||
-			    com->c.value == QSE_T('*') ||
-			    com->c.value == QSE_T('.') ||
-			    com->c.value == QSE_T('(') ||
-			    com->c.value == QSE_T(')')) 
-			{
-				com->c.type = CT_SPECIAL;
-			}
-		}
-		else if (level == LEVEL_CHARSET)
-		{
-			if (com->c.value == QSE_T(']')) 
-			{
-				com->c.type = CT_SPECIAL;
-			}
-		}
-		else if (level == LEVEL_RANGE)
-		{
-			if (com->c.value == QSE_T(',') ||
-			    com->c.value == QSE_T('}')) 
-			{
-				com->c.type = CT_SPECIAL;
-			}
-		}
-	}
 #if 0
 	com->c = (com->ptr < com->end)? *com->ptr++: QSE_CHAR_EOF;
 if (com->c == QSE_CHAR_EOF)
@@ -471,47 +432,24 @@ static qse_rex_node_t* comp2 (comp_t* c)
 				if (n == QSE_NULL) return QSE_NULL;
 
 				ge = newgroupendnode (c, n);
-				if (ge == QSE_NULL) 
-				{
-					// free n
-					return QSE_NULL;
-				}
+				if (ge == QSE_NULL) return QSE_NULL;
 
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// freere (ge);
-					// freere (n);
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 
 				c->gdepth++;
 				x = comp0 (c, ge);
-				if (x == QSE_NULL)
-				{
-					// freere (ge);
-					// freere (n);
-					return QSE_NULL;
-				}
+				if (x == QSE_NULL) return QSE_NULL;
 
 				if (!IS_SPE(c,QSE_T(')')))
 				{
-qse_printf (QSE_T("expecting )\n"));
-					// UNBALANCED PAREN.
-					// freere (x);
-					// freere (n);
+					c->rex->errnum = QSE_REX_EUNBALPAREN;
 					return QSE_NULL;
 				}
 
 				c->gdepth--;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// freere (x);
-					// freere (n);
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 
 				n->u.g.head = x;
-
 				break;
 			}
 			
@@ -519,31 +457,19 @@ qse_printf (QSE_T("expecting )\n"));
 			case QSE_T('.'):
 				n = newnode (c, QSE_REX_NODE_ANYCHAR);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 
 			case QSE_T('^'):
 				n = newnode (c, QSE_REX_NODE_BOL);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 	
 			case QSE_T('$'):
 				n = newnode (c, QSE_REX_NODE_EOL);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 
 
@@ -562,11 +488,7 @@ qse_printf (QSE_T("expecting )\n"));
 		/* normal character */
 		n = newcharnode (c, c->c.value);
 		if (n == QSE_NULL) return QSE_NULL;
-		if (getc(c,LEVEL_NORMAL) <= -1)
-		{
-			// TODO: error handling..
-			return QSE_NULL;
-		}
+		if (getc(c) <= -1) return QSE_NULL;
 	}
 
 	n->occ.min = 1;
@@ -581,40 +503,25 @@ qse_printf (QSE_T("expecting )\n"));
 			case QSE_T('?'):
 				n->occ.min = 0;
 				n->occ.max = 1;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					//free n
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 			
 			case QSE_T('*'):
 				n->occ.min = 0;
 				n->occ.max = OCC_MAX;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					//free n
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 
 			case QSE_T('+'):
 				n->occ.min = 1;
 				n->occ.max = OCC_MAX;
-				if (getc(c,LEVEL_NORMAL) <= -1)
-				{
-					// TODO: error handling..
-					//free n
-					return QSE_NULL;
-				}
+				if (getc(c) <= -1) return QSE_NULL;
 				break;
 
 			/*
 			case QSE_T('{'):
 				// TODO:
-				if (com->rex->option & QSE_REX_BUILD_NOBOUND)
+				if (!(com->rex->option & QSE_REX_NOBOUND))
 				{
 				}
 				break;
@@ -661,7 +568,7 @@ static qse_rex_node_t* comp0 (comp_t* c, qse_rex_node_t* ge)
 
 	while (IS_SPE(c,QSE_T('|')))
 	{
-		if (getc(c,LEVEL_NORMAL) <= -1) 
+		if (getc(c) <= -1) 
 		{
 			//freere (left);
 			return QSE_NULL;
@@ -707,7 +614,7 @@ qse_rex_node_t* qse_rex_comp (
 	c.start = QSE_NULL;
 
 	/* read the first character */
-	if (getc(&c,LEVEL_NORMAL) <= -1) return QSE_NULL;
+	if (getc(&c) <= -1) return QSE_NULL;
 
 	c.start = newstartnode (&c);
 	if (c.start == QSE_NULL) return QSE_NULL;
@@ -751,7 +658,8 @@ static group_t* dupgroups (exec_t* e, group_t* g)
 	if (yg == QSE_NULL)
 	{
 		/* TODO: freegroups (xg); */
-		/* TODO: set error info */
+
+		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
@@ -788,7 +696,7 @@ static group_t* pushgroup (exec_t* e, group_t* group, qse_rex_node_t* newgn)
 	newg = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*newg));
 	if (newg == QSE_NULL)
 	{
-		/* TODO: set error info */
+		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
@@ -843,7 +751,7 @@ qse_printf (QSE_T("adding %d NA\n"), node->id);*/
 		QSE_LDA_SIZE(&e->cand.set[e->cand.pending]),
 		&cand, 1) == (qse_size_t)-1)
 	{
-		/* TODO: set error code: ENOERR */
+		e->rex->errnum = QSE_REX_ENOMEM;
 		return -1;
 	}
 
