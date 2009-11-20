@@ -258,11 +258,11 @@ static qse_rex_node_t* newbranchnode (
 	return n;
 }
 
-#define CHECK_END(builder) \
+#define CHECK_END(com) \
 	do { \
-		if (builder->ptr >= builder->ptn.end) \
+		if (com->ptr >= com->end) \
 		{ \
-			builder->errnum = QSE_REX_EEND; \
+			/*com->errnum = QSE_REX_EEND;*/ \
 			return -1; \
 		} \
 	} while(0)
@@ -277,7 +277,18 @@ static qse_rex_node_t* newbranchnode (
 	 (c >= QSE_T('A') && c <= QSE_T('F'))? c-QSE_T('A')+10: \
 	                                       c-QSE_T('a')+10)
 
-static int getc (comp_t* com)
+#define IS_SPE(com,ch) ((com)->c.value == (ch) && !(com)->c.escaped)
+#define IS_ESC(com) ((com)->c.escaped)
+#define IS_EOF(com) ((com)->c.value == QSE_CHAR_EOF)
+
+enum
+{
+	LEVEL_NORMAL,
+	LEVEL_CHARSET,
+	LEVEL_RANGE
+};
+
+static int getc (comp_t* com, int level)
 {
 	if (com->ptr >= com->end)
 	{
@@ -295,7 +306,7 @@ static int getc (comp_t* com)
 	{	       
 		qse_char_t c;
 
-		CHECK_END (builder);
+		CHECK_END (com);
 		c = *com->ptr++;
 
 		if (c == QSE_T('n')) c = QSE_T('\n');
@@ -311,13 +322,13 @@ static int getc (comp_t* com)
 
 			c = c - QSE_T('0');
 
-			CHECK_END (builder);
+			CHECK_END (com);
 			cx = *com->ptr++;
 			if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 			{
 				c = c * 8 + cx - QSE_T('0');
 
-				CHECK_END (builder);
+				CHECK_END (com);
 				cx = *com->ptr++;
 				if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 				{
@@ -329,13 +340,13 @@ static int getc (comp_t* com)
 		{
 			qse_char_t cx;
 
-			CHECK_END (builder);
+			CHECK_END (com);
 			cx = *com->ptr++;
 			if (IS_HEX(cx))
 			{
 				c = HEX_TO_NUM(cx);
 
-				CHECK_END (builder);
+				CHECK_END (com);
 				cx = *com->ptr++;
 				if (IS_HEX(cx))
 				{
@@ -348,7 +359,7 @@ static int getc (comp_t* com)
 		{
 			qse_char_t cx;
 
-			CHECK_END (builder);
+			CHECK_END (com);
 			cx = *com->ptr++;
 			if (IS_HEX(cx))
 			{
@@ -358,7 +369,7 @@ static int getc (comp_t* com)
 
 				for (i = 0; i < 3; i++)
 				{
-					CHECK_END (builder);
+					CHECK_END (com);
 					cx = *com->ptr++;
 
 					if (!IS_HEX(cx)) break;
@@ -370,7 +381,7 @@ static int getc (comp_t* com)
 		{
 			qse_char_t cx;
 
-			CHECK_END (builder);
+			CHECK_END (com);
 			cx = *com->ptr++;
 			if (IS_HEX(cx))
 			{
@@ -380,7 +391,7 @@ static int getc (comp_t* com)
 
 				for (i = 0; i < 7; i++)
 				{
-					CHECK_END (builder);
+					CHECK_END (com);
 					cx = *com->ptr++;
 
 					if (!IS_HEX(cx)) break;
@@ -397,13 +408,13 @@ static int getc (comp_t* com)
 	}
 	else
 	{
-		if (level == LEVEL_TOP)
+		if (level == LEVEL_NORMAL)
 		{
 			if (com->c.value == QSE_T('[') ||
 			    com->c.value == QSE_T('|') ||
 			    com->c.value == QSE_T('^') ||
 			    com->c.value == QSE_T('$') ||
-			    (!(com->option & QSE_REX_BUILD_NOBOUND) &&
+			    (/*!(com->option & QSE_REX_BUILD_NOBOUND) && TODO:*/
 			     com->c.value == QSE_T('{')) ||
 			    com->c.value == QSE_T('+') ||
 			    com->c.value == QSE_T('?') ||
@@ -446,152 +457,170 @@ static qse_rex_node_t* comp2 (comp_t* c)
 {
 	qse_rex_node_t* n;
 
-	switch (c->c.value)
+	if (!IS_ESC(c))
 	{
-		case QSE_T('('):
+		switch (c->c.value)
 		{
-			qse_rex_node_t* x, * ge;
+			case QSE_T('('):
+			{
+				/* enter a subgroup */
+
+				qse_rex_node_t* x, * ge;
 			
-			n = newgroupnode (c, QSE_NULL);
-			if (n == QSE_NULL) return QSE_NULL;
+				n = newgroupnode (c, QSE_NULL);
+				if (n == QSE_NULL) return QSE_NULL;
 
-			ge = newgroupendnode (c, n);
-			if (ge == QSE_NULL) 
-			{
-				// free n
-				return QSE_NULL;
-			}
+				ge = newgroupendnode (c, n);
+				if (ge == QSE_NULL) 
+				{
+					// free n
+					return QSE_NULL;
+				}
 
-			if (getc(c) <= -1)
-			{
-				// freere (ge);
-				// freere (n);
-				return QSE_NULL;
-			}
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// freere (ge);
+					// freere (n);
+					return QSE_NULL;
+				}
 
-			c->gdepth++;
-			x = comp0 (c, ge);
-			if (x == QSE_NULL)
-			{
-				// freere (ge);
-				// freere (n);
-				return QSE_NULL;
-			}
+				c->gdepth++;
+				x = comp0 (c, ge);
+				if (x == QSE_NULL)
+				{
+					// freere (ge);
+					// freere (n);
+					return QSE_NULL;
+				}
 
-			if (c->c.value != QSE_T(')')) 
-			{
+				if (!IS_SPE(c,QSE_T(')')))
+				{
 qse_printf (QSE_T("expecting )\n"));
-				// UNBALANCED PAREN.
-				// freere (x);
-				// freere (n);
-				return QSE_NULL;
-			}
+					// UNBALANCED PAREN.
+					// freere (x);
+					// freere (n);
+					return QSE_NULL;
+				}
 
-			c->gdepth--;
-			if (getc(c) <= -1)
-			{
-				// freere (x);
-				// freere (n);
-				return QSE_NULL;
-			}
+				c->gdepth--;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// freere (x);
+					// freere (n);
+					return QSE_NULL;
+				}
 
-			n->u.g.head = x;
-			break;
-		}
+				n->u.g.head = x;
+
+				break;
+			}
 			
-		case QSE_T('.'):
-			n = newnode (c, QSE_REX_NODE_ANYCHAR);
-			if (n == QSE_NULL) return QSE_NULL;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				return QSE_NULL;
-			}
-			break;
+			
+			case QSE_T('.'):
+				n = newnode (c, QSE_REX_NODE_ANYCHAR);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					return QSE_NULL;
+				}
+				break;
 
-		case QSE_T('^'):
-			n = newnode (c, QSE_REX_NODE_BOL);
-			if (n == QSE_NULL) return QSE_NULL;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				return QSE_NULL;
-			}
-			break;
+			case QSE_T('^'):
+				n = newnode (c, QSE_REX_NODE_BOL);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					return QSE_NULL;
+				}
+				break;
+	
+			case QSE_T('$'):
+				n = newnode (c, QSE_REX_NODE_EOL);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					return QSE_NULL;
+				}
+				break;
 
-		case QSE_T('$'):
-			n = newnode (c, QSE_REX_NODE_EOL);
-			if (n == QSE_NULL) return QSE_NULL;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				return QSE_NULL;
-			}
-			break;
 
+			/*
+			case QSE_T('['):
+				break;
+			*/
 
-		/*
-		case QSE_T('['):
-			....
-		*/
-
-		default:
-			/* normal character */
-			n = newcharnode (c, c->c.value);
-			if (n == QSE_NULL) return QSE_NULL;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				return QSE_NULL;
-			}
-			break;
+			default:
+				goto normal_char;
+		}
+	}
+	else
+	{
+	normal_char:
+		/* normal character */
+		n = newcharnode (c, c->c.value);
+		if (n == QSE_NULL) return QSE_NULL;
+		if (getc(c,LEVEL_NORMAL) <= -1)
+		{
+			// TODO: error handling..
+			return QSE_NULL;
+		}
 	}
 
-	/* handle the occurrence specifier, if any */
-	switch (c->c)
+	n->occ.min = 1;
+	n->occ.max = 1;
+
+	if (!IS_ESC(c))
 	{
-		case QSE_T('?'):
-			n->occ.min = 0;
-			n->occ.max = 1;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				//free n
-				return QSE_NULL;
-			}
-			break;
+		/* handle the occurrence specifier, if any */
+
+		switch (c->c.value)
+		{
+			case QSE_T('?'):
+				n->occ.min = 0;
+				n->occ.max = 1;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					//free n
+					return QSE_NULL;
+				}
+				break;
 			
-		case QSE_T('*'):
-			n->occ.min = 0;
-			n->occ.max = OCC_MAX;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				//free n
-				return QSE_NULL;
-			}
-			break;
+			case QSE_T('*'):
+				n->occ.min = 0;
+				n->occ.max = OCC_MAX;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					//free n
+					return QSE_NULL;
+				}
+				break;
 
-		case QSE_T('+'):
-			n->occ.min = 1;
-			n->occ.max = OCC_MAX;
-			if (getc(c) <= -1)
-			{
-				// TODO: error handling..
-				//free n
-				return QSE_NULL;
-			}
-			break;
+			case QSE_T('+'):
+				n->occ.min = 1;
+				n->occ.max = OCC_MAX;
+				if (getc(c,LEVEL_NORMAL) <= -1)
+				{
+					// TODO: error handling..
+					//free n
+					return QSE_NULL;
+				}
+				break;
 
-		/*
-		case QSE_T('{'):
-			 // TODO --------------
-			break;
-		*/
+			/*
+			case QSE_T('{'):
+				// TODO:
+				if (com->rex->option & QSE_REX_BUILD_NOBOUND)
+				{
+				}
+				break;
+			*/
 
-		default:
-			n->occ.min = 1;
-			n->occ.max = 1;
+		}
 	}
 
 	return n;
@@ -604,8 +633,8 @@ static qse_rex_node_t* comp1 (comp_t* c, pair_t* pair)
 
 	pair->tail = pair->head;
 
-	while (c->c.value != QSE_T('|') && c->c.value != QSE_CHAR_EOF && 
-	       !(c->gdepth >= 0 && c->c.value == QSE_T(')')))
+	while (!IS_SPE(c,QSE_T('|')) && !IS_EOF(c) &&
+	       !(c->gdepth > 0 && IS_SPE(c,QSE_T(')'))))
 	{
 		qse_rex_node_t* tmp = comp2 (c);
 		if (tmp == QSE_NULL) 
@@ -630,9 +659,9 @@ static qse_rex_node_t* comp0 (comp_t* c, qse_rex_node_t* ge)
 	if (left == QSE_NULL) return QSE_NULL;
 	xpair.tail->next = ge;
 
-	while (c->c.value == QSE_T('|'))
+	while (IS_SPE(c,QSE_T('|')))
 	{
-		if (getc (c) <= -1) 
+		if (getc(c,LEVEL_NORMAL) <= -1) 
 		{
 			//freere (left);
 			return QSE_NULL;
@@ -663,12 +692,7 @@ qse_rex_node_t* qse_rex_comp (
 	qse_rex_t* rex, const qse_char_t* ptr, qse_size_t len)
 {
 	comp_t c;
-
-	if (rex->code != QSE_NULL)
-	{
-		freeallnodes (rex->code);
-		rex->code = QSE_NULL;
-	}
+	qse_rex_node_t* end, * body;
 
 	c.rex = rex;
 	c.re.ptr = ptr;
@@ -682,38 +706,30 @@ qse_rex_node_t* qse_rex_comp (
 	c.gdepth = 0;
 	c.start = QSE_NULL;
 
-	if (getc(&c) <= -1) return QSE_NULL;
+	/* read the first character */
+	if (getc(&c,LEVEL_NORMAL) <= -1) return QSE_NULL;
 
 	c.start = newstartnode (&c);
-	if (c.start != QSE_NULL)
+	if (c.start == QSE_NULL) return QSE_NULL;
+
+	end = newendnode (&c);
+	if (end == QSE_NULL)
 	{
-		qse_rex_node_t* end;
-		end = newendnode (&c);
-		if (end == QSE_NULL)
-		{
-			freenode (c.start, c.rex->mmgr);
-			c.start = QSE_NULL;
-		}
-		else
-		{
-			qse_rex_node_t* tmp;
-			/*tmp = comp0 (&c, QSE_NULL);*/
-			tmp = comp0 (&c, end);
-			if (tmp == QSE_NULL) 
-			{
-				/*freenode (c.start, c.rex->mmgr);*/
-				freeallnodes (c.start);
-				c.start = QSE_NULL;
-			}
-			else 
-			{
-qse_printf (QSE_T("start has tmp...\n"));
-				c.start->next = tmp;
-			}
-		}
+		freenode (c.start, c.rex->mmgr);
+		return QSE_NULL;
 	}
 
+	body = comp0 (&c, end);
+	if (body == QSE_NULL) 
+	{
+		freeallnodes (c.start);
+		return QSE_NULL;
+	}
+
+	c.start->next = body;
+	if (rex->code != QSE_NULL) freeallnodes (rex->code);
 	rex->code = c.start;
+
 	return rex->code;
 }
 
@@ -854,15 +870,18 @@ static int addcands (
 	}
 	else if (candnode->id == QSE_REX_NODE_BRANCH)
 	{
-		group_t* groupdup;
+		group_t* gx = group;
 
 		QSE_ASSERT (candnode->next == QSE_NULL);
 
-		groupdup = dupgroups (e, group);
-		if (groupdup == QSE_NULL) return -1;
+		if (group != QSE_NULL)
+		{
+			gx = dupgroups (e, group);
+			if (gx == QSE_NULL) return -1;
+		}
 
 		if (addcands (e, group, prevnode, candnode->u.b.left, mptr) <= -1) return -1;
-		if (addcands (e, groupdup, prevnode, candnode->u.b.right, mptr) <= -1) return -1;
+		if (addcands (e, gx, prevnode, candnode->u.b.right, mptr) <= -1) return -1;
 	}
 	else if (candnode->id == QSE_REX_NODE_GROUP)
 	{
@@ -1050,17 +1069,24 @@ static int exec (exec_t* e)
 
 	do
 	{
-		/* kind of swap the next set and the current set by swapping indices */
+		/* swap the pending and active set indices.
+		 * the pending set becomes active after which the match()
+		 * function tries each candidate in it. New candidates
+		 * are added into the pending set which will become active
+		 * later when the loop reaches here again */
 		int tmp = e->cand.pending;
 		e->cand.pending = e->cand.active;
 		e->cand.active = tmp;
 
-		/* check if there are any next candidates */
 		if (QSE_LDA_SIZE(&e->cand.set[e->cand.active]) <= 0)
 		{
-			/* if no more candidates, break */
+			/* we can't go on with no candidates in the 
+			 * active set. */
 			break;
 		}
+
+		/* clear the pending set */
+		qse_lda_clear (&e->cand.set[e->cand.pending]); 
 
 {
 int i;
@@ -1081,9 +1107,6 @@ for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
 }
 qse_printf (QSE_T("\n"));
 }
-
-		/* clear the array to hold the next candidates */
-		qse_lda_clear (&e->cand.set[e->cand.pending]); 
 
 		if (match (e) <= -1) return -1;
 	}
