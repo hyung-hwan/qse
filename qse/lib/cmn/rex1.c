@@ -144,8 +144,8 @@ static void freenode (qse_rex_node_t* node, qse_mmgr_t* mmgr)
 {
 	if (node->id == QSE_REX_NODE_CHARSET)
 	{
-		// TODO: 
-		QSE_MMGR_FREE (mmgr, node->u.cs);
+		if (node->u.cs != QSE_NULL) 
+			QSE_MMGR_FREE (mmgr, node->u.cs);
 	}
 
 	QSE_MMGR_FREE (mmgr, node);
@@ -288,8 +288,13 @@ static qse_rex_node_t* newbranchnode (
 #define IS_ESC(com) ((com)->c.escaped)
 #define IS_EOF(com) ((com)->c.value == QSE_CHAR_EOF)
 
-static int getc (comp_t* com)
+#define getc_noesc(c) getc(c,1)
+#define getc_esc(c)   getc(c,0)
+
+static int getc (comp_t* com, int noesc)
 {
+	qse_char_t c;
+
 	if (com->ptr >= com->end)
 	{
 		com->c.value = QSE_CHAR_EOF;
@@ -298,110 +303,108 @@ static int getc (comp_t* com)
 	}
 
 	com->c.value = *com->ptr++;
-	com->c.escaped = QSE_FALSE;
+	com->c.escaped = 0;
 
-	if (com->c.value == QSE_T('\\'))
-	{	       
-		qse_char_t c;
+	if (noesc || com->c.value != QSE_T('\\')) return 0;
+
+
+	CHECK_END (com);
+	c = *com->ptr++;
+
+	if (c == QSE_T('n')) c = QSE_T('\n');
+	else if (c == QSE_T('r')) c = QSE_T('\r');
+	else if (c == QSE_T('t')) c = QSE_T('\t');
+	else if (c == QSE_T('f')) c = QSE_T('\f');
+	else if (c == QSE_T('b')) c = QSE_T('\b');
+	else if (c == QSE_T('v')) c = QSE_T('\v');
+	else if (c == QSE_T('a')) c = QSE_T('\a');
+	else if (c >= QSE_T('0') && c <= QSE_T('7')) 
+	{
+		qse_char_t cx;
+
+		c = c - QSE_T('0');
 
 		CHECK_END (com);
-		c = *com->ptr++;
-
-		if (c == QSE_T('n')) c = QSE_T('\n');
-		else if (c == QSE_T('r')) c = QSE_T('\r');
-		else if (c == QSE_T('t')) c = QSE_T('\t');
-		else if (c == QSE_T('f')) c = QSE_T('\f');
-		else if (c == QSE_T('b')) c = QSE_T('\b');
-		else if (c == QSE_T('v')) c = QSE_T('\v');
-		else if (c == QSE_T('a')) c = QSE_T('\a');
-		else if (c >= QSE_T('0') && c <= QSE_T('7')) 
+		cx = *com->ptr++;
+		if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 		{
-			qse_char_t cx;
-
-			c = c - QSE_T('0');
+			c = c * 8 + cx - QSE_T('0');
 
 			CHECK_END (com);
 			cx = *com->ptr++;
 			if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 			{
 				c = c * 8 + cx - QSE_T('0');
-
-				CHECK_END (com);
-				cx = *com->ptr++;
-				if (cx >= QSE_T('0') && cx <= QSE_T('7'))
-				{
-					c = c * 8 + cx - QSE_T('0');
-				}
 			}
 		}
-		else if (c == QSE_T('x')) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (com);
-			cx = *com->ptr++;
-			if (IS_HEX(cx))
-			{
-				c = HEX_TO_NUM(cx);
-
-				CHECK_END (com);
-				cx = *com->ptr++;
-				if (IS_HEX(cx))
-				{
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-	#ifdef QSE_CHAR_IS_WCHAR
-		else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (com);
-			cx = *com->ptr++;
-			if (IS_HEX(cx))
-			{
-				qse_size_t i;
-
-				c = HEX_TO_NUM(cx);
-
-				for (i = 0; i < 3; i++)
-				{
-					CHECK_END (com);
-					cx = *com->ptr++;
-
-					if (!IS_HEX(cx)) break;
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-		else if (c == QSE_T('U') && QSE_SIZEOF(qse_char_t) >= 4) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (com);
-			cx = *com->ptr++;
-			if (IS_HEX(cx))
-			{
-				qse_size_t i;
-
-				c = HEX_TO_NUM(cx);
-
-				for (i = 0; i < 7; i++)
-				{
-					CHECK_END (com);
-					cx = *com->ptr++;
-
-					if (!IS_HEX(cx)) break;
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-	#endif
-
-		com->c.value = c;
-		com->c.escaped = QSE_TRUE;
 	}
+	else if (c == QSE_T('x')) 
+	{
+		qse_char_t cx;
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
+		{
+			c = HEX_TO_NUM(cx);
+
+			CHECK_END (com);
+			cx = *com->ptr++;
+			if (IS_HEX(cx))
+			{
+				c = c * 16 + HEX_TO_NUM(cx);
+			}
+		}
+	}
+#ifdef QSE_CHAR_IS_WCHAR
+	else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
+	{
+		qse_char_t cx;
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
+		{
+			qse_size_t i;
+
+			c = HEX_TO_NUM(cx);
+
+			for (i = 0; i < 3; i++)
+			{
+				CHECK_END (com);
+				cx = *com->ptr++;
+
+				if (!IS_HEX(cx)) break;
+				c = c * 16 + HEX_TO_NUM(cx);
+			}
+		}
+	}
+	else if (c == QSE_T('U') && QSE_SIZEOF(qse_char_t) >= 4) 
+	{
+		qse_char_t cx;
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
+		{
+			qse_size_t i;
+
+			c = HEX_TO_NUM(cx);
+
+			for (i = 0; i < 7; i++)
+			{
+				CHECK_END (com);
+				cx = *com->ptr++;
+
+				if (!IS_HEX(cx)) break;
+				c = c * 16 + HEX_TO_NUM(cx);
+			}
+		}
+	}
+#endif
+
+	com->c.value = c;
+	com->c.escaped = QSE_TRUE;
 
 #if 0
 	com->c = (com->ptr < com->end)? *com->ptr++: QSE_CHAR_EOF;
@@ -409,6 +412,162 @@ if (com->c == QSE_CHAR_EOF)
 qse_printf (QSE_T("getc => <EOF>\n"));
 else qse_printf (QSE_T("getc => %c\n"), com->c);
 #endif
+	return 0;
+}
+
+#if 0
+static int charclass (comp_t* builder, qse_char_t* cc)
+{
+	const struct __char_class_t* ccp = __char_class;
+	qse_size_t len = builder->ptn.end - builder->ptn.curp;
+
+	while (ccp->name != QSE_NULL)
+	{
+		if (__begin_with (builder->ptn.curp, len, ccp->name)) break;
+		ccp++;
+	}
+
+	if (ccp->name == QSE_NULL)
+	{
+		/* wrong class name */
+	#ifdef DEBUG_REX
+		DPUTS (QSE_T("build_atom_cclass: wrong class name\n"));
+	#endif
+		builder->errnum = QSE_REX_ECCLASS;
+		return -1;
+	}
+
+	builder->ptn.curp += ccp->name_len;
+
+	NEXT_CHAR (builder, LEVEL_CHARSET);
+	if (builder->ptn.curc.type != CT_NORMAL ||
+	    builder->ptn.curc.value != QSE_T(':'))
+	{
+	#ifdef DEBUG_REX
+		DPUTS (QSE_T("build_atom_cclass: a colon(:) expected\n"));
+	#endif
+		builder->errnum = QSE_REX_ECOLON;
+		return -1;
+	}
+
+	NEXT_CHAR (builder, LEVEL_CHARSET); 
+	
+	/* ] happens to be the charset ender ] */
+	if (builder->ptn.curc.type != CT_SPECIAL ||
+	    builder->ptn.curc.value != QSE_T(']'))
+	{
+	#ifdef DEBUG_REX
+		DPUTS (QSE_T("build_atom_cclass: ] expected\n"));
+	#endif
+		builder->errnum = QSE_REX_ERBRACKET;	
+		return -1;
+	}
+
+	NEXT_CHAR (builder, LEVEL_CHARSET);
+
+	*cc = (qse_char_t)(ccp - __char_class);
+	return 1;
+}
+#endif
+
+static int charset (comp_t* c, qse_rex_node_t* node)
+{
+	qse_size_t zero = 0;
+	qse_size_t old_size;
+	qse_size_t pos_csc;
+
+	if (c->c.value == QSE_T('^'))
+	{
+		//cmd->negate = 1;
+		//TODO: negate...
+		if (getc_noesc(c) <= -1) return -1;
+	}
+
+	/* if ] is the first character or the second character following ^,
+	 * it is treated literally */
+
+	do
+	{
+		qse_char_t c1, c2;
+
+		c1 = c->c.value;
+		if (getc_noesc(c) <= -1) return -1;
+		c2 = c->c.value;
+
+		if (c1 == QSE_T('[') && c2 == QSE_T(':'))
+		{
+			/* begins with [: */
+			if (getc_noesc(c) <= -1) return -1;
+			//if (charclass (c) <= -1) return -1;
+		}
+		else if (c2 == QSE_T('-'))
+		{
+			if (getc_noesc(c) <= -1) return -1;
+			//add c->c.value;
+qse_printf (QSE_T("[%c-%c]\n"), c1, c->c.value);
+			if (getc_noesc(c) <= -1) return -1;
+		}
+		else
+		{
+			//add c1;
+qse_printf (QSE_T("[%c]\n"), c1);
+		}
+	}
+	while (c->c.value != QSE_T(']'));
+
+	if (getc_esc(c) <= -1) return -1;
+	return 0;
+}
+
+static int occbound (comp_t* c, qse_rex_node_t* n)
+{
+	qse_size_t bound;
+
+	bound = 0;
+	while (c->c.value >= QSE_T('0') && c->c.value <= QSE_T('9'))
+	{
+		bound = bound * 10 + c->c.value - QSE_T('0');
+		if (getc_noesc(c) <= -1) return -1;
+	}
+
+	n->occ.min = bound;
+
+	if (c->c.value == QSE_T(',')) 
+	{
+		if (getc_noesc(c) <= -1) return -1;
+
+		if (c->c.value >= QSE_T('0') && c->c.value <= QSE_T('9'))
+		{
+			bound = 0;
+
+			do
+			{
+				bound = bound * 10 + c->c.value - QSE_T('0');
+				if (getc_noesc(c) <= -1) return -1;
+			}
+			while (c->c.value >= QSE_T('0') && 
+			       c->c.value <= QSE_T('9'));
+
+			n->occ.max = bound;
+		}
+		else n->occ.max = OCC_MAX;
+	}
+	else n->occ.max = n->occ.min;
+
+	if (n->occ.min > n->occ.min)
+	{
+		/* invalid occurrences range */
+		c->rex->errnum = QSE_REX_EBOUND;
+		return -1;
+	}
+
+	if (c->c.value != QSE_T('}'))
+	{
+		c->rex->errnum = QSE_REX_ERBRACE;
+		return -1;
+	}
+
+	if (getc_esc(c) <= -1) return -1;
 	return 0;
 }
 
@@ -434,7 +593,7 @@ static qse_rex_node_t* comp2 (comp_t* c)
 				ge = newgroupendnode (c, n);
 				if (ge == QSE_NULL) return QSE_NULL;
 
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 
 				c->gdepth++;
 				x = comp0 (c, ge);
@@ -442,12 +601,12 @@ static qse_rex_node_t* comp2 (comp_t* c)
 
 				if (!IS_SPE(c,QSE_T(')')))
 				{
-					c->rex->errnum = QSE_REX_EUNBALPAREN;
+					c->rex->errnum = QSE_REX_ERPAREN;
 					return QSE_NULL;
 				}
 
 				c->gdepth--;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 
 				n->u.g.head = x;
 				break;
@@ -457,26 +616,28 @@ static qse_rex_node_t* comp2 (comp_t* c)
 			case QSE_T('.'):
 				n = newnode (c, QSE_REX_NODE_ANYCHAR);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 
 			case QSE_T('^'):
 				n = newnode (c, QSE_REX_NODE_BOL);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 	
 			case QSE_T('$'):
 				n = newnode (c, QSE_REX_NODE_EOL);
 				if (n == QSE_NULL) return QSE_NULL;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 
-
-			/*
 			case QSE_T('['):
+				n = newnode (c, QSE_REX_NODE_CHARSET);
+				if (n == QSE_NULL) return QSE_NULL;
+
+				if (getc_noesc(c) <= -1) return QSE_NULL;
+				if (charset(c, n) <= -1) return QSE_NULL;
 				break;
-			*/
 
 			default:
 				goto normal_char;
@@ -488,7 +649,7 @@ static qse_rex_node_t* comp2 (comp_t* c)
 		/* normal character */
 		n = newcharnode (c, c->c.value);
 		if (n == QSE_NULL) return QSE_NULL;
-		if (getc(c) <= -1) return QSE_NULL;
+		if (getc_esc(c) <= -1) return QSE_NULL;
 	}
 
 	n->occ.min = 1;
@@ -503,30 +664,28 @@ static qse_rex_node_t* comp2 (comp_t* c)
 			case QSE_T('?'):
 				n->occ.min = 0;
 				n->occ.max = 1;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 			
 			case QSE_T('*'):
 				n->occ.min = 0;
 				n->occ.max = OCC_MAX;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 
 			case QSE_T('+'):
 				n->occ.min = 1;
 				n->occ.max = OCC_MAX;
-				if (getc(c) <= -1) return QSE_NULL;
+				if (getc_esc(c) <= -1) return QSE_NULL;
 				break;
 
-			/*
 			case QSE_T('{'):
-				// TODO:
-				if (!(com->rex->option & QSE_REX_NOBOUND))
+				if (!(c->rex->option & QSE_REX_NOBOUND))
 				{
+					if (getc_noesc(c) <= -1) return QSE_NULL;
+					if (occbound(c,n) <= -1) return QSE_NULL;
 				}
 				break;
-			*/
-
 		}
 	}
 
@@ -568,7 +727,7 @@ static qse_rex_node_t* comp0 (comp_t* c, qse_rex_node_t* ge)
 
 	while (IS_SPE(c,QSE_T('|')))
 	{
-		if (getc(c) <= -1) 
+		if (getc_esc(c) <= -1) 
 		{
 			//freere (left);
 			return QSE_NULL;
@@ -614,7 +773,7 @@ qse_rex_node_t* qse_rex_comp (
 	c.start = QSE_NULL;
 
 	/* read the first character */
-	if (getc(&c) <= -1) return QSE_NULL;
+	if (getc_esc(&c) <= -1) return QSE_NULL;
 
 	c.start = newstartnode (&c);
 	if (c.start == QSE_NULL) return QSE_NULL;

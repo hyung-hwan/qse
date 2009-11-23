@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: awk.h 306 2009-11-22 13:58:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -795,7 +795,7 @@ enum qse_awk_errnum_t
 	QSE_AWK_EREXCOLON,     /**< a colon is expected */
 	QSE_AWK_EREXCRANGE,    /**< invalid character range */
 	QSE_AWK_EREXCCLASS,    /**< invalid character class */
-	QSE_AWK_EREXBRANGE,    /**< invalid boundary range */
+	QSE_AWK_EREXBOUND,     /**< invalid boundary range */
 	QSE_AWK_EREXEND,       /**< unexpected end of the pattern */
 	QSE_AWK_EREXGARBAGE,   /**< garbage after the pattern */
 

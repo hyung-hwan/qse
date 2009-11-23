@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 304 2009-11-20 05:12:27Z hyunghwan.chung $
+ * $Id: rex.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -962,7 +962,7 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	if (cmd->lbound > cmd->ubound)
 	{
 		/* invalid occurrences range */
-		builder->errnum = QSE_REX_EBRANGE;
+		builder->errnum = QSE_REX_EBOUND;
 		return -1;
 	}
 
