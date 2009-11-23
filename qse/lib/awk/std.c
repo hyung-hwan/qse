@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: std.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1224,11 +1224,7 @@ static int fnc_math_1 (
 		r = qse_awk_rtx_makerealval (run, rf(rv));
 	}
 	
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;
@@ -1277,11 +1273,7 @@ static int fnc_math_2 (
 		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
 	}
 	
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;
@@ -1434,11 +1426,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (n == 1) lv = (qse_long_t)rv;
 
 	r = qse_awk_rtx_makeintval (run, lv);
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;
@@ -1456,11 +1444,7 @@ static int fnc_rand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	*/
 	r = qse_awk_rtx_makerealval (
 		run, (qse_real_t)(rand() % RAND_MAX) / RAND_MAX);
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;
@@ -1504,11 +1488,7 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
         srand (rxtn->seed);
 
 	r = qse_awk_rtx_makeintval (run, prev);
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: awk.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -297,11 +297,7 @@ static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 #endif
 
 	r = qse_awk_rtx_makeintval (run, n);
-	if (r == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
 	return 0;

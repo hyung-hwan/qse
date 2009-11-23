@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
+ * $Id: misc.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1039,7 +1039,7 @@ qse_char_t* qse_awk_rtx_strxnfld (
 	 (err == QSE_REX_ECOLON)?      QSE_AWK_EREXCOLON: \
 	 (err == QSE_REX_ECRANGE)?     QSE_AWK_EREXCRANGE: \
 	 (err == QSE_REX_ECCLASS)?     QSE_AWK_EREXCCLASS: \
-	 (err == QSE_REX_EBRANGE)?     QSE_AWK_EREXBRANGE: \
+	 (err == QSE_REX_EBOUND)?      QSE_AWK_EREXBOUND: \
 	 (err == QSE_REX_EEND)?        QSE_AWK_EREXEND: \
 	 (err == QSE_REX_EGARBAGE)?    QSE_AWK_EREXGARBAGE: \
 	                               QSE_AWK_EINTERN)

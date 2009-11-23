@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 304 2009-11-20 05:12:27Z hyunghwan.chung $
+ * $Id: rex.h 306 2009-11-22 13:58:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,6 +72,10 @@ enum qse_rex_option_t
 	/**< do not support the {n,m} style occurrence specifier */
 	QSE_REX_NOBOUND = (1 << 0),
 
+	QSE_REX_ESQ_HEX   = (1 << 1), /* \xhh and \uhhhh */
+	QSE_REX_ESQ_OCTAL = (1 << 2), /* \000 */
+	QSE_REX_ESQ_CNTRL = (1 << 3), /* \cX where X is A to Z */
+
 	/**< perform case-insensitive match */
 	QSE_REX_IGNORECASE = (1 << 8)
 };
@@ -89,7 +93,7 @@ enum qse_rex_errnum_t
         QSE_REX_ECOLON,        /* a colon is expected */
         QSE_REX_ECRANGE,       /* invalid character range */
         QSE_REX_ECCLASS,       /* invalid character class */
-        QSE_REX_EBRANGE,       /* invalid boundary range */
+        QSE_REX_EBOUND,        /* invalid boundary range */
         QSE_REX_EEND,          /* unexpected end of the pattern */
         QSE_REX_EGARBAGE       /* garbage after the pattern */
 };
