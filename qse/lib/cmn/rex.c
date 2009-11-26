@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
+ * $Id: rex.c 307 2009-11-25 13:32:20Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -205,9 +205,6 @@ static int build_atom_occ_range (builder_t* rex, atom_t* cmd);
 
 static int next_char (builder_t* rex, int level);
 static int add_code (builder_t* rex, void* data, qse_size_t len);
-
-static qse_bool_t __begin_with (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* what);
 
 static const qse_byte_t* match_pattern (
 	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
@@ -677,7 +674,7 @@ static int build_atom (builder_t* builder)
 			if (builder->ptn.curc.type != CT_SPECIAL ||
 			    builder->ptn.curc.value != QSE_T(']'))
 			{
-				builder->errnum = QSE_REX_ERBRACKET;
+				builder->errnum = QSE_REX_ERBRACK;
 				return -1;
 			}
 
@@ -819,7 +816,7 @@ static int build_atom_cclass (builder_t* builder, qse_char_t* cc)
 
 	while (ccp->name != QSE_NULL)
 	{
-		if (__begin_with (builder->ptn.curp, len, ccp->name)) break;
+		if (qse_strxbeg (builder->ptn.curp, len, ccp->name) != QSE_NULL) break;
 		ccp++;
 	}
 
@@ -855,7 +852,7 @@ static int build_atom_cclass (builder_t* builder, qse_char_t* cc)
 	#ifdef DEBUG_REX
 		DPUTS (QSE_T("build_atom_cclass: ] expected\n"));
 	#endif
-		builder->errnum = QSE_REX_ERBRACKET;	
+		builder->errnum = QSE_REX_ERBRACK;	
 		return -1;
 	}
 
@@ -973,7 +970,7 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	do { \
 		if (builder->ptn.curp >= builder->ptn.end) \
 		{ \
-			builder->errnum = QSE_REX_EEND; \
+			builder->errnum = QSE_REX_EPREEND; \
 			return -1; \
 		} \
 	} while(0)
@@ -1190,23 +1187,6 @@ static int add_code (builder_t* builder, void* data, qse_size_t len)
 	builder->code.size += len;
 
 	return 0;
-}
-
-static qse_bool_t __begin_with (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* what)
-{
-	const qse_char_t* end = str + len;
-
-	while (str < end)
-	{
-		if (*what == QSE_T('\0')) return QSE_TRUE;
-		if (*what != *str) return QSE_FALSE;
-
-		str++; what++;
-	}
-
-	if (*what == QSE_T('\0')) return QSE_TRUE;
-	return QSE_FALSE;
 }
 
 static const qse_byte_t* match_pattern (

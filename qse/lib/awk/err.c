@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: err.c 307 2009-11-25 13:32:20Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -138,18 +138,19 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("invalid character in CONVFMT"),
 		QSE_T("invalid character in OFMT"),
 
-		QSE_T("recursion too deep in the regular expression"),
-		QSE_T("a right parenthesis expected in the regular expression"),
-		QSE_T("a right bracket expected in the regular expression"),
-		QSE_T("a right brace expected in the regular expression"),
-		QSE_T("unbalanced parenthesis in the regular expression"),
-		QSE_T("invalid brace in the regular expression"),
-		QSE_T("a colon expected in the regular expression"),
-		QSE_T("invalid character range in the regular expression"),
-		QSE_T("invalid character class in the regular expression"),
-		QSE_T("invalid boundary range in the regular expression"),
-		QSE_T("unexpected end of the regular expression"),
-		QSE_T("garbage after the regular expression")
+		QSE_T("no regular expression compiled"),
+		QSE_T("recursion too deep in regular expression"),
+		QSE_T("right parenthesis expected in regular expression"),
+		QSE_T("right bracket expected in regular expression"),
+		QSE_T("right brace expected in regular expression"),
+		QSE_T("unbalanced parenthesis in regular expression"),
+		QSE_T("invalid brace in regular expression"),
+		QSE_T("colon expected in regular expression"),
+		QSE_T("invalid character range in regular expression"),
+		QSE_T("invalid character class in regular expression"),
+		QSE_T("invalid occurrence bound in regular expression"),
+		QSE_T("premature end of regular expression"),
+		QSE_T("garbage after regular expression")
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?

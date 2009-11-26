@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 306 2009-11-22 13:58:53Z hyunghwan.chung $
+ * $Id: rex.h 307 2009-11-25 13:32:20Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,6 +23,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/str.h>
 
 /** @file
  *
@@ -72,9 +73,11 @@ enum qse_rex_option_t
 	/**< do not support the {n,m} style occurrence specifier */
 	QSE_REX_NOBOUND = (1 << 0),
 
+#if 0
 	QSE_REX_ESQ_HEX   = (1 << 1), /* \xhh and \uhhhh */
 	QSE_REX_ESQ_OCTAL = (1 << 2), /* \000 */
 	QSE_REX_ESQ_CNTRL = (1 << 3), /* \cX where X is A to Z */
+#endif
 
 	/**< perform case-insensitive match */
 	QSE_REX_IGNORECASE = (1 << 8)
@@ -83,19 +86,20 @@ enum qse_rex_option_t
 enum qse_rex_errnum_t
 {
 	QSE_REX_ENOERR = 0,
-	QSE_REX_ENOMEM,        /* no sufficient memory available */
-        QSE_REX_ERECUR,        /* recursion too deep */
-        QSE_REX_ERPAREN,       /* a right parenthesis is expected */
-        QSE_REX_ERBRACKET,     /* a right bracket is expected */
-        QSE_REX_ERBRACE,       /* a right brace is expected */
-        QSE_REX_EUNBALPAREN,   /* unbalanced parenthesis */
-        QSE_REX_EINVALBRACE,   /* invalid brace */
-        QSE_REX_ECOLON,        /* a colon is expected */
-        QSE_REX_ECRANGE,       /* invalid character range */
-        QSE_REX_ECCLASS,       /* invalid character class */
-        QSE_REX_EBOUND,        /* invalid boundary range */
-        QSE_REX_EEND,          /* unexpected end of the pattern */
-        QSE_REX_EGARBAGE       /* garbage after the pattern */
+	QSE_REX_ENOMEM,        /**< no sufficient memory available */
+	QSE_REX_ENOCOMP,       /**< no expression compiled */
+        QSE_REX_ERECUR,        /**< recursion too deep */
+        QSE_REX_ERPAREN,       /**< right parenthesis expected */
+        QSE_REX_ERBRACK,       /**< right bracket expected */
+        QSE_REX_ERBRACE,       /**< right brace expected */
+        QSE_REX_EUNBALPAREN,   /**< unbalanced parenthesis */
+        QSE_REX_EINVALBRACE,   /**< invalid brace */
+        QSE_REX_ECOLON,        /**< colon expected */
+        QSE_REX_ECRANGE,       /**< invalid character range */
+        QSE_REX_ECCLASS,       /**< invalid character class */
+        QSE_REX_EBOUND,        /**< invalid occurrence bound */
+        QSE_REX_EPREEND,       /**< premature expression end */
+        QSE_REX_EGARBAGE       /**< garbage after expression */
 };
 typedef enum qse_rex_errnum_t qse_rex_errnum_t;
 
@@ -104,11 +108,11 @@ enum qse_rex_node_id_t
 	QSE_REX_NODE_START,
 	QSE_REX_NODE_END,
 	QSE_REX_NODE_NOP,
-	QSE_REX_NODE_BOL,     /* beginning of line */
-	QSE_REX_NODE_EOL,     /* end of line */
-	QSE_REX_NODE_ANYCHAR, /* dot */
-	QSE_REX_NODE_CHAR,    /* single character */
-	QSE_REX_NODE_CHARSET, /* character set */
+	QSE_REX_NODE_BOL,  /* beginning of line */
+	QSE_REX_NODE_EOL,  /* end of line */
+	QSE_REX_NODE_ANY,  /* dot */
+	QSE_REX_NODE_CHAR, /* single character */
+	QSE_REX_NODE_CSET, /* character set */
 	QSE_REX_NODE_BRANCH,
 	QSE_REX_NODE_GROUP,
 	QSE_REX_NODE_GROUPEND
@@ -134,7 +138,12 @@ struct qse_rex_node_t
 		} s;
 
 		qse_char_t c;
-		qse_char_t* cs; /* charset */
+
+		struct
+		{
+			int negated;
+			qse_str_t* member; 
+		} cset;
 
 		struct
 		{
@@ -160,6 +169,13 @@ struct qse_rex_node_t
 	} occ;
 };
 
+enum qse_rex_cset_code_t
+{
+	QSE_REX_CSET_CHAR,
+	QSE_REX_CSET_RANGE,
+	QSE_REX_CSET_CLASS
+};
+
 /**
  * The qse_rex_t type defines a regular expression processor.
  * You can compile a regular expression and match it againt a string.
@@ -170,7 +186,7 @@ struct qse_rex_t
 	QSE_DEFINE_COMMON_FIELDS (rex)
 	qse_rex_errnum_t errnum;
 	int option;
-	qse_rex_node_t*  code;
+	qse_rex_node_t* code;
 };
 
 #ifdef __cplusplus
@@ -203,6 +219,14 @@ int qse_rex_getoption (
 void qse_rex_setoption (
 	qse_rex_t* rex, /**< regular expression processor */
 	int        opts /**< 0 or number XORed of ::qse_rex_option_t enumerators */
+);
+
+qse_rex_errnum_t qse_rex_geterrnum (
+	qse_rex_t* rex
+);
+
+const qse_char_t* qse_rex_geterrmsg (
+	qse_rex_t* rex
 );
 
 qse_rex_node_t* qse_rex_comp (

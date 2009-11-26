@@ -36,7 +36,8 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
 	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT) rex$(EXEEXT)
+	time$(EXEEXT) rex01$(EXEEXT) $(am__EXEEXT_1)
+@ENABLE_CXX_TRUE@am__append_1 = rex02
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -51,6 +52,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
+@ENABLE_CXX_TRUE@am__EXEEXT_1 = rex02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_chr_OBJECTS = chr.$(OBJEXT)
@@ -73,13 +75,18 @@ am_pio_OBJECTS = pio.$(OBJEXT)
 pio_OBJECTS = $(am_pio_OBJECTS)
 pio_LDADD = $(LDADD)
 pio_DEPENDENCIES =
-am_rex_OBJECTS = rex-rex.$(OBJEXT)
-rex_OBJECTS = $(am_rex_OBJECTS)
-rex_LDADD = $(LDADD)
-rex_DEPENDENCIES =
-rex_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(rex_CXXFLAGS) $(CXXFLAGS) \
-	$(rex_LDFLAGS) $(LDFLAGS) -o $@
+am_rex01_OBJECTS = rex01.$(OBJEXT)
+rex01_OBJECTS = $(am_rex01_OBJECTS)
+rex01_LDADD = $(LDADD)
+rex01_DEPENDENCIES =
+am__rex02_SOURCES_DIST = rex02.cpp
+@ENABLE_CXX_TRUE@am_rex02_OBJECTS = rex02-rex02.$(OBJEXT)
+rex02_OBJECTS = $(am_rex02_OBJECTS)
+rex02_LDADD = $(LDADD)
+rex02_DEPENDENCIES =
+rex02_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(rex02_CXXFLAGS) $(CXXFLAGS) \
+	$(rex02_LDFLAGS) $(LDFLAGS) -o $@
 am_sio_OBJECTS = sio.$(OBJEXT)
 sio_OBJECTS = $(am_sio_OBJECTS)
 sio_LDADD = $(LDADD)
@@ -119,11 +126,12 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(rex_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES)
+	$(pio_SOURCES) $(rex01_SOURCES) $(rex02_SOURCES) \
+	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(rex_SOURCES) $(sio_SOURCES) \
-	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
+	$(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) \
+	$(am__rex02_SOURCES_DIST) $(sio_SOURCES) $(sll_SOURCES) \
+	$(str_SOURCES) $(time_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -275,11 +283,10 @@ fio_SOURCES = fio.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
-rex_SOURCES = rex.cpp
-rex_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
-
-#rex_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2u_richtext-2.8 -lwx_gtk2u_aui-2.8 -lwx_gtk2u_xrc-2.8 -lwx_gtk2u_qa-2.8 -lwx_gtk2u_html-2.8 -lwx_gtk2u_adv-2.8 -lwx_gtk2u_core-2.8 -lwx_baseu_xml-2.8 -lwx_baseu_net-2.8 -lwx_baseu-2.8
-rex_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
+rex01_SOURCES = rex01.c
+@ENABLE_CXX_TRUE@rex02_SOURCES = rex02.cpp
+@ENABLE_CXX_TRUE@rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
+@ENABLE_CXX_TRUE@rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 all: all-am
 
 .SUFFIXES:
@@ -372,9 +379,12 @@ map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
 	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
-rex$(EXEEXT): $(rex_OBJECTS) $(rex_DEPENDENCIES) 
-	@rm -f rex$(EXEEXT)
-	$(rex_LINK) $(rex_OBJECTS) $(rex_LDADD) $(LIBS)
+rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) 
+	@rm -f rex01$(EXEEXT)
+	$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
+rex02$(EXEEXT): $(rex02_OBJECTS) $(rex02_DEPENDENCIES) 
+	@rm -f rex02$(EXEEXT)
+	$(rex02_LINK) $(rex02_OBJECTS) $(rex02_LDADD) $(LIBS)
 sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
 	@rm -f sio$(EXEEXT)
 	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
@@ -399,7 +409,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex-rex.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex02-rex02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
@@ -447,19 +458,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
-rex-rex.o: rex.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -MT rex-rex.o -MD -MP -MF $(DEPDIR)/rex-rex.Tpo -c -o rex-rex.o `test -f 'rex.cpp' || echo '$(srcdir)/'`rex.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex-rex.Tpo $(DEPDIR)/rex-rex.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex.cpp' object='rex-rex.o' libtool=no @AMDEPBACKSLASH@
+rex02-rex02.o: rex02.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -MT rex02-rex02.o -MD -MP -MF $(DEPDIR)/rex02-rex02.Tpo -c -o rex02-rex02.o `test -f 'rex02.cpp' || echo '$(srcdir)/'`rex02.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex02-rex02.Tpo $(DEPDIR)/rex02-rex02.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex02.cpp' object='rex02-rex02.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -c -o rex-rex.o `test -f 'rex.cpp' || echo '$(srcdir)/'`rex.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -c -o rex02-rex02.o `test -f 'rex02.cpp' || echo '$(srcdir)/'`rex02.cpp
 
-rex-rex.obj: rex.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -MT rex-rex.obj -MD -MP -MF $(DEPDIR)/rex-rex.Tpo -c -o rex-rex.obj `if test -f 'rex.cpp'; then $(CYGPATH_W) 'rex.cpp'; else $(CYGPATH_W) '$(srcdir)/rex.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex-rex.Tpo $(DEPDIR)/rex-rex.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex.cpp' object='rex-rex.obj' libtool=no @AMDEPBACKSLASH@
+rex02-rex02.obj: rex02.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -MT rex02-rex02.obj -MD -MP -MF $(DEPDIR)/rex02-rex02.Tpo -c -o rex02-rex02.obj `if test -f 'rex02.cpp'; then $(CYGPATH_W) 'rex02.cpp'; else $(CYGPATH_W) '$(srcdir)/rex02.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex02-rex02.Tpo $(DEPDIR)/rex02-rex02.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex02.cpp' object='rex02-rex02.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex_CXXFLAGS) $(CXXFLAGS) -c -o rex-rex.obj `if test -f 'rex.cpp'; then $(CYGPATH_W) 'rex.cpp'; else $(CYGPATH_W) '$(srcdir)/rex.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -c -o rex02-rex02.obj `if test -f 'rex02.cpp'; then $(CYGPATH_W) 'rex02.cpp'; else $(CYGPATH_W) '$(srcdir)/rex02.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
