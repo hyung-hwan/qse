@@ -8,6 +8,9 @@ static int rex_main (int argc, qse_char_t* argv[])
 {
 	qse_rex_t* rex;
 	qse_rex_node_t* start;
+	qse_cstr_t str;
+	qse_cstr_t matstr;
+	int n;
 
 	if (argc != 3)
 	{
@@ -32,14 +35,22 @@ static int rex_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (qse_rex_exec (rex, 
-		argv[2], qse_strlen(argv[2]),
-		argv[2], qse_strlen(argv[2])) <= -1)
+	str.ptr = argv[2];
+	str.len = qse_strlen(argv[2]);
+
+	n = qse_rex_exec (rex, &str, &str, &matstr);
+	if (n <= -1)
 	{
 		qse_printf (QSE_T("ERROR: cannot execute - %s\n"),
 			qse_rex_geterrmsg(rex));
 		qse_rex_close (rex);
 		return -1;
+	}
+	if (n >= 1)
+	{
+		qse_printf (QSE_T("MATCH: [%.*s] beginning from char #%d\n"), 
+			(int)matstr.len, matstr.ptr,
+			(int)(matstr.ptr, matstr.ptr - str.ptr + 1));
 	}
 
 	qse_rex_close (rex);

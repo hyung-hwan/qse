@@ -739,7 +739,7 @@ static qse_rex_node_t* comp2 (comp_t* com)
 				/* enter a subgroup */
 
 				qse_rex_node_t* x, * ge;
-			
+
 				n = newgroupnode (com, QSE_NULL);
 				if (n == QSE_NULL) return QSE_NULL;
 
@@ -764,7 +764,6 @@ static qse_rex_node_t* comp2 (comp_t* com)
 				n->u.g.head = x;
 				break;
 			}
-			
 			
 			case QSE_T('.'):
 				n = newnode (com, QSE_REX_NODE_ANY);
@@ -1036,8 +1035,11 @@ static group_t* dupgroupstack (exec_t* e, group_t* gs)
 	return head;
 }
 
-/* creates a new group stack duplicating 'gs' and push 'gn' to it */
-static group_t* dupgroupstackpush (exec_t* e, group_t* gs, qse_rex_node_t* gn)
+/* push 'gn' to the group stack 'gs'.
+ * if dup is non-zero, the group stack is duplicated and 'gn' is pushed to 
+ * its top */
+static group_t* __groupstackpush (
+	exec_t* e, group_t* gs, qse_rex_node_t* gn, int dup)
 {
 	group_t* head, * elem;
 
@@ -1064,9 +1066,16 @@ static group_t* dupgroupstackpush (exec_t* e, group_t* gs, qse_rex_node_t* gn)
 	}
 	else 
 	{
-		/* duplicate existing stack */
-		head = dupgroupstack (e, gs);
-		if (head == QSE_NULL) return QSE_NULL;
+		if (dup)
+		{
+			/* duplicate existing stack */
+			head = dupgroupstack (e, gs);
+			if (head == QSE_NULL) return QSE_NULL;
+		}
+		else
+		{
+			head = gs;
+		}
 	}
 
 	/* create a new stack element */
@@ -1076,7 +1085,8 @@ static group_t* dupgroupstackpush (exec_t* e, group_t* gs, qse_rex_node_t* gn)
 		/* rollback */
 		if (gs == QSE_NULL) 
 			QSE_MMGR_FREE (e->rex->mmgr, head);
-		else freegroupstack (head, e->rex->mmgr);
+		else if (dup) 
+			freegroupstack (head, e->rex->mmgr);
 
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
@@ -1092,6 +1102,9 @@ static group_t* dupgroupstackpush (exec_t* e, group_t* gs, qse_rex_node_t* gn)
 
 	return head;
 }
+
+#define dupgroupstackpush(e,gs,gn) __groupstackpush(e,gs,gn,1)
+#define groupstackpush(e,gs,gn) __groupstackpush(e,gs,gn,0)
 
 /* duplidate a group stack excluding the top data element */
 static group_t* dupgroupstackpop (exec_t* e, group_t* gs)
@@ -1195,7 +1208,7 @@ static int addcands (
 	{
 		case QSE_REX_NODE_END:
 		{
-qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));
+/*qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));*/
 			if (e->matchend == QSE_NULL || mptr >= e->matchend)
 				e->matchend = mptr;
 			e->nmatches++;
@@ -1258,12 +1271,19 @@ qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));
 				group_t* gx;
 	
 				/* push the current group node (candnode) to 
-				 * the group stack duplicated. */
+				 * the group stack. if candnode->next is 
+				 * added to the candidate array, which means
+				 * the group stack has already been used to 
+				 * a different path, the group stack is
+				 * duplicated for this path. */
 
-				gx = dupgroupstackpush (e, group, candnode);
+				gx = (candnode->occ.min <= 0)?
+					dupgroupstackpush (e, group, candnode):
+					groupstackpush (e, group, candnode);
 				if (gx == QSE_NULL) return -1;
 
-				/* add the first node in the group */
+				/* add the first node in the group to 
+				 * the candidate array */
 				refupgroupstack (gx);
 				n = addcands (e, gx,
 					candnode, candnode->u.g.head, mptr);
@@ -1287,7 +1307,14 @@ qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));
 
 			if (prevnode == candnode) 
 			{
-qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
+				/* consider a pattern like (x*)*.
+				 * when GROUPEND is reached, an 'if' block below
+				 * tries to add the first node(node->u.g.head) 
+				 * in the group again. however, it('x') is optional, 
+				 * a possible path reach GROUPEND directly without 
+				 * adding a candidate. this check is needed to 
+				 * avoid the infinite loop, which otherwise is not
+				 * avoidable. */
 				break;
 			}
 	
@@ -1302,7 +1329,10 @@ qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 			{
 				group_t* gx;
 	
-				/* take the next atom as a candidate.
+				/* the lower bound has been met. 
+				 * for a pattern (abc){3,4}, 'abc' has been 
+				 * repeated 3 times. in this case, the next 
+				 * node can be added to the candiate array.
 				 * it is actually a branch case. move on. */
 	
 				if (top->next == QSE_NULL)
@@ -1354,7 +1384,6 @@ qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 			break;
 		}
 
-
 		default:
 		{
 			int n;
@@ -1373,10 +1402,14 @@ qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
 			{
 				group_t* gx;
 	
+				/* if the upper bound is greater than 0, 
+				 * this node is added to the candidate array */
+
 				if (group != QSE_NULL && candnode->occ.min <= 0)
 				{
-					/* if it belongs to a group and it has been
-					 * pushed to a different path above, 
+					/* if a group stack exists(group != QSE_NULL)
+					 * for this path  and it has been
+					 * used for a different path above, 
 					 * duplicate the group stack */
 					gx = dupgroupstack (e, group);
 					if (gx == QSE_NULL) return -1;
@@ -1511,7 +1544,7 @@ static int match (exec_t* e)
 					 * next chracter.*/
 					nmptr = cand->mptr + 1;
 				}
-//qse_printf (QSE_T("matched %c\n"), node->u.c);
+/*qse_printf (QSE_T("matched %c\n"), node->u.c);*/
 				break;
 
 			case QSE_REX_NODE_CSET:
@@ -1626,6 +1659,7 @@ static int exec (exec_t* e)
 		/* clear the pending set */
 		qse_lda_clear (&e->cand.set[e->cand.pending]); 
 
+#if 0
 {
 int i;
 qse_printf (QSE_T("SET="));
@@ -1645,20 +1679,24 @@ for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
 }
 qse_printf (QSE_T("\n"));
 }
+#endif
 
 		if (match (e) <= -1) return -1;
 	}
 	while (1);
 
+#if 0
 if (e->nmatches > 0)
 {
-	qse_printf (QSE_T("MATCH: %d [%.*s]\n"), 
-		(int)(e->matchend - e->sub.ptr), 
-		(int)(e->matchend - e->sub.ptr), e->sub.ptr);
+qse_printf (QSE_T("MATCH: %d [%.*s]\n"), 
+	(int)(e->matchend - e->sub.ptr), 
+	(int)(e->matchend - e->sub.ptr), e->sub.ptr);
 }
 
-	qse_printf (QSE_T("TOTAL MATCHES FOUND... %d\n"), e->nmatches);
-	return 0;
+qse_printf (QSE_T("TOTAL MATCHES FOUND... %d\n"), e->nmatches);
+#endif
+
+	return (e->nmatches > 0)? 1: 0;
 }
 
 static void refdowngroupstack_incand (qse_lda_t* lda, void* dptr, qse_size_t dlen)
@@ -1700,9 +1738,9 @@ static void fini_exec_dds (exec_t* e)
 	qse_lda_fini (&e->cand.set[0]);
 }
 
-int qse_rex_exec (qse_rex_t* rex, 
-	const qse_char_t* str, qse_size_t len,
-	const qse_char_t* substr, qse_size_t sublen)
+int qse_rex_exec (
+	qse_rex_t* rex, const qse_cstr_t* str, 
+	const qse_cstr_t* substr, qse_cstr_t* matstr)
 {
 	exec_t e;
 	int n = 0;
@@ -1716,10 +1754,10 @@ int qse_rex_exec (qse_rex_t* rex,
 	QSE_MEMSET (&e, 0, QSE_SIZEOF(e));
 
 	e.rex = rex;
-	e.str.ptr = str;
-	e.str.end = str + len;
-	e.sub.ptr = substr;
-	e.sub.end = substr + sublen;
+	e.str.ptr = str->ptr;
+	e.str.end = str->ptr + str->len;
+	e.sub.ptr = substr->ptr;
+	e.sub.end = substr->ptr + substr->len;
 
 	if (init_exec_dds (&e, rex->mmgr) <= -1) return -1;
 
@@ -1732,7 +1770,14 @@ int qse_rex_exec (qse_rex_t* rex,
 			break;
 		}
 
-		if (e.nmatches > 0) break;
+		if (n >= 1)
+		{
+			QSE_ASSERT (e.nmatches > 0);
+			QSE_ASSERT (e.matchend != QSE_NULL);
+			matstr->ptr = e.sub.ptr;
+			matstr->len = e.matchend - e.sub.ptr;
+			break;
+		}
 
 		e.sub.ptr++;
 	}

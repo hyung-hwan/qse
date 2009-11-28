@@ -36,8 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
 	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT) rex01$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_CXX_TRUE@am__append_1 = rex02
+	time$(EXEEXT) rex01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -52,7 +51,6 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@ENABLE_CXX_TRUE@am__EXEEXT_1 = rex02$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_chr_OBJECTS = chr.$(OBJEXT)
@@ -79,14 +77,6 @@ am_rex01_OBJECTS = rex01.$(OBJEXT)
 rex01_OBJECTS = $(am_rex01_OBJECTS)
 rex01_LDADD = $(LDADD)
 rex01_DEPENDENCIES =
-am__rex02_SOURCES_DIST = rex02.cpp
-@ENABLE_CXX_TRUE@am_rex02_OBJECTS = rex02-rex02.$(OBJEXT)
-rex02_OBJECTS = $(am_rex02_OBJECTS)
-rex02_LDADD = $(LDADD)
-rex02_DEPENDENCIES =
-rex02_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(rex02_CXXFLAGS) $(CXXFLAGS) \
-	$(rex02_LDFLAGS) $(LDFLAGS) -o $@
 am_sio_OBJECTS = sio.$(OBJEXT)
 sio_OBJECTS = $(am_sio_OBJECTS)
 sio_LDADD = $(LDADD)
@@ -116,22 +106,12 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
 SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(rex01_SOURCES) $(rex02_SOURCES) \
-	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) \
-	$(am__rex02_SOURCES_DIST) $(sio_SOURCES) $(sll_SOURCES) \
+	$(pio_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
 	$(str_SOURCES) $(time_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
+	$(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
+	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -284,13 +264,10 @@ pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
 rex01_SOURCES = rex01.c
-@ENABLE_CXX_TRUE@rex02_SOURCES = rex02.cpp
-@ENABLE_CXX_TRUE@rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
-@ENABLE_CXX_TRUE@rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cpp .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -382,9 +359,6 @@ pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES)
 rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) 
 	@rm -f rex01$(EXEEXT)
 	$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
-rex02$(EXEEXT): $(rex02_OBJECTS) $(rex02_DEPENDENCIES) 
-	@rm -f rex02$(EXEEXT)
-	$(rex02_LINK) $(rex02_OBJECTS) $(rex02_LDADD) $(LIBS)
 sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
 	@rm -f sio$(EXEEXT)
 	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
@@ -410,7 +384,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex02-rex02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
@@ -436,41 +409,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-.cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
-
-.cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
-
-rex02-rex02.o: rex02.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -MT rex02-rex02.o -MD -MP -MF $(DEPDIR)/rex02-rex02.Tpo -c -o rex02-rex02.o `test -f 'rex02.cpp' || echo '$(srcdir)/'`rex02.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex02-rex02.Tpo $(DEPDIR)/rex02-rex02.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex02.cpp' object='rex02-rex02.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -c -o rex02-rex02.o `test -f 'rex02.cpp' || echo '$(srcdir)/'`rex02.cpp
-
-rex02-rex02.obj: rex02.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -MT rex02-rex02.obj -MD -MP -MF $(DEPDIR)/rex02-rex02.Tpo -c -o rex02-rex02.obj `if test -f 'rex02.cpp'; then $(CYGPATH_W) 'rex02.cpp'; else $(CYGPATH_W) '$(srcdir)/rex02.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/rex02-rex02.Tpo $(DEPDIR)/rex02-rex02.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rex02.cpp' object='rex02-rex02.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(rex02_CXXFLAGS) $(CXXFLAGS) -c -o rex02-rex02.obj `if test -f 'rex02.cpp'; then $(CYGPATH_W) 'rex02.cpp'; else $(CYGPATH_W) '$(srcdir)/rex02.cpp'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -678,6 +616,11 @@ uninstall-am: uninstall-binPROGRAMS
 	pdf pdf-am ps ps-am tags uninstall uninstall-am \
 	uninstall-binPROGRAMS
 
+
+#bin_PROGRAMS += rex02
+#rex02_SOURCES = rex02.cpp
+#rex02_CXXFLAGS = -I/usr/lib/wx/include/gtk2-unicode-release-2.8 -I/usr/include/wx-2.8 -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES -D__WXGTK__ -pthread 
+#rex02_LDFLAGS = -pthread -Wl,-Bsymbolic-functions  -lwx_gtk2ud_richtext-2.8 -lwx_gtk2ud_aui-2.8 -lwx_gtk2ud_xrc-2.8 -lwx_gtk2ud_qa-2.8 -lwx_gtk2ud_html-2.8 -lwx_gtk2ud_adv-2.8 -lwx_gtk2ud_core-2.8 -lwx_baseud_xml-2.8 -lwx_baseud_net-2.8 -lwx_baseud-2.8 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
