@@ -81,11 +81,17 @@ struct pair_t
 	qse_rex_node_t* tail;
 };
 
+/* The group_t type defines a structure to maintain the nested
+ * traces of subgroups. The actual traces are maintained in a stack
+ * of sinlgly linked group_t elements. The head element acts
+ * as a management element where the occ field is a reference count
+ * and the node field is QSE_NULL always 
+ */
 typedef struct group_t group_t;
 struct group_t
 {
 	qse_rex_node_t* node;
-	qse_size_t occ;
+	qse_size_t occ; 
 	group_t* next;
 };
 
@@ -932,30 +938,53 @@ qse_rex_node_t* qse_rex_comp (
 	return rex->code;
 }
 
-static void freegroups (exec_t* e, group_t* group)
+static void freegroupstackmembers (group_t* gs, qse_mmgr_t* mmgr)
 {
-	while (group != QSE_NULL)
+	while (gs != QSE_NULL)
 	{
-		group_t* next = group->next;
-		QSE_MMGR_FREE (e->rex->mmgr, group);
-		group = next;
+		group_t* next = gs->next;
+		QSE_MMGR_FREE (mmgr, gs);
+		gs = next;
 	}
 }
 
-static void refupgroup (exec_t* e, group_t* group)
+static void freegroupstack (group_t* gs, qse_mmgr_t* mmgr)
 {
-	//group->ref++;
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+
+	freegroupstackmembers (gs, mmgr);
 }
 
-static void refdowngroup (exec_t* e, group_t* group)
+
+static void refupgroupstack (group_t* gs)
 {
-	//if (--group->ref <= 0)
-	//{
-	//	freegroups (e, group);
-	//}
+	if (gs != QSE_NULL)
+	{
+		QSE_ASSERTX (gs->node == QSE_NULL, 
+			"The head of a group stack must point to QSE_NULL for "
+			"management purpose.");
+		gs->occ++;
+	}
 }
 
-static group_t* dupgroups (exec_t* e, group_t* g)
+static void refdowngroupstack (group_t* gs, qse_mmgr_t* mmgr)
+{
+	if (gs != QSE_NULL)
+	{
+		QSE_ASSERTX (gs->node == QSE_NULL, 
+			"The head of a group stack must point to QSE_NULL for "
+			"management purpose.");
+		if (--gs->occ <= 0)
+		{
+			freegroupstack (gs, mmgr);
+		}
+	}
+}
+
+static group_t* dupgroupstackmembers (exec_t* e, group_t* g)
 {
 	group_t* yg, * xg = QSE_NULL;
 
@@ -965,14 +994,14 @@ static group_t* dupgroups (exec_t* e, group_t* g)
 	{
 		/* TODO: make it non recursive or 
 		 *       implement stack overflow protection */
-		xg = dupgroups (e, g->next);
+		xg = dupgroupstackmembers (e, g->next);
 		if (xg == QSE_NULL) return QSE_NULL;
 	}
 
-	yg = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*g));
+	yg = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*yg));
 	if (yg == QSE_NULL)
 	{
-		if (xg != QSE_NULL) freegroups (e, xg);
+		if (xg != QSE_NULL) freegroupstack (xg, e->rex->mmgr);
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
@@ -983,46 +1012,134 @@ static group_t* dupgroups (exec_t* e, group_t* g)
 	return yg;
 }
 
-static group_t* pushgroup (exec_t* e, group_t* group, qse_rex_node_t* newgn)
+static group_t* dupgroupstack (exec_t* e, group_t* gs)
 {
-	group_t* newg;
+	group_t* head;
 
-	QSE_ASSERT (newgn->id == QSE_REX_NODE_GROUP);
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
 
-	newg = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*newg));
-	if (newg == QSE_NULL)
+	head = dupgroupstackmembers (e, gs);
+	if (head == QSE_NULL) return QSE_NULL;
+
+	QSE_ASSERTX (
+		head->node == QSE_NULL && 
+		head->node == gs->node && 
+		head->occ == gs->occ,
+		"The duplicated stack head must not be corrupted"
+	);
+
+	/* reset the reference count of a duplicated stack */
+	head->occ = 0;
+	return head;
+}
+
+/* creates a new group stack duplicating 'gs' and push 'gn' to it */
+static group_t* dupgroupstackpush (exec_t* e, group_t* gs, qse_rex_node_t* gn)
+{
+	group_t* head, * elem;
+
+	QSE_ASSERT (gn->id == QSE_REX_NODE_GROUP);
+
+	if (gs == QSE_NULL)
 	{
+		/* gn is the first group pushed. no stack yet.
+		 * create the head to store management info. */
+		head = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*head));
+		if (head == QSE_NULL)
+		{
+			e->rex->errnum = QSE_REX_ENOMEM;
+			return QSE_NULL;
+		}
+
+		/* the head does not point to any group node. */
+		head->node = QSE_NULL;
+		/* the occ field is used for reference counting. 
+		 * refupgroupstack and refdowngroupstack update it. */
+		head->occ = 0;
+		/* the head links to the first actual group */
+		head->next = QSE_NULL;	
+	}
+	else 
+	{
+		/* duplicate existing stack */
+		head = dupgroupstack (e, gs);
+		if (head == QSE_NULL) return QSE_NULL;
+	}
+
+	/* create a new stack element */
+	elem = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*elem));
+	if (elem == QSE_NULL)
+	{
+		/* rollback */
+		if (gs == QSE_NULL) 
+			QSE_MMGR_FREE (e->rex->mmgr, head);
+		else freegroupstack (head, e->rex->mmgr);
+
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
-	newg->node = newgn;
-	newg->occ = 0;
-	newg->next = group;
+	/* initialize the element */
+	elem->node = gn;
+	elem->occ = 0;
 
-	return newg;
+	/* make it the top */
+	elem->next = head->next;
+	head->next = elem;
+
+	return head;
 }
 
-static group_t* pushgroupdup (exec_t* e, group_t* pg, qse_rex_node_t* gn)
+/* duplidate a group stack excluding the top data element */
+static group_t* dupgroupstackpop (exec_t* e, group_t* gs)
 {
-	group_t* gs = QSE_NULL, * s;
+	group_t* dupg, * head;
 
-	/* duplicate the current group stack if necessary */
-	if (pg != QSE_NULL)
-	{
-		gs = dupgroups (e, pg);
-		if (gs == QSE_NULL) return QSE_NULL;
-	}
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
+		"dupgroupstackpop() needs at least two data elements");
 
-	/* and push a new group node to the stack */
-	s = pushgroup (e, gs, gn);
-	if (s == QSE_NULL) 
+	dupg = dupgroupstackmembers (e, gs->next->next);
+	if (dupg == QSE_NULL) return QSE_NULL;
+
+	head = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*head));
+	if (head == QSE_NULL)
 	{
-		if (gs != QSE_NULL) freegroups (e, gs);	
+		if (dupg != QSE_NULL) freegroupstackmembers (dupg, e->rex->mmgr);
+		e->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
-	return s;
+	head->node = QSE_NULL;
+	head->occ = 0;
+	head->next = dupg;
+
+	return head;
+}
+
+static group_t* groupstackpop (exec_t* e, group_t* gs)
+{
+	group_t* top;
+
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
+		"groupstackpop() needs at least two data elements");
+
+
+	top = gs->next;
+	gs->next = top->next;
+
+	QSE_MMGR_FREE (e->rex->mmgr, top);	
+	return gs;
 }
 
 static int addsimplecand (
@@ -1059,7 +1176,7 @@ qse_printf (QSE_T("adding %d NA\n"), node->id);*/
 	}
 
 	/* the reference must be decremented by the freeer */
-	refupgroup (e, group);
+	refupgroupstack (group);
 	return 0;
 }
 
@@ -1074,162 +1191,206 @@ static int addcands (
 	/* nothing to add */
 	if (candnode == QSE_NULL) return 0;
 
-	if (candnode->id == QSE_REX_NODE_END)
+	switch (candnode->id)
 	{
-		qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));
-		if (e->matchend == QSE_NULL || mptr >= e->matchend)
-			e->matchend = mptr;
-		e->nmatches++;
-	}
-	else if (candnode->id == QSE_REX_NODE_BRANCH)
-	{
-		group_t* gx = group;
-		int n;
-
-		QSE_ASSERTX (candnode->next == QSE_NULL, 
-			"The current implementation does not link nodes to "
-			"a branch node via the next field. follow the left "
-			"and the right field instead");
-
-		if (group != QSE_NULL)
+		case QSE_REX_NODE_END:
 		{
-			gx = dupgroups (e, group);
-			if (gx == QSE_NULL) return -1;
+qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));
+			if (e->matchend == QSE_NULL || mptr >= e->matchend)
+				e->matchend = mptr;
+			e->nmatches++;
+			break;
 		}
 
-		refupgroup (e, group);
-		refupgroup (e, gx);
-
-		n = addcands (e, group, prevnode, candnode->u.b.left, mptr);
-		if (n >= 0) n = addcands (e, gx, prevnode, candnode->u.b.right, mptr);
-
-		refdowngroup (e, gx);
-		refdowngroup (e, group);
-
-		if (n <= -1) return -1;
-	}
-	else if (candnode->id == QSE_REX_NODE_GROUP)
-	{
-		int n;
-
-		if (candnode->occ.min <= 0)
+		case QSE_REX_NODE_BRANCH:
 		{
-			/* if the group node is optional, 
-			 * add the next node to the candidate array. */
+			group_t* gx = group;
+			int n;
 
-			refupgroup (e, group);
-			n = addcands (e, group, prevnode, candnode->next, mptr);
-			refdowngroup (e, group);
+			QSE_ASSERTX (candnode->next == QSE_NULL, 
+				"The current implementation does not link "
+				"nodes to a branch node via the next field."
+				"follow the left and the right field instead");
+
+			if (group != QSE_NULL)
+			{
+				gx = dupgroupstack (e, group);
+				if (gx == QSE_NULL) return -1;
+			}
+
+			refupgroupstack (group);
+			refupgroupstack (gx);
+
+			n = addcands (e, group, 
+				prevnode, candnode->u.b.left, mptr);
+			if (n >= 0) 
+			{
+				n = addcands (e, gx, 
+					prevnode, candnode->u.b.right, mptr);
+			}
+
+			refdowngroupstack (gx, e->rex->mmgr);
+			refdowngroupstack (group, e->rex->mmgr);
 
 			if (n <= -1) return -1;
+			break;
 		}
 
-		if (candnode->occ.max > 0)
-		{
-			group_t* groupdup;
-
-			/* push the current group node (candnode) to 
-			 * the group stack duplicated. */
-			groupdup = pushgroupdup (e, group, candnode);
-			if (groupdup == QSE_NULL) return -1;
-
-			/* add the first node in the group */
-			refupgroup (e, groupdup);
-			n = addcands (e, groupdup, candnode, candnode->u.g.head, mptr);
-			refdowngroup (e, groupdup);
-
-			if (n <= -1) return -1;
-		}
-	}
-	else if (candnode->id == QSE_REX_NODE_GROUPEND)
-	{
-		qse_rex_node_t* node;
-		qse_size_t occ;
-
-		QSE_ASSERTX (group != QSE_NULL, 
-			"GROUPEND reached must be paired up with a GROUP");
-
-		if (prevnode != candnode) 
-		/*if (prevnode == QSE_NULL || prevnode->id != QSE_REX_NODE_GROUPEND)*/
+		case QSE_REX_NODE_GROUP:
 		{
 			int n;
 
-			group->occ++;
+			if (candnode->occ.min <= 0)
+			{
+				/* if the group node is optional, 
+				 * add the next node to the candidate array. */
+	
+				refupgroupstack (group);
+				n = addcands (e, group, 
+					prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+	
+				if (n <= -1) return -1;
+			}
 
-			occ = group->occ;
-			node = group->node;
+			if (candnode->occ.max > 0)
+			{
+				group_t* gx;
+	
+				/* push the current group node (candnode) to 
+				 * the group stack duplicated. */
+
+				gx = dupgroupstackpush (e, group, candnode);
+				if (gx == QSE_NULL) return -1;
+
+				/* add the first node in the group */
+				refupgroupstack (gx);
+				n = addcands (e, gx,
+					candnode, candnode->u.g.head, mptr);
+				refdowngroupstack (gx, e->rex->mmgr);
+
+				if (n <= -1) return -1;
+			}
+
+			break;
+		}
+
+		case QSE_REX_NODE_GROUPEND:
+		{
+			int n;
+			group_t* top;
+			qse_rex_node_t* node;
+			qse_size_t occ;
+
+			QSE_ASSERTX (group != QSE_NULL && group->next != QSE_NULL, 
+				"GROUPEND reached must be paired up with a GROUP");
+
+			if (prevnode == candnode) 
+			{
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n"));
+				break;
+			}
+	
+			top = group->next;
+			top->occ++;
+
+			occ = top->occ;
+			node = top->node;
 			QSE_ASSERT (node == candnode->u.ge.group);
 	
 			if (occ >= node->occ.min)
 			{
-				group_t* gx = group->next;
+				group_t* gx;
 	
 				/* take the next atom as a candidate.
 				 * it is actually a branch case. move on. */
 	
-				if (occ < node->occ.max)
+				if (top->next == QSE_NULL)
+				{
+					/* only one element in the stack.
+					 * falls back to QSE_NULL regardless 
+					 * of the need to reuse it */
+					gx = QSE_NULL;
+				}
+				else if (occ < node->occ.max)
 				{
 					/* check if the group will be repeated.
-					 * if so, duplicate the group stack excluding
-					 * the top. it goes along a different path and
-					 * hence requires a duplicated group stack. */
-					if (group->next != QSE_NULL)
-					{
-						gx = dupgroups (e, group->next);
-						if (gx == QSE_NULL) return -1;
-					}
+					 * if so, duplicate the group stack 
+					 * excluding the top. it goes along a 
+					 * different path and hence requires  
+					 * duplication. */
+
+					gx = dupgroupstackpop (e, group);
+					if (gx == QSE_NULL) return -1;
+				}
+				else
+				{
+					/* reuse the group stack. pop the top 
+					 * data element off the stack */
+
+					gx = groupstackpop (e, group);
+
+					/* this function always succeeds and
+					 * returns the same head */
+					QSE_ASSERT (gx == group);
 				}
 	
-				refupgroup (e, gx);
+				refupgroupstack (gx);
 				n = addcands (e, gx, candnode, node->next, mptr);
-				refdowngroup (e, gx);
+				refdowngroupstack (gx, e->rex->mmgr);
 				if (n <= -1) return -1;
 			}
-	
+
 			if (occ < node->occ.max)
 			{
 				/* need to repeat itself. */
-				refupgroup (e, group);
+				refupgroupstack (group);
 				n = addcands (e, group, candnode, node->u.g.head, mptr);
-				refdowngroup (e, group);
+				refdowngroupstack (group, e->rex->mmgr);
 
 				if (n <= -1) return -1;
 			}
-		}
-	}
-	else
-	{
-		int n;
 
-		if (candnode->occ.min <= 0)
-		{
-			/* if the node is optional,
-			 * add the next node to the candidate array  */
-			refupgroup (e, group);
-			n = addcands (e, group, prevnode, candnode->next, mptr);
-			refdowngroup (e, group);
-			if (n <= -1) return -1;
+			break;
 		}
 
-		if (candnode->occ.max > 0)
-		{
-			group_t* gx;
 
-			if (group != QSE_NULL && candnode->occ.min <= 0)
+		default:
+		{
+			int n;
+
+			if (candnode->occ.min <= 0)
 			{
-				/* if it belongs to a group and it has been
-				 * pushed to a different path above, 
-				 * duplicate the group stack */
-				gx = dupgroups (e, group);
-				if (gx == QSE_NULL) return -1;
+				/* if the node is optional,
+				 * add the next node to the candidate array  */
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
 			}
-			else gx = group;
 
-			refupgroup (e, gx);
-			n = addsimplecand (e, gx, candnode, 1, mptr);
-			refdowngroup (e, gx);
+			if (candnode->occ.max > 0)
+			{
+				group_t* gx;
+	
+				if (group != QSE_NULL && candnode->occ.min <= 0)
+				{
+					/* if it belongs to a group and it has been
+					 * pushed to a different path above, 
+					 * duplicate the group stack */
+					gx = dupgroupstack (e, group);
+					if (gx == QSE_NULL) return -1;
+				}
+				else gx = group;
+	
+				refupgroupstack (gx);
+				n = addsimplecand (e, gx, candnode, 1, mptr);
+				refdowngroupstack (gx, e->rex->mmgr);
 
-			if (n <= -1) return -1;
+				if (n <= -1) return -1;
+			}
+
+			break;
 		}
 	}
 
@@ -1390,15 +1551,15 @@ static int match (exec_t* e)
 
 				if (cand->occ < node->occ.max && cand->group != QSE_NULL)
 				{
-					gx = dupgroups (e, cand->group);
+					gx = dupgroupstack (e, cand->group);
 					if (gx == QSE_NULL) return -1;
 				}
 				else gx = cand->group;
 	
 				/* move on to the next candidate */
-				refupgroup (e, gx);
+				refupgroupstack (gx);
 				n = addcands (e, gx, node, node->next, nmptr);
-				refdowngroup (e, gx);
+				refdowngroupstack (gx, e->rex->mmgr);
 
 				if (n <= -1) return -1;
 			}
@@ -1406,9 +1567,9 @@ static int match (exec_t* e)
 			if (cand->occ < node->occ.max)
 			{
 				/* repeat itself more */
-				refupgroup (e, cand->group);
+				refupgroupstack (cand->group);
 				n = addsimplecand (e, cand->group, node, cand->occ+1, nmptr);
-				refdowngroup (e, cand->group);
+				refdowngroupstack (cand->group, e->rex->mmgr);
 
 				if (n <= -1) return -1;
 			}
@@ -1500,12 +1661,10 @@ if (e->nmatches > 0)
 	return 0;
 }
 
-static void refdowncandgroup (qse_lda_t* lda, void* dptr, qse_size_t dlen)
+static void refdowngroupstack_incand (qse_lda_t* lda, void* dptr, qse_size_t dlen)
 {
-	cand_t* cand = (cand_t*)dptr;
 	QSE_ASSERT (dlen == 1);
-
-	refdowngroup (lda->mmgr, cand->group);
+	refdowngroupstack (((cand_t*)dptr)->group, lda->mmgr);
 }
 
 static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
@@ -1529,8 +1688,8 @@ static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
 	qse_lda_setcopier (&e->cand.set[0], QSE_LDA_COPIER_INLINE);
 	qse_lda_setcopier (&e->cand.set[1], QSE_LDA_COPIER_INLINE);
 
-	qse_lda_setfreeer (&e->cand.set[0], refdowncandgroup);
-	qse_lda_setfreeer (&e->cand.set[0], refdowncandgroup);
+	qse_lda_setfreeer (&e->cand.set[0], refdowngroupstack_incand);
+	qse_lda_setfreeer (&e->cand.set[1], refdowngroupstack_incand);
 
 	return 0;
 }
