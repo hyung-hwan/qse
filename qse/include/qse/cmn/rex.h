@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 309 2009-11-27 13:46:49Z hyunghwan.chung $
+ * $Id: rex.h 310 2009-12-08 13:15:00Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -154,6 +154,7 @@ struct qse_rex_node_t
 		struct
 		{
 			qse_rex_node_t* head;
+			qse_rex_node_t* end;
 		} g;
 
 		struct
