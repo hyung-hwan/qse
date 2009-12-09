@@ -270,11 +270,9 @@ static qse_rex_node_t* newnopnode (comp_t* c)
 	return newnode (c, QSE_REX_NODE_NOP);
 }
 
-static qse_rex_node_t* newgroupnode (comp_t* c, qse_rex_node_t* head)
+static qse_rex_node_t* newgroupnode (comp_t* c)
 {
-	qse_rex_node_t* n = newnode (c, QSE_REX_NODE_GROUP);
-	if (n != QSE_NULL) n->u.g.head = head;
-	return n;
+	return newnode (c, QSE_REX_NODE_GROUP);
 }
 
 static qse_rex_node_t* newgroupendnode (comp_t* c, qse_rex_node_t* group)
@@ -740,7 +738,7 @@ static qse_rex_node_t* comp2 (comp_t* com)
 
 				qse_rex_node_t* x, * ge;
 
-				n = newgroupnode (com, QSE_NULL);
+				n = newgroupnode (com);
 				if (n == QSE_NULL) return QSE_NULL;
 
 				ge = newgroupendnode (com, n);
@@ -749,6 +747,9 @@ static qse_rex_node_t* comp2 (comp_t* com)
 				if (getc_esc(com) <= -1) return QSE_NULL;
 
 				com->gdepth++;
+				/* pass the GROUPEND node so that the
+				 * last node in the subgroup links to
+				 * this GROUPEND node. */
 				x = comp0 (com, ge);
 				if (x == QSE_NULL) return QSE_NULL;
 
@@ -762,6 +763,7 @@ static qse_rex_node_t* comp2 (comp_t* com)
 				if (getc_esc(com) <= -1) return QSE_NULL;
 
 				n->u.g.head = x;
+				n->u.g.end = ge;
 				break;
 			}
 			
@@ -845,10 +847,17 @@ static qse_rex_node_t* comp2 (comp_t* com)
 	return n;
 }
 
+/* compile a list of atoms at the outermost level and/or
+ * within a subgroup */
 static qse_rex_node_t* comp1 (comp_t* c, pair_t* pair)
 {
 	pair->head = newnopnode (c);
 	if (pair->head == QSE_NULL) return QSE_NULL;
+
+#ifdef DONOT_SKIP_NOP
+	pair->head->occ.min = 1;
+	pair->head->occ.max = 1;
+#endif
 
 	pair->tail = pair->head;
 
@@ -857,6 +866,18 @@ static qse_rex_node_t* comp1 (comp_t* c, pair_t* pair)
 	{
 		qse_rex_node_t* tmp = comp2 (c);
 		if (tmp == QSE_NULL) return QSE_NULL;
+
+		if (tmp->id == QSE_REX_NODE_GROUP)
+		{
+			/* simple optimization to remove an empty group */
+			qse_rex_node_t* gg = tmp->u.g.head;
+			while (gg->id == QSE_REX_NODE_NOP) gg = gg->next;
+			if (gg->id == QSE_REX_NODE_GROUPEND)
+			{
+				/* exclude an empty subgroup */
+				continue;
+			}
+		}
 
 		pair->tail->next = tmp;
 		pair->tail = tmp;
@@ -1160,6 +1181,7 @@ static int addsimplecand (
 	qse_size_t occ, const qse_char_t* mptr)
 {
 	QSE_ASSERT (
+		node->id == QSE_REX_NODE_NOP ||
 		node->id == QSE_REX_NODE_BOL ||
 		node->id == QSE_REX_NODE_EOL ||
 		node->id == QSE_REX_NODE_ANY ||
@@ -1177,12 +1199,21 @@ static int addsimplecand (
 /*if (node->id == QSE_REX_NODE_CHAR)
 qse_printf (QSE_T("adding %d %c\n"), node->id, node->u.c);
 else
-qse_printf (QSE_T("adding %d NA\n"), node->id);*/
+qse_printf (QSE_T("adding %d NA\n"), node->id);
+*/
 		
+if (qse_lda_search (
+	&e->cand.set[e->cand.pending],
+	0,
+	&cand, 1) != QSE_LDA_NIL)
+{
+return 0;
+}
+
 	if (qse_lda_insert (
 		&e->cand.set[e->cand.pending],
 		QSE_LDA_SIZE(&e->cand.set[e->cand.pending]),
-		&cand, 1) == (qse_size_t)-1)
+		&cand, 1) == QSE_LDA_NIL)
 	{
 		e->rex->errnum = QSE_REX_ENOMEM;
 		return -1;
@@ -1193,13 +1224,22 @@ qse_printf (QSE_T("adding %d NA\n"), node->id);*/
 	return 0;
 }
 
+/* addcands() function add a candicate from candnode.
+ * if candnode is not a simple node, it traverses further
+ * until it reaches a simple node. prevnode is the last
+ * GROUPEND node visited during traversal. If no GROUPEND
+ * is visited yet, it can be any starting node */
 static int addcands (
 	exec_t* e, group_t* group, qse_rex_node_t* prevnode,
 	qse_rex_node_t* candnode, const qse_char_t* mptr)
 {
+warpback:
+
+#ifndef DONOT_SKIP_NOP
 	/* skip all NOP nodes */
 	while (candnode != QSE_NULL && candnode->id == QSE_REX_NODE_NOP) 
 		candnode = candnode->next;
+#endif
 
 	/* nothing to add */
 	if (candnode == QSE_NULL) return 0;
@@ -1252,24 +1292,32 @@ static int addcands (
 		case QSE_REX_NODE_GROUP:
 		{
 			int n;
+			qse_rex_node_t* front;
 
-			if (candnode->occ.min <= 0)
+/*qse_printf (QSE_T("GROUP %p PREV %p\n"), candnode, prevnode);*/
+
+			/* skip all NOP nodes */
+			front = candnode->u.g.head;
+			while (front->id == QSE_REX_NODE_NOP) 
+				front = front->next;
+			if (front->id == QSE_REX_NODE_GROUPEND) 
 			{
-				/* if the group node is optional, 
-				 * add the next node to the candidate array. */
-	
-				refupgroupstack (group);
-				n = addcands (e, group, 
-					prevnode, candnode->next, mptr);
-				refdowngroupstack (group, e->rex->mmgr);
-	
-				if (n <= -1) return -1;
+				/* if GROUPEND is reached, the group
+				 * is empty. jump to the next node
+				 * regardless of its occurrence. 
+				 * however, this will never be reached 
+				 * as it has been removed in comp() */
+				candnode = candnode->next;
+				goto warpback;
 			}
 
 			if (candnode->occ.max > 0)
 			{
+				/* add the first node in a subgroup
+				 * as a candidate */
+
 				group_t* gx;
-	
+
 				/* push the current group node (candnode) to 
 				 * the group stack. if candnode->next is 
 				 * added to the candidate array, which means
@@ -1285,11 +1333,27 @@ static int addcands (
 				/* add the first node in the group to 
 				 * the candidate array */
 				refupgroupstack (gx);
-				n = addcands (e, gx,
-					candnode, candnode->u.g.head, mptr);
+				n = addcands (e, gx, prevnode, front, mptr); 
 				refdowngroupstack (gx, e->rex->mmgr);
 
 				if (n <= -1) return -1;
+			}
+			
+			if (candnode->occ.min <= 0)
+			{
+				/* if the group node is optional, 
+				 * add the next node to the candidate array. */
+	
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
+			#endif
+				candnode = candnode->next;
+				goto warpback;
+			/* END avoid recursion */
 			}
 
 			break;
@@ -1302,8 +1366,10 @@ static int addcands (
 			qse_rex_node_t* node;
 			qse_size_t occ;
 
-			QSE_ASSERTX (group != QSE_NULL && group->next != QSE_NULL, 
-				"GROUPEND reached must be paired up with a GROUP");
+/*qse_printf (QSE_T("GROUPEND %p PREV %p\n"), candnode, prevnode);*/
+			QSE_ASSERTX (
+				group != QSE_NULL && group->next != QSE_NULL, 
+				"GROUPEND must be paired up with GROUP");
 
 			if (prevnode == candnode) 
 			{
@@ -1323,7 +1389,10 @@ static int addcands (
 
 			occ = top->occ;
 			node = top->node;
-			QSE_ASSERT (node == candnode->u.ge.group);
+			QSE_ASSERTX (node == candnode->u.ge.group, 
+				"The GROUP node in the group stack must be the one "
+				"pairing up with the GROUPEND node."
+			);
 	
 			if (occ >= node->occ.min)
 			{
@@ -1366,19 +1435,34 @@ static int addcands (
 				}
 	
 				refupgroupstack (gx);
-				n = addcands (e, gx, candnode, node->next, mptr);
+				if (prevnode != QSE_NULL && prevnode->id == QSE_REX_NODE_GROUPEND)
+				{
+					n = addcands (e, gx, prevnode, node->next, mptr);
+				}
+				else
+				{
+					n = addcands (e, gx, candnode, node->next, mptr);
+				}
 				refdowngroupstack (gx, e->rex->mmgr);
 				if (n <= -1) return -1;
 			}
 
 			if (occ < node->occ.max)
 			{
-				/* need to repeat itself. */
-				refupgroupstack (group);
-				n = addcands (e, group, candnode, node->u.g.head, mptr);
-				refdowngroupstack (group, e->rex->mmgr);
+				/* repeat itself. */
 
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, node->u.g.head, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
 				if (n <= -1) return -1;
+			#endif
+
+				prevnode = candnode;
+				candnode = node->u.g.head;
+				goto warpback;
+			/* END avoid recursion */
 			}
 
 			break;
@@ -1387,16 +1471,6 @@ static int addcands (
 		default:
 		{
 			int n;
-
-			if (candnode->occ.min <= 0)
-			{
-				/* if the node is optional,
-				 * add the next node to the candidate array  */
-				refupgroupstack (group);
-				n = addcands (e, group, prevnode, candnode->next, mptr);
-				refdowngroupstack (group, e->rex->mmgr);
-				if (n <= -1) return -1;
-			}
 
 			if (candnode->occ.max > 0)
 			{
@@ -1422,6 +1496,24 @@ static int addcands (
 
 				if (n <= -1) return -1;
 			}
+
+			if (candnode->occ.min <= 0)
+			{
+				/* if the node is optional,
+				 * add the next node to the candidate array  */
+
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
+			#endif
+				candnode = candnode->next;
+				goto warpback;
+			/* END avoid recursion */
+			}
+
 
 			break;
 		}
@@ -1507,6 +1599,12 @@ static int match (exec_t* e)
 
 		switch (node->id)
 		{
+#ifdef DONOT_SKIP_NOP
+			case QSE_REX_NODE_NOP:
+				nmptr = cand->mptr;
+				break;
+#endif
+
 			case QSE_REX_NODE_BOL:
 				if (cand->mptr == e->str.ptr) 
 				{
@@ -1568,7 +1666,8 @@ static int match (exec_t* e)
 					"QSE_REX_NODE_EOL, "
 					"QSE_REX_NODE_ANY, "
 					"QSE_REX_NODE_CHAR, "
-					"QSE_REX_NODE_CSET");
+					"QSE_REX_NODE_CSET, "
+					"QSE_REX_NODE_NOP");
 
 				break;
 			}
@@ -1705,6 +1804,16 @@ static void refdowngroupstack_incand (qse_lda_t* lda, void* dptr, qse_size_t dle
 	refdowngroupstack (((cand_t*)dptr)->group, lda->mmgr);
 }
 
+static int comp_cand (qse_lda_t* lda,
+	const void* dptr1, qse_size_t dlen1,
+	const void* dptr2, qse_size_t dlen2)
+{
+	cand_t* c1 = (cand_t*)dptr1;
+	cand_t* c2 = (cand_t*)dptr2;
+	if (c1->node == c2->node) return 0;
+	return 1;
+}
+
 static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
 {
 	/* initializes dynamic data structures */
@@ -1728,6 +1837,9 @@ static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
 
 	qse_lda_setfreeer (&e->cand.set[0], refdowngroupstack_incand);
 	qse_lda_setfreeer (&e->cand.set[1], refdowngroupstack_incand);
+
+	qse_lda_setcomper (&e->cand.set[0], comp_cand);
+	qse_lda_setcomper (&e->cand.set[1], comp_cand);
 
 	return 0;
 }
