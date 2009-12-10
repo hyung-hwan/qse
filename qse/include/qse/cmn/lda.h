@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: lda.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -87,7 +87,7 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
  * SYNOPSIS
  */
 typedef void* (*qse_lda_copier_t) (
-	qse_lda_t* lda    /* a lda */,
+	qse_lda_t* lda    /* lda */,
 	void*      dptr   /* the pointer to data to copy */,
 	qse_size_t dlen   /* the length of data to copy */
 );
@@ -99,7 +99,7 @@ typedef void* (*qse_lda_copier_t) (
  * SYNOPSIS
  */
 typedef void (*qse_lda_freeer_t) (
-	qse_lda_t* lda    /* a lda */,
+	qse_lda_t* lda    /* lda */,
 	void*      dptr   /* the pointer to data to free */,
 	qse_size_t dlen   /* the length of data to free */
 );
@@ -141,7 +141,7 @@ typedef int (*qse_lda_comper_t) (
  * SYNOPSIS
  */
 typedef void (*qse_lda_keeper_t) (
-	qse_lda_t* lda     /* a lda */,
+	qse_lda_t* lda     /* lda */,
 	void* vptr         /* the pointer to a value */,
 	qse_size_t vlen    /* the length of a value */	
 );
@@ -259,72 +259,63 @@ void qse_lda_fini (
 /******/
 
 int qse_lda_getscale (
-	qse_lda_t* lda   /* a lda */
+	qse_lda_t* lda   /* lda */
 );
 
-/****f* Common/qse_lda_setscale
- * NAME
- *  qse_lda_setscale - set the scale factor
- *
- * DESCRIPTION 
- *  The qse_lda_setscale() function sets the scale factor of the length
- *  of a key and a value. A scale factor determines the actual length of
- *  a key and a value in bytes. A lda is created with a scale factor of 1.
- *  The scale factor should be larger than 0 and less than 256.
- *
- * NOTES
- *  It is a bad idea to change the scale factor when a lda is not empty.
- *  
- * SYNOPSIS
+/**
+ * The qse_lda_setscale() function sets the scale factor of the length
+ * of a key and a value. A scale factor determines the actual length of
+ * a key and a value in bytes. A lda is created with a scale factor of 1.
+ * The scale factor should be larger than 0 and less than 256.
+ * It is a bad idea to change the scale factor when @a lda is not empty.
  */
 void qse_lda_setscale (
-	qse_lda_t* lda   /* a lda */,
+	qse_lda_t* lda   /* lda */,
 	int scale        /* a scale factor */
 );
-/******/
 
 qse_lda_copier_t qse_lda_getcopier (
-	qse_lda_t* lda   /* a lda */
+	qse_lda_t* lda   /* lda */
 );
 
-/****f* Common/qse_lda_setcopier
- * NAME 
- *  qse_lda_setcopier - specify how to clone an element
- *
- * DESCRIPTION
- *  A special copier QSE_LDA_COPIER_INLINE is provided. This copier enables
- *  you to copy the data inline to the internal node. No freeer is invoked
- *  when the node is freeed.
- *
- *  You may set the copier to QSE_NULL to perform no special operation 
- *  when the data pointer is rememebered.
- *
- * SYNOPSIS
+/**
+ * The qse_lda_setcopier() specifies how to clone an element. The special 
+ * copier #QSE_LDA_COPIER_INLINE copies the data inline to the internal node.
+ * No freeer is invoked when the node is freeed. You may set the copier to 
+ * #QSE_LDA_COPIER_SIMPLE to perform no special operation when the data 
+ * pointer is stored.
  */
 void qse_lda_setcopier (
-	qse_lda_t* lda           /* a lda */, 
-	qse_lda_copier_t copier  /* an element copier */
+	qse_lda_t* lda           /** lda */, 
+	qse_lda_copier_t copier  /** element copier */
 );
-/******/
 
 qse_lda_freeer_t qse_lda_getfreeer (
-	qse_lda_t*   lda  /* a lda */
+	qse_lda_t*   lda  /**< lda */
 );
 
-/****f* Common/qse_lda_setfreeer
- * NAME 
- *  qse_lda_setfreeer - specify how to destroy an element
- *
- * DESCRIPTION
- *  The freeer is called when a node containing the element is destroyed.
- *
- * SYNOPSIS
+/**
+ * The qse_lda_setfreeer() function specifies how to destroy an element.
+ * The @a freeer is called when a node containing the element is destroyed.
  */
 void qse_lda_setfreeer (
-	qse_lda_t* lda           /* a lda */,
-	qse_lda_freeer_t freeer  /* an element freeer */
+	qse_lda_t* lda           /**< lda */,
+	qse_lda_freeer_t freeer  /**< element freeer */
 );
-/******/
+
+qse_lda_comper_t qse_lda_getcomper (
+	qse_lda_t*   lda  /**< lda */
+);
+
+/**
+ * The qse_lda_setcomper() function specifies how to compare two elements
+ * for equality test. The comparator @a comper must return 0 if two elements
+ * compared are equal, or a non-zero number otherwise.
+ */
+void qse_lda_setcomper (
+	qse_lda_t*       lda     /**< lda */,
+	qse_lda_comper_t comper  /**< comparator */
+);
 
 qse_lda_keeper_t qse_lda_getkeeper (
         qse_lda_t* lda

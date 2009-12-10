@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 307 2009-11-25 13:32:20Z hyunghwan.chung $
+ * $Id: misc.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1035,14 +1035,12 @@ qse_char_t* qse_awk_rtx_strxnfld (
 	 (err == QSE_REX_ERPAREN)?     QSE_AWK_EREXRPAREN: \
 	 (err == QSE_REX_ERBRACK)?     QSE_AWK_EREXRBRACK: \
 	 (err == QSE_REX_ERBRACE)?     QSE_AWK_EREXRBRACE: \
-	 (err == QSE_REX_EUNBALPAREN)? QSE_AWK_EREXUNBALPAREN: \
-	 (err == QSE_REX_EINVALBRACE)? QSE_AWK_EREXINVALBRACE: \
 	 (err == QSE_REX_ECOLON)?      QSE_AWK_EREXCOLON: \
 	 (err == QSE_REX_ECRANGE)?     QSE_AWK_EREXCRANGE: \
 	 (err == QSE_REX_ECCLASS)?     QSE_AWK_EREXCCLASS: \
 	 (err == QSE_REX_EBOUND)?      QSE_AWK_EREXBOUND: \
+	 (err == QSE_REX_ESPCAWP)?     QSE_AWK_EREXSPCAWP: \
 	 (err == QSE_REX_EPREEND)?     QSE_AWK_EREXPREEND: \
-	 (err == QSE_REX_EGARBAGE)?    QSE_AWK_EREXGARBAGE: \
 	                               QSE_AWK_EINTERN)
 
 void* qse_awk_buildrex (
