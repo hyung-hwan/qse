@@ -210,14 +210,12 @@ const qse_char_t* qse_rex_geterrmsg (qse_rex_t* rex)
 		QSE_T("right parenthesis expected"),
 		QSE_T("right bracket expected"),
 		QSE_T("right brace expected"),
-		QSE_T("unbalanced parenthesis"),
-		QSE_T("invalid brace"),
 		QSE_T("colon expected"),
 		QSE_T("invalid character range"),
 		QSE_T("invalid character class"),
 		QSE_T("invalid occurrence bound"),
-		QSE_T("premature expression end"),
-		QSE_T("garbage after expression"),
+		QSE_T("special character at wrong position"),
+		QSE_T("premature expression end")
 	};
 	
 	return (rex->errnum >= 0 && rex->errnum < QSE_COUNTOF(errstr))?
@@ -793,6 +791,20 @@ static qse_rex_node_t* comp2 (comp_t* com)
 				break;
 
 			default:
+				if (com->rex->option & QSE_REX_STRICT)
+				{
+					qse_char_t spc[] = QSE_T(")?*+{");
+
+					if (com->rex->option & QSE_REX_NOBOUND)
+						spc[4] = QSE_T('\0');
+
+					if (qse_strchr (spc, com->c.value) != QSE_NULL)
+					{
+						com->rex->errnum = QSE_REX_ESPCAWP;
+						return QSE_NULL;
+					}
+				}
+
 				goto normal_char;
 		}
 	}
@@ -1202,13 +1214,21 @@ else
 qse_printf (QSE_T("adding %d NA\n"), node->id);
 */
 		
-if (qse_lda_search (
-	&e->cand.set[e->cand.pending],
-	0,
-	&cand, 1) != QSE_LDA_NIL)
-{
-return 0;
-}
+	if (qse_lda_search (
+		&e->cand.set[e->cand.pending],
+		0, &cand, 1) != QSE_LDA_NIL)
+	{
+		/* exclude any existing entries in the array.
+		 * see comp_cand() for the equality test used.
+		 * note this linear search may be a performance bottle neck	
+		 * if the arrary grows large. not so sure if it should be
+		 * switched to a different data structure such as a hash table.
+		 * the problem is that most practical regular expressions
+		 * won't have many candidates for a particular match point.
+		 * so i'm a bit skeptical about data struct switching.
+		 */
+		return 0;
+	}
 
 	if (qse_lda_insert (
 		&e->cand.set[e->cand.pending],
@@ -1810,8 +1830,9 @@ static int comp_cand (qse_lda_t* lda,
 {
 	cand_t* c1 = (cand_t*)dptr1;
 	cand_t* c2 = (cand_t*)dptr2;
-	if (c1->node == c2->node) return 0;
-	return 1;
+	return (c1->node == c2->node && 
+	        c1->mptr == c2->mptr &&
+	        c1->occ == c2->occ)? 0: 1;
 }
 
 static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)

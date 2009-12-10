@@ -26,6 +26,8 @@ static int rex_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
+qse_rex_setoption (rex, QSE_REX_STRICT);
+
 	start = qse_rex_comp (rex, argv[1], qse_strlen(argv[1]));
 	if (start == QSE_NULL)
 	{

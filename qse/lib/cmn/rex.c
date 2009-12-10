@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 307 2009-11-25 13:32:20Z hyunghwan.chung $
+ * $Id: rex.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -384,22 +384,7 @@ void* qse_buildrex (
 	if (builder.ptn.curc.type != CT_EOF)
 	{
 		if (errnum != QSE_NULL) 
-		{
-			if (builder.ptn.curc.type ==  CT_SPECIAL &&
-			    builder.ptn.curc.value == QSE_T(')'))
-			{
-				*errnum = QSE_REX_EUNBALPAREN;
-			}
-			else if (builder.ptn.curc.type ==  CT_SPECIAL &&
-			         builder.ptn.curc.value == QSE_T('{'))
-			{
-				*errnum = QSE_REX_EINVALBRACE;
-			}
-			else
-			{
-				*errnum = QSE_REX_EGARBAGE;
-			}
-		}
+			*errnum = QSE_REX_ESPCAWP;
 
 		QSE_MMGR_FREE (builder.mmgr, builder.code.buf);
 		return QSE_NULL;

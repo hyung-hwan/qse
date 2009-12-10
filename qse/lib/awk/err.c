@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 307 2009-11-25 13:32:20Z hyunghwan.chung $
+ * $Id: err.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -143,14 +143,12 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("right parenthesis expected in regular expression"),
 		QSE_T("right bracket expected in regular expression"),
 		QSE_T("right brace expected in regular expression"),
-		QSE_T("unbalanced parenthesis in regular expression"),
-		QSE_T("invalid brace in regular expression"),
 		QSE_T("colon expected in regular expression"),
 		QSE_T("invalid character range in regular expression"),
 		QSE_T("invalid character class in regular expression"),
 		QSE_T("invalid occurrence bound in regular expression"),
-		QSE_T("premature end of regular expression"),
-		QSE_T("garbage after regular expression")
+		QSE_T("special character at wrong position"),
+		QSE_T("premature end of regular expression")
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?

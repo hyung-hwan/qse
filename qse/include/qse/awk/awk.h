@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 307 2009-11-25 13:32:20Z hyunghwan.chung $
+ * $Id: awk.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -791,14 +791,12 @@ enum qse_awk_errnum_t
 	QSE_AWK_EREXRPAREN,    /**< a right parenthesis is expected */
 	QSE_AWK_EREXRBRACK,    /**< a right bracket is expected */
 	QSE_AWK_EREXRBRACE,    /**< a right brace is expected */
-	QSE_AWK_EREXUNBALPAREN,/**< unbalanced parenthesis */
-	QSE_AWK_EREXINVALBRACE,/**< invalid brace */
 	QSE_AWK_EREXCOLON,     /**< a colon is expected */
 	QSE_AWK_EREXCRANGE,    /**< invalid character range */
 	QSE_AWK_EREXCCLASS,    /**< invalid character class */
 	QSE_AWK_EREXBOUND,     /**< invalid occurrence bound */
+	QSE_AWK_EREXSPCAWP,    /**< special character at wrong position */
 	QSE_AWK_EREXPREEND,    /**< premature end of regular expression */
-	QSE_AWK_EREXGARBAGE,   /**< garbage after pattern */
 
 	/* the number of error numbers, internal use only */
 	QSE_AWK_NUMERRNUM 

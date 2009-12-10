@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 310 2009-12-08 13:15:00Z hyunghwan.chung $
+ * $Id: rex.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -66,12 +66,14 @@
 
 enum qse_rex_option_t
 {
-	QSE_REX_BUILD_NOBOUND    = (1 << 0),
+	QSE_REX_BUILD_NOBOUND    = (1 << 1),
 	QSE_REX_MATCH_IGNORECASE = (1 << 8),
 
+	/**< do not allow a special character at normal character position */
+	QSE_REX_STRICT  = (1 << 0),
 
 	/**< do not support the {n,m} style occurrence specifier */
-	QSE_REX_NOBOUND = (1 << 0),
+	QSE_REX_NOBOUND = (1 << 1),
 
 #if 0
 	QSE_REX_ESQ_HEX   = (1 << 1), /* \xhh and \uhhhh */
@@ -92,14 +94,12 @@ enum qse_rex_errnum_t
         QSE_REX_ERPAREN,       /**< right parenthesis expected */
         QSE_REX_ERBRACK,       /**< right bracket expected */
         QSE_REX_ERBRACE,       /**< right brace expected */
-        QSE_REX_EUNBALPAREN,   /**< unbalanced parenthesis */
-        QSE_REX_EINVALBRACE,   /**< invalid brace */
         QSE_REX_ECOLON,        /**< colon expected */
         QSE_REX_ECRANGE,       /**< invalid character range */
         QSE_REX_ECCLASS,       /**< invalid character class */
         QSE_REX_EBOUND,        /**< invalid occurrence bound */
-        QSE_REX_EPREEND,       /**< premature expression end */
-        QSE_REX_EGARBAGE       /**< garbage after expression */
+        QSE_REX_ESPCAWP,       /**< special character at wrong position */
+        QSE_REX_EPREEND        /**< premature expression end */
 };
 typedef enum qse_rex_errnum_t qse_rex_errnum_t;
 
