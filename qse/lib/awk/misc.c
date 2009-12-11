@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: misc.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -860,7 +860,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	{
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex, 
-			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
+			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			str, len, ptr, left, &match, errnum);
 		if (n == -1) return QSE_NULL;
 		if (n == 0)
@@ -1052,7 +1052,7 @@ void* qse_awk_buildrex (
 
 	p = qse_buildrex (
 		awk->mmgr, awk->rex.depth.max.build, 
-		((awk->option&QSE_AWK_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
+		((awk->option&QSE_AWK_REXBOUND)? 0:QSE_REX_NOBOUND),
 		ptn, len, &err
 	);
 	if (p == QSE_NULL) *errnum = QSE_AWK_REXERRTOERR(err);

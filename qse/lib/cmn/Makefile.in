@@ -72,10 +72,10 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
-am_libqsecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo rex1.lo \
-	str_bas.lo str_cnv.lo str_dyn.lo str_utl.lo lda.lo map.lo \
-	sll.lo dll.lo opt.lo tio.lo tio_get.lo tio_put.lo fio.lo \
-	pio.lo sio.lo time.lo misc.lo assert.lo main.lo stdio.lo
+am_libqsecmn_la_OBJECTS = mem.lo chr.lo chr_cnv.lo rex.lo str_bas.lo \
+	str_cnv.lo str_dyn.lo str_utl.lo lda.lo map.lo sll.lo dll.lo \
+	opt.lo tio.lo tio_get.lo tio_put.lo fio.lo pio.lo sio.lo \
+	time.lo misc.lo assert.lo main.lo stdio.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -240,7 +240,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
-	mem.c chr.c chr_cnv.c rex.c rex1.c \
+	mem.c chr.c chr_cnv.c rex.c \
 	str_bas.c str_cnv.c str_dyn.c str_utl.c \
 	lda.c map.c sll.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
@@ -340,7 +340,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Plo@am__quote@

@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: fnc.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1118,7 +1118,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 	}
 
-	opt = (run->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0;
+	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
 
 	a2_end = a2_ptr + a2_len;
 	cur_ptr = a2_ptr;
@@ -1331,12 +1331,28 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	if (nargs >= 3) 
 	{
 		qse_awk_val_t* a2;
-		qse_real_t rv;
 
 		a2 = qse_awk_rtx_getarg (rtx, 2);
-		n = qse_awk_rtx_valtonum (rtx, a2, &start, &rv);
-		if (n <= -1) return -1;
-		if (n >= 1) start = (qse_long_t)rv;
+#if 0
+		if (a2->type == QSE_AWK_VAL_MAP)
+		{
+			/* if the 3rd paramater is an array,
+			 * it is a placeholder to store parenthesized 
+			 * subexpressions */
+
+			/* TODO: please implement this... */
+			start = 0;
+		}
+		else
+#endif
+		{
+			qse_real_t rv;
+			/* if the 3rd parameter is not an array,
+			 * it is treated as a match start index */
+			n = qse_awk_rtx_valtonum (rtx, a2, &start, &rv);
+			if (n <= -1) return -1;
+			if (n >= 1) start = (qse_long_t)rv;
+		}
 	}
 
 	if (a0->type == QSE_AWK_VAL_STR)
@@ -1394,7 +1410,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	{
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex, 
-			(rtx->gbl.ignorecase? QSE_REX_MATCH_IGNORECASE: 0),
+			(rtx->gbl.ignorecase? QSE_REX_IGNORECASE: 0),
 			str0+start-1, len0-start+1,/*TODO: must use str0,len0?*/
 			str0+start-1, len0-start+1,
 			&mat, &errnum

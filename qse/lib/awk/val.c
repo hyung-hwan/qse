@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: val.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -339,13 +339,9 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	/* the regular expression value holds:
 	 * - header
 	 * - a raw string plus with added a terminating '\0'
-	 * - a compiled regular expression
 	 * the total size is just large enough for all these.
 	 */
-	totsz = QSE_SIZEOF(qse_awk_val_rex_t) +  
-	        (QSE_SIZEOF(*buf) * (len + 1)) + 
-	        QSE_REX_LEN(code); 
-		
+	totsz = QSE_SIZEOF(*val) + (QSE_SIZEOF(*buf) * (len + 1));
 	val = (qse_awk_val_rex_t*) QSE_AWK_ALLOC (rtx->awk, totsz);
 	if (val == QSE_NULL) 
 	{
@@ -361,8 +357,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	val->ptr = (qse_char_t*)(val + 1);
 	qse_strncpy (val->ptr, buf, len);
 
-	val->code = val->ptr + len + 1;
-	QSE_MEMCPY (val->code, code, QSE_REX_LEN(code));
+	val->code = code;
 
 	return (qse_awk_val_t*)val;
 }
@@ -551,10 +546,15 @@ void qse_awk_rtx_freeval (
 	}
 	else if (val->type == QSE_AWK_VAL_REX)
 	{
-		/*
+		/* don't free ptr as it is inlined to val
 		QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
+		 */
+	
+		/* code is just a pointer to a regular expression stored
+		 * in parse tree nodes. so don't free it.
 		QSE_AWK_FREEREX (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
-		*/
+		 */
+
 		QSE_AWK_FREE (rtx->awk, val);
 	}
 	else if (val->type == QSE_AWK_VAL_MAP)

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: rex.h 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,62 +27,59 @@
 
 /** @file
  *
- * Regular Esseression Syntax
- *   A regular expression is zero or more branches, separated by '|'.
- *   ......
- *   ......
+ * Regular Expression Syntax
  *
- * Compiled form of a regular expression:
- *
- * | expression                                                                      |
- * | header  | branch                          | branch              | branch        |
- * | nb | el | na | bl | cmd | arg | cmd | arg | na | bl | cmd | arg | na | bl | cmd |
- *
- * - nb: the number of branches
- * -  el: the length of a expression including the length of nb and el
- * -  na: the number of atoms
- * -  bl: the length of a branch including the length of na and bl
- * -  cmd: The command and repetition info encoded together. 
- *
- * Some commands require an argument to follow them but some other don't.
- * It is encoded as follows:
- * .................
+ *  regular expression := branch_set
+ *  branch_set := branch [ '|' branch ]*
+ *  atom := char | '.' | '^' | '$' | subgroup
+ *  subgroup = '(' branch_set ')'
+ *  bound := '?' | '*' | '+' | {n,m}
+ *  bounded_atom := atom bound*
+ *  branch := bounded_atom bounded_atom*
  * 
- * Subexpressions can be nested by having the command "GROUP" 
- * and a subexpression as its argument.
+ * Special escaping sequence includes:
+ *   \uXXXX, \XX, \000, \t, \n, \r, \v, ...
  *
- * Examples:
- * a.c -> |1|6|5|ORD_CHAR(no bound)|a|ANY_CHAR(no bound)|ORD_CHAR(no bound)|c|
- * ab|xy -> |2|10|4|ORD_CHAR(no bound)|a|ORD_CHAR(no bound)|b|4|ORD_CHAR(no bound)|x|ORD_CHAR(no bound)|y|
+ * A special character preceded by a backslash loses its special role and
+ * matches the character itself literally.
+ *
+ * Some examples of compiled regular expressions are shown below.
+ * 
+ * @code
+ * ab
+ * START --@ NOP --@  CHAR(a) --@ CHAR(b) --@ END
+ *
+ * a(bc)d
+ * START --@ NOP --@ CHAR(A) --@ GROUP --@ CHAR(d) --@ END
+ *                   u.g.head => | @ 
+ *                               | | <= u.g.end
+ *                               | +---------------------------+
+ *                               |                             | <= u.ge.group
+ *                               @                             @ 
+ *                              NOP -@ CHAR(b) -@ CHAR(c) -@ GROUPEND
+ *
+ * ab|cd
+ *                             +--@ CHAR(a) --@ CHAR(b) --+ 
+ *                             | <= u.b.left              |
+ * START --@ NOP --@  BRANCH --+                          +--@ END
+ *                             | <= u.b.right             |
+ *                             +--@ CHAR(c) --@ CHAR(d) --+ 
+ * @endcode
  *
  * @todo
  * - support \\n to refer to the nth matching substring
  */
 
-#define QSE_REX_NA(code) (*(qse_size_t*)(code))
-
-#define QSE_REX_LEN(code) \
-	(*(qse_size_t*)((qse_byte_t*)(code)+QSE_SIZEOF(qse_size_t)))
-
 enum qse_rex_option_t
 {
-	QSE_REX_BUILD_NOBOUND    = (1 << 1),
-	QSE_REX_MATCH_IGNORECASE = (1 << 8),
-
-	/**< do not allow a special character at normal character position */
+	/**< do not allow a special character at normal character position. */
 	QSE_REX_STRICT  = (1 << 0),
 
-	/**< do not support the {n,m} style occurrence specifier */
+	/**< do not support the {n,m} style occurrence specifier. */
 	QSE_REX_NOBOUND = (1 << 1),
 
-#if 0
-	QSE_REX_ESQ_HEX   = (1 << 1), /* \xhh and \uhhhh */
-	QSE_REX_ESQ_OCTAL = (1 << 2), /* \000 */
-	QSE_REX_ESQ_CNTRL = (1 << 3), /* \cX where X is A to Z */
-#endif
-
 	/**< perform case-insensitive match */
-	QSE_REX_IGNORECASE = (1 << 8)
+	QSE_REX_IGNORECASE = (1 << 2)
 };
 
 enum qse_rex_errnum_t
@@ -125,7 +122,8 @@ struct qse_rex_node_t
 	/* for internal management. not used for startnode */
 	qse_rex_node_t* link; 
 
-	/* connect to the next node in the graph */
+	/* connect to the next node in the graph.
+	 * it is always NULL for a branch node. */
 	qse_rex_node_t* next;
 
 	qse_rex_node_id_t id;
@@ -206,6 +204,29 @@ void qse_rex_close (
 	qse_rex_t* rex
 );
 
+qse_rex_t* qse_rex_init (
+	qse_rex_t* rex, 
+	qse_mmgr_t* mmgr,
+	qse_rex_node_t* code
+);
+
+/** 
+ * The qse_rex_fini() function finalizes a statically initialized 
+ * regular expression object @a rex.
+ */
+void qse_rex_fini (
+	qse_rex_t* rex
+);
+
+/**
+ * The qse_rex_yield() function gives up the ownership of a compiled regular
+ * expression. Once yielded, the compiled regular expression is not destroyed 
+ * when @a rex is closed or finalized. 
+ * @return start node of a compiled regular expression
+ */
+qse_rex_node_t* qse_rex_yield (
+	qse_rex_t* rex /**< regular expression processor */
+);
 
 /**
  * The qse_rex_getoption() function returns the current options.
@@ -243,6 +264,7 @@ int qse_rex_exec (
 	qse_cstr_t*       matstr
 );
 
+
 void* qse_buildrex (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        depth,
@@ -269,14 +291,6 @@ void qse_freerex (
 	qse_mmgr_t* mmgr,
 	void*       code
 );
-
-qse_bool_t qse_isemptyrex (
-	void* code
-);
-
-#if 0
-void qse_dprintrex (qse_rex_t* rex, void* rex);
-#endif
 
 #ifdef __cplusplus
 }

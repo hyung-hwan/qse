@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: parse.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4012,7 +4012,7 @@ static qse_awk_nde_t* parse_primary_nogetline (
 
 		return (qse_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOK_DIV))
+	else if (MATCH(awk,TOK_DIV) || MATCH(awk,TOK_DIV_ASSN))
 	{
 		qse_awk_nde_rex_t* nde;
 		qse_awk_errnum_t errnum;
@@ -4021,8 +4021,16 @@ static qse_awk_nde_t* parse_primary_nogetline (
 		 * of the context-sensitivity of the slash symbol.
 		 * if TOK_DIV is seen as a primary, it tries to compile
 		 * it as a regular expression */
-		SET_TOKEN_TYPE (awk, &awk->tok, TOK_REX);
 		qse_str_clear (awk->tok.name);
+
+		if (MATCH(awk,TOK_DIV_ASSN) &&
+ 		   qse_str_ccat (awk->tok.name, QSE_T('=')) == (qse_size_t)-1)
+		{
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+			return QSE_NULL;
+		}
+
+		SET_TOKEN_TYPE (awk, &awk->tok, TOK_REX);
 		if (get_rexstr (awk, &awk->tok) <= -1) return QSE_NULL;
 
 		QSE_ASSERT (MATCH(awk,TOK_REX));
@@ -4064,8 +4072,8 @@ static qse_awk_nde_t* parse_primary_nogetline (
 
 		if (get_token(awk) <= -1) 
 		{
+			QSE_AWK_FREEREX (awk, nde->code);
 			QSE_AWK_FREE (awk, nde->ptr);
-			QSE_AWK_FREE (awk, nde->code);
 			QSE_AWK_FREE (awk, nde);
 			return QSE_NULL;			
 		}
@@ -4274,7 +4282,10 @@ static qse_awk_nde_t* parse_primary_nogetline (
 			&awk->ptok.loc
 		);
 	}
-	else SETERR_TOK (awk, QSE_AWK_EEXPRNR);
+	else 
+	{
+		SETERR_TOK (awk, QSE_AWK_EEXPRNR);
+	}
 
 	return QSE_NULL;
 }
@@ -5480,10 +5491,10 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("**"),  2, TOK_EXP,          QSE_AWK_EXTRAOPS },
 		{ QSE_T("*="),  2, TOK_MUL_ASSN,     0 },
 		{ QSE_T("*"),   1, TOK_MUL,          0 },
-		{ QSE_T("//="), 3, TOK_IDIV_ASSN,    0 },
-		{ QSE_T("//"),  2, TOK_IDIV,         QSE_AWK_EXTRAOPS },
-		{ QSE_T("/="),  2, TOK_DIV_ASSN,     QSE_AWK_EXTRAOPS },
+		{ QSE_T("/="),  2, TOK_DIV_ASSN,     0 },
 		{ QSE_T("/"),   1, TOK_DIV,          0 },
+		{ QSE_T("\\="), 2, TOK_IDIV_ASSN,    QSE_AWK_EXTRAOPS },
+		{ QSE_T("\\"),  1, TOK_IDIV,         QSE_AWK_EXTRAOPS },
 		{ QSE_T("%="),  2, TOK_MOD_ASSN,     0 },
 		{ QSE_T("%"),   1, TOK_MOD,          0 },
 		{ QSE_T("~"),   1, TOK_TILDE,        0 },

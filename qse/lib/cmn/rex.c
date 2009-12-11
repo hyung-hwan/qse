@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: rex.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,942 +20,312 @@
 
 #include <qse/cmn/rex.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/str.h>
+#include <qse/cmn/lda.h>
 #include "mem.h"
 
-#ifdef DEBUG_REX
-#include <qse/cmn/sio.h>
-#define DPUTS(x) qse_sio_puts(&qse_sio_err,x)
-#endif
+#define OCC_MAX QSE_TYPE_MAX(qse_size_t)
 
-enum
+typedef struct comp_t comp_t;
+struct comp_t
 {
-	CT_EOF,
-	CT_SPECIAL,
-	CT_NORMAL
+	qse_rex_t* rex;
+
+	qse_cstr_t re;
+
+	const qse_char_t* ptr;
+	const qse_char_t* end;
+
+	struct
+	{
+		qse_cint_t value;
+		int escaped;
+	} c;
+
+	qse_size_t gdepth; /* group depth */
+	qse_rex_node_t* start;
 };
 
-enum
+typedef struct exec_t exec_t;
+struct exec_t
 {
-	LEVEL_TOP,
-	LEVEL_CHARSET,
-	LEVEL_RANGE
-};
-
-enum 
-{
-	CMD_BOL,
-	CMD_EOL,
-	CMD_ANY_CHAR,
-	CMD_ORD_CHAR,
-	CMD_CHARSET,
-	CMD_GROUP
-};
-
-enum
-{
-	CHARSET_ONE,
-	CHARSET_RANGE,
-	CHARSET_CLASS
-};
-
-enum
-{
-	CHARSET_CLASS_PUNCT,
-	CHARSET_CLASS_SPACE,
-	CHARSET_CLASS_DIGIT,
-	CHARSET_CLASS_ALNUM
-};
-
-#define DEF_CODE_CAPA 512
-
-#define BOUND_MIN 0
-#define BOUND_MAX (QSE_TYPE_MAX(qse_size_t))
-
-typedef struct builder_t builder_t;
-typedef struct matcher_t matcher_t;
-typedef struct match_t match_t;
-
-typedef struct atom_t atom_t;
-typedef struct rhdr_t rhdr_t;
-typedef struct bhdr_t bhdr_t;
-typedef struct cshdr_t cshdr_t;
-
-struct builder_t
-{
-	qse_mmgr_t* mmgr;
+	qse_rex_t* rex;
 
 	struct
 	{
 		const qse_char_t* ptr;
 		const qse_char_t* end;
-		const qse_char_t* curp;
-		struct
-		{
-			int type;
-			qse_char_t value;
-			qse_bool_t escaped;
-		} curc;
-	} ptn;
+	} str;
 
 	struct
 	{
-		qse_byte_t* buf;
-		qse_size_t  size;
-		qse_size_t  capa;
-	} code;	
+		const qse_char_t* ptr;
+		const qse_char_t* end;
+	} sub;
 
 	struct
 	{
-		qse_size_t max;
-		qse_size_t cur;
-	} depth;
+		int active;
+		int pending;
+		qse_lda_t set[2]; /* candidate arrays */
+	} cand;
 
-	int option;
-	qse_rex_errnum_t errnum;
+	qse_size_t nmatches;
+	const qse_char_t* matchend; /* 1 character past the match end */
 };
 
-struct matcher_t
+typedef struct pair_t pair_t;
+struct pair_t
 {
+	qse_rex_node_t* head;
+	qse_rex_node_t* tail;
+};
+
+/* The group_t type defines a structure to maintain the nested
+ * traces of subgroups. The actual traces are maintained in a stack
+ * of sinlgly linked group_t elements. The head element acts
+ * as a management element where the occ field is a reference count
+ * and the node field is QSE_NULL always 
+ */
+typedef struct group_t group_t;
+struct group_t
+{
+	qse_rex_node_t* node;
+	qse_size_t occ; 
+	group_t* next;
+};
+
+typedef struct cand_t cand_t;
+struct cand_t
+{
+	qse_rex_node_t*   node;
+
+	/* occurrence */
+	qse_size_t        occ;
+
+	/* the stack of groups that this candidate belongs to. 
+	 * it is in the singliy linked list form */
+	group_t*          group;
+
+	/* match pointer. the number of character advancement 
+	 * differs across various node types. BOL and EOL don't advance to
+	 * the next character on match while ANY and CHAR do on match.
+	 * therefore, the match pointer is managed per candidate basis. */
+	const qse_char_t* mptr; 
+};
+
+qse_rex_t* qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
+{
+	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
+	rex->mmgr = mmgr;
+
+	QSE_ASSERT (code == QSE_NULL || code->id == QSE_REX_NODE_START);
+
+	/* note that passing a compiled expression to qse_rex_open() 
+	 * is to delegate it to this rex object. when this rex object
+	 * is closed, the code delegated is destroyed. */
+
+	rex->code = code;
+	return rex;
+}
+
+qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
+{
+	qse_rex_t* rex;
+
+	if (mmgr == QSE_NULL) 
+	{
+		mmgr = QSE_MMGR_GETDFL();
+
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
+
+		if (mmgr == QSE_NULL) return QSE_NULL;
+	}
+
+	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
+	if (rex == QSE_NULL) return QSE_NULL;
+
+	return qse_rex_init (rex, mmgr, code);
+}
+
+static void freenode (qse_rex_node_t* node, qse_mmgr_t* mmgr)
+{
+	if (node->id == QSE_REX_NODE_CSET)
+	{
+		if (node->u.cset.member != QSE_NULL) 
+			qse_str_close (node->u.cset.member);
+	}
+
+	QSE_MMGR_FREE (mmgr, node);
+}
+
+static void freeallnodes (qse_rex_node_t* start)
+{
+	qse_rex_node_t* x, * y;
 	qse_mmgr_t* mmgr;
 
-	struct
+	QSE_ASSERT (start->id == QSE_REX_NODE_START);
+
+	mmgr = start->u.s.mmgr;
+	x = start->u.s.link;
+	while (x != QSE_NULL)
 	{
-		struct
-		{
-			const qse_char_t* ptr;
-			const qse_char_t* end;
-		} str;
+		y = x->link;
+		freenode (x, mmgr);
+		x = y;
+	}
 
-		struct
-		{
-			const qse_char_t* ptr;
-			const qse_char_t* end;
-		} realstr;
-	} match;
+	QSE_MMGR_FREE (mmgr, start);
+}
 
-	struct
-	{
-		qse_size_t max;
-		qse_size_t cur;
-	} depth;
-
-	int option;
-	qse_rex_errnum_t errnum;
-};
-
-struct match_t
+void qse_rex_fini (qse_rex_t* rex)
 {
-	const qse_char_t* match_ptr;
+	if (rex->code != QSE_NULL) 
+	{
+		freeallnodes (rex->code);
+		rex->code = QSE_NULL;
+	}
+}
 
-	qse_bool_t matched;
-	qse_size_t match_len;
+void qse_rex_close (qse_rex_t* rex)
+{
+	qse_rex_fini (rex);
+	QSE_MMGR_FREE (rex->mmgr, rex);
+}
 
-	const qse_byte_t* branch;
-	const qse_byte_t* branch_end;
-};
+qse_rex_node_t* qse_rex_yield (qse_rex_t* rex)
+{
+	qse_rex_node_t* code = rex->code;
+	rex->code = QSE_NULL;
+	return code;
+}
 
-#include <qse/pack1.h>
+int qse_rex_getoption (qse_rex_t* rex)
+{
+	return rex->option;
+}
 
-QSE_BEGIN_PACKED_STRUCT (atom_t)
-	short cmd;         /* CMD_XXX */
-	short negate;      /* only for CMD_CHARSET */
-	qse_size_t lbound; /* lower bound */
-	qse_size_t ubound; /* upper bound */
-QSE_END_PACKED_STRUCT ()
+void qse_rex_setoption (qse_rex_t* rex, int opts)
+{
+	rex->option = opts;
+}
 
-/* compiled regular expression header */
-QSE_BEGIN_PACKED_STRUCT (rhdr_t)
-	qse_size_t nb;  /* number of branches */
-	qse_size_t el;  /* expression length in bytes */
-QSE_END_PACKED_STRUCT ()
+qse_rex_errnum_t qse_rex_geterrnum (qse_rex_t* rex)
+{
+	return rex->errnum;
+}
 
-/* branch header */
-QSE_BEGIN_PACKED_STRUCT (bhdr_t)
-	qse_size_t na;  /* number of atoms */
-	qse_size_t bl;  /* branch length in bytes */
-QSE_END_PACKED_STRUCT ()
-
-/* character set header */
-QSE_BEGIN_PACKED_STRUCT (cshdr_t)
-	qse_size_t csc; /* count */
-	qse_size_t csl; /* length */
-QSE_END_PACKED_STRUCT ()
-
-#include <qse/unpack.h>
-
-typedef const qse_byte_t* (*atom_matcher_t) (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-
-#define NCHARS_REMAINING(rex) ((rex)->ptn.end - (rex)->ptn.curp)
+const qse_char_t* qse_rex_geterrmsg (qse_rex_t* rex)
+{
+	static const qse_char_t* errstr[] = 
+	{
+		QSE_T("no error"),
+		QSE_T("no sufficient memory available"),
+		QSE_T("no expression compiled"),
+		QSE_T("recursion too deep"),
+		QSE_T("right parenthesis expected"),
+		QSE_T("right bracket expected"),
+		QSE_T("right brace expected"),
+		QSE_T("colon expected"),
+		QSE_T("invalid character range"),
+		QSE_T("invalid character class"),
+		QSE_T("invalid occurrence bound"),
+		QSE_T("special character at wrong position"),
+		QSE_T("premature expression end")
+	};
 	
-#define NEXT_CHAR(rex,level) \
-	do { if (next_char(rex,level) == -1) return -1; } while (0)
-
-#define ADD_CODE(rex,data,len) \
-	do { if (add_code(rex,data,len) == -1) return -1; } while (0)
-
-static int build_pattern (builder_t* rex);
-static int build_pattern0 (builder_t* rex);
-static int build_branch (builder_t* rex);
-static int build_atom (builder_t* rex);
-static int build_atom_charset (builder_t* rex, atom_t* cmd);
-static int build_atom_occ (builder_t* rex, atom_t* cmd);
-static int build_atom_cclass (builder_t* rex, qse_char_t* cc);
-static int build_atom_occ_range (builder_t* rex, atom_t* cmd);
-
-static int next_char (builder_t* rex, int level);
-static int add_code (builder_t* rex, void* data, qse_size_t len);
-
-static const qse_byte_t* match_pattern (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_branch (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_branch_body (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_branch_body0 (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_atom (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_bol (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_eol (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_any_char (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_ord_char (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_charset (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-static const qse_byte_t* match_group (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat);
-
-static const qse_byte_t* match_occurrences (
-	matcher_t* matcher, qse_size_t si, const qse_byte_t* p,
-	qse_size_t lbound, qse_size_t ubound, match_t* mat);
-
-static qse_bool_t __test_charset (
-	matcher_t* matcher, const qse_byte_t* p, qse_size_t csc, qse_char_t c);
-
-static qse_bool_t cc_isalnum (qse_char_t c)
-{
-	return QSE_ISALNUM (c);
+	return (rex->errnum >= 0 && rex->errnum < QSE_COUNTOF(errstr))?
+		errstr[rex->errnum]: QSE_T("unknown error");
 }
 
-static qse_bool_t cc_isalpha (qse_char_t c)
+static qse_rex_node_t* newnode (comp_t* c, qse_rex_node_id_t id)
 {
-	return QSE_ISALPHA (c);
-}
+	qse_rex_node_t* node;
 
-static qse_bool_t cc_isblank (qse_char_t c)
-{
-	return c == QSE_T(' ') || c == QSE_T('\t');
-}
+	/* TODO: performance optimization.
+	 *       preallocate a large chunk of memory and allocate a node
+	 *       from the chunk. increase the chunk if it has been used up.
+	 */
 
-static qse_bool_t cc_iscntrl (qse_char_t c)
-{
-	return QSE_ISCNTRL (c);
-}
-
-static qse_bool_t cc_isdigit (qse_char_t c)
-{
-	return QSE_ISDIGIT (c);
-}
-
-static qse_bool_t cc_isgraph (qse_char_t c)
-{
-	return QSE_ISGRAPH (c);
-}
-
-static qse_bool_t cc_islower (qse_char_t c)
-{
-	return QSE_ISLOWER (c);
-}
-
-static qse_bool_t cc_isprint (qse_char_t c)
-{
-	return QSE_ISPRINT (c);
-}
-
-static qse_bool_t cc_ispunct (qse_char_t c)
-{
-	return QSE_ISPUNCT (c);
-}
-
-static qse_bool_t cc_isspace (qse_char_t c)
-{
-	return QSE_ISSPACE (c);
-}
-
-static qse_bool_t cc_isupper (qse_char_t c)
-{
-	return QSE_ISUPPER (c);
-}
-
-static qse_bool_t cc_isxdigit (qse_char_t c)
-{
-	return QSE_ISXDIGIT (c);
-}
-
-
-#if 0
-XXX
-static const qse_byte_t* __print_pattern (qse_awk_t* awk, const qse_byte_t* p);
-static const qse_byte_t* __print_branch (qse_awk_t* awk, const qse_byte_t* p);
-static const qse_byte_t* __print_atom (qse_awk_t* awk, const qse_byte_t* p);
-#endif
-
-struct __char_class_t
-{
-	const qse_char_t* name;
-	qse_size_t name_len;
-	qse_bool_t (*func) (qse_char_t c);
-}; 
-
-static struct __char_class_t __char_class[] =
-{
-	{ QSE_T("alnum"),  5, cc_isalnum },
-	{ QSE_T("alpha"),  5, cc_isalpha },
-	{ QSE_T("blank"),  5, cc_isblank },
-	{ QSE_T("cntrl"),  5, cc_iscntrl },
-	{ QSE_T("digit"),  5, cc_isdigit },
-	{ QSE_T("graph"),  5, cc_isgraph },
-	{ QSE_T("lower"),  5, cc_islower },
-	{ QSE_T("print"),  5, cc_isprint },
-	{ QSE_T("punct"),  5, cc_ispunct },
-	{ QSE_T("space"),  5, cc_isspace },
-	{ QSE_T("upper"),  5, cc_isupper },
-	{ QSE_T("xdigit"), 6, cc_isxdigit },
-
-	/*
-	{ QSE_T("arabic"),   6, cc_isarabic },
-	{ QSE_T("chinese"),  7, cc_ischinese },
-	{ QSE_T("english"),  7, cc_isenglish },
-	{ QSE_T("japanese"), 8, cc_isjapanese },
-	{ QSE_T("korean"),   6, cc_iskorean }, 
-	{ QSE_T("thai"),     4, cc_isthai }, 
-	*/
-
-	{ QSE_NULL,          0, QSE_NULL }
-};
-
-void* qse_buildrex (
-	qse_mmgr_t* mmgr, qse_size_t depth, int option,
-	const qse_char_t* ptn, qse_size_t len, qse_rex_errnum_t* errnum)
-{
-	builder_t builder;
-
-	builder.mmgr = mmgr;
-	builder.code.capa = DEF_CODE_CAPA;
-	builder.code.size = 0;
-	builder.code.buf = (qse_byte_t*) 
-		QSE_MMGR_ALLOC (builder.mmgr, builder.code.capa);
-	if (builder.code.buf == QSE_NULL) 
+	node = (qse_rex_node_t*) 
+		QSE_MMGR_ALLOC (c->rex->mmgr, QSE_SIZEOF(qse_rex_node_t));
+	if (node == QSE_NULL) 
 	{
-		*errnum = QSE_REX_ENOMEM;
+		c->rex->errnum = QSE_REX_ENOMEM;
 		return QSE_NULL;
 	}
 
-	builder.ptn.ptr = ptn;
-	builder.ptn.end = builder.ptn.ptr + len;
-	builder.ptn.curp = builder.ptn.ptr;
+	QSE_MEMSET (node, 0, QSE_SIZEOF(*node));
+	node->id = id;
 
-	builder.ptn.curc.type = CT_EOF;
-	builder.ptn.curc.value = QSE_T('\0');
-	builder.ptn.curc.escaped = QSE_FALSE;
-
-	builder.depth.max = depth;
-	builder.depth.cur = 0;
-	builder.option = option;
-
-	if (next_char (&builder, LEVEL_TOP) == -1) 
+	if (c->start != QSE_NULL) 
 	{
-		if (errnum != QSE_NULL) *errnum = builder.errnum;
-		QSE_MMGR_FREE (builder.mmgr, builder.code.buf);
-		return QSE_NULL;
+		QSE_ASSERT (c->start->id == QSE_REX_NODE_START);
+		node->link = c->start->u.s.link;
+		c->start->u.s.link = node;
 	}
 
-	if (build_pattern (&builder) == -1) 
-	{
-		if (errnum != QSE_NULL) *errnum = builder.errnum;
-		QSE_MMGR_FREE (builder.mmgr, builder.code.buf);
-		return QSE_NULL;
-	}
-
-	if (builder.ptn.curc.type != CT_EOF)
-	{
-		if (errnum != QSE_NULL) 
-			*errnum = QSE_REX_ESPCAWP;
-
-		QSE_MMGR_FREE (builder.mmgr, builder.code.buf);
-		return QSE_NULL;
-	}
-
-	return builder.code.buf;
+	return node;
 }
 
-int qse_matchrex (
-	qse_mmgr_t* mmgr, qse_size_t depth,
-	void* code, int option,
-	const qse_char_t* str, qse_size_t len, 
-	const qse_char_t* substr, qse_size_t sublen, 
-	qse_cstr_t* match, qse_rex_errnum_t* errnum)
+static qse_rex_node_t* newstartnode (comp_t* c)
 {
-	matcher_t matcher;
-	match_t mat;
-	qse_size_t offset = 0;
-
-	matcher.mmgr = mmgr;
-
-	/* store the source string */
-	matcher.match.str.ptr = substr;
-	matcher.match.str.end = substr + sublen;
-
-	matcher.match.realstr.ptr = str;
-	matcher.match.realstr.end = str + len;
-
-	matcher.depth.max = depth;
-	matcher.depth.cur = 0;
-	matcher.option = option;
-
-	mat.matched = QSE_FALSE;
-	/* TODO: should it allow an offset here??? */
-	mat.match_ptr = substr + offset;
-
-	while (mat.match_ptr <= matcher.match.str.end)
+	qse_rex_node_t* n = newnode (c, QSE_REX_NODE_START);
+	if (n != QSE_NULL) 
 	{
-		if (match_pattern (&matcher, code, &mat) == QSE_NULL) 
-		{
-			if (errnum != QSE_NULL) *errnum = matcher.errnum;
-			return -1;
-		}
-
-		if (mat.matched)
-		{
-			if (match != QSE_NULL) 
-			{
-				match->ptr = mat.match_ptr;
-				match->len = mat.match_len;
-			}
-
-			break;
-		}
-
-		mat.match_ptr++;
+		n->u.s.mmgr = c->rex->mmgr;
+		n->u.s.link = QSE_NULL;
 	}
-
-	return (mat.matched)? 1: 0;
-}
-
-void qse_freerex (qse_mmgr_t* mmgr, void* code)
-{
-	QSE_ASSERT (code != QSE_NULL);
-	QSE_MMGR_FREE (mmgr, code);
-}
-
-qse_bool_t qse_isemptyrex (void* code)
-{
-	rhdr_t* rhdr = (rhdr_t*) code;
-	QSE_ASSERT (rhdr != QSE_NULL);
-
-	/* an empty regular expression look like:
-	 *  | expression                     | 
-	 *  | header         | branch        |
-	 *  |                | branch header |
-	 *  | NB(1) | EL(16) | NA(1) | BL(8) | */
-	return (rhdr->nb == 1 && 
-	        rhdr->el == QSE_SIZEOF(qse_size_t)*4)? QSE_TRUE: QSE_FALSE;
-}
-
-static int build_pattern (builder_t* builder)
-{
-	int n;
-
-	if (builder->depth.max > 0 && builder->depth.cur >= builder->depth.max)
-	{
-		builder->errnum = QSE_REX_ERECUR;
-		return -1;
-	}
-
-	builder->depth.cur++;
-	n = build_pattern0 (builder);
-	builder->depth.cur--;
-
 	return n;
 }
 
-static int build_pattern0 (builder_t* builder)
+static qse_rex_node_t* newendnode (comp_t* c)
 {
-	qse_size_t zero = 0;
-	qse_size_t old_size;
-	qse_size_t pos_nb;
-	rhdr_t* rhdr;
-	int n;
-
-	old_size = builder->code.size;
-
-	/* secure space for header and set the header fields to zero */
-	pos_nb = builder->code.size;
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-
-	/* handle the first branch */
-	n = build_branch (builder);
-	if (n == -1) return -1;
-	if (n == 0) 
-	{
-		/* if the pattern is empty, the control reaches here */
-		return 0;
-	}
-
-	rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
-	rhdr->nb++;
-
-	/* handle subsequent branches if any */
-	while (builder->ptn.curc.type == CT_SPECIAL && 
-	       builder->ptn.curc.value == QSE_T('|'))
-	{
-		NEXT_CHAR (builder, LEVEL_TOP);
-
-		n = build_branch(builder);
-		if (n == -1) return -1;
-		if (n == 0) 
-		{
-			/* if the pattern ends with a vertical bar(|),
-			 * this block can be reached. however, such a 
-			 * pattern is highly discouraged */
-			break;
-		}
-
-		rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
-		rhdr->nb++;
-	}
-
-	rhdr = (rhdr_t*)&builder->code.buf[pos_nb];
-	rhdr->el = builder->code.size - old_size;
-
-	return 1;
+	return newnode (c, QSE_REX_NODE_END);
 }
 
-static int build_branch (builder_t* builder)
+static qse_rex_node_t* newnopnode (comp_t* c)
 {
-	int n;
-	qse_size_t zero = 0;
-	qse_size_t old_size;
-	qse_size_t pos_na;
-	atom_t* cmd;
-	bhdr_t* bhdr;
-
-	old_size = builder->code.size;
-
-	pos_na = builder->code.size;
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-
-	while (1)
-	{
-		cmd = (atom_t*)&builder->code.buf[builder->code.size];
-
-		n = build_atom (builder);
-		if (n == -1) 
-		{
-			builder->code.size = old_size;
-			return -1;
-		}
-
-		if (n == 0) break; /* no atom */
-
-		n = build_atom_occ (builder, cmd);
-		if (n == -1)
-		{
-			builder->code.size = old_size;
-			return -1;
-		}
-
-		/* n == 0  no bound character. just continue */
-		/* n == 1  bound has been applied by build_atom_occ */
-
-		bhdr = (bhdr_t*)&builder->code.buf[pos_na];
-		bhdr->na++;
-	}
-
-	bhdr = (bhdr_t*)&builder->code.buf[pos_na];
-	bhdr->bl = builder->code.size - old_size;
-
-	return (builder->code.size == old_size)? 0: 1;
+	return newnode (c, QSE_REX_NODE_NOP);
 }
 
-static int build_atom (builder_t* builder)
+static qse_rex_node_t* newgroupnode (comp_t* c)
 {
-	int n;
-	atom_t tmp;
-
-	if (builder->ptn.curc.type == CT_EOF) return 0;
-
-	if (builder->ptn.curc.type == CT_SPECIAL)
-	{
-		if (builder->ptn.curc.value == QSE_T('('))
-		{
-			tmp.cmd = CMD_GROUP;
-			tmp.negate = 0;
-			tmp.lbound = 1;
-			tmp.ubound = 1;
-			ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-
-			NEXT_CHAR (builder, LEVEL_TOP);
-
-			n = build_pattern (builder);
-			if (n == -1) return -1;
-
-			if (builder->ptn.curc.type != CT_SPECIAL || 
-			    builder->ptn.curc.value != QSE_T(')')) 
-			{
-				builder->errnum = QSE_REX_ERPAREN;
-				return -1;
-			}
-		}
-		else if (builder->ptn.curc.value == QSE_T('^'))
-		{
-			tmp.cmd = CMD_BOL;
-			tmp.negate = 0;
-			tmp.lbound = 1;
-			tmp.ubound = 1;
-			ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-		}
-		else if (builder->ptn.curc.value == QSE_T('$'))
-		{
-			tmp.cmd = CMD_EOL;
-			tmp.negate = 0;
-			tmp.lbound = 1;
-			tmp.ubound = 1;
-			ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-		}
-		else if (builder->ptn.curc.value == QSE_T('.'))
-		{
-			tmp.cmd = CMD_ANY_CHAR;
-			tmp.negate = 0;
-			tmp.lbound = 1;
-			tmp.ubound = 1;
-			ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-		}
-		else if (builder->ptn.curc.value == QSE_T('['))
-		{
-			atom_t* cmd;
-
-			cmd = (atom_t*)&builder->code.buf[builder->code.size];
-
-			tmp.cmd = CMD_CHARSET;
-			tmp.negate = 0;
-			tmp.lbound = 1;
-			tmp.ubound = 1;
-			ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-
-			NEXT_CHAR (builder, LEVEL_CHARSET);
-
-			n = build_atom_charset (builder, cmd);
-			if (n == -1) return -1;
-
-			QSE_ASSERT (n != 0);
-
-			if (builder->ptn.curc.type != CT_SPECIAL ||
-			    builder->ptn.curc.value != QSE_T(']'))
-			{
-				builder->errnum = QSE_REX_ERBRACK;
-				return -1;
-			}
-
-		}
-		else return 0;
-
-		NEXT_CHAR (builder, LEVEL_TOP);
-		return 1;
-	}
-	else 
-	{
-		QSE_ASSERT (builder->ptn.curc.type == CT_NORMAL);
-
-		tmp.cmd = CMD_ORD_CHAR;
-		tmp.negate = 0;
-		tmp.lbound = 1;
-		tmp.ubound = 1;
-		ADD_CODE (builder, &tmp, QSE_SIZEOF(tmp));
-
-		ADD_CODE (builder, 
-			&builder->ptn.curc.value, 
-			QSE_SIZEOF(builder->ptn.curc.value));
-		NEXT_CHAR (builder, LEVEL_TOP);
-
-		return 1;
-	}
+	return newnode (c, QSE_REX_NODE_GROUP);
 }
 
-static int build_atom_charset (builder_t* builder, atom_t* cmd)
+static qse_rex_node_t* newgroupendnode (comp_t* c, qse_rex_node_t* group)
 {
-	qse_size_t zero = 0;
-	qse_size_t old_size;
-	qse_size_t pos_csc;
-	cshdr_t* cshdr;
-
-	old_size = builder->code.size;
-
-	pos_csc = builder->code.size;
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-	ADD_CODE (builder, &zero, QSE_SIZEOF(zero));
-
-	if (builder->ptn.curc.type == CT_NORMAL &&
-	    builder->ptn.curc.value == QSE_T('^')) 
-	{
-		cmd->negate = 1;
-		NEXT_CHAR (builder, LEVEL_CHARSET);
-	}
-
-	while (builder->ptn.curc.type == CT_NORMAL)
-	{
-		qse_char_t c0, c1, c2;
-		int cc = 0;
-
-		c1 = builder->ptn.curc.value;
-		NEXT_CHAR(builder, LEVEL_CHARSET);
-
-		if (c1 == QSE_T('[') &&
-		    builder->ptn.curc.type == CT_NORMAL &&
-		    builder->ptn.curc.value == QSE_T(':'))
-		{
-			if (build_atom_cclass (builder, &c1) == -1) return -1;
-			cc = cc | 1;
-		}
-
-		c2 = c1;
-		if (builder->ptn.curc.type == CT_NORMAL &&
-		    builder->ptn.curc.value == QSE_T('-') && 
-		    builder->ptn.curc.escaped == QSE_FALSE)
-		{
-			NEXT_CHAR (builder, LEVEL_CHARSET);
-
-			if (builder->ptn.curc.type == CT_NORMAL)
-			{
-				c2 = builder->ptn.curc.value;
-				NEXT_CHAR (builder, LEVEL_CHARSET);
-
-				if (c2 == QSE_T('[') &&
-				    builder->ptn.curc.type == CT_NORMAL &&
-				    builder->ptn.curc.value == QSE_T(':'))
-				{
-					if (build_atom_cclass (builder, &c2) == -1)
-					{
-						return -1;
-					}
-
-					cc = cc | 2;
-				}
-			}	
-			else cc = cc | 4;
-		}
-
-
-		if (cc == 0 || cc == 4)
-		{
-			if (c1 == c2)
-			{
-				c0 = CHARSET_ONE;
-				ADD_CODE (builder, &c0, QSE_SIZEOF(c0));
-				ADD_CODE (builder, &c1, QSE_SIZEOF(c1));
-			}
-			else
-			{
-				c0 = CHARSET_RANGE;
-				ADD_CODE (builder, &c0, QSE_SIZEOF(c0));
-				ADD_CODE (builder, &c1, QSE_SIZEOF(c1));
-				ADD_CODE (builder, &c2, QSE_SIZEOF(c2));
-			}
-		}
-		else if (cc == 1)
-		{
-			c0 = CHARSET_CLASS;
-			ADD_CODE (builder, &c0, QSE_SIZEOF(c0));
-			ADD_CODE (builder, &c1, QSE_SIZEOF(c1));
-		}
-		else
-		{
-			/* invalid range */
-		#ifdef DEBUG_REX
-			DPUTS (QSE_T("build_atom_charset: invalid character set range\n"));
-		#endif
-			builder->errnum = QSE_REX_ECRANGE;
-			return -1;
-		}
-
-		cshdr = (cshdr_t*)&builder->code.buf[pos_csc];
-		cshdr->csc++;
-	}
-
-	cshdr = (cshdr_t*)&builder->code.buf[pos_csc];
-	cshdr->csl = builder->code.size - old_size;
-
-	return 1;
+	qse_rex_node_t* n = newnode (c, QSE_REX_NODE_GROUPEND);
+	if (n != QSE_NULL) n->u.ge.group = group;
+	return n;
 }
 
-static int build_atom_cclass (builder_t* builder, qse_char_t* cc)
+static qse_rex_node_t* newcharnode (comp_t* c, qse_char_t ch)
 {
-	const struct __char_class_t* ccp = __char_class;
-	qse_size_t len = builder->ptn.end - builder->ptn.curp;
-
-	while (ccp->name != QSE_NULL)
-	{
-		if (qse_strxbeg (builder->ptn.curp, len, ccp->name) != QSE_NULL) break;
-		ccp++;
-	}
-
-	if (ccp->name == QSE_NULL)
-	{
-		/* wrong class name */
-	#ifdef DEBUG_REX
-		DPUTS (QSE_T("build_atom_cclass: wrong class name\n"));
-	#endif
-		builder->errnum = QSE_REX_ECCLASS;
-		return -1;
-	}
-
-	builder->ptn.curp += ccp->name_len;
-
-	NEXT_CHAR (builder, LEVEL_CHARSET);
-	if (builder->ptn.curc.type != CT_NORMAL ||
-	    builder->ptn.curc.value != QSE_T(':'))
-	{
-	#ifdef DEBUG_REX
-		DPUTS (QSE_T("build_atom_cclass: a colon(:) expected\n"));
-	#endif
-		builder->errnum = QSE_REX_ECOLON;
-		return -1;
-	}
-
-	NEXT_CHAR (builder, LEVEL_CHARSET); 
-	
-	/* ] happens to be the charset ender ] */
-	if (builder->ptn.curc.type != CT_SPECIAL ||
-	    builder->ptn.curc.value != QSE_T(']'))
-	{
-	#ifdef DEBUG_REX
-		DPUTS (QSE_T("build_atom_cclass: ] expected\n"));
-	#endif
-		builder->errnum = QSE_REX_ERBRACK;	
-		return -1;
-	}
-
-	NEXT_CHAR (builder, LEVEL_CHARSET);
-
-	*cc = (qse_char_t)(ccp - __char_class);
-	return 1;
+	qse_rex_node_t* n = newnode (c, QSE_REX_NODE_CHAR);
+	if (n != QSE_NULL) n->u.c = ch;
+	return n;
 }
 
-static int build_atom_occ (builder_t* builder, atom_t* cmd)
+static qse_rex_node_t* newbranchnode (
+	comp_t* c, qse_rex_node_t* left, qse_rex_node_t* right)
 {
-	if (builder->ptn.curc.type != CT_SPECIAL) return 0;
-
-	switch (builder->ptn.curc.value)
+	qse_rex_node_t* n = newnode (c, QSE_REX_NODE_BRANCH);
+	if (n != QSE_NULL)
 	{
-		case QSE_T('+'):
-		{
-			cmd->lbound = 1;
-			cmd->ubound = BOUND_MAX;
-			NEXT_CHAR(builder, LEVEL_TOP);
-			return 1;
-		}
-
-		case QSE_T('*'):
-		{
-			cmd->lbound = 0;
-			cmd->ubound = BOUND_MAX;
-			NEXT_CHAR(builder, LEVEL_TOP);
-			return 1;
-		}
-
-		case QSE_T('?'):
-		{
-			cmd->lbound = 0;
-			cmd->ubound = 1;
-			NEXT_CHAR(builder, LEVEL_TOP);
-			return 1;
-		}
-
-		case QSE_T('{'):
-		{
-			NEXT_CHAR (builder, LEVEL_RANGE);
-
-			if (build_atom_occ_range(builder, cmd) == -1) return -1;
-
-			if (builder->ptn.curc.type != CT_SPECIAL || 
-			    builder->ptn.curc.value != QSE_T('}')) 
-			{
-				builder->errnum = QSE_REX_ERBRACE;
-				return -1;
-			}
-
-			NEXT_CHAR (builder, LEVEL_TOP);
-			return 1;
-		}
+		n->u.b.left = left; 
+		n->u.b.right = right;
 	}
-
-	return 0;
+	return n;
 }
 
-static int build_atom_occ_range (builder_t* builder, atom_t* cmd)
-{
-	qse_size_t bound;
-
-/* TODO: should allow white spaces in the range???
-what if it is not in the raight format? convert it to ordinary characters?? */
-	bound = 0;
-	while (builder->ptn.curc.type == CT_NORMAL &&
-	       (builder->ptn.curc.value >= QSE_T('0') && 
-	        builder->ptn.curc.value <= QSE_T('9')))
-	{
-		bound = bound * 10 + builder->ptn.curc.value - QSE_T('0');
-		NEXT_CHAR (builder, LEVEL_RANGE);
-	}
-
-	cmd->lbound = bound;
-
-	if (builder->ptn.curc.type == CT_SPECIAL &&
-	    builder->ptn.curc.value == QSE_T(',')) 
-	{
-		NEXT_CHAR (builder, LEVEL_RANGE);
-
-		if (builder->ptn.curc.type == CT_NORMAL &&
-		    (builder->ptn.curc.value >= QSE_T('0') && 
-		     builder->ptn.curc.value <= QSE_T('9')))
-		{
-			bound = 0;
-
-			do
-			{
-				bound = bound * 10 + builder->ptn.curc.value - QSE_T('0');
-				NEXT_CHAR (builder, LEVEL_RANGE);
-			}
-			while (builder->ptn.curc.type == CT_NORMAL &&
-			       (builder->ptn.curc.value >= QSE_T('0') && 
-			        builder->ptn.curc.value <= QSE_T('9')));
-
-			cmd->ubound = bound;
-		}
-		else cmd->ubound = BOUND_MAX;
-	}
-	else cmd->ubound = cmd->lbound;
-
-	if (cmd->lbound > cmd->ubound)
-	{
-		/* invalid occurrences range */
-		builder->errnum = QSE_REX_EBOUND;
-		return -1;
-	}
-
-	return 0;
-}
-
-#define CHECK_END(builder) \
+#define CHECK_END(com) \
 	do { \
-		if (builder->ptn.curp >= builder->ptn.end) \
+		if (com->ptr >= com->end) \
 		{ \
-			builder->errnum = QSE_REX_EPREEND; \
+			com->rex->errnum = QSE_REX_EPREEND; \
 			return -1; \
 		} \
 	} while(0)
@@ -970,1055 +340,1718 @@ what if it is not in the raight format? convert it to ordinary characters?? */
 	 (c >= QSE_T('A') && c <= QSE_T('F'))? c-QSE_T('A')+10: \
 	                                       c-QSE_T('a')+10)
 
-static int next_char (builder_t* builder, int level)
+#define IS_SPE(com,ch) ((com)->c.value == (ch) && !(com)->c.escaped)
+#define IS_ESC(com) ((com)->c.escaped)
+#define IS_EOF(com) ((com)->c.value == QSE_CHAR_EOF)
+
+#define getc_noesc(c) getc(c,1)
+#define getc_esc(c)   getc(c,0)
+
+static int getc (comp_t* com, int noesc)
 {
-	if (builder->ptn.curp >= builder->ptn.end)
+	qse_char_t c;
+
+	if (com->ptr >= com->end)
 	{
-		builder->ptn.curc.type = CT_EOF;
-		builder->ptn.curc.value = QSE_T('\0');
-		builder->ptn.curc.escaped = QSE_FALSE;
+		com->c.value = QSE_CHAR_EOF;
+		com->c.escaped = 0;
 		return 0;
 	}
 
-	builder->ptn.curc.type = CT_NORMAL;
-	builder->ptn.curc.value = *builder->ptn.curp++;
-	builder->ptn.curc.escaped = QSE_FALSE;
+	com->c.value = *com->ptr++;
+	com->c.escaped = 0;
 
-	if (builder->ptn.curc.value == QSE_T('\\'))
-	{	       
-		qse_char_t c;
+	if (noesc || com->c.value != QSE_T('\\')) return 0;
 
-		CHECK_END (builder);
-		c = *builder->ptn.curp++;
 
-		if (c == QSE_T('n')) c = QSE_T('\n');
-		else if (c == QSE_T('r')) c = QSE_T('\r');
-		else if (c == QSE_T('t')) c = QSE_T('\t');
-		else if (c == QSE_T('f')) c = QSE_T('\f');
-		else if (c == QSE_T('b')) c = QSE_T('\b');
-		else if (c == QSE_T('v')) c = QSE_T('\v');
-		else if (c == QSE_T('a')) c = QSE_T('\a');
-		else if (c >= QSE_T('0') && c <= QSE_T('7')) 
+	CHECK_END (com);
+	c = *com->ptr++;
+
+	if (c == QSE_T('n')) c = QSE_T('\n');
+	else if (c == QSE_T('r')) c = QSE_T('\r');
+	else if (c == QSE_T('t')) c = QSE_T('\t');
+	else if (c == QSE_T('f')) c = QSE_T('\f');
+	else if (c == QSE_T('b')) c = QSE_T('\b');
+	else if (c == QSE_T('v')) c = QSE_T('\v');
+	else if (c == QSE_T('a')) c = QSE_T('\a');
+	else if (c >= QSE_T('0') && c <= QSE_T('7')) 
+	{
+		qse_char_t cx;
+
+		c = c - QSE_T('0');
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 		{
-			qse_char_t cx;
+			c = c * 8 + cx - QSE_T('0');
 
-			c = c - QSE_T('0');
-
-			CHECK_END (builder);
-			cx = *builder->ptn.curp++;
+			CHECK_END (com);
+			cx = *com->ptr++;
 			if (cx >= QSE_T('0') && cx <= QSE_T('7'))
 			{
 				c = c * 8 + cx - QSE_T('0');
-
-				CHECK_END (builder);
-				cx = *builder->ptn.curp++;
-				if (cx >= QSE_T('0') && cx <= QSE_T('7'))
-				{
-					c = c * 8 + cx - QSE_T('0');
-				}
 			}
 		}
-		else if (c == QSE_T('x')) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (builder);
-			cx = *builder->ptn.curp++;
-			if (IS_HEX(cx))
-			{
-				c = HEX_TO_NUM(cx);
-
-				CHECK_END (builder);
-				cx = *builder->ptn.curp++;
-				if (IS_HEX(cx))
-				{
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-	#ifdef QSE_CHAR_IS_WCHAR
-		else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (builder);
-			cx = *builder->ptn.curp++;
-			if (IS_HEX(cx))
-			{
-				qse_size_t i;
-
-				c = HEX_TO_NUM(cx);
-
-				for (i = 0; i < 3; i++)
-				{
-					CHECK_END (builder);
-					cx = *builder->ptn.curp++;
-
-					if (!IS_HEX(cx)) break;
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-		else if (c == QSE_T('U') && QSE_SIZEOF(qse_char_t) >= 4) 
-		{
-			qse_char_t cx;
-
-			CHECK_END (builder);
-			cx = *builder->ptn.curp++;
-			if (IS_HEX(cx))
-			{
-				qse_size_t i;
-
-				c = HEX_TO_NUM(cx);
-
-				for (i = 0; i < 7; i++)
-				{
-					CHECK_END (builder);
-					cx = *builder->ptn.curp++;
-
-					if (!IS_HEX(cx)) break;
-					c = c * 16 + HEX_TO_NUM(cx);
-				}
-			}
-		}
-	#endif
-
-		builder->ptn.curc.value = c;
-		builder->ptn.curc.escaped = QSE_TRUE;
-
-		return 0;
 	}
-	else
+	else if (c == QSE_T('x')) 
 	{
-		if (level == LEVEL_TOP)
+		qse_char_t cx;
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
 		{
-			if (builder->ptn.curc.value == QSE_T('[') ||
-			    builder->ptn.curc.value == QSE_T('|') ||
-			    builder->ptn.curc.value == QSE_T('^') ||
-			    builder->ptn.curc.value == QSE_T('$') ||
-			    (!(builder->option & QSE_REX_BUILD_NOBOUND) &&
-			     builder->ptn.curc.value == QSE_T('{')) ||
-			    builder->ptn.curc.value == QSE_T('+') ||
-			    builder->ptn.curc.value == QSE_T('?') ||
-			    builder->ptn.curc.value == QSE_T('*') ||
-			    builder->ptn.curc.value == QSE_T('.') ||
-			    builder->ptn.curc.value == QSE_T('(') ||
-			    builder->ptn.curc.value == QSE_T(')')) 
+			c = HEX_TO_NUM(cx);
+
+			CHECK_END (com);
+			cx = *com->ptr++;
+			if (IS_HEX(cx))
 			{
-				builder->ptn.curc.type = CT_SPECIAL;
-			}
-		}
-		else if (level == LEVEL_CHARSET)
-		{
-			if (builder->ptn.curc.value == QSE_T(']')) 
-			{
-				builder->ptn.curc.type = CT_SPECIAL;
-			}
-		}
-		else if (level == LEVEL_RANGE)
-		{
-			if (builder->ptn.curc.value == QSE_T(',') ||
-			    builder->ptn.curc.value == QSE_T('}')) 
-			{
-				builder->ptn.curc.type = CT_SPECIAL;
+				c = c * 16 + HEX_TO_NUM(cx);
 			}
 		}
 	}
+#ifdef QSE_CHAR_IS_WCHAR
+	else if (c == QSE_T('u') && QSE_SIZEOF(qse_char_t) >= 2) 
+	{
+		qse_char_t cx;
 
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
+		{
+			qse_size_t i;
+
+			c = HEX_TO_NUM(cx);
+
+			for (i = 0; i < 3; i++)
+			{
+				CHECK_END (com);
+				cx = *com->ptr++;
+
+				if (!IS_HEX(cx)) break;
+				c = c * 16 + HEX_TO_NUM(cx);
+			}
+		}
+	}
+	else if (c == QSE_T('U') && QSE_SIZEOF(qse_char_t) >= 4) 
+	{
+		qse_char_t cx;
+
+		CHECK_END (com);
+		cx = *com->ptr++;
+		if (IS_HEX(cx))
+		{
+			qse_size_t i;
+
+			c = HEX_TO_NUM(cx);
+
+			for (i = 0; i < 7; i++)
+			{
+				CHECK_END (com);
+				cx = *com->ptr++;
+
+				if (!IS_HEX(cx)) break;
+				c = c * 16 + HEX_TO_NUM(cx);
+			}
+		}
+	}
+#endif
+
+	com->c.value = c;
+	com->c.escaped = QSE_TRUE;
+
+#if 0
+	com->c = (com->ptr < com->end)? *com->ptr++: QSE_CHAR_EOF;
+if (com->c == QSE_CHAR_EOF)
+qse_printf (QSE_T("getc => <EOF>\n"));
+else qse_printf (QSE_T("getc => %c\n"), com->c);
+#endif
 	return 0;
 }
 
-static int add_code (builder_t* builder, void* data, qse_size_t len)
+struct ccinfo_t
 {
-	if (len > builder->code.capa - builder->code.size)
-	{
-		qse_size_t capa = builder->code.capa * 2;
-		qse_byte_t* tmp;
-		
-		if (capa == 0) capa = DEF_CODE_CAPA;
-		while (len > capa - builder->code.size) { capa = capa * 2; }
+	qse_cstr_t name;
+	int (*func) (exec_t* e, qse_char_t c);
+}; 
 
-		if (builder->mmgr->realloc != QSE_NULL)
+#define ISBLANK(c) ((c) == QSE_T(' ') || (c) == QSE_T('\t'))
+
+static int cc_isalnum (exec_t* e, qse_char_t c) { return QSE_ISALNUM (c); }
+static int cc_isalpha (exec_t* e, qse_char_t c) { return QSE_ISALPHA (c); }
+static int cc_isblank (exec_t* e, qse_char_t c) { return ISBLANK(c); }
+static int cc_iscntrl (exec_t* e, qse_char_t c) { return QSE_ISCNTRL (c); }
+static int cc_isdigit (exec_t* e, qse_char_t c) { return QSE_ISDIGIT (c); }
+static int cc_isgraph (exec_t* e, qse_char_t c) { return QSE_ISGRAPH (c); }
+
+static int cc_islower (exec_t* e, qse_char_t c) 
+{ 
+	if (e->rex->option & QSE_REX_IGNORECASE) return !0;
+	return QSE_ISLOWER (c); 
+}
+
+static int cc_isprint (exec_t* e, qse_char_t c) { return QSE_ISPRINT (c); }
+static int cc_ispunct (exec_t* e, qse_char_t c) { return QSE_ISPUNCT (c); }
+static int cc_isspace (exec_t* e, qse_char_t c) { return QSE_ISSPACE (c); }
+
+static int cc_isupper (exec_t* e, qse_char_t c) 
+{ 
+	if (e->rex->option & QSE_REX_IGNORECASE) return !0;
+	return QSE_ISUPPER (c); 
+}
+
+static int cc_isxdigit (exec_t* e, qse_char_t c) { return QSE_ISXDIGIT (c); }
+
+static struct ccinfo_t ccinfo[] =
+{
+	{ { QSE_T("alnum"),  5 }, cc_isalnum },
+	{ { QSE_T("alpha"),  5 }, cc_isalpha },
+	{ { QSE_T("blank"),  5 }, cc_isblank },
+	{ { QSE_T("cntrl"),  5 }, cc_iscntrl },
+	{ { QSE_T("digit"),  5 }, cc_isdigit },
+	{ { QSE_T("graph"),  5 }, cc_isgraph },
+	{ { QSE_T("lower"),  5 }, cc_islower },
+	{ { QSE_T("print"),  5 }, cc_isprint },
+	{ { QSE_T("punct"),  5 }, cc_ispunct },
+	{ { QSE_T("space"),  5 }, cc_isspace },
+	{ { QSE_T("upper"),  5 }, cc_isupper },
+	{ { QSE_T("xdigit"), 6 }, cc_isxdigit },
+
+	/*
+	{ { QSE_T("arabic"),   6 }, cc_isarabic },
+	{ { QSE_T("chinese"),  7 }, cc_ischinese },
+	{ { QSE_T("english"),  7 }, cc_isenglish },
+	{ { QSE_T("japanese"), 8 }, cc_isjapanese },
+	{ { QSE_T("korean"),   6 }, cc_iskorean }, 
+	{ { QSE_T("thai"),     4 }, cc_isthai }, 
+	*/
+
+	{ { QSE_NULL,          0 }, QSE_NULL }
+};
+
+static int charclass (comp_t* com)
+{
+	const struct ccinfo_t* ccp = ccinfo;
+	qse_size_t len = com->end - com->ptr;
+
+	while (ccp->name.ptr != QSE_NULL)
+	{
+		if (qse_strxbeg(com->ptr,len,ccp->name.ptr) != QSE_NULL) break;
+		ccp++;
+	}
+
+	if (ccp->name.ptr == QSE_NULL)
+	{
+		/* wrong class name */
+		com->rex->errnum = QSE_REX_ECCLASS;
+		return -1;
+	}
+
+	com->ptr += ccp->name.len;
+
+	if (getc_noesc(com) <= -1) return -1;
+	if (com->c.value != QSE_T(':'))
+	{
+		com->rex->errnum = QSE_REX_ECCLASS;
+		return -1;
+	}
+
+	if (getc_noesc(com) <= -1) return -1;
+	if (com->c.value != QSE_T(']'))
+	{
+		com->rex->errnum = QSE_REX_ERBRACK;	
+		return -1;
+	}
+
+	if (getc_esc(com) <= -1) return -1;
+	return (int)(ccp - ccinfo);
+}
+
+#define ADD_CSET_CODE(com,node,code,len) \
+	do { if (add_cset_code(com,node,code,len) <= -1) return -1; } while(0)
+
+static int add_cset_code (
+	comp_t* com, qse_rex_node_t* node, const qse_char_t* c, qse_size_t l)
+{
+	if (qse_str_ncat(node->u.cset.member,c,l) == (qse_size_t)-1)
+	{
+		com->rex->errnum = QSE_REX_ENOMEM;
+		return -1;
+	}
+	return 0;
+}
+
+static int charset (comp_t* com, qse_rex_node_t* node)
+{
+	QSE_ASSERT (node->id == QSE_REX_NODE_CSET);
+	QSE_ASSERT (node->u.cset.negated == 0);
+	QSE_ASSERT (node->u.cset.member	== QSE_NULL);
+
+	if (IS_SPE(com,QSE_T('^')))
+	{
+		/* negate an expression */
+		node->u.cset.negated = 1;
+		if (getc_noesc(com) <= -1) return -1;
+	}
+
+
+	/* initialize the member array */
+	node->u.cset.member = qse_str_open (com->rex->mmgr, 0, 64);
+	if (node->u.cset.member == QSE_NULL)
+	{
+		com->rex->errnum = QSE_REX_ENOMEM;
+		return -1;
+	}
+
+	/* if ] is the first character or the second character following ^,
+	 * it is treated literally */
+
+	do
+	{
+		int x1, x2;
+		qse_char_t c1, c2;
+
+		x1 = com->c.escaped;
+		c1 = com->c.value;
+		if (c1 == QSE_CHAR_EOF)
 		{
-			tmp = (qse_byte_t*) QSE_MMGR_REALLOC (
-				builder->mmgr, builder->code.buf, capa);
-			if (tmp == QSE_NULL)
+			com->rex->errnum = QSE_REX_EPREEND;
+			return -1;
+		}
+
+		if (getc_esc(com) <= -1) return -1;
+		x2 = com->c.escaped;
+		c2 = com->c.value;
+
+		if (!x1 && c1 == QSE_T('[') && 
+		    !x2 && c2 == QSE_T(':'))
+		{
+			int n;
+			qse_char_t tmp[2];
+
+			/* begins with [: 
+			 * don't read in the next character as charclass() 
+			 * matches a class name differently from other routines.
+			 * if (getc_noesc(com) <= -1) return -1;
+			 */
+			if ((n = charclass(com)) <= -1) return -1;
+			
+			QSE_ASSERT (n < QSE_TYPE_MAX(qse_char_t));
+
+			tmp[0] = QSE_REX_CSET_CLASS;
+			tmp[1] = n;
+			ADD_CSET_CODE (com, node, tmp, QSE_COUNTOF(tmp));
+		}
+		else if (!x2 && c2 == QSE_T('-'))
+		{
+			if (getc_esc(com) <= -1) return -1;
+			if (IS_SPE(com, QSE_T(']')))
 			{
-				builder->errnum = QSE_REX_ENOMEM;
+				qse_char_t tmp[4];
+
+				/* '-' is the last character in the set.
+				 * treat it literally */
+
+				tmp[0] = QSE_REX_CSET_CHAR;
+				tmp[1] = c1;
+				tmp[2] = QSE_REX_CSET_CHAR;
+				tmp[3] = c2;
+
+				ADD_CSET_CODE (com, node, tmp, QSE_COUNTOF(tmp));
+				break;
+			}
+
+			if (c1 > com->c.value)
+			{
+				/* range end must be >= range start */
+				com->rex->errnum = QSE_REX_ECRANGE;
 				return -1;
 			}
+			else if (c1 == com->c.value)
+			{
+				/* if two chars in the range are the same,
+				 * treat it as a single character */
+				qse_char_t tmp[2];
+				tmp[0] = QSE_REX_CSET_CHAR;
+				tmp[1] = c1;
+				ADD_CSET_CODE (com, node, tmp, QSE_COUNTOF(tmp));
+			}
+			else
+			{
+				qse_char_t tmp[3];
+				tmp[0] = QSE_REX_CSET_RANGE;
+				tmp[1] = c1;
+				tmp[2] = com->c.value;
+				ADD_CSET_CODE (com, node, tmp, QSE_COUNTOF(tmp));
+			}
+			
+			if (getc_esc(com) <= -1) return -1;
 		}
 		else
 		{
-			tmp = (qse_byte_t*) QSE_MMGR_ALLOC (builder->mmgr, capa);
-			if (tmp == QSE_NULL)
-			{
-				builder->errnum = QSE_REX_ENOMEM;
-				return -1;
-			}
-
-			if (builder->code.buf != QSE_NULL)
-			{
-				QSE_MEMCPY (tmp, builder->code.buf, builder->code.capa);
-				QSE_MMGR_FREE (builder->mmgr, builder->code.buf);
-			}
+			qse_char_t tmp[2];
+			tmp[0] = QSE_REX_CSET_CHAR;
+			tmp[1] = c1;
+			ADD_CSET_CODE (com, node, tmp, QSE_COUNTOF(tmp));
 		}
-
-		builder->code.buf = tmp;
-		builder->code.capa = capa;
 	}
+	while (!IS_SPE(com,QSE_T(']')));
 
-	QSE_MEMCPY (&builder->code.buf[builder->code.size], data, len);
-	builder->code.size += len;
-
+	if (getc_esc(com) <= -1) return -1;
 	return 0;
 }
 
-static const qse_byte_t* match_pattern (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
+static int occbound (comp_t* com, qse_rex_node_t* n)
 {
-	match_t mat2;
-	qse_size_t i;
-	const qse_byte_t* p;
-	rhdr_t* rhdr;
+	qse_size_t bound;
 
-	p = base;
-	rhdr = (rhdr_t*) p; p += QSE_SIZEOF(*rhdr);
-
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_pattern: NB = %u, EL = %u\n"), 
-		(unsigned int)rhdr->nb, (unsigned int)rhdr->el);
-#endif
-
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-
-	for (i = 0; i < rhdr->nb; i++)
+	bound = 0;
+	while (com->c.value >= QSE_T('0') && com->c.value <= QSE_T('9'))
 	{
-		mat2.match_ptr = mat->match_ptr;
+		bound = bound * 10 + com->c.value - QSE_T('0');
+		if (getc_noesc(com) <= -1) return -1;
+	}
 
-		p = match_branch (matcher, p, &mat2);
-		if (p == QSE_NULL) return QSE_NULL;
+	n->occ.min = bound;
 
-		if (mat2.matched)
+	if (com->c.value == QSE_T(',')) 
+	{
+		if (getc_noesc(com) <= -1) return -1;
+
+		if (com->c.value >= QSE_T('0') && com->c.value <= QSE_T('9'))
 		{
-			mat->matched = QSE_TRUE;
-			mat->match_len = mat2.match_len;
-			break;
+			bound = 0;
+
+			do
+			{
+				bound = bound * 10 + com->c.value - QSE_T('0');
+				if (getc_noesc(com) <= -1) return -1;
+			}
+			while (com->c.value >= QSE_T('0') && 
+			       com->c.value <= QSE_T('9'));
+
+			n->occ.max = bound;
+		}
+		else n->occ.max = OCC_MAX;
+	}
+	else n->occ.max = n->occ.min;
+
+	if (n->occ.min > n->occ.min)
+	{
+		/* invalid occurrences range */
+		com->rex->errnum = QSE_REX_EBOUND;
+		return -1;
+	}
+
+	if (com->c.value != QSE_T('}'))
+	{
+		com->rex->errnum = QSE_REX_ERBRACE;
+		return -1;
+	}
+
+	if (getc_esc(com) <= -1) return -1;
+	return 0;
+}
+
+static qse_rex_node_t* comp0 (comp_t* com, qse_rex_node_t* ge);
+
+static qse_rex_node_t* comp2 (comp_t* com)
+{
+	qse_rex_node_t* n;
+
+	if (!IS_ESC(com))
+	{
+		switch (com->c.value)
+		{
+			case QSE_T('('):
+			{
+				/* enter a subgroup */
+
+				qse_rex_node_t* x, * ge;
+
+				n = newgroupnode (com);
+				if (n == QSE_NULL) return QSE_NULL;
+
+				ge = newgroupendnode (com, n);
+				if (ge == QSE_NULL) return QSE_NULL;
+
+				if (getc_esc(com) <= -1) return QSE_NULL;
+
+				com->gdepth++;
+				/* pass the GROUPEND node so that the
+				 * last node in the subgroup links to
+				 * this GROUPEND node. */
+				x = comp0 (com, ge);
+				if (x == QSE_NULL) return QSE_NULL;
+
+				if (!IS_SPE(com,QSE_T(')')))
+				{
+					com->rex->errnum = QSE_REX_ERPAREN;
+					return QSE_NULL;
+				}
+
+				com->gdepth--;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+
+				n->u.g.head = x;
+				n->u.g.end = ge;
+				break;
+			}
+			
+			case QSE_T('.'):
+				n = newnode (com, QSE_REX_NODE_ANY);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+
+			case QSE_T('^'):
+				n = newnode (com, QSE_REX_NODE_BOL);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+	
+			case QSE_T('$'):
+				n = newnode (com, QSE_REX_NODE_EOL);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+
+			case QSE_T('['):
+				n = newnode (com, QSE_REX_NODE_CSET);
+				if (n == QSE_NULL) return QSE_NULL;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				if (charset(com, n) <= -1) return QSE_NULL;
+				break;
+
+			default:
+				if (com->rex->option & QSE_REX_STRICT)
+				{
+					qse_char_t spc[] = QSE_T(")?*+{");
+
+					if (com->rex->option & QSE_REX_NOBOUND)
+						spc[4] = QSE_T('\0');
+
+					if (qse_strchr (spc, com->c.value) != QSE_NULL)
+					{
+						com->rex->errnum = QSE_REX_ESPCAWP;
+						return QSE_NULL;
+					}
+				}
+
+				goto normal_char;
 		}
 	}
-
-	return base + rhdr->el;
-}
-
-static const qse_byte_t* match_branch (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	/* branch body  base+sizeof(NA)+sizeof(BL)-----+
-	 * BL base+sizeof(NA) ----------+              |
-	 * base NA ------+              |              |
-	 *               |              |              |
-	 *               |NA(qse_size_t)|BL(qse_size_t)|ATOMS.........|
-	 */
-	mat->branch = base;
-	mat->branch_end = base + ((bhdr_t*)base)->bl;
-
-	return match_branch_body (
-		matcher, (const qse_byte_t*)((bhdr_t*)base+1), mat);
-}
-
-static const qse_byte_t* match_branch_body (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* n;
-
-	if (matcher->depth.max > 0 && matcher->depth.cur >= matcher->depth.max)
+	else
 	{
-		matcher->errnum = QSE_REX_ERECUR;
-		return QSE_NULL;
+	normal_char:
+		/* normal character */
+		n = newcharnode (com, com->c.value);
+		if (n == QSE_NULL) return QSE_NULL;
+		if (getc_esc(com) <= -1) return QSE_NULL;
 	}
 
-	matcher->depth.cur++;
-	n = match_branch_body0 (matcher, base, mat);
-	matcher->depth.cur--;
+	n->occ.min = 1;
+	n->occ.max = 1;
+
+	if (!IS_ESC(com))
+	{
+		/* handle the occurrence specifier, if any */
+
+		switch (com->c.value)
+		{
+			case QSE_T('?'):
+				n->occ.min = 0;
+				n->occ.max = 1;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+			
+			case QSE_T('*'):
+				n->occ.min = 0;
+				n->occ.max = OCC_MAX;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+
+			case QSE_T('+'):
+				n->occ.min = 1;
+				n->occ.max = OCC_MAX;
+				if (getc_esc(com) <= -1) return QSE_NULL;
+				break;
+
+			case QSE_T('{'):
+				if (!(com->rex->option & QSE_REX_NOBOUND))
+				{
+					if (getc_noesc(com) <= -1) 
+						return QSE_NULL;
+					if (occbound(com,n) <= -1) 
+						return QSE_NULL;
+				}
+				break;
+		}
+	}
 
 	return n;
 }
 
-static const qse_byte_t* match_branch_body0 (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
+/* compile a list of atoms at the outermost level and/or
+ * within a subgroup */
+static qse_rex_node_t* comp1 (comp_t* c, pair_t* pair)
 {
-	const qse_byte_t* p;
-	qse_size_t match_len = 0;
+	pair->head = newnopnode (c);
+	if (pair->head == QSE_NULL) return QSE_NULL;
 
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-
-	p = base;
-
-	while (p < mat->branch_end)
-	{
-		p = match_atom (matcher, p, mat);
-		if (p == QSE_NULL) return QSE_NULL;
-
-		if (!mat->matched) break;
-
-		mat->match_ptr = &mat->match_ptr[mat->match_len];
-		match_len += mat->match_len;
-	}
-
-	if (mat->matched) mat->match_len = match_len;
-	return mat->branch_end;
-}
-
-static const qse_byte_t* match_atom (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	static atom_matcher_t matchers[] =
-	{
-		match_bol,
-		match_eol,
-		match_any_char,
-		match_ord_char,
-		match_charset,
-		match_group
-	};
-       
-	QSE_ASSERT (
-		((atom_t*)base)->cmd >= 0 && 
-		((atom_t*)base)->cmd < QSE_COUNTOF(matchers));
-
-	return matchers[((atom_t*)base)->cmd] (matcher, base, mat);
-}
-
-static const qse_byte_t* match_bol (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	const atom_t* cp;
-
-	cp = (const atom_t*)p; p += QSE_SIZEOF(*cp);
-	QSE_ASSERT (cp->cmd == CMD_BOL);
-
-	/*mat->matched = (mat->match_ptr == matcher->match.str.ptr ||
-	               (cp->lbound == cp->ubound && cp->lbound == 0));*/
-	mat->matched = (mat->match_ptr == matcher->match.realstr.ptr ||
-	               (cp->lbound == cp->ubound && cp->lbound == 0));
-	mat->match_len = 0;
-
-	return p;
-}
-
-static const qse_byte_t* match_eol (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	const atom_t* cp;
-
-	cp = (const atom_t*)p; p += QSE_SIZEOF(*cp);
-	QSE_ASSERT (cp->cmd == CMD_EOL);
-
-	/*mat->matched = (mat->match_ptr == matcher->match.str.end ||
-	               (cp->lbound == cp->ubound && cp->lbound == 0));*/
-	mat->matched = (mat->match_ptr == matcher->match.realstr.end ||
-	               (cp->lbound == cp->ubound && cp->lbound == 0));
-	mat->match_len = 0;
-
-	return p;
-}
-
-static const qse_byte_t* match_any_char (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	const atom_t* cp;
-	qse_size_t si = 0, lbound, ubound;
-
-	cp = (const atom_t*)p; p += QSE_SIZEOF(*cp);
-	QSE_ASSERT (cp->cmd == CMD_ANY_CHAR);
-
-	lbound = cp->lbound;
-	ubound = cp->ubound;
-
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-
-	/* merge the same consecutive codes */
-	while (p < mat->branch_end &&
-	       cp->cmd == ((const atom_t*)p)->cmd)
-	{
-		qse_size_t lb, ub;
-
-		lb = ((const atom_t*)p)->lbound;
-		ub = ((const atom_t*)p)->ubound;
-
-		/* perform minimal overflow check as this implementation
-		 * uses the maximum value to mean infinite.
-		 * consider the upper bound of '+' and '*'. */
-		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
-		ubound = (BOUND_MAX-ub >= ubound)? (ubound + ub): BOUND_MAX;
-
-		p += QSE_SIZEOF(*cp);
-	}
-
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_any_char: lbound = %lu, ubound = %lu\n"), 
-		(unsigned long)lbound, (unsigned long)ubound);
+#ifdef DONOT_SKIP_NOP
+	pair->head->occ.min = 1;
+	pair->head->occ.max = 1;
 #endif
 
-	/* find the longest match */
-	while (si < ubound)
+	pair->tail = pair->head;
+
+	while (!IS_SPE(c,QSE_T('|')) && !IS_EOF(c) &&
+	       !(c->gdepth > 0 && IS_SPE(c,QSE_T(')'))))
 	{
-		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-		si++;
-	}
+		qse_rex_node_t* tmp = comp2 (c);
+		if (tmp == QSE_NULL) return QSE_NULL;
 
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_any_char: max si = %lu\n"), (unsigned long)si);
-#endif
-
-	if (si >= lbound && si <= ubound)
-	{
-		p = match_occurrences (matcher, si, p, lbound, ubound, mat);
-	}
-
-	return p;
-}
-
-static const qse_byte_t* match_ord_char (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	const atom_t* cp;
-	qse_size_t si = 0, lbound, ubound;
-	qse_char_t cc;
-
-	cp = (const atom_t*)p; p += QSE_SIZEOF(*cp);
-	QSE_ASSERT (cp->cmd == CMD_ORD_CHAR);
-
-	lbound = cp->lbound; 
-	ubound = cp->ubound;
-
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_ord_char: cc=%c, lbound=%lu, ubound=%lu\n"), 
-		cc, (unsigned long)lbound, (unsigned long)ubound);
-#endif
-
-	cc = *(qse_char_t*)p; p += QSE_SIZEOF(cc);
-	if (matcher->option & QSE_REX_MATCH_IGNORECASE) cc = QSE_TOUPPER(cc);
-
-	/* merge the same consecutive codes 
-	 * for example, a{1,10}a{0,10} is shortened to a{1,20} */
-	while (p < mat->branch_end &&
-	       cp->cmd == ((const atom_t*)p)->cmd)
-	{
-		qse_size_t lb, ub;
-		qse_char_t xc;
-
-		xc = *(qse_char_t*)(p+QSE_SIZEOF(*cp));
-		if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
-			xc = QSE_TOUPPER(xc);
-
-		if (xc != cc) break;
-
-		lb = ((const atom_t*)p)->lbound;
-		ub = ((const atom_t*)p)->ubound;
-
-		/* perform minimal overflow check as this implementation
-		 * uses the maximum value to mean infinite.
-		 * consider the upper bound of '+' and '*'. */
-		lbound = (BOUND_MAX-lb >= lbound)? (lbound + lb): BOUND_MAX;
-		ubound = (BOUND_MAX-ub >= ubound)? (ubound + ub): BOUND_MAX;
-
-		p += QSE_SIZEOF(*cp) + QSE_SIZEOF(cc);
-	}
-	
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_ord_char(after merging): cc=%c, lbound=%lu, ubound=%lu\n"), 
-		cc, (unsigned long)lbound, (unsigned long)ubound);
-#endif
-
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-
-	/* find the longest match */
-	if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
-	{
-		while (si < ubound)
+		if (tmp->id == QSE_REX_NODE_GROUP)
 		{
-			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("match_ord_char: <ignorecase> %c %c\n"),
-				cc, mat->match_ptr[si]);
-		#endif
-			if (cc != QSE_TOUPPER (mat->match_ptr[si])) break;
-			si++;
+			/* simple optimization to remove an empty group */
+			qse_rex_node_t* gg = tmp->u.g.head;
+			while (gg->id == QSE_REX_NODE_NOP) gg = gg->next;
+			if (gg->id == QSE_REX_NODE_GROUPEND)
+			{
+				/* exclude an empty subgroup */
+				continue;
+			}
+		}
+
+		pair->tail->next = tmp;
+		pair->tail = tmp;
+	}
+
+	return pair->head;
+}
+
+static qse_rex_node_t* comp0 (comp_t* c, qse_rex_node_t* ge)
+{
+	qse_rex_node_t* left, * right, * tmp;
+	pair_t xpair;
+
+	left = comp1 (c, &xpair);
+	if (left == QSE_NULL) return QSE_NULL;
+	xpair.tail->next = ge;
+
+	while (IS_SPE(c,QSE_T('|')))
+	{
+		if (getc_esc(c) <= -1) return QSE_NULL;
+		
+		right = comp1 (c, &xpair);
+		if (right == QSE_NULL) return QSE_NULL;
+
+		xpair.tail->next = ge;
+
+		tmp = newbranchnode (c, left, right);
+		if (tmp == QSE_NULL) return QSE_NULL;
+
+		left = tmp;
+	} 
+
+	return left;
+}
+
+qse_rex_node_t* qse_rex_comp (
+	qse_rex_t* rex, const qse_char_t* ptr, qse_size_t len)
+{
+	comp_t c;
+	qse_rex_node_t* end, * body;
+
+	c.rex = rex;
+	c.re.ptr = ptr;
+	c.re.len = len;	
+
+	c.ptr = ptr;
+	c.end = ptr + len;
+
+	c.c.value = QSE_CHAR_EOF;
+
+	c.gdepth = 0;
+	c.start = QSE_NULL;
+
+	/* read the first character */
+	if (getc_esc(&c) <= -1) return QSE_NULL;
+
+	c.start = newstartnode (&c);
+	if (c.start == QSE_NULL) return QSE_NULL;
+
+	end = newendnode (&c);
+	if (end == QSE_NULL)
+	{
+		freenode (c.start, c.rex->mmgr);
+		return QSE_NULL;
+	}
+
+	body = comp0 (&c, end);
+	if (body == QSE_NULL) 
+	{
+		freeallnodes (c.start);
+		return QSE_NULL;
+	}
+
+	c.start->next = body;
+	if (rex->code != QSE_NULL) freeallnodes (rex->code);
+	rex->code = c.start;
+
+	return rex->code;
+}
+
+static void freegroupstackmembers (group_t* gs, qse_mmgr_t* mmgr)
+{
+	while (gs != QSE_NULL)
+	{
+		group_t* next = gs->next;
+		QSE_MMGR_FREE (mmgr, gs);
+		gs = next;
+	}
+}
+
+static void freegroupstack (group_t* gs, qse_mmgr_t* mmgr)
+{
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+
+	freegroupstackmembers (gs, mmgr);
+}
+
+
+static void refupgroupstack (group_t* gs)
+{
+	if (gs != QSE_NULL)
+	{
+		QSE_ASSERTX (gs->node == QSE_NULL, 
+			"The head of a group stack must point to QSE_NULL for "
+			"management purpose.");
+		gs->occ++;
+	}
+}
+
+static void refdowngroupstack (group_t* gs, qse_mmgr_t* mmgr)
+{
+	if (gs != QSE_NULL)
+	{
+		QSE_ASSERTX (gs->node == QSE_NULL, 
+			"The head of a group stack must point to QSE_NULL for "
+			"management purpose.");
+		if (--gs->occ <= 0)
+		{
+			freegroupstack (gs, mmgr);
 		}
 	}
-	else
+}
+
+static group_t* dupgroupstackmembers (exec_t* e, group_t* g)
+{
+	group_t* yg, * xg = QSE_NULL;
+
+	QSE_ASSERT (g != QSE_NULL);
+
+	if (g->next != QSE_NULL) 
 	{
-		while (si < ubound)
+		/* TODO: make it non recursive or 
+		 *       implement stack overflow protection */
+		xg = dupgroupstackmembers (e, g->next);
+		if (xg == QSE_NULL) return QSE_NULL;
+	}
+
+	yg = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*yg));
+	if (yg == QSE_NULL)
+	{
+		if (xg != QSE_NULL) freegroupstack (xg, e->rex->mmgr);
+		e->rex->errnum = QSE_REX_ENOMEM;
+		return QSE_NULL;
+	}
+
+	QSE_MEMCPY (yg, g, QSE_SIZEOF(*yg));
+	yg->next = xg;
+
+	return yg;
+}
+
+static group_t* dupgroupstack (exec_t* e, group_t* gs)
+{
+	group_t* head;
+
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+
+	head = dupgroupstackmembers (e, gs);
+	if (head == QSE_NULL) return QSE_NULL;
+
+	QSE_ASSERTX (
+		head->node == QSE_NULL && 
+		head->node == gs->node && 
+		head->occ == gs->occ,
+		"The duplicated stack head must not be corrupted"
+	);
+
+	/* reset the reference count of a duplicated stack */
+	head->occ = 0;
+	return head;
+}
+
+/* push 'gn' to the group stack 'gs'.
+ * if dup is non-zero, the group stack is duplicated and 'gn' is pushed to 
+ * its top */
+static group_t* __groupstackpush (
+	exec_t* e, group_t* gs, qse_rex_node_t* gn, int dup)
+{
+	group_t* head, * elem;
+
+	QSE_ASSERT (gn->id == QSE_REX_NODE_GROUP);
+
+	if (gs == QSE_NULL)
+	{
+		/* gn is the first group pushed. no stack yet.
+		 * create the head to store management info. */
+		head = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*head));
+		if (head == QSE_NULL)
 		{
-			if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("match_ord_char: %c %c\n"), 
-				cc, mat->match_ptr[si]);
-		#endif
-			if (cc != mat->match_ptr[si]) break;
-			si++;
+			e->rex->errnum = QSE_REX_ENOMEM;
+			return QSE_NULL;
 		}
-	}
 
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_ord_char: cc=%c, max occ=%lu, lbound=%lu, ubound=%lu\n"), 
-		cc, (unsigned long)si, (unsigned long)lbound, (unsigned long)ubound);
-#endif
-
-	if (si >= lbound && si <= ubound)
-	{
-		p = match_occurrences (matcher, si, p, lbound, ubound, mat);
-	}
-
-	return p;
-}
-
-static const qse_byte_t* match_charset (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	qse_size_t si = 0;
-	qse_bool_t n;
-	qse_char_t c;
-
-	atom_t* cp;
-	cshdr_t* cshdr;
-
-	cp = (atom_t*)p; p += QSE_SIZEOF(*cp);
-	QSE_ASSERT (cp->cmd == CMD_CHARSET);
-
-	cshdr = (cshdr_t*)p; p += QSE_SIZEOF(*cshdr);
-
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_charset: lbound=%lu, ubound=%lu\n"), 
-		(unsigned long)cp->lbound, (unsigned long)cp->ubound);
-#endif
-
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-
-	while (si < cp->ubound)
-	{
-		if (&mat->match_ptr[si] >= matcher->match.str.end) break;
-
-		c = mat->match_ptr[si];
-		if (matcher->option & QSE_REX_MATCH_IGNORECASE) c = QSE_TOUPPER(c);
-
-		n = __test_charset (matcher, p, cshdr->csc, c);
-		if (cp->negate) n = !n;
-		if (!n) break;
-
-		si++;
-	}
-
-	p = p + cshdr->csl - QSE_SIZEOF(*cshdr);
-
-#ifdef DEBUG_REX
-	qse_dprintf (
-		QSE_T("match_charset: max occurrences=%u, lbound=%u, ubound=%u\n"), 
-		(unsigned)si, (unsigned)cp->lbound, (unsigned)cp->ubound);
-#endif
-
-	if (si >= cp->lbound && si <= cp->ubound)
-	{
-		p = match_occurrences (matcher, si, p, cp->lbound, cp->ubound, mat);
-	}
-
-	return p;
-}
-
-static const qse_byte_t* match_group (
-	matcher_t* matcher, const qse_byte_t* base, match_t* mat)
-{
-	const qse_byte_t* p = base;
-	const atom_t* cp;
-	match_t mat2;
-	qse_size_t si = 0, grp_len_static[16], * grp_len, grp_len_capa;
-
-	cp = (const atom_t*)p; 
-	p += QSE_SIZEOF(*cp); /* points to a subpattern in a group */
-
-	QSE_ASSERT (cp->cmd == CMD_GROUP);
-
-	mat->matched = QSE_FALSE;
-	mat->match_len = 0;
-	
-	/* 
-	 * A grouped pattern, unlike other atoms, can match one or more 
-	 * characters. When it is requested with a variable occurrences, 
-	 * the number of characters that have matched at each occurrence 
-	 * needs to be remembered for the backtracking purpose.
-	 *
-	 * An array "grp_len" is used to store the accumulated number of 
-	 * characters. grp_len[0] is set to zero always for convenience.
-	 * grp_len[1] holds the number of characters that have matched
-	 * at the first occurrence, grp_len[2] at the second occurrence, 
-	 * and so on.
-	 *
-	 * Look at the following example
-	 *
-	 *   pattern: (abc){1,3}x   string: abcabcabcxyz
-	 *
-	 *  grp_len[3] => 9 -----------+
-	 *  grp_len[2] => 6 --------+  |
-	 *  grp_len[1] => 3 -----+  |  |
-	 *  grp_len[0] => 0 --+  |  |  |
-	 *                    |  |  |  |
-	 *                     abcabcabcxyz
-	 */
-
-	if (cp->ubound < QSE_COUNTOF(grp_len_static))
-	{
-		grp_len_capa = QSE_COUNTOF(grp_len_static);
-		grp_len = grp_len_static;
+		/* the head does not point to any group node. */
+		head->node = QSE_NULL;
+		/* the occ field is used for reference counting. 
+		 * refupgroupstack and refdowngroupstack update it. */
+		head->occ = 0;
+		/* the head links to the first actual group */
+		head->next = QSE_NULL;	
 	}
 	else 
 	{
-		grp_len_capa = cp->ubound;
-		if (grp_len_capa > 256) grp_len_capa = 256;
-
-		grp_len = (qse_size_t*) QSE_MMGR_ALLOC (
-			matcher->mmgr, QSE_SIZEOF(qse_size_t) * grp_len_capa);
-		if (grp_len == QSE_NULL)
+		if (dup)
 		{
-			matcher->errnum = QSE_REX_ENOMEM;
-			return QSE_NULL;
-		}
-	}
-
-	grp_len[si] = 0;
-
-	mat2.match_ptr = mat->match_ptr;
-	while (si < cp->ubound)
-	{
-		/* for eol($) check, it should not break when 
-		 * mat2.match_ptr == matcher->match.str.end.
-		 * matcher->match.str.end is one character past the 
-		 * actual end */
-		/*if (mat2.match_ptr >= matcher->match.str.end) break;*/
-		if (mat2.match_ptr > matcher->match.str.end) break; 
-
-		if (match_pattern (matcher, p, &mat2) == QSE_NULL) 
-		{
-			if (grp_len != grp_len_static) 
-				QSE_MMGR_FREE (matcher->mmgr, grp_len);
-			return QSE_NULL;
-		}
-		if (!mat2.matched) break;
-
-		if ((si + 1) >= grp_len_capa)
-		{
-			qse_size_t* tmp;
-
-			QSE_ASSERT (grp_len != grp_len_static);
-
-			tmp = (qse_size_t*) QSE_MMGR_REALLOC (
-				matcher->mmgr, grp_len, 
-				QSE_SIZEOF(qse_size_t) * (grp_len_capa + 256)
-			);
-			if (tmp == QSE_NULL)
-			{
-				QSE_MMGR_FREE (matcher->mmgr, grp_len);
-				return QSE_NULL;	
-			}
-
-			grp_len = tmp;
-			grp_len_capa += 256;
-		}
-
-
-		grp_len[si+1] = grp_len[si] + mat2.match_len;
-
-		if (mat2.match_len == 0) 
-		{
-/* TODO: verify this.... */
-			/* Advance to the next in case the match lengh is zero 
-			 * for (1*)*, 1* can match zero-length. 
-			 * A zero-length inner match results in zero-length no
-			 * matter how many times the outer group is requested
-			 * to match */
-			break;
-		}
-
-		mat2.match_ptr += mat2.match_len;
-		mat2.match_len = 0;
-		mat2.matched = QSE_FALSE;
-
-		si++;
-	}
-
-	/* increment p by the length of the subpattern */
-	p += *(qse_size_t*)(p+QSE_SIZEOF(qse_size_t));
-
-	/* check the occurrences */
-	if (si >= cp->lbound && si <= cp->ubound)
-	{
-		if (cp->lbound == cp->ubound || p >= mat->branch_end)
-		{
-			mat->matched = QSE_TRUE;
-			mat->match_len = grp_len[si];
-		}
-		else 
-		{
-			/* consider the pattern '(abc|def){1,3}(abc)'.
-			 * for the input abcabcabc,
-			 * '(abc|def){1,3}' should match up to the second 'abc'.
-			 * '(abc)' should match the last 'abc'.
-			 *
-			 * backtracking is needed to handle this case.
-			 */
-
-			QSE_ASSERT (cp->ubound > cp->lbound);
-
-			do
-			{
-				const qse_byte_t* tmp;
-	
-				mat2.match_ptr = &mat->match_ptr[grp_len[si]];
-				mat2.branch = mat->branch;
-				mat2.branch_end = mat->branch_end;
-	
-			#ifdef DEBUG_REX
-				qse_dprintf (
-					QSE_T("match_group: GROUP si=%d [%s]\n"),
-					(unsigned)si, mat->match_ptr);
-			#endif
-
-				tmp = match_branch_body (matcher, p, &mat2);
-				if (tmp == QSE_NULL)
-				{
-					if (grp_len != grp_len_static) 
-						QSE_MMGR_FREE (matcher->mmgr, grp_len);
-					return QSE_NULL;
-				}
-
-				if (mat2.matched)
-				{
-					mat->matched = QSE_TRUE;
-					mat->match_len = grp_len[si] + mat2.match_len;
-					p = tmp;
-					break;
-				}
-
-				if (si <= cp->lbound) break;
-				si--;
-			} 
-			while (1);
-		}
-
-	}
-
-	if (grp_len != grp_len_static) QSE_MMGR_FREE (matcher->mmgr, grp_len);
-	return p;
-}
-
-static const qse_byte_t* match_occurrences (
-	matcher_t* matcher, qse_size_t si, const qse_byte_t* p,
-	qse_size_t lbound, qse_size_t ubound, match_t* mat)
-{
-	QSE_ASSERT (si >= lbound && si <= ubound);
-	/* the match has been found */
-
-	if (lbound == ubound || p >= mat->branch_end)
-	{
-		/* if the match for fixed occurrences was 
-		 * requested or no atoms remain unchecked in 
-		 * the branch, the match is returned. */
-		mat->matched = QSE_TRUE;
-		mat->match_len = si;
-	}
-	else 
-	{
-		/* Otherwise, it checks if the remaining atoms 
-		 * match the rest of the string 
-		 * 
-		 * Let's say the caller of this function was processing
-		 * the first period character in the following example.
-		 *
-		 *     pattern: .{1,3}xx   string: xxxyy
-		 * 
-		 * It scans up to the third "x" in the string. si is set 
-		 * to 3 and p points to the first "x" in the pattern. 
-		 * It doesn't change mat.match_ptr so mat.match_ptr remains
-		 * the same.
-		 *
-		 *     si = 3    p -----+    mat.match_ptr ---+
-		 *                      |                     |
-		 *                .{1,3}xx                    xxxyy
-		 *                     
-		 *  When the code reaches here, the string pointed at by
-		 *  &mat.match_ptr[si] is tried to match against the remaining
-		 *  pattern pointed at p.
-		 *  
-		 *     &mat.match_ptr[si] ---+
-		 *                           |
-		 *                        xxxyy
-		 *
-		 * If a match is found, the match and the previous match are
-		 * merged and returned.
-		 *
-		 * If not, si is decremented by one and the match is performed
-		 * from the string pointed at by &mat.match_ptr[si].
-		 *
-		 *     &mat.match_ptr[si] --+
-		 *                          |
-		 *                        xxxyy
-		 *
-		 * This process is repeated until a match is found or si 
-		 * becomes less than lbound. (si never becomes less than
-		 * lbound in the implementation below, though)
-		 */
-
-		QSE_ASSERT (ubound > lbound);
-
-		do
-		{
-			match_t mat2;
-			const qse_byte_t* tmp;
-
-			mat2.match_ptr = &mat->match_ptr[si];
-			mat2.branch = mat->branch;
-			mat2.branch_end = mat->branch_end;
-
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("__match occurrences: si=%u [%s]\n"), 
-				(unsigned)si, mat->match_ptr);
-		#endif
-			tmp = match_branch_body (matcher, p, &mat2);
-
-			if (mat2.matched)
-			{
-				mat->matched = QSE_TRUE;
-				mat->match_len = si + mat2.match_len;
-				p = tmp;
-				break;
-			}
-
-			if (si <= lbound) break;
-			si--;
-		} 
-		while (1);
-	}
-
-	return p;
-}
-
-static qse_bool_t __test_charset (
-	matcher_t* matcher, const qse_byte_t* p, qse_size_t csc, qse_char_t c)
-{
-	qse_size_t i;
-
-	for (i = 0; i < csc; i++)
-	{
-		qse_char_t c0, c1, c2;
-
-		c0 = *(const qse_char_t*)p;
-		p += QSE_SIZEOF(c0);
-		if (c0 == CHARSET_ONE)
-		{
-			c1 = *(const qse_char_t*)p;
-			if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
-				c1 = QSE_TOUPPER(c1);
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("match_charset: <one> %c %c\n"), c, c1);
-		#endif
-			if (c == c1) return QSE_TRUE;
-		}
-		else if (c0 == CHARSET_RANGE)
-		{
-			c1 = *(const qse_char_t*)p;
-			p += QSE_SIZEOF(c1);
-			c2 = *(const qse_char_t*)p;
-
-			if (matcher->option & QSE_REX_MATCH_IGNORECASE) 
-			{
-				c1 = QSE_TOUPPER(c1);
-				c2 = QSE_TOUPPER(c2);
-			}
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("match_charset: <range> %c %c-%c\n"), c, c1, c2);
-		#endif
-			if (c >= c1 && c <= c2) return QSE_TRUE;
-		}
-		else if (c0 == CHARSET_CLASS)
-		{
-			c1 = *(const qse_char_t*)p;
-		#ifdef DEBUG_REX
-			qse_dprintf (
-				QSE_T("match_charset: <class> %c %s\n"), 
-				c, __char_class[c1].name);
-		#endif
-			if (__char_class[c1].func(c)) return QSE_TRUE;
+			/* duplicate existing stack */
+			head = dupgroupstack (e, gs);
+			if (head == QSE_NULL) return QSE_NULL;
 		}
 		else
 		{
-			QSE_ASSERT (!"should never happen - invalid charset code");
+			head = gs;
+		}
+	}
+
+	/* create a new stack element */
+	elem = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*elem));
+	if (elem == QSE_NULL)
+	{
+		/* rollback */
+		if (gs == QSE_NULL) 
+			QSE_MMGR_FREE (e->rex->mmgr, head);
+		else if (dup) 
+			freegroupstack (head, e->rex->mmgr);
+
+		e->rex->errnum = QSE_REX_ENOMEM;
+		return QSE_NULL;
+	}
+
+	/* initialize the element */
+	elem->node = gn;
+	elem->occ = 0;
+
+	/* make it the top */
+	elem->next = head->next;
+	head->next = elem;
+
+	return head;
+}
+
+#define dupgroupstackpush(e,gs,gn) __groupstackpush(e,gs,gn,1)
+#define groupstackpush(e,gs,gn) __groupstackpush(e,gs,gn,0)
+
+/* duplidate a group stack excluding the top data element */
+static group_t* dupgroupstackpop (exec_t* e, group_t* gs)
+{
+	group_t* dupg, * head;
+
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
+		"dupgroupstackpop() needs at least two data elements");
+
+	dupg = dupgroupstackmembers (e, gs->next->next);
+	if (dupg == QSE_NULL) return QSE_NULL;
+
+	head = (group_t*) QSE_MMGR_ALLOC (e->rex->mmgr, QSE_SIZEOF(*head));
+	if (head == QSE_NULL)
+	{
+		if (dupg != QSE_NULL) freegroupstackmembers (dupg, e->rex->mmgr);
+		e->rex->errnum = QSE_REX_ENOMEM;
+		return QSE_NULL;
+	}
+
+	head->node = QSE_NULL;
+	head->occ = 0;
+	head->next = dupg;
+
+	return head;
+}
+
+static group_t* groupstackpop (exec_t* e, group_t* gs)
+{
+	group_t* top;
+
+	QSE_ASSERT (gs != QSE_NULL);
+	QSE_ASSERTX (gs->node == QSE_NULL, 
+		"The head of a group stack must point to QSE_NULL for "
+		"management purpose.");
+	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
+		"groupstackpop() needs at least two data elements");
+
+
+	top = gs->next;
+	gs->next = top->next;
+
+	QSE_MMGR_FREE (e->rex->mmgr, top);	
+	return gs;
+}
+
+static int addsimplecand (
+	exec_t* e, group_t* group, qse_rex_node_t* node, 
+	qse_size_t occ, const qse_char_t* mptr)
+{
+	QSE_ASSERT (
+		node->id == QSE_REX_NODE_NOP ||
+		node->id == QSE_REX_NODE_BOL ||
+		node->id == QSE_REX_NODE_EOL ||
+		node->id == QSE_REX_NODE_ANY ||
+		node->id == QSE_REX_NODE_CHAR ||
+		node->id == QSE_REX_NODE_CSET
+	);
+
+	cand_t cand;
+
+	cand.node = node;
+	cand.occ = occ;
+	cand.group = group;
+	cand.mptr = mptr;
+
+/*if (node->id == QSE_REX_NODE_CHAR)
+qse_printf (QSE_T("adding %d %c\n"), node->id, node->u.c);
+else
+qse_printf (QSE_T("adding %d NA\n"), node->id);
+*/
+		
+	if (qse_lda_search (
+		&e->cand.set[e->cand.pending],
+		0, &cand, 1) != QSE_LDA_NIL)
+	{
+		/* exclude any existing entries in the array.
+		 * see comp_cand() for the equality test used.
+		 * note this linear search may be a performance bottle neck	
+		 * if the arrary grows large. not so sure if it should be
+		 * switched to a different data structure such as a hash table.
+		 * the problem is that most practical regular expressions
+		 * won't have many candidates for a particular match point.
+		 * so i'm a bit skeptical about data struct switching.
+		 */
+		return 0;
+	}
+
+	if (qse_lda_insert (
+		&e->cand.set[e->cand.pending],
+		QSE_LDA_SIZE(&e->cand.set[e->cand.pending]),
+		&cand, 1) == QSE_LDA_NIL)
+	{
+		e->rex->errnum = QSE_REX_ENOMEM;
+		return -1;
+	}
+
+	/* the reference must be decremented by the freeer */
+	refupgroupstack (group);
+	return 0;
+}
+
+/* addcands() function add a candicate from candnode.
+ * if candnode is not a simple node, it traverses further
+ * until it reaches a simple node. prevnode is the last
+ * GROUPEND node visited during traversal. If no GROUPEND
+ * is visited yet, it can be any starting node */
+static int addcands (
+	exec_t* e, group_t* group, qse_rex_node_t* prevnode,
+	qse_rex_node_t* candnode, const qse_char_t* mptr)
+{
+warpback:
+
+#ifndef DONOT_SKIP_NOP
+	/* skip all NOP nodes */
+	while (candnode != QSE_NULL && candnode->id == QSE_REX_NODE_NOP) 
+		candnode = candnode->next;
+#endif
+
+	/* nothing to add */
+	if (candnode == QSE_NULL) return 0;
+
+	switch (candnode->id)
+	{
+		case QSE_REX_NODE_END:
+		{
+/*qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));*/
+			if (e->matchend == QSE_NULL || mptr >= e->matchend)
+				e->matchend = mptr;
+			e->nmatches++;
 			break;
 		}
 
-		p += QSE_SIZEOF(c1);
-	}
-
-	return QSE_FALSE;
-}
-
-#if 0
-#define DPRINTF awk->prmfns.misc.dprintf
-#define DCUSTOM awk->prmfns.misc.custom_data
-
-void qse_awk_dprintrex (qse_awk_t* awk, void* rex)
-{
-	__print_pattern (awk, rex);
-	DPRINTF (DCUSTOM, awk->prmfns.misc.custom_data, QSE_T("\n"));
-}
-
-static const qse_byte_t* __print_pattern (qse_awk_t* awk, const qse_byte_t* p)
-{
-	qse_size_t i;
-	rhdr_t* rhdr;
-
-	rhdr = (rhdr_t*)p; p += QSE_SIZEOF(*rhdr);
-
-	for (i = 0; i < rhdr->nb; i++)
-	{
-		if (i != 0) DPRINTF (DCUSTOM, QSE_T("|"));
-		p = __print_branch (awk, p);
-	}
-
-	return p;
-}
-
-static const qse_byte_t* __print_branch (qse_awk_t* awk, const qse_byte_t* p)
-{
-	qse_size_t i;
-	bhdr_t* bhdr;
-       
-	bhdr = (bhdr_t*)p; p += QSE_SIZEOF(*bhdr);
-
-	for (i = 0; i < bhdr->na; i++)
-	{
-		p = __print_atom (awk, p);
-	}
-
-	return p;
-}
-
-static const qse_byte_t* __print_atom (qse_awk_t* awk, const qse_byte_t* p)
-{
-	const atom_t* cp = (const atom_t*)p;
-
-	if (cp->cmd == CMD_BOL)
-	{
-		DPRINTF (DCUSTOM, QSE_T("^"));
-		p += QSE_SIZEOF(*cp);
-	}
-	else if (cp->cmd == CMD_EOL)
-	{
-		DPRINTF (DCUSTOM, QSE_T("$"));
-		p += QSE_SIZEOF(*cp);
-	}
-	else if (cp->cmd == CMD_ANY_CHAR) 
-	{
-		DPRINTF (DCUSTOM, QSE_T("."));
-		p += QSE_SIZEOF(*cp);
-	}
-	else if (cp->cmd == CMD_ORD_CHAR) 
-	{
-		p += QSE_SIZEOF(*cp);
-		DPRINTF (DCUSTOM, QSE_T("%c"), *(qse_char_t*)p);
-		p += QSE_SIZEOF(qse_char_t);
-	}
-	else if (cp->cmd == CMD_CHARSET)
-	{
-		qse_size_t i;
-		cshdr_t* cshdr;
-
-		p += QSE_SIZEOF(*cp);
-		DPRINTF (DCUSTOM, QSE_T("["));
-		if (cp->negate) DPRINTF (DCUSTOM, QSE_T("^"));
-
-		cshdr = (cshdr_t*)p; p += QSE_SIZEOF(*cshdr);
-
-		for (i = 0; i < cshdr->csc; i++)
+		case QSE_REX_NODE_BRANCH:
 		{
-			qse_char_t c0, c1, c2;
+			group_t* gx = group;
+			int n;
 
-			c0 = *(qse_char_t*)p;
-			p += QSE_SIZEOF(c0);
+			QSE_ASSERTX (candnode->next == QSE_NULL, 
+				"The current implementation does not link "
+				"nodes to a branch node via the next field."
+				"follow the left and the right field instead");
 
-			if (c0 == CHARSET_ONE)
+			if (group != QSE_NULL)
 			{
-				c1 = *(qse_char_t*)p;
-				DPRINTF (DCUSTOM, QSE_T("%c"), c1);
-			}
-			else if (c0 == CHARSET_RANGE)
-			{
-				c1 = *(qse_char_t*)p;
-				p += QSE_SIZEOF(c1);
-				c2 = *(qse_char_t*)p;
-				DPRINTF (DCUSTOM, QSE_T("%c-%c"), c1, c2);
-			}
-			else if (c0 == CHARSET_CLASS)
-			{
-				c1 = *(qse_char_t*)p;
-				DPRINTF (DCUSTOM, QSE_T("[:%s:]"), __char_class[c1].name);
-			}
-			else
-			{
-				DPRINTF (DCUSTOM, QSE_T("should never happen - invalid charset code\n"));
+				gx = dupgroupstack (e, group);
+				if (gx == QSE_NULL) return -1;
 			}
 
-			p += QSE_SIZEOF(c1);
+			refupgroupstack (group);
+			refupgroupstack (gx);
+
+			n = addcands (e, group, 
+				prevnode, candnode->u.b.left, mptr);
+			if (n >= 0) 
+			{
+				n = addcands (e, gx, 
+					prevnode, candnode->u.b.right, mptr);
+			}
+
+			refdowngroupstack (gx, e->rex->mmgr);
+			refdowngroupstack (group, e->rex->mmgr);
+
+			if (n <= -1) return -1;
+			break;
 		}
 
-		DPRINTF (DCUSTOM, QSE_T("]"));
-	}
-	else if (cp->cmd == CMD_GROUP)
-	{
-		p += QSE_SIZEOF(*cp);
-		DPRINTF (DCUSTOM, QSE_T("("));
-		p = __print_pattern (awk, p);
-		DPRINTF (DCUSTOM, QSE_T(")"));
-	}
-	else 
-	{
-		DPRINTF (DCUSTOM, QSE_T("should never happen - invalid atom code\n"));
+		case QSE_REX_NODE_GROUP:
+		{
+			int n;
+			qse_rex_node_t* front;
+
+/*qse_printf (QSE_T("GROUP %p PREV %p\n"), candnode, prevnode);*/
+
+			/* skip all NOP nodes */
+			front = candnode->u.g.head;
+			while (front->id == QSE_REX_NODE_NOP) 
+				front = front->next;
+			if (front->id == QSE_REX_NODE_GROUPEND) 
+			{
+				/* if GROUPEND is reached, the group
+				 * is empty. jump to the next node
+				 * regardless of its occurrence. 
+				 * however, this will never be reached 
+				 * as it has been removed in comp() */
+				candnode = candnode->next;
+				goto warpback;
+			}
+
+			if (candnode->occ.max > 0)
+			{
+				/* add the first node in a subgroup
+				 * as a candidate */
+
+				group_t* gx;
+
+				/* push the current group node (candnode) to 
+				 * the group stack. if candnode->next is 
+				 * added to the candidate array, which means
+				 * the group stack has already been used to 
+				 * a different path, the group stack is
+				 * duplicated for this path. */
+
+				gx = (candnode->occ.min <= 0)?
+					dupgroupstackpush (e, group, candnode):
+					groupstackpush (e, group, candnode);
+				if (gx == QSE_NULL) return -1;
+
+				/* add the first node in the group to 
+				 * the candidate array */
+				refupgroupstack (gx);
+				n = addcands (e, gx, prevnode, front, mptr); 
+				refdowngroupstack (gx, e->rex->mmgr);
+
+				if (n <= -1) return -1;
+			}
+			
+			if (candnode->occ.min <= 0)
+			{
+				/* if the group node is optional, 
+				 * add the next node to the candidate array. */
+	
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
+			#endif
+				candnode = candnode->next;
+				goto warpback;
+			/* END avoid recursion */
+			}
+
+			break;
+		}
+
+		case QSE_REX_NODE_GROUPEND:
+		{
+			int n;
+			group_t* top;
+			qse_rex_node_t* node;
+			qse_size_t occ;
+
+/*qse_printf (QSE_T("GROUPEND %p PREV %p\n"), candnode, prevnode);*/
+			QSE_ASSERTX (
+				group != QSE_NULL && group->next != QSE_NULL, 
+				"GROUPEND must be paired up with GROUP");
+
+			if (prevnode == candnode) 
+			{
+				/* consider a pattern like (x*)*.
+				 * when GROUPEND is reached, an 'if' block 
+				 * below tries to add the first node 
+				 * (node->u.g.head) in the group again. 
+				 * however, it('x') is optional, a possible 
+				 * path reach GROUPEND directly without 
+				 * adding a candidate. this check is needed to 
+				 * avoid the infinite loop, which otherwise is 
+				 * not avoidable. */
+				break;
+			}
+	
+			top = group->next;
+			top->occ++;
+
+			occ = top->occ;
+			node = top->node;
+			QSE_ASSERTX (node == candnode->u.ge.group, 
+				"The GROUP node in the group stack must be the "
+				"one pairing up with the GROUPEND node."
+			);
+	
+			if (occ >= node->occ.min)
+			{
+				group_t* gx;
+	
+				/* the lower bound has been met. 
+				 * for a pattern (abc){3,4}, 'abc' has been 
+				 * repeated 3 times. in this case, the next 
+				 * node can be added to the candiate array.
+				 * it is actually a branch case. move on. */
+	
+				if (top->next == QSE_NULL)
+				{
+					/* only one element in the stack.
+					 * falls back to QSE_NULL regardless 
+					 * of the need to reuse it */
+					gx = QSE_NULL;
+				}
+				else if (occ < node->occ.max)
+				{
+					/* check if the group will be repeated.
+					 * if so, duplicate the group stack 
+					 * excluding the top. it goes along a 
+					 * different path and hence requires  
+					 * duplication. */
+
+					gx = dupgroupstackpop (e, group);
+					if (gx == QSE_NULL) return -1;
+				}
+				else
+				{
+					/* reuse the group stack. pop the top 
+					 * data element off the stack */
+
+					gx = groupstackpop (e, group);
+
+					/* this function always succeeds and
+					 * returns the same head */
+					QSE_ASSERT (gx == group);
+				}
+	
+				refupgroupstack (gx);
+				if (prevnode != QSE_NULL && 
+				    prevnode->id == QSE_REX_NODE_GROUPEND)
+				{
+					n = addcands (e, gx, prevnode, node->next, mptr);
+				}
+				else
+				{
+					n = addcands (e, gx, candnode, node->next, mptr);
+				}
+				refdowngroupstack (gx, e->rex->mmgr);
+				if (n <= -1) return -1;
+			}
+
+			if (occ < node->occ.max)
+			{
+				/* repeat itself. */
+
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, node->u.g.head, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
+			#endif
+
+				prevnode = candnode;
+				candnode = node->u.g.head;
+				goto warpback;
+			/* END avoid recursion */
+			}
+
+			break;
+		}
+
+		default:
+		{
+			int n;
+
+			if (candnode->occ.max > 0)
+			{
+				group_t* gx;
+	
+				/* if the upper bound is greater than 0, 
+				 * this node is added to the candidate array */
+
+				if (group != QSE_NULL && candnode->occ.min <= 0)
+				{
+					/* if a group stack exists(group != QSE_NULL)
+					 * for this path  and it has been
+					 * used for a different path above, 
+					 * duplicate the group stack */
+					gx = dupgroupstack (e, group);
+					if (gx == QSE_NULL) return -1;
+				}
+				else gx = group;
+	
+				refupgroupstack (gx);
+				n = addsimplecand (e, gx, candnode, 1, mptr);
+				refdowngroupstack (gx, e->rex->mmgr);
+
+				if (n <= -1) return -1;
+			}
+
+			if (candnode->occ.min <= 0)
+			{
+				/* if the node is optional,
+				 * add the next node to the candidate array  */
+
+			/* BEGIN avoid recursion */
+			#if 0
+				refupgroupstack (group);
+				n = addcands (e, group, prevnode, candnode->next, mptr);
+				refdowngroupstack (group, e->rex->mmgr);
+				if (n <= -1) return -1;
+			#endif
+				candnode = candnode->next;
+				goto warpback;
+			/* END avoid recursion */
+			}
+
+
+			break;
+		}
 	}
 
-	if (cp->lbound == 0 && cp->ubound == BOUND_MAX)
-		DPRINTF (DCUSTOM, QSE_T("*"));
-	else if (cp->lbound == 1 && cp->ubound == BOUND_MAX)
-		DPRINTF (DCUSTOM, QSE_T("+"));
-	else if (cp->lbound == 0 && cp->ubound == 1)
-		DPRINTF (DCUSTOM, QSE_T("?"));
-	else if (cp->lbound != 1 || cp->ubound != 1)
-	{
-		DPRINTF (DCUSTOM, QSE_T("{%lu,%lu}"), 
-			(unsigned long)cp->lbound, (unsigned long)cp->ubound);
-	}
-
-	return p;
+	return 0;
 }
 
+static int charset_matched (exec_t* e, qse_rex_node_t* node, qse_char_t c)
+{
+	const qse_char_t* ptr, * end;
+	int matched = 0;
+
+	QSE_ASSERT (node->u.cset.member != QSE_NULL);
+
+	ptr = QSE_STR_PTR (node->u.cset.member);
+	end = ptr + QSE_STR_LEN (node->u.cset.member);
+
+	while (ptr < end && !matched)
+	{
+		switch (*ptr)
+		{
+			case QSE_REX_CSET_CHAR:
+			{
+				ptr++;
+
+				if (e->rex->option & QSE_REX_IGNORECASE)
+				{
+					if (QSE_TOUPPER(c) == QSE_TOUPPER(*ptr)) matched = !0;
+				}
+				else
+				{
+					if (c == *ptr) matched = !0;
+				}
+				break;
+			}
+				
+			case QSE_REX_CSET_RANGE:
+			{
+				qse_char_t c1, c2;
+
+				if (e->rex->option & QSE_REX_IGNORECASE)
+				{
+					qse_char_t c3;
+					ptr++; c1 = QSE_TOUPPER(*ptr);
+					ptr++; c2 = QSE_TOUPPER(*ptr);
+					c3 = QSE_TOUPPER(c);
+					if (c3 >= c1 && c3 <= c2) matched = !0;
+				}
+				else
+				{
+					c1 = *++ptr; c2 = *++ptr;
+					if (c >= c1 && c <= c2) matched = !0;
+				}
+				break;
+			}
+				
+			case QSE_REX_CSET_CLASS:
+			{
+				qse_char_t c1;
+
+				c1 = *++ptr;
+				QSE_ASSERT (c1 < QSE_COUNTOF(ccinfo));
+				if (ccinfo[c1].func(e,c)) matched = !0;
+			
+				break;
+			}
+
+			default:
+			{
+				QSE_ASSERTX (0, 
+					"SHOUL NEVER HAPPEN - membership code "
+					"for a character set must be one of "
+					"QSE_REX_CSET_CHAR, "
+					"QSE_REX_CSET_RANGE, "
+					"QSE_REX_CSET_CLASS");
+
+				/* return no match if this part is reached.
+				 * however, something is totally wrong if it
+				 * happens. */
+				return 0;
+			}
+		}
+
+		ptr++;
+	}
+
+	if (node->u.cset.negated) matched = !matched;
+	return matched;
+}
+
+static int match (exec_t* e)
+{
+	qse_size_t i;
+
+	QSE_ASSERT (QSE_LDA_SIZE(&e->cand.set[e->cand.active]) > 0);
+
+	for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
+	{
+		cand_t* cand = QSE_LDA_DPTR(&e->cand.set[e->cand.active],i);
+		qse_rex_node_t* node = cand->node;
+		const qse_char_t* nmptr = QSE_NULL;
+
+		switch (node->id)
+		{
+#ifdef DONOT_SKIP_NOP
+			case QSE_REX_NODE_NOP:
+				nmptr = cand->mptr;
+				break;
 #endif
+
+			case QSE_REX_NODE_BOL:
+				if (cand->mptr == e->str.ptr) 
+				{
+					/* the next match pointer remains 
+					 * the same as ^ matches a position,
+					 * not a character. */
+					nmptr = cand->mptr;
+				}
+				break;
+
+			case QSE_REX_NODE_EOL:
+				if (cand->mptr >= e->str.end) 
+				{
+					/* the next match pointer remains 
+					 * the same as $ matches a position,
+					 * not a character. */
+					nmptr = cand->mptr;
+				}
+				break;
+
+			case QSE_REX_NODE_ANY:
+				if (cand->mptr < e->sub.end) 
+				{
+					/* advance the match pointer to the
+					 * next chracter.*/
+					nmptr = cand->mptr + 1;
+				}
+				break;
+
+			case QSE_REX_NODE_CHAR:	
+			{
+
+				if (cand->mptr < e->sub.end)
+				{
+					int equal;
+
+					equal =(e->rex->option & QSE_REX_IGNORECASE)?
+						(QSE_TOUPPER(node->u.c) == QSE_TOUPPER(*cand->mptr)):
+						(node->u.c == *cand->mptr) ;
+
+					if (equal)
+					{
+						/* advance the match pointer to the
+						 * next chracter.*/
+						nmptr = cand->mptr + 1;
+					}
+/*qse_printf (QSE_T("matched %c\n"), node->u.c);*/
+				}
+				break;
+			}
+
+			case QSE_REX_NODE_CSET:
+			{
+				if (cand->mptr < e->sub.end &&
+				    charset_matched(e, node, *cand->mptr))
+				{
+					/* advance the match pointer 
+					 * to the next chracter.*/
+					nmptr = cand->mptr + 1;
+				}
+
+				break;
+			}
+
+			default:
+			{
+				QSE_ASSERTX (0, 
+					"SHOUL NEVER HAPPEN - node ID must be"
+					"one of QSE_REX_NODE_BOL, "
+					"QSE_REX_NODE_EOL, "
+					"QSE_REX_NODE_ANY, "
+					"QSE_REX_NODE_CHAR, "
+					"QSE_REX_NODE_CSET, "
+					"QSE_REX_NODE_NOP");
+
+				break;
+			}
+		}
+
+		if (nmptr != QSE_NULL)
+		{
+			int n;
+
+			if (cand->occ >= node->occ.min)
+			{
+				group_t* gx;
+
+				if (cand->occ < node->occ.max && cand->group != QSE_NULL)
+				{
+					gx = dupgroupstack (e, cand->group);
+					if (gx == QSE_NULL) return -1;
+				}
+				else gx = cand->group;
+	
+				/* move on to the next candidate */
+				refupgroupstack (gx);
+				n = addcands (e, gx, node, node->next, nmptr);
+				refdowngroupstack (gx, e->rex->mmgr);
+
+				if (n <= -1) return -1;
+			}
+
+			if (cand->occ < node->occ.max)
+			{
+				/* repeat itself more */
+				refupgroupstack (cand->group);
+				n = addsimplecand (e, cand->group, node, cand->occ+1, nmptr);
+				refdowngroupstack (cand->group, e->rex->mmgr);
+
+				if (n <= -1) return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int exec (exec_t* e)
+{
+	int n;
+
+	e->nmatches = 0;
+	e->matchend = QSE_NULL;
+
+	e->cand.pending = 0;
+	e->cand.active = 1;
+
+	/* empty the pending set to collect the initial candidates */
+	qse_lda_clear (&e->cand.set[e->cand.pending]); 
+
+	/* the first node must be the START node */
+	QSE_ASSERT (e->rex->code->id == QSE_REX_NODE_START);
+
+	/* addcands() collects a set of candidates into the pending set */
+	n = addcands (
+		e,                  /* execution structure */
+		QSE_NULL,           /* doesn't belong to any groups yet */
+		e->rex->code,       /* dummy previous node, the start node */
+		e->rex->code->next, /* start from the second node */
+		e->sub.ptr          /* current match pointer */
+	);
+	if (n <= -1) return -1;
+
+	do
+	{
+		/* swap the pending and active set indices.
+		 * the pending set becomes active after which the match()
+		 * function tries each candidate in it. New candidates
+		 * are added into the pending set which will become active
+		 * later when the loop reaches here again */
+		int tmp = e->cand.pending;
+		e->cand.pending = e->cand.active;
+		e->cand.active = tmp;
+
+		if (QSE_LDA_SIZE(&e->cand.set[e->cand.active]) <= 0)
+		{
+			/* we can't go on with no candidates in the 
+			 * active set. */
+			break;
+		}
+
+		/* clear the pending set */
+		qse_lda_clear (&e->cand.set[e->cand.pending]); 
+
+#if 0
+{
+int i;
+qse_printf (QSE_T("SET="));
+for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
+{
+	cand_t* cand = QSE_LDA_DPTR(&e->cand.set[e->cand.active],i);
+	qse_rex_node_t* node = cand->node;
+
+	if (node->id == QSE_REX_NODE_CHAR)
+		qse_printf (QSE_T("%c "), node->u.c);
+	else if (node->id == QSE_REX_NODE_ANY)
+		qse_printf (QSE_T(". "), node->u.c);
+	else if (node->id == QSE_REX_NODE_BOL)
+		qse_printf (QSE_T("^ "));
+	else if (node->id == QSE_REX_NODE_EOL)
+		qse_printf (QSE_T("$ "));
+}
+qse_printf (QSE_T("\n"));
+}
+#endif
+
+		if (match (e) <= -1) return -1;
+	}
+	while (1);
+
+#if 0
+if (e->nmatches > 0)
+{
+qse_printf (QSE_T("MATCH: %d [%.*s]\n"), 
+	(int)(e->matchend - e->sub.ptr), 
+	(int)(e->matchend - e->sub.ptr), e->sub.ptr);
+}
+
+qse_printf (QSE_T("TOTAL MATCHES FOUND... %d\n"), e->nmatches);
+#endif
+
+	return (e->nmatches > 0)? 1: 0;
+}
+
+static void refdowngroupstack_incand (qse_lda_t* lda, void* dptr, qse_size_t dlen)
+{
+	QSE_ASSERT (dlen == 1);
+	refdowngroupstack (((cand_t*)dptr)->group, lda->mmgr);
+}
+
+static int comp_cand (qse_lda_t* lda,
+	const void* dptr1, qse_size_t dlen1,
+	const void* dptr2, qse_size_t dlen2)
+{
+	cand_t* c1 = (cand_t*)dptr1;
+	cand_t* c2 = (cand_t*)dptr2;
+	return (c1->node == c2->node && 
+	        c1->mptr == c2->mptr &&
+	        c1->occ == c2->occ)? 0: 1;
+}
+
+static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
+{
+	/* initializes dynamic data structures */
+	if (qse_lda_init (&e->cand.set[0], mmgr, 100) == QSE_NULL)
+	{
+		/* TOOD: set error */
+		return -1;
+	}
+	if (qse_lda_init (&e->cand.set[1], mmgr, 100) == QSE_NULL)
+	{
+		/* TOOD: set error */
+		qse_lda_fini (&e->cand.set[0]);
+		return -1;
+	}
+
+	qse_lda_setscale (&e->cand.set[0], QSE_SIZEOF(cand_t));
+	qse_lda_setscale (&e->cand.set[1], QSE_SIZEOF(cand_t));
+
+	qse_lda_setcopier (&e->cand.set[0], QSE_LDA_COPIER_INLINE);
+	qse_lda_setcopier (&e->cand.set[1], QSE_LDA_COPIER_INLINE);
+
+	qse_lda_setfreeer (&e->cand.set[0], refdowngroupstack_incand);
+	qse_lda_setfreeer (&e->cand.set[1], refdowngroupstack_incand);
+
+	qse_lda_setcomper (&e->cand.set[0], comp_cand);
+	qse_lda_setcomper (&e->cand.set[1], comp_cand);
+
+	return 0;
+}
+
+static void fini_exec_dds (exec_t* e)
+{
+	qse_lda_fini (&e->cand.set[1]);
+	qse_lda_fini (&e->cand.set[0]);
+}
+
+int qse_rex_exec (
+	qse_rex_t* rex, const qse_cstr_t* str, 
+	const qse_cstr_t* substr, qse_cstr_t* matstr)
+{
+	exec_t e;
+	int n = 0;
+
+	if (rex->code == QSE_NULL)
+	{
+		rex->errnum = QSE_REX_ENOCOMP;
+		return -1;
+	}
+
+	QSE_MEMSET (&e, 0, QSE_SIZEOF(e));
+
+	e.rex = rex;
+	e.str.ptr = str->ptr;
+	e.str.end = str->ptr + str->len;
+	e.sub.ptr = substr->ptr;
+	e.sub.end = substr->ptr + substr->len;
+
+	if (init_exec_dds (&e, rex->mmgr) <= -1) return -1;
+
+	while (e.sub.ptr <= e.sub.end)
+	{
+		n = exec (&e);
+		if (n <= -1) 
+		{
+			n = -1;
+			break;
+		}
+
+		if (n >= 1)
+		{
+			QSE_ASSERT (e.nmatches > 0);
+			QSE_ASSERT (e.matchend != QSE_NULL);
+			if (matstr)
+			{
+				matstr->ptr = e.sub.ptr;
+				matstr->len = e.matchend - e.sub.ptr;
+			}
+			break;
+		}
+
+		e.sub.ptr++;
+	}
+
+	fini_exec_dds (&e);
+
+	return n;
+}
+
+
+void* qse_buildrex (
+	qse_mmgr_t* mmgr, qse_size_t depth, int option,
+	const qse_char_t* ptn, qse_size_t len, qse_rex_errnum_t* errnum)
+{
+	qse_rex_t rex;
+	qse_rex_node_t* code;
+
+	qse_rex_init (&rex, mmgr, QSE_NULL);
+	qse_rex_setoption (&rex, option);
+
+	if (qse_rex_comp (&rex, ptn, len) == QSE_NULL)
+	{
+		*errnum = rex.errnum;
+		qse_rex_fini (&rex);
+		return QSE_NULL;
+	}
+
+	code = qse_rex_yield (&rex);
+
+	qse_rex_fini (&rex);
+	return code;
+}
+
+
+int qse_matchrex (
+        qse_mmgr_t* mmgr, qse_size_t depth,
+        void* code, int option,
+        const qse_char_t* str, qse_size_t len,
+        const qse_char_t* substr, qse_size_t sublen,
+        qse_cstr_t* match, qse_rex_errnum_t* errnum)
+{
+	qse_rex_t rex;
+	qse_cstr_t s, ss;
+	int n;
+
+	qse_rex_init (&rex, mmgr, code);
+	qse_rex_setoption (&rex, option);
+
+	s.ptr = str;
+	s.len = len;
+	ss.ptr = substr;
+	ss.len = sublen;
+
+	if ((n = qse_rex_exec (&rex, &s, &ss, match)) <= -1)
+	{
+		*errnum = rex.errnum;
+		qse_rex_yield (&rex);
+		qse_rex_fini (&rex);
+		return -1;
+	}
+
+	qse_rex_yield (&rex);
+	qse_rex_fini (&rex);
+
+	return n;
+}
+
+void qse_freerex (qse_mmgr_t* mmgr, void* code)
+{
+	qse_rex_t rex;
+	qse_rex_init (&rex, mmgr, code);
+	qse_rex_fini (&rex);
+}
