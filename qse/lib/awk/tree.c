@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: tree.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1229,8 +1229,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_REX:
 			{
+				QSE_AWK_FREEREX (awk, ((qse_awk_nde_rex_t*)p)->code);
 				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->ptr);
-				QSE_AWK_FREE (awk, ((qse_awk_nde_rex_t*)p)->code);
 				QSE_AWK_FREE (awk, p);
 				break;
 			}

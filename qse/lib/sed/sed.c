@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sed.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -377,7 +377,7 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	code = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
-		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
+		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_NOBOUND),
 		QSE_STR_PTR(&sed->tmp.rex), 
 		QSE_STR_LEN(&sed->tmp.rex), 
 		QSE_NULL
@@ -891,7 +891,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	cmd->u.subst.rex = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
-		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_BUILD_NOBOUND),
+		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_NOBOUND),
 		QSE_STR_PTR(t[0]),
 		QSE_STR_LEN(t[0]),
 		QSE_NULL
@@ -1832,7 +1832,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	QSE_ASSERT (cmd->type == QSE_SED_CMD_SUBSTITUTE);
 
 	qse_str_clear (&sed->e.txt.subst);
-	if (cmd->u.subst.i) opt = QSE_REX_MATCH_IGNORECASE;
+	if (cmd->u.subst.i) opt = QSE_REX_IGNORECASE;
 
 	str_ptr = QSE_STR_PTR(&sed->e.in.line);
 	str_len = QSE_STR_LEN(&sed->e.in.line);

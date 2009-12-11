@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 299 2009-10-19 13:33:40Z hyunghwan.chung $
+ * $Id: run.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -930,12 +930,12 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 
 	if (rtx->gbl.rs != QSE_NULL) 
 	{
-		QSE_AWK_FREE (rtx->awk, rtx->gbl.rs);
+		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
 		rtx->gbl.rs = QSE_NULL;
 	}
 	if (rtx->gbl.fs != QSE_NULL)
 	{
-		QSE_AWK_FREE (rtx->awk, rtx->gbl.fs);
+		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.fs);
 		rtx->gbl.fs = QSE_NULL;
 	}
 
@@ -3101,6 +3101,13 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 	if (v->type == QSE_AWK_VAL_REX)
 	{
+		const qse_char_t* ptr;
+		qse_size_t len;
+		int opt = 0;
+
+		if (((qse_awk_rtx_t*)rtx)->gbl.ignorecase) 
+			opt = QSE_REX_IGNORECASE;
+
 		qse_awk_rtx_refupval (rtx, v);
 
 		if (rtx->inrec.d0->type == QSE_AWK_VAL_NIL)
@@ -3108,35 +3115,37 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 			/* the record has never been read. 
 			 * probably, this function has been triggered
 			 * by the statements in the BEGIN block */
-			n = QSE_AWK_ISEMPTYREX(rtx->awk,((qse_awk_val_rex_t*)v)->code)? 1: 0;
+			ptr = QSE_T("");
+			len = 0;
 		}
 		else
 		{
 			QSE_ASSERTX (
 				rtx->inrec.d0->type == QSE_AWK_VAL_STR,
-				"the internal value representing $0 should always be of the string type once it has been set/updated. it is nil initially.");
+				"the internal value representing $0 should "
+				"always be of the string type once it has "
+				"been set/updated. it is nil initially.");
 
-			n = QSE_AWK_MATCHREX (
-				((qse_awk_rtx_t*)rtx)->awk, 
-				((qse_awk_val_rex_t*)v)->code,
-				((((qse_awk_rtx_t*)rtx)->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
-				((qse_awk_val_str_t*)rtx->inrec.d0)->ptr,
-				((qse_awk_val_str_t*)rtx->inrec.d0)->len,
-				((qse_awk_val_str_t*)rtx->inrec.d0)->ptr,
-				((qse_awk_val_str_t*)rtx->inrec.d0)->len,
-				QSE_NULL, &errnum);
-	
-			if (n == -1) 
-			{
-				qse_awk_rtx_refdownval (rtx, v);
+			ptr = ((qse_awk_val_str_t*)rtx->inrec.d0)->ptr;
+			len = ((qse_awk_val_str_t*)rtx->inrec.d0)->len;
+		}	
 
-				/* matchrex should never set the error number
-				 * whose message contains a formatting 
-				 * character. otherwise, the following way of
-				 * setting the error information may not work */
-				SETERR_LOC (rtx, errnum, &nde->loc);
-				return QSE_NULL;
-			}
+		n = QSE_AWK_MATCHREX (
+			((qse_awk_rtx_t*)rtx)->awk, 
+			((qse_awk_val_rex_t*)v)->code,
+			opt, ptr, len, ptr, len,
+			QSE_NULL, &errnum);
+
+		if (n <= -1) 
+		{
+			qse_awk_rtx_refdownval (rtx, v);
+
+			/* matchrex should never set the error number
+			 * whose message contains a formatting 
+			 * character. otherwise, the following way of
+			 * setting the error information may not work */
+			SETERR_LOC (rtx, errnum, &nde->loc);
+			return QSE_NULL;
 		}
 
 		qse_awk_rtx_refdownval (rtx, v);
@@ -4775,7 +4784,7 @@ static qse_awk_val_t* eval_binop_match0 (
 	{
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex_code,
-			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
+			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			((qse_awk_val_str_t*)left)->ptr,
 			((qse_awk_val_str_t*)left)->len,
 			((qse_awk_val_str_t*)left)->ptr,
@@ -4784,7 +4793,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (n == -1) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
+				QSE_AWK_FREEREX (rtx->awk, rex_code);
 
 			SETERR_LOC (rtx, errnum, lloc);
 			return QSE_NULL;
@@ -4794,7 +4803,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (res == QSE_NULL) 
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
+				QSE_AWK_FREEREX (rtx->awk, rex_code);
 
 			ADJERR_LOC (rtx, lloc);
 			return QSE_NULL;
@@ -4808,13 +4817,13 @@ static qse_awk_val_t* eval_binop_match0 (
 		if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL)
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
+				QSE_AWK_FREEREX (rtx->awk, rex_code);
 			return QSE_NULL;
 		}
 
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex_code,
-			((rtx->gbl.ignorecase)? QSE_REX_MATCH_IGNORECASE: 0),
+			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
 			out.u.cpldup.ptr, out.u.cpldup.len, 
 			out.u.cpldup.ptr, out.u.cpldup.len, 
 			QSE_NULL, &errnum);
@@ -4822,7 +4831,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		{
 			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
+				QSE_AWK_FREEREX (rtx->awk, rex_code);
 
 			SETERR_LOC (rtx, errnum, lloc);
 			return QSE_NULL;
@@ -4833,7 +4842,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		{
 			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 			if (right->type != QSE_AWK_VAL_REX) 
-				QSE_AWK_FREE (rtx->awk, rex_code);
+				QSE_AWK_FREEREX (rtx->awk, rex_code);
 
 			ADJERR_LOC (rtx, lloc);
 			return QSE_NULL;
@@ -4842,7 +4851,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	}
 
-	if (right->type != QSE_AWK_VAL_REX) QSE_AWK_FREE (rtx->awk, rex_code);
+	if (right->type != QSE_AWK_VAL_REX) QSE_AWK_FREEREX (rtx->awk, rex_code);
 	return res;
 }
 

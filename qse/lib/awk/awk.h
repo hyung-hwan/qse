@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: awk.h 312 2009-12-10 13:03:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -383,7 +383,6 @@ struct qse_awk_rtx_t
 
 
 #define QSE_AWK_FREEREX(awk,code) qse_freerex((awk)->mmgr,code)
-#define QSE_AWK_ISEMPTYREX(awk,code) qse_isemptyrex(code)
 #define QSE_AWK_BUILDREX(awk,ptn,len,errnum) \
 	qse_awk_buildrex(awk,ptn,len,errnum)
 #define QSE_AWK_MATCHREX(awk,code,option,str,len,substr,sublen,match,errnum) \
