@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: misc.c 313 2009-12-12 13:24:40Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -63,7 +63,7 @@ qse_long_t qse_awk_strxtolong (
 	if (awk->option & QSE_AWK_STRIPSTRSPC)
 	{
 		/* strip off leading spaces */
-		while (QSE_AWK_ISSPACE(awk,*p)) p++;
+		while (p < end && QSE_AWK_ISSPACE(awk,*p)) p++;
 	}
 
 	/* check for a sign */
@@ -127,7 +127,7 @@ qse_long_t qse_awk_strxtolong (
 		p++;
 	}
 
-	if (endptr != QSE_NULL) *endptr = p;
+	if (endptr) *endptr = p;
 	return (negative)? -n: n;
 }
 
