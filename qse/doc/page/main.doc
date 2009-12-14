@@ -1,6 +1,6 @@
 /** @mainpage QSE
 
-@section INTRODUCTION
+@section qse_intro INTRODUCTION
 
 @b QSE is a code library that implements various Unix utilities in an 
 embeddable form and provides a set of APIs to embed them into an application. 
