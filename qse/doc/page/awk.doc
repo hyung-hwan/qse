@@ -2,21 +2,18 @@
 
 @section awk_intro INTRODUCTION
 
-QSEAWK is an embeddable AWK interpreter that is a part of the QSE library.
-The design focuses on easy to use APIs
-
-A embedding application can
-- add new awk global variables and functions.
-- get and set the value of a global variable.
-- call an awk function.
-- customize I/O handlers for file, pipe, console I/O.
-- embed multiple interpreters independent of each other.
-- run a single script with different I/O streams independently.
-- change language features by setting options.
+QSEAWK is an embeddable AWK interpreter that is a part of the @ref qse_intro "QSE" library. The design focuses on building a flexible and robust embedding API with minimal platform dependency. An embedding application is capable of
+- adding new global variables and functions.
+- getting and set the value of a global variable.
+- calling a function.
+- customizing I/O handlers for file, pipe, console I/O.
+- creating multiple interpreters independent of each other.
+- running a single script with different I/O streams independently.
+- changing language features by setting options.
 
 The interpreter implements the language described in the book 
-The AWK Programming Language(http://cm.bell-labs.com/cm/cs/awkbook/) with
-some extensions.
+The AWK Proramming Language (http://cm.bell-labs.com/cm/cs/awkbook/)
+with some extensions.
 
 @section awk_ext EXTENSIONS
 Some language extensions are implemented and they can be enabled by setting the
