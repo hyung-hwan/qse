@@ -118,6 +118,8 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+QSE_PROJECT_AUTHOR = @QSE_PROJECT_AUTHOR@
+QSE_PROJECT_URL = @QSE_PROJECT_URL@
 QSE_SIZEOF_CHAR = @QSE_SIZEOF_CHAR@
 QSE_SIZEOF_DOUBLE = @QSE_SIZEOF_DOUBLE@
 QSE_SIZEOF_FLOAT = @QSE_SIZEOF_FLOAT@
@@ -285,11 +287,28 @@ EXTRA_DIST = \
 	lang-031.awk \
 	lang-032.awk \
 	lang-033.awk \
+	lang-034.awk \
+	lang-035.awk \
+	lang-036.awk \
+	lang-037.awk \
+	lang-038.awk \
+	lang-039.awk \
+	lang-040.awk \
+	lang-041.awk \
+	lang-042.awk \
+	columnate.awk \
+	levenshtein.awk \
+	levenshtein-utests.awk \
+	rcalc.awk \
 	quicksort2.awk \
 	quicksort.awk \
 	stripcomment.awk \
 	unr-001.awk \
 	wordfreq.awk \
+	lang-035.dat1 \
+	lang-035.dat2 \
+	lang-036.dat \
+	lang-037.dat \
 	adr.dat \
 	asm.dat \
 	cou.dat \

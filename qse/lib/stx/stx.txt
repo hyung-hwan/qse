@@ -24,13 +24,10 @@ return the returned value from #main:withArgv and exits.
 
 
 AUTHOR(S)
-	Hyung-Hwan Chung (bacon@abiyo.net) is the sole designer and implementer of stx.
-
-BUG REPORTS
-	Report bugs to bacon@abiyo.net if you find any bugs. but make sure that it is really a bug before you report it.
+	Hyung-Hwan Chung (hyunghwan.chung@gmail.com)
 
 COPYRIGHT
-	Copyright(c) 2005 bacon@abiyo.net
+	Copyright(c) 2005 hyugnhwan.chung@gmail.com
 
 SEE ALSO
 	qse(7)

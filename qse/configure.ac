@@ -1,5 +1,7 @@
+
 dnl AC_PREREQ(2.59)
-AC_INIT([qse],[0.5.3],[bacon@abiyo.net])
+
+AC_INIT([qse],[0.5.3],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://qse.googlecode.com])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac/au])
 AC_CONFIG_MACRO_DIR([ac/m4])
@@ -159,11 +161,13 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
 
-AC_DEFINE_UNQUOTED(QSE_VERSION, "${VERSION}", [package version])
-AC_DEFINE_UNQUOTED(QSE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [major version number])
-AC_DEFINE_UNQUOTED(QSE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [minor version number])
-AC_DEFINE_UNQUOTED(QSE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [patch level])
-AC_DEFINE_UNQUOTED(QSE_AUTHOR,"${PACKAGE_BUGREPORT}", [author's email address])
+AC_DEFINE_UNQUOTED(QSE_VERSION, "${VERSION}", [Package version])
+AC_DEFINE_UNQUOTED(QSE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
+AC_DEFINE_UNQUOTED(QSE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
+AC_DEFINE_UNQUOTED(QSE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
+
+AC_DEFINE_UNQUOTED(QSE_PROJECT_AUTHOR,"${PACKAGE_BUGREPORT}", [Author's contact])
+AC_DEFINE_UNQUOTED(QSE_PROJECT_URL, "${PACKAGE_URL}", [Project URL])
 
 AC_C_BIGENDIAN(
 	[AC_DEFINE([QSE_ENDIAN_BIG],[],[Big Endian])],
@@ -242,8 +246,12 @@ AC_SUBST(QSE_SIZEOF_FLOAT, $ac_cv_sizeof_float)
 AC_SUBST(QSE_SIZEOF_DOUBLE, $ac_cv_sizeof_double)
 AC_SUBST(QSE_SIZEOF_LONG_DOUBLE, $ac_cv_sizeof_long_double)
 
+AC_SUBST(QSE_PROJECT_AUTHOR, "${PACKAGE_BUGREPORT}")
+AC_SUBST(QSE_PROJECT_URL, "${PACKAGE_URL}")
+
 AC_CONFIG_FILES([
 	Makefile 
+	README
 	include/Makefile
 	include/qse/Makefile
 	include/qse/cmn/Makefile
@@ -274,7 +282,6 @@ AC_CONFIG_FILES([
 	regress/awk/Makefile
 	doc/Makefile
 	doc/page/Makefile
-	doc/page.ko/Makefile
 	doc/Doxyfile
 ])
 AC_OUTPUT

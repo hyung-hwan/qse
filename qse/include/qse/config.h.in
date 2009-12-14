@@ -238,9 +238,6 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* author's email address */
-#undef QSE_AUTHOR
-
 /* char is mchar */
 #undef QSE_CHAR_IS_MCHAR
 
@@ -255,6 +252,12 @@
 
 /* Unknown Endian */
 #undef QSE_ENDIAN_UNKNOWN
+
+/* Author's contact */
+#undef QSE_PROJECT_AUTHOR
+
+/* Project URL */
+#undef QSE_PROJECT_URL
 
 /* sizeof(char) */
 #undef QSE_SIZEOF_CHAR
@@ -310,16 +313,16 @@
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL
 
-/* package version */
+/* Package version */
 #undef QSE_VERSION
 
-/* major version number */
+/* Major version number */
 #undef QSE_VERSION_MAJOR
 
-/* minor version number */
+/* Minor version number */
 #undef QSE_VERSION_MINOR
 
-/* patch level */
+/* Patch level */
 #undef QSE_VERSION_PATCH
 
 /* The size of `char', as computed by sizeof. */

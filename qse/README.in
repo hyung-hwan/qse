@@ -12,9 +12,8 @@ Currently the library implements the following utilities:
 
 As the library grows, more utilities will be added.
 
-The library is licensed under the Apache License, Version 2.0.
+The library is licensed under LGPLv3.
 
-The project webpage: http://qse.googlecode.com/
+The project webpage: @QSE_PROJECT_URL@
 
-For further information, contact:
-Chung, Hyung-Hwan <bacon@abiyo.net>
+For further information, contact: @QSE_PROJECT_AUTHOR@

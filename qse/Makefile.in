@@ -35,9 +35,9 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure \
-	ac/au/config.guess ac/au/config.sub ac/au/depcomp \
-	ac/au/install-sh ac/au/ltmain.sh ac/au/missing
+	$(srcdir)/Makefile.in $(srcdir)/README.in \
+	$(top_srcdir)/configure ac/au/config.guess ac/au/config.sub \
+	ac/au/depcomp ac/au/install-sh ac/au/ltmain.sh ac/au/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/ac/m4/libtool.m4 \
 	$(top_srcdir)/ac/m4/ltoptions.m4 \
@@ -50,7 +50,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = README
 CONFIG_CLEAN_VPATH_FILES =
 SOURCES =
 DIST_SOURCES =
@@ -170,6 +170,8 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+QSE_PROJECT_AUTHOR = @QSE_PROJECT_AUTHOR@
+QSE_PROJECT_URL = @QSE_PROJECT_URL@
 QSE_SIZEOF_CHAR = @QSE_SIZEOF_CHAR@
 QSE_SIZEOF_DOUBLE = @QSE_SIZEOF_DOUBLE@
 QSE_SIZEOF_FLOAT = @QSE_SIZEOF_FLOAT@
@@ -283,6 +285,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
+README: $(top_builddir)/config.status $(srcdir)/README.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 
 mostlyclean-libtool:
 	-rm -f *.lo
