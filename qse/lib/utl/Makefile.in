@@ -72,7 +72,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqseutl_la_DEPENDENCIES =
-am_libqseutl_la_OBJECTS = http.lo tgp.lo
+am_libqseutl_la_OBJECTS = http.lo
 libqseutl_la_OBJECTS = $(am_libqseutl_la_OBJECTS)
 libqseutl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -237,9 +237,7 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libqseutl.la
 libqseutl_la_SOURCES = \
-	http.c \
-	tgp.c \
-	tgp.h
+	http.c 
 
 libqseutl_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn
 libqseutl_la_LIBADD = -lqsecmn
@@ -318,7 +316,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tgp.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

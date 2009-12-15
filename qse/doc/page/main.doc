@@ -5,14 +5,14 @@
 @b QSE is a code library that implements various Unix utilities in an 
 embeddable form and provides a set of APIs to embed them into an application. 
 The APIs have been designed to be flexible enough to access various aspects of 
-a hosting application and an embedded object from each other. By embedding 
+a embedding application and an embedded object from each other. By embedding 
 a Unix utility into an application, a developer is relieved of problems caused
-by interacting with external programs and is given tighter control over it.
+by interacting with external programs and can have tighter control over it.
 
-Currently the library implements the following utilities:
-- @subpage sed "SED Stream Editor"
-- @subpage cut "CUT Text Cutter"
+Currently the library contains the following utilities:
 - @subpage awk "AWK Interpreter"
+- @subpage cut "CUT Text Cutter"
+- @subpage sed "SED Stream Editor"
 
 As the library grows, more utilities will be added.
 

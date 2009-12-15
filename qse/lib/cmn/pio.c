@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: pio.c 316 2009-12-14 12:50:11Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -174,9 +174,19 @@ qse_pio_t* qse_pio_init (
 
 	startup.cb = QSE_SIZEOF(startup);
 
+	/*
 	startup.hStdInput = INVALID_HANDLE_VALUE;
 	startup.hStdOutput = INVALID_HANDLE_VALUE;
 	startup.hStdOutput = INVALID_HANDLE_VALUE;
+	*/
+
+        startup.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
+        startup.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
+        startup.hStdOutput = GetStdHandle (STD_ERROR_HANDLE);
+
+	if (startup.hStdInput == INVALID_HANDLE_VALUE ||
+	    startup.hStdOutput == INVALID_HANDLE_VALUE ||
+	    startup.hStdError == INVALID_HANDLE_VALUE) goto oops;
 
 	if (oflags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
 

@@ -272,13 +272,12 @@ AC_CONFIG_FILES([
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
 	cmd/lsp/Makefile
-	cmd/utl/Makefile
 	samples/Makefile 
 	samples/cmn/Makefile 
 	samples/sed/Makefile 
 	samples/awk/Makefile 
-	samples/utl/Makefile 
 	regress/Makefile
+	regress/sed/Makefile
 	regress/awk/Makefile
 	doc/Makefile
 	doc/page/Makefile

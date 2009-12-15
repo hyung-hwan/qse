@@ -1,1 +1,1 @@
-SUBDIRS = awk
+SUBDIRS = awk sed

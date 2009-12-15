@@ -15,6 +15,6 @@ SED="../test/sed/sed01"
 #	/^INPUT[[:space:]]*=/s/page/page.ja/' < Doxyfile > Doxyfile.ja
 
 doxygen Doxyfile
-doxygen Doxyfile.ko
+#doxygen Doxyfile.ko
 #doxygen Doxyfile.cn
 #doxygen Doxyfile.ja

@@ -21,6 +21,11 @@
 #ifndef _QSE_CMN_STDIO_H_
 #define _QSE_CMN_STDIO_H_
 
+/** @file
+ * #qse_char_t friendly stdio wrapper functions are defined in this file.
+ *
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -63,7 +68,7 @@
 #define QSE_STDOUT      stdout
 #define QSE_STDERR      stderr
 
-typedef int (*qse_getdelim_t) (const qse_char_t* ptr,qse_size_t len, void* arg);
+typedef int (*qse_getdelim_t) (const qse_char_t* ptr,qse_size_t len,void* arg);
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,12 +89,16 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode);
 QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode);
 
 /**
- * returns -2 on error, -1 on eof, length of data read on success 
+ * @return -2 on error, -1 on eof, length of data read on success 
  */
 qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);
+
 /**
- * returns -3 on line breaker error, -2 on error, -1 on eof, 
- * length of data read on success 
+ * The qse_getdelim() function reads characters from a file pointer @a fp 
+ * until a certain condition is met as defined by @a fn and @a fnarg. 
+ * 
+ * @return -3 on line breaker error, -2 on error, -1 on eof, 
+ *         length of data read on success 
  */
 qse_ssize_t qse_getdelim (
 	qse_char_t **buf, qse_size_t *n, 
