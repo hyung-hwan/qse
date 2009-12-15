@@ -1,7 +1,7 @@
 
 ACLOCAL_AMFLAGS = -I ac/m4
 AUTOMAKE_OPTION = foreign
-#EXTRA_DIST = 
+EXTRA_DIST = LICENSE
 
 SUBDIRS = lib cmd include
 DIST_SUBDIRS = $(SUBDIRS) regress samples doc
