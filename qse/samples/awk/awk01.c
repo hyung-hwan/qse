@@ -1,5 +1,5 @@
 /*
- * $Id: awk01.c 287 2009-09-15 10:01:02Z hyunghwan.chung $ 
+ * $Id: awk01.c 316 2009-12-14 12:50:11Z hyunghwan.chung $ 
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -39,7 +39,7 @@ int main ()
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
 	qse_awk_parsestd_in_t psin;
-	int ret;
+	int ret = -1;
 
 	awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)  
@@ -51,12 +51,11 @@ int main ()
 	psin.type = QSE_AWK_PARSESTD_CP;
 	psin.u.cp  = src;
 
-	ret = qse_awk_parsestd (awk, &psin, QSE_NULL);
-	if (ret <= -1)
+	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		goto oops;
 	}
 
 	rtx = qse_awk_rtx_openstd (
@@ -70,7 +69,7 @@ int main ()
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_geterrmsg(awk));
-		ret = -1; goto oops;
+		goto oops;
 	}
 	
 	retv = qse_awk_rtx_loop (rtx);
@@ -78,7 +77,7 @@ int main ()
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		goto oops;
 	}
 
 	qse_awk_rtx_refdownval (rtx, retv);

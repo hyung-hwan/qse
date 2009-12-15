@@ -2,18 +2,121 @@
 
 @section awk_intro INTRODUCTION
 
-QSEAWK is an embeddable AWK interpreter that is a part of the @ref qse_intro "QSE" library. The design focuses on building a flexible and robust embedding API with minimal platform dependency. An embedding application is capable of
+QSEAWK is an embeddable AWK interpreter and is a part of the @ref qse_intro 
+"QSE" library. The interpreter implements the language described in the book
+<a class="el" href="http://cm.bell-labs.com/cm/cs/awkbook/">
+The AWK Proramming Language</a>
+with @ref awk_ext "extensions". Its design focuses on building a flexible 
+and robust embedding API with minimal platform dependency. An embedding 
+application is capable of
 - adding new global variables and functions.
 - getting and set the value of a global variable.
-- calling a function.
+- calling a function with or without parameters and getting its return value.
 - customizing I/O handlers for file, pipe, console I/O.
 - creating multiple interpreters independent of each other.
 - running a single script with different I/O streams independently.
 - changing language features by setting options.
+- and more
 
-The interpreter implements the language described in the book 
-The AWK Proramming Language (http://cm.bell-labs.com/cm/cs/awkbook/)
-with some extensions.
+Embedding an interpreter typically involves the following steps. 
+
+- open a new interpreter
+- parse in a source script
+- open a new runtime context
+- execute pattern-action blocks or call a function
+- close the runtime context
+- close the interpter
+
+The code example below demonstrates the steps in C. It executes the one liner
+<b>BEGIN { print "hello, world" }</b>.
+
+@code
+/* cc -o hello hello.c -lqsecmn -lqseawk */
+#include <qse/awk/std.h>
+#include <qse/cmn/stdio.h>
+
+#define FAIL(msg) do { qse_printf(QSE_T("ERR: %s\n"),msg); goto oops; } while(0)
+
+int main ()
+{
+	qse_awk_t* awk = QSE_NULL;
+	qse_awk_rtx_t* rtx = QSE_NULL;
+	qse_awk_val_t* retv;
+	qse_awk_parsestd_in_t psin;
+	int ret = -1;
+
+	awk = qse_awk_openstd (0); /* open a new interpreter */
+	if (!awk) FAIL ("cannot open awk");
+
+	/* parse the hello world script from a string */
+	psin.type = QSE_AWK_PARSESTD_CP;
+	psin.u.cp = QSE_T("BEGIN { print \"hello, world\" }");
+	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1) 
+		FAIL (qse_awk_geterrmsg(awk));
+
+	rtx = qse_awk_rtx_openstd ( /* open a runtime context */
+		awk, 0,             /* no extension */
+		QSE_T("hello"),     /* ARGV[0] */
+		QSE_NULL,           /* stdin */
+		QSE_NULL            /* stdout */               
+	);
+	if (!rtx) FAIL (qse_awk_geterrmsg(awk));
+	
+	retv = qse_awk_rtx_loop (rtx); /* exeucte pattern-action blocks */
+	if (!retv) FAIL (qse_awk_rtx_geterrmsg(rtx));
+
+	qse_awk_rtx_refdownval (rtx, retv); /* destroy the return value */
+	ret = 0;
+
+oops:
+	if (rtx) qse_awk_rtx_close (rtx); /* close the runtime context */
+	if (awk) qse_awk_close (awk); /* close the interpreter */
+	return ret;
+}
+@endcode
+
+Things can get simpler when you use C++ API as the C++ API supports a single 
+runtime context for each interpreter.
+
+@code
+/* c++ -o hello hello.cpp -lqsecmn -lqseawk -lqseawk++ */
+#include <qse/awk/StdAwk.hpp>
+#include <iostream>
+
+#ifdef QSE_CHAR_IS_MCHAR
+#       define xcout std::cout
+#else
+#       define xcout std::wcout
+#endif
+
+struct MyAwk: public QSE::StdAwk { ~MyAwk () { QSE::StdAwk::close (); } };
+
+#define FAIL(awk) do { \
+	xcout << QSE_T("ERR: ") << awk.getErrorMessage() << std::endl; \
+	return -1; \
+} while (0)
+
+int main (int argc, char* argv[])
+{
+	MyAwk awk;
+
+	// open a new interpreter
+	if (awk.open () <= -1) FAIL (awk);
+
+	// set ARGV[0]
+	if (awk.addArgument (QSE_T("hello")) <= -1) FAIL (awk);
+
+	// parse the source script string 
+	MyAwk::SourceString in(QSE_T("BEGIN { print \"hello, world\" }"));
+	if (awk.parse (in, MyAwk::Source::NONE) == QSE_NULL) FAIL (awk);
+
+	// execute the BEGIN, pattern-action, END blocks.
+	MyAwk::Value r;
+	if (awk.loop (&r) <= -1) FAIL (awk);
+
+	return 0;
+}
+@endcode
 
 @section awk_ext EXTENSIONS
 Some language extensions are implemented and they can be enabled by setting the

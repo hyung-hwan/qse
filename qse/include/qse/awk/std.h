@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: std.h 316 2009-12-14 12:50:11Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -38,10 +38,10 @@
  */
 enum qse_awk_parsestd_type_t
 {
-	QSE_AWK_PARSESTD_FILE  = 0, /* file name */
-	QSE_AWK_PARSESTD_CP    = 1, /* character pointer */
-	QSE_AWK_PARSESTD_CPL   = 2, /* character pointer + length */
-	QSE_AWK_PARSESTD_STDIO = 3  /* standard input/output */
+	QSE_AWK_PARSESTD_FILE  = 0, /**< file name */
+	QSE_AWK_PARSESTD_CP    = 1, /**< character pointer */
+	QSE_AWK_PARSESTD_CPL   = 2, /**< character pointer + length */
+	QSE_AWK_PARSESTD_STDIO = 3  /**< standard input/output */
 };
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
 
