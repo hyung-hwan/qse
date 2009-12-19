@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 288 2009-09-15 14:03:15Z hyunghwan.chung $
+ * $Id: Awk.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,7 +24,7 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/map.h>
 #include <qse/cmn/chr.h>
-#include <qse/Mmgr.hpp>
+#include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
 
 /// @file
@@ -39,7 +39,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// The Awk class implements an AWK interpreter by wrapping around 
 /// #qse_awk_t and #qse_awk_rtx_t.
 ///
-class Awk: public Mmgr
+class Awk: public Mmged
 {
 public:
 	typedef qse_map_t   map_t;
@@ -180,7 +180,7 @@ public:
 		/// The Data class encapsulates information passed in and out
 		/// for source script I/O. 
 		///
-		class Data: protected sio_arg_t
+		class Data
 		{
 		public:
 			friend class Awk;
@@ -202,12 +202,12 @@ public:
 				return arg->name;
 			}
 
-			const void* getHandle () const
+			void* getHandle () const
 			{
 				return arg->handle;
 			}
 
-			void  setHandle (void* handle)
+			void setHandle (void* handle)
 			{
 				arg->handle = handle;
 			}
@@ -234,7 +234,7 @@ public:
 		virtual int open (Data& io) = 0;
 		virtual int close (Data& io) = 0;
 		virtual ssize_t read (Data& io, char_t* buf, size_t len) = 0;
-		virtual ssize_t write (Data& io, char_t* buf, size_t len) = 0;
+		virtual ssize_t write (Data& io, const char_t* buf, size_t len) = 0;
 
 		///
 		/// The NONE object indicates no source.
@@ -253,7 +253,7 @@ protected:
 		int open (Data& io) { return -1; }
 		int close (Data& io) { return 0; }
 		ssize_t read (Data& io, char_t* buf, size_t len) { return 0; }
-		ssize_t write (Data& io, char_t* buf, size_t len) { return 0; }
+		ssize_t write (Data& io, const char_t* buf, size_t len) { return 0; }
 	};
 
 public:
@@ -774,8 +774,14 @@ public:
 	/// @{
 	///
 
-	/// Constructor 
-	Awk ();
+	/// The Awk() function creates an interpreter without fully 
+	/// initializing it. You must call open() for full initialization
+	/// before calling other functions. 
+	Awk (Mmgr* mmgr);
+
+	/// The ~Awk() function destroys an interpreter. Make sure to have
+	/// called close() for finalization before the destructor is executed.
+	virtual ~Awk () {}
 
 	///
 	/// The open() function initializes an interpreter. 
@@ -785,7 +791,7 @@ public:
 	int open ();
 
 	///
-	/// The cloase() function closes the interpreter. 
+	/// The close() function closes the interpreter. 
 	///
 	void close ();
 

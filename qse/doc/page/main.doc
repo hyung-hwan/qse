@@ -93,8 +93,8 @@ organized to dedicated modules.  See relevant subpages for more information
 on each module.
 
 - @subpage cmn "Common Functions"
-- @subpage sed "SED Stream Editor"
-- @subpage cut "CUT Text Cutter"
 - @subpage awk "AWK Interpreter"
+- @subpage cut "CUT Text Cutter"
+- @subpage sed "SED Stream Editor"
 
 */

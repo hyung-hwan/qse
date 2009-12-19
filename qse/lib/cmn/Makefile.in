@@ -34,6 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_CXX_TRUE@am__append_1 = libqsecmnxx.la
 subdir = lib/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -80,6 +81,14 @@ libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqsecmn_la_LDFLAGS) $(LDFLAGS) -o $@
+libqsecmnxx_la_LIBADD =
+am__libqsecmnxx_la_SOURCES_DIST = Mmgr.cpp StdMmgr.cpp
+@ENABLE_CXX_TRUE@am_libqsecmnxx_la_OBJECTS = Mmgr.lo StdMmgr.lo
+libqsecmnxx_la_OBJECTS = $(am_libqsecmnxx_la_OBJECTS)
+libqsecmnxx_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libqsecmnxx_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_CXX_TRUE@am_libqsecmnxx_la_rpath = -rpath $(libdir)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/au/depcomp
 am__depfiles_maybe = depfiles
@@ -93,8 +102,18 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libqsecmn_la_SOURCES)
-DIST_SOURCES = $(libqsecmn_la_SOURCES)
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
+SOURCES = $(libqsecmn_la_SOURCES) $(libqsecmnxx_la_SOURCES)
+DIST_SOURCES = $(libqsecmn_la_SOURCES) \
+	$(am__libqsecmnxx_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -239,7 +258,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include 
-lib_LTLIBRARIES = libqsecmn.la
+lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
 	mem.c chr.c chr_cnv.c rex.c \
@@ -255,10 +274,14 @@ libqsecmn_la_SOURCES = \
 
 libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 @WIN32_TRUE@libqsecmn_la_LIBADD = -lpsapi
+@ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
+@ENABLE_CXX_TRUE@	Mmgr.cpp StdMmgr.cpp
+
+@ENABLE_CXX_TRUE@libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -322,6 +345,8 @@ clean-libLTLIBRARIES:
 	done
 libqsecmn.la: $(libqsecmn_la_OBJECTS) $(libqsecmn_la_DEPENDENCIES) 
 	$(libqsecmn_la_LINK) -rpath $(libdir) $(libqsecmn_la_OBJECTS) $(libqsecmn_la_LIBADD) $(LIBS)
+libqsecmnxx.la: $(libqsecmnxx_la_OBJECTS) $(libqsecmnxx_la_DEPENDENCIES) 
+	$(libqsecmnxx_la_LINK) $(am_libqsecmnxx_la_rpath) $(libqsecmnxx_la_OBJECTS) $(libqsecmnxx_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -329,6 +354,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mmgr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdMmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr_cnv.Plo@am__quote@
@@ -374,6 +401,27 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

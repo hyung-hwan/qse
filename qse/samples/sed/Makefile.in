@@ -58,11 +58,13 @@ am__sed02_SOURCES_DIST = sed02.cpp
 sed02_OBJECTS = $(am_sed02_OBJECTS)
 am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-@ENABLE_CXX_TRUE@sed02_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@sed02_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
 am__sed03_SOURCES_DIST = sed03.cpp
 @ENABLE_CXX_TRUE@am_sed03_OBJECTS = sed03.$(OBJEXT)
 sed03_OBJECTS = $(am_sed03_OBJECTS)
-@ENABLE_CXX_TRUE@sed03_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@sed03_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/ac/au/depcomp
 am__depfiles_maybe = depfiles
@@ -222,10 +224,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
 LDADD = -lqsesed -lqsecmn $(LIBM)
+@ENABLE_CXX_TRUE@CXXLIB = -lqsesedxx -lqsecmnxx
 @ENABLE_CXX_TRUE@sed02_SOURCES = sed02.cpp
-@ENABLE_CXX_TRUE@sed02_LDADD = -lqsesedxx $(LDADD)
+@ENABLE_CXX_TRUE@sed02_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@sed03_SOURCES = sed03.cpp
-@ENABLE_CXX_TRUE@sed03_LDADD = -lqsesedxx $(LDADD)
+@ENABLE_CXX_TRUE@sed03_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
 .SUFFIXES:

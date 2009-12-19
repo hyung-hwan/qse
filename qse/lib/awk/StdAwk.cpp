@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -305,7 +305,7 @@ int StdAwk::openPipe (Pipe& io)
 	}
 
 	pio = qse_pio_open (
-		(qse_mmgr_t*)this,
+		this->getMmgr(),
 		0, 
 		io.getName(), 
 		flags
@@ -376,7 +376,7 @@ int StdAwk::openFile (File& io)
 	}
 
 	fio = qse_fio_open (
-		(qse_mmgr_t*)this,
+		this->getMmgr(),
 		0, 
 		io.getName(), 
 		flags,
@@ -801,6 +801,8 @@ int StdAwk::SourceFile::open (Data& io)
 
 	if (ioname == QSE_NULL)
 	{
+		// open the main source file.
+
 		if (name[0] == QSE_T('-') && name[1] == QSE_T('\0'))
 		{
 			sio = (io.getMode() == READ)? qse_sio_in: qse_sio_out;
@@ -836,6 +838,8 @@ int StdAwk::SourceFile::open (Data& io)
 	}
 	else
 	{
+		// open an included file
+
 		const char_t* file = ioname;
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
@@ -909,7 +913,7 @@ StdAwk::ssize_t StdAwk::SourceFile::read (Data& io, char_t* buf, size_t len)
 	return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
-StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, char_t* buf, size_t len)
+StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, const char_t* buf, size_t len)
 {
 	return qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
 }
@@ -921,13 +925,14 @@ int StdAwk::SourceString::open (Data& io)
 
 	if (ioname == QSE_NULL)
 	{
-		/* SourceString does not support writing */
+		// open the main source file.
+		// SourceString does not support writing.
 		if (io.getMode() == WRITE) return -1;
 		ptr = str;
 	}
 	else
 	{
-		/* open an included file */
+		// open an included file 
 		sio = qse_sio_open (
 			((awk_t*)io)->mmgr,
 			0,
@@ -971,7 +976,7 @@ StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
 	}
 }
 
-StdAwk::ssize_t StdAwk::SourceString::write (Data& io, char_t* buf, size_t len)
+StdAwk::ssize_t StdAwk::SourceString::write (Data& io, const char_t* buf, size_t len)
 {
 	if (io.getName() == QSE_NULL)
 	{

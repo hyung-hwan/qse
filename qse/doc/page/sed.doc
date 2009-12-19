@@ -13,13 +13,69 @@ pattern space, manipulates the pattern space by applying a set of editing
 commands, and writes the pattern space to an output stream. Typically, the
 input and output streams are a console or a file. 
 
-@b QSE provides an embeddable stream editor that supports most of 
+@b QSESED is an embeddable stream editor that supports most of 
 the conventional sed commands and implements input and output streams as a 
 callback function: 
 
 - #qse_sed_t - C type that encapsulates a stream editor
 - QSE::Sed - C++ class that wraps #qse_sed_t
 - QSE::StdSed - C++ child class of QSE::Sed that implements standard input and output streams
+
+@code
+#include <qse/sed/StdSed.hpp>
+#include <qse/cmn/main.h>
+#include <iostream>
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define xcout std::cout
+#else
+#	define xcout std::wcout
+#endif
+
+int sed_main (int argc, qse_char_t* argv[])
+{
+	if (argc <  2 || argc > 4)
+	{
+		xcout << QSE_T("USAGE: ") << argv[0] <<
+		         QSE_T(" command-string [input-file [output-file]]") << std::endl;
+		return -1;
+	}
+
+	QSE::StdSed sed;
+
+	if (sed.open () == -1)
+	{
+		xcout << QSE_T("ERR: cannot open - ") << sed.getErrorMessage() << std::endl;
+		return -1;
+	}
+
+	if (sed.compile (argv[1]) == -1)
+	{
+		xcout << QSE_T("ERR: cannot compile - ") << sed.getErrorMessage() << std::endl;
+		sed.close ();
+		return -1;
+	}
+
+	qse_char_t* infile = (argc >= 3)? argv[2]: QSE_NULL;
+	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
+	QSE::StdSed::StdStream stream (infile, outfile);
+
+	if (sed.execute (stream) == -1)
+	{
+		xcout << QSE_T("ERR: cannot execute - ") << sed.getErrorMessage() << std::endl;
+		sed.close ();
+		return -1;
+	}
+
+	sed.close ();
+	return 0;
+}
+
+int qse_main (int argc, qse_achar_t* argv[])
+{
+	return qse_runmain (argc, argv, sed_main);
+}
+@endcode
 
 @section sed_command COMMAND
 
