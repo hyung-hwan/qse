@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.cpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: StdSed.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,79 +21,150 @@
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/fio.h>
 #include <qse/cmn/sio.h>
-#include <stdlib.h>
+#include "sed.h"
+#include "../cmn/mem.h"
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-void* StdSed::allocMem (qse_size_t n)
-{ 
-	return ::malloc (n); 
-}
-
-void* StdSed::reallocMem (void* ptr, qse_size_t n)
-{ 
-	return ::realloc (ptr, n); 
-}
-
-void StdSed::freeMem (void* ptr)
-{ 
-	::free (ptr); 
-}
-
-int StdSed::openConsole (Console& io)
+int StdSed::StdStream::open (Data& io)
 {
-	io.setHandle ((io.getMode() == Console::READ)?  qse_sio_in: qse_sio_out);
+	qse_sio_t* sio;
+	const char_t* ioname = io.getName();
+
+	if (ioname == QSE_NULL)
+	{
+		//
+		// a normal console is indicated by a null name 
+		//
+
+		if (io.getMode() == READ)
+		{
+			if (infile == QSE_NULL) sio = qse_sio_in;
+			else
+			{
+				sio = qse_sio_open (
+					((sed_t*)io)->mmgr,
+					0,
+					infile,
+					QSE_SIO_READ
+				);
+				if (sio == QSE_NULL)
+				{
+					// set the error message explicitly
+					// as the file name is different from 
+					// the standard console name (NULL)
+					qse_cstr_t ea;
+					ea.ptr = infile;
+					ea.len = qse_strlen (infile);
+					((Sed*)io)->setError (
+						QSE_SED_EIOFIL, &ea);
+					return -1;
+				}
+			}
+		}
+		else
+		{
+			if (outfile == QSE_NULL) sio = qse_sio_out;
+			else
+			{
+				sio = qse_sio_open (
+					((sed_t*)io)->mmgr,
+					0,
+					outfile,
+					QSE_SIO_WRITE |
+					QSE_SIO_CREATE |
+					QSE_SIO_TRUNCATE
+				);
+				if (sio == QSE_NULL)
+				{
+					// set the error message explicitly
+					// as the file name is different from 
+					// the standard console name (NULL)
+					qse_cstr_t ea;
+					ea.ptr = outfile;
+					ea.len = qse_strlen (outfile);
+					((Sed*)io)->setError (
+						QSE_SED_EIOFIL, &ea);
+					return -1;
+				}
+			}
+		}
+	}
+	else
+	{
+		//
+		// if ioname is not empty, it is a file name
+		//
+
+		sio = qse_sio_open (
+			((sed_t*)io)->mmgr,
+			0,
+			ioname,
+			(io.getMode() == READ? 
+				QSE_SIO_READ: 
+				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+		);
+
+		if (sio == QSE_NULL) return -1;
+	}
+
+	io.setHandle (sio);
 	return 1;
 }
 
-int StdSed::closeConsole (Console& io)
+int StdSed::StdStream::close (Data& io)
 {
+	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
+
+	qse_sio_flush (sio);
+	if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
+		qse_sio_close (sio);
+
 	return 0;
 }
 
-StdSed::ssize_t StdSed::readConsole (Console& io, char_t* buf, size_t len)
+StdSed::ssize_t StdSed::StdStream::read (Data& io, char_t* buf, size_t len)
 {
-	return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	ssize_t n = qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+
+	if (n == -1)
+	{
+		if (io.getName() == QSE_NULL && infile != QSE_NULL) 
+		{
+			// if writing to outfile, set the error message
+			// explicitly. other cases are handled by 
+			// the caller in sed.c.
+			qse_cstr_t ea;
+			ea.ptr = infile;
+			ea.len = qse_strlen (infile);
+			((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
+		}
+	}
+
+	return n;
 }
 
-StdSed::ssize_t StdSed::writeConsole (Console& io, const char_t* data, size_t len) 
+StdSed::ssize_t StdSed::StdStream::write (Data& io, const char_t* buf, size_t len)
 {
-	return qse_sio_putsn ((qse_sio_t*)io.getHandle(), data, len);
-}
+	ssize_t n = qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
 
-int StdSed::openFile (File& io) 
-{
-	int flags = (io.getMode() == File::READ)?
-		QSE_FIO_READ: (QSE_FIO_WRITE|QSE_FIO_CREATE|QSE_FIO_TRUNCATE);
+	if (n == -1)
+	{
+		if (io.getName() == QSE_NULL && outfile != QSE_NULL) 
+		{
+			// if writing to outfile, set the error message
+			// explicitly. other cases are handled by 
+			// the caller in sed.c.
+			qse_cstr_t ea;
+			ea.ptr = outfile;
+			ea.len = qse_strlen (outfile);
+			((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
+		}
+	}
 
-	qse_fio_t* fio = qse_fio_open (
-		this, 0, io.getName(),
-		flags | QSE_FIO_TEXT,
-		QSE_FIO_RUSR | QSE_FIO_WUSR |
-		QSE_FIO_RGRP | QSE_FIO_ROTH
-	);	
-	if (fio == QSE_NULL) return -1;
-
-	io.setHandle (fio);
-	return 1;
-}
-
-int StdSed::closeFile (File& io) 
-{
-	qse_fio_close ((qse_fio_t*)io.getHandle());
-	return 0;
-}
-
-StdSed::ssize_t StdSed::readFile (File& io, char_t* buf, size_t len) 
-{
-	return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
-}
-
-StdSed::ssize_t StdSed::writeFile (File& io, const char_t* data, size_t len) 
-{
-	return qse_fio_write ((qse_fio_t*)io.getHandle(), data, len);
+	return n;
 }
 
 /////////////////////////////////

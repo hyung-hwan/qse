@@ -11,6 +11,9 @@ awk03_SOURCES = awk03.c
 awk04_SOURCES = awk04.c
 
 if ENABLE_CXX
+
+CXXLIB = -lqseawkxx -lqsecmnxx
+
 bin_PROGRAMS += awk05 awk06 awk07 awk08
 
 awk05_SOURCES = awk05.cpp
@@ -18,8 +21,8 @@ awk06_SOURCES = awk06.cpp
 awk07_SOURCES = awk07.cpp
 awk08_SOURCES = awk08.cpp
 
-awk05_LDADD = -lqseawkxx $(LDADD)
-awk06_LDADD = -lqseawkxx $(LDADD)
-awk07_LDADD = -lqseawkxx $(LDADD)
-awk08_LDADD = -lqseawkxx $(LDADD)
+awk05_LDADD = $(CXXLIB) $(LDADD)
+awk06_LDADD = $(CXXLIB) $(LDADD)
+awk07_LDADD = $(CXXLIB) $(LDADD)
+awk08_LDADD = $(CXXLIB) $(LDADD)
 endif

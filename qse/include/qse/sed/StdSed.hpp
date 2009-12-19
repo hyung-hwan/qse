@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: StdSed.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,6 +22,7 @@
 #define _QSE_SED_STDSED_HPP_
 
 #include <qse/sed/Sed.hpp>
+#include <qse/cmn/StdMmgr.hpp>
 
 /** @file
  * Standard Stream Editor
@@ -32,32 +33,40 @@ QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
 /**
- * The StdSed class inherits the Sed class and implements the standard
- * I/O handlers and memory manager for easier use.
+ * The StdSed class inherits the Sed class, implements a standard
+ * I/O stream class, and sets the default memory manager.
  *
  */
 class StdSed: public Sed
 {
-protected:
-	void* allocMem   (qse_size_t n);
-	void* reallocMem (void* ptr, qse_size_t n);
-	void  freeMem    (void* ptr);
+public:
+	StdSed (Mmgr* mmgr = &StdMmgr::DFL): Sed (mmgr) {}
 
-	int openConsole (Console& io);
-	int closeConsole (Console& io);
-	ssize_t readConsole (Console& io, char_t* buf, size_t len);
-	ssize_t writeConsole (Console& io, const char_t* data, size_t len);
+	class StdStream: public IOStream
+	{
+	public:
+		StdStream (const char_t* infile = QSE_NULL,
+		         const char_t* outfile = QSE_NULL): 
+			infile(infile), outfile(outfile) 
+		{
+		}
 
-	int openFile (File& io);
-	int closeFile (File& io);
-	ssize_t readFile (File& io, char_t* buf, size_t len);
-	ssize_t writeFile (File& io, const char_t* data, size_t len);
+		int open (Data& io);
+		int close (Data& io);
+		ssize_t read (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, const char_t* buf, size_t len);
+
+	protected:
+		const char_t* infile;
+		const char_t* outfile;
+	};
 };
 
 /** 
  * @example sed02.cpp 
  * The example shows how to use the QSE::StdSed class to write a simple stream
- * editor that reads from a standard input and writes to a standard output.
+ * editor that reads from a standard input or a file and writes to a standard 
+ * output or a file.
  */
 
 /**

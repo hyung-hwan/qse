@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sio.h 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,6 +20,10 @@
  
 #ifndef _QSE_CMN_SIO_H_
 #define _QSE_CMN_SIO_H_
+
+/** @file
+ * This file defines a simple stream I/O interface.
+ */
 
 #include <qse/types.h>
 #include <qse/macros.h>

@@ -23,7 +23,7 @@ Embedding an interpreter typically involves the following steps.
 - open a new interpreter
 - parse in a source script
 - open a new runtime context
-- execute pattern-action blocks or call a function
+- execute BEGIN,pattern-action,END blocks or call a function
 - close the runtime context
 - close the interpter
 
@@ -61,8 +61,9 @@ int main ()
 		QSE_NULL            /* stdout */               
 	);
 	if (!rtx) FAIL (qse_awk_geterrmsg(awk));
-	
-	retv = qse_awk_rtx_loop (rtx); /* exeucte pattern-action blocks */
+
+	/* exeucte BEGIN,pattern-action,END blocks */
+	retv = qse_awk_rtx_loop (rtx); 
 	if (!retv) FAIL (qse_awk_rtx_geterrmsg(rtx));
 
 	qse_awk_rtx_refdownval (rtx, retv); /* destroy the return value */
@@ -75,11 +76,11 @@ oops:
 }
 @endcode
 
-Things can get simpler when you use C++ API as the C++ API supports a single 
-runtime context for each interpreter.
+Things can get simpler when you use C++ API. Note that the C++ API supports 
+just a single runtime context for each interpreter.
 
 @code
-/* c++ -o hello hello.cpp -lqsecmn -lqseawk -lqseawk++ */
+/* c++ -o hello hello.cpp -lqsecmn -lqseawk -lqseawkxx */
 #include <qse/awk/StdAwk.hpp>
 #include <iostream>
 
@@ -110,7 +111,7 @@ int main (int argc, char* argv[])
 	MyAwk::SourceString in(QSE_T("BEGIN { print \"hello, world\" }"));
 	if (awk.parse (in, MyAwk::Source::NONE) == QSE_NULL) FAIL (awk);
 
-	// execute the BEGIN, pattern-action, END blocks.
+	// execute BEGIN, pattern-action, END blocks.
 	MyAwk::Value r;
 	if (awk.loop (&r) <= -1) FAIL (awk);
 

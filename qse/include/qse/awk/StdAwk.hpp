@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,6 +22,7 @@
 #define _QSE_AWK_STDAWK_HPP_
 
 #include <qse/awk/Awk.hpp>
+#include <qse/cmn/StdMmgr.hpp>
 
 /// @file
 /// Standard AWK Interpreter
@@ -65,7 +66,7 @@ public:
 		int open (Data& io);
 		int close (Data& io);
 		ssize_t read (Data& io, char_t* buf, size_t len);
-		ssize_t write (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, const char_t* buf, size_t len);
 
 	protected:
 		const char_t* name;
@@ -84,13 +85,15 @@ public:
 		int open (Data& io);
 		int close (Data& io);
 		ssize_t read (Data& io, char_t* buf, size_t len);
-		ssize_t write (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, const char_t* buf, size_t len);
 
 	protected:
 		const char_t* str;
 		const char_t* ptr;
 	};
         
+	StdAwk (Mmgr* mmgr = &StdMmgr::DFL): Awk (mmgr) {}
+
 	int open ();
 	void close ();
 

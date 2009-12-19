@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 288 2009-09-15 14:03:15Z hyunghwan.chung $
+ * $Id: Awk.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1003,7 +1003,8 @@ int Awk::Run::getGlobal (int id, Value& g) const
 // Awk
 //////////////////////////////////////////////////////////////////
 
-Awk::Awk () : awk (QSE_NULL), functionMap (QSE_NULL), runctx (this)
+Awk::Awk (Mmgr* mmgr): 
+	Mmged (mmgr), awk (QSE_NULL), functionMap (QSE_NULL), runctx (this)
 
 {
 	QSE_MEMSET (&errinf, 0, QSE_SIZEOF(errinf));
@@ -1112,7 +1113,7 @@ int Awk::open ()
 	prm.pow     = pow;
 	prm.sprintf = sprintf;
 
-	awk = qse_awk_open ((qse_mmgr_t*)this, QSE_SIZEOF(xtn_t), &prm);
+	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
 	{
 		setError (QSE_AWK_ENOMEM);

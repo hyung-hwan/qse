@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: Sed.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -19,6 +19,8 @@
  */
 
 #include <qse/sed/Sed.hpp>
+#include <qse/cmn/sio.h>
+#include "../cmn/mem.h"
 #include "sed.h"
 
 /////////////////////////////////
@@ -27,7 +29,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 
 int Sed::open ()
 {
-	sed = qse_sed_open (this, QSE_SIZEOF(Sed*));
+	sed = qse_sed_open (this->mmgr, QSE_SIZEOF(Sed*));
 	if (sed == QSE_NULL) return -1;
 	*(Sed**)QSE_XTN(sed) = this;
 
@@ -58,9 +60,11 @@ int Sed::compile (const char_t* sptr, size_t slen)
 	return qse_sed_comp (sed, sptr, slen);
 }
 
-int Sed::execute ()
+int Sed::execute (IOStream& iostream)
 {
 	QSE_ASSERT (sed != QSE_NULL);
+
+	this->iostream = &iostream;
 	return qse_sed_exec (sed, xin, xout);
 }
 
@@ -132,51 +136,25 @@ Sed::ssize_t Sed::xin (
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
-	if (arg->path == QSE_NULL)
-	{
-		Console io (arg, Console::READ);
+	IOStream::Data iodata (sed, IOStream::READ, arg);
 
-		try
+	try
+	{
+		switch (cmd)
 		{
-			switch (cmd)	
-			{
-				case QSE_SED_IO_OPEN:
-					return sed->openConsole (io);
-				case QSE_SED_IO_CLOSE:
-					return sed->closeConsole (io);
-				case QSE_SED_IO_READ:
-					return sed->readConsole (io, buf, len);
-				default:
-					return -1;
-			}
-		}
-		catch (...)
-		{
-			return -1;
+			case QSE_SED_IO_OPEN:
+				return sed->iostream->open (iodata);
+			case QSE_SED_IO_CLOSE:
+				return sed->iostream->close (iodata);
+			case QSE_SED_IO_READ:
+				return sed->iostream->read (iodata, buf, len);
+			default:
+				return -1;
 		}
 	}
-	else
+	catch (...)
 	{
-		File io (arg, File::READ);
-
-		try
-		{
-			switch (cmd)
-			{
-				case QSE_SED_IO_OPEN:
-					return sed->openFile (io);
-				case QSE_SED_IO_CLOSE:
-					return sed->closeFile (io);
-				case QSE_SED_IO_READ:
-					return sed->readFile (io, buf, len);
-				default:
-					return -1;
-			}
-		}
-		catch (...)
-		{
-			return -1;
-		}
+		return -1;
 	}
 }
 
@@ -185,51 +163,25 @@ Sed::ssize_t Sed::xout (
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
-	if (arg->path == QSE_NULL)
-	{
-		Console io (arg, Console::WRITE);
+	IOStream::Data iodata (sed, IOStream::WRITE, arg);
 
-		try
+	try
+	{
+		switch (cmd)
 		{
-			switch (cmd)	
-			{
-				case QSE_SED_IO_OPEN:
-					return sed->openConsole (io);
-				case QSE_SED_IO_CLOSE:
-					return sed->closeConsole (io);
-				case QSE_SED_IO_WRITE:
-					return sed->writeConsole (io, dat, len);
-				default:
-					return -1;
-			}
-		}
-		catch (...)
-		{
-			return -1;
+			case QSE_SED_IO_OPEN:
+				return sed->iostream->open (iodata);
+			case QSE_SED_IO_CLOSE:
+				return sed->iostream->close (iodata);
+			case QSE_SED_IO_WRITE:
+				return sed->iostream->write (iodata, dat, len);
+			default:
+				return -1;
 		}
 	}
-	else
+	catch (...)
 	{
-		File io (arg, File::WRITE);
-
-		try
-		{
-			switch (cmd)
-			{
-				case QSE_SED_IO_OPEN:
-					return sed->openFile (io);
-				case QSE_SED_IO_CLOSE:
-					return sed->closeFile (io);
-				case QSE_SED_IO_WRITE:
-					return sed->writeFile (io, dat, len);
-				default:
-					return -1;
-			}
-		}
-		catch (...)
-		{
-			return -1;
-		}
+		return -1;
 	}
 }
 

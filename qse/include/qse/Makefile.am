@@ -6,7 +6,7 @@ pkgincludedir = $(includedir)/qse
 pkginclude_HEADERS = config.h conf_msw.h conf_vms.h types.h macros.h pack1.h unpack.h 
 
 if ENABLE_CXX
-pkginclude_HEADERS += Types.hpp Mmgr.hpp
+pkginclude_HEADERS += Types.hpp 
 endif
 
 install-data-hook:

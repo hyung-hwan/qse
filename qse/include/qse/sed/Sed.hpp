@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: Sed.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,7 +21,7 @@
 #ifndef _QSE_SED_SED_HPP_
 #define _QSE_SED_SED_HPP_
 
-#include <qse/Mmgr.hpp>
+#include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
 
 /** @file
@@ -35,7 +35,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /**
  * The Sed class implements a stream editor by wrapping around #qse_sed_t.
  */
-class Sed: public Mmgr
+class Sed: public Mmged
 {
 public:
 	/// The sed_t type redefines a stream editor type
@@ -56,9 +56,83 @@ public:
 	typedef qse_sed_depth_t depth_t;
 
 	///
+	/// The IOStream class is a base class for I/O operation during
+	/// execution.
+	///
+	class IOStream: public Types
+	{
+	public:
+		enum Mode
+		{
+			READ,  ///< open for read
+			WRITE  ///< open for write
+		};
+
+		class Data
+		{
+		public:
+			friend class Sed;
+
+		protected:
+			Data (Sed* sed, Mode mode, io_arg_t* arg):
+				sed (sed), mode (mode), arg (arg)
+			{
+			}
+
+		public:
+			Mode getMode() const
+			{
+				return mode;
+			}
+
+			void* getHandle () const
+			{
+				return arg->handle;
+			}
+
+			void setHandle (void* handle)
+			{
+				arg->handle = handle;
+			}
+
+			const char_t* getName () const
+			{
+				return arg->path;
+			}
+
+			operator Sed* () const
+			{
+				return sed;
+			}
+
+			operator sed_t* () const
+			{
+				return sed->sed;
+			}
+
+		protected:
+			Sed* sed;
+			Mode mode;
+			io_arg_t* arg;
+		};
+
+		IOStream () {}
+		virtual ~IOStream () {}
+
+		virtual int open (Data& io) = 0;
+		virtual int close (Data& io) = 0;
+		virtual ssize_t read (Data& io, char_t* buf, size_t len) = 0;
+		virtual ssize_t write (Data& io, const char_t* buf, size_t len) = 0;
+
+	private:
+		IOStream (const IOStream&);
+		IOStream& operator= (const IOStream&);
+	};
+
+	///
 	/// The Sed() function creates an uninitialized stream editor.
 	///
-	Sed (): sed (QSE_NULL), dflerrstr (QSE_NULL) {}
+	Sed (Mmgr* mmgr): Mmged (mmgr), sed (QSE_NULL), dflerrstr (QSE_NULL) {}
 
 	///
 	/// The ~Sed() function destroys a stream editor. 
@@ -67,7 +141,7 @@ public:
 	///       a stream editor is destroyed if it has been initialized
 	///       with open().
 	///
-	~Sed () {}
+	virtual ~Sed () {}
 
 	///
 	/// The open() function initializes a stream editor and makes it
@@ -105,7 +179,7 @@ public:
 	/// streams defined through I/O handlers
 	/// @return 0 on success, -1 on failure
 	///
-	int execute ();
+	int execute (IOStream& iostream);
 
 	///
 	/// The getOption() function gets the current options.
@@ -184,210 +258,11 @@ public:
 		size_t num ///< a line number
 	);
 
+	///
+	/// The getMmgr() function returns the memory manager associated.
+	///
+	
 protected:
-	///
-	/// The IOBase class is a base class for I/O operations. It wraps around
-	/// the primitive #io_arg_t type and exposes relevant information to
-	/// an I/O handler.
-	///
-	class IOBase
-	{
-	public:
-		/** 
-		 * The Mode enumerator defines I/O operation modes.
-		 */
-		enum Mode
-		{
-			READ, ///< open a stream for reading
-			WRITE ///< open a stream for writing
-		};
-
-	protected:
-		IOBase (io_arg_t* arg, Mode mode): 
-			arg(arg), mode (mode) {}
-
-	public:
-		///
-		/// The getHandle() function gets an I/O handle set with the
-		/// setHandle() function. Once set, it is maintained until
-		/// an assoicated I/O handler closes it or changes it with
-		/// another call to setHandle().
-		///
-		const void* getHandle () const
-		{
-			return arg->handle;
-		}
-
-		///
-		/// The setHandle() function sets an I/O handle and is typically
-		/// called in stream opening functions such as openConsole()
-		/// and openFile(). You can get the handle with getHandle() 
-		// as needed.
-		///
-		void setHandle (void* handle)
-		{
-			arg->handle = handle;
-		}		
-
-		///
-		/// The getMode() function gets the I/O mode requested.
-		/// A stream opening function can inspect the mode requested and
-		/// open a stream properly 
-		///
-		Mode getMode ()
-		{
-			return this->mode;
-		}
-
-	protected:
-		Sed*      sed;
-		io_arg_t* arg;
-		Mode      mode;
-	};
-
-	///
-	/// The Console class inherits the IOBase class and provides 
-	/// functionality for console I/O operations.
-	///
-	class Console: public IOBase
-	{
-	protected:
-		friend class Sed;
-		Console (io_arg_t* arg, Mode mode):
-			IOBase (arg, mode) {}
-	};
-
-	///
-	/// The File class inherits the IOBase class and provides functionality
-	/// for file I/O operations.
-	///
-	class File: public IOBase
-	{
-	protected:
-		friend class Sed;
-		File (io_arg_t* arg, Mode mode):
-			IOBase (arg, mode) {}
-
-	public:
-		///
-		/// The getName() function gets the file path requested.
-		/// You can call this function from the openFile() function
-		/// to determine a file to open.
-		///
-		const char_t* getName () const
-		{
-			return arg->path;
-		}
-	};
-
-	///
-	/// The openConsole() function should be implemented by a subclass
-	/// to open a console. It can get the mode requested by invoking
-	/// the Console::getMode() function over the console object @a io.
-	///
-	/// When it comes to the meaning of the return value, 0 may look
-	/// a bit tricky. Easygoers can just return 1 on success and never
-	/// return 0 from openConsole().
-	/// - If 0 is returned for a Console::READ console, the execute()
-	/// function returns success after having calle closeConsole() as it 
-	/// has opened a console but has reached EOF.
-	/// - If 0 is returned for a Console::WRITE console and there are any
-	/// following writeConsole() requests, the execute() function
-	/// returns failure after having called closeConsole() as it cannot
-	/// write further on EOF.
-	///
-	/// @return -1 on failure, 1 on success, 0 on success but reached EOF.
-	///
-	virtual int openConsole (
-		Console& io ///< a console object
-	) = 0;
-
-	///
-	/// The closeConsole() function should be implemented by a subclass
-	/// to close a console.
-	///
-	virtual int closeConsole (
-		Console& io ///< a console object
-	) = 0;
-
-	///
-	/// The readConsole() function should be implemented by a subclass
-	/// to read from a console. It should fill the memory area pointed to
-	/// by @a buf, but at most \a len characters.
-	/// @return the number of characters read on success, 
-	///        0 on EOF, -1 on failure
-	///
-	virtual ssize_t readConsole (
-		Console& io,  ///< a console object
-		char_t*  buf, ///< a buffer pointer 
-		size_t   len  ///< the size of a buffer
-	) = 0;
-
-	///
-	/// The writeConsole() function should be implemented by a subclass
-	/// to write to a console. It should write up to @a len characters
-	/// from the memory are pointed to by @a data.
-	/// @return the number of characters written on success
-	///         0 on EOF, -1 on failure
-	/// @note The number of characters written may be less than @a len.
-	///       But the return value 0 causes execute() to fail as
-	///       writeConsole() is called when there are data to write and
-	///       it has indicated EOF.
-	///
-	virtual ssize_t writeConsole (
-		Console&      io,    ///< a console object
-		const char_t* data,  ///< a pointer to data to write
-		size_t        len    ///< the length of data
-	) = 0;
-
-	///
-	/// The openFile() function should be implemented by a subclass
-	/// to open a file. It can get the mode requested by invoking
-	/// the File::getMode() function over the file object @a io.
-	/// @return -1 on failure, 1 on success, 0 on success but reached EOF.
-	///
-	virtual int openFile (
-		File& io    ///< a file object
-	) = 0;
-
-	///
-	/// The closeFile() function should be implemented by a subclass
-	/// to close a file.
-	///
-	virtual int closeFile (
-		File& io    ///< a file object
-	) = 0;
-
-	///
-	/// The readFile() function should be implemented by a subclass
-	/// to read from a file. It should fill the memory area pointed to
-	/// by @a buf, but at most \a len characters.
-	/// @return the number of characters read on success, 
-	///         0 on EOF, -1 on failure
-	///
-	virtual ssize_t readFile (
-		File& io,     ///< a file object
-		char_t*  buf, ///< a buffer pointer 
-		size_t   len  ///< the size of a buffer
-	) = 0;
-
-	///
-	/// The writeFile() function should be implemented by a subclass
-	/// to write to a file. It should write up to @a len characters
-	/// from the memory are pointed to by @a data.
-	/// @return the number of characters written on success
-	///         0 on EOF, -1 on failure
-	/// @note The number of characters written may be less than @a len.
-	///       But the return value 0 causes execute() to fail as
-	///       writeFile() is called when there are data to write and
-	///       it has indicated EOF.
-	///
-	virtual ssize_t writeFile (
-		File& io,            ///< a file object
-		const char_t* data,  ///< a pointer to data to write
-		size_t        len    ///< the length of data
-	) = 0;
-
 	///
 	/// The getErrorString() function returns an error formatting string
 	/// for the error number @a num. A subclass wishing to customize
@@ -402,6 +277,9 @@ protected:
 	sed_t* sed;
 	/// default error formatting string getter
 	errstr_t dflerrstr; 
+	/// I/O stream to read data from and write output to.
+	IOStream* iostream;
+
 
 private:
 	static ssize_t xin (

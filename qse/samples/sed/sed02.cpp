@@ -20,14 +20,20 @@
 
 #include <qse/sed/StdSed.hpp>
 #include <qse/cmn/main.h>
-#include <qse/cmn/stdio.h>
+#include <iostream>
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define xcout std::cout
+#else
+#	define xcout std::wcout
+#endif
 
 int sed_main (int argc, qse_char_t* argv[])
 {
-	if (argc !=  2)
+	if (argc <  2 || argc > 4)
 	{
-		qse_fprintf (QSE_STDERR, 
-			QSE_T("usage: %s command-string\n"), argv[0]);
+		xcout << QSE_T("USAGE: ") << argv[0] <<
+		         QSE_T(" command-string [input-file [output-file]]") << std::endl;
 		return -1;
 	}
 
@@ -35,23 +41,24 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (sed.open () == -1)
 	{
-		qse_printf (QSE_T("cannot open a stream editor - %s\n"), 
-			sed.getErrorMessage());
+		xcout << QSE_T("ERR: cannot open") << std::endl;
 		return -1;
 	}
 
 	if (sed.compile (argv[1]) == -1)
 	{
-		qse_printf (QSE_T("cannot compile - %s\n"), 
-			sed.getErrorMessage());
+		xcout << QSE_T("ERR: cannot compile - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();
 		return -1;
 	}
 
-	if (sed.execute () == -1)
+	qse_char_t* infile = (argc >= 3)? argv[2]: QSE_NULL;
+	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
+	QSE::StdSed::StdStream stream (infile, outfile);
+
+	if (sed.execute (stream) == -1)
 	{
-		qse_printf (QSE_T("cannot execute - %s\n"),
-			sed.getErrorMessage());
+		xcout << QSE_T("ERR: cannot execute - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();
 		return -1;
 	}
@@ -60,7 +67,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	return 0;
 }
 
-int qse_main (int argc, char* argv[])
+int qse_main (int argc, qse_achar_t* argv[])
 {
 	return qse_runmain (argc, argv, sed_main);
 }

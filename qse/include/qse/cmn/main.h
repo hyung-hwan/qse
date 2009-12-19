@@ -30,10 +30,18 @@
  */
 
 /**
- * The #qse_main macro defines a main function wrapper for an underlying 
- * platform. Combined with the qse_runmain() function, it provides a consistant
- * view to the main function.
+ * @def qse_main
+ * The qse_main macro defines a main function wrapper for an underlying 
+ * platform. It is defined to @b main or @b wmain depending on the choice of
+ * the default character type #qse_char_t. Combined with the qse_runmain() 
+ * function, it provides a consistant view to the main function.
+ *
+ * @typedef qse_achar_t
+ * The qse_achar_t type defines a character type for the second parameter to 
+ * #qse_main. It is defined to #qse_mchar_t or #qse_wchar_t depending on the
+ * choice of the default character type #qse_char_t.
  */
+
 #if defined(_WIN32) && !defined(__MINGW32__)
 #	if defined(QSE_CHAR_IS_MCHAR)
 #		define qse_main main
