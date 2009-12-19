@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: StdSed.cpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,7 +28,7 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-int StdSed::StdStream::open (Data& io)
+int StdSed::FileStream::open (Data& io)
 {
 	qse_sio_t* sio;
 	const char_t* ioname = io.getName();
@@ -114,7 +114,7 @@ int StdSed::StdStream::open (Data& io)
 	return 1;
 }
 
-int StdSed::StdStream::close (Data& io)
+int StdSed::FileStream::close (Data& io)
 {
 	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
 
@@ -125,7 +125,7 @@ int StdSed::StdStream::close (Data& io)
 	return 0;
 }
 
-StdSed::ssize_t StdSed::StdStream::read (Data& io, char_t* buf, size_t len)
+StdSed::ssize_t StdSed::FileStream::read (Data& io, char_t* buf, size_t len)
 {
 	ssize_t n = qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
 
@@ -146,7 +146,7 @@ StdSed::ssize_t StdSed::StdStream::read (Data& io, char_t* buf, size_t len)
 	return n;
 }
 
-StdSed::ssize_t StdSed::StdStream::write (Data& io, const char_t* buf, size_t len)
+StdSed::ssize_t StdSed::FileStream::write (Data& io, const char_t* buf, size_t len)
 {
 	ssize_t n = qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
 
@@ -165,6 +165,142 @@ StdSed::ssize_t StdSed::StdStream::write (Data& io, const char_t* buf, size_t le
 	}
 
 	return n;
+}
+
+StdSed::StringStream::StringStream (const char_t* in)
+{
+	this->in.ptr = in; 
+	this->in.end = in + qse_strlen(in);
+	this->out.inited = false;
+}
+
+StdSed::StringStream::StringStream (const char_t* in, size_t len)
+{
+	this->in.ptr = in; 
+	this->in.end = in + len;
+	this->out.inited = false;
+}
+
+StdSed::StringStream::~StringStream ()
+{
+	if (out.inited) qse_str_fini (&out.buf);
+}
+	
+int StdSed::StringStream::open (Data& io)
+{
+	const char_t* ioname = io.getName ();
+
+	if (ioname == QSE_NULL)
+	{
+		// open a main data stream
+		if (io.getMode() == READ) 
+		{
+			in.cur = in.ptr;
+			io.setHandle ((void*)in.ptr);
+		}
+		else
+		{
+			if (!out.inited)
+			{
+				if (qse_str_init (&out.buf, ((Sed*)io)->getMmgr(), 256) == QSE_NULL)
+				{
+					((Sed*)io)->setError (QSE_SED_ENOMEM);
+					return -1;
+				}
+
+				out.inited = true;
+			}
+
+			qse_str_clear (&out.buf);
+			io.setHandle (&out.buf);
+		}
+	}
+	else
+	{
+		// open files for a r or w command
+		qse_sio_t* sio;
+		int mode = (io.getMode() == READ)?
+			QSE_SIO_READ: 
+			(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE);
+
+		sio = qse_sio_open (((Sed*)io)->getMmgr(), 0, ioname, mode);
+		if (sio == QSE_NULL) return -1;
+
+		io.setHandle (sio);
+	}
+
+	return 1;
+}
+
+int StdSed::StringStream::close (Data& io)
+{
+	const void* handle = io.getHandle();
+	if (handle != in.ptr && handle != &out.buf)
+		qse_sio_close ((qse_sio_t*)handle);
+	return 0;
+}
+
+StdSed::ssize_t StdSed::StringStream::read (Data& io, char_t* buf, size_t len)
+{
+	const void* handle = io.getHandle();
+
+	if (len == (size_t)-1) len--; // shrink buffer if too long
+	if (handle == in.ptr)
+	{
+		size_t n = 0;
+		while (in.cur < in.end && n < len)
+			buf[n++] = *in.cur++;
+		return (ssize_t)n;
+	}
+	else
+	{
+		QSE_ASSERT (handle != &out.buf);
+		return qse_sio_getsn ((qse_sio_t*)handle, buf, len);
+	}
+}
+
+StdSed::ssize_t StdSed::StringStream::write (Data& io, const char_t* data, size_t len)
+{
+	const void* handle = io.getHandle();
+
+	if (len == (qse_size_t)-1) len--; // shrink data if too long
+
+	if (handle == &out.buf)
+	{
+		if (qse_str_ncat (&out.buf, data, len) == (qse_size_t)-1)
+		{
+			((Sed*)io)->setError (QSE_SED_ENOMEM);
+			return -1;
+		}
+
+		return len;
+	}
+	else
+	{
+		QSE_ASSERT (handle != in.ptr);
+		return qse_sio_putsn ((qse_sio_t*)handle, data, len);
+	}
+}
+
+const StdSed::char_t* StdSed::StringStream::getInput (size_t* len) const
+{
+	if (len) *len = in.end - in.ptr;
+	return in.ptr;
+}
+
+const StdSed::char_t* StdSed::StringStream::getOutput (size_t* len) const
+{
+	if (out.inited)
+	{
+		if (len) *len = QSE_STR_LEN(&out.buf);
+		return QSE_STR_PTR(&out.buf);
+	}
+	else
+	{
+		static char_t empty[] = QSE_T("");
+		if (len) *len = 0;
+		return empty;
+	}
 }
 
 /////////////////////////////////
