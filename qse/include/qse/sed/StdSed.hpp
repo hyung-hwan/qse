@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: StdSed.hpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,6 +23,7 @@
 
 #include <qse/sed/Sed.hpp>
 #include <qse/cmn/StdMmgr.hpp>
+#include <qse/cmn/str.h>
 
 /** @file
  * Standard Stream Editor
@@ -42,11 +43,11 @@ class StdSed: public Sed
 public:
 	StdSed (Mmgr* mmgr = &StdMmgr::DFL): Sed (mmgr) {}
 
-	class StdStream: public IOStream
+	class FileStream: public Stream
 	{
 	public:
-		StdStream (const char_t* infile = QSE_NULL,
-		         const char_t* outfile = QSE_NULL): 
+		FileStream (const char_t* infile = QSE_NULL,
+		            const char_t* outfile = QSE_NULL): 
 			infile(infile), outfile(outfile) 
 		{
 		}
@@ -59,6 +60,36 @@ public:
 	protected:
 		const char_t* infile;
 		const char_t* outfile;
+	};
+
+	class StringStream: public Stream
+	{
+	public:
+		StringStream (const char_t* in);
+		StringStream (const char_t* in, size_t len);
+		~StringStream ();
+
+		int open (Data& io);
+		int close (Data& io);
+		ssize_t read (Data& io, char_t* buf, size_t len);
+		ssize_t write (Data& io, const char_t* buf, size_t len);
+
+		const char_t* getInput (size_t* len = QSE_NULL) const;
+		const char_t* getOutput (size_t* len = QSE_NULL) const;
+
+	protected:
+		struct
+		{
+			const char_t* ptr; 
+			const char_t* end; 
+			const char_t* cur;
+		} in;
+
+		struct
+		{
+			bool inited;
+			qse_str_t buf;
+		} out;
 	};
 };
 

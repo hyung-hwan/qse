@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: Sed.hpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -56,10 +56,10 @@ public:
 	typedef qse_sed_depth_t depth_t;
 
 	///
-	/// The IOStream class is a base class for I/O operation during
+	/// The Stream class is a base class for I/O operation during
 	/// execution.
 	///
-	class IOStream: public Types
+	class Stream: public Types
 	{
 	public:
 		enum Mode
@@ -116,8 +116,8 @@ public:
 			io_arg_t* arg;
 		};
 
-		IOStream () {}
-		virtual ~IOStream () {}
+		Stream () {}
+		virtual ~Stream () {}
 
 		virtual int open (Data& io) = 0;
 		virtual int close (Data& io) = 0;
@@ -125,8 +125,8 @@ public:
 		virtual ssize_t write (Data& io, const char_t* buf, size_t len) = 0;
 
 	private:
-		IOStream (const IOStream&);
-		IOStream& operator= (const IOStream&);
+		Stream (const Stream&);
+		Stream& operator= (const Stream&);
 	};
 
 	///
@@ -179,7 +179,7 @@ public:
 	/// streams defined through I/O handlers
 	/// @return 0 on success, -1 on failure
 	///
-	int execute (IOStream& iostream);
+	int execute (Stream& iostream);
 
 	///
 	/// The getOption() function gets the current options.
@@ -278,7 +278,7 @@ protected:
 	/// default error formatting string getter
 	errstr_t dflerrstr; 
 	/// I/O stream to read data from and write output to.
-	IOStream* iostream;
+	Stream* iostream;
 
 
 private:

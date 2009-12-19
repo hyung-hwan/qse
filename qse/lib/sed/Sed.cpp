@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: Sed.cpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -60,7 +60,7 @@ int Sed::compile (const char_t* sptr, size_t slen)
 	return qse_sed_comp (sed, sptr, slen);
 }
 
-int Sed::execute (IOStream& iostream)
+int Sed::execute (Stream& iostream)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 
@@ -136,7 +136,7 @@ Sed::ssize_t Sed::xin (
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
-	IOStream::Data iodata (sed, IOStream::READ, arg);
+	Stream::Data iodata (sed, Stream::READ, arg);
 
 	try
 	{
@@ -163,7 +163,7 @@ Sed::ssize_t Sed::xout (
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 
-	IOStream::Data iodata (sed, IOStream::WRITE, arg);
+	Stream::Data iodata (sed, Stream::WRITE, arg);
 
 	try
 	{

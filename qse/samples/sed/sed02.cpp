@@ -54,7 +54,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	qse_char_t* infile = (argc >= 3)? argv[2]: QSE_NULL;
 	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
-	QSE::StdSed::StdStream stream (infile, outfile);
+	QSE::StdSed::FileStream stream (infile, outfile);
 
 	if (sed.execute (stream) == -1)
 	{
