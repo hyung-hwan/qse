@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 320 2009-12-21 12:29:52Z hyunghwan.chung $
+ * $Id: Sed.hpp 321 2009-12-21 12:44:33Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -93,7 +93,7 @@ public:
 			void setHandle (void* handle) { arg->handle = handle; }
 
 			/// The getName() function returns an I/O name.
-			/// @return QSE_NULL for the main data stream,
+			/// @return #QSE_NULL for the main data stream,
 			///         file path for explicit file stream
 			const char_t* getName () const { return arg->path; }
 

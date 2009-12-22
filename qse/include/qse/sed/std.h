@@ -25,6 +25,10 @@
 
 /** @file
  * This file defines a simple stream editor.
+ *
+ * @example sed01.c
+ * This example shows how to write a simple stream editor using easy API 
+ * functions.
  */
 
 #ifdef __cplusplus
@@ -59,8 +63,8 @@ int qse_sed_compstd (
 /**
  * The qse_sed_execstd() function executes the compiled script
  * over an input file @a infile and an output file @a outfile.
- * If @infile is QSE_NULL, the standard console input is used.
- * If @outfile is QSE_NULL, the standard console output is used.
+ * If @a infile is QSE_NULL, the standard console input is used.
+ * If @a outfile is QSE_NULL, the standard console output is used.
  */
 int qse_sed_execstd (
 	qse_sed_t*        sed,

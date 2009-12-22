@@ -1,5 +1,5 @@
 /*
- * $Id: sed01.c 316 2009-12-14 12:50:11Z hyunghwan.chung $ 
+ * $Id$
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,15 +25,15 @@
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_sed_t* sed = QSE_NULL;
-        qse_char_t* infile;
-        qse_char_t* outfile;
+	qse_char_t* infile;
+	qse_char_t* outfile;
 	int ret = -1;
 
 	if (argc <  2 || argc > 4)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("USAGE: %s command-string [input-file [output-file]]\n"), argv[0]);
-                return -1;
-        }
+		return -1;
+	}
 
 	sed = qse_sed_openstd (0);
 	if (sed == QSE_NULL)  

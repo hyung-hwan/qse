@@ -61,8 +61,8 @@ int qse_cut_compstd (
 /**
  * The qse_cut_execstd() function executes the compiled script
  * over an input file @a infile and an output file @a outfile.
- * If @infile is QSE_NULL, the standard console input is used.
- * If @outfile is QSE_NULL, the standard console output is used..
+ * If @a infile is QSE_NULL, the standard console input is used.
+ * If @a outfile is QSE_NULL, the standard console output is used..
  */
 int qse_cut_execstd (
 	qse_cut_t*        cut,
