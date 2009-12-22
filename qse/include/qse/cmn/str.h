@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 297 2009-10-08 13:09:19Z hyunghwan.chung $
+ * $Id: str.h 320 2009-12-21 12:29:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -272,6 +272,12 @@ int qse_strxncasecmp (
 
 qse_char_t* qse_strdup (
 	const qse_char_t* str,
+	qse_mmgr_t*       mmgr
+);
+
+qse_char_t* qse_strdup2 (
+	const qse_char_t* str1,
+	const qse_char_t* str2,
 	qse_mmgr_t*       mmgr
 );
 

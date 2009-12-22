@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
+ * $Id: std.c 320 2009-12-21 12:29:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,6 +26,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
+#include "../cmn/mem.h"
 
 #include <stdarg.h>
 #include <stdlib.h>

@@ -48,7 +48,7 @@ enum qse_cut_errnum_t
 	QSE_CUT_ENOERR,  /**< no error */
 	QSE_CUT_ENOMEM,  /**< insufficient memory */
 	QSE_CUT_ESELNV,  /**< selector not valid */
-	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
+	QSE_CUT_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_CUT_EIOUSR   /**< error returned by user io handler */
 };
 typedef enum qse_cut_errnum_t qse_cut_errnum_t;
@@ -75,28 +75,20 @@ enum qse_cut_option_t
 	/** show delimited line only. if not set, undelimited lines are 
 	 *  shown in its entirety */
 	QSE_CUT_DELIMONLY    = (1 << 0),
-	/** support mixing of c and f selectors */
-	QSE_CUT_HYBRIDSEL    = (1 << 1),
+
 	/** treat any whitespaces as an input delimiter */
 	QSE_CUT_WHITESPACE   = (1 << 2),
+
 	/** fold adjacent delimiters */
 	QSE_CUT_FOLDDELIMS   = (1 << 3),
+
 	/** trim leading and trailing whitespaces off the input line */
 	QSE_CUT_TRIMSPACE    = (1 << 4),
+
 	/** normalize whitespaces in the input line */
 	QSE_CUT_NORMSPACE    = (1 << 5)
 };
 typedef enum qse_cut_option_t qse_cut_option_t;
-
-/**
- * The qse_cut_sel_id_t type defines selector types.
- */
-enum qse_cut_sel_id_t
-{
-	QSE_CUT_SEL_CHAR, /**< character */
-	QSE_CUT_SEL_FIELD /**< field */
-};
-typedef enum qse_cut_sel_id_t qse_cut_sel_id_t;
 
 /**
  * The qse_cut_io_cmd_t type defines I/O command codes. The code indicates 
@@ -260,7 +252,6 @@ void qse_cut_clear (
  */
 int qse_cut_comp (
 	qse_cut_t*        cut, /**< text cutter */
-	qse_cut_sel_id_t  sel, /**< initial selector type */
 	const qse_char_t* str, /**< selector pointer */
 	qse_size_t        len, /**< selector length */ 
 	qse_char_t        din, /**< input field delimiter */

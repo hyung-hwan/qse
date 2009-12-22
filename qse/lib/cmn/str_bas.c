@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 290 2009-09-19 04:28:49Z hyunghwan.chung $
+ * $Id: str_bas.c 320 2009-12-21 12:29:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -448,6 +448,13 @@ qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
 
 	qse_strcpy (tmp, str);
 	return tmp;
+}
+
+qse_char_t* qse_strdup2 (
+	const qse_char_t* str1, const qse_char_t* str2, qse_mmgr_t* mmgr)
+{
+	return qse_strxdup2 (
+		str1, qse_strlen(str1), str2, qse_strlen(str2), mmgr);
 }
 
 qse_char_t* qse_strxdup (

@@ -163,13 +163,13 @@ void qse_cut_clear (qse_cut_t* cut)
 }
 
 int qse_cut_comp (
-	qse_cut_t* cut, qse_cut_sel_id_t sel, 
-	const qse_char_t* str, qse_size_t len,
+	qse_cut_t* cut, const qse_char_t* str, qse_size_t len,
 	qse_char_t din, qse_char_t dout)
 {
 	const qse_char_t* p = str;
 	const qse_char_t* xnd = str + len;
 	qse_cint_t c;
+	int sel = QSE_SED_SEL_CHAR;
 
 #define CC(x,y) (((x) <= (y))? ((qse_cint_t)*(x)): QSE_CHAR_EOF)
 #define NC(x,y) (((x) < (y))? ((qse_cint_t)*(++(x))): QSE_CHAR_EOF)
@@ -200,20 +200,17 @@ int qse_cut_comp (
 			break;
 		}
 
-		if (cut->option & QSE_CUT_HYBRIDSEL)
+		if (c == QSE_T('c'))
 		{
-			if (c == QSE_T('c'))
-			{
-				sel = QSE_CUT_SEL_CHAR;
-				c = NC (p, xnd);
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
-			}
-			else if (c == QSE_T('f'))
-			{
-				sel = QSE_CUT_SEL_FIELD;
-				c = NC (p, xnd);
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
-			}
+			sel = QSE_SED_SEL_CHAR;
+			c = NC (p, xnd);
+			while (QSE_ISSPACE(c)) c = NC (p, xnd);
+		}
+		else if (c == QSE_T('f'))
+		{
+			sel = QSE_SED_SEL_FIELD;
+			c = NC (p, xnd);
+			while (QSE_ISSPACE(c)) c = NC (p, xnd);
 		}
 
 		if (QSE_ISDIGIT(c))
@@ -270,7 +267,7 @@ int qse_cut_comp (
 		cut->sel.lb->range[cut->sel.lb->len].end = end;
 		cut->sel.lb->len++;
 		cut->sel.count++;
-		if (sel == QSE_CUT_SEL_FIELD) cut->sel.fcount++;
+		if (sel == QSE_SED_SEL_FIELD) cut->sel.fcount++;
 		else cut->sel.ccount++;
 
 		if (EOF(c)) break;
@@ -407,11 +404,13 @@ static int write_linebreak (qse_cut_t* cut)
 static int write_str (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 {
 	qse_size_t i;
+
 	for (i = 0; i < len; i++)
 	{
 		if (write_char (cut, str[i]) <= -1) return -1;
 	}
-		return 0;
+
+	return 0;
 }
 
 static int cut_chars (
@@ -431,7 +430,8 @@ static int cut_chars (
 
 			if (end >= len) end = len - 1;
 						
-			if (delim && write_char (cut, cut->sel.dout) <= -1) return -1;
+			if (delim && write_char (cut, cut->sel.dout) <= -1)
+				return -1;
 
 			if (write_str (cut, &ptr[start], end-start+1) <= -1)
 				return -1;
@@ -450,7 +450,8 @@ static int cut_chars (
 
 			if (start >= len) start = len - 1;
 
-			if (delim && write_char (cut, cut->sel.dout) <= -1) return -1;
+			if (delim && write_char (cut, cut->sel.dout) <= -1)
+				return -1;
 
 			for (i = start; i >= end; i--)
 			{
@@ -547,14 +548,16 @@ static int cut_fields (
 
 			if (end >= len) end = len - 1;
 
-			if (delim && write_char (cut, cut->sel.dout) <= -1) return -1;
+			if (delim && write_char (cut, cut->sel.dout) <= -1)
+				return -1;
 
 			for (i = start; i <= end; i++)
 			{
 				if (write_str (cut, cut->e.in.flds[i].ptr, cut->e.in.flds[i].len) <= -1)
 					return -1;
 
-				if (i < end && write_char (cut, cut->sel.dout) <= -1) return -1;
+				if (i < end && write_char (cut, cut->sel.dout) <= -1)
+					return -1;
 			}
 
 			return 1;
@@ -571,14 +574,16 @@ static int cut_fields (
 
 			if (start >= len) start = len - 1;
 
-			if (delim && write_char (cut, cut->sel.dout) <= -1) return -1;
+			if (delim && write_char (cut, cut->sel.dout) <= -1)
+				return -1;
 
 			for (i = start; i >= end; i--)
 			{
 				if (write_str (cut, cut->e.in.flds[i].ptr, cut->e.in.flds[i].len) <= -1)
 					return -1;
 
-				if (i > end && write_char (cut, cut->sel.dout) <= -1) return -1;
+				if (i > end && write_char (cut, cut->sel.dout) <= -1)
+					return -1;
 			}
 
 			return 1;
@@ -658,7 +663,7 @@ int qse_cut_exec (qse_cut_t* cut, qse_cut_io_fun_t inf, qse_cut_io_fun_t outf)
 
 			for (i = 0; i < b->len; i++)
 			{
-				if (b->range[i].id == QSE_CUT_SEL_CHAR)
+				if (b->range[i].id == QSE_SED_SEL_CHAR)
 				{
 					n = cut_chars (
 						cut,

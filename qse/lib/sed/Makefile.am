@@ -1,8 +1,9 @@
+AUTOMAKE_OPTIONS = nostdinc
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libqsesed.la
-libqsesed_la_SOURCES = sed.c err.c sed.h
+libqsesed_la_SOURCES = sed.c err.c sed.h std.c
 libqsesed_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn 
 libqsesed_la_LIBADD = -lqsecmn 
 

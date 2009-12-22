@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.cpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
+ * $Id: StdSed.cpp 320 2009-12-21 12:29:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -297,9 +297,8 @@ const StdSed::char_t* StdSed::StringStream::getOutput (size_t* len) const
 	}
 	else
 	{
-		static char_t empty[] = QSE_T("");
 		if (len) *len = 0;
-		return empty;
+		return QSE_T("");
 	}
 }
 
