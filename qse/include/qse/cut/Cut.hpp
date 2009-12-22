@@ -58,6 +58,7 @@ public:
 	class Stream: public Types
 	{
 	public:
+		/// The Mode type defines I/O operation mode.
 		enum Mode
 		{
 			READ,  ///< open for read

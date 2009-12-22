@@ -26,7 +26,7 @@
 #include <qse/cmn/str.h>
 
 /** @file
- * cut utility
+ * This file defines a text cutter utility.
  * 
  * @todo QSE_CUT_ORDEREDSEL - A selector 5,3,1 is ordered to 1,3,5
  */
@@ -37,6 +37,7 @@
  */
 
 /** @struct qse_cut_t
+ * The qes_cut_t type defines a text cutter.
  */
 typedef struct qse_cut_t qse_cut_t;
 

@@ -35,7 +35,6 @@ static int g_infile_end = 0;
 static const qse_char_t* g_infile = QSE_NULL;
 static const qse_char_t* g_outfile = QSE_NULL;
 static int g_option = 0;
-static int g_infile_index = 0;
 
 static qse_cint_t g_din = QSE_CHAR_EOF;
 static qse_cint_t g_dout = QSE_CHAR_EOF;
