@@ -28,7 +28,6 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
-static qse_cut_sel_id_t g_selector_id = QSE_CUT_SEL_CHAR;
 static qse_char_t* g_selector = QSE_NULL;
 
 static int g_infile_start = 0;
@@ -204,31 +203,27 @@ static int handle_args (int argc, qse_char_t* argv[])
 				return 0;
 
 			case QSE_T('c'):
-				if (g_selector != QSE_NULL)
-				{
-					qse_fprintf (QSE_STDERR, 
-						QSE_T("ERROR: both -c and -f specified\n"));
-					print_usage (QSE_STDERR, argc, argv);
-					return -1;
-				}
-
-				g_selector = opt.arg;
-				g_selector_id = QSE_CUT_SEL_CHAR;
-				break;
-
 			case QSE_T('f'):
+			{
+				qse_char_t x[2] = QSE_T(" ");
+
 				if (g_selector != QSE_NULL)
 				{
 					qse_fprintf (QSE_STDERR, 
-						QSE_T("ERROR: both -c and -f specified\n"));
+						QSE_T("ERROR: multiple selectors specified\n"));
 					print_usage (QSE_STDERR, argc, argv);
 					return -1;
 				}
 
-				g_selector = opt.arg;
-				g_selector_id = QSE_CUT_SEL_FIELD;
+				x[0] = c;
+				g_selector = qse_strdup2 (x, opt.arg, QSE_MMGR_GETDFL());
+				if (g_selector == QSE_NULL)
+				{
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: insufficient memory\n"));
+					return -1;
+				}
 				break;
-
+			}
 
 			case QSE_T('d'):
 				if (qse_strlen(opt.arg) > 1)
@@ -296,7 +291,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (g_selector_id == QSE_CUT_SEL_CHAR &&
+	if (g_selector[0] == QSE_T('c') &&
 	    (g_din != QSE_CHAR_EOF || g_dout != QSE_CHAR_EOF || 
 	     (g_option & QSE_CUT_WHITESPACE) || (g_option & QSE_CUT_FOLDDELIMS)))
 	{
@@ -314,7 +309,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (g_selector_id == QSE_CUT_SEL_CHAR &&
+	if (g_selector[0] == QSE_T('f') &&
 	    (g_option & QSE_CUT_DELIMONLY))
 	{
 		qse_fprintf (QSE_STDERR, 
@@ -349,8 +344,7 @@ int cut_main (int argc, qse_char_t* argv[])
 	if (g_din == QSE_CHAR_EOF) g_din = QSE_T('\t');
 	if (g_dout == QSE_CHAR_EOF) g_dout = g_din;
 
-	if (qse_cut_comp (cut, g_selector_id,
-		g_selector, qse_strlen(g_selector), g_din, g_dout) == -1)
+	if (qse_cut_comp (cut, g_selector, qse_strlen(g_selector), g_din, g_dout) == -1)
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("cannot compile - %s\n"),
@@ -393,6 +387,7 @@ int cut_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (cut != QSE_NULL) qse_cut_close (cut);
+	if (g_selector != QSE_NULL) QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_selector);
 	return ret;
 }
 

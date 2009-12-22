@@ -31,7 +31,11 @@ struct qse_cut_sel_blk_t
 	qse_size_t len;
 	struct
 	{
-		qse_cut_sel_id_t id;
+		enum
+		{
+			QSE_SED_SEL_CHAR,
+			QSE_SED_SEL_FIELD
+		} id;
 		qse_size_t start;
 		qse_size_t end;
 	} range[128];

@@ -1,5 +1,5 @@
 /*
- * $Id: awk01.c 316 2009-12-14 12:50:11Z hyunghwan.chung $ 
+ * $Id: awk01.c 320 2009-12-21 12:29:52Z hyunghwan.chung $ 
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -18,7 +18,6 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/awk/awk.h>
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 

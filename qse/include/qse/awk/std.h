@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 316 2009-12-14 12:50:11Z hyunghwan.chung $
+ * $Id: std.h 320 2009-12-21 12:29:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -122,7 +122,6 @@ int qse_awk_parsestd (
 	const qse_awk_parsestd_in_t* in,
 	qse_awk_parsestd_out_t*      out
 );
-/******/
 
 /**
  * The qse_awk_rtx_openstd() function creates a standard runtime context.
