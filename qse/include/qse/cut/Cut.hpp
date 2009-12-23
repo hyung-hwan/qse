@@ -105,8 +105,6 @@ public:
 	///
 	Cut (Mmgr* mmgr): Mmged (mmgr), cut (QSE_NULL), dflerrstr (QSE_NULL) 
 	{
-		delim.in = QSE_T(' ');
-		delim.out = delim.in;
 	}
 
 	///
@@ -129,12 +127,6 @@ public:
 	/// The close() function finalizes a stream editor.
 	///
 	void close ();
-
-	char_t getInputDelimiter () const { return delim.in; }
-	void setInputDelimiter (char_t delimc) { delim.in = delimc; }
-
-	char_t getOutputDelimiter () const { return delim.out; }
-	void setOutputDelimiter (char_t delimc) { delim.out = delimc; }
 
 	///
 	/// The compile() function compiles a null-terminated string pointed
@@ -216,13 +208,6 @@ protected:
 	errstr_t dflerrstr; 
 	/// I/O stream to read data from and write output to.
 	Stream* iostream;
-
-	struct
-	{
-		char_t in;
-		char_t out;
-	} delim;
-
 
 private:
 	static ssize_t xin (

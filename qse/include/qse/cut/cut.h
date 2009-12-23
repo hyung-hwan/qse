@@ -254,9 +254,7 @@ void qse_cut_clear (
 int qse_cut_comp (
 	qse_cut_t*        cut, /**< text cutter */
 	const qse_char_t* str, /**< selector pointer */
-	qse_size_t        len, /**< selector length */ 
-	qse_char_t        din, /**< input field delimiter */
-	qse_char_t        dout /**< output field delimiter */
+	qse_size_t        len  /**< selector length */ 
 );
 
 /**

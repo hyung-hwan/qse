@@ -33,8 +33,8 @@ struct qse_cut_sel_blk_t
 	{
 		enum
 		{
-			QSE_SED_SEL_CHAR,
-			QSE_SED_SEL_FIELD
+			QSE_SED_SEL_CHAR = QSE_T('c'),
+			QSE_SED_SEL_FIELD = QSE_T('f')
 		} id;
 		qse_size_t start;
 		qse_size_t end;
