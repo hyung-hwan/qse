@@ -34,9 +34,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = sed01$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_CXX_TRUE@am__append_1 = sed02 sed03 
-subdir = samples/sed
+bin_PROGRAMS = cut01$(EXEEXT)
+subdir = samples/cut
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/ac/m4/libtool.m4 \
@@ -50,24 +49,13 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@ENABLE_CXX_TRUE@am__EXEEXT_1 = sed02$(EXEEXT) sed03$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_sed01_OBJECTS = sed01.$(OBJEXT)
-sed01_OBJECTS = $(am_sed01_OBJECTS)
+am_cut01_OBJECTS = cut01.$(OBJEXT)
+cut01_OBJECTS = $(am_cut01_OBJECTS)
 am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-sed01_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am__sed02_SOURCES_DIST = sed02.cpp
-@ENABLE_CXX_TRUE@am_sed02_OBJECTS = sed02.$(OBJEXT)
-sed02_OBJECTS = $(am_sed02_OBJECTS)
-@ENABLE_CXX_TRUE@sed02_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
-am__sed03_SOURCES_DIST = sed03.cpp
-@ENABLE_CXX_TRUE@am_sed03_OBJECTS = sed03.$(OBJEXT)
-sed03_OBJECTS = $(am_sed03_OBJECTS)
-@ENABLE_CXX_TRUE@sed03_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
+cut01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include/qse
 depcomp = $(SHELL) $(top_srcdir)/ac/au/depcomp
 am__depfiles_maybe = depfiles
@@ -81,18 +69,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-SOURCES = $(sed01_SOURCES) $(sed02_SOURCES) $(sed03_SOURCES)
-DIST_SOURCES = $(sed01_SOURCES) $(am__sed02_SOURCES_DIST) \
-	$(am__sed03_SOURCES_DIST)
+SOURCES = $(cut01_SOURCES)
+DIST_SOURCES = $(cut01_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -134,7 +112,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
-LDFLAGS = -L../../lib/cmn -L../../lib/sed
+LDFLAGS = -L../../lib/cmn -L../../lib/cut
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -236,18 +214,13 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-LDADD = -lqsesed -lqsecmn $(LIBM)
-sed01_SOURCES = sed01.c
-sed01_LDADD = $(LDADD)
-@ENABLE_CXX_TRUE@CXXLIB = -lqsesedxx -lqsecmnxx
-@ENABLE_CXX_TRUE@sed02_SOURCES = sed02.cpp
-@ENABLE_CXX_TRUE@sed02_LDADD = $(CXXLIB) $(LDADD)
-@ENABLE_CXX_TRUE@sed03_SOURCES = sed03.cpp
-@ENABLE_CXX_TRUE@sed03_LDADD = $(CXXLIB) $(LDADD)
+LDADD = -lqsecut -lqsecmn $(LIBM)
+cut01_SOURCES = cut01.c
+cut01_LDADD = $(LDADD)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .cpp .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -257,9 +230,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/sed/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign samples/cut/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign samples/sed/Makefile
+	  $(AUTOMAKE) --foreign samples/cut/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -321,15 +294,9 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-sed01$(EXEEXT): $(sed01_OBJECTS) $(sed01_DEPENDENCIES) 
-	@rm -f sed01$(EXEEXT)
-	$(LINK) $(sed01_OBJECTS) $(sed01_LDADD) $(LIBS)
-sed02$(EXEEXT): $(sed02_OBJECTS) $(sed02_DEPENDENCIES) 
-	@rm -f sed02$(EXEEXT)
-	$(CXXLINK) $(sed02_OBJECTS) $(sed02_LDADD) $(LIBS)
-sed03$(EXEEXT): $(sed03_OBJECTS) $(sed03_DEPENDENCIES) 
-	@rm -f sed03$(EXEEXT)
-	$(CXXLINK) $(sed03_OBJECTS) $(sed03_LDADD) $(LIBS)
+cut01$(EXEEXT): $(cut01_OBJECTS) $(cut01_DEPENDENCIES) 
+	@rm -f cut01$(EXEEXT)
+	$(LINK) $(cut01_OBJECTS) $(cut01_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -337,9 +304,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed02.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sed03.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cut01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -361,27 +326,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-.cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
-
-.cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -589,6 +533,17 @@ uninstall-am: uninstall-binPROGRAMS
 	pdf pdf-am ps ps-am tags uninstall uninstall-am \
 	uninstall-binPROGRAMS
 
+
+#if ENABLE_CXX
+#
+#CXXLIB = -lqsecutxx -lqsecmnxx
+#bin_PROGRAMS += cut02 cut03 
+#
+#cut02_SOURCES = cut02.cpp
+#cut02_LDADD = $(CXXLIB) $(LDADD)
+#
+#
+#endif
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

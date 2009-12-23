@@ -162,9 +162,7 @@ void qse_cut_clear (qse_cut_t* cut)
 	qse_str_setcapa (&cut->e.in.line, DFL_LINE_CAPA);
 }
 
-int qse_cut_comp (
-	qse_cut_t* cut, const qse_char_t* str, qse_size_t len,
-	qse_char_t din, qse_char_t dout)
+int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 {
 	const qse_char_t* p = str;
 	const qse_char_t* xnd = str + len;
@@ -178,10 +176,17 @@ int qse_cut_comp (
 #define MASK_END (1 << 2)
 #define MAX QSE_TYPE_MAX(qse_size_t)
 
+	/* free selector blocks compiled previously */
 	free_all_selector_blocks (cut);
 
+	/* set the default delimiters */
+	cut->sel.din = QSE_T(' ');
+	cut->sel.dout = QSE_T(' ');
+
+	/* if the selector string is empty, don't need to proceed */
 	if (len <= 0) return 0;
 
+	/* compile the selector string */
 	xnd--; c = CC (p, xnd);
 	while (1)
 	{
@@ -200,82 +205,115 @@ int qse_cut_comp (
 			break;
 		}
 
-		if (c == QSE_T('c'))
+		if (c == QSE_T('d'))
 		{
-			sel = QSE_SED_SEL_CHAR;
+			/* the next character is the input delimiter.
+			 * the output delimiter defaults to the input 
+			 * delimiter. */
 			c = NC (p, xnd);
-			while (QSE_ISSPACE(c)) c = NC (p, xnd);
-		}
-		else if (c == QSE_T('f'))
-		{
-			sel = QSE_SED_SEL_FIELD;
-			c = NC (p, xnd);
-			while (QSE_ISSPACE(c)) c = NC (p, xnd);
-		}
+			if (EOF(c))
+			{
+				SETERR0 (cut, QSE_CUT_ESELNV);
+				return -1;
+			}
+			cut->sel.din = c;
+			cut->sel.dout = c;
 
-		if (QSE_ISDIGIT(c))
+			c = NC (p, xnd);
+		}
+		else if (c == QSE_T('D'))
 		{
-			do 
-			{ 
-				start = start * 10 + (c - QSE_T('0')); 
+			/* the next two characters are the input and 
+			 * the output delimiter each. */
+			c = NC (p, xnd);
+			if (EOF(c))
+			{
+				SETERR0 (cut, QSE_CUT_ESELNV);
+				return -1;
+			}
+			cut->sel.din = c;
+
+			c = NC (p, xnd);
+			if (EOF(c))
+			{
+				SETERR0 (cut, QSE_CUT_ESELNV);
+				return -1;
+			}
+			cut->sel.dout = c;
+
+			c = NC (p, xnd);
+		}
+		else 
+		{
+			if (c == QSE_T('c') || c == QSE_T('f'))
+			{
+				sel = c;
 				c = NC (p, xnd);
-			} 
-			while (QSE_ISDIGIT(c));
-
-			while (QSE_ISSPACE(c)) c = NC (p, xnd);
-			mask |= MASK_START;
-		}
-		else start++;
-
-		if (c == QSE_T('-'))
-		{
-			c = NC (p, xnd);
-			while (QSE_ISSPACE(c)) c = NC (p, xnd);
-
+				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+			}
+	
 			if (QSE_ISDIGIT(c))
 			{
 				do 
 				{ 
-					end = end * 10 + (c - QSE_T('0')); 
+					start = start * 10 + (c - QSE_T('0')); 
 					c = NC (p, xnd);
 				} 
 				while (QSE_ISDIGIT(c));
-				mask |= MASK_END;
+	
+				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+				mask |= MASK_START;
 			}
-			else end = MAX;
+			else start++;
 
-			while (QSE_ISSPACE(c)) c = NC (p, xnd);
-		}
-		else end = start;
-
-		if (!(mask & (MASK_START | MASK_END)))
-		{
-			SETERR0 (cut, QSE_CUT_ESELNV);
-			return -1;
-		}
-
-		if (cut->sel.lb->len >= QSE_COUNTOF(cut->sel.lb->range))
-		{
-			if (add_selector_block (cut) <= -1) 
+			if (c == QSE_T('-'))
 			{
+				c = NC (p, xnd);
+				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+
+				if (QSE_ISDIGIT(c))
+				{
+					do 
+					{ 
+						end = end * 10 + (c - QSE_T('0')); 
+						c = NC (p, xnd);
+					} 
+					while (QSE_ISDIGIT(c));
+					mask |= MASK_END;
+				}
+				else end = MAX;
+
+				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+			}
+			else end = start;
+
+			if (!(mask & (MASK_START | MASK_END)))
+			{
+				SETERR0 (cut, QSE_CUT_ESELNV);
 				return -1;
 			}
-		}
 
-		cut->sel.lb->range[cut->sel.lb->len].id = sel;
-		cut->sel.lb->range[cut->sel.lb->len].start = start;
-		cut->sel.lb->range[cut->sel.lb->len].end = end;
-		cut->sel.lb->len++;
-		cut->sel.count++;
-		if (sel == QSE_SED_SEL_FIELD) cut->sel.fcount++;
-		else cut->sel.ccount++;
+			if (cut->sel.lb->len >= QSE_COUNTOF(cut->sel.lb->range))
+			{
+				if (add_selector_block (cut) <= -1) 
+				{
+					return -1;
+				}
+			}
+
+			cut->sel.lb->range[cut->sel.lb->len].id = sel;
+			cut->sel.lb->range[cut->sel.lb->len].start = start;
+			cut->sel.lb->range[cut->sel.lb->len].end = end;
+			cut->sel.lb->len++;
+			cut->sel.count++;
+			if (sel == QSE_SED_SEL_FIELD) cut->sel.fcount++;
+			else cut->sel.ccount++;
+		}
 
 		if (EOF(c)) break;
 		if (c == QSE_T(',')) c = NC (p, xnd);
 	}
 
-	cut->sel.din = din;
-	cut->sel.dout = dout;
 	return 0;
 }
 

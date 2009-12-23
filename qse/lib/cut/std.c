@@ -54,9 +54,9 @@ void* qse_cut_getxtnstd (qse_cut_t* cut)
 	return (void*)((xtn_t*)QSE_XTN(cut) + 1);
 }
 
-int qse_cut_compstd (qse_cut_t* cut, const qse_char_t* sptr, qse_char_t din, qse_char_t dout)
+int qse_cut_compstd (qse_cut_t* cut, const qse_char_t* sptr)
 {
-	return qse_cut_comp (cut, sptr, qse_strlen(sptr), din, dout);
+	return qse_cut_comp (cut, sptr, qse_strlen(sptr));
 }
 
 static qse_ssize_t xin (
@@ -88,7 +88,7 @@ static qse_ssize_t xin (
 					qse_cstr_t ea;
 					ea.ptr = xtn->infile;
 					ea.len = qse_strlen (xtn->infile);
-					qse_cut_seterrnum (cut,QSE_CUT_EIOFIL, &ea);
+					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 					return -1;
 				}
 			}

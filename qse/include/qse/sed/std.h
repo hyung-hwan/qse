@@ -24,7 +24,8 @@
 #include <qse/sed/sed.h>
 
 /** @file
- * This file defines a simple stream editor.
+ * This file provides easier-to-use versions of selected API functions
+ * by implementing default handlers for I/O and memory management.
  *
  * @example sed01.c
  * This example shows how to write a simple stream editor using easy API 

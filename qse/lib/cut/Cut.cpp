@@ -51,13 +51,13 @@ void Cut::close ()
 int Cut::compile (const char_t* sptr)
 {
 	QSE_ASSERT (cut != QSE_NULL);
-	return qse_cut_comp (cut, sptr, qse_strlen(sptr), delim.in, delim.out);
+	return qse_cut_comp (cut, sptr, qse_strlen(sptr));
 }
 
 int Cut::compile (const char_t* sptr, size_t slen)
 {
 	QSE_ASSERT (cut != QSE_NULL);
-	return qse_cut_comp (cut, sptr, slen, delim.in, delim.out);
+	return qse_cut_comp (cut, sptr, slen);
 }
 
 int Cut::execute (Stream& iostream)

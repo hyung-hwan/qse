@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cut/cut.h>
+#include <qse/cut/std.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
@@ -35,9 +35,6 @@ static int g_infile_end = 0;
 static const qse_char_t* g_infile = QSE_NULL;
 static const qse_char_t* g_outfile = QSE_NULL;
 static int g_option = 0;
-
-static qse_cint_t g_din = QSE_CHAR_EOF;
-static qse_cint_t g_dout = QSE_CHAR_EOF;
 
 static qse_ssize_t in (
 	qse_cut_t* cut, qse_cut_io_cmd_t cmd,
@@ -62,7 +59,14 @@ static qse_ssize_t in (
 					QSE_SIO_READ
 				);	
 
-				if (arg->handle == QSE_NULL) return -1;
+				if (arg->handle == QSE_NULL) 
+				{
+					qse_cstr_t ea;
+					ea.ptr = g_infile;
+					ea.len = qse_strlen (g_infile);
+					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
+					return -1;
+				}
 			}
 
 			return 1;
@@ -75,24 +79,13 @@ static qse_ssize_t in (
 		case QSE_CUT_IO_READ:
 		{
 			qse_ssize_t n = qse_sio_getsn (arg->handle, buf, size);
-#if 0
-			if (n == 0)
+			if (n <= -1)
 			{
-				if (no more file) return 0;
-
-				tmp = qse_sio_open (
-					qse_cut_getmmgr(cut),
-					0,
-					g_infile[++g_infile],
-					QSE_SIO_READ
-				);	
-				if (tmp == QSE_NULL) return -1;
-				
-				qse_sio_close (arg->handle);
-				arg->handle = tmp;
-				goto retry;
+				qse_cstr_t ea;
+				ea.ptr = g_infile;
+				ea.len = qse_strlen (g_infile);
+				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 			}
-#endif
 
 			return n;
 		}
@@ -126,7 +119,17 @@ static qse_ssize_t out (
 					QSE_SIO_TRUNCATE
 				);	
 
-				if (arg->handle == QSE_NULL) return -1;
+				if (arg->handle == QSE_NULL) 
+				{
+					/* set the error message explicitly
+					 * as the file name is different from
+					 * the standard console name (NULL) */
+					qse_cstr_t ea;
+					ea.ptr = g_outfile;
+					ea.len = qse_strlen (g_outfile);
+					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
+					return -1;
+				}
 			}
 			return 1;
 
@@ -135,7 +138,17 @@ static qse_ssize_t out (
 			return 0;
 
 		case QSE_CUT_IO_WRITE:
-			return qse_sio_putsn (arg->handle, data, len);
+		{
+			qse_ssize_t n = qse_sio_putsn (arg->handle, data, len);
+			if (n <= -1)
+			{
+				qse_cstr_t ea;
+				ea.ptr = g_outfile;
+				ea.len = qse_strlen (g_outfile);
+				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
+			}
+			return n;
+		}
 
 		default:
 			return -1;
@@ -172,6 +185,8 @@ static int handle_args (int argc, qse_char_t* argv[])
 		QSE_NULL
 	};
 	qse_cint_t c;
+	qse_cint_t din = QSE_CHAR_EOF;
+	qse_cint_t dout = QSE_CHAR_EOF;
 
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
 	{
@@ -204,8 +219,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 			case QSE_T('c'):
 			case QSE_T('f'):
 			{
-				qse_char_t x[2] = QSE_T(" ");
-
+				/* 
+				 * 1 character for c or f.
+				 * 4 characters to hold Dxx, in case 
+				 * a delimiter is specified 
+				 * 1 character for the terminating '\0';
+				 */
+				qse_char_t x[6] = QSE_T("     ");
+				
 				if (g_selector != QSE_NULL)
 				{
 					qse_fprintf (QSE_STDERR, 
@@ -214,7 +235,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					return -1;
 				}
 
-				x[0] = c;
+				x[4] = c;
 				g_selector = qse_strdup2 (x, opt.arg, QSE_MMGR_GETDFL());
 				if (g_selector == QSE_NULL)
 				{
@@ -231,7 +252,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					return -1;
 				}
 
-				g_din = opt.arg[0];
+				din = opt.arg[0];
 				break;
 
 			case QSE_T('D'):
@@ -241,7 +262,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					return -1;
 				}
 
-				g_dout = opt.arg[0];
+				dout = opt.arg[0];
 				break;
 
 			case QSE_T('s'):
@@ -290,8 +311,20 @@ static int handle_args (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (g_selector[0] == QSE_T('c') &&
-	    (g_din != QSE_CHAR_EOF || g_dout != QSE_CHAR_EOF || 
+	if (din == QSE_CHAR_EOF) din = QSE_T('\t');
+	if (dout == QSE_CHAR_EOF) dout = din;
+
+	if (din != QSE_CHAR_EOF)
+	{
+		QSE_ASSERT (dout != QSE_CHAR_EOF);
+		g_selector[0] = QSE_T('D'),
+		g_selector[1] = din;
+		g_selector[2] = dout;
+		g_selector[3] = QSE_T(',');
+	}
+
+	if (g_selector[4] == QSE_T('c') &&
+	    (din != QSE_CHAR_EOF || dout != QSE_CHAR_EOF || 
 	     (g_option & QSE_CUT_WHITESPACE) || (g_option & QSE_CUT_FOLDDELIMS)))
 	{
 		qse_fprintf (QSE_STDERR, 
@@ -300,7 +333,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (g_din != QSE_CHAR_EOF && (g_option & QSE_CUT_WHITESPACE))
+	if (din != QSE_CHAR_EOF && (g_option & QSE_CUT_WHITESPACE))
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("ERROR: both -d and -w specified\n"));
@@ -308,7 +341,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (g_selector[0] == QSE_T('f') &&
+	if (g_selector[4] == QSE_T('c') &&
 	    (g_option & QSE_CUT_DELIMONLY))
 	{
 		qse_fprintf (QSE_STDERR, 
@@ -326,8 +359,7 @@ int cut_main (int argc, qse_char_t* argv[])
 	int ret = -1;
 
 	ret = handle_args (argc, argv);
-	if (ret <= -1) return -1;
-	if (ret == 0) return 0;
+	if (ret <= 0) goto oops;
 
 	ret = -1;
 
@@ -340,10 +372,7 @@ int cut_main (int argc, qse_char_t* argv[])
 	
 	qse_cut_setoption (cut, g_option);
 
-	if (g_din == QSE_CHAR_EOF) g_din = QSE_T('\t');
-	if (g_dout == QSE_CHAR_EOF) g_dout = g_din;
-
-	if (qse_cut_comp (cut, g_selector, qse_strlen(g_selector), g_din, g_dout) == -1)
+	if (qse_cut_comp (cut, g_selector, qse_strlen(g_selector)) == -1)
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("cannot compile - %s\n"),

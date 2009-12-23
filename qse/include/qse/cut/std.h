@@ -24,7 +24,12 @@
 #include <qse/cut/cut.h>
 
 /** @file
- * This file defines a simple text cutter.
+ * This file provides easier-to-use versions of selected API functions
+ * by implementing default handlers for I/O and memory management.
+ *
+ * @example cut01.c
+ * This example shows how to write a simple text cutter using easy API
+ * functions.
  */
 
 #ifdef __cplusplus
@@ -53,9 +58,7 @@ void* qse_cut_getxtnstd (
  */
 int qse_cut_compstd (
 	qse_cut_t*        cut,
-	const qse_char_t* str,
-	qse_char_t        din, 
-	qse_char_t        dout
+	const qse_char_t* str
 );
 
 /**
