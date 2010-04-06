@@ -2087,7 +2087,7 @@ IGNORECASE= 1
 1
 1
 --------------------------------------------------------------------------------
- ../../cmd/awk/.libs/qseawk --newline=on -F: -f columnate.awk /etc/passwd </dev/stdin 2>&1 
+ ../../cmd/awk/.libs/qseawk --newline=on -F: -f columnate.awk ./passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 root               x  0      0      root                                /root                       /bin/bash
 daemon             x  1      1      daemon                              /usr/sbin                   /bin/sh
@@ -2119,12 +2119,14 @@ messagebus         x  108    117                                        /var/run
 polkituser         x  109    118    PolicyKit,,,                        /var/run/PolicyKit          /bin/false
 avahi              x  110    119    Avahi mDNS daemon,,,                /var/run/avahi-daemon       /bin/false
 haldaemon          x  111    120    Hardware abstraction layer,,,       /var/run/hald               /bin/false
-hyung-hwan         x  1000   1000   hyung-hwan chung,,,                 /home/hyung-hwan            /bin/bash
 statd              x  112    65534                                      /var/lib/nfs                /bin/false
 sshd               x  113    65534                                      /var/run/sshd               /usr/sbin/nologin
 speech-dispatcher  x  114    29     Speech Dispatcher,,,                /var/run/speech-dispatcher  /bin/sh
 couchdb            x  115    116    CouchDB Administrator,,,            /var/lib/couchdb            /bin/bash
 kernoops           x  116    65534  Kernel Oops Tracking Daemon,,,      /                           /bin/false
+mysql              x  117    124    MySQL Server,,,                     /var/lib/mysql              /bin/false
+openldap           x  118    125    OpenLDAP Server Account,,,          /nonexistent                /bin/false
+postfix            x  119    126                                        /var/spool/postfix          /bin/false
 --------------------------------------------------------------------------------
  ../../cmd/awk/.libs/qseawk --newline=on --include=on -f levenshtein-utests.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

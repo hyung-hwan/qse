@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: parse.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -226,8 +226,6 @@ static int skip_spaces (qse_awk_t* awk);
 static int skip_comment (qse_awk_t* awk);
 static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
-static int is_plain_var (qse_awk_nde_t* nde);
-static int is_var (qse_awk_nde_t* nde);
 
 static int deparse (qse_awk_t* awk);
 static qse_map_walk_t deparse_func (
@@ -399,6 +397,26 @@ static global_t gtab[] =
 	} while (0)
 
 #define SETERR_ARG(awk,code,ep,el) SETERR_ARG_LOC(awk,code,ep,el,QSE_NULL)
+
+static QSE_INLINE int is_plain_var (qse_awk_nde_t* nde)
+{
+	return nde->type == QSE_AWK_NDE_GBL ||
+	       nde->type == QSE_AWK_NDE_LCL ||
+	       nde->type == QSE_AWK_NDE_ARG ||
+	       nde->type == QSE_AWK_NDE_NAMED;
+}
+
+static QSE_INLINE int is_var (qse_awk_nde_t* nde)
+{
+	return nde->type == QSE_AWK_NDE_GBL ||
+	       nde->type == QSE_AWK_NDE_LCL ||
+	       nde->type == QSE_AWK_NDE_ARG ||
+	       nde->type == QSE_AWK_NDE_NAMED ||
+	       nde->type == QSE_AWK_NDE_GBLIDX ||
+	       nde->type == QSE_AWK_NDE_LCLIDX ||
+	       nde->type == QSE_AWK_NDE_ARGIDX ||
+	       nde->type == QSE_AWK_NDE_NAMEDIDX;
+}
 
 static int get_char (qse_awk_t* awk)
 {
@@ -5760,26 +5778,6 @@ static int classify_ident (
 	}	
 
 	return TOK_IDENT;
-}
-
-static int is_plain_var (qse_awk_nde_t* nde)
-{
-	return nde->type == QSE_AWK_NDE_GBL ||
-	       nde->type == QSE_AWK_NDE_LCL ||
-	       nde->type == QSE_AWK_NDE_ARG ||
-	       nde->type == QSE_AWK_NDE_NAMED;
-}
-
-static int is_var (qse_awk_nde_t* nde)
-{
-	return nde->type == QSE_AWK_NDE_GBL ||
-	       nde->type == QSE_AWK_NDE_LCL ||
-	       nde->type == QSE_AWK_NDE_ARG ||
-	       nde->type == QSE_AWK_NDE_NAMED ||
-	       nde->type == QSE_AWK_NDE_GBLIDX ||
-	       nde->type == QSE_AWK_NDE_LCLIDX ||
-	       nde->type == QSE_AWK_NDE_ARGIDX ||
-	       nde->type == QSE_AWK_NDE_NAMEDIDX;
 }
 
 struct deparse_func_t 

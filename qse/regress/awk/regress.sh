@@ -154,7 +154,7 @@ PROGS="
 	lang-041.awk!!!--newline=on -o-
 	lang-042.awk!!!--newline=on -o-
 
-	columnate.awk!/etc/passwd!!--newline=on -F:
+	columnate.awk!./passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on --include=on
 	rcalc.awk!!!--newline=on -v target=89000
 	quicksort.awk!quicksort.dat!!

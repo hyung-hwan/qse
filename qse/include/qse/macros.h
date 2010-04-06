@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 289 2009-09-16 06:35:29Z hyunghwan.chung $
+ * $Id: macros.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,6 +26,14 @@
 /** @file
  * <qse/macros.h> contains various useful macro definitions.
  */
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)
+#	define QSE_INLINE inline
+#elif defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
+#	define QSE_INLINE /*extern*/ inline
+#else
+#	define QSE_INLINE 
+#endif
 
 /** 
  * The #QSE_NULL macro defines a special pointer value to indicate an error or
@@ -128,13 +136,13 @@
 
 #define QSE_ABS(x) ((x) < 0? -(x): (x))
 
-#define QSE_ERR_THROW(id) goto  __err_ ## id 
-#define QSE_ERR_CATCH(id) while(0) __err_ ## id:
+#define QSE_THROW_ERR(id) goto  __err_ ## id 
+#define QSE_CATCH_ERR(id) while(0) __err_ ## id:
 
-#define QSE_LOOP_CONTINUE(id) goto __loop_ ## id ## _begin__
-#define QSE_LOOP_BREAK(id)    goto __loop_ ## id ## _end__
-#define QSE_LOOP_BEGIN(id)    __loop_ ## id ## _begin__: {
-#define QSE_LOOP_END(id)      QSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:
+#define QSE_CONTINUE_LOOP(id) goto __loop_ ## id ## _begin__
+#define QSE_BREAK_LOOP(id)    goto __loop_ ## id ## _end__
+#define QSE_BEGIN_LOOP(id)    __loop_ ## id ## _begin__: {
+#define QSE_END_LOOP(id)      QSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:
 
 #define QSE_REPEAT(n,blk) \
 	do { \
@@ -196,6 +204,16 @@
 #	define QSE_END_PACKED_STRUCT() };
 #endif
 
+/**
+ * The QSE_STRUCT_FIELD() macro provides a neutral way to specify
+ * a field ID for initialzing a structure  in both C9X and C89
+ */
+#if (defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)) || defined(__GNUC__)
+#	define QSE_STRUCT_FIELD(id) .id =
+#else
+#	define QSE_STRUCT_FIELD(id)
+#endif
+
 #ifdef NDEBUG
 #	define QSE_ASSERT(expr) ((void)0)
 #	define QSE_ASSERTX(expr,desc) ((void)0)
@@ -227,8 +245,17 @@
  * The QSE_DEFINE_COMMON_FIELDS() macro defines common object fields.
  */
 #define QSE_DEFINE_COMMON_FIELDS(name) \
-	qse_mmgr_t* mmgr;
+	qse_mmgr_t* mmgr; 
 	
+
+#define QSE_BEGIN_CLASS(name) \
+	typedef struct name name; \
+	struct name \
+	{ \
+		qse_mmgr_t* mmgr; \
+
+#define QSE_END_CLASS(name) };
+
 /**
  * The QSE_DEFINE_COMMON_FUNCTIONS() macro defines common object functions.
  * - @code void qse_xxx_setmmgr (qse_xxx_t* xxx, qse_mmgr_t* mmgr); @endcode

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: run.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -273,17 +273,17 @@ static qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
 }
 #endif
 
-qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
+QSE_INLINE qse_size_t qse_awk_rtx_getnargs (qse_awk_rtx_t* run)
 {
 	return (qse_size_t) STACK_NARGS (run);
 }
 
-qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* run, qse_size_t idx)
+QSE_INLINE qse_awk_val_t* qse_awk_rtx_getarg (qse_awk_rtx_t* run, qse_size_t idx)
 {
 	return STACK_ARG (run, idx);
 }
 
-qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
+QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(run->awk->parse.gbls));
 	return STACK_GBL (run, id);
@@ -618,7 +618,7 @@ static int set_global (
 	return 0;
 }
 
-void qse_awk_rtx_setretval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+QSE_INLINE void qse_awk_rtx_setretval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	qse_awk_rtx_refdownval (rtx, STACK_RETVAL(rtx));
 	STACK_RETVAL(rtx) = val;
@@ -626,7 +626,7 @@ void qse_awk_rtx_setretval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	qse_awk_rtx_refupval (rtx, val);
 }
 
-int qse_awk_rtx_setgbl (qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
+QSE_INLINE int qse_awk_rtx_setgbl (qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(rtx->awk->parse.gbls));
 	return set_global (rtx, (qse_size_t)id, QSE_NULL, val);

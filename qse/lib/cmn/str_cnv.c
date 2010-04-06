@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: str_cnv.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -133,6 +133,45 @@ qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
 	return v;
 }
 
+qse_size_t qse_mbstowcslen (const qse_mchar_t* mcs, qse_size_t* wcslen)
+{
+	qse_wchar_t wc;
+	qse_size_t n, ml, wl = 0;
+	const qse_mchar_t* p = mcs;
+	
+	while (*p != '\0') p++;
+	ml = p - mcs;
+	
+	for (p = mcs; ml > 0; p += n, ml -= n) 
+	{
+		n = qse_mbtowc (p, ml, &wc);
+		/* insufficient input or wrong sequence */
+		if (n == 0 || n > ml) break;
+		wl++;
+	}
+
+	if (wcslen) *wcslen = wl;
+	return p - mcs;
+}
+
+qse_size_t qse_mbsntowcsnlen (const qse_mchar_t* mcs, qse_size_t mcslen, qse_size_t* wcslen)
+{
+	qse_wchar_t wc;
+	qse_size_t n, ml = mcslen, wl = 0;
+	const qse_mchar_t* p = mcs;
+	
+	for (p = mcs; ml > 0; p += n, ml -= n) 
+	{
+		n = qse_mbtowc (p, ml, &wc);
+		/* insufficient or invalid sequence */
+		if (n == 0 || n > ml) break;
+		wl++;
+	}
+
+	if (wcslen) *wcslen = wl;
+	return mcslen - ml;
+}
+
 qse_size_t qse_mbstowcs (
 	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t* wcslen)
 {
@@ -141,24 +180,26 @@ qse_size_t qse_mbstowcs (
 
 	/* get the length of mbs and pass it to qse_mbsntowcsn as 
 	 * qse_mbtowc called by qse_mbsntowcsn needs it. */
+	wlen = *wcslen;
+	if (wlen <= 0)
+	{
+		/* buffer too small. also cannot null-terminate it */
+		*wcslen = 0;
+		return 0; /* 0 byte processed */
+	}
+
 	for (mp = mbs; *mp != '\0'; mp++);
-
-	if (*wcslen <= 0) 
-	{
-		/* buffer too small. cannot null-terminate it */
-		return 0;
-	}
-	if (*wcslen == 1) 
-	{
-		wcs[0] = L'\0';
-		return 0;
-	}
-
-	wlen = *wcslen - 1;
 	mlen = qse_mbsntowcsn (mbs, mp - mbs, wcs, &wlen);
+	if (wlen < *wcslen) 
+	{
+		/* null-terminate wcs if it is large enough. */
+		wcs[wlen] = L'\0';
+	}
 
-	wcs[wlen] = L'\0';
-	*wcslen = wlen;
+	/* if null-terminated properly, the input wcslen must be less than
+	 * the output wcslen. (input length includs the terminating null
+	 * while the output length excludes the terminating null) */
+	*wcslen = wlen; 
 
 	return mlen;
 }
@@ -305,6 +346,29 @@ qse_size_t qse_wcsntombsn (
 	return p - wcs; 
 }
 
+int qse_mbstowcs_strict (
+	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t wcslen)
+{
+	qse_size_t n;
+	qse_size_t wn = wcslen;
+
+	n = qse_mbstowcs (mbs, wcs, &wn);
+	if (wn >= wcslen)
+	{
+		/* wcs not big enough to be null-terminated.
+		 * if it has been null-terminated properly, 
+		 * wn should be less than wcslen. */
+                return -1;
+        }
+	if (mbs[n] != QSE_MT('\0'))
+	{
+		/* incomplete sequence or invalid sequence */
+		return -1;
+	}
+
+        return 0;
+}
+
 int qse_wcstombs_strict (
 	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t mbslen)
 {
@@ -312,13 +376,6 @@ int qse_wcstombs_strict (
 	qse_size_t mn = mbslen;
 
 	n = qse_wcstombs (wcs, mbs, &mn);
-	if (wcs[n] != QSE_WT('\0')) 
-	{
-		/* if qse_wcstombs() processed all wide characters,
-		 * the character at position 'n' should be a null character
-		 * as 'n' is the number of wide characters processed. */
-		return -1;
-	}
 	if (mn >= mbslen) 
 	{
 		/* mbs not big enough to be null-terminated.
@@ -326,6 +383,14 @@ int qse_wcstombs_strict (
 		 * mn should be less than mbslen. */
 		return -1; 
 	}
+	if (wcs[n] != QSE_WT('\0')) 
+	{
+		/* if qse_wcstombs() processed all wide characters,
+		 * the character at position 'n' should be a null character
+		 * as 'n' is the number of wide characters processed. */
+		return -1;
+	}
 
 	return 0;
 }
+

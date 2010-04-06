@@ -1,6 +1,6 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -DNDEBUG
 
-bin_PROGRAMS = chr str sll map lda fio pio sio time rex01
+bin_PROGRAMS = chr str sll map lda fio pio sio time main rex01 
 
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
@@ -14,6 +14,7 @@ fio_SOURCES = fio.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
+main_SOURCES = main.c
 rex01_SOURCES = rex01.c
 
 if ENABLE_CXX
