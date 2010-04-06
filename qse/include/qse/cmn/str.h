@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 320 2009-12-21 12:29:52Z hyunghwan.chung $
+ * $Id: str.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -120,31 +120,29 @@ extern "C" {
  * basic string functions
  */
 
-/****f* Common/qse_strlen
- * NAME
- *  qse_strlen - get the number of characters
- * DESCRIPTION
- *  The qse_strlen() function returns the number of characters in a 
- *  null-terminated string. The length returned excludes a terminating null.
- * SYNOPSIS
+/**
+ * The qse_strlen() function returns the number of characters in a 
+ * null-terminated string. The length returned excludes a terminating null.
  */
 qse_size_t qse_strlen (
 	const qse_char_t* str
 );
-/******/
 
-/****f* Common/qse_strbytes
- * NAME
- *  qse_strbytes - get the length of a string in bytes
- * DESCRIPTOIN
- *  The qse_strbytes() function returns the number of bytes a null-terminated
- *  string is holding excluding a terminating null.
- * SYNOPSIS
+/**
+ * The qse_strbytes() function returns the number of bytes a null-terminated
+ * string is holding excluding a terminating null.
  */
 qse_size_t qse_strbytes (
 	const qse_char_t* str
 );
-/******/
+
+qse_size_t qse_mbslen (
+	const qse_mchar_t* mbs
+);
+
+qse_size_t qse_wcslen (
+	const qse_wchar_t* wcs
+);
 
 qse_size_t qse_strcpy (
 	qse_char_t*       buf,
@@ -170,36 +168,32 @@ qse_size_t qse_strxncpy (
 	qse_size_t        len
 );
 
-/****f* Common/qse_strfcpy
- * NAME
- *  qse_strfcpy - copy a string
- * DESCRIPTION
- *  "format ${1} ${3} ${2} \\${1} string"
- * SYNOPSIS
+/**
+ * The qse_strfcpy() function formats a string by position.
+ * The position specifier is a number enclosed in ${ and }.
+ * When ${ is preceeded by a backslash, it is treated literally. 
+ * A sameple format string containing the position specifiers are shown below:
+ * @code
+ *  "${1} ${3} ${2} \\${1} string"
+ * @endcode
  */
 qse_size_t qse_strfcpy (
 	qse_char_t*       buf,
 	const qse_char_t* fmt,
 	const qse_char_t* str[]
 );
-/******/
 
-/****f* Common/qse_strfncpy
- * NAME
- *  qse_strfncpy - copy a string 
- * SYNOPSIS
+/**
+ * The qse_strfncpy() function formats a string by position.
  */
 qse_size_t qse_strfncpy (
         qse_char_t*       buf,
         const qse_char_t* fmt, 
 	const qse_cstr_t  str[]
 );
-/******/
 
-/****f* Common/qse_strxfcpy
- * NAME
- *  qse_strxfcpy - copy a string
- * SYNOPSIS
+/**
+ * The qse_strxfcpy() function formats a string by position.
  */
 qse_size_t qse_strxfcpy (
 	qse_char_t*       buf,
@@ -207,12 +201,9 @@ qse_size_t qse_strxfcpy (
 	const qse_char_t* fmt,
 	const qse_char_t* str[]
 );
-/******/
 
-/****f* Common/qse_strxfncpy
- * NAME
- *  qse_strxfncpy - copy a string
- * SYNOPSIS
+/**
+ * The qse_strxfncpy() function formats a string by position.
  */
 qse_size_t qse_strxfncpy (
         qse_char_t*       buf,
@@ -220,7 +211,6 @@ qse_size_t qse_strxfncpy (
         const qse_char_t* fmt,
 	const qse_cstr_t  str[]
 );
-/******/
 
 qse_size_t qse_strxcat (
 	qse_char_t*       buf,
@@ -235,11 +225,23 @@ qse_size_t qse_strxncat (
 	qse_size_t        len
 );
 
-int qse_strcmp (const qse_char_t* s1, const qse_char_t* s2);
-int qse_strxcmp (const qse_char_t* s1, qse_size_t len1, const qse_char_t* s2);
+int qse_strcmp (
+	const qse_char_t* s1,
+	const qse_char_t* s2
+);
+
+int qse_strxcmp (
+	const qse_char_t* s1,
+	qse_size_t len1,
+	const qse_char_t* s2
+);
+
 int qse_strxncmp (
-	const qse_char_t* s1, qse_size_t len1, 
-	const qse_char_t* s2, qse_size_t len2);
+	const qse_char_t* s1,
+	qse_size_t len1, 
+	const qse_char_t* s2,
+	qse_size_t len2
+);
 
 int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
 
@@ -361,20 +363,56 @@ qse_char_t* qse_strxnrstr (
 	qse_size_t        subsz
 );
 
-qse_char_t* qse_strchr (const qse_char_t* str, qse_cint_t c);
-qse_char_t* qse_strxchr (const qse_char_t* str, qse_size_t len, qse_cint_t c);
-qse_char_t* qse_strrchr (const qse_char_t* str, qse_cint_t c);
-qse_char_t* qse_strxrchr (const qse_char_t* str, qse_size_t len, qse_cint_t c);
+qse_char_t* qse_strchr (
+	const qse_char_t* str,
+	qse_cint_t c
+);
 
-/* Checks if a string begins with a substring */
-qse_char_t* qse_strbeg (const qse_char_t* str, const qse_char_t* sub);
+qse_char_t* qse_strxchr (
+	const qse_char_t* str,
+	qse_size_t len,
+	qse_cint_t c
+);
+
+qse_char_t* qse_strrchr (
+	const qse_char_t* str,
+	qse_cint_t c
+);
+
+qse_char_t* qse_strxrchr (
+	const qse_char_t* str,
+	qse_size_t len,
+	qse_cint_t c
+);
+
+/**
+ * The qse_strbeg() function checks if the a string begins with a substring.
+ * @return the pointer to a beginning of a matching beginning, 
+ *         QSE_NULL if no match is found.
+ */
+qse_char_t* qse_strbeg (
+	const qse_char_t* str,
+	const qse_char_t* sub
+);
+
 qse_char_t* qse_strxbeg (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* sub);
+	const qse_char_t* str,
+	qse_size_t len,
+	const qse_char_t* sub)
+;
+
 qse_char_t* qse_strnbeg (
-	const qse_char_t* str, const qse_char_t* sub, qse_size_t len);
+	const qse_char_t* str,
+	const qse_char_t* sub,
+	qse_size_t len
+);
+
 qse_char_t* qse_strxnbeg (
-	const qse_char_t* str, qse_size_t len1, 
-	const qse_char_t* sub, qse_size_t len2);
+	const qse_char_t* str,
+	qse_size_t len1, 
+	const qse_char_t* sub,
+	qse_size_t len2
+);
 
 /**
  * The qse_strend() function checks if the a string ends with a substring.
@@ -443,12 +481,8 @@ qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len);
 qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len);
 qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len);
 
-/****f* Common/qse_strspl
- * NAME
- *  qse_strspl - split a string into fields
- * SEE ALSO
- *  qse_strspltrn
- * SYNOPSIS
+/**
+ * The qse_strspl() function splits a string into fields.
  */
 int qse_strspl (
 	qse_char_t*       str,
@@ -459,24 +493,24 @@ int qse_strspl (
 );
 /******/
 
-/****f* Common/qse_strspltrn
- * NAME
- *  qse_strspltrn - split a string translating special escape sequences 
- * DESCRIPTION
- *  The argument trset is a translation character set which is composed
- *  of multiple character pairs. An escape character followed by the 
- *  first character in a pair is translated into the second character
- *  in the pair. If trset is QSE_NULL, no translation is performed. 
- * EXAMPLES
- *  Let's translate a sequence of '\n' and '\r' to a new line and a carriage
- *  return respectively.
+/**
+ * The qse_strspltrn() function splits a string translating special 
+ * escape sequences.
+ * The argument @a trset is a translation character set which is composed
+ * of multiple character pairs. An escape character followed by the 
+ * first character in a pair is translated into the second character
+ * in the pair. If trset is QSE_NULL, no translation is performed. 
+ *
+ * Let's translate a sequence of '\n' and '\r' to a new line and a carriage
+ * return respectively.
+ * @code
  *   qse_strspltrn (str, QSE_T(':'), QSE_T('['), QSE_T(']'), QSE_T('\\'), QSE_T("n\nr\r"), &nfields);
- *  Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
- *  fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
- *  new line.
- * SEE ALSO
- *  If you don't need any translation, you may call qse_strspl() alternatively.
- * SYNOPSIS
+ * @endcode
+ * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
+ * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
+ * new line.
+ *
+ * If you don't need any translation, you may call qse_strspl() alternatively.
  */
 int qse_strspltrn (
 	qse_char_t*       str,
@@ -486,7 +520,6 @@ int qse_strspltrn (
 	qse_char_t        escape,
 	const qse_char_t* trset
 );
-/******/
 
 /**
  * The qse_strtrmx() function strips leading spaces and/or trailing
@@ -557,8 +590,49 @@ qse_size_t qse_strxpac (
 );
 
 /**
+ * The qse_mbstowcslen() function scans a null-terminated multibyte string
+ * to calculate the number of wide characters it can be converted to.
+ * The number of wide characters is returned via @a wcslen if it is not 
+ * #QSE_NULL. The function may be aborted if it has encountered invalid
+ * or incomplete multibyte sequences. The return value, in this case, 
+ * is less than qse_strlen(mcs).
+ * @return number of bytes scanned
+ */
+qse_size_t qse_mbstowcslen (
+	const qse_mchar_t* mcs,
+	qse_size_t*        wcslen
+);
+
+/**
+ * The qse_mbsntowcsnlen() function scans a multibyte string of @a mcslen bytes
+ * to get the number of wide characters it can be converted to.
+ * The number of wide characters is returned via @a wcslen if it is not 
+ * #QSE_NULL. The function may be aborted if it has encountered invalid
+ * or incomplete multibyte sequences. The return value, in this case, 
+ * is less than @a mcslen.
+ * @return number of bytes scanned
+ */
+qse_size_t qse_mbsntowcsnlen (
+	const qse_mchar_t* mcs,
+	qse_size_t         mcslen,
+	qse_size_t*        wcslen
+);
+
+/**
  * The qse_mbstowcs() function converts a multibyte string to a wide 
  * character string.
+ *
+ * @code
+ *  const qse_mchar_t* mbs = "a multibyte string";
+ *  qse_wchar_t buf[100];
+ *  qse_size_t bufsz = QSE_COUNTOF(buf), n;
+ *  n = qse_mbstowcs (mbs, buf, bufsz);
+ *  if (bufsz >= QSE_COUNTOF(buf)) { buffer too small }
+ *  if (mbs[n] != '\0') { incomplete processing  }
+ *  //if (n != strlen(mbs)) { incomplete processing  }
+ * @endcode
+ *
+ * @return number of multibyte characters processed.
  */
 qse_size_t qse_mbstowcs (
 	const qse_mchar_t* mbs,
@@ -569,7 +643,7 @@ qse_size_t qse_mbstowcs (
 /**
  * The qse_mbsntowcsn() function converts a multibyte string to a 
  * wide character string.
- * @return number of bytes handled.
+ * @return number of multibyte characters processed.
  */
 qse_size_t qse_mbsntowcsn (
 	const qse_mchar_t* mbs,
@@ -578,11 +652,15 @@ qse_size_t qse_mbsntowcsn (
 	qse_size_t*        wcslen
 );
 
-/****f* Common/qse_wcstombslen
+/**
  * The qse_wcstombslen() function scans a null-terminated wide character 
- * string @a wcs to get the total number of multibyte characters that it can be
- * converted to. The resulting number of characters is stored into memory
- * pointed to by @a mbslen.
+ * string @a wcs to get the total number of multibyte characters that it 
+ * can be converted to. The resulting number of characters is stored into 
+ * memory pointed to by @a mbslen.
+ * Complete scanning is indicated by the following condition:
+ * @code
+ *  qse_wcstombslen(wcs,&xx) == qse_strlen(wcs)
+ * @endcode
  * @return number of wide characters handled
  */
 qse_size_t qse_wcstombslen (
@@ -592,9 +670,13 @@ qse_size_t qse_wcstombslen (
 
 /**
  * The qse_wcsntombsnlen() function scans a wide character wcs as long as
- * wcslen characters to get the get the total number of multibyte characters 
+ * @a wcslen characters to get the total number of multibyte characters 
  * that it can be converted to. The resulting number of characters is stored 
  * into memory pointed to by @a mbslen.
+ * Complete scanning is indicated by the following condition:
+ * @code
+ *  qse_wcstombslen(wcs,&xx) == wcslen
+ * @endcode
  * @return number of wide characters handled
  */
 qse_size_t qse_wcsntombsnlen (
@@ -608,12 +690,11 @@ qse_size_t qse_wcsntombsnlen (
  * string to a multibyte string and stores it into the buffer pointed to
  * by mbs. The pointer to a variable holding the buffer length should be
  * passed to the function as the third parameter. After conversion, it holds 
- * the length of the multibyte string excluding the terminating-null.
+ * the length of the multibyte string excluding the terminating-null character.
  * It may not null-terminate the resulting multibyte string if the buffer
  * is not large enough. You can check if the resulting mbslen is equal to 
  * the input mbslen to know it.
- * @return number of wide characters handled
- * SYNOPSIS
+ * @return number of wide characters processed
  */
 qse_size_t qse_wcstombs (
 	const qse_wchar_t* wcs,
@@ -627,14 +708,26 @@ qse_size_t qse_wcstombs (
  * @return the number of wide characters
  */
 qse_size_t qse_wcsntombsn (
-	const qse_wchar_t* wcs,    /**< a wide string */
+	const qse_wchar_t* wcs,    /**< wide string */
 	qse_size_t         wcslen, /**< wide string length */
-	qse_mchar_t*       mbs,    /**< a multibyte string buffer */
-	qse_size_t*        mbslen  /**< the buffer size */
+	qse_mchar_t*       mbs,    /**< multibyte string buffer */
+	qse_size_t*        mbslen  /**< buffer size */
 );
 
 /**
- * The qse_wcstombs_strict() function performs the same as the qse_wcsmbs() 
+ * The qse_mbstowcs_strict() function performs the same as the qse_mbstowcs() 
+ * function except that it returns an error if it can't fully convert the
+ * input string and/or the buffer is not large enough.
+ * @return 0 on success, -1 on failure.
+ */
+int qse_mbstowcs_strict (
+	const qse_mchar_t* mbs,
+	qse_wchar_t*       wcs,
+	qse_size_t         wcslen
+);
+
+/**
+ * The qse_wcstombs_strict() function performs the same as the qse_wcstombs() 
  * function except that it returns an error if it can't fully convert the
  * input string and/or the buffer is not large enough.
  * @return 0 on success, -1 on failure.
@@ -657,75 +750,51 @@ void qse_str_close (
 	qse_str_t* str
 );
 
-/****f* Common/qse_str_init
- * NAME
- *  qse_str_init - initialize a dynamically resizable string
- * NOTE
- *  If the parameter capa is 0, it doesn't allocate the internal buffer 
- *  in advance.
- * SYNOPSIS
+/**
+ * The qse_str_init() function initializes a dynamically resizable string
+ * If the parameter capa is 0, it doesn't allocate the internal buffer 
+ * in advance.
  */
 qse_str_t* qse_str_init (
 	qse_str_t*  str,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
 );
-/******/
 
-/****f* Common/qse_str_fini
- * NAME
- *  qse_str_fini - finialize a dynamically resizable string
- * SYNOPSIS
+/**
+ * The qse_str_fini() function finalizes a dynamically resizable string.
  */
 void qse_str_fini (
 	qse_str_t* str
 );
-/******/
 
-/****f* Common/qse_str_yield
- * NAME 
- *  qse_str_yield - yield the buffer 
- * 
- * DESCRIPTION
- *  The qse_str_yield() function assigns the buffer to an variable of the
- *  qse_xstr_t type and recreate a new buffer of the new_capa capacity.
- *  The function fails if it fails to allocate a new buffer.
- *
- * RETURN
- *  The qse_str_yield() function returns 0 on success, and -1 on failure.
- *
- * SYNOPSIS
+/**
+ * The qse_str_yield() function assigns the buffer to an variable of the
+ * qse_xstr_t type and recreate a new buffer of the @a new_capa capacity.
+ * The function fails if it fails to allocate a new buffer.
+ * @return 0 on success, and -1 on failure.
  */
 int qse_str_yield (
-	qse_str_t*  str      /* a dynamic string */,
-	qse_xstr_t* buf      /* the pointer to a qse_xstr_t variable */,
-	int         new_capa /* new capacity in number of characters */
+	qse_str_t*  str,     /**< string */
+	qse_xstr_t* buf,     /**< buffer pointer */
+	int         new_capa /**< new capacity */
 );
-/******/
 
-/****f* Common/qse_str_getsizer
- * NAME
- *  qse_str_getsizer - get the sizer
- * RETURN
- *  a sizer function set or QSE_NULL if no sizer is set.
- * SYNOPSIS
+/**
+ * The qse_str_getsizer() function gets the sizer.
+ * @return sizer function set or QSE_NULL if no sizer is set.
  */
 qse_str_sizer_t qse_str_getsizer (
 	qse_str_t* str
 );
-/******/
 
-/****f* Common/qse_str_setsizer
- * NAME
- *  qse_str_setsizer - specify a sizer
- * DESCRIPTION
- *  The qse_str_setsizer() function specify a new sizer for a dynamic string.
- *  With no sizer specified, the dynamic string doubles the current buffer
- *  when it needs to increase its size. The sizer function is passed a dynamic
- *  string and the minimum capacity required to hold data after resizing.
- *  The string is truncated if the sizer function returns a smaller number
- *  than the hint passed.
- * SYNOPSIS
+/**
+ * The qse_str_setsizer() function specify a new sizer for a dynamic string.
+ * With no sizer specified, the dynamic string doubles the current buffer
+ * when it needs to increase its size. The sizer function is passed a dynamic
+ * string and the minimum capacity required to hold data after resizing.
+ * The string is truncated if the sizer function returns a smaller number
+ * than the hint passed.
  */
 void qse_str_setsizer (
 	qse_str_t*      str,
@@ -733,87 +802,58 @@ void qse_str_setsizer (
 );
 /******/
 
-/****f* Common/qse_str_getcapa
- * NAME
- *  qse_str_getcapa - get capacity
- * DESCRIPTION
- *  The qse_str_getcapa() function returns the current capacity.
- *  You may use QSE_STR_CAPA(str) macro for performance sake.
- * RETURNS
- *  current capacity in number of characters.
- * SYNOPSIS
+/**
+ * The qse_str_getcapa() function returns the current capacity.
+ * You may use QSE_STR_CAPA(str) macro for performance sake.
+ * @return current capacity in number of characters.
  */
 qse_size_t qse_str_getcapa (
 	qse_str_t* str
 );
-/******/
 
-/****f* Common/qse_str_setcapa
- * NAME
- *  qse_str_setcapa - set new capacity
- * DESCRIPTION
- *  The qse_str_setcapa() function sets the new capacity. If the new capacity
- *  is smaller than the old, the overflowing characters are removed from
- *  from the buffer.
- * RETURNS
- *  (qse_size_t)-1 on failure, new capacity on success 
- * SYNOPSIS
+/**
+ * The qse_str_setcapa() function sets the new capacity. If the new capacity
+ * is smaller than the old, the overflowing characters are removed from
+ * from the buffer.
+ * @return (qse_size_t)-1 on failure, new capacity on success 
  */
 qse_size_t qse_str_setcapa (
 	qse_str_t* str,
 	qse_size_t capa
 );
-/******/
 
-/****f* Common/qse_str_getlen
- * NAME
- *  qse_str_getlen - get length
- * SYNOPSIS
+/**
+ * The qse_str_getlen() function return the string length.
  */
 qse_size_t qse_str_getlen (
 	qse_str_t* str
 );
-/******/
 
-/****f* Common/qse_str_setlen
- * NAME
- *  qse_str_setlen - change length
- * RETURNS
- *  (qse_size_t)-1 on failure, new length on success 
- * SYNOPSIS
+/**
+ * The qse_str_setlen() function changes the string length.
+ * @return (qse_size_t)-1 on failure, new length on success 
  */
 qse_size_t qse_str_setlen (
 	qse_str_t* str,
 	qse_size_t len
 );
-/******/
 
-/****f* Common/qse_str_clear
- * NAME
- *  qse_str_clear - clear a string
- * DESCRIPTION
- *  The qse_str_clear() funtion deletes all characters in a string and sets
- *  the length to 0. It doesn't resize the internal buffer.
- * SYNOPSIS
+/**
+ * The qse_str_clear() funtion deletes all characters in a string and sets
+ * the length to 0. It doesn't resize the internal buffer.
  */
 void qse_str_clear (
 	qse_str_t* str
 );
-/******/
 
-/****f* Common/qse_str_swap
- * NAME
- *  qse_str_swap - swap buffers of two dynamic string
- * DESCRIPTION
- *  The qse_str_swap() function exchanges the pointers to a buffer between
- *  two strings. It updates the length and the capacity accordingly.
- * SYNOPSIS
+/**
+ * The qse_str_swap() function exchanges the pointers to a buffer between
+ * two strings. It updates the length and the capacity accordingly.
  */
 void qse_str_swap (
 	qse_str_t* str1,
 	qse_str_t* str2
 );
-/******/
 
 qse_size_t qse_str_cpy (
 	qse_str_t*        str,

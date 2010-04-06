@@ -37,7 +37,7 @@ static int test2 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_size_t k = strlen(x[i]);
+		qse_size_t k = qse_mbslen(x[i]);
 		qse_size_t j = 0;
 		qse_wchar_t wc;
 
@@ -102,7 +102,7 @@ static int test3 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		int len = wcslen (x[i]);
+		int len = qse_wcslen (x[i]);
 		if (len == 0) len++; /* for x[0] */
 
 		qse_printf (QSE_T("["));

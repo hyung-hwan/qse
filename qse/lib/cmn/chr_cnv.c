@@ -1,5 +1,5 @@
 /*
- * $Id: chr_cnv.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: chr_cnv.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,6 +41,13 @@ qse_size_t qse_mblen (const qse_mchar_t* mb, qse_size_t mblen)
 	if (n == (size_t)-2) return mblen + 1; /* incomplete sequence */
 
 	return (qse_size_t)n;
+
+	#if 0
+	n = mblen (mb, mblen, &mbs);
+	if (n == 0) return 1; /* a null character */
+	if (n == (size_t)-1) return 0; /* invalid or incomplete sequence */
+	return (qse_size_t)n;
+	#endif
 #else
 	#error #### NOT SUPPORTED ####
 #endif

@@ -32,7 +32,7 @@ static int test1 (void)
 		return -1;
 	}
 
-	n = qse_fio_write (fio, x, strlen(x));
+	n = qse_fio_write (fio, x, qse_mbslen(x));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
 
@@ -77,7 +77,7 @@ static int test1 (void)
 		qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
 	}
 
-	n = qse_fio_write (fio, x2, strlen(x2));
+	n = qse_fio_write (fio, x2, qse_mbslen(x2));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
 	qse_fio_close (fio);
@@ -110,7 +110,7 @@ static int test2 (void)
 
 	for (i = 0; i < 2; i++)
 	{
-		n = qse_fio_write (fio, x, strlen(x));
+		n = qse_fio_write (fio, x, qse_mbslen(x));
 		qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
 		off = qse_fio_seek (fio, 0, QSE_FIO_CURRENT);
@@ -156,7 +156,7 @@ static int test2 (void)
 		qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
 	}
 
-	n = qse_fio_write (fio, x2, strlen(x2));
+	n = qse_fio_write (fio, x2, qse_mbslen(x2));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
 	off = qse_fio_seek (fio, 0, QSE_FIO_CURRENT);
@@ -174,7 +174,7 @@ static int test2 (void)
 		qse_printf (QSE_T("failed to truncate the file\n"));
 	}
 
-	n = qse_fio_write (fio, x2, strlen(x2));
+	n = qse_fio_write (fio, x2, qse_mbslen(x2));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
 	off = qse_fio_seek (fio, 0, QSE_FIO_CURRENT);

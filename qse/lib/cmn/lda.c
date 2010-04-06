@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: lda.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -39,7 +39,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (lda)
 #define DPTR(node)   ((node)->dptr)
 #define DLEN(node)   ((node)->dlen)
 
-static int comp_data (lda_t* lda, 
+static int default_comparator (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
 	const void* dptr2, size_t dlen2)
 {
@@ -58,7 +58,7 @@ static int comp_data (lda_t* lda,
 	return n;
 }
 
-static node_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
+static QSE_INLINE node_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
 {
 	node_t* n;
 
@@ -136,7 +136,7 @@ lda_t* qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 	lda->node = QSE_NULL;
 
 	lda->copier = QSE_LDA_COPIER_SIMPLE;
-	lda->comper = comp_data;
+	lda->comper = default_comparator;
 
 	if (qse_lda_setcapa (lda, capa) == QSE_NULL) return QSE_NULL;
 	return lda;
@@ -162,7 +162,8 @@ int qse_lda_getscale (lda_t* lda)
 void qse_lda_setscale (lda_t* lda, int scale)
 {
 	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
-		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
+		"The scale should be larger than 0 and less than or "
+		"equal to the maximum value that the qse_byte_t type can hold");
 
 	if (scale <= 0) scale = 1;
 	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);
@@ -198,7 +199,7 @@ comper_t qse_lda_getcomper (lda_t* lda)
 
 void qse_lda_setcomper (lda_t* lda, comper_t comper)
 {
-	if (comper == QSE_NULL) comper = comp_data;
+	if (comper == QSE_NULL) comper = default_comparator;
 	lda->comper = comper;
 }
 
@@ -236,8 +237,11 @@ lda_t* qse_lda_setcapa (lda_t* lda, size_t capa)
 {
 	void* tmp;
 
+	if (capa == lda->capa) return lda;
+
 	if (lda->size > capa) 
 	{
+		/* to trigger freeers on the items truncated */
 		qse_lda_delete (lda, capa, lda->size - capa);
 		QSE_ASSERT (lda->size <= capa);
 	}
@@ -246,13 +250,14 @@ lda_t* qse_lda_setcapa (lda_t* lda, size_t capa)
 	{
 		if (lda->mmgr->realloc != QSE_NULL && lda->node != QSE_NULL)
 		{
-			tmp = (qse_lda_node_t**)QSE_MMGR_REALLOC (
-				lda->mmgr, lda->node, QSE_SIZEOF(*lda->node)*capa);
+			tmp = (node_t**) QSE_MMGR_REALLOC (
+				lda->mmgr, lda->node,
+				QSE_SIZEOF(*lda->node)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 		}
 		else
 		{
-			tmp = (qse_lda_node_t**) QSE_MMGR_ALLOC (
+			tmp = (node_t**) QSE_MMGR_ALLOC (
 				lda->mmgr, QSE_SIZEOF(*lda->node)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 
@@ -261,7 +266,7 @@ lda_t* qse_lda_setcapa (lda_t* lda, size_t capa)
 				size_t x;
 				x = (capa > lda->capa)? lda->capa: capa;
 				QSE_MEMCPY (tmp, lda->node, 
-					QSE_SIZEOF(*lda->node) * x);
+					QSE_SIZEOF(*lda->node)*x);
 				QSE_MMGR_FREE (lda->mmgr, lda->node);
 			}
 		}
@@ -514,6 +519,8 @@ void qse_lda_walk (lda_t* lda, walker_t walker, void* arg)
 	qse_lda_walk_t w = QSE_LDA_WALK_FORWARD;
 	size_t i = 0;
 
+	if (lda->size <= 0) return;
+
 	while (1)	
 	{
 		if (lda->node[i] != QSE_NULL) 
@@ -562,3 +569,108 @@ void qse_lda_rwalk (lda_t* lda, walker_t walker, void* arg)
 	}
 }
 
+size_t qse_lda_pushstack (lda_t* lda, void* dptr, size_t dlen)
+{
+	return qse_lda_insert (lda, lda->size, dptr, dlen);
+}
+
+void qse_lda_popstack (lda_t* lda)
+{
+	QSE_ASSERT (lda->size > 0);
+	qse_lda_delete (lda, lda->size - 1, 1);
+}
+
+#define HEAP_PARENT(x) (((x)-1) / 2)
+#define HEAP_LEFT(x)   ((x)*2 + 1)
+#define HEAP_RIGHT(x)  ((x)*2 + 2)
+
+size_t qse_lda_pushheap (lda_t* lda, void* dptr, size_t dlen)
+{
+	size_t cur, par;
+	int n;
+
+	/* add a value to the bottom */
+	cur = lda->size;
+	if (qse_lda_insert (lda, cur, dptr, dlen) == QSE_LDA_NIL)
+		return QSE_LDA_NIL;
+
+	while (cur != 0)
+	{
+		node_t* tmp;
+
+		/* compare with the parent */
+		par = HEAP_PARENT(cur);
+		n = lda->comper (lda,
+			DPTR(lda->node[cur]), DLEN(lda->node[cur]),
+			DPTR(lda->node[par]), DLEN(lda->node[par]));
+		if (n <= 0) break; /* ok */
+
+		/* swap the current with the parent */
+		tmp = lda->node[cur];
+		lda->node[cur] = lda->node[par];
+		lda->node[par] = tmp;
+
+		cur = par;
+	}
+
+	return lda->size;
+}
+
+void qse_lda_popheap (lda_t* lda)
+{
+	size_t cur, child;
+	node_t* tmp;
+
+	QSE_ASSERT (lda->size > 0);
+
+	/* destroy the top */
+	tmp = lda->node[0];
+	if (lda->freeer) lda->freeer (lda, DPTR(tmp), DLEN(tmp));
+	QSE_MMGR_FREE (lda->mmgr, tmp);
+
+	/* move the last item to the top position also shrink the size */
+	lda->node[0] = lda->node[--lda->size];
+
+	if (lda->size <= 1) return; /* only 1 element. nothing further to do */
+
+	for (cur = 0; cur < lda->size; cur = child)
+	{
+		size_t left, right;
+		int n;
+
+		left = HEAP_LEFT(cur);
+		right = HEAP_RIGHT(cur);
+
+		if (left >= lda->size) 
+		{
+			/* the left child does not exist. 
+			 * reached the bottom. abort exchange */
+			break;
+		}
+
+		if (right >= lda->size) 
+		{
+			/* the right child does not exist. only the left */
+			child = left;	
+		}
+		else
+		{
+			/* get the larger child of the two */
+			n = lda->comper (lda,
+				DPTR(lda->node[left]), DLEN(lda->node[left]),
+				DPTR(lda->node[right]), DLEN(lda->node[right]));
+			child = (n > 0)? left: right;
+		}
+		
+		/* compare the current one with the child */
+		n = lda->comper (lda,
+			DPTR(lda->node[cur]), DLEN(lda->node[cur]),
+			DPTR(lda->node[child]), DLEN(lda->node[child]));
+		if (n > 0) break; /* current one is larger. stop exchange */
+
+		/* swap the current with the child */
+		tmp = lda->node[cur];
+		lda->node[cur] = lda->node[child];
+		lda->node[child] = tmp;
+	}
+}

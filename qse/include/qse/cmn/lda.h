@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: lda.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,13 +24,9 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* Common/linear dynamic array
- * DESCRIPTION
- *  <Common.h> provides a linear dynamic array. It grows as more items 
- *  are added.
- *
- *  #include <Common.h>
- ******
+/** @file
+ * This file provides a linear dynamic array. It grows dynamically as items 
+ * are added.
  */
 
 enum qse_lda_walk_t
@@ -62,14 +58,8 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 #define QSE_LDA_KEEPER(lda)      ((lda)->keeper)
 #define QSE_LDA_SIZER(lda)       ((lda)->sizer)
 
-
-
-/****t* Common/qse_lda_copier_t
- * NAME
- *  qse_lda_copier_t - define a node contruction callback
- *
- * DESCRIPTION
- *  The qse_lda_copier_t defines a callback function for node construction.
+/**
+ *  The qse_lda_copier_t type defines a callback function for node construction.
  *  A node is contructed when a user adds data to a list. The user can
  *  define how the data to add can be maintained in the list. A singly
  *  linked list not specified with any copiers stores the data pointer and
@@ -80,44 +70,30 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
  *  A copier should return the pointer to the copied data. If it fails to copy
  *  data, it may return QSE_NULL. You need to set a proper freeer to free up
  *  memory allocated for copy.
- *
- * SEE ALSO
- *  qse_lda_setcopier, qse_lda_getcopier, QSE_LDA_COPIER
- *
- * SYNOPSIS
  */
 typedef void* (*qse_lda_copier_t) (
 	qse_lda_t* lda    /* lda */,
 	void*      dptr   /* the pointer to data to copy */,
 	qse_size_t dlen   /* the length of data to copy */
 );
-/******/
 
-/****t* Common/qse_lda_freeer_t
- * NAME
- *  qse_lda_freeer_t - define a node destruction callback
- * SYNOPSIS
+/**
+ * The qse_lda_freeer_t type defines a node destruction callback.
  */
 typedef void (*qse_lda_freeer_t) (
 	qse_lda_t* lda    /* lda */,
 	void*      dptr   /* the pointer to data to free */,
 	qse_size_t dlen   /* the length of data to free */
 );
-/******/
 
-/****t* Common/qse_lda_comper_t
- * NAME
- *  qse_lda_comper_t - define a data comparator
+/**
+ * The qse_lda_comper_t type defines a key comparator that is called when
+ * the list needs to compare data. A linear dynamic array is created with a
+ * default comparator that performs bitwise comparison.
  *
- * DESCRIPTION
- *  The qse_lda_comper_t type defines a key comparator that is called when
- *  the list needs to compare data. A linear dynamic array is created with a
- *  default comparator that performs bitwise comparison.
+ * The comparator should return 0 if the data are the same and a non-zero
+ * integer otherwise.
  *
- *  The comparator should return 0 if the data are the same and a non-zero
- *  integer otherwise.
- *
- * SYNOPSIS
  */
 typedef int (*qse_lda_comper_t) (
 	qse_lda_t*  lda    /* a linear dynamic array */, 
@@ -126,42 +102,27 @@ typedef int (*qse_lda_comper_t) (
 	const void* dptr2  /* a data pointer */,
 	qse_size_t  dlen2  /* a data length */
 );
-/******/
 
-/****t* Common/qse_lda_keeper_t
- * NAME
- *  qse_lda_keeper_t - define a value keeper
- *
- * DESCRIPTION
- *  The qse_lda_keeper_t type defines a value keeper that is called when 
- *  a value is retained in the context that it should be destroyed because
- *  it is identical to a new value. Two values are identical if their beginning
- *  pointers and their lengths are equal.
- *
- * SYNOPSIS
+/**
+ * The qse_lda_keeper_t type defines a value keeper that is called when 
+ * a value is retained in the context that it should be destroyed because
+ * it is identical to a new value. Two values are identical if their beginning
+ * pointers and their lengths are equal.
  */
 typedef void (*qse_lda_keeper_t) (
 	qse_lda_t* lda     /* lda */,
 	void* vptr         /* the pointer to a value */,
 	qse_size_t vlen    /* the length of a value */	
 );
-/******/
 
-/****t* Common/qse_lda_sizer_t
- * NAME
- *  qse_lda_sizer_t - define an array size calculator
- *
- * DESCRIPTION
- *  The qse_lda_sizer_t type defines an array size claculator that is called
- *  when the array needs to be resized. 
- *
- * SYNOPSIS
+/**
+ * The qse_lda_sizer_t type defines an array size claculator that is called
+ * when the array needs to be resized. 
  */
 typedef qse_size_t (*qse_lda_sizer_t) (
         qse_lda_t* lda,  /* a linear dynamic array */
         qse_size_t hint  /* a sizing hint */
 );
-/******/
 
 typedef qse_lda_walk_t (*qse_lda_walker_t) (
         qse_lda_t*      lda   /* a linear dynamic array */,
@@ -169,11 +130,8 @@ typedef qse_lda_walk_t (*qse_lda_walker_t) (
         void*           arg   /* user-defined data */
 );
 
-/****s* Common/qse_lda_t
- * NAME
- *  qse_lda_t - define a linear dynamic array
- *
- * SYNOPSIS
+/**
+ * The qse_lda_t type defines a linear dynamic array.
  */
 struct qse_lda_t
 {
@@ -185,24 +143,19 @@ struct qse_lda_t
 	qse_lda_keeper_t keeper; /* data keeper */
 	qse_lda_sizer_t  sizer;  /* size calculator */
 	qse_byte_t       scale;  /* scale factor */
-	qse_size_t       size;   /* the number of items */
+	qse_size_t       size;   /* number of items */
 	qse_size_t       capa;   /* capacity */
 	qse_lda_node_t** node;
 };
-/******/
 
-/****s*
- * NAME
- *  qse_lda_node_t - define a linear dynamic array node
- *
- * SYNOPSIS
+/**
+ * The qse_lda_node_t type defines a linear dynamic array node
  */
 struct qse_lda_node_t
 {
 	void*      dptr;
 	qse_size_t dlen;
 };
-/******/
 
 #ifdef __cplusplus
 extern "C" {
@@ -210,53 +163,37 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (lda)
 
-/****f* Common/qse_lda_open
- * NAME
- *  qse_lda_open - create a linear dynamic array
- *
- * SYNOPSIS
+/**
+ * The qse_lda_open() function creates a linear dynamic array.
  */
 qse_lda_t* qse_lda_open (
 	qse_mmgr_t* lda,
 	qse_size_t  ext,
 	qse_size_t  capa
 );
-/******/
 
-/****f* Common/qse_lda_close
- * NAME
- *  qse_lda_close - destroy a linear dynamic array
- *
- * SYNOPSIS
+/**
+ * The qse_lda_close() function destroys a linear dynamic array.
  */
 void qse_lda_close (
 	qse_lda_t* lda
 );
-/******/
 
-/****f* Common/qse_lda_init
- * NAME
- *  qse_lda_init - initialize a linear dynamic array
- *
- * SYNOPSIS
+/**
+ * The qse_lda_init() function initializes a linear dynamic array.
  */
 qse_lda_t* qse_lda_init (
 	qse_lda_t*  lda,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
 );
-/******/
 
-/****f* Common/qse_lda_fini
- * NAME
- *  qse_lda_fini - deinitialize a linear dynamic array
- *
- * SYNOPSIS
+/**
+ * The qse_lda_fini() function finalizes a linear dynamic array.
  */
 void qse_lda_fini (
 	qse_lda_t* lda
 );
-/******/
 
 int qse_lda_getscale (
 	qse_lda_t* lda   /* lda */
@@ -383,43 +320,25 @@ qse_size_t qse_lda_update (
 	qse_size_t dlen
 );
 
-/****f* Common/qse_lda_delete
- * NAME
- *  qse_lda_delete - delete data
- *
- * DESCRIPTION
- *  The qse_lda_delete() function deletes the as many data as the count 
- *  from the index.
- * 
- * RETURN
- *  The qse_lda_delete() function returns the number of data deleted.
- *
- * SYNOPSIS
+/**
+ * The qse_lda_delete() function deletes the as many data as the count 
+ * from the index. It returns the number of data deleted.
  */
 qse_size_t qse_lda_delete (
 	qse_lda_t* lda,
 	qse_size_t index,
 	qse_size_t count
 );
-/******/
 
-/****f* Common/qse_lda_uplete
- * NAME
- *  qse_lda_uplete - delete data node
- *
- * DESCRIPTION
+/**
  *  The qse_lda_uplete() function deletes data node without compaction.
- * 
- * RETURN
- *  The qse_lda_uplete() function returns the number of data affected.
- *
+ *  It returns the number of data affected.
  */
 qse_size_t qse_lda_uplete (
 	qse_lda_t* lda,
 	qse_size_t index,
 	qse_size_t count
 );
-/******/
 
 void qse_lda_clear (
 	qse_lda_t* lda
@@ -435,6 +354,52 @@ void qse_lda_rwalk (
 	qse_lda_t*       lda,
 	qse_lda_walker_t walker,
 	void*            arg
+);
+
+/**
+ * The qse_lda_pushstack() function appends data to the array. It is a utility
+ * function to allow stack-like operations over an array. To do so, you should
+ * not play with other non-stack related functions.
+ */
+qse_size_t qse_lda_pushstack (
+	qse_lda_t* lda,
+	void*      dptr, 
+	qse_size_t dlen
+);
+
+/**
+ * The qse_lda_popstack() function deletes the last array data. It is a utility
+ * function to allow stack-like operations over an array. To do so, you should
+ * not play with other non-stack related functions. 
+ * @note You must not call this function if @a lda is empty.
+ */
+void qse_lda_popstack (
+	qse_lda_t* lda
+);
+
+/**
+ * The qse_lda_pushheap() function inserts data to an array while keeping the
+ * largest data at position 0. It is a utiltiy funtion to implement a binary
+ * max-heap over an array. Inverse the comparator to implement a min-heap.
+ * @return number of array elements
+ * @note You must not mess up the array with other non-heap related functions
+ *       to keep the heap property.
+ */
+qse_size_t qse_lda_pushheap (
+	qse_lda_t* lda,
+	void*      dptr,
+	qse_size_t dlen
+);
+
+/**
+ * The qse_lda_popheap() function deletes data at position 0 while keeping
+ * the largest data at positon 0. It is a utiltiy funtion to implement a binary
+ * max-heap over an array. 
+ * @note You must not mess up the array with other non-heap related functions
+ *       to keep the heap property.
+ */
+void qse_lda_popheap (
+	qse_lda_t* lda
 );
 
 #ifdef __cplusplus

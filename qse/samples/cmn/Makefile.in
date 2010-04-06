@@ -36,7 +36,7 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
 	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT) rex01$(EXEEXT)
+	time$(EXEEXT) main$(EXEEXT) rex01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -65,6 +65,10 @@ am_lda_OBJECTS = lda.$(OBJEXT)
 lda_OBJECTS = $(am_lda_OBJECTS)
 lda_LDADD = $(LDADD)
 lda_DEPENDENCIES =
+am_main_OBJECTS = main.$(OBJEXT)
+main_OBJECTS = $(am_main_OBJECTS)
+main_LDADD = $(LDADD)
+main_DEPENDENCIES =
 am_map_OBJECTS = map.$(OBJEXT)
 map_OBJECTS = $(am_map_OBJECTS)
 map_LDADD = $(LDADD)
@@ -106,12 +110,12 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(map_SOURCES) \
-	$(pio_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
+SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
 	$(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
 	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
+	$(main_SOURCES) $(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) \
+	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -265,6 +269,7 @@ fio_SOURCES = fio.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
+main_SOURCES = main.c
 rex01_SOURCES = rex01.c
 all: all-am
 
@@ -352,6 +357,9 @@ fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES)
 lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) 
 	@rm -f lda$(EXEEXT)
 	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
+main$(EXEEXT): $(main_OBJECTS) $(main_DEPENDENCIES) 
+	@rm -f main$(EXEEXT)
+	$(LINK) $(main_OBJECTS) $(main_LDADD) $(LIBS)
 map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES) 
 	@rm -f map$(EXEEXT)
 	$(LINK) $(map_OBJECTS) $(map_LDADD) $(LIBS)
@@ -383,6 +391,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@

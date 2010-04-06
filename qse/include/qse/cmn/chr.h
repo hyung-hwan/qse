@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: chr.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -110,42 +110,42 @@ qse_cint_t qse_ccls_to (
 	qse_ccls_id_t type
 );
 
+/**
+ * The qse_mblen() function scans a multibyte sequence to get the number of 
+ * bytes needed to form a wide character. It does not scan more than @a mblen
+ * bytes.
+ * @return number of bytes processed on success, 
+ *         0 for invalid sequences, 
+ *         mblen + 1 for incomplete sequences
+ */
 qse_size_t qse_mblen (
 	const qse_mchar_t* mb,
-	qse_size_t mblen
+	qse_size_t         mblen
 );
 
-/****f* Common/qse_mbtowc
- * NAME
- *  qse_mbtowc - convert a multibyte sequence to a wide character.
- * RETURN
- *  The qse_mbtowc() function returns 0 if an invalid multibyte sequence is
- *  detected, mblen + 1 if the sequence is incomplete. It returns the number
- *  of bytes processed to form a wide character.
- * SYNOPSIS
+/**
+ * The qse_mbtowc() function converts a multibyte sequence to a wide character.
+ * It returns 0 if an invalid multibyte sequence is detected, mblen + 1 if the 
+ * sequence is incomplete. It returns the number of bytes processed to form a 
+ * wide character.
  */
 qse_size_t qse_mbtowc (
 	const qse_mchar_t* mb,
 	qse_size_t         mblen,
 	qse_wchar_t*       wc
 );
-/******/
 
-/****f* Common/qse_wctomb
- * NAME
- *  qse_wctomb - convert a wide character to a multibyte sequence
- * RETURN
- *  The qse_wctomb() functions returns 0 if the wide character is illegal, 
- *  mblen + 1 if mblen is not large enough to hold the multibyte sequence.
- *  On successful conversion, it returns the number of bytes in the sequence.
- * SYNOPSIS
+/**
+ * The qse_wctomb() function converts a wide character to a multibyte sequence.
+ * It returns 0 if the wide character is illegal, mblen + 1 if mblen is not 
+ * large enough to hold the multibyte sequence. On successful conversion, it 
+ * returns the number of bytes in the sequence.
  */
 qse_size_t qse_wctomb (
 	qse_wchar_t        wc,
 	qse_mchar_t*       mb,
 	qse_size_t         mblen
 );
-/******/
 
 #ifdef __cplusplus
 }

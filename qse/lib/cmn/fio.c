@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: fio.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -213,16 +213,16 @@ qse_fio_t* qse_fio_init (
 		qse_tio_t* tio;
 
 		tio = qse_tio_open (fio->mmgr, 0);
-		if (tio == QSE_NULL) QSE_ERR_THROW (tio);
+		if (tio == QSE_NULL) QSE_THROW_ERR (tio);
 
 		if (qse_tio_attachin (tio, fio_input, fio) == -1 ||
 		    qse_tio_attachout (tio, fio_output, fio) == -1)
 		{
 			qse_tio_close (tio);
-			QSE_ERR_THROW (tio);
+			QSE_THROW_ERR (tio);
 		}
 
-		QSE_ERR_CATCH (tio) 
+		QSE_CATCH_ERR (tio) 
 		{
 		#ifdef _WIN32
 			CloseHandle (handle);

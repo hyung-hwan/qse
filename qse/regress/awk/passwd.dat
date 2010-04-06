@@ -1,0 +1,38 @@
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+bin:x:2:2:bin:/bin:/bin/sh
+sys:x:3:3:sys:/dev:/bin/sh
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/bin/sh
+man:x:6:12:man:/var/cache/man:/bin/sh
+lp:x:7:7:lp:/var/spool/lpd:/bin/sh
+mail:x:8:8:mail:/var/mail:/bin/sh
+news:x:9:9:news:/var/spool/news:/bin/sh
+uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh
+proxy:x:13:13:proxy:/bin:/bin/sh
+www-data:x:33:33:www-data:/var/www:/bin/sh
+backup:x:34:34:backup:/var/backups:/bin/sh
+list:x:38:38:Mailing List Manager:/var/list:/bin/sh
+irc:x:39:39:ircd:/var/run/ircd:/bin/sh
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+libuuid:x:100:101::/var/lib/libuuid:/bin/sh
+syslog:x:101:102::/home/syslog:/bin/false
+klog:x:102:103::/home/klog:/bin/false
+hplip:x:103:7:HPLIP system user,,,:/var/run/hplip:/bin/false
+avahi-autoipd:x:104:110:Avahi autoip daemon,,,:/var/lib/avahi-autoipd:/bin/false
+gdm:x:105:111:Gnome Display Manager:/var/lib/gdm:/bin/false
+saned:x:106:113::/home/saned:/bin/false
+pulse:x:107:114:PulseAudio daemon,,,:/var/run/pulse:/bin/false
+messagebus:x:108:117::/var/run/dbus:/bin/false
+polkituser:x:109:118:PolicyKit,,,:/var/run/PolicyKit:/bin/false
+avahi:x:110:119:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/bin/false
+haldaemon:x:111:120:Hardware abstraction layer,,,:/var/run/hald:/bin/false
+statd:x:112:65534::/var/lib/nfs:/bin/false
+sshd:x:113:65534::/var/run/sshd:/usr/sbin/nologin
+speech-dispatcher:x:114:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/bin/sh
+couchdb:x:115:116:CouchDB Administrator,,,:/var/lib/couchdb:/bin/bash
+kernoops:x:116:65534:Kernel Oops Tracking Daemon,,,:/:/bin/false
+mysql:x:117:124:MySQL Server,,,:/var/lib/mysql:/bin/false
+openldap:x:118:125:OpenLDAP Server Account,,,:/nonexistent:/bin/false
+postfix:x:119:126::/var/spool/postfix:/bin/false

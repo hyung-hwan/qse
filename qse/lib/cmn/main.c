@@ -19,10 +19,9 @@
  */
 
 #include <qse/cmn/main.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <qse/cmn/str.h>
 #include <locale.h>
+#include "mem.h"
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 
@@ -37,62 +36,62 @@ int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
 {
 	int i, ret;
 	qse_char_t** v;
+	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
 
 	setlocale (LC_ALL, "");
 
-	v = (qse_char_t**) malloc (argc * QSE_SIZEOF(qse_char_t*));
-	if (v == NULL) return -1;
+	v = (qse_char_t**) QSE_MMGR_ALLOC (
+		mmgr, argc * QSE_SIZEOF(qse_char_t*));
+	if (v == QSE_NULL) return -1;
 
-	for (i = 0; i < argc; i++) v[i] = NULL;
+	for (i = 0; i < argc; i++) v[i] = QSE_NULL;
+
 	for (i = 0; i < argc; i++) 
 	{
-		qse_size_t n, len, rem;
-		char* p = argv[i];
+		qse_size_t n, len, nlen;
+		qse_size_t mbslen;
 
-		len = 0; rem = strlen (p);
-		while (*p != '\0')
+		mbslen = qse_mbslen (argv[i]);
+
+		n = qse_mbstowcslen (argv[i], &len);
+		if (n < mbslen)
 		{
-			int x = mblen (p, rem); 
-			if (x == -1) 
-			{
-				ret = -1;
-				goto exit_main;
-			}
-			if (x == 0) break;
-			p += x; rem -= x; len++;
+			ret = -1; goto oops;
 		}
 
-	#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
-		v[i] = (qse_char_t*) _malloc32 ((len+1)*QSE_SIZEOF(qse_char_t));
-	#else
-		v[i] = (qse_char_t*) malloc ((len+1)*QSE_SIZEOF(qse_char_t));
-	#endif
-		if (v[i] == NULL) 
+		len++; /* include the terminating null */
+
+		v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
+			mmgr, len*QSE_SIZEOF(qse_char_t));
+		if (v[i] == QSE_NULL) 
 		{
-			ret = -1;
-			goto exit_main;
+			ret = -1; goto oops;
 		}
 
-		n = mbstowcs (v[i], argv[i], len);
-		if (n == (size_t)-1) 
+		nlen = len;
+		n = qse_mbstowcs (argv[i], v[i], &nlen);
+		if (nlen >= len)
 		{
-			/* error */
-			return -1;
+			/* no null-termination */
+			ret = -1; goto oops;
 		}
-
-		if (n == len) v[i][len] = QSE_T('\0');
+		if (argv[i][n] != '\0')
+		{		
+			/* partial processing */
+			ret = -1; goto oops;
+		}
 	}
 
 	/* TODO: envp... */
-	//ret = mf (argc, v, NULL);
+	//ret = mf (argc, v, QSE_NULL);
 	ret = mf (argc, v);
 
-exit_main:
+oops:
 	for (i = 0; i < argc; i++) 
 	{
-		if (v[i] != NULL) free (v[i]);
+		if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
 	}
-	free (v);
+	QSE_MMGR_FREE (mmgr, v);
 
 	return ret;
 }

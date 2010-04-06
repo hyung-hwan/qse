@@ -168,7 +168,7 @@ static int test5 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_size_t k = strlen(x[i]);
+		qse_size_t k = qse_mbslen(x[i]);
 		qse_size_t j = 0;
 		qse_wchar_t wc;
 		qse_wchar_t buf[10];

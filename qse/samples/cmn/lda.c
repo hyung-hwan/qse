@@ -2,6 +2,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/lda.h>
 #include <qse/cmn/stdio.h>
+#include <stdlib.h>
 
 
 #define R(f) \
@@ -26,6 +27,13 @@ qse_lda_walk_t rwalker1 (qse_lda_t* lda, qse_size_t index, void* arg)
 	qse_printf (QSE_T("%d => [%.*s]\n"), 
 		index, (int)QSE_LDA_DLEN(lda,index), QSE_LDA_DPTR(lda,index));
 	return QSE_LDA_WALK_BACKWARD;
+}
+
+qse_lda_walk_t walker3 (qse_lda_t* lda, qse_size_t index, void* arg)
+{
+	qse_printf (QSE_T("%d => [%d]\n"), 
+		index, *(int*)QSE_LDA_DPTR(lda,index));
+	return QSE_LDA_WALK_FORWARD;
 }
 
 static int test1 ()
@@ -101,6 +109,8 @@ static int test1 ()
 	qse_lda_walk (s1, walker1, QSE_NULL);
 	qse_printf (QSE_T("lda size => %lu\n"), QSE_LDA_SIZE(s1));
 	qse_lda_rwalk (s1, rwalker1, QSE_NULL);
+
+qse_lda_setcapa (s1, 3);
 
 	qse_lda_close (s1);
 	return 0;
@@ -328,7 +338,7 @@ static int test4 ()
 	s1 = qse_lda_open (QSE_MMGR_GETDFL(), 0, 3);
 	if (s1 == QSE_NULL)
 	{
-		qse_printf (QSE_T("cannot open a string\n"));
+		qse_printf (QSE_T("cannot open an array\n"));
 		return -1;
 	}
 
@@ -359,11 +369,92 @@ static int test4 ()
 	return 0;
 }
 
+
+qse_lda_comper_t default_comparator;
+
+static int inverse_comparator (qse_lda_t* lda,
+        const void* dptr1, size_t dlen1,
+        const void* dptr2, size_t dlen2)
+{
+	return -default_comparator (lda, dptr1, dlen1, dptr2, dlen2);
+}
+
+static int test5 ()
+{
+	qse_lda_t* s1;
+	int i, j;
+
+	s1 = qse_lda_open (QSE_MMGR_GETDFL(), 0, 3);
+	if (s1 == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open an array\n"));
+		return -1;
+	}
+
+	qse_lda_setcopier (s1, QSE_LDA_COPIER_INLINE);
+	qse_lda_setscale (s1, QSE_SIZEOF(i));
+
+	/* inverse the comparator to implement min-heap */
+	default_comparator = qse_lda_getcomper (s1);
+	qse_lda_setcomper (s1, inverse_comparator);
+
+	for (i = 0; i < 25; i++)
+	{
+		j = random () % 100;
+		qse_lda_pushheap (s1, &j, 1);
+	}
+
+	qse_printf (QSE_T("lda size => %lu\n"), QSE_LDA_SIZE(s1));
+	qse_lda_walk (s1, walker3, QSE_NULL);
+
+	while (QSE_LDA_SIZE(s1) > 10 )
+	{
+		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_LDA_DPTR(s1,0));
+		qse_lda_popheap (s1);
+	}
+
+	for (i = 0; i < 25; i++)
+	{
+		j = random () % 100;
+		qse_lda_pushheap (s1, &j, 1);
+	}
+
+	qse_printf (QSE_T("lda size => %lu\n"), QSE_LDA_SIZE(s1));
+	qse_lda_walk (s1, walker3, QSE_NULL);
+
+	while (QSE_LDA_SIZE(s1))
+	{
+		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_LDA_DPTR(s1,0));
+		qse_lda_popheap (s1);
+	}
+
+	qse_lda_setcomper (s1, default_comparator);
+	for (i = 0; i < 25; i++)
+	{
+		j = random () % 100;
+		qse_lda_pushheap (s1, &j, 1);
+	}
+
+	qse_printf (QSE_T("lda size => %lu\n"), QSE_LDA_SIZE(s1));
+	qse_lda_walk (s1, walker3, QSE_NULL);
+
+	while (QSE_LDA_SIZE(s1))
+	{
+		qse_printf (QSE_T("top => %d\n"), *(int*)QSE_LDA_DPTR(s1,0));
+		qse_lda_popheap (s1);
+	}
+
+
+	qse_lda_close (s1);
+	return 0;
+}
+
 int main ()
 {
 	R (test1);
 	R (test2);
 	R (test3);
 	R (test4);
+	R (test5);
 	return 0;
 }
