@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: str.h 324 2010-04-29 13:14:13Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,8 +25,7 @@
 #include <qse/macros.h>
 
 /** @file
- *  <qse/cmn/str.h> defines various functions, types, macros to manipulate
- *  a string.
+ *  Various functions, types, macros for string manipulation.
  *
  *  The qse_cstr_t type and the qse_xstr_t defined in <qse/types.h> helps you
  *  dealing with a string pointer and length.
@@ -39,7 +38,11 @@
 #define QSE_STR_SIZER(s)     ((s)->sizer)    /**< buffer resizer function */
 
 typedef struct qse_str_t qse_str_t;
-typedef qse_size_t (*qse_str_sizer_t) (qse_str_t* data, qse_size_t hint);
+
+typedef qse_size_t (*qse_str_sizer_t) (
+	qse_str_t* data,
+	qse_size_t hint
+);
 
 /**
  * The qse_str_t type defines a dynamically resizable string.
@@ -52,6 +55,18 @@ struct qse_str_t
 	qse_size_t      len;   /**< string length */
 	qse_size_t      capa;  /**< buffer capacity */
 };
+
+/**
+ * The qse_strxsubst_subst_t type defines a callback function
+ * for qse_strxsubst() to substitue a new value for an identifier @a ident.
+ */
+typedef qse_char_t* (*qse_strxsubst_subst_t) (
+	qse_char_t*       buf, 
+	qse_size_t        bsz, 
+	const qse_cstr_t* ident, 
+	void*             ctx
+);
+
 
 /* int qse_chartonum (qse_char_t c, int base) */
 #define QSE_CHARTONUM(c,base) \
@@ -169,13 +184,34 @@ qse_size_t qse_strxncpy (
 );
 
 /**
+ * The qse_strxput() function copies the string @a str into the buffer @a buf
+ * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
+ * buffer.
+ */
+qse_size_t qse_strxput (
+        qse_char_t*       buf, 
+	qse_size_t        bsz,
+	const qse_char_t* str
+);
+
+qse_size_t qse_strxnput (
+        qse_char_t*       buf,
+	qse_size_t        bsz,
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+/**
  * The qse_strfcpy() function formats a string by position.
  * The position specifier is a number enclosed in ${ and }.
  * When ${ is preceeded by a backslash, it is treated literally. 
- * A sameple format string containing the position specifiers are shown below:
+ * See the example below:
  * @code
- *  "${1} ${3} ${2} \\${1} string"
+ *  qse_char_t buf[256]
+ *  qse_char_t* colors[] = { QSE_T("blue"), QSE_T("green"), QSE_T("red") };
+ *  qse_strfcpy(buf, QSE_T("RGB: ${2}, ${1}, ${0}"), colors);
  * @endcode
+ * @sa qse_strfncpy, qse_strxfcpy, qse_strxfncpy
  */
 qse_size_t qse_strfcpy (
 	qse_char_t*       buf,
@@ -185,6 +221,9 @@ qse_size_t qse_strfcpy (
 
 /**
  * The qse_strfncpy() function formats a string by position.
+ * It differs from qse_strfcpy() in that @str is an array of the 
+ * #qse_cstr_t type.
+ * @sa qse_strfcpy, qse_strxfcpy, qse_strxfncpy
  */
 qse_size_t qse_strfncpy (
         qse_char_t*       buf,
@@ -194,6 +233,14 @@ qse_size_t qse_strfncpy (
 
 /**
  * The qse_strxfcpy() function formats a string by position.
+ * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
+ * characters.
+ * @code
+ *  qse_char_t buf[256]
+ *  qse_char_t* colors[] = { QSE_T("blue"), QSE_T("green"), QSE_T("red") };
+ *  qse_strxfcpy(buf, QSE_COUNTOF(buf), QSE_T("RGB: ${2}, ${1}, ${0}"), colors);
+ * @endcode
+ * @sa qse_strfcpy, qse_strfncpy, qse_strxfncpy
  */
 qse_size_t qse_strxfcpy (
 	qse_char_t*       buf,
@@ -204,12 +251,41 @@ qse_size_t qse_strxfcpy (
 
 /**
  * The qse_strxfncpy() function formats a string by position.
+ * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
+ * characters and @a str is an array of the #qse_cstr_t type.
+ * @sa qse_strfcpy, qse_strfncpy, qse_strxfcpy
  */
 qse_size_t qse_strxfncpy (
         qse_char_t*       buf,
 	qse_size_t        bsz,
         const qse_char_t* fmt,
 	const qse_cstr_t  str[]
+);
+
+/**
+ * The qse_strxsubst() function expands @a fmt into a buffer @a buf of the size
+ * @a bsz by substituting new values for ${} segments within it. The actual
+ * substitution is made by invoking the callback function @a subst. 
+ * @code
+ * qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_strxcmp (ident->ptr, ident->len, QSE_T("USER")) == 0)
+ *     return buf + qse_strxput (buf, bsz, QSE_T("sam"));	
+ *   else if (qse_strxcmp (ident->ptr, ident->len, QSE_T("GROUP")) == 0)
+ *     return buf + qse_strxput (buf, bsz, QSE_T("coders"));	
+ *   return buf; 
+ * }
+ * 
+ * qse_char_t buf[25];
+ * qse_strxsubst (buf, i, QSE_T("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * @endcode
+ */
+qse_size_t qse_strxsubst (
+        qse_char_t*            buf,
+	qse_size_t             bsz,
+	const qse_char_t*      fmt,
+	qse_strxsubst_subst_t  subst,
+        void*                  ctx
 );
 
 qse_size_t qse_strxcat (

@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: str_bas.c 324 2010-04-29 13:14:13Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -120,6 +120,39 @@ qse_size_t qse_strxncpy (
 	buf[n] = QSE_T('\0');
 
 	return n;
+}
+
+qse_size_t qse_strxput (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
+{
+	qse_char_t* p, * p2;
+
+	p = buf; p2 = buf + bsz;
+
+	while (p < p2) 
+	{
+		if (*str == QSE_T('\0')) break;
+		*p++ = *str++;
+	}
+
+	return p - buf;
+}
+
+qse_size_t qse_strxnput (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
+{
+	qse_char_t* p, * p2; 
+	const qse_char_t* end;
+
+	p = buf; p2 = buf + bsz; end = str + len;
+
+	while (p < p2) 
+	{
+		if (str >= end) break;
+		*p++ = *str++;
+	}
+
+	return p - buf;
 }
 
 qse_size_t qse_strfcpy (
@@ -325,6 +358,62 @@ fini:
 	*b = QSE_T('\0');
 	return b - buf;
 }
+
+qse_size_t qse_strxsubst (
+	qse_char_t* buf, qse_size_t bsz, const qse_char_t* fmt, 
+	qse_strxsubst_subst_t subst, void* ctx)
+{
+	qse_char_t* b = buf;
+	qse_char_t* end = buf + bsz - 1;
+	const qse_char_t* f = fmt;
+
+	if (bsz <= 0) return 0;
+
+	while (*f != QSE_T('\0'))
+	{
+		if (*f == QSE_T('$'))
+		{
+			if (f[1] == QSE_T('{'))
+			{
+				const qse_char_t* tmp;
+				qse_cstr_t ident;
+
+				f += 2; /* skip ${ */ 
+				tmp = f; /* mark the beginning */
+
+				/* scan an enclosed segment */
+				while (*f != QSE_T('\0') && *f != QSE_T('}')) f++;
+	
+				if (*f != QSE_T('}'))
+				{
+					/* restore to the position of $ */
+					f = tmp - 2;
+					goto normal;
+				}
+
+				f++; /* skip } */
+			
+				ident.ptr = tmp;
+				ident.len = f - tmp - 1;
+
+				b = subst (b, end - b, &ident, ctx);
+				if (b >= end) goto fini;
+
+				continue;
+			}
+			else if (f[1] == QSE_T('$')) f++;
+		}
+
+	normal:
+		if (b >= end) break;
+		*b++ = *f++;
+	}
+
+fini:
+	*b = QSE_T('\0');
+	return b - buf;
+}
+
 
 qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
 {
