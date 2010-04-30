@@ -508,7 +508,44 @@ static int test11 (void)
 	return 0;
 }
 
+qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, void* ctx)
+{
+	if (qse_strxcmp (ident->ptr, ident->len, QSE_T("USER")) == 0)
+	{
+		return buf + qse_strxput (buf, bsz, QSE_T("sam"));	
+	}
+	else if (qse_strxcmp (ident->ptr, ident->len, QSE_T("GROUP")) == 0)
+	{
+		return buf + qse_strxput (buf, bsz, QSE_T("coders"));	
+	}
+
+	/* don't do anything */
+	return buf;
+}
+
 static int test12 (void)
+{
+	qse_char_t buf[24];
+	qse_size_t i, j;
+
+	for (i = 0; i <= QSE_COUNTOF(buf); i++)
+	{
+		qse_strcpy (buf, QSE_T("AAAAAAAAAAAAAAAAAAAAAAA"));
+		qse_strxsubst (buf, i, QSE_T("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+		qse_printf (QSE_T("bufsize=%02d, buf=[%-25s] "), i, buf);
+
+		qse_printf (QSE_T("["));
+		for (j = 0; j < QSE_COUNTOF(buf); j++)
+		{
+			if (buf[j] == QSE_T('\0')) qse_printf (QSE_T("*"));
+			else qse_printf (QSE_T("%c"), buf[j]);
+		}
+		qse_printf (QSE_T("]\n"));
+	}
+	return 0;
+}
+
+static int test13 (void)
 {
 	qse_char_t a1[] = QSE_T("   this is a test string    ");
 	qse_char_t a2[] = QSE_T("   this is a test string    ");
@@ -527,7 +564,7 @@ static int test12 (void)
 	return 0;
 }
 
-static int test13 (void)
+static int test14 (void)
 {
 	qse_char_t a1[] = QSE_T("abcdefghijklmnopqrstuvwxyz");
 	qse_str_t x;
@@ -571,6 +608,7 @@ int main ()
 	R (test11);
 	R (test12);
 	R (test13);
+	R (test14);
 
 	return 0;
 }
