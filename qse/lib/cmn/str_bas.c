@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 324 2010-04-29 13:14:13Z hyunghwan.chung $
+ * $Id: str_bas.c 326 2010-05-09 13:44:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -208,7 +208,14 @@ qse_size_t qse_strfncpy (
 
 	while (*f != QSE_T('\0'))
 	{
-		if (*f == QSE_T('$'))
+		if (*f == QSE_T('\\'))
+		{
+			// get the escaped character and treat it normally.
+			// if the escaper is the last character, treat it 
+			// normally also.
+			if (f[1] != QSE_T('\0')) f++;
+		}
+		else if (*f == QSE_T('$'))
 		{
 			if (f[1] == QSE_T('{') && 
 			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
@@ -259,7 +266,14 @@ qse_size_t qse_strxfcpy (
 
 	while (*f != QSE_T('\0'))
 	{
-		if (*f == QSE_T('$'))
+		if (*f == QSE_T('\\'))
+		{
+			// get the escaped character and treat it normally.
+			// if the escaper is the last character, treat it 
+			// normally also.
+			if (f[1] != QSE_T('\0')) f++;
+		}
+		else if (*f == QSE_T('$'))
 		{
 			if (f[1] == QSE_T('{') && 
 			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
@@ -314,7 +328,14 @@ qse_size_t qse_strxfncpy (
 
 	while (*f != QSE_T('\0'))
 	{
-		if (*f == QSE_T('$'))
+		if (*f == QSE_T('\\'))
+		{
+			// get the escaped character and treat it normally.
+			// if the escaper is the last character, treat it 
+			// normally also.
+			if (f[1] != QSE_T('\0')) f++;
+		}
+		else if (*f == QSE_T('$'))
 		{
 			if (f[1] == QSE_T('{') && 
 			    (f[2] >= QSE_T('0') && f[2] <= QSE_T('9')))
@@ -371,7 +392,14 @@ qse_size_t qse_strxsubst (
 
 	while (*f != QSE_T('\0'))
 	{
-		if (*f == QSE_T('$'))
+		if (*f == QSE_T('\\'))
+		{
+			// get the escaped character and treat it normally.
+			// if the escaper is the last character, treat it 
+			// normally also.
+			if (f[1] != QSE_T('\0')) f++;
+		}
+		else if (*f == QSE_T('$'))
 		{
 			if (f[1] == QSE_T('{'))
 			{
@@ -413,7 +441,6 @@ fini:
 	*b = QSE_T('\0');
 	return b - buf;
 }
-
 
 qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
 {

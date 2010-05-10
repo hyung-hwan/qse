@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: rex.h 326 2010-05-09 13:44:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -59,10 +59,9 @@
  *                              NOP -@ CHAR(b) -@ CHAR(c) -@ GROUPEND
  *
  * ab|cd
- *                             +--@ CHAR(a) --@ CHAR(b) --+ 
- *                             | <= u.b.left              |
- * START --@ NOP --@  BRANCH --+                          +--@ END
- *                             | <= u.b.right             |
+ * START --@ NOP --@  BRANCH --+--@ CHAR(a) --@ CHAR(b) --+--@ END
+ *                             |                          |
+ *                             | <= u.b.alter             |
  *                             +--@ CHAR(c) --@ CHAR(d) --+ 
  * @endcode
  *
@@ -145,19 +144,20 @@ struct qse_rex_node_t
 
 		struct
 		{
-			qse_rex_node_t* left;
-			qse_rex_node_t* right;
+			qse_rex_node_t* alter;
 		} b;
 
 		struct
 		{
 			qse_rex_node_t* head;
 			qse_rex_node_t* end;
+			int pseudo;
 		} g;
 
 		struct
 		{
 			qse_rex_node_t* group;
+			int pseudo;
 		} ge;
 	} u;
 
