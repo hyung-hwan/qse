@@ -40,6 +40,7 @@ qse_rex_setoption (rex, QSE_REX_STRICT);
 	str.ptr = argv[2];
 	str.len = qse_strlen(argv[2]);
 
+qse_printf (QSE_T("compile ok\n"));
 	n = qse_rex_exec (rex, &str, &str, &matstr);
 	if (n <= -1)
 	{
@@ -52,7 +53,7 @@ qse_rex_setoption (rex, QSE_REX_STRICT);
 	{
 		qse_printf (QSE_T("MATCH: [%.*s] beginning from char #%d\n"), 
 			(int)matstr.len, matstr.ptr,
-			(int)(matstr.ptr, matstr.ptr - str.ptr + 1));
+			(int)(matstr.ptr - str.ptr + 1));
 	}
 
 	qse_rex_close (rex);
