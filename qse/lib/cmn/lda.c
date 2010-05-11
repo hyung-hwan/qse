@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: lda.c 327 2010-05-10 13:15:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -514,59 +514,69 @@ void qse_lda_clear (lda_t* lda)
 	lda->size = 0;
 }
 
-void qse_lda_walk (lda_t* lda, walker_t walker, void* arg)
+size_t qse_lda_walk (lda_t* lda, walker_t walker, void* ctx)
 {
 	qse_lda_walk_t w = QSE_LDA_WALK_FORWARD;
-	size_t i = 0;
+	size_t i = 0, nwalks = 0;
 
-	if (lda->size <= 0) return;
+	if (lda->size <= 0) return 0;
 
 	while (1)	
 	{
 		if (lda->node[i] != QSE_NULL) 
-                	w = walker (lda, i, arg);
+		{
+                	w = walker (lda, i, ctx);
+			nwalks++;
+		}
 
-		if (w == QSE_LDA_WALK_STOP) return;
+		if (w == QSE_LDA_WALK_STOP) break;
 
 		if (w == QSE_LDA_WALK_FORWARD) 
 		{
 			i++;
-			if (i >= lda->size) return;
+			if (i >= lda->size) break;
 		}
 		if (w == QSE_LDA_WALK_BACKWARD) 
 		{
-			if (i <= 0) return;
+			if (i <= 0) break;
 			i--;
 		}
 	}
+
+	return nwalks;
 }
 
-void qse_lda_rwalk (lda_t* lda, walker_t walker, void* arg)
+size_t qse_lda_rwalk (lda_t* lda, walker_t walker, void* ctx)
 {
 	qse_lda_walk_t w = QSE_LDA_WALK_BACKWARD;
-	size_t i;
+	size_t i, nwalks = 0;
 
-	if (lda->size <= 0) return;
+	if (lda->size <= 0) return 0;
 	i = lda->size - 1;
 
 	while (1)	
 	{
 		if (lda->node[i] != QSE_NULL) 
-                	w = walker (lda, i, arg);
+		{
+                	w = walker (lda, i, ctx);
+			nwalks++;
+		}
 
-		if (w == QSE_LDA_WALK_STOP) return;
+		if (w == QSE_LDA_WALK_STOP) break;
 
 		if (w == QSE_LDA_WALK_FORWARD) 
 		{
 			i++;
-			if (i >= lda->size) return;
+			if (i >= lda->size) break;
 		}
 		if (w == QSE_LDA_WALK_BACKWARD) 
 		{
-			if (i <= 0) return;
+			if (i <= 0) break;
 			i--;
 		}
 	}
+
+	return nwalks;
 }
 
 size_t qse_lda_pushstack (lda_t* lda, void* dptr, size_t dlen)

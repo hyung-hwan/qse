@@ -1,5 +1,5 @@
 /*
- * $Id: map.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: map.h 327 2010-05-10 13:15:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -323,43 +323,32 @@ void qse_map_setscale (
 );
 /******/
 
-/****f* Common/qse_map_getcopier
- * NAME
- *  qse_map_getcopier - get a data copier
- * PARAMETERS
- *  * id - QSE_MAP_KEY or QSE_MAP_VAL
- * SYNOPSIS
+/**
+ * The qse_map_getcopier() function gets a data copier.
  */
 qse_map_copier_t qse_map_getcopier (
 	qse_map_t*   map,
-	qse_map_id_t id
+	qse_map_id_t id /**< QSE_MAP_KEY or QSE_MAP_VAL */
 );
-/*****/
 
-/****f* Common/qse_map_setcopier
- * NAME 
- *  qse_map_setcopier - specify how to clone an element
- *
- * DESCRIPTION
+/**
+ * The qse_map_setcopier() function specifies how to clone an element.
  *  A special copier QSE_MAP_COPIER_INLINE is provided. This copier enables
  *  you to copy the data inline to the internal node. No freeer is invoked
  *  when the node is freeed.
  *
  *  You may set the copier to QSE_NULL to perform no special operation 
  *  when the data pointer is rememebered.
- *
- * SYNOPSIS
  */
 void qse_map_setcopier (
-	qse_map_t* map           /* a map */, 
-	qse_map_id_t id          /* QSE_MAP_KEY or QSE_MAP_VAL */,
-	qse_map_copier_t copier  /* an element copier */
+	qse_map_t* map,          /**< a map */
+	qse_map_id_t id,         /**< QSE_MAP_KEY or QSE_MAP_VAL */
+	qse_map_copier_t copier  /**< element copier */
 );
-/******/
 
 qse_map_freeer_t qse_map_getfreeer (
-	qse_map_t*   map  /* a map */,
-	qse_map_id_t id   /* QSE_MAP_KEY or QSE_MAP_VAL */
+	qse_map_t*   map, /**< map */
+	qse_map_id_t id   /**< QSE_MAP_KEY or QSE_MAP_VAL */
 );
 
 /**
@@ -494,10 +483,10 @@ void qse_map_clear (
 );
 
 /* traverse a map */
-void qse_map_walk (
+qse_size_t qse_map_walk (
 	qse_map_t* map          /* a map */,
 	qse_map_walker_t walker /* the pointer to the function for each pair */,
-	void* arg               /* a pointer to user-specific data */
+	void* ctx               /* a pointer to user-specific data */
 );
 
 /* get the pointer to the first pair in the map. */
