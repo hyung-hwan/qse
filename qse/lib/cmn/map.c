@@ -1,5 +1,5 @@
 /*
- * $Id: map.c 289 2009-09-16 06:35:29Z hyunghwan.chung $
+ * $Id: map.c 327 2010-05-10 13:15:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -572,9 +572,9 @@ void qse_map_clear (map_t* map)
 }
 
 
-void qse_map_walk (map_t* map, walker_t walker, void* arg)
+size_t qse_map_walk (map_t* map, walker_t walker, void* arg)
 {
-	size_t i;
+	size_t i, nwalks = 0;
 	pair_t* pair, * next;
 
 	for (i = 0; i < map->capa; i++) 
@@ -584,10 +584,14 @@ void qse_map_walk (map_t* map, walker_t walker, void* arg)
 		while (pair != QSE_NULL) 
 		{
 			next = NEXT(pair);
-			if (walker(map, pair, arg) == QSE_MAP_WALK_STOP) return;
+			if (walker(map, pair, arg) == QSE_MAP_WALK_STOP) 
+				return nwalks;
+			nwalks++;
 			pair = next;
 		}
 	}
+
+	return nwalks;
 }
 
 pair_t* qse_map_getfirstpair (map_t* map, size_t* buckno)

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 326 2010-05-09 13:44:39Z hyunghwan.chung $
+ * $Id: rex.c 327 2010-05-10 13:15:55Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -910,6 +910,36 @@ static qse_rex_node_t* comp_atom (comp_t* com)
 	return atom;
 }
 
+#if 0
+static qse_rex_node_t* zero_or_more (comp_t* c, qse_rex_node_t* atom)
+{
+	qse_rex_node_t* b;
+
+	b = newbranchnode (c, QSE_NULL, atom);
+	if (b == QSE_NULL) return QSE_NULL;
+	
+	atom->occ.min = 1;
+	atom->occ.max = 1;
+	atom->next = b;	
+	
+	return b;
+}
+
+static qse_rex_node_t* one_or_more (comp_t* c, qse_rex_node_t* atom)
+{
+	qse_rex_node_t* b;
+
+	b = newbranchnode (c, atom, QSE_NULL);
+
+	atom->occ.min = 1;
+	atom->occ.max = 1;
+	atom->next = b;	
+
+	TODO: return b as the tail....
+	return atom;
+}
+#endif
+
 static qse_rex_node_t* pseudo_group (comp_t* c, qse_rex_node_t* atom)
 {
 	qse_rex_node_t* g, *ge, * b;
@@ -962,20 +992,41 @@ static qse_rex_node_t* comp_branch (comp_t* c, pair_t* pair)
 		{
 			qse_rex_node_t* atom = comp_atom (c);
 			if (atom == QSE_NULL) return QSE_NULL;
+
 			if (atom->occ.min <= 0)
 			{
-				/*
-				 * Given an atom, this function encloses it with a pseudogroup
-				 * head and a psuedo-group tail. the pseudogroup head is
-				 * followed by a branch that conntects to the pseudogroup tail
- 				 * and the atom given. The atom given gets connected to the
-				 * pseudogroup tail.
-				 *   Head -> BR        -> Tail
-				 *        -> ORG(atom) -> Tail
-				 */
-				atom = pseudo_group (c, atom);
+			#if 0
+				if (atom->occ.max >= OCC_MAX)
+				{
+					/*    
+					 * +-----------next--+
+					 * v                 | 
+					 * BR --alter----> ORG(atom)
+					 * | 
+					 * +----next------------------->
+					 *    
+					 */
+					atom = zero_or_more (c, atom);
+				}
+				else
+				{
+			#endif
+					/*
+					 * Given an atom, enclose it with a
+					 * pseudogroup head and a psuedogroup 
+					 * tail. the head is followed by a 
+					 * branch that conntects to the tail 
+					 * and the atom given. The atom given
+					 * gets connected to the tail.
+					 *   Head -> BR        -> Tail
+					 *        -> ORG(atom) -> Tail
+					 */
+					atom = pseudo_group (c, atom);
+				}
 				if (atom == QSE_NULL) return QSE_NULL;
+			#if 0
 			}
+			#endif
 	
 			if (pair->tail == QSE_NULL) 
 			{
@@ -1340,22 +1391,21 @@ static int addcands (
 	exec_t* e, group_t* group, qse_rex_node_t* prevnode,
 	qse_rex_node_t* candnode, const qse_char_t* mptr)
 {
+	qse_rex_node_t* curcand = candnode;
+
 warpback:
 
-#ifndef DONOT_SKIP_NOP
 	/* skip all NOP nodes */
-	while (candnode != QSE_NULL && candnode->id == QSE_REX_NODE_NOP) 
-		candnode = candnode->next;
-#endif
+	while (curcand != QSE_NULL && curcand->id == QSE_REX_NODE_NOP) 
+		curcand = curcand->next;
 
 	/* nothing to add */
-	if (candnode == QSE_NULL) return 0;
+	if (curcand == QSE_NULL) return 0;
 
-	switch (candnode->id)
+	switch (curcand->id)
 	{
 		case QSE_REX_NODE_END:
 		{
-/*qse_printf (QSE_T("== ADDING THE END(MATCH) NODE MEANING MATCH FOUND == \n"));*/
 			if (e->matchend == QSE_NULL || mptr >= e->matchend)
 				e->matchend = mptr;
 			e->nmatches++;
@@ -1373,52 +1423,33 @@ warpback:
 				if (gx == QSE_NULL) return -1;
 			}
 
-#if 0
-			refupgroupstack (group);
-			refupgroupstack (gx);
-
-			n = addcands (e, group, 
-				prevnode, candnode->next, mptr);
-			if (n >= 0) 
-			{
-				n = addcands (e, gx, 
-					prevnode, candnode->u.b.alter, mptr);
-			}
-
-			refdowngroupstack (gx, e->rex->mmgr);
-			refdowngroupstack (group, e->rex->mmgr);
-			if (n <= -1) return -1;
-			break;
-
-#endif
 			refupgroupstack (gx);
 			n = addcands (e, gx, 
-				prevnode, candnode->u.b.alter, mptr);
+				prevnode, curcand->u.b.alter, mptr);
 			refdowngroupstack (gx, e->rex->mmgr);
 			if (n <= -1) return -1;
 	
-			candnode = candnode->next;
+			curcand = curcand->next;
 			goto warpback;
 		}
 
 		case QSE_REX_NODE_GROUP:
 		{
-			int n;
 			qse_rex_node_t* front;
 			group_t* gx;
 
 		#ifdef XTRA_DEBUG
 			qse_printf (QSE_T("DEBUG: GROUP %p(pseudo=%d) PREV %p\n"),
-				candnode, candnode->u.g.pseudo, prevnode);
+				curcand, curcand->u.g.pseudo, prevnode);
 		#endif
-			if (candnode->u.g.pseudo) 
+			if (curcand->u.g.pseudo) 
 			{
-				candnode = candnode->u.g.head;
+				curcand = curcand->u.g.head;
 				goto warpback;
 			}
 
 			/* skip all NOP nodes */
-			front = candnode->u.g.head;
+			front = curcand->u.g.head;
 
 			while (front->id == QSE_REX_NODE_NOP) 
 				front = front->next;
@@ -1429,22 +1460,18 @@ warpback:
 				 * regardless of its occurrence. 
 				 * however, this will never be reached 
 				 * as it has been removed in comp() */
-				candnode = candnode->next;
+				curcand = curcand->next;
 				goto warpback;
 			}
 
-			gx = groupstackpush (e, group, candnode);
+			gx = groupstackpush (e, group, curcand);
 			if (gx == QSE_NULL) return -1;
 
 			/* add the first node in the group to 
 			 * the candidate array */
-			refupgroupstack (gx);
-			n = addcands (e, gx, prevnode, front, mptr); 
-			refdowngroupstack (gx, e->rex->mmgr);
-
-			if (n <= -1) return -1;
-			
-			break;
+			group = gx;
+			curcand = front;
+			goto warpback;
 		}
 
 		case QSE_REX_NODE_GROUPEND:
@@ -1456,12 +1483,12 @@ warpback:
 
 		#ifdef XTRA_DEBUG
 			qse_printf (QSE_T("DEBUG: GROUPEND %p(pseudo=%d) PREV %p\n"), 
-				candnode, candnode->u.ge.pseudo, prevnode);
+				curcand, curcand->u.ge.pseudo, prevnode);
 		#endif
 
-			if (candnode->u.ge.pseudo) 
+			if (curcand->u.ge.pseudo) 
 			{
-				candnode = candnode->u.ge.group->next;	
+				curcand = curcand->u.ge.group->next;	
 				goto warpback;
 			}
 
@@ -1469,7 +1496,7 @@ warpback:
 				group != QSE_NULL && group->next != QSE_NULL, 
 				"GROUPEND must be paired up with GROUP");
 
-			if (prevnode == candnode) 
+			if (prevnode == curcand) 
 			{
 				/* consider a pattern like (x*)*.
 				 * when GROUPEND is reached, an 'if' block 
@@ -1488,7 +1515,7 @@ warpback:
 
 			occ = top->occ;
 			node = top->node;
-			QSE_ASSERTX (node == candnode->u.ge.group, 
+			QSE_ASSERTX (node == curcand->u.ge.group, 
 				"The GROUP node in the group stack must be the "
 				"one pairing up with the GROUPEND node."
 			);
@@ -1539,7 +1566,7 @@ warpback:
 				    prevnode->id == QSE_REX_NODE_GROUPEND)
 					n = addcands (e, gx, prevnode, node->next, mptr);
 				else
-					n = addcands (e, gx, candnode, node->next, mptr);
+					n = addcands (e, gx, curcand, node->next, mptr);
 
 				refdowngroupstack (gx, e->rex->mmgr);
 				if (n <= -1) return -1;
@@ -1548,18 +1575,9 @@ warpback:
 			if (occ < node->occ.max)
 			{
 				/* repeat itself. */
-			/* BEGIN avoid recursion */
-			#if 0
-				refupgroupstack (group);
-				n = addcands (e, group, prevnode, node->u.g.head, mptr);
-				refdowngroupstack (group, e->rex->mmgr);
-				if (n <= -1) return -1;
-			#endif
-
-				prevnode = candnode;
-				candnode = node->u.g.head;
+				prevnode = curcand;
+				curcand = node->u.g.head;
 				goto warpback;
-			/* END avoid recursion */
 			}
 
 			break;
@@ -1570,7 +1588,7 @@ warpback:
 			int n;
 
 			if (group) refupgroupstack (group);
-			n = addsimplecand (e, group, candnode, 1, mptr);
+			n = addsimplecand (e, group, curcand, 1, mptr);
 			if (group) refdowngroupstack (group, e->rex->mmgr);
 
 			if (n <= -1) return -1;
@@ -1664,152 +1682,142 @@ static int charset_matched (exec_t* e, qse_rex_node_t* node, qse_char_t c)
 	return matched;
 }
 
-static int match (exec_t* e)
+static qse_lda_walk_t walk_cands_for_match (
+	qse_lda_t* lda, qse_size_t index, void* ctx)
 {
-	qse_size_t i;
+	exec_t* e = (exec_t*)ctx;	
+	cand_t* cand = QSE_LDA_DPTR(lda,index);
+	qse_rex_node_t* node = cand->node;
+	const qse_char_t* nmptr = QSE_NULL;
 
-	QSE_ASSERT (QSE_LDA_SIZE(&e->cand.set[e->cand.active]) > 0);
-
-	for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
+	switch (node->id)
 	{
-		cand_t* cand = QSE_LDA_DPTR(&e->cand.set[e->cand.active],i);
-		qse_rex_node_t* node = cand->node;
-		const qse_char_t* nmptr = QSE_NULL;
-
-		switch (node->id)
-		{
-#ifdef DONOT_SKIP_NOP
-			case QSE_REX_NODE_NOP:
+		case QSE_REX_NODE_BOL:
+			if (cand->mptr == e->str.ptr) 
+			{
+				/* the next match pointer remains 
+				 * the same as ^ matches a position,
+				 * not a character. */
 				nmptr = cand->mptr;
-				break;
-#endif
+			#ifdef XTRA_DEBUG
+				qse_printf (QSE_T("DEBUG: matched <^>\n"));
+			#endif
+			}
+			break;
 
-			case QSE_REX_NODE_BOL:
-				if (cand->mptr == e->str.ptr) 
-				{
-					/* the next match pointer remains 
-					 * the same as ^ matches a position,
-					 * not a character. */
-					nmptr = cand->mptr;
-				#ifdef XTRA_DEBUG
-					qse_printf (QSE_T("DEBUG: matched <^>\n"));
-				#endif
-				}
-				break;
+		case QSE_REX_NODE_EOL:
+			if (cand->mptr >= e->str.end) 
+			{
+				/* the next match pointer remains 
+				 * the same as $ matches a position,
+				 * not a character. */
+				nmptr = cand->mptr;
+			#ifdef XTRA_DEBUG
+				qse_printf (QSE_T("DEBUG: matched <$>\n"));
+			#endif
+			}
+			break;
 
-			case QSE_REX_NODE_EOL:
-				if (cand->mptr >= e->str.end) 
-				{
-					/* the next match pointer remains 
-					 * the same as $ matches a position,
-					 * not a character. */
-					nmptr = cand->mptr;
-				#ifdef XTRA_DEBUG
-					qse_printf (QSE_T("DEBUG: matched <$>\n"));
-				#endif
-				}
-				break;
+		case QSE_REX_NODE_ANY:
+			if (cand->mptr < e->sub.end) 
+			{
+				/* advance the match pointer to the
+				 * next chracter.*/
+				nmptr = cand->mptr + 1;
+			#ifdef XTRA_DEBUG
+				qse_printf (QSE_T("DEBUG: matched <.>\n"));
+			#endif
+			}
+			break;
 
-			case QSE_REX_NODE_ANY:
-				if (cand->mptr < e->sub.end) 
+		case QSE_REX_NODE_CHAR:	
+		{
+			if (cand->mptr < e->sub.end)
+			{
+				int equal;
+
+				equal =(e->rex->option & QSE_REX_IGNORECASE)?
+					(QSE_TOUPPER(node->u.c) == QSE_TOUPPER(*cand->mptr)):
+					(node->u.c == *cand->mptr) ;
+
+				if (equal)
 				{
 					/* advance the match pointer to the
 					 * next chracter.*/
 					nmptr = cand->mptr + 1;
-				#ifdef XTRA_DEBUG
-					qse_printf (QSE_T("DEBUG: matched <.>\n"));
-				#endif
 				}
-				break;
-
-			case QSE_REX_NODE_CHAR:	
-			{
-
-				if (cand->mptr < e->sub.end)
-				{
-					int equal;
-
-					equal =(e->rex->option & QSE_REX_IGNORECASE)?
-						(QSE_TOUPPER(node->u.c) == QSE_TOUPPER(*cand->mptr)):
-						(node->u.c == *cand->mptr) ;
-
-					if (equal)
-					{
-						/* advance the match pointer to the
-						 * next chracter.*/
-						nmptr = cand->mptr + 1;
-					}
-				#ifdef XTRA_DEBUG
-					qse_printf (QSE_T("DEBUG: matched %c\n"), node->u.c); 
-				#endif
-				}
-				break;
+			#ifdef XTRA_DEBUG
+				qse_printf (QSE_T("DEBUG: matched %c\n"), node->u.c); 
+			#endif
 			}
-
-			case QSE_REX_NODE_CSET:
-			{
-				if (cand->mptr < e->sub.end &&
-				    charset_matched(e, node, *cand->mptr))
-				{
-					/* advance the match pointer 
-					 * to the next chracter.*/
-					nmptr = cand->mptr + 1;
-				}
-
-				break;
-			}
-
-			default:
-			{
-				QSE_ASSERTX (0, 
-					"SHOUL NEVER HAPPEN - node ID must be"
-					"one of QSE_REX_NODE_BOL, "
-					"QSE_REX_NODE_EOL, "
-					"QSE_REX_NODE_ANY, "
-					"QSE_REX_NODE_CHAR, "
-					"QSE_REX_NODE_CSET, "
-					"QSE_REX_NODE_NOP");
-
-				break;
-			}
+			break;
 		}
 
-		if (nmptr != QSE_NULL)
+		case QSE_REX_NODE_CSET:
 		{
-			int n;
-
-			if (cand->occ >= node->occ.min)
+			if (cand->mptr < e->sub.end &&
+			    charset_matched(e, node, *cand->mptr))
 			{
-				group_t* gx;
-
-				if (cand->occ < node->occ.max && cand->group != QSE_NULL)
-				{
-					gx = dupgroupstack (e, cand->group);
-					if (gx == QSE_NULL) return -1;
-				}
-				else gx = cand->group;
-	
-				/* move on to the next candidate */
-				refupgroupstack (gx);
-				n = addcands (e, gx, node, node->next, nmptr);
-				refdowngroupstack (gx, e->rex->mmgr);
-
-				if (n <= -1) return -1;
+				/* advance the match pointer 
+				 * to the next chracter.*/
+				nmptr = cand->mptr + 1;
 			}
 
-			if (cand->occ < node->occ.max)
-			{
-				/* repeat itself more */
-				refupgroupstack (cand->group);
-				n = addsimplecand (e, cand->group, node, cand->occ+1, nmptr);
-				refdowngroupstack (cand->group, e->rex->mmgr);
+			break;
+		}
 
-				if (n <= -1) return -1;
-			}
+		default:
+		{
+			QSE_ASSERTX (0, 
+				"SHOULD NEVER HAPPEN - node ID must be"
+				"one of QSE_REX_NODE_BOL, "
+				"QSE_REX_NODE_EOL, "
+				"QSE_REX_NODE_ANY, "
+				"QSE_REX_NODE_CHAR, "
+				"QSE_REX_NODE_CSET, "
+				"QSE_REX_NODE_NOP");
+
+			break;
 		}
 	}
 
-	return 0;
+	if (nmptr != QSE_NULL)
+	{
+		int n;
+
+		if (cand->occ >= node->occ.min)
+		{
+			group_t* gx;
+
+			if (cand->occ < node->occ.max && cand->group != QSE_NULL)
+			{
+				gx = dupgroupstack (e, cand->group);
+				if (gx == QSE_NULL) return QSE_LDA_WALK_STOP;
+			}
+			else gx = cand->group;
+
+			/* move on to the next candidate */
+			refupgroupstack (gx);
+			n = addcands (e, gx, node, node->next, nmptr);
+			refdowngroupstack (gx, e->rex->mmgr);
+
+			if (n <= -1) return QSE_LDA_WALK_STOP;
+		}
+
+		if (cand->occ < node->occ.max)
+		{
+			/* repeat itself more */
+			refupgroupstack (cand->group);
+			n = addsimplecand (
+				e, cand->group, 
+				node, cand->occ + 1, nmptr);
+			refdowngroupstack (cand->group, e->rex->mmgr);
+
+			if (n <= -1) return QSE_LDA_WALK_STOP;
+		}
+	}
+
+	return QSE_LDA_WALK_FORWARD;
 }
 
 static int exec (exec_t* e)
@@ -1828,7 +1836,7 @@ static int exec (exec_t* e)
 	/* the first node must be the START node */
 	QSE_ASSERT (e->rex->code->id == QSE_REX_NODE_START);
 
-	/* addcands() collects a set of candidates into the pending set */
+	/* collect an initial set of candidates into the pending set */
 	n = addcands (
 		e,                  /* execution structure */
 		QSE_NULL,           /* doesn't belong to any groups yet */
@@ -1840,6 +1848,8 @@ static int exec (exec_t* e)
 
 	do
 	{
+		qse_size_t ncands_active;
+
 		/* swap the pending and active set indices.
 		 * the pending set becomes active after which the match()
 		 * function tries each candidate in it. New candidates
@@ -1849,7 +1859,8 @@ static int exec (exec_t* e)
 		e->cand.pending = e->cand.active;
 		e->cand.active = tmp;
 
-		if (QSE_LDA_SIZE(&e->cand.set[e->cand.active]) <= 0)
+		ncands_active = QSE_LDA_SIZE(&e->cand.set[e->cand.active]);
+		if (ncands_active <= 0)
 		{
 			/* we can't go on with no candidates in the 
 			 * active set. */
@@ -1863,7 +1874,7 @@ static int exec (exec_t* e)
 		{
 			int i;
 			qse_printf (QSE_T("SET="));
-			for (i = 0; i < QSE_LDA_SIZE(&e->cand.set[e->cand.active]); i++)
+			for (i = 0; i < ncands_active; i++)
 			{
 				cand_t* cand = QSE_LDA_DPTR(&e->cand.set[e->cand.active],i);
 				qse_rex_node_t* node = cand->node;
@@ -1881,7 +1892,15 @@ static int exec (exec_t* e)
 		}
 #endif
 
-		if (match (e) <= -1) return -1;
+		if (qse_lda_walk (
+			&e->cand.set[e->cand.active],
+			walk_cands_for_match, e) != ncands_active) 
+		{
+			/* if the number of walks is different the number of
+			 * candidates, traversal must have been aborted for
+			 * an error. */
+			return -1; 
+		}
 	}
 	while (1);
 
@@ -1910,6 +1929,7 @@ static int comp_cand (qse_lda_t* lda,
 {
 	cand_t* c1 = (cand_t*)dptr1;
 	cand_t* c2 = (cand_t*)dptr2;
+//qse_printf (QSE_T("%p(%d) %p(%d), %p %p, %d %d\n"), c1->node,c1->node->id, c2->node,c1->node->id, c1->mptr, c2->mptr, (int)c1->occ, (int)c2->occ);
 	return (c1->node == c2->node && 
 	        c1->mptr == c2->mptr &&
 	        c1->occ == c2->occ)? 0: 1;

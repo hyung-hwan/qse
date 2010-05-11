@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: lda.h 327 2010-05-10 13:15:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -344,16 +344,30 @@ void qse_lda_clear (
 	qse_lda_t* lda
 );
 
-void qse_lda_walk (
+/**
+ * The qse_lda_walk() function calls the @a walker function for each
+ * element in the array beginning from the first. The @a walker function
+ * should return one of #QSE_LDA_WALK_FORWARD, #QSE_LDA_WALK_BACKWARD,
+ * #QSE_LDA_WALK_STOP.
+ * @return number of calls to the @a walker fucntion made
+ */
+qse_size_t qse_lda_walk (
 	qse_lda_t*       lda,
 	qse_lda_walker_t walker,
-	void*            arg
+	void*            ctx
 );
 
-void qse_lda_rwalk (
+/**
+ * The qse_lda_rwalk() function calls the @a walker function for each
+ * element in the array beginning from the last. The @a walker function
+ * should return one of #QSE_LDA_WALK_FORWARD, #QSE_LDA_WALK_BACKWARD,
+ * #QSE_LDA_WALK_STOP.
+ * @return number of calls to the @a walker fucntion made
+ */
+qse_size_t qse_lda_rwalk (
 	qse_lda_t*       lda,
 	qse_lda_walker_t walker,
-	void*            arg
+	void*            ctx
 );
 
 /**
