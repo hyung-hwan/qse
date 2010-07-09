@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: Awk.hpp 329 2010-07-08 11:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -807,6 +807,30 @@ public:
 		Source& in,  ///< script to parse 
 		Source& out  ///< deparsing target 
 	);
+
+	///
+	/// The getRunContext() funciton returns the execution context 
+	/// returned by the parse() function. The returned context
+	/// is valid if parse() has been called. You may call this 
+	/// function to get the context if you forgot to store it
+	/// in a call to parse().
+	///
+	const Awk::Run* getRunContext () const
+	{
+		return &runctx;
+	}
+
+	///
+	/// The getRunContext() funciton returns the execution context 
+	/// returned by the parse() function. The returned context
+	/// is valid if parse() has been called. You may call this 
+	/// function to get the context if you forgot to store it
+	/// in a call to parse().
+	///
+	Awk::Run* getRunContext () 
+	{
+		return &runctx;
+	}
 
 	///
 	/// The loop() function executes the BEGIN block, pattern-action blocks,
