@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: parse.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -228,8 +228,8 @@ static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
 
 static int deparse (qse_awk_t* awk);
-static qse_map_walk_t deparse_func (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg);
+static qse_htb_walk_t deparse_func (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg);
 static int put_char (qse_awk_t* awk, qse_char_t c);
 static int flush_out (qse_awk_t* awk);
 
@@ -495,16 +495,16 @@ const qse_char_t* qse_awk_getgblname (
 
 qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s)
 {
-	qse_map_pair_t* p;
+	qse_htb_pair_t* p;
 
 	s->ptr = kwtab[id].name;
 	s->len = kwtab[id].namelen;
 
-	p = qse_map_search (awk->wtab, s->ptr, s->len);
+	p = qse_htb_search (awk->wtab, s->ptr, s->len);
 	if (p != QSE_NULL) 
 	{
-		s->ptr = QSE_MAP_VPTR(p);
-		s->len = QSE_MAP_VLEN(p);
+		s->ptr = QSE_HTB_VPTR(p);
+		s->len = QSE_HTB_VLEN(p);
 	}
 
 	return s;
@@ -558,31 +558,31 @@ static int parse (qse_awk_t* awk)
 			/* ensure that all functions called are defined 
 			 * in the EXPLICIT-only mode */
 
-			qse_map_pair_t* p;
+			qse_htb_pair_t* p;
 			qse_size_t buckno;
 
-			p = qse_map_getfirstpair (awk->parse.funs, &buckno);
+			p = qse_htb_getfirstpair (awk->parse.funs, &buckno);
 			while (p != QSE_NULL)
 			{
-				if (qse_map_search (awk->tree.funs, 
-					QSE_MAP_KPTR(p), QSE_MAP_KLEN(p)) == QSE_NULL)
+				if (qse_htb_search (awk->tree.funs, 
+					QSE_HTB_KPTR(p), QSE_HTB_KLEN(p)) == QSE_NULL)
 				{
 					qse_awk_nde_call_t* call;
 
 					/* see parse_fncall() for what is
 					 * stored into awk->tree.funs */
-					call = (qse_awk_nde_call_t*)QSE_MAP_VPTR(p);
+					call = (qse_awk_nde_call_t*)QSE_HTB_VPTR(p);
 					SETERR_ARG_LOC (
 						awk, 
 						QSE_AWK_EFUNNF, 
-						QSE_MAP_KPTR(p),
-						QSE_MAP_KLEN(p),
+						QSE_HTB_KPTR(p),
+						QSE_HTB_KLEN(p),
 						&call->loc
 					);
 					goto oops;
 				}
 
-				p = qse_map_getnextpair (awk->parse.funs, p, &buckno);
+				p = qse_htb_getnextpair (awk->parse.funs, p, &buckno);
 			}
 		}
 	}
@@ -660,7 +660,7 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	QSE_ASSERT (awk->parse.depth.cur.expr == 0);
 
 	qse_awk_clear (awk);
-	qse_map_clear (awk->sio.names);
+	qse_htb_clear (awk->sio.names);
 	awk->sio.inf = sio->in;
 	awk->sio.outf = sio->out;
 
@@ -677,7 +677,7 @@ static int begin_include (qse_awk_t* awk)
 {
 	qse_ssize_t op;
 	qse_awk_sio_arg_t* arg = QSE_NULL;
-	qse_map_pair_t* pair = QSE_NULL;
+	qse_htb_pair_t* pair = QSE_NULL;
 
 	if (qse_strlen(awk->tok.name->ptr) != QSE_STR_LEN(awk->tok.name))
 	{
@@ -692,7 +692,7 @@ static int begin_include (qse_awk_t* awk)
 	}
 
 	/* store the file name to awk->sio.names */
-	pair = qse_map_ensert (
+	pair = qse_htb_ensert (
 		awk->sio.names, 
 		QSE_STR_PTR(awk->tok.name),
 		QSE_STR_LEN(awk->tok.name) + 1, /* to include '\0' */
@@ -704,8 +704,8 @@ static int begin_include (qse_awk_t* awk)
 		goto oops;
 	}
 
-	/*QSE_MAP_VPTR(pair) = QSE_MAP_KPTR(pair);
-	QSE_MAP_VLEN(pair) = QSE_MAP_KLEN(pair);*/
+	/*QSE_HTB_VPTR(pair) = QSE_HTB_KPTR(pair);
+	QSE_HTB_VLEN(pair) = QSE_HTB_KLEN(pair);*/
 
 	arg = (qse_awk_sio_arg_t*) QSE_MMGR_ALLOC (awk->mmgr, QSE_SIZEOF(*arg));
 	if (arg == QSE_NULL)
@@ -715,7 +715,7 @@ static int begin_include (qse_awk_t* awk)
 	}
 
 	QSE_MEMSET (arg, 0, QSE_SIZEOF(*arg));
-	arg->name = QSE_MAP_KPTR(pair);
+	arg->name = QSE_HTB_KPTR(pair);
 
 	CLRERR (awk);
 	op = awk->sio.inf (awk, QSE_AWK_SIO_OPEN, arg, QSE_NULL, 0);
@@ -1051,7 +1051,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	qse_awk_nde_t* body;
 	qse_awk_fun_t* fun;
 	qse_size_t nargs, g;
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 
 	/* eat up the keyword 'function' and get the next token */
 	QSE_ASSERT (MATCH(awk,TOK_FUNCTION));
@@ -1077,7 +1077,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	}
 
 	/* check if it has already been defined as a function */
-	if (qse_map_search (awk->tree.funs, name, namelen) != QSE_NULL)
+	if (qse_htb_search (awk->tree.funs, name, namelen) != QSE_NULL)
 	{
 		/* the function is defined previously */
 		SETERR_ARG_LOC (
@@ -1086,7 +1086,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	}
 
 	/* check if it conflicts with a named variable */
-	if (qse_map_search (awk->parse.named, name, namelen) != QSE_NULL)
+	if (qse_htb_search (awk->parse.named, name, namelen) != QSE_NULL)
 	{
 		SETERR_ARG_LOC (
 			awk, QSE_AWK_EVARRED, name, namelen, &awk->tok.loc);
@@ -1317,10 +1317,10 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	fun->nargs = nargs;
 	fun->body = body;
 
-	pair = qse_map_insert (awk->tree.funs, namedup, namelen, fun, 0);
+	pair = qse_htb_insert (awk->tree.funs, namedup, namelen, fun, 0);
 	if (pair == QSE_NULL)
 	{
-		/* if qse_map_insert() fails for other reasons than memory 
+		/* if qse_htb_insert() fails for other reasons than memory 
 		 * shortage, there should be implementaion errors as duplicate
 		 * functions are detected earlier in this function */
 		QSE_AWK_FREE (awk, namedup);
@@ -1332,12 +1332,12 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 
 	/* do some trick to save a string. make it back-point at the key part 
 	 * of the pair */
-	fun->name.ptr = QSE_MAP_KPTR(pair); 
-	fun->name.len = QSE_MAP_KLEN(pair);
+	fun->name.ptr = QSE_HTB_KPTR(pair); 
+	fun->name.len = QSE_HTB_KLEN(pair);
 	QSE_AWK_FREE (awk, namedup);
 
 	/* remove an undefined function call entry from the parse.fun table */
-	qse_map_delete (awk->parse.funs, fun->name.ptr, namelen);
+	qse_htb_delete (awk->parse.funs, fun->name.ptr, namelen);
 	return body;
 }
 
@@ -1685,9 +1685,9 @@ static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
 
 	if (index < awk->tree.ngbls_base)
 	{
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
-		pair = qse_map_search (awk->wtab, tmp.ptr, tmp.len);
+		pair = qse_htb_search (awk->wtab, tmp.ptr, tmp.len);
 		if (pair != QSE_NULL)
 		{
 			tmp.ptr = ((qse_cstr_t*)(pair->vptr))->ptr;
@@ -1753,7 +1753,7 @@ static int add_global (
 	}
 
 	/* check if it conflicts with a function name */
-	if (qse_map_search (awk->tree.funs, name, len) != QSE_NULL) 
+	if (qse_htb_search (awk->tree.funs, name, len) != QSE_NULL) 
 	{
 		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name, len, xloc);
 		return -1;
@@ -1761,7 +1761,7 @@ static int add_global (
 
 	/* check if it conflicts with a function name 
 	 * caught in the function call table */
-	if (qse_map_search (awk->parse.funs, name, len) != QSE_NULL)
+	if (qse_htb_search (awk->parse.funs, name, len) != QSE_NULL)
 	{
 		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name, len, xloc);
 		return -1;
@@ -1781,7 +1781,7 @@ static int add_global (
 	 *  global X;
 	 *  function x() { print X++; }
 	 */
-	if (qse_map_search (awk->parse.named, name, len) != QSE_NULL)
+	if (qse_htb_search (awk->parse.named, name, len) != QSE_NULL)
 	{
 		SETERR_ARG_LOC (awk, QSE_AWK_EVARRED, name, len, xloc);
 		return -1;
@@ -1842,13 +1842,13 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 	return n;
 }
 
+#define QSE_AWK_NUM_STATIC_GBLS \
+	(QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1)
+
 int qse_awk_delgbl (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
 	qse_size_t n;
-	
-#define QSE_AWK_NUM_STATIC_GBLS \
-	(QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1)
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
@@ -1878,6 +1878,22 @@ int qse_awk_delgbl (
 	QSE_ASSERT (n == 1);
 
 	return 0;
+}
+
+int qse_awk_findgbl (
+	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+{
+	qse_size_t n;
+
+	n = qse_lda_search (awk->parse.gbls, 
+		QSE_AWK_NUM_STATIC_GBLS, name, len);
+	if (n == QSE_LDA_NIL)
+	{
+		SETERR_ARG (awk, QSE_AWK_ENOENT, name, len);
+		return -1;
+	}
+
+	return (int)n;
 }
 
 static qse_awk_t* collect_globals (qse_awk_t* awk)
@@ -4413,13 +4429,13 @@ static int isfnname (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 		}
 	}
 
-	if (qse_map_search (awk->tree.funs, name, len) != QSE_NULL)
+	if (qse_htb_search (awk->tree.funs, name, len) != QSE_NULL)
 	{
 		/* one of the functions defined previously */
 		return 2;
 	}
 
-	if (qse_map_search (awk->parse.funs, name, len) != QSE_NULL) 
+	if (qse_htb_search (awk->parse.funs, name, len) != QSE_NULL) 
 	{
 		/* one of the function calls not resolved so far. */ 
 		return 2;
@@ -4648,7 +4664,7 @@ static qse_awk_nde_t* parse_primary_ident (
 			}
 
 			/* must be a function name */
-			QSE_ASSERT (qse_map_search (
+			QSE_ASSERT (qse_htb_search (
 				awk->parse.named, namedup, namelen) == QSE_NULL);
 
 			nde = parse_fncall (
@@ -4665,7 +4681,7 @@ static qse_awk_nde_t* parse_primary_ident (
 				qse_awk_nde_t* nde;
 
 				/* a function call to a yet undefined function */
-				if (qse_map_search (awk->parse.named, 
+				if (qse_htb_search (awk->parse.named, 
 					namedup, namelen) != QSE_NULL)
 				{
 					/* a function call conflicts with a named variable */
@@ -4705,7 +4721,7 @@ static qse_awk_nde_t* parse_primary_ident (
 	
 				/* collect unique instances of a named variable 
 				 * for reference */
-				if (qse_map_upsert (
+				if (qse_htb_upsert (
 					awk->parse.named, 
 					namedup, namelen, QSE_NULL, 0) == QSE_NULL)
 				{
@@ -5018,7 +5034,7 @@ make_node:
 
 		/* store a non-builtin function call into the awk->parse.funs 
 		 * table */
-		if (qse_map_upsert (
+		if (qse_htb_upsert (
 			awk->parse.funs, name, namelen, call, 0) == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, call);
@@ -5707,7 +5723,7 @@ static int preget_token (qse_awk_t* awk)
 static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	if (QSE_MAP_SIZE(awk->wtab) <= 0)
+	if (QSE_HTB_SIZE(awk->wtab) <= 0)
 	{
 		/* perform binary search if no custom words are specified */
 
@@ -5746,7 +5762,7 @@ static int classify_ident (
 	{
 		/* perform linear search if there are any custom words set */
 		kwent_t* kwp, * end;
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
 		end = kwtab + QSE_COUNTOF(kwtab);
 		for (kwp = kwtab; kwp < end; kwp++) 
@@ -5757,7 +5773,7 @@ static int classify_ident (
 			if (kwp->valid != 0 && 
 			    (awk->option & kwp->valid) != kwp->valid) continue;
 
-			pair = qse_map_search (awk->wtab, kwp->name, kwp->namelen);
+			pair = qse_htb_search (awk->wtab, kwp->name, kwp->namelen);
 			if (pair != QSE_NULL)
 			{
 				k = ((qse_cstr_t*)(pair->vptr))->ptr;
@@ -5923,7 +5939,7 @@ static int deparse (qse_awk_t* awk)
 	df.tmp_len = QSE_COUNTOF(tmp);
 	df.ret = 0;
 
-	qse_map_walk (awk->tree.funs, deparse_func, &df);
+	qse_htb_walk (awk->tree.funs, deparse_func, &df);
 	if (df.ret <= -1)
 	{
 		EXIT_DEPARSE ();
@@ -6029,29 +6045,29 @@ exit_deparse:
 	return n;
 }
 
-static qse_map_walk_t deparse_func (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_htb_walk_t deparse_func (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	struct deparse_func_t* df = (struct deparse_func_t*)arg;
-	qse_awk_fun_t* fun = (qse_awk_fun_t*)QSE_MAP_VPTR(pair);
+	qse_awk_fun_t* fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
 	qse_size_t i, n;
 	qse_cstr_t kw;
 
-	QSE_ASSERT (qse_strxncmp (QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair), fun->name.ptr, fun->name.len) == 0);
+	QSE_ASSERT (qse_strxncmp (QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair), fun->name.ptr, fun->name.len) == 0);
 
 #define PUT_C(x,c) \
 	if (put_char(x->awk,c)==-1) { \
-		x->ret = -1; return QSE_MAP_WALK_STOP; \
+		x->ret = -1; return QSE_HTB_WALK_STOP; \
 	}
 
 #define PUT_S(x,str) \
 	if (qse_awk_putsrcstr(x->awk,str) <= -1) { \
-		x->ret = -1; return QSE_MAP_WALK_STOP; \
+		x->ret = -1; return QSE_HTB_WALK_STOP; \
 	}
 
 #define PUT_SX(x,str,len) \
 	if (qse_awk_putsrcstrx (x->awk, str, len) <= -1) { \
-		x->ret = -1; return QSE_MAP_WALK_STOP; \
+		x->ret = -1; return QSE_HTB_WALK_STOP; \
 	}
 
 	qse_awk_getkw (df->awk, KW_FUNCTION, &kw);
@@ -6085,7 +6101,7 @@ static qse_map_walk_t deparse_func (
 	}
 	PUT_C (df, QSE_T('\n'));
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 
 #undef PUT_C
 #undef PUT_S

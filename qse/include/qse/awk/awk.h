@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: awk.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,7 +23,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/map.h>
+#include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
 
 /** @file
@@ -216,7 +216,7 @@ struct qse_awk_val_map_t
 	 *       integers switch to map dynamically once the 
 	 *       non-integral index is seen.
 	 */
-	qse_map_t* map; 
+	qse_htb_t* map; 
 };
 typedef struct qse_awk_val_map_t  qse_awk_val_map_t;
 
@@ -1216,10 +1216,21 @@ int qse_awk_addgbl (
 );
 
 /**
- * The qse_awk_delgbl() function deletes an instrinsic global variable by name.
+ * The qse_awk_delgbl() function deletes an intrinsic global variable by name.
  * @return 0 on success, -1 on failure
  */
 int qse_awk_delgbl (
+	qse_awk_t*        awk,  /**< awk */
+	const qse_char_t* name, /**< variable name */
+	qse_size_t        len   /**< name length */
+);
+
+/**
+ * The qse_awk_findgbl function returns the numeric ID of an intrinsic global
+ * variable.
+ * @return number >= 0 on success, -1 on failure
+ */
+int qse_awk_findgbl (
 	qse_awk_t*        awk,  /**< awk */
 	const qse_char_t* name, /**< variable name */
 	qse_size_t        len   /**< name length */
@@ -1605,7 +1616,7 @@ void* qse_awk_rtx_getxtn (
 /**
  * The qse_awk_rtx_getnvmap() gets the map of named variables 
  */
-qse_map_t* qse_awk_rtx_getnvmap (
+qse_htb_t* qse_awk_rtx_getnvmap (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 

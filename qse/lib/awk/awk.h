@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: awk.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,7 +25,7 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/map.h>
+#include <qse/cmn/htb.h>
 #include <qse/cmn/lda.h>
 #include <qse/cmn/rex.h>
 
@@ -89,7 +89,7 @@ struct qse_awk_tree_t
 	qse_size_t ngbls; /* total number of globals */
 	qse_size_t ngbls_base; /* number of intrinsic globals */
 	qse_cstr_t cur_fun;
-	qse_map_t* funs; /* awk function map */
+	qse_htb_t* funs; /* awk function map */
 
 	qse_awk_nde_t* begin;
 	qse_awk_nde_t* begin_tail;
@@ -123,9 +123,9 @@ struct qse_awk_t
 	int option;
 
 	/* word table */
-	qse_map_t* wtab;
+	qse_htb_t* wtab;
 	/* reverse word table */
-	qse_map_t* rwtab;
+	qse_htb_t* rwtab;
 
 	/* parse tree */
 	qse_awk_tree_t tree;
@@ -159,10 +159,10 @@ struct qse_awk_t
 		} depth;
 
 		/* function calls */
-		qse_map_t* funs;
+		qse_htb_t* funs;
 
 		/* named variables */
-		qse_map_t* named;
+		qse_htb_t* named;
 
 		/* global variables */
 		qse_lda_t* gbls;
@@ -190,7 +190,7 @@ struct qse_awk_t
 
 		qse_awk_sio_arg_t arg; /* for the top level source */
 		qse_awk_sio_arg_t* inp; /* current input */
-		qse_map_t* names; 
+		qse_htb_t* names; 
 	} sio;
 
 	/* previous token */
@@ -204,7 +204,7 @@ struct qse_awk_t
 	struct
 	{
 		qse_awk_fnc_t* sys;
-		qse_map_t* user;
+		qse_htb_t* user;
 	} fnc;
 
 	struct
@@ -253,7 +253,7 @@ struct qse_awk_chain_t
 struct qse_awk_rtx_t
 {
 	int id;
-	qse_map_t* named;
+	qse_htb_t* named;
 
 	void** stack;
 	qse_size_t stack_top;

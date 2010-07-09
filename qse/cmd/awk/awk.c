@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 306 2009-11-22 13:58:53Z hyunghwan.chung $
+ * $Id: awk.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -62,7 +62,7 @@ struct arg_t
 
 	qse_char_t** icf;  /* input console files */
 	qse_size_t   icfl; /* the number of input console files */
-	qse_map_t*   gvm;  /* global variable map */
+	qse_htb_t*   gvm;  /* global variable map */
 	qse_char_t*  fs;   /* field separator */
 	qse_char_t*  call; /* function to call */
 
@@ -154,8 +154,8 @@ static void unset_intr_run (void)
 #endif
 }
 
-static qse_map_walk_t print_awk_value (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_htb_walk_t print_awk_value (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	qse_char_t* str;
@@ -164,13 +164,13 @@ static qse_map_walk_t print_awk_value (
 
 	qse_awk_rtx_geterrinf (rtx, &oerrinf);
 
-	str = qse_awk_rtx_valtocpldup (rtx, QSE_MAP_VPTR(pair), &len);
+	str = qse_awk_rtx_valtocpldup (rtx, QSE_HTB_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
 		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTYPE)
 		{
 			dprint (QSE_T("%.*s = [not printable]\n"), 
-				(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
+				(int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair));
 
 			qse_awk_rtx_seterrinf (rtx, &oerrinf);
 		}
@@ -182,29 +182,29 @@ static qse_map_walk_t print_awk_value (
 	else
 	{
 		dprint (QSE_T("%.*s = %.*s\n"), 
-			(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair), 
+			(int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), 
 			(int)len, str);
 		qse_awk_free (qse_awk_rtx_getawk(rtx), str);
 	}
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
-static qse_map_walk_t set_global (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_htb_walk_t set_global (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_val_t* v;
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
-	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_MAP_VPTR(pair);
+	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
 	v = qse_awk_rtx_makenstrval (rtx, gvmv->ptr, gvmv->len);
-	if (v == QSE_NULL) return QSE_MAP_WALK_STOP;
+	if (v == QSE_NULL) return QSE_HTB_WALK_STOP;
 
 	qse_awk_rtx_refupval (rtx, v);
 	qse_awk_rtx_setgbl (rtx, gvmv->idx, v);
 	qse_awk_rtx_refdownval (rtx, v);
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
 static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
@@ -228,7 +228,7 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 		/* set the value of user-defined global variables 
 		 * to a runtime context */
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
-		qse_map_walk (arg->gvm, set_global, rtx);
+		qse_htb_walk (arg->gvm, set_global, rtx);
 		if (qse_awk_rtx_geterrnum(rtx) != QSE_AWK_ENOERR) return -1;
 	}
 
@@ -259,7 +259,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	}
 
 	dprint (QSE_T("[NAMED VARIABLES]\n"));
-	qse_map_walk (qse_awk_rtx_getnvmap(rtx), print_awk_value, rtx);
+	qse_htb_walk (qse_awk_rtx_getnvmap(rtx), print_awk_value, rtx);
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
@@ -413,7 +413,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	qse_char_t*  osf = QSE_NULL; /* output source file */
 	qse_char_t** icf = QSE_NULL; /* input console files */
 
-	qse_map_t* gvm = QSE_NULL;  /* global variable map */
+	qse_htb_t* gvm = QSE_NULL;  /* global variable map */
 	qse_char_t* fs = QSE_NULL; /* field separator */
 	qse_char_t* call = QSE_NULL; /* function to call */
 
@@ -426,16 +426,16 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		goto oops;
 	}
 
-	gvm = qse_map_open (QSE_NULL, 0, 30, 70); 
+	gvm = qse_htb_open (QSE_NULL, 0, 30, 70); 
 	if (gvm == QSE_NULL)
 	{
 		print_err (QSE_T("out of memory\n"));
 		goto oops;
 	}
-	/*qse_map_setcopier (gvm, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);*/
-	qse_map_setscale (gvm, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
-	qse_map_setcopier (gvm, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (gvm, QSE_MAP_VAL, QSE_SIZEOF(struct gvmv_t));
+	/*qse_htb_setcopier (gvm, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);*/
+	qse_htb_setscale (gvm, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (gvm, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (gvm, QSE_HTB_VAL, QSE_SIZEOF(struct gvmv_t));
 
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
 	{
@@ -443,7 +443,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{
 			case QSE_T('h'):
 				if (isf != QSE_NULL) free (isf);
-				if (gvm != QSE_NULL) qse_map_close (gvm);
+				if (gvm != QSE_NULL) qse_htb_close (gvm);
 				return 0;
 
 			case QSE_T('d'):
@@ -511,7 +511,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				gvmv.ptr = ++eq;
 				gvmv.len = qse_strlen(eq);
 
-				if (qse_map_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
+				if (qse_htb_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
 				{
 					print_err (QSE_T("out of memory\n"));
 					goto oops;
@@ -626,7 +626,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	return 1;
 
 oops:
-	if (gvm != QSE_NULL) qse_map_close (gvm);
+	if (gvm != QSE_NULL) qse_htb_close (gvm);
 	if (icf != QSE_NULL) free (icf);
 	if (isf != QSE_NULL) free (isf);
 	return -1;
@@ -638,7 +638,7 @@ static void freearg (struct arg_t* arg)
 	    arg->isp.files != QSE_NULL) free (arg->isp.files);
 	/*if (arg->osf != QSE_NULL) free (arg->osf);*/
 	if (arg->icf != QSE_NULL) free (arg->icf);
-	if (arg->gvm != QSE_NULL) qse_map_close (arg->gvm);
+	if (arg->gvm != QSE_NULL) qse_htb_close (arg->gvm);
 }
 
 static void print_awkerr (qse_awk_t* awk)
@@ -673,18 +673,18 @@ static void print_rtxerr (qse_awk_rtx_t* rtx)
 	);
 }
 
-qse_map_walk_t add_global (qse_map_t* map, qse_map_pair_t* pair, void* arg)
+qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_t* awk = (qse_awk_t*)arg;
-	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_MAP_VPTR(pair);
+	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	gvmv->idx = qse_awk_addgbl (awk, QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair));
+	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair));
 	if (gvmv->idx <= -1)
 	{
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
 static int awk_main (int argc, qse_char_t* argv[])
@@ -751,7 +751,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
-	qse_map_walk (arg.gvm, add_global, awk);
+	qse_htb_walk (arg.gvm, add_global, awk);
 	if (qse_awk_geterrnum(awk) != QSE_AWK_ENOERR)
 	{
 		print_awkerr (awk);

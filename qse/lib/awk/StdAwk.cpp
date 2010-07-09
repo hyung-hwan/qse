@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -450,8 +450,8 @@ int StdAwk::open_console_in (Console& io)
 		qse_sio_t* sio;
 		const qse_char_t* file;
 		qse_awk_val_t* argv;
-		qse_map_t* map;
-		qse_map_pair_t* pair;
+		qse_htb_t* map;
+		qse_htb_pair_t* pair;
 		qse_char_t ibuf[128];
 		qse_size_t ibuflen;
 		qse_awk_val_t* v;
@@ -512,10 +512,10 @@ int StdAwk::open_console_in (Console& io)
 			ibuf, QSE_COUNTOF(ibuf)
 		);
 
-		pair = qse_map_search (map, ibuf, ibuflen);
+		pair = qse_htb_search (map, ibuf, ibuflen);
 		QSE_ASSERT (pair != QSE_NULL);
 
-		v = (qse_awk_val_t*)QSE_MAP_VPTR(pair);
+		v = (qse_awk_val_t*)QSE_HTB_VPTR(pair);
 		QSE_ASSERT (v != QSE_NULL);
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;

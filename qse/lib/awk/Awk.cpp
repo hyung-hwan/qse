@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: Awk.cpp 328 2010-07-08 06:58:44Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -605,7 +605,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		qse_awk_rtx_refupval (r->rtx, v);
 
 		/* update the map with a given value */
-		pair_t* pair = qse_map_upsert (
+		pair_t* pair = qse_htb_upsert (
 			((qse_awk_val_map_t*)map)->map, 
 			(char_t*)idx.ptr, idx.len, v, 0);
 		if (pair == QSE_NULL)
@@ -640,7 +640,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 
 		qse_awk_rtx_refupval (r->rtx, v);
 
-		pair_t* pair = qse_map_upsert (
+		pair_t* pair = qse_htb_upsert (
 			((qse_awk_val_map_t*)val)->map, 
 			(char_t*)idx.ptr, idx.len, v, 0);
 		if (pair == QSE_NULL)
@@ -768,7 +768,7 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 
 	// get the value from the map.
 	qse_awk_val_map_t* m = (qse_awk_val_map_t*)val;
-	pair_t* pair = qse_map_search (m->map, idx.ptr, idx.len);
+	pair_t* pair = qse_htb_search (m->map, idx.ptr, idx.len);
 
 	// the key is not found. it is not an error. v is just nil 
 	if (pair == QSE_NULL) 
@@ -778,7 +778,7 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 	}
 
 	// if v.set fails, it should return an error 
-	return v->setVal (run, (val_t*)QSE_MAP_VPTR(pair));
+	return v->setVal (run, (val_t*)QSE_HTB_VPTR(pair));
 }
 
 Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
@@ -789,11 +789,11 @@ Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
 
 	size_t buckno;
 	qse_awk_val_map_t* m = (qse_awk_val_map_t*)val;
-	pair_t* pair = qse_map_getfirstpair (m->map, &buckno);
+	pair_t* pair = qse_htb_getfirstpair (m->map, &buckno);
 	if (pair == QSE_NULL) return IndexIterator::END; // no more key
 
-	idx->ptr = (const char_t*)QSE_MAP_KPTR(pair);
-	idx->len = QSE_MAP_KLEN(pair);
+	idx->ptr = (const char_t*)QSE_HTB_KPTR(pair);
+	idx->len = QSE_HTB_KLEN(pair);
 
 	return IndexIterator (pair, buckno);	
 }
@@ -810,11 +810,11 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 	pair_t* pair = (pair_t*)iter.pair;
 	size_t buckno = iter.buckno;
 		
-	pair = qse_map_getnextpair (m->map, pair, &buckno);
+	pair = qse_htb_getnextpair (m->map, pair, &buckno);
 	if (pair == QSE_NULL) return IndexIterator::END;
 
-	idx->ptr = (const char_t*)QSE_MAP_KPTR(pair); 
-	idx->len = QSE_MAP_KLEN(pair);
+	idx->ptr = (const char_t*)QSE_HTB_KPTR(pair); 
+	idx->len = QSE_HTB_KLEN(pair);
 
 	return IndexIterator (pair, buckno);	
 }
@@ -829,12 +829,12 @@ int Awk::Argument::getFirstIndex (Awk::Argument& val) const
 
 	qse_size_t buckno;
 	qse_awk_val_map_t* m = (qse_awk_val_map_t*)this->val;
-	pair_t* pair = qse_map_getfirstpair (m->map, &buckno);
+	pair_t* pair = qse_htb_getfirstpair (m->map, &buckno);
 	if (pair == QSE_NULL) return 0; // no more key
 
 	if (val.init (
-		(qse_char_t*)QSE_MAP_KPTR(pair),
-		QSE_MAP_KLEN(pair)) == -1) return -1;
+		(qse_char_t*)QSE_HTB_KPTR(pair),
+		QSE_HTB_KLEN(pair)) == -1) return -1;
 
 	// reuse the string field as an interator.
 	this->str.ptr = (char_t*)pair;
@@ -855,12 +855,12 @@ int Awk::Argument::getNextIndex (Awk::Argument& val) const
 	pair_t* pair = (pair_t*)this->str.ptr;
 	qse_size_t buckno = this->str.len;
 		
-	pair = qse_map_getnextpair (m->map, pair, &buckno);
+	pair = qse_htb_getnextpair (m->map, pair, &buckno);
 	if (pair == QSE_NULL) return 0;
 
 	if (val.init (
-		(qse_char_t*)QSE_MAP_KPTR(pair),
-		QSE_MAP_KLEN(pair)) == -1) return -1;
+		(qse_char_t*)QSE_HTB_KPTR(pair),
+		QSE_HTB_KLEN(pair)) == -1) return -1;
 
 	// reuse the string field as an interator.
 	this->str.ptr = (char_t*)pair;
@@ -1099,7 +1099,7 @@ void Awk::retrieveError (Run* run)
 }
 
 static void free_function_map_value (
-	Awk::map_t* map, void* dptr, Awk::size_t dlen)
+	Awk::htb_t* map, void* dptr, Awk::size_t dlen)
 {
 	Awk* awk = *(Awk**) QSE_XTN (map);
 	qse_awk_free ((Awk::awk_t*)*awk, dptr);
@@ -1127,7 +1127,7 @@ int Awk::open ()
 	dflerrstr = qse_awk_geterrstr (awk);
 	qse_awk_seterrstr (awk, xerrstr);
 
-	functionMap = qse_map_open (
+	functionMap = qse_htb_open (
 		qse_awk_getmmgr(awk), QSE_SIZEOF(this), 512, 70);
 	if (functionMap == QSE_NULL)
 	{
@@ -1139,9 +1139,9 @@ int Awk::open ()
 	}
 
 	*(Awk**)QSE_XTN(functionMap) = this;
-	qse_map_setcopier (functionMap, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setfreeer (functionMap, QSE_MAP_VAL, free_function_map_value);
-	qse_map_setscale (functionMap, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (functionMap, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setfreeer (functionMap, QSE_HTB_VAL, free_function_map_value);
+	qse_htb_setscale (functionMap, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	return 0;
 }
@@ -1153,7 +1153,7 @@ void Awk::close ()
 
 	if (functionMap != QSE_NULL)
 	{
-		qse_map_close (functionMap);
+		qse_htb_close (functionMap);
 		functionMap = QSE_NULL;
 	}
 
@@ -1327,7 +1327,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 {
 	pair_t* pair;
 
-	pair = qse_map_search (functionMap, name->ptr, name->len);
+	pair = qse_htb_search (functionMap, name->ptr, name->len);
 	if (pair == QSE_NULL) 
 	{
 		run->setError (QSE_AWK_EFUNNF, name);
@@ -1335,7 +1335,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 	}
 
 	FunctionHandler handler;
-       	handler = *(FunctionHandler*)QSE_MAP_VPTR(pair);	
+       	handler = *(FunctionHandler*)QSE_HTB_VPTR(pair);	
 
 	size_t i, nargs = qse_awk_rtx_getnargs(run->rtx);
 
@@ -1491,6 +1491,14 @@ int Awk::deleteGlobal (const char_t* name)
 	return n;
 }
 
+int Awk::findGlobal (const char_t* name) 
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	int n = qse_awk_findgbl (awk, name, qse_strlen(name));
+	if (n <= -1) retrieveError ();
+	return n;
+}
+
 int Awk::setGlobal (int id, const Value& v) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
@@ -1552,7 +1560,7 @@ int Awk::addFunction (
 		return -1;
 	}
 
-	pair_t* pair = qse_map_upsert (
+	pair_t* pair = qse_htb_upsert (
 		functionMap, (char_t*)name, nameLen, tmp, 0);
 	if (pair == QSE_NULL)
 	{
@@ -1573,7 +1581,7 @@ int Awk::deleteFunction (const char_t* name)
 	size_t nameLen = qse_strlen(name);
 
 	int n = qse_awk_delfnc (awk, name, nameLen);
-	if (n == 0) qse_map_delete (functionMap, name, nameLen);
+	if (n == 0) qse_htb_delete (functionMap, name, nameLen);
 	else retrieveError ();
 
 	return n;

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: Awk.hpp 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,7 +22,7 @@
 #define _QSE_AWK_AWK_HPP_
 
 #include <qse/awk/awk.h>
-#include <qse/cmn/map.h>
+#include <qse/cmn/htb.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/Mmged.hpp>
 #include <stdarg.h>
@@ -42,8 +42,8 @@ QSE_BEGIN_NAMESPACE(QSE)
 class Awk: public Mmged
 {
 public:
-	typedef qse_map_t   map_t;
-	typedef qse_map_pair_t pair_t;
+	typedef qse_htb_t htb_t;
+	typedef qse_htb_pair_t pair_t;
 
 	/** Defines a primitive handle */
 	typedef qse_awk_t awk_t;
@@ -913,6 +913,15 @@ public:
 	);
 
 	///
+	/// The addGlobal() function returns the numeric ID of an intrinsic 
+	//  global variable. 
+	/// @return integer >= 0 on success, -1 on failure.
+	///
+	int findGlobal (
+		const char_t* name ///> variable name
+	);
+
+	///
 	/// The setGlobal() function sets the value of a global variable 
 	/// identified by @a id. The @a id is either a value returned by 
 	/// addGlobal() or one of the #gbl_id_t enumerators. It is not allowed
@@ -1069,7 +1078,7 @@ protected:
 	errstr_t dflerrstr;
 	errinf_t errinf;
 
-	map_t* functionMap;
+	htb_t* functionMap;
 
 	Source* sourceReader;
 	Source* sourceWriter;
