@@ -7,7 +7,7 @@ libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
 	mem.c chr.c chr_cnv.c rex.c \
 	str_bas.c str_cnv.c str_dyn.c str_utl.c \
-	lda.c map.c sll.c dll.c opt.c \
+	lda.c htb.c rbt.c sll.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \
 	time.c \

@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 326 2010-05-09 13:44:39Z hyunghwan.chung $
+ * $Id: rex.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -86,16 +86,16 @@ enum qse_rex_errnum_t
 	QSE_REX_ENOERR = 0,
 	QSE_REX_ENOMEM,        /**< no sufficient memory available */
 	QSE_REX_ENOCOMP,       /**< no expression compiled */
-        QSE_REX_ERECUR,        /**< recursion too deep */
-        QSE_REX_ERPAREN,       /**< right parenthesis expected */
-        QSE_REX_ERBRACK,       /**< right bracket expected */
-        QSE_REX_ERBRACE,       /**< right brace expected */
-        QSE_REX_ECOLON,        /**< colon expected */
-        QSE_REX_ECRANGE,       /**< invalid character range */
-        QSE_REX_ECCLASS,       /**< invalid character class */
-        QSE_REX_EBOUND,        /**< invalid occurrence bound */
-        QSE_REX_ESPCAWP,       /**< special character at wrong position */
-        QSE_REX_EPREEND        /**< premature expression end */
+	QSE_REX_ERECUR,        /**< recursion too deep */
+	QSE_REX_ERPAREN,       /**< right parenthesis expected */
+	QSE_REX_ERBRACK,       /**< right bracket expected */
+	QSE_REX_ERBRACE,       /**< right brace expected */
+	QSE_REX_ECOLON,        /**< colon expected */
+	QSE_REX_ECRANGE,       /**< invalid character range */
+	QSE_REX_ECCLASS,       /**< invalid character class */
+	QSE_REX_EBOUND,        /**< invalid occurrence bound */
+	QSE_REX_ESPCAWP,       /**< special character at wrong position */
+	QSE_REX_EPREEND        /**< premature expression end */
 };
 typedef enum qse_rex_errnum_t qse_rex_errnum_t;
 
@@ -111,7 +111,8 @@ enum qse_rex_node_id_t
 	QSE_REX_NODE_CSET, /* character set */
 	QSE_REX_NODE_BRANCH,
 	QSE_REX_NODE_GROUP,
-	QSE_REX_NODE_GROUPEND
+	QSE_REX_NODE_GROUPEND,
+	QSE_REX_NODE_BACKREF /* back reference */
 };
 typedef enum qse_rex_node_id_t qse_rex_node_id_t;
 
@@ -159,6 +160,11 @@ struct qse_rex_node_t
 			qse_rex_node_t* group;
 			int pseudo;
 		} ge;
+
+		struct
+		{
+			int index;		
+		} bref;
 	} u;
 
 	struct
@@ -195,9 +201,9 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (rex)
 
 qse_rex_t* qse_rex_open (
-	qse_mmgr_t*     mmgr,
-	qse_size_t      xtn,
-	qse_rex_node_t* code
+	qse_mmgr_t*     mmgr, /**< memory manager */
+	qse_size_t      xtn,  /**< extension size */
+	qse_rex_node_t* code  /**< compiled regular expression code */
 );
 
 void qse_rex_close (

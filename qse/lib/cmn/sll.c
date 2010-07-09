@@ -1,5 +1,5 @@
 /*
- * $Id: sll.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sll.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -319,13 +319,13 @@ void qse_sll_poptail (sll_t* sll)
 	qse_sll_delete (sll, TAIL(sll));
 }
 
-void qse_sll_walk (sll_t* sll, walker_t walker, void* arg)
+void qse_sll_walk (sll_t* sll, walker_t walker, void* ctx)
 {
 	node_t* n = HEAD(sll);
 
 	while (n != QSE_NULL)
 	{
-		if (walker(sll,n,arg) == QSE_SLL_WALK_STOP) return;
+		if (walker(sll,n,ctx) == QSE_SLL_WALK_STOP) return;
 		n = NEXT(n);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: val.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -362,7 +362,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	return (qse_awk_val_t*)val;
 }
 
-static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
+static void free_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_t* rtx = *(qse_awk_rtx_t**)QSE_XTN(map);
 
@@ -375,7 +375,7 @@ static void free_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
 	qse_awk_rtx_refdownval (rtx, dptr);
 }
 
-static void same_mapval (qse_map_t* map, void* dptr, qse_size_t dlen)
+static void same_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_t* run = *(qse_awk_rtx_t**)QSE_XTN(map);
 #ifdef DEBUG_VAL
@@ -403,7 +403,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->nstr = 0;
-	val->map = qse_map_open (
+	val->map = qse_htb_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
 	if (val->map == QSE_NULL)
 	{
@@ -416,7 +416,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val = (qse_awk_val_map_t*) QSE_AWK_ALLOC (
 		rtx->awk,
 		QSE_SIZEOF(qse_awk_val_map_t) +
-		QSE_SIZEOF(qse_map_t) +
+		QSE_SIZEOF(qse_htb_t) +
 		QSE_SIZEOF(rtx));
 	if (val == QSE_NULL) 
 	{
@@ -427,9 +427,9 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
 	val->nstr = 0;
-	val->map = (qse_map_t*)(val + 1);
+	val->map = (qse_htb_t*)(val + 1);
 
-	val->map = qse_map_init (val->map, rtx->awk->mmgr, 256, 70);
+	val->map = qse_htb_init (val->map, rtx->awk->mmgr, 256, 70);
 	if (val->map == QSE_NULL)
 	{
 		QSE_AWK_FREE (rtx->awk, val);
@@ -440,14 +440,14 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 
 	/* the key is copied inline into a pair and is freed when the pair
 	 * is destroyed */
-	qse_map_setcopier (val->map, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (val->map, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (val->map, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (val->map, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	/* not setting copier for a value means that the pointer to the data 
 	 * allocated somewhere else is remembered in a pair. but the freeing 
 	 * the actual value is handled by free_mapval and same_mapval */
-	qse_map_setfreeer (val->map, QSE_MAP_VAL, free_mapval);
-	qse_map_setkeeper (val->map, same_mapval);
+	qse_htb_setfreeer (val->map, QSE_HTB_VAL, free_mapval);
+	qse_htb_setkeeper (val->map, same_mapval);
 	/* END CHECK */
 
 	return (qse_awk_val_t*)val;
@@ -559,7 +559,7 @@ void qse_awk_rtx_freeval (
 	}
 	else if (val->type == QSE_AWK_VAL_MAP)
 	{
-		qse_map_fini (((qse_awk_val_map_t*)val)->map);
+		qse_htb_fini (((qse_awk_val_map_t*)val)->map);
 		QSE_AWK_FREE (rtx->awk, val);
 	}
 	else if (val->type == QSE_AWK_VAL_REF)
@@ -1131,19 +1131,19 @@ int qse_awk_rtx_strtonum (
 #define DPRINTF run->awk->prmfns->dprintf
 #define DCUSTOM run->awk->prmfns->data
 
-static qse_map_walk_t print_pair (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_htb_walk_t print_pair (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	qse_awk_rtx_t* run = (qse_awk_rtx_t*)arg;
 
 	QSE_ASSERT (run == *(qse_awk_rtx_t**)QSE_XTN(map));
 
 	DPRINTF (DCUSTOM, QSE_T(" %.*s=>"),
-		(int)QSE_MAP_KLEN(pair), QSE_MAP_KPTR(pair));
-	qse_awk_dprintval ((qse_awk_rtx_t*)arg, QSE_MAP_VPTR(pair));
+		(int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair));
+	qse_awk_dprintval ((qse_awk_rtx_t*)arg, QSE_HTB_VPTR(pair));
 	DPRINTF (DCUSTOM, QSE_T(" "));
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
 void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
@@ -1194,7 +1194,7 @@ void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 
 		case QSE_AWK_VAL_MAP:
 			DPRINTF (DCUSTOM, QSE_T("MAP["));
-			qse_map_walk (((qse_awk_val_map_t*)val)->map, print_pair, run);
+			qse_htb_walk (((qse_awk_val_map_t*)val)->map, print_pair, run);
 			DPRINTF (DCUSTOM, QSE_T("]"));
 			break;
 	

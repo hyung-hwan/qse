@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 327 2010-05-10 13:15:55Z hyunghwan.chung $
+ * $Id: rex.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -375,6 +375,9 @@ static int getc (comp_t* com, int noesc)
 	else if (c == QSE_T('b')) c = QSE_T('\b');
 	else if (c == QSE_T('v')) c = QSE_T('\v');
 	else if (c == QSE_T('a')) c = QSE_T('\a');
+
+#if 0
+	/* backrefernce conflicts with octal notation */
 	else if (c >= QSE_T('0') && c <= QSE_T('7')) 
 	{
 		qse_char_t cx;
@@ -395,6 +398,8 @@ static int getc (comp_t* com, int noesc)
 			}
 		}
 	}
+#endif
+
 	else if (c == QSE_T('x')) 
 	{
 		qse_char_t cx;
@@ -505,6 +510,11 @@ static int cc_isupper (exec_t* e, qse_char_t c)
 
 static int cc_isxdigit (exec_t* e, qse_char_t c) { return QSE_ISXDIGIT (c); }
 
+static int cc_isword (exec_t* e, qse_char_t c) 
+{
+	return QSE_ISALNUM (c) || c == QSE_T('_'); 
+}
+
 static struct ccinfo_t ccinfo[] =
 {
 	{ { QSE_T("alnum"),  5 }, cc_isalnum },
@@ -519,6 +529,7 @@ static struct ccinfo_t ccinfo[] =
 	{ { QSE_T("space"),  5 }, cc_isspace },
 	{ { QSE_T("upper"),  5 }, cc_isupper },
 	{ { QSE_T("xdigit"), 6 }, cc_isxdigit },
+	{ { QSE_T("word"),   4 }, cc_isword },
 
 	/*
 	{ { QSE_T("arabic"),   6 }, cc_isarabic },

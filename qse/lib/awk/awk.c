@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 287 2009-09-15 10:01:02Z hyunghwan.chung $ 
+ * $Id: awk.c 328 2010-07-08 06:58:44Z hyunghwan.chung $ 
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,7 +22,7 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (awk)
 
-static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
+static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {
 	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(map);
 	qse_awk_fun_t* f = (qse_awk_fun_t*)vptr;
@@ -34,7 +34,7 @@ static void free_fun (qse_map_t* map, void* vptr, qse_size_t vlen)
 	QSE_AWK_FREE (awk, f);
 }
 
-static void free_fnc (qse_map_t* map, void* vptr, qse_size_t vlen)
+static void free_fnc (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {
 	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(map);
 	qse_awk_fnc_t* f = (qse_awk_fnc_t*)vptr;
@@ -113,50 +113,50 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	if (init_token (mmgr, &awk->tok) == -1) goto oops;
 	if (init_token (mmgr, &awk->ntok) == -1) goto oops;
 
-	awk->wtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
+	awk->wtab = qse_htb_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->wtab == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->wtab) = awk;
-	qse_map_setcopier (awk->wtab, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setcopier (awk->wtab, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (awk->wtab, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
-	qse_map_setscale (awk->wtab, QSE_MAP_VAL, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->wtab, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setcopier (awk->wtab, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (awk->wtab, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setscale (awk->wtab, QSE_HTB_VAL, QSE_SIZEOF(qse_char_t));
 
-	awk->rwtab = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
+	awk->rwtab = qse_htb_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->rwtab == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->rwtab) = awk;
-	qse_map_setcopier (awk->rwtab, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setcopier (awk->rwtab, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (awk->rwtab, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
-	qse_map_setscale (awk->rwtab, QSE_MAP_VAL, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->rwtab, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setcopier (awk->rwtab, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (awk->rwtab, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setscale (awk->rwtab, QSE_HTB_VAL, QSE_SIZEOF(qse_char_t));
 
-	awk->sio.names = qse_map_open (mmgr, QSE_SIZEOF(awk), 128, 70);
+	awk->sio.names = qse_htb_open (mmgr, QSE_SIZEOF(awk), 128, 70);
 	if (awk->sio.names == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->sio.names) = awk;
-	qse_map_setcopier (awk->sio.names, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (awk->sio.names, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->sio.names, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (awk->sio.names, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 	awk->sio.inp = &awk->sio.arg;
 
 	/* TODO: initial map size?? */
-	awk->tree.funs = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
+	awk->tree.funs = qse_htb_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->tree.funs == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->tree.funs) = awk;
-	qse_map_setcopier (awk->tree.funs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setfreeer (awk->tree.funs, QSE_MAP_VAL, free_fun);
-	qse_map_setscale (awk->tree.funs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->tree.funs, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setfreeer (awk->tree.funs, QSE_HTB_VAL, free_fun);
+	qse_htb_setscale (awk->tree.funs, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
-	awk->parse.funs = qse_map_open (mmgr, QSE_SIZEOF(awk), 256, 70);
+	awk->parse.funs = qse_htb_open (mmgr, QSE_SIZEOF(awk), 256, 70);
 	if (awk->parse.funs == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.funs) = awk;
-	qse_map_setcopier (awk->parse.funs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (awk->parse.funs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->parse.funs, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (awk->parse.funs, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
-	awk->parse.named = qse_map_open (mmgr, QSE_SIZEOF(awk), 256, 70);
+	awk->parse.named = qse_htb_open (mmgr, QSE_SIZEOF(awk), 256, 70);
 	if (awk->parse.named == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.named) = awk;
-	qse_map_setcopier (
-		awk->parse.named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (
-		awk->parse.named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (
+		awk->parse.named, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setscale (
+		awk->parse.named, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);
 	awk->parse.lcls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 64);
@@ -197,28 +197,28 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->tree.chain_size = 0;
 
 	awk->fnc.sys = QSE_NULL;
-	awk->fnc.user = qse_map_open (mmgr, QSE_SIZEOF(awk), 512, 70);
+	awk->fnc.user = qse_htb_open (mmgr, QSE_SIZEOF(awk), 512, 70);
 	if (awk->fnc.user == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->fnc.user) = awk;
-	qse_map_setcopier (awk->fnc.user, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setfreeer (awk->fnc.user, QSE_MAP_VAL, free_fnc); 
-	qse_map_setscale (awk->fnc.user, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (awk->fnc.user, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setfreeer (awk->fnc.user, QSE_HTB_VAL, free_fnc); 
+	qse_htb_setscale (awk->fnc.user, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	if (qse_awk_initgbls (awk) <= -1) goto oops;
 
 	return awk;
 
 oops:
-	if (awk->fnc.user) qse_map_close (awk->fnc.user);
+	if (awk->fnc.user) qse_htb_close (awk->fnc.user);
 	if (awk->parse.params) qse_lda_close (awk->parse.params);
 	if (awk->parse.lcls) qse_lda_close (awk->parse.lcls);
 	if (awk->parse.gbls) qse_lda_close (awk->parse.gbls);
-	if (awk->parse.named) qse_map_close (awk->parse.named);
-	if (awk->parse.funs) qse_map_close (awk->parse.funs);
-	if (awk->tree.funs) qse_map_close (awk->tree.funs);
-	if (awk->sio.names) qse_map_close (awk->sio.names);
-	if (awk->rwtab) qse_map_close (awk->rwtab);
-	if (awk->wtab) qse_map_close (awk->wtab);
+	if (awk->parse.named) qse_htb_close (awk->parse.named);
+	if (awk->parse.funs) qse_htb_close (awk->parse.funs);
+	if (awk->tree.funs) qse_htb_close (awk->tree.funs);
+	if (awk->sio.names) qse_htb_close (awk->sio.names);
+	if (awk->rwtab) qse_htb_close (awk->rwtab);
+	if (awk->wtab) qse_htb_close (awk->wtab);
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
@@ -231,19 +231,19 @@ int qse_awk_close (qse_awk_t* awk)
 {
 	if (qse_awk_clear (awk) <= -1) return -1;
 	/*qse_awk_clrfnc (awk);*/
-	qse_map_close (awk->fnc.user);
+	qse_htb_close (awk->fnc.user);
 
 	qse_lda_close (awk->parse.params);
 	qse_lda_close (awk->parse.lcls);
 	qse_lda_close (awk->parse.gbls);
-	qse_map_close (awk->parse.named);
-	qse_map_close (awk->parse.funs);
+	qse_htb_close (awk->parse.named);
+	qse_htb_close (awk->parse.funs);
 
-	qse_map_close (awk->tree.funs);
-	qse_map_close (awk->sio.names);
+	qse_htb_close (awk->tree.funs);
+	qse_htb_close (awk->sio.names);
 
-	qse_map_close (awk->rwtab);
-	qse_map_close (awk->wtab);
+	qse_htb_close (awk->rwtab);
+	qse_htb_close (awk->wtab);
 
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
@@ -271,8 +271,8 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	qse_lda_clear (awk->parse.lcls);
 	qse_lda_clear (awk->parse.params);
-	qse_map_clear (awk->parse.named);
-	qse_map_clear (awk->parse.funs);
+	qse_htb_clear (awk->parse.named);
+	qse_htb_clear (awk->parse.funs);
 
 	awk->parse.nlcls_max = 0; 
 	awk->parse.depth.cur.block = 0;
@@ -287,7 +287,7 @@ int qse_awk_clear (qse_awk_t* awk)
 
 	awk->tree.cur_fun.ptr = QSE_NULL;
 	awk->tree.cur_fun.len = 0;
-	qse_map_clear (awk->tree.funs);
+	qse_htb_clear (awk->tree.funs);
 
 	if (awk->tree.begin != QSE_NULL) 
 	{
@@ -324,7 +324,7 @@ int qse_awk_clear (qse_awk_t* awk)
 	/* this table must not be cleared here as there can be a reference
 	 * to an entry of this table from errinf.fil when qse_awk_parse() 
 	 * failed. this table is cleared in qse_awk_parse().
-	 * qse_map_clear (awk->sio.names);
+	 * qse_htb_clear (awk->sio.names);
 	 */
 
 	awk->sio.last.c = QSE_CHAR_EOF;
@@ -363,9 +363,9 @@ void qse_awk_stopall (qse_awk_t* awk)
 
 int qse_awk_getword (qse_awk_t* awk, const qse_cstr_t* okw, qse_cstr_t* nkw)
 {
-	qse_map_pair_t* p;
+	qse_htb_pair_t* p;
 
-	p = qse_map_search (awk->wtab, okw->ptr, okw->len);
+	p = qse_htb_search (awk->wtab, okw->ptr, okw->len);
 	if (p == QSE_NULL) return -1;
 
 	nkw->ptr = ((qse_cstr_t*)p->vptr)->ptr;
@@ -376,26 +376,26 @@ int qse_awk_getword (qse_awk_t* awk, const qse_cstr_t* okw, qse_cstr_t* nkw)
 
 int qse_awk_unsetword (qse_awk_t* awk, const qse_cstr_t* kw)
 {
-	qse_map_pair_t* p;
+	qse_htb_pair_t* p;
 
 	QSE_ASSERT (kw->ptr != QSE_NULL);
 
-	p = qse_map_search (awk->wtab, kw->ptr, kw->len);
+	p = qse_htb_search (awk->wtab, kw->ptr, kw->len);
 	if (p == QSE_NULL)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, kw);
 		return -1;
 	}
 
-	qse_map_delete (awk->rwtab, QSE_MAP_VPTR(p), QSE_MAP_VLEN(p));
-	qse_map_delete (awk->wtab, kw->ptr, kw->len);
+	qse_htb_delete (awk->rwtab, QSE_HTB_VPTR(p), QSE_HTB_VLEN(p));
+	qse_htb_delete (awk->wtab, kw->ptr, kw->len);
 	return 0;
 }
 
 void qse_awk_unsetallwords (qse_awk_t* awk)
 {
-	qse_map_clear (awk->wtab);
-	qse_map_clear (awk->rwtab);
+	qse_htb_clear (awk->wtab);
+	qse_htb_clear (awk->rwtab);
 }
 
 int qse_awk_setword (
@@ -422,7 +422,7 @@ int qse_awk_setword (
 	QSE_ASSERT (nkw->ptr != QSE_NULL);
 
 	/* set the word */
-	if (qse_map_upsert (
+	if (qse_htb_upsert (
 		awk->wtab, 
 		(qse_char_t*)okw->ptr, okw->len, 
 		(qse_char_t*)nkw->ptr, nkw->len) == QSE_NULL)
@@ -431,12 +431,12 @@ int qse_awk_setword (
 		return -1;
 	}
 
-	if (qse_map_upsert (
+	if (qse_htb_upsert (
 		awk->rwtab,
 		(qse_char_t*)nkw->ptr, nkw->len,
 		(qse_char_t*)okw->ptr, okw->len) == QSE_NULL)
 	{
-		qse_map_delete (awk->wtab, okw->ptr, okw->len);
+		qse_htb_delete (awk->wtab, okw->ptr, okw->len);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}

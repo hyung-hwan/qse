@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: fnc.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -19,8 +19,6 @@
  */
 
 #include "awk.h"
-
-#include <qse/cmn/stdio.h>
 
 static int fnc_close   (qse_awk_rtx_t*, const qse_cstr_t*);
 static int fnc_fflush  (qse_awk_rtx_t*, const qse_cstr_t*);
@@ -129,7 +127,7 @@ void* qse_awk_addfnc (
 
 	fnc->handler = handler;
 
-	if (qse_map_insert (awk->fnc.user,
+	if (qse_htb_insert (awk->fnc.user,
 		(qse_char_t*)name, name_len, fnc, 0) == QSE_NULL)
 	{
 		QSE_AWK_FREE (awk, fnc);
@@ -143,7 +141,7 @@ void* qse_awk_addfnc (
 int qse_awk_delfnc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len)
 {
-	if (qse_map_delete (awk->fnc.user, name, name_len) == -1)
+	if (qse_htb_delete (awk->fnc.user, name, name_len) == -1)
 	{
 		qse_cstr_t errarg;
 
@@ -159,14 +157,14 @@ int qse_awk_delfnc (
 
 void qse_awk_clrfnc (qse_awk_t* awk)
 {
-	qse_map_clear (awk->fnc.user);
+	qse_htb_clear (awk->fnc.user);
 }
 
 qse_awk_fnc_t* qse_awk_getfnc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
 	qse_awk_fnc_t* fnc;
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 	const qse_char_t* k;
 	qse_size_t l;
 
@@ -176,13 +174,13 @@ qse_awk_fnc_t* qse_awk_getfnc (
 		if (fnc->valid != 0 && 
 		    (awk->option & fnc->valid) != fnc->valid) continue;
 
-		pair = qse_map_search (
+		pair = qse_htb_search (
 			awk->wtab, fnc->name.ptr, fnc->name.len);
 		if (pair != QSE_NULL)
 		{
 			/* found in the customized word table */
-			k = QSE_MAP_VPTR(pair);
-			l = QSE_MAP_VLEN(pair);
+			k = QSE_HTB_VPTR(pair);
+			l = QSE_HTB_VLEN(pair);
 		}
 		else
 		{
@@ -197,21 +195,21 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	 *       because I'm trying to support qse_awk_setword in 
 	 *       a very flimsy way here. Would it be better to drop
 	 *       qse_awk_setword totally? */
-	pair = qse_map_search (awk->rwtab, name, len);
+	pair = qse_htb_search (awk->rwtab, name, len);
 	if (pair != QSE_NULL)
 	{
 		/* the current name is a target name for
 		 * one of the original word. */
-		k = QSE_MAP_VPTR(pair);
-		l = QSE_MAP_VLEN(pair);
+		k = QSE_HTB_VPTR(pair);
+		l = QSE_HTB_VLEN(pair);
 	}
 	else
 	{
-		pair = qse_map_search (awk->wtab, name, len);
+		pair = qse_htb_search (awk->wtab, name, len);
 		if (pair != QSE_NULL)
 		{
-			k = QSE_MAP_VPTR(pair);
-			l = QSE_MAP_VLEN(pair);
+			k = QSE_HTB_VPTR(pair);
+			l = QSE_HTB_VLEN(pair);
 
 			if (qse_strxncmp (name, len, k, l) != 0)
 			{
@@ -235,10 +233,10 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	}
 	/* END NOTE */
 
-	pair = qse_map_search (awk->fnc.user, k, l);
+	pair = qse_htb_search (awk->fnc.user, k, l);
 	if (pair == QSE_NULL) return QSE_NULL;
 
-	fnc = (qse_awk_fnc_t*)QSE_MAP_VPTR(pair);
+	fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
 	if (fnc->valid != 0 && (awk->option & fnc->valid) == 0) return QSE_NULL;
 
 	return fnc;
@@ -856,7 +854,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		 * it is decremented if the assignement fails. */
 		qse_awk_rtx_refupval (run, t2);
 
-		if (qse_map_insert (
+		if (qse_htb_insert (
 			((qse_awk_val_map_t*)t1)->map, 
 			key, key_len, t2, 0) == QSE_NULL)
 		{
@@ -870,7 +868,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 			if (fs_rex_free != QSE_NULL)
 				QSE_AWK_FREEREX (run->awk, fs_rex_free);
 
-			/* qse_map_insert() fails if the key exists.
+			/* qse_htb_insert() fails if the key exists.
 			 * that can't happen here. so set the error code
 			 * to ENOMEM */
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);

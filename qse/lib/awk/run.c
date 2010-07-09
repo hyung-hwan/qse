@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: run.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -691,7 +691,7 @@ qse_mmgr_t* qse_awk_rtx_getmmgr (qse_awk_rtx_t* rtx)
 	return MMGR(rtx);
 }
 
-qse_map_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
+qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 {
 	return rtx->named;
 }
@@ -713,7 +713,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	    awk->tree.begin == QSE_NULL &&
 	    awk->tree.end == QSE_NULL &&
 	    awk->tree.chain_size == 0 &&
-	    qse_map_getsize(awk->tree.funs) == 0)
+	    qse_htb_getsize(awk->tree.funs) == 0)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOPER, QSE_NULL);
 		return QSE_NULL;
@@ -773,13 +773,13 @@ void qse_awk_rtx_setrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
 	rtx->rcb = *rcb;
 }
 
-static void free_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
+static void free_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval (
 		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
 }
 
-static void same_namedval (qse_map_t* map, void* dptr, qse_size_t dlen)
+static void same_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_awk_rtx_refdownval_nofree (
 		*(qse_awk_rtx_t**)QSE_XTN(map), dptr);
@@ -844,7 +844,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		return -1;
 	}
 
-	rtx->named = qse_map_open (
+	rtx->named = qse_htb_open (
 		MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70);
 	if (rtx->named == QSE_NULL)
 	{
@@ -856,16 +856,16 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		return -1;
 	}
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
-	qse_map_setcopier (rtx->named, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setfreeer (rtx->named, QSE_MAP_VAL, free_namedval);
-	qse_map_setkeeper (rtx->named, same_namedval);	
-	qse_map_setscale (rtx->named, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (rtx->named, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setfreeer (rtx->named, QSE_HTB_VAL, free_namedval);
+	qse_htb_setkeeper (rtx->named, same_namedval);	
+	qse_htb_setscale (rtx->named, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	rtx->format.tmp.ptr = (qse_char_t*)
 		QSE_AWK_ALLOC (rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));
 	if (rtx->format.tmp.ptr == QSE_NULL)
 	{
-		qse_map_close (rtx->named);
+		qse_htb_close (rtx->named);
 		qse_str_fini (&rtx->format.fmt);
 		qse_str_fini (&rtx->format.out);
 		qse_str_fini (&rtx->inrec.linew);
@@ -883,7 +883,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		if (rtx->pattern_range_state == QSE_NULL)
 		{
 			QSE_AWK_FREE (rtx->awk, rtx->format.tmp.ptr);
-			qse_map_close (rtx->named);
+			qse_htb_close (rtx->named);
 			qse_str_fini (&rtx->format.fmt);
 			qse_str_fini (&rtx->format.out);
 			qse_str_fini (&rtx->inrec.linew);
@@ -1014,7 +1014,7 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	}
 
 	/* destroy named variables */
-	qse_map_close (rtx->named);
+	qse_htb_close (rtx->named);
 
 	/* destroy values in free list */
 	while (rtx->fcache_count > 0)
@@ -1082,7 +1082,7 @@ static int build_runarg (
 			 * it has successfully been assigned into ARGV. */
 			qse_awk_rtx_refupval (rtx, v_tmp);
 
-			if (qse_map_upsert (
+			if (qse_htb_upsert (
 				((qse_awk_val_map_t*)v_argv)->map,
 				key, key_len, v_tmp, 0) == QSE_NULL)
 			{
@@ -1508,7 +1508,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
 	qse_awk_val_t** args, qse_size_t nargs)
 {
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
 	qse_awk_val_t* v;
@@ -1535,7 +1535,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	call.nargs = nargs;
 
 	/* find the function */
-	pair = qse_map_search (
+	pair = qse_htb_search (
 		rtx->awk->tree.funs, 
 		call.what.fun.name.ptr,
 		call.what.fun.name.len
@@ -1548,7 +1548,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 		return QSE_NULL;
 	}
 
-	fun = (qse_awk_fun_t*)QSE_MAP_VPTR(pair);
+	fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
 	QSE_ASSERT (fun != QSE_NULL);
 
 	/* check if the number of arguments given is more than expected */
@@ -2216,19 +2216,19 @@ struct foreach_walker_t
 	int ret;
 };
 
-static qse_map_walk_t walk_foreach (
-	qse_map_t* map, qse_map_pair_t* pair, void* arg)
+static qse_htb_walk_t walk_foreach (
+	qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 {
 	struct foreach_walker_t* w = (struct foreach_walker_t*)arg;
 	qse_awk_val_t* str;
 
 	str = (qse_awk_val_t*) qse_awk_rtx_makestrval (
-		w->rtx, QSE_MAP_KPTR(pair), QSE_MAP_KLEN(pair));
+		w->rtx, QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair));
 	if (str == QSE_NULL) 
 	{
 		ADJERR_LOC (w->rtx, &w->var->loc);
 		w->ret = -1;
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 
 	qse_awk_rtx_refupval (w->rtx, str);
@@ -2236,14 +2236,14 @@ static qse_map_walk_t walk_foreach (
 	{
 		qse_awk_rtx_refdownval (w->rtx, str);
 		w->ret = -1;
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 
 	if (run_statement (w->rtx, w->body) == -1)
 	{
 		qse_awk_rtx_refdownval (w->rtx, str);
 		w->ret = -1;
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 	
 	qse_awk_rtx_refdownval (w->rtx, str);
@@ -2251,7 +2251,7 @@ static qse_map_walk_t walk_foreach (
 	if (w->rtx->exit_level == EXIT_BREAK)
 	{	
 		w->rtx->exit_level = EXIT_NONE;
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 	else if (w->rtx->exit_level == EXIT_CONTINUE)
 	{
@@ -2259,17 +2259,17 @@ static qse_map_walk_t walk_foreach (
 	}
 	else if (w->rtx->exit_level != EXIT_NONE) 
 	{
-		return QSE_MAP_WALK_STOP;
+		return QSE_HTB_WALK_STOP;
 	}
 
-	return QSE_MAP_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
 static int run_foreach (qse_awk_rtx_t* rtx, qse_awk_nde_foreach_t* nde)
 {
 	qse_awk_nde_exp_t* test;
 	qse_awk_val_t* rv;
-	qse_map_t* map;
+	qse_htb_t* map;
 	struct foreach_walker_t walker;
 
 	test = (qse_awk_nde_exp_t*)nde->test;
@@ -2303,7 +2303,7 @@ static int run_foreach (qse_awk_rtx_t* rtx, qse_awk_nde_foreach_t* nde)
 	walker.var = test->left;
 	walker.body = nde->body;
 	walker.ret = 0;
-	qse_map_walk (map, walk_foreach, &walker);
+	qse_htb_walk (map, walk_foreach, &walker);
 
 	qse_awk_rtx_refdownval (rtx, rv);
 	return walker.ret;
@@ -2477,7 +2477,7 @@ static int run_nextfile (qse_awk_rtx_t* rtx, qse_awk_nde_nextfile_t* nde)
 }
 
 static int delete_indexed (
-	qse_awk_rtx_t* rtx, qse_map_t* map, qse_awk_nde_var_t* var)
+	qse_awk_rtx_t* rtx, qse_htb_t* map, qse_awk_nde_var_t* var)
 {
 	qse_awk_val_t* idx;
 
@@ -2492,7 +2492,7 @@ static int delete_indexed (
 	{
 		/* delete x["abc"] */
 
-		qse_map_delete (
+		qse_htb_delete (
 			map, 
 			((qse_awk_val_str_t*)idx)->ptr,
 			((qse_awk_val_str_t*)idx)->len
@@ -2532,7 +2532,7 @@ static int delete_indexed (
 		keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
 			out.u.cpl.len: out.u.cpldup.len;
 
-		qse_map_delete (map, key, keylen);
+		qse_htb_delete (map, key, keylen);
 
 		if (key != buf) QSE_AWK_FREE (rtx->awk, key);
 	}
@@ -2549,14 +2549,14 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 	if (var->type == QSE_AWK_NDE_NAMED ||
 	    var->type == QSE_AWK_NDE_NAMEDIDX)
 	{
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
 		QSE_ASSERTX (
 			(var->type == QSE_AWK_NDE_NAMED && var->idx == QSE_NULL) ||
 			(var->type == QSE_AWK_NDE_NAMEDIDX && var->idx != QSE_NULL),
 			"if a named variable has an index part and a named indexed variable doesn't have an index part, the program is definitely wrong");
 
-		pair = qse_map_search (
+		pair = qse_htb_search (
 			rtx->named, var->id.name.ptr, var->id.name.len);
 		if (pair == QSE_NULL)
 		{
@@ -2573,7 +2573,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 				return -1;
 			}
 
-			pair = qse_map_upsert (rtx->named, 
+			pair = qse_htb_upsert (rtx->named, 
 				var->id.name.ptr, var->id.name.len, tmp, 0);
 			if (pair == QSE_NULL)
 			{
@@ -2590,9 +2590,9 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 		else
 		{
 			qse_awk_val_t* val;
-			qse_map_t* map;
+			qse_htb_t* map;
 
-			val = (qse_awk_val_t*)QSE_MAP_VPTR(pair);
+			val = (qse_awk_val_t*)QSE_HTB_VPTR(pair);
 			QSE_ASSERT (val != QSE_NULL);
 
 			if (val->type != QSE_AWK_VAL_MAP)
@@ -2613,7 +2613,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			}
 			else
 			{
-				qse_map_clear (map);
+				qse_htb_clear (map);
 			}
 		}
 	}
@@ -2678,7 +2678,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 		}
 		else
 		{
-			qse_map_t* map;
+			qse_htb_t* map;
 
 			if (val->type != QSE_AWK_VAL_MAP)
 			{
@@ -2700,7 +2700,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 			}
 			else
 			{
-				qse_map_clear (map);
+				qse_htb_clear (map);
 			}
 		}
 	}
@@ -2731,7 +2731,7 @@ static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
 
 		/* a named variable can be reset if removed from a internal map 
 		   to manage it */
-		qse_map_delete (rtx->named, var->id.name.ptr, var->id.name.len);
+		qse_htb_delete (rtx->named, var->id.name.ptr, var->id.name.len);
 	}
 	else if (var->type == QSE_AWK_NDE_GBL ||
 	         var->type == QSE_AWK_NDE_LCL ||
@@ -3368,12 +3368,12 @@ static qse_awk_val_t* do_assignment_scalar (
 
 	if (var->type == QSE_AWK_NDE_NAMED) 
 	{
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
-		pair = qse_map_search (
+		pair = qse_htb_search (
 			run->named, var->id.name.ptr, var->id.name.len);
 		if (pair != QSE_NULL && 
-		    ((qse_awk_val_t*)QSE_MAP_VPTR(pair))->type == QSE_AWK_VAL_MAP)
+		    ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
 		{
 			/* once a variable becomes a map,
 			 * it cannot be changed to a scalar variable */
@@ -3383,7 +3383,7 @@ static qse_awk_val_t* do_assignment_scalar (
 			return QSE_NULL;
 		}
 
-		if (qse_map_upsert (run->named, 
+		if (qse_htb_upsert (run->named, 
 			var->id.name.ptr, var->id.name.len, val, 0) == QSE_NULL)
 		{
 			SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
@@ -3455,12 +3455,12 @@ static qse_awk_val_t* do_assignment_map (
 
 	if (var->type == QSE_AWK_NDE_NAMEDIDX)
 	{
-		qse_map_pair_t* pair;
-		pair = qse_map_search (
+		qse_htb_pair_t* pair;
+		pair = qse_htb_search (
 			run->named, var->id.name.ptr, var->id.name.len);
 		map = (pair == QSE_NULL)? 
 			(qse_awk_val_map_t*)qse_awk_val_nil: 
-			(qse_awk_val_map_t*)QSE_MAP_VPTR(pair);
+			(qse_awk_val_map_t*)QSE_HTB_VPTR(pair);
 	}
 	else
 	{
@@ -3487,8 +3487,8 @@ static qse_awk_val_t* do_assignment_map (
 		{
 			/* doesn't have to decrease the reference count 
 			 * of the previous value here as it is done by 
-			 * qse_map_upsert */
-			if (qse_map_upsert (
+			 * qse_htb_upsert */
+			if (qse_htb_upsert (
 				run->named,
 				var->id.name.ptr,
 				var->id.name.len, 
@@ -3546,7 +3546,7 @@ static qse_awk_val_t* do_assignment_map (
 		str, (int)map->ref, (int)map->type);
 #endif
 
-	if (qse_map_upsert (map->map, str, len, val, 0) == QSE_NULL)
+	if (qse_htb_upsert (map->map, str, len, val, 0) == QSE_NULL)
 	{
 		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
 		SETERR_LOC (run, QSE_AWK_ENOMEM, &var->loc);
@@ -3862,10 +3862,10 @@ static qse_awk_val_t* eval_binop_in (
 	else if (rv->type == QSE_AWK_VAL_MAP)
 	{
 		qse_awk_val_t* res;
-		qse_map_t* map;
+		qse_htb_t* map;
 
 		map = ((qse_awk_val_map_t*)rv)->map;
-		res = (qse_map_search (map, str, len) == QSE_NULL)? 
+		res = (qse_htb_search (map, str, len) == QSE_NULL)? 
 			qse_awk_val_zero: qse_awk_val_one;
 
 		if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
@@ -5429,9 +5429,9 @@ static qse_awk_val_t* eval_fun_ex (
 {
 	qse_awk_nde_call_t* call = (qse_awk_nde_call_t*)nde;
 	qse_awk_fun_t* fun;
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 
-	pair = qse_map_search (rtx->awk->tree.funs,
+	pair = qse_htb_search (rtx->awk->tree.funs,
 		call->what.fun.name.ptr, call->what.fun.name.len);
 	if (pair == QSE_NULL) 
 	{
@@ -5441,7 +5441,7 @@ static qse_awk_val_t* eval_fun_ex (
 		return QSE_NULL;
 	}
 
-	fun = (qse_awk_fun_t*)QSE_MAP_VPTR(pair);
+	fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
 	QSE_ASSERT (fun != QSE_NULL);
 
 	if (call->nargs > fun->nargs)
@@ -5862,16 +5862,16 @@ static int get_reference (
 
 	if (nde->type == QSE_AWK_NDE_NAMED)
 	{
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
-		pair = qse_map_search (
+		pair = qse_htb_search (
 			run->named, tgt->id.name.ptr, tgt->id.name.len);
 		if (pair == QSE_NULL)
 		{
 			/* it is bad that the named variable has to be
 			 * created in the function named "__get_refernce".
 			 * would there be any better ways to avoid this? */
-			pair = qse_map_upsert (
+			pair = qse_htb_upsert (
 				run->named, tgt->id.name.ptr,
 				tgt->id.name.len, qse_awk_val_nil, 0);
 			if (pair == QSE_NULL) 
@@ -5881,7 +5881,7 @@ static int get_reference (
 			}
 		}
 
-		*ref = (qse_awk_val_t**)&QSE_MAP_VPTR(pair);
+		*ref = (qse_awk_val_t**)&QSE_HTB_VPTR(pair);
 		return 0;
 	}
 
@@ -5905,13 +5905,13 @@ static int get_reference (
 
 	if (nde->type == QSE_AWK_NDE_NAMEDIDX)
 	{
-		qse_map_pair_t* pair;
+		qse_htb_pair_t* pair;
 
-		pair = qse_map_search (
+		pair = qse_htb_search (
 			run->named, tgt->id.name.ptr, tgt->id.name.len);
 		if (pair == QSE_NULL)
 		{
-			pair = qse_map_upsert (
+			pair = qse_htb_upsert (
 				run->named, tgt->id.name.ptr,
 				tgt->id.name.len, qse_awk_val_nil, 0);
 			if (pair == QSE_NULL) 
@@ -5922,7 +5922,7 @@ static int get_reference (
 		}
 
 		tmp = get_reference_indexed (
-			run, tgt, (qse_awk_val_t**)&QSE_MAP_VPTR(pair));
+			run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
 		if (tmp == QSE_NULL) return -1;
 		*ref = tmp;
 	}
@@ -5990,7 +5990,7 @@ static int get_reference (
 static qse_awk_val_t** get_reference_indexed (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
 {
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 	qse_char_t* str;
 	qse_size_t len;
 	qse_char_t idxbuf[IDXBUFSIZE];
@@ -6024,10 +6024,10 @@ static qse_awk_val_t** get_reference_indexed (
 	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
-	pair = qse_map_search ((*(qse_awk_val_map_t**)val)->map, str, len);
+	pair = qse_htb_search ((*(qse_awk_val_map_t**)val)->map, str, len);
 	if (pair == QSE_NULL)
 	{
-		pair = qse_map_upsert (
+		pair = qse_htb_upsert (
 			(*(qse_awk_val_map_t**)val)->map, 
 			str, len, qse_awk_val_nil, 0);
 		if (pair == QSE_NULL)
@@ -6037,11 +6037,11 @@ static qse_awk_val_t** get_reference_indexed (
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refupval (run, QSE_MAP_VPTR(pair));
+		qse_awk_rtx_refupval (run, QSE_HTB_VPTR(pair));
 	}
 
 	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
-	return (qse_awk_val_t**)&QSE_MAP_VPTR(pair);
+	return (qse_awk_val_t**)&QSE_HTB_VPTR(pair);
 }
 
 static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
@@ -6109,13 +6109,13 @@ static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 static qse_awk_val_t* eval_named (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 		       
-	pair = qse_map_search (run->named, 
+	pair = qse_htb_search (run->named, 
 		((qse_awk_nde_var_t*)nde)->id.name.ptr, 
 		((qse_awk_nde_var_t*)nde)->id.name.len);
 
-	return (pair == QSE_NULL)? qse_awk_val_nil: QSE_MAP_VPTR(pair);
+	return (pair == QSE_NULL)? qse_awk_val_nil: QSE_HTB_VPTR(pair);
 }
 
 static qse_awk_val_t* eval_gbl (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
@@ -6136,7 +6136,7 @@ static qse_awk_val_t* eval_arg (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 static qse_awk_val_t* eval_indexed (
 	qse_awk_rtx_t* run, qse_awk_nde_var_t* nde, qse_awk_val_t** val)
 {
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 	qse_char_t* str;
 	qse_size_t len;
 	qse_char_t idxbuf[IDXBUFSIZE];
@@ -6170,22 +6170,22 @@ static qse_awk_val_t* eval_indexed (
 	str = idxnde_to_str (run, nde->idx, idxbuf, &len);
 	if (str == QSE_NULL) return QSE_NULL;
 
-	pair = qse_map_search ((*(qse_awk_val_map_t**)val)->map, str, len);
+	pair = qse_htb_search ((*(qse_awk_val_map_t**)val)->map, str, len);
 	if (str != idxbuf) QSE_AWK_FREE (run->awk, str);
 
 	return (pair == QSE_NULL)? qse_awk_val_nil: 
-	                           (qse_awk_val_t*)QSE_MAP_VPTR(pair);
+	                           (qse_awk_val_t*)QSE_HTB_VPTR(pair);
 }
 
 static qse_awk_val_t* eval_namedidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
 	qse_awk_nde_var_t* tgt = (qse_awk_nde_var_t*)nde;
-	qse_map_pair_t* pair;
+	qse_htb_pair_t* pair;
 
-	pair = qse_map_search (run->named, tgt->id.name.ptr, tgt->id.name.len);
+	pair = qse_htb_search (run->named, tgt->id.name.ptr, tgt->id.name.len);
 	if (pair == QSE_NULL)
 	{
-		pair = qse_map_upsert (run->named, 
+		pair = qse_htb_upsert (run->named, 
 			tgt->id.name.ptr, tgt->id.name.len, qse_awk_val_nil, 0);
 		if (pair == QSE_NULL) 
 		{
@@ -6193,10 +6193,10 @@ static qse_awk_val_t* eval_namedidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			return QSE_NULL;
 		}
 
-		qse_awk_rtx_refupval (run, QSE_MAP_VPTR(pair)); 
+		qse_awk_rtx_refupval (run, QSE_HTB_VPTR(pair)); 
 	}
 
-	return eval_indexed (run, tgt, (qse_awk_val_t**)&QSE_MAP_VPTR(pair));
+	return eval_indexed (run, tgt, (qse_awk_val_t**)&QSE_HTB_VPTR(pair));
 }
 
 static qse_awk_val_t* eval_gblidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde)

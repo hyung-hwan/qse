@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 296 2009-10-07 12:39:18Z hyunghwan.chung $
+ * $Id: sed.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,9 +23,6 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
-#include <qse/cmn/str.h>
-#include <qse/cmn/lda.h>
-#include <qse/cmn/map.h>
 
 /** @file
  * A stream editor performs text transformation on a text stream. 
@@ -181,8 +178,8 @@ typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
  * qse_sed_exec().
  */
 typedef qse_ssize_t (*qse_sed_io_fun_t) (
-        qse_sed_t*        sed,
-        qse_sed_io_cmd_t  cmd,
+	qse_sed_t*        sed,
+	qse_sed_io_cmd_t  cmd,
 	qse_sed_io_arg_t* arg,
 	qse_char_t*       data,
 	qse_size_t        count
@@ -339,7 +336,7 @@ void qse_sed_geterror (
  * location.
  */
 void qse_sed_seterrnum (
-        qse_sed_t*        sed,    /**< stream editor */
+	qse_sed_t*        sed,    /**< stream editor */
 	qse_sed_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument for formatting error message */
 );
@@ -349,9 +346,9 @@ void qse_sed_seterrnum (
  * message for a given error number.
  */
 void qse_sed_seterrmsg (
-        qse_sed_t*        sed,      /**< stream editor */
+	qse_sed_t*        sed,      /**< stream editor */
 	qse_sed_errnum_t  errnum,   /**< error number */
-        const qse_char_t* errmsg,   /**< error message */
+	const qse_char_t* errmsg,   /**< error message */
 	const qse_sed_loc_t* errloc /**< error location */
 );
 

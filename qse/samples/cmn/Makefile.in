@@ -34,9 +34,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) map$(EXEEXT) \
-	lda$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
-	time$(EXEEXT) main$(EXEEXT) rex01$(EXEEXT)
+bin_PROGRAMS = chr$(EXEEXT) str$(EXEEXT) sll$(EXEEXT) lda$(EXEEXT) \
+	htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) \
+	sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) rex01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -61,6 +61,10 @@ am_fio_OBJECTS = fio.$(OBJEXT)
 fio_OBJECTS = $(am_fio_OBJECTS)
 fio_LDADD = $(LDADD)
 fio_DEPENDENCIES =
+am_htb_OBJECTS = htb.$(OBJEXT)
+htb_OBJECTS = $(am_htb_OBJECTS)
+htb_LDADD = $(LDADD)
+htb_DEPENDENCIES =
 am_lda_OBJECTS = lda.$(OBJEXT)
 lda_OBJECTS = $(am_lda_OBJECTS)
 lda_LDADD = $(LDADD)
@@ -69,14 +73,14 @@ am_main_OBJECTS = main.$(OBJEXT)
 main_OBJECTS = $(am_main_OBJECTS)
 main_LDADD = $(LDADD)
 main_DEPENDENCIES =
-am_map_OBJECTS = map.$(OBJEXT)
-map_OBJECTS = $(am_map_OBJECTS)
-map_LDADD = $(LDADD)
-map_DEPENDENCIES =
 am_pio_OBJECTS = pio.$(OBJEXT)
 pio_OBJECTS = $(am_pio_OBJECTS)
 pio_LDADD = $(LDADD)
 pio_DEPENDENCIES =
+am_rbt_OBJECTS = rbt.$(OBJEXT)
+rbt_OBJECTS = $(am_rbt_OBJECTS)
+rbt_LDADD = $(LDADD)
+rbt_DEPENDENCIES =
 am_rex01_OBJECTS = rex01.$(OBJEXT)
 rex01_OBJECTS = $(am_rex01_OBJECTS)
 rex01_LDADD = $(LDADD)
@@ -110,12 +114,13 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
-	$(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
-	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(lda_SOURCES) \
-	$(main_SOURCES) $(map_SOURCES) $(pio_SOURCES) $(rex01_SOURCES) \
+SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(htb_SOURCES) $(lda_SOURCES) \
+	$(main_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
 	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(htb_SOURCES) \
+	$(lda_SOURCES) $(main_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
+	$(time_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -263,8 +268,9 @@ LDADD = -lqsecmn
 chr_SOURCES = chr.c
 str_SOURCES = str.c
 sll_SOURCES = sll.c
-map_SOURCES = map.c
 lda_SOURCES = lda.c
+htb_SOURCES = htb.c
+rbt_SOURCES = rbt.c
 fio_SOURCES = fio.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
@@ -354,18 +360,21 @@ chr$(EXEEXT): $(chr_OBJECTS) $(chr_DEPENDENCIES)
 fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
 	@rm -f fio$(EXEEXT)
 	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
+htb$(EXEEXT): $(htb_OBJECTS) $(htb_DEPENDENCIES) 
+	@rm -f htb$(EXEEXT)
+	$(LINK) $(htb_OBJECTS) $(htb_LDADD) $(LIBS)
 lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) 
 	@rm -f lda$(EXEEXT)
 	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
 main$(EXEEXT): $(main_OBJECTS) $(main_DEPENDENCIES) 
 	@rm -f main$(EXEEXT)
 	$(LINK) $(main_OBJECTS) $(main_LDADD) $(LIBS)
-map$(EXEEXT): $(map_OBJECTS) $(map_DEPENDENCIES) 
-	@rm -f map$(EXEEXT)
-	$(LINK) $(map_OBJECTS) $(map_LDADD) $(LIBS)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
 	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
+rbt$(EXEEXT): $(rbt_OBJECTS) $(rbt_DEPENDENCIES) 
+	@rm -f rbt$(EXEEXT)
+	$(LINK) $(rbt_OBJECTS) $(rbt_LDADD) $(LIBS)
 rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) 
 	@rm -f rex01$(EXEEXT)
 	$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
@@ -390,10 +399,11 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@

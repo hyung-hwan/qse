@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sll.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -381,94 +381,63 @@ qse_sll_node_t* qse_sll_gettail (
 );
 /******/
 
-/****f* Common/qse_sll_search
- * NAME
- *  qse_sll_search - find a node
+/**
+ * The qse_sll_search() function traverses a list to find a node containing
+ * the same value as the the data pointer and length. The traversal begins
+ * from the next node of the positional node. If the positional node is 
+ * QSE_NULL, the traversal begins from the head node. 
  *
- * DESCRIPTION
- *  The qse_sll_search() function traverses a list to find a node containing
- *  the same value as the the data pointer and length. The traversal begins
- *  from the next node of the positional node. If the positional node is 
- *  QSE_NULL, the traversal begins from the head node. 
+ * Note that no reverse search is provided because a reverse traversal can not be 
+ * achieved efficiently.
  *
- * RETURN
- *  The pointer to the node found. Otherwise, QSE_NULL.
- *
- * NOTES
- *  No reverse search is provided because a reverse traversal can not be 
- *  achieved efficiently.
- *
- * SYNOPSIS
+ * @return pointer to the node found. QSE_NULL if no match is found
  */
 qse_sll_node_t* qse_sll_search (
-	qse_sll_t*      sll   /* a singly linked list */,
-	qse_sll_node_t* pos   /* a positional node */,
-	const void*     dptr  /* a data pointer */,
-	qse_size_t      dlen  /* a data length */
+	qse_sll_t*      sll,   /**< singly linked list */
+	qse_sll_node_t* pos,   /**< positional node */
+	const void*     dptr,  /**< data pointer */
+	qse_size_t      dlen   /**< data length */
 );
-/******/
 
-/****f* Common/qse_sll_insert
- * NAME
- *  qse_sll_insert - insert data to a new node
- *
- * DESCRIPTION
- *  There is performance penalty unless the positional node is neither
- *  the head node nor QSE_NULL. You should consider a different data
- *  structure such as a doubly linked list if you need to insert data
- *  into a random position.
- *
- * RETURN
- *  The pointer to a new node on success and QSE_NULL on failure:w
- *
- * SYNOPSIS
+/**
+ * The qse_sll_insert() function inserts data to the list @a sll.
+ * There is performance penalty unless the positional node is neither
+ * the head node nor QSE_NULL. You should consider a different data
+ * structure such as a doubly linked list if you need to insert data
+ * into a random position.
+ * @return pointer to a new node on success, QSE_NULL on failure
  */
 qse_sll_node_t* qse_sll_insert (
-	qse_sll_t*      sll  /* a singly linked list */,
-	qse_sll_node_t* pos  /* a node before which a new node is inserted */,
-	void*           dptr /* the pointer to the data */,
-	qse_size_t      dlen /* the length of the data */
+	qse_sll_t*      sll,  /**< singly linked list */
+	qse_sll_node_t* pos,  /**< node before which a new node is inserted */
+	void*           dptr, /**< the pointer to the data */
+	qse_size_t      dlen  /**< the length of the data */
 );
-/******/
 
-/****f* Common/qse_sll_delete
- * NAME
- *  qse_sll_delete - delete a node
- *
- * DESCRIPTION
- *  The qse_sll_delete() function deletes a node. 
- * 
- * SYNOPSIS
+/**
+ * The qse_sll_delete() function deletes a node. 
  */
 void qse_sll_delete (
-	qse_sll_t*      sll  /* a singly linked list */,
-	qse_sll_node_t* pos  /* a node to delete */
+	qse_sll_t*      sll, /**< singly linked list */
+	qse_sll_node_t* pos  /**< node to delete */
 );
-/******/
 
-/****f* Common/qse_sll_clear 
- * NAME 
- *  qse_sll_clear - delete all nodes
- *
- * DESCRIPTION
- *  The qse_sll_clear() function empties a singly linked list by deletinng
- *  all the nodes.
- *
- * SYNOPSIS
+/**
+ * The qse_sll_clear() function empties a singly linked list by deletinng
+ * all the nodes.
  */
 void qse_sll_clear (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
 qse_sll_node_t* qse_sll_pushhead (
-	qse_sll_t* sll /* a singly linked list */,
+	qse_sll_t* sll /**< singly linked list */,
 	void*      dptr, 
 	qse_size_t dlen
 );
 
 qse_sll_node_t* qse_sll_pushtail (
-	qse_sll_t* sll /* a singly linked list */, 
+	qse_sll_t* sll /**< singly linked list */, 
 	void*      dptr, 
 	qse_size_t dlen
 );
@@ -482,12 +451,7 @@ void qse_sll_poptail (
 	qse_sll_t* sll
 );
 
-/****f* Common/qse_sll_walk
- * NAME
- *  qse_sll_walk - traverse s singly linked list 
- *
- * DESCRIPTION
- *  A singly linked list allows uni-directional in-order traversal.
+/**
  *  The qse_sll_walk() function traverses a singly linkked list from its 
  *  head node down to its tail node as long as the walker function returns 
  *  QSE_SLL_WALK_FORWARD. A walker can return QSE_SLL_WALK_STOP to cause 
@@ -497,15 +461,12 @@ void qse_sll_poptail (
  *  parameters: the singly linked list, the visiting node, and the 
  *  user-defined data passed as the third parameter in a call to the 
  *  qse_sll_walk() function.
- * 
- * SYNOPSIS
  */
 void qse_sll_walk (
-	qse_sll_t*       sll     /* a singly linked list */,
-	qse_sll_walker_t walker  /* a user-defined walker function */,
-	void*            arg     /* the pointer to user-defined data */
+	qse_sll_t*       sll,     /**< singly linked list */
+	qse_sll_walker_t walker,  /**< user-defined walker function */
+	void*            ctx      /**< the pointer to user-defined data */
 );
-/******/
 
 #ifdef __cplusplus
 }
