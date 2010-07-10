@@ -1,7 +1,7 @@
 
 dnl AC_PREREQ(2.59)
 
-AC_INIT([qse],[0.5.4],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://qse.googlecode.com])
+AC_INIT([qse],[0.5.5],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://qse.googlecode.com])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac/au])
 AC_CONFIG_MACRO_DIR([ac/m4])
