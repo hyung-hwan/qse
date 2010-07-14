@@ -28,22 +28,29 @@
  * A red-black tree is a self-balancing binary search tree.
  */
 
-/* values that can be returned by qse_rbt_walker_t */
+typedef struct qse_rbt_t qse_rbt_t;
+typedef struct qse_rbt_pair_t qse_rbt_pair_t;
+
+/** 
+ * The qse_rbt_walk_t type defines values that the callback function can
+ * return to control qse_rbt_walk() and qse_rbt_rwalk().
+ */
 enum qse_rbt_walk_t
 {
         QSE_RBT_WALK_STOP = 0,
         QSE_RBT_WALK_FORWARD = 1
 };
+typedef enum qse_rbt_walk_t qse_rbt_walk_t;
 
+/**
+ * The qse_rbt_id_t type defines IDs to indicate a key or a value in various
+ * functions
+ */
 enum qse_rbt_id_t
 {
-	QSE_RBT_KEY = 0,
-	QSE_RBT_VAL = 1
+	QSE_RBT_KEY = 0, /**< indicate a key */
+	QSE_RBT_VAL = 1  /**< indicate a value */
 };
-
-typedef struct qse_rbt_t qse_rbt_t;
-typedef struct qse_rbt_pair_t qse_rbt_pair_t;
-typedef enum qse_rbt_walk_t qse_rbt_walk_t;
 typedef enum qse_rbt_id_t qse_rbt_id_t;
 
 /**
@@ -66,11 +73,10 @@ typedef void (*qse_rbt_freeer_t) (
 
 /**
  * The qse_rbt_comper_t type defines a key comparator that is called when
- * the rbt needs to compare keys. A rbt is created with a default comparator
- * which performs bitwise comparison between two keys.
- *
- * The comparator should return 0 if the keys are the same and a non-zero
- * integer otherwise.
+ * the rbt needs to compare keys. A red-black tree is created with a default
+ * comparator which performs bitwise comparison of two keys.
+ * The comparator should return 0 if the keys are the same, 1 if the first
+ * key is greater than the second key, -1 otherwise.
  */
 typedef int (*qse_rbt_comper_t) (
 	qse_rbt_t*  rbt,    /**< red-black tree */ 
@@ -83,8 +89,8 @@ typedef int (*qse_rbt_comper_t) (
 /**
  * The qse_rbt_keeper_t type defines a value keeper that is called when 
  * a value is retained in the context that it should be destroyed because
- * it is identical to a new value. Two values are identical if their beginning
- * pointers and their lengths are equal.
+ * it is identical to a new value. Two values are identical if their 
+ * pointers and lengths are equal.
  */
 typedef void (*qse_rbt_keeper_t) (
 	qse_rbt_t* rbt,    /**< red-black tree */
@@ -131,22 +137,31 @@ struct qse_rbt_t
 {
 	QSE_DEFINE_COMMON_FIELDS (rbt)
 
-	qse_rbt_copier_t copier[2];
-	qse_rbt_freeer_t freeer[2];
-	qse_rbt_comper_t comper;   /**< key comparator */
-	qse_rbt_keeper_t keeper;   /**< value keeper */
+	qse_rbt_copier_t copier[2]; /**< key and value copier */
+	qse_rbt_freeer_t freeer[2]; /**< key and value freeer */
+	qse_rbt_comper_t comper;    /**< key comparator */
+	qse_rbt_keeper_t keeper;    /**< value keeper */
 
-	qse_byte_t       scale[2]; /**< length scale */
-	qse_byte_t       factor;   /**< load factor */
+	qse_byte_t       scale[2];  /**< length scale */
+	qse_byte_t       factor;    /**< load factor */
 	qse_byte_t       filler0;
 
-	qse_rbt_pair_t   nil; /**< internal nil node */
+	qse_rbt_pair_t   nil;       /**< internal nil node */
 
-	qse_size_t       size;
-	qse_rbt_pair_t*  root;
+	qse_size_t       size;      /**< number of pairs */
+	qse_rbt_pair_t*  root;      /**< root pair */
 };
 
+/**
+ * The QSE_RBT_COPIER_SIMPLE macros defines a copier that remembers the
+ * pointer and length of data in a pair.
+ */
 #define QSE_RBT_COPIER_SIMPLE ((qse_rbt_copier_t)1)
+
+/**
+ * The QSE_RBT_COPIER_INLINE macros defines a copier that copies data into
+ * a pair.
+ */
 #define QSE_RBT_COPIER_INLINE ((qse_rbt_copier_t)2)
 
 /**
@@ -220,7 +235,7 @@ qse_size_t qse_rbt_getsize (
  */
 int qse_rbt_getscale (
 	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< QSE_RBT_KEY or QSE_RBT_VAL */
+	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
 );
 
 /**
@@ -233,7 +248,7 @@ int qse_rbt_getscale (
  */
 void qse_rbt_setscale (
 	qse_rbt_t*   rbt,  /**< red-black tree */
-	qse_rbt_id_t id,   /**< QSE_RBT_KEY or QSE_RBT_VAL */
+	qse_rbt_id_t id,   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
 	int          scale /**< scale factor in bytes */
 );
 
@@ -242,7 +257,7 @@ void qse_rbt_setscale (
  */
 qse_rbt_copier_t qse_rbt_getcopier (
 	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< QSE_RBT_KEY or QSE_RBT_VAL */
+	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
 );
 
 /**
@@ -256,13 +271,13 @@ qse_rbt_copier_t qse_rbt_getcopier (
  */
 void qse_rbt_setcopier (
 	qse_rbt_t* rbt,          /**< red-black tree */
-	qse_rbt_id_t id,         /**< QSE_RBT_KEY or QSE_RBT_VAL */
-	qse_rbt_copier_t copier  /**< element copier */
+	qse_rbt_id_t id,         /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
+	qse_rbt_copier_t copier  /**< callback for copying a key or a value */
 );
 
 qse_rbt_freeer_t qse_rbt_getfreeer (
 	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< QSE_RBT_KEY or QSE_RBT_VAL */
+	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
 );
 
 /**
@@ -271,10 +286,9 @@ qse_rbt_freeer_t qse_rbt_getfreeer (
  */
 void qse_rbt_setfreeer (
 	qse_rbt_t*       rbt,    /**< red-black tree */
-	qse_rbt_id_t     id,     /**< QSE_RBT_KEY or QSE_RBT_VAL */
-	qse_rbt_freeer_t freeer  /**< an element freeer */
+	qse_rbt_id_t     id,     /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
+	qse_rbt_freeer_t freeer  /**< callback for destroying a key or a value */
 );
-
 
 /**
  * The qse_rbt_getcomper() function returns the key comparator.
@@ -324,7 +338,7 @@ qse_rbt_pair_t* qse_rbt_search (
 /**
  * The qse_rbt_upsert() function searches red-black tree for the pair with a 
  * matching key. If one is found, it updates the pair. Otherwise, it inserts
- * a new pair with the key and value given. It returns the pointer to the 
+ * a new pair with the key and the value given. It returns the pointer to the 
  * pair updated or inserted.
  * @return a pointer to the updated or inserted pair on success, 
  *         QSE_NULL on failure. 
@@ -388,7 +402,7 @@ int qse_rbt_delete (
 	qse_size_t klen   /**< key size */
 );
 
-/* 
+/**
  * The qse_rbt_clear() function empties a red-black tree.
  */
 void qse_rbt_clear (
@@ -401,7 +415,7 @@ void qse_rbt_clear (
  */
 void qse_rbt_walk (
 	qse_rbt_t*       rbt,    /**< red-black tree */
-	qse_rbt_walker_t walker, /**< pointer to the function for each pair */
+	qse_rbt_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
 );
 
@@ -411,7 +425,7 @@ void qse_rbt_walk (
  */
 void qse_rbt_rwalk (
 	qse_rbt_t*       rbt,    /**< red-black tree */
-	qse_rbt_walker_t walker, /**< pointer to the function for each pair */
+	qse_rbt_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
 );
 
