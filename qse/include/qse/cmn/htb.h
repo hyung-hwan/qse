@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 331 2010-07-13 11:18:30Z hyunghwan.chung $
+ * $Id: htb.h 333 2010-07-13 13:29:02Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -29,26 +29,33 @@
  * chained under the same bucket.
  */
 
-/* values that can be returned by qse_htb_walker_t */
+typedef struct qse_htb_t qse_htb_t;
+typedef struct qse_htb_pair_t qse_htb_pair_t;
+
+/** 
+ * The qse_htb_walk_t type defines values that the callback function can
+ * return to control qse_htb_walk().
+ */
 enum qse_htb_walk_t
 {
         QSE_HTB_WALK_STOP = 0,
         QSE_HTB_WALK_FORWARD = 1
 };
+typedef enum qse_htb_walk_t qse_htb_walk_t;
 
+/**
+ * The qse_htb_id_t type defines IDs to indicate a key or a value in various
+ * functions.
+ */
 enum qse_htb_id_t
 {
 	QSE_HTB_KEY = 0,
 	QSE_HTB_VAL = 1
 };
-
-typedef struct qse_htb_t qse_htb_t;
-typedef struct qse_htb_pair_t qse_htb_pair_t;
-typedef enum qse_htb_walk_t qse_htb_walk_t;
 typedef enum qse_htb_id_t qse_htb_id_t;
 
 /**
- * The qse_htb_copier_t type defines a pair contruction callback
+ * The qse_htb_copier_t type defines a pair contruction callback.
  */
 typedef void* (*qse_htb_copier_t) (
 	qse_htb_t* htb  /* hash table */,
@@ -67,16 +74,15 @@ typedef void (*qse_htb_freeer_t) (
 
 /* key hasher */
 typedef qse_size_t (*qse_htb_hasher_t) (
-	qse_htb_t* htb,   /**< hash table */
-	const void* kptr, /**< pointer to a key */
-	qse_size_t klen   /**< length of a key in bytes */
+	qse_htb_t*  htb,   /**< hash table */
+	const void* kptr,  /**< key pointer */
+	qse_size_t  klen   /**< key length in bytes */
 );
 
 /**
  * The qse_htb_comper_t type defines a key comparator that is called when
- * the htb needs to compare keys. A htb is created with a default comparator
- * which performs bitwise comparison between two keys.
- *
+ * the htb needs to compare keys. A hash table is created with a default
+ * comparator which performs bitwise comparison of two keys.
  * The comparator should return 0 if the keys are the same and a non-zero
  * integer otherwise.
  */
@@ -91,8 +97,8 @@ typedef int (*qse_htb_comper_t) (
 /**
  * The qse_htb_keeper_t type defines a value keeper that is called when 
  * a value is retained in the context that it should be destroyed because
- * it is identical to a new value. Two values are identical if their beginning
- * pointers and their lengths are equal.
+ * it is identical to a new value. Two values are identical if their 
+ * pointers and lengths are equal.
  */
 typedef void (*qse_htb_keeper_t) (
 	qse_htb_t* htb,    /**< hash table */
@@ -434,7 +440,7 @@ int qse_htb_delete (
 	qse_size_t klen   /**< the size of the key */
 );
 
-/* 
+/**
  * The qse_htb_clear() function empties a hash table
  */
 void qse_htb_clear (
@@ -446,7 +452,7 @@ void qse_htb_clear (
  */
 void qse_htb_walk (
 	qse_htb_t* htb,          /**< hash table */
-	qse_htb_walker_t walker, /**< pointer to the function for each pair */
+	qse_htb_walker_t walker, /**< callback function for each pair */
 	void* ctx                /**< pointer to user-specific data */
 );
 

@@ -503,7 +503,7 @@ static pair_t* change_pair_val (
 					}
 					else 
 					{
-						QSE_ASSERT (parent->parent->right == pair);
+						QSE_ASSERT (pair->parent->right == pair);
 						pair->parent->right = p;
 					}
 				}
@@ -535,8 +535,6 @@ static pair_t* change_pair_val (
 static pair_t* insert (
 	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen, int opt)
 {
-	/* TODO: enhance this. ues comper... etc */
-
 	pair_t* xcur = rbt->root;
 	pair_t* xpar = QSE_NULL;
 	pair_t* xnew; 
@@ -546,8 +544,6 @@ static pair_t* insert (
 		int n = rbt->comper (rbt, kptr, klen, xcur->kptr, xcur->klen);
 		if (n == 0) 
 		{
-			/* TODO: handle various cases depending on insert types.
-			 * return error. update value. */
 			switch (opt)
 			{
 				case UPSERT:
