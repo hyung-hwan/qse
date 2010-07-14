@@ -25,6 +25,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
 
 #define rbt_t    qse_rbt_t
 #define pair_t   qse_rbt_pair_t
+#define id_t     qse_rbt_id_t
 #define copier_t qse_rbt_copier_t
 #define freeer_t qse_rbt_freeer_t
 #define comper_t qse_rbt_comper_t
@@ -39,7 +40,6 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
 #define SIZEOF(x) QSE_SIZEOF(x)
 #define size_t    qse_size_t
 #define byte_t    qse_byte_t
-#define uint_t    qse_uint_t
 #define mmgr_t    qse_mmgr_t
 
 #define KTOB(rbt,len) ((len)*(rbt)->scale[QSE_RBT_KEY])
@@ -60,10 +60,10 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
 
 static QSE_INLINE int comp_key (
 	qse_rbt_t* rbt,
-	const void* kptr1, qse_size_t klen1,
-	const void* kptr2, qse_size_t klen2)
+	const void* kptr1, size_t klen1,
+	const void* kptr2, size_t klen2)
 {
-	qse_size_t min;
+	size_t min;
 	int n, nn;
 
 	if (klen1 < klen2)
@@ -227,14 +227,14 @@ void qse_rbt_fini (rbt_t* rbt)
 	qse_rbt_clear (rbt);
 }
 
-int qse_rbt_getscale (rbt_t* rbt, qse_rbt_id_t id)
+int qse_rbt_getscale (rbt_t* rbt, id_t id)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
 	return rbt->scale[id];
 }
 
-void qse_rbt_setscale (rbt_t* rbt, qse_rbt_id_t id, int scale)
+void qse_rbt_setscale (rbt_t* rbt, id_t id, int scale)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
@@ -248,14 +248,14 @@ void qse_rbt_setscale (rbt_t* rbt, qse_rbt_id_t id, int scale)
 	rbt->scale[id] = scale;
 }
 
-copier_t qse_rbt_getcopier (rbt_t* rbt, qse_rbt_id_t id)
+copier_t qse_rbt_getcopier (rbt_t* rbt, id_t id)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
 	return rbt->copier[id];
 }
 
-void qse_rbt_setcopier (rbt_t* rbt, qse_rbt_id_t id, copier_t copier)
+void qse_rbt_setcopier (rbt_t* rbt, id_t id, copier_t copier)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
@@ -263,14 +263,14 @@ void qse_rbt_setcopier (rbt_t* rbt, qse_rbt_id_t id, copier_t copier)
 	rbt->copier[id] = copier;
 }
 
-freeer_t qse_rbt_getfreeer (rbt_t* rbt, qse_rbt_id_t id)
+freeer_t qse_rbt_getfreeer (rbt_t* rbt, id_t id)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
 	return rbt->freeer[id];
 }
 
-void qse_rbt_setfreeer (rbt_t* rbt, qse_rbt_id_t id, freeer_t freeer)
+void qse_rbt_setfreeer (rbt_t* rbt, id_t id, freeer_t freeer)
 {
 	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
 		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
@@ -319,7 +319,7 @@ pair_t* qse_rbt_search (rbt_t* rbt, const void* kptr, size_t klen)
 	return QSE_NULL;
 }
 
-static void rotate (qse_rbt_t* rbt, qse_rbt_pair_t* pivot, int leftwise)
+static void rotate (rbt_t* rbt, pair_t* pivot, int leftwise)
 {
 	/*
 	 * == leftwise rotation
@@ -355,7 +355,7 @@ static void rotate (qse_rbt_t* rbt, qse_rbt_pair_t* pivot, int leftwise)
 	 * is the left child or the right child of its parent, 
 	 */
 
-	qse_rbt_pair_t* parent, * z, * c;
+	pair_t* parent, * z, * c;
 	int cid1, cid2;
 
 	QSE_ASSERT (pivot != QSE_NULL);
@@ -403,14 +403,14 @@ static void rotate (qse_rbt_t* rbt, qse_rbt_pair_t* pivot, int leftwise)
 	if (!IS_NIL(rbt,c)) c->parent = pivot;
 }
 
-static void adjust (qse_rbt_t* rbt, qse_rbt_pair_t* pair)
+static void adjust (rbt_t* rbt, pair_t* pair)
 {
 	while (pair != rbt->root)
 	{
-		qse_rbt_pair_t* tmp, * tmp2;
+		pair_t* tmp, * tmp2, * xpar;
 		int leftwise;
 
-		qse_rbt_pair_t* xpar = pair->parent;
+		xpar = pair->parent;
 		if (xpar->color == QSE_RBT_BLACK) break;
 
 		QSE_ASSERT (xpar->parent != QSE_NULL);
@@ -537,9 +537,9 @@ static pair_t* insert (
 {
 	/* TODO: enhance this. ues comper... etc */
 
-	qse_rbt_pair_t* xcur = rbt->root;
-	qse_rbt_pair_t* xpar = QSE_NULL;
-	qse_rbt_pair_t* xnew; 
+	pair_t* xcur = rbt->root;
+	pair_t* xpar = QSE_NULL;
+	pair_t* xnew; 
 
 	while (!IS_NIL(rbt,xcur))
 	{
@@ -629,12 +629,11 @@ pair_t* qse_rbt_update (
 	return insert (rbt, kptr, klen, vptr, vlen, UPDATE);
 }
 
-static void adjust_for_delete (
-	qse_rbt_t* rbt, qse_rbt_pair_t* pair, qse_rbt_pair_t* par)
+static void adjust_for_delete (rbt_t* rbt, pair_t* pair, pair_t* par)
 {
 	while (pair != rbt->root && pair->color == QSE_RBT_BLACK)
 	{
-		qse_rbt_pair_t* tmp;
+		pair_t* tmp;
 
 		if (pair == par->left)
 		{
@@ -717,9 +716,9 @@ static void adjust_for_delete (
 	pair->color = QSE_RBT_BLACK;
 }
 
-static void delete_pair (qse_rbt_t* rbt, qse_rbt_pair_t* pair)
+static void delete_pair (rbt_t* rbt, pair_t* pair)
 {
-	qse_rbt_pair_t* x, * y, * par;
+	pair_t* x, * y, * par;
 
 	QSE_ASSERT (pair && !IS_NIL(rbt,pair));
 
@@ -803,9 +802,9 @@ static void delete_pair (qse_rbt_t* rbt, qse_rbt_pair_t* pair)
 	rbt->size--;
 }
 
-int qse_rbt_delete (qse_rbt_t* rbt, const void* kptr, size_t klen)
+int qse_rbt_delete (rbt_t* rbt, const void* kptr, size_t klen)
 {
-	qse_rbt_pair_t* pair;
+	pair_t* pair;
 
 	pair = qse_rbt_search (rbt, kptr, klen);
 	if (pair == QSE_NULL) return -1;
@@ -822,8 +821,8 @@ void qse_rbt_clear (rbt_t* rbt)
 
 static QSE_INLINE void walk (rbt_t* rbt, walker_t walker, void* ctx, int l, int r)
 {
-	qse_rbt_pair_t* xcur = rbt->root;
-	qse_rbt_pair_t* prev = rbt->root->parent;
+	pair_t* xcur = rbt->root;
+	pair_t* prev = rbt->root->parent;
 
 	while (xcur && !IS_NIL(rbt,xcur))
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 331 2010-07-13 11:18:30Z hyunghwan.chung $
+ * $Id: htb.c 332 2010-07-13 11:25:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -42,7 +42,6 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 #define SIZEOF(x) QSE_SIZEOF(x)
 #define size_t    qse_size_t
 #define byte_t    qse_byte_t
-#define uint_t    qse_uint_t
 #define mmgr_t    qse_mmgr_t
 
 #define KTOB(htb,len) ((len)*(htb)->scale[QSE_HTB_KEY])
