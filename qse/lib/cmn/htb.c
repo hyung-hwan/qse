@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: htb.c 331 2010-07-13 11:18:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -73,7 +73,7 @@ static size_t hash_key (htb_t* htb, const void* kptr, size_t klen)
 	return h ; 
 }
 
-static int comp_key (htb_t* htb, 
+static QSE_INLINE int comp_key (htb_t* htb, 
 	const void* kptr1, size_t klen1, 
 	const void* kptr2, size_t klen2)
 {

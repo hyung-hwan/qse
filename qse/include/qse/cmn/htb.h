@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: htb.h 331 2010-07-13 11:18:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -52,8 +52,8 @@ typedef enum qse_htb_id_t qse_htb_id_t;
  */
 typedef void* (*qse_htb_copier_t) (
 	qse_htb_t* htb  /* hash table */,
-	void*      dptr /* the pointer to a key or a value */, 
-	qse_size_t dlen /* the length of a key or a value */
+	void*      dptr /* pointer to a key or a value */, 
+	qse_size_t dlen /* length of a key or a value */
 );
 
 /**
@@ -61,15 +61,15 @@ typedef void* (*qse_htb_copier_t) (
  */
 typedef void (*qse_htb_freeer_t) (
 	qse_htb_t* htb,  /**< hash table */
-	void*      dptr, /**< the pointer to a key or a value */
-	qse_size_t dlen  /**< the length of a key or a value */
+	void*      dptr, /**< pointer to a key or a value */
+	qse_size_t dlen  /**< length of a key or a value */
 );
 
 /* key hasher */
 typedef qse_size_t (*qse_htb_hasher_t) (
 	qse_htb_t* htb,   /**< hash table */
-	const void* kptr, /**< the pointer to a key */
-	qse_size_t klen   /**< the length of a key in bytes */
+	const void* kptr, /**< pointer to a key */
+	qse_size_t klen   /**< length of a key in bytes */
 );
 
 /**
@@ -82,10 +82,10 @@ typedef qse_size_t (*qse_htb_hasher_t) (
  */
 typedef int (*qse_htb_comper_t) (
 	qse_htb_t*  htb,    /**< hash table */ 
-	const void* kptr1,  /**< the pointer to a key */
-	qse_size_t  klen1,  /**< the length of a key */ 
-	const void* kptr2,  /**< the pointer to a key */ 
-	qse_size_t  klen2   /**< the length of a key */
+	const void* kptr1,  /**< pointer to a key */
+	qse_size_t  klen1,  /**< length of a key */ 
+	const void* kptr2,  /**< pointer to a key */ 
+	qse_size_t  klen2   /**< length of a key */
 );
 
 /**
@@ -101,7 +101,7 @@ typedef void (*qse_htb_keeper_t) (
 );
 
 /**
- * The qse_htb_sizer_T type defines a bucket size claculator that is called
+ * The qse_htb_sizer_t type defines a bucket size claculator that is called
  * when hash table should resize the bucket. The current bucket size +1 is passed
  * as the hint.
  */
@@ -123,15 +123,17 @@ typedef qse_htb_walk_t (*qse_htb_walker_t) (
  * The qse_htb_pair_t type defines hash table pair. A pair is composed of a key
  * and a value. It maintains pointers to the beginning of a key and a value
  * plus their length. The length is scaled down with the scale factor 
- * specified in an owning htb. Use macros defined in the 
+ * specified in an owning hash table. 
  */
 struct qse_htb_pair_t
 {
-	void*           kptr;  /**< the pointer to a key */
-	qse_size_t      klen;  /**< the length of a key */
-	void*           vptr;  /**< the pointer to a value */
-	qse_size_t      vlen;  /**< the length of a value */
-	qse_htb_pair_t* next;  /**< the next pair under the same slot */
+	void*           kptr;  /**< pointer to a key */
+	qse_size_t      klen;  /**< length of a key */
+	void*           vptr;  /**< pointer to a value */
+	qse_size_t      vlen;  /**< length of a value */
+
+	/* management information below */
+	qse_htb_pair_t* next; 
 };
 
 /**
@@ -162,27 +164,16 @@ struct qse_htb_t
 #define QSE_HTB_COPIER_SIMPLE ((qse_htb_copier_t)1)
 #define QSE_HTB_COPIER_INLINE ((qse_htb_copier_t)2)
 
-/****m* Common/QSE_HTB_SIZE
- * NAME
- *  QSE_HTB_SIZE - get the number of pairs
- * DESCRIPTION
- *  The QSE_HTB_SIZE() macro returns the number of pairs in hash table.
- * SYNOPSIS
+/**
+ * The QSE_HTB_SIZE() macro returns the number of pairs in a hash table.
  */
 #define QSE_HTB_SIZE(m) ((m)->size)
-/*****/
 
-/****m* Common/QSE_HTB_CAPA
- * NAME
- *  QSE_HTB_CAPA - get the capacity of hash table
- *
- * DESCRIPTION
- *  The QSE_HTB_CAPA() macro returns the maximum number of pairs hash table can hold.
- *
- * SYNOPSIS
+/**
+ * The QSE_HTB_CAPA() macro returns the maximum number of pairs that can be
+ * stored in a hash table without further reorganization.
  */
 #define QSE_HTB_CAPA(m) ((m)->capa)
-/*****/
 
 #define QSE_HTB_KCOPIER(m)   ((m)->copier[QSE_HTB_KEY])
 #define QSE_HTB_VCOPIER(m)   ((m)->copier[QSE_HTB_VAL])
@@ -285,15 +276,15 @@ int qse_htb_getscale (
 void qse_htb_setscale (
 	qse_htb_t*   htb,  /**< hash table */
 	qse_htb_id_t id,   /**< QSE_HTB_KEY or QSE_HTB_VAL */
-	int          scale /* scale factor in bytes */
+	int          scale /**< scale factor in bytes */
 );
 
 /**
  * The qse_htb_getcopier() function gets a data copier.
  */
 qse_htb_copier_t qse_htb_getcopier (
-	qse_htb_t*   htb,
-	qse_htb_id_t id /**< QSE_HTB_KEY or QSE_HTB_VAL */
+	qse_htb_t*   htb, /**< hash table */
+	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */
 );
 
 /**
@@ -312,7 +303,7 @@ void qse_htb_setcopier (
 );
 
 qse_htb_freeer_t qse_htb_getfreeer (
-	qse_htb_t*   htb, /**< htb */
+	qse_htb_t*   htb, /**< hash table */
 	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */
 );
 
@@ -321,18 +312,17 @@ qse_htb_freeer_t qse_htb_getfreeer (
  * The @a freeer is called when a node containing the element is destroyed.
  */
 void qse_htb_setfreeer (
-	qse_htb_t* htb,          /**< hash table */
-	qse_htb_id_t id,         /**< QSE_HTB_KEY or QSE_HTB_VAL */
+	qse_htb_t*       htb,    /**< hash table */
+	qse_htb_id_t     id,     /**< QSE_HTB_KEY or QSE_HTB_VAL */
 	qse_htb_freeer_t freeer  /**< an element freeer */
 );
 
-
 qse_htb_hasher_t qse_htb_gethasher (
-	qse_htb_t* htb
+	qse_htb_t* htb 
 );
 
 void qse_htb_sethasher (
-	qse_htb_t* htb,
+	qse_htb_t*       htb,
 	qse_htb_hasher_t hasher
 );
 
