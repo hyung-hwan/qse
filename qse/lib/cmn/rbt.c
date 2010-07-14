@@ -21,34 +21,42 @@
 #include <qse/cmn/rbt.h>
 #include "mem.h"
 
-#define IS_NIL(rbt,x) ((x) == &((rbt)->nil))
-
-#define KTOB(htb,len) ((len)*(htb)->scale[QSE_RBT_KEY])
-
-#define LEFT 0
-#define RIGHT 1
-
-#define left child[LEFT]
-#define right child[RIGHT]
-
-#define rotate_left(rbt,pivot) rotate(rbt,pivot,1);
-#define rotate_right(rbt,pivot) rotate(rbt,pivot,0);
-
 QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
 
-static QSE_INLINE void init_node (
-	qse_rbt_t* rbt, qse_rbt_node_t* node, int color, 
-	int key, int value)
-{
-	QSE_MEMSET (node, 0, QSE_SIZEOF(*node)); 
+#define rbt_t    qse_rbt_t
+#define pair_t   qse_rbt_pair_t
+#define copier_t qse_rbt_copier_t
+#define freeer_t qse_rbt_freeer_t
+#define comper_t qse_rbt_comper_t
+#define keeper_t qse_rbt_keeper_t
+#define walker_t qse_rbt_walker_t
 
-	node->color = color;
-	node->right = &rbt->nil;
-	node->left = &rbt->nil;
+#define KPTR(p)  QSE_RBT_KPTR(p)
+#define KLEN(p)  QSE_RBT_KLEN(p)
+#define VPTR(p)  QSE_RBT_VPTR(p)
+#define VLEN(p)  QSE_RBT_VLEN(p)
 
-	node->key = key;
-	node->value = value;
-}
+#define SIZEOF(x) QSE_SIZEOF(x)
+#define size_t    qse_size_t
+#define byte_t    qse_byte_t
+#define uint_t    qse_uint_t
+#define mmgr_t    qse_mmgr_t
+
+#define KTOB(rbt,len) ((len)*(rbt)->scale[QSE_RBT_KEY])
+#define VTOB(rbt,len) ((len)*(rbt)->scale[QSE_RBT_VAL])
+
+#define UPSERT 1
+#define UPDATE 2
+#define ENSERT 3
+#define INSERT 4
+
+#define IS_NIL(rbt,x) ((x) == &((rbt)->nil))
+#define LEFT 0
+#define RIGHT 1
+#define left child[LEFT]
+#define right child[RIGHT]
+#define rotate_left(rbt,pivot) rotate(rbt,pivot,1);
+#define rotate_right(rbt,pivot) rotate(rbt,pivot,0);
 
 static QSE_INLINE int comp_key (
 	qse_rbt_t* rbt,
@@ -74,9 +82,85 @@ static QSE_INLINE int comp_key (
 	return n;
 }
 
-qse_rbt_t* qse_rbt_open (qse_mmgr_t* mmgr, qse_size_t ext)
+static pair_t* alloc_pair (rbt_t* rbt, 
+	void* kptr, size_t klen, void* vptr, size_t vlen)
 {
-	qse_rbt_t* rbt;
+	pair_t* n;
+
+	copier_t kcop = rbt->copier[QSE_RBT_KEY];
+	copier_t vcop = rbt->copier[QSE_RBT_VAL];
+
+	size_t as = SIZEOF(pair_t);
+	if (kcop == QSE_RBT_COPIER_INLINE) as += KTOB(rbt,klen);
+	if (vcop == QSE_RBT_COPIER_INLINE) as += VTOB(rbt,vlen);
+
+	n = (pair_t*) QSE_MMGR_ALLOC (rbt->mmgr, as);
+	if (n == QSE_NULL) return QSE_NULL;
+
+	n->color = QSE_RBT_RED;
+	n->parent = QSE_NULL;
+	n->child[LEFT] = &rbt->nil;
+	n->child[RIGHT] = &rbt->nil;
+
+	KLEN(n) = klen;
+	if (kcop == QSE_RBT_COPIER_SIMPLE)
+	{
+		KPTR(n) = kptr;
+	}
+	else if (kcop == QSE_RBT_COPIER_INLINE)
+	{
+		KPTR(n) = n + 1;
+		QSE_MEMCPY (KPTR(n), kptr, KTOB(rbt,klen));
+	}
+	else 
+	{
+		KPTR(n) = kcop (rbt, kptr, klen);
+		if (KPTR(n) == QSE_NULL)
+		{
+			QSE_MMGR_FREE (rbt->mmgr, n);		
+			return QSE_NULL;
+		}
+	}
+
+	VLEN(n) = vlen;
+	if (vcop == QSE_RBT_COPIER_SIMPLE)
+	{
+		VPTR(n) = vptr;
+	}
+	else if (vcop == QSE_RBT_COPIER_INLINE)
+	{
+		VPTR(n) = n + 1;
+		if (kcop == QSE_RBT_COPIER_INLINE) 
+			VPTR(n) = (byte_t*)VPTR(n) + KTOB(rbt,klen);
+		QSE_MEMCPY (VPTR(n), vptr, VTOB(rbt,vlen));
+	}
+	else 
+	{
+		VPTR(n) = vcop (rbt, vptr, vlen);
+		if (VPTR(n) != QSE_NULL)
+		{
+			if (rbt->freeer[QSE_RBT_KEY] != QSE_NULL)
+				rbt->freeer[QSE_RBT_KEY] (rbt, KPTR(n), KLEN(n));
+			QSE_MMGR_FREE (rbt->mmgr, n);		
+			return QSE_NULL;
+		}
+	}
+
+	return n;
+}
+
+static void free_pair (rbt_t* rbt, pair_t* pair)
+{
+	if (rbt->freeer[QSE_RBT_KEY] != QSE_NULL) 
+		rbt->freeer[QSE_RBT_KEY] (rbt, KPTR(pair), KLEN(pair));
+	if (rbt->freeer[QSE_RBT_VAL] != QSE_NULL)
+		rbt->freeer[QSE_RBT_VAL] (rbt, VPTR(pair), VLEN(pair));
+	QSE_MMGR_FREE (rbt->mmgr, pair);
+}
+
+rbt_t* qse_rbt_open (mmgr_t* mmgr, size_t ext)
+{
+	rbt_t* rbt;
 
 	if (mmgr == QSE_NULL) 
 	{
@@ -88,7 +172,7 @@ qse_rbt_t* qse_rbt_open (qse_mmgr_t* mmgr, qse_size_t ext)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	rbt = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rbt_t) + ext);
+	rbt = (rbt_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(rbt_t) + ext);
 	if (rbt == QSE_NULL) return QSE_NULL;
 
 	if (qse_rbt_init (rbt, mmgr) == QSE_NULL)
@@ -100,179 +184,146 @@ qse_rbt_t* qse_rbt_open (qse_mmgr_t* mmgr, qse_size_t ext)
 	return rbt;
 }
 
-void qse_rbt_close (qse_rbt_t* rbt)
+void qse_rbt_close (rbt_t* rbt)
 {
 	qse_rbt_fini (rbt);
 	QSE_MMGR_FREE (rbt->mmgr, rbt);
 }
 
-qse_rbt_t* qse_rbt_init (qse_rbt_t* rbt, qse_mmgr_t* mmgr)
+rbt_t* qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr)
 {
 	/* do not zero out the extension */
-	QSE_MEMSET (rbt, 0, QSE_SIZEOF(*rbt));
-
+	QSE_MEMSET (rbt, 0, SIZEOF(*rbt));
 	rbt->mmgr = mmgr;
-	rbt->size = 0;
 
 	rbt->scale[QSE_RBT_KEY] = 1;
 	rbt->scale[QSE_RBT_VAL] = 1;
+	rbt->size = 0;
 
 	rbt->comper = comp_key;
 	rbt->copier[QSE_RBT_KEY] = QSE_RBT_COPIER_SIMPLE;
 	rbt->copier[QSE_RBT_VAL] = QSE_RBT_COPIER_SIMPLE;
 
-	init_node (rbt, &rbt->nil, QSE_RBT_BLACK, 0, 0);
+	/*
+	rbt->freeer[QSE_RBT_KEY] = QSE_NULL;
+	rbt->freeer[QSE_RBT_VAL] = QSE_NULL;
+	rbt->keeper = QSE_NULL;
+	*/
+	
+	/* self-initializing nil */
+	QSE_MEMSET(&rbt->nil, 0, QSE_SIZEOF(rbt->nil));
+	rbt->nil.color = QSE_RBT_BLACK;
+	rbt->nil.left = &rbt->nil;
+	rbt->nil.right = &rbt->nil;
+
+	/* root is set to nil initially */
 	rbt->root = &rbt->nil;
+
 	return rbt;
 }
 
-void qse_rbt_fini (qse_rbt_t* rbt)
+void qse_rbt_fini (rbt_t* rbt)
 {
 	qse_rbt_clear (rbt);
 }
 
-qse_rbt_node_t* qse_rbt_search (qse_rbt_t* rbt, int key)
+int qse_rbt_getscale (rbt_t* rbt, qse_rbt_id_t id)
 {
-	/* TODO: enhance this. ues comper... etc */
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
+	return rbt->scale[id];
+}
 
-	qse_rbt_node_t* node = rbt->root;
+void qse_rbt_setscale (rbt_t* rbt, qse_rbt_id_t id, int scale)
+{
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
 
-	while (!IS_NIL(rbt,node))
+	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
+		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
+
+	if (scale <= 0) scale = 1;
+	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);
+
+	rbt->scale[id] = scale;
+}
+
+copier_t qse_rbt_getcopier (rbt_t* rbt, qse_rbt_id_t id)
+{
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
+	return rbt->copier[id];
+}
+
+void qse_rbt_setcopier (rbt_t* rbt, qse_rbt_id_t id, copier_t copier)
+{
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
+	if (copier == QSE_NULL) copier = QSE_RBT_COPIER_SIMPLE;
+	rbt->copier[id] = copier;
+}
+
+freeer_t qse_rbt_getfreeer (rbt_t* rbt, qse_rbt_id_t id)
+{
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
+	return rbt->freeer[id];
+}
+
+void qse_rbt_setfreeer (rbt_t* rbt, qse_rbt_id_t id, freeer_t freeer)
+{
+	QSE_ASSERTX (id == QSE_RBT_KEY || id == QSE_RBT_VAL,
+		"The ID should be either QSE_RBT_KEY or QSE_RBT_VAL");
+	rbt->freeer[id] = freeer;
+}
+
+comper_t qse_rbt_getcomper (rbt_t* rbt)
+{
+	return rbt->comper;
+}
+
+void qse_rbt_setcomper (rbt_t* rbt, comper_t comper)
+{
+	if (comper == QSE_NULL) comper = comp_key;
+	rbt->comper = comper;
+}
+
+keeper_t qse_rbt_getkeeper (rbt_t* rbt)
+{
+	return rbt->keeper;
+}
+
+void qse_rbt_setkeeper (rbt_t* rbt, keeper_t keeper)
+{
+	rbt->keeper = keeper;
+}
+
+size_t qse_rbt_getsize (rbt_t* rbt)
+{
+	return rbt->size;
+}
+
+pair_t* qse_rbt_search (rbt_t* rbt, const void* kptr, size_t klen)
+{
+	pair_t* pair = rbt->root;
+
+	while (!IS_NIL(rbt,pair))
 	{
-#if 0
-		int n = rbt->comper (rbt, kptr, klen, node->kptr, node->klen);
-		if (n == 0) return node;
+		int n = rbt->comper (rbt, kptr, klen, pair->kptr, pair->klen);
+		if (n == 0) return pair;
 
-		if (n > 0) node = node->right;
-		else /* if (n < 0) */ node = node->left;
-#endif
-		if (key == node->key) return node;
-
-		if (key > node->key) node = node->right;
-		else /* if (key < node->key) */ node = node->left;
+		if (n > 0) pair = pair->right;
+		else /* if (n < 0) */ pair = pair->left;
 	}
 
 	return QSE_NULL;
 }
 
-#if 0
-static void rotate_left (qse_rbt_t* rbt, qse_rbt_node_t* pivot)
-{
-	/* move the pivot node down to the poistion of the pivot's original 
-	 * left child(x). move the pivot's right child(y) to the pivot's original 
-	 * position. as 'c1' is between 'y' and 'pivot', move it to the right 
-	 * of the new pivot position.
-	 *
-	 *       parent                   parent 
-	 *        | | (left or right?)      | |
-	 *       pivot                      y
-	 *       /  \                     /  \
-	 *     x     y    =====>      pivot   c2
-	 *          / \               /  \
-	 *         c1  c2            x   c1
-	 *
-	 * the actual implementation here resolves the pivot's relationship to
-	 * its parent by comparaing pointers as it is not known if the pivot node
-	 * is the left child or the right child of its parent, 
-	 */
-
-	qse_rbt_node_t* parent, * y, * c1;
-
-	QSE_ASSERT (pivot != QSE_NULL && pivot->right != QSE_NULL);
-
-	parent = pivot->parent;
-	y = pivot->right;
-	c1 = y->left;
-
-	y->parent = parent;
-	if (parent)
-	{
-		if (parent->left == pivot)
-		{
-			parent->left = y;
-		}
-		else
-		{
-			QSE_ASSERT (parent->right == pivot);
-			parent->right = y;
-		}
-	}
-	else
-	{
-		QSE_ASSERT (rbt->root == pivot);
-		rbt->root = y;
-	}
-
-	y->left = pivot;
-	if (!IS_NIL(rbt,pivot)) pivot->parent = y;
-
-	pivot->right = c1;
-	if (!IS_NIL(rbt,c1)) c1->parent = pivot;
-}
-
-static void rotate_right (qse_rbt_t* rbt, qse_rbt_node_t* pivot)
-{
-	/* move the pivot node down to the poistion of the pivot's original 
-	 * right child(y). move the pivot's left child(x) to the pivot's original 
-	 * position. as 'c2' is between 'x' and 'pivot', move it to the left 
-	 * of the new pivot position.
-	 *
-	 *       parent                   parent 
-	 *        | | (left or right?)      | |
-	 *       pivot                      x
-	 *       /  \                     /  \
-	 *     x     y    =====>        c1   pivot          
-	 *    / \                            /  \
-	 *   c1  c2                         c2   y
-	 *
-	 * the actual implementation here resolves the pivot's relationship to
-	 * its parent by comparaing pointers as it is not known if the pivot node
-	 * is the left child or the right child of its parent, 
-	 */
-
-	qse_rbt_node_t* parent, * x, * c2;
-
-	QSE_ASSERT (pivot != QSE_NULL);
-
-	parent = pivot->parent;
-	x = pivot->left;
-	c2 = x->right;
-
-	x->parent = parent;
-	if (parent)
-	{
-		if (parent->left == pivot)
-		{
-			/* pivot is the left child of its parent */
-			parent->left = x;
-		}
-		else
-		{
-			/* pivot is the right child of its parent */
-			QSE_ASSERT (parent->right == pivot);
-			parent->right = x;
-		}
-	}
-	else
-	{
-		/* pivot is the root node */
-		QSE_ASSERT (rbt->root == pivot);
-		rbt->root = x;
-	}
-
-	x->right = pivot;
-	if (!IS_NIL(rbt,pivot)) pivot->parent = x;
-
-	pivot->left = c2;
-	if (!IS_NIL(rbt,c2)) c2->parent = pivot;
-}
-#endif
-
-static void rotate (qse_rbt_t* rbt, qse_rbt_node_t* pivot, int leftwise)
+static void rotate (qse_rbt_t* rbt, qse_rbt_pair_t* pivot, int leftwise)
 {
 	/*
 	 * == leftwise rotation
-	 * move the pivot node down to the poistion of the pivot's original 
+	 * move the pivot pair down to the poistion of the pivot's original 
 	 * left child(x). move the pivot's right child(y) to the pivot's original 
 	 * position. as 'c1' is between 'y' and 'pivot', move it to the right 
 	 * of the new pivot position.
@@ -285,7 +336,7 @@ static void rotate (qse_rbt_t* rbt, qse_rbt_node_t* pivot, int leftwise)
 	 *         c1  c2            x   c1
 	 *
 	 * == rightwise rotation
-	 * move the pivot node down to the poistion of the pivot's original 
+	 * move the pivot pair down to the poistion of the pivot's original 
 	 * right child(y). move the pivot's left child(x) to the pivot's original 
 	 * position. as 'c2' is between 'x' and 'pivot', move it to the left 
 	 * of the new pivot position.
@@ -300,11 +351,11 @@ static void rotate (qse_rbt_t* rbt, qse_rbt_node_t* pivot, int leftwise)
 	 *
 	 *
 	 * the actual implementation here resolves the pivot's relationship to
-	 * its parent by comparaing pointers as it is not known if the pivot node
+	 * its parent by comparaing pointers as it is not known if the pivot pair
 	 * is the left child or the right child of its parent, 
 	 */
 
-	qse_rbt_node_t* parent, * z, * c;
+	qse_rbt_pair_t* parent, * z, * c;
 	int cid1, cid2;
 
 	QSE_ASSERT (pivot != QSE_NULL);
@@ -352,14 +403,14 @@ static void rotate (qse_rbt_t* rbt, qse_rbt_node_t* pivot, int leftwise)
 	if (!IS_NIL(rbt,c)) c->parent = pivot;
 }
 
-static void adjust (qse_rbt_t* rbt, qse_rbt_node_t* node)
+static void adjust (qse_rbt_t* rbt, qse_rbt_pair_t* pair)
 {
-	while (node != rbt->root)
+	while (pair != rbt->root)
 	{
-		qse_rbt_node_t* tmp, * tmp2;
+		qse_rbt_pair_t* tmp, * tmp2;
 		int leftwise;
 
-		qse_rbt_node_t* xpar = node->parent;
+		qse_rbt_pair_t* xpar = pair->parent;
 		if (xpar->color == QSE_RBT_BLACK) break;
 
 		QSE_ASSERT (xpar->parent != QSE_NULL);
@@ -382,15 +433,15 @@ static void adjust (qse_rbt_t* rbt, qse_rbt_node_t* node)
 			xpar->color = QSE_RBT_BLACK;
 			tmp->color = QSE_RBT_BLACK;
 			xpar->parent->color = QSE_RBT_RED;	
-			node = xpar->parent;
+			pair = xpar->parent;
 		}
 		else
 		{
-			if (node == tmp2)
+			if (pair == tmp2)
 			{
-				node = xpar;
-				rotate (rbt, node, leftwise);
-				xpar = node->parent;
+				pair = xpar;
+				rotate (rbt, pair, leftwise);
+				xpar = pair->parent;
 			}
 
 			xpar->color = QSE_RBT_BLACK;
@@ -400,60 +451,141 @@ static void adjust (qse_rbt_t* rbt, qse_rbt_node_t* node)
 	}
 }
 
-static qse_rbt_node_t* new_node (qse_rbt_t* rbt, int key, int value)
+static pair_t* change_pair_val (
+	rbt_t* rbt, pair_t* pair, void* vptr, size_t vlen)
 {
-	qse_rbt_node_t* node;
+	if (VPTR(pair) == vptr && VLEN(pair) == vlen) 
+	{
+		/* if the old value and the new value are the same,
+		 * it just calls the handler for this condition. 
+		 * No value replacement occurs. */
+		if (rbt->keeper != QSE_NULL)
+		{
+			rbt->keeper (rbt, vptr, vlen);
+		}
+	}
+	else
+	{
+		copier_t vcop = rbt->copier[QSE_RBT_VAL];
+		void* ovptr = VPTR(pair);
+		size_t ovlen = VLEN(pair);
 
-	node = QSE_MMGR_ALLOC (rbt->mmgr, QSE_SIZEOF(*node));
-	if (node == QSE_NULL) return QSE_NULL;
+		/* place the new value according to the copier */
+		if (vcop == QSE_RBT_COPIER_SIMPLE)
+		{
+			VPTR(pair) = vptr;
+			VLEN(pair) = vlen;
+		}
+		else if (vcop == QSE_RBT_COPIER_INLINE)
+		{
+			if (ovlen == vlen)
+			{
+				QSE_MEMCPY (VPTR(pair), vptr, VTOB(rbt,vlen));
+			}
+			else
+			{
+				/* need to reconstruct the pair */
+				pair_t* p = alloc_pair (rbt, 
+					KPTR(pair), KLEN(pair),
+					vptr, vlen);
+				if (p == QSE_NULL) return QSE_NULL;
 
-	init_node (rbt, node, QSE_RBT_RED, key, value);
-	return node;
+				p->color = pair->color;
+				p->left = pair->left;
+				p->right = pair->right;
+				p->parent = pair->parent;
+
+				if (pair->parent)
+				{
+					if (pair->parent->left == pair)
+					{
+						pair->parent->left = p;
+					}
+					else 
+					{
+						QSE_ASSERT (parent->parent->right == pair);
+						pair->parent->right = p;
+					}
+				}
+				if (!IS_NIL(rbt,pair->left)) pair->left->parent = p;
+				if (!IS_NIL(rbt,pair->right)) pair->right->parent = p;
+
+				free_pair (rbt, pair);
+				return p;
+			}
+		}
+		else 
+		{
+			void* nvptr = vcop (rbt, vptr, vlen);
+			if (nvptr == QSE_NULL) return QSE_NULL;
+			VPTR(pair) = nvptr;
+			VLEN(pair) = vlen;
+		}
+
+		/* free up the old value */
+		if (rbt->freeer[QSE_RBT_VAL] != QSE_NULL) 
+		{
+			rbt->freeer[QSE_RBT_VAL] (rbt, ovptr, ovlen);
+		}
+	}
+
+	return pair;
 }
 
-static void free_node (qse_rbt_t* rbt, qse_rbt_node_t* node)
-{
-	/* TODO: call destructor... */
-	QSE_MMGR_FREE (rbt->mmgr, node);
-}
-
-qse_rbt_node_t* qse_rbt_insert (qse_rbt_t* rbt, int key, int value)
+static pair_t* insert (
+	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen, int opt)
 {
 	/* TODO: enhance this. ues comper... etc */
 
-	qse_rbt_node_t* xcur = rbt->root;
-	qse_rbt_node_t* xpar = QSE_NULL;
-	qse_rbt_node_t* xnew; 
+	qse_rbt_pair_t* xcur = rbt->root;
+	qse_rbt_pair_t* xpar = QSE_NULL;
+	qse_rbt_pair_t* xnew; 
 
 	while (!IS_NIL(rbt,xcur))
 	{
-		if (key == xcur->key)
+		int n = rbt->comper (rbt, kptr, klen, xcur->kptr, xcur->klen);
+		if (n == 0) 
 		{
-			/* TODO: handle various cases depending on insert types. 
+			/* TODO: handle various cases depending on insert types.
 			 * return error. update value. */
-			xcur->value = value;
-			return xcur;
+			switch (opt)
+			{
+				case UPSERT:
+				case UPDATE:
+					return change_pair_val (rbt, xcur, vptr, vlen);
+
+				case ENSERT:
+					/* return existing pair */
+					return xcur; 
+
+				case INSERT:
+					/* return failure */
+					return QSE_NULL;
+			}
 		}
 
 		xpar = xcur;
 
-		if (key > xcur->key) xcur = xcur->right;
-		else /* if (key < xcur->key) */ xcur = xcur->left;
+		if (n > 0) xcur = xcur->right;
+		else /* if (n < 0) */ xcur = xcur->left;
 	}
 
-	xnew = new_node (rbt, key, value);
+	if (opt == UPDATE) return QSE_NULL;
+
+	xnew = alloc_pair (rbt, kptr, klen, vptr, vlen);
 	if (xnew == QSE_NULL) return QSE_NULL;
 
 	if (xpar == QSE_NULL)
 	{
-		/* the tree contains no node */
+		/* the tree contains no pair */
 		QSE_ASSERT (rbt->root == &rbt->nil);
 		rbt->root = xnew;
 	}
 	else
 	{
 		/* perform normal binary insert */
-		if (key > xpar->key)
+		int n = rbt->comper (rbt, kptr, klen, xpar->kptr, xpar->klen);
+		if (n > 0)
 		{
 			QSE_ASSERT (xpar->right == &rbt->nil);
 			xpar->right = xnew;
@@ -472,14 +604,39 @@ qse_rbt_node_t* qse_rbt_insert (qse_rbt_t* rbt, int key, int value)
 	return xnew;
 }
 
-static void adjust_for_delete (
-	qse_rbt_t* rbt, qse_rbt_node_t* node, qse_rbt_node_t* par)
+pair_t* qse_rbt_upsert (
+	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
-	while (node != rbt->root && node->color == QSE_RBT_BLACK)
-	{
-		qse_rbt_node_t* tmp;
+	return insert (rbt, kptr, klen, vptr, vlen, UPSERT);
+}
 
-		if (node == par->left)
+pair_t* qse_rbt_ensert (
+	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	return insert (rbt, kptr, klen, vptr, vlen, ENSERT);
+}
+
+pair_t* qse_rbt_insert (
+	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	return insert (rbt, kptr, klen, vptr, vlen, INSERT);
+}
+
+
+pair_t* qse_rbt_update (
+	rbt_t* rbt, void* kptr, size_t klen, void* vptr, size_t vlen)
+{
+	return insert (rbt, kptr, klen, vptr, vlen, UPDATE);
+}
+
+static void adjust_for_delete (
+	qse_rbt_t* rbt, qse_rbt_pair_t* pair, qse_rbt_pair_t* par)
+{
+	while (pair != rbt->root && pair->color == QSE_RBT_BLACK)
+	{
+		qse_rbt_pair_t* tmp;
+
+		if (pair == par->left)
 		{
 			tmp = par->right;
 			if (tmp->color == QSE_RBT_RED)
@@ -494,8 +651,8 @@ static void adjust_for_delete (
 			    tmp->right->color == QSE_RBT_BLACK)
 			{
 				if (!IS_NIL(rbt,tmp)) tmp->color = QSE_RBT_RED;
-				node = par;
-				par = node->parent;
+				pair = par;
+				par = pair->parent;
 			}
 			else
 			{
@@ -514,12 +671,12 @@ static void adjust_for_delete (
 					tmp->right->color = QSE_RBT_BLACK;
 
 				rotate_left (rbt, par);
-				node = rbt->root;
+				pair = rbt->root;
 			}
 		}
 		else
 		{
-			QSE_ASSERT (node == par->right);
+			QSE_ASSERT (pair == par->right);
 			tmp = par->left;
 			if (tmp->color == QSE_RBT_RED)
 			{
@@ -533,8 +690,8 @@ static void adjust_for_delete (
 			    tmp->right->color == QSE_RBT_BLACK)
 			{
 				if (!IS_NIL(rbt,tmp)) tmp->color = QSE_RBT_RED;
-				node = par;
-				par = node->parent;
+				pair = par;
+				par = pair->parent;
 			}
 			else
 			{
@@ -552,28 +709,28 @@ static void adjust_for_delete (
 					tmp->left->color = QSE_RBT_BLACK;
 
 				rotate_right (rbt, par);
-				node = rbt->root;
+				pair = rbt->root;
 			}
 		}
 	}
 
-	node->color = QSE_RBT_BLACK;
+	pair->color = QSE_RBT_BLACK;
 }
 
-static void delete_node (qse_rbt_t* rbt, qse_rbt_node_t* node)
+static void delete_pair (qse_rbt_t* rbt, qse_rbt_pair_t* pair)
 {
-	qse_rbt_node_t* x, * y, * par;
+	qse_rbt_pair_t* x, * y, * par;
 
-	QSE_ASSERT (node && !IS_NIL(rbt,node));
+	QSE_ASSERT (pair && !IS_NIL(rbt,pair));
 
-	if (IS_NIL(rbt,node->left) || IS_NIL(rbt,node->right))
+	if (IS_NIL(rbt,pair->left) || IS_NIL(rbt,pair->right))
 	{
-		y = node;
+		y = pair;
 	}
 	else
 	{
 		/* find a successor with NIL as a child */
-		y = node->right;
+		y = pair->right;
 		while (!IS_NIL(rbt,y->left)) y = y->left;
 	}
 
@@ -594,12 +751,12 @@ static void delete_node (qse_rbt_t* rbt, qse_rbt_node_t* node)
 		rbt->root = x;
 	}
 
-	if (y == node)
+	if (y == pair)
 	{
 		if (y->color == QSE_RBT_BLACK && !IS_NIL(rbt,x))
 			adjust_for_delete (rbt, x, par);
 
-		free_node (rbt, y);
+		free_pair (rbt, y);
 	}
 	else
 	{
@@ -607,85 +764,133 @@ static void delete_node (qse_rbt_t* rbt, qse_rbt_node_t* node)
 			adjust_for_delete (rbt, x, par);
 
 #if 1
-		if (node->parent)
+		if (pair->parent)
 		{
-			if (node->parent->left == node) node->parent->left = y;
-			if (node->parent->right == node) node->parent->right = y;
+			if (pair->parent->left == pair) pair->parent->left = y;
+			if (pair->parent->right == pair) pair->parent->right = y;
 		}
 		else
 		{
 			rbt->root = y;
 		}
 
-		y->parent = node->parent;
-		y->left = node->left;
-		y->right = node->right;
-		y->color = node->color;
+		y->parent = pair->parent;
+		y->left = pair->left;
+		y->right = pair->right;
+		y->color = pair->color;
 
-		if (node->left->parent == node) node->left->parent = y;
-		if (node->right->parent == node) node->right->parent = y;
+		if (pair->left->parent == pair) pair->left->parent = y;
+		if (pair->right->parent == pair) pair->right->parent = y;
 #else
-		*y = *node;
+		*y = *pair;
 		if (y->parent)
 		{
-			if (y->parent->left == node) y->parent->left = y;
-			if (y->parent->right == node) y->parent->right = y;
+			if (y->parent->left == pair) y->parent->left = y;
+			if (y->parent->right == pair) y->parent->right = y;
 		}
 		else
 		{
 			rbt->root = y;
 		}
 
-		if (y->left->parent == node) y->left->parent = y;
-		if (y->right->parent == node) y->right->parent = y;
+		if (y->left->parent == pair) y->left->parent = y;
+		if (y->right->parent == pair) y->right->parent = y;
 #endif
 
-		free_node (rbt, node);
+		free_pair (rbt, pair);
 	}
 
-	/* TODO: update tally */	
+	rbt->size--;
 }
 
-int qse_rbt_delete (qse_rbt_t* rbt, int key)
+int qse_rbt_delete (qse_rbt_t* rbt, const void* kptr, size_t klen)
 {
-	qse_rbt_node_t* node;
+	qse_rbt_pair_t* pair;
 
-	node = qse_rbt_search (rbt, key);
-	if (node == QSE_NULL) return -1;
+	pair = qse_rbt_search (rbt, kptr, klen);
+	if (pair == QSE_NULL) return -1;
 
-	delete_node (rbt, node);
+	delete_pair (rbt, pair);
 	return 0;
 }
 
-void qse_rbt_clear (qse_rbt_t* rbt)
+void qse_rbt_clear (rbt_t* rbt)
 {
 	/* TODO: improve this */
-	while (!IS_NIL(rbt,rbt->root)) delete_node (rbt, rbt->root);
+	while (!IS_NIL(rbt,rbt->root)) delete_pair (rbt, rbt->root);
 }
 
-static qse_rbt_walk_t walk (
-	qse_rbt_t* rbt, qse_rbt_walker_t walker,
-	void* ctx, qse_rbt_node_t* node)
+static QSE_INLINE void walk (rbt_t* rbt, walker_t walker, void* ctx, int l, int r)
 {
-	if (!IS_NIL(rbt,node->left))
+	qse_rbt_pair_t* xcur = rbt->root;
+	qse_rbt_pair_t* prev = rbt->root->parent;
+
+	while (xcur && !IS_NIL(rbt,xcur))
 	{
-		if (walk (rbt, walker, ctx, node->left) == QSE_RBT_WALK_STOP)
-			return QSE_RBT_WALK_STOP;
+		if (prev == xcur->parent)
+		{
+			/* the previous node is the parent of the current node.
+			 * it indicates that we're going down to the child[l] */
+			if (!IS_NIL(rbt,xcur->child[l]))
+			{
+				/* go to the child[l] child */
+				prev = xcur;
+				xcur = xcur->child[l];
+			}
+			else
+			{
+				if (walker (rbt, xcur, ctx) == QSE_RBT_WALK_STOP) break;
+
+				if (!IS_NIL(rbt,xcur->child[r]))
+				{
+					/* go down to the right node if exists */
+					prev = xcur;
+					xcur = xcur->child[r];
+				}
+				else
+				{
+					/* otherwise, move up to the parent */
+					prev = xcur;
+					xcur = xcur->parent;	
+				}
+			}
+		}
+		else if (prev == xcur->child[l])
+		{
+			/* the left child has been already traversed */
+
+			if (walker (rbt, xcur, ctx) == QSE_RBT_WALK_STOP) break;
+
+			if (!IS_NIL(rbt,xcur->child[r]))
+			{
+				/* go down to the right node if it exists */ 
+				prev = xcur;
+				xcur = xcur->child[r];	
+			}
+			else
+			{
+				/* otherwise, move up to the parent */
+				prev = xcur;
+				xcur = xcur->parent;	
+			}
+		}
+		else
+		{
+			/* both the left child and the right child have beem traversed */
+			QSE_ASSERT (prev == xcur->child[r]);
+			/* just move up to the parent */
+			prev = xcur;
+			xcur = xcur->parent;
+		}
 	}
-
-	if (walker (rbt, node, ctx) == QSE_RBT_WALK_STOP) 
-		return QSE_RBT_WALK_STOP;
-
-	if (!IS_NIL(rbt,node->right))
-	{
-		if (walk (rbt, walker, ctx, node->right) == QSE_RBT_WALK_STOP)
-			return QSE_RBT_WALK_STOP;
-	}
-
-	return QSE_RBT_WALK_FORWARD;
 }
 
-void qse_rbt_walk (qse_rbt_t* rbt, qse_rbt_walker_t walker, void* ctx)
+void qse_rbt_walk (rbt_t* rbt, walker_t walker, void* ctx)
 {
-	walk (rbt, walker, ctx, rbt->root);
+	walk (rbt, walker, ctx, LEFT, RIGHT);
+}
+
+void qse_rbt_rwalk (rbt_t* rbt, walker_t walker, void* ctx)
+{
+	walk (rbt, walker, ctx, RIGHT, LEFT);
 }
