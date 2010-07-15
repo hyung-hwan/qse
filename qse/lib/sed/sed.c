@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: sed.c 334 2010-07-14 12:54:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -92,19 +92,19 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;	
 	}	
 
-	if (qse_htb_init (&sed->tmp.labs, mmgr, 128, 70) == QSE_NULL)
+	if (qse_map_init (&sed->tmp.labs, mmgr, 128, 70) == QSE_NULL)
 	{
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return QSE_NULL;	
 	}
-	qse_htb_setcopier (&sed->tmp.labs, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-        qse_htb_setscale (&sed->tmp.labs, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
+	qse_map_setcopier (&sed->tmp.labs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+	qse_map_setscale (&sed->tmp.labs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
 
 	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) == QSE_NULL)
 	{
-		qse_htb_fini (&sed->tmp.labs);
+		qse_map_fini (&sed->tmp.labs);
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		return QSE_NULL;
@@ -113,7 +113,7 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	if (qse_str_init (&sed->e.txt.read, mmgr, 256) == QSE_NULL)
 	{
 		qse_lda_fini (&sed->e.txt.appended);
-		qse_htb_fini (&sed->tmp.labs);
+		qse_map_fini (&sed->tmp.labs);
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		return QSE_NULL;
@@ -123,7 +123,7 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	{
 		qse_str_fini (&sed->e.txt.read);
 		qse_lda_fini (&sed->e.txt.appended);
-		qse_htb_fini (&sed->tmp.labs);
+		qse_map_fini (&sed->tmp.labs);
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		return QSE_NULL;
@@ -134,7 +134,7 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		qse_str_fini (&sed->e.txt.held);
 		qse_str_fini (&sed->e.txt.read);
 		qse_lda_fini (&sed->e.txt.appended);
-		qse_htb_fini (&sed->tmp.labs);
+		qse_map_fini (&sed->tmp.labs);
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		return QSE_NULL;
@@ -158,7 +158,7 @@ static void qse_sed_fini (qse_sed_t* sed)
 	qse_str_fini (&sed->e.txt.read);
 	qse_lda_fini (&sed->e.txt.appended);
 
-	qse_htb_fini (&sed->tmp.labs);
+	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
 	qse_str_fini (&sed->tmp.rex);
 }
@@ -565,7 +565,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 	while (IS_LABCHAR(c));
 
-	if (qse_htb_search (
+	if (qse_map_search (
 		&sed->tmp.labs, 
 		QSE_STR_PTR(&sed->tmp.lab),
 		QSE_STR_LEN(&sed->tmp.lab)) != QSE_NULL)
@@ -579,7 +579,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		return -1;
 	}
 
-	if (qse_htb_insert (
+	if (qse_map_insert (
 		&sed->tmp.labs, 
 		QSE_STR_PTR(&sed->tmp.lab), QSE_STR_LEN(&sed->tmp.lab),
 		cmd, 0) == QSE_NULL)
@@ -626,7 +626,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c;
 	qse_str_t* t = QSE_NULL;
-	qse_htb_pair_t* pair;
+	qse_map_pair_t* pair;
 
 	/* skip white spaces */
 	c = CURSC(sed);
@@ -664,7 +664,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	if (terminate_command (sed) <= -1) goto oops;
 
-	pair = qse_htb_search (&sed->tmp.labs, QSE_STR_PTR(t), QSE_STR_LEN(t));
+	pair = qse_map_search (&sed->tmp.labs, QSE_STR_PTR(t), QSE_STR_LEN(t));
 	if (pair == QSE_NULL)
 	{
 		/* label not resolved yet */
@@ -675,7 +675,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	{
 		cmd->u.branch.label.ptr = QSE_NULL;
 		cmd->u.branch.label.len = 0;
-		cmd->u.branch.target = QSE_HTB_VPTR(pair);
+		cmd->u.branch.target = QSE_MAP_VPTR(pair);
 	}
 	
 	qse_str_close (t);
@@ -1247,7 +1247,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	QSE_ASSERT (sed->cmd.lb == &sed->cmd.fb && sed->cmd.lb->len == 0);
 
 	/* clear the label table */
-	qse_htb_clear (&sed->tmp.labs);
+	qse_map_clear (&sed->tmp.labs);
 
 	/* clear temporary data */
 	sed->tmp.grp.level = 0;
@@ -1750,16 +1750,16 @@ static int write_str_to_file (
 	const qse_char_t* path, qse_size_t plen)
 {
 	qse_ssize_t n;
-	qse_htb_pair_t* pair;
+	qse_map_pair_t* pair;
 	qse_sed_io_arg_t* ap;
 
-	pair = qse_htb_search (&sed->e.out.files, path, plen);
+	pair = qse_map_search (&sed->e.out.files, path, plen);
 	if (pair == QSE_NULL)
 	{
 		qse_sed_io_arg_t arg;
 
 		QSE_MEMSET (&arg, 0, QSE_SIZEOF(arg));
-		pair = qse_htb_insert (&sed->e.out.files,
+		pair = qse_map_insert (&sed->e.out.files,
 			(void*)path, plen, &arg, QSE_SIZEOF(arg));
 		if (pair == QSE_NULL)
 		{
@@ -1768,7 +1768,7 @@ static int write_str_to_file (
 		}
 	}
 
-	ap = QSE_HTB_VPTR(pair);
+	ap = QSE_MAP_VPTR(pair);
 	if (ap->handle == QSE_NULL)
 	{
 		sed->errnum = QSE_SED_ENOERR;
@@ -2504,7 +2504,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	return jumpto;
 } 
 
-static void close_outfile (qse_htb_t* map, void* dptr, qse_size_t dlen)
+static void close_outfile (qse_map_t* map, void* dptr, qse_size_t dlen)
 {
 	qse_sed_io_arg_t* arg = dptr;
 	QSE_ASSERT (dlen == QSE_SIZEOF(*arg));
@@ -2550,7 +2550,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 		    c->u.branch.target == QSE_NULL)
 		{
 			/* resolve unresolved branch targets */
-			qse_htb_pair_t* pair;
+			qse_map_pair_t* pair;
 			qse_xstr_t* lab = &c->u.branch.label;
 
 			if (lab->ptr == QSE_NULL)
@@ -2561,7 +2561,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 			else
 			{
 				/* resolve the target */
-			  	pair = qse_htb_search (
+			  	pair = qse_map_search (
 					&sed->tmp.labs, lab->ptr, lab->len);
 				if (pair == QSE_NULL)
 				{
@@ -2572,7 +2572,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 					return -1;
 				}
 
-				c->u.branch.target = QSE_HTB_VPTR(pair);
+				c->u.branch.target = QSE_MAP_VPTR(pair);
 
 				/* free resolved label name */ 
 				QSE_MMGR_FREE (sed->mmgr, lab->ptr);
@@ -2640,20 +2640,20 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.out.fun = outf;
 	sed->e.out.eof = 0;
 	sed->e.out.len = 0;
-	if (qse_htb_init (&sed->e.out.files, sed->mmgr, 128, 70) == QSE_NULL)
+	if (qse_map_init (&sed->e.out.files, sed->mmgr, 128, 70) == QSE_NULL)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	*(qse_sed_t**)QSE_XTN(&sed->e.out.files) = sed;
-	qse_htb_setcopier (
-		&sed->e.out.files, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-        qse_htb_setscale (
-		&sed->e.out.files, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
-	qse_htb_setcopier (
-		&sed->e.out.files, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
-	qse_htb_setfreeer (
-		&sed->e.out.files, QSE_HTB_VAL, close_outfile);
+	qse_map_setcopier (
+		&sed->e.out.files, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
+        qse_map_setscale (
+		&sed->e.out.files, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_map_setcopier (
+		&sed->e.out.files, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
+	qse_map_setfreeer (
+		&sed->e.out.files, QSE_MAP_VAL, close_outfile);
 
 	sed->e.in.fun = inf;
 	sed->e.in.eof = 0;
@@ -2662,7 +2662,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.in.num = 0;
 	if (qse_str_init (&sed->e.in.line, QSE_MMGR(sed), 256) == QSE_NULL)
 	{
-		qse_htb_fini (&sed->e.out.files);
+		qse_map_fini (&sed->e.out.files);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return -1;
 	}
@@ -2779,13 +2779,13 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	}
 
 done:
-	qse_htb_clear (&sed->e.out.files);
+	qse_map_clear (&sed->e.out.files);
 	sed->e.out.fun (sed, QSE_SED_IO_CLOSE, &sed->e.out.arg, QSE_NULL, 0);
 done2:
 	sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &sed->e.in.arg, QSE_NULL, 0);
 done3:
 	qse_str_fini (&sed->e.in.line);
-	qse_htb_fini (&sed->e.out.files);
+	qse_map_fini (&sed->e.out.files);
 	return ret;
 }
 
