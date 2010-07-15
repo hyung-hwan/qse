@@ -510,6 +510,8 @@ static pair_t* change_pair_val (
 				if (!IS_NIL(rbt,pair->left)) pair->left->parent = p;
 				if (!IS_NIL(rbt,pair->right)) pair->right->parent = p;
 
+				if (pair == rbt->root) rbt->root = p;
+
 				free_pair (rbt, pair);
 				return p;
 			}
@@ -815,7 +817,30 @@ void qse_rbt_clear (rbt_t* rbt)
 	while (!IS_NIL(rbt,rbt->root)) delete_pair (rbt, rbt->root);
 }
 
-static QSE_INLINE void walk (rbt_t* rbt, walker_t walker, void* ctx, int l, int r)
+#if 0
+static QSE_INLINE qse_rbt_walk_t walk_recursively (
+	rbt_t* rbt, walker_t walker, void* ctx, qse_rbt_pair_t* pair)
+{
+	if (!IS_NIL(rbt,pair->left))
+	{
+		if (walk_recursively (rbt, walker, ctx, pair->left) == QSE_RBT_WALK_STOP)
+			return QSE_RBT_WALK_STOP;
+	}
+
+	if (walker (rbt, pair, ctx) == QSE_RBT_WALK_STOP) return QSE_RBT_WALK_STOP;
+
+	if (!IS_NIL(rbt,pair->right))
+	{
+		if (walk_recursively (rbt, walker, ctx, pair->right) == QSE_RBT_WALK_STOP)
+			return QSE_RBT_WALK_STOP;
+	}
+
+	return QSE_RBT_WALK_FORWARD;
+}
+#endif
+
+static QSE_INLINE void walk (
+	rbt_t* rbt, walker_t walker, void* ctx, int l, int r)
 {
 	pair_t* xcur = rbt->root;
 	pair_t* prev = rbt->root->parent;
@@ -871,7 +896,7 @@ static QSE_INLINE void walk (rbt_t* rbt, walker_t walker, void* ctx, int l, int 
 		}
 		else
 		{
-			/* both the left child and the right child have beem traversed */
+			/* both the left child and the right child have been traversed */
 			QSE_ASSERT (prev == xcur->child[r]);
 			/* just move up to the parent */
 			prev = xcur;
@@ -889,3 +914,4 @@ void qse_rbt_rwalk (rbt_t* rbt, walker_t walker, void* ctx)
 {
 	walk (rbt, walker, ctx, RIGHT, LEFT);
 }
+

@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: sed.h 334 2010-07-14 12:54:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,8 +23,10 @@
 
 #include <qse/sed/sed.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/htb.h>
 #include <qse/cmn/lda.h>
+
+#define QSE_MAP_AS_RBT
+#include <qse/cmn/map.h>
 
 typedef struct qse_sed_adr_t qse_sed_adr_t; 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t;
@@ -188,7 +190,7 @@ struct qse_sed_t
 		} grp;
 
 		/** a table storing labels seen */
-		qse_htb_t labs; 
+		qse_map_t labs; 
 	} tmp;
 
 	/** compiled commands */
@@ -218,7 +220,7 @@ struct qse_sed_t
 			/*****************************************************/
 			/* the following two fields are very tightly-coupled.
 			 * don't make any partial changes */
-			qse_htb_t  files;
+			qse_map_t  files;
 			qse_sed_t* files_ext;
 			/*****************************************************/
 		} out;
