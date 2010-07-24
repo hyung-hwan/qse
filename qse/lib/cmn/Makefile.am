@@ -5,7 +5,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
-	mem.c chr.c chr_cnv.c rex.c \
+	xma.c mem.c chr.c chr_cnv.c rex.c \
 	str_bas.c str_cnv.c str_dyn.c str_utl.c \
 	lda.c htb.c rbt.c sll.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \

@@ -1,0 +1,57 @@
+/*
+ * $Id$
+ *
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef _QSE_CMN_XMA_H_
+#define _QSE_CMN_XMA_H_
+
+#include <qse/types.h>
+#include <qse/macros.h>
+
+typedef struct qse_xma_t qse_xma_t;
+typedef struct qse_xma_blk_t qse_xma_blk_t;
+
+struct qse_xma_t
+{
+	QSE_DEFINE_COMMON_FIELDS (xma)
+
+	qse_xma_blk_t* head;
+	qse_xma_blk_t* xfree[100];
+
+	struct
+	{
+		qse_size_t total;
+		qse_size_t alloc;
+		qse_size_t avail;
+		qse_size_t nused;
+		qse_size_t nfree;
+	} stat;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+QSE_DEFINE_COMMON_FUNCTIONS (xma)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
