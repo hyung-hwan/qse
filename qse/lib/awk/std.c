@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: std.c 336 2010-07-24 12:43:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -127,6 +127,11 @@ static int add_functions (qse_awk_t* awk);
 
 qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 {
+	return qse_awk_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+}
+
+qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+{
 	qse_awk_t* awk;
 	qse_awk_prm_t prm;
 	xtn_t* xtn;
@@ -135,8 +140,7 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 	prm.sprintf = custom_awk_sprintf;
 
 	/* create an object */
-	awk = qse_awk_open (
-		QSE_MMGR_GETDFL(), QSE_SIZEOF(xtn_t) + xtnsize, &prm);
+	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm);
 	if (awk == QSE_NULL) return QSE_NULL;
 
 	/* initialize extension */

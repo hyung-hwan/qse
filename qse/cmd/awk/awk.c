@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: awk.c 336 2010-07-24 12:43:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,6 +27,7 @@
 #include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/xma.h>
 
 #include <string.h>
 #include <signal.h>
@@ -687,7 +688,7 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 	return QSE_HTB_WALK_FORWARD;
 }
 
-static int awk_main (int argc, qse_char_t* argv[])
+static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
@@ -723,7 +724,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 		psout.u.file = arg.osf;
 	}
 
-	awk = qse_awk_openstd (0);
+	awk = qse_awk_openstdwithmmgr (mmgr, 0);
+	//awk = qse_awk_openstd (0);
 	if (awk == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));
@@ -817,6 +819,31 @@ oops:
 
 	freearg (&arg);
 	return ret;
+}
+
+static int awk_main (int argc, qse_char_t* argv[])
+{
+	int n;
+
+	qse_mmgr_t mmgr = 
+	{
+		qse_xma_alloc,
+		QSE_NULL,
+		qse_xma_free,
+		QSE_NULL
+	};
+
+	mmgr.udd = qse_xma_open (QSE_NULL, 0, 1000000);
+	if (mmgr.udd == QSE_NULL)
+	{
+		qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
+		return -1;
+	}
+
+	n = real_awk_main (argc, argv, &mmgr);
+
+	qse_xma_close (mmgr.udd);
+	return n;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])

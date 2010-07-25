@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 320 2009-12-21 12:29:52Z hyunghwan.chung $
+ * $Id: std.h 336 2010-07-24 12:43:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -86,6 +86,11 @@ extern "C" {
  */
 qse_awk_t* qse_awk_openstd (
 	qse_size_t xtnsize /**< size of extension in bytes */
+);
+
+qse_awk_t* qse_awk_openstdwithmmgr (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize
 );
 
 /**
