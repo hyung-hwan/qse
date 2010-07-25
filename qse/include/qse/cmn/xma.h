@@ -50,6 +50,36 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (xma)
 
+qse_xma_t* qse_xma_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t  ext,
+	qse_size_t  size
+);
+
+void qse_xma_close (
+	qse_xma_t* xma
+);
+
+qse_xma_t* qse_xma_init (
+	qse_xma_t*  xma,
+	qse_mmgr_t* mmgr,
+	qse_size_t  size
+);
+
+void qse_xma_fini (
+	qse_xma_t* xma
+);
+
+void* qse_xma_alloc (
+	qse_xma_t* xma,
+	qse_size_t size
+);
+
+void qse_xma_free (
+	qse_xma_t* xma,
+	void*      b
+);
+
 #ifdef __cplusplus
 }
 #endif

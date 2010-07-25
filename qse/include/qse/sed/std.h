@@ -43,6 +43,11 @@ qse_sed_t* qse_sed_openstd (
 	qse_size_t xtnsize /**< size of extension in bytes */
 );
 
+qse_sed_t* qse_sed_openstdwithmmgr (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize /**< size of extension in bytes */
+);
+
 /**
  * The qse_sed_getxtnstd() gets the pointer to extension space. 
  * Note that you must not call qse_sed_getxtn() for a stream editor

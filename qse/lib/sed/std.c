@@ -34,12 +34,16 @@ typedef struct xtn_t xtn_t;
 
 qse_sed_t* qse_sed_openstd (qse_size_t xtnsize)
 {
+	return qse_sed_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+}
+
+qse_sed_t* qse_sed_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+{
 	qse_sed_t* sed;
 	xtn_t* xtn;
 
 	/* create an object */
-	sed = qse_sed_open (
-		QSE_MMGR_GETDFL(), QSE_SIZEOF(xtn_t) + xtnsize);
+	sed = qse_sed_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize);
 	if (sed == QSE_NULL) return QSE_NULL;
 
 	/* initialize extension */
