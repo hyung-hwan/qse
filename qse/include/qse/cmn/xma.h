@@ -27,13 +27,18 @@
 typedef struct qse_xma_t qse_xma_t;
 typedef struct qse_xma_blk_t qse_xma_blk_t;
 
+#define QSE_XMA_FIXED 32
+#define QSE_XMA_SIZE_BITS ((QSE_SIZEOF_SIZE_T*8)-1)
+
 struct qse_xma_t
 {
 	QSE_DEFINE_COMMON_FIELDS (xma)
 
 	qse_xma_blk_t* head;
-	qse_xma_blk_t* xfree[100];
+	qse_xma_blk_t* xfree[QSE_XMA_FIXED + QSE_XMA_SIZE_BITS + 1];
+	qse_size_t     bdec;
 
+#ifdef QSE_XMA_ENABLE_STAT
 	struct
 	{
 		qse_size_t total;
@@ -42,6 +47,7 @@ struct qse_xma_t
 		qse_size_t nused;
 		qse_size_t nfree;
 	} stat;
+#endif
 };
 
 #ifdef __cplusplus
@@ -72,6 +78,12 @@ void qse_xma_fini (
 
 void* qse_xma_alloc (
 	qse_xma_t* xma,
+	qse_size_t size
+);
+
+void* qse_xma_realloc (
+	qse_xma_t* xma, 
+	void*      b,
 	qse_size_t size
 );
 

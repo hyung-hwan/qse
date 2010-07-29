@@ -24,6 +24,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
 #include <qse/cmn/sio.h>
+#include <qse/cmn/xma.h>
 #include <qse/cmn/misc.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
@@ -32,6 +33,15 @@ static const qse_char_t* g_script_file = QSE_NULL;
 static qse_char_t* g_script = QSE_NULL;
 static const qse_char_t* g_infile = QSE_NULL;
 static int g_option = 0;
+static qse_ulong_t g_memlimit = 0;
+
+static qse_mmgr_t xma_mmgr = 
+{
+	qse_xma_alloc,
+	QSE_NULL,
+	qse_xma_free,
+	QSE_NULL
+};
 
 static qse_ssize_t in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd,
@@ -130,14 +140,15 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -r        allow {n,m} in a regular expression\n"));
 	qse_fprintf (out, QSE_T(" -s        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -l        ensure a newline at text end\n"));
-	qse_fprintf (out, QSE_T(" -f file   specifie a s script file\n"));
+	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
+	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnarslf:"),
+		QSE_T("hnarslf:m:"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -192,6 +203,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('f'):
 				g_script_file = opt.arg;
+				break;
+
+			case QSE_T('m'):
+				g_memlimit = qse_strtoulong (opt.arg);
 				break;
 		}
 	}
@@ -248,6 +263,7 @@ qse_char_t* load_script_file (const qse_char_t* file)
 
 int sed_main (int argc, qse_char_t* argv[])
 {
+	qse_mmgr_t* mmgr = QSE_NULL;
 	qse_sed_t* sed = QSE_NULL;
 	int ret = -1;
 
@@ -257,7 +273,18 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	ret = -1;
 
-	sed = qse_sed_open (QSE_NULL, 0);
+	if (g_memlimit > 0)
+	{
+		xma_mmgr.udd = qse_xma_open (QSE_NULL, 0, g_memlimit);
+		if (xma_mmgr.udd == QSE_NULL)
+		{
+			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
+			goto oops;
+		}
+		mmgr = &xma_mmgr;
+	}
+
+	sed = qse_sed_open (mmgr, 0);
 	if (sed == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("cannot open a stream editor\n"));
@@ -325,7 +352,8 @@ int sed_main (int argc, qse_char_t* argv[])
 	ret = 0;
 
 oops:
-	if (sed != QSE_NULL) qse_sed_close (sed);
+	if (sed) qse_sed_close (sed);
+	if (xma_mmgr.udd) qse_xma_close (xma_mmgr.udd);
 	if (g_script_file != QSE_NULL && g_script != QSE_NULL) 
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_script);
 	return ret;

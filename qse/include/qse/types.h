@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: types.h 337 2010-07-28 13:27:03Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -239,10 +239,12 @@ typedef qse_uint8_t qse_byte_t;
  * The qse_size_t type defines an unsigned integer type that is as large as
  * to hold a pointer value.
  */
-#ifdef __SIZE_TYPE__
+#if defined(__SIZE_TYPE__) && defined(__SIZEOF_SIZE_T__)
 	typedef __SIZE_TYPE__ qse_size_t;
+#	define QSE_SIZEOF_SIZE_T __SIZEOF_SIZE_T__
 #else
 	typedef qse_uint_t  qse_size_t;
+#	define QSE_SIZEOF_SIZE_T QSE_SIZEOF_INT_T
 #endif
 
 /**

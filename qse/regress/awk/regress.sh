@@ -48,6 +48,8 @@ print_usage()
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
 
+GLOBALOPTS="-m 500000"
+
 PROGS="
 	cou-001.awk!cou.dat!!
 	cou-002.awk!cou.dat!!
@@ -198,8 +200,8 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${valgrind} ${QSEAWK} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
-		${valgrind} ${QSEAWK} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
+		echo_title "${valgrind} ${QSEAWK} ${GLOBALOPTS} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
+		${valgrind} ${QSEAWK} ${GLOBALOPTS} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
 	
