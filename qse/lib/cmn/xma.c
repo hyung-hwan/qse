@@ -27,12 +27,21 @@
 #define SYS_TO_USR(_) (((qse_xma_blk_t*)_) + 1)
 #define USR_TO_SYS(_) (((qse_xma_blk_t*)_) - 1)
 
+/*
+ * the xfree array is divided into three region
+ * 0 ....................... FIXED ......................... XFIMAX-1 ... XFIMAX
+ * |  small fixed-size chains |     large  chains                | huge chain |
+ */
+#define FIXED QSE_XMA_FIXED
 #define XFIMAX(xma) (QSE_COUNTOF(xma->xfree)-1)
+#define _XFI(size) (((size) / ALIGN) - 1)
+#define _XFI_LARGE(xma,size) (szlog2(size) - (xma)->bdec + FIXED)
+#define XFI(xma,size) ((_XFI(size) < FIXED)? _XFI(size): _XFI_LARGE(xma,size))
 
 struct qse_xma_blk_t 
 {
 	qse_size_t avail: 1;
-	qse_size_t size: (sizeof(qse_size_t)*8)-1; /**< block size */
+	qse_size_t size: QSE_XMA_SIZE_BITS;/**< block size */
 
 	struct
 	{
@@ -48,6 +57,46 @@ struct qse_xma_blk_t
 };
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (xma)
+
+static QSE_INLINE qse_size_t szlog2 (qse_size_t n)
+{
+	/*
+	 * 2**x = n;
+	 * x = log2(n);
+	 * -------------------------------------------
+	 * 	unsigned int x = 0;
+	 * 	while((n >> x) > 1) ++x;
+	 * 	return x;
+	 */
+
+#define BITS (QSE_SIZEOF_SIZE_T * 8)
+	int x = BITS - 1;
+
+#if QSE_SIZEOF_SIZE_T >= 32
+#	error qse_size_t too large. unsupported platform
+#endif
+
+#if QSE_SIZEOF_SIZE_T >= 16
+	if ((n & (~(qse_size_t)0 << (BITS-64))) == 0) { x -= 64; n <<= 64; }
+#endif
+#if QSE_SIZEOF_SIZE_T >= 8
+	if ((n & (~(qse_size_t)0 << (BITS-32))) == 0) { x -= 32; n <<= 32; }
+#endif
+#if QSE_SIZEOF_SIZE_T >= 4 
+	if ((n & (~(qse_size_t)0 << (BITS-16))) == 0) { x -= 16; n <<= 16; }
+#endif
+#if QSE_SIZEOF_SIZE_T >= 2
+	if ((n & (~(qse_size_t)0 << (BITS-8))) == 0) { x -= 8; n <<= 8; }
+#endif
+#if QSE_SIZEOF_SIZE_T >= 1
+	if ((n & (~(qse_size_t)0 << (BITS-4))) == 0) { x -= 4; n <<= 4; }
+#endif
+	if ((n & (~(qse_size_t)0 << (BITS-2))) == 0) { x -= 2; n <<= 2; }
+	if ((n & (~(qse_size_t)0 << (BITS-1))) == 0) { x -= 1; }
+
+	return x;
+#undef BITS
+}
 
 qse_xma_t* qse_xma_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t size)
 {
@@ -84,35 +133,42 @@ void qse_xma_close (qse_xma_t* xma)
 qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t size)
 {
 	qse_xma_blk_t* free;
+	qse_size_t xfi;
 
+	/* adjust 'size' to be large enough to hold a single smallest block */
 	if (size < HDRSIZE + ALIGN) size = HDRSIZE + ALIGN;
 
+	/* allocate a memory chunk to use for actual memory allocation */
 	free = QSE_MMGR_ALLOC (mmgr, size);
 	if (free == QSE_NULL) return QSE_NULL;
 	
-	/* make the entire region available. the allocatable block begins
-	 * past the xma structure */
+	/* initialize the header part of the free chunk */
+	free->avail = 1;
 	free->size = size - HDRSIZE; /* size excluding the block header */
 	free->f.prev = QSE_NULL;
 	free->f.next = QSE_NULL;
 	free->b.next = QSE_NULL;
 	free->b.prev = QSE_NULL;
-	free->avail = 1;
 
 	QSE_MEMSET (xma, 0, QSE_SIZEOF(*xma));
 	xma->mmgr = mmgr;
+	xma->bdec = szlog2(FIXED*ALIGN); /* precalculate the decrement value */
 
-	/* the entire region is a free block */
-	xma->xfree[XFIMAX(xma)] = free;
-	xma->head = free;
+	/* the entire chunk is a free block */
+	xfi = XFI(xma,free->size);
+	if (xfi > XFIMAX(xma)) xfi = XFIMAX(xma);
+	xma->xfree[xfi] = free; /* locate it at the right slot */
+	xma->head = free; /* store it for furture reference */
 
 	/* initialize some statistical variables */
+#ifdef QSE_XMA_ENABLE_STAT
 	xma->stat.total = size;
 	xma->stat.alloc = 0;
 	xma->stat.avail = size - HDRSIZE;
 	xma->stat.nfree = 1;
 	xma->stat.nused = 0;
-
+#endif
+	
 	return xma;
 }
 
@@ -121,9 +177,9 @@ void qse_xma_fini (qse_xma_t* xma)
 	QSE_MMGR_FREE (xma->mmgr, xma->head);
 }
 
-static QSE_INLINE void attach_block_to_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
+static QSE_INLINE void attach_to_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
 {
-	qse_size_t xfi = (b->size / ALIGN) - 1;
+	qse_size_t xfi = XFI(xma,b->size);
 	if (xfi > XFIMAX(xma)) xfi = XFIMAX(xma);
 
 	b->f.prev = QSE_NULL;
@@ -132,21 +188,26 @@ static QSE_INLINE void attach_block_to_freelist (qse_xma_t* xma, qse_xma_blk_t* 
 	xma->xfree[xfi] = b;		
 }
 
-static QSE_INLINE void detach_block_from_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
+static QSE_INLINE void detach_from_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
 {
-	qse_xma_blk_t* x, * y;
+	qse_xma_blk_t* p, * n;
 
-	x = b->f.prev;
-	y = b->f.next;
+	p = b->f.prev;
+	n = b->f.next;
 
-	if (x) x->f.next = y;
+	if (p)
+	{
+		p->f.next = n;
+	}
 	else 
 	{
-		qse_size_t xfi = (b->size / ALIGN) - 1;
+		qse_size_t xfi = XFI(xma,b->size);
 		if (xfi > XFIMAX(xma)) xfi = XFIMAX(xma);
-		xma->xfree[xfi] = y;
+
+		QSE_ASSERT (b == xma->xfree[xfi]);
+		xma->xfree[xfi] = n;
 	}
-	if (y) y->f.prev = x;
+	if (n) n->f.prev = p;
 }
 
 static qse_xma_blk_t* alloc_from_freelist (
@@ -158,45 +219,48 @@ static qse_xma_blk_t* alloc_from_freelist (
 	{
 		if (free->size >= size)
 		{
-			qse_size_t rem;
+			detach_from_freelist (xma, free);
 
-			rem  = free->size - size;
+			qse_size_t rem = free->size - size;
 			if (rem > HDRSIZE)
 			{
 				qse_xma_blk_t* tmp;
 
 				/* the remaining part is large enough to hold 
-				 * another block. let's split it */
+				 * another block. let's split it 
+				 */
+
+				/* shrink the size of the 'free' block */
+				free->size = size;
+
+				/* let 'tmp' point to the remaining part */
 				tmp = (qse_xma_blk_t*)(((qse_byte_t*)(free + 1)) + size);
 
+				/* initialize some fields */
 				tmp->avail = 1;
 				tmp->size = rem - HDRSIZE;
+
+				/* link 'tmp' to the block list */
 				tmp->b.next = free->b.next;
 				tmp->b.prev = free;
 				if (free->b.next) free->b.next->b.prev = tmp;
 				free->b.next = tmp;
-				free->size = size;
 
-				tmp->f.next = free->f.next;
-				free->f.next = tmp;
+				/* add the remaining part to the free list */
+				attach_to_freelist (xma, tmp);
 
+#ifdef QSE_XMA_ENABLE_STAT
 				xma->stat.avail -= HDRSIZE;
+#endif
 			}
+#ifdef QSE_XMA_ENABLE_STAT
 			else
 			{
 				/* decrement the number of free blocks as the current
 				 * block is allocated as a whole without being split */
 				xma->stat.nfree--;
 			}
-
-
-			if (free->f.next) free->f.next->f.prev = free->f.prev;
-			if (free->f.prev) free->f.prev->f.next = free->f.next;
-			else
-			{
-				QSE_ASSERT (xma->xfree[xfi] == free);
-				xma->xfree[xfi] = free->f.next;
-			}
+#endif
 
 			free->avail = 0;
 			/*
@@ -204,9 +268,11 @@ static qse_xma_blk_t* alloc_from_freelist (
 			free->f.prev = QSE_NULL;
 			*/
 
+#ifdef QSE_XMA_ENABLE_STAT
 			xma->stat.nused++;
 			xma->stat.alloc += free->size;
 			xma->stat.avail -= free->size;
+#endif
 			return free;
 		}
 	}
@@ -226,43 +292,72 @@ void* qse_xma_alloc (qse_xma_t* xma, qse_size_t size)
 	size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
 
 	QSE_ASSERT (size >= ALIGN);
-	xfi = (size / ALIGN) - 1;
+	xfi = XFI(xma,size);
 	if (xfi > XFIMAX(xma)) xfi = XFIMAX(xma);
 
-	if (xfi < XFIMAX(xma) && xma->xfree[xfi])
+	/*if (xfi < XFIMAX(xma) && xma->xfree[xfi])*/
+	if (xfi < FIXED && xma->xfree[xfi])
 	{
 		/* try the best fit */
-//printf ("FOUND A BEST FIT...............\n");
 		free = xma->xfree[xfi];
 
 		QSE_ASSERT (free->avail != 0);
 		QSE_ASSERT (free->size == size);
 
-		detach_block_from_freelist (xma, free);
+		detach_from_freelist (xma, free);
 		free->avail = 0;
 
+#ifdef QSE_XMA_ENABLE_STAT
 		xma->stat.nfree--;
 		xma->stat.nused++;
 		xma->stat.alloc += free->size;
 		xma->stat.avail -= free->size;
+#endif
+	}
+	else if (xfi == XFIMAX(xma))
+	{
+		/* huge block */
+		free = alloc_from_freelist (xma, XFIMAX(xma), size);
+		if (free == QSE_NULL) return QSE_NULL;
 	}
 	else
 	{
-		/* traverses the chain of free blocks */
-		free = alloc_from_freelist (xma, XFIMAX(xma), size);
+		if (xfi >= FIXED)
+		{
+			/* get the block from its own large chain */
+			free = alloc_from_freelist (xma, xfi, size);
+			if (free == QSE_NULL)
+			{
+				/* borrow a large block from the huge block chain */
+				free = alloc_from_freelist (xma, XFIMAX(xma), size);
+			}
+		}
+		else
+		{
+			/* borrow a small block from the huge block chain */
+			free = alloc_from_freelist (xma, XFIMAX(xma), size);
+			if (free == QSE_NULL) xfi = FIXED - 1;
+		}
+
 		if (free == QSE_NULL)
 		{
+			/* try each large block chain left */
 			for (++xfi; xfi < XFIMAX(xma) - 1; xfi++)
 			{
 				free = alloc_from_freelist (xma, xfi, size);
 				if (free != QSE_NULL) break;
 			}
-
 			if (free == QSE_NULL) return QSE_NULL;
 		}
 	}
 
 	return SYS_TO_USR(free);
+}
+
+void* qse_xma_realloc (qse_xma_t* xma, void* b, qse_size_t size)
+{
+	/* TODO */
+	return QSE_NULL;
 }
 
 void qse_xma_free (qse_xma_t* xma, void* b)
@@ -271,9 +366,11 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 
 	/*QSE_ASSERT (blk->f.next == QSE_NULL);*/
 
+#ifdef QSE_XMA_ENABLE_STAT
 	/* update statistical variables */
 	xma->stat.nused--;
 	xma->stat.alloc -= blk->size;
+#endif
 
 	if ((blk->b.prev && blk->b.prev->avail) &&
 	    (blk->b.next && blk->b.next->avail))
@@ -304,17 +401,19 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		qse_xma_blk_t* z = y->b.next;
 		qse_size_t bs = blk->size + HDRSIZE + y->size + HDRSIZE;
 
-		detach_block_from_freelist (xma, x);
-		detach_block_from_freelist (xma, y);
+		detach_from_freelist (xma, x);
+		detach_from_freelist (xma, y);
 
 		x->size += bs;
 		x->b.next = z;
 		if (z) z->b.prev = x;	
 
-		attach_block_to_freelist (xma, x);
+		attach_to_freelist (xma, x);
 
+#ifdef QSE_XMA_ENABLE_STAT
 		xma->stat.nfree--;
 		xma->stat.avail += bs;
+#endif
 	}
 	else if (blk->b.next && blk->b.next->avail)
 	{
@@ -344,7 +443,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		qse_size_t bs = x->size + HDRSIZE;
 
 		/* detach x from the free list */
-		detach_block_from_freelist (xma, x);
+		detach_from_freelist (xma, x);
 
 		/* update the block availability */
 		blk->avail = 1;
@@ -357,9 +456,11 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		blk->b.next = y;
 
 		/* attach blk to the free list */
-		attach_block_to_freelist (xma, blk);
+		attach_to_freelist (xma, blk);
 
+#ifdef QSE_XMA_ENABLE_STAT
 		xma->stat.avail += bs;
+#endif
 	}
 	else if (blk->b.prev && blk->b.prev->avail)
 	{
@@ -389,26 +490,31 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 		qse_xma_blk_t* y = blk->b.next;
 		qse_size_t bs = blk->size + HDRSIZE;
 
-		detach_block_from_freelist (xma, x);
+		detach_from_freelist (xma, x);
 
-		x->size += blk->size + HDRSIZE;
+		x->size += bs;
 		x->b.next = y;
 		if (y) y->b.prev = x;
 
-		attach_block_to_freelist (xma, x);
+		attach_to_freelist (xma, x);
 
+#ifdef QSE_XMA_ENABLE_STAT
 		xma->stat.avail += bs;
+#endif
 	}
 	else
 	{
 		blk->avail = 1;
-		attach_block_to_freelist (xma, blk);
+		attach_to_freelist (xma, blk);
 
+#ifdef QSE_XMA_ENABLE_STAT
 		xma->stat.nfree++;
 		xma->stat.avail += blk->size;
+#endif
 	}
 }
 
+#if 0
 void qse_xma_dump (qse_xma_t* xma)
 {
 	qse_xma_blk_t* tmp;
@@ -438,7 +544,6 @@ void qse_xma_dump (qse_xma_t* xma)
 	printf ("Total           : %18llu bytes\n", asum + fsum + isum);
 }
 
-#if 0
 int main ()
 {
 	int i;

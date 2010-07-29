@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 336 2010-07-24 12:43:26Z hyunghwan.chung $
+ * $Id: awk.c 337 2010-07-28 13:27:03Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -69,6 +69,7 @@ struct arg_t
 
 	int          opton;
 	int          optoff;
+	qse_ulong_t  memlimit;
 };
 
 struct gvmv_t
@@ -358,6 +359,7 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
+	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
 
 	for (j = 0; opttab[j].name != QSE_NULL; j++)
 	{
@@ -392,13 +394,14 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":field-separator"), QSE_T('F') },
 		{ QSE_T(":deparsed-file"),   QSE_T('o') },
 		{ QSE_T(":assign"),          QSE_T('v') },
+		{ QSE_T(":memory-limit"),    QSE_T('m') },
 
 		{ QSE_T("help"),             QSE_T('h') }
 	};
 
 	static qse_opt_t opt = 
 	{
-		QSE_T("dc:f:F:o:v:h"),
+		QSE_T("dc:f:F:o:v:m:h"),
 		lng
 	};
 
@@ -517,6 +520,12 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					print_err (QSE_T("out of memory\n"));
 					goto oops;
 				}
+				break;
+			}
+
+			case QSE_T('m'):
+			{
+				arg->memlimit = qse_strtoulong (opt.arg);
 				break;
 			}
 
@@ -688,7 +697,15 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 	return QSE_HTB_WALK_FORWARD;
 }
 
-static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
+static qse_mmgr_t xma_mmgr = 
+{
+	qse_xma_alloc,
+	QSE_NULL,
+	qse_xma_free,
+	QSE_NULL
+};
+
+static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
@@ -696,7 +713,6 @@ static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
 #if 0
 	qse_awk_rcb_t rcb;
 #endif
-
 	int i;
 	struct arg_t arg;
 	int ret = -1;
@@ -704,6 +720,7 @@ static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
 	/* TODO: change it to support multiple source files */
 	qse_awk_parsestd_in_t psin;
 	qse_awk_parsestd_out_t psout;
+	qse_mmgr_t* mmgr = QSE_NULL;
 
 	memset (&arg, 0, QSE_SIZEOF(arg));
 
@@ -724,8 +741,19 @@ static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
 		psout.u.file = arg.osf;
 	}
 
+	if (arg.memlimit > 0)
+	{
+		xma_mmgr.udd = qse_xma_open (QSE_NULL, 0, arg.memlimit);
+		if (xma_mmgr.udd == QSE_NULL)
+		{
+			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
+			goto oops;
+		}
+		mmgr = &xma_mmgr;
+	}
+
 	awk = qse_awk_openstdwithmmgr (mmgr, 0);
-	//awk = qse_awk_openstd (0);
+	/*awk = qse_awk_openstd (0);*/
 	if (awk == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open awk\n"));
@@ -814,36 +842,12 @@ static int real_awk_main (int argc, qse_char_t* argv[], qse_mmgr_t* mmgr)
 	}
 
 oops:
-	if (rtx != QSE_NULL) qse_awk_rtx_close (rtx);
-	if (awk != QSE_NULL) qse_awk_close (awk);
+	if (rtx) qse_awk_rtx_close (rtx);
+	if (awk) qse_awk_close (awk);
 
+	if (xma_mmgr.udd) qse_xma_close (xma_mmgr.udd);
 	freearg (&arg);
 	return ret;
-}
-
-static int awk_main (int argc, qse_char_t* argv[])
-{
-	int n;
-
-	qse_mmgr_t mmgr = 
-	{
-		qse_xma_alloc,
-		QSE_NULL,
-		qse_xma_free,
-		QSE_NULL
-	};
-
-	mmgr.udd = qse_xma_open (QSE_NULL, 0, 1000000);
-	if (mmgr.udd == QSE_NULL)
-	{
-		qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
-		return -1;
-	}
-
-	n = real_awk_main (argc, argv, &mmgr);
-
-	qse_xma_close (mmgr.udd);
-	return n;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])

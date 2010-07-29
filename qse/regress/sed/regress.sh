@@ -48,6 +48,8 @@ print_usage()
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
 
+GLOBALOPTS="-m 500000"
+
 PROGS="
 	s001.sed/s001.dat//-n
 	s002.sed/s002.dat//
@@ -85,8 +87,8 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${valgrind} ${QSESED} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
-		${valgrind} ${QSESED} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
+		echo_title "${valgrind} ${QSESED} ${GLOBALOPTS} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
+		${valgrind} ${QSESED} ${GLOBALOPTS} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
 	

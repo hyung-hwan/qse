@@ -1,5 +1,5 @@
 /*
- * $Id: syscall.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: syscall.h 337 2010-07-28 13:27:03Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -49,6 +49,9 @@
 #endif
 #ifdef HAVE_SYS_RESOURCE_H
 #	include <sys/resource.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#	include <sys/stat.h>
 #endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
