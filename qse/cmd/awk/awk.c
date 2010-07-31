@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 337 2010-07-28 13:27:03Z hyunghwan.chung $
+ * $Id: awk.c 338 2010-07-30 13:24:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -700,7 +700,7 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 static qse_mmgr_t xma_mmgr = 
 {
 	qse_xma_alloc,
-	QSE_NULL,
+	qse_xma_realloc,
 	qse_xma_free,
 	QSE_NULL
 };
