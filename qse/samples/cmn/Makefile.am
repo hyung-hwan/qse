@@ -1,10 +1,11 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -DNDEBUG
 
-bin_PROGRAMS = chr str sll lda htb rbt fio pio sio time main rex01 
+bin_PROGRAMS = xma chr str sll lda htb rbt fio pio sio time main rex01 
 
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
 
+xma_SOURCES = xma.c
 chr_SOURCES = chr.c
 str_SOURCES = str.c
 sll_SOURCES = sll.c

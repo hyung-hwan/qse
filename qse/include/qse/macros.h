@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: macros.h 338 2010-07-30 13:24:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -34,6 +34,23 @@
 #else
 #	define QSE_INLINE 
 #endif
+
+#if defined(__GNUC__)
+#	define QSE_INLINE_ALWAYS inline __attribute__((__always_inline__))
+#elif defined(_MSC_VER) || (defined(__CC_ARM) || defined(__ARMCC__))
+#	define QSE_INLINE_ALWAYS __forceinline
+#else
+#	define QSE_INLINE_ALWAYS QSE_INLINE
+#endif
+
+#if defined(__GNUC__)
+#	define QSE_INLINE_NEVER inline __attribute__((__noinline__))
+#elif (defined(__CC_ARM) || defined(__ARMCC__))
+#	define QSE_INLINE_NEVER __declspec(noinline)
+#else
+#	define QSE_INLINE_NEVER 
+#endif
+
 
 /** 
  * The #QSE_NULL macro defines a special pointer value to indicate an error or

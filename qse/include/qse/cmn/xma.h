@@ -24,6 +24,10 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+#ifdef QSE_BUILD_DEBUG
+#	define QSE_XMA_ENABLE_STAT
+#endif
+
 typedef struct qse_xma_t qse_xma_t;
 typedef struct qse_xma_blk_t qse_xma_blk_t;
 

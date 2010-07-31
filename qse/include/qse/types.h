@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 337 2010-07-28 13:27:03Z hyunghwan.chung $
+ * $Id: types.h 338 2010-07-30 13:24:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -408,40 +408,39 @@ struct qse_cstr_t
 };
 typedef struct qse_cstr_t qse_cstr_t;
 
+/** 
+ * allocate a memory chunk of the size @a n.
+ * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+ */
+typedef void* (*qse_mmgr_alloc_t)   (void* udd, qse_size_t n);
+/** 
+ * resize a memory chunk pointed to by @a ptr to the size @a n.
+ * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+ */
+typedef void* (*qse_mmgr_realloc_t) (void* udd, void* ptr, qse_size_t n);
 /**
- * The qse_mmgr_t type defines a set type of functions for memory management.
+ * free a memory chunk pointed to by @a ptr.
+ */
+typedef void  (*qse_mmgr_free_t)    (void* udd, void* ptr);
+
+/**
+ * The qse_mmgr_t type defines a set of functions for memory management.
  * As the type is merely a structure, it is just used as a single container
  * for memory management functions with a pointer to user-defined data. 
- * The user-defined \a data is passed to each memory management function
- * whenever it is called. You can allocate, reallocate, and free a memory
- * chunk.
+ * The user-defined data pointer @a udd is passed to each memory management 
+ * function whenever it is called. You can allocate, reallocate, and free 
+ * a memory chunk.
  *
- * For example, a qse_xxx_open() function accepts a pointer of the qse_mmgr_t *
+ * For example, a qse_xxx_open() function accepts a pointer of the qse_mmgr_t
  * type and the xxx object uses it to manage dynamic data within the object. 
  */
 struct qse_mmgr_t
 {
-	/** 
-	 * allocate a memory chunk of the size \a n.
-	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
-	 */
-	void* (*alloc)   (void* udd, qse_size_t n);
-	/** 
-	 * resize a memory chunk pointed to by \a ptr to the size \a n.
-	 * @return a pointer to a memory chunk on success, QSE_NULL on failure.
-	 */
-	void* (*realloc) (void* udd, void* ptr, qse_size_t n);
-	/**
-	 * frees a memory chunk pointed to by \a ptr.
-	 */
-	void  (*free)    (void* udd, void* ptr);
-	/** 
-	 * a pointer to user-defined data passed as the first parameter to
-	 * alloc(), realloc(), and free().
-	 */
-	void*   udd;
+	qse_mmgr_alloc_t   alloc;   /**< allocation function */
+	qse_mmgr_realloc_t realloc; /**< resizing function */
+	qse_mmgr_free_t    free;    /**< disposal function */
+	void*              udd;     /**< user-defined data pointer */
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
-/******/
 
 #endif
