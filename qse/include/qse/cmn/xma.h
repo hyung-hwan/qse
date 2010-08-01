@@ -96,6 +96,12 @@ void qse_xma_free (
 	void*      b
 );
 
+void qse_xma_dump (
+	qse_xma_t* xma,
+	int (*printf)(const qse_char_t* fmt,...)
+);
+
+
 #ifdef __cplusplus
 }
 #endif

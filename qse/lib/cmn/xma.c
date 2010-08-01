@@ -491,37 +491,53 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 		if (rem >= MINBLKLEN) 
 		{
 			qse_xma_blk_t* tmp;
+			qse_xma_blk_t* n = blk->b.next;
 
 			/* the leftover is large enough to hold a block
 			 * of minimum size. split the current block. 
 			 * let 'tmp' point to the leftover. */
 			tmp = (qse_xma_blk_t*)(((qse_byte_t*)(blk + 1)) + size);
 			tmp->avail = 1;
-			tmp->size = rem - HDRSIZE;
 
-			/* link 'tmp' to the block list */
-			tmp->b.next = blk->b.next;
-			tmp->b.prev = blk;
-			if (blk->b.next) blk->b.next->b.prev = tmp;
-			blk->b.next = tmp;
-			blk->size = size;
+			if (n && n->avail)
+			{
+				/* merge with the next block */
+				detach_from_freelist (xma, n);
+
+				tmp->b.next = n->b.next;
+				tmp->b.prev = blk;
+				if (n->b.next) n->b.next->b.prev = tmp;
+				blk->b.next = tmp;
+				blk->size = size;
+
+				tmp->size = rem - HDRSIZE + HDRSIZE + n->size;
+
+#ifdef QSE_XMA_ENABLE_STAT
+				xma->stat.alloc -= rem;
+				/* rem - HDRSIZE(tmp) + HDRSIZE(n) */
+				xma->stat.avail += rem;
+#endif
+			}
+			else
+			{
+				/* link 'tmp' to the block list */
+				tmp->b.next = n;
+				tmp->b.prev = blk;
+				if (n) n->b.prev = tmp;
+				blk->b.next = tmp;
+				blk->size = size;
+
+				tmp->size = rem - HDRSIZE;
+
+#ifdef QSE_XMA_ENABLE_STAT
+				xma->stat.nfree++;
+				xma->stat.alloc -= rem;
+				xma->stat.avail += tmp->size;
+#endif
+			}
 
 			/* add 'tmp' to the free list */
 			attach_to_freelist (xma, tmp);
-
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-/* TODO: if the next block is free. need to merge tmp with that..... */
-
-#ifdef QSE_XMA_ENABLE_STAT
-			xma->stat.nfree++;
-			xma->stat.alloc -= rem;
-			xma->stat.avail += tmp->size;
-#endif
 		}
 	}
 
@@ -711,7 +727,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 	}
 }
 
-void qse_xma_dump (qse_xma_t* xma)
+void qse_xma_dump (qse_xma_t* xma, int (*printf)(const qse_char_t* fmt,...))
 {
 	qse_xma_blk_t* tmp;
 	unsigned long long fsum, asum; 
@@ -719,19 +735,19 @@ void qse_xma_dump (qse_xma_t* xma)
 	unsigned long long isum;
 #endif
 
-	qse_printf (QSE_T("<XMA DUMP>\n"));
+	printf (QSE_T("<XMA DUMP>\n"));
 #ifdef QSE_XMA_ENABLE_STAT
-	qse_printf (QSE_T("== statistics ==\n"));
-	qse_printf (QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
-	qse_printf (QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
-	qse_printf (QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
+	printf (QSE_T("== statistics ==\n"));
+	printf (QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
+	printf (QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
+	printf (QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
 #endif
 
-	qse_printf (QSE_T("== blocks ==\n"));
-	qse_printf (QSE_T(" size               avail address\n"));
+	printf (QSE_T("== blocks ==\n"));
+	printf (QSE_T(" size               avail address\n"));
 	for (tmp = xma->head, fsum = 0, asum = 0; tmp; tmp = tmp->b.next)
 	{
-		qse_printf (QSE_T(" %-18llu %-5d %p\n"), (unsigned long long)tmp->size, tmp->avail, tmp);
+		printf (QSE_T(" %-18llu %-5d %p\n"), (unsigned long long)tmp->size, tmp->avail, tmp);
 		if (tmp->avail) fsum += tmp->size;
 		else asum += tmp->size;
 	}
@@ -740,68 +756,19 @@ void qse_xma_dump (qse_xma_t* xma)
 	isum = (xma->stat.nfree + xma->stat.nused) * HDRSIZE;
 #endif
 
-	qse_printf (QSE_T("---------------------------------------\n"));
-	qse_printf (QSE_T("Allocated blocks: %18llu bytes\n"), asum);
-	qse_printf (QSE_T("Available blocks: %18llu bytes\n"), fsum);
+	printf (QSE_T("---------------------------------------\n"));
+	printf (QSE_T("Allocated blocks: %18llu bytes\n"), asum);
+	printf (QSE_T("Available blocks: %18llu bytes\n"), fsum);
 #ifdef QSE_XMA_ENABLE_STAT
-	qse_printf (QSE_T("Internal use    : %18llu bytes\n"), isum);
-	qse_printf (QSE_T("Total           : %18llu bytes\n"), asum + fsum + isum);
+	printf (QSE_T("Internal use    : %18llu bytes\n"), isum);
+	printf (QSE_T("Total           : %18llu bytes\n"), asum + fsum + isum);
+#endif
+
+	QSE_ASSERT (asum == xma->stat.alloc);
+	QSE_ASSERT (fsum == xma->stat.avail);
+#ifdef QSE_XMA_ENABLE_STAT
+	QSE_ASSERT (isum == xma->stat.total - (xma->stat.alloc + xma->stat.avail));
+	QSE_ASSERT (asum + fsum + isum == xma->stat.total);
 #endif
 }
 
-#if 0
-int main ()
-{
-	int i;
-	void* ptr[100];
-
-	qse_xma_t* xma = qse_xma_open (100000L);
-	if (xma == QSE_NULL) 
-	{
-		printf ("cannot open xma\n");
-		return -1;
-	}
-
-	for (i = 0; i < 100; i++)
-	{
-		int sz = (i + 1) * 10;
-		/*int sz = 10240;*/
-		ptr[i] = qse_xma_alloc (xma, sz);
-		if (ptr[i] == QSE_NULL) 
-		{
-			printf ("failed to alloc %d\n", sz);
-			break;
-		}
-		printf ("%d %p\n", sz, ptr[i]);
-	}
-
-	for (--i; i > 0; i-= 3)
-	{
-		if (i >= 0) qse_xma_free (xma, ptr[i]);
-	}
-
-/*
-	qse_xma_free (xma, ptr[0]);
-	qse_xma_free (xma, ptr[1]);
-	qse_xma_free (xma, ptr[2]);
-*/
-
-	{
-		void* x, * y;
-
-		printf ("%p\n", qse_xma_alloc (xma, 5000));
-		printf ("%p\n", qse_xma_alloc (xma, 1000));
-		printf ("%p\n", (x = qse_xma_alloc (xma, 10)));
-		printf ("%p\n", (y = qse_xma_alloc (xma, 40)));
-
-		if (x) qse_xma_free (xma, x);
-		if (y) qse_xma_free (xma, y);
-		printf ("%p\n", (x = qse_xma_alloc (xma, 10)));
-		printf ("%p\n", (y = qse_xma_alloc (xma, 40)));
-	}
-	qse_xma_dump (xma);
-
-	qse_xma_close (xma);
-	return 0;
-}
-#endif
