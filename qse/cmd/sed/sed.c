@@ -38,7 +38,7 @@ static qse_ulong_t g_memlimit = 0;
 static qse_mmgr_t xma_mmgr = 
 {
 	qse_xma_alloc,
-	QSE_NULL,
+	qse_xma_realloc,
 	qse_xma_free,
 	QSE_NULL
 };

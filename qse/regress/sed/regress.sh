@@ -17,8 +17,8 @@ echo_title()
 	echo "--------------------------------------------------------------------------------"
 	while [ $# -gt 0 ]
 	do
-		echo -n "$1 "
-		echo -n "$1 " >/dev/stderr
+		echo -n "[CMD] $1 "
+		echo -n "[CMD] $1 " >/dev/stderr
 		shift
 	done		
 	echo
@@ -47,8 +47,8 @@ print_usage()
 
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
-
-GLOBALOPTS="-m 500000"
+OUTFILE_XMA="${OUTFILE}.xma"
+XMAOPTS="-m 500000"
 
 PROGS="
 	s001.sed/s001.dat//-n
@@ -66,6 +66,7 @@ PROGS="
 run_scripts() 
 {
 	valgrind="$1"
+	extraopts="$2"
 	echo "${PROGS}" > "${TMPFILE}"
 	
 	while read prog
@@ -87,35 +88,56 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${valgrind} ${QSESED} ${GLOBALOPTS} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
-		${valgrind} ${QSESED} ${GLOBALOPTS} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
+		echo_title "${valgrind} ${QSESED} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
+		${valgrind} ${QSESED} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
 	
 	rm -f "${TMPFILE}"
 }
 
-case $1 in
-init)
-	rm -f *.dp
-	run_scripts > "${OUTFILE}"
-	rm -f *.dp
-	echo_so "INIT OK"
-	;;
-test)
-	run_scripts > "${OUTFILE}.test"
+run_test()
+{
+	outfile="${1}"
+	extraopts="${2}"
+
+	run_scripts "" "${extraopts}"> "${outfile}.test"
 
 	# diff -q is not supported on old platforms.
 	# redirect output to /dev/null instead.
-	diff "${OUTFILE}" "${OUTFILE}.test" > /dev/null || {
+	diff "${outfile}" "${outfile}.test" > /dev/null || {
 		echo_so "ERROR: Difference is found between expected output and actual output."
-		echo_so "       The expected output is stored in '${OUTFILE}'."
-		echo_so "       The actual output is stored in '${OUTFILE}.test'."
-		echo_so "       You may execute 'diff ${OUTFILE} ${OUTFILE}.test' for more info."
-		exit 1
+		echo_so "       The expected output is stored in '${outfile}'."
+		echo_so "       The actual output is stored in '${outfile}.test'."
+		echo_so "       You may execute 'diff ${outfile} ${outfile}.test' for more info."
+		return 1
 	}
-	rm -f "${OUTFILE}.test"
-	echo_so "TEST OK"
+	rm -f "${outfile}.test"
+	return 0
+}
+
+case $1 in
+init)
+	run_scripts "" "" > "${OUTFILE}"
+	run_scripts "" "${XMAOPTS}" > "${OUTFILE_XMA}"
+	echo_so "INIT OK"
+	;;
+test)
+	run_test "${OUTFILE}" "" && {
+		run_test "${OUTFILE_XMA}" "${XMAOPTS}" && {
+			${QSESED} "s|${QSEAWK} ${XMAOPTS}|${QSEAWK} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
+			diff "${OUTFILE}" "${OUTFILE_XMA}.$$"  || {
+				rm -f "${OUTFILE_XMA}.$$"
+				echo_so "ERROR: Difference is found between normal output and xma output."
+				echo_so "       The normal output is stored in '${OUTFILE}'."
+				echo_so "       The xma output is stored in '${OUTFILE_XMA}'."
+				echo_so "       Ignore lines staring with [CMD] in the difference."
+				exit 1;
+			}
+			rm -f "${OUTFILE_XMA}.$$"
+			echo_so "TEST OK"
+		}
+	}
 	;;
 leakcheck)
 	bin_valgrind="`which valgrind 2> /dev/null || echo ""`"
