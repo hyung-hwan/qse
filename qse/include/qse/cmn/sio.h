@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 318 2009-12-18 12:34:42Z hyunghwan.chung $
+ * $Id: sio.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,19 +32,19 @@
 
 enum qse_sio_open_flag_t
 {
-        QSE_SIO_HANDLE    = QSE_FIO_HANDLE,
+	QSE_SIO_HANDLE    = QSE_FIO_HANDLE,
 
-        QSE_SIO_READ      = QSE_FIO_READ,
-        QSE_SIO_WRITE     = QSE_FIO_WRITE,
+	QSE_SIO_READ      = QSE_FIO_READ,
+	QSE_SIO_WRITE     = QSE_FIO_WRITE,
 	QSE_SIO_APPEND    = QSE_FIO_APPEND,
 
 	QSE_SIO_CREATE    = QSE_FIO_CREATE,
-        QSE_SIO_TRUNCATE  = QSE_FIO_TRUNCATE,
+	QSE_SIO_TRUNCATE  = QSE_FIO_TRUNCATE,
 	QSE_SIO_EXCLUSIVE = QSE_FIO_EXCLUSIVE,
 	QSE_SIO_SYNC      = QSE_FIO_SYNC,
 
-        QSE_SIO_NOSHRD    = QSE_FIO_NOSHRD,
-        QSE_SIO_NOSHWR    = QSE_FIO_NOSHWR
+	QSE_SIO_NOSHRD    = QSE_FIO_NOSHRD,
+	QSE_SIO_NOSHWR    = QSE_FIO_NOSHWR
 };
 
 typedef qse_fio_off_t qse_sio_pos_t;
@@ -71,22 +71,28 @@ extern qse_sio_t* qse_sio_err;
 #define QSE_SIO_OUT qse_sio_out
 #define QSE_SIO_ERR qse_sio_err
 
+/**
+ * The qse_sio_open() fucntion creates a stream object.
+ */
 qse_sio_t* qse_sio_open (
-        qse_mmgr_t*       mmgr,
-	qse_size_t        ext,
-	const qse_char_t* file,
-	int               flags
+	qse_mmgr_t*       mmgr,    /**< memory manager */
+	qse_size_t        xtnsize, /**< extension size in bytes */
+	const qse_char_t* file,    /**< file name */
+	int               flags    /**< number OR'ed of #qse_sio_open_flag_t */
 );
 
+/**
+ * The qse_sio_close() function destroys a stream object.
+ */
 void qse_sio_close (
-	qse_sio_t* sio
+	qse_sio_t* sio  /**< stream */
 );
 
 qse_sio_t* qse_sio_init (
-        qse_sio_t*        sio,
+	qse_sio_t*        sio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* file,
-	int flags
+	int               flags
 );
 
 void qse_sio_fini (
@@ -138,25 +144,23 @@ qse_ssize_t qse_sio_putsn (
 	qse_size_t        size
 );
 
-/****f* Common/qse_sio_getpos
- * NAME
- *  qse_sio_getpos - get the stream position
- *
- * WARNING
- *  The getpos() function may not return the desired postion because of 
- *  buffering.
- *
- * SYNOPSIS
+/**
+ * The get_sio_getpos() gets the current position in a stream.
+ * Note that it may not return the desired postion due to buffering.
+ * @return 0 on success, -1 on failure
  */
 int qse_sio_getpos (
-	qse_sio_t*     sio, 
-	qse_sio_pos_t* pos
+	qse_sio_t*     sio,  /**< stream */
+	qse_sio_pos_t* pos   /**< position */
 );
-/******/
 
+/**
+ * The qse_sio_setpos() changes the current position in a stream.
+ * @return 0 on success, -1 on failure
+ */
 int qse_sio_setpos (
-	qse_sio_t*    sio, 
-	qse_sio_pos_t pos
+	qse_sio_t*    sio,   /**< stream */
+	qse_sio_pos_t pos    /**< position */
 );
 
 #if 0

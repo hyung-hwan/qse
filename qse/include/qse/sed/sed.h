@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: sed.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -210,11 +210,11 @@ QSE_DEFINE_COMMON_FUNCTIONS (sed)
  * with the object. See #QSE_DEFINE_COMMON_FUNCTIONS() for qse_sed_getxtn().
  * When done, you should destroy the object with the qse_sed_close() function
  * to avoid any resource leaks including memory. 
- * @return A pointer to a stream editor on success, QSE_NULL on failure
+ * @return pointer to a stream editor on success, QSE_NULL on failure
  */
 qse_sed_t* qse_sed_open (
-	qse_mmgr_t*    mmgr, /**< a memory manager */
-	qse_size_t     xtn   /**< the size of extension in bytes */
+	qse_mmgr_t*    mmgr,   /**< memory manager */
+	qse_size_t     xtnsize /**< extension size in bytes */
 );
 
 /**

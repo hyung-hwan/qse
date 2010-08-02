@@ -37,21 +37,29 @@ extern "C" {
 #endif
 
 /**
- * The qse_sed_openstd() function creates a stream editor.
+ * The qse_sed_openstd() function creates a stream editor with the default
+ * memory manager and initialized it for other qse_sed_xxxxstd functions.
+ * @return pointer to a stream editor on success, QSE_NULL on failure.
  */
 qse_sed_t* qse_sed_openstd (
-	qse_size_t xtnsize /**< size of extension in bytes */
+	qse_size_t xtnsize  /**< extension size in bytes */
 );
 
+/**
+ * The qse_sed_openstdwithmmgr() function creates a stream editor with a 
+ * user-defined memory manager. It is equivalent to qse_sed_openstd(), 
+ * except that you can specify your own memory manager.
+ * @return pointer to a stream editor on success, QSE_NULL on failure.
+ */
 qse_sed_t* qse_sed_openstdwithmmgr (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize /**< size of extension in bytes */
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize  /**< extension size in bytes */
 );
 
 /**
  * The qse_sed_getxtnstd() gets the pointer to extension space. 
  * Note that you must not call qse_sed_getxtn() for a stream editor
- * created with qse_sed_openstd().
+ * created with qse_sed_openstd() and qse_sed_openstdwithmmgr().
  */
 void* qse_sed_getxtnstd (
 	qse_sed_t* sed
@@ -60,6 +68,7 @@ void* qse_sed_getxtnstd (
 /**
  * The qse_sed_compstd() function compiles a null-terminated sed script.
  * Call qse_sed_comp() for a length delimited script.
+ * @return 0 on success, -1 on failure
  */
 int qse_sed_compstd (
 	qse_sed_t*        sed,
@@ -71,6 +80,7 @@ int qse_sed_compstd (
  * over an input file @a infile and an output file @a outfile.
  * If @a infile is QSE_NULL, the standard console input is used.
  * If @a outfile is QSE_NULL, the standard console output is used.
+ * @return 0 on success, -1 on failure
  */
 int qse_sed_execstd (
 	qse_sed_t*        sed,
