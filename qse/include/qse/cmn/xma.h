@@ -21,6 +21,9 @@
 #ifndef _QSE_CMN_XMA_H_
 #define _QSE_CMN_XMA_H_
 
+/** @file
+ * This file defines an extravagant memory allocator. Why? It may be so.
+ */
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -60,6 +63,9 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (xma)
 
+/**
+ * The qse_xma_open() function creates a memory allocator.
+ */
 qse_xma_t* qse_xma_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext,

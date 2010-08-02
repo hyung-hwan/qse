@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 336 2010-07-24 12:43:26Z hyunghwan.chung $
+ * $Id: std.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -82,21 +82,29 @@ extern "C" {
 #endif
 
 /**
- * The qse_awk_openstd() function creates an awk object.
+ * The qse_awk_openstd() function creates an awk object using the default 
+ * memory manager and primitive functions. Besides, it adds a set of
+ * standard intrinsic functions like atan, system, etc. Use this function
+ * over qse_awk_open() if you don't need finer-grained customization.
  */
 qse_awk_t* qse_awk_openstd (
-	qse_size_t xtnsize /**< size of extension in bytes */
+	qse_size_t xtnsize  /**< extension size in bytes */
 );
 
+/**
+ * The qse_awk_openstdwithmmgr() function creates an awk object with a 
+ * user-defined memory manager. It is equivalent to qse_awk_openstd(), 
+ * except that you can specify your own memory manager.
+ */
 qse_awk_t* qse_awk_openstdwithmmgr (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize  /**< extension size in bytes */
 );
 
 /**
  * The qse_awk_getxtnstd() gets the pointer to extension space. 
  * Note that you must not call qse_awk_getxtn() for an awk object
- * created with qse_awk_openstd().
+ * created with qse_awk_openstd() and qse_awk_openstdwithmmgr().
  */
 void* qse_awk_getxtnstd (
 	qse_awk_t* awk

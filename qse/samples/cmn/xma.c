@@ -145,6 +145,58 @@ static int test4 ()
 	qse_xma_close (xma);
 	return 0;
 }
+static int test5 ()
+{
+	int i;
+	void* ptr[100];
+	qse_mmgr_t xmammgr = 
+	{
+		qse_xma_alloc,
+		qse_xma_realloc,
+		qse_xma_free,
+		QSE_NULL
+	};
+
+	qse_xma_t* xma1, * xma2, * xma3;
+
+	xma1 = qse_xma_open (QSE_NULL, 0, 2000000L);
+	if (xma1 == QSE_NULL) 
+	{
+		qse_printf (QSE_T("cannot open outer xma\n"));
+		return -1;
+	}
+
+	xmammgr.udd = xma1;
+
+	xma2 = qse_xma_open (&xmammgr, 0, 500000L);
+	if (xma1 == QSE_NULL) 
+	{
+		qse_printf (QSE_T("cannot open inner xma\n"));
+		return -1;
+	}
+
+	xma3 = qse_xma_open (&xmammgr, 0, 500000L);
+	if (xma1 == QSE_NULL) 
+	{
+		qse_printf (QSE_T("cannot open inner xma\n"));
+		return -1;
+	}
+
+	qse_xma_alloc (xma2, 10345);
+	qse_xma_alloc (xma3, 200301);
+	qse_xma_alloc (xma2, 20000);
+	ptr[0] = qse_xma_alloc (xma3, 40031);
+	qse_xma_alloc (xma3, 8);
+	qse_xma_realloc (xma3, ptr[0], 40000);
+
+	qse_xma_dump (xma3, qse_printf);
+	qse_xma_dump (xma2, qse_printf);
+	qse_xma_dump (xma1, qse_printf);
+
+	qse_xma_close (xma3);
+	qse_xma_close (xma2);
+	qse_xma_close (xma1);
+}
 
 int main ()
 {
@@ -152,5 +204,6 @@ int main ()
 	R (test2);
 	R (test3);
 	R (test4);
+	R (test5);
 	return 0;
 }

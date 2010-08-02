@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: fio.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,6 +20,10 @@
 
 #ifndef _QSE_CMN_FIO_H_
 #define _QSE_CMN_FIO_H_
+
+/** @file
+ * This file defines a simple file I/O interface.
+ */
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -127,15 +131,10 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (fio)
 
-/****f* Common/qse_fio_open
- * NAME
- *  qse_fio_open - open a file
- *
- * DESCRIPTION
- *  To open a file, you should set the flags with at least one of
- *  QSE_FIO_READ, QSE_FIO_WRITE, QSE_FIO_APPEND.
- *
- * SYNOPSIS
+/**
+ * The qse_fio_open() function opens a file.
+ * To open a file, you should set the flags with at least one of
+ * QSE_FIO_READ, QSE_FIO_WRITE, QSE_FIO_APPEND.
  */
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t*       mmgr,
@@ -144,136 +143,114 @@ qse_fio_t* qse_fio_open (
 	int               flags,
 	int               mode
 );
-/******/
 
-/****f* Common/qse_fio_close
- * NAME
- *  qse_fio_close - close a file
- *
- * SYNOPSIS
+/***
+ * The qse_fio_close() function closes a file.
  */
 void qse_fio_close (
 	qse_fio_t* fio
 );
-/******/
 
+/***
+ * The qse_fio_close() function opens a file into @a fio.
+ */
 qse_fio_t* qse_fio_init (
-	qse_fio_t* fio,
-	qse_mmgr_t* mmgr,
+	qse_fio_t*        fio,
+	qse_mmgr_t*       mmgr,
 	const qse_char_t* path,
-	int flags,
-	int mode
+	int               flags,
+	int               mode
 );
 
+/***
+ * The qse_fio_close() function finalizes a file by closing the handle 
+ * stored in @a fio.
+ */
 void qse_fio_fini (
 	qse_fio_t* fio
 );
 
-/****f* Common/qse_fio_gethandle
- * NAME
- *  qse_fio_gethandle - get the native file handle
- * SYNOPSIS
+/**
+ * The qse_fio_gethandle() function returns the native file handle.
  */
 qse_fio_hnd_t qse_fio_gethandle (
 	qse_fio_t* fio
 );
-/******/
 
-/****f* Common/qse_fio_sethandle
- * NAME
- *  qse_fio_sethandle - set the file handle
- * WARNING
- *  Avoid using this function if you don't know what you are doing.
- *  You may have to retrieve the previous handle using qse_fio_gethandle()
- *  to take relevant actions before resetting it with qse_fio_sethandle().
- * SYNOPSIS
+/**
+ * The qse_fio_sethandle() function sets the file handle
+ * Avoid using this function if you don't know what you are doing.
+ * You may have to retrieve the previous handle using qse_fio_gethandle()
+ * to take relevant actions before resetting it with qse_fio_sethandle().
  */
 void qse_fio_sethandle (
 	qse_fio_t* fio,
 	qse_fio_hnd_t handle
 );
-/******/
 
+/**
+ * The qse_fio_seek() function changes the current file position.
+ */
 qse_fio_off_t qse_fio_seek (
 	qse_fio_t*    fio,
 	qse_fio_off_t offset,
 	qse_fio_ori_t origin
 );
 
+/**
+ * The qse_fio_truncate() function truncates a file to @a size.
+ */
 int qse_fio_truncate (
 	qse_fio_t*    fio,
 	qse_fio_off_t size
 );
 
-/****f* Common/qse_fio_read
- * NAME
- *  qse_fio_read - read data
- * SYNOPSIS
+/**
+ * The qse_fio_read() function reads data.
  */
 qse_ssize_t qse_fio_read (
 	qse_fio_t*  fio,
 	void*       buf,
 	qse_size_t  size
 );
-/******/
 
-/****f* Common/qse_fio_write
- * NAME
- *  qse_fio_write - write data
- *
- * DESCRIPTION
- *  If QSE_FIO_TEXT is used and the size parameter is (qse_size_t)-1,
- *  the function treats the data parameter as a pointer to a null-terminated
- *  string.
- * 
- * SYNOPSIS
+/**
+ * The qse_fio_write() function writes data.
+ * If QSE_FIO_TEXT is used and the size parameter is (qse_size_t)-1,
+ * the function treats the data parameter as a pointer to a null-terminated
+ * string.
  */
 qse_ssize_t qse_fio_write (
 	qse_fio_t*  fio,
 	const void* data,
 	qse_size_t  size
 );
-/******/
 
 
-/****f* Common/qse_fio_flush
- * NAME
- *  qse_fio_flush - flush data
- *
- * DESCRIPTION
- *  The qse_fio_flush() function is useful if QSE_FIO_TEXT is used in 
- *  qse_fio_open ().
- *
- * SYNOPSIS
+/**
+ * The qse_fio_flush() function flushes data. It is useful if #QSE_FIO_TEXT is 
+ * set for the file handle @a fio.
  */
 qse_ssize_t qse_fio_flush (
         qse_fio_t*    fio
 );
-/******/
 
-/****f* Common/qse_fio_chmod
- * NAME
- *  qse_fio_chmod - change the file mode
- * SYNOPSIS
+/**
+ * The qse_fio_chmod() function changes the file mode.
  */
 int qse_fio_chmod (
 	qse_fio_t* fio,
-	int mode
+	int        mode
 );
-/******/
 
-/****f* Common/qse_fio_sync
- * NAME
- *  qse_fio_sync - synchronize file contents into storage media
- * DESCRIPTION
- *  The qse_fio_sync() function is useful in determining the media error,
- *  without which qse_fio_close() may succeed despite such an error.
- * SYNOPSIS
+/**
+ * The qse_fio_sync() function synchronizes file contents into storage media
+ * It is useful in determining the media error, without which qse_fio_close() 
+ * may succeed despite such an error.
  */
 int qse_fio_sync (
 	qse_fio_t* fio
 );
-/******/
 
 
 /* TODO: qse_fio_lock, qse_fio_unlock */

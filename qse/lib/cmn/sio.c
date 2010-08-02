@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: sio.c 340 2010-08-01 13:13:38Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -141,7 +141,7 @@ qse_sio_t* qse_sio_out = &__sio_out;
 qse_sio_t* qse_sio_err = &__sio_err;
 
 qse_sio_t* qse_sio_open (
-	qse_mmgr_t* mmgr, qse_size_t ext, const qse_char_t* file, int flags)
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
 
@@ -155,7 +155,7 @@ qse_sio_t* qse_sio_open (
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + ext);
+	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + xtnsize);
 	if (sio == QSE_NULL) return QSE_NULL;
 
 	if (qse_sio_init (sio, mmgr, file, flags) == QSE_NULL)
