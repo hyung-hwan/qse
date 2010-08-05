@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 333 2010-07-13 13:29:02Z hyunghwan.chung $
+ * $Id: htb.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -308,6 +308,9 @@ void qse_htb_setcopier (
 	qse_htb_copier_t copier  /**< element copier */
 );
 
+/**
+ * The qse_htb_getfreeer() function returns a custom element destroyer.
+ */
 qse_htb_freeer_t qse_htb_getfreeer (
 	qse_htb_t*   htb, /**< hash table */
 	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */

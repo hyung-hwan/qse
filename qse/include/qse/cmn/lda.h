@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 327 2010-05-10 13:15:55Z hyunghwan.chung $
+ * $Id: lda.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,18 +72,18 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
  *  memory allocated for copy.
  */
 typedef void* (*qse_lda_copier_t) (
-	qse_lda_t* lda    /* lda */,
-	void*      dptr   /* the pointer to data to copy */,
-	qse_size_t dlen   /* the length of data to copy */
+	qse_lda_t* lda    /**< array */,
+	void*      dptr   /**< pointer to data to copy */,
+	qse_size_t dlen   /**< length of data to copy */
 );
 
 /**
  * The qse_lda_freeer_t type defines a node destruction callback.
  */
 typedef void (*qse_lda_freeer_t) (
-	qse_lda_t* lda    /* lda */,
-	void*      dptr   /* the pointer to data to free */,
-	qse_size_t dlen   /* the length of data to free */
+	qse_lda_t* lda    /**< array */,
+	void*      dptr   /**< pointer to data to free */,
+	qse_size_t dlen   /**< length of data to free */
 );
 
 /**
@@ -96,11 +96,11 @@ typedef void (*qse_lda_freeer_t) (
  *
  */
 typedef int (*qse_lda_comper_t) (
-	qse_lda_t*  lda    /* a linear dynamic array */, 
-	const void* dptr1  /* a data pointer */,
-	qse_size_t  dlen1  /* a data length */,
-	const void* dptr2  /* a data pointer */,
-	qse_size_t  dlen2  /* a data length */
+	qse_lda_t*  lda    /* array */, 
+	const void* dptr1  /* data pointer */,
+	qse_size_t  dlen1  /* data length */,
+	const void* dptr2  /* data pointer */,
+	qse_size_t  dlen2  /* data length */
 );
 
 /**
@@ -110,9 +110,9 @@ typedef int (*qse_lda_comper_t) (
  * pointers and their lengths are equal.
  */
 typedef void (*qse_lda_keeper_t) (
-	qse_lda_t* lda     /* lda */,
-	void* vptr         /* the pointer to a value */,
-	qse_size_t vlen    /* the length of a value */	
+	qse_lda_t* lda     /**< array */,
+	void* vptr         /**< pointer to a value */,
+	qse_size_t vlen    /**< length of a value */	
 );
 
 /**
@@ -120,14 +120,14 @@ typedef void (*qse_lda_keeper_t) (
  * when the array needs to be resized. 
  */
 typedef qse_size_t (*qse_lda_sizer_t) (
-        qse_lda_t* lda,  /* a linear dynamic array */
-        qse_size_t hint  /* a sizing hint */
+	qse_lda_t* lda,  /**< array */
+	qse_size_t hint  /**< sizing hint */
 );
 
 typedef qse_lda_walk_t (*qse_lda_walker_t) (
-        qse_lda_t*      lda   /* a linear dynamic array */,
-	qse_size_t      index /* the index to the visited node */,
-        void*           arg   /* user-defined data */
+	qse_lda_t*      lda   /* array */,
+	qse_size_t      index /* index to the visited node */,
+	void*           ctx   /* user-defined context */
 );
 
 /**
@@ -167,16 +167,16 @@ QSE_DEFINE_COMMON_FUNCTIONS (lda)
  * The qse_lda_open() function creates a linear dynamic array.
  */
 qse_lda_t* qse_lda_open (
-	qse_mmgr_t* lda,
-	qse_size_t  ext,
-	qse_size_t  capa
+	qse_mmgr_t* mmgr, /**< memory manager */
+	qse_size_t  ext,  /**< extension size in bytes */
+	qse_size_t  capa  /**< initial array capacity */
 );
 
 /**
  * The qse_lda_close() function destroys a linear dynamic array.
  */
 void qse_lda_close (
-	qse_lda_t* lda
+	qse_lda_t* lda /**< array */
 );
 
 /**
@@ -192,11 +192,14 @@ qse_lda_t* qse_lda_init (
  * The qse_lda_fini() function finalizes a linear dynamic array.
  */
 void qse_lda_fini (
-	qse_lda_t* lda
+	qse_lda_t* lda /**< array */
 );
 
+/**
+ * The qse_lda_getscale() function returns the scale factor
+ */
 int qse_lda_getscale (
-	qse_lda_t* lda   /* lda */
+	qse_lda_t* lda   /**< array */
 );
 
 /**
@@ -207,12 +210,12 @@ int qse_lda_getscale (
  * It is a bad idea to change the scale factor when @a lda is not empty.
  */
 void qse_lda_setscale (
-	qse_lda_t* lda   /* lda */,
-	int scale        /* a scale factor */
+	qse_lda_t* lda   /**< array */,
+	int scale        /**< scale factor */
 );
 
 qse_lda_copier_t qse_lda_getcopier (
-	qse_lda_t* lda   /* lda */
+	qse_lda_t* lda   /* array */
 );
 
 /**
@@ -227,6 +230,9 @@ void qse_lda_setcopier (
 	qse_lda_copier_t copier  /** element copier */
 );
 
+/**
+ * The qse_lda_getfreeer() function returns a custom element destroyer.
+ */
 qse_lda_freeer_t qse_lda_getfreeer (
 	qse_lda_t*   lda  /**< lda */
 );
