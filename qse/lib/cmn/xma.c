@@ -104,7 +104,8 @@ static QSE_INLINE_ALWAYS qse_size_t getxfi (qse_xma_t* xma, qse_size_t size)
 	return xfi;
 }
 
-qse_xma_t* qse_xma_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t size)
+qse_xma_t* qse_xma_open (
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t zonesize)
 {
 	qse_xma_t* xma;
 
@@ -118,10 +119,10 @@ qse_xma_t* qse_xma_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t size)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	xma = (qse_xma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xma) + ext);
+	xma = (qse_xma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xma) + xtnsize);
 	if (xma == QSE_NULL) return QSE_NULL;
 
-	if (qse_xma_init (xma, mmgr, size) == QSE_NULL)
+	if (qse_xma_init (xma, mmgr, zonesize) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, xma);
 		return QSE_NULL;
@@ -136,22 +137,22 @@ void qse_xma_close (qse_xma_t* xma)
 	QSE_MMGR_FREE (xma->mmgr, xma);
 }
 
-qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t size)
+qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 {
 	qse_xma_blk_t* free;
 	qse_size_t xfi;
 
-	size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
-	/* adjust 'size' to be large enough to hold a single smallest block */
-	if (size < MINBLKLEN) size = MINBLKLEN;
+	zonesize = ((zonesize + ALIGN - 1) / ALIGN) * ALIGN;
+	/* adjust 'zonesize' to be large enough to hold a single smallest block */
+	if (zonesize < MINBLKLEN) zonesize = MINBLKLEN;
 
 	/* allocate a memory chunk to use for actual memory allocation */
-	free = QSE_MMGR_ALLOC (mmgr, size);
+	free = QSE_MMGR_ALLOC (mmgr, zonesize);
 	if (free == QSE_NULL) return QSE_NULL;
 	
 	/* initialize the header part of the free chunk */
 	free->avail = 1;
-	free->size = size - HDRSIZE; /* size excluding the block header */
+	free->size = zonesize - HDRSIZE; /* size excluding the block header */
 	free->f.prev = QSE_NULL;
 	free->f.next = QSE_NULL;
 	free->b.next = QSE_NULL;
@@ -168,9 +169,9 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t size)
 
 	/* initialize some statistical variables */
 #ifdef QSE_XMA_ENABLE_STAT
-	xma->stat.total = size;
+	xma->stat.total = zonesize;
 	xma->stat.alloc = 0;
-	xma->stat.avail = size - HDRSIZE;
+	xma->stat.avail = zonesize - HDRSIZE;
 	xma->stat.nfree = 1;
 	xma->stat.nused = 0;
 #endif

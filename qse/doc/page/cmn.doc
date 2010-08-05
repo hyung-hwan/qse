@@ -1,5 +1,9 @@
 /** @page cmn COMMON FUNCTIONS
 
+@section xma MEMORY ALLOCATOR
+QSE provides a memory allocator #qse_xma_t for private heap management.
+
 @section rex REGULAR EXPRESSION
-QSE provides regular expression handling functions.
+QSE provides a regular expression processor #qse_rex_t.
+
 */

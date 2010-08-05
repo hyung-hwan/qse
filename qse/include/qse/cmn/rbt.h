@@ -275,6 +275,9 @@ void qse_rbt_setcopier (
 	qse_rbt_copier_t copier  /**< callback for copying a key or a value */
 );
 
+/**
+ * The qse_rb_getfreeer() function returns the element destroyer.
+ */
 qse_rbt_freeer_t qse_rbt_getfreeer (
 	qse_rbt_t*   rbt, /**< red-black tree */
 	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */

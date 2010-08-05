@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 324 2010-04-29 13:14:13Z hyunghwan.chung $
+ * $Id: str.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -623,7 +623,7 @@ qse_char_t* qse_strtrmx (
 	int         op   /**< operation code XOR'ed of qse_strtrmx_op_t values */
 );
 
-/*
+/**
  * The qse_strtrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
@@ -634,7 +634,7 @@ qse_size_t qse_strtrm (
 	qse_char_t* str /**< string */
 );
 
-/*
+/**
  * The qse_strxtrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 

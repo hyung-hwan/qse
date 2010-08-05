@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: rex.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -181,7 +181,7 @@ enum qse_rex_cset_code_t
 	QSE_REX_CSET_CLASS
 };
 
-/**
+/** @struct qse_rex_t
  * The qse_rex_t type defines a regular expression processor.
  * You can compile a regular expression and match it againt a string.
  */
