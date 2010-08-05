@@ -37,10 +37,23 @@ extern "C" {
 #endif
 
 /**
- * The qse_cut_openstd() function creates a text cutter.
+ * The qse_cut_openstd() function creates a text cutter with the default
+ * memory manager and initialized it for other qse_cut_xxxxstd functions.
+ * @return pointer to a text cutter on success, QSE_NULL on failure.
  */
 qse_cut_t* qse_cut_openstd (
-	qse_size_t xtnsize /**< size of extension in bytes */
+	qse_size_t xtnsize  /**< extension size in bytes */
+);
+
+/**
+ * The qse_cut_openstdwithmmgr() function creates a text cutter with a 
+ * user-defined memory manager. It is equivalent to qse_cut_openstd(), 
+ * except that you can specify your own memory manager.
+ * @return pointer to a text cutter on success, QSE_NULL on failure.
+ */
+qse_cut_t* qse_cut_openstdwithmmgr (
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize  /**< extension size in bytes */
 );
 
 /**

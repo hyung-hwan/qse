@@ -34,6 +34,11 @@ typedef struct xtn_t xtn_t;
 
 qse_cut_t* qse_cut_openstd (qse_size_t xtnsize)
 {
+	return qse_cut_openstdwithmmgr (QSE_MMGR_GETDFL(), xtnsize);
+}
+
+qse_cut_t* qse_cut_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+{
 	qse_cut_t* cut;
 	xtn_t* xtn;
 
