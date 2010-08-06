@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: parse.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -165,7 +165,7 @@ static qse_awk_chain_t* parse_action_block (
 static qse_awk_nde_t* parse_block_dc (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_bool_t istop);
 
-static qse_awk_nde_t* parse_stmt (
+static qse_awk_nde_t* parse_statement (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc);
 
 static qse_awk_nde_t* parse_expr_dc (
@@ -1516,7 +1516,7 @@ static qse_awk_nde_t* parse_block (
 		/* parse an actual statement in a block */
 		{
 			qse_awk_loc_t sloc = awk->tok.loc;
-			nde = parse_stmt (awk, &sloc);
+			nde = parse_statement (awk, &sloc);
 		}
 
 		if (nde == QSE_NULL) 
@@ -2128,7 +2128,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	}
 
 	tloc = awk->tok.loc;
-	then_part = parse_stmt (awk, &tloc);
+	then_part = parse_statement (awk, &tloc);
 	if (then_part == QSE_NULL) 
 	{
 		qse_awk_clrpt (awk, test);
@@ -2157,7 +2157,7 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 
 		{
 			qse_awk_loc_t eloc = awk->tok.loc;
-			else_part = parse_stmt (awk, &eloc);
+			else_part = parse_statement (awk, &eloc);
 		}
 		if (else_part == QSE_NULL) 
 		{
@@ -2222,7 +2222,7 @@ static qse_awk_nde_t* parse_while (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 
 	{
 		qse_awk_loc_t wloc = awk->tok.loc;
-		body = parse_stmt (awk, &wloc);
+		body = parse_statement (awk, &wloc);
 	}
 	if (body == QSE_NULL) 
 	{
@@ -2297,7 +2297,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 			
 			{
 				qse_awk_loc_t floc = awk->tok.loc;
-				body = parse_stmt (awk, &floc);
+				body = parse_statement (awk, &floc);
 			}
 			if (body == QSE_NULL) 
 			{
@@ -2415,7 +2415,7 @@ static qse_awk_nde_t* parse_for (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 
 	{
 		qse_awk_loc_t floc = awk->tok.loc;
-		body = parse_stmt (awk, &floc);
+		body = parse_statement (awk, &floc);
 	}
 	if (body == QSE_NULL) 
 	{
@@ -2457,7 +2457,7 @@ static qse_awk_nde_t* parse_dowhile (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 
 	{
 		qse_awk_loc_t dwloc = awk->tok.loc;
-		body = parse_stmt (awk, &dwloc);
+		body = parse_statement (awk, &dwloc);
 	}
 	if (body == QSE_NULL) return QSE_NULL;
 
@@ -2998,11 +2998,10 @@ static qse_awk_nde_t* parse_print (
 	return (qse_awk_nde_t*)nde;
 }
 
-static qse_awk_nde_t* parse_stmt_nb (
+static qse_awk_nde_t* parse_statement_nb (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	/* parse a non-block statement */
-
 	qse_awk_nde_t* nde;
 
 	/* keywords that don't require any terminating semicolon */
@@ -3031,6 +3030,7 @@ static qse_awk_nde_t* parse_stmt_nb (
 
 		return nde;
 	}
+
 
 	/* keywords that require a terminating semicolon */
 	if (MATCH(awk,TOK_DO)) 
@@ -3129,7 +3129,7 @@ static qse_awk_nde_t* parse_stmt_nb (
 	return nde;
 }
 
-static qse_awk_nde_t* parse_stmt (
+static qse_awk_nde_t* parse_statement (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* nde;
@@ -3164,28 +3164,29 @@ static qse_awk_nde_t* parse_stmt (
 	else if (MATCH(awk,TOK_LBRACE)) 
 	{
 		/* a block statemnt { ... } */
-		qse_awk_loc_t xloc = awk->ptok.loc;
+		qse_awk_loc_t tloc = awk->ptok.loc;
 		if (get_token(awk) <= -1) return QSE_NULL; 
-		nde = parse_block_dc (awk, &xloc, QSE_FALSE);
+		nde = parse_block_dc (awk, &tloc, QSE_FALSE);
 	}
 	else 
 	{
-		/* the statement id held in awk->parse.id.stmnt denotes
+		/* the statement id held in awk->parse.id.stmt denotes
 		 * the token id of the statement currently being parsed.
 		 * the current statement id is saved here because the 
-		 * statement id can be changed in parse_stmt_nb.
-		 * it will, in turn, call parse_stmt which will
+		 * statement id can be changed in parse_statement_nb.
+		 * it will, in turn, call parse_statement which will
 		 * eventually change the statement id. */
-		int old_id = awk->parse.id.stmnt;
+		int old_id = awk->parse.id.stmt;
+		qse_awk_loc_t tloc = awk->tok.loc;
 
 		/* set the current statement id */
-		awk->parse.id.stmnt = awk->tok.type;
+		awk->parse.id.stmt = awk->tok.type;
 
 		/* proceed parsing the statement */
-		nde = parse_stmt_nb (awk, xloc);
+		nde = parse_statement_nb (awk, &tloc);
 
 		/* restore the statement id saved previously */
-		awk->parse.id.stmnt = old_id;
+		awk->parse.id.stmt = old_id;
 	}
 
 	return nde;
@@ -4215,8 +4216,8 @@ static qse_awk_nde_t* parse_primary_nogetline (
 
 			qse_awk_nde_grp_t* tmp;
 
-			if ((awk->parse.id.stmnt != TOK_PRINT &&
-			     awk->parse.id.stmnt != TOK_PRINTF) ||
+			if ((awk->parse.id.stmt != TOK_PRINT &&
+			     awk->parse.id.stmt != TOK_PRINTF) ||
 			    awk->parse.depth.cur.expr != 1)
 			{
 				if (!MATCH(awk,TOK_IN))

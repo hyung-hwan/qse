@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 338 2010-07-30 13:24:19Z hyunghwan.chung $
+ * $Id: awk.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define ENABLE_CALLBACK
 #define ABORT(label) goto label
 
 #if defined(_WIN32)
@@ -265,11 +266,11 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	dprint (QSE_T("[END NAMED VARIABLES]\n"));
 }
 
-#if 0
+#ifdef ENABLE_CALLBACK
 static void on_statement (
-	qse_awk_rtx_t* run, qse_size_t line, void* data)
+	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void* data)
 {
-	/*dprint (L"running %d\n", (int)line);*/
+	dprint (L"running %d at line %d\n", (int)nde->type, (int)nde->loc.lin);
 }
 #endif
 
@@ -710,7 +711,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
-#if 0
+#ifdef ENABLE_CALLBACK
 	qse_awk_rcb_t rcb;
 #endif
 	int i;
@@ -795,8 +796,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-#if 0
-	rcb.on_statement = on_statement;
+#ifdef ENABLE_CALLBACK
+	rcb.stm = on_statement;
 	rcb.udd = &arg;
 #endif
 
@@ -816,7 +817,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	app_rtx = rtx;
-#if 0
+#ifdef ENABLE_CALLBACK
 	qse_awk_rtx_setrcb (rtx, &rcb);
 #endif
 

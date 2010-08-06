@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: run.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1870,11 +1870,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 #define ON_STATEMENT(rtx,nde) \
 	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
-	if ((rtx)->rcb.on_statement != QSE_NULL) \
-	{ \
-		(rtx)->rcb.on_statement ( \
-			rtx, &(nde)->loc, (rtx)->rcb.udd); \
-	} 
+	if ((rtx)->rcb.stm) (rtx)->rcb.stm (rtx, nde, (rtx)->rcb.udd); 
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
@@ -3167,7 +3163,7 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	static eval_expr_t __evaluator[] =
 	{
 		/* the order of functions here should match the order
-		 * of node types declared in tree.h */
+		 * of node types(qse_awk_nde_type_t) declared in qse/awk/awk.h */
 		eval_group,
 		eval_assignment,
 		eval_binary,
@@ -4995,7 +4991,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	QSE_ASSERT (exp->left != QSE_NULL && exp->right == QSE_NULL);
 
 	/* this way of checking if the l-value is assignable is
-	 * ugly as it is dependent of the values defined in tree.h.
+	 * ugly as it is dependent on the node types defined in qse/awk/awk.h
 	 * but let's keep going this way for the time being. */
 	if (exp->left->type < QSE_AWK_NDE_NAMED ||
 	    /*exp->left->type > QSE_AWK_NDE_ARGIDX) XXX */
@@ -5150,7 +5146,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	QSE_ASSERT (exp->left != QSE_NULL && exp->right == QSE_NULL);
 
 	/* this way of checking if the l-value is assignable is
-	 * ugly as it is dependent of the values defined in tree.h.
+	 * ugly as it is dependent on the node types defined in qse/awk/awk.h.
 	 * but let's keep going this way for the time being. */
 	if (exp->left->type < QSE_AWK_NDE_NAMED ||
 	    /*exp->left->type > QSE_AWK_NDE_ARGIDX) XXX */
