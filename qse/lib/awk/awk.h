@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: awk.h 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -137,7 +137,7 @@ struct qse_awk_t
 		{
 			int block;
 			int loop;
-			int stmnt; /* statement */
+			int stmt; /* statement */
 		} id;
 
 		struct

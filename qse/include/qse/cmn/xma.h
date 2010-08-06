@@ -49,6 +49,8 @@
  *
  *  qse_xma_dump (xma, qse_printf); // dump memory blocks 
  *
+ *  // the following two lines are not actually needed as the allocator
+ *  // is closed after them.
  *  qse_xma_free (xma, ptr2); // dispose of the 1K block
  *  qse_xma_free (xma, ptr1); // dispose of the 6K block
  *

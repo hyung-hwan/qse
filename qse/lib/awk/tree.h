@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: tree.h 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,65 +20,6 @@
 
 #ifndef _QSE_LIB_AWK_TREE_H_
 #define _QSE_LIB_AWK_TREE_H_
-
-enum qse_awk_nde_type_t
-{
-	QSE_AWK_NDE_NULL,
-
-	/* statement */
-	QSE_AWK_NDE_BLK,
-	QSE_AWK_NDE_IF,
-	QSE_AWK_NDE_WHILE,
-	QSE_AWK_NDE_DOWHILE,
-	QSE_AWK_NDE_FOR,
-	QSE_AWK_NDE_FOREACH,
-	QSE_AWK_NDE_BREAK,
-	QSE_AWK_NDE_CONTINUE,
-	QSE_AWK_NDE_RETURN,
-	QSE_AWK_NDE_EXIT,
-	QSE_AWK_NDE_NEXT,
-	QSE_AWK_NDE_NEXTFILE,
-	QSE_AWK_NDE_DELETE,
-	QSE_AWK_NDE_RESET,
-	QSE_AWK_NDE_PRINT,
-	QSE_AWK_NDE_PRINTF,
-
-	/* expression */
-	/* if you change the following values including their order,
-	 * you should change __eval_func of __eval_expression 
-	 * in run.c accordingly */
-	QSE_AWK_NDE_GRP, 
-	QSE_AWK_NDE_ASS,
-	QSE_AWK_NDE_EXP_BIN,
-	QSE_AWK_NDE_EXP_UNR,
-	QSE_AWK_NDE_EXP_INCPRE,
-	QSE_AWK_NDE_EXP_INCPST,
-	QSE_AWK_NDE_CND,
-	QSE_AWK_NDE_FNC,
-	QSE_AWK_NDE_FUN,
-	QSE_AWK_NDE_INT,
-	QSE_AWK_NDE_REAL,
-	QSE_AWK_NDE_STR,
-	QSE_AWK_NDE_REX,
-
-	/* keep this order for the following items otherwise, you may have 
-	 * to change eval_incpre and eval_incpst in run.c as well as
-	 * QSE_AWK_VAL_REF_XXX in awk.h */
-	QSE_AWK_NDE_NAMED,
-	QSE_AWK_NDE_GBL,
-	QSE_AWK_NDE_LCL,
-	QSE_AWK_NDE_ARG,
-	QSE_AWK_NDE_NAMEDIDX,
-	QSE_AWK_NDE_GBLIDX,
-	QSE_AWK_NDE_LCLIDX,
-	QSE_AWK_NDE_ARGIDX,
-	QSE_AWK_NDE_POS,
-	/* ---------------------------------- */
-
-	QSE_AWK_NDE_GETLINE
-};
-
-typedef enum qse_awk_nde_type_t qse_awk_nde_type_t;
 
 enum qse_awk_in_type_t
 {
@@ -107,7 +48,6 @@ enum qse_awk_out_type_t
  * note it is different from qse_awk_fnc_t */
 typedef struct qse_awk_fun_t           qse_awk_fun_t;
 
-typedef struct qse_awk_nde_t           qse_awk_nde_t;
 typedef struct qse_awk_nde_blk_t       qse_awk_nde_blk_t;
 typedef struct qse_awk_nde_grp_t       qse_awk_nde_grp_t;
 typedef struct qse_awk_nde_ass_t       qse_awk_nde_ass_t;
@@ -150,16 +90,6 @@ struct qse_awk_fun_t
 	qse_xstr_t     name;
 	qse_size_t     nargs;
 	qse_awk_nde_t* body;
-};
-
-#define QSE_AWK_NDE_HDR \
-	qse_awk_nde_type_t type; \
-	qse_awk_loc_t loc; \
-	qse_awk_nde_t* next
-
-struct qse_awk_nde_t
-{
-	QSE_AWK_NDE_HDR;
 };
 
 /* QSE_AWK_NDE_BLK - block statement including top-level blocks */

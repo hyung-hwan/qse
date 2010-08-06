@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: awk.h 343 2010-08-05 07:31:17Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -113,6 +113,17 @@ typedef struct qse_awk_t qse_awk_t;
  * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
+
+/**
+ * The qse_awk_loc_t type defines a structure to hold location.
+ */
+struct qse_awk_loc_t
+{
+	const qse_char_t* fil; /**< file */
+	qse_size_t        lin; /**< line */
+	qse_size_t        col; /**< column */
+};
+typedef struct qse_awk_loc_t qse_awk_loc_t;
 
 /**
  * The QSE_AWK_VAL_HDR defines the common header for a value.
@@ -231,7 +242,7 @@ struct qse_awk_val_ref_t
 	enum
 	{
 		/* keep these items in the same order as corresponding items
-		 * in tree.h */
+		 * in qse_awk_nde_type_t. */
 		QSE_AWK_VAL_REF_NAMED,    /**< plain named variable */
 		QSE_AWK_VAL_REF_GBL,      /**< plain global variable */
 		QSE_AWK_VAL_REF_LCL,      /**< plain local variable */
@@ -249,6 +260,81 @@ struct qse_awk_val_ref_t
 	qse_awk_val_t** adr;
 };
 typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
+
+/**
+ * The qse_awk_nde_type_t defines the node types.
+ */
+enum qse_awk_nde_type_t
+{
+	QSE_AWK_NDE_NULL,
+
+	/* statement */
+	QSE_AWK_NDE_BLK,
+	QSE_AWK_NDE_IF,
+	QSE_AWK_NDE_WHILE,
+	QSE_AWK_NDE_DOWHILE,
+	QSE_AWK_NDE_FOR,
+	QSE_AWK_NDE_FOREACH,
+	QSE_AWK_NDE_BREAK,
+	QSE_AWK_NDE_CONTINUE,
+	QSE_AWK_NDE_RETURN,
+	QSE_AWK_NDE_EXIT,
+	QSE_AWK_NDE_NEXT,
+	QSE_AWK_NDE_NEXTFILE,
+	QSE_AWK_NDE_DELETE,
+	QSE_AWK_NDE_RESET,
+	QSE_AWK_NDE_PRINT,
+	QSE_AWK_NDE_PRINTF,
+
+	/* expression */
+	/* if you change the following values including their order,
+	 * you should change __eval_func of __eval_expression 
+	 * in run.c accordingly */
+	QSE_AWK_NDE_GRP, 
+	QSE_AWK_NDE_ASS,
+	QSE_AWK_NDE_EXP_BIN,
+	QSE_AWK_NDE_EXP_UNR,
+	QSE_AWK_NDE_EXP_INCPRE,
+	QSE_AWK_NDE_EXP_INCPST,
+	QSE_AWK_NDE_CND,
+	QSE_AWK_NDE_FNC,
+	QSE_AWK_NDE_FUN,
+	QSE_AWK_NDE_INT,
+	QSE_AWK_NDE_REAL,
+	QSE_AWK_NDE_STR,
+	QSE_AWK_NDE_REX,
+
+	/* keep this order for the following items otherwise, you may have 
+	 * to change eval_incpre and eval_incpst in run.c as well as
+	 * QSE_AWK_VAL_REF_XXX in qse_awk_val_ref_t */
+	QSE_AWK_NDE_NAMED,
+	QSE_AWK_NDE_GBL,
+	QSE_AWK_NDE_LCL,
+	QSE_AWK_NDE_ARG,
+	QSE_AWK_NDE_NAMEDIDX,
+	QSE_AWK_NDE_GBLIDX,
+	QSE_AWK_NDE_LCLIDX,
+	QSE_AWK_NDE_ARGIDX,
+	QSE_AWK_NDE_POS,
+	/* ---------------------------------- */
+
+	QSE_AWK_NDE_GETLINE
+};
+typedef enum qse_awk_nde_type_t qse_awk_nde_type_t;
+
+#define QSE_AWK_NDE_HDR \
+	qse_awk_nde_type_t type; \
+	qse_awk_loc_t      loc; \
+	qse_awk_nde_t*     next
+
+/** @struct qse_awk_nde_t
+ * The qse_awk_nde_t type defines a common part of a node.
+ */
+typedef struct qse_awk_nde_t  qse_awk_nde_t;
+struct qse_awk_nde_t
+{
+	QSE_AWK_NDE_HDR;
+};
 
 typedef qse_real_t (*qse_awk_pow_t) (
 	qse_awk_t* awk,
@@ -466,17 +552,6 @@ struct qse_awk_prm_t
 typedef struct qse_awk_prm_t qse_awk_prm_t;
 
 /**
- * The qse_awk_loc_t type defines a structure to hold location.
- */
-struct qse_awk_loc_t
-{
-	const qse_char_t* fil; /**< file */
-	qse_size_t        lin; /**< line */
-	qse_size_t        col; /**< column */
-};
-typedef struct qse_awk_loc_t qse_awk_loc_t;
-
-/**
  * The qse_awk_sio_t type defines a script stream handler set.
  * The qse_awk_parse() function calls the input and output handler to parse
  * a script and optionally deparse it. Typical input and output handlers 
@@ -536,8 +611,19 @@ struct qse_awk_rio_t
 typedef struct qse_awk_rio_t qse_awk_rio_t;
 
 /**
- * The qse_awk_rcb_t type defines runtime callbacks. You may set callbacks
- * with qse_awk_rtx_setrcb() to be informed of important events during runtime.
+ * The qse_awk_rcb_stm_t type defines the callback function for each
+ * statement.
+ */
+typedef void (*qse_awk_rcb_stm_t) (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_nde_t* nde, /**< node */
+	void*                udd  /**< user-defined data */
+);
+
+/**
+ * The qse_awk_rcb_t type defines runtime callbacks. You can specify callback 
+ * functions with qse_awk_rtx_setrcb() to be informed of important events 
+ * during runtime.
  */
 struct qse_awk_rcb_t
 {
@@ -545,13 +631,13 @@ struct qse_awk_rcb_t
 	 * called by qse_awk_rtx_loop() and qse_awk_rtx_call() for
 	 * each statement executed.
 	 */
-	void (*on_statement) (
-		qse_awk_rtx_t* rtx, const qse_awk_loc_t* loc, void* udd);
+	qse_awk_rcb_stm_t stm;
 
 	/**
-	 * A caller may store a custom data pointer into this field.
+	 * A caller may store a user-defined data pointer into this field. This
+	 * is passed to the actual callback.
 	 */
-	void* udd;
+	void*             udd;
 };
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 
