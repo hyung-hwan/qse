@@ -1,7 +1,21 @@
 /*
- * $Id: lsp_i.h 332 2008-08-18 11:21:48Z baconevi $
+ * $Id: lsp.h 332 2008-08-18 11:21:48Z baconevi $
  *
- * {License}
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_LIB_LSP_LSP_H_
@@ -17,15 +31,14 @@
 #include "mem.h"
 #include "misc.h"
 #include "prim.h"
-#include "name.h"
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #endif
 
-#define QSE_LSP_ALLOC(lsp,size)       QSE_MMGR_ALLOC(&(lsp)->prmfns.mmgr,size)
-#define QSE_LSP_REALLOC(lsp,ptr,size) QSE_MMGR_REALLOC(&(lsp)->prmfns.mmgr,ptr,size)
-#define QSE_LSP_FREE(lsp,ptr)         QSE_MMGR_FREE(&(lsp)->prmfns.mmgr,ptr)
+#define QSE_LSP_ALLOC(lsp,size)       QSE_MMGR_ALLOC((lsp)->mmgr,size)
+#define QSE_LSP_REALLOC(lsp,ptr,size) QSE_MMGR_REALLOC((lsp)->mmgr,ptr,size)
+#define QSE_LSP_FREE(lsp,ptr)         QSE_MMGR_FREE((lsp)->mmgr,ptr)
 
 #define QSE_LSP_ISUPPER(lsp,c)  QSE_ISUPPER(c)
 #define QSE_LSP_ISLOWER(lsp,c)  QSE_ISLOWER(c)
@@ -43,32 +56,42 @@
 
 struct qse_lsp_t 
 {
-	qse_lsp_prmfns_t prmfns;
-	/* user-specified data */
-	void* assoc_data;
+	QSE_DEFINE_COMMON_FIELDS (lsp)
 
-	/* error */
-	int errnum;
-	qse_char_t errmsg[256];
+	qse_lsp_prm_t prm;
+
+	qse_lsp_errstr_t errstr; /**< error string getter */
+	qse_lsp_errnum_t errnum; /**< stores an error number */
+	qse_char_t errmsg[128];  /**< error message holder */
+	qse_lsp_loc_t errloc;    /**< location of the last error */
 
 	/* options */
 	int opt_undef_symbol;
 
 	/* for read */
-	qse_cint_t curc;
+	qse_cint_t curc; 
+	qse_lsp_loc_t curloc;
+
 	struct
 	{
-		int type;
-		qse_long_t ival;
-		qse_real_t rval;
-		qse_lsp_name_t name;
+		int           type;
+		qse_lsp_loc_t loc;
+		qse_long_t    ival;
+		qse_real_t    rval;
+		qse_str_t     name;
 	} token;
 
-	/* io functions */
-	qse_lsp_io_t input_func;
-	qse_lsp_io_t output_func;
-	void* input_arg;
-	void* output_arg;
+	/* io function */
+	struct
+	{
+		qse_lsp_io_t fns;
+
+		struct
+		{
+			qse_lsp_io_arg_t in;
+			qse_lsp_io_arg_t out;
+		} arg;
+	} io;
 
 	/* security options */
 	qse_size_t max_eval_depth;
@@ -78,4 +101,13 @@ struct qse_lsp_t
 	qse_lsp_mem_t* mem;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+const qse_char_t* qse_lsp_dflerrstr (qse_lsp_t* lsp, qse_lsp_errnum_t errnum);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

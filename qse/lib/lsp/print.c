@@ -8,7 +8,7 @@
 
 #define OUTPUT_STR(lsp,str) \
 	do { \
-		if (lsp->output_func(QSE_LSP_IO_WRITE, lsp->output_arg, (qse_char_t*)str, qse_strlen(str)) == -1) { \
+		if (lsp->io.fns.out(lsp, QSE_LSP_IO_WRITE, &lsp->io.arg.out, (qse_char_t*)str, qse_strlen(str)) == -1) { \
 			qse_lsp_seterror (lsp, QSE_LSP_EOUTPUT, QSE_NULL, 0); \
 			return -1; \
 		} \
@@ -16,7 +16,7 @@
 
 #define OUTPUT_STRX(lsp,str,len) \
 	do { \
-		if (lsp->output_func(QSE_LSP_IO_WRITE, lsp->output_arg, (qse_char_t*)str, len) == -1) { \
+		if (lsp->io.fns.out(lsp, QSE_LSP_IO_WRITE, &lsp->io.arg.out, (qse_char_t*)str, qse_strlen(str)) == -1) { \
 			qse_lsp_seterror (lsp, QSE_LSP_EOUTPUT, QSE_NULL, 0); \
 			return -1; \
 		} \
@@ -26,7 +26,7 @@ static int __print (qse_lsp_t* lsp, const qse_lsp_obj_t* obj, qse_bool_t prt_con
 {
 	qse_char_t buf[256];
 
-	if (lsp->output_func == QSE_NULL) 
+	if (lsp->io.fns.out == QSE_NULL) 
 	{
 		qse_lsp_seterror (lsp, QSE_LSP_ENOOUTP, QSE_NULL, 0);
 		return -1;
@@ -44,23 +44,23 @@ static int __print (qse_lsp_t* lsp, const qse_lsp_obj_t* obj, qse_bool_t prt_con
 
 		case QSE_LSP_OBJ_INT:
 		#if QSE_SIZEOF_LONG_LONG > 0
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%lld"), (long long)QSE_LSP_IVAL(obj));
 		#elif QSE_SIZEOF___INT64 > 0
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%I64d"), (__int64)QSE_LSP_IVAL(obj));
 		#elif QSE_SIZEOF_LONG > 0
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%ld"), (long)QSE_LSP_IVAL(obj));
 		#elif QSE_SIZEOF_INT > 0
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%d"), (int)QSE_LSP_IVAL(obj));
 		#else
@@ -70,8 +70,8 @@ static int __print (qse_lsp_t* lsp, const qse_lsp_obj_t* obj, qse_bool_t prt_con
 			break;
 
 		case QSE_LSP_OBJ_REAL:
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%Lf"), 
 			#ifdef __MINGW32__
@@ -140,8 +140,8 @@ static int __print (qse_lsp_t* lsp, const qse_lsp_obj_t* obj, qse_bool_t prt_con
 			break;
 
 		default:
-			lsp->prmfns.misc.sprintf (
-				lsp->prmfns.misc.udd,
+			lsp->prm.sprintf (
+				lsp->prm.udd,
 				buf, QSE_COUNTOF(buf),
 				QSE_T("unknown object type: %d"), QSE_LSP_TYPE(obj)); 
 			OUTPUT_STR (lsp, buf);

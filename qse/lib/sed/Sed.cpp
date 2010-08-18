@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
+ * $Id: Sed.cpp 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -102,7 +102,7 @@ Sed::loc_t Sed::getErrorLocation () const
 	if (sed == QSE_NULL) 
 	{
 		loc_t loc;
-		loc.lin = 0; loc.col = 0;
+		loc.line = 0; loc.colm = 0;
 		return loc;
 	}
 	return *qse_sed_geterrloc (sed);

@@ -62,7 +62,7 @@ typedef enum qse_cut_errnum_t qse_cut_errnum_t;
  * editor with the qse_cut_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_cut_errstr_t) (
-	qse_cut_t* sed,         /**< text cutter */
+	qse_cut_t*       cut,   /**< text cutter */
 	qse_cut_errnum_t num    /**< an error number */
 );
 
@@ -119,8 +119,8 @@ typedef struct qse_cut_io_arg_t qse_cut_io_arg_t;
  * I/O handlers to read from and write to a text stream.
  */
 typedef qse_ssize_t (*qse_cut_io_fun_t) (
-        qse_cut_t*        sed,
-        qse_cut_io_cmd_t  cmd,
+	qse_cut_t*        cut,
+	qse_cut_io_cmd_t  cmd,
 	qse_cut_io_arg_t* arg,
 	qse_char_t*       data,
 	qse_size_t        count
@@ -223,9 +223,9 @@ void qse_cut_seterrnum (
  * message for a given error number.
  */
 void qse_cut_seterrmsg (
-        qse_cut_t*        cut,      /**< text cutter */
+	qse_cut_t*        cut,      /**< text cutter */
 	qse_cut_errnum_t  errnum,   /**< error number */
-        const qse_char_t* errmsg    /**< error message */
+	const qse_char_t* errmsg    /**< error message */
 );
 
 /**
