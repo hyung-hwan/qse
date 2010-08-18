@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 343 2010-08-05 07:31:17Z hyunghwan.chung $
+ * $Id: awk.h 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -119,9 +119,9 @@ typedef struct qse_awk_rtx_t qse_awk_rtx_t;
  */
 struct qse_awk_loc_t
 {
-	const qse_char_t* fil; /**< file */
-	qse_size_t        lin; /**< line */
-	qse_size_t        col; /**< column */
+	const qse_char_t* file; /**< file */
+	qse_size_t        line; /**< line */
+	qse_size_t        colm; /**< column */
 };
 typedef struct qse_awk_loc_t qse_awk_loc_t;
 
@@ -376,10 +376,10 @@ typedef enum qse_awk_sio_cmd_t qse_awk_sio_cmd_t;
  */
 struct qse_awk_sio_lxc_t
 {
-	qse_cint_t        c;   /**< character */
-	qse_size_t        lin; /**< line */
-	qse_size_t        col; /**< column */
-	const qse_char_t* fil; /**< file */
+	qse_cint_t        c;    /**< character */
+	qse_size_t        line; /**< line */
+	qse_size_t        colm; /**< column */
+	const qse_char_t* file; /**< file */
 };
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
@@ -396,8 +396,8 @@ struct qse_awk_sio_arg_t
 		qse_size_t len;
 	} b;
 
-	qse_size_t lin;
-	qse_size_t col;
+	qse_size_t line;
+	qse_size_t colm;
 
 	qse_awk_sio_lxc_t last;
 	struct qse_awk_sio_arg_t* next;
@@ -615,9 +615,9 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
  * statement.
  */
 typedef void (*qse_awk_rcb_stm_t) (
-	qse_awk_rtx_t*       rtx, /**< runtime context */
-	const qse_awk_nde_t* nde, /**< node */
-	void*                udd  /**< user-defined data */
+	qse_awk_rtx_t* rtx, /**< runtime context */
+	qse_awk_nde_t* nde, /**< node */
+	void*          udd  /**< user-defined data */
 );
 
 /**

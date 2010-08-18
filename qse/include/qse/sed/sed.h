@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
+ * $Id: sed.h 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -65,8 +65,8 @@ typedef struct qse_sed_t qse_sed_t;
  */
 struct qse_sed_loc_t
 {
-	qse_size_t lin; /**< line  */
-	qse_size_t col; /**< column */
+	qse_size_t line; /**< line  */
+	qse_size_t colm; /**< column */
 };
 typedef struct qse_sed_loc_t qse_sed_loc_t;
 
@@ -108,14 +108,14 @@ enum qse_sed_errnum_t
 typedef enum qse_sed_errnum_t qse_sed_errnum_t;
 
 /**
- * The qse_sed_errstr_t type defines a error string getter. It should return 
+ * The qse_sed_errstr_t type defines an error string getter. It should return 
  * an error formatting string for an error number requested. A new string
  * should contain the same number of positional parameters (${X}) as in the
  * default error formatting string. You can set a new getter into a stream
  * editor with the qse_sed_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_sed_errstr_t) (
-	qse_sed_t* sed,         /**< stream editor */
+	qse_sed_t*       sed,   /**< stream editor */
 	qse_sed_errnum_t num    /**< an error number */
 );
 

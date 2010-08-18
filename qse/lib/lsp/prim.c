@@ -422,7 +422,7 @@ qse_lsp_obj_t* qse_lsp_prim_length (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 	}
 
 	QSE_ASSERT (body == lsp->mem->nil);
-	return qse_lsp_makeintobj (lsp->mem, len);
+	return qse_lsp_makeint (lsp->mem, len);
 }
 
 qse_lsp_obj_t* qse_lsp_prim_set (qse_lsp_t* lsp, qse_lsp_obj_t* args)

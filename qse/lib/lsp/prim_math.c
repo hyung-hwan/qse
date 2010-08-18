@@ -67,8 +67,8 @@ qse_lsp_obj_t* qse_lsp_prim_plus (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		qse_lsp_makerealobj (lsp->mem, rval):
-		qse_lsp_makeintobj (lsp->mem, ival);
+		qse_lsp_makereal (lsp->mem, rval):
+		qse_lsp_makeint (lsp->mem, ival);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
@@ -136,8 +136,8 @@ qse_lsp_obj_t* qse_lsp_prim_minus (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		qse_lsp_makerealobj (lsp->mem, rval):
-		qse_lsp_makeintobj (lsp->mem, ival);
+		qse_lsp_makereal (lsp->mem, rval):
+		qse_lsp_makeint (lsp->mem, ival);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
@@ -204,8 +204,8 @@ qse_lsp_obj_t* qse_lsp_prim_mul (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		qse_lsp_makerealobj (lsp->mem, rval):
-		qse_lsp_makeintobj (lsp->mem, ival);
+		qse_lsp_makereal (lsp->mem, rval):
+		qse_lsp_makeint (lsp->mem, ival);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
@@ -279,8 +279,8 @@ qse_lsp_obj_t* qse_lsp_prim_div (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 	QSE_ASSERT (body == lsp->mem->nil);
 
 	tmp = (realnum)?
-		qse_lsp_makerealobj (lsp->mem, rval):
-		qse_lsp_makeintobj (lsp->mem, ival);
+		qse_lsp_makereal (lsp->mem, rval):
+		qse_lsp_makeint (lsp->mem, ival);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;
@@ -344,7 +344,7 @@ qse_lsp_obj_t* qse_lsp_prim_mod (qse_lsp_t* lsp, qse_lsp_obj_t* args)
 
 	QSE_ASSERT (body == lsp->mem->nil);
 
-	tmp = qse_lsp_makeintobj (lsp->mem, ival);
+	tmp = qse_lsp_makeint (lsp->mem, ival);
 	if (tmp == QSE_NULL) return QSE_NULL;
 
 	return tmp;

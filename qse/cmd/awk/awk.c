@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
+ * $Id: awk.c 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -270,7 +270,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 static void on_statement (
 	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void* data)
 {
-	dprint (L"running %d at line %d\n", (int)nde->type, (int)nde->loc.lin);
+	dprint (L"running %d at line %d\n", (int)nde->type, (int)nde->loc.line);
 }
 #endif
 
@@ -659,11 +659,11 @@ static void print_awkerr (qse_awk_t* awk)
 	print_err ( 
 		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"), 
 		qse_awk_geterrnum(awk),
-		(unsigned int)loc->lin,
-		(unsigned int)loc->col,
-		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
-		((loc->fil == QSE_NULL)? QSE_T(""): loc->fil),
-		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T(" ")),
+		(unsigned int)loc->line,
+		(unsigned int)loc->colm,
+		((loc->file == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
+		((loc->file == QSE_NULL)? QSE_T(""): loc->file),
+		((loc->file == QSE_NULL)? QSE_T(""): QSE_T(" ")),
 		qse_awk_geterrmsg(awk)
 	);
 }
@@ -675,11 +675,11 @@ static void print_rtxerr (qse_awk_rtx_t* rtx)
 	print_err (
 		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"),
 		qse_awk_rtx_geterrnum(rtx),
-		(unsigned int)loc->lin,
-		(unsigned int)loc->col,
-		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
-		((loc->fil == QSE_NULL)? QSE_T(""): loc->fil),
-		((loc->fil == QSE_NULL)? QSE_T(""): QSE_T(" ")),
+		(unsigned int)loc->line,
+		(unsigned int)loc->colm,
+		((loc->file == QSE_NULL)? QSE_T(""): QSE_T("FILE ")),
+		((loc->file == QSE_NULL)? QSE_T(""): loc->file),
+		((loc->file == QSE_NULL)? QSE_T(""): QSE_T(" ")),
 		qse_awk_rtx_geterrmsg(rtx)
 	);
 }

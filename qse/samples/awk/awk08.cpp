@@ -179,7 +179,7 @@ static void print_error (MyAwk& awk)
 
 	print_error ( 
 		QSE_T("LINE [%u] %s\n"), 
-		(unsigned)loc.lin,
+		(unsigned)loc.line,
 		awk.getErrorMessage()
 	);
 }

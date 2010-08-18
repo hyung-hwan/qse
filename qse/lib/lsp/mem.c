@@ -1,16 +1,35 @@
 /*
  * $Id: mem.c 337 2008-08-20 09:17:25Z baconevi $
  *
- * {License}
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "lsp.h"
+
+static qse_lsp_obj_t* makeint (qse_lsp_mem_t* mem, qse_long_t value);
+static QSE_INLINE_ALWAYS void collect_garbage (qse_lsp_mem_t* mem);
+static void dispose_all (qse_lsp_mem_t* mem);
 
 qse_lsp_mem_t* qse_lsp_openmem (
 	qse_lsp_t* lsp, qse_size_t ubound, qse_size_t ubound_inc)
 {
 	qse_lsp_mem_t* mem;
 	qse_size_t i;
+	int fail = 0;
 
 	/* allocate memory */
 	mem = (qse_lsp_mem_t*) QSE_LSP_ALLOC (lsp, QSE_SIZEOF(qse_lsp_mem_t));	
@@ -40,7 +59,11 @@ qse_lsp_mem_t* qse_lsp_openmem (
 		mem->used[i] = QSE_NULL;
 		mem->free[i] = QSE_NULL;
 	}
-	mem->read = QSE_NULL;
+
+	/* initialize read registers */
+	mem->r.obj = QSE_NULL;
+	mem->r.tmp = QSE_NULL;
+	mem->r.stack = QSE_NULL;
 
 	/* when "ubound" is too small, the garbage collection can
 	 * be performed while making the common objects. */
@@ -49,21 +72,35 @@ qse_lsp_mem_t* qse_lsp_openmem (
 	mem->quote  = QSE_NULL;
 	mem->lambda = QSE_NULL;
 	mem->macro  = QSE_NULL;
+	for (i = 0; i < QSE_COUNTOF(mem->num); i++) mem->num[i] = QSE_NULL;
 
 	/* initialize common object pointers */
-	mem->nil     = qse_lsp_makenil  (mem);
-	mem->t       = qse_lsp_maketrue (mem);
-	mem->quote   = qse_lsp_makesym  (mem, QSE_T("quote"),  5);
-	mem->lambda  = qse_lsp_makesym  (mem, QSE_T("lambda"), 6);
-	mem->macro   = qse_lsp_makesym  (mem, QSE_T("macro"),  5);
+	mem->nil = qse_lsp_makenil (mem);
+	mem->t = qse_lsp_maketrue (mem);
+	mem->quote = qse_lsp_makesym (mem, QSE_T("quote"), 5);
+	mem->lambda = qse_lsp_makesym (mem, QSE_T("lambda"), 6);
+	mem->macro = qse_lsp_makesym (mem, QSE_T("macro"), 5);
 
-	if (mem->nil    == QSE_NULL ||
-	    mem->t      == QSE_NULL ||
-	    mem->quote  == QSE_NULL ||
+	if (mem->nil == QSE_NULL ||
+	    mem->t == QSE_NULL ||
+	    mem->quote == QSE_NULL ||
 	    mem->lambda == QSE_NULL ||
-	    mem->macro  == QSE_NULL) 
+	    mem->macro == QSE_NULL) 
 	{
-		qse_lsp_dispose_all (mem);
+		fail = 1;
+	}
+	else
+	{
+		for (i = 0; i < QSE_COUNTOF(mem->num); i++)
+		{
+			mem->num[i] = makeint (mem, i);
+			if (mem->num[i] == QSE_NULL) { fail = 1; break; }
+		}
+	}
+
+	if (fail)
+	{
+		dispose_all (mem);
 		qse_lsp_freeframe (lsp, mem->frame);
 		QSE_LSP_FREE (lsp, mem);
 		return QSE_NULL;
@@ -74,6 +111,13 @@ qse_lsp_mem_t* qse_lsp_openmem (
 	QSE_LSP_PERM(mem->quote)  = 1;
 	QSE_LSP_PERM(mem->lambda) = 1;
 	QSE_LSP_PERM(mem->macro)  = 1;
+	for (i = 0; i < QSE_COUNTOF(mem->num); i++)
+	{
+		QSE_LSP_PERM(mem->num[i]) = 1;
+	}
+
+	/* let the read stack point to nil */
+	mem->r.stack = mem->nil;
 
 	return mem;
 }
@@ -81,7 +125,7 @@ qse_lsp_mem_t* qse_lsp_openmem (
 void qse_lsp_closemem (qse_lsp_mem_t* mem)
 {
 	/* dispose of the allocated objects */
-	qse_lsp_dispose_all (mem);
+	dispose_all (mem);
 
 	/* dispose of environment frames */
 	qse_lsp_freeframe (mem->lsp, mem->frame);
@@ -90,14 +134,11 @@ void qse_lsp_closemem (qse_lsp_mem_t* mem)
 	QSE_LSP_FREE (mem->lsp, mem);
 }
 
-qse_lsp_obj_t* qse_lsp_alloc (qse_lsp_mem_t* mem, int type, qse_size_t size)
+static qse_lsp_obj_t* allocate (qse_lsp_mem_t* mem, int type, qse_size_t size)
 {
 	qse_lsp_obj_t* obj;
 	
-/* TODO: remove the following line... */
-qse_lsp_gc (mem);
-
-	if (mem->count >= mem->ubound) qse_lsp_gc (mem);
+	if (mem->count >= mem->ubound) collect_garbage (mem);
 	if (mem->count >= mem->ubound) 
 	{
 		mem->ubound += mem->ubound_inc;
@@ -107,7 +148,7 @@ qse_lsp_gc (mem);
 	obj = (qse_lsp_obj_t*) QSE_LSP_ALLOC (mem->lsp, size);
 	if (obj == QSE_NULL) 
 	{
-		qse_lsp_gc (mem);
+		collect_garbage (mem);
 
 		obj = (qse_lsp_obj_t*) QSE_LSP_ALLOC (mem->lsp, size);
 		if (obj == QSE_NULL) 
@@ -121,7 +162,6 @@ qse_lsp_gc (mem);
 	QSE_LSP_SIZE(obj) = size;
 	QSE_LSP_MARK(obj) = 0;
 	QSE_LSP_PERM(obj) = 0;
-	QSE_LSP_LOCK(obj) = 0;
 
 	/* insert the object at the head of the used list */
 	QSE_LSP_LINK(obj) = mem->used[type];
@@ -135,7 +175,7 @@ qse_lsp_gc (mem);
 	return obj;
 }
 
-void qse_lsp_dispose (
+static void dispose (
 	qse_lsp_mem_t* mem, qse_lsp_obj_t* prev, qse_lsp_obj_t* obj)
 {
 	QSE_ASSERT (obj != QSE_NULL);
@@ -156,7 +196,7 @@ void qse_lsp_dispose (
 	QSE_LSP_FREE (mem->lsp, obj);	
 }
 
-void qse_lsp_dispose_all (qse_lsp_mem_t* mem)
+static void dispose_all (qse_lsp_mem_t* mem)
 {
 	qse_lsp_obj_t* obj, * next;
 	qse_size_t i;
@@ -168,96 +208,45 @@ void qse_lsp_dispose_all (qse_lsp_mem_t* mem)
 		while (obj != QSE_NULL) 
 		{
 			next = QSE_LSP_LINK(obj);
-			qse_lsp_dispose (mem, QSE_NULL, obj);
+			dispose (mem, QSE_NULL, obj);
 			obj = next;
 		}
 	}
 }
 
-static void __mark_obj (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
+static void mark_obj (qse_lsp_mem_t* mem, qse_lsp_obj_t* obj)
 {
 	QSE_ASSERT (obj != QSE_NULL);
 
-	/* TODO: can it be recursive? */
+	/* TODO: can it be non-recursive? */
 	if (QSE_LSP_MARK(obj) != 0) return;
 
 	QSE_LSP_MARK(obj) = 1;
 
 	if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_CONS) 
 	{
-		__mark_obj (lsp, QSE_LSP_CAR(obj));
-		__mark_obj (lsp, QSE_LSP_CDR(obj));
+		mark_obj (mem, QSE_LSP_CAR(obj));
+		mark_obj (mem, QSE_LSP_CDR(obj));
 	}
 	else if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_FUNC) 
 	{
-		__mark_obj (lsp, QSE_LSP_FFORMAL(obj));
-		__mark_obj (lsp, QSE_LSP_FBODY(obj));
+		mark_obj (mem, QSE_LSP_FFORMAL(obj));
+		mark_obj (mem, QSE_LSP_FBODY(obj));
 	}
 	else if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_MACRO) 
 	{
-		__mark_obj (lsp, QSE_LSP_MFORMAL(obj));
-		__mark_obj (lsp, QSE_LSP_MBODY(obj));
+		mark_obj (mem, QSE_LSP_MFORMAL(obj));
+		mark_obj (mem, QSE_LSP_MBODY(obj));
 	}
 }
 
-/*
- * qse_lsp_lockobj and qse_lsp_deepunlockobj are just called by qse_lsp_read.
- */
-void qse_lsp_lockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
-{
-	QSE_ASSERTX (obj != QSE_NULL,
-		"an object pointer should not be QSE_NULL");
-	if (QSE_LSP_PERM(obj) == 0) QSE_LSP_LOCK(obj)++;
-}
-
-void qse_lsp_unlockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
-{
-	QSE_ASSERTX (obj != QSE_NULL,
-		"an object pointer should not be QSE_NULL");
-
-	if (QSE_LSP_PERM(obj) != 0) return;
-	QSE_ASSERTX (QSE_LSP_LOCK(obj) > 0,
-		"the lock count should be greater than zero to be unlocked");
-
-	QSE_LSP_LOCK(obj)--;
-}
-
-void qse_lsp_deepunlockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
-{
-	QSE_ASSERTX (obj != QSE_NULL,
-		"an object pointer should not be QSE_NULL");
-
-	if (QSE_LSP_PERM(obj) == 0) 
-	{
-		QSE_ASSERTX (QSE_LSP_LOCK(obj) > 0,
-			"the lock count should be greater than zero to be unlocked");
-		QSE_LSP_LOCK(obj)--;
-	}
-
-	if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_CONS) 
-	{
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_CAR(obj));
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_CDR(obj));
-	}
-	else if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_FUNC) 
-	{
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_FFORMAL(obj));
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_FBODY(obj));
-	}
-	else if (QSE_LSP_TYPE(obj) == QSE_LSP_OBJ_MACRO) 
-	{
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_MFORMAL(obj));
-		qse_lsp_deepunlockobj (lsp, QSE_LSP_MBODY(obj));
-	}
-}
-
-static void __mark_objs_in_use (qse_lsp_mem_t* mem)
+static void mark_objs_in_use (qse_lsp_mem_t* mem)
 {
 	qse_lsp_frame_t* frame;
 	qse_lsp_assoc_t* assoc;
 	qse_lsp_tlink_t* tlink;
 	/*qse_lsp_arr_t* arr;*/
-	/*qse_size_t       i;*/
+	qse_size_t       i;
 
 #if 0
 	qse_dprint0 (QSE_T("marking environment frames\n"));
@@ -269,12 +258,12 @@ static void __mark_objs_in_use (qse_lsp_mem_t* mem)
 		assoc = frame->assoc;
 		while (assoc != QSE_NULL) 
 		{
-			__mark_obj (mem->lsp, assoc->name);
+			mark_obj (mem, assoc->name);
 
 			if (assoc->value != QSE_NULL) 
-				__mark_obj (mem->lsp, assoc->value);
+				mark_obj (mem, assoc->value);
 			if (assoc->func != QSE_NULL) 
-				__mark_obj (mem->lsp, assoc->func);
+				mark_obj (mem, assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -293,12 +282,12 @@ static void __mark_objs_in_use (qse_lsp_mem_t* mem)
 		assoc = frame->assoc;
 		while (assoc != QSE_NULL) 
 		{
-			__mark_obj (mem->lsp, assoc->name);
+			mark_obj (mem, assoc->name);
 
 			if (assoc->value != QSE_NULL) 
-				__mark_obj (mem->lsp, assoc->value);
+				mark_obj (mem, assoc->value);
 			if (assoc->func != QSE_NULL) 
-				__mark_obj (mem->lsp, assoc->func);
+				mark_obj (mem, assoc->func);
 
 			assoc = assoc->link;
 		}
@@ -306,28 +295,35 @@ static void __mark_objs_in_use (qse_lsp_mem_t* mem)
 		frame = frame->link;
 	}
 
-	/* qse_dprint0 (QSE_T("marking the read object\n"));*/
-	if (mem->read != QSE_NULL) __mark_obj (mem->lsp, mem->read);
+	/*qse_dprint0 (QSE_T("marking the read object\n"));*/
+	if (mem->r.obj) mark_obj (mem, mem->r.obj);
+	if (mem->r.tmp) mark_obj (mem, mem->r.tmp);
+	if (mem->r.stack) mark_obj (mem, mem->r.stack);
 
 	/* qse_dprint0 (QSE_T("marking the temporary objects\n"));*/
 	for (tlink = mem->tlink; tlink != QSE_NULL; tlink = tlink->link)
 	{
-		__mark_obj (mem->lsp, tlink->obj);
+		mark_obj (mem, tlink->obj);
 	}
 
 #if 0
 	qse_dprint0 (QSE_T("marking builtin objects\n"));
 #endif
 	/* mark common objects */
-	if (mem->t      != QSE_NULL) __mark_obj (mem->lsp, mem->t);
-	if (mem->nil    != QSE_NULL) __mark_obj (mem->lsp, mem->nil);
-	if (mem->quote  != QSE_NULL) __mark_obj (mem->lsp, mem->quote);
-	if (mem->lambda != QSE_NULL) __mark_obj (mem->lsp, mem->lambda);
-	if (mem->macro  != QSE_NULL) __mark_obj (mem->lsp, mem->macro);
+	if (mem->t) mark_obj (mem, mem->t);
+	if (mem->nil) mark_obj (mem, mem->nil);
+	if (mem->quote) mark_obj (mem, mem->quote);
+	if (mem->lambda) mark_obj (mem, mem->lambda);
+	if (mem->macro) mark_obj (mem, mem->macro);
+
+	for (i = 0; i < QSE_COUNTOF(mem->num); i++) 
+	{
+		if (mem->num[i]) mark_obj (mem, mem->num[i]);
+	}
 }
 
 //#include <qse/cmn/stdio.h>
-static void __sweep_unmarked_objs (qse_lsp_mem_t* mem)
+static void sweep_unmarked_objs (qse_lsp_mem_t* mem)
 {
 	qse_lsp_obj_t* obj, * prev, * next;
 	qse_size_t i;
@@ -345,8 +341,7 @@ static void __sweep_unmarked_objs (qse_lsp_mem_t* mem)
 		{
 			next = QSE_LSP_LINK(obj);
 
-			if (QSE_LSP_LOCK(obj) == 0 && 
-			    QSE_LSP_MARK(obj) == 0 && 
+			if (QSE_LSP_MARK(obj) == 0 && 
 			    QSE_LSP_PERM(obj) == 0) 
 			{
 				/* dispose of unused objects */
@@ -362,7 +357,7 @@ qse_printf (QSE_T("disposing....%d [%s]\n"), i, QSE_LSP_STRPTR(obj));
 else
 qse_printf (QSE_T("disposing....%d\n"), i);
 */
-				qse_lsp_dispose (mem, prev, obj);
+				dispose (mem, prev, obj);
 			}
 			else 
 			{
@@ -376,16 +371,21 @@ qse_printf (QSE_T("disposing....%d\n"), i);
 	}
 }
 
-void qse_lsp_gc (qse_lsp_mem_t* mem)
+static QSE_INLINE_ALWAYS void collect_garbage (qse_lsp_mem_t* mem)
 {
-	__mark_objs_in_use (mem);
-	__sweep_unmarked_objs (mem);
+	mark_objs_in_use (mem);
+	sweep_unmarked_objs (mem);
+}
+
+void qse_lsp_gc (qse_lsp_t* lsp)
+{
+	collect_garbage (lsp->mem);
 }
 
 qse_lsp_obj_t* qse_lsp_makenil (qse_lsp_mem_t* mem)
 {
 	if (mem->nil != QSE_NULL) return mem->nil;
-	mem->nil = qse_lsp_alloc (
+	mem->nil = allocate (
 		mem, QSE_LSP_OBJ_NIL, QSE_SIZEOF(qse_lsp_obj_nil_t));
 	return mem->nil;
 }
@@ -393,16 +393,16 @@ qse_lsp_obj_t* qse_lsp_makenil (qse_lsp_mem_t* mem)
 qse_lsp_obj_t* qse_lsp_maketrue (qse_lsp_mem_t* mem)
 {
 	if (mem->t != QSE_NULL) return mem->t;
-	mem->t = qse_lsp_alloc (
+	mem->t = allocate (
 		mem, QSE_LSP_OBJ_TRUE, QSE_SIZEOF(qse_lsp_obj_true_t));
 	return mem->t;
 }
 
-qse_lsp_obj_t* qse_lsp_makeintobj (qse_lsp_mem_t* mem, qse_long_t value)
+static qse_lsp_obj_t* makeint (qse_lsp_mem_t* mem, qse_long_t value)
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (mem, 
+	obj = allocate (mem, 
 		QSE_LSP_OBJ_INT, QSE_SIZEOF(qse_lsp_obj_int_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -411,11 +411,17 @@ qse_lsp_obj_t* qse_lsp_makeintobj (qse_lsp_mem_t* mem, qse_long_t value)
 	return obj;
 }
 
-qse_lsp_obj_t* qse_lsp_makerealobj (qse_lsp_mem_t* mem, qse_real_t value)
+qse_lsp_obj_t* qse_lsp_makeint (qse_lsp_mem_t* mem, qse_long_t value)
+{
+	if (value >= 0 && value < QSE_COUNTOF(mem->num)) return mem->num[value];
+	return makeint (mem, value);
+}
+
+qse_lsp_obj_t* qse_lsp_makereal (qse_lsp_mem_t* mem, qse_real_t value)
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (mem, 
+	obj = allocate (mem, 
 		QSE_LSP_OBJ_REAL, QSE_SIZEOF(qse_lsp_obj_real_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 	
@@ -428,6 +434,8 @@ qse_lsp_obj_t* qse_lsp_makesym (
 	qse_lsp_mem_t* mem, const qse_char_t* str, qse_size_t len)
 {
 	qse_lsp_obj_t* obj;
+
+/* TODO: use rbt or htb ... */
 
 	/* look for a sysmbol with the given name */
 	obj = mem->used[QSE_LSP_OBJ_SYM];
@@ -442,7 +450,7 @@ qse_lsp_obj_t* qse_lsp_makesym (
 	}
 
 	/* no such symbol found. create a new one */
-	obj = qse_lsp_alloc (mem, QSE_LSP_OBJ_SYM,
+	obj = allocate (mem, QSE_LSP_OBJ_SYM,
 		QSE_SIZEOF(qse_lsp_obj_sym_t)+(len + 1)*QSE_SIZEOF(qse_char_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -458,7 +466,7 @@ qse_lsp_obj_t* qse_lsp_makestr (
 	qse_lsp_obj_t* obj;
 
 	/* allocate memory for the string */
-	obj = qse_lsp_alloc (mem, QSE_LSP_OBJ_STR,
+	obj = allocate (mem, QSE_LSP_OBJ_STR,
 		QSE_SIZEOF(qse_lsp_obj_str_t)+(len + 1)*QSE_SIZEOF(qse_char_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -473,7 +481,7 @@ qse_lsp_obj_t* qse_lsp_makecons (
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (mem,
+	obj = allocate (mem,
 		QSE_LSP_OBJ_CONS, QSE_SIZEOF(qse_lsp_obj_cons_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -488,7 +496,7 @@ qse_lsp_obj_t* qse_lsp_makefunc (
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (mem,
+	obj = allocate (mem,
 		QSE_LSP_OBJ_FUNC, QSE_SIZEOF(qse_lsp_obj_func_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -503,7 +511,7 @@ qse_lsp_obj_t* qse_lsp_makemacro (
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (mem, 
+	obj = allocate (mem, 
 		QSE_LSP_OBJ_MACRO, QSE_SIZEOF(qse_lsp_obj_macro_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 
@@ -518,7 +526,7 @@ qse_lsp_obj_t* qse_lsp_makeprim (qse_lsp_mem_t* mem,
 {
 	qse_lsp_obj_t* obj;
 
-	obj = qse_lsp_alloc (
+	obj = allocate (
 		mem, QSE_LSP_OBJ_PRIM, QSE_SIZEOF(qse_lsp_obj_prim_t));
 	if (obj == QSE_NULL) return QSE_NULL;
 

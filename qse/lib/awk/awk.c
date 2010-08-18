@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 328 2010-07-08 06:58:44Z hyunghwan.chung $ 
+ * $Id: awk.c 344 2010-08-17 13:15:14Z hyunghwan.chung $ 
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -47,9 +47,9 @@ static int init_token (qse_mmgr_t* mmgr, qse_awk_tok_t* tok)
 	if (tok->name == QSE_NULL) return -1;
 	
 	tok->type = 0;
-	tok->loc.fil = QSE_NULL;
-	tok->loc.lin = 0;
-	tok->loc.col = 0;
+	tok->loc.file = QSE_NULL;
+	tok->loc.line = 0;
+	tok->loc.colm = 0;
 
 	return 0;
 }
@@ -67,9 +67,9 @@ static void clear_token (qse_awk_tok_t* tok)
 {
 	if (tok->name != QSE_NULL) qse_str_clear (tok->name);
 	tok->type = 0;
-	tok->loc.fil = QSE_NULL;
-	tok->loc.lin = 0;
-	tok->loc.col = 0;
+	tok->loc.file = QSE_NULL;
+	tok->loc.line = 0;
+	tok->loc.colm = 0;
 }
 
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
@@ -180,9 +180,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 
 	awk->option = QSE_AWK_CLASSIC;
 	awk->errinf.num = QSE_AWK_ENOERR;
-	awk->errinf.loc.lin = 0;
-	awk->errinf.loc.col = 0;
-	awk->errinf.loc.fil = QSE_NULL;
+	awk->errinf.loc.line = 0;
+	awk->errinf.loc.colm = 0;
+	awk->errinf.loc.file = QSE_NULL;
 	awk->errstr = qse_awk_dflerrstr;
 	awk->stopall = QSE_FALSE;
 
@@ -328,13 +328,13 @@ int qse_awk_clear (qse_awk_t* awk)
 	 */
 
 	awk->sio.last.c = QSE_CHAR_EOF;
-	awk->sio.last.lin = 0;
-	awk->sio.last.col = 0;
-	awk->sio.last.fil = QSE_NULL;
+	awk->sio.last.line = 0;
+	awk->sio.last.colm = 0;
+	awk->sio.last.file = QSE_NULL;
 	awk->sio.nungots = 0;
 
-	awk->sio.arg.lin = 1;
-	awk->sio.arg.col = 1;
+	awk->sio.arg.line = 1;
+	awk->sio.arg.colm = 1;
 	awk->sio.arg.b.pos = 0;
 	awk->sio.arg.b.len = 0;
 

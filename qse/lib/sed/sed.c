@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 334 2010-07-14 12:54:48Z hyunghwan.chung $
+ * $Id: sed.c 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -148,7 +148,6 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	return sed;
 }
 
-
 static void qse_sed_fini (qse_sed_t* sed)
 {
 	free_all_command_blocks (sed);
@@ -209,10 +208,10 @@ static qse_cint_t getnextsc (qse_sed_t* sed)
 	{
 		if (sed->src.cc == QSE_T('\n')) 
 		{
-			sed->src.loc.lin++;
-			sed->src.loc.col = 1;
+			sed->src.loc.line++;
+			sed->src.loc.colm = 1;
 		}
-		else sed->src.loc.col++;
+		else sed->src.loc.colm++;
 
 		sed->src.cc = *sed->src.cur++;
 		/* TODO: support different line end convension */
@@ -1236,8 +1235,8 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	sed->src.ptr = sptr;
 	sed->src.end = sptr + slen;
 	sed->src.cur = sptr;
-	sed->src.loc.lin = 1;
-	sed->src.loc.col = 0;
+	sed->src.loc.line = 1;
+	sed->src.loc.colm = 0;
 	sed->src.cc = QSE_CHAR_EOF;
 	
 	c = NXTSC (sed);

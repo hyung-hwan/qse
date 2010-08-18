@@ -25,8 +25,8 @@
 static void print_error (
 	const QSE::StdAwk::loc_t& loc, const QSE::StdAwk::char_t* msg)
 {
-	if (loc.lin > 0 || loc.col > 0)
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s at LINE %lu COLUMN %lu\n"), msg, loc.lin, loc.col);
+	if (loc.line > 0 || loc.colm > 0)
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s at LINE %lu COLUMN %lu\n"), msg, loc.line, loc.colm);
 	else
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), msg);
 	

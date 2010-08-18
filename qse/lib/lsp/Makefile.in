@@ -73,8 +73,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqselsp_la_DEPENDENCIES =
 am_libqselsp_la_OBJECTS = lsp.lo err.lo env.lo eval.lo mem.lo misc.lo \
-	name.lo prim.lo prim_compar.lo prim_let.lo prim_math.lo \
-	prim_prog.lo print.lo read.lo
+	prim.lo prim_compar.lo prim_let.lo prim_math.lo prim_prog.lo \
+	print.lo read.lo
 libqselsp_la_OBJECTS = $(am_libqselsp_la_OBJECTS)
 libqselsp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -239,7 +239,7 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libqselsp.la 
-libqselsp_la_SOURCES = lsp.c err.c env.c eval.c mem.c mem.h misc.c name.c prim.c prim_compar.c prim.h prim_let.c prim_math.c prim_prog.c print.c read.c lsp.h env.h misc.h name.h obj.h 
+libqselsp_la_SOURCES = lsp.c err.c env.c eval.c mem.c mem.h misc.c prim.c prim_compar.c prim.h prim_let.c prim_math.c prim_prog.c print.c read.c lsp.h env.h misc.h obj.h 
 libqselsp_la_LDFLAGS = -L../cmn -version-info 1:0:0 -no-undefined
 libqselsp_la_LIBADD = -lqsecmn
 all: all-am
@@ -322,7 +322,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lsp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/name.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prim.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prim_compar.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prim_let.Plo@am__quote@

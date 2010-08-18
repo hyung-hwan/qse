@@ -24,50 +24,78 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****o* LISP/LISP Interpreter
- * DESCRIPTION
- *  The library includes a LISP interpreter that can be embedded into other
- *  applications or can run stand-alone.
- *
- *  #include <qse/lsp/lsp.h>
- ******
+/** @file
+ *  The file provides interface to a LISP interpreter.
  */
 
 typedef struct qse_lsp_t qse_lsp_t;
 typedef struct qse_lsp_obj_t qse_lsp_obj_t;
-typedef struct qse_lsp_prmfns_t qse_lsp_prmfns_t;
+typedef struct qse_lsp_prm_t qse_lsp_prm_t;
 
-typedef qse_ssize_t (*qse_lsp_io_t) (
-	int cmd, void* arg, qse_char_t* data, qse_size_t count);
+/** 
+ * The qse_lsp_loc_t defines a structure to store location information.
+ */
+struct qse_lsp_loc_t
+{
+	const qse_char_t* file; /**< file */
+	qse_size_t        line; /**< line  */
+	qse_size_t        colm; /**< column */
+};
+typedef struct qse_lsp_loc_t qse_lsp_loc_t;
 
-typedef qse_real_t (*qse_lsp_pow_t) (
-	void* data, qse_real_t x, qse_real_t y);
 typedef int (*qse_lsp_sprintf_t) (
 	void* data, qse_char_t* buf, qse_size_t size, 
 	const qse_char_t* fmt, ...);
-typedef void (*qse_lsp_dprintf_t) (void* data, const qse_char_t* fmt, ...); 
 
-struct qse_lsp_prmfns_t
+struct qse_lsp_prm_t
 {
-	qse_mmgr_t mmgr;
-
-	/* utilities */
-	struct
-	{
-		qse_lsp_sprintf_t sprintf;
-		qse_lsp_dprintf_t dprintf;
-		void* udd;
-	} misc;
+	qse_lsp_sprintf_t sprintf;
+	void* udd;
 };
 
-/* io function commands */
-enum 
+/**
+ * The qse_lsp_io_cmd_t type defines I/O commands.
+ */
+enum qse_lsp_io_cmd_t
 {
 	QSE_LSP_IO_OPEN   = 0,
 	QSE_LSP_IO_CLOSE  = 1,
 	QSE_LSP_IO_READ   = 2,
 	QSE_LSP_IO_WRITE  = 3
 };
+typedef enum qse_lsp_io_cmd_t qse_lsp_io_cmd_t;
+
+/**
+ * The qse_lsp_io_arg_t type defines a data structure for an I/O handler.
+ */
+struct qse_lsp_io_arg_t
+{
+	void*             handle;
+	const qse_char_t* path;
+};
+typedef struct qse_lsp_io_arg_t qse_lsp_io_arg_t;
+
+/**
+ * The qse_lsp_io_fun_t type defines an I/O handler function.
+ */
+typedef qse_ssize_t (*qse_lsp_io_fun_t) (
+	qse_lsp_t*        lsp,
+	qse_lsp_io_cmd_t  cmd,
+	qse_lsp_io_arg_t* arg,
+	qse_char_t*       data, 
+	qse_size_t        count
+);
+
+/**
+ * The qse_lsp_io_t type defines a I/O handler set.
+ */
+struct qse_lsp_io_t
+{
+	qse_lsp_io_fun_t in;
+	qse_lsp_io_fun_t out;
+};
+typedef struct qse_lsp_io_t qse_lsp_io_t;
+
 
 /* option code */
 enum
@@ -75,8 +103,10 @@ enum
 	QSE_LSP_UNDEFSYMBOL = (1 << 0)
 };
 
-/* error code */
-enum 
+/**
+ * The qse_lsp_errnum_t type defines error numbers.
+ */
+enum qse_lsp_errnum_t
 {
 	QSE_LSP_ENOERR,
 	QSE_LSP_ENOMEM,
@@ -89,7 +119,9 @@ enum
 	QSE_LSP_ENOOUTP,
 	QSE_LSP_EOUTPUT,
 
+	QSE_LSP_EINTERN,
 	QSE_LSP_ESYNTAX,
+	QSE_LSP_ELSTDEEP,
 	QSE_LSP_ERPAREN,
 	QSE_LSP_EARGBAD,
 	QSE_LSP_EARGFEW,
@@ -103,46 +135,115 @@ enum
 	QSE_LSP_EVALBAD,
 	QSE_LSP_EDIVBY0
 };
+typedef enum qse_lsp_errnum_t qse_lsp_errnum_t;
 
-typedef qse_lsp_obj_t* (*qse_lsp_prim_t) (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
+typedef const qse_char_t* (*qse_lsp_errstr_t) (
+	qse_lsp_t*       lsp,   /**< lisp */
+	qse_lsp_errnum_t num    /**< error number */
+);
+
+typedef qse_lsp_obj_t* (*qse_lsp_prim_t) (
+	qse_lsp_t*     lsp,
+	qse_lsp_obj_t* obj
+);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+QSE_DEFINE_COMMON_FUNCTIONS (lsp)
+
 qse_lsp_t* qse_lsp_open (
-	const qse_lsp_prmfns_t* prmfns,
-	qse_size_t mem_ubound, qse_size_t mem_ubound_inc);
+	qse_mmgr_t*          mmgr, 
+	qse_size_t           xtnsize,
+	const qse_lsp_prm_t* prm,
+	qse_size_t           mem_ubound,
+	qse_size_t           mem_ubound_inc
+);
 
-void qse_lsp_close (qse_lsp_t* lsp);
+void qse_lsp_close (
+	qse_lsp_t* lsp /**< lisp */
+);
 
-/**
- *  @function qse_lsp_setassocdata
- *  @brief ssociats the user-specified data with an interpreter
- */
-void qse_lsp_setassocdata (qse_lsp_t* lsp, void* data);
-/**
- *  @function qse_lsp_getassocdata
- *  @brief returns the user-specified data associated with an interpreter
- */
-void* qse_lsp_getassocdata (qse_lsp_t* lsp);
+qse_lsp_errstr_t qse_lsp_geterrstr (
+	qse_lsp_t* lsp    /**< lisp */
+);
+
+void qse_lsp_seterrstr (
+     qse_lsp_t*       lsp,   /**< lisp */
+     qse_lsp_errstr_t errstr /**< an error string getter */
+);
+
+qse_lsp_errnum_t qse_lsp_geterrnum (
+	qse_lsp_t* lsp /**< lisp */
+);
+
+const qse_lsp_loc_t* qse_lsp_geterrloc (
+	qse_lsp_t* lsp /**< lisp */
+);
+
+const qse_char_t* qse_lsp_geterrmsg (
+	qse_lsp_t* lsp /**< lisp */
+);
 
 void qse_lsp_geterror (
-	qse_lsp_t* lsp, int* errnum, const qse_char_t** errmsg);
+	qse_lsp_t*         lsp,    /**< lisp */
+	qse_lsp_errnum_t*  errnum, /**< error number */
+	const qse_char_t** errmsg, /**< error message */
+	qse_lsp_loc_t*     errloc  /**< error location */
+);
+
+void qse_lsp_seterrnum (
+	qse_lsp_t*        lsp,    /**< lisp */
+	qse_lsp_errnum_t  errnum, /**< error number */
+	const qse_cstr_t* errarg  /**< argument for formatting error message */
+);
+
+void qse_lsp_seterrmsg (
+	qse_lsp_t*        lsp,      /**< lisp */
+	qse_lsp_errnum_t  errnum,   /**< error number */
+	const qse_char_t* errmsg,   /**< error message */
+	const qse_lsp_loc_t* errloc /**< error location */
+);
 
 void qse_lsp_seterror (
-	qse_lsp_t* lsp, int errnum, 
-	const qse_char_t** errarg, qse_size_t argcnt);
+	qse_lsp_t*           lsp,    /**< lisp */
+	qse_lsp_errnum_t     errnum, /**< error number */
+	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
+	                              *   an error message */
+	const qse_lsp_loc_t* errloc  /**< error location */
+);
 
-int qse_lsp_attinput (qse_lsp_t* lsp, qse_lsp_io_t input, void* arg);
-int qse_lsp_detinput (qse_lsp_t* lsp);
+/**
+ * The qse_lsp_attachio() function attaches I/O handlers.
+ * Upon attachment, it opens input and output streams by calling
+ * the I/O handlers with the #QSE_LSP_IO_OPEN command. 
+ */
+int qse_lsp_attachio (
+	qse_lsp_t*    lsp,  /**< lisp */
+	qse_lsp_io_t* io    /**< I/O handler set */
+);
 
-int qse_lsp_attoutput (qse_lsp_t* lsp, qse_lsp_io_t output, void* arg);
-int qse_lsp_detoutput (qse_lsp_t* lsp);
+/**
+ * The qse_lsp_detachio() function detaches I/O handlers.
+ * It closes the streams for both input and output by calling the I/O handlers
+ * with the #QSE_LSP_IO_CLOSE command.
+ */
+void qse_lsp_detachio (
+	qse_lsp_t*    lsp   /**< lisp */
+);
 
 qse_lsp_obj_t* qse_lsp_read (qse_lsp_t* lsp);
 qse_lsp_obj_t* qse_lsp_eval (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
 int qse_lsp_print (qse_lsp_t* lsp, const qse_lsp_obj_t* obj);
+
+
+/**
+ * The qse_lsp_gc() function invokes the garbage collector
+ */
+void qse_lsp_gc (
+	qse_lsp_t* lsp /**< lisp */
+);
 
 int qse_lsp_addprim (
 	qse_lsp_t* lsp, const qse_char_t* name, qse_size_t name_len, 

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
+ * $Id: parse.c 344 2010-08-17 13:15:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -446,9 +446,9 @@ static int get_char (qse_awk_t* awk)
 		if (n == 0)
 		{
 			awk->sio.last.c = QSE_CHAR_EOF;
-			awk->sio.last.lin = awk->sio.inp->lin;
-			awk->sio.last.col = awk->sio.inp->col;
-			awk->sio.last.fil = awk->sio.inp->name;
+			awk->sio.last.line = awk->sio.inp->line;
+			awk->sio.last.colm = awk->sio.inp->colm;
+			awk->sio.last.file = awk->sio.inp->name;
 			return 0;
 		}
 
@@ -463,14 +463,14 @@ static int get_char (qse_awk_t* awk)
 		 * incrementing it line number here instead of
 		 * updating inp->last causes the line number for
 		 * TOK_EOF to be the same line as the last newline. */
-		awk->sio.inp->lin++;
-		awk->sio.inp->col = 1;
+		awk->sio.inp->line++;
+		awk->sio.inp->colm = 1;
 	}
 	
 	awk->sio.inp->last.c = awk->sio.inp->b.buf[awk->sio.inp->b.pos++];
-	awk->sio.inp->last.lin = awk->sio.inp->lin;
-	awk->sio.inp->last.col = awk->sio.inp->col++;
-	awk->sio.inp->last.fil = awk->sio.inp->name;
+	awk->sio.inp->last.line = awk->sio.inp->line;
+	awk->sio.inp->last.colm = awk->sio.inp->colm++;
+	awk->sio.inp->last.file = awk->sio.inp->name;
 
 	awk->sio.last = awk->sio.inp->last;
 	return 0;
@@ -742,8 +742,8 @@ static int begin_include (qse_awk_t* awk)
 	awk->sio.inp = arg;
 	awk->parse.depth.cur.incl++;
 
-	awk->sio.inp->lin = 1;
-	awk->sio.inp->col = 1;
+	awk->sio.inp->line = 1;
+	awk->sio.inp->colm = 1;
 
 	return 0;
 
@@ -4676,8 +4676,8 @@ static qse_awk_nde_t* parse_primary_ident (
 		else if (awk->option & QSE_AWK_IMPLICIT) 
 		{
 			if (MATCH(awk,TOK_LPAREN) &&
-			    awk->tok.loc.lin == xloc->lin &&
-			    awk->tok.loc.col == xloc->col + namelen)
+			    awk->tok.loc.line == xloc->line &&
+			    awk->tok.loc.colm == xloc->colm + namelen)
 			{
 				qse_awk_nde_t* nde;
 
@@ -5440,9 +5440,9 @@ static int skip_comment (qse_awk_t* awk)
 			if (c == QSE_CHAR_EOF)
 			{
 				qse_awk_loc_t loc;
-				loc.lin = awk->sio.inp->lin;
-				loc.col = awk->sio.inp->col;
-				loc.fil = awk->sio.inp->name;
+				loc.line = awk->sio.inp->line;
+				loc.colm = awk->sio.inp->colm;
+				loc.file = awk->sio.inp->name;
 				SETERR_LOC (awk, QSE_AWK_ECMTNC, &loc);
 				return -1;
 			}
@@ -5453,9 +5453,9 @@ static int skip_comment (qse_awk_t* awk)
 				if (c == QSE_CHAR_EOF)
 				{
 					qse_awk_loc_t loc;
-					loc.lin = awk->sio.inp->lin;
-					loc.col = awk->sio.inp->col;
-					loc.fil = awk->sio.inp->name;
+					loc.line = awk->sio.inp->line;
+					loc.colm = awk->sio.inp->colm;
+					loc.file = awk->sio.inp->name;
 					SETERR_LOC (awk, QSE_AWK_ECMTNC, &loc);
 					return -1;
 				}
@@ -5593,9 +5593,9 @@ retry:
 	while (n >= 1);
 
 	qse_str_clear (tok->name);
-	tok->loc.fil = awk->sio.last.fil;
-	tok->loc.lin = awk->sio.last.lin;
-	tok->loc.col = awk->sio.last.col;
+	tok->loc.file = awk->sio.last.file;
+	tok->loc.line = awk->sio.last.line;
+	tok->loc.colm = awk->sio.last.colm;
 
 	c = awk->sio.last.c;
 
@@ -5695,17 +5695,17 @@ retry:
 static int get_token (qse_awk_t* awk)
 {
 	awk->ptok.type = awk->tok.type;
-	awk->ptok.loc.fil = awk->tok.loc.fil;
-	awk->ptok.loc.lin = awk->tok.loc.lin;
-	awk->ptok.loc.col = awk->tok.loc.col;
+	awk->ptok.loc.file = awk->tok.loc.file;
+	awk->ptok.loc.line = awk->tok.loc.line;
+	awk->ptok.loc.colm = awk->tok.loc.colm;
 	qse_str_swap (awk->ptok.name, awk->tok.name);
 
 	if (QSE_STR_LEN(awk->ntok.name) > 0)
 	{
 		awk->tok.type = awk->ntok.type;
-		awk->tok.loc.fil = awk->ntok.loc.fil;
-		awk->tok.loc.lin = awk->ntok.loc.lin;
-		awk->tok.loc.col = awk->ntok.loc.col;	
+		awk->tok.loc.file = awk->ntok.loc.file;
+		awk->tok.loc.line = awk->ntok.loc.line;
+		awk->tok.loc.colm = awk->ntok.loc.colm;	
 
 		qse_str_swap (awk->tok.name, awk->ntok.name);
 		qse_str_clear (awk->ntok.name);

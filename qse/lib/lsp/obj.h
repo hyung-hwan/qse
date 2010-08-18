@@ -1,11 +1,25 @@
 /*
  * $Id: obj.h 117 2008-03-03 11:20:05Z baconevi $
  *
- * {License}
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_LSP_OBJ_H_
-#define _QSE_LSP_OBJ_H_
+#ifndef _QSE_LIB_LSP_OBJ_H_
+#define _QSE_LIB_LSP_OBJ_H_
 
 #ifndef _QSE_LSP_LSP_H_
 #error Never include this file directly. Include <qse/lsp/lsp.h> instead
@@ -42,10 +56,9 @@ typedef struct qse_lsp_obj_prim_t   qse_lsp_obj_prim_t;
 
 struct qse_lsp_objhdr_t
 {
-	qse_uint32_t   type:  8;
-	qse_uint32_t   mark:  4;
-	qse_uint32_t   perm:  4;
-	qse_uint32_t   lock: 16;
+	qse_uint16_t   type:  8;
+	qse_uint16_t   mark:  4;
+	qse_uint16_t   perm:  4;
 	qse_size_t     size;
 	qse_lsp_obj_t* link;
 };
@@ -127,7 +140,6 @@ struct qse_lsp_obj_prim_t
 #define QSE_LSP_SIZE(x)  (((qse_lsp_obj_t*)x)->hdr.size)
 #define QSE_LSP_MARK(x)  (((qse_lsp_obj_t*)x)->hdr.mark)
 #define QSE_LSP_PERM(x)  (((qse_lsp_obj_t*)x)->hdr.perm)
-#define QSE_LSP_LOCK(x)  (((qse_lsp_obj_t*)x)->hdr.lock)
 #define QSE_LSP_LINK(x)  (((qse_lsp_obj_t*)x)->hdr.link)
 
 /* value access */

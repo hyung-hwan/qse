@@ -1,11 +1,25 @@
 /*
  * $Id: mem.h 117 2008-03-03 11:20:05Z baconevi $
  *
- * {License}
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_LSP_MEM_H_
-#define _QSE_LSP_MEM_H_
+#ifndef _QSE_LIB_LSP_MEM_H_
+#define _QSE_LIB_LSP_MEM_H_
 
 #ifndef _QSE_LSP_LSP_H_
 #error Never include this file directly. Include <qse/lsp/lsp.h> instead
@@ -23,7 +37,13 @@ struct qse_lsp_mem_t
 	qse_size_t count;  /* the number of objects currently allocated */
 	qse_lsp_obj_t* used[QSE_LSP_TYPE_COUNT];
 	qse_lsp_obj_t* free[QSE_LSP_TYPE_COUNT];
-	qse_lsp_obj_t* read;
+
+	struct
+	{
+		qse_lsp_obj_t* obj;
+		qse_lsp_obj_t* tmp; /* temporary object to protect from gc in read() */
+		qse_lsp_obj_t* stack;
+	} r;
 
 	/* commonly accessed objects */
 	qse_lsp_obj_t* nil;     /* qse_lsp_obj_nil_t */
@@ -31,6 +51,7 @@ struct qse_lsp_mem_t
 	qse_lsp_obj_t* quote;   /* qse_lsp_obj_sym_t */
 	qse_lsp_obj_t* lambda;  /* qse_lsp_obj_sym_t */
 	qse_lsp_obj_t* macro;   /* qse_lsp_obj_sym_t */
+	qse_lsp_obj_t* num[10]; /* qse_lsp_obj_int_t */
 
 	/* run-time environment frame */
 	qse_lsp_frame_t* frame;
@@ -52,20 +73,11 @@ qse_lsp_mem_t* qse_lsp_openmem (
 	qse_lsp_t* lsp, qse_size_t ubound, qse_size_t ubound_inc);
 void qse_lsp_closemem (qse_lsp_mem_t* mem);
 
-qse_lsp_obj_t* qse_lsp_alloc (qse_lsp_mem_t* mem, int type, qse_size_t size);
-void qse_lsp_dispose  (qse_lsp_mem_t* mem, qse_lsp_obj_t* prev, qse_lsp_obj_t* obj);
-void qse_lsp_dispose_all (qse_lsp_mem_t* mem);
-void qse_lsp_gc (qse_lsp_mem_t* mem);
-
-void qse_lsp_lockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
-void qse_lsp_unlockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
-void qse_lsp_deepunlockobj (qse_lsp_t* lsp, qse_lsp_obj_t* obj);
-
 /* object creation of standard types */
-qse_lsp_obj_t* qse_lsp_makenil     (qse_lsp_mem_t* mem);
-qse_lsp_obj_t* qse_lsp_maketrue    (qse_lsp_mem_t* mem);
-qse_lsp_obj_t* qse_lsp_makeintobj  (qse_lsp_mem_t* mem, qse_long_t value);
-qse_lsp_obj_t* qse_lsp_makerealobj (qse_lsp_mem_t* mem, qse_real_t value);
+qse_lsp_obj_t* qse_lsp_makenil (qse_lsp_mem_t* mem);
+qse_lsp_obj_t* qse_lsp_maketrue (qse_lsp_mem_t* mem);
+qse_lsp_obj_t* qse_lsp_makeint (qse_lsp_mem_t* mem, qse_long_t value);
+qse_lsp_obj_t* qse_lsp_makereal (qse_lsp_mem_t* mem, qse_real_t value);
 
 qse_lsp_obj_t* qse_lsp_makesym (
 	qse_lsp_mem_t* mem, const qse_char_t* str, qse_size_t len);

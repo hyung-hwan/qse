@@ -1,7 +1,21 @@
 /*
  * $Id: eval.c 337 2008-08-20 09:17:25Z baconevi $
  *
- * {License}
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "lsp.h"
@@ -44,13 +58,12 @@ qse_lsp_obj_t* qse_lsp_eval (qse_lsp_t* lsp, qse_lsp_obj_t* obj)
 		{
 			if (lsp->opt_undef_symbol) 
 			{
-				const qse_char_t* arg[1];
+				qse_cstr_t errarg;
 
-				arg[0] = QSE_LSP_SYMPTR(obj);
+          		errarg.len = QSE_LSP_SYMLEN(obj);
+          		errarg.ptr = QSE_LSP_SYMPTR(obj);
 
-				qse_lsp_seterror (
-					lsp, QSE_LSP_EUNDEFSYM, 
-					arg, QSE_COUNTOF(arg));
+				qse_lsp_seterror (lsp, QSE_LSP_EUNDEFSYM, &errarg, QSE_NULL);
 				return QSE_NULL;
 			}
 			return lsp->mem->nil;
@@ -68,13 +81,13 @@ static qse_lsp_obj_t* makefn (qse_lsp_t* lsp, qse_lsp_obj_t* cdr, int is_macro)
 
 	if (cdr == lsp->mem->nil) 
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
 	if (QSE_LSP_TYPE(cdr) != QSE_LSP_OBJ_CONS) 
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -83,7 +96,7 @@ static qse_lsp_obj_t* makefn (qse_lsp_t* lsp, qse_lsp_obj_t* cdr, int is_macro)
 
 	if (body == lsp->mem->nil) 
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EEMPBDY, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EEMPBDY, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -95,7 +108,7 @@ static qse_lsp_obj_t* makefn (qse_lsp_t* lsp, qse_lsp_obj_t* cdr, int is_macro)
 	if (p != lsp->mem->nil) 
 	{
 		/* like in (lambda (x) (+ x 10) . 4) */
-		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -137,13 +150,12 @@ static qse_lsp_obj_t* eval_cons (qse_lsp_t* lsp, qse_lsp_obj_t* cons)
 			if (func == QSE_NULL) 
 			{
 				/* the symbol's function definition is void */
-				const qse_char_t* arg[1];
+				qse_cstr_t errarg;
 
-				arg[0] = QSE_LSP_SYMPTR(car);
-				qse_lsp_seterror (
-					lsp, QSE_LSP_EUNDEFFN, 
-					arg, QSE_COUNTOF(arg));
+          		errarg.len = QSE_LSP_SYMLEN(car);
+          		errarg.ptr = QSE_LSP_SYMPTR(car);
 
+				qse_lsp_seterror (lsp, QSE_LSP_EUNDEFFN, &errarg, QSE_NULL);
 				return QSE_NULL;
 			}
 
@@ -159,25 +171,23 @@ static qse_lsp_obj_t* eval_cons (qse_lsp_t* lsp, qse_lsp_obj_t* cons)
 			}
 			else 
 			{
-				const qse_char_t* arg[1];
+				qse_cstr_t errarg;
 
-				arg[0] = QSE_LSP_SYMPTR(car);
-				qse_lsp_seterror (
-					lsp, QSE_LSP_EUNDEFFN, 
-					arg, QSE_COUNTOF(arg));
+          		errarg.len = QSE_LSP_SYMLEN(car);
+          		errarg.ptr = QSE_LSP_SYMPTR(car);
 
+				qse_lsp_seterror (lsp, QSE_LSP_EUNDEFFN, &errarg, QSE_NULL);
 				return QSE_NULL;
 			}
 		}
 		else 
 		{
-			const qse_char_t* arg[1];
+			qse_cstr_t errarg;
 
-			arg[0] = QSE_LSP_SYMPTR(car);
-			qse_lsp_seterror (
-				lsp, QSE_LSP_EUNDEFFN, 
-				arg, QSE_COUNTOF(arg));
+          	errarg.len = QSE_LSP_SYMLEN(car);
+          	errarg.ptr = QSE_LSP_SYMPTR(car);
 
+			qse_lsp_seterror (lsp, QSE_LSP_EUNDEFFN, &errarg, QSE_NULL);
 			return QSE_NULL;
 		}
 	}
@@ -204,7 +214,7 @@ static qse_lsp_obj_t* eval_cons (qse_lsp_t* lsp, qse_lsp_obj_t* cons)
 		}
 	}
 
-	qse_lsp_seterror (lsp, QSE_LSP_EBADFN, QSE_NULL, 0);
+	qse_lsp_seterror (lsp, QSE_LSP_EBADFN, QSE_NULL, QSE_NULL);
 	return QSE_NULL;
 }
 
@@ -252,7 +262,7 @@ static qse_lsp_obj_t* apply (
 			mem->brooding_frame = frame->link;
 			qse_lsp_freeframe (lsp, frame);
 
-			qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, 0);
+			qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -275,7 +285,7 @@ static qse_lsp_obj_t* apply (
 			mem->brooding_frame = frame->link;
 			qse_lsp_freeframe (lsp, frame);
 
-			qse_lsp_seterror (lsp, QSE_LSP_EDUPFML, QSE_NULL, 0);
+			qse_lsp_seterror (lsp, QSE_LSP_EDUPFML, QSE_NULL, QSE_NULL);
 			return QSE_NULL;
 		}
 
@@ -296,7 +306,7 @@ static qse_lsp_obj_t* apply (
 		mem->brooding_frame = frame->link;
 		qse_lsp_freeframe (lsp, frame);
 
-		qse_lsp_seterror (lsp, QSE_LSP_EARGMANY, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGMANY, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 	else if (actual != mem->nil) 
@@ -304,7 +314,7 @@ static qse_lsp_obj_t* apply (
 		mem->brooding_frame = frame->link;
 		qse_lsp_freeframe (lsp, frame);
 
-		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
@@ -359,19 +369,19 @@ static qse_lsp_obj_t* apply_to_prim (
 	}	
 	if (obj != lsp->mem->nil) 
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGBAD, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
 	if (count < QSE_LSP_PMINARGS(func))
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGFEW, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
 	if (count > QSE_LSP_PMAXARGS(func))
 	{
-		qse_lsp_seterror (lsp, QSE_LSP_EARGMANY, QSE_NULL, 0);
+		qse_lsp_seterror (lsp, QSE_LSP_EARGMANY, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	} 
 
