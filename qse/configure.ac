@@ -258,20 +258,20 @@ AC_CONFIG_FILES([
 	include/qse/awk/Makefile
 	include/qse/cut/Makefile
 	include/qse/sed/Makefile
-	include/qse/lsp/Makefile
+	include/qse/scm/Makefile
 	include/qse/utl/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/cut/Makefile 
 	lib/sed/Makefile 
-	lib/lsp/Makefile 
+	lib/scm/Makefile 
 	lib/utl/Makefile 
 	cmd/Makefile 
-	cmd/sed/Makefile 
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
-	cmd/lsp/Makefile
+	cmd/sed/Makefile 
+	cmd/scm/Makefile
 	samples/Makefile 
 	samples/cmn/Makefile 
 	samples/awk/Makefile 

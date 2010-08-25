@@ -1,5 +1,5 @@
 # EXTRA_DIST = 
-SUBDIRS = cmn sed awk cut lsp utl
+SUBDIRS = cmn awk cut sed scm utl
 
 pkgincludedir = $(includedir)/qse
 

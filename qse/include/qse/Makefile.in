@@ -259,7 +259,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 # EXTRA_DIST = 
-SUBDIRS = cmn sed awk cut lsp utl
+SUBDIRS = cmn awk cut sed scm utl
 pkginclude_HEADERS = config.h conf_msw.h conf_vms.h types.h macros.h \
 	pack1.h unpack.h $(am__append_1)
 all: config.h
