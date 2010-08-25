@@ -1,2 +1,2 @@
-SUBDIRS = sed awk cut lsp 
+SUBDIRS = awk cut sed scm
 DIST_SUBDIRS = $(SUBDIRS) 
