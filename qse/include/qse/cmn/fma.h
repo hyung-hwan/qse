@@ -122,7 +122,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (fma)
 qse_fma_t* qse_fma_open (
 	qse_mmgr_t* mmgr,   /**< outer memory manager */
 	qse_size_t xtnsize, /**< extension size in bytes */
-     qse_size_t blksize, /**< block size in bytes */
+	qse_size_t blksize, /**< block size in bytes */
 	qse_size_t maxblks, /**< maximum numbers of blocks in a chunk */
 	qse_size_t maxcnks  /**< maximum numbers of chunks */
 );
@@ -138,9 +138,9 @@ void qse_fma_close (
  * The qse_fma_init() function initializes an memory allocator.
  */
 qse_fma_t* qse_fma_init (
-     qse_fma_t* fma,     /**< memory allocator */
+	qse_fma_t* fma,     /**< memory allocator */
 	qse_mmgr_t* mmgr,   /**< outer memory manager */
-     qse_size_t blksize, /**< block size in bytes */
+	qse_size_t blksize, /**< block size in bytes */
 	qse_size_t maxblks, /**< maximum numbers of blocks in a chunk */
 	qse_size_t maxcnks  /**< maximum numbers of chunks */
 );
