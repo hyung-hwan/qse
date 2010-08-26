@@ -1,7 +1,8 @@
 /** @page cmn COMMON FUNCTIONS
 
 @section xma MEMORY ALLOCATOR
-QSE provides a memory allocator #qse_xma_t for private heap management.
+- QSE provides a memory allocator #qse_xma_t for private heap management.
+- QSE provides a fixed-size block memory allocator #qse_fma_t.
 
 @section rex REGULAR EXPRESSION
 QSE provides a regular expression processor #qse_rex_t.

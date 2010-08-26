@@ -23,6 +23,11 @@
 
 /** @file
  * This file defines an extravagant memory allocator. Why? It may be so.
+ * The memory allocator allows you to maintain memory blocks from a
+ * larger memory chunk allocated with an outer memory allocator.
+ * Typically, an outer memory allocator is a standard memory allocator
+ * like malloc(). You can isolate memory blocks into a particular chunk.
+ * See #qse_xma_t for an example.
  */
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -173,7 +178,8 @@ void qse_xma_free (
 
 /**
  * The qse_xma_dump() function dumps the contents of the memory zone
- * with the output function @a printf provided.
+ * with the output function @a printf provided. The debug build shows
+ * more statistical counters.
  */
 void qse_xma_dump (
 	qse_xma_t* xma, /**< memory allocator */
