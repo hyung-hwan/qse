@@ -1,0 +1,139 @@
+/*
+ * $Id$
+ *
+    Copyright 2006-2009 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include <qse/cmn/fma.h>
+#include "mem.h"
+
+QSE_IMPLEMENT_COMMON_FUNCTIONS (fma)
+
+qse_fma_t* qse_fma_open (
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
+	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
+{
+	qse_fma_t* fma;
+
+	if (mmgr == QSE_NULL)
+	{
+		mmgr = QSE_MMGR_GETDFL();
+
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
+
+		if (mmgr == QSE_NULL) return QSE_NULL;
+	}
+
+	fma = (qse_fma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*fma) + xtnsize);
+	if (fma == QSE_NULL) return QSE_NULL;
+
+	if (qse_fma_init (fma, mmgr, blksize, maxblks, maxcnks) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (mmgr, fma);
+		return QSE_NULL;
+	}
+
+	return fma;
+}
+
+void qse_fma_close (qse_fma_t* fma)
+{
+	qse_fma_fini (fma);
+	QSE_MMGR_FREE (fma->mmgr, fma);
+}
+
+qse_fma_t* qse_fma_init (
+	qse_fma_t* fma, qse_mmgr_t* mmgr,
+	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
+{
+	QSE_MEMSET (fma, 0, QSE_SIZEOF(*fma));
+	fma->mmgr = mmgr;
+	
+	if (blksize <= QSE_SIZEOF(qse_fma_blk_t)) 
+		blksize = QSE_SIZEOF(qse_fma_blk_t);
+	if (maxblks <= 0) maxblks = 1;
+	if (maxcnks <= 0) maxcnks = 1;
+
+	fma->blksize = blksize;
+	fma->maxblks = maxblks;
+	fma->maxcnks = maxcnks;
+
+	return fma;
+}
+
+void qse_fma_fini (qse_fma_t* fma)
+{
+	while (fma->cnkhead)
+	{
+		qse_fma_cnk_t* next = fma->cnkhead->next;
+		QSE_MMGR_FREE (fma->mmgr, fma->cnkhead);
+		fma->cnkhead = next;
+	}
+}
+
+static QSE_INLINE qse_fma_cnk_t* add_chunk (qse_fma_t* fma)
+{
+	qse_fma_cnk_t* cnk; 
+	qse_fma_blk_t* blk;
+	qse_size_t i;
+
+	/* check if there are too many chunks */
+	if (fma->numcnks >= fma->maxcnks) return QSE_NULL;
+
+	/* allocate a chunk */
+	cnk = (qse_fma_cnk_t*) QSE_MMGR_ALLOC (fma->mmgr, 
+		QSE_SIZEOF(*cnk) + fma->blksize * fma->maxblks);
+	if (cnk == QSE_NULL) return QSE_NULL;
+
+	/* weave the blocks in the chunk to the free block list */
+	fma->freeblk = (qse_fma_blk_t*)(cnk + 1);
+	blk = fma->freeblk;
+	for (i = 1; i < fma->maxblks; i++)
+	{
+		blk->next = (qse_fma_blk_t*)((qse_byte_t*)blk + fma->blksize);
+		blk = blk->next;
+	}
+	blk->next = QSE_NULL;
+
+	/* weave the chunk to the chunk list */
+	cnk->next = fma->cnkhead;
+	fma->cnkhead = cnk;
+	fma->numcnks++;
+
+	return cnk;
+}
+
+void* qse_fma_alloc (qse_fma_t* fma)
+{
+	void* blk;
+
+	if ((blk = fma->freeblk) == QSE_NULL)
+	{
+		if (add_chunk (fma) == QSE_NULL) return QSE_NULL;
+		blk = fma->freeblk;
+	}
+	fma->freeblk = fma->freeblk->next;
+	return blk;
+}
+
+void qse_fma_free (qse_fma_t* fma, void* blk)
+{
+	((qse_fma_blk_t*)blk)->next = fma->freeblk;
+	fma->freeblk = blk;
+}
+

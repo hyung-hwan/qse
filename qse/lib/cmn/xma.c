@@ -142,7 +142,9 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	qse_xma_blk_t* free;
 	qse_size_t xfi;
 
+	/* round 'zonesize' to be the multiples of ALIGN */
 	zonesize = ((zonesize + ALIGN - 1) / ALIGN) * ALIGN;
+
 	/* adjust 'zonesize' to be large enough to hold a single smallest block */
 	if (zonesize < MINBLKLEN) zonesize = MINBLKLEN;
 
@@ -162,10 +164,14 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	xma->mmgr = mmgr;
 	xma->bdec = szlog2(FIXED*ALIGN); /* precalculate the decrement value */
 
-	/* the entire chunk is a free block */
+	/* at this point, the 'free' chunk is a only block available */
+
+	/* get the free block index */
 	xfi = getxfi(xma,free->size);
-	xma->xfree[xfi] = free; /* locate it at the right slot */
-	xma->head = free; /* store it for furture reference */
+	/* locate it into an apporopriate slot */
+	xma->xfree[xfi] = free; 
+	/* let it be the head, which is natural with only a block */
+	xma->head = free;
 
 	/* initialize some statistical variables */
 #ifdef QSE_XMA_ENABLE_STAT
@@ -181,14 +187,22 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 
 void qse_xma_fini (qse_xma_t* xma)
 {
+	/* the head must point to the free chunk allocated in init().
+	 * let's deallocate it */
 	QSE_MMGR_FREE (xma->mmgr, xma->head);
 }
 
 static QSE_INLINE void attach_to_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
 {
-	qse_size_t xfi = getxfi(xma,b->size);
+	/* 
+	 * attach a block to a free list 
+	 */
 
-	b->f.prev = QSE_NULL;
+	/* get the free list index for the block size */
+	qse_size_t xfi = getxfi(xma,b->size); 
+
+	/* let it be the head of the free list doubly-linked */
+	b->f.prev = QSE_NULL; 
 	b->f.next = xma->xfree[xfi];
 	if (xma->xfree[xfi]) xma->xfree[xfi]->f.prev = b;
 	xma->xfree[xfi] = b;		
@@ -196,22 +210,35 @@ static QSE_INLINE void attach_to_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
 
 static QSE_INLINE void detach_from_freelist (qse_xma_t* xma, qse_xma_blk_t* b)
 {
+	/*
+ 	 * detach a block from a free list 
+ 	 */
 	qse_xma_blk_t* p, * n;
 
+	/* alias the previous and the next with short variable names */
 	p = b->f.prev;
 	n = b->f.next;
 
 	if (p)
 	{
+		/* the previous item exists. let its 'next' pointer point to 
+		 * the block's next item. */
 		p->f.next = n;
 	}
 	else 
 	{
+		/* the previous item does not exist. the block is the first
+ 		 * item in the free list. */
+
 		qse_size_t xfi = getxfi(xma,b->size);
 		QSE_ASSERT (b == xma->xfree[xfi]);
+		/* let's update the free list head */
 		xma->xfree[xfi] = n;
 	}
-	if (n) n->f.prev = p;
+
+	/* let the 'prev' pointer of the block's next item point to the 
+	 * block's previous item */
+	if (n) n->f.prev = p; 
 }
 
 static qse_xma_blk_t* alloc_from_freelist (
@@ -363,22 +390,32 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 
 	if (size > blk->size)
 	{
+		/* 
+		 * grow the current block
+		 */
+
 		qse_size_t req = size - blk->size;
 		qse_xma_blk_t* n;
 		qse_size_t rem;
 		
 		n = blk->b.next;
-		if (!n || !n->avail || req > n->size) return QSE_NULL;
 
-		/* merge the current block with the next block 
-		 * if it is available */
+		/* check if the next adjacent block is available */
+		if (!n || !n->avail || req > n->size) return QSE_NULL; /* no! */
 
+		/* let's merge the current block with the next block */
 		detach_from_freelist (xma, n);
 
 		rem = (HDRSIZE + n->size) - req;
 		if (rem >= MINBLKLEN)
 		{
+			/* 	
+			 * the remaining part of the next block is large enough 
+			 * to hold a block. break the next block.
+			 */
+
 			qse_xma_blk_t* tmp;
+
 			/* store n->b.next in case 'tmp' begins somewhere 
 			 * in the header part of n */
 			qse_xma_blk_t* nn = n->b.next; 
@@ -404,6 +441,8 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 		}
 		else
 		{
+			/* the remaining part of the next block is negligible.
+			 * utilize the whole block by merging to the resizing block */
 			blk->size += HDRSIZE + n->size;
 			blk->b.next = n->b.next;
 			if (n->b.next) n->b.next->b.prev = blk;
@@ -414,80 +453,13 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 			xma->stat.avail -= n->size;
 #endif
 		}
-		
-#if 0
-		qse_size_t total = 0;
-		qse_xma_blk_t* x = QSE_NULL;
-
-		/* find continuous blocks available to accomodate
- 		 * additional space required */
-		for (n = blk->b.next; n && n->avail; n = n->b.next)
-		{
-			total += n->size + HDRSIZE;
-			if (req <= total) 
-			{
-				x = n;
-				break;
-			}
-			n = n->b.next;	
-		}
-
-		if (!x) 
-		{
-			/* no such blocks. return failure */
-			return QSE_NULL;
-		}
-
-		for (n = blk->b.next; n != x; n = n->b.next)
-		{
-			detach_from_freelist (xma, n);
-#ifdef QSE_XMA_ENABLE_STAT
-			xma->stat.nfree--;
-#endif
-		}
-
-		detach_from_freelist (xma, x);
-
-		rem = total - req;
-		if (rem >= MINBLKLEN)
-		{
-			qse_xma_blk_t* tmp;
-
-			tmp = (qse_xma_blk_t*)(((qse_byte_t*)(blk->b.next + 1)) + req);
-			tmp->avail = 1;
-			tmp->size = rem - HDRSIZE;
-
-			attach_to_freelist (xma, tmp);
-
-			blk->size += req;
-
-			tmp->b.next = x->b.next;
-			if (x->b.next) x->b.next->b.prev = tmp;
-
-			blk->b.next = tmp;
-			tmp->b.prev = blk;
-
-#ifdef QSE_XMA_ENABLE_STAT
-			xma->stat.alloc += req;
-			xma->stat.avail -= req + HDRSIZE;
-#endif
-		}
-		else
-		{
-			blk->size += total;
-			blk->b.next = x->b.next;
-			if (x->b.next) x->b.next->b.prev = blk;
-
-#ifdef QSE_XMA_ENABLE_STAT
-			xma->stat.nfree--;
-			xma->stat.alloc += total;
-			xma->stat.avail -= total;
-#endif
-		}
-#endif
 	}
 	else if (size < blk->size)
 	{
+		/* 
+		 * shrink the block 
+		 */
+
 		qse_size_t rem = blk->size - size;
 		if (rem >= MINBLKLEN) 
 		{
