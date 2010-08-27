@@ -109,6 +109,8 @@ void qse_cut_close (qse_cut_t* cut)
 
 static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (cut, 0, QSE_SIZEOF(*cut));
 
 	cut->mmgr = mmgr;

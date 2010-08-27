@@ -22,8 +22,7 @@
 #define _QSE_CMN_STDIO_H_
 
 /** @file
- * #qse_char_t friendly stdio wrapper functions are defined in this file.
- *
+ * This file defines stdio wrapper functions for #qse_char_t.
  */
 
 #include <qse/types.h>
@@ -89,6 +88,9 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode);
 QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode);
 
 /**
+ * The qse_getline() function read a line from a file pointer @a fp
+ * until a new line character is met.
+ *
  * @return -2 on error, -1 on eof, length of data read on success 
  */
 qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);

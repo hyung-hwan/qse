@@ -142,6 +142,8 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	qse_xma_blk_t* free;
 	qse_size_t xfi;
 
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	/* round 'zonesize' to be the multiples of ALIGN */
 	zonesize = ((zonesize + ALIGN - 1) / ALIGN) * ALIGN;
 

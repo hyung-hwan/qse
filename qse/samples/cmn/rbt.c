@@ -102,7 +102,6 @@ qse_printf (QSE_T("deleting %d\n"), i);
 static int test2 ()
 {
 	qse_rbt_t* s1;
-	int i;
 
 	s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0);
 	if (s1 == QSE_NULL)

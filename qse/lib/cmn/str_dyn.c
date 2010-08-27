@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 297 2009-10-08 13:09:19Z hyunghwan.chung $
+ * $Id: str_dyn.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -57,6 +57,8 @@ void qse_str_close (qse_str_t* str)
 
 qse_str_t* qse_str_init (qse_str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (str, 0, QSE_SIZEOF(qse_str_t));
 
 	str->mmgr = mmgr;

@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 327 2010-05-10 13:15:55Z hyunghwan.chung $
+ * $Id: lda.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -108,10 +108,10 @@ lda_t* qse_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-        lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + ext);
-        if (lda == QSE_NULL) return QSE_NULL;
+	lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + ext);
+	if (lda == QSE_NULL) return QSE_NULL;
 
-        if (qse_lda_init (lda, mmgr, capa) == QSE_NULL)
+	if (qse_lda_init (lda, mmgr, capa) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, lda);
 		return QSE_NULL;
@@ -128,6 +128,8 @@ void qse_lda_close (lda_t* lda)
 
 lda_t* qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (lda, 0, QSE_SIZEOF(*lda));
 
 	lda->mmgr = mmgr;

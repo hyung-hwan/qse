@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 340 2010-08-01 13:13:38Z hyunghwan.chung $
+ * $Id: sio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -177,6 +177,8 @@ qse_sio_t* qse_sio_init (
 	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
 {
 	int mode;
+
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (sio, 0, QSE_SIZEOF(*sio));
 	sio->mmgr = mmgr;

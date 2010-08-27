@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: mem.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,13 +21,21 @@
 #ifndef _QSE_CMN_MEM_H_
 #define _QSE_CMN_MEM_H_
 
+/** @file
+ * This file defines functions and macros for memory manipulation.
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/* gets a pointer to the default memory manager */
+/** 
+ * The QSE_MMGR_GETDFL() macro returns the default memory manager.
+ */
 #define QSE_MMGR_GETDFL()  (qse_mmgr)
 
-/* sets a pointer to the default memory manager */
+/**
+ * The QSE_MMGR_SETDFL() macro changes the default memory manager.
+ */
 #define QSE_MMGR_SETDFL(m) ((qse_mmgr)=(m))
 
 /* allocate a memory block */
@@ -46,163 +54,128 @@
 extern "C" {
 #endif
 
-/* 
- * NAME: holds a pointer to the default memory manager 
- *
- * DESCRIPTION:
- *  The QSE_MMGR_GETDFL() macro returns the default memory manager.
- *  You may use QSE_MMGR_SETDFL() to change the default memory manager.
+/** 
+ * The qse_mmgr global variable holds a pointer to the default memory 
+ * manager. Use QSE_MMGR_GETDFL() and QSE_MMGR_SETDFL() to manipulate it.
  */
 extern qse_mmgr_t* qse_mmgr;
 
-/*
- * NAME: copy a memory block
+/**
+ * The qse_memcpy() functions copies @a n bytes from the source memory block 
+ * @a src to the destinaion memory block @a dst. The memory blocks must not 
+ * overlap. Use qse_memmove() if they overlap.
  *
- * DESCRIPTION:
- *  The qse_memcpy() functions copies n bytes from the source memory block src 
- *  to the destinaion memory block dst. 
- *
- * RETURNS: the destination memory block dst.
- *
- * WARNING:
- *  The memory blocks should not overlap. Use the qse_memmove() function if
- *  they overlap.
+ * @return destination memory block @a dst.
  */
-
 void* qse_memcpy (
-	void* dst /* a pointer to the destination memory block */ , 
-	const void* src /* a pointer to the source memory block */ , 
-	qse_size_t n /* the number of bytes to copy */
+	void*       dst, /**< destination memory block */
+	const void* src, /**< source memory block */
+	qse_size_t  n    /**< number of bytes to copy */
 );
 
-/*
- * NAME: copy a memory block with more care 
+/**
+ * The qse_memmove() functions copies @a n bytes from the source memory block
+ * @a src to the destinaion memory block @a dst without corrupting overlapping
+ * zone.
  *
- * DESCRIPTION:
- *  The qse_memmove() functions copies n bytes from the source memory block src 
- *  to the destinaion memory block dst without corrupting overlapping zone.
- *
- * RETURNS: the destination memory block dst.
+ * @return destination memory block @a dst.
  */
 void* qse_memmove (
-	void* dst /* a pointer to the destination memory block */,
-	const void* src /* a pointer to the source memory block */,
-	qse_size_t n /* the number of bytes to copy */
+	void*       dst, /**< destination memory block */
+	const void* src, /**< source memory block */
+	qse_size_t  n    /**< number of bytes to copy */
 );
 
 /*
- * NAME: fill a memory block
+ * The qse_memset() function fills leading @a n bytes of the destination 
+ * memory block @a dst with the byte @a val.
  *
- * DESCRIPTION:
- *  The qse_memset() function fills leading n bytes of the destination 
- *  memory block dst with the byte val.
- * 
- * RETURNS: the destination memory block dst
+ * @return destination memory block @a dst.
  */
 void* qse_memset (
-	void* dst /* a pointer to the destination memory block */,
-	int val /* the byte to fill the memory block with */,
-	qse_size_t n /* the number of bytes to fill */
+	void*       dst, /**< destination memory block */
+	int         val, /**< value fill the memory block with */
+	qse_size_t   n   /**< number of bytes to fill */
 );
 
-/*
- * NAME: compare memory blocks
- * 
- * DESCRIPTION:
- *  The qse_memcmp() function compares leading n bytes of two memory blocks 
- *  s1 and s2.
+/**
+ * The qse_memcmp() function compares leading *a n bytes of two memory blocks 
+ * @a s1 and @a s2.
  *
- * RETURNS: 
- *  0 if two memory ares have the same leadning n bytes.
- *  a positive number if the first different byte of s1 is greater than that 
- *  of s2.
- *  a negative number if the first different byte of s1 is less than that of s2.
+ * @return
+ * 0 if two memory ares have the same leadning @a n bytes.
+ * positive number if the first different byte of s1 is greater than that of s2.
+ * negative number if the first different byte of s1 is less than that of s2.
  */
 int qse_memcmp (
-	const void* s1 /* a pointer to the first memory block to compare */, 
-	const void* s2 /* a pointer to the second memory block to compare */, 
-	qse_size_t n /* the number of bytes to compare */
+	const void* s1, /**< first memory block to compare */
+	const void* s2, /**< second memory block to compare */ 
+	qse_size_t  n   /**< the number of bytes to compare */
 );
 
-/*
- * NAME: find a byte forward in a memory block
- * 
- * DESCRIPTION:
- *  The qse_membyte() function scans the memory block s from the first byte
- *  up to the nth byte in search of the byte val. If it finds a match,
- *  it aborts scanning the memory block and returns the pointer to the matching
- *  location.
+/**
+ * The qse_membyte() function scans the memory block @a s from the first byte
+ * up to the nth byte in search of the byte @a val. If it finds a match,
+ * it aborts scanning the memory block and returns the pointer to the matching
+ * location.
  *
- * RETURNS:
- *  QSE_NULL if the byte val is not found.
- *  The pointer to the location in the memory block s matching the byte val
+ * @return
+ *  #QSE_NULL if the byte @a val is not found.
+ *  pointer to the location in the memory block @a s matching the byte @a val
  *  if a match is found.
  */
 void* qse_membyte (
-	const void* s /* a pointer to the memory block to scan */,
-	int val /* a byte to find */,
-	qse_size_t n /* the number of bytes to scan */ 
+	const void* s,     /**< memory block to scan */
+	int         val,   /**< byte to find */
+	qse_size_t  n      /**< number of bytes to scan */ 
 );
 
 /*
- * NAME: find a byte backward in a memory block
- * 
- * DESCRIPTION:
- *  The qse_memrbyte() function scans the memory block s from the nth byte
- *  backward to the first byte in search of the byte val. If it finds a match,
- *  it aborts scanning the memory block and returns the pointer to the matching 
- *  location.
+ * The qse_memrbyte() function scans the memory block @a s from the nth byte
+ * backward to the first byte in search of the byte @a val. If it finds a match,
+ * it aborts scanning the memory block and returns the pointer to the matching 
+ * location.
  *
- * RETURNS:
- *  QSE_NULL if the byte val is not found.
- *  The pointer to the location in the memory block s matching the byte val
+ * @return
+ *  #QSE_NULL if the byte val is not found.
+ *  pointer to the location in the memory block s matching the byte val
  *  if a match is found.
  */
 void* qse_memrbyte (
-	const void* s /* a pointer to the memory block to scan */,
-	int val /* a byte to find */,
-	qse_size_t n /* the number of bytes to scan */ 
+	const void* s,     /**< memory block to scan */
+	int         val,   /**< byte to find */
+	qse_size_t  n      /**< number of bytes to scan */ 
 );
 
-/*
- * NAME: find a block of bytes forward in a memory block
- * 
- * DESCRIPTION:
- *  The qse_memmem() functions scans the first hl bytes of the memory block hs
- *  in search of the byte block nd of the length nl bytes.
+/**
+ * The qse_memmem() functions scans the first @a hl bytes of the memory 
+ * block @a hs in search of the byte block @a nd of the length @a nl bytes.
  *
- * RETURNS:
- *  QSE_NULL if the byte val is not found.
- *  The pointer to the location in the memory block s matching the byte val
- *  if a match is found.
- *
- * RETURNS:
- *  QSE_NULL if no match is found.
- *  The pointer to the start of the matching location if a match is found.
+ * @return
+ *  #QSE_NULL if no match is found.
+ *  pointer to the start of the matching location if a match is found.
  */
 void* qse_memmem (
-	const void* hs /* a pointer to the memory block to scan */,
-	qse_size_t hl /* the number of bytes to scan */,
-	const void* nd /* a pointer to the byte block to find */,
-	qse_size_t nl /* the number of bytes in the block */
+	const void* hs,  /**< memory block to scan */
+	qse_size_t  hl,  /**< number of bytes to scan */
+	const void* nd,  /**< byte block to find */
+	qse_size_t  nl   /**< number of bytes in the block */
 );
 
 /*
- * NAME: find a block of bytes backward in a memory block
+ * The qse_memrmem() functions scans the first @a hl bytes of the memory
+ * block @a hs backward in search of the byte block @a nd of the length 
+ * @a nl bytes.
  *
- * DESCRIPTION:
- *  The qse_memrmem() functions scans the first hl bytes of the memory block hs
- *  backward in search of the byte block nd of the length nl bytes.
- *
- * RETURNS:
- *  QSE_NULL if no match is found.
- *  The pointer to the start of the matching location if a match is found.
+ * @return
+ * #QSE_NULL if no match is found.
+ * pointer to the start of the matching location if a match is found.
  */
 void* qse_memrmem (
-	const void* hs /* a pointer to the memory block to scan */,
-	qse_size_t hl /* the number of bytes to scan */,
-	const void* nd /* a pointer to the byte block to find */,
-	qse_size_t nl /* the number of bytes in the block */
+	const void* hs,  /**< memory block to scan */
+	qse_size_t  hl,  /**< number of bytes to scan */
+	const void* nd,  /**< byte block to find */
+	qse_size_t  nl   /**< number of bytes in the block */
 );
 
 #ifdef __cplusplus

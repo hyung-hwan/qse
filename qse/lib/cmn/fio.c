@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: fio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -80,6 +80,8 @@ qse_fio_t* qse_fio_init (
 	const qse_char_t* path, int flags, int mode)
 {
 	qse_fio_hnd_t handle;
+
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;

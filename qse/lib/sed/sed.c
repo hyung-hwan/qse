@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 344 2010-08-17 13:15:14Z hyunghwan.chung $
+ * $Id: sed.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -75,6 +75,8 @@ void qse_sed_close (qse_sed_t* sed)
 
 static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (sed, 0, QSE_SIZEOF(*sed));
 	sed->mmgr = mmgr;
 	sed->errstr = qse_sed_dflerrstr;
