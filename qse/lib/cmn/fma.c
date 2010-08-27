@@ -29,7 +29,7 @@ qse_fma_t* qse_fma_open (
 {
 	qse_fma_t* fma;
 
-	if (mmgr == QSE_NULL)
+	if (mmgr == QSE_NULL) 
 	{
 		mmgr = QSE_MMGR_GETDFL();
 
@@ -61,13 +61,14 @@ qse_fma_t* qse_fma_init (
 	qse_fma_t* fma, qse_mmgr_t* mmgr,
 	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (fma, 0, QSE_SIZEOF(*fma));
 	fma->mmgr = mmgr;
 	
-	if (blksize <= QSE_SIZEOF(qse_fma_blk_t)) 
+	if (blksize < QSE_SIZEOF(qse_fma_blk_t)) 
 		blksize = QSE_SIZEOF(qse_fma_blk_t);
 	if (maxblks <= 0) maxblks = 1;
-	if (maxcnks <= 0) maxcnks = 1;
 
 	fma->blksize = blksize;
 	fma->maxblks = maxblks;
@@ -78,6 +79,7 @@ qse_fma_t* qse_fma_init (
 
 void qse_fma_fini (qse_fma_t* fma)
 {
+	/* destroys the chunks allocated */
 	while (fma->cnkhead)
 	{
 		qse_fma_cnk_t* next = fma->cnkhead->next;
@@ -93,7 +95,7 @@ static QSE_INLINE qse_fma_cnk_t* add_chunk (qse_fma_t* fma)
 	qse_size_t i;
 
 	/* check if there are too many chunks */
-	if (fma->numcnks >= fma->maxcnks) return QSE_NULL;
+	if (fma->maxcnks && fma->numcnks >= fma->maxcnks) return QSE_NULL;
 
 	/* allocate a chunk */
 	cnk = (qse_fma_cnk_t*) QSE_MMGR_ALLOC (fma->mmgr, 
@@ -118,9 +120,15 @@ static QSE_INLINE qse_fma_cnk_t* add_chunk (qse_fma_t* fma)
 	return cnk;
 }
 
-void* qse_fma_alloc (qse_fma_t* fma)
+void* qse_fma_alloc (qse_fma_t* fma, qse_size_t size)
 {
 	void* blk;
+
+	QSE_ASSERTX (size <= fma->blksize, 
+		"You must not request a block larger than the fixed size set in the allocator. Use a generic allocator instead"
+	);
+
+	if (size > fma->blksize) return QSE_NULL;
 
 	if ((blk = fma->freeblk) == QSE_NULL)
 	{
@@ -131,9 +139,23 @@ void* qse_fma_alloc (qse_fma_t* fma)
 	return blk;
 }
 
+void* qse_fma_realloc (qse_fma_t* fma, void* blk, qse_size_t size)
+{
+	if (blk)
+	{
+		QSE_ASSERTX (size <= fma->blksize, 
+			"A block can be enlarged with a fixed-size block allocator. Use a generic allocator instead"
+		);
+
+		if (size > fma->blksize) return QSE_NULL;
+		return blk;
+	}
+
+	return qse_fma_alloc (fma, size);
+}
+
 void qse_fma_free (qse_fma_t* fma, void* blk)
 {
 	((qse_fma_blk_t*)blk)->next = fma->freeblk;
 	fma->freeblk = blk;
 }
-

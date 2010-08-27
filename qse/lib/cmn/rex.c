@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: rex.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -118,6 +118,8 @@ struct cand_t
 
 qse_rex_t* qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
 	rex->mmgr = mmgr;
 

@@ -27,7 +27,36 @@
  * larger memory chunk allocated with an outer memory allocator.
  * Typically, an outer memory allocator is a standard memory allocator
  * like malloc(). You can isolate memory blocks into a particular chunk.
- * See #qse_xma_t for an example.
+ *
+ * See the example below. Note it omits error handling.
+ *
+ * @code
+ * #include <qse/cmn/xma.h>
+ * #include <qse/cmn/stdio.h>
+ * int main ()
+ * {
+ *   qse_xma_t* xma;
+ *   void* ptr1, * ptr2;
+ *
+ *   // create a new memory allocator obtaining a 100K byte zone 
+ *   // with the default memory allocator
+ *   xma = qse_xma_open (QSE_NULL, 0, 100000L); 
+ *
+ *   ptr1 = qse_xma_alloc (xma, 5000); // allocate a 5K block from the zone
+ *   ptr2 = qse_xma_alloc (xma, 1000); // allocate a 1K block from the zone
+ *   ptr1 = qse_xma_realloc (xma, ptr1, 6000); // resize the 5K block to 6K.
+ *
+ *   qse_xma_dump (xma, qse_printf); // dump memory blocks 
+ *
+ *   // the following two lines are not actually needed as the allocator
+ *   // is closed after them.
+ *   qse_xma_free (xma, ptr2); // dispose of the 1K block
+ *   qse_xma_free (xma, ptr1); // dispose of the 6K block
+ *
+ *   qse_xma_close (xma); //  destroy the memory allocator
+ *   return 0;
+ * }
+ * @endcode
  */
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -39,28 +68,6 @@
 /** @struct qse_xma_t
  * The qse_xma_t type defines a simple memory allocator over a memory zone.
  * It can obtain a relatively large zone of memory and manage it.
- *
- * @code
- *  qse_xma_t* xma;
- *  void* ptr1, * ptr2;
- *
- *  // create a new memory allocator obtaining a 100K byte zone 
- *  // with the default memory allocator
- *  xma = qse_xma_open (QSE_NULL, 0, 100000L); 
- *  
- *  ptr1 = qse_xma_alloc (xma, 5000); // allocate a 5K block from the zone
- *  ptr2 = qse_xma_alloc (xma, 1000); // allocate a 1K block from the zone
- *  ptr1 = qse_xma_realloc (xma, ptr1, 6000); // resize the 5K block to 6K.
- *
- *  qse_xma_dump (xma, qse_printf); // dump memory blocks 
- *
- *  // the following two lines are not actually needed as the allocator
- *  // is closed after them.
- *  qse_xma_free (xma, ptr2); // dispose of the 1K block
- *  qse_xma_free (xma, ptr1); // dispose of the 6K block
- *
- *  qse_xma_close (xma); //  destroy the memory allocator
- * @endcode
  */
 typedef struct qse_xma_t qse_xma_t;
 

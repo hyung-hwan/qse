@@ -1,5 +1,5 @@
 /*
- * $Id: sll.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: sll.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -124,6 +124,8 @@ void qse_sll_close (sll_t* sll)
 
 sll_t* qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	/* do not zero out the extension */
 	QSE_MEMSET (sll, 0, SIZEOF(*sll));
 

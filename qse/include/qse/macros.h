@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 338 2010-07-30 13:24:19Z hyunghwan.chung $
+ * $Id: macros.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,7 +24,7 @@
 #include <qse/types.h>
 
 /** @file
- * <qse/macros.h> contains various useful macro definitions.
+ * This file contains various useful macro definitions.
  */
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)

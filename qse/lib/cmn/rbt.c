@@ -192,6 +192,8 @@ void qse_rbt_close (rbt_t* rbt)
 
 rbt_t* qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	/* do not zero out the extension */
 	QSE_MEMSET (rbt, 0, SIZEOF(*rbt));
 	rbt->mmgr = mmgr;

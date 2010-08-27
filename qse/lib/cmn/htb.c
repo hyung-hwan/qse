@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 332 2010-07-13 11:25:24Z hyunghwan.chung $
+ * $Id: htb.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -248,10 +248,13 @@ void qse_htb_close (htb_t* htb)
 
 htb_t* qse_htb_init (htb_t* htb, mmgr_t* mmgr, size_t capa, int factor)
 {
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
 	QSE_ASSERTX (capa > 0,
 		"The initial capacity should be greater than 0. Otherwise, it is adjusted to 1 in the release mode");
 	QSE_ASSERTX (factor >= 0 && factor <= 100,
 		"The load factor should be between 0 and 100 inclusive. In the release mode, a value out of the range is adjusted to 100");
+
 
 	/* some initial adjustment */
 	if (capa <= 0) capa = 1;

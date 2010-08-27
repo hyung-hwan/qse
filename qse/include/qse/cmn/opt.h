@@ -1,5 +1,5 @@
 /*
- * $Id: opt.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: opt.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,7 +25,7 @@
 #include <qse/macros.h>
 
 /** @file
- * <qse/cmn/opt.h> defines functions and data structures to process 
+ * This file defines functions and data structures to process 
  * command-line arguments. 
  */
 

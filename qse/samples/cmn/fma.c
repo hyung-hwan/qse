@@ -1,4 +1,6 @@
 #include <qse/cmn/fma.h>
+#include <qse/cmn/rbt.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
 #define R(f) \
@@ -12,7 +14,7 @@ static int test1 ()
 	int i;
 	int* ptr[100];
 
-	qse_fma_t* fma = qse_fma_open (QSE_NULL, 0, sizeof(int), 10, 5);
+	qse_fma_t* fma = qse_fma_open (QSE_MMGR_GETDFL(), 0, sizeof(int), 10, 5);
 	if (fma == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open fma\n"));
@@ -21,7 +23,7 @@ static int test1 ()
 
 	for (i = 0; i < 100; i++)
 	{
-		ptr[i] = qse_fma_alloc (fma);
+		ptr[i] = qse_fma_alloc (fma, sizeof(int));
 		if (ptr[i]) 
 		{
 			qse_printf (QSE_T("%d %p\n"), i, ptr[i]);
@@ -50,7 +52,7 @@ static int test1 ()
 
 	for (i = 0; i < 100; i++)
 	{
-		ptr[i] = qse_fma_alloc (fma);
+		ptr[i] = qse_fma_alloc (fma, sizeof(int));
 		if (ptr[i]) 
 		{
 			qse_printf (QSE_T("%d %p\n"), i, ptr[i]);
@@ -63,8 +65,71 @@ static int test1 ()
 	return 0;
 }
 
+static qse_rbt_walk_t walk (qse_rbt_t* rbt, qse_rbt_pair_t* pair, void* ctx)
+{
+	qse_printf (QSE_T("key = %lld, value = %lld\n"),
+		*(long*)QSE_RBT_KPTR(pair), *(long*)QSE_RBT_VPTR(pair));
+	return QSE_RBT_WALK_FORWARD;
+}
+
+static int test2 ()
+{ 
+	qse_mmgr_t mmgr = 
+	{
+		(qse_mmgr_alloc_t) qse_fma_alloc,
+		(qse_mmgr_realloc_t) qse_fma_realloc,
+		(qse_mmgr_free_t) qse_fma_free,
+		QSE_NULL
+	};
+	qse_fma_t* fma;
+	qse_rbt_t rbt;
+	qse_size_t blksize;
+	long x;
+
+	           /* key */      /* value */      /* internal node */
+	blksize = sizeof(long) + sizeof(long) + sizeof(qse_rbt_pair_t);
+
+	fma = qse_fma_open (QSE_MMGR_GETDFL(), 0, blksize, 10, 0);
+	if (fma == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open a memory allocator\n"));
+		return -1;
+	}
+
+	mmgr.udd = fma;
+	if (qse_rbt_init (&rbt, &mmgr) == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot initialize a tree\n"));
+		qse_fma_close (fma);
+		return -1;
+	}
+
+	qse_rbt_setcopier (&rbt, QSE_RBT_KEY, QSE_RBT_COPIER_INLINE);
+	qse_rbt_setcopier (&rbt, QSE_RBT_VAL, QSE_RBT_COPIER_INLINE);
+	qse_rbt_setscale (&rbt, QSE_RBT_KEY, QSE_SIZEOF(long));
+	qse_rbt_setscale (&rbt, QSE_RBT_VAL, QSE_SIZEOF(long));
+
+	for (x = 10; x < 100; x++)
+	{
+		long y = x * x;
+		if (qse_rbt_insert (&rbt, &x, 1, &y, 1) == QSE_NULL) 
+		{
+			qse_printf (QSE_T("failed to insert. out of memory\n"));
+			break;
+		}
+	}
+
+	qse_rbt_walk (&rbt, walk, QSE_NULL);
+
+	qse_rbt_fini (&rbt);
+	qse_fma_close (fma);
+
+	return 0;
+}
+
 int main ()
 {
 	R (test1);
+	R (test2);
 	return 0;
 }
