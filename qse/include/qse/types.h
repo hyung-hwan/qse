@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: types.h 349 2010-08-27 11:47:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,7 +26,8 @@
  * cross-platform. These types are preferred over native data types.
  */
 
-/* WARNING: NEVER CHANGE/DELETE THE FOLLOWING LINE */
+/* WARNING: NEVER CHANGE/DELETE THE FOLLOWING QSE_HAVE_CONFIG_H DEFINITION. 
+ *          IT IS USED FOR DEPLOYMENT BY MAKEFILE.AM */
 /*#define QSE_HAVE_CONFIG_H*/
 
 #if defined(QSE_HAVE_CONFIG_H)
