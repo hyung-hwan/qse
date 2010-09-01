@@ -1,5 +1,5 @@
 /*
- * $Id: dll.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: dll.h 352 2010-08-31 13:20:34Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,6 +24,97 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/**
+ * The qse_dll_nhdr_t type defines a common node header fields used internally.
+ */
+typedef struct qse_dll_nhdr_t qse_dll_nhdr_t;
+struct qse_dll_nhdr_t
+{
+	qse_dll_nhdr_t* next;
+	qse_dll_nhdr_t* prev;
+};
+
+#define __QSE_DLL_WRAP(x) do { x } while(0)
+
+#define QSE_DLL_TYPE(data_type) qse_dll_ ## data_type ## _t
+#define QSE_DLL_NODE_TYPE(data_type) qse_dll_ ## data_type ## _node_t
+
+/**
+ * The QSE_DLL_DEFINE macro defines a new doubly-linked list type for data
+ * of the @a data_type type.
+ */
+#define QSE_DLL_DEFINE(data_type) \
+	typedef struct QSE_DLL_TYPE(data_type) QSE_DLL_TYPE(data_type); \
+	typedef struct QSE_DLL_NODE_TYPE(data_type) QSE_DLL_NODE_TYPE(data_type); \
+	struct QSE_DLL_NODE_TYPE(data_type) \
+	{ \
+		QSE_DLL_NODE_TYPE(data_type)* next; \
+		QSE_DLL_NODE_TYPE(data_type)* prev; \
+		data_type data; \
+	}; \
+	struct QSE_DLL_TYPE(data_type) \
+	{ \
+		QSE_DLL_NODE_TYPE(data_type) link; \
+	}
+
+/**
+ * The QSE_DLL_DEFINE macro defines a new doubly-linked list type for data
+ * of the @a data_type type.
+ */
+#define QSE_DLL_DEFINE_MANAGED(data_type,manage_type) \
+	typedef struct QSE_DLL_TYPE(data_type) QSE_DLL_TYPE(data_type); \
+	typedef struct QSE_DLL_NODE_TYPE(data_type) QSE_DLL_NODE_TYPE(data_type); \
+	struct QSE_DLL_NODE_TYPE(data_type) \
+	{ \
+		QSE_DLL_NODE_TYPE(data_type)* next; \
+		QSE_DLL_NODE_TYPE(data_type)* prev; \
+		data_type data; \
+	}; \
+	struct QSE_DLL_TYPE(data_type) \
+	{ \
+		QSE_DLL_NODE_TYPE(data_type) link; \
+		manage_type data; \
+	}
+
+#define QSE_DLL_INIT(dll) __QSE_DLL_WRAP ( \
+	(dll)->link.next = &(dll)->link; \
+	(dll)->link.prev = &(dll)->link; \
+)
+
+#define QSE_DLL_FINI(dll) __QSE_DLL_WRAP ( \
+	while (!QSE_DLL_ISEMPTY(dll)) QSE_DLL_DELHEAD(dll); \
+)
+
+#define QSE_DLL_CHAIN(dll,p,x,n) __QSE_DLL_WRAP ( \
+	register qse_dll_nhdr_t* __qse_dll_chain_prev = (qse_dll_nhdr_t*)(p); \
+	register qse_dll_nhdr_t* __qse_dll_chain_next = (qse_dll_nhdr_t*)(n); \
+	(x)->prev = (void*)__qse_dll_chain_prev; \
+	(x)->next = (void*)__qse_dll_chain_next; \
+	__qse_dll_chain_next->prev = (void*)(x); \
+	__qse_dll_chain_prev->next = (void*)(x); \
+)
+
+#define QSE_DLL_UNCHAIN(dll,x) __QSE_DLL_WRAP ( \
+	register qse_dll_nhdr_t* __qse_dll_unchain_prev = \
+		(qse_dll_nhdr_t*)((x)->prev); \
+	register qse_dll_nhdr_t* __qse_dll_unchain_next = \
+		(qse_dll_nhdr_t*)((x)->next); \
+	__qse_dll_unchain_next->prev = __qse_dll_unchain_prev; \
+	__qse_dll_unchain_prev->next = __qse_dll_unchain_next; \
+)
+
+#define QSE_DLL_HEADNODE(dll) ((dll)->link.next)
+#define QSE_DLL_TAILNODE(dll) ((dll)->link.prev)
+#define QSE_DLL_NEXTNODE(dll,p) ((p)->next)
+#define QSE_DLL_PREVNODE(dll,p) ((p)->prev)
+#define QSE_DLL_ISVALIDNODE(dll,p) ((p) != &(dll)->link)
+
+#define QSE_DLL_ISEMPTY(dll) (QSE_DLL_HEADNODE(dll) == &(dll)->link)
+#define QSE_DLL_ADDHEAD(dll,x) QSE_DLL_CHAIN(dll,&(dll)->link,x,QSE_DLL_HEADNODE(dll))
+#define QSE_DLL_ADDTAIL(dll,x) QSE_DLL_CHAIN(dll,QSE_DLL_TAILNODE(dll),x,&(dll)->link)
+#define QSE_DLL_DELHEAD(dll) QSE_DLL_UNCHAIN(dll,QSE_DLL_HEADNODE(dll))
+#define QSE_DLL_DELTAIL(dll) QSE_DLL_UNCHAIN(dll,QSE_DLL_TAILNODE(dll))
+		
 /*
  * Doubly Linked List
  */
