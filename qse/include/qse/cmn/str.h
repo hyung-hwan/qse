@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
+ * $Id: str.h 353 2010-09-01 13:19:59Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -319,7 +319,16 @@ int qse_strxncmp (
 	qse_size_t len2
 );
 
-int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2);
+int qse_strcasecmp (
+	const qse_char_t* s1,
+	const qse_char_t* s2
+);
+
+int qse_strxcasecmp (
+	const qse_char_t* s1,
+	qse_size_t        len,
+	const qse_char_t* s2
+);
 
 /**
  * The qse_strxncasecmp() function compares characters at the same position 
@@ -459,6 +468,25 @@ qse_char_t* qse_strxrchr (
 	const qse_char_t* str,
 	qse_size_t len,
 	qse_cint_t c
+);
+
+/**
+ * The qse_strxword() function finds a whole word in a string.
+ */
+const qse_char_t* qse_strxword (
+     const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* word
+);
+
+/**
+ * The qse_strxcaseword() function finds a whole word in a string 
+ * case-insensitively.
+ */
+const qse_char_t* qse_strxcaseword (
+     const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* word
 );
 
 /**

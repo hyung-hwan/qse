@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 326 2010-05-09 13:44:39Z hyunghwan.chung $
+ * $Id: str_bas.c 353 2010-09-01 13:19:59Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -544,6 +544,22 @@ int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2)
 	return (QSE_TOUPPER(*s1) > QSE_TOUPPER(*s2))? 1: -1;
 }
 
+int qse_strxcasecmp (const qse_char_t* s1, qse_size_t len, const qse_char_t* s2)
+{
+	qse_char_t c1, c2;
+	const qse_char_t* end = s1 + len;
+
+	c1 = QSE_TOUPPER(*s1); c2 = QSE_TOUPPER(*s2);
+	while (s1 < end && c2 != QSE_T('\0') && c1 == c2) 
+	{
+		s1++; s2++;
+		c1 = QSE_TOUPPER(*s1); c2 = QSE_TOUPPER(*s2);
+	}
+	if (s1 == end && c2 == QSE_T('\0')) return 0;
+	if (c1 == c2) return (s1 < end)? 1: -1;
+	return (c1 > c2)? 1: -1;
+}
+
 int qse_strxncasecmp (
 	const qse_char_t* s1, qse_size_t len1, 
 	const qse_char_t* s2, qse_size_t len2)
@@ -835,6 +851,53 @@ qse_char_t* qse_strxrchr (const qse_char_t* str, qse_size_t len, qse_cint_t c)
 
 	return QSE_NULL;
 }
+
+const qse_char_t* qse_strxword (
+	const qse_char_t* str, qse_size_t len, const qse_char_t* word)
+{
+	/* find a full word in a string */
+
+	const qse_char_t* ptr = str;
+	const qse_char_t* end = str + len;
+	const qse_char_t* s;
+
+	do
+	{
+		while (ptr < end && QSE_ISSPACE(*ptr)) ptr++;
+		if (ptr >= end) return QSE_NULL;
+
+		s = ptr;
+		while (ptr < end && !QSE_ISSPACE(*ptr)) ptr++;
+
+		if (qse_strxcmp (s, ptr-s, word) == 0) return s;
+	}
+	while (ptr < end);
+
+	return QSE_NULL;
+}
+
+const qse_char_t* qse_strxcaseword (
+	const qse_char_t* str, qse_size_t len, const qse_char_t* word)
+{
+	const qse_char_t* ptr = str;
+	const qse_char_t* end = str + len;
+	const qse_char_t* s;
+
+	do
+	{
+		while (ptr < end && QSE_ISSPACE(*ptr)) ptr++;
+		if (ptr >= end) return QSE_NULL;
+
+		s = ptr;
+		while (ptr < end && !QSE_ISSPACE(*ptr)) ptr++;
+
+		if (qse_strxcasecmp (s, ptr-s, word) == 0) return s;
+	}
+	while (ptr < end);
+
+	return QSE_NULL;
+}
+
 
 qse_char_t* qse_strbeg (const qse_char_t* str, const qse_char_t* sub)
 {
