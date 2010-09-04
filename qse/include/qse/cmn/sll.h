@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: sll.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,7 +25,7 @@
 #include <qse/macros.h>
 
 /** @file
- * Singly linked list
+ * This file provides a singly linked list interface.
  */
 
 /**
@@ -33,13 +33,14 @@
  */
 enum qse_sll_walk_t
 {
-	QSE_SLL_WALK_STOP    = 0,  /**< stop traversal */
-	QSE_SLL_WALK_FORWARD = 1   /**< traverse to the next node */
+	QSE_SLL_WALK_STOP     = 0,  /**< stop traversal */
+	QSE_SLL_WALK_FORWARD  = 1   /**< traverse to the next node */
 };
+typedef enum qse_sll_walk_t qse_sll_walk_t;
+
 
 typedef struct qse_sll_t      qse_sll_t;
 typedef struct qse_sll_node_t qse_sll_node_t;
-typedef enum   qse_sll_walk_t qse_sll_walk_t;
 
 /**
  * The qse_sll_copier_t type defines a callback function for node construction.
@@ -89,16 +90,15 @@ typedef int (*qse_sll_comper_t) (
  * The qse_sll_walker_t type defines a list traversal callback for each node.
  * The qse_sll_walk() calls a callback function of the type qse_sll_walker_t
  * for each node until it returns QSE_SLL_WALK_STOP. The walker should return
- * QSE_SLL_WALK_FORWARD to let qse_sll_walk() continue visiting the next node.
+ * QSE_SLL_WALK_FORWARD  to let qse_sll_walk() continue visiting the next node.
  * The third parameter to qse_sll_walk() is passed to the walker as the third
  * parameter.
  */
 typedef qse_sll_walk_t (*qse_sll_walker_t) (
-	qse_sll_t*      sll,   /* singly linked list */
-	qse_sll_node_t* node,  /* visited node */
-	void*           arg    /* user-defined data */
+	qse_sll_t*      sll,   /**< singly linked list */
+	qse_sll_node_t* node,  /**< visited node */
+	void*           ctx    /**< user-defined data */
 );
-/******/
 
 /**
  * The qse_sll_t type defines a singly lnked list.
@@ -183,203 +183,128 @@ qse_sll_t* qse_sll_open (
 	qse_size_t  ext   /* size of extension area in bytes */
 );
 
-/****f* Common/qse_sll_close
- * NAME
- *  qse_sll_close - destroy a singly linked list 
- *
- * DESCRIPTION
- *  The qse_sll_close() function destroys a singly linked list freeing up
- *  the memory.
- *
- * SYNOPSIS
+/**
+ * The qse_sll_close() function destroys a singly linked list freeing up
+ * the memory.
  */
 void qse_sll_close (
-	qse_sll_t* sll /* a singly linked list */
+	qse_sll_t* sll /**< singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_init
- * NAME
- *  qse_sll_init - initialize a singly linked list
- *
- * DESCRIPTION
- *  The qse_sll_init() function initializes a singly linked list. The memory
- *  should be allocated by a caller and be passed to it. The caller may declare
- *  a static variable of the qse_sll_t type and pass its address. A memory 
- *  manager still needs to be passed for node manipulation later.
+/**
+ * The qse_sll_init() function initializes a statically declared singly 
+ * linked list. The memory should be allocated by a caller and be passed 
+ * to it. The caller may declare a static variable of the qse_sll_t type
+ * and pass its address. A memory manager still needs to be passed for 
+ * node manipulation later.
  *  
- * RETURN
+ * @return
  *  The qse_sll_init() function returns the first parameter on success and
  *  QSE_NULL on failure.
- * 
- * SYNOPSIS
  */
 qse_sll_t* qse_sll_init (
-	qse_sll_t*  sll   /* an uninitialized singly linked list */,
-	qse_mmgr_t* mmgr  /* a memory manager */
+	qse_sll_t*  sll,  /* singly linked list */
+	qse_mmgr_t* mmgr  /* memory manager */
 );
-/******/
 
-/****f* Common/qse_sll_fini
- * NAME
- *  qse_sll_init - deinitialize a singly linked list
- *
- * SYNOPSIS
+/**
+ * The qse_sll_fini() function finalizes a statically initialized list.
  */
 void qse_sll_fini (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_getsize
- * NAME
- *  qse_sll_getsize - get the number of nodes
- *
- * DESCRIPTION
- *  The qse_sll_getsize() function returns the number of the data nodes held
- *  in a singly linked list.
- *
- * SYNOPSIS
- */
-qse_size_t qse_sll_getsize (
-	qse_sll_t* sll  /* a singly linked list */
-);
-/******/
-
-
-/****f* Common/qse_sll_getscale
- * NAME
- *  qse_sll_getscale - get the scale factor
- *
- * SYNOPSIS
+/**
+ * The qse_sll_getscale() function gets the scale factor
  */
 int qse_sll_getscale (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_setscale
- * NAME
- *  qse_sll_setscale - set the scale factor
- *
- * DESCRIPTION 
+/**
  *  The qse_sll_setscale() function sets the scale factor of the data length.
  *  A scale factor determines the actual length of data in bytes. A singly 
  *  linked list created with a scale factor of 1. The scale factor should be
  *  larger than 0 and less than 256.
- *
- * NOTES
- *  It is a bad idea to change the scale factor when a sll is not empty.
- *  
- * SYNOPSIS
  */
 void qse_sll_setscale (
-	qse_sll_t* sll /* a singly linked list */,
-	int scale      /* a scale factor */
+	qse_sll_t* sll,     /**< singly linked list */
+	int        scale    /**< scale factor */
 );
-/******/
 
-/****f* Common/qse_sll_getcopier
- * NAME
- *  qse_sll_getfreeer - get the data copier
- *
- * SYNOPSIS
+/**
+ * The qse_sll_getfreeer() function gets the data copier.
  */
 qse_sll_copier_t qse_sll_getcopier (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /* singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_setcopier
- * NAME 
- *  qse_sll_setcopier - set a data copier
- *
- * DESCRIPTION
- *  A special copier QSE_SLL_COPIER_INLINE is provided. This copier enables
- *  you to copy the data inline to the internal node. No freeer is invoked
- *  when the node is freeed.
- *
- *  You may set the copier to QSE_NULL to perform no special operation 
- *  when the data pointer is rememebered.
- * 
- * SYNOPSIS
+/**
+ * The qse_sll_setcopier() function changes the element copier.
+ * A special copier QSE_SLL_COPIER_INLINE is provided. This copier enables
+ * you to copy the data inline to the internal node. No freeer is invoked
+ * when the node is freeed. You may set the copier to QSE_NULL to perform 
+ * no special operation when the data pointer is rememebered.
  */
 void qse_sll_setcopier (
-	qse_sll_t* sll          /* a singly linked list */, 
-	qse_sll_copier_t copier /* a data copier */
+	qse_sll_t*       sll,   /**< singly linked list */
+	qse_sll_copier_t copier /**< data copier */
 );
-/******/
 
-/****f* Common/qse_sll_getfreeer
- * NAME
- *  qse_sll_getfreeer - get the data freeer
- *
- * SYNOPSIS
+/**
+ * The qse_sll_getfreeer() function returns the element freeer.
  */
 qse_sll_freeer_t qse_sll_getfreeer (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_setfreeer
- * NAME
- *  qse_sll_setfreeer - set a data freeer
- *
- * DESCRIPTION
- *  The freeer is called when a node containing the element is destroyed.
- * 
- * SYNOPSIS
+/**
+ * The qse_sll_setfreeer() function changes the element freeer.
+ * The freeer is called when a node containing the element is destroyed.
  */
 void qse_sll_setfreeer (
-	qse_sll_t* sll          /* a singly linked list */,
-	qse_sll_freeer_t freeer /* a data freeer */
+	qse_sll_t*       sll,   /**< singly linked list */
+	qse_sll_freeer_t freeer /**< data freeer */
 );
-/******/
 
-/****f* Common/qse_sll_getcomper
- * NAME
- *  qse_sll_getcomper - get the data comparator
- *
- * SYNOPSIS
+/**
+ * The qse_sll_getcomper() function returns the data comparator.
  */
 qse_sll_comper_t qse_sll_getcomper (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_setcomper
- * NAME
- *  qse_sll_setcomper - set the data comparator
- *
- * SYNOPSIS
+/**
+ * The qse_sll_setcomper() function changes  the data comparator
  */
 void qse_sll_setcomper (
-	qse_sll_t*       sll     /* a singly linked list */,
-	qse_sll_comper_t comper  /* a comparator */
+	qse_sll_t*       sll     /**< singly linked list */,
+	qse_sll_comper_t comper  /**< comparator */
 );
-/******/
 
-/****f* Common/qse_sll_gethead
- * NAME
- *  qse_sll_gethead - get the head node
- *
- * SYNOPSIS
+/**
+ * The qse_sll_getsize() function returns the number of the data nodes held
+ * in a singly linked list.
+ */
+qse_size_t qse_sll_getsize (
+	qse_sll_t* sll  /** singly linked list */
+);
+
+/**
+ * The qse_sll_gethead() function gets the head node. You may use the 
+ * #QSE_SLL_HEAD macro instead.
  */
 qse_sll_node_t* qse_sll_gethead (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< a singly linked list */
 );
-/******/
 
-/****f* Common/qse_sll_gettail
- * NAME
- *  qse_sll_gettail - get the tail node
- *
- * SYNOPSIS
+/**
+ * The qse_sll_gettail() function gets the head node. You may use the 
+ * #QSE_SLL_TAIL macro instead.
  */
 qse_sll_node_t* qse_sll_gettail (
-	qse_sll_t* sll  /* a singly linked list */
+	qse_sll_t* sll  /**< singly linked list */
 );
-/******/
 
 /**
  * The qse_sll_search() function traverses a list to find a node containing
@@ -387,8 +312,8 @@ qse_sll_node_t* qse_sll_gettail (
  * from the next node of the positional node. If the positional node is 
  * QSE_NULL, the traversal begins from the head node. 
  *
- * Note that no reverse search is provided because a reverse traversal can not be 
- * achieved efficiently.
+ * Note that no reverse search is provided because a reverse traversal can not 
+ * be achieved efficiently.
  *
  * @return pointer to the node found. QSE_NULL if no match is found
  */
@@ -430,6 +355,23 @@ void qse_sll_clear (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
+/**
+ *  The qse_sll_walk() function traverses a singly linkked list from its 
+ *  head node down to its tail node as long as the walker function returns 
+ *  QSE_SLL_WALK_FORWARD . A walker can return QSE_SLL_WALK_STOP to cause 
+ *  immediate stop of traversal.
+ * 
+ *  For each node, the walker function is called and it is passed three
+ *  parameters: the singly linked list, the visiting node, and the 
+ *  user-defined data passed as the third parameter in a call to the 
+ *  qse_sll_walk() function.
+ */
+void qse_sll_walk (
+	qse_sll_t*       sll,     /**< singly linked list */
+	qse_sll_walker_t walker,  /**< user-defined walker function */
+	void*            ctx      /**< the pointer to user-defined data */
+);
+
 qse_sll_node_t* qse_sll_pushhead (
 	qse_sll_t* sll /**< singly linked list */,
 	void*      dptr, 
@@ -442,30 +384,12 @@ qse_sll_node_t* qse_sll_pushtail (
 	qse_size_t dlen
 );
 
-
 void qse_sll_pophead (
 	qse_sll_t* sll
 );
 
 void qse_sll_poptail (
 	qse_sll_t* sll
-);
-
-/**
- *  The qse_sll_walk() function traverses a singly linkked list from its 
- *  head node down to its tail node as long as the walker function returns 
- *  QSE_SLL_WALK_FORWARD. A walker can return QSE_SLL_WALK_STOP to cause 
- *  immediate stop of traversal.
- * 
- *  For each node, the walker function is called and it is passed three
- *  parameters: the singly linked list, the visiting node, and the 
- *  user-defined data passed as the third parameter in a call to the 
- *  qse_sll_walk() function.
- */
-void qse_sll_walk (
-	qse_sll_t*       sll,     /**< singly linked list */
-	qse_sll_walker_t walker,  /**< user-defined walker function */
-	void*            ctx      /**< the pointer to user-defined data */
 );
 
 #ifdef __cplusplus

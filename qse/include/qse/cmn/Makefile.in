@@ -52,8 +52,9 @@ CONFIG_CLEAN_VPATH_FILES =
 SOURCES =
 DIST_SOURCES =
 am__pkginclude_HEADERS_DIST = mem.h xma.h fma.h chr.h str.h lda.h \
-	htb.h rbt.h rex.h sll.h dll.h opt.h tio.h fio.h pio.h sio.h \
-	time.h misc.h main.h stdio.h Mmgr.hpp StdMmgr.hpp Mmged.hpp
+	htb.h rbt.h rex.h sll.h gdl.h dll.h opt.h tio.h fio.h pio.h \
+	sio.h time.h misc.h main.h stdio.h Mmgr.hpp StdMmgr.hpp \
+	Mmged.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -221,8 +222,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = mem.h xma.h fma.h chr.h str.h lda.h htb.h rbt.h \
-	rex.h sll.h dll.h opt.h tio.h fio.h pio.h sio.h time.h misc.h \
-	main.h stdio.h $(am__append_1)
+	rex.h sll.h gdl.h dll.h opt.h tio.h fio.h pio.h sio.h time.h \
+	misc.h main.h stdio.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:

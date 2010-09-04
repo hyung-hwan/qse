@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
+ * $Id: htb.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -38,7 +38,7 @@ typedef struct qse_htb_pair_t qse_htb_pair_t;
  */
 enum qse_htb_walk_t
 {
-        QSE_HTB_WALK_STOP = 0,
+        QSE_HTB_WALK_STOP    = 0,
         QSE_HTB_WALK_FORWARD = 1
 };
 typedef enum qse_htb_walk_t qse_htb_walk_t;

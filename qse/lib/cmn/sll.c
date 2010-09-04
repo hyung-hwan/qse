@@ -1,5 +1,5 @@
 /*
- * $Id: sll.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: sll.c 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -44,13 +44,23 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sll)
 #define size_t    qse_size_t
 #define mmgr_t    qse_mmgr_t
 
-static int comp_data (sll_t* sll, 
+static int default_comper (sll_t* sll, 
 	const void* dptr1, size_t dlen1, 
 	const void* dptr2, size_t dlen2)
 {
 	if (dlen1 == dlen2) return QSE_MEMCMP (dptr1, dptr2, TOB(sll,dlen1));
 	/* it just returns 1 to indicate that they are different. */
 	return 1;
+
+#if 0
+	size_t min = (dlen1 < dlen2)? dlen1: dlen2;
+	int n = QSE_MEMCMP (dptr1, dptr2, TOB(sll,min));
+	if (n == 0 && dlen1 != dlen2)
+	{
+		n = (dlen1 > dlen2)? 1: -1;
+	}
+	return n;
+#endif
 }
 
 static node_t* alloc_node (sll_t* sll, void* dptr, size_t dlen)
@@ -133,7 +143,7 @@ sll_t* qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 	sll->size = 0;
 	sll->scale = 1;
 
-	sll->comper = comp_data;
+	sll->comper = default_comper;
 	sll->copier = QSE_SLL_COPIER_SIMPLE;
 	return sll;
 }
@@ -187,7 +197,7 @@ comper_t qse_sll_getcomper (sll_t* sll)
 
 void qse_sll_setcomper (sll_t* sll, comper_t comper)
 {
-	if (comper == QSE_NULL) comper = comp_data;
+	if (comper == QSE_NULL) comper = default_comper;
 	sll->comper = comper;
 }
 
@@ -301,6 +311,18 @@ void qse_sll_clear (sll_t* sll)
 	QSE_ASSERT (TAIL(sll) == QSE_NULL);
 }
 
+void qse_sll_walk (sll_t* sll, walker_t walker, void* ctx)
+{
+	node_t* n = HEAD(sll);
+
+	while (n != QSE_NULL)
+	{
+		qse_sll_node_t* nxt = NEXT(n);
+		if (walker(sll,n,ctx) == QSE_SLL_WALK_STOP) return;
+		n = nxt;
+	}
+}
+
 node_t* qse_sll_pushhead (sll_t* sll, void* data, size_t size)
 {
 	return qse_sll_insert (sll, HEAD(sll), data, size);
@@ -321,14 +343,4 @@ void qse_sll_poptail (sll_t* sll)
 	qse_sll_delete (sll, TAIL(sll));
 }
 
-void qse_sll_walk (sll_t* sll, walker_t walker, void* ctx)
-{
-	node_t* n = HEAD(sll);
-
-	while (n != QSE_NULL)
-	{
-		if (walker(sll,n,ctx) == QSE_SLL_WALK_STOP) return;
-		n = NEXT(n);
-	}
-}
 

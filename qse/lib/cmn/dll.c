@@ -1,5 +1,5 @@
 /*
- * $Id: dll.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: dll.c 354 2010-09-03 12:50:08Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,7 +21,31 @@
 #include <qse/cmn/dll.h>
 #include "mem.h"
 
-qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t ext)
+QSE_IMPLEMENT_COMMON_FUNCTIONS (dll)
+
+#define TOB(dll,len) ((len)*(dll)->scale)
+
+static int default_comper (
+	qse_dll_t* dll, 
+	const void* dptr1, size_t dlen1, 
+	const void* dptr2, size_t dlen2)
+{
+	if (dlen1 == dlen2) return QSE_MEMCMP (dptr1, dptr2, TOB(dll,dlen1));
+	/* it just returns 1 to indicate that they are different. */
+	return 1;
+
+#if 0
+	qse_size_t min = (dlen1 < dlen2)? dlen1: dlen2;
+	int n = QSE_MEMCMP (dptr1, dptr2, TOB(dll,min));
+	if (n == 0 && dlen1 != dlen2)
+	{
+		n = (dlen1 > dlen2)? 1: -1;
+	}
+	return n;
+#endif
+}
+
+qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_dll_t* dll;
 
@@ -35,56 +59,60 @@ qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t ext)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	dll = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_dll_t) + ext);
+	dll = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_dll_t) + xtnsize);
 	if (dll == QSE_NULL) return QSE_NULL;
 
-	/* do not zero the extension */
-	QSE_MEMSET (dll, 0, QSE_SIZEOF(qse_dll_t));
-	dll->mmgr = mmgr;
+	if (qse_dll_init (dll, mmgr) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (mmgr, dll);
+		return QSE_NULL;
+	}
 
 	return dll;
 }
 
 void qse_dll_close (qse_dll_t* dll)
 {
-	qse_dll_clear (dll);
+	qse_dll_fini (dll);
 	QSE_MMGR_FREE (dll->mmgr, dll);
 }
 
-void qse_dll_clear (qse_dll_t* dll)
+qse_dll_t* qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 {
-	while (dll->head != QSE_NULL) qse_dll_delete (dll, dll->head);
-	QSE_ASSERT (dll->tail == QSE_NULL);
-}
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
-void* qse_dll_getxtn (qse_dll_t* dll)
-{
-	return dll + 1;
-}
+	/* do not zero out the xtnsizeension */
+	QSE_MEMSET (dll, 0, QSE_SIZEOF(*dll));
 
-qse_mmgr_t* qse_dll_getmmgr (qse_dll_t* dll)
-{
-        return dll->mmgr;
-}
-
-void qse_dll_setmmgr (qse_dll_t* dll, qse_mmgr_t* mmgr)
-{
 	dll->mmgr = mmgr;
+	dll->scale = 1;
+
+	dll->comper = default_comper;
+	dll->copier = QSE_DLL_COPIER_SIMPLE;
+
+	QSE_DLL_INIT (dll);
+	return dll;
 }
 
-qse_size_t qse_dll_getsize (qse_dll_t* dll)
+void qse_dll_fini (qse_dll_t* dll)
 {
-	return dll->size;
+	qse_dll_clear (dll);
 }
 
-qse_dll_node_t* qse_dll_gethead (qse_dll_t* dll)
+int qse_dll_getscale (qse_dll_t* dll)
 {
-	return dll->head;
+	return dll->scale;
 }
 
-qse_dll_node_t* qse_dll_gettail (qse_dll_t* dll)
+void qse_dll_setscale (qse_dll_t* dll, int scale)
 {
-	return dll->tail;
+	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
+		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
+
+	if (scale <= 0) scale = 1;
+	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);
+
+	dll->scale = scale;
 }
 
 qse_dll_copier_t qse_dll_getcopier (qse_dll_t* dll)
@@ -94,6 +122,7 @@ qse_dll_copier_t qse_dll_getcopier (qse_dll_t* dll)
 
 void qse_dll_setcopier (qse_dll_t* dll, qse_dll_copier_t copier)
 {
+	if (copier == QSE_NULL) copier = QSE_DLL_COPIER_SIMPLE;
 	dll->copier = copier;
 }
 
@@ -107,11 +136,37 @@ void qse_dll_setfreeer (qse_dll_t* dll, qse_dll_freeer_t freeer)
 	dll->freeer = freeer;
 }
 
+qse_dll_comper_t qse_dll_getcomper (qse_dll_t* dll)
+{
+	return dll->comper;
+}
+
+void qse_dll_setcomper (qse_dll_t* dll, qse_dll_comper_t comper)
+{
+	if (comper == QSE_NULL) comper = default_comper;
+	dll->comper = comper;
+}
+
+qse_size_t qse_dll_getsize (qse_dll_t* dll)
+{
+	return QSE_DLL_SIZE(dll);
+}
+
+qse_dll_node_t* qse_dll_gethead (qse_dll_t* dll)
+{
+	return QSE_DLL_HEAD(dll);
+}
+
+qse_dll_node_t* qse_dll_gettail (qse_dll_t* dll)
+{
+	return QSE_DLL_TAIL(dll);
+}
+
 static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
 {
 	qse_dll_node_t* n;
 
-	if (dll->copier == QSE_NULL)
+	if (dll->copier == QSE_DLL_COPIER_SIMPLE)
 	{
 		n = QSE_MMGR_ALLOC (dll->mmgr, QSE_SIZEOF(qse_dll_node_t));
 		if (n == QSE_NULL) return QSE_NULL;
@@ -119,10 +174,11 @@ static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
 	}
 	else if (dll->copier == QSE_DLL_COPIER_INLINE)
 	{
-		n = QSE_MMGR_ALLOC (dll->mmgr, QSE_SIZEOF(qse_dll_node_t) + dlen);
+		n = QSE_MMGR_ALLOC (dll->mmgr, 
+			QSE_SIZEOF(qse_dll_node_t) + TOB(dll,dlen));
 		if (n == QSE_NULL) return QSE_NULL;
 
-		QSE_MEMCPY (n + 1, dptr, dlen);
+		QSE_MEMCPY (n + 1, dptr, TOB(dll,dlen));
 		n->dptr = n + 1;
 	}
 	else
@@ -138,51 +194,132 @@ static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
 	}
 
 	n->dlen = dlen; 
-	n->next = QSE_NULL;	
-	n->prev = QSE_NULL;
-
 	return n;
+}
+
+static QSE_INLINE void free_node (qse_dll_t* dll, qse_dll_node_t* node)
+{
+	if (dll->freeer != QSE_NULL)
+	{
+		/* free the actual data */
+		dll->freeer (dll, node->dptr, node->dlen);
+	}
+
+	/* free the node */
+	QSE_MMGR_FREE (dll->mmgr, node);
+}
+
+qse_dll_node_t* qse_dll_search (
+	qse_dll_t* dll, qse_dll_node_t* pos, const void* dptr, qse_size_t dlen)
+{
+	if (pos == QSE_NULL) pos = QSE_DLL_HEAD(dll);
+
+	while (QSE_DLL_ISMEMBER(dll,pos))
+	{
+		if (dll->comper (dll, pos->dptr, pos->dlen, dptr, dlen) == 0)
+		{
+			return pos;
+		}
+
+		pos = pos->next;
+	}	
+
+	return QSE_NULL;
+}
+
+qse_dll_node_t* qse_dll_rsearch (
+	qse_dll_t* dll, qse_dll_node_t* pos, const void* dptr, qse_size_t dlen)
+{
+	if (pos == QSE_NULL) pos = QSE_DLL_TAIL(dll);
+
+	while (QSE_DLL_ISMEMBER(dll,pos))
+	{
+		if (dll->comper (dll, pos->dptr, pos->dlen, dptr, dlen) == 0)
+		{
+			return pos;
+		}
+
+		pos = pos->prev;
+	}	
+
+	return QSE_NULL;
 }
 
 qse_dll_node_t* qse_dll_insert (
 	qse_dll_t* dll, qse_dll_node_t* pos, void* dptr, qse_size_t dlen)
 {
 	qse_dll_node_t* n = alloc_node (dll, dptr, dlen);
-	if (n == QSE_NULL) return QSE_NULL;
-
-	if (pos == QSE_NULL)
+	if (n)
 	{
-		/* insert at the end */
-		if (dll->head == QSE_NULL)
+		if (pos == QSE_NULL)
 		{
-			QSE_ASSERT (dll->tail == QSE_NULL);
-			dll->head = n;
+			/* insert at the end */
+			QSE_DLL_ADDTAIL (dll, n);
 		}
-		else dll->tail->next = n;
-
-		dll->tail = n;
-	}
-	else
-	{
-		/* insert in front of the positional node */
-		n->next = pos;
-		if (pos == dll->head) dll->head = n;
 		else
 		{
-			/* take note of performance penalty */
-			qse_dll_node_t* n2 = dll->head;
-			while (n2->next != pos) n2 = n2->next;
-			n2->next = n;
+			/* insert in front of the positional node */
+			QSE_DLL_CHAIN (dll, pos->prev, n, pos);
 		}
 	}
 
-	dll->size++;
 	return n;
+}
+
+void qse_dll_delete (qse_dll_t* dll, qse_dll_node_t* pos)
+{
+	if (pos == QSE_NULL || !QSE_DLL_ISMEMBER(dll,pos)) return;
+	QSE_DLL_UNCHAIN (dll, pos);
+	free_node (dll, pos);
+}
+
+void qse_dll_clear (qse_dll_t* dll)
+{
+	while (!QSE_DLL_ISEMPTY(dll))
+	{
+		qse_dll_delete (dll, QSE_DLL_HEAD(dll));
+	}
+}
+
+void qse_dll_walk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
+{
+	qse_dll_node_t* n = QSE_DLL_HEAD(dll);
+	qse_dll_walk_t w = QSE_DLL_WALK_FORWARD;
+
+	while (QSE_DLL_ISMEMBER(dll,n))
+	{
+		qse_dll_node_t* nxt = n->next;
+		qse_dll_node_t* prv = n->prev;
+
+		w = walker (dll, n, ctx);
+
+		if (w == QSE_DLL_WALK_FORWARD) n = nxt;
+		else if (w == QSE_DLL_WALK_BACKWARD) n = prv;
+		else break;
+	}
+}
+
+void qse_dll_rwalk (qse_dll_t* dll, qse_dll_walker_t walker, void* ctx)
+{
+	qse_dll_node_t* n = QSE_DLL_TAIL(dll);
+	qse_dll_walk_t w = QSE_DLL_WALK_BACKWARD;
+
+	while (QSE_DLL_ISMEMBER(dll,n))
+	{
+		qse_dll_node_t* nxt = n->next;
+		qse_dll_node_t* prv = n->prev;
+
+		w = walker (dll, n, ctx);
+
+		if (w == QSE_DLL_WALK_FORWARD) n = nxt;
+		else if (w == QSE_DLL_WALK_BACKWARD) n = prv;
+		else break;
+	}
 }
 
 qse_dll_node_t* qse_dll_pushhead (qse_dll_t* dll, void* data, qse_size_t size)
 {
-	return qse_dll_insert (dll, dll->head, data, size);
+	return qse_dll_insert (dll, QSE_DLL_HEAD(dll), data, size);
 }
 
 qse_dll_node_t* qse_dll_pushtail (qse_dll_t* dll, void* data, qse_size_t size)
@@ -190,67 +327,16 @@ qse_dll_node_t* qse_dll_pushtail (qse_dll_t* dll, void* data, qse_size_t size)
 	return qse_dll_insert (dll, QSE_NULL, data, size);
 }
 
-void qse_dll_delete (qse_dll_t* dll, qse_dll_node_t* pos)
-{
-	if (pos == QSE_NULL) return; /* not a valid node */
-
-	if (pos == dll->head)
-	{
-		/* it is simple to delete the head node */
-		dll->head = pos->next;
-		if (dll->head == QSE_NULL) dll->tail = QSE_NULL;
-	}
-	else 
-	{
-		/* but deletion of other nodes has significant performance
-		 * penalty as it has look for the predecessor of the 
-		 * target node */
-		qse_dll_node_t* n2 = dll->head;
-		while (n2->next != pos) n2 = n2->next;
-
-		n2->next = pos->next;
-
-		/* update the tail node if necessary */
-		if (pos == dll->tail) dll->tail = n2;
-	}
-
-	if (dll->freeer != QSE_NULL)
-	{
-		/* free the actual data */
-		dll->freeer (dll, pos->dptr, pos->dlen);
-	}
-
-	/* free the node */
-	QSE_MMGR_FREE (dll->mmgr, pos);
-
-	/* decrement the number of elements */
-	dll->size--;
-}
-
 void qse_dll_pophead (qse_dll_t* dll)
 {
-	qse_dll_delete (dll, dll->head);
+	QSE_ASSERT (!QSE_DLL_ISEMPTY(dll));
+	QSE_DLL_DELHEAD (dll);
 }
 
 void qse_dll_poptail (qse_dll_t* dll)
 {
-	qse_dll_delete (dll, dll->tail);
+	QSE_ASSERT (!QSE_DLL_ISEMPTY(dll));
+	QSE_DLL_DELTAIL (dll);
 }
 
-void qse_dll_walk (qse_dll_t* dll, qse_dll_walker_t walker, void* arg)
-{
-	qse_dll_node_t* n = dll->head;
-
-	while (n != QSE_NULL)
-	{
-		if (walker(dll,n,arg) == QSE_DLL_WALK_STOP) return;
-		n = n->next;
-	}
-}
-
-void* qse_dll_copyinline (qse_dll_t* dll, void* dptr, qse_size_t dlen)
-{
-	/* this is a dummy copier */
-	return QSE_NULL;
-}
 

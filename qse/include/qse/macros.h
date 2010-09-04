@@ -1,5 +1,5 @@
 /*
- * $Id: macros.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: macros.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -29,26 +29,35 @@
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__>=199901L)
 #	define QSE_INLINE inline
+#	define QSE_HAVE_INLINE
 #elif defined(__GNUC__) && defined(__GNUC_GNU_INLINE__)
 #	define QSE_INLINE /*extern*/ inline
+#	define QSE_HAVE_INLINE
 #else
 #	define QSE_INLINE 
+#	undef QSE_HAVE_INLINE
 #endif
 
 #if defined(__GNUC__)
 #	define QSE_INLINE_ALWAYS inline __attribute__((__always_inline__))
+#	define QSE_HAVE_INLINE_ALWAYS
 #elif defined(_MSC_VER) || (defined(__CC_ARM) || defined(__ARMCC__))
 #	define QSE_INLINE_ALWAYS __forceinline
+#	define QSE_HAVE_INLINE_ALWAYS
 #else
 #	define QSE_INLINE_ALWAYS QSE_INLINE
+#	undef QSE_HAVE_INLINE_ALWAYS
 #endif
 
 #if defined(__GNUC__)
 #	define QSE_INLINE_NEVER inline __attribute__((__noinline__))
+#	define QSE_HAVE_INLINE_NEVER
 #elif (defined(__CC_ARM) || defined(__ARMCC__))
 #	define QSE_INLINE_NEVER __declspec(noinline)
+#	define QSE_HAVE_INLINE_NEVER
 #else
 #	define QSE_INLINE_NEVER 
+#	undef QSE_HAVE_INLINE_NEVER
 #endif
 
 
@@ -142,14 +151,20 @@
 #define QSE_TYPE_MIN(type) \
 	((QSE_TYPE_IS_SIGNED(type)? QSE_TYPE_SIGNED_MIN(type): QSE_TYPE_UNSIGNED_MIN(type)))
 
+/**
+ * The QSE_BLOCK macro encloses one or more statements in a block with 
+ * no side-effect.
+ */
+#define QSE_BLOCK(code) do { code } while(0)
+
 #define QSE_IS_POWOF2(x) (((x) & ((x) - 1)) == 0)
 
 #define QSE_SWAP(x,y,original_type,casting_type) \
-	do { \
+	QSE_BLOCK ( \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
 		y = (original_type)((casting_type)(y) ^ (casting_type)(x)); \
 		x = (original_type)((casting_type)(x) ^ (casting_type)(y)); \
-	} while (0)
+	)
 
 #define QSE_ABS(x) ((x) < 0? -(x): (x))
 
@@ -162,7 +177,7 @@
 #define QSE_END_LOOP(id)      QSE_LOOP_CONTINUE(id) } __loop_ ## id ## _end__:
 
 #define QSE_REPEAT(n,blk) \
-	do { \
+	QSE_BLOCK ( \
 		qse_size_t __qse_repeat_x1__ = (qse_size_t)(n); \
 		qse_size_t __qse_repeat_x2__ = __qse_repeat_x1__ >> 4; \
 		__qse_repeat_x1__ &= 15; \
@@ -171,7 +186,8 @@
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 			blk; blk; blk; blk; blk; blk; blk; blk; \
 		} \
-	} while (0);
+	)
+
 
 /* number of characters to number of bytes */
 #define QSE_NCTONB(x) ((x)*sizeof(qse_char_t))

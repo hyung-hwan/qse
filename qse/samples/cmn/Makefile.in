@@ -35,9 +35,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) chr$(EXEEXT) str$(EXEEXT) \
-	sll$(EXEEXT) lda$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) \
-	fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) \
-	main$(EXEEXT) rex01$(EXEEXT)
+	sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) htb$(EXEEXT) \
+	rbt$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) \
+	time$(EXEEXT) main$(EXEEXT) rex01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -58,6 +58,10 @@ am_chr_OBJECTS = chr.$(OBJEXT)
 chr_OBJECTS = $(am_chr_OBJECTS)
 chr_LDADD = $(LDADD)
 chr_DEPENDENCIES =
+am_dll_OBJECTS = dll.$(OBJEXT)
+dll_OBJECTS = $(am_dll_OBJECTS)
+dll_LDADD = $(LDADD)
+dll_DEPENDENCIES =
 am_fio_OBJECTS = fio.$(OBJEXT)
 fio_OBJECTS = $(am_fio_OBJECTS)
 fio_LDADD = $(LDADD)
@@ -123,14 +127,14 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(fma_SOURCES) $(htb_SOURCES) \
-	$(lda_SOURCES) $(main_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) \
-	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
-	$(time_SOURCES) $(xma_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(fio_SOURCES) $(fma_SOURCES) \
+SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(fio_SOURCES) $(fma_SOURCES) \
 	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(pio_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
 	$(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(fio_SOURCES) \
+	$(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
+	$(pio_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
+	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -280,6 +284,7 @@ fma_SOURCES = fma.c
 chr_SOURCES = chr.c
 str_SOURCES = str.c
 sll_SOURCES = sll.c
+dll_SOURCES = dll.c
 lda_SOURCES = lda.c
 htb_SOURCES = htb.c
 rbt_SOURCES = rbt.c
@@ -369,6 +374,9 @@ clean-binPROGRAMS:
 chr$(EXEEXT): $(chr_OBJECTS) $(chr_DEPENDENCIES) 
 	@rm -f chr$(EXEEXT)
 	$(LINK) $(chr_OBJECTS) $(chr_LDADD) $(LIBS)
+dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES) 
+	@rm -f dll$(EXEEXT)
+	$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
 fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
 	@rm -f fio$(EXEEXT)
 	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
@@ -416,6 +424,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@

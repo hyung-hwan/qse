@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 353 2010-09-01 13:19:59Z hyunghwan.chung $
+ * $Id: str.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,10 +25,11 @@
 #include <qse/macros.h>
 
 /** @file
- *  Various functions, types, macros for string manipulation.
+ * This file provides various functions, types, macros for string manipulation.
  *
- *  The qse_cstr_t type and the qse_xstr_t defined in <qse/types.h> helps you
- *  dealing with a string pointer and length.
+ * The #qse_cstr_t type and the #qse_xstr_t defined in <qse/types.h> help you
+ * deal with a string pointer and length in a structure.
+ *
  */
 
 #define QSE_STR_LEN(s)       ((s)->len)      /**< string length */
@@ -170,17 +171,25 @@ qse_size_t qse_strxcpy (
 	const qse_char_t* str
 );
 
+/**
+ * The qse_strycpy() function copies a length-bounded string into
+ * a buffer with unknown size. 
+ */
 qse_size_t qse_strncpy (
-	qse_char_t*       buf, 
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_char_t*       buf, /**< buffer with unknown length */
+	const qse_char_t* str, /**< length-bounded string */
+	qse_size_t        len  /**< string length */
 );
 
+/**
+ * The qse_strycpy() function copies a length-bounded string into
+ * a length-bounded buffer.
+ */
 qse_size_t qse_strxncpy (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* str,
-	qse_size_t        len
+	qse_char_t*       buf, /**< length-bounded buffer */
+	qse_size_t        bsz, /**< buffer length */
+	const qse_char_t* str, /**< length-bounded string */
+	qse_size_t        len  /**< string length */
 );
 
 /**
@@ -189,13 +198,13 @@ qse_size_t qse_strxncpy (
  * buffer.
  */
 qse_size_t qse_strxput (
-        qse_char_t*       buf, 
+	qse_char_t*       buf, 
 	qse_size_t        bsz,
 	const qse_char_t* str
 );
 
 qse_size_t qse_strxnput (
-        qse_char_t*       buf,
+	qse_char_t*       buf,
 	qse_size_t        bsz,
 	const qse_char_t* str,
 	qse_size_t        len
@@ -226,8 +235,8 @@ qse_size_t qse_strfcpy (
  * @sa qse_strfcpy, qse_strxfcpy, qse_strxfncpy
  */
 qse_size_t qse_strfncpy (
-        qse_char_t*       buf,
-        const qse_char_t* fmt, 
+	qse_char_t*       buf,
+	const qse_char_t* fmt, 
 	const qse_cstr_t  str[]
 );
 
@@ -256,9 +265,9 @@ qse_size_t qse_strxfcpy (
  * @sa qse_strfcpy, qse_strfncpy, qse_strxfcpy
  */
 qse_size_t qse_strxfncpy (
-        qse_char_t*       buf,
+	qse_char_t*       buf,
 	qse_size_t        bsz,
-        const qse_char_t* fmt,
+	const qse_char_t* fmt,
 	const qse_cstr_t  str[]
 );
 
@@ -281,11 +290,11 @@ qse_size_t qse_strxfncpy (
  * @endcode
  */
 qse_size_t qse_strxsubst (
-        qse_char_t*            buf,
+	qse_char_t*            buf,
 	qse_size_t             bsz,
 	const qse_char_t*      fmt,
 	qse_strxsubst_subst_t  subst,
-        void*                  ctx
+	void*                  ctx
 );
 
 qse_size_t qse_strxcat (
@@ -308,15 +317,15 @@ int qse_strcmp (
 
 int qse_strxcmp (
 	const qse_char_t* s1,
-	qse_size_t len1,
+	qse_size_t        len1,
 	const qse_char_t* s2
 );
 
 int qse_strxncmp (
 	const qse_char_t* s1,
-	qse_size_t len1, 
+	qse_size_t        len1, 
 	const qse_char_t* s2,
-	qse_size_t len2
+	qse_size_t        len2
 );
 
 int qse_strcasecmp (
@@ -505,17 +514,25 @@ qse_char_t* qse_strxbeg (
 	const qse_char_t* sub)
 ;
 
+/*
+ * The qse_strbeg() function checks if the a string begins with a substring.
+ * @return @a str on match, QSE_NULL on no match
+ */
 qse_char_t* qse_strnbeg (
 	const qse_char_t* str,
 	const qse_char_t* sub,
-	qse_size_t len
+	qse_size_t        len
 );
 
+/*
+ * The qse_strbeg() function checks if the a string begins with a substring.
+ * @return @a str on match, QSE_NULL on no match
+ */
 qse_char_t* qse_strxnbeg (
 	const qse_char_t* str,
-	qse_size_t len1, 
+	qse_size_t        len1, 
 	const qse_char_t* sub,
-	qse_size_t len2
+	qse_size_t        len2
 );
 
 /**
@@ -565,25 +582,76 @@ qse_char_t* qse_strxnend (
 /* 
  * string conversion
  */
-int qse_strtoi (const qse_char_t* str);
-long qse_strtol (const qse_char_t* str);
-unsigned int qse_strtoui (const qse_char_t* str);
-unsigned long qse_strtoul (const qse_char_t* str);
+int qse_strtoi (
+	const qse_char_t* str
+);
 
-int qse_strxtoi (const qse_char_t* str, qse_size_t len);
-long qse_strxtol (const qse_char_t* str, qse_size_t len);
-unsigned int qse_strxtoui (const qse_char_t* str, qse_size_t len);
-unsigned long qse_strxtoul (const qse_char_t* str, qse_size_t len);
+long qse_strtol (
+	const qse_char_t* str
+);
 
-qse_int_t qse_strtoint (const qse_char_t* str);
-qse_long_t qse_strtolong (const qse_char_t* str);
-qse_uint_t qse_strtouint (const qse_char_t* str);
-qse_ulong_t qse_strtoulong (const qse_char_t* str);
+unsigned int qse_strtoui (
+	const qse_char_t* str
+);
 
-qse_int_t qse_strxtoint (const qse_char_t* str, qse_size_t len);
-qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len);
-qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len);
-qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len);
+unsigned long qse_strtoul (
+	const qse_char_t* str
+);
+
+int qse_strxtoi (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+long qse_strxtol (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+unsigned int qse_strxtoui (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+unsigned long qse_strxtoul (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+qse_int_t qse_strtoint (
+	const qse_char_t* str
+);
+
+qse_long_t qse_strtolong (
+	const qse_char_t* str
+);
+
+qse_uint_t qse_strtouint (
+	const qse_char_t* str
+);
+
+qse_ulong_t qse_strtoulong (
+	const qse_char_t* str
+);
+
+qse_int_t qse_strxtoint (
+	const qse_char_t* str, qse_size_t len
+);
+
+qse_long_t qse_strxtolong (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+qse_uint_t qse_strxtouint (
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+qse_ulong_t qse_strxtoulong (
+	const qse_char_t* str,
+	qse_size_t        len
+);
 
 /**
  * The qse_strspl() function splits a string into fields.
@@ -595,7 +663,6 @@ int qse_strspl (
 	qse_char_t        rquote,
 	qse_char_t        escape
 );
-/******/
 
 /**
  * The qse_strspltrn() function splits a string translating special 
