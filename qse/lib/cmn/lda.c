@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: lda.c 354 2010-09-03 12:50:08Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -207,22 +207,22 @@ void qse_lda_setcomper (lda_t* lda, comper_t comper)
 
 keeper_t qse_lda_getkeeper (lda_t* lda)
 {
-        return lda->keeper;
+	return lda->keeper;
 }
 
 void qse_lda_setkeeper (lda_t* lda, keeper_t keeper)
 {
-        lda->keeper = keeper;
+	lda->keeper = keeper;
 }
 
 sizer_t qse_lda_getsizer (lda_t* lda)
 {
-        return lda->sizer;
+	return lda->sizer;
 }
 
 void qse_lda_setsizer (lda_t* lda, sizer_t sizer)
 {
-        lda->sizer = sizer;
+	lda->sizer = sizer;
 }
 
 size_t qse_lda_getsize (lda_t* lda)
@@ -527,7 +527,7 @@ size_t qse_lda_walk (lda_t* lda, walker_t walker, void* ctx)
 	{
 		if (lda->node[i] != QSE_NULL) 
 		{
-                	w = walker (lda, i, ctx);
+               w = walker (lda, i, ctx);
 			nwalks++;
 		}
 

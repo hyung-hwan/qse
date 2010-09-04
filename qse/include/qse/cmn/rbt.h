@@ -37,7 +37,7 @@ typedef struct qse_rbt_pair_t qse_rbt_pair_t;
  */
 enum qse_rbt_walk_t
 {
-        QSE_RBT_WALK_STOP = 0,
+        QSE_RBT_WALK_STOP    = 0,
         QSE_RBT_WALK_FORWARD = 1
 };
 typedef enum qse_rbt_walk_t qse_rbt_walk_t;
