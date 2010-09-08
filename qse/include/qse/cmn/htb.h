@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: htb.h 355 2010-09-07 10:57:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -157,7 +157,7 @@ struct qse_htb_t
 	qse_htb_sizer_t  sizer;    /**< bucket capacity recalculator */
 
 	qse_byte_t       scale[2]; /**< length scale */
-	qse_byte_t       factor;   /**< load factor */
+	qse_byte_t       factor;   /**< load factor in percentage */
 	qse_byte_t       filler0;
 
 	qse_size_t       size;

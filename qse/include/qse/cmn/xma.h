@@ -46,7 +46,7 @@
  *   ptr2 = qse_xma_alloc (xma, 1000); // allocate a 1K block from the zone
  *   ptr1 = qse_xma_realloc (xma, ptr1, 6000); // resize the 5K block to 6K.
  *
- *   qse_xma_dump (xma, qse_printf); // dump memory blocks 
+ *   qse_xma_dump (xma, qse_fprintf, QSE_STDOUT); // dump memory blocks 
  *
  *   // the following two lines are not actually needed as the allocator
  *   // is closed after them.
@@ -103,6 +103,8 @@ struct qse_xma_t
 	} stat;
 #endif
 };
+
+typedef int (*qse_xma_dumper_t) (void* target, const qse_char_t* fmt,...);
 
 #ifdef __cplusplus
 extern "C" {
@@ -189,8 +191,9 @@ void qse_xma_free (
  * more statistical counters.
  */
 void qse_xma_dump (
-	qse_xma_t* xma, /**< memory allocator */
-	int (*printf)(const qse_char_t* fmt,...) /**< output function */
+	qse_xma_t*       xma,    /**< memory allocator */
+	qse_xma_dumper_t dumper, /**< output function */
+	void*            target  /**< first parameter to output function */
 );
 
 #ifdef __cplusplus
