@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: str.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,11 +32,10 @@
  *
  */
 
-#define QSE_STR_LEN(s)       ((s)->len)      /**< string length */
-#define QSE_STR_PTR(s)       ((s)->ptr)      /**< string/buffer pointer */
-#define QSE_STR_CAPA(s)      ((s)->capa)     /**< buffer capacity */
+#define QSE_STR_LEN(s)       ((const qse_size_t)(s)->len) /**< string length */
+#define QSE_STR_PTR(s)       ((qse_char_t* const)(s)->ptr) /**< string/buffer pointer */
+#define QSE_STR_CAPA(s)      ((qse_size_t)(s)->capa) /**< buffer capacity */
 #define QSE_STR_CHAR(s,idx)  ((s)->ptr[idx]) /**< character at given position */
-#define QSE_STR_SIZER(s)     ((s)->sizer)    /**< buffer resizer function */
 
 typedef struct qse_str_t qse_str_t;
 

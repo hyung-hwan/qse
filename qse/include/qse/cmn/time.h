@@ -1,5 +1,5 @@
 /*
- * $Id: time.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: time.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,6 +20,10 @@
 
 #ifndef _QSE_CMN_TIME_H_
 #define _QSE_CMN_TIME_H_
+
+/** @file
+ * This file provides time manipulation functions.
+ */
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -78,20 +82,15 @@ struct qse_btime_t
 extern "C" {
 #endif
 
-/****f* Common/qse_gettime
- * NAME
- *  qse_gettime - get the current time
- * SYNPOSIS
+/**
+ * The qse_gettime() function gets the current time.
  */
 int qse_gettime (
 	qse_ntime_t* nt
 );
-/******/
 
-/****f* Common/qse_settime
- * NAME
- *  qse_settime - set the current time
- * SYNOPSIS
+/**
+ * The qse_settime() function sets the current time.
  */
 int qse_settime (
 	qse_ntime_t nt
@@ -114,7 +113,6 @@ int qse_localtime (
 	qse_ntime_t  nt, 
 	qse_btime_t* bt
 ); 
-/******/
 
 /**
  * The qse_timegm() converts broken-down time to numeric time. It is the 
@@ -125,7 +123,6 @@ int qse_timegm (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );
-/******/
 
 /**
  * The qse_timelocal() converts broken-down time to numeric time. It is the
@@ -135,13 +132,9 @@ int qse_timelcoal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );
-/******/
 
-/****f* Common/qse_strftime
- * NAME
- *  qse_strftime - format time
- *
- * SYNOPSIS
+/**
+ * The qse_strftime() functions formats time.
  */
 qse_size_t qse_strftime (
         qse_char_t*       buf, 
@@ -149,7 +142,6 @@ qse_size_t qse_strftime (
 	const qse_char_t* fmt,
 	qse_btime_t*      bt
 );
-/******/
 
 #ifdef __cplusplus
 }

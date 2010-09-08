@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 341 2010-08-04 07:25:48Z hyunghwan.chung $
+ * $Id: lda.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,18 +45,12 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 
 #define QSE_LDA_NIL ((qse_size_t)-1)
 
-#define QSE_LDA_SIZE(lda)        ((lda)->size)
-#define QSE_LDA_CAPA(lda)        ((lda)->capa)
+#define QSE_LDA_SIZE(lda)        ((const qse_size_t)(lda)->size)
+#define QSE_LDA_CAPA(lda)        ((const qse_size_t)(lda)->capa)
 
 #define QSE_LDA_NODE(lda,index)  ((lda)->node[index])
 #define QSE_LDA_DPTR(lda,index)  ((lda)->node[index]->dptr)
 #define QSE_LDA_DLEN(lda,index)  ((lda)->node[index]->dlen)
-
-#define QSE_LDA_COPIER(lda)      ((lda)->copier)
-#define QSE_LDA_FREEER(lda)      ((lda)->freeer)
-#define QSE_LDA_COMPER(lda)      ((lda)->comper)
-#define QSE_LDA_KEEPER(lda)      ((lda)->keeper)
-#define QSE_LDA_SIZER(lda)       ((lda)->sizer)
 
 /**
  *  The qse_lda_copier_t type defines a callback function for node construction.

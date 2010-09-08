@@ -1,5 +1,5 @@
 /*
- * $Id: tio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: tio.c 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -89,7 +89,7 @@ int qse_tio_fini (qse_tio_t* tio)
 	return 0;
 }
 
-qse_tio_err_t qse_tio_geterrnum (qse_tio_t* tio)
+qse_tio_errnum_t qse_tio_geterrnum (qse_tio_t* tio)
 {
 	return tio->errnum;
 }
