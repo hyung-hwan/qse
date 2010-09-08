@@ -702,7 +702,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 	}
 }
 
-void qse_xma_dump (qse_xma_t* xma, int (*printf)(const qse_char_t* fmt,...))
+void qse_xma_dump (qse_xma_t* xma,  qse_xma_dumper_t dumper, void* target)
 {
 	qse_xma_blk_t* tmp;
 	unsigned long long fsum, asum; 
@@ -710,19 +710,19 @@ void qse_xma_dump (qse_xma_t* xma, int (*printf)(const qse_char_t* fmt,...))
 	unsigned long long isum;
 #endif
 
-	printf (QSE_T("<XMA DUMP>\n"));
+	dumper (target, QSE_T("<XMA DUMP>\n"));
 #ifdef QSE_XMA_ENABLE_STAT
-	printf (QSE_T("== statistics ==\n"));
-	printf (QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
-	printf (QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
-	printf (QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
+	dumper (target, QSE_T("== statistics ==\n"));
+	dumper (target, QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
+	dumper (target, QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
+	dumper (target, QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
 #endif
 
-	printf (QSE_T("== blocks ==\n"));
-	printf (QSE_T(" size               avail address\n"));
+	dumper (target, QSE_T("== blocks ==\n"));
+	dumper (target, QSE_T(" size               avail address\n"));
 	for (tmp = xma->head, fsum = 0, asum = 0; tmp; tmp = tmp->b.next)
 	{
-		printf (QSE_T(" %-18llu %-5d %p\n"), (unsigned long long)tmp->size, tmp->avail, tmp);
+		dumper (target, QSE_T(" %-18llu %-5d %p\n"), (unsigned long long)tmp->size, tmp->avail, tmp);
 		if (tmp->avail) fsum += tmp->size;
 		else asum += tmp->size;
 	}
@@ -731,12 +731,12 @@ void qse_xma_dump (qse_xma_t* xma, int (*printf)(const qse_char_t* fmt,...))
 	isum = (xma->stat.nfree + xma->stat.nused) * HDRSIZE;
 #endif
 
-	printf (QSE_T("---------------------------------------\n"));
-	printf (QSE_T("Allocated blocks: %18llu bytes\n"), asum);
-	printf (QSE_T("Available blocks: %18llu bytes\n"), fsum);
+	dumper (target, QSE_T("---------------------------------------\n"));
+	dumper (target, QSE_T("Allocated blocks: %18llu bytes\n"), asum);
+	dumper (target, QSE_T("Available blocks: %18llu bytes\n"), fsum);
 #ifdef QSE_XMA_ENABLE_STAT
-	printf (QSE_T("Internal use    : %18llu bytes\n"), isum);
-	printf (QSE_T("Total           : %18llu bytes\n"), asum + fsum + isum);
+	dumper (target, QSE_T("Internal use    : %18llu bytes\n"), isum);
+	dumper (target, QSE_T("Total           : %18llu bytes\n"), asum + fsum + isum);
 #endif
 
 	QSE_ASSERT (asum == xma->stat.alloc);

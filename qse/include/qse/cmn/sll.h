@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: sll.h 355 2010-09-07 10:57:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -123,9 +123,9 @@ struct qse_sll_t
  */
 struct qse_sll_node_t
 {
-	void*           dptr; /* the pointer to data */
-	qse_size_t      dlen; /* the length of data */
-	qse_sll_node_t* next; /* the pointer to the next node */
+	qse_sll_node_t* next; /* point to the next node */
+	void*           dptr; /* data pointer */
+	qse_size_t      dlen; /* data length */
 };
 
 #define QSE_SLL_COPIER_SIMPLE ((qse_sll_copier_t)1)
