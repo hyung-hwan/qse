@@ -31,13 +31,13 @@ static qse_oht_walk_t walk2 (qse_oht_t* oht, void* data, void* ctx)
  	return QSE_OHT_WALK_FORWARD;
 }
 
-static qse_size_t hash (qse_oht_t* oht, void* data)
+static qse_size_t hash (qse_oht_t* oht, const void* data)
 {
 	item_t* item = (item_t*)data;
-	return item->a;	
+	return item->a	+ 123445;
 }
 
-static int comp (qse_oht_t* oht, void* data1, void* data2)
+static int comp (qse_oht_t* oht, const void* data1, const void* data2)
 {
 	return ((item_t*)data1)->a != ((item_t*)data2)->a;	
 }
@@ -73,6 +73,7 @@ static int test1 ()
 			x, (unsigned long)qse_oht_search (oht, &x));
 
 
+	qse_printf (QSE_T("total %lu items\n"), (unsigned long)QSE_OHT_SIZE(oht));
 	qse_oht_walk (oht, walk1, QSE_NULL);
 	qse_oht_close (oht);
 	return 0;
@@ -83,7 +84,7 @@ static int test2 ()
 	item_t x;
 	qse_oht_t* oht;
 
-	oht = qse_oht_open (QSE_NULL, 0, QSE_SIZEOF(x), 10, 5);
+	oht = qse_oht_open (QSE_NULL, 0, QSE_SIZEOF(x), 10, 10);
 	if (oht == QSE_NULL)
 	{
 		qse_printf (QSE_T("failed to open a table\n"));
@@ -114,6 +115,7 @@ static int test2 ()
 			x.a, (unsigned long)qse_oht_search (oht, &x));
 
 
+	qse_printf (QSE_T("total %lu items\n"), (unsigned long)QSE_OHT_SIZE(oht));
 	qse_oht_walk (oht, walk2, QSE_NULL);
 	qse_oht_close (oht);
 	return 0;

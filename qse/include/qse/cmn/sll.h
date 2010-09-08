@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 355 2010-09-07 10:57:43Z hyunghwan.chung $
+ * $Id: sll.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -131,14 +131,10 @@ struct qse_sll_node_t
 #define QSE_SLL_COPIER_SIMPLE ((qse_sll_copier_t)1)
 #define QSE_SLL_COPIER_INLINE ((qse_sll_copier_t)2)
 
-#define QSE_SLL_COPIER(sll) ((sll)->copier)
-#define QSE_SLL_FREEER(sll) ((sll)->freeer)
-#define QSE_SLL_COMPER(sll) ((sll)->comper)
-
 #define QSE_SLL_HEAD(sll)   ((sll)->head)
 #define QSE_SLL_TAIL(sll)   ((sll)->tail)
-#define QSE_SLL_SIZE(sll)   ((sll)->size)
-#define QSE_SLL_SCALE(sll)  ((sll)->scale)
+#define QSE_SLL_SIZE(sll)   ((const qse_size_t)(sll)->size)
+#define QSE_SLL_SCALE(sll)  ((const int)(sll)->scale)
 
 /**
  * The QSE_SLL_DPTR macro gets the data pointer in a node.
@@ -278,7 +274,7 @@ qse_sll_comper_t qse_sll_getcomper (
  * The qse_sll_setcomper() function changes  the data comparator
  */
 void qse_sll_setcomper (
-	qse_sll_t*       sll     /**< singly linked list */,
+	qse_sll_t*       sll,    /**< singly linked list */
 	qse_sll_comper_t comper  /**< comparator */
 );
 

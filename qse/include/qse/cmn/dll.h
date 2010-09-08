@@ -1,5 +1,5 @@
 /*
- * $Id: dll.h 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: dll.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -109,7 +109,7 @@
 
 #define QSE_DLL_HEAD(dll) QSE_GDL_HEAD(&(dll)->gdl)
 #define QSE_DLL_TAIL(dll) QSE_GDL_TAIL(&(dll)->gdl)
-#define QSE_DLL_SIZE(dll) ((dll)->size)
+#define QSE_DLL_SIZE(dll) ((const qse_size_t)(dll)->size)
 
 /**
  * The QSE_DLL_ADDHEAD macro add a member node @a x to the head of 
@@ -219,10 +219,9 @@ struct qse_dll_t
 #define QSE_DLL_COPIER_SIMPLE ((qse_dll_copier_t)1)
 #define QSE_DLL_COPIER_INLINE ((qse_dll_copier_t)2)
 
-#define QSE_DLL_SCALE(dll) ((dll)->scale)
+#define QSE_DLL_SCALE(dll) ((const int)(dll)->scale)
 #define QSE_DLL_DPTR(node) ((node)->dptr)
 #define QSE_DLL_DLEN(node) ((node)->dlen)
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -321,6 +320,21 @@ void qse_dll_setfreeer (
  */
 qse_dll_freeer_t qse_dll_getfreeer (
 	qse_dll_t* dll /**< doubly linked list */
+);
+
+/**
+ * The qse_dll_getcomper() function returns the data comparator.
+ */
+qse_dll_comper_t qse_dll_getcomper (
+	qse_dll_t* dll  /**< doubly linked list */
+);
+
+/**
+ * The qse_dll_setcomper() function changes the data comparator
+ */
+void qse_dll_setcomper (
+	qse_dll_t*       dll,    /**< doubly linked list */
+	qse_dll_comper_t comper  /**< comparator */
 );
 
 /**

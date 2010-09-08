@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: chr.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,10 +24,8 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/****t* Common/qse_ccls_id_t
- * NAME
- *  qse_ccls_id_t - define character class types
- * SYNOPSIS
+/**
+ * The qse_ccls_id_t type defines character class types.
  */
 enum qse_ccls_id_t
 {
@@ -44,7 +42,6 @@ enum qse_ccls_id_t
         QSE_CCLS_PUNCT
 };
 typedef enum qse_ccls_id_t qse_ccls_id_t;
-/******/
 
 #ifdef USE_STDC
 #	if defined(QSE_CHAR_IS_MCHAR)

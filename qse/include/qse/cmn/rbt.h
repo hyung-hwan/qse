@@ -143,8 +143,6 @@ struct qse_rbt_t
 	qse_rbt_keeper_t keeper;    /**< value keeper */
 
 	qse_byte_t       scale[2];  /**< length scale */
-	qse_byte_t       factor;    /**< load factor */
-	qse_byte_t       filler0;
 
 	qse_rbt_pair_t   nil;       /**< internal nil node */
 
@@ -167,18 +165,9 @@ struct qse_rbt_t
 /**
  * The QSE_RBT_SIZE() macro returns the number of pairs in red-black tree.
  */
-#define QSE_RBT_SIZE(m) ((m)->size)
-
-#define QSE_RBT_KCOPIER(m)   ((m)->copier[QSE_RBT_KEY])
-#define QSE_RBT_VCOPIER(m)   ((m)->copier[QSE_RBT_VAL])
-#define QSE_RBT_KFREEER(m)   ((m)->freeer[QSE_RBT_KEY])
-#define QSE_RBT_VFREEER(m)   ((m)->freeer[QSE_RBT_VAL])
-#define QSE_RBT_COMPER(m)    ((m)->comper)
-#define QSE_RBT_KEEPER(m)    ((m)->keeper)
-
-#define QSE_RBT_FACTOR(m)    ((m)->factor)
-#define QSE_RBT_KSCALE(m)    ((m)->scale[QSE_RBT_KEY])
-#define QSE_RBT_VSCALE(m)    ((m)->scale[QSE_RBT_VAL])
+#define QSE_RBT_SIZE(m)   ((const qse_size_t)(m)->size)
+#define QSE_RBT_KSCALE(m) ((const int)(m)->scale[QSE_RBT_KEY])
+#define QSE_RBT_VSCALE(m) ((const int)(m)->scale[QSE_RBT_VAL])
 
 #define QSE_RBT_KPTR(p) ((p)->kptr)
 #define QSE_RBT_KLEN(p) ((p)->klen)

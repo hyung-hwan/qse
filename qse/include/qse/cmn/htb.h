@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 355 2010-09-07 10:57:43Z hyunghwan.chung $
+ * $Id: htb.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -158,7 +158,6 @@ struct qse_htb_t
 
 	qse_byte_t       scale[2]; /**< length scale */
 	qse_byte_t       factor;   /**< load factor in percentage */
-	qse_byte_t       filler0;
 
 	qse_size_t       size;
 	qse_size_t       capa;
@@ -173,26 +172,17 @@ struct qse_htb_t
 /**
  * The QSE_HTB_SIZE() macro returns the number of pairs in a hash table.
  */
-#define QSE_HTB_SIZE(m) ((m)->size)
+#define QSE_HTB_SIZE(m) ((const qse_size_t)(m)->size)
 
 /**
  * The QSE_HTB_CAPA() macro returns the maximum number of pairs that can be
  * stored in a hash table without further reorganization.
  */
-#define QSE_HTB_CAPA(m) ((m)->capa)
+#define QSE_HTB_CAPA(m) ((const qse_size_t)(m)->capa)
 
-#define QSE_HTB_KCOPIER(m)   ((m)->copier[QSE_HTB_KEY])
-#define QSE_HTB_VCOPIER(m)   ((m)->copier[QSE_HTB_VAL])
-#define QSE_HTB_KFREEER(m)   ((m)->freeer[QSE_HTB_KEY])
-#define QSE_HTB_VFREEER(m)   ((m)->freeer[QSE_HTB_VAL])
-#define QSE_HTB_HASHER(m)    ((m)->hasher)
-#define QSE_HTB_COMPER(m)    ((m)->comper)
-#define QSE_HTB_KEEPER(m)    ((m)->keeper)
-#define QSE_HTB_SIZER(m)     ((m)->sizer)
-
-#define QSE_HTB_FACTOR(m)    ((m)->factor)
-#define QSE_HTB_KSCALE(m)    ((m)->scale[QSE_HTB_KEY])
-#define QSE_HTB_VSCALE(m)    ((m)->scale[QSE_HTB_VAL])
+#define QSE_HTB_FACTOR(m) ((const int)(m)->factor)
+#define QSE_HTB_KSCALE(m) ((const int)(m)->scale[QSE_HTB_KEY])
+#define QSE_HTB_VSCALE(m) ((const int)(m)->scale[QSE_HTB_VAL])
 
 #define QSE_HTB_KPTR(p) ((p)->kptr)
 #define QSE_HTB_KLEN(p) ((p)->klen)
@@ -364,7 +354,7 @@ void qse_htb_setsizer (
 );
 
 /**
- * The qse_htb_search() function searches hash table to find a pair with a 
+ * The qse_htb_search() function searches a hash table to find a pair with a 
  * matching key. It returns the pointer to the pair found. If it fails
  * to find one, it returns QSE_NULL.
  * @return pointer to the pair with a maching key, 
@@ -377,7 +367,7 @@ qse_htb_pair_t* qse_htb_search (
 );
 
 /**
- * The qse_htb_upsert() function searches hash table for the pair with a 
+ * The qse_htb_upsert() function searches a hash table for the pair with a 
  * matching key. If one is found, it updates the pair. Otherwise, it inserts
  * a new pair with the key and value given. It returns the pointer to the 
  * pair updated or inserted.

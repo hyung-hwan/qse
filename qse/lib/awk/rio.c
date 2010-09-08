@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 312 2009-12-10 13:03:54Z hyunghwan.chung $
+ * $Id: rio.c 356 2010-09-07 12:29:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -299,7 +299,8 @@ int qse_awk_rtx_readio (
 							QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
 							match.ptr + match.len);
 
-						QSE_STR_LEN(buf) -= match.len;
+						/*QSE_STR_LEN(buf) -= match.len;*/
+						buf->len -= match.len;
 						break;
 					}
 				}
@@ -322,7 +323,8 @@ int qse_awk_rtx_readio (
 				if (pc == QSE_T('\r') && 
 				    QSE_STR_LEN(buf) > 0) 
 				{
-					QSE_STR_LEN(buf) -= 1;
+					/*QSE_STR_LEN(buf) -= 1;*/
+					buf->len -= 1;
 				}
 				break;
 			}
@@ -335,7 +337,8 @@ int qse_awk_rtx_readio (
 				if (pc == QSE_T('\r') && 
 				    QSE_STR_LEN(buf) > 0) 
 				{
-					QSE_STR_LEN(buf) -= 1;
+					/*QSE_STR_LEN(buf) -= 1;*/
+					buf->len -= 1;
 				}
 			}
 
@@ -353,7 +356,8 @@ int qse_awk_rtx_readio (
 				/* when a blank line is encountered,
 				 * it needs to snip off the line 
 				 * terminator of the previous line */
-				QSE_STR_LEN(buf) -= 1;
+				/*QSE_STR_LEN(buf) -= 1;*/
+				buf->len -= 1;
 				break;
 			}
 		}
@@ -394,7 +398,8 @@ int qse_awk_rtx_readio (
 					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
 					match.ptr + match.len);
 
-				QSE_STR_LEN(buf) -= match.len;
+				/*QSE_STR_LEN(buf) -= match.len;*/
+				buf->len -= match.len;
 				p->in.pos--; /* unread the character in c */
 				break;
 			}

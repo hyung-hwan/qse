@@ -44,7 +44,7 @@ static QSE_INLINE_ALWAYS void default_copier (
 
 qse_oht_t* qse_oht_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize,
-	qse_size_t scale, qse_size_t capa, qse_size_t limit) 
+	int scale, qse_size_t capa, qse_size_t limit) 
 {
 	qse_oht_t* oht;
 
@@ -78,12 +78,12 @@ void qse_oht_close (qse_oht_t* oht)
 
 qse_oht_t* qse_oht_init (
 	qse_oht_t* oht, qse_mmgr_t* mmgr,
-	qse_size_t scale, qse_size_t capa, qse_size_t limit) 
+	int scale, qse_size_t capa, qse_size_t limit) 
 {
 	qse_size_t i;
 
 	if (scale <= 0) scale = 1;
-	if (capa >= QSE_OHT_INVALID_INDEX - 1) capa = QSE_OHT_INVALID_INDEX - 1;
+	if (capa >= QSE_OHT_NIL - 1) capa = QSE_OHT_NIL - 1;
 	if (limit > capa || limit <= 0) limit = capa;
 
 	QSE_MEMSET (oht, 0, QSE_SIZEOF(*oht));
@@ -165,13 +165,13 @@ static QSE_INLINE qse_size_t search (
 		}
 	}
 
-	return QSE_OHT_INVALID_INDEX;
+	return QSE_OHT_NIL;
 }
 
 qse_size_t qse_oht_search (qse_oht_t* oht, void* data)
 {
 	qse_size_t i = search (oht, data, HASH_DATA(oht,data));
-	if (i != QSE_OHT_INVALID_INDEX && data) 
+	if (i != QSE_OHT_NIL && data) 
 		COPY_DATA (oht, data, DATA_PTR(oht,i));
 	return i;
 }
@@ -179,7 +179,7 @@ qse_size_t qse_oht_search (qse_oht_t* oht, void* data)
 qse_size_t qse_oht_update (qse_oht_t* oht, const void* data)
 {
 	qse_size_t i = search (oht, data, HASH_DATA(oht,data));
-	if (i != QSE_OHT_INVALID_INDEX) 
+	if (i != QSE_OHT_NIL) 
 		COPY_DATA (oht, DATA_PTR(oht,i), data);
 	return i;
 }
@@ -190,14 +190,14 @@ qse_size_t qse_oht_upsert (qse_oht_t* oht, const void* data)
 
 	/* find the existing item */
 	i = search (oht, data, hash);
-	if (i != QSE_OHT_INVALID_INDEX)
+	if (i != QSE_OHT_NIL)
 	{
 		COPY_DATA (oht, DATA_PTR(oht,i), data);
 		return i;
 	}
 
 	/* check if there is a free slot to insert data into */
-	if (oht->size >= oht->capa.soft) return QSE_OHT_INVALID_INDEX;
+	if (oht->size >= oht->capa.soft) return QSE_OHT_NIL;
 
 	/* get the unoccupied slot and insert the data into it.
 	 * iterate at most 'the number of items (oht->size)' times + 1. */
@@ -213,7 +213,7 @@ qse_size_t qse_oht_upsert (qse_oht_t* oht, const void* data)
 		}
 	}
 
-	return QSE_OHT_INVALID_INDEX;
+	return QSE_OHT_NIL;
 }
 
 qse_size_t qse_oht_insert (qse_oht_t* oht, const void* data)
@@ -221,13 +221,13 @@ qse_size_t qse_oht_insert (qse_oht_t* oht, const void* data)
 	qse_size_t i, hash;
 
 	/* check if there is a free slot to insert data into */
-	if (oht->size >= oht->capa.soft) return QSE_OHT_INVALID_INDEX;
+	if (oht->size >= oht->capa.soft) return QSE_OHT_NIL;
 
 	hash = HASH_DATA (oht, data);
 
 	/* check if the item already exits */
 	i = search (oht, data, hash);
-	if (i != QSE_OHT_INVALID_INDEX) return QSE_OHT_INVALID_INDEX;
+	if (i != QSE_OHT_NIL) return QSE_OHT_NIL;
 
 	/* get the unoccupied slot and insert the data into it.
 	 * iterate at most 'the number of items (oht->size)' times + 1. */
@@ -243,7 +243,7 @@ qse_size_t qse_oht_insert (qse_oht_t* oht, const void* data)
 		}
 	}
 
-	return QSE_OHT_INVALID_INDEX;
+	return QSE_OHT_NIL;
 }
 
 qse_size_t qse_oht_delete (qse_oht_t* oht, const void* data)
@@ -251,10 +251,10 @@ qse_size_t qse_oht_delete (qse_oht_t* oht, const void* data)
 #if 0
 	qse_size_t index;
 
-	if (oht->size <= 0) return QSE_OHT_INVALID_INDEX; 
+	if (oht->size <= 0) return QSE_OHT_NIL; 
 
 	index = search (oht, data, HASH_DATA(oht,data));
-	if (index != QSE_OHT_INVALID_INDEX)
+	if (index != QSE_OHT_NIL)
 	{
 		oht->mark[index] = QSE_OHT_DELETED;
 		oht->size--;
@@ -266,11 +266,11 @@ qse_size_t qse_oht_delete (qse_oht_t* oht, const void* data)
 	qse_size_t index, i, x, y, z;
 
 	/* check if the oht is empty. if so, do nothing */
-	if (oht->size <= 0) return QSE_OHT_INVALID_INDEX; 
+	if (oht->size <= 0) return QSE_OHT_NIL; 
 
 	/* check if the item exists. otherwise, do nothing. */
 	index = search (oht, data, HASH_DATA(oht,data));
-	if (index == QSE_OHT_INVALID_INDEX) return QSE_OHT_INVALID_INDEX;
+	if (index == QSE_OHT_NIL) return QSE_OHT_NIL;
 
 	/* compact the cluster */
 	for (i = 0, x = index, y = index; i < oht->size; i++)
