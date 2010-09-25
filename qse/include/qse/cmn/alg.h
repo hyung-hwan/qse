@@ -51,12 +51,40 @@ typedef qse_search_comper_t qse_sort_comper_t;
 
 /**
  * The qse_bsearch() function performs binary search over a sorted array.
+ * See the example below:
+ * @code
+ * static int compstr (const void* s1, const void* s2, void* ctx)
+ * {
+ * 	return qse_strcmp ((const qse_char_t*)s1, *(const qse_char_t**)s2);
+ * }
+
+ * int find (const qse_char_t* name)
+ * {
+ * 	static const qse_char_t* tgtnames[] =
+ * 	{
+ * 		QSE_T("awk"),
+ *  		QSE_T("cut"),
+ *  		QSE_T("ls"),
+ *  		QSE_T("rm"),
+ * 		QSE_T("sed"),
+ *  		QSE_T("tr"),
+ *  		QSE_T("watch")
+ * 	};
+ * 
+ * 	const qse_char_t** ptr;
+ * 	ptr = (const qse_char_t**) qse_bsearch (
+ * 		name, tgtnames, QSE_COUNTOF(tgtnames),
+ * 		QSE_SIZEOF(qse_char_t*), QSE_NULL, compstr
+ * 	);
+ * 	return ptr? (ptr - tgtnames): -1;
+ * }
+ * @endcode
  */
 void* qse_bsearch (
 	const void*         key,
 	const void*         base,
 	qse_size_t          nmemb,
-     qse_size_t          size,
+	qse_size_t          size,
 	qse_search_comper_t comper,
 	void*               ctx
 );
@@ -64,11 +92,11 @@ void* qse_bsearch (
 /**
  * The qse_lsearch() function performs linear search over an array.
  */
-void* qse_bsearch (
+void* qse_lsearch (
 	const void*         key,
 	const void*         base,
 	qse_size_t          nmemb,
-     qse_size_t          size,
+	qse_size_t          size,
 	qse_search_comper_t comper,
 	void*               ctx
 );
