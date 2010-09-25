@@ -10,6 +10,8 @@ libqsecmn_la_SOURCES = \
 	lda.c oht.c htb.c rbt.c sll.c gdl.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \
+	alg_search.c  \
+	alg_sort.c \
 	time.c \
 	misc.c \
 	assert.c \

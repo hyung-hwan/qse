@@ -1,9 +1,29 @@
 pkgincludedir = $(includedir)/qse/cmn
 
 pkginclude_HEADERS = \
-	mem.h xma.h fma.h chr.h str.h lda.h oht.h htb.h rbt.h \
-	rex.h sll.h gdl.h dll.h opt.h tio.h \
-	fio.h pio.h sio.h time.h misc.h main.h stdio.h  
+	alg.h \
+	chr.h \
+	dll.h \
+	fio.h \
+	fma.h \
+	gdl.h \
+	htb.h \
+	lda.h \
+	main.h \
+	mem.h \
+	misc.h \
+	oht.h \
+	opt.h \
+	pio.h \
+	rbt.h \
+	rex.h \
+	sio.h \
+	sll.h \
+	stdio.h \
+	str.h \
+	time.h \
+	tio.h \
+	xma.h 
 
 if ENABLE_CXX
 pkginclude_HEADERS += Mmgr.hpp StdMmgr.hpp Mmged.hpp
