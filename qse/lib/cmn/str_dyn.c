@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: str_dyn.c 360 2010-10-21 13:29:12Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -256,12 +256,16 @@ qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 {
 	if (len > str->capa - str->len) 
 	{
-		qse_size_t ncapa;
+		qse_size_t ncapa, mincapa;
+
+		/* let the minimum capacity be as large as 
+		 * to fit in the new substring */
+		mincapa = str->len + len;
 
 		if (str->sizer == QSE_NULL)
 		{
 			/* increase the capacity by the length to add */
-			ncapa = str->len + len;
+			ncapa = mincapa;
 			/* if the new capacity is less than the double,
 			 * just double it */
 			if (ncapa < str->capa * 2) ncapa = str->capa * 2;
@@ -270,15 +274,19 @@ qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 		{
 			/* let the user determine the new capacity.
 			 * pass the minimum capacity required as a hint */
-			ncapa = str->sizer (str, str->len + len);
+			ncapa = str->sizer (str, mincapa);
 			/* if no change in capacity, return current length */
 			if (ncapa == str->capa) return str->len;
 		}
 
-		if (qse_str_setcapa (str, ncapa) == (qse_size_t)-1) 
+		/* change the capacity */
+		do
 		{
-			return (qse_size_t)-1;
+			if (qse_str_setcapa (str, ncapa) != (qse_size_t)-1) break;
+			if (ncapa <= mincapa) return (qse_size_t)-1;
+			ncapa--;
 		}
+		while (1);
 	}
 
 	if (len > str->capa - str->len) 

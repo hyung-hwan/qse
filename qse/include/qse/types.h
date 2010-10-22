@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 349 2010-08-27 11:47:48Z hyunghwan.chung $
+ * $Id: types.h 360 2010-10-21 13:29:12Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -108,7 +108,11 @@ typedef enum qse_tri_t qse_tri_t;
 /** @typedef qse_ulong_t
  * The qse_ulong_t type defines the largest unsigned integer type supported
  */
-#if QSE_SIZEOF_LONG_LONG > 0
+#if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
+	typedef long qse_long_t;
+	typedef unsigned long qse_ulong_t;
+	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
+#elif QSE_SIZEOF_LONG_LONG > 0
 	typedef long long qse_long_t;
 	typedef unsigned long long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG_LONG

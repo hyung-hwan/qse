@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: sed.c 360 2010-10-21 13:29:12Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,7 +41,7 @@ do { \
 	qse_sed_seterror (sed, num, &__ea__, loc); \
 } while (0)
 
-qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
+qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_sed_t* sed;
 
@@ -55,7 +55,7 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtn);
+	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtnsize);
 	if (sed == QSE_NULL) return QSE_NULL;
 
 	if (qse_sed_init (sed, mmgr) == QSE_NULL)

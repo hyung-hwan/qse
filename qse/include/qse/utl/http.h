@@ -8,6 +8,55 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+
+typedef struct qse_http_buf_t qse_http_buf_t;
+
+struct qse_http_buf_t
+{
+	qse_size_t  capa;
+	qse_size_t  size;
+	qse_char_t* data;
+};
+
+
+enum qse_http_errnum_t
+{
+	QSE_HTTP_ENOERR,
+	QSE_HTTP_ENOMEM
+};
+
+typedef enum qse_http_errnum_t qse_http_errnum_t;
+
+/*
+struct qse_http_req_t
+{
+	enum
+	{
+		QSE_HTTP_REQ_HEAD,
+		QSE_HTTP_REQ_GET,
+		QSE_HTTP_REQ_POST
+	} method;
+
+	qse_char_t path[];
+};
+*/
+
+typedef struct qse_http_t qse_http_t;
+
+struct qse_http_t
+{
+	QSE_DEFINE_COMMON_FIELDS (http)
+	qse_http_errnum_t errnum;
+
+	struct
+	{
+		qse_http_buf_t buf;
+		int no;
+	} state;
+
+
+};
+
 /* returns the type of http method */
 typedef struct qse_http_req_t qse_http_req_t;
 typedef struct qse_http_hdr_t qse_http_hdr_t;
@@ -47,6 +96,32 @@ extern "C" {
 
 qse_char_t* qse_parsehttpreq (qse_char_t* buf, qse_http_req_t* req);
 qse_char_t* qse_parsehttphdr (qse_char_t* buf, qse_http_hdr_t* hdr);
+
+QSE_DEFINE_COMMON_FUNCTIONS (http)
+
+/**
+ * The qse_http_open() function creates a http processor.
+ */
+qse_http_t* qse_http_open (
+	qse_mmgr_t* mmgr,   /**< memory manager */
+	qse_size_t  xtnsize /**< extension size in bytes */
+);
+
+/**
+ * The qse_http_close() function destroys a http processor.
+ */
+void qse_http_close (
+	qse_http_t* http
+);
+
+qse_http_t* qse_http_init (
+	qse_http_t* http,
+	qse_mmgr_t* mmgr
+);
+
+void qse_http_fini (
+	qse_http_t* http
+);
 
 #ifdef __cplusplus
 }

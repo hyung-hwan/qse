@@ -22,6 +22,8 @@
 #include <qse/cmn/chr.h>
 #include "../cmn/mem.h"
 
+QSE_IMPLEMENT_COMMON_FUNCTIONS (http)
+
 static int is_http_space (qse_char_t c)
 {
 	return QSE_ISSPACE(c) && c != QSE_T('\r') && c != QSE_T('\n');
@@ -204,4 +206,166 @@ qse_char_t* qse_parsehttphdr (qse_char_t* buf, qse_http_hdr_t* hdr)
 ok:
 	*last = QSE_T('\0');
 	return p;
+}
+
+static QSE_INLINE void init_buffer (qse_http_t* http, qse_http_buf_t* buf)
+{
+	buf->size = 0;
+	buf->capa = 0;
+	buf->data = QSE_NULL;
+}
+
+static QSE_INLINE void fini_buffer (qse_http_t* http, qse_http_buf_t* buf)
+{
+	if (buf->data) 
+	{
+		QSE_MMGR_FREE (http->mmgr, buf->data);
+		buf->capa = 0;
+		buf->size = 0;
+		buf->data = QSE_NULL;
+	}
+}
+
+static QSE_INLINE_ALWAYS void clear_buffer (qse_http_t* http, qse_http_buf_t* buf)
+{
+	buf->size = 0;
+}
+
+static QSE_INLINE int push_to_buffer (
+	qse_http_t* http, qse_http_buf_t* buf, 
+	const qse_char_t* ptr, qse_size_t len)
+{
+	qse_size_t nsize = (buf)->size + len; 
+	const qse_char_t* end = ptr + len;
+
+	if (nsize > (buf)->capa) 
+	{ 
+		qse_size_t ncapa = (nsize > (buf)->capa * 2)? nsize: ((buf)->capa * 2);
+		
+		do
+		{
+			void* tmp = QSE_MMGR_REALLOC ((http)->mmgr, (buf)->data, ncapa * QSE_SIZEOF(*ptr));
+			if (tmp)
+			{
+				(buf)->capa = ncapa;
+				(buf)->data = tmp;
+				break;
+			}
+
+			if (ncapa <= nsize)
+			{
+				(http)->errnum = QSE_HTTP_ENOMEM;
+				return -1;
+			}
+
+			/* retry with a smaller size */
+			ncapa--;
+		}
+		while (1);
+	}
+
+	while (ptr < end) (buf)->data[(buf)->size++] = *ptr++;
+
+	return 0;
+}
+
+#define QSE_HTTP_STATE_REQ  1
+#define QSE_HTTP_STATE_HDR  2
+#define QSE_HTTP_STATE_POST 3
+
+qse_http_t* qse_http_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+{
+	qse_http_t* http;
+
+	if (mmgr == QSE_NULL) 
+	{
+		mmgr = QSE_MMGR_GETDFL();
+
+		QSE_ASSERTX (mmgr != QSE_NULL,
+			"Set the memory manager with QSE_MMGR_SETDFL()");
+
+		if (mmgr == QSE_NULL) return QSE_NULL;
+	}
+
+	http = (qse_http_t*) QSE_MMGR_ALLOC (
+		mmgr, QSE_SIZEOF(qse_http_t) + xtnsize
+	);
+	if (http == QSE_NULL) return QSE_NULL;
+
+	if (qse_http_init (http, mmgr) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (http->mmgr, http);
+		return QSE_NULL;
+	}
+
+	return http;
+}
+
+void qse_http_close (qse_http_t* http)
+{
+	qse_http_fini (http);
+	QSE_MMGR_FREE (http->mmgr, http);
+}
+
+qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
+{
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
+	QSE_MEMSET (http, 0, QSE_SIZEOF(*http));
+	http->mmgr = mmgr;
+
+	init_buffer (http, &http->state.buf);
+	http->state.no = QSE_HTTP_STATE_REQ;
+	return http;
+}
+
+void qse_http_fini (qse_http_t* http)
+{
+	fini_buffer (http, &http->state.buf);
+}
+
+/* feed the percent encoded string */
+int qse_http_feed (qse_http_t* http, const qse_char_t* ptr, qse_size_t len)
+{
+	const qse_char_t* end = ptr + len;
+	const qse_char_t* blk = ptr;
+
+	while (ptr < end)
+	{
+		if (*ptr++ == '\n')
+		{
+			if (push_to_buffer (http, &http->state.buf, blk, ptr - blk) <= -1) return -1;
+
+			blk = ptr; /* let ptr point to the next character to '\n' */
+
+			if (http->state.no == QSE_HTTP_STATE_REQ)
+			{
+				/*
+				if (parse_http_req (http, &http->state.buf) <= -1)
+				{
+					return -1;
+				}
+				*/
+			}
+			else 
+			{
+				/*
+				if (parse_http_hdr (http, &http->state.buf) <= -1)
+				{
+					return -1;
+				}
+				*/
+			}
+
+qse_printf (QSE_T("[%.*s]\n"), (int)http->state.buf.size, http->state.buf.data);
+			clear_buffer (http, &http->state.buf);
+		}
+	}
+
+
+	/* enbuffer the unfinished data */
+	if (push_to_buffer (http, &http->state.buf, blk, ptr - blk) <= -1) return -1;
+qse_printf (QSE_T("UNFINISHED [%.*s]\n"), (int)http->state.buf.size, http->state.buf.data);
+
+	return 0;
 }
