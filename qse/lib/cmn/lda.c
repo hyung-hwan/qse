@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: lda.c 360 2010-10-21 13:29:12Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -347,12 +347,14 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 	 * doesn't modify lda on any errors */
 	if (pos >= lda->capa || lda->size >= lda->capa) 
 	{
-		size_t capa;
+		size_t capa, mincapa;
+
+		/* get the minimum capacity needed */
+		mincapa = (pos >= lda->size)? (pos + 1): (lda->size + 1);
 
 		if (lda->sizer)
 		{
-			capa = (pos >= lda->size)? (pos + 1): (lda->size + 1);
-			capa = lda->sizer (lda, capa);
+			capa = lda->sizer (lda, mincapa);
 		}
 		else
 		{
@@ -368,13 +370,21 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 			}
 		}
 		
-		if (qse_lda_setcapa(lda,capa) == QSE_NULL) 
+		do
 		{
-			if (lda->freeer) 
-				lda->freeer (lda, DPTR(node), DLEN(node));
-			QSE_MMGR_FREE (lda->mmgr, node);
-			return QSE_LDA_NIL;
-		}
+			if (qse_lda_setcapa(lda,capa) != QSE_NULL) break;
+
+			if (capa <= mincapa)
+			{
+				if (lda->freeer) 
+					lda->freeer (lda, DPTR(node), DLEN(node));
+				QSE_MMGR_FREE (lda->mmgr, node);
+				return QSE_LDA_NIL;
+			}
+
+			capa--; /* let it retry after lowering the capacity */
+		} 
+		while (1);
 	}
 
 	if (pos >= lda->capa || lda->size >= lda->capa) 
