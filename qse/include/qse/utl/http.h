@@ -9,20 +9,22 @@
 #include <qse/macros.h>
 
 
-typedef struct qse_http_buf_t qse_http_buf_t;
+typedef struct qse_http_octb_t qse_http_octb_t;
 
-struct qse_http_buf_t
+struct qse_http_octb_t
 {
 	qse_size_t  capa;
 	qse_size_t  size;
-	qse_char_t* data;
+	qse_byte_t* data;
 };
 
 
 enum qse_http_errnum_t
 {
 	QSE_HTTP_ENOERR,
-	QSE_HTTP_ENOMEM
+	QSE_HTTP_ENOMEM,
+	QSE_HTTP_EBADREQ,
+	QSE_HTTP_EBADHDR
 };
 
 typedef enum qse_http_errnum_t qse_http_errnum_t;
@@ -50,10 +52,32 @@ struct qse_http_t
 
 	struct
 	{
-		qse_http_buf_t buf;
-		int no;
+		//qse_size_t pending;
+
+		int crlf; /* crlf status */
+		qse_size_t plen; /* raw request length excluding crlf */
 	} state;
 
+	struct
+	{
+		qse_http_octb_t raw;
+
+		enum
+		{
+			QSE_HTTP_REQ_GET,
+			QSE_HTTP_REQ_HEAD,
+			QSE_HTTP_REQ_POST
+		} method;
+
+		const qse_byte_t* path;	
+		const qse_byte_t* args;
+
+		struct
+		{
+			short major;
+			short minor;
+		} version;
+	} req;
 
 };
 
@@ -111,7 +135,7 @@ qse_http_t* qse_http_open (
  * The qse_http_close() function destroys a http processor.
  */
 void qse_http_close (
-	qse_http_t* http
+	qse_http_t* http 
 );
 
 qse_http_t* qse_http_init (
