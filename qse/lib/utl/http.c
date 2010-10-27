@@ -218,6 +218,11 @@ static QSE_INLINE int is_space_octet (qse_byte_t c)
 	return c == ' ' || c == '\t' || c == '\r';
 }
 
+static QSE_INLINE int is_purespace_octet (qse_byte_t c)
+{
+	return c == ' ' || c == '\t';
+}
+
 static QSE_INLINE int is_upalpha_octet (qse_byte_t c)
 {
 	return c >= 'A' && c <= 'Z';
@@ -370,11 +375,19 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 	http->state.crlf = 0;
 	http->state.plen = 0;
 	init_buffer (http, &http->req.raw);
+
+	if (qse_htb_init (&http->req.hdr, mmgr, 60, 70) == QSE_NULL) 
+	{
+		fini_buffer (http, &http->req.raw);
+		return QSE_NULL;
+	}
+
 	return http;
 }
 
 void qse_http_fini (qse_http_t* http)
 {
+	qse_htb_fini (&http->req.hdr);
 	fini_buffer (http, &http->req.raw);
 }
 
@@ -421,11 +434,11 @@ static qse_byte_t* parse_http_req (qse_http_t* http, qse_byte_t* line)
 	while (is_space_octet(*p)) p++;
 
 	/* process the url part */
-	http->req.path = p; 
-	http->req.args = QSE_NULL;
+	http->req.path.ptr = p; 
+	http->req.args.ptr = QSE_NULL;
 
 	tmp = p;
-	while (!is_space_octet(*p)) 
+	while (*p != '\0' && !is_space_octet(*p)) 
 	{
 		if (*p == '%')
 		{
@@ -448,12 +461,13 @@ static qse_byte_t* parse_http_req (qse_http_t* http, qse_byte_t* line)
 		}
 		else if (*p == '?')
 		{
-			if (!http->req.args)
+			if (!http->req.args.ptr)
 			{
 				/* ? must be explicit to be a argument instroducer. 
 				 * %3f is just a literal. */
-				*tmp++ = '\0';
-				http->req.args = tmp;
+				http->req.path.len = tmp - http->req.path.ptr;
+				/**tmp++ = '\0';*/
+				http->req.args.ptr = tmp;
 				p++;
 			}
 			else *tmp++ = *p++;
@@ -464,8 +478,11 @@ static qse_byte_t* parse_http_req (qse_http_t* http, qse_byte_t* line)
 	/* the url must be followed by a space */
 	if (!is_space_octet(*p)) goto badreq;
 
-	/* null-terminate the url part */
-	*tmp = '\0';
+	if (http->req.args.ptr)
+		http->req.args.len = tmp - http->req.args.ptr;
+	else
+		http->req.path.len = tmp - http->req.path.ptr;
+	/* *tmp = '\0'; */ /* null-terminate the url part */
 
 	/* skip spaces after the url part */
 	do { p++; } while (is_space_octet(*p));
@@ -499,13 +516,14 @@ qse_printf (QSE_T("parse_http_req ....\n"));
 	return ++p;
 
 badreq:
+qse_printf (QSE_T("BADREQ\n"));
 	http->errnum = QSE_HTTP_EBADREQ;
 	return QSE_NULL;
 }
 
 qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 {
-	qse_byte_t* p = line, * mark;
+	qse_byte_t* p = line, * last;
 	struct
 	{
 		qse_byte_t* ptr;
@@ -517,28 +535,65 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 	while (is_space_octet(*p)) p++;
 #endif
 
-	name.ptr = p;
-	while (!is_whspace_octet(*p) && *p != ':') p++;
-	name.len = p - name.ptr;
+	QSE_ASSERT (!is_whspace_octet(*p));
 
-	mark = p; while (is_space_octet(*p)) p++;
+	/* check the field name */
+	name.ptr = last = p;
+	while (*p != '\0' && *p != '\n' && *p != ':')
+	{
+		if (!is_space_octet(*p++)) last = p;
+	}
+	name.len = last - name.ptr;
+
 	if (*p != ':') goto badhdr;
-	*mark = '\0';
+	*last = '\0';
 
 	/* skip the colon and spaces after it */
 	do { p++; } while (is_space_octet(*p));
 
-	value.ptr = p;
-	do { p++; } while (!is_whspace_octet(*p));
-	value.len = p - value.ptr;
+	value.ptr = last = p;
+	while (*p != '\0' && *p != '\n')
+	{
+		if (!is_space_octet(*p++)) last = p;
+	}
 
-	/* skip trailing spaces on the line */
-	mark = p; while (is_space_octet(*p)) p++;
+	value.len = last - value.ptr;
 	if (*p != '\n') goto badhdr; /* not ending with a new line */
-	*mark = '\0';
 
+	/* peep at the beginning of the next line to check if it is 
+	 * the continuation */
+	if (is_purespace_octet (*++p))
+	{
+		qse_byte_t* cpydst;
 
-qse_printf (QSE_T("<<%S>> => <<%S>>\n"),  name.ptr, value.ptr);
+		cpydst = p - 1;
+		if (*(cpydst-1) == '\r') cpydst--;
+
+		/* process all continued lines */
+		do 
+		{
+			while (*p != '\0' && *p != '\n')
+			{
+				*cpydst = *p++; 
+				if (!is_space_octet(*cpydst++)) last = cpydst;
+			} 
+	
+			value.len = last - value.ptr;
+			if (*p != '\n') goto badhdr;
+
+			if (*(cpydst-1) == '\r') cpydst--;
+		}
+		while (is_purespace_octet(*++p));
+	}
+	*last = '\0';
+
+	if (qse_htb_insert (&http->req.hdr,
+		name.ptr, name.len, value.ptr, value.len) == QSE_NULL)
+	{
+		http->errnum = QSE_HTTP_ENOMEM;
+		return QSE_NULL;
+	}
+
 	return p;
 
 badhdr:
@@ -547,6 +602,10 @@ qse_printf (QSE_T("BADHDR\n"),  name.ptr, value.ptr);
 	return QSE_NULL;
 }
 
+static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
+{
+qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)pair->klen, pair->kptr, (int)pair->vlen, pair->vptr);
+}
 
 /* feed the percent encoded string */
 int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
@@ -603,6 +662,9 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 					if (p == QSE_NULL) return -1;
 				}
 				while (1);
+					
+qse_htb_walk (&http->req.hdr, walk, QSE_NULL);
+/* TODO: do the main job here... before the raw buffer is cleared out... */
 			
 				clear_buffer (http, &http->req.raw);
 				req = ptr; /* let ptr point to the next character to '\n' */
