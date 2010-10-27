@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
+ * $Id: htb.h 362 2010-10-26 13:01:16Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -444,9 +444,9 @@ void qse_htb_clear (
  * The qse_htb_walk() function traverses a hash table.
  */
 void qse_htb_walk (
-	qse_htb_t* htb,          /**< hash table */
+	qse_htb_t*       htb,    /**< hash table */
 	qse_htb_walker_t walker, /**< callback function for each pair */
-	void* ctx                /**< pointer to user-specific data */
+	void*            ctx     /**< pointer to user-specific data */
 );
 
 /**

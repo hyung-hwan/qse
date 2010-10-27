@@ -7,6 +7,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/htb.h>
 
 
 typedef struct qse_http_octb_t qse_http_octb_t;
@@ -69,14 +70,25 @@ struct qse_http_t
 			QSE_HTTP_REQ_POST
 		} method;
 
-		const qse_byte_t* path;	
-		const qse_byte_t* args;
+		struct
+		{
+			qse_byte_t* ptr;
+			qse_size_t  len;
+		} path;
+
+		struct
+		{
+			qse_byte_t* ptr;
+			qse_size_t  len;
+		} args;
 
 		struct
 		{
 			short major;
 			short minor;
 		} version;
+
+		qse_htb_t hdr;
 	} req;
 
 };
