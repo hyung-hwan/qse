@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: val.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -389,6 +389,25 @@ static void same_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 {
 	qse_awk_val_map_t* val;
+	static qse_htb_mancbs_t mancbs =
+	{
+	/* the key is copied inline into a pair and is freed when the pair
+	 * is destroyed. not setting copier for a value means that the pointer 
+	 * to the data allocated somewhere else is remembered in a pair. but 
+	 * freeing the actual value is handled by free_mapval and same_mapval */
+		{
+			QSE_HTB_COPIER_INLINE,
+			QSE_HTB_COPIER_DEFAULT
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			free_mapval
+		},
+		QSE_HTB_HASHER_DEFAULT,
+		QSE_HTB_COMPER_DEFAULT,
+		same_mapval,
+		QSE_HTB_SIZER_DEFAULT
+	};
 
 	/* CHECK */
 	/* 
@@ -429,7 +448,9 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->nstr = 0;
 	val->map = (qse_htb_t*)(val + 1);
 
-	val->map = qse_htb_init (val->map, rtx->awk->mmgr, 256, 70);
+	val->map = qse_htb_init (
+		val->map, rtx->awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1
+	);
 	if (val->map == QSE_NULL)
 	{
 		QSE_AWK_FREE (rtx->awk, val);
@@ -437,17 +458,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 		return QSE_NULL;
 	}
 	*(qse_awk_rtx_t**)QSE_XTN(val->map) = rtx;
-
-	/* the key is copied inline into a pair and is freed when the pair
-	 * is destroyed */
-	qse_htb_setcopier (val->map, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-	qse_htb_setscale (val->map, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
-
-	/* not setting copier for a value means that the pointer to the data 
-	 * allocated somewhere else is remembered in a pair. but the freeing 
-	 * the actual value is handled by free_mapval and same_mapval */
-	qse_htb_setfreeer (val->map, QSE_HTB_VAL, free_mapval);
-	qse_htb_setkeeper (val->map, same_mapval);
+	qse_htb_setmancbs (val->map, &mancbs);
 	/* END CHECK */
 
 	return (qse_awk_val_t*)val;

@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: htb.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -52,41 +52,13 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 #define ENSERT 3
 #define INSERT 4
 
-static int reorganize (htb_t* htb);
-
-static size_t hash_key (htb_t* htb, const void* kptr, size_t klen)
-{
-	/*size_t h = 2166136261;*/
-	/*size_t h = 0;*/
-	size_t h = 5381;
-	const byte_t* p = (const byte_t*)kptr;
-	const byte_t* bound = p + klen;
-
-	while (p < bound)
-	{
-		/*h = (h * 16777619) ^ *p++;*/
-		/*h = h * 31 + *p++;*/
-		h = ((h << 5) + h) + *p++;
-	}	
-
-	return h ; 
-}
-
-static QSE_INLINE int comp_key (htb_t* htb, 
-	const void* kptr1, size_t klen1, 
-	const void* kptr2, size_t klen2)
-{
-	if (klen1 == klen2) return QSE_MEMCMP (kptr1, kptr2, KTOB(htb,klen1));
-	/* it just returns 1 to indicate that they are different. */
-	return 1;
-}
 
 static pair_t* alloc_pair (htb_t* htb, 
 	void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* n;
-	copier_t kcop = htb->copier[QSE_HTB_KEY];
-	copier_t vcop = htb->copier[QSE_HTB_VAL];
+	copier_t kcop = htb->mancbs->copier[QSE_HTB_KEY];
+	copier_t vcop = htb->mancbs->copier[QSE_HTB_VAL];
 
 	size_t as = SIZEOF(pair_t);
 	if (kcop == QSE_HTB_COPIER_INLINE) as += KTOB(htb,klen);
@@ -134,8 +106,8 @@ static pair_t* alloc_pair (htb_t* htb,
 		VPTR(n) = vcop (htb, vptr, vlen);
 		if (VPTR(n) != QSE_NULL)
 		{
-			if (htb->freeer[QSE_HTB_KEY] != QSE_NULL)
-				htb->freeer[QSE_HTB_KEY] (htb, KPTR(n), KLEN(n));
+			if (htb->mancbs->freeer[QSE_HTB_KEY] != QSE_NULL)
+				htb->mancbs->freeer[QSE_HTB_KEY] (htb, KPTR(n), KLEN(n));
 			QSE_MMGR_FREE (htb->mmgr, n);		
 			return QSE_NULL;
 		}
@@ -146,10 +118,10 @@ static pair_t* alloc_pair (htb_t* htb,
 
 static void free_pair (htb_t* htb, pair_t* pair)
 {
-	if (htb->freeer[QSE_HTB_KEY] != QSE_NULL) 
-		htb->freeer[QSE_HTB_KEY] (htb, KPTR(pair), KLEN(pair));
-	if (htb->freeer[QSE_HTB_VAL] != QSE_NULL)
-		htb->freeer[QSE_HTB_VAL] (htb, VPTR(pair), VLEN(pair));
+	if (htb->mancbs->freeer[QSE_HTB_KEY] != QSE_NULL) 
+		htb->mancbs->freeer[QSE_HTB_KEY] (htb, KPTR(pair), KLEN(pair));
+	if (htb->mancbs->freeer[QSE_HTB_VAL] != QSE_NULL)
+		htb->mancbs->freeer[QSE_HTB_VAL] (htb, VPTR(pair), VLEN(pair));
 	QSE_MMGR_FREE (htb->mmgr, pair);
 }
 
@@ -161,14 +133,14 @@ static pair_t* change_pair_val (
 		/* if the old value and the new value are the same,
 		 * it just calls the handler for this condition. 
 		 * No value replacement occurs. */
-		if (htb->keeper != QSE_NULL)
+		if (htb->mancbs->keeper != QSE_NULL)
 		{
-			htb->keeper (htb, vptr, vlen);
+			htb->mancbs->keeper (htb, vptr, vlen);
 		}
 	}
 	else
 	{
-		copier_t vcop = htb->copier[QSE_HTB_VAL];
+		copier_t vcop = htb->mancbs->copier[QSE_HTB_VAL];
 		void* ovptr = VPTR(pair);
 		size_t ovlen = VLEN(pair);
 
@@ -204,9 +176,9 @@ static pair_t* change_pair_val (
 		}
 
 		/* free up the old value */
-		if (htb->freeer[QSE_HTB_VAL] != QSE_NULL) 
+		if (htb->mancbs->freeer[QSE_HTB_VAL] != QSE_NULL) 
 		{
-			htb->freeer[QSE_HTB_VAL] (htb, ovptr, ovlen);
+			htb->mancbs->freeer[QSE_HTB_VAL] (htb, ovptr, ovlen);
 		}
 	}
 
@@ -214,7 +186,24 @@ static pair_t* change_pair_val (
 	return pair;
 }
 
-htb_t* qse_htb_open (mmgr_t* mmgr, size_t ext, size_t capa, int factor)
+static qse_htb_mancbs_t mancbs =
+{
+	{
+		QSE_HTB_COPIER_DEFAULT,
+		QSE_HTB_COPIER_DEFAULT
+	},
+	{
+		QSE_HTB_FREEER_DEFAULT,
+		QSE_HTB_FREEER_DEFAULT
+	},
+	QSE_HTB_HASHER_DEFAULT,
+	QSE_HTB_COMPER_DEFAULT,
+	QSE_HTB_KEEPER_DEFAULT,
+	QSE_HTB_SIZER_DEFAULT
+};
+
+htb_t* qse_htb_open (
+	mmgr_t* mmgr, size_t ext, size_t capa, int factor, int kscale, int vscale)
 {
 	htb_t* htb;
 
@@ -231,7 +220,7 @@ htb_t* qse_htb_open (mmgr_t* mmgr, size_t ext, size_t capa, int factor)
 	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(htb_t) + ext);
 	if (htb == QSE_NULL) return QSE_NULL;
 
-	if (qse_htb_init (htb, mmgr, capa, factor) == QSE_NULL)
+	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, htb);
 		return QSE_NULL;
@@ -246,7 +235,8 @@ void qse_htb_close (htb_t* htb)
 	QSE_MMGR_FREE (htb->mmgr, htb);
 }
 
-htb_t* qse_htb_init (htb_t* htb, mmgr_t* mmgr, size_t capa, int factor)
+htb_t* qse_htb_init (
+	htb_t* htb, mmgr_t* mmgr, size_t capa, int factor, int kscale, int vscale)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -270,15 +260,22 @@ htb_t* qse_htb_init (htb_t* htb, mmgr_t* mmgr, size_t capa, int factor)
 	/*for (i = 0; i < capa; i++) htb->bucket[i] = QSE_NULL;*/
 	QSE_MEMSET (htb->bucket, 0, capa*SIZEOF(pair_t*));
 
+	htb->factor = factor;
+#if 0
 	htb->scale[QSE_HTB_KEY] = 1;
 	htb->scale[QSE_HTB_VAL] = 1;
-	htb->factor = factor;
+#endif
+	htb->scale[QSE_HTB_KEY] = (kscale < 1)? 1: kscale;
+	htb->scale[QSE_HTB_VAL] = (vscale < 1)? 1: vscale;
 
 	htb->size = 0;
 	htb->capa = capa;
 	htb->threshold = htb->capa * htb->factor / 100;
 	if (htb->capa > 0 && htb->threshold <= 0) htb->threshold = 1;
 
+	htb->mancbs = &mancbs;
+
+#if 0
 	htb->hasher = hash_key;
 	htb->comper = comp_key;
 	htb->copier[QSE_HTB_KEY] = QSE_HTB_COPIER_SIMPLE;
@@ -290,6 +287,7 @@ htb_t* qse_htb_init (htb_t* htb, mmgr_t* mmgr, size_t capa, int factor)
 	htb->keeper = QSE_NULL;
 	htb->sizer = QSE_NULL;
 	*/
+#endif
 
 	return htb;
 }
@@ -300,6 +298,7 @@ void qse_htb_fini (htb_t* htb)
 	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
 }
 
+#if 0
 int qse_htb_getscale (htb_t* htb, qse_htb_id_t id)
 {
 	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
@@ -320,7 +319,20 @@ void qse_htb_setscale (htb_t* htb, qse_htb_id_t id, int scale)
 
 	htb->scale[id] = scale;
 }
+#endif
 
+const qse_htb_mancbs_t* qse_htb_getmancbs (htb_t* htb)
+{
+	return htb->mancbs;
+}
+
+void qse_htb_setmancbs (htb_t* htb, const qse_htb_mancbs_t* mancbs)
+{
+	QSE_ASSERT (mancbs != QSE_NULL);
+	htb->mancbs = mancbs;
+}
+
+#if 0
 copier_t qse_htb_getcopier (htb_t* htb, qse_htb_id_t id)
 {
 	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
@@ -391,6 +403,7 @@ void qse_htb_setsizer (htb_t* htb, sizer_t sizer)
 {
 	htb->sizer = sizer;
 }
+#endif
 
 size_t qse_htb_getsize (htb_t* htb)
 {
@@ -407,12 +420,12 @@ pair_t* qse_htb_search (htb_t* htb, const void* kptr, size_t klen)
 	pair_t* pair;
 	size_t hc;
 
-	hc = htb->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 
 	while (pair != QSE_NULL) 
 	{
-		if (htb->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0)
+		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0)
 		{
 			return pair;
 		}
@@ -423,13 +436,75 @@ pair_t* qse_htb_search (htb_t* htb, const void* kptr, size_t klen)
 	return QSE_NULL;
 }
 
+static QSE_INLINE_ALWAYS int reorganize (htb_t* htb)
+{
+	size_t i, hc, new_capa;
+	pair_t** new_buck;
+
+	if (htb->mancbs->sizer)
+	{
+		new_capa = htb->mancbs->sizer (htb, htb->capa + 1);
+
+		/* if no change in capacity, return success 
+		 * without reorganization */
+		if (new_capa == htb->capa) return 0; 
+
+		/* adjust to 1 if the new capacity is not reasonable */
+		if (new_capa <= 0) new_capa = 1;
+	}
+	else
+	{
+		/* the bucket is doubled until it grows up to 65536 slots.
+		 * once it has reached it, it grows by 65536 slots */
+		new_capa = (htb->capa >= 65536)? (htb->capa + 65536): (htb->capa << 1);
+	}
+
+	new_buck = (pair_t**) QSE_MMGR_ALLOC (
+		htb->mmgr, new_capa*SIZEOF(pair_t*));
+	if (new_buck == QSE_NULL) 
+	{
+		/* reorganization is disabled once it fails */
+		htb->threshold = 0;
+		return -1;
+	}
+
+	/*for (i = 0; i < new_capa; i++) new_buck[i] = QSE_NULL;*/
+	QSE_MEMSET (new_buck, 0, new_capa*SIZEOF(pair_t*));
+
+	for (i = 0; i < htb->capa; i++)
+	{
+		pair_t* pair = htb->bucket[i];
+
+		while (pair != QSE_NULL) 
+		{
+			pair_t* next = NEXT(pair);
+
+			hc = htb->mancbs->hasher (htb,
+				KPTR(pair),
+				KLEN(pair)) % new_capa;
+
+			NEXT(pair) = new_buck[hc];
+			new_buck[hc] = pair;
+
+			pair = next;
+		}
+	}
+
+	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
+	htb->bucket = new_buck;
+	htb->capa = new_capa;
+	htb->threshold = htb->capa * htb->factor / 100;
+
+	return 0;
+}
+
 static pair_t* insert (
 	htb_t* htb, void* kptr, size_t klen, void* vptr, size_t vlen, int opt)
 {
 	pair_t* pair, * p, * prev, * next;
 	size_t hc;
 
-	hc = htb->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 	prev = QSE_NULL;
 
@@ -437,7 +512,7 @@ static pair_t* insert (
 	{
 		next = NEXT(pair);
 
-		if (htb->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			/* found a pair with a matching key */
 			switch (opt)
@@ -481,7 +556,7 @@ static pair_t* insert (
 	{
 		if (reorganize(htb) == 0) /* ignore the error */
 		{
-			hc = htb->hasher(htb,kptr,klen) % htb->capa;
+			hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
 		}
 	}
 
@@ -527,13 +602,13 @@ int qse_htb_delete (htb_t* htb, const void* kptr, size_t klen)
 	pair_t* pair, * prev;
 	size_t hc;
 
-	hc = htb->hasher(htb,kptr,klen) % htb->capa;
+	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
 	pair = htb->bucket[hc];
 	prev = QSE_NULL;
 
 	while (pair != QSE_NULL) 
 	{
-		if (htb->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
 		{
 			if (prev == QSE_NULL) 
 				htb->bucket[hc] = NEXT(pair);
@@ -635,64 +710,30 @@ pair_t* qse_htb_getnextpair (htb_t* htb, pair_t* pair, size_t* buckno)
 	return QSE_NULL;
 }
 
-static int reorganize (htb_t* htb)
+size_t qse_htb_dflhash (htb_t* htb, const void* kptr, size_t klen)
 {
-	size_t i, hc, new_capa;
-	pair_t** new_buck;
+	/*size_t h = 2166136261;*/
+	/*size_t h = 0;*/
+	size_t h = 5381;
+	const byte_t* p = (const byte_t*)kptr;
+	const byte_t* bound = p + klen;
 
-	if (htb->sizer)
+	while (p < bound)
 	{
-		new_capa = htb->sizer (htb, htb->capa + 1);
+		/*h = (h * 16777619) ^ *p++;*/
+		/*h = h * 31 + *p++;*/
+		h = ((h << 5) + h) + *p++;
+	}	
 
-		/* if no change in capacity, return success 
-		 * without reorganization */
-		if (new_capa == htb->capa) return 0; 
-
-		/* adjust to 1 if the new capacity is not reasonable */
-		if (new_capa <= 0) new_capa = 1;
-	}
-	else
-	{
-		/* the bucket is doubled until it grows up to 65536 slots.
-		 * once it has reached it, it grows by 65536 slots */
-		new_capa = (htb->capa >= 65536)? (htb->capa + 65536): (htb->capa << 1);
-	}
-
-	new_buck = (pair_t**) QSE_MMGR_ALLOC (
-		htb->mmgr, new_capa*SIZEOF(pair_t*));
-	if (new_buck == QSE_NULL) 
-	{
-		/* reorganization is disabled once it fails */
-		htb->threshold = 0;
-		return -1;
-	}
-
-	/*for (i = 0; i < new_capa; i++) new_buck[i] = QSE_NULL;*/
-	QSE_MEMSET (new_buck, 0, new_capa*SIZEOF(pair_t*));
-
-	for (i = 0; i < htb->capa; i++)
-	{
-		pair_t* pair = htb->bucket[i];
-
-		while (pair != QSE_NULL) 
-		{
-			pair_t* next = NEXT(pair);
-
-			hc = htb->hasher (htb,
-				KPTR(pair),
-				KLEN(pair)) % new_capa;
-
-			NEXT(pair) = new_buck[hc];
-			new_buck[hc] = pair;
-
-			pair = next;
-		}
-	}
-
-	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
-	htb->bucket = new_buck;
-	htb->capa = new_capa;
-	htb->threshold = htb->capa * htb->factor / 100;
-
-	return 0;
+	return h ; 
 }
+
+int qse_htb_dflcomp (htb_t* htb, 
+	const void* kptr1, size_t klen1, 
+	const void* kptr2, size_t klen2)
+{
+	if (klen1 == klen2) return QSE_MEMCMP (kptr1, kptr2, KTOB(htb,klen1));
+	/* it just returns 1 to indicate that they are different. */
+	return 1;
+}
+

@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 362 2010-10-26 13:01:16Z hyunghwan.chung $
+ * $Id: htb.h 363 2010-10-27 12:54:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -142,6 +142,18 @@ struct qse_htb_pair_t
 	qse_htb_pair_t* next; 
 };
 
+typedef struct qse_htb_mancbs_t qse_htb_mancbs_t;
+
+struct qse_htb_mancbs_t
+{
+	qse_htb_copier_t copier[2];
+	qse_htb_freeer_t freeer[2];
+	qse_htb_hasher_t hasher;   /**< key hasher */
+	qse_htb_comper_t comper;   /**< key comparator */
+	qse_htb_keeper_t keeper;   /**< value keeper */
+	qse_htb_sizer_t  sizer;    /**< bucket capacity recalculator */
+};
+
 /**
  * The qse_htb_t type defines a hash table.
  */
@@ -149,12 +161,16 @@ struct qse_htb_t
 {
 	QSE_DEFINE_COMMON_FIELDS (htb)
 
+	const qse_htb_mancbs_t* mancbs;
+
+#if 0
 	qse_htb_copier_t copier[2];
 	qse_htb_freeer_t freeer[2];
 	qse_htb_hasher_t hasher;   /**< key hasher */
 	qse_htb_comper_t comper;   /**< key comparator */
 	qse_htb_keeper_t keeper;   /**< value keeper */
 	qse_htb_sizer_t  sizer;    /**< bucket capacity recalculator */
+#endif
 
 	qse_byte_t       scale[2]; /**< length scale */
 	qse_byte_t       factor;   /**< load factor in percentage */
@@ -168,6 +184,13 @@ struct qse_htb_t
 
 #define QSE_HTB_COPIER_SIMPLE ((qse_htb_copier_t)1)
 #define QSE_HTB_COPIER_INLINE ((qse_htb_copier_t)2)
+
+#define QSE_HTB_COPIER_DEFAULT (QSE_HTB_COPIER_SIMPLE)
+#define QSE_HTB_FREEER_DEFAULT (QSE_NULL)
+#define QSE_HTB_HASHER_DEFAULT (qse_htb_dflhash)
+#define QSE_HTB_COMPER_DEFAULT (qse_htb_dflcomp)
+#define QSE_HTB_KEEPER_DEFAULT (QSE_NULL)
+#define QSE_HTB_SIZER_DEFAULT  (QSE_NULL)
 
 /**
  * The QSE_HTB_SIZE() macro returns the number of pairs in a hash table.
@@ -210,7 +233,9 @@ qse_htb_t* qse_htb_open (
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  ext,    /**< extension size in bytes */
 	qse_size_t  capa,   /**< initial capacity */
-	int         factor  /**< load factor */
+	int         factor, /**< load factor */
+	int         kscale, /**< key scale */
+	int         vscale  /**< value scale */
 );
 
 
@@ -225,10 +250,12 @@ void qse_htb_close (
  * The qse_htb_init() function initializes a hash table
  */
 qse_htb_t* qse_htb_init (
-	qse_htb_t*  htb,
-	qse_mmgr_t* mmgr,
-	qse_size_t  capa,
-	int         factor
+	qse_htb_t*  htb,    /**< hash table */
+	qse_mmgr_t* mmgr,   /**< memory manager */
+	qse_size_t  capa,   /**< initial capacity */
+	int         factor, /**< load factor */
+	int         kscale, /**< key scale */
+	int         vscale  /**< value scale */
 );
 
 /**
@@ -253,6 +280,7 @@ qse_size_t qse_htb_getcapa (
 	qse_htb_t* htb /**< hash table */
 );
 
+#if 0
 /**
  * The qse_htb_getscale() function returns the scale factor
  */
@@ -274,7 +302,18 @@ void qse_htb_setscale (
 	qse_htb_id_t id,   /**< QSE_HTB_KEY or QSE_HTB_VAL */
 	int          scale /**< scale factor in bytes */
 );
+#endif
 
+const qse_htb_mancbs_t* qse_htb_getmancbs (
+	qse_htb_t* htb
+);
+
+void qse_htb_setmancbs (
+	qse_htb_t*              htb,
+	const qse_htb_mancbs_t* mancbs
+);
+
+#if 0
 /**
  * The qse_htb_getcopier() function gets a data copier.
  */
@@ -352,6 +391,8 @@ void qse_htb_setsizer (
 	qse_htb_t* htb,
 	qse_htb_sizer_t sizer
 );
+
+#endif
 
 /**
  * The qse_htb_search() function searches a hash table to find a pair with a 
@@ -466,6 +507,21 @@ qse_htb_pair_t* qse_htb_getnextpair (
 	qse_htb_t*      htb,    /**< hash table */
 	qse_htb_pair_t* pair,   /**< current pair  */
 	qse_size_t*     buckno  /**< bucket number */
+);
+
+
+qse_size_t qse_htb_dflhash (
+	qse_htb_t*  htb,
+	const void* kptr,
+	qse_size_t  klen
+);
+
+int qse_htb_dflcomp (
+	qse_htb_t*  htb,
+     const void* kptr1,
+	qse_size_t  klen1,
+     const void* kptr2,
+	qse_size_t  klen2
 );
 
 #ifdef __cplusplus
