@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 343 2010-08-05 07:31:17Z hyunghwan.chung $
+ * $Id: run.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -787,6 +787,22 @@ static void same_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 {
+	static qse_htb_mancbs_t mancbs_for_named =
+	{
+		{
+			QSE_HTB_COPIER_INLINE,
+			QSE_HTB_COPIER_DEFAULT 
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			free_namedval 
+		},
+		QSE_HTB_HASHER_DEFAULT,
+		QSE_HTB_COMPER_DEFAULT,
+		same_namedval,
+		QSE_HTB_SIZER_DEFAULT
+	};
+
 	/* zero out the runtime context excluding the extension */
 	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t));
 
@@ -845,7 +861,8 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	}
 
 	rtx->named = qse_htb_open (
-		MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70);
+		MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1
+	);
 	if (rtx->named == QSE_NULL)
 	{
 		qse_str_fini (&rtx->format.fmt);
@@ -856,10 +873,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		return -1;
 	}
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
-	qse_htb_setcopier (rtx->named, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-	qse_htb_setfreeer (rtx->named, QSE_HTB_VAL, free_namedval);
-	qse_htb_setkeeper (rtx->named, same_namedval);	
-	qse_htb_setscale (rtx->named, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
+	qse_htb_setmancbs (rtx->named, &mancbs_for_named);
 
 	rtx->format.tmp.ptr = (qse_char_t*)
 		QSE_AWK_ALLOC (rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));

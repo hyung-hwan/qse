@@ -376,7 +376,7 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 	http->state.plen = 0;
 	init_buffer (http, &http->req.raw);
 
-	if (qse_htb_init (&http->req.hdr, mmgr, 60, 70) == QSE_NULL) 
+	if (qse_htb_init (&http->req.hdr, mmgr, 60, 70, 1, 1) == QSE_NULL) 
 	{
 		fini_buffer (http, &http->req.raw);
 		return QSE_NULL;
@@ -587,6 +587,7 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 	}
 	*last = '\0';
 
+	/* add the field name and value into a hash table */
 	if (qse_htb_insert (&http->req.hdr,
 		name.ptr, name.len, value.ptr, value.len) == QSE_NULL)
 	{
@@ -605,6 +606,7 @@ qse_printf (QSE_T("BADHDR\n"),  name.ptr, value.ptr);
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
 qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)pair->klen, pair->kptr, (int)pair->vlen, pair->vptr);
+	return QSE_HTB_WALK_FORWARD;
 }
 
 /* feed the percent encoded string */

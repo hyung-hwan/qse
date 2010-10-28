@@ -161,10 +161,10 @@ static int test2 ()
 		return -1;
 	}
 
-	qse_htb_setcopier (s1, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-	qse_htb_setcopier (s1, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
 	qse_htb_setscale (s1, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 	qse_htb_setscale (s1, QSE_HTB_VAL, QSE_SIZEOF(qse_char_t));
+	qse_htb_setcopier (s1, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
+	qse_htb_setcopier (s1, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
 
 	for (i = 0; i < QSE_COUNTOF(keys); i++)
 	{
@@ -227,10 +227,10 @@ static int test3 ()
 		return -1;
 	}
 
+	qse_htb_setscale (s1, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 	qse_htb_setcopier (s1, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
 	qse_htb_setcopier (s1, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
 	qse_htb_setcomper (s1, comp_key);
-	qse_htb_setscale (s1, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	for (i = 0; i < QSE_COUNTOF(keys); i++)
 	{
@@ -273,10 +273,10 @@ static int test4 ()
 		return -1;
 	}
 
+	qse_htb_setscale (s1, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 	qse_htb_setcopier (s1, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
 	qse_htb_setcopier (s1, QSE_HTB_VAL, QSE_HTB_COPIER_INLINE);
 	qse_htb_setcomper (s1, comp_key);
-	qse_htb_setscale (s1, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
 
 	for (i = 0; i < QSE_COUNTOF(keys); i++)
 	{
