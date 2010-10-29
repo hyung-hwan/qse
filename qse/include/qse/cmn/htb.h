@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: htb.h 364 2010-10-28 13:09:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -56,6 +56,9 @@ typedef enum qse_htb_id_t qse_htb_id_t;
 
 /**
  * The qse_htb_copier_t type defines a pair contruction callback.
+ * A special copier #QSE_HTB_COPIER_INLINE is provided. This copier enables
+ * you to copy the data inline to the internal node. No freeer is invoked
+ * when the node is freeed.
  */
 typedef void* (*qse_htb_copier_t) (
 	qse_htb_t* htb  /* hash table */,
@@ -65,6 +68,7 @@ typedef void* (*qse_htb_copier_t) (
 
 /**
  * The qse_htb_freeer_t defines a key/value destruction callback
+ * The freeer is called when a node containing the element is destroyed.
  */
 typedef void (*qse_htb_freeer_t) (
 	qse_htb_t* htb,  /**< hash table */
@@ -108,8 +112,8 @@ typedef void (*qse_htb_keeper_t) (
 
 /**
  * The qse_htb_sizer_t type defines a bucket size claculator that is called
- * when hash table should resize the bucket. The current bucket size +1 is passed
- * as the hint.
+ * when hash table should resize the bucket. The current bucket size + 1 is 
+ * passed as the hint.
  */
 typedef qse_size_t (*qse_htb_sizer_t) (
 	qse_htb_t* htb,  /**< htb */
@@ -162,15 +166,6 @@ struct qse_htb_t
 	QSE_DEFINE_COMMON_FIELDS (htb)
 
 	const qse_htb_mancbs_t* mancbs;
-
-#if 0
-	qse_htb_copier_t copier[2];
-	qse_htb_freeer_t freeer[2];
-	qse_htb_hasher_t hasher;   /**< key hasher */
-	qse_htb_comper_t comper;   /**< key comparator */
-	qse_htb_keeper_t keeper;   /**< value keeper */
-	qse_htb_sizer_t  sizer;    /**< bucket capacity recalculator */
-#endif
 
 	qse_byte_t       scale[2]; /**< length scale */
 	qse_byte_t       factor;   /**< load factor in percentage */
@@ -313,87 +308,6 @@ void qse_htb_setmancbs (
 	const qse_htb_mancbs_t* mancbs
 );
 
-#if 0
-/**
- * The qse_htb_getcopier() function gets a data copier.
- */
-qse_htb_copier_t qse_htb_getcopier (
-	qse_htb_t*   htb, /**< hash table */
-	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */
-);
-
-/**
- * The qse_htb_setcopier() function specifies how to clone an element.
- *  A special copier QSE_HTB_COPIER_INLINE is provided. This copier enables
- *  you to copy the data inline to the internal node. No freeer is invoked
- *  when the node is freeed.
- *
- *  You may set the copier to QSE_NULL to perform no special operation 
- *  when the data pointer is rememebered.
- */
-void qse_htb_setcopier (
-	qse_htb_t* htb,          /**< hash table */
-	qse_htb_id_t id,         /**< QSE_HTB_KEY or QSE_HTB_VAL */
-	qse_htb_copier_t copier  /**< element copier */
-);
-
-/**
- * The qse_htb_getfreeer() function returns a custom element destroyer.
- */
-qse_htb_freeer_t qse_htb_getfreeer (
-	qse_htb_t*   htb, /**< hash table */
-	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */
-);
-
-/**
- * The qse_htb_setfreeer() function specifies how to destroy an element.
- * The @a freeer is called when a node containing the element is destroyed.
- */
-void qse_htb_setfreeer (
-	qse_htb_t*       htb,    /**< hash table */
-	qse_htb_id_t     id,     /**< QSE_HTB_KEY or QSE_HTB_VAL */
-	qse_htb_freeer_t freeer  /**< an element freeer */
-);
-
-qse_htb_hasher_t qse_htb_gethasher (
-	qse_htb_t* htb 
-);
-
-void qse_htb_sethasher (
-	qse_htb_t*       htb,
-	qse_htb_hasher_t hasher
-);
-
-qse_htb_comper_t qse_htb_getcomper (
-	qse_htb_t* htb
-);
-
-void qse_htb_setcomper (
-	qse_htb_t* htb,
-	qse_htb_comper_t comper
-);
-
-qse_htb_keeper_t qse_htb_getkeeper (
-	qse_htb_t* htb
-);
-
-void qse_htb_setkeeper (
-	qse_htb_t* htb,
-	qse_htb_keeper_t keeper
-);
-
-qse_htb_sizer_t qse_htb_getsizer (
-	qse_htb_t* htb
-);
-
-/* the sizer function is passed hash table object and htb->capa + 1 */
-void qse_htb_setsizer (
-	qse_htb_t* htb,
-	qse_htb_sizer_t sizer
-);
-
-#endif
-
 /**
  * The qse_htb_search() function searches a hash table to find a pair with a 
  * matching key. It returns the pointer to the pair found. If it fails
@@ -464,6 +378,22 @@ qse_htb_pair_t* qse_htb_update (
 	qse_size_t vlen   /**< the length of the value */
 );
 
+typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
+	qse_htb_t*      htb,
+	qse_htb_pair_t* pair,
+	void*           kptr,
+	qse_size_t      klen,
+	void*           ctx
+);
+
+qse_htb_pair_t* qse_htb_cbsert (
+	qse_htb_t*         htb,
+	void*              kptr,
+	qse_size_t         klen,
+	qse_htb_cbserter_t cbserter,
+	void*              ctx
+);
+
 /**
  * The qse_htb_delete() function deletes a pair with a matching key 
  * @return 0 on success, -1 on failure
@@ -509,6 +439,28 @@ qse_htb_pair_t* qse_htb_getnextpair (
 	qse_size_t*     buckno  /**< bucket number */
 );
 
+/**
+ * The qse_htb_allocpair() function allocates a pair for a key and a value 
+ * given. But it does not chain the pair allocated into the hash table @a htb.
+ * Use this function at your own risk.
+ */
+qse_htb_pair_t* qse_htb_allocpair (
+	qse_htb_t* htb,
+	void*      kptr, 
+	qse_size_t klen,	
+	void*      vptr,
+	qse_size_t vlen
+);
+
+/**
+ * The qse_htb_freepair() function destroys a pair. But it does not detach
+ * the pair destroyed from the hash table @a htb. Use this function at your
+ * own risk.
+ */
+void qse_htb_freepair (
+	qse_htb_t*      htb,
+	qse_htb_pair_t* pair
+);
 
 qse_size_t qse_htb_dflhash (
 	qse_htb_t*  htb,

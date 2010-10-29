@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: htb.c 364 2010-10-28 13:09:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,15 +23,16 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 
-#define htb_t    qse_htb_t
-#define pair_t   qse_htb_pair_t
-#define copier_t qse_htb_copier_t
-#define freeer_t qse_htb_freeer_t
-#define hasher_t qse_htb_hasher_t
-#define comper_t qse_htb_comper_t
-#define keeper_t qse_htb_keeper_t
-#define sizer_t  qse_htb_sizer_t
-#define walker_t qse_htb_walker_t
+#define htb_t      qse_htb_t
+#define pair_t     qse_htb_pair_t
+#define copier_t   qse_htb_copier_t
+#define freeer_t   qse_htb_freeer_t
+#define hasher_t   qse_htb_hasher_t
+#define comper_t   qse_htb_comper_t
+#define keeper_t   qse_htb_keeper_t
+#define sizer_t    qse_htb_sizer_t
+#define walker_t   qse_htb_walker_t
+#define cbserter_t qse_htb_cbserter_t
 
 #define KPTR(p)  QSE_HTB_KPTR(p)
 #define KLEN(p)  QSE_HTB_KLEN(p)
@@ -47,14 +48,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 #define KTOB(htb,len) ((len)*(htb)->scale[QSE_HTB_KEY])
 #define VTOB(htb,len) ((len)*(htb)->scale[QSE_HTB_VAL])
 
-#define UPSERT 1
-#define UPDATE 2
-#define ENSERT 3
-#define INSERT 4
-
-
-static pair_t* alloc_pair (htb_t* htb, 
-	void* kptr, size_t klen, void* vptr, size_t vlen)
+QSE_INLINE pair_t* qse_htb_allocpair (
+	htb_t* htb, void* kptr, size_t klen, void* vptr, size_t vlen)
 {
 	pair_t* n;
 	copier_t kcop = htb->mancbs->copier[QSE_HTB_KEY];
@@ -116,7 +111,7 @@ static pair_t* alloc_pair (htb_t* htb,
 	return n;
 }
 
-static void free_pair (htb_t* htb, pair_t* pair)
+QSE_INLINE void qse_htb_freepair (htb_t* htb, pair_t* pair)
 {
 	if (htb->mancbs->freeer[QSE_HTB_KEY] != QSE_NULL) 
 		htb->mancbs->freeer[QSE_HTB_KEY] (htb, KPTR(pair), KLEN(pair));
@@ -125,7 +120,7 @@ static void free_pair (htb_t* htb, pair_t* pair)
 	QSE_MMGR_FREE (htb->mmgr, pair);
 }
 
-static pair_t* change_pair_val (
+static QSE_INLINE pair_t* change_pair_val (
 	htb_t* htb, pair_t* pair, void* vptr, size_t vlen)
 {
 	if (VPTR(pair) == vptr && VLEN(pair) == vlen) 
@@ -159,11 +154,11 @@ static pair_t* change_pair_val (
 			else
 			{
 				/* need to reconstruct the pair */
-				pair_t* p = alloc_pair (htb, 
+				pair_t* p = qse_htb_allocpair (htb, 
 					KPTR(pair), KLEN(pair),
 					vptr, vlen);
 				if (p == QSE_NULL) return QSE_NULL;
-				free_pair (htb, pair);
+				qse_htb_freepair (htb, pair);
 				return p;
 			}
 		}
@@ -332,79 +327,6 @@ void qse_htb_setmancbs (htb_t* htb, const qse_htb_mancbs_t* mancbs)
 	htb->mancbs = mancbs;
 }
 
-#if 0
-copier_t qse_htb_getcopier (htb_t* htb, qse_htb_id_t id)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-	return htb->copier[id];
-}
-
-void qse_htb_setcopier (htb_t* htb, qse_htb_id_t id, copier_t copier)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-	if (copier == QSE_NULL) copier = QSE_HTB_COPIER_SIMPLE;
-	htb->copier[id] = copier;
-}
-
-freeer_t qse_htb_getfreeer (htb_t* htb, qse_htb_id_t id)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-	return htb->freeer[id];
-}
-
-void qse_htb_setfreeer (htb_t* htb, qse_htb_id_t id, freeer_t freeer)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-	htb->freeer[id] = freeer;
-}
-
-hasher_t qse_htb_gethasher (htb_t* htb)
-{
-	return htb->hasher;
-}
-
-void qse_htb_sethasher (htb_t* htb, hasher_t hasher)
-{
-	if (hasher == QSE_NULL) hasher = hash_key;
-	htb->hasher = hasher;	
-}
-
-comper_t qse_htb_getcomper (htb_t* htb)
-{
-	return htb->comper;
-}
-
-void qse_htb_setcomper (htb_t* htb, comper_t comper)
-{
-	if (comper == QSE_NULL) comper = comp_key;
-	htb->comper = comper;
-}
-
-keeper_t qse_htb_getkeeper (htb_t* htb)
-{
-	return htb->keeper;
-}
-
-void qse_htb_setkeeper (htb_t* htb, keeper_t keeper)
-{
-	htb->keeper = keeper;
-}
-
-sizer_t qse_htb_getsizer (htb_t* htb)
-{
-	return htb->sizer;
-}
-
-void qse_htb_setsizer (htb_t* htb, sizer_t sizer)
-{
-	htb->sizer = sizer;
-}
-#endif
-
 size_t qse_htb_getsize (htb_t* htb)
 {
 	return htb->size;
@@ -498,6 +420,12 @@ static QSE_INLINE_ALWAYS int reorganize (htb_t* htb)
 	return 0;
 }
 
+/* insert options */
+#define UPSERT 1
+#define UPDATE 2
+#define ENSERT 3
+#define INSERT 4
+
 static pair_t* insert (
 	htb_t* htb, void* kptr, size_t klen, void* vptr, size_t vlen, int opt)
 {
@@ -522,17 +450,18 @@ static pair_t* insert (
 					p = change_pair_val (htb, pair, vptr, vlen);
 					if (p == QSE_NULL) 
 					{
-						/* error in change the value */
+						/* error in changing the value */
 						return QSE_NULL; 
 					}
 					if (p != pair) 
 					{
-						/* pair reallocated. 
-						 * relink it */
+						/* old pair destroyed. new pair reallocated.
+						 * relink to include the new pair but to drop
+						 * the old pair. */
 						if (prev == QSE_NULL) 
 							htb->bucket[hc] = p;
 						else NEXT(prev) = p;
-						NEXT(p) = next;
+						NEXT(p) = next; 
 					}
 					return p;
 
@@ -554,7 +483,9 @@ static pair_t* insert (
 
 	if (htb->threshold > 0 && htb->size >= htb->threshold)
 	{
-		if (reorganize(htb) == 0) /* ignore the error */
+		/* ingore reorganization error as it simply means
+		 * more bucket collision and performance penalty. */
+		if (reorganize(htb) == 0) 
 		{
 			hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
 		}
@@ -562,7 +493,7 @@ static pair_t* insert (
 
 	QSE_ASSERT (pair == QSE_NULL);
 
-	pair = alloc_pair (htb, kptr, klen, vptr, vlen);
+	pair = qse_htb_allocpair (htb, kptr, klen, vptr, vlen);
 	if (pair == QSE_NULL) return QSE_NULL; /* error */
 
 	NEXT(pair) = htb->bucket[hc];
@@ -597,6 +528,68 @@ pair_t* qse_htb_update (
 	return insert (htb, kptr, klen, vptr, vlen, UPDATE);
 }
 
+pair_t* qse_htb_cbsert (
+	htb_t* htb, void* kptr, size_t klen, cbserter_t cbserter, void* ctx)
+{
+	pair_t* pair, * p, * prev, * next;
+	size_t hc;
+
+	hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+	pair = htb->bucket[hc];
+	prev = QSE_NULL;
+
+	while (pair != QSE_NULL) 
+	{
+		next = NEXT(pair);
+
+		if (htb->mancbs->comper (htb, KPTR(pair), KLEN(pair), kptr, klen) == 0) 
+		{
+			/* found a pair with a matching key */
+			p = cbserter (htb, pair, kptr, klen, ctx);
+			if (p == QSE_NULL) 
+			{
+				/* error returned by the callback function */
+				return QSE_NULL; 
+			}
+			if (p != pair) 
+			{
+				/* old pair destroyed. new pair reallocated.
+				 * relink to include the new pair but to drop
+				 * the old pair. */
+				if (prev == QSE_NULL) 
+					htb->bucket[hc] = p;
+				else NEXT(prev) = p;
+				NEXT(p) = next; 
+			}
+			return p;
+		}
+
+		prev = pair;
+		pair = next;
+	}
+
+	if (htb->threshold > 0 && htb->size >= htb->threshold)
+	{
+		/* ingore reorganization error as it simply means
+		 * more bucket collision and performance penalty. */
+		if (reorganize(htb) == 0)
+		{
+			hc = htb->mancbs->hasher(htb,kptr,klen) % htb->capa;
+		}
+	}
+
+	QSE_ASSERT (pair == QSE_NULL);
+
+	pair = cbserter (htb, QSE_NULL, kptr, klen, ctx);
+	if (pair == QSE_NULL) return QSE_NULL; /* error */
+
+	NEXT(pair) = htb->bucket[hc];
+	htb->bucket[hc] = pair;
+	htb->size++;
+
+	return pair; /* new key added */
+}
+
 int qse_htb_delete (htb_t* htb, const void* kptr, size_t klen)
 {
 	pair_t* pair, * prev;
@@ -614,7 +607,7 @@ int qse_htb_delete (htb_t* htb, const void* kptr, size_t klen)
 				htb->bucket[hc] = NEXT(pair);
 			else NEXT(prev) = NEXT(pair);
 
-			free_pair (htb, pair);
+			qse_htb_freepair (htb, pair);
 			htb->size--;
 
 			return 0;
@@ -639,7 +632,7 @@ void qse_htb_clear (htb_t* htb)
 		while (pair != QSE_NULL) 
 		{
 			next = NEXT(pair);
-			free_pair (htb, pair);
+			qse_htb_freepair (htb, pair);
 			htb->size--;
 			pair = next;
 		}
