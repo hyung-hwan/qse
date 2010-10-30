@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 364 2010-10-28 13:09:53Z hyunghwan.chung $
+ * $Id: htb.h 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -76,12 +76,6 @@ typedef void (*qse_htb_freeer_t) (
 	qse_size_t dlen  /**< length of a key or a value */
 );
 
-/* key hasher */
-typedef qse_size_t (*qse_htb_hasher_t) (
-	qse_htb_t*  htb,   /**< hash table */
-	const void* kptr,  /**< key pointer */
-	qse_size_t  klen   /**< key length in bytes */
-);
 
 /**
  * The qse_htb_comper_t type defines a key comparator that is called when
@@ -92,10 +86,10 @@ typedef qse_size_t (*qse_htb_hasher_t) (
  */
 typedef int (*qse_htb_comper_t) (
 	qse_htb_t*  htb,    /**< hash table */ 
-	const void* kptr1,  /**< pointer to a key */
-	qse_size_t  klen1,  /**< length of a key */ 
-	const void* kptr2,  /**< pointer to a key */ 
-	qse_size_t  klen2   /**< length of a key */
+	const void* kptr1,  /**< key pointer */
+	qse_size_t  klen1,  /**< key length */ 
+	const void* kptr2,  /**< key pointer */ 
+	qse_size_t  klen2   /**< key length */
 );
 
 /**
@@ -121,6 +115,15 @@ typedef qse_size_t (*qse_htb_sizer_t) (
 );
 
 /**
+ * The qse_htb_hasher_t type defines a key hash function
+ */
+typedef qse_size_t (*qse_htb_hasher_t) (
+	qse_htb_t*  htb,   /**< hash table */
+	const void* kptr,  /**< key pointer */
+	qse_size_t  klen   /**< key length in bytes */
+);
+
+/**
  * The qse_htb_walker_t defines a pair visitor.
  */
 typedef qse_htb_walk_t (*qse_htb_walker_t) (
@@ -137,10 +140,10 @@ typedef qse_htb_walk_t (*qse_htb_walker_t) (
  */
 struct qse_htb_pair_t
 {
-	void*           kptr;  /**< pointer to a key */
-	qse_size_t      klen;  /**< length of a key */
-	void*           vptr;  /**< pointer to a value */
-	qse_size_t      vlen;  /**< length of a value */
+	void*           kptr;  /**< key pointer */
+	qse_size_t      klen;  /**< key length */
+	void*           vptr;  /**< value pointer */
+	qse_size_t      vlen;  /**< value length */
 
 	/* management information below */
 	qse_htb_pair_t* next; 
@@ -152,11 +155,21 @@ struct qse_htb_mancbs_t
 {
 	qse_htb_copier_t copier[2];
 	qse_htb_freeer_t freeer[2];
-	qse_htb_hasher_t hasher;   /**< key hasher */
 	qse_htb_comper_t comper;   /**< key comparator */
 	qse_htb_keeper_t keeper;   /**< value keeper */
 	qse_htb_sizer_t  sizer;    /**< bucket capacity recalculator */
+	qse_htb_hasher_t hasher;   /**< key hasher */
 };
+
+enum qse_htb_mancbs_kind_t
+{
+	QSE_HTB_MANCBS_DEFAULT,
+	QSE_HTB_MANCBS_INLINE_COPIERS,
+	QSE_HTB_MANCBS_INLINE_KEY_COPIER,
+	QSE_HTB_MANCBS_INLINE_VALUE_COPIER
+};
+
+typedef enum qse_htb_mancbs_kind_t  qse_htb_mancbs_kind_t;
 
 /**
  * The qse_htb_t type defines a hash table.
@@ -182,10 +195,10 @@ struct qse_htb_t
 
 #define QSE_HTB_COPIER_DEFAULT (QSE_HTB_COPIER_SIMPLE)
 #define QSE_HTB_FREEER_DEFAULT (QSE_NULL)
-#define QSE_HTB_HASHER_DEFAULT (qse_htb_dflhash)
 #define QSE_HTB_COMPER_DEFAULT (qse_htb_dflcomp)
 #define QSE_HTB_KEEPER_DEFAULT (QSE_NULL)
 #define QSE_HTB_SIZER_DEFAULT  (QSE_NULL)
+#define QSE_HTB_HASHER_DEFAULT (qse_htb_dflhash)
 
 /**
  * The QSE_HTB_SIZE() macro returns the number of pairs in a hash table.
@@ -214,23 +227,29 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (htb)
 
+const qse_htb_mancbs_t* qse_htb_mancbs (
+	qse_htb_mancbs_kind_t kind
+);
+
 /**
  * The qse_htb_open() function creates a hash table with a dynamic array 
  * bucket and a list of values chained. The initial capacity should be larger
  * than 0. The load factor should be between 0 and 100 inclusive and the load
  * factor of 0 disables bucket resizing. If you need extra space associated
- * with hash table, you may pass a non-zero value as the second parameter. 
+ * with hash table, you may pass a non-zero value for @a xtnsize.
  * The QSE_HTB_XTN() macro and the qse_htb_getxtn() function return the 
  * pointer to the beginning of the extension.
- * @return qse_htb_t pointer on success, QSE_NULL on failure.
+ * The @a kscale and @a vscale parameters specify the unit of the key and 
+ * value size. 
+ * @return #qse_htb_t pointer on success, #QSE_NULL on failure.
  */
 qse_htb_t* qse_htb_open (
-	qse_mmgr_t* mmgr,   /**< memory manager */
-	qse_size_t  ext,    /**< extension size in bytes */
-	qse_size_t  capa,   /**< initial capacity */
-	int         factor, /**< load factor */
-	int         kscale, /**< key scale */
-	int         vscale  /**< value scale */
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize, /**< extension size in bytes */
+	qse_size_t  capa,    /**< initial capacity */
+	int         factor,  /**< load factor */
+	int         kscale,  /**< key scale */
+	int         vscale   /**< value scale */
 );
 
 
@@ -261,6 +280,22 @@ void qse_htb_fini (
 );
 
 /**
+ * The qse_htb_getmancbs() function gets manipulation callback function set.
+ */
+const qse_htb_mancbs_t* qse_htb_getmancbs (
+	qse_htb_t* htb /**< hash table */
+);
+
+/**
+ * The qse_htb_setmancbs() function sets internal manipulation callback 
+ * functions for data construction, destruction, resizing, hashing, etc.
+ */
+void qse_htb_setmancbs (
+	qse_htb_t*              htb,   /**< hash table */
+	const qse_htb_mancbs_t* mancbs /**< callback function set */
+);
+
+/**
  * The qse_htb_getsize() function gets the number of pairs in hash table.
  */
 qse_size_t qse_htb_getsize (
@@ -275,50 +310,17 @@ qse_size_t qse_htb_getcapa (
 	qse_htb_t* htb /**< hash table */
 );
 
-#if 0
-/**
- * The qse_htb_getscale() function returns the scale factor
- */
-int qse_htb_getscale (
-	qse_htb_t*   htb, /**< hash table */
-	qse_htb_id_t id   /**< QSE_HTB_KEY or QSE_HTB_VAL */
-);
-
-/**
- * The qse_htb_setscale() function sets the scale factor of the length
- * of a key and a value. A scale factor determines the actual length of
- * a key and a value in bytes. A htb is created with a scale factor of 1.
- * The scale factor should be larger than 0 and less than 256.
- * Note that it is a bad idea to change the scale factor while a hash table 
- * is not empty.
- */
-void qse_htb_setscale (
-	qse_htb_t*   htb,  /**< hash table */
-	qse_htb_id_t id,   /**< QSE_HTB_KEY or QSE_HTB_VAL */
-	int          scale /**< scale factor in bytes */
-);
-#endif
-
-const qse_htb_mancbs_t* qse_htb_getmancbs (
-	qse_htb_t* htb
-);
-
-void qse_htb_setmancbs (
-	qse_htb_t*              htb,
-	const qse_htb_mancbs_t* mancbs
-);
-
 /**
  * The qse_htb_search() function searches a hash table to find a pair with a 
  * matching key. It returns the pointer to the pair found. If it fails
  * to find one, it returns QSE_NULL.
  * @return pointer to the pair with a maching key, 
- *         or QSE_NULL if no match is found.
+ *         or #QSE_NULL if no match is found.
  */
 qse_htb_pair_t* qse_htb_search (
 	qse_htb_t*  htb,   /**< hash table */
-	const void* kptr,  /**< the pointer to a key */
-	qse_size_t  klen   /**< the size of the key */
+	const void* kptr,  /**< key pointer */
+	qse_size_t  klen   /**< key length */
 );
 
 /**
@@ -326,72 +328,169 @@ qse_htb_pair_t* qse_htb_search (
  * matching key. If one is found, it updates the pair. Otherwise, it inserts
  * a new pair with the key and value given. It returns the pointer to the 
  * pair updated or inserted.
- * @return a pointer to the updated or inserted pair on success, 
- *         QSE_NULL on failure. 
+ * @return pointer to the updated or inserted pair on success, 
+ *         #QSE_NULL on failure. 
  */
 qse_htb_pair_t* qse_htb_upsert (
 	qse_htb_t* htb,   /**< hash table */
-	void*      kptr,  /**< the pointer to a key */
-	qse_size_t klen,  /**< the length of the key */
-	void*      vptr,  /**< the pointer to a value */
-	qse_size_t vlen   /**< the length of the value */
+	void*      kptr,  /**< key pointer */
+	qse_size_t klen,  /**< key length */
+	void*      vptr,  /**< value pointer */
+	qse_size_t vlen   /**< value length */
 );
 
 /**
  * The qse_htb_ensert() function inserts a new pair with the key and the value
  * given. If there exists a pair with the key given, the function returns 
  * the pair containing the key.
- * @return pointer to a pair on success, QSE_NULL on failure. 
+ * @return pointer to a pair on success, #QSE_NULL on failure. 
  */
 qse_htb_pair_t* qse_htb_ensert (
 	qse_htb_t* htb,   /**< hash table */
-	void*      kptr,  /**< the pointer to a key */
-	qse_size_t klen,  /**< the length of the key */
-	void*      vptr,  /**< the pointer to a value */
-	qse_size_t vlen   /**< the length of the value */
+	void*      kptr,  /**< key pointer */
+	qse_size_t klen,  /**< key length */
+	void*      vptr,  /**< value pointer */
+	qse_size_t vlen   /**< value length */
 );
 
 /**
  * The qse_htb_insert() function inserts a new pair with the key and the value
  * given. If there exists a pair with the key given, the function returns 
- * QSE_NULL without channging the value.
- * @return pointer to the pair created on success, QSE_NULL on failure. 
+ * #QSE_NULL without channging the value.
+ * @return pointer to the pair created on success, #QSE_NULL on failure. 
  */
 qse_htb_pair_t* qse_htb_insert (
 	qse_htb_t* htb,   /**< hash table */
-	void*      kptr,  /**< the pointer to a key */
-	qse_size_t klen,  /**< the length of the key */
-	void*      vptr,  /**< the pointer to a value */
-	qse_size_t vlen   /**< the length of the value */
+	void*      kptr,  /**< key pointer */
+	qse_size_t klen,  /**< key length */
+	void*      vptr,  /**< value pointer */
+	qse_size_t vlen   /**< value length */
 );
 
 /**
  * The qse_htb_update() function updates the value of an existing pair
  * with a matching key.
- * @return pointer to the pair on success, QSE_NULL on no matching pair
+ * @return pointer to the pair on success, #QSE_NULL on no matching pair
  */
 qse_htb_pair_t* qse_htb_update (
 	qse_htb_t* htb,   /**< hash table */
-	void*      kptr,  /**< the pointer to a key */
-	qse_size_t klen,  /**< the length of the key */
-	void*      vptr,  /**< the pointer to a value */
-	qse_size_t vlen   /**< the length of the value */
+	void*      kptr,  /**< key pointer */
+	qse_size_t klen,  /**< key length */
+	void*      vptr,  /**< value pointer */
+	qse_size_t vlen   /**< value length */
 );
 
+/**
+ * The qse_htb_cbserter_t type defines a callback function for qse_htb_cbsert().
+ * The qse_htb_cbserter() function calls it to allocate a new pair for the 
+ * key pointed to by @a kptr of the length @a klen and the callback context
+ * @a ctx. The second parameter @a pair is passed the pointer to the existing
+ * pair for the key or #QSE_NULL in case of no existing key. The callback
+ * must return a pointer to a new or a reallocated pair. When reallocating the
+ * existing pair, this callback must destroy the existing pair and return the 
+ * newly reallocated pair. It must return #QSE_NULL for failure.
+ */
 typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
-	qse_htb_t*      htb,
-	qse_htb_pair_t* pair,
-	void*           kptr,
-	qse_size_t      klen,
-	void*           ctx
+	qse_htb_t*      htb,    /**< hash table */
+	qse_htb_pair_t* pair,   /**< pair pointer */
+	void*           kptr,   /**< key pointer */
+	qse_size_t      klen,   /**< key length */
+	void*           ctx     /**< callback context */
 );
 
+/**
+ * The qse_htb_cbsert() function inserts a key/value pair by delegating pair 
+ * allocation to a callback function. Depending on the callback function,
+ * it may behave like qse_htb_insert(), qse_htb_upsert(), qse_htb_update(),
+ * qse_htb_ensert(), or totally differently. The sample code below inserts
+ * a new pair if the key is not found and appends the new value to the
+ * existing value delimited by a comma if the key is found.
+ *
+ * @code
+ *  qse_htb_walk_t print_map_pair (qse_htb_t* map, qse_htb_pair_t* pair, void* ctx)
+ *  {
+ *    qse_printf (QSE_T("%.*s[%d] => %.*s[%d]\n"),
+ *      (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_KLEN(pair),
+ *      (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair), (int)QSE_HTB_VLEN(pair));
+ *    return QSE_HTB_WALK_FORWARD;
+ *  }
+ *  
+ *  qse_htb_pair_t* cbserter (
+ *    qse_htb_t* htb, qse_htb_pair_t* pair,
+ *    void* kptr, qse_size_t klen, void* ctx)
+ *  {
+ *    qse_xstr_t* v = (qse_xstr_t*)ctx;
+ *    if (pair == QSE_NULL)
+ *    {
+ *      // no existing key for the key 
+ *      return qse_htb_allocpair (htb, kptr, klen, v->ptr, v->len);
+ *    }
+ *    else
+ *    {
+ *      // a pair with the key exists. 
+ *      // in this sample, i will append the new value to the old value 
+ *      // separated by a comma
+ *      qse_htb_pair_t* new_pair;
+ *      qse_char_t comma = QSE_T(',');
+ *      qse_byte_t* vptr;
+ *  
+ *      // allocate a new pair, but without filling the actual value. 
+ *      // note vptr is given QSE_NULL for that purpose 
+ *      new_pair = qse_htb_allocpair (
+ *        htb, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len); 
+ *      if (new_pair == QSE_NULL) return QSE_NULL;
+ *  
+ *      // fill in the value space 
+ *      vptr = new_pair->vptr;
+ *      qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
+ *      vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+ *      qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
+ *      vptr += QSE_SIZEOF(qse_char_t);
+ *      qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
+ *  
+ *      // this callback requires the old pair to be destroyed 
+ *      qse_htb_freepair (htb, pair);
+ *  
+ *      // return the new pair 
+ *      return new_pair;
+ *    }
+ *  }
+ *  
+ *  int main ()
+ *  {
+ *    qse_htb_t* s1;
+ *    int i;
+ *    qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
+ *    qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
+ *  
+ *    s1 = qse_htb_open (
+ *      QSE_MMGR_GETDFL(), 0, 10, 70,
+ *      QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
+ *    ); // note error check is skipped 
+ *    qse_htb_setmancbs (s1, &mancbs1);
+ *  
+ *    for (i = 0; i < QSE_COUNTOF(vals); i++)
+ *    {
+ *      qse_xstr_t ctx;
+ *      ctx.ptr = vals[i]; ctx.len = qse_strlen(vals[i]);
+ *      qse_htb_cbsert (s1,
+ *        keys[i%QSE_COUNTOF(keys)], qse_strlen(keys[i%QSE_COUNTOF(keys)]),
+ *        cbserter, &ctx
+ *      ); // note error check is skipped
+ *    }
+ *    qse_htb_walk (s1, print_map_pair, QSE_NULL);
+ *  
+ *    qse_htb_close (s1);
+ *    return 0;
+ *  }
+ * @endcode
+ */
 qse_htb_pair_t* qse_htb_cbsert (
-	qse_htb_t*         htb,
-	void*              kptr,
-	qse_size_t         klen,
-	qse_htb_cbserter_t cbserter,
-	void*              ctx
+	qse_htb_t*         htb,      /**< hash table */
+	void*              kptr,     /**< key pointer */
+	qse_size_t         klen,     /**< key length */
+	qse_htb_cbserter_t cbserter, /**< callback function */
+	void*              ctx       /**< callback context */
 );
 
 /**
@@ -400,8 +499,8 @@ qse_htb_pair_t* qse_htb_cbsert (
  */
 int qse_htb_delete (
 	qse_htb_t* htb,   /**< hash table */
-	const void* kptr, /**< the pointer to a key */
-	qse_size_t klen   /**< the size of the key */
+	const void* kptr, /**< key pointer */
+	qse_size_t klen   /**< key length */
 );
 
 /**
@@ -442,7 +541,14 @@ qse_htb_pair_t* qse_htb_getnextpair (
 /**
  * The qse_htb_allocpair() function allocates a pair for a key and a value 
  * given. But it does not chain the pair allocated into the hash table @a htb.
- * Use this function at your own risk.
+ * Use this function at your own risk. 
+ *
+ * Take note of he following special behavior when the copier is 
+ * #QSE_HTB_COPIER_INLINE.
+ * - If @a kptr is #QSE_NULL, the key space of the size @a klen is reserved but
+ *   not propagated with any data.
+ * - If @a vptr is #QSE_NULL, the value space of the size @a vlen is reserved
+ *   but not propagated with any data.
  */
 qse_htb_pair_t* qse_htb_allocpair (
 	qse_htb_t* htb,
@@ -462,12 +568,18 @@ void qse_htb_freepair (
 	qse_htb_pair_t* pair
 );
 
+/**
+ * The qse_htb_dflhash() function is a default hash function.
+ */
 qse_size_t qse_htb_dflhash (
 	qse_htb_t*  htb,
 	const void* kptr,
 	qse_size_t  klen
 );
 
+/**
+ * The qse_htb_dflcomp() function is default comparator.
+ */
 int qse_htb_dflcomp (
 	qse_htb_t*  htb,
      const void* kptr1,

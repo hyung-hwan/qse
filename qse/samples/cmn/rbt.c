@@ -34,22 +34,13 @@ static int test1 ()
 	qse_rbt_t* s1;
 	int i;
 
-	s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0);
+	s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0, 1, 1);
 	if (s1 == QSE_NULL)
 	{
 		qse_printf (QSE_T("cannot open a table\n"));
 		return -1;
 	}
-
-	qse_rbt_setcopier (s1, QSE_RBT_KEY, QSE_RBT_COPIER_INLINE);
-	qse_rbt_setcopier (s1, QSE_RBT_VAL, QSE_RBT_COPIER_INLINE);
-	/*
-	qse_rbt_setscale (s1, QSE_RBT_KEY, QSE_SIZEOF(int));
-	qse_rbt_setscale (s1, QSE_RBT_VAL, QSE_SIZEOF(int));
-	*/
-	/*
-	qse_rbt_setkeeper (s1, keeper1);
-	*/
+	qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
 	for (i = 0; i < 20; i++)
 	{
@@ -103,17 +94,13 @@ static int test2 ()
 {
 	qse_rbt_t* s1;
 
-	s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0);
+	s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0, QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t));
 	if (s1 == QSE_NULL)
 	{
 		qse_printf (QSE_T("cannot open a table\n"));
 		return -1;
 	}
-
-	qse_rbt_setcopier (s1, QSE_RBT_KEY, QSE_RBT_COPIER_INLINE);
-	qse_rbt_setcopier (s1, QSE_RBT_VAL, QSE_RBT_COPIER_INLINE);
-	qse_rbt_setscale (s1, QSE_RBT_KEY, QSE_SIZEOF(qse_char_t));
-	qse_rbt_setscale (s1, QSE_RBT_VAL, QSE_SIZEOF(qse_char_t));
+	qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
 	qse_rbt_insert (s1, QSE_T("hello"), 5, QSE_T("mr. monkey"), 10);
 	qse_rbt_insert (s1, QSE_T("world"), 5, QSE_T("ms. panda"), 9);

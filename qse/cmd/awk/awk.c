@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: awk.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -441,24 +441,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		goto oops;
 	}
 
-	{
-		static qse_htb_mancbs_t mancbs = 
-		{
-			{
-				QSE_HTB_COPIER_DEFAULT, /* remember the key pointer */
-				QSE_HTB_COPIER_INLINE   /* copy a value inline */
-			},
-			{
-				QSE_HTB_FREEER_DEFAULT,
-				QSE_HTB_FREEER_DEFAULT
-			},
-			QSE_HTB_HASHER_DEFAULT,
-			QSE_HTB_COMPER_DEFAULT,
-			QSE_HTB_KEEPER_DEFAULT,
-			QSE_HTB_SIZER_DEFAULT
-		};
-		qse_htb_setmancbs (gvm, &mancbs);
-	}
+	qse_htb_setmancbs (gvm,
+		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_VALUE_COPIER)
+	);
 
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: Awk.cpp 365 2010-10-29 13:54:36Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1152,18 +1152,12 @@ int Awk::open ()
 			QSE_HTB_FREEER_DEFAULT,
 			free_function_map_value
 		},
-		QSE_HTB_HASHER_DEFAULT,
 		QSE_HTB_COMPER_DEFAULT,
 		QSE_HTB_KEEPER_DEFAULT,
-		QSE_HTB_SIZER_DEFAULT
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	};
-
 	qse_htb_setmancbs (functionMap, &mancbs);
-#if 0
-	qse_htb_setscale (functionMap, QSE_HTB_KEY, QSE_SIZEOF(qse_char_t));
-	qse_htb_setcopier (functionMap, QSE_HTB_KEY, QSE_HTB_COPIER_INLINE);
-	qse_htb_setfreeer (functionMap, QSE_HTB_VAL, free_function_map_value);
-#endif
 
 	return 0;
 }

@@ -130,6 +130,26 @@ struct qse_rbt_pair_t
 	qse_rbt_pair_t* child[2]; /* left and right */
 };
 
+typedef struct qse_rbt_mancbs_t qse_rbt_mancbs_t;
+
+struct qse_rbt_mancbs_t
+{
+	qse_rbt_copier_t copier[2]; /**< key and value copier */
+	qse_rbt_freeer_t freeer[2]; /**< key and value freeer */
+	qse_rbt_comper_t comper;    /**< key comparator */
+	qse_rbt_keeper_t keeper;    /**< value keeper */
+};
+
+enum qse_rbt_mancbs_kind_t
+{
+	QSE_RBT_MANCBS_DEFAULT,
+	QSE_RBT_MANCBS_INLINE_COPIERS,
+	QSE_RBT_MANCBS_INLINE_KEY_COPIER,
+	QSE_RBT_MANCBS_INLINE_VALUE_COPIER
+};
+
+typedef enum qse_rbt_mancbs_kind_t  qse_rbt_mancbs_kind_t;
+
 /**
  * The qse_rbt_t type defines a red-black tree.
  */
@@ -137,10 +157,7 @@ struct qse_rbt_t
 {
 	QSE_DEFINE_COMMON_FIELDS (rbt)
 
-	qse_rbt_copier_t copier[2]; /**< key and value copier */
-	qse_rbt_freeer_t freeer[2]; /**< key and value freeer */
-	qse_rbt_comper_t comper;    /**< key comparator */
-	qse_rbt_keeper_t keeper;    /**< value keeper */
+	const qse_rbt_mancbs_t* mancbs;
 
 	qse_byte_t       scale[2];  /**< length scale */
 
@@ -162,6 +179,11 @@ struct qse_rbt_t
  */
 #define QSE_RBT_COPIER_INLINE ((qse_rbt_copier_t)2)
 
+#define QSE_RBT_COPIER_DEFAULT (QSE_RBT_COPIER_SIMPLE)
+#define QSE_RBT_FREEER_DEFAULT (QSE_NULL)
+#define QSE_RBT_COMPER_DEFAULT (qse_rbt_dflcomp)
+#define QSE_RBT_KEEPER_DEFAULT (QSE_NULL)
+
 /**
  * The QSE_RBT_SIZE() macro returns the number of pairs in red-black tree.
  */
@@ -181,13 +203,19 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (rbt)
 
+const qse_rbt_mancbs_t* qse_rbt_mancbs (
+	qse_rbt_mancbs_kind_t kind
+);
+
 /**
  * The qse_rbt_open() function creates a red-black tree.
  * @return qse_rbt_t pointer on success, QSE_NULL on failure.
  */
 qse_rbt_t* qse_rbt_open (
-	qse_mmgr_t* mmgr,   /**< memory manager */
-	qse_size_t  ext     /**< extension size in bytes */
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize, /**< extension size in bytes */
+	int         kscale,  /**< key scale */
+	int         vscale   /**< value scale */
 );
 
 /**
@@ -201,8 +229,10 @@ void qse_rbt_close (
  * The qse_rbt_init() function initializes a red-black tree
  */
 qse_rbt_t* qse_rbt_init (
-	qse_rbt_t*  rbt, /**< red-black tree */
-	qse_mmgr_t* mmgr /**< memory manager */
+	qse_rbt_t*  rbt,    /**< red-black tree */
+	qse_mmgr_t* mmgr,   /**< memory manager */
+	int         kscale, /**< key scale */
+	int         vscale  /**< value scale */
 );
 
 /**
@@ -213,105 +243,26 @@ void qse_rbt_fini (
 );
 
 /**
- * The qse_rbt_getsize() function gets the number of pairs in red-black tree.
+ * The qse_rbt_getmancbs() function gets manipulation callback function set.
  */
-qse_size_t qse_rbt_getsize (
-	qse_rbt_t* rbt  /**< red-black tree */
-);
-
-/**
- * The qse_rbt_getscale() function returns the scale factor
- */
-int qse_rbt_getscale (
-	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-);
-
-/**
- * The qse_rbt_setscale() function sets the scale factor of the length
- * of a key and a value. A scale factor determines the actual length of
- * a key and a value in bytes. A rbt is created with a scale factor of 1.
- * The scale factor should be larger than 0 and less than 256.
- * Note that it is a bad idea to change the scale factor while a red-black tree 
- * is not empty.
- */
-void qse_rbt_setscale (
-	qse_rbt_t*   rbt,  /**< red-black tree */
-	qse_rbt_id_t id,   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-	int          scale /**< scale factor in bytes */
-);
-
-/**
- * The qse_rbt_getcopier() function gets a data copier.
- */
-qse_rbt_copier_t qse_rbt_getcopier (
-	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-);
-
-/**
- * The qse_rbt_setcopier() function specifies how to clone an element.
- *  A special copier QSE_RBT_COPIER_INLINE is provided. This copier enables
- *  you to copy the data inline to the internal node. No freeer is invoked
- *  when the node is freeed.
- *
- *  You may set the copier to QSE_NULL to perform no special operation 
- *  when the data pointer is rememebered.
- */
-void qse_rbt_setcopier (
-	qse_rbt_t* rbt,          /**< red-black tree */
-	qse_rbt_id_t id,         /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-	qse_rbt_copier_t copier  /**< callback for copying a key or a value */
-);
-
-/**
- * The qse_rb_getfreeer() function returns the element destroyer.
- */
-qse_rbt_freeer_t qse_rbt_getfreeer (
-	qse_rbt_t*   rbt, /**< red-black tree */
-	qse_rbt_id_t id   /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-);
-
-/**
- * The qse_rbt_setfreeer() function specifies how to destroy an element.
- * The @a freeer is called when a node containing the element is destroyed.
- */
-void qse_rbt_setfreeer (
-	qse_rbt_t*       rbt,    /**< red-black tree */
-	qse_rbt_id_t     id,     /**< #QSE_RBT_KEY or #QSE_RBT_VAL */
-	qse_rbt_freeer_t freeer  /**< callback for destroying a key or a value */
-);
-
-/**
- * The qse_rbt_getcomper() function returns the key comparator.
- */
-qse_rbt_comper_t qse_rbt_getcomper (
+const qse_rbt_mancbs_t* qse_rbt_getmancbs (
 	qse_rbt_t* rbt /**< red-black tree */
 );
 
 /**
- * The qse_rbt_setcomper() function changes the key comparator.
+ * The qse_rbt_setmancbs() function sets internal manipulation callback 
+ * functions for data construction, destruction, resizing, hashing, etc.
  */
-void qse_rbt_setcomper (
-	qse_rbt_t* rbt,         /**< red-black tree */
-	qse_rbt_comper_t comper /**< comparator function pointer */
+void qse_rbt_setmancbs (
+	qse_rbt_t*              rbt,   /**< red-black tree */
+	const qse_rbt_mancbs_t* mancbs /**< callback function set */
 );
 
 /**
- * The qse_rbt_getkeeper() function returns the value retainer function
- * that is called when you change the value of an existing key with the
- * same value.
+ * The qse_rbt_getsize() function gets the number of pairs in red-black tree.
  */
-qse_rbt_keeper_t qse_rbt_getkeeper (
-	qse_rbt_t* rbt
-);
-
-/**
- * The qse_rbt_setkeeper() function changes the value retainer function.
- */
-void qse_rbt_setkeeper (
-	qse_rbt_t*       rbt,
-	qse_rbt_keeper_t keeper
+qse_size_t qse_rbt_getsize (
+	qse_rbt_t* rbt  /**< red-black tree */
 );
 
 /**
@@ -419,6 +370,14 @@ void qse_rbt_rwalk (
 	qse_rbt_t*       rbt,    /**< red-black tree */
 	qse_rbt_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
+);
+
+int qse_rbt_dflcomp (
+	qse_rbt_t*  rbt,
+	const void* kptr1,
+	qse_size_t  klen1,
+	const void* kptr2,
+	qse_size_t  klen2
 );
 
 #ifdef __cplusplus

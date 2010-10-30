@@ -9,6 +9,20 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
+static qse_rbt_mancbs_t mancbs =
+{
+	{
+		QSE_RBT_COPIER_INLINE,
+		QSE_RBT_COPIER_INLINE
+	},
+	{
+		QSE_RBT_FREEER_DEFAULT,
+		QSE_RBT_FREEER_DEFAULT
+	},
+	QSE_RBT_COMPER_DEFAULT,
+	QSE_RBT_KEEPER_DEFAULT
+};
+
 static int test1 ()
 {
 	int i;
@@ -97,17 +111,13 @@ static int test2 ()
 	}
 
 	mmgr.udd = fma;
-	if (qse_rbt_init (&rbt, &mmgr) == QSE_NULL)
+	if (qse_rbt_init (&rbt, &mmgr, QSE_SIZEOF(long), QSE_SIZEOF(long)) == QSE_NULL)
 	{
 		qse_printf (QSE_T("cannot initialize a tree\n"));
 		qse_fma_close (fma);
 		return -1;
 	}
-
-	qse_rbt_setcopier (&rbt, QSE_RBT_KEY, QSE_RBT_COPIER_INLINE);
-	qse_rbt_setcopier (&rbt, QSE_RBT_VAL, QSE_RBT_COPIER_INLINE);
-	qse_rbt_setscale (&rbt, QSE_RBT_KEY, QSE_SIZEOF(long));
-	qse_rbt_setscale (&rbt, QSE_RBT_VAL, QSE_SIZEOF(long));
+	qse_rbt_setmancbs (&rbt, &mancbs);
 
 	for (x = 10; x < 100; x++)
 	{
