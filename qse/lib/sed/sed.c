@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 360 2010-10-21 13:29:12Z hyunghwan.chung $
+ * $Id: sed.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -94,15 +94,17 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		return QSE_NULL;	
 	}	
 
-	if (qse_map_init (&sed->tmp.labs, mmgr, 128, 70) == QSE_NULL)
+	if (qse_map_init (&sed->tmp.labs, mmgr,
+		128, 70, QSE_SIZEOF(qse_char_t), 1) == QSE_NULL)
 	{
 		qse_str_fini (&sed->tmp.lab);
 		qse_str_fini (&sed->tmp.rex);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return QSE_NULL;	
 	}
-	qse_map_setcopier (&sed->tmp.labs, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-	qse_map_setscale (&sed->tmp.labs, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
+	qse_map_setmancbs (&sed->tmp.labs, 
+		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
+	);
 
 	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) == QSE_NULL)
 	{
@@ -2627,6 +2629,25 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	qse_ssize_t n;
 	int ret = 0;
 
+	static qse_map_mancbs_t mancbs =
+	{
+		{
+			QSE_MAP_COPIER_INLINE,
+			QSE_MAP_COPIER_INLINE
+		},
+		{
+			QSE_MAP_FREEER_DEFAULT,
+			close_outfile
+		},
+		QSE_MAP_COMPER_DEFAULT,
+		QSE_MAP_KEEPER_DEFAULT
+#ifdef QSE_MAP_AS_HTB
+		,
+		QSE_MAP_SIZER_DEFAULT,
+		QSE_MAP_HASHER_DEFAULT
+#endif
+	};
+
 	sed->e.subst_done = 0;
 	qse_lda_clear (&sed->e.txt.appended);
 	qse_str_clear (&sed->e.txt.read);
@@ -2641,20 +2662,14 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.out.fun = outf;
 	sed->e.out.eof = 0;
 	sed->e.out.len = 0;
-	if (qse_map_init (&sed->e.out.files, sed->mmgr, 128, 70) == QSE_NULL)
+	if (qse_map_init (&sed->e.out.files, sed->mmgr, 
+		128, 70, QSE_SIZEOF(qse_char_t), 1) == QSE_NULL)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	*(qse_sed_t**)QSE_XTN(&sed->e.out.files) = sed;
-	qse_map_setcopier (
-		&sed->e.out.files, QSE_MAP_KEY, QSE_MAP_COPIER_INLINE);
-        qse_map_setscale (
-		&sed->e.out.files, QSE_MAP_KEY, QSE_SIZEOF(qse_char_t));
-	qse_map_setcopier (
-		&sed->e.out.files, QSE_MAP_VAL, QSE_MAP_COPIER_INLINE);
-	qse_map_setfreeer (
-		&sed->e.out.files, QSE_MAP_VAL, close_outfile);
+	qse_map_setmancbs (&sed->e.out.files, &mancbs);
 
 	sed->e.in.fun = inf;
 	sed->e.in.eof = 0;

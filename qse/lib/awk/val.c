@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: val.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -403,10 +403,10 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 			QSE_HTB_FREEER_DEFAULT,
 			free_mapval
 		},
-		QSE_HTB_HASHER_DEFAULT,
 		QSE_HTB_COMPER_DEFAULT,
 		same_mapval,
-		QSE_HTB_SIZER_DEFAULT
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	};
 
 	/* CHECK */

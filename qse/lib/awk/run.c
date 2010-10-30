@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 363 2010-10-27 12:54:37Z hyunghwan.chung $
+ * $Id: run.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -797,10 +797,10 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 			QSE_HTB_FREEER_DEFAULT,
 			free_namedval 
 		},
-		QSE_HTB_HASHER_DEFAULT,
 		QSE_HTB_COMPER_DEFAULT,
 		same_namedval,
-		QSE_HTB_SIZER_DEFAULT
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	};
 
 	/* zero out the runtime context excluding the extension */

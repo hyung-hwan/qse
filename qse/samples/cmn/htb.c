@@ -10,23 +10,6 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
-static qse_htb_mancbs_t mancbs1 =
-{
-	{
-		QSE_HTB_COPIER_INLINE,
-		QSE_HTB_COPIER_INLINE
-	},
-	{
-		QSE_HTB_FREEER_DEFAULT,
-		QSE_HTB_FREEER_DEFAULT
-	},
-	QSE_HTB_HASHER_DEFAULT,
-	QSE_HTB_COMPER_DEFAULT,
-	QSE_HTB_KEEPER_DEFAULT,
-	QSE_HTB_SIZER_DEFAULT
-};
-
-
 static int test1_build (qse_htb_t* s1)
 {
 	int i;
@@ -129,10 +112,10 @@ static int test1 ()
 	s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 5, 70, 1, 1);
 	if (s1 == QSE_NULL)
 	{
-		qse_printf (QSE_T("cannot open a map\n"));
+		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_htb_setmancbs (s1, &mancbs1);
+	qse_htb_setmancbs (s1, qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
 
 	if (test1_build(s1) == -1) 
 	{
@@ -174,17 +157,17 @@ static int test2 ()
 		QSE_T("what the hell is this"),
 		QSE_T("oh my goddess"),
 		QSE_T("hello mr monkey"),
-		QSE_T("is this good?")
+		QSE_T("this is good")
 	};
 
 	s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 1, 70, 
 		QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t));
 	if (s1 == QSE_NULL)
 	{
-		qse_printf (QSE_T("cannot open a map\n"));
+		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_htb_setmancbs (s1, &mancbs1);
+	qse_htb_setmancbs (s1, qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
 
 	for (i = 0; i < QSE_COUNTOF(keys); i++)
 	{
@@ -261,7 +244,7 @@ static int test3 ()
 	s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 1, 70);
 	if (s1 == QSE_NULL)
 	{
-		qse_printf (QSE_T("cannot open a map\n"));
+		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
 
@@ -307,7 +290,7 @@ static int test4 ()
 	s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 1, 70);
 	if (s1 == QSE_NULL)
 	{
-		qse_printf (QSE_T("cannot open a map\n"));
+		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
 
@@ -336,6 +319,98 @@ static int test4 ()
 }
 #endif
 
+static qse_htb_pair_t* test5_cbserter (
+	qse_htb_t* htb, qse_htb_pair_t* pair, 
+	void* kptr, qse_size_t klen, void* ctx)
+{
+	qse_xstr_t* v = (qse_xstr_t*)ctx;
+	if (pair == QSE_NULL)
+	{
+		/* no existing key for the key */
+		return qse_htb_allocpair (htb, kptr, klen, v->ptr, v->len);
+	}
+	else
+	{
+		/* a pair with the key exists. 
+		 * in this sample, i will append the new value to the old value 
+		 * separated by a comma */
+
+		qse_htb_pair_t* new_pair;
+		qse_char_t comma = QSE_T(',');
+		qse_byte_t* vptr;
+
+		/* allocate a new pair, but without filling the actual value. 
+		 * note vptr is given QSE_NULL for that purpose */
+		new_pair = qse_htb_allocpair (
+			htb, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len);
+		if (new_pair == QSE_NULL) return QSE_NULL;
+
+		/* fill in the value space */
+		vptr = new_pair->vptr;
+		qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
+		vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+		qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
+		vptr += QSE_SIZEOF(qse_char_t);
+		qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
+
+		/* this callback requires the old pair to be destroyed */
+		qse_htb_freepair (htb, pair);
+
+		/* return the new pair */
+		return new_pair;
+	}
+}
+
+static int test5 ()
+{
+	qse_htb_t* s1;
+	int i;
+
+	qse_char_t* keys[] = 
+	{
+		QSE_T("one"), QSE_T("two"), QSE_T("three")
+	};
+	qse_char_t* vals[] = 
+	{
+		QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5"),
+	};
+
+	s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 10, 70, 
+		QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t));
+	if (s1 == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open a hash table\n"));
+		return -1;
+	}
+	qse_htb_setmancbs (s1, qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+
+	for (i = 0; i < QSE_COUNTOF(vals); i++)
+	{
+		qse_xstr_t ctx;
+
+		qse_printf (QSE_T("setting a key [%s] and a value [%s]: "), keys[i%QSE_COUNTOF(keys)], vals[i]);
+
+		ctx.ptr = vals[i];
+		ctx.len = qse_strlen(vals[i]);
+		if (qse_htb_cbsert (s1, 
+			keys[i%QSE_COUNTOF(keys)], 
+			qse_strlen(keys[i%QSE_COUNTOF(keys)]), 
+			test5_cbserter, &ctx) == QSE_NULL)
+		{
+			qse_printf (QSE_T("[FAILED]\n"));
+		}
+		else
+		{	
+			qse_printf (QSE_T("[OK]\n"));
+		}
+	}
+	qse_htb_walk (s1, print_map_pair, QSE_NULL);
+		
+
+	qse_htb_close (s1);
+	return 0;
+}
+
 int main ()
 {
 	R (test1);
@@ -344,5 +419,6 @@ int main ()
 	R (test3);
 	R (test4);
 #endif
+	R (test5);
 	return 0;
 }

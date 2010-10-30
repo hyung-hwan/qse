@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 364 2010-10-28 13:09:53Z hyunghwan.chung $
+ * $Id: htb.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,7 +72,9 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 	else if (kcop == QSE_HTB_COPIER_INLINE)
 	{
 		KPTR(n) = n + 1;
-		QSE_MEMCPY (KPTR(n), kptr, KTOB(htb,klen));
+		/* if kptr is QSE_NULL, the inline copier does not fill
+		 * the actual key area */
+		if (kptr) QSE_MEMCPY (KPTR(n), kptr, KTOB(htb,klen));
 	}
 	else 
 	{
@@ -94,7 +96,9 @@ QSE_INLINE pair_t* qse_htb_allocpair (
 		VPTR(n) = n + 1;
 		if (kcop == QSE_HTB_COPIER_INLINE) 
 			VPTR(n) = (byte_t*)VPTR(n) + KTOB(htb,klen);
-		QSE_MEMCPY (VPTR(n), vptr, VTOB(htb,vlen));
+		/* if vptr is QSE_NULL, the inline copier does not fill
+		 * the actual value area */
+		if (vptr) QSE_MEMCPY (VPTR(n), vptr, VTOB(htb,vlen));
 	}
 	else 
 	{
@@ -181,24 +185,76 @@ static QSE_INLINE pair_t* change_pair_val (
 	return pair;
 }
 
-static qse_htb_mancbs_t mancbs =
+static qse_htb_mancbs_t mancbs[] =
 {
 	{
-		QSE_HTB_COPIER_DEFAULT,
-		QSE_HTB_COPIER_DEFAULT
+		{
+			QSE_HTB_COPIER_DEFAULT,
+			QSE_HTB_COPIER_DEFAULT
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			QSE_HTB_FREEER_DEFAULT
+		},
+		QSE_HTB_COMPER_DEFAULT,
+		QSE_HTB_KEEPER_DEFAULT,
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	},
+
 	{
-		QSE_HTB_FREEER_DEFAULT,
-		QSE_HTB_FREEER_DEFAULT
+		{
+			QSE_HTB_COPIER_INLINE,
+			QSE_HTB_COPIER_INLINE
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			QSE_HTB_FREEER_DEFAULT
+		},
+		QSE_HTB_COMPER_DEFAULT,
+		QSE_HTB_KEEPER_DEFAULT,
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
 	},
-	QSE_HTB_HASHER_DEFAULT,
-	QSE_HTB_COMPER_DEFAULT,
-	QSE_HTB_KEEPER_DEFAULT,
-	QSE_HTB_SIZER_DEFAULT
+
+	{
+		{
+			QSE_HTB_COPIER_INLINE,
+			QSE_HTB_COPIER_DEFAULT
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			QSE_HTB_FREEER_DEFAULT
+		},
+		QSE_HTB_COMPER_DEFAULT,
+		QSE_HTB_KEEPER_DEFAULT,
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
+	},
+
+	{
+		{
+			QSE_HTB_COPIER_DEFAULT,
+			QSE_HTB_COPIER_INLINE
+		},
+		{
+			QSE_HTB_FREEER_DEFAULT,
+			QSE_HTB_FREEER_DEFAULT
+		},
+		QSE_HTB_COMPER_DEFAULT,
+		QSE_HTB_KEEPER_DEFAULT,
+		QSE_HTB_SIZER_DEFAULT,
+		QSE_HTB_HASHER_DEFAULT
+	}
+};
+
+const qse_htb_mancbs_t* qse_htb_mancbs (qse_htb_mancbs_kind_t kind)
+{
+	return &mancbs[kind];
 };
 
 htb_t* qse_htb_open (
-	mmgr_t* mmgr, size_t ext, size_t capa, int factor, int kscale, int vscale)
+	mmgr_t* mmgr, size_t xtnsize, size_t capa, int factor, int kscale, int vscale)
 {
 	htb_t* htb;
 
@@ -212,7 +268,7 @@ htb_t* qse_htb_open (
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(htb_t) + ext);
+	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(htb_t) + xtnsize);
 	if (htb == QSE_NULL) return QSE_NULL;
 
 	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) == QSE_NULL)
@@ -256,10 +312,6 @@ htb_t* qse_htb_init (
 	QSE_MEMSET (htb->bucket, 0, capa*SIZEOF(pair_t*));
 
 	htb->factor = factor;
-#if 0
-	htb->scale[QSE_HTB_KEY] = 1;
-	htb->scale[QSE_HTB_VAL] = 1;
-#endif
 	htb->scale[QSE_HTB_KEY] = (kscale < 1)? 1: kscale;
 	htb->scale[QSE_HTB_VAL] = (vscale < 1)? 1: vscale;
 
@@ -268,22 +320,7 @@ htb_t* qse_htb_init (
 	htb->threshold = htb->capa * htb->factor / 100;
 	if (htb->capa > 0 && htb->threshold <= 0) htb->threshold = 1;
 
-	htb->mancbs = &mancbs;
-
-#if 0
-	htb->hasher = hash_key;
-	htb->comper = comp_key;
-	htb->copier[QSE_HTB_KEY] = QSE_HTB_COPIER_SIMPLE;
-	htb->copier[QSE_HTB_VAL] = QSE_HTB_COPIER_SIMPLE;
-
-	/*
-	htb->freeer[QSE_HTB_KEY] = QSE_NULL;
-	htb->freeer[QSE_HTB_VAL] = QSE_NULL;
-	htb->keeper = QSE_NULL;
-	htb->sizer = QSE_NULL;
-	*/
-#endif
-
+	htb->mancbs = &mancbs[0];
 	return htb;
 }
 
@@ -292,29 +329,6 @@ void qse_htb_fini (htb_t* htb)
 	qse_htb_clear (htb);
 	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
 }
-
-#if 0
-int qse_htb_getscale (htb_t* htb, qse_htb_id_t id)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-	return htb->scale[id];
-}
-
-void qse_htb_setscale (htb_t* htb, qse_htb_id_t id, int scale)
-{
-	QSE_ASSERTX (id == QSE_HTB_KEY || id == QSE_HTB_VAL,
-		"The ID should be either QSE_HTB_KEY or QSE_HTB_VAL");
-
-	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
-		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
-
-	if (scale <= 0) scale = 1;
-	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);
-
-	htb->scale[id] = scale;
-}
-#endif
 
 const qse_htb_mancbs_t* qse_htb_getmancbs (htb_t* htb)
 {
