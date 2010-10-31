@@ -25,7 +25,44 @@
 #include <qse/macros.h>
 
 /**@file
- * A red-black tree is a self-balancing binary search tree.
+ * This file provides a red-black tree encapsulated in the #qse_rbt_t type that
+ * implements a self-balancing binary search tree.Its interface is very close 
+ * to #qse_htb_t.
+ *
+ * This sample code adds a series of keys and values and print them
+ * in descending key order.
+ * @code
+ * #include <qse/cmn/rbt.h>
+ * #include <qse/cmn/mem.h>
+ * #include <qse/cmn/stdio.h>
+ * 
+ * static qse_rbt_walk_t walk (qse_rbt_t* rbt, qse_rbt_pair_t* pair, void* ctx)
+ * {
+ *   qse_printf (QSE_T("key = %d, value = %d\n"),
+ *     *(int*)QSE_RBT_KPTR(pair), *(int*)QSE_RBT_VPTR(pair));
+ *   return QSE_RBT_WALK_FORWARD;
+ * }
+ * 
+ * int main ()
+ * {
+ *   qse_rbt_t* s1;
+ *   int i;
+ * 
+ *   s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0, 1, 1); // error handling skipped
+ *   qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+ * 
+ *   for (i = 0; i < 20; i++)
+ *   {
+ *     int x = i * 20;
+ *     qse_rbt_insert (s1, &i, QSE_SIZEOF(i), &x, QSE_SIZEOF(x)); // eror handling skipped
+ *   }
+ * 
+ *   qse_rbt_rwalk (s1, walk, QSE_NULL);
+ * 
+ *   qse_rbt_close (s1);
+ *   return 0;
+ * }
+ * @endcode
  */
 
 typedef struct qse_rbt_t qse_rbt_t;
@@ -102,9 +139,27 @@ typedef void (*qse_rbt_keeper_t) (
  * The qse_rbt_walker_t defines a pair visitor.
  */
 typedef qse_rbt_walk_t (*qse_rbt_walker_t) (
-	qse_rbt_t*      rbt,   /**< rbt */
+	qse_rbt_t*      rbt,   /**< red-black tree */
 	qse_rbt_pair_t* pair,  /**< pointer to a key/value pair */
 	void*           ctx    /**< pointer to user-defined data */
+);
+
+/**
+ * The qse_rbt_cbserter_t type defines a callback function for qse_rbt_cbsert().
+ * The qse_rbt_cbserter() function calls it to allocate a new pair for the 
+ * key pointed to by @a kptr of the length @a klen and the callback context
+ * @a ctx. The second parameter @a pair is passed the pointer to the existing
+ * pair for the key or #QSE_NULL in case of no existing key. The callback
+ * must return a pointer to a new or a reallocated pair. When reallocating the
+ * existing pair, this callback must destroy the existing pair and return the 
+ * newly reallocated pair. It must return #QSE_NULL for failure.
+ */
+typedef qse_rbt_pair_t* (*qse_rbt_cbserter_t) (
+	qse_rbt_t*      rbt,    /**< red-black tree */
+	qse_rbt_pair_t* pair,   /**< pair pointer */
+	void*           kptr,   /**< key pointer */
+	qse_size_t      klen,   /**< key length */
+	void*           ctx     /**< callback context */
 );
 
 /**
@@ -132,6 +187,10 @@ struct qse_rbt_pair_t
 
 typedef struct qse_rbt_mancbs_t qse_rbt_mancbs_t;
 
+/**
+ * The qse_rbt_mancbs_t type defines callback function sets for key/value 
+ * pair manipulation. 
+ */
 struct qse_rbt_mancbs_t
 {
 	qse_rbt_copier_t copier[2]; /**< key and value copier */
@@ -140,11 +199,19 @@ struct qse_rbt_mancbs_t
 	qse_rbt_keeper_t keeper;    /**< value keeper */
 };
 
+/**
+ * The qse_rbt_mancbs_kind_t type defines the type of predefined
+ * callback set for pair manipulation.
+ */
 enum qse_rbt_mancbs_kind_t
 {
+	/** store the key and the value pointer */
 	QSE_RBT_MANCBS_DEFAULT,
+	/** copy both key and value into the pair */
 	QSE_RBT_MANCBS_INLINE_COPIERS,
+	/** copy the key into the pair but store the value pointer */
 	QSE_RBT_MANCBS_INLINE_KEY_COPIER,
+	/** copy the value into the pair but store the key pointer */
 	QSE_RBT_MANCBS_INLINE_VALUE_COPIER
 };
 
@@ -203,6 +270,10 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (rbt)
 
+/**
+ * The qse_rbt_mancbs() functions returns a predefined callback set for
+ * pair manipulation.
+ */
 const qse_rbt_mancbs_t* qse_rbt_mancbs (
 	qse_rbt_mancbs_kind_t kind
 );
@@ -251,7 +322,7 @@ const qse_rbt_mancbs_t* qse_rbt_getmancbs (
 
 /**
  * The qse_rbt_setmancbs() function sets internal manipulation callback 
- * functions for data construction, destruction, resizing, hashing, etc.
+ * functions for data construction, destruction, comparison, etc.
  */
 void qse_rbt_setmancbs (
 	qse_rbt_t*              rbt,   /**< red-black tree */
@@ -336,6 +407,101 @@ qse_rbt_pair_t* qse_rbt_update (
 );
 
 /**
+ * The qse_rbt_cbsert() function inserts a key/value pair by delegating pair 
+ * allocation to a callback function. Depending on the callback function,
+ * it may behave like qse_rbt_insert(), qse_rbt_upsert(), qse_rbt_update(),
+ * qse_rbt_ensert(), or totally differently. The sample code below inserts
+ * a new pair if the key is not found and appends the new value to the
+ * existing value delimited by a comma if the key is found.
+ *
+ * @code
+ * qse_rbt_walk_t print_map_pair (qse_rbt_t* map, qse_rbt_pair_t* pair, void* ctx)
+ * {
+ *   qse_printf (QSE_T("%.*s[%d] => %.*s[%d]\n"),
+ *     (int)QSE_RBT_KLEN(pair), QSE_RBT_KPTR(pair), (int)QSE_RBT_KLEN(pair),
+ *     (int)QSE_RBT_VLEN(pair), QSE_RBT_VPTR(pair), (int)QSE_RBT_VLEN(pair));
+ *   return QSE_RBT_WALK_FORWARD;
+ * }
+ * 
+ * qse_rbt_pair_t* cbserter (
+ *   qse_rbt_t* rbt, qse_rbt_pair_t* pair,
+ *   void* kptr, qse_size_t klen, void* ctx)
+ * {
+ *   qse_xstr_t* v = (qse_xstr_t*)ctx;
+ *   if (pair == QSE_NULL)
+ *   {
+ *     // no existing key for the key 
+ *     return qse_rbt_allocpair (rbt, kptr, klen, v->ptr, v->len);
+ *   }
+ *   else
+ *   {
+ *     // a pair with the key exists. 
+ *     // in this sample, i will append the new value to the old value 
+ *     // separated by a comma
+ *     qse_rbt_pair_t* new_pair;
+ *     qse_char_t comma = QSE_T(',');
+ *     qse_byte_t* vptr;
+ * 
+ *     // allocate a new pair, but without filling the actual value. 
+ *     // note vptr is given QSE_NULL for that purpose 
+ *     new_pair = qse_rbt_allocpair (
+ *       rbt, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len); 
+ *     if (new_pair == QSE_NULL) return QSE_NULL;
+ * 
+ *     // fill in the value space 
+ *     vptr = new_pair->vptr;
+ *     qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
+ *     vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+ *     qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
+ *     vptr += QSE_SIZEOF(qse_char_t);
+ *     qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
+ * 
+ *     // this callback requires the old pair to be destroyed 
+ *     qse_rbt_freepair (rbt, pair);
+ * 
+ *     // return the new pair 
+ *     return new_pair;
+ *   }
+ * }
+ * 
+ * int main ()
+ * {
+ *   qse_rbt_t* s1;
+ *   int i;
+ *   qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
+ *   qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
+ * 
+ *   s1 = qse_rbt_open (
+ *     QSE_MMGR_GETDFL(), 0,
+ *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
+ *   ); // note error check is skipped 
+ *   qse_rbt_setmancbs (s1, &mancbs1);
+ * 
+ *   for (i = 0; i < QSE_COUNTOF(vals); i++)
+ *   {
+ *     qse_xstr_t ctx;
+ *     ctx.ptr = vals[i]; ctx.len = qse_strlen(vals[i]);
+ *     qse_rbt_cbsert (s1,
+ *       keys[i%QSE_COUNTOF(keys)], qse_strlen(keys[i%QSE_COUNTOF(keys)]),
+ *       cbserter, &ctx
+ *     ); // note error check is skipped
+ *   }
+ *   qse_rbt_walk (s1, print_map_pair, QSE_NULL);
+ * 
+ *   qse_rbt_close (s1);
+ *   return 0;
+ * }
+ * @endcode
+ */
+qse_rbt_pair_t* qse_rbt_cbsert (
+	qse_rbt_t*         rbt,      /**< red-black tree */
+	void*              kptr,     /**< key pointer */
+	qse_size_t         klen,     /**< key length */
+	qse_rbt_cbserter_t cbserter, /**< callback function */
+	void*              ctx       /**< callback context */
+);
+
+/**
  * The qse_rbt_delete() function deletes a pair with a matching key 
  * @return 0 on success, -1 on failure
  */
@@ -372,6 +538,39 @@ void qse_rbt_rwalk (
 	void*            ctx     /**< pointer to user-specific data */
 );
 
+/**
+ * The qse_rbt_allocpair() function allocates a pair for a key and a value 
+ * given. But it does not chain the pair allocated into the red-black tree @a rbt.
+ * Use this function at your own risk. 
+ *
+ * Take note of he following special behavior when the copier is 
+ * #QSE_RBT_COPIER_INLINE.
+ * - If @a kptr is #QSE_NULL, the key space of the size @a klen is reserved but
+ *   not propagated with any data.
+ * - If @a vptr is #QSE_NULL, the value space of the size @a vlen is reserved
+ *   but not propagated with any data.
+ */
+qse_rbt_pair_t* qse_rbt_allocpair (
+	qse_rbt_t* rbt,
+	void*      kptr, 
+	qse_size_t klen,	
+	void*      vptr,
+	qse_size_t vlen
+);
+
+/**
+ * The qse_rbt_freepair() function destroys a pair. But it does not detach
+ * the pair destroyed from the red-black tree @a rbt. Use this function at your
+ * own risk.
+ */
+void qse_rbt_freepair (
+	qse_rbt_t*      rbt,
+	qse_rbt_pair_t* pair
+);
+
+/**
+ * The qse_rbt_dflcomp() function defines the default key comparator.
+ */
 int qse_rbt_dflcomp (
 	qse_rbt_t*  rbt,
 	const void* kptr1,

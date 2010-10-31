@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
+ * $Id: str.h 366 2010-10-30 12:49:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -229,7 +229,7 @@ qse_size_t qse_strfcpy (
 
 /**
  * The qse_strfncpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @str is an array of the 
+ * It differs from qse_strfcpy() in that @a str is an array of the 
  * #qse_cstr_t type.
  * @sa qse_strfcpy, qse_strxfcpy, qse_strxfncpy
  */

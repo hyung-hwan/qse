@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 365 2010-10-29 13:54:36Z hyunghwan.chung $
+ * $Id: htb.h 366 2010-10-30 12:49:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,8 +25,44 @@
 #include <qse/macros.h>
 
 /**@file
- * A hash table maintains buckets for key/value pairs with the same key hash
- * chained under the same bucket.
+ * This file provides a hash table encapsulated in the #qse_htb_t type that 
+ * maintains buckets for key/value pairs with the same key hash chained under
+ * the same bucket. Its interface is very close to #qse_rbt_t.
+ *
+ * This sample code adds a series of keys and values and print them
+ * in the randome order.
+ * @code
+ * #include <qse/cmn/htb.h>
+ * #include <qse/cmn/mem.h>
+ * #include <qse/cmn/stdio.h>
+ * 
+ * static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
+ * {
+ *   qse_printf (QSE_T("key = %d, value = %d\n"),
+ *     *(int*)QSE_HTB_KPTR(pair), *(int*)QSE_HTB_VPTR(pair));
+ *   return QSE_HTB_WALK_FORWARD;
+ * }
+ * 
+ * int main ()
+ * {
+ *   qse_htb_t* s1;
+ *   int i;
+ * 
+ *   s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 30, 75, 1, 1); // error handling skipped
+ *   qse_htb_setmancbs (s1, qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+ * 
+ *   for (i = 0; i < 20; i++)
+ *   {
+ *     int x = i * 20;
+ *     qse_htb_insert (s1, &i, QSE_SIZEOF(i), &x, QSE_SIZEOF(x)); // eror handling skipped
+ *   }
+ * 
+ *   qse_htb_walk (s1, walk, QSE_NULL);
+ * 
+ *   qse_htb_close (s1);
+ *   return 0;
+ * }
+ * @endcode
  */
 
 typedef struct qse_htb_t qse_htb_t;
@@ -133,6 +169,25 @@ typedef qse_htb_walk_t (*qse_htb_walker_t) (
 );
 
 /**
+ * The qse_htb_cbserter_t type defines a callback function for qse_htb_cbsert().
+ * The qse_htb_cbserter() function calls it to allocate a new pair for the 
+ * key pointed to by @a kptr of the length @a klen and the callback context
+ * @a ctx. The second parameter @a pair is passed the pointer to the existing
+ * pair for the key or #QSE_NULL in case of no existing key. The callback
+ * must return a pointer to a new or a reallocated pair. When reallocating the
+ * existing pair, this callback must destroy the existing pair and return the 
+ * newly reallocated pair. It must return #QSE_NULL for failure.
+ */
+typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
+	qse_htb_t*      htb,    /**< hash table */
+	qse_htb_pair_t* pair,   /**< pair pointer */
+	void*           kptr,   /**< key pointer */
+	qse_size_t      klen,   /**< key length */
+	void*           ctx     /**< callback context */
+);
+
+
+/**
  * The qse_htb_pair_t type defines hash table pair. A pair is composed of a key
  * and a value. It maintains pointers to the beginning of a key and a value
  * plus their length. The length is scaled down with the scale factor 
@@ -161,11 +216,19 @@ struct qse_htb_mancbs_t
 	qse_htb_hasher_t hasher;   /**< key hasher */
 };
 
+/**
+ * The qse_htb_mancbs_kind_t type defines the type of predefined
+ * callback set for pair manipulation.
+ */
 enum qse_htb_mancbs_kind_t
 {
+	/** store the key and the value pointer */
 	QSE_HTB_MANCBS_DEFAULT,
+	/** copy both key and value into the pair */
 	QSE_HTB_MANCBS_INLINE_COPIERS,
+	/** copy the key into the pair but store the value pointer */
 	QSE_HTB_MANCBS_INLINE_KEY_COPIER,
+	/** copy the value into the pair but store the key pointer */
 	QSE_HTB_MANCBS_INLINE_VALUE_COPIER
 };
 
@@ -190,7 +253,17 @@ struct qse_htb_t
 	qse_htb_pair_t** bucket;
 };
 
+
+/**
+ * The QSE_HTB_COPIER_SIMPLE macros defines a copier that remembers the
+ * pointer and length of data in a pair.
+ **/
 #define QSE_HTB_COPIER_SIMPLE ((qse_htb_copier_t)1)
+
+/**
+ * The QSE_HTB_COPIER_INLINE macros defines a copier that copies data into
+ * a pair.
+ **/
 #define QSE_HTB_COPIER_INLINE ((qse_htb_copier_t)2)
 
 #define QSE_HTB_COPIER_DEFAULT (QSE_HTB_COPIER_SIMPLE)
@@ -227,6 +300,10 @@ extern "C" {
 
 QSE_DEFINE_COMMON_FUNCTIONS (htb)
 
+/**
+ * The qse_htb_mancbs() functions returns a predefined callback set for
+ * pair manipulation.
+ */
 const qse_htb_mancbs_t* qse_htb_mancbs (
 	qse_htb_mancbs_kind_t kind
 );
@@ -381,24 +458,6 @@ qse_htb_pair_t* qse_htb_update (
 );
 
 /**
- * The qse_htb_cbserter_t type defines a callback function for qse_htb_cbsert().
- * The qse_htb_cbserter() function calls it to allocate a new pair for the 
- * key pointed to by @a kptr of the length @a klen and the callback context
- * @a ctx. The second parameter @a pair is passed the pointer to the existing
- * pair for the key or #QSE_NULL in case of no existing key. The callback
- * must return a pointer to a new or a reallocated pair. When reallocating the
- * existing pair, this callback must destroy the existing pair and return the 
- * newly reallocated pair. It must return #QSE_NULL for failure.
- */
-typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
-	qse_htb_t*      htb,    /**< hash table */
-	qse_htb_pair_t* pair,   /**< pair pointer */
-	void*           kptr,   /**< key pointer */
-	qse_size_t      klen,   /**< key length */
-	void*           ctx     /**< callback context */
-);
-
-/**
  * The qse_htb_cbsert() function inserts a key/value pair by delegating pair 
  * allocation to a callback function. Depending on the callback function,
  * it may behave like qse_htb_insert(), qse_htb_upsert(), qse_htb_update(),
@@ -407,82 +466,82 @@ typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
  * existing value delimited by a comma if the key is found.
  *
  * @code
- *  qse_htb_walk_t print_map_pair (qse_htb_t* map, qse_htb_pair_t* pair, void* ctx)
- *  {
- *    qse_printf (QSE_T("%.*s[%d] => %.*s[%d]\n"),
- *      (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_KLEN(pair),
- *      (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair), (int)QSE_HTB_VLEN(pair));
- *    return QSE_HTB_WALK_FORWARD;
- *  }
- *  
- *  qse_htb_pair_t* cbserter (
- *    qse_htb_t* htb, qse_htb_pair_t* pair,
- *    void* kptr, qse_size_t klen, void* ctx)
- *  {
- *    qse_xstr_t* v = (qse_xstr_t*)ctx;
- *    if (pair == QSE_NULL)
- *    {
- *      // no existing key for the key 
- *      return qse_htb_allocpair (htb, kptr, klen, v->ptr, v->len);
- *    }
- *    else
- *    {
- *      // a pair with the key exists. 
- *      // in this sample, i will append the new value to the old value 
- *      // separated by a comma
- *      qse_htb_pair_t* new_pair;
- *      qse_char_t comma = QSE_T(',');
- *      qse_byte_t* vptr;
- *  
- *      // allocate a new pair, but without filling the actual value. 
- *      // note vptr is given QSE_NULL for that purpose 
- *      new_pair = qse_htb_allocpair (
- *        htb, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len); 
- *      if (new_pair == QSE_NULL) return QSE_NULL;
- *  
- *      // fill in the value space 
- *      vptr = new_pair->vptr;
- *      qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
- *      vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
- *      qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
- *      vptr += QSE_SIZEOF(qse_char_t);
- *      qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
- *  
- *      // this callback requires the old pair to be destroyed 
- *      qse_htb_freepair (htb, pair);
- *  
- *      // return the new pair 
- *      return new_pair;
- *    }
- *  }
- *  
- *  int main ()
- *  {
- *    qse_htb_t* s1;
- *    int i;
- *    qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
- *    qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
- *  
- *    s1 = qse_htb_open (
- *      QSE_MMGR_GETDFL(), 0, 10, 70,
- *      QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
- *    ); // note error check is skipped 
- *    qse_htb_setmancbs (s1, &mancbs1);
- *  
- *    for (i = 0; i < QSE_COUNTOF(vals); i++)
- *    {
- *      qse_xstr_t ctx;
- *      ctx.ptr = vals[i]; ctx.len = qse_strlen(vals[i]);
- *      qse_htb_cbsert (s1,
- *        keys[i%QSE_COUNTOF(keys)], qse_strlen(keys[i%QSE_COUNTOF(keys)]),
- *        cbserter, &ctx
- *      ); // note error check is skipped
- *    }
- *    qse_htb_walk (s1, print_map_pair, QSE_NULL);
- *  
- *    qse_htb_close (s1);
- *    return 0;
- *  }
+ * qse_htb_walk_t print_map_pair (qse_htb_t* map, qse_htb_pair_t* pair, void* ctx)
+ * {
+ *   qse_printf (QSE_T("%.*s[%d] => %.*s[%d]\n"),
+ *     (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_KLEN(pair),
+ *     (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair), (int)QSE_HTB_VLEN(pair));
+ *   return QSE_HTB_WALK_FORWARD;
+ * }
+ * 
+ * qse_htb_pair_t* cbserter (
+ *   qse_htb_t* htb, qse_htb_pair_t* pair,
+ *   void* kptr, qse_size_t klen, void* ctx)
+ * {
+ *   qse_xstr_t* v = (qse_xstr_t*)ctx;
+ *   if (pair == QSE_NULL)
+ *   {
+ *     // no existing key for the key 
+ *     return qse_htb_allocpair (htb, kptr, klen, v->ptr, v->len);
+ *   }
+ *   else
+ *   {
+ *     // a pair with the key exists. 
+ *     // in this sample, i will append the new value to the old value 
+ *     // separated by a comma
+ *     qse_htb_pair_t* new_pair;
+ *     qse_char_t comma = QSE_T(',');
+ *     qse_byte_t* vptr;
+ * 
+ *     // allocate a new pair, but without filling the actual value. 
+ *     // note vptr is given QSE_NULL for that purpose 
+ *     new_pair = qse_htb_allocpair (
+ *       htb, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len); 
+ *     if (new_pair == QSE_NULL) return QSE_NULL;
+ * 
+ *     // fill in the value space 
+ *     vptr = new_pair->vptr;
+ *     qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
+ *     vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+ *     qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
+ *     vptr += QSE_SIZEOF(qse_char_t);
+ *     qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));
+ * 
+ *     // this callback requires the old pair to be destroyed 
+ *     qse_htb_freepair (htb, pair);
+ * 
+ *     // return the new pair 
+ *     return new_pair;
+ *   }
+ * }
+ * 
+ * int main ()
+ * {
+ *   qse_htb_t* s1;
+ *   int i;
+ *   qse_char_t* keys[] = { QSE_T("one"), QSE_T("two"), QSE_T("three") };
+ *   qse_char_t* vals[] = { QSE_T("1"), QSE_T("2"), QSE_T("3"), QSE_T("4"), QSE_T("5") };
+ * 
+ *   s1 = qse_htb_open (
+ *     QSE_MMGR_GETDFL(), 0, 10, 70,
+ *     QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
+ *   ); // note error check is skipped 
+ *   qse_htb_setmancbs (s1, &mancbs1);
+ * 
+ *   for (i = 0; i < QSE_COUNTOF(vals); i++)
+ *   {
+ *     qse_xstr_t ctx;
+ *     ctx.ptr = vals[i]; ctx.len = qse_strlen(vals[i]);
+ *     qse_htb_cbsert (s1,
+ *       keys[i%QSE_COUNTOF(keys)], qse_strlen(keys[i%QSE_COUNTOF(keys)]),
+ *       cbserter, &ctx
+ *     ); // note error check is skipped
+ *   }
+ *   qse_htb_walk (s1, print_map_pair, QSE_NULL);
+ * 
+ *   qse_htb_close (s1);
+ *   return 0;
+ * }
  * @endcode
  */
 qse_htb_pair_t* qse_htb_cbsert (
