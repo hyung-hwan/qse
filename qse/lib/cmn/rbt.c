@@ -23,14 +23,17 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
 
-#define rbt_t    qse_rbt_t
-#define pair_t   qse_rbt_pair_t
-#define id_t     qse_rbt_id_t
-#define copier_t qse_rbt_copier_t
-#define freeer_t qse_rbt_freeer_t
-#define comper_t qse_rbt_comper_t
-#define keeper_t qse_rbt_keeper_t
-#define walker_t qse_rbt_walker_t
+#define rbt_t           qse_rbt_t
+#define pair_t          qse_rbt_pair_t
+#define id_t            qse_rbt_id_t
+#define copier_t        qse_rbt_copier_t
+#define freeer_t        qse_rbt_freeer_t
+#define comper_t        qse_rbt_comper_t
+#define keeper_t        qse_rbt_keeper_t
+#define walker_t        qse_rbt_walker_t
+#define cbserter_t      qse_rbt_cbserter_t
+#define mancbs_t        qse_rbt_mancbs_t
+#define mancbs_kind_t   qse_rbt_mancbs_kind_t
 
 #define KPTR(p)  QSE_RBT_KPTR(p)
 #define KLEN(p)  QSE_RBT_KLEN(p)
@@ -134,7 +137,7 @@ QSE_INLINE void qse_rbt_freepair (rbt_t* rbt, pair_t* pair)
 	QSE_MMGR_FREE (rbt->mmgr, pair);
 }
 
-static qse_rbt_mancbs_t mancbs[] =
+static mancbs_t mancbs[] =
 {
 	{
 		{
@@ -189,7 +192,7 @@ static qse_rbt_mancbs_t mancbs[] =
 	}
 };
 
-const qse_rbt_mancbs_t* qse_rbt_mancbs (qse_rbt_mancbs_kind_t kind)
+const mancbs_t* qse_rbt_mancbs (mancbs_kind_t kind)
 {
 	return &mancbs[kind];
 };
@@ -257,12 +260,12 @@ void qse_rbt_fini (rbt_t* rbt)
 	qse_rbt_clear (rbt);
 }
 
-const qse_rbt_mancbs_t* qse_rbt_getmancbs (rbt_t* rbt)
+const mancbs_t* qse_rbt_getmancbs (rbt_t* rbt)
 {
 	return rbt->mancbs;
 }
 
-void qse_rbt_setmancbs (rbt_t* rbt, const qse_rbt_mancbs_t* mancbs)
+void qse_rbt_setmancbs (rbt_t* rbt, const mancbs_t* mancbs)
 {
 	QSE_ASSERT (mancbs != QSE_NULL);
 	rbt->mancbs = mancbs;
@@ -450,7 +453,7 @@ static pair_t* change_pair_val (
 		{
 			if (ovlen == vlen)
 			{
-				QSE_MEMCPY (VPTR(pair), vptr, VTOB(rbt,vlen));
+				if (vptr) QSE_MEMCPY (VPTR(pair), vptr, VTOB(rbt,vlen));
 			}
 			else
 			{
@@ -596,6 +599,101 @@ pair_t* qse_rbt_update (
 {
 	return insert (rbt, kptr, klen, vptr, vlen, UPDATE);
 }
+
+pair_t* qse_rbt_cbsert (
+	rbt_t* rbt, void* kptr, size_t klen, cbserter_t cbserter, void* ctx)
+{
+	pair_t* xcur = rbt->root;
+	pair_t* xpar = QSE_NULL;
+	pair_t* xnew; 
+
+	while (!IS_NIL(rbt,xcur))
+	{
+		int n = rbt->mancbs->comper (rbt, kptr, klen, xcur->kptr, xcur->klen);
+		if (n == 0) 
+		{
+			/* back up the contents of the current pair 
+			 * in case it is reallocated */
+			pair_t tmp = *xcur;	 
+
+			/* call the callback function to manipulate the pair */
+			xnew = cbserter (rbt, xcur, kptr, klen, ctx);
+			if (xnew == QSE_NULL)
+			{
+				/* error returned by the callback function */
+				return QSE_NULL;
+			}
+
+			if (xnew != xcur)
+			{
+				/* the current pair has been reallocated, which implicitly
+				 * means the previous contents were wiped out. so the contents
+				 * backed up will be used for restoration/migration */
+
+				xnew->color = tmp.color;
+				xnew->left = tmp.left;
+				xnew->right = tmp.right;
+				xnew->parent = tmp.parent;
+
+				if (tmp.parent)
+				{
+					if (tmp.parent->left == xcur)
+					{
+						tmp.parent->left = xnew;
+					}
+					else 
+					{
+						QSE_ASSERT (tmp.parent->right == xcur);
+						tmp.parent->right = xnew;
+					}
+				}
+				if (!IS_NIL(rbt,tmp.left)) tmp.left->parent = xnew;
+				if (!IS_NIL(rbt,tmp.right)) tmp.right->parent = xnew;
+
+				if (xcur == rbt->root) rbt->root = xnew;
+			}
+
+			return xnew;
+		}
+
+		xpar = xcur;
+
+		if (n > 0) xcur = xcur->right;
+		else /* if (n < 0) */ xcur = xcur->left;
+	}
+
+	xnew = cbserter (rbt, QSE_NULL, kptr, klen, ctx);
+	if (xnew == QSE_NULL) return QSE_NULL;
+
+	if (xpar == QSE_NULL)
+	{
+		/* the tree contains no pair */
+		QSE_ASSERT (rbt->root == &rbt->nil);
+		rbt->root = xnew;
+	}
+	else
+	{
+		/* perform normal binary insert */
+		int n = rbt->mancbs->comper (rbt, kptr, klen, xpar->kptr, xpar->klen);
+		if (n > 0)
+		{
+			QSE_ASSERT (xpar->right == &rbt->nil);
+			xpar->right = xnew;
+		}
+		else
+		{
+			QSE_ASSERT (xpar->left == &rbt->nil);
+			xpar->left = xnew;
+		}
+
+		xnew->parent = xpar;
+		adjust (rbt, xnew);
+	}
+
+	rbt->root->color = QSE_RBT_BLACK;
+	return xnew;
+}
+
 
 static void adjust_for_delete (rbt_t* rbt, pair_t* pair, pair_t* par)
 {

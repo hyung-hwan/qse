@@ -140,7 +140,7 @@ void qse_xma_close (
  * The qse_xma_init() initializes a memory allocator. If you have the qse_xma_t
  * structure statically declared or already allocated, you may pass the pointer
  * to this function instead of calling qse_xma_open(). It obtains a memory zone
- * of @a zonesize bytes with the memory manager @mmgr. Unlike qse_xma_open(),
+ * of @a zonesize bytes with the memory manager @a mmgr. Unlike qse_xma_open(),
  * it does not accept the extension size, thus not creating an extention area.
  * @return @a xma on success, #QSE_NULL on failure
  */

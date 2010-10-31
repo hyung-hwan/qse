@@ -271,7 +271,7 @@ void* qse_fma_alloc (
  * the @a size requested is not greater than the fixed block size of the memory
  * allocator @a fma, it allocates a block of the fixed size; If the block 
  * @a blk is not #QSE_NULL and the @a size requested is not greater than the
- * fixed block size of the memory allocator @a fma, it returns the block @blk.
+ * fixed block size of the memory allocator @a fma, it returns the block @a blk.
  *
  * @return block pointer on success, #QSE_NULL on failure
  */

@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
+ * $Id: htb.c 366 2010-10-30 12:49:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,16 +23,18 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 
-#define htb_t      qse_htb_t
-#define pair_t     qse_htb_pair_t
-#define copier_t   qse_htb_copier_t
-#define freeer_t   qse_htb_freeer_t
-#define hasher_t   qse_htb_hasher_t
-#define comper_t   qse_htb_comper_t
-#define keeper_t   qse_htb_keeper_t
-#define sizer_t    qse_htb_sizer_t
-#define walker_t   qse_htb_walker_t
-#define cbserter_t qse_htb_cbserter_t
+#define htb_t           qse_htb_t
+#define pair_t          qse_htb_pair_t
+#define copier_t        qse_htb_copier_t
+#define freeer_t        qse_htb_freeer_t
+#define hasher_t        qse_htb_hasher_t
+#define comper_t        qse_htb_comper_t
+#define keeper_t        qse_htb_keeper_t
+#define sizer_t         qse_htb_sizer_t
+#define walker_t        qse_htb_walker_t
+#define cbserter_t      qse_htb_cbserter_t
+#define mancbs_t        qse_htb_mancbs_t
+#define mancbs_kind_t   qse_htb_mancbs_kind_t
 
 #define KPTR(p)  QSE_HTB_KPTR(p)
 #define KLEN(p)  QSE_HTB_KLEN(p)
@@ -153,7 +155,7 @@ static QSE_INLINE pair_t* change_pair_val (
 		{
 			if (ovlen == vlen)
 			{
-				QSE_MEMCPY (VPTR(pair), vptr, VTOB(htb,vlen));
+				if (vptr) QSE_MEMCPY (VPTR(pair), vptr, VTOB(htb,vlen));
 			}
 			else
 			{
@@ -185,7 +187,7 @@ static QSE_INLINE pair_t* change_pair_val (
 	return pair;
 }
 
-static qse_htb_mancbs_t mancbs[] =
+static mancbs_t mancbs[] =
 {
 	{
 		{
@@ -248,7 +250,7 @@ static qse_htb_mancbs_t mancbs[] =
 	}
 };
 
-const qse_htb_mancbs_t* qse_htb_mancbs (qse_htb_mancbs_kind_t kind)
+const mancbs_t* qse_htb_mancbs (mancbs_kind_t kind)
 {
 	return &mancbs[kind];
 };
@@ -330,12 +332,12 @@ void qse_htb_fini (htb_t* htb)
 	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
 }
 
-const qse_htb_mancbs_t* qse_htb_getmancbs (htb_t* htb)
+const mancbs_t* qse_htb_getmancbs (htb_t* htb)
 {
 	return htb->mancbs;
 }
 
-void qse_htb_setmancbs (htb_t* htb, const qse_htb_mancbs_t* mancbs)
+void qse_htb_setmancbs (htb_t* htb, const mancbs_t* mancbs)
 {
 	QSE_ASSERT (mancbs != QSE_NULL);
 	htb->mancbs = mancbs;
