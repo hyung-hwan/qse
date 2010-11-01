@@ -30,20 +30,6 @@ enum qse_http_errnum_t
 
 typedef enum qse_http_errnum_t qse_http_errnum_t;
 
-/*
-struct qse_http_req_t
-{
-	enum
-	{
-		QSE_HTTP_REQ_HEAD,
-		QSE_HTTP_REQ_GET,
-		QSE_HTTP_REQ_POST
-	} method;
-
-	qse_char_t path[];
-};
-*/
-
 typedef struct qse_http_t qse_http_t;
 
 struct qse_http_t
@@ -53,7 +39,7 @@ struct qse_http_t
 
 	struct
 	{
-		//qse_size_t pending;
+		/*qse_size_t pending;*/
 
 		int crlf; /* crlf status */
 		qse_size_t plen; /* raw request length excluding crlf */
@@ -88,9 +74,12 @@ struct qse_http_t
 			short minor;
 		} version;
 
-		qse_htb_t hdr;
+		struct
+		{
+			qse_htb_t tab;
+			void* combined;
+		} hdr;
 	} req;
-
 };
 
 /* returns the type of http method */

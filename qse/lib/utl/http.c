@@ -301,7 +301,9 @@ static QSE_INLINE int push_to_buffer (
 		
 		do
 		{
-			void* tmp = QSE_MMGR_REALLOC ((http)->mmgr, (octb)->data, ncapa * QSE_SIZEOF(*ptr));
+			void* tmp = QSE_MMGR_REALLOC (
+				(http)->mmgr, (octb)->data, ncapa * QSE_SIZEOF(*ptr)
+			);
 			if (tmp)
 			{
 				(octb)->capa = ncapa;
@@ -324,6 +326,25 @@ static QSE_INLINE int push_to_buffer (
 	while (ptr < end) (octb)->data[(octb)->size++] = *ptr++;
 
 	return 0;
+}
+
+struct hdr_cmb_t
+{
+	struct hdr_cmb_t* next;
+};
+
+static QSE_INLINE void clear_combined_headers (qse_http_t* http)
+{
+	struct hdr_cmb_t* cmb = (struct hdr_cmb_t*)http->req.hdr.combined;	
+	
+	while (cmb)
+	{	
+		struct hdr_cmb_t* next = cmb->next;
+		QSE_MMGR_FREE (http->mmgr, cmb);
+		cmb = next;
+	}
+
+	http->req.hdr.combined = QSE_NULL;
 }
 
 #define QSE_HTTP_STATE_REQ  1
@@ -376,7 +397,7 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 	http->state.plen = 0;
 	init_buffer (http, &http->req.raw);
 
-	if (qse_htb_init (&http->req.hdr, mmgr, 60, 70, 1, 1) == QSE_NULL) 
+	if (qse_htb_init (&http->req.hdr.tab, mmgr, 60, 70, 1, 1) == QSE_NULL) 
 	{
 		fini_buffer (http, &http->req.raw);
 		return QSE_NULL;
@@ -387,7 +408,8 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 
 void qse_http_fini (qse_http_t* http)
 {
-	qse_htb_fini (&http->req.hdr);
+	qse_htb_fini (&http->req.hdr.tab);
+	clear_combined_headers (http);
 	fini_buffer (http, &http->req.raw);
 }
 
@@ -521,6 +543,99 @@ qse_printf (QSE_T("BADREQ\n"));
 	return QSE_NULL;
 }
 
+struct cbserter_ctx_t
+{
+	qse_http_t* http;
+	void* vptr;
+	qse_size_t vlen;
+};
+
+static qse_htb_pair_t* cbserter (
+	qse_htb_t* htb, qse_htb_pair_t* pair, 
+	void* kptr, qse_size_t klen, void* ctx)
+{
+	struct cbserter_ctx_t* tx = (struct cbserter_ctx_t*)ctx;
+
+	if (pair == QSE_NULL)
+	{
+		/* the key is new. create a new pair with the key and the value */
+		qse_htb_pair_t* p; 
+		p = qse_htb_allocpair (htb, kptr, klen, tx->vptr, tx->vlen);
+		if (p == QSE_NULL) tx->http->errnum = QSE_HTTP_ENOMEM;
+		return p;
+	}
+	else
+	{
+		/* the key exists. let's combine values, each separated by a comma */
+		struct hdr_cmb_t* cmb;
+		qse_byte_t* ptr;
+		qse_size_t len;
+
+		/* TODO: reduce waste in case the same key appears again and again.
+		 *
+		 *  the current implementation is not space nor performance efficient.
+		 *  it allocates a new buffer again whenever it encounters the
+		 *  same key. memory is wasted and performance is sacrificed. 
+		 *
+		 *  hopefully, a http header does not include a lot of duplicate 
+		 *  fields and this implmentation can afford wastage.
+		 */
+
+		/* allocate a block to combine the existing value and the new value */
+		cmb = (struct hdr_cmb_t*) QSE_MMGR_ALLOC (
+			tx->http->mmgr, 
+			QSE_SIZEOF(*cmb) + 
+			QSE_SIZEOF(qse_byte_t) * (pair->vlen + 1 + tx->vlen + 1)
+		);
+		if (cmb == QSE_NULL)
+		{
+			tx->http->errnum = QSE_HTTP_ENOMEM;
+			return QSE_NULL;
+		}
+
+		/* let 'ptr' point to the actual space for the combined value */
+		ptr = (qse_byte_t*)(cmb + 1);
+		len = 0;
+
+		/* fill the space with the value */
+		QSE_MEMCPY (&ptr[len], pair->vptr, pair->vlen);
+		len += pair->vlen;
+		ptr[len++] = ',';
+		QSE_MEMCPY (&ptr[len], tx->vptr, tx->vlen);
+		len += tx->vlen;
+		ptr[len] = '\0';
+
+#if 0
+TODO:
+Not easy to unlink when using a singly linked list...
+Change it to doubly linked for this?
+
+		/* let's destroy the old buffer at least */
+		if (!(ptr >= tx->http->req.raw.data && ptr < 
+		      &tx->http->req.raw.data[tx->http->req.raw.size]))
+		{
+			/* NOTE the range check in 'if' assumes that raw.data is never
+			 * relocated for resizing */
+
+			QSE_MMGR_FREE (
+				tx->http->mmgr, 
+				((struct hdr_cmb_t*)pair->vptr) - 1
+			);
+		}
+#endif
+		
+		/* update the value pointer and length */
+		pair->vptr = ptr;
+		pair->vlen = len;
+
+		/* link the new combined value block */
+		cmb->next = tx->http->req.hdr.combined;
+		tx->http->req.hdr.combined = cmb;
+
+		return pair;
+	}
+}
+
 qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 {
 	qse_byte_t* p = line, * last;
@@ -587,13 +702,21 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 	}
 	*last = '\0';
 
-	/* add the field name and value into a hash table */
-	if (qse_htb_insert (&http->req.hdr,
-		name.ptr, name.len, value.ptr, value.len) == QSE_NULL)
+{
+	struct cbserter_ctx_t ctx;
+
+	ctx.http = http;
+	ctx.vptr = value.ptr;
+	ctx.vlen = value.len;
+
+	http->errnum = QSE_HTTP_ENOERR;
+	if (qse_htb_cbsert (
+		&http->req.hdr.tab, name.ptr, name.len, cbserter, &ctx) == QSE_NULL)
 	{
-		http->errnum = QSE_HTTP_ENOMEM;
+		if (http->errnum == QSE_HTTP_ENOERR) http->errnum = QSE_HTTP_ENOMEM;
 		return QSE_NULL;
 	}
+}
 
 	return p;
 
@@ -665,9 +788,11 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 				}
 				while (1);
 					
-qse_htb_walk (&http->req.hdr, walk, QSE_NULL);
+qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
 /* TODO: do the main job here... before the raw buffer is cleared out... */
 			
+				qse_htb_clear (&http->req.hdr.tab);
+				clear_combined_headers (http);
 				clear_buffer (http, &http->req.raw);
 				req = ptr; /* let ptr point to the next character to '\n' */
 			}
