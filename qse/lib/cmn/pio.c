@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: pio.c 368 2010-11-03 14:24:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -91,7 +91,6 @@ qse_pio_t* qse_pio_init (
 
 	int i, minidx = -1, maxidx = -1;
 
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 #ifdef _WIN32
 	SECURITY_ATTRIBUTES secattr; 
@@ -103,6 +102,8 @@ qse_pio_t* qse_pio_init (
 #else
 	qse_pio_pid_t pid;
 #endif
+
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;

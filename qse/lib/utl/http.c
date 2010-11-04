@@ -543,42 +543,132 @@ qse_printf (QSE_T("BADREQ\n"));
 	return QSE_NULL;
 }
 
-struct cbserter_ctx_t
+#define octet_tolower(c) (((c) >= 'A' && (c) <= 'Z') ? ((c) | 0x20) : (c))
+#define octet_toupper(c) (((c) >= 'a' && (c) <= 'z') ? ((c) & ~0x20) : (c))
+
+static QSE_INLINE int compare_octets (
+     const qse_byte_t* s1, qse_size_t len1,
+     const qse_byte_t* s2, qse_size_t len2)
+{
+	qse_char_t c1, c2;
+	const qse_byte_t* end1 = s1 + len1;
+	const qse_byte_t* end2 = s2 + len2;
+
+	while (s1 < end1)
+	{
+		c1 = octet_toupper (*s1);
+		if (s2 < end2)
+		{
+			c2 = octet_toupper (*s2);
+			if (c1 > c2) return 1;
+			if (c1 < c2) return -1;
+		}
+		else return 1;
+		s1++; s2++;
+	}
+
+	return (s2 < end2)? -1: 0;
+}
+
+
+static QSE_INLINE void capture_content_length (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	qse_printf (QSE_T("content length %.*S\n"), (int)pair->vlen, pair->vptr);
+}
+
+static QSE_INLINE void capture_content_type (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	qse_printf (QSE_T("content type %.*S\n"), (int)pair->vlen, pair->vptr);
+}
+
+static QSE_INLINE void capture_host (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	qse_printf (QSE_T("host capture => %.*S\n"), (int)pair->vlen, pair->vptr);
+}
+
+static QSE_INLINE void capture_key_header (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	static struct
+	{
+		const qse_byte_t* ptr;
+		qse_size_t        len;
+		void (*handler) (qse_http_t*, qse_htb_pair_t*);
+	} hdrtab[] = 
+	{
+		{ "Content-Length", 14, capture_content_length },
+		{ "Content-Type",   12, capture_content_type },
+		{ "Host",           4,  capture_host  }
+	};
+
+	int n;
+	qse_size_t mid, count, base = 0;
+
+	/* perform binary search */
+	for (count = QSE_COUNTOF(hdrtab); count > 0; count /= 2)
+	{
+		mid = base + count / 2;
+
+		n = compare_octets (
+			pair->kptr, pair->klen,
+			hdrtab[mid].ptr, hdrtab[mid].len
+		);
+
+		if (n == 0)
+		{
+			/* bingo! */
+			hdrtab[mid].handler (http, pair);
+			break;
+		}
+		if (n > 0) { base = mid + 1; count--; }
+	}
+}
+
+struct hdr_cbserter_ctx_t
 {
 	qse_http_t* http;
 	void* vptr;
 	qse_size_t vlen;
 };
 
-static qse_htb_pair_t* cbserter (
+static qse_htb_pair_t* hdr_cbserter (
 	qse_htb_t* htb, qse_htb_pair_t* pair, 
 	void* kptr, qse_size_t klen, void* ctx)
 {
-	struct cbserter_ctx_t* tx = (struct cbserter_ctx_t*)ctx;
+	struct hdr_cbserter_ctx_t* tx = (struct hdr_cbserter_ctx_t*)ctx;
 
 	if (pair == QSE_NULL)
 	{
-		/* the key is new. create a new pair with the key and the value */
+		/* the key is new. let's create a new pair. */
 		qse_htb_pair_t* p; 
+
 		p = qse_htb_allocpair (htb, kptr, klen, tx->vptr, tx->vlen);
+
 		if (p == QSE_NULL) tx->http->errnum = QSE_HTTP_ENOMEM;
+		else capture_key_header (tx->http, p);
+
 		return p;
 	}
 	else
 	{
-		/* the key exists. let's combine values, each separated by a comma */
+		/* the key exists. let's combine values, each separated 
+		 * by a comma */
 		struct hdr_cmb_t* cmb;
 		qse_byte_t* ptr;
 		qse_size_t len;
 
-		/* TODO: reduce waste in case the same key appears again and again.
+		/* TODO: reduce waste in case the same key appears again.
 		 *
-		 *  the current implementation is not space nor performance efficient.
-		 *  it allocates a new buffer again whenever it encounters the
-		 *  same key. memory is wasted and performance is sacrificed. 
-		 *
-		 *  hopefully, a http header does not include a lot of duplicate 
-		 *  fields and this implmentation can afford wastage.
+		 *  the current implementation is not space nor performance 
+		 *  efficient. it allocates a new buffer again whenever it
+		 *  encounters the same key. memory is wasted and performance
+		 *  is sacrificed. 
+
+		 *  hopefully, a http header does not include a lot of 
+		 *  duplicate fields and this implmentation can afford wastage.
 		 */
 
 		/* allocate a block to combine the existing value and the new value */
@@ -631,6 +721,8 @@ Change it to doubly linked for this?
 		/* link the new combined value block */
 		cmb->next = tx->http->req.hdr.combined;
 		tx->http->req.hdr.combined = cmb;
+
+		capture_key_header (tx->http, pair);
 
 		return pair;
 	}
@@ -703,7 +795,7 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 	*last = '\0';
 
 {
-	struct cbserter_ctx_t ctx;
+	struct hdr_cbserter_ctx_t ctx;
 
 	ctx.http = http;
 	ctx.vptr = value.ptr;
@@ -711,7 +803,8 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 
 	http->errnum = QSE_HTTP_ENOERR;
 	if (qse_htb_cbsert (
-		&http->req.hdr.tab, name.ptr, name.len, cbserter, &ctx) == QSE_NULL)
+		&http->req.hdr.tab, name.ptr, name.len, 
+		hdr_cbserter, &ctx) == QSE_NULL)
 	{
 		if (http->errnum == QSE_HTTP_ENOERR) http->errnum = QSE_HTTP_ENOMEM;
 		return QSE_NULL;

@@ -252,9 +252,11 @@ static qse_xma_blk_t* alloc_from_freelist (
 	{
 		if (free->size >= size)
 		{
+			qse_size_t rem;
+
 			detach_from_freelist (xma, free);
 
-			qse_size_t rem = free->size - size;
+			rem = free->size - size;
 			if (rem >= MINBLKLEN)
 			{
 				qse_xma_blk_t* tmp;
