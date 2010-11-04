@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: rex.c 368 2010-11-03 14:24:29Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1349,6 +1349,8 @@ static int addsimplecand (
 	exec_t* e, group_t* group, qse_rex_node_t* node, 
 	qse_size_t occ, const qse_char_t* mptr)
 {
+	cand_t cand;
+
 	QSE_ASSERT (
 		node->id == QSE_REX_NODE_NOP ||
 		node->id == QSE_REX_NODE_BOL ||
@@ -1357,8 +1359,6 @@ static int addsimplecand (
 		node->id == QSE_REX_NODE_CHAR ||
 		node->id == QSE_REX_NODE_CSET
 	);
-
-	cand_t cand;
 
 	cand.node = node;
 	cand.occ = occ;

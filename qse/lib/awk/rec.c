@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 292 2009-09-23 10:19:30Z hyunghwan.chung $
+ * $Id: rec.c 368 2010-11-03 14:24:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -299,11 +299,15 @@ static int split_record (qse_awk_rtx_t* rtx)
 #if 1
 		if (rtx->inrec.nflds >= rtx->inrec.maxflds)
 		{
+			void* tmp;
+
 			if (rtx->inrec.nflds < 16) nflds = 32;
 			else nflds = rtx->inrec.nflds * 2;
 
-			void* tmp = QSE_AWK_ALLOC (
-				rtx->awk, QSE_SIZEOF(*rtx->inrec.flds) * nflds);
+			tmp = QSE_AWK_ALLOC (
+				rtx->awk, 
+				QSE_SIZEOF(*rtx->inrec.flds) * nflds
+			);
 			if (tmp == QSE_NULL) 
 			{
 				if (fs_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, fs_free);
