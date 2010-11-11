@@ -347,6 +347,16 @@ static QSE_INLINE void clear_combined_headers (qse_http_t* http)
 	http->req.hdr.combined = QSE_NULL;
 }
 
+static QSE_INLINE void clear_request (qse_http_t* http)
+{
+	/* clear necessary part of the request before 
+	 * reading the next request */
+	QSE_MEMSET (&http->req.attr, 0, QSE_SIZEOF(http->req.attr));
+	qse_htb_clear (&http->req.hdr.tab);
+	clear_combined_headers (http);
+	clear_buffer (http, &http->req.raw);
+}
+
 #define QSE_HTTP_STATE_REQ  1
 #define QSE_HTTP_STATE_HDR  2
 #define QSE_HTTP_STATE_POST 3
@@ -413,7 +423,7 @@ void qse_http_fini (qse_http_t* http)
 	fini_buffer (http, &http->req.raw);
 }
 
-static qse_byte_t* parse_http_req (qse_http_t* http, qse_byte_t* line)
+static qse_byte_t* parse_http_reqline (qse_http_t* http, qse_byte_t* line)
 {
 	qse_byte_t* p = line;
 	qse_byte_t* tmp;
@@ -534,7 +544,14 @@ static qse_byte_t* parse_http_req (qse_http_t* http, qse_byte_t* line)
 	/* if the line does not end with a new line, it is a bad request */
 	if (*p != QSE_T('\n')) goto badreq;
 
-qse_printf (QSE_T("parse_http_req ....\n"));
+	/* adjust Connection: close for HTTP 1.0 or eariler */
+	if (http->req.version.major < 1 || 
+	    (http->req.version.major == 1 && http->req.version.minor == 0))
+	{
+		http->req.attr.connection_close = 1;
+	}
+
+qse_printf (QSE_T("parse_http_reqline ....\n"));
 	return ++p;
 
 badreq:
@@ -570,38 +587,99 @@ static QSE_INLINE int compare_octets (
 	return (s2 < end2)? -1: 0;
 }
 
-
-static QSE_INLINE void capture_content_length (
+static QSE_INLINE int capture_connection (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
-	qse_printf (QSE_T("content length %.*S\n"), (int)pair->vlen, pair->vptr);
+	int n;
+
+	n = compare_octets (pair->vptr, pair->vlen, "close", 5);
+	if (n == 0)
+	{
+		http->req.attr.connection_close = 1;
+		return 0;
+	}
+
+	/* don't care about other values */
+	return 0;
 }
 
-static QSE_INLINE void capture_content_type (
+static QSE_INLINE int capture_content_length (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
-	qse_printf (QSE_T("content type %.*S\n"), (int)pair->vlen, pair->vptr);
+	qse_size_t len = 0, off = 0, tmp;
+	const qse_byte_t* ptr = pair->vptr;
+
+	while (off < pair->vlen)
+	{
+		int num = digit_to_num (ptr[off]);
+		if (num <= -1)
+		{
+			/* the length contains a non-digit */
+			http->errnum = QSE_HTTP_EBADREQ;
+			return -1;
+		}
+
+		tmp = len * 10 + num;
+		if (tmp < len)
+		{
+			/* the length has overflown */
+			http->errnum = QSE_HTTP_EBADREQ;
+			return -1;
+		}
+
+		len = tmp;
+		off++;
+	}
+
+	if (off == 0)
+	{
+		/* no length was provided */
+		http->errnum = QSE_HTTP_EBADREQ;
+		return -1;
+	}
+
+	http->req.attr.content_length = len;
+	return 0;
 }
 
-static QSE_INLINE void capture_host (
+static QSE_INLINE int capture_host (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
 	qse_printf (QSE_T("host capture => %.*S\n"), (int)pair->vlen, pair->vptr);
+	return 0;
 }
 
-static QSE_INLINE void capture_key_header (
+static QSE_INLINE int capture_transfer_encoding (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	int n;
+
+	n = compare_octets (pair->vptr, pair->vlen, "chunked", 7);
+	if (n == 0)
+	{
+		http->req.attr.chunked = 1;
+		return 0;
+	}
+
+	/* other encoding type not supported yet */
+	http->errnum = QSE_HTTP_EBADREQ;
+	return -1;
+}
+
+static QSE_INLINE int capture_key_header (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
 	static struct
 	{
 		const qse_byte_t* ptr;
 		qse_size_t        len;
-		void (*handler) (qse_http_t*, qse_htb_pair_t*);
+		int (*handler) (qse_http_t*, qse_htb_pair_t*);
 	} hdrtab[] = 
 	{
-		{ "Content-Length", 14, capture_content_length },
-		{ "Content-Type",   12, capture_content_type },
-		{ "Host",           4,  capture_host  }
+		{ "Connection",         10, capture_connection },
+		{ "Content-Length",     14, capture_content_length },
+		{ "Host",               4,  capture_host },
+		{ "Transfer-Encoding",  17, capture_transfer_encoding  }
 	};
 
 	int n;
@@ -620,11 +698,14 @@ static QSE_INLINE void capture_key_header (
 		if (n == 0)
 		{
 			/* bingo! */
-			hdrtab[mid].handler (http, pair);
-			break;
+			return hdrtab[mid].handler (http, pair);
 		}
+
 		if (n > 0) { base = mid + 1; count--; }
 	}
+
+	/* No callback functions were interested in this header field. */
+	return 0;
 }
 
 struct hdr_cbserter_ctx_t
@@ -648,7 +729,16 @@ static qse_htb_pair_t* hdr_cbserter (
 		p = qse_htb_allocpair (htb, kptr, klen, tx->vptr, tx->vlen);
 
 		if (p == QSE_NULL) tx->http->errnum = QSE_HTTP_ENOMEM;
-		else capture_key_header (tx->http, p);
+		else 
+		{
+			if (capture_key_header (tx->http, p) <= -1)
+			{
+				/* Destroy the pair created here
+				 * as it is not added to the hash table yet */
+				qse_htb_freepair (htb, p);
+				p = QSE_NULL;
+			}
+		}
 
 		return p;
 	}
@@ -722,7 +812,7 @@ Change it to doubly linked for this?
 		cmb->next = tx->http->req.hdr.combined;
 		tx->http->req.hdr.combined = cmb;
 
-		capture_key_header (tx->http, pair);
+		if (capture_key_header (tx->http, pair) <= -1) return QSE_NULL;
 
 		return pair;
 	}
@@ -794,22 +884,24 @@ qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
 	}
 	*last = '\0';
 
-{
-	struct hdr_cbserter_ctx_t ctx;
-
-	ctx.http = http;
-	ctx.vptr = value.ptr;
-	ctx.vlen = value.len;
-
-	http->errnum = QSE_HTTP_ENOERR;
-	if (qse_htb_cbsert (
-		&http->req.hdr.tab, name.ptr, name.len, 
-		hdr_cbserter, &ctx) == QSE_NULL)
+	/* insert the new field to the header table */
 	{
-		if (http->errnum == QSE_HTTP_ENOERR) http->errnum = QSE_HTTP_ENOMEM;
-		return QSE_NULL;
+		struct hdr_cbserter_ctx_t ctx;
+
+		ctx.http = http;
+		ctx.vptr = value.ptr;
+		ctx.vlen = value.len;
+
+		http->errnum = QSE_HTTP_ENOERR;
+		if (qse_htb_cbsert (
+			&http->req.hdr.tab, name.ptr, name.len, 
+			hdr_cbserter, &ctx) == QSE_NULL)
+		{
+			if (http->errnum == QSE_HTTP_ENOERR) 
+				http->errnum = QSE_HTTP_ENOMEM;
+			return QSE_NULL;
+		}
 	}
-}
 
 	return p;
 
@@ -868,7 +960,7 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 
 				while (is_whspace_octet(*p)) p++;
 				QSE_ASSERT (*p != '\0');
-				p = parse_http_req (http, p);
+				p = parse_http_reqline (http, p);
 				if (p == QSE_NULL) return -1;
 			
 				do
@@ -876,17 +968,22 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 					while (is_whspace_octet(*p)) p++;
 					if (*p == '\0') break;
 
+					/* TODO: return error if protocol is 0.9.
+					 * HTTP/0.9 must not get headers... */
+
 					p = parse_http_header (http, p);
 					if (p == QSE_NULL) return -1;
 				}
 				while (1);
 					
+				if (http->req.attr.content_length > 0)
+				{
+qse_printf (QSE_T("content->length.. %d\n"), (int)http->req.attr.content_length);
+				}
 qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
 /* TODO: do the main job here... before the raw buffer is cleared out... */
-			
-				qse_htb_clear (&http->req.hdr.tab);
-				clear_combined_headers (http);
-				clear_buffer (http, &http->req.raw);
+
+				clear_request (http);
 				req = ptr; /* let ptr point to the next character to '\n' */
 			}
 		}
