@@ -25,7 +25,8 @@ enum qse_http_errnum_t
 	QSE_HTTP_ENOERR,
 	QSE_HTTP_ENOMEM,
 	QSE_HTTP_EBADREQ,
-	QSE_HTTP_EBADHDR
+	QSE_HTTP_EBADHDR,
+	QSE_HTTP_ETRAENC  /* bad transfer-encoding */
 };
 
 typedef enum qse_http_errnum_t qse_http_errnum_t;
@@ -60,6 +61,12 @@ struct qse_http_t
 		{
 			qse_byte_t* ptr;
 			qse_size_t  len;
+		} host;
+
+		struct
+		{
+			qse_byte_t* ptr;
+			qse_size_t  len;
 		} path;
 
 		struct
@@ -79,6 +86,14 @@ struct qse_http_t
 			qse_htb_t tab;
 			void* combined;
 		} hdr;
+
+		/* special attributes derived from the header */
+		struct
+		{
+			int chunked;		
+			int content_length;
+			int connection_close;
+		} attr;
 	} req;
 };
 
