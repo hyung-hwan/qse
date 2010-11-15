@@ -40,15 +40,15 @@ struct qse_http_t
 
 	struct
 	{
-		/*qse_size_t pending;*/
-
 		int crlf; /* crlf status */
 		qse_size_t plen; /* raw request length excluding crlf */
+		qse_size_t need; /* number of octets needed for contents */
 	} state;
 
 	struct
 	{
 		qse_http_octb_t raw;
+		qse_http_octb_t con;
 
 		enum
 		{
