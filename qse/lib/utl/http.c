@@ -297,6 +297,7 @@ static QSE_INLINE int push_to_buffer (
 
 	if (nsize > (octb)->capa) 
 	{ 
+		/* TODO: enhance the resizing scheme */
 		qse_size_t ncapa = (nsize > (octb)->capa * 2)? nsize: ((octb)->capa * 2);
 		
 		do
@@ -354,6 +355,7 @@ static QSE_INLINE void clear_request (qse_http_t* http)
 	QSE_MEMSET (&http->req.attr, 0, QSE_SIZEOF(http->req.attr));
 	qse_htb_clear (&http->req.hdr.tab);
 	clear_combined_headers (http);
+	clear_buffer (http, &http->req.con);
 	clear_buffer (http, &http->req.raw);
 }
 
@@ -406,6 +408,7 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 	http->state.crlf = 0;
 	http->state.plen = 0;
 	init_buffer (http, &http->req.raw);
+	init_buffer (http, &http->req.con);
 
 	if (qse_htb_init (&http->req.hdr.tab, mmgr, 60, 70, 1, 1) == QSE_NULL) 
 	{
@@ -420,10 +423,11 @@ void qse_http_fini (qse_http_t* http)
 {
 	qse_htb_fini (&http->req.hdr.tab);
 	clear_combined_headers (http);
+	fini_buffer (http, &http->req.con);
 	fini_buffer (http, &http->req.raw);
 }
 
-static qse_byte_t* parse_http_reqline (qse_http_t* http, qse_byte_t* line)
+static qse_byte_t* parse_reqline (qse_http_t* http, qse_byte_t* line)
 {
 	qse_byte_t* p = line;
 	qse_byte_t* tmp;
@@ -551,7 +555,7 @@ static qse_byte_t* parse_http_reqline (qse_http_t* http, qse_byte_t* line)
 		http->req.attr.connection_close = 1;
 	}
 
-qse_printf (QSE_T("parse_http_reqline ....\n"));
+qse_printf (QSE_T("parse_reqline ....\n"));
 	return ++p;
 
 badreq:
@@ -818,7 +822,7 @@ Change it to doubly linked for this?
 	}
 }
 
-qse_byte_t* parse_http_header (qse_http_t* http, qse_byte_t* line)
+qse_byte_t* parse_header_fields (qse_http_t* http, qse_byte_t* line)
 {
 	qse_byte_t* p = line, * last;
 	struct
@@ -917,13 +921,55 @@ qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)pair->klen, pair->kptr, (i
 	return QSE_HTB_WALK_FORWARD;
 }
 
+static QSE_INLINE int parse_request (
+	qse_http_t* http, const qse_byte_t* req, qse_size_t rlen)
+{
+	static const qse_byte_t nul = '\0';
+	qse_byte_t* p;
+
+	/* add the actual request */
+	if (push_to_buffer (http, &http->req.raw, req, rlen) <= -1) return -1;
+
+	/* add the terminating null for easier parsing */
+	if (push_to_buffer (http, &http->req.raw, &nul, 1) <= -1) return -1;
+
+	p = http->req.raw.data;
+
+	while (is_whspace_octet(*p)) p++;
+	QSE_ASSERT (*p != '\0');
+
+	/* parse the request line */
+	p = parse_reqline (http, p);
+	if (p == QSE_NULL) return -1;
+
+	/* parse header fields */
+	do
+	{
+		while (is_whspace_octet(*p)) p++;
+		if (*p == '\0') break;
+
+		/* TODO: return error if protocol is 0.9.
+		 * HTTP/0.9 must not get headers... */
+
+		p = parse_header_fields (http, p);
+		if (p == QSE_NULL) return -1;
+	}
+	while (1);
+		
+	return 0;
+}
+
 /* feed the percent encoded string */
 int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 {
 	const qse_byte_t* end = ptr + len;
 	const qse_byte_t* req = ptr;
 
-	static const qse_byte_t nul = '\0';
+	if (http->state.need > 0) 
+	{
+		/* does this goto drop code maintainability? */
+		goto get_content;
+	}
 
 	while (ptr < end)
 	{
@@ -939,52 +985,69 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 
 		if (b == '\n')
 		{
-			if (http->state.crlf <= 1) http->state.crlf = 2;
+			if (http->state.crlf <= 1) 
+			{
+				/* http->state.crlf == 0, CR was not seen
+				 * http->state.crlf == 1, CR was seen 
+				 * whatever the current case is, mark the 
+				 * first LF is seen here.
+				 */
+				http->state.crlf = 2;
+			}
 			else
 			{
-				qse_byte_t* p;
+				/* http->state.crlf == 2, no 2nd CR before LF
+				 * http->state.crlf == 3, 2nd CR before LF
+				 */
 
+				/* we got a complete request. */
 				QSE_ASSERT (http->state.crlf <= 3);
 
-				/* got a complete request */
+				/* reset the crlf state */
 				http->state.crlf = 0;
+				/* reset the raw request length */
 				http->state.plen = 0;
 
-				/* add the actual request */
-				if (push_to_buffer (http, &http->req.raw, req, ptr-req) <= -1) return -1;
+				if (parse_request (http, req, ptr - req) <= -1)
+					return -1;
 
-				/* add the terminating null for easier parsing */
-				if (push_to_buffer (http, &http->req.raw, &nul, 1) <= -1) return -1;
-
-				p = http->req.raw.data;
-
-				while (is_whspace_octet(*p)) p++;
-				QSE_ASSERT (*p != '\0');
-				p = parse_http_reqline (http, p);
-				if (p == QSE_NULL) return -1;
-			
-				do
-				{
-					while (is_whspace_octet(*p)) p++;
-					if (*p == '\0') break;
-
-					/* TODO: return error if protocol is 0.9.
-					 * HTTP/0.9 must not get headers... */
-
-					p = parse_http_header (http, p);
-					if (p == QSE_NULL) return -1;
-				}
-				while (1);
-					
 				if (http->req.attr.content_length > 0)
 				{
-qse_printf (QSE_T("content->length.. %d\n"), (int)http->req.attr.content_length);
+					/* let's get content */
+					qse_size_t avail;
+
+					http->state.need = http->req.attr.content_length;
+
+				get_content:
+					avail = end - ptr;
+
+					if (avail < http->state.need)
+					{
+						if (push_to_buffer (http, &http->req.con, ptr, avail) <= -1) return -1;
+						http->state.need -= avail;
+						goto done;
+					}
+					else 
+					{
+						/* we are given all needed or more than needed */
+						if (push_to_buffer (http, &http->req.con, ptr, http->state.need) <= -1) return -1;
+						ptr += http->state.need;
+						http->state.need = 0;
+					}
 				}
+
+
 qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
+if (http->req.attr.content_length > 0)
+{
+	qse_printf (QSE_T("content = [%.*S]\n"), (int)http->req.attr.content_length, http->req.con.data);
+}
 /* TODO: do the main job here... before the raw buffer is cleared out... */
 
 				clear_request (http);
-				req = ptr; /* let ptr point to the next character to '\n' */
+
+				/* let ptr point to the next character to LF or the optional contents */
+				req = ptr; 
 			}
 		}
 		else if (b == '\r')
@@ -995,13 +1058,17 @@ qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
 		}
 		else if (b == '\0')
 		{
-			/* guarantee that the request does not contain a null character */
+			/* guarantee that the request does not contain a null 
+			 * character */
 			http->errnum = QSE_HTTP_EBADREQ;
 			return -1;
 		}
 		else
 		{
-			http->state.plen++;
+			/* increment length of a request in raw 
+			 * excluding crlf */
+			http->state.plen++; 
+			/* mark that neither CR nor LF was seen */
 			http->state.crlf = 0;
 		}
 	}
@@ -1012,51 +1079,6 @@ qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
 		if (push_to_buffer (http, &http->req.raw, req, ptr - req) <= -1) return -1;
 	}
 
-#if 0
-	while (ptr < end)
-	{
-		if (*ptr++ == '\n')
-		{
-			qse_size_t reqlen = ptr - req;
-			int blank;
-
-			if (http->state.pending > 0)
-			{
-				QSE_ASSERT (http->req.raw.size > 0);
-				blank = (reqlen + http->state.pending == 2 && 
-				         http->req.raw.data[http->req.raw.size-1] == '\r');
-				http->state.pending = 0;
-			}
-			else
-			{
-				blank = (reqlen == 1 || (reqlen == 2 && req[0] == '\r'));
-			}
-
-			if (push_to_buffer (
-				http, &http->req.raw, req, reqlen) <= -1) return -1;
-
-			if (blank)
-			{
-				/* blank line - we got a complete request. 
-				 * we didn't process the optinal message body yet, though */
-
-				/* DO SOMETHIGN ... */
-qse_printf  (QSE_T("[[[%.*S]]]]\n"), (int)http->req.raw.size, http->req.raw.data), 
-
-				clear_buffer (http, &http->req.raw);
-			}
-
-			req = ptr; /* let ptr point to the next character to '\n' */
-		}
-	}
-
-	if (ptr > req)
-	{
-		/* enbuffer the unfinished data */
-		if (push_to_buffer (http, &http->req.raw, req, ptr - req) <= -1) return -1;
-		http->state.pending = ptr - req;
-	}
-#endif
-	
+done:
 	return 0;
 }
