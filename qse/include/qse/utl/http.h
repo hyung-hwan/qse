@@ -43,6 +43,13 @@ struct qse_http_t
 		int crlf; /* crlf status */
 		qse_size_t plen; /* raw request length excluding crlf */
 		qse_size_t need; /* number of octets needed for contents */
+
+		struct
+		{
+			qse_size_t len;
+			qse_size_t count;
+			int        phase;
+		} chunk;
 	} state;
 
 	struct
