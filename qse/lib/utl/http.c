@@ -642,7 +642,22 @@ static QSE_INLINE int capture_content_length (
 		return -1;
 	}
 
+	if (http->req.attr.chunked && len > 0)
+	{
+		/* content-length is greater than 0 
+		 * while transfer-encoding: chunked is specified. */
+		http->errnum = QSE_HTTP_EBADREQ;
+		return -1;
+	}
+
 	http->req.attr.content_length = len;
+	return 0;
+}
+
+static QSE_INLINE int capture_content_type (
+	qse_http_t* http, qse_htb_pair_t* pair)
+{
+	qse_printf (QSE_T("content type capture => %.*S\n"), (int)pair->vlen, pair->vptr);
 	return 0;
 }
 
@@ -661,11 +676,19 @@ static QSE_INLINE int capture_transfer_encoding (
 	n = compare_octets (pair->vptr, pair->vlen, "chunked", 7);
 	if (n == 0)
 	{
+		if (http->req.attr.content_length > 0)
+		{
+			/* content-length is greater than 0 
+			 * while transfer-encoding: chunked is specified. */
+			goto badreq;
+		}
+
 		http->req.attr.chunked = 1;
 		return 0;
 	}
 
 	/* other encoding type not supported yet */
+badreq:
 	http->errnum = QSE_HTTP_EBADREQ;
 	return -1;
 }
@@ -682,6 +705,7 @@ static QSE_INLINE int capture_key_header (
 	{
 		{ "Connection",         10, capture_connection },
 		{ "Content-Length",     14, capture_content_length },
+		{ "Content-Type",       12, capture_content_type },
 		{ "Host",               4,  capture_host },
 		{ "Transfer-Encoding",  17, capture_transfer_encoding  }
 	};
@@ -959,16 +983,79 @@ static QSE_INLINE int parse_request (
 	return 0;
 }
 
+static const qse_byte_t* getchunklen (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
+{
+	const qse_byte_t* end = ptr + len;
+
+	if (http->state.chunk.count == 0)
+	{
+		while (ptr < end && is_space_octet(*ptr)) ptr++;
+	}
+
+	while (ptr < end)
+	{
+		int n = xdigit_to_num (*ptr);
+		if (n <= -1) break;
+
+		http->state.chunk.len = http->state.chunk.len * 16 + n;
+		http->state.chunk.count++;
+		ptr++;
+	}
+
+	if (http->state.chunk.count > 0)
+	{
+		while (ptr < end && is_space_octet(*ptr)) ptr++;
+	}
+
+	if (ptr < end)
+	{
+		if (*ptr == '\n') 
+		{
+			http->state.need = http->state.chunk.len;
+			ptr++;
+		}
+		else
+		{
+			http->errnum = QSE_HTTP_EBADREQ;
+			return QSE_NULL;
+		}
+	}
+
+	return ptr;
+}
+
+/* chunk parsing phases */
+#define GET_CHUNK_DONE     0
+#define GET_CHUNK_LEN      1
+#define GET_CHUNK_DATA     2
+#define GET_CHUNK_CRLF     3
+#define GET_CHUNK_TRAILERS 4
+
 /* feed the percent encoded string */
 int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 {
 	const qse_byte_t* end = ptr + len;
 	const qse_byte_t* req = ptr;
 
-	if (http->state.need > 0) 
+	/* does this goto drop code maintainability? */
+	if (http->state.need > 0) goto content_resume;
+	switch (http->state.chunk.phase)
 	{
-		/* does this goto drop code maintainability? */
-		goto get_content;
+		case GET_CHUNK_LEN:
+			goto dechunk_resume;
+
+		case GET_CHUNK_DATA:
+			/* this won't be reached as http->state.need 
+			 * is greater than 0 if GET_CHUNK_DATA is true */
+			goto content_resume;
+
+		case GET_CHUNK_CRLF:
+			goto dechunk_crlf;
+
+		/*
+		case GET_CHUNK_TRAILERS:
+			goto ....
+		*/
 	}
 
 	while (ptr < end)
@@ -1011,21 +1098,59 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 				if (parse_request (http, req, ptr - req) <= -1)
 					return -1;
 
-				if (http->req.attr.content_length > 0)
+				if (http->req.attr.chunked)
 				{
-					/* let's get content */
+					/* transfer-encoding: chunked */
+					QSE_ASSERT (http->req.attr.content_length <= 0);
+
+				dechunk_start:
+					http->state.chunk.phase = GET_CHUNK_LEN;
+					http->state.chunk.len = 0;
+					http->state.chunk.count = 0;
+
+				dechunk_resume:
+					ptr = getchunklen (http, ptr, end - ptr);
+					if (ptr == QSE_NULL) return -1;
+
+					if (http->state.chunk.count <= 0)
+					{
+						/* empty line - end of the chunk */
+						http->state.chunk.phase = GET_CHUNK_DONE;
+					}
+					else if (http->state.need <= 0)
+					{
+						/* length explicity specified to 0
+						   get trailing headers .... */
+						/*http->state.chunk.phase = GET_CHUNK_TRAILERS;*/
+						http->state.chunk.phase = GET_CHUNK_DATA;
+					}
+					else
+					{
+						/* let's piggy back on the normal content-length data acquisition */
+						http->state.chunk.phase = GET_CHUNK_DATA;
+					}
+				}
+				else
+				{
+					http->state.need = http->req.attr.content_length;
+				}
+
+				if (http->state.need > 0)
+				{
+					/* content-length or chunked data length specified */
+
 					qse_size_t avail;
 
-					http->state.need = http->req.attr.content_length;
-
-				get_content:
+				content_resume:
 					avail = end - ptr;
 
 					if (avail < http->state.need)
 					{
+						/* the data is not as large as needed */
 						if (push_to_buffer (http, &http->req.con, ptr, avail) <= -1) return -1;
 						http->state.need -= avail;
-						goto done;
+						/* we didn't get a complete content yet */
+						goto abort; 
 					}
 					else 
 					{
@@ -1036,11 +1161,39 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 					}
 				}
 
+				if (http->state.chunk.phase == GET_CHUNK_DATA)
+				{
+					QSE_ASSERT (http->state.need == 0);
+					http->state.chunk.phase = GET_CHUNK_CRLF;
+
+				dechunk_crlf:
+					while (ptr < end && is_space_octet(*ptr)) ptr++;
+					if (ptr < end)
+					{
+						if (*ptr == '\n') 
+						{
+							/* end of chunk data. let's decode the next chunk */
+							ptr++;
+							goto dechunk_start;
+						}
+						else
+						{
+							/* redundant character ... */
+							http->errnum = QSE_HTTP_EBADREQ;
+							return -1;
+						}
+					}
+					else
+					{
+						/* data not enough */
+						goto abort;
+					}
+				}
 
 qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
-if (http->req.attr.content_length > 0)
+if (http->req.con.size > 0)
 {
-	qse_printf (QSE_T("content = [%.*S]\n"), (int)http->req.attr.content_length, http->req.con.data);
+	qse_printf (QSE_T("content = [%.*S]\n"), (int)http->req.con.size, http->req.con.data);
 }
 /* TODO: do the main job here... before the raw buffer is cleared out... */
 
@@ -1079,6 +1232,7 @@ if (http->req.attr.content_length > 0)
 		if (push_to_buffer (http, &http->req.raw, req, ptr - req) <= -1) return -1;
 	}
 
-done:
+abort:
 	return 0;
 }
+
