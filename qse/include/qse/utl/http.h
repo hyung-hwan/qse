@@ -38,22 +38,23 @@ struct qse_http_t
 	QSE_DEFINE_COMMON_FIELDS (http)
 	qse_http_errnum_t errnum;
 
+
 	struct
 	{
-		int crlf; /* crlf status */
-		qse_size_t plen; /* raw request length excluding crlf */
-		qse_size_t need; /* number of octets needed for contents */
-
 		struct
 		{
-			qse_size_t len;
-			qse_size_t count;
-			int        phase;
-		} chunk;
-	} state;
+			int crlf; /* crlf status */
+			qse_size_t plen; /* raw request length excluding crlf */
+			qse_size_t need; /* number of octets needed for contents */
+	
+			struct
+			{
+				qse_size_t len;
+				qse_size_t count;
+				int        phase;
+			} chunk;
+		} state;
 
-	struct
-	{
 		qse_http_octb_t raw;
 		qse_http_octb_t con;
 
@@ -167,6 +168,10 @@ qse_http_t* qse_http_init (
 );
 
 void qse_http_fini (
+	qse_http_t* http
+);
+
+void qse_http_clear (
 	qse_http_t* http
 );
 
