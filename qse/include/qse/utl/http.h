@@ -57,6 +57,7 @@ struct qse_http_t
 
 		qse_http_octb_t raw;
 		qse_http_octb_t con;
+		qse_http_octb_t tra;
 
 		enum
 		{

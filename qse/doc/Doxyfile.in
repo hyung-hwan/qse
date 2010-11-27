@@ -186,7 +186,7 @@ ALIASES                =
 # For instance, some of the names that are used will be different. The list 
 # of all members will be omitted, etc.
 
-OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
 
 # Set the OPTIMIZE_OUTPUT_JAVA tag to YES if your project consists of Java 
 # sources only. Doxygen will then generate output that is more tailored for 
@@ -1397,12 +1397,12 @@ CLASS_GRAPH            = YES
 # indirect implementation dependencies (inheritance, containment, and 
 # class references variables) of the class with other documented classes.
 
-COLLABORATION_GRAPH    = YES
+COLLABORATION_GRAPH    = NO
 
 # If the GROUP_GRAPHS and HAVE_DOT tags are set to YES then doxygen 
 # will generate a graph for groups, showing the direct groups dependencies
 
-GROUP_GRAPHS           = YES
+GROUP_GRAPHS           = NO
 
 # If the UML_LOOK tag is set to YES doxygen will generate inheritance and 
 # collaboration diagrams in a style similar to the OMG's Unified Modeling 

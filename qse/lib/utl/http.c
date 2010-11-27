@@ -24,6 +24,8 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (http)
 
+static const qse_byte_t NUL = '\0';
+
 static QSE_INLINE int is_http_space (qse_char_t c)
 {
 	return QSE_ISSPACE(c) && c != QSE_T('\r') && c != QSE_T('\n');
@@ -354,8 +356,12 @@ static QSE_INLINE void clear_request (qse_http_t* http)
 	 * reading the next request */
 	QSE_MEMSET (&http->req.state, 0, QSE_SIZEOF(http->req.state));
 	QSE_MEMSET (&http->req.attr, 0, QSE_SIZEOF(http->req.attr));
+
 	qse_htb_clear (&http->req.hdr.tab);
+
 	clear_combined_headers (http);
+
+	clear_buffer (http, &http->req.tra);
 	clear_buffer (http, &http->req.con);
 	clear_buffer (http, &http->req.raw);
 }
@@ -407,9 +413,12 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 
 	init_buffer (http, &http->req.raw);
 	init_buffer (http, &http->req.con);
+	init_buffer (http, &http->req.tra);
 
 	if (qse_htb_init (&http->req.hdr.tab, mmgr, 60, 70, 1, 1) == QSE_NULL) 
 	{
+		fini_buffer (http, &http->req.tra);
+		fini_buffer (http, &http->req.con);
 		fini_buffer (http, &http->req.raw);
 		return QSE_NULL;
 	}
@@ -421,6 +430,7 @@ void qse_http_fini (qse_http_t* http)
 {
 	qse_htb_fini (&http->req.hdr.tab);
 	clear_combined_headers (http);
+	fini_buffer (http, &http->req.tra);
 	fini_buffer (http, &http->req.con);
 	fini_buffer (http, &http->req.raw);
 }
@@ -951,14 +961,13 @@ qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)pair->klen, pair->kptr, (i
 static QSE_INLINE int parse_request (
 	qse_http_t* http, const qse_byte_t* req, qse_size_t rlen)
 {
-	static const qse_byte_t nul = '\0';
 	qse_byte_t* p;
 
 	/* add the actual request */
 	if (push_to_buffer (http, &http->req.raw, req, rlen) <= -1) return -1;
 
 	/* add the terminating null for easier parsing */
-	if (push_to_buffer (http, &http->req.raw, &nul, 1) <= -1) return -1;
+	if (push_to_buffer (http, &http->req.raw, &NUL, 1) <= -1) return -1;
 
 	p = http->req.raw.data;
 
@@ -1037,8 +1046,8 @@ static const qse_byte_t* getchunklen (qse_http_t* http, const qse_byte_t* ptr, q
 			{
 				/* length explicity specified to 0
 				   get trailing headers .... */
-				/*TODO: => http->req.state.chunk.phase = GET_CHUNK_TRAILERS;*/
-				http->req.state.chunk.phase = GET_CHUNK_DATA;
+				http->req.state.chunk.phase = GET_CHUNK_TRAILERS;
+//qse_printf (QSE_T("SWITCH TO GET_CHUNK_TRAILERS....\n"));
 			}
 			else
 			{
@@ -1061,11 +1070,86 @@ static const qse_byte_t* getchunklen (qse_http_t* http, const qse_byte_t* ptr, q
 	return ptr;
 }
 
-/* feed the percent encoded string */
-int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
+static const qse_byte_t* get_trailing_headers (
+	qse_http_t* http, const qse_byte_t* req, const qse_byte_t* end)
 {
-	const qse_byte_t* end = ptr + len;
-	const qse_byte_t* req = ptr;
+	const qse_byte_t* ptr = req;
+
+	while (ptr < end)
+	{
+		register qse_byte_t b = *ptr++;
+
+		switch (b)
+		{
+			case '\0':
+				/* guarantee that the request does not contain a null 
+				 * character */
+				http->errnum = QSE_HTTP_EBADREQ;
+				return -1;
+
+			case '\n':
+				if (http->req.state.crlf <= 1) 
+				{
+					http->req.state.crlf = 2;
+					break;
+				}
+				else
+				{
+					qse_byte_t* p;
+	
+					QSE_ASSERT (http->req.state.crlf <= 3);
+					http->req.state.crlf = 0;
+	
+					if (push_to_buffer (
+						http, &http->req.tra, req, ptr - req) <= -1)
+						return QSE_NULL;
+					if (push_to_buffer (
+						http, &http->req.tra, &NUL, 1) <= -1) 
+						return QSE_NULL;
+	
+					p = http->req.tra.data;
+	
+					do
+					{
+						while (is_whspace_octet(*p)) p++;
+						if (*p == '\0') break;
+	
+						/* TODO: return error if protocol is 0.9.
+						 * HTTP/0.9 must not get headers... */
+	
+						p = parse_header_fields (http, p);
+						if (p == QSE_NULL) return QSE_NULL;
+					}
+					while (1);
+
+					http->req.state.chunk.phase = GET_CHUNK_DONE;
+					goto done;
+				}
+
+			case '\r':
+				if (http->req.state.crlf == 0 || http->req.state.crlf == 2) 
+					http->req.state.crlf++;
+				else http->req.state.crlf = 1;
+				break;
+
+			default:
+				/* mark that neither CR nor LF was seen */
+				http->req.state.crlf = 0;
+		}
+	}
+
+	if (push_to_buffer (http, &http->req.tra, req, ptr - req) <= -1) return QSE_NULL;
+
+done:
+	return ptr;
+}
+
+
+/* feed the percent encoded string */
+int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
+{
+	const qse_byte_t* end = req + len;
+	const qse_byte_t* ptr = req;
 
 	/* does this goto drop code maintainability? */
 	if (http->req.state.need > 0) goto content_resume;
@@ -1082,10 +1166,8 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 		case GET_CHUNK_CRLF:
 			goto dechunk_crlf;
 
-		/*
 		case GET_CHUNK_TRAILERS:
-			goto ....
-		*/
+			goto dechunk_get_trailers;
 	}
 
 	while (ptr < end)
@@ -1100,128 +1182,156 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
 			continue;
 		}
 
-		if (b == '\n')
+		switch (b)
 		{
-			if (http->req.state.crlf <= 1) 
-			{
-				/* http->req.state.crlf == 0, CR was not seen
-				 * http->req.state.crlf == 1, CR was seen 
-				 * whatever the current case is, mark the 
-				 * first LF is seen here.
-				 */
-				http->req.state.crlf = 2;
-			}
-			else
-			{
-				/* http->req.state.crlf == 2, no 2nd CR before LF
-				 * http->req.state.crlf == 3, 2nd CR before LF
-				 */
+			case '\0':
+				/* guarantee that the request does not contain a null 
+				 * character */
+				http->errnum = QSE_HTTP_EBADREQ;
+				return -1;
 
-				/* we got a complete request. */
-				QSE_ASSERT (http->req.state.crlf <= 3);
-
-				/* reset the crlf state */
-				http->req.state.crlf = 0;
-				/* reset the raw request length */
-				http->req.state.plen = 0;
-
-				if (parse_request (http, req, ptr - req) <= -1)
-					return -1;
-
-				if (http->req.attr.chunked)
+			case '\n':
+				if (http->req.state.crlf <= 1) 
 				{
-					/* transfer-encoding: chunked */
-					QSE_ASSERT (http->req.attr.content_length <= 0);
-
-				dechunk_start:
-					http->req.state.chunk.phase = GET_CHUNK_LEN;
-					http->req.state.chunk.len = 0;
-					http->req.state.chunk.count = 0;
-
-				dechunk_resume:
-					ptr = getchunklen (http, ptr, end - ptr);
-					if (ptr == QSE_NULL) return -1;
-
-					if (http->req.state.chunk.phase == GET_CHUNK_LEN)
-					{
-						/* still in the GET_CHUNK_LEN state.
-						 * the length has been partially read. */
-						goto feedme_more;
-					}
+					/* http->req.state.crlf == 0
+					 *   => CR was not seen
+					 * http->req.state.crlf == 1
+					 *   => CR was seen 
+					 * whatever the current case is, 
+					 * mark the first LF is seen here.
+					 */
+					http->req.state.crlf = 2;
 				}
 				else
 				{
-					/* we need to read as many octets as Content-Length */
-					http->req.state.need = http->req.attr.content_length;
-				}
-
-				if (http->req.state.need > 0)
-				{
-					/* content-length or chunked data length specified */
-
-					qse_size_t avail;
-
-				content_resume:
-					avail = end - ptr;
-
-					if (avail < http->req.state.need)
+					/* http->req.state.crlf == 2
+					 *   => no 2nd CR before LF
+					 * http->req.state.crlf == 3
+					 *   => 2nd CR before LF
+					 */
+	
+					/* we got a complete request. */
+					QSE_ASSERT (http->req.state.crlf <= 3);
+	
+					/* reset the crlf state */
+					http->req.state.crlf = 0;
+					/* reset the raw request length */
+					http->req.state.plen = 0;
+	
+					if (parse_request (http, req, ptr - req) <= -1)
+						return -1;
+	
+					if (http->req.attr.chunked)
 					{
-						/* the data is not as large as needed */
-						if (push_to_buffer (http, &http->req.con, ptr, avail) <= -1) return -1;
-						http->req.state.need -= avail;
-						/* we didn't get a complete content yet */
-						goto feedme_more; 
-					}
-					else 
-					{
-						/* we are given all needed or more than needed */
-						if (push_to_buffer (http, &http->req.con, ptr, http->req.state.need) <= -1) return -1;
-						ptr += http->req.state.need;
-						http->req.state.need = 0;
-					}
-				}
-
-				if (http->req.state.chunk.phase == GET_CHUNK_DATA)
-				{
-					QSE_ASSERT (http->req.state.need == 0);
-					http->req.state.chunk.phase = GET_CHUNK_CRLF;
-
-				dechunk_crlf:
-					while (ptr < end && is_space_octet(*ptr)) ptr++;
-					if (ptr < end)
-					{
-						if (*ptr == '\n') 
+						/* transfer-encoding: chunked */
+						QSE_ASSERT (http->req.attr.content_length <= 0);
+	
+					dechunk_start:
+						http->req.state.chunk.phase = GET_CHUNK_LEN;
+						http->req.state.chunk.len = 0;
+						http->req.state.chunk.count = 0;
+	
+					dechunk_resume:
+						ptr = getchunklen (http, ptr, end - ptr);
+						if (ptr == QSE_NULL) return -1;
+	
+						if (http->req.state.chunk.phase == GET_CHUNK_LEN)
 						{
-							/* end of chunk data. */
-							ptr++;
-
-							/* more octets still available. 
-							 * let it decode the next chunk */
-							if (ptr < end) goto dechunk_start; 
-						
-							/* no more octets available after chunk data.
-							 * the chunk state variables need to be
-							 * reset when a jump is made to dechunk_resume
-							 * upon the next call */
-							http->req.state.chunk.phase = GET_CHUNK_LEN;
-							http->req.state.chunk.len = 0;
-							http->req.state.chunk.count = 0;
-
+							/* still in the GET_CHUNK_LEN state.
+							 * the length has been partially read. */
 							goto feedme_more;
 						}
-						else
+						else if (http->req.state.chunk.phase == GET_CHUNK_TRAILERS)
 						{
-							/* redundant character ... */
-							http->errnum = QSE_HTTP_EBADREQ;
-							return -1;
+						dechunk_get_trailers:
+							ptr = get_trailing_headers (http, ptr, end);
+							if (ptr == QSE_NULL) return -1;
+	
+							if (http->req.state.chunk.phase == GET_CHUNK_TRAILERS)
+							{
+								/* still in the same state.
+								 * the trailers have not been processed fully */
+								goto feedme_more;
+							}
 						}
 					}
 					else
 					{
-						/* data not enough */
-						goto feedme_more;
+						/* we need to read as many octets as Content-Length */
+						http->req.state.need = http->req.attr.content_length;
 					}
-				}
+
+					if (http->req.state.need > 0)
+					{
+						/* content-length or chunked data length specified */
+	
+						qse_size_t avail;
+	
+					content_resume:
+						avail = end - ptr;
+	
+						if (avail < http->req.state.need)
+						{
+							/* the data is not as large as needed */
+							if (push_to_buffer (http, &http->req.con, ptr, avail) <= -1) return -1;
+							http->req.state.need -= avail;
+							/* we didn't get a complete content yet */
+							goto feedme_more; 
+						}
+						else 
+						{
+							/* we got all or more than needed */
+							if (push_to_buffer (
+								http, &http->req.con, ptr, 
+								http->req.state.need) <= -1) return -1;
+							ptr += http->req.state.need;
+							http->req.state.need = 0;
+						}
+					}
+	
+					if (http->req.state.chunk.phase == GET_CHUNK_DATA)
+					{
+						QSE_ASSERT (http->req.state.need == 0);
+						http->req.state.chunk.phase = GET_CHUNK_CRLF;
+	
+					dechunk_crlf:
+						while (ptr < end && is_space_octet(*ptr)) ptr++;
+						if (ptr < end)
+						{
+							if (*ptr == '\n') 
+							{
+								/* end of chunk data. */
+								ptr++;
+	
+								/* more octets still available. 
+								 * let it decode the next chunk 
+								 */
+								if (ptr < end) goto dechunk_start; 
+							
+								/* no more octets available after 
+								 * chunk data. the chunk state variables
+								 * need to be reset when a jump is made
+								 * to dechunk_resume upon the next call
+								 */
+								http->req.state.chunk.phase = GET_CHUNK_LEN;
+								http->req.state.chunk.len = 0;
+								http->req.state.chunk.count = 0;
+
+								goto feedme_more;
+							}
+							else
+							{
+								/* redundant character ... */
+								http->errnum = QSE_HTTP_EBADREQ;
+								return -1;
+							}
+						}
+						else
+						{
+							/* data not enough */
+							goto feedme_more;
+						}
+					}
 
 qse_htb_walk (&http->req.hdr.tab, walk, QSE_NULL);
 if (http->req.con.size > 0)
@@ -1230,32 +1340,26 @@ if (http->req.con.size > 0)
 }
 /* TODO: do the main job here... before the raw buffer is cleared out... */
 
-				clear_request (http);
+					clear_request (http);
 
-				/* let ptr point to the next character to LF or the optional contents */
-				req = ptr; 
-			}
-		}
-		else if (b == '\r')
-		{
-			if (http->req.state.crlf == 0 || http->req.state.crlf == 2) 
-				http->req.state.crlf++;
-			else http->req.state.crlf = 1;
-		}
-		else if (b == '\0')
-		{
-			/* guarantee that the request does not contain a null 
-			 * character */
-			http->errnum = QSE_HTTP_EBADREQ;
-			return -1;
-		}
-		else
-		{
-			/* increment length of a request in raw 
-			 * excluding crlf */
-			http->req.state.plen++; 
-			/* mark that neither CR nor LF was seen */
-			http->req.state.crlf = 0;
+					/* let ptr point to the next character to LF or 
+					 * the optional contents */
+					req = ptr; 
+				}
+				break;
+
+			case '\r':
+				if (http->req.state.crlf == 0 || http->req.state.crlf == 2) 
+					http->req.state.crlf++;
+				else http->req.state.crlf = 1;
+				break;
+
+			default:
+				/* increment length of a request in raw 
+				 * excluding crlf */
+				http->req.state.plen++; 
+				/* mark that neither CR nor LF was seen */
+				http->req.state.crlf = 0;
 		}
 	}
 
@@ -1267,5 +1371,6 @@ if (http->req.con.size > 0)
 
 feedme_more:
 	return 0;
+
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 321 2009-12-21 12:44:33Z hyunghwan.chung $
+ * $Id: Sed.hpp 373 2010-11-26 15:00:57Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,6 +23,18 @@
 
 #include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
+
+/**
+ * @defgroup sed_cxx C++ 
+ * @ingroup sed
+ * @{
+ */
+
+/**
+ * @defgroup sed_cxx_core Core interface
+ * @ingroup sed_cxx
+ * @{
+ */
 
 /** @file
  * Stream Editor
@@ -309,5 +321,8 @@ private:
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
+
+/* @} */
+/* @} */
 
 #endif
