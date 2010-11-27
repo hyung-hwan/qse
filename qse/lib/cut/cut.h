@@ -76,32 +76,31 @@ struct qse_cut_t
 			qse_char_t buf[2048];
 			qse_size_t len;
 			int        eof;
-                } out;
+		} out;
 		
 		/** data needed for input streams */
 		struct
-                {
-                        qse_cut_io_fun_t fun; /**< an input handler */
-                        qse_cut_io_arg_t arg; /**< input handling data */
+		{
+			qse_cut_io_fun_t fun; /**< an input handler */
+			qse_cut_io_arg_t arg; /**< input handling data */
 
-                        qse_char_t xbuf[1]; /**< a read-ahead buffer */
-                        int xbuf_len; /**< data length in the buffer */
+			qse_char_t xbuf[1]; /**< a read-ahead buffer */
+			int xbuf_len; /**< data length in the buffer */
 
-                        qse_char_t buf[2048]; /**< input buffer */
-                        qse_size_t len; /**< data length in the buffer */
-                        qse_size_t pos; /**< current position in the buffer */
-                        int        eof; /**< EOF indicator */
+			qse_char_t buf[2048]; /**< input buffer */
+			qse_size_t len; /**< data length in the buffer */
+			qse_size_t pos; /**< current position in the buffer */
+			int        eof; /**< EOF indicator */
 
-                        qse_str_t line; /**< pattern space */
-                        qse_size_t num; /**< current line number */
+			qse_str_t line; /**< pattern space */
+			qse_size_t num; /**< current line number */
 
 			qse_size_t  nflds; /**< the number of fields */
 			qse_size_t  cflds; /**< capacity of flds field */
 			qse_cstr_t  sflds[128]; /**< static field buffer */
 			qse_cstr_t* flds;
 			int delimited;
-                } in;
-
+		} in;
 	} e;
 };
 

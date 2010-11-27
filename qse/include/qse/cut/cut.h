@@ -37,7 +37,8 @@
  */
 
 /** @struct qse_cut_t
- * The qes_cut_t type defines a text cutter.
+ * The qse_cut_t type defines a text cutter. The details are hidden as it is
+ * a large complex structure vulnerable to unintended changes. 
  */
 typedef struct qse_cut_t qse_cut_t;
 
@@ -110,7 +111,7 @@ typedef enum qse_cut_io_cmd_t qse_cut_io_cmd_t;
  */
 struct qse_cut_io_arg_t
 {
-	void*             handle; /**< I/O handle */
+	void* handle; /**< I/O handle */
 };
 typedef struct qse_cut_io_arg_t qse_cut_io_arg_t;
 
@@ -133,12 +134,12 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (cut)
 
 /**
- * The qse_cut_open() function creates a text cutter object.
- * @return A pointer to a text cutter on success, QSE_NULL on failure
+ * The qse_cut_open() function creates a text cutter.
+ * @return A pointer to a text cutter on success, #QSE_NULL on failure
  */
 qse_cut_t* qse_cut_open (
-	qse_mmgr_t*    mmgr, /**< a memory manager */
-	qse_size_t     xtn   /**< the size of extension in bytes */
+	qse_mmgr_t*    mmgr,   /**< memory manager */
+	qse_size_t     xtnsize /**< extension size in bytes */
 );
 
 /**
