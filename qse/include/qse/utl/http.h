@@ -9,6 +9,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/htb.h>
 
+typedef struct qse_http_t qse_http_t;
 
 typedef struct qse_http_octb_t qse_http_octb_t;
 
@@ -19,25 +20,81 @@ struct qse_http_octb_t
 	qse_byte_t* data;
 };
 
-
 enum qse_http_errnum_t
 {
 	QSE_HTTP_ENOERR,
 	QSE_HTTP_ENOMEM,
 	QSE_HTTP_EBADREQ,
 	QSE_HTTP_EBADHDR,
-	QSE_HTTP_ETRAENC  /* bad transfer-encoding */
+	QSE_HTTP_EREQCBS
 };
 
 typedef enum qse_http_errnum_t qse_http_errnum_t;
 
-typedef struct qse_http_t qse_http_t;
+
+typedef struct qse_http_req_t qse_http_req_t;
+
+struct qse_http_req_t
+{
+	enum
+	{
+		QSE_HTTP_REQ_GET,
+		QSE_HTTP_REQ_HEAD,
+		QSE_HTTP_REQ_POST
+	} method;
+
+	struct
+	{
+		qse_byte_t* ptr;
+		qse_size_t  len;
+	} host;
+
+	struct
+	{
+		qse_byte_t* ptr;
+		qse_size_t  len;
+	} path;
+
+	struct
+	{
+		qse_byte_t* ptr;
+		qse_size_t  len;
+	} args;
+
+	struct
+	{
+		short major;
+		short minor;
+	} version;
+
+	/* header table */
+	qse_htb_t hdrtab;
+
+	/* special attributes derived from the header */
+	struct
+	{
+		int chunked;		
+		int content_length;
+		int connection_close;
+	} attr;
+
+	qse_http_octb_t con;
+};
+
+typedef struct qse_http_reqcbs_t qse_http_reqcbs_t;
+
+struct qse_http_reqcbs_t
+{
+	int (*request) (qse_http_t* http, qse_http_req_t* req);
+};
+
 
 struct qse_http_t
 {
 	QSE_DEFINE_COMMON_FIELDS (http)
 	qse_http_errnum_t errnum;
 
+	const qse_http_reqcbs_t* reqcbs;
 
 	struct
 	{
@@ -46,105 +103,33 @@ struct qse_http_t
 			int crlf; /* crlf status */
 			qse_size_t plen; /* raw request length excluding crlf */
 			qse_size_t need; /* number of octets needed for contents */
-	
+
 			struct
 			{
 				qse_size_t len;
 				qse_size_t count;
 				int        phase;
 			} chunk;
-		} state;
+		} s; /* state */
 
-		qse_http_octb_t raw;
-		qse_http_octb_t con;
-		qse_http_octb_t tra;
 
-		enum
-		{
-			QSE_HTTP_REQ_GET,
-			QSE_HTTP_REQ_HEAD,
-			QSE_HTTP_REQ_POST
-		} method;
-
+		/* buffers needed to for processing a request */
 		struct
 		{
-			qse_byte_t* ptr;
-			qse_size_t  len;
-		} host;
+			qse_http_octb_t raw;
+			qse_http_octb_t tra;
+		} b; 
 
-		struct
-		{
-			qse_byte_t* ptr;
-			qse_size_t  len;
-		} path;
+		/* points to the head of the combined header list */
+		void* chl;
+	} reqx; 
 
-		struct
-		{
-			qse_byte_t* ptr;
-			qse_size_t  len;
-		} args;
-
-		struct
-		{
-			short major;
-			short minor;
-		} version;
-
-		struct
-		{
-			qse_htb_t tab;
-			void* combined;
-		} hdr;
-
-		/* special attributes derived from the header */
-		struct
-		{
-			int chunked;		
-			int content_length;
-			int connection_close;
-		} attr;
-	} req;
-};
-
-/* returns the type of http method */
-typedef struct qse_http_req_t qse_http_req_t;
-typedef struct qse_http_hdr_t qse_http_hdr_t;
-
-struct qse_http_req_t
-{
-	qse_char_t* method;
-
-	struct
-	{
-		qse_char_t* ptr;
-		qse_size_t len;
-	} path;
-
-	struct
-	{
-		qse_char_t* ptr;
-		qse_size_t len;
-	} args;
-
-	struct
-	{
-		char major;
-		char minor;
-	} vers;
-};
-
-struct qse_http_hdr_t
-{
-	qse_cstr_t name;
-	qse_cstr_t value;
+	qse_http_req_t req;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-qse_char_t* qse_parsehttpreq (qse_char_t* buf, qse_http_req_t* req);
-qse_char_t* qse_parsehttphdr (qse_char_t* buf, qse_http_hdr_t* hdr);
 
 QSE_DEFINE_COMMON_FUNCTIONS (http)
 
@@ -174,6 +159,25 @@ void qse_http_fini (
 
 void qse_http_clear (
 	qse_http_t* http
+);
+
+const qse_http_reqcbs_t* qse_http_getreqcbs (
+	qse_http_t* http
+);
+
+void qse_http_setreqcbs (
+	qse_http_t*              http,
+	const qse_http_reqcbs_t* reqcbs
+);
+
+/**
+ * The qse_http_feed() function accepts http request octets and invokes a 
+ * callback function if it has processed a proper http request. 
+ */
+int qse_http_feed (
+	qse_http_t*       http, /**< http */
+	const qse_byte_t* req,  /**< request octets */
+	qse_size_t        len   /**< number of octets */
 );
 
 #ifdef __cplusplus
