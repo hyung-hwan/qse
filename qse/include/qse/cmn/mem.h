@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: mem.h 375 2010-11-30 11:35:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -38,17 +38,26 @@
  */
 #define QSE_MMGR_SETDFL(m) ((qse_mmgr)=(m))
 
-/* allocate a memory block */
+/**
+ * The QSE_MMGR_ALLOC() macro allocates a memory block of the @a size bytes
+ * using the @a mmgr memory manager.
+ */
 #define QSE_MMGR_ALLOC(mmgr,size) \
 	((mmgr)->alloc((mmgr)->udd,size))
 
-/* reallocate a memory block */
+/**
+ * The QSE_MMGR_REALLOC() macro resizes a memory block pointed to by @a ptr 
+ * to the @a size bytes using the @a mmgr memory manager.
+ */
 #define QSE_MMGR_REALLOC(mmgr,ptr,size) \
 	((mmgr)->realloc((mmgr)->udd,ptr,size))
 
-/* free a memory block */
+/** 
+ * The QSE_MMGR_FREE() macro deallocates the memory block pointed to by @a ptr.
+ */
 #define QSE_MMGR_FREE(mmgr,ptr) \
 	((mmgr)->free((mmgr)->udd,ptr))
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,7 +95,7 @@ void* qse_memmove (
 	qse_size_t  n    /**< number of bytes to copy */
 );
 
-/*
+/**
  * The qse_memset() function fills leading @a n bytes of the destination 
  * memory block @a dst with the byte @a val.
  *
@@ -130,7 +139,7 @@ void* qse_membyte (
 	qse_size_t  n      /**< number of bytes to scan */ 
 );
 
-/*
+/**
  * The qse_memrbyte() function scans the memory block @a s from the nth byte
  * backward to the first byte in search of the byte @a val. If it finds a match,
  * it aborts scanning the memory block and returns the pointer to the matching 
@@ -162,7 +171,7 @@ void* qse_memmem (
 	qse_size_t  nl   /**< number of bytes in the block */
 );
 
-/*
+/**
  * The qse_memrmem() functions scans the first @a hl bytes of the memory
  * block @a hs backward in search of the byte block @a nd of the length 
  * @a nl bytes.

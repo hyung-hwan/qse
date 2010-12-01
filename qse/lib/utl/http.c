@@ -326,7 +326,7 @@ static qse_byte_t* parse_reqline (qse_http_t* http, qse_byte_t* line)
 				/* ? must be explicit to be a argument instroducer. 
 				 * %3f is just a literal. */
 				http->req.path.len = tmp - http->req.path.ptr;
-				/**tmp++ = '\0';*/
+				*tmp++ = '\0';
 				http->req.args.ptr = tmp;
 				p++;
 			}
@@ -342,7 +342,8 @@ static qse_byte_t* parse_reqline (qse_http_t* http, qse_byte_t* line)
 		http->req.args.len = tmp - http->req.args.ptr;
 	else
 		http->req.path.len = tmp - http->req.path.ptr;
-	/* *tmp = '\0'; */ /* null-terminate the url part */
+	/* null-terminate the url part though we record the length */
+	*tmp = '\0'; 
 
 	/* skip spaces after the url part */
 	do { p++; } while (is_space_octet(*p));
@@ -391,6 +392,16 @@ qse_printf (QSE_T("BADREQ\n"));
 void qse_http_clear (qse_http_t* http)
 {
 	clear_request (http);
+}
+
+int qse_http_getoption (qse_http_t* http)
+{
+	return http->option;
+}
+
+void qse_http_setoption (qse_http_t* http, int opts)
+{
+	http->option = opts;
 }
 
 const qse_http_reqcbs_t* qse_http_getreqcbs (qse_http_t* http)
@@ -797,7 +808,11 @@ static QSE_INLINE int parse_request (
 
 	p = http->reqx.b.raw.data;
 
-	while (is_whspace_octet(*p)) p++;
+	if (http->option & QSE_HTTP_LEADINGEMPTYLINES)
+		while (is_whspace_octet(*p)) p++;
+	else
+		while (is_space_octet(*p)) p++;
+	
 	QSE_ASSERT (*p != '\0');
 
 	/* parse the request line */
@@ -1001,7 +1016,8 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 	{
 		register qse_byte_t b = *ptr++;
 
-		if (http->reqx.s.plen <= 0 && is_whspace_octet(b)) 
+		if (http->option & QSE_HTTP_LEADINGEMPTYLINES &&
+		    http->reqx.s.plen <= 0 && is_whspace_octet(b)) 
 		{
 			/* let's drop leading whitespaces across multiple
 			 * lines */
@@ -1160,9 +1176,8 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 						}
 					}
 
-
-					QSE_ASSERTX (http->reqcbs != QSE_NULL, 
-						"Set the request callback before feeding data");
+					QSE_ASSERTX (http->reqcbs->request != QSE_NULL,
+						"set request callbacks before feeding");
 					http->errnum = QSE_HTTP_ENOERR;
 					if (http->reqcbs->request (http, &http->req) <= -1)
 					{
@@ -1216,3 +1231,4 @@ feedme_more:
 	return 0;
 
 }
+

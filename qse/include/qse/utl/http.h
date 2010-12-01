@@ -31,6 +31,12 @@ enum qse_http_errnum_t
 
 typedef enum qse_http_errnum_t qse_http_errnum_t;
 
+enum qse_http_option_t
+{
+	QSE_HTTP_LEADINGEMPTYLINES = (1 << 0)
+};
+
+typedef enum qse_http_option_t qse_http_option_t;
 
 typedef struct qse_http_req_t qse_http_req_t;
 
@@ -88,11 +94,11 @@ struct qse_http_reqcbs_t
 	int (*request) (qse_http_t* http, qse_http_req_t* req);
 };
 
-
 struct qse_http_t
 {
 	QSE_DEFINE_COMMON_FIELDS (http)
 	qse_http_errnum_t errnum;
+	int option;
 
 	const qse_http_reqcbs_t* reqcbs;
 
@@ -159,6 +165,15 @@ void qse_http_fini (
 
 void qse_http_clear (
 	qse_http_t* http
+);
+
+int qse_http_getoption (
+	qse_http_t* http	
+);
+
+void qse_http_setoption (
+	qse_http_t* http,
+	int         opts
 );
 
 const qse_http_reqcbs_t* qse_http_getreqcbs (
