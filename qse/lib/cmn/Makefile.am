@@ -1,6 +1,6 @@
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir)/include 
+AM_CPPFLAGS = -I$(top_srcdir)/include  -I$(includedir)
 
 lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
@@ -17,7 +17,7 @@ libqsecmn_la_SOURCES = \
 	assert.c \
 	main.c \
 	stdio.c
-libqsecmn_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 
 if WIN32 
 libqsecmn_la_LIBADD = -lpsapi
@@ -28,7 +28,7 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqsecmnxx.la
 libqsecmnxx_la_SOURCES = \
 	Mmgr.cpp StdMmgr.cpp
-libqsecmnxx_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+libqsecmnxx_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 
 endif
 

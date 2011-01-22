@@ -24,7 +24,7 @@ static qse_scm_obj_t* makeint (qse_scm_mem_t* mem, qse_long_t value);
 static QSE_INLINE_ALWAYS void collect_garbage (qse_scm_mem_t* mem);
 static void dispose_all (qse_scm_mem_t* mem);
 
-qse_scm_mem_t* qse_scm_initmem (
+qse_scm_mem_t* qse_scm_mem_init (
 	qse_scm_mem_t* mem, qse_scm_t* scm,
 	qse_size_t ubound, qse_size_t ubound_inc)
 {
@@ -114,7 +114,7 @@ qse_scm_mem_t* qse_scm_initmem (
 	return mem;
 }
 
-void qse_scm_finimem (qse_scm_mem_t* mem)
+void qse_scm_mem_fini (qse_scm_mem_t* mem)
 {
 	/* dispose of the allocated objects */
 	dispose_all (mem);
@@ -212,20 +212,22 @@ static void mark_obj (qse_scm_mem_t* mem, qse_scm_obj_t* obj)
 
 	QSE_SCM_MARK(obj) = 1;
 
-	if (QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_CONS) 
+	switch (QSE_SCM_TYPE(obj))
 	{
-		mark_obj (mem, QSE_SCM_CAR(obj));
-		mark_obj (mem, QSE_SCM_CDR(obj));
-	}
-	else if (QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_FUNC) 
-	{
-		mark_obj (mem, QSE_SCM_FFORMAL(obj));
-		mark_obj (mem, QSE_SCM_FBODY(obj));
-	}
-	else if (QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_MACRO) 
-	{
-		mark_obj (mem, QSE_SCM_MFORMAL(obj));
-		mark_obj (mem, QSE_SCM_MBODY(obj));
+		case QSE_SCM_OBJ_CONS:
+			mark_obj (mem, QSE_SCM_CAR(obj));
+			mark_obj (mem, QSE_SCM_CDR(obj));
+			break;
+	
+		case QSE_SCM_OBJ_FUNC:
+			mark_obj (mem, QSE_SCM_FFORMAL(obj));
+			mark_obj (mem, QSE_SCM_FBODY(obj));
+			break;
+
+		case QSE_SCM_OBJ_MACRO:
+			mark_obj (mem, QSE_SCM_MFORMAL(obj));
+			mark_obj (mem, QSE_SCM_MBODY(obj));
+			break;
 	}
 }
 
@@ -586,7 +588,7 @@ qse_size_t qse_scm_conslen (qse_scm_mem_t* mem, qse_scm_obj_t* obj)
 		obj == mem->nil || QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_CONS);
 
 	count = 0;
-	/*while (obj != mem->nil) {*/
+	/*while (obj != mem->nil) */
 	while (QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_CONS) 
 	{
 		count++;

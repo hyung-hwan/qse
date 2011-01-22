@@ -1,9 +1,11 @@
 
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
 
 bin_PROGRAMS = qseawk
 
 qseawk_SOURCES = awk.c
-qseawk_LDFLAGS = -L../../lib/awk
+qseawk_LDFLAGS = -L../../lib/awk -L$(libdir)
 qseawk_LDADD = -lqseawk $(LIBM)
 

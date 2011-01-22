@@ -30,7 +30,6 @@
 
 typedef struct qse_scm_t qse_scm_t;
 typedef struct qse_scm_obj_t qse_scm_obj_t;
-typedef struct qse_scm_prm_t qse_scm_prm_t;
 
 /** 
  * The qse_scm_loc_t defines a structure to store location information.
@@ -42,16 +41,6 @@ struct qse_scm_loc_t
 	qse_size_t        colm; /**< column */
 };
 typedef struct qse_scm_loc_t qse_scm_loc_t;
-
-typedef int (*qse_scm_sprintf_t) (
-	void* data, qse_char_t* buf, qse_size_t size, 
-	const qse_char_t* fmt, ...);
-
-struct qse_scm_prm_t
-{
-	qse_scm_sprintf_t sprintf;
-	void* udd;
-};
 
 /**
  * The qse_scm_io_cmd_t type defines I/O commands.
@@ -147,7 +136,6 @@ QSE_DEFINE_COMMON_FUNCTIONS (scm)
 qse_scm_t* qse_scm_open (
 	qse_mmgr_t*          mmgr, 
 	qse_size_t           xtnsize,
-	const qse_scm_prm_t* prm,
 	qse_size_t           mem_ubound,
 	qse_size_t           mem_ubound_inc
 );
