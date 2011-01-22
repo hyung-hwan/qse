@@ -26,12 +26,6 @@
 #include <qse/cmn/str.h>
 #include <qse/scm/scm.h>
 
-#include "mem.h"
-
-#define QSE_SCM_ALLOC(scm,size)       QSE_MMGR_ALLOC((scm)->mmgr,size)
-#define QSE_SCM_REALLOC(scm,ptr,size) QSE_MMGR_REALLOC((scm)->mmgr,ptr,size)
-#define QSE_SCM_FREE(scm,ptr)         QSE_MMGR_FREE((scm)->mmgr,ptr)
-
 #define QSE_SCM_ISUPPER(scm,c)  QSE_ISUPPER(c)
 #define QSE_SCM_ISLOWER(scm,c)  QSE_ISLOWER(c)
 #define QSE_SCM_ISALPHA(scm,c)  QSE_ISALPHA(c)
@@ -46,12 +40,70 @@
 #define QSE_SCM_TOUPPER(scm,c)  QSE_TOUPPER(c)
 #define QSE_SCM_TOLOWER(scm,c)  QSE_TOLOWER(c)
 
+#define QSE_SCM_VAL_STRING         1    /* 0000000000000001 */
+#define QSE_SCM_VAL_NUMBER         2    /* 0000000000000010 */
+#define QSE_SCM_VAL_SYMBOL         4    /* 0000000000000100 */
+#define QSE_SCM_VAL_SYNTAX         8    /* 0000000000001000 */
+#define QSE_SCM_VAL_PROC          16    /* 0000000000010000 */
+
+#define QSE_SCM_VAL_PAIR          32    /* 0000000000100000 */
+#define QSE_SCM_VAL_CLOSURE       64    /* 0000000001000000 */
+#define QSE_SCM_VAL_CONTINUATION 128    /* 0000000010000000 */
+#define QSE_SCM_VAL_MACRO        256    /* 0000000100000000 */
+#define QSE_SCM_VAL_PROMISE      512    /* 0000001000000000 */
+#define QSE_SCM_VAL_ATOM        4096    /* 0001000000000000 */ /* only for gc */
+
+typedef struct qse_scm_val_t qse_scm_val_t;
+struct qse_scm_val_t
+{
+	qse_uint16_t dsw_count: 2;
+	qse_uint16_t mark:      1;
+	qse_uint16_t types:     13;
+
+	union
+	{
+		struct
+		{
+			qse_char_t* ptr;
+			qse_size_t  len;
+		} str;
+
+		struct
+		{
+			qse_long_t val;
+		} num;
+		
+		struct
+		{
+			qse_scm_val_t* car;
+			qse_scm_val_t* cdr;
+		} cons;
+
+		/* arrayed cons. cona must maintain the
+		 * same size as cons */
+		struct
+		{
+			qse_scm_val_t* val[2];
+		} cona; 
+	} u;
+};
+
+
+/**
+ * The qse_scm_vbl_t type defines a value block. A value block is allocated
+ * when more memory is requested and is chained to existing value blocks.
+ */
+typedef struct qse_scm_vbl_t qse_scm_vbl_t;
+struct qse_scm_vbl_t
+{
+	qse_scm_val_t* ptr;
+	qse_size_t     len;
+	qse_scm_vbl_t* next;	
+};
+
 struct qse_scm_t 
 {
 	QSE_DEFINE_COMMON_FIELDS (scm)
-
-	qse_scm_prm_t prm;
-	int opt_undef_symbol;
 
 	/** error information */
 	struct 
@@ -61,9 +113,6 @@ struct qse_scm_t
 		qse_char_t       msg[128]; /**< error message holder */
 		qse_scm_loc_t    loc;      /**< location of the last error */
 	} err; 
-
-	/** memory manager */
-	qse_scm_mem_t mem;
 
 	/** I/O functions */
 	struct
@@ -94,12 +143,28 @@ struct qse_scm_t
 		} t;
 	} r;
 
-	/** data for evaluation */
-	/*
+	/* common values */
+	qse_scm_val_t* nil;
+	qse_scm_val_t* t;
+	qse_scm_val_t* f;
+
+	/* global environment */
+	qse_scm_val_t* genv;
+
+	/* registers */
 	struct
 	{
-	} e;
-	*/
+		qse_scm_val_t* arg; /* function arguments */
+		qse_scm_val_t* env; /* current environment */
+		qse_scm_val_t* cod; /* current code */
+		qse_scm_val_t* dmp; /* stack register for next evaluation */
+	} reg;
+
+	struct
+	{
+		qse_scm_vbl_t* vbl;  /* value block list */
+		qse_scm_val_t* free;
+	} mem;
 };
 
 #ifdef __cplusplus
