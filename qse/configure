@@ -857,14 +857,12 @@ am__fastdepOBJC_TRUE
 am__fastdepOBJC_FALSE
 HAVE_OBJC
 HAVE_CXX
-AR
-RANLIB
-OBJDUMP
-NM
-LD
 GREP
+EGREP
+LN_S
 RM
-SED
+RMDIR
+TRUE
 build
 build_cpu
 build_vendor
@@ -873,9 +871,10 @@ host
 host_cpu
 host_vendor
 host_os
-EGREP
-LN_S
+SED
 ECHO
+AR
+RANLIB
 DSYMUTIL
 NMEDIT
 CPP
@@ -4581,677 +4580,259 @@ fi
 
 
 
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ar", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ar; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_AR+set}" = set; then
+# Find a good install program.  We prefer a C program (faster),
+# so one script is as good as another.  But avoid the broken or
+# incompatible versions:
+# SysV /etc/install, /usr/sbin/install
+# SunOS /usr/etc/install
+# IRIX /sbin/install
+# AIX /bin/install
+# AmigaOS /C/install, which installs bootblocks on floppy discs
+# AIX 4 /usr/bin/installbsd, which doesn't work without a -g flag
+# AFS /usr/afsws/bin/install, which mishandles nonexistent args
+# SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+# OS/2's system install, which has a completely different semantic
+# ./install, which can be erroneously created by make from ./install.sh.
+{ echo "$as_me:$LINENO: checking for a BSD-compatible install" >&5
+echo $ECHO_N "checking for a BSD-compatible install... $ECHO_C" >&6; }
+if test -z "$INSTALL"; then
+if test "${ac_cv_path_install+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_AR="${ac_tool_prefix}ar"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  { echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_AR"; then
-  ac_ct_AR=$AR
-  # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_AR+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ac_ct_AR"; then
-  ac_cv_prog_ac_ct_AR="$ac_ct_AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_AR="ar"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_AR=$ac_cv_prog_ac_ct_AR
-if test -n "$ac_ct_AR"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_AR" >&5
-echo "${ECHO_T}$ac_ct_AR" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_AR" = x; then
-    AR=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
+  # Account for people who put trailing slashes in PATH elements.
+case $as_dir/ in
+  ./ | .// | /cC/* | \
+  /etc/* | /usr/sbin/* | /usr/etc/* | /sbin/* | /usr/afsws/bin/* | \
+  ?:\\/os2\\/install\\/* | ?:\\/OS2\\/INSTALL\\/* | \
+  /usr/ucb/* ) ;;
+  *)
+    # OSF1 and SCO ODT 3.0 have their own names for install.
+    # Don't use installbsd from OSF since it installs stuff as root
+    # by default.
+    for ac_prog in ginstall scoinst install; do
+      for ac_exec_ext in '' $ac_executable_extensions; do
+	if { test -f "$as_dir/$ac_prog$ac_exec_ext" && $as_test_x "$as_dir/$ac_prog$ac_exec_ext"; }; then
+	  if test $ac_prog = install &&
+	    grep dspmsg "$as_dir/$ac_prog$ac_exec_ext" >/dev/null 2>&1; then
+	    # AIX install.  It has an incompatible calling convention.
+	    :
+	  elif test $ac_prog = install &&
+	    grep pwplus "$as_dir/$ac_prog$ac_exec_ext" >/dev/null 2>&1; then
+	    # program-specific install script used by HP pwplus--don't use.
+	    :
+	  else
+	    ac_cv_path_install="$as_dir/$ac_prog$ac_exec_ext -c"
+	    break 3
+	  fi
+	fi
+      done
+    done
+    ;;
 esac
-    AR=$ac_ct_AR
-  fi
-else
-  AR="$ac_cv_prog_AR"
-fi
-
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ranlib; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_RANLIB+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
 done
 IFS=$as_save_IFS
 
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  { echo "$as_me:$LINENO: result: $RANLIB" >&5
-echo "${ECHO_T}$RANLIB" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
 
 fi
-if test -z "$ac_cv_prog_RANLIB"; then
-  ac_ct_RANLIB=$RANLIB
-  # Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_RANLIB+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ac_ct_RANLIB"; then
-  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_RANLIB="ranlib"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
-if test -n "$ac_ct_RANLIB"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_RANLIB" >&5
-echo "${ECHO_T}$ac_ct_RANLIB" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_RANLIB" = x; then
-    RANLIB=""
+  if test "${ac_cv_path_install+set}" = set; then
+    INSTALL=$ac_cv_path_install
   else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
+    # As a last resort, use the slow shell script.  Don't cache a
+    # value for INSTALL within a source directory, because that will
+    # break other packages using the cache if that directory is
+    # removed, or if the value is a relative name.
+    INSTALL=$ac_install_sh
+  fi
+fi
+{ echo "$as_me:$LINENO: result: $INSTALL" >&5
+echo "${ECHO_T}$INSTALL" >&6; }
+
+# Use test -z because SunOS4 sh mishandles braces in ${var-val}.
+# It thinks the first close brace ends the variable substitution.
+test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM='${INSTALL}'
+
+test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
+
+test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+
+{ echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
+echo $ECHO_N "checking for grep that handles long lines and -e... $ECHO_C" >&6; }
+if test "${ac_cv_path_GREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  # Extract the first word of "grep ggrep" to use in msg output
+if test -z "$GREP"; then
+set dummy grep ggrep; ac_prog_name=$2
+if test "${ac_cv_path_GREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_path_GREP_found=false
+# Loop through the user's path and test for each of PROGNAME-LIST
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_prog in grep ggrep; do
+  for ac_exec_ext in '' $ac_executable_extensions; do
+    ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
+    { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
+    # Check for GNU ac_path_GREP and select it if it is found.
+  # Check for GNU $ac_path_GREP
+case `"$ac_path_GREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:;;
+*)
+  ac_count=0
+  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    echo 'GREP' >> "conftest.nl"
+    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    ac_count=`expr $ac_count + 1`
+    if test $ac_count -gt ${ac_path_GREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_GREP="$ac_path_GREP"
+      ac_path_GREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
 esac
-    RANLIB=$ac_ct_RANLIB
-  fi
-else
-  RANLIB="$ac_cv_prog_RANLIB"
-fi
 
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}strip", so it can be a program name with args.
-set dummy ${ac_tool_prefix}strip; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_STRIP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$STRIP"; then
-  ac_cv_prog_STRIP="$STRIP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_STRIP="${ac_tool_prefix}strip"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
+
+    $ac_path_GREP_found && break 3
+  done
 done
+
 done
 IFS=$as_save_IFS
 
+
 fi
+
+GREP="$ac_cv_path_GREP"
+if test -z "$GREP"; then
+  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
+echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
+   { (exit 1); exit 1; }; }
 fi
-STRIP=$ac_cv_prog_STRIP
-if test -n "$STRIP"; then
-  { echo "$as_me:$LINENO: result: $STRIP" >&5
-echo "${ECHO_T}$STRIP" >&6; }
+
 else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
+  ac_cv_path_GREP=$GREP
 fi
 
 
 fi
-if test -z "$ac_cv_prog_STRIP"; then
-  ac_ct_STRIP=$STRIP
-  # Extract the first word of "strip", so it can be a program name with args.
-set dummy strip; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_STRIP+set}" = set; then
+{ echo "$as_me:$LINENO: result: $ac_cv_path_GREP" >&5
+echo "${ECHO_T}$ac_cv_path_GREP" >&6; }
+ GREP="$ac_cv_path_GREP"
+
+
+{ echo "$as_me:$LINENO: checking for egrep" >&5
+echo $ECHO_N "checking for egrep... $ECHO_C" >&6; }
+if test "${ac_cv_path_EGREP+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$ac_ct_STRIP"; then
-  ac_cv_prog_ac_ct_STRIP="$ac_ct_STRIP" # Let the user override the test.
+  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
+   then ac_cv_path_EGREP="$GREP -E"
+   else
+     # Extract the first word of "egrep" to use in msg output
+if test -z "$EGREP"; then
+set dummy egrep; ac_prog_name=$2
+if test "${ac_cv_path_EGREP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
 else
+  ac_path_EGREP_found=false
+# Loop through the user's path and test for each of PROGNAME-LIST
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
+for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
+  for ac_prog in egrep; do
   for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_STRIP="strip"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_STRIP=$ac_cv_prog_ac_ct_STRIP
-if test -n "$ac_ct_STRIP"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_STRIP" >&5
-echo "${ECHO_T}$ac_ct_STRIP" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_STRIP" = x; then
-    STRIP=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
+    ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
+    { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
+    # Check for GNU ac_path_EGREP and select it if it is found.
+  # Check for GNU $ac_path_EGREP
+case `"$ac_path_EGREP" --version 2>&1` in
+*GNU*)
+  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
+*)
+  ac_count=0
+  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    echo 'EGREP' >> "conftest.nl"
+    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    ac_count=`expr $ac_count + 1`
+    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_EGREP="$ac_path_EGREP"
+      ac_path_EGREP_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
 esac
-    STRIP=$ac_ct_STRIP
-  fi
-else
-  STRIP="$ac_cv_prog_STRIP"
-fi
 
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}objdump", so it can be a program name with args.
-set dummy ${ac_tool_prefix}objdump; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_OBJDUMP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$OBJDUMP"; then
-  ac_cv_prog_OBJDUMP="$OBJDUMP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_OBJDUMP="${ac_tool_prefix}objdump"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
+
+    $ac_path_EGREP_found && break 3
+  done
 done
+
 done
 IFS=$as_save_IFS
 
+
 fi
+
+EGREP="$ac_cv_path_EGREP"
+if test -z "$EGREP"; then
+  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
+echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
+   { (exit 1); exit 1; }; }
 fi
-OBJDUMP=$ac_cv_prog_OBJDUMP
-if test -n "$OBJDUMP"; then
-  { echo "$as_me:$LINENO: result: $OBJDUMP" >&5
-echo "${ECHO_T}$OBJDUMP" >&6; }
+
 else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
+  ac_cv_path_EGREP=$EGREP
 fi
 
 
+   fi
 fi
-if test -z "$ac_cv_prog_OBJDUMP"; then
-  ac_ct_OBJDUMP=$OBJDUMP
-  # Extract the first word of "objdump", so it can be a program name with args.
-set dummy objdump; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_OBJDUMP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ac_ct_OBJDUMP"; then
-  ac_cv_prog_ac_ct_OBJDUMP="$ac_ct_OBJDUMP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_OBJDUMP="objdump"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_OBJDUMP=$ac_cv_prog_ac_ct_OBJDUMP
-if test -n "$ac_ct_OBJDUMP"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_OBJDUMP" >&5
-echo "${ECHO_T}$ac_ct_OBJDUMP" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_OBJDUMP" = x; then
-    OBJDUMP=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
-esac
-    OBJDUMP=$ac_ct_OBJDUMP
-  fi
-else
-  OBJDUMP="$ac_cv_prog_OBJDUMP"
-fi
-
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
-set dummy ${ac_tool_prefix}nm; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_NM+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$NM"; then
-  ac_cv_prog_NM="$NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_NM="${ac_tool_prefix}nm"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-NM=$ac_cv_prog_NM
-if test -n "$NM"; then
-  { echo "$as_me:$LINENO: result: $NM" >&5
-echo "${ECHO_T}$NM" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
+{ echo "$as_me:$LINENO: result: $ac_cv_path_EGREP" >&5
+echo "${ECHO_T}$ac_cv_path_EGREP" >&6; }
+ EGREP="$ac_cv_path_EGREP"
 
 
-fi
-if test -z "$ac_cv_prog_NM"; then
-  ac_ct_NM=$NM
-  # Extract the first word of "nm", so it can be a program name with args.
-set dummy nm; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_NM+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
+{ echo "$as_me:$LINENO: checking whether ln -s works" >&5
+echo $ECHO_N "checking whether ln -s works... $ECHO_C" >&6; }
+LN_S=$as_ln_s
+if test "$LN_S" = "ln -s"; then
+  { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
 else
-  if test -n "$ac_ct_NM"; then
-  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_NM="nm"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_NM=$ac_cv_prog_ac_ct_NM
-if test -n "$ac_ct_NM"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_NM" >&5
-echo "${ECHO_T}$ac_ct_NM" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
+  { echo "$as_me:$LINENO: result: no, using $LN_S" >&5
+echo "${ECHO_T}no, using $LN_S" >&6; }
 fi
 
-  if test "x$ac_ct_NM" = x; then
-    NM=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
-esac
-    NM=$ac_ct_NM
-  fi
-else
-  NM="$ac_cv_prog_NM"
-fi
-
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}ld", so it can be a program name with args.
-set dummy ${ac_tool_prefix}ld; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_LD+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$LD"; then
-  ac_cv_prog_LD="$LD" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_LD="${ac_tool_prefix}ld"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-LD=$ac_cv_prog_LD
-if test -n "$LD"; then
-  { echo "$as_me:$LINENO: result: $LD" >&5
-echo "${ECHO_T}$LD" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_LD"; then
-  ac_ct_LD=$LD
-  # Extract the first word of "ld", so it can be a program name with args.
-set dummy ld; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_LD+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ac_ct_LD"; then
-  ac_cv_prog_ac_ct_LD="$ac_ct_LD" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_LD="ld"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_LD=$ac_cv_prog_ac_ct_LD
-if test -n "$ac_ct_LD"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_LD" >&5
-echo "${ECHO_T}$ac_ct_LD" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_LD" = x; then
-    LD=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
-esac
-    LD=$ac_ct_LD
-  fi
-else
-  LD="$ac_cv_prog_LD"
-fi
-
-if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}grep", so it can be a program name with args.
-set dummy ${ac_tool_prefix}grep; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$GREP"; then
-  ac_cv_prog_GREP="$GREP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_GREP="${ac_tool_prefix}grep"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-GREP=$ac_cv_prog_GREP
-if test -n "$GREP"; then
-  { echo "$as_me:$LINENO: result: $GREP" >&5
-echo "${ECHO_T}$GREP" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-fi
-if test -z "$ac_cv_prog_GREP"; then
-  ac_ct_GREP=$GREP
-  # Extract the first word of "grep", so it can be a program name with args.
-set dummy grep; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$ac_ct_GREP"; then
-  ac_cv_prog_ac_ct_GREP="$ac_ct_GREP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_GREP="grep"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-fi
-fi
-ac_ct_GREP=$ac_cv_prog_ac_ct_GREP
-if test -n "$ac_ct_GREP"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_GREP" >&5
-echo "${ECHO_T}$ac_ct_GREP" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-  if test "x$ac_ct_GREP" = x; then
-    GREP=""
-  else
-    case $cross_compiling:$ac_tool_warned in
-yes:)
-{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&5
-echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
-whose name does not start with the host triplet.  If you think this
-configuration is useful to you, please write to autoconf@gnu.org." >&2;}
-ac_tool_warned=yes ;;
-esac
-    GREP=$ac_ct_GREP
-  fi
-else
-  GREP="$ac_cv_prog_GREP"
-fi
 
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}rm", so it can be a program name with args.
@@ -5350,15 +4931,15 @@ else
 fi
 
 if test -n "$ac_tool_prefix"; then
-  # Extract the first word of "${ac_tool_prefix}sed", so it can be a program name with args.
-set dummy ${ac_tool_prefix}sed; ac_word=$2
+  # Extract the first word of "${ac_tool_prefix}rmdir", so it can be a program name with args.
+set dummy ${ac_tool_prefix}rmdir; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_SED+set}" = set; then
+if test "${ac_cv_prog_RMDIR+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$SED"; then
-  ac_cv_prog_SED="$SED" # Let the user override the test.
+  if test -n "$RMDIR"; then
+  ac_cv_prog_RMDIR="$RMDIR" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -5367,7 +4948,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_SED="${ac_tool_prefix}sed"
+    ac_cv_prog_RMDIR="${ac_tool_prefix}rmdir"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5377,10 +4958,10 @@ IFS=$as_save_IFS
 
 fi
 fi
-SED=$ac_cv_prog_SED
-if test -n "$SED"; then
-  { echo "$as_me:$LINENO: result: $SED" >&5
-echo "${ECHO_T}$SED" >&6; }
+RMDIR=$ac_cv_prog_RMDIR
+if test -n "$RMDIR"; then
+  { echo "$as_me:$LINENO: result: $RMDIR" >&5
+echo "${ECHO_T}$RMDIR" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
@@ -5388,17 +4969,17 @@ fi
 
 
 fi
-if test -z "$ac_cv_prog_SED"; then
-  ac_ct_SED=$SED
-  # Extract the first word of "sed", so it can be a program name with args.
-set dummy sed; ac_word=$2
+if test -z "$ac_cv_prog_RMDIR"; then
+  ac_ct_RMDIR=$RMDIR
+  # Extract the first word of "rmdir", so it can be a program name with args.
+set dummy rmdir; ac_word=$2
 { echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_prog_ac_ct_SED+set}" = set; then
+if test "${ac_cv_prog_ac_ct_RMDIR+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$ac_ct_SED"; then
-  ac_cv_prog_ac_ct_SED="$ac_ct_SED" # Let the user override the test.
+  if test -n "$ac_ct_RMDIR"; then
+  ac_cv_prog_ac_ct_RMDIR="$ac_ct_RMDIR" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -5407,7 +4988,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_prog_ac_ct_SED="sed"
+    ac_cv_prog_ac_ct_RMDIR="rmdir"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -5417,17 +4998,17 @@ IFS=$as_save_IFS
 
 fi
 fi
-ac_ct_SED=$ac_cv_prog_ac_ct_SED
-if test -n "$ac_ct_SED"; then
-  { echo "$as_me:$LINENO: result: $ac_ct_SED" >&5
-echo "${ECHO_T}$ac_ct_SED" >&6; }
+ac_ct_RMDIR=$ac_cv_prog_ac_ct_RMDIR
+if test -n "$ac_ct_RMDIR"; then
+  { echo "$as_me:$LINENO: result: $ac_ct_RMDIR" >&5
+echo "${ECHO_T}$ac_ct_RMDIR" >&6; }
 else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
 
-  if test "x$ac_ct_SED" = x; then
-    SED=""
+  if test "x$ac_ct_RMDIR" = x; then
+    RMDIR=""
   else
     case $cross_compiling:$ac_tool_warned in
 yes:)
@@ -5439,10 +5020,106 @@ whose name does not start with the host triplet.  If you think this
 configuration is useful to you, please write to autoconf@gnu.org." >&2;}
 ac_tool_warned=yes ;;
 esac
-    SED=$ac_ct_SED
+    RMDIR=$ac_ct_RMDIR
   fi
 else
-  SED="$ac_cv_prog_SED"
+  RMDIR="$ac_cv_prog_RMDIR"
+fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}true", so it can be a program name with args.
+set dummy ${ac_tool_prefix}true; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_prog_TRUE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$TRUE"; then
+  ac_cv_prog_TRUE="$TRUE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_TRUE="${ac_tool_prefix}true"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+fi
+fi
+TRUE=$ac_cv_prog_TRUE
+if test -n "$TRUE"; then
+  { echo "$as_me:$LINENO: result: $TRUE" >&5
+echo "${ECHO_T}$TRUE" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_TRUE"; then
+  ac_ct_TRUE=$TRUE
+  # Extract the first word of "true", so it can be a program name with args.
+set dummy true; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_prog_ac_ct_TRUE+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$ac_ct_TRUE"; then
+  ac_cv_prog_ac_ct_TRUE="$ac_ct_TRUE" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_ac_ct_TRUE="true"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_TRUE=$ac_cv_prog_ac_ct_TRUE
+if test -n "$ac_ct_TRUE"; then
+  { echo "$as_me:$LINENO: result: $ac_ct_TRUE" >&5
+echo "${ECHO_T}$ac_ct_TRUE" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+  if test "x$ac_ct_TRUE" = x; then
+    TRUE=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ echo "$as_me:$LINENO: WARNING: In the future, Autoconf will not detect cross-tools
+whose name does not start with the host triplet.  If you think this
+configuration is useful to you, please write to autoconf@gnu.org." >&5
+echo "$as_me: WARNING: In the future, Autoconf will not detect cross-tools
+whose name does not start with the host triplet.  If you think this
+configuration is useful to you, please write to autoconf@gnu.org." >&2;}
+ac_tool_warned=yes ;;
+esac
+    TRUE=$ac_ct_TRUE
+  fi
+else
+  TRUE="$ac_cv_prog_TRUE"
 fi
 
 
@@ -5662,168 +5339,6 @@ SED=$lt_cv_path_SED
 { echo "$as_me:$LINENO: result: $SED" >&5
 echo "${ECHO_T}$SED" >&6; }
 
-{ echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
-echo $ECHO_N "checking for grep that handles long lines and -e... $ECHO_C" >&6; }
-if test "${ac_cv_path_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  # Extract the first word of "grep ggrep" to use in msg output
-if test -z "$GREP"; then
-set dummy grep ggrep; ac_prog_name=$2
-if test "${ac_cv_path_GREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_path_GREP_found=false
-# Loop through the user's path and test for each of PROGNAME-LIST
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_prog in grep ggrep; do
-  for ac_exec_ext in '' $ac_executable_extensions; do
-    ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
-    { test -f "$ac_path_GREP" && $as_test_x "$ac_path_GREP"; } || continue
-    # Check for GNU ac_path_GREP and select it if it is found.
-  # Check for GNU $ac_path_GREP
-case `"$ac_path_GREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:;;
-*)
-  ac_count=0
-  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    echo 'GREP' >> "conftest.nl"
-    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    ac_count=`expr $ac_count + 1`
-    if test $ac_count -gt ${ac_path_GREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_GREP="$ac_path_GREP"
-      ac_path_GREP_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-
-    $ac_path_GREP_found && break 3
-  done
-done
-
-done
-IFS=$as_save_IFS
-
-
-fi
-
-GREP="$ac_cv_path_GREP"
-if test -z "$GREP"; then
-  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
-echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-else
-  ac_cv_path_GREP=$GREP
-fi
-
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_path_GREP" >&5
-echo "${ECHO_T}$ac_cv_path_GREP" >&6; }
- GREP="$ac_cv_path_GREP"
-
-
-{ echo "$as_me:$LINENO: checking for egrep" >&5
-echo $ECHO_N "checking for egrep... $ECHO_C" >&6; }
-if test "${ac_cv_path_EGREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if echo a | $GREP -E '(a|b)' >/dev/null 2>&1
-   then ac_cv_path_EGREP="$GREP -E"
-   else
-     # Extract the first word of "egrep" to use in msg output
-if test -z "$EGREP"; then
-set dummy egrep; ac_prog_name=$2
-if test "${ac_cv_path_EGREP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_path_EGREP_found=false
-# Loop through the user's path and test for each of PROGNAME-LIST
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH$PATH_SEPARATOR/usr/xpg4/bin
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_prog in egrep; do
-  for ac_exec_ext in '' $ac_executable_extensions; do
-    ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
-    { test -f "$ac_path_EGREP" && $as_test_x "$ac_path_EGREP"; } || continue
-    # Check for GNU ac_path_EGREP and select it if it is found.
-  # Check for GNU $ac_path_EGREP
-case `"$ac_path_EGREP" --version 2>&1` in
-*GNU*)
-  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:;;
-*)
-  ac_count=0
-  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
-  while :
-  do
-    cat "conftest.in" "conftest.in" >"conftest.tmp"
-    mv "conftest.tmp" "conftest.in"
-    cp "conftest.in" "conftest.nl"
-    echo 'EGREP' >> "conftest.nl"
-    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
-    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
-    ac_count=`expr $ac_count + 1`
-    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
-      # Best one so far, save it but keep looking for a better one
-      ac_cv_path_EGREP="$ac_path_EGREP"
-      ac_path_EGREP_max=$ac_count
-    fi
-    # 10*(2^10) chars as input seems more than enough
-    test $ac_count -gt 10 && break
-  done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
-esac
-
-
-    $ac_path_EGREP_found && break 3
-  done
-done
-
-done
-IFS=$as_save_IFS
-
-
-fi
-
-EGREP="$ac_cv_path_EGREP"
-if test -z "$EGREP"; then
-  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&5
-echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH$PATH_SEPARATOR/usr/xpg4/bin" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-else
-  ac_cv_path_EGREP=$EGREP
-fi
-
-
-   fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_path_EGREP" >&5
-echo "${ECHO_T}$ac_cv_path_EGREP" >&6; }
- EGREP="$ac_cv_path_EGREP"
-
-
 
 # Check whether --with-gnu-ld was given.
 if test "${with_gnu_ld+set}" = set; then
@@ -6008,17 +5523,6 @@ fi
 { echo "$as_me:$LINENO: result: $lt_cv_path_NM" >&5
 echo "${ECHO_T}$lt_cv_path_NM" >&6; }
 NM="$lt_cv_path_NM"
-
-{ echo "$as_me:$LINENO: checking whether ln -s works" >&5
-echo $ECHO_N "checking whether ln -s works... $ECHO_C" >&6; }
-LN_S=$as_ln_s
-if test "$LN_S" = "ln -s"; then
-  { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no, using $LN_S" >&5
-echo "${ECHO_T}no, using $LN_S" >&6; }
-fi
 
 { echo "$as_me:$LINENO: checking how to recognize dependent libraries" >&5
 echo $ECHO_N "checking how to recognize dependent libraries... $ECHO_C" >&6; }
@@ -6256,7 +5760,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6259 "configure"' > conftest.$ac_ext
+  echo '#line 5763 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8841,11 +8345,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8844: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8348: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8848: \$? = $ac_status" >&5
+   echo "$as_me:8352: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9131,11 +8635,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9134: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8638: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9138: \$? = $ac_status" >&5
+   echo "$as_me:8642: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9235,11 +8739,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9238: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8742: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9242: \$? = $ac_status" >&5
+   echo "$as_me:8746: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11612,7 +11116,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11615 "configure"
+#line 11119 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11712,7 +11216,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11715 "configure"
+#line 11219 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14113,11 +13617,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14116: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13620: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:14120: \$? = $ac_status" >&5
+   echo "$as_me:13624: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -14217,11 +13721,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:14220: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13724: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:14224: \$? = $ac_status" >&5
+   echo "$as_me:13728: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15815,11 +15319,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15818: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15322: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15822: \$? = $ac_status" >&5
+   echo "$as_me:15326: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -15919,11 +15423,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15922: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15426: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15926: \$? = $ac_status" >&5
+   echo "$as_me:15430: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -18139,11 +17643,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18142: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17646: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:18146: \$? = $ac_status" >&5
+   echo "$as_me:17650: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -18429,11 +17933,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18432: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:17936: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:18436: \$? = $ac_status" >&5
+   echo "$as_me:17940: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -18533,11 +18037,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:18536: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:18040: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:18540: \$? = $ac_status" >&5
+   echo "$as_me:18044: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -30331,6 +29835,11 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
+#define QSE_PROJECT_NAME "${PACKAGE_NAME}"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
 #define QSE_PROJECT_URL "${PACKAGE_URL}"
 _ACEOF
 
@@ -31516,14 +31025,14 @@ am__fastdepOBJC_TRUE!$am__fastdepOBJC_TRUE$ac_delim
 am__fastdepOBJC_FALSE!$am__fastdepOBJC_FALSE$ac_delim
 HAVE_OBJC!$HAVE_OBJC$ac_delim
 HAVE_CXX!$HAVE_CXX$ac_delim
-AR!$AR$ac_delim
-RANLIB!$RANLIB$ac_delim
-OBJDUMP!$OBJDUMP$ac_delim
-NM!$NM$ac_delim
-LD!$LD$ac_delim
 GREP!$GREP$ac_delim
+EGREP!$EGREP$ac_delim
+LN_S!$LN_S$ac_delim
 RM!$RM$ac_delim
-SED!$SED$ac_delim
+RMDIR!$RMDIR$ac_delim
+TRUE!$TRUE$ac_delim
+build!$build$ac_delim
+build_cpu!$build_cpu$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -31565,17 +31074,16 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
-build!$build$ac_delim
-build_cpu!$build_cpu$ac_delim
 build_vendor!$build_vendor$ac_delim
 build_os!$build_os$ac_delim
 host!$host$ac_delim
 host_cpu!$host_cpu$ac_delim
 host_vendor!$host_vendor$ac_delim
 host_os!$host_os$ac_delim
-EGREP!$EGREP$ac_delim
-LN_S!$LN_S$ac_delim
+SED!$SED$ac_delim
 ECHO!$ECHO$ac_delim
+AR!$AR$ac_delim
+RANLIB!$RANLIB$ac_delim
 DSYMUTIL!$DSYMUTIL$ac_delim
 NMEDIT!$NMEDIT$ac_delim
 CPP!$CPP$ac_delim
@@ -31610,7 +31118,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 43; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 42; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

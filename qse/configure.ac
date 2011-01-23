@@ -26,16 +26,15 @@ AC_CHECK_PROG(HAVE_OBJC, $OBJC, yes, no)
 dnl check if the C++ compiler exists in PATH. 
 AC_CHECK_PROG(HAVE_CXX, $CXX, yes, no)
 
+dnl determine some key programs
+AC_PROG_INSTALL
+AC_PROG_EGREP
+AC_PROG_LN_S
+
 dnl check other tools
-AC_CHECK_TOOL(AR, ar)
-AC_CHECK_TOOL(RANLIB, ranlib)
-AC_CHECK_TOOL(STRIP, strip)
-AC_CHECK_TOOL(OBJDUMP, objdump)
-AC_CHECK_TOOL(NM, nm)
-AC_CHECK_TOOL(LD, ld)
-AC_CHECK_TOOL(GREP, grep)
 AC_CHECK_TOOL(RM, rm)
-AC_CHECK_TOOL(SED, sed)
+AC_CHECK_TOOL(RMDIR, rmdir)
+AC_CHECK_TOOL(TRUE, true)
 
 dnl avoid "'/bin/rm: cannot remove `libtoolT': No such file or directory"
 RM="$RM -f"
@@ -166,6 +165,7 @@ AC_DEFINE_UNQUOTED(QSE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor v
 AC_DEFINE_UNQUOTED(QSE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
 
 AC_DEFINE_UNQUOTED(QSE_PROJECT_AUTHOR,"${PACKAGE_BUGREPORT}", [Author's contact])
+AC_DEFINE_UNQUOTED(QSE_PROJECT_NAME,"${PACKAGE_NAME}", [package name])
 AC_DEFINE_UNQUOTED(QSE_PROJECT_URL, "${PACKAGE_URL}", [Project URL])
 
 AC_C_BIGENDIAN(
