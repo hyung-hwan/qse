@@ -244,13 +244,25 @@
 #undef QSE_ENDIAN_UNKNOWN
 
 /* Author's contact */
-#undef QSE_PROJECT_AUTHOR
+#undef QSE_PACKAGE_AUTHOR
 
 /* package name */
-#undef QSE_PROJECT_NAME
+#undef QSE_PACKAGE_NAME
 
 /* Project URL */
-#undef QSE_PROJECT_URL
+#undef QSE_PACKAGE_URL
+
+/* Package version */
+#undef QSE_PACKAGE_VERSION
+
+/* Major version number */
+#undef QSE_PACKAGE_VERSION_MAJOR
+
+/* Minor version number */
+#undef QSE_PACKAGE_VERSION_MINOR
+
+/* Patch level */
+#undef QSE_PACKAGE_VERSION_PATCH
 
 /* sizeof(char) */
 #undef QSE_SIZEOF_CHAR
@@ -305,18 +317,6 @@
 
 /* use the syscall() function to invoke a system call */
 #undef QSE_USE_SYSCALL
-
-/* Package version */
-#undef QSE_VERSION
-
-/* Major version number */
-#undef QSE_VERSION_MAJOR
-
-/* Minor version number */
-#undef QSE_VERSION_MINOR
-
-/* Patch level */
-#undef QSE_VERSION_PATCH
 
 /* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR

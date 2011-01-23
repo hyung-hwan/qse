@@ -29809,38 +29809,38 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_VERSION "${VERSION}"
+#define QSE_PACKAGE_VERSION "${VERSION}"
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_VERSION_MAJOR $(echo ${VERSION} | cut -d. -f1)
+#define QSE_PACKAGE_VERSION_MAJOR $(echo ${VERSION} | cut -d. -f1)
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_VERSION_MINOR $(echo ${VERSION} | cut -d. -f2)
+#define QSE_PACKAGE_VERSION_MINOR $(echo ${VERSION} | cut -d. -f2)
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_VERSION_PATCH $(echo ${VERSION} | cut -d. -f3)
+#define QSE_PACKAGE_VERSION_PATCH $(echo ${VERSION} | cut -d. -f3)
 _ACEOF
 
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PROJECT_AUTHOR "${PACKAGE_BUGREPORT}"
+#define QSE_PACKAGE_AUTHOR "${PACKAGE_BUGREPORT}"
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PROJECT_NAME "${PACKAGE_NAME}"
+#define QSE_PACKAGE_NAME "${PACKAGE_NAME}"
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PROJECT_URL "${PACKAGE_URL}"
+#define QSE_PACKAGE_URL "${PACKAGE_URL}"
 _ACEOF
 
 

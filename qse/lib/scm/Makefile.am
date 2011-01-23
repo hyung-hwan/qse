@@ -1,7 +1,10 @@
 
 AUTOMAKE_OPTIONS = nostdinc
 
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(includedir)
+AM_CPPFLAGS = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
 
 lib_LTLIBRARIES = libqsescm.la 
 
