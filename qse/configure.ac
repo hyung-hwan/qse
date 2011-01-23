@@ -159,14 +159,14 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
 
-AC_DEFINE_UNQUOTED(QSE_VERSION, "${VERSION}", [Package version])
-AC_DEFINE_UNQUOTED(QSE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
-AC_DEFINE_UNQUOTED(QSE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
-AC_DEFINE_UNQUOTED(QSE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION, "${VERSION}", [Package version])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
 
-AC_DEFINE_UNQUOTED(QSE_PROJECT_AUTHOR,"${PACKAGE_BUGREPORT}", [Author's contact])
-AC_DEFINE_UNQUOTED(QSE_PROJECT_NAME,"${PACKAGE_NAME}", [package name])
-AC_DEFINE_UNQUOTED(QSE_PROJECT_URL, "${PACKAGE_URL}", [Project URL])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_AUTHOR,"${PACKAGE_BUGREPORT}", [Author's contact])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_NAME,"${PACKAGE_NAME}", [package name])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_URL, "${PACKAGE_URL}", [Project URL])
 
 AC_C_BIGENDIAN(
 	[AC_DEFINE([QSE_ENDIAN_BIG],[],[Big Endian])],

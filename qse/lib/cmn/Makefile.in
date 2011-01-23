@@ -230,7 +230,11 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir)/include  -I$(includedir)
+AM_CPPFLAGS = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
+
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
