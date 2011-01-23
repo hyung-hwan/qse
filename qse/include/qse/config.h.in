@@ -246,6 +246,9 @@
 /* Author's contact */
 #undef QSE_PROJECT_AUTHOR
 
+/* package name */
+#undef QSE_PROJECT_NAME
+
 /* Project URL */
 #undef QSE_PROJECT_URL
 
