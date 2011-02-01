@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 336 2010-07-24 12:43:26Z hyunghwan.chung $
+ * $Id: std.c 380 2011-01-31 13:46:52Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -98,7 +98,7 @@ typedef struct rxtn_t
 
 static qse_real_t custom_awk_pow (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 {
-#if defined(HAVE_POWL)
+#if defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return powl (x, y);
 #elif defined(HAVE_POW)
 	return pow (x, y);
@@ -1288,7 +1288,7 @@ static int fnc_sin (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_SINL)
+	#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)sinl
 	#elif defined(HAVE_SIN)
 		FNC_MATH_D, (void*)sin
@@ -1304,7 +1304,7 @@ static int fnc_cos (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_COSL)
+	#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)cosl
 	#elif defined(HAVE_COS)
 		FNC_MATH_D, (void*)cos
@@ -1320,7 +1320,7 @@ static int fnc_tan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_TANL)
+	#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)tanl
 	#elif defined(HAVE_TAN)
 		FNC_MATH_D, (void*)tan
@@ -1336,7 +1336,7 @@ static int fnc_atan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_ATANL)
+	#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)atanl
 	#elif defined(HAVE_ATAN)
 		FNC_MATH_D, (void*)atan
@@ -1352,7 +1352,7 @@ static int fnc_atan2 (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_2 (
 		run, fnm,
-	#if defined(HAVE_ATAN2L)
+	#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)atan2l
 	#elif defined(HAVE_ATAN2)
 		FNC_MATH_D, (void*)atan2
@@ -1368,7 +1368,7 @@ static int fnc_log (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_LOGL)
+	#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)logl
 	#elif defined(HAVE_LOG)
 		FNC_MATH_D, (void*)log
@@ -1384,7 +1384,7 @@ static int fnc_exp (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm,
-	#if defined(HAVE_EXPL)
+	#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)expl
 	#elif defined(HAVE_EXP)
 		FNC_MATH_D, (void*)exp
@@ -1400,7 +1400,7 @@ static int fnc_sqrt (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (
 		run, fnm, 
-	#if defined(HAVE_SQRTL)
+	#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		FNC_MATH_LD, (void*)sqrtl
 	#elif defined(HAVE_SQRT)
 		FNC_MATH_D, (void*)sqrt
