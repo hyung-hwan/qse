@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 328 2010-07-08 06:58:44Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 381 2011-01-31 13:49:41Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -88,7 +88,7 @@ int StdAwk::sin (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_SINL)
+	#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::sinl(args[0].toReal())
 	#elif defined(HAVE_SIN)
 		(real_t)::sin(args[0].toReal())
@@ -104,7 +104,7 @@ int StdAwk::cos (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_COSL)
+	#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::cosl(args[0].toReal())
 	#elif defined(HAVE_COS)
 		(real_t)::cos(args[0].toReal())
@@ -120,7 +120,7 @@ int StdAwk::tan (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_TANL)
+	#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::tanl(args[0].toReal())
 	#elif defined(HAVE_TAN)
 		(real_t)::tan(args[0].toReal())
@@ -136,7 +136,7 @@ int StdAwk::atan (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_ATANL)
+	#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::atanl(args[0].toReal())
 	#elif defined(HAVE_ATAN)
 		(real_t)::atan(args[0].toReal())
@@ -152,7 +152,7 @@ int StdAwk::atan2 (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_ATAN2L)
+	#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::atan2l(args[0].toReal(), args[1].toReal())
 	#elif defined(HAVE_ATAN2)
 		(real_t)::atan2(args[0].toReal(), args[1].toReal())
@@ -168,7 +168,7 @@ int StdAwk::log (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_LOGL)
+	#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::logl(args[0].toReal())
 	#elif defined(HAVE_LOG)
 		(real_t)::log(args[0].toReal())
@@ -184,7 +184,7 @@ int StdAwk::exp (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_EXPL)
+	#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::expl(args[0].toReal())
 	#elif defined(HAVE_EXP)
 		(real_t)::exp(args[0].toReal())
@@ -200,7 +200,7 @@ int StdAwk::sqrt (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	return ret.setReal (
-	#if defined(HAVE_SQRTL)
+	#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 		(real_t)::sqrtl(args[0].toReal())
 	#elif defined(HAVE_SQRT)
 		(real_t)::sqrt(args[0].toReal())
