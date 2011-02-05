@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 360 2010-10-21 13:29:12Z hyunghwan.chung $
+ * $Id: types.h 383 2011-02-04 15:39:15Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -233,6 +233,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT128_T
 	typedef __int128 qse_int128_t;
 	typedef unsigned __int128 qse_uint128_t;
+#elif QSE_SIZEOF___INT128_T == 16
+#	define QSE_HAVE_INT128_T
+#	define QSE_HAVE_UINT128_T
+	typedef __int128_t qse_int128_t;
+	typedef __uint128_t qse_uint128_t;
 #endif
 
 /**
