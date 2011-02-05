@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 383 2011-02-04 15:39:15Z hyunghwan.chung $
+ * $Id: types.h 384 2011-02-04 15:47:53Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -142,6 +142,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT8_T
 	typedef __int8 qse_int8_t;
 	typedef unsigned __int8 qse_uint8_t;
+#elif QSE_SIZEOF___INT8_T == 1
+#	define QSE_HAVE_INT8_T
+#	define QSE_HAVE_UINT8_T
+	typedef __int8_t qse_int8_t;
+	typedef __uint8_t qse_uint8_t;
 #endif
 
 /** @typedef qse_int16_t
@@ -160,6 +165,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT16_T
 	typedef __int16 qse_int16_t;
 	typedef unsigned __int16 qse_uint16_t;
+#elif QSE_SIZEOF___INT16_T == 2
+#	define QSE_HAVE_INT16_T
+#	define QSE_HAVE_UINT16_T
+	typedef __int16_t qse_int16_t;
+	typedef __uint16_t qse_uint16_t;
 #endif
 
 /** @typedef qse_int32_t
@@ -183,6 +193,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT32_T
 	typedef __int32 qse_int32_t;
 	typedef unsigned __int32 qse_uint32_t;
+#elif QSE_SIZEOF___INT32_T == 4
+#	define QSE_HAVE_INT32_T
+#	define QSE_HAVE_UINT32_T
+	typedef __int32_t qse_int32_t;
+	typedef __uint32_t qse_uint32_t;
 #endif
 
 /** @typedef qse_int64_t
@@ -211,6 +226,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT64_T
 	typedef __int64 qse_int64_t;
 	typedef unsigned __int64 qse_uint64_t;
+#elif QSE_SIZEOF___INT64_T == 8
+#	define QSE_HAVE_INT64_T
+#	define QSE_HAVE_UINT64_T
+	typedef __int64_t qse_int64_t;
+	typedef __uint64_t qse_uint64_t;
 #endif
 
 #if QSE_SIZEOF_INT == 16
