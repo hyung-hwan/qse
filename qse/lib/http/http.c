@@ -1052,7 +1052,6 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 					 * http->reqx.s.crlf == 3
 					 *   => 2nd CR before LF
 					 */
-	
 					/* we got a complete request. */
 					QSE_ASSERT (http->reqx.s.crlf <= 3);
 	
@@ -1229,6 +1228,5 @@ if (http->req.con.size > 0)
 
 feedme_more:
 	return 0;
-
 }
 

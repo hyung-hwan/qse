@@ -77,20 +77,6 @@ static qse_ssize_t put_output (
 	}
 }
 
-static int custom_scm_sprintf (
-	void* custom, qse_char_t* buf, qse_size_t size, 
-	const qse_char_t* fmt, ...)
-{
-	int n;
-
-	va_list ap;
-	va_start (ap, fmt);
-	n = qse_vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-
-	return n;
-}
-
 static int opt_memsize = 1000;
 static int opt_meminc = 1000;
 
@@ -161,14 +147,10 @@ int scm_main (int argc, qse_char_t* argv[])
 {
 	qse_scm_t* scm;
 	qse_scm_obj_t* obj;
-	qse_scm_prm_t prm;
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
-	prm.sprintf = custom_scm_sprintf;
-	prm.udd = QSE_NULL;
-
-	scm = qse_scm_open (QSE_NULL, 0, &prm, opt_memsize, opt_meminc);
+	scm = qse_scm_open (QSE_NULL, 0, opt_memsize, opt_meminc);
 	if (scm == QSE_NULL) 
 	{
 		qse_printf (QSE_T("Error: cannot create a scm instance\n"));

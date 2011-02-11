@@ -1,4 +1,9 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AUTOMAKE_OPTIONS = nostdinc
+
+AM_CPPFLAGS = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
 
 bin_PROGRAMS = awk01 awk02 awk03 awk04
 
