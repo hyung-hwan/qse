@@ -1,4 +1,10 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include -DNDEBUG
+AUTOMAKE_OPTIONS = nostdinc
+
+AM_CPPFLAGS = \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-I$(includedir)
+
 
 bin_PROGRAMS = xma fma chr str sll dll lda oht htb rbt fio pio sio time main rex01 
 

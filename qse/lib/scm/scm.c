@@ -22,13 +22,11 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (scm)
 
-static qse_scm_val_t static_values[3];
-
 static qse_scm_t* qse_scm_init (
-	qse_scm_t*           scm,
-	qse_mmgr_t*          mmgr,
-	qse_size_t           mem_ubound,
-	qse_size_t mem_ubound_inc
+	qse_scm_t*  scm,
+	qse_mmgr_t* mmgr,
+	qse_size_t  mem_ubound,
+	qse_size_t  mem_ubound_inc
 );
 
 static void qse_scm_fini (qse_scm_t* scm);
@@ -85,6 +83,7 @@ static qse_scm_t* qse_scm_init (
 	qse_scm_t* scm, qse_mmgr_t* mmgr, 
 	qse_size_t mem_ubound, qse_size_t mem_ubound_inc)
 {
+#if 0
 	static qse_scm_val_t static_values[3] =
 	{
 		/* nil */
@@ -94,6 +93,7 @@ static qse_scm_t* qse_scm_init (
 		/* t */
 		{ (QSE_SCM_VAL_ATOM | QSE_SCM_VAL_MARK) }
 	};
+#endif
 
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -119,10 +119,12 @@ static qse_scm_t* qse_scm_init (
 		return QSE_NULL;
 	}
 
+#if 0
 	/* initialize common values */
 	scm->nil = &static_values[0];
 	scm->f = &static_values[1];
 	scm->t = &static_values[2];
+#endif
 
 	scm->mem.vbl = QSE_NULL;
 	scm->mem.free = scm->nil;
@@ -260,6 +262,7 @@ static void mark (qse_scm_t* scm, qse_scm_val_t* v)
 
 	qse_scm_val_t* parent, * me;
 
+#if 0
 	/* initialization */
 	parent = QSE_NULL;
 	me = v;
@@ -326,6 +329,7 @@ static void mark (qse_scm_t* scm, qse_scm_val_t* v)
 			}
 		}
 	}
+#endif
 }
 
 
@@ -428,9 +432,11 @@ static qse_scm_val_t* mkcons (
 	v = mkval (scm, car, cdr);
 	if (v == QSE_NULL) return QSE_NULL;
 
+#if 0
 	v->flag = QSE_SCM_VAL_PAIR;
 	v->u.cons.car = car;
 	v->u.cons.cdr = car;
+#endif
 
 	return v;
 }

@@ -1,9 +1,10 @@
 
 dnl AC_PREREQ(2.59)
 
-AC_INIT([qse],[0.5.5],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://qse.googlecode.com])
+AC_INIT([qse],[0.5.5],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://code.abiyo.net/@qse])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])
+AC_CONFIG_MACRO_DIR([m4])
 
 dnl use CC and CPP for compilation tests with .c test programs.
 AC_LANG(C)
@@ -252,14 +253,14 @@ AC_CONFIG_FILES([
 	include/qse/cut/Makefile
 	include/qse/sed/Makefile
 	include/qse/scm/Makefile
-	include/qse/utl/Makefile
+	include/qse/http/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/cut/Makefile 
 	lib/sed/Makefile 
 	lib/scm/Makefile 
-	lib/utl/Makefile 
+	lib/http/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
@@ -270,6 +271,7 @@ AC_CONFIG_FILES([
 	samples/awk/Makefile 
 	samples/cut/Makefile 
 	samples/sed/Makefile 
+	samples/http/Makefile 
 	regress/Makefile
 	regress/awk/Makefile
 	regress/sed/Makefile
