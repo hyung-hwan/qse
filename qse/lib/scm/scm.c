@@ -22,6 +22,8 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (scm)
 
+#define IS_NIL(x) ((x) != scm->nil)
+
 static qse_scm_t* qse_scm_init (
 	qse_scm_t*  scm,
 	qse_mmgr_t* mmgr,
@@ -29,9 +31,15 @@ static qse_scm_t* qse_scm_init (
 	qse_size_t  mem_ubound_inc
 );
 
-static void qse_scm_fini (qse_scm_t* scm);
-static qse_scm_val_t* mkcons (
-	qse_scm_t* scm, qse_scm_val_t* car, qse_scm_val_t* cdr);
+static void qse_scm_fini (
+	qse_scm_t* scm
+);
+
+static qse_scm_ent_t* make_pair_entity (
+	qse_scm_t*     scm,
+	qse_scm_ent_t* car, 
+	qse_scm_ent_t* cdr
+);
 
 qse_scm_t* qse_scm_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize,
@@ -71,11 +79,11 @@ void qse_scm_close (qse_scm_t* scm)
 
 static QSE_INLINE void delete_all_value_blocks (qse_scm_t* scm)
 {
-	while (scm->mem.vbl)
+	while (scm->mem.ebl)
 	{
-		qse_scm_vbl_t* vbl = scm->mem.vbl;
-		scm->mem.vbl = scm->mem.vbl->next;
-		QSE_MMGR_FREE (scm->mmgr, vbl);
+		qse_scm_enb_t* enb = scm->mem.ebl;
+		scm->mem.ebl = scm->mem.ebl->next;
+		QSE_MMGR_FREE (scm->mmgr, enb);
 	}
 }
 
@@ -83,17 +91,17 @@ static qse_scm_t* qse_scm_init (
 	qse_scm_t* scm, qse_mmgr_t* mmgr, 
 	qse_size_t mem_ubound, qse_size_t mem_ubound_inc)
 {
-#if 0
-	static qse_scm_val_t static_values[3] =
+	static qse_scm_ent_t static_values[3] =
 	{
+		/* dswcount, mark, atom, type */
+
 		/* nil */
-		{ (QSE_SCM_VAL_ATOM | QSE_SCM_VAL_MARK) },
+		{ 0, 1, 1, QSE_SCM_ENT_NIL },
 		/* f */
-		{ (QSE_SCM_VAL_ATOM | QSE_SCM_VAL_MARK) },
+		{ 0, 1, 1, QSE_SCM_ENT_T }, 
 		/* t */
-		{ (QSE_SCM_VAL_ATOM | QSE_SCM_VAL_MARK) }
+		{ 0, 1, 1, QSE_SCM_ENT_F }
 	};
-#endif
 
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -119,17 +127,15 @@ static qse_scm_t* qse_scm_init (
 		return QSE_NULL;
 	}
 
-#if 0
 	/* initialize common values */
 	scm->nil = &static_values[0];
-	scm->f = &static_values[1];
-	scm->t = &static_values[2];
-#endif
+	scm->f   = &static_values[1];
+	scm->t   = &static_values[2];
 
-	scm->mem.vbl = QSE_NULL;
+	scm->mem.ebl = QSE_NULL;
 	scm->mem.free = scm->nil;
 
-	scm->genv = mkcons (scm, scm->nil, scm->nil);
+	scm->genv = make_pair_entity (scm, scm->nil, scm->nil);
 	if (scm->genv == QSE_NULL)
 	{
 		delete_all_value_blocks (scm);
@@ -137,6 +143,8 @@ static qse_scm_t* qse_scm_init (
 		QSE_MMGR_FREE (scm->mmgr, scm);
 		return QSE_NULL;
 	}
+
+	scm->symtab = scm->nil;
 
 	scm->reg.dmp = scm->nil;
 	scm->reg.env = scm->genv;
@@ -186,7 +194,7 @@ int qse_scm_attachio (qse_scm_t* scm, qse_scm_io_t* io)
 	if (io->out (scm, QSE_SCM_IO_OPEN, &scm->io.arg.out, QSE_NULL, 0) <= -1)
 	{
 		if (scm->err.num == QSE_SCM_ENOERR)
-			qse_scm_seterror (scm,QSE_SCM_EIO, QSE_NULL, QSE_NULL);
+			qse_scm_seterror (scm, QSE_SCM_EIO, QSE_NULL, QSE_NULL);
 		io->in (scm, QSE_SCM_IO_CLOSE, &scm->io.arg.in, QSE_NULL, 0);
 		return -1;
 	}
@@ -199,60 +207,50 @@ int qse_scm_attachio (qse_scm_t* scm, qse_scm_io_t* io)
 	return 0;
 }
 
-static qse_scm_vbl_t* newvbl (qse_scm_t* scm, qse_size_t len)
+static qse_scm_enb_t* new_entity_block (qse_scm_t* scm, qse_size_t len)
 {
 	/* 
 	 * create a new value block containing as many slots as len
 	 */
 
-	qse_scm_vbl_t* blk;
-	qse_scm_val_t* v;
+	qse_scm_enb_t* blk;
+	qse_scm_ent_t* v;
 	qse_size_t i;
 
-	blk = (qse_scm_vbl_t*) QSE_MMGR_ALLOC (
+	blk = (qse_scm_enb_t*) QSE_MMGR_ALLOC (
 		scm->mmgr, 
-		QSE_SIZEOF(qse_scm_vbl_t) + 
-		QSE_SIZEOF(qse_scm_val_t) * len
+		QSE_SIZEOF(qse_scm_enb_t) + 
+		QSE_SIZEOF(qse_scm_ent_t) * len
 	);
 	if (blk == QSE_NULL)
 	{
-		scm->err.num = QSE_SCM_ENOMEM;
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
 	/* initialize the block fields */
-	blk->ptr = (qse_scm_val_t*)(blk + 1);
+	blk->ptr = (qse_scm_ent_t*)(blk + 1);
 	blk->len = len;
 
 	/* chain the value block to the block list */
-	blk->next = scm->mem.vbl;
-	scm->mem.vbl = blk;
+	blk->next = scm->mem.ebl;
+	scm->mem.ebl = blk;
 
-	/* chain each slot to the free slot list */
+	/* chain each slot to the free slot list using 
+	 * the CDR field of an entity */
 	v = &blk->ptr[0];
 	for (i = 0; i < len -1; i++) 
 	{
-		qse_scm_val_t* tmp = v++;
-		tmp->u.cons.cdr = v;
+		qse_scm_ent_t* tmp = v++;
+		PAIR_CDR(tmp) = v;
 	}
-	v->u.cons.cdr = scm->mem.free;
+	PAIR_CDR(v) = scm->mem.free;
 	scm->mem.free = &blk->ptr[0];
 
 	return blk;
 };
 
-/* TODO: redefine this ... */
-#define IS_ATOM(v)  ((v)->flags & (QSE_SCM_VAL_STRING | QSE_SCM_VAL_NUMBER | QSE_SCM_VAL_PROC)
-
-#define IS_MARKED(v)  ((v)->mark)
-#define SET_MARK(v)   ((v)->mark = 1)
-#define CLEAR_MARK(v) ((v)->mark = 0)
-
-#define ZERO_DSW_COUNT(v) ((v)->dsw_count = 0)
-#define GET_DSW_COUNT(v)  ((v)->dsw_count)
-#define INC_DSW_COUNT(v)  ((v)->dsw_count++)
-
-static void mark (qse_scm_t* scm, qse_scm_val_t* v)
+static void mark (qse_scm_t* scm, qse_scm_ent_t* v)
 {
 	/* 
 	 * mark values non-recursively with Deutsch-Schorr-Waite(DSW) algorithm 
@@ -260,24 +258,23 @@ static void mark (qse_scm_t* scm, qse_scm_val_t* v)
 	 * with the help of additional variables.
 	 */
 
-	qse_scm_val_t* parent, * me;
+	qse_scm_ent_t* parent, * me;
 
-#if 0
 	/* initialization */
 	parent = QSE_NULL;
 	me = v;
 
-	SET_MARK (me);
-	/*if (!IS_ATOM(me))*/ ZERO_DSW_COUNT (me);
+	MARK(me) = 1;
+	/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
 
 	while (1)
 	{
-		if (IS_ATOM(me) || GET_DSW_COUNT(me) >= 2)
+		if (ATOM(me) || DSWCOUNT(me) >= QSE_COUNTOF(me->u.ref.ent))
 		{
 			/* 
 			 * backtrack to the parent node 
 			 */
-			qse_scm_val_t* child;
+			qse_scm_ent_t* child;
 
 			/* nothing more to backtrack? end of marking */
 			if (parent == QSE_NULL) return;
@@ -289,30 +286,30 @@ static void mark (qse_scm_t* scm, qse_scm_val_t* v)
 			me = parent;
 
 			/* change the parent to the parent of parent */
-			parent = me->u.cona.val[GET_DSW_COUNT(me)];
+			parent = me->u.ref.ent[DSWCOUNT(me)];
 			
 			/* restore the cell contents */
-			me->u.cona.val[GET_DSW_COUNT(me)] = child;
+			me->u.ref.ent[DSWCOUNT(me)] = child;
 
 			/* increment the counter to indicate that the 
-			 * 'count'th field has been processed.
-			INC_DSW_COUNT (me);
+			 * 'count'th field has been processed. */
+			DSWCOUNT(me)++;
 		}
 		else 
 		{
 			/* 
 			 * move on to an unprocessed child 
 			 */
-			qse_scm_val_t* child;
+			qse_scm_ent_t* child;
 
-			child = me->u.cona.val[GET_DSW_COUNT(me)];
+			child = me->u.ref.ent[DSWCOUNT(me)];
 
 			/* process the field */
-			if (child && !ismark(child))
+			if (child && !MARK(child))
 			{
 				/* change the contents of the child chonse 
 				 * to point to the current parent */
-				me->u.cona.val[GET_DSW_COUNT(me)] = parent;
+				me->u.ref.ent[DSWCOUNT(me)] = parent;
 
 				/* link me to the head of parent list */
 				parent = me;
@@ -320,23 +317,23 @@ static void mark (qse_scm_t* scm, qse_scm_val_t* v)
 				/* let me point to the child chosen */
 				me = child;
 
-				SET_MARK (me);
-				/*if (!IS_ATOM(me))*/ ZERO_DSW_COUNT (me);
+				MARK(me) = 1;
+				/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
 			}
 			else
 			{
-				INC_DSW_COUNT (me)
+				/* increment the count */
+				DSWCOUNT(me)++;
 			}
 		}
 	}
-#endif
 }
 
 
 #if 0
-static void mark (qse_scm_t* scm, qse_scm_val_t* v)
+static void mark (qse_scm_t* scm, qse_scm_ent_t* v)
 {
-	qse_scm_val_t* t, * p, * q;
+	qse_scm_ent_t* t, * p, * q;
 
 	t = QSE_NULL;
 	p = v;
@@ -389,9 +386,9 @@ E6:
 }
 #endif
 
-static void gc (qse_scm_t* scm, qse_scm_val_t* x, qse_scm_val_t* y)
+static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
 {
-	//mark (scm, scm->oblist);
+	//mark (scm, scm->symtab);
 	mark (scm, scm->genv);
 
 	mark (scm, scm->reg.arg);
@@ -399,45 +396,276 @@ static void gc (qse_scm_t* scm, qse_scm_val_t* x, qse_scm_val_t* y)
 	mark (scm, scm->reg.cod);
 	mark (scm, scm->reg.dmp);
 
+	/* mark the temporaries */
 	mark (scm, x);
 	mark (scm, y);
+
+
+	/* scan the allocated values */
 }
 
-static qse_scm_val_t* mkval (qse_scm_t* scm, qse_scm_val_t* x, qse_scm_val_t* y)
+/*
+
+rsr4 
+
+the following identifiers are syntatic keywors and should not be	
+used as variables.
+
+ =>           do            or
+ and          else          quasiquote
+ begin        if            quote
+ case         lambda        set!
+ cond         let           unquote
+ define       let*          unquote-splicing
+ delay        letrec
+
+however, you can allow for these keywords to be used as variables...
+
+biniding, unbound...
+environment.. a set of visible bindings at some point in a program.
+
+
+
+                  type           atom       cons        
+  number          NUMBER         Y 
+  string          STRING         Y
+  symbol          SYMBOL                    name,NIL
+  syntax          SYNTAX|SYMBOL             name,NIL 
+  proc            PROC           Y
+  pair            PAIR           Y
+  closure
+  continuation
+
+  an atom does not reference any other values.
+  a symbol can be assoicated with property list
+	(put 'a 'name "brian")
+	(put 'a 'city "daegu")
+	-------------------------
+	(define a1 'a)
+	(put a1 'name "brian")
+	(put a1 'city "daegu")
+	-------------------------
+	(get a1 'name)
+	(get a1 'city)
+
+  a procedure is a privimitive routine built-in to scheme.
+  a closure is an anonymous routine defined with lambda.
+  both can be bound to a variable in the environment.
+
+  a syntax is more primitive than a procedure.
+  a syntax is created as if it is a symbol but not registerd 
+  into an environment
+
+         car            cdr
+| STR  | PTR CHR ARR  |  -1           |
+| PROC | PROCNUM      |               |
+| SYM  | REF STR      | REF PROP LIST |
+| SYN  | REF STR      | REF PROP LIST | 
+
+*/
+    
+static qse_scm_ent_t* alloc_entity (
+	qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
 {
-	qse_scm_val_t* v;
+	/* find a free value slot and return it.
+	 * two parameters x and y are saved from garbage collection */
+
+	qse_scm_ent_t* v;
 
 	if (scm->mem.free == scm->nil)
 	{
-		gc (scm, x, y);
+		/* if no free slot is available */
+		gc (scm, x, y); /* perform garbage collection */
 		if (scm->mem.free == scm->nil)
 		{
-			if (newvbl (scm,  1000) == QSE_NULL) return QSE_NULL;
+			/* if no free slot is available after garbage collection,
+			 * make new value blocks containing more free slots */
+
+/* TODO: make the value block size configurable */
+			if (new_entity_block (scm, 1000) == QSE_NULL) return QSE_NULL;
 			QSE_ASSERT (scm->mem.free != scm->nil);
 		}
 	}
 
 	v = scm->mem.free;
-	scm->mem.free = v->u.cons.cdr;
+	scm->mem.free = PAIR_CDR(v);
 	
 	return v;
 }
 
-
-static qse_scm_val_t* mkcons (
-	qse_scm_t* scm, qse_scm_val_t* car, qse_scm_val_t* cdr)
+static qse_scm_ent_t* make_pair_entity (
+	qse_scm_t* scm, qse_scm_ent_t* car, qse_scm_ent_t* cdr)
 {
-	qse_scm_val_t* v;
+	qse_scm_ent_t* v;
 
-	v = mkval (scm, car, cdr);
+	v = alloc_entity (scm, car, cdr);
 	if (v == QSE_NULL) return QSE_NULL;
 
-#if 0
-	v->flag = QSE_SCM_VAL_PAIR;
-	v->u.cons.car = car;
-	v->u.cons.cdr = car;
-#endif
+	TYPE(v) = QSE_SCM_ENT_PAIR;
+	ATOM(v) = 0; /* a pair is not an atom as it references other entities */
+	PAIR_CAR(v) = car;
+	PAIR_CDR(v) = cdr;
 
 	return v;
 }
 
+
+static qse_scm_ent_t* make_string_entity (
+	qse_scm_t* scm, const qse_char_t* str, qse_size_t len)
+{
+	qse_scm_ent_t* v;
+
+	v = alloc_entity (scm, scm->nil, scm->nil);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	TYPE(v) = QSE_SCM_ENT_STR;
+	ATOM(v) = 1;
+/* TODO: allocate a string from internal managed region .
+Calling strdup is not an option as it is not managed...
+*/
+	STR_PTR(v) = qse_strxdup (str, len, QSE_MMGR(scm));
+	if (STR_PTR(v) == QSE_NULL) 
+	{
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
+		return QSE_NULL;
+	}
+	STR_LEN(v) = len;
+
+	return v;
+}
+
+static qse_scm_ent_t* make_name_entity (qse_scm_t* scm, const qse_char_t* str)
+{
+	qse_scm_ent_t* v;
+
+	v = alloc_entity (scm, scm->nil, scm->nil);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	TYPE(v) = QSE_SCM_ENT_NAM;
+	ATOM(v) = 1;
+/* TODO: allocate a string from internal managed region .
+Calling strdup is not an option as it is not managed...
+*/
+	LAB_PTR(v) = qse_strdup (str, QSE_MMGR(scm));
+	if (LAB_PTR(v) == QSE_NULL) 
+	{
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
+		return QSE_NULL;
+	}
+	LAB_CODE(v) = 0;
+
+	return v;
+}
+
+static qse_scm_ent_t* make_symbol_entity (qse_scm_t* scm, const qse_char_t* name)
+{
+	qse_scm_ent_t* pair, * sym, * nam;
+
+/* TODO: use a hash table, red-black tree to maintain symbol table 
+ * The current linear search algo is not performance friendly...
+ */
+
+	/* find if the symbol already exists by traversing the pair list 
+	 * and inspecting the symbol name pointed to by CAR of each pair. 
+	 *
+	 * the symbol table is a list of pairs whose CAR points to a symbol
+	 * and CDR is used for chaining.
+	 *   
+	 *   +-----+-----+
+	 *   |     |     |
+	 *   +-----+-----+
+	 *  car |     | cdr        +-----+-----+
+	 *      |     +----------> |     |     |
+	 *      V                  +-----+-----+
+	 *    +--------+          car | 
+      *    | symbol |              V
+	 *    +--------+           +--------+
+	 *                         | symbol |
+	 *                         +--------+
+	 */
+	for (pair = scm->symtab; !IS_NIL(pair); pair = PAIR_CDR(pair))
+	{
+		sym = PAIR_CAR(pair);
+		if (qse_strcmp(name, LAB_PTR(SYM_NAME(sym))) == 0) return sym;
+	}
+	
+	/* no existing symbol with such a name is found.  
+	 * let's create a new symbol. the first step is to create a 
+	 * string entity to contain the symbol name */
+	nam = make_name_entity (scm, name);
+	if (nam == QSE_NULL) return QSE_NULL;
+
+	/* let's allocate the actual symbol entity that references the
+	 * the symbol name entity created above */
+	sym = alloc_entity (scm, nam, scm->nil);
+	if (sym == QSE_NULL) return QSE_NULL;
+	TYPE(sym) = QSE_SCM_ENT_SYM;
+	ATOM(sym) = 0;
+	SYM_NAME(sym) = nam;
+	SYM_PROP(sym) = scm->nil; /* no properties yet */
+
+	/* chain the symbol entity to the symbol table for lookups later */
+	pair = make_pair_entity (scm, sym, scm->symtab);
+	if (pair == QSE_NULL) return QSE_NULL;
+	scm->symtab = pair;
+
+	return sym;
+}
+
+static qse_scm_ent_t* make_syntax_entity (
+	qse_scm_t* scm, const qse_char_t* name, int code)
+{
+	qse_scm_ent_t* v;
+
+	QSE_ASSERTX (code > 0, "Syntax code must be greater than 0");
+
+	v = make_symbol_entity (scm, name);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	/* we piggy-back the syntax code to a symbol name.
+	 * the syntax entity is basically a symbol except that the
+	 * code field of its label entity is set to non-zero. 
+	 */
+	TYPE(v) |= QSE_SCM_ENT_SYNT; 
+	SYNT_CODE(v) = code; 
+
+	return v;
+}
+
+static qse_scm_ent_t* make_proc_entity (
+	qse_scm_t* scm, const qse_char_t* name, int code)
+{
+	qse_scm_ent_t* sym, * proc, * pair;
+
+	/* a procedure entity is a built-in function that
+	 * that can be overridden by a user while a syntax entity
+	 * represents a lower-level syntatic function that can't 
+	 * be overriden. 
+	 * (define lambda 10) is legal but does not change the
+	 *    meaning of lambda when used as a function name. 	
+	 * (define eval 10) changes the meaning of eval totally.
+	 */ 
+
+	/* create a symbol containing the name */
+	sym = make_symbol_entity (scm, name);
+	if (sym == QSE_NULL) return QSE_NULL;
+
+	/* create an actual procecure value which is a number containing
+	 * the opcode for the procedure */
+	proc = alloc_entity (scm, scm->nil, scm->nil);
+	if (proc == QSE_NULL) return QSE_NULL;
+	TYPE(proc) = QSE_SCM_ENT_PROC;
+	ATOM(proc) = 1;
+	PROC_CODE(proc) = code; 
+	
+	/* create a pair containing the name symbol and the procedure value */
+	pair = make_pair_entity (scm, sym, proc);
+	if (pair == QSE_NULL) return QSE_NULL;
+
+	/* link it to the global environment */
+	pair = make_pair_entity (scm, pair, PAIR_CAR(scm->genv));
+	if (pair == QSE_NULL) return QSE_NULL;
+	PAIR_CAR(scm->genv) = pair;
+
+	return proc;
+}

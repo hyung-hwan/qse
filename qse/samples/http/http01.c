@@ -1,4 +1,4 @@
-#include <qse/utl/http.h>
+#include <qse/http/http.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -20,12 +21,9 @@ typedef struct client_array_t client_array_t;
 
 struct client_t
 {
-	int                fd;
-	struct sockaddr_in addr;
-	qse_http_t*        http;
-
-	pending_requests???
-	action_t           actions[10];
+	int                     fd;
+	struct sockaddr_storage addr;
+	qse_http_t*             http;
 };
 
 struct client_array_t
@@ -50,28 +48,43 @@ int handle_request (qse_http_t* http, qse_http_req_t* req)
 
 	if (req->method == QSE_HTTP_REQ_GET)
 	{
-	#if 0
-		/* determine what to do with the request 
-		 * and set the right action for it */
-		xtn->action.type = SENDFILE;
-		xtn->action.data.sendfile.path = filename;
-		xtn->action.data.sendfile.ifnewer = xxxx;
-	#endif
+#if 0
+		qse_http_rep_t* rep;
 
-	#if 0
 		int fd = open (req->path.ptr, O_RDONLY);
 		if (fd <= -1)
 		{
+			qse_http_addtext (http, 
+				"<html><title>FILE NOT FOUND</title><body></body></html>");
 		}
 		else
 		{
+		#if 0
+			qse_http_addheader (
+				http, "Content-Type", detect_file_type(req->path.ptr)
+			);
+
+			qse_http_addtext (http, .....);
+			qse_http_adddata (http, 
+
+			qse_http_addoutputdata (http, fd);
+		#endif
+
+			/*
 			struct stat st;
 
 			fstat (fd, &st);
 			sendfile (xtn->array->data[xtn->index].fd, fd, NULL, st.st_size);
 			close (fd);
+			*/
 		}	
-	#endif
+
+		rep = qse_http_emit (http);
+		if (rep == NULL)
+		{
+			/* ERROR */
+		}
+#endif
 	}
 
 	return 0;
@@ -116,18 +129,18 @@ qse_http_reqcbs_t http_reqcbs =
 int mkserver (const char* portstr)
 {
 	int s, flag, port = atoi(portstr);
-	struct sockaddr_in addr;
+	struct sockaddr_in6 addr;
 	
-	s = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	s = socket (PF_INET6, SOCK_STREAM, IPPROTO_TCP);
 	if (s <= -1) return -1;
 
 	flag = 1;
 	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
 
 	memset (&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl (INADDR_ANY);
-	addr.sin_port = htons (port);
+	addr.sin6_family = AF_INET6;
+	addr.sin6_port = htons(port);
+	inet_pton (AF_INET6, "::1", &addr.sin6_addr);
 
 	if (bind (s, (struct sockaddr*)&addr, sizeof(addr)) <= -1)
 	{
@@ -183,7 +196,7 @@ static void fini_client_array (client_array_t* array)
 }
 
 static client_t* insert_into_client_array (
-	client_array_t* array, int fd, struct sockaddr_in* addr)
+	client_array_t* array, int fd, struct sockaddr_storage* addr)
 {
 	http_xtn_t* xtn;
 
@@ -219,7 +232,8 @@ static client_t* insert_into_client_array (
 	return &array->data[fd];
 }
 
-static int make_fd_set_from_client_array (client_array_t* ca, int s, fd_set* r, fd_set* w)
+static int make_fd_set_from_client_array (
+	client_array_t* ca, int s, fd_set* r, fd_set* w)
 {
 	int fd, max = s;
 
@@ -285,48 +299,23 @@ int main (int argc, char* argv[])
 		fd_set r, w;
 		struct timeval tv;
 
-	#if 0
-		if (ca->need_cpu)
-		{
-			tv.tv_sec = 0;
-			tv.tv_usec = 0;
-		}
-		else
-		{
-	#endif
-			tv.tv_sec = 1;
-			tv.tv_usec = 0;
-	#if 0
-		}
-	#endif
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
 
 		max = make_fd_set_from_client_array (&ca, s, &r, &w);
 		n = select (max + 1, &r, &w, NULL, &tv);
 		if (n <= -1)
 		{
 			if (errno == EINTR) continue;
-
 			qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 			break;
 		}
-		if (n == 0) 
-		{
-	#if 0
-			/* no input and no writable sockets.
-			 */
-			for (fd = 0; fd < ca.capa; fd++)
-			{
-				/* process internal things */
-				qse_http_pump (ca.data[fd].http);
-			}
-	#endif
-			continue;
-		}
+		if (n == 0) continue;
 
 		if (FD_ISSET(s, &r))
 		{
 			int flag;
-			struct sockaddr_in addr;
+			struct sockaddr_storage addr;
 			socklen_t addrlen = sizeof(addr);
 			int c = accept (s, (struct sockaddr*)&addr, &addrlen);
 			if (c <= -1)
@@ -408,7 +397,7 @@ int main (int argc, char* argv[])
 			}
 
 		#if 0
-			if (FD_ISSET(client->fd, &w) && client->has_data_to_send)
+			if (FD_ISSET(client->fd, &w) && client->rep)
 			{
 				/* ready to send output */
 				if (handle_output (xxxxx) <= -1)

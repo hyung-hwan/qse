@@ -30,6 +30,7 @@ dnl check other tools
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(RMDIR, rmdir)
 AC_CHECK_TOOL(TRUE, true)
+AC_CHECK_TOOL(ECHO, echo)
 
 dnl avoid "'/bin/rm: cannot remove `libtoolT': No such file or directory"
 RM="$RM -f"

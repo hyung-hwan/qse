@@ -87,7 +87,22 @@ struct qse_http_req_t
 	qse_http_octb_t con;
 };
 
+#if 0
+struct qse_http_rep_node_t
+{
+	int type; /* TEXT, RESOURCE */
+	qse_http_req_node_t* next;
+};
+
+typedef struct qse_http_rep_t qse_http_rep_t;
+
+struct qse_http_rep_t
+{
+};
+#endif
+
 typedef struct qse_http_reqcbs_t qse_http_reqcbs_t;
+
 
 struct qse_http_reqcbs_t
 {
@@ -122,8 +137,9 @@ struct qse_http_t
 		/* buffers needed to for processing a request */
 		struct
 		{
-			qse_http_octb_t raw;
-			qse_http_octb_t tra;
+			qse_http_octb_t raw; /* buffer to hold raw octets */
+			qse_http_octb_t tra; /* buffer for handling trailers */
+			qse_http_octb_t pen; /* buffer for raw octets during pending period */
 		} b; 
 
 		/* points to the head of the combined header list */
