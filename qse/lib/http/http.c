@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/utl/http.h>
+#include <qse/http/http.h>
 #include <qse/cmn/chr.h>
 #include "../cmn/mem.h"
 
@@ -229,11 +229,13 @@ qse_http_t* qse_http_init (qse_http_t* http, qse_mmgr_t* mmgr)
 
 	init_buffer (http, &http->reqx.b.raw);
 	init_buffer (http, &http->reqx.b.tra);
+	init_buffer (http, &http->reqx.b.pen);
 	init_buffer (http, &http->req.con);
 
 	if (qse_htb_init (&http->req.hdrtab, mmgr, 60, 70, 1, 1) == QSE_NULL) 
 	{
 		fini_buffer (http, &http->req.con);
+		fini_buffer (http, &http->reqx.b.pen);
 		fini_buffer (http, &http->reqx.b.tra);
 		fini_buffer (http, &http->reqx.b.raw);
 		return QSE_NULL;
@@ -247,6 +249,7 @@ void qse_http_fini (qse_http_t* http)
 	qse_htb_fini (&http->req.hdrtab);
 	clear_combined_headers (http);
 	fini_buffer (http, &http->req.con);
+	fini_buffer (http, &http->reqx.b.pen);
 	fini_buffer (http, &http->reqx.b.tra);
 	fini_buffer (http, &http->reqx.b.raw);
 }
@@ -993,8 +996,21 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 	const qse_byte_t* end = req + len;
 	const qse_byte_t* ptr = req;
 
+#if 0
+	if (http->reqx.pending)
+	{
+	}	
+#endif
+
 	/* does this goto drop code maintainability? */
-	if (http->reqx.s.need > 0) goto content_resume;
+	if (http->reqx.s.need > 0) 
+	{
+		/* we're in need of as many octets as http->reqx.s.need 
+		 * for contents body. make a proper jump to resume
+		 * content handling */
+		goto content_resume;
+	}
+
 	switch (http->reqx.s.chunk.phase)
 	{
 		case GET_CHUNK_LEN:
@@ -1099,14 +1115,16 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 					}
 					else
 					{
-						/* we need to read as many octets as Content-Length */
+						/* we need to read as many octets as
+						 * Content-Length */
 						http->reqx.s.need = http->req.attr.content_length;
 					}
 
 					if (http->reqx.s.need > 0)
 					{
-						/* content-length or chunked data length specified */
-	
+						/* content-length or chunked data length 
+						 * specified */
+
 						qse_size_t avail;
 	
 					content_resume:
@@ -1230,3 +1248,19 @@ feedme_more:
 	return 0;
 }
 
+int qse_http_addtext (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
+{
+}
+
+int qse_http_addresource (qse_http_t* http, const void* ptr, qse_size_t len)
+{
+}
+
+int qse_http_addheader (
+	qse_http_t* http, const qse_byte_t* key, const qse_byte_t* val)
+{
+}
+
+int qse_http_emit (qse_http_t* http)
+{
+}

@@ -90,6 +90,20 @@ void qse_assert_failed (
 
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
 
+#if 1
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("                         __ \n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T(" _____ _____ _____ _____|  |\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|     |     |  _  |   __|  |\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|  |  |  |  |   __|__   |__|\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|_____|_____|__|  |_____|__|\n"));
+#else
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("                            __ \n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T(" _____ _____ _____ _____   |  |\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|     |     |  _  |   __|  |  |\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|  |  |  |  |   __|__   |  |__|\n"));
+	qse_sio_puts (QSE_SIO_ERR, QSE_T("|_____|_____|__|  |_____|  |__|\n"));
+#endif
+
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("FILE "));
 	qse_sio_puts (QSE_SIO_ERR, file);
 	qse_sio_puts (QSE_SIO_ERR, QSE_T(" LINE "));

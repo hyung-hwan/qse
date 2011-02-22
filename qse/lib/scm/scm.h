@@ -40,65 +40,100 @@
 #define QSE_SCM_TOUPPER(scm,c)  QSE_TOUPPER(c)
 #define QSE_SCM_TOLOWER(scm,c)  QSE_TOLOWER(c)
 
-#define QSE_SCM_VAL_STRING         1    /* 0000000000000001 */
-#define QSE_SCM_VAL_NUMBER         2    /* 0000000000000010 */
-#define QSE_SCM_VAL_SYMBOL         4    /* 0000000000000100 */
-#define QSE_SCM_VAL_SYNTAX         8    /* 0000000000001000 */
-#define QSE_SCM_VAL_PROC          16    /* 0000000000010000 */
-
-#define QSE_SCM_VAL_PAIR          32    /* 0000000000100000 */
-#define QSE_SCM_VAL_CLOSURE       64    /* 0000000001000000 */
-#define QSE_SCM_VAL_CONTINUATION 128    /* 0000000010000000 */
-#define QSE_SCM_VAL_MACRO        256    /* 0000000100000000 */
-#define QSE_SCM_VAL_PROMISE      512    /* 0000001000000000 */
-#define QSE_SCM_VAL_ATOM        4096    /* 0001000000000000 */ /* only for gc */
-
-typedef struct qse_scm_val_t qse_scm_val_t;
-struct qse_scm_val_t
+enum qse_scm_ent_type_t
 {
-	qse_uint16_t dsw_count: 2;
-	qse_uint16_t mark:      1;
-	qse_uint16_t types:     13;
+	QSE_SCM_ENT_NIL     = (1 << 0),
+	QSE_SCM_ENT_T       = (1 << 1),
+	QSE_SCM_ENT_F       = (1 << 2),
+	QSE_SCM_ENT_NUM     = (1 << 3),
+	QSE_SCM_ENT_STR     = (1 << 4), 
+	QSE_SCM_ENT_NAM     = (1 << 5),
+	QSE_SCM_ENT_SYM     = (1 << 6),
+	QSE_SCM_ENT_PAIR    = (1 << 7),
+	QSE_SCM_ENT_PROC    = (1 << 8),
+	QSE_SCM_ENT_SYNT    = (1 << 9)
+
+};
+
+#if 0
+#define QSE_SCM_ENT_CLOSURE       64    /* 0000000001000000 */
+#define QSE_SCM_ENT_CONTINUATION 128    /* 0000000010000000 */
+#define QSE_SCM_ENT_MACRO        256    /* 0000000100000000 */
+#define QSE_SCM_ENT_PROMISE      512    /* 0000001000000000 */
+#endif
+
+typedef struct qse_scm_ent_t qse_scm_ent_t;
+
+/**
+ * The qse_scm_ent_t type defines an entity that represents an individual
+ * value in scheme.
+ */
+struct qse_scm_ent_t
+{
+	qse_uint16_t dswcount: 2;
+	qse_uint16_t mark:     1;
+	qse_uint16_t atom:     1;
+	qse_uint16_t type:     12;
 
 	union
 	{
 		struct
 		{
-			qse_char_t* ptr;
-			qse_size_t  len;
-		} str;
+			qse_long_t val;
+		} num; /* number */
 
 		struct
 		{
-			qse_long_t val;
-		} num;
+			/* a string doesn't need to be null-terminated 
+			 * as the length is remembered */
+			qse_char_t* ptr; 
+			qse_size_t  len;
+		} str; /* string */
+
+		struct
+		{
+			qse_char_t* ptr;  /* null-terminated string */
+			int         code; /* used for syntax entities only */
+		} lab; /* label */
+
+		struct
+		{
+			int code;
+		} proc;
 		
 		struct
 		{
-			qse_scm_val_t* car;
-			qse_scm_val_t* cdr;
-		} cons;
-
-		/* arrayed cons. cona must maintain the
-		 * same size as cons */
-		struct
-		{
-			qse_scm_val_t* val[2];
-		} cona; 
+			qse_scm_ent_t* ent[2];
+		} ref; 
 	} u;
 };
 
+#define DSWCOUNT(v)       ((v)->dswcount)
+#define MARK(v)           ((v)->mark)
+#define TYPE(v)           ((v)->type)
+#define ATOM(v)           ((v)->atom)
+#define NUM_VALUE(v)      ((v)->u.num.val)
+#define STR_PTR(v)        ((v)->u.str.ptr)
+#define STR_LEN(v)        ((v)->u.str.len)
+#define LAB_PTR(v)        ((v)->u.lab.ptr)
+#define LAB_CODE(v)       ((v)->u.lab.code)
+#define SYM_NAME(v)       ((v)->u.ref.ent[0])
+#define SYM_PROP(v)       ((v)->u.ref.ent[1])
+#define PAIR_CAR(v)       ((v)->u.ref.ent[0])
+#define PAIR_CDR(v)       ((v)->u.ref.ent[1])
+#define PROC_CODE(v)      ((v)->u.proc.code)
+#define SYNT_CODE(v)      LAB_CODE(SYM_NAME(v))
 
 /**
- * The qse_scm_vbl_t type defines a value block. A value block is allocated
+ * The qse_scm_enb_t type defines a value block. A value block is allocated
  * when more memory is requested and is chained to existing value blocks.
  */
-typedef struct qse_scm_vbl_t qse_scm_vbl_t;
-struct qse_scm_vbl_t
+typedef struct qse_scm_enb_t qse_scm_enb_t;
+struct qse_scm_enb_t
 {
-	qse_scm_val_t* ptr;
+	qse_scm_ent_t* ptr;
 	qse_size_t     len;
-	qse_scm_vbl_t* next;	
+	qse_scm_enb_t* next;	
 };
 
 struct qse_scm_t 
@@ -144,26 +179,29 @@ struct qse_scm_t
 	} r;
 
 	/* common values */
-	qse_scm_val_t* nil;
-	qse_scm_val_t* t;
-	qse_scm_val_t* f;
+	qse_scm_ent_t* nil;
+	qse_scm_ent_t* t;
+	qse_scm_ent_t* f;
 
 	/* global environment */
-	qse_scm_val_t* genv;
+	qse_scm_ent_t* genv;
+
+	/* symbol table */
+	qse_scm_ent_t* symtab;
 
 	/* registers */
 	struct
 	{
-		qse_scm_val_t* arg; /* function arguments */
-		qse_scm_val_t* env; /* current environment */
-		qse_scm_val_t* cod; /* current code */
-		qse_scm_val_t* dmp; /* stack register for next evaluation */
+		qse_scm_ent_t* arg; /* function arguments */
+		qse_scm_ent_t* env; /* current environment */
+		qse_scm_ent_t* cod; /* current code */
+		qse_scm_ent_t* dmp; /* stack register for next evaluation */
 	} reg;
 
 	struct
 	{
-		qse_scm_vbl_t* vbl;  /* value block list */
-		qse_scm_val_t* free;
+		qse_scm_enb_t* ebl;  /* entity block list */
+		qse_scm_ent_t* free;
 	} mem;
 };
 
