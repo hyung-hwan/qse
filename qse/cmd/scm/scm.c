@@ -148,7 +148,6 @@ int scm_main (int argc, qse_char_t* argv[])
 	qse_scm_t* scm;
 	qse_scm_obj_t* obj;
 
-	QSE_ASSERT (0 == 1);
 	if (handle_args (argc, argv) == -1) return -1;
 	
 	scm = qse_scm_open (QSE_NULL, 0, opt_memsize, opt_meminc);
