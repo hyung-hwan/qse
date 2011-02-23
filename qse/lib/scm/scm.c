@@ -22,7 +22,7 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (scm)
 
-#define IS_NIL(x) ((x) != scm->nil)
+#define IS_NIL(x) ((x) == scm->nil)
 
 static qse_scm_t* qse_scm_init (
 	qse_scm_t*  scm,
@@ -77,7 +77,7 @@ void qse_scm_close (qse_scm_t* scm)
 	QSE_MMGR_FREE (scm->mmgr, scm);
 }
 
-static QSE_INLINE void delete_all_value_blocks (qse_scm_t* scm)
+static QSE_INLINE void delete_all_entity_blocks (qse_scm_t* scm)
 {
 	while (scm->mem.ebl)
 	{
@@ -85,77 +85,6 @@ static QSE_INLINE void delete_all_value_blocks (qse_scm_t* scm)
 		scm->mem.ebl = scm->mem.ebl->next;
 		QSE_MMGR_FREE (scm->mmgr, enb);
 	}
-}
-
-static qse_scm_t* qse_scm_init (
-	qse_scm_t* scm, qse_mmgr_t* mmgr, 
-	qse_size_t mem_ubound, qse_size_t mem_ubound_inc)
-{
-	static qse_scm_ent_t static_values[3] =
-	{
-		/* dswcount, mark, atom, type */
-
-		/* nil */
-		{ 0, 1, 1, QSE_SCM_ENT_NIL },
-		/* f */
-		{ 0, 1, 1, QSE_SCM_ENT_T }, 
-		/* t */
-		{ 0, 1, 1, QSE_SCM_ENT_F }
-	};
-
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
-	QSE_MEMSET (scm, 0, QSE_SIZEOF(*scm));
-
-	scm->mmgr = mmgr;
-
-	/* set the default error string function */
-	scm->err.str = qse_scm_dflerrstr;
-
-	/* initialize error data */
-	scm->err.num = QSE_SCM_ENOERR;
-	scm->err.msg[0] = QSE_T('\0');
-
-	/* initialize read data */
-	scm->r.curc = QSE_CHAR_EOF;
-	scm->r.curloc.line = 1;
-	scm->r.curloc.colm = 0;
-
-	if (qse_str_init(&scm->r.t.name, mmgr, 256) == QSE_NULL) 
-	{
-		QSE_MMGR_FREE (scm->mmgr, scm);
-		return QSE_NULL;
-	}
-
-	/* initialize common values */
-	scm->nil = &static_values[0];
-	scm->f   = &static_values[1];
-	scm->t   = &static_values[2];
-
-	scm->mem.ebl = QSE_NULL;
-	scm->mem.free = scm->nil;
-
-	scm->genv = make_pair_entity (scm, scm->nil, scm->nil);
-	if (scm->genv == QSE_NULL)
-	{
-		delete_all_value_blocks (scm);
-		qse_str_fini (&scm->r.t.name);
-		QSE_MMGR_FREE (scm->mmgr, scm);
-		return QSE_NULL;
-	}
-
-	scm->symtab = scm->nil;
-
-	scm->reg.dmp = scm->nil;
-	scm->reg.env = scm->genv;
-
-	return scm;
-}
-
-static void qse_scm_fini (qse_scm_t* scm)
-{
-	delete_all_value_blocks (scm);
-	qse_str_fini (&scm->r.t.name);
 }
 
 void qse_scm_detachio (qse_scm_t* scm)
@@ -388,8 +317,12 @@ E6:
 
 static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
 {
-	//mark (scm, scm->symtab);
-	mark (scm, scm->genv);
+/* TODO: how can i GC away those symbols not actually meaningful?
+ *       marking objects referenced in symbol table prevent me from
+ *       finding unused symbols... you keep on evaluating expressions
+ *       with different symbols. you'll get out of memory. */
+	mark (scm, scm->symtab);
+	mark (scm, scm->gloenv);
 
 	mark (scm, scm->reg.arg);
 	mark (scm, scm->reg.env);
@@ -397,8 +330,8 @@ static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
 	mark (scm, scm->reg.dmp);
 
 	/* mark the temporaries */
-	mark (scm, x);
-	mark (scm, y);
+	if (x) mark (scm, x);
+	if (y) mark (scm, y);
 
 
 	/* scan the allocated values */
@@ -509,13 +442,12 @@ static qse_scm_ent_t* make_pair_entity (
 	return v;
 }
 
-
 static qse_scm_ent_t* make_string_entity (
 	qse_scm_t* scm, const qse_char_t* str, qse_size_t len)
 {
 	qse_scm_ent_t* v;
 
-	v = alloc_entity (scm, scm->nil, scm->nil);
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
 	if (v == QSE_NULL) return QSE_NULL;
 
 	TYPE(v) = QSE_SCM_ENT_STR;
@@ -538,7 +470,7 @@ static qse_scm_ent_t* make_name_entity (qse_scm_t* scm, const qse_char_t* str)
 {
 	qse_scm_ent_t* v;
 
-	v = alloc_entity (scm, scm->nil, scm->nil);
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
 	if (v == QSE_NULL) return QSE_NULL;
 
 	TYPE(v) = QSE_SCM_ENT_NAM;
@@ -597,7 +529,7 @@ static qse_scm_ent_t* make_symbol_entity (qse_scm_t* scm, const qse_char_t* name
 
 	/* let's allocate the actual symbol entity that references the
 	 * the symbol name entity created above */
-	sym = alloc_entity (scm, nam, scm->nil);
+	sym = alloc_entity (scm, nam, QSE_NULL);
 	if (sym == QSE_NULL) return QSE_NULL;
 	TYPE(sym) = QSE_SCM_ENT_SYM;
 	ATOM(sym) = 0;
@@ -622,9 +554,11 @@ static qse_scm_ent_t* make_syntax_entity (
 	v = make_symbol_entity (scm, name);
 	if (v == QSE_NULL) return QSE_NULL;
 
-	/* we piggy-back the syntax code to a symbol name.
-	 * the syntax entity is basically a symbol except that the
+	/* We piggy-back the syntax code to a symbol name.
+	 * The syntax entity is basically a symbol except that the
 	 * code field of its label entity is set to non-zero. 
+	 * Read the comment in make_procedure_entity() for difference between
+	 * the syntax entity and the procedure entity.
 	 */
 	TYPE(v) |= QSE_SCM_ENT_SYNT; 
 	SYNT_CODE(v) = code; 
@@ -632,18 +566,40 @@ static qse_scm_ent_t* make_syntax_entity (
 	return v;
 }
 
-static qse_scm_ent_t* make_proc_entity (
+static qse_scm_ent_t* make_procedure_entity (
 	qse_scm_t* scm, const qse_char_t* name, int code)
 {
 	qse_scm_ent_t* sym, * proc, * pair;
 
-	/* a procedure entity is a built-in function that
-	 * that can be overridden by a user while a syntax entity
-	 * represents a lower-level syntatic function that can't 
-	 * be overriden. 
+	/* A procedure entity is a built-in function that can be
+	 * overridden by a user while a syntax entity represents a 
+	 * lower-level syntatic function that can't be overriden. 
+	 * 
 	 * (define lambda 10) is legal but does not change the
 	 *    meaning of lambda when used as a function name. 	
-	 * (define eval 10) changes the meaning of eval totally.
+	 *
+	 * (define tail 10) changes the meaning of eval totally.
+	 * (tail '(1 2 3)) is not legal from now on.
+	 *
+	 * (define x lambda) is illegal as the lambda symbol
+	 *
+	 * (define lambda 10) followed by (define x lambda) lets the x symbol
+	 * to be assoicated with 10 but you still can use lambda to create
+	 * a closure as in ((lambda (x) (+ x 10)) 50)
+	 *
+	 * (define x tail) lets the 'x' symbol point to the eval procedure.
+	 * (x '(1 2 3)) returns (2 3).
+	 *	
+	 * We implement the syntax entity as a symbol itself by ORing
+	 * the TYPE field with QSE_SCM_ENT_SYNT and setting the syntax
+	 * code in the symbol label entity.
+	 *
+	 * A procedure entity is an independent entity unlike the syntax
+	 * entity. We explicitily create a symbol entity for the procedure name
+	 * and assoicate it with the procedure entity in the global environment.
+	 * If you redefine the symbol name to be something else, you won't be
+	 * able to reference the procedure entity with the name. Worst case,
+	 * it may be GCed out.
 	 */ 
 
 	/* create a symbol containing the name */
@@ -652,7 +608,7 @@ static qse_scm_ent_t* make_proc_entity (
 
 	/* create an actual procecure value which is a number containing
 	 * the opcode for the procedure */
-	proc = alloc_entity (scm, scm->nil, scm->nil);
+	proc = alloc_entity (scm, sym, QSE_NULL);
 	if (proc == QSE_NULL) return QSE_NULL;
 	TYPE(proc) = QSE_SCM_ENT_PROC;
 	ATOM(proc) = 1;
@@ -663,9 +619,98 @@ static qse_scm_ent_t* make_proc_entity (
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	/* link it to the global environment */
-	pair = make_pair_entity (scm, pair, PAIR_CAR(scm->genv));
+	pair = make_pair_entity (scm, pair, PAIR_CAR(scm->gloenv));
 	if (pair == QSE_NULL) return QSE_NULL;
-	PAIR_CAR(scm->genv) = pair;
+	PAIR_CAR(scm->gloenv) = pair;
 
 	return proc;
 }
+
+#define MAKE_SYNTAX_ENTITY(scm,name,code) QSE_BLOCK( \
+	if (make_syntax_entity (scm, name, code) == QSE_NULL) return -1; \
+)
+
+static int build_syntax_entities (qse_scm_t* scm)
+{
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("lambda"), 1);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("quote"), 2);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("define"), 3);
+	return 0;
+}
+
+static qse_scm_t* qse_scm_init (
+	qse_scm_t* scm, qse_mmgr_t* mmgr, 
+	qse_size_t mem_ubound, qse_size_t mem_ubound_inc)
+{
+	static qse_scm_ent_t static_values[3] =
+	{
+		/* dswcount, mark, atom, type */
+
+		/* nil */
+		{ 0, 1, 1, QSE_SCM_ENT_NIL },
+		/* f */
+		{ 0, 1, 1, QSE_SCM_ENT_T }, 
+		/* t */
+		{ 0, 1, 1, QSE_SCM_ENT_F }
+	};
+
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
+	QSE_MEMSET (scm, 0, QSE_SIZEOF(*scm));
+	scm->mmgr = mmgr;
+
+	/* set the default error string function */
+	scm->err.str = qse_scm_dflerrstr;
+
+	/* initialize error data */
+	scm->err.num = QSE_SCM_ENOERR;
+	scm->err.msg[0] = QSE_T('\0');
+
+	/* initialize read data */
+	scm->r.curc = QSE_CHAR_EOF;
+	scm->r.curloc.line = 1;
+	scm->r.curloc.colm = 0;
+	if (qse_str_init(&scm->r.t.name, mmgr, 256) == QSE_NULL) return QSE_NULL;
+
+	/* initialize common values */
+	scm->nil = &static_values[0];
+	scm->f   = &static_values[1];
+	scm->t   = &static_values[2];
+
+	scm->mem.ebl = QSE_NULL;
+	scm->mem.free = scm->nil;
+
+	/* initialize all the key data to nil before make_pair_entity()
+	 * below. make_pair_entity() calls alloc_entity() that invokes
+	 * gc() as this is the first time. As gc() marks all the key data,
+	 * we need to initialize these to nil. */
+	scm->reg.arg = scm->nil;
+	scm->reg.dmp = scm->nil;
+	scm->reg.cod = scm->nil;
+	scm->reg.env = scm->nil;
+
+	scm->symtab = scm->nil;
+	scm->gloenv = scm->nil;
+
+	/* build the global environment entity as a pair */
+	scm->gloenv = make_pair_entity (scm, scm->nil, scm->nil);
+	if (scm->gloenv == QSE_NULL) goto oops;
+
+	/* update the current environement to the global environment */
+	scm->reg.env = scm->gloenv;
+
+	if (build_syntax_entities (scm) <= -1) goto oops;
+	return scm;
+
+oops:
+	delete_all_entity_blocks (scm);
+	qse_str_fini (&scm->r.t.name);
+	return QSE_NULL;
+}
+
+static void qse_scm_fini (qse_scm_t* scm)
+{
+	delete_all_entity_blocks (scm);
+	qse_str_fini (&scm->r.t.name);
+}
+

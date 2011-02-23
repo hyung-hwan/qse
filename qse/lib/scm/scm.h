@@ -183,11 +183,8 @@ struct qse_scm_t
 	qse_scm_ent_t* t;
 	qse_scm_ent_t* f;
 
-	/* global environment */
-	qse_scm_ent_t* genv;
-
-	/* symbol table */
-	qse_scm_ent_t* symtab;
+	qse_scm_ent_t* gloenv; /* global environment */
+	qse_scm_ent_t* symtab; /* symbol table */
 
 	/* registers */
 	struct
