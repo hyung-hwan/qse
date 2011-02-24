@@ -40,6 +40,10 @@
 #define QSE_SCM_TOUPPER(scm,c)  QSE_TOUPPER(c)
 #define QSE_SCM_TOLOWER(scm,c)  QSE_TOLOWER(c)
 
+/* Note that not all these values can be ORed with each other.
+ * each value represents its own type except that QSE_SCM_ENT_SYNT
+ * can be ORed with QSE_SCM_ENT_SYM.
+ */
 enum qse_scm_ent_type_t
 {
 	QSE_SCM_ENT_NIL     = (1 << 0),
@@ -61,8 +65,6 @@ enum qse_scm_ent_type_t
 #define QSE_SCM_ENT_MACRO        256    /* 0000000100000000 */
 #define QSE_SCM_ENT_PROMISE      512    /* 0000001000000000 */
 #endif
-
-typedef struct qse_scm_ent_t qse_scm_ent_t;
 
 /**
  * The qse_scm_ent_t type defines an entity that represents an individual
@@ -182,9 +184,12 @@ struct qse_scm_t
 	qse_scm_ent_t* nil;
 	qse_scm_ent_t* t;
 	qse_scm_ent_t* f;
+	qse_scm_ent_t* lambda;
+	qse_scm_ent_t* quote;
 
 	qse_scm_ent_t* gloenv; /* global environment */
 	qse_scm_ent_t* symtab; /* symbol table */
+	qse_scm_ent_t* rstack; /* stack for reading */
 
 	/* registers */
 	struct
@@ -195,6 +200,8 @@ struct qse_scm_t
 		qse_scm_ent_t* dmp; /* stack register for next evaluation */
 	} reg;
 
+
+	/* fields for entity allocation */
 	struct
 	{
 		qse_scm_enb_t* ebl;  /* entity block list */

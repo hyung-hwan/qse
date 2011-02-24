@@ -29,7 +29,7 @@
  */
 
 typedef struct qse_scm_t qse_scm_t;
-typedef struct qse_scm_obj_t qse_scm_obj_t;
+typedef struct qse_scm_ent_t qse_scm_ent_t;
 
 /** 
  * The qse_scm_loc_t defines a structure to store location information.
@@ -122,9 +122,9 @@ typedef const qse_char_t* (*qse_scm_errstr_t) (
 	qse_scm_errnum_t num    /**< error number */
 );
 
-typedef qse_scm_obj_t* (*qse_scm_prim_t) (
+typedef qse_scm_ent_t* (*qse_scm_prim_t) (
 	qse_scm_t*     scm,
-	qse_scm_obj_t* obj
+	qse_scm_ent_t* obj
 );
 
 #ifdef __cplusplus
@@ -209,21 +209,21 @@ int qse_scm_attachio (
  * with the #QSE_SCM_IO_CLOSE command.
  */
 void qse_scm_detachio (
-	qse_scm_t*    scm   /**< scheme */
+	qse_scm_t* scm   /**< scheme */
 );
 
-qse_scm_obj_t* qse_scm_read (
+qse_scm_ent_t* qse_scm_read (
 	qse_scm_t* scm /**< scheme */
 );
 
-qse_scm_obj_t* qse_scm_eval (
+qse_scm_ent_t* qse_scm_eval (
 	qse_scm_t*     scm, /**< scheme */
-	qse_scm_obj_t* obj
+	qse_scm_ent_t* obj
 );
 
 int qse_scm_print (
 	qse_scm_t*           scm, /**< scheme */
-	const qse_scm_obj_t* obj
+	const qse_scm_ent_t* obj
 );
 
 /**
