@@ -236,7 +236,7 @@ static void mark (qse_scm_t* scm, qse_scm_ent_t* v)
 			/* process the field */
 			if (child && !MARK(child))
 			{
-				/* change the contents of the child chonse 
+				/* change the contents of the child chosen
 				 * to point to the current parent */
 				me->u.ref.ent[DSWCOUNT(me)] = parent;
 
@@ -573,7 +573,7 @@ static qse_scm_ent_t* make_procedure_entity (
 
 	/* A procedure entity is a built-in function that can be
 	 * overridden by a user while a syntax entity represents a 
-	 * lower-level syntatic function that can't be overriden. 
+	 * lower-level syntatic function that can't be overridden.
 	 * 
 	 * (define lambda 10) is legal but does not change the
 	 *    meaning of lambda when used as a function name. 	
@@ -584,7 +584,7 @@ static qse_scm_ent_t* make_procedure_entity (
 	 * (define x lambda) is illegal as the lambda symbol
 	 *
 	 * (define lambda 10) followed by (define x lambda) lets the x symbol
-	 * to be assoicated with 10 but you still can use lambda to create
+	 * to be associated with 10 but you still can use lambda to create
 	 * a closure as in ((lambda (x) (+ x 10)) 50)
 	 *
 	 * (define x tail) lets the 'x' symbol point to the eval procedure.
@@ -595,8 +595,8 @@ static qse_scm_ent_t* make_procedure_entity (
 	 * code in the symbol label entity.
 	 *
 	 * A procedure entity is an independent entity unlike the syntax
-	 * entity. We explicitily create a symbol entity for the procedure name
-	 * and assoicate it with the procedure entity in the global environment.
+	 * entity. We explicitly create a symbol entity for the procedure name
+	 * and associate it with the procedure entity in the global environment.
 	 * If you redefine the symbol name to be something else, you won't be
 	 * able to reference the procedure entity with the name. Worst case,
 	 * it may be GCed out.
@@ -606,7 +606,7 @@ static qse_scm_ent_t* make_procedure_entity (
 	sym = make_symbol_entity (scm, name);
 	if (sym == QSE_NULL) return QSE_NULL;
 
-	/* create an actual procecure value which is a number containing
+	/* create an actual procedure value which is a number containing
 	 * the opcode for the procedure */
 	proc = alloc_entity (scm, sym, QSE_NULL);
 	if (proc == QSE_NULL) return QSE_NULL;
@@ -632,9 +632,21 @@ static qse_scm_ent_t* make_procedure_entity (
 
 static int build_syntax_entities (qse_scm_t* scm)
 {
-	MAKE_SYNTAX_ENTITY (scm, QSE_T("lambda"), 1);
-	MAKE_SYNTAX_ENTITY (scm, QSE_T("quote"), 2);
+	qse_scm_ent_t* v;
+
+	v = make_syntax_entity (scm, QSE_T("lambda"), 1);
+	if (v == QSE_NULL) return -1;
+	scm->lambda = v;
+
+	v = make_syntax_entity (scm, QSE_T("quote"), 2);
+	if (v == QSE_NULL) return -1;
+	scm->quote = v;
+
+
 	MAKE_SYNTAX_ENTITY (scm, QSE_T("define"), 3);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("if"),     4);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("begin"),  5);
+
 	return 0;
 }
 
@@ -672,13 +684,16 @@ static qse_scm_t* qse_scm_init (
 	scm->r.curloc.colm = 0;
 	if (qse_str_init(&scm->r.t.name, mmgr, 256) == QSE_NULL) return QSE_NULL;
 
+	scm->mem.ebl = QSE_NULL;
+	scm->mem.free = scm->nil;
+
 	/* initialize common values */
 	scm->nil = &static_values[0];
 	scm->f   = &static_values[1];
 	scm->t   = &static_values[2];
 
-	scm->mem.ebl = QSE_NULL;
-	scm->mem.free = scm->nil;
+	scm->lambda = scm->nil;
+	scm->quote = scm->nil;
 
 	/* initialize all the key data to nil before make_pair_entity()
 	 * below. make_pair_entity() calls alloc_entity() that invokes
@@ -691,12 +706,13 @@ static qse_scm_t* qse_scm_init (
 
 	scm->symtab = scm->nil;
 	scm->gloenv = scm->nil;
+	scm->rstack = scm->nil;
 
 	/* build the global environment entity as a pair */
 	scm->gloenv = make_pair_entity (scm, scm->nil, scm->nil);
 	if (scm->gloenv == QSE_NULL) goto oops;
 
-	/* update the current environement to the global environment */
+	/* update the current environment to the global environment */
 	scm->reg.env = scm->gloenv;
 
 	if (build_syntax_entities (scm) <= -1) goto oops;
@@ -712,5 +728,516 @@ static void qse_scm_fini (qse_scm_t* scm)
 {
 	delete_all_entity_blocks (scm);
 	qse_str_fini (&scm->r.t.name);
+}
+
+
+/*---------------------------------------------------------------------------
+ * READER
+ *---------------------------------------------------------------------------*/
+
+enum list_flag_t
+{
+	QUOTED = (1 << 0),
+	DOTTED = (1 << 1),
+	CLOSED = (1 << 2)
+};
+
+enum tok_type_t
+{
+	TOK_END     = 0,
+	TOK_INT     = 1,
+	TOK_REAL    = 2,
+	TOK_STRING  = 3,
+	TOK_LPAREN  = 4,
+	TOK_RPAREN  = 5,
+	TOK_IDENT   = 6,
+	TOK_DOT     = 7,
+	TOK_QUOTE   = 8,
+	TOK_QQUOTE  = 9, /* quasiquote */
+	TOK_COMMA   = 10,
+	TOK_COMMAAT = 11,
+	TOK_INVALID = 50
+};
+
+#define TOK_CLEAR(scm) qse_str_clear(&(scm)->r.t.name)
+#define TOK_TYPE(scm)  (scm)->r.t.type
+#define TOK_IVAL(scm)  (scm)->r.t.ival
+#define TOK_RVAL(scm)  (scm)->r.t.rval
+#define TOK_STR(scm)   (scm)->r.t.name
+#define TOK_SPTR(scm)  (scm)->r.t.name.ptr
+#define TOK_SLEN(scm)  (scm)->r.t.name.len
+#define TOK_LOC(scm) (scm)->r.t.loc
+#define READ_CHAR(scm) QSE_BLOCK(if (read_char(scm) <= -1) return -1;)
+
+static int read_char (qse_scm_t* scm)
+{
+	qse_ssize_t n;
+	qse_char_t c;
+
+/* TODO: do bufferring */
+	scm->err.num = QSE_SCM_ENOERR;
+	n = scm->io.fns.in (scm, QSE_SCM_IO_READ, &scm->io.arg.in, &c, 1);
+	if (n <= -1)
+	{
+		if (scm->err.num == QSE_SCM_ENOERR)
+			qse_scm_seterror (scm, QSE_SCM_EIO, QSE_NULL, QSE_NULL);
+		return -1;
+	}
+
+/* TODO: handle the case when a new file is included or loaded ... 
+ *       stacking of curloc is needed??? see qseawk for reference
+ */
+	if (n == 0) scm->r.curc = QSE_CHAR_EOF;
+	else
+	{
+		scm->r.curc = c;
+
+		if (c == QSE_T('\n'))
+		{
+			scm->r.curloc.colm = 0;
+			scm->r.curloc.line++;
+		}
+		else scm->r.curloc.colm++;
+	}
+
+	return 0;
+}
+
+static int read_token (qse_scm_t* scm)
+{
+	TOK_CLEAR (scm);
+
+	/* skip a series of white spaces and comment lines */
+	do
+	{
+		/* skip white spaces */
+		while (QSE_SCM_ISSPACE(scm,scm->r.curc)) READ_CHAR (scm);
+
+		if (scm->r.curc != QSE_T(';')) break;
+
+		/* skip a comment line */
+		do { READ_CHAR (scm); }
+		while (scm->r.curc != QSE_T('\n') &&
+		       scm->r.curc != QSE_CHAR_EOF);
+	} 
+	while (1);
+
+	TOK_LOC(scm) = scm->r.curloc;	
+	if (scm->r.curc == QSE_CHAR_EOF)
+	{
+		TOK_TYPE(scm) = TOK_END;
+		return 0;
+	}
+
+	switch (scm->r.curc)
+	{
+		case QSE_T('('):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			TOK_TYPE(scm) = TOK_LPAREN;
+			READ_CHAR (scm);	
+			return 0;
+
+		case QSE_T(')'):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			TOK_TYPE(scm) = TOK_RPAREN;
+			READ_CHAR (scm);	
+			return 0;
+
+		case QSE_T('.'):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			TOK_TYPE(scm) = TOK_DOT;
+			READ_CHAR (scm);	
+			return 0;
+
+		case QSE_T('\''):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			TOK_TYPE(scm) = TOK_QUOTE;
+			READ_CHAR (scm);	
+			return 0;
+
+		case QSE_T('`'):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			TOK_TYPE(scm) = TOK_QQUOTE;
+			READ_CHAR (scm);	
+			return 0;
+
+		case QSE_T(','):
+			TOK_ADD_CHAR (scm, scm->r.curc);
+			READ_CHAR (scm);
+
+			if (scm->r.curc == QSE_T('@'))
+			{
+				TOK_TYPE(scm) = TOK_COMMAAT;
+				READ_CHAR (scm);	
+			}
+			else
+			{
+
+				TOK_TYPE(scm) = TOK_COMMA;
+			}
+
+			return 0;
+
+		case QSE_T('#'):
+			return 0;
+
+		case QSE_T('\"'):
+			return read_string_token (scm);
+	}
+
+	TOK_TYPE(scm) = TOK_INVALID;
+	READ_CHAR (scm); /* consume */
+	return 0;
+}
+
+static QSE_INLINE qse_scm_ent_t* push (qse_scm_t* scm, qse_scm_ent_t* obj)
+{
+	qse_scm_ent_t* pair;
+
+	pair = make_pair_entity (scm, obj, scm->rstack);
+	if (pair == QSE_NULL) return QSE_NULL;
+
+	scm->rstack = pair;
+
+	/* return the top of the staich which is the containing pair */
+	return pair;
+}
+
+static QSE_INLINE_ALWAYS void pop (qse_scm_t* scm)
+{
+	QSE_ASSERTX (
+		scm->rstack != scm->nil,
+		"You've called pop() more than push()"
+	);
+	scm->rstack = PAIR_CDR(scm->rstack);
+}
+
+static QSE_INLINE qse_scm_ent_t* enter_list (qse_scm_t* scm, int flagv)
+{
+	/* upon entering a list, it pushes three cells into a stack.
+	 *
+      *  rstack -------+
+      *                 V
+	 *             +---cons--+    
+	 *         +------  |  -------+
+	 *      car|   +---------+    |cdr
+	 *         V                  |
+	 *        nil#1               V
+	 *                          +---cons--+
+	 *                      +------  |  --------+
+	 *                   car|   +---------+     |cdr
+	 *                      v                   |
+	 *                     nil#2                V
+	 *                                       +---cons--+
+	 *                                   +------  | --------+
+	 *                                car|   +---------+    |cdr
+	 *                                   V                  |
+	 *                                flag number           V
+	 *                                                  previous stack top
+	 *
+	 * nil#1 to store the first element in the list.
+	 * nil#2 to store the last element in the list.
+	 * both to be updated in chain_to_list() as items are added.
+	 */
+	return (push (scm, scm->mem.num[flagv]) == QSE_NULL ||
+	        push (scm, scm->nil) == QSE_NULL ||
+	        push (scm, scm->nil) == QSE_NULL)? QSE_NULL: scm->rstack;
+}
+
+static QSE_INLINE_ALWAYS qse_scm_ent_t* leave_list (qse_scm_t* scm, int* flagv)
+{
+	qse_scm_ent_t* head;
+
+	/* the stack must not be empty */
+	QSE_ASSERT (scm->rstack != scm->nil);
+
+	/* remember the current list head */
+	head = PAIR_CAR(PAIR_CDR(scm->rstack));
+
+	/* upon leaving a list, it pops the three cells off the stack */
+	pop (scm);
+	pop (scm);
+	pop (scm);
+
+	if (scm->rstack == scm->nil)
+	{
+		/* the stack is empty after popping. 
+		 * it is back to the top level. 
+		 * the top level can never be quoted. */
+		*flagv = 0;
+	}
+	else
+	{
+		/* restore the flag for the outer returning level */
+		qse_scm_ent_t* flag = PAIR_CDR(PAIR_CDR(scm->rstack));
+		QSE_ASSERT (QSE_SCM_TYPE(PAIR_CAR(flag)) == QSE_SCM_ENT_INT);
+		*flagv = QSE_SCM_IVAL(PAIR_CAR(flag));
+	}
+
+	/* return the head of the list being left */
+	return head;
+}
+
+static QSE_INLINE_ALWAYS void dot_list (qse_scm_t* scm)
+{
+	qse_scm_ent_t* cell;
+
+	/* mark the state that a dot has appeared in the list */
+	QSE_ASSERT (scm->rstack != scm->nil);
+	cell = PAIR_CDR(PAIR_CDR(scm->rstack));
+	PAIR_CAR(cell) = scm->mem.num[QSE_SCM_IVAL(PAIR_CAR(cell)) | DOTTED];
+}
+
+static qse_scm_ent_t* chain_to_list (qse_scm_t* scm, qse_scm_ent_t* obj)
+{
+	qse_scm_ent_t* cell, * head, * tail, *flag;
+	int flagv;
+
+	/* the stack top is the pair pointing to the list tail */
+	tail = scm->rstack;
+	QSE_ASSERT (tail != scm->nil);
+
+	/* the pair pointing to the list head is below the tail cell
+	 * connected via cdr. */
+	head = PAIR_CDR(tail);
+	QSE_ASSERT (head != scm->nil);
+
+	/* the pair pointing to the flag is below the head cell
+	 * connected via cdr */
+	flag = PAIR_CDR(head);
+
+	/* retrieve the numeric flag value */
+	QSE_ASSERT(QSE_SCM_TYPE(PAIR_CAR(flag)) == QSE_SCM_ENT_INT);
+	flagv = (int)QSE_SCM_IVAL(PAIR_CAR(flag));
+
+	if (flagv & CLOSED)
+	{
+		/* the list has already been closed. cannot add more items.  */
+		qse_scm_seterror (scm, QSE_SCM_ERPAREN, QSE_NULL, &TOK_LOC(scm));
+		return QSE_NULL;
+	}
+	else if (flagv & DOTTED)
+	{
+		/* the list must not be empty to have reached the dotted state */
+		QSE_ASSERT (PAIR_CAR(tail) != scm->nil);
+
+		/* chain the object via 'cdr' of the tail cell */
+		PAIR_CDR(PAIR_CAR(tail)) = obj;
+
+		/* update the flag to CLOSED */
+		PAIR_CAR(flag) = scm->mem.num[flagv | CLOSED];
+	}
+	else
+	{
+		cell = make_pair_entity (scm, obj, scm->nil);
+		if (cell == QSE_NULL) return QSE_NULL;
+
+		if (PAIR_CAR(head) == scm->nil)
+		{
+			/* the list head is not set yet. it is the first
+			 * element added to the list. let both head and tail
+			 * point to the new cons cell */
+			QSE_ASSERT (PAIR_CAR(tail) == scm->nil);
+			PAIR_CAR(head) = cell; 
+			PAIR_CAR(tail) = cell;
+		}
+		else
+		{
+			/* the new cons cell is not the first element.
+			 * append it to the list */
+			PAIR_CDR(PAIR_CAR(tail)) = cell;
+			PAIR_CAR(tail) = cell;
+		}
+	}
+
+	return obj;
+}
+
+static QSE_INLINE_ALWAYS int is_list_empty (qse_scm_t* scm)
+{
+	/* the stack must not be empty */
+	QSE_ASSERTX (
+		!IS_NIL(scm->rstack), 
+		"You can not call this function while the stack is empty"		
+	);
+
+	/* if the tail pointer is pointing to nil, the list is empty */
+	return IS_NIL(PAIR_CAR(scm->rstack));
+}
+
+static qse_scm_ent_t* read_entity (qse_scm_t* scm)
+{
+	/* this function read an s-expression non-recursively
+	 * by manipulating its own stack. */
+
+	int level = 0, flag = 0; 
+	qse_scm_ent_t* obj;
+
+	while (1)
+	{
+	redo:
+		switch (TOK_TYPE(scm)) 
+		{
+			default:
+				QSE_ASSERT (!"should never happen - invalid token type");
+				qse_scm_seterror (scm, QSE_SCM_EINTERN, QSE_NULL, QSE_NULL);
+				return QSE_NULL;
+
+			case TOK_INVALID:
+				qse_scm_seterror (
+					scm, QSE_SCM_ESYNTAX,
+					QSE_NULL, &TOK_LOC(scm));
+				return QSE_NULL;
+			
+			case TOK_END:
+				qse_scm_seterror (
+					scm, QSE_SCM_EEND,
+					QSE_NULL, &TOK_LOC(scm));
+				return QSE_NULL;
+
+			case TOK_QUOTE:
+				if (level >= QSE_TYPE_MAX(int))
+				{
+					/* the nesting level has become too deep */
+					qse_scm_seterror (
+						scm, QSE_SCM_ELSTDEEP,
+						QSE_NULL, &TOK_LOC(scm));
+					return QSE_NULL;
+				}
+
+				/* enter a quoted string */
+				flag |= QUOTED;
+				if (enter_list (scm, flag) == QSE_NULL) return QSE_NULL;
+				level++;
+
+				/* force-chain the quote symbol to the new list entered */
+				if (chain_to_list (scm, scm->mem.quote) == QSE_NULL) return QSE_NULL;
+
+				/* read the next token */
+				READ_TOKEN (scm);
+				goto redo;
+	
+			case TOK_LPAREN:
+				if (level >= QSE_TYPE_MAX(int))
+				{
+					/* the nesting level has become too deep */
+					qse_scm_seterror (
+						scm, QSE_SCM_ELSTDEEP,
+						QSE_NULL, &TOK_LOC(scm));
+					return QSE_NULL;
+				}
+
+				/* enter a normal string */
+				flag = 0;
+				if (enter_list (scm, flag) == QSE_NULL) return QSE_NULL;
+				level++;
+
+				/* read the next token */
+				READ_TOKEN (scm);
+				goto redo;
+
+			case TOK_DOT:
+				if (level <= 0 || is_list_empty (scm))
+				{
+					qse_scm_seterror (scm, QSE_SCM_ESYNTAX, QSE_NULL, &TOK_LOC(scm));
+					return QSE_NULL;
+				}
+
+				dot_list (scm);
+				READ_TOKEN (scm);
+				goto redo;
+		
+			case TOK_RPAREN:
+				if ((flag & QUOTED) || level <= 0)
+				{
+					/* the right parenthesis can never appear while 
+					 * 'quoted' is true. 'quoted' is set to false when 
+					 * entering a normal list. 'quoted' is set to true 
+					 * when entering a quoted list. a quoted list does
+					 * not have an explicit right parenthesis.
+					 * so the right parenthesis can only pair up with 
+					 * the left parenthesis for the normal list.
+					 *
+					 * For example, '(1 2 3 ') 5 6)
+					 *
+					 * this condition is triggerred when the first ) is 
+					 * met after the second quote.
+					 *
+					 * also it is illegal to have the right parenthesis 
+					 * with no opening(left) parenthesis, which is 
+					 * indicated by level<=0.
+					 */
+					qse_scm_seterror (
+						scm, QSE_SCM_ESYNTAX, 
+						QSE_NULL, &TOK_LOC(scm));
+					return QSE_NULL;
+				}
+
+				obj = leave_list (scm, &flag);
+
+				level--;
+				break;
+
+			case TOK_INT:
+				obj = qse_scm_makeint (&scm->mem, TOK_IVAL(scm));
+				break;
+
+			case TOK_REAL:
+				obj = qse_scm_makereal (&scm->mem, TOK_RVAL(scm));
+				break;
+	
+			case TOK_STRING:
+				obj = make_string_entity (
+					&scm->mem, TOK_SPTR(scm), TOK_SLEN(scm));
+				break;
+
+			case TOK_IDENT:
+				obj = make_symbol_entity (scm, TOK_SPTR(scm));
+				break;
+		}
+
+		/* check if the element is read for a quoted list */
+		while (flag & QUOTED)
+		{
+			QSE_ASSERT (level > 0);
+
+			/* if so, append the element read into the quote list */
+			if (chain_to_list (scm, obj) == QSE_NULL) return QSE_NULL;
+
+			/* exit out of the quoted list. the quoted list can have 
+			 * one element only. */
+			obj = leave_list (scm, &flag);
+
+			/* one level up toward the top */
+			level--;
+		}
+
+		/* check if we are at the top level */
+		if (level <= 0) break; /* yes */
+
+		/* if not, append the element read into the current list.
+		 * if we are not at the top level, we must be in a list */
+		if (chain_to_list (scm, obj) == QSE_NULL) return QSE_NULL;
+
+		/* read the next token */
+		READ_TOKEN (scm);
+	}
+
+	/* upon exit, we must be at the top level */
+	QSE_ASSERT (level == 0);
+
+	return obj;
+}	
+qse_scm_ent_t* qse_scm_read (qse_scm_t* scm)
+{
+	QSE_ASSERTX (
+		scm->io.fns.in != QSE_NULL, 
+		"Specify input function before calling qse_scm_read()"
+	);
+
+	while (1)
+	{
+	}
+	return QSE_NULL;
 }
 

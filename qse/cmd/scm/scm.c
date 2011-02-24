@@ -146,7 +146,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 int scm_main (int argc, qse_char_t* argv[])
 {
 	qse_scm_t* scm;
-	qse_scm_obj_t* obj;
+	qse_scm_ent_t* obj;
 
 	if (handle_args (argc, argv) == -1) return -1;
 	
