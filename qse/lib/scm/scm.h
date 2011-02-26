@@ -26,36 +26,27 @@
 #include <qse/cmn/str.h>
 #include <qse/scm/scm.h>
 
-#define QSE_SCM_ISUPPER(scm,c)  QSE_ISUPPER(c)
-#define QSE_SCM_ISLOWER(scm,c)  QSE_ISLOWER(c)
-#define QSE_SCM_ISALPHA(scm,c)  QSE_ISALPHA(c)
-#define QSE_SCM_ISDIGIT(scm,c)  QSE_ISDIGIT(c)
-#define QSE_SCM_ISXDIGIT(scm,c) QSE_ISXDIGIT(c)
-#define QSE_SCM_ISALNUM(scm,c)  QSE_ISALNUM(c)
-#define QSE_SCM_ISSPACE(scm,c)  QSE_ISSPACE(c)
-#define QSE_SCM_ISPRINT(scm,c)  QSE_ISPRINT(c)
-#define QSE_SCM_ISGRAPH(scm,c)  QSE_ISGRAPH(c)
-#define QSE_SCM_ISCNTRL(scm,c)  QSE_ISCNTRL(c)
-#define QSE_SCM_ISPUNCT(scm,c)  QSE_ISPUNCT(c)
-#define QSE_SCM_TOUPPER(scm,c)  QSE_TOUPPER(c)
-#define QSE_SCM_TOLOWER(scm,c)  QSE_TOLOWER(c)
-
 /* Note that not all these values can be ORed with each other.
- * each value represents its own type except that QSE_SCM_ENT_SYNT
- * can be ORed with QSE_SCM_ENT_SYM.
+ * each value represents its own type except the following combinations.
+ *
+ *   QSE_SCM_ENT_T | QSE_SCM_ENT_BOOL
+ *   QSE_SCM_ENT_F | QSE_SCM_ENT_BOOL
+ *   QSE_SCM_ENT_SYM | QSE_SCM_ENT_SYNT
  */
 enum qse_scm_ent_type_t
 {
 	QSE_SCM_ENT_NIL     = (1 << 0),
 	QSE_SCM_ENT_T       = (1 << 1),
 	QSE_SCM_ENT_F       = (1 << 2),
-	QSE_SCM_ENT_NUM     = (1 << 3),
-	QSE_SCM_ENT_STR     = (1 << 4), 
-	QSE_SCM_ENT_NAM     = (1 << 5),
-	QSE_SCM_ENT_SYM     = (1 << 6),
-	QSE_SCM_ENT_PAIR    = (1 << 7),
-	QSE_SCM_ENT_PROC    = (1 << 8),
-	QSE_SCM_ENT_SYNT    = (1 << 9)
+	QSE_SCM_ENT_BOOL    = (1 << 3),
+	QSE_SCM_ENT_NUM     = (1 << 4),
+	QSE_SCM_ENT_REAL    = (1 << 5),
+	QSE_SCM_ENT_STR     = (1 << 6), 
+	QSE_SCM_ENT_NAM     = (1 << 7),
+	QSE_SCM_ENT_SYM     = (1 << 8),
+	QSE_SCM_ENT_PAIR    = (1 << 9),
+	QSE_SCM_ENT_PROC    = (1 << 10),
+	QSE_SCM_ENT_SYNT    = (1 << 11)
 
 };
 
@@ -72,10 +63,10 @@ enum qse_scm_ent_type_t
  */
 struct qse_scm_ent_t
 {
-	qse_uint16_t dswcount: 2;
-	qse_uint16_t mark:     1;
-	qse_uint16_t atom:     1;
-	qse_uint16_t type:     12;
+	qse_uint32_t dswcount: 2;
+	qse_uint32_t mark:     1;
+	qse_uint32_t atom:     1;
+	qse_uint32_t type:     28;
 
 	union
 	{
@@ -83,6 +74,11 @@ struct qse_scm_ent_t
 		{
 			qse_long_t val;
 		} num; /* number */
+
+		struct
+		{
+			qse_real_t val;
+		} real;
 
 		struct
 		{
@@ -115,6 +111,7 @@ struct qse_scm_ent_t
 #define TYPE(v)           ((v)->type)
 #define ATOM(v)           ((v)->atom)
 #define NUM_VALUE(v)      ((v)->u.num.val)
+#define REAL_VALUE(v)     ((v)->u.real.val)
 #define STR_PTR(v)        ((v)->u.str.ptr)
 #define STR_LEN(v)        ((v)->u.str.len)
 #define LAB_PTR(v)        ((v)->u.lab.ptr)
@@ -178,6 +175,9 @@ struct qse_scm_t
 			qse_real_t    rval;
 			qse_str_t     name;
 		} t;
+
+		qse_scm_ent_t* s; /* stack for reading */
+		qse_scm_ent_t* e; /* last entity read */
 	} r;
 
 	/* common values */
@@ -189,7 +189,6 @@ struct qse_scm_t
 
 	qse_scm_ent_t* gloenv; /* global environment */
 	qse_scm_ent_t* symtab; /* symbol table */
-	qse_scm_ent_t* rstack; /* stack for reading */
 
 	/* registers */
 	struct

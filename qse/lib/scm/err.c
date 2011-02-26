@@ -32,10 +32,12 @@ const qse_char_t* qse_scm_dflerrstr (qse_scm_t* scm, qse_scm_errnum_t errnum)
 
 		QSE_T("I/O error"),
 		QSE_T("unexpected end of string"),
+		QSE_T("bad sharp expression"),
+		QSE_T("wrong use of dot"),
 
 		QSE_T("internal error"),
-		QSE_T("syntax"),
 		QSE_T("list too deep"),
+		QSE_T("left parenthesis expected"),
 		QSE_T("right parenthesis expected"),
 		QSE_T("bad arguments"),
 		QSE_T("too few arguments"),

@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 384 2011-02-04 15:47:53Z hyunghwan.chung $
+ * $Id: types.h 389 2011-02-25 15:26:16Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -287,6 +287,18 @@ typedef qse_int_t qse_ssize_t;
  * The qse_word_t type redefines qse_uint_t. 
  */
 typedef qse_uint_t qse_word_t;
+
+/**
+ * The qse_uintptr_t redefines qse_uint_t to indicate that you are dealing
+ * with a pointer.
+ */
+typedef qse_uint_t qse_uintptr_t;
+
+/**
+ * The qse_untptr_t redefines qse_int_t to indicate that you are dealing
+ * with a pointer.
+ */
+typedef qse_int_t qse_intptr_t;
 
 /** @typedef qse_real_t
  * The qse_real_t type defines the largest floating-pointer number type

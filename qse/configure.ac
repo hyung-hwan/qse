@@ -39,39 +39,29 @@ dnl initialize libtool
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
-#dnl overrides the default CFLAGS setting
-#if test "$ac_test_CFLAGS" = "set"
-#then
-#	CFLAGS=$ac_save_CFLAGS
-#else
-#	if test "$GCC" = "yes"
-#	then
-#		CFLAGS="-O2"
-#	else
-#		CFLAGS=
-#	fi
-#fi
+dnl overrides the default CFLAGS setting
+if test "$ac_test_CFLAGS" != "set"
+then
+	if test "$GCC" = "yes"
+	then
+		CFLAGS="$CFLAGS -Wall"
+	fi
+fi
 
-#if test "$ac_test_CXXFLAGS" = "set"
-#then
-#	CXXFLAGS=$ac_save_CXXFLAGS
-#else
-#	if test "$GCC" = "yes"
-#	then
-#		CXXFLAGS="-O2"
-#	else
-#		CXXFLAGS=
-#	fi
-#fi
+if test "$ac_test_CXXFLAGS" != "set"
+then
+	if test "$GCC" = "yes"
+	then
+		CXXFLAGS="$CXXFLAGS -Wall"
+	fi
+fi
 
 dnl indicate the existence of config.h
 CFLAGS="$CFLAGS -DQSE_HAVE_CONFIG_H"
-OBJCFLAGS="$OBJCFLAGS -DQSE_HAVE_CONFIG_H"
 CXXFLAGS="$CXXFLAGS -DQSE_HAVE_CONFIG_H"
 
 dnl make visible the 64-bit interface to the file system
 CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
-OBJCFLAGS="$OBJCFLAGS -D_LARGEFILE64_SOURCE"
 CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE"
 
 dnl define the WIN32 conditional if necessary
@@ -203,12 +193,10 @@ AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
 if test "$enable_debug_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -g -D_DEBUG -UNDEBUG -DQSE_BUILD_DEBUG"]
-	[OBJCFLAGS="$OBJCFLAGS -g -D_DEBUG -UNDEBUG -DQSE_BUILD_DEBUG"]
 	[CXXFLAGS="$CXXFLAGS -g -D_DEBUG -UNDEBUG -DQSE_BUILD_DEBUG"]
 	AC_SUBST(BUILD_MODE, "debug")
 else
 	[CFLAGS="$CFLAGS -DNDEBUG -U_DEBUG -DQSE_BUILD_RELEASE"]
-	[OBJCFLAGS="$OBJCFLAGS -DNDEBUG -U_DEBUG -DQSE_BUILD_RELEASE"]
 	[CXXFLAGS="$CXXFLAGS -DNDEBUG -U_DEBUG -DQSE_BUILD_RELEASE"]
 	AC_SUBST(BUILD_MODE, "release")
 fi
@@ -226,7 +214,6 @@ AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
 if test "$enable_reentrant_is" = "yes"
 then
 	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
-	[OBJCFLAGS="$OBJCFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
