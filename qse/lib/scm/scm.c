@@ -22,18 +22,6 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (scm)
 
-#define IS_NIL(x) ((x) == scm->nil)
-
-#define IS_SMALLINT(x)   ((qse_uintptr_t)(x) & 1)
-#define TO_SMALLINT(x)   ((qse_scm_ent_t*)(qse_uintptr_t)(((x) << 1) | 1))
-/* TODO: need more typecasting to something like int? how to i determine 
- *       the best type for the range in CAN_BE_SMALLINT()? 
-#define FROM_SMALLINT(x) ((int)((qse_uintptr_t)(x) >> 1))
- */
-#define FROM_SMALLINT(x) ((qse_uintptr_t)(x) >> 1)
-/* TODO: change the smallint range... */
-#define CAN_BE_SMALLINT(x) (((x) >= -16384) && ((x) <= 16383))
-
 static qse_scm_t* qse_scm_init (
 	qse_scm_t*  scm,
 	qse_mmgr_t* mmgr,
@@ -43,12 +31,6 @@ static qse_scm_t* qse_scm_init (
 
 static void qse_scm_fini (
 	qse_scm_t* scm
-);
-
-static qse_scm_ent_t* make_pair_entity (
-	qse_scm_t*     scm,
-	qse_scm_ent_t* car, 
-	qse_scm_ent_t* cdr
 );
 
 qse_scm_t* qse_scm_open (
@@ -146,530 +128,19 @@ int qse_scm_attachio (qse_scm_t* scm, qse_scm_io_t* io)
 	return 0;
 }
 
-static qse_scm_enb_t* new_entity_block (qse_scm_t* scm, qse_size_t len)
-{
-	/* 
-	 * Create a new value block containing as 'len' slots.
-	 */
-
-	void* raw;
-	qse_scm_enb_t* blk;
-	qse_scm_ent_t* v;
-	qse_size_t i;
-
-	/* Let me assume that an aligned memory pointer is an even address.
-	 * malloc() returns an aligned memory pointer on most systems.
-	 * However, I can't simply ignore oddball systems that returns
-	 * an unaligned memory pointer. (Is there any?) A user may provide 
-	 * a custom memory allocator that does not return unaligned memory
-	 * pointer. I make the pointer to an entity block 2-byte aligned 
-	 * hoping that the entity pointer alloc_entity() returns is also an
-	 * even number. This, of couurse, requires that the size of 
-	 * qse_scm_enb_t and qse_scm_ent_t is the multiple of 2.
-	 * I do this for SMALLINT, not for memory alignemnt.The test for 
-	 * SMALLINT can simply check the lowest bit. Am i doing too much?
-	 */ 
-	QSE_ASSERTX (
-		QSE_SIZEOF(qse_scm_enb_t) % 2 == 0, 
-		"This function is written assuming the size of qse_scm_enb_t is even"
-	);
-	QSE_ASSERTX (
-		QSE_SIZEOF(qse_scm_ent_t) % 2 == 0, 
-		"This function is written assuming the size of qse_scm_ent_t is even"
-	);
-
-	/* The actual memory block size is calculated as shown here:
-	 *   QSE_SIZEOF(void*) to store the actual memory block pointer
-	 *   1 to secure extra 1 byte required for 2-byte alignement.
-	 *   QSE_SIZEOF(qse_scm_enb_t) to store the block header.
-	 *   QSE_SIZEOF(qse_Scm_ent_t) * len to store the actual entities.
-	 */
-	raw = (qse_scm_enb_t*) QSE_MMGR_ALLOC (
-		scm->mmgr, 
-		QSE_SIZEOF(void*) + 1 + 
-		QSE_SIZEOF(qse_scm_enb_t) + 
-		QSE_SIZEOF(qse_scm_ent_t) * len
-	);
-	if (raw == QSE_NULL)
-	{
-		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
-		return QSE_NULL;
-	}
-
-	/* The entity block begins after the memory block pointer. */
-	blk = (qse_scm_enb_t*)((qse_byte_t*)raw + QSE_SIZEOF(void*) + 1);
-
-	/* Adjust the block pointer to an even number. 
-	 * the resulting address is:
-	 *     either the old address
-	 *     or the old address - 1
-	 */
-	blk = (qse_scm_enb_t*)((qse_uintptr_t)blk & ~(qse_uintptr_t)1);
-
-	/* Remember the raw block pointer.
-	 * ((void**)blk)[-1] gets naturally aligned as blk is aligned. 
-	 * It can be raw + 1 or the same as raw. */
-	((void**)blk)[-1] = raw;
-
-	/* Initialize the block fields */
-	blk->ptr = (qse_scm_ent_t*)(blk + 1);
-	blk->len = len;
-
-	/* Chain the value block to the block list */
-	blk->next = scm->mem.ebl;
-	scm->mem.ebl = blk;
-
-	/* Chain each slot to the free slot list using 
-	 * the CDR field of an entity */
-	v = &blk->ptr[0];
-	for (i = 0; i < len -1; i++) 
-	{
-		qse_scm_ent_t* tmp = v++;
-		PAIR_CDR(tmp) = v;
-	}
-	PAIR_CDR(v) = scm->mem.free;
-	scm->mem.free = &blk->ptr[0];
-
-	return blk;
-};
-
-static void mark (qse_scm_t* scm, qse_scm_ent_t* v)
-{
-	/* 
-	 * Mark values non-recursively with Deutsch-Schorr-Waite(DSW) algorithm.
-	 * This algorithm builds backtraces directly into the value chain
-	 * with the help of additional variables.
-	 */
-
-	qse_scm_ent_t* parent, * me;
-
-	if (IS_SMALLINT(v)) return;
-
-	/* Initialization */
-	parent = QSE_NULL;
-	me = v;
-
-	MARK(me) = 1;
-	/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
-
-	while (1)
-	{
-		if (ATOM(me) || DSWCOUNT(me) >= QSE_COUNTOF(me->u.ref.ent))
-		{
-			/* 
-			 * Backtrack to the parent node 
-			 */
-			qse_scm_ent_t* child;
-
-			/* Nothing more to backtrack? end of marking */
-			if (parent == QSE_NULL) return;
-
-			/* Remember me temporarily for restoration below */
-			child = me;
-
-			/* The current parent becomes me */
-			me = parent;
-
-			/* Change the parent to the parent of parent */
-			parent = me->u.ref.ent[DSWCOUNT(me)];
-			
-			/* Restore the cell contents */
-			me->u.ref.ent[DSWCOUNT(me)] = child;
-
-			/* Increment the counter to indicate that the 
-			 * 'count'th field has been processed. */
-			DSWCOUNT(me)++;
-		}
-		else 
-		{
-			/* 
-			 * Move on to an unprocessed child 
-			 */
-			qse_scm_ent_t* child;
-
-			child = me->u.ref.ent[DSWCOUNT(me)];
-
-			/* Process the field */
-			QSE_ASSERT (child != QSE_NULL);
-
-			if (IS_SMALLINT(child) || MARK(child))
-			{
-				/* Already marked. Increment the count */
-				DSWCOUNT(me)++;
-			}
-			else
-			{
-				/* Change the contents of the child chosen
-				 * to point to the current parent */
-				me->u.ref.ent[DSWCOUNT(me)] = parent;
-
-				/* Link me to the head of parent list */
-				parent = me;
-
-				/* Let me point to the child chosen */
-				me = child;
-
-				MARK(me) = 1;
-				/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
-			}
-		}
-	}
-}
-
-static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
-{
-/* TODO: How can i GC away those symbols not actually meaningful?
- *       marking objects referenced in symbol table prevent me from
- *       finding unused symbols... you keep on evaluating expressions
- *       with different symbols. you'll get out of memory. */
-	mark (scm, scm->symtab);
-	mark (scm, scm->gloenv);
-
-	mark (scm, scm->reg.arg);
-	mark (scm, scm->reg.env);
-	mark (scm, scm->reg.cod);
-	mark (scm, scm->reg.dmp);
-
-	/* mark the temporaries */
-	if (x) mark (scm, x);
-	if (y) mark (scm, y);
-
-
-	/* scan the allocated values */
-}
-
-/*
-
-rsr4 
-
-the following identifiers are syntactic keywors and should not be	
-used as variables.
-
- =>           do            or
- and          else          quasiquote
- begin        if            quote
- case         lambda        set!
- cond         let           unquote
- define       let*          unquote-splicing
- delay        letrec
-
-however, you can allow for these keywords to be used as variables...
-
-biniding, unbound...
-environment.. a set of visible bindings at some point in a program.
-
-
-
-                  type           atom       cons        
-  number          NUMBER         Y 
-  string          STRING         Y
-  symbol          SYMBOL                    name,NIL
-  syntax          SYNTAX|SYMBOL             name,NIL 
-  proc            PROC           Y
-  pair            PAIR           Y
-  closure
-  continuation
-
-  an atom does not reference any other values.
-  a symbol can be assoicated with property list
-	(put 'a 'name "brian")
-	(put 'a 'city "daegu")
-	-------------------------
-	(define a1 'a)
-	(put a1 'name "brian")
-	(put a1 'city "daegu")
-	-------------------------
-	(get a1 'name)
-	(get a1 'city)
-
-  a procedure is a privimitive routine built-in to scheme.
-  a closure is an anonymous routine defined with lambda.
-  both can be bound to a variable in the environment.
-
-  a syntax is more primitive than a procedure.
-  a syntax is created as if it is a symbol but not registerd 
-  into an environment
-
-         car            cdr
-| STR  | PTR CHR ARR  |  -1           |
-| PROC | PROCNUM      |               |
-| SYM  | REF STR      | REF PROP LIST |
-| SYN  | REF STR      | REF PROP LIST | 
-
-*/
-    
-static qse_scm_ent_t* alloc_entity (
-	qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
-{
-	/* find a free value slot and return it.
-	 * two parameters x and y are saved from garbage collection */
-
-	qse_scm_ent_t* v;
-
-	if (IS_NIL(scm->mem.free))
-	{
-		/* if no free slot is available */
-		gc (scm, x, y); /* perform garbage collection */
-		if (IS_NIL(scm->mem.free))
-		{
-			/* if no free slot is available after garbage collection,
-			 * make new value blocks containing more free slots */
-
-/* TODO: make the value block size configurable */
-			if (new_entity_block (scm, 1000) == QSE_NULL) return QSE_NULL;
-			QSE_ASSERT (scm->mem.free != scm->nil);
-		}
-	}
-
-	v = scm->mem.free;
-	scm->mem.free = PAIR_CDR(v);
-	
-	return v;
-}
-
-static qse_scm_ent_t* make_pair_entity (
-	qse_scm_t* scm, qse_scm_ent_t* car, qse_scm_ent_t* cdr)
-{
-	qse_scm_ent_t* v;
-
-	v = alloc_entity (scm, car, cdr);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	TYPE(v) = QSE_SCM_ENT_PAIR;
-	ATOM(v) = 0; /* a pair is not an atom as it references other entities */
-	PAIR_CAR(v) = car;
-	PAIR_CDR(v) = cdr;
-
-	return v;
-}
-
-static qse_scm_ent_t* make_number_entity (qse_scm_t* scm, qse_long_t val)
-{
-	qse_scm_ent_t* v;
-
-	if (CAN_BE_SMALLINT(val)) return TO_SMALLINT(val);
-
-	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	TYPE(v) = QSE_SCM_ENT_NUM;
-	ATOM(v) = 1;
-	NUM_VALUE(v) = val;
-
-	return v;
-}
-
-static qse_scm_ent_t* make_real_entity (qse_scm_t* scm, qse_long_t val)
-{
-	qse_scm_ent_t* v;
-
-	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	TYPE(v) = QSE_SCM_ENT_REAL;
-	ATOM(v) = 1;
-	REAL_VALUE(v) = val;
-
-	return v;
-}
-
-static qse_scm_ent_t* make_string_entity (
-	qse_scm_t* scm, const qse_char_t* str, qse_size_t len)
-{
-	qse_scm_ent_t* v;
-
-	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	TYPE(v) = QSE_SCM_ENT_STR;
-	ATOM(v) = 1;
-/* TODO: allocate a string from internal managed region .
-Calling strdup is not an option as it is not managed...
-*/
-	STR_PTR(v) = qse_strxdup (str, len, QSE_MMGR(scm));
-	if (STR_PTR(v) == QSE_NULL) 
-	{
-		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
-		return QSE_NULL;
-	}
-	STR_LEN(v) = len;
-
-	return v;
-}
-
-static qse_scm_ent_t* make_name_entity (qse_scm_t* scm, const qse_char_t* str)
-{
-	qse_scm_ent_t* v;
-
-	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	TYPE(v) = QSE_SCM_ENT_NAM;
-	ATOM(v) = 1;
-/* TODO: allocate a string from internal managed region .
-Calling strdup is not an option as it is not managed...
-*/
-	LAB_PTR(v) = qse_strdup (str, QSE_MMGR(scm));
-	if (LAB_PTR(v) == QSE_NULL) 
-	{
-		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
-		return QSE_NULL;
-	}
-	LAB_CODE(v) = 0;
-
-	return v;
-}
-
-static qse_scm_ent_t* make_symbol_entity (qse_scm_t* scm, const qse_char_t* name)
-{
-	qse_scm_ent_t* pair, * sym, * nam;
-
-/* TODO: use a hash table, red-black tree to maintain symbol table 
- * The current linear search algo is not performance friendly...
- */
-
-	/* find if the symbol already exists by traversing the pair list 
-	 * and inspecting the symbol name pointed to by CAR of each pair. 
-	 *
-	 * the symbol table is a list of pairs whose CAR points to a symbol
-	 * and CDR is used for chaining.
-	 *   
-	 *   +-----+-----+
-	 *   |     |     |
-	 *   +-----+-----+
-	 *  car |     | cdr        +-----+-----+
-	 *      |     +----------> |     |     |
-	 *      V                  +-----+-----+
-	 *    +--------+          car | 
-      *    | symbol |              V
-	 *    +--------+           +--------+
-	 *                         | symbol |
-	 *                         +--------+
-	 */
-	for (pair = scm->symtab; !IS_NIL(pair); pair = PAIR_CDR(pair))
-	{
-		sym = PAIR_CAR(pair);
-		if (qse_strcmp(name, LAB_PTR(SYM_NAME(sym))) == 0) return sym;
-	}
-	
-	/* no existing symbol with such a name is found.  
-	 * let's create a new symbol. the first step is to create a 
-	 * string entity to contain the symbol name */
-	nam = make_name_entity (scm, name);
-	if (nam == QSE_NULL) return QSE_NULL;
-
-	/* let's allocate the actual symbol entity that references the
-	 * the symbol name entity created above */
-	sym = alloc_entity (scm, nam, QSE_NULL);
-	if (sym == QSE_NULL) return QSE_NULL;
-	TYPE(sym) = QSE_SCM_ENT_SYM;
-	ATOM(sym) = 0;
-	SYM_NAME(sym) = nam;
-	SYM_PROP(sym) = scm->nil; /* no properties yet */
-
-	/* chain the symbol entity to the symbol table for lookups later */
-	pair = make_pair_entity (scm, sym, scm->symtab);
-	if (pair == QSE_NULL) return QSE_NULL;
-	scm->symtab = pair;
-
-	return sym;
-}
-
-static qse_scm_ent_t* make_syntax_entity (
-	qse_scm_t* scm, const qse_char_t* name, int code)
-{
-	qse_scm_ent_t* v;
-
-	QSE_ASSERTX (code > 0, "Syntax code must be greater than 0");
-
-	v = make_symbol_entity (scm, name);
-	if (v == QSE_NULL) return QSE_NULL;
-
-	/* We piggy-back the syntax code to a symbol name.
-	 * The syntax entity is basically a symbol except that the
-	 * code field of its label entity is set to non-zero. 
-	 * Read the comment in make_procedure_entity() for difference between
-	 * the syntax entity and the procedure entity.
-	 */
-	TYPE(v) |= QSE_SCM_ENT_SYNT; 
-	SYNT_CODE(v) = code; 
-
-	return v;
-}
-
-static qse_scm_ent_t* make_procedure_entity (
-	qse_scm_t* scm, const qse_char_t* name, int code)
-{
-	qse_scm_ent_t* sym, * proc, * pair;
-
-	/* A procedure entity is a built-in function that can be
-	 * overridden by a user while a syntax entity represents a 
-	 * lower-level syntactic function that can't be overridden.
-	 * 
-	 * (define lambda 10) is legal but does not change the
-	 *    meaning of lambda when used as a function name. 	
-	 *
-	 * (define tail 10) changes the meaning of eval totally.
-	 * (tail '(1 2 3)) is not legal from now on.
-	 *
-	 * (define x lambda) is illegal as the lambda symbol
-	 *
-	 * (define lambda 10) followed by (define x lambda) lets the x symbol
-	 * to be associated with 10 but you still can use lambda to create
-	 * a closure as in ((lambda (x) (+ x 10)) 50)
-	 *
-	 * (define x tail) lets the 'x' symbol point to the eval procedure.
-	 * (x '(1 2 3)) returns (2 3).
-	 *	
-	 * We implement the syntax entity as a symbol itself by ORing
-	 * the TYPE field with QSE_SCM_ENT_SYNT and setting the syntax
-	 * code in the symbol label entity.
-	 *
-	 * A procedure entity is an independent entity unlike the syntax
-	 * entity. We explicitly create a symbol entity for the procedure name
-	 * and associate it with the procedure entity in the global environment.
-	 * If you redefine the symbol name to be something else, you won't be
-	 * able to reference the procedure entity with the name. Worst case,
-	 * it may be GCed out.
-	 */ 
-
-	/* create a symbol containing the name */
-	sym = make_symbol_entity (scm, name);
-	if (sym == QSE_NULL) return QSE_NULL;
-
-	/* create an actual procedure value which is a number containing
-	 * the opcode for the procedure */
-	proc = alloc_entity (scm, sym, QSE_NULL);
-	if (proc == QSE_NULL) return QSE_NULL;
-	TYPE(proc) = QSE_SCM_ENT_PROC;
-	ATOM(proc) = 1;
-	PROC_CODE(proc) = code; 
-	
-	/* create a pair containing the name symbol and the procedure value */
-	pair = make_pair_entity (scm, sym, proc);
-	if (pair == QSE_NULL) return QSE_NULL;
-
-	/* link it to the global environment */
-	pair = make_pair_entity (scm, pair, PAIR_CAR(scm->gloenv));
-	if (pair == QSE_NULL) return QSE_NULL;
-	PAIR_CAR(scm->gloenv) = pair;
-
-	return proc;
-}
-
 #define MAKE_SYNTAX_ENTITY(scm,name,code) QSE_BLOCK( \
-	if (make_syntax_entity (scm, name, code) == QSE_NULL) return -1; \
+	if (qse_scm_makesyntent (scm, name, code) == QSE_NULL) return -1; \
 )
 
 static int build_syntax_entities (qse_scm_t* scm)
 {
 	qse_scm_ent_t* v;
 
-	v = make_syntax_entity (scm, QSE_T("lambda"), 1);
+	v = qse_scm_makesyntent (scm, QSE_T("lambda"), 1);
 	if (v == QSE_NULL) return -1;
 	scm->lambda = v;
 
-	v = make_syntax_entity (scm, QSE_T("quote"), 2);
+	v = qse_scm_makesyntent (scm, QSE_T("quote"), 2);
 	if (v == QSE_NULL) return -1;
 	scm->quote = v;
 
@@ -726,8 +197,8 @@ static qse_scm_t* qse_scm_init (
 	scm->mem.ebl = QSE_NULL;
 	scm->mem.free = scm->nil;
 
-	/* initialize all the key data to nil before make_pair_entity()
-	 * below. make_pair_entity() calls alloc_entity() that invokes
+	/* initialize all the key data to nil before qse_scm_makepairent()
+	 * below. qse_scm_makepairent() calls alloc_entity() that invokes
 	 * gc() as this is the first time. As gc() marks all the key data,
 	 * we need to initialize these to nil. */
 	scm->reg.arg = scm->nil;
@@ -741,7 +212,7 @@ static qse_scm_t* qse_scm_init (
 	scm->r.e    = scm->nil;
 
 	/* build the global environment entity as a pair */
-	scm->gloenv = make_pair_entity (scm, scm->nil, scm->nil);
+	scm->gloenv = qse_scm_makepairent (scm, scm->nil, scm->nil);
 	if (scm->gloenv == QSE_NULL) goto oops;
 
 	/* update the current environment to the global environment */
@@ -1259,7 +730,7 @@ static QSE_INLINE qse_scm_ent_t* push (qse_scm_t* scm, qse_scm_ent_t* obj)
 {
 	qse_scm_ent_t* pair;
 
-	pair = make_pair_entity (scm, obj, scm->r.s);
+	pair = qse_scm_makepairent (scm, obj, scm->r.s);
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	scm->r.s = pair;
@@ -1271,7 +742,7 @@ static QSE_INLINE qse_scm_ent_t* push (qse_scm_t* scm, qse_scm_ent_t* obj)
 static QSE_INLINE_ALWAYS void pop (qse_scm_t* scm)
 {
 	QSE_ASSERTX (
-		!IS_NIL(scm->r.s),
+		!IS_NIL(scm,scm->r.s),
 		"You've called pop() more times than push()"
 	);
 	scm->r.s = PAIR_CDR(scm->r.s);
@@ -1304,7 +775,7 @@ static QSE_INLINE qse_scm_ent_t* enter_list (qse_scm_t* scm, int flagv)
 	 * nil#2 to store the last element in the list.
 	 * both to be updated in chain_to_list() as items are added.
 	 */
-	return (push (scm, TO_SMALLINT(flagv)) == QSE_NULL ||
+	return (push (scm, TO_SMALLINT(scm,flagv)) == QSE_NULL ||
 	        push (scm, scm->nil) == QSE_NULL ||
 	        push (scm, scm->nil) == QSE_NULL)? QSE_NULL: scm->r.s;
 }
@@ -1315,7 +786,7 @@ static QSE_INLINE_ALWAYS qse_scm_ent_t* leave_list (qse_scm_t* scm, int* flagv)
 
 	/* the stack must not be empty */
 	QSE_ASSERTX (
-		!IS_NIL(scm->r.s), 
+		!IS_NIL(scm,scm->r.s), 
 		"You cannot leave a list without entering it"
 	);
 
@@ -1327,7 +798,7 @@ static QSE_INLINE_ALWAYS qse_scm_ent_t* leave_list (qse_scm_t* scm, int* flagv)
 	pop (scm);
 	pop (scm);
 
-	if (IS_NIL(scm->r.s))
+	if (IS_NIL(scm,scm->r.s))
 	{
 		/* the stack is empty after popping. 
 		 * it is back to the top level. 
@@ -1351,12 +822,12 @@ static QSE_INLINE_ALWAYS void dot_list (qse_scm_t* scm)
 	qse_scm_ent_t* pair;
 	int flagv;
 
-	QSE_ASSERT (!IS_NIL(scm->r.s));
+	QSE_ASSERT (!IS_NIL(scm,scm->r.s));
 
 	/* mark the state that a dot has appeared in the list */
 	pair = PAIR_CDR(PAIR_CDR(scm->r.s));
-	flagv = FROM_SMALLINT(PAIR_CAR(pair));
-	PAIR_CAR(pair) = TO_SMALLINT(flagv | DOTTED);
+	flagv = FROM_SMALLINT(scm,PAIR_CAR(pair));
+	PAIR_CAR(pair) = TO_SMALLINT(scm,flagv|DOTTED);
 }
 
 static qse_scm_ent_t* chain_to_list (qse_scm_t* scm, qse_scm_ent_t* obj)
@@ -1366,20 +837,20 @@ static qse_scm_ent_t* chain_to_list (qse_scm_t* scm, qse_scm_ent_t* obj)
 
 	/* the stack top is the pair pointing to the list tail */
 	tail = scm->r.s;
-	QSE_ASSERT (!IS_NIL(tail));
+	QSE_ASSERT (!IS_NIL(scm,tail));
 
 	/* the pair pointing to the list head is below the tail cell
 	 * connected via cdr. */
 	head = PAIR_CDR(tail);
-	QSE_ASSERT (!IS_NIL(head));
+	QSE_ASSERT (!IS_NIL(scm,head));
 
 	/* the pair pointing to the flag is below the head cell
 	 * connected via cdr */
 	flag = PAIR_CDR(head);
 
 	/* retrieve the numeric flag value */
-	QSE_ASSERT(IS_SMALLINT(PAIR_CAR(flag)));
-	flagv = (int)FROM_SMALLINT(PAIR_CAR(flag));
+	QSE_ASSERT(IS_SMALLINT(scm,PAIR_CAR(flag)));
+	flagv = (int)FROM_SMALLINT(scm,PAIR_CAR(flag));
 
 	if (flagv & CLOSED)
 	{
@@ -1390,18 +861,18 @@ static qse_scm_ent_t* chain_to_list (qse_scm_t* scm, qse_scm_ent_t* obj)
 	else if (flagv & DOTTED)
 	{
 		/* the list must not be empty to have reached the dotted state */
-		QSE_ASSERT (!IS_NIL(PAIR_CAR(tail)));
+		QSE_ASSERT (!IS_NIL(scm,PAIR_CAR(tail)));
 
 		/* chain the object via 'cdr' of the tail cell */
 		PAIR_CDR(PAIR_CAR(tail)) = obj;
 
 		/* update the flag to CLOSED so that you can have more than
 		 * one item after the dot. */
-		PAIR_CAR(flag) = TO_SMALLINT(flagv | CLOSED);
+		PAIR_CAR(flag) = TO_SMALLINT(scm,flagv|CLOSED);
 	}
 	else
 	{
-		cell = make_pair_entity (scm, obj, scm->nil);
+		cell = qse_scm_makepairent (scm, obj, scm->nil);
 		if (cell == QSE_NULL) return QSE_NULL;
 
 		if (PAIR_CAR(head) == scm->nil)
@@ -1429,12 +900,12 @@ static QSE_INLINE_ALWAYS int is_list_empty (qse_scm_t* scm)
 {
 	/* the stack must not be empty */
 	QSE_ASSERTX (
-		!IS_NIL(scm->r.s), 
+		!IS_NIL(scm,scm->r.s), 
 		"You can not call this function while the stack is empty"		
 	);
 
 	/* if the tail pointer is pointing to nil, the list is empty */
-	return IS_NIL(PAIR_CAR(scm->r.s));
+	return IS_NIL(scm,PAIR_CAR(scm->r.s));
 }
 
 static int read_entity (qse_scm_t* scm)
@@ -1563,20 +1034,20 @@ static int read_entity (qse_scm_t* scm)
 				break;
 
 			case TOK_INT:
-				obj = make_number_entity (scm, TOK_IVAL(scm));
+				obj = qse_scm_makenument (scm, TOK_IVAL(scm));
 				break;
 
 			case TOK_REAL:
-				obj = make_real_entity (scm, TOK_RVAL(scm));
+				obj = qse_scm_makerealent (scm, TOK_RVAL(scm));
 				break;
 	
 			case TOK_STRING:
-				obj = make_string_entity (
+				obj = qse_scm_makestrent (
 					scm, TOK_NAME_PTR(scm), TOK_NAME_LEN(scm));
 				break;
 
 			case TOK_SYMBOL:
-				obj = make_symbol_entity (scm, TOK_NAME_PTR(scm));
+				obj = qse_scm_makesyment (scm, TOK_NAME_PTR(scm));
 				break;
 		}
 
