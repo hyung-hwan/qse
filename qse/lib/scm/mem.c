@@ -20,583 +20,513 @@
 
 #include "scm.h"
 
-static qse_scm_obj_t* makeint (qse_scm_mem_t* mem, qse_long_t value);
-static QSE_INLINE_ALWAYS void collect_garbage (qse_scm_mem_t* mem);
-static void dispose_all (qse_scm_mem_t* mem);
-
-qse_scm_mem_t* qse_scm_mem_init (
-	qse_scm_mem_t* mem, qse_scm_t* scm,
-	qse_size_t ubound, qse_size_t ubound_inc)
+static qse_scm_enb_t* new_entity_block (qse_scm_t* scm, qse_size_t len)
 {
+	/* 
+	 * Create a new value block containing as 'len' slots.
+	 */
+
+	void* raw;
+	qse_scm_enb_t* blk;
+	qse_scm_ent_t* v;
 	qse_size_t i;
-	int fail = 0;
 
-	QSE_MEMSET (mem, 0, QSE_SIZEOF(qse_scm_mem_t));
-	mem->scm = scm;
+	/* Let me assume that an aligned memory pointer is an even address.
+	 * malloc() returns an aligned memory pointer on most systems.
+	 * However, I can't simply ignore oddball systems that returns
+	 * an unaligned memory pointer. (Is there any?) A user may provide 
+	 * a custom memory allocator that does not return unaligned memory
+	 * pointer. I make the pointer to an entity block 2-byte aligned 
+	 * hoping that the entity pointer alloc_entity() returns is also an
+	 * even number. This, of couurse, requires that the size of 
+	 * qse_scm_enb_t and qse_scm_ent_t is the multiple of 2.
+	 * I do this for SMALLINT, not for memory alignemnt.The test for 
+	 * SMALLINT can simply check the lowest bit. Am i doing too much?
+	 */ 
+	QSE_ASSERTX (
+		QSE_SIZEOF(qse_scm_enb_t) % 2 == 0, 
+		"This function is written assuming the size of qse_scm_enb_t is even"
+	);
+	QSE_ASSERTX (
+		QSE_SIZEOF(qse_scm_ent_t) % 2 == 0, 
+		"This function is written assuming the size of qse_scm_ent_t is even"
+	);
 
-	/* create a new root environment frame */
-	mem->frame = qse_scm_newframe (scm);
-	if (mem->frame == QSE_NULL) return QSE_NULL;
-
-	mem->root_frame     = mem->frame;
-	mem->brooding_frame = QSE_NULL;
-	mem->tlink          = QSE_NULL;
-	mem->tlink_count    = 0;
-
-	/* initialize object allocation list */
-	mem->ubound     = ubound;
-	mem->ubound_inc = ubound_inc;
-	mem->count      = 0;
-	for (i = 0; i < QSE_SCM_TYPE_COUNT; i++) 
+	/* The actual memory block size is calculated as shown here:
+	 *   QSE_SIZEOF(void*) to store the actual memory block pointer
+	 *   1 to secure extra 1 byte required for 2-byte alignement.
+	 *   QSE_SIZEOF(qse_scm_enb_t) to store the block header.
+	 *   QSE_SIZEOF(qse_Scm_ent_t) * len to store the actual entities.
+	 */
+	raw = (qse_scm_enb_t*) QSE_MMGR_ALLOC (
+		scm->mmgr, 
+		QSE_SIZEOF(void*) + 1 + 
+		QSE_SIZEOF(qse_scm_enb_t) + 
+		QSE_SIZEOF(qse_scm_ent_t) * len
+	);
+	if (raw == QSE_NULL)
 	{
-		mem->used[i] = QSE_NULL;
-		mem->free[i] = QSE_NULL;
-	}
-
-	/* initialize read registers */
-	mem->r.obj = QSE_NULL;
-	mem->r.tmp = QSE_NULL;
-	mem->r.stack = QSE_NULL;
-
-	/* when "ubound" is too small, the garbage collection can
-	 * be performed while making the common objects. */
-	mem->nil    = QSE_NULL;
-	mem->t      = QSE_NULL;
-	mem->quote  = QSE_NULL;
-	mem->lambda = QSE_NULL;
-	mem->macro  = QSE_NULL;
-	for (i = 0; i < QSE_COUNTOF(mem->num); i++) mem->num[i] = QSE_NULL;
-
-	/* initialize common object pointers */
-	mem->nil = qse_scm_makenil (mem);
-	mem->t = qse_scm_maketrue (mem);
-	mem->quote = qse_scm_makesym (mem, QSE_T("quote"), 5);
-	mem->lambda = qse_scm_makesym (mem, QSE_T("lambda"), 6);
-	mem->macro = qse_scm_makesym (mem, QSE_T("macro"), 5);
-
-	if (mem->nil == QSE_NULL ||
-	    mem->t == QSE_NULL ||
-	    mem->quote == QSE_NULL ||
-	    mem->lambda == QSE_NULL ||
-	    mem->macro == QSE_NULL) 
-	{
-		fail = 1;
-	}
-	else
-	{
-		for (i = 0; i < QSE_COUNTOF(mem->num); i++)
-		{
-			mem->num[i] = makeint (mem, i);
-			if (mem->num[i] == QSE_NULL) { fail = 1; break; }
-		}
-	}
-
-	if (fail)
-	{
-		dispose_all (mem);
-		qse_scm_freeframe (scm, mem->frame);
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
 
-	QSE_SCM_PERM(mem->nil)    = 1;
-	QSE_SCM_PERM(mem->t)      = 1;
-	QSE_SCM_PERM(mem->quote)  = 1;
-	QSE_SCM_PERM(mem->lambda) = 1;
-	QSE_SCM_PERM(mem->macro)  = 1;
-	for (i = 0; i < QSE_COUNTOF(mem->num); i++)
+	/* The entity block begins after the memory block pointer. */
+	blk = (qse_scm_enb_t*)((qse_byte_t*)raw + QSE_SIZEOF(void*) + 1);
+
+	/* Adjust the block pointer to an even number. 
+	 * the resulting address is:
+	 *     either the old address
+	 *     or the old address - 1
+	 */
+	blk = (qse_scm_enb_t*)((qse_uintptr_t)blk & ~(qse_uintptr_t)1);
+
+	/* Remember the raw block pointer.
+	 * ((void**)blk)[-1] gets naturally aligned as blk is aligned. 
+	 * It can be raw + 1 or the same as raw. */
+	((void**)blk)[-1] = raw;
+
+	/* Initialize the block fields */
+	blk->ptr = (qse_scm_ent_t*)(blk + 1);
+	blk->len = len;
+
+	/* Chain the value block to the block list */
+	blk->next = scm->mem.ebl;
+	scm->mem.ebl = blk;
+
+	/* Chain each slot to the free slot list using 
+	 * the CDR field of an entity */
+	v = &blk->ptr[0];
+	for (i = 0; i < len -1; i++) 
 	{
-		QSE_SCM_PERM(mem->num[i]) = 1;
+		qse_scm_ent_t* tmp = v++;
+		PAIR_CDR(tmp) = v;
 	}
+	PAIR_CDR(v) = scm->mem.free;
+	scm->mem.free = &blk->ptr[0];
 
-	/* let the read stack point to nil */
-	mem->r.stack = mem->nil;
+	return blk;
+};
 
-	return mem;
-}
-
-void qse_scm_mem_fini (qse_scm_mem_t* mem)
+static void mark (qse_scm_t* scm, qse_scm_ent_t* v)
 {
-	/* dispose of the allocated objects */
-	dispose_all (mem);
+	/* 
+	 * Mark values non-recursively with Deutsch-Schorr-Waite(DSW) algorithm.
+	 * This algorithm builds backtraces directly into the value chain
+	 * with the help of additional variables.
+	 */
 
-	/* dispose of environment frames */
-	qse_scm_freeframe (mem->scm, mem->frame);
-}
+	qse_scm_ent_t* parent, * me;
 
-static qse_scm_obj_t* allocate (qse_scm_mem_t* mem, int type, qse_size_t size)
-{
-	qse_scm_obj_t* obj;
-	
-	if (mem->count >= mem->ubound) collect_garbage (mem);
-	if (mem->count >= mem->ubound) 
+	if (IS_SMALLINT(scm,v)) return;
+
+	/* Initialization */
+	parent = QSE_NULL;
+	me = v;
+
+	MARK(me) = 1;
+	/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
+
+	while (1)
 	{
-		mem->ubound += mem->ubound_inc;
-		if (mem->count >= mem->ubound) return QSE_NULL;
-	}
-
-	obj = (qse_scm_obj_t*) QSE_SCM_ALLOC (mem->scm, size);
-	if (obj == QSE_NULL) 
-	{
-		collect_garbage (mem);
-
-		obj = (qse_scm_obj_t*) QSE_SCM_ALLOC (mem->scm, size);
-		if (obj == QSE_NULL) 
+		if (ATOM(me) || DSWCOUNT(me) >= QSE_COUNTOF(me->u.ref.ent))
 		{
-			qse_scm_seterror (mem->scm, QSE_SCM_ENOMEM, QSE_NULL, 0);
-			return QSE_NULL;
+			/* 
+			 * Backtrack to the parent node 
+			 */
+			qse_scm_ent_t* child;
+
+			/* Nothing more to backtrack? end of marking */
+			if (parent == QSE_NULL) return;
+
+			/* Remember me temporarily for restoration below */
+			child = me;
+
+			/* The current parent becomes me */
+			me = parent;
+
+			/* Change the parent to the parent of parent */
+			parent = me->u.ref.ent[DSWCOUNT(me)];
+			
+			/* Restore the cell contents */
+			me->u.ref.ent[DSWCOUNT(me)] = child;
+
+			/* Increment the counter to indicate that the 
+			 * 'count'th field has been processed. */
+			DSWCOUNT(me)++;
 		}
-	}
-
-	QSE_SCM_TYPE(obj) = type;
-	QSE_SCM_SIZE(obj) = size;
-	QSE_SCM_MARK(obj) = 0;
-	QSE_SCM_PERM(obj) = 0;
-
-	/* insert the object at the head of the used list */
-	QSE_SCM_LINK(obj) = mem->used[type];
-	mem->used[type] = obj;
-	mem->count++;
-
-#if 0
-	qse_dprint1 (QSE_T("mem->count: %u\n"), mem->count);
-#endif
-
-	return obj;
-}
-
-static void dispose (
-	qse_scm_mem_t* mem, qse_scm_obj_t* prev, qse_scm_obj_t* obj)
-{
-	QSE_ASSERT (obj != QSE_NULL);
-	QSE_ASSERT (mem->count > 0);
-
-	/* TODO: push the object to the free list for more 
-	 *       efficient memory management */
-
-	if (prev == QSE_NULL) 
-		mem->used[QSE_SCM_TYPE(obj)] = QSE_SCM_LINK(obj);
-	else QSE_SCM_LINK(prev) = QSE_SCM_LINK(obj);
-
-	mem->count--;
-#if 0
-	qse_dprint1 (QSE_T("mem->count: %u\n"), mem->count);
-#endif
-
-	QSE_SCM_FREE (mem->scm, obj);	
-}
-
-static void dispose_all (qse_scm_mem_t* mem)
-{
-	qse_scm_obj_t* obj, * next;
-	qse_size_t i;
-
-	for (i = 0; i < QSE_SCM_TYPE_COUNT; i++) 
-	{
-		obj = mem->used[i];
-
-		while (obj != QSE_NULL) 
+		else 
 		{
-			next = QSE_SCM_LINK(obj);
-			dispose (mem, QSE_NULL, obj);
-			obj = next;
-		}
-	}
-}
+			/* 
+			 * Move on to an unprocessed child 
+			 */
+			qse_scm_ent_t* child;
 
-static void mark_obj (qse_scm_mem_t* mem, qse_scm_obj_t* obj)
-{
-	QSE_ASSERT (obj != QSE_NULL);
+			child = me->u.ref.ent[DSWCOUNT(me)];
 
-	/* TODO: can it be non-recursive? */
-	if (QSE_SCM_MARK(obj) != 0) return;
+			/* Process the field */
+			QSE_ASSERT (child != QSE_NULL);
 
-	QSE_SCM_MARK(obj) = 1;
-
-	switch (QSE_SCM_TYPE(obj))
-	{
-		case QSE_SCM_OBJ_CONS:
-			mark_obj (mem, QSE_SCM_CAR(obj));
-			mark_obj (mem, QSE_SCM_CDR(obj));
-			break;
-	
-		case QSE_SCM_OBJ_FUNC:
-			mark_obj (mem, QSE_SCM_FFORMAL(obj));
-			mark_obj (mem, QSE_SCM_FBODY(obj));
-			break;
-
-		case QSE_SCM_OBJ_MACRO:
-			mark_obj (mem, QSE_SCM_MFORMAL(obj));
-			mark_obj (mem, QSE_SCM_MBODY(obj));
-			break;
-	}
-}
-
-static void mark_objs_in_use (qse_scm_mem_t* mem)
-{
-	qse_scm_frame_t* frame;
-	qse_scm_assoc_t* assoc;
-	qse_scm_tlink_t* tlink;
-	/*qse_scm_arr_t* arr;*/
-	qse_size_t       i;
-
-#if 0
-	qse_dprint0 (QSE_T("marking environment frames\n"));
-#endif
-	/* mark objects in the environment frames */
-	frame = mem->frame;
-	while (frame != QSE_NULL) 
-	{
-		assoc = frame->assoc;
-		while (assoc != QSE_NULL) 
-		{
-			mark_obj (mem, assoc->name);
-
-			if (assoc->value != QSE_NULL) 
-				mark_obj (mem, assoc->value);
-			if (assoc->func != QSE_NULL) 
-				mark_obj (mem, assoc->func);
-
-			assoc = assoc->link;
-		}
-
-		frame = frame->link;
-	}
-
-#if 0
-	qse_dprint0 (QSE_T("marking interim frames\n"));
-#endif
-
-	/* mark objects in the interim frames */
-	frame = mem->brooding_frame;
-	while (frame != QSE_NULL) 
-	{
-		assoc = frame->assoc;
-		while (assoc != QSE_NULL) 
-		{
-			mark_obj (mem, assoc->name);
-
-			if (assoc->value != QSE_NULL) 
-				mark_obj (mem, assoc->value);
-			if (assoc->func != QSE_NULL) 
-				mark_obj (mem, assoc->func);
-
-			assoc = assoc->link;
-		}
-
-		frame = frame->link;
-	}
-
-	/*qse_dprint0 (QSE_T("marking the read object\n"));*/
-	if (mem->r.obj) mark_obj (mem, mem->r.obj);
-	if (mem->r.tmp) mark_obj (mem, mem->r.tmp);
-	if (mem->r.stack) mark_obj (mem, mem->r.stack);
-
-	/* qse_dprint0 (QSE_T("marking the temporary objects\n"));*/
-	for (tlink = mem->tlink; tlink != QSE_NULL; tlink = tlink->link)
-	{
-		mark_obj (mem, tlink->obj);
-	}
-
-#if 0
-	qse_dprint0 (QSE_T("marking builtin objects\n"));
-#endif
-	/* mark common objects */
-	if (mem->t) mark_obj (mem, mem->t);
-	if (mem->nil) mark_obj (mem, mem->nil);
-	if (mem->quote) mark_obj (mem, mem->quote);
-	if (mem->lambda) mark_obj (mem, mem->lambda);
-	if (mem->macro) mark_obj (mem, mem->macro);
-
-	for (i = 0; i < QSE_COUNTOF(mem->num); i++) 
-	{
-		if (mem->num[i]) mark_obj (mem, mem->num[i]);
-	}
-}
-
-//#include <qse/cmn/stdio.h>
-static void sweep_unmarked_objs (qse_scm_mem_t* mem)
-{
-	qse_scm_obj_t* obj, * prev, * next;
-	qse_size_t i;
-
-	/* scan all the allocated objects and get rid of unused objects */
-	for (i = 0; i < QSE_SCM_TYPE_COUNT; i++) 
-	{
-		prev = QSE_NULL;
-		obj = mem->used[i];
-
-#if 0
-		qse_dprint1 (QSE_T("sweeping objects of type: %u\n"), i);
-#endif
-		while (obj != QSE_NULL) 
-		{
-			next = QSE_SCM_LINK(obj);
-
-			if (QSE_SCM_MARK(obj) == 0 && 
-			    QSE_SCM_PERM(obj) == 0) 
+			if (IS_SMALLINT(scm,child) || MARK(child))
 			{
-				/* dispose of unused objects */
+				/* Already marked. Increment the count */
+				DSWCOUNT(me)++;
+			}
+			else
+			{
+				/* Change the contents of the child chosen
+				 * to point to the current parent */
+				me->u.ref.ent[DSWCOUNT(me)] = parent;
+
+				/* Link me to the head of parent list */
+				parent = me;
+
+				/* Let me point to the child chosen */
+				me = child;
+
+				MARK(me) = 1;
+				/*if (!ATOM(me))*/ DSWCOUNT(me) = 0;
+			}
+		}
+	}
+}
+
+static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
+{
+/* TODO: How can i GC away those symbols not actually meaningful?
+ *       marking objects referenced in symbol table prevent me from
+ *       finding unused symbols... you keep on evaluating expressions
+ *       with different symbols. you'll get out of memory. */
+	mark (scm, scm->symtab);
+	mark (scm, scm->gloenv);
+
+	mark (scm, scm->reg.arg);
+	mark (scm, scm->reg.env);
+	mark (scm, scm->reg.cod);
+	mark (scm, scm->reg.dmp);
+
+	/* mark the temporaries */
+	if (x) mark (scm, x);
+	if (y) mark (scm, y);
+
+
+	/* scan the allocated values */
+}
+
 /*
-if (i == QSE_SCM_OBJ_INT)
-qse_printf (QSE_T("disposing....%d [%d]\n"), i, (int)QSE_SCM_IVAL(obj));
-if (i == QSE_SCM_OBJ_REAL)
-qse_printf (QSE_T("disposing....%d [%Lf]\n"), i, (double)QSE_SCM_RVAL(obj));
-else if (i == QSE_SCM_OBJ_SYM)
-qse_printf (QSE_T("disposing....%d [%s]\n"), i, QSE_SCM_SYMPTR(obj));
-else if (i == QSE_SCM_OBJ_STR)
-qse_printf (QSE_T("disposing....%d [%s]\n"), i, QSE_SCM_STRPTR(obj));
-else
-qse_printf (QSE_T("disposing....%d\n"), i);
-*/
-				dispose (mem, prev, obj);
-			}
-			else 
-			{
-				/* unmark the object in use */
-				QSE_SCM_MARK(obj) = 0; 
-				prev = obj;
-			}
+rsr4 
 
-			obj = next;
+the following identifiers are syntactic keywors and should not be	
+used as variables.
+
+ =>           do            or
+ and          else          quasiquote
+ begin        if            quote
+ case         lambda        set!
+ cond         let           unquote
+ define       let*          unquote-splicing
+ delay        letrec
+
+however, you can allow for these keywords to be used as variables...
+
+biniding, unbound...
+environment.. a set of visible bindings at some point in a program.
+
+
+
+                  type           atom       cons        
+  number          NUMBER         Y 
+  string          STRING         Y
+  symbol          SYMBOL                    name,NIL
+  syntax          SYNTAX|SYMBOL             name,NIL 
+  proc            PROC           Y
+  pair            PAIR           Y
+  closure
+  continuation
+
+  an atom does not reference any other values.
+  a symbol can be assoicated with property list
+	(put 'a 'name "brian")
+	(put 'a 'city "daegu")
+	-------------------------
+	(define a1 'a)
+	(put a1 'name "brian")
+	(put a1 'city "daegu")
+	-------------------------
+	(get a1 'name)
+	(get a1 'city)
+
+  a procedure is a privimitive routine built-in to scheme.
+  a closure is an anonymous routine defined with lambda.
+  both can be bound to a variable in the environment.
+
+  a syntax is more primitive than a procedure.
+  a syntax is created as if it is a symbol but not registerd 
+  into an environment
+
+         car            cdr
+| STR  | PTR CHR ARR  |  -1           |
+| PROC | PROCNUM      |               |
+| SYM  | REF STR      | REF PROP LIST |
+| SYN  | REF STR      | REF PROP LIST | 
+
+*/
+    
+static qse_scm_ent_t* alloc_entity (
+	qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
+{
+	/* find a free value slot and return it.
+	 * two parameters x and y are saved from garbage collection */
+
+	qse_scm_ent_t* v;
+
+	if (IS_NIL(scm,scm->mem.free))
+	{
+		/* if no free slot is available */
+		gc (scm, x, y); /* perform garbage collection */
+		if (IS_NIL(scm,scm->mem.free))
+		{
+			/* if no free slot is available after garbage collection,
+			 * make new value blocks containing more free slots */
+
+/* TODO: make the value block size configurable */
+			if (new_entity_block (scm, 1000) == QSE_NULL) return QSE_NULL;
+			QSE_ASSERT (scm->mem.free != scm->nil);
 		}
 	}
-}
 
-static QSE_INLINE_ALWAYS void collect_garbage (qse_scm_mem_t* mem)
-{
-	mark_objs_in_use (mem);
-	sweep_unmarked_objs (mem);
-}
-
-void qse_scm_gc (qse_scm_t* scm)
-{
-	collect_garbage (&scm->mem);
-}
-
-qse_scm_obj_t* qse_scm_makenil (qse_scm_mem_t* mem)
-{
-	if (mem->nil != QSE_NULL) return mem->nil;
-	mem->nil = allocate (
-		mem, QSE_SCM_OBJ_NIL, QSE_SIZEOF(qse_scm_obj_nil_t));
-	return mem->nil;
-}
-
-qse_scm_obj_t* qse_scm_maketrue (qse_scm_mem_t* mem)
-{
-	if (mem->t != QSE_NULL) return mem->t;
-	mem->t = allocate (
-		mem, QSE_SCM_OBJ_TRUE, QSE_SIZEOF(qse_scm_obj_true_t));
-	return mem->t;
-}
-
-static qse_scm_obj_t* makeint (qse_scm_mem_t* mem, qse_long_t value)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (mem, 
-		QSE_SCM_OBJ_INT, QSE_SIZEOF(qse_scm_obj_int_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	QSE_SCM_IVAL(obj) = value;
-
-	return obj;
-}
-
-qse_scm_obj_t* qse_scm_makeint (qse_scm_mem_t* mem, qse_long_t value)
-{
-	if (value >= 0 && value < QSE_COUNTOF(mem->num)) return mem->num[value];
-	return makeint (mem, value);
-}
-
-qse_scm_obj_t* qse_scm_makereal (qse_scm_mem_t* mem, qse_real_t value)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (mem, 
-		QSE_SCM_OBJ_REAL, QSE_SIZEOF(qse_scm_obj_real_t));
-	if (obj == QSE_NULL) return QSE_NULL;
+	v = scm->mem.free;
+	scm->mem.free = PAIR_CDR(v);
 	
-	QSE_SCM_RVAL(obj) = value;
-
-	return obj;
+	return v;
 }
 
-qse_scm_obj_t* qse_scm_makesym (
-	qse_scm_mem_t* mem, const qse_char_t* str, qse_size_t len)
+qse_scm_ent_t* qse_scm_makepairent (
+	qse_scm_t* scm, qse_scm_ent_t* car, qse_scm_ent_t* cdr)
 {
-	qse_scm_obj_t* obj;
+	qse_scm_ent_t* v;
 
-/* TODO: use rbt or htb ... */
+	v = alloc_entity (scm, car, cdr);
+	if (v == QSE_NULL) return QSE_NULL;
 
-	/* look for a sysmbol with the given name */
-	obj = mem->used[QSE_SCM_OBJ_SYM];
-	while (obj != QSE_NULL) 
+	TYPE(v) = QSE_SCM_ENT_PAIR;
+	ATOM(v) = 0; /* a pair is not an atom as it references other entities */
+	PAIR_CAR(v) = car;
+	PAIR_CDR(v) = cdr;
+
+	return v;
+}
+
+qse_scm_ent_t* qse_scm_makenument (qse_scm_t* scm, qse_long_t val)
+{
+	qse_scm_ent_t* v;
+
+	if (CAN_BE_SMALLINT(scm,val)) return TO_SMALLINT(scm,val);
+
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	TYPE(v) = QSE_SCM_ENT_NUM;
+	ATOM(v) = 1;
+	NUM_VALUE(v) = val;
+
+	return v;
+}
+
+qse_scm_ent_t* qse_scm_makerealent (qse_scm_t* scm, qse_long_t val)
+{
+	qse_scm_ent_t* v;
+
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	TYPE(v) = QSE_SCM_ENT_REAL;
+	ATOM(v) = 1;
+	REAL_VALUE(v) = val;
+
+	return v;
+}
+
+qse_scm_ent_t* qse_scm_makestrent (
+	qse_scm_t* scm, const qse_char_t* str, qse_size_t len)
+{
+	qse_scm_ent_t* v;
+
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	TYPE(v) = QSE_SCM_ENT_STR;
+	ATOM(v) = 1;
+/* TODO: allocate a string from internal managed region .
+Calling strdup is not an option as it is not managed...
+*/
+	STR_PTR(v) = qse_strxdup (str, len, QSE_MMGR(scm));
+	if (STR_PTR(v) == QSE_NULL) 
 	{
-		/* if there is a symbol with the same name, it is just used. */
-		if (qse_strxncmp (
-			QSE_SCM_SYMPTR(obj), 
-			QSE_SCM_SYMLEN(obj), 
-			str, len) == 0) return obj;
-		obj = QSE_SCM_LINK(obj);
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
+		return QSE_NULL;
 	}
+	STR_LEN(v) = len;
 
-	/* no such symbol found. create a new one */
-	obj = allocate (mem, QSE_SCM_OBJ_SYM,
-		QSE_SIZEOF(qse_scm_obj_sym_t)+(len + 1)*QSE_SIZEOF(qse_char_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	/* fill in the symbol buffer */
-	qse_strncpy (QSE_SCM_SYMPTR(obj), str, len);
-
-	return obj;
+	return v;
 }
 
-qse_scm_obj_t* qse_scm_makestr (
-	qse_scm_mem_t* mem, const qse_char_t* str, qse_size_t len)
+qse_scm_ent_t* qse_scm_makenamentity (qse_scm_t* scm, const qse_char_t* str)
 {
-	qse_scm_obj_t* obj;
+	qse_scm_ent_t* v;
 
-	/* allocate memory for the string */
-	obj = allocate (mem, QSE_SCM_OBJ_STR,
-		QSE_SIZEOF(qse_scm_obj_str_t)+(len + 1)*QSE_SIZEOF(qse_char_t));
-	if (obj == QSE_NULL) return QSE_NULL;
+	v = alloc_entity (scm, QSE_NULL, QSE_NULL);
+	if (v == QSE_NULL) return QSE_NULL;
 
-	/* fill in the string buffer */
-	qse_strncpy (QSE_SCM_STRPTR(obj), str, len);
-
-	return obj;
-}
-
-qse_scm_obj_t* qse_scm_makecons (
-	qse_scm_mem_t* mem, qse_scm_obj_t* car, qse_scm_obj_t* cdr)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (mem,
-		QSE_SCM_OBJ_CONS, QSE_SIZEOF(qse_scm_obj_cons_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	QSE_SCM_CAR(obj) = car;
-	QSE_SCM_CDR(obj) = cdr;
-
-	return obj;
-}
-
-qse_scm_obj_t* qse_scm_makefunc (
-	qse_scm_mem_t* mem, qse_scm_obj_t* formal, qse_scm_obj_t* body)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (mem,
-		QSE_SCM_OBJ_FUNC, QSE_SIZEOF(qse_scm_obj_func_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	QSE_SCM_FFORMAL(obj) = formal;
-	QSE_SCM_FBODY(obj)   = body;
-
-	return obj;
-}
-
-qse_scm_obj_t* qse_scm_makemacro (
-	qse_scm_mem_t* mem, qse_scm_obj_t* formal, qse_scm_obj_t* body)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (mem, 
-		QSE_SCM_OBJ_MACRO, QSE_SIZEOF(qse_scm_obj_macro_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	QSE_SCM_MFORMAL(obj) = formal;
-	QSE_SCM_MBODY(obj)   = body;
-
-	return obj;
-}
-
-qse_scm_obj_t* qse_scm_makeprim (qse_scm_mem_t* mem, 
-	qse_scm_prim_t impl, qse_size_t min_args, qse_size_t max_args)
-{
-	qse_scm_obj_t* obj;
-
-	obj = allocate (
-		mem, QSE_SCM_OBJ_PRIM, QSE_SIZEOF(qse_scm_obj_prim_t));
-	if (obj == QSE_NULL) return QSE_NULL;
-
-	QSE_SCM_PIMPL(obj) = impl;
-	QSE_SCM_PMINARGS(obj) = min_args;
-	QSE_SCM_PMAXARGS(obj) = max_args;
-	return obj;
-}
-
-qse_scm_assoc_t* qse_scm_lookup (qse_scm_mem_t* mem, qse_scm_obj_t* name)
-{
-	qse_scm_frame_t* frame;
-	qse_scm_assoc_t* assoc;
-
-	QSE_ASSERT (QSE_SCM_TYPE(name) == QSE_SCM_OBJ_SYM);
-
-	frame = mem->frame;
-
-	while (frame != QSE_NULL) 
+	TYPE(v) = QSE_SCM_ENT_NAM;
+	ATOM(v) = 1;
+/* TODO: allocate a string from internal managed region .
+Calling strdup is not an option as it is not managed...
+*/
+	LAB_PTR(v) = qse_strdup (str, QSE_MMGR(scm));
+	if (LAB_PTR(v) == QSE_NULL) 
 	{
-		assoc = qse_scm_lookupinframe (mem->scm, frame, name);
-		if (assoc != QSE_NULL) return assoc;
-		frame = frame->link;
+		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
+		return QSE_NULL;
 	}
+	LAB_CODE(v) = 0;
 
-	return QSE_NULL;
+	return v;
 }
 
-qse_scm_assoc_t* qse_scm_setvalue (
-	qse_scm_mem_t* mem, qse_scm_obj_t* name, qse_scm_obj_t* value)
+qse_scm_ent_t* qse_scm_makesyment (qse_scm_t* scm, const qse_char_t* name)
 {
-	qse_scm_assoc_t* assoc;
+	qse_scm_ent_t* pair, * sym, * nam;
 
-	assoc = qse_scm_lookup (mem, name);
-	if (assoc == QSE_NULL)
+/* TODO: use a hash table, red-black tree to maintain symbol table 
+ * The current linear search algo is not performance friendly...
+ */
+
+	/* find if the symbol already exists by traversing the pair list 
+	 * and inspecting the symbol name pointed to by CAR of each pair. 
+	 *
+	 * the symbol table is a list of pairs whose CAR points to a symbol
+	 * and CDR is used for chaining.
+	 *   
+	 *   +-----+-----+
+	 *   |     |     |
+	 *   +-----+-----+
+	 *  car |     | cdr        +-----+-----+
+	 *      |     +----------> |     |     |
+	 *      V                  +-----+-----+
+	 *    +--------+          car | 
+      *    | symbol |              V
+	 *    +--------+           +--------+
+	 *                         | symbol |
+	 *                         +--------+
+	 */
+	for (pair = scm->symtab; !IS_NIL(scm,pair); pair = PAIR_CDR(pair))
 	{
-		assoc = qse_scm_insvalueintoframe (
-			mem->scm, mem->root_frame, name, value);
-		if (assoc == QSE_NULL) return QSE_NULL;
+		sym = PAIR_CAR(pair);
+		if (qse_strcmp(name, LAB_PTR(SYM_NAME(sym))) == 0) return sym;
 	}
-	else assoc->value = value;
+	
+	/* no existing symbol with such a name is found.  
+	 * let's create a new symbol. the first step is to create a 
+	 * string entity to contain the symbol name */
+	nam = qse_scm_makenamentity (scm, name);
+	if (nam == QSE_NULL) return QSE_NULL;
 
-	return assoc;
+	/* let's allocate the actual symbol entity that references the
+	 * the symbol name entity created above */
+	sym = alloc_entity (scm, nam, QSE_NULL);
+	if (sym == QSE_NULL) return QSE_NULL;
+	TYPE(sym) = QSE_SCM_ENT_SYM;
+	ATOM(sym) = 0;
+	SYM_NAME(sym) = nam;
+	SYM_PROP(sym) = scm->nil; /* no properties yet */
+
+	/* chain the symbol entity to the symbol table for lookups later */
+	pair = qse_scm_makepairent (scm, sym, scm->symtab);
+	if (pair == QSE_NULL) return QSE_NULL;
+	scm->symtab = pair;
+
+	return sym;
 }
 
-qse_scm_assoc_t* qse_scm_setfunc (
-	qse_scm_mem_t* mem, qse_scm_obj_t* name, qse_scm_obj_t* func)
+qse_scm_ent_t* qse_scm_makesyntent (
+	qse_scm_t* scm, const qse_char_t* name, int code)
 {
-	qse_scm_assoc_t* assoc;
+	qse_scm_ent_t* v;
 
-	assoc = qse_scm_lookup (mem, name);
-	if (assoc == QSE_NULL) 
-	{
-		assoc = qse_scm_insfuncintoframe (
-			mem->scm, mem->root_frame, name, func);
-		if (assoc == QSE_NULL) return QSE_NULL;
-	}
-	else assoc->func = func;
+	QSE_ASSERTX (code > 0, "Syntax code must be greater than 0");
 
-	return assoc;
+	v = qse_scm_makesyment (scm, name);
+	if (v == QSE_NULL) return QSE_NULL;
+
+	/* We piggy-back the syntax code to a symbol name.
+	 * The syntax entity is basically a symbol except that the
+	 * code field of its label entity is set to non-zero. 
+	 * Read the comment in qse_scm_makeprocent() for difference between
+	 * the syntax entity and the procedure entity.
+	 */
+	TYPE(v) |= QSE_SCM_ENT_SYNT; 
+	SYNT_CODE(v) = code; 
+
+	return v;
 }
 
-qse_size_t qse_scm_conslen (qse_scm_mem_t* mem, qse_scm_obj_t* obj)
+qse_scm_ent_t* qse_scm_makeprocent (
+	qse_scm_t* scm, const qse_char_t* name, int code)
 {
-	qse_size_t count;
+	qse_scm_ent_t* sym, * proc, * pair;
 
-	QSE_ASSERT (
-		obj == mem->nil || QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_CONS);
+	/* A procedure entity is a built-in function that can be
+	 * overridden by a user while a syntax entity represents a 
+	 * lower-level syntactic function that can't be overridden.
+	 * 
+	 * (define lambda 10) is legal but does not change the
+	 *    meaning of lambda when used as a function name. 	
+	 *
+	 * (define tail 10) changes the meaning of eval totally.
+	 * (tail '(1 2 3)) is not legal from now on.
+	 *
+	 * (define x lambda) is illegal as the lambda symbol
+	 *
+	 * (define lambda 10) followed by (define x lambda) lets the x symbol
+	 * to be associated with 10 but you still can use lambda to create
+	 * a closure as in ((lambda (x) (+ x 10)) 50)
+	 *
+	 * (define x tail) lets the 'x' symbol point to the eval procedure.
+	 * (x '(1 2 3)) returns (2 3).
+	 *	
+	 * We implement the syntax entity as a symbol itself by ORing
+	 * the TYPE field with QSE_SCM_ENT_SYNT and setting the syntax
+	 * code in the symbol label entity.
+	 *
+	 * A procedure entity is an independent entity unlike the syntax
+	 * entity. We explicitly create a symbol entity for the procedure name
+	 * and associate it with the procedure entity in the global environment.
+	 * If you redefine the symbol name to be something else, you won't be
+	 * able to reference the procedure entity with the name. Worst case,
+	 * it may be GCed out.
+	 */ 
 
-	count = 0;
-	/*while (obj != mem->nil) */
-	while (QSE_SCM_TYPE(obj) == QSE_SCM_OBJ_CONS) 
-	{
-		count++;
-		obj = QSE_SCM_CDR(obj);
-	}
+	/* create a symbol containing the name */
+	sym = qse_scm_makesyment (scm, name);
+	if (sym == QSE_NULL) return QSE_NULL;
 
-	return count;
+	/* create an actual procedure value which is a number containing
+	 * the opcode for the procedure */
+	proc = alloc_entity (scm, sym, QSE_NULL);
+	if (proc == QSE_NULL) return QSE_NULL;
+	TYPE(proc) = QSE_SCM_ENT_PROC;
+	ATOM(proc) = 1;
+	PROC_CODE(proc) = code; 
+	
+	/* create a pair containing the name symbol and the procedure value */
+	pair = qse_scm_makepairent (scm, sym, proc);
+	if (pair == QSE_NULL) return QSE_NULL;
+
+	/* link it to the global environment */
+	pair = qse_scm_makepairent (scm, pair, PAIR_CAR(scm->gloenv));
+	if (pair == QSE_NULL) return QSE_NULL;
+	PAIR_CAR(scm->gloenv) = pair;
+
+	return proc;
 }
-
-
 

@@ -129,6 +129,24 @@ typedef qse_scm_ent_t* (*qse_scm_prim_t) (
 	qse_scm_ent_t* obj
 );
 
+#define QSE_SCM_ENT_ISNIL(scm,ent) ((ent) == (scm)->nil)
+
+#define QSE_SCM_ENT_ISSMALLINT(scm,ent) ((qse_uintptr_t)(ent) & 1)
+
+/* TODO: need more typecasting to something like int? how to i determine 
+ *       the best type for the range in CAN_BE_SMALLINT()? 
+#define QSE_SCM_ENT_FROMSMALLINT(x) ((int)((qse_uintptr_t)(x) >> 1))
+ */
+#define QSE_SCM_ENT_FROMSMALLINT(scm,ent) \
+	((qse_uintptr_t)(ent) >> 1)
+
+/* TODO: change the smallint range... */
+#define QSE_SCM_ENT_TOSMALLINT(scm,num) \
+	((qse_scm_ent_t*)(qse_uintptr_t)(((num) << 1) | 1))
+
+#define QSE_SCM_ENT_CANBESMALLINT(scm,num) \
+	(((num) >= -16384) && ((num) <= 16383))
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -248,6 +266,51 @@ int qse_scm_addprim (
 int qse_scm_removeprim (
 	qse_scm_t* scm,
 	const qse_char_t* name
+);
+
+
+qse_scm_ent_t* qse_scm_makepairent (
+	qse_scm_t*     scm,
+	qse_scm_ent_t* car,
+	qse_scm_ent_t* cdr
+);
+
+qse_scm_ent_t* qse_scm_makenument (
+	qse_scm_t* scm,
+	qse_long_t val
+);
+
+qse_scm_ent_t* qse_scm_makerealent (
+	qse_scm_t* scm,
+	qse_long_t val
+);
+
+qse_scm_ent_t* qse_scm_makestrent (
+	qse_scm_t*        scm,
+	const qse_char_t* str,
+	qse_size_t        len
+);
+
+qse_scm_ent_t* qse_scm_makenamentity (
+	qse_scm_t*        scm,
+	const qse_char_t* str
+);
+
+qse_scm_ent_t* qse_scm_makesyment (
+	qse_scm_t*        scm,
+	const qse_char_t* name
+);
+
+qse_scm_ent_t* qse_scm_makesyntent (
+	qse_scm_t*        scm,
+	const qse_char_t* name,
+	int               code
+);
+
+qse_scm_ent_t* qse_scm_makeprocent (
+	qse_scm_t*        scm,
+	const qse_char_t* name,	
+	int               code
 );
 
 #ifdef __cplusplus

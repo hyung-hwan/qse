@@ -36,13 +36,94 @@
 	} \
 )
 
+static qse_size_t long_to_str (
+	qse_long_t value, int radix, 
+	const qse_char_t* prefix, qse_char_t* buf, qse_size_t size)
+{
+	qse_long_t t, rem;
+	qse_size_t len, ret, i;
+	qse_size_t prefix_len;
+
+	prefix_len = (prefix != QSE_NULL)? qse_strlen(prefix): 0;
+
+	t = value;
+	if (t == 0)
+	{
+		/* zero */
+		if (buf == QSE_NULL) 
+		{
+			/* if buf is not given, 
+			 * return the number of bytes required */
+			return prefix_len + 1;
+		}
+
+		if (size < prefix_len+1) 
+		{
+			/* buffer too small */
+			return (qse_size_t)-1;
+		}
+
+		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
+		buf[prefix_len] = QSE_T('0');
+		if (size > prefix_len+1) buf[prefix_len+1] = QSE_T('\0');
+		return prefix_len+1;
+	}
+
+	/* non-zero values */
+	len = prefix_len;
+	if (t < 0) { t = -t; len++; }
+	while (t > 0) { len++; t /= radix; }
+
+	if (buf == QSE_NULL)
+	{
+		/* if buf is not given, return the number of bytes required */
+		return len;
+	}
+
+	if (size < len) return (qse_size_t)-1; /* buffer too small */
+	if (size > len) buf[len] = QSE_T('\0');
+	ret = len;
+
+	t = value;
+	if (t < 0) t = -t;
+
+	while (t > 0) 
+	{
+		rem = t % radix;
+		if (rem >= 10)
+			buf[--len] = (qse_char_t)rem + QSE_T('a') - 10;
+		else
+			buf[--len] = (qse_char_t)rem + QSE_T('0');
+		t /= radix;
+	}
+
+	if (value < 0) 
+	{
+		for (i = 1; i <= prefix_len; i++) 
+		{
+			buf[i] = prefix[i-1];
+			len--;
+		}
+		buf[--len] = QSE_T('-');
+	}
+	else
+	{
+		for (i = 0; i < prefix_len; i++) buf[i] = prefix[i];
+	}
+
+	return ret;
+}
+
 static int print_entity (
 	qse_scm_t* scm, const qse_scm_ent_t* obj, int prt_cons_par)
 {
 	qse_char_t buf[256];
+	qse_long_t nval;
 
-	if (IS_SMALLINT(obj))
+	if (IS_SMALLINT(scm,obj))
 	{
+		nval = FROM_SMALLINT(scm,obj);
+		goto printnum;
 	}
 
 	switch (TYPE(obj)) 
@@ -60,31 +141,17 @@ static int print_entity (
 			break;
 
 		case QSE_SCM_ENT_NUM:
-		#if QSE_SIZEOF_LONG_LONG > 0
-			scm->prm.sprintf (
-				scm->prm.udd,
-				buf, QSE_COUNTOF(buf), 
-				QSE_T("%lld"), (long long)NUM_VALUE(obj));
-		#elif QSE_SIZEOF___INT64 > 0
-			scm->prm.sprintf (
-				scm->prm.udd,
-				buf, QSE_COUNTOF(buf), 
-				QSE_T("%I64d"), (__int64)NUM_VALUE(obj));
-		#elif QSE_SIZEOF_LONG > 0
-			scm->prm.sprintf (
-				scm->prm.udd,
-				buf, QSE_COUNTOF(buf), 
-				QSE_T("%ld"), (long)NUM_VALUE(obj));
-		#elif QSE_SIZEOF_INT > 0
-			scm->prm.sprintf (
-				scm->prm.udd,
-				buf, QSE_COUNTOF(buf), 
-				QSE_T("%d"), (int)NUM_VALUE(obj));
-		#else
-			#error unsupported size		
-		#endif
-			OUTPUT_STR (scm, buf);
+		{
+			qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2];
+			qse_size_t len;
+
+			nval = NUM_VALUE(obj);
+
+		printnum:
+			len = long_to_str (nval, 10, QSE_NULL, tmp, QSE_COUNTOF(tmp));
+               OUTPUT_STRX (scm, tmp, len);
 			break;
+		}
 
 #if 0
 		case QSE_SCM_ENT_REAL:
@@ -122,7 +189,7 @@ static int print_entity (
 			{
 				qse_scm_print (scm, PAIR_CAR(p));
 				p = PAIR_CDR(p);
-				if (!IS_NIL(p))
+				if (!IS_NIL(scm,p))
 				{
 					OUTPUT_STR (scm, QSE_T(" "));
 					if (TYPE(p) != QSE_SCM_ENT_PAIR) 

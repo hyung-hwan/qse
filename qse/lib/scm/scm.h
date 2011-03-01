@@ -208,6 +208,13 @@ struct qse_scm_t
 	} mem;
 };
 
+
+#define IS_NIL(scm,ent)          QSE_SCM_ENT_ISNIL(scm,ent)
+#define IS_SMALLINT(scm,ent)     QSE_SCM_ENT_ISSMALLINT(scm,ent)
+#define FROM_SMALLINT(scm,ent)   QSE_SCM_ENT_FROMSMALLINT(scm,ent)
+#define TO_SMALLINT(scm,num)     QSE_SCM_ENT_TOSMALLINT(scm,num)
+#define CAN_BE_SMALLINT(scm,num) QSE_SCM_ENT_CANBESMALLINT(scm,num)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -218,4 +225,5 @@ const qse_char_t* qse_scm_dflerrstr (qse_scm_t* scm, qse_scm_errnum_t errnum);
 #ifdef __cplusplus
 }
 #endif
+
 #endif
