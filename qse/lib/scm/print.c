@@ -114,12 +114,30 @@ static qse_size_t long_to_str (
 	return ret;
 }
 
+static QSE_INLINE push (qse_scm_t* scm, qse_scm_ent_t* obj)
+{
+	qse_scm_ent_t* top;
+
+	top = qse_scm_makepairent (scm, obj, scm->p.s);
+	if (top == QSE_NULL) return -1;	
+
+	scm->p.s = top;
+	return 0;
+}
+
+static QSE_INLINE qse_scm_ent_t* pop (qse_scm_t* scm)
+{
+	qse_scm_ent_t* top = scm->p.s;
+	scm->p.s = PAIR_CDR(scm->p.s);
+	return PAIR_CAR(top);
+}
+
 static int print_entity (
 	qse_scm_t* scm, const qse_scm_ent_t* obj, int prt_cons_par)
 {
-	qse_char_t buf[256];
 	qse_long_t nval;
 
+retry:
 	if (IS_SMALLINT(scm,obj))
 	{
 		nval = FROM_SMALLINT(scm,obj);
@@ -155,6 +173,8 @@ static int print_entity (
 
 #if 0
 		case QSE_SCM_ENT_REAL:
+		{
+			qse_char_t buf[256];
 			scm->prm.sprintf (
 				scm->prm.udd,
 				buf, QSE_COUNTOF(buf), 
@@ -168,6 +188,7 @@ static int print_entity (
 
 			OUTPUT_STR (scm, buf);
 			break;
+		}
 #endif
 
 		case QSE_SCM_ENT_SYM:
@@ -185,6 +206,35 @@ static int print_entity (
 		{
 			const qse_scm_ent_t* p = obj;
 			if (prt_cons_par) OUTPUT_STR (scm, QSE_T("("));
+
+			do
+			{
+				if (push (scm, PAIR_CDR(p)) <= -1) return -1;
+				obj = PAIR_CAR(p);
+				goto retry;
+
+			resume:
+				p = pop (scm);
+				if (!IS_NIL(scm,p))
+				{
+					OUTPUT_STR (scm, QSE_T(" "));
+					if (IS_SMALLINT(scm,p) || TYPE(p) != QSE_SCM_ENT_PAIR) 
+					{
+						OUTPUT_STR (scm, QSE_T(". "));
+						
+						// push resume location
+						// push ....
+						if (push (scm, 1) <= -1) return -1;
+						obj = p;
+						goto retry;
+						//qse_scm_print (scm, p);
+					}
+				}
+			}
+			while (!IS_NIL(scm,p) && !IS_SMALLINT(scm,p) && TYPE(p) == QSE_SCM_ENT_PAIR);
+			if (prt_cons_par) OUTPUT_STR (scm, QSE_T(")"));
+
+#if 0
 			do 
 			{
 				qse_scm_print (scm, PAIR_CAR(p));
@@ -201,37 +251,25 @@ static int print_entity (
 			} 
 			while (p != scm->nil && TYPE(p) == QSE_SCM_ENT_PAIR);
 			if (prt_cons_par) OUTPUT_STR (scm, QSE_T(")"));
+#endif
 
 			break;
 		}
 
-#if 0
-		case QSE_SCM_ENT_FUNC:
-			/*OUTPUT_STR (scm, QSE_T("func"));*/
-			OUTPUT_STR (scm, QSE_T("(lambda "));
-			if (print_entity (scm, QSE_SCM_FFORMAL(obj), 1) == -1) return -1;
-			OUTPUT_STR (scm, QSE_T(" "));
-			if (print_entity (scm, QSE_SCM_FBODY(obj), 0) == -1) return -1;
-			OUTPUT_STR (scm, QSE_T(")"));
+		#if 0
+		case QSE_SCM_ENT_PROC:
 			break;
-
-		case QSE_SCM_ENT_MACRO:
-			OUTPUT_STR (scm, QSE_T("(macro "));
-			if (print_entity (scm, QSE_SCM_FFORMAL(obj), 1) == -1) return -1;
-			OUTPUT_STR (scm, QSE_T(" "));
-			if (print_entity (scm, QSE_SCM_FBODY(obj), 0) == -1) return -1;
-			OUTPUT_STR (scm, QSE_T(")"));
-			break;
-		case QSE_SCM_ENT_PRIM:
-			OUTPUT_STR (scm, QSE_T("prim"));
-			break;
-#endif
+		#endif
 
 		default:
 			QSE_ASSERT (!"should never happen - unknown entity type");
 			qse_scm_seterror (scm, QSE_SCM_EINTERN, QSE_NULL, QSE_NULL);
 			return -1;
 	}
+
+	
+	/* if the print stack is not empty, we still got more to print */
+	if (!IS_NIL(scm,scm->p.s)) goto resume; 
 
 	return 0;
 }

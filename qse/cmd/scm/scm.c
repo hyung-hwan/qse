@@ -164,6 +164,7 @@ int scm_main (int argc, qse_char_t* argv[])
 		qse_scm_attachio (scm, &io);
 	}
 
+//qse_scm_read (scm);
 qse_scm_print (scm, qse_scm_read (scm));
 
 #if 0
