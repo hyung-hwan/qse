@@ -180,6 +180,12 @@ struct qse_scm_t
 		qse_scm_ent_t* e; /* last entity read */
 	} r;
 
+	struct
+	{
+		qse_scm_ent_t* s; /* stack for printing */
+		qse_scm_ent_t* e; /* top entity being printed */
+	} p;
+
 	/* common values */
 	qse_scm_ent_t* nil;
 	qse_scm_ent_t* t;

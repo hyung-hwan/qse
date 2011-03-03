@@ -71,7 +71,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsescm_la_DEPENDENCIES =
-am_libqsescm_la_OBJECTS = scm.lo mem.lo print.lo err.lo
+am_libqsescm_la_OBJECTS = scm.lo mem.lo read.lo print.lo err.lo
 libqsescm_la_OBJECTS = $(am_libqsescm_la_OBJECTS)
 libqsescm_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -238,7 +238,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 lib_LTLIBRARIES = libqsescm.la 
-libqsescm_la_SOURCES = scm.h scm.c mem.c print.c err.c
+libqsescm_la_SOURCES = scm.h scm.c mem.c read.c print.c err.c
 libqsescm_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsescm_la_LIBADD = -lqsecmn
 all: all-am
@@ -318,6 +318,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/print.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/read.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scm.Plo@am__quote@
 
 .c.o:
