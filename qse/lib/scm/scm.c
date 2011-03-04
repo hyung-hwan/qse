@@ -157,14 +157,14 @@ static qse_scm_t* qse_scm_init (
 {
 	static qse_scm_ent_t static_values[3] =
 	{
-		/* dswcount, mark, atom, type */
+		/* dswcount, mark, atom, synt, type */
 
 		/* nil */
-		{ 0, 1, 1, QSE_SCM_ENT_NIL },
+		{ 0, 1, 1, 0, QSE_SCM_ENT_NIL },
 		/* f */
-		{ 0, 1, 1, QSE_SCM_ENT_T | QSE_SCM_ENT_BOOL }, 
+		{ 0, 1, 1, 0, QSE_SCM_ENT_T }, 
 		/* t */
-		{ 0, 1, 1, QSE_SCM_ENT_F | QSE_SCM_ENT_BOOL }
+		{ 0, 1, 1, 0, QSE_SCM_ENT_F }
 	};
 
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
@@ -188,8 +188,8 @@ static qse_scm_t* qse_scm_init (
 
 	/* initialize common values */
 	scm->nil    = &static_values[0];
-	scm->f      = &static_values[1];
-	scm->t      = &static_values[2];
+	scm->t      = &static_values[1];
+	scm->f      = &static_values[2];
 	scm->lambda = scm->nil;
 	scm->quote  = scm->nil;
 
