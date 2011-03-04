@@ -114,7 +114,7 @@ static qse_size_t long_to_str (
 	return ret;
 }
 
-static QSE_INLINE push (qse_scm_t* scm, qse_scm_ent_t* obj)
+static QSE_INLINE int push (qse_scm_t* scm, qse_scm_ent_t* obj)
 {
 	qse_scm_ent_t* top;
 
@@ -132,16 +132,25 @@ static QSE_INLINE qse_scm_ent_t* pop (qse_scm_t* scm)
 	return PAIR_CAR(top);
 }
 
-static int print_entity (
-	qse_scm_t* scm, const qse_scm_ent_t* obj, int prt_cons_par)
+static QSE_INLINE print_num (qse_scm_t* scm, qse_long_t nval)
 {
-	qse_long_t nval;
+	qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2];
+	qse_size_t len;
 
-retry:
+	len = long_to_str (nval, 10, QSE_NULL, tmp, QSE_COUNTOF(tmp));
+	OUTPUT_STRX (scm, tmp, len);
+	return 0;
+}
+
+static int print_entity (qse_scm_t* scm, const qse_scm_ent_t* obj)
+{
+	const qse_scm_ent_t* cur;
+
+next:
 	if (IS_SMALLINT(scm,obj))
 	{
-		nval = FROM_SMALLINT(scm,obj);
-		goto printnum;
+		if (print_num (scm, FROM_SMALLINT(scm,obj)) <= -1) return -1;
+		goto done;
 	}
 
 	switch (TYPE(obj)) 
@@ -160,14 +169,7 @@ retry:
 
 		case QSE_SCM_ENT_NUM:
 		{
-			qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2];
-			qse_size_t len;
-
-			nval = NUM_VALUE(obj);
-
-		printnum:
-			len = long_to_str (nval, 10, QSE_NULL, tmp, QSE_COUNTOF(tmp));
-               OUTPUT_STRX (scm, tmp, len);
+			if (print_num (scm, NUM_VALUE(obj)) <= -1) return -1;
 			break;
 		}
 
@@ -192,6 +194,9 @@ retry:
 #endif
 
 		case QSE_SCM_ENT_SYM:
+			/* Any needs for special action if SYNT(obj) is true?
+			 * I simply treat the syntax symbol as a normal symbol
+			 * for printing currently. */
 			OUTPUT_STR (scm, LAB_PTR(SYM_NAME(obj)));
 			break;
 
@@ -204,55 +209,52 @@ retry:
 
 		case QSE_SCM_ENT_PAIR:
 		{
-			const qse_scm_ent_t* p = obj;
-			if (prt_cons_par) OUTPUT_STR (scm, QSE_T("("));
+			
+			OUTPUT_STR (scm, QSE_T("("));
+			cur = obj;
 
 			do
 			{
-				if (push (scm, PAIR_CDR(p)) <= -1) return -1;
-				obj = PAIR_CAR(p);
-				goto retry;
+				/* Push what to print next on to the stack 
+				 * the variable p is */
+				if (push (scm, PAIR_CDR(cur)) <= -1) return -1;
+
+				obj = PAIR_CAR(cur);
+				/* Jump to the 'next' label so that the entity 
+				 * pointed to by 'obj' is printed. Once it 
+				 * ends, a jump back to the 'resume' label
+				 * is made at the at of this function. */
+				goto next; 
 
 			resume:
-				p = pop (scm);
-				if (!IS_NIL(scm,p))
+				cur = pop (scm); /* Get back the CDR pushed */
+				if (IS_NIL(scm,cur)) 
 				{
-					OUTPUT_STR (scm, QSE_T(" "));
-					if (IS_SMALLINT(scm,p) || TYPE(p) != QSE_SCM_ENT_PAIR) 
-					{
-						OUTPUT_STR (scm, QSE_T(". "));
+					/* The CDR part points to a NIL entity, which
+					 * indicates the end of a list. break the loop */
+					break;
+				}
+				if (IS_SMALLINT(scm,cur) || TYPE(cur) != QSE_SCM_ENT_PAIR) 
+				{
+					/* The CDR part does not point to a pair. */
+					OUTPUT_STR (scm, QSE_T(" . "));
 						
-						// push resume location
-						// push ....
-						if (push (scm, 1) <= -1) return -1;
-						obj = p;
-						goto retry;
-						//qse_scm_print (scm, p);
-					}
+					/* Push NIL so that the IS_NIL(scm,p) test in 
+					 * the 'if' statement above breaks the loop
+					 * after the jump is maded back to the 'resume' 
+					 * label. */
+					if (push (scm, scm->nil) <= -1) return -1;
+
+					/* Make a jump to 'next' to print the CDR part */
+					obj = cur;
+					goto next;
 				}
+
+				/* The CDR part points to a pair. proceed to it */
+				OUTPUT_STR (scm, QSE_T(" "));
 			}
-			while (!IS_NIL(scm,p) && !IS_SMALLINT(scm,p) && TYPE(p) == QSE_SCM_ENT_PAIR);
-			if (prt_cons_par) OUTPUT_STR (scm, QSE_T(")"));
-
-#if 0
-			do 
-			{
-				qse_scm_print (scm, PAIR_CAR(p));
-				p = PAIR_CDR(p);
-				if (!IS_NIL(scm,p))
-				{
-					OUTPUT_STR (scm, QSE_T(" "));
-					if (TYPE(p) != QSE_SCM_ENT_PAIR) 
-					{
-						OUTPUT_STR (scm, QSE_T(". "));
-						qse_scm_print (scm, p);
-					}
-				}
-			} 
-			while (p != scm->nil && TYPE(p) == QSE_SCM_ENT_PAIR);
-			if (prt_cons_par) OUTPUT_STR (scm, QSE_T(")"));
-#endif
-
+			while (1);
+			OUTPUT_STR (scm, QSE_T(")"));
 			break;
 		}
 
@@ -262,13 +264,16 @@ retry:
 		#endif
 
 		default:
-			QSE_ASSERT (!"should never happen - unknown entity type");
+			QSE_ASSERTX (
+				0,
+				"Unknown entity type - buggy!!"
+			);
 			qse_scm_seterror (scm, QSE_SCM_EINTERN, QSE_NULL, QSE_NULL);
 			return -1;
 	}
 
-	
-	/* if the print stack is not empty, we still got more to print */
+done:
+	/* if the printing stack is not empty, we still got more to print */
 	if (!IS_NIL(scm,scm->p.s)) goto resume; 
 
 	return 0;
@@ -276,10 +281,23 @@ retry:
 
 int qse_scm_print (qse_scm_t* scm, const qse_scm_ent_t* obj)
 {
+	int n;
+
 	QSE_ASSERTX (
 		scm->io.fns.out != QSE_NULL, 
 		"Specify output function before calling qse_scm_print()"
 	);	
 
-	return print_entity (scm, obj, 1);
+	n = print_entity (scm, obj);
+
+	/* clear the printing stack if an error has occurred for GC not to keep
+	 * the entities in the stack */
+	if (n <= -1) scm->p.s = scm->nil;
+
+	QSE_ASSERTX (
+		IS_NIL(scm,scm->p.s),
+		"The printing stack is not empty after printing - buggy!!"
+	);
+		
+	return n;
 }

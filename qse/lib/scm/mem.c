@@ -458,13 +458,7 @@ qse_scm_ent_t* qse_scm_makesyntent (
 	v = qse_scm_makesyment (scm, name);
 	if (v == QSE_NULL) return QSE_NULL;
 
-	/* We piggy-back the syntax code to a symbol name.
-	 * The syntax entity is basically a symbol except that the
-	 * code field of its label entity is set to non-zero. 
-	 * Read the comment in qse_scm_makeprocent() for difference between
-	 * the syntax entity and the procedure entity.
-	 */
-	TYPE(v) |= QSE_SCM_ENT_SYNT; 
+	SYNT(v) = 1;
 	SYNT_CODE(v) = code; 
 
 	return v;

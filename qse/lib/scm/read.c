@@ -107,7 +107,7 @@ static int read_char (qse_scm_t* scm)
 		else scm->r.curloc.colm++;
 	}
 
-qse_printf (QSE_T("[%c]\n"), scm->r.curc);
+/*qse_printf (QSE_T("[%c]\n"), scm->r.curc);*/
 	return 0;
 }
 

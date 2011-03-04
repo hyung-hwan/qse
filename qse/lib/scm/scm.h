@@ -29,24 +29,22 @@
 /* Note that not all these values can be ORed with each other.
  * each value represents its own type except the following combinations.
  *
- *   QSE_SCM_ENT_T | QSE_SCM_ENT_BOOL
- *   QSE_SCM_ENT_F | QSE_SCM_ENT_BOOL
- *   QSE_SCM_ENT_SYM | QSE_SCM_ENT_SYNT
+ *   QSE_SCM_ENT_T
+ *   QSE_SCM_ENT_F
+ *   QSE_SCM_ENT_SYM 
  */
 enum qse_scm_ent_type_t
 {
 	QSE_SCM_ENT_NIL     = (1 << 0),
 	QSE_SCM_ENT_T       = (1 << 1),
 	QSE_SCM_ENT_F       = (1 << 2),
-	QSE_SCM_ENT_BOOL    = (1 << 3),
-	QSE_SCM_ENT_NUM     = (1 << 4),
-	QSE_SCM_ENT_REAL    = (1 << 5),
-	QSE_SCM_ENT_STR     = (1 << 6), 
-	QSE_SCM_ENT_NAM     = (1 << 7),
-	QSE_SCM_ENT_SYM     = (1 << 8),
-	QSE_SCM_ENT_PAIR    = (1 << 9),
-	QSE_SCM_ENT_PROC    = (1 << 10),
-	QSE_SCM_ENT_SYNT    = (1 << 11)
+	QSE_SCM_ENT_NUM     = (1 << 3),
+	QSE_SCM_ENT_REAL    = (1 << 4),
+	QSE_SCM_ENT_STR     = (1 << 5), 
+	QSE_SCM_ENT_NAM     = (1 << 6),
+	QSE_SCM_ENT_SYM     = (1 << 7),
+	QSE_SCM_ENT_PAIR    = (1 << 8),
+	QSE_SCM_ENT_PROC    = (1 << 9)
 
 };
 
@@ -66,7 +64,8 @@ struct qse_scm_ent_t
 	qse_uint32_t dswcount: 2;
 	qse_uint32_t mark:     1;
 	qse_uint32_t atom:     1;
-	qse_uint32_t type:     28;
+	qse_uint32_t synt:     1;
+	qse_uint32_t type:     27;
 
 	union
 	{
@@ -108,8 +107,10 @@ struct qse_scm_ent_t
 
 #define DSWCOUNT(v)       ((v)->dswcount)
 #define MARK(v)           ((v)->mark)
-#define TYPE(v)           ((v)->type)
 #define ATOM(v)           ((v)->atom)
+#define SYNT(v)           ((v)->synt)
+#define TYPE(v)           ((v)->type)
+
 #define NUM_VALUE(v)      ((v)->u.num.val)
 #define REAL_VALUE(v)     ((v)->u.real.val)
 #define STR_PTR(v)        ((v)->u.str.ptr)
@@ -118,10 +119,10 @@ struct qse_scm_ent_t
 #define LAB_CODE(v)       ((v)->u.lab.code)
 #define SYM_NAME(v)       ((v)->u.ref.ent[0])
 #define SYM_PROP(v)       ((v)->u.ref.ent[1])
+#define SYNT_CODE(v)      LAB_CODE(SYM_NAME(v))
 #define PAIR_CAR(v)       ((v)->u.ref.ent[0])
 #define PAIR_CDR(v)       ((v)->u.ref.ent[1])
 #define PROC_CODE(v)      ((v)->u.proc.code)
-#define SYNT_CODE(v)      LAB_CODE(SYM_NAME(v))
 
 /**
  * The qse_scm_enb_t type defines a value block. A value block is allocated
