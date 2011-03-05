@@ -232,42 +232,35 @@ void qse_scm_detachio (
 	qse_scm_t* scm   /**< scheme */
 );
 
+/**
+ * The qse_scm_read() function reads a textual expression into an entity.
+ */
 qse_scm_ent_t* qse_scm_read (
 	qse_scm_t* scm /**< scheme */
 );
 
+/**
+ * The qse_scm_eval() function evaluates an entity.
+ */
 qse_scm_ent_t* qse_scm_eval (
 	qse_scm_t*     scm, /**< scheme */
-	qse_scm_ent_t* obj
+	qse_scm_ent_t* obj  /**< entity */
 );
 
+/**
+ * The qse_scm_print() function prints an entity.
+ */
 int qse_scm_print (
 	qse_scm_t*           scm, /**< scheme */
-	const qse_scm_ent_t* obj
+	const qse_scm_ent_t* obj  /**< entity */
 );
 
 /**
  * The qse_scm_gc() function invokes the garbage collector
  */
 void qse_scm_gc (
-	qse_scm_t* scm /**< scheme */
+	qse_scm_t*     scm /**< scheme */
 );
-
-
-int qse_scm_addprim (
-	qse_scm_t* scm,
-	const qse_char_t* name,
-	qse_size_t name_len, 
-	qse_scm_prim_t prim,
-	qse_size_t min_args,
-	qse_size_t max_args
-);
-
-int qse_scm_removeprim (
-	qse_scm_t* scm,
-	const qse_char_t* name
-);
-
 
 qse_scm_ent_t* qse_scm_makepairent (
 	qse_scm_t*     scm,
