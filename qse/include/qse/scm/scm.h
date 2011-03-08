@@ -92,6 +92,7 @@ enum qse_scm_errnum_t
 {
 	QSE_SCM_ENOERR,
 	QSE_SCM_ENOMEM,
+	QSE_SCM_EINTERN,
 
 	QSE_SCM_EEXIT,
 	QSE_SCM_EEND,
@@ -100,11 +101,11 @@ enum qse_scm_errnum_t
 	QSE_SCM_EENDSTR,
 	QSE_SCM_ESHARP,
 	QSE_SCM_EDOT,
-
-	QSE_SCM_EINTERN,
-	QSE_SCM_ELSTDEEP,
 	QSE_SCM_ELPAREN,
 	QSE_SCM_ERPAREN,
+	QSE_SCM_ELSTDEEP,
+
+	QSE_SCM_EVARBAD,
 	QSE_SCM_EARGBAD,
 	QSE_SCM_EARGFEW,
 	QSE_SCM_EARGMANY,
@@ -251,8 +252,8 @@ qse_scm_ent_t* qse_scm_eval (
  * The qse_scm_print() function prints an entity.
  */
 int qse_scm_print (
-	qse_scm_t*           scm, /**< scheme */
-	const qse_scm_ent_t* obj  /**< entity */
+	qse_scm_t*     scm, /**< scheme */
+	qse_scm_ent_t* obj  /**< entity */
 );
 
 /**
@@ -297,13 +298,19 @@ qse_scm_ent_t* qse_scm_makesyment (
 qse_scm_ent_t* qse_scm_makesyntent (
 	qse_scm_t*        scm,
 	const qse_char_t* name,
-	int               code
+	void*             uptr
 );
 
 qse_scm_ent_t* qse_scm_makeprocent (
 	qse_scm_t*        scm,
 	const qse_char_t* name,	
 	int               code
+);
+
+qse_scm_ent_t* qse_scm_makeclosent (
+	qse_scm_t*        scm,
+	qse_scm_ent_t*    code,
+	qse_scm_ent_t*    env
 );
 
 #ifdef __cplusplus

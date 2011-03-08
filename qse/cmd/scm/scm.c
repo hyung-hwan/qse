@@ -117,12 +117,12 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('?'):
-				qse_fprintf (QSE_STDERR, QSE_T("Error: illegal option - %c\n"), opt.opt);
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: illegal option - %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
 
 			case QSE_T(':'):
-				qse_fprintf (QSE_STDERR, QSE_T("Error: missing argument for %c\n"), opt.opt);
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: missing argument for %c\n"), opt.opt);
 				print_usage (argv[0]);
 				return -1;
 		}
@@ -130,14 +130,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 	if (opt.ind < argc)
 	{
-		qse_printf (QSE_T("Error: redundant argument - %s\n"), argv[opt.ind]);
+		qse_printf (QSE_T("ERROR: redundant argument - %s\n"), argv[opt.ind]);
 		print_usage (argv[0]);
 		return -1;
 	}
 
 	if (opt_memsize <= 0)
 	{
-		qse_printf (QSE_T("Error: invalid memory size given\n"));
+		qse_printf (QSE_T("ERROR: invalid memory size given\n"));
 		return -1;
 	}
 	return 0;
@@ -153,7 +153,7 @@ int scm_main (int argc, qse_char_t* argv[])
 	scm = qse_scm_open (QSE_NULL, 0, opt_memsize, opt_meminc);
 	if (scm == QSE_NULL) 
 	{
-		qse_printf (QSE_T("Error: cannot create a scm instance\n"));
+		qse_printf (QSE_T("ERROR: cannot create a scm instance\n"));
 		return -1;
 	}
 
@@ -164,8 +164,36 @@ int scm_main (int argc, qse_char_t* argv[])
 		qse_scm_attachio (scm, &io);
 	}
 
-//qse_scm_read (scm);
-qse_scm_print (scm, qse_scm_read (scm));
+{
+qse_scm_ent_t* x1, * x2;
+
+x1 = qse_scm_read (scm);
+if (x1 == QSE_NULL)
+{
+	qse_printf (QSE_T("ERROR: %s\n"), qse_scm_geterrmsg(scm));
+}
+else
+{
+	x2 = qse_scm_eval (scm, x1);
+	if (x2 == QSE_NULL)
+	{
+		qse_printf (QSE_T("ERROR: %s ...\n   "), qse_scm_geterrmsg(scm));
+		qse_scm_print (scm, x1);
+		qse_printf (QSE_T("\n"));
+		
+	}
+	else
+	{
+		qse_printf (QSE_T("Evaluated...\n   "));
+		qse_scm_print (scm, x1);
+		qse_printf (QSE_T("\nTo...\n   "));
+		qse_scm_print (scm, x2);
+		qse_printf (QSE_T("\n"));
+	}
+
+}
+
+}
 
 #if 0
 	while (1)

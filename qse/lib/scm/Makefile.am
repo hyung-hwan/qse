@@ -8,6 +8,6 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsescm.la 
 
-libqsescm_la_SOURCES = scm.h scm.c mem.c read.c print.c err.c
+libqsescm_la_SOURCES = scm.h scm.c mem.c read.c eval.c print.c err.c
 libqsescm_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsescm_la_LIBADD = -lqsecmn

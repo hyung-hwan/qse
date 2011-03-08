@@ -44,16 +44,10 @@ enum qse_scm_ent_type_t
 	QSE_SCM_ENT_NAM     = (1 << 6),
 	QSE_SCM_ENT_SYM     = (1 << 7),
 	QSE_SCM_ENT_PAIR    = (1 << 8),
-	QSE_SCM_ENT_PROC    = (1 << 9)
+	QSE_SCM_ENT_PROC    = (1 << 9),
+	QSE_SCM_ENT_CLOS    = (1 << 10)
 
 };
-
-#if 0
-#define QSE_SCM_ENT_CLOSURE       64    /* 0000000001000000 */
-#define QSE_SCM_ENT_CONTINUATION 128    /* 0000000010000000 */
-#define QSE_SCM_ENT_MACRO        256    /* 0000000100000000 */
-#define QSE_SCM_ENT_PROMISE      512    /* 0000001000000000 */
-#endif
 
 /**
  * The qse_scm_ent_t type defines an entity that represents an individual
@@ -64,7 +58,7 @@ struct qse_scm_ent_t
 	qse_uint32_t dswcount: 2;
 	qse_uint32_t mark:     1;
 	qse_uint32_t atom:     1;
-	qse_uint32_t synt:     1;
+	qse_uint32_t synt:     1; /* can be set to 1 if type is QSE_SCM_ENT_SYM */
 	qse_uint32_t type:     27;
 
 	union
@@ -90,7 +84,7 @@ struct qse_scm_ent_t
 		struct
 		{
 			qse_char_t* ptr;  /* null-terminated string */
-			int         code; /* used for syntax entities only */
+			void*       uptr; /* used for syntax entities only */
 		} lab; /* label */
 
 		struct
@@ -116,13 +110,15 @@ struct qse_scm_ent_t
 #define STR_PTR(v)        ((v)->u.str.ptr)
 #define STR_LEN(v)        ((v)->u.str.len)
 #define LAB_PTR(v)        ((v)->u.lab.ptr)
-#define LAB_CODE(v)       ((v)->u.lab.code)
+#define LAB_UPTR(v)       ((v)->u.lab.uptr)
 #define SYM_NAME(v)       ((v)->u.ref.ent[0])
 #define SYM_PROP(v)       ((v)->u.ref.ent[1])
-#define SYNT_CODE(v)      LAB_CODE(SYM_NAME(v))
+#define SYNT_UPTR(v)      LAB_UPTR(SYM_NAME(v))
 #define PAIR_CAR(v)       ((v)->u.ref.ent[0])
 #define PAIR_CDR(v)       ((v)->u.ref.ent[1])
 #define PROC_CODE(v)      ((v)->u.proc.code)
+#define CLOS_CODE(v)      ((v)->u.ref.ent[0])
+#define CLOS_ENV(v)       ((v)->u.ref.ent[1])
 
 /**
  * The qse_scm_enb_t type defines a value block. A value block is allocated
@@ -179,13 +175,28 @@ struct qse_scm_t
 
 		qse_scm_ent_t* s; /* stack for reading */
 		qse_scm_ent_t* e; /* last entity read */
-	} r;
+	} r; 
 
+	/** data for printing */
 	struct
 	{
 		qse_scm_ent_t* s; /* stack for printing */
 		qse_scm_ent_t* e; /* top entity being printed */
-	} p;
+	} p; 
+
+	/* data for evaluation */
+	struct
+	{
+		int (*op) (qse_scm_t*);
+
+		qse_scm_ent_t* in;
+		qse_scm_ent_t* out;
+
+		qse_scm_ent_t* arg; /* function arguments */
+		qse_scm_ent_t* env; /* current environment */
+		qse_scm_ent_t* cod; /* current code */
+		qse_scm_ent_t* dmp; /* stack register for next evaluation */
+	} e; 
 
 	/* common values */
 	qse_scm_ent_t* nil;
@@ -196,16 +207,6 @@ struct qse_scm_t
 
 	qse_scm_ent_t* gloenv; /* global environment */
 	qse_scm_ent_t* symtab; /* symbol table */
-
-	/* registers */
-	struct
-	{
-		qse_scm_ent_t* arg; /* function arguments */
-		qse_scm_ent_t* env; /* current environment */
-		qse_scm_ent_t* cod; /* current code */
-		qse_scm_ent_t* dmp; /* stack register for next evaluation */
-	} reg;
-
 
 	/* fields for entity allocation */
 	struct
@@ -225,6 +226,14 @@ struct qse_scm_t
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+/* eval.c */
+int qse_scm_dolambda (qse_scm_t* scm);
+int qse_scm_doquote  (qse_scm_t* scm);
+int qse_scm_dodefine (qse_scm_t* scm);
+int qse_scm_dobegin  (qse_scm_t* scm);
+int qse_scm_doif     (qse_scm_t* scm);
 
 /* err.c */
 const qse_char_t* qse_scm_dflerrstr (qse_scm_t* scm, qse_scm_errnum_t errnum);

@@ -128,25 +128,25 @@ int qse_scm_attachio (qse_scm_t* scm, qse_scm_io_t* io)
 	return 0;
 }
 
-#define MAKE_SYNTAX_ENTITY(scm,name,code) QSE_BLOCK( \
-	if (qse_scm_makesyntent (scm, name, code) == QSE_NULL) return -1; \
+#define MAKE_SYNTAX_ENTITY(scm,name,uptr) QSE_BLOCK( \
+	if (qse_scm_makesyntent (scm, name, uptr) == QSE_NULL) return -1; \
 )
 
 static int build_syntax_entities (qse_scm_t* scm)
 {
 	qse_scm_ent_t* v;
 
-	v = qse_scm_makesyntent (scm, QSE_T("lambda"), 1);
+	v = qse_scm_makesyntent (scm, QSE_T("lambda"), qse_scm_dolambda);
 	if (v == QSE_NULL) return -1;
 	scm->lambda = v;
 
-	v = qse_scm_makesyntent (scm, QSE_T("quote"), 2);
+	v = qse_scm_makesyntent (scm, QSE_T("quote"), qse_scm_doquote);
 	if (v == QSE_NULL) return -1;
 	scm->quote = v;
 
-	MAKE_SYNTAX_ENTITY (scm, QSE_T("define"), 3);
-	MAKE_SYNTAX_ENTITY (scm, QSE_T("if"),     4);
-	MAKE_SYNTAX_ENTITY (scm, QSE_T("begin"),  5);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("define"), qse_scm_dodefine);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("begin"),  qse_scm_dobegin);
+	MAKE_SYNTAX_ENTITY (scm, QSE_T("if"),     qse_scm_doif);
 
 	return 0;
 }
@@ -185,7 +185,6 @@ static qse_scm_t* qse_scm_init (
 	scm->r.curloc.colm = 0;
 	if (qse_str_init(&scm->r.t.name, mmgr, 256) == QSE_NULL) return QSE_NULL;
 
-
 	/* initialize common values */
 	scm->nil    = &static_values[0];
 	scm->t      = &static_values[1];
@@ -201,24 +200,24 @@ static qse_scm_t* qse_scm_init (
 	 * below. qse_scm_makepairent() calls alloc_entity() that invokes
 	 * gc() as this is the first time. As gc() marks all the key data,
 	 * we need to initialize these to nil. */
-	scm->reg.arg = scm->nil;
-	scm->reg.dmp = scm->nil;
-	scm->reg.cod = scm->nil;
-	scm->reg.env = scm->nil;
-
 	scm->symtab = scm->nil;
 	scm->gloenv = scm->nil;
+
 	scm->r.s    = scm->nil;
 	scm->r.e    = scm->nil;
 	scm->p.s    = scm->nil;
 	scm->p.e    = scm->nil;
+	scm->e.arg  = scm->nil;
+	scm->e.dmp  = scm->nil;
+	scm->e.cod  = scm->nil;
+	scm->e.env  = scm->nil;
 
 	/* build the global environment entity as a pair */
 	scm->gloenv = qse_scm_makepairent (scm, scm->nil, scm->nil);
 	if (scm->gloenv == QSE_NULL) goto oops;
 
 	/* update the current environment to the global environment */
-	scm->reg.env = scm->gloenv;
+	scm->e.env = scm->gloenv;
 
 	if (build_syntax_entities (scm) <= -1) goto oops;
 	return scm;
