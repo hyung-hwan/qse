@@ -132,7 +132,7 @@ static QSE_INLINE qse_scm_ent_t* pop (qse_scm_t* scm)
 	return PAIR_CAR(top);
 }
 
-static QSE_INLINE print_num (qse_scm_t* scm, qse_long_t nval)
+static QSE_INLINE int print_num (qse_scm_t* scm, qse_long_t nval)
 {
 	qse_char_t tmp[QSE_SIZEOF(qse_long_t)*8+2];
 	qse_size_t len;
@@ -258,10 +258,13 @@ next:
 			break;
 		}
 
-		#if 0
 		case QSE_SCM_ENT_PROC:
+			OUTPUT_STR (scm, QSE_T("#<PROC>"));
 			break;
-		#endif
+
+		case QSE_SCM_ENT_CLOS:
+			OUTPUT_STR (scm, QSE_T("#<CLOSURE>"));
+			break;
 
 		default:
 			QSE_ASSERTX (
@@ -279,7 +282,7 @@ done:
 	return 0;
 }
 
-int qse_scm_print (qse_scm_t* scm, const qse_scm_ent_t* obj)
+int qse_scm_print (qse_scm_t* scm, qse_scm_ent_t* obj)
 {
 	int n;
 
@@ -288,7 +291,14 @@ int qse_scm_print (qse_scm_t* scm, const qse_scm_ent_t* obj)
 		"Specify output function before calling qse_scm_print()"
 	);	
 
-	n = print_entity (scm, obj);
+	QSE_ASSERTX (
+		IS_NIL(scm,scm->p.s),
+		"The printing stack is not empty before printing - buggy!!"
+	);
+
+	scm->p.e = obj; /* remember the head of the entity to print */
+	n = print_entity (scm, obj); /* call the actual printing routine */
+	scm->p.e = scm->nil; /* reset what's remembered */
 
 	/* clear the printing stack if an error has occurred for GC not to keep
 	 * the entities in the stack */

@@ -25,7 +25,9 @@ const qse_char_t* qse_scm_dflerrstr (qse_scm_t* scm, qse_scm_errnum_t errnum)
 	static const qse_char_t* errstr[] = 
 	{
 		QSE_T("no error"),
+
 		QSE_T("out of memory"),
+		QSE_T("internal error"),
 
 		QSE_T("exit"),
 		QSE_T("end of source"),
@@ -34,11 +36,11 @@ const qse_char_t* qse_scm_dflerrstr (qse_scm_t* scm, qse_scm_errnum_t errnum)
 		QSE_T("unexpected end of string"),
 		QSE_T("bad sharp expression"),
 		QSE_T("wrong use of dot"),
-
-		QSE_T("internal error"),
-		QSE_T("list too deep"),
 		QSE_T("left parenthesis expected"),
 		QSE_T("right parenthesis expected"),
+		QSE_T("list too deep"),
+
+		QSE_T("bad variable"),
 		QSE_T("bad arguments"),
 		QSE_T("too few arguments"),
 		QSE_T("too many arguments"),

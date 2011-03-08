@@ -199,10 +199,14 @@ static void gc (qse_scm_t* scm, qse_scm_ent_t* x, qse_scm_ent_t* y)
 	mark (scm, scm->symtab);
 	mark (scm, scm->gloenv);
 
-	mark (scm, scm->reg.arg);
-	mark (scm, scm->reg.env);
-	mark (scm, scm->reg.cod);
-	mark (scm, scm->reg.dmp);
+	mark (scm, scm->r.s);
+	mark (scm, scm->r.e);
+	mark (scm, scm->p.s);
+	mark (scm, scm->p.e);
+	mark (scm, scm->e.arg);
+	mark (scm, scm->e.env);
+	mark (scm, scm->e.cod);
+	mark (scm, scm->e.dmp);
 
 	/* mark the temporaries */
 	if (x) mark (scm, x);
@@ -388,7 +392,7 @@ Calling strdup is not an option as it is not managed...
 		qse_scm_seterror (scm, QSE_SCM_ENOMEM, QSE_NULL, QSE_NULL);
 		return QSE_NULL;
 	}
-	LAB_CODE(v) = 0;
+	LAB_UPTR(v) = QSE_NULL;
 
 	return v;
 }
@@ -449,17 +453,17 @@ qse_scm_ent_t* qse_scm_makesyment (qse_scm_t* scm, const qse_char_t* name)
 }
 
 qse_scm_ent_t* qse_scm_makesyntent (
-	qse_scm_t* scm, const qse_char_t* name, int code)
+	qse_scm_t* scm, const qse_char_t* name, void* uptr)
 {
 	qse_scm_ent_t* v;
 
-	QSE_ASSERTX (code > 0, "Syntax code must be greater than 0");
+	QSE_ASSERTX (uptr != QSE_NULL, "Syntax uptr must not be null");
 
 	v = qse_scm_makesyment (scm, name);
 	if (v == QSE_NULL) return QSE_NULL;
 
 	SYNT(v) = 1;
-	SYNT_CODE(v) = code; 
+	SYNT_UPTR(v) = uptr; 
 
 	return v;
 }
@@ -524,3 +528,17 @@ qse_scm_ent_t* qse_scm_makeprocent (
 	return proc;
 }
 
+qse_scm_ent_t* qse_scm_makeclosent (
+	qse_scm_t* scm, qse_scm_ent_t* code, qse_scm_ent_t* env)
+{
+	qse_scm_ent_t* clos;
+	
+	clos = alloc_entity (scm, code, env);
+	if (clos == QSE_NULL) return QSE_NULL;
+
+	TYPE(clos) = QSE_SCM_ENT_CLOS;
+	CLOS_CODE(clos) = code;	
+	CLOS_ENV(clos) = env;	
+
+	return clos;
+}
