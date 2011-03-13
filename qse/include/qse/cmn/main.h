@@ -55,6 +55,22 @@
 	typedef qse_mchar_t qse_achar_t;
 #endif
 
+/**
+ * The qse_runmain_handler_t type defines the actual function to be
+ * executed by qse_runmain(). Unlike the standard main(), it is passed
+ * arguments in the #qse_char_t type.
+ */
+typedef int (*qse_runmain_handler_t) (
+	int         argc,
+	qse_char_t* argv[]
+);
+
+typedef int (*qse_runmainwithenv_handler_t) (
+	int         argc,
+	qse_char_t* argv[],
+	qse_char_t* envp[]
+);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,12 +80,25 @@ extern "C" {
  * the character mode configured for the library.
  */
 int qse_runmain (
-	int          argc, 
-	qse_achar_t* argv[],
-	int        (*mf)(int,qse_char_t*[])
+	int                   argc,
+	qse_achar_t*          argv[],
+	qse_runmain_handler_t handler
 );
 
-/* TODO - qse_runmain with env, namely, qse_runmaine */
+/**
+ * The qse_runmainwithenv() function helps to invoke a main function 
+ * independent of the character mode configured for the library providing
+ * the enviroment list.
+ */
+int qse_runmainwithenv (
+	int                          argc,
+	qse_achar_t*                 argv[],
+	qse_achar_t*                 envp[],
+	qse_runmainwithenv_handler_t handler
+);
+
+/* TODO: support more weird main functions. for example,
+ *  int main(int argc, char **argv, char **envp, char **apple) in Mac OS X */
 
 #ifdef __cplusplus
 }
