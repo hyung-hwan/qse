@@ -23,84 +23,138 @@
 #include <locale.h>
 #include "mem.h"
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-
-int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
+int qse_runmain (
+	int argc, qse_achar_t* argv[], qse_runmain_handler_t handler)
 {
-	return mf (argc, argv);
-}
+	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
 
-#elif defined(QSE_CHAR_IS_WCHAR)
-
-int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
-{
-	int i, ret;
-	qse_char_t** v;
-	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
-
-	setlocale (LC_ALL, "");
-
-	v = (qse_char_t**) QSE_MMGR_ALLOC (
-		mmgr, argc * QSE_SIZEOF(qse_char_t*));
-	if (v == QSE_NULL) return -1;
-
-	for (i = 0; i < argc; i++) v[i] = QSE_NULL;
-
-	for (i = 0; i < argc; i++) 
+	if (QSE_SIZEOF(qse_achar_t) == QSE_SIZEOF(qse_char_t))
 	{
-		qse_size_t n, len, nlen;
-		qse_size_t mbslen;
-
-		mbslen = qse_mbslen (argv[i]);
-
-		n = qse_mbstowcslen (argv[i], &len);
-		if (n < mbslen)
-		{
-			ret = -1; goto oops;
-		}
-
-		len++; /* include the terminating null */
-
-		v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
-			mmgr, len*QSE_SIZEOF(qse_char_t));
-		if (v[i] == QSE_NULL) 
-		{
-			ret = -1; goto oops;
-		}
-
-		nlen = len;
-		n = qse_mbstowcs (argv[i], v[i], &nlen);
-		if (nlen >= len)
-		{
-			/* no null-termination */
-			ret = -1; goto oops;
-		}
-		if (argv[i][n] != '\0')
-		{		
-			/* partial processing */
-			ret = -1; goto oops;
-		}
+		return handler (argc, (qse_char_t**)argv);
 	}
-
-	/* TODO: envp... */
-	//ret = mf (argc, v, QSE_NULL);
-	ret = mf (argc, v);
-
-oops:
-	for (i = 0; i < argc; i++) 
+	else
 	{
-		if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
+		int i, ret;
+		qse_char_t** v;
+		qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
+
+		v = (qse_char_t**) QSE_MMGR_ALLOC (
+			mmgr, (argc + 1) * QSE_SIZEOF(qse_char_t*));
+		if (v == QSE_NULL) return -1;
+
+		for (i = 0; i < argc + 1; i++) v[i] = QSE_NULL;
+
+		for (i = 0; i < argc; i++)
+		{
+			qse_size_t n, len, nlen;
+			qse_size_t mbslen;
+
+			mbslen = qse_mbslen (argv[i]);
+
+			n = qse_mbstowcslen (argv[i], &len);
+			if (n < mbslen)	{ ret = -1; goto oops; }
+
+			len++; /* include the terminating null */
+
+			v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
+				mmgr, len*QSE_SIZEOF(qse_char_t));
+			if (v[i] == QSE_NULL) { ret = -1; goto oops; }
+
+			nlen = len;
+			n = qse_mbstowcs (argv[i], v[i], &nlen);
+			if (nlen >= len)
+			{
+				/* no null-termination */
+				ret = -1; goto oops;
+			}
+			if (argv[i][n] != '\0')
+			{
+				/* partial processing */
+				ret = -1; goto oops;
+			}
+		}
+
+		ret = handler (argc, v);
+
+	oops:
+		for (i = 0; i < argc + 1; i++)
+		{
+			if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
+		}
+		QSE_MMGR_FREE (mmgr, v);
+
+		return ret;
 	}
-	QSE_MMGR_FREE (mmgr, v);
-
-	return ret;
 }
 
-#else
-
-int qse_runmain (int argc, qse_achar_t* argv[], int(*mf) (int,qse_char_t*[]))
+int qse_runmainwithenv (
+	int argc, qse_achar_t* argv[], 
+	qse_achar_t* envp[], qse_runmainwithenv_handler_t handler)
 {
-	return mf (argc, argv);
-}
+	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
 
-#endif
+	if (QSE_SIZEOF(qse_achar_t) == QSE_SIZEOF(qse_char_t))
+	{
+		return handler (argc, (qse_char_t**)argv, (qse_char_t**)envp);
+	}
+	else
+	{
+		int i, ret, envc;
+		qse_char_t** v;
+		qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
+
+		for (envc = 0; envp[envc]; envc++) ; /* count the number of env items */
+
+		v = (qse_char_t**) QSE_MMGR_ALLOC (
+			mmgr, (argc + 1 + envc + 1) * QSE_SIZEOF(qse_char_t*));
+		if (v == QSE_NULL) return -1;
+
+		for (i = 0; i < argc + 1 + envc + 1; i++) v[i] = QSE_NULL;
+
+		for (i = 0; i < argc + 1 + envc; i++)
+		{
+			qse_size_t n, len, nlen;
+			qse_size_t mbslen;
+			qse_achar_t* x;
+
+			if (i < argc) x = argv[i];
+			else if (i == argc) continue;
+			else x = envp[i - argc - 1];
+		
+			mbslen = qse_mbslen (x);
+
+			n = qse_mbstowcslen (x, &len);
+			if (n < mbslen) { ret = -1; goto oops; }
+
+			len++; /* include the terminating null */
+
+			v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
+				mmgr, len*QSE_SIZEOF(qse_char_t));
+			if (v[i] == QSE_NULL) { ret = -1; goto oops; }
+
+			nlen = len;
+			n = qse_mbstowcs (x, v[i], &nlen);
+			if (nlen >= len)
+			{
+				/* no null-termination */
+				ret = -1; goto oops;
+			}
+			if (x[n] != '\0')
+			{
+				/* partial processing */
+				ret = -1; goto oops;
+			}
+		}
+
+		ret = handler (argc, v, &v[argc + 1]);
+
+	oops:
+		for (i = 0; i < argc + 1 + envc + 1; i++)
+		{
+			if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
+		}
+		QSE_MMGR_FREE (mmgr, v);
+
+		return ret;
+	}
+}

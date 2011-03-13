@@ -1,7 +1,7 @@
 
-dnl AC_PREREQ(2.59)
+dnl AC_PREREQ([2.67])
 
-AC_INIT([qse],[0.5.5],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],,[http://code.abiyo.net/@qse])
+AC_INIT([qse],[0.5.5],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])
 AC_CONFIG_MACRO_DIR([m4])
@@ -36,7 +36,7 @@ dnl avoid "'/bin/rm: cannot remove `libtoolT': No such file or directory"
 RM="$RM -f"
 
 dnl initialize libtool
-AC_PROG_LIBTOOL
+LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 
 dnl overrides the default CFLAGS setting
@@ -73,7 +73,7 @@ esac
 AM_CONDITIONAL(WIN32, test "${platform_win32}" = "yes" )
 
 dnl check the math library (check if -lm is needed)
-AC_CHECK_LIBM
+LT_LIB_M
 AC_SUBST(LIBM, $LIBM)
 
 dnl check header files.
@@ -166,8 +166,7 @@ AC_C_BIGENDIAN(
 	[AC_DEFINE([QSE_ENDIAN_UNKNOWN],[],[Unknown Endian])])
 
 dnl define extra options
-AC_ARG_ENABLE([wchar], [AC_HELP_STRING([--enable-wchar],
-	[use wchar_t a default charater type when enabled (default. yes)])],
+AC_ARG_ENABLE([wchar], [AS_HELP_STRING([--enable-wchar],[use wchar_t a default charater type when enabled (default. yes)])],
 	enable_wchar_is=$enableval,enable_wchar_is=yes)
 test "${ac_cv_sizeof_wchar_t}" = "0" && enable_wchar_is=no
 if test "${enable_wchar_is}" = "yes"
@@ -179,16 +178,14 @@ else
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
 
-AC_ARG_ENABLE([syscall], [AC_HELP_STRING([--enable-syscall],
-	[use the syscall() function to call system calls (default. no)])],
+AC_ARG_ENABLE([syscall], [AS_HELP_STRING([--enable-syscall],[use the syscall() function to call system calls (default. no)])],
 	enable_syscall_is=$enableval,enable_syscall_is=no)
 if test "${enable_syscall_is}" = "yes"
 then
 	AC_DEFINE([QSE_USE_SYSCALL],[],[use the syscall() function to invoke a system call])
 fi
 
-AC_ARG_ENABLE([debug], [AC_HELP_STRING([--enable-debug],
-	[build the library in the debug mode (default. no)])],
+AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug],[build the library in the debug mode (default. no)])],
 	enable_debug_is=$enableval,enable_debug_is=no)
 if test "$enable_debug_is" = "yes"
 then
@@ -201,15 +198,13 @@ else
 	AC_SUBST(BUILD_MODE, "release")
 fi
 
-AC_ARG_ENABLE([cxx], [AC_HELP_STRING([--enable-cxx],
-	[build the library for C++ if a C++ compiler is available (default. yes)])],
+AC_ARG_ENABLE([cxx], [AS_HELP_STRING([--enable-cxx],[build the library for C++ if a C++ compiler is available (default. yes)])],
 	enable_cxx_is=$enableval,enable_cxx_is=yes) 
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
 # configure makefiles
-AC_ARG_ENABLE([reentrant], [AC_HELP_STRING([--enable-reentrant],
-	[define _REENTRANT (default. yes)])],
+AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
 if test "$enable_reentrant_is" = "yes"
 then
