@@ -1,5 +1,5 @@
 /*
- * $Id: conf_vms.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: conf_vms.h 397 2011-03-15 03:40:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -55,7 +55,6 @@
 	#define QSE_SIZEOF___INT64 0
 #endif
 
-#define QSE_SIZEOF___INT96 0
 #define QSE_SIZEOF___INT128 0
 
 #if defined(vax) || defined(__vax)

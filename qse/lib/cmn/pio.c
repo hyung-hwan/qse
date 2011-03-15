@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 368 2010-11-03 14:24:29Z hyunghwan.chung $
+ * $Id: pio.c 397 2011-03-15 03:40:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,9 +22,11 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #	include <windows.h>
 #	include <tchar.h>
+#elif defined(__OS2__)
+#	include <os2.h>
 #else
 #	include "syscall.h"
 #	include <fcntl.h>
@@ -986,7 +988,7 @@ static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by pio */
-        return 0;
+	return 0;
 }
 
 static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
@@ -1001,5 +1003,5 @@ static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by pio */
-        return 0;
+	return 0;
 }

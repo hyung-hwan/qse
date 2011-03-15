@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 396 2011-03-14 15:40:35Z hyunghwan.chung $
+ * $Id: fio.c 397 2011-03-15 03:40:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,6 +27,8 @@
 #	include <psapi.h>
 #	include <tchar.h>
 #elif defined(__OS2__)
+#	define INCL_DOSFILEMGR
+#	define INCL_DOSERRORS
 #	include <os2.h>
 #else
 #	include "syscall.h"
@@ -171,6 +173,10 @@ qse_fio_t* qse_fio_init (
 		APIRET ret;
 		ULONG action_taken = 0;
 		ULONG open_action, open_mode;
+		LONGLONG zero;
+
+		zero.ulLo = 0;
+		zero.ulHi = 0;
 
 		if (flags & QSE_FIO_CREATE)
 		{
@@ -206,12 +212,14 @@ qse_fio_t* qse_fio_init (
 			path,          /* file name */
 			&handle,       /* file handle */
 			&action_taken, /* store action taken */
-			(LONGLONG)0,   /* size */
+			zero,          /* size */
 			FILE_NORMAL,   /* attribute */
-			open_action,    /* action if it exists */
-			open_mode      /* open mode */
-			0L
+			open_action,   /* action if it exists */
+			open_mode,     /* open mode */
+			0L                            
 		);
+
+		if (ret != NO_ERROR) return QSE_NULL;
 	}
 #else
 
@@ -356,7 +364,25 @@ qse_fio_off_t qse_fio_seek (
 	return (qse_fio_off_t)x.QuadPart;
 	*/
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	static int seek_map[] =
+	{
+		FILE_BEGIN,
+		FILE_CURRENT,
+		FILE_END
+	};
+
+	LONGLONG pos, newpos;
+	APIRET ret;
+
+	QSE_ASSERT (QSE_SIZEOF(offset) >= QSE_SIZEOF(pos));
+
+	pos.ulLo = (ULONG)(offset&0xFFFFFFFFlu);
+	pos.ulHi = (ULONG)(offset>>32);
+
+	ret = DosSetFilePtrL (fio->handle, pos, seek_map[origin], &newpos);
+	if (ret != NO_ERROR) return (qse_fio_off_t)-1;
+
+	return ((qse_fio_off_t)pos.ulHi << 32) | pos.ulLo;
 #else
 	static int seek_map[] =
 	{
@@ -400,8 +426,13 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	return 0;
 #elif defined(__OS2__)
 	APIRET ret;
+	LONGLONG sz;
 	/* the file must have the write access for it to succeed */
-	ret = DosSetFileSizeL (fio->handle, 0);
+
+	sz.ulLo = (ULONG)(size&0xFFFFFFFFlu);
+	sz.ulHi = (ULONG)(size>>32);
+
+	ret = DosSetFileSizeL (fio->handle, sz);
 	return (ret == NO_ERROR)? 0: -1;
 #else
 	return QSE_FTRUNCATE (fio->handle, size);
@@ -413,10 +444,13 @@ static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 #if defined(_WIN32)
 	DWORD count;
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (ReadFile(fio->handle, buf, size, &count, QSE_NULL) == FALSE) return -1;
+	if (ReadFile(fio->handle, buf, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	ULONG count;
+	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	if (DosRead (fio->handle, buf, (ULONG)size, &count) != NO_ERROR) return -1;
+	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_READ (fio->handle, buf, size);
@@ -436,10 +470,13 @@ static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 #if defined(_WIN32)
 	DWORD count;
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (WriteFile(fio->handle, data, size, &count, QSE_NULL) == FALSE) return -1;
+	if (WriteFile(fio->handle, data, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	ULONG count;
+	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	if (DosWrite(fio->handle, (PVOID)data, (ULONG)size, &count) != NO_ERROR) return -1;
+	return (qse_ssize_t)count;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_WRITE (fio->handle, data, size);
@@ -570,7 +607,16 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_ATTRIBUTE_READONLY;
 	return (SetFileAttributes (name, flags) == FALSE)? -1: 0;
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	int flags = FILE_NORMAL;
+	FILESTATUS3L stat;
+	ULONG size = QSE_SIZEOF(stat);
+
+	if (DosQueryFileInfo (fio->handle, FIL_STANDARDL, &stat, size) != NO_ERROR) return -1;
+
+	if (!(mode & QSE_FIO_WUSR)) flags = FILE_READONLY;
+	
+	stat.attrFile = flags;
+	return (DosSetFileInfo (fio->handle, FIL_STANDARDL, &stat, size) != NO_ERROR)? -1: 0;
 #else
 	return QSE_FCHMOD (fio->handle, mode);
 #endif

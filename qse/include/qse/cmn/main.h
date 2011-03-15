@@ -45,13 +45,20 @@
 #if defined(_WIN32) && !defined(__MINGW32__)
 #	if defined(QSE_CHAR_IS_MCHAR)
 #		define qse_main main
+#		define QSE_ACHAR_IS_MCHAR
 		typedef qse_mchar_t qse_achar_t;
 #	else
 #		define qse_main wmain
+#		define QSE_ACHAR_IS_WCHAR
 		typedef qse_wchar_t qse_achar_t;
 #	endif
+#elif defined(__OS2__)
+#	define qse_main main
+#	define QSE_ACHAR_IS_MCHAR
+	typedef qse_mchar_t qse_achar_t;
 #else
 #	define qse_main main
+#	define QSE_ACHAR_IS_MCHAR
 	typedef qse_mchar_t qse_achar_t;
 #endif
 
