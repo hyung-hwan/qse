@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: conf_msw.h 397 2011-03-15 03:40:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,7 +45,7 @@ _M_X64 x64 platform
 	#define QSE_SIZEOF_LONG 4
 /*#endif*/
 
-#if defined(__POCC__) || defined(__DMC__)
+#if defined(__POCC__) || defined(__DMC__) || defined(__GNUC__)
 	/* pelles c with no microsoft extension */
 	#define QSE_SIZEOF_LONG_LONG 8
 
@@ -53,7 +53,6 @@ _M_X64 x64 platform
 	#define QSE_SIZEOF___INT16 0
 	#define QSE_SIZEOF___INT32 0
 	#define QSE_SIZEOF___INT64 0
-	#define QSE_SIZEOF___INT96 0
 	#define QSE_SIZEOF___INT128 0
 #else
 	#define QSE_SIZEOF_LONG_LONG 0
@@ -62,7 +61,6 @@ _M_X64 x64 platform
 	#define QSE_SIZEOF___INT16 2
 	#define QSE_SIZEOF___INT32 4
 	#define QSE_SIZEOF___INT64 8
-	#define QSE_SIZEOF___INT96 0
 	#define QSE_SIZEOF___INT128 0
 #endif
 

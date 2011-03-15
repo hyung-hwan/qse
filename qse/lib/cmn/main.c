@@ -28,11 +28,12 @@ int qse_runmain (
 {
 	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
 
-	if (QSE_SIZEOF(qse_achar_t) == QSE_SIZEOF(qse_char_t))
+#if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+    (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
 	{
 		return handler (argc, (qse_char_t**)argv);
 	}
-	else
+#else
 	{
 		int i, ret;
 		qse_char_t** v;
@@ -83,8 +84,8 @@ int qse_runmain (
 		}
 		QSE_MMGR_FREE (mmgr, v);
 
-		return ret;
-	}
+		return ret;	
+#endif
 }
 
 int qse_runmainwithenv (
@@ -93,11 +94,12 @@ int qse_runmainwithenv (
 {
 	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
 
-	if (QSE_SIZEOF(qse_achar_t) == QSE_SIZEOF(qse_char_t))
+#if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+    (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
 	{
 		return handler (argc, (qse_char_t**)argv, (qse_char_t**)envp);
 	}
-	else
+#else
 	{
 		int i, ret, envc;
 		qse_char_t** v;
@@ -157,4 +159,5 @@ int qse_runmainwithenv (
 
 		return ret;
 	}
+#endif
 }

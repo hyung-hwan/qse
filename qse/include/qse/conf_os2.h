@@ -26,13 +26,25 @@
 
 #define QSE_SIZEOF_LONG 4
 
-#define QSE_SIZEOF_LONG_LONG 0
-#define QSE_SIZEOF___INT8 1
-#define QSE_SIZEOF___INT16 2
-#define QSE_SIZEOF___INT32 4
-#define QSE_SIZEOF___INT64 8
-#define QSE_SIZEOF___INT96 0
-#define QSE_SIZEOF___INT128 0
+#if defined(__GNUC__) 
+#	define QSE_SIZEOF_LONG_LONG 8
+#	define QSE_SIZEOF___INT8 0
+#	define QSE_SIZEOF___INT16 0
+#	define QSE_SIZEOF___INT32 0
+#	define QSE_SIZEOF___INT64 0
+#	define QSE_SIZEOF___INT128 0
+#else
+#	if defined(__WATCOMC__)
+#		define QSE_SIZEOF_LONG_LONG 8
+#	else
+#		define QSE_SIZEOF_LONG_LONG 0
+#	endif
+#	define QSE_SIZEOF___INT8 1
+#	define QSE_SIZEOF___INT16 2
+#	define QSE_SIZEOF___INT32 4
+#	define QSE_SIZEOF___INT64 8
+#	define QSE_SIZEOF___INT128 0
+#endif
 
 #define QSE_SIZEOF_VOID_P 4
 #define QSE_SIZEOF_FLOAT 4
@@ -41,4 +53,4 @@
 #define QSE_SIZEOF_WCHAR_T 2
 
 #define QSE_SIZEOF_OFF64_T 0
-#define QSE_SIZEOF_OFF_T 4
+#define QSE_SIZEOF_OFF_T 8
