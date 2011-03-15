@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: fio.c 396 2011-03-14 15:40:35Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,10 +22,12 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #	include <windows.h>
 #	include <psapi.h>
 #	include <tchar.h>
+#elif defined(__OS2__)
+#	include <os2.h>
 #else
 #	include "syscall.h"
 #	include <sys/types.h>
@@ -86,7 +88,7 @@ qse_fio_t* qse_fio_init (
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (flags & QSE_FIO_HANDLE)
 	{
 		handle = *(qse_fio_hnd_t*)path;
@@ -157,6 +159,60 @@ qse_fio_t* qse_fio_init (
 	}
 
 	/* TODO: support more features on WIN32 - TEMPORARY, DELETE_ON_CLOSE */
+
+#elif defined(__OS2__)
+
+	if (flags & QSE_FIO_HANDLE)
+	{
+		handle = *(qse_fio_hnd_t*)path;
+	}
+	else
+	{
+		APIRET ret;
+		ULONG action_taken = 0;
+		ULONG open_action, open_mode;
+
+		if (flags & QSE_FIO_CREATE)
+		{
+     		if (flags & QSE_FIO_EXCLUSIVE)
+			{
+      			open_action = OPEN_ACTION_FAIL_IF_EXISTS | OPEN_ACTION_CREATE_IF_NEW;
+      		}
+			else if (flags & QSE_FIO_TRUNCATE)
+			{
+      			open_action = OPEN_ACTION_REPLACE_IF_EXISTS | OPEN_ACTION_CREATE_IF_NEW;
+      		}
+			else
+			{
+      			open_action = OPEN_ACTION_CREATE_IF_NEW | OPEN_ACTION_OPEN_IF_EXISTS;
+      		}
+		}
+		else if (flags & QSE_FIO_TRUNCATE)
+		{
+			open_action = OPEN_ACTION_REPLACE_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+		}
+		else 
+		{
+			open_action = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+		}
+
+		open_mode = OPEN_FLAGS_NOINHERIT | OPEN_SHARE_DENYNONE;
+		if ((flags & QSE_FIO_READ) &&
+		    (flags & QSE_FIO_WRITE)) open_mode |= OPEN_ACCESS_READWRITE;
+		else if (flags & QSE_FIO_READ) open_mode |= OPEN_ACCESS_READONLY;
+		else if (flags & QSE_FIO_WRITE) open_mode |= OPEN_ACCESS_WRITEONLY;
+		
+		ret = DosOpenL (
+			path,          /* file name */
+			&handle,       /* file handle */
+			&action_taken, /* store action taken */
+			(LONGLONG)0,   /* size */
+			FILE_NORMAL,   /* attribute */
+			open_action,    /* action if it exists */
+			open_mode      /* open mode */
+			0L
+		);
+	}
 #else
 
 	if (flags & QSE_FIO_HANDLE)
@@ -226,10 +282,12 @@ qse_fio_t* qse_fio_init (
 
 		QSE_CATCH_ERR (tio) 
 		{
-		#ifdef _WIN32
+		#if defined(_WIN32)
 			CloseHandle (handle);
+		#elif defined(__OS2__)
+			DosClose (handle);
 		#else
-			QSE_CLOSE (handle);
+			QSE_CLOSE (handle);     
 		#endif
 			return QSE_NULL;
 		}
@@ -245,8 +303,10 @@ qse_fio_t* qse_fio_init (
 void qse_fio_fini (qse_fio_t* fio)
 {
 	if (fio->tio != QSE_NULL) qse_tio_close (fio->tio);
-#ifdef _WIN32
+#if defined(_WIN32)
 	CloseHandle (fio->handle);
+#elif defined(__OS2__)
+	DosClose (fio->handle);
 #else
 	QSE_CLOSE (fio->handle);
 #endif
@@ -265,7 +325,7 @@ void qse_fio_sethandle (qse_fio_t* fio, qse_fio_hnd_t handle)
 qse_fio_off_t qse_fio_seek (
 	qse_fio_t* fio, qse_fio_off_t offset, qse_fio_ori_t origin)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	static int seek_map[] =
 	{
 		FILE_BEGIN,
@@ -295,11 +355,12 @@ qse_fio_off_t qse_fio_seek (
 
 	return (qse_fio_off_t)x.QuadPart;
 	*/
-
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED
 #else
 	static int seek_map[] =
 	{
-		SEEK_SET,
+		SEEK_SET,                    
 		SEEK_CUR,
 		SEEK_END
 	};
@@ -337,6 +398,11 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	    SetEndOfFile(fio->handle) == FALSE) return -1;
 
 	return 0;
+#elif defined(__OS2__)
+	APIRET ret;
+	/* the file must have the write access for it to succeed */
+	ret = DosSetFileSizeL (fio->handle, 0);
+	return (ret == NO_ERROR)? 0: -1;
 #else
 	return QSE_FTRUNCATE (fio->handle, size);
 #endif
@@ -344,11 +410,13 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 
 static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD count;
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (ReadFile(fio->handle, buf, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_READ (fio->handle, buf, size);
@@ -365,11 +433,13 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 
 static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD count;
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (WriteFile(fio->handle, data, size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_WRITE (fio->handle, data, size);
@@ -386,8 +456,8 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 
 qse_ssize_t qse_fio_flush (qse_fio_t* fio)
 {
-        if (fio->tio == QSE_NULL) return 0;
-        return qse_tio_flush (fio->tio);
+	if (fio->tio == QSE_NULL) return 0;
+	return qse_tio_flush (fio->tio);
 }
 
 
@@ -435,7 +505,6 @@ static int get_devname_from_handle (
 static int get_volname_from_handle (
 	HANDLE handle, qse_char_t* buf, qse_size_t len) 
 {
-
 	if (get_devname_from_handle (handle, buf, len) == -1) return -1;
 
 	if (_tcsnicmp(QSE_T("\\Device\\LanmanRedirector\\"), buf, 25) == 0)
@@ -488,18 +557,20 @@ static int get_volname_from_handle (
 
 int qse_fio_chmod (qse_fio_t* fio, int mode)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	int flags = FILE_ATTRIBUTE_NORMAL;
 	qse_char_t name[MAX_PATH];
 
 	/* it is a best effort implementation. if the file size is 0,
-	 * it can't even get the file name from the handle and thus fails. */
-
+	 * it can't even get the file name from the handle and thus fails. 
+	 */
 	if (get_volname_from_handle (
 		fio->handle, name, QSE_COUNTOF(name)) == -1) return -1;
 
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_ATTRIBUTE_READONLY;
 	return (SetFileAttributes (name, flags) == FALSE)? -1: 0;
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED
 #else
 	return QSE_FCHMOD (fio->handle, mode);
 #endif
@@ -507,8 +578,10 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 
 int qse_fio_sync (qse_fio_t* fio)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	return (FlushFileBuffers (fio->handle) == FALSE)? -1: 0;
+#elif defined(__OS2__)
+	return (DosResetBuffer (fio->handle) == NO_ERROR)? 0: -1;
 #else
 	return QSE_FSYNC (fio->handle);
 #endif
@@ -536,28 +609,28 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 
 static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_fio_t* fio = (qse_fio_t*)arg;
-        QSE_ASSERT (fio != QSE_NULL);
-        if (cmd == QSE_TIO_IO_DATA) 
+	qse_fio_t* fio = (qse_fio_t*)arg;
+	QSE_ASSERT (fio != QSE_NULL);
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 		return fio_read (fio, buf, size);
 	}
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
-        return 0;
+	return 0;
 }
 
 static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_fio_t* fio = (qse_fio_t*)arg;
-        QSE_ASSERT (fio != QSE_NULL);
-        if (cmd == QSE_TIO_IO_DATA) 
+	qse_fio_t* fio = (qse_fio_t*)arg;
+	QSE_ASSERT (fio != QSE_NULL);
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 		return fio_write (fio, buf, size);
 	}
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
-        return 0;
+	return 0;
 }

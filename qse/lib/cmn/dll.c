@@ -1,5 +1,5 @@
 /*
- * $Id: dll.c 354 2010-09-03 12:50:08Z hyunghwan.chung $
+ * $Id: dll.c 396 2011-03-14 15:40:35Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -107,7 +107,8 @@ int qse_dll_getscale (qse_dll_t* dll)
 void qse_dll_setscale (qse_dll_t* dll, int scale)
 {
 	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
-		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
+		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold"
+	);
 
 	if (scale <= 0) scale = 1;
 	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);

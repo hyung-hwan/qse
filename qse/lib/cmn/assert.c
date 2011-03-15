@@ -31,8 +31,10 @@
 #	include <qse/cmn/str.h>
 #endif
 
-#ifdef _WIN32
-#       include <windows.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#elif defined(__OS2__)
+#	include <os2.h>
 #else
 #	include "syscall.h"
 #endif
@@ -147,8 +149,10 @@ void qse_assert_failed (
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("================================================================================\n"));
 	qse_sio_flush (QSE_SIO_ERR);
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	ExitProcess (1);
+#elif defined(__OS2__)
+	DosExit (EXIT_PROCESS, 1);
 #else
 	QSE_KILL (QSE_GETPID(), SIGABRT);
 	QSE_EXIT (1);
