@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 389 2011-02-25 15:26:16Z hyunghwan.chung $
+ * $Id: types.h 396 2011-03-14 15:40:35Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -36,6 +36,8 @@
 #	include <qse/conf_msw.h>
 #elif defined(vms) || defined(__vms)
 #	include <qse/conf_vms.h>
+#elif defined(OS2) || defined(__OS2__)
+#	include <qse/conf_os2.h>
 #else
 #	error unsupported operating system
 #endif
@@ -398,6 +400,10 @@ typedef int qse_mcint_t;
 #	define QSE_CHAR_IS_WCHAR
 	typedef qse_wchar_t qse_char_t;
 	typedef qse_wcint_t qse_cint_t;
+#elif defined(__OS2__)
+#	define QSE_CHAR_IS_MCHAR
+	typedef qse_mchar_t qse_char_t;
+	typedef qse_mcint_t qse_cint_t;
 #else
 #	if defined(QSE_CHAR_IS_MCHAR)
 		typedef qse_mchar_t qse_char_t;

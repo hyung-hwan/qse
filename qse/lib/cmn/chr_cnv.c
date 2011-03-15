@@ -1,5 +1,5 @@
 /*
- * $Id: chr_cnv.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: chr_cnv.c 396 2011-03-14 15:40:35Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,11 +21,21 @@
 #include <qse/cmn/chr.h>
 #include "mem.h"
 
+#if !defined(QSE_HAVE_CONFIG_H)
+#	if defined(_WIN32) || defined(__OS2__)
+#		define HAVE_WCHAR_H
+#		define HAVE_STDLIB_H
+#		define HAVE_MBRLEN
+#		define HAVE_MBRTOWC
+#		define HAVE_WCRTOMB
+#	endif
+#endif
+
 #ifdef HAVE_WCHAR_H
-#include <wchar.h>
+#	include <wchar.h>
 #endif
 #ifdef HAVE_STDLIB_H
-#include <stdlib.h>
+#	include <stdlib.h>
 #endif
 
 qse_size_t qse_mblen (const qse_mchar_t* mb, qse_size_t mblen)
