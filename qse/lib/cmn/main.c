@@ -84,7 +84,8 @@ int qse_runmain (
 		}
 		QSE_MMGR_FREE (mmgr, v);
 
-		return ret;	
+		return ret;
+	}
 #endif
 }
 
@@ -161,3 +162,4 @@ int qse_runmainwithenv (
 	}
 #endif
 }
+
