@@ -767,9 +767,9 @@ void qse_xma_dump (qse_xma_t* xma,  qse_xma_dumper_t dumper, void* target)
 #endif
 #endif
 
+#ifdef QSE_XMA_ENABLE_STAT
 	QSE_ASSERT (asum == xma->stat.alloc);
 	QSE_ASSERT (fsum == xma->stat.avail);
-#ifdef QSE_XMA_ENABLE_STAT
 	QSE_ASSERT (isum == xma->stat.total - (xma->stat.alloc + xma->stat.avail));
 	QSE_ASSERT (asum + fsum + isum == xma->stat.total);
 #endif

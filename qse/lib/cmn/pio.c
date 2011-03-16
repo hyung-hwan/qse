@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 397 2011-03-15 03:40:39Z hyunghwan.chung $
+ * $Id: pio.c 398 2011-03-15 15:20:03Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,6 +26,8 @@
 #	include <windows.h>
 #	include <tchar.h>
 #elif defined(__OS2__)
+#	define INCL_DOSPROCESS
+#	define INCL_DOSERRORS
 #	include <os2.h>
 #else
 #	include "syscall.h"
@@ -94,13 +96,15 @@ qse_pio_t* qse_pio_init (
 	int i, minidx = -1, maxidx = -1;
 
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	SECURITY_ATTRIBUTES secattr; 
 	PROCESS_INFORMATION procinfo;
 	STARTUPINFO startup;
 	qse_char_t* dup = QSE_NULL;
 	HANDLE windevnul = INVALID_HANDLE_VALUE;
 	BOOL x;
+#elif defined(__OS2__)
+	/* TODO: implmenet this for os/2 */
 #else
 	qse_pio_pid_t pid;
 #endif
@@ -184,9 +188,9 @@ qse_pio_t* qse_pio_init (
 	startup.hStdOutput = INVALID_HANDLE_VALUE;
 	*/
 
-        startup.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
-        startup.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
-        startup.hStdOutput = GetStdHandle (STD_ERROR_HANDLE);
+	startup.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
+	startup.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
+	startup.hStdOutput = GetStdHandle (STD_ERROR_HANDLE);
 
 	if (startup.hStdInput == INVALID_HANDLE_VALUE ||
 	    startup.hStdOutput == INVALID_HANDLE_VALUE ||
@@ -270,6 +274,8 @@ qse_pio_t* qse_pio_init (
 
 	CloseHandle (procinfo.hThread);
 	pio->child = procinfo.hProcess;
+#elif defined(__OS2__)
+	/* TODO: implement this for OS/2 */
 #else
 
 	if (oflags & QSE_PIO_WRITEIN)
@@ -602,8 +608,11 @@ oops:
 	{
 		if (tio[i] != QSE_NULL) qse_tio_close (tio[i]);
 	}
-#ifdef _WIN32
+#if defined(_WIN32)
 	for (i = minidx; i < maxidx; i++) CloseHandle (handle[i]);
+#elif defined(__OS2__)
+	/* TODO: */
+	for (i = minidx; i < maxidx; i++) DosClose (handle[i]);
 #else
 	for (i = minidx; i < maxidx; i++) QSE_CLOSE (handle[i]);
 #endif
@@ -668,8 +677,11 @@ qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)
 static qse_ssize_t pio_read (
 	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hnd_t hnd)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD count;
+#elif defined(__OS2__)
+	ULONG count;
+	APIRET rc;
 #else
 	qse_ssize_t n;
 #endif
@@ -681,9 +693,9 @@ static qse_ssize_t pio_read (
 		return (qse_ssize_t)-1;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (ReadFile(hnd, buf, size, &count, QSE_NULL) == FALSE) 
+	if (ReadFile(hnd, buf, (DWORD)size, &count, QSE_NULL) == FALSE) 
 	{
 		/* ReadFile receives ERROR_BROKEN_PIPE when the write end
 		 * is closed in the child process */
@@ -691,6 +703,16 @@ static qse_ssize_t pio_read (
 		pio->errnum = QSE_PIO_ESUBSYS;
 		return -1;
 	}
+	return (qse_ssize_t)count;
+#elif defined(__OS2__)
+	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	rc = DosRead (hnd, buf, (ULONG)size, &count);
+	if (rc != NO_ERROR)
+	{
+    		if (rc == ERROR_BROKEN_PIPE) return 0; /* TODO: check this */
+    		pio->errnum = QSE_PIO_ESUBSYS;
+    		return -1;
+    	}
 	return (qse_ssize_t)count;
 #else
 
@@ -732,8 +754,11 @@ qse_ssize_t qse_pio_read (
 static qse_ssize_t pio_write (
 	qse_pio_t* pio, const void* data, qse_size_t size, qse_pio_hnd_t hnd)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD count;
+#elif defined(__OS2__)
+	ULONG count;
+	APIRET rc;
 #else
 	qse_ssize_t n;
 #endif
@@ -745,15 +770,26 @@ static qse_ssize_t pio_write (
 		return (qse_ssize_t)-1;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
-	if (WriteFile (hnd, data, size, &count, QSE_NULL) == FALSE)
+	if (WriteFile (hnd, data, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
 		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
 			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS;
 		return -1;
 	}
 	return (qse_ssize_t)count;
+#elif defined(__OS2__)
+	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	rc = DosWrite (hnd, (PVOID)data, (ULONG)size, &count);
+	if (rc != NO_ERROR)
+	{
+    		pio->errnum = (rc == ERROR_BROKEN_PIPE)? 
+			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS; /* TODO: check this */
+    		return -1;
+	}
+	return (qse_ssize_t)count;
+
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 
@@ -806,8 +842,10 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 
 	if (pio->pin[hid].handle != QSE_PIO_HND_NIL)
 	{
-#ifdef _WIN32
+#if defined(_WIN32)
 		CloseHandle (pio->pin[hid].handle);
+#elif defined(__OS2__)
+		DosClose (pio->pin[hid].handle);
 #else
 		QSE_CLOSE (pio->pin[hid].handle);
 #endif
@@ -817,7 +855,7 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 
 int qse_pio_wait (qse_pio_t* pio)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD ecode, w;
 
 	if (pio->child == QSE_PIO_PID_NIL) 
@@ -869,6 +907,9 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	return ecode;
+#elif defined(__OS2__)
+	/* TODO: implement this */
+	return -1;
 #else
 	int opt = 0;
 	int ret = -1;
@@ -948,8 +989,10 @@ int qse_pio_wait (qse_pio_t* pio)
 
 int qse_pio_kill (qse_pio_t* pio)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	DWORD n;
+#elif defined(__OS2__)
+	APIRET n;
 #else
 	int n;
 #endif
@@ -960,7 +1003,7 @@ int qse_pio_kill (qse_pio_t* pio)
 		return -1;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	/* 9 was chosen below to treat TerminateProcess as kill -KILL. */
 	n = TerminateProcess (pio->child, 255 + 1 + 9);
 	if (n == FALSE) 
@@ -969,6 +1012,16 @@ int qse_pio_kill (qse_pio_t* pio)
 		return -1;
 	}
 	return 0;
+#elif defined(__OS2__)
+
+/*TODO: must use DKP_PROCESSTREE? */
+	n = DosKillProcess (pio->child, DKP_PROCESS);
+	if (n != NO_ERROR)
+	{
+		pio->errnum = QSE_PIO_ESUBSYS;
+		return -1;
+	}
+	return 0;	
 #else
 	n = QSE_KILL (pio->child, SIGKILL);
 	if (n <= -1) pio->errnum = QSE_PIO_ESUBSYS;
@@ -978,9 +1031,9 @@ int qse_pio_kill (qse_pio_t* pio)
 
 static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
-        QSE_ASSERT (pin != QSE_NULL);
-        if (cmd == QSE_TIO_IO_DATA) 
+	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
+	QSE_ASSERT (pin != QSE_NULL);
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_read (pin->self, buf, size, pin->handle);
@@ -993,9 +1046,9 @@ static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
 
 static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
 {
-        qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
-        QSE_ASSERT (pin != QSE_NULL);
-        if (cmd == QSE_TIO_IO_DATA) 
+	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
+	QSE_ASSERT (pin != QSE_NULL);
+	if (cmd == QSE_TIO_IO_DATA) 
 	{
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_write (pin->self, buf, size, pin->handle);

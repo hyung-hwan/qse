@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: time.c 398 2011-03-15 15:20:03Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,8 +21,10 @@
 #include <qse/cmn/time.h>
 #include "mem.h"
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #	include <windows.h>
+#elif defined(__OS2__)
+#	include <os2.h>
 #else
 #	include "syscall.h"
 #	include <sys/time.h>
@@ -73,7 +75,7 @@ static int get_leap_days (int fy, int ty)
 
 int qse_gettime (qse_ntime_t* t)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	SYSTEMTIME st;
 	FILETIME ft;
 
@@ -87,6 +89,9 @@ int qse_gettime (qse_ntime_t* t)
 	*t = ((qse_ntime_t)(*((qse_int64_t*)&ft)) / (10 * 1000));
 	*t -= EPOCH_DIFF_MSECS;
 	return 0;
+#elif defined(__OS2__)
+	/* TODO: implement this */
+	return -1;
 #else
 	struct timeval tv;
 	int n;
@@ -102,7 +107,7 @@ int qse_gettime (qse_ntime_t* t)
 
 int qse_settime (qse_ntime_t t)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	FILETIME ft;
 	SYSTEMTIME st;
 
@@ -110,6 +115,9 @@ int qse_settime (qse_ntime_t t)
 	if (FileTimeToSystemTime (&ft, &st) == FALSE) return -1;
 	if (SetSystemTime(&st) == FALSE) return -1;
 	return 0;
+#elif defined(__OS2__)
+	/* TODO: implement this */
+	return -1;
 #else
 	struct timeval tv;
 	int n;
@@ -215,8 +223,9 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 	qse_ntime_t rem = nt % QSE_MSECS_PER_SEC;
 
 	/* TODO: remove dependency on localtime/localtime_r */
-#ifdef _WIN32
+#if defined(_WIN32)
 	tm = localtime (&t);
+#elif defined(__OS2__)
 #else
 	struct tm btm;
 	tm = localtime_r (&t, &btm);
