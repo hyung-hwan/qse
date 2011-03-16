@@ -34,6 +34,7 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #elif defined(__OS2__)
+#	define INCL_DOSPROCESS
 #	include <os2.h>
 #else
 #	include "syscall.h"

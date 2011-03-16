@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 368 2010-11-03 14:24:29Z hyunghwan.chung $
+ * $Id: rex.c 398 2011-03-15 15:20:03Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -887,7 +887,15 @@ static qse_rex_node_t* comp_atom (comp_t* com)
 			default:
 				if (com->rex->option & QSE_REX_STRICT)
 				{
-					qse_char_t spc[] = QSE_T(")?*+{");
+					qse_char_t spc[] =
+        				{
+						QSE_T(')'),
+						QSE_T('?'),
+						QSE_T('*'),
+						QSE_T('+'),
+						QSE_T('{'),
+						QSE_T('\0')
+					};
 
 					if (com->rex->option & QSE_REX_NOBOUND)
 						spc[4] = QSE_T('\0');

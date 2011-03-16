@@ -362,8 +362,12 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
+#if defined(__OS2__)
+	return _popen (cmd, mode);
+#else
 	return popen (cmd, mode);
-#elif defined(_WIN32) 
+#endif
+#elif defined(_WIN32) || defined(__OS2__)
 	return _wpopen (cmd, mode);
 #else
 	char cmd_mb[PATH_MAX + 1];
