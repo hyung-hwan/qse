@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 348 2010-08-26 06:26:28Z hyunghwan.chung $
+ * $Id: sio.c 401 2011-03-16 15:17:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,8 +24,11 @@
 static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size);
 static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
-#ifdef _WIN32
-	#include <windows.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#elif defined(__OS2__)
+#	define INCL_DOSFILEMGR
+#	include <os2.h>
 #endif
 
 static qse_sio_t __sio_in = 
@@ -36,8 +39,10 @@ static qse_sio_t __sio_in =
 	{
 		QSE_NULL,
 		0,
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		(HANDLE)STD_INPUT_HANDLE,
+	#elif defined(__OS2__)
+		(HFILE)0,
 	#else
 		0,
 	#endif
@@ -74,6 +79,8 @@ static qse_sio_t __sio_out =
 		0,
 	#ifdef _WIN32
 		(HANDLE)STD_OUTPUT_HANDLE,
+	#elif defined(__OS2__)
+		(HFILE)1,
 	#else
 		1,
 	#endif
@@ -110,6 +117,8 @@ static qse_sio_t __sio_err =
 		0,
 	#ifdef _WIN32
 		(HANDLE)STD_ERROR_HANDLE,
+	#elif defined(__OS2__)
+		(HFILE)2,
 	#else
 		2,
 	#endif
@@ -288,24 +297,29 @@ int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 
 int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
 {
-	if (qse_sio_flush(sio) == -1) return -1;
-	return (qse_fio_seek (&sio->fio,
-		pos, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
+   	qse_fio_off_t off;
+
+	if (qse_sio_flush(sio) <= -1) return -1;
+	off = qse_fio_seek (&sio->fio, pos, QSE_FIO_BEGIN);
+
+	return (off == (qse_fio_off_t)-1)? -1: 0;
 }
 
 #if 0
-int qse_sio_rewind (qse_sio_t* sio)
+int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
 {
-	if (qse_sio_flush(sio) == -1) return -1;
-	return (qse_fio_seek (&sio->fio, 
-		0, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
-}
+	/* TODO: write this function - more flexible positioning ....
+	 *       can move to the end of the stream also.... */
 
-int qse_sio_movetoend (qse_sio_t* sio)
-{
-	if (qse_sio_flush(sio) == -1) return -1;
+	if (qse_sio_flush(sio) <= -1) return -1;
 	return (qse_fio_seek (&sio->fio, 
 		0, QSE_FIO_END) == (qse_fio_off_t)-1)? -1: 0;
+
+	/* TODO: write this function */
+	if (qse_sio_flush(sio) <= -1) return -1;
+	return (qse_fio_seek (&sio->fio, 
+		0, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
+
 }
 #endif
 
