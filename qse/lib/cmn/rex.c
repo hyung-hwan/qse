@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 398 2011-03-15 15:20:03Z hyunghwan.chung $
+ * $Id: rex.c 400 2011-03-16 08:37:06Z hyunghwan.chung $
  * 
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
