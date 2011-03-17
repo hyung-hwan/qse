@@ -1,5 +1,5 @@
 /*
- * $Id: chr_cnv.c 396 2011-03-14 15:40:35Z hyunghwan.chung $
+ * $Id: chr_cnv.c 400 2011-03-16 08:37:06Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
