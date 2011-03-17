@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: misc.c 401 2011-03-16 15:17:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,7 +27,7 @@ const qse_char_t* qse_basename (const qse_char_t* path)
 	for (p = path; *p != QSE_T('\0'); p++)
 	{
 		if (*p == QSE_T('/')) last = p;
-	#ifdef _WIN32
+	#if defined(_WIN32) || defined(__OS2__)
 		else if (*p == QSE_T('\\')) last = p;
 	#endif
 	}
