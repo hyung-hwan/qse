@@ -26,6 +26,9 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
+#if defined(__OS2__)
+#	define INCL_DOSPROCESS
+#	include <os2.h>
 #else
 #	include <unistd.h>
 #	include <signal.h>
@@ -86,8 +89,11 @@ public:
 
 		if (run.setGlobal (idLastSleep, x) <= -1) return -1;
 
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		::Sleep ((DWORD)(x * 1000));
+		return ret.setInt (0);
+	#elif defined(__OS2__)
+		::DosSleep ((ULONG)(x * 1000));
 		return ret.setInt (0);
 	#else
 		return ret.setInt (::sleep (x));

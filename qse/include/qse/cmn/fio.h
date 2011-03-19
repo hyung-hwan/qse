@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 396 2011-03-14 15:40:35Z hyunghwan.chung $
+ * $Id: fio.h 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -115,6 +115,7 @@ struct qse_fio_t
 	QSE_DEFINE_COMMON_FIELDS (fio)
 	int           errnum;
 	qse_fio_hnd_t handle;
+	int           flags; /* extra flags */
 	qse_tio_t*    tio;
 };
 

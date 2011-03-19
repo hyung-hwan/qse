@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 323 2010-04-05 12:50:01Z hyunghwan.chung $
+ * $Id: str_cnv.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -247,7 +247,8 @@ qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
 		p++; mlen += n;
 	}
 
-	/* this length excludes the terminating null character. */
+	/* this length holds the number of resulting multi-byte characters 
+	 * excluding the terminating null character */
 	*mbslen = mlen;
 
 	/* returns the number of characters handled. 
@@ -310,6 +311,8 @@ qse_size_t qse_wcstombs (
 		mbs += n; rem -= n; p++;
 	}
 
+	/* update mbslen to the length of the mbs string converted excluding
+	 * terminating null */
 	*mbslen -= rem; 
 
 	/* null-terminate the multibyte sequence if it has sufficient space */
@@ -358,15 +361,15 @@ int qse_mbstowcs_strict (
 		/* wcs not big enough to be null-terminated.
 		 * if it has been null-terminated properly, 
 		 * wn should be less than wcslen. */
-                return -1;
-        }
+		return -1;
+	}
 	if (mbs[n] != QSE_MT('\0'))
 	{
 		/* incomplete sequence or invalid sequence */
 		return -1;
 	}
 
-        return 0;
+	return 0;
 }
 
 int qse_wcstombs_strict (

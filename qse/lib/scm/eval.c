@@ -22,6 +22,7 @@
 
 static int eval_entity (qse_scm_t* scm);
 
+#if 0
 static int save (qse_scm_t* scm, qse_scm_ent_t* )
 {
 }
@@ -29,6 +30,7 @@ static int save (qse_scm_t* scm, qse_scm_ent_t* )
 static int leave (qse_scm_t* scm)
 {
 }
+#endif
 
 int qse_scm_dolambda (qse_scm_t* scm)
 {
@@ -52,10 +54,10 @@ int qse_scm_doquote (qse_scm_t* scm)
 
 static int define_finish (qse_scm_t* scm)
 {
-	qse_scm_ent_t* var = scm->e.cod;
+//	qse_scm_ent_t* var = scm->e.cod;
 	//set var in the environemtn....	
 	
-	leave (scm);
+	//leave (scm);
 	return 0;
 }
 
@@ -95,7 +97,7 @@ int qse_scm_dodefine (qse_scm_t* scm)
 		return -1;
 	}
 
-	save car...
+//	save car...
 
 // let it jump to EVAL and come back to DEFINE_FINISH...
 	scm->e.cod = PAIR_CAR(cdr);
@@ -114,23 +116,23 @@ int qse_scm_dobegin (qse_scm_t* scm)
 
 	qse_scm_ent_t* car, * cdr;
 	
-	if (IS_SMALLINT(scm.e.cod) || TYPE(scm.e.cod) != QSE_SCM_ENT_PAIR)
+	if (IS_SMALLINT(scm, scm->e.cod) || TYPE(scm->e.cod) != QSE_SCM_ENT_PAIR)
 	{
 		/* (begin (+ x y) . 30) */
 		qse_scm_seterror (scm, QSE_SCM_EARGBAD, QSE_NULL, QSE_NULL);
 		return -1;
 	}
 
-	car = PAIR_CAR(scm.e.cod);
-	cdr = PAIR_CDR(scm.e.cod);
+	car = PAIR_CAR(scm->e.cod);
+	cdr = PAIR_CDR(scm->e.cod);
 	
-	if (!IS_NIL(cdr))
+	if (!IS_NIL(scm,cdr))
 	{
-save (BEGIN... cdr);
+//save (BEGIN... cdr);
 	}
 
-	scm.e.cod = car;
-	scm.e.op = eval_entity;
+	scm->e.cod = car;
+	scm->e.op = eval_entity;
 	return 0;
 }
 

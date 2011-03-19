@@ -4,8 +4,12 @@
 #include <string.h>
 #include <locale.h>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #	include <windows.h>
+#elif defined(__OS2__)
+#	define INCL_DOSPROCESS
+#	define INCL_DOSERRORS
+#	include <os2.h>
 #else
 #	include <unistd.h>
 #	include <sys/wait.h>
@@ -245,7 +249,7 @@ static int test9 (void)
 	pio = qse_pio_open (
 		QSE_NULL,
 		0,
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__)
 		QSE_T(".\\sll.exe"),
 #else
 		QSE_T("/bin/ls -laF"),
@@ -258,7 +262,7 @@ static int test9 (void)
 		return -1;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	{
 		int n = 5;
 
@@ -266,6 +270,17 @@ static int test9 (void)
 		Sleep (n * 1000);
 		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
 			WaitForSingleObject (pio->child, 0));
+	}
+#elif defined(__OS2__)
+	{
+		int n = 5;
+
+		#error NO IMPLEMENTED YET.
+		qse_printf (QSE_T("sleeping for %d seconds\n"), n);
+		DosSleep (n * 1000);
+		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
+			WaitForSingleObject (pio->child, 0));
+		DosWaitChild (DCWA_PROCESS, DCWW_WAIT,..);
 	}
 #else
 	{

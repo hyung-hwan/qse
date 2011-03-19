@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 400 2011-03-16 08:37:06Z hyunghwan.chung $
+ * $Id: time.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,14 +24,17 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #elif defined(__OS2__)
+#	define INCL_DOSDATETIME
+#	define INCL_DOSERRORS
 #	include <os2.h>
 #else
 #	include "syscall.h"
 #	include <sys/time.h>
 #endif
+
 #include <time.h>
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	#define WIN_EPOCH_YEAR   (1601)
 	#define WIN_EPOCH_MON    (1)
 	#define WIN_EPOCH_DAY    (1)
@@ -89,9 +92,33 @@ int qse_gettime (qse_ntime_t* t)
 	*t = ((qse_ntime_t)(*((qse_int64_t*)&ft)) / (10 * 1000));
 	*t -= EPOCH_DIFF_MSECS;
 	return 0;
+
 #elif defined(__OS2__)
-	/* TODO: implement this */
-	return -1;
+
+	APIRET rc;
+	DATETIME dt;
+	qse_btime_t bt;
+
+	/* Can I use DosQuerySysInfo(QSV_TIME_LOW) and 
+	 * DosQuerySysInfo(QSV_TIME_HIGH) for this instead? 
+	 * Maybe, resolution too low as it returns values 
+	 * in seconds. */
+
+	rc = DosGetDateTime (&dt);
+	if (rc != NO_ERROR) return -1;
+
+	bt.year = dt.year - 1900;
+	bt.mon = dt.month - 1;
+	bt.mday = dt.day;
+	bt.hour = dt.hours;
+	bt.min = dt.minutes;
+	bt.sec = dt.seconds;
+	bt.msec = dt.hundredths * 10;
+	bt.isdst = -1;
+
+	if (qse_timelocal (&bt, t) <= -1) return -1;
+	return 0;
+
 #else
 	struct timeval tv;
 	int n;
@@ -99,8 +126,8 @@ int qse_gettime (qse_ntime_t* t)
 	n = QSE_GETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 
-	*t = (qse_ntime_t)tv.tv_sec*QSE_MSECS_PER_SEC + 
-	     (qse_ntime_t)tv.tv_usec/QSE_USECS_PER_MSEC;
+	*t = (qse_ntime_t)tv.tv_sec * QSE_MSECS_PER_SEC + 
+	     (qse_ntime_t)tv.tv_usec / QSE_USECS_PER_MSEC;
 	return 0;
 #endif
 }
@@ -116,8 +143,24 @@ int qse_settime (qse_ntime_t t)
 	if (SetSystemTime(&st) == FALSE) return -1;
 	return 0;
 #elif defined(__OS2__)
-	/* TODO: implement this */
-	return -1;
+
+	APIRET rc;
+	DATETIME dt;
+	qse_btime_t bt;
+
+	if (qse_localtime (t, &bt) <= -1) return -1;
+
+	QSE_MEMSET (&dt, 0, QSE_SIZEOF(dt));
+	dt.year = bt.year + 1900;
+	dt.month = bt.mon + 1;
+	dt.day = bt.mday;
+	dt.hours = bt.hour;
+	dt.minutes = bt.min;
+	dt.seconds = bt.sec;
+	dt.hundredths = bt.msec / 10;
+
+	rc = DosSetDateTime (&dt);
+	return (rc != NO_ERROR)? -1: 0;
 #else
 	struct timeval tv;
 	int n;
@@ -226,6 +269,12 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 #if defined(_WIN32)
 	tm = localtime (&t);
 #elif defined(__OS2__)
+#	if defined(__WATCOMC__)
+		struct tm btm;
+		tm = _localtime (&t, &btm);
+#	else
+#		error Please support other compilers that I didn't try.
+#	endif
 #else
 	struct tm btm;
 	tm = localtime_r (&t, &btm);
@@ -252,8 +301,7 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 {
 #if 0
-
-#ifdef _WIN32
+#if defined(_WIN32)
 	/* TODO: verify qse_timegm for WIN32 */
 	SYSTEMTIME st;
 	FILETIME ft;
@@ -272,6 +320,8 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	*nt -= EPOCH_DIFF_MSECS;
 	
 	return 0;
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED YET
 #else
 
 	/* TODO: qse_timegm - remove dependency on timegm */
