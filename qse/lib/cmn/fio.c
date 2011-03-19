@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 400 2011-03-16 08:37:06Z hyunghwan.chung $
+ * $Id: fio.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -90,6 +90,10 @@ qse_fio_t* qse_fio_init (
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;
 
+	/* store the flags for later use though only OS/2 needs 
+	 * this at this moment */
+	fio->flags = flags;
+
 #if defined(_WIN32)
 	if (flags & QSE_FIO_HANDLE)
 	{
@@ -172,8 +176,16 @@ qse_fio_t* qse_fio_init (
 	{
 		APIRET ret;
 		ULONG action_taken = 0;
-		ULONG open_action, open_mode;
+		ULONG open_action, open_mode, open_attr;
 		LONGLONG zero;
+
+	#ifdef QSE_CHAR_IS_MCHAR
+		const qse_mchar_t* path_mb = path;
+	#else
+		qse_mchar_t path_mb[CCHMAXPATH];
+		if (qse_wcstombs_strict (path,
+			path_mb, QSE_COUNTOF(path_mb)) == -1) return QSE_NULL;
+	#endif
 
 		zero.ulLo = 0;
 		zero.ulHi = 0;
@@ -202,18 +214,33 @@ qse_fio_t* qse_fio_init (
 			open_action = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
 		}
 
-		open_mode = OPEN_FLAGS_NOINHERIT | OPEN_SHARE_DENYNONE;
+		open_mode = OPEN_FLAGS_NOINHERIT;
+
+		if (flags & QSE_FIO_SYNC) 
+			open_mode |= OPEN_FLAGS_WRITE_THROUGH;
+
+		if ((flags & QSE_FIO_NOSHRD) && (flags & QSE_FIO_NOSHWR))
+			open_mode |= OPEN_SHARE_DENYREADWRITE;
+		else if (flags & QSE_FIO_NOSHRD)
+			open_mode |= OPEN_SHARE_DENYREAD;
+		else if (flags & QSE_FIO_NOSHWR)
+			open_mode |= OPEN_SHARE_DENYWRITE;
+		else
+			open_mode |= OPEN_SHARE_DENYNONE;
+
 		if ((flags & QSE_FIO_READ) &&
 		    (flags & QSE_FIO_WRITE)) open_mode |= OPEN_ACCESS_READWRITE;
 		else if (flags & QSE_FIO_READ) open_mode |= OPEN_ACCESS_READONLY;
 		else if (flags & QSE_FIO_WRITE) open_mode |= OPEN_ACCESS_WRITEONLY;
+
+		open_attr = (mode & QSE_FIO_WUSR)? FILE_NORMAL: FILE_READONLY;
 		
 		ret = DosOpenL (
-			path,          /* file name */
+			path_mb,       /* file name */
 			&handle,       /* file handle */
 			&action_taken, /* store action taken */
 			zero,          /* size */
-			FILE_NORMAL,   /* attribute */
+			open_attr,     /* attribute */
 			open_action,   /* action if it exists */
 			open_mode,     /* open mode */
 			0L                            
@@ -416,7 +443,7 @@ qse_fio_off_t qse_fio_seek (
 
 int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	LARGE_INTEGER x;
 	x.QuadPart = size;
 
@@ -485,6 +512,17 @@ static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 
 qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 {
+#if defined(__OS2__)
+   	if (fio->flags & QSE_FIO_APPEND)
+	{
+		/* i do this on a best-effort basis */
+		LONGLONG pos, newpos;
+		pos.ulLo = (ULONG)0;
+		pos.ulHi = (ULONG)0;
+    		DosSetFilePtrL (fio->handle, pos, FILE_END, &newpos);
+    	}
+#endif
+
 	if (fio->tio == QSE_NULL)
 		return fio_write (fio, data, size);
 	else
@@ -498,7 +536,7 @@ qse_ssize_t qse_fio_flush (qse_fio_t* fio)
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32)
 
 static int get_devname_from_handle (
 	HANDLE handle, qse_char_t* buf, qse_size_t len) 
@@ -657,10 +695,8 @@ static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) 
-	{
-		return fio_read (fio, buf, size);
-	}
+	if (cmd == QSE_TIO_IO_DATA) return fio_read (fio, buf, size);
+	
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
@@ -671,10 +707,7 @@ static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) 
-	{
-		return fio_write (fio, buf, size);
-	}
+	if (cmd == QSE_TIO_IO_DATA) return fio_write (fio, buf, size);
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */

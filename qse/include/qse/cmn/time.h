@@ -1,5 +1,5 @@
 /*
- * $Id: time.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
+ * $Id: time.h 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -128,7 +128,7 @@ int qse_timegm (
  * The qse_timelocal() converts broken-down time to numeric time. It is the
  * inverse of qse_localtime();
  */
-int qse_timelcoal (
+int qse_timelocal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );

@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 400 2011-03-16 08:37:06Z hyunghwan.chung $
+ * $Id: pio.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,6 +26,7 @@
 #	include <windows.h>
 #	include <tchar.h>
 #elif defined(__OS2__)
+#	define INCL_DOSQUEUES
 #	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
 #	include <os2.h>
@@ -95,7 +96,6 @@ qse_pio_t* qse_pio_init (
 
 	int i, minidx = -1, maxidx = -1;
 
-
 #if defined(_WIN32)
 	SECURITY_ATTRIBUTES secattr; 
 	PROCESS_INFORMATION procinfo;
@@ -105,6 +105,12 @@ qse_pio_t* qse_pio_init (
 	BOOL x;
 #elif defined(__OS2__)
 	/* TODO: implmenet this for os/2 */
+	APIRET rc;
+	ULONG pipe_size = 4096;
+	UCHAR load_error[CCHMAXPATH] = { 0 };
+	RESULTCODES child_rc;
+	HFILE old_in, old_out, old_err;
+	HFILE std_in, std_out, std_err;
 #else
 	qse_pio_pid_t pid;
 #endif
@@ -114,7 +120,7 @@ qse_pio_t* qse_pio_init (
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	/* http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx */
 
 	secattr.nLength = QSE_SIZEOF(secattr);
@@ -165,6 +171,8 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
+	if (maxidx == -1) goto oops;
+
 	if ((oflags & QSE_PIO_INTONUL) || 
 	    (oflags & QSE_PIO_OUTTONUL) ||
 	    (oflags & QSE_PIO_ERRTONUL))
@@ -210,7 +218,7 @@ qse_pio_t* qse_pio_init (
 		if (oflags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
 	}
 
-	if (oflags & QSE_PIO_INTONUL) startup.hStdOutput = windevnul;
+	if (oflags & QSE_PIO_INTONUL) startup.hStdInput = windevnul;
 	if (oflags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
 	if (oflags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
 
@@ -274,8 +282,113 @@ qse_pio_t* qse_pio_init (
 
 	CloseHandle (procinfo.hThread);
 	pio->child = procinfo.hProcess;
+
 #elif defined(__OS2__)
-	/* TODO: implement this for OS/2 */
+
+	if (oflags & QSE_PIO_WRITEIN)
+	{
+		ULONG state;
+
+		/* child reads, parent writes */		
+		if (DosCreatePipe (
+			&handle[0], &handle[1], pipe_size) != NO_ERROR) goto oops;
+
+		/* don't inherit write handle */
+		if (DosQueryFHState (handle[1], &state) != NO_ERROR) goto oops;
+		state &= 0x7F88; /* this & operation as shown in the ibm documents */
+		if (DosSetFHState (handle[1], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+
+		minidx = 0; maxidx = 1;
+	}
+
+	if (oflags & QSE_PIO_READOUT)
+	{
+		ULONG state;
+
+		/* child writes, parent reads */
+		if (DosCreatePipe (
+			&handle[2], &handle[3], pipe_size) != NO_ERROR) goto oops;
+
+		/* don't inherit read handle */
+		if (DosQueryFHState (handle[2], &state) != NO_ERROR) goto oops;
+		state &= 0x7F88; /* this & operation as shown in the ibm documents */
+		if (DosSetFHState (handle[2], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+
+		if (minidx == -1) minidx = 2;
+		maxidx = 3;
+	}
+
+	if (oflags & QSE_PIO_READERR)
+	{
+		ULONG state;
+
+		/* child writes, parent reads */
+		if (DosCreatePipe (
+			&handle[4], &handle[5], pipe_size) != NO_ERROR) goto oops;
+
+		/* don't inherit read handle */
+		if (DosQueryFHState (handle[4], &state) != NO_ERROR) goto oops;
+		state &= 0x7F88; /* this & operation as shown in the ibm documents */
+		if (DosSetFHState (handle[4], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+
+		if (minidx == -1) minidx = 4;
+		maxidx = 5;
+	}
+
+	if (maxidx == -1) goto oops;
+
+	old_in = old_out = old_err = 0xFFFFFFFFFF;
+	std_in = 0; std_out = 1; std_err = 2;
+
+/* TODO: error handling ... */
+	if (oflags & QSE_PIO_WRITEIN)
+	{
+		DosDupHandle (std_in, &old_in); /* store the original */
+		DosDupHandle (handle[0], &std_in); /* substitute a pipe handle */
+	}
+
+	if (oflags & QSE_PIO_READOUT)
+	{
+		DosDupHandle (std_out, &old_out);
+		DosDupHandle (handle[3], &std_out);
+		if (oflags & QSE_PIO_ERRTOOUT) DosDupHandle (handle[3], &std_err);
+	}
+
+	if (oflags & QSE_PIO_READERR)
+	{
+		DosDupHandle (std_err, &old_err);
+		DosDupHandle (handle[5], &std_err);
+		if (oflags & QSE_PIO_OUTTOERR) DosDupHandle (handle[5], &std_out);
+	}
+
+	/*
+	if (oflags & QSE_PIO_INTONUL) startup.hStdOutput = os2devnul;
+	if (oflags & QSE_PIO_OUTTONUL) startup.hStdOutput = os2devnul;
+	if (oflags & QSE_PIO_ERRTONUL) startup.hStdError = os2devnul;
+	*/
+
+	if (oflags & QSE_PIO_DROPIN) DosClose (std_in);
+	if (oflags & QSE_PIO_DROPOUT) DosClose (std_out);
+	if (oflags & QSE_PIO_DROPERR) DosClose (std_err);
+
+	rc = DosExecPgm (
+		&load_error,
+		QSE_SIZEOF(load_error), 
+		EXEC_ASYNCRESULT,
+		NULL,
+		NULL,
+		&child_rc,
+		cmd /* TODO: mchar... */
+	);
+	if (rc != NO_ERROR) goto oops;
+	
+	/* restore file handles to the original for this parent */
+	DosDupHandle (old_in, &std_in);
+	DosDupHandle (old_out, &std_out);
+	DosDupHandle (old_err, &std_err);
+
+	pio->child = child_rc.codeTerminate;
+		
 #else
 
 	if (oflags & QSE_PIO_WRITEIN)
@@ -312,7 +425,7 @@ qse_pio_t* qse_pio_init (
 		extern char** environ; 
 		int fcnt = 0;
 	#ifndef QSE_CHAR_IS_MCHAR
-       		qse_size_t n, mn, wl;
+		qse_size_t n, mn, wl;
 		qse_char_t* wcmd = QSE_NULL;
 		qse_mchar_t buf[64];
 	#endif
@@ -431,7 +544,7 @@ qse_pio_t* qse_pio_init (
 	#else	
 		if (oflags & QSE_PIO_SHELL)
 		{
-       			n = qse_wcstombslen (cmd, &mn);
+			n = qse_wcstombslen (cmd, &mn);
 			if (cmd[n] != QSE_WT('\0')) 
 			{
 				/* cmd has illegal sequence */
@@ -599,7 +712,7 @@ qse_pio_t* qse_pio_init (
 	return pio;
 
 oops:
-#ifdef _WIN32
+#if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
 	if (dup != QSE_NULL) QSE_MMGR_FREE (mmgr, dup);
 #endif
@@ -608,14 +721,15 @@ oops:
 	{
 		if (tio[i] != QSE_NULL) qse_tio_close (tio[i]);
 	}
+
 #if defined(_WIN32)
 	for (i = minidx; i < maxidx; i++) CloseHandle (handle[i]);
 #elif defined(__OS2__)
-	/* TODO: */
 	for (i = minidx; i < maxidx; i++) DosClose (handle[i]);
 #else
 	for (i = minidx; i < maxidx; i++) QSE_CLOSE (handle[i]);
 #endif
+
 	return QSE_NULL;
 }
 
@@ -859,8 +973,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	DWORD ecode, w;
 
 	if (pio->child == QSE_PIO_PID_NIL) 
-	{
-		
+	{		
 		pio->errnum = QSE_PIO_ECHILD;
 		return -1;
 	}
@@ -908,8 +1021,42 @@ int qse_pio_wait (qse_pio_t* pio)
 
 	return ecode;
 #elif defined(__OS2__)
-	/* TODO: implement this */
-	return -1;
+	APIRET rc;
+	RESULTCODES child_rc;
+	PID ppid;
+
+	if (pio->child == QSE_PIO_PID_NIL) 
+	{		
+		pio->errnum = QSE_PIO_ECHILD;
+		return -1;
+	}
+
+	rc = DosWaitChild (
+		DCWA_PROCESS,
+		((pio->option & QSE_PIO_WAIT_NOBLOCK)? DCWW_NOWAIT: DCWW_WAIT),
+		&child_rc,
+		&ppid,
+		pio->child
+	);
+	if (rc == ERROR_CHILD_NOT_COMPLETE)
+	{
+		/* the child process is still alive */
+		return 255 + 1;
+	}
+	if (rc != NO_ERROR)
+	{
+		/* WAIT_FAILED, WAIT_ABANDONED */
+		pio->errnum = QSE_PIO_ESUBSYS;
+		return -1;
+	}
+
+	/* close handle here to emulate waitpid() as much as possible. */
+	
+	DosClose (pio->child); 
+	pio->child = QSE_PIO_PID_NIL;
+
+	return child_rc.codeResult;
+
 #else
 	int opt = 0;
 	int ret = -1;

@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 401 2011-03-16 15:17:25Z hyunghwan.chung $
+ * $Id: sio.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -77,7 +77,7 @@ static qse_sio_t __sio_out =
 	{
 		QSE_NULL,
 		0,
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		(HANDLE)STD_OUTPUT_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)1,
@@ -115,7 +115,7 @@ static qse_sio_t __sio_err =
 	{
 		QSE_NULL,
 		0,
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		(HANDLE)STD_ERROR_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)2,
@@ -331,7 +331,7 @@ static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size)
 
 	if (cmd == QSE_TIO_IO_DATA) 
 	{
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		/* TODO: I hate this way of adjusting the handle value
 		 *       Is there any good ways to do it statically? */
 		HANDLE h = sio->fio.handle;
@@ -360,7 +360,7 @@ static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size)
 
 	if (cmd == QSE_TIO_IO_DATA) 
 	{
-	#ifdef _WIN32
+	#if defined(_WIN32)
 		/* TODO: I hate this way of adjusting the handle value
 		 *       Is there any good ways to do it statically? */
 		HANDLE h = sio->fio.handle;

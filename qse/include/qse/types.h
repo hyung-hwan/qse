@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 396 2011-03-14 15:40:35Z hyunghwan.chung $
+ * $Id: types.h 402 2011-03-18 15:07:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -34,10 +34,10 @@
 #	include <qse/config.h>
 #elif defined(_WIN32)
 #	include <qse/conf_msw.h>
+#elif defined(__OS2__)
+#	include <qse/conf_os2.h>
 #elif defined(vms) || defined(__vms)
 #	include <qse/conf_vms.h>
-#elif defined(OS2) || defined(__OS2__)
-#	include <qse/conf_os2.h>
 #else
 #	error unsupported operating system
 #endif
@@ -383,10 +383,10 @@ typedef int qse_mcint_t;
 		typedef int qse_wchar_t;
 		typedef int qse_wcint_t;
 #	else
-#		error no supported data type for wchar_t
+#		error No supported data type for wchar_t
 #	endif
 #else
-#	error unsupported size of wchar_t
+#	error Unsupported size of wchar_t
 #endif
 
 /** @typedef qse_char_t
@@ -396,33 +396,32 @@ typedef int qse_mcint_t;
  * The qse_cint_t typep defines a type that can hold a qse_char_t value and 
  * #QSE_CHAR_EOF.
  */
-#if defined(_WIN32) && (defined(UNICODE)||defined(_UNICODE))
-#	define QSE_CHAR_IS_WCHAR
+#if defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_char_t;
 	typedef qse_wcint_t qse_cint_t;
-#elif defined(__OS2__)
-#	define QSE_CHAR_IS_MCHAR
+#elif defined(QSE_CHAR_IS_MCHAR)
 	typedef qse_mchar_t qse_char_t;
 	typedef qse_mcint_t qse_cint_t;
 #else
-#	if defined(QSE_CHAR_IS_MCHAR)
-		typedef qse_mchar_t qse_char_t;
-		typedef qse_mcint_t qse_cint_t;
-#	elif defined(QSE_CHAR_IS_WCHAR)
-		typedef qse_wchar_t qse_char_t;
-		typedef qse_wcint_t qse_cint_t;
-#	elif defined(_MBCS)
-#		define QSE_CHAR_IS_MCHAR
-		typedef qse_mchar_t qse_char_t;
-		typedef qse_mcint_t qse_cint_t;
+	/* If the character type is not determined in the conf_xxx files */
+
+#	if defined(_WIN32)
+#		if defined(UNICODE) || defined(_UNICODE)
+#			define QSE_CHAR_IS_WCHAR
+			typedef qse_wchar_t qse_char_t;
+			typedef qse_wcint_t qse_cint_t;
+#		else
+#			define QSE_CHAR_IS_MCHAR
+			typedef qse_mchar_t qse_char_t;
+			typedef qse_mcint_t qse_cint_t;
+#		endif
 #	else
-#		define QSE_CHAR_IS_WCHAR
-		typedef qse_wchar_t qse_char_t;
-		typedef qse_wcint_t qse_cint_t;
+#		error Cannot determine the character type to use
 #	endif
 #endif
 
 #if defined(QSE_CHAR_IS_WCHAR) && defined(_WIN32) 
+	/* Special definiton to use Unicode APIs on Windows */
 #	ifndef UNICODE
 #		define UNICODE
 #	endif
