@@ -45,6 +45,8 @@ print_usage()
 	exit 1
 }
 
+QSESED_BASENAME="`basename "${QSESED}"`"
+
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
 OUTFILE_XMA="${OUTFILE}.xma"
@@ -88,7 +90,7 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${valgrind} ${QSESED} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
+		echo_title "${valgrind} ${QSESED_BASENAME} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
 		${valgrind} ${QSESED} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
@@ -125,7 +127,7 @@ init)
 test)
 	run_test "${OUTFILE}" "" && {
 		run_test "${OUTFILE_XMA}" "${XMAOPTS}" && {
-			${QSESED} "s|${QSEAWK} ${XMAOPTS}|${QSEAWK} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
+			${QSESED} "s|${QSESED_BASENAME} ${XMAOPTS}|${QSESED_BASENAME} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
 			diff "${OUTFILE}" "${OUTFILE_XMA}.$$"  || {
 				rm -f "${OUTFILE_XMA}.$$"
 				echo_so "ERROR: Difference is found between normal output and xma output."
