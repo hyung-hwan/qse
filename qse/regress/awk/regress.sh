@@ -42,7 +42,7 @@ print_usage()
 }
 [ -z "${QSESED}" ] && {
 	QSESED=../../cmd/sed/.libs/qsesed
-	[ -f "${QSESED}" ] || QSEAWK=../../cmd/sed/qsesed
+	[ -f "${QSESED}" ] || QSESED=../../cmd/sed/qsesed
 }
 [ -f "${QSEAWK}" -a -x "${QSEAWK}" ] || {
 	echo_so "the executable '${QSEAWK}' is not found or not executable"
@@ -52,6 +52,8 @@ print_usage()
 	echo_so "the executable '${QSESED}' is not found or not executable"
 	exit 1
 }
+
+QSEAWK_BASENAME="`basename "${QSEAWK}"`"
 
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
@@ -209,7 +211,7 @@ run_scripts()
 	
 		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
 
-		echo_title "${valgrind} ${QSEAWK} ${extraopts} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
+		echo_title "${valgrind} ${QSEAWK_BASENAME} ${extraopts} ${awkopts} -f ${orgscript} ${datafile} <${redinfile} 2>&1"
 		${valgrind} ${QSEAWK} ${extraopts} -o "${script}.dp" ${awkopts} -f ${script} ${datafile} <${redinfile} 2>&1
 	
 	done < "${TMPFILE}" 
@@ -264,7 +266,7 @@ test)
 	run_test "${OUTFILE}" "" && {
 		run_test "${OUTFILE_XMA}" "${XMAOPTS}" && {
 			#diff "${OUTFILE}" "${OUTFILE_XMA}" | grep -v '^\[CMD\] '
-			${QSESED} "s|${QSEAWK} ${XMAOPTS}|${QSEAWK} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
+			${QSESED} "s|${QSEAWK_BASENAME} ${XMAOPTS}|${QSEAWK_BASENAME} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
 			diff "${OUTFILE}" "${OUTFILE_XMA}.$$"  || {
 				rm -f "${OUTFILE_XMA}.$$"
 				echo_so "ERROR: Difference is found between normal output and xma output."
