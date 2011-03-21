@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 366 2010-10-30 12:49:18Z hyunghwan.chung $
+ * $Id: str.h 404 2011-03-20 14:16:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -162,6 +162,16 @@ qse_size_t qse_wcslen (
 qse_size_t qse_strcpy (
 	qse_char_t*       buf,
 	const qse_char_t* str
+);
+
+qse_size_t qse_mbscpy (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* str
+);
+
+qse_size_t qse_wcscpy (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* str
 );
 
 qse_size_t qse_strxcpy (
@@ -867,9 +877,9 @@ qse_size_t qse_wcsntombsnlen (
  * @return number of wide characters processed
  */
 qse_size_t qse_wcstombs (
-	const qse_wchar_t* wcs,
-	qse_mchar_t*       mbs,
-	qse_size_t*        mbslen
+	const qse_wchar_t* wcs,   /**< wide-character string to convert */
+	qse_mchar_t*       mbs,   /**< multibyte string buffer */
+	qse_size_t*        mbslen /**< [IN] buffer size, [OUT] string length */
 );
 
 /**
@@ -878,10 +888,10 @@ qse_size_t qse_wcstombs (
  * @return the number of wide characters
  */
 qse_size_t qse_wcsntombsn (
-	const qse_wchar_t* wcs,    /**< wide string */
-	qse_size_t         wcslen, /**< wide string length */
-	qse_mchar_t*       mbs,    /**< multibyte string buffer */
-	qse_size_t*        mbslen  /**< buffer size */
+	const qse_wchar_t* wcs,   /**< wide string */
+	qse_size_t         wcslen,/**< wide string length */
+	qse_mchar_t*       mbs,   /**< multibyte string buffer */
+	qse_size_t*        mbslen /**< [IN] buffer size, [OUT] string length */
 );
 
 /**

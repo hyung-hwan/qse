@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id: pio.c 404 2011-03-20 14:16:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -107,10 +107,15 @@ qse_pio_t* qse_pio_init (
 	/* TODO: implmenet this for os/2 */
 	APIRET rc;
 	ULONG pipe_size = 4096;
-	UCHAR load_error[CCHMAXPATH] = { 0 };
+	UCHAR load_error[CCHMAXPATH];
 	RESULTCODES child_rc;
-	HFILE old_in, old_out, old_err;
-	HFILE std_in, std_out, std_err;
+	HFILE old_in = QSE_PIO_HND_NIL;
+	HFILE old_out = QSE_PIO_HND_NIL;
+	HFILE old_err = QSE_PIO_HND_NIL;
+	HFILE std_in = 0, std_out = 1, std_err = 2;
+	qse_mchar_t* cmd_line = QSE_NULL;
+	qse_mchar_t* cmd_file;
+	HFILE os2devnul = (HFILE)-1;
 #else
 	qse_pio_pid_t pid;
 #endif
@@ -260,7 +265,11 @@ qse_pio_t* qse_pio_init (
 	);
 
 	QSE_MMGR_FREE (mmgr, dup); dup = QSE_NULL;
-	CloseHandle (windevnul); windevnul = INVALID_HANDLE_VALUE;
+	if (windevnul != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle (windevnul); 
+		windevnul = INVALID_HANDLE_VALUE;
+	}
 
 	if (x == FALSE) goto oops;
 
@@ -285,6 +294,10 @@ qse_pio_t* qse_pio_init (
 
 #elif defined(__OS2__)
 
+#define DOS_DUP_HANDLE(x,y) QSE_BLOCK ( \
+	if (DosDupHandle(x,y) != NO_ERROR) goto oops; \
+)
+
 	if (oflags & QSE_PIO_WRITEIN)
 	{
 		ULONG state;
@@ -293,10 +306,13 @@ qse_pio_t* qse_pio_init (
 		if (DosCreatePipe (
 			&handle[0], &handle[1], pipe_size) != NO_ERROR) goto oops;
 
-		/* don't inherit write handle */
-		if (DosQueryFHState (handle[1], &state) != NO_ERROR) goto oops;
-		state &= 0x7F88; /* this & operation as shown in the ibm documents */
-		if (DosSetFHState (handle[1], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		/* the parent writes to handle[1] and the child reads from 
+		 * handle[0] inherited. set the flag not to inherit handle[1]. */
+		if (DosSetFHState (handle[1], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+
+		/* Need to do somthing like this to set the flag instead? 
+		DosQueryFHState (handle[1], &state);
+		DosSetFHState (handle[1], state | OPEN_FLAGS_NOINHERIT); */
 
 		minidx = 0; maxidx = 1;
 	}
@@ -309,10 +325,9 @@ qse_pio_t* qse_pio_init (
 		if (DosCreatePipe (
 			&handle[2], &handle[3], pipe_size) != NO_ERROR) goto oops;
 
-		/* don't inherit read handle */
-		if (DosQueryFHState (handle[2], &state) != NO_ERROR) goto oops;
-		state &= 0x7F88; /* this & operation as shown in the ibm documents */
-		if (DosSetFHState (handle[2], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		/* the parent reads from handle[2] and the child writes to 
+		 * handle[3] inherited. set the flag not to inherit handle[2] */
+		if (DosSetFHState (handle[2], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
 
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
@@ -326,10 +341,9 @@ qse_pio_t* qse_pio_init (
 		if (DosCreatePipe (
 			&handle[4], &handle[5], pipe_size) != NO_ERROR) goto oops;
 
-		/* don't inherit read handle */
-		if (DosQueryFHState (handle[4], &state) != NO_ERROR) goto oops;
-		state &= 0x7F88; /* this & operation as shown in the ibm documents */
-		if (DosSetFHState (handle[4], state | OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		/* the parent reads from handle[4] and the child writes to 
+		 * handle[5] inherited. set the flag not to inherit handle[4] */
+		if (DosSetFHState (handle[4], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
 
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
@@ -337,56 +351,160 @@ qse_pio_t* qse_pio_init (
 
 	if (maxidx == -1) goto oops;
 
-	old_in = old_out = old_err = 0xFFFFFFFFFF;
-	std_in = 0; std_out = 1; std_err = 2;
+	if ((oflags & QSE_PIO_INTONUL) || 
+	    (oflags & QSE_PIO_OUTTONUL) ||
+	    (oflags & QSE_PIO_ERRTONUL))
+	{
+		ULONG action_taken;
+		LONGLONG zero;
 
-/* TODO: error handling ... */
+		zero.ulLo = 0;
+		zero.ulHi = 0;
+
+		rc = DosOpenL (
+			QSE_MT("NUL"),
+			&os2devnul,
+			&action_taken,
+			zero,
+			FILE_NORMAL,		
+			OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW,
+			OPEN_FLAGS_NOINHERIT | OPEN_SHARE_DENYNONE,
+			0L
+		);
+		if (rc != NO_ERROR) goto oops;
+	}
+
+	/* duplicate the current stdin/out/err to old_in/out/err as a new handle */
+	
+	if (DosDupHandle (std_in, &old_in) != NO_ERROR) 
+	{
+		goto oops;
+	}
+	if (DosDupHandle (std_out, &old_out) != NO_ERROR) 
+	{
+		DosClose (old_in); old_in = QSE_PIO_HND_NIL;
+		goto oops;
+	}
+	if (DosDupHandle (std_err, &old_err) != NO_ERROR)
+	{
+		DosClose (old_out); old_out = QSE_PIO_HND_NIL;
+		DosClose (old_in); old_in = QSE_PIO_HND_NIL;
+		goto oops;
+	}    	
+
+	/* we must not let our own stdin/out/err duplicated 
+	 * into old_in/out/err be inherited */
+	DosSetFHState (old_in, OPEN_FLAGS_NOINHERIT);
+	DosSetFHState (old_out, OPEN_FLAGS_NOINHERIT); 
+	DosSetFHState (old_err, OPEN_FLAGS_NOINHERIT);
+
 	if (oflags & QSE_PIO_WRITEIN)
 	{
-		DosDupHandle (std_in, &old_in); /* store the original */
-		DosDupHandle (handle[0], &std_in); /* substitute a pipe handle */
+		/* the child reads from handle[0] inherited and expects it to
+		 * be stdin(0). so we duplicate handle[0] to stdin */
+		DOS_DUP_HANDLE (handle[0], &std_in);
+
+		/* the parent writes to handle[1] but does not read from handle[0].
+		 * so we close it */
+		DosClose (handle[0]); handle[0] = QSE_PIO_HND_NIL;
 	}
 
 	if (oflags & QSE_PIO_READOUT)
 	{
-		DosDupHandle (std_out, &old_out);
-		DosDupHandle (handle[3], &std_out);
-		if (oflags & QSE_PIO_ERRTOOUT) DosDupHandle (handle[3], &std_err);
+		/* the child writes to handle[3] inherited and expects it to
+		 * be stdout(1). so we duplicate handle[3] to stdout. */
+		DOS_DUP_HANDLE (handle[3], &std_out);
+		if (oflags & QSE_PIO_ERRTOOUT) DOS_DUP_HANDLE (handle[3], &std_err);
+		/* the parent reads from handle[2] but does not write to handle[3].
+		 * so we close it */
+		DosClose (handle[3]); handle[3] = QSE_PIO_HND_NIL;
 	}
 
 	if (oflags & QSE_PIO_READERR)
 	{
-		DosDupHandle (std_err, &old_err);
-		DosDupHandle (handle[5], &std_err);
-		if (oflags & QSE_PIO_OUTTOERR) DosDupHandle (handle[5], &std_out);
+		DOS_DUP_HANDLE (handle[5], &std_err);
+		if (oflags & QSE_PIO_OUTTOERR) DOS_DUP_HANDLE (handle[5], &std_out);
+		DosClose (handle[5]); handle[5] = QSE_PIO_HND_NIL;
 	}
 
-	/*
-	if (oflags & QSE_PIO_INTONUL) startup.hStdOutput = os2devnul;
-	if (oflags & QSE_PIO_OUTTONUL) startup.hStdOutput = os2devnul;
-	if (oflags & QSE_PIO_ERRTONUL) startup.hStdError = os2devnul;
-	*/
+	if (oflags & QSE_PIO_INTONUL) DOS_DUP_HANDLE (os2devnul, &std_in);
+	if (oflags & QSE_PIO_OUTTONUL) DOS_DUP_HANDLE (os2devnul, &std_out);
+	if (oflags & QSE_PIO_ERRTONUL) DOS_DUP_HANDLE (os2devnul, &std_err);
 
+	if (os2devnul != QSE_PIO_HND_NIL)
+	{
+	    	/* close NUL early as we've duplicated it already */
+		DosClose (os2devnul); 
+		os2devnul = QSE_PIO_HND_NIL;
+	}
+	
+	/* at this moment, stdin/out/err are already redirected to pipes
+	 * if proper flags have been set. we close them selectively if 
+	 * dropping is requested */
 	if (oflags & QSE_PIO_DROPIN) DosClose (std_in);
 	if (oflags & QSE_PIO_DROPOUT) DosClose (std_out);
 	if (oflags & QSE_PIO_DROPERR) DosClose (std_err);
+#if 0
+	if (oflags & QSE_PIO_SHELL) 
+#endif
+	{
+		qse_size_t n, mn;
 
+	#ifdef QSE_CHAR_IS_MCHAR
+		mn = qse_strlen(cmd);
+	#else
+		n = qse_wcstombslen (cmd, &mn);
+		if (cmd[n] != QSE_WT('\0')) goto oops; /* illegal sequence found */
+	#endif
+		cmd_line = QSE_MMGR_ALLOC (
+			mmgr, ((11+mn+1+1) * QSE_SIZEOF(qse_mchar_t)));
+		if (cmd_line == QSE_NULL) goto oops;
+
+		qse_mbscpy (cmd_line, QSE_MT("cmd.exe")); /* cmd.exe\0/c */ 
+		qse_mbscpy (&cmd_line[8], QSE_MT("/c "));
+	#ifdef QSE_CHAR_IS_MCHAR
+		qse_mbscpy (&cmd_line[11], cmd);
+	#else
+		mn = mn + 1; /* update the buffer size */
+		n = qse_wcstombs (cmd, &cmd_line[11], &mn);
+	#endif
+		cmd_line[11+mn+1] = QSE_MT('\0'); /* additional \0 after \0 */    
+		
+		cmd_file = QSE_MT("cmd.exe");
+	}
+#if 0
+	else
+	{
+	#ifdef QSE_CHAR_IS_MCHAR
+	#else   
+		cmd_line = qse_strdup (cmd, mmgr);
+		if (cmd_line == QSE_NULL) goto oops;
+	#endif
+		cmd_file...
+	}
+#endif
+
+	/* execute the command line */
 	rc = DosExecPgm (
 		&load_error,
 		QSE_SIZEOF(load_error), 
 		EXEC_ASYNCRESULT,
-		NULL,
+		cmd_line,
 		NULL,
 		&child_rc,
-		cmd /* TODO: mchar... */
+		cmd_file
 	);
-	if (rc != NO_ERROR) goto oops;
-	
-	/* restore file handles to the original for this parent */
-	DosDupHandle (old_in, &std_in);
-	DosDupHandle (old_out, &std_out);
-	DosDupHandle (old_err, &std_err);
 
+	/* Once execution is completed regardless of success or failure,
+	 * Restore stdin/out/err using handles duplicated into old_in/out/err */
+	DosDupHandle (old_in, &std_in); /* I can't do much if this fails */
+	DosClose (old_in); old_in = QSE_PIO_HND_NIL;
+	DosDupHandle (old_out, &std_out);
+	DosClose (old_out); old_out = QSE_PIO_HND_NIL;
+	DosDupHandle (old_err, &std_err);
+	DosClose (old_err); old_err = QSE_PIO_HND_NIL;
+
+	if (rc != NO_ERROR) goto oops;
 	pio->child = child_rc.codeTerminate;
 		
 #else
@@ -714,7 +832,25 @@ qse_pio_t* qse_pio_init (
 oops:
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
-	if (dup != QSE_NULL) QSE_MMGR_FREE (mmgr, dup);
+	if (dup) QSE_MMGR_FREE (mmgr, dup);
+#elif defined(__OS2__)
+	if (cmd_line) QSE_MMGR_FREE (mmgr, cmd_line);
+	if (old_in != QSE_PIO_HND_NIL)
+	{
+		DosDupHandle (old_in, &std_in);
+		DosClose (old_in); 
+	}
+	if (old_out != QSE_PIO_HND_NIL)
+	{
+		DosDupHandle (old_out, &std_out);
+		DosClose (old_out);
+	}
+	if (old_err != QSE_PIO_HND_NIL)
+	{
+		DosDupHandle (old_err, &std_err);
+		DosClose (old_err);
+	}
+	if (os2devnul != QSE_PIO_HND_NIL) DosClose (os2devnul);
 #endif
 
 	for (i = 0; i < QSE_COUNTOF(tio); i++) 
@@ -725,9 +861,15 @@ oops:
 #if defined(_WIN32)
 	for (i = minidx; i < maxidx; i++) CloseHandle (handle[i]);
 #elif defined(__OS2__)
-	for (i = minidx; i < maxidx; i++) DosClose (handle[i]);
+	for (i = minidx; i < maxidx; i++) 
+	{
+    		if (handle[i] != QSE_PIO_HND_NIL) DosClose (handle[i]);
+	}
 #else
-	for (i = minidx; i < maxidx; i++) QSE_CLOSE (handle[i]);
+	for (i = minidx; i < maxidx; i++) 
+	{
+    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+	}
 #endif
 
 	return QSE_NULL;
@@ -885,6 +1027,7 @@ static qse_ssize_t pio_write (
 	}
 
 #if defined(_WIN32)
+
 	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
 	if (WriteFile (hnd, data, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
@@ -893,7 +1036,9 @@ static qse_ssize_t pio_write (
 		return -1;
 	}
 	return (qse_ssize_t)count;
+
 #elif defined(__OS2__)
+
 	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
 	rc = DosWrite (hnd, (PVOID)data, (ULONG)size, &count);
 	if (rc != NO_ERROR)
@@ -905,6 +1050,7 @@ static qse_ssize_t pio_write (
 	return (qse_ssize_t)count;
 
 #else
+
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 
 rewrite:
@@ -927,6 +1073,7 @@ rewrite:
 		}
 	}
 	return n;
+
 #endif
 }
 
@@ -970,6 +1117,7 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 int qse_pio_wait (qse_pio_t* pio)
 {
 #if defined(_WIN32)
+
 	DWORD ecode, w;
 
 	if (pio->child == QSE_PIO_PID_NIL) 
@@ -1020,7 +1168,9 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	return ecode;
+
 #elif defined(__OS2__)
+
 	APIRET rc;
 	RESULTCODES child_rc;
 	PID ppid;
@@ -1032,7 +1182,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	rc = DosWaitChild (
-		DCWA_PROCESS,
+		DCWA_PROCESSTREE,
 		((pio->option & QSE_PIO_WAIT_NOBLOCK)? DCWW_NOWAIT: DCWW_WAIT),
 		&child_rc,
 		&ppid,
@@ -1051,13 +1201,14 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	/* close handle here to emulate waitpid() as much as possible. */
-	
-	DosClose (pio->child); 
+	/*DosClose (pio->child);*/
 	pio->child = QSE_PIO_PID_NIL;
 
-	return child_rc.codeResult;
+	return (child_rc.codeTerminate == TC_EXIT)? 
+		child_rc.codeResult: (255 + 1 + child_rc.codeTerminate);
 
 #else
+
 	int opt = 0;
 	int ret = -1;
 
@@ -1139,7 +1290,7 @@ int qse_pio_kill (qse_pio_t* pio)
 #if defined(_WIN32)
 	DWORD n;
 #elif defined(__OS2__)
-	APIRET n;
+	APIRET rc;
 #else
 	int n;
 #endif
@@ -1160,10 +1311,9 @@ int qse_pio_kill (qse_pio_t* pio)
 	}
 	return 0;
 #elif defined(__OS2__)
-
-/*TODO: must use DKP_PROCESSTREE? */
-	n = DosKillProcess (pio->child, DKP_PROCESS);
-	if (n != NO_ERROR)
+/*TODO: must use DKP_PROCESS? */
+	rc = DosKillProcess (pio->child, DKP_PROCESSTREE);
+	if (rc != NO_ERROR)
 	{
 		pio->errnum = QSE_PIO_ESUBSYS;
 		return -1;
