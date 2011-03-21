@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id: fio.c 404 2011-03-20 14:16:54Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -148,20 +148,19 @@ qse_fio_t* qse_fio_init (
 		if (flags & QSE_FIO_SEQUENTIAL) 
 			flag_and_attr |= FILE_FLAG_SEQUENTIAL_SCAN;
 
-		handle = CreateFile (path,
-			desired_access, share_mode, QSE_NULL,
-			creation_disposition, flag_and_attr, 0);
+		handle = CreateFile (
+			path, desired_access, share_mode, 
+			QSE_NULL, /* set noinherit by setting no secattr */
+			creation_disposition, flag_and_attr, 0
+		);
 	}
-
 	if (handle == INVALID_HANDLE_VALUE) return QSE_NULL;
 
+	/* some special check
+	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
 	{
-		DWORD file_type = GetFileType(handle);
-		if (file_type == FILE_TYPE_UNKNOWN)
-		{
-			CloseHandle (handle);
-			return QSE_NULL;
-		}
+		CloseHandle (handle);
+		return QSE_NULL;
 	}
 
 	/* TODO: support more features on WIN32 - TEMPORARY, DELETE_ON_CLOSE */
@@ -192,26 +191,31 @@ qse_fio_t* qse_fio_init (
 
 		if (flags & QSE_FIO_CREATE)
 		{
-     		if (flags & QSE_FIO_EXCLUSIVE)
+			if (flags & QSE_FIO_EXCLUSIVE)
 			{
-      			open_action = OPEN_ACTION_FAIL_IF_EXISTS | OPEN_ACTION_CREATE_IF_NEW;
-      		}
+				open_action = OPEN_ACTION_FAIL_IF_EXISTS | 
+				              OPEN_ACTION_CREATE_IF_NEW;
+			}
 			else if (flags & QSE_FIO_TRUNCATE)
 			{
-      			open_action = OPEN_ACTION_REPLACE_IF_EXISTS | OPEN_ACTION_CREATE_IF_NEW;
-      		}
+				open_action = OPEN_ACTION_REPLACE_IF_EXISTS |
+					      OPEN_ACTION_CREATE_IF_NEW;
+			}
 			else
 			{
-      			open_action = OPEN_ACTION_CREATE_IF_NEW | OPEN_ACTION_OPEN_IF_EXISTS;
-      		}
+				open_action = OPEN_ACTION_CREATE_IF_NEW | 
+				              OPEN_ACTION_OPEN_IF_EXISTS;
+			}
 		}
 		else if (flags & QSE_FIO_TRUNCATE)
 		{
-			open_action = OPEN_ACTION_REPLACE_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+			open_action = OPEN_ACTION_REPLACE_IF_EXISTS | 
+			              OPEN_ACTION_FAIL_IF_NEW;
 		}
 		else 
 		{
-			open_action = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+			open_action = OPEN_ACTION_OPEN_IF_EXISTS |
+			              OPEN_ACTION_FAIL_IF_NEW;
 		}
 
 		open_mode = OPEN_FLAGS_NOINHERIT;
@@ -292,6 +296,9 @@ qse_fio_t* qse_fio_init (
 
 	#if defined(O_LARGEFILE)
 		desired_access |= O_LARGEFILE;
+	#endif
+	#if defined(O_CLOEXEC)
+		desired_access |= O_CLOEXEC; /* no inherit */
 	#endif
 
 		handle = QSE_OPEN (path_mb, desired_access, mode);

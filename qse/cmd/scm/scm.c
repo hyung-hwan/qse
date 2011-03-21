@@ -225,12 +225,13 @@ int scm_main (int argc, qse_char_t* argv[])
 	}
 
 {
-pio1 (QSE_T("dir /a"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, QSE_PIO_OUT);   
+pio1 (QSE_T("pstat"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL|QSE_PIO_DROPERR, QSE_PIO_OUT);   
 }
 
 {
 qse_scm_ent_t* x1, * x2;
 
+qse_printf (QSE_T("QSESCM> "));
 x1 = qse_scm_read (scm);
 if (x1 == QSE_NULL)
 {
