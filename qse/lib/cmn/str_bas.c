@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 404 2011-03-20 14:16:54Z hyunghwan.chung $
+ * $Id: str_bas.c 405 2011-03-21 14:01:10Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,11 +22,18 @@
 #include <qse/cmn/chr.h>
 #include "mem.h"
 
-qse_size_t qse_strlen (const qse_char_t* str)
+qse_size_t qse_mbslen (const qse_mchar_t* mbs)
 {
-	const qse_char_t* p = str;
-	while (*p != QSE_T('\0')) p++;
-	return p - str;
+	const qse_mchar_t* p = mbs;
+	while (*p != QSE_MT('\0')) p++;
+	return p - mbs;
+}
+
+qse_size_t qse_wcslen (const qse_wchar_t* wcs)
+{
+	const qse_wchar_t* p = wcs;
+	while (*p != QSE_WT('\0')) p++;
+	return p - wcs;
 }
 
 qse_size_t qse_strbytes (const qse_char_t* str)
@@ -34,27 +41,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	const qse_char_t* p = str;
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
-
-qse_size_t qse_mbslen (const qse_mchar_t* mbs)
-{
-	const qse_mchar_t* p = mbs;
-	while (*p != QSE_T('\0')) p++;
-	return p - mbs;
-}
-
-qse_size_t qse_wcslen (const qse_wchar_t* wcs)
-{
-	const qse_wchar_t* p = wcs;
-	while (*p != QSE_T('\0')) p++;
-	return p - wcs;
-}
-
-qse_size_t qse_strcpy (qse_char_t* buf, const qse_char_t* str)
-{
-	qse_char_t* org = buf;
-	while ((*buf++ = *str++) != QSE_T('\0'));
-	return buf - org - 1;
 }
 
 qse_size_t qse_mbscpy (qse_mchar_t* buf, const qse_mchar_t* str)
@@ -645,14 +631,14 @@ qse_char_t* qse_strxdup2 (
 	return tmp;
 }
 
-qse_char_t* qse_strstr (const qse_char_t* str, const qse_char_t* sub)
+qse_mchar_t* qse_mbsstr (const qse_mchar_t* str, const qse_mchar_t* sub)
 {
-	const qse_char_t* x, * y;
+	const qse_mchar_t* x, * y;
 
 	y = sub;
-	if (*y == QSE_T('\0')) return (qse_char_t*)str;
+	if (*y == QSE_MT('\0')) return (qse_mchar_t*)str;
 
-	while (*str != QSE_T('\0')) 
+	while (*str != QSE_MT('\0')) 
 	{
 		if (*str != *y) 
 		{
@@ -661,11 +647,42 @@ qse_char_t* qse_strstr (const qse_char_t* str, const qse_char_t* sub)
 		}
 
 		x = str;
-		while (1)
+		do
 		{
-			if (*y == QSE_T('\0')) return (qse_char_t*)str;
+			if (*y == QSE_MT('\0')) return (qse_mchar_t*)str;
 			if (*x++ != *y++) break;
 		}
+		while (1);
+
+		y = sub;
+		str++;
+	}
+
+	return QSE_NULL;
+}
+
+qse_wchar_t* qse_wcsstr (const qse_wchar_t* str, const qse_wchar_t* sub)
+{
+	const qse_wchar_t* x, * y;
+
+	y = sub;
+	if (*y == QSE_WT('\0')) return (qse_wchar_t*)str;
+
+	while (*str != QSE_WT('\0')) 
+	{
+		if (*str != *y) 
+		{
+			str++;
+			continue;
+		}
+
+		x = str;
+		do
+		{
+			if (*y == QSE_WT('\0')) return (qse_wchar_t*)str;
+			if (*x++ != *y++) break;
+		}
+		while (1);
 
 		y = sub;
 		str++;
@@ -817,11 +834,21 @@ qse_char_t* qse_strxnrstr (
 	return QSE_NULL;
 }
 
-qse_char_t* qse_strchr (const qse_char_t* str, qse_cint_t c)
+qse_mchar_t* qse_mbschr (const qse_mchar_t* str, qse_mcint_t c)
 {
-	while (*str != QSE_T('\0')) 
+	while (*str != QSE_MT('\0')) 
 	{
-		if (*str == c) return (qse_char_t*)str;
+		if (*str == c) return (qse_mchar_t*)str;
+		str++;
+	}
+	return QSE_NULL;
+}
+
+qse_wchar_t* qse_wcschr (const qse_wchar_t* str, qse_wcint_t c)
+{
+	while (*str != QSE_WT('\0')) 
+	{
+		if (*str == c) return (qse_wchar_t*)str;
 		str++;
 	}
 	return QSE_NULL;

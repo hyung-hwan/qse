@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 404 2011-03-20 14:16:54Z hyunghwan.chung $
+ * $Id: str.h 405 2011-03-21 14:01:10Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -136,31 +136,34 @@ extern "C" {
  */
 
 /**
- * The qse_strlen() function returns the number of characters in a 
- * null-terminated string. The length returned excludes a terminating null.
+ * The qse_mbslen() function returns the number of characters in a 
+ * multibyte null-terminated string. The length returned excludes a 
+ * terminating null.
  */
-qse_size_t qse_strlen (
-	const qse_char_t* str
+qse_size_t qse_mbslen (
+	const qse_mchar_t* mbs
 );
+
+/**
+ * The qse_wcslen() function returns the number of characters in a 
+ * wide-character null-terminated string. The length returned excludes 
+ * a terminating null.
+ */
+qse_size_t qse_wcslen (
+	const qse_wchar_t* wcs
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strlen(str) qse_mbslen(str)
+#else
+#	define qse_strlen(str) qse_wcslen(str)
+#endif
 
 /**
  * The qse_strbytes() function returns the number of bytes a null-terminated
  * string is holding excluding a terminating null.
  */
 qse_size_t qse_strbytes (
-	const qse_char_t* str
-);
-
-qse_size_t qse_mbslen (
-	const qse_mchar_t* mbs
-);
-
-qse_size_t qse_wcslen (
-	const qse_wchar_t* wcs
-);
-
-qse_size_t qse_strcpy (
-	qse_char_t*       buf,
 	const qse_char_t* str
 );
 
@@ -173,6 +176,12 @@ qse_size_t qse_wcscpy (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* str
 );
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strcpy(buf,str) qse_mbscpy(buf,str)
+#else
+#	define qse_strcpy(buf,str) qse_wcscpy(buf,str)
+#endif
 
 qse_size_t qse_strxcpy (
 	qse_char_t*       buf,
@@ -401,15 +410,32 @@ qse_char_t* qse_strxdup2 (
 );
 
 /**
- * The qse_strstr() function searchs a string @a str for the first occurrence 
+ * The qse_mbsstr() function searchs a string @a str for the first occurrence 
  * of a substring @a sub.
  * @return pointer to the first occurrence in @a str if @a sub is found, 
  *         QSE_NULL if not.
  */
-qse_char_t* qse_strstr (
-	const qse_char_t* str, 
-	const qse_char_t* sub
+qse_mchar_t* qse_mbsstr (
+	const qse_mchar_t* str, 
+	const qse_mchar_t* sub
 );
+
+/**
+ * The qse_wcsstr() function searchs a string @a str for the first occurrence 
+ * of a substring @a sub.
+ * @return pointer to the first occurrence in @a str if @a sub is found, 
+ *         QSE_NULL if not.
+ */
+qse_wchar_t* qse_wcsstr (
+	const qse_wchar_t* str, 
+	const qse_wchar_t* sub
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strstr(str,sub) qse_mbsstr(str,sub)
+#else
+#	define qse_strstr(str,sub) qse_wcsstr(str,,sub)
+#endif
 
 qse_char_t* qse_strxstr (
 	const qse_char_t* str,
@@ -466,10 +492,21 @@ qse_char_t* qse_strxnrstr (
 	qse_size_t        subsz
 );
 
-qse_char_t* qse_strchr (
-	const qse_char_t* str,
-	qse_cint_t c
+qse_mchar_t* qse_mbschr (
+	const qse_mchar_t* str,
+	qse_mcint_t        c
 );
+
+qse_wchar_t* qse_wcschr (
+	const qse_wchar_t* str,
+	qse_wcint_t        c
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strchr(str,c) qse_mbschr(str,c)
+#else
+#	define qse_strchr(str,c) qse_wcschr(str,c)
+#endif
 
 qse_char_t* qse_strxchr (
 	const qse_char_t* str,
