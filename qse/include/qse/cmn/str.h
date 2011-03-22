@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 405 2011-03-21 14:01:10Z hyunghwan.chung $
+ * $Id: str.h 406 2011-03-21 14:03:01Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -434,7 +434,7 @@ qse_wchar_t* qse_wcsstr (
 #ifdef QSE_CHAR_IS_MCHAR
 #	define qse_strstr(str,sub) qse_mbsstr(str,sub)
 #else
-#	define qse_strstr(str,sub) qse_wcsstr(str,,sub)
+#	define qse_strstr(str,sub) qse_wcsstr(str,sub)
 #endif
 
 qse_char_t* qse_strxstr (
