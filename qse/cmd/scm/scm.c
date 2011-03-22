@@ -224,8 +224,12 @@ int scm_main (int argc, qse_char_t* argv[])
 		qse_scm_attachio (scm, &io);
 	}
 
+
+
 {
-pio1 (QSE_T("pstat"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL|QSE_PIO_DROPERR, QSE_PIO_OUT);   
+   int i;
+   for (i = 0; i<200; i++) 
+pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PIO_DROPERR, QSE_PIO_OUT);   
 }
 
 {

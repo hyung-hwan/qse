@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 404 2011-03-20 14:16:54Z hyunghwan.chung $
+ * $Id: pio.c 405 2011-03-21 14:01:10Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -294,14 +294,12 @@ qse_pio_t* qse_pio_init (
 
 #elif defined(__OS2__)
 
-#define DOS_DUP_HANDLE(x,y) QSE_BLOCK ( \
-	if (DosDupHandle(x,y) != NO_ERROR) goto oops; \
-)
+	#define DOS_DUP_HANDLE(x,y) QSE_BLOCK ( \
+		if (DosDupHandle(x,y) != NO_ERROR) goto oops; \
+	)
 
 	if (oflags & QSE_PIO_WRITEIN)
 	{
-		ULONG state;
-
 		/* child reads, parent writes */		
 		if (DosCreatePipe (
 			&handle[0], &handle[1], pipe_size) != NO_ERROR) goto oops;
@@ -311,6 +309,7 @@ qse_pio_t* qse_pio_init (
 		if (DosSetFHState (handle[1], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
 
 		/* Need to do somthing like this to set the flag instead? 
+		ULONG state;               
 		DosQueryFHState (handle[1], &state);
 		DosSetFHState (handle[1], state | OPEN_FLAGS_NOINHERIT); */
 
@@ -319,8 +318,6 @@ qse_pio_t* qse_pio_init (
 
 	if (oflags & QSE_PIO_READOUT)
 	{
-		ULONG state;
-
 		/* child writes, parent reads */
 		if (DosCreatePipe (
 			&handle[2], &handle[3], pipe_size) != NO_ERROR) goto oops;
@@ -335,8 +332,6 @@ qse_pio_t* qse_pio_init (
 
 	if (oflags & QSE_PIO_READERR)
 	{
-		ULONG state;
-
 		/* child writes, parent reads */
 		if (DosCreatePipe (
 			&handle[4], &handle[5], pipe_size) != NO_ERROR) goto oops;
@@ -444,9 +439,8 @@ qse_pio_t* qse_pio_init (
 	if (oflags & QSE_PIO_DROPIN) DosClose (std_in);
 	if (oflags & QSE_PIO_DROPOUT) DosClose (std_out);
 	if (oflags & QSE_PIO_DROPERR) DosClose (std_err);
-#if 0
+
 	if (oflags & QSE_PIO_SHELL) 
-#endif
 	{
 		qse_size_t n, mn;
 
@@ -472,17 +466,39 @@ qse_pio_t* qse_pio_init (
 		
 		cmd_file = QSE_MT("cmd.exe");
 	}
-#if 0
 	else
 	{
+		qse_mchar_t* mptr;
+
 	#ifdef QSE_CHAR_IS_MCHAR
-	#else   
-		cmd_line = qse_strdup (cmd, mmgr);
+		qse_size_t mn = qse_strlen(cmd);
+		cmd_line = qse_strdup2 (cmd, QSE_T(" "), pio->mmgr);
 		if (cmd_line == QSE_NULL) goto oops;
+	#else   
+		qse_size_t n, mn;
+		n = qse_wcstombslen (cmd, &mn);
+		if (cmd[n] != QSE_T('\0')) goto oops; /* illegal sequence in cmd */
+
+		mn = mn + 1;
+		cmd_line = QSE_MMGR_ALLOC (pio->mmgr, mn * QSE_SIZEOF(qse_char_t));
+		if (cmd_line == QSE_NULL) goto oops;
+  
+		qse_wcstombs (cmd, cmd_line, &mn);
 	#endif
-		cmd_file...
+
+		/* TODO: enhance this part by:
+		 *          supporting file names containing whitespaces.
+		 *          detecting the end of the file name better.
+		 *          doing better parsing of the command line.
+		 */
+
+		/* NOTE: you must separate the command name and the parameters with 
+		 *       a space. "pstat.exe /c" is ok while "pstat.exe/c" is not. */
+		mptr = qse_mbschr (cmd_line, QSE_MT(' '));
+		if (mptr) *mptr = QSE_MT('\0');
+		cmd_line[mn+1] = QSE_MT('\0'); /* the second '\0' at the end */
+		cmd_file = cmd_line;
 	}
-#endif
 
 	/* execute the command line */
 	rc = DosExecPgm (
@@ -682,6 +698,7 @@ qse_pio_t* qse_pio_init (
 				goto child_oops;
 			}
 			
+			/* calculate the length of the string after splitting */
 			for (wl = 0, n = fcnt; n > 0; )
 			{
 				if (wcmd[wl++] == QSE_T('\0')) n--;
@@ -691,6 +708,8 @@ qse_pio_t* qse_pio_init (
 			if (n != wl) goto child_oops;
 		}
 
+		/* prepare to reserve 1 more slot for the terminating '\0'
+		 * by incrementing mn by 1. */
 		mn = mn + 1;
 
 		if (mn <= QSE_COUNTOF(buf)) 
