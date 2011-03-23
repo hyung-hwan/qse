@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: mem.c 407 2011-03-23 02:21:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -430,7 +430,7 @@ static void mmgr_free (void* data, void* ptr)
         free (ptr);
 }
 
-static qse_mmgr_t mmgr =
+static qse_mmgr_t builtin_mmgr =
 {
 	mmgr_alloc,
 	mmgr_realloc,
@@ -438,4 +438,14 @@ static qse_mmgr_t mmgr =
 	QSE_NULL
 };
 
-qse_mmgr_t* qse_mmgr = &mmgr;
+static qse_mmgr_t* dfl_mmgr = &builtin_mmgr;
+
+qse_mmgr_t* qse_getdflmmgr ()
+{
+	return dfl_mmgr;
+}
+
+void qse_setdflmmgr (qse_mmgr_t* mmgr)
+{
+	dfl_mmgr = (mmgr? mmgr: &builtin_mmgr);
+}

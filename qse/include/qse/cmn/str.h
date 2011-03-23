@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 406 2011-03-21 14:03:01Z hyunghwan.chung $
+ * $Id: str.h 407 2011-03-23 02:21:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -624,6 +624,34 @@ qse_char_t* qse_strxnend (
 	const qse_char_t* sub,
 	qse_size_t        len2
 );
+
+qse_size_t qse_mbsspn (
+	const qse_mchar_t* str1,
+	const qse_mchar_t* str2
+);
+
+qse_size_t qse_wcsspn (
+	const qse_wchar_t* str1,
+	const qse_wchar_t* str2
+);
+
+qse_size_t qse_mbscspn (
+	const qse_mchar_t* str1,
+	const qse_mchar_t* str2
+);
+
+qse_size_t qse_wcscspn (
+	const qse_wchar_t* str1,
+	const qse_wchar_t* str2
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strspn(str1,str2) qse_mbsspn(str1,str2)
+#	define qse_strcspn(str1,str2) qse_mbscspn(str1,str2)
+#else
+#	define qse_strspn(str1,str2) qse_wcsspn(str1,str2)
+#	define qse_strcspn(str1,str2) qse_wcscspn(str1,str2)
+#endif
 
 /* 
  * string conversion

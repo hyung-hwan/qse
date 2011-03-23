@@ -228,8 +228,13 @@ int scm_main (int argc, qse_char_t* argv[])
 
 {
    int i;
-   for (i = 0; i<200; i++) 
+   for (i = 0; i<2; i++) 
 pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PIO_DROPERR, QSE_PIO_OUT);   
+}
+
+{
+	qse_printf (QSE_T("%d\n"), (int)qse_strspn (QSE_T("abcdefg"), QSE_T("cdab")));
+	qse_printf (QSE_T("%d\n"), (int)qse_strcspn (QSE_T("abcdefg"), QSE_T("fg")));
 }
 
 {

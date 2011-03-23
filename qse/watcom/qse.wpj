@@ -4,8 +4,8 @@ projectIdent
 VpeMain
 1
 WRect
-610
-213
+680
+400
 9320
 9120
 2
@@ -73,7 +73,7 @@ VComponent
 18
 WRect
 90
-693
+680
 5700
 4240
 1
@@ -89,7 +89,7 @@ VComponent
 21
 WRect
 2100
-853
+840
 5700
 4240
 1
@@ -107,7 +107,7 @@ WRect
 590
 520
 5700
-4253
+4240
 1
 0
 25
@@ -121,17 +121,17 @@ VComponent
 27
 WRect
 430
-333
+320
 5700
-4253
+4240
 0
 0
 28
 WFileName
 28
 debug/os2/lib/cmn/qsecmn.tgt
-0
-0
+19
+27
 29
 VComponent
 30
@@ -139,7 +139,7 @@ WRect
 1050
 1800
 5700
-4253
+4240
 0
 0
 31
@@ -153,9 +153,9 @@ VComponent
 33
 WRect
 2680
-2093
+2080
 5700
-4253
+4240
 0
 0
 34
@@ -171,7 +171,7 @@ WRect
 0
 0
 5700
-4253
+4240
 0
 0
 37
@@ -180,4 +180,4 @@ WFileName
 debug/os2/cmd/scm/qsescm.tgt
 0
 1
-35
+26
