@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 375 2010-11-30 11:35:28Z hyunghwan.chung $
+ * $Id: mem.h 407 2011-03-23 02:21:14Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -31,12 +31,12 @@
 /** 
  * The QSE_MMGR_GETDFL() macro returns the default memory manager.
  */
-#define QSE_MMGR_GETDFL()  (qse_mmgr)
+#define QSE_MMGR_GETDFL()  qse_getdflmmgr()
 
 /**
  * The QSE_MMGR_SETDFL() macro changes the default memory manager.
  */
-#define QSE_MMGR_SETDFL(m) ((qse_mmgr)=(m))
+#define QSE_MMGR_SETDFL(m) qse_setdflmmgr(m)
 
 /**
  * The QSE_MMGR_ALLOC() macro allocates a memory block of the @a size bytes
@@ -185,6 +185,22 @@ void* qse_memrmem (
 	qse_size_t  hl,  /**< number of bytes to scan */
 	const void* nd,  /**< byte block to find */
 	qse_size_t  nl   /**< number of bytes in the block */
+);
+
+/**
+ * The qse_getdflmmgr() function returns the default memory manager.
+ */
+qse_mmgr_t* qse_getdflmmgr (
+	void
+);
+
+/**
+ * The qse_setdflmmgr() function changes the default memory manager.
+ * If mmgr is #QSE_NULL, the memory manager is set to the builtin
+ * default.
+ */
+void qse_setdflmmgr (
+	qse_mmgr_t* mmgr
 );
 
 #ifdef __cplusplus
