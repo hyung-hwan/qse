@@ -66,8 +66,8 @@ WRect
 WFileName
 30
 release/os2/lib/cmn/qsecmn.tgt
-0
-14
+25
+25
 17
 VComponent
 18
@@ -124,14 +124,14 @@ WRect
 320
 5700
 4240
-0
+1
 0
 28
 WFileName
 28
 debug/os2/lib/cmn/qsecmn.tgt
 19
-27
+26
 29
 VComponent
 30
@@ -163,7 +163,7 @@ WFileName
 28
 debug/os2/lib/scm/qsescm.tgt
 0
-3
+4
 35
 VComponent
 36
@@ -180,4 +180,4 @@ WFileName
 debug/os2/cmd/scm/qsescm.tgt
 0
 1
-26
+32

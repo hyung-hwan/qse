@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 407 2011-03-23 02:21:14Z hyunghwan.chung $
+ * $Id: str.h 408 2011-03-23 02:45:39Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -651,6 +651,34 @@ qse_size_t qse_wcscspn (
 #else
 #	define qse_strspn(str1,str2) qse_wcsspn(str1,str2)
 #	define qse_strcspn(str1,str2) qse_wcscspn(str1,str2)
+#endif
+
+/*
+ * The qse_mbspbrk() function searches @a str1 for the first occurrence of 
+ * a character in @a str2.
+ * @return pointer to the first occurrence in @a str1 if one is found.
+ *         QSE_NULL if none is found.
+ */
+qse_mchar_t* qse_mbspbrk (
+	const qse_mchar_t* str1,
+	const qse_mchar_t* str2
+);
+
+/*
+ * The qse_wcspbrk() function searches @a str1 for the first occurrence of 
+ * a character in @a str2.
+ * @return pointer to the first occurrence in @a str1 if one is found.
+ *         QSE_NULL if none is found.
+ */
+qse_wchar_t* qse_wcspbrk (
+	const qse_wchar_t* str1,
+	const qse_wchar_t* str2
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strpbrk(str1,str2) qse_mbspbrk(str1,str2)
+#else
+#	define qse_strpbrk(str1,str2) qse_wcspbrk(str1,str2)
 #endif
 
 /* 
