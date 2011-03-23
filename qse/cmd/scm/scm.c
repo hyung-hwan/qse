@@ -235,6 +235,7 @@ pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/Q
 {
 	qse_printf (QSE_T("%d\n"), (int)qse_strspn (QSE_T("abcdefg"), QSE_T("cdab")));
 	qse_printf (QSE_T("%d\n"), (int)qse_strcspn (QSE_T("abcdefg"), QSE_T("fg")));
+	qse_printf (QSE_T("%s\n"), qse_strpbrk (QSE_T("abcdefg"), QSE_T("fb")));
 }
 
 {
