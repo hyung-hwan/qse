@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 408 2011-03-23 02:45:39Z hyunghwan.chung $
+ * $Id: str.h 410 2011-03-23 15:07:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -167,6 +167,7 @@ qse_size_t qse_strbytes (
 	const qse_char_t* str
 );
 
+
 qse_size_t qse_mbscpy (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* str
@@ -177,38 +178,71 @@ qse_size_t qse_wcscpy (
 	const qse_wchar_t* str
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strcpy(buf,str) qse_mbscpy(buf,str)
-#else
-#	define qse_strcpy(buf,str) qse_wcscpy(buf,str)
-#endif
+qse_size_t qse_mbsxcpy (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* str
+);
 
-qse_size_t qse_strxcpy (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* str
+qse_size_t qse_wcsxcpy (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* str
 );
 
 /**
- * The qse_strycpy() function copies a length-bounded string into
+ * The qse_mbsncpy() function copies a length-bounded string into
  * a buffer with unknown size. 
  */
-qse_size_t qse_strncpy (
-	qse_char_t*       buf, /**< buffer with unknown length */
-	const qse_char_t* str, /**< length-bounded string */
-	qse_size_t        len  /**< string length */
+qse_size_t qse_mbsncpy (
+	qse_mchar_t*       buf, /**< buffer with unknown length */
+	const qse_mchar_t* str, /**< length-bounded string */
+	qse_size_t         len  /**< string length */
 );
 
 /**
- * The qse_strycpy() function copies a length-bounded string into
+ * The qse_wcsncpy() function copies a length-bounded string into
+ * a buffer with unknown size. 
+ */
+qse_size_t qse_wcsncpy (
+	qse_wchar_t*       buf, /**< buffer with unknown length */
+	const qse_wchar_t* str, /**< length-bounded string */
+	qse_size_t         len  /**< string length */
+);
+
+/**
+ * The qse_mbsxncpy() function copies a length-bounded string into
  * a length-bounded buffer.
  */
-qse_size_t qse_strxncpy (
-	qse_char_t*       buf, /**< length-bounded buffer */
-	qse_size_t        bsz, /**< buffer length */
-	const qse_char_t* str, /**< length-bounded string */
-	qse_size_t        len  /**< string length */
+qse_size_t qse_mbsxncpy (
+	qse_mchar_t*       buf, /**< length-bounded buffer */
+	qse_size_t         bsz, /**< buffer length */
+	const qse_mchar_t* str, /**< length-bounded string */
+	qse_size_t         len  /**< string length */
 );
+
+/**
+ * The qse_wcsxncpy() function copies a length-bounded string into
+ * a length-bounded buffer.
+ */
+qse_size_t qse_wcsxncpy (
+	qse_wchar_t*       buf, /**< length-bounded buffer */
+	qse_size_t         bsz, /**< buffer length */
+	const qse_wchar_t* str, /**< length-bounded string */
+	qse_size_t         len  /**< string length */
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strcpy(buf,str)           qse_mbscpy(buf,str)
+#	define qse_strxcpy(buf,bsz,str)      qse_mbsxcpy(buf,bsz,str)
+#	define qse_strncpy(buf,str,len)      qse_mbsncpy(buf,str,len)
+#	define qse_strxncpy(buf,bsz,str,len) qse_mbsxncpy(buf,bsz,str,len)
+#else
+#	define qse_strcpy(buf,str)           qse_wcscpy(buf,str)
+#	define qse_strxcpy(buf,bsz,str)      qse_wcsxcpy(buf,bsz,str)
+#	define qse_strncpy(buf,str,len)      qse_wcsncpy(buf,str,len)
+#	define qse_strxncpy(buf,bsz,str,len) qse_wcsxncpy(buf,bsz,str,len)
+#endif
 
 /**
  * The qse_strxput() function copies the string @a str into the buffer @a buf

@@ -19,7 +19,6 @@
  */
 
 #include <qse/cmn/str.h>
-#include <qse/cmn/chr.h>
 
 qse_size_t qse_mbsspn (const qse_mchar_t* str1, const qse_mchar_t* str2)
 {

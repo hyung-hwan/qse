@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 405 2011-03-21 14:01:10Z hyunghwan.chung $
+ * $Id: str_bas.c 410 2011-03-23 15:07:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,85 +41,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	const qse_char_t* p = str;
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
-
-qse_size_t qse_mbscpy (qse_mchar_t* buf, const qse_mchar_t* str)
-{
-	qse_mchar_t* org = buf;
-	while ((*buf++ = *str++) != QSE_MT('\0'));
-	return buf - org - 1;
-}
-
-qse_size_t qse_wcscpy (qse_wchar_t* buf, const qse_wchar_t* str)
-{
-	qse_wchar_t* org = buf;
-	while ((*buf++ = *str++) != QSE_WT('\0'));
-	return buf - org - 1;
-}
-
-qse_size_t qse_strxcpy (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
-{
-	qse_char_t* p, * p2;
-
-	p = buf; p2 = buf + bsz - 1;
-
-	while (p < p2) 
-	{
-		if (*str == QSE_T('\0')) break;
-		*p++ = *str++;
-	}
-
-	if (bsz > 0) *p = QSE_T('\0');
-	return p - buf;
-}
-
-qse_size_t qse_strncpy (
-	qse_char_t* buf, const qse_char_t* str, qse_size_t len)
-{
-	/*
-	const qse_char_t* end = str + len;
-	while (str < end) *buf++ = *str++;
-	*buf = QSE_T('\0');
-	return len;
-	*/
-
-	if (len > 0)
-	{
-		qse_size_t n = (len-1) >> 3; /* (len-1) / 8 */
-
-		switch (len & 7) /* len % 8 */
-		{
-		repeat:
-			case 0: *buf++ = *str++;
-			case 7: *buf++ = *str++;
-			case 6: *buf++ = *str++;
-			case 5: *buf++ = *str++;
-			case 4: *buf++ = *str++;
-			case 3: *buf++ = *str++;
-			case 2: *buf++ = *str++;
-			case 1: *buf++ = *str++;
-			        if (n <= 0) break;
-			        n--;
-			        goto repeat;
-		}
-	}
-
-	*buf = QSE_T('\0');
-	return len;
-}
-
-qse_size_t qse_strxncpy (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
-{
-	qse_size_t n;
-
-	if (bsz <= 0) return 0;
-	if ((n = bsz - 1) > len) n = len;
-	QSE_MEMCPY (buf, str, n * QSE_SIZEOF(qse_char_t));
-	buf[n] = QSE_T('\0');
-
-	return n;
 }
 
 qse_size_t qse_strxput (
