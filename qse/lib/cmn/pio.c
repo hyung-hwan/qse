@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 407 2011-03-23 02:21:14Z hyunghwan.chung $
+ * $Id: pio.c 410 2011-03-23 15:07:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -492,9 +492,10 @@ qse_pio_t* qse_pio_init (
 		 *          doing better parsing of the command line.
 		 */
 
-		/* NOTE: you must separate the command name and the parameters with 
-		 *       a space. "pstat.exe /c" is ok while "pstat.exe/c" is not. */
-		mptr = qse_mbschr (cmd_line, QSE_MT(' '));
+		/* NOTE: you must separate the command name and the parameters 
+		 *       with a space. "pstat.exe /c" is ok while "pstat.exe/c"
+		 *       is not. */
+		mptr = qse_mbspbrk (cmd_line, QSE_MT(" \t"));
 		if (mptr) *mptr = QSE_MT('\0');
 		cmd_line[mn+1] = QSE_MT('\0'); /* the second '\0' at the end */
 		cmd_file = cmd_line;

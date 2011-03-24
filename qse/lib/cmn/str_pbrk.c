@@ -19,7 +19,6 @@
  */
 
 #include <qse/cmn/str.h>
-#include <qse/cmn/chr.h>
 
 qse_mchar_t* qse_mbspbrk (const qse_mchar_t* str1, const qse_mchar_t* str2)
 {
