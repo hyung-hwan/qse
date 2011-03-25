@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 413 2011-03-25 04:36:43Z hyunghwan.chung $
+ * $Id: chr.h 414 2011-03-25 04:52:47Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -73,33 +73,33 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #	include <ctype.h>
 #	include <wctype.h>
 #
-#	define QSE_ISUPPER(c) isupper(c)
-#	define QSE_ISLOWER(c) islower(c)
-#	define QSE_ISALPHA(c) isalpha(c)
-#	define QSE_ISDIGIT(c) isdigit(c)
-#	define QSE_ISXDIGIT(c) isxdigit(c)
-#	define QSE_ISALNUM(c) isalnum(c)
-#	define QSE_ISSPACE(c) isspace(c)
-#	define QSE_ISPRINT(c) isprint(c)
-#	define QSE_ISGRAPH(c) isgraph(c)
-#	define QSE_ISCNTRL(c) iscntrl(c)
-#	define QSE_ISPUNCT(c) ispunct(c)
-#	define QSE_TOUPPER(c) toupper(c)
-#	define QSE_TOLOWER(c) tolower(c)
+#	define QSE_ISMUPPER(c) isupper(c)
+#	define QSE_ISMLOWER(c) islower(c)
+#	define QSE_ISMALPHA(c) isalpha(c)
+#	define QSE_ISMDIGIT(c) isdigit(c)
+#	define QSE_ISMXDIGIT(c) isxdigit(c)
+#	define QSE_ISMALNUM(c) isalnum(c)
+#	define QSE_ISMSPACE(c) isspace(c)
+#	define QSE_ISMPRINT(c) isprint(c)
+#	define QSE_ISMGRAPH(c) isgraph(c)
+#	define QSE_ISMCNTRL(c) iscntrl(c)
+#	define QSE_ISMPUNCT(c) ispunct(c)
+#	define QSE_TOMUPPER(c) toupper(c)
+#	define QSE_TOMLOWER(c) tolower(c)
 #
-#	define QSE_ISUPPER(c) iswupper(c)
-#	define QSE_ISLOWER(c) iswlower(c)
-#	define QSE_ISALPHA(c) iswalpha(c)
-#	define QSE_ISDIGIT(c) iswdigit(c)
-#	define QSE_ISXDIGIT(c) iswxdigit(c)
-#	define QSE_ISALNUM(c) iswalnum(c)
-#	define QSE_ISSPACE(c) iswspace(c)
-#	define QSE_ISPRINT(c) iswprint(c)
-#	define QSE_ISGRAPH(c) iswgraph(c)
-#	define QSE_ISCNTRL(c) iswcntrl(c)
-#	define QSE_ISPUNCT(c) iswpunct(c)
-#	define QSE_TOUPPER(c) towupper(c)
-#	define QSE_TOLOWER(c) towlower(c)
+#	define QSE_ISWUPPER(c) iswupper(c)
+#	define QSE_ISWLOWER(c) iswlower(c)
+#	define QSE_ISWALPHA(c) iswalpha(c)
+#	define QSE_ISWDIGIT(c) iswdigit(c)
+#	define QSE_ISWXDIGIT(c) iswxdigit(c)
+#	define QSE_ISWALNUM(c) iswalnum(c)
+#	define QSE_ISWSPACE(c) iswspace(c)
+#	define QSE_ISWPRINT(c) iswprint(c)
+#	define QSE_ISWGRAPH(c) iswgraph(c)
+#	define QSE_ISWCNTRL(c) iswcntrl(c)
+#	define QSE_ISWPUNCT(c) iswpunct(c)
+#	define QSE_TOWUPPER(c) towupper(c)
+#	define QSE_TOWLOWER(c) towlower(c)
 #else
 #	define QSE_ISMUPPER(c) (qse_mccls_is(c,QSE_CCLS_UPPER))
 #	define QSE_ISMLOWER(c) (qse_mccls_is(c,QSE_CCLS_LOWER))

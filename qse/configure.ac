@@ -93,7 +93,7 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
-AC_CHECK_FUNCS([wctrans towctrans])
+AC_CHECK_FUNCS([wctype wctrans towctrans])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 343 2010-08-05 07:31:17Z hyunghwan.chung $
+ * $Id: awk.h 414 2011-03-25 04:52:47Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,7 +21,6 @@
 #ifndef _QSE_LIB_AWK_AWK_H_
 #define _QSE_LIB_AWK_AWK_H_
 
-#define USE_STDC
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
