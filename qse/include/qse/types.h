@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id: types.h 411 2011-03-24 14:20:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -345,7 +345,7 @@ typedef int qse_mcint_t;
 	typedef wchar_t qse_wcint_t;
 
 	/* all the way down from here for C */
-#elif defined(__WCHAR_TYPE__) && defined(__WINT_TYPE__)
+#elif defined(__GNUC__) && defined(__WCHAR_TYPE__) && defined(__WINT_TYPE__)
 	typedef __WCHAR_TYPE__ qse_wchar_t;
 	typedef __WINT_TYPE__ qse_wcint_t;
 #elif (QSE_SIZEOF_WCHAR_T == 2) || (QSE_SIZEOF_WCHAR_T == 0)
@@ -396,12 +396,12 @@ typedef int qse_mcint_t;
  * The qse_cint_t typep defines a type that can hold a qse_char_t value and 
  * #QSE_CHAR_EOF.
  */
-#if defined(QSE_CHAR_IS_WCHAR)
-	typedef qse_wchar_t qse_char_t;
-	typedef qse_wcint_t qse_cint_t;
-#elif defined(QSE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	typedef qse_mchar_t qse_char_t;
 	typedef qse_mcint_t qse_cint_t;
+#elif defined(QSE_CHAR_IS_WCHAR)
+	typedef qse_wchar_t qse_char_t;
+	typedef qse_wcint_t qse_cint_t;
 #else
 	/* If the character type is not determined in the conf_xxx files */
 
@@ -431,29 +431,62 @@ typedef int qse_mcint_t;
 #endif
 
 /**
- * The qse_xstr_t type defines a structure combining a pointer to a character
+ * The qse_mxstr_t type defines a structure combining a pointer to a character
  * string and the number of characters. It is designed to be interchangeable
- * with the #qse_cstr_t type except the constness on the @a ptr field.
+ * with the #qse_mcstr_t type except the constness on the @a ptr field.
  */
-struct qse_xstr_t
+struct qse_mxstr_t
 {
-	qse_char_t* ptr; /**< pointer to a character string */
-	qse_size_t  len; /**< the number of characters */
+	qse_mchar_t* ptr; /**< pointer to a character string */
+	qse_size_t   len; /**< the number of characters */
 };
-typedef struct qse_xstr_t qse_xstr_t;
+typedef struct qse_mxstr_t qse_mxstr_t;
 
 /**
- * The qse_cstr_t type defines a structure combining a pointer to
+ * The qse_wxstr_t type defines a structure combining a pointer to a character
+ * string and the number of characters. It is designed to be interchangeable
+ * with the #qse_wcstr_t type except the constness on the @a ptr field.
+ */
+struct qse_wxstr_t
+{
+	qse_wchar_t* ptr; /**< pointer to a character string */
+	qse_size_t   len; /**< the number of characters */
+};
+typedef struct qse_wxstr_t qse_wxstr_t;
+
+/**
+ * The qse_mcstr_t type defines a structure combining a pointer to
  * a constant character string and the number of characters.
- * It is designed to be interchangeable with the #qse_xstr_t type
+ * It is designed to be interchangeable with the #qse_mxstr_t type
  * except the constness on the @a ptr field.
  */
-struct qse_cstr_t
+struct qse_mcstr_t
 {
-	const qse_char_t* ptr; /**< pointer to a const character string */
-	qse_size_t        len; /**< the number of characters */
+	const qse_mchar_t* ptr; /**< pointer to a const character string */
+	qse_size_t         len; /**< the number of characters */
 };
-typedef struct qse_cstr_t qse_cstr_t;
+typedef struct qse_mcstr_t qse_mcstr_t;
+
+/**
+ * The qse_wcstr_t type defines a structure combining a pointer to
+ * a constant character string and the number of characters.
+ * It is designed to be interchangeable with the #qse_wxstr_t type
+ * except the constness on the @a ptr field.
+ */
+struct qse_wcstr_t
+{
+	const qse_wchar_t* ptr; /**< pointer to a const character string */
+	qse_size_t         len; /**< the number of characters */
+};
+typedef struct qse_wcstr_t qse_wcstr_t;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	typedef qse_mxstr_t qse_xstr_t;
+	typedef qse_mcstr_t qse_cstr_t;
+#else
+	typedef qse_wxstr_t qse_xstr_t;
+	typedef qse_wcstr_t qse_cstr_t;
+#endif
 
 /** 
  * allocate a memory chunk of the size @a n.
