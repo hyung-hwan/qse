@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.

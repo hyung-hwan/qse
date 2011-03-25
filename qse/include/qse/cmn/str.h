@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 410 2011-03-23 15:07:24Z hyunghwan.chung $
+ * $Id: str.h 411 2011-03-24 14:20:55Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -244,84 +244,195 @@ qse_size_t qse_wcsxncpy (
 #	define qse_strxncpy(buf,bsz,str,len) qse_wcsxncpy(buf,bsz,str,len)
 #endif
 
+qse_size_t qse_mbsput (
+	qse_mchar_t*       buf, 
+	const qse_mchar_t* str
+);
+
+qse_size_t qse_wcsput (
+	qse_wchar_t*       buf, 
+	const qse_wchar_t* str
+);
+
 /**
- * The qse_strxput() function copies the string @a str into the buffer @a buf
+ * The qse_mbsxput() function copies the string @a str into the buffer @a buf
  * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
  * buffer.
  */
-qse_size_t qse_strxput (
-	qse_char_t*       buf, 
-	qse_size_t        bsz,
-	const qse_char_t* str
-);
-
-qse_size_t qse_strxnput (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* str,
-	qse_size_t        len
+qse_size_t qse_mbsxput (
+	qse_mchar_t*       buf, 
+	qse_size_t         bsz,
+	const qse_mchar_t* str
 );
 
 /**
- * The qse_strfcpy() function formats a string by position.
+ * The qse_wcsxput() function copies the string @a str into the buffer @a buf
+ * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
+ * buffer.
+ */
+qse_size_t qse_wcsxput (
+	qse_wchar_t*       buf, 
+	qse_size_t         bsz,
+	const qse_wchar_t* str
+);
+
+qse_size_t qse_mbsxnput (
+	qse_mchar_t*       buf,
+	qse_size_t        bsz,
+	const qse_mchar_t* str,
+	qse_size_t        len
+);
+
+qse_size_t qse_wcsxnput (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* str,
+	qse_size_t         len
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strput(buf,str)           qse_mbsput(buf,str)
+#	define qse_strxput(buf,bsz,str)      qse_mbsxput(buf,bsz,str)
+#	define qse_strxnput(buf,bsz,str,len) qse_mbsxnput(buf,bsz,str,len)
+#else
+#	define qse_strput(buf,str)           qse_wcsput(buf,str)
+#	define qse_strxput(buf,bsz,str)      qse_wcsxput(buf,bsz,str)
+#	define qse_strxnput(buf,bsz,str,len) qse_wcsxnput(buf,bsz,str,len)
+#endif
+
+/**
+ * The qse_mbsfcpy() function formats a string by position.
  * The position specifier is a number enclosed in ${ and }.
  * When ${ is preceeded by a backslash, it is treated literally. 
  * See the example below:
  * @code
  *  qse_char_t buf[256]
- *  qse_char_t* colors[] = { QSE_T("blue"), QSE_T("green"), QSE_T("red") };
- *  qse_strfcpy(buf, QSE_T("RGB: ${2}, ${1}, ${0}"), colors);
+ *  qse_char_t* colors[] = { QSE_MT("blue"), QSE_MT("green"), QSE_MT("red") };
+ *  qse_mbsfcpy(buf, QSE_MT("RGB: ${2}, ${1}, ${0}"), colors);
  * @endcode
- * @sa qse_strfncpy, qse_strxfcpy, qse_strxfncpy
+ * @sa qse_mbsfncpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
-qse_size_t qse_strfcpy (
-	qse_char_t*       buf,
-	const qse_char_t* fmt,
-	const qse_char_t* str[]
+qse_size_t qse_mbsfcpy (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	const qse_mchar_t* str[]
 );
 
 /**
- * The qse_strfncpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @a str is an array of the 
- * #qse_cstr_t type.
- * @sa qse_strfcpy, qse_strxfcpy, qse_strxfncpy
+ * The qse_wcsfcpy() function formats a string by position.
+ * The position specifier is a number enclosed in ${ and }.
+ * When ${ is preceeded by a backslash, it is treated literally. 
+ * See the example below:
+ * @code
+ *  qse_char_t buf[256]
+ *  qse_char_t* colors[] = { QSE_WT("blue"), QSE_WT("green"), QSE_WT("red") };
+ *  qse_wcsfcpy(buf, QSE_WT("RGB: ${2}, ${1}, ${0}"), colors);
+ * @endcode
+ * @sa qse_wcsfncpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
-qse_size_t qse_strfncpy (
-	qse_char_t*       buf,
-	const qse_char_t* fmt, 
-	const qse_cstr_t  str[]
+qse_size_t qse_wcsfcpy (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	const qse_wchar_t* str[]
 );
 
 /**
- * The qse_strxfcpy() function formats a string by position.
+ * The qse_mbsfncpy() function formats a string by position.
+ * It differs from qse_mbsfcpy() in that @a str is an array of the 
+ * #qse_mcstr_t type.
+ * @sa qse_mbsfcpy, qse_mbsxfcpy, qse_mbsxfncpy
+ */
+qse_size_t qse_mbsfncpy (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* fmt,
+	const qse_mcstr_t  str[]
+);
+
+/**
+ * The qse_wcsfncpy() function formats a string by position.
+ * It differs from qse_wcsfcpy() in that @a str is an array of the 
+ * #qse_wcstr_t type.
+ * @sa qse_wcsfcpy, qse_wcsxfcpy, qse_wcsxfncpy
+ */
+qse_size_t qse_wcsfncpy (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* fmt,
+	const qse_wcstr_t  str[]
+);
+
+/**
+ * The qse_mbsxfcpy() function formats a string by position.
  * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
  * characters.
  * @code
- *  qse_char_t buf[256]
- *  qse_char_t* colors[] = { QSE_T("blue"), QSE_T("green"), QSE_T("red") };
- *  qse_strxfcpy(buf, QSE_COUNTOF(buf), QSE_T("RGB: ${2}, ${1}, ${0}"), colors);
+ *  qse_mchar_t buf[256]
+ *  qse_mchar_t* colors[] = { QSE_MT("blue"), QSE_MT("green"), QSE_MT("red") };
+ *  qse_mbsxfcpy(buf, QSE_COUNTOF(buf), QSE_MT("RGB: ${2}, ${1}, ${0}"), colors);
  * @endcode
- * @sa qse_strfcpy, qse_strfncpy, qse_strxfncpy
+ * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfncpy
  */
-qse_size_t qse_strxfcpy (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* fmt,
-	const qse_char_t* str[]
+qse_size_t qse_mbsxfcpy (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz, 
+	const qse_mchar_t* fmt,
+	const qse_mchar_t* str[]
 );
 
 /**
- * The qse_strxfncpy() function formats a string by position.
- * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
- * characters and @a str is an array of the #qse_cstr_t type.
- * @sa qse_strfcpy, qse_strfncpy, qse_strxfcpy
+ * The qse_wcsxfcpy() function formats a string by position.
+ * It differs from qse_wcsfcpy() in that @a buf is length-bounded of @a bsz
+ * characters.
+ * @code
+ *  qse_char_t buf[256]
+ *  qse_char_t* colors[] = { QSE_WT("blue"), QSE_WT("green"), QSE_WT("red") };
+ *  qse_wcsxfcpy(buf, QSE_COUNTOF(buf), QSE_WT("RGB: ${2}, ${1}, ${0}"), colors);
+ * @endcode
+ * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfncpy
  */
-qse_size_t qse_strxfncpy (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* fmt,
-	const qse_cstr_t  str[]
+qse_size_t qse_wcsxfcpy (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz, 
+	const qse_wchar_t* fmt,
+	const qse_wchar_t* str[]
 );
+
+/**
+ * The qse_mbsxfncpy() function formats a string by position.
+ * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
+ * characters and @a str is an array of the #qse_mcstr_t type.
+ * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfcpy
+ */
+qse_size_t qse_mbsxfncpy (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz, 
+	const qse_mchar_t* fmt,
+	const qse_mcstr_t  str[]
+);
+
+/**
+ * The qse_wcsxfncpy() function formats a string by position.
+ * It differs from qse_strfcpy() in that @a buf is length-bounded of @a bsz
+ * characters and @a str is an array of the #qse_wcstr_t type.
+ * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfcpy
+ */
+qse_size_t qse_wcsxfncpy (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz, 
+	const qse_wchar_t* fmt,
+	const qse_wcstr_t  str[]
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strfcpy(buf,fmt,str)        qse_mbsfcpy(buf,fmt,str)
+#	define qse_strfncpy(buf,fmt,str)       qse_mbsfncpy(buf,fmt,str)
+#	define qse_strxfcpy(buf,bsz,fmt,str)   qse_mbsxfcpy(buf,bsz,fmt,str)
+#	define qse_strxfncpy(buf,bsz,fmt,str)  qse_mbsxfncpy(buf,bsz,fmt,str)
+#else
+#	define qse_strfcpy(buf,fmt,str)        qse_wcsfcpy(buf,fmt,str)
+#	define qse_strfncpy(buf,fmt,str)       qse_wcsfncpy(buf,fmt,str)
+#	define qse_strxfcpy(buf,bsz,fmt,str)   qse_wcsxfcpy(buf,bsz,fmt,str)
+#	define qse_strxfncpy(buf,bsz,fmt,str)  qse_wcsxfncpy(buf,bsz,fmt,str)
+#endif
 
 /**
  * The qse_strxsubst() function expands @a fmt into a buffer @a buf of the size
