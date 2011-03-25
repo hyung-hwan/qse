@@ -210,6 +210,9 @@
 /* Define to 1 if you have the `wctrans' function. */
 #undef HAVE_WCTRANS
 
+/* Define to 1 if you have the `wctype' function. */
+#undef HAVE_WCTYPE
+
 /* Define to 1 if you have the <wctype.h> header file. */
 #undef HAVE_WCTYPE_H
 
