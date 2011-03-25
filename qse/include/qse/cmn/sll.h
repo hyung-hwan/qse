@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 356 2010-09-07 12:29:25Z hyunghwan.chung $
+ * $Id: sll.h 413 2011-03-25 04:36:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -133,8 +133,8 @@ struct qse_sll_node_t
 
 #define QSE_SLL_HEAD(sll)   ((sll)->head)
 #define QSE_SLL_TAIL(sll)   ((sll)->tail)
-#define QSE_SLL_SIZE(sll)   ((const qse_size_t)(sll)->size)
-#define QSE_SLL_SCALE(sll)  ((const int)(sll)->scale)
+#define QSE_SLL_SIZE(sll)   ((sll)->size)
+#define QSE_SLL_SCALE(sll)  ((sll)->scale)
 
 /**
  * The QSE_SLL_DPTR macro gets the data pointer in a node.

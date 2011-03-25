@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 411 2011-03-24 14:20:55Z hyunghwan.chung $
+ * $Id: str.h 413 2011-03-25 04:36:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -473,37 +473,67 @@ qse_size_t qse_strxncat (
 	qse_size_t        len
 );
 
-int qse_strcmp (
-	const qse_char_t* s1,
-	const qse_char_t* s2
+
+int qse_mbscmp (
+	const qse_mchar_t* s1,
+	const qse_mchar_t* s2
 );
 
-int qse_strxcmp (
-	const qse_char_t* s1,
-	qse_size_t        len1,
-	const qse_char_t* s2
+int qse_wcscmp (
+	const qse_wchar_t* s1,
+	const qse_wchar_t* s2
 );
 
-int qse_strxncmp (
-	const qse_char_t* s1,
-	qse_size_t        len1, 
-	const qse_char_t* s2,
-	qse_size_t        len2
+int qse_mbsxcmp (
+	const qse_mchar_t* s1,
+	qse_size_t         ln1,
+	const qse_mchar_t* s2
 );
 
-int qse_strcasecmp (
-	const qse_char_t* s1,
-	const qse_char_t* s2
+int qse_wcsxcmp (
+	const qse_wchar_t* s1,
+	qse_size_t         ln1,
+	const qse_wchar_t* s2
 );
 
-int qse_strxcasecmp (
-	const qse_char_t* s1,
-	qse_size_t        len,
-	const qse_char_t* s2
+int qse_mbsxncmp (
+	const qse_mchar_t* s1,
+	qse_size_t         ln1, 
+	const qse_mchar_t* s2,
+	qse_size_t         ln2
+);
+
+int qse_wcsxncmp (
+	const qse_wchar_t* s1,
+	qse_size_t         ln1, 
+	const qse_wchar_t* s2,
+	qse_size_t         ln2
+);
+
+int qse_mbscasecmp (
+	const qse_mchar_t* s1,
+	const qse_mchar_t* s2
+);
+
+int qse_wcscasecmp (
+	const qse_wchar_t* s1,
+	const qse_wchar_t* s2
+);
+
+int qse_mbsxcasecmp (
+	const qse_mchar_t* s1,
+	qse_size_t         ln,
+	const qse_mchar_t* s2
+);
+
+int qse_wcsxcasecmp (
+	const qse_wchar_t* s1,
+	qse_size_t         ln,
+	const qse_wchar_t* s2
 );
 
 /**
- * The qse_strxncasecmp() function compares characters at the same position 
+ * The qse_mbsxncasecmp() function compares characters at the same position 
  * in each string after converting them to the same case temporarily. 
  * It accepts two strings and a character class handler. A string is 
  * represented by its beginning pointer and length. 
@@ -514,7 +544,7 @@ int qse_strxcasecmp (
  *
  * The following code snippet compares "foo" and "FoO" case-insenstively.
  * @code
- * qse_strxncasecmp (QSE_T("foo"), 3, QSE_T("FoO"), 3);
+ * qse_mbsxncasecmp (QSE_MT("foo"), 3, QSE_MT("FoO"), 3);
  * @endcode
  *
  * @return 0 if two strings are equal, 
@@ -522,12 +552,58 @@ int qse_strxcasecmp (
  *         -1 if the second string is larger.
  *
  */
-int qse_strxncasecmp (
-	const qse_char_t* s1,   /**< pointer to the first string */
-	qse_size_t        len1, /**< length of the first string */ 
-	const qse_char_t* s2,   /**< pointer to the second string */
-	qse_size_t        len2  /**< length of the second string */
+int qse_mbsxncasecmp (
+	const qse_mchar_t* s1,  /**< pointer to the first string */
+	qse_size_t         ln1, /**< length of the first string */ 
+	const qse_mchar_t* s2,  /**< pointer to the second string */
+	qse_size_t         ln2  /**< length of the second string */
 );
+
+/**
+ * The qse_wcsxncasecmp() function compares characters at the same position 
+ * in each string after converting them to the same case temporarily. 
+ * It accepts two strings and a character class handler. A string is 
+ * represented by its beginning pointer and length. 
+ *
+ * For two strings to be equal, they need to have the same length and all
+ * characters in the first string must be equal to their counterpart in the
+ * second string.
+ *
+ * The following code snippet compares "foo" and "FoO" case-insenstively.
+ * @code
+ * qse_wcsxncasecmp (QSE_WT("foo"), 3, QSE_WT("FoO"), 3);
+ * @endcode
+ *
+ * @return 0 if two strings are equal, 
+ *         a positive number if the first string is larger, 
+ *         -1 if the second string is larger.
+ *
+ */
+int qse_wcsxncasecmp (
+	const qse_wchar_t* s1,  /**< pointer to the first string */
+	qse_size_t         ln1, /**< length of the first string */ 
+	const qse_wchar_t* s2,  /**< pointer to the second string */
+	qse_size_t         ln2  /**< length of the second string */
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strcmp(s1,s2)               qse_mbscmp(s1,s2)
+#	define qse_strxcmp(s1,ln1,s2)          qse_mbsxcmp(s1,ln1,s2)
+#	define qse_strxncmp(s1,ln1,s2,ln2)     qse_mbsxncmp(s1,ln1,s2,ln2)
+#	define qse_strcasecmp(s1,s2)           qse_mbscasecmp(s1,s2)
+#	define qse_strxcasecmp(s1,ln1,s2)      qse_mbsxcasecmp(s1,ln1,s2)
+#	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_mbsxncasecmp(s1,ln1,s2,ln2)
+#else
+#	define qse_strcmp(s1,s2)               qse_wcscmp(s1,s2)
+#	define qse_strxcmp(s1,ln1,s2)          qse_wcsxcmp(s1,ln1,s2)
+#	define qse_strxncmp(s1,ln1,s2,ln2)     qse_wcsxncmp(s1,ln1,s2,ln2)
+#	define qse_strcasecmp(s1,s2)           qse_wcscasecmp(s1,s2)
+#	define qse_strxcasecmp(s1,ln1,s2)      qse_wcsxcasecmp(s1,ln1,s2)
+#	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_wcsxncasecmp(s1,ln1,s2,ln2)
+#endif
+
+
+
 
 qse_char_t* qse_strdup (
 	const qse_char_t* str,

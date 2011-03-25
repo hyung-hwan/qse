@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 404 2011-03-20 14:16:54Z hyunghwan.chung $
+ * $Id: fio.c 413 2011-03-25 04:36:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -156,7 +156,7 @@ qse_fio_t* qse_fio_init (
 	}
 	if (handle == INVALID_HANDLE_VALUE) return QSE_NULL;
 
-	/* some special check
+	/* some special check */
 	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
 	{
 		CloseHandle (handle);
