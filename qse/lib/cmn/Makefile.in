@@ -73,11 +73,11 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo chr.lo chr_cnv.lo \
-	rex.lo str_bas.lo str_cnv.lo str_dyn.lo str_fcpy.lo str_pbrk.lo \
-	str_put.lo str_spn.lo str_utl.lo lda.lo oht.lo htb.lo rbt.lo sll.lo \
-	gdl.lo dll.lo opt.lo tio.lo tio_get.lo tio_put.lo fio.lo pio.lo \
-	sio.lo alg_search.lo alg_sort.lo time.lo misc.lo assert.lo main.lo \
-	stdio.lo
+	rex.lo str_bas.lo str_cnv.lo str_cpy.lo str_dyn.lo str_fcpy.lo \
+	str_pbrk.lo str_put.lo str_spn.lo str_utl.lo lda.lo oht.lo \
+	htb.lo rbt.lo sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo \
+	tio_put.lo fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo \
+	time.lo misc.lo assert.lo main.lo stdio.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -386,6 +386,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_bas.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cnv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dyn.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_fcpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_pbrk.Plo@am__quote@
