@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id: fio.h 413 2011-03-25 04:36:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -78,7 +78,7 @@ enum qse_fio_mode_t
 	QSE_FIO_XOTH = 00001  /* can be executed by others */
 };
 
-#if defined (_WIN32)
+#if defined(_WIN32)
 	/* <winnt.h> => typedef PVOID HANDLE; */
 	typedef void* qse_fio_hnd_t;
 #elif defined(__OS2__)

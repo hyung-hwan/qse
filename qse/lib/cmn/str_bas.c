@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 411 2011-03-24 14:20:55Z hyunghwan.chung $
+ * $Id: str_bas.c 413 2011-03-25 04:36:43Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -126,7 +126,6 @@ qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
 	return p - buf;
 }
 
-
 qse_size_t qse_strxncat (
 	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
 {
@@ -150,101 +149,6 @@ qse_size_t qse_strxncat (
 
 	if (bsz > 0) *p = QSE_T('\0');
 	return p - buf;
-}
-
-int qse_strcmp (const qse_char_t* s1, const qse_char_t* s2)
-{
-	while (*s1 == *s2) 
-	{
-		if (*s1 == QSE_T('\0')) return 0;
-		s1++, s2++;
-	}
-
-	return (*s1 > *s2)? 1: -1;
-}
-
-int qse_strxcmp (const qse_char_t* s1, qse_size_t len, const qse_char_t* s2)
-{
-	const qse_char_t* end = s1 + len;
-	while (s1 < end && *s2 != QSE_T('\0') && *s1 == *s2) s1++, s2++;
-	if (s1 == end && *s2 == QSE_T('\0')) return 0;
-	if (*s1 == *s2) return (s1 < end)? 1: -1;
-	return (*s1 > *s2)? 1: -1;
-}
-
-int qse_strxncmp (
-	const qse_char_t* s1, qse_size_t len1, 
-	const qse_char_t* s2, qse_size_t len2)
-{
-	qse_char_t c1, c2;
-	const qse_char_t* end1 = s1 + len1;
-	const qse_char_t* end2 = s2 + len2;
-
-	while (s1 < end1)
-	{
-		c1 = *s1;
-		if (s2 < end2) 
-		{
-			c2 = *s2;
-			if (c1 > c2) return 1;
-			if (c1 < c2) return -1;
-		}
-		else return 1;
-		s1++; s2++;
-	}
-
-	return (s2 < end2)? -1: 0;
-}
-
-int qse_strcasecmp (const qse_char_t* s1, const qse_char_t* s2)
-{
-	while (QSE_TOUPPER(*s1) == QSE_TOUPPER(*s2)) 
-	{
-		if (*s1 == QSE_C('\0')) return 0;
-		s1++, s2++;
-	}
-
-	return (QSE_TOUPPER(*s1) > QSE_TOUPPER(*s2))? 1: -1;
-}
-
-int qse_strxcasecmp (const qse_char_t* s1, qse_size_t len, const qse_char_t* s2)
-{
-	qse_char_t c1, c2;
-	const qse_char_t* end = s1 + len;
-
-	c1 = QSE_TOUPPER(*s1); c2 = QSE_TOUPPER(*s2);
-	while (s1 < end && c2 != QSE_T('\0') && c1 == c2) 
-	{
-		s1++; s2++;
-		c1 = QSE_TOUPPER(*s1); c2 = QSE_TOUPPER(*s2);
-	}
-	if (s1 == end && c2 == QSE_T('\0')) return 0;
-	if (c1 == c2) return (s1 < end)? 1: -1;
-	return (c1 > c2)? 1: -1;
-}
-
-int qse_strxncasecmp (
-	const qse_char_t* s1, qse_size_t len1, 
-	const qse_char_t* s2, qse_size_t len2)
-{
-	qse_char_t c1, c2;
-	const qse_char_t* end1 = s1 + len1;
-	const qse_char_t* end2 = s2 + len2;
-
-	while (s1 < end1)
-	{
-		c1 = QSE_TOUPPER (*s1); 
-		if (s2 < end2) 
-		{
-			c2 = QSE_TOUPPER (*s2);
-			if (c1 > c2) return 1;
-			if (c1 < c2) return -1;
-		}
-		else return 1;
-		s1++; s2++;
-	}
-
-	return (s2 < end2)? -1: 0;
 }
 
 qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
