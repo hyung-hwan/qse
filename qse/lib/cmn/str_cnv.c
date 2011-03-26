@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 402 2011-03-18 15:07:21Z hyunghwan.chung $
+ * $Id: str_cnv.c 415 2011-03-25 16:02:04Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -397,3 +397,33 @@ int qse_wcstombs_strict (
 	return 0;
 }
 
+
+/* case conversion */
+
+qse_size_t qse_mbslwr (qse_mchar_t* str)
+{
+	qse_mchar_t* p = str;
+	for (p = str; *p != QSE_MT('\0'); p++) *p = QSE_TOMLOWER (*p);
+	return p - str;
+}
+
+qse_size_t qse_mbsupr (qse_mchar_t* str)
+{
+	qse_mchar_t* p = str;
+	for (p = str; *p != QSE_MT('\0'); p++) *p = QSE_TOMUPPER (*p);
+	return p - str;
+}
+
+qse_size_t qse_wcslwr (qse_wchar_t* str)
+{
+	qse_wchar_t* p = str;
+	for (p = str; *p != QSE_WT('\0'); p++) *p = QSE_TOWLOWER (*p);
+	return p - str;
+}
+
+qse_size_t qse_wcsupr (qse_wchar_t* str)
+{
+	qse_wchar_t* p = str;
+	for (p = str; *p != QSE_WT('\0'); p++) *p = QSE_TOWUPPER (*p);
+	return p - str;
+}

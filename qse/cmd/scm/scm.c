@@ -239,6 +239,17 @@ pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/Q
 }
 
 {
+	qse_char_t str[256];
+	qse_size_t len;
+
+	qse_strcpy (str, QSE_T("what a Wonderful WORLD"));
+	len = qse_strlwr(str);
+	qse_printf (QSE_T("%d %s\n"), (int)len, str);
+	len = qse_strupr(str);
+	qse_printf (QSE_T("%d %s\n"), (int)len, str);
+}
+
+{
 qse_scm_ent_t* x1, * x2;
 
 qse_printf (QSE_T("QSESCM> "));
