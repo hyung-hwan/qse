@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 413 2011-03-25 04:36:43Z hyunghwan.chung $
+ * $Id: str.h 415 2011-03-25 16:02:04Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -975,6 +975,32 @@ qse_ulong_t qse_strxtoulong (
 	const qse_char_t* str,
 	qse_size_t        len
 );
+
+/* case conversion */
+
+qse_size_t qse_mbslwr (
+	qse_mchar_t* str
+);
+
+qse_size_t qse_wcslwr (
+	qse_wchar_t* str
+);
+
+qse_size_t qse_mbsupr (
+	qse_mchar_t* str
+);
+
+qse_size_t qse_wcsupr (
+	qse_wchar_t* str
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strlwr(str) qse_mbslwr(str);
+#	define qse_strupr(str) qse_mbsupr(str);
+#else
+#	define qse_strlwr(str) qse_wcslwr(str);
+#	define qse_strupr(str) qse_wcsupr(str);
+#endif
 
 /**
  * The qse_strspl() function splits a string into fields.
