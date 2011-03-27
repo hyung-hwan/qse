@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 413 2011-03-25 04:36:43Z hyunghwan.chung $
+ * $Id: str_bas.c 416 2011-03-27 05:04:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -396,65 +396,6 @@ qse_char_t* qse_strxnrstr (
 		}	
 
 		p--;
-	}
-
-	return QSE_NULL;
-}
-
-qse_mchar_t* qse_mbschr (const qse_mchar_t* str, qse_mcint_t c)
-{
-	while (*str != QSE_MT('\0')) 
-	{
-		if (*str == c) return (qse_mchar_t*)str;
-		str++;
-	}
-	return QSE_NULL;
-}
-
-qse_wchar_t* qse_wcschr (const qse_wchar_t* str, qse_wcint_t c)
-{
-	while (*str != QSE_WT('\0')) 
-	{
-		if (*str == c) return (qse_wchar_t*)str;
-		str++;
-	}
-	return QSE_NULL;
-}
-
-qse_char_t* qse_strxchr (const qse_char_t* str, qse_size_t len, qse_cint_t c)
-{
-	const qse_char_t* end = str + len;
-
-	while (str < end) 
-	{
-		if (*str == c) return (qse_char_t*)str;
-		str++;
-	}
-
-	return QSE_NULL;
-}
-
-qse_char_t* qse_strrchr (const qse_char_t* str, qse_cint_t c)
-{
-	const qse_char_t* end = str;
-
-	while (*end != QSE_T('\0')) end++;
-
-	while (end > str) 
-	{
-		if (*--end == c) return (qse_char_t*)end;
-	}
-
-	return QSE_NULL;
-}
-
-qse_char_t* qse_strxrchr (const qse_char_t* str, qse_size_t len, qse_cint_t c)
-{
-	const qse_char_t* end = str + len;
-
-	while (end > str) 
-	{
-		if (*--end == c) return (qse_char_t*)end;
 	}
 
 	return QSE_NULL;
