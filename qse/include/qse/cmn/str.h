@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 415 2011-03-25 16:02:04Z hyunghwan.chung $
+ * $Id: str.h 416 2011-03-27 05:04:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -723,34 +723,58 @@ qse_wchar_t* qse_wcschr (
 	qse_wcint_t        c
 );
 
+qse_mchar_t* qse_mbsxchr (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	qse_mcint_t        c
+);
+
+qse_wchar_t* qse_wcsxchr (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	qse_wcint_t        c
+);
+
+qse_wchar_t* qse_wcsrchr (
+	const qse_wchar_t* str,
+	qse_wcint_t        c
+);
+
+qse_mchar_t* qse_mbsrchr (
+	const qse_mchar_t* str,
+	qse_mcint_t        c
+);
+
+qse_mchar_t* qse_mbsxrchr (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	qse_mcint_t        c
+);
+
+qse_wchar_t* qse_wcsxrchr (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	qse_wcint_t        c
+);
+
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strchr(str,c) qse_mbschr(str,c)
+#	define qse_strchr(str,c)        qse_mbschr(str,c)
+#	define qse_strxchr(str,len,c)   qse_mbsxchr(str,len,c)
+#	define qse_strrchr(str,c)       qse_mbsrchr(str,c)
+#	define qse_strxrchr(str,len,c)  qse_mbsxrchr(str,len,c)
 #else
-#	define qse_strchr(str,c) qse_wcschr(str,c)
+#	define qse_strchr(str,c)        qse_wcschr(str,c)
+#	define qse_strxchr(str,len,c)   qse_wcsxchr(str,len,c)
+#	define qse_strrchr(str,c)       qse_wcsrchr(str,c)
+#	define qse_strxrrchr(str,len,c) qse_wcsxrchr(str,len,c)
 #endif
 
-qse_char_t* qse_strxchr (
-	const qse_char_t* str,
-	qse_size_t len,
-	qse_cint_t c
-);
-
-qse_char_t* qse_strrchr (
-	const qse_char_t* str,
-	qse_cint_t c
-);
-
-qse_char_t* qse_strxrchr (
-	const qse_char_t* str,
-	qse_size_t len,
-	qse_cint_t c
-);
 
 /**
  * The qse_strxword() function finds a whole word in a string.
  */
 const qse_char_t* qse_strxword (
-     const qse_char_t* str,
+	const qse_char_t* str,
 	qse_size_t        len,
 	const qse_char_t* word
 );
@@ -760,7 +784,7 @@ const qse_char_t* qse_strxword (
  * case-insensitively.
  */
 const qse_char_t* qse_strxcaseword (
-     const qse_char_t* str,
+	const qse_char_t* str,
 	qse_size_t        len,
 	const qse_char_t* word
 );
