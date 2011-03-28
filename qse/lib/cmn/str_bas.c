@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 416 2011-03-27 05:04:24Z hyunghwan.chung $
+ * $Id: str_bas.c 417 2011-03-27 14:32:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,68 +41,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	const qse_char_t* p = str;
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
-
-qse_size_t qse_strxsubst (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* fmt, 
-	qse_strxsubst_subst_t subst, void* ctx)
-{
-	qse_char_t* b = buf;
-	qse_char_t* end = buf + bsz - 1;
-	const qse_char_t* f = fmt;
-
-	if (bsz <= 0) return 0;
-
-	while (*f != QSE_T('\0'))
-	{
-		if (*f == QSE_T('\\'))
-		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
-			if (f[1] != QSE_T('\0')) f++;
-		}
-		else if (*f == QSE_T('$'))
-		{
-			if (f[1] == QSE_T('{'))
-			{
-				const qse_char_t* tmp;
-				qse_cstr_t ident;
-
-				f += 2; /* skip ${ */ 
-				tmp = f; /* mark the beginning */
-
-				/* scan an enclosed segment */
-				while (*f != QSE_T('\0') && *f != QSE_T('}')) f++;
-	
-				if (*f != QSE_T('}'))
-				{
-					/* restore to the position of $ */
-					f = tmp - 2;
-					goto normal;
-				}
-
-				f++; /* skip } */
-			
-				ident.ptr = tmp;
-				ident.len = f - tmp - 1;
-
-				b = subst (b, end - b, &ident, ctx);
-				if (b >= end) goto fini;
-
-				continue;
-			}
-			else if (f[1] == QSE_T('$')) f++;
-		}
-
-	normal:
-		if (b >= end) break;
-		*b++ = *f++;
-	}
-
-fini:
-	*b = QSE_T('\0');
-	return b - buf;
 }
 
 qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
