@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 416 2011-03-27 05:04:24Z hyunghwan.chung $
+ * $Id: str.h 417 2011-03-27 14:32:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -57,16 +57,32 @@ struct qse_str_t
 };
 
 /**
- * The qse_strxsubst_subst_t type defines a callback function
- * for qse_strxsubst() to substitue a new value for an identifier @a ident.
+ * The qse_mbsxsubst_subst_t type defines a callback function
+ * for qse_mbsxsubst() to substitue a new value for an identifier @a ident.
  */
-typedef qse_char_t* (*qse_strxsubst_subst_t) (
-	qse_char_t*       buf, 
-	qse_size_t        bsz, 
-	const qse_cstr_t* ident, 
-	void*             ctx
+typedef qse_mchar_t* (*qse_mbsxsubst_subst_t) (
+	qse_mchar_t*       buf, 
+	qse_size_t         bsz, 
+	const qse_mcstr_t* ident, 
+	void*              ctx
 );
 
+/**
+ * The qse_wcsxsubst_subst_t type defines a callback function
+ * for qse_wcsxsubst() to substitue a new value for an identifier @a ident.
+ */
+typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
+	qse_wchar_t*       buf, 
+	qse_size_t         bsz, 
+	const qse_wcstr_t* ident, 
+	void*              ctx
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strxsubst_subst_t qse_mbsxsubst_subst_t
+#else
+#	define qse_strxsubst_subst_t qse_wcsxsubst_subst_t
+#endif
 
 /* int qse_chartonum (qse_char_t c, int base) */
 #define QSE_CHARTONUM(c,base) \
@@ -435,30 +451,62 @@ qse_size_t qse_wcsxfncpy (
 #endif
 
 /**
- * The qse_strxsubst() function expands @a fmt into a buffer @a buf of the size
+ * The qse_mbsxsubst() function expands @a fmt into a buffer @a buf of the size
  * @a bsz by substituting new values for ${} segments within it. The actual
  * substitution is made by invoking the callback function @a subst. 
  * @code
- * qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, void* ctx)
+ * qse_mchar_t* subst (qse_mchar_t* buf, qse_size_t bsz, const qse_mcstr_t* ident, void* ctx)
  * { 
- *   if (qse_strxcmp (ident->ptr, ident->len, QSE_T("USER")) == 0)
- *     return buf + qse_strxput (buf, bsz, QSE_T("sam"));	
- *   else if (qse_strxcmp (ident->ptr, ident->len, QSE_T("GROUP")) == 0)
- *     return buf + qse_strxput (buf, bsz, QSE_T("coders"));	
+ *   if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("USER")) == 0)
+ *     return buf + qse_mbsxput (buf, bsz, QSE_MT("sam"));	
+ *   else if (qse_mbsxcmp (ident->ptr, ident->len, QSE_MT("GROUP")) == 0)
+ *     return buf + qse_mbsxput (buf, bsz, QSE_MT("coders"));	
  *   return buf; 
  * }
  * 
- * qse_char_t buf[25];
- * qse_strxsubst (buf, i, QSE_T("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * qse_mchar_t buf[25];
+ * qse_mbsxsubst (buf, i, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
  * @endcode
  */
-qse_size_t qse_strxsubst (
-	qse_char_t*            buf,
+qse_size_t qse_mbsxsubst (
+	qse_mchar_t*           buf,
 	qse_size_t             bsz,
-	const qse_char_t*      fmt,
-	qse_strxsubst_subst_t  subst,
+	const qse_mchar_t*     fmt,
+	qse_mbsxsubst_subst_t  subst,
 	void*                  ctx
 );
+
+/**
+ * The qse_wcsxsubst() function expands @a fmt into a buffer @a buf of the size
+ * @a bsz by substituting new values for ${} segments within it. The actual
+ * substitution is made by invoking the callback function @a subst. 
+ * @code
+ * qse_wchar_t* subst (qse_wchar_t* buf, qse_size_t bsz, const qse_wcstr_t* ident, void* ctx)
+ * { 
+ *   if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("USER")) == 0)
+ *     return buf + qse_wcsxput (buf, bsz, QSE_WT("sam"));	
+ *   else if (qse_wcsxcmp (ident->ptr, ident->len, QSE_WT("GROUP")) == 0)
+ *     return buf + qse_wcsxput (buf, bsz, QSE_WT("coders"));	
+ *   return buf; 
+ * }
+ * 
+ * qse_wchar_t buf[25];
+ * qse_wcsxsubst (buf, i, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
+ * @endcode
+ */
+qse_size_t qse_wcsxsubst (
+	qse_wchar_t*           buf,
+	qse_size_t             bsz,
+	const qse_wchar_t*     fmt,
+	qse_wcsxsubst_subst_t  subst,
+	void*                  ctx
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_mbsxsubst(buf,bsz,fmt,subst,ctx)
+#else
+#	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
+#endif
 
 qse_size_t qse_strxcat (
 	qse_char_t*       buf,
@@ -713,11 +761,37 @@ qse_char_t* qse_strxnrstr (
 	qse_size_t        subsz
 );
 
+/**
+ * The qse_strxword() function finds a whole word in a string.
+ */
+const qse_char_t* qse_strxword (
+	const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* word
+);
+
+/**
+ * The qse_strxcaseword() function finds a whole word in a string 
+ * case-insensitively.
+ */
+const qse_char_t* qse_strxcaseword (
+	const qse_char_t* str,
+	qse_size_t        len,
+	const qse_char_t* word
+);
+
+
+/**
+ * The qse_mbschr() function finds a chracter in a string. 
+ */
 qse_mchar_t* qse_mbschr (
 	const qse_mchar_t* str,
 	qse_mcint_t        c
 );
 
+/**
+ * The qse_wcschr() function finds a chracter in a string. 
+ */
 qse_wchar_t* qse_wcschr (
 	const qse_wchar_t* str,
 	qse_wcint_t        c
@@ -768,26 +842,6 @@ qse_wchar_t* qse_wcsxrchr (
 #	define qse_strrchr(str,c)       qse_wcsrchr(str,c)
 #	define qse_strxrrchr(str,len,c) qse_wcsxrchr(str,len,c)
 #endif
-
-
-/**
- * The qse_strxword() function finds a whole word in a string.
- */
-const qse_char_t* qse_strxword (
-	const qse_char_t* str,
-	qse_size_t        len,
-	const qse_char_t* word
-);
-
-/**
- * The qse_strxcaseword() function finds a whole word in a string 
- * case-insensitively.
- */
-const qse_char_t* qse_strxcaseword (
-	const qse_char_t* str,
-	qse_size_t        len,
-	const qse_char_t* word
-);
 
 /**
  * The qse_strbeg() function checks if the a string begins with a substring.
