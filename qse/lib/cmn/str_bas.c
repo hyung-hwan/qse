@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 417 2011-03-27 14:32:37Z hyunghwan.chung $
+ * $Id: str_bas.c 419 2011-03-28 16:07:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,52 +41,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	const qse_char_t* p = str;
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
-
-qse_size_t qse_strxcat (qse_char_t* buf, qse_size_t bsz, const qse_char_t* str)
-{
-	qse_char_t* p, * p2;
-	qse_size_t blen;
-
-	blen = qse_strlen(buf);
-	if (blen >= bsz) return blen; /* something wrong */
-
-	p = buf + blen;
-	p2 = buf + bsz - 1;
-
-	while (p < p2) 
-	{
-		if (*str == QSE_T('\0')) break;
-		*p++ = *str++;
-	}
-
-	if (bsz > 0) *p = QSE_T('\0');
-	return p - buf;
-}
-
-qse_size_t qse_strxncat (
-	qse_char_t* buf, qse_size_t bsz, const qse_char_t* str, qse_size_t len)
-{
-	qse_char_t* p, * p2;
-	const qse_char_t* end;
-	qse_size_t blen;
-
-	blen = qse_strlen(buf);
-	if (blen >= bsz) return blen; /* something wrong */
-
-	p = buf + blen;
-	p2 = buf + bsz - 1;
-
-	end = str + len;
-
-	while (p < p2) 
-	{
-		if (str >= end) break;
-		*p++ = *str++;
-	}
-
-	if (bsz > 0) *p = QSE_T('\0');
-	return p - buf;
 }
 
 qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
