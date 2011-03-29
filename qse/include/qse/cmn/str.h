@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 417 2011-03-27 14:32:37Z hyunghwan.chung $
+ * $Id: str.h 419 2011-03-28 16:07:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -508,19 +508,79 @@ qse_size_t qse_wcsxsubst (
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
 #endif
 
-qse_size_t qse_strxcat (
-	qse_char_t*       buf,
-	qse_size_t        bsz, 
-	const qse_char_t* str
+qse_size_t qse_mbscat (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* str
 );
 
-qse_size_t qse_strxncat (
-	qse_char_t*       buf,
-	qse_size_t        bsz,
-	const qse_char_t* str,
-	qse_size_t        len
+qse_size_t qse_mbsncat (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* str,
+	qse_size_t         len
 );
 
+qse_size_t qse_mbscatn (
+	qse_mchar_t*       buf,
+	const qse_mchar_t* str,
+	qse_size_t         n
+);
+
+qse_size_t qse_mbsxcat (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* str
+);
+
+qse_size_t qse_mbsxncat (
+	qse_mchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_mchar_t* str,
+	qse_size_t         len
+);
+
+qse_size_t qse_wcscat (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* str
+);
+
+qse_size_t qse_wcsncat (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* str,
+	qse_size_t         len
+);
+
+qse_size_t qse_wcscatn (
+	qse_wchar_t*       buf,
+	const qse_wchar_t* str,
+	qse_size_t         n
+);
+
+qse_size_t qse_wcsxcat (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* str
+);
+
+qse_size_t qse_wcsxncat (
+	qse_wchar_t*       buf,
+	qse_size_t         bsz,
+	const qse_wchar_t* str,
+	qse_size_t         len
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strcat(buf,str)           qse_mbscat(buf,str)
+#	define qse_strncat(buf,str,len)      qse_mbsncat(buf,str,len)
+#	define qse_strcatn(buf,str,n)        qse_mbscatn(buf,str,n)
+#	define qse_strxcat(buf,bsz,str)      qse_mbsxcat(buf,bsz,str);
+#	define qse_strxncat(buf,bsz,str,len) qse_mbsxncat(buf,bsz,str,len)
+#else
+#	define qse_strcat(buf,str)           qse_wcscat(buf,str)
+#	define qse_strncat(buf,str,len)      qse_wcsncat(buf,str,len)
+#	define qse_strcatn(buf,str,n)        qse_wcscatn(buf,str,n)
+#	define qse_strxcat(buf,bsz,str)      qse_wcsxcat(buf,bsz,str);
+#	define qse_strxncat(buf,bsz,str,len) qse_wcsxncat(buf,bsz,str,len)
+#endif
 
 int qse_mbscmp (
 	const qse_mchar_t* s1,

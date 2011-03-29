@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: mem.h 419 2011-03-28 16:07:37Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,26 +24,22 @@
 #include <qse/cmn/mem.h>
 
 #ifdef MINIMIZE_PLATFORM_DEPENDENCY
-
-#define QSE_MEMCPY(dst,src,len) qse_memcpy(dst,src,len)
-#define QSE_MEMCMP(p1,p2,len) qse_memcmp(p1,p2,len)
-#define QSE_MEMSET(dst,val,len) qse_memset(dst,val,len)
-#define QSE_MEMBYTE(s,val,len) qse_membyte(s,val,len)
-#define QSE_MEMRBYTE(s,val,len) qse_memrbyte(s,val,len)
-#define QSE_MEMMEM(hs,hl,nd,nl) qse_memmem(hs,hl,nd,nl)
-#define QSE_MEMRMEM(hs,hl,nd,nl) qse_memrmem(hs,hl,nd,nl)
-
+#	define QSE_MEMCPY(dst,src,len) qse_memcpy(dst,src,len)
+#	define QSE_MEMCMP(p1,p2,len) qse_memcmp(p1,p2,len)
+#	define QSE_MEMSET(dst,val,len) qse_memset(dst,val,len)
+#	define QSE_MEMBYTE(s,val,len) qse_membyte(s,val,len)
+#	define QSE_MEMRBYTE(s,val,len) qse_memrbyte(s,val,len)
+#	define QSE_MEMMEM(hs,hl,nd,nl) qse_memmem(hs,hl,nd,nl)
+#	define QSE_MEMRMEM(hs,hl,nd,nl) qse_memrmem(hs,hl,nd,nl)
 #else
-
-#include <string.h>
-#define QSE_MEMCPY(dst,src,len) memcpy(dst,src,len)
-#define QSE_MEMCMP(p1,p2,len) memcmp(p1,p2,len)
-#define QSE_MEMSET(dst,val,len) memset(dst,val,len)
-#define QSE_MEMBYTE(s,val,len) memchr(s,val,len)
-#define QSE_MEMRBYTE(s,val,len) memrchr(s,val,len)
-#define QSE_MEMMEM(hs,hl,nd,nl) memmem(hs,hl,nd,nl)
-#define QSE_MEMRMEM(hs,hl,nd,nl) memrmem(hs,hl,nd,nl)
-
+#	include <string.h>
+#	define QSE_MEMCPY(dst,src,len) memcpy(dst,src,len)
+#	define QSE_MEMCMP(p1,p2,len) memcmp(p1,p2,len)
+#	define QSE_MEMSET(dst,val,len) memset(dst,val,len)
+#	define QSE_MEMBYTE(s,val,len) memchr(s,val,len)
+#	define QSE_MEMRBYTE(s,val,len) memrchr(s,val,len)
+#	define QSE_MEMMEM(hs,hl,nd,nl) memmem(hs,hl,nd,nl)
+#	define QSE_MEMRMEM(hs,hl,nd,nl) memrmem(hs,hl,nd,nl)
 #endif
 
 #define QSE_MALLOC(mmgr,size) QSE_MMGR_ALLOC(mmgr,size)
