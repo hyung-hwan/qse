@@ -154,7 +154,6 @@ static int eval_entity (qse_scm_t* scm)
 		car = PAIR_CAR(scm->e.cod);
 		if (SYNT(car))
 		{
-qse_printf (QSE_T("xxxxx\n"));
 			/* the first item in the list is a syntax symbol */
 			cdr = PAIR_CDR(scm->e.cod);
 			if (IS_SMALLINT(scm,cdr) || TYPE(cdr) != QSE_SCM_ENT_PAIR)
