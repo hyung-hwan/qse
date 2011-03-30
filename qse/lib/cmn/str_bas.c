@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 419 2011-03-28 16:07:37Z hyunghwan.chung $
+ * $Id: str_bas.c 420 2011-03-29 11:20:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,53 +41,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	const qse_char_t* p = str;
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
-
-qse_char_t* qse_strdup (const qse_char_t* str, qse_mmgr_t* mmgr)
-{
-	qse_char_t* tmp;
-
-	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
-		mmgr, (qse_strlen(str)+1)*QSE_SIZEOF(qse_char_t));
-	if (tmp == QSE_NULL) return QSE_NULL;
-
-	qse_strcpy (tmp, str);
-	return tmp;
-}
-
-qse_char_t* qse_strdup2 (
-	const qse_char_t* str1, const qse_char_t* str2, qse_mmgr_t* mmgr)
-{
-	return qse_strxdup2 (
-		str1, qse_strlen(str1), str2, qse_strlen(str2), mmgr);
-}
-
-qse_char_t* qse_strxdup (
-	const qse_char_t* str, qse_size_t len, qse_mmgr_t* mmgr)
-{
-	qse_char_t* tmp;
-
-	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
-		mmgr, (len+1)*QSE_SIZEOF(qse_char_t));
-	if (tmp == QSE_NULL) return QSE_NULL;
-
-	qse_strncpy (tmp, str, len);
-	return tmp;
-}
-
-qse_char_t* qse_strxdup2 (
-	const qse_char_t* str1, qse_size_t len1,
-	const qse_char_t* str2, qse_size_t len2, qse_mmgr_t* mmgr)
-{
-	qse_char_t* tmp;
-
-	tmp = (qse_char_t*) QSE_MMGR_ALLOC (
-		mmgr, (len1+len2+1) * QSE_SIZEOF(qse_char_t));
-	if (tmp == QSE_NULL) return QSE_NULL;
-
-	qse_strncpy (tmp, str1, len1);
-	qse_strncpy (tmp + len1, str2, len2);
-	return tmp;
 }
 
 qse_mchar_t* qse_mbsstr (const qse_mchar_t* str, const qse_mchar_t* sub)
