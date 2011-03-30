@@ -9,8 +9,9 @@ lib_LTLIBRARIES = libqsecmn.la
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
 	mem.c xma.c fma.c chr.c chr_cnv.c rex.c \
-	str_bas.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c str_dyn.c \
-	str_fcpy.c str_pbrk.c str_put.c str_spn.c str_subst.c str_utl.c \
+	str_bas.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c str_dup.c \
+	str_dyn.c str_fcpy.c str_pbrk.c str_put.c str_spn.c str_subst.c \
+	str_utl.c \
 	lda.c oht.c htb.c rbt.c sll.c gdl.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \

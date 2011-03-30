@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 419 2011-03-28 16:07:37Z hyunghwan.chung $
+ * $Id: str.h 420 2011-03-29 11:20:29Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -710,33 +710,67 @@ int qse_wcsxncasecmp (
 #	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_wcsxncasecmp(s1,ln1,s2,ln2)
 #endif
 
-
-
-
-qse_char_t* qse_strdup (
-	const qse_char_t* str,
-	qse_mmgr_t*       mmgr
+qse_mchar_t* qse_mbsdup (
+	const qse_mchar_t* str,
+	qse_mmgr_t*        mmgr
 );
 
-qse_char_t* qse_strdup2 (
-	const qse_char_t* str1,
-	const qse_char_t* str2,
-	qse_mmgr_t*       mmgr
+qse_mchar_t* qse_mbsdup2 (
+	const qse_mchar_t* str1,
+	const qse_mchar_t* str2,
+	qse_mmgr_t*        mmgr
 );
 
-qse_char_t* qse_strxdup (
-	const qse_char_t* str,
-	qse_size_t        len, 
-	qse_mmgr_t*       mmgr
+qse_mchar_t* qse_mbsxdup (
+	const qse_mchar_t* str,
+	qse_size_t         len, 
+	qse_mmgr_t*        mmgr
 );
 
-qse_char_t* qse_strxdup2 (
-	const qse_char_t* str1,
-	qse_size_t        len1,
-	const qse_char_t* str2,
-	qse_size_t        len2,
-	qse_mmgr_t*       mmgr
+qse_mchar_t* qse_mbsxdup2 (
+	const qse_mchar_t* str1,
+	qse_size_t         len1,
+	const qse_mchar_t* str2,
+	qse_size_t         len2,
+	qse_mmgr_t*        mmgr
 );
+
+qse_wchar_t* qse_wcsdup (
+	const qse_wchar_t* str,
+	qse_mmgr_t*        mmgr
+);
+
+qse_wchar_t* qse_wcsdup2 (
+	const qse_wchar_t* str1,
+	const qse_wchar_t* str2,
+	qse_mmgr_t*        mmgr
+);
+
+qse_wchar_t* qse_wcsxdup (
+	const qse_wchar_t* str,
+	qse_size_t         len, 
+	qse_mmgr_t*        mmgr
+);
+
+qse_wchar_t* qse_wcsxdup2 (
+	const qse_wchar_t* str1,
+	qse_size_t         len1,
+	const qse_wchar_t* str2,
+	qse_size_t         len2,
+	qse_mmgr_t*        mmgr
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strdup(s,mmgr)             qse_mbsdup(s,mmgr)
+#	define qse_strdup2(s1,s2,mmgr)        qse_mbsdup2(s1,s2,mmgr)
+#	define qse_strxdup(s,l,mmgr)          qse_mbsxdup(s,l,mmgr)
+#	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_mbsxdup(s1,l1,s2,l2,mmgr)
+#else
+#	define qse_strdup(s,mmgr)             qse_wcsdup(s,mmgr)
+#	define qse_strdup2(s1,s2,mmgr)        qse_wcsdup2(s1,s2,mmgr)
+#	define qse_strxdup(s,l,mmgr)          qse_wcsxdup(s,l,mmgr)
+#	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_wcsxdup(s1,l1,s2,l2,mmgr)
+#endif
 
 /**
  * The qse_mbsstr() function searchs a string @a str for the first occurrence 

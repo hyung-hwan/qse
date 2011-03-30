@@ -28,14 +28,7 @@ qse_size_t qse_mbscpy (qse_mchar_t* buf, const qse_mchar_t* str)
 	return buf - org - 1;
 }
 
-qse_size_t qse_wcscpy (qse_wchar_t* buf, const qse_wchar_t* str)
-{
-	qse_wchar_t* org = buf;
-	while ((*buf++ = *str++) != QSE_WT('\0'));
-	return buf - org - 1;
-}
-
-qse_size_t qse_mcsxcpy (
+qse_size_t qse_mbsxcpy (
 	qse_mchar_t* buf, qse_size_t bsz, const qse_mchar_t* str)
 {
 	qse_mchar_t* p, * p2;
@@ -52,24 +45,7 @@ qse_size_t qse_mcsxcpy (
 	return p - buf;
 }
 
-qse_size_t qse_wcsxcpy (
-	qse_wchar_t* buf, qse_size_t bsz, const qse_wchar_t* str)
-{
-	qse_wchar_t* p, * p2;
-
-	p = buf; p2 = buf + bsz - 1;
-
-	while (p < p2) 
-	{
-		if (*str == QSE_WT('\0')) break;
-		*p++ = *str++;
-	}
-
-	if (bsz > 0) *p = QSE_WT('\0');
-	return p - buf;
-}
-
-qse_size_t qse_mcsncpy (
+qse_size_t qse_mbsncpy (
 	qse_mchar_t* buf, const qse_mchar_t* str, qse_size_t len)
 {
 	/*
@@ -102,6 +78,44 @@ qse_size_t qse_mcsncpy (
 
 	*buf = QSE_MT('\0');
 	return len;
+}
+
+qse_size_t qse_mbsxncpy (
+	qse_mchar_t* buf, qse_size_t bsz, 
+	const qse_mchar_t* str, qse_size_t len)
+{
+	qse_size_t n;
+
+	if (bsz <= 0) return 0;
+	if ((n = bsz - 1) > len) n = len;
+	QSE_MEMCPY (buf, str, n * QSE_SIZEOF(qse_mchar_t));
+	buf[n] = QSE_MT('\0');
+
+	return n;
+}
+
+qse_size_t qse_wcscpy (qse_wchar_t* buf, const qse_wchar_t* str)
+{
+	qse_wchar_t* org = buf;
+	while ((*buf++ = *str++) != QSE_WT('\0'));
+	return buf - org - 1;
+}
+
+qse_size_t qse_wcsxcpy (
+	qse_wchar_t* buf, qse_size_t bsz, const qse_wchar_t* str)
+{
+	qse_wchar_t* p, * p2;
+
+	p = buf; p2 = buf + bsz - 1;
+
+	while (p < p2) 
+	{
+		if (*str == QSE_WT('\0')) break;
+		*p++ = *str++;
+	}
+
+	if (bsz > 0) *p = QSE_WT('\0');
+	return p - buf;
 }
 
 qse_size_t qse_wcsncpy (
@@ -137,20 +151,6 @@ qse_size_t qse_wcsncpy (
 
 	*buf = QSE_WT('\0');
 	return len;
-}
-
-qse_size_t qse_mcsxncpy (
-	qse_mchar_t* buf, qse_size_t bsz, 
-	const qse_mchar_t* str, qse_size_t len)
-{
-	qse_size_t n;
-
-	if (bsz <= 0) return 0;
-	if ((n = bsz - 1) > len) n = len;
-	QSE_MEMCPY (buf, str, n * QSE_SIZEOF(qse_mchar_t));
-	buf[n] = QSE_MT('\0');
-
-	return n;
 }
 
 qse_size_t qse_wcsxncpy (
