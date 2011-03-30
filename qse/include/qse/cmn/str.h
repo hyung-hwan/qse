@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 420 2011-03-29 11:20:29Z hyunghwan.chung $
+ * $Id: str.h 421 2011-03-29 15:37:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -776,10 +776,10 @@ qse_wchar_t* qse_wcsxdup2 (
  * The qse_mbsstr() function searchs a string @a str for the first occurrence 
  * of a substring @a sub.
  * @return pointer to the first occurrence in @a str if @a sub is found, 
- *         QSE_NULL if not.
+ *         #QSE_NULL if not.
  */
 qse_mchar_t* qse_mbsstr (
-	const qse_mchar_t* str, 
+	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
 
@@ -787,73 +787,186 @@ qse_mchar_t* qse_mbsstr (
  * The qse_wcsstr() function searchs a string @a str for the first occurrence 
  * of a substring @a sub.
  * @return pointer to the first occurrence in @a str if @a sub is found, 
- *         QSE_NULL if not.
+ *         #QSE_NULL if not.
  */
 qse_wchar_t* qse_wcsstr (
-	const qse_wchar_t* str, 
+	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strstr(str,sub) qse_mbsstr(str,sub)
-#else
-#	define qse_strstr(str,sub) qse_wcsstr(str,sub)
-#endif
-
-qse_char_t* qse_strxstr (
-	const qse_char_t* str,
-	qse_size_t        size,
-	const qse_char_t* sub
+qse_mchar_t* qse_mbsxstr (
+	const qse_mchar_t* str,
+	qse_size_t         size,
+	const qse_mchar_t* sub
 );
 
-qse_char_t* qse_strxnstr (
-	const qse_char_t* str,
-	qse_size_t        strsz, 
-	const qse_char_t* sub,
-	qse_size_t        subsz
+qse_wchar_t* qse_wcsxstr (
+	const qse_wchar_t* str,
+	qse_size_t         size,
+	const qse_wchar_t* sub
 );
 
-qse_char_t* qse_strcasestr (
-	const qse_char_t* str, 
-	const qse_char_t* sub
+qse_mchar_t* qse_mbsxnstr (
+	const qse_mchar_t* str,
+	qse_size_t         strsz, 
+	const qse_mchar_t* sub,
+	qse_size_t         subsz
 );
 
-qse_char_t* qse_strxcasestr (
-	const qse_char_t* str,
-	qse_size_t        size,
-	const qse_char_t* sub
+qse_wchar_t* qse_wcsxnstr (
+	const qse_wchar_t* str,
+	qse_size_t         strsz, 
+	const qse_wchar_t* sub,
+	qse_size_t         subsz
 );
 
-qse_char_t* qse_strxncasestr (
-	const qse_char_t* str,
-	qse_size_t        strsz, 
-	const qse_char_t* sub,
-	qse_size_t        subsz
+qse_mchar_t* qse_mbscasestr (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub
+);
+
+qse_wchar_t* qse_wcscasestr (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxcasestr (
+	const qse_mchar_t* str,
+	qse_size_t         size,
+	const qse_mchar_t* sub
+);
+
+qse_wchar_t* qse_wcsxcasestr (
+	const qse_wchar_t* str,
+	qse_size_t         size,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxncasestr (
+	const qse_mchar_t* str,
+	qse_size_t         strsz, 
+	const qse_mchar_t* sub,
+	qse_size_t         subsz
+);
+
+qse_wchar_t* qse_wcsxncasestr (
+	const qse_wchar_t* str,
+	qse_size_t         strsz, 
+	const qse_wchar_t* sub,
+	qse_size_t         subsz
 );
 
 /**
- * The qse_strrstr() function searchs a string @a str for the last occurrence 
+ * The qse_mbsrstr() function searchs a string @a str for the last occurrence 
  * of a substring @a sub.
  * @return pointer to the last occurrence in @a str if @a sub is found, 
- *         QSE_NULL if not.
+ *         #QSE_NULL if not.
  */
-qse_char_t* qse_strrstr (
-	const qse_char_t* str,
-	const qse_char_t* sub
+qse_mchar_t* qse_mbsrstr (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub
 );
 
-qse_char_t* qse_strxrstr (
-	const qse_char_t* str,
-	qse_size_t        size,
-	const qse_char_t* sub
+/**
+ * The qse_wcsrstr() function searchs a string @a str for the last occurrence 
+ * of a substring @a sub.
+ * @return pointer to the last occurrence in @a str if @a sub is found, 
+ *         #QSE_NULL if not.
+ */
+qse_wchar_t* qse_wcsrstr (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub
 );
 
-qse_char_t* qse_strxnrstr (
-	const qse_char_t* str,
-	qse_size_t        strsz, 
-	const qse_char_t* sub,
-	qse_size_t        subsz
+qse_mchar_t* qse_mbsxrstr (
+	const qse_mchar_t* str,
+	qse_size_t         size,
+	const qse_mchar_t* sub
 );
+
+qse_wchar_t* qse_wcsxrstr (
+	const qse_wchar_t* str,
+	qse_size_t         size,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxnrstr (
+	const qse_mchar_t* str,
+	qse_size_t         strsz, 
+	const qse_mchar_t* sub,
+	qse_size_t         subsz
+);
+
+qse_wchar_t* qse_wcsxnrstr (
+	const qse_wchar_t* str,
+	qse_size_t         strsz, 
+	const qse_wchar_t* sub,
+	qse_size_t         subsz
+);
+
+qse_mchar_t* qse_mbsrcasestr (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub
+);
+
+qse_wchar_t* qse_wcsrcasestr (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxrcasestr (
+	const qse_mchar_t* str,
+	qse_size_t         size,
+	const qse_mchar_t* sub
+);
+
+qse_wchar_t* qse_wcsxrcasestr (
+	const qse_wchar_t* str,
+	qse_size_t         size,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxnrcasestr (
+	const qse_mchar_t* str,
+	qse_size_t         strsz, 
+	const qse_mchar_t* sub,
+	qse_size_t         subsz
+);
+
+qse_wchar_t* qse_wcsxnrcasestr (
+	const qse_wchar_t* str,
+	qse_size_t         strsz, 
+	const qse_wchar_t* sub,
+	qse_size_t         subsz
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strstr(str,sub)                    qse_mbsstr(str,sub)
+#	define qse_strxstr(str,size,sub)              qse_mbsxstr(str,size,sub)
+#	define qse_strxnstr(str,strsz,sub,subsz)      qse_mbsxnstr(str,strsz,sub,subsz)
+#	define qse_strcasestr(str,sub)                qse_mbscasestr(str,sub)
+#	define qse_strxcasestr(str,size,sub)          qse_mbsxcasestr(str,size,sub)
+#	define qse_strxncasestr(str,strsz,sub,subsz)  qse_mbsxncasestr(str,strsz,sub,subsz)
+#	define qse_strrstr(str,sub)                   qse_mbsrstr(str,sub)
+#	define qse_strxrstr(str,size,sub)             qse_mbsxrstr(str,size,sub)
+#	define qse_strxnrstr(str,strsz,sub,subsz)     qse_mbsxnrstr(str,strsz,sub,subsz)
+#	define qse_strrcasestr(str,sub)               qse_mbsrcasestr(str,sub)
+#	define qse_strxrcasestr(str,size,sub)         qse_mbsxrcasestr(str,size,sub)
+#	define qse_strxnrcasestr(str,strsz,sub,subsz) qse_mbsxnrcasestr(str,strsz,sub,subsz)
+#else
+#	define qse_strstr(str,sub)                    qse_wcsstr(str,sub)
+#	define qse_strxstr(str,size,sub)              qse_wcsxstr(str,size,sub)
+#	define qse_strxnstr(str,strsz,sub,subsz)      qse_wcsxnstr(str,strsz,sub,subsz)
+#	define qse_strcasestr(str,sub)                qse_wcscasestr(str,sub)
+#	define qse_strxcasestr(str,size,sub)          qse_wcsxcasestr(str,size,sub)
+#	define qse_strxncasestr(str,strsz,sub,subsz)  qse_wcsxncasestr(str,strsz,sub,subsz)
+#	define qse_strrstr(str,sub)                   qse_wcsrstr(str,sub)
+#	define qse_strxrstr(str,size,sub)             qse_wcsxrstr(str,size,sub)
+#	define qse_strxnrstr(str,strsz,sub,subsz)     qse_wcsxnrstr(str,strsz,sub,subsz)
+#	define qse_strrcasestr(str,sub)               qse_wcsrcasestr(str,sub)
+#	define qse_strxrcasestr(str,size,sub)         qse_wcsxrcasestr(str,size,sub)
+#	define qse_strxnrcasestr(str,strsz,sub,subsz) qse_wcsxnrcasestr(str,strsz,sub,subsz)
+#endif
 
 /**
  * The qse_strxword() function finds a whole word in a string.

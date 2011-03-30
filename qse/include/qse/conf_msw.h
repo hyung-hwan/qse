@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 397 2011-03-15 03:40:39Z hyunghwan.chung $
+ * $Id: conf_msw.h 421 2011-03-29 15:37:19Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -33,44 +33,102 @@ _M_IX86 x86 platform
 _M_X64 x64 platform 
 */
 
+/* windows for most of non-x86 platforms dropped. 
+ * make it selective to support old non-x86 windows platforms. */
 #define QSE_ENDIAN_LITTLE 
 
-#define QSE_SIZEOF_CHAR 1
-#define QSE_SIZEOF_SHORT 2
-#define QSE_SIZEOF_INT 4
+/*
+ * You must define which character type to use as a default character here.
+ *
+ * #define QSE_CHAR_IS_WCHAR
+ * #define QSE_CHAR_IS_MCHAR
+ */
 
-/*#ifdef _WIN64
-	#define QSE_SIZEOF_LONG 8
-#else*/
-	#define QSE_SIZEOF_LONG 4
-/*#endif*/
-
-#if defined(__POCC__) || defined(__DMC__) || defined(__GNUC__)
-	/* pelles c with no microsoft extension */
-	#define QSE_SIZEOF_LONG_LONG 8
-
-	#define QSE_SIZEOF___INT8 0
-	#define QSE_SIZEOF___INT16 0
-	#define QSE_SIZEOF___INT32 0
-	#define QSE_SIZEOF___INT64 0
-	#define QSE_SIZEOF___INT128 0
+#if defined(__WATCOMC__)
+#	define QSE_SIZEOF_CHAR        1
+#	define QSE_SIZEOF_SHORT       2
+#	define QSE_SIZEOF_INT         4
+#	define QSE_SIZEOF_LONG        4
+#	define QSE_SIZEOF_LONG_LONG   8
+#
+#	if defined(_WIN64)
+#		define QSE_SIZEOF_VOID_P      8
+#	else
+#		define QSE_SIZEOF_VOID_P      4
+#	endif
+#	define QSE_SIZEOF_FLOAT       4
+#	define QSE_SIZEOF_DOUBLE      8
+#	define QSE_SIZEOF_LONG_DOUBLE 8
+#	define QSE_SIZEOF_WCHAR_T     2
+#
+#	define QSE_SIZEOF___INT8      1
+#	define QSE_SIZEOF___INT16     2
+#	define QSE_SIZEOF___INT32     4
+#	define QSE_SIZEOF___INT64     8
+#	define QSE_SIZEOF___INT128    0
+#
+#	define QSE_SIZEOF_OFF64_T     0
+#	define QSE_SIZEOF_OFF_T       8
+#
+#	define QSE_CHAR_IS_WCHAR
+#elif defined(__GNUC__) || defined(__DMC__) || defined(__POCC__)
+#	define QSE_SIZEOF_CHAR        1
+#	define QSE_SIZEOF_SHORT       2
+#	define QSE_SIZEOF_INT         4
+#	define QSE_SIZEOF_LONG        4
+#	define QSE_SIZEOF_LONG_LONG   8
+#
+#	if defined(_WIN64)
+#		define QSE_SIZEOF_VOID_P      8
+#	else
+#		define QSE_SIZEOF_VOID_P      4
+#	endif
+#	define QSE_SIZEOF_FLOAT       4
+#	define QSE_SIZEOF_DOUBLE      8
+#	define QSE_SIZEOF_LONG_DOUBLE 16
+#	define QSE_SIZEOF_WCHAR_T     2
+#
+#	define QSE_SIZEOF___INT8      0
+#	define QSE_SIZEOF___INT16     0
+#	define QSE_SIZEOF___INT32     0
+#	define QSE_SIZEOF___INT64     0
+#	define QSE_SIZEOF___INT128    0
+#
+#	define QSE_SIZEOF_OFF64_T     0
+#	define QSE_SIZEOF_OFF_T       8
+#
+#	define QSE_CHAR_IS_WCHAR
+#elif defined(_MSC_VER)
+#	define QSE_SIZEOF_CHAR        1
+#	define QSE_SIZEOF_SHORT       2
+#	define QSE_SIZEOF_INT         4
+#	define QSE_SIZEOF_LONG        4
+#	if (_MSC_VER>=1310)
+#		define QSE_SIZEOF_LONG_LONG   8
+#	else
+#		define QSE_SIZEOF_LONG_LONG   0
+#	endif
+#
+#	if defined(_WIN64)
+#		define QSE_SIZEOF_VOID_P      8
+#	else
+#		define QSE_SIZEOF_VOID_P      4
+#	endif
+#	define QSE_SIZEOF_FLOAT       4
+#	define QSE_SIZEOF_DOUBLE      8
+#	define QSE_SIZEOF_LONG_DOUBLE 8
+#	define QSE_SIZEOF_WCHAR_T     2
+#
+#	define QSE_SIZEOF___INT8      1
+#	define QSE_SIZEOF___INT16     2
+#	define QSE_SIZEOF___INT32     4
+#	define QSE_SIZEOF___INT64     8
+#	define QSE_SIZEOF___INT128    0
+#
+#	define QSE_SIZEOF_OFF64_T     0
+#	define QSE_SIZEOF_OFF_T       8
+#
+#	define QSE_CHAR_IS_WCHAR
 #else
-	#define QSE_SIZEOF_LONG_LONG 0
-
-	#define QSE_SIZEOF___INT8 1
-	#define QSE_SIZEOF___INT16 2
-	#define QSE_SIZEOF___INT32 4
-	#define QSE_SIZEOF___INT64 8
-	#define QSE_SIZEOF___INT128 0
+#	error Define the size of various data types.
 #endif
-
-#ifdef _WIN64
-	#define QSE_SIZEOF_VOID_P 8
-#else
-	#define QSE_SIZEOF_VOID_P 4
-#endif
-
-#define QSE_SIZEOF_FLOAT 4
-#define QSE_SIZEOF_DOUBLE 8
-#define QSE_SIZEOF_LONG_DOUBLE 16
-#define QSE_SIZEOF_WCHAR_T 2

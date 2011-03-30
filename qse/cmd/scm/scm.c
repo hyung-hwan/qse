@@ -229,13 +229,23 @@ int scm_main (int argc, qse_char_t* argv[])
 {
    int i;
    for (i = 0; i<2; i++) 
+#if defined(_WIN32)
+pio1 (QSE_T("c:\\winnt\\system32\\netstat.exe -an"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PIO_DROPERR, QSE_PIO_OUT);   
+#elif defined(__OS2__)
 pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PIO_DROPERR, QSE_PIO_OUT);   
+#else
+pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PIO_DROPERR, QSE_PIO_OUT);   
+#endif
 }
+
 
 {
 	qse_printf (QSE_T("%d\n"), (int)qse_strspn (QSE_T("abcdefg"), QSE_T("cdab")));
 	qse_printf (QSE_T("%d\n"), (int)qse_strcspn (QSE_T("abcdefg"), QSE_T("fg")));
 	qse_printf (QSE_T("%s\n"), qse_strpbrk (QSE_T("abcdefg"), QSE_T("fb")));
+
+	qse_printf (QSE_T("%s\n"), qse_strrcasestr (QSE_T("fbFBFBFBxyz"), QSE_T("fb")));
+	qse_printf (QSE_T("%s\n"), qse_strcasestr (QSE_T("fbFBFBFBxyz"), QSE_T("fb")));
 }
 
 {
@@ -247,6 +257,17 @@ pio1 (QSE_T("pstat.exe /c"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/Q
 	qse_printf (QSE_T("%d %s\n"), (int)len, str);
 	len = qse_strupr(str);
 	qse_printf (QSE_T("%d %s\n"), (int)len, str);
+}
+
+{
+	qse_printf (QSE_T("sizeof(int) = %d\n"), (int)sizeof(int));
+	qse_printf (QSE_T("sizeof(long) = %d\n"), (int)sizeof(long));
+	qse_printf (QSE_T("sizeof(long long) = %d\n"), (int)sizeof(long long));
+	qse_printf (QSE_T("sizeof(float) = %d\n"), (int)sizeof(float));
+	qse_printf (QSE_T("sizeof(double) = %d\n"), (int)sizeof(double));
+	qse_printf (QSE_T("sizeof(long double) = %d\n"), (int)sizeof(long double));
+	qse_printf (QSE_T("sizeof(void*) = %d\n"), (int)sizeof(void*));
+	qse_printf (QSE_T("sizeof(wchar_t) = %d\n"), (int)sizeof(wchar_t));
 }
 
 {
