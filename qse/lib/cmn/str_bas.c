@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 421 2011-03-29 15:37:19Z hyunghwan.chung $
+ * $Id: str_bas.c 423 2011-03-31 04:15:24Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -42,53 +42,6 @@ qse_size_t qse_strbytes (const qse_char_t* str)
 	while (*p != QSE_T('\0')) p++;
 	return (p - str) * QSE_SIZEOF(qse_char_t);
 }
-
-const qse_char_t* qse_strxword (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* word)
-{
-	/* find a full word in a string */
-
-	const qse_char_t* ptr = str;
-	const qse_char_t* end = str + len;
-	const qse_char_t* s;
-
-	do
-	{
-		while (ptr < end && QSE_ISSPACE(*ptr)) ptr++;
-		if (ptr >= end) return QSE_NULL;
-
-		s = ptr;
-		while (ptr < end && !QSE_ISSPACE(*ptr)) ptr++;
-
-		if (qse_strxcmp (s, ptr-s, word) == 0) return s;
-	}
-	while (ptr < end);
-
-	return QSE_NULL;
-}
-
-const qse_char_t* qse_strxcaseword (
-	const qse_char_t* str, qse_size_t len, const qse_char_t* word)
-{
-	const qse_char_t* ptr = str;
-	const qse_char_t* end = str + len;
-	const qse_char_t* s;
-
-	do
-	{
-		while (ptr < end && QSE_ISSPACE(*ptr)) ptr++;
-		if (ptr >= end) return QSE_NULL;
-
-		s = ptr;
-		while (ptr < end && !QSE_ISSPACE(*ptr)) ptr++;
-
-		if (qse_strxcasecmp (s, ptr-s, word) == 0) return s;
-	}
-	while (ptr < end);
-
-	return QSE_NULL;
-}
-
 
 qse_char_t* qse_strbeg (const qse_char_t* str, const qse_char_t* sub)
 {

@@ -21,6 +21,30 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 
+const qse_mchar_t* qse_mbsword (
+	const qse_mchar_t* str, const qse_mchar_t* word)
+{
+	/* find a full word in a string */
+
+	const qse_mchar_t* ptr = str;
+
+	do
+	{
+		const qse_mchar_t* s;
+
+		while (QSE_ISMSPACE(*ptr)) ptr++;
+		if (*ptr == QSE_MT('\0')) return QSE_NULL;
+
+		s = ptr;
+		while (*ptr != QSE_MT('\0') && !QSE_ISMSPACE(*ptr)) ptr++;
+
+		if (qse_mbsxcmp (s, ptr-s, word) == 0) return s;
+	}
+	while (*ptr != QSE_MT('\0'));
+
+	return QSE_NULL;
+}
+
 const qse_mchar_t* qse_mbsxword (
 	const qse_mchar_t* str, qse_size_t len, const qse_mchar_t* word)
 {
@@ -41,6 +65,30 @@ const qse_mchar_t* qse_mbsxword (
 		if (qse_mbsxcmp (s, ptr-s, word) == 0) return s;
 	}
 	while (ptr < end);
+
+	return QSE_NULL;
+}
+
+const qse_mchar_t* qse_mbscaseword (
+	const qse_mchar_t* str, const qse_mchar_t* word)
+{
+	/* find a full word in a string */
+
+	const qse_mchar_t* ptr = str;
+
+	do
+	{
+		const qse_mchar_t* s;
+
+		while (QSE_ISMSPACE(*ptr)) ptr++;
+		if (*ptr == QSE_MT('\0')) return QSE_NULL;
+
+		s = ptr;
+		while (*ptr != QSE_MT('\0') && !QSE_ISMSPACE(*ptr)) ptr++;
+
+		if (qse_mbsxcasecmp (s, ptr-s, word) == 0) return s;
+	}
+	while (*ptr != QSE_MT('\0'));
 
 	return QSE_NULL;
 }
@@ -67,6 +115,30 @@ const qse_mchar_t* qse_mbsxcaseword (
 	return QSE_NULL;
 }
 
+const qse_wchar_t* qse_wcsword (
+	const qse_wchar_t* str, const qse_wchar_t* word)
+{
+	/* find a full word in a string */
+
+	const qse_wchar_t* ptr = str;
+
+	do
+	{
+		const qse_wchar_t* s;
+
+		while (QSE_ISWSPACE(*ptr)) ptr++;
+		if (*ptr == QSE_WT('\0')) return QSE_NULL;
+
+		s = ptr;
+		while (*ptr != QSE_WT('\0') && !QSE_ISWSPACE(*ptr)) ptr++;
+
+		if (qse_wcsxcmp (s, ptr-s, word) == 0) return s;
+	}
+	while (*ptr != QSE_WT('\0'));
+
+	return QSE_NULL;
+}
+
 const qse_wchar_t* qse_wcsxword (
 	const qse_wchar_t* str, qse_size_t len, const qse_wchar_t* word)
 {
@@ -87,6 +159,30 @@ const qse_wchar_t* qse_wcsxword (
 		if (qse_wcsxcmp (s, ptr-s, word) == 0) return s;
 	}
 	while (ptr < end);
+
+	return QSE_NULL;
+}
+
+const qse_wchar_t* qse_wcscaseword (
+	const qse_wchar_t* str, const qse_wchar_t* word)
+{
+	/* find a full word in a string */
+
+	const qse_wchar_t* ptr = str;
+
+	do
+	{
+		const qse_wchar_t* s;
+
+		while (QSE_ISWSPACE(*ptr)) ptr++;
+		if (*ptr == QSE_WT('\0')) return QSE_NULL;
+
+		s = ptr;
+		while (*ptr != QSE_WT('\0') && !QSE_ISWSPACE(*ptr)) ptr++;
+
+		if (qse_wcsxcasecmp (s, ptr-s, word) == 0) return s;
+	}
+	while (*ptr != QSE_WT('\0'));
 
 	return QSE_NULL;
 }
