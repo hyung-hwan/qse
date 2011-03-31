@@ -246,6 +246,10 @@ pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PI
 
 	qse_printf (QSE_T("%s\n"), qse_strrcasestr (QSE_T("fbFBFBFBxyz"), QSE_T("fb")));
 	qse_printf (QSE_T("%s\n"), qse_strcasestr (QSE_T("fbFBFBFBxyz"), QSE_T("fb")));
+
+	qse_printf (QSE_T("%s\n"), qse_strword (QSE_T("ilove lov LOVE love"), QSE_T("love")));
+	qse_printf (QSE_T("%s\n"), qse_strcaseword (QSE_T("ilove lov LOVE love"), QSE_T("love")));
+	qse_printf (QSE_T("%s\n"), qse_strxword (QSE_T("ilove love you"), 14, QSE_T("love")));
 }
 
 {
