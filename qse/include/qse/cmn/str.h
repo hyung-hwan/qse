@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 421 2011-03-29 15:37:19Z hyunghwan.chung $
+ * $Id: str.h 422 2011-03-30 15:07:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -969,24 +969,50 @@ qse_wchar_t* qse_wcsxnrcasestr (
 #endif
 
 /**
- * The qse_strxword() function finds a whole word in a string.
+ * The qse_mbsxword() function finds a whole word in a string.
  */
-const qse_char_t* qse_strxword (
-	const qse_char_t* str,
-	qse_size_t        len,
-	const qse_char_t* word
+const qse_mchar_t* qse_mbsxword (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	const qse_mchar_t* word
 );
 
 /**
- * The qse_strxcaseword() function finds a whole word in a string 
+ * The qse_mbsxcaseword() function finds a whole word in a string 
  * case-insensitively.
  */
-const qse_char_t* qse_strxcaseword (
-	const qse_char_t* str,
-	qse_size_t        len,
-	const qse_char_t* word
+const qse_mchar_t* qse_mbsxcaseword (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	const qse_mchar_t* word
 );
 
+/**
+ * The qse_wcsxword() function finds a whole word in a string.
+ */
+const qse_wchar_t* qse_wcsxword (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	const qse_wchar_t* word
+);
+
+/**
+ * The qse_wcsxcaseword() function finds a whole word in a string 
+ * case-insensitively.
+ */
+const qse_wchar_t* qse_wcsxcaseword (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	const qse_wchar_t* word
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strxword(str,len,word)     qse_mbsxword(str,len,word)
+#	define qse_strxcaseword(str,len,word) qse_mbsxcaseword(str,len,word)
+#else
+#	define qse_strxword(str,len,word)     qse_wcsxword(str,len,word)
+#	define qse_strxcaseword(str,len,word) qse_wcsxcaseword(str,len,word)
+#endif
 
 /**
  * The qse_mbschr() function finds a chracter in a string. 
