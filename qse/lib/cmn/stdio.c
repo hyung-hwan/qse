@@ -29,9 +29,9 @@
 #define PATH_MAX 2048
 #endif
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__WATCOMC__)
 
-int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list ap)
+int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_list ap)
 {
 	int n;
 
@@ -49,7 +49,7 @@ int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list a
 	return n;
 }
 
-int qse_sprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, ...)
+int qse_sprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
@@ -106,7 +106,7 @@ int qse_printf (const qse_char_t* fmt, ...)
 	return n;
 }
 
-int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list ap)
+int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_list ap)
 {
 	int n;
 	qse_char_t* nf = __adjust_format (fmt);
@@ -114,7 +114,7 @@ int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list a
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	n = vsnprintf (buf, size, nf, ap);
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(__WATCOMC__)
 	n = _vsnwprintf (buf, size, nf, ap);
 #else
 	n = vswprintf (buf, size, nf, ap);
@@ -129,7 +129,7 @@ int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list a
 	return n;
 }
 
-int qse_sprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, ...)
+int qse_sprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
@@ -279,7 +279,7 @@ static qse_char_t* __adjust_format (const qse_char_t* format)
 		}
 		else if (ch == QSE_T('C') || ch == QSE_T('S')) 
 		{
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__WATCOMC__)
 			ADDC (buf, ch);
 #else
 	#ifdef QSE_CHAR_IS_MCHAR
