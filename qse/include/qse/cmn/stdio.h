@@ -32,7 +32,7 @@
 #include <stdarg.h>
 #include <wchar.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__WATCOMC__)
 	#include <tchar.h>
 
 	#define qse_printf   _tprintf
@@ -73,10 +73,21 @@ typedef int (*qse_getdelim_t) (const qse_char_t* ptr,qse_size_t len,void* arg);
 extern "C" {
 #endif
 
-int qse_vsprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, va_list ap);
-int qse_sprintf (qse_char_t* buf, size_t size, const qse_char_t* fmt, ...);
+int qse_vsprintf (
+	qse_char_t*       buf,
+	qse_size_t        size,
+	const qse_char_t* fmt,
+	va_list ap
+);
 
-#if !defined(_WIN32)
+int qse_sprintf (
+	qse_char_t* buf,
+	qse_size_t size,
+	const qse_char_t* fmt,
+	...
+);
+
+#if !defined(_WIN32) || defined(__WATCOMC__)
 int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap);
 int qse_vprintf (const qse_char_t* fmt, va_list ap);
 int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...);
