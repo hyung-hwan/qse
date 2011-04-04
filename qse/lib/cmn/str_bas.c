@@ -1,5 +1,5 @@
 /*
- * $Id: str_bas.c 423 2011-03-31 04:15:24Z hyunghwan.chung $
+ * $Id: str_bas.c 425 2011-04-03 14:57:23Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,27 +21,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include "mem.h"
-
-qse_size_t qse_mbslen (const qse_mchar_t* mbs)
-{
-	const qse_mchar_t* p = mbs;
-	while (*p != QSE_MT('\0')) p++;
-	return p - mbs;
-}
-
-qse_size_t qse_wcslen (const qse_wchar_t* wcs)
-{
-	const qse_wchar_t* p = wcs;
-	while (*p != QSE_WT('\0')) p++;
-	return p - wcs;
-}
-
-qse_size_t qse_strbytes (const qse_char_t* str)
-{
-	const qse_char_t* p = str;
-	while (*p != QSE_T('\0')) p++;
-	return (p - str) * QSE_SIZEOF(qse_char_t);
-}
 
 qse_char_t* qse_strbeg (const qse_char_t* str, const qse_char_t* sub)
 {
