@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 423 2011-03-31 04:15:24Z hyunghwan.chung $
+ * $Id: str.h 425 2011-04-03 14:57:23Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -169,20 +169,29 @@ qse_size_t qse_wcslen (
 	const qse_wchar_t* wcs
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strlen(str) qse_mbslen(str)
-#else
-#	define qse_strlen(str) qse_wcslen(str)
-#endif
-
 /**
- * The qse_strbytes() function returns the number of bytes a null-terminated
+ * The qse_mbsbytes() function returns the number of bytes a null-terminated
  * string is holding excluding a terminating null.
  */
 qse_size_t qse_strbytes (
-	const qse_char_t* str
+	const qse_mchar_t* str
 );
 
+/**
+ * The qse_wcsbytes() function returns the number of bytes a null-terminated
+ * string is holding excluding a terminating null.
+ */
+qse_size_t qse_wcsbytes (
+	const qse_wchar_t* str
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strlen(str)   qse_mbslen(str)
+#	define qse_strbytes(str) qse_mbsbytes(str)
+#else
+#	define qse_strlen(str)   qse_wcslen(str)
+#	define qse_strbytes(str) qse_wcsbytes(str)
+#endif
 
 qse_size_t qse_mbscpy (
 	qse_mchar_t*       buf,
