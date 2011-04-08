@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 425 2011-04-03 14:57:23Z hyunghwan.chung $
+ * $Id: str.h 427 2011-04-07 06:46:25Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1347,43 +1347,98 @@ qse_size_t qse_wcsupr (
 #endif
 
 /**
- * The qse_strspl() function splits a string into fields.
+ * The qse_mbsspl() function splits a string into fields.
  */
-int qse_strspl (
-	qse_char_t*       str,
-	const qse_char_t* delim,
-	qse_char_t        lquote,
-	qse_char_t        rquote,
-	qse_char_t        escape
+int qse_mbsspl (
+	qse_mchar_t*       str,
+	const qse_mchar_t* delim,
+	qse_mchar_t        lquote,
+	qse_mchar_t        rquote,
+	qse_mchar_t        escape
 );
 
 /**
- * The qse_strspltrn() function splits a string translating special 
+ * The qse_wcsspl() function splits a string into fields.
+ */
+int qse_wcsspl (
+	qse_wchar_t*       str,
+	const qse_wchar_t* delim,
+	qse_wchar_t        lquote,
+	qse_wchar_t        rquote,
+	qse_wchar_t        escape
+);
+
+/**
+ * The qse_mbsspltrn() function splits a string translating special 
  * escape sequences.
  * The argument @a trset is a translation character set which is composed
  * of multiple character pairs. An escape character followed by the 
  * first character in a pair is translated into the second character
- * in the pair. If trset is QSE_NULL, no translation is performed. 
+ * in the pair. If trset is #QSE_NULL, no translation is performed. 
  *
  * Let's translate a sequence of '\n' and '\r' to a new line and a carriage
  * return respectively.
  * @code
- *   qse_strspltrn (str, QSE_T(':'), QSE_T('['), QSE_T(']'), QSE_T('\\'), QSE_T("n\nr\r"), &nfields);
+ *   nfields = qse_mbsspltrn (
+ *       str, QSE_MT(':'), QSE_MT('['), QSE_MT(']'), 
+ *       QSE_MT('\\'), QSE_MT("n\nr\r")
+ *   );
  * @endcode
  * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
  * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
  * new line.
  *
- * If you don't need any translation, you may call qse_strspl() alternatively.
+ * If you don't need translation, you may call qse_mbsspl() instead.
+ * @return number of resulting fields on success, -1 on failure
  */
-int qse_strspltrn (
-	qse_char_t*       str,
-	const qse_char_t* delim,
-	qse_char_t        lquote,
-	qse_char_t        rquote,
-	qse_char_t        escape,
-	const qse_char_t* trset
+int qse_mbsspltrn (
+	qse_mchar_t*       str,
+	const qse_mchar_t* delim,
+	qse_mchar_t        lquote,
+	qse_mchar_t        rquote,
+	qse_mchar_t        escape,
+	const qse_mchar_t* trset
 );
+
+/**
+ * The qse_wcsspltrn() function splits a string translating special 
+ * escape sequences.
+ * The argument @a trset is a translation character set which is composed
+ * of multiple character pairs. An escape character followed by the 
+ * first character in a pair is translated into the second character
+ * in the pair. If trset is #QSE_NULL, no translation is performed. 
+ *
+ * Let's translate a sequence of '\n' and '\r' to a new line and a carriage
+ * return respectively.
+ * @code
+ *   nfields = qse_wcsspltrn (
+ *       str, QSE_WT(':'), QSE_WT('['), QSE_WT(']'), 
+ *       QSE_WT('\\'), QSE_WT("n\nr\r")
+ *   );
+ * @endcode
+ * Given [xxx]:[\rabc\ndef]:[] as an input, the example breaks the second 
+ * fields to <CR>abc<NL>def where <CR> is a carriage return and <NL> is a 
+ * new line.
+ *
+ * If you don't need translation, you may call qse_wcsspl() instead.
+ * @return number of resulting fields on success, -1 on failure
+ */
+int qse_wcsspltrn (
+	qse_wchar_t*       str,
+	const qse_wchar_t* delim,
+	qse_wchar_t        lquote,
+	qse_wchar_t        rquote,
+	qse_wchar_t        escape,
+	const qse_wchar_t* trset
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strspl(str,delim,lquote,rquote,escape) qse_mbsspl(str,delim,lquote,rquote,escape)
+#	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_mbsspltrn(str,delim,lquote,rquote,escape,trset)
+#else
+#	define qse_strspl(str,delim,lquote,rquote,escape) qse_wcsspl(str,delim,lquote,rquote,escape)
+#	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_wcsspltrn(str,delim,lquote,rquote,escape,trset)
+#endif
 
 /**
  * The qse_strtrmx() function strips leading spaces and/or trailing
