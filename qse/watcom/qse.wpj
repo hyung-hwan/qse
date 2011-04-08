@@ -72,7 +72,7 @@ WRect
 3160
 5700
 4240
-1
+0
 0
 19
 WFileName
@@ -143,7 +143,7 @@ WFileName
 28
 debug/os2/lib/cmn/qsecmn.tgt
 31
-32
+35
 32
 VComponent
 33
@@ -207,7 +207,7 @@ WFileName
 30
 debug/win32/lib/cmn/qsecmn.tgt
 18
-22
+26
 44
 VComponent
 45
