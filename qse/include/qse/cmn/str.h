@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 427 2011-04-07 06:46:25Z hyunghwan.chung $
+ * $Id: str.h 428 2011-04-08 13:56:28Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -135,13 +135,30 @@ typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
 }
 
 /**
- * The qse_strtrmx_op_t defines a string trimming operation. 
+ * The qse_mbstrmx_op_t defines a string trimming operation. 
  */
-enum qse_strtrmx_op_t
+enum qse_mbstrmx_op_t
 {
-	QSE_STRTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
-	QSE_STRTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
+	QSE_MBSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
+	QSE_MBSTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
 };
+
+/**
+ * The qse_wcstrmx_op_t defines a string trimming operation. 
+ */
+enum qse_wcstrmx_op_t
+{
+	QSE_WCSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
+	QSE_WCSTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
+};
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define QSE_STRTRMX_LEFT QSE_MBSTRMX_LEFT
+#	define QSE_STRTRMX_RIGHT QSE_MBSTRMX_RIGHT
+#else
+#	define QSE_STRTRMX_LEFT QSE_WCSTRMX_LEFT
+#	define QSE_STRTRMX_RIGHT QSE_WCSTRMX_RIGHT
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -1441,72 +1458,159 @@ int qse_wcsspltrn (
 #endif
 
 /**
- * The qse_strtrmx() function strips leading spaces and/or trailing
+ * The qse_mbstrmx() function strips leading spaces and/or trailing
  * spaces off a string depending on the opt parameter. You can form
  * the op parameter by bitwise-OR'ing one or more of the following
  * values:
  *
- * - QSE_STRTRMX_LEFT - trim leading spaces
- * - QSE_STRTRMX_RIGHT - trim trailing spaces
+ * - QSE_MBSTRMX_LEFT - trim leading spaces
+ * - QSE_MBSTRMX_RIGHT - trim trailing spaces
  *
  * Should it remove leading spaces, it just returns the pointer to
  * the first non-space character in the string. Should it remove trailing
- * spaces, it inserts a QSE_T('\0') character after the last non-space
+ * spaces, it inserts a QSE_MT('\0') character after the last non-space
  * characters. Take note of this behavior.
  *
  * @code
- * qse_char_t a[] = QSE_T("   this is a test string   ");
- * qse_printf (QSE_T("[%s]\n"), qse_strtrmx(a,QSE_STRTRMX_LEFT|QSE_STRTRMX_RIGHT));
+ * qse_mchar_t a[] = QSE_MT("   this is a test string   ");
+ * qse_mbstrmx (a, QSE_MBSTRMX_LEFT|QSE_MBSTRMX_RIGHT);
  * @endcode
  *
  * @return pointer to a trimmed string.
  */
-qse_char_t* qse_strtrmx (
-	qse_char_t* str, /**< a string */
-	int         op   /**< operation code XOR'ed of qse_strtrmx_op_t values */
+qse_mchar_t* qse_mbstrmx (
+	qse_mchar_t* str, /**< string */
+	int          opt  /**< option OR'ed of #qse_mbstrmx_op_t values */
 );
 
 /**
- * The qse_strtrm() function strips leading spaces and/or trailing
+ * The qse_wcstrmx() function strips leading spaces and/or trailing
+ * spaces off a string depending on the opt parameter. You can form
+ * the op parameter by bitwise-OR'ing one or more of the following
+ * values:
+ *
+ * - QSE_WCSTRMX_LEFT - trim leading spaces
+ * - QSE_WCSTRMX_RIGHT - trim trailing spaces
+ *
+ * Should it remove leading spaces, it just returns the pointer to
+ * the first non-space character in the string. Should it remove trailing
+ * spaces, it inserts a QSE_WT('\0') character after the last non-space
+ * characters. Take note of this behavior.
+ *
+ * @code
+ * qse_wchar_t a[] = QSE_WT("   this is a test string   ");
+ * qse_wcstrmx (a, QSE_STRTRMX_LEFT|QSE_STRTRMX_RIGHT);
+ * @endcode
+ *
+ * @return pointer to a trimmed string.
+ */
+qse_wchar_t* qse_wcstrmx (
+	qse_wchar_t* str, /**< a string */
+	int          opt   /**< option OR'ed of #qse_wcstrmx_op_t values */
+);
+
+/**
+ * The qse_mbstrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_T('\0') is inserted after the last non-space character.
+ * by @a str; QSE_MT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_strtrm (
-	qse_char_t* str /**< string */
+qse_size_t qse_mbstrm (
+	qse_mchar_t* str /**< string */
 );
 
 /**
- * The qse_strxtrm() function strips leading spaces and/or trailing
+ * The qse_wcstrm() function strips leading spaces and/or trailing
  * spaces off a string. All characters between the first and the last non-space
  * character inclusive are relocated to the beginning of memory pointed to 
- * by @a str; QSE_T('\0') is inserted after the last non-space character.
+ * by @a str; QSE_WT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_strxtrm (
-	qse_char_t* str, /**< string */
-	qse_size_t  len  /**< length */
+qse_size_t qse_wcstrm (
+	qse_wchar_t* str /**< string */
 );
 
 /**
- * The qse_strpac() function folds repeated whitespaces into one as well
+ * The qse_mbsxtrm() function strips leading spaces and/or trailing
+ * spaces off a string. All characters between the first and the last non-space
+ * character inclusive are relocated to the beginning of memory pointed to 
+ * by @a str; QSE_MT('\0') is inserted after the last non-space character.
+ * @return length of the string without leading and trailing spaces.
+ */
+qse_size_t qse_mbsxtrm (
+	qse_mchar_t* str, /**< string */
+	qse_size_t   len  /**< length */
+);
+
+/**
+ * The qse_wcsxtrm() function strips leading spaces and/or trailing
+ * spaces off a string. All characters between the first and the last non-space
+ * character inclusive are relocated to the beginning of memory pointed to 
+ * by @a str; QSE_WT('\0') is inserted after the last non-space character.
+ * @return length of the string without leading and trailing spaces.
+ */
+qse_size_t qse_wcsxtrm (
+	qse_wchar_t* str, /**< string */
+	qse_size_t   len  /**< length */
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strtrmx(str,opt)  qse_mbstrmx(str,opt)
+#	define qse_strtrm(str)       qse_mbstrm(str)
+#	define qse_strxtrm(str,len)  qse_mbsxtrm(str,len)
+#else
+#	define qse_strtrmx(str,opt)  qse_wcstrmx(str,opt)
+#	define qse_strtrm(str)       qse_wcstrm(str)
+#	define qse_strxtrm(str,len)  qse_wcsxtrm(str,len)
+#endif
+
+/**
+ * The qse_mbspac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_strpac (
-	qse_char_t* str /**< string */
+qse_size_t qse_mbspac (
+	qse_mchar_t* str /**< string */
 );
 
 /**
- * The qse_strxpac() function folds repeated whitespaces into one as well
+ * The qse_wcspac() function folds repeated whitespaces into one as well
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_strxpac (
-	qse_char_t* str, /**< string */
-	qse_size_t  len  /**< length */
+qse_size_t qse_wcspac (
+	qse_wchar_t* str /**< string */
 );
+
+
+/**
+ * The qse_mbsxpac() function folds repeated whitespaces into one as well
+ * as stripping leading whitespaces and trailing whitespaces.
+ * @return length of the string without leading and trailing spaces.
+ */
+qse_size_t qse_mbsxpac (
+	qse_mchar_t* str, /**< string */
+	qse_size_t   len  /**< length */
+);
+
+/**
+ * The qse_wcsxpac() function folds repeated whitespaces into one as well
+ * as stripping leading whitespaces and trailing whitespaces.
+ * @return length of the string without leading and trailing spaces.
+ */
+qse_size_t qse_wcsxpac (
+	qse_wchar_t* str, /**< string */
+	qse_size_t   len  /**< length */
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strpac(str)      qse_mbspac(str)
+#	define qse_strxpac(str,len) qse_mbsxpac(str,len)
+#else
+#	define qse_strpac(str)      qse_wcspac(str)
+#	define qse_strxpac(str,len) qse_wcsxpac(str,len)
+#endif
 
 /**
  * The qse_mbstowcslen() function scans a null-terminated multibyte string
