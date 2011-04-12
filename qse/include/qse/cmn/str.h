@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 428 2011-04-08 13:56:28Z hyunghwan.chung $
+ * $Id: str.h 429 2011-04-11 14:15:30Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -190,7 +190,7 @@ qse_size_t qse_wcslen (
  * The qse_mbsbytes() function returns the number of bytes a null-terminated
  * string is holding excluding a terminating null.
  */
-qse_size_t qse_strbytes (
+qse_size_t qse_mbsbytes (
 	const qse_mchar_t* str
 );
 
@@ -1127,85 +1127,144 @@ qse_wchar_t* qse_wcsxrchr (
 #endif
 
 /**
- * The qse_strbeg() function checks if the a string begins with a substring.
- * @return the pointer to a beginning of a matching beginning, 
- *         QSE_NULL if no match is found.
+ * The qse_mbsbeg() function checks if a string begins with a substring.
+ * @return pointer to the beginning of a matching beginning, 
+ *         #SE_NULL if no match is found.
  */
-qse_char_t* qse_strbeg (
-	const qse_char_t* str,
-	const qse_char_t* sub
-);
-
-qse_char_t* qse_strxbeg (
-	const qse_char_t* str,
-	qse_size_t len,
-	const qse_char_t* sub)
-;
-
-/*
- * The qse_strbeg() function checks if the a string begins with a substring.
- * @return @a str on match, QSE_NULL on no match
- */
-qse_char_t* qse_strnbeg (
-	const qse_char_t* str,
-	const qse_char_t* sub,
-	qse_size_t        len
-);
-
-/*
- * The qse_strbeg() function checks if the a string begins with a substring.
- * @return @a str on match, QSE_NULL on no match
- */
-qse_char_t* qse_strxnbeg (
-	const qse_char_t* str,
-	qse_size_t        len1, 
-	const qse_char_t* sub,
-	qse_size_t        len2
+qse_mchar_t* qse_mbsbeg (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub
 );
 
 /**
- * The qse_strend() function checks if the a string ends with a substring.
- * @return the pointer to a beginning of a matching end, 
- *         QSE_NULL if no match is found.
+ * The qse_wcsbeg() function checks if a string begins with a substring.
+ * @return pointer to the beginning of a matching beginning, 
+ *         #QSE_NULL if no match is found.
  */
-qse_char_t* qse_strend (
-	const qse_char_t* str, /**< a string */
-	const qse_char_t* sub  /**< a substring */
+qse_wchar_t* qse_wcsbeg (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsxbeg (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	const qse_mchar_t* sub
+);
+
+qse_wchar_t* qse_wcsxbeg (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	const qse_wchar_t* sub
+);
+
+qse_mchar_t* qse_mbsnbeg (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub,
+	qse_size_t         len
+);
+
+qse_wchar_t* qse_wcsnbeg (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub,
+	qse_size_t         len
+);
+
+qse_mchar_t* qse_mbsxnbeg (
+	const qse_mchar_t* str,
+	qse_size_t         len1, 
+	const qse_mchar_t* sub,
+	qse_size_t         len2
+);
+
+qse_wchar_t* qse_wcsxnbeg (
+	const qse_wchar_t* str,
+	qse_size_t         len1, 
+	const qse_wchar_t* sub,
+	qse_size_t         len2
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strbeg(str,sub)             qse_mbsxbeg(str,sub)
+#	define qse_strxbeg(str,len,sub)        qse_mbsxbeg(str,len,sub)
+#	define qse_strnbeg(str,sub,len)        qse_mbsnbeg(str,sub,len)
+#	define qse_strxnbeg(str,len1,sub,len2) qse_mbsxnbeg(str,len1,sub,len2)
+#else
+#	define qse_strbeg(str,sub)             qse_wcsxbeg(str,sub)
+#	define qse_strxbeg(str,len,sub)        qse_wcsxbeg(str,len,sub)
+#	define qse_strnbeg(str,sub,len)        qse_wcsnbeg(str,sub,len)
+#	define qse_strxnbeg(str,len1,sub,len2) qse_wcsxnbeg(str,len1,sub,len2)
+#endif
+
+/**
+ * The qse_mbsend() function checks if a string ends with a substring.
+ * @return pointer to the beginning of a matching ending, 
+ *         #SE_NULL if no match is found.
+ */
+qse_mchar_t* qse_mbsend (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub
 );
 
 /**
- * The qse_strxend function checks if the a string ends with a substring.
- * @return the pointer to a beginning of a matching end, 
- *         QSE_NULL if no match is found.
+ * The qse_wcsend() function checks if a string ends with a substring.
+ * @return pointer to the beginning of a matching ending, 
+ *         #QSE_NULL if no match is found.
  */
-qse_char_t* qse_strxend (
-	const qse_char_t* str,
-	qse_size_t        len,
-	const qse_char_t* sub
+qse_wchar_t* qse_wcsend (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub
 );
 
-/**
- * The qse_strnend() function checks if the a string ends with a substring.
- * @return the pointer to a beginning of a matching end, 
- *         QSE_NULL if no match is found.
- */
-qse_char_t* qse_strnend (
-	const qse_char_t* str,
-	const qse_char_t* sub,
-	qse_size_t len
+qse_mchar_t* qse_mbsxend (
+	const qse_mchar_t* str,
+	qse_size_t         len,
+	const qse_mchar_t* sub
 );
 
-/**
- * The qse_strxnend() function checks if the a string ends with a substring.
- * @return the pointer to a beginning of a matching end, 
- *         QSE_NULL if no match is found.
- */
-qse_char_t* qse_strxnend (
-	const qse_char_t* str,
-	qse_size_t        len1, 
-	const qse_char_t* sub,
-	qse_size_t        len2
+qse_wchar_t* qse_wcsxend (
+	const qse_wchar_t* str,
+	qse_size_t         len,
+	const qse_wchar_t* sub
 );
+
+qse_mchar_t* qse_mbsnend (
+	const qse_mchar_t* str,
+	const qse_mchar_t* sub,
+	qse_size_t         len
+);
+
+qse_wchar_t* qse_wcsnend (
+	const qse_wchar_t* str,
+	const qse_wchar_t* sub,
+	qse_size_t         len
+);
+
+qse_mchar_t* qse_mbsxnend (
+	const qse_mchar_t* str,
+	qse_size_t         len1, 
+	const qse_mchar_t* sub,
+	qse_size_t         len2
+);
+
+qse_wchar_t* qse_wcsxnend (
+	const qse_wchar_t* str,
+	qse_size_t         len1, 
+	const qse_wchar_t* sub,
+	qse_size_t         len2
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strend(str,sub)             qse_mbsxend(str,sub)
+#	define qse_strxend(str,len,sub)        qse_mbsxend(str,len,sub)
+#	define qse_strnend(str,sub,len)        qse_mbsnend(str,sub,len)
+#	define qse_strxnend(str,len1,sub,len2) qse_mbsxnend(str,len1,sub,len2)
+#else
+#	define qse_strend(str,sub)             qse_wcsxend(str,sub)
+#	define qse_strxend(str,len,sub)        qse_wcsxend(str,len,sub)
+#	define qse_strnend(str,sub,len)        qse_wcsnend(str,sub,len)
+#	define qse_strxnend(str,len1,sub,len2) qse_wcsxnend(str,len1,sub,len2)
+#endif
 
 qse_size_t qse_mbsspn (
 	const qse_mchar_t* str1,
