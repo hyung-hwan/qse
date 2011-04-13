@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 429 2011-04-11 14:15:30Z hyunghwan.chung $
+ * $Id: str.h 430 2011-04-12 15:36:18Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1514,6 +1514,59 @@ int qse_wcsspltrn (
 #else
 #	define qse_strspl(str,delim,lquote,rquote,escape) qse_wcsspl(str,delim,lquote,rquote,escape)
 #	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_wcsspltrn(str,delim,lquote,rquote,escape,trset)
+#endif
+
+
+qse_mchar_t* qse_mbstok (
+	const qse_mchar_t* s,
+	const qse_mchar_t* delim, 
+	qse_mcstr_t*       tok
+);
+
+qse_mchar_t* qse_mbsxtok (
+	const qse_mchar_t* s,
+	qse_size_t         len,
+	const qse_mchar_t* delim,
+	qse_mcstr_t*       tok
+);
+
+qse_mchar_t* qse_mbsxntok (
+	const qse_mchar_t* s,
+	qse_size_t         len,
+	const qse_mchar_t* delim,
+	qse_size_t         delim_len, 
+	qse_mcstr_t*       tok
+);
+
+qse_wchar_t* qse_wcstok (
+	const qse_wchar_t* s,
+	const qse_wchar_t* delim, 
+	qse_wcstr_t*       tok
+);
+
+qse_wchar_t* qse_wcsxtok (
+	const qse_wchar_t* s,
+	qse_size_t         len,
+	const qse_wchar_t* delim,
+	qse_wcstr_t*       tok
+);
+
+qse_wchar_t* qse_wcsxntok (
+	const qse_wchar_t* s,
+	qse_size_t         len,
+	const qse_wchar_t* delim,
+	qse_size_t         delim_len, 
+	qse_wcstr_t*       tok
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strtok(s,d,t)          qse_mbstok(s,d,t)
+#	define qse_strxtok(s,len,d,t)     qse_mbsxtok(s,len,d,t)
+#	define qse_strxntok(s,len,d,dl,t) qse_mbsxntok(s,len,d,dl,t)
+#else
+#	define qse_strtok(s,d,t)          qse_wcstok(s,d,t)
+#	define qse_strxtok(s,len,d,t)     qse_wcsxtok(s,len,d,t)
+#	define qse_strxntok(s,len,d,dl,t) qse_wcsxntok(s,len,d,dl,t)
 #endif
 
 /**
