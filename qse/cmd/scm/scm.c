@@ -275,6 +275,19 @@ pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PI
 }
 
 {
+	const qse_char_t* x = QSE_T("rate:num,burst:num,mode:abc,name:xxx,size:num,max:num,expire:num,gcinterval:num");
+
+	const qse_char_t* p = x;
+	qse_cstr_t tok;
+
+	while (p)
+	{
+		p = qse_strtok (p, QSE_T(","), &tok);
+		qse_printf (QSE_T("[%.*s]\n"), (int)tok.len, tok.ptr);
+	}
+}
+
+{
 qse_scm_ent_t* x1, * x2;
 
 qse_printf (QSE_T("QSESCM> "));
