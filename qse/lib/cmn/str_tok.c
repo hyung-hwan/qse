@@ -29,7 +29,7 @@ qse_mchar_t* qse_mbstok (
 	qse_mchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_mchar_tacters */
+	/* skip preceding space characters */
 	while (/* *p != QSE_MT('\0') && */ QSE_ISMSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -40,10 +40,10 @@ qse_mchar_t* qse_mbstok (
 			if (!QSE_ISMSPACE(*d)) delim_mode = 2;
 	}
 
-	if (delim_mode == 0) {
-	 
-		/* when QSE_NULL is given as "delim", it has an effect of cutting
-		   preceding and trailing space characters off "s". */
+	if (delim_mode == 0) 
+	{
+		/* when QSE_NULL is given as "delim", it has an effect of 
+		 * cutting preceding and trailing space characters off "s". */
 		while ((c = *p) != QSE_MT('\0')) 
 		{
 			if (!QSE_ISMSPACE(c)) 
@@ -64,8 +64,8 @@ qse_mchar_t* qse_mbstok (
 			ep = p++;
 		}
 	}
-	else 
-	{ /* if (delim_mode == 2) { */
+	else /* if (delim_mode == 2) */
+	{
 		while ((c = *p) != QSE_MT('\0')) 
 		{
 			if (QSE_ISMSPACE(c)) 
@@ -106,7 +106,7 @@ qse_mchar_t* qse_mbsxtok (
 	qse_mchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_mchar_tacters */
+	/* skip preceding space characters */
 	while (p < end && QSE_ISMSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -120,8 +120,7 @@ qse_mchar_t* qse_mbsxtok (
 	if (delim_mode == 0) 
 	{
 		/* when QSE_NULL is given as "delim", it has an effect of 
-		 * cutting preceding and trailing space qse_mchar_tacters 
-		 * off "s". */
+		 * cutting preceding and trailing space characters off "s". */
 		while (p < end) 
 		{
 			c = *p;
@@ -188,7 +187,7 @@ qse_mchar_t* qse_mbsxntok (
 	qse_mchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_mchar_tacters */
+	/* skip preceding space characters */
 	while (p < end && QSE_ISMSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -201,12 +200,11 @@ qse_mchar_t* qse_mbsxntok (
 
 	if (delim_mode == 0) 
 	{ 
-		/* when QSE_NULL is given as "delim", it has an effect of cutting
-		   preceding and trailing space qse_mchar_tacters off "s". */
+		/* when QSE_NULL is given as "delim", it has an effect of 
+		 * cutting preceding and trailing space characters off "s". */
 		while (p < end) 
 		{
 			c = *p;
-
 			if (!QSE_ISMSPACE(c)) 
 			{
 				if (sp == QSE_NULL) sp = p;
@@ -268,7 +266,7 @@ qse_wchar_t* qse_wcstok (
 	qse_wchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_wchar_tacters */
+	/* skip preceding space characters */
 	while (/* *p != QSE_WT('\0') && */ QSE_ISWSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -345,7 +343,7 @@ qse_wchar_t* qse_wcsxtok (
 	qse_wchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_wchar_tacters */
+	/* skip preceding space characters */
 	while (p < end && QSE_ISWSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -359,8 +357,7 @@ qse_wchar_t* qse_wcsxtok (
 	if (delim_mode == 0) 
 	{
 		/* when QSE_NULL is given as "delim", it has an effect of 
-		 * cutting preceding and trailing space qse_wchar_tacters 
-		 * off "s". */
+		 * cutting preceding and trailing space characters off "s". */
 		while (p < end) 
 		{
 			c = *p;
@@ -427,7 +424,7 @@ qse_wchar_t* qse_wcsxntok (
 	qse_wchar_t c; 
 	int delim_mode;
 
-	/* skip preceding space qse_wchar_tacters */
+	/* skip preceding space characters */
 	while (p < end && QSE_ISWSPACE(*p)) p++;
 
 	if (delim == QSE_NULL) delim_mode = 0;
@@ -441,12 +438,10 @@ qse_wchar_t* qse_wcsxntok (
 	if (delim_mode == 0) 
 	{ 
 		/* when QSE_NULL is given as "delim", it has an effect of 
-		 * cutting preceding and trailing space qse_wchar_tacters 
-		 * off "s". */
+		 * cutting preceding and trailing space characters off "s". */
 		while (p < end) 
 		{
 			c = *p;
-
 			if (!QSE_ISWSPACE(c)) 
 			{
 				if (sp == QSE_NULL) sp = p;
