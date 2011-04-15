@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 430 2011-04-12 15:36:18Z hyunghwan.chung $
+ * $Id: str.h 432 2011-04-14 12:42:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1420,6 +1420,68 @@ qse_size_t qse_wcsupr (
 #else
 #	define qse_strlwr(str) qse_wcslwr(str);
 #	define qse_strupr(str) qse_wcsupr(str);
+#endif
+
+
+
+qse_size_t qse_mbsrev (
+	qse_mchar_t* str
+);
+
+qse_size_t qse_wcsrev (
+	qse_wchar_t* str
+);
+
+qse_size_t qse_mbsxrev (	
+	qse_mchar_t* str,
+	qse_size_t   len
+);
+
+qse_size_t qse_wcsxrev (	
+	qse_wchar_t* str,
+	qse_size_t   len
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strrev(str)      qse_mbsrev(str)
+#	define qse_strxrev(str,len) qse_mbsxrev(str,len)
+#else
+#	define qse_strrev(str)      qse_wcsrev(str)
+#	define qse_strxrev(str,len) qse_wcsxrev(str,len)
+#endif
+
+qse_size_t qse_mbsrot (
+	qse_mchar_t* str,
+	int          dir,
+	qse_size_t   n
+);
+
+qse_size_t qse_wcsrot (
+	qse_wchar_t* str,
+	int          dir,
+	qse_size_t   n
+);
+
+qse_size_t qse_mbsxrot (
+	qse_mchar_t* str,
+	qse_size_t   len,
+	int          dir,
+	qse_size_t   n
+);
+
+qse_size_t qse_wcsxrot (
+	qse_wchar_t* str,
+	qse_size_t   len,
+	int          dir,
+	qse_size_t   n
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strrot(str,dir,n)      qse_mbsrot(str,dir,n)
+#	define qse_strxrot(str,len,dir,n) qse_mbsrot(str,len,dir,n)
+#else
+#	define qse_strrot(str,dir,n)      qse_wcsrot(str,dir,n)
+#	define qse_strxrot(str,len,dir,n) qse_wcsrot(str,len,dir,n)
 #endif
 
 /**
