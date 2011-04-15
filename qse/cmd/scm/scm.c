@@ -288,6 +288,16 @@ pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PI
 }
 
 {
+	qse_char_t abc[100];
+
+	qse_strcpy (abc, QSE_T("abcdefghilklmn"));
+	qse_strrev (abc);
+	qse_printf (QSE_T("<%s>\n"), abc);
+	qse_strrot (abc, -1, 5);
+	qse_printf (QSE_T("<%s>\n"), abc);
+}
+
+{
 qse_scm_ent_t* x1, * x2;
 
 qse_printf (QSE_T("QSESCM> "));
