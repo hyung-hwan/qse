@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 432 2011-04-14 12:42:48Z hyunghwan.chung $
+ * $Id: str.h 433 2011-04-15 15:18:27Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1396,6 +1396,77 @@ qse_ulong_t qse_strxtoulong (
 	qse_size_t        len
 );
 
+
+
+qse_size_t qse_mbsdel (
+	qse_mchar_t* str, 
+	qse_size_t   pos,
+	qse_size_t   n
+);
+
+qse_size_t qse_wcsdel (
+	qse_wchar_t* str, 
+	qse_size_t   pos,
+	qse_size_t   n
+);
+
+qse_size_t qse_mbsxdel (
+	qse_mchar_t* str, 
+	qse_size_t   len,
+	qse_size_t   pos,
+	qse_size_t   n
+);
+
+qse_size_t qse_wcsxdel (
+	qse_wchar_t* str, 
+	qse_size_t   len,
+	qse_size_t   pos,
+	qse_size_t   n
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strdel(str,pos,n)      qse_mbsdel(str,pos,n)
+#	define qse_strxdel(str,len,pos,n) qse_mbsxdel(str,len,pos,n)
+#else
+#	define qse_strdel(str,pos,n)      qse_wcsdel(str,pos,n)
+#	define qse_strxdel(str,len,pos,n) qse_wcsxdel(str,len,pos,n)
+#endif
+
+qse_size_t qse_mbsset (
+	qse_mchar_t* buf,
+	qse_mchar_t  c,
+	qse_size_t   n
+);
+
+qse_size_t qse_wcsset (
+	qse_wchar_t* buf,
+	qse_wchar_t  c,
+	qse_size_t   n
+);
+
+qse_size_t qse_mbsxset (
+	qse_mchar_t* buf,
+	qse_size_t   bsz,
+	qse_mchar_t  c,
+	qse_size_t   n
+);
+
+
+qse_size_t qse_wcsxset (
+	qse_wchar_t* buf,
+	qse_size_t   bsz,
+	qse_wchar_t  c,
+	qse_size_t   n
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strset(buf,c,n) qse_mbsset(buf,c,n)
+#	define qse_strxset(buf,bsz,c,n) qse_mbsxset(buf,bsz,c,n)
+#else
+#	define qse_strset(buf,c,n) qse_wcsset(buf,c,n)
+#	define qse_strxset(buf,bsz,c,n) qse_wcsxset(buf,bsz,c,n)
+#endif
+
 /* case conversion */
 
 qse_size_t qse_mbslwr (
@@ -1421,7 +1492,6 @@ qse_size_t qse_wcsupr (
 #	define qse_strlwr(str) qse_wcslwr(str);
 #	define qse_strupr(str) qse_wcsupr(str);
 #endif
-
 
 
 qse_size_t qse_mbsrev (
