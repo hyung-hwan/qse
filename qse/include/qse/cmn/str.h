@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 433 2011-04-15 15:18:27Z hyunghwan.chung $
+ * $Id: str.h 435 2011-04-16 15:40:57Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1430,6 +1430,67 @@ qse_size_t qse_wcsxdel (
 #else
 #	define qse_strdel(str,pos,n)      qse_wcsdel(str,pos,n)
 #	define qse_strxdel(str,len,pos,n) qse_wcsxdel(str,len,pos,n)
+#endif
+
+
+qse_size_t qse_mbsexcl (
+	qse_mchar_t*       str,
+	const qse_mchar_t* cs
+);
+
+qse_size_t qse_mbsxexcl (
+	qse_mchar_t*       str,
+	qse_size_t         len,
+	const qse_mchar_t* cs
+);
+
+qse_size_t qse_wcsexcl (
+	qse_wchar_t*       str,
+	const qse_wchar_t* cs
+);
+
+qse_size_t qse_wcsxexcl (
+	qse_wchar_t*       str,
+	qse_size_t         len,
+	const qse_wchar_t* cs
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strexcl(str,cs)      qse_mbsexcl(str,cs)
+#	define qse_strxexcl(str,len,cs) qse_mbsxexcl(str,len,cs)
+#else
+#	define qse_strexcl(str,cs)      qse_wcsexcl(str,cs)
+#	define qse_strxexcl(str,len,cs) qse_wcsxexcl(str,len,cs)
+#endif
+
+qse_size_t qse_mbsincl (
+	qse_mchar_t*       str,
+	const qse_mchar_t* cs
+);
+
+qse_size_t qse_mbsxincl (
+	qse_mchar_t*       str,
+	qse_size_t         len,
+	const qse_mchar_t* cs
+);
+
+qse_size_t qse_wcsincl (
+	qse_wchar_t*       str,
+	const qse_wchar_t* cs
+);
+
+qse_size_t qse_wcsxincl (
+	qse_wchar_t*       str,
+	qse_size_t         len,
+	const qse_wchar_t* cs
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strincl(str,cs)      qse_mbsincl(str,cs)
+#	define qse_strxincl(str,len,cs) qse_mbsxincl(str,len,cs)
+#else
+#	define qse_strincl(str,cs)      qse_wcsincl(str,cs)
+#	define qse_strxincl(str,len,cs) qse_wcsxincl(str,len,cs)
 #endif
 
 qse_size_t qse_mbsset (
