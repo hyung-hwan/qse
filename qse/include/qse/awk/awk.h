@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 344 2010-08-17 13:15:14Z hyunghwan.chung $
+ * $Id: awk.h 434 2011-04-16 14:55:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -52,6 +52,7 @@
  *
  * @example awk04.c
  * This programs shows how to qse_awk_rtx_call().
+ *
  */
 
 /** @struct qse_awk_t

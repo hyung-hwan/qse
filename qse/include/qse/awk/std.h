@@ -1,5 +1,5 @@
 /*
- * $Id: std.h 340 2010-08-01 13:13:38Z hyunghwan.chung $
+ * $Id: std.h 434 2011-04-16 14:55:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -31,6 +31,11 @@
  * The source script handler does not evaluate a file name of the "var=val"
  * form as an assignment expression. Instead, it just treats it as a
  * normal file name.
+ */
+
+/**
+ * @example awk09.c
+ * This programs shows how to specify multiple console output files.
  */
 
 /**

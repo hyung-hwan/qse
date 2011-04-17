@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 380 2011-01-31 13:46:52Z hyunghwan.chung $
+ * $Id: std.c 434 2011-04-16 14:55:26Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -969,7 +969,9 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			else
 			{
 				sio = qse_sio_open (
-					rtx->awk->mmgr, 0, file, QSE_SIO_READ);
+					rtx->awk->mmgr, 0, file, 
+					QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE
+				);
 				if (sio == QSE_NULL)
 				{
 					qse_cstr_t errarg;

@@ -26,7 +26,7 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
-#if defined(__OS2__)
+#elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	include <os2.h>
 #else
