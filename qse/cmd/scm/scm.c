@@ -298,6 +298,17 @@ pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PI
 }
 
 {
+	qse_char_t abc[100];
+
+	qse_strcpy (abc, QSE_T("abcdefghilklmnabcdefghik"));
+	qse_printf (QSE_T("ORIGINAL=><%s>\n"), abc);
+	qse_strexcl (abc, QSE_T("adfikl"));
+	qse_printf (QSE_T("AFTER EXCL<%s>\n"), abc);
+	qse_strincl (abc, QSE_T("bcmn"));
+	qse_printf (QSE_T("AFTER INCL<%s>\n"), abc);
+}
+
+{
 qse_scm_ent_t* x1, * x2;
 
 qse_printf (QSE_T("QSESCM> "));
