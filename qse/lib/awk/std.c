@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 434 2011-04-16 14:55:26Z hyunghwan.chung $
+ * $Id: std.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -31,6 +31,24 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
+
+#if defined(_WIN32)
+#	include <tchar.h>
+#endif
+
+#ifndef QSE_HAVE_CONFIG_H
+#	if defined(__OS2__) || defined(_WIN32)
+#		define HAVE_POW
+#		define HAVE_SIN
+#		define HAVE_COS
+#		define HAVE_TAN
+#		define HAVE_ATAN
+#		define HAVE_ATAN2
+#		define HAVE_LOG
+#		define HAVE_EXP
+#		define HAVE_SQRT
+#	endif
+#endif
 
 typedef struct xtn_t
 {
@@ -914,7 +932,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			}
 
 			if (qse_awk_rtx_setfilename (
-				rtx, file, qse_strlen(file)) == -1)
+				rtx, file, qse_strlen(file)) <= -1)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
 				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
@@ -986,7 +1004,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			}
 			
 			if (qse_awk_rtx_setofilename (
-				rtx, file, qse_strlen(file)) == -1)
+				rtx, file, qse_strlen(file)) <= -1)
 			{
 				qse_sio_close (sio);
 				return -1;
@@ -1094,9 +1112,9 @@ static qse_ssize_t awk_rio_console (
 }
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*         awk,
-	qse_size_t         xtnsize,
-	const qse_char_t*  id,
+	qse_awk_t*             awk,
+	qse_size_t             xtnsize,
+	const qse_char_t*      id,
 	const qse_char_t*const icf[],
 	const qse_char_t*const ocf[])
 {
@@ -1175,6 +1193,40 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.out.files = ocf;
 	rxtn->c.out.index = 0;
 	rxtn->c.out.count = 0;
+
+	if (icf && icf[0])
+	{
+		/* If an explicit console file name is given,
+		 * set FILENAME in advance in case FILENAME printing
+		 * is the first output statement executed. FILENAME
+		 * would be printed as an empty string without this
+		 * as FILENAME is resolved before the I/O handler is 
+		 * executed.
+		 */
+		if (qse_awk_rtx_setfilename (rtx, icf[0], qse_strlen(icf[0])) <= -1)
+		{
+			awk->errinf = rtx->errinf; /* transfer error info */
+			qse_awk_rtx_close (rtx);
+			return QSE_NULL;
+		}
+	}
+
+	if (ocf && ocf[0])
+	{
+		/* If an explicit console file name is given,
+		 * set OFILENAME in advance in case OFILENAME printing
+		 * is the first output statement executed. OFILENAME
+		 * would be printed as an empty string without this
+		 * as OFILENAME is resolved before the I/O handler is 
+		 * executed.
+		 */
+		if (qse_awk_rtx_setofilename (rtx, ocf[0], qse_strlen(ocf[0])) <= -1)
+		{
+			awk->errinf = rtx->errinf; /* transfer error info */
+			qse_awk_rtx_close (rtx);
+			return QSE_NULL;
+		}
+	}
 
 	return rtx;
 }

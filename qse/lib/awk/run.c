@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
+ * $Id: run.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -731,14 +731,15 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	}
 
 	/* initialize the run object */
-	if (init_rtx (rtx, awk, rio) == -1) 
+	if (init_rtx (rtx, awk, rio) <= -1) 
 	{
 		QSE_AWK_FREE (awk, rtx);
 		return QSE_NULL;
 	}
 
-	if (init_globals (rtx, arg) == -1)
+	if (init_globals (rtx, arg) <= -1)
 	{
+		awk->errinf = rtx->errinf; /* transfer error info */
 		fini_rtx (rtx, 0);
 		QSE_AWK_FREE (awk, rtx);
 		return QSE_NULL;

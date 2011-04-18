@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 434 2011-04-16 14:55:26Z hyunghwan.chung $
+ * $Id: awk.h 436 2011-04-17 15:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -741,8 +741,8 @@ enum qse_awk_option_t
 	QSE_AWK_INCLUDE = (1 << 16),
 
 	/** 
-	 * makes #qse_awk_t to behave as compatibly as classical AWK
-	 * implementations 
+	 * makes #qse_awk_t to behave compatibly with classical AWK
+	 * implementations
 	 */
 	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 

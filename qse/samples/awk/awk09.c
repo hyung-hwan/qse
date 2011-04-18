@@ -21,18 +21,13 @@
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 
-/* this sample produces 8 text files containing multiplication char */
+/* this sample produces 8 text files containing multiplication chart. */
 
 const qse_char_t* src = QSE_T(
 	"BEGIN {"
-	"    printf \"\"; # work around the empty OFILENAME when printed\n"
-	"                 # for the first time in the loop below\n"
-	"                 # this happens because the console file is opened\n"
-	"                 # and OFILENAME is set when the first console output\n"
-	"                 # operation is peformed\n"
 	"	for (i=2;i<=9;i++)"
 	"	{"
-	"         print \"OFILENAME:\" OFILENAME;"
+	"		print \"OFILENAME:\" OFILENAME;"
 	"		for (j=1;j<=9;j++)"
 	"			print i \"*\" j \"=\" i * j;"
 	"		nextofile;"

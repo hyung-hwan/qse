@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 365 2010-10-29 13:54:36Z hyunghwan.chung $
+ * $Id: awk.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,6 +41,10 @@
 #	include <windows.h>
 #	include <tchar.h>
 #	include <process.h>
+#elif defined(__OS2__)
+#	define INCL_DOSEXCEPTIONS
+#	define INCL_ERRORS
+#	include <os2.h>
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -91,7 +95,7 @@ static void dprint (const qse_char_t* fmt, ...)
 	}
 }
 
-#ifdef _WIN32
+#if defined(_WIN32)
 static BOOL WINAPI stop_run (DWORD ctrl_type)
 {
 	if (ctrl_type == CTRL_C_EVENT ||
@@ -102,6 +106,30 @@ static BOOL WINAPI stop_run (DWORD ctrl_type)
 	}
 
 	return FALSE;
+}
+#elif defined(__OS2__)
+
+static ULONG _System stop_run (
+	PEXCEPTIONREPORTRECORD p1,
+	PEXCEPTIONREGISTRATIONRECORD p2,
+	PCONTEXTRECORD p3,
+	PVOID pv)
+{
+	if (p1->ExceptionNum == XCPT_SIGNAL)
+	{
+		if (p1->ExceptionInfo[0] == XCPT_SIGNAL_INTR ||
+		    p1->ExceptionInfo[0] == XCPT_SIGNAL_KILLPROC ||
+		    p1->ExceptionInfo[0] == XCPT_SIGNAL_BREAK)
+		{
+			APIRET rc;
+
+			qse_awk_rtx_stop (app_rtx);
+			rc = DosAcknowledgeSignalException (p1->ExceptionInfo[0]);
+			return (rc != NO_ERROR)? 1: XCPT_CONTINUE_EXECUTION; 
+		}
+	}
+
+	return XCPT_CONTINUE_SEARCH; /* exception not resolved */
 }
 #else
 
@@ -140,8 +168,15 @@ static void stop_run (int sig)
 
 static void set_intr_run (void)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	SetConsoleCtrlHandler (stop_run, TRUE);
+#elif defined(__OS2__)
+	EXCEPTIONREGISTRATIONRECORD rr = { 0 };
+	APIRET rc;
+	rr.ExceptionHandler = (ERR)stop_run;
+qse_printf (QSE_T("setting....\n"));
+	rc = DosSetExceptionHandler (&rr);
+	/*if (rc != NO_ERROR)...*/
 #else
 	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
 	setsignal (SIGINT, stop_run, 0);
@@ -150,8 +185,14 @@ static void set_intr_run (void)
 
 static void unset_intr_run (void)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	SetConsoleCtrlHandler (stop_run, FALSE);
+#elif defined(__OS2__)
+	EXCEPTIONREGISTRATIONRECORD rr = { 0 };
+	APIRET rc;
+	rr.ExceptionHandler = (ERR)stop_run;
+	rc = DosUnsetExceptionHandler (&rr);
+	/*if (rc != NO_ERROR) ...*/
 #else
 	setsignal (SIGINT, SIG_DFL, 1);
 #endif
