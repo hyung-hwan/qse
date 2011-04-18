@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
+ * $Id: awk.c 437 2011-04-17 15:32:02Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -174,7 +174,6 @@ static void set_intr_run (void)
 	EXCEPTIONREGISTRATIONRECORD rr = { 0 };
 	APIRET rc;
 	rr.ExceptionHandler = (ERR)stop_run;
-qse_printf (QSE_T("setting....\n"));
 	rc = DosSetExceptionHandler (&rr);
 	/*if (rc != NO_ERROR)...*/
 #else
