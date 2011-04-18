@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 365 2010-10-29 13:54:36Z hyunghwan.chung $ 
+ * $Id: awk.c 436 2011-04-17 15:28:22Z hyunghwan.chung $ 
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -223,6 +223,10 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 
 	awk->option = QSE_AWK_CLASSIC;
+#if defined(_WIN32) || defined(__OS2__)
+	awk->option |= QSE_AWK_CRLF;
+#endif
+
 	awk->errinf.num = QSE_AWK_ENOERR;
 	awk->errinf.loc.line = 0;
 	awk->errinf.loc.colm = 0;

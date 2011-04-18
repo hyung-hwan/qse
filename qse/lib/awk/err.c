@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 311 2009-12-09 11:35:54Z hyunghwan.chung $
+ * $Id: err.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -303,3 +303,4 @@ void qse_awk_rtx_seterror (
 
 	if (errloc != QSE_NULL) rtx->errinf.loc = *errloc;
 }
+
