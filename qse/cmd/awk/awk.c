@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 437 2011-04-17 15:32:02Z hyunghwan.chung $
+ * $Id: awk.c 438 2011-04-17 15:38:21Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -42,6 +42,7 @@
 #	include <tchar.h>
 #	include <process.h>
 #elif defined(__OS2__)
+#	define INCL_DOSPROCESS
 #	define INCL_DOSEXCEPTIONS
 #	define INCL_ERRORS
 #	include <os2.h>
@@ -332,8 +333,11 @@ static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (n == -1) return -1;
 	if (n == 1) lv = (qse_long_t)rv;
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	Sleep ((DWORD)(lv * 1000));
+	n = 0;
+#elif defined(__OS2__)
+	DosSleep ((ULONG)(lv * 1000));
 	n = 0;
 #else
 	n = sleep (lv);	
