@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
+ * $Id: std.c 439 2011-04-20 07:37:48Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1194,32 +1194,21 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.out.index = 0;
 	rxtn->c.out.count = 0;
 
-	if (icf && icf[0])
-	{
-		/* If an explicit console file name is given,
-		 * set FILENAME in advance in case FILENAME printing
-		 * is the first output statement executed. FILENAME
-		 * would be printed as an empty string without this
-		 * as FILENAME is resolved before the I/O handler is 
-		 * executed.
-		 */
-		if (qse_awk_rtx_setfilename (rtx, icf[0], qse_strlen(icf[0])) <= -1)
-		{
-			awk->errinf = rtx->errinf; /* transfer error info */
-			qse_awk_rtx_close (rtx);
-			return QSE_NULL;
-		}
-	}
-
+	
+	/* FILENAME can be set when the input console is opened.
+	 * so we skip setting it here even if an explicit console file
+	 * is specified.  So the value of FILENAME is empty in the 
+	 * BEGIN block unless getline is ever met. 
+	 *
+	 * However, OFILENAME is different. The output
+	 * console is treated as if it's already open upon start-up. 
+	 * otherwise, 'BEGIN { print OFILENAME; }' prints an empty
+	 * string regardless of output console files specified.
+	 * That's because OFILENAME is evaluated before the output
+	 * console file is opened. 
+	 */
 	if (ocf && ocf[0])
 	{
-		/* If an explicit console file name is given,
-		 * set OFILENAME in advance in case OFILENAME printing
-		 * is the first output statement executed. OFILENAME
-		 * would be printed as an empty string without this
-		 * as OFILENAME is resolved before the I/O handler is 
-		 * executed.
-		 */
 		if (qse_awk_rtx_setofilename (rtx, ocf[0], qse_strlen(ocf[0])) <= -1)
 		{
 			awk->errinf = rtx->errinf; /* transfer error info */
@@ -1261,26 +1250,32 @@ static int fnc_math_1 (
 	a0 = qse_awk_rtx_getarg (run, 0);
 
 	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
-	if (n == -1) return -1;
+	if (n <= -1) return -1;
 	if (n == 0) rv = (qse_real_t)lv;
 
-	if (type == FNC_MATH_LD)
+	switch (type)
 	{
-		long double (*rf) (long double) = 
-			(long double(*)(long double))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv));
-	}
-	else if (type == FNC_MATH_D)
-	{
-		double (*rf) (double) = (double(*)(double))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv));
-	}
-	else 
-	{
-		float (*rf) (float);
-		QSE_ASSERT (type == FNC_MATH_F);
-		rf = (float(*)(float))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv));
+		case FNC_MATH_LD:
+		{
+			long double (*rf) (long double) = 
+				(long double(*)(long double))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv));
+			break;
+		}
+		case FNC_MATH_D:
+		{
+			double (*rf) (double) = (double(*)(double))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv));
+			break;
+		}
+		default:
+		{
+			float (*rf) (float);
+			QSE_ASSERT (type == FNC_MATH_F);
+			rf = (float(*)(float))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv));
+			break;
+		}
 	}
 	
 	if (r == QSE_NULL) return -1;
@@ -1306,32 +1301,41 @@ static int fnc_math_2 (
 	a1 = qse_awk_rtx_getarg (run, 1);
 
 	n = qse_awk_rtx_valtonum (run, a0, &lv0, &rv0);
-	if (n == -1) return -1;
+	if (n <= -1) return -1;
 	if (n == 0) rv0 = (qse_real_t)lv0;
 
 	n = qse_awk_rtx_valtonum (run, a1, &lv1, &rv1);
-	if (n == -1) return -1;
+	if (n <= -1) return -1;
 	if (n == 0) rv1 = (qse_real_t)lv1;
 
-	if (type == FNC_MATH_LD)
+	switch (type)
 	{
-		long double (*rf) (long double,long double) = 
-			(long double(*)(long double,long double))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
+		case FNC_MATH_LD:
+		{
+			long double (*rf) (long double,long double) = 
+				(long double(*)(long double,long double))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
+			break;
+		}
+
+		case FNC_MATH_D:
+		{
+			double (*rf) (double,double) = 
+				(double(*)(double,double))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
+			break;
+		}
+
+		default:
+		{
+			float (*rf) (float,float);
+			QSE_ASSERT (type == FNC_MATH_F);
+			rf = (float(*)(float,float))f;
+			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
+			break;
+		}
 	}
-	else if (type == FNC_MATH_D)
-	{
-		double (*rf) (double,double) = (double(*)(double,double))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
-	}
-	else 
-	{
-		float (*rf) (float,float);
-		QSE_ASSERT (type == FNC_MATH_F);
-		rf = (float(*)(float,float))f;
-		r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
-	}
-	
+
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);
