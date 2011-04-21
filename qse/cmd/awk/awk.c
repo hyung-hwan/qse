@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 438 2011-04-17 15:38:21Z hyunghwan.chung $
+ * $Id: awk.c 440 2011-04-20 14:30:47Z hyunghwan.chung $
  *
     Copyright 2006-2009 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -167,15 +167,18 @@ static void stop_run (int sig)
 
 #endif
 
+#if defined(__OS2__)
+static EXCEPTIONREGISTRATIONRECORD os2_excrr = { 0 };
+#endif
+
 static void set_intr_run (void)
 {
 #if defined(_WIN32)
 	SetConsoleCtrlHandler (stop_run, TRUE);
 #elif defined(__OS2__)
-	EXCEPTIONREGISTRATIONRECORD rr = { 0 };
 	APIRET rc;
-	rr.ExceptionHandler = (ERR)stop_run;
-	rc = DosSetExceptionHandler (&rr);
+	os2_excrr.ExceptionHandler = (ERR)stop_run;
+	rc = DosSetExceptionHandler (&os2_excrr);
 	/*if (rc != NO_ERROR)...*/
 #else
 	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
@@ -188,10 +191,8 @@ static void unset_intr_run (void)
 #if defined(_WIN32)
 	SetConsoleCtrlHandler (stop_run, FALSE);
 #elif defined(__OS2__)
-	EXCEPTIONREGISTRATIONRECORD rr = { 0 };
 	APIRET rc;
-	rr.ExceptionHandler = (ERR)stop_run;
-	rc = DosUnsetExceptionHandler (&rr);
+	rc = DosUnsetExceptionHandler (&os2_excrr);
 	/*if (rc != NO_ERROR) ...*/
 #else
 	setsignal (SIGINT, SIG_DFL, 1);
@@ -747,9 +748,9 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 
 static qse_mmgr_t xma_mmgr = 
 {
-	qse_xma_alloc,
-	qse_xma_realloc,
-	qse_xma_free,
+	(qse_mmgr_alloc_t)qse_xma_alloc,
+	(qse_mmgr_realloc_t)qse_xma_realloc,
+	(qse_mmgr_free_t)qse_xma_free,
 	QSE_NULL
 };
 
@@ -895,6 +896,7 @@ oops:
 
 	if (xma_mmgr.udd) qse_xma_close (xma_mmgr.udd);
 	freearg (&arg);
+
 	return ret;
 }
 
@@ -902,3 +904,4 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 	return qse_runmain (argc, argv, awk_main);
 }
+
