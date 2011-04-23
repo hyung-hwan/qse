@@ -1,7 +1,7 @@
 /*
- * $Id: misc.h 291 2009-09-21 13:28:18Z hyunghwan.chung $
+ * $Id: misc.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

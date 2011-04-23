@@ -1,7 +1,7 @@
 /*
- * $Id: sed.h 334 2010-07-14 12:54:48Z hyunghwan.chung $
+ * $Id: sed.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

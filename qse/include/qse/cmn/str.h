@@ -1,7 +1,7 @@
 /*
- * $Id: str.h 435 2011-04-16 15:40:57Z hyunghwan.chung $
+ * $Id: str.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

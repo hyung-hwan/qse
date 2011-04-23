@@ -1,7 +1,7 @@
 /*
- * $Id: err.c 436 2011-04-17 15:28:22Z hyunghwan.chung $
+ * $Id: err.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

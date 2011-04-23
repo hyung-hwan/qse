@@ -1,7 +1,7 @@
 /*
- * $Id: types.h 411 2011-03-24 14:20:55Z hyunghwan.chung $
+ * $Id: types.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
