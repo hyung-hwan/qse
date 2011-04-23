@@ -1,7 +1,7 @@
 /*
  * $Id: http.c 341 2008-08-20 10:58:19Z baconevi $
  * 
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

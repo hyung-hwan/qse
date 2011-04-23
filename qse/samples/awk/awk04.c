@@ -1,7 +1,7 @@
 /*
- * $Id: awk04.c 287 2009-09-15 10:01:02Z hyunghwan.chung $
+ * $Id: awk04.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
-    Copyright 2006-2009 Chung, Hyung-Hwan.
+    Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
