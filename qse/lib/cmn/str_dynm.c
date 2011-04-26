@@ -1,5 +1,5 @@
 /*
- * $Id: str_dyn.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: str_dynm.c 443 2011-04-25 14:56:05Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
