@@ -74,7 +74,7 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo chr.lo chr_cnv.lo \
 	rex.lo str_beg.lo str_cat.lo str_chr.lo str_cnv.lo str_cmp.lo \
-	str_cpy.lo str_del.lo str_dup.lo str_dyn.lo str_end.lo \
+	str_cpy.lo str_del.lo str_dup.lo str_dynm.lo str_dynw.lo str_end.lo \
 	str_excl.lo str_fcpy.lo str_incl.lo str_len.lo str_pac.lo \
 	str_pbrk.lo str_put.lo str_rev.lo str_rot.lo str_set.lo \
 	str_spl.lo str_spn.lo str_str.lo str_subst.lo str_tok.lo \
@@ -270,10 +270,10 @@ libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
 	mem.c xma.c fma.c chr.c chr_cnv.c rex.c \
 	str_beg.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c \
-	str_del.c str_dup.c str_dyn.c str_end.c str_excl.c str_fcpy.c \
-	str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c str_rev.c \
-	str_rot.c str_set.c str_spl.c str_spn.c str_str.c str_subst.c \
-	str_tok.c str_trm.c str_word.c \
+	str_del.c str_dup.c str_dynm.c str_dynw.c str_end.c str_excl.c \
+	str_fcpy.c str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c \
+	str_rev.c str_rot.c str_set.c str_spl.c str_spn.c str_str.c \
+	str_subst.c str_tok.c str_trm.c str_word.c \
 	lda.c oht.c htb.c rbt.c sll.c gdl.c dll.c opt.c \
 	tio.c tio_get.c tio_put.c \
 	fio.c pio.c sio.c \
@@ -399,7 +399,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_del.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dup.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dyn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dynm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dynw.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_end.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_excl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_fcpy.Plo@am__quote@

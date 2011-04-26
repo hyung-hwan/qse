@@ -21,11 +21,11 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (str)
+QSE_IMPLEMENT_COMMON_FUNCTIONS (wcs)
 
-qse_str_t* qse_str_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
+qse_wcs_t* qse_wcs_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
 {
-	qse_str_t* str;
+	qse_wcs_t* str;
 
 	if (mmgr == QSE_NULL) 
 	{
@@ -37,10 +37,10 @@ qse_str_t* qse_str_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	str = (qse_str_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_str_t) + ext);
+	str = (qse_wcs_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_wcs_t) + ext);
 	if (str == QSE_NULL) return QSE_NULL;
 
-	if (qse_str_init (str, mmgr, capa) == QSE_NULL)
+	if (qse_wcs_init (str, mmgr, capa) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, str);
 		return QSE_NULL;
@@ -49,17 +49,17 @@ qse_str_t* qse_str_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
 	return str;
 }
 
-void qse_str_close (qse_str_t* str)
+void qse_wcs_close (qse_wcs_t* str)
 {
-	qse_str_fini (str);
+	qse_wcs_fini (str);
 	QSE_MMGR_FREE (str->mmgr, str);
 }
 
-qse_str_t* qse_str_init (qse_str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
+qse_wcs_t* qse_wcs_init (qse_wcs_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
-	QSE_MEMSET (str, 0, QSE_SIZEOF(qse_str_t));
+	QSE_MEMSET (str, 0, QSE_SIZEOF(qse_wcs_t));
 
 	str->mmgr = mmgr;
 	str->sizer = QSE_NULL;
@@ -67,10 +67,10 @@ qse_str_t* qse_str_init (qse_str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 	if (capa == 0) str->ptr = QSE_NULL;
 	else
 	{
-		str->ptr = (qse_char_t*) QSE_MMGR_ALLOC (
-			mmgr, QSE_SIZEOF(qse_char_t) * (capa + 1));
+		str->ptr = (qse_wchar_t*) QSE_MMGR_ALLOC (
+			mmgr, QSE_SIZEOF(qse_wchar_t) * (capa + 1));
 		if (str->ptr == QSE_NULL) return QSE_NULL;
-		str->ptr[0] = QSE_T('\0');
+		str->ptr[0] = QSE_WT('\0');
 	}
 
 	str->len = 0;
@@ -79,22 +79,22 @@ qse_str_t* qse_str_init (qse_str_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 	return str;
 }
 
-void qse_str_fini (qse_str_t* str)
+void qse_wcs_fini (qse_wcs_t* str)
 {
 	if (str->ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->ptr);
 }
 
-int qse_str_yield (qse_str_t* str, qse_xstr_t* buf, int new_capa)
+int qse_wcs_yield (qse_wcs_t* str, qse_wxstr_t* buf, qse_size_t new_capa)
 {
-	qse_char_t* tmp;
+	qse_wchar_t* tmp;
 
 	if (new_capa == 0) tmp = QSE_NULL;
 	else
 	{
-		tmp = (qse_char_t*) QSE_MMGR_ALLOC (
-			str->mmgr, QSE_SIZEOF(qse_char_t) * (new_capa + 1));
+		tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_wchar_t) * (new_capa + 1));
 		if (tmp == QSE_NULL) return -1;
-		tmp[0] = QSE_T('\0');
+		tmp[0] = QSE_WT('\0');
 	}
 
 	if (buf != QSE_NULL)
@@ -110,45 +110,45 @@ int qse_str_yield (qse_str_t* str, qse_xstr_t* buf, int new_capa)
 	return 0;
 }
 
-qse_str_sizer_t qse_str_getsizer (qse_str_t* str)
+qse_wcs_sizer_t qse_wcs_getsizer (qse_wcs_t* str)
 {
 	return str->sizer;	
 }
 
-void qse_str_setsizer (qse_str_t* str, qse_str_sizer_t sizer)
+void qse_wcs_setsizer (qse_wcs_t* str, qse_wcs_sizer_t sizer)
 {
 	str->sizer = sizer;
 }
 
-qse_size_t qse_str_getcapa (qse_str_t* str)
+qse_size_t qse_wcs_getcapa (qse_wcs_t* str)
 {
 	return str->capa;
 }
 
-qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
+qse_size_t qse_wcs_setcapa (qse_wcs_t* str, qse_size_t capa)
 {
-	qse_char_t* tmp;
+	qse_wchar_t* tmp;
 
 	if (capa == str->capa) return capa;
 
 	if (str->mmgr->realloc != QSE_NULL && str->ptr != QSE_NULL)
 	{
-		tmp = (qse_char_t*) QSE_MMGR_REALLOC (
+		tmp = (qse_wchar_t*) QSE_MMGR_REALLOC (
 			str->mmgr, str->ptr, 
-			QSE_SIZEOF(qse_char_t)*(capa+1));
+			QSE_SIZEOF(qse_wchar_t)*(capa+1));
 		if (tmp == QSE_NULL) return (qse_size_t)-1;
 	}
 	else
 	{
-		tmp = (qse_char_t*) QSE_MMGR_ALLOC (
-			str->mmgr, QSE_SIZEOF(qse_char_t)*(capa+1));
+		tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_wchar_t)*(capa+1));
 		if (tmp == QSE_NULL) return (qse_size_t)-1;
 
 		if (str->ptr != QSE_NULL)
 		{
 			qse_size_t ncopy = (str->len <= capa)? str->len: capa;
 			QSE_MEMCPY (tmp, str->ptr, 
-				QSE_SIZEOF(qse_char_t)*(ncopy+1));
+				QSE_SIZEOF(qse_wchar_t)*(ncopy+1));
 			QSE_MMGR_FREE (str->mmgr, str->ptr);
 		}
 	}
@@ -156,7 +156,7 @@ qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
 	if (capa < str->len)
 	{
 		str->len = capa;
-		tmp[capa] = QSE_T('\0');
+		tmp[capa] = QSE_WT('\0');
 	}
 
 	str->capa = capa;
@@ -165,44 +165,44 @@ qse_size_t qse_str_setcapa (qse_str_t* str, qse_size_t capa)
 	return str->capa;
 }
 
-qse_size_t qse_str_getlen (qse_str_t* str)
+qse_size_t qse_wcs_getlen (qse_wcs_t* str)
 {
-	return QSE_STR_LEN (str);
+	return QSE_WCS_LEN (str);
 }
 
-qse_size_t qse_str_setlen (qse_str_t* str, qse_size_t len)
+qse_size_t qse_wcs_setlen (qse_wcs_t* str, qse_size_t len)
 {
 	if (len == str->len) return len;
 	if (len < str->len) 
 	{
 		str->len = len;
-		str->ptr[len] = QSE_T('\0');	
+		str->ptr[len] = QSE_WT('\0');	
 		return len;
 	}
 
 	if (len > str->capa)
 	{
-		if (qse_str_setcapa (str, len) == (qse_size_t)-1) 
+		if (qse_wcs_setcapa (str, len) == (qse_size_t)-1) 
 			return (qse_size_t)-1;
 	}
 
-	while (str->len < len) str->ptr[str->len++] = QSE_T(' ');
+	while (str->len < len) str->ptr[str->len++] = QSE_WT(' ');
 	return str->len;
 }
 
-void qse_str_clear (qse_str_t* str)
+void qse_wcs_clear (qse_wcs_t* str)
 {
 	str->len = 0;
 	if (str->ptr != QSE_NULL)
 	{
 		QSE_ASSERT (str->capa >= 1);
-		str->ptr[0] = QSE_T('\0');
+		str->ptr[0] = QSE_WT('\0');
 	}
 }
 
-void qse_str_swap (qse_str_t* str, qse_str_t* str1)
+void qse_wcs_swap (qse_wcs_t* str, qse_wcs_t* str1)
 {
-	qse_str_t tmp;
+	qse_wcs_t tmp;
 
 	tmp.ptr = str->ptr;
 	tmp.len = str->len;
@@ -220,20 +220,20 @@ void qse_str_swap (qse_str_t* str, qse_str_t* str1)
 	str1->mmgr = tmp.mmgr;
 }
 
-qse_size_t qse_str_cpy (qse_str_t* str, const qse_char_t* s)
+qse_size_t qse_wcs_cpy (qse_wcs_t* str, const qse_wchar_t* s)
 {
 	/* TODO: improve it */
-	return qse_str_ncpy (str, s, qse_strlen(s));
+	return qse_wcs_ncpy (str, s, qse_wcslen(s));
 }
 
-qse_size_t qse_str_ncpy (qse_str_t* str, const qse_char_t* s, qse_size_t len)
+qse_size_t qse_wcs_ncpy (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 {
 	if (len > str->capa || str->ptr == QSE_NULL) 
 	{
-		qse_char_t* buf;
+		qse_wchar_t* buf;
 
-		buf = (qse_char_t*) QSE_MMGR_ALLOC (
-			str->mmgr, QSE_SIZEOF(qse_char_t) * (len + 1));
+		buf = (qse_wchar_t*) QSE_MMGR_ALLOC (
+			str->mmgr, QSE_SIZEOF(qse_wchar_t) * (len + 1));
 		if (buf == QSE_NULL) return (qse_size_t)-1;
 
 		if (str->ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->ptr);
@@ -241,18 +241,18 @@ qse_size_t qse_str_ncpy (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 		str->ptr = buf;
 	}
 
-	str->len = qse_strncpy (str->ptr, s, len);
-	str->ptr[str->len] = QSE_T('\0');
+	str->len = qse_wcsncpy (str->ptr, s, len);
+	str->ptr[str->len] = QSE_WT('\0');
 	return str->len;
 }
 
-qse_size_t qse_str_cat (qse_str_t* str, const qse_char_t* s)
+qse_size_t qse_wcs_cat (qse_wcs_t* str, const qse_wchar_t* s)
 {
 	/* TODO: improve it */
-	return qse_str_ncat (str, s, qse_strlen(s));
+	return qse_wcs_ncat (str, s, qse_wcslen(s));
 }
 
-qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
+qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 {
 	if (len > str->capa - str->len) 
 	{
@@ -282,7 +282,7 @@ qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 		/* change the capacity */
 		do
 		{
-			if (qse_str_setcapa (str, ncapa) != (qse_size_t)-1) break;
+			if (qse_wcs_setcapa (str, ncapa) != (qse_size_t)-1) break;
 			if (ncapa <= mincapa) return (qse_size_t)-1;
 			ncapa--;
 		}
@@ -300,22 +300,22 @@ qse_size_t qse_str_ncat (qse_str_t* str, const qse_char_t* s, qse_size_t len)
 	{
 		QSE_MEMCPY (&str->ptr[str->len], s, len*QSE_SIZEOF(*s));
 		str->len += len;
-		str->ptr[str->len] = QSE_T('\0');
+		str->ptr[str->len] = QSE_WT('\0');
 	}
 
 	return str->len;
 }
 
-qse_size_t qse_str_ccat (qse_str_t* str, qse_char_t c)
+qse_size_t qse_wcs_ccat (qse_wcs_t* str, qse_wchar_t c)
 {
-	return qse_str_ncat (str, &c, 1);
+	return qse_wcs_ncat (str, &c, 1);
 }
 
-qse_size_t qse_str_nccat (qse_str_t* str, qse_char_t c, qse_size_t len)
+qse_size_t qse_wcs_nccat (qse_wcs_t* str, qse_wchar_t c, qse_size_t len)
 {
 	while (len > 0)
 	{
-		if (qse_str_ncat (str, &c, 1) == (qse_size_t)-1) 
+		if (qse_wcs_ncat (str, &c, 1) == (qse_size_t)-1) 
 		{
 			return (qse_size_t)-1;
 		}
@@ -325,19 +325,19 @@ qse_size_t qse_str_nccat (qse_str_t* str, qse_char_t c, qse_size_t len)
 	return str->len;
 }
 
-qse_size_t qse_str_del (qse_str_t* str, qse_size_t index, qse_size_t size)
+qse_size_t qse_wcs_del (qse_wcs_t* str, qse_size_t index, qse_size_t size)
 {
 	if (str->ptr != QSE_NULL && index < str->len && size > 0)
 	{
 		qse_size_t nidx = index + size;
 		if (nidx >= str->len)
 		{
-			str->ptr[index] = QSE_T('\0');
+			str->ptr[index] = QSE_WT('\0');
 			str->len = index;
 		}
 		else
 		{
-			qse_strncpy (
+			qse_wcsncpy (
 				&str->ptr[index], &str->ptr[nidx],
 				str->len - nidx);
 			str->len -= size;
@@ -347,23 +347,24 @@ qse_size_t qse_str_del (qse_str_t* str, qse_size_t index, qse_size_t size)
 	return str->len;
 }
 
-qse_size_t qse_str_trm (qse_str_t* str)
+qse_size_t qse_wcs_trm (qse_wcs_t* str)
 {
 	if (str->ptr != QSE_NULL)
 	{
-		str->len = qse_strxtrm (str->ptr, str->len);
+		str->len = qse_wcsxtrm (str->ptr, str->len);
 	}
 
 	return str->len;
 }
 
-qse_size_t qse_str_pac (qse_str_t* str)
+qse_size_t qse_wcs_pac (qse_wcs_t* str)
 {
 	if (str->ptr != QSE_NULL)
 	{
-		str->len = qse_strxpac (str->ptr, str->len);
+		str->len = qse_wcsxpac (str->ptr, str->len);
 	}
 
 	return str->len;
 }
+
 
