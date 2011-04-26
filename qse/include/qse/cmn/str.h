@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: str.h 442 2011-04-25 14:53:50Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,26 +32,66 @@
  *
  */
 
-#define QSE_STR_LEN(s)       ((const qse_size_t)(s)->len) /**< string length */
-#define QSE_STR_PTR(s)       ((qse_char_t* const)(s)->ptr) /**< string/buffer pointer */
-#define QSE_STR_CAPA(s)      ((qse_size_t)(s)->capa) /**< buffer capacity */
-#define QSE_STR_CHAR(s,idx)  ((s)->ptr[idx]) /**< character at given position */
+#define QSE_MBS_LEN(s)      ((s)->len) /**< string length */
+#define QSE_MBS_PTR(s)      ((s)->ptr) /**< string buffer pointer */
+#define QSE_MBS_CAPA(s)     ((s)->capa) /**< string buffer capacity */
+#define QSE_MBS_CHAR(s,idx) ((s)->ptr[idx]) /**< character at given position */
 
-typedef struct qse_str_t qse_str_t;
+#define QSE_WCS_LEN(s)      ((s)->len) /**< string buffer length */
+#define QSE_WCS_PTR(s)      ((s)->ptr) /**< string buffer pointer */
+#define QSE_WCS_CAPA(s)     ((s)->capa) /**< string buffer capacity */
+#define QSE_WCS_CHAR(s,idx) ((s)->ptr[idx]) /**< character at given position */
 
-typedef qse_size_t (*qse_str_sizer_t) (
-	qse_str_t* data,
+typedef struct qse_mbs_t qse_mbs_t;
+typedef struct qse_wcs_t qse_wcs_t;
+
+typedef qse_size_t (*qse_mbs_sizer_t) (
+	qse_mbs_t* data,
 	qse_size_t hint
 );
 
+typedef qse_size_t (*qse_wcs_sizer_t) (
+	qse_wcs_t* data,
+	qse_size_t hint
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define QSE_STR_LEN(s)      QSE_MBS_LEN(s)
+#	define QSE_STR_PTR(s)      QSE_MBS_PTR(s)
+#	define QSE_STR_CAPA(s)     QSE_MBS_CAPA(s)
+#	define QSE_STR_CHAR(s,idx) QSE_MBS_CHAR(s,idx)
+#	define qse_str_t           qse_mbs_t
+#	define qse_str_sizer_t     qse_mbs_sizer_t
+#else
+#	define QSE_STR_LEN(s)      QSE_WCS_LEN(s)
+#	define QSE_STR_PTR(s)      QSE_WCS_PTR(s)
+#	define QSE_STR_CAPA(s)     QSE_WCS_CAPA(s)
+#	define QSE_STR_CHAR(s,idx) QSE_WCS_CHAR(s,idx)
+#	define qse_str_t           qse_wcs_t
+#	define qse_str_sizer_t     qse_wcs_sizer_t
+#endif
+
+
 /**
- * The qse_str_t type defines a dynamically resizable string.
+ * The qse_mbs_t type defines a dynamically resizable multi-byte string.
  */
-struct qse_str_t
+struct qse_mbs_t
 {
-	QSE_DEFINE_COMMON_FIELDS (str)
-	qse_str_sizer_t sizer; /**< buffer resizer function */
-	qse_char_t*     ptr;   /**< buffer/string pointer */
+	QSE_DEFINE_COMMON_FIELDS (mbs)
+	qse_mbs_sizer_t sizer; /**< buffer resizer function */
+	qse_mchar_t*    ptr;   /**< buffer/string pointer */
+	qse_size_t      len;   /**< string length */
+	qse_size_t      capa;  /**< buffer capacity */
+};
+
+/**
+ * The qse_wcs_t type defines a dynamically resizable wide-character string.
+ */
+struct qse_wcs_t
+{
+	QSE_DEFINE_COMMON_FIELDS (wcs)
+	qse_wcs_sizer_t sizer; /**< buffer resizer function */
+	qse_wchar_t*    ptr;   /**< buffer/string pointer */
 	qse_size_t      len;   /**< string length */
 	qse_size_t      capa;  /**< buffer capacity */
 };
@@ -2066,169 +2106,386 @@ int qse_wcstombs_strict (
 	qse_size_t         mbslen
 );
 
-QSE_DEFINE_COMMON_FUNCTIONS (str)
+QSE_DEFINE_COMMON_FUNCTIONS (mbs)
 
-qse_str_t* qse_str_open (
+qse_mbs_t* qse_mbs_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t ext,
-	qse_size_t capa
+	qse_size_t  ext,
+	qse_size_t  capa
 );
 
-void qse_str_close (
-	qse_str_t* str
+void qse_mbs_close (
+	qse_mbs_t* mbs
 );
 
 /**
- * The qse_str_init() function initializes a dynamically resizable string
+ * The qse_mbs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
  * in advance.
  */
-qse_str_t* qse_str_init (
-	qse_str_t*  str,
+qse_mbs_t* qse_mbs_init (
+	qse_mbs_t*  str,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
 );
 
 /**
- * The qse_str_fini() function finalizes a dynamically resizable string.
+ * The qse_mbs_fini() function finalizes a dynamically resizable string.
  */
-void qse_str_fini (
-	qse_str_t* str
+void qse_mbs_fini (
+	qse_mbs_t* str
 );
 
 /**
- * The qse_str_yield() function assigns the buffer to an variable of the
- * qse_xstr_t type and recreate a new buffer of the @a new_capa capacity.
+ * The qse_mbs_yield() function assigns the buffer to an variable of the
+ * #qse_mxstr_t type and recreate a new buffer of the @a new_capa capacity.
  * The function fails if it fails to allocate a new buffer.
  * @return 0 on success, and -1 on failure.
  */
-int qse_str_yield (
-	qse_str_t*  str,     /**< string */
-	qse_xstr_t* buf,     /**< buffer pointer */
-	int         new_capa /**< new capacity */
+int qse_mbs_yield (
+	qse_mbs_t*   str,     /**< string */
+	qse_mxstr_t* buf,     /**< buffer pointer */
+	qse_size_t   new_capa /**< new capacity */
 );
 
 /**
- * The qse_str_getsizer() function gets the sizer.
+ * The qse_mbs_getsizer() function gets the sizer.
  * @return sizer function set or QSE_NULL if no sizer is set.
  */
-qse_str_sizer_t qse_str_getsizer (
-	qse_str_t* str
+qse_mbs_sizer_t qse_mbs_getsizer (
+	qse_mbs_t* str
 );
 
 /**
- * The qse_str_setsizer() function specify a new sizer for a dynamic string.
+ * The qse_mbs_setsizer() function specify a new sizer for a dynamic string.
  * With no sizer specified, the dynamic string doubles the current buffer
  * when it needs to increase its size. The sizer function is passed a dynamic
  * string and the minimum capacity required to hold data after resizing.
  * The string is truncated if the sizer function returns a smaller number
  * than the hint passed.
  */
-void qse_str_setsizer (
-	qse_str_t*      str,
-	qse_str_sizer_t sizer
+void qse_mbs_setsizer (
+	qse_mbs_t*      str,
+	qse_mbs_sizer_t sizer
 );
 /******/
 
 /**
- * The qse_str_getcapa() function returns the current capacity.
+ * The qse_mbs_getcapa() function returns the current capacity.
  * You may use QSE_STR_CAPA(str) macro for performance sake.
  * @return current capacity in number of characters.
  */
-qse_size_t qse_str_getcapa (
-	qse_str_t* str
+qse_size_t qse_mbs_getcapa (
+	qse_mbs_t* str
 );
 
 /**
- * The qse_str_setcapa() function sets the new capacity. If the new capacity
+ * The qse_mbs_setcapa() function sets the new capacity. If the new capacity
  * is smaller than the old, the overflowing characters are removed from
  * from the buffer.
  * @return (qse_size_t)-1 on failure, new capacity on success 
  */
-qse_size_t qse_str_setcapa (
-	qse_str_t* str,
+qse_size_t qse_mbs_setcapa (
+	qse_mbs_t* str,
 	qse_size_t capa
 );
 
 /**
- * The qse_str_getlen() function return the string length.
+ * The qse_mbs_getlen() function return the string length.
  */
-qse_size_t qse_str_getlen (
-	qse_str_t* str
+qse_size_t qse_mbs_getlen (
+	qse_mbs_t* str
 );
 
 /**
- * The qse_str_setlen() function changes the string length.
+ * The qse_mbs_setlen() function changes the string length.
  * @return (qse_size_t)-1 on failure, new length on success 
  */
-qse_size_t qse_str_setlen (
-	qse_str_t* str,
+qse_size_t qse_mbs_setlen (
+	qse_mbs_t* str,
 	qse_size_t len
 );
 
 /**
- * The qse_str_clear() funtion deletes all characters in a string and sets
+ * The qse_mbs_clear() funtion deletes all characters in a string and sets
  * the length to 0. It doesn't resize the internal buffer.
  */
-void qse_str_clear (
-	qse_str_t* str
+void qse_mbs_clear (
+	qse_mbs_t* str
 );
 
 /**
- * The qse_str_swap() function exchanges the pointers to a buffer between
+ * The qse_mbs_swap() function exchanges the pointers to a buffer between
  * two strings. It updates the length and the capacity accordingly.
  */
-void qse_str_swap (
-	qse_str_t* str1,
-	qse_str_t* str2
+void qse_mbs_swap (
+	qse_mbs_t* str1,
+	qse_mbs_t* str2
 );
 
-qse_size_t qse_str_cpy (
-	qse_str_t*        str,
-	const qse_char_t* s
+qse_size_t qse_mbs_cpy (
+	qse_mbs_t*         str,
+	const qse_mchar_t* s
 );
 
-qse_size_t qse_str_ncpy (
-	qse_str_t*        str,
-	const qse_char_t* s,
-	qse_size_t        len
+qse_size_t qse_mbs_ncpy (
+	qse_mbs_t*         str,
+	const qse_mchar_t* s,
+	qse_size_t         len
 );
 
-qse_size_t qse_str_cat (
-	qse_str_t*        str,
-	const qse_char_t* s
+qse_size_t qse_mbs_cat (
+	qse_mbs_t*         str,
+	const qse_mchar_t* s
 );
 
-qse_size_t qse_str_ncat (
-	qse_str_t*        str,
-	const qse_char_t* s,
-	qse_size_t        len
+qse_size_t qse_mbs_ncat (
+	qse_mbs_t*         str,
+	const qse_mchar_t* s,
+	qse_size_t         len
 );
 
-qse_size_t qse_str_ccat (
-	qse_str_t* str,
-	qse_char_t c
+qse_size_t qse_mbs_ccat (
+	qse_mbs_t*  str,
+	qse_mchar_t c
 );
 
-qse_size_t qse_str_nccat (
-	qse_str_t* str,
-	qse_char_t c,
-	qse_size_t len
+qse_size_t qse_mbs_nccat (
+	qse_mbs_t*  str,
+	qse_mchar_t c,
+	qse_size_t  len
 );
 
-qse_size_t qse_str_del (
-	qse_str_t* str,
+qse_size_t qse_mbs_del (
+	qse_mbs_t* str,
 	qse_size_t index,
 	qse_size_t size
 );
 
-qse_size_t qse_str_trm (
-	qse_str_t* str
+qse_size_t qse_mbs_trm (
+	qse_mbs_t* str
 );
 
-qse_size_t qse_str_pac (
-	qse_str_t* str
+qse_size_t qse_mbs_pac (
+	qse_mbs_t* str
 );
+
+QSE_DEFINE_COMMON_FUNCTIONS (wcs)
+
+qse_wcs_t* qse_wcs_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t  ext,
+	qse_size_t  capa
+);
+
+void qse_wcs_close (
+	qse_wcs_t* wcs
+);
+
+/**
+ * The qse_wcs_init() function initializes a dynamically resizable string
+ * If the parameter capa is 0, it doesn't allocate the internal buffer 
+ * in advance.
+ */
+qse_wcs_t* qse_wcs_init (
+	qse_wcs_t*  str,
+	qse_mmgr_t* mmgr,
+	qse_size_t  capa
+);
+
+/**
+ * The qse_wcs_fini() function finalizes a dynamically resizable string.
+ */
+void qse_wcs_fini (
+	qse_wcs_t* str
+);
+
+/**
+ * The qse_wcs_yield() function assigns the buffer to an variable of the
+ * #qse_wxstr_t type and recreate a new buffer of the @a new_capa capacity.
+ * The function fails if it fails to allocate a new buffer.
+ * @return 0 on success, and -1 on failure.
+ */
+int qse_wcs_yield (
+	qse_wcs_t*   str,     /**< string */
+	qse_wxstr_t* buf,     /**< buffer pointer */
+	qse_size_t   new_capa /**< new capacity */
+);
+
+/**
+ * The qse_wcs_getsizer() function gets the sizer.
+ * @return sizer function set or QSE_NULL if no sizer is set.
+ */
+qse_wcs_sizer_t qse_wcs_getsizer (
+	qse_wcs_t* str
+);
+
+/**
+ * The qse_wcs_setsizer() function specify a new sizer for a dynamic string.
+ * With no sizer specified, the dynamic string doubles the current buffer
+ * when it needs to increase its size. The sizer function is passed a dynamic
+ * string and the minimum capacity required to hold data after resizing.
+ * The string is truncated if the sizer function returns a smaller number
+ * than the hint passed.
+ */
+void qse_wcs_setsizer (
+	qse_wcs_t*      str,
+	qse_wcs_sizer_t sizer
+);
+/******/
+
+/**
+ * The qse_wcs_getcapa() function returns the current capacity.
+ * You may use QSE_STR_CAPA(str) macro for performance sake.
+ * @return current capacity in number of characters.
+ */
+qse_size_t qse_wcs_getcapa (
+	qse_wcs_t* str
+);
+
+/**
+ * The qse_wcs_setcapa() function sets the new capacity. If the new capacity
+ * is smaller than the old, the overflowing characters are removed from
+ * from the buffer.
+ * @return (qse_size_t)-1 on failure, new capacity on success 
+ */
+qse_size_t qse_wcs_setcapa (
+	qse_wcs_t* str,
+	qse_size_t capa
+);
+
+/**
+ * The qse_wcs_getlen() function return the string length.
+ */
+qse_size_t qse_wcs_getlen (
+	qse_wcs_t* str
+);
+
+/**
+ * The qse_wcs_setlen() function changes the string length.
+ * @return (qse_size_t)-1 on failure, new length on success 
+ */
+qse_size_t qse_wcs_setlen (
+	qse_wcs_t* str,
+	qse_size_t len
+);
+
+/**
+ * The qse_wcs_clear() funtion deletes all characters in a string and sets
+ * the length to 0. It doesn't resize the internal buffer.
+ */
+void qse_wcs_clear (
+	qse_wcs_t* str
+);
+
+/**
+ * The qse_wcs_swap() function exchanges the pointers to a buffer between
+ * two strings. It updates the length and the capacity accordingly.
+ */
+void qse_wcs_swap (
+	qse_wcs_t* str1,
+	qse_wcs_t* str2
+);
+
+qse_size_t qse_wcs_cpy (
+	qse_wcs_t*         str,
+	const qse_wchar_t* s
+);
+
+qse_size_t qse_wcs_ncpy (
+	qse_wcs_t*         str,
+	const qse_wchar_t* s,
+	qse_size_t         len
+);
+
+qse_size_t qse_wcs_cat (
+	qse_wcs_t*         str,
+	const qse_wchar_t* s
+);
+
+qse_size_t qse_wcs_ncat (
+	qse_wcs_t*         str,
+	const qse_wchar_t* s,
+	qse_size_t         len
+);
+
+qse_size_t qse_wcs_ccat (
+	qse_wcs_t*  str,
+	qse_wchar_t c
+);
+
+qse_size_t qse_wcs_nccat (
+	qse_wcs_t*  str,
+	qse_wchar_t c,
+	qse_size_t  len
+);
+
+qse_size_t qse_wcs_del (
+	qse_wcs_t* str,
+	qse_size_t index,
+	qse_size_t size
+);
+
+qse_size_t qse_wcs_trm (
+	qse_wcs_t* str
+);
+
+qse_size_t qse_wcs_pac (
+	qse_wcs_t* str
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_str_setmmgr(str,mmgr)    qse_mbs_wetmmgr(str,mmgr)
+#	define qse_str_getmmgr(str)         qse_mbs_getmmgr(str)
+#	define qse_str_open(mmgr,ext,capa)  qse_mbs_open(mmgr,ext,capa)
+#	define qse_str_close(str)           qse_mbs_close(str)
+#	define qse_str_init(str,mmgr,capa)  qse_mbs_init(str,mmgr,capa)
+#	define qse_str_fini(str)            qse_mbs_fini(str)
+#	define qse_str_yield(str,buf,ncapa) qse_mbs_yield(str,buf,ncapa)
+#	define qse_str_getsizer(str)        qse_mbs_getsizer(str)
+#	define qse_str_setsizer(str,sizer)  qse_mbs_setsizer(str,sizer)
+#	define qse_str_getcapa(str)         qse_mbs_getcapa(str)
+#	define qse_str_setcapa(str,capa)    qse_mbs_setcapa(str,capa)
+#	define qse_str_getlen(str)          qse_mbs_getlen(str)
+#	define qse_str_setlen(str,len)      qse_mbs_setlen(str,len)
+#	define qse_str_clear(str)           qse_mbs_clear(str)
+#	define qse_str_swap(str1,str2)      qse_mbs_swap(str1,str2)
+#	define qse_str_cpy(str,s)           qse_mbs_cpy(str,s)
+#	define qse_str_ncpy(str,s,len)      qse_mbs_ncpy(str,s,len)
+#	define qse_str_cat(str,s)           qse_mbs_cat(str,s)
+#	define qse_str_ncat(str,s,len)      qse_mbs_ncat(str,s,len)
+#	define qse_str_ccat(str,c)          qse_mbs_ccat(str,c)
+#	define qse_str_nccat(str,c,len)     qse_mbs_nccat(str,c,len)
+#	define qse_str_del(str,index,size)  qse_mbs_del(str,index,size)
+#	define qse_str_trm(str)             qse_mbs_trm(str)
+#	define qse_str_pac(str)             qse_mbs_pac(str)
+#else
+#	define qse_str_setmmgr(str,mmgr)    qse_wcs_wetmmgr(str,mmgr)
+#	define qse_str_getmmgr(str)         qse_wcs_getmmgr(str)
+#	define qse_str_open(mmgr,ext,capa)  qse_wcs_open(mmgr,ext,capa)
+#	define qse_str_close(str)           qse_wcs_close(str)
+#	define qse_str_init(str,mmgr,capa)  qse_wcs_init(str,mmgr,capa)
+#	define qse_str_fini(str)            qse_wcs_fini(str)
+#	define qse_str_yield(str,buf,ncapa) qse_wcs_yield(str,buf,ncapa)
+#	define qse_str_getsizer(str)        qse_wcs_getsizer(str)
+#	define qse_str_setsizer(str,sizer)  qse_wcs_setsizer(str,sizer)
+#	define qse_str_getcapa(str)         qse_wcs_getcapa(str)
+#	define qse_str_setcapa(str,capa)    qse_wcs_setcapa(str,capa)
+#	define qse_str_getlen(str)          qse_wcs_getlen(str)
+#	define qse_str_setlen(str,len)      qse_wcs_setlen(str,len)
+#	define qse_str_clear(str)           qse_wcs_clear(str)
+#	define qse_str_swap(str1,str2)      qse_wcs_swap(str1,str2)
+#	define qse_str_cpy(str,s)           qse_wcs_cpy(str,s)
+#	define qse_str_ncpy(str,s,len)      qse_wcs_ncpy(str,s,len)
+#	define qse_str_cat(str,s)           qse_wcs_cat(str,s)
+#	define qse_str_ncat(str,s,len)      qse_wcs_ncat(str,s,len)
+#	define qse_str_ccat(str,c)          qse_wcs_ccat(str,c)
+#	define qse_str_nccat(str,c,len)     qse_wcs_nccat(str,c,len)
+#	define qse_str_del(str,index,size)  qse_wcs_del(str,index,size)
+#	define qse_str_trm(str)             qse_wcs_trm(str)
+#	define qse_str_pac(str)             qse_wcs_pac(str)
+#endif
+
 
 #ifdef __cplusplus
 }
