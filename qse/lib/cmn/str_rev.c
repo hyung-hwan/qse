@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: str_rev.c 443 2011-04-25 14:56:05Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
