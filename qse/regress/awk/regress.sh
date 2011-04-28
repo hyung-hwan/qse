@@ -165,6 +165,7 @@ PROGS="
 	lang-040.awk!!!--newline=on -o-
 	lang-041.awk!!!--newline=on -o-
 	lang-042.awk!!!--newline=on -o-
+	lang-043.awk!lang-043.dat!!--newline=on -o-
 
 	columnate.awk!./passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on --include=on

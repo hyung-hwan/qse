@@ -104,6 +104,7 @@ EXTRA_DIST = \
 	lang-040.awk \
 	lang-041.awk \
 	lang-042.awk \
+	lang-043.awk \
 	columnate.awk \
 	levenshtein.awk \
 	levenshtein-utests.awk \
@@ -117,6 +118,7 @@ EXTRA_DIST = \
 	lang-035.dat2 \
 	lang-036.dat \
 	lang-037.dat \
+	lang-043.dat \
 	adr.dat \
 	asm.dat \
 	cou.dat \
