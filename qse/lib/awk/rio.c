@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: rio.c 444 2011-04-27 14:04:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,7 +20,7 @@
 
 #include "awk.h"
 
-enum
+enum io_mask_t
 {
 	MASK_READ  = 0x0100,
 	MASK_WRITE = 0x0200,
@@ -87,6 +87,75 @@ static int out_mask_map[] =
 	MASK_WRITE,
 	MASK_WRITE
 };
+
+static QSE_INLINE int match_long_rs (qse_awk_rtx_t* run, qse_str_t* buf, int eof)
+{
+	qse_cstr_t match;
+	qse_awk_errnum_t errnum;
+	int n;
+
+/* TODO: minimize the number of regular expression match by minimizing the call
+ *       to match_long_rs() and changing its code.
+ *       currently it is called for each character added to buf.
+ *       this is a very bad way of doing the job.
+ */
+	QSE_ASSERT (run->gbl.rs != QSE_NULL);
+
+	n = QSE_AWK_MATCHREX (
+		run->awk, run->gbl.rs,
+		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
+		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
+		&match, &errnum);
+	if (n <= -1)
+	{
+		qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
+	}
+	else if (n >= 1)
+	{
+		if (eof)
+		{
+			/* when EOF is reached, the record buffer
+			 * is not added with a new character. It's
+			 * just called again with the same record buffer
+			 * as the previous call to this function.
+			 * A match in this case must end at the end of
+			 * the current record buffer */
+			QSE_ASSERT (
+					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
+					match.ptr + match.len);
+
+			/* drop the RS part. no extra character after RS to drop
+			 * because we're at EOF and the EOF condition didn't
+			 * add a new character to the buffer before the call
+			 * to this function.
+			 */
+			QSE_STR_LEN(buf) -= match.len;
+		}
+		else
+		{
+			/* the last character read so far has been added
+			 * to the record before the call to this function.
+			 * if the match is found and it ends one character
+			 * before this last character, it is the longest
+			 * match.
+			 */
+			if (QSE_STR_PTR(buf) + QSE_STR_LEN(buf) == match.ptr + match.len + 1)
+			{
+				/* drop the RS part and the last one character after RS */
+				QSE_STR_LEN(buf) -= match.len + 1;
+			}
+			else
+			{
+				/* if the match does not ends at the desired position,
+				 * it is no match as it is not the longest match */
+				n = 0;
+			}
+		}
+	}
+
+	return n;
+}
 
 int qse_awk_rtx_readio (
 	qse_awk_rtx_t* run, int in_type,
@@ -209,24 +278,26 @@ int qse_awk_rtx_readio (
 	rs = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_RS);
 	qse_awk_rtx_refupval (run, rs);
 
-	if (rs->type == QSE_AWK_VAL_NIL)
+	switch (rs->type)
 	{
-		rs_ptr = QSE_NULL;
-		rs_len = 0;
-	}
-	else if (rs->type == QSE_AWK_VAL_STR)
-	{
-		rs_ptr = ((qse_awk_val_str_t*)rs)->ptr;
-		rs_len = ((qse_awk_val_str_t*)rs)->len;
-	}
-	else 
-	{
-		rs_ptr = qse_awk_rtx_valtocpldup (run, rs, &rs_len);
-		if (rs_ptr == QSE_NULL)
-		{
-			qse_awk_rtx_refdownval (run, rs);
-			return -1;
-		}
+		case QSE_AWK_VAL_NIL:
+			rs_ptr = QSE_NULL;
+			rs_len = 0;
+			break;
+
+		case QSE_AWK_VAL_STR:
+			rs_ptr = ((qse_awk_val_str_t*)rs)->ptr;
+			rs_len = ((qse_awk_val_str_t*)rs)->len;
+			break;
+
+		default:
+			rs_ptr = qse_awk_rtx_valtocpldup (run, rs, &rs_len);
+			if (rs_ptr == QSE_NULL)
+			{
+				qse_awk_rtx_refdownval (run, rs);
+				return -1;
+			}
+			break;
 	}
 
 	ret = 1;
@@ -263,44 +334,24 @@ int qse_awk_rtx_readio (
 
 			if (n == 0) 
 			{
+				/* EOF reached */
 				p->in.eof = 1;
 
 				if (QSE_STR_LEN(buf) == 0) ret = 0;
 				else if (rs_len >= 2)
 				{
-					/* when RS is multiple characters, it needs to check
-					 * for the match at the end of the input stream as
-					 * the buffer has been appened with the last character
-					 * after the previous matchrex has failed */
-
-					qse_cstr_t match;
-					qse_awk_errnum_t errnum;
-
-					QSE_ASSERT (run->gbl.rs != QSE_NULL);
-
-					n = QSE_AWK_MATCHREX (
-						run->awk, run->gbl.rs, 
-						((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-						QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-						&match, &errnum);
-					if (n <= -1)
+					/* When RS is multiple characters, it should 
+					 * check for the match at the end of the 
+					 * input stream also because the previous 
+					 * match could fail as it didn't end at the
+					 * desired position to be the longest match.
+					 * At EOF, the match at the end is considered 
+					 * the longest as there are no more characters
+					 * left */
+					n = match_long_rs (run, buf, 1);
+					if (n != 0)
 					{
-						qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-						ret = -1;
-						break;
-					}
-
-					if (n >= 1)
-					{
-						/* the match should be found at the end of
-						 * the current buffer */
-						QSE_ASSERT (
-							QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
-							match.ptr + match.len);
-
-						/*QSE_STR_LEN(buf) -= match.len;*/
-						buf->len -= match.len;
+						if (n <= -1) ret = -1;
 						break;
 					}
 				}
@@ -323,8 +374,7 @@ int qse_awk_rtx_readio (
 				if (pc == QSE_T('\r') && 
 				    QSE_STR_LEN(buf) > 0) 
 				{
-					/*QSE_STR_LEN(buf) -= 1;*/
-					buf->len -= 1;
+					QSE_STR_LEN(buf) -= 1;
 				}
 				break;
 			}
@@ -337,8 +387,7 @@ int qse_awk_rtx_readio (
 				if (pc == QSE_T('\r') && 
 				    QSE_STR_LEN(buf) > 0) 
 				{
-					/*QSE_STR_LEN(buf) -= 1;*/
-					buf->len -= 1;
+					QSE_STR_LEN(buf) -= 1;
 				}
 			}
 
@@ -367,43 +416,10 @@ int qse_awk_rtx_readio (
 		}
 		else
 		{
-			qse_cstr_t match;
-			qse_awk_errnum_t errnum;
-
-/* TODO: minimize the number of regular expressoin match here...
- *       currently matchrex is called for each character added to buf.
- *       this is a very bad way of doing the job.
- */
-			QSE_ASSERT (run->gbl.rs != QSE_NULL);
-
-			n = QSE_AWK_MATCHREX (
-				run->awk, run->gbl.rs, 
-				((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-				QSE_STR_PTR(buf), QSE_STR_LEN(buf), 
-				&match, &errnum);
-			if (n <= -1)
-			{
-				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-				ret = -1;
-				p->in.pos--; /* unread the character in c */
-				break;
-			}
-
-			if (n >= 1)
-			{
-				/* the match should be found at the end of
-				 * the current buffer */
-				QSE_ASSERT (
-					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
-					match.ptr + match.len);
-
-				/*QSE_STR_LEN(buf) -= match.len;*/
-				buf->len -= match.len;
-				p->in.pos--; /* unread the character in c */
-				break;
-			}
+			/* I don't do anything here if RS is composed of
+			 * multiple characters. See the comment furthur down */
 		}
+
 
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
@@ -412,7 +428,29 @@ int qse_awk_rtx_readio (
 			break;
 		}
 
-		/* TODO: handle different line terminator like \r\n */
+		if (rs_len >= 2)
+		{
+			/* if RS is composed of multiple characters,
+			 * I perform the matching after having added the
+			 * current character 'c' to the record buffer 'buf'
+			 * to find the longest match. If a match found ends
+			 * one character before this character just added
+			 * to the buffer, it is the longest match.
+			 */
+			/* TODO: change the way to find the longest match
+			 *       for performance improvement. currently,
+			 *       the function is called for every character
+			 *       added to the buffer. Stupid! */
+			n = match_long_rs (run, buf, 0);
+			if (n != 0)
+			{
+				p->in.pos--; /* unread the character in c */
+				if (n <= -1) ret = -1;
+				break;
+			}
+		}
+
+/* TODO: handle different line terminator like \r\n */
 		if (c == QSE_T('\n')) line_len = 0;
 		else line_len = line_len + 1;
 	}
