@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 444 2011-04-27 14:04:13Z hyunghwan.chung $
+ * $Id: rio.c 445 2011-04-28 14:11:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -138,18 +138,23 @@ static QSE_INLINE int match_long_rs (qse_awk_rtx_t* run, qse_str_t* buf, int eof
 			 * to the record before the call to this function.
 			 * if the match is found and it ends one character
 			 * before this last character, it is the longest
-			 * match.
+			 * match. The code here is more generic in that
+			 * the match is determined seeing if it does not end
+			 * at the end of of the buffer.
 			 */
-			if (QSE_STR_PTR(buf) + QSE_STR_LEN(buf) == match.ptr + match.len + 1)
+			const qse_char_t* be = QSE_STR_PTR(buf) + QSE_STR_LEN(buf);
+			const qse_char_t* me = match.ptr + match.len;
+
+			if (be > me)
 			{
-				/* drop the RS part and the last one character after RS */
-				QSE_STR_LEN(buf) -= match.len + 1;
+				/* drop the RS part and the characters after RS */
+				QSE_STR_LEN(buf) -= match.len + (be - me);
 			}
 			else
 			{
-				/* if the match does not ends at the desired position,
+				/* if the match doesn't at the desired position,
 				 * it is no match as it is not the longest match */
-				n = 0;
+				n = 0; /* switch to no match */
 			}
 		}
 	}
@@ -257,7 +262,7 @@ int qse_awk_rtx_readio (
 		 * of the input. the user io handler can return 0 for the 
 		 * open request if it doesn't have any files to open. One 
 		 * advantage of doing this would be that you can skip the 
-		 * entire pattern-block matching and exeuction. */
+		 * entire pattern-block matching and execution. */
 		if (x == 0) 
 		{
 			p->in.eos = 1;
@@ -271,7 +276,8 @@ int qse_awk_rtx_readio (
 		return 0;
 	}
 
-	/* ready to read a line. clear the line buffer */
+	/* ready to read a record (typically a line).
+	 * clear the buffer. */
 	qse_str_clear (buf);
 
 	/* get the record separator */
@@ -417,9 +423,8 @@ int qse_awk_rtx_readio (
 		else
 		{
 			/* I don't do anything here if RS is composed of
-			 * multiple characters. See the comment furthur down */
+			 * multiple characters. See the comment further down */
 		}
-
 
 		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 		{
