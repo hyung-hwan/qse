@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 442 2011-04-25 14:53:50Z hyunghwan.chung $
+ * $Id: str.h 446 2011-04-30 15:24:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -29,18 +29,19 @@
  *
  * The #qse_cstr_t type and the #qse_xstr_t defined in <qse/types.h> help you
  * deal with a string pointer and length in a structure.
- *
  */
 
-#define QSE_MBS_LEN(s)      ((s)->len) /**< string length */
-#define QSE_MBS_PTR(s)      ((s)->ptr) /**< string buffer pointer */
-#define QSE_MBS_CAPA(s)     ((s)->capa) /**< string buffer capacity */
-#define QSE_MBS_CHAR(s,idx) ((s)->ptr[idx]) /**< character at given position */
+#define QSE_MBS_LEN(s)      ((s)->len)             /**< string length */
+#define QSE_MBS_PTR(s)      ((s)->ptr)             /**< string buffer pointer */
+#define QSE_MBS_CAPA(s)     ((s)->capa)            /**< string buffer capacity */
+#define QSE_MBS_CHAR(s,idx) ((s)->ptr[idx])        /**< character at given position */
+#define QSE_MBS_LASTCHAR(s) ((s)->ptr[(s)->len-1]) /**< last character. unsafe if length <= 0 */
 
-#define QSE_WCS_LEN(s)      ((s)->len) /**< string buffer length */
-#define QSE_WCS_PTR(s)      ((s)->ptr) /**< string buffer pointer */
-#define QSE_WCS_CAPA(s)     ((s)->capa) /**< string buffer capacity */
-#define QSE_WCS_CHAR(s,idx) ((s)->ptr[idx]) /**< character at given position */
+#define QSE_WCS_LEN(s)      ((s)->len)             /**< string buffer length */
+#define QSE_WCS_PTR(s)      ((s)->ptr)             /**< string buffer pointer */
+#define QSE_WCS_CAPA(s)     ((s)->capa)            /**< string buffer capacity */
+#define QSE_WCS_CHAR(s,idx) ((s)->ptr[idx])        /**< character at given position */
+#define QSE_WCS_LASTCHAR(s) ((s)->ptr[(s)->len-1]) /**< last character. unsafe if length <= 0 */
 
 typedef struct qse_mbs_t qse_mbs_t;
 typedef struct qse_wcs_t qse_wcs_t;
@@ -60,6 +61,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define QSE_STR_PTR(s)      QSE_MBS_PTR(s)
 #	define QSE_STR_CAPA(s)     QSE_MBS_CAPA(s)
 #	define QSE_STR_CHAR(s,idx) QSE_MBS_CHAR(s,idx)
+#	define QSE_STR_LASTCHAR(s) QSE_MBS_LASTCHAR(s)
 #	define qse_str_t           qse_mbs_t
 #	define qse_str_sizer_t     qse_mbs_sizer_t
 #else
@@ -67,6 +69,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define QSE_STR_PTR(s)      QSE_WCS_PTR(s)
 #	define QSE_STR_CAPA(s)     QSE_WCS_CAPA(s)
 #	define QSE_STR_CHAR(s,idx) QSE_WCS_CHAR(s,idx)
+#	define QSE_STR_LASTCHAR(s) QSE_WCS_LASTCHAR(s)
 #	define qse_str_t           qse_wcs_t
 #	define qse_str_sizer_t     qse_wcs_sizer_t
 #endif
