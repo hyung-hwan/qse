@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 445 2011-04-28 14:11:19Z hyunghwan.chung $
+ * $Id: rio.c 446 2011-04-30 15:24:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,7 +25,6 @@ enum io_mask_t
 	MASK_READ  = 0x0100,
 	MASK_WRITE = 0x0200,
 	MASK_RDWR  = 0x0400,
-
 	MASK_CLEAR = 0x00FF
 };
 
@@ -88,93 +87,13 @@ static int out_mask_map[] =
 	MASK_WRITE
 };
 
-static QSE_INLINE int match_long_rs (qse_awk_rtx_t* run, qse_str_t* buf, int eof)
-{
-	qse_cstr_t match;
-	qse_awk_errnum_t errnum;
-	int n;
-
-/* TODO: minimize the number of regular expression match by minimizing the call
- *       to match_long_rs() and changing its code.
- *       currently it is called for each character added to buf.
- *       this is a very bad way of doing the job.
- */
-	QSE_ASSERT (run->gbl.rs != QSE_NULL);
-
-	n = QSE_AWK_MATCHREX (
-		run->awk, run->gbl.rs,
-		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
-		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
-		&match, &errnum);
-	if (n <= -1)
-	{
-		qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-	}
-	else if (n >= 1)
-	{
-		if (eof)
-		{
-			/* when EOF is reached, the record buffer
-			 * is not added with a new character. It's
-			 * just called again with the same record buffer
-			 * as the previous call to this function.
-			 * A match in this case must end at the end of
-			 * the current record buffer */
-			QSE_ASSERT (
-					QSE_STR_PTR(buf) + QSE_STR_LEN(buf) ==
-					match.ptr + match.len);
-
-			/* drop the RS part. no extra character after RS to drop
-			 * because we're at EOF and the EOF condition didn't
-			 * add a new character to the buffer before the call
-			 * to this function.
-			 */
-			QSE_STR_LEN(buf) -= match.len;
-		}
-		else
-		{
-			/* the last character read so far has been added
-			 * to the record before the call to this function.
-			 * if the match is found and it ends one character
-			 * before this last character, it is the longest
-			 * match. The code here is more generic in that
-			 * the match is determined seeing if it does not end
-			 * at the end of of the buffer.
-			 */
-			const qse_char_t* be = QSE_STR_PTR(buf) + QSE_STR_LEN(buf);
-			const qse_char_t* me = match.ptr + match.len;
-
-			if (be > me)
-			{
-				/* drop the RS part and the characters after RS */
-				QSE_STR_LEN(buf) -= match.len + (be - me);
-			}
-			else
-			{
-				/* if the match doesn't at the desired position,
-				 * it is no match as it is not the longest match */
-				n = 0; /* switch to no match */
-			}
-		}
-	}
-
-	return n;
-}
-
-int qse_awk_rtx_readio (
-	qse_awk_rtx_t* run, int in_type,
-	const qse_char_t* name, qse_str_t* buf)
+static int find_rio_in (
+	qse_awk_rtx_t* run, int in_type, const qse_char_t* name,
+	qse_awk_rio_arg_t** rio, qse_awk_rio_fun_t* fun)
 {
 	qse_awk_rio_arg_t* p = run->rio.chain;
 	qse_awk_rio_fun_t handler;
-	int io_type, io_mode, io_mask, ret, n;
-	qse_ssize_t x;
-	qse_awk_val_t* rs;
-	qse_char_t* rs_ptr;
-	qse_size_t rs_len;
-	qse_size_t line_len = 0;
-	qse_char_t c = QSE_T('\0'), pc;
+	int io_type, io_mode, io_mask;
 
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_type_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
@@ -185,11 +104,11 @@ int qse_awk_rtx_readio (
 	io_mode = in_mode_map[in_type];
 	io_mask = in_mask_map[in_type];
 
-	/* get the io handler provided by a user */
+	/* get the I/O handler provided by a user */
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
@@ -204,6 +123,8 @@ int qse_awk_rtx_readio (
 
 	if (p == QSE_NULL)
 	{
+		qse_ssize_t x;
+
 		/* if the name doesn't exist in the chain, create an entry
 		 * to the chain */
 		p = (qse_awk_rio_arg_t*) QSE_AWK_ALLOC (
@@ -246,7 +167,7 @@ int qse_awk_rtx_readio (
 
 			if (run->errinf.num == QSE_AWK_ENOERR)
 			{
-				/* if the error number has not been 
+				/* if the error number has not been
 				 * set by the user handler */
 				qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 			}
@@ -258,52 +179,143 @@ int qse_awk_rtx_readio (
 		p->next = run->rio.chain;
 		run->rio.chain = p;
 
-		/* usually, x == 0 indicates that it has reached the end 
-		 * of the input. the user io handler can return 0 for the 
-		 * open request if it doesn't have any files to open. One 
-		 * advantage of doing this would be that you can skip the 
+		/* usually, x == 0 indicates that it has reached the end
+		 * of the input. the user I/O handler can return 0 for the
+		 * open request if it doesn't have any files to open. One
+		 * advantage of doing this would be that you can skip the
 		 * entire pattern-block matching and execution. */
-		if (x == 0) 
+		if (x == 0) p->in.eos = 1;
+	}
+
+	*rio = p;
+	*fun = handler;
+
+	return 0;
+}
+
+static QSE_INLINE int resolve_rs (
+	qse_awk_rtx_t* run, qse_awk_val_t* rs, qse_xstr_t* rrs)
+{
+	int ret = 0;
+
+	switch (rs->type)
+	{
+		case QSE_AWK_VAL_NIL:
+			rrs->ptr = QSE_NULL;
+			rrs->len = 0;
+			break;
+
+		case QSE_AWK_VAL_STR:
+			rrs->ptr = ((qse_awk_val_str_t*)rs)->ptr;
+			rrs->len = ((qse_awk_val_str_t*)rs)->len;
+			break;
+
+		default:
+			rrs->ptr = qse_awk_rtx_valtocpldup (run, rs, &rrs->len);
+			if (rrs->ptr == QSE_NULL) ret = -1;
+			break;
+	}
+
+	return ret;
+}
+
+static QSE_INLINE int match_long_rs (
+	qse_awk_rtx_t* run, qse_str_t* buf, qse_awk_rio_arg_t* p)
+{
+	qse_cstr_t match;
+	qse_awk_errnum_t errnum;
+	int ret;
+
+	QSE_ASSERT (run->gbl.rs != QSE_NULL);
+
+	ret = QSE_AWK_MATCHREX (
+		run->awk, run->gbl.rs,
+		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
+		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
+		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
+		&match, &errnum);
+	if (ret <= -1)
+	{
+		qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
+	}
+	else if (ret >= 1)
+	{
+		if (p->in.eof)
 		{
-			p->in.eos = 1;
-			return 0;
+			/* when EOF is reached, the record buffer
+			 * is not added with a new character. It's
+			 * just called again with the same record buffer
+			 * as the previous call to this function.
+			 * A match in this case must end at the end of
+			 * the current record buffer */
+			QSE_ASSERT (
+				QSE_STR_PTR(buf) + QSE_STR_LEN(buf) == match.ptr + match.len
+			);
+
+			/* drop the RS part. no extra character after RS to drop
+			 * because we're at EOF and the EOF condition didn't
+			 * add a new character to the buffer before the call
+			 * to this function.
+			 */
+			QSE_STR_LEN(buf) -= match.len;
+		}
+		else
+		{
+			/* If the match is found before the end of the current buffer,
+			 * I see it as the longest match. A match ending at the end
+			 * of the buffer is not indeterministic as we don't have the
+			 * full input yet.
+			 */
+			const qse_char_t* be = QSE_STR_PTR(buf) + QSE_STR_LEN(buf);
+			const qse_char_t* me = match.ptr + match.len;
+
+			if (me < be)
+			{
+				/* the match ends before the ending boundary.
+				 * it must be the longest match. drop the RS part
+				 * and the characters after RS. */
+				QSE_STR_LEN(buf) -= match.len + (be - me);
+				p->in.pos -= (be - me);
+			}
+			else
+			{
+				/* the match is at the ending boundary. switch to no match */
+				ret = 0;
+			}
 		}
 	}
 
-	if (p->in.eos)
-	{
-		/* no more streams. */
-		return 0;
-	}
+	return ret;
+}
 
-	/* ready to read a record (typically a line).
-	 * clear the buffer. */
+int qse_awk_rtx_readio (
+	qse_awk_rtx_t* run, int in_type,
+	const qse_char_t* name, qse_str_t* buf)
+{
+	qse_awk_rio_arg_t* p;
+	qse_awk_rio_fun_t handler;
+	int ret;
+
+	qse_awk_val_t* rs;
+	qse_xstr_t rrs;
+
+	qse_size_t line_len = 0;
+	qse_char_t c = QSE_T('\0'), pc;
+
+	if (find_rio_in (run, in_type, name, &p, &handler) <= -1) return -1;
+	if (p->in.eos) return 0; /* no more streams left */
+
+	/* ready to read a record(typically a line). clear the buffer. */
 	qse_str_clear (buf);
 
 	/* get the record separator */
 	rs = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_RS);
 	qse_awk_rtx_refupval (run, rs);
 
-	switch (rs->type)
+	if (resolve_rs (run, rs, &rrs) <= -1)
 	{
-		case QSE_AWK_VAL_NIL:
-			rs_ptr = QSE_NULL;
-			rs_len = 0;
-			break;
-
-		case QSE_AWK_VAL_STR:
-			rs_ptr = ((qse_awk_val_str_t*)rs)->ptr;
-			rs_len = ((qse_awk_val_str_t*)rs)->len;
-			break;
-
-		default:
-			rs_ptr = qse_awk_rtx_valtocpldup (run, rs, &rs_len);
-			if (rs_ptr == QSE_NULL)
-			{
-				qse_awk_rtx_refdownval (run, rs);
-				return -1;
-			}
-			break;
+		qse_awk_rtx_refdownval (run, rs);
+		return -1;
 	}
 
 	ret = 1;
@@ -313,7 +325,9 @@ int qse_awk_rtx_readio (
 	{
 		if (p->in.pos >= p->in.len)
 		{
-			qse_ssize_t n;
+			qse_ssize_t x;
+
+			/* no more data. read more */
 
 			if (p->in.eof)
 			{
@@ -323,9 +337,9 @@ int qse_awk_rtx_readio (
 
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 
-			n = handler (run, QSE_AWK_RIO_READ,
+			x = handler (run, QSE_AWK_RIO_READ,
 				p, p->in.buf, QSE_COUNTOF(p->in.buf));
-			if (n <= -1) 
+			if (x <= -1)
 			{
 				if (run->errinf.num == QSE_AWK_ENOERR)
 				{
@@ -338,13 +352,21 @@ int qse_awk_rtx_readio (
 				break;
 			}
 
-			if (n == 0) 
+			if (x == 0)
 			{
 				/* EOF reached */
 				p->in.eof = 1;
 
 				if (QSE_STR_LEN(buf) == 0) ret = 0;
-				else if (rs_len >= 2)
+				else if (rrs.ptr != QSE_NULL && rrs.len == 0)
+				{
+/* TODO: handle different line terminator */
+					/* drop the line terminator from the record
+					 * if RS is a blank line and EOF is reached. */
+					if (QSE_STR_LASTCHAR(buf) == QSE_T('\n'))
+						QSE_STR_LEN(buf) -= 1;
+				}
+				else if (rrs.len >= 2)
 				{
 					/* When RS is multiple characters, it should 
 					 * check for the match at the end of the 
@@ -354,7 +376,7 @@ int qse_awk_rtx_readio (
 					 * At EOF, the match at the end is considered 
 					 * the longest as there are no more characters
 					 * left */
-					n = match_long_rs (run, buf, 1);
+					int n = match_long_rs (run, buf, p);
 					if (n != 0)
 					{
 						if (n <= -1) ret = -1;
@@ -365,76 +387,155 @@ int qse_awk_rtx_readio (
 				break;
 			}
 
-			p->in.len = n;
+			p->in.len = x;
 			p->in.pos = 0;
 		}
 
-		pc = c;
-		c = p->in.buf[p->in.pos++];
-
-		if (rs_ptr == QSE_NULL)
+		if (rrs.ptr == QSE_NULL)
 		{
-			/* separate by a new line */
-			if (c == QSE_T('\n')) 
+			qse_size_t start_pos = p->in.pos;
+			qse_size_t end_pos, tmp;
+
+			do
 			{
-				if (pc == QSE_T('\r') && 
-				    QSE_STR_LEN(buf) > 0) 
+				pc = c;
+				c = p->in.buf[p->in.pos++];
+				end_pos = p->in.pos;
+
+/* TODO: handle different line terminator */
+				/* separate by a new line */
+				if (c == QSE_T('\n')) 
 				{
-					QSE_STR_LEN(buf) -= 1;
+					end_pos--;
+					if (pc == QSE_T('\r'))
+					{
+						if (end_pos > start_pos)
+						{
+							/* '\r' is the part of the read buffer.
+							 * decrementing the end_pos variable can
+							 * simply drop it */
+							end_pos--;
+						}
+						else
+						{
+							/* '\r' must have come from the previous
+							 * read. the record buffer must contain
+							 * it at the end.  */
+							QSE_ASSERT (end_pos == start_pos);
+							QSE_ASSERT (QSE_STR_LEN(buf) > 0);
+							QSE_ASSERT (QSE_STR_LASTCHAR(buf) == QSE_T('\r'));
+							QSE_STR_LEN(buf)--;
+						}
+					}
+					break;
 				}
+			}
+			while (p->in.pos < p->in.len);
+
+			tmp = qse_str_ncat (
+				buf,
+				&p->in.buf[start_pos],
+				end_pos - start_pos
+			);
+			if (tmp == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				ret = -1;
 				break;
 			}
+
+			if (end_pos < p->in.len) break; /* RS found */
 		}
-		else if (rs_len == 0)
+		else if (rrs.len == 0)
 		{
-			/* separate by a blank line */
-			if (c == QSE_T('\n'))
+			int done = 0;
+
+			do
 			{
-				if (pc == QSE_T('\r') && 
-				    QSE_STR_LEN(buf) > 0) 
+				pc = c;
+				c = p->in.buf[p->in.pos++];
+
+/* TODO: handle different line terminator */
+				/* separate by a blank line */
+				if (c == QSE_T('\n'))
 				{
+					if (pc == QSE_T('\r') &&
+					    QSE_STR_LEN(buf) > 0)
+					{
+						QSE_STR_LEN(buf) -= 1;
+					}
+				}
+
+				if (line_len == 0 && c == QSE_T('\n'))
+				{
+					if (QSE_STR_LEN(buf) <= 0)
+					{
+						/* if the record is empty when a blank
+						 * line is encountered, the line
+						 * terminator should not be added to
+						 * the record */
+						continue;
+					}
+
+					/* when a blank line is encountered,
+					 * it needs to snip off the line
+					 * terminator of the previous line */
 					QSE_STR_LEN(buf) -= 1;
+					done = 1;
+					break;
+				}
+
+				if (qse_str_ccat (buf, c) == (qse_size_t)-1)
+				{
+					qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+					ret = -1;
+					done = 1;
+					break;
+				}
+/* TODO: handle different line terminator */
+				if (c == QSE_T('\n')) line_len = 0;
+				else line_len = line_len + 1;
+			}
+			while (p->in.pos < p->in.len);
+
+			if (done) break;
+		}
+		else if (rrs.len == 1)
+		{
+			qse_size_t start_pos = p->in.pos;
+			qse_size_t end_pos, tmp;
+
+			do
+			{
+				c = p->in.buf[p->in.pos++];
+				end_pos = p->in.pos;
+				if (c == rrs.ptr[0])
+				{
+					end_pos--;
+					break;
 				}
 			}
+			while (p->in.pos < p->in.len);
 
-			if (line_len == 0 && c == QSE_T('\n'))
+			tmp = qse_str_ncat (
+				buf,
+				&p->in.buf[start_pos],
+				end_pos - start_pos
+			);
+			if (tmp == (qse_size_t)-1)
 			{
-				if (QSE_STR_LEN(buf) <= 0) 
-				{
-					/* if the record is empty when a blank 
-					 * line is encountered, the line 
-					 * terminator should not be added to 
-					 * the record */
-					continue;
-				}
-
-				/* when a blank line is encountered,
-				 * it needs to snip off the line 
-				 * terminator of the previous line */
-				/*QSE_STR_LEN(buf) -= 1;*/
-				buf->len -= 1;
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				ret = -1;
 				break;
 			}
-		}
-		else if (rs_len == 1)
-		{
-			if (c == rs_ptr[0]) break;
+
+			if (end_pos < p->in.len) break; /* RS found */
 		}
 		else
 		{
-			/* I don't do anything here if RS is composed of
-			 * multiple characters. See the comment further down */
-		}
+			qse_size_t tmp;
+			int n;
 
-		if (qse_str_ccat (buf, c) == (qse_size_t)-1)
-		{
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-			ret = -1;
-			break;
-		}
-
-		if (rs_len >= 2)
-		{
 			/* if RS is composed of multiple characters,
 			 * I perform the matching after having added the
 			 * current character 'c' to the record buffer 'buf'
@@ -442,26 +543,33 @@ int qse_awk_rtx_readio (
 			 * one character before this character just added
 			 * to the buffer, it is the longest match.
 			 */
-			/* TODO: change the way to find the longest match
-			 *       for performance improvement. currently,
-			 *       the function is called for every character
-			 *       added to the buffer. Stupid! */
-			n = match_long_rs (run, buf, 0);
+
+			tmp = qse_str_ncat (
+				buf,
+				&p->in.buf[p->in.pos],
+				p->in.len - p->in.pos
+			);
+			if (tmp == (qse_size_t)-1)
+			{
+				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+				ret = -1;
+				break;
+			}
+
+			p->in.pos = p->in.len;
+
+			n = match_long_rs (run, buf, p);
 			if (n != 0)
 			{
-				p->in.pos--; /* unread the character in c */
+				//p->in.pos--; /* unread the character in c */
 				if (n <= -1) ret = -1;
 				break;
 			}
 		}
-
-/* TODO: handle different line terminator like \r\n */
-		if (c == QSE_T('\n')) line_len = 0;
-		else line_len = line_len + 1;
 	}
 
-	if (rs_ptr != QSE_NULL && 
-	    rs->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, rs_ptr);
+	if (rrs.ptr != QSE_NULL &&
+	    rs->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, rrs.ptr);
 	qse_awk_rtx_refdownval (run, rs);
 
 	return ret;
@@ -752,7 +860,7 @@ int qse_awk_rtx_nextio_read (
 	if (n == 0) 
 	{
 		/* the next stream cannot be opened. 
-		 * set the eos flags so that the next call to nextio_read
+		 * set the EOS flags so that the next call to nextio_read
 		 * will return 0 without executing the handler */
 		p->in.eos = 1;
 		return 0;
@@ -760,7 +868,7 @@ int qse_awk_rtx_nextio_read (
 	else 
 	{
 		/* as the next stream has been opened successfully,
-		 * the eof flag should be cleared if set */
+		 * the EOF flag should be cleared if set */
 		p->in.eof = 0;
 
 		/* also the previous input buffer must be reset */
