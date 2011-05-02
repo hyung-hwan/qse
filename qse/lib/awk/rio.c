@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
+ * $Id: rio.c 449 2011-05-01 14:37:17Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -361,11 +361,20 @@ int qse_awk_rtx_readio (
 				if (QSE_STR_LEN(buf) == 0) ret = 0;
 				else if (rrs.ptr != QSE_NULL && rrs.len == 0)
 				{
-/* TODO: handle different line terminator */
+					/* TODO: handle different line terminator */
 					/* drop the line terminator from the record
 					 * if RS is a blank line and EOF is reached. */
 					if (QSE_STR_LASTCHAR(buf) == QSE_T('\n'))
+					{
 						QSE_STR_LEN(buf) -= 1;
+						if (run->awk->option & QSE_AWK_CRLF)
+						{
+							/* drop preceding CR */
+							if (QSE_STR_LEN(buf) > 0 &&
+							    QSE_STR_LASTCHAR(buf) == QSE_T('\r'))
+								QSE_STR_LEN(buf) -= 1;
+						}
+					}
 				}
 				else if (rrs.len >= 2)
 				{
@@ -403,7 +412,7 @@ int qse_awk_rtx_readio (
 				c = p->in.buf[p->in.pos++];
 				end_pos = p->in.pos;
 
-/* TODO: handle different line terminator */
+				/* TODO: handle different line terminator */
 				/* separate by a new line */
 				if (c == QSE_T('\n')) 
 				{
@@ -412,16 +421,16 @@ int qse_awk_rtx_readio (
 					{
 						if (end_pos > start_pos)
 						{
-							/* '\r' is the part of the read buffer.
+							/* CR is the part of the read buffer.
 							 * decrementing the end_pos variable can
 							 * simply drop it */
 							end_pos--;
 						}
 						else
 						{
-							/* '\r' must have come from the previous
-							 * read. the record buffer must contain
-							 * it at the end.  */
+							/* CR must have come from the previous
+							 * read. drop CR that must be found  at 
+							 * the end of the record buffer. */
 							QSE_ASSERT (end_pos == start_pos);
 							QSE_ASSERT (QSE_STR_LEN(buf) > 0);
 							QSE_ASSERT (QSE_STR_LASTCHAR(buf) == QSE_T('\r'));
@@ -456,7 +465,7 @@ int qse_awk_rtx_readio (
 				pc = c;
 				c = p->in.buf[p->in.pos++];
 
-/* TODO: handle different line terminator */
+				/* TODO: handle different line terminator */
 				/* separate by a blank line */
 				if (c == QSE_T('\n'))
 				{
@@ -467,25 +476,58 @@ int qse_awk_rtx_readio (
 						 * by dropping of CR before NL */
 						QSE_ASSERT (line_len > 0);
 						line_len--;
-						QSE_STR_LEN(buf) -= 1;
+
+						/* we don't drop CR from the record buffer 
+						 * if we're in CRLF mode. POINT-X */	
+						if (!(run->awk->option & QSE_AWK_CRLF))
+							QSE_STR_LEN(buf) -= 1;
 					}
 
 					if (line_len == 0)
 					{
 						/* we got a blank line */
-						if (QSE_STR_LEN(buf) <= 0)
+
+						if (run->awk->option & QSE_AWK_CRLF)
 						{
-							/* if the record is empty when a blank
-							 * line is encountered, the line
-							 * terminator should not be added to
-							 * the record */
-							continue;
+							if (QSE_STR_LEN(buf) > 0 && 
+							    QSE_STR_LASTCHAR(buf) == QSE_T('\r'))
+							{
+								/* drop CR not dropped in POINT-X above */
+								QSE_STR_LEN(buf) -= 1;
+							}
+
+							if (QSE_STR_LEN(buf) <= 0)
+							{
+								/* if the record is empty when a blank
+								 * line is encountered, the line
+								 * terminator should not be added to
+								 * the record */
+								continue;
+							}
+
+							/* drop NL */
+							QSE_STR_LEN(buf) -= 1;
+
+							/* drop preceding CR */
+							if (QSE_STR_LEN(buf) > 0 &&
+							    QSE_STR_LASTCHAR(buf) == QSE_T('\r')) 
+								QSE_STR_LEN(buf) -= 1;
+						}
+						else
+						{
+							if (QSE_STR_LEN(buf) <= 0)
+							{
+								/* if the record is empty when a blank
+								 * line is encountered, the line
+								 * terminator should not be added to
+								 * the record */
+								continue;
+							}
+
+							/* drop NL of the previous line */
+							QSE_STR_LEN(buf) -= 1; /* simply drop NL */
 						}
 
-						/* when a blank line is encountered,
-						 * it needs to snip off the line
-						 * terminator of the previous line */
-						QSE_STR_LEN(buf) -= 1;
 						done = 1;
 						break;
 					}
