@@ -2101,6 +2101,24 @@ abcd
 dcba
 j
 --------------------------------------------------------------------------------
+[CMD]  qseawk  --newline=on -o- -f lang-044.awk lang-044.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+BEGIN {
+	RS = "";
+}
+
+{
+	print (("["   $0)   "]");
+}
+
+[abc
+this is the second line]
+[def
+vwxyz
+this is the second second line]
+[   ttttt
+killer]
+--------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -F: -f columnate.awk ./passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 root               x  0      0      root                                /root                       /bin/bash
