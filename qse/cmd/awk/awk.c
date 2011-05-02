@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: awk.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -369,23 +369,23 @@ struct opttab_t
 	const qse_char_t* desc;
 } opttab[] =
 {
-	{ QSE_T("implicit"),    QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("explicit"),    QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
-	{ QSE_T("extraops"),    QSE_AWK_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
-	{ QSE_T("rio"),         QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
-	{ QSE_T("rwpipe"),      QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
-	{ QSE_T("newline"),     QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
-	{ QSE_T("striprecspc"), QSE_AWK_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
-	{ QSE_T("stripstrspc"), QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
-	{ QSE_T("nextofile"),   QSE_AWK_NEXTOFILE,      QSE_T("enable 'nextofile'") },
-	{ QSE_T("reset"),       QSE_AWK_RESET,          QSE_T("enable 'reset'") },
-	{ QSE_T("crlf"),        QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
-	{ QSE_T("maptovar"),    QSE_AWK_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
-	{ QSE_T("pablock"),     QSE_AWK_PABLOCK,        QSE_T("enable pattern-action loop") },
-	{ QSE_T("rexbound"),    QSE_AWK_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
-	{ QSE_T("ncmponstr"),   QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
-	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,  QSE_T("enable the strict naming rule") },
-	{ QSE_T("include"),     QSE_AWK_INCLUDE,        QSE_T("enable 'include'") },
+	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
+	{ QSE_T("explicit"),     QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
+	{ QSE_T("extraops"),     QSE_AWK_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
+	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
+	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
+	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
+	{ QSE_T("striprecspc"),  QSE_AWK_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
+	{ QSE_T("stripstrspc"),  QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
+	{ QSE_T("nextofile"),    QSE_AWK_NEXTOFILE,      QSE_T("enable 'nextofile'") },
+	{ QSE_T("reset"),        QSE_AWK_RESET,          QSE_T("enable 'reset'") },
+	{ QSE_T("crlf"),         QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
+	{ QSE_T("maptovar"),     QSE_AWK_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
+	{ QSE_T("pablock"),      QSE_AWK_PABLOCK,        QSE_T("enable pattern-action loop") },
+	{ QSE_T("rexbound"),     QSE_AWK_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
+	{ QSE_T("ncmponstr"),    QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
+	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,   QSE_T("enable the strict naming rule") },
+	{ QSE_T("include"),      QSE_AWK_INCLUDE,        QSE_T("enable 'include'") },
 	{ QSE_NULL,             0 }
 };
 

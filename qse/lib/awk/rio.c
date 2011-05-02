@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 446 2011-04-30 15:24:38Z hyunghwan.chung $
+ * $Id: rio.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,10 +22,10 @@
 
 enum io_mask_t
 {
-	MASK_READ  = 0x0100,
-	MASK_WRITE = 0x0200,
-	MASK_RDWR  = 0x0400,
-	MASK_CLEAR = 0x00FF
+	IO_MASK_READ  = 0x0100,
+	IO_MASK_WRITE = 0x0200,
+	IO_MASK_RDWR  = 0x0400,
+	IO_MASK_CLEAR = 0x00FF
 };
 
 static int in_type_map[] =
@@ -50,10 +50,10 @@ static int in_mode_map[] =
 
 static int in_mask_map[] =
 {
-	MASK_READ,
-	MASK_RDWR,
-	MASK_READ,
-	MASK_READ
+	IO_MASK_READ,
+	IO_MASK_RDWR,
+	IO_MASK_READ,
+	IO_MASK_READ
 };
 
 static int out_type_map[] =
@@ -80,11 +80,11 @@ static int out_mode_map[] =
 
 static int out_mask_map[] =
 {
-	MASK_WRITE,
-	MASK_RDWR,
-	MASK_WRITE,
-	MASK_WRITE,
-	MASK_WRITE
+	IO_MASK_WRITE,
+	IO_MASK_RDWR,
+	IO_MASK_WRITE,
+	IO_MASK_WRITE,
+	IO_MASK_WRITE
 };
 
 static int find_rio_in (
@@ -249,7 +249,8 @@ static QSE_INLINE int match_long_rs (
 			 * A match in this case must end at the end of
 			 * the current record buffer */
 			QSE_ASSERT (
-				QSE_STR_PTR(buf) + QSE_STR_LEN(buf) == match.ptr + match.len
+				QSE_STR_PTR(buf) + QSE_STR_LEN(buf) == 
+				match.ptr + match.len
 			);
 
 			/* drop the RS part. no extra character after RS to drop
@@ -462,28 +463,36 @@ int qse_awk_rtx_readio (
 					if (pc == QSE_T('\r') &&
 					    QSE_STR_LEN(buf) > 0)
 					{
+						/* shrink the line length and the record
+						 * by dropping of CR before NL */
+						QSE_ASSERT (line_len > 0);
+						line_len--;
 						QSE_STR_LEN(buf) -= 1;
 					}
-				}
 
-				if (line_len == 0 && c == QSE_T('\n'))
-				{
-					if (QSE_STR_LEN(buf) <= 0)
+					if (line_len == 0)
 					{
-						/* if the record is empty when a blank
-						 * line is encountered, the line
-						 * terminator should not be added to
-						 * the record */
-						continue;
+						/* we got a blank line */
+						if (QSE_STR_LEN(buf) <= 0)
+						{
+							/* if the record is empty when a blank
+							 * line is encountered, the line
+							 * terminator should not be added to
+							 * the record */
+							continue;
+						}
+
+						/* when a blank line is encountered,
+						 * it needs to snip off the line
+						 * terminator of the previous line */
+						QSE_STR_LEN(buf) -= 1;
+						done = 1;
+						break;
 					}
 
-					/* when a blank line is encountered,
-					 * it needs to snip off the line
-					 * terminator of the previous line */
-					QSE_STR_LEN(buf) -= 1;
-					done = 1;
-					break;
+					line_len = 0;
 				}
+				else line_len++;
 
 				if (qse_str_ccat (buf, c) == (qse_size_t)-1)
 				{
@@ -492,9 +501,6 @@ int qse_awk_rtx_readio (
 					done = 1;
 					break;
 				}
-/* TODO: handle different line terminator */
-				if (c == QSE_T('\n')) line_len = 0;
-				else line_len = line_len + 1;
 			}
 			while (p->in.pos < p->in.len);
 
@@ -561,7 +567,6 @@ int qse_awk_rtx_readio (
 			n = match_long_rs (run, buf, p);
 			if (n != 0)
 			{
-				//p->in.pos--; /* unread the character in c */
 				if (n <= -1) ret = -1;
 				break;
 			}
@@ -983,7 +988,7 @@ int qse_awk_rtx_closio_read (
 		{
 			qse_awk_rio_fun_t handler;
 		       
-			handler = run->rio.handler[p->type & MASK_CLEAR];
+			handler = run->rio.handler[p->type & IO_MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
 				if (handler (run, QSE_AWK_RIO_CLOSE, p, QSE_NULL, 0) <= -1)
@@ -1042,7 +1047,7 @@ int qse_awk_rtx_closio_write (
 		{
 			qse_awk_rio_fun_t handler;
 		       
-			handler = run->rio.handler[p->type & MASK_CLEAR];
+			handler = run->rio.handler[p->type & IO_MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
@@ -1088,7 +1093,7 @@ int qse_awk_rtx_closeio (
 			{
 				if (opt[0] == QSE_T('r'))
 				{
-					if (p->type & MASK_RDWR) 
+					if (p->type & IO_MASK_RDWR) 
 					{
 						if (p->rwcstate != QSE_AWK_RIO_CLOSE_WRITE)
 						{
@@ -1098,12 +1103,12 @@ int qse_awk_rtx_closeio (
 							rwcmode = QSE_AWK_RIO_CLOSE_READ;
 						}
 					}
-					else if (!(p->type & MASK_READ)) goto skip;
+					else if (!(p->type & IO_MASK_READ)) goto skip;
 				}
 				else
 				{
 					QSE_ASSERT (opt[0] == QSE_T('w'));
-					if (p->type & MASK_RDWR)
+					if (p->type & IO_MASK_RDWR)
 					{
 						if (p->rwcstate != QSE_AWK_RIO_CLOSE_READ)
 						{
@@ -1113,11 +1118,11 @@ int qse_awk_rtx_closeio (
 							rwcmode = QSE_AWK_RIO_CLOSE_WRITE;
 						}
 					}
-					else if (!(p->type & MASK_WRITE)) goto skip;
+					else if (!(p->type & IO_MASK_WRITE)) goto skip;
 				}
 			}
 
-			handler = rtx->rio.handler[p->type & MASK_CLEAR];
+			handler = rtx->rio.handler[p->type & IO_MASK_CLEAR];
 			if (handler != QSE_NULL)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOERR, QSE_NULL);
@@ -1131,7 +1136,7 @@ int qse_awk_rtx_closeio (
 				}
 			}
 
-			if (p->type & MASK_RDWR) 
+			if (p->type & IO_MASK_RDWR) 
 			{
 				p->rwcmode = rwcmode;
 				if (p->rwcstate == 0 && rwcmode != 0)
@@ -1172,7 +1177,7 @@ void qse_awk_rtx_cleario (qse_awk_rtx_t* run)
 	while (run->rio.chain != QSE_NULL)
 	{
 		handler = run->rio.handler[
-			run->rio.chain->type & MASK_CLEAR];
+			run->rio.chain->type & IO_MASK_CLEAR];
 		next = run->rio.chain->next;
 
 		if (handler != QSE_NULL)
