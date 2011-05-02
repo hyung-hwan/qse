@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: tree.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -103,29 +103,34 @@ static const qse_char_t* print_outop_str[] =
 	QSE_T("")
 };
 
-#define PUT_SRCSTR(awk,str) \
-	do { if (qse_awk_putsrcstr (awk, str) == -1) return -1; } while (0)
+#define PUT_SRCSTR(awk,str) QSE_BLOCK (\
+	if (qse_awk_putsrcstr (awk, str) == -1) return -1; \
+)
 
-#define PUT_NL(awk) \
-	do { \
-		if (awk->option & QSE_AWK_CRLF) PUT_SRCSTR (awk, QSE_T("\r")); \
-		PUT_SRCSTR (awk, QSE_T("\n")); \
-	} while (0)
+#define PUT_NL(awk) QSE_BLOCK (\
+	if (awk->option & QSE_AWK_CRLF) PUT_SRCSTR (awk, QSE_T("\r")); \
+	PUT_SRCSTR (awk, QSE_T("\n")); \
+)
 
-#define PUT_SRCSTRX(awk,str,len) \
-	do { if (qse_awk_putsrcstrx (awk, str, len) == -1) return -1; } while (0)
+#define PUT_SRCSTRX(awk,str,len) QSE_BLOCK (\
+	if (qse_awk_putsrcstrx (awk, str, len) == -1) return -1; \
+)
 
-#define PRINT_TABS(awk,depth) \
-	do { if (print_tabs(awk,depth) == -1) return -1; } while (0)
+#define PRINT_TABS(awk,depth) QSE_BLOCK (\
+	if (print_tabs(awk,depth) == -1) return -1; \
+)
 
-#define PRINT_EXPR(awk,nde) \
-	do { if (print_expr(awk,nde) == -1) return -1; } while (0)
+#define PRINT_EXPR(awk,nde) QSE_BLOCK (\
+	if (print_expr(awk,nde) == -1) return -1; \
+)
 
-#define PRINT_EXPR_LIST(awk,nde) \
-	do { if (print_expr_list(awk,nde) == -1) return -1; } while (0)
+#define PRINT_EXPR_LIST(awk,nde) QSE_BLOCK(\
+	if (print_expr_list(awk,nde) == -1) return -1; \
+)
 
-#define PRINT_STMTS(awk,nde,depth) \
-	do { if (print_stmts(awk,nde,depth) == -1) return -1; } while (0)
+#define PRINT_STMTS(awk,nde,depth) QSE_BLOCK(\
+	if (print_stmts(awk,nde,depth) == -1) return -1; \
+)
 
 static int print_tabs (qse_awk_t* awk, int depth);
 static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde);
