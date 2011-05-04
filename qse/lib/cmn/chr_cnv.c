@@ -1,5 +1,5 @@
 /*
- * $Id: chr_cnv.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: chr_cnv.c 451 2011-05-03 14:00:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,7 +22,7 @@
 #include "mem.h"
 
 #if !defined(QSE_HAVE_CONFIG_H)
-#	if defined(_WIN32) || defined(__OS2__)
+#	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_WCHAR_H
 #		define HAVE_STDLIB_H
 #		define HAVE_MBRLEN

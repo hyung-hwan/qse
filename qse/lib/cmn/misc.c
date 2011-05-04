@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 450 2011-05-03 07:48:42Z hyunghwan.chung $
+ * $Id: misc.c 451 2011-05-03 14:00:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,7 +28,7 @@ const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
 	for (p = path; *p != QSE_MT('\0'); p++)
 	{
 		if (*p == QSE_MT('/')) last = p;
-	#if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
+	#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		else if (*p == QSE_MT('\\')) last = p;
 	#endif
 	}
@@ -43,7 +43,7 @@ const qse_wchar_t* qse_wcsbasename (const qse_wchar_t* path)
 	for (p = path; *p != QSE_WT('\0'); p++)
 	{
 		if (*p == QSE_WT('/')) last = p;
-	#if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
+	#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		else if (*p == QSE_WT('\\')) last = p;
 	#endif
 	}

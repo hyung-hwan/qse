@@ -36,6 +36,9 @@
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	include <os2.h>
+#elif defined(__DOS__)
+#	include <dos.h>
+#	include <dosfunc.h>
 #else
 #	include "syscall.h"
 #endif
@@ -86,9 +89,11 @@ void qse_assert_failed (
 	void *btarray[128];
 	qse_size_t btsize, i;
 	char **btsyms;
+
 #ifdef QSE_CHAR_IS_WCHAR
 	qse_wchar_t wcs[256];
 #endif
+
 #endif
 
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
@@ -151,9 +156,16 @@ void qse_assert_failed (
 	qse_sio_flush (QSE_SIO_ERR);
 
 #if defined(_WIN32)
-	ExitProcess (1);
+	ExitProcess (249);
 #elif defined(__OS2__)
-	DosExit (EXIT_PROCESS, 1);
+	DosExit (EXIT_PROCESS, 249);
+#elif defined(__DOS__)
+	{
+		union REGS regs;
+		regs.h.ah = DOS_EXIT;
+		regs.h.al = 249;
+		intdos (&regs, &regs);
+	}
 #else
 	QSE_KILL (QSE_GETPID(), SIGABRT);
 	QSE_EXIT (1);

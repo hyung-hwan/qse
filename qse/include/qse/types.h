@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 450 2011-05-03 07:48:42Z hyunghwan.chung $
+ * $Id: types.h 451 2011-05-03 14:00:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -36,6 +36,8 @@
 #	include <qse/conf_msw.h>
 #elif defined(__OS2__)
 #	include <qse/conf_os2.h>
+#elif defined(__DOS__)
+#	include <qse/conf_dos.h>
 #elif defined(vms) || defined(__vms)
 #	include <qse/conf_vms.h>
 #else

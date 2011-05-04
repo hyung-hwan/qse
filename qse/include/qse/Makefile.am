@@ -2,7 +2,9 @@ SUBDIRS = cmn awk cut sed scm http
 
 pkgincludedir = $(includedir)/qse
 
-pkginclude_HEADERS = conf_msw.h conf_vms.h types.h macros.h pack1.h unpack.h 
+pkginclude_HEADERS = \
+	conf_msw.h conf_os2.h conf_dos.h conf_vms.h \
+	types.h macros.h pack1.h unpack.h 
 
 if ENABLE_CXX
 pkginclude_HEADERS += Types.hpp 
