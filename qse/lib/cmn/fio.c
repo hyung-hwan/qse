@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: fio.c 451 2011-05-03 14:00:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -252,6 +252,9 @@ qse_fio_t* qse_fio_init (
 
 		if (ret != NO_ERROR) return QSE_NULL;
 	}
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return QSE_NULL;
 #else
 
 	if (flags & QSE_FIO_HANDLE)
@@ -328,6 +331,9 @@ qse_fio_t* qse_fio_init (
 			CloseHandle (handle);
 		#elif defined(__OS2__)
 			DosClose (handle);
+		#elif defined(__DOS__)
+			/* UNSUPPORTED */
+			;
 		#else
 			QSE_CLOSE (handle);     
 		#endif
@@ -349,6 +355,9 @@ void qse_fio_fini (qse_fio_t* fio)
 	CloseHandle (fio->handle);
 #elif defined(__OS2__)
 	DosClose (fio->handle);
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	; 
 #else
 	QSE_CLOSE (fio->handle);
 #endif
@@ -417,6 +426,11 @@ qse_fio_off_t qse_fio_seek (
 	if (ret != NO_ERROR) return (qse_fio_off_t)-1;
 
 	return ((qse_fio_off_t)pos.ulHi << 32) | pos.ulLo;
+#elif defined(__DOS__)
+
+	/* UNSUPPORTED */
+	return -1;
+
 #else
 	static int seek_map[] =
 	{
@@ -468,6 +482,11 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 
 	ret = DosSetFileSizeL (fio->handle, sz);
 	return (ret == NO_ERROR)? 0: -1;
+
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return -1;
+
 #else
 	return QSE_FTRUNCATE (fio->handle, size);
 #endif
@@ -485,6 +504,10 @@ static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
 	if (DosRead (fio->handle, buf, (ULONG)size, &count) != NO_ERROR) return -1;
 	return (qse_ssize_t)count;
+
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return -1;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_READ (fio->handle, buf, size);
@@ -511,6 +534,10 @@ static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
 	if (DosWrite(fio->handle, (PVOID)data, (ULONG)size, &count) != NO_ERROR) return -1;
 	return (qse_ssize_t)count;
+
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return -1;
 #else
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
 	return QSE_WRITE (fio->handle, data, size);
@@ -662,6 +689,10 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	
 	stat.attrFile = flags;
 	return (DosSetFileInfo (fio->handle, FIL_STANDARDL, &stat, size) != NO_ERROR)? -1: 0;
+
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return -1;
 #else
 	return QSE_FCHMOD (fio->handle, mode);
 #endif
@@ -673,6 +704,10 @@ int qse_fio_sync (qse_fio_t* fio)
 	return (FlushFileBuffers (fio->handle) == FALSE)? -1: 0;
 #elif defined(__OS2__)
 	return (DosResetBuffer (fio->handle) == NO_ERROR)? 0: -1;
+
+#elif defined(__DOS__)
+	/* UNSUPPORTED */
+	return -1;
 #else
 	return QSE_FSYNC (fio->handle);
 #endif
