@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: misc.c 450 2011-05-03 07:48:42Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,15 +20,31 @@
 
 #include <qse/cmn/misc.h>
 
-const qse_char_t* qse_basename (const qse_char_t* path)
-{
-	const qse_char_t* p, * last = QSE_NULL;
 
-	for (p = path; *p != QSE_T('\0'); p++)
+const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
+{
+	const qse_mchar_t* p, * last = QSE_NULL;
+
+	for (p = path; *p != QSE_MT('\0'); p++)
 	{
-		if (*p == QSE_T('/')) last = p;
-	#if defined(_WIN32) || defined(__OS2__)
-		else if (*p == QSE_T('\\')) last = p;
+		if (*p == QSE_MT('/')) last = p;
+	#if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
+		else if (*p == QSE_MT('\\')) last = p;
+	#endif
+	}
+
+	return (last == QSE_NULL)? path: (last + 1);
+}
+
+const qse_wchar_t* qse_wcsbasename (const qse_wchar_t* path)
+{
+	const qse_wchar_t* p, * last = QSE_NULL;
+
+	for (p = path; *p != QSE_WT('\0'); p++)
+	{
+		if (*p == QSE_WT('/')) last = p;
+	#if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
+		else if (*p == QSE_WT('\\')) last = p;
 	#endif
 	}
 

@@ -24,12 +24,23 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+#ifdef QSE_CHAR_IS_MCHAR
+#	define	qse_basename(path) qse_mbsbasename(path)
+#else
+#	define	qse_basename(path) qse_wcsbasename(path)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-const qse_char_t* qse_basename (const qse_char_t* path);
+const qse_mchar_t* qse_mbsbasename (
+	const qse_mchar_t* path
+);
+
+const qse_wchar_t* qse_wcsbasename (
+	const qse_wchar_t* path
+);
 
 #ifdef __cplusplus
 }
