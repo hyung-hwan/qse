@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 449 2011-05-01 14:37:17Z hyunghwan.chung $
+ * $Id: rio.c 450 2011-05-03 07:48:42Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -321,18 +321,24 @@ int qse_awk_rtx_readio (
 
 	ret = 1;
 
-	/* call the io handler */
+	/* call the I/O handler */
 	while (1)
 	{
 		if (p->in.pos >= p->in.len)
 		{
 			qse_ssize_t x;
 
-			/* no more data. read more */
+			/* no more data in the read buffer.
+			 * let the I/O handler read more */
 
 			if (p->in.eof)
 			{
-				if (QSE_STR_LEN(buf) == 0) ret = 0;
+				/* it has reached EOF at the previous call. */
+				if (QSE_STR_LEN(buf) == 0)
+				{
+					/* we return EOF if the record buffer is empty */
+					ret = 0;
+				}
 				break;
 			}
 
@@ -345,7 +351,8 @@ int qse_awk_rtx_readio (
 				if (run->errinf.num == QSE_AWK_ENOERR)
 				{
 					/* if the error number has not been 
-				 	 * set by the user handler */
+				 	 * set by the user handler, we set
+				 	 * it here to QSE_AWK_EIOIMPL. */
 					qse_awk_rtx_seterrnum (run, QSE_AWK_EIOIMPL, QSE_NULL);
 				}
 
@@ -358,7 +365,12 @@ int qse_awk_rtx_readio (
 				/* EOF reached */
 				p->in.eof = 1;
 
-				if (QSE_STR_LEN(buf) == 0) ret = 0;
+				if (QSE_STR_LEN(buf) == 0)
+				{
+					/* We can return EOF now if the record buffer
+					 * is empty */
+					ret = 0;
+				}
 				else if (rrs.ptr != QSE_NULL && rrs.len == 0)
 				{
 					/* TODO: handle different line terminator */
@@ -674,7 +686,7 @@ int qse_awk_rtx_writeio_str (
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
@@ -744,10 +756,10 @@ int qse_awk_rtx_writeio_str (
 		run->rio.chain = p;
 
 		/* usually, n == 0 indicates that it has reached the end 
-		 * of the input. the user io handler can return 0 for the 
+		 * of the input. the user I/O handler can return 0 for the
 		 * open request if it doesn't have any files to open. One 
 		 * advantage of doing this would be that you can skip the 
-		 * entire pattern-block matching and exeuction. */
+		 * entire pattern-block matching and execution. */
 		if (n == 0) 
 		{
 			p->out.eos = 1;
@@ -806,7 +818,7 @@ int qse_awk_rtx_flushio (
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant io type and mode */
+	/* translate the out_type into the relevant I/O type and mode */
 	io_type = out_type_map[out_type];
 	/*io_mode = out_mode_map[out_type];*/
 	io_mask = out_mask_map[out_type];
@@ -814,7 +826,7 @@ int qse_awk_rtx_flushio (
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
@@ -860,7 +872,7 @@ int qse_awk_rtx_nextio_read (
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
-	/* translate the in_type into the relevant io type and mode */
+	/* translate the in_type into the relevant I/O type and mode */
 	io_type = in_type_map[in_type];
 	/*io_mode = in_mode_map[in_type];*/
 	io_mask = in_mask_map[in_type];
@@ -868,7 +880,7 @@ int qse_awk_rtx_nextio_read (
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
@@ -938,7 +950,7 @@ int qse_awk_rtx_nextio_write (
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mode_map));
 	QSE_ASSERT (out_type >= 0 && out_type <= QSE_COUNTOF(out_mask_map));
 
-	/* translate the out_type into the relevant io type and mode */
+	/* translate the out_type into the relevant I/O type and mode */
 	io_type = out_type_map[out_type];
 	/*io_mode = out_mode_map[out_type];*/
 	io_mask = out_mask_map[out_type];
@@ -946,7 +958,7 @@ int qse_awk_rtx_nextio_write (
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
@@ -985,7 +997,7 @@ int qse_awk_rtx_nextio_write (
 	if (n == 0) 
 	{
 		/* the next stream cannot be opened. 
-		 * set the eos flags so that the next call to nextio_write
+		 * set the EOS flags so that the next call to nextio_write
 		 * will return 0 without executing the handler */
 		p->out.eos = 1;
 		return 0;
@@ -993,7 +1005,7 @@ int qse_awk_rtx_nextio_write (
 	else 
 	{
 		/* as the next stream has been opened successfully,
-		 * the eof flag should be cleared if set */
+		 * the EOF flag should be cleared if set */
 		p->out.eof = 0;
 		return 1;
 	}
@@ -1010,7 +1022,7 @@ int qse_awk_rtx_closio_read (
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mode_map));
 	QSE_ASSERT (in_type >= 0 && in_type <= QSE_COUNTOF(in_mask_map));
 
-	/* translate the in_type into the relevant io type and mode */
+	/* translate the in_type into the relevant I/O type and mode */
 	io_type = in_type_map[in_type];
 	/*io_mode = in_mode_map[in_type];*/
 	io_mask = in_mask_map[in_type];
@@ -1018,7 +1030,7 @@ int qse_awk_rtx_closio_read (
 	handler = run->rio.handler[io_type];
 	if (handler == QSE_NULL)
 	{
-		/* no io handler provided */
+		/* no I/O handler provided */
 		qse_awk_rtx_seterrnum (run, QSE_AWK_EIOUSER, QSE_NULL);
 		return -1;
 	}
