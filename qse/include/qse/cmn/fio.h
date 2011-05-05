@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: fio.h 452 2011-05-04 15:11:23Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -85,6 +85,8 @@ enum qse_fio_mode_t
 	/* <os2def.h> => typedef LHANDLE HFILE;
 	                 typedef unsigned long LHANDLE; */
 	typedef unsigned long qse_fio_hnd_t;
+#elif defined(__DOS__)
+	typedef int qse_fio_hnd_t;
 #else
 	typedef int qse_fio_hnd_t;
 #endif
