@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sio.c 454 2011-05-06 15:28:27Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -43,6 +43,8 @@ static qse_sio_t __sio_in =
 		(HANDLE)STD_INPUT_HANDLE,      /* handle */
 	#elif defined(__OS2__)
 		(HFILE)0,                      /* handle */
+	#elif defined(__DOS__)
+		0,                             /* handle */
 	#else
 		0,                             /* handle */
 	#endif
@@ -82,6 +84,8 @@ static qse_sio_t __sio_out =
 		(HANDLE)STD_OUTPUT_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)1,
+	#elif defined(__DOS__)
+		1,
 	#else
 		1,
 	#endif
@@ -121,6 +125,8 @@ static qse_sio_t __sio_err =
 		(HANDLE)STD_ERROR_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)2,
+	#elif defined(__DOS__)
+		2,
 	#else
 		2,
 	#endif

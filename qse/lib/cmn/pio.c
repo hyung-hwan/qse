@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: pio.c 454 2011-05-06 15:28:27Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -30,6 +30,8 @@
 #	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
 #	include <os2.h>
+#elif defined(__DOS__)
+#	include <io.h>
 #else
 #	include "syscall.h"
 #	include <fcntl.h>
@@ -116,6 +118,8 @@ qse_pio_t* qse_pio_init (
 	qse_mchar_t* cmd_line = QSE_NULL;
 	qse_mchar_t* cmd_file;
 	HFILE os2devnul = (HFILE)-1;
+#elif defined(__DOS__)
+#	error UNSUPPORTED
 #else
 	qse_pio_pid_t pid;
 #endif
