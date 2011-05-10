@@ -96,7 +96,7 @@ WVList
 23
 MItem
 28
-..\..\..\..\..\cmd\scm\scm.c
+../../../../../cmd/scm/scm.c
 24
 WString
 4
@@ -118,7 +118,7 @@ o?2??Include directories:
 29
 WString
 54
-"$(%watcom)\h;$(%watcom)\h\os2;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
 0
 30
 WVList

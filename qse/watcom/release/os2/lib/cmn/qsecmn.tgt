@@ -144,7 +144,7 @@ WVList
 35
 MItem
 35
-..\..\..\..\..\lib\cmn\alg_search.c
+../../../../../lib/cmn/alg_search.c
 36
 WString
 4
@@ -162,7 +162,7 @@ WVList
 39
 MItem
 33
-..\..\..\..\..\lib\cmn\alg_sort.c
+../../../../../lib/cmn/alg_sort.c
 40
 WString
 4
@@ -180,7 +180,7 @@ WVList
 43
 MItem
 31
-..\..\..\..\..\lib\cmn\assert.c
+../../../../../lib/cmn/assert.c
 44
 WString
 4
@@ -198,7 +198,7 @@ WVList
 47
 MItem
 28
-..\..\..\..\..\lib\cmn\chr.c
+../../../../../lib/cmn/chr.c
 48
 WString
 4
@@ -216,7 +216,7 @@ WVList
 51
 MItem
 32
-..\..\..\..\..\lib\cmn\chr_cnv.c
+../../../../../lib/cmn/chr_cnv.c
 52
 WString
 4
@@ -234,7 +234,7 @@ WVList
 55
 MItem
 28
-..\..\..\..\..\lib\cmn\dll.c
+../../../../../lib/cmn/dll.c
 56
 WString
 4
@@ -252,7 +252,7 @@ WVList
 59
 MItem
 28
-..\..\..\..\..\lib\cmn\fio.c
+../../../../../lib/cmn/fio.c
 60
 WString
 4
@@ -270,7 +270,7 @@ WVList
 63
 MItem
 28
-..\..\..\..\..\lib\cmn\fma.c
+../../../../../lib/cmn/fma.c
 64
 WString
 4
@@ -288,7 +288,7 @@ WVList
 67
 MItem
 28
-..\..\..\..\..\lib\cmn\gdl.c
+../../../../../lib/cmn/gdl.c
 68
 WString
 4
@@ -306,7 +306,7 @@ WVList
 71
 MItem
 28
-..\..\..\..\..\lib\cmn\htb.c
+../../../../../lib/cmn/htb.c
 72
 WString
 4
@@ -324,7 +324,7 @@ WVList
 75
 MItem
 28
-..\..\..\..\..\lib\cmn\lda.c
+../../../../../lib/cmn/lda.c
 76
 WString
 4
@@ -342,7 +342,7 @@ WVList
 79
 MItem
 29
-..\..\..\..\..\lib\cmn\main.c
+../../../../../lib/cmn/main.c
 80
 WString
 4
@@ -360,7 +360,7 @@ WVList
 83
 MItem
 28
-..\..\..\..\..\lib\cmn\mem.c
+../../../../../lib/cmn/mem.c
 84
 WString
 4
@@ -378,7 +378,7 @@ WVList
 87
 MItem
 29
-..\..\..\..\..\lib\cmn\misc.c
+../../../../../lib/cmn/misc.c
 88
 WString
 4
@@ -396,7 +396,7 @@ WVList
 91
 MItem
 28
-..\..\..\..\..\lib\cmn\oht.c
+../../../../../lib/cmn/oht.c
 92
 WString
 4
@@ -414,7 +414,7 @@ WVList
 95
 MItem
 28
-..\..\..\..\..\lib\cmn\opt.c
+../../../../../lib/cmn/opt.c
 96
 WString
 4
@@ -432,7 +432,7 @@ WVList
 99
 MItem
 28
-..\..\..\..\..\lib\cmn\pio.c
+../../../../../lib/cmn/pio.c
 100
 WString
 4
@@ -450,7 +450,7 @@ WVList
 103
 MItem
 28
-..\..\..\..\..\lib\cmn\rbt.c
+../../../../../lib/cmn/rbt.c
 104
 WString
 4
@@ -468,7 +468,7 @@ WVList
 107
 MItem
 28
-..\..\..\..\..\lib\cmn\rex.c
+../../../../../lib/cmn/rex.c
 108
 WString
 4
@@ -486,7 +486,7 @@ WVList
 111
 MItem
 28
-..\..\..\..\..\lib\cmn\sio.c
+../../../../../lib/cmn/sio.c
 112
 WString
 4
@@ -504,7 +504,7 @@ WVList
 115
 MItem
 28
-..\..\..\..\..\lib\cmn\sll.c
+../../../../../lib/cmn/sll.c
 116
 WString
 4
@@ -522,7 +522,7 @@ WVList
 119
 MItem
 30
-..\..\..\..\..\lib\cmn\stdio.c
+../../../../../lib/cmn/stdio.c
 120
 WString
 4
@@ -540,7 +540,7 @@ WVList
 123
 MItem
 32
-..\..\..\..\..\lib\cmn\str_beg.c
+../../../../../lib/cmn/str_beg.c
 124
 WString
 4
@@ -558,7 +558,7 @@ WVList
 127
 MItem
 32
-..\..\..\..\..\lib\cmn\str_cat.c
+../../../../../lib/cmn/str_cat.c
 128
 WString
 4
@@ -576,7 +576,7 @@ WVList
 131
 MItem
 32
-..\..\..\..\..\lib\cmn\str_chr.c
+../../../../../lib/cmn/str_chr.c
 132
 WString
 4
@@ -594,7 +594,7 @@ WVList
 135
 MItem
 32
-..\..\..\..\..\lib\cmn\str_cmp.c
+../../../../../lib/cmn/str_cmp.c
 136
 WString
 4
@@ -612,7 +612,7 @@ WVList
 139
 MItem
 32
-..\..\..\..\..\lib\cmn\str_cnv.c
+../../../../../lib/cmn/str_cnv.c
 140
 WString
 4
@@ -630,7 +630,7 @@ WVList
 143
 MItem
 32
-..\..\..\..\..\lib\cmn\str_cpy.c
+../../../../../lib/cmn/str_cpy.c
 144
 WString
 4
@@ -648,7 +648,7 @@ WVList
 147
 MItem
 32
-..\..\..\..\..\lib\cmn\str_del.c
+../../../../../lib/cmn/str_del.c
 148
 WString
 4
@@ -666,7 +666,7 @@ WVList
 151
 MItem
 32
-..\..\..\..\..\lib\cmn\str_dup.c
+../../../../../lib/cmn/str_dup.c
 152
 WString
 4
@@ -684,7 +684,7 @@ WVList
 155
 MItem
 33
-..\..\..\..\..\lib\cmn\str_dynm.c
+../../../../../lib/cmn/str_dynm.c
 156
 WString
 4
@@ -702,7 +702,7 @@ WVList
 159
 MItem
 33
-..\..\..\..\..\lib\cmn\str_dynw.c
+../../../../../lib/cmn/str_dynw.c
 160
 WString
 4
@@ -720,7 +720,7 @@ WVList
 163
 MItem
 32
-..\..\..\..\..\lib\cmn\str_end.c
+../../../../../lib/cmn/str_end.c
 164
 WString
 4
@@ -738,7 +738,7 @@ WVList
 167
 MItem
 33
-..\..\..\..\..\lib\cmn\str_excl.c
+../../../../../lib/cmn/str_excl.c
 168
 WString
 4
@@ -756,7 +756,7 @@ WVList
 171
 MItem
 33
-..\..\..\..\..\lib\cmn\str_fcpy.c
+../../../../../lib/cmn/str_fcpy.c
 172
 WString
 4
@@ -774,7 +774,7 @@ WVList
 175
 MItem
 33
-..\..\..\..\..\lib\cmn\str_incl.c
+../../../../../lib/cmn/str_incl.c
 176
 WString
 4
@@ -792,7 +792,7 @@ WVList
 179
 MItem
 32
-..\..\..\..\..\lib\cmn\str_len.c
+../../../../../lib/cmn/str_len.c
 180
 WString
 4
@@ -810,7 +810,7 @@ WVList
 183
 MItem
 32
-..\..\..\..\..\lib\cmn\str_pac.c
+../../../../../lib/cmn/str_pac.c
 184
 WString
 4
@@ -828,7 +828,7 @@ WVList
 187
 MItem
 33
-..\..\..\..\..\lib\cmn\str_pbrk.c
+../../../../../lib/cmn/str_pbrk.c
 188
 WString
 4
@@ -846,7 +846,7 @@ WVList
 191
 MItem
 32
-..\..\..\..\..\lib\cmn\str_put.c
+../../../../../lib/cmn/str_put.c
 192
 WString
 4
@@ -864,7 +864,7 @@ WVList
 195
 MItem
 32
-..\..\..\..\..\lib\cmn\str_rev.c
+../../../../../lib/cmn/str_rev.c
 196
 WString
 4
@@ -882,7 +882,7 @@ WVList
 199
 MItem
 32
-..\..\..\..\..\lib\cmn\str_rot.c
+../../../../../lib/cmn/str_rot.c
 200
 WString
 4
@@ -900,7 +900,7 @@ WVList
 203
 MItem
 32
-..\..\..\..\..\lib\cmn\str_set.c
+../../../../../lib/cmn/str_set.c
 204
 WString
 4
@@ -918,7 +918,7 @@ WVList
 207
 MItem
 32
-..\..\..\..\..\lib\cmn\str_spl.c
+../../../../../lib/cmn/str_spl.c
 208
 WString
 4
@@ -936,7 +936,7 @@ WVList
 211
 MItem
 32
-..\..\..\..\..\lib\cmn\str_spn.c
+../../../../../lib/cmn/str_spn.c
 212
 WString
 4
@@ -954,7 +954,7 @@ WVList
 215
 MItem
 32
-..\..\..\..\..\lib\cmn\str_str.c
+../../../../../lib/cmn/str_str.c
 216
 WString
 4
@@ -972,7 +972,7 @@ WVList
 219
 MItem
 34
-..\..\..\..\..\lib\cmn\str_subst.c
+../../../../../lib/cmn/str_subst.c
 220
 WString
 4
@@ -990,7 +990,7 @@ WVList
 223
 MItem
 32
-..\..\..\..\..\lib\cmn\str_tok.c
+../../../../../lib/cmn/str_tok.c
 224
 WString
 4
@@ -1008,7 +1008,7 @@ WVList
 227
 MItem
 32
-..\..\..\..\..\lib\cmn\str_trm.c
+../../../../../lib/cmn/str_trm.c
 228
 WString
 4
@@ -1026,7 +1026,7 @@ WVList
 231
 MItem
 33
-..\..\..\..\..\lib\cmn\str_word.c
+../../../../../lib/cmn/str_word.c
 232
 WString
 4
@@ -1044,7 +1044,7 @@ WVList
 235
 MItem
 29
-..\..\..\..\..\lib\cmn\time.c
+../../../../../lib/cmn/time.c
 236
 WString
 4
@@ -1062,7 +1062,7 @@ WVList
 239
 MItem
 28
-..\..\..\..\..\lib\cmn\tio.c
+../../../../../lib/cmn/tio.c
 240
 WString
 4
@@ -1080,7 +1080,7 @@ WVList
 243
 MItem
 32
-..\..\..\..\..\lib\cmn\tio_get.c
+../../../../../lib/cmn/tio_get.c
 244
 WString
 4
@@ -1098,7 +1098,7 @@ WVList
 247
 MItem
 32
-..\..\..\..\..\lib\cmn\tio_put.c
+../../../../../lib/cmn/tio_put.c
 248
 WString
 4
@@ -1116,7 +1116,7 @@ WVList
 251
 MItem
 28
-..\..\..\..\..\lib\cmn\xma.c
+../../../../../lib/cmn/xma.c
 252
 WString
 4
@@ -1152,7 +1152,7 @@ WVList
 259
 MItem
 28
-..\..\..\..\..\lib\cmn\mem.h
+../../../../../lib/cmn/mem.h
 260
 WString
 3
@@ -1170,7 +1170,7 @@ WVList
 263
 MItem
 32
-..\..\..\..\..\lib\cmn\syscall.h
+../../../../../lib/cmn/syscall.h
 264
 WString
 3

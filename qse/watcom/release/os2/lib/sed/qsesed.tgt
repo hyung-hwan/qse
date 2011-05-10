@@ -68,7 +68,7 @@ o?2??Include directories:
 17
 WString
 54
-"$(%watcom)/h;$(%watcom)/h/os2;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
 0
 18
 MVState

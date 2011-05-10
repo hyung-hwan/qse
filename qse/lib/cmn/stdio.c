@@ -339,7 +339,7 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	return fopen (path, mode);
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(__OS2__)
 	return _wfopen (path, mode);
 #else
 
@@ -362,13 +362,21 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
-#if defined(__OS2__)
+
+	#if defined(__OS2__)
 	return _popen (cmd, mode);
-#else
+	#elif defined(__DOS__)
+	return QSE_NULL;
+	#else
 	return popen (cmd, mode);
-#endif
-#elif defined(_WIN32) || defined(__OS2__)
+	#endif
+
+#elif defined(_WIN32) || defined(__OS2__) 
 	return _wpopen (cmd, mode);
+
+#elif defined(__DOS__)
+	return QSE_NULL;
+
 #else
 	char cmd_mb[PATH_MAX + 1];
 	char mode_mb[32];

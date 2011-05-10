@@ -68,7 +68,7 @@ n????Include directories:
 17
 WString
 53
-"$(%watcom)/h;$(%watcom)/h/nt;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/nt;../../../../../include"
 0
 18
 WVList
@@ -80,7 +80,7 @@ WVList
 19
 MItem
 28
-..\..\..\..\..\lib\awk\awk.c
+../../../../../lib/awk/awk.c
 20
 WString
 4
@@ -98,7 +98,7 @@ WVList
 23
 MItem
 28
-..\..\..\..\..\lib\awk\err.c
+../../../../../lib/awk/err.c
 24
 WString
 4
@@ -116,7 +116,7 @@ WVList
 27
 MItem
 28
-..\..\..\..\..\lib\awk\fnc.c
+../../../../../lib/awk/fnc.c
 28
 WString
 4
@@ -134,7 +134,7 @@ WVList
 31
 MItem
 29
-..\..\..\..\..\lib\awk\misc.c
+../../../../../lib/awk/misc.c
 32
 WString
 4
@@ -152,7 +152,7 @@ WVList
 35
 MItem
 30
-..\..\..\..\..\lib\awk\parse.c
+../../../../../lib/awk/parse.c
 36
 WString
 4
@@ -170,7 +170,7 @@ WVList
 39
 MItem
 28
-..\..\..\..\..\lib\awk\rec.c
+../../../../../lib/awk/rec.c
 40
 WString
 4
@@ -188,7 +188,7 @@ WVList
 43
 MItem
 28
-..\..\..\..\..\lib\awk\rio.c
+../../../../../lib/awk/rio.c
 44
 WString
 4
@@ -206,7 +206,7 @@ WVList
 47
 MItem
 28
-..\..\..\..\..\lib\awk\run.c
+../../../../../lib/awk/run.c
 48
 WString
 4
@@ -224,7 +224,7 @@ WVList
 51
 MItem
 28
-..\..\..\..\..\lib\awk\std.c
+../../../../../lib/awk/std.c
 52
 WString
 4
@@ -242,7 +242,7 @@ WVList
 55
 MItem
 29
-..\..\..\..\..\lib\awk\tree.c
+../../../../../lib/awk/tree.c
 56
 WString
 4
@@ -260,7 +260,7 @@ WVList
 59
 MItem
 28
-..\..\..\..\..\lib\awk\val.c
+../../../../../lib/awk/val.c
 60
 WString
 4
@@ -296,7 +296,7 @@ WVList
 67
 MItem
 28
-..\..\..\..\..\lib\awk\awk.h
+../../../../../lib/awk/awk.h
 68
 WString
 3
@@ -314,7 +314,7 @@ WVList
 71
 MItem
 28
-..\..\..\..\..\lib\awk\err.h
+../../../../../lib/awk/err.h
 72
 WString
 3
@@ -332,7 +332,7 @@ WVList
 75
 MItem
 28
-..\..\..\..\..\lib\awk\fnc.h
+../../../../../lib/awk/fnc.h
 76
 WString
 3
@@ -350,7 +350,7 @@ WVList
 79
 MItem
 29
-..\..\..\..\..\lib\awk\misc.h
+../../../../../lib/awk/misc.h
 80
 WString
 3
@@ -368,7 +368,7 @@ WVList
 83
 MItem
 30
-..\..\..\..\..\lib\awk\parse.h
+../../../../../lib/awk/parse.h
 84
 WString
 3
@@ -386,7 +386,7 @@ WVList
 87
 MItem
 28
-..\..\..\..\..\lib\awk\rio.h
+../../../../../lib/awk/rio.h
 88
 WString
 3
@@ -404,7 +404,7 @@ WVList
 91
 MItem
 28
-..\..\..\..\..\lib\awk\run.h
+../../../../../lib/awk/run.h
 92
 WString
 3
@@ -422,7 +422,7 @@ WVList
 95
 MItem
 29
-..\..\..\..\..\lib\awk\tree.h
+../../../../../lib/awk/tree.h
 96
 WString
 3
@@ -440,7 +440,7 @@ WVList
 99
 MItem
 28
-..\..\..\..\..\lib\awk\val.h
+../../../../../lib/awk/val.h
 100
 WString
 3

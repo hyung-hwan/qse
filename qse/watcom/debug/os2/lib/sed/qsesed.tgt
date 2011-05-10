@@ -68,7 +68,7 @@ o?2??Include directories:
 17
 WString
 54
-"$(%watcom)\h;$(%watcom)\h\os2;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
 0
 18
 WVList
@@ -80,7 +80,7 @@ WVList
 19
 MItem
 28
-..\..\..\..\..\lib\sed\err.c
+../../../../../lib/sed/err.c
 20
 WString
 4
@@ -98,7 +98,7 @@ WVList
 23
 MItem
 28
-..\..\..\..\..\lib\sed\sed.c
+../../../../../lib/sed/sed.c
 24
 WString
 4
@@ -116,7 +116,7 @@ WVList
 27
 MItem
 28
-..\..\..\..\..\lib\sed\std.c
+../../../../../lib/sed/std.c
 28
 WString
 4
@@ -152,7 +152,7 @@ WVList
 35
 MItem
 28
-..\..\..\..\..\lib\sed\sed.h
+../../../../../lib/sed/sed.h
 36
 WString
 3

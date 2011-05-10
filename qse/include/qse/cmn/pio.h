@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: pio.h 455 2011-05-09 16:11:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -130,8 +130,13 @@ typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 	/* <os2def.h> => typedef LHANDLE HFILE;
 	                 typedef LHANDLE PID;
 	                 typedef unsigned long LHANDLE; */
-        typedef unsigned long qse_pio_hnd_t;
-	typedef unsigned long qse_pio_pid_t; 
+        typedef unsigned long qse_pio_hnd_t; /**< defines a pipe handle type */
+	typedef unsigned long qse_pio_pid_t; /**< defined a process handle type */
+#	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
+#	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)-1)
+#elif defined(__DOS__)
+	typedef int qse_pio_hnd_t; /**< defines a pipe handle type */
+	typedef int qse_pio_pid_t; /**< defines a process handle type */
 #	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
 #	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)-1)
 #else
