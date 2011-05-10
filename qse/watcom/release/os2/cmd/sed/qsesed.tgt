@@ -124,7 +124,7 @@ o?2??Include directories:
 31
 WString
 54
-"$(%watcom)/h;$(%watcom)/h/os2;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
 0
 32
 MVState
@@ -152,7 +152,7 @@ WVList
 37
 MItem
 28
-..\..\..\..\..\cmd\sed\sed.c
+../../../../../cmd/sed/sed.c
 38
 WString
 4

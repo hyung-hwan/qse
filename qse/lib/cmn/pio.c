@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 454 2011-05-06 15:28:27Z hyunghwan.chung $
+ * $Id: pio.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -105,8 +105,8 @@ qse_pio_t* qse_pio_init (
 	qse_char_t* dup = QSE_NULL;
 	HANDLE windevnul = INVALID_HANDLE_VALUE;
 	BOOL x;
+
 #elif defined(__OS2__)
-	/* TODO: implmenet this for os/2 */
 	APIRET rc;
 	ULONG pipe_size = 4096;
 	UCHAR load_error[CCHMAXPATH];
@@ -118,8 +118,11 @@ qse_pio_t* qse_pio_init (
 	qse_mchar_t* cmd_line = QSE_NULL;
 	qse_mchar_t* cmd_file;
 	HFILE os2devnul = (HFILE)-1;
+
 #elif defined(__DOS__)
-#	error UNSUPPORTED
+	/* TODO: implmenet this for dos
+	unsupported yet */
+
 #else
 	qse_pio_pid_t pid;
 #endif
@@ -527,7 +530,11 @@ qse_pio_t* qse_pio_init (
 
 	if (rc != NO_ERROR) goto oops;
 	pio->child = child_rc.codeTerminate;
+
+#elif defined(__DOS__)
 		
+	/* TODO: implement this */
+
 #else
 
 	if (oflags & QSE_PIO_WRITEIN)
@@ -854,9 +861,11 @@ qse_pio_t* qse_pio_init (
 	return pio;
 
 oops:
+
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
 	if (dup) QSE_MMGR_FREE (mmgr, dup);
+
 #elif defined(__OS2__)
 	if (cmd_line) QSE_MMGR_FREE (mmgr, cmd_line);
 	if (old_in != QSE_PIO_HND_NIL)
@@ -888,6 +897,11 @@ oops:
 	for (i = minidx; i < maxidx; i++) 
 	{
     		if (handle[i] != QSE_PIO_HND_NIL) DosClose (handle[i]);
+	}
+#elif defined(__DOS__)
+	for (i = minidx; i < maxidx; i++) 
+	{
+    		if (handle[i] != QSE_PIO_HND_NIL) close (handle[i]);
 	}
 #else
 	for (i = minidx; i < maxidx; i++) 
@@ -962,6 +976,8 @@ static qse_ssize_t pio_read (
 #elif defined(__OS2__)
 	ULONG count;
 	APIRET rc;
+#elif defined(__DOS__)
+	int n;
 #else
 	qse_ssize_t n;
 #endif
@@ -984,6 +1000,7 @@ static qse_ssize_t pio_read (
 		return -1;
 	}
 	return (qse_ssize_t)count;
+
 #elif defined(__OS2__)
 	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
 	rc = DosRead (hnd, buf, (ULONG)size, &count);
@@ -994,6 +1011,16 @@ static qse_ssize_t pio_read (
     		return -1;
     	}
 	return (qse_ssize_t)count;
+
+#elif defined(__DOS__)
+	/* TODO: verify this */
+	if (size > QSE_TYPE_MAX(unsigned int)) 
+		size = QSE_TYPE_MAX(unsigned int);
+
+	n = read (hnd, buf, size);
+	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
+	return n;
+
 #else
 
 	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
@@ -1039,6 +1066,8 @@ static qse_ssize_t pio_write (
 #elif defined(__OS2__)
 	ULONG count;
 	APIRET rc;
+#elif defined(__DOS__)
+	int n;
 #else
 	qse_ssize_t n;
 #endif
@@ -1072,6 +1101,14 @@ static qse_ssize_t pio_write (
     		return -1;
 	}
 	return (qse_ssize_t)count;
+
+#elif defined(__DOS__)
+	if (size > QSE_TYPE_MAX(unsigned int)) 
+		size = QSE_TYPE_MAX(unsigned int);
+
+	n = write (hnd, data, size);
+	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
+	return n;
 
 #else
 
@@ -1131,6 +1168,8 @@ void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 		CloseHandle (pio->pin[hid].handle);
 #elif defined(__OS2__)
 		DosClose (pio->pin[hid].handle);
+#elif defined(__DOS__)
+		close (pio->pin[hid].handle);
 #else
 		QSE_CLOSE (pio->pin[hid].handle);
 #endif
@@ -1231,6 +1270,10 @@ int qse_pio_wait (qse_pio_t* pio)
 	return (child_rc.codeTerminate == TC_EXIT)? 
 		child_rc.codeResult: (255 + 1 + child_rc.codeTerminate);
 
+#elif defined(__DOS__)
+	/* TOOD: implement this */
+	return -1;
+
 #else
 
 	int opt = 0;
@@ -1315,6 +1358,8 @@ int qse_pio_kill (qse_pio_t* pio)
 	DWORD n;
 #elif defined(__OS2__)
 	APIRET rc;
+#elif defined(__DOS__)
+	/* TODO: implement this */
 #else
 	int n;
 #endif
@@ -1334,6 +1379,7 @@ int qse_pio_kill (qse_pio_t* pio)
 		return -1;
 	}
 	return 0;
+
 #elif defined(__OS2__)
 /*TODO: must use DKP_PROCESS? */
 	rc = DosKillProcess (pio->child, DKP_PROCESSTREE);
@@ -1343,6 +1389,11 @@ int qse_pio_kill (qse_pio_t* pio)
 		return -1;
 	}
 	return 0;	
+
+#elif defined(__DOS__)
+	/* TODO: implement this*/
+	return -1;
+
 #else
 	n = QSE_KILL (pio->child, SIGKILL);
 	if (n <= -1) pio->errnum = QSE_PIO_ESUBSYS;

@@ -12,7 +12,7 @@ LIB
 3
 WString
 5
-o_2so
+d_2so
 1
 0
 1
@@ -63,12 +63,12 @@ WCC
 16
 WString
 25
-o?2??Include directories:
+d????Include directories:
 1
 17
 WString
-54
-"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
+37
+"$(%watcom)/h;../../../../../include"
 0
 18
 WVList

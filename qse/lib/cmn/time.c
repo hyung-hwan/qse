@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: time.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,6 +27,8 @@
 #	define INCL_DOSDATETIME
 #	define INCL_DOSERRORS
 #	include <os2.h>
+#elif defined(__DOS__)
+#	include <dos.h>
 #else
 #	include "syscall.h"
 #	include <sys/time.h>
@@ -119,6 +121,27 @@ int qse_gettime (qse_ntime_t* t)
 	if (qse_timelocal (&bt, t) <= -1) return -1;
 	return 0;
 
+#elif defined(__DOS__)
+
+	struct dostime_t dt;
+	struct dosdate_t dd;
+	qse_btime_t bt;
+
+	_dos_gettime (&dt);
+	_dos_getdate (&dd);
+
+	bt.year = dd.year - 1900;
+	bt.mon = dd.month - 1;
+	bt.mday = dd.day;
+	bt.hour = dt.hour;
+	bt.min = dt.minute;
+	bt.sec = dt.second;
+	bt.msec = dt.hsecond * 10;
+	bt.isdst = -1;
+
+	if (qse_timelocal (&bt, t) <= -1) return -1;
+	return 0;
+
 #else
 	struct timeval tv;
 	int n;
@@ -142,6 +165,7 @@ int qse_settime (qse_ntime_t t)
 	if (FileTimeToSystemTime (&ft, &st) == FALSE) return -1;
 	if (SetSystemTime(&st) == FALSE) return -1;
 	return 0;
+
 #elif defined(__OS2__)
 
 	APIRET rc;
@@ -161,6 +185,28 @@ int qse_settime (qse_ntime_t t)
 
 	rc = DosSetDateTime (&dt);
 	return (rc != NO_ERROR)? -1: 0;
+
+#elif defined(__DOS__)
+
+	struct dostime_t dt;
+	struct dosdate_t dd;
+	qse_btime_t bt;
+
+	if (qse_localtime (t, &bt) <= -1) return -1;
+
+	dd.year = bt.year + 1900;
+	dd.month = bt.mon + 1;
+	dd.day = bt.mday;
+	dt.hour = bt.hour;
+	dt.minute = bt.min;
+	dt.second = bt.sec;
+	dt.hsecond = bt.msec / 10;
+
+	if (_dos_settime (&dt) != 0) return -1;
+	if (_dos_setdate (&dd) != 0) return -1;
+
+	return 0;
+
 #else
 	struct timeval tv;
 	int n;
@@ -275,6 +321,13 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 #	else
 #		error Please support other compilers that I didn't try.
 #	endif
+#elif defined(__DOS__)
+#	if defined(__WATCOMC__)
+		struct tm btm;
+		tm = _localtime (&t, &btm);
+#	else
+#		error Please support other compilers that I didn't try.
+#	endif
 #else
 	struct tm btm;
 	tm = localtime_r (&t, &btm);
@@ -321,6 +374,8 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 	
 	return 0;
 #elif defined(__OS2__)
+#	error NOT IMPLEMENTED YET
+#elif defined(__DOS__)
 #	error NOT IMPLEMENTED YET
 #else
 

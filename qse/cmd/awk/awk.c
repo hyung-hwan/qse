@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
+ * $Id: awk.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,6 +28,7 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/xma.h>
+#include <qse/cmn/time.h>
 
 #include <string.h>
 #include <signal.h>
@@ -46,6 +47,8 @@
 #	define INCL_DOSEXCEPTIONS
 #	define INCL_ERRORS
 #	include <os2.h>
+#elif defined(__DOS__)
+#	include <dos.h>
 #else
 #	include <unistd.h>
 #	include <errno.h>
@@ -132,6 +135,19 @@ static ULONG _System stop_run (
 
 	return XCPT_CONTINUE_SEARCH; /* exception not resolved */
 }
+
+#elif defined(__DOS__)
+
+static void setsignal (int sig, void(*handler)(int))
+{
+	signal (sig, handler);
+}
+
+static void stop_run (int sig)
+{
+	qse_awk_rtx_stop (app_rtx);
+}
+
 #else
 
 static int setsignal (int sig, void(*handler)(int), int restart)
@@ -180,6 +196,8 @@ static void set_intr_run (void)
 	os2_excrr.ExceptionHandler = (ERR)stop_run;
 	rc = DosSetExceptionHandler (&os2_excrr);
 	/*if (rc != NO_ERROR)...*/
+#elif defined(__DOS__)
+	setsignal (SIGINT, stop_run);
 #else
 	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
 	setsignal (SIGINT, stop_run, 0);
@@ -194,6 +212,8 @@ static void unset_intr_run (void)
 	APIRET rc;
 	rc = DosUnsetExceptionHandler (&os2_excrr);
 	/*if (rc != NO_ERROR) ...*/
+#elif defined(__DOS__)
+	setsignal (SIGINT, SIG_DFL);
 #else
 	setsignal (SIGINT, SIG_DFL, 1);
 #endif

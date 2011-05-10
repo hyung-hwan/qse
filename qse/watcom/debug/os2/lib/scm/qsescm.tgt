@@ -68,7 +68,7 @@ o?2??Include directories:
 17
 WString
 54
-"$(%watcom)\h;$(%watcom)\h\os2;..\..\..\..\..\include"
+"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
 0
 18
 WVList
@@ -80,7 +80,7 @@ WVList
 19
 MItem
 28
-..\..\..\..\..\lib\scm\err.c
+../../../../../lib/scm/err.c
 20
 WString
 4
@@ -98,7 +98,7 @@ WVList
 23
 MItem
 29
-..\..\..\..\..\lib\scm\eval.c
+../../../../../lib/scm/eval.c
 24
 WString
 4
@@ -116,7 +116,7 @@ WVList
 27
 MItem
 28
-..\..\..\..\..\lib\scm\mem.c
+../../../../../lib/scm/mem.c
 28
 WString
 4
@@ -134,7 +134,7 @@ WVList
 31
 MItem
 30
-..\..\..\..\..\lib\scm\print.c
+../../../../../lib/scm/print.c
 32
 WString
 4
@@ -152,7 +152,7 @@ WVList
 35
 MItem
 29
-..\..\..\..\..\lib\scm\read.c
+../../../../../lib/scm/read.c
 36
 WString
 4
@@ -170,7 +170,7 @@ WVList
 39
 MItem
 28
-..\..\..\..\..\lib\scm\scm.c
+../../../../../lib/scm/scm.c
 40
 WString
 4
@@ -206,7 +206,7 @@ WVList
 47
 MItem
 28
-..\..\..\..\..\lib\scm\scm.h
+../../../../../lib/scm/scm.h
 48
 WString
 3
