@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: Awk.cpp 456 2011-05-12 14:55:53Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -604,6 +604,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		qse_awk_rtx_refupval (r->rtx, map);
 		qse_awk_rtx_refupval (r->rtx, v);
 
+/* TODO: use qse_awk_rtx_setmapvalfld() */
 		/* update the map with a given value */
 		pair_t* pair = qse_htb_upsert (
 			((qse_awk_val_map_t*)map)->map, 
@@ -640,6 +641,7 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 
 		qse_awk_rtx_refupval (r->rtx, v);
 
+/* TODO: use qse_awk_rtx_setmapvalfld() */
 		pair_t* pair = qse_htb_upsert (
 			((qse_awk_val_map_t*)val)->map, 
 			(char_t*)idx.ptr, idx.len, v, 0);
@@ -748,7 +750,6 @@ int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str)
 	return n;
 }
 
-
 bool Awk::Value::isIndexed () const
 {
 	QSE_ASSERT (val != QSE_NULL);
@@ -767,6 +768,19 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 	}
 
 	// get the value from the map.
+	val_t* fv = qse_awk_rtx_getmapvalfld (val, idx.ptr, idx.len);
+
+	// the key is not found. it is not an error. v is just nil 
+	if (fv == QSE_NULL)
+	{
+		v->clear ();
+		return 0; 
+	}
+
+	// if v.set fails, it should return an error 
+	return v->setVal (run, fv);
+		
+#if 0
 	qse_awk_val_map_t* m = (qse_awk_val_map_t*)val;
 	pair_t* pair = qse_htb_search (m->map, idx.ptr, idx.len);
 
@@ -779,6 +793,7 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 
 	// if v.set fails, it should return an error 
 	return v->setVal (run, (val_t*)QSE_HTB_VPTR(pair));
+#endif
 }
 
 Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const

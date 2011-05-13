@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: val.c 456 2011-05-12 14:55:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -388,7 +388,6 @@ static void same_mapval (qse_htb_t* map, void* dptr, qse_size_t dlen)
 
 qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 {
-	qse_awk_val_map_t* val;
 	static qse_htb_mancbs_t mancbs =
 	{
 	/* the key is copied inline into a pair and is freed when the pair
@@ -408,6 +407,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 		QSE_HTB_SIZER_DEFAULT,
 		QSE_HTB_HASHER_DEFAULT
 	};
+	qse_awk_val_map_t* val;
 
 	/* CHECK */
 	/* 
@@ -462,6 +462,69 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	/* END CHECK */
 
 	return (qse_awk_val_t*)val;
+}
+
+qse_awk_val_t* qse_awk_rtx_setmapvalfld (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
+	qse_char_t* kptr, qse_size_t klen, qse_awk_val_t* v)
+{
+	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+
+#if 0
+	if (map->type != QSE_AWK_VAL_MAP)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOTIDX, QSE_NULL);
+		return QSE_NULL;
+	}
+#endif
+
+	if (qse_htb_upsert (
+		((qse_awk_val_map_t*)map)->map,
+		kptr, klen, v, 0) == QSE_NULL)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	/* the value is passed in by an external party. we can't refup()
+	 * and refdown() the value if htb_upsert() fails. that way, the value
+	 * can be destroyed if it was passed with the reference count of 0.
+	 * so we increment the reference count when htb_upsert() is complete */
+	qse_awk_rtx_refupval (rtx, v);
+
+	return v;
+}
+
+qse_awk_val_t* qse_awk_rtx_getmapvalfld (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
+	qse_char_t* kptr, qse_size_t klen)
+{
+	qse_htb_pair_t* pair;
+
+	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+
+#if 0
+	if (map->type != QSE_AWK_VAL_MAP)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOTIDX, QSE_NULL);
+		return QSE_NULL;
+	}
+#endif
+
+	pair = qse_htb_search (((qse_awk_val_map_t*)map)->map, kptr, klen);
+	if (pair == QSE_NULL)
+	{
+		/* the given key is not found in the map.
+		 * we return NULL here as this function is called by 
+		 * a user unlike the awk statement accessing the map key.
+		 * so you can easily determine if the key is found by
+		 * checking the error number.
+		 */
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return QSE_NULL;
+	}
+		
+	return QSE_HTB_VPTR(pair);
 }
 
 qse_awk_val_t* qse_awk_rtx_makerefval (
