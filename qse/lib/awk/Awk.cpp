@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 456 2011-05-12 14:55:53Z hyunghwan.chung $
+ * $Id: Awk.cpp 457 2011-05-12 16:16:57Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -592,8 +592,8 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 
 	if (val->type != QSE_AWK_VAL_MAP)
 	{
-		/* the previous value is not a map. 
-		 * a new map value needs to be created first */
+		// the previous value is not a map. 
+		// a new map value needs to be created first.
 		val_t* map = qse_awk_rtx_makemapval (r->rtx);
 		if (map == QSE_NULL) 
 		{
@@ -602,24 +602,22 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 		}
 
 		qse_awk_rtx_refupval (r->rtx, map);
-		qse_awk_rtx_refupval (r->rtx, v);
 
-/* TODO: use qse_awk_rtx_setmapvalfld() */
-		/* update the map with a given value */
-		pair_t* pair = qse_htb_upsert (
-			((qse_awk_val_map_t*)map)->map, 
-			(char_t*)idx.ptr, idx.len, v, 0);
-		if (pair == QSE_NULL)
+		// update the map with a given value 
+		if (qse_awk_rtx_setmapvalfld (
+			r->rtx, map, idx.ptr, idx.len, v) == QSE_NULL)
 		{
-			qse_awk_rtx_refdownval (r->rtx, v);
 			qse_awk_rtx_refdownval (r->rtx, map);
-			r->setError (QSE_AWK_ENOMEM);
 			r->awk->retrieveError (r);
 			return -1;
 		}
 
-		if (run != QSE_NULL)
-			qse_awk_rtx_refdownval (run->rtx, val);
+		// increment the reference count of the value after
+		// it has been added to the map
+		qse_awk_rtx_refupval (r->rtx, v);
+
+		// free the previous value
+		if (run) qse_awk_rtx_refdownval (run->rtx, val);
 
 		run = r;
 		val = map;
@@ -639,19 +637,17 @@ int Awk::Value::setIndexedVal (Run* r, const Index& idx, val_t* v)
 			return -1;
 		}
 
-		qse_awk_rtx_refupval (r->rtx, v);
-
-/* TODO: use qse_awk_rtx_setmapvalfld() */
-		pair_t* pair = qse_htb_upsert (
-			((qse_awk_val_map_t*)val)->map, 
-			(char_t*)idx.ptr, idx.len, v, 0);
-		if (pair == QSE_NULL)
+		// update the map with a given value 
+		if (qse_awk_rtx_setmapvalfld (
+			r->rtx, val, idx.ptr, idx.len, v) == QSE_NULL)
 		{
-			qse_awk_rtx_refdownval (r->rtx, v);
-			run->setError (QSE_AWK_ENOMEM);
-			run->awk->retrieveError (run);
+			r->awk->retrieveError (r);
 			return -1;
 		}
+
+		// increment the reference count of the value after
+		// it has been added to the map
+		qse_awk_rtx_refupval (r->rtx, v);
 	}
 
 	return 0;
@@ -665,8 +661,7 @@ int Awk::Value::setIndexedInt (const Index& idx, long_t v)
 
 int Awk::Value::setIndexedInt (Run* r, const Index& idx, long_t v)
 {
-	val_t* tmp;
-	tmp = qse_awk_rtx_makeintval (r->rtx, v);
+	val_t* tmp = qse_awk_rtx_makeintval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -688,8 +683,7 @@ int Awk::Value::setIndexedReal (const Index& idx, real_t v)
 
 int Awk::Value::setIndexedReal (Run* r, const Index& idx, real_t v)
 {
-	val_t* tmp;
-	tmp = qse_awk_rtx_makerealval (r->rtx, v);
+	val_t* tmp = qse_awk_rtx_makerealval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -768,7 +762,8 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 	}
 
 	// get the value from the map.
-	val_t* fv = qse_awk_rtx_getmapvalfld (val, idx.ptr, idx.len);
+	val_t* fv = qse_awk_rtx_getmapvalfld (
+		run->rtx, val, (char_t*)idx.ptr, idx.len);
 
 	// the key is not found. it is not an error. v is just nil 
 	if (fv == QSE_NULL)
@@ -779,21 +774,6 @@ int Awk::Value::getIndexed (const Index& idx, Value* v) const
 
 	// if v.set fails, it should return an error 
 	return v->setVal (run, fv);
-		
-#if 0
-	qse_awk_val_map_t* m = (qse_awk_val_map_t*)val;
-	pair_t* pair = qse_htb_search (m->map, idx.ptr, idx.len);
-
-	// the key is not found. it is not an error. v is just nil 
-	if (pair == QSE_NULL) 
-	{
-		v->clear ();
-		return 0; 
-	}
-
-	// if v.set fails, it should return an error 
-	return v->setVal (run, (val_t*)QSE_HTB_VPTR(pair));
-#endif
 }
 
 Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
@@ -833,57 +813,6 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 
 	return IndexIterator (pair, buckno);	
 }
-
-#if 0
-int Awk::Argument::getFirstIndex (Awk::Argument& val) const
-{
-	val.clear ();
-
-	if (this->val == QSE_NULL) return -1;
-	if (this->val->type != QSE_AWK_VAL_MAP) return -1;
-
-	qse_size_t buckno;
-	qse_awk_val_map_t* m = (qse_awk_val_map_t*)this->val;
-	pair_t* pair = qse_htb_getfirstpair (m->map, &buckno);
-	if (pair == QSE_NULL) return 0; // no more key
-
-	if (val.init (
-		(qse_char_t*)QSE_HTB_KPTR(pair),
-		QSE_HTB_KLEN(pair)) == -1) return -1;
-
-	// reuse the string field as an interator.
-	this->str.ptr = (char_t*)pair;
-	this->str.len = buckno;
-
-	return 1;
-}
-
-int Awk::Argument::getNextIndex (Awk::Argument& val) const
-{
-	val.clear ();
-
-	if (this->val == QSE_NULL) return -1;
-	if (this->val->type != QSE_AWK_VAL_MAP) return -1;
-
-	qse_awk_val_map_t* m = (qse_awk_val_map_t*)this->val;
-
-	pair_t* pair = (pair_t*)this->str.ptr;
-	qse_size_t buckno = this->str.len;
-		
-	pair = qse_htb_getnextpair (m->map, pair, &buckno);
-	if (pair == QSE_NULL) return 0;
-
-	if (val.init (
-		(qse_char_t*)QSE_HTB_KPTR(pair),
-		QSE_HTB_KLEN(pair)) == -1) return -1;
-
-	// reuse the string field as an interator.
-	this->str.ptr = (char_t*)pair;
-	this->str.len = buckno;
-	return 1;
-}
-
-#endif
 
 //////////////////////////////////////////////////////////////////
 // Awk::Run

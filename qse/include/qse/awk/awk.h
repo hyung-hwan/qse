@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 456 2011-05-12 14:55:53Z hyunghwan.chung $
+ * $Id: awk.h 457 2011-05-12 16:16:57Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -53,6 +53,9 @@
  * @example awk04.c
  * This programs shows how to qse_awk_rtx_call().
  *
+ * @example awk10.c
+ * This programs shows how to manipuate a map using qse_awk_rtx_makemapval()
+ * and qse_awk_rtx_setmapvalfld().
  */
 
 /** @struct qse_awk_t
@@ -1905,25 +1908,25 @@ qse_awk_val_t* qse_awk_rtx_makemapval (
  * @return value @a v on success, #QSE_NULL on failure.
  */
 qse_awk_val_t* qse_awk_rtx_setmapvalfld (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* map,
-	qse_char_t*    kptr,
-	qse_size_t     klen,
-	qse_awk_val_t* v
+	qse_awk_rtx_t*    rtx,
+	qse_awk_val_t*    map,
+	const qse_char_t* kptr,
+	qse_size_t        klen,
+	qse_awk_val_t*    v
 );
 
 /**
  * The qse_awk_rtx_setmapvalfld() function gets the field value in a map.
  * You must make sure that the type of @a map is #QSE_AWK_VAL_MAP.
  * If the field is not found, the function fails and sets the error number
- * to #QSE_AWK_EINVAL.
+ * to #QSE_AWK_EINVAL. The function does not fail for other reasons.
  * @return field value on success, #QSE_NULL on failure.
  */
 qse_awk_val_t* qse_awk_rtx_getmapvalfld (
-        qse_awk_rtx_t* rtx,
-	qse_awk_val_t* map,
-        qse_char_t*    kptr,
-	qse_size_t     klen
+	qse_awk_rtx_t*     rtx,
+	qse_awk_val_t*     map,
+	const qse_char_t*  kptr,
+	qse_size_t         klen
 );
 
 /**
