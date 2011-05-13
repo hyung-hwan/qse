@@ -136,23 +136,47 @@ int main ()
 	/* print the return value */
 	if (rtv->type == QSE_AWK_VAL_MAP)
 	{
-		qse_printf (QSE_T("ret [MAP]\n"));
+		qse_awk_val_map_itr_t itr;
+		qse_awk_val_map_itr_t* iptr;
+
+		iptr = qse_awk_rtx_getfirstmapvalitr (rtx, rtv, &itr);
+		while (iptr)
+		{
+			qse_xstr_t str;
+
+			str.ptr = qse_awk_rtx_valtocpldup (
+				rtx, QSE_AWK_VAL_MAP_ITR_VPTR(iptr), &str.len);
+			if (str.ptr == QSE_NULL)
+			{
+				qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+					qse_awk_rtx_geterrmsg(rtx));
+				ret = -1; goto oops;
+			}
+	
+			qse_printf (QSE_T("ret [%.*s]=[%.*s]\n"), 
+				(int)QSE_AWK_VAL_MAP_ITR_KLEN(iptr), 
+				QSE_AWK_VAL_MAP_ITR_KPTR(iptr),
+				(int)str.len, str.ptr
+			);
+			qse_awk_rtx_free (rtx, str.ptr);
+			
+			iptr = qse_awk_rtx_getnextmapvalitr (rtx, rtv, &itr);
+		}
 	}
 	else
 	{
-		qse_char_t* str;
-		qse_size_t len;
+		qse_xstr_t str;
 
-		str = qse_awk_rtx_valtocpldup (rtx, rtv, &len);
-		if (str == QSE_NULL)
+		str.ptr = qse_awk_rtx_valtocpldup (rtx, rtv, &str.len);
+		if (str.ptr == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 				qse_awk_rtx_geterrmsg(rtx));
 			ret = -1; goto oops;
 		}
 	
-		qse_printf (QSE_T("ret [%.*s]\n"), (int)len, str);
-		qse_awk_rtx_free (rtx, str);
+		qse_printf (QSE_T("ret [%.*s]\n"), (int)str.len, str.ptr);
+		qse_awk_rtx_free (rtx, str.ptr);
 	}
 
 oops:
