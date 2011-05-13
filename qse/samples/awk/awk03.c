@@ -1,5 +1,5 @@
 /*
- * $Id: awk03.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: awk03.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -104,6 +104,8 @@ int main ()
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 				qse_awk_rtx_geterrmsg(rtx));
+
+			qse_awk_rtx_refdownval (rtx, v);
 			ret = -1; goto oops;
 		}
 

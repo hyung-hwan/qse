@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
+ * $Id: awk04.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,7 +23,7 @@
 #include <qse/cmn/stdio.h>
 
 static const qse_char_t* src = QSE_T(
-	"function pow(x,y) { return x ** y; }"
+	"function dump(x) { for (k in x) print k \"=\" x[k]; x[\"f99\"]=\"os2\"; return x; }"
 );
 
 int main ()
@@ -31,11 +31,20 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_parsestd_in_t psin;
-	qse_char_t* str;
-	qse_size_t len;
 	qse_awk_val_t* rtv = QSE_NULL;
-	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
+	qse_awk_val_t* arg = QSE_NULL;
 	int ret, i, opt;
+	struct 
+	{
+		const qse_char_t* kptr;
+		qse_size_t klen;
+		const qse_char_t* vptr;
+	} xxx[] =
+	{
+		{ QSE_T("f0"), 2, QSE_T("linux") },
+		{ QSE_T("f1"), 2, QSE_T("openvms") },
+		{ QSE_T("f2"), 2, QSE_T("hpux") }
+	};
 
 	/* create a main processor */
 	awk = qse_awk_openstd (0);
@@ -49,6 +58,8 @@ int main ()
 
 	/* don't allow BEGIN, END, pattern-action blocks */
 	opt &= ~QSE_AWK_PABLOCK;
+	/* can assign a map to a variable */
+	opt |= QSE_AWK_MAPTOVAR;
 	/* enable ** */
 	opt |= QSE_AWK_EXTRAOPS;
 
@@ -69,7 +80,7 @@ int main ()
 	rtx = qse_awk_rtx_openstd (
 		awk, 
 		0,
-		QSE_T("awk04"),
+		QSE_T("awk10"),
 		QSE_NULL, /* stdin */
 		QSE_NULL  /* stdout */
 	);
@@ -80,26 +91,41 @@ int main ()
 		ret = -1; goto oops;
 	}
 	
-	/* invoke the pow function */
-	arg[0] = qse_awk_rtx_makeintval (rtx, 50);
-	if (arg[0] == QSE_NULL)
+	/* prepare a argument to be a map */
+	arg = qse_awk_rtx_makemapval (rtx);
+	if (arg == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));
 		ret = -1; goto oops;
 	}
-	qse_awk_rtx_refupval (rtx, arg[0]);
+	qse_awk_rtx_refupval (rtx, arg);
 
-	arg[1] = qse_awk_rtx_makeintval (rtx, 3);
-	if (arg[1] == QSE_NULL)
+	/* insert some key/value pairs into the map */
+	for (i = 0; i < QSE_COUNTOF(xxx); i++)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
-	}
-	qse_awk_rtx_refupval (rtx, arg[1]);
+		qse_awk_val_t* v, * fv;
 
-	rtv = qse_awk_rtx_call (rtx, QSE_T("pow"), arg, 2);
+		fv = qse_awk_rtx_makestrval0 (rtx, xxx[i].vptr);
+		if (fv == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+				qse_awk_rtx_geterrmsg(rtx));
+			ret = -1; goto oops;
+		}
+		qse_awk_rtx_refupval (rtx, fv);
+		v = qse_awk_rtx_setmapvalfld (rtx, arg, xxx[i].kptr, xxx[i].klen, fv);
+		qse_awk_rtx_refdownval (rtx, fv);
+		if (v == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+				qse_awk_rtx_geterrmsg(rtx));
+			ret = -1; goto oops;
+		}
+	}
+	
+	/* invoke the dump function */
+	rtv = qse_awk_rtx_call (rtx, QSE_T("dump"), &arg, 1);
 	if (rtv == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -107,26 +133,34 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	str = qse_awk_rtx_valtocpldup (rtx, rtv, &len);
-	if (str == QSE_NULL)
+	/* print the return value */
+	if (rtv->type == QSE_AWK_VAL_MAP)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
-			qse_awk_rtx_geterrmsg(rtx));
-		ret = -1; goto oops;
+		qse_printf (QSE_T("ret [MAP]\n"));
 	}
+	else
+	{
+		qse_char_t* str;
+		qse_size_t len;
 
-	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
-	qse_awk_rtx_free (rtx, str);
+		str = qse_awk_rtx_valtocpldup (rtx, rtv, &len);
+		if (str == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+				qse_awk_rtx_geterrmsg(rtx));
+			ret = -1; goto oops;
+		}
+	
+		qse_printf (QSE_T("ret [%.*s]\n"), (int)len, str);
+		qse_awk_rtx_free (rtx, str);
+	}
 
 oops:
 	/* clear the return value */
 	if (rtv) qse_awk_rtx_refdownval (rtx, rtv);
 
-	/* dereference all arguments */
-	for (i = 0; i < QSE_COUNTOF(arg); i++)
-	{
-		if (arg[i]) qse_awk_rtx_refdownval (rtx, arg[i]);
-	}
+	/* dereference the argument */
+	if (arg) qse_awk_rtx_refdownval (rtx, arg);
 
 	/* destroy a runtime context */
 	if (rtx) qse_awk_rtx_close (rtx);

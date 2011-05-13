@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 456 2011-05-12 14:55:53Z hyunghwan.chung $
+ * $Id: val.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -466,7 +466,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 
 qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
-	qse_char_t* kptr, qse_size_t klen, qse_awk_val_t* v)
+	const qse_char_t* kptr, qse_size_t klen, qse_awk_val_t* v)
 {
 	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
 
@@ -480,7 +480,7 @@ qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 
 	if (qse_htb_upsert (
 		((qse_awk_val_map_t*)map)->map,
-		kptr, klen, v, 0) == QSE_NULL)
+		(qse_char_t*)kptr, klen, v, 0) == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
@@ -497,7 +497,7 @@ qse_awk_val_t* qse_awk_rtx_setmapvalfld (
 
 qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* map, 
-	qse_char_t* kptr, qse_size_t klen)
+	const qse_char_t* kptr, qse_size_t klen)
 {
 	qse_htb_pair_t* pair;
 
