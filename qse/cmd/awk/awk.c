@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id: awk.c 456 2011-05-12 14:55:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,7 +28,6 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/xma.h>
-#include <qse/cmn/time.h>
 
 #include <string.h>
 #include <signal.h>
