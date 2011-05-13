@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: Awk.hpp 458 2011-05-13 04:06:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -459,7 +459,7 @@ public:
 		/// The IndexIterator class is a helper class to make simple
 		/// iteration over array elements.
 		///
-		class IndexIterator
+		class IndexIterator: public qse_awk_val_map_itr_t
 		{
 		public:
 			friend class Value;
@@ -474,26 +474,29 @@ public:
 			/// The IndexIterator() function creates an iterator 
 			/// for an arrayed value.
 			///
-			IndexIterator (): pair (QSE_NULL), buckno (0) {}
+			IndexIterator ()
+			{
+				this->pair = QSE_NULL;
+				this->buckno = 0;
+			}
 
 		protected:
-			IndexIterator (pair_t* pair, size_t buckno): 
-				pair (pair), buckno (buckno) {}
+			IndexIterator (pair_t* pair, size_t buckno)
+			{
+				this->pair = pair;
+				this->buckno = buckno;
+			}
 
 		public:
 			bool operator==  (const IndexIterator& ii) const
 			{
-				return pair == ii.pair && buckno == ii.buckno;
+				return this->pair == ii.pair && this->buckno == ii.buckno;
 			}
 
 			bool operator!=  (const IndexIterator& ii) const
 			{
 				return !operator== (ii);
 			}
-
-		protected:
-			pair_t* pair;
-			size_t  buckno;
 		};
 
 		///
@@ -664,8 +667,8 @@ public:
 		///         iterator that can be passed to getNextIndex() if not
 		///
 		IndexIterator getNextIndex (
-			Index* idx,               ///< index holder
-			const IndexIterator& iter ///< current position
+			Index* idx,                 ///< index holder
+			const IndexIterator& curitr ///< current position
 		) const;
 
 	protected:

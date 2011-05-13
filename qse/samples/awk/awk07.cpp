@@ -69,6 +69,13 @@ static int run_awk (QSE::StdAwk& awk)
 		if (arg[0].setIndexedInt (run, 
 			QSE::StdAwk::Value::IntIndex(i), i*20) <= -1) return -1;
 	}
+	if (arg[0].setIndexedStr (run, 
+		QSE::StdAwk::Value::IntIndex(99), QSE_T("-2345")) <= -1) return -1;
+
+	QSE::StdAwk::Value dummy;
+	if (dummy.setStr (run, QSE_T("4567")) <= -1) return -1;
+	if (arg[0].setIndexedVal (run, 
+		QSE::StdAwk::Value::IntIndex(999), dummy) <= -1) return -1;
 
 	// prepare a variable to hold the return value
 	QSE::StdAwk::Value r;

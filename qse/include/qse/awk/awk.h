@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 457 2011-05-12 16:16:57Z hyunghwan.chung $
+ * $Id: awk.h 458 2011-05-13 04:06:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -264,6 +264,21 @@ struct qse_awk_val_ref_t
 	qse_awk_val_t** adr;
 };
 typedef struct qse_awk_val_ref_t  qse_awk_val_ref_t;
+
+/**
+ * The qse_awk_val_map_itr_t type defines the iterator to map value fields.
+ */
+struct qse_awk_val_map_itr_t
+{
+	qse_htb_pair_t* pair;
+	qse_size_t      buckno;
+};
+typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
+
+
+#define QSE_AWK_VAL_MAP_ITR_KPTR(itr) QSE_HTB_KPTR((itr)->pair)
+#define QSE_AWK_VAL_MAP_ITR_KLEN(itr) QSE_HTB_KLEN((itr)->pair)
+#define QSE_AWK_VAL_MAP_ITR_VPTR(itr) QSE_HTB_VPTR((itr)->pair)
 
 /**
  * The qse_awk_nde_type_t defines the node types.
@@ -1928,6 +1943,31 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 	const qse_char_t*  kptr,
 	qse_size_t         klen
 );
+
+/**
+ * The qse_awk_rtx_getfirstmapvalitr() returns the iterator to the
+ * first pair in the map. It returns #QSE_NULL and sets the pair field of 
+ * @a itr to #QSE_NULL if the map contains no pair. Otherwise, it returns
+ * @a itr pointing to the first pair.
+ */
+qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
+     qse_awk_rtx_t*         rtx,
+	qse_awk_val_t*         map,
+	qse_awk_val_map_itr_t* itr
+);
+
+/**
+ * The qse_awk_rtx_getnextmapvalitr() returns the iterator to the
+ * next pair to @a itr in the map. It returns #QSE_NULL and sets the pair 
+ * field of @a itr to #QSE_NULL if @a itr points to the last pair.
+ * Otherwise, it returns @a itr pointing to the next pair.
+ */
+qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
+     qse_awk_rtx_t*         rtx,
+	qse_awk_val_t*         map,
+	qse_awk_val_map_itr_t* itr
+);
+
 
 /**
  * The qse_awk_rtx_makerefval() function creates a reference value.

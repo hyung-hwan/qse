@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
+ * $Id: val.c 458 2011-05-13 04:06:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -525,6 +525,24 @@ qse_awk_val_t* qse_awk_rtx_getmapvalfld (
 	}
 		
 	return QSE_HTB_VPTR(pair);
+}
+
+qse_awk_val_map_itr_t* qse_awk_rtx_getfirstmapvalitr (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
+{
+	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+	itr->pair = qse_htb_getfirstpair (
+		((qse_awk_val_map_t*)map)->map, &itr->buckno);
+	return itr->pair? itr: QSE_NULL;
+}
+
+qse_awk_val_map_itr_t* qse_awk_rtx_getnextmapvalitr (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* map, qse_awk_val_map_itr_t* itr)
+{
+	QSE_ASSERT (map->type == QSE_AWK_VAL_MAP);
+	itr->pair = qse_htb_getnextpair (
+		((qse_awk_val_map_t*)map)->map, itr->pair, &itr->buckno);
+	return itr->pair? itr: QSE_NULL;
 }
 
 qse_awk_val_t* qse_awk_rtx_makerefval (
