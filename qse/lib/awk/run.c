@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: run.c 459 2011-05-17 14:37:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -702,7 +702,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 {
 	qse_awk_rtx_t* rtx;
 
-        QSE_ASSERTX (awk->prm.pow != QSE_NULL, "Call qse_awk_setprm() first");
+        QSE_ASSERTX (awk->prm.math.pow != QSE_NULL, "Call qse_awk_setprm() first");
         QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
@@ -4632,7 +4632,7 @@ static qse_awk_val_t* eval_binop_exp (
 	qse_real_t r1, r2;
 	qse_awk_val_t* res;
 
-	QSE_ASSERTX (rtx->awk->prm.pow != QSE_NULL,
+	QSE_ASSERTX (rtx->awk->prm.math.pow != QSE_NULL,
 		"the pow function should be provided when the awk object"
 		" is created to make the exponentiation work properly.");
 
@@ -4695,7 +4695,7 @@ static qse_awk_val_t* eval_binop_exp (
 		/* left - int, right - real */
 		res = qse_awk_rtx_makerealval (
 			rtx, 
-			rtx->awk->prm.pow (
+			rtx->awk->prm.math.pow (
 				rtx->awk, (qse_real_t)l1, (qse_real_t)r2
 			)
 		);
@@ -4706,7 +4706,7 @@ static qse_awk_val_t* eval_binop_exp (
 		QSE_ASSERT (n3 == 3);
 		res = qse_awk_rtx_makerealval (
 			rtx,
-			rtx->awk->prm.pow (
+			rtx->awk->prm.math.pow (
 				rtx->awk, (qse_real_t)r1,(qse_real_t)r2
 			)
 		);

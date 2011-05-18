@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 447 2011-05-01 13:28:51Z hyunghwan.chung $ 
+ * $Id: awk.c 459 2011-05-17 14:37:51Z hyunghwan.chung $ 
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,7 +72,6 @@ static void clear_token (qse_awk_tok_t* tok)
 	tok->loc.colm = 0;
 }
 
-
 qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 {
 	qse_awk_t* awk;
@@ -130,12 +129,28 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	awk->mmgr = mmgr;
 
 	/* progagate the primitive functions */
-	QSE_ASSERT (prm          != QSE_NULL);
-	QSE_ASSERT (prm->pow     != QSE_NULL);
-	QSE_ASSERT (prm->sprintf != QSE_NULL);
-	if (prm          == QSE_NULL || 
-	    prm->pow     == QSE_NULL ||
-	    prm->sprintf == QSE_NULL)
+	QSE_ASSERT (prm             != QSE_NULL);
+	QSE_ASSERT (prm->sprintf    != QSE_NULL);
+	QSE_ASSERT (prm->math.pow   != QSE_NULL);
+	QSE_ASSERT (prm->math.sin   != QSE_NULL);
+	QSE_ASSERT (prm->math.cos   != QSE_NULL);
+	QSE_ASSERT (prm->math.tan   != QSE_NULL);
+	QSE_ASSERT (prm->math.atan  != QSE_NULL);
+	QSE_ASSERT (prm->math.atan2 != QSE_NULL);
+	QSE_ASSERT (prm->math.log   != QSE_NULL);
+	QSE_ASSERT (prm->math.exp   != QSE_NULL);
+	QSE_ASSERT (prm->math.sqrt  != QSE_NULL);
+	if (prm             == QSE_NULL || 
+	    prm->sprintf    == QSE_NULL ||
+	    prm->math.pow   == QSE_NULL ||
+	    prm->math.sin   == QSE_NULL ||
+	    prm->math.cos   == QSE_NULL ||
+	    prm->math.tan   == QSE_NULL ||
+	    prm->math.atan  == QSE_NULL ||
+	    prm->math.atan2 == QSE_NULL ||
+	    prm->math.log   == QSE_NULL ||
+	    prm->math.exp   == QSE_NULL ||
+	    prm->math.sqrt  == QSE_NULL)
 	{
 		QSE_AWK_FREE (awk, awk);
 		return QSE_NULL;

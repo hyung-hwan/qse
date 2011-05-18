@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 451 2011-05-03 14:00:38Z hyunghwan.chung $
+ * $Id: std.c 459 2011-05-17 14:37:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -127,6 +127,110 @@ static qse_real_t custom_awk_pow (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 #endif
 }
 
+static qse_real_t custom_awk_sin (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return sinl (x);
+#elif defined(HAVE_SIN)
+	return sin (x);
+#elif defined(HAVE_SINF)
+	return sinf (x);
+#else
+	#error ### no sin function available ###
+#endif
+}
+
+static qse_real_t custom_awk_cos (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return cosl (x);
+#elif defined(HAVE_COS)
+	return cos (x);
+#elif defined(HAVE_COSF)
+	return cosf (x);
+#else
+	#error ### no cos function available ###
+#endif
+}
+
+static qse_real_t custom_awk_tan (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return tanl (x);
+#elif defined(HAVE_TAN)
+	return tan (x);
+#elif defined(HAVE_TANF)
+	return tanf (x);
+#else
+	#error ### no tan function available ###
+#endif
+}
+
+static qse_real_t custom_awk_atan (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return atanl (x);
+#elif defined(HAVE_ATAN)
+	return atan (x);
+#elif defined(HAVE_ATANF)
+	return atanf (x);
+#else
+	#error ### no atan function available ###
+#endif
+}
+
+static qse_real_t custom_awk_atan2 (qse_awk_t* awk, qse_real_t x, qse_real_t y)
+{
+#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return atan2l (x, y);
+#elif defined(HAVE_ATAN2)
+	return atan2 (x, y);
+#elif defined(HAVE_ATAN2F)
+	return atan2f (x, y);
+#else
+	#error ### no atan2 function available ###
+#endif
+}
+
+static qse_real_t custom_awk_log (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return logl (x);
+#elif defined(HAVE_LOG)
+	return log (x);
+#elif defined(HAVE_LOGF)
+	return logf (x);
+#else
+	#error ### no log function available ###
+#endif
+}
+
+static qse_real_t custom_awk_exp (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return expl (x);
+#elif defined(HAVE_EXP)
+	return exp (x);
+#elif defined(HAVE_EXPF)
+	return expf (x);
+#else
+	#error ### no exp function available ###
+#endif
+}
+
+static qse_real_t custom_awk_sqrt (qse_awk_t* awk, qse_real_t x)
+{
+#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return sqrtl (x);
+#elif defined(HAVE_SQRT)
+	return sqrt (x);
+#elif defined(HAVE_SQRTF)
+	return sqrtf (x);
+#else
+	#error ### no sqrt function available ###
+#endif
+}
+
 static int custom_awk_sprintf (
 	qse_awk_t* awk, qse_char_t* buf, qse_size_t size, 
 	const qse_char_t* fmt, ...)
@@ -154,8 +258,17 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_awk_prm_t prm;
 	xtn_t* xtn;
 
-	prm.pow     = custom_awk_pow;
-	prm.sprintf = custom_awk_sprintf;
+	prm.sprintf  = custom_awk_sprintf;
+
+	prm.math.pow = custom_awk_pow;
+	prm.math.sin = custom_awk_sin;
+	prm.math.cos = custom_awk_cos;
+	prm.math.tan = custom_awk_tan;
+	prm.math.atan = custom_awk_atan;
+	prm.math.atan2 = custom_awk_atan2;
+	prm.math.log = custom_awk_log;
+	prm.math.exp = custom_awk_exp;
+	prm.math.sqrt = custom_awk_sqrt;
 
 	/* create an object */
 	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm);
@@ -1225,251 +1338,6 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
 }
 
-/*** EXTRA BUILTIN FUNCTIONS ***/
-enum
-{
-	FNC_MATH_LD,
-	FNC_MATH_D,
-	FNC_MATH_F
-};
-
-static int fnc_math_1 (
-	qse_awk_rtx_t* run, const qse_cstr_t* fnm,
-	int type, void* f)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0;
-	qse_long_t lv;
-	qse_real_t rv;
-	qse_awk_val_t* r;
-	int n;
-
-	nargs = qse_awk_rtx_getnargs (run);
-	QSE_ASSERT (nargs == 1);
-
-	a0 = qse_awk_rtx_getarg (run, 0);
-
-	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
-	if (n <= -1) return -1;
-	if (n == 0) rv = (qse_real_t)lv;
-
-	switch (type)
-	{
-		case FNC_MATH_LD:
-		{
-			long double (*rf) (long double) = 
-				(long double(*)(long double))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv));
-			break;
-		}
-		case FNC_MATH_D:
-		{
-			double (*rf) (double) = (double(*)(double))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv));
-			break;
-		}
-		default:
-		{
-			float (*rf) (float);
-			QSE_ASSERT (type == FNC_MATH_F);
-			rf = (float(*)(float))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv));
-			break;
-		}
-	}
-	
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (run, r);
-	return 0;
-}
-
-static int fnc_math_2 (
-	qse_awk_rtx_t* run, const qse_cstr_t* fnm, int type, void* f)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0, * a1;
-	qse_long_t lv0, lv1;
-	qse_real_t rv0, rv1;
-	qse_awk_val_t* r;
-	int n;
-
-	nargs = qse_awk_rtx_getnargs (run);
-	QSE_ASSERT (nargs == 2);
-
-	a0 = qse_awk_rtx_getarg (run, 0);
-	a1 = qse_awk_rtx_getarg (run, 1);
-
-	n = qse_awk_rtx_valtonum (run, a0, &lv0, &rv0);
-	if (n <= -1) return -1;
-	if (n == 0) rv0 = (qse_real_t)lv0;
-
-	n = qse_awk_rtx_valtonum (run, a1, &lv1, &rv1);
-	if (n <= -1) return -1;
-	if (n == 0) rv1 = (qse_real_t)lv1;
-
-	switch (type)
-	{
-		case FNC_MATH_LD:
-		{
-			long double (*rf) (long double,long double) = 
-				(long double(*)(long double,long double))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
-			break;
-		}
-
-		case FNC_MATH_D:
-		{
-			double (*rf) (double,double) = 
-				(double(*)(double,double))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
-			break;
-		}
-
-		default:
-		{
-			float (*rf) (float,float);
-			QSE_ASSERT (type == FNC_MATH_F);
-			rf = (float(*)(float,float))f;
-			r = qse_awk_rtx_makerealval (run, rf(rv0,rv1));
-			break;
-		}
-	}
-
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (run, r);
-	return 0;
-}
-
-static int fnc_sin (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)sinl
-	#elif defined(HAVE_SIN)
-		FNC_MATH_D, (void*)sin
-	#elif defined(HAVE_SINF)
-		FNC_MATH_F, (void*)sinf
-	#else
-		#error ### no sin function available ###
-	#endif
-	);
-}
-
-static int fnc_cos (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)cosl
-	#elif defined(HAVE_COS)
-		FNC_MATH_D, (void*)cos
-	#elif defined(HAVE_COSF)
-		FNC_MATH_F, (void*)cosf
-	#else
-		#error ### no cos function available ###
-	#endif
-	);
-}
-
-static int fnc_tan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)tanl
-	#elif defined(HAVE_TAN)
-		FNC_MATH_D, (void*)tan
-	#elif defined(HAVE_TANF)
-		FNC_MATH_F, (void*)tanf
-	#else
-		#error ### no tan function available ###
-	#endif
-	);
-}
-
-static int fnc_atan (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)atanl
-	#elif defined(HAVE_ATAN)
-		FNC_MATH_D, (void*)atan
-	#elif defined(HAVE_ATANF)
-		FNC_MATH_F, (void*)atanf
-	#else
-		#error ### no atan function available ###
-	#endif
-	);
-}
-
-static int fnc_atan2 (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_2 (
-		run, fnm,
-	#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)atan2l
-	#elif defined(HAVE_ATAN2)
-		FNC_MATH_D, (void*)atan2
-	#elif defined(HAVE_ATAN2F)
-		FNC_MATH_F, (void*)atan2f
-	#else
-		#error ### no atan2 function available ###
-	#endif
-	);
-}
-
-static int fnc_log (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)logl
-	#elif defined(HAVE_LOG)
-		FNC_MATH_D, (void*)log
-	#elif defined(HAVE_LOGF)
-		FNC_MATH_F, (void*)logf
-	#else
-		#error ### no log function available ###
-	#endif
-	);
-}
-
-static int fnc_exp (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm,
-	#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)expl
-	#elif defined(HAVE_EXP)
-		FNC_MATH_D, (void*)exp
-	#elif defined(HAVE_EXPF)
-		FNC_MATH_F, (void*)expf
-	#else
-		#error ### no exp function available ###
-	#endif
-	);
-}
-
-static int fnc_sqrt (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	return fnc_math_1 (
-		run, fnm, 
-	#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		FNC_MATH_LD, (void*)sqrtl
-	#elif defined(HAVE_SQRT)
-		FNC_MATH_D, (void*)sqrt
-	#elif defined(HAVE_SQRTF)
-		FNC_MATH_F, (void*)sqrtf
-	#else
-		#error ### no sqrt function available ###
-	#endif
-	);
-}
-
 static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
@@ -1648,14 +1516,6 @@ skip_system:
 
 static int add_functions (qse_awk_t* awk)
 {
-        ADDFNC (awk, QSE_T("sin"),        1, 1, fnc_sin);
-        ADDFNC (awk, QSE_T("cos"),        1, 1, fnc_cos);
-        ADDFNC (awk, QSE_T("tan"),        1, 1, fnc_tan);
-        ADDFNC (awk, QSE_T("atan"),       1, 1, fnc_atan);
-        ADDFNC (awk, QSE_T("atan2"),      2, 2, fnc_atan2);
-        ADDFNC (awk, QSE_T("log"),        1, 1, fnc_log);
-        ADDFNC (awk, QSE_T("exp"),        1, 1, fnc_exp);
-        ADDFNC (awk, QSE_T("sqrt"),       1, 1, fnc_sqrt);
         ADDFNC (awk, QSE_T("int"),        1, 1, fnc_int);
         ADDFNC (awk, QSE_T("rand"),       0, 0, fnc_rand);
         ADDFNC (awk, QSE_T("srand"),      0, 1, fnc_srand);
