@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 461 2011-05-18 02:32:39Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -56,7 +56,6 @@ int StdAwk::open ()
 	int n = Awk::open ();
 	if (n == -1) return n;
 
-	ADDFNC (QSE_T("int"),        1, 1, &StdAwk::fnint);
 	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
 	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
 	ADDFNC (QSE_T("system"),     1, 1, &StdAwk::system);
@@ -74,12 +73,6 @@ void StdAwk::close ()
 {
 	clearConsoleOutputs ();
 	Awk::close ();
-}
-
-int StdAwk::fnint (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setInt (args[0].toInt());
 }
 
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
