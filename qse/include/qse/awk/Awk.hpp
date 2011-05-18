@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 458 2011-05-13 04:06:55Z hyunghwan.chung $
+ * $Id: Awk.hpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1071,9 +1071,18 @@ protected:
 	/// @}
 
 	// primitive handlers 
-	virtual real_t pow (real_t x, real_t y) = 0;
 	virtual int    vsprintf (char_t* buf, size_t size,
 	                         const char_t* fmt, va_list arg) = 0;
+
+	virtual real_t pow (real_t x, real_t y) = 0;
+	virtual real_t sin (real_t x) = 0;
+	virtual real_t cos (real_t x) = 0;
+	virtual real_t tan (real_t x) = 0;
+	virtual real_t atan (real_t x) = 0;
+	virtual real_t atan2 (real_t x, real_t y) = 0;
+	virtual real_t log (real_t x) = 0;
+	virtual real_t exp (real_t x) = 0;
+	virtual real_t sqrt (real_t x) = 0;
 
 	// static glue members for various handlers
 	static ssize_t readSource (
@@ -1095,9 +1104,17 @@ protected:
 
 	static int functionHandler (rtx_t* rtx, const cstr_t* name);
 
-	static real_t pow     (awk_t* data, real_t x, real_t y);
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
+	static real_t pow     (awk_t* data, real_t x, real_t y);
+	static real_t sin     (awk_t* data, real_t x);
+	static real_t cos     (awk_t* data, real_t x);
+	static real_t tan     (awk_t* data, real_t x);
+	static real_t atan    (awk_t* data, real_t x);
+	static real_t atan2   (awk_t* data, real_t x, real_t y);
+	static real_t log     (awk_t* data, real_t x);
+	static real_t exp     (awk_t* data, real_t x);
+	static real_t sqrt    (awk_t* data, real_t x);
 
 protected:
 	awk_t* awk;

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -56,14 +56,6 @@ int StdAwk::open ()
 	int n = Awk::open ();
 	if (n == -1) return n;
 
-	ADDFNC (QSE_T("sin"),        1, 1, &StdAwk::sin);
-	ADDFNC (QSE_T("cos"),        1, 1, &StdAwk::cos);
-	ADDFNC (QSE_T("tan"),        1, 1, &StdAwk::tan);
-	ADDFNC (QSE_T("atan"),       1, 1, &StdAwk::atan);
-	ADDFNC (QSE_T("atan2"),      2, 2, &StdAwk::atan2);
-	ADDFNC (QSE_T("log"),        1, 1, &StdAwk::log);
-	ADDFNC (QSE_T("exp"),        1, 1, &StdAwk::exp);
-	ADDFNC (QSE_T("sqrt"),       1, 1, &StdAwk::sqrt);
 	ADDFNC (QSE_T("int"),        1, 1, &StdAwk::fnint);
 	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
 	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
@@ -82,134 +74,6 @@ void StdAwk::close ()
 {
 	clearConsoleOutputs ();
 	Awk::close ();
-}
-
-int StdAwk::sin (Run& run, Value& ret, const Value* args, size_t nargs, 
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::sinl(args[0].toReal())
-	#elif defined(HAVE_SIN)
-		(real_t)::sin(args[0].toReal())
-	#elif defined(HAVE_SINF)
-		(real_t)::sinf(args[0].toReal())
-	#else
-		#error ### no sin function available ###
-	#endif
-	);
-}
-
-int StdAwk::cos (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::cosl(args[0].toReal())
-	#elif defined(HAVE_COS)
-		(real_t)::cos(args[0].toReal())
-	#elif defined(HAVE_COSF)
-		(real_t)::cosf(args[0].toReal())
-	#else
-		#error ### no cos function available ###
-	#endif
-	);
-}
-
-int StdAwk::tan (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::tanl(args[0].toReal())
-	#elif defined(HAVE_TAN)
-		(real_t)::tan(args[0].toReal())
-	#elif defined(HAVE_TANF)
-		(real_t)::tanf(args[0].toReal())
-	#else
-		#error ### no tan function available ###
-	#endif
-	);
-}
-
-int StdAwk::atan (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::atanl(args[0].toReal())
-	#elif defined(HAVE_ATAN)
-		(real_t)::atan(args[0].toReal())
-	#elif defined(HAVE_ATANF)
-		(real_t)::atanf(args[0].toReal())
-	#else
-		#error ### no atan function available ###
-	#endif
-	);
-}
-
-int StdAwk::atan2 (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::atan2l(args[0].toReal(), args[1].toReal())
-	#elif defined(HAVE_ATAN2)
-		(real_t)::atan2(args[0].toReal(), args[1].toReal())
-	#elif defined(HAVE_ATAN2F)
-		(real_t)::atan2f(args[0].toReal(), args[1].toReal())
-	#else
-		#error ### no atan2 function available ###
-	#endif
-	);
-}
-
-int StdAwk::log (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::logl(args[0].toReal())
-	#elif defined(HAVE_LOG)
-		(real_t)::log(args[0].toReal())
-	#elif defined(HAVE_LOGF)
-		(real_t)::logf(args[0].toReal())
-	#else
-		#error ### no log function available ###
-	#endif
-	);
-}
-
-int StdAwk::exp (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::expl(args[0].toReal())
-	#elif defined(HAVE_EXP)
-		(real_t)::exp(args[0].toReal())
-	#elif defined(HAVE_EXPF)
-		(real_t)::expf(args[0].toReal())
-	#else
-		#error ### no exp function available ###
-	#endif
-	);
-}
-
-int StdAwk::sqrt (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	return ret.setReal (
-	#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
-		(real_t)::sqrtl(args[0].toReal())
-	#elif defined(HAVE_SQRT)
-		(real_t)::sqrt(args[0].toReal())
-	#elif defined(HAVE_SQRTF)
-		(real_t)::sqrtf(args[0].toReal())
-	#else
-		#error ### no sqrt function available ###
-	#endif
-	);
 }
 
 int StdAwk::fnint (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -783,15 +647,127 @@ void  StdAwk::freeMem (void* ptr)
 }
 
 // miscellaneous primitive
-StdAwk::real_t StdAwk::pow (real_t x, real_t y) 
-{ 
-	return ::pow (x, y); 
-}
-
 int StdAwk::vsprintf (
 	char_t* buf, size_t size, const char_t* fmt, va_list arg) 
 {
 	return qse_vsprintf (buf, size, fmt, arg);
+}
+
+StdAwk::real_t StdAwk::pow (real_t x, real_t y) 
+{ 
+#if defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::powl (x, y);
+#elif defined(HAVE_POW)
+	return ::pow (x, y);
+#elif defined(HAVE_POWF)
+	return ::powf (x, y);
+#else
+	#error ### no pow function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::sin (real_t x)
+{ 
+#if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::sinl (x);
+#elif defined(HAVE_SIN)
+	return ::sin (x);
+#elif defined(HAVE_SINF)
+	return ::sinf (x);
+#else
+	#error ### no sin function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::cos (real_t x)
+{ 
+#if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::cosl (x);
+#elif defined(HAVE_COS)
+	return ::cos (x);
+#elif defined(HAVE_COSF)
+	return ::cosf (x);
+#else
+	#error ### no cos function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::tan (real_t x)
+{ 
+#if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::tanl (x);
+#elif defined(HAVE_TAN)
+	return ::tan (x);
+#elif defined(HAVE_TANF)
+	return ::tanf (x);
+#else
+	#error ### no tan function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::atan (real_t x)
+{ 
+#if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::atanl (x);
+#elif defined(HAVE_ATAN)
+	return ::atan (x);
+#elif defined(HAVE_ATANF)
+	return ::atanf (x);
+#else
+	#error ### no atan function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::atan2 (real_t x, real_t y) 
+{ 
+#if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::atan2l (x, y);
+#elif defined(HAVE_ATAN2)
+	return ::atan2 (x, y);
+#elif defined(HAVE_ATAN2F)
+	return ::atan2f (x, y);
+#else
+	#error ### no atan2 function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::log (real_t x)
+{ 
+#if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::logl (x);
+#elif defined(HAVE_LOG)
+	return ::log (x);
+#elif defined(HAVE_LOGF)
+	return ::logf (x);
+#else
+	#error ### no log function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::exp (real_t x)
+{ 
+#if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::expl (x);
+#elif defined(HAVE_EXP)
+	return ::exp (x);
+#elif defined(HAVE_EXPF)
+	return ::expf (x);
+#else
+	#error ### no exp function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::sqrt (real_t x)
+{ 
+#if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::sqrtl (x);
+#elif defined(HAVE_SQRT)
+	return ::sqrt (x);
+#elif defined(HAVE_SQRTF)
+	return ::sqrtf (x);
+#else
+	#error ### no sqrt function available ###
+#endif
 }
 
 int StdAwk::SourceFile::open (Data& io)

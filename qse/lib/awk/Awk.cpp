@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 458 2011-05-13 04:06:55Z hyunghwan.chung $
+ * $Id: Awk.cpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1073,8 +1073,9 @@ int Awk::open ()
 	QSE_ASSERT (awk == QSE_NULL && functionMap == QSE_NULL);
 
 	qse_awk_prm_t prm;
-	prm.pow     = pow;
-	prm.sprintf = sprintf;
+	memset (&prm, 0, QSE_SIZEOF(prm));
+	prm.sprintf  = sprintf;
+	prm.math.pow = pow;
 
 	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
@@ -1751,12 +1752,6 @@ int Awk::functionHandler (rtx_t* rtx, const cstr_t* name)
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 	return rxtn->run->awk->dispatch_function (rxtn->run, name);
 }	
-
-Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
-{
-	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->pow (x, y);
-}
 	
 int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
                   const char_t* fmt, ...)
@@ -1768,6 +1763,60 @@ int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
 	int n = xtn->awk->vsprintf (buf, size, fmt, ap);
 	va_end (ap);
 	return n;
+}
+
+Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->pow (x, y);
+}
+
+Awk::real_t Awk::sin (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->sin (x);
+}
+
+Awk::real_t Awk::cos (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->cos (x);
+}
+
+Awk::real_t Awk::tan (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->tan (x);
+}
+
+Awk::real_t Awk::atan (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->atan (x);
+}
+
+Awk::real_t Awk::atan2 (awk_t* awk, real_t x, real_t y)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->atan2 (x, y);
+}
+
+Awk::real_t Awk::log (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->log (x);
+}
+
+Awk::real_t Awk::exp (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->exp (x);
+}
+
+Awk::real_t Awk::sqrt (awk_t* awk, real_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->sqrt (x);
 }
 
 /////////////////////////////////

@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -103,22 +103,6 @@ public:
 
 protected:
 	// intrinsic functions 
-	int sin (Run& run, Value& ret, const Value* args, size_t nargs, 
-		const char_t* name, size_t len);
-	int cos (Run& run, Value& ret, const Value* args, size_t nargs, 
-		const char_t* name, size_t len);
-	int tan (Run& run, Value& ret, const Value* args, size_t nargs, 
-		const char_t* name, size_t len);
-	int atan (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int atan2 (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int log (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int exp (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int sqrt (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
 	int fnint (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -155,9 +139,18 @@ protected:
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
 
-	real_t pow (real_t x, real_t y);
 	int    vsprintf (char_t* buf, size_t size,
 	                 const char_t* fmt, va_list arg);
+
+	real_t pow (real_t x, real_t y);
+	real_t sin (real_t x);
+	real_t cos (real_t x);
+	real_t tan (real_t x);
+	real_t atan (real_t x);
+	real_t atan2 (real_t x, real_t y);
+	real_t log (real_t x);
+	real_t exp (real_t x);
+	real_t sqrt (real_t x);
 
 protected:
 	unsigned int seed; 
