@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 458 2011-05-13 04:06:55Z hyunghwan.chung $
+ * $Id: awk.h 459 2011-05-17 14:37:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -355,6 +355,17 @@ struct qse_awk_nde_t
 	QSE_AWK_NDE_HDR;
 };
 
+typedef qse_real_t (*qse_awk_math1_t) (
+	qse_awk_t* awk,
+	qse_real_t x
+);
+
+typedef qse_real_t (*qse_awk_math2_t) (
+	qse_awk_t* awk,
+	qse_real_t x, 
+	qse_real_t y
+);
+
 typedef qse_real_t (*qse_awk_pow_t) (
 	qse_awk_t* awk,
 	qse_real_t x, 
@@ -534,38 +545,53 @@ typedef qse_ssize_t (*qse_awk_rio_fun_t) (
  */
 struct qse_awk_prm_t
 {
-	qse_awk_pow_t     pow;
 	qse_awk_sprintf_t sprintf;
 
+	struct
+	{
+		qse_awk_math2_t pow;
+		qse_awk_math1_t sin;
+		qse_awk_math1_t cos;
+		qse_awk_math1_t tan;
+		qse_awk_math1_t atan;
+		qse_awk_math2_t atan2;
+		qse_awk_math1_t log;
+		qse_awk_math1_t exp;
+		qse_awk_math1_t sqrt;
+	} math;
+
 #if 0
-	/* TODO: accept regular expression handling functions */
-	void* (*build) (
-		qse_awk_t*        awk,
-		const qse_char_t* ptn, 
-		qse_size_t        len, 
-		int*              errnum
-	);
+	struct 
+	{
+		/* TODO: accept regular expression handling functions */
+		void* (*build) (
+			qse_awk_t*        awk,
+			const qse_char_t* ptn, 
+			qse_size_t        len, 
+			int*              errnum
+		);
 
-	int (*match) (
-		qse_awk_t*         awk,
-		void*              code,
-		int                option,
-		const qse_char_t*  str,
-		qse_size_t         len, 
-		const qse_char_t** mptr,
-		qse_size_t*        mlen, 
-		int*               errnum
-	);
+		int (*match) (
+			qse_awk_t*         awk,
+			void*              code,
+			int                option,
+			const qse_char_t*  str,
+			qse_size_t         len, 
+			const qse_char_t** mptr,
+			qse_size_t*        mlen, 
+			int*               errnum
+		);
 
-	void (*free) (
-		qse_awk_t* awk,
-		void*      code
-	);
+		void (*free) (
+			qse_awk_t* awk,
+			void*      code
+		);
 
-	qse_bool_t (*isempty) (
-		qse_awk_t* awk,
-		void*      code
-	);
+		qse_bool_t (*isempty) (
+			qse_awk_t* awk,
+			void*      code
+		);
+	} rex;
 #endif
 };
 typedef struct qse_awk_prm_t qse_awk_prm_t;
