@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 461 2011-05-18 02:32:39Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -103,8 +103,6 @@ public:
 
 protected:
 	// intrinsic functions 
-	int fnint (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
 	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 	int srand (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -138,6 +136,7 @@ protected:
 	void* allocMem   (size_t n);
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
+
 
 	int    vsprintf (char_t* buf, size_t size,
 	                 const char_t* fmt, va_list arg);

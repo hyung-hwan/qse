@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 459 2011-05-17 14:37:51Z hyunghwan.chung $
+ * $Id: fnc.c 461 2011-05-18 02:32:39Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -41,6 +41,7 @@ static int fnc_atan2   (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_log     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_exp     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_sqrt    (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
+static int fnc_int     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 
 #undef MAX
 #define MAX QSE_TYPE_UNSIGNED_MAX(qse_size_t)
@@ -85,6 +86,7 @@ static qse_awk_fnc_t sys_fnc[] =
 	{ {QSE_T("log"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_log},
 	{ {QSE_T("exp"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_exp},
 	{ {QSE_T("sqrt"),    4}, 0, 0,  {1,   1, QSE_NULL},     fnc_sqrt},
+	{ {QSE_T("int"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_int},
 
 	{ {QSE_NULL,         0}, 0, 0,  {0,   0, QSE_NULL},     QSE_NULL}
 };
@@ -1636,4 +1638,29 @@ static int fnc_exp (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 static int fnc_sqrt (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (rtx, fnm, rtx->awk->prm.math.sqrt);
+}
+
+static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* a0;
+	qse_long_t lv;
+	qse_real_t rv;
+	qse_awk_val_t* r;
+	int n;
+
+	nargs = qse_awk_rtx_getnargs (run);
+	QSE_ASSERT (nargs == 1);
+
+	a0 = qse_awk_rtx_getarg (run, 0);
+
+	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
+	if (n == -1) return -1;
+	if (n == 1) lv = (qse_long_t)rv;
+
+	r = qse_awk_rtx_makeintval (run, lv);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (run, r);
+	return 0;
 }
