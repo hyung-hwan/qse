@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: str.h 464 2011-05-19 03:33:28Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -31,19 +31,35 @@
  * deal with a string pointer and length in a structure.
  */
 
-#define QSE_MBS_XSTR(s)     (&((s)->val))          /**< string pointer and length as a aggregate */
-#define QSE_MBS_LEN(s)      ((s)->val.len)         /**< string length */
-#define QSE_MBS_PTR(s)      ((s)->val.ptr)         /**< string buffer pointer */
-#define QSE_MBS_CAPA(s)     ((s)->capa)            /**< string buffer capacity */
-#define QSE_MBS_CHAR(s,idx) ((s)->val.ptr[idx])    /**< character at given position */
-#define QSE_MBS_LASTCHAR(s) ((s)->val.ptr[(s)->val.len-1]) /**< last character. unsafe if length <= 0 */
+/** string pointer and length as a aggregate */
+#define QSE_MBS_XSTR(s)     (&((s)->val))  
+/** constant string pointer and length as a aggregate */
+#define QSE_MBS_CSTR(s)     ((qse_mcstr_t*)&((s)->val))
+/** string length */
+#define QSE_MBS_LEN(s)      ((s)->val.len)
+/** string pointer */
+#define QSE_MBS_PTR(s)      ((s)->val.ptr)
+/** string capacity */
+#define QSE_MBS_CAPA(s)     ((s)->capa)
+/** character at the given position */
+#define QSE_MBS_CHAR(s,idx) ((s)->val.ptr[idx]) 
+/**< last character. unsafe if length <= 0 */
+#define QSE_MBS_LASTCHAR(s) ((s)->val.ptr[(s)->val.len-1])
 
-#define QSE_WCS_XSTR(s)     (&((s)->val))          /**< string pointer and length as an aggregate*/
-#define QSE_WCS_LEN(s)      ((s)->val.len)         /**< string buffer length */
-#define QSE_WCS_PTR(s)      ((s)->val.ptr)         /**< string buffer pointer */
-#define QSE_WCS_CAPA(s)     ((s)->capa)            /**< string buffer capacity */
-#define QSE_WCS_CHAR(s,idx) ((s)->val.ptr[idx])    /**< character at given position */
-#define QSE_WCS_LASTCHAR(s) ((s)->val.ptr[(s)->val.len-1]) /**< last character. unsafe if length <= 0 */
+/** string pointer and length as a aggregate */
+#define QSE_WCS_XSTR(s)     (&((s)->val))  
+/** constant string pointer and length as a aggregate */
+#define QSE_WCS_CSTR(s)     ((qse_wcstr_t*)&((s)->val))
+/** string length */
+#define QSE_WCS_LEN(s)      ((s)->val.len)
+/** string pointer */
+#define QSE_WCS_PTR(s)      ((s)->val.ptr)
+/** string capacity */
+#define QSE_WCS_CAPA(s)     ((s)->capa)
+/** character at the given position */
+#define QSE_WCS_CHAR(s,idx) ((s)->val.ptr[idx]) 
+/**< last character. unsafe if length <= 0 */
+#define QSE_WCS_LASTCHAR(s) ((s)->val.ptr[(s)->val.len-1])
 
 typedef struct qse_mbs_t qse_mbs_t;
 typedef struct qse_wcs_t qse_wcs_t;
@@ -60,6 +76,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 
 #ifdef QSE_CHAR_IS_MCHAR
 #	define QSE_STR_XSTR(s)     ((qse_xstr_t*)QSE_MBS_XSTR(s))
+#	define QSE_STR_CSTR(s)     ((qse_cstr_t*)QSE_MBS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_MBS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_MBS_PTR(s)
 #	define QSE_STR_CAPA(s)     QSE_MBS_CAPA(s)
@@ -69,6 +86,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define qse_str_sizer_t     qse_mbs_sizer_t
 #else
 #	define QSE_STR_XSTR(s)     ((qse_xstr_t*)QSE_WCS_XSTR(s))
+#	define QSE_STR_CSTR(s)     ((qse_cstr_t*)QSE_WCS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_WCS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_WCS_PTR(s)
 #	define QSE_STR_CAPA(s)     QSE_WCS_CAPA(s)
