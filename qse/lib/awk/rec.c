@@ -1,5 +1,5 @@
 /*
- * $Id: rec.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: rec.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -98,8 +98,9 @@ int qse_awk_rtx_setrec (
 
 static int split_record (qse_awk_rtx_t* rtx)
 {
-	qse_char_t* p, * px, * tok;
-	qse_size_t len, tok_len, nflds;
+	qse_cstr_t tok;
+	qse_char_t* p, * px;
+	qse_size_t len, nflds;
 	qse_awk_val_t* v, * fs;
 	qse_char_t* fs_ptr, * fs_free;
 	qse_size_t fs_len;
@@ -119,8 +120,8 @@ static int split_record (qse_awk_rtx_t* rtx)
 	}
 	else if (fs->type == QSE_AWK_VAL_STR)
 	{
-		fs_ptr = ((qse_awk_val_str_t*)fs)->ptr;
-		fs_len = ((qse_awk_val_str_t*)fs)->len;
+		fs_ptr = ((qse_awk_val_str_t*)fs)->val.ptr;
+		fs_len = ((qse_awk_val_str_t*)fs)->val.len;
 		fs_free = QSE_NULL;
 	}
 	else 
@@ -169,7 +170,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 		{
 			case 0:
 				p = qse_awk_rtx_strxntok (rtx,
-					p, len, fs_ptr, fs_len, &tok, &tok_len);
+					p, len, fs_ptr, fs_len, &tok);
 				break;
 
 			case 1:
@@ -181,7 +182,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
 					p, len, 
-					rtx->gbl.fs, &tok, &tok_len, &errnum
+					rtx->gbl.fs, &tok, &errnum
 				); 
 				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 				{
@@ -192,7 +193,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 				}
 		}
 
-		if (nflds == 0 && p == QSE_NULL && tok_len == 0)
+		if (nflds == 0 && p == QSE_NULL && tok.len == 0)
 		{
 			/* there are no fields. it can just return here
 			 * as qse_awk_rtx_clrrec has been called before this */
@@ -200,7 +201,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 			return 0;
 		}
 
-		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
+		QSE_ASSERT ((tok.ptr != QSE_NULL && tok.len > 0) || tok.len == 0);
 
 		nflds++;
 		len = QSE_STR_LEN(&rtx->inrec.line) - 
@@ -255,16 +256,14 @@ static int split_record (qse_awk_rtx_t* rtx)
 		{
 			case 0:
 				p = qse_awk_rtx_strxntok (
-					rtx, p, len, fs_ptr, fs_len,
-					&tok, &tok_len);
+					rtx, p, len, fs_ptr, fs_len, &tok);
 				break;
 
 			case 1:
 				p = qse_awk_rtx_strxnfld (
 					rtx, p, len, 
 					fs_ptr[1], fs_ptr[2],
-					fs_ptr[3], fs_ptr[4],
-					&tok, &tok_len);
+					fs_ptr[3], fs_ptr[4], &tok);
 				break;
 
 			default:
@@ -273,7 +272,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 					QSE_STR_PTR(&rtx->inrec.line),
 					QSE_STR_LEN(&rtx->inrec.line),
 					p, len,
-					rtx->gbl.fs, &tok, &tok_len, &errnum
+					rtx->gbl.fs, &tok, &errnum
 				); 
 				if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 				{
@@ -285,7 +284,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 		}
 
 #if 1
-		if (rtx->inrec.nflds == 0 && p == QSE_NULL && tok_len == 0)
+		if (rtx->inrec.nflds == 0 && p == QSE_NULL && tok.len == 0)
 		{
 			/* there are no fields. it can just return here
 			 * as qse_awk_rtx_clrrec has been called before this */
@@ -294,7 +293,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 		}
 #endif
 
-		QSE_ASSERT ((tok != QSE_NULL && tok_len > 0) || tok_len == 0);
+		QSE_ASSERT ((tok.ptr != QSE_NULL && tok.len > 0) || tok.len == 0);
 
 #if 1
 		if (rtx->inrec.nflds >= rtx->inrec.maxflds)
@@ -327,11 +326,11 @@ static int split_record (qse_awk_rtx_t* rtx)
 		}
 #endif
 
-		rtx->inrec.flds[rtx->inrec.nflds].ptr = tok;
-		rtx->inrec.flds[rtx->inrec.nflds].len = tok_len;
+		rtx->inrec.flds[rtx->inrec.nflds].ptr = tok.ptr;
+		rtx->inrec.flds[rtx->inrec.nflds].len = tok.len;
 
 		rtx->inrec.flds[rtx->inrec.nflds].val =
-			qse_awk_rtx_makenstrval (rtx, tok, tok_len);
+			qse_awk_rtx_makenstrval (rtx, tok.ptr, tok.len);
 
 		if (rtx->inrec.flds[rtx->inrec.nflds].val == QSE_NULL)
 		{
@@ -531,10 +530,11 @@ static int recomp_record_fields (
 			run->inrec.flds[i].ptr = 
 				QSE_STR_PTR(&run->inrec.line) +
 				QSE_STR_LEN(&run->inrec.line);
-			run->inrec.flds[i].len = tmp->len;
+			run->inrec.flds[i].len = tmp->val.len;
 
-			if (qse_str_ncat (&run->inrec.line, 
-				tmp->ptr, tmp->len) == (qse_size_t)-1)
+			if (qse_str_ncat (
+				&run->inrec.line, 
+				tmp->val.ptr, tmp->val.len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;

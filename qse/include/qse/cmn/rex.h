@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: rex.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -264,9 +264,9 @@ qse_rex_node_t* qse_rex_comp (
 );
 
 int qse_rex_exec (
-        qse_rex_t*        rex,
+	qse_rex_t*        rex,
 	const qse_cstr_t* str, 
-        const qse_cstr_t* substr,
+	const qse_cstr_t* substr,
 	qse_cstr_t*       matstr
 );
 
@@ -285,10 +285,8 @@ int qse_matchrex (
 	qse_size_t         depth,
 	void*              code, 
 	int                option,
-	const qse_char_t*  str, 
-	qse_size_t         len, 
-	const qse_char_t*  substr, 
-	qse_size_t         sublen, 
+	const qse_cstr_t*  str,
+	const qse_cstr_t*  substr,
 	qse_cstr_t*        match,	
 	qse_rex_errnum_t*  errnum
 );

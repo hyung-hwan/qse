@@ -53,8 +53,8 @@ enum tok_type_t
 #define TOK_IVAL(scm)     (scm)->r.t.ival
 #define TOK_RVAL(scm)     (scm)->r.t.rval
 #define TOK_NAME(scm)     (&(scm)->r.t.name)
-#define TOK_NAME_PTR(scm) TOK_NAME(scm)->ptr
-#define TOK_NAME_LEN(scm) TOK_NAME(scm)->len
+#define TOK_NAME_PTR(scm) QSE_STR_PTR(TOK_NAME(scm))
+#define TOK_NAME_LEN(scm) QSE_STR_LEN(TOK_NAME(scm))
 #define TOK_LOC(scm)      (scm)->r.t.loc
 
 #define TOK_ADD_CHAR(scm,ch) QSE_BLOCK (\

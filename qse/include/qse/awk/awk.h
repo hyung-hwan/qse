@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 459 2011-05-17 14:37:51Z hyunghwan.chung $
+ * $Id: awk.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -201,8 +201,7 @@ typedef struct qse_awk_val_real_t qse_awk_val_real_t;
 struct qse_awk_val_str_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_char_t* ptr;
-	qse_size_t  len;
+	qse_xstr_t  val;
 };
 typedef struct qse_awk_val_str_t  qse_awk_val_str_t;
 
@@ -355,6 +354,14 @@ struct qse_awk_nde_t
 	QSE_AWK_NDE_HDR;
 };
 
+typedef int (*qse_awk_sprintf_t) (
+	qse_awk_t*        awk,
+	qse_char_t*       buf,
+	qse_size_t        size, 
+	const qse_char_t* fmt,
+	...
+);
+
 typedef qse_real_t (*qse_awk_math1_t) (
 	qse_awk_t* awk,
 	qse_real_t x
@@ -366,18 +373,31 @@ typedef qse_real_t (*qse_awk_math2_t) (
 	qse_real_t y
 );
 
-typedef qse_real_t (*qse_awk_pow_t) (
-	qse_awk_t* awk,
-	qse_real_t x, 
-	qse_real_t y
+
+typedef void* (*qse_awk_buildrex_t) (
+	qse_awk_t*        awk,
+	const qse_char_t* ptn, 
+	qse_size_t        len
 );
 
-typedef int (*qse_awk_sprintf_t) (
-	qse_awk_t*        awk,
-	qse_char_t*       buf,
-	qse_size_t        size, 
-	const qse_char_t* fmt,
-	...
+typedef int (*qse_awk_matchrex_t) (
+	qse_awk_t*         awk,
+	void*              code,
+	int                option,
+	const qse_char_t*  str,
+	qse_size_t         len, 
+	const qse_char_t** mptr,
+	qse_size_t*        mlen
+);
+
+typedef void (*qse_awk_freerex_t) (
+	qse_awk_t* awk,
+	void*      code
+);
+
+typedef qse_bool_t (*qse_awk_isemptyrex_t) (
+	qse_awk_t* awk,
+	void*      code
 );
 
 /**
@@ -564,33 +584,10 @@ struct qse_awk_prm_t
 	struct 
 	{
 		/* TODO: accept regular expression handling functions */
-		void* (*build) (
-			qse_awk_t*        awk,
-			const qse_char_t* ptn, 
-			qse_size_t        len, 
-			int*              errnum
-		);
-
-		int (*match) (
-			qse_awk_t*         awk,
-			void*              code,
-			int                option,
-			const qse_char_t*  str,
-			qse_size_t         len, 
-			const qse_char_t** mptr,
-			qse_size_t*        mlen, 
-			int*               errnum
-		);
-
-		void (*free) (
-			qse_awk_t* awk,
-			void*      code
-		);
-
-		qse_bool_t (*isempty) (
-			qse_awk_t* awk,
-			void*      code
-		);
+		qse_awk_buildrex_t build;
+		qse_awk_matchrex_t match;
+		qse_awk_freerex_t free;
+		qse_awk_isemptyrex_t isempty;
 	} rex;
 #endif
 };
@@ -723,11 +720,11 @@ enum qse_awk_option_t
 	QSE_AWK_NEWLINE     = (1 << 5),
 
 	/** 
-	 * strips off leading and trailing spaces when splitting a record
-	 * into fields with a regular expression. 
+	 * remove empty fields when splitting a record if FS is a regular
+	 * expression and the match is all spaces.
 	 *
 	 * @code
-	 * BEGIN { FS="[:[:space:]]+"; } 
+	 * BEGIN { FS="[[:space:]]+"; } 
 	 * { 
 	 *    print "NF=" NF; 
 	 *    for (i = 0; i < NF; i++) print i " [" $(i+1) "]";
@@ -735,6 +732,17 @@ enum qse_awk_option_t
 	 * @endcode
 	 * " a b c " is split to [a], [b], [c] if #QSE_AWK_STRIPRECSPC is on.
 	 * Otherwise, it is split to [], [a], [b], [c], [].
+	 *
+	 * @code
+	 * BEGIN { 
+	 *   n=split(" o my  god  ", x, /[ o]+/); 
+	 *   for (i=1;i<=n;i++) print "[" x[i] "]"; 
+	 * }
+	 * @endcode
+	 * The above example splits the string to [], [my], [g], [d]
+	 * if #QSE_AWK_STRIPRECSPC is on. Otherwise, it results in
+	 * [], [my], [g], [d], []. Note that the first empty field is not 
+	 * removed as the field separator is not all spaces. (space + 'o').
 	 */
 	QSE_AWK_STRIPRECSPC    = (1 << 6),
 

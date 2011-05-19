@@ -1,5 +1,5 @@
 /*
- * $Id: opt.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: opt.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -123,9 +123,10 @@ qse_cint_t qse_getopt (int argc, qse_char_t* const* argv, qse_opt_t* opt)
 
 		while (*end != QSE_T('\0') && *end != QSE_T('=')) end++;
 
-		for (o = opt->lng; o->str != QSE_NULL; o++) 
+		for (o = opt->lng; o->str; o++) 
 		{
 			const qse_char_t* str = o->str;
+
 			if (*str == QSE_T(':')) str++;
 
 			if (qse_strxcmp (opt->cur, end-opt->cur, str) != 0) continue;

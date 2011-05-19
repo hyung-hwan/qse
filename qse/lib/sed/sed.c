@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sed.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1832,24 +1832,24 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	qse_cstr_t mat, pmat;
 	int opt = 0, repl = 0, n;
 	qse_rex_errnum_t errnum;
-	const qse_char_t* cur_ptr, * str_ptr, * str_end;
-	qse_size_t cur_len, str_len, m, i;
-	qse_size_t max_count, sub_count;
+
+	qse_cstr_t str, cur;
+	const qse_char_t* str_end;
+	qse_size_t m, i, max_count, sub_count;
 
 	QSE_ASSERT (cmd->type == QSE_SED_CMD_SUBSTITUTE);
 
 	qse_str_clear (&sed->e.txt.subst);
 	if (cmd->u.subst.i) opt = QSE_REX_IGNORECASE;
 
-	str_ptr = QSE_STR_PTR(&sed->e.in.line);
-	str_len = QSE_STR_LEN(&sed->e.in.line);
+	str.ptr = QSE_STR_PTR(&sed->e.in.line);
+	str.len = QSE_STR_LEN(&sed->e.in.line);
 
 	/* TODO: support different line end convension */
-	if (str_len > 0 && str_ptr[str_len-1] == QSE_T('\n')) str_len--;
+	if (str.len > 0 && str.ptr[str.len-1] == QSE_T('\n')) str.len--;
 
-	str_end = str_ptr + str_len;
-	cur_ptr = str_ptr;
-	cur_len = str_len;
+	str_end = str.ptr + str.len;
+	cur = str;
 
 	sub_count = 0;
 	max_count = (cmd->u.subst.g)? 0: cmd->u.subst.occ;
@@ -1859,7 +1859,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	/* perform test when cur_ptr == str_end also because
 	 * end of string($) needs to be tested */
-	while (cur_ptr <= str_end)
+	while (cur.ptr <= str_end)
 	{
 		if (max_count == 0 || sub_count < max_count)
 		{
@@ -1867,9 +1867,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				sed->mmgr, 
 				sed->depth.rex.match,
 				cmd->u.subst.rex, opt,
-				str_ptr, str_len,
-				cur_ptr, cur_len,
-				&mat, &errnum
+				&str, &cur, &mat, &errnum
 			);
 		}
 		else n = 0;
@@ -1885,7 +1883,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			/* no more match found */
 			if (qse_str_ncat (
 				&sed->e.txt.subst,
-				cur_ptr, cur_len) == (qse_size_t)-1)
+				cur.ptr, cur.len) == (qse_size_t)-1)
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return -1;
@@ -1906,7 +1904,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			m = qse_str_ncat (
 				&sed->e.txt.subst,
-				cur_ptr, mat.ptr-cur_ptr+mat.len
+				cur.ptr, mat.ptr-cur.ptr+mat.len
 			);
 
 			if (m == (qse_size_t)-1)
@@ -1920,7 +1918,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			repl = 1;
 
 			m = qse_str_ncat (
-				&sed->e.txt.subst, cur_ptr, mat.ptr-cur_ptr);
+				&sed->e.txt.subst, cur.ptr, mat.ptr-cur.ptr);
 			if (m == (qse_size_t)-1)
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -1959,8 +1957,8 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 
 		sub_count++;
-		cur_len = cur_len - ((mat.ptr - cur_ptr) + mat.len);
-		cur_ptr = mat.ptr + mat.len;
+		cur.len = cur.len - ((mat.ptr - cur.ptr) + mat.len);
+		cur.ptr = mat.ptr + mat.len;
 
 		pmat = mat;
 
@@ -1969,18 +1967,18 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		skip_one_char:
 			/* special treament is need if the match length is 0 */
 
-			m = qse_str_ncat (&sed->e.txt.subst, cur_ptr, 1);
+			m = qse_str_ncat (&sed->e.txt.subst, cur.ptr, 1);
 			if (m == (qse_size_t)-1)
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return -1;
 			}
 
-			cur_ptr++; cur_len--;
+			cur.ptr++; cur.len--;
 		}
 	}
 
-	if (str_len < QSE_STR_LEN(&sed->e.in.line))
+	if (str.len < QSE_STR_LEN(&sed->e.in.line))
 	{
 		/* TODO: support different line ending convension */
 		m = qse_str_ccat (&sed->e.txt.subst, QSE_T('\n'));
@@ -2034,25 +2032,22 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 		{
 			int n;
 			qse_cstr_t match;
-			qse_str_t* line;
-			qse_size_t llen;
+			qse_cstr_t line;
 			qse_rex_errnum_t errnum;
 
 			QSE_ASSERT (a->u.rex != QSE_NULL);
 
-			line = &sed->e.in.line;
-			llen = QSE_STR_LEN(line);
+			line.ptr = QSE_STR_PTR(&sed->e.in.line);
+			line.len = QSE_STR_LEN(&sed->e.in.line);
 
-			/* TODO: support different line end convension */
-			if (llen > 0 && 
-			    QSE_STR_CHAR(line,llen-1) == QSE_T('\n')) llen--;
+			if (line.len > 0 &&
+			    line.ptr[line.len-1] == QSE_T('\n')) line.len--;
 
 			n = qse_matchrex (
 				sed->mmgr, 
 				sed->depth.rex.match,
 				a->u.rex, 0,
-				QSE_STR_PTR(line), llen, 
-				QSE_STR_PTR(line), llen, 
+				&line, &line,
 				&match, &errnum);
 			if (n <= -1)
 			{
@@ -2220,8 +2215,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_SED_CMD_INSERT:
 			n = write_str (sed,
-				QSE_STR_PTR(&cmd->u.text),
-				QSE_STR_LEN(&cmd->u.text));
+				cmd->u.text.ptr,
+				cmd->u.text.len
+			);
 			if (n <= -1) return QSE_NULL;
 			break;
 
@@ -2231,8 +2227,9 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				/* change the pattern space */
 				n = qse_str_ncpy (
 					&sed->e.in.line,
-					QSE_STR_PTR(&cmd->u.text),
-					QSE_STR_LEN(&cmd->u.text));
+					cmd->u.text.ptr,
+					cmd->u.text.len
+				);
 				if (n == (qse_size_t)-1) 
 				{
 					SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);

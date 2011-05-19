@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: parse.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -679,8 +679,10 @@ static int begin_include (qse_awk_t* awk)
 	qse_awk_sio_arg_t* arg = QSE_NULL;
 	qse_htb_pair_t* pair = QSE_NULL;
 
-	if (qse_strlen(awk->tok.name->ptr) != QSE_STR_LEN(awk->tok.name))
+	if (qse_strlen(QSE_STR_PTR(awk->tok.name)) != QSE_STR_LEN(awk->tok.name))
 	{
+		/* a '\0' character included in the include file name.
+		 * we don't support such a file name */
 		SETERR_ARG_LOC (
 			awk, 
 			QSE_AWK_EIONMNL,

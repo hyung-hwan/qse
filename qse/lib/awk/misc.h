@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: misc.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,21 +27,19 @@ extern "C" {
 
 qse_char_t* qse_awk_rtx_strtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
-	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len);
+	const qse_char_t* delim, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxtok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_char_t** tok, qse_size_t* tok_len);
+	const qse_char_t* delim, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, 
-	const qse_char_t* delim, qse_size_t delim_len,
-	qse_char_t** tok, qse_size_t* tok_len);
+	const qse_char_t* delim, qse_size_t delim_len, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxntok (
 	qse_awk_rtx_t* rtx, const qse_char_t* s, qse_size_t len,
-	const qse_char_t* delim, qse_size_t delim_len,
-	qse_char_t** tok, qse_size_t* tok_len);
+	const qse_char_t* delim, qse_size_t delim_len, qse_cstr_t* tok);
 
 qse_char_t* qse_awk_rtx_strxntokbyrex (
 	qse_awk_rtx_t*    rtx, 
@@ -50,8 +48,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 	const qse_char_t* substr,
 	qse_size_t        sublen,
 	void*             rex,
-	qse_char_t**      tok,
-	qse_size_t*       tok_len,
+	qse_cstr_t*       tok,
 	qse_awk_errnum_t* errnum
 );
 
@@ -63,8 +60,7 @@ qse_char_t* qse_awk_rtx_strxnfld (
 	qse_char_t     lq,
 	qse_char_t     rq,
 	qse_char_t     ec,
-	qse_char_t**   tok,
-	qse_size_t*    tok_len
+	qse_cstr_t*    tok
 );
 
 void* qse_awk_buildrex (
@@ -76,8 +72,7 @@ void* qse_awk_buildrex (
 
 int qse_awk_matchrex (
 	qse_awk_t* awk, void* code, int option,
-        const qse_char_t* str, qse_size_t len,
-        const qse_char_t* substr, qse_size_t sublen,
+	const qse_cstr_t* str, const qse_cstr_t* substr,
 	qse_cstr_t* match, qse_awk_errnum_t* errnum
 );
 

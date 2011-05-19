@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
+ * $Id: Awk.cpp 462 2011-05-18 14:36:40Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -432,8 +432,8 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 	{
 		if (val->type == QSE_AWK_VAL_STR)
 		{
-			p = ((qse_awk_val_str_t*)val)->ptr;
-			l = ((qse_awk_val_str_t*)val)->len;
+			p = ((qse_awk_val_str_t*)val)->val.ptr;
+			l = ((qse_awk_val_str_t*)val)->val.len;
 		}
 		else
 		{
