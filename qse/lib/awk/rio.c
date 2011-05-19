@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: rio.c 464 2011-05-19 03:33:28Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -231,7 +231,7 @@ static QSE_INLINE int match_long_rs (
 	ret = QSE_AWK_MATCHREX (
 		run->awk, run->gbl.rs,
 		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-		QSE_STR_XSTR(buf), QSE_STR_XSTR(buf),
+		QSE_STR_CSTR(buf), QSE_STR_CSTR(buf),
 		&match, &errnum);
 	if (ret <= -1)
 	{
