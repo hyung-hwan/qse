@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: fnc.c 463 2011-05-19 02:50:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -162,7 +162,7 @@ void* qse_awk_addfnc (
 int qse_awk_delfnc (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len)
 {
-	if (qse_htb_delete (awk->fnc.user, name, name_len) == -1)
+	if (qse_htb_delete (awk->fnc.user, name, name_len) <= -1)
 	{
 		qse_cstr_t errarg;
 
@@ -348,7 +348,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	n = qse_awk_rtx_closeio (rtx, name, opt);
 	/* failure to close is not a critical error. instead, that is
 	 * flagged by the return value of close(). 
-	if (n == -1 && rtx->errinf.num != QSE_AWK_EIONMNF)
+	if (n <= -1 && rtx->errinf.num != QSE_AWK_EIONMNF)
 	{
 		if (a0->type != QSE_AWK_VAL_STR) 
 			QSE_AWK_FREE (rtx->awk, name);
@@ -377,7 +377,7 @@ static int flush_io (
 	if (run->rio.handler[rio] != QSE_NULL)
 	{
 		n2 = qse_awk_rtx_flushio (run, rio, name);
-		if (n2 == -1)
+		if (n2 <= -1)
 		{
 			/*
 			if (run->errinf.num == QSE_AWK_EIOIMPL) n = -1;
@@ -623,7 +623,7 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	else 
 	{
 		n = qse_awk_rtx_valtonum (rtx, a2, &lcount, &rcount);
-		if (n == -1) 
+		if (n <= -1) 
 		{
 			if (a0->type != QSE_AWK_VAL_STR) 
 				QSE_AWK_FREE (rtx->awk, str);
@@ -658,16 +658,17 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1, * a2, * t1, * t2, ** a1_ref;
-	qse_char_t* str, * str_free, * p;
-	qse_size_t str_len, str_left, org_len;
-	qse_cstr_t tok;
-	qse_long_t nflds;
-	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
-	qse_size_t key_len;
-	qse_char_t* fs_ptr, * fs_free;
-	qse_size_t fs_len;
+
+	qse_cstr_t str, fs;
+	qse_char_t* str_free = QSE_NULL, * fs_free = QSE_NULL;
+	const qse_char_t* p;
+	qse_size_t str_left, org_len;
 	void* fs_rex = QSE_NULL; 
 	void* fs_rex_free = QSE_NULL;
+
+	qse_cstr_t tok;
+	qse_long_t nflds;
+
 	qse_awk_errnum_t errnum;
 
 	nargs = qse_awk_rtx_getnargs (run);
@@ -705,15 +706,14 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 
 	if (a0->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)a0)->val.ptr;
-		str_len = ((qse_awk_val_str_t*)a0)->val.len;
-		str_free = QSE_NULL;
+		str.ptr = ((qse_awk_val_str_t*)a0)->val.ptr;
+		str.len = ((qse_awk_val_str_t*)a0)->val.len;
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtocpldup (run, a0, &str_len);
-		if (str == QSE_NULL) return -1;
-		str_free = str;
+		str.ptr = qse_awk_rtx_valtocpldup (run, a0, &str.len);
+		if (str.ptr == QSE_NULL) return -1;
+		str_free = (qse_char_t*)str.ptr;
 	}
 
 	if (a2 == QSE_NULL)
@@ -722,126 +722,90 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		t1 = qse_awk_rtx_getgbl (run, QSE_AWK_GBL_FS);
 		if (t1->type == QSE_AWK_VAL_NIL)
 		{
-			fs_ptr = QSE_T(" ");
-			fs_len = 1;
-			fs_free = QSE_NULL;
+			fs.ptr = QSE_T(" ");
+			fs.len = 1;
 		}
 		else if (t1->type == QSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((qse_awk_val_str_t*)t1)->val.ptr;
-			fs_len = ((qse_awk_val_str_t*)t1)->val.len;
-			fs_free = QSE_NULL;
+			fs.ptr = ((qse_awk_val_str_t*)t1)->val.ptr;
+			fs.len = ((qse_awk_val_str_t*)t1)->val.len;
 		}
 		else
 		{
-			fs_ptr = qse_awk_rtx_valtocpldup (run, t1, &fs_len);
-			if (fs_ptr == QSE_NULL)
-			{
-				if (str_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, str_free);
-				return -1;
-			}
-			fs_free = fs_ptr;
+			fs.ptr = qse_awk_rtx_valtocpldup (run, t1, &fs.len);
+			if (fs.ptr == QSE_NULL) goto oops;
+			fs_free = (qse_char_t*)fs.ptr;
 		}
 
-		if (fs_len > 1) 
-		{
-			fs_rex = run->gbl.fs;
-			fs_rex_free = QSE_NULL;
-		}
+		if (fs.len > 1) fs_rex = run->gbl.fs;
 	}
 	else if (a2->type == QSE_AWK_VAL_REX)
 	{
 		/* the third parameter is a regular expression */
-
 		fs_rex = ((qse_awk_val_rex_t*)a2)->code;
-		fs_rex_free = QSE_NULL;
 
 		/* make the loop below to take fs_rex by 
 		 * setting fs_len greater than 1*/
-		fs_ptr = QSE_NULL;
-		fs_free = QSE_NULL;
-		fs_len = 2;
+		fs.ptr = QSE_NULL;
+		fs.len = 2;
 	}
 	else 
 	{
 		if (a2->type == QSE_AWK_VAL_STR)
 		{
-			fs_ptr = ((qse_awk_val_str_t*)a2)->val.ptr;
-			fs_len = ((qse_awk_val_str_t*)a2)->val.len;
-			fs_free = QSE_NULL;
+			fs.ptr = ((qse_awk_val_str_t*)a2)->val.ptr;
+			fs.len = ((qse_awk_val_str_t*)a2)->val.len;
 		}
 		else
 		{
-			fs_ptr = qse_awk_rtx_valtocpldup (run, a2, &fs_len);
-			if (fs_ptr == QSE_NULL)
-			{
-				if (str_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, str_free);
-				return -1;
-			}
-			fs_free = fs_ptr;
+			fs.ptr = qse_awk_rtx_valtocpldup (run, a2, &fs.len);
+			if (fs.ptr == QSE_NULL) goto oops;
+			fs_free = (qse_char_t*)fs.ptr;
 		}
 
-		if (fs_len > 1) 
+		if (fs.len > 1) 
 		{
 			fs_rex = QSE_AWK_BUILDREX (
-				run->awk, fs_ptr, fs_len, &errnum);
+				run->awk, fs.ptr, fs.len, &errnum);
 			if (fs_rex == QSE_NULL)
 			{
-				if (str_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, str_free);
-				if (fs_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, fs_free);
 				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-				return -1;
+				goto oops;
 			}
 			fs_rex_free = fs_rex;
 		}
 	}
 
 	t1 = qse_awk_rtx_makemapval (run);
-	if (t1 == QSE_NULL)
-	{
-		if (str_free != QSE_NULL) 
-			QSE_AWK_FREE (run->awk, str_free);
-		if (fs_free != QSE_NULL) 
-			QSE_AWK_FREE (run->awk, fs_free);
-		if (fs_rex_free != QSE_NULL) 
-			QSE_AWK_FREEREX (run->awk, fs_rex_free);
-		return -1;
-	}
+	if (t1 == QSE_NULL) goto oops;
 
 	qse_awk_rtx_refdownval (run, *a1_ref);
 	*a1_ref = t1;
 	qse_awk_rtx_refupval (run, *a1_ref);
 
-	p = str; str_left = str_len; org_len = str_len;
+	p = str.ptr; str_left = str.len; org_len = str.len;
 	nflds = 0;
 
 	while (p != QSE_NULL)
 	{
-		if (fs_len <= 1)
+		qse_char_t key_buf[QSE_SIZEOF(qse_long_t)*8+2];
+		qse_size_t key_len;
+
+		if (fs.len <= 1)
 		{
 			p = qse_awk_rtx_strxntok (run, 
-				p, str_len, fs_ptr, fs_len, &tok);
+				p, str.len, fs.ptr, fs.len, &tok);
 		}
 		else
 		{
 			p = qse_awk_rtx_strxntokbyrex (
-				run, str, org_len, p, str_len, 
+				run, str.ptr, org_len, p, str.len, 
 				fs_rex, &tok, &errnum
 			); 
 			if (p == QSE_NULL && errnum != QSE_AWK_ENOERR)
 			{
-				if (str_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, str_free);
-				if (fs_free != QSE_NULL) 
-					QSE_AWK_FREE (run->awk, fs_free);
-				if (fs_rex_free != QSE_NULL) 
-					QSE_AWK_FREEREX (run->awk, fs_rex_free);
 				qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-				return -1;
+				goto oops;
 			}
 		}
 
@@ -855,55 +819,27 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 
 		/* create the field string */
 		t2 = qse_awk_rtx_makestrval (run, tok.ptr, tok.len);
-		if (t2 == QSE_NULL)
-		{
-			if (str_free != QSE_NULL)
-				QSE_AWK_FREE (run->awk, str_free);
-			if (fs_free != QSE_NULL)
-				QSE_AWK_FREE (run->awk, fs_free);
-			if (fs_rex_free != QSE_NULL)
-				QSE_AWK_FREEREX (run->awk, fs_rex_free);
-			return -1;
-		}
+		if (t2 == QSE_NULL) goto oops;
 
 		/* put it into the map */
 		key_len = qse_awk_longtostr (
-			run->awk, ++nflds, 10, QSE_NULL, key, QSE_COUNTOF(key));
+			run->awk, ++nflds, 10, QSE_NULL, key_buf, QSE_COUNTOF(key_buf));
 		QSE_ASSERT (key_len != (qse_size_t)-1);
 
-		/* don't forget to update the reference count when you 
-		 * handle the assignment-like situation.  anyway, it is 
-		 * incremented in advance as if the assignment was successful.
-		 * it is decremented if the assignement fails. */
-		qse_awk_rtx_refupval (run, t2);
-
-		if (qse_htb_insert (
-			((qse_awk_val_map_t*)t1)->map, 
-			key, key_len, t2, 0) == QSE_NULL)
+		if (qse_awk_rtx_setmapvalfld (
+			run, t1, key_buf, key_len, t2) == QSE_NULL)
 		{
-			/* assignment failed. restore the reference counter */
+			qse_awk_rtx_refupval (run, t2);
 			qse_awk_rtx_refdownval (run, t2);
-
-			if (str_free != QSE_NULL) 
-				QSE_AWK_FREE (run->awk, str_free);
-			if (fs_free != QSE_NULL) 
-				QSE_AWK_FREE (run->awk, fs_free);
-			if (fs_rex_free != QSE_NULL)
-				QSE_AWK_FREEREX (run->awk, fs_rex_free);
-
-			/* qse_htb_insert() fails if the key exists.
-			 * that can't happen here. so set the error code
-			 * to ENOMEM */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
+			goto oops;
 		}
 
-		str_len = str_left - (p - str);
+		str.len = str_left - (p - str.ptr);
 	}
 
-	if (str_free != QSE_NULL) QSE_AWK_FREE (run->awk, str_free);
-	if (fs_free != QSE_NULL) QSE_AWK_FREE (run->awk, fs_free);
-	if (fs_rex_free != QSE_NULL) QSE_AWK_FREEREX (run->awk, fs_rex_free);
+	if (str_free) QSE_AWK_FREE (run->awk, str_free);
+	if (fs_free) QSE_AWK_FREE (run->awk, fs_free);
+	if (fs_rex_free) QSE_AWK_FREEREX (run->awk, fs_rex_free);
 
 	/*nflds--;*/
 
@@ -912,6 +848,12 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 
 	qse_awk_rtx_setretval (run, t1);
 	return 0;
+
+oops:
+	if (str_free) QSE_AWK_FREE (run->awk, str_free);
+	if (fs_free) QSE_AWK_FREE (run->awk, fs_free);
+	if (fs_rex_free) QSE_AWK_FREEREX (run->awk, fs_rex_free);
+	return -1;
 }
 
 static int fnc_tolower (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
@@ -995,15 +937,19 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 	qse_cstr_t s0, s1, s2;
 	const qse_char_t* s2_end;
+
 	qse_char_t* s0_free = QSE_NULL;
 	qse_char_t* s1_free = QSE_NULL;
 	qse_char_t* s2_free = QSE_NULL;
 
 	void* rex = QSE_NULL;
-	int opt, n;
-	qse_cstr_t mat, pmat, cur;
-	qse_size_t i, m;
+	void* rex_free = QSE_NULL;
+
 	qse_str_t new;
+	int new_inited = 0, opt;
+
+	qse_cstr_t mat, pmat, cur;
+
 	qse_long_t sub_count;
 
 	nargs = qse_awk_rtx_getnargs (run);
@@ -1014,17 +960,6 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	a2 = (nargs >= 3)? qse_awk_rtx_getarg (run, 2): QSE_NULL;
 
 	QSE_ASSERT (a2 == QSE_NULL || a2->type == QSE_AWK_VAL_REF);
-
-#define FREE_A_PTRS(awk) \
-	do { \
-		if (s2_free != QSE_NULL) QSE_AWK_FREE (awk, s2_free); \
-		if (s1_free != QSE_NULL) QSE_AWK_FREE (awk, s1_free); \
-		if (s0_free != QSE_NULL) QSE_AWK_FREE (awk, s0_free); \
-	} while (0)
-#define FREE_A0_REX(awk,rex) \
-	do { \
-		if (a0->type != QSE_AWK_VAL_REX) QSE_AWK_FREEREX (awk, rex); \
-	} while (0)
 
 	if (a0->type == QSE_AWK_VAL_REX)
 	{
@@ -1038,11 +973,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	else
 	{
 		s0.ptr = qse_awk_rtx_valtocpldup (run, a0, &s0.len);
-		if (s0.ptr == QSE_NULL) 
-		{
-			FREE_A_PTRS (run->awk);
-			return -1;
-		}	
+		if (s0.ptr == QSE_NULL) goto oops;
 		s0_free = (qse_char_t*)s0.ptr;
 	}
 
@@ -1054,11 +985,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	else
 	{
 		s1.ptr = qse_awk_rtx_valtocpldup (run, a1, &s1.len);
-		if (s1.ptr == QSE_NULL) 
-		{
-			FREE_A_PTRS (run->awk);
-			return -1;
-		}
+		if (s1.ptr == QSE_NULL) goto oops;
 		s1_free = (qse_char_t*)s1.ptr;
 	}
 
@@ -1095,10 +1022,9 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 		if ((*a2_ref)->type == QSE_AWK_VAL_MAP)
 		{
-			FREE_A_PTRS (run->awk);
 			/* a map is not allowed as the third parameter */
 			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNA, QSE_NULL);
-			return -1;
+			goto oops;
 		}
 
 		if ((*a2_ref)->type == QSE_AWK_VAL_STR)
@@ -1109,21 +1035,17 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		else
 		{
 			s2.ptr = qse_awk_rtx_valtocpldup (run, *a2_ref, &s2.len);
-			if (s2.ptr == QSE_NULL) 
-			{
-				FREE_A_PTRS (run->awk);
-				return -1;
-			}
+			if (s2.ptr == QSE_NULL) goto oops;
 			s2_free = (qse_char_t*)s2.ptr;
 		}
 	}
 
 	if (qse_str_init (&new, run->awk->mmgr, s2.len) == QSE_NULL)
 	{
-		FREE_A_PTRS (run->awk);
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
+		goto oops;
 	}
+	new_inited = 1;
 
 	if (a0->type != QSE_AWK_VAL_REX)
 	{
@@ -1133,11 +1055,11 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			run->awk, s0.ptr, s0.len, &errnum);
 		if (rex == QSE_NULL)
 		{
-			qse_str_fini (&new);
-			FREE_A_PTRS (run->awk);
 			qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-			return -1;
+			goto oops;
 		}
+
+		rex_free = rex;
 	}
 
 	opt = (run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0;
@@ -1155,6 +1077,8 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	while (cur.ptr <= s2_end)
 	{
 		qse_awk_errnum_t errnum;
+		int n;
+		qse_size_t m, i;
 
 		if (max_count == 0 || sub_count < max_count)
 		{
@@ -1167,10 +1091,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		if (n <= -1)
 		{
 			qse_awk_rtx_seterrnum (run, errnum, QSE_NULL);
-			FREE_A0_REX (run->awk, rex);
-			qse_str_fini (&new);
-			FREE_A_PTRS (run->awk);
-			return -1;
+			goto oops;
 		}
 
 		if (n == 0) 
@@ -1179,11 +1100,8 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			if (qse_str_ncat (
 				&new, cur.ptr, cur.len) == (qse_size_t)-1)
 			{
-				FREE_A0_REX (run->awk, rex);
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
+				goto oops;
 			}
 			break;
 		}
@@ -1200,11 +1118,8 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		if (qse_str_ncat (
 			&new, cur.ptr, mat.ptr - cur.ptr) == (qse_size_t)-1)
 		{
-			FREE_A0_REX (run->awk, rex);
-			qse_str_fini (&new);
-			FREE_A_PTRS (run->awk);
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
+			goto oops;
 		}
 
 		for (i = 0; i < s1.len; i++)
@@ -1227,11 +1142,8 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 			if (m == (qse_size_t)-1)
 			{
-				FREE_A0_REX (run->awk, rex);
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
+				goto oops;
 			}
 		}
 
@@ -1249,30 +1161,28 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 			m = qse_str_ncat (&new, cur.ptr, 1);
 			if (m == (qse_size_t)-1)
 			{
-				FREE_A0_REX (run->awk, rex);
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
+				goto oops;
 			}
 
 			cur.ptr++; cur.len--;
 		}
 	}
 
-	FREE_A0_REX (run->awk, rex);
+	if (rex_free)
+	{
+		QSE_AWK_FREEREX (run->awk, rex_free); 
+		rex_free = QSE_NULL;
+	}
 
 	if (sub_count > 0)
 	{
 		if (a2 == QSE_NULL)
 		{
-			if (qse_awk_rtx_setrec (run, 0,
-				QSE_STR_PTR(&new), QSE_STR_LEN(&new)) == -1)
-			{
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
-				return -1;
-			}
+			int n;
+			n = qse_awk_rtx_setrec (run, 0,
+				QSE_STR_PTR(&new), QSE_STR_LEN(&new));
+			if (n <= -1) goto oops;
 		}
 		else if (((qse_awk_val_ref_t*)a2)->id == QSE_AWK_VAL_REF_POS)
 		{
@@ -1282,23 +1192,13 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 				run, (qse_size_t)((qse_awk_val_ref_t*)a2)->adr,
 				QSE_STR_PTR(&new), QSE_STR_LEN(&new));
 
-			if (n == -1)
-			{
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
-				return -1;
-			}
+			if (n <= -1) goto oops;
 		}
 		else
 		{
 			v = qse_awk_rtx_makestrval (run,
 				QSE_STR_PTR(&new), QSE_STR_LEN(&new));
-			if (v == QSE_NULL)
-			{
-				qse_str_fini (&new);
-				FREE_A_PTRS (run->awk);
-				return -1;
-			}
+			if (v == QSE_NULL) goto oops;
 
 			qse_awk_rtx_refdownval (run, *a2_ref);
 			*a2_ref = v;
@@ -1307,16 +1207,24 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 
 	qse_str_fini (&new);
-	FREE_A_PTRS (run->awk);
 
-#undef FREE_A0_REX
-#undef FREE_A_PTRS
+	if (s2_free) QSE_AWK_FREE (run->awk, s2_free);
+	if (s1_free) QSE_AWK_FREE (run->awk, s1_free);
+	if (s0_free) QSE_AWK_FREE (run->awk, s0_free);
 
 	v = qse_awk_rtx_makeintval (run, sub_count);
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, v);
 	return 0;
+
+oops:
+	if (rex_free) QSE_AWK_FREEREX (run->awk, rex_free); 
+	if (new_inited) qse_str_fini (&new);
+	if (s2_free) QSE_AWK_FREE (run->awk, s2_free);
+	if (s1_free) QSE_AWK_FREE (run->awk, s1_free);
+	if (s0_free) QSE_AWK_FREE (run->awk, s0_free);
+	return -1;
 }
 
 static int fnc_gsub (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
@@ -1465,14 +1373,14 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	qse_awk_rtx_refupval (rtx, a1);
 
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RSTART, a0) == -1)
+	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RSTART, a0) <= -1)
 	{
 		qse_awk_rtx_refdownval (rtx, a1);
 		qse_awk_rtx_refdownval (rtx, a0);
 		return -1;
 	}
 
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RLENGTH, a1) == -1)
+	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_RLENGTH, a1) <= -1)
 	{
 		qse_awk_rtx_refdownval (rtx, a1);
 		qse_awk_rtx_refdownval (rtx, a0);
@@ -1491,6 +1399,7 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
 	qse_str_t out, fbu;
+	int out_inited = 0, fbu_inited = 0;
 	qse_xstr_t cs0;
 	qse_xstr_t x;
 
@@ -1500,14 +1409,16 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)
 	{
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
+		goto oops;
 	}
+	out_inited = 1;
+
 	if (qse_str_init (&fbu, run->awk->mmgr, 256) == QSE_NULL)
 	{
-		qse_str_fini (&out);
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
+		goto oops;
 	}
+	fbu_inited = 1;
 
 	a0 = qse_awk_rtx_getarg (run, 0);
 	if (a0->type == QSE_AWK_VAL_STR)
@@ -1517,38 +1428,28 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	else
 	{
 		cs0.ptr = qse_awk_rtx_valtocpldup (run, a0, &cs0.len);
-		if (cs0.ptr == QSE_NULL) 
-		{
-			qse_str_fini (&fbu);
-			qse_str_fini (&out);
-			return -1;
-		}
+		if (cs0.ptr == QSE_NULL) goto oops;
 	}
 
 	x.ptr = qse_awk_rtx_format (run, 
 		&out, &fbu, cs0.ptr, cs0.len, nargs, QSE_NULL, &x.len);
 	if (a0->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, cs0.ptr);
-	if (x.ptr == QSE_NULL) 
-	{
-		qse_str_fini (&fbu);
-		qse_str_fini (&out);
-		return -1;
-	}
+	if (x.ptr == QSE_NULL) goto oops;
 	
 	/*a0 = qse_awk_rtx_makestrval_nodup (run, x.ptr, x.len);*/
 	a0 = qse_awk_rtx_makestrval (run, x.ptr, x.len);
-	if (a0 == QSE_NULL) 
-	{
-		qse_str_fini (&fbu);
-		qse_str_fini (&out);
-		return -1;
-	}
+	if (a0 == QSE_NULL)  goto oops;
 
 	qse_str_fini (&fbu);
 	/*qse_str_yield (&out, QSE_NULL, 0);*/
 	qse_str_fini (&out);
 	qse_awk_rtx_setretval (run, a0);
 	return 0;
+
+oops:
+	if (fbu_inited) qse_str_fini (&fbu);
+	if (out_inited) qse_str_fini (&out);
+	return -1;
 }
 
 static int fnc_math_1 (
@@ -1656,7 +1557,7 @@ static int fnc_int (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	a0 = qse_awk_rtx_getarg (run, 0);
 
 	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
-	if (n == -1) return -1;
+	if (n <= -1) return -1;
 	if (n == 1) lv = (qse_long_t)rv;
 
 	r = qse_awk_rtx_makeintval (run, lv);

@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: run.c 463 2011-05-19 02:50:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -472,7 +472,7 @@ static int set_global (
 			qse_real_t rv;
 
 			n = qse_awk_rtx_valtonum (rtx, val, &lv, &rv);
-			if (n == -1) return -1;
+			if (n <= -1) return -1;
 			if (n == 1) lv = (qse_long_t)rv;
 
 			rtx->gbl.nr = lv;
@@ -3614,7 +3614,7 @@ static qse_awk_val_t* do_assignment_pos (
 
 	if (val->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str.ptr);
 
-	if (n == -1) return QSE_NULL;
+	if (n <= -1) return QSE_NULL;
 	return (lv == 0)? run->inrec.d0: run->inrec.flds[lv-1].val;
 }
 
@@ -6344,7 +6344,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			/* set $0 with the input value */
 			if (qse_awk_rtx_setrec (run, 0,
 				QSE_STR_PTR(&buf),
-				QSE_STR_LEN(&buf)) == -1)
+				QSE_STR_LEN(&buf)) <= -1)
 			{
 				qse_str_fini (&buf);
 				return QSE_NULL;
@@ -6449,7 +6449,7 @@ static int read_record (qse_awk_rtx_t* run)
 
 	if (qse_awk_rtx_setrec (run, 0, 
 		QSE_STR_PTR(&run->inrec.line), 
-		QSE_STR_LEN(&run->inrec.line)) == -1) return -1;
+		QSE_STR_LEN(&run->inrec.line)) <= -1) return -1;
 
 	return 1;
 }
