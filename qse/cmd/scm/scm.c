@@ -266,7 +266,9 @@ pio1 (QSE_T("ls -laF"), QSE_PIO_READOUT|QSE_PIO_WRITEIN|/*QSE_PIO_SHELL|*/QSE_PI
 {
 	qse_printf (QSE_T("sizeof(int) = %d\n"), (int)sizeof(int));
 	qse_printf (QSE_T("sizeof(long) = %d\n"), (int)sizeof(long));
+#if QSE_SIZEOF_LONG_LONG>0
 	qse_printf (QSE_T("sizeof(long long) = %d\n"), (int)sizeof(long long));
+#endif
 	qse_printf (QSE_T("sizeof(float) = %d\n"), (int)sizeof(float));
 	qse_printf (QSE_T("sizeof(double) = %d\n"), (int)sizeof(double));
 	qse_printf (QSE_T("sizeof(long double) = %d\n"), (int)sizeof(long double));

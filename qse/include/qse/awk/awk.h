@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: awk.h 463 2011-05-19 02:50:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -720,7 +720,7 @@ enum qse_awk_option_t
 	QSE_AWK_NEWLINE     = (1 << 5),
 
 	/** 
-	 * remove empty fields when splitting a record if FS is a regular
+	 * removes empty fields when splitting a record if FS is a regular
 	 * expression and the match is all spaces.
 	 *
 	 * @code
@@ -735,13 +735,13 @@ enum qse_awk_option_t
 	 *
 	 * @code
 	 * BEGIN { 
-	 *   n=split(" o my  god  ", x, /[ o]+/); 
+	 *   n=split("   oh my  noodle  ", x, /[ o]+/); 
 	 *   for (i=1;i<=n;i++) print "[" x[i] "]"; 
 	 * }
 	 * @endcode
-	 * The above example splits the string to [], [my], [g], [d]
+	 * This example splits the string to [], [h], [my], [n], [dle]
 	 * if #QSE_AWK_STRIPRECSPC is on. Otherwise, it results in
-	 * [], [my], [g], [d], []. Note that the first empty field is not 
+	 * [], [h], [my], [n], [dle], []. Note that the first empty field is not 
 	 * removed as the field separator is not all spaces. (space + 'o').
 	 */
 	QSE_AWK_STRIPRECSPC    = (1 << 6),
