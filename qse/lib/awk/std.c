@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 461 2011-05-18 02:32:39Z hyunghwan.chung $
+ * $Id: std.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1414,8 +1414,8 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	v = qse_awk_rtx_getarg (run, 0);
 	if (v->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)v)->ptr;
-		len = ((qse_awk_val_str_t*)v)->len;
+		str = ((qse_awk_val_str_t*)v)->val.ptr;
+		len = ((qse_awk_val_str_t*)v)->val.len;
 	}
 	else
 	{

@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 458 2011-05-13 04:06:55Z hyunghwan.chung $
+ * $Id: val.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,7 +27,7 @@
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
 
 static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 0 };
-static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 0, QSE_T(""), 0 };
+static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 0, { QSE_T(""), 0 } };
 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
@@ -225,9 +225,9 @@ init:
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->nstr = 0;
-	val->len = len;
-	val->ptr = (qse_char_t*)(val + 1);
-	qse_strncpy (val->ptr, str, len);
+	val->val.len = len;
+	val->val.ptr = (qse_char_t*)(val + 1);
+	qse_strncpy (val->val.ptr, str, len);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("makestrval => %p\n"), val);
@@ -251,8 +251,8 @@ qse_awk_val_t* qse_awk_rtx_makestrval_nodup (
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->nstr = 0;
-	val->len = len;
-	val->ptr = str;
+	val->val.len = len;
+	val->val.ptr = str;
 	return (qse_awk_val_t*)val;
 }
 
@@ -295,10 +295,10 @@ init:
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
 	val->nstr = 0;
-	val->len = len1 + len2;
-	val->ptr = (qse_char_t*)(val + 1);
-	qse_strncpy (val->ptr, str1, len1);
-	qse_strncpy (&val->ptr[len1], str2, len2);
+	val->val.len = len1 + len2;
+	val->val.ptr = (qse_char_t*)(val + 1);
+	qse_strncpy (val->val.ptr, str1, len1);
+	qse_strncpy (&val->val.ptr[len1], str2, len2);
 
 #ifdef DEBUG_VAL
 	qse_dprintf (QSE_T("makestrval2 => %p\n"), val);
@@ -623,7 +623,7 @@ void qse_awk_rtx_freeval (
 			qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
 			int i;
 
-			i = v->len / FEATURE_SCACHE_BLOCK_UNIT;
+			i = v->val.len / FEATURE_SCACHE_BLOCK_UNIT;
 			if (i < QSE_COUNTOF(rtx->scache_count) &&
 			    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
 			{
@@ -738,7 +738,7 @@ qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, qse_awk_val_t* val)
 		case QSE_AWK_VAL_REAL:
 			return ((qse_awk_val_real_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
-			return ((qse_awk_val_str_t*)val)->len > 0;
+			return ((qse_awk_val_str_t*)val)->val.len > 0;
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
 			return ((qse_awk_val_rex_t*)val)->len > 0;
 		case QSE_AWK_VAL_MAP:
@@ -1129,7 +1129,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 		case QSE_AWK_VAL_STR:
 		{
 			qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
-			return str_to_str (rtx, vs->ptr, vs->len, out);
+			return str_to_str (rtx, vs->val.ptr, vs->val.len, out);
 		}
 	}
 
@@ -1180,8 +1180,8 @@ int qse_awk_rtx_valtonum (
 	{
 		return qse_awk_rtx_strtonum (
 			rtx, 0,
-			((qse_awk_val_str_t*)v)->ptr, 
-			((qse_awk_val_str_t*)v)->len, 
+			((qse_awk_val_str_t*)v)->val.ptr, 
+			((qse_awk_val_str_t*)v)->val.len, 
 			l, r
 		);
 	}

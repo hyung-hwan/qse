@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 456 2011-05-12 14:55:53Z hyunghwan.chung $
+ * $Id: awk.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -405,7 +405,7 @@ struct opttab_t
 	{ QSE_T("ncmponstr"),    QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
 	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,   QSE_T("enable the strict naming rule") },
 	{ QSE_T("include"),      QSE_AWK_INCLUDE,        QSE_T("enable 'include'") },
-	{ QSE_NULL,             0 }
+	{ QSE_NULL,              0,                      QSE_NULL }
 };
 
 static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
@@ -461,7 +461,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":assign"),          QSE_T('v') },
 		{ QSE_T(":memory-limit"),    QSE_T('m') },
 
-		{ QSE_T("help"),             QSE_T('h') }
+		{ QSE_T("help"),             QSE_T('h') },
+		{ QSE_NULL,                  QSE_T('\0') }                  
 	};
 
 	static qse_opt_t opt = 

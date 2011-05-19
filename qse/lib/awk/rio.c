@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 450 2011-05-03 07:48:42Z hyunghwan.chung $
+ * $Id: rio.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -206,8 +206,8 @@ static QSE_INLINE int resolve_rs (
 			break;
 
 		case QSE_AWK_VAL_STR:
-			rrs->ptr = ((qse_awk_val_str_t*)rs)->ptr;
-			rrs->len = ((qse_awk_val_str_t*)rs)->len;
+			rrs->ptr = ((qse_awk_val_str_t*)rs)->val.ptr;
+			rrs->len = ((qse_awk_val_str_t*)rs)->val.len;
 			break;
 
 		default:
@@ -231,8 +231,7 @@ static QSE_INLINE int match_long_rs (
 	ret = QSE_AWK_MATCHREX (
 		run->awk, run->gbl.rs,
 		((run->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
-		QSE_STR_PTR(buf), QSE_STR_LEN(buf),
+		QSE_STR_XSTR(buf), QSE_STR_XSTR(buf),
 		&match, &errnum);
 	if (ret <= -1)
 	{
@@ -644,8 +643,8 @@ int qse_awk_rtx_writeio_val (
 
 	if (v->type == QSE_AWK_VAL_STR)
 	{
-		str = ((qse_awk_val_str_t*)v)->ptr;
-		len = ((qse_awk_val_str_t*)v)->len;
+		str = ((qse_awk_val_str_t*)v)->val.ptr;
+		len = ((qse_awk_val_str_t*)v)->val.len;
 	}
 	else
 	{
