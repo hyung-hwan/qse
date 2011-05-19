@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 463 2011-05-19 02:50:51Z hyunghwan.chung $
+ * $Id: run.c 465 2011-05-19 03:46:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -72,8 +72,8 @@ struct pafv
  * equal to sizeof(qse_size_t). */
 #define IS_VALID_POSIDX(idx) \
 	((idx) >= 0 && \
-	 (idx) < QSE_TYPE_MAX(qse_long_t) && \
-	 (idx) < QSE_TYPE_MAX(qse_size_t))
+	 (idx) <= QSE_TYPE_MAX(qse_long_t) && \
+	 (idx) <= QSE_TYPE_MAX(qse_size_t))
 
 #define SETERR_ARGX_LOC(rtx,code,ea,loc) \
 	qse_awk_rtx_seterror ((rtx), (code), (ea), (loc))
