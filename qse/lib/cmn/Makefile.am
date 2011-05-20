@@ -10,7 +10,7 @@ libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
 	mem.c xma.c fma.c chr.c chr_cnv.c rex.c \
 	str_beg.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c \
-	str_del.c str_dup.c str_dynm str_dynw.c str_end.c str_excl.c \
+	str_del.c str_dup.c str_dynm.c str_dynw.c str_end.c str_excl.c \
 	str_fcpy.c str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c \
 	str_rev.c str_rot.c str_set.c str_spl.c str_spn.c str_str.c \
 	str_subst.c str_tok.c str_trm.c str_word.c \

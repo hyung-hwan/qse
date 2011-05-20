@@ -74,13 +74,13 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo chr.lo chr_cnv.lo \
 	rex.lo str_beg.lo str_cat.lo str_chr.lo str_cnv.lo str_cmp.lo \
-	str_cpy.lo str_del.lo str_dup.lo str_dynm.lo str_dynw.lo str_end.lo \
-	str_excl.lo str_fcpy.lo str_incl.lo str_len.lo str_pac.lo \
-	str_pbrk.lo str_put.lo str_rev.lo str_rot.lo str_set.lo \
-	str_spl.lo str_spn.lo str_str.lo str_subst.lo str_tok.lo \
-	str_trm.lo str_word.lo lda.lo oht.lo htb.lo rbt.lo sll.lo \
-	gdl.lo dll.lo opt.lo tio.lo tio_get.lo tio_put.lo fio.lo \
-	pio.lo sio.lo alg_search.lo alg_sort.lo time.lo misc.lo \
+	str_cpy.lo str_del.lo str_dup.lo str_dynm.lo str_dynw.lo \
+	str_end.lo str_excl.lo str_fcpy.lo str_incl.lo str_len.lo \
+	str_pac.lo str_pbrk.lo str_put.lo str_rev.lo str_rot.lo \
+	str_set.lo str_spl.lo str_spn.lo str_str.lo str_subst.lo \
+	str_tok.lo str_trm.lo str_word.lo lda.lo oht.lo htb.lo rbt.lo \
+	sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo tio_put.lo \
+	fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo time.lo misc.lo \
 	assert.lo main.lo stdio.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
