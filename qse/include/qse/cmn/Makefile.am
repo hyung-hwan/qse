@@ -10,6 +10,7 @@ pkginclude_HEADERS = \
 	htb.h \
 	lda.h \
 	main.h \
+	map.h \
 	mem.h \
 	misc.h \
 	oht.h \

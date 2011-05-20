@@ -16,7 +16,7 @@ qse_word_t qse_stx_alloc_word_object (
 	qse_word_t idx, n;
 	qse_stx_word_object_t* obj;
 
-	qse_assert (stx->nil == QSE_STX_NIL);
+	QSE_ASSERT (stx->nil == QSE_STX_NIL);
 
 	/* bytes to allocated =
 	 *     (number of instance variables + 
@@ -60,7 +60,7 @@ qse_word_t qse_stx_alloc_byte_object (
 	qse_word_t idx;
 	qse_stx_byte_object_t* obj;
 
-	qse_assert (stx->nil == QSE_STX_NIL);
+	QSE_ASSERT (stx->nil == QSE_STX_NIL);
 
 	idx = qse_stx_memory_alloc (
 		&stx->memory, n + qse_sizeof(qse_stx_object_t));
@@ -96,7 +96,7 @@ qse_word_t qse_stx_alloc_char_objectx (
 	qse_word_t idx;
 	qse_stx_char_object_t* obj;
 
-	qse_assert (stx->nil == QSE_STX_NIL);
+	QSE_ASSERT (stx->nil == QSE_STX_NIL);
 
 	idx = qse_stx_memory_alloc (&stx->memory, 
 		(n + 1) * qse_sizeof(qse_char_t) + qse_sizeof(qse_stx_object_t));
@@ -125,7 +125,7 @@ qse_word_t qse_stx_allocn_char_object (qse_stx_t* stx, ...)
 	qse_va_list ap;
 	qse_stx_char_object_t* obj;
 
-	qse_assert (stx->nil == QSE_STX_NIL);
+	QSE_ASSERT (stx->nil == QSE_STX_NIL);
 
 	qse_va_start (ap, stx);
 	while ((p = qse_va_arg(ap, const qse_char_t*)) != QSE_NULL) {
@@ -174,7 +174,7 @@ qse_word_t qse_stx_hash_object (qse_stx_t* stx, qse_word_t object)
 			QSE_STX_DATA(stx,object), QSE_STX_SIZE(stx,object));
 	}
 	else {
-		qse_assert (QSE_STX_IS_WORD_OBJECT(stx,object));
+		QSE_ASSERT (QSE_STX_IS_WORD_OBJECT(stx,object));
 		hv = qse_stx_hash (QSE_STX_DATA(stx,object),
 			QSE_STX_SIZE(stx,object) * qse_sizeof(qse_word_t));
 	}
@@ -190,36 +190,40 @@ qse_word_t qse_stx_instantiate (
 	qse_word_t spec, nfields, new;
 	int indexable;
 
-	qse_assert (class != stx->class_smallinteger);
+	QSE_ASSERT (class != stx->class_smallinteger);
 	class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class);
 
 	/* don't instantiate a metaclass whose instance must be 
 	   created in a different way */
 	/* TODO: maybe delete the following line */
-	qse_assert (class_obj->header.class != stx->class_metaclass);
-	qse_assert (QSE_STX_IS_SMALLINT(class_obj->spec));
+	QSE_ASSERT (class_obj->header.class != stx->class_metaclass);
+	QSE_ASSERT (QSE_STX_IS_SMALLINT(class_obj->spec));
 
 	spec = QSE_STX_FROM_SMALLINT(class_obj->spec);
 	nfields = (spec >> QSE_STX_SPEC_INDEXABLE_BITS);
 	indexable = spec & QSE_STX_SPEC_INDEXABLE_MASK;
 
-	if (indexable == QSE_STX_SPEC_BYTE_INDEXABLE) {
-		qse_assert (nfields == 0 && data == QSE_NULL);
+	if (indexable == QSE_STX_SPEC_BYTE_INDEXABLE) 
+	{
+		QSE_ASSERT (nfields == 0 && data == QSE_NULL);
 		new = qse_stx_alloc_byte_object(
 			stx, variable_data, variable_nfields);
 	}
-	else if (indexable == QSE_STX_SPEC_CHAR_INDEXABLE) {
-		qse_assert (nfields == 0 && data == QSE_NULL);
+	else if (indexable == QSE_STX_SPEC_CHAR_INDEXABLE) 
+	{
+		QSE_ASSERT (nfields == 0 && data == QSE_NULL);
 		new = qse_stx_alloc_char_objectx(
 			stx, variable_data, variable_nfields);
 	}
-	else if (indexable == QSE_STX_SPEC_WORD_INDEXABLE) {
+	else if (indexable == QSE_STX_SPEC_WORD_INDEXABLE) 
+	{
 		new = qse_stx_alloc_word_object (
 			stx, data, nfields, variable_data, variable_nfields);
 	}
-	else {
-		qse_assert (indexable == QSE_STX_SPEC_NOT_INDEXABLE);
-		qse_assert (variable_nfields == 0 && variable_data == QSE_NULL);
+	else 
+	{
+		QSE_ASSERT (indexable == QSE_STX_SPEC_NOT_INDEXABLE);
+		QSE_ASSERT (variable_nfields == 0 && variable_data == QSE_NULL);
 		new = qse_stx_alloc_word_object (
 			stx, data, nfields, QSE_NULL, 0);
 	}
