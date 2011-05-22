@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: awk.c 470 2011-05-21 16:20:01Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -331,7 +331,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 static void on_statement (
 	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void* data)
 {
-	dprint (L"running %d at line %d\n", (int)nde->type, (int)nde->loc.line);
+	dprint (QSE_T("running %d at line %d\n"), (int)nde->type, (int)nde->loc.line);
 }
 #endif
 
