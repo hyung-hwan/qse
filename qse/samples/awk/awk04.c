@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
+ * $Id: awk04.c 469 2011-05-21 16:16:18Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -35,6 +35,7 @@ int main ()
 	qse_size_t len;
 	qse_awk_val_t* rtv = QSE_NULL;
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
+	qse_awk_fun_t* fun;
 	int ret, i, opt;
 
 	/* create a main processor */
@@ -117,6 +118,37 @@ int main ()
 
 	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
 	qse_awk_rtx_free (rtx, str);
+
+	
+	/* call the function again using different API functions */
+	fun = qse_awk_rtx_findfun (rtx, QSE_T("pow"));
+	if (fun == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+
+	rtv = qse_awk_rtx_callfun (rtx, fun, arg, 2);
+	if (rtv == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+
+	str = qse_awk_rtx_valtocpldup (rtx, rtv, &len);
+	if (str == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
+			qse_awk_rtx_geterrmsg(rtx));
+		ret = -1; goto oops;
+	}
+
+	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
+	qse_awk_rtx_free (rtx, str);
+
+	
 
 oops:
 	/* clear the return value */
