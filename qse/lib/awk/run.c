@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 468 2011-05-21 16:08:54Z hyunghwan.chung $
+ * $Id: run.c 469 2011-05-21 16:16:18Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1622,92 +1622,6 @@ qse_awk_val_t* qse_awk_rtx_call (
 	if (fun == QSE_NULL) return QSE_NULL;
 
 	return qse_awk_rtx_callfun (rtx, fun, args, nargs);
-
-#if 0
-	qse_htb_pair_t* pair;
-	qse_awk_fun_t* fun;
-	struct capture_retval_data_t crdata;
-	qse_awk_val_t* v;
-	struct pafv pafv/*= { args, nargs }*/;
-	qse_awk_nde_call_t call;
-
-	pafv.args = args;
-	pafv.nargs = nargs;
-
-	if (rtx->exit_level >= EXIT_GLOBAL) 
-	{
-		/* cannot call the function again when exit() is called
-		 * in an AWK program or qse_awk_rtx_stop() is invoked */
-		SETERR_COD (rtx, QSE_AWK_ENOPER);
-		return QSE_NULL;
-	}
-	/*rtx->exit_level = EXIT_NONE;*/
-
-	/* forge a fake node containing a function call */
-	QSE_MEMSET (&call, 0, QSE_SIZEOF(call));
-	call.type = QSE_AWK_NDE_FUN;
-	call.what.fun.name.ptr = (qse_char_t*)name;
-	call.what.fun.name.len = qse_strlen(name);
-	call.nargs = nargs;
-
-	/* find the function */
-	pair = qse_htb_search (
-		rtx->awk->tree.funs, 
-		call.what.fun.name.ptr,
-		call.what.fun.name.len
-	);
-	if (pair == QSE_NULL) 
-	{
-		SETERR_ARGX (
-			rtx, QSE_AWK_EFUNNF, 
-			xstr_to_cstr(&call.what.fun.name));
-		return QSE_NULL;
-	}
-
-	fun = (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
-	QSE_ASSERT (fun != QSE_NULL);
-
-	/* check if the number of arguments given is more than expected */
-	if (nargs > fun->nargs)
-	{
-		/* TODO: is this correct? what if i want to 
-		 *       allow arbitarary numbers of arguments? */
-		SETERR_COD (rtx, QSE_AWK_EARGTM);
-		return QSE_NULL;
-	}
-
-	/* now that the function is found and ok, let's execute it */
-
-	crdata.rtx = rtx;
-	crdata.val = QSE_NULL;
-
-	v = __eval_call (
-		rtx, (qse_awk_nde_t*)&call, QSE_NULL, fun,
-		push_arg_from_vals, (void*)&pafv,
-		capture_retval_on_exit,
-		&crdata
-	);
-
-	if (v == QSE_NULL)
-	{
-		/* an error occurred. let's check if it is caused by exit().
-		 * if so, the return value should have been captured into
-		 * crdata.val. */
-		if (crdata.val != QSE_NULL) v = crdata.val; /* yet it is */
-	}
-	else
-	{
-		/* thr return value captured in termination by exit()
-		 * is reference-counted up in capture_retval_on_exit().
-		 * let's do the same thing for the return value normally
-		 * returned. */
-		qse_awk_rtx_refupval (rtx, v);
-	}
-
-	/* return the return value with its reference count at least 1.
-	 * the caller of this function should count down its reference. */
-	return v;
-#endif
 }
 
 static int run_pblocks (qse_awk_rtx_t* run)
