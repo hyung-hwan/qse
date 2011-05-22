@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 465 2011-05-19 03:46:53Z hyunghwan.chung $
+ * $Id: run.c 468 2011-05-21 16:08:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1515,11 +1515,115 @@ qse_awk_val_t* qse_awk_rtx_loop (qse_awk_rtx_t* rtx)
 	return retv;
 }
 
-/* call an AWK function */
+/* find an AWK function by name */
+qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
+{
+	qse_htb_pair_t* pair;
+
+	pair = qse_htb_search (
+		rtx->awk->tree.funs, 
+		name, qse_strlen(name)
+	);
+
+	if (pair == QSE_NULL)
+	{
+		qse_cstr_t nm;
+
+		nm.ptr = name;
+		nm.len = qse_strlen(name);
+
+		SETERR_ARGX (rtx, QSE_AWK_EFUNNF, &nm);
+		return QSE_NULL;
+	}
+
+	return (qse_awk_fun_t*)QSE_HTB_VPTR(pair);
+}
+
+/* call an AWK function by the function structure */
+qse_awk_val_t* qse_awk_rtx_callfun (
+	qse_awk_rtx_t* rtx, qse_awk_fun_t* fun,
+	qse_awk_val_t** args, qse_size_t nargs)
+{
+	struct capture_retval_data_t crdata;
+	qse_awk_val_t* v;
+	struct pafv pafv/*= { args, nargs }*/;
+	qse_awk_nde_call_t call;
+
+	QSE_ASSERT (fun != QSE_NULL);
+
+	pafv.args = args;
+	pafv.nargs = nargs;
+
+	if (rtx->exit_level >= EXIT_GLOBAL) 
+	{
+		/* cannot call the function again when exit() is called
+		 * in an AWK program or qse_awk_rtx_stop() is invoked */
+		SETERR_COD (rtx, QSE_AWK_ENOPER);
+		return QSE_NULL;
+	}
+	/*rtx->exit_level = EXIT_NONE;*/
+
+	/* forge a fake node containing a function call */
+	QSE_MEMSET (&call, 0, QSE_SIZEOF(call));
+	call.type = QSE_AWK_NDE_FUN;
+	call.what.fun.name = fun->name;
+	call.nargs = nargs;
+
+	/* check if the number of arguments given is more than expected */
+	if (nargs > fun->nargs)
+	{
+		/* TODO: is this correct? what if i want to 
+		 *       allow arbitarary numbers of arguments? */
+		SETERR_COD (rtx, QSE_AWK_EARGTM);
+		return QSE_NULL;
+	}
+
+	/* now that the function is found and ok, let's execute it */
+
+	crdata.rtx = rtx;
+	crdata.val = QSE_NULL;
+
+	v = __eval_call (
+		rtx, (qse_awk_nde_t*)&call, QSE_NULL, fun,
+		push_arg_from_vals, (void*)&pafv,
+		capture_retval_on_exit,
+		&crdata
+	);
+
+	if (v == QSE_NULL)
+	{
+		/* an error occurred. let's check if it is caused by exit().
+		 * if so, the return value should have been captured into
+		 * crdata.val. */
+		if (crdata.val != QSE_NULL) v = crdata.val; /* yet it is */
+	}
+	else
+	{
+		/* thr return value captured in termination by exit()
+		 * is reference-counted up in capture_retval_on_exit().
+		 * let's do the same thing for the return value normally
+		 * returned. */
+		qse_awk_rtx_refupval (rtx, v);
+	}
+
+	/* return the return value with its reference count at least 1.
+	 * the caller of this function should count down its reference. */
+	return v;
+}
+
+/* call an AWK function by name */
 qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
 	qse_awk_val_t** args, qse_size_t nargs)
 {
+	qse_awk_fun_t* fun;
+
+	fun = qse_awk_rtx_findfun (rtx, name);
+	if (fun == QSE_NULL) return QSE_NULL;
+
+	return qse_awk_rtx_callfun (rtx, fun, args, nargs);
+
+#if 0
 	qse_htb_pair_t* pair;
 	qse_awk_fun_t* fun;
 	struct capture_retval_data_t crdata;
@@ -1603,6 +1707,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 	/* return the return value with its reference count at least 1.
 	 * the caller of this function should count down its reference. */
 	return v;
+#endif
 }
 
 static int run_pblocks (qse_awk_rtx_t* run)
@@ -4788,8 +4893,8 @@ static qse_awk_val_t* eval_binop_match0 (
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex_code,
 			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-			&((qse_awk_val_str_t*)left)->val,
-			&((qse_awk_val_str_t*)left)->val,
+			xstr_to_cstr(&((qse_awk_val_str_t*)left)->val),
+			xstr_to_cstr(&((qse_awk_val_str_t*)left)->val),
 			QSE_NULL, &errnum);
 		if (n == -1) 
 		{
@@ -4825,8 +4930,10 @@ static qse_awk_val_t* eval_binop_match0 (
 		n = QSE_AWK_MATCHREX (
 			rtx->awk, rex_code,
 			((rtx->gbl.ignorecase)? QSE_REX_IGNORECASE: 0),
-			&out.u.cpldup, &out.u.cpldup, 
-			QSE_NULL, &errnum);
+			xstr_to_cstr(&out.u.cpldup),
+			xstr_to_cstr(&out.u.cpldup), 
+			QSE_NULL, &errnum
+		);
 		if (n == -1) 
 		{
 			QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);

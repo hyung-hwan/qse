@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 463 2011-05-19 02:50:51Z hyunghwan.chung $
+ * $Id: awk.h 468 2011-05-21 16:08:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -117,6 +117,17 @@ typedef struct qse_awk_t qse_awk_t;
  * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
+
+/**
+ * The qse_awk_fun_t type defines an awk function type defined with the
+ * keyword 'function'.
+ */
+typedef struct qse_awk_fun_t qse_awk_fun_t;
+
+/**
+ * The qse_awk_fnc_t type defines an intrisic function type.
+ */
+typedef struct qse_awk_fnc_t qse_awk_fnc_t;
 
 /**
  * The qse_awk_loc_t type defines a structure to hold location.
@@ -353,6 +364,7 @@ struct qse_awk_nde_t
 {
 	QSE_AWK_NDE_HDR;
 };
+
 
 typedef int (*qse_awk_sprintf_t) (
 	qse_awk_t*        awk,
@@ -1591,8 +1603,30 @@ qse_awk_val_t* qse_awk_rtx_loop (
 );
 
 /**
- * The qse_awk_rtx_call() function invokes an AWK function. However, it is
- * not able to invoke an intrinsic function such as split(). 
+ * The qse_awk_rtx_findfun() function finds the function structure by name
+ * and returns the pointer to it if one is found. It returns #QSE_NULL if
+ * it fails to find a function by the @a name.
+ */
+qse_awk_fun_t* qse_awk_rtx_findfun (
+	qse_awk_rtx_t*    rtx, /**< runtime context */
+	const qse_char_t* name /**< function name */
+);
+
+/**
+ * The qse_awk_rtx_callfun() function invokdes an AWK function described by
+ * the structure pointed to by @a fun.
+ * @sa qse_awk_rtx_call
+ */
+qse_awk_val_t* qse_awk_rtx_callfun (
+	qse_awk_rtx_t*    rtx,  /**< runtime context */
+	qse_awk_fun_t*    fun,  /**< function */
+	qse_awk_val_t**   args, /**< arguments to the function */
+	qse_size_t        nargs /**< the number of arguments */
+);
+
+/**
+ * The qse_awk_rtx_call() function invokes an AWK function named @a name. 
+ * However, it is not able to invoke an intrinsic function such as split(). 
  * The #QSE_AWK_PABLOCK option can be turned off to make illegal the BEGIN 
  * block, the pattern-action blocks, and the END block.
  *
