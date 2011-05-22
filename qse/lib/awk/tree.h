@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: tree.h 468 2011-05-21 16:08:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -43,10 +43,6 @@ enum qse_awk_out_type_t
 	QSE_AWK_OUT_APFILE, /* file for appending */
 	QSE_AWK_OUT_CONSOLE
 };
-
-/* AWK function defined with the keyword function.
- * note it is different from qse_awk_fnc_t */
-typedef struct qse_awk_fun_t           qse_awk_fun_t;
 
 typedef struct qse_awk_nde_blk_t       qse_awk_nde_blk_t;
 typedef struct qse_awk_nde_grp_t       qse_awk_nde_grp_t;

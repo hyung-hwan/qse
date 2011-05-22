@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: fnc.h 468 2011-05-21 16:08:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,8 +20,6 @@
 
 #ifndef _QSE_LIB_AWK_FNC_H_
 #define _QSE_LIB_AWK_FNC_H_
-
-typedef struct qse_awk_fnc_t qse_awk_fnc_t;
 
 struct qse_awk_fnc_t
 {
