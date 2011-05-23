@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: rex.c 471 2011-05-22 14:14:36Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -116,6 +116,8 @@ struct cand_t
 	const qse_char_t* mptr; 
 };
 
+QSE_IMPLEMENT_COMMON_FUNCTIONS (rex)
+
 qse_rex_t* qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
@@ -150,7 +152,13 @@ qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
 	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
 	if (rex == QSE_NULL) return QSE_NULL;
 
-	return qse_rex_init (rex, mmgr, code);
+	if (qse_rex_init (rex, mmgr, code) == QSE_NULL)
+	{
+		QSE_MMGR_FREE (mmgr, rex);
+		return QSE_NULL;
+	}
+
+	return rex;
 }
 
 static void freenode (qse_rex_node_t* node, qse_mmgr_t* mmgr)
