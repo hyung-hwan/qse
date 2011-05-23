@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 468 2011-05-21 16:08:54Z hyunghwan.chung $
+ * $Id: awk.h 473 2011-05-23 03:38:03Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -117,17 +117,6 @@ typedef struct qse_awk_t qse_awk_t;
  * @sa qse_awk_t qse_awk_rtx_open qse_awk_rio_t
  */
 typedef struct qse_awk_rtx_t qse_awk_rtx_t;
-
-/**
- * The qse_awk_fun_t type defines an awk function type defined with the
- * keyword 'function'.
- */
-typedef struct qse_awk_fun_t qse_awk_fun_t;
-
-/**
- * The qse_awk_fnc_t type defines an intrisic function type.
- */
-typedef struct qse_awk_fnc_t qse_awk_fnc_t;
 
 /**
  * The qse_awk_loc_t type defines a structure to hold location.
@@ -365,6 +354,17 @@ struct qse_awk_nde_t
 	QSE_AWK_NDE_HDR;
 };
 
+/**
+ * The qse_awk_fun_t type defines a structure to maintain functions
+ * defined with the keyword 'function'.
+ */
+struct qse_awk_fun_t
+{
+	qse_xstr_t     name;
+	qse_size_t     nargs;
+	qse_awk_nde_t* body;
+};
+typedef struct qse_awk_fun_t qse_awk_fun_t;
 
 typedef int (*qse_awk_sprintf_t) (
 	qse_awk_t*        awk,

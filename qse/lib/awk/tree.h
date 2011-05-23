@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 468 2011-05-21 16:08:54Z hyunghwan.chung $
+ * $Id: tree.h 473 2011-05-23 03:38:03Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -51,15 +51,8 @@ typedef struct qse_awk_nde_exp_t       qse_awk_nde_exp_t;
 typedef struct qse_awk_nde_cnd_t       qse_awk_nde_cnd_t;
 typedef struct qse_awk_nde_pos_t       qse_awk_nde_pos_t;
 
-#ifndef QSE_AWK_NDE_INT_DEFINED
-#define QSE_AWK_NDE_INT_DEFINED
 typedef struct qse_awk_nde_int_t       qse_awk_nde_int_t;
-#endif
-
-#ifndef QSE_AWK_NDE_REAL_DEFINED
-#define QSE_AWK_NDE_REAL_DEFINED
 typedef struct qse_awk_nde_real_t      qse_awk_nde_real_t;
-#endif
 
 typedef struct qse_awk_nde_str_t       qse_awk_nde_str_t;
 typedef struct qse_awk_nde_rex_t       qse_awk_nde_rex_t;
@@ -80,13 +73,6 @@ typedef struct qse_awk_nde_nextfile_t  qse_awk_nde_nextfile_t;
 typedef struct qse_awk_nde_delete_t    qse_awk_nde_delete_t;
 typedef struct qse_awk_nde_reset_t     qse_awk_nde_reset_t;
 typedef struct qse_awk_nde_print_t     qse_awk_nde_print_t;
-
-struct qse_awk_fun_t
-{
-	qse_xstr_t     name;
-	qse_size_t     nargs;
-	qse_awk_nde_t* body;
-};
 
 /* QSE_AWK_NDE_BLK - block statement including top-level blocks */
 struct qse_awk_nde_blk_t
