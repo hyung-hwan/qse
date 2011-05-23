@@ -72,16 +72,16 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
-am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo chr.lo chr_cnv.lo \
-	rex.lo str_beg.lo str_cat.lo str_chr.lo str_cnv.lo str_cmp.lo \
-	str_cpy.lo str_del.lo str_dup.lo str_dynm.lo str_dynw.lo \
-	str_end.lo str_excl.lo str_fcpy.lo str_incl.lo str_len.lo \
-	str_pac.lo str_pbrk.lo str_put.lo str_rev.lo str_rot.lo \
-	str_set.lo str_spl.lo str_spn.lo str_str.lo str_subst.lo \
-	str_tok.lo str_trm.lo str_word.lo lda.lo oht.lo htb.lo rbt.lo \
-	sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo tio_put.lo \
-	fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo time.lo misc.lo \
-	assert.lo main.lo stdio.lo
+am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo pma.lo chr.lo \
+	chr_cnv.lo rex.lo str_beg.lo str_cat.lo str_chr.lo str_cnv.lo \
+	str_cmp.lo str_cpy.lo str_del.lo str_dup.lo str_dynm.lo \
+	str_dynw.lo str_end.lo str_excl.lo str_fcpy.lo str_incl.lo \
+	str_len.lo str_pac.lo str_pbrk.lo str_put.lo str_rev.lo \
+	str_rot.lo str_set.lo str_spl.lo str_spn.lo str_str.lo \
+	str_subst.lo str_tok.lo str_trm.lo str_word.lo lda.lo oht.lo \
+	htb.lo rbt.lo sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo \
+	tio_put.lo fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo \
+	time.lo misc.lo assert.lo main.lo stdio.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -268,7 +268,7 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 libqsecmn_la_SOURCES = \
 	syscall.h mem.h \
-	mem.c xma.c fma.c chr.c chr_cnv.c rex.c \
+	mem.c xma.c fma.c pma.c chr.c chr_cnv.c rex.c \
 	str_beg.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c \
 	str_del.c str_dup.c str_dynm.c str_dynw.c str_end.c str_excl.c \
 	str_fcpy.c str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c \
@@ -386,6 +386,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Plo@am__quote@
