@@ -16,6 +16,7 @@ pkginclude_HEADERS = \
 	oht.h \
 	opt.h \
 	pio.h \
+	pma.h \
 	rbt.h \
 	rex.h \
 	sio.h \
