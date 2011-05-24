@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: Awk.cpp 476 2011-05-23 17:07:13Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1076,6 +1076,14 @@ int Awk::open ()
 	memset (&prm, 0, QSE_SIZEOF(prm));
 	prm.sprintf  = sprintf;
 	prm.math.pow = pow;
+	prm.math.sin = sin;
+	prm.math.cos = cos;
+	prm.math.tan = tan;
+	prm.math.atan = atan;
+	prm.math.atan2 = atan2;
+	prm.math.log = log;
+	prm.math.exp = exp;
+	prm.math.sqrt = sqrt;
 
 	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
