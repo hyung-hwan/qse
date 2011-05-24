@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: htb.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -195,10 +195,8 @@ typedef qse_htb_pair_t* (*qse_htb_cbserter_t) (
  */
 struct qse_htb_pair_t
 {
-	void*           kptr;  /**< key pointer */
-	qse_size_t      klen;  /**< key length */
-	void*           vptr;  /**< value pointer */
-	qse_size_t      vlen;  /**< value length */
+	qse_xptl_t key;
+	qse_xptl_t val;
 
 	/* management information below */
 	qse_htb_pair_t* next; 
@@ -253,7 +251,6 @@ struct qse_htb_t
 	qse_htb_pair_t** bucket;
 };
 
-
 /**
  * The QSE_HTB_COPIER_SIMPLE macros defines a copier that remembers the
  * pointer and length of data in a pair.
@@ -276,22 +273,23 @@ struct qse_htb_t
 /**
  * The QSE_HTB_SIZE() macro returns the number of pairs in a hash table.
  */
-#define QSE_HTB_SIZE(m) ((const qse_size_t)(m)->size)
+#define QSE_HTB_SIZE(m) (*(const qse_size_t*)&(m)->size)
 
 /**
  * The QSE_HTB_CAPA() macro returns the maximum number of pairs that can be
  * stored in a hash table without further reorganization.
  */
-#define QSE_HTB_CAPA(m) ((const qse_size_t)(m)->capa)
+#define QSE_HTB_CAPA(m) (*(const qse_size_t*)&(m)->capa)
 
-#define QSE_HTB_FACTOR(m) ((const int)(m)->factor)
-#define QSE_HTB_KSCALE(m) ((const int)(m)->scale[QSE_HTB_KEY])
-#define QSE_HTB_VSCALE(m) ((const int)(m)->scale[QSE_HTB_VAL])
+#define QSE_HTB_FACTOR(m) (*(const int*)&(m)->factor)
+#define QSE_HTB_KSCALE(m) (*(const int*)&(m)->scale[QSE_HTB_KEY])
+#define QSE_HTB_VSCALE(m) (*(const int*)&(m)->scale[QSE_HTB_VAL])
 
-#define QSE_HTB_KPTR(p) ((p)->kptr)
-#define QSE_HTB_KLEN(p) ((p)->klen)
-#define QSE_HTB_VPTR(p) ((p)->vptr)
-#define QSE_HTB_VLEN(p) ((p)->vlen)
+#define QSE_HTB_KPTR(p) ((p)->key.ptr)
+#define QSE_HTB_KLEN(p) ((p)->key.len)
+#define QSE_HTB_VPTR(p) ((p)->val.ptr)
+#define QSE_HTB_VLEN(p) ((p)->val.len)
+
 #define QSE_HTB_NEXT(p) ((p)->next)
 
 #ifdef __cplusplus
@@ -641,9 +639,9 @@ qse_size_t qse_htb_dflhash (
  */
 int qse_htb_dflcomp (
 	qse_htb_t*  htb,
-     const void* kptr1,
+	const void* kptr1,
 	qse_size_t  klen1,
-     const void* kptr2,
+	const void* kptr2,
 	qse_size_t  klen2
 );
 

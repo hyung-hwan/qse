@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: Awk.cpp 474 2011-05-23 16:52:37Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -806,8 +806,8 @@ Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
 	iptr = qse_awk_rtx_getfirstmapvalitr (this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
-	idx->ptr = (const char_t*)QSE_AWK_VAL_MAP_ITR_KPTR(iptr);
-	idx->len = QSE_AWK_VAL_MAP_ITR_KLEN(iptr);
+	idx->ptr = QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr);
+	idx->len = QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr);
 
 	return itr;
 }
@@ -827,8 +827,8 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 	iptr = qse_awk_rtx_getnextmapvalitr (this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
-	idx->ptr = (const char_t*)QSE_AWK_VAL_MAP_ITR_KPTR(iptr);
-	idx->len = QSE_AWK_VAL_MAP_ITR_KLEN(iptr);
+	idx->ptr = QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr);
+	idx->len = QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr);
 
 	return itr;
 }
@@ -1565,30 +1565,6 @@ int Awk::deleteFunction (const char_t* name)
 	else retrieveError ();
 
 	return n;
-}
-
-int Awk::getWord (const cstr_t* ow, cstr_t* nw)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_getword (awk, ow, nw);
-}
-
-int Awk::setWord (const cstr_t* ow, const cstr_t* nw)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_setword (awk, ow, nw);
-}
-
-int Awk::unsetWord (const cstr_t* w)
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_unsetword (awk, w);
-}
-
-void Awk::unsetAllWords () 
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_unsetallwords (awk);
 }
 
 Awk::ssize_t Awk::readSource (

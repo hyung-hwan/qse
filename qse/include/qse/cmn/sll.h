@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sll.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -124,8 +124,7 @@ struct qse_sll_t
 struct qse_sll_node_t
 {
 	qse_sll_node_t* next; /* point to the next node */
-	void*           dptr; /* data pointer */
-	qse_size_t      dlen; /* data length */
+	qse_xptl_t      val;
 };
 
 #define QSE_SLL_COPIER_SIMPLE ((qse_sll_copier_t)1)
@@ -139,12 +138,12 @@ struct qse_sll_node_t
 /**
  * The QSE_SLL_DPTR macro gets the data pointer in a node.
  */
-#define QSE_SLL_DPTR(node)  ((node)->dptr)
+#define QSE_SLL_DPTR(node)  ((node)->val.ptr)
 
 /**
  * The QSE_SLL_DLEN macro gets the length of data in a node.
  */
-#define QSE_SLL_DLEN(node)  ((node)->dlen)
+#define QSE_SLL_DLEN(node)  ((node)->val.len)
 
 /**
  * The QSE_SLL_NEXT macro gets the next node.

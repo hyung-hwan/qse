@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 460 2011-05-17 14:56:54Z hyunghwan.chung $
+ * $Id: Awk.hpp 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1001,27 +1001,6 @@ public:
 	int deleteFunction (
 		const char_t* name ///< function name
 	);
-	/// @}
-
-	///
-	/// @name Word Substitution
-	/// @{
-	///
-	int getWord (
-		const cstr_t* ow,
-		cstr_t*       nw
-	);
-
-	int setWord (
-		const cstr_t* ow,
-		const cstr_t* nw
-	);
-
-	int unsetWord (
-		const cstr_t* ow
-	);
-
-	void unsetAllWords ();
 	/// @}
 
 protected:

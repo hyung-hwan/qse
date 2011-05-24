@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: lda.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,7 +24,7 @@
 QSE_IMPLEMENT_COMMON_FUNCTIONS (lda)
 
 #define lda_t    qse_lda_t
-#define node_t   qse_lda_node_t
+#define slot_t   qse_lda_slot_t
 #define copier_t qse_lda_copier_t
 #define freeer_t qse_lda_freeer_t
 #define comper_t qse_lda_comper_t
@@ -36,8 +36,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (lda)
 #define size_t   qse_size_t
 
 #define TOB(lda,len) ((len)*(lda)->scale)
-#define DPTR(node)   ((node)->dptr)
-#define DLEN(node)   ((node)->dlen)
+#define DPTR(node)   ((node)->val.ptr)
+#define DLEN(node)   ((node)->val.len)
 
 static int default_comparator (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
@@ -58,20 +58,20 @@ static int default_comparator (lda_t* lda,
 	return n;
 }
 
-static QSE_INLINE node_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
+static QSE_INLINE slot_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
 {
-	node_t* n;
+	slot_t* n;
 
 	if (lda->copier == QSE_LDA_COPIER_SIMPLE)
 	{
-		n = QSE_MMGR_ALLOC (lda->mmgr, QSE_SIZEOF(node_t));
+		n = QSE_MMGR_ALLOC (lda->mmgr, QSE_SIZEOF(slot_t));
 		if (n == QSE_NULL) return QSE_NULL;
 		DPTR(n) = dptr;
 	}
 	else if (lda->copier == QSE_LDA_COPIER_INLINE)
 	{
 		n = QSE_MMGR_ALLOC (lda->mmgr, 
-			QSE_SIZEOF(node_t) + TOB(lda,dlen));
+			QSE_SIZEOF(slot_t) + TOB(lda,dlen));
 		if (n == QSE_NULL) return QSE_NULL;
 
 		QSE_MEMCPY (n + 1, dptr, TOB(lda,dlen));
@@ -79,7 +79,7 @@ static QSE_INLINE node_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
 	}
 	else
 	{
-		n = QSE_MMGR_ALLOC (lda->mmgr, QSE_SIZEOF(node_t));
+		n = QSE_MMGR_ALLOC (lda->mmgr, QSE_SIZEOF(slot_t));
 		if (n == QSE_NULL) return QSE_NULL;
 		DPTR(n) = lda->copier (lda, dptr, dlen);
 		if (DPTR(n) == QSE_NULL) 
@@ -252,14 +252,14 @@ lda_t* qse_lda_setcapa (lda_t* lda, size_t capa)
 	{
 		if (lda->mmgr->realloc != QSE_NULL && lda->node != QSE_NULL)
 		{
-			tmp = (node_t**) QSE_MMGR_REALLOC (
+			tmp = (slot_t**) QSE_MMGR_REALLOC (
 				lda->mmgr, lda->node,
 				QSE_SIZEOF(*lda->node)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 		}
 		else
 		{
-			tmp = (node_t**) QSE_MMGR_ALLOC (
+			tmp = (slot_t**) QSE_MMGR_ALLOC (
 				lda->mmgr, QSE_SIZEOF(*lda->node)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 
@@ -336,7 +336,7 @@ size_t qse_lda_upsert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 {
 	size_t i;
-	node_t* node;
+	slot_t* node;
 
 	/* allocate the node first */
 	node = alloc_node (lda, dptr, dlen);
@@ -413,7 +413,7 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 
 size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 {
-	node_t* c;
+	slot_t* c;
 
 	if (pos >= lda->size) return QSE_LDA_NIL;
 
@@ -434,7 +434,7 @@ size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		else
 		{
 			/* updated to different data */
-			node_t* node = alloc_node (lda, dptr, dlen);
+			slot_t* node = alloc_node (lda, dptr, dlen);
 			if (node == QSE_NULL) return QSE_LDA_NIL;
 
 			if (lda->freeer != QSE_NULL)
@@ -459,7 +459,7 @@ size_t qse_lda_delete (lda_t* lda, size_t index, size_t count)
 
 	for (i = index; i < index + count; i++)
 	{
-		node_t* c = lda->node[i];
+		slot_t* c = lda->node[i];
 
 		if (c != QSE_NULL)
 		{
@@ -492,7 +492,7 @@ size_t qse_lda_uplete (lda_t* lda, size_t index, size_t count)
 
 	for (i = index; i < index + count; i++)
 	{
-		node_t* c = lda->node[i];
+		slot_t* c = lda->node[i];
 
 		if (c != QSE_NULL)
 		{
@@ -513,7 +513,7 @@ void qse_lda_clear (lda_t* lda)
 
 	for (i = 0; i < lda->size; i++) 
 	{
-		node_t* c = lda->node[i];
+		slot_t* c = lda->node[i];
 		if (c != QSE_NULL)
 		{
 			if (lda->freeer)
@@ -618,7 +618,7 @@ size_t qse_lda_pushheap (lda_t* lda, void* dptr, size_t dlen)
 
 	while (cur != 0)
 	{
-		node_t* tmp;
+		slot_t* tmp;
 
 		/* compare with the parent */
 		par = HEAP_PARENT(cur);
@@ -641,7 +641,7 @@ size_t qse_lda_pushheap (lda_t* lda, void* dptr, size_t dlen)
 void qse_lda_popheap (lda_t* lda)
 {
 	size_t cur, child;
-	node_t* tmp;
+	slot_t* tmp;
 
 	QSE_ASSERT (lda->size > 0);
 

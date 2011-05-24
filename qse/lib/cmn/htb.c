@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: htb.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -256,7 +256,8 @@ const mancbs_t* qse_htb_mancbs (mancbs_kind_t kind)
 };
 
 htb_t* qse_htb_open (
-	mmgr_t* mmgr, size_t xtnsize, size_t capa, int factor, int kscale, int vscale)
+	mmgr_t* mmgr, size_t xtnsize, size_t capa, 
+	int factor, int kscale, int vscale)
 {
 	htb_t* htb;
 
@@ -289,7 +290,8 @@ void qse_htb_close (htb_t* htb)
 }
 
 htb_t* qse_htb_init (
-	htb_t* htb, mmgr_t* mmgr, size_t capa, int factor, int kscale, int vscale)
+	htb_t* htb, mmgr_t* mmgr, size_t capa,
+	int factor, int kscale, int vscale)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 

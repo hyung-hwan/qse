@@ -1,5 +1,5 @@
 /*
- * $Id: parse.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: parse.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -22,47 +22,66 @@
 #define _QSE_LIB_AWK_PARSE_H_
 
 /* these enums should match kwtab in parse.c */
-enum kw_t
+enum qse_awk_kwid_t
 {
-	KW_BEGIN,
-	KW_END,
-	KW_BREAK,
-	KW_CONTINUE,
-	KW_DELETE,
-	KW_DO,
-	KW_ELSE,
-	KW_EXIT,
-	KW_FOR,
-	KW_FUNCTION,
-	KW_GETLINE,
-	KW_GLOBAL,
-	KW_IF,
-	KW_IN,
-	KW_INCLUDE,
-	KW_LOCAL,
-	KW_NEXT,
-	KW_NEXTFILE,
-	KW_NEXTOFILE,
-	KW_PRINT,
-	KW_PRINTF,
-	KW_RESET,
-	KW_RETURN,
-	KW_WHILE
+	QSE_AWK_KWID_BEGIN,
+	QSE_AWK_KWID_END,
+	QSE_AWK_KWID_BREAK,
+	QSE_AWK_KWID_CONTINUE,
+	QSE_AWK_KWID_DELETE,
+	QSE_AWK_KWID_DO,
+	QSE_AWK_KWID_ELSE,
+	QSE_AWK_KWID_EXIT,
+	QSE_AWK_KWID_FOR,
+	QSE_AWK_KWID_FUNCTION,
+	QSE_AWK_KWID_GETLINE,
+	QSE_AWK_KWID_GLOBAL,
+	QSE_AWK_KWID_IF,
+	QSE_AWK_KWID_IN,
+	QSE_AWK_KWID_INCLUDE,
+	QSE_AWK_KWID_LOCAL,
+	QSE_AWK_KWID_NEXT,
+	QSE_AWK_KWID_NEXTFILE,
+	QSE_AWK_KWID_NEXTOFILE,
+	QSE_AWK_KWID_PRINT,
+	QSE_AWK_KWID_PRINTF,
+	QSE_AWK_KWID_RESET,
+	QSE_AWK_KWID_RETURN,
+	QSE_AWK_KWID_WHILE
 };
+
+typedef enum qse_awk_kwid_t qse_awk_kwid_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int qse_awk_putsrcstr (qse_awk_t* awk, const qse_char_t* str);
+int qse_awk_putsrcstr (
+	qse_awk_t*        awk,
+	const qse_char_t* str
+);
+
 int qse_awk_putsrcstrx (
-	qse_awk_t* awk, const qse_char_t* str, qse_size_t len);
+	qse_awk_t*        awk,
+	const qse_char_t* str,
+	qse_size_t        len
+);
 
 const qse_char_t* qse_awk_getgblname (
-	qse_awk_t* awk, qse_size_t idx, qse_size_t* len);
-qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s);
+	qse_awk_t*  awk,
+	qse_size_t  idx,
+	qse_size_t* len
+);
 
-int qse_awk_initgbls (qse_awk_t* awk);
+void qse_awk_getkwname (
+	qse_awk_t*     awk,
+	qse_awk_kwid_t id, 
+	qse_cstr_t*    s
+);
+
+int qse_awk_initgbls (
+	qse_awk_t* awk
+);
 
 #ifdef __cplusplus
 }

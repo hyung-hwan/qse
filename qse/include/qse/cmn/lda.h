@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: lda.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -37,7 +37,7 @@ enum qse_lda_walk_t
 };
 
 typedef struct qse_lda_t      qse_lda_t;
-typedef struct qse_lda_node_t qse_lda_node_t;
+typedef struct qse_lda_slot_t qse_lda_slot_t;
 typedef enum   qse_lda_walk_t qse_lda_walk_t;
 
 #define QSE_LDA_COPIER_SIMPLE  ((qse_lda_copier_t)1)
@@ -45,12 +45,12 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 
 #define QSE_LDA_NIL ((qse_size_t)-1)
 
-#define QSE_LDA_SIZE(lda)        ((const qse_size_t)(lda)->size)
-#define QSE_LDA_CAPA(lda)        ((const qse_size_t)(lda)->capa)
+#define QSE_LDA_SIZE(lda)        (*(const qse_size_t*)&(lda)->size)
+#define QSE_LDA_CAPA(lda)        (*(const qse_size_t*)&(lda)->capa)
 
-#define QSE_LDA_NODE(lda,index)  ((lda)->node[index])
-#define QSE_LDA_DPTR(lda,index)  ((lda)->node[index]->dptr)
-#define QSE_LDA_DLEN(lda,index)  ((lda)->node[index]->dlen)
+#define QSE_LDA_DATA(lda,index)  ((const qse_xptl_t*)&(lda)->node[index]->val)
+#define QSE_LDA_DPTR(lda,index)  ((lda)->node[index]->val.ptr)
+#define QSE_LDA_DLEN(lda,index)  ((lda)->node[index]->val.len)
 
 /**
  *  The qse_lda_copier_t type defines a callback function for node construction.
@@ -139,16 +139,15 @@ struct qse_lda_t
 	qse_byte_t       scale;  /* scale factor */
 	qse_size_t       size;   /* number of items */
 	qse_size_t       capa;   /* capacity */
-	qse_lda_node_t** node;
+	qse_lda_slot_t** node;
 };
 
 /**
- * The qse_lda_node_t type defines a linear dynamic array node
+ * The qse_lda_slot_t type defines a linear dynamic array node
  */
-struct qse_lda_node_t
+struct qse_lda_slot_t
 {
-	void*      dptr;
-	qse_size_t dlen;
+	qse_xptl_t val;
 };
 
 #ifdef __cplusplus
@@ -286,17 +285,17 @@ qse_lda_t* qse_lda_setcapa (
 );
 
 qse_size_t qse_lda_search (
-	qse_lda_t* lda,
-	qse_size_t pos,
+	qse_lda_t*  lda,
+	qse_size_t  pos,
 	const void* dptr,
-	qse_size_t dlen
+	qse_size_t  dlen
 );
 
 qse_size_t qse_lda_rsearch (
-	qse_lda_t* lda,
-	qse_size_t pos,
+	qse_lda_t*  lda,
+	qse_size_t  pos,
 	const void* dptr,
-	qse_size_t dlen
+	qse_size_t  dlen
 );
 
 qse_size_t qse_lda_upsert (

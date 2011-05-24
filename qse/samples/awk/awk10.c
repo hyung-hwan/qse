@@ -23,7 +23,7 @@
 #include <qse/cmn/stdio.h>
 
 static const qse_char_t* src = QSE_T(
-	"function dump(x) { for (k in x) print k \"=\" x[k]; x[\"f99\"]=\"os2\"; return x; }"
+	"function dump(x) { OFS=\"=\"; for (k in x) print k, x[k]; x[\"f99\"]=\"os2\"; return x; }"
 );
 
 int main ()
@@ -145,7 +145,7 @@ int main ()
 			qse_xstr_t str;
 
 			str.ptr = qse_awk_rtx_valtocpldup (
-				rtx, QSE_AWK_VAL_MAP_ITR_VPTR(iptr), &str.len);
+				rtx, QSE_AWK_VAL_MAP_ITR_VAL(iptr), &str.len);
 			if (str.ptr == QSE_NULL)
 			{
 				qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -154,8 +154,8 @@ int main ()
 			}
 	
 			qse_printf (QSE_T("ret [%.*s]=[%.*s]\n"), 
-				(int)QSE_AWK_VAL_MAP_ITR_KLEN(iptr), 
-				QSE_AWK_VAL_MAP_ITR_KPTR(iptr),
+				(int)QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr), 
+				QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr),
 				(int)str.len, str.ptr
 			);
 			qse_awk_rtx_free (rtx, str.ptr);

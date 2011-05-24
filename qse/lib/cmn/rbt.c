@@ -282,7 +282,7 @@ pair_t* qse_rbt_search (rbt_t* rbt, const void* kptr, size_t klen)
 
 	while (!IS_NIL(rbt,pair))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, pair->kptr, pair->klen);
+		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(pair), KLEN(pair));
 		if (n == 0) return pair;
 
 		if (n > 0) pair = pair->right;
@@ -516,7 +516,7 @@ static pair_t* insert (
 
 	while (!IS_NIL(rbt,xcur))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, xcur->kptr, xcur->klen);
+		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(xcur), KLEN(xcur));
 		if (n == 0) 
 		{
 			switch (opt)
@@ -555,7 +555,7 @@ static pair_t* insert (
 	else
 	{
 		/* perform normal binary insert */
-		int n = rbt->mancbs->comper (rbt, kptr, klen, xpar->kptr, xpar->klen);
+		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(xpar), KLEN(xpar));
 		if (n > 0)
 		{
 			QSE_ASSERT (xpar->right == &rbt->nil);
@@ -609,7 +609,7 @@ pair_t* qse_rbt_cbsert (
 
 	while (!IS_NIL(rbt,xcur))
 	{
-		int n = rbt->mancbs->comper (rbt, kptr, klen, xcur->kptr, xcur->klen);
+		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(xcur), KLEN(xcur));
 		if (n == 0) 
 		{
 			/* back up the contents of the current pair 
@@ -674,7 +674,7 @@ pair_t* qse_rbt_cbsert (
 	else
 	{
 		/* perform normal binary insert */
-		int n = rbt->mancbs->comper (rbt, kptr, klen, xpar->kptr, xpar->klen);
+		int n = rbt->mancbs->comper (rbt, kptr, klen, KPTR(xpar), KLEN(xpar));
 		if (n > 0)
 		{
 			QSE_ASSERT (xpar->right == &rbt->nil);
