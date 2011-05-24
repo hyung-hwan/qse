@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id: time.c 478 2011-05-24 05:11:42Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -319,14 +319,14 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 		struct tm btm;
 		tm = _localtime (&t, &btm);
 #	else
-#		error Please support other compilers that I didn't try.
+#		error Please support other compilers 
 #	endif
 #elif defined(__DOS__)
 #	if defined(__WATCOMC__)
 		struct tm btm;
 		tm = _localtime (&t, &btm);
 #	else
-#		error Please support other compilers that I didn't try.
+#		error Please support other compilers
 #	endif
 #else
 	struct tm btm;
