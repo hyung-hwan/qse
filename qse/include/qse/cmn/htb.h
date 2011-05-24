@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: htb.h 477 2011-05-24 04:22:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -284,6 +284,9 @@ struct qse_htb_t
 #define QSE_HTB_FACTOR(m) (*(const int*)&(m)->factor)
 #define QSE_HTB_KSCALE(m) (*(const int*)&(m)->scale[QSE_HTB_KEY])
 #define QSE_HTB_VSCALE(m) (*(const int*)&(m)->scale[QSE_HTB_VAL])
+
+#define QSE_HTB_KPTL(p) (&(p)->key)
+#define QSE_HTB_VPTL(p) (&(p)->val)
 
 #define QSE_HTB_KPTR(p) ((p)->key.ptr)
 #define QSE_HTB_KLEN(p) ((p)->key.len)

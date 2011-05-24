@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 476 2011-05-23 17:07:13Z hyunghwan.chung $
+ * $Id: Awk.cpp 477 2011-05-24 04:22:40Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -806,8 +806,7 @@ Awk::Value::IndexIterator Awk::Value::getFirstIndex (Index* idx) const
 	iptr = qse_awk_rtx_getfirstmapvalitr (this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
-	idx->ptr = QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr);
-	idx->len = QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr);
+	idx->set (QSE_AWK_VAL_MAP_ITR_KEY(iptr));
 
 	return itr;
 }
@@ -827,8 +826,7 @@ Awk::Value::IndexIterator Awk::Value::getNextIndex (
 	iptr = qse_awk_rtx_getnextmapvalitr (this->run->rtx, this->val, &itr);
 	if (iptr == QSE_NULL) return IndexIterator::END; // no more key
 
-	idx->ptr = QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr);
-	idx->len = QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr);
+	idx->set (QSE_AWK_VAL_MAP_ITR_KEY(iptr));
 
 	return itr;
 }
