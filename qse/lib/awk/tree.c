@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 447 2011-05-01 13:28:51Z hyunghwan.chung $
+ * $Id: tree.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -576,7 +576,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 				PUT_SRCSTR (awk, QSE_T(" "));
 			}
 
-			qse_awk_getkw (awk, KW_GETLINE, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_GETLINE, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			if (px->var != QSE_NULL)
 			{
@@ -647,7 +647,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			if (px->nlcls > 0) 
 			{
 				PRINT_TABS (awk, depth + 1);
-				qse_awk_getkw (awk, KW_LOCAL, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_LOCAL, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 
@@ -692,7 +692,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			qse_awk_nde_if_t* px = (qse_awk_nde_if_t*)p;
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_IF, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_IF, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" ("));	
 			PRINT_EXPR (awk, px->test);
@@ -708,7 +708,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			if (px->else_part != QSE_NULL) 
 			{
 				PRINT_TABS (awk, depth);
-				qse_awk_getkw (awk, KW_ELSE, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_ELSE, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_NL (awk);
 				if (px->else_part->type == QSE_AWK_NDE_BLK)
@@ -724,7 +724,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			qse_awk_nde_while_t* px = (qse_awk_nde_while_t*)p;
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_WHILE, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_WHILE, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" ("));	
 			PRINT_EXPR (awk, px->test);
@@ -746,7 +746,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			qse_awk_nde_while_t* px = (qse_awk_nde_while_t*)p;
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_DO, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_DO, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_NL (awk);
 			if (px->body->type == QSE_AWK_NDE_BLK) 
@@ -759,7 +759,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			}
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_WHILE, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_WHILE, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" ("));	
 			PRINT_EXPR (awk, px->test);
@@ -773,7 +773,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			qse_awk_nde_for_t* px = (qse_awk_nde_for_t*)p;
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_FOR, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_FOR, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" ("));
 			if (px->init != QSE_NULL) 
@@ -809,7 +809,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			qse_awk_nde_foreach_t* px = (qse_awk_nde_foreach_t*)p;
 
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_FOR, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_FOR, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" "));
 			PRINT_EXPR (awk, px->test);
@@ -828,7 +828,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_BREAK:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_BREAK, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_BREAK, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(";"));
 			PUT_NL (awk);
@@ -838,7 +838,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_CONTINUE:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_CONTINUE, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_CONTINUE, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(";"));
 			PUT_NL (awk);
@@ -850,14 +850,14 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			PRINT_TABS (awk, depth);
 			if (((qse_awk_nde_return_t*)p)->val == QSE_NULL) 
 			{
-				qse_awk_getkw (awk, KW_RETURN, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_RETURN, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(";"));
 				PUT_NL (awk);
 			}
 			else 
 			{
-				qse_awk_getkw (awk, KW_RETURN, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_RETURN, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 				QSE_ASSERT (((qse_awk_nde_return_t*)p)->val->next == QSE_NULL);
@@ -876,14 +876,14 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 
 			if (px->val == QSE_NULL) 
 			{
-				qse_awk_getkw (awk, KW_EXIT, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_EXIT, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(";"));
 				PUT_NL (awk);
 			}
 			else 
 			{
-				qse_awk_getkw (awk, KW_EXIT, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_EXIT, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 				QSE_ASSERT (px->val->next == QSE_NULL);
@@ -897,7 +897,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_NEXT:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_NEXT, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_NEXT, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(";"));
 			PUT_NL (awk);
@@ -909,12 +909,12 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			PRINT_TABS (awk, depth);
 			if (((qse_awk_nde_nextfile_t*)p)->out)
 			{
-				qse_awk_getkw (awk, KW_NEXTOFILE, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_NEXTOFILE, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			}
 			else
 			{
-				qse_awk_getkw (awk, KW_NEXTFILE, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_NEXTFILE, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			}
 			PUT_SRCSTR (awk, QSE_T(";"));
@@ -925,7 +925,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_DELETE:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_DELETE, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_DELETE, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" "));
 			qse_awk_prnpt (awk, ((qse_awk_nde_delete_t*)p)->var);
@@ -935,7 +935,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_RESET:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkw (awk, KW_RESET, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_RESET, &kw);
 			PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" "));
 			qse_awk_prnpt (awk, ((qse_awk_nde_reset_t*)p)->var);
@@ -951,12 +951,12 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 
 			if (p->type == QSE_AWK_NDE_PRINT) 
 			{
-				qse_awk_getkw (awk, KW_PRINT, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_PRINT, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			}
 			else
 			{
-				qse_awk_getkw (awk, KW_PRINTF, &kw);
+				qse_awk_getkwname (awk, QSE_AWK_KWID_PRINTF, &kw);
 				PUT_SRCSTRX (awk, kw.ptr, kw.len);
 			}
 

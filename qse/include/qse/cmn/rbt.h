@@ -170,10 +170,8 @@ typedef qse_rbt_pair_t* (*qse_rbt_cbserter_t) (
  */
 struct qse_rbt_pair_t
 {
-	void*           kptr;  /**< key pointer */
-	qse_size_t      klen;  /**< key length */
-	void*           vptr;  /**< value pointer */
-	qse_size_t      vlen;  /**< value length */
+	qse_xptl_t key;
+	qse_xptl_t val;
 
 	/* management information below */
 	enum
@@ -258,10 +256,11 @@ struct qse_rbt_t
 #define QSE_RBT_KSCALE(m) ((const int)(m)->scale[QSE_RBT_KEY])
 #define QSE_RBT_VSCALE(m) ((const int)(m)->scale[QSE_RBT_VAL])
 
-#define QSE_RBT_KPTR(p) ((p)->kptr)
-#define QSE_RBT_KLEN(p) ((p)->klen)
-#define QSE_RBT_VPTR(p) ((p)->vptr)
-#define QSE_RBT_VLEN(p) ((p)->vlen)
+#define QSE_RBT_KPTR(p) ((p)->key.ptr)
+#define QSE_RBT_KLEN(p) ((p)->key.len)
+#define QSE_RBT_VPTR(p) ((p)->val.ptr)
+#define QSE_RBT_VLEN(p) ((p)->val.len)
+
 #define QSE_RBT_NEXT(p) ((p)->next)
 
 #ifdef __cplusplus

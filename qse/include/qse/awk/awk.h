@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 473 2011-05-23 03:38:03Z hyunghwan.chung $
+ * $Id: awk.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -274,10 +274,12 @@ struct qse_awk_val_map_itr_t
 };
 typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
 
-
-#define QSE_AWK_VAL_MAP_ITR_KPTR(itr) QSE_HTB_KPTR((itr)->pair)
-#define QSE_AWK_VAL_MAP_ITR_KLEN(itr) QSE_HTB_KLEN((itr)->pair)
-#define QSE_AWK_VAL_MAP_ITR_VPTR(itr) QSE_HTB_VPTR((itr)->pair)
+#define QSE_AWK_VAL_MAP_ITR_KEY_PTR(itr) \
+	((const qse_char_t*)QSE_HTB_KPTR((itr)->pair))
+#define QSE_AWK_VAL_MAP_ITR_KEY_LEN(itr) \
+	(*(const qse_size_t*)&QSE_HTB_KLEN((itr)->pair))
+#define QSE_AWK_VAL_MAP_ITR_VAL(itr) \
+	((const qse_awk_val_t*)QSE_HTB_VPTR((itr)->pair))
 
 /**
  * The qse_awk_nde_type_t defines the node types.
@@ -365,6 +367,11 @@ struct qse_awk_fun_t
 	qse_awk_nde_t* body;
 };
 typedef struct qse_awk_fun_t qse_awk_fun_t;
+
+#define QSE_AWK_FUN_NAME(fun)     ((const qse_xstr_t*)&(fun)->name)
+#define QSE_AWK_FUN_NAME_PTR(fun) ((const qse_char_t*)(fun)->name.ptr)
+#define QSE_AWK_FUN_NAME_LEN(fun) (*(const qse_size_t*)&(fun)->name.len)
+#define QSE_AWK_FUN_NARGS(fun)    (*(const qse_size_t*)&(fun)->nargs)
 
 typedef int (*qse_awk_sprintf_t) (
 	qse_awk_t*        awk,
@@ -1321,39 +1328,6 @@ void qse_awk_setmaxdepth (
 	qse_awk_t* awk,   /**< awk */
 	int        types, /**< number ORed of #qse_awk_depth_t enumerators */
 	qse_size_t depth  /**< maximum depth */
-);
-
-int qse_awk_getword (
-	qse_awk_t*        awk, 
-	const qse_cstr_t* okw,
-	qse_cstr_t*       nkw
-);
-
-int qse_awk_unsetword (
-	qse_awk_t*        awk,
-	const qse_cstr_t* kw
-);
-
-void qse_awk_unsetallwords (
-	qse_awk_t* awk
-);
-
-/**
- * The qse_awk_setword() function enables replacement of a name of a keyword,
- * intrinsic global variables, and intrinsic functions.
- *
- * If @a nkw is #QSE_NULL or @a nlen is zero and @a okw is #QSE_NULL or 
- * @a olen is zero, it unsets all word replacements; If @a nkw is #QSE_NULL or 
- * @a nlen is zero, it unsets the replacement for @a okw and @a olen; If 
- * all of them are valid, it sets the word replace for @a okw and @a olen 
- * to @a nkw and @a nlen.
- *
- * @return 0 on success, -1 on failure
- */
-int qse_awk_setword (
-	qse_awk_t*        awk,  /**< awk */
-	const qse_cstr_t* okw,  /**< old keyword */
-	const qse_cstr_t* nkw   /**< new keyword */
 );
 
 /**

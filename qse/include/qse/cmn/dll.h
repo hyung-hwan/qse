@@ -1,5 +1,5 @@
 /*
- * $Id: dll.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: dll.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -195,9 +195,8 @@ struct qse_dll_node_t
 	/* the first two fields in sync with qse_gdl_t */
 	qse_dll_node_t* prev;
 	qse_dll_node_t* next;
-
-	void*      dptr; /**< data pointer */
-	qse_size_t dlen; /**< data length */
+	/* data */
+	qse_xptl_t      val;
 };
 
 /**
@@ -220,8 +219,9 @@ struct qse_dll_t
 #define QSE_DLL_COPIER_INLINE ((qse_dll_copier_t)2)
 
 #define QSE_DLL_SCALE(dll) ((const int)(dll)->scale)
-#define QSE_DLL_DPTR(node) ((node)->dptr)
-#define QSE_DLL_DLEN(node) ((node)->dlen)
+
+#define QSE_DLL_DPTR(node) ((node)->val.ptr)
+#define QSE_DLL_DLEN(node) ((node)->val.len)
 
 #ifdef __cplusplus
 extern "C" {

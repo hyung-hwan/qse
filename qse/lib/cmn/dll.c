@@ -1,5 +1,5 @@
 /*
- * $Id: dll.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: dll.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,6 +24,8 @@
 QSE_IMPLEMENT_COMMON_FUNCTIONS (dll)
 
 #define TOB(dll,len) ((len)*(dll)->scale)
+#define DPTR(node) QSE_DLL_DPTR(node)
+#define DLEN(node) QSE_DLL_DLEN(node)
 
 static int default_comper (
 	qse_dll_t* dll, 
@@ -171,7 +173,7 @@ static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
 	{
 		n = QSE_MMGR_ALLOC (dll->mmgr, QSE_SIZEOF(qse_dll_node_t));
 		if (n == QSE_NULL) return QSE_NULL;
-		n->dptr = dptr;
+		DPTR(n) = dptr;
 	}
 	else if (dll->copier == QSE_DLL_COPIER_INLINE)
 	{
@@ -180,21 +182,21 @@ static qse_dll_node_t* alloc_node (qse_dll_t* dll, void* dptr, qse_size_t dlen)
 		if (n == QSE_NULL) return QSE_NULL;
 
 		QSE_MEMCPY (n + 1, dptr, TOB(dll,dlen));
-		n->dptr = n + 1;
+		DPTR(n) = n + 1;
 	}
 	else
 	{
 		n = QSE_MMGR_ALLOC (dll->mmgr, QSE_SIZEOF(qse_dll_node_t));
 		if (n == QSE_NULL) return QSE_NULL;
-		n->dptr = dll->copier (dll, dptr, dlen);
-		if (n->dptr == QSE_NULL)
+		DPTR(n) = dll->copier (dll, dptr, dlen);
+		if (DPTR(n) == QSE_NULL)
 		{
 			QSE_MMGR_FREE (dll->mmgr, n);
 			return QSE_NULL;
 		}
 	}
 
-	n->dlen = dlen; 
+	DLEN(n) = dlen; 
 	return n;
 }
 
@@ -203,7 +205,7 @@ static QSE_INLINE void free_node (qse_dll_t* dll, qse_dll_node_t* node)
 	if (dll->freeer != QSE_NULL)
 	{
 		/* free the actual data */
-		dll->freeer (dll, node->dptr, node->dlen);
+		dll->freeer (dll, DPTR(node), DLEN(node));
 	}
 
 	/* free the node */
@@ -217,7 +219,7 @@ qse_dll_node_t* qse_dll_search (
 
 	while (QSE_DLL_ISMEMBER(dll,pos))
 	{
-		if (dll->comper (dll, pos->dptr, pos->dlen, dptr, dlen) == 0)
+		if (dll->comper (dll, DPTR(pos), DLEN(pos), dptr, dlen) == 0)
 		{
 			return pos;
 		}
@@ -235,7 +237,7 @@ qse_dll_node_t* qse_dll_rsearch (
 
 	while (QSE_DLL_ISMEMBER(dll,pos))
 	{
-		if (dll->comper (dll, pos->dptr, pos->dlen, dptr, dlen) == 0)
+		if (dll->comper (dll, DPTR(pos), DLEN(pos), dptr, dlen) == 0)
 		{
 			return pos;
 		}

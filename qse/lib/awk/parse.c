@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: parse.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -237,8 +237,7 @@ typedef struct kwent_t kwent_t;
 
 struct kwent_t 
 { 
-	const qse_char_t* name; 
-	qse_size_t namelen;
+	qse_cstr_t name;
 	int type; 
 	int valid; /* the entry is valid when this option is set */
 };
@@ -247,30 +246,30 @@ static kwent_t kwtab[] =
 {
 	/* keep this table in sync with the kw_t enums in <parse.h>.
 	 * also keep it sorted by the first field for binary search */
-	{ QSE_T("BEGIN"),        5, TOK_BEGIN,       QSE_AWK_PABLOCK },
-	{ QSE_T("END"),          3, TOK_END,         QSE_AWK_PABLOCK },
-	{ QSE_T("break"),        5, TOK_BREAK,       0 },
-	{ QSE_T("continue"),     8, TOK_CONTINUE,    0 },
-	{ QSE_T("delete"),       6, TOK_DELETE,      0 },
-	{ QSE_T("do"),           2, TOK_DO,          0 },
-	{ QSE_T("else"),         4, TOK_ELSE,        0 },
-	{ QSE_T("exit"),         4, TOK_EXIT,        0 },
-	{ QSE_T("for"),          3, TOK_FOR,         0 },
-	{ QSE_T("function"),     8, TOK_FUNCTION,    0 },
-	{ QSE_T("getline"),      7, TOK_GETLINE,     QSE_AWK_RIO },
-	{ QSE_T("global"),       6, TOK_GLOBAL,      QSE_AWK_EXPLICIT },
-	{ QSE_T("if"),           2, TOK_IF,          0 },
-	{ QSE_T("in"),           2, TOK_IN,          0 },
-	{ QSE_T("include"),      7, TOK_INCLUDE,     QSE_AWK_INCLUDE },
-	{ QSE_T("local"),        5, TOK_LOCAL,       QSE_AWK_EXPLICIT },
-	{ QSE_T("next"),         4, TOK_NEXT,        QSE_AWK_PABLOCK },
-	{ QSE_T("nextfile"),     8, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
-	{ QSE_T("nextofile"),    9, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
-	{ QSE_T("print"),        5, TOK_PRINT,       QSE_AWK_RIO },
-	{ QSE_T("printf"),       6, TOK_PRINTF,      QSE_AWK_RIO },
-	{ QSE_T("reset"),        5, TOK_RESET,       QSE_AWK_RESET },
-	{ QSE_T("return"),       6, TOK_RETURN,      0 },
-	{ QSE_T("while"),        5, TOK_WHILE,       0 }
+	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
+	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
+	{ { QSE_T("break"),        5 }, TOK_BREAK,       0 },
+	{ { QSE_T("continue"),     8 }, TOK_CONTINUE,    0 },
+	{ { QSE_T("delete"),       6 }, TOK_DELETE,      0 },
+	{ { QSE_T("do"),           2 }, TOK_DO,          0 },
+	{ { QSE_T("else"),         4 }, TOK_ELSE,        0 },
+	{ { QSE_T("exit"),         4 }, TOK_EXIT,        0 },
+	{ { QSE_T("for"),          3 }, TOK_FOR,         0 },
+	{ { QSE_T("function"),     8 }, TOK_FUNCTION,    0 },
+	{ { QSE_T("getline"),      7 }, TOK_GETLINE,     QSE_AWK_RIO },
+	{ { QSE_T("global"),       6 }, TOK_GLOBAL,      QSE_AWK_EXPLICIT },
+	{ { QSE_T("if"),           2 }, TOK_IF,          0 },
+	{ { QSE_T("in"),           2 }, TOK_IN,          0 },
+	{ { QSE_T("include"),      7 }, TOK_INCLUDE,     QSE_AWK_INCLUDE },
+	{ { QSE_T("local"),        5 }, TOK_LOCAL,       QSE_AWK_EXPLICIT },
+	{ { QSE_T("next"),         4 }, TOK_NEXT,        QSE_AWK_PABLOCK },
+	{ { QSE_T("nextfile"),     8 }, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
+	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
+	{ { QSE_T("print"),        5 }, TOK_PRINT,       QSE_AWK_RIO },
+	{ { QSE_T("printf"),       6 }, TOK_PRINTF,      QSE_AWK_RIO },
+	{ { QSE_T("reset"),        5 }, TOK_RESET,       QSE_AWK_RESET },
+	{ { QSE_T("return"),       6 }, TOK_RETURN,      0 },
+	{ { QSE_T("while"),        5 }, TOK_WHILE,       0 }
 };
 
 typedef struct global_t global_t;
@@ -493,21 +492,9 @@ const qse_char_t* qse_awk_getgblname (
 	return QSE_LDA_DPTR(awk->parse.gbls,idx);
 }
 
-qse_cstr_t* qse_awk_getkw (qse_awk_t* awk, int id, qse_cstr_t* s)
+void qse_awk_getkwname (qse_awk_t* awk, qse_awk_kwid_t id, qse_cstr_t* s)
 {
-	qse_htb_pair_t* p;
-
-	s->ptr = kwtab[id].name;
-	s->len = kwtab[id].namelen;
-
-	p = qse_htb_search (awk->wtab, s->ptr, s->len);
-	if (p != QSE_NULL) 
-	{
-		s->ptr = QSE_HTB_VPTR(p);
-		s->len = QSE_HTB_VLEN(p);
-	}
-
-	return s;
+	*s = kwtab[id].name;
 }
 
 static int parse (qse_awk_t* awk)
@@ -1679,25 +1666,11 @@ struct check_global_t
 static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
 {
 	qse_cstr_t tmp;
-	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(lda);
+	/*qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(lda);*/
 	check_global_t* cg = (check_global_t*)arg;
 
-	tmp.ptr = QSE_LDA_DPTR(lda,index);
-	tmp.len = QSE_LDA_DLEN(lda,index);
-
-	if (index < awk->tree.ngbls_base)
-	{
-		qse_htb_pair_t* pair;
-
-		pair = qse_htb_search (awk->wtab, tmp.ptr, tmp.len);
-		if (pair != QSE_NULL)
-		{
-			tmp.ptr = ((qse_cstr_t*)(pair->vptr))->ptr;
-			tmp.len = ((qse_cstr_t*)(pair->vptr))->len;
-		}
-	}
-
-	if (qse_strxncmp(tmp.ptr, tmp.len, cg->name.ptr, cg->name.len) == 0) 
+	tmp = *(qse_cstr_t*)QSE_LDA_DATA(lda,index);
+	if (qse_strxncmp (tmp.ptr, tmp.len, cg->name.ptr, cg->name.len) == 0) 
 	{
 		cg->index = index;
 		return QSE_LDA_WALK_STOP;
@@ -1976,8 +1949,7 @@ static qse_awk_t* collect_locals (
 			return QSE_NULL;
 		}
 
-		lcl.ptr = QSE_STR_PTR(awk->tok.name);
-		lcl.len = QSE_STR_LEN(awk->tok.name);
+		lcl = *QSE_STR_XSTR(awk->tok.name);
 
 		/* check if it conflicts with a builtin function name 
 		 * function f() { local length; } */
@@ -5726,75 +5698,39 @@ static int preget_token (qse_awk_t* awk)
 static int classify_ident (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	if (QSE_HTB_SIZE(awk->wtab) <= 0)
+	/* perform binary search */
+
+	/* declaring left, right, mid to be of int is ok
+	 * because we know kwtab is small enough. */
+	int left = 0, right = QSE_COUNTOF(kwtab) - 1, mid;
+
+	while (left <= right)
 	{
-		/* perform binary search if no custom words are specified */
+		int n;
+		kwent_t* kwp;
 
-		/* declaring left, right, mid to be of int is ok
-		 * because we know kwtab is small enough. */
-		int left = 0, right = QSE_COUNTOF(kwtab) - 1, mid;
+		mid = (left + right) / 2;	
+		kwp = &kwtab[mid];
 
-		while (left <= right)
+		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name, len);
+		if (n > 0) 
 		{
-			int n;
-			kwent_t* kwp;
+			/* if left, right, mid were of qse_size_t,
+			 * you would need the following line. 
+			if (mid == 0) break;
+			 */
+			right = mid - 1;
+		}
+		else if (n < 0) left = mid + 1;
+		else
+		{
+			if (kwp->valid != 0 && 
+			    (awk->option & kwp->valid) != kwp->valid)
+				break;
 
-			mid = (left + right) / 2;	
-			kwp = &kwtab[mid];
-			n = qse_strxncmp (kwp->name, kwp->namelen, name, len);
-			if (n > 0) 
-			{
-				/* if left, right, mid were of qse_size_t,
-				 * you would need the following line. 
-				if (mid == 0) break;
-				 */
-				right = mid - 1;
-			}
-			else if (n < 0) left = mid + 1;
-			else
-			{
-				if (kwp->valid != 0 && 
-				    (awk->option & kwp->valid) != kwp->valid)
-					break;
-
-				return kwp->type;
-			}
+			return kwp->type;
 		}
 	}
-	else
-	{
-		/* perform linear search if there are any custom words set */
-		kwent_t* kwp, * end;
-		qse_htb_pair_t* pair;
-
-		end = kwtab + QSE_COUNTOF(kwtab);
-		for (kwp = kwtab; kwp < end; kwp++) 
-		{
-			const qse_char_t* k;
-			qse_size_t l;
-
-			if (kwp->valid != 0 && 
-			    (awk->option & kwp->valid) != kwp->valid) continue;
-
-			pair = qse_htb_search (awk->wtab, kwp->name, kwp->namelen);
-			if (pair != QSE_NULL)
-			{
-				k = ((qse_cstr_t*)(pair->vptr))->ptr;
-				l = ((qse_cstr_t*)(pair->vptr))->len;
-			}
-			else
-			{
-				k = kwp->name;
-				l = kwp->namelen;
-			}
-
-			if (qse_strxncmp (k, l, name, len) == 0) 
-			{
-				return kwp->type;
-			}
-		}
-
-	}	
 
 	return TOK_IDENT;
 }
@@ -5859,7 +5795,7 @@ static int deparse (qse_awk_t* awk)
 
 		QSE_ASSERT (awk->tree.ngbls > 0);
 
-		qse_awk_getkw (awk, KW_GLOBAL, &kw);
+		qse_awk_getkwname (awk, QSE_AWK_KWID_GLOBAL, &kw);
 		if (qse_awk_putsrcstrx(awk,kw.ptr,kw.len) <= -1)
 		{
 			EXIT_DEPARSE ();
@@ -5952,7 +5888,7 @@ static int deparse (qse_awk_t* awk)
 	{
 		qse_cstr_t kw;
 
-		qse_awk_getkw (awk, KW_BEGIN, &kw);
+		qse_awk_getkwname (awk, QSE_AWK_KWID_BEGIN, &kw);
 
 		if (qse_awk_putsrcstrx (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
@@ -6014,7 +5950,7 @@ static int deparse (qse_awk_t* awk)
 	{
 		qse_cstr_t kw;
 
-		qse_awk_getkw (awk, KW_END, &kw);
+		qse_awk_getkwname (awk, QSE_AWK_KWID_END, &kw);
 
 		if (qse_awk_putsrcstrx (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
@@ -6073,7 +6009,7 @@ static qse_htb_walk_t deparse_func (
 		x->ret = -1; return QSE_HTB_WALK_STOP; \
 	}
 
-	qse_awk_getkw (df->awk, KW_FUNCTION, &kw);
+	qse_awk_getkwname (df->awk, QSE_AWK_KWID_FUNCTION, &kw);
 	PUT_SX (df, kw.ptr, kw.len);
 
 	PUT_C (df, QSE_T(' '));

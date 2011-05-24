@@ -449,7 +449,7 @@ static QSE_INLINE int capture_connection (
 {
 	int n;
 
-	n = compare_octets (pair->vptr, pair->vlen, "close", 5);
+	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "close", 5);
 	if (n == 0)
 	{
 		http->req.attr.connection_close = 1;
@@ -464,9 +464,9 @@ static QSE_INLINE int capture_content_length (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
 	qse_size_t len = 0, off = 0, tmp;
-	const qse_byte_t* ptr = pair->vptr;
+	const qse_byte_t* ptr = QSE_HTB_VPTR(pair);
 
-	while (off < pair->vlen)
+	while (off < QSE_HTB_VLEN(pair))
 	{
 		int num = digit_to_num (ptr[off]);
 		if (num <= -1)
@@ -510,14 +510,14 @@ static QSE_INLINE int capture_content_length (
 static QSE_INLINE int capture_content_type (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
-	qse_printf (QSE_T("content type capture => %.*S\n"), (int)pair->vlen, pair->vptr);
+	qse_printf (QSE_T("content type capture => %.*S\n"), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
 	return 0;
 }
 
 static QSE_INLINE int capture_host (
 	qse_http_t* http, qse_htb_pair_t* pair)
 {
-	qse_printf (QSE_T("host capture => %.*S\n"), (int)pair->vlen, pair->vptr);
+	qse_printf (QSE_T("host capture => %.*S\n"), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
 	return 0;
 }
 
@@ -526,7 +526,7 @@ static QSE_INLINE int capture_transfer_encoding (
 {
 	int n;
 
-	n = compare_octets (pair->vptr, pair->vlen, "chunked", 7);
+	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
 	if (n == 0)
 	{
 		if (http->req.attr.content_length > 0)
@@ -572,7 +572,7 @@ static QSE_INLINE int capture_key_header (
 		mid = base + count / 2;
 
 		n = compare_octets (
-			pair->kptr, pair->klen,
+			QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair),
 			hdrtab[mid].ptr, hdrtab[mid].len
 		);
 
@@ -592,8 +592,8 @@ static QSE_INLINE int capture_key_header (
 struct hdr_cbserter_ctx_t
 {
 	qse_http_t* http;
-	void* vptr;
-	qse_size_t vlen;
+	void*       vptr;
+	qse_size_t  vlen;
 };
 
 static qse_htb_pair_t* hdr_cbserter (
@@ -646,7 +646,7 @@ static qse_htb_pair_t* hdr_cbserter (
 		cmb = (struct hdr_cmb_t*) QSE_MMGR_ALLOC (
 			tx->http->mmgr, 
 			QSE_SIZEOF(*cmb) + 
-			QSE_SIZEOF(qse_byte_t) * (pair->vlen + 1 + tx->vlen + 1)
+			QSE_SIZEOF(qse_byte_t) * (QSE_HTB_VLEN(pair) + 1 + tx->vlen + 1)
 		);
 		if (cmb == QSE_NULL)
 		{
@@ -659,8 +659,8 @@ static qse_htb_pair_t* hdr_cbserter (
 		len = 0;
 
 		/* fill the space with the value */
-		QSE_MEMCPY (&ptr[len], pair->vptr, pair->vlen);
-		len += pair->vlen;
+		QSE_MEMCPY (&ptr[len], QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair));
+		len += QSE_HTB_VLEN(pair);
 		ptr[len++] = ',';
 		QSE_MEMCPY (&ptr[len], tx->vptr, tx->vlen);
 		len += tx->vlen;
@@ -680,14 +680,14 @@ Change it to doubly linked for this?
 
 			QSE_MMGR_FREE (
 				tx->http->mmgr, 
-				((struct hdr_cmb_t*)pair->vptr) - 1
+				((struct hdr_cmb_t*)QSE_HTB_VPTR(pair)) - 1
 			);
 		}
 #endif
 		
 		/* update the value pointer and length */
-		pair->vptr = ptr;
-		pair->vlen = len;
+		QSE_HTB_VPTR(pair) = ptr;
+		QSE_HTB_VLEN(pair) = len;
 
 		/* link the new combined value block */
 		cmb->next = tx->http->reqx.chl;
@@ -794,7 +794,7 @@ qse_printf (QSE_T("BADHDR\n"),  name.ptr, value.ptr);
 
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
-qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)pair->klen, pair->kptr, (int)pair->vlen, pair->vptr);
+qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
 	return QSE_HTB_WALK_FORWARD;
 }
 

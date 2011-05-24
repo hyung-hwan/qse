@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 459 2011-05-17 14:37:51Z hyunghwan.chung $ 
+ * $Id: awk.c 474 2011-05-23 16:52:37Z hyunghwan.chung $ 
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -161,26 +161,6 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	if (init_token (mmgr, &awk->tok) == -1) goto oops;
 	if (init_token (mmgr, &awk->ntok) == -1) goto oops;
 
-	awk->wtab = qse_htb_open (
-		mmgr, QSE_SIZEOF(awk), 
-		512, 70, QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
-	);
-	if (awk->wtab == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_XTN(awk->wtab) = awk;
-	qse_htb_setmancbs (awk->wtab, 
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS)
-	);
-
-	awk->rwtab = qse_htb_open (
-		mmgr, QSE_SIZEOF(awk),
-		512, 70, QSE_SIZEOF(qse_char_t), QSE_SIZEOF(qse_char_t)
-	);
-	if (awk->rwtab == QSE_NULL) goto oops;
-	*(qse_awk_t**)QSE_XTN(awk->rwtab) = awk;
-	qse_htb_setmancbs (awk->rwtab,
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS)
-	);
-
 	awk->sio.names = qse_htb_open (
 		mmgr, QSE_SIZEOF(awk), 128, 70, QSE_SIZEOF(qse_char_t), 1
 	);
@@ -280,8 +260,6 @@ oops:
 	if (awk->parse.funs) qse_htb_close (awk->parse.funs);
 	if (awk->tree.funs) qse_htb_close (awk->tree.funs);
 	if (awk->sio.names) qse_htb_close (awk->sio.names);
-	if (awk->rwtab) qse_htb_close (awk->rwtab);
-	if (awk->wtab) qse_htb_close (awk->wtab);
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
 	fini_token (&awk->ptok);
@@ -304,9 +282,6 @@ int qse_awk_close (qse_awk_t* awk)
 
 	qse_htb_close (awk->tree.funs);
 	qse_htb_close (awk->sio.names);
-
-	qse_htb_close (awk->rwtab);
-	qse_htb_close (awk->wtab);
 
 	fini_token (&awk->ntok);
 	fini_token (&awk->tok);
@@ -422,89 +397,6 @@ void qse_awk_setoption (qse_awk_t* awk, int opt)
 void qse_awk_stopall (qse_awk_t* awk)
 {
 	awk->stopall = QSE_TRUE;
-}
-
-int qse_awk_getword (qse_awk_t* awk, const qse_cstr_t* okw, qse_cstr_t* nkw)
-{
-	qse_htb_pair_t* p;
-
-	p = qse_htb_search (awk->wtab, okw->ptr, okw->len);
-	if (p == QSE_NULL) return -1;
-
-	nkw->ptr = ((qse_cstr_t*)p->vptr)->ptr;
-	nkw->len = ((qse_cstr_t*)p->vptr)->len;
-
-	return 0;
-}
-
-int qse_awk_unsetword (qse_awk_t* awk, const qse_cstr_t* kw)
-{
-	qse_htb_pair_t* p;
-
-	QSE_ASSERT (kw->ptr != QSE_NULL);
-
-	p = qse_htb_search (awk->wtab, kw->ptr, kw->len);
-	if (p == QSE_NULL)
-	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, kw);
-		return -1;
-	}
-
-	qse_htb_delete (awk->rwtab, QSE_HTB_VPTR(p), QSE_HTB_VLEN(p));
-	qse_htb_delete (awk->wtab, kw->ptr, kw->len);
-	return 0;
-}
-
-void qse_awk_unsetallwords (qse_awk_t* awk)
-{
-	qse_htb_clear (awk->wtab);
-	qse_htb_clear (awk->rwtab);
-}
-
-int qse_awk_setword (
-	qse_awk_t* awk, const qse_cstr_t* okw, const qse_cstr_t* nkw)
-{
-	if (nkw == QSE_NULL)
-	{
-		if (okw == QSE_NULL)
-		{
-			/* clear the entire table */
-			qse_awk_unsetallwords (awk);
-			return 0;
-		}
-
-		return qse_awk_unsetword (awk, okw);
-	}
-	else if (okw == QSE_NULL)
-	{
-		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
-		return -1;
-	}
-
-	QSE_ASSERT (okw->ptr != QSE_NULL);
-	QSE_ASSERT (nkw->ptr != QSE_NULL);
-
-	/* set the word */
-	if (qse_htb_upsert (
-		awk->wtab, 
-		(qse_char_t*)okw->ptr, okw->len, 
-		(qse_char_t*)nkw->ptr, nkw->len) == QSE_NULL)
-	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
-
-	if (qse_htb_upsert (
-		awk->rwtab,
-		(qse_char_t*)nkw->ptr, nkw->len,
-		(qse_char_t*)okw->ptr, okw->len) == QSE_NULL)
-	{
-		qse_htb_delete (awk->wtab, okw->ptr, okw->len);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
- 
-	return 0;
 }
 
 qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, qse_awk_depth_t type)

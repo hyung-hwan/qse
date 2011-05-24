@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 451 2011-05-03 14:00:38Z hyunghwan.chung $
+ * $Id: types.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -489,6 +489,26 @@ typedef struct qse_wcstr_t qse_wcstr_t;
 	typedef qse_wxstr_t qse_xstr_t;
 	typedef qse_wcstr_t qse_cstr_t;
 #endif
+
+/** 
+ * The qse_cptl_t type defines a pair type of a constant pointer and a length.
+ */
+struct qse_cptl_t
+{
+	const void* ptr;
+	qse_size_t  len;
+};
+typedef struct qse_cptl_t qse_cptl_t;
+
+/** 
+ * The qse_xptl_t type defines a pair type of a pointer and a length.
+ */
+struct qse_xptl_t
+{
+	void*       ptr;
+	qse_size_t  len;
+};
+typedef struct qse_xptl_t qse_xptl_t;
 
 /** 
  * allocate a memory chunk of the size @a n.

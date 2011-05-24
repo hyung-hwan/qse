@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 463 2011-05-19 02:50:51Z hyunghwan.chung $
+ * $Id: fnc.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -186,8 +186,6 @@ qse_awk_fnc_t* qse_awk_getfnc (
 {
 	qse_awk_fnc_t* fnc;
 	qse_htb_pair_t* pair;
-	const qse_char_t* k;
-	qse_size_t l;
 
 	/* search the system function table */
 /* TODO: some speed up? binary search by ordering the table? */
@@ -196,66 +194,12 @@ qse_awk_fnc_t* qse_awk_getfnc (
 		if (fnc->valid != 0 && 
 		    (awk->option & fnc->valid) != fnc->valid) continue;
 
-		pair = qse_htb_search (
-			awk->wtab, fnc->name.ptr, fnc->name.len);
-		if (pair != QSE_NULL)
-		{
-			/* found in the customized word table */
-			k = QSE_HTB_VPTR(pair);
-			l = QSE_HTB_VLEN(pair);
-		}
-		else
-		{
-			k = fnc->name.ptr;
-			l = fnc->name.len;
-		}
-
-		if (qse_strxncmp (k, l, name, len) == 0) return fnc;
+		if (qse_strxncmp (
+			fnc->name.ptr, fnc->name.len,
+			name, len) == 0) return fnc;
 	}
 
-	/* NOTE: I suspect this block of code might be very fragile.
-	 *       because I'm trying to support qse_awk_setword in 
-	 *       a very flimsy way here. Would it be better to drop
-	 *       qse_awk_setword totally? */
-	pair = qse_htb_search (awk->rwtab, name, len);
-	if (pair != QSE_NULL)
-	{
-		/* the current name is a target name for
-		 * one of the original word. */
-		k = QSE_HTB_VPTR(pair);
-		l = QSE_HTB_VLEN(pair);
-	}
-	else
-	{
-		pair = qse_htb_search (awk->wtab, name, len);
-		if (pair != QSE_NULL)
-		{
-			k = QSE_HTB_VPTR(pair);
-			l = QSE_HTB_VLEN(pair);
-
-			if (qse_strxncmp (name, len, k, l) != 0)
-			{
-				/* it name is not a target name but has
-				 * a target name different from itself,
-				 * it cannot be a intrinsic function name.
-				 *
-				 * For instance, name is "sin" here after
-				 * qse_awk_setword ("sin", "cain") is called.
-				 * If name were "cain", it would be handled
-				 * in the outmost if block */
-
-				return QSE_NULL;
-			}
-		}
-		else
-		{
-			k = name;
-			l = len;
-		}
-	}
-	/* END NOTE */
-
-	pair = qse_htb_search (awk->fnc.user, k, l);
+	pair = qse_htb_search (awk->fnc.user, name, len);
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
