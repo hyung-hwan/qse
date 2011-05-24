@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: Awk.hpp 477 2011-05-24 04:22:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -412,20 +412,48 @@ public:
 		///
 		/// The Index class encapsulates an index of an arrayed value.
 		///
-		class Index
+		class Index: protected qse_cstr_t
 		{
 		public:
 			friend class Value;
 
 			/// The Index() function creates an empty array index.
-			Index (): ptr (EMPTY_STRING), len (0) {}
+			Index ()
+			{
+				this->ptr = EMPTY_STRING;
+				this->len = 0;
+			}
 
 			/// The Index() function creates a string array index.
-			Index (const char_t* ptr, size_t len):
-				ptr (ptr), len (len) {}
+			Index (const char_t* ptr, size_t len)
+			{
+				this->ptr = ptr;
+				this->len = len;
+			}
 
-			const char_t* ptr;
-			size_t        len;
+			void set (const qse_cstr_t* x)
+			{
+				this->ptr = x->ptr;
+				this->len = x->len;
+			}
+
+			void set (const qse_xstr_t* x)
+			{
+				this->ptr = x->ptr;
+				this->len = x->len;
+			}
+
+			Index& operator= (const qse_cstr_t* x)
+			{
+				this->set (x);
+				return *this;
+			}
+
+			Index& operator= (const qse_xstr_t* x)
+			{
+				this->set (x);
+				return *this;
+			}
 		};
 
 		///

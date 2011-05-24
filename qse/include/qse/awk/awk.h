@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: awk.h 477 2011-05-24 04:22:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -274,10 +274,8 @@ struct qse_awk_val_map_itr_t
 };
 typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
 
-#define QSE_AWK_VAL_MAP_ITR_KEY_PTR(itr) \
-	((const qse_char_t*)QSE_HTB_KPTR((itr)->pair))
-#define QSE_AWK_VAL_MAP_ITR_KEY_LEN(itr) \
-	(*(const qse_size_t*)&QSE_HTB_KLEN((itr)->pair))
+#define QSE_AWK_VAL_MAP_ITR_KEY(itr) \
+	((const qse_cstr_t*)QSE_HTB_KPTL((itr)->pair))
 #define QSE_AWK_VAL_MAP_ITR_VAL(itr) \
 	((const qse_awk_val_t*)QSE_HTB_VPTR((itr)->pair))
 

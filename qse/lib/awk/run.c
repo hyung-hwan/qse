@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 469 2011-05-21 16:16:18Z hyunghwan.chung $
+ * $Id: run.c 477 2011-05-24 04:22:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -260,9 +260,9 @@ typedef qse_awk_val_t* (*binop_func_t) (
 typedef qse_awk_val_t* (*eval_expr_t) (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
 #ifdef NDEBUG
-#define xstr_to_cstr(x) ((qse_cstr_t*)x)
+#	define xstr_to_cstr(xstr) ((qse_cstr_t*)xstr)
 #else
-static qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
+static QSE_INLINE qse_cstr_t* xstr_to_cstr (qse_xstr_t* xstr)
 {
 	/* i use this function to typecast qse_cstr_t* to 
 	 * qse_xstr_t* instead of direct typecasting.

@@ -256,6 +256,9 @@ struct qse_rbt_t
 #define QSE_RBT_KSCALE(m) ((const int)(m)->scale[QSE_RBT_KEY])
 #define QSE_RBT_VSCALE(m) ((const int)(m)->scale[QSE_RBT_VAL])
 
+#define QSE_RBT_KPTL(p) (&(p)->key)
+#define QSE_RBT_VPTL(p) (&(p)->val)
+
 #define QSE_RBT_KPTR(p) ((p)->key.ptr)
 #define QSE_RBT_KLEN(p) ((p)->key.len)
 #define QSE_RBT_VPTR(p) ((p)->val.ptr)
