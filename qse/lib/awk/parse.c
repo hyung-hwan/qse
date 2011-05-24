@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: parse.c 475 2011-05-23 17:02:35Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1654,57 +1654,38 @@ static void adjust_static_globals (qse_awk_t* awk)
 	}
 }
 
-typedef struct check_global_t check_global_t;
-
-struct check_global_t
-{
-	qse_cstr_t name;
-	qse_size_t index;
-	qse_lda_walk_t walk;
-};
-
-static qse_lda_walk_t check_global (qse_lda_t* lda, qse_size_t index, void* arg)
-{
-	qse_cstr_t tmp;
-	/*qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(lda);*/
-	check_global_t* cg = (check_global_t*)arg;
-
-	tmp = *(qse_cstr_t*)QSE_LDA_DATA(lda,index);
-	if (qse_strxncmp (tmp.ptr, tmp.len, cg->name.ptr, cg->name.len) == 0) 
-	{
-		cg->index = index;
-		return QSE_LDA_WALK_STOP;
-	}
-
-	return cg->walk;
-}
-
 static qse_size_t get_global (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	check_global_t cg;
+	qse_size_t i;
+	qse_lda_t* gbls = awk->parse.gbls;
 
-	cg.name.ptr = name;
-	cg.name.len = len;
-	cg.index = QSE_LDA_NIL;
-	cg.walk = QSE_LDA_WALK_BACKWARD;
+	for (i = QSE_LDA_SIZE(gbls); i > 0; )
+	{
+		i--;
 
-	qse_lda_rwalk (awk->parse.gbls, check_global, &cg);
-	return cg.index;
+		if (qse_strxncmp (
+			QSE_LDA_DPTR(gbls,i), QSE_LDA_DLEN(gbls,i), 
+			name, len) == 0) return i;
+	}
+
+	return QSE_LDA_NIL;
 }
 
 static qse_size_t find_global (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 {
-	check_global_t cg;
+	qse_size_t i;
+	qse_lda_t* gbls = awk->parse.gbls;
 
-	cg.name.ptr = name;
-	cg.name.len = len;
-	cg.index = QSE_LDA_NIL;
-	cg.walk = QSE_LDA_WALK_FORWARD;
+	for (i = 0; i < QSE_LDA_SIZE(gbls); i++)
+	{
+		if (qse_strxncmp (
+			QSE_LDA_DPTR(gbls,i), QSE_LDA_DLEN(gbls,i), 
+			name, len) == 0) return i;
+	}
 
-	qse_lda_walk (awk->parse.gbls, check_global, &cg);
-	return cg.index;
+	return QSE_LDA_NIL;
 }
 
 static int add_global (
