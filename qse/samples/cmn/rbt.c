@@ -150,13 +150,15 @@ static qse_rbt_pair_t* test5_cbserter (
 		/* allocate a new pair, but without filling the actual value. 
 		 * note vptr is given QSE_NULL for that purpose */
 		new_pair = qse_rbt_allocpair (
-			rbt, kptr, klen, QSE_NULL, pair->vlen + 1 + v->len);
+			rbt, kptr, klen, QSE_NULL, 
+			QSE_RBT_VLEN(pair) + 1 + v->len);
 		if (new_pair == QSE_NULL) return QSE_NULL;
 
 		/* fill in the value space */
-		vptr = new_pair->vptr;
-		qse_memcpy (vptr, pair->vptr, pair->vlen*QSE_SIZEOF(qse_char_t));
-		vptr += pair->vlen*QSE_SIZEOF(qse_char_t);
+		vptr = QSE_RBT_VPTR(new_pair);
+		qse_memcpy (vptr, QSE_RBT_VPTR(pair), 
+			QSE_RBT_VLEN(pair) * QSE_SIZEOF(qse_char_t));
+		vptr += QSE_RBT_VLEN(pair) * QSE_SIZEOF(qse_char_t);
 		qse_memcpy (vptr, &comma, QSE_SIZEOF(qse_char_t));
 		vptr += QSE_SIZEOF(qse_char_t);
 		qse_memcpy (vptr, v->ptr, v->len*QSE_SIZEOF(qse_char_t));

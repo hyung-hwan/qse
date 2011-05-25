@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 477 2011-05-24 04:22:40Z hyunghwan.chung $
+ * $Id: run.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2536,9 +2536,9 @@ static int delete_indexed (
 		qse_awk_rtx_valtostr_out_t out;
 
 		/* try with a fixed-size buffer */
-		out.type = QSE_AWK_RTX_VALTOSTR_CPL;
-		out.u.cpl.ptr = buf;
-		out.u.cpl.len = QSE_COUNTOF(buf);
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
+		out.u.cplcp.ptr = buf;
+		out.u.cplcp.len = QSE_COUNTOF(buf);
 		key = qse_awk_rtx_valtostr (rtx, idx, &out);
 		if (key == QSE_NULL)
 		{
@@ -2556,8 +2556,8 @@ static int delete_indexed (
 			return -1;
 		}
 
-		keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPL)?
-			out.u.cpl.len: out.u.cpldup.len;
+		keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPLCP)?
+			out.u.cplcp.len: out.u.cpldup.len;
 
 		qse_htb_delete (map, key, keylen);
 
@@ -6601,14 +6601,14 @@ static qse_char_t* idxnde_to_str (
 		if (buf != QSE_NULL)
 		{
 			/* try with a fixed-size buffer if given */
-			out.type = QSE_AWK_RTX_VALTOSTR_CPL;
-			out.u.cpl.ptr = buf;
-			out.u.cpl.len = *len;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
+			out.u.cplcp.ptr = buf;
+			out.u.cplcp.len = *len;
 
 			if (qse_awk_rtx_valtostr (run, idx, &out) != QSE_NULL)
 			{
-				str = out.u.cpl.ptr;
-				*len = out.u.cpl.len;
+				str = out.u.cplcp.ptr;
+				*len = out.u.cplcp.len;
 				QSE_ASSERT (str == buf);
 			}
 		}
