@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 477 2011-05-24 04:22:40Z hyunghwan.chung $
+ * $Id: Awk.hpp 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -453,6 +453,16 @@ public:
 			{
 				this->set (x);
 				return *this;
+			}
+
+			const char_t* pointer () const
+			{
+				return this->ptr;
+			}
+
+			size_t length () const
+			{
+				return this->len;
 			}
 		};
 

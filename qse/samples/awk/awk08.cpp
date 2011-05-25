@@ -155,7 +155,7 @@ public:
 		{
 			Value::IntIndex iidx (i);
 			if (ret.setIndexedStr (
-				iidx, idx.ptr, idx.len) <= -1) return -1;
+				iidx, idx.pointer(), idx.length()) <= -1) return -1;
 			ii = args[0].getNextIndex (&idx, ii);
 		}
 	

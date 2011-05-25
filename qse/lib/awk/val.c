@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: val.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -725,7 +725,7 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 	}
 }
 
-qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, qse_awk_val_t* val)
+qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 {
 	if (val == QSE_NULL) return QSE_FALSE;
 
@@ -763,16 +763,23 @@ static qse_char_t* str_to_str (
 	{
 		case QSE_AWK_RTX_VALTOSTR_CPL:
 		{
-			if (str_len >= out->u.cpl.len)
+			out->u.cpl.len = str_len;
+			out->u.cpl.ptr = str;
+			return out->u.cpl.ptr;
+		}
+
+		case QSE_AWK_RTX_VALTOSTR_CPLCP:
+		{
+			if (str_len >= out->u.cplcp.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-				out->u.cpl.len = str_len + 1;
+				out->u.cplcp.len = str_len + 1;
 				return QSE_NULL;
 			}
 
-			out->u.cpl.len = 
-				qse_strncpy (out->u.cpl.ptr, str, str_len);
-			return out->u.cpl.ptr;
+			out->u.cplcp.len = 
+				qse_strncpy (out->u.cplcp.ptr, str, str_len);
+			return out->u.cplcp.ptr;
 		}
 
 		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
@@ -826,7 +833,7 @@ static qse_char_t* str_to_str (
 }
 
 static qse_char_t* val_int_to_str (
-	qse_awk_rtx_t* rtx, qse_awk_val_int_t* v,
+	qse_awk_rtx_t* rtx, const qse_awk_val_int_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
@@ -841,18 +848,25 @@ static qse_char_t* val_int_to_str (
 		switch (type)
 		{
 			case QSE_AWK_RTX_VALTOSTR_CPL:
-				if (out->u.cpl.len <= 1)
+				/* CPL and CPLCP behave the same for int_t.
+				 * i just fall through assuming that cplcp 
+				 * and cpl are the same type. the following
+				 * assertion at least ensure that they have
+				 * the same size. */ 
+				QSE_ASSERT (QSE_SIZEOF(out->u.cpl) == QSE_SIZEOF(out->u.cplcp));
+			case QSE_AWK_RTX_VALTOSTR_CPLCP:
+				if (out->u.cplcp.len <= 1)
 				{
 					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
 					/* store the buffer size needed */
-					out->u.cpl.len = 2; 
+					out->u.cplcp.len = 2; 
 					return QSE_NULL;
 				}
 
-				out->u.cpl.len = 1; /* actual length */
-				out->u.cpl.ptr[0] = QSE_T('0');
-				out->u.cpl.ptr[1] = QSE_T('\0');
-				return out->u.cpl.ptr;
+				out->u.cplcp.len = 1; /* actual length */
+				out->u.cplcp.ptr[0] = QSE_T('0');
+				out->u.cplcp.ptr[1] = QSE_T('\0');
+				return out->u.cplcp.ptr;
 
 			case QSE_AWK_RTX_VALTOSTR_CPLDUP:
 				tmp = QSE_AWK_ALLOC (
@@ -899,17 +913,25 @@ static qse_char_t* val_int_to_str (
 	switch (type)
 	{
 		case QSE_AWK_RTX_VALTOSTR_CPL:
-			if (rlen >= out->u.cpl.len)
+			/* CPL and CPLCP behave the same for int_t.
+			 * i just fall through assuming that cplcp 
+			 * and cpl are the same type. the following
+			 * assertion at least ensure that they have
+			 * the same size. */ 
+			QSE_ASSERT (QSE_SIZEOF(out->u.cpl) == QSE_SIZEOF(out->u.cplcp));
+
+		case QSE_AWK_RTX_VALTOSTR_CPLCP:
+			if (rlen >= out->u.cplcp.len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
 				/* store the buffer size needed */
-				out->u.cpl.len = rlen + 1; 
+				out->u.cplcp.len = rlen + 1; 
 				return QSE_NULL;
 			}
 
-			tmp = out->u.cpl.ptr;
+			tmp = out->u.cplcp.ptr;
 			tmp[rlen] = QSE_T('\0');
-			out->u.cpl.len = rlen;
+			out->u.cplcp.len = rlen;
 			break;
 
 		case QSE_AWK_RTX_VALTOSTR_CPLDUP:
@@ -988,7 +1010,7 @@ static qse_char_t* val_int_to_str (
 }
 
 static qse_char_t* val_real_to_str (
-	qse_awk_rtx_t* rtx, qse_awk_val_real_t* v,
+	qse_awk_rtx_t* rtx, const qse_awk_val_real_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
@@ -1032,20 +1054,27 @@ static qse_char_t* val_real_to_str (
 	switch (type)
 	{
 		case QSE_AWK_RTX_VALTOSTR_CPL:
+			/* CPL and CPLCP behave the same for real_t.
+			 * i just fall through assuming that cplcp 
+			 * and cpl are the same type. the following
+			 * assertion at least ensure that they have
+			 * the same size. */ 
+			QSE_ASSERT (QSE_SIZEOF(out->u.cpl) == QSE_SIZEOF(out->u.cplcp));
 
-			if (out->u.cpl.len <= tmp_len)
+		case QSE_AWK_RTX_VALTOSTR_CPLCP:
+			if (out->u.cplcp.len <= tmp_len)
 			{
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
 				/* store the buffer size required */
-				out->u.cpl.len = tmp_len + 1; 
+				out->u.cplcp.len = tmp_len + 1; 
 				qse_str_close (&fbu);
 				qse_str_close (&buf);
 				return QSE_NULL;
 			}
 
-			qse_strncpy (out->u.cpl.ptr, tmp, tmp_len);
-			out->u.cpl.len = tmp_len;
-			tmp = out->u.cpl.ptr;
+			qse_strncpy (out->u.cplcp.ptr, tmp, tmp_len);
+			out->u.cplcp.len = tmp_len;
+			tmp = out->u.cplcp.ptr;
 
 			qse_str_fini (&fbu);
 			qse_str_fini (&buf);
@@ -1111,20 +1140,27 @@ static qse_char_t* val_real_to_str (
 }
 
 qse_char_t* qse_awk_rtx_valtostr (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_awk_rtx_valtostr_out_t* out)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v,
+	qse_awk_rtx_valtostr_out_t* out)
 {
 	switch (v->type)
 	{
 		case QSE_AWK_VAL_NIL:
+		{
 			return str_to_str (rtx, QSE_T(""), 0, out);
+		}
 
 		case QSE_AWK_VAL_INT:
+		{
 			return val_int_to_str (
 				rtx, (qse_awk_val_int_t*)v, out);
+		}
 
 		case QSE_AWK_VAL_REAL:
+		{
 			return val_real_to_str (
 				rtx, (qse_awk_val_real_t*)v, out);
+		}
 
 		case QSE_AWK_VAL_STR:
 		{
@@ -1144,7 +1180,7 @@ qse_char_t* qse_awk_rtx_valtostr (
 }
 
 qse_char_t* qse_awk_rtx_valtocpldup (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_size_t* len)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 	qse_awk_rtx_valtostr_out_t out;
 
@@ -1156,7 +1192,7 @@ qse_char_t* qse_awk_rtx_valtocpldup (
 }
 
 int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
 {
 	if (v->type == QSE_AWK_VAL_NIL) 
 	{

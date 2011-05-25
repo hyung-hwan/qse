@@ -112,7 +112,9 @@ static int run_awk (QSE::StdAwk& awk)
 		if (r.getIndexed (idx, &v) <= -1) return -1;
 		
 		qse_printf (QSE_T("\t[%.*s]=>[%lld]\n"), 
-			(int)idx.len, idx.ptr, (long long)v.toInt());
+			(int)idx.length(), idx.pointer(), 
+			(long long)v.toInt()
+		);
 		
 		iter = r.getNextIndex (&idx, iter);
 	}

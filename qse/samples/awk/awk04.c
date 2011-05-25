@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 469 2011-05-21 16:16:18Z hyunghwan.chung $
+ * $Id: awk04.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -37,6 +37,9 @@ int main ()
 	qse_awk_val_t* arg[2] = { QSE_NULL, QSE_NULL };
 	qse_awk_fun_t* fun;
 	int ret, i, opt;
+
+	qse_awk_rtx_valtostr_out_t out;
+	qse_char_t numbuf[128];
 
 	/* create a main processor */
 	awk = qse_awk_openstd (0);
@@ -119,7 +122,12 @@ int main ()
 	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
 	qse_awk_rtx_free (rtx, str);
 
-	
+	if (rtv) 
+	{
+		qse_awk_rtx_refdownval (rtx, rtv);
+		rtv = QSE_NULL;
+	}
+
 	/* call the function again using different API functions */
 	fun = qse_awk_rtx_findfun (rtx, QSE_T("pow"));
 	if (fun == QSE_NULL)
@@ -137,22 +145,26 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	str = qse_awk_rtx_valtocpldup (rtx, rtv, &len);
-	if (str == QSE_NULL)
+	/* Convert a value to a string in a different way */
+	out.type = QSE_AWK_RTX_VALTOSTR_CPL;
+	out.u.cpl.ptr = numbuf; /* used if the value is not a string */
+	out.u.cpl.len = QSE_COUNTOF(numbuf);
+	if (qse_awk_rtx_valtostr (rtx, rtv, &out) == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));
 		ret = -1; goto oops;
 	}
 
-	qse_printf (QSE_T("[%.*s]\n"), (int)len, str);
-	qse_awk_rtx_free (rtx, str);
-
-	
+	qse_printf (QSE_T("[%.*s]\n"), (int)out.u.cpl.len, out.u.cpl.ptr);
 
 oops:
 	/* clear the return value */
-	if (rtv) qse_awk_rtx_refdownval (rtx, rtv);
+	if (rtv) 
+	{
+		qse_awk_rtx_refdownval (rtx, rtv);
+		rtv = QSE_NULL;
+	}
 
 	/* dereference all arguments */
 	for (i = 0; i < QSE_COUNTOF(arg); i++)

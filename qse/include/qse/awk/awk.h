@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 477 2011-05-24 04:22:40Z hyunghwan.chung $
+ * $Id: awk.h 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1059,6 +1059,7 @@ enum qse_awk_val_type_t
  * following values:
  *
  * - #QSE_AWK_RTX_VALTOSTR_CPL
+ * - #QSE_AWK_RTX_VALTOSTR_CPLCP
  * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
  * - #QSE_AWK_RTX_VALTOSTR_STRP
  * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
@@ -1069,12 +1070,14 @@ enum qse_awk_rtx_valtostr_type_t
 { 
 	/** use u.cpl of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00, 
+	/** use u.cplcp of #qse_awk_rtx_valtostr_out_t */
+	QSE_AWK_RTX_VALTOSTR_CPLCP     = 0x01, 
 	/** use u.cpldup of #qse_awk_rtx_valtostr_out_t */
-	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x01,
+	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x02,
 	/** use u.strp of #qse_awk_rtx_valtostr_out_t */
-	QSE_AWK_RTX_VALTOSTR_STRP      = 0x02,
+	QSE_AWK_RTX_VALTOSTR_STRP      = 0x03,
 	/** use u.strpcat of #qse_awk_rtx_valtostr_out_t */
-	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x03,
+	QSE_AWK_RTX_VALTOSTR_STRPCAT   = 0x04,
 	/** convert for print */
 	QSE_AWK_RTX_VALTOSTR_PRINT     = 0x10   
 };
@@ -1090,6 +1093,7 @@ struct qse_awk_rtx_valtostr_out_t
 	union
 	{
 		qse_xstr_t  cpl;
+		qse_xstr_t  cplcp;
 		qse_xstr_t  cpldup;  /* need to free cpldup.ptr */
 		qse_str_t*  strp;
 		qse_str_t*  strpcat;
@@ -2063,8 +2067,8 @@ void qse_awk_rtx_refdownval_nofree (
  * value.
  */
 qse_bool_t qse_awk_rtx_valtobool (
-	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_awk_val_t* val  /**< value pointer */
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val  /**< value pointer */
 );
 
 /**
@@ -2075,6 +2079,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * The type field is one of the following qse_awk_rtx_valtostr_type_t values:
  *
  * - #QSE_AWK_RTX_VALTOSTR_CPL
+ * - #QSE_AWK_RTX_VALTOSTR_CPLCP
  * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
  * - #QSE_AWK_RTX_VALTOSTR_STRP
  * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
@@ -2086,7 +2091,22 @@ qse_bool_t qse_awk_rtx_valtobool (
  * You should initialize or free other fields before and after the call 
  * depending on the type field as shown below:
  *  
- * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPL.
+ * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPLCP.
+ * the resulting string is copied to the buffer.
+ * @code
+ * qse_awk_rtx_valtostr_out_t out;
+ * qse_char_t buf[100];
+ * out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
+ * out.u.cplcp.ptr = buf;
+ * out.u.cplcp.len = QSE_COUNTOF(buf);
+ * if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ * qse_printf (QSE_T("%.*s\n"), (int)out.u.cplcp.len, out.u.cplcp.ptr);
+ * @endcode
+ *
+ * #QSE_AWK_RTX_VALTOSTR_CPL is different from #QSE_AWK_RTX_VALTOSTR_CPLCP
+ * in that it doesn't copy the string to the buffer if the type of the value
+ * is #QSE_AWK_VAL_STR. It copies the resulting string to the buffer if
+ * the value type is not #QSE_AWK_VAL_STR. 
  * @code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_char_t buf[100];
@@ -2136,7 +2156,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  */
 qse_char_t* qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx, /**< runtime context */
-	qse_awk_val_t*              val, /**< value to convert */
+	const qse_awk_val_t*        val, /**< value to convert */
 	qse_awk_rtx_valtostr_out_t* out  /**< output buffer */
 );
 
@@ -2158,9 +2178,9 @@ qse_char_t* qse_awk_rtx_valtostr (
  *         #QSE_NULL on failure
  */
 qse_char_t* qse_awk_rtx_valtocpldup (
-	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_awk_val_t* val, /**< value to convert */
-	qse_size_t*    len  /**< result length */
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_size_t*          len  /**< result length */
 );
 
 /**
@@ -2187,10 +2207,10 @@ qse_char_t* qse_awk_rtx_valtocpldup (
  *         a floating-point number.
  */
 int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* rtx,
-	qse_awk_val_t* val,
-	qse_long_t*    l,
-	qse_real_t*    r
+	qse_awk_rtx_t*       rtx,
+	const qse_awk_val_t* val,
+	qse_long_t*          l,
+	qse_real_t*          r
 );
 
 /**

@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: lda.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -36,8 +36,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (lda)
 #define size_t   qse_size_t
 
 #define TOB(lda,len) ((len)*(lda)->scale)
-#define DPTR(node)   ((node)->val.ptr)
-#define DLEN(node)   ((node)->val.len)
+#define DPTR(slot)   ((slot)->val.ptr)
+#define DLEN(slot)   ((slot)->val.len)
 
 static int default_comparator (lda_t* lda, 
 	const void* dptr1, size_t dlen1, 
@@ -58,7 +58,7 @@ static int default_comparator (lda_t* lda,
 	return n;
 }
 
-static QSE_INLINE slot_t* alloc_node (lda_t* lda, void* dptr, size_t dlen)
+static QSE_INLINE slot_t* alloc_slot (lda_t* lda, void* dptr, size_t dlen)
 {
 	slot_t* n;
 
@@ -135,7 +135,7 @@ lda_t* qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 	lda->mmgr = mmgr;
 	lda->size = 0;
 	lda->capa = 0;
-	lda->node = QSE_NULL;
+	lda->slot = QSE_NULL;
 
 	lda->copier = QSE_LDA_COPIER_SIMPLE;
 	lda->comper = default_comparator;
@@ -148,10 +148,10 @@ void qse_lda_fini (lda_t* lda)
 {
 	qse_lda_clear (lda);
 
-	if (lda->node != QSE_NULL) 
+	if (lda->slot != QSE_NULL) 
 	{
-		QSE_MMGR_FREE (lda->mmgr, lda->node);
-		lda->node = QSE_NULL;
+		QSE_MMGR_FREE (lda->mmgr, lda->slot);
+		lda->slot = QSE_NULL;
 		lda->capa = 0;
 	}
 }
@@ -250,41 +250,41 @@ lda_t* qse_lda_setcapa (lda_t* lda, size_t capa)
 
 	if (capa > 0) 
 	{
-		if (lda->mmgr->realloc != QSE_NULL && lda->node != QSE_NULL)
+		if (lda->mmgr->realloc != QSE_NULL && lda->slot != QSE_NULL)
 		{
 			tmp = (slot_t**) QSE_MMGR_REALLOC (
-				lda->mmgr, lda->node,
-				QSE_SIZEOF(*lda->node)*capa);
+				lda->mmgr, lda->slot,
+				QSE_SIZEOF(*lda->slot)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 		}
 		else
 		{
 			tmp = (slot_t**) QSE_MMGR_ALLOC (
-				lda->mmgr, QSE_SIZEOF(*lda->node)*capa);
+				lda->mmgr, QSE_SIZEOF(*lda->slot)*capa);
 			if (tmp == QSE_NULL) return QSE_NULL;
 
-			if (lda->node != QSE_NULL)
+			if (lda->slot != QSE_NULL)
 			{
 				size_t x;
 				x = (capa > lda->capa)? lda->capa: capa;
-				QSE_MEMCPY (tmp, lda->node, 
-					QSE_SIZEOF(*lda->node)*x);
-				QSE_MMGR_FREE (lda->mmgr, lda->node);
+				QSE_MEMCPY (tmp, lda->slot, 
+					QSE_SIZEOF(*lda->slot)*x);
+				QSE_MMGR_FREE (lda->mmgr, lda->slot);
 			}
 		}
 	}
 	else 
 	{
-		if (lda->node != QSE_NULL) 
+		if (lda->slot != QSE_NULL) 
 		{
 			qse_lda_clear (lda);
-			QSE_MMGR_FREE (lda->mmgr, lda->node);
+			QSE_MMGR_FREE (lda->mmgr, lda->slot);
 		}
 
 		tmp = QSE_NULL;
 	}
 
-	lda->node = tmp;
+	lda->slot = tmp;
 	lda->capa = capa;
 	
 	return lda;
@@ -296,10 +296,10 @@ size_t qse_lda_search (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 	for (i = pos; i < lda->size; i++) 
 	{
-		if (lda->node[i] == QSE_NULL) continue;
+		if (lda->slot[i] == QSE_NULL) continue;
 
 		if (lda->comper (lda, 
-			DPTR(lda->node[i]), DLEN(lda->node[i]),
+			DPTR(lda->slot[i]), DLEN(lda->slot[i]),
 			dptr, dlen) == 0) return i;
 	}
 
@@ -316,10 +316,10 @@ size_t qse_lda_rsearch (lda_t* lda, size_t pos, const void* dptr, size_t dlen)
 
 		for (i = pos + 1; i-- > 0; ) 
 		{
-			if (lda->node[i] == QSE_NULL) continue;
+			if (lda->slot[i] == QSE_NULL) continue;
 
 			if (lda->comper (lda, 
-				DPTR(lda->node[i]), DLEN(lda->node[i]),
+				DPTR(lda->slot[i]), DLEN(lda->slot[i]),
 				dptr, dlen) == 0) return i;
 		}
 	}
@@ -336,14 +336,14 @@ size_t qse_lda_upsert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 {
 	size_t i;
-	slot_t* node;
+	slot_t* slot;
 
-	/* allocate the node first */
-	node = alloc_node (lda, dptr, dlen);
-	if (node == QSE_NULL) return QSE_LDA_NIL;
+	/* allocate the slot first */
+	slot = alloc_slot (lda, dptr, dlen);
+	if (slot == QSE_NULL) return QSE_LDA_NIL;
 
 	/* do resizeing if necessary. 
-	 * resizing is performed after node allocation because that way, it 
+	 * resizing is performed after slot allocation because that way, it 
 	 * doesn't modify lda on any errors */
 	if (pos >= lda->capa || lda->size >= lda->capa) 
 	{
@@ -377,8 +377,8 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 			if (capa <= mincapa)
 			{
 				if (lda->freeer) 
-					lda->freeer (lda, DPTR(node), DLEN(node));
-				QSE_MMGR_FREE (lda->mmgr, node);
+					lda->freeer (lda, DPTR(slot), DLEN(slot));
+				QSE_MMGR_FREE (lda->mmgr, slot);
 				return QSE_LDA_NIL;
 			}
 
@@ -391,19 +391,19 @@ size_t qse_lda_insert (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 	{
 		/* the buffer is not still enough after resizing */
 		if (lda->freeer) 
-			lda->freeer (lda, DPTR(node), DLEN(node));
-		QSE_MMGR_FREE (lda->mmgr, node);
+			lda->freeer (lda, DPTR(slot), DLEN(slot));
+		QSE_MMGR_FREE (lda->mmgr, slot);
 		return QSE_LDA_NIL;
 	}
 
 	/* fill in the gap with QSE_NULL */
-	for (i = lda->size; i < pos; i++) lda->node[i] = QSE_NULL;
+	for (i = lda->size; i < pos; i++) lda->slot[i] = QSE_NULL;
 
 	/* shift values to the next cell */
-	for (i = lda->size; i > pos; i--) lda->node[i] = lda->node[i-1];
+	for (i = lda->size; i > pos; i--) lda->slot[i] = lda->slot[i-1];
 
 	/*  set the value */
-	lda->node[pos] = node;
+	lda->slot[pos] = slot;
 
 	if (pos > lda->size) lda->size = pos + 1;
 	else lda->size++;
@@ -417,12 +417,12 @@ size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 
 	if (pos >= lda->size) return QSE_LDA_NIL;
 
-	c = lda->node[pos];
+	c = lda->slot[pos];
 	if (c == QSE_NULL)
 	{
 		/* no previous data */
-		lda->node[pos] = alloc_node (lda, dptr, dlen);
-		if (lda->node[pos] == QSE_NULL) return QSE_LDA_NIL;
+		lda->slot[pos] = alloc_slot (lda, dptr, dlen);
+		if (lda->slot[pos] == QSE_NULL) return QSE_LDA_NIL;
 	}
 	else
 	{
@@ -434,14 +434,14 @@ size_t qse_lda_update (lda_t* lda, size_t pos, void* dptr, size_t dlen)
 		else
 		{
 			/* updated to different data */
-			slot_t* node = alloc_node (lda, dptr, dlen);
-			if (node == QSE_NULL) return QSE_LDA_NIL;
+			slot_t* slot = alloc_slot (lda, dptr, dlen);
+			if (slot == QSE_NULL) return QSE_LDA_NIL;
 
 			if (lda->freeer != QSE_NULL)
 				lda->freeer (lda, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (lda->mmgr, c);
 
-			lda->node[pos] = node;
+			lda->slot[pos] = slot;
 		}
 	}
 
@@ -459,7 +459,7 @@ size_t qse_lda_delete (lda_t* lda, size_t index, size_t count)
 
 	for (i = index; i < index + count; i++)
 	{
-		slot_t* c = lda->node[i];
+		slot_t* c = lda->slot[i];
 
 		if (c != QSE_NULL)
 		{
@@ -467,15 +467,15 @@ size_t qse_lda_delete (lda_t* lda, size_t index, size_t count)
 				lda->freeer (lda, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (lda->mmgr, c);
 
-			lda->node[i] = QSE_NULL;
+			lda->slot[i] = QSE_NULL;
 		}
 	}
 
 	for (i = index + count; i < lda->size; i++)
 	{
-		lda->node[i-count] = lda->node[i];
+		lda->slot[i-count] = lda->slot[i];
 	}
-	lda->node[lda->size-1] = QSE_NULL;
+	lda->slot[lda->size-1] = QSE_NULL;
 
 	lda->size -= count;
 	return count;
@@ -492,7 +492,7 @@ size_t qse_lda_uplete (lda_t* lda, size_t index, size_t count)
 
 	for (i = index; i < index + count; i++)
 	{
-		slot_t* c = lda->node[i];
+		slot_t* c = lda->slot[i];
 
 		if (c != QSE_NULL)
 		{
@@ -500,7 +500,7 @@ size_t qse_lda_uplete (lda_t* lda, size_t index, size_t count)
 				lda->freeer (lda, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (lda->mmgr, c);
 
-			lda->node[i] = QSE_NULL;
+			lda->slot[i] = QSE_NULL;
 		}
 	}
 
@@ -513,13 +513,13 @@ void qse_lda_clear (lda_t* lda)
 
 	for (i = 0; i < lda->size; i++) 
 	{
-		slot_t* c = lda->node[i];
+		slot_t* c = lda->slot[i];
 		if (c != QSE_NULL)
 		{
 			if (lda->freeer)
 				lda->freeer (lda, DPTR(c), DLEN(c));
 			QSE_MMGR_FREE (lda->mmgr, c);
-			lda->node[i] = QSE_NULL;
+			lda->slot[i] = QSE_NULL;
 		}
 	}
 
@@ -535,7 +535,7 @@ size_t qse_lda_walk (lda_t* lda, walker_t walker, void* ctx)
 
 	while (1)	
 	{
-		if (lda->node[i] != QSE_NULL) 
+		if (lda->slot[i] != QSE_NULL) 
 		{
                w = walker (lda, i, ctx);
 			nwalks++;
@@ -568,7 +568,7 @@ size_t qse_lda_rwalk (lda_t* lda, walker_t walker, void* ctx)
 
 	while (1)	
 	{
-		if (lda->node[i] != QSE_NULL) 
+		if (lda->slot[i] != QSE_NULL) 
 		{
                 	w = walker (lda, i, ctx);
 			nwalks++;
@@ -623,14 +623,14 @@ size_t qse_lda_pushheap (lda_t* lda, void* dptr, size_t dlen)
 		/* compare with the parent */
 		par = HEAP_PARENT(cur);
 		n = lda->comper (lda,
-			DPTR(lda->node[cur]), DLEN(lda->node[cur]),
-			DPTR(lda->node[par]), DLEN(lda->node[par]));
+			DPTR(lda->slot[cur]), DLEN(lda->slot[cur]),
+			DPTR(lda->slot[par]), DLEN(lda->slot[par]));
 		if (n <= 0) break; /* ok */
 
 		/* swap the current with the parent */
-		tmp = lda->node[cur];
-		lda->node[cur] = lda->node[par];
-		lda->node[par] = tmp;
+		tmp = lda->slot[cur];
+		lda->slot[cur] = lda->slot[par];
+		lda->slot[par] = tmp;
 
 		cur = par;
 	}
@@ -646,12 +646,12 @@ void qse_lda_popheap (lda_t* lda)
 	QSE_ASSERT (lda->size > 0);
 
 	/* destroy the top */
-	tmp = lda->node[0];
+	tmp = lda->slot[0];
 	if (lda->freeer) lda->freeer (lda, DPTR(tmp), DLEN(tmp));
 	QSE_MMGR_FREE (lda->mmgr, tmp);
 
 	/* move the last item to the top position also shrink the size */
-	lda->node[0] = lda->node[--lda->size];
+	lda->slot[0] = lda->slot[--lda->size];
 
 	if (lda->size <= 1) return; /* only 1 element. nothing further to do */
 
@@ -679,20 +679,20 @@ void qse_lda_popheap (lda_t* lda)
 		{
 			/* get the larger child of the two */
 			n = lda->comper (lda,
-				DPTR(lda->node[left]), DLEN(lda->node[left]),
-				DPTR(lda->node[right]), DLEN(lda->node[right]));
+				DPTR(lda->slot[left]), DLEN(lda->slot[left]),
+				DPTR(lda->slot[right]), DLEN(lda->slot[right]));
 			child = (n > 0)? left: right;
 		}
 		
 		/* compare the current one with the child */
 		n = lda->comper (lda,
-			DPTR(lda->node[cur]), DLEN(lda->node[cur]),
-			DPTR(lda->node[child]), DLEN(lda->node[child]));
+			DPTR(lda->slot[cur]), DLEN(lda->slot[cur]),
+			DPTR(lda->slot[child]), DLEN(lda->slot[child]));
 		if (n > 0) break; /* current one is larger. stop exchange */
 
 		/* swap the current with the child */
-		tmp = lda->node[cur];
-		lda->node[cur] = lda->node[child];
-		lda->node[child] = tmp;
+		tmp = lda->slot[cur];
+		lda->slot[cur] = lda->slot[child];
+		lda->slot[child] = tmp;
 	}
 }

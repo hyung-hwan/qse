@@ -119,7 +119,7 @@ qse_lda_setcapa (s1, 3);
 static int test2 ()
 {
 	qse_lda_t* s1;
-	qse_lda_node_t* p;
+	qse_lda_slot_t* p;
 	const qse_char_t* x[] =
 	{
 		QSE_T("this is so good"),
@@ -168,7 +168,7 @@ static int test2 ()
 
 		for (i = 0; i < QSE_LDA_SIZE(s1); i++)
 		{
-			if (QSE_LDA_NODE(s1,i))
+			if (QSE_LDA_SLOT(s1,i))
 			{
 				qse_printf (QSE_T("[%d] %d => [%.*s]\n"), 
 					j, i, (int)QSE_LDA_DLEN(s1,i), QSE_LDA_DPTR(s1,i));
@@ -258,7 +258,7 @@ static int test3 ()
 		{
 			if (i < QSE_LDA_SIZE(s1))
 			{
-				if (QSE_LDA_NODE(s1,i))
+				if (QSE_LDA_SLOT(s1,i))
 				{
 					qse_printf (QSE_T("deleted at %d => [%.*s]\n"), 
 						i, (int)QSE_LDA_DLEN(s1,i), QSE_LDA_DPTR(s1,i));
@@ -287,7 +287,7 @@ static int test3 ()
 
 		for (i = 0; i < QSE_LDA_SIZE(s1); i++)
 		{
-			if (QSE_LDA_NODE(s1,i))
+			if (QSE_LDA_SLOT(s1,i))
 			{
 				qse_printf (QSE_T("[%d] %d => [%.*s]\n"), 
 					j, i, (int)QSE_LDA_DLEN(s1,i), QSE_LDA_DPTR(s1,i));
@@ -303,7 +303,7 @@ static int test3 ()
 
 		for (i = 0; i < QSE_LDA_SIZE(s1); i++)
 		{
-			if (QSE_LDA_NODE(s1,i))
+			if (QSE_LDA_SLOT(s1,i))
 			{
 				qse_printf (QSE_T("[%d] %d => [%.*s]\n"), 
 					j, i, (int)QSE_LDA_DLEN(s1,i), QSE_LDA_DPTR(s1,i));

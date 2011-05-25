@@ -154,8 +154,8 @@ int main ()
 			}
 	
 			qse_printf (QSE_T("ret [%.*s]=[%.*s]\n"), 
-				(int)QSE_AWK_VAL_MAP_ITR_KEY_LEN(iptr), 
-				QSE_AWK_VAL_MAP_ITR_KEY_PTR(iptr),
+				(int)QSE_AWK_VAL_MAP_ITR_KEY(iptr)->len, 
+				QSE_AWK_VAL_MAP_ITR_KEY(iptr)->ptr,
 				(int)str.len, str.ptr
 			);
 			qse_awk_rtx_free (rtx, str.ptr);

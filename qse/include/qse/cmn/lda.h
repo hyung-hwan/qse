@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: lda.h 479 2011-05-24 15:14:58Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -48,17 +48,18 @@ typedef enum   qse_lda_walk_t qse_lda_walk_t;
 #define QSE_LDA_SIZE(lda)        (*(const qse_size_t*)&(lda)->size)
 #define QSE_LDA_CAPA(lda)        (*(const qse_size_t*)&(lda)->capa)
 
-#define QSE_LDA_DATA(lda,index)  ((const qse_xptl_t*)&(lda)->node[index]->val)
-#define QSE_LDA_DPTR(lda,index)  ((lda)->node[index]->val.ptr)
-#define QSE_LDA_DLEN(lda,index)  ((lda)->node[index]->val.len)
+#define QSE_LDA_SLOT(lda,index)  ((lda)->slot[index])
+#define QSE_LDA_DPTL(lda,index)  ((const qse_xptl_t*)&(lda)->slot[index]->val)
+#define QSE_LDA_DPTR(lda,index)  ((lda)->slot[index]->val.ptr)
+#define QSE_LDA_DLEN(lda,index)  ((lda)->slot[index]->val.len)
 
 /**
- *  The qse_lda_copier_t type defines a callback function for node construction.
- *  A node is contructed when a user adds data to a list. The user can
+ *  The qse_lda_copier_t type defines a callback function for slot construction.
+ *  A slot is contructed when a user adds data to a list. The user can
  *  define how the data to add can be maintained in the list. A singly
  *  linked list not specified with any copiers stores the data pointer and
- *  the data length into a node. A special copier QSE_LDA_COPIER_INLINE copies 
- *  the contents of the data a user provided into the node. You can use the
+ *  the data length into a slot. A special copier QSE_LDA_COPIER_INLINE copies 
+ *  the contents of the data a user provided into the slot. You can use the
  *  qse_lda_setcopier() function to change the copier. 
  * 
  *  A copier should return the pointer to the copied data. If it fails to copy
@@ -72,7 +73,7 @@ typedef void* (*qse_lda_copier_t) (
 );
 
 /**
- * The qse_lda_freeer_t type defines a node destruction callback.
+ * The qse_lda_freeer_t type defines a slot destruction callback.
  */
 typedef void (*qse_lda_freeer_t) (
 	qse_lda_t* lda    /**< array */,
@@ -120,7 +121,7 @@ typedef qse_size_t (*qse_lda_sizer_t) (
 
 typedef qse_lda_walk_t (*qse_lda_walker_t) (
 	qse_lda_t*      lda   /* array */,
-	qse_size_t      index /* index to the visited node */,
+	qse_size_t      index /* index to the visited slot */,
 	void*           ctx   /* user-defined context */
 );
 
@@ -139,11 +140,11 @@ struct qse_lda_t
 	qse_byte_t       scale;  /* scale factor */
 	qse_size_t       size;   /* number of items */
 	qse_size_t       capa;   /* capacity */
-	qse_lda_slot_t** node;
+	qse_lda_slot_t** slot;
 };
 
 /**
- * The qse_lda_slot_t type defines a linear dynamic array node
+ * The qse_lda_slot_t type defines a linear dynamic array slot
  */
 struct qse_lda_slot_t
 {
@@ -213,8 +214,8 @@ qse_lda_copier_t qse_lda_getcopier (
 
 /**
  * The qse_lda_setcopier() specifies how to clone an element. The special 
- * copier #QSE_LDA_COPIER_INLINE copies the data inline to the internal node.
- * No freeer is invoked when the node is freeed. You may set the copier to 
+ * copier #QSE_LDA_COPIER_INLINE copies the data inline to the internal slot.
+ * No freeer is invoked when the slot is freeed. You may set the copier to 
  * #QSE_LDA_COPIER_SIMPLE to perform no special operation when the data 
  * pointer is stored.
  */
@@ -232,7 +233,7 @@ qse_lda_freeer_t qse_lda_getfreeer (
 
 /**
  * The qse_lda_setfreeer() function specifies how to destroy an element.
- * The @a freeer is called when a node containing the element is destroyed.
+ * The @a freeer is called when a slot containing the element is destroyed.
  */
 void qse_lda_setfreeer (
 	qse_lda_t* lda           /**< lda */,
@@ -330,7 +331,7 @@ qse_size_t qse_lda_delete (
 );
 
 /**
- *  The qse_lda_uplete() function deletes data node without compaction.
+ *  The qse_lda_uplete() function deletes data slot without compaction.
  *  It returns the number of data affected.
  */
 qse_size_t qse_lda_uplete (
