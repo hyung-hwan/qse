@@ -1,5 +1,5 @@
 /*
- * $Id: rio.c 464 2011-05-19 03:33:28Z hyunghwan.chung $
+ * $Id: rio.c 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -652,7 +652,7 @@ int qse_awk_rtx_writeio_val (
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP |
 		           QSE_AWK_RTX_VALTOSTR_PRINT;
-		if (qse_awk_rtx_valtostr (run, v, &out) == QSE_NULL) return -1;
+		if (qse_awk_rtx_valtostr (run, v, &out) <= -1) return -1;
 
 		str = out.u.cpldup.ptr;
 		len = out.u.cpldup.len;

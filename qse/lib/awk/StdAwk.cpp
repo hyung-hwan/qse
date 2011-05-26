@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 461 2011-05-18 02:32:39Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -376,7 +376,7 @@ int StdAwk::open_console_in (Console& io)
 		QSE_ASSERT (v != QSE_NULL);
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return -1;
+		if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return -1;
 
 		if (out.u.cpldup.len == 0)
 		{

@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: std.c 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -991,7 +991,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			QSE_ASSERT (v != QSE_NULL);
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL) return -1;
+			if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return -1;
 
 			if (out.u.cpldup.len == 0)
 			{
