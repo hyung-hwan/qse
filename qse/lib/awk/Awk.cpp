@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 477 2011-05-24 04:22:40Z hyunghwan.chung $
+ * $Id: Awk.cpp 480 2011-05-25 14:00:19Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -441,8 +441,7 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 			{
 				qse_awk_rtx_valtostr_out_t out;
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (
-					run->rtx, val, &out) == QSE_NULL)
+				if (qse_awk_rtx_valtostr (run->rtx, val, &out) <= -1)
 				{
 					run->awk->retrieveError (run);
 					return -1;

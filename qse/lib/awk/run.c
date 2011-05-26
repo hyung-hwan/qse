@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: run.c 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -343,7 +343,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) 
+			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1)
 				return -1;
 
 			for (i = 0; i < out.u.cpldup.len; i++)
@@ -397,7 +397,7 @@ static int set_global (
 				QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) return -1;
+				if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 				fs_ptr = out.u.cpldup.ptr;
 				fs_len = out.u.cpldup.len;
 			}
@@ -485,8 +485,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) 
-				return -1;
+			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
 			for (i = 0; i < out.u.cpldup.len; i++)
 			{
@@ -511,8 +510,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) 
-				return -1;
+			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.ofs.ptr != QSE_NULL)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.ofs.ptr);
@@ -527,8 +525,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) 
-				return -1;
+			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.ors.ptr != QSE_NULL)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.ors.ptr);
@@ -556,8 +553,7 @@ static int set_global (
 				QSE_ASSERT (val->type != QSE_AWK_VAL_REX);
 
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL) 
-					return -1;
+				if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
 				rss = out.u.cpldup;
 			}
@@ -595,8 +591,7 @@ static int set_global (
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (rtx, val, &out) == QSE_NULL)
-				return -1;
+			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
 			if (rtx->gbl.subsep.ptr != QSE_NULL)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
@@ -2529,39 +2524,38 @@ static int delete_indexed (
 	else
 	{
 		/* delete x[20] */
-
-		qse_char_t* key;
-		qse_size_t keylen;
 		qse_char_t buf[IDXBUFSIZE];
 		qse_awk_rtx_valtostr_out_t out;
 
 		/* try with a fixed-size buffer */
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
-		out.u.cplcp.ptr = buf;
-		out.u.cplcp.len = QSE_COUNTOF(buf);
-		key = qse_awk_rtx_valtostr (rtx, idx, &out);
-		if (key == QSE_NULL)
+		out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
+		out.u.cplcpy.ptr = buf;
+		out.u.cplcpy.len = QSE_COUNTOF(buf);
+		if (qse_awk_rtx_valtostr (rtx, idx, &out) <= -1)
 		{
+			int n;
+
 			/* retry it in dynamic mode */
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			key = qse_awk_rtx_valtostr (rtx, idx, &out);
+			n = qse_awk_rtx_valtostr (rtx, idx, &out);
+			qse_awk_rtx_refdownval (rtx, idx);
+			if (n <= -1)
+			{
+				/* change the error line */
+				ADJERR_LOC (rtx, &var->loc);
+				return -1;
+			}
+			else
+			{
+				qse_htb_delete (map, out.u.cpldup.ptr, out.u.cpldup.len);
+				QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+			}
 		}
-
-		qse_awk_rtx_refdownval (rtx, idx);
-
-		if (key == QSE_NULL) 
+		else 
 		{
-			/* change the error line */
-			ADJERR_LOC (rtx, &var->loc);
-			return -1;
+			qse_awk_rtx_refdownval (rtx, idx);
+			qse_htb_delete (map, out.u.cplcpy.ptr, out.u.cplcpy.len);
 		}
-
-		keylen = (out.type == QSE_AWK_RTX_VALTOSTR_CPLCP)?
-			out.u.cplcp.len: out.u.cpldup.len;
-
-		qse_htb_delete (map, key, keylen);
-
-		if (key != buf) QSE_AWK_FREE (rtx->awk, key);
 	}
 
 	return 0;
@@ -2825,7 +2819,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		qse_awk_rtx_refupval (rtx, v);
 
 		vsout.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, v, &vsout) == QSE_NULL)
+		if (qse_awk_rtx_valtostr (rtx, v, &vsout) <= -1)
 		{
 			qse_awk_rtx_refdownval (rtx, v);
 			ADJERR_LOC (rtx, &nde->loc);
@@ -2986,7 +2980,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		qse_awk_rtx_refupval (rtx, v);
 
 		vsout.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, v, &vsout) == QSE_NULL)
+		if (qse_awk_rtx_valtostr (rtx, v, &vsout) <= -1)
 		{
 			qse_awk_rtx_refdownval (rtx, v);
 			ADJERR_LOC (rtx, &nde->loc);
@@ -3620,7 +3614,7 @@ static qse_awk_val_t* do_assignment_pos (
 		qse_awk_rtx_valtostr_out_t out;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (run, val, &out) == QSE_NULL)
+		if (qse_awk_rtx_valtostr (run, val, &out) <= -1)
 		{
 			ADJERR_LOC (run, &pos->loc);
 			return QSE_NULL;
@@ -4071,8 +4065,7 @@ static int __cmp_int_str (
 	}
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL) 
-		return CMP_ERROR;
+	if (qse_awk_rtx_valtostr (rtx, left, &out) <= -1) return CMP_ERROR;
 
 	if (rtx->gbl.ignorecase)
 	{
@@ -4152,8 +4145,7 @@ static int __cmp_real_str (
 	}
 
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL) 
-		return CMP_ERROR;
+	if (qse_awk_rtx_valtostr (rtx, left, &out) <= -1) return CMP_ERROR;
 
 	if (rtx->gbl.ignorecase)
 	{
@@ -4733,13 +4725,10 @@ static qse_awk_val_t* eval_binop_concat (
 	qse_awk_rtx_valtostr_out_t lout, rout;
 
 	lout.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (run, left, &lout) == QSE_NULL) 
-	{
-		return QSE_NULL;
-	}
+	if (qse_awk_rtx_valtostr (run, left, &lout) <= -1) return QSE_NULL;
 
 	rout.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-	if (qse_awk_rtx_valtostr (run, right, &rout) == QSE_NULL) 
+	if (qse_awk_rtx_valtostr (run, right, &rout) <= -1)
 	{
 		QSE_AWK_FREE (run->awk, lout.u.cpldup.ptr);
 		return QSE_NULL;
@@ -4787,8 +4776,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		qse_awk_rtx_valtostr_out_t out;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, right, &out) == QSE_NULL)
-			return QSE_NULL;
+		if (qse_awk_rtx_valtostr (rtx, right, &out) <= -1) return QSE_NULL;
 
 		rex_code = QSE_AWK_BUILDREX (
 			rtx->awk, out.u.cpldup.ptr, out.u.cpldup.len, &errnum);
@@ -4834,7 +4822,7 @@ static qse_awk_val_t* eval_binop_match0 (
 		qse_awk_rtx_valtostr_out_t out;
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (rtx, left, &out) == QSE_NULL)
+		if (qse_awk_rtx_valtostr (rtx, left, &out) <= -1)
 		{
 			if (right->type != QSE_AWK_VAL_REX) 
 				QSE_AWK_FREEREX (rtx->awk, rex_code);
@@ -6305,7 +6293,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		qse_awk_rtx_refupval (run, v);
 
 		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (run, v, &out) == QSE_NULL)
+		if (qse_awk_rtx_valtostr (run, v, &out) <= -1)
 		{
 			qse_awk_rtx_refdownval (run, v);
 			return QSE_NULL;
@@ -6505,10 +6493,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 			qse_awk_rtx_valtostr_out_t out;
 
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (run, v, &out) == QSE_NULL)
-			{
-				return -1;
-			}
+			if (qse_awk_rtx_valtostr (run, v, &out) <= -1) return -1;
 
 			ofs_ptr = out.u.cpldup.ptr;
 			ofs_len = out.u.cpldup.len;
@@ -6601,14 +6586,14 @@ static qse_char_t* idxnde_to_str (
 		if (buf != QSE_NULL)
 		{
 			/* try with a fixed-size buffer if given */
-			out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
-			out.u.cplcp.ptr = buf;
-			out.u.cplcp.len = *len;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
+			out.u.cplcpy.ptr = buf;
+			out.u.cplcpy.len = *len;
 
-			if (qse_awk_rtx_valtostr (run, idx, &out) != QSE_NULL)
+			if (qse_awk_rtx_valtostr (run, idx, &out) >= 0)
 			{
-				str = out.u.cplcp.ptr;
-				*len = out.u.cplcp.len;
+				str = out.u.cplcpy.ptr;
+				*len = out.u.cplcpy.len;
 				QSE_ASSERT (str == buf);
 			}
 		}
@@ -6618,7 +6603,7 @@ static qse_char_t* idxnde_to_str (
 			/* if no fixed-size buffer was given or the fixed-size 
 			 * conversion failed, switch to the dynamic mode */
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-			if (qse_awk_rtx_valtostr (run, idx, &out) == QSE_NULL)
+			if (qse_awk_rtx_valtostr (run, idx, &out) <= -1)
 			{
 				qse_awk_rtx_refdownval (run, idx);
 				ADJERR_LOC (run, &nde->loc);
@@ -6669,7 +6654,7 @@ static qse_char_t* idxnde_to_str (
 				return QSE_NULL;
 			}
 
-			if (qse_awk_rtx_valtostr (run, idx, &out) == QSE_NULL)
+			if (qse_awk_rtx_valtostr (run, idx, &out) <= -1)
 			{
 				qse_awk_rtx_refdownval (run, idx);
 				qse_str_fini (&idxstr);
@@ -7333,7 +7318,7 @@ qse_char_t* qse_awk_rtx_format (
 				}
 	
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)
+				if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1)
 				{
 					qse_awk_rtx_refdownval (rtx, v);
 					return QSE_NULL;

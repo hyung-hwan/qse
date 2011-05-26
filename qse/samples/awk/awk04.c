@@ -1,5 +1,5 @@
 /*
- * $Id: awk04.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: awk04.c 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -149,7 +149,7 @@ int main ()
 	out.type = QSE_AWK_RTX_VALTOSTR_CPL;
 	out.u.cpl.ptr = numbuf; /* used if the value is not a string */
 	out.u.cpl.len = QSE_COUNTOF(numbuf);
-	if (qse_awk_rtx_valtostr (rtx, rtv, &out) == QSE_NULL)
+	if (qse_awk_rtx_valtostr (rtx, rtv, &out) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
 			qse_awk_rtx_geterrmsg(rtx));

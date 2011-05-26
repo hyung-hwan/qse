@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: awk.h 480 2011-05-25 14:00:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1059,7 +1059,7 @@ enum qse_awk_val_type_t
  * following values:
  *
  * - #QSE_AWK_RTX_VALTOSTR_CPL
- * - #QSE_AWK_RTX_VALTOSTR_CPLCP
+ * - #QSE_AWK_RTX_VALTOSTR_CPLCPY
  * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
  * - #QSE_AWK_RTX_VALTOSTR_STRP
  * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
@@ -1070,8 +1070,8 @@ enum qse_awk_rtx_valtostr_type_t
 { 
 	/** use u.cpl of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_CPL       = 0x00, 
-	/** use u.cplcp of #qse_awk_rtx_valtostr_out_t */
-	QSE_AWK_RTX_VALTOSTR_CPLCP     = 0x01, 
+	/** use u.cplcpy of #qse_awk_rtx_valtostr_out_t */
+	QSE_AWK_RTX_VALTOSTR_CPLCPY    = 0x01, 
 	/** use u.cpldup of #qse_awk_rtx_valtostr_out_t */
 	QSE_AWK_RTX_VALTOSTR_CPLDUP    = 0x02,
 	/** use u.strp of #qse_awk_rtx_valtostr_out_t */
@@ -1092,8 +1092,8 @@ struct qse_awk_rtx_valtostr_out_t
 
 	union
 	{
-		qse_xstr_t  cpl;
-		qse_xstr_t  cplcp;
+		qse_cstr_t  cpl;
+		qse_xstr_t  cplcpy;
 		qse_xstr_t  cpldup;  /* need to free cpldup.ptr */
 		qse_str_t*  strp;
 		qse_str_t*  strpcat;
@@ -2079,7 +2079,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * The type field is one of the following qse_awk_rtx_valtostr_type_t values:
  *
  * - #QSE_AWK_RTX_VALTOSTR_CPL
- * - #QSE_AWK_RTX_VALTOSTR_CPLCP
+ * - #QSE_AWK_RTX_VALTOSTR_CPLCPY
  * - #QSE_AWK_RTX_VALTOSTR_CPLDUP
  * - #QSE_AWK_RTX_VALTOSTR_STRP
  * - #QSE_AWK_RTX_VALTOSTR_STRPCAT
@@ -2091,19 +2091,19 @@ qse_bool_t qse_awk_rtx_valtobool (
  * You should initialize or free other fields before and after the call 
  * depending on the type field as shown below:
  *  
- * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPLCP.
+ * If you have a static buffer, use #QSE_AWK_RTX_VALTOSTR_CPLCPY.
  * the resulting string is copied to the buffer.
  * @code
  * qse_awk_rtx_valtostr_out_t out;
  * qse_char_t buf[100];
- * out.type = QSE_AWK_RTX_VALTOSTR_CPLCP;
- * out.u.cplcp.ptr = buf;
- * out.u.cplcp.len = QSE_COUNTOF(buf);
- * if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
- * qse_printf (QSE_T("%.*s\n"), (int)out.u.cplcp.len, out.u.cplcp.ptr);
+ * out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
+ * out.u.cplcpy.ptr = buf;
+ * out.u.cplcpy.len = QSE_COUNTOF(buf);
+ * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
+ * qse_printf (QSE_T("%.*s\n"), (int)out.u.cplcpy.len, out.u.cplcpy.ptr);
  * @endcode
  *
- * #QSE_AWK_RTX_VALTOSTR_CPL is different from #QSE_AWK_RTX_VALTOSTR_CPLCP
+ * #QSE_AWK_RTX_VALTOSTR_CPL is different from #QSE_AWK_RTX_VALTOSTR_CPLCPY
  * in that it doesn't copy the string to the buffer if the type of the value
  * is #QSE_AWK_VAL_STR. It copies the resulting string to the buffer if
  * the value type is not #QSE_AWK_VAL_STR. 
@@ -2113,7 +2113,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * out.type = QSE_AWK_RTX_VALTOSTR_CPL;
  * out.u.cpl.ptr = buf;
  * out.u.cpl.len = QSE_COUNTOF(buf);
- * if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), (int)out.u.cpl.len, out.u.cpl.ptr);
  * @endcode
  * 
@@ -2123,7 +2123,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * @code
  * qse_awk_rtx_valtostr_out_t out;
  * out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
- * if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), (int)out.u.cpldup.len, out.u.cpldup.ptr);
  * qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
  * @endcode
@@ -2136,7 +2136,7 @@ qse_bool_t qse_awk_rtx_valtobool (
  * qse_str_init (&str, qse_awk_rtx_getmmgr(rtx), 100);
  * out.type = QSE_AWK_RTX_VALTOSTR_STRP;
  * out.u.strp = str;
- * if (qse_awk_rtx_valtostr (rtx, v, &out) == QSE_NULL)  goto oops;
+ * if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) goto oops;
  * qse_printf (QSE_T("%.*s\n"), 
  *     (int)QSE_STR_LEN(out.u.strp), QSE_STR_PTR(out.u.strp));
  * qse_str_fini (&str);
@@ -2151,10 +2151,9 @@ qse_bool_t qse_awk_rtx_valtobool (
  * #QSE_AWK_VAL_STR, you may access its string pointer and length directly
  * instead of calling this function.
  *
- * @return character pointer to a string converted on success, 
- *         #QSE_NULL on failure
+ * @return 0 on success, -1 on failure
  */
-qse_char_t* qse_awk_rtx_valtostr (
+int qse_awk_rtx_valtostr (
 	qse_awk_rtx_t*              rtx, /**< runtime context */
 	const qse_awk_val_t*        val, /**< value to convert */
 	qse_awk_rtx_valtostr_out_t* out  /**< output buffer */
