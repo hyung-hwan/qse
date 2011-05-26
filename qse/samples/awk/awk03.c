@@ -1,5 +1,5 @@
 /*
- * $Id: awk03.c 457 2011-05-12 16:16:57Z hyunghwan.chung $
+ * $Id: awk03.c 481 2011-05-25 14:42:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,7 +25,7 @@
 static const qse_char_t* src = QSE_T(
 	"function init() { a = 20; return a; }"
 	"function main() { return ++a; }"
-	"function fini() { print ++a; return a; }"
+	"function fini() { print \"a in fini() =>\", ++a; return a; }"
 );
 
 static const qse_char_t* fnc[] = 

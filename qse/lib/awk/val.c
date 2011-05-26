@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 480 2011-05-25 14:00:19Z hyunghwan.chung $
+ * $Id: val.c 481 2011-05-25 14:42:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -599,75 +599,93 @@ void qse_awk_rtx_freeval (
 	qse_dprintf (QSE_T("\n"));
 #endif
 
-	if (val->type == QSE_AWK_VAL_NIL)
+	switch (val->type)
 	{
-		QSE_AWK_FREE (rtx->awk, val);
-	}
-	else if (val->type == QSE_AWK_VAL_INT)
-	{
-		((qse_awk_val_int_t*)val)->nde = 
-			(qse_awk_nde_int_t*)rtx->vmgr.ifree;
-		rtx->vmgr.ifree = (qse_awk_val_int_t*)val;
-	}
-	else if (val->type == QSE_AWK_VAL_REAL)
-	{
-		((qse_awk_val_real_t*)val)->nde =
-			(qse_awk_nde_real_t*)rtx->vmgr.rfree;
-		rtx->vmgr.rfree = (qse_awk_val_real_t*)val;
-	}
-	else if (val->type == QSE_AWK_VAL_STR)
-	{
-#ifdef ENABLE_FEATURE_SCACHE
-		if (cache)
+		case QSE_AWK_VAL_NIL:
 		{
-			qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
-			int i;
+			QSE_AWK_FREE (rtx->awk, val);
+			break;
+		}
+		
+		case QSE_AWK_VAL_INT:
+		{
+			((qse_awk_val_int_t*)val)->nde = 
+				(qse_awk_nde_int_t*)rtx->vmgr.ifree;
+			rtx->vmgr.ifree = (qse_awk_val_int_t*)val;
+			break;
+		}
 
-			i = v->val.len / FEATURE_SCACHE_BLOCK_UNIT;
-			if (i < QSE_COUNTOF(rtx->scache_count) &&
-			    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
+		case QSE_AWK_VAL_REAL:
+		{
+			((qse_awk_val_real_t*)val)->nde =
+				(qse_awk_nde_real_t*)rtx->vmgr.rfree;
+			rtx->vmgr.rfree = (qse_awk_val_real_t*)val;
+			break;
+		}
+
+		case QSE_AWK_VAL_STR:
+		{
+		#ifdef ENABLE_FEATURE_SCACHE
+			if (cache)
 			{
-				rtx->scache[i][rtx->scache_count[i]++] = v;
-				v->nstr = 0;
+				qse_awk_val_str_t* v = (qse_awk_val_str_t*)val;
+				int i;
+	
+				i = v->val.len / FEATURE_SCACHE_BLOCK_UNIT;
+				if (i < QSE_COUNTOF(rtx->scache_count) &&
+				    rtx->scache_count[i] < QSE_COUNTOF(rtx->scache[i]))
+				{
+					rtx->scache[i][rtx->scache_count[i]++] = v;
+					v->nstr = 0;
+				}
+				else QSE_AWK_FREE (rtx->awk, val);
+			}
+			else 
+		#endif
+				QSE_AWK_FREE (rtx->awk, val);
+
+			break;
+		}
+
+		case QSE_AWK_VAL_REX:
+		{
+			/* don't free ptr as it is inlined to val
+			QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
+			 */
+		
+			/* code is just a pointer to a regular expression stored
+			 * in parse tree nodes. so don't free it.
+			QSE_AWK_FREEREX (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
+			 */
+
+			QSE_AWK_FREE (rtx->awk, val);
+			break;
+		}
+
+		case QSE_AWK_VAL_MAP:
+		{
+			qse_htb_fini (((qse_awk_val_map_t*)val)->map);
+			QSE_AWK_FREE (rtx->awk, val);
+			break;
+		}
+
+		case QSE_AWK_VAL_REF:
+		{
+			if (cache && rtx->fcache_count < QSE_COUNTOF(rtx->fcache))
+			{
+				rtx->fcache[rtx->fcache_count++] = (qse_awk_val_ref_t*)val;	
 			}
 			else QSE_AWK_FREE (rtx->awk, val);
+			break;
 		}
-		else 
-#endif
-			QSE_AWK_FREE (rtx->awk, val);
-	}
-	else if (val->type == QSE_AWK_VAL_REX)
-	{
-		/* don't free ptr as it is inlined to val
-		QSE_AWK_FREE (rtx->awk, ((qse_awk_val_rex_t*)val)->ptr);
-		 */
-	
-		/* code is just a pointer to a regular expression stored
-		 * in parse tree nodes. so don't free it.
-		QSE_AWK_FREEREX (rtx->awk, ((qse_awk_val_rex_t*)val)->code);
-		 */
 
-		QSE_AWK_FREE (rtx->awk, val);
-	}
-	else if (val->type == QSE_AWK_VAL_MAP)
-	{
-		qse_htb_fini (((qse_awk_val_map_t*)val)->map);
-		QSE_AWK_FREE (rtx->awk, val);
-	}
-	else if (val->type == QSE_AWK_VAL_REF)
-	{
-		if (cache && rtx->fcache_count < QSE_COUNTOF(rtx->fcache))
+		default:
 		{
-			rtx->fcache[rtx->fcache_count++] = 
-				(qse_awk_val_ref_t*)val;	
+			QSE_ASSERTX (
+				!"should never happen - invalid value type",
+				"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
+			break;
 		}
-		else QSE_AWK_FREE (rtx->awk, val);
-	}
-	else
-	{
-		QSE_ASSERTX (
-			!"should never happen - invalid value type",
-			"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
 	}
 }
 
@@ -745,12 +763,13 @@ qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 			return QSE_FALSE; /* TODO: is this correct? */
 		case QSE_AWK_VAL_REF:
 			return QSE_FALSE; /* TODO: is this correct? */
-	}
 
-	QSE_ASSERTX (
-		!"should never happen - invalid value type",
-		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
-	return QSE_FALSE;
+		default:
+			QSE_ASSERTX (
+				!"should never happen - invalid value type",
+				"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
+			return QSE_FALSE;
+	}
 }
 
 static int str_to_str (
@@ -809,7 +828,6 @@ static int str_to_str (
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
-
 			return 0;
 		}
 
@@ -823,13 +841,15 @@ static int str_to_str (
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
-
 			return 0;
 		}
-	}
 
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
-	return -1;
+		default:
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+			return -1;
+		}
+	}
 }
 
 static int val_int_to_str (
@@ -923,6 +943,12 @@ static int val_int_to_str (
 				return -1;
 			}
 			break;
+		}
+
+		default:
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+			return -1;
 		}
 	}
 
@@ -1090,16 +1116,19 @@ int qse_awk_rtx_valtostr (
 			qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
 			return str_to_str (rtx, vs->val.ptr, vs->val.len, out);
 		}
+
+		default:
+		{
+		#ifdef DEBUG_VAL
+			qse_dprintf (
+				QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtostr\n"), 
+				v->type
+			);
+		#endif
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+			return -1;
+		}
 	}
-
-#ifdef DEBUG_VAL
-	qse_dprintf (
-		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtostr\n"), 
-		v->type);
-#endif
-
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
-	return -1;
 }
 
 qse_char_t* qse_awk_rtx_valtocpldup (
@@ -1117,42 +1146,50 @@ qse_char_t* qse_awk_rtx_valtocpldup (
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
 {
-	if (v->type == QSE_AWK_VAL_NIL) 
+	switch (v->type)
 	{
-		*l = 0;
-		return 0;
+		case QSE_AWK_VAL_NIL:
+		{
+			*l = 0;
+			return 0;
+		}
+
+		case QSE_AWK_VAL_INT:
+		{
+			*l = ((qse_awk_val_int_t*)v)->val;
+			return 0; /* long */
+		}
+
+		case QSE_AWK_VAL_REAL:
+		{
+			*r = ((qse_awk_val_real_t*)v)->val;
+			return 1; /* real */
+		}
+
+		case QSE_AWK_VAL_STR:
+		{
+			return qse_awk_rtx_strtonum (
+				rtx, 0,
+				((qse_awk_val_str_t*)v)->val.ptr,
+				((qse_awk_val_str_t*)v)->val.len,
+				l, r
+			);
+		}
+
+		default:
+		{
+		#ifdef DEBUG_VAL
+			qse_dprintf (
+				QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum\n"),
+				v->type
+			);
+		#endif
+
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+			return -1; /* error */
+		}
 	}
 
-	if (v->type == QSE_AWK_VAL_INT)
-	{
-		*l = ((qse_awk_val_int_t*)v)->val;
-		return 0; /* long */
-	}
-
-	if (v->type == QSE_AWK_VAL_REAL)
-	{
-		*r = ((qse_awk_val_real_t*)v)->val;
-		return 1; /* real */
-	}
-
-	if (v->type == QSE_AWK_VAL_STR)
-	{
-		return qse_awk_rtx_strtonum (
-			rtx, 0,
-			((qse_awk_val_str_t*)v)->val.ptr, 
-			((qse_awk_val_str_t*)v)->val.len, 
-			l, r
-		);
-	}
-
-#ifdef DEBUG_VAL
-	qse_dprintf (
-		QSE_T("ERROR: WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum\n"),
-		v->type);
-#endif
-
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
-	return -1; /* error */
 }
 
 int qse_awk_rtx_strtonum (
