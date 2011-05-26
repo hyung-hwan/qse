@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: awk.h 483 2011-05-25 15:25:51Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -120,11 +120,6 @@ struct qse_awk_t
 
 	/* options */
 	int option;
-
-	/* word table */
-	qse_htb_t* wtab;
-	/* reverse word table */
-	qse_htb_t* rwtab;
 
 	/* parse tree */
 	qse_awk_tree_t tree;
