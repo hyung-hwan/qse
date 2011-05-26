@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 482 2011-05-25 14:50:19Z hyunghwan.chung $
+ * $Id: val.c 484 2011-05-25 15:32:10Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -678,12 +678,7 @@ void qse_awk_rtx_freeval (
 			else QSE_AWK_FREE (rtx->awk, val);
 			break;
 		}
-
 	}
-
-	QSE_ASSERTX (
-		!"should never happen - invalid value type",
-		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
 }
 
 void qse_awk_rtx_refupval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
