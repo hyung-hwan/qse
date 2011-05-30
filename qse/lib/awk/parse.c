@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 485 2011-05-29 15:15:52Z hyunghwan.chung $
+ * $Id: parse.c 486 2011-05-29 15:22:08Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4556,7 +4556,7 @@ static qse_awk_nde_t* parse_primary_ident (
 			}
 			else
 			{
-				/* function name appeared without () or ` */
+				/* function name appeared without () */
 				SETERR_ARG_LOC (
 					awk, QSE_AWK_EFUNRED, 
 					namedup, namelen, xloc
@@ -4565,7 +4565,7 @@ static qse_awk_nde_t* parse_primary_ident (
 		}
 		else if (awk->option & QSE_AWK_IMPLICIT) 
 		{
-			/* if the name is followed by ( or ` without no spaces 
+			/* if the name is followed by ( without no spaces 
 			 * in the implicit mode, the name is considered a function
 			 * name though it has not been seen/resolved */
 
