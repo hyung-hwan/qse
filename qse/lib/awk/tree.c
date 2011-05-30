@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: tree.c 485 2011-05-29 15:15:52Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -540,9 +540,9 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_FNC:
 		{
-			qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)nde;
+			qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)nde;
 			PUT_SRCSTRX (awk, 
-				px->what.fnc.name.ptr, px->what.fnc.name.len);
+				px->u.fnc.name.ptr, px->u.fnc.name.len);
 			PUT_SRCSTR (awk, QSE_T("("));
 			PRINT_EXPR_LIST (awk, px->args);
 			PUT_SRCSTR (awk, QSE_T(")"));
@@ -551,9 +551,9 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_FUN:
 		{
-			qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)nde;
+			qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)nde;
 			PUT_SRCSTRX (awk, 
-				px->what.fun.name.ptr, px->what.fun.name.len);
+				px->u.fun.name.ptr, px->u.fun.name.len);
 			PUT_SRCSTR (awk, QSE_T("("));
 			PRINT_EXPR_LIST (awk, px->args);
 			PUT_SRCSTR (awk, QSE_T(")"));
@@ -1276,9 +1276,9 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_FNC:
 			{
-				qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)p;
-				/* QSE_AWK_FREE (awk, px->what.fnc); */
-				QSE_AWK_FREE (awk, px->what.fnc.name.ptr);
+				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
+				/* QSE_AWK_FREE (awk, px->u.fnc); */
+				QSE_AWK_FREE (awk, px->u.fnc.name.ptr);
 				qse_awk_clrpt (awk, px->args);
 				QSE_AWK_FREE (awk, p);
 				break;
@@ -1286,8 +1286,8 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_FUN:
 			{
-				qse_awk_nde_call_t* px = (qse_awk_nde_call_t*)p;
-				QSE_AWK_FREE (awk, px->what.fun.name.ptr);
+				qse_awk_nde_fncall_t* px = (qse_awk_nde_fncall_t*)p;
+				QSE_AWK_FREE (awk, px->u.fun.name.ptr);
 				qse_awk_clrpt (awk, px->args);
 				QSE_AWK_FREE (awk, p);
 				break;

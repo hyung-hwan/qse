@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 475 2011-05-23 17:02:35Z hyunghwan.chung $
+ * $Id: parse.c 485 2011-05-29 15:15:52Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -554,18 +554,21 @@ static int parse (qse_awk_t* awk)
 				if (qse_htb_search (awk->tree.funs, 
 					QSE_HTB_KPTR(p), QSE_HTB_KLEN(p)) == QSE_NULL)
 				{
-					qse_awk_nde_call_t* call;
+					
+					qse_awk_nde_t* nde;
 
 					/* see parse_fncall() for what is
 					 * stored into awk->tree.funs */
-					call = (qse_awk_nde_call_t*)QSE_HTB_VPTR(p);
+					nde = (qse_awk_nde_t*)QSE_HTB_VPTR(p);
+
 					SETERR_ARG_LOC (
 						awk, 
 						QSE_AWK_EFUNNF, 
 						QSE_HTB_KPTR(p),
 						QSE_HTB_KLEN(p),
-						&call->loc
+						&nde->loc
 					);
+
 					goto oops;
 				}
 
@@ -4365,15 +4368,13 @@ static qse_awk_nde_t* parse_primary (
 	return left;
 }
 
-static int isfnname (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
-{
-	if (qse_awk_getfnc (awk, name, len) != QSE_NULL) 
-	{
-		/* implicit function */
-		return 1;
-	}
+#define FNTYPE_UNKNOWN 0
+#define FNTYPE_FNC 1
+#define FNTYPE_FUN 2
 
-	/* check if it is an awk function */
+static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+{
+	/* check if it is an awk function being processed currently */
 	if (awk->tree.cur_fun.ptr != QSE_NULL)
 	{
 		if (qse_strxncmp (
@@ -4381,28 +4382,87 @@ static int isfnname (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 			name, len) == 0)
 		{
 			/* the current function begin parsed */
-			return 2;	
+			return FNTYPE_FUN;
 		}
 	}
 
+	/* check the funtion name in the function table */
 	if (qse_htb_search (awk->tree.funs, name, len) != QSE_NULL)
 	{
 		/* one of the functions defined previously */
-		return 2;
+		return FNTYPE_FUN;
 	}
 
+	/* check if it is a function not resolved so far */
 	if (qse_htb_search (awk->parse.funs, name, len) != QSE_NULL) 
 	{
 		/* one of the function calls not resolved so far. */ 
-		return 2;
+		return FNTYPE_FUN;
 	}
 
-	return 0;
+	return FNTYPE_UNKNOWN;
+}
+
+static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+{
+	if (qse_awk_getfnc (awk, name, len) != QSE_NULL) 
+	{
+		/* implicit function */
+		return FNTYPE_FNC;
+	}
+
+	return isfunname (awk, name, len);
+}
+
+static qse_awk_nde_t* parse_variable (
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_awk_nde_type_t type,
+	qse_char_t* nameptr, qse_size_t namelen, qse_size_t idxa)
+{
+	qse_awk_nde_var_t* nde;
+
+	if ((awk->option & QSE_AWK_EXPLICIT) && 
+	    !(awk->option & QSE_AWK_IMPLICIT))
+	{
+		/* if explicit only, the concatenation operator(.)
+		 * must be used. so it is obvious that it is a function
+		 * call, which is illegal for a variable. 
+		 * if implicit, "var_xxx (1)" may be concatenation of
+		 * the value of var_xxx and 1.
+		 */
+		if (MATCH(awk,TOK_LPAREN))
+		{
+			/* a variable is not a function */
+			SETERR_ARG_LOC (
+				awk, QSE_AWK_EFUNNAM,
+				nameptr, namelen, xloc);
+			return QSE_NULL;
+		}
+	}
+
+	nde = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
+		awk, QSE_SIZEOF(qse_awk_nde_var_t));
+	if (nde == QSE_NULL) 
+	{
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+		return QSE_NULL;
+	}
+
+	nde->type = type;
+	nde->loc = *xloc;
+	nde->next = QSE_NULL;
+	/*nde->id.name.ptr = QSE_NULL;*/
+	nde->id.name.ptr = nameptr;
+	nde->id.name.len = namelen;
+	nde->id.idxa = idxa;
+	nde->idx = QSE_NULL;
+
+	return (qse_awk_nde_t*)nde;
 }
 
 static qse_awk_nde_t* parse_primary_ident (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
+	qse_awk_nde_t* nde = QSE_NULL;
 	qse_char_t* namedup;
 	qse_size_t namelen;
 	qse_awk_fnc_t* fnc;
@@ -4430,9 +4490,11 @@ static qse_awk_nde_t* parse_primary_ident (
 	fnc = qse_awk_getfnc (awk, namedup, namelen);
 	if (fnc != QSE_NULL)
 	{
-		qse_awk_nde_t* nde;
-
-		if (!MATCH(awk,TOK_LPAREN))
+		if (MATCH(awk,TOK_LPAREN))
+		{
+			nde = parse_fncall (awk, namedup, namelen, fnc, xloc, 0);
+		}
+		else
 		{
 			if (fnc->dfl0)
 			{
@@ -4440,253 +4502,129 @@ static qse_awk_nde_t* parse_primary_ident (
 				 * when () is missing. i.e. length */
 				nde = parse_fncall (
 					awk, namedup, namelen, fnc, xloc, 1);
-				if (nde == QSE_NULL) 
-					QSE_AWK_FREE (awk, namedup);
-				return (qse_awk_nde_t*)nde;
 			}
-
-			/* an intrinsic function should be in the form 
-		 	 * of the function call */
-			QSE_AWK_FREE (awk, namedup);
-			SETERR_TOK (awk, QSE_AWK_ELPAREN);
-			return QSE_NULL;
+			else
+			{
+				/* an intrinsic function should be in the form 
+		 		 * of the function call */
+				SETERR_TOK (awk, QSE_AWK_ELPAREN);
+			}
 		}
-
-		nde = parse_fncall (awk, namedup, namelen, fnc, xloc, 0);
-		if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
-		return (qse_awk_nde_t*)nde;
 	}
-
 	/* now we know that namedup is a normal identifier. */
-	if (MATCH(awk,TOK_LBRACK)) 
+	else if (MATCH(awk,TOK_LBRACK)) 
 	{
-		qse_awk_nde_t* nde;
 		nde = parse_hashidx (awk, namedup, namelen, xloc);
-		if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
-		return (qse_awk_nde_t*)nde;
 	}
 	else if ((idxa = qse_lda_rsearch (awk->parse.lcls, QSE_LDA_SIZE(awk->parse.lcls), namedup, namelen)) != QSE_LDA_NIL)
 	{
 		/* local variable */
-
-		qse_awk_nde_var_t* nde;
-
-		if ((awk->option & QSE_AWK_EXPLICIT) && 
-		    !(awk->option & QSE_AWK_IMPLICIT))
-		{
-			/* if explicit only, the concatenation operator(.)
-			 * must be used. so it is obvious that it is a function
-			 * call, which is illegal for a local variable. 
-			 * if implicit, "local_var (1)" may be concatenation of
-			 * the value of local_var and 1.
-			 */
-			if (MATCH(awk,TOK_LPAREN))
-			{
-				/* a local variable is not a function */
-				SETERR_ARG_LOC (
-					awk, QSE_AWK_EFUNNAM,
-					namedup, namelen, xloc);
-				QSE_AWK_FREE (awk, namedup);
-				return QSE_NULL;
-			}
-		}
-
-		nde = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(qse_awk_nde_var_t));
-		if (nde == QSE_NULL) 
-		{
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			QSE_AWK_FREE (awk, namedup);
-			return QSE_NULL;
-		}
-
-		nde->type = QSE_AWK_NDE_LCL;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		/*nde->id.name.ptr = QSE_NULL;*/
-		nde->id.name.ptr = namedup;
-		nde->id.name.len = namelen;
-		nde->id.idxa = idxa;
-		nde->idx = QSE_NULL;
-
-		return (qse_awk_nde_t*)nde;
+		nde = parse_variable (
+			awk, xloc, QSE_AWK_NDE_LCL,
+			namedup, namelen, idxa);
 	}
 	else if ((idxa = qse_lda_search (awk->parse.params, 0, namedup, namelen)) != QSE_LDA_NIL)
 	{
 		/* parameter */
-
-		qse_awk_nde_var_t* nde;
-
-		if ((awk->option & QSE_AWK_EXPLICIT) && 
-		    !(awk->option & QSE_AWK_IMPLICIT))
-		{
-			if (MATCH(awk,TOK_LPAREN))
-			{
-				/* a parameter is not a function */
-				SETERR_ARG_LOC (
-					awk, QSE_AWK_EFUNNAM,
-					namedup, namelen, xloc);
-				QSE_AWK_FREE (awk, namedup);
-				return QSE_NULL;
-			}
-		}
-
-		nde = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(qse_awk_nde_var_t));
-		if (nde == QSE_NULL) 
-		{
-			QSE_AWK_FREE (awk, namedup);
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
-		}
-
-		nde->type = QSE_AWK_NDE_ARG;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		/*nde->id.name = QSE_NULL;*/
-		nde->id.name.ptr = namedup;
-		nde->id.name.len = namelen;
-		nde->id.idxa = idxa;
-		nde->idx = QSE_NULL;
-
-		return (qse_awk_nde_t*)nde;
+		nde = parse_variable (
+			awk, xloc, QSE_AWK_NDE_ARG,
+			namedup, namelen, idxa);
 	}
 	else if ((idxa = get_global (awk, namedup, namelen)) != QSE_LDA_NIL)
 	{
 		/* global variable */
-
-		qse_awk_nde_var_t* nde;
-
-		if ((awk->option & QSE_AWK_EXPLICIT) && 
-		    !(awk->option & QSE_AWK_IMPLICIT))
-		{
-			if (MATCH(awk,TOK_LPAREN))
-			{
-				/* a global variable is not a function */
-				SETERR_ARG_LOC (
-					awk, QSE_AWK_EFUNNAM,
-					namedup, namelen, xloc);
-				QSE_AWK_FREE (awk, namedup);
-				return QSE_NULL;
-			}
-		}
-
-		nde = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(qse_awk_nde_var_t));
-		if (nde == QSE_NULL) 
-		{
-			QSE_AWK_FREE (awk, namedup);
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
-		}
-
-		nde->type = QSE_AWK_NDE_GBL;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		/*nde->id.name = QSE_NULL;*/
-		nde->id.name.ptr = namedup;
-		nde->id.name.len = namelen;
-		nde->id.idxa = idxa;
-		nde->idx = QSE_NULL;
-
-		return (qse_awk_nde_t*)nde;
+		nde = parse_variable (
+			awk, xloc, QSE_AWK_NDE_GBL,
+			namedup, namelen, idxa);
 	}
 	else
 	{
-		int fnname = isfnname (awk, namedup, namelen);
+		int fntype = isfunname (awk, namedup, namelen);
 
-		if (fnname)
+		if (fntype)
 		{
-			qse_awk_nde_t* nde;
+			QSE_ASSERT (fntype == FNTYPE_FUN);
 
-			if (!MATCH(awk,TOK_LPAREN))
+			if (MATCH(awk,TOK_LPAREN))
 			{
-				/* function named appeared without () */
-				if (fnname == 1)
-				{
-					SETERR_ARG_LOC (
-						awk, QSE_AWK_EFNCRED,
-						namedup, namelen, xloc);
-				}
-				else
-				{
-					SETERR_ARG_LOC (
-						awk, QSE_AWK_EFUNRED, 
-						namedup, namelen, xloc);
-				}
+				/* must be a function name */
+				QSE_ASSERT (qse_htb_search (
+					awk->parse.named, namedup, namelen) == QSE_NULL);
 
-				QSE_AWK_FREE (awk, namedup);
-				return QSE_NULL;
+				nde = parse_fncall (
+					awk, namedup, namelen, QSE_NULL, xloc,  0);
 			}
-
-			/* must be a function name */
-			QSE_ASSERT (qse_htb_search (
-				awk->parse.named, namedup, namelen) == QSE_NULL);
-
-			nde = parse_fncall (
-				awk, namedup, namelen, QSE_NULL, xloc,  0);
-			if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
-			return (qse_awk_nde_t*)nde;
+			else
+			{
+				/* function name appeared without () or ` */
+				SETERR_ARG_LOC (
+					awk, QSE_AWK_EFUNRED, 
+					namedup, namelen, xloc
+				);
+			}
 		}
 		else if (awk->option & QSE_AWK_IMPLICIT) 
 		{
+			/* if the name is followed by ( or ` without no spaces 
+			 * in the implicit mode, the name is considered a function
+			 * name though it has not been seen/resolved */
+
 			if (MATCH(awk,TOK_LPAREN) &&
 			    awk->tok.loc.line == xloc->line &&
 			    awk->tok.loc.colm == xloc->colm + namelen)
 			{
-				qse_awk_nde_t* nde;
-
 				/* a function call to a yet undefined function */
-				if (qse_htb_search (awk->parse.named, 
-					namedup, namelen) != QSE_NULL)
+
+				if (qse_htb_search (
+					awk->parse.named, namedup, namelen) != QSE_NULL)
 				{
 					/* a function call conflicts with a named variable */
 					SETERR_ARG_LOC (
 						awk, QSE_AWK_EVARRED,
-						namedup, namelen, xloc);
-					QSE_AWK_FREE (awk, namedup);
-					return QSE_NULL;
+						namedup, namelen, xloc
+					);
 				}
-
-				nde = parse_fncall (
-					awk, namedup, namelen, QSE_NULL, xloc,  0);
-				if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
-				return (qse_awk_nde_t*)nde;
+				else
+				{
+					nde = parse_fncall (
+						awk, namedup, namelen, QSE_NULL, xloc, 0);
+				}
 			}
 			else
 			{
-				qse_awk_nde_var_t* nde;
+				qse_awk_nde_var_t* tmp;
 
 				/* named variable */
-				nde = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
+				tmp = (qse_awk_nde_var_t*) QSE_AWK_ALLOC (
 					awk, QSE_SIZEOF(qse_awk_nde_var_t));
-				if (nde == QSE_NULL) 
-				{
-					QSE_AWK_FREE (awk, namedup);
-					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-					return QSE_NULL;
-				}
-	
-				nde->type = QSE_AWK_NDE_NAMED;
-				nde->loc = *xloc;
-				nde->next = QSE_NULL;
-				nde->id.name.ptr = namedup;
-				nde->id.name.len = namelen;
-				nde->id.idxa = (qse_size_t)-1;
-				nde->idx = QSE_NULL;
-	
-				/* collect unique instances of a named variable 
-				 * for reference */
-				if (qse_htb_upsert (
-					awk->parse.named, 
-					namedup, namelen, QSE_NULL, 0) == QSE_NULL)
+				if (tmp == QSE_NULL) 
 				{
 					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-					QSE_AWK_FREE (awk, nde);
-					return QSE_NULL;
 				}
+				else
+				{
+					/* collect unique instances of a named variable 
+					 * for reference */
+					if (qse_htb_upsert (
+						awk->parse.named, 
+						namedup, namelen, QSE_NULL, 0) == QSE_NULL)
+					{
+						SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+						QSE_AWK_FREE (awk, tmp);
+					}
+					else
+					{
+						tmp->type = QSE_AWK_NDE_NAMED;
+						tmp->loc = *xloc;
+						tmp->next = QSE_NULL;
+						tmp->id.name.ptr = namedup;
+						tmp->id.name.len = namelen;
+						tmp->id.idxa = (qse_size_t)-1;
+						tmp->idx = QSE_NULL;
 
-				return (qse_awk_nde_t*)nde;
+						nde = (qse_awk_nde_t*)tmp;
+					}
+				}
 			}
 		}
 		else
@@ -4695,19 +4633,21 @@ static qse_awk_nde_t* parse_primary_ident (
 			{
 				/* it is a function call as the name is followed 
 				 * by ( and implicit variables are disabled. */
-				qse_awk_nde_t* nde;
 				nde = parse_fncall (
 					awk, namedup, namelen, QSE_NULL, xloc,  0);
-				if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
-				return (qse_awk_nde_t*)nde;
 			}
-
-			/* undefined variable */
-			SETERR_ARG_LOC (awk, QSE_AWK_EUNDEF, namedup, namelen, xloc);
-			QSE_AWK_FREE (awk, namedup);
-			return QSE_NULL;
+			else
+			{
+				/* undefined variable */
+				SETERR_ARG_LOC (	
+					awk, QSE_AWK_EUNDEF, namedup, namelen, xloc
+				);
+			}
 		}
 	}
+
+	if (nde == QSE_NULL) QSE_AWK_FREE (awk, namedup);
+	return nde;
 }
 
 static qse_awk_nde_t* parse_hashidx (
@@ -4832,17 +4772,17 @@ static qse_awk_nde_t* parse_hashidx (
 	if (awk->option & QSE_AWK_IMPLICIT) 
 	{
 		int fnname = isfnname (awk, name, namelen);
-		if (fnname == 1)
+		switch (fnname)
 		{
-			SETERR_ARG_LOC (	
-				awk, QSE_AWK_EFNCRED, name, namelen, xloc);
-			goto exit_func;
-		}
-		else if (fnname == 2)
-		{
-			SETERR_ARG_LOC (	
-				awk, QSE_AWK_EFUNRED, name, namelen, xloc);
-			goto exit_func;
+			case FNTYPE_FNC:
+				SETERR_ARG_LOC (	
+					awk, QSE_AWK_EFNCRED, name, namelen, xloc);
+				goto exit_func;
+
+			case FNTYPE_FUN:
+				SETERR_ARG_LOC (	
+					awk, QSE_AWK_EFUNRED, name, namelen, xloc);
+				goto exit_func;
 		}
 
 		QSE_ASSERT (fnname == 0);
@@ -4873,7 +4813,7 @@ static qse_awk_nde_t* parse_fncall (
 	qse_awk_fnc_t* fnc, const qse_awk_loc_t* xloc, int noarg)
 {
 	qse_awk_nde_t* head, * curr, * nde;
-	qse_awk_nde_call_t* call;
+	qse_awk_nde_fncall_t* call;
 	qse_size_t nargs;
 
 	head = curr = QSE_NULL;
@@ -4943,8 +4883,8 @@ static qse_awk_nde_t* parse_fncall (
 	}
 
 make_node:
-	call = (qse_awk_nde_call_t*) 
-		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_call_t));
+	call = (qse_awk_nde_fncall_t*) 
+		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_fncall_t));
 	if (call == QSE_NULL) 
 	{
 		if (head != QSE_NULL) qse_awk_clrpt (awk, head);
@@ -4958,22 +4898,13 @@ make_node:
 		call->loc = *xloc;
 		call->next = QSE_NULL;
 
-		/*call->what.fnc = fnc; */
-		call->what.fnc.name.ptr = name;
-		call->what.fnc.name.len = namelen;
-
-		/* NOTE: oname is the original as in the fnc table.
-		 *       it would not duplicated here and not freed in
-		 *       qse_awk_clrpt either. so qse_awk_delfnc between
-		 *       qse_awk_parse and qse_awk_run may cause the program 
-		 *       to fail. */
-		call->what.fnc.oname.ptr = fnc->name.ptr;
-		call->what.fnc.oname.len = fnc->name.len;
-
-		call->what.fnc.arg.min = fnc->arg.min;
-		call->what.fnc.arg.max = fnc->arg.max;
-		call->what.fnc.arg.spec = fnc->arg.spec;
-		call->what.fnc.handler = fnc->handler;
+		/*call->u.fnc = fnc; */
+		call->u.fnc.name.ptr = name;
+		call->u.fnc.name.len = namelen;
+		call->u.fnc.arg.min = fnc->arg.min;
+		call->u.fnc.arg.max = fnc->arg.max;
+		call->u.fnc.arg.spec = fnc->arg.spec;
+		call->u.fnc.handler = fnc->handler;
 
 		call->args = head;
 		call->nargs = nargs;
@@ -4983,8 +4914,8 @@ make_node:
 		call->type = QSE_AWK_NDE_FUN;
 		call->loc = *xloc;
 		call->next = QSE_NULL;
-		call->what.fun.name.ptr = name; 
-		call->what.fun.name.len = namelen;
+		call->u.fun.name.ptr = name; 
+		call->u.fun.name.len = namelen;
 		call->args = head;
 		call->nargs = nargs;
 
