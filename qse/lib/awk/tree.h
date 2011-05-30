@@ -1,5 +1,5 @@
 /*
- * $Id: tree.h 473 2011-05-23 03:38:03Z hyunghwan.chung $
+ * $Id: tree.h 485 2011-05-29 15:15:52Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -57,7 +57,7 @@ typedef struct qse_awk_nde_real_t      qse_awk_nde_real_t;
 typedef struct qse_awk_nde_str_t       qse_awk_nde_str_t;
 typedef struct qse_awk_nde_rex_t       qse_awk_nde_rex_t;
 typedef struct qse_awk_nde_var_t       qse_awk_nde_var_t;
-typedef struct qse_awk_nde_call_t      qse_awk_nde_call_t;
+typedef struct qse_awk_nde_fncall_t    qse_awk_nde_fncall_t;
 typedef struct qse_awk_nde_getline_t   qse_awk_nde_getline_t;
 
 typedef struct qse_awk_nde_if_t        qse_awk_nde_if_t;
@@ -175,7 +175,7 @@ struct qse_awk_nde_var_t
 };
 
 /* QSE_AWK_NDE_FNC, QSE_AWK_NDE_FUN */
-struct qse_awk_nde_call_t
+struct qse_awk_nde_fncall_t
 {
 	QSE_AWK_NDE_HDR;
 	union
@@ -191,10 +191,6 @@ struct qse_awk_nde_call_t
 		{
 			qse_xstr_t name;
 
-			/* original name. if qse_awk_setword has been 
-			 * invoked, oname can be different from name */
-			qse_xstr_t oname;
-
 			struct
 			{
 				qse_size_t min;
@@ -204,7 +200,7 @@ struct qse_awk_nde_call_t
 
 			qse_awk_fnc_fun_t handler;
 		} fnc;
-	} what;
+	} u;
 	qse_awk_nde_t* args;
 	qse_size_t nargs;
 };

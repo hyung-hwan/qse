@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 480 2011-05-25 14:00:19Z hyunghwan.chung $
+ * $Id: awk.h 485 2011-05-29 15:15:52Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1050,6 +1050,7 @@ enum qse_awk_val_type_t
 
 	QSE_AWK_VAL_REX  = 4, /**< regular expression */
 	QSE_AWK_VAL_MAP  = 5, /**< map */
+
 	QSE_AWK_VAL_REF  = 6  /**< reference to other types */
 };
 
