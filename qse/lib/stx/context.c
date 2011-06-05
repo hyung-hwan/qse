@@ -15,7 +15,7 @@ qse_word_t qse_stx_new_context (qse_stx_t* stx,
 
 	context = qse_stx_alloc_word_object(
 		stx, QSE_NULL, QSE_STX_CONTEXT_SIZE, QSE_NULL, 0);
-	obj = (qse_stx_context_t*)QSE_STX_OBJECT(stx,context);
+	obj = (qse_stx_context_t*)QSE_STX_OBJPTR(stx,context);
 	obj->header.class = qse_stx_lookup_class(stx,QSE_T("Context"));
 	obj->ip = QSE_STX_TO_SMALLINT(0);
 	obj->method = method;
@@ -30,8 +30,8 @@ static qse_byte_t __fetch_byte (
 {
 	qse_word_t ip, method;
 
-	qse_assert (QSE_STX_IS_SMALLINT(context_obj->ip));
-	ip = QSE_STX_FROM_SMALLINT(context_obj->ip);
+	QSE_ASSERT (QSE_STX_ISSMALLINT(context_obj->ip));
+	ip = QSE_STX_FROMSMALLINT(context_obj->ip);
 	method = context_obj->method;
 
 	/* increment instruction pointer */
@@ -46,9 +46,10 @@ int qse_stx_run_context (qse_stx_t* stx, qse_word_t context)
 	qse_byte_t byte, operand;
 	qse_stx_context_t* context_obj;
 
-	context_obj = (qse_stx_context_t*)QSE_STX_OBJECT(stx,context);
+	context_obj = (qse_stx_context_t*)QSE_STX_OBJPTR(stx,context);
 
-	while (!stx->__wantabort) {
+	while (!stx->__wantabort) 
+	{
 		/* check_process_switch (); // hopefully */
 		byte = __fetch_byte (stx, context_obj);
 

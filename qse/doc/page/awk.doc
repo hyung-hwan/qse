@@ -31,7 +31,7 @@ The code example below demonstrates the steps in C. It executes the one liner
 <b>BEGIN { print "hello, world" }</b>.
 
 @code
-/* cc -o hello hello.c -lqsecmn -lqseawk */
+/* cc -o hello hello.c -lqseawk -lqsecmn -lm */
 #include <qse/awk/std.h>
 #include <qse/cmn/stdio.h>
 
@@ -80,7 +80,7 @@ Things can get simpler when you use C++ API. Note that the C++ API supports
 just a single runtime context for each interpreter.
 
 @code
-/* c++ -o hello hello.cpp -lqsecmn -lqseawk -lqseawkxx */
+/* c++ -o hello hello.cpp -lqseawkxx -lqseawk -lqsecmnxx -lqsecmn -lm */
 #include <qse/awk/StdAwk.hpp>
 #include <iostream>
 

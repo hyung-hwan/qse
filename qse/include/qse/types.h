@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: types.h 487 2011-06-04 16:22:20Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -78,30 +78,37 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif defined(__SPU__) && (QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG)
 	typedef long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
 	typedef int qse_int_t;
 	typedef unsigned int qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_INT
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_INT
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
 	typedef long qse_int_t;
 	typedef unsigned long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG_LONG
 	typedef long long qse_int_t;
 	typedef unsigned long long qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF_LONG_LONG
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF_LONG_LONG
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT32
 	typedef __int32 qse_int_t;
 	typedef unsigned __int32 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT32
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT32
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT64
 	typedef __int64 qse_int_t;
 	typedef unsigned __int64 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT64
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT64
 #else
 #	error unsupported pointer size
 #endif
@@ -116,18 +123,22 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef long qse_long_t;
 	typedef unsigned long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG
 #elif QSE_SIZEOF_LONG_LONG > 0
 	typedef long long qse_long_t;
 	typedef unsigned long long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG_LONG
+	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG_LONG
 #elif QSE_SIZEOF___INT64 > 0
 	typedef __int64 qse_long_t;
 	typedef unsigned __int64 qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF___INT64
+	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF___INT64
 #else
 	typedef long qse_long_t;
 	typedef unsigned long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG
 #endif
 
 /** @typedef qse_int8_t
@@ -278,7 +289,7 @@ typedef qse_uint8_t qse_byte_t;
 #	define QSE_SIZEOF_SIZE_T __SIZEOF_SIZE_T__
 #else
 	typedef qse_uint_t  qse_size_t;
-#	define QSE_SIZEOF_SIZE_T QSE_SIZEOF_INT_T
+#	define QSE_SIZEOF_SIZE_T QSE_SIZEOF_UINT_T
 #endif
 
 /**
@@ -286,23 +297,27 @@ typedef qse_uint8_t qse_byte_t;
  * to hold a pointer value.
  */
 typedef qse_int_t qse_ssize_t;
+#	define QSE_SIZEOF_SSIZE_T QSE_SIZEOF_INT_T
 
 /** 
  * The qse_word_t type redefines qse_uint_t. 
  */
 typedef qse_uint_t qse_word_t;
+#define QSE_SIZEOF_WORD_T QSE_SIZEOF_UINT_T
 
 /**
  * The qse_uintptr_t redefines qse_uint_t to indicate that you are dealing
  * with a pointer.
  */
 typedef qse_uint_t qse_uintptr_t;
+#define QSE_SIZEOF_UINTPTR_T QSE_SIZEOF_UINT_T
 
 /**
  * The qse_untptr_t redefines qse_int_t to indicate that you are dealing
  * with a pointer.
  */
 typedef qse_int_t qse_intptr_t;
+#define QSE_SIZEOF_INTPTR_T QSE_SIZEOF_INT_T
 
 /** @typedef qse_real_t
  * The qse_real_t type defines the largest floating-pointer number type
@@ -325,6 +340,7 @@ typedef qse_int_t qse_intptr_t;
  * The qse_mchar_t type defines a multi-byte character type.
  */
 typedef char qse_mchar_t;
+
 /**
  * The qse_mcint_t defines a type that can hold a qse_mchar_t value and 
  * #QSE_MCHAR_EOF.

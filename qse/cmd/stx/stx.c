@@ -1,113 +1,110 @@
-#include <xp/stx/stx.h>
+#include <qse/stx/stx.h>
+#include <qse/cmn/main.h>
+#include <qse/cmn/stdio.h>
 
-#ifdef _DOS
-	#include <stdio.h>
-	#define xp_printf printf
-#else
-	#include <xp/bas/stdio.h>
-	#include <xp/bas/locale.h>
+#if 0
+#include <qse/stx/bootstrp.h>
+#include <qse/stx/object.h>
+#include <qse/stx/symbol.h>
+#include <qse/stx/context.h>
+#include <qse/stx/class.h>
+#include <qse/stx/dict.h>
 #endif
 
-#include <xp/stx/bootstrp.h>
-#include <xp/stx/object.h>
-#include <xp/stx/symbol.h>
-#include <xp/stx/context.h>
-#include <xp/stx/class.h>
-#include <xp/stx/dict.h>
-
-void print_symbol_names (xp_stx_t* stx, xp_word_t sym, void* unused)
+#if 0
+void print_symbol_names (qse_stx_t* stx, qse_word_t sym, void* unused)
 {
-	xp_printf (XP_TEXT("%lu [%s]\n"), (unsigned long)sym, XP_STX_DATA(stx,sym));
+	qse_printf (QSE_T("%lu [%s]\n"), (unsigned long)sym, QSE_STX_DATA(stx,sym));
 }
 
-void print_symbol_names_2 (xp_stx_t* stx, xp_word_t idx, void* unused)
+void print_symbol_names_2 (qse_stx_t* stx, qse_word_t idx, void* unused)
 {
-	xp_word_t key = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_KEY);
-	xp_word_t value = XP_STX_WORD_AT(stx,idx,XP_STX_ASSOCIATION_VALUE);
-	xp_printf (XP_TEXT("%lu [%s] %lu\n"), 
-		(unsigned long)key, XP_STX_DATA(stx,key), (unsigned long)value);
+	qse_word_t key = QSE_STX_WORD_AT(stx,idx,QSE_STX_ASSOCIATION_KEY);
+	qse_word_t value = QSE_STX_WORD_AT(stx,idx,QSE_STX_ASSOCIATION_VALUE);
+	qse_printf (QSE_T("%lu [%s] %lu\n"), 
+		(unsigned long)key, QSE_STX_DATA(stx,key), (unsigned long)value);
 }
 
-void print_superclasses (xp_stx_t* stx, const xp_char_t* name)
+void print_superclasses (qse_stx_t* stx, const qse_char_t* name)
 {
-	xp_word_t n;
-	xp_stx_class_t* obj;
+	qse_word_t n;
+	qse_stx_class_t* obj;
 
-	n = xp_stx_lookup_class (stx, name);
-	xp_printf (XP_TEXT("Class hierarchy for the class '%s'\n"), name);
+	n = qse_stx_lookup_class (stx, name);
+	qse_printf (QSE_T("Class hierarchy for the class '%s'\n"), name);
 
 	while (n != stx->nil) {
-		obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,n);
-		xp_printf (XP_TEXT("%lu, %s\n"), 
+		obj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,n);
+		qse_printf (QSE_T("%lu, %s\n"), 
 			(unsigned long)obj->name,
-			XP_STX_DATA(stx, obj->name));
+			QSE_STX_DATA(stx, obj->name));
 		n = obj->superclass;
 	}
 }
 
-void print_metaclass_superclasses (xp_stx_t* stx, const xp_char_t* name)
+void print_metaclass_superclasses (qse_stx_t* stx, const qse_char_t* name)
 {
-	xp_word_t n, x;
-	xp_stx_metaclass_t* obj;
-	xp_stx_class_t* xobj;
+	qse_word_t n, x;
+	qse_stx_metaclass_t* obj;
+	qse_stx_class_t* xobj;
 
-	n = xp_stx_lookup_class (stx, name);
-	n = XP_STX_CLASS(stx,n);
-	xp_printf (XP_TEXT("Class hierarchy for the metaclass '%s class'\n"), name);
+	n = qse_stx_lookup_class (stx, name);
+	n = QSE_STX_CLASS(stx,n);
+	qse_printf (QSE_T("Class hierarchy for the metaclass '%s class'\n"), name);
 
 	while (n != stx->nil) {
 		/*if (n == stx->class_class) break; */
-		if (XP_STX_CLASS(stx,n) != stx->class_metaclass) break;
+		if (QSE_STX_CLASS(stx,n) != stx->class_metaclass) break;
 
-		obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx,n);
+		obj = (qse_stx_metaclass_t*)QSE_STX_WORD_OBJECT(stx,n);
 		x = obj->instance_class;
-		xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,x);
-		xp_printf (XP_TEXT("%lu, %s class\n"), 
+		xobj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,x);
+		qse_printf (QSE_T("%lu, %s class\n"), 
 			(unsigned long)xobj->name,
-			XP_STX_DATA(stx, xobj->name));
+			QSE_STX_DATA(stx, xobj->name));
 		n = obj->superclass;
 	}
 	while (n != stx->nil) {
-		xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,n);
-		xp_printf (XP_TEXT("%lu, %s\n"), 
+		xobj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,n);
+		qse_printf (QSE_T("%lu, %s\n"), 
 			(unsigned long)xobj->name,
-			XP_STX_DATA(stx, xobj->name));
+			QSE_STX_DATA(stx, xobj->name));
 		n = xobj->superclass;
 	}
 }
 
-void print_class_name (xp_stx_t* stx, xp_word_t class, int tabs)
+void print_class_name (qse_stx_t* stx, qse_word_t class, int tabs)
 {
-	xp_stx_class_t* xobj;
-	xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
+	qse_stx_class_t* xobj;
+	xobj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,class);
 
-	while (tabs-- > 0) xp_printf (XP_TEXT("  "));
+	while (tabs-- > 0) qse_printf (QSE_T("  "));
 
-	xp_printf (XP_TEXT("%s [%lu]\n"), 
-		XP_STX_DATA(stx, xobj->name),
+	qse_printf (QSE_T("%s [%lu]\n"), 
+		QSE_STX_DATA(stx, xobj->name),
 		(unsigned long)class);
 }
 
-void print_metaclass_name (xp_stx_t* stx, xp_word_t class, int tabs)
+void print_metaclass_name (qse_stx_t* stx, qse_word_t class, int tabs)
 {
-	xp_stx_metaclass_t* obj;
-	xp_stx_class_t* xobj;
+	qse_stx_metaclass_t* obj;
+	qse_stx_class_t* xobj;
 
-	obj = (xp_stx_metaclass_t*)XP_STX_WORD_OBJECT(stx,class);
-	xobj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,obj->instance_class);
+	obj = (qse_stx_metaclass_t*)QSE_STX_WORD_OBJECT(stx,class);
+	xobj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,obj->instance_class);
 
-	while (tabs-- > 0) xp_printf (XP_TEXT("  "));
+	while (tabs-- > 0) qse_printf (QSE_T("  "));
 
-	xp_printf (XP_TEXT("%s class [%lu]\n"), 
-		XP_STX_DATA(stx, xobj->name),
+	qse_printf (QSE_T("%s class [%lu]\n"), 
+		QSE_STX_DATA(stx, xobj->name),
 		(unsigned long)class);
 }
 
-void print_subclass_names (xp_stx_t* stx, xp_word_t class, int tabs)
+void print_subclass_names (qse_stx_t* stx, qse_word_t class, int tabs)
 {
-	xp_stx_class_t* obj;
+	qse_stx_class_t* obj;
 
-	obj = (xp_stx_class_t*)XP_STX_WORD_OBJECT(stx,class);
+	obj = (qse_stx_class_t*)QSE_STX_WORD_OBJECT(stx,class);
 	if (obj->header.class == stx->class_metaclass) {
 		print_metaclass_name (stx, class, tabs);
 	}
@@ -116,122 +113,143 @@ void print_subclass_names (xp_stx_t* stx, xp_word_t class, int tabs)
 	}
 
 	if (obj->subclasses != stx->nil) {
-		xp_word_t count = XP_STX_SIZE(stx, obj->subclasses);
+		qse_word_t count = QSE_STX_SIZE(stx, obj->subclasses);
 		while (count-- > 0) {
 			print_subclass_names (stx, 
-				XP_STX_WORD_AT(stx,obj->subclasses,count), tabs + 1);
+				QSE_STX_WORD_AT(stx,obj->subclasses,count), tabs + 1);
 		}
 	}
 }
 
-void print_subclasses (xp_stx_t* stx, const xp_char_t* name)
+void print_subclasses (qse_stx_t* stx, const qse_char_t* name)
 {
-	xp_word_t class;
-	class = xp_stx_lookup_class (stx, name);	
-	xp_printf (XP_TEXT("== NORMAL == \n"));
+	qse_word_t class;
+	class = qse_stx_lookup_class (stx, name);	
+	qse_printf (QSE_T("== NORMAL == \n"));
 	print_subclass_names (stx, class, 0);
-	xp_printf (XP_TEXT("== META == \n"));
-	print_subclass_names (stx, XP_STX_CLASS(stx,class), 0);
+	qse_printf (QSE_T("== META == \n"));
+	print_subclass_names (stx, QSE_STX_CLASS(stx,class), 0);
 }
 
-int xp_main (int argc, xp_char_t* argv[])
+static int stx_main (int argc, qse_char_t* argv[])
 {
-	xp_stx_t stx;
-	//xp_word_t i;
+	qse_stx_t stx;
+	//qse_word_t i;
 
 #ifndef _DOS
-	if (xp_setlocale () == -1) {
+	if (qse_setlocale () == -1) {
 		printf ("cannot set locale\n");
 		return -1;
 	}
 #endif
 
 	if (argc != 2) { /* TODO: argument processing */
-		xp_printf (XP_TEXT("Usage: %s [-f imageFile] MainClass\n"), argv[0]);
+		qse_printf (QSE_T("Usage: %s [-f imageFile] MainClass\n"), argv[0]);
 		return -1;
 	}
 
-	if (xp_stx_open (&stx, 10000) == XP_NULL) {
-		xp_printf (XP_TEXT("cannot open stx\n"));
+	if (qse_stx_open (&stx, 10000) == QSE_NULL) {
+		qse_printf (QSE_T("cannot open stx\n"));
 		return -1;
 	}
 
-	if (xp_stx_bootstrap(&stx) == -1) {
-		xp_stx_close (&stx);
-		xp_printf (XP_TEXT("cannot bootstrap\n"));
+	if (qse_stx_bootstrap(&stx) == -1) {
+		qse_stx_close (&stx);
+		qse_printf (QSE_T("cannot bootstrap\n"));
 		return -1;
 	}	
 
-	xp_printf (XP_TEXT("stx.nil %lu\n"), (unsigned long)stx.nil);
-	xp_printf (XP_TEXT("stx.true %lu\n"), (unsigned long)stx.true);
-	xp_printf (XP_TEXT("stx.false %lu\n"), (unsigned long)stx.false);
-	xp_printf (XP_TEXT("-------------\n"));
+	qse_printf (QSE_T("stx.nil %lu\n"), (unsigned long)stx.nil);
+	qse_printf (QSE_T("stx.true %lu\n"), (unsigned long)stx.true);
+	qse_printf (QSE_T("stx.false %lu\n"), (unsigned long)stx.false);
+	qse_printf (QSE_T("-------------\n"));
 	
 	
-	xp_printf (XP_TEXT(">> SYMBOL_TABLE (%u/%u symbols/slots) <<\n"), 
+	qse_printf (QSE_T(">> SYMBOL_TABLE (%u/%u symbols/slots) <<\n"), 
 		(unsigned int)stx.symtab.size, (unsigned int)stx.symtab.capacity);
-	xp_stx_traverse_symbol_table (&stx, print_symbol_names, XP_NULL);
-	xp_printf (XP_TEXT("-------------\n"));
+	qse_stx_traverse_symbol_table (&stx, print_symbol_names, QSE_NULL);
+	qse_printf (QSE_T("-------------\n"));
 
-	xp_stx_dict_traverse (&stx, stx.smalltalk, print_symbol_names_2, XP_NULL);
-	xp_printf (XP_TEXT("-------------\n"));
+	qse_stx_dict_traverse (&stx, stx.smalltalk, print_symbol_names_2, QSE_NULL);
+	qse_printf (QSE_T("-------------\n"));
 
-	print_superclasses (&stx, XP_TEXT("Array"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_TEXT("Array"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_TEXT("False"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_TEXT("False"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_TEXT("Metaclass"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_TEXT("Metaclass"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_superclasses (&stx, XP_TEXT("Class"));
-	xp_printf (XP_TEXT("-------------\n"));
-	print_metaclass_superclasses (&stx, XP_TEXT("Class"));
-	xp_printf (XP_TEXT("-------------\n"));
+	print_superclasses (&stx, QSE_T("Array"));
+	qse_printf (QSE_T("-------------\n"));
+	print_metaclass_superclasses (&stx, QSE_T("Array"));
+	qse_printf (QSE_T("-------------\n"));
+	print_superclasses (&stx, QSE_T("False"));
+	qse_printf (QSE_T("-------------\n"));
+	print_metaclass_superclasses (&stx, QSE_T("False"));
+	qse_printf (QSE_T("-------------\n"));
+	print_superclasses (&stx, QSE_T("Metaclass"));
+	qse_printf (QSE_T("-------------\n"));
+	print_metaclass_superclasses (&stx, QSE_T("Metaclass"));
+	qse_printf (QSE_T("-------------\n"));
+	print_superclasses (&stx, QSE_T("Class"));
+	qse_printf (QSE_T("-------------\n"));
+	print_metaclass_superclasses (&stx, QSE_T("Class"));
+	qse_printf (QSE_T("-------------\n"));
 
-	print_subclasses (&stx, XP_TEXT("Object"));
-	xp_printf (XP_TEXT("-------------\n"));
+	print_subclasses (&stx, QSE_T("Object"));
+	qse_printf (QSE_T("-------------\n"));
 
 #if 0
 	{
-		xp_word_t method_name;
-		xp_word_t main_class;
-		xp_word_t method, context;
+		qse_word_t method_name;
+		qse_word_t main_class;
+		qse_word_t method, context;
 
-		method_name = xp_stx_new_symbol (&stx,XP_TEXT("main"));
+		method_name = qse_stx_new_symbol (&stx,QSE_T("main"));
 
-		main_class = xp_stx_lookup_class (&stx,argv[1]);
+		main_class = qse_stx_lookup_class (&stx,argv[1]);
 		if (main_class == stx.nil) {
-			xp_printf (XP_TEXT("non-existent class: %s\n"), argv[1]);
+			qse_printf (QSE_T("non-existent class: %s\n"), argv[1]);
 			return -1;
 		}
 
 		/*
-		method = xp_stx_alloc_byte_object (&stx,100);
-		XP_STX_CLASS(&stx,method) = stx.class_method;
+		method = qse_stx_alloc_byte_object (&stx,100);
+		QSE_STX_CLASS(&stx,method) = stx.class_method;
 		*/
-		method = xp_stx_instantiate (&stx, XP_TEXT("Method"));
+		method = qse_stx_instantiate (&stx, QSE_T("Method"));
 
-		XP_STX_BYTEAT(&stx,method,0) = PUSH_OBJECT;
-		XP_STX_BYTEAT(&stx,method,1) = main_class;
-		XP_STX_BYTEAT(&stx,method,2) = SEND_UNARY_MESSAGE;
-		XP_STX_BYTEAT(&stx,method,3) = method_name;
-		XP_STX_BYTEAT(&stx,method,4) = HALT;
+		QSE_STX_BYTEAT(&stx,method,0) = PUSH_OBJECT;
+		QSE_STX_BYTEAT(&stx,method,1) = main_class;
+		QSE_STX_BYTEAT(&stx,method,2) = SEND_UNARY_MESSAGE;
+		QSE_STX_BYTEAT(&stx,method,3) = method_name;
+		QSE_STX_BYTEAT(&stx,method,4) = HALT;
 
 		/*
-		context = xp_stx_new_context (&stx, method, stx.nil, stx.nil);
+		context = qse_stx_new_context (&stx, method, stx.nil, stx.nil);
 		*/
-		context = xp_stx_instantiate (&stx, XP_TEXT("Context"));
-		xp_stx_run_context (&stx, context);
+		context = qse_stx_instantiate (&stx, QSE_T("Context"));
+		qse_stx_run_context (&stx, context);
 	}
 #endif
 
-	xp_stx_close (&stx);
-	xp_printf (XP_TEXT("== End of program ==\n"));
+	qse_stx_close (&stx);
+	qse_printf (QSE_T("== End of program ==\n"));
 	return 0;
+}
+#endif
+
+static int stx_main (int argc, qse_char_t* argv[])
+{
+	qse_stx_t* stx;
+
+	stx = qse_stx_open (QSE_NULL, 0, 1000);
+	if (stx == QSE_NULL)
+	{
+		qse_printf (QSE_T("Cannot open stx\n"));
+		return -1;
+	}
+
+	qse_stx_close (stx);
+	return 0;
+}
+
+int qse_main (int argc, qse_achar_t* argv[])
+{
+	return qse_runmain (argc, argv, stx_main);
 }
 

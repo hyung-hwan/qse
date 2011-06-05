@@ -412,7 +412,7 @@ static int __add_character_literal (qse_stx_parser_t* parser, qse_char_t ch)
 	qse_stx_t* stx = parser->stx;
 
 	for (i = 0; i < parser->literal_count; i++) {
-		c = QSE_STX_IS_SMALLINT(parser->literals[i])? 
+		c = QSE_STX_ISSMALLINT(parser->literals[i])? 
 			stx->class_smallinteger: QSE_STX_CLASS (stx, parser->literals[i]);
 		if (c != stx->class_character) continue;
 
@@ -431,7 +431,7 @@ static int __add_string_literal (
 	qse_stx_t* stx = parser->stx;
 
 	for (i = 0; i < parser->literal_count; i++) {
-		c = QSE_STX_IS_SMALLINT(parser->literals[i])? 
+		c = QSE_STX_ISSMALLINT(parser->literals[i])? 
 			stx->class_smallinteger: QSE_STX_CLASS (stx, parser->literals[i]);
 		if (c != stx->class_string) continue;
 
@@ -509,7 +509,7 @@ static int __finish_method (qse_stx_parser_t* parser)
 	qse_assert (parser->bytecode.size != 0);
 
 	class_obj = (qse_stx_class_t*)
-		QSE_STX_OBJECT(stx, parser->method_class);
+		QSE_STX_OBJPTR(stx, parser->method_class);
 
 	if (class_obj->methods == stx->nil) {
 		/* TODO: reconfigure method dictionary size */
@@ -524,7 +524,7 @@ static int __finish_method (qse_stx_parser_t* parser)
 
 	method = qse_stx_instantiate(stx, stx->class_method, 
 		QSE_NULL, parser->literals, parser->literal_count);
-	method_obj = (qse_stx_method_t*)QSE_STX_OBJECT(stx, method);
+	method_obj = (qse_stx_method_t*)QSE_STX_OBJPTR(stx, method);
 
 	/* TODO: text saving must be optional */
 	/*method_obj->text = qse_stx_instantiate (

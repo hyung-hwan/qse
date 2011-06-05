@@ -359,13 +359,17 @@ static void __create_bootstrapping_objects (qse_stx_t* stx)
 	qse_word_t symbol_Association;
 
 	/* allocate three keyword objects */
-	stx->nil = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
-	stx->true = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
-	stx->false = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
+	stx->ref.nil = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
+	stx->ref.true = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
+	stx->ref.false = qse_stx_alloc_word_object (stx, QSE_NULL, 0, QSE_NULL, 0);
 
-	qse_assert (stx->nil == QSE_STX_NIL);
-	qse_assert (stx->true == QSE_STX_TRUE);
-	qse_assert (stx->false == QSE_STX_FALSE);
+	QSE_ASSERT (stx->ref.nil == QSE_STX_NIL);
+	QSE_ASSERT (stx->ref.true == QSE_STX_TRUE);
+	QSE_ASSERT (stx->ref.false == QSE_STX_FALSE);
+
+	stx->symtab = qse_stx_alloc_word_object (
+		stx, QSE_NULL, 1, QSE_NULL, 256);
+	QSE_STX_WORDAT(stx,stx->symtab,QSE_STX_SYMSET_TALLY) = QSE_STX_INTTOREF(0);
 
 	/* system dictionary */
 	/* TODO: dictionary size */
@@ -466,7 +470,7 @@ static void __create_builtin_classes (qse_stx_t* stx)
 		}
 
 		qse_assert (class != stx->nil);
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class);
+		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
 		class_obj->superclass = (p->superclass == QSE_NULL)?
 			stx->nil: qse_stx_lookup_class(stx,p->superclass);
 
@@ -479,15 +483,15 @@ static void __create_builtin_classes (qse_stx_t* stx)
 			qse_assert (superclass != stx->nil);
 
 			meta = class_obj->header.class;
-			meta_obj = (qse_stx_metaclass_t*)QSE_STX_OBJECT(stx,meta);
+			meta_obj = (qse_stx_metaclass_t*)QSE_STX_OBJPTR(stx,meta);
 			meta_obj->superclass = QSE_STX_CLASS(stx,superclass);
 			meta_obj->instance_class = class;
 
 			while (superclass != stx->nil) {
 				superclass_obj = (qse_stx_class_t*)
-					QSE_STX_OBJECT(stx,superclass);
+					QSE_STX_OBJPTR(stx,superclass);
 				nfields += 
-					QSE_STX_FROM_SMALLINT(superclass_obj->spec) >>
+					QSE_STX_FROMSMALLINT(superclass_obj->spec) >>
 					QSE_STX_SPEC_INDEXABLE_BITS;
 				superclass = superclass_obj->superclass;
 			}
@@ -512,7 +516,7 @@ static void __create_builtin_classes (qse_stx_t* stx)
 		class = qse_stx_lookup_class(stx, p->name);
 		qse_assert (class != stx->nil);
 
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class);
+		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
 
 		if (p->class_variables != QSE_NULL) {
 			class_obj->class_variables = 
@@ -536,7 +540,7 @@ static void __create_builtin_classes (qse_stx_t* stx)
 
 		class = qse_stx_lookup_class(stx, p->name);
 		qse_assert (class != stx->nil);
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class);
+		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
 		class_obj->subclasses = array;
 	}
 
@@ -549,7 +553,7 @@ static void __create_builtin_classes (qse_stx_t* stx)
 		class = qse_stx_lookup_class(stx, p->name);
 		qse_assert (class != stx->nil);
 		metaclass = QSE_STX_CLASS(stx,class);
-		metaclass_obj = (qse_stx_metaclass_t*)QSE_STX_OBJECT(stx, metaclass);
+		metaclass_obj = (qse_stx_metaclass_t*)QSE_STX_OBJPTR(stx, metaclass);
 		metaclass_obj->subclasses = array;
 	}
 }
