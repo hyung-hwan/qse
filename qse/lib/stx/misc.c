@@ -1,9 +1,45 @@
 /*
- * $Id: misc.c 118 2008-03-03 11:21:33Z baconevi $
+ * $Id$
  */
 
-#include <qse/stx/misc.h>
+#include "stx.h"
+#include <qse/cmn/str.h>
 
+qse_word_t qse_stx_hashstr (qse_stx_t* stx, const qse_char_t* str)
+{
+	qse_word_t h = 0;
+	qse_byte_t* bp, * be;
+	const qse_char_t* p = str;
+
+	while (*p != QSE_T('\0')) 
+	{
+		bp = (qse_byte_t*)p;
+		be = bp + QSE_SIZEOF(qse_char_t);
+		while (bp < be) h = h * 31 + *bp++;
+		p++;
+	}
+
+	return h;
+}
+
+qse_word_t qse_stx_hashstrx (qse_stx_t* stx, const qse_char_t* str, qse_word_t len)
+{
+	qse_word_t h = 0;
+	qse_byte_t* bp, * be;
+	const qse_char_t* p = str, * end = str + len;
+
+	while (p < end) 
+	{
+		bp = (qse_byte_t*)p;
+		be = bp + QSE_SIZEOF(qse_char_t);
+		while (bp < be) h = h * 31 + *bp++;
+		p++;
+	}
+
+	return h;
+}
+
+#if 0
 qse_word_t qse_stx_hash (const void* data, qse_word_t len)
 {
 	qse_word_t h = 0;
@@ -14,39 +50,6 @@ qse_word_t qse_stx_hash (const void* data, qse_word_t len)
 
 	return h;
 }
-
-qse_word_t qse_stx_strhash (const qse_char_t* str)
-{
-	qse_word_t h = 0;
-	qse_byte_t* bp, * be;
-	const qse_char_t* p = str;
-
-	while (*p != QSE_T('\0')) {
-		bp = (qse_byte_t*)p;
-		be = bp + qse_sizeof(qse_char_t);
-		while (bp < be) h = h * 31 + *bp++;
-		p++;
-	}
-
-	return h;
-}
-
-qse_word_t qse_stx_strxhash (const qse_char_t* str, qse_word_t len)
-{
-	qse_word_t h = 0;
-	qse_byte_t* bp, * be;
-	const qse_char_t* p = str, * end = str + len;
-
-	while (p < end) {
-		bp = (qse_byte_t*)p;
-		be = bp + qse_sizeof(qse_char_t);
-		while (bp < be) h = h * 31 + *bp++;
-		p++;
-	}
-
-	return h;
-}
-
 qse_char_t* qse_stx_strword (
 	const qse_char_t* str, const qse_char_t* word, qse_word_t* word_index)
 {
@@ -55,9 +58,11 @@ qse_char_t* qse_stx_strword (
 	qse_size_t len;
 	qse_word_t index = 0;
 
-	while (p != QSE_NULL) {
+	while (p != QSE_NULL) 
+	{
 		p = qse_strtok (p, QSE_T(""), &tok, &len);
-		if (qse_strxcmp (tok, len, word) == 0) {
+		if (qse_strxcmp (tok, len, word) == 0) 
+		{
 			*word_index = index;
 			return tok;
 		}
@@ -68,3 +73,4 @@ qse_char_t* qse_stx_strword (
 	*word_index = index;
 	return QSE_NULL;
 }
+#endif

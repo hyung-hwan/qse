@@ -8,7 +8,7 @@
 #include <qse/stx/dict.h>
 #include <qse/stx/misc.h>
 
-qse_word_t qse_stx_new_class (qse_stx_t* stx, const qse_char_t* name)
+qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
 {
 	qse_word_t meta, class;
 	qse_word_t class_name;
@@ -37,7 +37,8 @@ qse_word_t qse_stx_lookup_class (qse_stx_t* stx, const qse_char_t* name)
 	qse_word_t assoc, meta, value;
 
 	assoc = qse_stx_dict_lookup (stx, stx->smalltalk, name);
-	if (assoc == stx->nil) {
+	if (assoc == stx->nil) 
+	{
 		return stx->nil;
 	}
 
@@ -56,7 +57,7 @@ int qse_stx_get_instance_variable_index (
 	qse_stx_class_t* class_obj;
 	qse_stx_char_object_t* string;
 
-	class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class_index);
+	class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class_index);
 	qse_assert (class_obj != QSE_NULL);
 
 	if (class_obj->superclass != stx->nil) {
@@ -93,7 +94,7 @@ qse_word_t qse_stx_lookup_class_variable (
 {
 	qse_stx_class_t* class_obj;
 
-	class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class_index);
+	class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class_index);
 	qse_assert (class_obj != QSE_NULL);
 
 	if (class_obj->superclass != stx->nil) {
@@ -118,7 +119,7 @@ qse_word_t qse_stx_lookup_method (qse_stx_t* stx,
 {
 	qse_stx_class_t* class_obj;
 
-	class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class_index);
+	class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class_index);
 	qse_assert (class_obj != QSE_NULL);
 
 #if 0
@@ -141,7 +142,7 @@ qse_word_t qse_stx_lookup_method (qse_stx_t* stx,
 #endif
 
 	while (class_index != stx->nil) {
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class_index);
+		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class_index);
 
 		qse_assert (class_obj != QSE_NULL);
 		qse_assert (

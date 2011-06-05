@@ -15,13 +15,10 @@ qse_word_t __new_association (
 	qse_stx_t* stx, qse_word_t key, qse_word_t value)
 {
 	qse_word_t x;
-#ifdef __GNUC__
-	qse_word_t data[2] = { key, value };
-#else
 	qse_word_t data[2];
 	data[0] = key;
 	data[1] = value;
-#endif
+
 	x = qse_stx_alloc_word_object (
 		stx, data, QSE_STX_ASSOCIATION_SIZE, QSE_NULL, 0);
 	QSE_STX_CLASS(stx,x) = stx->class_association;
@@ -34,8 +31,8 @@ static qse_word_t __dict_find_slot (
 	qse_word_t size, hash, index, assoc, symbol;
 	qse_stx_word_object_t* dict_obj;
 
-	qse_assert (!QSE_STX_IS_SMALLINT(dict) &&
-	           QSE_STX_IS_WORD_OBJECT(stx, dict));
+	qse_assert (!QSE_STX_ISSMALLINT(dict) &&
+	           QSE_STX_ISWORDOBJECT(stx, dict));
 	qse_assert (dict == stx->smalltalk || 
 	           qse_stx_classof(stx,dict) == stx->class_system_dictionary);
 	qse_assert (qse_stx_classof(stx,key) == stx->class_symbol);
@@ -99,9 +96,13 @@ static void __grow_dict (qse_stx_t* stx, qse_word_t dict)
 	/* TODO: explore if dict can be immediately destroyed. */
 
 	qse_assert (qse_sizeof(qse_stx_object_t*) == qse_sizeof(qse_uint_t));
-	QSE_SWAP (QSE_STX_OBJECT(stx,dict),
-	         QSE_STX_OBJECT(stx,new),
-	         qse_stx_object_t*, qse_uint_t);
+
+	QSE_SWAP (
+		QSE_STX_OBJPTR(stx,dict),
+		QSE_STX_OBJPTR(stx,new),
+		qse_stx_object_t*,
+		qse_uint_t
+	);
 }
 
 qse_word_t qse_stx_dict_lookup (
@@ -110,8 +111,8 @@ qse_word_t qse_stx_dict_lookup (
 	qse_word_t size, hash, index, assoc, symbol;
 	qse_stx_word_object_t* dict_obj;
 
-	qse_assert (!QSE_STX_IS_SMALLINT(dict) &&
-	           QSE_STX_IS_WORD_OBJECT(stx, dict));
+	qse_assert (!QSE_STX_ISSMALLINT(dict) &&
+	           QSE_STX_ISWORDOBJECT(stx, dict));
 	qse_assert (dict == stx->smalltalk || 
 	           qse_stx_classof(stx,dict) == stx->class_system_dictionary);
 
@@ -123,7 +124,8 @@ qse_word_t qse_stx_dict_lookup (
 
 	dict_obj = QSE_STX_WORD_OBJECT(stx,dict);
 
-	while (1) {
+	while (1) 
+	{
 		assoc = dict_obj->data[index];
 		if (assoc == stx->nil) break;
 
@@ -154,17 +156,19 @@ qse_word_t qse_stx_dict_put (
 	qse_assert (QSE_STX_SIZE(stx,dict) > 1);
 
 	capa = QSE_STX_SIZE(stx,dict) - 1;
-	tally = QSE_STX_FROM_SMALLINT(QSE_STX_WORD_AT(stx,dict,0));
-	if (capa <= tally + 1) {
+	tally = QSE_STX_FROMSMALLINT(QSE_STX_WORD_AT(stx,dict,0));
+	if (capa <= tally + 1) 
+	{
 		__grow_dict (stx, dict);
 		/* refresh tally */
-		tally = QSE_STX_FROM_SMALLINT(QSE_STX_WORD_AT(stx,dict,0));
+		tally = QSE_STX_FROMSMALLINT(QSE_STX_WORD_AT(stx,dict,0));
 	}
 
 	slot = __dict_find_slot (stx, dict, key);
 
 	assoc = QSE_STX_WORD_AT(stx,dict,slot);
-	if (assoc == stx->nil) {
+	if (assoc == stx->nil) 
+	{
 		QSE_STX_WORD_AT(stx,dict,slot) = 
 			__new_association (stx, key, value);
 		QSE_STX_WORD_AT(stx,dict,0) = QSE_STX_TO_SMALLINT(tally + 1);

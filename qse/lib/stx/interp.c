@@ -84,15 +84,15 @@ qse_printf (QSE_T("out of memory in qse_stx_interp\n"));
 	proc.stack_base = 0;
 	proc.stack_top = 0;
 	
-	mthobj = (qse_stx_method_t*)QSE_STX_OBJECT(stx,method);
+	mthobj = (qse_stx_method_t*)QSE_STX_OBJPTR(stx,method);
 	qse_assert (mthobj != QSE_NULL);
 
 	proc.literals = mthobj->literals;
 	proc.bytecodes = QSE_STX_DATA(stx, mthobj->bytecodes);
 	proc.bytecode_size = QSE_STX_SIZE(stx, mthobj->bytecodes);
 	/* TODO: disable the method with arguments for start-up */
-	proc.argcount = QSE_STX_FROM_SMALLINT(mthobj->argcount); 
-	proc.tmpcount = QSE_STX_FROM_SMALLINT(mthobj->tmpcount);
+	proc.argcount = QSE_STX_FROMSMALLINT(mthobj->argcount); 
+	proc.tmpcount = QSE_STX_FROMSMALLINT(mthobj->tmpcount);
 
 	proc.receiver = receiver;
 	proc.method = method;
@@ -281,10 +281,10 @@ qse_printf (QSE_T("cannot find the method....\n"));
 		return -1;	
 	}
 
-	mthobj = (qse_stx_method_t*)QSE_STX_OBJECT(stx,method);
+	mthobj = (qse_stx_method_t*)QSE_STX_OBJPTR(stx,method);
 
-	argcount = QSE_STX_FROM_SMALLINT(mthobj->argcount);
-	tmpcount = QSE_STX_FROM_SMALLINT(mthobj->tmpcount);
+	argcount = QSE_STX_FROMSMALLINT(mthobj->argcount);
+	tmpcount = QSE_STX_FROMSMALLINT(mthobj->tmpcount);
 	qse_assert (argcount == nargs);
 
 	/* secure space for temporaries */
@@ -329,7 +329,7 @@ static int __return_from_message (qse_stx_t* stx, process_t* proc)
 	method = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount + 1];
 	pc = proc->stack[proc->stack_base + 1 + proc->tmpcount + proc->argcount];
 
-	mthobj = (qse_stx_method_t*)QSE_STX_OBJECT(stx,method);
+	mthobj = (qse_stx_method_t*)QSE_STX_OBJPTR(stx,method);
 	qse_assert (mthobj != QSE_NULL);
 	
 	/* return value is located on top of the previous stack */
@@ -346,8 +346,8 @@ static int __return_from_message (qse_stx_t* stx, process_t* proc)
 	proc->literals = mthobj->literals;
 	proc->bytecodes = QSE_STX_DATA(stx, mthobj->bytecodes);
 	proc->bytecode_size = QSE_STX_SIZE(stx, mthobj->bytecodes);
-	proc->argcount = QSE_STX_FROM_SMALLINT(mthobj->argcount); 
-	proc->tmpcount = QSE_STX_FROM_SMALLINT(mthobj->tmpcount);
+	proc->argcount = QSE_STX_FROMSMALLINT(mthobj->argcount); 
+	proc->tmpcount = QSE_STX_FROMSMALLINT(mthobj->tmpcount);
 
 	return 0;
 }
@@ -364,12 +364,12 @@ static int __dispatch_primitive (qse_stx_t* stx, process_t* proc, qse_word_t no)
 		break;
 	case 2:
 		qse_printf (QSE_T("<<  FUNKY STX SMALLTALK  >> %d\n"), 
-			QSE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]));
+			QSE_STX_FROMSMALLINT(proc->stack[proc->stack_base + 1]));
 		break;
 	case 3:
 		qse_printf (QSE_T("<<  HIGH STX SMALLTALK  >> %d, %d\n"), 
-			QSE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 1]),
-			QSE_STX_FROM_SMALLINT(proc->stack[proc->stack_base + 2]));
+			QSE_STX_FROMSMALLINT(proc->stack[proc->stack_base + 1]),
+			QSE_STX_FROMSMALLINT(proc->stack[proc->stack_base + 2]));
 		break;
 	case 20:
 		qse_printf (QSE_T("<< PRIMITIVE 20 >>\n"));

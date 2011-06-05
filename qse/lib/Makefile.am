@@ -1,2 +1,2 @@
-SUBDIRS = cmn sed awk cut scm http
+SUBDIRS = cmn sed awk cut stx 
 DIST_SUBDIRS = $(SUBDIRS) 

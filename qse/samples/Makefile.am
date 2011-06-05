@@ -1,1 +1,1 @@
-SUBDIRS = cmn awk cut sed http
+SUBDIRS = cmn awk cut sed 

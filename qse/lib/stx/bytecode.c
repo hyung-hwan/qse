@@ -14,7 +14,7 @@ int qse_stx_decode (qse_stx_t* stx, qse_word_t class)
 {
 	qse_stx_class_t* class_obj;
 
-	class_obj = (qse_stx_class_t*)QSE_STX_OBJECT(stx, class);
+	class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
 	if (class_obj->methods == stx->nil) return 0;
 
 /* TODO */
@@ -25,8 +25,8 @@ int qse_stx_decode (qse_stx_t* stx, qse_word_t class)
 #include <qse/bas/stdio.h>
 static void __dump_object (qse_stx_t* stx, qse_word_t obj)
 {
-	if (QSE_STX_IS_SMALLINT(obj)) {
-		qse_printf (QSE_T("%d"), QSE_STX_FROM_SMALLINT(obj));
+	if (QSE_STX_ISSMALLINT(obj)) {
+		qse_printf (QSE_T("%d"), QSE_STX_FROMSMALLINT(obj));
 	}	
 	else if (QSE_STX_CLASS(stx,obj) == stx->class_character) {
 		qse_printf (QSE_T("$%c"), QSE_STX_WORD_AT(stx,obj,0));
@@ -37,13 +37,13 @@ static void __dump_object (qse_stx_t* stx, qse_word_t obj)
 	else if (QSE_STX_CLASS(stx,obj) == stx->class_symbol) {
 		qse_printf (QSE_T("#%s"), QSE_STX_DATA(stx,obj));
 	}
-	else if (QSE_STX_IS_CHAR_OBJECT(stx, obj)) {
+	else if (QSE_STX_ISCHAROBJECT(stx, obj)) {
 		qse_printf (QSE_T("unknow char object [%s]"), QSE_STX_DATA(stx,obj));
 	}
-	else if (QSE_STX_IS_BYTE_OBJECT(stx, obj)) {
+	else if (QSE_STX_ISBYTEOBJECT(stx, obj)) {
 		qse_printf (QSE_T("unknown byte object"), QSE_STX_DATA(stx,obj));
 	}
-	else if (QSE_STX_IS_WORD_OBJECT(stx, obj)) {
+	else if (QSE_STX_ISWORDOBJECT(stx, obj)) {
 		qse_printf (QSE_T("unknown word object"), QSE_STX_DATA(stx,obj));
 	}
 	else {
@@ -66,22 +66,22 @@ static void __decode1 (qse_stx_t* stx, qse_word_t idx, void* data)
 	class_obj = (qse_stx_class_t*)data;
 
 	qse_printf (QSE_T("* Method: %s\n"), QSE_STX_DATA(stx, key));
-	method_obj = (qse_stx_method_t*)QSE_STX_OBJECT(stx, value);
+	method_obj = (qse_stx_method_t*)QSE_STX_OBJPTR(stx, value);
 
 	literals = method_obj->literals;
 	/*
 	literal_count = QSE_STX_SIZE(stx, value) - 
-		(QSE_STX_FROM_SMALLINT(class_obj->spec) >> QSE_STX_SPEC_INDEXABLE_BITS);
+		(QSE_STX_FROMSMALLINT(class_obj->spec) >> QSE_STX_SPEC_INDEXABLE_BITS);
 	*/
 	method_class = QSE_STX_CLASS(stx,value);
-	method_class_obj = QSE_STX_OBJECT(stx, method_class);
+	method_class_obj = QSE_STX_OBJPTR(stx, method_class);
 	literal_count = QSE_STX_SIZE(stx,value) - 
-		(QSE_STX_FROM_SMALLINT(method_class_obj->spec) >> QSE_STX_SPEC_INDEXABLE_BITS);
+		(QSE_STX_FROMSMALLINT(method_class_obj->spec) >> QSE_STX_SPEC_INDEXABLE_BITS);
 
 	qse_printf (QSE_T("* Literal Count: %d, Temporary Count: %d, Argument Count: %d\n"),
 		literal_count, 
-		QSE_STX_FROM_SMALLINT(method_obj->tmpcount), 
-		QSE_STX_FROM_SMALLINT(method_obj->argcount));
+		QSE_STX_FROMSMALLINT(method_obj->tmpcount), 
+		QSE_STX_FROMSMALLINT(method_obj->argcount));
 	for (i = 0; i < literal_count; i++) {
 		qse_printf (QSE_T("%d. ["), i);
 		__dump_object (stx, literals[i]);

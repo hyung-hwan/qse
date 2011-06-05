@@ -11,13 +11,26 @@
 extern "C" {
 #endif
 
-qse_stx_memory_t* qse_stx_memory_open (
-	qse_stx_memory_t* mem, qse_word_t capacity);
-void qse_stx_memory_close (qse_stx_memory_t* mem);
+qse_stx_memory_t* qse_stx_initmem (
+	qse_stx_memory_t* mem,
+	qse_word_t capacity
+);
 
-void qse_stx_memory_gc (qse_stx_memory_t* mem);
-qse_word_t qse_stx_memory_alloc (qse_stx_memory_t* mem, qse_word_t size);
-void qse_stx_memory_dealloc (qse_stx_memory_t* mem, qse_word_t object_index);
+void qse_stx_finimem (
+	qse_stx_memory_t* mem
+);
+
+void qse_stx_gcmem (
+	qse_stx_memory_t* mem
+);
+
+qse_word_t qse_stx_alloc (
+	qse_stx_memory_t* mem, qse_word_t size
+);
+
+void qse_stx_memory_dealloc (
+	qse_stx_memory_t* mem, qse_word_t object_index
+);
 
 #ifdef __cplusplus
 }
