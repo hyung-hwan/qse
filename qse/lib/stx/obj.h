@@ -29,6 +29,11 @@ qse_word_t qse_stx_alloccharobj (
 	qse_word_t        variable_nflds
 );
 
+qse_word_t qse_stx_hashobj (
+	qse_stx_t* stx,
+	qse_word_t ref
+);
+
 
 #if 0
 qse_word_t qse_stx_alloc_word_object (
@@ -43,8 +48,6 @@ qse_word_t qse_stx_alloc_char_object (
 qse_word_t qse_stx_alloc_char_objectx (
 	qse_stx_t* stx, const qse_char_t* str, qse_word_t n);
 qse_word_t qse_stx_allocn_char_object (qse_stx_t* stx, ...);
-
-qse_word_t qse_stx_hash_object (qse_stx_t* stx, qse_word_t object);
 
 qse_word_t qse_stx_instantiate (
 	qse_stx_t* stx, qse_word_t class_index, const void* data,

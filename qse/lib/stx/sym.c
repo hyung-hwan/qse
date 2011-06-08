@@ -26,21 +26,21 @@ qse_word_t qse_stx_newsymbol (
 
 #if 0
 	/* the table must have at least one slot excluding the tally field */
-	QSE_ASSERT (QSE_STX_OBJSIZE(stx,tab) > 1);
+	QSE_ASSERT (OBJSIZE(stx,tabref) > 1);
 #endif
 
-	tabptr = (qse_stx_symtab_t*) PTRBYREF (stx, tabref);
 
-	capa = tabptr->h._size - 1; /* exclude the tally field */
+	capa = OBJSIZE(stx,tabref) - 1; /* exclude the tally field */
 	hash = qse_stx_hashstr (stx, name) % capa;
 
+	tabptr = (qse_stx_symtab_t*) PTRBYREF (stx, tabref);
 	for (count = 0; count < capa; count++)
 	{
 		symref = tabptr->slot[hash];
 		if (symref == stx->ref.nil) break; /* not found */
 
+		QSE_ASSERT (OBJTYPE(stx,symref) == CHAROBJ);
 		symptr = (qse_stx_charobjptr_t) PTRBYREF (stx, symref);
-		QSE_ASSERT (symptr->h._type == QSE_STX_CHAROBJ);
 
 		if (qse_strcmp (name, symptr->fld) == 0) return symref;
 			
@@ -50,6 +50,7 @@ qse_word_t qse_stx_newsymbol (
 	if (tabptr->tally >= capa)
 	{
 #if 0
+/* TODO: write this part....
 		if (grow (stx, tab) <= -1) return -1;
 		/* refresh tally */
 		tally = QSE_STX_REFTOINT(QSE_STX_WORDAT(stx,tab,QSE_STX_SET_TALLY));

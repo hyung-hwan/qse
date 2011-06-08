@@ -71,8 +71,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsestx_la_DEPENDENCIES =
-am_libqsestx_la_OBJECTS = stx.lo err.lo mem.lo obj.lo sym.lo boot.lo \
-	misc.lo
+am_libqsestx_la_OBJECTS = stx.lo err.lo hash.lo mem.lo obj.lo sym.lo \
+	dic.lo boot.lo
 libqsestx_la_OBJECTS = $(am_libqsestx_la_OBJECTS)
 libqsestx_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -239,7 +239,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 lib_LTLIBRARIES = libqsestx.la 
-libqsestx_la_SOURCES = stx.c err.c mem.c obj.c sym.c boot.c misc.c
+libqsestx_la_SOURCES = stx.c err.c hash.c mem.c obj.c sym.c dic.c boot.c 
 libqsestx_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsestx_la_LIBADD = -lqsecmn
 all: all-am
@@ -317,9 +317,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/boot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dic.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/obj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sym.Plo@am__quote@
