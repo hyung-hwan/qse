@@ -188,37 +188,39 @@ qse_word_t qse_stx_allocn_char_object (qse_stx_t* stx, ...)
 
 	return idx;
 }
+#endif
 
-qse_word_t qse_stx_hash_object (qse_stx_t* stx, qse_word_t objref)
+qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
 {
 	qse_word_t hv;
 
-	if (QSE_STX_ISSMALLINT(objref)) 
+	if (REFISINT(stx, ref)) 
 	{
-		qse_word_t tmp = QSE_STX_FROMSMALLINT(objref);
-		hv = qse_stx_hash(&tmp, QSE_SIZEOF(tmp));
+		qse_word_t tmp = REFTOINT(stx, ref);
+		hv = qse_stx_hash (&tmp, QSE_SIZEOF(tmp));
 	}
-	else if (QSE_STX_ISCHAROBJECT(stx,objref)) 
+	else if (QSE_STX_ISCHAROBJECT(stx,ref)) 
 	{
 		/* the additional null is not taken into account */
-		hv = qse_stx_hash (QSE_STX_DATA(stx,objref),
-			QSE_STX_SIZE(stx,objref) * QSE_SIZEOF(qse_char_t));
+		hv = qse_stx_hash (QSE_STX_DATA(stx,ref),
+			QSE_STX_SIZE(stx,ref) * QSE_SIZEOF(qse_char_t));
 	}
-	else if (QSE_STX_ISBYTEOBJECT(stx,objref)) 
+	else if (QSE_STX_ISBYTEOBJECT(stx,ref)) 
 	{
 		hv = qse_stx_hash (
-			QSE_STX_DATA(stx,objref), QSE_STX_SIZE(stx,objref));
+			QSE_STX_DATA(stx,ref), QSE_STX_SIZE(stx,ref));
 	}
 	else 
 	{
-		QSE_ASSERT (QSE_STX_ISWORDOBJECT(stx,objref));
-		hv = qse_stx_hash (QSE_STX_DATA(stx,objref),
-			QSE_STX_SIZE(stx,objref) * QSE_SIZEOF(qse_word_t));
+		QSE_ASSERT (QSE_STX_ISWORDOBJECT(stx,ref));
+		hv = qse_stx_hash (QSE_STX_DATA(stx,ref),
+			QSE_STX_SIZE(stx,ref) * QSE_SIZEOF(qse_word_t));
 	}
 
 	return hv;
 }
 
+#if 0
 qse_word_t qse_stx_instantiate (
 	qse_stx_t* stx, qse_stx_objref_t class, const void* data, 
 	const void* variable_data, qse_word_t variable_nflds)

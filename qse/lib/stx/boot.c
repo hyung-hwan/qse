@@ -7,8 +7,8 @@
 #include "sym.h"
 #include "class.h"
 
+static void make_intrinsic_classes (qse_stx_t* stx);
 #if 0
-static void __create_builtin_classes (qse_stx_t* stx);
 static qse_word_t __make_classvar_dict (
 	qse_stx_t* stx, qse_word_t class, const qse_char_t* names);
 static void __filein_kernel (qse_stx_t* stx);
@@ -282,7 +282,7 @@ qse_word_t QSE_INLINE __new_string (qse_stx_t* stx, const qse_char_t* str)
 	return x;	
 }
 
-static void __create_builtin_classes (qse_stx_t* stx)
+static void make_intrinsic_classes (qse_stx_t* stx)
 {
 	class_info_t* p;
 	qse_word_t class, superclass, array;
@@ -565,13 +565,13 @@ static int sketch_key_objects (qse_stx_t* stx)
 /* TODO: initial symbol table size */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.symtab, 1, 256);
 	/* set tally to 0. */
-	WORDAT(stx,stx->ref.symtab,0) = INTTOREF(stx,0);
+	WORDAT(stx,stx->ref.symtab,QSE_STX_SYMTAB_TALLY) = INTTOREF(stx,0);
 
 	/* global system dictionary */
 /* TODO: initial dictionary size */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.sysdic, 1, 256);
 	/* set tally to 0 */
-	WORDAT(stx,stx->ref.sysdic,0) = INTTOREF(stx,0);
+	WORDAT(stx,stx->ref.sysdic,QSE_STX_DIC_TALLY) = INTTOREF(stx,0);
 
 	/* Symbol */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.class_symbol, QSE_STX_CLASS_NFLDS, 0);
@@ -579,12 +579,6 @@ static int sketch_key_objects (qse_stx_t* stx)
 	ALLOC_WORDOBJ_TO (stx, stx->ref.class_metaclass, QSE_STX_CLASS_NFLDS, 0);
 	/* Association */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.class_association, QSE_STX_CLASS_NFLDS, 0);
-
-qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("abcdefg")));
-qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("abcdefx")));
-qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("abcdefy")));
-qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("abcdefg")));
-qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("abcdefc")));
 
 	/* Metaclass is a class so it has the same structure 
 	 * as a normal class. "Metaclass class" is an instance of
@@ -622,7 +616,7 @@ qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("
 		INTTOREF (stx, MAKE_SPEC(QSE_STX_CLASS_NFLDS,SPEC_FIXED_WORD));
 
 	/* specs for class_metaclass, class_association, 
-	 * class_symbol are set later in __create_builtin_classes */
+	 * class_symbol are set later in make_builtin_classes */
 
 	/* #Symbol */
 	symbol_Symbol = qse_stx_newsymbol (
@@ -644,11 +638,11 @@ qse_printf (QSE_T("%d\n"), (int)qse_stx_newsymbol (stx, stx->ref.symtab, QSE_T("
 #if 0
 	/* register class names into the system dictionary */
 	qse_stx_dict_put (stx,
-		stx->sysdic, symbol_Symbol, stx->class_symbol);
+		stx->ref.sysdic, symbol_Symbol, stx->class_symbol);
 	qse_stx_dict_put (stx,
-		stx->sysdic, symbol_Metaclass, stx->class_metaclass);
+		stx->ref.sysdic, symbol_Metaclass, stx->class_metaclass);
 	qse_stx_dict_put (stx,
-		stx->sysdic, symbol_Association, stx->class_association);
+		stx->ref.sysdic, symbol_Association, stx->class_association);
 #endif
 
 	return 0;
@@ -687,13 +681,13 @@ int qse_stx_boot (qse_stx_t* stx)
 	stx->class_smallinteger = 
 		qse_stx_newclass (stx, QSE_T("SmallInteger"));
 
-	__create_builtin_classes (stx);
+	make_intrisic_classes (stx);
 
 	/* (Object class) setSuperclass: Class */
 	object_meta = QSE_STX_CLASS(stx,stx->class_object);
 	QSE_STX_WORD_AT(stx,object_meta,QSE_STX_METACLASS_SUPERCLASS) = stx->class_class;
 	/* instance class for Object is set here as it is not 
-	 * set in __create_builtin_classes */
+	 * set in make_intrisic_classes */
 	QSE_STX_WORD_AT(stx,object_meta,QSE_STX_METACLASS_INSTANCE_CLASS) = stx->class_object;
 
 	/* for some fun here */

@@ -18,9 +18,11 @@ typedef struct qse_stx_byteobj_t* qse_stx_byteobjptr_t;
 typedef struct qse_stx_charobj_t* qse_stx_charobjptr_t;
 typedef struct qse_stx_wordobj_t* qse_stx_wordobjptr_t;
 
+#include "hash.h"
 #include "mem.h"
 #include "obj.h"
 #include "sym.h"
+#include "dic.h"
 #include "boot.h"
 
 enum qse_stx_objtype_t

@@ -5,6 +5,11 @@
 #ifndef _QSE_LIB_STX_SYM_H_
 #define _QSE_LIB_STX_SYM_H_
 
+/* The SystemSymbolTable is a word variable class. 
+ * The info below is for the fixed part only */
+#define QSE_STX_SYMTAB_SIZE  1
+#define QSE_STX_SYMTAB_TALLY 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
