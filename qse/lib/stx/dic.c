@@ -47,7 +47,7 @@ static qse_word_t new_assoc (
 static qse_word_t find_slot (
 	qse_stx_t* stx, qse_word_t dic, qse_word_t key)
 {
-	qse_word_t size, hash, index, assoc, symbol;
+	qse_word_t size, hash, index, assoc, sym;
 	qse_stx_dic_t* ptr;
 
 	/* ensure that dic is a system dictionary */
@@ -59,6 +59,7 @@ static qse_word_t find_slot (
 	/* ensure that the key is a symbol */
 	QSE_ASSERT (REFISIDX(stx,key));
 	QSE_ASSERT (OBJCLASS(stx,key) == stx->ref.class_symbol);
+	QSE_ASSERT (OBJTYPE(stx,key) == CHAROBJ);
 
 	size = OBJSIZE (stx, dic);
 	hash = qse_stx_hashobj (stx, key); 
@@ -73,18 +74,19 @@ static qse_word_t find_slot (
 		assoc = ptr->slot[index];
 		if (assoc == stx->ref.nil) break;
 
-		symbol = WORDAT (stx, assoc, QSE_STX_ASSOC_KEY);
+		sym = WORDAT (stx, assoc, QSE_STX_ASSOC_KEY);
 
-		QSE_ASSERT (REFISIDX(stx,symbol));
-		QSE_ASSERT (OBJCLASS(stx,symbol) == stx->ref.class_symbol);
+		QSE_ASSERT (REFISIDX(stx,sym));
+		QSE_ASSERT (OBJCLASS(stx,sym) == stx->ref.class_symbol);
+		QSE_ASSERT (OBJTYPE(stx,sym) == CHAROBJ);
 
 		/* NOTE:
 		 * shallow comparison is enough for identity check 
 		 * because a symbol can just be a key of a system dicionary
 		 */
 		if (qse_strxncmp(
-			QSE_STX_DATA(stx,key), OBJSIZE(stx,key),
-			QSE_STX_DATA(stx,symbol), OBJSIZE(stx,symbol)) == 0) break;
+			&CHARAT(stx,key,0), OBJSIZE(stx,key),
+			&CHARAT(stx,key,0), OBJSIZE(stx,sym)) == 0) break;
 
 		/* consider tally here too */	
 		index = index % (size - 1);
@@ -93,7 +95,7 @@ static qse_word_t find_slot (
 	return index;
 }
 
-static void grow_dic (qse_stx_t* stx, qse_word_t dic)
+static qse_word_t grow_dic (qse_stx_t* stx, qse_word_t dic)
 {
 	qse_word_t new, size, index, assoc;
 	
@@ -103,12 +105,14 @@ static void grow_dic (qse_stx_t* stx, qse_word_t dic)
 	 * during the bootstrapping.
 	 */
 	QSE_ASSERT (stx->ref.class_system_dictionary != stx->ref.nil);
-	QSE_ASSERT (qse_stx_classof(stx,dic) == stx->ref.class_system_dicionary);
+	QSE_ASSERT (REFISIDX(stx,dic));
+	QSE_ASSERT (OBJCLASS(stx,dic) == stx->ref.class_system_dictionary);
 
 	size = OBJSIZE(stx,dic);
 	new = qse_stx_instantiate (stx, 
 		OBJCLASS(stx,dic), QSE_NULL, QSE_NULL, (size - 1) * 2); 
-	WORDAT(stx,new,0) = QSE_STX_TO_SMALLINT(0);		
+	if (new == stx->ref.nil) return stx->ref.nil;
+	WORDAT(stx,new,QSE_STX_DIC_TALLY) = INTTOREF (stx, 0);		
 
 	for (index = 1; index < size; index++) 
 	{
@@ -130,6 +134,8 @@ static void grow_dic (qse_stx_t* stx, qse_word_t dic)
 		qse_stx_object_t*,
 		qse_uint_t
 	);
+
+	return dic;
 }
 
 qse_word_t qse_stx_lookupdic (

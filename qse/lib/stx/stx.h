@@ -186,8 +186,6 @@ struct qse_stx_t
 #define QSE_STX_CHARAT(stx,ref,pos) \
 	(((qse_stx_charobjptr_t)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
 
-
-
 /* REDEFINITION DROPPING PREFIX FOR INTERNAL USE */
 #define REFISINT(stx,x)     QSE_STX_REFISINT(stx,x)
 #define INTTOREF(stx,x)     QSE_STX_INTTOREF(stx,x)
