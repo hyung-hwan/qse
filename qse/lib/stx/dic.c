@@ -44,57 +44,6 @@ static qse_word_t new_assoc (
 	return x;
 }
 
-static qse_word_t find_slot (
-	qse_stx_t* stx, qse_word_t dic, qse_word_t key)
-{
-	qse_word_t size, hash, index, assoc, sym;
-	qse_stx_dic_t* ptr;
-
-	/* ensure that dic is a system dictionary */
-	QSE_ASSERT (REFISIDX(stx,dic));
-	QSE_ASSERT (OBJTYPE(stx,dic) == WORDOBJ);
-	QSE_ASSERT (dic == stx->ref.sysdic ||
-	            OBJCLASS(stx,key) == stx->ref.class_system_dictionary);
-
-	/* ensure that the key is a symbol */
-	QSE_ASSERT (REFISIDX(stx,key));
-	QSE_ASSERT (OBJCLASS(stx,key) == stx->ref.class_symbol);
-	QSE_ASSERT (OBJTYPE(stx,key) == CHAROBJ);
-
-	size = OBJSIZE (stx, dic);
-	hash = qse_stx_hashobj (stx, key); 
-
-	/* consider tally, the only instance variable of a system dicionary */
-	index = hash % (size - 1);
-
-	ptr = (qse_stx_dic_t*) REFTOIDX (stx, dic);
-
-	while (1) 
-	{
-		assoc = ptr->slot[index];
-		if (assoc == stx->ref.nil) break;
-
-		sym = WORDAT (stx, assoc, QSE_STX_ASSOC_KEY);
-
-		QSE_ASSERT (REFISIDX(stx,sym));
-		QSE_ASSERT (OBJCLASS(stx,sym) == stx->ref.class_symbol);
-		QSE_ASSERT (OBJTYPE(stx,sym) == CHAROBJ);
-
-		/* NOTE:
-		 * shallow comparison is enough for identity check 
-		 * because a symbol can just be a key of a system dicionary
-		 */
-		if (qse_strxncmp(
-			&CHARAT(stx,key,0), OBJSIZE(stx,key),
-			&CHARAT(stx,key,0), OBJSIZE(stx,sym)) == 0) break;
-
-		/* consider tally here too */	
-		index = index % (size - 1);
-	}
-
-	return index;
-}
-
 static qse_word_t grow_dic (qse_stx_t* stx, qse_word_t dic)
 {
 	qse_word_t new, size, index, assoc;
@@ -117,7 +66,7 @@ static qse_word_t grow_dic (qse_stx_t* stx, qse_word_t dic)
 	for (index = 1; index < size; index++) 
 	{
 		assoc = WORDAT(stx,dic,index);
-		if (assoc == stx->nil) continue;
+		if (assoc == stx->ref.nil) continue;
 
 		qse_stx_putdic (stx, new, 
 			WORDAT(stx,assoc,QSE_STX_ASSOC_KEY),
@@ -126,11 +75,11 @@ static qse_word_t grow_dic (qse_stx_t* stx, qse_word_t dic)
 	
 	/* TODO: explore if dic can be immediately destroyed. */
 
-	QSE_ASSERT (qse_sizeof(qse_stx_object_t*) == qse_sizeof(qse_uint_t));
+	QSE_ASSERT (QSE_SIZEOF(qse_stx_object_t*) == QSE_SIZEOF(qse_uint_t));
 
 	QSE_SWAP (
-		QSE_STX_OBJPTR(stx,dic),
-		QSE_STX_OBJPTR(stx,new),
+		PTRBYIDX(stx,dic),
+		PTRBYIDX(stx,new),
 		qse_stx_object_t*,
 		qse_uint_t
 	);
@@ -138,83 +87,151 @@ static qse_word_t grow_dic (qse_stx_t* stx, qse_word_t dic)
 	return dic;
 }
 
-qse_word_t qse_stx_lookupdic (
-	qse_stx_t* stx, qse_word_t dic, const qse_char_t* key)
+static qse_word_t find_slot (
+	qse_stx_t* stx, qse_word_t dic, qse_word_t key)
 {
-	qse_word_t size, hash, index, assoc, symbol;
-	qse_stx_word_object_t* ptr;
+	qse_word_t capa, hash;
+	qse_stx_dic_t* dicptr;
 
-	QSE_ASSERT (!QSE_STX_ISSMALLINT(dic) &&
-	           QSE_STX_ISWORDOBJECT(stx, dic));
-	QSE_ASSERT (dic == stx->smalltalk || 
-	           qse_stx_classof(stx,dic) == stx->class_system_dicionary);
+	/* ensure that dic is a system dictionary */
+	QSE_ASSERT (REFISIDX(stx,dic));
+	QSE_ASSERT (OBJTYPE(stx,dic) == WORDOBJ);
+	QSE_ASSERT (dic == stx->ref.sysdic ||
+	            OBJCLASS(stx,key) == stx->ref.class_system_dictionary);
 
-	size = OBJSIZE(stx,dic);
-	hash = qse_stx_hash(key, qse_strlen(key) * qse_sizeof(qse_char_t));
+	/* ensure that the key is a symbol */
+	QSE_ASSERT (REFISIDX(stx,key));
+	QSE_ASSERT (OBJCLASS(stx,key) == stx->ref.class_symbol);
+	QSE_ASSERT (OBJTYPE(stx,key) == CHAROBJ);
 
-	/* consider tally, the only instance variable of a system dicionary */
-	index = hash % (size - 1);
+	capa = OBJSIZE(stx,dic) - 1; /* exclude the tally field */
+	hash = qse_stx_hashobj (stx, key) % capa;
 
-	ptr = QSE_STX_WORD_OBJECT(stx,dic);
+	dicptr = (qse_stx_dic_t*)PTRBYREF(stx,dic);
 
-	while (1) 
+	do
 	{
-		assoc = ptr->slot[index];
-		if (assoc == stx->ref.nil) break;
+		qse_word_t assoc, sym;
 
-		symbol = WORDAT(stx,assoc,QSE_STX_ASSOC_KEY);
-		QSE_ASSERT (qse_stx_classof(stx,symbol) == stx->class_symbol);
+		assoc = dicptr->slot[hash];
+		if (assoc == stx->ref.nil) break; /* not found */
 
-		if (qse_strxcmp (
-			QSE_STX_DATA(stx,symbol), OBJSIZE(stx,symbol), key) == 0) break;
+		sym = WORDAT (stx, assoc, QSE_STX_ASSOC_KEY);
 
-		/* consider tally here too */	
-		index = index % (size - 1);
+		QSE_ASSERT (REFISIDX(stx,sym));
+		QSE_ASSERT (OBJCLASS(stx,sym) == stx->ref.class_symbol);
+		QSE_ASSERT (OBJTYPE(stx,sym) == CHAROBJ);
+
+		if (qse_strxncmp(
+			&CHARAT(stx,key,0), OBJSIZE(stx,key),
+			&CHARAT(stx,sym,0), OBJSIZE(stx,sym)) == 0) break;
+
+		hash = (hash + 1) % capa;
 	}
+	while (1);
 
-	return WORDAT(stx,dic,index);
+	/* Include the tally back when returning the association index.
+	 * you can access the association with WORDAT() by using this index. */
+	return hash + 1; 
 }
 
-#if 0
+/* look up a system dictionary by a null-terminated string */
+qse_word_t qse_stx_lookupdic (
+	qse_stx_t* stx, qse_word_t dic, const qse_char_t* skey)
+{
+	qse_word_t capa, hash;
+	qse_stx_dic_t* dicptr;
+
+	QSE_ASSERT (REFISIDX(stx,dic));
+	QSE_ASSERT (OBJTYPE(stx,dic) == WORDOBJ);
+	QSE_ASSERT (dic == stx->ref.sysdic || 
+	            OBJCLASS(stx,dic) == stx->ref.class_system_dictionary);
+
+	capa = OBJSIZE(stx,dic) - 1; /* exclude the tally field */
+	hash = qse_stx_hashstr (stx, skey) % capa;
+
+	dicptr = (qse_stx_dic_t*)PTRBYREF(stx,dic);
+
+	do
+	{
+		qse_word_t assoc, keyref;
+
+		assoc = dicptr->slot[hash];
+		if (assoc == stx->ref.nil) break; /* not found */
+
+		keyref = WORDAT(stx,assoc,QSE_STX_ASSOC_KEY);
+
+		QSE_ASSERT (REFISIDX(stx,keyref));
+		QSE_ASSERT (OBJCLASS(stx,keyref) == stx->ref.class_symbol);
+		QSE_ASSERT (OBJTYPE(stx,keyref) == CHAROBJ);
+
+		if (qse_strxcmp (
+			&CHARAT(stx,keyref,0), OBJSIZE(stx,keyref),
+			skey) == 0) break;
+			
+		hash = (hash + 1) % capa;
+	}
+	while (1);
+
+	return dicptr->slot[hash];
+}
+
 qse_word_t qse_stx_getdic (qse_stx_t* stx, qse_word_t dic, qse_word_t key)
 {
-	return WORDAT (stx, dic, find_slot(stx, dic, key));
+	return WORDAT (stx, dic, find_slot (stx, dic, key));
 }
 
 qse_word_t qse_stx_putdic (
-	qse_stx_t* stx, qse_word_t dic, qse_word_t key, qse_word_t val)
+	qse_stx_t* stx, qse_word_t dic, qse_word_t key, qse_word_t value)
 {
 	qse_word_t slot, capa, tally, assoc;
+	qse_stx_dic_t* dicptr;
 
 	/* the dicionary must have at least one slot excluding tally */
 	QSE_ASSERT (OBJSIZE(stx,dic) > 1);
 
 	capa = OBJSIZE(stx,dic) - 1;
-	tally = REFTOINT(WORDAT(stx,dic,0));
-	if (capa <= tally + 1) 
-	{
-		if (grow_dic (stx, dic) == stx->ref.nil) return stx->ref.nil;
-		
-		/* refresh tally */
-		tally = REFTOINT (stx, WORDAT (stx, dic, QSE_STX_DIC_TALLY));
-	}
+	dicptr = (qse_stx_dic_t*)PTRBYREF(stx,dic);
+
+	tally = REFTOINT(stx,WORDAT(stx,dic,QSE_STX_DIC_TALLY));
 
 	slot = find_slot (stx, dic, key);
+	assoc = WORDAT(stx,dic,slot);
 
-	assoc = WORDAT (stx, dic, slot);
 	if (assoc == stx->ref.nil) 
 	{
+		/* the key is not found */
+
+		if (tally + 1 >= capa) 
+		{
+			/* Enlarge the dictionary if there is one free slot left.
+			 * The last free slot left is always maintained to be nil.
+			 * The nil slot plays multiple roles.
+			 *  - make sure that lookup never enters a infinite loop.
+			 *  - the slot's index can be returned when no key is found.
+			 */
+			if (grow_dic (stx, dic) == stx->ref.nil) return stx->ref.nil;
+		
+			/* refresh tally */
+			tally = REFTOINT(stx,WORDAT(stx,dic,QSE_STX_DIC_TALLY));
+		}
+
 		assoc = new_assoc (stx, key, value);
 		if (assoc == stx->ref.nil) return stx->ref.nil;
 
-		WORDAT (stx, dic, slot) = assoc;
-		WORDAT (stx, dic, QSE_STX_DIC_TALLY) = INTTOREF (stx, tally + 1);
+		WORDAT(stx,dic,slot) = assoc;
+		WORDAT(stx,dic,QSE_STX_DIC_TALLY) = INTTOREF(stx,tally + 1);
 	}
-	else WORDAT (stx, assoc, QSE_STX_ASSOC_VALUE) = value;
+	else 
+	{
+		/* found the key. change the value */
+		WORDAT(stx,assoc,QSE_STX_ASSOC_VALUE) = value;
+	}
 
-	return WORDAT(stx,dic,slot);
+	return assoc;
 }
 
+#if 0
 void qse_stx_walkdic (
 	qse_stx_t* stx, qse_word_t dic, 
 	void (*func) (qse_stx_t*,qse_word_t,void*), void* data)

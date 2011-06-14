@@ -21,39 +21,44 @@ qse_word_t qse_stx_newsymbol (
 {
 	qse_stx_symtab_t* tabptr;
 	qse_word_t symref;
-	qse_stx_charobjptr_t symptr;
-	qse_word_t capa, hash, count;
+	qse_word_t capa, hash, tally;
 
-#if 0
 	/* the table must have at least one slot excluding the tally field */
 	QSE_ASSERT (OBJSIZE(stx,tabref) > 1);
-#endif
-
 
 	capa = OBJSIZE(stx,tabref) - 1; /* exclude the tally field */
 	hash = qse_stx_hashstr (stx, name) % capa;
 
-	tabptr = (qse_stx_symtab_t*) PTRBYREF (stx, tabref);
-	for (count = 0; count < capa; count++)
+	tabptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
+	tally = REFTOINT(stx, tabptr->tally);
+
+	do
 	{
 		symref = tabptr->slot[hash];
 		if (symref == stx->ref.nil) break; /* not found */
 
+		QSE_ASSERT (REFISIDX(stx,symref));
+		QSE_ASSERT (OBJCLASS(stx,symref) == stx->ref.class_symbol);
 		QSE_ASSERT (OBJTYPE(stx,symref) == CHAROBJ);
-		symptr = (qse_stx_charobjptr_t) PTRBYREF (stx, symref);
 
-		if (qse_strcmp (name, symptr->fld) == 0) return symref;
+		/*if (qse_strxcmp (
+			&CHARAT(stx,symref,0), OBJSIZE(stx,symref),
+			name) == 0) return symref;*/
+		if (qse_strcmp (&CHARAT(stx,symref,0), name) == 0) return symref;
 			
 		hash = (hash + 1) % capa;
 	}
+	while (0);
 
-	if (tabptr->tally >= capa)
+	if (tally + 1 >= capa)
 	{
+		/* Enlarge the symbol table before it gets full to make sure that 
+		 * it has at least one free slot. */
+
 #if 0
-/* TODO: write this part....
 		if (grow (stx, tab) <= -1) return -1;
 		/* refresh tally */
-		tally = QSE_STX_REFTOINT(QSE_STX_WORDAT(stx,tab,QSE_STX_SET_TALLY));
+		tally = REFTOINT (stx, tabptr->tally);
 #endif
 	}
 
@@ -61,8 +66,10 @@ qse_word_t qse_stx_newsymbol (
 	if (symref != stx->ref.nil) 
 	{
 		OBJCLASS(stx,symref) = stx->ref.class_symbol;
+		tabptr->tally = INTTOREF (stx, tally + 1);
 		tabptr->slot[hash] = symref;
 	}
+
 	return symref;
 }
 
