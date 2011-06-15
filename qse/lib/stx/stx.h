@@ -12,17 +12,18 @@ typedef qse_word_t qse_stx_objidx_t;
 
 typedef struct qse_stx_objhdr_t   qse_stx_objhdr_t; /* object header */
 typedef struct qse_stx_object_t   qse_stx_object_t; /* abstract object */
-
 typedef struct qse_stx_object_t*  qse_stx_objptr_t; /* object pointer */
-typedef struct qse_stx_byteobj_t* qse_stx_byteobjptr_t;
-typedef struct qse_stx_charobj_t* qse_stx_charobjptr_t;
-typedef struct qse_stx_wordobj_t* qse_stx_wordobjptr_t;
+
+typedef struct qse_stx_byteobj_t qse_stx_byteobj_t;
+typedef struct qse_stx_charobj_t qse_stx_charobj_t;
+typedef struct qse_stx_wordobj_t qse_stx_wordobj_t;
 
 #include "hash.h"
 #include "mem.h"
 #include "obj.h"
 #include "sym.h"
 #include "dic.h"
+#include "cls.h"
 #include "boot.h"
 
 enum qse_stx_objtype_t
@@ -105,13 +106,6 @@ struct qse_stx_t
 		qse_stx_objptr_t* free;
 	} mem;
 
-	struct 
-	{
-		qse_size_t  capa;
-		qse_size_t  size;
-		qse_word_t* slot;
-	} symtab;
-
 	struct
 	{
 		qse_word_t nil;
@@ -132,7 +126,8 @@ struct qse_stx_t
 		qse_word_t class_string;
 		qse_word_t class_character;
 		qse_word_t class_context;
-		qse_word_t class_system_dictionary;
+		qse_word_t class_systemsymboltable;
+		qse_word_t class_systemdictionary;
 		qse_word_t class_method;
 		qse_word_t class_smallinteger;
 	} ref;
@@ -180,11 +175,11 @@ struct qse_stx_t
 #define QSE_STX_OBJCLASS(stx,ref) (QSE_STX_PTRBYREF(stx,ref)->h._class)
 
 #define QSE_STX_WORDAT(stx,ref,pos) \
-	(((qse_stx_wordobjptr_t)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
+	(((qse_stx_wordobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
 #define QSE_STX_BYTEAT(stx,ref,pos) \
-	(((qse_stx_byteobjptr_t)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
+	(((qse_stx_byteobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
 #define QSE_STX_CHARAT(stx,ref,pos) \
-	(((qse_stx_charobjptr_t)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
+	(((qse_stx_charobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
 
 /* REDEFINITION DROPPING PREFIX FOR INTERNAL USE */
 #define REFISINT(stx,x)     QSE_STX_REFISINT(stx,x)
@@ -210,60 +205,13 @@ struct qse_stx_t
 #define CHAROBJ             QSE_STX_CHAROBJ
 #define WORDOBJ             QSE_STX_WORDOBJ
 
-#if 0
-/* hardcoded object reference */
-#define QSE_STX_NIL(stx)   QSE_STX_IDXTOREF(stx,0)
-#define QSE_STX_TRUE(stx)  QSE_STX_IDXTOREF(stx,1)
-#define QSE_STX_FALSE(stx) QSE_STX_IDXTOREF(stx,2)
-
-#define QSE_STX_DATA(stx,idx)     ((void*)(QSE_STX_OBJPTR(stx,idx) + 1))
-#endif
-
-
-#if 0
-#define QSE_STX_WORD_INDEXED  (0x00)
-#define QSE_STX_BYTE_INDEXED  (0x01)
-#define QSE_STX_CHAR_INDEXED  (0x02)
-
-/* this type has nothing to do with
- * the indexability of the object... */
-enum qse_stx_objtype_t
-{
-	QSE_STX_OBJTYPE_BYTE,
-	QSE_STX_OBJTYPE_CHAR,
-	QSE_STX_OBJTYPE_WORD
-};
-
-#define QSE_STX_ISWORDOBJECT(stx,idx) \
-	(QSE_STX_TYPE(stx,idx) == QSE_STX_WORD_INDEXED)
-#define QSE_STX_ISBYTEOBJECT(stx,idx) \
-	(QSE_STX_TYPE(stx,idx) == QSE_STX_BYTE_INDEXED)
-#define QSE_STX_ISCHAROBJECT(stx,idx) \
-	(QSE_STX_TYPE(stx,idx) == QSE_STX_CHAR_INDEXED)
-
-#define QSE_STX_WORDOBJPTR(stx,idx) \
-	((qse_stx_word_object_t*)QSE_STX_OBJPTR(stx,idx))
-#define QSE_STX_BYTEOBJPTR(stx,idx) \
-	((qse_stx_byte_object_t*)QSE_STX_OBJPTR(stx,idx))
-#define QSE_STX_CHAROBJPTR(stx,idx) \
-	((qse_stx_char_object_t*)QSE_STX_OBJPTR(stx,idx))
-
-#define QSE_STX_WORD_AT(stx,idx,n) \
-	(QSE_STX_WORD_OBJECT(stx,idx)->data[n])
-#define QSE_STX_BYTE_AT(stx,idx,n) \
-	(QSE_STX_BYTE_OBJECT(stx,idx)->data[n])
-#define QSE_STX_CHAR_AT(stx,idx,n) \
-	(QSE_STX_CHAR_OBJECT(stx,idx)->data[n])
-
-#endif
+/* SOME INTERNAL MACRO DEFINITIONS */
+#define SYMTAB_INIT_CAPA 256
+#define SYSDIC_INIT_CAPA 256
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*
- * 
- */
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,11 @@ int qse_stx_initmem (qse_stx_t* stx, qse_size_t capa)
 		stx->mmgr,
 		capa * QSE_SIZEOF(*stx->mem.slot)
 	);
-	if (stx->mem.slot == QSE_NULL) return -1;
+	if (stx->mem.slot == QSE_NULL) 
+	{
+		qse_stx_seterrnum (stx, QSE_STX_ENOMEM, QSE_NULL);
+		return -1;
+	}
 
 	stx->mem.capa = capa;
 
@@ -59,7 +63,13 @@ qse_stx_objidx_t qse_stx_allocmem (qse_stx_t* stx, qse_size_t nbytes)
 	if (stx->mem.free == QSE_NULL) 
 	{
 		qse_stx_gcmem (stx);
-		if (stx->mem.free == QSE_NULL) return QSE_STX_OBJIDX_INVALID;
+		if (stx->mem.free == QSE_NULL) 
+		{
+			/* ran out of object table slots */
+/* TODO: NEED TO USE a different error code??? */
+			qse_stx_seterrnum (stx, QSE_STX_ENOMEM, QSE_NULL);
+			return QSE_STX_OBJIDX_INVALID;
+		}
 	}
 
 /* TODO: memory allocation by region.. instead of calling individual QSE_MMGR_ALLOC 
@@ -73,7 +83,8 @@ qse_stx_objidx_t qse_stx_allocmem (qse_stx_t* stx, qse_size_t nbytes)
 		objptr = (qse_stx_objptr_t) QSE_MMGR_ALLOC (stx->mmgr, nbytes);
 		if (objptr == QSE_NULL) 
 		{
-QSE_ASSERT (QSE_T("MEMORY ALLOCATION ERROR\n") == QSE_NULL);
+			/* ran out of object memory */
+			qse_stx_seterrnum (stx, QSE_STX_ENOMEM, QSE_NULL);
 			return QSE_STX_OBJIDX_INVALID;
 		}
 	}
@@ -82,7 +93,7 @@ QSE_ASSERT (QSE_T("MEMORY ALLOCATION ERROR\n") == QSE_NULL);
 	stx->mem.free = (qse_stx_objptr_t*)*slot;
 	*slot = objptr;
 
-	QSE_MEMSET (objptr, 0, QSE_SIZEOF(nbytes));
+	QSE_MEMSET (objptr, 0, nbytes);
 	return (qse_stx_objidx_t)(slot - stx->mem.slot);
 }
 
@@ -98,3 +109,11 @@ void qse_stx_freemem (qse_stx_t* stx, qse_stx_objidx_t objidx)
 	stx->mem.free = &stx->mem.slot[objidx];
 }
 
+void qse_stx_swapmem  (qse_stx_t* stx, qse_stx_objidx_t idx1, qse_stx_objidx_t idx2)
+{
+	qse_stx_objptr_t tmp;	
+
+	tmp = stx->mem.slot[idx1];
+	stx->mem.slot[idx1] = stx->mem.slot[idx2];
+	stx->mem.slot[idx2] = tmp;
+}

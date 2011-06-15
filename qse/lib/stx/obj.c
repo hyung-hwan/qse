@@ -12,7 +12,7 @@ qse_word_t qse_stx_allocwordobj (
 	qse_size_t total_bytes;
 	qse_stx_objidx_t idx;
 	qse_word_t ref;
-	qse_stx_wordobjptr_t ptr;
+	qse_stx_wordobj_t* ptr;
 
 	total_nflds = nflds + variable_nflds;
 	total_bytes = 
@@ -26,7 +26,7 @@ qse_word_t qse_stx_allocwordobj (
 	if (idx == QSE_STX_OBJIDX_INVALID) return stx->ref.nil;
 
 	ref = IDXTOREF(stx,idx);
-	ptr = (qse_stx_wordobjptr_t)PTRBYIDX(stx,idx);
+	ptr = (qse_stx_wordobj_t*)PTRBYIDX(stx,idx);
 
 	ptr->h._type    = QSE_STX_WORDOBJ;
 	ptr->h._mark    = 0;
@@ -71,19 +71,19 @@ qse_word_t qse_stx_allocbyteobj (
 {
 	qse_stx_objidx_t idx;
 	qse_word_t ref;
-	qse_stx_byteobjptr_t ptr;
+	qse_stx_byteobj_t* ptr;
 
 	idx = qse_stx_allocmem (
 		stx, variable_nflds + QSE_SIZEOF(qse_stx_objhdr_t));
 	if (idx == QSE_STX_OBJIDX_INVALID) return stx->ref.nil;
 
 	ref = QSE_STX_IDXTOREF(stx,idx);
-	ptr = (qse_stx_byteobjptr_t)PTRBYIDX(stx,idx);
+	ptr = (qse_stx_byteobj_t*)PTRBYIDX(stx,idx);
 
-	ptr->h._type     = QSE_STX_BYTEOBJ;
-	ptr->h._mark     = 0;
-	ptr->h._refcnt   = 0;
-	ptr->h._size   = variable_nflds;
+	ptr->h._type    = QSE_STX_BYTEOBJ;
+	ptr->h._mark    = 0;
+	ptr->h._refcnt  = 0;
+	ptr->h._size    = variable_nflds;
 	ptr->h._class   = stx->ref.nil;
 	ptr->h._backref = ref;
 
@@ -114,7 +114,7 @@ qse_word_t qse_stx_alloccharobj (
 {
 	qse_stx_objidx_t idx;
 	qse_word_t ref;
-	qse_stx_charobjptr_t ptr;
+	qse_stx_charobj_t* ptr;
 	qse_size_t total_bytes;
 
 	total_bytes =
@@ -125,14 +125,17 @@ qse_word_t qse_stx_alloccharobj (
 	if (idx == QSE_STX_OBJIDX_INVALID) return stx->ref.nil;
 
 	ref = QSE_STX_IDXTOREF(stx,idx);
-	ptr = (qse_stx_charobjptr_t)PTRBYIDX(stx,idx);
+	ptr = (qse_stx_charobj_t*)PTRBYIDX(stx,idx);
 
 	ptr->h._type     = QSE_STX_CHAROBJ;
 	ptr->h._mark     = 0;
 	ptr->h._refcnt   = 0;
-	ptr->h._size   = variable_nflds;
-	ptr->h._class   = stx->ref.nil;
-	ptr->h._backref = ref;
+	/* the size for the character object does not include
+	 * the extra 1 byte allocated for an implicit terminating 
+	 * '\0' character */
+	ptr->h._size     = variable_nflds; 
+	ptr->h._class    = stx->ref.nil;
+	ptr->h._backref  = ref;
 
 	if (variable_data)
 	{
@@ -189,118 +192,7 @@ qse_word_t qse_stx_allocn_char_object (qse_stx_t* stx, ...)
 }
 #endif
 
-qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
-{
-	qse_word_t hv;
-
-	if (REFISINT(stx, ref)) 
-	{
-		qse_word_t tmp = REFTOINT(stx, ref);
-		hv = qse_stx_hashbytes (stx, &tmp, QSE_SIZEOF(tmp));
-	}
-	else
-	{
-		switch (OBJTYPE(stx,ref))
-		{
-			case BYTEOBJ:
-				hv = qse_stx_hashbytes (
-					stx,
-					&BYTEAT(stx,ref,0),
-					OBJSIZE(stx,ref)
-				);
-				break;
-
-			case CHAROBJ:
-				/* the additional null is not taken into account */
-				hv = qse_stx_hashbytes (
-					stx,
-					&CHARAT(stx,ref,0),
-					OBJSIZE(stx,ref) * QSE_SIZEOF(qse_char_t)
-				);
-				break;
-
-			case WORDOBJ:
-				hv = qse_stx_hashbytes (
-					stx, 
-					&WORDAT(stx,ref,0),
-					OBJSIZE(stx,ref) * QSE_SIZEOF(qse_word_t)
-				);
-				break;
-
-			default:		
-				QSE_ASSERT (
-					!"This should never happen"
-				);
-				break;
-		}
-	}
-
-	return hv;
-}
-
 #if 0
-qse_word_t qse_stx_instantiate (
-	qse_stx_t* stx, qse_stx_objref_t class, const void* data, 
-	const void* variable_data, qse_word_t variable_nflds)
-{
-	qse_stx_class_t* class_ptr;
-	qse_word_t spec, nflds, inst;
-	int indexable;
-
-	QSE_ASSERT (class != stx->class_smallinteger);
-	class_ptr = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
-
-	/* don't instantiate a metaclass whose instance must be 
-	   created in a different way */
-	/* TODO: maybe delete the following line */
-	QSE_ASSERT (QSE_STX_CLASS(class) != stx->class_metaclass);
-	QSE_ASSERT (QSE_STX_ISSMALLINT(class_obj->spec));
-
-	spec = QSE_STX_FROMSMALLINT(class_obj->spec);
-	nflds = (spec >> QSE_STX_SPEC_INDEXABLE_BITS);
-	indexable = spec & QSE_STX_SPEC_INDEXABLE_MASK;
-
-	switch (indexable)
-	{
-		case QSE_STX_SPEC_BYTE_INDEXABLE:
-			/* variable-size byte class */
-			QSE_ASSERT (nflds == 0 && data == QSE_NULL);
-			inst = qse_stx_alloc_byte_object(
-				stx, variable_data, variable_nflds);
-			break;
-
-		case QSE_STX_SPEC_CHAR_INDEXABLE:
-			/* variable-size char class */
-			QSE_ASSERT (nflds == 0 && data == QSE_NULL);
-			inst = qse_stx_alloc_char_objectx(
-				stx, variable_data, variable_nflds);
-			break;
-
-		case QSE_STX_SPEC_WORD_INDEXABLE:
-			/* variable-size class */
-			inst = qse_stx_alloc_word_object (
-				stx, data, nflds, variable_data, variable_nflds);
-			break;
-
-		case QSE_STX_SPEC_FIXED:
-			/* fixed size */
-			QSE_ASSERT (indexable == QSE_STX_SPEC_NOT_INDEXABLE);
-			QSE_ASSERT (variable_nflds == 0 && variable_data == QSE_NULL);
-			inst = qse_stx_alloc_word_object (
-				stx, data, nflds, QSE_NULL, 0);
-			break;
-
-		default:
-			/* this should never happen */	
-			QSE_ASSERTX (0, "this should never happen");
-			inst = QSE_STX_OBJREF_INVALID;
-	}
-
-	if (inst != QSE_STX_OBJREF_INVALID) 
-		QSE_STX_CLASSOF(stx,inst) = class;
-	return inst;
-}
-
 qse_word_t qse_stx_class (qse_stx_t* stx, qse_stx_objref_t obj)
 {
 	return QSE_STX_ISSMALLINT(obj)? 

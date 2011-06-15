@@ -32,6 +32,12 @@ void qse_stx_freemem (
 	qse_stx_objidx_t objidx
 );
 
+void qse_stx_swapmem (
+	qse_stx_t*       stx,
+	qse_stx_objidx_t idx1,
+	qse_stx_objidx_t idx2
+);
+
 #ifdef __cplusplus
 }
 #endif
