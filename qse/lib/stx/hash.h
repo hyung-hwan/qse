@@ -26,6 +26,13 @@ qse_word_t qse_stx_hashstrx (
 	qse_word_t        len
 );
 
+qse_word_t qse_stx_hashobj (
+	qse_stx_t* stx,
+	qse_word_t ref
+);
+
+
+
 #ifdef __cplusplus
 }
 #endif

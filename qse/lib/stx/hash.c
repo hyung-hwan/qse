@@ -5,7 +5,7 @@
 #include "stx.h"
 #include <qse/cmn/str.h>
 
-qse_word_t qse_stx_hashbyte (qse_stx_t* stx, const void* data, qse_word_t len)
+qse_word_t qse_stx_hashbytes (qse_stx_t* stx, const void* data, qse_word_t len)
 {
 	qse_word_t h = 0;
 	qse_byte_t* bp, * be;
@@ -38,6 +38,54 @@ qse_word_t qse_stx_hashstrx (qse_stx_t* stx, const qse_char_t* str, qse_word_t l
 	return qse_stx_hashbytes (stx, str, len * QSE_SIZEOF(*str));
 }
 
+qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
+{
+	qse_word_t hv;
+
+	if (REFISINT(stx, ref)) 
+	{
+		qse_word_t tmp = REFTOINT(stx, ref);
+		hv = qse_stx_hashbytes (stx, &tmp, QSE_SIZEOF(tmp));
+	}
+	else
+	{
+		switch (OBJTYPE(stx,ref))
+		{
+			case BYTEOBJ:
+				hv = qse_stx_hashbytes (
+					stx,
+					&BYTEAT(stx,ref,0),
+					OBJSIZE(stx,ref)
+				);
+				break;
+
+			case CHAROBJ:
+				/* the additional null is not taken into account */
+				hv = qse_stx_hashbytes (
+					stx,
+					&CHARAT(stx,ref,0),
+					OBJSIZE(stx,ref) * QSE_SIZEOF(qse_char_t)
+				);
+				break;
+
+			case WORDOBJ:
+				hv = qse_stx_hashbytes (
+					stx, 
+					&WORDAT(stx,ref,0),
+					OBJSIZE(stx,ref) * QSE_SIZEOF(qse_word_t)
+				);
+				break;
+
+			default:		
+				QSE_ASSERT (
+					!"This should never happen"
+				);
+				break;
+		}
+	}
+
+	return hv;
+}
 
 #if 0
 qse_char_t* qse_stx_strword (

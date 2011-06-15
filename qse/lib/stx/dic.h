@@ -9,7 +9,7 @@
 #define QSE_STX_ASSOC_KEY   0
 #define QSE_STX_ASSOC_VALUE 1
 
-/* The SystemDictionary is a word variable class. 
+/* The SystemDictionary is a variable word class. 
  * The info below is for the fixed part only */
 #define QSE_STX_DIC_SIZE  1
 #define QSE_STX_DIC_TALLY 0

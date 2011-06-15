@@ -2,53 +2,92 @@
  * $Id: class.c 118 2008-03-03 11:21:33Z baconevi $
  */
 
-#include <qse/stx/class.h>
-#include <qse/stx/symbol.h>
-#include <qse/stx/object.h>
-#include <qse/stx/dict.h>
-#include <qse/stx/misc.h>
+#include "stx.h"
+
+struct qse_stx_class_t
+{
+	qse_stx_objhdr_t h;
+	qse_word_t spec; /* indexable: 2, nfields: the rest */
+	qse_word_t methods;
+	qse_word_t superclass;
+	qse_word_t subclasses;
+	qse_word_t name;
+	qse_word_t variables;
+	qse_word_t class_variables;
+	qse_word_t pool_dictonaries;
+};
+
+struct qse_stx_metaclass_t
+{
+	qse_stx_objhdr_t h;
+	qse_word_t spec;
+	qse_word_t methods;
+	qse_word_t superclass;
+	qse_word_t subclasses;
+	qse_word_t instance_class;
+};
+
+typedef struct qse_stx_class_t qse_stx_class_t;
+typedef struct qse_stx_metaclass_t qse_stx_metaclass_t;
 
 qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
 {
 	qse_word_t meta, class;
 	qse_word_t class_name;
 
-	meta = qse_stx_alloc_word_object (
+	QSE_ASSERT (REFISIDX(stx,stx->ref.class_metaclass));
+	
+	meta = qse_stx_allocwordobj (
 		stx, QSE_NULL, QSE_STX_METACLASS_SIZE, QSE_NULL, 0);
-	QSE_STX_CLASS(stx,meta) = stx->class_metaclass;
+	if (meta == stx->ref.nil) return stx->ref.nil;
+	OBJCLASS(stx,meta) = stx->ref.class_metaclass;
+
 	/* the spec of the metaclass must be the spec of its
 	 * instance. so the QSE_STX_CLASS_SIZE is set */
-	QSE_STX_WORD_AT(stx,meta,QSE_STX_METACLASS_SPEC) = 
-		QSE_STX_TO_SMALLINT((QSE_STX_CLASS_SIZE << QSE_STX_SPEC_INDEXABLE_BITS) | QSE_STX_SPEC_NOT_INDEXABLE);
+	WORDAT(stx,meta,QSE_STX_METACLASS_SPEC) = 
+		INTTOREF(stx,MAKE_SPEC(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
 	
 	/* the spec of the class is set later in __create_builtin_classes */
-	class = qse_stx_alloc_word_object (
+	class = qse_stx_allocwordobj (
 		stx, QSE_NULL, QSE_STX_CLASS_SIZE, QSE_NULL, 0);
-	QSE_STX_CLASS(stx,class) = meta;
-	class_name = qse_stx_new_symbol (stx, name);
-	QSE_STX_WORD_AT(stx,class,QSE_STX_CLASS_NAME) = class_name;
+	OBJCLASS(stx,class) = meta;
 
-	qse_stx_dict_put (stx, stx->smalltalk, class_name, class);
-	return class;
+	class_name = qse_stx_newsymbol (stx, name);
+	if (class_name == stx->ref.nil) return stx->ref.nil;
+
+	WORDAT(stx,class,QSE_STX_CLASS_NAME) = class_name;
+
+	return (qse_stx_putdic (stx, stx->ref.sysdic, class_name, class) == stx->ref.nil)? stx->ref.nil: class;
 }
 
 qse_word_t qse_stx_findclass (qse_stx_t* stx, const qse_char_t* name)
 {
 	qse_word_t assoc, meta, value;
 
-	assoc = qse_stx_dict_lookup (stx, stx->ref.sysdic, name);
-	if (assoc == stx->nil) 
+	/* look up the system dictionary for the name given */
+	assoc = qse_stx_lookupdic (stx, stx->ref.sysdic, name);
+	if (assoc == stx->ref.nil) 
 	{
-		return stx->nil;
+		/*qse_stx_seterrnum (stx, QSE_STX_ENOCLASS, QSE_NULL);*/
+		return stx->ref.nil;
 	}
 
-	value = QSE_STX_WORD_AT(stx,assoc,QSE_STX_ASSOCIATION_VALUE);
-	meta = QSE_STX_CLASS(stx,value);
-	if (QSE_STX_CLASS(stx,meta) != stx->ref.class_metaclass) return stx->nil;
+	/* get the value part in the association for the name */
+	value = WORDAT(stx,assoc,QSE_STX_ASSOC_VALUE);
+
+	/* check if its class is Metaclass because the class of
+	 * a class object must be Metaclass. */
+	meta = OBJCLASS(stx,value);
+	if (OBJCLASS(stx,meta) != stx->ref.class_metaclass) 
+	{
+		/*qse_stx_seterrnum (stx, QSE_STX_ENOTCLASS, QSE_NULL);*/
+		return stx->ref.nil;
+	}
 
 	return value;
 }
 
+#if 0
 int qse_stx_get_instance_variable_index (
 	qse_stx_t* stx, qse_word_t class_index, 
 	const qse_char_t* name, qse_word_t* index)
@@ -166,9 +205,10 @@ qse_word_t qse_stx_lookup_method (qse_stx_t* stx,
 
 	return stx->nil;
 }
+#endif
 
 qse_word_t qse_stx_instantiate (
-	qse_stx_t* stx, qse_word_t classref, void* data, 
+	qse_stx_t* stx, qse_word_t classref, const void* data, 
 	const void* variable_data, qse_word_t variable_nflds)
 {
 	qse_stx_class_t* classptr;
@@ -182,13 +222,10 @@ qse_word_t qse_stx_instantiate (
 	   created in a different way */
 	QSE_ASSERT (OBJCLASS(stx,classref) != stx->ref.class_metaclass);
 
-	classptr = (qse_stx_class_t*) PTRBYRFF (stx, classref);
-
-	/* TODO: maybe delete the following line */
-	QSE_ASSERT (QSE_STX_CLASS(class) != stx->class_metaclass);
+	classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
 	QSE_ASSERT (REFISINT(stx,classptr->spec));
 
-	spec = REFTOINT(classptr->spec);
+	spec = REFTOINT(stx,classptr->spec);
 	nflds = (spec >> SPEC_VARIABLE_BITS);
 	variable = spec & SPEC_VARIABLE_MASK;
 
@@ -197,7 +234,7 @@ qse_word_t qse_stx_instantiate (
 		case SPEC_VARIABLE_BYTE:
 			/* variable-size byte class */
 			QSE_ASSERT (nflds == 0 && data == QSE_NULL);
-			inst = qse_stx_allocbyteobj(
+			inst = qse_stx_allocbyteobj (
 				stx, variable_data, variable_nflds);
 			break;
 
@@ -224,10 +261,12 @@ qse_word_t qse_stx_instantiate (
 		default:
 			/* this should never happen */	
 			QSE_ASSERTX (0, "this should never happen");
-			qse_stx_seterror
-			inst = stx->ref.nil;
+			qse_stx_seterrnum (stx, QSE_STX_EINTERN, QSE_NULL);
+			return stx->ref.nil;
 	}
 
-	if (inst != stx->ref.nil) OBJCLASS(stx,inst) = classref;
+	QSE_ASSERT (inst != stx->ref.nil);
+
+	OBJCLASS(stx,inst) = classref;
 	return inst;
 }

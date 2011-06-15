@@ -16,25 +16,95 @@ struct qse_stx_symtab_t
 
 typedef struct qse_stx_symtab_t qse_stx_symtab_t;
 
-qse_word_t qse_stx_newsymbol (
+static qse_word_t expand (qse_stx_t* stx, qse_word_t tabref)
+{
+	qse_word_t oldcapa, newcapa;
+	qse_word_t newtab;
+	qse_stx_symtab_t* oldptr, * newptr;
+
+	QSE_ASSERTX (
+		REFISIDX(stx,tabref), 
+		"The reference is not an object index"
+	);
+
+	/* This function can handle expansion of an object whose class is
+	 * SystemSymbolTable. During initial bootstrapping, the class of
+	 * the stock symbol table (stx->ref.symtab) may not be set properly.
+	 * You must make sure that expansion is not triggered until its class
+	 * is set. If this assertion fails, you must increase the value of
+	 * SYMTAB_INIT_CAPA.
+	 */
+	QSE_ASSERT (OBJCLASS(stx,tabref) == stx->ref.class_systemsymboltable);
+
+	/* get the current table capacity being the size of the object
+	 * excluding the tally field. */
+	oldcapa = OBJSIZE(stx,tabref) - 1;
+
+	/* instantiate a new symbol table with its capacity doubled. */
+	newcapa = oldcapa * 2;
+	newtab = qse_stx_instantiate (
+		stx, OBJCLASS(stx,tabref), 
+		QSE_NULL, QSE_NULL, newcapa + 1 
+	); 
+	if (newtab == stx->ref.nil) return stx->ref.nil;
+
+	oldptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
+	newptr = (qse_stx_symtab_t*)PTRBYREF(stx,newtab);
+	newptr->tally = INTTOREF (stx, 0);
+
+	while (oldcapa > 0)
+	{
+		qse_word_t symbol;
+
+		symbol = oldptr->slot[--oldcapa];
+		if (symbol != stx->ref.nil)
+		{
+			qse_word_t index;
+
+			QSE_ASSERT (REFISIDX(stx,symbol));
+			QSE_ASSERT (OBJCLASS(stx,symbol) == stx->ref.class_symbol);
+			QSE_ASSERT (OBJTYPE(stx,symbol) == CHAROBJ);
+
+			/* qse_stx_newsymbol uses qse_stx_hashstr().
+			 * this function uses qse_stx_hashobj(). 
+			 * both must return the same value */
+			QSE_ASSERT (qse_stx_hashobj (stx, symbol) == 
+			            qse_stx_hashstr (stx, &CHARAT(stx,symbol,0)));
+
+			index = qse_stx_hashobj (stx, symbol) % newcapa;
+			while (newptr->slot[index] != stx->ref.nil) 
+				index = (index + 1) % newcapa;
+			newptr->slot[index] = symbol;
+		}
+	}
+
+	qse_stx_swapmem (stx, REFTOIDX(stx,tabref), REFTOIDX(stx,newtab));
+	
+	newptr->tally = oldptr->tally;
+	return tabref;
+}
+
+
+static qse_word_t new_symbol (
 	qse_stx_t* stx, qse_word_t tabref, const qse_char_t* name)
 {
 	qse_stx_symtab_t* tabptr;
 	qse_word_t symref;
-	qse_word_t capa, hash, tally;
+	qse_word_t capa, hash, index, tally;
 
 	/* the table must have at least one slot excluding the tally field */
 	QSE_ASSERT (OBJSIZE(stx,tabref) > 1);
 
 	capa = OBJSIZE(stx,tabref) - 1; /* exclude the tally field */
-	hash = qse_stx_hashstr (stx, name) % capa;
+	hash = qse_stx_hashstr (stx, name);
+	index = hash % capa;
 
 	tabptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
-	tally = REFTOINT(stx, tabptr->tally);
 
 	do
 	{
-		symref = tabptr->slot[hash];
+		/*symref = WORDAT (stx, tabref, index + 1);*/
+		symref = tabptr->slot[index];
 		if (symref == stx->ref.nil) break; /* not found */
 
 		QSE_ASSERT (REFISIDX(stx,symref));
@@ -46,20 +116,31 @@ qse_word_t qse_stx_newsymbol (
 			name) == 0) return symref;*/
 		if (qse_strcmp (&CHARAT(stx,symref,0), name) == 0) return symref;
 			
-		hash = (hash + 1) % capa;
+		index = (index + 1) % capa;
 	}
 	while (0);
 
+	/* symbol is not found. let's create a new symbol */
+	tally = REFTOINT(stx, tabptr->tally);
+
+	/* check if the symbol table is getting full soon */
 	if (tally + 1 >= capa)
 	{
-		/* Enlarge the symbol table before it gets full to make sure that 
-		 * it has at least one free slot. */
+		/* Enlarge the symbol table before it gets full to 
+		 * make sure that it has at least one free slot left
+		 * after having added a new symbol. this is to help
+		 * traversal end at a nil slot if no entry is found. */
+		if (expand (stx, tabref) == stx->ref.nil) return stx->ref.nil;
 
-#if 0
-		if (grow (stx, tab) <= -1) return -1;
-		/* refresh tally */
-		tally = REFTOINT (stx, tabptr->tally);
-#endif
+		/* refresh the object pointer */
+		tabptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
+
+		/* refersh capacity and hash index */
+		capa = OBJSIZE(stx,tabref) - 1; /* exclude the tally field */
+		index = hash % capa;
+
+		/* after expansion, the tally must still be the same */
+		QSE_ASSERT (tally == REFTOINT (stx, tabptr->tally));
 	}
 
 	symref = qse_stx_alloccharobj (stx, name, qse_strlen(name));
@@ -67,105 +148,18 @@ qse_word_t qse_stx_newsymbol (
 	{
 		OBJCLASS(stx,symref) = stx->ref.class_symbol;
 		tabptr->tally = INTTOREF (stx, tally + 1);
-		tabptr->slot[hash] = symref;
+		tabptr->slot[index] = symref;
 	}
 
 	return symref;
 }
 
+qse_word_t qse_stx_newsymbol (qse_stx_t* stx, const qse_char_t* name)
+{
+	return new_symbol (stx, stx->ref.symtab, name);
+}
+
 #if 0
-#include "stx.h"
-
-static int __grow_symtab (qse_stx_t* stx)
-{
-	qse_word_t capa, ncapa, i, j;
-	qse_word_t* nspace;
-
-	capa = stx->symtab.capa;
-	ncapa = capa << 1; /* double the capacity */
-
-/* TODO: allocate symbol table from stx->mem......... */
-	nspace = (qse_word_t*) QSE_MMGR_ALLOC (
-		stx->mmgr, ncapa * QSE_SIZEOF(*nspace)
-	);
-	if (nspace == QSE_NULL) 
-	{
-		/* TODO: handle memory error */
-		qse_stx_seterrnum (stx, QSE_STX_ENOMEM);
-		return -1;
-	}
-
-	for (i = 0; i < capa; i++) 
-	{
-		qse_word_t x = stx->symtab.slot[i];
-		if (x == stx->nil) continue;
-
-		j = qse_stx_strxhash (
-			QSE_STX_DATA(stx,x), QSE_STX_SIZE(stx,x)) % ncapa;
-
-		while (1) 
-		{
-			if (nspace[j] == stx->nil) 
-			{
-				nspace[j] = x;
-				break;
-			}
-			j = (j % ncapa) + 1;
-		}
-	}
-
-	stx->symtab.capa = ncapa;	
-	QSE_MMGR_FREE (stx->mmgr, stx->symtab.slot);
-	stx->symtab.slot = nspace;
-
-	return 0;
-}
-
-qse_word_t qse_stx_newsym (qse_stx_t* stx, const qse_char_t* name)
-{
-	return qse_stx_newsymwithlen (stx, name, qse_strlen(name));
-}
-
-qse_word_t qse_stx_newsymwithlen (qse_stx_t* stx, const qse_char_t* name, qse_word_t len)
-{
-	qse_word_t capa, hash, index, size, x;
-
-	capa = stx->symtab.capa;
-	size = stx->symtab.size;
-
-	if (capa <= size + 1) 
-	{
-		if (__grow_symtab (stx) <= -1)
-		{
-/* TODO: .... */
-		}
-		capa = stx->symtab.capa;
-	}
-
-	hash = qse_stx_strxhash(name,len);
-	index = hash % stx->symtab.capa;
-
-	while (1) 
-	{
-		x = stx->symtab.slot[index];
-		if (x == stx->nil) 
-		{
-			/* insert a new item into an empty slot */
-			x = qse_stx_alloc_char_objectx (stx, name, len);
-			QSE_STX_CLASS(stx,x) = stx->class_symbol;
-			stx->symtab.slot[index] = x;
-			stx->symtab.size++;
-			break;
-		}
-
-		if (qse_strxncmp (name, len, QSE_STX_DATA(stx,x), QSE_STX_SIZE(stx,x)) == 0) break;
-
-		index = (index % stx->symtab.capa) + 1;
-	}
-
-	return x;
-}
-
 void qse_stx_traverse_symbol_table (
 	qse_stx_t* stx, void (*func) (qse_stx_t*,qse_word_t,void*), void* data)
 {

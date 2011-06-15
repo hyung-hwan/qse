@@ -5,7 +5,7 @@
 #ifndef _QSE_LIB_STX_SYM_H_
 #define _QSE_LIB_STX_SYM_H_
 
-/* The SystemSymbolTable is a word variable class. 
+/* The SystemSymbolTable is a variable word class. 
  * The info below is for the fixed part only */
 #define QSE_STX_SYMTAB_SIZE  1
 #define QSE_STX_SYMTAB_TALLY 0
@@ -16,7 +16,6 @@ extern "C" {
 
 qse_word_t qse_stx_newsymbol (
 	qse_stx_t*        stx,
-	qse_word_t        tabref,
 	const qse_char_t* name
 );
 
