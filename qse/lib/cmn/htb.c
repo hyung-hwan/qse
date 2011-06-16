@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: htb.c 492 2011-06-15 16:00:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -271,7 +271,7 @@ htb_t* qse_htb_open (
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(htb_t) + xtnsize);
+	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, SIZEOF(htb_t) + xtnsize);
 	if (htb == QSE_NULL) return QSE_NULL;
 
 	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) == QSE_NULL)
