@@ -5,6 +5,32 @@
 #ifndef _QSE_LIB_STX_CLS_H_
 #define _QSE_LIB_STX_CLS_H_
 
+struct qse_stx_class_t
+{
+	qse_stx_objhdr_t h;
+	qse_word_t spec; /* indexable: 2, nfields: the rest */
+	qse_word_t methods;
+	qse_word_t superclass;
+	qse_word_t subclasses;
+	qse_word_t name;
+	qse_word_t variables;
+	qse_word_t class_variables;
+	qse_word_t pool_dictonaries;
+};
+
+struct qse_stx_metaclass_t
+{
+	qse_stx_objhdr_t h;
+	qse_word_t spec;
+	qse_word_t methods;
+	qse_word_t superclass;
+	qse_word_t subclasses;
+	qse_word_t instance_class;
+};
+
+typedef struct qse_stx_class_t qse_stx_class_t;
+typedef struct qse_stx_metaclass_t qse_stx_metaclass_t;
+
 #define QSE_STX_CLASS_SIZE              8
 #define QSE_STX_CLASS_SPEC              0
 #define QSE_STX_CLASS_METHODS           1
@@ -30,8 +56,10 @@
 #define SPEC_VARIABLE_BYTE  0x02
 #define SPEC_VARIABLE_CHAR  0x03
 
-#define MAKE_SPEC(nflds,variable) \
-	(((nflds) << SPEC_VARIABLE_BITS) | (variable))
+#define SPEC_MAKE(fixed,variable) \
+	(((fixed) << SPEC_VARIABLE_BITS) | (variable))
+
+#define SPEC_GETFIXED(spec) ((spec) >> SPEC_VARIABLE_BITS)
 
 #ifdef __cplusplus
 extern "C" {

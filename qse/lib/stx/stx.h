@@ -18,14 +18,6 @@ typedef struct qse_stx_byteobj_t qse_stx_byteobj_t;
 typedef struct qse_stx_charobj_t qse_stx_charobj_t;
 typedef struct qse_stx_wordobj_t qse_stx_wordobj_t;
 
-#include "hash.h"
-#include "mem.h"
-#include "obj.h"
-#include "sym.h"
-#include "dic.h"
-#include "cls.h"
-#include "boot.h"
-
 enum qse_stx_objtype_t
 {
 	QSE_STX_BYTEOBJ = 0,
@@ -62,6 +54,14 @@ word fixed
 	qse_word_t _class;
 	qse_word_t _backref;
 };
+
+#include "hash.h"
+#include "mem.h"
+#include "obj.h"
+#include "sym.h"
+#include "dic.h"
+#include "cls.h"
+#include "boot.h"
 
 struct qse_stx_object_t
 {
@@ -208,6 +208,9 @@ struct qse_stx_t
 /* SOME INTERNAL MACRO DEFINITIONS */
 #define SYMTAB_INIT_CAPA 256
 #define SYSDIC_INIT_CAPA 256
+
+#define ISNIL(stx,obj) ((obj) == (stx)->ref.nil)
+#define NIL(stx)       ((stx)->ref.nil)
 
 #ifdef __cplusplus
 extern "C" {

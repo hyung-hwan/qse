@@ -4,32 +4,6 @@
 
 #include "stx.h"
 
-struct qse_stx_class_t
-{
-	qse_stx_objhdr_t h;
-	qse_word_t spec; /* indexable: 2, nfields: the rest */
-	qse_word_t methods;
-	qse_word_t superclass;
-	qse_word_t subclasses;
-	qse_word_t name;
-	qse_word_t variables;
-	qse_word_t class_variables;
-	qse_word_t pool_dictonaries;
-};
-
-struct qse_stx_metaclass_t
-{
-	qse_stx_objhdr_t h;
-	qse_word_t spec;
-	qse_word_t methods;
-	qse_word_t superclass;
-	qse_word_t subclasses;
-	qse_word_t instance_class;
-};
-
-typedef struct qse_stx_class_t qse_stx_class_t;
-typedef struct qse_stx_metaclass_t qse_stx_metaclass_t;
-
 qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
 {
 	qse_word_t meta, class;
@@ -45,7 +19,7 @@ qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
 	/* the spec of the metaclass must be the spec of its
 	 * instance. so the QSE_STX_CLASS_SIZE is set */
 	WORDAT(stx,meta,QSE_STX_METACLASS_SPEC) = 
-		INTTOREF(stx,MAKE_SPEC(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
+		INTTOREF(stx,SPEC_MAKE(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
 	
 	/* the spec of the class is set later in __create_builtin_classes */
 	class = qse_stx_allocwordobj (

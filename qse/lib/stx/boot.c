@@ -6,8 +6,8 @@
 #include <qse/cmn/str.h>
 
 static int make_intrinsic_classes (qse_stx_t* stx);
-#if 0
-static qse_word_t __make_classvar_dict (
+
+static qse_word_t __make_classvar_dic (
 	qse_stx_t* stx, qse_word_t class, const qse_char_t* names);
 static void __filein_kernel (qse_stx_t* stx);
 
@@ -20,7 +20,6 @@ static void __set_subclasses (
 	qse_stx_t* stx, qse_word_t* array, const qse_char_t* str);
 static void __set_metaclass_subclasses (
 	qse_stx_t* stx, qse_word_t* array, const qse_char_t* str);
-#endif
 
 struct class_info_t 
 {
@@ -284,7 +283,7 @@ qse_word_t QSE_INLINE new_string (qse_stx_t* stx, const qse_char_t* str)
 	qse_word_t x;
 
 	QSE_ASSERT (REFISIDX(stx,stx->ref.class_string));
-	QSE_ASSERT (stx->ref.class_string != stx->ref.nil);
+	QSE_ASSERT (!ISNIL(stx,stx->ref.class_string));
 
 	x = qse_stx_alloccharobj (stx, str, qse_strlen(str));
 	if (x != stx->ref.nil) OBJCLASS(stx,x) = stx->ref.class_string;
@@ -295,89 +294,98 @@ qse_word_t QSE_INLINE new_string (qse_stx_t* stx, const qse_char_t* str)
 static int make_intrinsic_classes (qse_stx_t* stx)
 {
 	class_info_t* p;
-	qse_word_t class, superclass, array;
-	qse_stx_class_t* class_obj, * superclass_obj;
-	qse_word_t metaclass;
-	qse_stx_metaclass_t* metaclass_obj;
-	qse_word_t n, nfields;
+	qse_word_t n;
 
-	QSE_ASSERT (stx->class_array != stx->ref.nil);
+	QSE_ASSERT (!ISNIL(stx,stx->ref.class_array));
 
 	for (p = class_info; p->name != QSE_NULL; p++) 
 	{
-		class = qse_stx_findclass(stx, p->name);
-		if (class == stx->ref.nil) 
+		qse_word_t classref;
+		qse_stx_class_t* classptr;
+		qse_word_t nfixed;
+
+		classref = qse_stx_findclass(stx, p->name);
+		if (ISNIL(stx,classref)) 
 		{
-			class = qse_stx_newclass (stx, p->name);
-			if (class == stx->ref.nil) return stx->ref.nil;
+			classref = qse_stx_newclass (stx, p->name);
+			if (ISNIL(stx,classref)) return NIL(stx);
 		}
 
-		QSE_ASSERT (class != stx->ref.nil);
-
-		class_obj = (qse_stx_class_t*)PTRBYREF(stx,class);
+		classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
 		if (p->superclass)
 		{
-			class_obj->superclass = qse_stx_findclass(stx,p->superclass);
-			QSE_ASSERT (class_obj->superclass != stx->ref.nil);
+			classptr->superclass = qse_stx_findclass(stx,p->superclass);
+			QSE_ASSERT (!ISNIL(stx,classptr->superclass));
 		}
 		
-		nfields = 0;
+		nfixed = 0;
+
+		/* resolve the number of fixed fields in the superclass chain */
 		if (p->superclass)
 		{
-			qse_word_t meta;
-			qse_stx_metaclass_t* meta_obj;
+			qse_word_t superref; 
+			qse_stx_class_t* superptr;
 
-			superclass = qse_stx_findclass (stx, p->superclass);
-			QSE_ASSERT (superclass != stx->ref.nil);
+			qse_word_t metaref;
+			qse_stx_metaclass_t* metaptr;
 
-			meta = class_obj->h._class;
-			meta_obj = (qse_stx_metaclass_t*)PTRBYREF(stx,meta);
-			meta_obj->superclass = OBJCLASS(stx,superclass);
-			meta_obj->instance_class = class;
+			superref = qse_stx_findclass (stx, p->superclass);
+			QSE_ASSERT (!ISNIL(stx,superref));
 
-			while (superclass != stx->ref.nil) 
+			metaref = OBJCLASS(stx,classref);
+			metaptr = (qse_stx_metaclass_t*)PTRBYREF(stx,metaref);
+			metaptr->superclass = OBJCLASS(stx,superref);
+			metaptr->instance_class = classref;
+
+			do
 			{
-				superclass_obj = (qse_stx_class_t*)
-					QSE_STX_OBJPTR(stx,superclass);
-				nfields += 
-					QSE_STX_FROMSMALLINT(superclass_obj->spec) >>
-					QSE_STX_SPEC_INDEXABLE_BITS;
-				superclass = superclass_obj->superclass;
+				superptr = (qse_stx_class_t*)PTRBYREF(stx,superref);
+				nfixed += SPEC_GETFIXED(REFTOINT(stx,superptr->spec));
+				superref = superptr->superclass;
 			}
+			while (!ISNIL(stx,superref));
 		}
 
+		/* add the number of instance variables to the number of 
+		 * fixed fields */
 		if (p->instance_variables)
 		{
-			nfields += __count_names (p->instance_variables);
-			class_obj->variables = 
+			nfixed += __count_names (p->instance_variables);
+			classptr->variables = 
 				new_string (stx, p->instance_variables);
-			if (class_obj->variables == stx->ref.nil) return -1;
+			if (ISNIL(stx,classptr->variables)) return  -1;
 		}
 
-		QSE_ASSERT (nfields <= 0 || (nfields > 0 && 
-			(p->spec == SPEC_FIXED_WORD || 
-			 p->spec == SPEC_VARIABLE_WORD)));
+		QSE_ASSERT (
+			nfixed <= 0 || 
+			(nfixed > 0 && (p->spec == SPEC_FIXED_WORD || 
+		                      p->spec == SPEC_VARIABLE_WORD)));
 	
-		class_obj->spec = MAKE_SPEC (nfields, p->spec);
+		classptr->spec = SPEC_MAKE (nfixed, p->spec);
 	}
 
 	for (p = class_info; p->name != QSE_NULL; p++) 
 	{
-		class = qse_stx_lookup_class(stx, p->name);
-		QSE_ASSERT (class != stx->ref.nil);
+		qse_word_t classref;
+		qse_stx_class_t* classptr;
 
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
+		classref = qse_stx_findclass (stx, p->name);
+		QSE_ASSERT (!ISNIL(stx,classref));
+
+		classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
 
 		if (p->class_variables != QSE_NULL) 
 		{
-			class_obj->class_variables = 
-				__make_classvar_dict(stx, class, p->class_variables);
+			classptr->class_variables = 
+				__make_classvar_dic(stx, classref, p->class_variables);
+
+			if (ISNIL(stx,classptr->class_variables)) return NIL(stx);
 		}
 
 		/*
 		TODO:
 		if (p->pool_dictionaries != QSE_NULL) {
-			class_obj->pool_dictionaries =
+			classptr->pool_dictionaries =
 				__make_pool_dictionary(stx, class, p->pool_dictionaries);
 		}
 		*/
@@ -386,28 +394,44 @@ static int make_intrinsic_classes (qse_stx_t* stx)
 	/* fill subclasses */
 	for (p = class_info; p->name != QSE_NULL; p++) 
 	{
-		n = __count_subclasses (p->name);
-		array = qse_stx_new_array (stx, n);
-		__set_subclasses (stx, QSE_STX_DATA(stx,array), p->name);
+		qse_word_t classref;
+		qse_stx_class_t* classptr;
+		qse_word_t array;
 
-		class = qse_stx_lookup_class(stx, p->name);
-		QSE_ASSERT (class != stx->ref.nil);
-		class_obj = (qse_stx_class_t*)QSE_STX_OBJPTR(stx, class);
-		class_obj->subclasses = array;
+		n = __count_subclasses (p->name);
+		array = qse_stx_newarray (stx, n);
+		if (ISNIL(stx,array)) return NIL(stx);
+
+		__set_subclasses (stx, &WORDAT(stx,array,0), p->name);
+
+		classref = qse_stx_findclass (stx, p->name);
+		QSE_ASSERT (!ISNIL(stx,classref));
+
+		classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
+		classptr->subclasses = array;
 	}
 
 	/* fill subclasses for metaclasses */
 	for (p = class_info; p->name != QSE_NULL; p++) 
 	{
+		qse_word_t classref;
+		qse_stx_class_t* classptr;
+
+		qse_word_t metaref;
+		qse_stx_metaclass_t* metaptr;
+
+		qse_word_t array;
+
 		n = __count_subclasses (p->name);
 		array = qse_stx_new_array (stx, n);
-		__set_metaclass_subclasses (stx, QSE_STX_DATA(stx,array), p->name);
+		__set_metaclass_subclasses (stx, &WORDAT(stx,array,0), p->name);
 
-		class = qse_stx_lookup_class(stx, p->name);
-		QSE_ASSERT (class != stx->ref.nil);
-		metaclass = QSE_STX_CLASS(stx,class);
-		metaclass_obj = (qse_stx_metaclass_t*)QSE_STX_OBJPTR(stx, metaclass);
-		metaclass_obj->subclasses = array;
+		classref = qse_stx_findclass (stx, p->name);
+		QSE_ASSERT (!ISNIL(stx,classref));
+
+		metaref = OBJCLASS(stx,classref);
+		metaptr = (qse_stx_metaclass_t*)PTRBYREF(stx,metaref);
+		metaptr->subclasses = array;
 	}
 
 	return 0;
@@ -418,7 +442,8 @@ static qse_word_t __count_names (const qse_char_t* str)
 	qse_word_t n = 0;
 	const qse_char_t* p = str;
 
-	do {
+	do 
+	{
 		while (*p == QSE_T(' ') ||
 		       *p == QSE_T('\t')) p++;
 		if (*p == QSE_T('\0')) break;
@@ -427,7 +452,8 @@ static qse_word_t __count_names (const qse_char_t* str)
 		while (*p != QSE_T(' ') && 
 		       *p != QSE_T('\t') && 
 		       *p != QSE_T('\0')) p++;
-	} while (1);
+	} 
+	while (1);
 
 	return n;
 }
@@ -439,7 +465,8 @@ static void __set_names (
 	const qse_char_t* p = str;
 	const qse_char_t* name;
 
-	do {
+	do 
+	{
 		while (*p == QSE_T(' ') ||
 		       *p == QSE_T('\t')) p++;
 		if (*p == QSE_T('\0')) break;
@@ -449,8 +476,9 @@ static void __set_names (
 		       *p != QSE_T('\t') && 
 		       *p != QSE_T('\0')) p++;
 
-		array[n++] = qse_stx_new_symbolx (stx, name, p - name);
-	} while (1);
+		array[n++] = qse_stx_newsymbolx (stx, name, p - name);
+	}
+	while (1);
 }
 
 static qse_word_t __count_subclasses (const qse_char_t* str)
@@ -458,7 +486,8 @@ static qse_word_t __count_subclasses (const qse_char_t* str)
 	class_info_t* p;
 	qse_word_t n = 0;
 
-	for (p = class_info; p->name != QSE_NULL; p++) {
+	for (p = class_info; p->name != QSE_NULL; p++) 
+	{
 		if (p->superclass == QSE_NULL) continue;
 		if (qse_strcmp (str, p->superclass) == 0) n++;
 	}
@@ -472,11 +501,12 @@ static void __set_subclasses (
 	class_info_t* p;
 	qse_word_t n = 0, class;
 
-	for (p = class_info; p->name != QSE_NULL; p++) {
+	for (p = class_info; p->name != QSE_NULL; p++) 
+	{
 		if (p->superclass == QSE_NULL) continue;
 		if (qse_strcmp (str, p->superclass) != 0) continue;
-		class = qse_stx_lookup_class (stx, p->name);
-		QSE_ASSERT (class != stx->ref.nil);
+		class = qse_stx_findclass (stx, p->name);
+		QSE_ASSERT (!ISNIL(stx,class));
 		array[n++] = class;
 	}
 }
@@ -487,27 +517,31 @@ static void __set_metaclass_subclasses (
 	class_info_t* p;
 	qse_word_t n = 0, class;
 
-	for (p = class_info; p->name != QSE_NULL; p++) {
+	for (p = class_info; p->name != QSE_NULL; p++) 
+	{
 		if (p->superclass == QSE_NULL) continue;
 		if (qse_strcmp (str, p->superclass) != 0) continue;
-		class = qse_stx_lookup_class (stx, p->name);
-		QSE_ASSERT (class != stx->ref.nil);
-		array[n++] = QSE_STX_CLASS(stx,class);
+		class = qse_stx_findclass (stx, p->name);
+		QSE_ASSERT (!ISNIL(stx,class));
+		array[n++] = OBJCLASS(stx,class);
 	}
 }
 
-static qse_word_t __make_classvar_dict (
+static qse_word_t __make_classvar_dic (
 	qse_stx_t* stx, qse_word_t class, const qse_char_t* names)
 {
-	qse_word_t dict, symbol;
+	qse_word_t dic, symbol, assoc;
 	const qse_char_t* p = names;
 	const qse_char_t* name;
 
-	dict = qse_stx_instantiate (
-		stx, stx->class_systemdictionary,
+/* TODO: how to implement temporary GC prevention....???? */
+	dic = qse_stx_instantiate (
+		stx, stx->ref.class_systemdictionary,
 		QSE_NULL, QSE_NULL, __count_names(names));
+	if (ISNIL(stx,dic)) return NIL(stx);
 
-	do {
+	do 
+	{
 		while (*p == QSE_T(' ') ||
 		       *p == QSE_T('\t')) p++;
 		if (*p == QSE_T('\0')) break;
@@ -517,11 +551,15 @@ static qse_word_t __make_classvar_dict (
 		       *p != QSE_T('\t') && 
 		       *p != QSE_T('\0')) p++;
 
-		symbol = qse_stx_new_symbolx (stx, name, p - name);
-		qse_stx_dict_put (stx, dict, symbol, stx->ref.nil);
-	} while (1);
+		symbol = qse_stx_newsymbolx (stx, name, p - name);
+		if (ISNIL(stx,symbol)) return NIL(stx);
 
-	return dict;
+		assoc =qse_stx_putdic (stx, dic, symbol, stx->ref.nil);
+		if (ISNIL(stx,assoc)) return NIL(stx);
+	} 
+	while (1);
+
+	return dic;
 }
 
 static void __filein_kernel (qse_stx_t* stx)
@@ -532,7 +570,6 @@ static void __filein_kernel (qse_stx_t* stx)
 		/* TODO: */
 	}
 }
-#endif
 
 static int sketch_nil (qse_stx_t* stx)
 {
@@ -608,22 +645,22 @@ static int sketch_key_objects (qse_stx_t* stx)
 	WORDAT(stx,stx->ref.sysdic,QSE_STX_DIC_TALLY) = INTTOREF(stx,0);
 
 	/* Symbol */
-	ALLOC_WORDOBJ_TO (stx, stx->ref.class_symbol, QSE_STX_CLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, stx->ref.class_symbol, QSE_STX_CLASS_SIZE, 0);
 	/* Metaclass */
-	ALLOC_WORDOBJ_TO (stx, stx->ref.class_metaclass, QSE_STX_CLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, stx->ref.class_metaclass, QSE_STX_CLASS_SIZE, 0);
 	/* Association */
-	ALLOC_WORDOBJ_TO (stx, stx->ref.class_association, QSE_STX_CLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, stx->ref.class_association, QSE_STX_CLASS_SIZE, 0);
 
 	/* Metaclass is a class so it has the same structure 
 	 * as a normal class. "Metaclass class" is an instance of
 	 * Metaclass. */
 
 	/* Symbol class */
-	ALLOC_WORDOBJ_TO (stx, class_SymbolMeta, QSE_STX_METACLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, class_SymbolMeta, QSE_STX_METACLASS_SIZE, 0);
 	/* Metaclass class */
-	ALLOC_WORDOBJ_TO (stx, class_MetaclassMeta, QSE_STX_METACLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, class_MetaclassMeta, QSE_STX_METACLASS_SIZE, 0);
 	/* Association class */
-	ALLOC_WORDOBJ_TO (stx, class_AssociationMeta, QSE_STX_METACLASS_NFLDS, 0);
+	ALLOC_WORDOBJ_TO (stx, class_AssociationMeta, QSE_STX_METACLASS_SIZE, 0);
 
 	/* (Symbol class) setClass: Metaclass */
 	QSE_STX_OBJCLASS(stx,class_SymbolMeta) = stx->ref.class_metaclass;
@@ -641,13 +678,13 @@ static int sketch_key_objects (qse_stx_t* stx)
 
 	/* (Symbol class) setSpec: CLASS_SIZE */
 	WORDAT(stx,class_SymbolMeta,QSE_STX_CLASS_SPEC) = 
-		INTTOREF (stx, MAKE_SPEC(QSE_STX_CLASS_NFLDS,SPEC_FIXED_WORD));
+		INTTOREF (stx, SPEC_MAKE(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
 	/* (Metaclass class) setSpec: CLASS_SIZE */
 	WORDAT(stx,class_MetaclassMeta,QSE_STX_CLASS_SPEC) = 
-		INTTOREF (stx, MAKE_SPEC(QSE_STX_CLASS_NFLDS,SPEC_FIXED_WORD));
+		INTTOREF (stx, SPEC_MAKE(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
 	/* (Association class) setSpec: CLASS_SIZE */
 	WORDAT(stx,class_AssociationMeta,QSE_STX_CLASS_SPEC) = 
-		INTTOREF (stx, MAKE_SPEC(QSE_STX_CLASS_NFLDS,SPEC_FIXED_WORD));
+		INTTOREF (stx, SPEC_MAKE(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
 
 	/* specs for class_metaclass, class_association, 
 	 * class_symbol are set later in make_builtin_classes */
