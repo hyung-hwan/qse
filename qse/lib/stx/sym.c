@@ -22,6 +22,9 @@ static qse_word_t expand (qse_stx_t* stx, qse_word_t tabref)
 	qse_word_t newtab;
 	qse_stx_symtab_t* oldptr, * newptr;
 
+	QSE_ASSERT (REFISIDX(stx,stx->ref.class_systemsymboltable));
+	QSE_ASSERT (!ISNIL(stx,stx->ref.class_systemsymboltable));
+
 	QSE_ASSERTX (
 		REFISIDX(stx,tabref), 
 		"The reference is not an object index"
@@ -43,21 +46,24 @@ static qse_word_t expand (qse_stx_t* stx, qse_word_t tabref)
 	/* instantiate a new symbol table with its capacity doubled. */
 	newcapa = oldcapa * 2;
 	newtab = qse_stx_instantiate (
-		stx, OBJCLASS(stx,tabref), 
-		QSE_NULL, QSE_NULL, newcapa + 1 
+		stx, OBJCLASS(stx,tabref),
+		QSE_NULL, QSE_NULL, newcapa
 	); 
-	if (newtab == stx->ref.nil) return stx->ref.nil;
+	if (ISNIL(stx,newtab)) return NIL(stx);
 
 	oldptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
 	newptr = (qse_stx_symtab_t*)PTRBYREF(stx,newtab);
 	newptr->tally = INTTOREF (stx, 0);
 
+	QSE_ASSERT (newcapa == OBJSIZE(stx,newtab) - 1);
+
+	/* reorganize the symbol table */
 	while (oldcapa > 0)
 	{
 		qse_word_t symbol;
 
 		symbol = oldptr->slot[--oldcapa];
-		if (symbol != stx->ref.nil)
+		if (!ISNIL(stx,symbol))
 		{
 			qse_word_t index;
 
@@ -72,15 +78,14 @@ static qse_word_t expand (qse_stx_t* stx, qse_word_t tabref)
 			            qse_stx_hashstr (stx, &CHARAT(stx,symbol,0)));
 
 			index = qse_stx_hashobj (stx, symbol) % newcapa;
-			while (newptr->slot[index] != stx->ref.nil) 
+			while (!ISNIL(stx,newptr->slot[index]))
 				index = (index + 1) % newcapa;
 			newptr->slot[index] = symbol;
 		}
 	}
 
-	qse_stx_swapmem (stx, REFTOIDX(stx,tabref), REFTOIDX(stx,newtab));
-	
 	newptr->tally = oldptr->tally;
+	qse_stx_swapmem (stx, REFTOIDX(stx,tabref), REFTOIDX(stx,newtab));
 	return tabref;
 }
 
@@ -105,7 +110,7 @@ static qse_word_t new_symbol (
 	{
 		/*symref = WORDAT (stx, tabref, index + 1);*/
 		symref = tabptr->slot[index];
-		if (symref == stx->ref.nil) break; /* not found */
+		if (ISNIL(stx,symref)) break; /* not found */
 
 		QSE_ASSERT (REFISIDX(stx,symref));
 		QSE_ASSERT (OBJCLASS(stx,symref) == stx->ref.class_symbol);
@@ -130,7 +135,7 @@ static qse_word_t new_symbol (
 		 * make sure that it has at least one free slot left
 		 * after having added a new symbol. this is to help
 		 * traversal end at a nil slot if no entry is found. */
-		if (expand (stx, tabref) == stx->ref.nil) return stx->ref.nil;
+		if (ISNIL (stx, expand (stx, tabref))) return NIL(stx);
 
 		/* refresh the object pointer */
 		tabptr = (qse_stx_symtab_t*)PTRBYREF(stx,tabref);
@@ -144,7 +149,7 @@ static qse_word_t new_symbol (
 	}
 
 	symref = qse_stx_alloccharobj (stx, name, qse_strlen(name));
-	if (symref != stx->ref.nil) 
+	if (!ISNIL(stx,symref))
 	{
 		OBJCLASS(stx,symref) = stx->ref.class_symbol;
 		tabptr->tally = INTTOREF (stx, tally + 1);
