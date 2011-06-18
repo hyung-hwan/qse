@@ -1008,39 +1008,47 @@ static int __parse_primary_ident (
 
 	*is_super = qse_false;
 
-	if (qse_strcmp(ident, QSE_T("self")) == 0) {
+	if (qse_strcmp(ident, QSE_T("self")) == 0) 
+	{
 		EMIT_CODE (parser, PUSH_RECEIVER);
 		return 0;
 	}
-	else if (qse_strcmp(ident, QSE_T("super")) == 0) {
+	else if (qse_strcmp(ident, QSE_T("super")) == 0) 
+	{
 		*is_super = qse_true;
 		EMIT_CODE (parser, PUSH_RECEIVER);
 		return 0;
 	}
-	else if (qse_strcmp(ident, QSE_T("nil")) == 0) {
+	else if (qse_strcmp(ident, QSE_T("nil")) == 0) 
+	{
 		EMIT_CODE (parser, PUSH_NIL);
 		return 0;
 	}
-	else if (qse_strcmp(ident, QSE_T("true")) == 0) {
+	else if (qse_strcmp(ident, QSE_T("true")) == 0) 
+	{
 		EMIT_CODE (parser, PUSH_TRUE);
 		return 0;
 	}
-	else if (qse_strcmp(ident, QSE_T("false")) == 0) {
+	else if (qse_strcmp(ident, QSE_T("false")) == 0) 
+	{
 		EMIT_CODE (parser, PUSH_FALSE);
 		return 0;
 	}
 
 	/* Refer to __parse_assignment for identifier lookup */
 
-	for (i = 0; i < parser->temporary_count; i++) {
-		if (qse_strcmp(ident, parser->temporaries[i]) == 0) {
+	for (i = 0; i < parser->temporary_count; i++) 
+	{
+		if (qse_strcmp(ident, parser->temporaries[i]) == 0) 
+		{
 			EMIT_PUSH_TEMPORARY_LOCATION (parser, i);
 			return 0;
 		}
 	}
 
 	if (qse_stx_get_instance_variable_index (
-		stx, parser->method_class, ident, &i) == 0) {
+		stx, parser->method_class, ident, &i) == 0) 
+	{
 		EMIT_PUSH_RECEIVER_VARIABLE (parser, i);
 		return 0;
 	}	
@@ -1074,20 +1082,25 @@ static int __parse_block_constructor (qse_stx_parser_t* parser)
 	 * <block argument> ::= ':'  identifier
 	 */
 
-	if (parser->token.type == QSE_STX_TOKEN_COLON) {
-		do {
+	if (parser->token.type == QSE_STX_TOKEN_COLON) 
+	{
+		do 
+		{
 			GET_TOKEN (parser);
 
-			if (parser->token.type != QSE_STX_TOKEN_IDENT) {
+			if (parser->token.type != QSE_STX_TOKEN_IDENT) 
+			{
 				parser->error_code = QSE_STX_PARSER_ERROR_BLOCK_ARGUMENT_NAME;
 				return -1;
 			}
 
 			/* TODO : store block arguments */
 			GET_TOKEN (parser);
-		} while (parser->token.type == QSE_STX_TOKEN_COLON);
+		} 
+		while (parser->token.type == QSE_STX_TOKEN_COLON);
 			
-		if (!__is_vbar_token(&parser->token)) {
+		if (!__is_vbar_token(&parser->token)) 
+		{
 			parser->error_code = QSE_STX_PARSER_ERROR_BLOCK_ARGUMENT_LIST;
 			return -1;
 		}
@@ -1099,7 +1112,8 @@ static int __parse_block_constructor (qse_stx_parser_t* parser)
 	if (__parse_temporaries(parser) == -1) return -1;
 	if (__parse_block_statements(parser) == -1) return -1;
 
-	if (parser->token.type != QSE_STX_TOKEN_RBRACKET) {
+	if (parser->token.type != QSE_STX_TOKEN_RBRACKET) 
+	{
 		parser->error_code = QSE_STX_PARSER_ERROR_BLOCK_NOT_CLOSED;
 		return -1;
 	}
@@ -1123,7 +1137,8 @@ static int __parse_message_continuation (
 	 */
 	if (__parse_keyword_message(parser, is_super) == -1) return -1;
 
-	while (parser->token.type == QSE_STX_TOKEN_SEMICOLON) {
+	while (parser->token.type == QSE_STX_TOKEN_SEMICOLON) 
+	{
 		EMIT_CODE_TEST (parser, QSE_T("DoSpecial(DUP_RECEIVER(CASCADE))"), QSE_T(""));
 		GET_TOKEN (parser);
 

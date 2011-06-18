@@ -1,65 +1,8 @@
 /*
- * $Id: class.c 118 2008-03-03 11:21:33Z baconevi $
+ * $Id$
  */
 
 #include "stx.h"
-
-qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
-{
-	qse_word_t meta, class;
-	qse_word_t class_name;
-
-	QSE_ASSERT (REFISIDX(stx,stx->ref.class_metaclass));
-	
-	meta = qse_stx_allocwordobj (
-		stx, QSE_NULL, QSE_STX_METACLASS_SIZE, QSE_NULL, 0);
-	if (meta == stx->ref.nil) return stx->ref.nil;
-	OBJCLASS(stx,meta) = stx->ref.class_metaclass;
-
-	/* the spec of the metaclass must be the spec of its
-	 * instance. so the QSE_STX_CLASS_SIZE is set */
-	WORDAT(stx,meta,QSE_STX_METACLASS_SPEC) = 
-		INTTOREF(stx,SPEC_MAKE(QSE_STX_CLASS_SIZE,SPEC_FIXED_WORD));
-	
-	/* the spec of the class is set later in __create_builtin_classes */
-	class = qse_stx_allocwordobj (
-		stx, QSE_NULL, QSE_STX_CLASS_SIZE, QSE_NULL, 0);
-	OBJCLASS(stx,class) = meta;
-
-	class_name = qse_stx_newsymbol (stx, name);
-	if (class_name == stx->ref.nil) return stx->ref.nil;
-
-	WORDAT(stx,class,QSE_STX_CLASS_NAME) = class_name;
-
-	return (qse_stx_putdic (stx, stx->ref.sysdic, class_name, class) == stx->ref.nil)? stx->ref.nil: class;
-}
-
-qse_word_t qse_stx_findclass (qse_stx_t* stx, const qse_char_t* name)
-{
-	qse_word_t assoc, meta, value;
-
-	/* look up the system dictionary for the name given */
-	assoc = qse_stx_lookupdic (stx, stx->ref.sysdic, name);
-	if (assoc == stx->ref.nil) 
-	{
-		/*qse_stx_seterrnum (stx, QSE_STX_ENOCLASS, QSE_NULL);*/
-		return stx->ref.nil;
-	}
-
-	/* get the value part in the association for the name */
-	value = WORDAT(stx,assoc,QSE_STX_ASSOC_VALUE);
-
-	/* check if its class is Metaclass because the class of
-	 * a class object must be Metaclass. */
-	meta = OBJCLASS(stx,value);
-	if (OBJCLASS(stx,meta) != stx->ref.class_metaclass) 
-	{
-		/*qse_stx_seterrnum (stx, QSE_STX_ENOTCLASS, QSE_NULL);*/
-		return stx->ref.nil;
-	}
-
-	return value;
-}
 
 #if 0
 int qse_stx_get_instance_variable_index (
@@ -189,7 +132,6 @@ qse_word_t qse_stx_instantiate (
 	qse_word_t spec, nflds, inst;
 	int variable;
 
-
 	QSE_ASSERT (REFISIDX(stx,classref));
 
 	/* don't instantiate a metaclass whose instance must be 
@@ -197,6 +139,7 @@ qse_word_t qse_stx_instantiate (
 	QSE_ASSERT (OBJCLASS(stx,classref) != stx->ref.class_metaclass);
 
 	classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
+qse_printf (QSE_T("instantiating ... %s\n"), ((qse_stx_charobj_t*)PTRBYREF(stx,classptr->name))->fld);
 	QSE_ASSERT (REFISINT(stx,classptr->spec));
 
 	spec = REFTOINT(stx,classptr->spec);

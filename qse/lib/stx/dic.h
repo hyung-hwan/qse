@@ -5,14 +5,14 @@
 #ifndef _QSE_LIB_STX_DIC_H_
 #define _QSE_LIB_STX_DIC_H_
 
-#define QSE_STX_ASSOC_SIZE  2
-#define QSE_STX_ASSOC_KEY   0
-#define QSE_STX_ASSOC_VALUE 1
+#define QSE_STX_ASSOCIATION_SIZE  2
+#define QSE_STX_ASSOCIATION_KEY   0
+#define QSE_STX_ASSOCIATION_VALUE 1
 
 /* The SystemDictionary is a variable word class. 
  * The info below is for the fixed part only */
-#define QSE_STX_DIC_SIZE  1
-#define QSE_STX_DIC_TALLY 0
+#define QSE_STX_SYSTEMDICTIONARY_SIZE  1
+#define QSE_STX_SYSTEMDICTIONARY_TALLY 0
 
 #ifdef __cplusplus
 extern "C"
