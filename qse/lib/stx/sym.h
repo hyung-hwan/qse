@@ -19,6 +19,12 @@ qse_word_t qse_stx_newsymbol (
 	const qse_char_t* name
 );
 
+qse_word_t qse_stx_newsymbolx (
+	qse_stx_t*        stx,
+	const qse_char_t* name,
+	qse_size_t        len
+);
+
 #ifdef __cplusplus
 }
 #endif

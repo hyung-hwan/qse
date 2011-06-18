@@ -120,6 +120,7 @@ struct qse_stx_t
 		qse_word_t class_association;
 	
 		qse_word_t class_object;
+		qse_word_t class_undefinedobject;
 		qse_word_t class_class;
 		qse_word_t class_array;
 		qse_word_t class_bytearray;

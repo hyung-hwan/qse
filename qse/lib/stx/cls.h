@@ -56,8 +56,8 @@ typedef struct qse_stx_metaclass_t qse_stx_metaclass_t;
 #define SPEC_VARIABLE_BYTE  0x02
 #define SPEC_VARIABLE_CHAR  0x03
 
-#define SPEC_MAKE(fixed,variable) \
-	(((fixed) << SPEC_VARIABLE_BITS) | (variable))
+#define SPEC_MAKE(nfixed,variable) \
+	(((nfixed) << SPEC_VARIABLE_BITS) | (variable))
 
 #define SPEC_GETFIXED(spec) ((spec) >> SPEC_VARIABLE_BITS)
 
