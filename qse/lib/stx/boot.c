@@ -477,7 +477,6 @@ static int sketch_nil (qse_stx_t* stx)
 	ptr->h._class   = stx->ref.nil; /* the class is yet to be set */
 	ptr->h._backref = ref;
 
-
 	return 0;
 }
 
@@ -517,7 +516,7 @@ static int sketch_key_objects (qse_stx_t* stx)
 /* TODO: initial symbol table size */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.symtab, 1, SYMTAB_INIT_CAPA);
 	/* Set tally to 0. */
-	WORDAT(stx,stx->ref.symtab,QSE_STX_SYMTAB_TALLY) = INTTOREF(stx,0);
+	WORDAT(stx,stx->ref.symtab,QSE_STX_SYSTEMSYMBOLTABLE_TALLY) = INTTOREF(stx,0);
 
 	/* Create a global system dictionary partially initialized.
 	 * Especially, the class of the system dictionary is not set yet.  
@@ -871,10 +870,16 @@ static void filein_kernel_source (qse_stx_t* stx)
 
 int qse_stx_boot (qse_stx_t* stx)
 {
-	/* create nil, true, false references */
+	/* you must not call this function more than once... */
+	QSE_ASSERTX (
+		stx->ref.nil == 0 &&
+		stx->ref.true == 0 &&
+		stx->ref.false == 0,
+		"You must not call qse_stx_boot() more than once"
+	);
+
 	if (sketch_nil (stx) <= -1) return -1;
 
-	/* continue intializing other key objects */
 	if (sketch_key_objects (stx) <= -1) return -1;
 
 	if (make_key_classes (stx) <= -1) return -1;
@@ -892,3 +897,9 @@ int qse_stx_boot (qse_stx_t* stx)
 	return 0;
 }
 
+
+/* for debugging for the time begin ... */
+qse_word_t qse_stx_findclass (qse_stx_t* stx, const qse_char_t* name)
+{
+	return find_class (stx, name);
+}

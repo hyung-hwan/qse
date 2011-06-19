@@ -15,58 +15,6 @@ qse_stx_t* qse_stx_init (qse_stx_t* stx, qse_mmgr_t* mmgr, qse_size_t memcapa)
 	/* initialize object memory subsystem */
 	if (qse_stx_initmem (stx, memcapa) <= -1) return QSE_NULL;
 
-	/* perform initial bootstrapping */
-/* TODO: if image file is available, load it.... */
-	if (qse_stx_boot (stx) <= -1)
-	{
-		qse_stx_finimem (stx);
-		return QSE_NULL;
-	}
-
-#if 0
-	if (qse_stx_initsymtab (stx, 128) <= -1)
-	{
-		qse_stx_finimem (stx);
-		return QSE_NULL;
-	}
-
-	stx->symtab.size = 0;
-	stx->symtab.capacity = 128; /* TODO: symbol table size */
-	stx->symtab.datum = (qse_word_t*)qse_malloc (
-		qse_sizeof(qse_word_t) * stx->symtab.capacity);
-	if (stx->symtab.datum == QSE_NULL) 
-	{
-		qse_stx_memory_close (&stx->memory);
-		return QSE_NULL;
-	}
-
-	stx->ref.nil = QSE_STX_NIL;
-	stx->ref.true = QSE_STX_TRUE;
-	stx->ref.false = QSE_STX_FALSE;
-
-	stx->smalltalk = QSE_STX_NIL;
-
-	stx->class_symbol = QSE_STX_NIL;
-	stx->class_metaclass = QSE_STX_NIL;
-	stx->class_association = QSE_STX_NIL;
-
-	stx->class_object = QSE_STX_NIL;
-	stx->class_class = QSE_STX_NIL;
-	stx->class_array = QSE_STX_NIL;
-	stx->class_bytearray = QSE_STX_NIL;
-	stx->class_string = QSE_STX_NIL;
-	stx->class_character = QSE_STX_NIL;
-	stx->class_context = QSE_STX_NIL;
-	stx->class_system_dictionary = QSE_STX_NIL;
-	stx->class_method = QSE_STX_NIL;
-	stx->class_smallinteger = QSE_STX_NIL;
-
-	for (i = 0; i < stx->symtab.capacity; i++) 
-	{
-		stx->symtab.datum[i] = stx->nil;
-	}
-#endif
-	
 	return stx;
 }
 

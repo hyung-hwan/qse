@@ -5,6 +5,30 @@
 #include "stx.h"
 
 #if 0
+qse_char_t* qse_stx_strword (
+	const qse_char_t* str, const qse_char_t* word, qse_word_t* word_index)
+{
+	qse_char_t* p = (qse_char_t*)str;
+	qse_char_t* tok;
+	qse_size_t len;
+	qse_word_t index = 0;
+
+	while (p != QSE_NULL) 
+	{
+		p = qse_strtok (p, QSE_T(""), &tok, &len);
+		if (qse_strxcmp (tok, len, word) == 0) 
+		{
+			*word_index = index;
+			return tok;
+		}
+
+		index++;
+	}
+
+	*word_index = index;
+	return QSE_NULL;
+}
+
 int qse_stx_get_instance_variable_index (
 	qse_stx_t* stx, qse_word_t class_index, 
 	const qse_char_t* name, qse_word_t* index)
@@ -139,7 +163,6 @@ qse_word_t qse_stx_instantiate (
 	QSE_ASSERT (OBJCLASS(stx,classref) != stx->ref.class_metaclass);
 
 	classptr = (qse_stx_class_t*)PTRBYREF(stx,classref);
-qse_printf (QSE_T("instantiating ... %s\n"), ((qse_stx_charobj_t*)PTRBYREF(stx,classptr->name))->fld);
 	QSE_ASSERT (REFISINT(stx,classptr->spec));
 
 	spec = REFTOINT(stx,classptr->spec);

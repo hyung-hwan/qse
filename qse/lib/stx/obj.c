@@ -40,13 +40,13 @@ qse_word_t qse_stx_allocwordobj (
 		while (total_nflds > nflds) 
 		{
 			total_nflds--; 
-			ptr->fld[total_nflds] = variable_data[total_nflds - nflds];
+			ptr->slot[total_nflds] = variable_data[total_nflds - nflds];
 		}
 	}
 	else
 	{
 		while (total_nflds > nflds) 
-			ptr->fld[--total_nflds] = stx->ref.nil;
+			ptr->slot[--total_nflds] = stx->ref.nil;
 	}
 
 	if (data)
@@ -54,13 +54,13 @@ qse_word_t qse_stx_allocwordobj (
 		while (total_nflds > 0) 
 		{
 			total_nflds--; 
-			ptr->fld[total_nflds] = data[total_nflds];
+			ptr->slot[total_nflds] = data[total_nflds];
 		}
 	}
 	else
 	{
 		while (total_nflds > 0) 
-			ptr->fld[--total_nflds] = stx->ref.nil;
+			ptr->slot[--total_nflds] = stx->ref.nil;
 	}
 
 	return ref;
@@ -92,7 +92,7 @@ qse_word_t qse_stx_allocbyteobj (
 		while (variable_nflds > 0) 
 		{
 			variable_nflds--;
-			ptr->fld[variable_nflds] = variable_data[variable_nflds];
+			ptr->slot[variable_nflds] = variable_data[variable_nflds];
 		}
 	}
 
@@ -142,11 +142,11 @@ qse_word_t qse_stx_alloccharobj (
 		while (variable_nflds > 0) 
 		{
 			variable_nflds--;
-			ptr->fld[variable_nflds] = variable_data[variable_nflds];
+			ptr->slot[variable_nflds] = variable_data[variable_nflds];
 		}
 	}
 
-	QSE_ASSERT (ptr->fld[ptr->h._size] == QSE_T('\0'));
+	QSE_ASSERT (ptr->slot[ptr->h._size] == QSE_T('\0'));
 	return ref;
 }
 

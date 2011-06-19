@@ -71,19 +71,19 @@ struct qse_stx_object_t
 struct qse_stx_wordobj_t
 {
 	qse_stx_objhdr_t h;
-	qse_word_t   fld[1];
+	qse_word_t       slot[1];
 };
 
 struct qse_stx_byteobj_t
 {
 	qse_stx_objhdr_t h;
-	qse_byte_t       fld[1];
+	qse_byte_t       slot[1];
 };
 
 struct qse_stx_charobj_t
 {
 	qse_stx_objhdr_t h;
-	qse_char_t       fld[1];
+	qse_char_t       slot[1];
 };
 
 struct qse_stx_t
@@ -175,12 +175,21 @@ struct qse_stx_t
 #define QSE_STX_OBJSIZE(stx,ref)  (QSE_STX_PTRBYREF(stx,ref)->h._size)
 #define QSE_STX_OBJCLASS(stx,ref) (QSE_STX_PTRBYREF(stx,ref)->h._class)
 
-#define QSE_STX_WORDAT(stx,ref,pos) \
-	(((qse_stx_wordobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
-#define QSE_STX_BYTEAT(stx,ref,pos) \
-	(((qse_stx_byteobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
-#define QSE_STX_CHARAT(stx,ref,pos) \
-	(((qse_stx_charobj_t*)QSE_STX_PTRBYREF(stx,ref))->fld[pos])
+/* pointer to the body of the object past the header */
+#define QSE_STX_WORDPTR(stx,ref) \
+	(((qse_stx_wordobj_t*)QSE_STX_PTRBYREF(stx,ref))->slot)
+#define QSE_STX_BYTEPTR(stx,ref) \
+	(((qse_stx_byteobj_t*)QSE_STX_PTRBYREF(stx,ref))->slot)
+#define QSE_STX_CHARPTR(stx,ref) \
+	(((qse_stx_charobj_t*)QSE_STX_PTRBYREF(stx,ref))->slot)
+
+#define QSE_STX_WORDLEN(stx,ref) OBJSIZE(stx,ref)
+#define QSE_STX_BYTELEN(stx,ref) OBJSIZE(stx,ref)
+#define QSE_STX_CHARLEN(stx,ref) OBJSIZE(stx,ref)
+
+#define QSE_STX_WORDAT(stx,ref,pos) (QSE_STX_WORDPTR(stx,ref)[pos])
+#define QSE_STX_BYTEAT(stx,ref,pos) (QSE_STX_BYTEPTR(stx,ref)[pos])
+#define QSE_STX_CHARAT(stx,ref,pos) (QSE_STX_CHARPTR(stx,ref)[pos])
 
 /* REDEFINITION DROPPING PREFIX FOR INTERNAL USE */
 #define REFISINT(stx,x)     QSE_STX_REFISINT(stx,x)
@@ -198,6 +207,13 @@ struct qse_stx_t
 #define OBJCLASS(stx,ref)   QSE_STX_OBJCLASS(stx,ref)
 #define OBJSIZE(stx,ref)    QSE_STX_OBJSIZE(stx,ref)
 
+
+#define BYTEPTR(stx,ref)    QSE_STX_BYTEPTR(stx,ref)
+#define CHARPTR(stx,ref)    QSE_STX_CHARPTR(stx,ref)
+#define WORDPTR(stx,ref)    QSE_STX_WORDPTR(stx,ref)
+#define BYTELEN(stx,ref)    QSE_STX_BYTELEN(stx,ref)
+#define CHARLEN(stx,ref)    QSE_STX_CHARLEN(stx,ref)
+#define WORDLEN(stx,ref)    QSE_STX_WORDLEN(stx,ref)
 #define BYTEAT(stx,ref,pos) QSE_STX_BYTEAT(stx,ref,pos)
 #define CHARAT(stx,ref,pos) QSE_STX_CHARAT(stx,ref,pos)
 #define WORDAT(stx,ref,pos) QSE_STX_WORDAT(stx,ref,pos)
@@ -211,7 +227,6 @@ struct qse_stx_t
 #define SYSDIC_INIT_CAPA 256
 
 #define ISNIL(stx,obj) ((obj) == (stx)->ref.nil)
-#define NIL(stx)       ((stx)->ref.nil)
 
 #ifdef __cplusplus
 extern "C" {
