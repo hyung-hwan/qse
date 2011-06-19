@@ -33,7 +33,8 @@ qse_word_t qse_stx_hashstr (qse_stx_t* stx, const qse_char_t* str)
 	return h;
 }
 
-qse_word_t qse_stx_hashstrx (qse_stx_t* stx, const qse_char_t* str, qse_word_t len)
+qse_word_t qse_stx_hashstrx (
+	qse_stx_t* stx, const qse_char_t* str, qse_word_t len)
 {
 	return qse_stx_hashbytes (stx, str, len * QSE_SIZEOF(*str));
 }
@@ -54,8 +55,8 @@ qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
 			case BYTEOBJ:
 				hv = qse_stx_hashbytes (
 					stx,
-					&BYTEAT(stx,ref,0),
-					OBJSIZE(stx,ref)
+					BYTEPTR(stx,ref),
+					BYTELEN(stx,ref)
 				);
 				break;
 
@@ -78,7 +79,7 @@ qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
 
 			default:		
 				QSE_ASSERT (
-					!"This should never happen"
+					!"This must never happen"
 				);
 				break;
 		}
@@ -86,29 +87,3 @@ qse_word_t qse_stx_hashobj (qse_stx_t* stx, qse_word_t ref)
 
 	return hv;
 }
-
-#if 0
-qse_char_t* qse_stx_strword (
-	const qse_char_t* str, const qse_char_t* word, qse_word_t* word_index)
-{
-	qse_char_t* p = (qse_char_t*)str;
-	qse_char_t* tok;
-	qse_size_t len;
-	qse_word_t index = 0;
-
-	while (p != QSE_NULL) 
-	{
-		p = qse_strtok (p, QSE_T(""), &tok, &len);
-		if (qse_strxcmp (tok, len, word) == 0) 
-		{
-			*word_index = index;
-			return tok;
-		}
-
-		index++;
-	}
-
-	*word_index = index;
-	return QSE_NULL;
-}
-#endif

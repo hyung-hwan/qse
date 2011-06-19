@@ -8,6 +8,29 @@
 #include <qse/stx/dict.h>
 #include <qse/stx/misc.h>
 
+qse_char_t* qse_stx_strword (
+	const qse_char_t* str, const qse_char_t* word, qse_word_t* word_index)
+{
+	qse_char_t* p = (qse_char_t*)str;
+	qse_char_t* tok;
+	qse_size_t len;
+	qse_word_t index = 0;
+
+	while (p != QSE_NULL) 
+	{
+		p = qse_strtok (p, QSE_T(""), &tok, &len);
+		if (qse_strxcmp (tok, len, word) == 0) 
+		{
+			*word_index = index;
+			return tok;
+		}
+
+		index++;
+	}
+
+	*word_index = index;
+	return QSE_NULL;
+}
 qse_word_t qse_stx_newclass (qse_stx_t* stx, const qse_char_t* name)
 {
 	qse_word_t meta, class;

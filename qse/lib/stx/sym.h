@@ -7,8 +7,8 @@
 
 /* The SystemSymbolTable is a variable word class. 
  * The info below is for the fixed part only */
-#define QSE_STX_SYMTAB_SIZE  1
-#define QSE_STX_SYMTAB_TALLY 0
+#define QSE_STX_SYSTEMSYMBOLTABLE_SIZE  1
+#define QSE_STX_SYSTEMSYMBOLTABLE_TALLY 0
 
 #ifdef __cplusplus
 extern "C" {
