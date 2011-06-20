@@ -131,6 +131,7 @@ struct qse_stx_t
 		qse_word_t class_systemdictionary;
 		qse_word_t class_method;
 		qse_word_t class_smallinteger;
+		qse_word_t class_parser;
 	} ref;
 
 	qse_bool_t __wantabort; /* TODO: make it a function pointer */

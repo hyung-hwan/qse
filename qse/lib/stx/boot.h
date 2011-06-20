@@ -1,5 +1,5 @@
 /*
- * $Id: symbol.h 118 2008-03-03 11:21:33Z baconevi $
+ * $Id$
  */
 
 #ifndef _QSE_LIB_STX_BOOT_H_
@@ -13,8 +13,8 @@ int qse_stx_boot (
 	qse_stx_t* stx
 );
 
-
 qse_word_t qse_stx_findclass (qse_stx_t* stx, const qse_char_t* name);
+
 #ifdef __cplusplus
 }
 #endif
