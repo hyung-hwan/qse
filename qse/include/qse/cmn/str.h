@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 464 2011-05-19 03:33:28Z hyunghwan.chung $
+ * $Id: str.h 497 2011-06-20 14:56:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2166,9 +2166,14 @@ void qse_mbs_fini (
  * @return 0 on success, and -1 on failure.
  */
 int qse_mbs_yield (
-	qse_mbs_t*   str,     /**< string */
-	qse_mxstr_t* buf,     /**< buffer pointer */
-	qse_size_t   new_capa /**< new capacity */
+	qse_mbs_t*   str,    /**< string */
+	qse_mxstr_t* buf,    /**< buffer pointer */
+	qse_size_t   newcapa /**< new capacity */
+);
+
+qse_mchar_t* qse_mbs_yieldptr (
+	qse_mbs_t*   str,    /**< string */
+	qse_size_t   newcapa /**< new capacity */
 );
 
 /**
@@ -2335,6 +2340,11 @@ int qse_wcs_yield (
 	qse_size_t   new_capa /**< new capacity */
 );
 
+qse_wchar_t* qse_wcs_yieldptr (
+	qse_wcs_t*   str,    /**< string */
+	qse_size_t   newcapa /**< new capacity */
+);
+
 /**
  * The qse_wcs_getsizer() function gets the sizer.
  * @return sizer function set or QSE_NULL if no sizer is set.
@@ -2465,6 +2475,7 @@ qse_size_t qse_wcs_pac (
 #	define qse_str_init(str,mmgr,capa)  qse_mbs_init(str,mmgr,capa)
 #	define qse_str_fini(str)            qse_mbs_fini(str)
 #	define qse_str_yield(str,buf,ncapa) qse_mbs_yield(str,buf,ncapa)
+#	define qse_str_yieldptr(str,ncapa)  qse_mbs_yieldptr(str,ncapa)
 #	define qse_str_getsizer(str)        qse_mbs_getsizer(str)
 #	define qse_str_setsizer(str,sizer)  qse_mbs_setsizer(str,sizer)
 #	define qse_str_getcapa(str)         qse_mbs_getcapa(str)
@@ -2490,6 +2501,7 @@ qse_size_t qse_wcs_pac (
 #	define qse_str_init(str,mmgr,capa)  qse_wcs_init(str,mmgr,capa)
 #	define qse_str_fini(str)            qse_wcs_fini(str)
 #	define qse_str_yield(str,buf,ncapa) qse_wcs_yield(str,buf,ncapa)
+#	define qse_str_yieldptr(str,ncapa)  qse_wcs_yieldptr(str,ncapa)
 #	define qse_str_getsizer(str)        qse_wcs_getsizer(str)
 #	define qse_str_setsizer(str,sizer)  qse_wcs_setsizer(str,sizer)
 #	define qse_str_getcapa(str)         qse_wcs_getcapa(str)

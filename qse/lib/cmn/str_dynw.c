@@ -1,5 +1,5 @@
 /*
- * $Id: str_dynw.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: str_dynw.c 497 2011-06-20 14:56:40Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -84,15 +84,15 @@ void qse_wcs_fini (qse_wcs_t* str)
 	if (str->val.ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->val.ptr);
 }
 
-int qse_wcs_yield (qse_wcs_t* str, qse_wxstr_t* buf, qse_size_t new_capa)
+int qse_wcs_yield (qse_wcs_t* str, qse_wxstr_t* buf, qse_size_t newcapa)
 {
 	qse_wchar_t* tmp;
 
-	if (new_capa == 0) tmp = QSE_NULL;
+	if (newcapa == 0) tmp = QSE_NULL;
 	else
 	{
 		tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
-			str->mmgr, QSE_SIZEOF(qse_wchar_t) * (new_capa + 1));
+			str->mmgr, QSE_SIZEOF(qse_wchar_t) * (newcapa + 1));
 		if (tmp == QSE_NULL) return -1;
 		tmp[0] = QSE_WT('\0');
 	}
@@ -105,9 +105,16 @@ int qse_wcs_yield (qse_wcs_t* str, qse_wxstr_t* buf, qse_size_t new_capa)
 
 	str->val.ptr = tmp;
 	str->val.len = 0;
-	str->capa = new_capa;
+	str->capa = newcapa;
 
 	return 0;
+}
+
+qse_wchar_t* qse_wcs_yieldptr (qse_wcs_t* str, qse_size_t newcapa)
+{
+	qse_wxstr_t wx;
+	if (qse_wcs_yield (str, &wx, newcapa) <= -1) return QSE_NULL;
+	return wx.ptr;
 }
 
 qse_wcs_sizer_t qse_wcs_getsizer (qse_wcs_t* str)
