@@ -989,7 +989,6 @@ done:
 	return ptr;
 }
 
-
 /* feed the percent encoded string */
 int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 {
@@ -1193,8 +1192,11 @@ int qse_http_feed (qse_http_t* http, const qse_byte_t* req, qse_size_t len)
 						}
 					}
 
-					QSE_ASSERTX (http->reqcbs->request != QSE_NULL,
-						"set request callbacks before feeding");
+					QSE_ASSERTX (
+						http->reqcbs->request != QSE_NULL,
+						"set request callbacks before feeding"
+					);
+
 					http->errnum = QSE_HTTP_ENOERR;
 					if (http->reqcbs->request (http, &http->req) <= -1)
 					{
@@ -1248,19 +1250,3 @@ feedme_more:
 	return 0;
 }
 
-int qse_http_addtext (qse_http_t* http, const qse_byte_t* ptr, qse_size_t len)
-{
-}
-
-int qse_http_addresource (qse_http_t* http, const void* ptr, qse_size_t len)
-{
-}
-
-int qse_http_addheader (
-	qse_http_t* http, const qse_byte_t* key, const qse_byte_t* val)
-{
-}
-
-int qse_http_emit (qse_http_t* http)
-{
-}

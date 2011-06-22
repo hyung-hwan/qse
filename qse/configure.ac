@@ -242,6 +242,7 @@ AC_CONFIG_FILES([
 	lib/cut/Makefile 
 	lib/sed/Makefile 
 	lib/stx/Makefile 
+	lib/http/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
@@ -252,6 +253,7 @@ AC_CONFIG_FILES([
 	samples/awk/Makefile 
 	samples/cut/Makefile 
 	samples/sed/Makefile 
+	samples/http/Makefile
 	regress/Makefile
 	regress/awk/Makefile
 	regress/sed/Makefile
