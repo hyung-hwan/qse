@@ -11,20 +11,23 @@
 
 typedef struct qse_http_t qse_http_t;
 
+/*typedef qse_byte_t qse_http_oct_t;*/
+typedef qse_mchar_t qse_http_oct_t;
+
 typedef struct qse_http_octb_t qse_http_octb_t;
 
 struct qse_http_octb_t
 {
-	qse_size_t  capa;
-	qse_size_t  size;
-	qse_byte_t* data;
+	qse_size_t      capa;
+	qse_size_t      size;
+	qse_http_oct_t* data;
 };
 
 enum qse_http_errnum_t
 {
 	QSE_HTTP_ENOERR,
 	QSE_HTTP_ENOMEM,
-	QSE_HTTP_EBADREQ,
+	QSE_HTTP_EBADRE,
 	QSE_HTTP_EBADHDR,
 	QSE_HTTP_EREQCBS
 };
@@ -39,40 +42,12 @@ enum qse_http_option_t
 typedef enum qse_http_option_t qse_http_option_t;
 
 typedef struct qse_http_req_t qse_http_req_t;
+typedef struct qse_http_res_t qse_http_res_t;
+typedef struct qse_http_rhc_t qse_http_rhc_t;
 
-struct qse_http_req_t
+/* header and contents of request/response */
+struct qse_http_rhc_t 
 {
-	enum
-	{
-		QSE_HTTP_REQ_GET,
-		QSE_HTTP_REQ_HEAD,
-		QSE_HTTP_REQ_POST
-	} method;
-
-	struct
-	{
-		qse_byte_t* ptr;
-		qse_size_t  len;
-	} host;
-
-	struct
-	{
-		qse_byte_t* ptr;
-		qse_size_t  len;
-	} path;
-
-	struct
-	{
-		qse_byte_t* ptr;
-		qse_size_t  len;
-	} args;
-
-	struct
-	{
-		short major;
-		short minor;
-	} version;
-
 	/* header table */
 	qse_htb_t hdrtab;
 
@@ -82,31 +57,89 @@ struct qse_http_req_t
 		int chunked;		
 		int content_length;
 		int connection_close;
+		struct
+		{
+			qse_http_oct_t* ptr;
+			qse_size_t      len;
+		} content_type;
+		struct
+		{
+			qse_http_oct_t* ptr;
+			qse_size_t      len;
+		} host;
+
+		int expect_continue;
 	} attr;
 
 	qse_http_octb_t con;
+
+	/* if set, the rest of the contents are discarded */
+	int discard;
 };
+
+struct qse_http_req_t
+{
+	enum
+	{
+		QSE_HTTP_REQ_GET,
+		QSE_HTTP_REQ_HEAD,
+		QSE_HTTP_REQ_POST,
+		QSE_HTTP_REQ_PUT,
+		QSE_HTTP_REQ_DELETE,
+		QSE_HTTP_REQ_TRACE,
+		QSE_HTTP_REQ_OPTIONS,
+		QSE_HTTP_REQ_CONNECT
+	} method;
+
+	struct
+	{
+		qse_http_oct_t* ptr;
+		qse_size_t      len;
+	} path;
 
 #if 0
-struct qse_http_rep_node_t
-{
-	int type; /* TEXT, RESOURCE */
-	qse_http_req_node_t* next;
-};
-
-typedef struct qse_http_rep_t qse_http_rep_t;
-
-struct qse_http_rep_t
-{
-};
+	struct
+	{
+		qse_http_oct_t* ptr;
+		qse_size_t      len;
+	} args;
 #endif
 
-typedef struct qse_http_reqcbs_t qse_http_reqcbs_t;
+	struct
+	{
+		short major;
+		short minor;
+	} version;
 
+	qse_http_rhc_t* rhc;
+};
 
-struct qse_http_reqcbs_t
+struct qse_http_res_t
 {
-	int (*request) (qse_http_t* http, qse_http_req_t* req);
+	struct
+	{
+		short major;
+		short minor;
+	} version;
+
+	int code;
+
+	struct
+	{
+		qse_http_oct_t* ptr;
+		qse_size_t      len;
+	} message;
+
+	qse_http_rhc_t* rhc;
+};
+
+typedef struct qse_http_recbs_t qse_http_recbs_t;
+
+struct qse_http_recbs_t
+{
+	int (*request)         (qse_http_t* http, qse_http_req_t* req);
+	int (*response)        (qse_http_t* http, qse_http_res_t* rep);
+	int (*expect_continue) (qse_http_t* http, qse_http_req_t* req);
 };
 
 struct qse_http_t
@@ -115,7 +148,7 @@ struct qse_http_t
 	qse_http_errnum_t errnum;
 	int option;
 
-	const qse_http_reqcbs_t* reqcbs;
+	qse_http_recbs_t recbs;
 
 	struct
 	{
@@ -144,9 +177,22 @@ struct qse_http_t
 
 		/* points to the head of the combined header list */
 		void* chl;
-	} reqx; 
+	} fed; 
 
-	qse_http_req_t req;
+	
+	enum 
+	{
+		QSE_HTTP_RETYPE_Q,
+		QSE_HTTP_RETYPE_S
+	} retype;
+
+	union
+	{
+		qse_http_req_t q;
+		qse_http_res_t s;
+	} re;
+
+	qse_http_rhc_t rhc;
 };
 
 #ifdef __cplusplus
@@ -192,13 +238,13 @@ void qse_http_setoption (
 	int         opts
 );
 
-const qse_http_reqcbs_t* qse_http_getreqcbs (
+const qse_http_recbs_t* qse_http_getrecbs (
 	qse_http_t* http
 );
 
-void qse_http_setreqcbs (
-	qse_http_t*              http,
-	const qse_http_reqcbs_t* reqcbs
+void qse_http_setrecbs (
+	qse_http_t*             http,
+	const qse_http_recbs_t* recbs
 );
 
 /**
@@ -206,9 +252,9 @@ void qse_http_setreqcbs (
  * callback function if it has processed a proper http request. 
  */
 int qse_http_feed (
-	qse_http_t*       http, /**< http */
-	const qse_byte_t* req,  /**< request octets */
-	qse_size_t        len   /**< number of octets */
+	qse_http_t*           http, /**< http */
+	const qse_http_oct_t* req,  /**< request octets */
+	qse_size_t            len   /**< number of octets */
 );
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
 /*
- * $Id: str_dup.c 443 2011-04-25 14:56:05Z hyunghwan.chung $
+ * $Id: str_dup.c 499 2011-06-22 16:17:35Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,6 +24,8 @@
 qse_mchar_t* qse_mbsdup (const qse_mchar_t* str, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* tmp;
+
+	QSE_ASSERT (mmgr != QSE_NULL);
 
 	tmp = (qse_mchar_t*) QSE_MMGR_ALLOC (
 		mmgr, (qse_mbslen(str)+1)*QSE_SIZEOF(qse_mchar_t));
@@ -59,6 +61,8 @@ qse_mchar_t* qse_mbsxdup2 (
 {
 	qse_mchar_t* tmp;
 
+	QSE_ASSERT (mmgr != QSE_NULL);
+
 	tmp = (qse_mchar_t*) QSE_MMGR_ALLOC (
 		mmgr, (len1+len2+1) * QSE_SIZEOF(qse_mchar_t));
 	if (tmp == QSE_NULL) return QSE_NULL;
@@ -71,6 +75,8 @@ qse_mchar_t* qse_mbsxdup2 (
 qse_wchar_t* qse_wcsdup (const qse_wchar_t* str, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* tmp;
+
+	QSE_ASSERT (mmgr != QSE_NULL);
 
 	tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
 		mmgr, (qse_wcslen(str)+1)*QSE_SIZEOF(qse_wchar_t));
@@ -92,6 +98,8 @@ qse_wchar_t* qse_wcsxdup (
 {
 	qse_wchar_t* tmp;
 
+	QSE_ASSERT (mmgr != QSE_NULL);
+
 	tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
 		mmgr, (len+1)*QSE_SIZEOF(qse_wchar_t));
 	if (tmp == QSE_NULL) return QSE_NULL;
@@ -105,6 +113,8 @@ qse_wchar_t* qse_wcsxdup2 (
 	const qse_wchar_t* str2, qse_size_t len2, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* tmp;
+
+	QSE_ASSERT (mmgr != QSE_NULL);
 
 	tmp = (qse_wchar_t*) QSE_MMGR_ALLOC (
 		mmgr, (len1+len2+1) * QSE_SIZEOF(qse_wchar_t));
