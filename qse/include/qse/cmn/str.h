@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 497 2011-06-20 14:56:40Z hyunghwan.chung $
+ * $Id: str.h 500 2011-06-29 15:12:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2144,10 +2144,11 @@ void qse_mbs_close (
 /**
  * The qse_mbs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
- * in advance.
+ * in advance and always succeeds.
+ * @return @a mbs on success, #QSE_NULL on failure.
  */
 qse_mbs_t* qse_mbs_init (
-	qse_mbs_t*  str,
+	qse_mbs_t*  mbs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
 );
@@ -2156,7 +2157,7 @@ qse_mbs_t* qse_mbs_init (
  * The qse_mbs_fini() function finalizes a dynamically resizable string.
  */
 void qse_mbs_fini (
-	qse_mbs_t* str
+	qse_mbs_t* mbs
 );
 
 /**
@@ -2313,10 +2314,11 @@ void qse_wcs_close (
 /**
  * The qse_wcs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
- * in advance.
+ * in advance and always succeeds.
+ * @return @a wcs on success, #QSE_NULL on failure.
  */
 qse_wcs_t* qse_wcs_init (
-	qse_wcs_t*  str,
+	qse_wcs_t*  wcs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
 );
@@ -2325,7 +2327,7 @@ qse_wcs_t* qse_wcs_init (
  * The qse_wcs_fini() function finalizes a dynamically resizable string.
  */
 void qse_wcs_fini (
-	qse_wcs_t* str
+	qse_wcs_t* wcs
 );
 
 /**

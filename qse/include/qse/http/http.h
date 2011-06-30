@@ -1,27 +1,29 @@
 /*
  * $Id: http.h 223 2008-06-26 06:44:41Z baconevi $
+ *
+    Copyright 2006-2011 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_UTL_HTTP_H_
-#define _QSE_UTL_HTTP_H_
+#ifndef _QSE_HTTP_HTTP_H_
+#define _QSE_HTTP_HTTP_H_
 
-#include <qse/types.h>
-#include <qse/macros.h>
-#include <qse/cmn/htb.h>
+#include <qse/http/htre.h>
 
 typedef struct qse_http_t qse_http_t;
-
-/*typedef qse_byte_t qse_http_oct_t;*/
-typedef qse_mchar_t qse_http_oct_t;
-
-typedef struct qse_http_octb_t qse_http_octb_t;
-
-struct qse_http_octb_t
-{
-	qse_size_t      capa;
-	qse_size_t      size;
-	qse_http_oct_t* data;
-};
 
 enum qse_http_errnum_t
 {
@@ -41,105 +43,13 @@ enum qse_http_option_t
 
 typedef enum qse_http_option_t qse_http_option_t;
 
-typedef struct qse_http_req_t qse_http_req_t;
-typedef struct qse_http_res_t qse_http_res_t;
-typedef struct qse_http_rhc_t qse_http_rhc_t;
-
-/* header and contents of request/response */
-struct qse_http_rhc_t 
-{
-	/* header table */
-	qse_htb_t hdrtab;
-
-	/* special attributes derived from the header */
-	struct
-	{
-		int chunked;		
-		int content_length;
-		int connection_close;
-		struct
-		{
-			qse_http_oct_t* ptr;
-			qse_size_t      len;
-		} content_type;
-		struct
-		{
-			qse_http_oct_t* ptr;
-			qse_size_t      len;
-		} host;
-
-		int expect_continue;
-	} attr;
-
-	qse_http_octb_t con;
-
-	/* if set, the rest of the contents are discarded */
-	int discard;
-};
-
-struct qse_http_req_t
-{
-	enum
-	{
-		QSE_HTTP_REQ_GET,
-		QSE_HTTP_REQ_HEAD,
-		QSE_HTTP_REQ_POST,
-		QSE_HTTP_REQ_PUT,
-		QSE_HTTP_REQ_DELETE,
-		QSE_HTTP_REQ_TRACE,
-		QSE_HTTP_REQ_OPTIONS,
-		QSE_HTTP_REQ_CONNECT
-	} method;
-
-	struct
-	{
-		qse_http_oct_t* ptr;
-		qse_size_t      len;
-	} path;
-
-#if 0
-	struct
-	{
-		qse_http_oct_t* ptr;
-		qse_size_t      len;
-	} args;
-#endif
-
-	struct
-	{
-		short major;
-		short minor;
-	} version;
-
-	qse_http_rhc_t* rhc;
-};
-
-struct qse_http_res_t
-{
-	struct
-	{
-		short major;
-		short minor;
-	} version;
-
-	int code;
-
-	struct
-	{
-		qse_http_oct_t* ptr;
-		qse_size_t      len;
-	} message;
-
-	qse_http_rhc_t* rhc;
-};
-
 typedef struct qse_http_recbs_t qse_http_recbs_t;
 
 struct qse_http_recbs_t
 {
-	int (*request)         (qse_http_t* http, qse_http_req_t* req);
-	int (*response)        (qse_http_t* http, qse_http_res_t* rep);
-	int (*expect_continue) (qse_http_t* http, qse_http_req_t* req);
+	int (*request)         (qse_http_t* http, qse_htre_t* req);
+	int (*response)        (qse_http_t* http, qse_htre_t* res);
+	int (*expect_continue) (qse_http_t* http, qse_htre_t* req);
 };
 
 struct qse_http_t
@@ -170,29 +80,22 @@ struct qse_http_t
 		/* buffers needed to for processing a request */
 		struct
 		{
-			qse_http_octb_t raw; /* buffer to hold raw octets */
-			qse_http_octb_t tra; /* buffer for handling trailers */
-			qse_http_octb_t pen; /* buffer for raw octets during pending period */
+			qse_htob_t raw; /* buffer to hold raw octets */
+			qse_htob_t tra; /* buffer for handling trailers */
+			qse_htob_t pen; /* buffer for raw octets during pending period */
 		} b; 
 
 		/* points to the head of the combined header list */
 		void* chl;
 	} fed; 
 
-	
 	enum 
 	{
 		QSE_HTTP_RETYPE_Q,
 		QSE_HTTP_RETYPE_S
 	} retype;
 
-	union
-	{
-		qse_http_req_t q;
-		qse_http_res_t s;
-	} re;
-
-	qse_http_rhc_t rhc;
+	qse_htre_t re;
 };
 
 #ifdef __cplusplus
@@ -252,9 +155,9 @@ void qse_http_setrecbs (
  * callback function if it has processed a proper http request. 
  */
 int qse_http_feed (
-	qse_http_t*           http, /**< http */
-	const qse_http_oct_t* req,  /**< request octets */
-	qse_size_t            len   /**< number of octets */
+	qse_http_t*       http, /**< http */
+	const qse_htoc_t* req,  /**< request octets */
+	qse_size_t        len   /**< number of octets */
 );
 
 #ifdef __cplusplus

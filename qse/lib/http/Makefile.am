@@ -7,6 +7,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsehttp.la
 libqsehttp_la_SOURCES = \
+	htre.c \
 	http.c 
 
 libqsehttp_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)

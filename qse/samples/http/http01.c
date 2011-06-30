@@ -39,13 +39,13 @@ struct client_action_t
 	{
 		struct
 		{
-			const qse_http_oct_t* ptr;
-			qse_size_t            left;
+			const qse_htoc_t* ptr;
+			qse_size_t        left;
 		} sendtext;
 		struct
 		{
-			qse_http_oct_t* ptr;
-			qse_size_t      left;
+			qse_htoc_t* ptr;
+			qse_size_t  left;
 		} sendtextdup;
 		struct
 		{
@@ -215,23 +215,54 @@ static int enqueue_disconnect (client_t* client)
 	return enqueue_client_action_locked (client, &action);
 }
 
-static int handle_request (qse_http_t* http, qse_http_req_t* req)
+static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
+{
+qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
+     return QSE_HTB_WALK_FORWARD;
+}
+
+static int handle_request (qse_http_t* http, qse_htre_t* req)
 {
 	http_xtn_t* xtn = (http_xtn_t*) qse_http_getxtn (http);
-	qse_printf (QSE_T("got a request... %S\n"), req->path.ptr);
+	client_t* client = &xtn->array->data[xtn->index];
 
-	if (req->rhc->attr.host.ptr) qse_printf (QSE_T("host %S\n"), req->rhc->attr.host.ptr);
+qse_printf (QSE_T("================================\n"));
+qse_printf (QSE_T("REQUEST ==> [%S] version[%d.%d] method[%d]\n"), 
+	req->re.quest.path.ptr, req->version.major, req->version.minor, req->re.quest.method);
 
-	if (req->method == QSE_HTTP_REQ_GET)
+if (req->attr.host.ptr) qse_printf (QSE_T("HOST===> %S\n"), req->attr.host.ptr);
+qse_htb_walk (&http->re.hdrtab, walk, QSE_NULL);
+if (QSE_MBS_LEN(&http->re.content) > 0)
+{
+qse_printf (QSE_T("content = [%.*S]\n"),
+		(int)QSE_MBS_LEN(&http->re.content),
+		QSE_MBS_PTR(&http->re.content));
+}
+
+
+	if (req->re.quest.method == QSE_HTTP_REQ_GET || req->re.quest.method == QSE_HTTP_REQ_POST)
 	{
-		int fd = open (req->path.ptr, O_RDONLY);
+		qse_htre_decodereqpath (req, );
+		/* original path not available anymore */
+
+		int fd = open (req->re.quest.path.ptr, O_RDONLY);
 		if (fd <= -1)
 		{
-qse_printf (QSE_T("open failure....\n"));
-			/*
-			qse_http_addtext (http, 
-				"<html><title>FILE NOT FOUND</title><body></body></html>");
-			*/
+char text[256];
+const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
+snprintf (text, sizeof(text),
+	"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
+	req->version.major, 
+	req->version.minor,
+	(int)strlen(msg) + 4, msg);
+
+qse_printf (QSE_T("open failure.... sending 404 not found\n"));
+
+			if (enqueue_sendtextdup_locked (client, text) <= -1)
+			{
+qse_printf (QSE_T("failed to push action....\n"));
+				return -1;
+			}
 		}
 		else
 		{
@@ -248,7 +279,7 @@ qse_printf (QSE_T("fstat failure....\n"));
 
 qse_printf (QSE_T("empty file....\n"));
 #if 0
-				qse_http_req_t* res = qse_http_newresponse (http);
+				qse_htre_t* res = qse_http_newresponse (http);
 				if (req == QSE_NULL)
 				{
 					/* hard failure... can't answer */
@@ -270,8 +301,6 @@ qse_printf (QSE_T("empty file....\n"));
 			}
 			else
 			{
-				client_t* client = &xtn->array->data[xtn->index];
-
 char text[128];
 snprintf (text, sizeof(text),
 	"HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\n\r\n", 
@@ -301,7 +330,7 @@ qse_printf (QSE_T("failed to push action....\n"));
 					return -1;
 				}
 
-				if (req->rhc->attr.connection_close)
+				if (req->attr.connection_close)
 				{
 					if (enqueue_disconnect (client) <= -1)
 					{
@@ -312,21 +341,36 @@ qse_printf (QSE_T("failed to push action....\n"));
 			}
 		}	
 	}
+	else
+	{
+char text[256];
+const char* msg = "<html><head><title>Method not allowed</title></head><body><b>METHOD NOT ALLOWED</b></body></html>";
+snprintf (text, sizeof(text),
+	"HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
+	req->version.major, 
+	req->version.minor, (int)strlen(msg)+4, msg);
+if (enqueue_sendtextdup_locked (client, text) <= -1)
+{
+qse_printf (QSE_T("failed to push action....\n"));
+return -1;
+}
+
+	}
 
 	pthread_cond_signal (&xtn->array->cond);
 	return 0;
 }
 
-static int handle_expect_continue (qse_http_t* http, qse_http_req_t* req)
+static int handle_expect_continue (qse_http_t* http, qse_htre_t* req)
 {
 	http_xtn_t* xtn = (http_xtn_t*) qse_http_getxtn (http);
 	client_t* client = &xtn->array->data[xtn->index];
 
-	if (req->method == QSE_HTTP_REQ_GET)
+	if (req->re.quest.method == QSE_HTTP_REQ_GET)
 	{
 		char text[32];
 
-		req->rhc->discard = 1;
+		qse_htre_setdiscard (req, 1);
 
 		snprintf (text, sizeof(text),
 			"HTTP/%d.%d 404 Not found\r\n\r\n", 
@@ -354,7 +398,7 @@ static int handle_expect_continue (qse_http_t* http, qse_http_req_t* req)
 	return 0;
 }
 
-static int handle_response (qse_http_t* http, qse_http_res_t* res)
+static int handle_response (qse_http_t* http, qse_htre_t* res)
 {
 #if 0
 	if (res->code >= 100 && res->code <= 199)
@@ -364,8 +408,8 @@ static int handle_response (qse_http_t* http, qse_http_res_t* res)
 #endif
 
 	qse_printf (QSE_T("response received... HTTP/%d.%d %d %.*S\n"), 
-		res->version.major, res->version.minor, res->code, 
-		(int)res->message.len, res->message.ptr);
+		res->version.major, res->version.minor, res->re.sponse.code, 
+		(int)res->re.sponse.message.len, res->re.sponse.message.ptr);
 	return -1;
 }
 
@@ -815,7 +859,7 @@ qse_printf (QSE_T("connection %d accepted\n"), c);
 			{
 				/* got input */
 
-				qse_http_oct_t buf[1024];
+				qse_htoc_t buf[1024];
 				ssize_t m;
 
 			reread:

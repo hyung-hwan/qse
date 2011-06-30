@@ -71,7 +71,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsehttp_la_DEPENDENCIES =
-am_libqsehttp_la_OBJECTS = http.lo
+am_libqsehttp_la_OBJECTS = htre.lo http.lo
 libqsehttp_la_OBJECTS = $(am_libqsehttp_la_OBJECTS)
 libqsehttp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -239,6 +239,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsehttp.la
 libqsehttp_la_SOURCES = \
+	htre.c \
 	http.c 
 
 libqsehttp_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
@@ -317,6 +318,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htre.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
 
 .c.o:
