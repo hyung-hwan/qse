@@ -7,8 +7,8 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = http01 
 
-LDFLAGS = -L../../lib/cmn -L../../lib/http
-LDADD = -lqsehttp -lqsecmn $(LIBM) -lpthread
+LDFLAGS = -L../../lib/cmn -L../../lib/net
+LDADD = -lqsenet -lqsecmn $(LIBM) -lpthread
 
 http01_SOURCES = http01.c
 

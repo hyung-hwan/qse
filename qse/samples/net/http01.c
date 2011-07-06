@@ -1,4 +1,4 @@
-#include <qse/http/http.h>
+#include <qse/net/htrd.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
@@ -60,7 +60,7 @@ struct client_t
 {
 	int                     fd;
 	struct sockaddr_storage addr;
-	qse_http_t*             http;
+	qse_htrd_t*             http;
 
 	pthread_mutex_t action_mutex;
 	struct
@@ -163,8 +163,90 @@ static int enqueue_sendtext_locked (client_t* client, const char* text)
 	return enqueue_client_action_locked (client, &action);
 }
 
-static int enqueue_sendfmt_locked (client_t* client, const char* fmt, ...)
+static int format_and_do (int (*task) (void* arg, char* text), void* arg, const char* fmt, ...)
 {
+	va_list ap;
+	char n[2];
+	char* buf;
+	int bytes_req;
+
+	va_start (ap, fmt);
+#if defined(_WIN32) && defined(_MSC_VER)
+	bytes_req = _vsnprintf (n, 1, fmt, ap);
+#else
+	bytes_req = vsnprintf (n, 1, fmt, ap);
+#endif
+	va_end (ap);
+	if (bytes_req == -1) 
+	{
+		qse_size_t capa = 256;
+		buf = (char*) malloc (capa + 1);
+
+		/* an old vsnprintf behaves differently from C99 standard.
+		 * thus, it returns -1 when it can't write all the input given. */
+		for (;;) 
+		{
+			int l;
+			va_start (ap, fmt);
+#if defined(_WIN32) && defined(_MSC_VER)
+			if ((l = _vsnprintf (buf, capa + 1, fmt, ap)) == -1) 
+#else
+			if ((l = vsnprintf (buf, capa + 1, fmt, ap)) == -1) 
+#endif
+			{
+				va_end (ap);
+
+				free (buf);
+				capa = capa * 2;
+				buf = (char*)malloc (capa + 1);
+				if (buf == NULL) return -1;
+
+				continue;
+			}
+
+			va_end (ap);
+			break;
+		}
+	}
+	else 
+	{
+		/* vsnprintf returns the number of characters that would 
+		 * have been written not including the terminating '\0' 
+		 * if the _data buffer were large enough */
+		buf = (char*)malloc (bytes_req + 1);
+		if (buf == NULL) return -1;
+
+		va_start (ap, fmt);
+#if defined(_WIN32) && defined(_MSC_VER)
+		_vsnprintf (buf, bytes_req + 1, fmt, ap);
+#else
+		vsnprintf (buf, bytes_req + 1, fmt, ap);
+#endif
+
+		//_data[_size] = '\0';
+		va_end (ap);
+	}
+
+	return task (arg, buf);
+}
+
+static int enqueue_format (void* arg, char* text)
+{
+	client_t* client = (client_t*)arg;
+
+	client_action_t action;
+
+	memset (&action, 0, sizeof(action));
+	action.type = ACTION_SENDTEXTDUP;
+	action.u.sendtextdup.ptr = text;
+	action.u.sendtextdup.left = strlen(text);
+
+	if (enqueue_client_action_locked (client, &action) <= -1)
+	{
+		free (text);
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -221,16 +303,28 @@ qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HT
      return QSE_HTB_WALK_FORWARD;
 }
 
-static int handle_request (qse_http_t* http, qse_htre_t* req)
+static capture_param (void* ctx, const qse_mcstr_t* key, const qse_mcstr_t* val)
 {
-	http_xtn_t* xtn = (http_xtn_t*) qse_http_getxtn (http);
+}
+
+static int handle_request (qse_htrd_t* http, qse_htre_t* req)
+{
+	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
 	client_t* client = &xtn->array->data[xtn->index];
+	int method;
 
 qse_printf (QSE_T("================================\n"));
 qse_printf (QSE_T("REQUEST ==> [%S] version[%d.%d] method[%d]\n"), 
-	req->re.quest.path.ptr, req->version.major, req->version.minor, req->re.quest.method);
+	qse_htre_getqpathptr(req),
+	qse_htre_getmajorversion(req),
+	qse_htre_getminorversion(req),
+	qse_htre_getqmethod(req)
+);
+if (qse_htre_getqparamslen(req) > 0)
+{
+qse_printf (QSE_T("PARAMS ==> [%S]\n"), qse_htre_getqparamsptr(req));
+}
 
-if (req->attr.host.ptr) qse_printf (QSE_T("HOST===> %S\n"), req->attr.host.ptr);
 qse_htb_walk (&http->re.hdrtab, walk, QSE_NULL);
 if (QSE_MBS_LEN(&http->re.content) > 0)
 {
@@ -239,30 +333,29 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 		QSE_MBS_PTR(&http->re.content));
 }
 
+	method = qse_htre_getqmethod (req);
 
-	if (req->re.quest.method == QSE_HTTP_REQ_GET || req->re.quest.method == QSE_HTTP_REQ_POST)
+	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
-		qse_htre_decodereqpath (req, );
+		//qse_htre_decodereqpath (req, );
 		/* original path not available anymore */
 
-		int fd = open (req->re.quest.path.ptr, O_RDONLY);
+		qse_scanhttpparamstr (qse_htre_getqparamstrptr(req), capture_param, xxx);
+
+		int fd = open (qse_htre_getqpathptr(req), O_RDONLY);
 		if (fd <= -1)
 		{
-char text[256];
 const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
-snprintf (text, sizeof(text),
+if (format_and_do (enqueue_format, client, 
 	"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
 	req->version.major, 
 	req->version.minor,
-	(int)strlen(msg) + 4, msg);
-
-qse_printf (QSE_T("open failure.... sending 404 not found\n"));
-
-			if (enqueue_sendtextdup_locked (client, text) <= -1)
-			{
+	(int)strlen(msg) + 4, msg) <= -1)
+{
 qse_printf (QSE_T("failed to push action....\n"));
-				return -1;
-			}
+	return -1;
+}
+
 		}
 		else
 		{
@@ -279,7 +372,7 @@ qse_printf (QSE_T("fstat failure....\n"));
 
 qse_printf (QSE_T("empty file....\n"));
 #if 0
-				qse_htre_t* res = qse_http_newresponse (http);
+				qse_htre_t* res = qse_htrd_newresponse (http);
 				if (req == QSE_NULL)
 				{
 					/* hard failure... can't answer */
@@ -287,7 +380,7 @@ qse_printf (QSE_T("empty file....\n"));
 				}
 
 
-				ptr = qse_http_emitresponse (http, res, &len);
+				ptr = qse_htrd_emitresponse (http, res, &len);
 				if (ptr == QSE_NULL)
 				{
 					/* hard failure... can't answer */
@@ -301,11 +394,13 @@ qse_printf (QSE_T("empty file....\n"));
 			}
 			else
 			{
+
 char text[128];
 snprintf (text, sizeof(text),
 	"HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\n\r\n", 
-	req->version.major, 
-	req->version.minor, (unsigned long long)st.st_size);
+	qse_htre_getmajorversion(req),
+	qse_htre_getminorversion(req),
+	(unsigned long long)st.st_size);
 
 #if 0
 				if (enqueue_sendfmt_locked (client,
@@ -347,8 +442,9 @@ char text[256];
 const char* msg = "<html><head><title>Method not allowed</title></head><body><b>METHOD NOT ALLOWED</b></body></html>";
 snprintf (text, sizeof(text),
 	"HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
-	req->version.major, 
-	req->version.minor, (int)strlen(msg)+4, msg);
+	qse_htre_getmajorversion(req),
+	qse_htre_getminorversion(req),
+	(int)strlen(msg)+4, msg);
 if (enqueue_sendtextdup_locked (client, text) <= -1)
 {
 qse_printf (QSE_T("failed to push action....\n"));
@@ -361,12 +457,25 @@ return -1;
 	return 0;
 }
 
-static int handle_expect_continue (qse_http_t* http, qse_htre_t* req)
+static int handle_expect_continue (qse_htrd_t* http, qse_htre_t* req)
 {
-	http_xtn_t* xtn = (http_xtn_t*) qse_http_getxtn (http);
+	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
 	client_t* client = &xtn->array->data[xtn->index];
 
-	if (req->re.quest.method == QSE_HTTP_REQ_GET)
+	if (qse_htre_getqmethod(req) == QSE_HTTP_POST)
+	{
+		char text[32];
+
+		snprintf (text, sizeof(text),
+			"HTTP/%d.%d 100 OK\r\n\r\n", 
+			req->version.major, req->version.minor);
+
+		if (enqueue_sendtextdup_locked (client, text) <= -1)
+		{
+			return -1;
+		}
+	}
+	else
 	{
 		char text[32];
 
@@ -381,24 +490,11 @@ static int handle_expect_continue (qse_http_t* http, qse_htre_t* req)
 			return -1;
 		}
 	}
-	else
-	{
-		char text[32];
-
-		snprintf (text, sizeof(text),
-			"HTTP/%d.%d 100 OK\r\n\r\n", 
-			req->version.major, req->version.minor);
-
-		if (enqueue_sendtextdup_locked (client, text) <= -1)
-		{
-			return -1;
-		}
-	}
 
 	return 0;
 }
 
-static int handle_response (qse_http_t* http, qse_htre_t* res)
+static int handle_response (qse_htrd_t* http, qse_htre_t* res)
 {
 #if 0
 	if (res->code >= 100 && res->code <= 199)
@@ -408,13 +504,31 @@ static int handle_response (qse_http_t* http, qse_htre_t* res)
 #endif
 
 	qse_printf (QSE_T("response received... HTTP/%d.%d %d %.*S\n"), 
-		res->version.major, res->version.minor, res->re.sponse.code, 
-		(int)res->re.sponse.message.len, res->re.sponse.message.ptr);
+		qse_htre_getmajorversion(res),
+		qse_htre_getminorversion(res),
+		qse_htre_getsstatus(res),
+		(int)qse_htre_getsmessagelen(res),
+		qse_htre_getsmessageptr(res)
+	);
 	return -1;
 }
 
-qse_http_recbs_t http_recbs =
+static qse_ssize_t receive_octets (qse_htrd_t* http, qse_htoc_t* buf, qse_size_t size)
 {
+	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
+	client_t* client = &xtn->array->data[xtn->index];
+	ssize_t n;
+
+	n = recv (client->fd, buf, size, 0);
+	if (n <= -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
+		http->errnum = 99999;	
+
+	return n;
+}
+
+qse_htrd_recbs_t http_recbs =
+{
+	receive_octets,
 	handle_request,
 	handle_response,
 	handle_expect_continue
@@ -469,7 +583,7 @@ static void delete_from_client_array (client_array_t* array, int fd)
 		purge_client_actions_locked (&array->data[fd]);
 		pthread_mutex_destroy (&array->data[fd].action_mutex);
 
-		qse_http_close (array->data[fd].http);
+		qse_htrd_close (array->data[fd].http);
 		array->data[fd].http = QSE_NULL;	
 		close (array->data[fd].fd);
 		array->size--;
@@ -518,15 +632,15 @@ static client_t* insert_into_client_array (
 
 	array->data[fd].fd = fd;	
 	array->data[fd].addr = *addr;
-	array->data[fd].http = qse_http_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(*xtn));
+	array->data[fd].http = qse_htrd_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(*xtn));
 	if (array->data[fd].http == QSE_NULL) return QSE_NULL;
 	pthread_mutex_init (&array->data[fd].action_mutex, NULL);
 
-	xtn = (http_xtn_t*)qse_http_getxtn (array->data[fd].http);	
+	xtn = (http_xtn_t*)qse_htrd_getxtn (array->data[fd].http);	
 	xtn->array = array;
 	xtn->index = fd; 
 
-	qse_http_setrecbs (array->data[fd].http, &http_recbs);
+	qse_htrd_setrecbs (array->data[fd].http, &http_recbs);
 	array->size++;
 	return &array->data[fd];
 }
@@ -652,6 +766,9 @@ qse_printf (QSE_T("finished sending text dup...\n"));
 			count = MAX_SENDFILE_SIZE;
 			if (count >= action->u.sendfile.left)
 				count = action->u.sendfile.left;
+
+//n = qse_htrd_write (client->http, sendfile, joins);
+
 
 			n = sendfile (
 				client->fd, 
@@ -858,48 +975,19 @@ qse_printf (QSE_T("connection %d accepted\n"), c);
 			if (FD_ISSET(client->fd, &r)) 
 			{
 				/* got input */
-
-				qse_htoc_t buf[1024];
-				ssize_t m;
-
-			reread:
-				m = read (client->fd, buf, sizeof(buf));
-				if (m <= -1)
+				if (qse_htrd_read (client->http) <= -1)
 				{
-					if (errno != EINTR)
+					int errnum = client->http->errnum;
+					if (errnum != 99999)
 					{
 						pthread_mutex_lock (&appdata.camutex);
 						delete_from_client_array (&appdata.ca, fd);	
 						pthread_mutex_unlock (&appdata.camutex);
-						qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), fd);
-						continue;
+						if (errnum == QSE_HTRD_EDISCON)
+							qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->fd);
+						else
+							qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read/process a request from a client %d\n"), client->fd);
 					}
-					goto reread;
-				}
-				else if (m == 0)
-				{
-					pthread_mutex_lock (&appdata.camutex);
-					delete_from_client_array (&appdata.ca, fd);	
-					pthread_mutex_unlock (&appdata.camutex);
-					qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), fd);
-					continue;
-				}
-
-				/* feed may have called the request callback multiple times... 
-				 * that's because we don't know how many valid requests
-				 * are included in 'buf' */ 
-				n = qse_http_feed (client->http, buf, m);
-				if (n <= -1)
-				{
-					if (client->http->errnum == QSE_HTTP_EBADRE)
-					{
-						/* TODO: write a response to indicate bad request... */	
-					}
-
-					pthread_mutex_lock (&appdata.camutex);
-					delete_from_client_array (&appdata.ca, fd);	
-					pthread_mutex_unlock (&appdata.camutex);
-					qse_fprintf (QSE_STDERR, QSE_T("Error: http error while processing \n"));
 					continue;
 				}
 			}

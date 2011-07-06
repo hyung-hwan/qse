@@ -1,0 +1,179 @@
+/*
+ * $Id: htrd.h 223 2008-06-26 06:44:41Z baconevi $
+ *
+    Copyright 2006-2011 Chung, Hyung-Hwan.
+    This file is part of QSE.
+
+    QSE is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as 
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
+
+    QSE is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public 
+    License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
+ */
+
+#ifndef _QSE_NET_HTRD_H_
+#define _QSE_NET_HTRD_H_
+
+#include <qse/net/http.h>
+#include <qse/net/htre.h>
+
+typedef struct qse_htrd_t qse_htrd_t;
+
+enum qse_htrd_errnum_t
+{
+	QSE_HTRD_ENOERR,
+	QSE_HTRD_ENOMEM,
+
+	QSE_HTRD_EDISCON,
+	QSE_HTRD_EREADER,
+
+	QSE_HTRD_EBADRE,
+	QSE_HTRD_EBADHDR,
+	QSE_HTRD_EREQCBS
+};
+
+typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
+
+enum qse_htrd_option_t
+{
+	QSE_HTRD_LEADINGEMPTYLINES = (1 << 0)
+};
+
+typedef enum qse_htrd_option_t qse_htrd_option_t;
+
+typedef struct qse_htrd_recbs_t qse_htrd_recbs_t;
+
+struct qse_htrd_recbs_t
+{
+	/* octet reader and writer */
+	qse_ssize_t (*reader)          (qse_htrd_t* htrd, qse_htoc_t* buf, qse_size_t len);
+
+	int         (*request)         (qse_htrd_t* htrd, qse_htre_t* req);
+	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
+	int         (*expect_continue) (qse_htrd_t* htrd, qse_htre_t* req);
+};
+
+struct qse_htrd_t
+{
+	QSE_DEFINE_COMMON_FIELDS (htrd)
+	qse_htrd_errnum_t errnum;
+	int option;
+
+	qse_htrd_recbs_t recbs;
+
+	struct
+	{
+		struct
+		{
+			int crlf; /* crlf status */
+			qse_size_t plen; /* raw request length excluding crlf */
+			qse_size_t need; /* number of octets needed for contents */
+
+			struct
+			{
+				qse_size_t len;
+				qse_size_t count;
+				int        phase;
+			} chunk;
+		} s; /* state */
+
+
+		/* buffers needed to for processing a request */
+		struct
+		{
+			qse_htob_t raw; /* buffer to hold raw octets */
+			qse_htob_t tra; /* buffer for handling trailers */
+		} b; 
+
+		/* points to the head of the combined header list */
+		void* chl;
+	} fed; 
+
+	enum 
+	{
+		QSE_HTRD_RETYPE_Q,
+		QSE_HTRD_RETYPE_S
+	} retype;
+	qse_htre_t re;
+
+	qse_htoc_t rbuf[4096];
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+QSE_DEFINE_COMMON_FUNCTIONS (htrd)
+
+/**
+ * The qse_htrd_open() function creates a htrd processor.
+ */
+qse_htrd_t* qse_htrd_open (
+	qse_mmgr_t* mmgr,   /**< memory manager */
+	qse_size_t  xtnsize /**< extension size in bytes */
+);
+
+/**
+ * The qse_htrd_close() function destroys a htrd processor.
+ */
+void qse_htrd_close (
+	qse_htrd_t* htrd 
+);
+
+qse_htrd_t* qse_htrd_init (
+	qse_htrd_t* htrd,
+	qse_mmgr_t* mmgr
+);
+
+void qse_htrd_fini (
+	qse_htrd_t* htrd
+);
+
+void qse_htrd_clear (
+	qse_htrd_t* htrd
+);
+
+int qse_htrd_getoption (
+	qse_htrd_t* htrd	
+);
+
+void qse_htrd_setoption (
+	qse_htrd_t* htrd,
+	int         opts
+);
+
+const qse_htrd_recbs_t* qse_htrd_getrecbs (
+	qse_htrd_t* htrd
+);
+
+void qse_htrd_setrecbs (
+	qse_htrd_t*             htrd,
+	const qse_htrd_recbs_t* recbs
+);
+
+/**
+ * The qse_htrd_feed() function accepts htrd request octets and invokes a 
+ * callback function if it has processed a proper htrd request. 
+ */
+int qse_htrd_feed (
+	qse_htrd_t*       htrd, /**< htrd */
+	const qse_htoc_t* req,  /**< request octets */
+	qse_size_t        len   /**< number of octets */
+);
+
+int qse_htrd_read (
+	qse_htrd_t* htrd /**< htrd */
+);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

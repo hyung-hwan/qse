@@ -236,13 +236,14 @@ AC_CONFIG_FILES([
 	include/qse/cut/Makefile
 	include/qse/sed/Makefile
 	include/qse/stx/Makefile
+	include/qse/net/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/cut/Makefile 
 	lib/sed/Makefile 
 	lib/stx/Makefile 
-	lib/http/Makefile 
+	lib/net/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
@@ -253,7 +254,7 @@ AC_CONFIG_FILES([
 	samples/awk/Makefile 
 	samples/cut/Makefile 
 	samples/sed/Makefile 
-	samples/http/Makefile
+	samples/net/Makefile
 	regress/Makefile
 	regress/awk/Makefile
 	regress/sed/Makefile
