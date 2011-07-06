@@ -18,29 +18,12 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_HTTP_HTRE_H_
-#define _QSE_HTTP_HTRE_H_
+#ifndef _QSE_NET_HTRE_H_
+#define _QSE_NET_HTRE_H_
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#include <qse/net/http.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
-
-/*typedef qse_byte_t qse_htoc_t;*/
-typedef qse_mchar_t qse_htoc_t;
-
-/* octet buffer */
-typedef qse_mbs_t qse_htob_t;
-
-/* octet string */
-typedef qse_mxstr_t qse_htos_t;
-
-typedef struct qse_htvr_t qse_htvr_t;
-struct qse_htvr_t
-{
-	short major;
-	short minor;
-};
 
 /* header and contents of request/response */
 typedef struct qse_htre_t qse_htre_t;
@@ -49,34 +32,11 @@ struct qse_htre_t
 	qse_mmgr_t* mmgr;
 
 	/* version */
-	qse_htvr_t version;
+	qse_http_version_t version;
 
-	union
-	{
-		struct
-		{
-			enum
-			{
-				QSE_HTTP_REQ_GET,
-				QSE_HTTP_REQ_HEAD,
-				QSE_HTTP_REQ_POST,
-				QSE_HTTP_REQ_PUT,
-				QSE_HTTP_REQ_DELETE,
-				QSE_HTTP_REQ_TRACE,
-				QSE_HTTP_REQ_OPTIONS,
-				QSE_HTTP_REQ_CONNECT
-			} method;
-	
-			qse_htos_t path;
-			/* qse_htos_t args; */
-		} quest;
-
-		struct
-		{
-			int code;
-			qse_htos_t message;
-		} sponse;
-	} re;
+	int qmethod_or_sstatus; 
+	qse_htob_t qpath_or_smesg;
+	qse_htob_t qparamstr;
 
 	/* special attributes derived from the header */
 	struct
@@ -84,8 +44,6 @@ struct qse_htre_t
 		int chunked;		
 		int content_length;
 		int connection_close;
-		qse_htos_t content_type;
-		qse_htos_t host;
 		int expect_continue;
 	} attr;
 
@@ -99,8 +57,27 @@ struct qse_htre_t
 	int discard;
 };
 
-#define qse_htre_getversion(re) &((re)->version)
+#define qse_htre_getversion(re) (&((re)->version))
+#define qse_htre_getmajorversion(re) ((re)->version.major)
+#define qse_htre_getminorversion(re) ((re)->version.minor)
 #define qse_htre_setversion(re,v) QSE_BLOCK((re)->version = *(v);)
+
+#define qse_htre_getqmethod(re) ((re)->qmethod_or_sstatus)
+#define qse_htre_setqmethod(re,v) QSE_BLOCK((re)->qmethod_or_sstatus=(v);)
+
+#define qse_htre_getsstatus(re) ((re)->qmethod_or_sstatus)
+#define qse_htre_setsstatus(re,v) QSE_BLOCK((re)->qmethod_or_sstatus=(v);)
+
+#define qse_htre_setqpath(re,v) qse_htre_setbuf((re),&(re)->qpath_or_smesg,(v))
+#define qse_htre_setsmessage(re,v) qse_htre_setbuf((re),&(re)->qpath_or_smesg,(v))
+
+#define qse_htre_getqpathptr(re) QSE_MBS_PTR(&(re)->qpath_or_smesg)
+#define qse_htre_getqpathlen(re) QSE_MBS_LEN(&(re)->qpath_or_smesg)
+#define qse_htre_getqparamsptr(re) QSE_MBS_PTR(&(re)->qparamstr)
+#define qse_htre_getqparamslen(re) QSE_MBS_LEN(&(re)->qparamstr)
+#define qse_htre_getsmessageptr(re) QSE_MBS_PTR(&(re)->qpath_or_smesg)
+#define qse_htre_getsmessagelen(re) QSE_MBS_LEN(&(re)->qpath_or_smesg)
+
 #define qse_htre_setdiscard(re,v) QSE_BLOCK((re)->discard = (v);)
 
 #ifdef __cplusplus
@@ -118,6 +95,23 @@ void qse_htre_fini (
 
 void qse_htre_clear (
 	qse_htre_t* re
+);
+
+int qse_htre_setbuf (
+	qse_htre_t* re,
+	qse_htob_t* buf,
+	const qse_htos_t* str
+);
+
+void qse_htre_getbuf (
+	qse_htre_t* re,
+	const qse_htob_t* buf,
+	qse_htos_t* str
+);
+	
+int qse_htre_setqparamstr (
+	qse_htre_t* re,
+	const qse_htoc_t* str
 );
 
 #ifdef __cplusplus

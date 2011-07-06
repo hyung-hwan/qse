@@ -117,6 +117,11 @@ qse_stc_t* qse_stc_init (qse_stc_t* stc, qse_mmgr_t* mmgr, qse_stx_t* stx)
 	}
 	stc->token.type = TOKEN_END;
 
+/* TODO:create a bytearray data type...
+ *      i think i can reuse qse_mbs_t ... by dropping the null-termination part...
+qse_bar_t bryte array....
+qse_lba_t linear byte array
+ */
 	if (qse_lda_init (
 		&stc->bytecode, mmgr, 256, 
 		QSE_SIZEOF(qse_byte_t), QSE_NULL) == QSE_NULL) 

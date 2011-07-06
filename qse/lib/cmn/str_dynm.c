@@ -1,5 +1,5 @@
 /*
- * $Id: str_dynm.c 497 2011-06-20 14:56:40Z hyunghwan.chung $
+ * $Id: str_dynm.c 501 2011-07-05 15:45:00Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -249,7 +249,7 @@ qse_size_t qse_mbs_ncpy (qse_mbs_t* str, const qse_mchar_t* s, qse_size_t len)
 	}
 
 	str->val.len = qse_mbsncpy (str->val.ptr, s, len);
-	str->val.ptr[str->val.len] = QSE_MT('\0');
+	/*str->val.ptr[str->val.len] = QSE_MT('\0'); -> mbsncpy does this*/
 	return str->val.len;
 }
 
