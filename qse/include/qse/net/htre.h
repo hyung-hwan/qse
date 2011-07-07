@@ -68,15 +68,20 @@ struct qse_htre_t
 #define qse_htre_getsstatus(re) ((re)->qmethod_or_sstatus)
 #define qse_htre_setsstatus(re,v) QSE_BLOCK((re)->qmethod_or_sstatus=(v);)
 
-#define qse_htre_setqpath(re,v) qse_htre_setbuf((re),&(re)->qpath_or_smesg,(v))
-#define qse_htre_setsmessage(re,v) qse_htre_setbuf((re),&(re)->qpath_or_smesg,(v))
-
+#define qse_htre_getqpath(re) (&(re)->qpath_or_smesg)
 #define qse_htre_getqpathptr(re) QSE_MBS_PTR(&(re)->qpath_or_smesg)
 #define qse_htre_getqpathlen(re) QSE_MBS_LEN(&(re)->qpath_or_smesg)
-#define qse_htre_getqparamsptr(re) QSE_MBS_PTR(&(re)->qparamstr)
-#define qse_htre_getqparamslen(re) QSE_MBS_LEN(&(re)->qparamstr)
+
+#define qse_htre_getqparamstr(re) (&(re)->qparamstr)
+#define qse_htre_getqparamstrptr(re) QSE_MBS_PTR(&(re)->qparamstr)
+#define qse_htre_getqparamstrlen(re) QSE_MBS_LEN(&(re)->qparamstr)
+
+#define qse_htre_getsmessage(re) (&(re)->qpath_or_smesg)
 #define qse_htre_getsmessageptr(re) QSE_MBS_PTR(&(re)->qpath_or_smesg)
 #define qse_htre_getsmessagelen(re) QSE_MBS_LEN(&(re)->qpath_or_smesg)
+
+#define qse_htre_setqpath(re,v) qse_htre_setbuf((re),qse_htre_getqpath(re),(v))
+#define qse_htre_setsmessage(re,v) qse_htre_setbuf((re),qse_htre_getsmessage(re),(v))
 
 #define qse_htre_setdiscard(re,v) QSE_BLOCK((re)->discard = (v);)
 
@@ -100,18 +105,18 @@ void qse_htre_clear (
 int qse_htre_setbuf (
 	qse_htre_t* re,
 	qse_htob_t* buf,
-	const qse_htos_t* str
+	const qse_mcstr_t* str
 );
 
 void qse_htre_getbuf (
 	qse_htre_t* re,
 	const qse_htob_t* buf,
-	qse_htos_t* str
+	qse_mcstr_t* str
 );
 	
 int qse_htre_setqparamstr (
 	qse_htre_t* re,
-	const qse_htoc_t* str
+	const qse_mcstr_t* str
 );
 
 #ifdef __cplusplus

@@ -198,7 +198,7 @@ static qse_htoc_t* parse_initial_line (
 	qse_htrd_t* http, qse_htoc_t* line)
 {
 	qse_htoc_t* p = line;
-	qse_htos_t tmp;
+	qse_mcstr_t tmp;
 	qse_http_method_t mtype;
 
 #if 0
@@ -285,7 +285,7 @@ static qse_htoc_t* parse_initial_line (
 	else
 	{
 		qse_htoc_t* out;
-		qse_htos_t param;
+		qse_mcstr_t param;
 
 		/* method name must be followed by space */
 		if (!is_space_octet(*p)) goto badre;
@@ -344,7 +344,7 @@ static qse_htoc_t* parse_initial_line (
 		if (param.ptr)
 		{
 			param.len = out - param.ptr;
-			if (qse_htre_setqparamstr (&http->re, param.ptr) <= -1) goto outofmem;
+			if (qse_htre_setqparamstr (&http->re, &param) <= -1) goto outofmem;
 		}
 		else tmp.len = out - tmp.ptr;
 

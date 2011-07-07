@@ -303,8 +303,10 @@ qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HT
      return QSE_HTB_WALK_FORWARD;
 }
 
-static capture_param (void* ctx, const qse_mcstr_t* key, const qse_mcstr_t* val)
+static int capture_param (void* ctx, const qse_mcstr_t* key, const qse_mcstr_t* val)
 {
+qse_printf (QSE_T("PARAM [%.*S] => [%.*S] \n"), (int)key->len, key->ptr, (int)val->len, val->ptr);
+	return 0;
 }
 
 static int handle_request (qse_htrd_t* http, qse_htre_t* req)
@@ -320,9 +322,9 @@ qse_printf (QSE_T("REQUEST ==> [%S] version[%d.%d] method[%d]\n"),
 	qse_htre_getminorversion(req),
 	qse_htre_getqmethod(req)
 );
-if (qse_htre_getqparamslen(req) > 0)
+if (qse_htre_getqparamstrlen(req) > 0)
 {
-qse_printf (QSE_T("PARAMS ==> [%S]\n"), qse_htre_getqparamsptr(req));
+qse_printf (QSE_T("PARAMS ==> [%S]\n"), qse_htre_getqparamstrptr(req));
 }
 
 qse_htb_walk (&http->re.hdrtab, walk, QSE_NULL);
@@ -337,12 +339,30 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
-		//qse_htre_decodereqpath (req, );
-		/* original path not available anymore */
+		int fd;
+		qse_mchar_t* paramstr;
 
-		qse_scanhttpparamstr (qse_htre_getqparamstrptr(req), capture_param, xxx);
+qse_printf (QSE_T("BEGIN SCANNING PARAM STR\n"));
 
-		int fd = open (qse_htre_getqpathptr(req), O_RDONLY);
+		paramstr = qse_htre_getqparamstrptr(req); /* if it is null, ? wasn't even provided */
+		if (paramstr != QSE_NULL && qse_scanhttpparamstr (paramstr, capture_param, client) <= -1)
+		{
+qse_printf (QSE_T("END SCANNING PARAM STR WITH ERROR\n"));
+const char* msg = "<html><head><title>INTERNAL SERVER ERROR</title></head><body><b>INTERNAL SERVER ERROR</b></body></html>";
+if (format_and_do (enqueue_format, client, 
+	"HTTP/%d.%d 500 Internal Server Error\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
+	req->version.major, 
+	req->version.minor,
+	(int)strlen(msg) + 4, msg) <= -1)
+{
+qse_printf (QSE_T("failed to push action....\n"));
+	return -1;
+}
+		}
+
+qse_printf (QSE_T("END SCANNING PARAM STR WITH SUCCESS\n"));
+
+		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
 		if (fd <= -1)
 		{
 const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
@@ -355,7 +375,6 @@ if (format_and_do (enqueue_format, client,
 qse_printf (QSE_T("failed to push action....\n"));
 	return -1;
 }
-
 		}
 		else
 		{
@@ -752,6 +771,7 @@ qse_printf (QSE_T("send text dup failure... arrange to close this connection....
 				{
 qse_printf (QSE_T("finished sending text dup...\n"));
 					dequeue_client_action_locked (client, NULL);
+qse_printf (QSE_T("finished sending text dup dequed...\n"));
 				}
 			}
 

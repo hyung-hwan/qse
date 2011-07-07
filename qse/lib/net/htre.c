@@ -16,7 +16,6 @@ qse_htre_t* qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 	}
 
 	qse_mbs_init (&re->content, mmgr, 0);
-
 	qse_mbs_init (&re->qpath_or_smesg, mmgr, 0);
 	qse_mbs_init (&re->qparamstr, mmgr, 0);
 
@@ -46,23 +45,21 @@ void qse_htre_clear (qse_htre_t* re)
 }
 
 int qse_htre_setbuf (
-	qse_htre_t* re, qse_htob_t* buf, const qse_htos_t* str)
+	qse_htre_t* re, qse_htob_t* buf, const qse_mcstr_t* str)
 {
-	qse_mbs_clear (buf);
-	return (qse_mbs_ncat (buf, str->ptr, str->len) == (qse_size_t)-1)? -1: 0;
+	return (qse_mbs_ncpy (buf, str->ptr, str->len) == (qse_size_t)-1)? -1: 0;
 }
 
 void qse_htre_getbuf (
-	qse_htre_t* re, const qse_htob_t* buf, qse_htos_t* str)
+	qse_htre_t* re, const qse_htob_t* buf, qse_mcstr_t* str)
 {
 	str->ptr = QSE_MBS_PTR(buf);
 	str->len = QSE_MBS_LEN(buf);
 }
 
-int qse_htre_setqparamstr (qse_htre_t* re, const qse_htoc_t* str)
-
+int qse_htre_setqparamstr (qse_htre_t* re, const qse_mcstr_t* str)
 {
-	return (qse_mbs_cpy (&re->qparamstr, str) == (qse_size_t)-1)? -1: 0;
+	return (qse_mbs_ncpy (&re->qparamstr, str->ptr, str->len) == (qse_size_t)-1)? -1: 0;
 }
 
 
