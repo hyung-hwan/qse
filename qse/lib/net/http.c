@@ -97,7 +97,7 @@ int qse_gethttpmethodtype (
 }
 
 int qse_gethttpmethodtypefromstr (
-	const qse_htos_t* name,
+	const qse_mcstr_t* name,
 	qse_http_method_t* type)
 {
 	/* perform binary search */
@@ -150,7 +150,11 @@ int qse_scanhttpparamstr (
 		if (*p == '&' || *p == ';' || *p == '\0')
 		{
 			QSE_ASSERT (key.ptr != QSE_NULL);
-			if (val.ptr == QSE_NULL) val.ptr = "";
+			if (val.ptr == QSE_NULL) 
+			{
+				if (key.len == 0) break;
+				val.ptr = "";
+			}
 
 			if (callback (ctx, &key, &val) <= -1) return -1;
 
@@ -168,6 +172,7 @@ int qse_scanhttpparamstr (
 		{
 			if (val.ptr) val.len++;
 			else key.len++;
+			p++;
 		}
 	}
 

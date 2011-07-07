@@ -76,7 +76,7 @@ int qse_gethttpmethodtype (
 );
 
 int qse_gethttpmethodtypefromstr (
-	const qse_htos_t* name,
+	const qse_mcstr_t* name,
 	qse_http_method_t* type
 );
 

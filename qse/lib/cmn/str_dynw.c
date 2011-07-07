@@ -1,5 +1,5 @@
 /*
- * $Id: str_dynw.c 501 2011-07-05 15:45:00Z hyunghwan.chung $
+ * $Id: str_dynw.c 502 2011-07-06 16:44:10Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -235,22 +235,32 @@ qse_size_t qse_wcs_cpy (qse_wcs_t* str, const qse_wchar_t* s)
 
 qse_size_t qse_wcs_ncpy (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 {
-	if (len > str->capa || str->val.ptr == QSE_NULL) 
+	if (len > str->capa || str->capa <= 0)
 	{
-		qse_wchar_t* buf;
+		qse_size_t tmp;
 
-		buf = (qse_wchar_t*) QSE_MMGR_ALLOC (
-			str->mmgr, QSE_SIZEOF(qse_wchar_t) * (len + 1));
-		if (buf == QSE_NULL) return (qse_size_t)-1;
-
-		if (str->val.ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->val.ptr);
-		str->capa = len;
-		str->val.ptr = buf;
+		/* if the current capacity is 0 and the string len to copy is 0
+		 * we can't simply pass 'len' as the new capapcity.
+		 * qse_wcs_setcapa() won't do anything the current capacity of 0
+		 * is the same as new capacity required. note that when str->capa 
+		 * is 0, str->val.ptr is QSE_NULL. However, this is copying operation.
+		 * Copying a zero-length string may indicate that str->val.ptr must
+		 * not be QSE_NULL. so I simply pass 1 as the new capacity */
+		tmp = qse_wcs_setcapa (
+			str, ((str->capa <= 0 && len <= 0)? 1: len)
+		);
+		if (tmp == (qse_size_t)-1) return (qse_size_t)-1;
 	}
 
+	QSE_MEMCPY (&str->val.ptr[0], s, len*QSE_SIZEOF(*s));
+	str->val.ptr[len] = QSE_WT('\0');
+	str->val.len = len;
+	return len;
+#if 0
 	str->val.len = qse_wcsncpy (str->val.ptr, s, len);
-	/* str->val.ptr[str->val.len] = QSE_WT('\0'); -> wcsncpy does this */
+	/*str->val.ptr[str->val.len] = QSE_WT('\0'); -> wcsncpy does this*/
 	return str->val.len;
+#endif
 }
 
 qse_size_t qse_wcs_cat (qse_wcs_t* str, const qse_wchar_t* s)
@@ -295,6 +305,12 @@ qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 		}
 		while (1);
 	}
+	else if (str->capa <= 0 && len <= 0)
+	{
+		QSE_ASSERT (str->val.ptr == QSE_NULL);
+		QSE_ASSERT (str->val.len <= 0);
+		if (qse_wcs_setcapa (str, 1) == (qse_size_t)-1) return (qse_size_t)-1;
+	}
 
 	if (len > str->capa - str->val.len) 
 	{
@@ -303,12 +319,16 @@ qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 		len = str->capa - str->val.len;
 	}
 
+#if 0
 	if (len > 0)
 	{
+#endif
 		QSE_MEMCPY (&str->val.ptr[str->val.len], s, len*QSE_SIZEOF(*s));
 		str->val.len += len;
 		str->val.ptr[str->val.len] = QSE_WT('\0');
+#if 0
 	}
+#endif
 
 	return str->val.len;
 }

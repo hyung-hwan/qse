@@ -2,6 +2,7 @@
  * $Id$
  */
 
+#if 0
 #include "par.h"
 #include "../cmn/mem.h"
 
@@ -1698,3 +1699,4 @@ static int __close_input (qse_stc_t* stc)
 	return 0;
 }
 
+#endif
