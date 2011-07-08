@@ -134,47 +134,15 @@ int qse_gethttpmethodtypefromstr (
 	return -1;
 }
 
-int qse_scanhttpparamstr (
-	const qse_htoc_t* paramstr, 
-	qse_scanhttpparamstr_callback_t callback,
-	void* ctx)
+int qse_gethttpdatetime (const qse_htoc_t* str, qse_ntime_t* t)
 {
-	qse_mcstr_t key, val;
-	const qse_htoc_t* p = paramstr;
-
-	key.ptr = p; key.len = 0;
-	val.ptr = QSE_NULL; val.len = 0;
-
-	while (1)
-	{
-		if (*p == '&' || *p == ';' || *p == '\0')
-		{
-			QSE_ASSERT (key.ptr != QSE_NULL);
-			if (val.ptr == QSE_NULL) 
-			{
-				if (key.len == 0) break;
-				val.ptr = "";
-			}
-
-			if (callback (ctx, &key, &val) <= -1) return -1;
-
-			if (*p == '\0') break;
-
-			key.ptr = ++p; key.len = 0;
-			val.ptr = QSE_NULL; val.len = 0;
-		}
-		else if (*p == '=')
-		{
-			val.ptr = ++p;
-			val.len = 0;
-		}
-		else
-		{
-			if (val.ptr) val.len++;
-			else key.len++;
-			p++;
-		}
-	}
-
-	return 0;
+/* TODO: */
+	return -1;
 }
+
+int qse_gethttpdatetimefromstr (const qse_mcstr_t* str, qse_ntime_t* t)
+{
+/* TODO: */
+	return -1;
+}
+

@@ -9,7 +9,8 @@ lib_LTLIBRARIES = libqsenet.la
 libqsenet_la_SOURCES = \
 	http.c \
 	htre.c \
-	htrd.c 
+	htrd.c \
+	httpd.c 
 
 libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
 libqsenet_la_LIBADD = -lqsecmn

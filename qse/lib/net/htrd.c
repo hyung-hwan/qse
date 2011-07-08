@@ -172,6 +172,7 @@ qse_htrd_t* qse_htrd_init (qse_htrd_t* http, qse_mmgr_t* mmgr)
 	QSE_MEMSET (http, 0, QSE_SIZEOF(*http));
 	http->mmgr = mmgr;
 
+	qse_mbs_init (&http->tmp.qparam, http->mmgr, 0);
 	qse_mbs_init (&http->fed.b.raw, http->mmgr, 0);
 	qse_mbs_init (&http->fed.b.tra, http->mmgr, 0);
 
@@ -179,6 +180,7 @@ qse_htrd_t* qse_htrd_init (qse_htrd_t* http, qse_mmgr_t* mmgr)
 	{
 		qse_mbs_fini (&http->fed.b.tra);
 		qse_mbs_fini (&http->fed.b.raw);
+		qse_mbs_fini (&http->tmp.qparam);
 		return QSE_NULL;
 	}
 
@@ -192,6 +194,7 @@ void qse_htrd_fini (qse_htrd_t* http)
 	clear_combined_headers (http);
 	qse_mbs_fini (&http->fed.b.tra);
 	qse_mbs_fini (&http->fed.b.raw);
+	qse_mbs_fini (&http->tmp.qparam);
 }
 
 static qse_htoc_t* parse_initial_line (
@@ -273,7 +276,7 @@ static qse_htoc_t* parse_initial_line (
 		while (*p != '\0' && *p != '\n') p++;
 		tmp.len = p - tmp.ptr;
 
-		if (qse_htre_setsmessage (&http->re, &tmp) <= -1) goto outofmem;
+		if (qse_htre_setsmessagefromcstr (&http->re, &tmp) <= -1) goto outofmem;
 
 		/* adjust Connection: close for HTTP 1.0 or eariler */
 		if (http->re.version.major < 1 || 
@@ -300,8 +303,12 @@ static qse_htoc_t* parse_initial_line (
 		out = p;
 		while (*p != '\0' && !is_space_octet(*p)) 
 		{
-			if (*p == '%')
+			if (*p == '%' && param.ptr == QSE_NULL)
 			{
+				/* decode percence-encoded charaters in the 
+				 * path part.  if we're in the parameter string
+				 * part, we don't decode them. */
+
 				int q = xdigit_to_num(*(p+1));
 				int w = xdigit_to_num(*(p+2));
 	
@@ -344,11 +351,11 @@ static qse_htoc_t* parse_initial_line (
 		if (param.ptr)
 		{
 			param.len = out - param.ptr;
-			if (qse_htre_setqparamstr (&http->re, &param) <= -1) goto outofmem;
+			if (qse_htre_setqparamfromcstr (&http->re, &param) <= -1) goto outofmem;
 		}
 		else tmp.len = out - tmp.ptr;
 
-		if (qse_htre_setqpath (&http->re, &tmp) <= -1) goto outofmem;
+		if (qse_htre_setqpathfromcstr (&http->re, &tmp) <= -1) goto outofmem;
 
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
@@ -1100,7 +1107,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						if (n <= -1)
 						{
 							if (http->errnum == QSE_HTRD_ENOERR)
-								http->errnum = QSE_HTRD_EREQCBS;	
+								http->errnum = QSE_HTRD_ERECBS;	
 
 							/* need to clear request on error? 
 							clear_feed (http); */
@@ -1237,7 +1244,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						{
 							QSE_ASSERTX (
 								http->recbs.response != QSE_NULL,
-								"set response callbacks before feeding"
+								"set response callback before feeding"
 							);
 	
 							n = http->recbs.response (http, &http->re);
@@ -1246,7 +1253,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						{
 							QSE_ASSERTX (
 								http->recbs.request != QSE_NULL,
-								"set request callbacks before feeding"
+								"set request callback before feeding"
 							);
 	
 							n = http->recbs.request (http, &http->re);
@@ -1255,7 +1262,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						if (n <= -1)
 						{
 							if (http->errnum == QSE_HTRD_ENOERR)
-								http->errnum = QSE_HTRD_EREQCBS;	
+								http->errnum = QSE_HTRD_ERECBS;	
 	
 							/* need to clear request on error? 
 							clear_feed (http); */
@@ -1310,7 +1317,7 @@ int qse_htrd_read (qse_htrd_t* http)
 	n = http->recbs.reader (http, http->rbuf, QSE_SIZEOF(http->rbuf));
 	if (n <= -1) 
 	{
-		if (http->errnum == QSE_HTRD_ENOERR) http->errnum = QSE_HTRD_EREADER;
+		if (http->errnum == QSE_HTRD_ENOERR) http->errnum = QSE_HTRD_ERECBS;
 		return -1;
 	}
 	if (n == 0) 
@@ -1322,3 +1329,108 @@ int qse_htrd_read (qse_htrd_t* http)
 	return qse_htrd_feed (http, http->rbuf, n);
 }
 
+int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
+{
+	qse_mcstr_t key, val;
+	const qse_htoc_t* p, * end;
+	qse_htoc_t* out;
+
+	if (cstr == QSE_NULL) cstr = qse_htre_getqparamcstr(&http->re);
+
+	p = cstr->ptr;
+	if (p == QSE_NULL) return 0; /* no param string to scan */
+
+	end = p + cstr->len;
+
+	/* a key and a value pair including two terminating null 
+	 * can't exceed the the qparamstrlen + 2. only +1 below as there is
+	 * one more space for an internal terminating null */
+	qse_mbs_setlen (&http->tmp.qparam, cstr->len + 1);
+
+	/* let out point to the beginning of the qparam buffer.
+	 * the loop below emits percent-decode key and value to this buffer. */
+	out = QSE_MBS_PTR(&http->tmp.qparam);
+
+	key.ptr = out; key.len = 0;
+	val.ptr = QSE_NULL; val.len = 0;
+
+	do
+	{
+		if (p >= end || *p == '&' || *p == ';')
+		{
+			QSE_ASSERT (key.ptr != QSE_NULL);
+
+			*out++ = '\0'; 
+			if (val.ptr == QSE_NULL) 
+			{
+				if (key.len == 0) 
+				{
+					/* both key and value are empty.
+					 * we don't need to do anything */
+					goto next_octet;
+				}
+
+				val.ptr = out;
+				*out++ = '\0'; 
+				QSE_ASSERT (val.len == 0);
+			}
+
+			QSE_ASSERTX (
+				http->recbs.qparamstr != QSE_NULL,
+				"set request parameter string callback before scanning"
+			);
+
+			http->errnum = QSE_HTRD_ENOERR;
+			if (http->recbs.qparamstr (http, &key, &val) <= -1) 
+			{
+				if (http->errnum == QSE_HTRD_ENOERR)
+					http->errnum = QSE_HTRD_ERECBS;	
+				return -1;
+			}
+
+		next_octet:
+			if (p >= end) break;
+			p++;
+
+			out = QSE_MBS_PTR(&http->tmp.qparam);
+			key.ptr = out; key.len = 0;
+			val.ptr = QSE_NULL; val.len = 0;
+		}
+		else if (*p == '=')
+		{
+			*out++ = '\0'; p++;
+
+			val.ptr = out;
+			/*val.len = 0; */
+		}
+		else
+		{
+			if (*p == '%' && p + 2 <= end)
+			{
+				int q = xdigit_to_num(*(p+1));
+				if (q >= 0)
+				{
+					int w = xdigit_to_num(*(p+2));
+					if (w >= 0)
+					{
+						/* unlike the path part, we don't care if it 
+						 * contains a null character */
+						*out++ = ((q << 4) + w);
+						p += 3;
+						goto next;
+					}
+				}
+			}
+
+			*out++ = *p++;
+
+		next:
+			if (val.ptr) val.len++;
+			else key.len++;
+		}
+	}
+	while (1);
+
+	qse_mbs_clear (&http->tmp.qparam);
+	return 0;
+}
