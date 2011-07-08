@@ -32,11 +32,9 @@ enum qse_htrd_errnum_t
 	QSE_HTRD_ENOMEM,
 
 	QSE_HTRD_EDISCON,
-	QSE_HTRD_EREADER,
-
 	QSE_HTRD_EBADRE,
 	QSE_HTRD_EBADHDR,
-	QSE_HTRD_EREQCBS
+	QSE_HTRD_ERECBS
 };
 
 typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
@@ -58,6 +56,8 @@ struct qse_htrd_recbs_t
 	int         (*request)         (qse_htrd_t* htrd, qse_htre_t* req);
 	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
 	int         (*expect_continue) (qse_htrd_t* htrd, qse_htre_t* req);
+
+	int         (*qparamstr)       (qse_htrd_t* htrd, const qse_mcstr_t* key, const qse_mcstr_t* val);
 };
 
 struct qse_htrd_t
@@ -96,11 +96,19 @@ struct qse_htrd_t
 		void* chl;
 	} fed; 
 
+	struct
+	{
+		/* temporary space to store a key and value pair
+		 * during the call to qse_http_scanqparamstr() */
+		qse_htob_t qparam; 
+	} tmp;
+
 	enum 
 	{
 		QSE_HTRD_RETYPE_Q,
 		QSE_HTRD_RETYPE_S
 	} retype;
+
 	qse_htre_t re;
 
 	qse_htoc_t rbuf[4096];
@@ -170,6 +178,11 @@ int qse_htrd_feed (
 
 int qse_htrd_read (
 	qse_htrd_t* htrd /**< htrd */
+);
+
+int qse_htrd_scanqparam (
+	qse_htrd_t*        http,
+	const qse_mcstr_t* cstr
 );
 
 #ifdef __cplusplus

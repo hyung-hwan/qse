@@ -25,6 +25,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>
+#include <qse/cmn/time.h>
 
 /*typedef qse_byte_t qse_htoc_t;*/
 typedef qse_mchar_t qse_htoc_t;
@@ -56,12 +57,6 @@ enum qse_http_method_t
 
 typedef enum qse_http_method_t qse_http_method_t;
 
-typedef int (*qse_scanhttpparamstr_callback_t) (
-	void* ctx,
-	const qse_mcstr_t* key,
-	const qse_mcstr_t* val
-);
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,10 +75,14 @@ int qse_gethttpmethodtypefromstr (
 	qse_http_method_t* type
 );
 
-int qse_scanhttpparamstr (
-	const qse_htoc_t*               paramstr,
-	qse_scanhttpparamstr_callback_t callback,
-	void*                           ctx
+int qse_gethttpdatetime (
+	const qse_htoc_t* str,
+	qse_ntime_t*      t
+);
+
+int qse_gethttpdatetimefromstr (
+	const qse_mcstr_t* str,
+	qse_ntime_t*       t
 );
 
 #ifdef __cplusplus
