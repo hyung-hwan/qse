@@ -66,7 +66,7 @@ struct qse_htrd_t
 	qse_htrd_errnum_t errnum;
 	int option;
 
-	qse_htrd_recbs_t recbs;
+	const qse_htrd_recbs_t* recbs;
 
 	struct
 	{

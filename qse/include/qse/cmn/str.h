@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 500 2011-06-29 15:12:36Z hyunghwan.chung $
+ * $Id: str.h 504 2011-07-11 16:31:33Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2127,6 +2127,17 @@ int qse_wcstombs_strict (
 	const qse_wchar_t* wcs,
 	qse_mchar_t*       mbs,
 	qse_size_t         mbslen
+);
+
+
+qse_wchar_t* qse_mbstowcsdup (
+	const qse_mchar_t* mbs,
+	qse_mmgr_t* mmgr
+);
+
+qse_mchar_t* qse_wcstombsdup (
+	const qse_wchar_t* wcs,
+	qse_mmgr_t* mmgr
 );
 
 QSE_DEFINE_COMMON_FUNCTIONS (mbs)
