@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 487 2011-06-04 16:22:20Z hyunghwan.chung $
+ * $Id: types.h 504 2011-07-11 16:31:33Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -336,6 +336,7 @@ typedef qse_int_t qse_intptr_t;
 	typedef double qse_real_t;
 #endif
 
+
 /** 
  * The qse_mchar_t type defines a multi-byte character type.
  */
@@ -560,5 +561,18 @@ struct qse_mmgr_t
 	void*              udd;     /**< user-defined data pointer */
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
+
+/* file offset */
+#if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF64_T==8)
+	typedef qse_int64_t qse_foff_t;
+#elif defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF_T==8)
+	typedef qse_int64_t qse_foff_t;
+#elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_OFF_T==4)
+	typedef qse_int32_t qse_foff_t;
+#elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_OFF_T==2)
+	typedef qse_int16_t qse_foff_t;
+#else
+#    error Unsupported platform
+#endif
 
 #endif

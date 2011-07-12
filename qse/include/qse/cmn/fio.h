@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 452 2011-05-04 15:11:23Z hyunghwan.chung $
+ * $Id: fio.h 504 2011-07-11 16:31:33Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -55,7 +55,7 @@ enum qse_fio_open_flag_t
 };
 
 /* seek origin */
-enum qse_fio_seek_origin_t
+enum qse_fio_ori_t
 {
 	QSE_FIO_BEGIN   = 0,
 	QSE_FIO_CURRENT = 1,
@@ -92,19 +92,10 @@ enum qse_fio_mode_t
 #endif
 
 /* file offset */
-#if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF64_T==8)
-	typedef qse_int64_t qse_fio_off_t;
-#elif defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF_T==8)
-	typedef qse_int64_t qse_fio_off_t;
-#elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_OFF_T==4)
-	typedef qse_int32_t qse_fio_off_t;
-#elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_OFF_T==2)
-	typedef qse_int16_t qse_fio_off_t;
-#else
-#	error Unsupported platform
-#endif
+typedef qse_foff_t qse_fio_off_t;
 
-typedef enum qse_fio_seek_origin_t qse_fio_ori_t;
+/* file origin for seek */
+typedef enum qse_fio_ori_t qse_fio_ori_t;
 
 typedef struct qse_fio_t qse_fio_t;
 typedef struct qse_fio_lck_t qse_fio_lck_t;

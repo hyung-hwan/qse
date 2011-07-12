@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: str_cnv.c 504 2011-07-11 16:31:33Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,6 +20,7 @@
 
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
+#include "mem.h"
 
 int qse_strtoi (const qse_char_t* str)
 {
@@ -397,6 +398,41 @@ int qse_wcstombs_strict (
 	return 0;
 }
 
+qse_wchar_t* qse_mbstowcsdup (
+	const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
+{
+	qse_size_t n, req;
+	qse_wchar_t* wcs;
+
+	n = qse_mbstowcslen (mbs, &req);
+	if (mbs[n] != QSE_WT('\0')) return QSE_NULL;
+
+	req++;
+
+	wcs = QSE_MMGR_ALLOC (mmgr, req * QSE_SIZEOF(*wcs));	
+	if (wcs == QSE_NULL) return QSE_NULL;
+
+	qse_mbstowcs (mbs, wcs, &req);
+	return wcs;
+}
+
+qse_mchar_t* qse_wcstombsdup (
+	const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
+{
+	qse_size_t n, req;
+	qse_mchar_t* mbs;
+
+	n = qse_wcstombslen (wcs, &req);
+	if (wcs[n] != QSE_WT('\0')) return QSE_NULL;
+
+	req++;
+
+	mbs = QSE_MMGR_ALLOC (mmgr, req * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	qse_wcstombs (wcs, mbs, &req);
+	return mbs;
+}
 
 /* case conversion */
 

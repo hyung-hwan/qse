@@ -422,12 +422,12 @@ void qse_htrd_setoption (qse_htrd_t* http, int opts)
 
 const qse_htrd_recbs_t* qse_htrd_getrecbs (qse_htrd_t* http)
 {
-	return &http->recbs;
+	return http->recbs;
 }
 
 void qse_htrd_setrecbs (qse_htrd_t* http, const qse_htrd_recbs_t* recbs)
 {
-	http->recbs = *recbs;
+	http->recbs = recbs;
 }
 
 #define octet_tolower(c) (((c) >= 'A' && (c) <= 'Z') ? ((c) | 0x20) : (c))
@@ -1091,7 +1091,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 
 					if (http->retype == QSE_HTRD_RETYPE_Q && 
 					    http->re.attr.expect_continue && 
-					    http->recbs.expect_continue && ptr >= end)
+					    http->recbs->expect_continue && ptr >= end)
 					{
 						int n;
 
@@ -1102,7 +1102,7 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						 * not fed here?
 						 */ 
 
-						n = http->recbs.expect_continue (http, &http->re);
+						n = http->recbs->expect_continue (http, &http->re);
 
 						if (n <= -1)
 						{
@@ -1243,20 +1243,20 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						if (http->retype == QSE_HTRD_RETYPE_S)
 						{
 							QSE_ASSERTX (
-								http->recbs.response != QSE_NULL,
+								http->recbs->response != QSE_NULL,
 								"set response callback before feeding"
 							);
 	
-							n = http->recbs.response (http, &http->re);
+							n = http->recbs->response (http, &http->re);
 						}
 						else
 						{
 							QSE_ASSERTX (
-								http->recbs.request != QSE_NULL,
+								http->recbs->request != QSE_NULL,
 								"set request callback before feeding"
 							);
 	
-							n = http->recbs.request (http, &http->re);
+							n = http->recbs->request (http, &http->re);
 						}
 		
 						if (n <= -1)
@@ -1309,12 +1309,12 @@ int qse_htrd_read (qse_htrd_t* http)
 	qse_ssize_t n;
 
 	QSE_ASSERTX (
-		http->recbs.reader != QSE_NULL, 
+		http->recbs->reader != QSE_NULL, 
 		"You must set the octet reader to be able to call qse_htrd_read()"
 	);
 
 	http->errnum = QSE_HTRD_ENOERR;
-	n = http->recbs.reader (http, http->rbuf, QSE_SIZEOF(http->rbuf));
+	n = http->recbs->reader (http, http->rbuf, QSE_SIZEOF(http->rbuf));
 	if (n <= -1) 
 	{
 		if (http->errnum == QSE_HTRD_ENOERR) http->errnum = QSE_HTRD_ERECBS;
@@ -1376,12 +1376,12 @@ int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 			}
 
 			QSE_ASSERTX (
-				http->recbs.qparamstr != QSE_NULL,
+				http->recbs->qparamstr != QSE_NULL,
 				"set request parameter string callback before scanning"
 			);
 
 			http->errnum = QSE_HTRD_ENOERR;
-			if (http->recbs.qparamstr (http, &key, &val) <= -1) 
+			if (http->recbs->qparamstr (http, &key, &val) <= -1) 
 			{
 				if (http->errnum == QSE_HTRD_ENOERR)
 					http->errnum = QSE_HTRD_ERECBS;	

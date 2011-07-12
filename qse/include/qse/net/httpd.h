@@ -25,11 +25,23 @@
 #include <qse/macros.h>
 
 typedef struct qse_httpd_t qse_httpd_t;
-struct qse_httpd_t
-{
-	QSE_DEFINE_COMMON_FIELDS (httpd)
 
-	int stopreq;
+enum qse_httpd_errnum_t
+{
+	QSE_HTTPD_ENOERR,
+	QSE_HTTPD_ENOMEM,
+	QSE_HTTPD_EINVAL,
+	QSE_HTTPD_ESOCKET,
+	QSE_HTTPD_EINTERN,
+	QSE_HTTPD_ECOMCBS
+};
+typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
+
+typedef struct qse_httpd_comcbs_t qse_httpd_comcbs_t;
+struct qse_httpd_comcbs_t
+{
+	int (*open_listeners) (qse_httpd_t* httpd);
+	int (*close_listeners) (qse_httpd_t* httpd);
 };
 
 #ifdef __cplusplus
@@ -53,13 +65,26 @@ void qse_httpd_close (
 	qse_httpd_t* httpd 
 );
 
-qse_httpd_t* qse_httpd_init (
+void qse_httpd_setcomcbs (
 	qse_httpd_t* httpd,
-	qse_mmgr_t*  mmgr
+	qse_httpd_comcbs_t* comcbs
 );
 
-void qse_httpd_fini (
+int qse_httpd_loop (
 	qse_httpd_t* httpd
+);
+
+/**
+ * The qse_httpd_stop() function requests to stop qse_httpd_loop()
+ */
+void qse_httpd_stop (
+	qse_httpd_t* httpd
+);
+
+
+int qse_httpd_addlisteners (
+	qse_httpd_t*      httpd,
+	const qse_char_t* uri
 );
 
 #ifdef __cplusplus
