@@ -91,6 +91,18 @@ void qse_httpd_stop (qse_httpd_t* httpd)
 	httpd->stopreq = 1;
 }
 
+static QSE_INLINE void* httpd_alloc (qse_httpd_t* httpd, qse_size_t n)
+{
+	void* ptr = QSE_MMGR_ALLOC (httpd->mmgr, n);
+	if (ptr == QSE_NULL) httpd->errnum = QSE_HTTPD_ENOMEM;
+	return ptr;
+}
+
+static void httpd_free (qse_httpd_t* httpd, void* ptr)
+{
+	QSE_MMGR_FREE (httpd->mmgr, ptr);
+}
+
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 
@@ -118,80 +130,81 @@ struct http_xtn_t
 {
 	client_array_t* array;
 	qse_size_t      index; 
+	qse_httpd_t*    httpd;
 };
 
-static int enqueue_client_action_unlocked (client_t* client, const client_action_t* action)
+static int enqueue_task_unlocked (client_t* client, const task_t* task)
 {
 	int index;
 
-	if (client->action.count >= QSE_COUNTOF(client->action.target)) return -1;
+	if (client->task.count >= QSE_COUNTOF(client->task.array)) return -1;
 	
-	index = (client->action.offset + client->action.count) % 
-	        QSE_COUNTOF(client->action.target);
-	client->action.target[index] = *action;
-	client->action.count++;
+	index = (client->task.offset + client->task.count) % 
+	        QSE_COUNTOF(client->task.array);
+	client->task.array[index] = *task;
+	client->task.count++;
 	return 0;
 }
 
-static int enqueue_client_action_locked (client_t* client, const client_action_t* action)
+static int enqueue_task_locked (client_t* client, const task_t* task)
 {
 	int ret;
-	pthread_mutex_lock (&client->action_mutex);
-	ret = enqueue_client_action_unlocked (client, action);
-	pthread_mutex_unlock (&client->action_mutex);
+	pthread_mutex_lock (&client->task.mutex);
+	ret = enqueue_task_unlocked (client, task);
+	pthread_mutex_unlock (&client->task.mutex);
 	return ret;
 }
 
-static int dequeue_client_action_unlocked (client_t* client, client_action_t* action)
+static int dequeue_task_unlocked (client_t* client, task_t* task)
 {
-	client_action_t* actp;
+	task_t* actp;
 
-	if (client->action.count <= 0) return -1;
+	if (client->task.count <= 0) return -1;
 
-	actp = &client->action.target[client->action.offset];
-	if (actp->type == ACTION_SENDFILE) close (actp->u.sendfile.fd);
-	else if (actp->type == ACTION_SENDTEXTDUP) free (actp->u.sendtextdup.ptr);
+	actp = &client->task.array[client->task.offset];
+	if (actp->type == TASK_SENDFILE) close (actp->u.sendfile.fd);
+	else if (actp->type == TASK_SENDTEXTDUP) free (actp->u.sendtextdup.ptr);
 
-	if (action) *action = *actp;
-	client->action.offset = (client->action.offset + 1) % QSE_COUNTOF(client->action.target);
-	client->action.count--;
+	if (task) *task = *actp;
+	client->task.offset = (client->task.offset + 1) % QSE_COUNTOF(client->task.array);
+	client->task.count--;
 	return 0;
 }
 
-static int dequeue_client_action_locked (client_t* client, client_action_t* action)
+static int dequeue_task_locked (client_t* client, task_t* task)
 {
 	int ret;
-	pthread_mutex_lock (&client->action_mutex);
-	ret = dequeue_client_action_unlocked (client, action);
-	pthread_mutex_unlock (&client->action_mutex);
+	pthread_mutex_lock (&client->task.mutex);
+	ret = dequeue_task_unlocked (client, task);
+	pthread_mutex_unlock (&client->task.mutex);
 	return ret;
 }
 
-static void purge_client_actions_locked (client_t* client)
+static void purge_tasks_locked (client_t* client)
 {
-	client_action_t action;
-	pthread_mutex_lock (&client->action_mutex);
-	while (dequeue_client_action_unlocked (client, &action) == 0);
-	pthread_mutex_unlock (&client->action_mutex);
+	task_t task;
+	pthread_mutex_lock (&client->task.mutex);
+	while (dequeue_task_unlocked (client, &task) == 0);
+	pthread_mutex_unlock (&client->task.mutex);
 }
 
 static int enqueue_sendtext_locked (client_t* client, const char* text)
 {
-	client_action_t action;
+	task_t task;
 
-	memset (&action, 0, sizeof(action));
-	action.type = ACTION_SENDTEXT;
-	action.u.sendtext.ptr = text;
-	action.u.sendtext.left = strlen(text);
+	memset (&task, 0, sizeof(task));
+	task.type = TASK_SENDTEXT;
+	task.u.sendtext.ptr = text;
+	task.u.sendtext.left = strlen(text);
 
-	return enqueue_client_action_locked (client, &action);
+	return enqueue_task_locked (client, &task);
 }
 
-static int format_and_do (int (*task) (void* arg, char* text), void* arg, const char* fmt, ...)
+static qse_mchar_t* format_textdup (qse_httpd_t* httpd, const char* fmt, ...)
 {
 	va_list ap;
-	char n[2];
-	char* buf;
+	qse_mchar_t n[2];
+	qse_mchar_t* buf;
 	int bytes_req;
 
 	va_start (ap, fmt);
@@ -201,10 +214,13 @@ static int format_and_do (int (*task) (void* arg, char* text), void* arg, const 
 	bytes_req = vsnprintf (n, 1, fmt, ap);
 #endif
 	va_end (ap);
+
 	if (bytes_req == -1) 
 	{
 		qse_size_t capa = 256;
-		buf = (char*) malloc (capa + 1);
+
+		buf = (qse_mchar_t*) httpd_alloc (httpd, (capa + 1) * QSE_SIZEOF(*buf));
+		if (buf == QSE_NULL) return QSE_NULL;
 
 		/* an old vsnprintf behaves differently from C99 standard.
 		 * thus, it returns -1 when it can't write all the input given. */
@@ -213,23 +229,21 @@ static int format_and_do (int (*task) (void* arg, char* text), void* arg, const 
 			int l;
 			va_start (ap, fmt);
 #if defined(_WIN32) && defined(_MSC_VER)
-			if ((l = _vsnprintf (buf, capa + 1, fmt, ap)) == -1) 
+			l = _vsnprintf (buf, capa + 1, fmt, ap);
 #else
-			if ((l = vsnprintf (buf, capa + 1, fmt, ap)) == -1) 
+			l = vsnprintf (buf, capa + 1, fmt, ap);
 #endif
-			{
-				va_end (ap);
-
-				free (buf);
-				capa = capa * 2;
-				buf = (char*)malloc (capa + 1);
-				if (buf == NULL) return -1;
-
-				continue;
-			}
-
 			va_end (ap);
-			break;
+
+			if (l == -1)
+			{
+				httpd_free (httpd, buf);
+
+				capa = capa * 2;
+				buf = (qse_mchar_t*) httpd_alloc (httpd, (capa + 1) * QSE_SIZEOF(*buf));
+				if (buf == QSE_NULL) return QSE_NULL;
+			}
+			else break;
 		}
 	}
 	else 
@@ -237,8 +251,8 @@ static int format_and_do (int (*task) (void* arg, char* text), void* arg, const 
 		/* vsnprintf returns the number of characters that would 
 		 * have been written not including the terminating '\0' 
 		 * if the _data buffer were large enough */
-		buf = (char*)malloc (bytes_req + 1);
-		if (buf == NULL) return -1;
+		buf = (qse_mchar_t*) httpd_alloc (httpd, (bytes_req + 1) * QSE_SIZEOF(*buf));
+		if (buf == NULL) return QSE_NULL;
 
 		va_start (ap, fmt);
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -246,48 +260,26 @@ static int format_and_do (int (*task) (void* arg, char* text), void* arg, const 
 #else
 		vsnprintf (buf, bytes_req + 1, fmt, ap);
 #endif
-
-		//_data[_size] = '\0';
 		va_end (ap);
 	}
 
-	return task (arg, buf);
-}
-
-static int enqueue_format (void* arg, char* text)
-{
-	client_t* client = (client_t*)arg;
-
-	client_action_t action;
-
-	memset (&action, 0, sizeof(action));
-	action.type = ACTION_SENDTEXTDUP;
-	action.u.sendtextdup.ptr = text;
-	action.u.sendtextdup.left = strlen(text);
-
-	if (enqueue_client_action_locked (client, &action) <= -1)
-	{
-		free (text);
-		return -1;
-	}
-
-	return 0;
+	return buf;
 }
 
 static int enqueue_sendtextdup_locked (client_t* client, const char* text)
 {
-	client_action_t action;
+	task_t task;
 	char* textdup;
 
 	textdup = strdup (text);
 	if (textdup == NULL) return -1;
 
-	memset (&action, 0, sizeof(action));
-	action.type = ACTION_SENDTEXTDUP;
-	action.u.sendtextdup.ptr = textdup;
-	action.u.sendtextdup.left = strlen(textdup);
+	memset (&task, 0, sizeof(task));
+	task.type = TASK_SENDTEXTDUP;
+	task.u.sendtextdup.ptr = textdup;
+	task.u.sendtextdup.left = strlen(textdup);
 
-	if (enqueue_client_action_locked (client, &action) <= -1)
+	if (enqueue_task_locked (client, &task) <= -1)
 	{
 		free (textdup);
 		return -1;
@@ -298,27 +290,27 @@ static int enqueue_sendtextdup_locked (client_t* client, const char* text)
 
 static int enqueue_sendfile_locked (client_t* client, int fd)
 {
-	client_action_t action;
+	task_t task;
 	struct stat st;
 
 	if (fstat (fd, &st) <= -1) return -1;
 
-	memset (&action, 0, sizeof(action));
-	action.type = ACTION_SENDFILE;
-	action.u.sendfile.fd = fd;
-	action.u.sendfile.left = st.st_size;;
+	memset (&task, 0, sizeof(task));
+	task.type = TASK_SENDFILE;
+	task.u.sendfile.fd = fd;
+	task.u.sendfile.left = st.st_size;;
 
-	return enqueue_client_action_locked (client, &action);
+	return enqueue_task_locked (client, &task);
 }
 
 static int enqueue_disconnect (client_t* client)
 {
-	client_action_t action;
+	task_t task;
 
-	memset (&action, 0, sizeof(action));
-	action.type = ACTION_DISCONNECT;
+	memset (&task, 0, sizeof(task));
+	task.type = TASK_DISCONNECT;
 
-	return enqueue_client_action_locked (client, &action);
+	return enqueue_task_locked (client, &task);
 }
 
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
@@ -365,19 +357,22 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 	{
 		int fd;
 
-		//if (qse_htrd_scanqparam (http, qse_htre_getqparamcstr(req)) <= -1)
+		/*if (qse_htrd_scanqparam (http, qse_htre_getqparamcstr(req)) <= -1) */
 		if (qse_htrd_scanqparam (http, QSE_NULL) <= -1)
 		{
 const char* msg = "<html><head><title>INTERNAL SERVER ERROR</title></head><body><b>INTERNAL SERVER ERROR</b></body></html>";
-if (format_and_do (enqueue_format, client, 
+char* text = format_textdup (xtn->httpd,
 	"HTTP/%d.%d 500 Internal Server Error\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
 	req->version.major, 
 	req->version.minor,
-	(int)strlen(msg) + 4, msg) <= -1)
+	(int)strlen(msg) + 4, msg);
+if (text == QSE_NULL || enqueue_sendtextdup_locked (client, text) <= -1)
 {
-qse_printf (QSE_T("failed to push action....\n"));
+	if (text) httpd_free (xtn->httpd, text);
+	qse_printf (QSE_T("failed to format text push task....\n"));
 	return -1;
 }
+
 		}
 
 		if (method == QSE_HTTP_POST)
@@ -392,16 +387,21 @@ qse_printf (QSE_T("END FORM FIELDS=============\n"));
 		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
 		if (fd <= -1)
 		{
-const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
-if (format_and_do (enqueue_format, client, 
-	"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
-	req->version.major, 
-	req->version.minor,
-	(int)strlen(msg) + 4, msg) <= -1)
-{
-qse_printf (QSE_T("failed to push action....\n"));
-	return -1;
-}
+			const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
+			char* text = format_textdup (
+				xtn->httpd,
+				"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
+				req->version.major, 
+				req->version.minor,
+				(int)strlen(msg) + 4, msg
+			);
+
+			if (text == QSE_NULL || enqueue_sendtextdup_locked (client, text) <= -1)
+			{
+				if (text) httpd_free (xtn->httpd, text);
+				qse_printf (QSE_T("failed to push task....\n"));
+				return -1;
+			}
 		}
 		else
 		{
@@ -433,9 +433,9 @@ qse_printf (QSE_T("empty file....\n"));
 					/* arrange to close connection */
 				}
 
-				action.type = ACTION_SENDTEXT;
-				action.u.sendtext.ptr = ptr;
-				action.u.sendtext.len = len;
+				task.type = TASK_SENDTEXT;
+				task.u.sendtext.ptr = ptr;
+				task.u.sendtext.len = len;
 #endif
 			}
 			else
@@ -462,14 +462,14 @@ snprintf (text, sizeof(text),
 
 				if (enqueue_sendtextdup_locked (client, text) <= -1)
 				{
-qse_printf (QSE_T("failed to push action....\n"));
+qse_printf (QSE_T("failed to push task....\n"));
 					return -1;
 				}
 
 				if (enqueue_sendfile_locked (client, fd) <= -1)
 				{
 	/* TODO: close??? just close....??? */
-qse_printf (QSE_T("failed to push action....\n"));
+qse_printf (QSE_T("failed to push task....\n"));
 					return -1;
 				}
 
@@ -477,7 +477,7 @@ qse_printf (QSE_T("failed to push action....\n"));
 				{
 					if (enqueue_disconnect (client) <= -1)
 					{
-qse_printf (QSE_T("failed to push action....\n"));
+qse_printf (QSE_T("failed to push task....\n"));
 						return -1;
 					}
 				}
@@ -495,7 +495,7 @@ snprintf (text, sizeof(text),
 	(int)strlen(msg)+4, msg);
 if (enqueue_sendtextdup_locked (client, text) <= -1)
 {
-qse_printf (QSE_T("failed to push action....\n"));
+qse_printf (QSE_T("failed to push task....\n"));
 return -1;
 }
 
@@ -574,7 +574,7 @@ static qse_ssize_t receive_octets (qse_htrd_t* http, qse_htoc_t* buf, qse_size_t
 	return n;
 }
 
-qse_htrd_recbs_t http_recbs =
+qse_htrd_recbs_t htrd_recbs =
 {
 	receive_octets,
 	handle_request,
@@ -717,8 +717,8 @@ static void delete_from_client_array (client_array_t* array, int fd)
 {
 	if (array->data[fd].http)
 	{
-		purge_client_actions_locked (&array->data[fd]);
-		pthread_mutex_destroy (&array->data[fd].action_mutex);
+		purge_tasks_locked (&array->data[fd]);
+		pthread_mutex_destroy (&array->data[fd].task.mutex);
 
 		qse_htrd_close (array->data[fd].http);
 		array->data[fd].http = QSE_NULL;	
@@ -744,10 +744,10 @@ static void fini_client_array (client_array_t* array)
 	pthread_cond_destroy (&array->cond);
 }
 
-static client_t* insert_into_client_array (
-	client_array_t* array, int fd, sockaddr_t* addr)
+static client_t* insert_into_client_array (qse_httpd_t* httpd, int fd, sockaddr_t* addr)
 {
 	http_xtn_t* xtn;
+	client_array_t* array = &httpd->ca;
 
 	if (fd >= array->capa)
 	{
@@ -771,13 +771,14 @@ static client_t* insert_into_client_array (
 	array->data[fd].addr = *addr;
 	array->data[fd].http = qse_htrd_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(*xtn));
 	if (array->data[fd].http == QSE_NULL) return QSE_NULL;
-	pthread_mutex_init (&array->data[fd].action_mutex, NULL);
+	pthread_mutex_init (&array->data[fd].task.mutex, NULL);
 
 	xtn = (http_xtn_t*)qse_htrd_getxtn (array->data[fd].http);	
 	xtn->array = array;
 	xtn->index = fd; 
+	xtn->httpd = httpd;
 
-	qse_htrd_setrecbs (array->data[fd].http, &http_recbs);
+	qse_htrd_setrecbs (array->data[fd].http, &htrd_recbs);
 	array->size++;
 	return &array->data[fd];
 }
@@ -824,7 +825,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	fcntl (c, F_SETFD, FD_CLOEXEC);
 
 	pthread_mutex_lock (&httpd->camutex);
-	client = insert_into_client_array (&httpd->ca, c, &addr);
+	client = insert_into_client_array (httpd, c, &addr);
 	pthread_mutex_unlock (&httpd->camutex);
 	if (client == QSE_NULL)
 	{
@@ -880,7 +881,7 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 				FD_SET (ca->data[fd].fd, r);
 				if (ca->data[fd].fd > max) max = ca->data[fd].fd;
 			}
-			if (w && ca->data[fd].action.count > 0)
+			if (w && ca->data[fd].task.count > 0)
 			{
 				/* add it to the set if it has a response to send */
 				FD_SET (ca->data[fd].fd, w);
@@ -892,70 +893,70 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 	return max;
 }
 
-static int take_client_action (client_t* client)
+static int perform_task (client_t* client)
 {
-	client_action_t* action;
+	task_t* task;
 
-	action = &client->action.target[client->action.offset];
+	task = &client->task.array[client->task.offset];
 
-	switch (action->type)
+	switch (task->type)
 	{
-		case ACTION_SENDTEXT:
+		case TASK_SENDTEXT:
 		{
 			ssize_t n;
 			size_t count;
 
 			count = MAX_SENDFILE_SIZE;
-			if (count >= action->u.sendtext.left)
-				count = action->u.sendtext.left;
+			if (count >= task->u.sendtext.left)
+				count = task->u.sendtext.left;
 
-			n = send (client->fd, action->u.sendtext.ptr, count, 0);
+			n = send (client->fd, task->u.sendtext.ptr, count, 0);
 			if (n <= -1) 
 			{
 qse_printf (QSE_T("send text failure... arrange to close this connection....\n"));
-				dequeue_client_action_locked (client, NULL);
+				dequeue_task_locked (client, NULL);
 				shutdown (client->fd, SHUT_RDWR);
 			}
 			else
 			{
 /* TODO: what if n is 0???? does it mean EOF? */
-				action->u.sendtext.left -= n;
+				task->u.sendtext.left -= n;
 
-				if (action->u.sendtext.left <= 0)
+				if (task->u.sendtext.left <= 0)
 				{
 qse_printf (QSE_T("finished sending text ...\n"));
-					dequeue_client_action_locked (client, NULL);
+					dequeue_task_locked (client, NULL);
 				}
 			}
 
 			break;
 		}
 
-		case ACTION_SENDTEXTDUP:
+		case TASK_SENDTEXTDUP:
 		{
 			ssize_t n;
 			size_t count;
 
 			count = MAX_SENDFILE_SIZE;
-			if (count >= action->u.sendtextdup.left)
-				count = action->u.sendtextdup.left;
+			if (count >= task->u.sendtextdup.left)
+				count = task->u.sendtextdup.left;
 
-			n = send (client->fd, action->u.sendtextdup.ptr, count, 0);
+			n = send (client->fd, task->u.sendtextdup.ptr, count, 0);
 			if (n <= -1) 
 			{
 qse_printf (QSE_T("send text dup failure... arrange to close this connection....\n"));
-				dequeue_client_action_locked (client, NULL);
+				dequeue_task_locked (client, NULL);
 				shutdown (client->fd, SHUT_RDWR);
 			}
 			else
 			{
 /* TODO: what if n is 0???? does it mean EOF? */
-				action->u.sendtextdup.left -= n;
+				task->u.sendtextdup.left -= n;
 
-				if (action->u.sendtextdup.left <= 0)
+				if (task->u.sendtextdup.left <= 0)
 				{
 qse_printf (QSE_T("finished sending text dup...\n"));
-					dequeue_client_action_locked (client, NULL);
+					dequeue_task_locked (client, NULL);
 qse_printf (QSE_T("finished sending text dup dequed...\n"));
 				}
 			}
@@ -963,47 +964,47 @@ qse_printf (QSE_T("finished sending text dup dequed...\n"));
 			break;
 		}
 
-		case ACTION_SENDFILE:
+		case TASK_SENDFILE:
 		{
 			ssize_t n;
 			size_t count;
 
 			count = MAX_SENDFILE_SIZE;
-			if (count >= action->u.sendfile.left)
-				count = action->u.sendfile.left;
+			if (count >= task->u.sendfile.left)
+				count = task->u.sendfile.left;
 
 //n = qse_htrd_write (client->http, sendfile, joins);
 
 
 			n = sendfile (
 				client->fd, 
-				action->u.sendfile.fd,
-				&action->u.sendfile.offset,
+				task->u.sendfile.fd,
+				&task->u.sendfile.offset,
 				count
 			);
 
 			if (n <= -1) 
 			{
 qse_printf (QSE_T("sendfile failure... arrange to close this connection....\n"));
-				dequeue_client_action_locked (client, NULL);
+				dequeue_task_locked (client, NULL);
 				shutdown (client->fd, SHUT_RDWR);
 			}
 			else
 			{
 /* TODO: what if n is 0???? does it mean EOF? */
-				action->u.sendfile.left -= n;
+				task->u.sendfile.left -= n;
 
-				if (action->u.sendfile.left <= 0)
+				if (task->u.sendfile.left <= 0)
 				{
 qse_printf (QSE_T("finished sending...\n"));
-					dequeue_client_action_locked (client, NULL);
+					dequeue_task_locked (client, NULL);
 				}
 			}
 
 			break;
 		}
 
-		case ACTION_DISCONNECT:
+		case TASK_DISCONNECT:
 		{
 			shutdown (client->fd, SHUT_RDWR);
 			break;
@@ -1067,7 +1068,7 @@ static void* response_thread (void* arg)
 
 			if (FD_ISSET(client->fd, &w)) 
 			{
-				if (client->action.count > 0) take_client_action (client);
+				if (client->task.count > 0) perform_task (client);
 			}
 		
 		}
@@ -1121,11 +1122,8 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 		n = select (max + 1, &r, NULL, NULL, &tv);
 		if (n <= -1)
 		{
-/*
-httpd->errnum = QSE_HTTPD_EMUX;
-*/
-/* TODO: user callback for an error */
-
+			httpd->errnum = QSE_HTTPD_EIOMUX;
+/* TODO: call user callback for this multiplexer error */
 			if (errno == EINTR) continue;
 qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 			/* break; */
@@ -1210,8 +1208,8 @@ static listener_t* parse_listener_string (
 		/* skip spaces */
 		while (QSE_ISSPACE(*p)) p++;
 
-		ltmp = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*ltmp));
-		if (ltmp == QSE_NULL) goto oops_enomem;
+		ltmp = httpd_alloc (httpd, QSE_SIZEOF(*ltmp));
+		if (ltmp == QSE_NULL) goto oops; /* alloc set error number. so goto oops */
 
 		QSE_MEMSET (ltmp, 0, QSE_SIZEOF(*ltmp));
 		ltmp->handle = -1;
@@ -1280,12 +1278,14 @@ static listener_t* parse_listener_string (
 
 		x = inet_pton (ltmp->family, host, &ltmp->addr);
 #ifdef QSE_CHAR_IS_WCHAR
-		QSE_MMGR_FREE (httpd->mmgr, host);
+		httpd_free (httpd, host);
 #endif
 		if (x != 1)
 		{
 			/* TODO: need to support host names??? 
 			if (getaddrinfo... )....
+or CALL a user callback for name resolution? 
+			if (httpd->cbs.resolve_hostname (httpd, ltmp->host) <= -1) must call this with host before freeing it up????
 			 */
 			goto oops_einval;
 		}
@@ -1404,3 +1404,4 @@ void qse_httpd_clearlisteners (qse_httpd_t* httpd)
 	pthread_mutex_unlock (&httpd->listener.mutex);
 }
 #endif
+

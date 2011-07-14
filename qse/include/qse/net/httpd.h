@@ -31,8 +31,9 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOERR,
 	QSE_HTTPD_ENOMEM,
 	QSE_HTTPD_EINVAL,
-	QSE_HTTPD_ESOCKET,
 	QSE_HTTPD_EINTERN,
+	QSE_HTTPD_EIOMUX,
+	QSE_HTTPD_ESOCKET,
 	QSE_HTTPD_ECOMCBS
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
