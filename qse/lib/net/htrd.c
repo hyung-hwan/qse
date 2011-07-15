@@ -1304,31 +1304,6 @@ feedme_more:
 	return 0;
 }
 
-int qse_htrd_read (qse_htrd_t* http)
-{
-	qse_ssize_t n;
-
-	QSE_ASSERTX (
-		http->recbs->reader != QSE_NULL, 
-		"You must set the octet reader to be able to call qse_htrd_read()"
-	);
-
-	http->errnum = QSE_HTRD_ENOERR;
-	n = http->recbs->reader (http, http->rbuf, QSE_SIZEOF(http->rbuf));
-	if (n <= -1) 
-	{
-		if (http->errnum == QSE_HTRD_ENOERR) http->errnum = QSE_HTRD_ERECBS;
-		return -1;
-	}
-	if (n == 0) 
-	{
-		http->errnum = QSE_HTRD_EDISCON;	
-		return -1;
-	}
-
-	return qse_htrd_feed (http, http->rbuf, n);
-}
-
 int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 {
 	qse_mcstr_t key, val;
