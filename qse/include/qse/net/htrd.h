@@ -30,8 +30,6 @@ enum qse_htrd_errnum_t
 {
 	QSE_HTRD_ENOERR,
 	QSE_HTRD_ENOMEM,
-
-	QSE_HTRD_EDISCON,
 	QSE_HTRD_EBADRE,
 	QSE_HTRD_EBADHDR,
 	QSE_HTRD_ERECBS
@@ -50,13 +48,9 @@ typedef struct qse_htrd_recbs_t qse_htrd_recbs_t;
 
 struct qse_htrd_recbs_t
 {
-	/* octet reader and writer */
-	qse_ssize_t (*reader)          (qse_htrd_t* htrd, qse_htoc_t* buf, qse_size_t len);
-
 	int         (*request)         (qse_htrd_t* htrd, qse_htre_t* req);
-	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
 	int         (*expect_continue) (qse_htrd_t* htrd, qse_htre_t* req);
-
+	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
 	int         (*qparamstr)       (qse_htrd_t* htrd, const qse_mcstr_t* key, const qse_mcstr_t* val);
 };
 
@@ -110,8 +104,6 @@ struct qse_htrd_t
 	} retype;
 
 	qse_htre_t re;
-
-	qse_htoc_t rbuf[4096];
 };
 
 #ifdef __cplusplus

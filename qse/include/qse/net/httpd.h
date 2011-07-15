@@ -23,8 +23,10 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/net/htre.h>
 
-typedef struct qse_httpd_t qse_httpd_t;
+typedef struct qse_httpd_t        qse_httpd_t;
+typedef struct qse_httpd_client_t qse_httpd_client_t;
 
 enum qse_httpd_errnum_t
 {
@@ -34,15 +36,18 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EINTERN,
 	QSE_HTTPD_EIOMUX,
 	QSE_HTTPD_ESOCKET,
+	QSE_HTTPD_EDISCON, /* client disconnnected */
+	QSE_HTTPD_EBADREQ, /* bad request */
 	QSE_HTTPD_ECOMCBS
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
-typedef struct qse_httpd_comcbs_t qse_httpd_comcbs_t;
-struct qse_httpd_comcbs_t
+
+typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
+struct qse_httpd_cbs_t
 {
-	int (*open_listeners) (qse_httpd_t* httpd);
-	int (*close_listeners) (qse_httpd_t* httpd);
+	int (*handle_request)         (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+	int (*handle_expect_continue) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 };
 
 #ifdef __cplusplus
@@ -66,9 +71,13 @@ void qse_httpd_close (
 	qse_httpd_t* httpd 
 );
 
-void qse_httpd_setcomcbs (
-	qse_httpd_t* httpd,
-	qse_httpd_comcbs_t* comcbs
+const qse_httpd_cbs_t* qse_httpd_getcbs (
+	qse_httpd_t* httpd
+);
+
+void qse_httpd_setcbs (
+	qse_httpd_t*     httpd,
+	qse_httpd_cbs_t* cbs
 );
 
 int qse_httpd_loop (

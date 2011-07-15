@@ -32,6 +32,17 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 #define DEFAULT_SECURE_PORT 443
 
 static void free_listener_list (qse_httpd_t* httpd, listener_t* l);
+int qse_httpd_entask (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
+
+static int handle_request (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+static int handle_expect_continue (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+
+static qse_httpd_cbs_t default_cbs = 
+{
+	handle_request,
+	handle_expect_continue
+};
+
 
 qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -72,6 +83,7 @@ qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
 	httpd->listener.max = -1;
+	httpd->cbs = &default_cbs;
 
 	pthread_mutex_init (&httpd->listener.mutex, QSE_NULL);
 
@@ -89,6 +101,16 @@ void qse_httpd_fini (qse_httpd_t* httpd)
 void qse_httpd_stop (qse_httpd_t* httpd)
 {
 	httpd->stopreq = 1;
+}
+
+const qse_httpd_cbs_t* qse_httpd_getcbs (qse_httpd_t* httpd)
+{
+	return httpd->cbs;
+}
+
+void qse_httpd_setcbs (qse_httpd_t* httpd, qse_httpd_cbs_t* cbs)
+{
+	httpd->cbs = cbs;
 }
 
 static QSE_INLINE void* httpd_alloc (qse_httpd_t* httpd, qse_size_t n)
@@ -124,16 +146,15 @@ static void httpd_free (qse_httpd_t* httpd, void* ptr)
 #define MAX_SENDFILE_SIZE 4096
 //#define MAX_SENDFILE_SIZE 64
 
-typedef struct http_xtn_t http_xtn_t;
+typedef struct htrd_xtn_t htrd_xtn_t;
 
-struct http_xtn_t
+struct htrd_xtn_t
 {
-	client_array_t* array;
-	qse_size_t      index; 
+	qse_size_t      client_index; 
 	qse_httpd_t*    httpd;
 };
 
-static int enqueue_task_unlocked (client_t* client, const task_t* task)
+static int enqueue_task_unlocked (qse_httpd_client_t* client, const qse_httpd_task_t* task)
 {
 	int index;
 
@@ -146,7 +167,7 @@ static int enqueue_task_unlocked (client_t* client, const task_t* task)
 	return 0;
 }
 
-static int enqueue_task_locked (client_t* client, const task_t* task)
+static int enqueue_task_locked (qse_httpd_client_t* client, const qse_httpd_task_t* task)
 {
 	int ret;
 	pthread_mutex_lock (&client->task.mutex);
@@ -155,9 +176,9 @@ static int enqueue_task_locked (client_t* client, const task_t* task)
 	return ret;
 }
 
-static int dequeue_task_unlocked (client_t* client, task_t* task)
+static int dequeue_task_unlocked (qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_t* actp;
+	qse_httpd_task_t* actp;
 
 	if (client->task.count <= 0) return -1;
 
@@ -171,7 +192,7 @@ static int dequeue_task_unlocked (client_t* client, task_t* task)
 	return 0;
 }
 
-static int dequeue_task_locked (client_t* client, task_t* task)
+static int dequeue_task_locked (qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	int ret;
 	pthread_mutex_lock (&client->task.mutex);
@@ -180,17 +201,17 @@ static int dequeue_task_locked (client_t* client, task_t* task)
 	return ret;
 }
 
-static void purge_tasks_locked (client_t* client)
+static void purge_tasks_locked (qse_httpd_client_t* client)
 {
-	task_t task;
+	qse_httpd_task_t task;
 	pthread_mutex_lock (&client->task.mutex);
 	while (dequeue_task_unlocked (client, &task) == 0);
 	pthread_mutex_unlock (&client->task.mutex);
 }
 
-static int enqueue_sendtext_locked (client_t* client, const char* text)
+static int enqueue_sendtext_locked (qse_httpd_client_t* client, const char* text)
 {
-	task_t task;
+	qse_httpd_task_t task;
 
 	memset (&task, 0, sizeof(task));
 	task.type = TASK_SENDTEXT;
@@ -266,31 +287,35 @@ static qse_mchar_t* format_textdup (qse_httpd_t* httpd, const char* fmt, ...)
 	return buf;
 }
 
-static int enqueue_sendtextdup_locked (client_t* client, const char* text)
+static int enqueue_sendduptext_locked (qse_httpd_t* httpd, qse_httpd_client_t* client, char* text)
 {
-	task_t task;
+	qse_httpd_task_t task;
+
+	memset (&task, 0, sizeof(task));
+	task.type = TASK_SENDTEXTDUP;
+	task.u.sendtextdup.ptr = text;
+	task.u.sendtextdup.left = strlen(text);
+
+	return qse_httpd_entask (httpd, client, &task);
+}
+
+static int enqueue_sendtextdup_locked (qse_httpd_t* httpd, qse_httpd_client_t* client, const char* text)
+{
 	char* textdup;
+	int n;
 
 	textdup = strdup (text);
 	if (textdup == NULL) return -1;
 
-	memset (&task, 0, sizeof(task));
-	task.type = TASK_SENDTEXTDUP;
-	task.u.sendtextdup.ptr = textdup;
-	task.u.sendtextdup.left = strlen(textdup);
+	n = enqueue_sendduptext_locked (httpd, client, textdup);
+	if (n <= -1) free (textdup);
 
-	if (enqueue_task_locked (client, &task) <= -1)
-	{
-		free (textdup);
-		return -1;
-	}
-
-	return 0;
+	return n;
 }
 
-static int enqueue_sendfile_locked (client_t* client, int fd)
+static int enqueue_sendfile_locked (qse_httpd_t* httpd, qse_httpd_client_t* client, int fd)
 {
-	task_t task;
+	qse_httpd_task_t task;
 	struct stat st;
 
 	if (fstat (fd, &st) <= -1) return -1;
@@ -300,17 +325,17 @@ static int enqueue_sendfile_locked (client_t* client, int fd)
 	task.u.sendfile.fd = fd;
 	task.u.sendfile.left = st.st_size;;
 
-	return enqueue_task_locked (client, &task);
+	return qse_httpd_entask (httpd, client, &task);
 }
 
-static int enqueue_disconnect (client_t* client)
+static int enqueue_disconnect (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	task_t task;
+	qse_httpd_task_t task;
 
 	memset (&task, 0, sizeof(task));
 	task.type = TASK_DISCONNECT;
 
-	return enqueue_task_locked (client, &task);
+	return qse_httpd_entask (httpd, client, &task);
 }
 
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
@@ -325,10 +350,8 @@ qse_printf (QSE_T("PARAM %d[%S] => %d[%S] \n"), (int)key->len, key->ptr, (int)va
 	return 0;
 }
 
-static int handle_request (qse_htrd_t* http, qse_htre_t* req)
+static int handle_request (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
-	client_t* client = &xtn->array->data[xtn->index];
 	int method;
 
 qse_printf (QSE_T("================================\n"));
@@ -343,12 +366,12 @@ if (qse_htre_getqparamlen(req) > 0)
 qse_printf (QSE_T("PARAMS ==> [%S]\n"), qse_htre_getqparamptr(req));
 }
 
-qse_htb_walk (&http->re.hdrtab, walk, QSE_NULL);
-if (QSE_MBS_LEN(&http->re.content) > 0)
+qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
+if (QSE_MBS_LEN(&req->content) > 0)
 {
 qse_printf (QSE_T("content = [%.*S]\n"),
-		(int)QSE_MBS_LEN(&http->re.content),
-		QSE_MBS_PTR(&http->re.content));
+		(int)QSE_MBS_LEN(&req->content),
+		QSE_MBS_PTR(&req->content));
 }
 
 	method = qse_htre_getqmethod (req);
@@ -357,6 +380,7 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 	{
 		int fd;
 
+#if 0
 		/*if (qse_htrd_scanqparam (http, qse_htre_getqparamcstr(req)) <= -1) */
 		if (qse_htrd_scanqparam (http, QSE_NULL) <= -1)
 		{
@@ -366,7 +390,7 @@ char* text = format_textdup (xtn->httpd,
 	req->version.major, 
 	req->version.minor,
 	(int)strlen(msg) + 4, msg);
-if (text == QSE_NULL || enqueue_sendtextdup_locked (client, text) <= -1)
+if (text == QSE_NULL || enqueue_sendduptext_locked (httpd, client, text) <= -1)
 {
 	if (text) httpd_free (xtn->httpd, text);
 	qse_printf (QSE_T("failed to format text push task....\n"));
@@ -374,31 +398,32 @@ if (text == QSE_NULL || enqueue_sendtextdup_locked (client, text) <= -1)
 }
 
 		}
+#endif
 
+#if 0
 		if (method == QSE_HTTP_POST)
 		{
-qse_printf (QSE_T("BEGIN FORM FIELDS=============\n"));
 			if (qse_htrd_scanqparam (http, qse_htre_getcontentcstr(req)) <= -1)
 			{
 			}
-qse_printf (QSE_T("END FORM FIELDS=============\n"));
 		}
+#endif
 
 		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
 		if (fd <= -1)
 		{
 			const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
 			char* text = format_textdup (
-				xtn->httpd,
+				httpd,
 				"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
 				req->version.major, 
 				req->version.minor,
 				(int)strlen(msg) + 4, msg
 			);
 
-			if (text == QSE_NULL || enqueue_sendtextdup_locked (client, text) <= -1)
+			if (text == QSE_NULL || enqueue_sendduptext_locked (httpd, client, text) <= -1)
 			{
-				if (text) httpd_free (xtn->httpd, text);
+				if (text) httpd_free (httpd, text);
 				qse_printf (QSE_T("failed to push task....\n"));
 				return -1;
 			}
@@ -415,28 +440,7 @@ qse_printf (QSE_T("fstat failure....\n"));
 			else if (st.st_size <= 0)
 			{
 				close (fd);
-
 qse_printf (QSE_T("empty file....\n"));
-#if 0
-				qse_htre_t* res = qse_htrd_newresponse (http);
-				if (req == QSE_NULL)
-				{
-					/* hard failure... can't answer */
-					/* arrange to close connection */
-				}
-
-
-				ptr = qse_htrd_emitresponse (http, res, &len);
-				if (ptr == QSE_NULL)
-				{
-					/* hard failure... can't answer */
-					/* arrange to close connection */
-				}
-
-				task.type = TASK_SENDTEXT;
-				task.u.sendtext.ptr = ptr;
-				task.u.sendtext.len = len;
-#endif
 			}
 			else
 			{
@@ -450,37 +454,19 @@ snprintf (text, sizeof(text),
 	qse_htre_getqpathptr(req)
 );
 
-#if 0
-				if (enqueue_sendfmt_locked (client,
-					"HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\n\r\n", 
-					req->version.major, 
-					req->version.minor, 
-					(unsigned long long)st.st_size) <= -1)
-				{
-				}
-#endif
-
-				if (enqueue_sendtextdup_locked (client, text) <= -1)
+				if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
 				{
 qse_printf (QSE_T("failed to push task....\n"));
 					return -1;
 				}
 
-				if (enqueue_sendfile_locked (client, fd) <= -1)
+				if (enqueue_sendfile_locked (httpd, client, fd) <= -1)
 				{
 	/* TODO: close??? just close....??? */
 qse_printf (QSE_T("failed to push task....\n"));
 					return -1;
 				}
 
-				if (req->attr.connection_close)
-				{
-					if (enqueue_disconnect (client) <= -1)
-					{
-qse_printf (QSE_T("failed to push task....\n"));
-						return -1;
-					}
-				}
 			}
 		}	
 	}
@@ -493,47 +479,58 @@ snprintf (text, sizeof(text),
 	qse_htre_getmajorversion(req),
 	qse_htre_getminorversion(req),
 	(int)strlen(msg)+4, msg);
-if (enqueue_sendtextdup_locked (client, text) <= -1)
+if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
 {
 qse_printf (QSE_T("failed to push task....\n"));
 return -1;
 }
-
 	}
 
-	pthread_cond_signal (&xtn->array->cond);
+	if (req->attr.connection_close)
+	{
+		if (enqueue_disconnect (httpd, client) <= -1)
+		{
+qse_printf (QSE_T("failed to push task....\n"));
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
-static int handle_expect_continue (qse_htrd_t* http, qse_htre_t* req)
-{
-	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
-	client_t* client = &xtn->array->data[xtn->index];
 
+static int handle_expect_continue (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
+{
+/*
+	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (http);
+	qse_httpd_client_t* client = &xtn->array->data[xtn->index];
+*/
+
+/* TODO: change this whole callback */
 	if (qse_htre_getqmethod(req) == QSE_HTTP_POST)
 	{
-		char text[32];
+		qse_mchar_t text[32];
 
 		snprintf (text, sizeof(text),
-			"HTTP/%d.%d 100 OK\r\n\r\n", 
+			QSE_MT("HTTP/%d.%d 100 OK\r\n\r\n"), 
 			req->version.major, req->version.minor);
 
-		if (enqueue_sendtextdup_locked (client, text) <= -1)
+		if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
 		{
 			return -1;
 		}
 	}
 	else
 	{
-		char text[32];
+		qse_mchar_t text[32];
 
 		qse_htre_setdiscard (req, 1);
 
 		snprintf (text, sizeof(text),
-			"HTTP/%d.%d 404 Not found\r\n\r\n", 
+			QSE_MT("HTTP/%d.%d 404 Not found\r\n\r\n"), 
 			req->version.major, req->version.minor);
 
-		if (enqueue_sendtextdup_locked (client, text) <= -1)
+		if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
 		{
 			return -1;
 		}
@@ -542,15 +539,28 @@ static int handle_expect_continue (qse_htrd_t* http, qse_htre_t* req)
 	return 0;
 }
 
-static int handle_response (qse_htrd_t* http, qse_htre_t* res)
+static int htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
-#if 0
-	if (res->code >= 100 && res->code <= 199)
-	{
-		/* informational response */
-	}
-#endif
+	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
+	return xtn->httpd->cbs->handle_request (xtn->httpd, client, req);
+}
 
+static int htrd_handle_expect_continue (qse_htrd_t* htrd, qse_htre_t* req)
+{
+	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
+	return xtn->httpd->cbs->handle_expect_continue (xtn->httpd, client, req);
+}
+
+static int htrd_handle_response (qse_htrd_t* htrd, qse_htre_t* res)
+{
+/*
+	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
+*/
+
+/* directly send some response saying stupid request... */
 	qse_printf (QSE_T("response received... HTTP/%d.%d %d %.*S\n"), 
 		qse_htre_getmajorversion(res),
 		qse_htre_getminorversion(res),
@@ -558,31 +568,17 @@ static int handle_response (qse_htrd_t* http, qse_htre_t* res)
 		(int)qse_htre_getsmessagelen(res),
 		qse_htre_getsmessageptr(res)
 	);
-	return -1;
+
+	return 0;
 }
 
-static qse_ssize_t receive_octets (qse_htrd_t* http, qse_htoc_t* buf, qse_size_t size)
+static qse_htrd_recbs_t htrd_recbs =
 {
-	http_xtn_t* xtn = (http_xtn_t*) qse_htrd_getxtn (http);
-	client_t* client = &xtn->array->data[xtn->index];
-	ssize_t n;
-
-	n = recv (client->fd, buf, size, 0);
-	if (n <= -1 && (errno == EAGAIN || errno == EWOULDBLOCK))
-		http->errnum = 99999;	
-
-	return n;
-}
-
-qse_htrd_recbs_t htrd_recbs =
-{
-	receive_octets,
-	handle_request,
-	handle_response,
-	handle_expect_continue,
+	htrd_handle_request,
+	htrd_handle_expect_continue,
+	htrd_handle_response,
 	capture_param
 };
-
 
 static void deactivate_listener (qse_httpd_t* httpd, listener_t* l)
 {
@@ -710,18 +706,17 @@ static void init_client_array (client_array_t* array)
 	array->capa = 0;
 	array->size = 0;
 	array->data = QSE_NULL;
-	pthread_cond_init (&array->cond, NULL);
 }
 
 static void delete_from_client_array (client_array_t* array, int fd)
 {
-	if (array->data[fd].http)
+	if (array->data[fd].htrd)
 	{
 		purge_tasks_locked (&array->data[fd]);
 		pthread_mutex_destroy (&array->data[fd].task.mutex);
 
-		qse_htrd_close (array->data[fd].http);
-		array->data[fd].http = QSE_NULL;	
+		qse_htrd_close (array->data[fd].htrd);
+		array->data[fd].htrd = QSE_NULL;	
 		close (array->data[fd].fd);
 		array->size--;
 	}
@@ -741,44 +736,42 @@ static void fini_client_array (client_array_t* array)
 		array->size = 0;
 		array->data = QSE_NULL;
 	}
-	pthread_cond_destroy (&array->cond);
 }
 
-static client_t* insert_into_client_array (qse_httpd_t* httpd, int fd, sockaddr_t* addr)
+static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd, sockaddr_t* addr)
 {
-	http_xtn_t* xtn;
-	client_array_t* array = &httpd->ca;
+	htrd_xtn_t* xtn;
+	client_array_t* array = &httpd->client.array;
 
 	if (fd >= array->capa)
 	{
 	#define ALIGN 512
-		client_t* tmp;
+		qse_httpd_client_t* tmp;
 		qse_size_t capa = ((fd + ALIGN) / ALIGN) * ALIGN;
 
-		tmp = realloc (array->data, capa * QSE_SIZEOF(client_t));
+		tmp = realloc (array->data, capa * QSE_SIZEOF(*tmp));
 		if (tmp == QSE_NULL) return QSE_NULL;
 
 		memset (&tmp[array->capa], 0,
-			QSE_SIZEOF(client_t) * (capa - array->capa));
+			QSE_SIZEOF(*tmp) * (capa - array->capa));
 
 		array->data = tmp;
 		array->capa = capa;
 	}
 
-	QSE_ASSERT (array->data[fd].http == QSE_NULL);
+	QSE_ASSERT (array->data[fd].htrd == QSE_NULL);
 
 	array->data[fd].fd = fd;	
 	array->data[fd].addr = *addr;
-	array->data[fd].http = qse_htrd_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(*xtn));
-	if (array->data[fd].http == QSE_NULL) return QSE_NULL;
+	array->data[fd].htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(*xtn));
+	if (array->data[fd].htrd == QSE_NULL) return QSE_NULL;
 	pthread_mutex_init (&array->data[fd].task.mutex, NULL);
 
-	xtn = (http_xtn_t*)qse_htrd_getxtn (array->data[fd].http);	
-	xtn->array = array;
-	xtn->index = fd; 
+	xtn = (htrd_xtn_t*)qse_htrd_getxtn (array->data[fd].htrd);	
+	xtn->client_index = fd; 
 	xtn->httpd = httpd;
 
-	qse_htrd_setrecbs (array->data[fd].http, &htrd_recbs);
+	qse_htrd_setrecbs (array->data[fd].htrd, &htrd_recbs);
 	array->size++;
 	return &array->data[fd];
 }
@@ -788,7 +781,7 @@ static int accept_client_from_listener (qse_httpd_t* httpd, listener_t* l)
 	int flag, c;
 	sockaddr_t addr;
 	socklen_t addrlen = QSE_SIZEOF(addr);
-	client_t* client;
+	qse_httpd_client_t* client;
 
 /* TODO:
 	if (l->secure)
@@ -824,9 +817,9 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	if (flag >= 0) fcntl (c, F_SETFL, flag | O_NONBLOCK);
 	fcntl (c, F_SETFD, FD_CLOEXEC);
 
-	pthread_mutex_lock (&httpd->camutex);
+	pthread_mutex_lock (&httpd->client.mutex);
 	client = insert_into_client_array (httpd, c, &addr);
-	pthread_mutex_unlock (&httpd->camutex);
+	pthread_mutex_unlock (&httpd->client.mutex);
 	if (client == QSE_NULL)
 	{
 		close (c);
@@ -860,7 +853,7 @@ httpd->cbs.on_error (httpd, l).... */
 static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set* w)
 {
 	int fd, max = -1;
-	client_array_t* ca = &httpd->ca;
+	client_array_t* ca = &httpd->client.array;
 
 	if (r)
 	{
@@ -874,7 +867,7 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 
 	for (fd = 0; fd < ca->capa; fd++)
 	{
-		if (ca->data[fd].http) 
+		if (ca->data[fd].htrd) 
 		{
 			if (r) 
 			{
@@ -893,9 +886,9 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 	return max;
 }
 
-static int perform_task (client_t* client)
+static int perform_task (qse_httpd_client_t* client)
 {
-	task_t* task;
+	qse_httpd_task_t* task;
 
 	task = &client->task.array[client->task.offset];
 
@@ -973,9 +966,6 @@ qse_printf (QSE_T("finished sending text dup dequed...\n"));
 			if (count >= task->u.sendfile.left)
 				count = task->u.sendfile.left;
 
-//n = qse_htrd_write (client->http, sendfile, joins);
-
-
 			n = sendfile (
 				client->fd, 
 				task->u.sendfile.fd,
@@ -1027,25 +1017,25 @@ static void* response_thread (void* arg)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		pthread_mutex_lock (&httpd->camutex);
+		pthread_mutex_lock (&httpd->client.mutex);
 		max = make_fd_set_from_client_array (httpd, NULL, &w);
-		pthread_mutex_unlock (&httpd->camutex);
+		pthread_mutex_unlock (&httpd->client.mutex);
 
 		while (max == -1 && !httpd->stopreq)
 		{
 			struct timeval now;
 			struct timespec timeout;
 
-			pthread_mutex_lock (&httpd->camutex);
+			pthread_mutex_lock (&httpd->client.mutex);
 
 			gettimeofday (&now, NULL);
 			timeout.tv_sec = now.tv_sec + 2;
 			timeout.tv_nsec = now.tv_usec * 1000;
 
-			pthread_cond_timedwait (&httpd->ca.cond, &httpd->camutex, &timeout);
+			pthread_cond_timedwait (&httpd->client.cond, &httpd->client.mutex, &timeout);
 			max = make_fd_set_from_client_array (httpd, NULL, &w);
 
-			pthread_mutex_unlock (&httpd->camutex);
+			pthread_mutex_unlock (&httpd->client.mutex);
 		}
 
 		if (httpd->stopreq) break;
@@ -1060,11 +1050,11 @@ static void* response_thread (void* arg)
 		}
 		if (n == 0) continue;
 
-		for (fd = 0; fd < httpd->ca.capa; fd++)
+		for (fd = 0; fd < httpd->client.array.capa; fd++)
 		{
-			client_t* client = &httpd->ca.data[fd];
+			qse_httpd_client_t* client = &httpd->client.array.data[fd];
 
-			if (!client->http) continue;
+			if (!client->htrd) continue;
 
 			if (FD_ISSET(client->fd, &w)) 
 			{
@@ -1078,12 +1068,56 @@ static void* response_thread (void* arg)
 	return NULL;
 }
 
+static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	qse_htoc_t buf[1024];
+	qse_ssize_t m;
+
+reread:
+	m = read (client->fd, buf, sizeof(buf));
+	if (m <= -1)
+	{
+		if (errno != EINTR)
+		{
+			httpd->errnum = QSE_HTTPD_ESOCKET;
+qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), client->fd);
+			return -1;
+		}
+		goto reread;
+	}
+	else if (m == 0)
+	{
+		httpd->errnum = QSE_HTTPD_EDISCON;
+qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->fd);
+		return -1;
+	}
+
+	/* feed may have called the request callback multiple times... 
+ 	 * that's because we don't know how many valid requests
+	 * are included in 'buf' */ 
+	httpd->errnum = QSE_HTTPD_ENOERR;
+	if (qse_htrd_feed (client->htrd, buf, m) <= -1)
+	{
+		if (httpd->errnum == QSE_HTTPD_ENOERR)
+		{
+			if (client->htrd->errnum == QSE_HTRD_EBADRE || 
+			    client->htrd->errnum == QSE_HTRD_EBADHDR)
+				httpd->errnum = QSE_HTTPD_EBADREQ;
+			else httpd->errnum = QSE_HTTPD_ENOMEM; /* TODO: better translate error code */
+		}
+
+qse_fprintf (QSE_STDERR, QSE_T("Error: http error while processing \n"));
+		return -1;
+	}
+
+	return 0;
+}
+
 int qse_httpd_loop (qse_httpd_t* httpd)
 {
 	pthread_t response_thread_id;
 
 	httpd->stopreq = 0;
-
 
 	QSE_ASSERTX (httpd->listener.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()"
@@ -1102,8 +1136,9 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 	}
 
 	/* data receiver main logic */
-	init_client_array (&httpd->ca);
-	pthread_mutex_init (&httpd->camutex, NULL);
+	pthread_mutex_init (&httpd->client.mutex, NULL);
+	pthread_cond_init (&httpd->client.cond, NULL);
+	init_client_array (&httpd->client.array);
 
 	/* start the response sender as a thread */
 	pthread_create (&response_thread_id, NULL, response_thread, httpd);
@@ -1135,29 +1170,20 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 		accept_client_from_listeners (httpd, &r);
 
 		/* check the client activity */
-		for (fd = 0; fd < httpd->ca.capa; fd++)
+		for (fd = 0; fd < httpd->client.array.capa; fd++)
 		{
-			client_t* client = &httpd->ca.data[fd];
+			qse_httpd_client_t* client = &httpd->client.array.data[fd];
 
-			if (!client->http) continue;
+			if (!client->htrd) continue;
 
 			if (FD_ISSET(client->fd, &r)) 
 			{
 				/* got input */
-				if (qse_htrd_read (client->http) <= -1)
+				if (read_from_client (httpd, client) <= -1)
 				{
-					int errnum = client->http->errnum;
-					if (errnum != 99999)
-					{
-						pthread_mutex_lock (&httpd->camutex);
-						delete_from_client_array (&httpd->ca, fd);	
-						pthread_mutex_unlock (&httpd->camutex);
-						if (errnum == QSE_HTRD_EDISCON)
-							qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->fd);
-						else
-							qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read/process a request from a client %d\n"), client->fd);
-					}
-					continue;
+					pthread_mutex_lock (&httpd->client.mutex);
+					delete_from_client_array (&httpd->client.array, fd);     
+					pthread_mutex_unlock (&httpd->client.mutex);
 				}
 			}
 		}
@@ -1165,8 +1191,9 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 
 	pthread_join (response_thread_id, NULL);
 
-	fini_client_array (&httpd->ca);
-	pthread_mutex_destroy (&httpd->camutex);
+	fini_client_array (&httpd->client.array);
+	pthread_cond_destroy (&httpd->client.cond);
+	pthread_mutex_destroy (&httpd->client.mutex);
 
 	deactivate_listeners (httpd);
 	return 0;
@@ -1405,3 +1432,10 @@ void qse_httpd_clearlisteners (qse_httpd_t* httpd)
 }
 #endif
 
+int qse_httpd_entask (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	int ret;
+	ret = enqueue_task_locked (client, task);
+	if (ret >= 0) pthread_cond_signal (&httpd->client.cond);
+	return ret;
+}
