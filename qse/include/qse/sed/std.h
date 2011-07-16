@@ -21,21 +21,14 @@
 #ifndef _QSE_SED_STD_H_
 #define _QSE_SED_STD_H_
 
-/** 
- * @defgroup sed_c_std Helper functions
- * @ingroup sed_c
- * @{
- * If you don't care about the details of memory management and I/O,
- * you can choose to use the helper functions provided here. It is  
- * a higher-level interface that is easier to use as it implements 
- * default handlers for I/O and memory management.
- */
-
 #include <qse/sed/sed.h>
 
 /** @file
- * This file provides easier-to-use interface  
- * by implementing default handlers for I/O and memory management.
+ * This file defines easier-to-use helper interface for a stream editor.
+ * If you don't care about the details of memory management and I/O handling,
+ * you can choose to use the helper functions provided here. It is  
+ * a higher-level interface that is easier to use as it implements 
+ * default handlers for I/O and memory management.
  *
  * @example sed01.c
  * This example shows how to write a simple stream editor using easy API 
@@ -103,7 +96,5 @@ int qse_sed_execstd (
 #ifdef __cplusplus
 }
 #endif
-
-/* @} */
 
 #endif

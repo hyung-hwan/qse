@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: Sed.hpp 507 2011-07-15 15:53:49Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,20 +24,10 @@
 #include <qse/cmn/Mmged.hpp>
 #include <qse/sed/sed.h>
 
-/**
- * @defgroup sed_cxx C++ 
- * @ingroup sed
- * @{
- */
-
-/**
- * @defgroup sed_cxx_core Core interface
- * @ingroup sed_cxx
- * @{
- */
-
 /** @file
- * Stream Editor
+ * This file defines C++ classes that you can use when you create a stream
+ * editor. The C++ classes encapsulates the C data types and functions in 
+ * a more object-oriented manner.
  */
 
 /////////////////////////////////
@@ -321,8 +311,5 @@ private:
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////
-
-/* @} */
-/* @} */
 
 #endif
