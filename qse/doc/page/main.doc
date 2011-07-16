@@ -2,19 +2,18 @@
 
 @section qse_intro INTRODUCTION
 
-@b QSE is a code library that implements various Unix utilities in an 
-embeddable form and provides a set of APIs to embed them into an application. 
-The APIs have been designed to be flexible enough to access various aspects of 
-a embedding application and an embedded object from each other. By embedding 
-a Unix utility into an application, a developer is relieved of problems caused
-by interacting with external programs and can have tighter control over it.
+The QSE library implements functionality of various Unix commands in an 
+embeddable form and defines data types, functions, and classes that you can 
+use when you embed such functionality into an application. The interface has
+been designed to be flexible enough to access various aspects of embedding 
+application and an embedded object from each other. 
 
-Currently the library contains the following utilities:
+Currently the library contains the following components:
 - @subpage awk "AWK Interpreter"
 - @subpage cut "CUT Text Cutter"
 - @subpage sed "SED Stream Editor"
 
-As the library grows, more utilities will be added.
+As the library grows, more components will be added.
 
 The library is licensed under the GNU Lesser General Public License version 3:
 http://www.gnu.org/licenses/
