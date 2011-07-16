@@ -7,8 +7,8 @@
 
 @section sed_intro INTRODUCTION
 
-The sed stream editor is a non-interactive text editing tool commonly used
-on Unix environment. Sed reads text from an input stream, stores it to
+A stream editor is a non-interactive text editing tool commonly used
+on Unix environment. It reads text from an input stream, stores it to
 pattern space, manipulates the pattern space by applying a set of editing
 commands, and writes the pattern space to an output stream. Typically, the
 input and output streams are a console or a file. 

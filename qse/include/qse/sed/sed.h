@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sed.h 507 2011-07-15 15:53:49Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,27 +24,13 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/**
- * @defgroup sed_c C
- * @ingroup sed
- * @{
- * hello
- */
-
-/**
- * @defgroup sed_c_core Core interface
- * @ingroup sed_c
- * @{
- * The sed library provides data types and functions for creating a custom
- * stream editor commonly available on platforms. It is a non-interactive 
- * text editing tool that reads text from an input stream, stores it to 
- * pattern space, manipulates the pattern space by applying a set of editing 
- * commands, and writes the pattern space to an output stream. Typically, 
- * the input and output streams are a console or a file.
- */
- 
 /** @file
- * A stream editor performs text transformation on a text stream. 
+ * This file defines data types and functions to use for creating a custom
+ * stream editor commonly available on many platforms. A stream editor is 
+ * a non-interactive text editing tool that reads text from an input stream, 
+ * stores it to pattern space, manipulates the pattern space by applying a set
+ * of editing commands, and writes the pattern space to an output stream. 
+ * Typically, the input and output streams are a console or a file.
  *
  * @code
  * sed = qse_sed_open ();
@@ -441,8 +427,5 @@ void qse_sed_setlinnum (
 #ifdef __cplusplus
 }
 #endif
-
-/* @} */
-/* @} */
 
 #endif

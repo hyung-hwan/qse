@@ -28,7 +28,7 @@
  * by implementing default handlers for I/O and memory management.
  *
  * @example cut01.c
- * This example shows how to write a simple text cutter using easy API
+ * This example shows how to write a simple text cutter using helper
  * functions.
  */
 

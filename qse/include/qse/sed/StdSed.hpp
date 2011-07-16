@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: StdSed.hpp 507 2011-07-15 15:53:49Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -26,7 +26,8 @@
 #include <qse/cmn/str.h>
 
 /** @file
- * Standard Stream Editor
+ * This file defines easier-to-use stream editor classes providing standard
+ * memory management and I/O handling.
  */
 
 /////////////////////////////////
