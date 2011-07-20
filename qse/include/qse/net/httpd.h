@@ -38,16 +38,25 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ESOCKET,
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
+	QSE_HTTPD_ETASK,
 	QSE_HTTPD_ECOMCBS
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
-
 
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
 	int (*handle_request)         (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_expect_continue) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+};
+
+typedef struct qse_httpd_task_t qse_httpd_task_t;
+struct qse_httpd_task_t
+{
+	int   (*init) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
+	void  (*fini) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
+	int   (*main) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
+	void* ctx;
 };
 
 #ifdef __cplusplus
@@ -95,6 +104,33 @@ void qse_httpd_stop (
 int qse_httpd_addlisteners (
 	qse_httpd_t*      httpd,
 	const qse_char_t* uri
+);
+
+#define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
+
+int qse_httpd_entask (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* task,
+	qse_size_t              xtnsize
+);
+
+int qse_httpd_entasksendtext (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	const qse_mchar_t*  text
+);
+
+int qse_httpd_entasksendfmt (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	const qse_mchar_t*  fmt,
+	...
+);
+
+int qse_httpd_entaskdisconnect (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client
 );
 
 #ifdef __cplusplus
