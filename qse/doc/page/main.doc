@@ -31,10 +31,14 @@ The package uses the standard autoconf build systems. Briefly, you can run
 @b configure and @b make to compile and install it. Here is the simple 
 instruction.
 
-Download the latest source package from:
+Unpack the latest source package downloaded from:
 - http://code.google.com/p/qse/downloads/list
 
-Unpack the package and run @b configure and @b make to compile and install it:
+Alternatively, you can check out the lastest source code from the subversion 
+repository by executing the following command:
+- svn checkout http://qse.googlecode.com/svn/trunk/qse/ 
+
+Run @b configure and @b make to compile and install it:
 
 @code
 $ ./configure
