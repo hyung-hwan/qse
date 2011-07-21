@@ -20,7 +20,7 @@ See the following key functions.
 - qse_cut_exec()
 - qse_cut_close()
 
-Also see a helper functions for easier use.
+Also see helper functions for easier use.
 
 - qse_cut_openstd()
 - qse_cut_compstd()
