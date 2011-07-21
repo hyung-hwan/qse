@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 480 2011-05-25 14:00:19Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -114,7 +114,7 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #elif defined(QSE_CHAR_IS_MCHAR)
 	return ret.setInt ((long_t)::system(ptr));
 #else
-	char* mbs = (char*) qse_awk_alloc ((awk_t*)(Awk*)run, l*5+1);
+	char* mbs = (char*) qse_awk_allocmem ((awk_t*)(Awk*)run, l*5+1);
 	if (mbs == QSE_NULL) return -1;
 
 	/* at this point, the string is guaranteed to be 
@@ -126,14 +126,14 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 	{
 		/* not the entire string is converted.
 		 * mbs is not null-terminated properly. */
-		qse_awk_free ((awk_t*)(Awk*)run, mbs);
+		qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
 		return -1;
 	}
 
 	mbs[mbl] = '\0';
 	int n = ret.setInt ((long_t)::system(mbs));
 
-	qse_awk_free ((awk_t*)(Awk*)run, mbs);
+	qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
 	return n;
 #endif
 }
@@ -381,7 +381,7 @@ int StdAwk::open_console_in (Console& io)
 		if (out.u.cpldup.len == 0)
 		{
 			/* the name is empty */
-			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			runarg_index++;
 			goto nextfile;
 		}
@@ -393,7 +393,7 @@ int StdAwk::open_console_in (Console& io)
 			arg.ptr = out.u.cpldup.ptr;
 			arg.len = qse_strlen (arg.ptr);
 			((Run*)io)->setError (QSE_AWK_EIONMNL, &arg);
-			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
 
@@ -414,7 +414,7 @@ int StdAwk::open_console_in (Console& io)
 				arg.ptr = file;
 				arg.len = qse_strlen (arg.ptr);
 				((Run*)io)->setError (QSE_AWK_EOPEN, &arg);
-				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
 		}
@@ -423,11 +423,11 @@ int StdAwk::open_console_in (Console& io)
 			rtx, file, qse_strlen(file)) == -1)
 		{
 			if (sio != qse_sio_in) qse_sio_close (sio);
-			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
 
-		qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+		qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 		io.setHandle (sio);
 
 		/* increment the counter of files successfully opened */

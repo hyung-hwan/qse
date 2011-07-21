@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 470 2011-05-21 16:20:01Z hyunghwan.chung $
+ * $Id: awk.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -248,7 +248,7 @@ static qse_htb_walk_t print_awk_value (
 		dprint (QSE_T("%.*s = %.*s\n"), 
 			(int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), 
 			(int)len, str);
-		qse_awk_free (qse_awk_rtx_getawk(rtx), str);
+		qse_awk_freemem (qse_awk_rtx_getawk(rtx), str);
 	}
 
 	return QSE_HTB_WALK_FORWARD;
@@ -318,7 +318,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 		else
 		{
 			dprint (QSE_T("[RETURN] - [%.*s]\n"), (int)len, str);
-			qse_awk_free (qse_awk_rtx_getawk(rtx), str);
+			qse_awk_freemem (qse_awk_rtx_getawk(rtx), str);
 		}
 	}
 

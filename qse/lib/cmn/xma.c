@@ -704,7 +704,7 @@ void qse_xma_free (qse_xma_t* xma, void* b)
 	}
 }
 
-void qse_xma_dump (qse_xma_t* xma,  qse_xma_dumper_t dumper, void* target)
+void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 {
 	qse_xma_blk_t* tmp;
 	qse_ulong_t fsum, asum; 
@@ -712,31 +712,31 @@ void qse_xma_dump (qse_xma_t* xma,  qse_xma_dumper_t dumper, void* target)
 	qse_ulong_t isum;
 #endif
 
-	dumper (target, QSE_T("<XMA DUMP>\n"));
+	dumper (ctx, QSE_T("<XMA DUMP>\n"));
 
 #ifdef QSE_XMA_ENABLE_STAT
-	dumper (target, QSE_T("== statistics ==\n"));
+	dumper (ctx, QSE_T("== statistics ==\n"));
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-	dumper (target, QSE_T("total = %lu\n"), (unsigned long)xma->stat.total);
-	dumper (target, QSE_T("alloc = %lu\n"), (unsigned long)xma->stat.alloc);
-	dumper (target, QSE_T("avail = %lu\n"), (unsigned long)xma->stat.avail);
+	dumper (ctx, QSE_T("total = %lu\n"), (unsigned long)xma->stat.total);
+	dumper (ctx, QSE_T("alloc = %lu\n"), (unsigned long)xma->stat.alloc);
+	dumper (ctx, QSE_T("avail = %lu\n"), (unsigned long)xma->stat.avail);
 #else
-	dumper (target, QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
-	dumper (target, QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
-	dumper (target, QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
+	dumper (ctx, QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
+	dumper (ctx, QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
+	dumper (ctx, QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
 #endif
 #endif
 
-	dumper (target, QSE_T("== blocks ==\n"));
-	dumper (target, QSE_T(" size               avail address\n"));
+	dumper (ctx, QSE_T("== blocks ==\n"));
+	dumper (ctx, QSE_T(" size               avail address\n"));
 	for (tmp = xma->head, fsum = 0, asum = 0; tmp; tmp = tmp->b.next)
 	{
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-		dumper (target, QSE_T(" %-18lu %-5d %p\n"), 
+		dumper (ctx, QSE_T(" %-18lu %-5d %p\n"), 
 			(unsigned long)tmp->size, tmp->avail, tmp
 		);
 #else
-		dumper (target, QSE_T(" %-18llu %-5d %p\n"), 
+		dumper (ctx, QSE_T(" %-18llu %-5d %p\n"), 
 			(unsigned long long)tmp->size, tmp->avail, tmp
 		);
 #endif
@@ -748,22 +748,22 @@ void qse_xma_dump (qse_xma_t* xma,  qse_xma_dumper_t dumper, void* target)
 	isum = (xma->stat.nfree + xma->stat.nused) * HDRSIZE;
 #endif
 
-	dumper (target, QSE_T("---------------------------------------\n"));
+	dumper (ctx, QSE_T("---------------------------------------\n"));
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-	dumper (target, QSE_T("Allocated blocks: %18lu bytes\n"), (unsigned long)asum);
-	dumper (target, QSE_T("Available blocks: %18lu bytes\n"), (unsigned long)fsum);
+	dumper (ctx, QSE_T("Allocated blocks: %18lu bytes\n"), (unsigned long)asum);
+	dumper (ctx, QSE_T("Available blocks: %18lu bytes\n"), (unsigned long)fsum);
 #else
-	dumper (target, QSE_T("Allocated blocks: %18llu bytes\n"), (unsigned long long)asum);
-	dumper (target, QSE_T("Available blocks: %18llu bytes\n"), (unsigned long long)fsum);
+	dumper (ctx, QSE_T("Allocated blocks: %18llu bytes\n"), (unsigned long long)asum);
+	dumper (ctx, QSE_T("Available blocks: %18llu bytes\n"), (unsigned long long)fsum);
 #endif
 
 #ifdef QSE_XMA_ENABLE_STAT
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-	dumper (target, QSE_T("Internal use    : %18lu bytes\n"), (unsigned long)isum);
-	dumper (target, QSE_T("Total           : %18lu bytes\n"), (unsigned long)(asum + fsum + isum));
+	dumper (ctx, QSE_T("Internal use    : %18lu bytes\n"), (unsigned long)isum);
+	dumper (ctx, QSE_T("Total           : %18lu bytes\n"), (unsigned long)(asum + fsum + isum));
 #else
-	dumper (target, QSE_T("Internal use    : %18llu bytes\n"), (unsigned long long)isum);
-	dumper (target, QSE_T("Total           : %18llu bytes\n"), (unsigned long long)(asum + fsum + isum));
+	dumper (ctx, QSE_T("Internal use    : %18llu bytes\n"), (unsigned long long)isum);
+	dumper (ctx, QSE_T("Total           : %18llu bytes\n"), (unsigned long long)(asum + fsum + isum));
 #endif
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: misc.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,29 +20,37 @@
 
 #include "awk.h"
 
-void* qse_awk_alloc (qse_awk_t* awk, qse_size_t size)
+void* qse_awk_allocmem (qse_awk_t* awk, qse_size_t size)
 {
-	return QSE_AWK_ALLOC (awk, size);
+	void* ptr = QSE_AWK_ALLOC (awk, size);
+	if (ptr == QSE_NULL)  qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
 }
 
-void* qse_awk_realloc (qse_awk_t* awk, void* ptr, qse_size_t size)
+void* qse_awk_reallocmem (qse_awk_t* awk, void* ptr, qse_size_t size)
 {
-	return QSE_AWK_REALLOC (awk, ptr, size);
+	void* nptr = QSE_AWK_REALLOC (awk, ptr, size);
+	if (nptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return nptr;
 }
 
-void qse_awk_free (qse_awk_t* awk, void* ptr)
+void qse_awk_freemem (qse_awk_t* awk, void* ptr)
 {
 	QSE_AWK_FREE (awk, ptr);
 }
 
 qse_char_t* qse_awk_strdup (qse_awk_t* awk, const qse_char_t* s)
 {
-	return QSE_AWK_STRDUP (awk, s);
+	qse_char_t* ptr = QSE_AWK_STRDUP (awk, s);
+	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
 }
 
 qse_char_t* qse_awk_strxdup (qse_awk_t* awk, const qse_char_t* s, qse_size_t l)
 {
-	return QSE_AWK_STRXDUP (awk, s, l);
+	qse_char_t* ptr = QSE_AWK_STRXDUP (awk, s, l);
+	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
 }
 
 qse_long_t qse_awk_strxtolong (
@@ -1085,18 +1093,18 @@ int qse_awk_matchrex (
 	return x;
 }
 
-void* qse_awk_rtx_alloc (qse_awk_rtx_t* rtx, qse_size_t size)
+void* qse_awk_rtx_allocmem (qse_awk_rtx_t* rtx, qse_size_t size)
 {
-	return qse_awk_alloc (rtx->awk, size);
+	return qse_awk_allocmem (rtx->awk, size);
 }
 
-void* qse_awk_rtx_realloc (qse_awk_rtx_t* rtx, void* ptr, qse_size_t size)
+void* qse_awk_rtx_reallocmem (qse_awk_rtx_t* rtx, void* ptr, qse_size_t size)
 {
-	return qse_awk_realloc (rtx->awk, ptr, size);
+	return qse_awk_reallocmem (rtx->awk, ptr, size);
 }
 
-void qse_awk_rtx_free (qse_awk_rtx_t* rtx, void* ptr)
+void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 {
-	qse_awk_free (rtx->awk, ptr);
+	qse_awk_freemem (rtx->awk, ptr);
 }
 

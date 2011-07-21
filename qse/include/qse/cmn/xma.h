@@ -104,7 +104,15 @@ struct qse_xma_t
 #endif
 };
 
-typedef int (*qse_xma_dumper_t) (void* target, const qse_char_t* fmt,...);
+/**
+ * The qse_xma_dumper_t type defines a printf-like output function
+ * for qse_xma_dump().
+ */
+typedef int (*qse_xma_dumper_t) (
+	void*             ctx,
+	const qse_char_t* fmt,
+	...
+);
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,13 +195,13 @@ void qse_xma_free (
 
 /**
  * The qse_xma_dump() function dumps the contents of the memory zone
- * with the output function @a printf provided. The debug build shows
+ * with the output function @a dumper provided. The debug build shows
  * more statistical counters.
  */
 void qse_xma_dump (
 	qse_xma_t*       xma,    /**< memory allocator */
 	qse_xma_dumper_t dumper, /**< output function */
-	void*            target  /**< first parameter to output function */
+	void*            ctx     /**< first parameter to output function */
 );
 
 #ifdef __cplusplus
