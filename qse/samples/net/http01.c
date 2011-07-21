@@ -17,82 +17,6 @@ struct httpd_xtn_t
 	const qse_httpd_cbs_t* orgcbs;
 };
 
-typedef struct httpd_task_sendfile_t httpd_task_sendfile_t;
-struct httpd_task_sendfile_t
-{
-	int fd;
-	qse_foff_t left;
-	qse_foff_t offset;
-};
-
-typedef struct httpd_task_sendtext_t httpd_task_sendtext_t;
-struct httpd_task_sendtext_t
-{
-	const qse_mchar_t* ptr;
-	qse_size_t left;
-};
-
-static int httpd_init_sendfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	httpd_task_sendfile_t* xtn = qse_httpd_gettaskxtn (httpd, task);
-	memcpy (xtn, task->ctx, QSE_SIZEOF(*xtn));
-	task->ctx = xtn;
-	return 0;
-}
-
-static void httpd_fini_sendfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	httpd_task_sendfile_t* ctx = (httpd_task_sendfile_t*)task->ctx;
-	close (ctx->fd);
-}
-
-static int httpd_main_sendfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	ssize_t n;
-	size_t count;
-	httpd_task_sendfile_t* ctx = (httpd_task_sendfile_t*)task->ctx;
-
-	count = MAX_SENDFILE_SIZE;
-	if (count >= ctx->left) count = ctx->left;
-
-	n = sendfile (
-	/*	TODO: client->fd, */ *(int*)client,
-		ctx->fd,
-		&ctx->offset,
-		count
-	);
-
-	if (n <= -1) return -1;
-
-	ctx->left -= n;
-	if (ctx->left <= 0) return 0;
-
-	return 1; /* more work to do */
-}
-
-static int entask_sendfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, int fd, qse_foff_t size)
-{
-	qse_httpd_task_t task;
-	httpd_task_sendfile_t data;
-	
-	memset (&data, 0, QSE_SIZEOF(data));
-	data.fd = fd;
-	data.left = size;
-
-	memset (&task, 0, QSE_SIZEOF(task));
-	task.init = httpd_init_sendfile;
-	task.main = httpd_main_sendfile;
-	task.fini = httpd_fini_sendfile;
-	task.ctx = &data;
-
-	return qse_httpd_entask (httpd, client, &task, QSE_SIZEOF(data));
-}
-
-
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
 qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
@@ -177,7 +101,7 @@ snprintf (text, sizeof(text),
 				);
 				if (n <= -1) return -1;
 
-				if (entask_sendfile (httpd, client, fd, st.st_size) <= -1) return -1;
+				if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) return -1;
 			}
 
 		}

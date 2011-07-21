@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 504 2011-07-11 16:31:33Z hyunghwan.chung $
+ * $Id: types.h 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -336,7 +336,6 @@ typedef qse_int_t qse_intptr_t;
 	typedef double qse_real_t;
 #endif
 
-
 /** 
  * The qse_mchar_t type defines a multi-byte character type.
  */
@@ -574,5 +573,67 @@ typedef struct qse_mmgr_t qse_mmgr_t;
 #else
 #    error Unsupported platform
 #endif
+
+/* The qse_ubi_t type defines a union type that includes most of built-in 
+ * data types and numeric types defined in the library. */
+union qse_ubi_t
+{
+	char           c;
+	unsigned char  uc;
+	short          s;
+	unsigned short us;
+	int            i;
+	unsigned int   ui;
+	long           l;
+	unsigned long  ul;
+#if defined(QSE_SIZEOF_LONG_LONG) && (QSE_SIZEOF_LONG_LONG > 0)
+	long long      ll;
+	unsigned long long ull;
+#endif
+	float          f;
+	double         d;
+#if defined(QSE_SIZEOF_LONG_DOUBLE) && (QSE_SIZEOF_LONG_DOUBLE > 0)
+	long double    ld;
+#endif
+	void*          ptr;
+
+	qse_byte_t     byte;
+	qse_int_t      sint;
+	qse_uint_t     uint;
+	qse_long_t     slong;
+	qse_ulong_t    ulong;
+	qse_size_t     size;
+	qse_ssize_t    ssize;
+	qse_word_t     word;
+	qse_intptr_t   intptr;
+	qse_uintptr_t  uintptr;
+	qse_real_t     real;
+
+	qse_char_t     cha;
+	qse_mchar_t    mchar;
+	qse_wchar_t    wchar;
+	qse_cint_t     cint;
+	qse_mcint_t    mcint;
+	qse_wcint_t    wcint;
+
+	qse_int8_t     int8;
+	qse_uint8_t    uint8;
+	qse_int16_t    int16;
+	qse_uint16_t   uint16;
+	qse_int32_t    int32;
+	qse_uint32_t   uint32;
+#if defined(QSE_HAVE_INT64_T)
+	qse_int64_t    int64;
+	qse_uint64_t   uint64;
+#endif
+#if defined(QSE_HAVE_INT128_T)
+	qse_int128_t   int128;
+	qse_uint128_t  uint128;
+#endif
+	qse_foff_t     foff;
+};
+typedef union qse_ubi_t qse_ubi_t;
+
+
 
 #endif

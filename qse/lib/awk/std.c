@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 481 2011-05-25 14:42:26Z hyunghwan.chung $
+ * $Id: std.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1013,7 +1013,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			if (out.u.cpldup.len == 0)
 			{
 				/* the name is empty */
-				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 				rxtn->c.in.index++;
 				goto nextfile;
 			}
@@ -1031,7 +1031,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				qse_awk_rtx_seterrnum (
 					rtx, QSE_AWK_EIONMNL, &errarg);
 
-				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
 
@@ -1056,7 +1056,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					qse_awk_rtx_seterrnum (
 						rtx, QSE_AWK_EOPEN, &errarg);
 
-					qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+					qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 					return -1;
 				}
 			}
@@ -1065,11 +1065,11 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				rtx, file, qse_strlen(file)) <= -1)
 			{
 				if (sio != qse_sio_in) qse_sio_close (sio);
-				qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 				return -1;
 			}
 
-			qse_awk_rtx_free (rtx, out.u.cpldup.ptr);
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			riod->handle = sio;
 
 			/* increment the counter of files successfully opened */
@@ -1465,7 +1465,7 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		char* mbs;
 		qse_size_t mbl;
 
-		mbs = (char*) qse_awk_alloc (run->awk, len*5+1);
+		mbs = (char*) qse_awk_allocmem (run->awk, len*5+1);
 		if (mbs == QSE_NULL) 
 		{
 			n = -1;
@@ -1489,7 +1489,7 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 		n = system (mbs);
 
 	skip_system_mbs:
-		qse_awk_free (run->awk, mbs);
+		qse_awk_freemem (run->awk, mbs);
 	}
 #endif
 

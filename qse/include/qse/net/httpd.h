@@ -128,9 +128,33 @@ int qse_httpd_entasksendfmt (
 	...
 );
 
+int qse_httpd_entasksendfile (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	int                 fd,
+	qse_foff_t          offset,
+	qse_foff_t          size
+);
+
 int qse_httpd_entaskdisconnect (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client
+);
+
+void* qse_httpd_allocmem (
+	qse_httpd_t* httpd, 
+	qse_size_t   size
+);
+
+void* qse_httpd_reallocmem (
+	qse_httpd_t* httpd,
+	void*        ptr,
+	qse_size_t   size
+);
+
+void qse_httpd_freemem (
+	qse_httpd_t* httpd,
+	void*        ptr
 );
 
 #ifdef __cplusplus

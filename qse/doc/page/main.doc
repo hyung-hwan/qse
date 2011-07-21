@@ -81,7 +81,7 @@ Under the wide character mode:
 - #QSE_CHAR_IS_WCHAR is defined.
 - #qse_char_t maps to #qse_wchar_t.
 
-#qse_mchar_t maps @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
+#qse_mchar_t maps to @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
 
 @section library_modules LIBRARY MODULES
 @b QSE contains a set of APIs. Each set is organized into a library module 

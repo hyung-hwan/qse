@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 480 2011-05-25 14:00:19Z hyunghwan.chung $
+ * $Id: Awk.cpp 510 2011-07-20 16:17:16Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -139,7 +139,7 @@ Awk::Console::~Console ()
 {
 	if (filename != QSE_NULL)
 	{
-		qse_awk_free ((awk_t*)this, filename);
+		qse_awk_freemem ((awk_t*)this, filename);
 	}
 }
 
@@ -230,7 +230,7 @@ Awk::Value::IntIndex::IntIndex (long_t x)
 
 void* Awk::Value::operator new (size_t n, Run* run) throw ()
 {
-	void* ptr = qse_awk_rtx_alloc (run->rtx, QSE_SIZEOF(run) + n);
+	void* ptr = qse_awk_rtx_allocmem (run->rtx, QSE_SIZEOF(run) + n);
 	if (ptr == QSE_NULL) return QSE_NULL;
 
 	*(Run**)ptr = run;
@@ -239,7 +239,7 @@ void* Awk::Value::operator new (size_t n, Run* run) throw ()
 
 void* Awk::Value::operator new[] (size_t n, Run* run) throw () 
 {
-	void* ptr = qse_awk_rtx_alloc (run->rtx, QSE_SIZEOF(run) + n);
+	void* ptr = qse_awk_rtx_allocmem (run->rtx, QSE_SIZEOF(run) + n);
 	if (ptr == QSE_NULL) return QSE_NULL;
 
 	*(Run**)ptr = run;
@@ -249,25 +249,25 @@ void* Awk::Value::operator new[] (size_t n, Run* run) throw ()
 #if !defined(__BORLANDC__)
 void Awk::Value::operator delete (void* ptr, Run* run) 
 {
-	qse_awk_rtx_free (run->rtx, (char*)ptr-QSE_SIZEOF(run));
+	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
 }
 
 void Awk::Value::operator delete[] (void* ptr, Run* run) 
 {
-	qse_awk_rtx_free (run->rtx, (char*)ptr-QSE_SIZEOF(run));
+	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
 }
 #endif
 
 void Awk::Value::operator delete (void* ptr) 
 {
 	void* p = (char*)ptr-QSE_SIZEOF(Run*);
-	qse_awk_rtx_free ((*(Run**)p)->rtx, p);
+	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
 
 void Awk::Value::operator delete[] (void* ptr) 
 {
 	void* p = (char*)ptr-QSE_SIZEOF(Run*);
-	qse_awk_rtx_free ((*(Run**)p)->rtx, p);
+	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
 
 Awk::Value::Value (): run (QSE_NULL), val (qse_awk_val_nil) 
@@ -303,7 +303,7 @@ Awk::Value::~Value ()
 	{
 		qse_awk_rtx_refdownval (run->rtx, val);
 		if (cached.str.ptr != QSE_NULL)
-			qse_awk_rtx_free (run->rtx, cached.str.ptr);
+			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
 	}
 }
 
@@ -316,7 +316,7 @@ Awk::Value& Awk::Value::operator= (const Value& v)
 		qse_awk_rtx_refdownval (run->rtx, val);
 		if (cached.str.ptr != QSE_NULL)
 		{
-			qse_awk_rtx_free (run->rtx, cached.str.ptr);
+			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
 		}
@@ -339,7 +339,7 @@ void Awk::Value::clear ()
 
 		if (cached.str.ptr != QSE_NULL)
 		{
-			qse_awk_rtx_free (run->rtx, cached.str.ptr);
+			qse_awk_rtx_freemem (run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
 		}
@@ -485,7 +485,7 @@ int Awk::Value::setVal (Run* r, val_t* v)
 		qse_awk_rtx_refdownval (this->run->rtx, val);
 		if (cached.str.ptr != QSE_NULL)
 		{
-			qse_awk_rtx_free (this->run->rtx, cached.str.ptr);
+			qse_awk_rtx_freemem (this->run->rtx, cached.str.ptr);
 			cached.str.ptr = QSE_NULL;
 			cached.str.len = 0;
 		}
@@ -1062,7 +1062,7 @@ static void free_function_map_value (
 	Awk::htb_t* map, void* dptr, Awk::size_t dlen)
 {
 	Awk* awk = *(Awk**) QSE_XTN (map);
-	qse_awk_free ((Awk::awk_t*)*awk, dptr);
+	qse_awk_freemem ((Awk::awk_t*)*awk, dptr);
 }
 
 int Awk::open () 
@@ -1214,7 +1214,7 @@ int Awk::call (
 		if (nargs <= QSE_COUNTOF(buf)) ptr = buf;
 		else
 		{
-			ptr = (val_t**) qse_awk_alloc (
+			ptr = (val_t**) qse_awk_allocmem (
 				awk, QSE_SIZEOF(val_t*) * nargs);
 			if (ptr == QSE_NULL)
 			{
@@ -1229,7 +1229,7 @@ int Awk::call (
 
 	val_t* rv = qse_awk_rtx_call (runctx.rtx, name, ptr, nargs);
 
-	if (ptr != QSE_NULL && ptr != buf) qse_awk_free (awk, ptr);
+	if (ptr != QSE_NULL && ptr != buf) qse_awk_freemem (awk, ptr);
 
 	if (rv == QSE_NULL) 
 	{
@@ -1409,7 +1409,7 @@ int Awk::xstrs_t::add (awk_t* awk, const char_t* arg, size_t len)
 		size_t capa = this->capa;
 
 		capa += 64;
-		ptr = (qse_xstr_t*) qse_awk_realloc (
+		ptr = (qse_xstr_t*) qse_awk_reallocmem (
 			awk, this->ptr, QSE_SIZEOF(qse_xstr_t)*(capa+1));
 		if (ptr == QSE_NULL) return -1;
 
@@ -1433,9 +1433,9 @@ void Awk::xstrs_t::clear (awk_t* awk)
 	if (this->ptr != QSE_NULL)
 	{
 		while (this->len > 0)
-			qse_awk_free (awk, this->ptr[--this->len].ptr);
+			qse_awk_freemem (awk, this->ptr[--this->len].ptr);
 
-		qse_awk_free (awk, this->ptr);
+		qse_awk_freemem (awk, this->ptr);
 		this->ptr = QSE_NULL;
 		this->capa = 0;
 	}
@@ -1517,7 +1517,7 @@ int Awk::addFunction (
 	QSE_ASSERT (awk != QSE_NULL);
 
 	FunctionHandler* tmp = (FunctionHandler*) 
-		qse_awk_alloc (awk, QSE_SIZEOF(handler));
+		qse_awk_allocmem (awk, QSE_SIZEOF(handler));
 	if (tmp == QSE_NULL)
 	{
 		setError (QSE_AWK_ENOMEM);
@@ -1540,7 +1540,7 @@ int Awk::addFunction (
 		functionHandler);
 	if (p == QSE_NULL) 
 	{
-		qse_awk_free (awk, tmp);
+		qse_awk_freemem (awk, tmp);
 		retrieveError ();
 		return -1;
 	}
@@ -1550,7 +1550,7 @@ int Awk::addFunction (
 	if (pair == QSE_NULL)
 	{
 		qse_awk_delfnc (awk, name, nameLen);
-		qse_awk_free (awk, tmp);
+		qse_awk_freemem (awk, tmp);
 
 		setError (QSE_AWK_ENOMEM);
 		return -1;

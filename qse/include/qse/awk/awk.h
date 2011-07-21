@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 485 2011-05-29 15:15:52Z hyunghwan.chung $
+ * $Id: awk.h 510 2011-07-20 16:17:16Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1442,28 +1442,28 @@ int qse_awk_parse (
 );
 
 /**
- * The qse_awk_alloc() function allocates dynamic memory.
+ * The qse_awk_allocmem() function allocates dynamic memory.
  * @return a pointer to a memory block on success, #QSE_NULL on failure
  */
-void* qse_awk_alloc (
+void* qse_awk_allocmem (
 	qse_awk_t* awk,  /**< awk */
 	qse_size_t size  /**< size of memory to allocate in bytes */
 );
 
 /**
- * The qse_awk_realloc() function resizes a dynamic memory block.
+ * The qse_awk_reallocmem() function resizes a dynamic memory block.
  * @return a pointer to a memory block on success, #QSE_NULL on failure
  */
-void* qse_awk_realloc (
+void* qse_awk_reallocmem (
 	qse_awk_t* awk,  /**< awk */
 	void*      ptr,  /**< memory block */
 	qse_size_t size  /**< new block size in bytes */
 );
 
 /**
- * The qse_awk_free() function frees dynamic memory allocated.
+ * The qse_awk_freemem() function frees dynamic memory allocated.
  */
-void qse_awk_free (
+void qse_awk_freemem (
 	qse_awk_t* awk, /**< awk */
 	void*      ptr  /**< memory block to free */
 );
@@ -2237,32 +2237,32 @@ int qse_awk_rtx_strtonum (
 );
 
 /**
- * The qse_awk_rtx_alloc() function allocats a memory block of @a size bytes
+ * The qse_awk_rtx_allocmem() function allocats a memory block of @a size bytes
  * using the memory manager associated with a runtime context @a rtx. 
  * @return the pointer to a memory block on success, #QSE_NULL on failure.
  */
-void* qse_awk_rtx_alloc (
+void* qse_awk_rtx_allocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_size_t     size /**< block size in bytes */
 );
 
 /**
- * The qse_awk_rtx_realloc() function resizes a memory block pointed to
+ * The qse_awk_rtx_reallocmem() function resizes a memory block pointed to
  * by @a ptr to @a size bytes using the memory manager associated with 
  * a runtime context @a rtx. 
  * @return the pointer to a memory block on success, #QSE_NULL on failure.
  */
-void* qse_awk_rtx_realloc (
+void* qse_awk_rtx_reallocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	void*          ptr, /**< memory block */
 	qse_size_t     size /**< block size in bytes */
 );
 
 /**
- * The qse_awk_rtx_free() function frees a memory block pointed to by @a ptr
+ * The qse_awk_rtx_freemem() function frees a memory block pointed to by @a ptr
  * using the memory manager of a runtime ocntext @a rtx.
  */
-void qse_awk_rtx_free (
+void qse_awk_rtx_freemem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	void*          ptr  /**< memory block pointer */
 );
