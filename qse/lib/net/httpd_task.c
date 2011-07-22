@@ -20,7 +20,7 @@
 static int task_main_disconnect (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	shutdown (client->fd, SHUT_RDWR);
+	shutdown (client->handle.i, SHUT_RDWR);
 	return 0;
 }
 
@@ -67,7 +67,7 @@ static int httpd_main_sendtext (
 	if (count >= ctx->left) count = ctx->left;
 
 	n = send (
-		client->fd,
+		client->handle.i,
 		ctx->ptr,
 		count,
 		0
@@ -143,7 +143,7 @@ static int httpd_main_sendfmt (
 	if (count >= ctx->left) count = ctx->left;
 
 	n = send (
-		client->fd,
+		client->handle.i,
 		ctx->ptr,
 		count,
 		0
@@ -287,13 +287,19 @@ static int httpd_main_sendfile (
 	if (count >= ctx->left) count = ctx->left;
 
 	n = sendfile (
-		client->fd,
+		client->handle.i,
 		ctx->fd,
 		&ctx->offset,
 		count
 	);
 
 	if (n <= -1) return -1;
+
+	if (n == 0 && count > 0)
+	{
+/* TODO: .... */
+		/* anything to do in this case? can this happen if the file has been truncated during transfer.... */
+	}
 
 	ctx->left -= n;
 	if (ctx->left <= 0) return 0;

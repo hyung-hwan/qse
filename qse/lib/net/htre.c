@@ -56,3 +56,12 @@ int qse_htre_setstrfromxstr (
 	return (qse_mbs_ncpy (str, xstr->ptr, xstr->len) == (qse_size_t)-1)? -1: 0;
 }
 
+const qse_mchar_t* qse_htre_gethdrval (
+	qse_htre_t* re, const qse_mchar_t* name)
+{
+	qse_htb_pair_t* pair;
+	pair = qse_htb_search (&re->hdrtab, name, qse_mbslen(name));
+	if (pair == QSE_NULL) return pair;
+	return QSE_HTB_VPTR(pair);
+}
+
