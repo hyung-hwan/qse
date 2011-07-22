@@ -610,7 +610,7 @@ static void delete_from_client_array (qse_httpd_t* httpd, int fd)
 
 		qse_htrd_close (array->data[fd].htrd);
 		array->data[fd].htrd = QSE_NULL;	
-		close (array->data[fd].fd);
+		close (array->data[fd].handle.i);
 		array->size--;
 	}
 }
@@ -636,6 +636,7 @@ static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd,
 {
 	htrd_xtn_t* xtn;
 	client_array_t* array = &httpd->client.array;
+	int opt;
 
 	if (fd >= array->capa)
 	{
@@ -655,10 +656,17 @@ static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd,
 
 	QSE_ASSERT (array->data[fd].htrd == QSE_NULL);
 
-	array->data[fd].fd = fd;	
-	array->data[fd].addr = *addr;
 	array->data[fd].htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(*xtn));
 	if (array->data[fd].htrd == QSE_NULL) return QSE_NULL;
+	opt = qse_htrd_getoption (array->data[fd].htrd);
+	opt |= QSE_HTRD_REQUEST;
+	opt &= ~QSE_HTRD_RESPONSE;
+	qse_htrd_setoption (array->data[fd].htrd, opt);
+
+	array->data[fd].bad = 0;
+	array->data[fd].handle.i = fd;	
+	array->data[fd].addr = *addr;
+
 	pthread_mutex_init (&array->data[fd].task.mutex, NULL);
 
 	xtn = (htrd_xtn_t*)qse_htrd_getxtn (array->data[fd].htrd);	
@@ -765,14 +773,14 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 		{
 			if (r) 
 			{
-				FD_SET (ca->data[fd].fd, r);
-				if (ca->data[fd].fd > max) max = ca->data[fd].fd;
+				FD_SET (ca->data[fd].handle.i, r);
+				if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
 			}
-			if (w && ca->data[fd].task.queue.count > 0)
+			if (w && (ca->data[fd].task.queue.count > 0 || ca->data[fd].bad))
 			{
 				/* add it to the set if it has a response to send */
-				FD_SET (ca->data[fd].fd, w);
-				if (ca->data[fd].fd > max) max = ca->data[fd].fd;
+				FD_SET (ca->data[fd].handle.i, w);
+				if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
 			}
 		}
 	}
@@ -793,7 +801,7 @@ static void perform_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	if (n <= -1)
 	{
 		dequeue_task_locked (httpd, client);
-		shutdown (client->fd, SHUT_RDWR);
+		shutdown (client->handle.i, SHUT_RDWR);
 	}
 	else if (n == 0)
 	{
@@ -853,9 +861,14 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerro
 
 			if (!client->htrd) continue;
 
-			if (FD_ISSET(client->fd, &w)) 
+			if (FD_ISSET(client->handle.i, &w)) 
 			{
-				if (client->task.queue.count > 0) perform_task (httpd, client);
+				if (client->bad) 
+				{
+					/*send (client->handle, i, "INTERNAL SERVER ERROR..", ...);*/
+					shutdown (client->handle.i, 0);
+				}
+				else if (client->task.queue.count > 0) perform_task (httpd, client);
 			}
 		
 		}
@@ -871,13 +884,13 @@ static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	qse_ssize_t m;
 
 reread:
-	m = read (client->fd, buf, QSE_SIZEOF(buf));
+	m = read (client->handle.i, buf, QSE_SIZEOF(buf));
 	if (m <= -1)
 	{
 		if (errno != EINTR)
 		{
 			httpd->errnum = QSE_HTTPD_ESOCKET;
-qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), client->fd);
+qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), client->handle.i);
 			return -1;
 		}
 		goto reread;
@@ -885,7 +898,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), clie
 	else if (m == 0)
 	{
 		httpd->errnum = QSE_HTTPD_EDISCON;
-qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->fd);
+qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->handle.i);
 		return -1;
 	}
 
@@ -974,7 +987,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 
 			if (!client->htrd) continue;
 
-			if (FD_ISSET(client->fd, &r)) 
+			if (FD_ISSET(client->handle.i, &r)) 
 			{
 				/* got input */
 				if (read_from_client (httpd, client) <= -1)
@@ -1237,7 +1250,15 @@ int qse_httpd_entask (
 {
 	int ret;
 	ret = enqueue_task_locked (httpd, client, task, xtnsize);
-	if (ret >= 0) pthread_cond_signal (&httpd->client.cond);
+	if (ret <= -1) client->bad = 1; /* mark this client bad */
+	else pthread_cond_signal (&httpd->client.cond);
 	return ret;
 }
 
+void qse_httpd_markclientbad (qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	/* mark that something is wrong in processing requests from this client.
+	 * this client could be bad... or the system could encounter some errors
+	 * like memory allocation failure */
+	client->bad = 1;
+}

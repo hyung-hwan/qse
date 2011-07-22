@@ -143,6 +143,10 @@ int qse_htre_setstrfromxstr (
 	const qse_mxstr_t* xstr
 );
 
+const qse_mchar_t* qse_htre_gethdrval (
+	qse_htre_t* re, const qse_mchar_t* key
+);
+
 #ifdef __cplusplus
 }
 #endif

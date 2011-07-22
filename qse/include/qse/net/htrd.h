@@ -39,7 +39,9 @@ typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
 
 enum qse_htrd_option_t
 {
-	QSE_HTRD_LEADINGEMPTYLINES = (1 << 0)
+	QSE_HTRD_LEADINGEMPTYLINES = (1 << 0),
+	QSE_HTRD_REQUEST           = (1 << 1),
+	QSE_HTRD_RESPONSE          = (1 << 2)
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;

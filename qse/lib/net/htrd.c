@@ -15,7 +15,7 @@
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+    License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
 #include <qse/net/htrd.h>
@@ -84,12 +84,12 @@ static QSE_INLINE int xdigit_to_num (qse_htoc_t c)
 }
 
 static QSE_INLINE int push_to_buffer (
-	qse_htrd_t* http, qse_htob_t* octb,
+	qse_htrd_t* htrd, qse_htob_t* octb,
 	const qse_htoc_t* ptr, qse_size_t len)
 {
 	if (qse_mbs_ncat (octb, ptr, len) == (qse_size_t)-1) 
 	{
-		http->errnum = QSE_HTRD_ENOMEM;
+		htrd->errnum = QSE_HTRD_ENOMEM;
 		return -1;
 	}
 	return 0;
@@ -100,31 +100,31 @@ struct hdr_cmb_t
 	struct hdr_cmb_t* next;
 };
 
-static QSE_INLINE void clear_combined_headers (qse_htrd_t* http)
+static QSE_INLINE void clear_combined_headers (qse_htrd_t* htrd)
 {
-	struct hdr_cmb_t* cmb = (struct hdr_cmb_t*)http->fed.chl;	
+	struct hdr_cmb_t* cmb = (struct hdr_cmb_t*)htrd->fed.chl;	
 	
 	while (cmb)
 	{	
 		struct hdr_cmb_t* next = cmb->next;
-		QSE_MMGR_FREE (http->mmgr, cmb);
+		QSE_MMGR_FREE (htrd->mmgr, cmb);
 		cmb = next;
 	}
 
-	http->fed.chl = QSE_NULL;
+	htrd->fed.chl = QSE_NULL;
 }
 
-static QSE_INLINE void clear_feed (qse_htrd_t* http)
+static QSE_INLINE void clear_feed (qse_htrd_t* htrd)
 {
 	/* clear necessary part of the request/response before 
 	 * reading the next request/response */
-	qse_htre_clear (&http->re);
+	qse_htre_clear (&htrd->re);
 
-	qse_mbs_clear (&http->fed.b.tra);
-	qse_mbs_clear (&http->fed.b.raw);
-	clear_combined_headers (http);
+	qse_mbs_clear (&htrd->fed.b.tra);
+	qse_mbs_clear (&htrd->fed.b.raw);
+	clear_combined_headers (htrd);
 
-	QSE_MEMSET (&http->fed.s, 0, QSE_SIZEOF(http->fed.s));
+	QSE_MEMSET (&htrd->fed.s, 0, QSE_SIZEOF(htrd->fed.s));
 }
 
 #define QSE_HTRD_STATE_REQ  1
@@ -133,7 +133,7 @@ static QSE_INLINE void clear_feed (qse_htrd_t* http)
 
 qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
-	qse_htrd_t* http;
+	qse_htrd_t* htrd;
 
 	if (mmgr == QSE_NULL) 
 	{
@@ -145,60 +145,61 @@ qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	http = (qse_htrd_t*) QSE_MMGR_ALLOC (
+	htrd = (qse_htrd_t*) QSE_MMGR_ALLOC (
 		mmgr, QSE_SIZEOF(qse_htrd_t) + xtnsize
 	);
-	if (http == QSE_NULL) return QSE_NULL;
+	if (htrd == QSE_NULL) return QSE_NULL;
 
-	if (qse_htrd_init (http, mmgr) == QSE_NULL)
+	if (qse_htrd_init (htrd, mmgr) == QSE_NULL)
 	{
-		QSE_MMGR_FREE (http->mmgr, http);
+		QSE_MMGR_FREE (htrd->mmgr, htrd);
 		return QSE_NULL;
 	}
 
-	return http;
+	return htrd;
 }
 
-void qse_htrd_close (qse_htrd_t* http)
+void qse_htrd_close (qse_htrd_t* htrd)
 {
-	qse_htrd_fini (http);
-	QSE_MMGR_FREE (http->mmgr, http);
+	qse_htrd_fini (htrd);
+	QSE_MMGR_FREE (htrd->mmgr, htrd);
 }
 
-qse_htrd_t* qse_htrd_init (qse_htrd_t* http, qse_mmgr_t* mmgr)
+qse_htrd_t* qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
-	QSE_MEMSET (http, 0, QSE_SIZEOF(*http));
-	http->mmgr = mmgr;
+	QSE_MEMSET (htrd, 0, QSE_SIZEOF(*htrd));
+	htrd->mmgr = mmgr;
+	htrd->option = QSE_HTRD_REQUEST | QSE_HTRD_RESPONSE;
 
-	qse_mbs_init (&http->tmp.qparam, http->mmgr, 0);
-	qse_mbs_init (&http->fed.b.raw, http->mmgr, 0);
-	qse_mbs_init (&http->fed.b.tra, http->mmgr, 0);
+	qse_mbs_init (&htrd->tmp.qparam, htrd->mmgr, 0);
+	qse_mbs_init (&htrd->fed.b.raw, htrd->mmgr, 0);
+	qse_mbs_init (&htrd->fed.b.tra, htrd->mmgr, 0);
 
-	if (qse_htre_init (&http->re, mmgr) == QSE_NULL)
+	if (qse_htre_init (&htrd->re, mmgr) == QSE_NULL)
 	{
-		qse_mbs_fini (&http->fed.b.tra);
-		qse_mbs_fini (&http->fed.b.raw);
-		qse_mbs_fini (&http->tmp.qparam);
+		qse_mbs_fini (&htrd->fed.b.tra);
+		qse_mbs_fini (&htrd->fed.b.raw);
+		qse_mbs_fini (&htrd->tmp.qparam);
 		return QSE_NULL;
 	}
 
-	return http;
+	return htrd;
 }
 
-void qse_htrd_fini (qse_htrd_t* http)
+void qse_htrd_fini (qse_htrd_t* htrd)
 {
-	qse_htre_fini (&http->re);
+	qse_htre_fini (&htrd->re);
 
-	clear_combined_headers (http);
-	qse_mbs_fini (&http->fed.b.tra);
-	qse_mbs_fini (&http->fed.b.raw);
-	qse_mbs_fini (&http->tmp.qparam);
+	clear_combined_headers (htrd);
+	qse_mbs_fini (&htrd->fed.b.tra);
+	qse_mbs_fini (&htrd->fed.b.raw);
+	qse_mbs_fini (&htrd->tmp.qparam);
 }
 
 static qse_htoc_t* parse_initial_line (
-	qse_htrd_t* http, qse_htoc_t* line)
+	qse_htrd_t* htrd, qse_htoc_t* line)
 {
 	qse_htoc_t* p = line;
 	qse_mcstr_t tmp;
@@ -217,19 +218,21 @@ static qse_htoc_t* parse_initial_line (
 	do { p++; } while (is_upalpha_octet(*p));
 	tmp.len = p - tmp.ptr;
 
-	http->retype = QSE_HTRD_RETYPE_Q;
-	if (qse_gethttpmethodtypefromstr (&tmp, &mtype) >= 0)
+	htrd->retype = QSE_HTRD_RETYPE_Q;
+	if ((htrd->option & QSE_HTRD_REQUEST) &&
+	    qse_gethttpmethodtypefromstr (&tmp, &mtype) >= 0)
 	{
-		qse_htre_setqmethod (&http->re, mtype);
+		qse_htre_setqmethod (&htrd->re, mtype);
 	}
-	else if (qse_mbsxcmp (tmp.ptr, tmp.len, "HTTP") == 0)
+	else if ((htrd->option & QSE_HTRD_RESPONSE) &&
+	         qse_mbsxcmp (tmp.ptr, tmp.len, "HTTP") == 0)
 	{
 		/* it begins with HTTP. it may be a response */
-		http->retype = QSE_HTRD_RETYPE_S;
+		htrd->retype = QSE_HTRD_RETYPE_S;
 	}
 	else goto badre;
 
-	if (http->retype == QSE_HTRD_RETYPE_S)
+	if (htrd->retype == QSE_HTRD_RETYPE_S)
 	{
 		int n, status;
 
@@ -239,15 +242,15 @@ static qse_htoc_t* parse_initial_line (
 			int w = digit_to_num(p[3]);
 			if (q >= 0 && w >= 0)
 			{
-				http->re.version.major = q;
-				http->re.version.minor = w;
+				htrd->re.version.major = q;
+				htrd->re.version.minor = w;
 				p += 4;
 			}
 			else goto badre;
 		}
 		else goto badre;
 
-		/* http version must be followed by space */
+		/* htrd version must be followed by space */
 		if (!is_space_octet(*p)) goto badre;
 
 		/* skip spaces */
@@ -267,7 +270,7 @@ static qse_htoc_t* parse_initial_line (
 		/* status code must be followed by space */
 		if (!is_space_octet(*p)) goto badre;
 
-		qse_htre_setsstatus (&http->re, status);
+		qse_htre_setsstatus (&htrd->re, status);
 
 		/* skip spaces */
 		do p++; while (is_space_octet(*p));
@@ -276,13 +279,13 @@ static qse_htoc_t* parse_initial_line (
 		while (*p != '\0' && *p != '\n') p++;
 		tmp.len = p - tmp.ptr;
 
-		if (qse_htre_setsmessagefromcstr (&http->re, &tmp) <= -1) goto outofmem;
+		if (qse_htre_setsmessagefromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
 
 		/* adjust Connection: close for HTTP 1.0 or eariler */
-		if (http->re.version.major < 1 || 
-		    (http->re.version.major == 1 && http->re.version.minor == 0))
+		if (htrd->re.version.major < 1 || 
+		    (htrd->re.version.major == 1 && htrd->re.version.minor == 0))
 		{
-			http->re.attr.connection_close = 1;
+			htrd->re.attr.connection_close = 1;
 		}
 	}
 	else
@@ -351,16 +354,16 @@ static qse_htoc_t* parse_initial_line (
 		if (param.ptr)
 		{
 			param.len = out - param.ptr;
-			if (qse_htre_setqparamfromcstr (&http->re, &param) <= -1) goto outofmem;
+			if (qse_htre_setqparamfromcstr (&htrd->re, &param) <= -1) goto outofmem;
 		}
 		else tmp.len = out - tmp.ptr;
 
-		if (qse_htre_setqpathfromcstr (&http->re, &tmp) <= -1) goto outofmem;
+		if (qse_htre_setqpathfromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
 
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
 	
-		/* check http version */
+		/* check htrd version */
 		if ((p[0] == 'H' || p[0] == 'h') &&
 		    (p[1] == 'T' || p[1] == 't') &&
 		    (p[2] == 'T' || p[2] == 't') &&
@@ -371,8 +374,8 @@ static qse_htoc_t* parse_initial_line (
 			int w = digit_to_num(p[7]);
 			if (q >= 0 && w >= 0)
 			{
-				http->re.version.major = q;
-				http->re.version.minor = w;
+				htrd->re.version.major = q;
+				htrd->re.version.minor = w;
 				p += 8;
 			}
 			else goto badre;
@@ -383,10 +386,10 @@ static qse_htoc_t* parse_initial_line (
 		while (is_space_octet(*p)) p++;
 
 		/* adjust Connection: close for HTTP 1.0 or eariler */
-		if (http->re.version.major < 1 || 
-		    (http->re.version.major == 1 && http->re.version.minor == 0))
+		if (htrd->re.version.major < 1 || 
+		    (htrd->re.version.major == 1 && htrd->re.version.minor == 0))
 		{
-			http->re.attr.connection_close = 1;
+			htrd->re.attr.connection_close = 1;
 		}
 	}
 	
@@ -396,38 +399,38 @@ static qse_htoc_t* parse_initial_line (
 	return ++p;
 
 badre:
-	http->errnum = QSE_HTRD_EBADRE;
+	htrd->errnum = QSE_HTRD_EBADRE;
 	return QSE_NULL;
 
 outofmem:
-	http->errnum = QSE_HTRD_ENOMEM;
+	htrd->errnum = QSE_HTRD_ENOMEM;
 	return QSE_NULL;
 
 }
 
-void qse_htrd_clear (qse_htrd_t* http)
+void qse_htrd_clear (qse_htrd_t* htrd)
 {
-	clear_feed (http);
+	clear_feed (htrd);
 }
 
-int qse_htrd_getoption (qse_htrd_t* http)
+int qse_htrd_getoption (qse_htrd_t* htrd)
 {
-	return http->option;
+	return htrd->option;
 }
 
-void qse_htrd_setoption (qse_htrd_t* http, int opts)
+void qse_htrd_setoption (qse_htrd_t* htrd, int opts)
 {
-	http->option = opts;
+	htrd->option = opts;
 }
 
-const qse_htrd_recbs_t* qse_htrd_getrecbs (qse_htrd_t* http)
+const qse_htrd_recbs_t* qse_htrd_getrecbs (qse_htrd_t* htrd)
 {
-	return http->recbs;
+	return htrd->recbs;
 }
 
-void qse_htrd_setrecbs (qse_htrd_t* http, const qse_htrd_recbs_t* recbs)
+void qse_htrd_setrecbs (qse_htrd_t* htrd, const qse_htrd_recbs_t* recbs)
 {
-	http->recbs = recbs;
+	htrd->recbs = recbs;
 }
 
 #define octet_tolower(c) (((c) >= 'A' && (c) <= 'Z') ? ((c) | 0x20) : (c))
@@ -458,21 +461,21 @@ static QSE_INLINE int compare_octets (
 }
 
 static QSE_INLINE int capture_connection (
-	qse_htrd_t* http, qse_htb_pair_t* pair)
+	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
 	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "close", 5);
 	if (n == 0)
 	{
-		http->re.attr.connection_close = 1;
+		htrd->re.attr.connection_close = 1;
 		return 0;
 	}
 
 	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "Keep-Alive", 10);
 	if (n == 0)
 	{
-		http->re.attr.connection_close = 0;
+		htrd->re.attr.connection_close = 0;
 		return 0;
 	}
 
@@ -481,7 +484,7 @@ static QSE_INLINE int capture_connection (
 }
 
 static QSE_INLINE int capture_content_length (
-	qse_htrd_t* http, qse_htb_pair_t* pair)
+	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	qse_size_t len = 0, off = 0, tmp;
 	const qse_htoc_t* ptr = QSE_HTB_VPTR(pair);
@@ -492,7 +495,7 @@ static QSE_INLINE int capture_content_length (
 		if (num <= -1)
 		{
 			/* the length contains a non-digit */
-			http->errnum = QSE_HTRD_EBADRE;
+			htrd->errnum = QSE_HTRD_EBADRE;
 			return -1;
 		}
 
@@ -500,7 +503,7 @@ static QSE_INLINE int capture_content_length (
 		if (tmp < len)
 		{
 			/* the length has overflown */
-			http->errnum = QSE_HTRD_EBADRE;
+			htrd->errnum = QSE_HTRD_EBADRE;
 			return -1;
 		}
 
@@ -511,24 +514,24 @@ static QSE_INLINE int capture_content_length (
 	if (off == 0)
 	{
 		/* no length was provided */
-		http->errnum = QSE_HTRD_EBADRE;
+		htrd->errnum = QSE_HTRD_EBADRE;
 		return -1;
 	}
 
-	if (http->re.attr.chunked && len > 0)
+	if (htrd->re.attr.chunked && len > 0)
 	{
 		/* content-length is greater than 0 
 		 * while transfer-encoding: chunked is specified. */
-		http->errnum = QSE_HTRD_EBADRE;
+		htrd->errnum = QSE_HTRD_EBADRE;
 		return -1;
 	}
 
-	http->re.attr.content_length = len;
+	htrd->re.attr.content_length = len;
 	return 0;
 }
 
 static QSE_INLINE int capture_expect (
-	qse_htrd_t* http, qse_htb_pair_t* pair)
+	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
@@ -536,7 +539,7 @@ static QSE_INLINE int capture_expect (
 	if (n == 0)
 	{
 		
-		http->re.attr.expect_continue = 1;
+		htrd->re.attr.expect_continue = 1;
 		return 0;
 	}
 
@@ -545,32 +548,32 @@ static QSE_INLINE int capture_expect (
 }
 
 static QSE_INLINE int capture_transfer_encoding (
-	qse_htrd_t* http, qse_htb_pair_t* pair)
+	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
 	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
 	if (n == 0)
 	{
-		if (http->re.attr.content_length > 0)
+		if (htrd->re.attr.content_length > 0)
 		{
 			/* content-length is greater than 0 
 			 * while transfer-encoding: chunked is specified. */
 			goto badre;
 		}
 
-		http->re.attr.chunked = 1;
+		htrd->re.attr.chunked = 1;
 		return 0;
 	}
 
 	/* other encoding type not supported yet */
 badre:
-	http->errnum = QSE_HTRD_EBADRE;
+	htrd->errnum = QSE_HTRD_EBADRE;
 	return -1;
 }
 
 static QSE_INLINE int capture_key_header (
-	qse_htrd_t* http, qse_htb_pair_t* pair)
+	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	static struct
 	{
@@ -601,7 +604,7 @@ static QSE_INLINE int capture_key_header (
 		if (n == 0)
 		{
 			/* bingo! */
-			return hdrtab[mid].handler (http, pair);
+			return hdrtab[mid].handler (htrd, pair);
 		}
 
 		if (n > 0) { base = mid + 1; count--; }
@@ -613,7 +616,7 @@ static QSE_INLINE int capture_key_header (
 
 struct hdr_cbserter_ctx_t
 {
-	qse_htrd_t* http;
+	qse_htrd_t* htrd;
 	void*       vptr;
 	qse_size_t  vlen;
 };
@@ -631,10 +634,10 @@ static qse_htb_pair_t* hdr_cbserter (
 
 		p = qse_htb_allocpair (htb, kptr, klen, tx->vptr, tx->vlen);
 
-		if (p == QSE_NULL) tx->http->errnum = QSE_HTRD_ENOMEM;
+		if (p == QSE_NULL) tx->htrd->errnum = QSE_HTRD_ENOMEM;
 		else 
 		{
-			if (capture_key_header (tx->http, p) <= -1)
+			if (capture_key_header (tx->htrd, p) <= -1)
 			{
 				/* Destroy the pair created here
 				 * as it is not added to the hash table yet */
@@ -660,19 +663,19 @@ static qse_htb_pair_t* hdr_cbserter (
 		 *  encounters the same key. memory is wasted and performance
 		 *  is sacrificed. 
 
-		 *  hopefully, a http header does not include a lot of 
+		 *  hopefully, a htrd header does not include a lot of 
 		 *  duplicate fields and this implmentation can afford wastage.
 		 */
 
 		/* allocate a block to combine the existing value and the new value */
 		cmb = (struct hdr_cmb_t*) QSE_MMGR_ALLOC (
-			tx->http->mmgr, 
+			tx->htrd->mmgr, 
 			QSE_SIZEOF(*cmb) + 
 			QSE_SIZEOF(qse_htoc_t) * (QSE_HTB_VLEN(pair) + 1 + tx->vlen + 1)
 		);
 		if (cmb == QSE_NULL)
 		{
-			tx->http->errnum = QSE_HTRD_ENOMEM;
+			tx->htrd->errnum = QSE_HTRD_ENOMEM;
 			return QSE_NULL;
 		}
 
@@ -694,14 +697,14 @@ Not easy to unlink when using a singly linked list...
 Change it to doubly linked for this?
 
 		/* let's destroy the old buffer at least */
-		if (!(ptr >= tx->http->fed.b.raw.data && ptr < 
-		      &tx->http->fed.b.raw.data[tx->http->fed.b.raw.size]))
+		if (!(ptr >= tx->htrd->fed.b.raw.data && ptr < 
+		      &tx->htrd->fed.b.raw.data[tx->htrd->fed.b.raw.size]))
 		{
 			/* NOTE the range check in 'if' assumes that raw.data is never
 			 * relocated for resizing */
 
 			QSE_MMGR_FREE (
-				tx->http->mmgr, 
+				tx->htrd->mmgr, 
 				((struct hdr_cmb_t*)QSE_HTB_VPTR(pair)) - 1
 			);
 		}
@@ -712,16 +715,16 @@ Change it to doubly linked for this?
 		QSE_HTB_VLEN(pair) = len;
 
 		/* link the new combined value block */
-		cmb->next = tx->http->fed.chl;
-		tx->http->fed.chl = cmb;
+		cmb->next = tx->htrd->fed.chl;
+		tx->htrd->fed.chl = cmb;
 
-		if (capture_key_header (tx->http, pair) <= -1) return QSE_NULL;
+		if (capture_key_header (tx->htrd, pair) <= -1) return QSE_NULL;
 
 		return pair;
 	}
 }
 
-qse_htoc_t* parse_header_fields (qse_htrd_t* http, qse_htoc_t* line)
+qse_htoc_t* parse_header_fields (qse_htrd_t* htrd, qse_htoc_t* line)
 {
 	qse_htoc_t* p = line, * last;
 	struct
@@ -791,17 +794,17 @@ qse_htoc_t* parse_header_fields (qse_htrd_t* http, qse_htoc_t* line)
 	{
 		struct hdr_cbserter_ctx_t ctx;
 
-		ctx.http = http;
+		ctx.htrd = htrd;
 		ctx.vptr = value.ptr;
 		ctx.vlen = value.len;
 
-		http->errnum = QSE_HTRD_ENOERR;
+		htrd->errnum = QSE_HTRD_ENOERR;
 		if (qse_htb_cbsert (
-			&http->re.hdrtab, name.ptr, name.len, 
+			&htrd->re.hdrtab, name.ptr, name.len, 
 			hdr_cbserter, &ctx) == QSE_NULL)
 		{
-			if (http->errnum == QSE_HTRD_ENOERR) 
-				http->errnum = QSE_HTRD_ENOMEM;
+			if (htrd->errnum == QSE_HTRD_ENOERR) 
+				htrd->errnum = QSE_HTRD_ENOMEM;
 			return QSE_NULL;
 		}
 	}
@@ -809,24 +812,24 @@ qse_htoc_t* parse_header_fields (qse_htrd_t* http, qse_htoc_t* line)
 	return p;
 
 badhdr:
-	http->errnum = QSE_HTRD_EBADHDR;
+	htrd->errnum = QSE_HTRD_EBADHDR;
 	return QSE_NULL;
 }
 
 static QSE_INLINE int parse_initial_line_and_headers (
-	qse_htrd_t* http, const qse_htoc_t* req, qse_size_t rlen)
+	qse_htrd_t* htrd, const qse_htoc_t* req, qse_size_t rlen)
 {
 	qse_htoc_t* p;
 
 	/* add the actual request */
-	if (push_to_buffer (http, &http->fed.b.raw, req, rlen) <= -1) return -1;
+	if (push_to_buffer (htrd, &htrd->fed.b.raw, req, rlen) <= -1) return -1;
 
 	/* add the terminating null for easier parsing */
-	if (push_to_buffer (http, &http->fed.b.raw, &NUL, 1) <= -1) return -1;
+	if (push_to_buffer (htrd, &htrd->fed.b.raw, &NUL, 1) <= -1) return -1;
 
-	p = QSE_MBS_PTR(&http->fed.b.raw);
+	p = QSE_MBS_PTR(&htrd->fed.b.raw);
 
-	if (http->option & QSE_HTRD_LEADINGEMPTYLINES)
+	if (htrd->option & QSE_HTRD_LEADINGEMPTYLINES)
 		while (is_whspace_octet(*p)) p++;
 	else
 		while (is_space_octet(*p)) p++;
@@ -834,7 +837,7 @@ static QSE_INLINE int parse_initial_line_and_headers (
 	QSE_ASSERT (*p != '\0');
 
 	/* parse the initial line */
-	p = parse_initial_line (http, p);
+	p = parse_initial_line (htrd, p);
 	if (p == QSE_NULL) return -1;
 
 	/* parse header fields */
@@ -846,7 +849,7 @@ static QSE_INLINE int parse_initial_line_and_headers (
 		/* TODO: return error if protocol is 0.9.
 		 * HTTP/0.9 must not get headers... */
 
-		p = parse_header_fields (http, p);
+		p = parse_header_fields (htrd, p);
 		if (p == QSE_NULL) return -1;
 	}
 	while (1);
@@ -861,15 +864,15 @@ static QSE_INLINE int parse_initial_line_and_headers (
 #define GET_CHUNK_CRLF     3
 #define GET_CHUNK_TRAILERS 4
 
-static const qse_htoc_t* getchunklen (qse_htrd_t* http, const qse_htoc_t* ptr, qse_size_t len)
+static const qse_htoc_t* getchunklen (qse_htrd_t* htrd, const qse_htoc_t* ptr, qse_size_t len)
 {
 	const qse_htoc_t* end = ptr + len;
 
 	/* this function must be called in the GET_CHUNK_LEN context */
-	QSE_ASSERT (http->fed.s.chunk.phase == GET_CHUNK_LEN);
+	QSE_ASSERT (htrd->fed.s.chunk.phase == GET_CHUNK_LEN);
 
 //qse_printf (QSE_T("CALLING getchunklen [%d]\n"), *ptr);
-	if (http->fed.s.chunk.count <= 0)
+	if (htrd->fed.s.chunk.count <= 0)
 	{
 		/* skip leading spaces if the first character of
 		 * the chunk length has not been read yet */
@@ -881,8 +884,8 @@ static const qse_htoc_t* getchunklen (qse_htrd_t* http, const qse_htoc_t* ptr, q
 		int n = xdigit_to_num (*ptr);
 		if (n <= -1) break;
 
-		http->fed.s.chunk.len = http->fed.s.chunk.len * 16 + n;
-		http->fed.s.chunk.count++;
+		htrd->fed.s.chunk.len = htrd->fed.s.chunk.len * 16 + n;
+		htrd->fed.s.chunk.count++;
 		ptr++;
 	}
 
@@ -895,33 +898,33 @@ static const qse_htoc_t* getchunklen (qse_htrd_t* http, const qse_htoc_t* ptr, q
 		{
 			/* the chunk length line ended properly */
 
-			if (http->fed.s.chunk.count <= 0)
+			if (htrd->fed.s.chunk.count <= 0)
 			{
 				/* empty line - no more chunk */
 //qse_printf (QSE_T("empty line chunk done....\n"));
-				http->fed.s.chunk.phase = GET_CHUNK_DONE;
+				htrd->fed.s.chunk.phase = GET_CHUNK_DONE;
 			}
-			else if (http->fed.s.chunk.len <= 0)
+			else if (htrd->fed.s.chunk.len <= 0)
 			{
 				/* length explicity specified to 0
 				   get trailing headers .... */
-				http->fed.s.chunk.phase = GET_CHUNK_TRAILERS;
+				htrd->fed.s.chunk.phase = GET_CHUNK_TRAILERS;
 //qse_printf (QSE_T("SWITCH TO GET_CHUNK_TRAILERS....\n"));
 			}
 			else
 			{
 				/* ready to read the chunk data... */
-				http->fed.s.chunk.phase = GET_CHUNK_DATA;
+				htrd->fed.s.chunk.phase = GET_CHUNK_DATA;
 //qse_printf (QSE_T("SWITCH TO GET_CHUNK_DATA....\n"));
 			}
 
-			http->fed.s.need = http->fed.s.chunk.len;
+			htrd->fed.s.need = htrd->fed.s.chunk.len;
 			ptr++;
 		}
 		else
 		{
 //qse_printf (QSE_T("XXXXXXXXXXXXXXXXXxxx [%c]\n"), *ptr);
-			http->errnum = QSE_HTRD_EBADRE;
+			htrd->errnum = QSE_HTRD_EBADRE;
 			return QSE_NULL;
 		}
 	}
@@ -930,7 +933,7 @@ static const qse_htoc_t* getchunklen (qse_htrd_t* http, const qse_htoc_t* ptr, q
 }
 
 static const qse_htoc_t* get_trailing_headers (
-	qse_htrd_t* http, const qse_htoc_t* req, const qse_htoc_t* end)
+	qse_htrd_t* htrd, const qse_htoc_t* req, const qse_htoc_t* end)
 {
 	const qse_htoc_t* ptr = req;
 
@@ -943,30 +946,30 @@ static const qse_htoc_t* get_trailing_headers (
 			case '\0':
 				/* guarantee that the request does not contain a null 
 				 * character */
-				http->errnum = QSE_HTRD_EBADRE;
+				htrd->errnum = QSE_HTRD_EBADRE;
 				return QSE_NULL;
 
 			case '\n':
-				if (http->fed.s.crlf <= 1) 
+				if (htrd->fed.s.crlf <= 1) 
 				{
-					http->fed.s.crlf = 2;
+					htrd->fed.s.crlf = 2;
 					break;
 				}
 				else
 				{
 					qse_htoc_t* p;
 	
-					QSE_ASSERT (http->fed.s.crlf <= 3);
-					http->fed.s.crlf = 0;
+					QSE_ASSERT (htrd->fed.s.crlf <= 3);
+					htrd->fed.s.crlf = 0;
 	
 					if (push_to_buffer (
-						http, &http->fed.b.tra, req, ptr - req) <= -1)
+						htrd, &htrd->fed.b.tra, req, ptr - req) <= -1)
 						return QSE_NULL;
 					if (push_to_buffer (
-						http, &http->fed.b.tra, &NUL, 1) <= -1) 
+						htrd, &htrd->fed.b.tra, &NUL, 1) <= -1) 
 						return QSE_NULL;
 	
-					p = QSE_MBS_PTR(&http->fed.b.tra);
+					p = QSE_MBS_PTR(&htrd->fed.b.tra);
 	
 					do
 					{
@@ -976,28 +979,28 @@ static const qse_htoc_t* get_trailing_headers (
 						/* TODO: return error if protocol is 0.9.
 						 * HTTP/0.9 must not get headers... */
 	
-						p = parse_header_fields (http, p);
+						p = parse_header_fields (htrd, p);
 						if (p == QSE_NULL) return QSE_NULL;
 					}
 					while (1);
 
-					http->fed.s.chunk.phase = GET_CHUNK_DONE;
+					htrd->fed.s.chunk.phase = GET_CHUNK_DONE;
 					goto done;
 				}
 
 			case '\r':
-				if (http->fed.s.crlf == 0 || http->fed.s.crlf == 2) 
-					http->fed.s.crlf++;
-				else http->fed.s.crlf = 1;
+				if (htrd->fed.s.crlf == 0 || htrd->fed.s.crlf == 2) 
+					htrd->fed.s.crlf++;
+				else htrd->fed.s.crlf = 1;
 				break;
 
 			default:
 				/* mark that neither CR nor LF was seen */
-				http->fed.s.crlf = 0;
+				htrd->fed.s.crlf = 0;
 		}
 	}
 
-	if (push_to_buffer (http, &http->fed.b.tra, req, ptr - req) <= -1) 
+	if (push_to_buffer (htrd, &htrd->fed.b.tra, req, ptr - req) <= -1) 
 		return QSE_NULL;
 
 done:
@@ -1005,27 +1008,27 @@ done:
 }
 
 /* feed the percent encoded string */
-int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
+int qse_htrd_feed (qse_htrd_t* htrd, const qse_htoc_t* req, qse_size_t len)
 {
 	const qse_htoc_t* end = req + len;
 	const qse_htoc_t* ptr = req;
 
 	/* does this goto drop code maintainability? */
-	if (http->fed.s.need > 0) 
+	if (htrd->fed.s.need > 0) 
 	{
-		/* we're in need of as many octets as http->fed.s.need 
+		/* we're in need of as many octets as htrd->fed.s.need 
 		 * for contents body. make a proper jump to resume
 		 * content handling */
 		goto content_resume;
 	}
 
-	switch (http->fed.s.chunk.phase)
+	switch (htrd->fed.s.chunk.phase)
 	{
 		case GET_CHUNK_LEN:
 			goto dechunk_resume;
 
 		case GET_CHUNK_DATA:
-			/* this won't be reached as http->fed.s.need 
+			/* this won't be reached as htrd->fed.s.need 
 			 * is greater than 0 if GET_CHUNK_DATA is true */
 			goto content_resume;
 
@@ -1040,8 +1043,8 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 	{
 		register qse_htoc_t b = *ptr++;
 
-		if (http->option & QSE_HTRD_LEADINGEMPTYLINES &&
-		    http->fed.s.plen <= 0 && is_whspace_octet(b)) 
+		if (htrd->option & QSE_HTRD_LEADINGEMPTYLINES &&
+		    htrd->fed.s.plen <= 0 && is_whspace_octet(b)) 
 		{
 			/* let's drop leading whitespaces across multiple
 			 * lines */
@@ -1054,44 +1057,44 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 			case '\0':
 				/* guarantee that the request does not contain
 				 * a null character */
-				http->errnum = QSE_HTRD_EBADRE;
+				htrd->errnum = QSE_HTRD_EBADRE;
 				return -1;
 
 			case '\n':
 			{
-				if (http->fed.s.crlf <= 1) 
+				if (htrd->fed.s.crlf <= 1) 
 				{
-					/* http->fed.s.crlf == 0
+					/* htrd->fed.s.crlf == 0
 					 *   => CR was not seen
-					 * http->fed.s.crlf == 1
+					 * htrd->fed.s.crlf == 1
 					 *   => CR was seen 
 					 * whatever the current case is, 
 					 * mark the first LF is seen here.
 					 */
-					http->fed.s.crlf = 2;
+					htrd->fed.s.crlf = 2;
 				}
 				else
 				{
-					/* http->fed.s.crlf == 2
+					/* htrd->fed.s.crlf == 2
 					 *   => no 2nd CR before LF
-					 * http->fed.s.crlf == 3
+					 * htrd->fed.s.crlf == 3
 					 *   => 2nd CR before LF
 					 */
 
 					/* we got a complete request. */
-					QSE_ASSERT (http->fed.s.crlf <= 3);
+					QSE_ASSERT (htrd->fed.s.crlf <= 3);
 	
 					/* reset the crlf state */
-					http->fed.s.crlf = 0;
+					htrd->fed.s.crlf = 0;
 					/* reset the raw request length */
-					http->fed.s.plen = 0;
+					htrd->fed.s.plen = 0;
 	
-					if (parse_initial_line_and_headers (http, req, ptr - req) <= -1)
+					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1)
 						return -1;
 
-					if (http->retype == QSE_HTRD_RETYPE_Q && 
-					    http->re.attr.expect_continue && 
-					    http->recbs->expect_continue && ptr >= end)
+					if (htrd->retype == QSE_HTRD_RETYPE_Q && 
+					    htrd->re.attr.expect_continue && 
+					    htrd->recbs->expect_continue && ptr >= end)
 					{
 						int n;
 
@@ -1102,51 +1105,51 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						 * not fed here?
 						 */ 
 
-						n = http->recbs->expect_continue (http, &http->re);
+						n = htrd->recbs->expect_continue (htrd, &htrd->re);
 
 						if (n <= -1)
 						{
-							if (http->errnum == QSE_HTRD_ENOERR)
-								http->errnum = QSE_HTRD_ERECBS;	
+							if (htrd->errnum == QSE_HTRD_ENOERR)
+								htrd->errnum = QSE_HTRD_ERECBS;	
 
 							/* need to clear request on error? 
-							clear_feed (http); */
+							clear_feed (htrd); */
 							return -1;
 						}
 
 						/* the expect_continue handler can set discard to non-zero 
 						 * to force discard the contents body 
-						http->re.discard = 1;
+						htrd->re.discard = 1;
 						 */
 					}
 	
-					if (http->re.attr.chunked)
+					if (htrd->re.attr.chunked)
 					{
 						/* transfer-encoding: chunked */
-						QSE_ASSERT (http->re.attr.content_length <= 0);
+						QSE_ASSERT (htrd->re.attr.content_length <= 0);
 	
 					dechunk_start:
-						http->fed.s.chunk.phase = GET_CHUNK_LEN;
-						http->fed.s.chunk.len = 0;
-						http->fed.s.chunk.count = 0;
+						htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
+						htrd->fed.s.chunk.len = 0;
+						htrd->fed.s.chunk.count = 0;
 	
 					dechunk_resume:
-						ptr = getchunklen (http, ptr, end - ptr);
+						ptr = getchunklen (htrd, ptr, end - ptr);
 						if (ptr == QSE_NULL) return -1;
 	
-						if (http->fed.s.chunk.phase == GET_CHUNK_LEN)
+						if (htrd->fed.s.chunk.phase == GET_CHUNK_LEN)
 						{
 							/* still in the GET_CHUNK_LEN state.
 							 * the length has been partially read. */
 							goto feedme_more;
 						}
-						else if (http->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
+						else if (htrd->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
 						{
 						dechunk_get_trailers:
-							ptr = get_trailing_headers (http, ptr, end);
+							ptr = get_trailing_headers (htrd, ptr, end);
 							if (ptr == QSE_NULL) return -1;
 	
-							if (http->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
+							if (htrd->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
 							{
 								/* still in the same state.
 								 * the trailers have not been processed fully */
@@ -1158,10 +1161,10 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 					{
 						/* we need to read as many octets as
 						 * Content-Length */
-						http->fed.s.need = http->re.attr.content_length;
+						htrd->fed.s.need = htrd->re.attr.content_length;
 					}
 
-					if (http->fed.s.need > 0)
+					if (htrd->fed.s.need > 0)
 					{
 						/* content-length or chunked data length 
 						 * specified */
@@ -1171,11 +1174,11 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 					content_resume:
 						avail = end - ptr;
 	
-						if (avail < http->fed.s.need)
+						if (avail < htrd->fed.s.need)
 						{
 							/* the data is not as large as needed */
-							if (push_to_buffer (http, &http->re.content, ptr, avail) <= -1) return -1;
-							http->fed.s.need -= avail;
+							if (push_to_buffer (htrd, &htrd->re.content, ptr, avail) <= -1) return -1;
+							htrd->fed.s.need -= avail;
 							/* we didn't get a complete content yet */
 							goto feedme_more; 
 						}
@@ -1183,17 +1186,17 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						{
 							/* we got all or more than needed */
 							if (push_to_buffer (
-								http, &http->re.content, ptr, 
-								http->fed.s.need) <= -1) return -1;
-							ptr += http->fed.s.need;
-							http->fed.s.need = 0;
+								htrd, &htrd->re.content, ptr, 
+								htrd->fed.s.need) <= -1) return -1;
+							ptr += htrd->fed.s.need;
+							htrd->fed.s.need = 0;
 						}
 					}
 	
-					if (http->fed.s.chunk.phase == GET_CHUNK_DATA)
+					if (htrd->fed.s.chunk.phase == GET_CHUNK_DATA)
 					{
-						QSE_ASSERT (http->fed.s.need == 0);
-						http->fed.s.chunk.phase = GET_CHUNK_CRLF;
+						QSE_ASSERT (htrd->fed.s.need == 0);
+						htrd->fed.s.chunk.phase = GET_CHUNK_CRLF;
 	
 					dechunk_crlf:
 						while (ptr < end && is_space_octet(*ptr)) ptr++;
@@ -1214,16 +1217,16 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 								 * need to be reset when a jump is made
 								 * to dechunk_resume upon the next call
 								 */
-								http->fed.s.chunk.phase = GET_CHUNK_LEN;
-								http->fed.s.chunk.len = 0;
-								http->fed.s.chunk.count = 0;
+								htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
+								htrd->fed.s.chunk.len = 0;
+								htrd->fed.s.chunk.count = 0;
 
 								goto feedme_more;
 							}
 							else
 							{
 								/* redundant character ... */
-								http->errnum = QSE_HTRD_EBADRE;
+								htrd->errnum = QSE_HTRD_EBADRE;
 								return -1;
 							}
 						}
@@ -1234,43 +1237,43 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 						}
 					}
 
-					if (!http->re.discard)
+					if (!htrd->re.discard)
 					{
 						int n;
 
-						http->errnum = QSE_HTRD_ENOERR;
+						htrd->errnum = QSE_HTRD_ENOERR;
 
-						if (http->retype == QSE_HTRD_RETYPE_S)
+						if (htrd->retype == QSE_HTRD_RETYPE_S)
 						{
 							QSE_ASSERTX (
-								http->recbs->response != QSE_NULL,
+								htrd->recbs->response != QSE_NULL,
 								"set response callback before feeding"
 							);
 	
-							n = http->recbs->response (http, &http->re);
+							n = htrd->recbs->response (htrd, &htrd->re);
 						}
 						else
 						{
 							QSE_ASSERTX (
-								http->recbs->request != QSE_NULL,
+								htrd->recbs->request != QSE_NULL,
 								"set request callback before feeding"
 							);
 	
-							n = http->recbs->request (http, &http->re);
+							n = htrd->recbs->request (htrd, &htrd->re);
 						}
 		
 						if (n <= -1)
 						{
-							if (http->errnum == QSE_HTRD_ENOERR)
-								http->errnum = QSE_HTRD_ERECBS;	
+							if (htrd->errnum == QSE_HTRD_ENOERR)
+								htrd->errnum = QSE_HTRD_ERECBS;	
 	
 							/* need to clear request on error? 
-							clear_feed (http); */
+							clear_feed (htrd); */
 							return -1;
 						}
 					}
 
-					clear_feed (http);
+					clear_feed (htrd);
 
 					/* let ptr point to the next character to LF or 
 					 * the optional contents */
@@ -1280,37 +1283,37 @@ int qse_htrd_feed (qse_htrd_t* http, const qse_htoc_t* req, qse_size_t len)
 			}
 
 			case '\r':
-				if (http->fed.s.crlf == 0 || http->fed.s.crlf == 2) 
-					http->fed.s.crlf++;
-				else http->fed.s.crlf = 1;
+				if (htrd->fed.s.crlf == 0 || htrd->fed.s.crlf == 2) 
+					htrd->fed.s.crlf++;
+				else htrd->fed.s.crlf = 1;
 				break;
 
 			default:
 				/* increment length of a request in raw 
 				 * excluding crlf */
-				http->fed.s.plen++; 
+				htrd->fed.s.plen++; 
 				/* mark that neither CR nor LF was seen */
-				http->fed.s.crlf = 0;
+				htrd->fed.s.crlf = 0;
 		}
 	}
 
 	if (ptr > req)
 	{
 		/* enbuffer the incomplete request */
-		if (push_to_buffer (http, &http->fed.b.raw, req, ptr - req) <= -1) return -1;
+		if (push_to_buffer (htrd, &htrd->fed.b.raw, req, ptr - req) <= -1) return -1;
 	}
 
 feedme_more:
 	return 0;
 }
 
-int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
+int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mcstr_t* cstr)
 {
 	qse_mcstr_t key, val;
 	const qse_htoc_t* p, * end;
 	qse_htoc_t* out;
 
-	if (cstr == QSE_NULL) cstr = qse_htre_getqparamcstr(&http->re);
+	if (cstr == QSE_NULL) cstr = qse_htre_getqparamcstr(&htrd->re);
 
 	p = cstr->ptr;
 	if (p == QSE_NULL) return 0; /* no param string to scan */
@@ -1320,11 +1323,11 @@ int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 	/* a key and a value pair including two terminating null 
 	 * can't exceed the the qparamstrlen + 2. only +1 below as there is
 	 * one more space for an internal terminating null */
-	qse_mbs_setlen (&http->tmp.qparam, cstr->len + 1);
+	qse_mbs_setlen (&htrd->tmp.qparam, cstr->len + 1);
 
 	/* let out point to the beginning of the qparam buffer.
 	 * the loop below emits percent-decode key and value to this buffer. */
-	out = QSE_MBS_PTR(&http->tmp.qparam);
+	out = QSE_MBS_PTR(&htrd->tmp.qparam);
 
 	key.ptr = out; key.len = 0;
 	val.ptr = QSE_NULL; val.len = 0;
@@ -1351,15 +1354,15 @@ int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 			}
 
 			QSE_ASSERTX (
-				http->recbs->qparamstr != QSE_NULL,
+				htrd->recbs->qparamstr != QSE_NULL,
 				"set request parameter string callback before scanning"
 			);
 
-			http->errnum = QSE_HTRD_ENOERR;
-			if (http->recbs->qparamstr (http, &key, &val) <= -1) 
+			htrd->errnum = QSE_HTRD_ENOERR;
+			if (htrd->recbs->qparamstr (htrd, &key, &val) <= -1) 
 			{
-				if (http->errnum == QSE_HTRD_ENOERR)
-					http->errnum = QSE_HTRD_ERECBS;	
+				if (htrd->errnum == QSE_HTRD_ENOERR)
+					htrd->errnum = QSE_HTRD_ERECBS;	
 				return -1;
 			}
 
@@ -1367,7 +1370,7 @@ int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 			if (p >= end) break;
 			p++;
 
-			out = QSE_MBS_PTR(&http->tmp.qparam);
+			out = QSE_MBS_PTR(&htrd->tmp.qparam);
 			key.ptr = out; key.len = 0;
 			val.ptr = QSE_NULL; val.len = 0;
 		}
@@ -1406,6 +1409,6 @@ int qse_htrd_scanqparam (qse_htrd_t* http, const qse_mcstr_t* cstr)
 	}
 	while (1);
 
-	qse_mbs_clear (&http->tmp.qparam);
+	qse_mbs_clear (&htrd->tmp.qparam);
 	return 0;
 }

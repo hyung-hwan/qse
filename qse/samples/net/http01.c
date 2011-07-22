@@ -53,7 +53,6 @@ qse_printf (QSE_T("content = [%.*S]\n"),
           QSE_MBS_PTR(&req->content));
 }
 
-
 	method = qse_htre_getqmethod (req);
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
@@ -63,56 +62,99 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
 		if (fd <= -1)
 		{
-			return -1;
+			const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
+			if (qse_httpd_entasksendfmt (httpd, client,
+				QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+				req->version.major, req->version.minor,
+				(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
 		}
 		else
 		{
 			struct stat st;
 			if (fstat (fd, &st) <= -1)
 			{
+				const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
+
 				close (fd);
-				return -1;
-			}
-			else if (st.st_size <= 0)
-			{
-				close (fd);
-				return -1;
+				if (qse_httpd_entasksendfmt (httpd, client,
+					QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+					req->version.major, req->version.minor,
+					(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
 			}
 			else
 			{
-				int n;
-#if 0
-qse_mchar_t text[128];
-snprintf (text, sizeof(text),
-     "HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n", 
-     qse_htre_getmajorversion(req),
-     qse_htre_getminorversion(req),
-     (unsigned long long)st.st_size,
-     qse_htre_getqpathptr(req)
-);
-				n = qse_httpd_entasksendfmt (httpd, client, text);
-#endif
-				n = qse_httpd_entasksendfmt (httpd, client,
-     				"HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n", 
-					qse_htre_getmajorversion(req),
-					qse_htre_getminorversion(req),
-					(unsigned long long)st.st_size,
-					qse_htre_getqpathptr(req)
-				);
-				if (n <= -1) return -1;
+				const qse_mchar_t* range;
+				if (st.st_size <= 0) st.st_size = 0;
 
-				if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) return -1;
+				range = qse_htre_gethdrval (req, "Range");
+				if (range)
+				{
+qse_printf (QSE_T("PARTIAL>>>> %S\n"), range);
+#if 0
+					if (qse_httpd_entasksendfmt (httpd, client,
+     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %sContent-Range: bytes %lld-%lld\r\n\r\n"), 
+						qse_htre_getmajorversion(req),
+						qse_htre_getminorversion(req),
+						(unsigned long long)st.st_size,
+						qse_htre_getqpathptr(req)) <= -1) 
+					{
+						close (fd);
+						goto oops;
+					}
+#endif
+					if (qse_httpd_entasksendfmt (httpd, client,
+     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+						qse_htre_getmajorversion(req),
+						qse_htre_getminorversion(req),
+						(unsigned long long)st.st_size,
+						qse_htre_getqpathptr(req)) <= -1) 
+					{
+						close (fd);
+						goto oops;
+					}
+				}
+				else
+				{
+/* TODO: int64 format.... don't hard code it llu */
+					if (qse_httpd_entasksendfmt (httpd, client,
+     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+						qse_htre_getmajorversion(req),
+						qse_htre_getminorversion(req),
+						(unsigned long long)st.st_size,
+						qse_htre_getqpathptr(req)) <= -1) 
+					{
+						close (fd);
+						goto oops;
+					}
+				}
+
+				if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) 
+				{
+					close (fd);
+					goto oops;
+				}
 			}
 
 		}
 	}
-
+	else
+	{
+		const qse_mchar_t* msg = QSE_MT("<html><head><title>Method not allowed</title></head><body><b>REQUEST METHOD NOT ALLOWED</b></body></html>");
+		if (qse_httpd_entasksendfmt (httpd, client,
+			QSE_MT("HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+			req->version.major, req->version.minor,
+			(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
+	}
 
 	if (req->attr.connection_close)
 	{
 		if (qse_httpd_entaskdisconnect (httpd, client) <= -1) return -1;
 	}
 
+	return 0;
+
+oops:
+	qse_httpd_markclientbad (httpd, client);
 	return 0;
 }
 
