@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 485 2011-05-29 15:15:52Z hyunghwan.chung $
+ * $Id: tree.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -260,19 +260,39 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 		case QSE_AWK_NDE_INT:
 		{
-			QSE_ASSERT (((qse_awk_nde_int_t*)nde)->str != QSE_NULL);
-			PUT_SRCSTRX (awk,
-				((qse_awk_nde_int_t*)nde)->str,
-				((qse_awk_nde_int_t*)nde)->len);
+			if (((qse_awk_nde_int_t*)nde)->str)
+			{
+				PUT_SRCSTRX (awk,
+					((qse_awk_nde_int_t*)nde)->str,
+					((qse_awk_nde_int_t*)nde)->len);
+			}
+			else
+			{
+				qse_char_t buf[64];
+				qse_awk_sprintlong (
+					awk, buf, QSE_COUNTOF(buf), 
+					((qse_awk_nde_int_t*)nde)->val);
+				PUT_SRCSTR (awk, buf);
+			}
 			break;
 		}
 
 		case QSE_AWK_NDE_REAL:
 		{
-			QSE_ASSERT (((qse_awk_nde_real_t*)nde)->str != QSE_NULL);
-			PUT_SRCSTRX (awk,
-				((qse_awk_nde_real_t*)nde)->str,
-				((qse_awk_nde_real_t*)nde)->len);
+			if (((qse_awk_nde_real_t*)nde)->str)
+			{
+				PUT_SRCSTRX (awk,
+					((qse_awk_nde_real_t*)nde)->str,
+					((qse_awk_nde_real_t*)nde)->len);
+			}
+			else
+			{
+				qse_char_t buf[64];
+				qse_awk_sprintreal (
+					awk, buf, QSE_COUNTOF(buf), 
+					((qse_awk_nde_real_t*)nde)->val);
+				PUT_SRCSTR (awk, buf);
+			}
 			break;
 		}
 
@@ -1211,7 +1231,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_INT:
 			{
-				if (((qse_awk_nde_int_t*)p)->str != QSE_NULL)
+				if (((qse_awk_nde_int_t*)p)->str)
 					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)p)->str);
 				QSE_AWK_FREE (awk, p);
 				break;
@@ -1219,7 +1239,7 @@ void qse_awk_clrpt (qse_awk_t* awk, qse_awk_nde_t* tree)
 
 			case QSE_AWK_NDE_REAL:
 			{
-				if (((qse_awk_nde_real_t*)p)->str != QSE_NULL)
+				if (((qse_awk_nde_real_t*)p)->str)
 					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)p)->str);
 				QSE_AWK_FREE (awk, p);
 				break;
