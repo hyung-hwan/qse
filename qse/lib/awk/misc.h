@@ -1,5 +1,5 @@
 /*
- * $Id: misc.h 514 2011-07-22 15:37:46Z hyunghwan.chung $
+ * $Id: misc.h 515 2011-07-22 15:43:03Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -77,7 +77,7 @@ int qse_awk_matchrex (
 );
 
 int qse_awk_sprintlong (
-     qse_awk_t*  awk, 
+	qse_awk_t*  awk, 
 	qse_char_t* buf,
 	qse_size_t  len,
 	qse_long_t  num
