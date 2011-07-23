@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 485 2011-05-29 15:15:52Z hyunghwan.chung $
+ * $Id: run.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -6822,22 +6822,12 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = rtx->awk->prm.sprintf (
+				n = qse_awk_sprintlong (
 					rtx->awk,
 					rtx->format.tmp.ptr,
 					rtx->format.tmp.len,
-				#if QSE_SIZEOF_LONG_LONG > 0
-					QSE_T("%lld"), (long long)width
-				#elif QSE_SIZEOF___INT64 > 0
-					QSE_T("%I64d"), (__int64)width
-				#elif QSE_SIZEOF_LONG > 0
-					QSE_T("%ld"), (long)width
-				#elif QSE_SIZEOF_INT > 0
-					QSE_T("%d"), (int)width
-				#else
-					#error unsupported size	
-				#endif
-					);
+					width
+				);
 				if (n == -1)
 				{
 					GROW (&rtx->format.tmp);

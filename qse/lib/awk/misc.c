@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: misc.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1108,3 +1108,36 @@ void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 	qse_awk_freemem (rtx->awk, ptr);
 }
 
+int qse_awk_sprintlong (
+	qse_awk_t* awk, qse_char_t* buf, qse_size_t len, qse_long_t num)
+{
+	return awk->prm.sprintf (
+		awk, buf, len,
+	#if QSE_SIZEOF_LONG_LONG > 0
+		QSE_T("%lld"), (long long)num
+	#elif QSE_SIZEOF___INT64 > 0
+		QSE_T("%I64d"), (__int64)num
+	#elif QSE_SIZEOF_LONG > 0
+		QSE_T("%ld"), (long)num
+	#elif QSE_SIZEOF_INT > 0
+		QSE_T("%d"), (int)num
+	#else
+		#error unsupported size	
+	#endif
+	);
+}
+
+int qse_awk_sprintreal (
+	qse_awk_t* awk, qse_char_t* buf, qse_size_t len, qse_real_t num)
+{
+	return awk->prm.sprintf (
+		awk, buf, len,
+	#if QSE_SIZEOF_LONG_DOUBLE > 0
+		QSE_T("%Lf"), (long long)num
+	#elif QSE_SIZEOF_DOUBLE > 0
+		QSE_T("%f"), (double)num
+	#else
+		#error unsupported size	
+	#endif
+	);
+}
