@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: Awk.hpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1092,6 +1092,7 @@ protected:
 	                         const char_t* fmt, va_list arg) = 0;
 
 	virtual real_t pow (real_t x, real_t y) = 0;
+	virtual real_t mod (real_t x, real_t y) = 0;
 	virtual real_t sin (real_t x) = 0;
 	virtual real_t cos (real_t x) = 0;
 	virtual real_t tan (real_t x) = 0;
@@ -1124,6 +1125,7 @@ protected:
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
 	static real_t pow     (awk_t* data, real_t x, real_t y);
+	static real_t mod     (awk_t* data, real_t x, real_t y);
 	static real_t sin     (awk_t* data, real_t x);
 	static real_t cos     (awk_t* data, real_t x);
 	static real_t tan     (awk_t* data, real_t x);

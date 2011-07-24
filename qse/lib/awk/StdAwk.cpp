@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -656,6 +656,19 @@ StdAwk::real_t StdAwk::pow (real_t x, real_t y)
 	return ::powf (x, y);
 #else
 	#error ### no pow function available ###
+#endif
+}
+
+StdAwk::real_t StdAwk::mod (real_t x, real_t y) 
+{ 
+#if defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::fmodl (x, y);
+#elif defined(HAVE_FMOD)
+	return ::fmod (x, y);
+#elif defined(HAVE_FMODF)
+	return ::fmodf (x, y);
+#else
+	#error ### no fmod function available ###
 #endif
 }
 

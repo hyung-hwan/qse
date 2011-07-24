@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
+ * $Id: parse.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -3334,6 +3334,101 @@ static qse_awk_nde_t* parse_expr_dc (
 	return nde;
 }
 
+#define INT_BINOP_INT(x,op,y) \
+	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_int_t*)y)->val)
+
+#define INT_BINOP_REAL(x,op,y) \
+	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
+
+#define REAL_BINOP_REAL(x,op,y) \
+	(((qse_awk_nde_real_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
+
+#if 0
+static qse_awk_nde_t* fold_constants_for_binop (
+	qse_awk_nde_t* left, qse_awk_nde_t* right, int opcode)
+{
+	int fold = 0;
+	qse_long_t folded_l;
+	qse_real_t folded_r;
+
+	if (left->type == QSE_AWK_NDE_INT &&
+	    right->type == QSE_AWK_NDE_INT)
+	{
+		fold = 1;
+		switch (opcode)
+		{
+			case QSE_AWK_BINOP_PLUS:
+				folded_l = INT_BINOP_INT(left,+,right);
+				break;
+
+			case QSE_AWK_BINOP_MINUS:
+				folded_l = INT_BINOP_INT(left,-,right);
+				break;
+
+			case QSE_AWK_BINOP_MUL:
+				folded_l = INT_BINOP_INT(left,*,right);
+				break;
+
+			case QSE_AWK_BINOP_DIV:
+				if (INT_BINOP_INT(left,%,right))
+				{
+					folded_r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
+					           (qse_real_t)((qse_awk_nde_int_t*)right)->val;
+					fold = 2;
+					break;
+				}
+			case QSE_AWK_BINOP_IDIV:
+				folded_l = INT_BINOP_INT(left,/,right);
+				break;
+
+			case QSE_AWK_BINOP_MOD:
+				folded_l = INT_BINOP_INT(left,%,right);
+				break;
+
+			default:
+				fold = 0;
+				break;
+		}
+	}
+	else if (left->type == QSE_AWK_NDE_REAL &&
+	         right->type == QSE_AWK_NDE_REAL)
+	{
+		fold = 1;
+		switch (opcode)
+		{
+			case QSE_AWK_BINOP_PLUS:
+				folded_r = REAL_BINOP_REAL(left,+,right);
+				break;
+
+			case QSE_AWK_BINOP_MINUS:
+				folded_r = REAL_BINOP_REAL(left,-,right);
+				break;
+
+			case QSE_AWK_BINOP_MUL:
+				folded_r = REAL_BINOP_REAL(left,*,right);
+				break;
+
+			case QSE_AWK_BINOP_DIV:
+				folded_r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
+				           (qse_real_t)((qse_awk_nde_int_t*)right)->val;
+				break;
+
+			case QSE_AWK_BINOP_IDIV:
+				folded_l = REAL_BINOP_REAL(left,/,right);
+				break;
+
+			case QSE_AWK_BINOP_MOD:
+				folded_l = REAL_BINOP_REAL(left,%,right);
+				break;
+
+			default:
+				fold = 0;
+				break;
+		}
+	}
+}
+#endif
+
 static qse_awk_nde_t* parse_binary (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, 
 	int skipnl, const binmap_t* binmap,
@@ -3351,8 +3446,6 @@ static qse_awk_nde_t* parse_binary (
 		qse_awk_loc_t rloc;
 		const binmap_t* p = binmap;
 		qse_bool_t matched = QSE_FALSE;
-		int fold;
-		qse_long_t folded_l;
 
 		while (p->token != TOK_EOF)
 		{
@@ -3384,37 +3477,8 @@ static qse_awk_nde_t* parse_binary (
 			return QSE_NULL;
 		}
 
-		fold = 0;
-		if (left->type == QSE_AWK_NDE_INT &&
-		    right->type == QSE_AWK_NDE_INT)
-		{
-			fold = 1;
-			switch (opcode)
-			{
-				case QSE_AWK_BINOP_PLUS:
-					folded_l = ((qse_awk_nde_int_t*)left)->val + ((qse_awk_nde_int_t*)right)->val;
-					break;
-
-				case QSE_AWK_BINOP_MINUS:
-					folded_l = ((qse_awk_nde_int_t*)left)->val - ((qse_awk_nde_int_t*)right)->val;
-					break;
-
-				case QSE_AWK_BINOP_MUL:
-					folded_l = ((qse_awk_nde_int_t*)left)->val * ((qse_awk_nde_int_t*)right)->val;
-					break;
-
-				case QSE_AWK_BINOP_IDIV:
-					folded_l = ((qse_awk_nde_int_t*)left)->val / ((qse_awk_nde_int_t*)right)->val;
-					break;
-
-				case QSE_AWK_BINOP_MOD:
-					folded_l = ((qse_awk_nde_int_t*)left)->val % ((qse_awk_nde_int_t*)right)->val;
-					break;
-
-				default:
-					fold = 0;
-			}
-		}
+#if 0
+		fold_constants_for_binop (left, right, opcode);
 
 		if (fold)
 		{
@@ -3429,6 +3493,7 @@ static qse_awk_nde_t* parse_binary (
 		}
 		else
 		{
+#endif
 			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
 				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
 			if (nde == QSE_NULL) 
@@ -3447,7 +3512,9 @@ static qse_awk_nde_t* parse_binary (
 			nde->right = right;
 
 			left = (qse_awk_nde_t*)nde;
+#if 0
 		}
+#endif
 	}
 
 	return left;

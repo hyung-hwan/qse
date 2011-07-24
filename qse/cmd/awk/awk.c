@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: awk.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -390,7 +390,7 @@ struct opttab_t
 {
 	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
 	{ QSE_T("explicit"),     QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
-	{ QSE_T("extraops"),     QSE_AWK_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,//)") },
+	{ QSE_T("extraops"),     QSE_AWK_EXTRAOPS,       QSE_T("enable extra operators(<<,>>,^^,\\)") },
 	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },

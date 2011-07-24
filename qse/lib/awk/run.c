@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
+ * $Id: run.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4527,40 +4527,41 @@ static qse_awk_val_t* eval_binop_div (
 	}
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
+	switch (n3)
 	{
-		if  (l2 == 0) 
-		{
-			SETERR_COD (rtx, QSE_AWK_EDIVBY0);
-			return QSE_NULL;
-		}
+		case 0:
+			if  (l2 == 0) 
+			{
+				SETERR_COD (rtx, QSE_AWK_EDIVBY0);
+				return QSE_NULL;
+			}
 
-		if (((qse_long_t)l1 % (qse_long_t)l2) == 0)
-		{
-			res = qse_awk_rtx_makeintval (
-				rtx, (qse_long_t)l1 / (qse_long_t)l2);
-		}
-		else
-		{
+			if (((qse_long_t)l1 % (qse_long_t)l2) == 0)
+			{
+				res = qse_awk_rtx_makeintval (
+					rtx, (qse_long_t)l1 / (qse_long_t)l2);
+			}
+			else
+			{
+				res = qse_awk_rtx_makerealval (
+					rtx, (qse_real_t)l1 / (qse_real_t)l2);
+			}
+			break;
+
+		case 1:
 			res = qse_awk_rtx_makerealval (
-				rtx, (qse_real_t)l1 / (qse_real_t)l2);
-		}
-	}
-	else if (n3 == 1)
-	{
-		res = qse_awk_rtx_makerealval (
-			rtx, (qse_real_t)r1 / (qse_real_t)l2);
-	}
-	else if (n3 == 2)
-	{
-		res = qse_awk_rtx_makerealval (
-			rtx, (qse_real_t)l1 / (qse_real_t)r2);
-	}
-	else
-	{
-		QSE_ASSERT (n3 == 3);
-		res = qse_awk_rtx_makerealval (
-			rtx, (qse_real_t)r1 / (qse_real_t)r2);
+				rtx, (qse_real_t)r1 / (qse_real_t)l2);
+			break;
+
+		case 2:
+			res = qse_awk_rtx_makerealval (
+				rtx, (qse_real_t)l1 / (qse_real_t)r2);
+			break;
+
+		case 3:
+			res = qse_awk_rtx_makerealval (
+				rtx, (qse_real_t)r1 / (qse_real_t)r2);
+			break;
 	}
 
 	return res;
@@ -4584,32 +4585,32 @@ static qse_awk_val_t* eval_binop_idiv (
 	}
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
+	switch (n3)
 	{
-		if (l2 == 0) 
-		{
-			SETERR_COD (rtx, QSE_AWK_EDIVBY0);
-			return QSE_NULL;
-		}
-		res = qse_awk_rtx_makeintval (
-			rtx, (qse_long_t)l1 / (qse_long_t)l2);
-	}
-	else if (n3 == 1)
-	{
-		quo = (qse_real_t)r1 / (qse_real_t)l2;
-		res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
-	}
-	else if (n3 == 2)
-	{
-		quo = (qse_real_t)l1 / (qse_real_t)r2;
-		res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
-	}
-	else
-	{
-		QSE_ASSERT (n3 == 3);
+		case 0:
+			if (l2 == 0) 
+			{
+				SETERR_COD (rtx, QSE_AWK_EDIVBY0);
+				return QSE_NULL;
+			}
+			res = qse_awk_rtx_makeintval (
+				rtx, (qse_long_t)l1 / (qse_long_t)l2);
+			break;
 
-		quo = (qse_real_t)r1 / (qse_real_t)r2;
-		res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
+		case 1:
+			quo = (qse_real_t)r1 / (qse_real_t)l2;
+			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
+			break;
+
+		case 2:
+			quo = (qse_real_t)l1 / (qse_real_t)r2;
+			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
+			break;
+
+		case 3:
+			quo = (qse_real_t)r1 / (qse_real_t)r2;
+			res = qse_awk_rtx_makeintval (rtx, (qse_long_t)quo);
+			break;
 	}
 
 	return res;
@@ -4623,6 +4624,10 @@ static qse_awk_val_t* eval_binop_mod (
 	qse_real_t r1, r2;
 	qse_awk_val_t* res;
 
+	QSE_ASSERTX (rtx->awk->prm.math.mod != QSE_NULL,
+		"the mod function must be provided when the awk object"
+		" is created to be able to calculate floating-pointer remainder.");
+
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
@@ -4633,20 +4638,38 @@ static qse_awk_val_t* eval_binop_mod (
 	}
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
+	switch (n3)
 	{
-		if  (l2 == 0) 
-		{
-			SETERR_COD (rtx, QSE_AWK_EDIVBY0);
-			return QSE_NULL;
-		}
-		res = qse_awk_rtx_makeintval (
-			rtx, (qse_long_t)l1 % (qse_long_t)l2);
-	}
-	else 
-	{
-		SETERR_COD (rtx, QSE_AWK_EOPERAND);
-		return QSE_NULL;
+		case 0:
+			if  (l2 == 0) 
+			{
+				SETERR_COD (rtx, QSE_AWK_EDIVBY0);
+				return QSE_NULL;
+			}
+			res = qse_awk_rtx_makeintval (
+				rtx, (qse_long_t)l1 % (qse_long_t)l2);
+			break;	
+
+		case 1:
+			res = qse_awk_rtx_makerealval (rtx,
+				rtx->awk->prm.math.mod (
+					rtx->awk, (qse_real_t)r1, (qse_real_t)l2)
+			);
+			break;
+
+		case 2:
+			res = qse_awk_rtx_makerealval (rtx,
+				rtx->awk->prm.math.mod (
+					rtx->awk, (qse_real_t)l1, (qse_real_t)r2)
+			);
+			break;
+
+		case 3:
+			res = qse_awk_rtx_makerealval (rtx,
+				rtx->awk->prm.math.mod (
+					rtx->awk, (qse_real_t)r1, (qse_real_t)r2)
+			);
+			break;
 	}
 
 	return res;
@@ -4661,8 +4684,8 @@ static qse_awk_val_t* eval_binop_exp (
 	qse_awk_val_t* res;
 
 	QSE_ASSERTX (rtx->awk->prm.math.pow != QSE_NULL,
-		"the pow function should be provided when the awk object"
-		" is created to make the exponentiation work properly.");
+		"the pow function must be provided when the awk object"
+		" is created to make exponentiation work properly.");
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);

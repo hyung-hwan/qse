@@ -102,9 +102,9 @@ AC_CHECK_FUNCS([backtrace backtrace_symbols])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
-AC_CHECK_FUNCS([powl sinl cosl tanl atanl atan2l logl expl sqrtl])
-AC_CHECK_FUNCS([pow sin cos tan atan atan2 log exp sqrt])
-AC_CHECK_FUNCS([powf sinf cosf tanf atanf atan2f logf expf sqrtf])
+AC_CHECK_FUNCS([powl fmodl sinl cosl tanl atanl atan2l logl expl sqrtl])
+AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log exp sqrt])
+AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf])
 LIBS="$OLDLIBS"
 
 dnl check the size of primitive data types

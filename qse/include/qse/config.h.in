@@ -54,6 +54,15 @@
 /* Define to 1 if you have the `expl' function. */
 #undef HAVE_EXPL
 
+/* Define to 1 if you have the `fmod' function. */
+#undef HAVE_FMOD
+
+/* Define to 1 if you have the `fmodf' function. */
+#undef HAVE_FMODF
+
+/* Define to 1 if you have the `fmodl' function. */
+#undef HAVE_FMODL
+
 /* Define to 1 if you have the `fstat64' function. */
 #undef HAVE_FSTAT64
 
