@@ -15444,7 +15444,7 @@ done
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
-for ac_func in powl sinl cosl tanl atanl atan2l logl expl sqrtl
+for ac_func in powl fmodl sinl cosl tanl atanl atan2l logl expl sqrtl
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15456,7 +15456,7 @@ _ACEOF
 fi
 done
 
-for ac_func in pow sin cos tan atan atan2 log exp sqrt
+for ac_func in pow fmod sin cos tan atan atan2 log exp sqrt
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15468,7 +15468,7 @@ _ACEOF
 fi
 done
 
-for ac_func in powf sinf cosf tanf atanf atan2f logf expf sqrtf
+for ac_func in powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

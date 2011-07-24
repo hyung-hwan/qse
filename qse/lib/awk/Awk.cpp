@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: Awk.cpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1073,6 +1073,7 @@ int Awk::open ()
 	memset (&prm, 0, QSE_SIZEOF(prm));
 	prm.sprintf  = sprintf;
 	prm.math.pow = pow;
+	prm.math.mod = mod;
 	prm.math.sin = sin;
 	prm.math.cos = cos;
 	prm.math.tan = tan;
@@ -1750,6 +1751,12 @@ Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->pow (x, y);
+}
+
+Awk::real_t Awk::mod (awk_t* awk, real_t x, real_t y)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->mod (x, y);
 }
 
 Awk::real_t Awk::sin (awk_t* awk, real_t x)

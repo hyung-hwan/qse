@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: std.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -124,6 +124,19 @@ static qse_real_t custom_awk_pow (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 	return powf (x, y);
 #else
 	#error ### no pow function available ###
+#endif
+}
+
+static qse_real_t custom_awk_mod (qse_awk_t* awk, qse_real_t x, qse_real_t y)
+{
+#if defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return fmodl (x, y);
+#elif defined(HAVE_FMOD)
+	return fmod (x, y);
+#elif defined(HAVE_FMODF)
+	return fmodf (x, y);
+#else
+	#error ### no fmod function available ###
 #endif
 }
 
@@ -261,6 +274,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	prm.sprintf  = custom_awk_sprintf;
 
 	prm.math.pow = custom_awk_pow;
+	prm.math.mod = custom_awk_mod;
 	prm.math.sin = custom_awk_sin;
 	prm.math.cos = custom_awk_cos;
 	prm.math.tan = custom_awk_tan;

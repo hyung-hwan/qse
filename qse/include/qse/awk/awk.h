@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: awk.h 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -587,6 +587,7 @@ struct qse_awk_prm_t
 	struct
 	{
 		qse_awk_math2_t pow;
+		qse_awk_math2_t mod;
 		qse_awk_math1_t sin;
 		qse_awk_math1_t cos;
 		qse_awk_math1_t tan;

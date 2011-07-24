@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 461 2011-05-18 02:32:39Z hyunghwan.chung $
+ * $Id: StdAwk.hpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -142,6 +142,7 @@ protected:
 	                 const char_t* fmt, va_list arg);
 
 	real_t pow (real_t x, real_t y);
+	real_t mod (real_t x, real_t y);
 	real_t sin (real_t x);
 	real_t cos (real_t x);
 	real_t tan (real_t x);
