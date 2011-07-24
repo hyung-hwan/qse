@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: run.c 517 2011-07-23 16:17:15Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4697,70 +4697,71 @@ static qse_awk_val_t* eval_binop_exp (
 	}
 
 	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
+	switch (n3)
 	{
-		/* left - int, right - int */
-		if (l2 >= 0)
-		{
-			qse_long_t v = 1;
-			while (l2-- > 0) v *= l1;
-			res = qse_awk_rtx_makeintval (rtx, v);
-		}
-		else if (l1 == 0)
-		{
-			SETERR_COD (rtx, QSE_AWK_EDIVBY0);
-			return QSE_NULL;
-		}
-		else
-		{
-			qse_real_t v = 1.0;
-			l2 *= -1;
-			while (l2-- > 0) v /= l1;
-			res = qse_awk_rtx_makerealval (rtx, v);
-		}
-	}
-	else if (n3 == 1)
-	{
-		/* left - real, right - int */
-		if (l2 >= 0)
-		{
-			qse_real_t v = 1.0;
-			while (l2-- > 0) v *= r1;
-			res = qse_awk_rtx_makerealval (rtx, v);
-		}
-		else if (r1 == 0.0)
-		{
-			SETERR_COD (rtx, QSE_AWK_EDIVBY0);
-			return QSE_NULL;
-		}
-		else
-		{
-			qse_real_t v = 1.0;
-			l2 *= -1;
-			while (l2-- > 0) v /= r1;
-			res = qse_awk_rtx_makerealval (rtx, v);
-		}
-	}
-	else if (n3 == 2)
-	{
-		/* left - int, right - real */
-		res = qse_awk_rtx_makerealval (
-			rtx, 
-			rtx->awk->prm.math.pow (
-				rtx->awk, (qse_real_t)l1, (qse_real_t)r2
-			)
-		);
-	}
-	else
-	{
-		/* left - real, right - real */
-		QSE_ASSERT (n3 == 3);
-		res = qse_awk_rtx_makerealval (
-			rtx,
-			rtx->awk->prm.math.pow (
-				rtx->awk, (qse_real_t)r1,(qse_real_t)r2
-			)
-		);
+		case 0:
+			/* left - int, right - int */
+			if (l2 >= 0)
+			{
+				qse_long_t v = 1;
+				while (l2-- > 0) v *= l1;
+				res = qse_awk_rtx_makeintval (rtx, v);
+			}
+			else if (l1 == 0)
+			{
+				SETERR_COD (rtx, QSE_AWK_EDIVBY0);
+				return QSE_NULL;
+			}
+			else
+			{
+				qse_real_t v = 1.0;
+				l2 *= -1;
+				while (l2-- > 0) v /= l1;
+				res = qse_awk_rtx_makerealval (rtx, v);
+			}
+			break;
+
+		case 1:
+			/* left - real, right - int */
+			if (l2 >= 0)
+			{
+				qse_real_t v = 1.0;
+				while (l2-- > 0) v *= r1;
+				res = qse_awk_rtx_makerealval (rtx, v);
+			}
+			else if (r1 == 0.0)
+			{
+				SETERR_COD (rtx, QSE_AWK_EDIVBY0);
+				return QSE_NULL;
+			}
+			else
+			{
+				qse_real_t v = 1.0;
+				l2 *= -1;
+				while (l2-- > 0) v /= r1;
+				res = qse_awk_rtx_makerealval (rtx, v);
+			}
+			break;
+
+		case 2:
+			/* left - int, right - real */
+			res = qse_awk_rtx_makerealval (
+				rtx, 
+				rtx->awk->prm.math.pow (
+					rtx->awk, (qse_real_t)l1, (qse_real_t)r2
+				)
+			);
+			break;
+
+		case 3:
+			/* left - real, right - real */
+			res = qse_awk_rtx_makerealval (
+				rtx,
+				rtx->awk->prm.math.pow (
+					rtx->awk, (qse_real_t)r1,(qse_real_t)r2
+				)
+			);
+			break;
 	}
 
 	return res;
@@ -4996,45 +4997,47 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	qse_awk_rtx_refupval (run, left);
 
-	if (exp->opcode == QSE_AWK_UNROP_MINUS)
+	switch (exp->opcode)
 	{
-		n = qse_awk_rtx_valtonum (run, left, &l, &r);
-		if (n == -1) goto exit_func;
-
-		res = (n == 0)? qse_awk_rtx_makeintval (run, -l):
-		                qse_awk_rtx_makerealval (run, -r);
-	}
-	else if (exp->opcode == QSE_AWK_UNROP_LNOT)
-	{
-		if (left->type == QSE_AWK_VAL_STR)
-		{
-			res = qse_awk_rtx_makeintval (
-				run, !(((qse_awk_val_str_t*)left)->val.len > 0));
-		}
-		else
-		{
+		case QSE_AWK_UNROP_MINUS:
 			n = qse_awk_rtx_valtonum (run, left, &l, &r);
 			if (n == -1) goto exit_func;
 
-			res = (n == 0)? qse_awk_rtx_makeintval (run, !l):
-			                qse_awk_rtx_makerealval (run, !r);
-		}
-	}
-	else if (exp->opcode == QSE_AWK_UNROP_BNOT)
-	{
-		n = qse_awk_rtx_valtonum (run, left, &l, &r);
-		if (n == -1) goto exit_func;
+			res = (n == 0)? qse_awk_rtx_makeintval (run, -l):
+			                qse_awk_rtx_makerealval (run, -r);
+			break;
 
-		if (n == 1) l = (qse_long_t)r;
-		res = qse_awk_rtx_makeintval (run, ~l);
-	}
-	else if (exp->opcode == QSE_AWK_UNROP_PLUS) 
-	{
-		n = qse_awk_rtx_valtonum (run, left, &l, &r);
-		if (n == -1) goto exit_func;
+		case QSE_AWK_UNROP_LNOT:
+			if (left->type == QSE_AWK_VAL_STR)
+			{
+				res = qse_awk_rtx_makeintval (
+					run, !(((qse_awk_val_str_t*)left)->val.len > 0));
+			}
+			else
+			{
+				n = qse_awk_rtx_valtonum (run, left, &l, &r);
+				if (n == -1) goto exit_func;
 
-		res = (n == 0)? qse_awk_rtx_makeintval (run, l):
-		                qse_awk_rtx_makerealval (run, r);
+				res = (n == 0)? qse_awk_rtx_makeintval (run, !l):
+				                qse_awk_rtx_makerealval (run, !r);
+			}
+			break;
+	
+		case QSE_AWK_UNROP_BNOT:
+			n = qse_awk_rtx_valtonum (run, left, &l, &r);
+			if (n == -1) goto exit_func;
+
+			if (n == 1) l = (qse_long_t)r;
+			res = qse_awk_rtx_makeintval (run, ~l);
+			break;
+
+		case QSE_AWK_UNROP_PLUS:
+			n = qse_awk_rtx_valtonum (run, left, &l, &r);
+			if (n == -1) goto exit_func;
+
+			res = (n == 0)? qse_awk_rtx_makeintval (run, l):
+			                qse_awk_rtx_makerealval (run, r);
+			break;
 	}
 
 exit_func:

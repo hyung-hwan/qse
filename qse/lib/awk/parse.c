@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: parse.c 517 2011-07-23 16:17:15Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -3340,108 +3340,209 @@ static qse_awk_nde_t* parse_expr_dc (
 #define INT_BINOP_REAL(x,op,y) \
 	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
 
+#define REAL_BINOP_INT(x,op,y) \
+	(((qse_awk_nde_real_t*)x)->val op ((qse_awk_nde_int_t*)y)->val)
+
 #define REAL_BINOP_REAL(x,op,y) \
 	(((qse_awk_nde_real_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
 
-#if 0
-static qse_awk_nde_t* fold_constants_for_binop (
-	qse_awk_nde_t* left, qse_awk_nde_t* right, int opcode)
+union folded_t
 {
-	int fold = 0;
-	qse_long_t folded_l;
-	qse_real_t folded_r;
+	qse_long_t l;
+	qse_real_t r;
+};
+typedef union folded_t folded_t;
+
+static int fold_constants_for_binop (
+	qse_awk_t* awk, qse_awk_nde_t* left, qse_awk_nde_t* right, int opcode, folded_t* folded)
+{
+	int fold = -1;
+
+	/* TODO: can i shorten various comparisons below? 
+ 	 *       i hate to repeat similar code just for type difference */
 
 	if (left->type == QSE_AWK_NDE_INT &&
 	    right->type == QSE_AWK_NDE_INT)
 	{
-		fold = 1;
+		fold = QSE_AWK_NDE_INT;
 		switch (opcode)
 		{
 			case QSE_AWK_BINOP_PLUS:
-				folded_l = INT_BINOP_INT(left,+,right);
+				folded->l = INT_BINOP_INT(left,+,right);
 				break;
 
 			case QSE_AWK_BINOP_MINUS:
-				folded_l = INT_BINOP_INT(left,-,right);
+				folded->l = INT_BINOP_INT(left,-,right);
 				break;
 
 			case QSE_AWK_BINOP_MUL:
-				folded_l = INT_BINOP_INT(left,*,right);
+				folded->l = INT_BINOP_INT(left,*,right);
 				break;
 
 			case QSE_AWK_BINOP_DIV:
 				if (INT_BINOP_INT(left,%,right))
 				{
-					folded_r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
-					           (qse_real_t)((qse_awk_nde_int_t*)right)->val;
-					fold = 2;
+					folded->r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
+					            (qse_real_t)((qse_awk_nde_int_t*)right)->val;
+					fold = QSE_AWK_NDE_REAL;
 					break;
 				}
+				/* fall through here */
 			case QSE_AWK_BINOP_IDIV:
-				folded_l = INT_BINOP_INT(left,/,right);
+				folded->l = INT_BINOP_INT(left,/,right);
 				break;
 
 			case QSE_AWK_BINOP_MOD:
-				folded_l = INT_BINOP_INT(left,%,right);
+				folded->l = INT_BINOP_INT(left,%,right);
 				break;
 
 			default:
-				fold = 0;
+				fold = -1;
 				break;
 		}
 	}
 	else if (left->type == QSE_AWK_NDE_REAL &&
 	         right->type == QSE_AWK_NDE_REAL)
 	{
-		fold = 1;
+		fold = QSE_AWK_NDE_REAL;
 		switch (opcode)
 		{
 			case QSE_AWK_BINOP_PLUS:
-				folded_r = REAL_BINOP_REAL(left,+,right);
+				folded->r = REAL_BINOP_REAL(left,+,right);
 				break;
 
 			case QSE_AWK_BINOP_MINUS:
-				folded_r = REAL_BINOP_REAL(left,-,right);
+				folded->r = REAL_BINOP_REAL(left,-,right);
 				break;
 
 			case QSE_AWK_BINOP_MUL:
-				folded_r = REAL_BINOP_REAL(left,*,right);
+				folded->r = REAL_BINOP_REAL(left,*,right);
 				break;
 
 			case QSE_AWK_BINOP_DIV:
-				folded_r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
-				           (qse_real_t)((qse_awk_nde_int_t*)right)->val;
+				folded->r = REAL_BINOP_REAL(left,/,right);
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
-				folded_l = REAL_BINOP_REAL(left,/,right);
+				folded->l = (qse_long_t)REAL_BINOP_REAL(left,/,right);
+				fold = QSE_AWK_NDE_INT;
 				break;
 
 			case QSE_AWK_BINOP_MOD:
-				folded_l = REAL_BINOP_REAL(left,%,right);
+				folded->r = awk->prm.math.mod (
+					awk, 
+					((qse_awk_nde_real_t*)left)->val, 
+					((qse_awk_nde_real_t*)right)->val
+				);
 				break;
 
 			default:
-				fold = 0;
+				fold = -1;
 				break;
 		}
 	}
+	else if (left->type == QSE_AWK_NDE_INT &&
+	         right->type == QSE_AWK_NDE_REAL)
+	{
+		fold = QSE_AWK_NDE_REAL;
+		switch (opcode)
+		{
+			case QSE_AWK_BINOP_PLUS:
+				folded->r = INT_BINOP_REAL(left,+,right);
+				break;
+
+			case QSE_AWK_BINOP_MINUS:
+				folded->r = INT_BINOP_REAL(left,-,right);
+				break;
+
+			case QSE_AWK_BINOP_MUL:
+				folded->r = INT_BINOP_REAL(left,*,right);
+				break;
+
+			case QSE_AWK_BINOP_DIV:
+				folded->r = INT_BINOP_REAL(left,/,right);
+				break;
+
+			case QSE_AWK_BINOP_IDIV:
+				folded->l = (qse_long_t)
+					((qse_real_t)((qse_awk_nde_int_t*)left)->val / 
+					 ((qse_awk_nde_real_t*)right)->val);
+				fold = QSE_AWK_NDE_INT;
+				break;
+
+			case QSE_AWK_BINOP_MOD:
+				folded->r = awk->prm.math.mod (
+					awk, 
+					(qse_real_t)((qse_awk_nde_int_t*)left)->val, 
+					((qse_awk_nde_real_t*)right)->val
+				);
+				break;
+
+			default:
+				fold = -1;
+				break;
+		}
+	}
+	else if (left->type == QSE_AWK_NDE_REAL &&
+	         right->type == QSE_AWK_NDE_INT)
+	{
+		fold = QSE_AWK_NDE_REAL;
+		switch (opcode)
+		{
+			case QSE_AWK_BINOP_PLUS:
+				folded->r = REAL_BINOP_INT(left,+,right);
+				break;
+
+			case QSE_AWK_BINOP_MINUS:
+				folded->r = REAL_BINOP_INT(left,-,right);
+				break;
+
+			case QSE_AWK_BINOP_MUL:
+				folded->r = REAL_BINOP_INT(left,*,right);
+				break;
+
+			case QSE_AWK_BINOP_DIV:
+				folded->r = REAL_BINOP_INT(left,/,right);
+				break;
+
+			case QSE_AWK_BINOP_IDIV:
+				folded->l = (qse_long_t)
+					(((qse_awk_nde_int_t*)left)->val / 
+					 (qse_real_t)((qse_awk_nde_int_t*)right)->val);
+				fold = QSE_AWK_NDE_INT;
+				break;
+
+			case QSE_AWK_BINOP_MOD:
+				folded->r = awk->prm.math.mod (
+					awk, 
+					((qse_awk_nde_real_t*)left)->val, 
+					(qse_real_t)((qse_awk_nde_int_t*)right)->val
+				);
+				break;
+
+			default:
+				fold = -1;
+				break;
+		}
+	}
+
+	return fold;
 }
-#endif
 
 static qse_awk_nde_t* parse_binary (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, 
 	int skipnl, const binmap_t* binmap,
 	qse_awk_nde_t*(*next_level_func)(qse_awk_t*,const qse_awk_loc_t*))
 {
-	qse_awk_nde_exp_t* nde;
 	qse_awk_nde_t* left, * right;
 	int opcode;
+	int fold;
+	folded_t folded;
 
 	left = next_level_func (awk, xloc);
 	if (left == QSE_NULL) return QSE_NULL;
-	
-	while (1) 
+
+	do
 	{
 		qse_awk_loc_t rloc;
 		const binmap_t* p = binmap;
@@ -3477,26 +3578,106 @@ static qse_awk_nde_t* parse_binary (
 			return QSE_NULL;
 		}
 
-#if 0
-		fold_constants_for_binop (left, right, opcode);
-
-		if (fold)
+		fold = fold_constants_for_binop (awk, left, right, opcode, &folded);
+		if (fold == QSE_AWK_NDE_INT)
 		{
-			qse_awk_clrpt (awk, right);
-			((qse_awk_nde_int_t*)left)->val = folded_l;
-			if (((qse_awk_nde_int_t*)left)->str)
+			if (fold == left->type)
 			{
-				QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
-				((qse_awk_nde_int_t*)left)->str = QSE_NULL;
-				((qse_awk_nde_int_t*)left)->len = 0;
+				qse_awk_clrpt (awk, right);
+				((qse_awk_nde_int_t*)left)->val = folded.l;
+				if (((qse_awk_nde_int_t*)left)->str)
+				{
+					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
+					((qse_awk_nde_int_t*)left)->str = QSE_NULL;
+					((qse_awk_nde_int_t*)left)->len = 0;
+				}
+			}
+			else if (fold == right->type)
+			{
+				qse_awk_clrpt (awk, left);
+				((qse_awk_nde_int_t*)right)->val = folded.l;
+				if (((qse_awk_nde_int_t*)right)->str)
+				{
+					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)right)->str);
+					((qse_awk_nde_int_t*)right)->str = QSE_NULL;
+					((qse_awk_nde_int_t*)right)->len = 0;
+				}
+				left = right;
+			}
+			else 
+			{
+				qse_awk_nde_int_t* tmp;
+
+				qse_awk_clrpt (awk, right);
+				qse_awk_clrpt (awk, left);
+
+				tmp = (qse_awk_nde_int_t*) QSE_AWK_ALLOC (
+					awk, QSE_SIZEOF(qse_awk_nde_int_t));
+				if (tmp == QSE_NULL) 
+				{
+					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+					return QSE_NULL;
+				}
+				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_int_t));
+				tmp->type = QSE_AWK_NDE_INT;
+				tmp->loc = *xloc;
+				tmp->val = folded.l;
+				left = (qse_awk_nde_t*)tmp;
+			}
+		}
+		else if (fold == QSE_AWK_NDE_REAL)
+		{
+			if (fold == left->type)
+			{
+				qse_awk_clrpt (awk, right);
+				((qse_awk_nde_real_t*)left)->val = folded.r;
+				if (((qse_awk_nde_real_t*)left)->str)
+				{
+					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)left)->str);
+					((qse_awk_nde_real_t*)left)->str = QSE_NULL;
+					((qse_awk_nde_real_t*)left)->len = 0;
+				}
+			}
+			else if (fold == right->type)
+			{
+				qse_awk_clrpt (awk, left);
+				((qse_awk_nde_real_t*)right)->val = folded.r;
+				if (((qse_awk_nde_real_t*)right)->str)
+				{
+					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)right)->str);
+					((qse_awk_nde_real_t*)right)->str = QSE_NULL;
+					((qse_awk_nde_real_t*)right)->len = 0;
+				}
+				left = right;
+			}
+			else 
+			{
+				qse_awk_nde_real_t* tmp;
+
+				qse_awk_clrpt (awk, right);
+				qse_awk_clrpt (awk, left);
+
+				tmp = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (
+					awk, QSE_SIZEOF(qse_awk_nde_real_t));
+				if (tmp == QSE_NULL) 
+				{
+					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+					return QSE_NULL;
+				}
+				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_real_t));
+				tmp->type = QSE_AWK_NDE_REAL;
+				tmp->loc = *xloc;
+				tmp->val = folded.r;
+				left = (qse_awk_nde_t*)tmp;
 			}
 		}
 		else
 		{
-#endif
+			qse_awk_nde_exp_t* nde;
+
 			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
 				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
-			if (nde == QSE_NULL) 
+			if (nde == QSE_NULL)  
 			{
 				qse_awk_clrpt (awk, right);
 				qse_awk_clrpt (awk, left);
@@ -3512,10 +3693,9 @@ static qse_awk_nde_t* parse_binary (
 			nde->right = right;
 
 			left = (qse_awk_nde_t*)nde;
-#if 0
 		}
-#endif
 	}
+	while (1);
 
 	return left;
 }
@@ -3803,12 +3983,11 @@ static qse_awk_nde_t* parse_multiplicative (
 static qse_awk_nde_t* parse_unary (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
-	qse_awk_nde_exp_t* nde; 
 	qse_awk_nde_t* left;
 	qse_awk_loc_t uloc;
 	int opcode;
 	int fold;
-	qse_long_t folded_l;
+	folded_t folded;
 
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
@@ -3834,68 +4013,109 @@ static qse_awk_nde_t* parse_unary (
 	awk->parse.depth.cur.expr--;
 	if (left == QSE_NULL) return QSE_NULL;
 
-	fold = 0;
+	fold = -1;
 	if (left->type == QSE_AWK_NDE_INT)
 	{
-		fold = 1;
-
+		fold = QSE_AWK_NDE_INT;
 		switch (opcode)
 		{
 			case QSE_AWK_UNROP_PLUS:
-				folded_l = ((qse_awk_nde_int_t*)left)->val;
+				folded.l = ((qse_awk_nde_int_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_MINUS:
-				folded_l = -((qse_awk_nde_int_t*)left)->val;
+				folded.l = -((qse_awk_nde_int_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_LNOT:
-				folded_l = !((qse_awk_nde_int_t*)left)->val;
+				folded.l = !((qse_awk_nde_int_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_BNOT:
-				folded_l = ~((qse_awk_nde_int_t*)left)->val;
+				folded.l = ~((qse_awk_nde_int_t*)left)->val;
 				break;
 
 			default:
-				fold = 0;
+				fold = -1;
+				break;
+		}
+	}
+	else if (left->type == QSE_AWK_NDE_REAL)
+	{
+		fold = QSE_AWK_NDE_REAL;
+		switch (opcode)
+		{
+			case QSE_AWK_UNROP_PLUS:
+				folded.r = ((qse_awk_nde_real_t*)left)->val;
+				break;
+
+			case QSE_AWK_UNROP_MINUS:
+				folded.r = -((qse_awk_nde_real_t*)left)->val;
+				break;
+
+			case QSE_AWK_UNROP_LNOT:
+				folded.r = !((qse_awk_nde_real_t*)left)->val;
+				break;
+
+			/*
+			case QSE_AWK_UNROP_BNOT:
+				folded.r = ~((qse_awk_nde_real_t*)left)->val;
+				break;
+			*/
+
+			default:
+				fold = -1;
 				break;
 		}
 	}
 
-	if (fold)
+	switch (fold)
 	{
-		((qse_awk_nde_int_t*)left)->val = folded_l;
-		if (((qse_awk_nde_int_t*)left)->str)
+		case QSE_AWK_NDE_INT:
+			QSE_ASSERT (left->type == fold);
+			((qse_awk_nde_int_t*)left)->val = folded.l;
+			if (((qse_awk_nde_int_t*)left)->str)
+			{
+				QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
+				((qse_awk_nde_int_t*)left)->str = QSE_NULL;
+				((qse_awk_nde_int_t*)left)->len = 0;
+			}
+			return left;
+
+		case QSE_AWK_NDE_REAL:
+			QSE_ASSERT (left->type == fold);
+			((qse_awk_nde_real_t*)left)->val = folded.r;
+			if (((qse_awk_nde_real_t*)left)->str)
+			{
+				QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)left)->str);
+				((qse_awk_nde_real_t*)left)->str = QSE_NULL;
+				((qse_awk_nde_real_t*)left)->len = 0;
+			}
+			return left;
+
+		default:
 		{
-			QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
-			((qse_awk_nde_int_t*)left)->str = QSE_NULL;
-			((qse_awk_nde_int_t*)left)->len = 0;
+			qse_awk_nde_exp_t* nde; 
+
+			nde = (qse_awk_nde_exp_t*) 
+				QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_exp_t));
+			if (nde == QSE_NULL)
+			{
+				qse_awk_clrpt (awk, left);
+				SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+				return QSE_NULL;
+			}
+
+			nde->type = QSE_AWK_NDE_EXP_UNR;
+			nde->loc = *xloc;
+			nde->next = QSE_NULL;
+			nde->opcode = opcode;
+			nde->left = left;
+			nde->right = QSE_NULL;
+	
+			return (qse_awk_nde_t*)nde;
 		}
-
-		return left;
 	}
-	else
-	{
-		nde = (qse_awk_nde_exp_t*) 
-			QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_exp_t));
-		if (nde == QSE_NULL)
-		{
-			qse_awk_clrpt (awk, left);
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
-		}
-
-		nde->type = QSE_AWK_NDE_EXP_UNR;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		nde->opcode = opcode;
-		nde->left = left;
-		nde->right = QSE_NULL;
-
-		return (qse_awk_nde_t*)nde;
-	}
-
 }
 
 static qse_awk_nde_t* parse_exponent (
