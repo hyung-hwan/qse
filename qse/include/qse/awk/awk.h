@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: awk.h 518 2011-07-24 14:24:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -578,7 +578,8 @@ typedef qse_ssize_t (*qse_awk_rio_fun_t) (
 );
 
 /**
- * The qse_awk_prm_t type defines primitive functions
+ * The qse_awk_prm_t type defines primitive functions required to perform
+ * a set of primitive operations.
  */
 struct qse_awk_prm_t
 {
@@ -586,8 +587,8 @@ struct qse_awk_prm_t
 
 	struct
 	{
-		qse_awk_math2_t pow;
-		qse_awk_math2_t mod;
+		qse_awk_math2_t pow; /**< floating-point power function */
+		qse_awk_math2_t mod; /**< floating-point remainder function */
 		qse_awk_math1_t sin;
 		qse_awk_math1_t cos;
 		qse_awk_math1_t tan;
@@ -2211,6 +2212,18 @@ int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
 	qse_long_t*          l,
+	qse_real_t*          r
+);
+
+int qse_awk_rtx_valtolong (
+	qse_awk_rtx_t*       rtx,
+	const qse_awk_val_t* val,
+	qse_long_t*          l
+);
+
+int qse_awk_rtx_valtoreal (
+	qse_awk_rtx_t*       rtx,
+	const qse_awk_val_t* val,
 	qse_real_t*          r
 );
 

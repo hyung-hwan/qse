@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 484 2011-05-25 15:32:10Z hyunghwan.chung $
+ * $Id: val.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1171,6 +1171,35 @@ int qse_awk_rtx_valtonum (
 
 	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
 	return -1; /* error */
+}
+
+int qse_awk_rtx_valtolong (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l)
+{
+	int n;
+	qse_real_t r;
+
+	n = qse_awk_rtx_valtonum (rtx, v, l, &r);
+	if (n == 1) 
+	{
+		*l = (qse_long_t)r;
+		n = 0;
+	}
+
+	return n;
+}
+
+int qse_awk_rtx_valtoreal (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_real_t* r)
+{
+	int n;
+	qse_long_t l;
+
+	n = qse_awk_rtx_valtonum (rtx, v, &l, r);
+	if (n == 0) *r = (qse_real_t)l;
+	else if (n == 1) n = 0;
+
+	return n;
 }
 
 int qse_awk_rtx_strtonum (
