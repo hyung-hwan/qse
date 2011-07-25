@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: std.c 519 2011-07-24 14:42:23Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -39,6 +39,7 @@
 #ifndef QSE_HAVE_CONFIG_H
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_POW
+#		define HAVE_FMOD
 #		define HAVE_SIN
 #		define HAVE_COS
 #		define HAVE_TAN
