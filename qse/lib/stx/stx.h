@@ -48,7 +48,7 @@ word fixed
 	qse_word_t _mark: 1;
 	qse_word_t _type: 2; 
 	qse_word_t _variable: 1;
-	qse_word_t _refcnt: (QSE_SIZEOF_WORD_T-4); 
+	qse_word_t _refcnt: ((QSE_SIZEOF_WORD_T*8)-4); 
 
 	qse_word_t _size;
 	qse_word_t _class;
