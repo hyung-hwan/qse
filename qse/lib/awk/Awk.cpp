@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: Awk.cpp 518 2011-07-24 14:24:13Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -381,14 +381,12 @@ int Awk::Value::getInt (long_t* v) const
 	    val->type != QSE_AWK_VAL_NIL &&
 	    val->type != QSE_AWK_VAL_MAP)
 	{
-		real_t rv;
-		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
+		int n = qse_awk_rtx_valtolong (run->rtx, val, &lv);
 		if (n <= -1) 
 		{
 			run->awk->retrieveError (run);
 			return -1;
 		}
-		if (n >= 1) lv = (long_t)rv;
 	}
 
 	*v = lv;
@@ -405,14 +403,12 @@ int Awk::Value::getReal (real_t* v) const
 	    val->type != QSE_AWK_VAL_NIL &&
 	    val->type != QSE_AWK_VAL_MAP)
 	{
-		long_t lv;
-		int n = qse_awk_rtx_valtonum (run->rtx, val, &lv, &rv);
+		int n = qse_awk_rtx_valtoreal (run->rtx, val, &rv);
 		if (n <= -1)
 		{
 			run->awk->retrieveError (run);
 			return -1;
 		}
-		if (n == 0) rv = (real_t)lv;
 	}
 
 	*v = rv;

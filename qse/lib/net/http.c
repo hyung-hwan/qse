@@ -1,5 +1,5 @@
 /*
- * $Id: http.c 341 2008-08-20 10:58:19Z baconevi $
+ * $Id$
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.

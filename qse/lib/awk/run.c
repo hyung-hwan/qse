@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 517 2011-07-23 16:17:15Z hyunghwan.chung $
+ * $Id: run.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -368,11 +368,9 @@ static int set_global (
 		{
 			int n;
 			qse_long_t lv;
-			qse_real_t rv;
 
-			n = qse_awk_rtx_valtonum (rtx, val, &lv, &rv);
-			if (n == -1) return -1;
-			if (n == 1) lv = (qse_long_t)rv;
+			n = qse_awk_rtx_valtolong (rtx, val, &lv);
+			if (n <= -1) return -1;
 
 			rtx->gbl.fnr = lv;
 			break;
@@ -444,11 +442,9 @@ static int set_global (
 		{
 			int n;
 			qse_long_t lv;
-			qse_real_t rv;
 
-			n = qse_awk_rtx_valtonum (rtx, val, &lv, &rv);
+			n = qse_awk_rtx_valtolong (rtx, val, &lv);
 			if (n <= -1) return -1;
-			if (n == 1) lv = (qse_long_t)rv;
 
 			if (lv < (qse_long_t)rtx->inrec.nflds)
 			{
@@ -469,11 +465,9 @@ static int set_global (
 		{
 			int n;
 			qse_long_t lv;
-			qse_real_t rv;
 
-			n = qse_awk_rtx_valtonum (rtx, val, &lv, &rv);
+			n = qse_awk_rtx_valtolong (rtx, val, &lv);
 			if (n <= -1) return -1;
-			if (n == 1) lv = (qse_long_t)rv;
 
 			rtx->gbl.nr = lv;
 			break;
@@ -3607,7 +3601,6 @@ static qse_awk_val_t* do_assignment_pos (
 {
 	qse_awk_val_t* v;
 	qse_long_t lv;
-	qse_real_t rv;
 	qse_xstr_t str;
 	int n;
 
@@ -3615,15 +3608,15 @@ static qse_awk_val_t* do_assignment_pos (
 	if (v == QSE_NULL) return QSE_NULL;
 
 	qse_awk_rtx_refupval (run, v);
-	n = qse_awk_rtx_valtonum (run, v, &lv, &rv);
+	n = qse_awk_rtx_valtolong (run, v, &lv);
 	qse_awk_rtx_refdownval (run, v);
 
-	if (n == -1) 
+	if (n <= -1) 
 	{
 		SETERR_LOC (run, QSE_AWK_EPOSIDX, &pos->loc);
 		return QSE_NULL;
 	}
-	if (n == 1) lv = (qse_long_t)rv;
+
 	if (!IS_VALID_POSIDX(lv)) 
 	{
 		SETERR_LOC (run, QSE_AWK_EPOSIDX, &pos->loc);
@@ -3925,80 +3918,46 @@ static qse_awk_val_t* eval_binop_in (
 static qse_awk_val_t* eval_binop_bor (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 
-	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
-	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
-
-	if (n1 == -1 || n2 == -1) 
+	if (qse_awk_rtx_valtolong (rtx, left, &l1) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, right, &l2) <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
 	}
 
-	n3 = n1 + (n2 << 1);
-	QSE_ASSERT (n3 >= 0 && n3 <= 3);
-
-	return qse_awk_rtx_makeintval (rtx,
-		(n3 == 0)? ((qse_long_t)l1 | (qse_long_t)l2):
-		(n3 == 1)? ((qse_long_t)r1 | (qse_long_t)l2):
-		(n3 == 2)? ((qse_long_t)l1 | (qse_long_t)r2):
-		           ((qse_long_t)r1 | (qse_long_t)r2));
-		
+	return qse_awk_rtx_makeintval (rtx, l1 | l2);
 }
 
 static qse_awk_val_t* eval_binop_bxor (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 
-	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
-	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
-
-	if (n1 == -1 || n2 == -1)
+	if (qse_awk_rtx_valtolong (rtx, left, &l1) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, right, &l2) <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
 	}
 
-	n3 = n1 + (n2 << 1);
-	QSE_ASSERT (n3 >= 0 && n3 <= 3);
-
-	return qse_awk_rtx_makeintval (rtx,
-		(n3 == 0)? ((qse_long_t)l1 ^ (qse_long_t)l2):
-		(n3 == 1)? ((qse_long_t)r1 ^ (qse_long_t)l2):
-		(n3 == 2)? ((qse_long_t)l1 ^ (qse_long_t)r2):
-		           ((qse_long_t)r1 ^ (qse_long_t)r2));
+	return qse_awk_rtx_makeintval (rtx, l1 ^ l2);
 }
 
 static qse_awk_val_t* eval_binop_band (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 
-	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
-	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
-
-	if (n1 == -1 || n2 == -1) 
+	if (qse_awk_rtx_valtolong (rtx, left, &l1) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, right, &l2) <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
 	}
 
-	n3 = n1 + (n2 << 1);
-	QSE_ASSERT (n3 >= 0 && n3 <= 3);
-
-	return qse_awk_rtx_makeintval (rtx,
-		(n3 == 0)? ((qse_long_t)l1 & (qse_long_t)l2):
-		(n3 == 1)? ((qse_long_t)r1 & (qse_long_t)l2):
-		(n3 == 2)? ((qse_long_t)l1 & (qse_long_t)r2):
-		           ((qse_long_t)r1 & (qse_long_t)r2));
+	return qse_awk_rtx_makeintval (rtx, l1 & l2);
 }
 
 static int __cmp_nil_nil (
@@ -4376,58 +4335,31 @@ static qse_awk_val_t* eval_binop_le (
 static qse_awk_val_t* eval_binop_lshift (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 
-	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
-	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
-
-	if (n1 == -1 || n2 == -1)
+	if (qse_awk_rtx_valtolong (rtx, left, &l1) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, right, &l2) <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
 	}
 
-	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
-	{
-		return qse_awk_rtx_makeintval (rtx, (qse_long_t)l1<<(qse_long_t)l2);
-	}
-	else
-	{
-		SETERR_COD (rtx, QSE_AWK_EOPERAND);
-		return QSE_NULL;
-	}
+	return qse_awk_rtx_makeintval (rtx, l1 << l2);
 }
 
 static qse_awk_val_t* eval_binop_rshift (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n1, n2, n3;
 	qse_long_t l1, l2;
-	qse_real_t r1, r2;
 
-	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
-	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
-
-	if (n1 == -1 || n2 == -1)
+	if (qse_awk_rtx_valtolong (rtx, left, &l1) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, right, &l2) <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
 	}
 
-	n3 = n1 + (n2 << 1);
-	if (n3 == 0)
-	{
-		return qse_awk_rtx_makeintval (
-			rtx, (qse_long_t)l1>>(qse_long_t)l2);
-	}
-	else
-	{
-		SETERR_COD (rtx, QSE_AWK_EOPERAND);
-		return QSE_NULL;
-	}
+	return qse_awk_rtx_makeintval (rtx, l1 >> l2);
 }
 
 static qse_awk_val_t* eval_binop_plus (
@@ -4440,7 +4372,7 @@ static qse_awk_val_t* eval_binop_plus (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1)
+	if (n1 <= -1 || n2 <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4471,7 +4403,7 @@ static qse_awk_val_t* eval_binop_minus (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1)
+	if (n1 <= -1 || n2 <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4495,7 +4427,7 @@ static qse_awk_val_t* eval_binop_mul (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1)
+	if (n1 <= -1 || n2 <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4520,7 +4452,7 @@ static qse_awk_val_t* eval_binop_div (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) 
+	if (n1 <= -1 || n2 <= -1) 
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4578,7 +4510,7 @@ static qse_awk_val_t* eval_binop_idiv (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) 
+	if (n1 <= -1 || n2 <= -1) 
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4631,7 +4563,7 @@ static qse_awk_val_t* eval_binop_mod (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1)
+	if (n1 <= -1 || n2 <= -1)
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -4690,7 +4622,7 @@ static qse_awk_val_t* eval_binop_exp (
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
 
-	if (n1 == -1 || n2 == -1) 
+	if (n1 <= -1 || n2 <= -1) 
 	{
 		SETERR_COD (rtx, QSE_AWK_EOPERAND);
 		return QSE_NULL;
@@ -5001,7 +4933,7 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	{
 		case QSE_AWK_UNROP_MINUS:
 			n = qse_awk_rtx_valtonum (run, left, &l, &r);
-			if (n == -1) goto exit_func;
+			if (n <= -1) goto exit_func;
 
 			res = (n == 0)? qse_awk_rtx_makeintval (run, -l):
 			                qse_awk_rtx_makerealval (run, -r);
@@ -5016,7 +4948,7 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			else
 			{
 				n = qse_awk_rtx_valtonum (run, left, &l, &r);
-				if (n == -1) goto exit_func;
+				if (n <= -1) goto exit_func;
 
 				res = (n == 0)? qse_awk_rtx_makeintval (run, !l):
 				                qse_awk_rtx_makerealval (run, !r);
@@ -5024,16 +4956,15 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			break;
 	
 		case QSE_AWK_UNROP_BNOT:
-			n = qse_awk_rtx_valtonum (run, left, &l, &r);
-			if (n == -1) goto exit_func;
+			n = qse_awk_rtx_valtolong (run, left, &l);
+			if (n <= -1) goto exit_func;
 
-			if (n == 1) l = (qse_long_t)r;
 			res = qse_awk_rtx_makeintval (run, ~l);
 			break;
 
 		case QSE_AWK_UNROP_PLUS:
 			n = qse_awk_rtx_valtonum (run, left, &l, &r);
-			if (n == -1) goto exit_func;
+			if (n <= -1) goto exit_func;
 
 			res = (n == 0)? qse_awk_rtx_makeintval (run, l):
 			                qse_awk_rtx_makerealval (run, r);
@@ -5102,7 +5033,7 @@ static qse_awk_val_t* eval_incpre (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
-			if (n == -1)
+			if (n <= -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				ADJERR_LOC (run, &nde->loc);
@@ -5275,7 +5206,7 @@ static qse_awk_val_t* eval_incpst (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			int n;
 
 			n = qse_awk_rtx_valtonum (run, left, &v1, &v2);
-			if (n == -1)
+			if (n <= -1)
 			{
 				qse_awk_rtx_refdownval (run, left);
 				ADJERR_LOC (run, &nde->loc);
@@ -6012,7 +5943,6 @@ static int get_reference (
 	{
 		int n;
 		qse_long_t lv;
-		qse_real_t rv;
 		qse_awk_val_t* v;
 
 		/* the position number is returned for the positional 
@@ -6021,15 +5951,15 @@ static int get_reference (
 		if (v == QSE_NULL) return -1;
 
 		qse_awk_rtx_refupval (run, v);
-		n = qse_awk_rtx_valtonum (run, v, &lv, &rv);
+		n = qse_awk_rtx_valtolong (run, v, &lv);
 		qse_awk_rtx_refdownval (run, v);
 
-		if (n == -1) 
+		if (n <= -1) 
 		{
 			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 			return -1;
 		}
-		if (n == 1) lv = (qse_long_t)rv;
+
 		if (!IS_VALID_POSIDX(lv)) 
 		{
 			SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
@@ -6281,21 +6211,19 @@ static qse_awk_val_t* eval_pos (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_nde_pos_t* pos = (qse_awk_nde_pos_t*)nde;
 	qse_awk_val_t* v;
 	qse_long_t lv;
-	qse_real_t rv;
 	int n;
 
 	v = eval_expression (run, pos->val);
 	if (v == QSE_NULL) return QSE_NULL;
 
 	qse_awk_rtx_refupval (run, v);
-	n = qse_awk_rtx_valtonum (run, v, &lv, &rv);
+	n = qse_awk_rtx_valtolong (run, v, &lv);
 	qse_awk_rtx_refdownval (run, v);
-	if (n == -1) 
+	if (n <= -1) 
 	{
 		SETERR_LOC (run, QSE_AWK_EPOSIDX, &nde->loc);
 		return QSE_NULL;
 	}
-	if (n == 1) lv = (qse_long_t)rv;
 
 	if (lv < 0)
 	{
@@ -6734,36 +6662,37 @@ qse_char_t* qse_awk_rtx_format (
 	qse_size_t stack_arg_idx = 1;
 	qse_awk_val_t* val;
 
-#define OUT_CHAR(c) \
-	do { \
-		if (qse_str_ccat (out, (c)) == -1) \
-		{ \
-			SETERR_COD (rtx, QSE_AWK_ENOMEM); \
-			return QSE_NULL; \
-		} \
-	} while (0)
+#define OUT_CHAR(c) QSE_BLOCK( \
+	if (qse_str_ccat (out, (c)) == -1) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		return QSE_NULL; \
+	} \
+)
 
-#define FMT_CHAR(c) \
-	do { \
-		if (qse_str_ccat (fbu, (c)) == -1) \
-		{ \
-			SETERR_COD (rtx, QSE_AWK_ENOMEM); \
-			return QSE_NULL; \
-		} \
-	} while (0)
+#define FMT_CHAR(c) QSE_BLOCK( \
+	if (qse_str_ccat (fbu, (c)) == -1) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		return QSE_NULL; \
+	} \
+)
 
-#define GROW(buf) \
-	do { \
-		if ((buf)->ptr != QSE_NULL) \
-		{ \
-			QSE_AWK_FREE (rtx->awk, (buf)->ptr); \
-			(buf)->ptr = QSE_NULL; \
-		} \
-		(buf)->len += (buf)->inc; \
-		(buf)->ptr = (qse_char_t*)QSE_AWK_ALLOC ( \
-			rtx->awk, (buf)->len * QSE_SIZEOF(qse_char_t)); \
-		if ((buf)->ptr == QSE_NULL) (buf)->len = 0; \
-	} while (0) 
+#define GROW(buf) QSE_BLOCK( \
+	if ((buf)->ptr != QSE_NULL) \
+	{ \
+		QSE_AWK_FREE (rtx->awk, (buf)->ptr); \
+		(buf)->ptr = QSE_NULL; \
+	} \
+	(buf)->len += (buf)->inc; \
+	(buf)->ptr = (qse_char_t*)QSE_AWK_ALLOC ( \
+		rtx->awk, (buf)->len * QSE_SIZEOF(qse_char_t)); \
+	if ((buf)->ptr == QSE_NULL) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		(buf)->len = 0; \
+	} \
+)
 
 	QSE_ASSERTX (rtx->format.tmp.ptr != QSE_NULL,
 		"run->format.tmp.ptr should have been assigned a pointer to a block of memory before this function has been called");
@@ -6808,7 +6737,6 @@ qse_char_t* qse_awk_rtx_format (
 		if (i < fmt_len && fmt[i] == QSE_T('*'))
 		{
 			qse_awk_val_t* v;
-			qse_real_t r;
 			qse_char_t* p;
 			int n;
 
@@ -6840,11 +6768,9 @@ qse_char_t* qse_awk_rtx_format (
 			}
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtonum (rtx, v, &width, &r);
+			n = qse_awk_rtx_valtolong (rtx, v, &width);
 			qse_awk_rtx_refdownval (rtx, v);
-
-			if (n == -1) return QSE_NULL; 
-			if (n == 1) width = (qse_long_t)r;
+			if (n <= -1) return QSE_NULL; 
 
 			do
 			{
@@ -6904,7 +6830,6 @@ qse_char_t* qse_awk_rtx_format (
 		if (i < fmt_len && fmt[i] == QSE_T('*'))
 		{
 			qse_awk_val_t* v;
-			qse_real_t r;
 			qse_char_t* p;
 			int n;
 
@@ -6936,28 +6861,18 @@ qse_char_t* qse_awk_rtx_format (
 			}
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtonum (rtx, v, &prec, &r);
+			n = qse_awk_rtx_valtolong (rtx, v, &prec);
 			qse_awk_rtx_refdownval (rtx, v);
-
-			if (n == -1) return QSE_NULL; 
-			if (n == 1) prec = (qse_long_t)r;
+			if (n <= -1) return QSE_NULL; 
 
 			do
 			{
-				n = rtx->awk->prm.sprintf (
-					rtx->awk,
+				n = qse_awk_sprintlong (
+					rtx->awk, 
 					rtx->format.tmp.ptr,
 					rtx->format.tmp.len,
-				#if QSE_SIZEOF_LONG_LONG > 0
-					QSE_T("%lld"), (long long)prec
-				#elif QSE_SIZEOF___INT64 > 0
-					QSE_T("%I64d"), (__int64)prec
-				#elif QSE_SIZEOF_LONG > 0
-					QSE_T("%ld"), (long)prec
-				#elif QSE_SIZEOF_INT > 0
-					QSE_T("%d"), (int)prec
-				#endif
-					);
+					prec
+				);
 				if (n == -1)
 				{
 					GROW (&rtx->format.tmp);
@@ -6966,7 +6881,6 @@ qse_char_t* qse_awk_rtx_format (
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL;
 					}
-
 					continue;
 				}
 
@@ -7007,7 +6921,6 @@ qse_char_t* qse_awk_rtx_format (
 		{
 			qse_awk_val_t* v;
 			qse_long_t l;
-			qse_real_t r;
 			qse_char_t* p;
 			int n;
 
@@ -7057,11 +6970,9 @@ qse_char_t* qse_awk_rtx_format (
 			}
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtonum (rtx, v, &l, &r);
+			n = qse_awk_rtx_valtolong (rtx, v, &l);
 			qse_awk_rtx_refdownval (rtx, v);
-
-			if (n == -1) return QSE_NULL; 
-			if (n == 1) l = (qse_long_t)r;
+			if (n <= -1) return QSE_NULL; 
 
 			do
 			{
@@ -7079,7 +6990,7 @@ qse_char_t* qse_awk_rtx_format (
 				#elif QSE_SIZEOF_INT > 0
 					(int)l
 				#endif
-					);
+				);
 					
 				if (n == -1)
 				{
@@ -7109,7 +7020,6 @@ qse_char_t* qse_awk_rtx_format (
 		         fmt[i] == QSE_T('f'))
 		{
 			qse_awk_val_t* v;
-			qse_long_t l;
 			qse_real_t r;
 			qse_char_t* p;
 			int n;
@@ -7145,11 +7055,9 @@ qse_char_t* qse_awk_rtx_format (
 			}
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtonum (rtx, v, &l, &r);
+			n = qse_awk_rtx_valtoreal (rtx, v, &r);
 			qse_awk_rtx_refdownval (rtx, v);
-
-			if (n == -1) return QSE_NULL;
-			if (n == 0) r = (qse_real_t)l;
+			if (n <= -1) return QSE_NULL;
 
 			do
 			{
