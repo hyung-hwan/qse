@@ -26,8 +26,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <pthread.h>
 #include <sys/time.h>
+
+#if defined(HAVE_PTHREAD)
+#include <pthread.h>
+#endif
 
 #if 0
 #include <openssl.h>
@@ -103,7 +106,9 @@ qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	httpd->listener.max = -1;
 	httpd->cbs = &default_cbs;
 
+#if defined(HAVE_PTHREAD)
 	pthread_mutex_init (&httpd->listener.mutex, QSE_NULL);
+#endif
 
 	return httpd;
 }
@@ -111,7 +116,9 @@ qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
 	/* TODO */
+#if defined(HAVE_PTHREAD)
 	pthread_mutex_destroy (&httpd->listener.mutex);
+#endif
 	free_listener_list (httpd, httpd->listener.list);
 	httpd->listener.list = QSE_NULL;
 }
@@ -951,8 +958,11 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 
 	init_client_array (httpd);
 
+#if defined(HAVE_PTHREAD)
 	/* start the response sender as a thread */
 	pthread_create (&response_thread_id, NULL, response_thread, httpd);
+/* TODO: error check */
+#endif
 
 	while (!httpd->stopreq)
 	{
@@ -1000,7 +1010,9 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 		}
 	}
 
+#if defined(HAVE_PTHREAD)
 	pthread_join (response_thread_id, NULL);
+#endif
 
 	fini_client_array (httpd);
 

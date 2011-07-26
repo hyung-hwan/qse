@@ -212,6 +212,8 @@ then
 	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
 fi
 
+AX_PTHREAD()
+
 AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
 AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
 AC_SUBST(QSE_SIZEOF_LONG, $ac_cv_sizeof_long)

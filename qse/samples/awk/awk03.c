@@ -1,5 +1,5 @@
 /*
- * $Id: awk03.c 481 2011-05-25 14:42:26Z hyunghwan.chung $
+ * $Id: awk03.c 523 2011-07-25 15:42:35Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -110,7 +110,7 @@ int main ()
 		}
 
 		qse_printf (QSE_T("return: [%.*s]\n"), (int)len, str);
-		qse_awk_rtx_free (rtx, str);
+		qse_awk_rtx_freemem (rtx, str);
 
 		/* clear the return value */
 		qse_awk_rtx_refdownval (rtx, v);

@@ -23,6 +23,18 @@ qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HT
 	return QSE_HTB_WALK_FORWARD;
 }
 
+static int range_not_satisfiable (qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_htre_t* req)
+{
+	const qse_mchar_t* msg;
+
+	msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
+	return qse_httpd_entasksendfmt (httpd, client,
+		QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+		req->version.major, req->version.minor,
+		(int)qse_mbslen(msg) + 4, msg
+	);
+}
+
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
@@ -83,34 +95,55 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 			}
 			else
 			{
-				const qse_mchar_t* range;
+				const qse_mchar_t* rangestr;
+				qse_http_range_t range;
 				if (st.st_size <= 0) st.st_size = 0;
 
-				range = qse_htre_gethdrval (req, "Range");
-				if (range)
-				{
-qse_printf (QSE_T("PARTIAL>>>> %S\n"), range);
-#if 0
-					if (qse_httpd_entasksendfmt (httpd, client,
-     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %sContent-Range: bytes %lld-%lld\r\n\r\n"), 
-						qse_htre_getmajorversion(req),
-						qse_htre_getminorversion(req),
-						(unsigned long long)st.st_size,
-						qse_htre_getqpathptr(req)) <= -1) 
+				rangestr = qse_htre_gethdrval (req, "Range");
+				if (rangestr)
+				{ 
+					if (qse_parsehttprange (rangestr, &range) <= -1)
 					{
-						close (fd);
-						goto oops;
+						if (range_not_satisfiable (httpd, client, req) <= -1) goto oops;
 					}
-#endif
-					if (qse_httpd_entasksendfmt (httpd, client,
-     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
-						qse_htre_getmajorversion(req),
-						qse_htre_getminorversion(req),
-						(unsigned long long)st.st_size,
-						qse_htre_getqpathptr(req)) <= -1) 
+					else
 					{
-						close (fd);
-						goto oops;
+						if (range.suffix)
+						{
+							if (range.to > st.st_size) range.to = st.st_size;
+							range.from = st.st_size - range.to;
+							range.to = range.to + range.from;
+							if (st.st_size > 0) range.to--;
+						}
+
+						if (range.from >= st.st_size)
+						{
+							if (range_not_satisfiable (httpd, client, req) <= -1) goto oops;
+						}
+						else
+						{
+							if (range.to >= st.st_size) range.to = st.st_size - 1;
+
+							if (qse_httpd_entasksendfmt (httpd, client,
+     							QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+								qse_htre_getmajorversion(req),
+								qse_htre_getminorversion(req),
+								(unsigned long long)(range.to - range.from + 1),
+								qse_htre_getqpathptr(req),
+								(unsigned long long)range.from,
+								(unsigned long long)range.to,
+								st.st_size) <= -1) 
+							{
+								close (fd);
+								goto oops;
+							}
+
+							if (qse_httpd_entasksendfile (httpd, client, fd, range.from, (range.to - range.from + 1)) <= -1) 
+							{
+								close (fd);
+								goto oops;
+							}
+						}
 					}
 				}
 				else
@@ -126,13 +159,14 @@ qse_printf (QSE_T("PARTIAL>>>> %S\n"), range);
 						close (fd);
 						goto oops;
 					}
+
+					if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) 
+					{
+						close (fd);
+						goto oops;
+					}
 				}
 
-				if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) 
-				{
-					close (fd);
-					goto oops;
-				}
 			}
 
 		}
