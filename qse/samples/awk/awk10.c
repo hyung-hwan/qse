@@ -158,7 +158,7 @@ int main ()
 				QSE_AWK_VAL_MAP_ITR_KEY(iptr)->ptr,
 				(int)str.len, str.ptr
 			);
-			qse_awk_rtx_free (rtx, str.ptr);
+			qse_awk_rtx_freemem (rtx, str.ptr);
 			
 			iptr = qse_awk_rtx_getnextmapvalitr (rtx, rtv, &itr);
 		}
@@ -176,7 +176,7 @@ int main ()
 		}
 	
 		qse_printf (QSE_T("ret [%.*s]\n"), (int)str.len, str.ptr);
-		qse_awk_rtx_free (rtx, str.ptr);
+		qse_awk_rtx_freemem (rtx, str.ptr);
 	}
 
 oops:

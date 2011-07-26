@@ -36,12 +36,13 @@ typedef qse_mbs_t qse_htob_t;
 /* octet string */
 typedef qse_mxstr_t qse_htos_t;
 
-typedef struct qse_http_version_t qse_http_version_t;
 struct qse_http_version_t
 {
 	short major;
 	short minor;
 };
+
+typedef struct qse_http_version_t qse_http_version_t;
 
 enum qse_http_method_t
 {
@@ -56,6 +57,14 @@ enum qse_http_method_t
 };
 
 typedef enum qse_http_method_t qse_http_method_t;
+
+struct qse_http_range_t
+{
+	int suffix; 
+	qse_ulong_t from;
+	qse_ulong_t to;
+};
+typedef struct qse_http_range_t qse_http_range_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,15 +84,17 @@ int qse_gethttpmethodtypefromstr (
 	qse_http_method_t* type
 );
 
-int qse_gethttpdatetime (
-	const qse_htoc_t* str,
-	qse_ntime_t*      t
+int qse_parsehttprange (
+	const qse_mchar_t* str,
+	qse_http_range_t* range
 );
 
-int qse_gethttpdatetimefromstr (
-	const qse_mcstr_t* str,
+/*
+int qse_parsehttpdatetime (
+	const qse_mchar_t* str,
 	qse_ntime_t*       t
 );
+*/
 
 #ifdef __cplusplus
 }

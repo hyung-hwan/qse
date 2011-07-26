@@ -28,8 +28,8 @@
 
 #include <pthread.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 typedef struct client_array_t client_array_t;
 

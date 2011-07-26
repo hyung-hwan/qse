@@ -20,20 +20,21 @@
 
 #include <qse/net/http.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include <qse/cmn/htb.h>
 
-const qse_htoc_t* qse_gethttpmethodname (qse_http_method_t type)
+const qse_mchar_t* qse_gethttpmethodname (qse_http_method_t type)
 {
-	static qse_htoc_t* names[]  =
+	static qse_mchar_t* names[]  =
 	{
-		"GET",
-		"HEAD",
-		"POST",
-		"PUT",
-		"DELETE",
-		"TRACE",
-		"OPTIONS",
-		"CONNECT"
+		QSE_MT("GET"),
+		QSE_MT("HEAD"),
+		QSE_MT("POST"),
+		QSE_MT("PUT"),
+		QSE_MT("DELETE"),
+		QSE_MT("TRACE"),
+		QSE_MT("OPTIONS"),
+		QSE_MT("CONNECT")
 	}; 
 
 	return (type < 0 || type >= QSE_COUNTOF(names))? QSE_NULL: names[type];
@@ -41,24 +42,25 @@ const qse_htoc_t* qse_gethttpmethodname (qse_http_method_t type)
 
 struct mtab_t
 {
-	const qse_htoc_t* name;
+	const qse_mchar_t* name;
 	qse_http_method_t type;
 };
 
 static struct mtab_t mtab[] =
 {
-	{ "CONNECT", QSE_HTTP_CONNECT },
-	{ "DELETE",  QSE_HTTP_DELETE },
-	{ "GET",     QSE_HTTP_GET },
-	{ "HEAD",    QSE_HTTP_HEAD },
-	{ "OPTIONS", QSE_HTTP_OPTIONS },
-	{ "POST",    QSE_HTTP_POST },
-	{ "PUT",     QSE_HTTP_PUT },
-	{ "TRACE",   QSE_HTTP_TRACE }
+	/* keep this table sorted by name for binary search */
+	{ QSE_MT("CONNECT"), QSE_HTTP_CONNECT },
+	{ QSE_MT("DELETE"),  QSE_HTTP_DELETE },
+	{ QSE_MT("GET"),     QSE_HTTP_GET },
+	{ QSE_MT("HEAD"),    QSE_HTTP_HEAD },
+	{ QSE_MT("OPTIONS"), QSE_HTTP_OPTIONS },
+	{ QSE_MT("POST"),    QSE_HTTP_POST },
+	{ QSE_MT("PUT"),     QSE_HTTP_PUT },
+	{ QSE_MT("TRACE"),   QSE_HTTP_TRACE }
 };
 
 int qse_gethttpmethodtype (
-	const qse_htoc_t* name,
+	const qse_mchar_t* name,
 	qse_http_method_t* type)
 {
 
@@ -134,16 +136,65 @@ int qse_gethttpmethodtypefromstr (
 	return -1;
 }
 
-int qse_gethttpdatetime (const qse_htoc_t* str, qse_ntime_t* t)
+int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 {
-/* TODO: */
-	return -1;
+	/* NOTE: this function does not support a range set 
+	 *       like bytes=1-20,30-50 */
+
+	qse_ulong_t from, to;
+	int suffix = 0;
+
+	if (str[0] != QSE_MT('b') ||
+	    str[1] != QSE_MT('y') ||
+	    str[2] != QSE_MT('t') ||
+	    str[3] != QSE_MT('e') ||
+	    str[4] != QSE_MT('s') ||
+	    str[5] != QSE_MT('=')) return -1;
+	
+	str += 6;
+
+	from = 0;
+	if (QSE_ISDIGIT(*str))
+	{
+		do
+		{
+			from = from * 10 + (*str - QSE_MT('0'));
+			str++;
+		}
+		while (QSE_ISDIGIT(*str));
+	}
+	else suffix = 1;
+
+	if (*str != QSE_MT('-')) return -1;
+	str++;
+
+	if (QSE_ISDIGIT(*str))
+	{
+		to = 0;
+		do
+		{
+			to = to * 10 + (*str - QSE_MT('0'));
+			str++;
+		}
+		while (QSE_ISDIGIT(*str));
+	}
+	else to = QSE_TYPE_MAX(qse_ulong_t); 
+
+	if (from > to) return -1;
+
+	range->suffix = suffix;
+	range->from = from;
+	range->to = to;
+	return 0;
 }
 
-int qse_gethttpdatetimefromstr (const qse_mcstr_t* str, qse_ntime_t* t)
+#if 0
+int qse_parsehttpdatetime (const qse_mchar_t* str, qse_ntime_t* t)
 {
 /* TODO: */
 	return -1;
 }
+#endif
+
 
 
