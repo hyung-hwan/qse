@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: run.c 520 2011-07-25 07:32:49Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -604,7 +604,8 @@ static int set_global (
 	return 0;
 }
 
-QSE_INLINE void qse_awk_rtx_setretval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+QSE_INLINE void qse_awk_rtx_setretval (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	qse_awk_rtx_refdownval (rtx, STACK_RETVAL(rtx));
 	STACK_RETVAL(rtx) = val;
@@ -612,7 +613,8 @@ QSE_INLINE void qse_awk_rtx_setretval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	qse_awk_rtx_refupval (rtx, val);
 }
 
-QSE_INLINE int qse_awk_rtx_setgbl (qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
+QSE_INLINE int qse_awk_rtx_setgbl (
+	qse_awk_rtx_t* rtx, int id, qse_awk_val_t* val)
 {
 	QSE_ASSERT (id >= 0 && id < (int)QSE_LDA_SIZE(rtx->awk->parse.gbls));
 	return set_global (rtx, (qse_size_t)id, QSE_NULL, val);

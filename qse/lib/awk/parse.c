@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: parse.c 520 2011-07-25 07:32:49Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -3354,7 +3354,8 @@ union folded_t
 typedef union folded_t folded_t;
 
 static int fold_constants_for_binop (
-	qse_awk_t* awk, qse_awk_nde_t* left, qse_awk_nde_t* right, int opcode, folded_t* folded)
+	qse_awk_t* awk, qse_awk_nde_t* left, qse_awk_nde_t* right,
+	int opcode, folded_t* folded)
 {
 	int fold = -1;
 
@@ -3529,6 +3530,72 @@ static int fold_constants_for_binop (
 	return fold;
 }
 
+static qse_awk_nde_t* new_int_node (
+	qse_awk_t* awk, qse_long_t lv, const qse_awk_loc_t* loc)
+{
+	qse_awk_nde_int_t* tmp;
+
+	tmp = (qse_awk_nde_int_t*) QSE_AWK_ALLOC (
+		awk, QSE_SIZEOF(qse_awk_nde_int_t));
+	if (tmp == QSE_NULL) 
+	{
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, loc);
+		return QSE_NULL;
+	}
+
+	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp));
+	tmp->type = QSE_AWK_NDE_INT;
+	tmp->loc = *loc;
+	tmp->val = lv;
+
+	return (qse_awk_nde_t*)tmp;
+}
+
+static qse_awk_nde_t* new_real_node (	
+	qse_awk_t* awk, qse_real_t rv, const qse_awk_loc_t* loc)
+{
+	qse_awk_nde_real_t* tmp;
+
+	tmp = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (
+		awk, QSE_SIZEOF(qse_awk_nde_real_t));
+	if (tmp == QSE_NULL) 
+	{
+		SETERR_LOC (awk, QSE_AWK_ENOMEM, loc);
+		return QSE_NULL;
+	}
+
+	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp));
+	tmp->type = QSE_AWK_NDE_REAL;
+	tmp->loc = *loc;
+	tmp->val = rv;
+
+	return (qse_awk_nde_t*)tmp;
+}
+
+static QSE_INLINE void update_int_node (
+	qse_awk_t* awk, qse_awk_nde_int_t* node, qse_long_t lv)
+{
+	node->val = lv;
+	if (node->str)
+	{
+		QSE_AWK_FREE (awk, node->str);
+		node->str = QSE_NULL;
+		node->len = 0;
+	}
+}
+
+static QSE_INLINE void update_real_node (
+	qse_awk_t* awk, qse_awk_nde_real_t* node, qse_real_t rv)
+{
+	node->val = rv;
+	if (node->str)
+	{
+		QSE_AWK_FREE (awk, node->str);
+		node->str = QSE_NULL;
+		node->len = 0;
+	}
+}
+
 static qse_awk_nde_t* parse_binary (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc, 
 	int skipnl, const binmap_t* binmap,
@@ -3579,120 +3646,78 @@ static qse_awk_nde_t* parse_binary (
 		}
 
 		fold = fold_constants_for_binop (awk, left, right, opcode, &folded);
-		if (fold == QSE_AWK_NDE_INT)
+		switch (fold)
 		{
-			if (fold == left->type)
-			{
-				qse_awk_clrpt (awk, right);
-				((qse_awk_nde_int_t*)left)->val = folded.l;
-				if (((qse_awk_nde_int_t*)left)->str)
+			case QSE_AWK_NDE_INT:
+				if (fold == left->type)
 				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
-					((qse_awk_nde_int_t*)left)->str = QSE_NULL;
-					((qse_awk_nde_int_t*)left)->len = 0;
+					qse_awk_clrpt (awk, right);
+					update_int_node (awk, (qse_awk_nde_int_t*)left, folded.l);
 				}
-			}
-			else if (fold == right->type)
-			{
-				qse_awk_clrpt (awk, left);
-				((qse_awk_nde_int_t*)right)->val = folded.l;
-				if (((qse_awk_nde_int_t*)right)->str)
+				else if (fold == right->type)
 				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)right)->str);
-					((qse_awk_nde_int_t*)right)->str = QSE_NULL;
-					((qse_awk_nde_int_t*)right)->len = 0;
+					qse_awk_clrpt (awk, left);
+					update_int_node (awk, (qse_awk_nde_int_t*)right, folded.l);
+					left = right;
 				}
-				left = right;
-			}
-			else 
-			{
-				qse_awk_nde_int_t* tmp;
-
-				qse_awk_clrpt (awk, right);
-				qse_awk_clrpt (awk, left);
-
-				tmp = (qse_awk_nde_int_t*) QSE_AWK_ALLOC (
-					awk, QSE_SIZEOF(qse_awk_nde_int_t));
-				if (tmp == QSE_NULL) 
+				else 
 				{
+					qse_awk_clrpt (awk, right);
+					qse_awk_clrpt (awk, left);
+	
+					left = new_int_node (awk, folded.l, xloc);
+					if (left == QSE_NULL) return QSE_NULL;
+				}
+
+				break;
+
+			case QSE_AWK_NDE_REAL:
+				if (fold == left->type)
+				{
+					qse_awk_clrpt (awk, right);
+					update_real_node (awk, (qse_awk_nde_real_t*)left, folded.r);
+				}
+				else if (fold == right->type)
+				{
+					qse_awk_clrpt (awk, left);
+					update_real_node (awk, (qse_awk_nde_real_t*)right, folded.r);
+					left = right;
+				}
+				else 
+				{
+					qse_awk_clrpt (awk, right);
+					qse_awk_clrpt (awk, left);
+
+					left = new_real_node (awk, folded.r, xloc);
+					if (left == QSE_NULL) return QSE_NULL;
+				}
+
+				break;
+
+			default:
+			{
+				qse_awk_nde_exp_t* nde;
+	
+				nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
+					awk, QSE_SIZEOF(qse_awk_nde_exp_t));
+				if (nde == QSE_NULL)  
+				{
+					qse_awk_clrpt (awk, right);
+					qse_awk_clrpt (awk, left);
 					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
 					return QSE_NULL;
 				}
-				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_int_t));
-				tmp->type = QSE_AWK_NDE_INT;
-				tmp->loc = *xloc;
-				tmp->val = folded.l;
-				left = (qse_awk_nde_t*)tmp;
+	
+				nde->type = QSE_AWK_NDE_EXP_BIN;
+				nde->loc = *xloc;
+				nde->next = QSE_NULL;
+				nde->opcode = opcode; 
+				nde->left = left;
+				nde->right = right;
+	
+				left = (qse_awk_nde_t*)nde;
+				break;
 			}
-		}
-		else if (fold == QSE_AWK_NDE_REAL)
-		{
-			if (fold == left->type)
-			{
-				qse_awk_clrpt (awk, right);
-				((qse_awk_nde_real_t*)left)->val = folded.r;
-				if (((qse_awk_nde_real_t*)left)->str)
-				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)left)->str);
-					((qse_awk_nde_real_t*)left)->str = QSE_NULL;
-					((qse_awk_nde_real_t*)left)->len = 0;
-				}
-			}
-			else if (fold == right->type)
-			{
-				qse_awk_clrpt (awk, left);
-				((qse_awk_nde_real_t*)right)->val = folded.r;
-				if (((qse_awk_nde_real_t*)right)->str)
-				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)right)->str);
-					((qse_awk_nde_real_t*)right)->str = QSE_NULL;
-					((qse_awk_nde_real_t*)right)->len = 0;
-				}
-				left = right;
-			}
-			else 
-			{
-				qse_awk_nde_real_t* tmp;
-
-				qse_awk_clrpt (awk, right);
-				qse_awk_clrpt (awk, left);
-
-				tmp = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (
-					awk, QSE_SIZEOF(qse_awk_nde_real_t));
-				if (tmp == QSE_NULL) 
-				{
-					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-					return QSE_NULL;
-				}
-				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_real_t));
-				tmp->type = QSE_AWK_NDE_REAL;
-				tmp->loc = *xloc;
-				tmp->val = folded.r;
-				left = (qse_awk_nde_t*)tmp;
-			}
-		}
-		else
-		{
-			qse_awk_nde_exp_t* nde;
-
-			nde = (qse_awk_nde_exp_t*) QSE_AWK_ALLOC (
-				awk, QSE_SIZEOF(qse_awk_nde_exp_t));
-			if (nde == QSE_NULL)  
-			{
-				qse_awk_clrpt (awk, right);
-				qse_awk_clrpt (awk, left);
-				SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-				return QSE_NULL;
-			}
-
-			nde->type = QSE_AWK_NDE_EXP_BIN;
-			nde->loc = *xloc;
-			nde->next = QSE_NULL;
-			nde->opcode = opcode; 
-			nde->left = left;
-			nde->right = right;
-
-			left = (qse_awk_nde_t*)nde;
 		}
 	}
 	while (1);
@@ -4073,69 +4098,27 @@ static qse_awk_nde_t* parse_unary (
 		case QSE_AWK_NDE_INT:
 			if (left->type == fold)
 			{
-				((qse_awk_nde_int_t*)left)->val = folded.l;
-				if (((qse_awk_nde_int_t*)left)->str)
-				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_int_t*)left)->str);
-					((qse_awk_nde_int_t*)left)->str = QSE_NULL;
-					((qse_awk_nde_int_t*)left)->len = 0;
-				}
+				update_int_node (awk, (qse_awk_nde_int_t*)left, folded.l);
 				return left;
 			}
 			else
 			{
-				qse_awk_nde_int_t* tmp;
-
 				QSE_ASSERT (left->type == QSE_AWK_NDE_REAL);
 				qse_awk_clrpt (awk, left);
-
-				tmp = (qse_awk_nde_int_t*) QSE_AWK_ALLOC (
-					awk, QSE_SIZEOF(qse_awk_nde_int_t));
-				if (tmp == QSE_NULL) 
-				{
-					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-					return QSE_NULL;
-				}
-				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_int_t));
-				tmp->type = QSE_AWK_NDE_INT;
-				tmp->loc = *xloc;
-				tmp->val = folded.l;
-
-				return (qse_awk_nde_t*)tmp;
+				return new_int_node (awk, folded.l, xloc);
 			}
 
 		case QSE_AWK_NDE_REAL:
 			if (left->type == fold)
 			{
-				((qse_awk_nde_real_t*)left)->val = folded.r;
-				if (((qse_awk_nde_real_t*)left)->str)
-				{
-					QSE_AWK_FREE (awk, ((qse_awk_nde_real_t*)left)->str);
-					((qse_awk_nde_real_t*)left)->str = QSE_NULL;
-					((qse_awk_nde_real_t*)left)->len = 0;
-				}
+				update_real_node (awk, (qse_awk_nde_real_t*)left, folded.r);
 				return left;
 			}
 			else
 			{
-				qse_awk_nde_real_t* tmp;
-
 				QSE_ASSERT (left->type == QSE_AWK_NDE_INT);
 				qse_awk_clrpt (awk, left);
-
-				tmp = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (
-					awk, QSE_SIZEOF(qse_awk_nde_real_t));
-				if (tmp == QSE_NULL) 
-				{
-					SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-					return QSE_NULL;
-				}
-				QSE_MEMSET (tmp, 0, QSE_SIZEOF(qse_awk_nde_real_t));
-				tmp->type = QSE_AWK_NDE_REAL;
-				tmp->loc = *xloc;
-				tmp->val = folded.r;
-
-				return (qse_awk_nde_t*)tmp;
+				return new_real_node (awk, folded.r, xloc);
 			}
 
 		default:
@@ -4320,20 +4303,17 @@ static qse_awk_nde_t* parse_primary_nogetline (
 	{
 		qse_awk_nde_int_t* nde;
 
-		nde = (qse_awk_nde_int_t*) QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(qse_awk_nde_int_t));
-		if (nde == QSE_NULL)
-		{
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
-		}
+		nde = (qse_awk_nde_int_t*)new_int_node (
+			awk, 
+			qse_awk_strxtolong (awk, 
+				QSE_STR_PTR(awk->tok.name),
+				QSE_STR_LEN(awk->tok.name), 
+				0, QSE_NULL
+			),
+			xloc
+		);
+		if (nde == QSE_NULL) return QSE_NULL;
 
-		nde->type = QSE_AWK_NDE_INT;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		nde->val = qse_awk_strxtolong (awk, 
-			QSE_STR_PTR(awk->tok.name), 
-			QSE_STR_LEN(awk->tok.name), 0, QSE_NULL);
 		nde->str = QSE_AWK_STRXDUP (awk,
 			QSE_STR_PTR(awk->tok.name),
 			QSE_STR_LEN(awk->tok.name));
@@ -4361,20 +4341,17 @@ static qse_awk_nde_t* parse_primary_nogetline (
 	{
 		qse_awk_nde_real_t* nde;
 
-		nde = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(qse_awk_nde_real_t));
-		if (nde == QSE_NULL)
-		{
-			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
-		}
+		nde = (qse_awk_nde_real_t*) new_real_node (
+			awk, 
+			qse_awk_strxtoreal (awk, 
+				QSE_STR_PTR(awk->tok.name), 
+				QSE_STR_LEN(awk->tok.name),
+				QSE_NULL
+			),
+			xloc
+		);
+		if (nde == QSE_NULL) return QSE_NULL;
 
-		nde->type = QSE_AWK_NDE_REAL;
-		nde->loc = *xloc;
-		nde->next = QSE_NULL;
-		nde->val = qse_awk_strxtoreal (awk, 
-			QSE_STR_PTR(awk->tok.name), 
-			QSE_STR_LEN(awk->tok.name), QSE_NULL);
 		nde->str = QSE_AWK_STRXDUP (awk,
 			QSE_STR_PTR(awk->tok.name),
 			QSE_STR_LEN(awk->tok.name));
