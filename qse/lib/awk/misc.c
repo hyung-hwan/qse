@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
+ * $Id: misc.c 522 2011-07-25 13:08:07Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1133,7 +1133,7 @@ int qse_awk_sprintreal (
 	return awk->prm.sprintf (
 		awk, buf, len,
 	#if QSE_SIZEOF_LONG_DOUBLE > 0
-		QSE_T("%Lf"), (long long)num
+		QSE_T("%Lf"), (long double)num
 	#elif QSE_SIZEOF_DOUBLE > 0
 		QSE_T("%f"), (double)num
 	#else
