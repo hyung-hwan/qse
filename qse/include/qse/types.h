@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 510 2011-07-20 16:17:16Z hyunghwan.chung $
+ * $Id: types.h 524 2011-07-26 15:41:20Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -164,6 +164,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef __uint8_t qse_uint8_t;
 #endif
 
+#ifdef QSE_HAVE_INT32_T
+#	define QSE_SIZEOF_INT16_T 1
+#	define QSE_SIZEOF_UINT16_T 1
+#endif
+
 /** @typedef qse_int16_t
  * The qse_int16_t defines an 16-bit signed integer type.
  */
@@ -185,6 +190,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT16_T
 	typedef __int16_t qse_int16_t;
 	typedef __uint16_t qse_uint16_t;
+#endif
+
+#ifdef QSE_HAVE_INT32_T
+#	define QSE_SIZEOF_INT16_T 2
+#	define QSE_SIZEOF_UINT16_T 2
 #endif
 
 /** @typedef qse_int32_t
@@ -213,6 +223,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT32_T
 	typedef __int32_t qse_int32_t;
 	typedef __uint32_t qse_uint32_t;
+#endif
+
+#ifdef QSE_HAVE_INT32_T
+#	define QSE_SIZEOF_INT32_T 4
+#	define QSE_SIZEOF_UINT32_T 4
 #endif
 
 /** @typedef qse_int64_t
@@ -248,6 +263,11 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef __uint64_t qse_uint64_t;
 #endif
 
+#ifdef QSE_HAVE_INT64_T
+#	define QSE_SIZEOF_INT64_T 8
+#	define QSE_SIZEOF_UINT64_T 8
+#endif
+
 #if QSE_SIZEOF_INT == 16
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
@@ -273,6 +293,11 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT128_T
 	typedef __int128_t qse_int128_t;
 	typedef __uint128_t qse_uint128_t;
+#endif
+
+#ifdef QSE_HAVE_INT128_T
+#	define QSE_SIZEOF_INT128_T 16
+#	define QSE_SIZEOF_UINT128_T 16
 #endif
 
 /**
@@ -511,8 +536,8 @@ typedef struct qse_wcstr_t qse_wcstr_t;
  */
 struct qse_cptl_t
 {
-	const void* ptr;
-	qse_size_t  len;
+	const void* ptr; /**< pointer */
+	qse_size_t  len; /**< length */
 };
 typedef struct qse_cptl_t qse_cptl_t;
 
@@ -521,19 +546,19 @@ typedef struct qse_cptl_t qse_cptl_t;
  */
 struct qse_xptl_t
 {
-	void*       ptr;
-	qse_size_t  len;
+	void*       ptr; /**< pointer */
+	qse_size_t  len; /**< length */
 };
 typedef struct qse_xptl_t qse_xptl_t;
 
 /** 
  * allocate a memory chunk of the size @a n.
- * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+ * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
 typedef void* (*qse_mmgr_alloc_t)   (void* udd, qse_size_t n);
 /** 
  * resize a memory chunk pointed to by @a ptr to the size @a n.
- * @return a pointer to a memory chunk on success, QSE_NULL on failure.
+ * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
 typedef void* (*qse_mmgr_realloc_t) (void* udd, void* ptr, qse_size_t n);
 /**
@@ -561,21 +586,32 @@ struct qse_mmgr_t
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
 
-/* file offset */
+/**
+ * The #qse_foff_t type defines an integer that can represent a file offset.
+ * Depending on your system, it's defined to one of #qse_int64_t, #qse_int32_t,
+ * and #qse_int16_t.
+ */
 #if defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF64_T==8)
 	typedef qse_int64_t qse_foff_t;
+#	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT64_T
 #elif defined(QSE_HAVE_INT64_T) && (QSE_SIZEOF_OFF_T==8)
 	typedef qse_int64_t qse_foff_t;
+#	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT64_T
 #elif defined(QSE_HAVE_INT32_T) && (QSE_SIZEOF_OFF_T==4)
 	typedef qse_int32_t qse_foff_t;
+#	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT32_T
 #elif defined(QSE_HAVE_INT16_T) && (QSE_SIZEOF_OFF_T==2)
 	typedef qse_int16_t qse_foff_t;
+#	define QSE_SIZEOF_FOFF_T QSE_SIZEOF_INT16_T
 #else
+	typedef qse_int32_t qse_foff_t; /* this line is for doxygen */
 #    error Unsupported platform
 #endif
 
-/* The qse_ubi_t type defines a union type that includes most of built-in 
- * data types and numeric types defined in the library. */
+/** 
+ * The qse_ubi_t type defines a union type that includes most of built-in 
+ * data types and numeric types defined in the library.
+ */
 union qse_ubi_t
 {
 	char           c;
@@ -633,7 +669,5 @@ union qse_ubi_t
 	qse_foff_t     foff;
 };
 typedef union qse_ubi_t qse_ubi_t;
-
-
 
 #endif
