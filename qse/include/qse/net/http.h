@@ -21,13 +21,16 @@
 #ifndef _QSE_NET_HTTP_H_
 #define _QSE_NET_HTTP_H_
 
+/** @file
+ * This file provides basic data types and functions for the http protocol.
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/time.h>
 
-/*typedef qse_byte_t qse_htoc_t;*/
 typedef qse_mchar_t qse_htoc_t;
 
 /* octet buffer */
@@ -36,14 +39,20 @@ typedef qse_mbs_t qse_htob_t;
 /* octet string */
 typedef qse_mxstr_t qse_htos_t;
 
+/**
+ * The qse_http_version_t type defines http version.
+ */
 struct qse_http_version_t
 {
-	short major;
-	short minor;
+	short major; /**< major version */
+	short minor; /**< minor version */
 };
 
 typedef struct qse_http_version_t qse_http_version_t;
 
+/**
+ * The qse_http_method_t type defines http methods .
+ */
 enum qse_http_method_t
 {
 	QSE_HTTP_GET,
@@ -58,11 +67,44 @@ enum qse_http_method_t
 
 typedef enum qse_http_method_t qse_http_method_t;
 
+/** 
+ * The #qse_http_range_int_t type defines an integer that can represent
+ * a range offset. Depening on the size of #qse_foff_t, it is defined to
+ * either #qse_foff_t or #qse_ulong_t.
+ */
+#if defined(QSE_SIZEOF_FOFF_T) && \
+    defined(QSE_SIZEOF_ULONG_T) && \
+    (QSE_SIZEOF_FOFF_T > QSE_SIZEOF_ULONG_T)
+typedef qse_foff_t qse_http_range_int_t;
+#else
+typedef qse_ulong_t qse_http_range_int_t;
+#endif
+
+/**
+ * The qse_http_range_t type defines a structure that can represent
+ * a value for the @b Range: http header. 
+ *
+ * If suffix is non-zero, 'from' is meaningleass and 'to' indicates 
+ * the number of bytes from the back. 
+ *  - -500    => last 500 bytes
+ *
+ * You should adjust a range when the size that this range belongs to is 
+ * made known. See this code:
+ * @code
+ *  range.from = total_size - range.to;
+ *  range.to = range.to + range.from - 1;
+ * @endcode
+ *
+ * If suffix is zero, 'from' and 'to' represents a proper range where
+ * the value of 0 indicates the first byte. This doesn't require any adjustment.
+ *  - 0-999   => first 1000 bytes
+ *  - 99-     => from the 100th bytes to the end.
+ */
 struct qse_http_range_t
 {
-	int suffix; 
-	qse_ulong_t from;
-	qse_ulong_t to;
+	int suffix;                /**< suffix indicator */
+	qse_http_range_int_t from; /**< starting offset */
+	qse_http_range_int_t to;   /**< ending offset */
 };
 typedef struct qse_http_range_t qse_http_range_t;
 

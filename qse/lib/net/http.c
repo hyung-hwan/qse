@@ -141,7 +141,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 	/* NOTE: this function does not support a range set 
 	 *       like bytes=1-20,30-50 */
 
-	qse_ulong_t from, to;
+	qse_http_range_int_t from, to;
 	int suffix = 0;
 
 	if (str[0] != QSE_MT('b') ||
