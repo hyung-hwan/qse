@@ -165,9 +165,9 @@ void qse_htrd_setrecbs (
  * callback function if it has processed a proper htrd request. 
  */
 int qse_htrd_feed (
-	qse_htrd_t*       htrd, /**< htrd */
-	const qse_htoc_t* req,  /**< request octets */
-	qse_size_t        len   /**< number of octets */
+	qse_htrd_t*        htrd, /**< htrd */
+	const qse_mchar_t* req,  /**< request octets */
+	qse_size_t         len   /**< number of octets */
 );
 
 int qse_htrd_read (

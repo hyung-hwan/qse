@@ -77,7 +77,7 @@ const qse_mchar_t* qse_htre_gethdrval (
 {
 	qse_htb_pair_t* pair;
 	pair = qse_htb_search (&re->hdrtab, name, qse_mbslen(name));
-	if (pair == QSE_NULL) return pair;
+	if (pair == QSE_NULL) return QSE_NULL;
 	return QSE_HTB_VPTR(pair);
 }
 

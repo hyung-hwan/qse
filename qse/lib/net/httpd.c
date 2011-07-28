@@ -778,7 +778,7 @@ static int make_fd_set_from_client_array (qse_httpd_t* httpd, fd_set* r, fd_set*
 	{
 		if (ca->data[fd].htrd) 
 		{
-			if (r) 
+			if (r && !ca->data[fd].bad) 
 			{
 				FD_SET (ca->data[fd].handle.i, r);
 				if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
@@ -860,7 +860,10 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerro
 			/* break; */
 			continue;
 		}
-		if (n == 0) continue;
+		if (n == 0) 
+		{
+			continue;
+		}
 
 		for (fd = 0; fd < httpd->client.array.capa; fd++)
 		{
@@ -873,9 +876,15 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerro
 				if (client->bad) 
 				{
 					/*send (client->handle, i, "INTERNAL SERVER ERROR..", ...);*/
-					shutdown (client->handle.i, 0);
+					/*shutdown (client->handle.i, 0);*/
+					pthread_mutex_lock (&httpd->client.mutex);
+					delete_from_client_array (httpd, fd);     
+					pthread_mutex_unlock (&httpd->client.mutex);
 				}
-				else if (client->task.queue.count > 0) perform_task (httpd, client);
+				else if (client->task.queue.count > 0) 
+				{
+					perform_task (httpd, client);
+				}
 			}
 		
 		}
@@ -887,7 +896,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerro
 
 static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_htoc_t buf[1024];
+	qse_mchar_t buf[1024];
 	qse_ssize_t m;
 
 reread:
@@ -974,7 +983,10 @@ int qse_httpd_loop (qse_httpd_t* httpd)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
+		pthread_mutex_lock (&httpd->client.mutex);
 		max = make_fd_set_from_client_array (httpd, &r, QSE_NULL);
+		pthread_mutex_unlock (&httpd->client.mutex);
+
 		n = select (max + 1, &r, NULL, NULL, &tv);
 		if (n <= -1)
 		{
@@ -997,14 +1009,18 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 
 			if (!client->htrd) continue;
 
-			if (FD_ISSET(client->handle.i, &r)) 
+			if (FD_ISSET(client->handle.i, &r))
 			{
 				/* got input */
 				if (read_from_client (httpd, client) <= -1)
 				{
+					qse_httpd_markclientbad (httpd, client);
+					shutdown (client->handle.i, 0);
+				#if 0
 					pthread_mutex_lock (&httpd->client.mutex);
 					delete_from_client_array (httpd, fd);     
 					pthread_mutex_unlock (&httpd->client.mutex);
+				#endif
 				}
 			}
 		}

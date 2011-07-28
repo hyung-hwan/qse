@@ -31,8 +31,6 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/time.h>
 
-typedef qse_mchar_t qse_htoc_t;
-
 /* octet buffer */
 typedef qse_mbs_t qse_htob_t;
 
@@ -80,11 +78,20 @@ typedef qse_foff_t qse_http_range_int_t;
 typedef qse_ulong_t qse_http_range_int_t;
 #endif
 
+enum qse_http_range_type_t
+{
+	QSE_HTTP_RANGE_NONE,
+	QSE_HTTP_RANGE_PROPER,
+	QSE_HTTP_RANGE_SUFFIX
+};
+typedef enum qse_http_range_type_t qse_http_range_type_t;
 /**
  * The qse_http_range_t type defines a structure that can represent
  * a value for the @b Range: http header. 
  *
- * If suffix is non-zero, 'from' is meaningleass and 'to' indicates 
+ * If type is #QSE_HTTP_RANGE_NONE, this range is not valid.
+ * 
+ * If type is #QSE_HTTP_RANGE_SUFFIX, 'from' is meaningleass and 'to' indicates 
  * the number of bytes from the back. 
  *  - -500    => last 500 bytes
  *
@@ -95,16 +102,17 @@ typedef qse_ulong_t qse_http_range_int_t;
  *  range.to = range.to + range.from - 1;
  * @endcode
  *
- * If suffix is zero, 'from' and 'to' represents a proper range where
- * the value of 0 indicates the first byte. This doesn't require any adjustment.
+ * If type is #QSE_HTTP_RANGE_PROPER, 'from' and 'to' represents a proper range
+ * where the value of 0 indicates the first byte. This doesn't require any 
+ * adjustment.
  *  - 0-999   => first 1000 bytes
  *  - 99-     => from the 100th bytes to the end.
  */
 struct qse_http_range_t
 {
-	int suffix;                /**< suffix indicator */
-	qse_http_range_int_t from; /**< starting offset */
-	qse_http_range_int_t to;   /**< ending offset */
+	qse_http_range_type_t type; /**< type indicator */
+	qse_http_range_int_t from;  /**< starting offset */
+	qse_http_range_int_t to;    /**< ending offset */
 };
 typedef struct qse_http_range_t qse_http_range_t;
 
@@ -112,12 +120,12 @@ typedef struct qse_http_range_t qse_http_range_t;
 extern "C" {
 #endif
 
-const qse_htoc_t* qse_gethttpmethodname (
+const qse_mchar_t* qse_gethttpmethodname (
 	qse_http_method_t type
 );
 
 int qse_gethttpmethodtype (
-	const qse_htoc_t* name, 
+	const qse_mchar_t* name, 
 	qse_http_method_t* method
 );
 
