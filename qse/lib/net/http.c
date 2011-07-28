@@ -142,7 +142,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 	 *       like bytes=1-20,30-50 */
 
 	qse_http_range_int_t from, to;
-	int suffix = 0;
+	int type = QSE_HTTP_RANGE_PROPER;
 
 	if (str[0] != QSE_MT('b') ||
 	    str[1] != QSE_MT('y') ||
@@ -163,7 +163,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 		}
 		while (QSE_ISDIGIT(*str));
 	}
-	else suffix = 1;
+	else type = QSE_HTTP_RANGE_SUFFIX;
 
 	if (*str != QSE_MT('-')) return -1;
 	str++;
@@ -182,7 +182,7 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 
 	if (from > to) return -1;
 
-	range->suffix = suffix;
+	range->type = type;
 	range->from = from;
 	range->to = to;
 	return 0;

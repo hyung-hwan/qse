@@ -24,58 +24,58 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (htrd)
 
-static const qse_htoc_t NUL = '\0';
+static const qse_mchar_t NUL = QSE_MT('\0');
 
-static QSE_INLINE int is_whspace_octet (qse_htoc_t c)
+static QSE_INLINE int is_whspace_octet (qse_mchar_t c)
 {
-	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+	return c == QSE_MT(' ') || c == QSE_MT('\t') || c == QSE_MT('\r') || c == QSE_MT('\n');
 }
 
-static QSE_INLINE int is_space_octet (qse_htoc_t c)
+static QSE_INLINE int is_space_octet (qse_mchar_t c)
 {
 	return c == ' ' || c == '\t' || c == '\r';
 }
 
-static QSE_INLINE int is_purespace_octet (qse_htoc_t c)
+static QSE_INLINE int is_purespace_octet (qse_mchar_t c)
 {
 	return c == ' ' || c == '\t';
 }
 
-static QSE_INLINE int is_upalpha_octet (qse_htoc_t c)
+static QSE_INLINE int is_upalpha_octet (qse_mchar_t c)
 {
 	return c >= 'A' && c <= 'Z';
 }
 
-static QSE_INLINE int is_loalpha_octet (qse_htoc_t c)
+static QSE_INLINE int is_loalpha_octet (qse_mchar_t c)
 {
 	return c >= 'a' && c <= 'z';
 }
 
-static QSE_INLINE int is_alpha_octet (qse_htoc_t c)
+static QSE_INLINE int is_alpha_octet (qse_mchar_t c)
 {
 	return (c >= 'A' && c <= 'Z') ||
 	       (c >= 'a' && c <= 'z');
 }
 
-static QSE_INLINE int is_digit_octet (qse_htoc_t c)
+static QSE_INLINE int is_digit_octet (qse_mchar_t c)
 {
 	return c >= '0' && c <= '9';
 }
 
-static QSE_INLINE int is_xdigit_octet (qse_htoc_t c)
+static QSE_INLINE int is_xdigit_octet (qse_mchar_t c)
 {
 	return (c >= '0' && c <= '9') ||
 	       (c >= 'A' && c <= 'F') ||
 	       (c >= 'a' && c <= 'f');
 }
 
-static QSE_INLINE int digit_to_num (qse_htoc_t c)
+static QSE_INLINE int digit_to_num (qse_mchar_t c)
 {
 	if (c >= '0' && c <= '9') return c - '0';
 	return -1;
 }
 
-static QSE_INLINE int xdigit_to_num (qse_htoc_t c)
+static QSE_INLINE int xdigit_to_num (qse_mchar_t c)
 {
 	if (c >= '0' && c <= '9') return c - '0';
 	if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
@@ -85,7 +85,7 @@ static QSE_INLINE int xdigit_to_num (qse_htoc_t c)
 
 static QSE_INLINE int push_to_buffer (
 	qse_htrd_t* htrd, qse_htob_t* octb,
-	const qse_htoc_t* ptr, qse_size_t len)
+	const qse_mchar_t* ptr, qse_size_t len)
 {
 	if (qse_mbs_ncat (octb, ptr, len) == (qse_size_t)-1) 
 	{
@@ -198,10 +198,10 @@ void qse_htrd_fini (qse_htrd_t* htrd)
 	qse_mbs_fini (&htrd->tmp.qparam);
 }
 
-static qse_htoc_t* parse_initial_line (
-	qse_htrd_t* htrd, qse_htoc_t* line)
+static qse_mchar_t* parse_initial_line (
+	qse_htrd_t* htrd, qse_mchar_t* line)
 {
-	qse_htoc_t* p = line;
+	qse_mchar_t* p = line;
 	qse_mcstr_t tmp;
 	qse_http_method_t mtype;
 
@@ -225,7 +225,7 @@ static qse_htoc_t* parse_initial_line (
 		qse_htre_setqmethod (&htrd->re, mtype);
 	}
 	else if ((htrd->option & QSE_HTRD_RESPONSE) &&
-	         qse_mbsxcmp (tmp.ptr, tmp.len, "HTTP") == 0)
+	         qse_mbsxcmp (tmp.ptr, tmp.len, QSE_MT("HTTP")) == 0)
 	{
 		/* it begins with HTTP. it may be a response */
 		htrd->retype = QSE_HTRD_RETYPE_S;
@@ -290,7 +290,7 @@ static qse_htoc_t* parse_initial_line (
 	}
 	else
 	{
-		qse_htoc_t* out;
+		qse_mchar_t* out;
 		qse_mcstr_t param;
 
 		/* method name must be followed by space */
@@ -437,12 +437,12 @@ void qse_htrd_setrecbs (qse_htrd_t* htrd, const qse_htrd_recbs_t* recbs)
 #define octet_toupper(c) (((c) >= 'a' && (c) <= 'z') ? ((c) & ~0x20) : (c))
 
 static QSE_INLINE int compare_octets (
-     const qse_htoc_t* s1, qse_size_t len1,
-     const qse_htoc_t* s2, qse_size_t len2)
+     const qse_mchar_t* s1, qse_size_t len1,
+     const qse_mchar_t* s2, qse_size_t len2)
 {
 	qse_char_t c1, c2;
-	const qse_htoc_t* end1 = s1 + len1;
-	const qse_htoc_t* end2 = s2 + len2;
+	const qse_mchar_t* end1 = s1 + len1;
+	const qse_mchar_t* end2 = s2 + len2;
 
 	while (s1 < end1)
 	{
@@ -487,7 +487,7 @@ static QSE_INLINE int capture_content_length (
 	qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	qse_size_t len = 0, off = 0, tmp;
-	const qse_htoc_t* ptr = QSE_HTB_VPTR(pair);
+	const qse_mchar_t* ptr = QSE_HTB_VPTR(pair);
 
 	while (off < QSE_HTB_VLEN(pair))
 	{
@@ -577,7 +577,7 @@ static QSE_INLINE int capture_key_header (
 {
 	static struct
 	{
-		const qse_htoc_t* ptr;
+		const qse_mchar_t* ptr;
 		qse_size_t        len;
 		int (*handler) (qse_htrd_t*, qse_htb_pair_t*);
 	} hdrtab[] = 
@@ -653,7 +653,7 @@ static qse_htb_pair_t* hdr_cbserter (
 		/* the key exists. let's combine values, each separated 
 		 * by a comma */
 		struct hdr_cmb_t* cmb;
-		qse_htoc_t* ptr;
+		qse_mchar_t* ptr;
 		qse_size_t len;
 
 		/* TODO: reduce waste in case the same key appears again.
@@ -671,7 +671,7 @@ static qse_htb_pair_t* hdr_cbserter (
 		cmb = (struct hdr_cmb_t*) QSE_MMGR_ALLOC (
 			tx->htrd->mmgr, 
 			QSE_SIZEOF(*cmb) + 
-			QSE_SIZEOF(qse_htoc_t) * (QSE_HTB_VLEN(pair) + 1 + tx->vlen + 1)
+			QSE_SIZEOF(qse_mchar_t) * (QSE_HTB_VLEN(pair) + 1 + tx->vlen + 1)
 		);
 		if (cmb == QSE_NULL)
 		{
@@ -680,7 +680,7 @@ static qse_htb_pair_t* hdr_cbserter (
 		}
 
 		/* let 'ptr' point to the actual space for the combined value */
-		ptr = (qse_htoc_t*)(cmb + 1);
+		ptr = (qse_mchar_t*)(cmb + 1);
 		len = 0;
 
 		/* fill the space with the value */
@@ -724,12 +724,12 @@ Change it to doubly linked for this?
 	}
 }
 
-qse_htoc_t* parse_header_fields (qse_htrd_t* htrd, qse_htoc_t* line)
+qse_mchar_t* parse_header_fields (qse_htrd_t* htrd, qse_mchar_t* line)
 {
-	qse_htoc_t* p = line, * last;
+	qse_mchar_t* p = line, * last;
 	struct
 	{
-		qse_htoc_t* ptr;
+		qse_mchar_t* ptr;
 		qse_size_t      len;
 	} name, value;
 
@@ -767,7 +767,7 @@ qse_htoc_t* parse_header_fields (qse_htrd_t* htrd, qse_htoc_t* line)
 	 * the continuation */
 	if (is_purespace_octet (*++p))
 	{
-		qse_htoc_t* cpydst;
+		qse_mchar_t* cpydst;
 
 		cpydst = p - 1;
 		if (*(cpydst-1) == '\r') cpydst--;
@@ -817,9 +817,9 @@ badhdr:
 }
 
 static QSE_INLINE int parse_initial_line_and_headers (
-	qse_htrd_t* htrd, const qse_htoc_t* req, qse_size_t rlen)
+	qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t rlen)
 {
-	qse_htoc_t* p;
+	qse_mchar_t* p;
 
 	/* add the actual request */
 	if (push_to_buffer (htrd, &htrd->fed.b.raw, req, rlen) <= -1) return -1;
@@ -864,9 +864,9 @@ static QSE_INLINE int parse_initial_line_and_headers (
 #define GET_CHUNK_CRLF     3
 #define GET_CHUNK_TRAILERS 4
 
-static const qse_htoc_t* getchunklen (qse_htrd_t* htrd, const qse_htoc_t* ptr, qse_size_t len)
+static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr, qse_size_t len)
 {
-	const qse_htoc_t* end = ptr + len;
+	const qse_mchar_t* end = ptr + len;
 
 	/* this function must be called in the GET_CHUNK_LEN context */
 	QSE_ASSERT (htrd->fed.s.chunk.phase == GET_CHUNK_LEN);
@@ -932,14 +932,14 @@ static const qse_htoc_t* getchunklen (qse_htrd_t* htrd, const qse_htoc_t* ptr, q
 	return ptr;
 }
 
-static const qse_htoc_t* get_trailing_headers (
-	qse_htrd_t* htrd, const qse_htoc_t* req, const qse_htoc_t* end)
+static const qse_mchar_t* get_trailing_headers (
+	qse_htrd_t* htrd, const qse_mchar_t* req, const qse_mchar_t* end)
 {
-	const qse_htoc_t* ptr = req;
+	const qse_mchar_t* ptr = req;
 
 	while (ptr < end)
 	{
-		register qse_htoc_t b = *ptr++;
+		register qse_mchar_t b = *ptr++;
 
 		switch (b)
 		{
@@ -957,7 +957,7 @@ static const qse_htoc_t* get_trailing_headers (
 				}
 				else
 				{
-					qse_htoc_t* p;
+					qse_mchar_t* p;
 	
 					QSE_ASSERT (htrd->fed.s.crlf <= 3);
 					htrd->fed.s.crlf = 0;
@@ -1008,10 +1008,10 @@ done:
 }
 
 /* feed the percent encoded string */
-int qse_htrd_feed (qse_htrd_t* htrd, const qse_htoc_t* req, qse_size_t len)
+int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 {
-	const qse_htoc_t* end = req + len;
-	const qse_htoc_t* ptr = req;
+	const qse_mchar_t* end = req + len;
+	const qse_mchar_t* ptr = req;
 
 	/* does this goto drop code maintainability? */
 	if (htrd->fed.s.need > 0) 
@@ -1041,7 +1041,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_htoc_t* req, qse_size_t len)
 
 	while (ptr < end)
 	{
-		register qse_htoc_t b = *ptr++;
+		register qse_mchar_t b = *ptr++;
 
 		if (htrd->option & QSE_HTRD_LEADINGEMPTYLINES &&
 		    htrd->fed.s.plen <= 0 && is_whspace_octet(b)) 
@@ -1310,8 +1310,8 @@ feedme_more:
 int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mcstr_t* cstr)
 {
 	qse_mcstr_t key, val;
-	const qse_htoc_t* p, * end;
-	qse_htoc_t* out;
+	const qse_mchar_t* p, * end;
+	qse_mchar_t* out;
 
 	if (cstr == QSE_NULL) cstr = qse_htre_getqparamcstr(&htrd->re);
 

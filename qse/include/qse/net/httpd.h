@@ -46,16 +46,38 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
-	int (*handle_request)         (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-	int (*handle_expect_continue) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+	int (*handle_request) (
+		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+	int (*handle_expect_continue) (
+		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 };
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;
+
+typedef int (*qse_httpd_task_init_t) (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* task
+);
+
+typedef void (*qse_httpd_task_fini_t) (	
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* task
+);
+
+typedef int (*qse_httpd_task_main_t) (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* task
+);
+
 struct qse_httpd_task_t
 {
-	int   (*init) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
-	void  (*fini) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
-	int   (*main) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task);
+	/* you must not call another entask functions from within initailizer */
+	qse_httpd_task_init_t init;
+	qse_httpd_task_fini_t fini;
+	qse_httpd_task_main_t main;
 	void* ctx;
 };
 
@@ -106,6 +128,12 @@ int qse_httpd_addlisteners (
 	const qse_char_t* uri
 );
 
+
+void qse_httpd_markclientbad (
+	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client
+);
+
 #define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
 
 int qse_httpd_entask (
@@ -115,25 +143,33 @@ int qse_httpd_entask (
 	qse_size_t              xtnsize
 );
 
-int qse_httpd_entasksendtext (
+int qse_httpd_entasktext (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
 	const qse_mchar_t*  text
 );
 
-int qse_httpd_entasksendfmt (
+int qse_httpd_entaskformat (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
 	const qse_mchar_t*  fmt,
 	...
 );
 
-int qse_httpd_entasksendfile (
+int qse_httpd_entaskfile (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
-	int                 fd,
+	qse_ubi_t           handle,
 	qse_foff_t          offset,
 	qse_foff_t          size
+);
+
+int qse_httpd_entaskpath (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_mchar_t*        name,
+	const qse_http_range_t*   range,
+	const qse_http_version_t* version
 );
 
 int qse_httpd_entaskdisconnect (

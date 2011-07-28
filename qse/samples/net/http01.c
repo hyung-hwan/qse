@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -21,18 +20,6 @@ static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
 qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
 	return QSE_HTB_WALK_FORWARD;
-}
-
-static int range_not_satisfiable (qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_htre_t* req)
-{
-	const qse_mchar_t* msg;
-
-	msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
-	return qse_httpd_entasksendfmt (httpd, client,
-		QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-		req->version.major, req->version.minor,
-		(int)qse_mbslen(msg) + 4, msg
-	);
 }
 
 static int handle_request (
@@ -69,112 +56,35 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
-		int fd;
+		const qse_mchar_t* rangestr;
+		qse_http_range_t range;
+		int x;
 
-		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
-		if (fd <= -1)
+		rangestr = qse_htre_gethdrval (req, "Range");
+		if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
 		{
-			const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
-			if (qse_httpd_entasksendfmt (httpd, client,
-				QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+			const qse_mchar_t* msg;
+			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
+			x = qse_httpd_entaskformat (httpd, client,
+				QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 				req->version.major, req->version.minor,
-				(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
+				(int)qse_mbslen(msg) + 4, msg
+			);
+			if (x <= -1) goto oops;
 		}
-		else
-		{
-			struct stat st;
-			if (fstat (fd, &st) <= -1)
-			{
-				const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
 
-				close (fd);
-				if (qse_httpd_entasksendfmt (httpd, client,
-					QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-					req->version.major, req->version.minor,
-					(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
-			}
-			else
-			{
-				const qse_mchar_t* rangestr;
-				qse_http_range_t range;
-				if (st.st_size <= 0) st.st_size = 0;
-
-				rangestr = qse_htre_gethdrval (req, "Range");
-				if (rangestr)
-				{ 
-					if (qse_parsehttprange (rangestr, &range) <= -1)
-					{
-						if (range_not_satisfiable (httpd, client, req) <= -1) goto oops;
-					}
-					else
-					{
-						if (range.suffix)
-						{
-							if (range.to > st.st_size) range.to = st.st_size;
-							range.from = st.st_size - range.to;
-							range.to = range.to + range.from;
-							if (st.st_size > 0) range.to--;
-						}
-
-						if (range.from >= st.st_size)
-						{
-							if (range_not_satisfiable (httpd, client, req) <= -1) goto oops;
-						}
-						else
-						{
-							if (range.to >= st.st_size) range.to = st.st_size - 1;
-
-							if (qse_httpd_entasksendfmt (httpd, client,
-     							QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
-								qse_htre_getmajorversion(req),
-								qse_htre_getminorversion(req),
-								(unsigned long long)(range.to - range.from + 1),
-								qse_htre_getqpathptr(req),
-								(unsigned long long)range.from,
-								(unsigned long long)range.to,
-								st.st_size) <= -1) 
-							{
-								close (fd);
-								goto oops;
-							}
-
-							if (qse_httpd_entasksendfile (httpd, client, fd, range.from, (range.to - range.from + 1)) <= -1) 
-							{
-								close (fd);
-								goto oops;
-							}
-						}
-					}
-				}
-				else
-				{
-/* TODO: int64 format.... don't hard code it llu */
-					if (qse_httpd_entasksendfmt (httpd, client,
-     					QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
-						qse_htre_getmajorversion(req),
-						qse_htre_getminorversion(req),
-						(unsigned long long)st.st_size,
-						qse_htre_getqpathptr(req)) <= -1) 
-					{
-						close (fd);
-						goto oops;
-					}
-
-					if (qse_httpd_entasksendfile (httpd, client, fd, 0, st.st_size) <= -1) 
-					{
-						close (fd);
-						goto oops;
-					}
-				}
-
-			}
-
-		}
+		x = qse_httpd_entaskpath (
+			httpd, client, 
+			qse_htre_getqpathptr(req),
+			(rangestr? &range: QSE_NULL),
+			qse_htre_getversion(req)
+		);
+		if (x <= -1) goto oops;
 	}
 	else
 	{
 		const qse_mchar_t* msg = QSE_MT("<html><head><title>Method not allowed</title></head><body><b>REQUEST METHOD NOT ALLOWED</b></body></html>");
-		if (qse_httpd_entasksendfmt (httpd, client,
+		if (qse_httpd_entaskformat (httpd, client,
 			QSE_MT("HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 			req->version.major, req->version.minor,
 			(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
