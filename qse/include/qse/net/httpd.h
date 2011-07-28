@@ -111,8 +111,18 @@ void qse_httpd_setcbs (
 	qse_httpd_cbs_t* cbs
 );
 
+/**
+ * The qse_httpd_loop() function starts a httpd server loop.
+ * If @a threaded is non-zero, it creates a separate output thread.
+ * If no thread support is available, it is ignored.
+ *
+ * @note
+ * In the future, the @a threaded parameter will be extended to
+ * specify the number of output threads.
+ */
 int qse_httpd_loop (
-	qse_httpd_t* httpd
+	qse_httpd_t* httpd, 
+	int          threaded 
 );
 
 /**
@@ -145,6 +155,12 @@ int qse_httpd_entask (
 
 int qse_httpd_entasktext (
 	qse_httpd_t*        httpd,
+	qse_httpd_client_t* client,
+	const qse_mchar_t*  text
+);
+
+int qse_httpd_entaskstatictext (
+     qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
 	const qse_mchar_t*  text
 );

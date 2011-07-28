@@ -23,6 +23,14 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/htb.h>
 
+int qse_comparehttpversions (
+	const qse_http_version_t* v1,
+	const qse_http_version_t* v2)
+{
+	if (v1->major == v2->major) return v1->minor - v2->minor;
+	return v1->major - v2->major;
+}
+
 const qse_mchar_t* qse_gethttpmethodname (qse_http_method_t type)
 {
 	static qse_mchar_t* names[]  =

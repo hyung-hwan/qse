@@ -56,6 +56,49 @@ int qse_httpd_entaskdisconnect (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 /*------------------------------------------------------------------------*/
 
+static int task_main_statictext (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	qse_ssize_t n;
+	qse_size_t count = 0;
+	const qse_mchar_t* ptr = (const qse_mchar_t*)task->ctx;
+
+	while (*ptr != QSE_MT('\0') && count < MAX_SENDFILE_SIZE)
+	{
+		ptr++; count++;
+	}
+
+/* TODO: do i need to add code to skip this send if count is 0? */
+	n = send (
+		client->handle.i,
+		task->ctx,
+		count,
+		0
+	);
+
+	if (n <= -1) return -1;
+
+	ptr = (const qse_mchar_t*)task->ctx + n;
+	if (*ptr == QSE_MT('\0')) return 0;
+
+	task->ctx = (void*)ptr;
+	return 1; /* more work to do */
+}
+
+int qse_httpd_entaskstatictext (
+     qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* text)
+{
+	qse_httpd_task_t task;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.main = task_main_statictext;
+	task.ctx = (void*)text;
+
+	return qse_httpd_entask (httpd, client, &task, 0);
+}
+
+/*------------------------------------------------------------------------*/
+
 typedef struct task_text_t task_text_t;
 struct task_text_t
 {
@@ -79,13 +122,14 @@ static int task_init_text (
 static int task_main_text (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	ssize_t n;
-	size_t count;
+	qse_ssize_t n;
+	qse_size_t count;
 	task_text_t* ctx = (task_text_t*)task->ctx;
 
 	count = MAX_SENDFILE_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
+/* TODO: do i need to add code to skip this send if count is 0? */
 	n = send (
 		client->handle.i,
 		ctx->ptr,
@@ -155,8 +199,8 @@ static void task_fini_format (
 static int task_main_format (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	ssize_t n;
-	size_t count;
+	qse_ssize_t n;
+	qse_size_t count;
 	task_format_t* ctx = (task_format_t*)task->ctx;
 
 	count = MAX_SENDFILE_SIZE;
@@ -299,8 +343,8 @@ static void task_fini_file (
 static int task_main_file (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	ssize_t n;
-	size_t count;
+	qse_ssize_t n;
+	qse_size_t count;
 	task_file_t* ctx = (task_file_t*)task->ctx;
 
 	count = MAX_SENDFILE_SIZE;
