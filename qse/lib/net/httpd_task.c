@@ -25,15 +25,35 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-
-#ifdef HAVE_SYS_SENDFILE_H
-#include <sys/sendfile.h>
-#endif
-
 #include <stdarg.h>
 #include <stdio.h>
 
 #define MAX_SENDFILE_SIZE 4096
+
+#ifdef HAVE_SYS_SENDFILE_H
+#	include <sys/sendfile.h>
+#else
+qse_ssize_t sendfile (
+	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
+{
+	qse_mchar_t buf[MAX_SENDFILE_SIZE];
+	qse_ssize_t n;
+
+	if (offset && lseek (in_fd, *offset, SEEK_SET) != *offset) 
+		return (qse_ssize_t)-1;
+
+	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
+	n = read (in_fd, buf, count);
+	if (n == (qse_ssize_t)-1 || n == 0) return n;
+
+	n = write (out_fd, buf, n);
+	if (n > 0 && offset) *offset = *offset + n;
+
+	return n;
+}
+#endif
+
+
 
 /*------------------------------------------------------------------------*/
 
@@ -481,6 +501,7 @@ static int task_main_path (
 
 		if (data->range.to >= st.st_size) data->range.to = st.st_size - 1;
 
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (httpd, client,
     			QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
@@ -489,8 +510,20 @@ static int task_main_path (
 			data->name,
 			(unsigned long long)data->range.from,
 			(unsigned long long)data->range.to,
-			st.st_size
+			(unsigned long long)st.st_size
 		);
+#else
+		x = qse_httpd_entaskformat (httpd, client,
+    			QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+			data->version.major,
+			data->version.minor,
+			(unsigned long)(data->range.to - data->range.from + 1),
+			data->name,
+			(unsigned long)data->range.from,
+			(unsigned long)data->range.to,
+			(unsigned long)st.st_size
+		);
+#endif
 		if (x <= -1) goto oops;
 
 		x = qse_httpd_entaskfile (
@@ -504,6 +537,7 @@ static int task_main_path (
 	{
 /* TODO: int64 format.... don't hard code it llu */
 
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (httpd, client,
     			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
@@ -511,6 +545,15 @@ static int task_main_path (
 			(unsigned long long)st.st_size,
 			data->name
 		);
+#else
+		x = qse_httpd_entaskformat (httpd, client,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
+			data->version.major,
+			data->version.minor,
+			(unsigned long)st.st_size,
+			data->name
+		);
+#endif
 		if (x <= -1) goto oops;
 
 		x = qse_httpd_entaskfile (httpd, client, handle, 0, st.st_size);

@@ -34,12 +34,18 @@
 #	include <pthread.h>
 #endif
 
+#ifndef SHUT_RDWR
+#	define SHUT_RDWR 2
+#endif
+
 typedef struct client_array_t client_array_t;
 
 union sockaddr_t
 {
 	struct sockaddr_in in4;
+#ifdef AF_INET6
 	struct sockaddr_in6 in6;
+#endif
 };
 
 typedef union sockaddr_t sockaddr_t;
@@ -90,7 +96,9 @@ struct listener_t
 	union
 	{
 		struct in_addr in4;
+#ifdef AF_INET6
 		struct in6_addr in6;
+#endif
 	} addr;
 
 	int port;
@@ -105,9 +113,7 @@ struct qse_httpd_t
 	qse_httpd_cbs_t* cbs;
 
 	int stopreq;
-#if defined(HAVE_PTHREAD)
 	int threaded;
-#endif
 
 	struct
 	{
