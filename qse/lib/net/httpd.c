@@ -539,6 +539,7 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 			break;
 		}
 
+#ifdef AF_INET6
 		case AF_INET6:
 		{
 			addr.in6.sin6_family = l->family;	
@@ -547,6 +548,7 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 			/* TODO: addr.in6.sin6_scope_id  */
 			break;
 		}
+#endif
 
 		default:
 		{
@@ -720,7 +722,11 @@ static int accept_client_from_listener (qse_httpd_t* httpd, listener_t* l)
 {
 	int flag, c;
 	sockaddr_t addr;
+#ifdef HAVE_SOCKLEN_T
 	socklen_t addrlen = QSE_SIZEOF(addr);
+#else
+	int addrlen = QSE_SIZEOF(addr);
+#endif
 	qse_httpd_client_t* client;
 
 /* TODO:
@@ -915,7 +921,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerro
 				if (client->bad) 
 				{
 					/*send (client->handle, i, "INTERNAL SERVER ERROR..", ...);*/
-					/*shutdown (client->handle.i, 0);*/
+					/*shutdown (client->handle.i, SHUT_RDWR);*/
 					pthread_mutex_lock (&httpd->client.mutex);
 					delete_from_client_array (httpd, fd);     
 					pthread_mutex_unlock (&httpd->client.mutex);
@@ -985,6 +991,7 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 #endif
 
 	httpd->stopreq = 0;
+	httpd->threaded = 0;
 
 	QSE_ASSERTX (httpd->listener.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()"
@@ -1008,11 +1015,12 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 		pthread_mutex_init (&httpd->client.mutex, QSE_NULL);
 		pthread_cond_init (&httpd->client.cond, QSE_NULL);
 
-		if (pthread_create (&response_thread_id, QSE_NULL, response_thread, httpd) != 0) 
+		if (pthread_create (
+			&response_thread_id, QSE_NULL,
+			response_thread, httpd) != 0) 
 		{
 			pthread_cond_destroy (&httpd->client.cond);
 			pthread_mutex_destroy (&httpd->client.mutex);
-			httpd->threaded = 0;
 		}
 		else httpd->threaded = 1;
 	}
@@ -1028,9 +1036,13 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		pthread_mutex_lock (&httpd->client.mutex);
+#if defined(HAVE_PTHREAD)
+		if (httpd->threaded) pthread_mutex_lock (&httpd->client.mutex);
+#endif
 		max = make_fd_set_from_client_array (httpd, &r, &w);
-		pthread_mutex_unlock (&httpd->client.mutex);
+#if defined(HAVE_PTHREAD)
+		if (httpd->threaded) pthread_mutex_unlock (&httpd->client.mutex);
+#endif
 
 		n = select (max + 1, &r, &w, QSE_NULL, &tv);
 		if (n <= -1)
@@ -1064,7 +1076,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 						/* let the writing part handle it,  
 						 * probably in the next iteration */
 						qse_httpd_markclientbad (httpd, client);
-						shutdown (client->handle.i, 0);
+						shutdown (client->handle.i, SHUT_RDWR);
 					}
 					else
 					{
@@ -1083,7 +1095,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 				if (client->bad) 
 				{
 					/*send (client->handle, i, "INTERNAL SERVER ERROR..", ...);*/
-					/*shutdown (client->handle.i, 0);*/
+					/*shutdown (client->handle.i, SHUT_RDWR);*/
 
 					/*pthread_mutex_lock (&httpd->client.mutex);*/
 					delete_from_client_array (httpd, fd);     
@@ -1176,6 +1188,7 @@ static listener_t* parse_listener_string (
 		if (*p != QSE_T('/')) goto oops_einval;
 		p++; /* skip / */
 
+#ifdef AF_INET6
 		if (*p == QSE_T('['))	
 		{
 			/* IPv6 address */
@@ -1193,6 +1206,7 @@ static listener_t* parse_listener_string (
 		}
 		else
 		{
+#endif
 			/* host name or IPv4 address */
 			tmp.ptr = p;
 			while (!QSE_ISSPACE(*p) &&
@@ -1200,7 +1214,9 @@ static listener_t* parse_listener_string (
 			       *p != QSE_T('\0')) p++;
 			tmp.len = p - tmp.ptr;
 			ltmp->family = AF_INET;
+#ifdef AF_INET6
 		}
+#endif
 
 		ltmp->host = qse_strxdup (tmp.ptr, tmp.len, httpd->mmgr);
 		if (ltmp->host == QSE_NULL) goto oops_enomem;
@@ -1314,11 +1330,15 @@ static int delete_listeners (qse_httpd_t* httpd, const qse_char_t* uri)
 
 int qse_httpd_addlisteners (qse_httpd_t* httpd, const qse_char_t* uri)
 {
+#if defined(HAVE_PTHREAD)
 	int n;
 	pthread_mutex_lock (&httpd->listener.mutex);
 	n = add_listeners (httpd, uri);
 	pthread_mutex_unlock (&httpd->listener.mutex);
 	return n;
+#else
+	return add_listeners (httpd, uri);
+#endif
 }
 
 #if 0
