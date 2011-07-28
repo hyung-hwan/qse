@@ -120,6 +120,11 @@ typedef struct qse_http_range_t qse_http_range_t;
 extern "C" {
 #endif
 
+int qse_comparehttpversions (
+	const qse_http_version_t* v1,
+	const qse_http_version_t* v2
+);
+
 const qse_mchar_t* qse_gethttpmethodname (
 	qse_http_method_t type
 );

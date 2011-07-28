@@ -26,10 +26,13 @@
 #include <qse/net/httpd.h>
 #include <qse/net/htrd.h>
 
-#include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#if defined(HAVE_PTHREAD)
+#	include <pthread.h>
+#endif
 
 typedef struct client_array_t client_array_t;
 
@@ -58,7 +61,9 @@ struct qse_httpd_client_t
 
 	struct
 	{
+#if defined(HAVE_PTHREAD)
 		pthread_mutex_t  mutex;
+#endif
 		struct
 		{
 			int count;
@@ -100,17 +105,24 @@ struct qse_httpd_t
 	qse_httpd_cbs_t* cbs;
 
 	int stopreq;
+#if defined(HAVE_PTHREAD)
+	int threaded;
+#endif
 
 	struct
 	{
+#if defined(HAVE_PTHREAD)
 		pthread_mutex_t mutex;
 		pthread_cond_t  cond;
+#endif
 		client_array_t array;
 	} client;
 
 	struct
 	{
+#if defined(HAVE_PTHREAD)
 		pthread_mutex_t mutex;
+#endif
 		listener_t*     list;
 		fd_set          set;
 		int             max;
