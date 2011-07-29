@@ -118,6 +118,7 @@ static void sigint (int sig)
 
 static qse_httpd_cbs_t httpd_cbs =
 {
+	{ QSE_NULL },
 	handle_request,
 	handle_expect_continue
 };

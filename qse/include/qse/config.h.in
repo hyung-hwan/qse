@@ -126,6 +126,9 @@
 /* Define to 1 if you have the `sinl' function. */
 #undef HAVE_SINL
 
+/* Define it socklen_t typedef is in sys/socket.h. */
+#undef HAVE_SOCKLEN_T
+
 /* Define to 1 if you have the `sqrt' function. */
 #undef HAVE_SQRT
 

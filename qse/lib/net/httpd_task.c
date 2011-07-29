@@ -459,8 +459,9 @@ static int task_main_path (
 				data->version.major, data->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 		);
-		if (x <= -1) return -1;
+		goto done;
 	}
+	fcntl (handle.i, F_SETFD, FD_CLOEXEC);
 
 	if (fstat (handle.i, &st) <= -1)
 	{
@@ -471,13 +472,15 @@ static int task_main_path (
 			data->version.major, data->version.minor,
 			(int)qse_mbslen(msg) + 4, msg
 		);
-		if (x <= -1) goto oops;
+		goto done;
 	}
 
 	if (st.st_size < 0) st.st_size = 0; /* can this happen? */
 
 	if (data->range.type != QSE_HTTP_RANGE_NONE)
 	{ 
+		const qse_mchar_t* mime_type = QSE_NULL;
+
 		if (data->range.type == QSE_HTTP_RANGE_SUFFIX)
 		{
 			if (data->range.to > st.st_size) data->range.to = st.st_size;
@@ -496,16 +499,25 @@ static int task_main_path (
 				data->version.major, data->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 			);
-			if (x <= -1) goto oops;
+			goto done;
 		}
 
 		if (data->range.to >= st.st_size) data->range.to = st.st_size - 1;
 
+		if (httpd->cbs->file.getmimetype)
+		{
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			mime_type = httpd->cbs->file.getmimetype (httpd, data->name);
+			/*TODO: how to handle an error... */
+		}
+
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (httpd, client,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
 			(unsigned long long)(data->range.to - data->range.from + 1),
 			data->name,
 			(unsigned long long)data->range.from,
@@ -514,9 +526,11 @@ static int task_main_path (
 		);
 #else
 		x = qse_httpd_entaskformat (httpd, client,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\nContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
 			(unsigned long)(data->range.to - data->range.from + 1),
 			data->name,
 			(unsigned long)data->range.from,
@@ -524,47 +538,59 @@ static int task_main_path (
 			(unsigned long)st.st_size
 		);
 #endif
-		if (x <= -1) goto oops;
+		if (x <= -1) goto done;
 
 		x = qse_httpd_entaskfile (
 				httpd, client, handle, 
 				data->range.from, 
 				(data->range.to - data->range.from + 1)
 		);
-		if (x <= -1) goto oops;
+		if (x <= -1) goto done;
 	}
 	else
 	{
 /* TODO: int64 format.... don't hard code it llu */
+		const qse_mchar_t* mime_type = QSE_NULL;
+
+		if (httpd->cbs->file.getmimetype)
+		{
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			mime_type = httpd->cbs->file.getmimetype (httpd, data->name);
+			/*TODO: how to handle an error... */
+		}
 
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (httpd, client,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
 			(unsigned long long)st.st_size,
 			data->name
 		);
 #else
 		x = qse_httpd_entaskformat (httpd, client,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
 			(unsigned long)st.st_size,
 			data->name
 		);
 #endif
-		if (x <= -1) goto oops;
+		if (x <= -1) goto done;
 
 		x = qse_httpd_entaskfile (httpd, client, handle, 0, st.st_size);
-		if (x <= -1) goto oops;
+		if (x <= -1) goto done;
 	}
 
 	return 0;
 
-oops:
-	close (handle.i);
-	return -1;
+done:
+	if (handle.i >= 0) close (handle.i);
+	return x;
 }
 
 int qse_httpd_entaskpath (
