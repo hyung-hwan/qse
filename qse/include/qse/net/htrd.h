@@ -53,7 +53,6 @@ struct qse_htrd_recbs_t
 	int         (*request)         (qse_htrd_t* htrd, qse_htre_t* req);
 	int         (*expect_continue) (qse_htrd_t* htrd, qse_htre_t* req);
 	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
-	int         (*qparamstr)       (qse_htrd_t* htrd, const qse_mcstr_t* key, const qse_mcstr_t* val);
 };
 
 struct qse_htrd_t
@@ -92,12 +91,14 @@ struct qse_htrd_t
 		void* chl;
 	} fed; 
 
+#if 0
 	struct
 	{
 		/* temporary space to store a key and value pair
 		 * during the call to qse_http_scanqparamstr() */
 		qse_htob_t qparam; 
 	} tmp;
+#endif
 
 	enum 
 	{

@@ -53,18 +53,6 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 
 static void free_listener_list (qse_httpd_t* httpd, listener_t* l);
 
-static int handle_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-static int handle_expect_continue (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-
-static qse_httpd_cbs_t default_cbs = 
-{
-	handle_request,
-	handle_expect_continue
-};
-
-
 qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_httpd_t* httpd;
@@ -104,7 +92,6 @@ qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
 	httpd->listener.max = -1;
-	httpd->cbs = &default_cbs;
 
 #if defined(HAVE_PTHREAD)
 	pthread_mutex_init (&httpd->listener.mutex, QSE_NULL);
@@ -283,186 +270,6 @@ static void purge_tasks_locked (qse_httpd_t* httpd, qse_httpd_client_t* client)
 #endif
 }
 
-static int capture_param (qse_htrd_t* http, const qse_mcstr_t* key, const qse_mcstr_t* val)
-{
-qse_printf (QSE_T("PARAM %d[%S] => %d[%S] \n"), (int)key->len, key->ptr, (int)val->len, val->ptr);
-	return 0;
-}
-
-static int handle_request (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
-{
-#if 0
-	int method;
-
-	method = qse_htre_getqmethod (req);
-
-	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
-	{
-		int fd;
-
-#if 0
-		/*if (qse_htrd_scanqparam (http, qse_htre_getqparamcstr(req)) <= -1) */
-		if (qse_htrd_scanqparam (http, QSE_NULL) <= -1)
-		{
-const char* msg = "<html><head><title>INTERNAL SERVER ERROR</title></head><body><b>INTERNAL SERVER ERROR</b></body></html>";
-char* text = format_textdup (xtn->httpd,
-	"HTTP/%d.%d 500 Internal Server Error\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
-	req->version.major, 
-	req->version.minor,
-	(int)strlen(msg) + 4, msg);
-if (text == QSE_NULL || enqueue_sendduptext_locked (httpd, client, text) <= -1)
-{
-	if (text) httpd_free (xtn->httpd, text);
-	qse_printf (QSE_T("failed to format text push task....\n"));
-	return -1;
-}
-
-		}
-#endif
-
-#if 0
-		if (method == QSE_HTTP_POST)
-		{
-			if (qse_htrd_scanqparam (http, qse_htre_getcontentcstr(req)) <= -1)
-			{
-			}
-		}
-#endif
-
-		fd = open (qse_htre_getqpathptr(req), O_RDONLY);
-		if (fd <= -1)
-		{
-			const char* msg = "<html><head><title>NOT FOUND</title></head><body><b>REQUESTD FILE NOT FOUND</b></body></html>";
-			char* text = format_textdup (
-				httpd,
-				"HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
-				req->version.major, 
-				req->version.minor,
-				(int)strlen(msg) + 4, msg
-			);
-
-			if (text == QSE_NULL || enqueue_sendduptext_locked (httpd, client, text) <= -1)
-			{
-				if (text) httpd_free (httpd, text);
-				qse_printf (QSE_T("failed to push task....\n"));
-				return -1;
-			}
-		}
-		else
-		{
-			struct stat st;
-			if (fstat (fd, &st) <= -1)
-			{
-				close (fd);
-
-qse_printf (QSE_T("fstat failure....\n"));
-			}
-			else if (st.st_size <= 0)
-			{
-				close (fd);
-qse_printf (QSE_T("empty file....\n"));
-			}
-			else
-			{
-
-char text[128];
-snprintf (text, QSE_SIZEOF(text),
-	"HTTP/%d.%d 200 OK\r\nContent-Length: %llu\r\nContent-Location: %s\r\n\r\n", 
-	qse_htre_getmajorversion(req),
-	qse_htre_getminorversion(req),
-	(unsigned long long)st.st_size,
-	qse_htre_getqpathptr(req)
-);
-
-				if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
-				{
-qse_printf (QSE_T("failed to push task....\n"));
-					return -1;
-				}
-
-				if (enqueue_sendfile_locked (httpd, client, fd) <= -1)
-				{
-	/* TODO: close??? just close....??? */
-qse_printf (QSE_T("failed to push task....\n"));
-					return -1;
-				}
-
-			}
-		}	
-	}
-	else
-	{
-char text[256];
-const char* msg = "<html><head><title>Method not allowed</title></head><body><b>METHOD NOT ALLOWED</b></body></html>";
-snprintf (text, QSE_SIZEOF(text),
-	"HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n", 
-	qse_htre_getmajorversion(req),
-	qse_htre_getminorversion(req),
-	(int)strlen(msg)+4, msg);
-if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
-{
-qse_printf (QSE_T("failed to push task....\n"));
-return -1;
-}
-	}
-
-	if (req->attr.connection_close)
-	{
-		if (enqueue_disconnect (httpd, client) <= -1)
-		{
-qse_printf (QSE_T("failed to push task....\n"));
-			return -1;
-		}
-	}
-
-	return 0;
-#endif
-
-return 0;
-}
-
-
-static int handle_expect_continue (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
-{
-#if 0
-/*
-	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (http);
-	qse_httpd_client_t* client = &xtn->array->data[xtn->index];
-*/
-
-/* TODO: change this whole callback */
-	if (qse_htre_getqmethod(req) == QSE_HTTP_POST)
-	{
-		qse_mchar_t text[32];
-
-		snprintf (text, QSE_SIZEOF(text),
-			QSE_MT("HTTP/%d.%d 100 OK\r\n\r\n"), 
-			req->version.major, req->version.minor);
-
-		if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
-		{
-			return -1;
-		}
-	}
-	else
-	{
-		qse_mchar_t text[32];
-
-		qse_htre_setdiscard (req, 1);
-
-		snprintf (text, QSE_SIZEOF(text),
-			QSE_MT("HTTP/%d.%d 404 Not found\r\n\r\n"), 
-			req->version.major, req->version.minor);
-
-		if (enqueue_sendtextdup_locked (httpd, client, text) <= -1)
-		{
-			return -1;
-		}
-	}
-#endif
-	return 0;
-}
-
 static int htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
@@ -477,31 +284,13 @@ static int htrd_handle_expect_continue (qse_htrd_t* htrd, qse_htre_t* req)
 	return xtn->httpd->cbs->handle_expect_continue (xtn->httpd, client, req);
 }
 
-static int htrd_handle_response (qse_htrd_t* htrd, qse_htre_t* res)
-{
-/*
-	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
-*/
-
-/* directly send some response saying stupid request... */
-	qse_printf (QSE_T("response received... HTTP/%d.%d %d %.*S\n"), 
-		qse_htre_getmajorversion(res),
-		qse_htre_getminorversion(res),
-		qse_htre_getsstatus(res),
-		(int)qse_htre_getsmessagelen(res),
-		qse_htre_getsmessageptr(res)
-	);
-
-	return 0;
-}
-
 static qse_htrd_recbs_t htrd_recbs =
 {
 	htrd_handle_request,
 	htrd_handle_expect_continue,
-	htrd_handle_response,
-	capture_param
+
+	/* The response handler is not needed  as QSE_HTRD_RESPONSE is truned off */
+	QSE_NULL
 };
 
 static void deactivate_listener (qse_httpd_t* httpd, listener_t* l)
@@ -995,6 +784,10 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 
 	QSE_ASSERTX (httpd->listener.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()"
+	);	
+
+	QSE_ASSERTX (httpd->cbs != QSE_NULL,
+		"Set httpd callbacks before calling qse_httpd_loop()"
 	);	
 
 	if (httpd->listener.list == QSE_NULL)

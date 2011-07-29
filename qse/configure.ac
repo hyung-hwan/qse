@@ -214,6 +214,15 @@ fi
 
 AX_PTHREAD()
 
+AC_MSG_CHECKING([for socklen_t in sys/socket.h])
+AC_TRY_COMPILE([#define _POSIX_PII_SOCKET
+#include <sys/types.h>
+#include <sys/socket.h>], [socklen_t x = 5;],
+	[AC_DEFINE(HAVE_SOCKLEN_T, 1, [Define it socklen_t typedef is in sys/socket.h.])
+	AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)]
+)
+
 AC_SUBST(QSE_SIZEOF_WCHAR_T, $ac_cv_sizeof_wchar_t)
 AC_SUBST(QSE_SIZEOF_LONG_LONG, $ac_cv_sizeof_long_long)
 AC_SUBST(QSE_SIZEOF_LONG, $ac_cv_sizeof_long)

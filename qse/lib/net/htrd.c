@@ -173,7 +173,9 @@ qse_htrd_t* qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 	htrd->mmgr = mmgr;
 	htrd->option = QSE_HTRD_REQUEST | QSE_HTRD_RESPONSE;
 
+#if 0
 	qse_mbs_init (&htrd->tmp.qparam, htrd->mmgr, 0);
+#endif
 	qse_mbs_init (&htrd->fed.b.raw, htrd->mmgr, 0);
 	qse_mbs_init (&htrd->fed.b.tra, htrd->mmgr, 0);
 
@@ -181,7 +183,9 @@ qse_htrd_t* qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 	{
 		qse_mbs_fini (&htrd->fed.b.tra);
 		qse_mbs_fini (&htrd->fed.b.raw);
+#if 0
 		qse_mbs_fini (&htrd->tmp.qparam);
+#endif
 		return QSE_NULL;
 	}
 
@@ -195,7 +199,9 @@ void qse_htrd_fini (qse_htrd_t* htrd)
 	clear_combined_headers (htrd);
 	qse_mbs_fini (&htrd->fed.b.tra);
 	qse_mbs_fini (&htrd->fed.b.raw);
+#if 0
 	qse_mbs_fini (&htrd->tmp.qparam);
+#endif
 }
 
 static qse_mchar_t* parse_initial_line (
@@ -1307,6 +1313,7 @@ feedme_more:
 	return 0;
 }
 
+#if 0
 int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mcstr_t* cstr)
 {
 	qse_mcstr_t key, val;
@@ -1412,3 +1419,4 @@ int qse_htrd_scanqparam (qse_htrd_t* htrd, const qse_mcstr_t* cstr)
 	qse_mbs_clear (&htrd->tmp.qparam);
 	return 0;
 }
+#endif
