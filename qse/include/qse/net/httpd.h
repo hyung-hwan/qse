@@ -87,7 +87,7 @@ struct qse_httpd_task_t
 	qse_httpd_task_init_t init;
 	qse_httpd_task_fini_t fini;
 	qse_httpd_task_main_t main;
-	void* ctx;
+	void*                 ctx;
 };
 
 #ifdef __cplusplus
@@ -155,51 +155,65 @@ void qse_httpd_markclientbad (
 
 #define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
 
-int qse_httpd_entask (
+qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
 	const qse_httpd_task_t* task,
 	qse_size_t              xtnsize
 );
 
-int qse_httpd_entasktext (
-	qse_httpd_t*        httpd,
-	qse_httpd_client_t* client,
-	const qse_mchar_t*  text
+qse_httpd_task_t* qse_httpd_entaskdisconnect (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred
 );
 
-int qse_httpd_entaskstatictext (
-     qse_httpd_t*        httpd,
-	qse_httpd_client_t* client,
-	const qse_mchar_t*  text
+qse_httpd_task_t* qse_httpd_entasktext (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t*      text
 );
 
-int qse_httpd_entaskformat (
-	qse_httpd_t*        httpd,
-	qse_httpd_client_t* client,
-	const qse_mchar_t*  fmt,
+qse_httpd_task_t* qse_httpd_entaskstatictext (
+     qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t*      text
+);
+
+qse_httpd_task_t* qse_httpd_entaskformat (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t*      fmt,
 	...
 );
 
-int qse_httpd_entaskfile (
-	qse_httpd_t*        httpd,
-	qse_httpd_client_t* client,
-	qse_ubi_t           handle,
-	qse_foff_t          offset,
-	qse_foff_t          size
+qse_httpd_task_t* qse_httpd_entaskfile (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	qse_ubi_t               handle,
+	qse_foff_t              offset,
+	qse_foff_t              size
 );
 
-int qse_httpd_entaskpath (
+qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        name,
 	const qse_http_range_t*   range,
 	const qse_http_version_t* version
 );
 
-int qse_httpd_entaskdisconnect (
-	qse_httpd_t*        httpd,
-	qse_httpd_client_t* client
+qse_httpd_task_t* qse_httpd_entaskcgi (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   pred,
+	const qse_char_t*         path
 );
 
 void* qse_httpd_allocmem (

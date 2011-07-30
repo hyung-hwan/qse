@@ -132,7 +132,8 @@ QSE_INLINE void* qse_httpd_allocmem (qse_httpd_t* httpd, qse_size_t size)
 	return ptr;
 }
 
-QSE_INLINE void* qse_httpd_reallocmem (qse_httpd_t* httpd, void* ptr, qse_size_t size)
+QSE_INLINE void* qse_httpd_reallocmem (
+	qse_httpd_t* httpd, void* ptr, qse_size_t size)
 {
 	void* nptr = QSE_MMGR_REALLOC (httpd->mmgr, ptr, size);
 	if (nptr == QSE_NULL)  httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -144,9 +145,10 @@ QSE_INLINE void qse_httpd_freemem (qse_httpd_t* httpd, void* ptr)
 	QSE_MMGR_FREE (httpd->mmgr, ptr);
 }
 
-static int enqueue_task_unlocked (
+static qse_httpd_task_t* enqueue_task_unlocked (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, qse_size_t xtnsize)
+	const qse_httpd_task_t* pred, const qse_httpd_task_t* task,
+	qse_size_t xtnsize)
 {
 	task_queue_node_t* node;
 
@@ -157,8 +159,9 @@ static int enqueue_task_unlocked (
 		return -1;
 	}
 */
-	node = qse_httpd_allocmem (httpd, QSE_SIZEOF(*node) + xtnsize);
-	if (node == QSE_NULL) return -1;
+	node = (task_queue_node_t*)
+		qse_httpd_allocmem (httpd, QSE_SIZEOF(*node) + xtnsize);
+	if (node == QSE_NULL) return QSE_NULL;
 
 	node->task = *task;
 
@@ -170,43 +173,59 @@ static int enqueue_task_unlocked (
 			if (httpd->errnum == QSE_HTTPD_ENOERR) 
 				httpd->errnum = QSE_HTTPD_ETASK;
 			qse_httpd_freemem (httpd, node);
-			return -1;	
+			return QSE_NULL;	
 		}
 	}
 
-	node->next = QSE_NULL;
-	node->prev = client->task.queue.tail;
-	if (client->task.queue.tail) 
+	if (pred)
 	{
-		client->task.queue.tail->next = node;
+		task_queue_node_t* prev;
+
+		/* TODO: confirm if this calculation works all the time,
+		 *       especially regarding structure alignment */
+		prev = (task_queue_node_t*) 
+			((qse_byte_t*)pred - (QSE_SIZEOF(*prev) - QSE_SIZEOF(*pred)));
+
+		node->next = prev->next;
+		node->prev = prev;
+
+		if (prev->next) prev->next->prev = node;
+		else client->task.queue.tail = node;
+		prev->next = node;
 	}
-	else 
-	{	
-		client->task.queue.head = node;
+	else
+	{
+		node->next = QSE_NULL;
+		node->prev = client->task.queue.tail;
+		if (client->task.queue.tail) 
+			client->task.queue.tail->next = node;
+		else 
+			client->task.queue.head = node;
+		client->task.queue.tail = node;
 	}
-	client->task.queue.tail = node;
 	client->task.queue.count++;
 
-	return 0;
+	return &node->task;
 }
 
-static int enqueue_task_locked (
+static qse_httpd_task_t* enqueue_task_locked (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, qse_size_t xtnsize)
+	const qse_httpd_task_t* pred, const qse_httpd_task_t* task,
+	qse_size_t xtnsize)
 {
 #if defined(HAVE_PTHREAD)
 	if (httpd->threaded)
 	{
-		int ret;
+		qse_httpd_task_t* ret;
 		pthread_mutex_lock (&client->task.mutex);
-		ret = enqueue_task_unlocked (httpd, client, task, xtnsize);
+		ret = enqueue_task_unlocked (httpd, client, pred, task, xtnsize);
 		pthread_mutex_unlock (&client->task.mutex);
 		return ret;
 	}
 	else
 	{
 #endif
-		return enqueue_task_unlocked (httpd, client, task, xtnsize);
+		return enqueue_task_unlocked (httpd, client, pred, task, xtnsize);
 #if defined(HAVE_PTHREAD)
 	}
 #endif
@@ -641,7 +660,8 @@ static void perform_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	if (n <= -1)
 	{
 		dequeue_task_locked (httpd, client);
-		shutdown (client->handle.i, SHUT_RDWR);
+		/*shutdown (client->handle.i, SHUT_RDWR);*/
+		client->bad = 1;
 	}
 	else if (n == 0)
 	{
@@ -1154,13 +1174,14 @@ void qse_httpd_clearlisteners (qse_httpd_t* httpd)
 }
 #endif
 
-int qse_httpd_entask (
+qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, qse_size_t xtnsize)
+	const qse_httpd_task_t* pred, const qse_httpd_task_t* task,
+	qse_size_t xtnsize)
 {
-	int ret;
-	ret = enqueue_task_locked (httpd, client, task, xtnsize);
-	if (ret <= -1) client->bad = 1; /* mark this client bad */
+	qse_httpd_task_t* ret;
+	ret = enqueue_task_locked (httpd, client, pred, task, xtnsize);
+	if (ret == QSE_NULL) client->bad = 1; /* mark this client bad */
 #if defined(HAVE_PTHREAD)
 	else if (httpd->threaded) pthread_cond_signal (&httpd->client.cond);
 #endif
@@ -1174,3 +1195,4 @@ void qse_httpd_markclientbad (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	 * like memory allocation failure */
 	client->bad = 1;
 }
+

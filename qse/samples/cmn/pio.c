@@ -44,7 +44,7 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		qse_ssize_t i;
 
 		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, buf, sizeof(buf), rhid);
+		qse_ssize_t n = qse_pio_read (pio, buf, QSE_SIZEOF(buf), rhid);
 		if (n == 0) break;
 		if (n <= -1)
 		{

@@ -55,7 +55,7 @@ struct task_queue_node_t
 {
 	task_queue_node_t* next;
 	task_queue_node_t* prev;
-	qse_httpd_task_t task;
+	qse_httpd_task_t   task;
 };
 
 struct qse_httpd_client_t
