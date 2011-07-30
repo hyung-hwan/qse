@@ -26,6 +26,7 @@ static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
 	int method;
+	qse_httpd_task_t* x;
 
 #if 0
 	httpd_xtn_t* xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
@@ -58,11 +59,16 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 	{
 		const qse_mchar_t* rangestr;
 		qse_http_range_t range;
-		int x;
 
 		rangestr = qse_htre_gethdrval (req, "Range");
 		if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
 		{
+#if 0
+qse_httpd_entaskstatictext (httpd, client, QSE_MT("HTTP/1.1 416 Requested range not satisfiable\r\nContent-Length: 5\r\n\r\nA\r\n\r\n"));
+#endif
+qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/bin/ls -l /etc"));
+
+#if 0
 			const qse_mchar_t* msg;
 			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
 			x = qse_httpd_entaskformat (httpd, client,
@@ -70,35 +76,42 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 				req->version.major, req->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 			);
-			if (x <= -1) goto oops;
+			if (x == QSE_NULL) goto oops;
+#endif
 		}
-
-		x = qse_httpd_entaskpath (
-			httpd, client, 
-			qse_htre_getqpathptr(req),
-			(rangestr? &range: QSE_NULL),
-			qse_htre_getversion(req)
-		);
-		if (x <= -1) goto oops;
+		else
+		{
+			x = qse_httpd_entaskpath (
+				httpd, client, QSE_NULL,
+				qse_htre_getqpathptr(req),
+				(rangestr? &range: QSE_NULL),
+				qse_htre_getversion(req)
+			);
+			if (x == QSE_NULL) goto oops;
+		}
 	}
 	else
 	{
 		const qse_mchar_t* msg = QSE_MT("<html><head><title>Method not allowed</title></head><body><b>REQUEST METHOD NOT ALLOWED</b></body></html>");
-		if (qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, QSE_NULL,
 			QSE_MT("HTTP/%d.%d 405 Method not allowed\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 			req->version.major, req->version.minor,
-			(int)qse_mbslen(msg) + 4, msg) <= -1) goto oops;
+			(int)qse_mbslen(msg) + 4, msg
+		);
+		if (x == QSE_NULL) goto oops;
 	}
 
 	if (req->attr.connection_close)
 	{
-		if (qse_httpd_entaskdisconnect (httpd, client) <= -1) return -1;
+		x = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+		if (x == QSE_NULL) goto oops;
 	}
 
 	return 0;
 
 oops:
-	qse_httpd_markclientbad (httpd, client);
+	/*qse_httpd_markclientbad (httpd, client);*/
 	return 0;
 }
 

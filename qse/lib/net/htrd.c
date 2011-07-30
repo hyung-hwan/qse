@@ -33,7 +33,7 @@ static QSE_INLINE int is_whspace_octet (qse_mchar_t c)
 
 static QSE_INLINE int is_space_octet (qse_mchar_t c)
 {
-	return c == ' ' || c == '\t' || c == '\r';
+	return c == QSE_MT(' ') || c == QSE_MT('\t') || c == QSE_MT('\r');
 }
 
 static QSE_INLINE int is_purespace_octet (qse_mchar_t c)
@@ -71,17 +71,18 @@ static QSE_INLINE int is_xdigit_octet (qse_mchar_t c)
 
 static QSE_INLINE int digit_to_num (qse_mchar_t c)
 {
-	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= QSE_MT('0') && c <= QSE_MT('9')) return c - QSE_MT('0');
 	return -1;
 }
 
 static QSE_INLINE int xdigit_to_num (qse_mchar_t c)
 {
-	if (c >= '0' && c <= '9') return c - '0';
-	if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
-	if (c >= 'a' && c <= 'z') return c - 'a' + 10;
+	if (c >= QSE_MT('0') && c <= QSE_MT('9')) return c - QSE_MT('0');
+	if (c >= QSE_MT('A') && c <= QSE_MT('Z')) return c - QSE_MT('A') + 10;
+	if (c >= QSE_MT('a') && c <= QSE_MT('z')) return c - QSE_MT('a') + 10;
 	return -1;
 }
+
 
 static QSE_INLINE int push_to_buffer (
 	qse_htrd_t* htrd, qse_htob_t* octb,

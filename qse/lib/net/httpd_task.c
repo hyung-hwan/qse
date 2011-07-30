@@ -28,7 +28,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define MAX_SENDFILE_SIZE 4096
+#define MAX_SEND_SIZE 4096
 
 #ifdef HAVE_SYS_SENDFILE_H
 #	include <sys/sendfile.h>
@@ -36,7 +36,7 @@
 qse_ssize_t sendfile (
 	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
 {
-	qse_mchar_t buf[MAX_SENDFILE_SIZE];
+	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t n;
 
 	if (offset && lseek (in_fd, *offset, SEEK_SET) != *offset) 
@@ -46,7 +46,7 @@ qse_ssize_t sendfile (
 	n = read (in_fd, buf, count);
 	if (n == (qse_ssize_t)-1 || n == 0) return n;
 
-	n = write (out_fd, buf, n);
+	n = send (out_fd, buf, n, 0);
 	if (n > 0 && offset) *offset = *offset + n;
 
 	return n;
@@ -64,14 +64,17 @@ static int task_main_disconnect (
 	return 0;
 }
 
-int qse_httpd_entaskdisconnect (qse_httpd_t* httpd, qse_httpd_client_t* client)
+qse_httpd_task_t* qse_httpd_entaskdisconnect (
+	qse_httpd_t* httpd, 
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred)
 {
 	qse_httpd_task_t task;
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.main = task_main_disconnect;
 
-	return qse_httpd_entask (httpd, client, &task, 0);
+	return qse_httpd_entask (httpd, client, pred, &task, 0);
 }
 
 /*------------------------------------------------------------------------*/
@@ -83,7 +86,7 @@ static int task_main_statictext (
 	qse_size_t count = 0;
 	const qse_mchar_t* ptr = (const qse_mchar_t*)task->ctx;
 
-	while (*ptr != QSE_MT('\0') && count < MAX_SENDFILE_SIZE)
+	while (*ptr != QSE_MT('\0') && count < MAX_SEND_SIZE)
 	{
 		ptr++; count++;
 	}
@@ -105,8 +108,11 @@ static int task_main_statictext (
 	return 1; /* more work to do */
 }
 
-int qse_httpd_entaskstatictext (
-     qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* text)
+qse_httpd_task_t* qse_httpd_entaskstatictext (
+     qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, 
+	const qse_mchar_t* text)
 {
 	qse_httpd_task_t task;
 
@@ -114,7 +120,7 @@ int qse_httpd_entaskstatictext (
 	task.main = task_main_statictext;
 	task.ctx = (void*)text;
 
-	return qse_httpd_entask (httpd, client, &task, 0);
+	return qse_httpd_entask (httpd, client, pred, &task, 0);
 }
 
 /*------------------------------------------------------------------------*/
@@ -146,7 +152,7 @@ static int task_main_text (
 	qse_size_t count;
 	task_text_t* ctx = (task_text_t*)task->ctx;
 
-	count = MAX_SENDFILE_SIZE;
+	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: do i need to add code to skip this send if count is 0? */
@@ -166,8 +172,11 @@ static int task_main_text (
 	return 1; /* more work to do */
 }
 
-int qse_httpd_entasktext (
-     qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* text)
+qse_httpd_task_t* qse_httpd_entasktext (
+     qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, 
+	const qse_mchar_t* text)
 {
 	qse_httpd_task_t task;
 	task_text_t data;
@@ -182,7 +191,7 @@ int qse_httpd_entasktext (
 	task.ctx = &data;
 
 	return qse_httpd_entask (
-		httpd, client, &task, QSE_SIZEOF(data) + data.left);
+		httpd, client, pred, &task, QSE_SIZEOF(data) + data.left);
 }
 
 /*------------------------------------------------------------------------*/
@@ -223,7 +232,7 @@ static int task_main_format (
 	qse_size_t count;
 	task_format_t* ctx = (task_format_t*)task->ctx;
 
-	count = MAX_SENDFILE_SIZE;
+	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
 	n = send (
@@ -242,8 +251,11 @@ static int task_main_format (
 	return 1; /* more work to do */
 }
 
-int qse_httpd_entaskformat (
-     qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_mchar_t* fmt, ...)
+qse_httpd_task_t* qse_httpd_entaskformat (
+     qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t* fmt, ...)
 {
 	qse_httpd_task_t task;
 	task_format_t data;
@@ -266,7 +278,7 @@ int qse_httpd_entaskformat (
 		qse_size_t capa = 256;
 
 		buf = (qse_mchar_t*) qse_httpd_allocmem (httpd, (capa + 1) * QSE_SIZEOF(*buf));
-		if (buf == QSE_NULL) return -1;
+		if (buf == QSE_NULL) return QSE_NULL;
 
 		/* an old vsnprintf behaves differently from C99 standard.
 		 * thus, it returns -1 when it can't write all the input given. */
@@ -286,7 +298,7 @@ int qse_httpd_entaskformat (
 
 				capa = capa * 2;
 				buf = (qse_mchar_t*) qse_httpd_allocmem (httpd, (capa + 1) * QSE_SIZEOF(*buf));
-				if (buf == QSE_NULL) return  -1;
+				if (buf == QSE_NULL) return  QSE_NULL;
 			}
 			else break;
 		}
@@ -297,7 +309,7 @@ int qse_httpd_entaskformat (
 		 * have been written not including the terminating '\0' 
 		 * if the _data buffer were large enough */
 		buf = (qse_mchar_t*) qse_httpd_allocmem (httpd, (bytes_req + 1) * QSE_SIZEOF(*buf));
-		if (buf == QSE_NULL) return -1;
+		if (buf == QSE_NULL) return QSE_NULL;
 
 		va_start (ap, fmt);
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -313,7 +325,7 @@ int qse_httpd_entaskformat (
 			qse_httpd_freemem (httpd, buf);
 
 			httpd->errnum = QSE_HTTPD_EINTERN;
-			return -1;
+			return QSE_NULL;
 		}
 	}
 
@@ -329,7 +341,7 @@ int qse_httpd_entaskformat (
 	task.ctx = &data;
 
 	return qse_httpd_entask (
-		httpd, client, &task, QSE_SIZEOF(data));
+		httpd, client, pred, &task, QSE_SIZEOF(data));
 }
 
 /* TODO: send wide character string when QSE_CHAR_IS_WCHAR */
@@ -367,7 +379,7 @@ static int task_main_file (
 	qse_size_t count;
 	task_file_t* ctx = (task_file_t*)task->ctx;
 
-	count = MAX_SENDFILE_SIZE;
+	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: more adjustment needed for OS with different sendfile semantics... */
@@ -396,9 +408,13 @@ static int task_main_file (
 	return 1; /* more work to do */
 }
 
-int qse_httpd_entaskfile (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_ubi_t handle, qse_foff_t offset, qse_foff_t size)
+qse_httpd_task_t* qse_httpd_entaskfile (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	qse_ubi_t handle,
+	qse_foff_t offset,
+	qse_foff_t size)
 {
 	qse_httpd_task_t task;
 	task_file_t data;
@@ -414,7 +430,7 @@ int qse_httpd_entaskfile (
 	task.fini = task_fini_file;
 	task.ctx = &data;
 
-	return qse_httpd_entask (httpd, client, &task, QSE_SIZEOF(data));
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data));
 }
 
 /*------------------------------------------------------------------------*/
@@ -448,18 +464,20 @@ static int task_main_path (
 	task_path_t* data = (task_path_t*)task->ctx;
 	qse_ubi_t handle;
 	struct stat st;
-	int x;
+	qse_httpd_task_t* x = task;
 
+qse_printf (QSE_T("opending file %S\n"), data->name);
 	handle.i = open (data->name, O_RDONLY);
 	if (handle.i <= -1)
 	{
 		const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+				httpd, client, x,
 				QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 				data->version.major, data->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 		);
-		goto done;
+		goto no_file_send;
 	}
 	fcntl (handle.i, F_SETFD, FD_CLOEXEC);
 
@@ -467,12 +485,27 @@ static int task_main_path (
 	{
 		const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
 
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
 			QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 			data->version.major, data->version.minor,
 			(int)qse_mbslen(msg) + 4, msg
 		);
-		goto done;
+		goto no_file_send;
+	}
+
+	if (S_ISDIR(st.st_mode))
+	{
+/* TODO: directory listing */
+		const qse_mchar_t* msg = QSE_MT("<html><head><title>Directory Listing</title></head><body><li>file1<li>file2<li>file3</body></html>");
+
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+			data->version.major, data->version.minor,
+			(int)qse_mbslen(msg) + 4, msg
+		);
+		goto no_file_send;
 	}
 
 	if (st.st_size < 0) st.st_size = 0; /* can this happen? */
@@ -494,12 +527,13 @@ static int task_main_path (
 			const qse_mchar_t* msg;
 
 			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
-			x = qse_httpd_entaskformat (httpd, client,
+			x = qse_httpd_entaskformat (
+				httpd, client, x,
 				QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"),
 				data->version.major, data->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 			);
-			goto done;
+			goto no_file_send;
 		}
 
 		if (data->range.to >= st.st_size) data->range.to = st.st_size - 1;
@@ -512,7 +546,8 @@ static int task_main_path (
 		}
 
 #if (QSE_SIZEOF_LONG_LONG > 0)
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
     			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
@@ -525,7 +560,8 @@ static int task_main_path (
 			(unsigned long long)st.st_size
 		);
 #else
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
     			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
@@ -538,14 +574,15 @@ static int task_main_path (
 			(unsigned long)st.st_size
 		);
 #endif
-		if (x <= -1) goto done;
-
-		x = qse_httpd_entaskfile (
-				httpd, client, handle, 
-				data->range.from, 
-				(data->range.to - data->range.from + 1)
-		);
-		if (x <= -1) goto done;
+		if (x)
+		{
+			x = qse_httpd_entaskfile (
+					httpd, client, x,
+					handle, 
+					data->range.from, 
+					(data->range.to - data->range.from + 1)
+			);
+		}
 	}
 	else
 	{
@@ -556,11 +593,12 @@ static int task_main_path (
 		{
 			httpd->errnum = QSE_HTTPD_ENOERR;
 			mime_type = httpd->cbs->file.getmimetype (httpd, data->name);
-			/*TODO: how to handle an error... */
+/*TODO: how to handle an error... */
 		}
 
 #if (QSE_SIZEOF_LONG_LONG > 0)
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
     			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
@@ -570,7 +608,8 @@ static int task_main_path (
 			data->name
 		);
 #else
-		x = qse_httpd_entaskformat (httpd, client,
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
     			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
@@ -580,22 +619,26 @@ static int task_main_path (
 			data->name
 		);
 #endif
-		if (x <= -1) goto done;
-
-		x = qse_httpd_entaskfile (httpd, client, handle, 0, st.st_size);
-		if (x <= -1) goto done;
+		if (x)
+		{
+			x = qse_httpd_entaskfile (
+				httpd, client, x, handle, 0, st.st_size);
+		}
 	}
 
-	return 0;
+	return (x == QSE_NULL)? -1: 0;
 
-done:
+no_file_send:
 	if (handle.i >= 0) close (handle.i);
-	return x;
+	return (x == QSE_NULL)? -1: 0;
 }
 
-int qse_httpd_entaskpath (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	const qse_mchar_t* name, const qse_http_range_t* range, 
+qse_httpd_task_t* qse_httpd_entaskpath (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t* name,
+	const qse_http_range_t* range, 
 	const qse_http_version_t* verison)
 {
 	qse_httpd_task_t task;
@@ -612,62 +655,142 @@ int qse_httpd_entaskpath (
 	task.main = task_main_path;
 	task.ctx = &data;
 
-	return qse_httpd_entask (httpd, client, &task, 
+	return qse_httpd_entask (httpd, client, pred, &task, 
 		QSE_SIZEOF(task_path_t) + qse_mbslen(name) + 1);
 }
 
 /*------------------------------------------------------------------------*/
 
-#if 0
-typedef struct httpd_task_cgi_t httpd_task_cgi_t;
-struct httpd_task_cgi_t
+typedef struct task_cgi_t task_cgi_t;
+struct task_cgi_t
 {
+	const qse_char_t* path;
 	qse_pio_t* pio;
+	qse_mchar_t buf[MAX_SEND_SIZE];
+	qse_size_t buflen;
 };
 
-static int httpd_init_cgi (
+static int task_init_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	httpd_task_cgi_t* xtn = qse_httpd_gettaskxtn (httpd, task);
-
+	task_cgi_t* xtn = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
-	xtn->pio = qse_pio_open (httpd->mmgr, task->ctx);
-	if (xtn->pio == QSE_NULL)
-	{
-		httpd->errnum = QSE_HTTPD_ECGI;
-		return -1;
-	}
-
+	qse_strcpy ((qse_char_t*)(xtn + 1), task->ctx);
+	xtn->path = (qse_char_t*)(xtn + 1);
 	task->ctx = xtn;
 	return 0;
 }
 
-static void httpd_fini_cgi (
+static void task_fini_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	httpd_task_cgi_t* xtn = task->ctx;
-	qse_pio_close (xtn->pio);
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	if (cgi->pio) qse_pio_close (cgi->pio);
 }
-
-static void httpd_main_cgi (
+static int task_main_cgi_3 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-/* TODO */
-	return -1;
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	qse_ssize_t n;
+
+	QSE_ASSERT (cgi->pio != QSE_NULL);
+
+	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
+	if (n <= -1)
+	{
+		/* can't return internal server error any more... */
+/* TODO: logging ... */
+		return -1;
+	}
+
+	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
+	cgi->buflen -= n;
+
+	return (cgi->buflen > 0)? 1: 0;
 }
 
-int qse_httpd_entaskcgi (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_char_t* path)
+static int task_main_cgi_2 (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	qse_ssize_t n;
+	
+	QSE_ASSERT (cgi->pio != QSE_NULL);
+
+	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
+	n = qse_pio_read (
+		cgi->pio, 
+		&cgi->buf[cgi->buflen], 
+		QSE_SIZEOF(cgi->buf) - cgi->buflen,
+		QSE_PIO_OUT
+	);
+	if (n <= -1)
+	{
+		/* can't return internal server error any more... */
+/* TODO: logging ... */
+		return -1;
+	}
+	if (n == 0) 
+	{
+		if (cgi->buflen > 0)
+		{
+			task->main = task_main_cgi_3;
+			return task_main_cgi_3 (httpd, client, task);
+		}
+		else return 0;
+	}
+			
+	cgi->buflen += n;
+
+	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
+	if (n <= -1)
+	{
+		/* can't return internal server error any more... */
+/* TODO: logging ... */
+		return -1;
+	}
+
+	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
+	cgi->buflen -= n;
+
+	return 1;
+}
+
+static int task_main_cgi (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+
+qse_printf (QSE_T("[pip open for %s]\n"), cgi->path);
+	cgi->pio = qse_pio_open (httpd->mmgr, 0, cgi->path, QSE_PIO_READOUT | QSE_PIO_WRITEIN);
+	if (cgi->pio == QSE_NULL)
+	{
+		/* TODO: entask internal server errror */
+qse_printf (QSE_T("internal server error....\n"));
+		return 0;
+	}
+
+	task->main = task_main_cgi_2; /* cause this function to be called subsequently */
+
+	return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
+}
+
+qse_httpd_task_t* qse_httpd_entaskcgi (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, 
+	const qse_char_t* path)
 {
 	qse_httpd_task_t task;
-	httpd_task_cgi_t data;
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = httpd_init_cgi;
-	task.main = httpd_main_cgi;
-	task.fini = httpd_fini_cgi;
-	task.ctx = path;
+	task.init = task_init_cgi;
+	task.fini = task_fini_cgi;
+	task.main = task_main_cgi;
+	task.ctx = (void*)path;
 
-	return qse_httpd_entask (httpd, client, &task, QSE_SIZEOF(data));
+	return qse_httpd_entask (
+		httpd, client, pred, &task, 
+		QSE_SIZEOF(task_cgi_t) + ((qse_strlen(path) + 1) * QSE_SIZEOF(*path))
+	);
 }
-#endif
