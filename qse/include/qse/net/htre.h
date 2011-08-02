@@ -114,6 +114,13 @@ struct qse_htre_t
 
 #define qse_htre_setdiscard(re,v) QSE_BLOCK((re)->discard = (v);)
 
+typedef int (*qse_htre_header_walker_t) (
+	qse_htre_t*        re,
+	const qse_mchar_t* key,
+	const qse_mchar_t* val,
+	void*              ctx
+);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -143,8 +150,15 @@ int qse_htre_setstrfromxstr (
 	const qse_mxstr_t* xstr
 );
 
-const qse_mchar_t* qse_htre_gethdrval (
-	qse_htre_t* re, const qse_mchar_t* key
+const qse_mchar_t* qse_htre_getheaderval (
+	qse_htre_t*        re, 
+	const qse_mchar_t* key
+);
+
+int qse_htre_walkheaders (
+	qse_htre_t*              re,
+	qse_htre_header_walker_t walker,
+	void*                    ctx
 );
 
 #ifdef __cplusplus

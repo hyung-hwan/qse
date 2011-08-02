@@ -2,12 +2,8 @@
 #include <qse/net/httpd.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/str.h>
 #include <signal.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/socket.h>
 
 #define MAX_SENDFILE_SIZE 4096
 typedef struct httpd_xtn_t httpd_xtn_t;
@@ -60,24 +56,31 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 		const qse_mchar_t* rangestr;
 		qse_http_range_t range;
 
+		const qse_mchar_t* qpath = qse_htre_getqpathptr(req);
+		const qse_mchar_t* dot = qse_mbsrchr (qpath, QSE_MT('.'));
+
+		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
+		{
+qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/bin/ls -l /etc"));
+			goto done;
+		}
+
 		rangestr = qse_htre_gethdrval (req, "Range");
 		if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
 		{
 #if 0
-qse_httpd_entaskstatictext (httpd, client, QSE_MT("HTTP/1.1 416 Requested range not satisfiable\r\nContent-Length: 5\r\n\r\nA\r\n\r\n"));
+qse_httpd_entaskstatictext (httpd, client, QSE_NULL, QSE_MT("HTTP/1.1 416 Requested range not satisfiable\r\nContent-Length: 5\r\n\r\nA\r\n\r\n"));
 #endif
-qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/bin/ls -l /etc"));
 
-#if 0
 			const qse_mchar_t* msg;
 			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
-			x = qse_httpd_entaskformat (httpd, client,
+			x = qse_httpd_entaskformat (
+				httpd, client, QSE_NULL,
 				QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 				req->version.major, req->version.minor,
 				(int)qse_mbslen(msg) + 4, msg
 			);
 			if (x == QSE_NULL) goto oops;
-#endif
 		}
 		else
 		{
@@ -102,6 +105,7 @@ qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/bin/ls -l /etc"));
 		if (x == QSE_NULL) goto oops;
 	}
 
+done:
 	if (req->attr.connection_close)
 	{
 		x = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);

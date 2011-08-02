@@ -37,11 +37,16 @@ enum qse_htrd_errnum_t
 
 typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
 
+/**
+ * The qse_htrd_option_t type defines various options to
+ * change the behavior of the qse_htrd_t reader.
+ */
 enum qse_htrd_option_t
 {
-	QSE_HTRD_LEADINGEMPTYLINES = (1 << 0),
-	QSE_HTRD_REQUEST           = (1 << 1),
-	QSE_HTRD_RESPONSE          = (1 << 2)
+	QSE_HTRD_SKIPEMPTYLINES  = (1 << 0), /**< skip leading empty lines before the initial line */
+	QSE_HTRD_SKIPINITIALLINE = (1 << 1), /**< skip processing an initial line */
+	QSE_HTRD_REQUEST         = (1 << 2), /**< parse input as a request */
+	QSE_HTRD_RESPONSE        = (1 << 3)  /**< parse input as a response */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;

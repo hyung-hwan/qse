@@ -72,7 +72,7 @@ int qse_htre_setstrfromxstr (
 	return (qse_mbs_ncpy (str, xstr->ptr, xstr->len) == (qse_size_t)-1)? -1: 0;
 }
 
-const qse_mchar_t* qse_htre_gethdrval (
+const qse_mchar_t* qse_htre_getheaderval (
 	qse_htre_t* re, const qse_mchar_t* name)
 {
 	qse_htb_pair_t* pair;
@@ -81,3 +81,34 @@ const qse_mchar_t* qse_htre_gethdrval (
 	return QSE_HTB_VPTR(pair);
 }
 
+struct header_walker_ctx_t
+{
+	qse_htre_t* re;
+	qse_htre_header_walker_t walker;
+	void* ctx;
+	int ret;
+};
+
+static qse_htb_walk_t walk_headers (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
+{
+	struct header_walker_ctx_t* hwctx = (struct header_walker_ctx_t*)ctx;
+	if (hwctx->walker (hwctx->re, QSE_HTB_KPTR(pair), QSE_HTB_VPTR(pair), hwctx->ctx) <= -1) 
+	{
+		hwctx->ret = -1;
+		return QSE_HTB_WALK_STOP;
+	}
+     return QSE_HTB_WALK_FORWARD;
+}
+
+int qse_htre_walkheaders (
+	qse_htre_t* re, qse_htre_header_walker_t walker, void* ctx)
+{
+	struct header_walker_ctx_t hwctx;
+	hwctx.re = re;
+	hwctx.walker = walker;
+	hwctx.ctx = ctx;
+	hwctx.ret = 0;
+	qse_htb_walk (&re->hdrtab, walk_headers, &hwctx);
+	return hwctx.ret;
+}
+	

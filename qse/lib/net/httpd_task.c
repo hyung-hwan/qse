@@ -665,9 +665,76 @@ typedef struct task_cgi_t task_cgi_t;
 struct task_cgi_t
 {
 	const qse_char_t* path;
+
+	qse_htrd_t* htrd;
+	qse_mbs_t* res;
 	qse_pio_t* pio;
+
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_size_t buflen;
+};
+
+typedef struct cgi_htrd_xtn_t cgi_htrd_xtn_t;
+struct cgi_htrd_xtn_t
+{
+	task_cgi_t* cgi;
+};
+
+int walk_cgi_headers (qse_htre_t* req, const qse_mchar_t* key, const qse_mchar_t* val, void* ctx)
+{
+	task_cgi_t* cgi = (task_cgi_t*)ctx;
+
+	if (qse_mbscmp (key, "Status") != 0)
+	{
+		if (qse_mbs_cat (cgi->res, key) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, QSE_MT(": ")) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, val) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) return -1;
+	}
+
+	return 0;
+}
+
+static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
+{
+	cgi_htrd_xtn_t* xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	task_cgi_t* cgi = xtn->cgi;
+	const qse_mchar_t* status;
+
+	status = qse_htre_getheaderval (req, QSE_MT("Status"));
+	if (status)
+	{
+		qse_mchar_t buf[128];
+		snprintf (buf, QSE_COUNTOF(buf), 	
+			QSE_MT("HTTP/%d.%d "),
+			qse_htre_getmajorversion(req),
+			qse_htre_getminorversion(req)
+		);
+		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+/* TODO: check the syntax of status value??? */
+		if (qse_mbs_cat (cgi->res, status) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
+	}
+	else
+	{
+		qse_mchar_t buf[128];
+		snprintf (buf, QSE_COUNTOF(buf), 	
+			QSE_MT("HTTP/%d.%d 200 OK\r\n"),
+			qse_htre_getmajorversion(req),
+			qse_htre_getminorversion(req)
+		);
+		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+	}
+
+	if (qse_htre_walkheaders (req, walk_cgi_headers, cgi) <= -1) return -1;
+	return 0;
+}
+
+static qse_htrd_recbs_t cgi_htrd_cbs =
+{
+	cgi_htrd_handle_request,
+	QSE_NULL, /* not needed for CGI */
+     QSE_NULL  /* not needed for CGI */
 };
 
 static int task_init_cgi (
@@ -686,7 +753,10 @@ static void task_fini_cgi (
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	if (cgi->pio) qse_pio_close (cgi->pio);
+	if (cgi->res) qse_mbs_close (cgi->res);
+	if (cgi->htrd) qse_htrd_close (cgi->htrd);
 }
+
 static int task_main_cgi_3 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -742,6 +812,14 @@ static int task_main_cgi_2 (
 			
 	cgi->buflen += n;
 
+	if (qse_htrd_feed (cgi->htrd, cgi->buf, cgi->buflen) <= -1)
+	{
+/* TODO: logging */
+		return -1;
+	}
+
+
+#if 0
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
 	{
@@ -752,6 +830,7 @@ static int task_main_cgi_2 (
 
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
+#endif
 
 	return 1;
 }
@@ -760,14 +839,40 @@ static int task_main_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	cgi_htrd_xtn_t* xtn;
 
-qse_printf (QSE_T("[pip open for %s]\n"), cgi->path);
+	cgi->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_htrd_xtn_t));
+	if (cgi->htrd == QSE_NULL)
+	{
+qse_printf (QSE_T("internal server error....\n"));
+return 0;
+	}
+	xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (cgi->htrd);
+	xtn->cgi = cgi;
+	qse_htrd_setrecbs (cgi->htrd, &cgi_htrd_cbs);
+	qse_htrd_setoption (cgi->htrd, QSE_HTRD_SKIPINITIALLINE | QSE_HTRD_REQUEST);
+
+	cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
+	if (cgi->res == QSE_NULL)
+	{
+		/* TODO: entask internal server errror */
+		qse_htrd_close (cgi->htrd);
+qse_printf (QSE_T("internal server error....\n"));
+		return 0;
+	}
+
+qse_printf (QSE_T("[pio open for %s]\n"), cgi->path);
 	cgi->pio = qse_pio_open (httpd->mmgr, 0, cgi->path, QSE_PIO_READOUT | QSE_PIO_WRITEIN);
 	if (cgi->pio == QSE_NULL)
 	{
 		/* TODO: entask internal server errror */
+		qse_mbs_close (cgi->res);
+		qse_htrd_close (cgi->htrd);
 qse_printf (QSE_T("internal server error....\n"));
 		return 0;
+	}
+	else
+	{
 	}
 
 	task->main = task_main_cgi_2; /* cause this function to be called subsequently */
@@ -794,3 +899,20 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 		QSE_SIZEOF(task_cgi_t) + ((qse_strlen(path) + 1) * QSE_SIZEOF(*path))
 	);
 }
+
+
+/*------------------------------------------------------------------------*/
+
+/* 
+typedef struct task_proxy_t task_proxy_t;
+struct task_proxy_t
+{
+}
+
+qse_httpd_task_t* qse_httpd_entaskproxy (...) 
+{
+}
+*/
+
+/*------------------------------------------------------------------------*/
+
