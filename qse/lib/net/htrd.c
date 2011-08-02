@@ -836,7 +836,7 @@ static QSE_INLINE int parse_initial_line_and_headers (
 
 	p = QSE_MBS_PTR(&htrd->fed.b.raw);
 
-	if (htrd->option & QSE_HTRD_LEADINGEMPTYLINES)
+	if (htrd->option & QSE_HTRD_SKIPEMPTYLINES)
 		while (is_whspace_octet(*p)) p++;
 	else
 		while (is_space_octet(*p)) p++;
@@ -844,8 +844,11 @@ static QSE_INLINE int parse_initial_line_and_headers (
 	QSE_ASSERT (*p != '\0');
 
 	/* parse the initial line */
-	p = parse_initial_line (htrd, p);
-	if (p == QSE_NULL) return -1;
+	if (!(htrd->option & QSE_HTRD_SKIPINITIALLINE))
+	{
+		p = parse_initial_line (htrd, p);
+		if (p == QSE_NULL) return -1;
+	}
 
 	/* parse header fields */
 	do
@@ -1050,7 +1053,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 	{
 		register qse_mchar_t b = *ptr++;
 
-		if (htrd->option & QSE_HTRD_LEADINGEMPTYLINES &&
+		if (htrd->option & QSE_HTRD_SKIPEMPTYLINES &&
 		    htrd->fed.s.plen <= 0 && is_whspace_octet(b)) 
 		{
 			/* let's drop leading whitespaces across multiple
