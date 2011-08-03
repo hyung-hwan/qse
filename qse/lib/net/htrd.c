@@ -38,35 +38,35 @@ static QSE_INLINE int is_space_octet (qse_mchar_t c)
 
 static QSE_INLINE int is_purespace_octet (qse_mchar_t c)
 {
-	return c == ' ' || c == '\t';
+	return c == QSE_MT(' ') || c == QSE_MT('\t');
 }
 
 static QSE_INLINE int is_upalpha_octet (qse_mchar_t c)
 {
-	return c >= 'A' && c <= 'Z';
+	return c >= QSE_MT('A') && c <= QSE_MT('Z');
 }
 
 static QSE_INLINE int is_loalpha_octet (qse_mchar_t c)
 {
-	return c >= 'a' && c <= 'z';
+	return c >= QSE_MT('a') && c <= QSE_MT('z');
 }
 
 static QSE_INLINE int is_alpha_octet (qse_mchar_t c)
 {
-	return (c >= 'A' && c <= 'Z') ||
-	       (c >= 'a' && c <= 'z');
+	return (c >= QSE_MT('A') && c <= QSE_MT('Z')) ||
+	       (c >= QSE_MT('a') && c <= QSE_MT('z'));
 }
 
 static QSE_INLINE int is_digit_octet (qse_mchar_t c)
 {
-	return c >= '0' && c <= '9';
+	return c >= QSE_MT('0') && c <= QSE_MT('9');
 }
 
 static QSE_INLINE int is_xdigit_octet (qse_mchar_t c)
 {
-	return (c >= '0' && c <= '9') ||
-	       (c >= 'A' && c <= 'F') ||
-	       (c >= 'a' && c <= 'f');
+	return (c >= QSE_MT('0') && c <= QSE_MT('9')) ||
+	       (c >= QSE_MT('A') && c <= QSE_MT('F')) ||
+	       (c >= QSE_MT('a') && c <= QSE_MT('f'));
 }
 
 static QSE_INLINE int digit_to_num (qse_mchar_t c)
@@ -534,6 +534,7 @@ static QSE_INLINE int capture_content_length (
 	}
 
 	htrd->re.attr.content_length = len;
+	htrd->re.attr.content_length_set = 1;
 	return 0;
 }
 
@@ -562,10 +563,10 @@ static QSE_INLINE int capture_transfer_encoding (
 	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
 	if (n == 0)
 	{
-		if (htrd->re.attr.content_length > 0)
+		/* if (htrd->re.attr.content_length > 0) */
+		if (htrd->re.attr.content_length_set)
 		{
-			/* content-length is greater than 0 
-			 * while transfer-encoding: chunked is specified. */
+			/* both content-length and 'transfer-encoding: chunked' are specified. */
 			goto badre;
 		}
 
@@ -881,7 +882,7 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 	/* this function must be called in the GET_CHUNK_LEN context */
 	QSE_ASSERT (htrd->fed.s.chunk.phase == GET_CHUNK_LEN);
 
-//qse_printf (QSE_T("CALLING getchunklen [%d]\n"), *ptr);
+/*qse_printf (QSE_T("CALLING getchunklen [%d]\n"), *ptr);*/
 	if (htrd->fed.s.chunk.count <= 0)
 	{
 		/* skip leading spaces if the first character of
@@ -911,7 +912,7 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 			if (htrd->fed.s.chunk.count <= 0)
 			{
 				/* empty line - no more chunk */
-//qse_printf (QSE_T("empty line chunk done....\n"));
+/*qse_printf (QSE_T("empty line chunk done....\n"));*/
 				htrd->fed.s.chunk.phase = GET_CHUNK_DONE;
 			}
 			else if (htrd->fed.s.chunk.len <= 0)
@@ -919,13 +920,13 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 				/* length explicity specified to 0
 				   get trailing headers .... */
 				htrd->fed.s.chunk.phase = GET_CHUNK_TRAILERS;
-//qse_printf (QSE_T("SWITCH TO GET_CHUNK_TRAILERS....\n"));
+/*qse_printf (QSE_T("SWITCH TO GET_CHUNK_TRAILERS....\n"));*/
 			}
 			else
 			{
 				/* ready to read the chunk data... */
 				htrd->fed.s.chunk.phase = GET_CHUNK_DATA;
-//qse_printf (QSE_T("SWITCH TO GET_CHUNK_DATA....\n"));
+/*qse_printf (QSE_T("SWITCH TO GET_CHUNK_DATA....\n"));*/
 			}
 
 			htrd->fed.s.need = htrd->fed.s.chunk.len;
@@ -933,7 +934,7 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 		}
 		else
 		{
-//qse_printf (QSE_T("XXXXXXXXXXXXXXXXXxxx [%c]\n"), *ptr);
+/*qse_printf (QSE_T("XXXXXXXXXXXXXXXXXxxx [%c]\n"), *ptr);*/
 			htrd->errnum = QSE_HTRD_EBADRE;
 			return QSE_NULL;
 		}
@@ -1102,6 +1103,53 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1)
 						return -1;
 
+					if (htrd->option & QSE_HTRD_HURRIED)
+					{
+						int n;
+
+						/* it pushes any trailing data into the content in this mode.
+						 * so the handler knows if there is contents fed to this reader. */
+						if (push_to_buffer (htrd, &htrd->re.content, ptr, end - ptr) <= -1) 
+							return -1;
+					
+
+						htrd->re.attr.hurried = 1;
+						htrd->errnum = QSE_HTRD_ENOERR;	
+						if (htrd->retype == QSE_HTRD_RETYPE_S)
+						{
+							QSE_ASSERTX (
+								htrd->recbs->response != QSE_NULL,
+								"set response callback before feeding"
+							);
+							n = htrd->recbs->response (htrd, &htrd->re);
+						}
+						else
+						{
+							QSE_ASSERTX (
+								htrd->recbs->request != QSE_NULL,
+								"set request callback before feeding"
+							);
+							n = htrd->recbs->request (htrd, &htrd->re);
+						}
+
+						/* qse_mbs_clear (&htrd->re.content); */
+
+						if (n <= -1)
+						{
+							if (htrd->errnum == QSE_HTRD_ENOERR)
+								htrd->errnum = QSE_HTRD_ERECBS;	
+	
+							/* need to clear request on error? 
+							clear_feed (htrd); */
+							return -1;
+						}
+
+						/* if QSE_HTRD_HURRIED is set, we do not handle expect_continue */
+						/* if QSE_HTRD_HURRIED is set, we handle a single request only */
+
+						return 0;
+					}
+
 					if (htrd->retype == QSE_HTRD_RETYPE_Q && 
 					    htrd->re.attr.expect_continue && 
 					    htrd->recbs->expect_continue && ptr >= end)
@@ -1115,6 +1163,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 * not fed here?
 						 */ 
 
+						htrd->re.attr.hurried = 0;
+						htrd->errnum = QSE_HTRD_ENOERR;	
 						n = htrd->recbs->expect_continue (htrd, &htrd->re);
 
 						if (n <= -1)
@@ -1136,7 +1186,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					if (htrd->re.attr.chunked)
 					{
 						/* transfer-encoding: chunked */
-						QSE_ASSERT (htrd->re.attr.content_length <= 0);
+						QSE_ASSERT (!htrd->re.attr.content_length_set);
 	
 					dechunk_start:
 						htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
@@ -1251,6 +1301,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					{
 						int n;
 
+						htrd->re.attr.hurried = 0;
 						htrd->errnum = QSE_HTRD_ENOERR;
 
 						if (htrd->retype == QSE_HTRD_RETYPE_S)
