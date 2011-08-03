@@ -61,11 +61,11 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 
 		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
 		{
-qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/bin/ls -l /etc"));
+qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"));
 			goto done;
 		}
 
-		rangestr = qse_htre_gethdrval (req, "Range");
+		rangestr = qse_htre_getheaderval (req, "Range");
 		if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
 		{
 #if 0

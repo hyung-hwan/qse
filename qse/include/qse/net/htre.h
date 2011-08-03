@@ -35,23 +35,27 @@ struct qse_htre_t
 	qse_http_version_t version;
 
 	int qmethod_or_sstatus; 
-	qse_htob_t qpath_or_smesg;
-	qse_htob_t qparam;
+	qse_mbs_t qpath_or_smesg;
+	qse_mbs_t qparam;
 
 	/* special attributes derived from the header */
 	struct
 	{
 		int chunked;		
-		int content_length;
+		int content_length_set;
+		qse_size_t content_length;
 		int connection_close;
 		int expect_continue;
+
+		/* indicates if the content has been filled */
+		int hurried;
 	} attr;
 
 	/* header table */
 	qse_htb_t hdrtab;
 	
 	/* content octets */
-	qse_htob_t content;
+	qse_mbs_t content;
 
 	/* if set, the rest of the contents are discarded */
 	int discard;
@@ -140,13 +144,13 @@ void qse_htre_clear (
 
 int qse_htre_setstrfromcstr (
 	qse_htre_t*        re,
-	qse_htob_t*        str,
+	qse_mbs_t*         str,
 	const qse_mcstr_t* cstr
 );
 
 int qse_htre_setstrfromxstr (
 	qse_htre_t*        re,
-	qse_htob_t*        str,
+	qse_mbs_t*         str,
 	const qse_mxstr_t* xstr
 );
 

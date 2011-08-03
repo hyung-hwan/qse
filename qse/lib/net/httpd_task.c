@@ -667,7 +667,11 @@ struct task_cgi_t
 	const qse_char_t* path;
 
 	qse_htrd_t* htrd;
+
 	qse_mbs_t* res;
+	qse_mchar_t* res_ptr;
+	qse_size_t   res_left;	
+
 	qse_pio_t* pio;
 
 	qse_mchar_t buf[MAX_SEND_SIZE];
@@ -701,6 +705,8 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 	task_cgi_t* cgi = xtn->cgi;
 	const qse_mchar_t* status;
 
+	QSE_ASSERT (req->attr.hurried);
+
 	status = qse_htre_getheaderval (req, QSE_MT("Status"));
 	if (status)
 	{
@@ -726,7 +732,24 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 	}
 
+	if (!req->attr.content_length_set)
+	{
+		if (qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) return -1;
+	}
+
 	if (qse_htre_walkheaders (req, walk_cgi_headers, cgi) <= -1) return -1;
+
+	if (qse_htre_getcontentlen(req) > 0)
+	{
+		if (!req->attr.content_length_set)
+		{
+			qse_mchar_t buf[64];
+			snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)qse_htre_getcontentlen(req));
+			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+		}
+		if (qse_mbs_ncat (cgi->res, qse_htre_getcontentptr(req), qse_htre_getcontentlen(req)) == (qse_size_t)-1) return -1;
+	}
+
 	return 0;
 }
 
@@ -755,15 +778,86 @@ static void task_fini_cgi (
 	if (cgi->pio) qse_pio_close (cgi->pio);
 	if (cgi->res) qse_mbs_close (cgi->res);
 	if (cgi->htrd) qse_htrd_close (cgi->htrd);
+qse_printf (QSE_T("task_fini_cgi\n"));
 }
 
-static int task_main_cgi_3 (
+static int task_main_cgi_5 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	qse_ssize_t n;
 
 	QSE_ASSERT (cgi->pio != QSE_NULL);
+
+qse_printf (QSE_T("task_main_cgi_5\n"));
+{
+char buf[64];
+snprintf (buf, sizeof(buf), "%lX\r\n", cgi->buflen);
+send (client->handle.i, buf, strlen(buf), 0);
+}
+/* TODO: check if cgi outputs more than content-length if it is set... */
+	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
+	if (n <= -1)
+	{
+		/* can't return internal server error any more... */
+/* TODO: logging ... */
+		return -1;
+	}
+send (client->handle.i, "\r\n", 2, 0);
+
+	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
+	cgi->buflen -= n;
+
+	if (cgi->buflen > 0) return 1;
+
+send (client->handle.i, "0\r\n\r\n", 5, 0);
+	return 0;
+}
+
+static int task_main_cgi_4 (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	qse_ssize_t n;
+	
+	QSE_ASSERT (cgi->pio != QSE_NULL);
+qse_printf (QSE_T("task_main_cgi_4\n"));
+
+/* TODO: check if cgi outputs more than content-length if it is set... */
+	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
+	n = qse_pio_read (
+		cgi->pio, 
+		&cgi->buf[cgi->buflen], 
+		QSE_SIZEOF(cgi->buf) - cgi->buflen,
+		QSE_PIO_OUT
+	);
+	if (n <= -1)
+	{
+		/* can't return internal server error any more... */
+/* TODO: logging ... */
+		return -1;
+	}
+	if (n == 0) 
+	{
+		if (cgi->buflen > 0)
+		{
+			task->main = task_main_cgi_4;
+			return task_main_cgi_5 (httpd, client, task);
+		}
+		else 
+		{
+send (client->handle.i, "0\r\n\r\n", 5, 0);
+			return 0;
+		}
+	}
+			
+	cgi->buflen += n;
+
+{
+char buf[64];
+snprintf (buf, sizeof(buf), "%lX\r\n", cgi->buflen);
+send (client->handle.i, buf, strlen(buf), 0);
+}
 
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
@@ -772,11 +866,43 @@ static int task_main_cgi_3 (
 /* TODO: logging ... */
 		return -1;
 	}
+send (client->handle.i, "\r\n", 2, 0);
 
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
 
-	return (cgi->buflen > 0)? 1: 0;
+	return 1;
+}
+
+static int task_main_cgi_3 (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	qse_ssize_t n;
+	qse_size_t count;
+
+qse_printf (QSE_T("task_main_cgi_3\n"));
+	count = MAX_SEND_SIZE;
+	if (count >= cgi->res_left) count = cgi->res_left;
+
+	n = send (
+		client->handle.i,
+		cgi->res_ptr,
+		count,
+		0
+	);
+
+	if (n <= -1) return -1;
+
+	cgi->res_left -= n;
+	if (cgi->res_left <= 0) 
+	{
+		task->main = task_main_cgi_4;
+		return task_main_cgi_4 (httpd, client, task);
+	}
+
+	cgi->res_ptr += n;
+	return 1; /* more work to do */
 }
 
 static int task_main_cgi_2 (
@@ -802,12 +928,11 @@ static int task_main_cgi_2 (
 	}
 	if (n == 0) 
 	{
-		if (cgi->buflen > 0)
-		{
-			task->main = task_main_cgi_3;
-			return task_main_cgi_3 (httpd, client, task);
-		}
-		else return 0;
+		/* end of output from cgi before it has seen a header.
+		 * the cgi script must be crooked. */
+/* TODO: logging */
+		qse_pio_kill (cgi->pio);
+		return -1;
 	}
 			
 	cgi->buflen += n;
@@ -818,20 +943,19 @@ static int task_main_cgi_2 (
 		return -1;
 	}
 
+	cgi->buflen = 0;
 
-#if 0
-	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
-	if (n <= -1)
+	if (QSE_MBS_LEN(cgi->res) > 0)
 	{
-		/* can't return internal server error any more... */
-/* TODO: logging ... */
-		return -1;
+		/* the headers and probably some contents are ready */
+		cgi->res_ptr = QSE_MBS_PTR(cgi->res);
+		cgi->res_left = QSE_MBS_LEN(cgi->res);
+
+		task->main = task_main_cgi_3;
+		return task_main_cgi_3 (httpd, client, task);
 	}
 
-	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
-	cgi->buflen -= n;
-#endif
-
+	/* complete headers not seen yet. i need to be called again */
 	return 1;
 }
 
@@ -850,7 +974,12 @@ return 0;
 	xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (cgi->htrd);
 	xtn->cgi = cgi;
 	qse_htrd_setrecbs (cgi->htrd, &cgi_htrd_cbs);
-	qse_htrd_setoption (cgi->htrd, QSE_HTRD_SKIPINITIALLINE | QSE_HTRD_REQUEST);
+	qse_htrd_setoption (
+		cgi->htrd, 
+		QSE_HTRD_SKIPINITIALLINE | 
+		QSE_HTRD_HURRIED | 
+		QSE_HTRD_REQUEST
+	);
 
 	cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
 	if (cgi->res == QSE_NULL)

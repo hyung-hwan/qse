@@ -45,8 +45,9 @@ enum qse_htrd_option_t
 {
 	QSE_HTRD_SKIPEMPTYLINES  = (1 << 0), /**< skip leading empty lines before the initial line */
 	QSE_HTRD_SKIPINITIALLINE = (1 << 1), /**< skip processing an initial line */
-	QSE_HTRD_REQUEST         = (1 << 2), /**< parse input as a request */
-	QSE_HTRD_RESPONSE        = (1 << 3)  /**< parse input as a response */
+	QSE_HTRD_HURRIED         = (1 << 2), /**< trigger a callback also after headers without processing contents */
+	QSE_HTRD_REQUEST         = (1 << 3), /**< parse input as a request */
+	QSE_HTRD_RESPONSE        = (1 << 4)  /**< parse input as a response */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;
@@ -95,15 +96,6 @@ struct qse_htrd_t
 		/* points to the head of the combined header list */
 		void* chl;
 	} fed; 
-
-#if 0
-	struct
-	{
-		/* temporary space to store a key and value pair
-		 * during the call to qse_http_scanqparamstr() */
-		qse_htob_t qparam; 
-	} tmp;
-#endif
 
 	enum 
 	{
