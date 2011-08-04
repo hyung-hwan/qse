@@ -61,6 +61,11 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 
 		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
 		{
+			static qse_http_version_t v1 = { 1, 0 };
+			/* persistent connection and cgi not compatible */
+			if (qse_comparehttpversions (qse_htre_getversion(req), &v1) <= 0)
+				req->attr.connection_close = 1;
+
 qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"));
 			goto done;
 		}
