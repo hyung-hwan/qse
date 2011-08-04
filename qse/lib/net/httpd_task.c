@@ -671,6 +671,8 @@ struct task_cgi_t
 	qse_mbs_t* res;
 	qse_mchar_t* res_ptr;
 	qse_size_t   res_left;	
+	int chunked;
+	int sent;
 
 	qse_pio_t* pio;
 
@@ -693,7 +695,7 @@ int walk_cgi_headers (qse_htre_t* req, const qse_mchar_t* key, const qse_mchar_t
 		if (qse_mbs_cat (cgi->res, key) == (qse_size_t)-1) return -1;
 		if (qse_mbs_cat (cgi->res, QSE_MT(": ")) == (qse_size_t)-1) return -1;
 		if (qse_mbs_cat (cgi->res, val) == (qse_size_t)-1) return -1;
-		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
 	}
 
 	return 0;
@@ -713,8 +715,7 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		qse_mchar_t buf[128];
 		snprintf (buf, QSE_COUNTOF(buf), 	
 			QSE_MT("HTTP/%d.%d "),
-			qse_htre_getmajorversion(req),
-			qse_htre_getminorversion(req)
+			1,1 /* TODO: get the version from outer request....... */
 		);
 		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 /* TODO: check the syntax of status value??? */
@@ -726,28 +727,38 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		qse_mchar_t buf[128];
 		snprintf (buf, QSE_COUNTOF(buf), 	
 			QSE_MT("HTTP/%d.%d 200 OK\r\n"),
-			qse_htre_getmajorversion(req),
-			qse_htre_getminorversion(req)
+			1,1 /* TODO: get the version from outer request....... */
 		);
 		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 	}
 
-	if (!req->attr.content_length_set)
+	if (!req->attr.content_length_set) cgi->chunked = 1;
+
+qse_printf (QSE_T("req->attr.content_length_set = %d, req->attr.content_length = %d\n"), (int)req->attr.content_length_set, req->attr.content_length);
+
+	if (cgi->chunked)
 	{
 		if (qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) return -1;
 	}
 
 	if (qse_htre_walkheaders (req, walk_cgi_headers, cgi) <= -1) return -1;
+	if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) return -1;
 
 	if (qse_htre_getcontentlen(req) > 0)
 	{
-		if (!req->attr.content_length_set)
+		if (cgi->chunked)
 		{
 			qse_mchar_t buf[64];
 			snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)qse_htre_getcontentlen(req));
 			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 		}
+
 		if (qse_mbs_ncat (cgi->res, qse_htre_getcontentptr(req), qse_htre_getcontentlen(req)) == (qse_size_t)-1) return -1;
+
+		if (cgi->chunked)
+		{
+			if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) return -1;
+		}
 	}
 
 	return 0;
@@ -790,11 +801,7 @@ static int task_main_cgi_5 (
 	QSE_ASSERT (cgi->pio != QSE_NULL);
 
 qse_printf (QSE_T("task_main_cgi_5\n"));
-{
-char buf[64];
-snprintf (buf, sizeof(buf), "%lX\r\n", cgi->buflen);
-send (client->handle.i, buf, strlen(buf), 0);
-}
+
 /* TODO: check if cgi outputs more than content-length if it is set... */
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
@@ -803,15 +810,11 @@ send (client->handle.i, buf, strlen(buf), 0);
 /* TODO: logging ... */
 		return -1;
 	}
-send (client->handle.i, "\r\n", 2, 0);
 
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
 
-	if (cgi->buflen > 0) return 1;
-
-send (client->handle.i, "0\r\n\r\n", 5, 0);
-	return 0;
+	return (cgi->buflen > 0)? 1: 0;
 }
 
 static int task_main_cgi_4 (
@@ -821,43 +824,83 @@ static int task_main_cgi_4 (
 	qse_ssize_t n;
 	
 	QSE_ASSERT (cgi->pio != QSE_NULL);
+
+	/* this function assumes that the chunk length does not exceeded 
+	 * 4 hexadecimal digits. */
+	QSE_ASSERT (QSE_SIZEOF(cgi->buf) <= 0xFFFF);
+
 qse_printf (QSE_T("task_main_cgi_4\n"));
+
+	if (cgi->chunked)
+	{
+		qse_size_t count, extra;
+		qse_mchar_t chunklen[7];
+
+		extra = (QSE_SIZEOF(chunklen) - 1) + 2;
+		count = QSE_SIZEOF(cgi->buf) - cgi->buflen;
+		if (count > extra)
+		{
 
 /* TODO: check if cgi outputs more than content-length if it is set... */
 	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
-	n = qse_pio_read (
-		cgi->pio, 
-		&cgi->buf[cgi->buflen], 
-		QSE_SIZEOF(cgi->buf) - cgi->buflen,
-		QSE_PIO_OUT
-	);
-	if (n <= -1)
-	{
-		/* can't return internal server error any more... */
+
+			n = qse_pio_read (
+				cgi->pio, 
+				&cgi->buf[cgi->buflen + QSE_SIZEOF(chunklen) - 1], 
+				count - extra,
+				QSE_PIO_OUT
+			);
+			if (n <= -1)
+			{
+				/* can't return internal server error any more... */
 /* TODO: logging ... */
-		return -1;
+				return -1;
+			}
+			if (n == 0) 
+			{
+				cgi->buf[cgi->buflen++] = QSE_MT('0');
+				cgi->buf[cgi->buflen++] = QSE_MT('\r');
+				cgi->buf[cgi->buflen++] = QSE_MT('\n');
+				cgi->buf[cgi->buflen++] = QSE_MT('\r');
+				cgi->buf[cgi->buflen++] = QSE_MT('\n');
+
+				task->main = task_main_cgi_5;
+				return task_main_cgi_5 (httpd, client, task);
+			}
+
+			/* set the chunk length */
+			snprintf (chunklen, QSE_COUNTOF(chunklen), QSE_MT("%-4lX\r\n"), n);
+			QSE_MEMCPY (&cgi->buf[cgi->buflen], chunklen, QSE_SIZEOF(chunklen) - 1);
+			cgi->buflen += QSE_SIZEOF(chunklen) - 1 + n;
+	
+			/* set the trailing CR & LF for a chunk */
+			cgi->buf[cgi->buflen++] = QSE_MT('\r');
+			cgi->buf[cgi->buflen++] = QSE_MT('\n');
+		}
 	}
-	if (n == 0) 
+	else
 	{
-		if (cgi->buflen > 0)
+qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
+		n = qse_pio_read (
+			cgi->pio, 
+			&cgi->buf[cgi->buflen], 
+			QSE_SIZEOF(cgi->buf) - cgi->buflen,
+			QSE_PIO_OUT
+		);
+		if (n <= -1)
 		{
-			task->main = task_main_cgi_4;
+			/* can't return internal server error any more... */
+/* TODO: loggig ... */
+			return -1;
+		}
+		if (n == 0)
+		{
+			task->main = task_main_cgi_5;
 			return task_main_cgi_5 (httpd, client, task);
 		}
-		else 
-		{
-send (client->handle.i, "0\r\n\r\n", 5, 0);
-			return 0;
-		}
-	}
-			
-	cgi->buflen += n;
 
-{
-char buf[64];
-snprintf (buf, sizeof(buf), "%lX\r\n", cgi->buflen);
-send (client->handle.i, buf, strlen(buf), 0);
-}
+		cgi->buflen += n;
+	}
 
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
@@ -866,7 +909,8 @@ send (client->handle.i, buf, strlen(buf), 0);
 /* TODO: logging ... */
 		return -1;
 	}
-send (client->handle.i, "\r\n", 2, 0);
+cgi->sent += n;
+qse_printf (QSE_T("READING IN NON-CHUNKED MODE...SENT %d so far\n"), cgi->sent);
 
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
@@ -877,6 +921,9 @@ send (client->handle.i, "\r\n", 2, 0);
 static int task_main_cgi_3 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+	/* send the http initial line and headers built using the headers
+	 * returned by CGI. it may include some contents as well */
+
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	qse_ssize_t n;
 	qse_size_t count;
@@ -908,11 +955,18 @@ qse_printf (QSE_T("task_main_cgi_3\n"));
 static int task_main_cgi_2 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
+	/* several calls to this function will read output from the cgi 
+	 * until the end of header is reached. when the end is reached, 
+	 * it is possible that some contents are also read in.
+	 * The callback function to qse_htrd_feed() handles this also.
+	 */
+
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	qse_ssize_t n;
 	
 	QSE_ASSERT (cgi->pio != QSE_NULL);
 
+qse_printf (QSE_T("[cgi_2 ]\n"));
 	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
 	n = qse_pio_read (
 		cgi->pio, 
@@ -937,6 +991,7 @@ static int task_main_cgi_2 (
 			
 	cgi->buflen += n;
 
+qse_printf (QSE_T("[feeding ]\n"));
 	if (qse_htrd_feed (cgi->htrd, cgi->buf, cgi->buflen) <= -1)
 	{
 /* TODO: logging */
@@ -1004,8 +1059,8 @@ qse_printf (QSE_T("internal server error....\n"));
 	{
 	}
 
+qse_printf (QSE_T("[calling cgi_2 ]\n"));
 	task->main = task_main_cgi_2; /* cause this function to be called subsequently */
-
 	return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
 }
 
@@ -1016,7 +1071,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	const qse_char_t* path)
 {
 	qse_httpd_task_t task;
-	
+
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
 	task.fini = task_fini_cgi;
