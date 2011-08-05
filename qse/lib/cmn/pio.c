@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 533 2011-08-04 15:43:28Z hyunghwan.chung $
+ * $Id: pio.c 534 2011-08-04 15:53:43Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -686,7 +686,7 @@ qse_pio_t* qse_pio_init (
 			if (mcmd == QSE_NULL) goto child_oops;
 
 			fcnt = qse_strspl (mcmd, QSE_T(""), 
-				QSE_T('\"'), QSE_T('\"'), QSE_T('\'')); 
+				QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
 			if (fcnt <= 0) 
 			{
 				/* no field or an error */
@@ -709,7 +709,7 @@ qse_pio_t* qse_pio_init (
 			if (wcmd == QSE_NULL) goto child_oops;
 
 			fcnt = qse_strspl (wcmd, QSE_T(""), 
-				QSE_T('\"'), QSE_T('\"'), QSE_T('\'')); 
+				QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
 			if (fcnt <= 0)
 			{
 				/* no field or an error */
