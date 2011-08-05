@@ -61,41 +61,42 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 
 		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
 		{
-			static qse_http_version_t v1 = { 1, 0 };
-			/* persistent connection and cgi not compatible */
-			if (qse_comparehttpversions (qse_htre_getversion(req), &v1) <= 0)
-				req->attr.connection_close = 1;
-
-qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"));
-			goto done;
-		}
-
-		rangestr = qse_htre_getheaderval (req, "Range");
-		if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
-		{
-#if 0
-qse_httpd_entaskstatictext (httpd, client, QSE_NULL, QSE_MT("HTTP/1.1 416 Requested range not satisfiable\r\nContent-Length: 5\r\n\r\nA\r\n\r\n"));
-#endif
-
-			const qse_mchar_t* msg;
-			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
-			x = qse_httpd_entaskformat (
-				httpd, client, QSE_NULL,
-				QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-				req->version.major, req->version.minor,
-				(int)qse_mbslen(msg) + 4, msg
-			);
+			/* cgi */
+			x = qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"), qse_htre_getversion(req));
 			if (x == QSE_NULL) goto oops;
+
+#if 0
+			x = qse_httpd_entasknphcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"), qse_htre_getversion(req));
+#endif
 		}
 		else
 		{
-			x = qse_httpd_entaskpath (
-				httpd, client, QSE_NULL,
-				qse_htre_getqpathptr(req),
-				(rangestr? &range: QSE_NULL),
-				qse_htre_getversion(req)
-			);
-			if (x == QSE_NULL) goto oops;
+			rangestr = qse_htre_getheaderval (req, "Range");
+			if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
+			{
+#if 0
+qse_httpd_entaskstatictext (httpd, client, QSE_NULL, QSE_MT("HTTP/1.1 416 Requested range not satisfiable\r\nContent-Length: 5\r\n\r\nA\r\n\r\n"));
+#endif
+				const qse_mchar_t* msg;
+				msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
+				x = qse_httpd_entaskformat (
+					httpd, client, QSE_NULL,
+					QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+					req->version.major, req->version.minor,
+					(int)qse_mbslen(msg) + 4, msg
+				);
+				if (x == QSE_NULL) goto oops;
+			}
+			else
+			{
+				x = qse_httpd_entaskpath (
+					httpd, client, QSE_NULL,
+					qse_htre_getqpathptr(req),
+					(rangestr? &range: QSE_NULL),
+					qse_htre_getversion(req)
+				);
+				if (x == QSE_NULL) goto oops;
+			}
 		}
 	}
 	else

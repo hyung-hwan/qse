@@ -81,7 +81,7 @@ am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo pma.lo chr.lo \
 	str_subst.lo str_tok.lo str_trm.lo str_word.lo lda.lo oht.lo \
 	htb.lo rbt.lo sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo \
 	tio_put.lo fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo \
-	time.lo misc.lo assert.lo main.lo stdio.lo
+	env.lo time.lo misc.lo assert.lo main.lo stdio.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -283,6 +283,7 @@ libqsecmn_la_SOURCES = \
 	fio.c pio.c sio.c \
 	alg_search.c  \
 	alg_sort.c \
+	env.c \
 	time.c \
 	misc.c \
 	assert.c \
@@ -379,6 +380,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr_cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdl.Plo@am__quote@

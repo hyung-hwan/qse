@@ -19,6 +19,7 @@ libqsecmn_la_SOURCES = \
 	fio.c pio.c sio.c \
 	alg_search.c  \
 	alg_sort.c \
+	env.c \
 	time.c \
 	misc.c \
 	assert.c \

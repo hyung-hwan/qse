@@ -243,7 +243,7 @@ static qse_mchar_t* parse_initial_line (
 	{
 		int n, status;
 
-		if (*p == '/' && p[1] != '\0' && p[2] == '.')
+		if (*p == QSE_MT('/') && p[1] != QSE_MT('\0') && p[2] == QSE_MT('.'))
 		{
 			int q = digit_to_num(p[1]);
 			int w = digit_to_num(p[3]);
@@ -274,18 +274,20 @@ static qse_mchar_t* parse_initial_line (
 		} 
 		while ((n = digit_to_num(*p)) >= 0);
 
-		/* status code must be followed by space */
-		if (!is_space_octet(*p)) goto badre;
-
 		qse_htre_setsstatus (&htrd->re, status);
 
+		/* i don't treat the following weird messages as bad message
+		 *    no status message follows the status code
+		 *    no space between the status code and the status message
+		 */
+
 		/* skip spaces */
-		do p++; while (is_space_octet(*p));
-
+		while (is_space_octet(*p)) p++;
+	
 		tmp.ptr = p;
-		while (*p != '\0' && *p != '\n') p++;
+		while (*p != QSE_MT('\0') && *p != QSE_MT('\n')) p++;
 		tmp.len = p - tmp.ptr;
-
+	
 		if (qse_htre_setsmessagefromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
 
 		/* adjust Connection: close for HTTP 1.0 or eariler */
@@ -311,9 +313,9 @@ static qse_mchar_t* parse_initial_line (
 		param.ptr = QSE_NULL;
 	
 		out = p;
-		while (*p != '\0' && !is_space_octet(*p)) 
+		while (*p != QSE_MT('\0') && !is_space_octet(*p)) 
 		{
-			if (*p == '%' && param.ptr == QSE_NULL)
+			if (*p == QSE_MT('%') && param.ptr == QSE_NULL)
 			{
 				/* decode percence-encoded charaters in the 
 				 * path part.  if we're in the parameter string
@@ -336,14 +338,14 @@ static qse_mchar_t* parse_initial_line (
 				}
 				else *out++ = *p++;
 			}
-			else if (*p == '?')
+			else if (*p == QSE_MT('?'))
 			{
 				if (!param.ptr)
 				{
 					/* ? must be explicit to be a argument instroducer. 
 					 * %3f is just a literal. */
 					tmp.len = out - tmp.ptr;
-					*out++ = '\0'; /* null-terminate the path part */
+					*out++ = QSE_MT('\0'); /* null-terminate the path part */
 					param.ptr = out;
 					p++;
 				}
@@ -356,7 +358,7 @@ static qse_mchar_t* parse_initial_line (
 		if (!is_space_octet(*p)) goto badre;
 	
 		/* null-terminate the url part though we know the length */
-		*out = '\0'; 
+		*out = QSE_MT('\0'); 
 
 		if (param.ptr)
 		{
@@ -370,7 +372,7 @@ static qse_mchar_t* parse_initial_line (
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
 	
-		/* check htrd version */
+		/* check protocol version */
 		if ((p[0] == 'H' || p[0] == 'h') &&
 		    (p[1] == 'T' || p[1] == 't') &&
 		    (p[2] == 'T' || p[2] == 't') &&

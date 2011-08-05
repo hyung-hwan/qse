@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id: pio.h 533 2011-08-04 15:43:28Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -193,9 +193,9 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
  * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t*       mmgr,  /**< memory manager */
-	qse_size_t        ext,   /**< extension size */
-	const qse_char_t* cmd,   /**< command to execute */
+	qse_mmgr_t*       mmgr,   /**< memory manager */
+	qse_size_t        ext,    /**< extension size */
+	const qse_char_t* cmd,    /**< command to execute */
 	int               oflags  /**< 0 or a number OR'ed of the
 	                              #qse_pio_oflag_t enumerators*/
 );
@@ -292,7 +292,6 @@ qse_ssize_t qse_pio_read (
 	qse_size_t    size, /**< buffer size */
 	qse_pio_hid_t hid   /**< handle ID */
 );
-/******/
 
 /**
  * The qse_pio_write() function writes data.
@@ -306,7 +305,6 @@ qse_ssize_t qse_pio_write (
 	qse_size_t    size,  /**< data size */
 	qse_pio_hid_t hid    /**< handle ID */
 );
-/******/
 
 /**
  * The qse_pio_flush() flushes buffered data if #QSE_PIO_TEXT has been 
