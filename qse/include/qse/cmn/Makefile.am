@@ -4,6 +4,7 @@ pkginclude_HEADERS = \
 	alg.h \
 	chr.h \
 	dll.h \
+	env.h \
 	fio.h \
 	fma.h \
 	gdl.h \

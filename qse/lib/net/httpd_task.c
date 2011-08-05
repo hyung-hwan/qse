@@ -21,6 +21,7 @@
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 #include <qse/cmn/pio.h>
 
 #include <fcntl.h>
@@ -661,23 +662,39 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 
 /*------------------------------------------------------------------------*/
 
+typedef struct task_cgi_arg_t task_cgi_arg_t;
+struct task_cgi_arg_t 
+{
+	const qse_char_t* path;
+	qse_http_version_t version;
+};
+
 typedef struct task_cgi_t task_cgi_t;
 struct task_cgi_t
 {
 	const qse_char_t* path;
-
-	qse_htrd_t* htrd;
-
-	qse_mbs_t* res;
-	qse_mchar_t* res_ptr;
-	qse_size_t   res_left;	
-	int chunked;
-	int sent;
+	qse_http_version_t version;
 
 	qse_pio_t* pio;
+	qse_htrd_t* htrd;
+
+	qse_mbs_t*   res;
+	qse_mchar_t* res_ptr;
+	qse_size_t   res_left;	
+
+	/* if true, close connection after response is sent out */
+	int disconnect;
+	/* if true, the content of response is chunked */
+	int content_chunked;
+	/* if true, content_length is set. */
+	int content_length_set;
+	/* content-length that CGI returned */
+	qse_size_t content_length;
+	/* the number of octets in the contents received */
+	qse_size_t content_received; 
 
 	qse_mchar_t buf[MAX_SEND_SIZE];
-	qse_size_t buflen;
+	qse_size_t  buflen;
 };
 
 typedef struct cgi_htrd_xtn_t cgi_htrd_xtn_t;
@@ -706,6 +723,7 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 	cgi_htrd_xtn_t* xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (htrd);
 	task_cgi_t* cgi = xtn->cgi;
 	const qse_mchar_t* status;
+	static qse_http_version_t v11 = { 1, 1 };
 
 	QSE_ASSERT (req->attr.hurried);
 
@@ -713,13 +731,28 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 	if (status)
 	{
 		qse_mchar_t buf[128];
-		snprintf (buf, QSE_COUNTOF(buf), 	
-			QSE_MT("HTTP/%d.%d "),
-			1,1 /* TODO: get the version from outer request....... */
-		);
-		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+		int nstatus;
+		qse_mchar_t* endptr;
+
 /* TODO: check the syntax of status value??? */
-		if (qse_mbs_cat (cgi->res, status) == (qse_size_t)-1) return -1;
+
+		QSE_MSTRTONUM (nstatus,status,&endptr,10);
+
+		snprintf (buf, QSE_COUNTOF(buf), 	
+			QSE_MT("HTTP/%d.%d %d "),
+			cgi->version.major, 
+			cgi->version.minor, 
+			nstatus
+		);
+
+		/* 
+		Would it need this kind of extra work?
+		while (QSE_ISMSPACE(*endptr)) endptr++;
+		if (*endptr == QSE_MT('\0')) ....
+		*/
+
+		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (cgi->res, endptr) == (qse_size_t)-1) return -1;
 		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
 	}
 	else
@@ -727,16 +760,25 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		qse_mchar_t buf[128];
 		snprintf (buf, QSE_COUNTOF(buf), 	
 			QSE_MT("HTTP/%d.%d 200 OK\r\n"),
-			1,1 /* TODO: get the version from outer request....... */
+			cgi->version.major, cgi->version.minor
 		);
 		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 	}
 
-	if (!req->attr.content_length_set) cgi->chunked = 1;
+	if (req->attr.content_length_set) 
+	{
+		cgi->content_length_set = 1;
+		cgi->content_length = req->attr.content_length;
+	}
+	else
+	{
+		/* no Content-Length returned by CGI */
+		if (qse_comparehttpversions (&cgi->version, &v11) >= 0) 
+			cgi->content_chunked = 1;
+		else cgi->disconnect = 1;
+	}
 
-qse_printf (QSE_T("req->attr.content_length_set = %d, req->attr.content_length = %d\n"), (int)req->attr.content_length_set, req->attr.content_length);
-
-	if (cgi->chunked)
+	if (cgi->content_chunked)
 	{
 		if (qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) return -1;
 	}
@@ -744,18 +786,26 @@ qse_printf (QSE_T("req->attr.content_length_set = %d, req->attr.content_length =
 	if (qse_htre_walkheaders (req, walk_cgi_headers, cgi) <= -1) return -1;
 	if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) return -1;
 
-	if (qse_htre_getcontentlen(req) > 0)
+	cgi->content_received = qse_htre_getcontentlen(req);
+	if (cgi->content_length_set && 
+	    cgi->content_received > cgi->content_length)
 	{
-		if (cgi->chunked)
+/* TODO: cgi returning too much data... something is wrong in CGI */
+		return -1;
+	}
+
+	if (cgi->content_received > 0)
+	{
+		if (cgi->content_chunked)
 		{
 			qse_mchar_t buf[64];
-			snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)qse_htre_getcontentlen(req));
+			snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)cgi->content_received);
 			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
 		}
 
 		if (qse_mbs_ncat (cgi->res, qse_htre_getcontentptr(req), qse_htre_getcontentlen(req)) == (qse_size_t)-1) return -1;
 
-		if (cgi->chunked)
+		if (cgi->content_chunked)
 		{
 			if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) return -1;
 		}
@@ -775,9 +825,12 @@ static int task_init_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* xtn = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
+	task_cgi_arg_t* arg = (task_cgi_arg_t*)task->ctx;
+
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
-	qse_strcpy ((qse_char_t*)(xtn + 1), task->ctx);
+	qse_strcpy ((qse_char_t*)(xtn + 1), arg->path);
 	xtn->path = (qse_char_t*)(xtn + 1);
+	xtn->version = arg->version;
 	task->ctx = xtn;
 	return 0;
 }
@@ -831,11 +884,12 @@ static int task_main_cgi_4 (
 
 qse_printf (QSE_T("task_main_cgi_4\n"));
 
-	if (cgi->chunked)
+	if (cgi->content_chunked)
 	{
 		qse_size_t count, extra;
 		qse_mchar_t chunklen[7];
 
+qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 		extra = (QSE_SIZEOF(chunklen) - 1) + 2;
 		count = QSE_SIZEOF(cgi->buf) - cgi->buflen;
 		if (count > extra)
@@ -876,6 +930,8 @@ qse_printf (QSE_T("task_main_cgi_4\n"));
 			/* set the trailing CR & LF for a chunk */
 			cgi->buf[cgi->buflen++] = QSE_MT('\r');
 			cgi->buf[cgi->buflen++] = QSE_MT('\n');
+
+			cgi->content_received += n;
 		}
 	}
 	else
@@ -900,6 +956,15 @@ qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
 		}
 
 		cgi->buflen += n;
+		cgi->content_received += n;
+	}
+
+	if (cgi->content_length_set && 
+	    cgi->content_received > cgi->content_length)
+	{
+/* TODO: cgi returning too much data... something is wrong in CGI */
+qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
+		return -1;
 	}
 
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
@@ -909,8 +974,6 @@ qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
 /* TODO: logging ... */
 		return -1;
 	}
-cgi->sent += n;
-qse_printf (QSE_T("READING IN NON-CHUNKED MODE...SENT %d so far\n"), cgi->sent);
 
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
@@ -991,7 +1054,6 @@ qse_printf (QSE_T("[cgi_2 ]\n"));
 			
 	cgi->buflen += n;
 
-qse_printf (QSE_T("[feeding ]\n"));
 	if (qse_htrd_feed (cgi->htrd, cgi->buf, cgi->buflen) <= -1)
 	{
 /* TODO: logging */
@@ -1002,7 +1064,14 @@ qse_printf (QSE_T("[feeding ]\n"));
 
 	if (QSE_MBS_LEN(cgi->res) > 0)
 	{
-		/* the headers and probably some contents are ready */
+		/* the htrd handler composed some response.
+		 * this means that at least it finished processing CGI headers.
+		 * some contents could be in cgi->res, though.
+		 */
+
+		if (cgi->disconnect && 
+		    qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) return -1;
+
 		cgi->res_ptr = QSE_MBS_PTR(cgi->res);
 		cgi->res_left = QSE_MBS_LEN(cgi->res);
 
@@ -1046,7 +1115,7 @@ qse_printf (QSE_T("internal server error....\n"));
 	}
 
 qse_printf (QSE_T("[pio open for %s]\n"), cgi->path);
-	cgi->pio = qse_pio_open (httpd->mmgr, 0, cgi->path, QSE_PIO_READOUT | QSE_PIO_WRITEIN);
+	cgi->pio = qse_pio_open (httpd->mmgr, 0, cgi->path, QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_ERRTONUL);
 	if (cgi->pio == QSE_NULL)
 	{
 		/* TODO: entask internal server errror */
@@ -1068,15 +1137,20 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	const qse_httpd_task_t* pred, 
-	const qse_char_t* path)
+	const qse_char_t* path,
+	const qse_http_version_t* version)
 {
 	qse_httpd_task_t task;
+	task_cgi_arg_t arg;
+
+	arg.path = path;
+	arg.version = *version;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
 	task.fini = task_fini_cgi;
 	task.main = task_main_cgi;
-	task.ctx = (void*)path;
+	task.ctx = &arg;
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 

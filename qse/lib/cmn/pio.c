@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id: pio.c 533 2011-08-04 15:43:28Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -44,7 +44,8 @@ static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
 static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t* mmgr, qse_size_t ext, const qse_char_t* path, int oflags)
+	qse_mmgr_t* mmgr, qse_size_t ext, 
+	const qse_char_t* cmd, int oflags)
 {
 	qse_pio_t* pio;
 
@@ -61,7 +62,7 @@ qse_pio_t* qse_pio_open (
 	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
 	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pio_init (pio, mmgr, path, oflags) == QSE_NULL)
+	if (qse_pio_init (pio, mmgr, cmd, oflags) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
@@ -120,8 +121,8 @@ qse_pio_t* qse_pio_init (
 	HFILE os2devnul = (HFILE)-1;
 
 #elif defined(__DOS__)
-	/* TODO: implmenet this for dos
-	unsupported yet */
+
+	/* DOS not multi-processed. can't support pio */
 
 #else
 	qse_pio_pid_t pid;
@@ -264,7 +265,11 @@ qse_pio_t* qse_pio_init (
 		NULL, /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
 		NULL, /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
 		TRUE, /* BOOL bInheritHandles */
+#ifdef QSE_CHAR_IS_MCHAR
 		0,    /* DWORD dwCreationFlags */
+#else
+		CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
+#endif
 		NULL, /* LPVOID lpEnvironment */
 		NULL, /* LPCTSTR lpCurrentDirectory */
 		&startup, /* LPSTARTUPINFO lpStartupInfo */
@@ -533,7 +538,8 @@ qse_pio_t* qse_pio_init (
 
 #elif defined(__DOS__)
 		
-	/* TODO: implement this */
+	/* DOS not multi-processed. can't support pio */
+	return QSE_NULL;
 
 #else
 
@@ -650,9 +656,9 @@ qse_pio_t* qse_pio_init (
 		    (oflags & QSE_PIO_ERRTONUL))
 		{
 		#ifdef O_LARGEFILE
-			devnull = QSE_OPEN ("/dev/null", O_RDWR|O_LARGEFILE, 0);
+			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
 		#else
-			devnull = QSE_OPEN ("/dev/null", O_RDWR, 0);
+			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR, 0);
 		#endif
 			if (devnull <= -1) goto child_oops;
 		}
@@ -784,6 +790,9 @@ qse_pio_t* qse_pio_init (
 			argv[i] = QSE_NULL;
 
 			QSE_EXECVE (argv[0], argv, environ);
+
+			/* this won't be reached if execve succeeds */
+			QSE_MMGR_FREE (pio->mmgr, argv);
 		}
 
 	child_oops:
@@ -801,7 +810,8 @@ qse_pio_t* qse_pio_init (
 		 * X  
 		 * WRITE => 1
 		 */
-		QSE_CLOSE (handle[0]); handle[0] = QSE_PIO_HND_NIL;
+		QSE_CLOSE (handle[0]);
+		handle[0] = QSE_PIO_HND_NIL;
 	}
 
 	if (oflags & QSE_PIO_READOUT)
@@ -812,7 +822,8 @@ qse_pio_t* qse_pio_init (
 		 *    X
 		 * READ => 2
 		 */
-		QSE_CLOSE (handle[3]); handle[3] = QSE_PIO_HND_NIL;
+		QSE_CLOSE (handle[3]);
+		handle[3] = QSE_PIO_HND_NIL;
 	}
 
 	if (oflags & QSE_PIO_READERR)
@@ -823,7 +834,8 @@ qse_pio_t* qse_pio_init (
 		 *      X   
 		 * READ => 4
 		 */
-		QSE_CLOSE (handle[5]); handle[5] = QSE_PIO_HND_NIL;
+		QSE_CLOSE (handle[5]);
+		handle[5] = QSE_PIO_HND_NIL;
 	}
 
 #endif
@@ -888,7 +900,7 @@ oops:
 
 	for (i = 0; i < QSE_COUNTOF(tio); i++) 
 	{
-		if (tio[i] != QSE_NULL) qse_tio_close (tio[i]);
+		if (tio[i]) qse_tio_close (tio[i]);
 	}
 
 #if defined(_WIN32)
@@ -899,10 +911,9 @@ oops:
     		if (handle[i] != QSE_PIO_HND_NIL) DosClose (handle[i]);
 	}
 #elif defined(__DOS__)
-	for (i = minidx; i < maxidx; i++) 
-	{
-    		if (handle[i] != QSE_PIO_HND_NIL) close (handle[i]);
-	}
+
+	/* DOS not multi-processed. can't support pio */
+
 #else
 	for (i = minidx; i < maxidx; i++) 
 	{
