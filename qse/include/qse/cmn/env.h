@@ -34,14 +34,14 @@ struct qse_env_t
 	{
 		qse_size_t  capa;
 		qse_size_t  len;
-		void*       ptr;
-	} buf;
+		qse_char_t* ptr;
+	} str;
 
 	struct
 	{
-		qse_size_t  capa;
-		qse_size_t  len;
-		void**      ptr;
+		qse_size_t   capa;
+		qse_size_t   len;
+		qse_char_t** ptr;
 	} arr;
 };
 
@@ -70,15 +70,26 @@ void qse_env_fini (
 	qse_env_t* env
 );
 
-/*
-void* qse_env_getstring ();
-void* qse_env_getarray ();
-*/
+void qse_env_clear (
+	qse_env_t* env
+);
 
-int qse_env_add (
+#define qse_env_getstr(env) ((env)->str.ptr)
+#define qse_env_getarr(env) ((env)->arr.ptr)
+
+int qse_env_addvar (
 	qse_env_t*  env,
-	const void* name,
-	const void* value
+	const qse_char_t* name,
+	const qse_char_t* value
+);
+
+int qse_env_addraw (
+	qse_env_t*        env, /**< env */
+	const qse_char_t* raw  /**< name=value */
+);
+
+int qse_env_loadcurvars (
+	qse_env_t*        env
 );
 
 #ifdef __cplusplus

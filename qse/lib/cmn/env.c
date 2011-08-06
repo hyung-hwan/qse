@@ -20,7 +20,11 @@
 
 
 #include <qse/cmn/env.h>
+#include <qse/cmn/str.h>
 #include "mem.h"
+
+#define STRSIZE 4096
+#define ARRSIZE 128
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS(env)
 
@@ -59,33 +63,158 @@ void qse_env_close (qse_env_t* env)
 qse_env_t* qse_env_init (qse_env_t* env, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (env, 0, QSE_SIZEOF(*env));
+	env->mmgr = mmgr;
 	return env;
 }
 
 void qse_env_fini (qse_env_t* env)
 {
 	if (env->arr.ptr) QSE_MMGR_FREE (env->mmgr, env->arr.ptr);
-	if (env->buf.ptr) QSE_MMGR_FREE (env->mmgr, env->buf.ptr);
+	if (env->str.ptr) QSE_MMGR_FREE (env->mmgr, env->str.ptr);
 }
 
-
-static int expand_buffer (qse_env_t* env)
+void qse_env_clear (qse_env_t* env)
 {
-	if (env->buf.ptr == QSE_NULL)
+	if (env->str.ptr) env->str.ptr[0] = QSE_T('\0');
+	if (env->arr.ptr) env->arr.ptr = QSE_NULL;
+}
+
+static int expandarr (qse_env_t* env)
+{
+	qse_char_t** tmp;
+	qse_size_t ncapa = env->arr.capa + ARRSIZE;
+
+	tmp = (qse_char_t**) QSE_MMGR_REALLOC (
+		env->mmgr, env->arr.ptr,
+		QSE_SIZEOF(qse_char_t*) * (ncapa + 1));
+	if (tmp == QSE_NULL) return -1;
+
+	env->arr.ptr = tmp;
+	env->arr.capa = ncapa;
+	return 0;
+}
+
+static int expandstr (qse_env_t* env, qse_size_t inc)
+{
+	qse_char_t* tmp;
+	qse_size_t ncapa = env->str.capa;
+
+	ncapa = (inc > STRSIZE)? (ncapa + inc): (ncapa + STRSIZE);
+
+	tmp = (qse_char_t*) QSE_MMGR_REALLOC (
+		env->mmgr, env->str.ptr, 
+		QSE_SIZEOF(qse_char_t) * (ncapa + 1));
+	if (tmp == QSE_NULL) return -1;
+
+	env->str.ptr = tmp;
+	env->str.capa = ncapa;
+	return 0;
+}
+
+int qse_env_addvar (qse_env_t* env, const qse_char_t* name, const qse_char_t* value)
+{
+	qse_size_t nl, vl, tl;
+
+	nl = qse_strlen (name);
+	vl = qse_strlen (value);
+
+	if (env->arr.len >= env->arr.capa &&
+	    expandarr(env) <= -1) return -1;
+
+	tl = nl + 1 + vl + 1; /* name = value '\0' */
+	if (env->str.len + tl > env->str.capa &&
+	    expandstr (env, tl) <= -1) return -1;
+
+	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
+	env->arr.ptr[env->arr.len] = QSE_NULL;
+
+	env->str.len += qse_strcpy (&env->str.ptr[env->str.len], name);
+	env->str.ptr[env->str.len++] = QSE_T('=');
+	env->str.len += qse_strcpy (&env->str.ptr[env->str.len], value);
+	env->str.ptr[++env->str.len] = QSE_T('\0'); 
+
+	return -1;
+}
+
+int qse_env_addraw (qse_env_t* env, const qse_char_t* nv)
+{
+	qse_size_t tl;
+	
+	if (env->arr.len >= env->arr.capa &&
+	    expandarr(env) <= -1) return -1;
+
+	tl = qse_strlen(nv) + 1;
+	if (env->str.len + tl > env->str.capa &&
+	    expandstr (env, tl) <= -1) return -1;
+
+	env->arr.ptr[env->arr.len++] = &env->str.ptr[env->str.len];
+	env->arr.ptr[env->arr.len] = QSE_NULL;
+
+	env->str.len += qse_strcpy (&env->str.ptr[env->str.len], nv);
+	env->str.ptr[++env->str.len] = QSE_T('\0'); 
+	return 0;
+}
+
+/* add current environment variables */
+int qse_env_loadcurvars (qse_env_t* env)
+{
+#if defined(_WIN32)
+	qse_char_t* envstr;
+	int ret = 0;
+
+	envstr = GetEnvironmentStrings ();
+	if (envstr == QSE_NULL) return -1;
+
+	while (*envstr != QSE_T('\0'))
 	{
-	}
-	return -1;
-}
+		if (qse_env_addraw (env, envstr) <= -1) 
+		{
+			ret = -1;
+			goto done;
+		}
+		envstr += qse_strlen(lpszVariable) + 1;
+	}		
 
-static int expand_array (qse_env_t* env)
-{
-	if (env->arr.ptr == QSE_NULL)
+done:
+	FreeEnvironmentStrings (envstr);
+	return ret;
+
+#elif defined(__OS2__)
+	/* TODO: */
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	return -1;
+#else
+	extern char** environ;
+	char** p = environ;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	while (*p)
 	{
+		if (qse_env_addraw (env, *p) <= -1) return -1;
+		p++;	
 	}
-	return -1;
+				
+#else
+	while (*p)
+	{
+		int n;
+		qse_char_t* x;
+
+		x = qse_mbstowcsdup (*p, env->mmgr);
+		if (x == QSE_NULL) return -1;
+
+		n = qse_env_addraw (env, x);
+		QSE_MMGR_FREE (env->mmgr, x);
+
+		if (n <= -1) return -1;
+
+		p++;	
+	}
+#endif
+
+	return 0;
+#endif
 }
 
-int qse_env_add (qse_env_t* env, const void* name, const void* value)
-{
-	return -1;
-}
