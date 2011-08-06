@@ -54,7 +54,8 @@ QSE_DEFINE_COMMON_FUNCTIONS(env)
 
 qse_env_t* qse_env_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize
+	qse_size_t  xtnsize,
+	int         fromcurenv
 );
 
 void qse_env_close (
@@ -63,7 +64,8 @@ void qse_env_close (
 
 qse_env_t* qse_env_init (
 	qse_env_t*  env,
-	qse_mmgr_t* mmgr
+	qse_mmgr_t* mmgr,
+	int         fromcurenv
 );
 
 void qse_env_fini (
@@ -77,19 +79,15 @@ void qse_env_clear (
 #define qse_env_getstr(env) ((env)->str.ptr)
 #define qse_env_getarr(env) ((env)->arr.ptr)
 
-int qse_env_addvar (
-	qse_env_t*  env,
+int qse_env_insert (
+	qse_env_t*        env,
 	const qse_char_t* name,
 	const qse_char_t* value
 );
 
-int qse_env_addraw (
-	qse_env_t*        env, /**< env */
-	const qse_char_t* raw  /**< name=value */
-);
-
-int qse_env_loadcurvars (
-	qse_env_t*        env
+int qse_env_delete (
+	qse_env_t*        env,
+	const qse_char_t* name
 );
 
 #ifdef __cplusplus
