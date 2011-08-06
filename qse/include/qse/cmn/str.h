@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 533 2011-08-04 15:43:28Z hyunghwan.chung $
+ * $Id: str.h 535 2011-08-05 17:08:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -104,7 +104,7 @@ struct qse_mbs_t
 {
 	QSE_DEFINE_COMMON_FIELDS (mbs)
 	qse_mbs_sizer_t sizer; /**< buffer resizer function */
-	qse_mxstr_t     val;  /**< buffer/string pointer and lengh */
+	qse_mxstr_t     val;   /**< buffer/string pointer and lengh */
 	qse_size_t      capa;  /**< buffer capacity */
 };
 
@@ -2302,7 +2302,6 @@ void qse_mbs_setsizer (
 	qse_mbs_t*      str,
 	qse_mbs_sizer_t sizer
 );
-/******/
 
 /**
  * The qse_mbs_getcapa() function returns the current capacity.
@@ -2472,7 +2471,6 @@ void qse_wcs_setsizer (
 	qse_wcs_t*      str,
 	qse_wcs_sizer_t sizer
 );
-/******/
 
 /**
  * The qse_wcs_getcapa() function returns the current capacity.

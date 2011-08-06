@@ -38,7 +38,7 @@ bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) chr$(EXEEXT) str$(EXEEXT) \
 	sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) oht$(EXEEXT) \
 	htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) \
 	sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) main2$(EXEEXT) \
-	rex01$(EXEEXT)
+	rex01$(EXEEXT) env$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -62,6 +62,10 @@ am_dll_OBJECTS = dll.$(OBJEXT)
 dll_OBJECTS = $(am_dll_OBJECTS)
 dll_LDADD = $(LDADD)
 dll_DEPENDENCIES =
+am_env_OBJECTS = env.$(OBJEXT)
+env_OBJECTS = $(am_env_OBJECTS)
+env_LDADD = $(LDADD)
+env_DEPENDENCIES =
 am_fio_OBJECTS = fio.$(OBJEXT)
 fio_OBJECTS = $(am_fio_OBJECTS)
 fio_LDADD = $(LDADD)
@@ -135,16 +139,16 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(fio_SOURCES) $(fma_SOURCES) \
-	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
-	$(oht_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
-	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) \
-	$(xma_SOURCES)
-DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(fio_SOURCES) \
+SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) $(fio_SOURCES) \
 	$(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
 	$(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) \
 	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
 	$(time_SOURCES) $(xma_SOURCES)
+DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
+	$(fio_SOURCES) $(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) \
+	$(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) \
+	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
+	$(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -313,6 +317,7 @@ time_SOURCES = time.c
 main_SOURCES = main.c
 main2_SOURCES = main2.c
 rex01_SOURCES = rex01.c
+env_SOURCES = env.c
 all: all-am
 
 .SUFFIXES:
@@ -396,6 +401,9 @@ chr$(EXEEXT): $(chr_OBJECTS) $(chr_DEPENDENCIES)
 dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES) 
 	@rm -f dll$(EXEEXT)
 	$(LINK) $(dll_OBJECTS) $(dll_LDADD) $(LIBS)
+env$(EXEEXT): $(env_OBJECTS) $(env_DEPENDENCIES) 
+	@rm -f env$(EXEEXT)
+	$(LINK) $(env_OBJECTS) $(env_LDADD) $(LIBS)
 fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
 	@rm -f fio$(EXEEXT)
 	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
@@ -450,6 +458,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@
