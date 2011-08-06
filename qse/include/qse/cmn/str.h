@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 535 2011-08-05 17:08:21Z hyunghwan.chung $
+ * $Id: str.h 536 2011-08-06 03:25:08Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1342,12 +1342,12 @@ qse_wchar_t* qse_wcsxnbeg (
 );
 
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strbeg(str,sub)             qse_mbsxbeg(str,sub)
+#	define qse_strbeg(str,sub)             qse_mbsbeg(str,sub)
 #	define qse_strxbeg(str,len,sub)        qse_mbsxbeg(str,len,sub)
 #	define qse_strnbeg(str,sub,len)        qse_mbsnbeg(str,sub,len)
 #	define qse_strxnbeg(str,len1,sub,len2) qse_mbsxnbeg(str,len1,sub,len2)
 #else
-#	define qse_strbeg(str,sub)             qse_wcsxbeg(str,sub)
+#	define qse_strbeg(str,sub)             qse_wcsbeg(str,sub)
 #	define qse_strxbeg(str,len,sub)        qse_wcsxbeg(str,len,sub)
 #	define qse_strnbeg(str,sub,len)        qse_wcsnbeg(str,sub,len)
 #	define qse_strxnbeg(str,len1,sub,len2) qse_wcsxnbeg(str,len1,sub,len2)

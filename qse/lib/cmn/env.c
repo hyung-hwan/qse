@@ -28,7 +28,9 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS(env)
 
-qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
+static int load_curenv (qse_env_t* env);
+
+qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int fromcurenv)
 {
 	qse_env_t* env;
 
@@ -45,7 +47,7 @@ qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	env = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_env_t) + xtnsize);
 	if (env == QSE_NULL) return QSE_NULL;
 
-	if (qse_env_init (env, mmgr) == QSE_NULL)
+	if (qse_env_init (env, mmgr, fromcurenv) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, env);
 		return QSE_NULL;
@@ -60,10 +62,12 @@ void qse_env_close (qse_env_t* env)
 	QSE_MMGR_FREE (env->mmgr, env);
 }
 
-qse_env_t* qse_env_init (qse_env_t* env, qse_mmgr_t* mmgr)
+qse_env_t* qse_env_init (qse_env_t* env, qse_mmgr_t* mmgr, int fromcurenv)
 {
 	QSE_MEMSET (env, 0, QSE_SIZEOF(*env));
 	env->mmgr = mmgr;
+
+	if (fromcurenv && load_curenv (env) <= -1) return QSE_NULL;
 	return env;
 }
 
@@ -75,8 +79,16 @@ void qse_env_fini (qse_env_t* env)
 
 void qse_env_clear (qse_env_t* env)
 {
-	if (env->str.ptr) env->str.ptr[0] = QSE_T('\0');
-	if (env->arr.ptr) env->arr.ptr = QSE_NULL;
+	if (env->str.ptr) 
+	{
+		env->str.ptr[0] = QSE_T('\0');
+		env->str.len = 0;
+	}
+	if (env->arr.ptr) 
+	{
+		env->arr.ptr = QSE_NULL;
+		env->arr.len = 0;
+	}
 }
 
 static int expandarr (qse_env_t* env)
@@ -111,7 +123,8 @@ static int expandstr (qse_env_t* env, qse_size_t inc)
 	return 0;
 }
 
-int qse_env_addvar (qse_env_t* env, const qse_char_t* name, const qse_char_t* value)
+int qse_env_insert (
+	qse_env_t* env, const qse_char_t* name, const qse_char_t* value)
 {
 	qse_size_t nl, vl, tl;
 
@@ -136,7 +149,33 @@ int qse_env_addvar (qse_env_t* env, const qse_char_t* name, const qse_char_t* va
 	return -1;
 }
 
-int qse_env_addraw (qse_env_t* env, const qse_char_t* nv)
+int qse_env_delete (qse_env_t* env, const qse_char_t* name)
+{
+	const qse_char_t* p = env->str.ptr;
+	qse_size_t i;
+
+	for (i = 0; i < env->arr.len; i++)
+	{
+		const qse_char_t* eq;
+		const qse_char_t* vp;
+
+		vp = env->arr.ptr[i];
+
+		eq = qse_strbeg (vp, name);
+		if (eq && *eq == QSE_T('='))
+		{
+#if 0
+			/* bingo */
+			len = qse_strlen (vp) + 1;
+			QSE_MEMCPY (vp, vp + len, ... );
+#endif
+		}
+	}
+
+	return 0;
+}
+
+static int add_envstr (qse_env_t* env, const qse_char_t* nv)
 {
 	qse_size_t tl;
 	
@@ -155,8 +194,7 @@ int qse_env_addraw (qse_env_t* env, const qse_char_t* nv)
 	return 0;
 }
 
-/* add current environment variables */
-int qse_env_loadcurvars (qse_env_t* env)
+static int load_curenv (qse_env_t* env)
 {
 #if defined(_WIN32)
 	qse_char_t* envstr;
@@ -205,7 +243,7 @@ done:
 		x = qse_mbstowcsdup (*p, env->mmgr);
 		if (x == QSE_NULL) return -1;
 
-		n = qse_env_addraw (env, x);
+		n = add_envstr (env, x);
 		QSE_MMGR_FREE (env->mmgr, x);
 
 		if (n <= -1) return -1;
