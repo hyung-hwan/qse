@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -86,7 +86,7 @@ void qse_env_clear (qse_env_t* env)
 	}
 	if (env->arr.ptr) 
 	{
-		env->arr.ptr = QSE_NULL;
+		env->arr.ptr[0] = QSE_NULL;
 		env->arr.len = 0;
 	}
 }
@@ -103,23 +103,37 @@ static int expandarr (qse_env_t* env)
 
 	env->arr.ptr = tmp;
 	env->arr.capa = ncapa;
+
 	return 0;
 }
 
 static int expandstr (qse_env_t* env, qse_size_t inc)
 {
 	qse_char_t* tmp;
-	qse_size_t ncapa = env->str.capa;
+	qse_size_t ncapa;
 
-	ncapa = (inc > STRSIZE)? (ncapa + inc): (ncapa + STRSIZE);
+	ncapa = (inc > STRSIZE)? 
+		(env->str.capa + inc): (env->str.capa + STRSIZE);
 
 	tmp = (qse_char_t*) QSE_MMGR_REALLOC (
 		env->mmgr, env->str.ptr, 
 		QSE_SIZEOF(qse_char_t) * (ncapa + 1));
 	if (tmp == QSE_NULL) return -1;
 
+	if (tmp != env->str.ptr)
+	{
+		/* reallocation relocated the string buffer.
+		 * the pointers in the pointer array have to be adjusted */
+		qse_size_t i;
+		for (i = 0; i < env->arr.len; i++)
+		{
+			env->arr.ptr[i] = tmp + (env->arr.ptr[i] - env->str.ptr);
+		}
+	}
+
 	env->str.ptr = tmp;
 	env->str.capa = ncapa;
+
 	return 0;
 }
 
@@ -151,28 +165,46 @@ int qse_env_insert (
 
 int qse_env_delete (qse_env_t* env, const qse_char_t* name)
 {
-	const qse_char_t* p = env->str.ptr;
 	qse_size_t i;
 
 	for (i = 0; i < env->arr.len; i++)
 	{
 		const qse_char_t* eq;
-		const qse_char_t* vp;
+		qse_char_t* vp;
 
 		vp = env->arr.ptr[i];
 
+//qse_printf (QSE_T("comparing [%s] []\n"), vp);
 		eq = qse_strbeg (vp, name);
 		if (eq && *eq == QSE_T('='))
 		{
-#if 0
 			/* bingo */
+			qse_size_t len, rem;
+
+/*
+5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+A B C = D  E  F \0  X  = Y  Y  \0 Z  =  T  T  \0 \0
+
+env->str.len = 18
+env->str.ptr = 5
+vp = 13
+len = 4 + 1
+*/
 			len = qse_strlen (vp) + 1;
-			QSE_MEMCPY (vp, vp + len, ... );
-#endif
+			rem = env->str.len - (vp + len - env->str.ptr) + 1;
+			QSE_MEMCPY (vp, vp + len, rem * QSE_SIZEOF(qse_char_t));
+			env->str.len -= len;
+
+			env->arr.len--;
+			for (; i < env->arr.len; i++)
+				env->arr.ptr[i] = env->arr.ptr[i+1] - len;
+			env->arr.ptr[i] = QSE_NULL;
+
+			return 0;
 		}
 	}
 
-	return 0;
+	return -1;
 }
 
 static int add_envstr (qse_env_t* env, const qse_char_t* nv)
