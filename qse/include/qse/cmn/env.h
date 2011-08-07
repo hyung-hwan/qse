@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 455 2011-05-09 16:11:13Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,11 +24,19 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/** @file
+ * This file defines data types and functions that you can use to build
+ * an environment block. 
+ */
+
+/**
+ * The qse_env_t type defines a cross-platform environment block.
+ */
 typedef struct qse_env_t qse_env_t;
 
 struct qse_env_t
 {
-	QSE_DEFINE_COMMON_FIELDS(pio)
+	QSE_DEFINE_COMMON_FIELDS(env)
 
 	struct
 	{
