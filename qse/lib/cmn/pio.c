@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 534 2011-08-04 15:53:43Z hyunghwan.chung $
+ * $Id: pio.c 538 2011-08-09 16:08:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,7 +45,7 @@ static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext, 
-	const qse_char_t* cmd, int oflags)
+	const qse_char_t* cmd, qse_env_t* env, int oflags)
 {
 	qse_pio_t* pio;
 
@@ -62,7 +62,7 @@ qse_pio_t* qse_pio_open (
 	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
 	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pio_init (pio, mmgr, cmd, oflags) == QSE_NULL)
+	if (qse_pio_init (pio, mmgr, cmd, env, oflags) == QSE_NULL)
 	{
 		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
@@ -78,7 +78,8 @@ void qse_pio_close (qse_pio_t* pio)
 }
 
 qse_pio_t* qse_pio_init (
-	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, int oflags)
+	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
+	qse_env_t* env, int oflags)
 {
 	qse_pio_hnd_t handle[6] = 
 	{ 
@@ -270,7 +271,7 @@ qse_pio_t* qse_pio_init (
 #else
 		CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
 #endif
-		NULL, /* LPVOID lpEnvironment */
+		(env? qse_env_getstr(env): QSE_NULL), /* LPVOID lpEnvironment */
 		NULL, /* LPCTSTR lpCurrentDirectory */
 		&startup, /* LPSTARTUPINFO lpStartupInfo */
 		&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
@@ -574,7 +575,6 @@ qse_pio_t* qse_pio_init (
 
 		qse_pio_hnd_t devnull;
 		qse_mchar_t* mcmd;
-		extern char** environ; 
 		int fcnt = 0;
 	#ifndef QSE_CHAR_IS_MCHAR
 		qse_size_t n, mn, wl;
@@ -763,6 +763,7 @@ qse_pio_t* qse_pio_init (
 		if (oflags & QSE_PIO_SHELL)
 		{
 			const qse_mchar_t* argv[4];
+			extern char** environ;
 
 			argv[0] = QSE_MT("/bin/sh");
 			argv[1] = QSE_MT("-c");
@@ -771,12 +772,15 @@ qse_pio_t* qse_pio_init (
 
 			QSE_EXECVE (
 				QSE_MT("/bin/sh"),
-				(qse_mchar_t*const*)argv, environ);
+				(qse_mchar_t*const*)argv, 
+				(env? qse_env_getarr(env): environ)
+			);
 		}
 		else
 		{
 			int i;
 			qse_mchar_t** argv;
+			extern char** environ;
 
 			argv = QSE_MMGR_ALLOC (pio->mmgr, (fcnt+1)*QSE_SIZEOF(argv[0]));
 			if (argv == QSE_NULL) goto child_oops;
@@ -789,7 +793,7 @@ qse_pio_t* qse_pio_init (
 			}
 			argv[i] = QSE_NULL;
 
-			QSE_EXECVE (argv[0], argv, environ);
+			QSE_EXECVE (argv[0], argv, (env? qse_env_getarr(env): environ));
 
 			/* this won't be reached if execve succeeds */
 			QSE_MMGR_FREE (pio->mmgr, argv);

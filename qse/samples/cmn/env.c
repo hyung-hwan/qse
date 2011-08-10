@@ -8,11 +8,56 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
+static void dump (qse_env_t* env)
+{
+	const qse_env_char_t* envstr;
+	qse_env_char_t** envarr;
+
+	envstr = qse_env_getstr (env);
+	if (envstr)
+	{
+#if (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)) || \
+    (defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) 
+		while (*envstr != QSE_T('\0'))
+		{
+			qse_printf (QSE_T("%p [%s]\n"), envstr, envstr);
+			envstr += qse_strlen(envstr) + 1;
+		}
+#elif defined(QSE_ENV_CHAR_IS_WCHAR) 
+		while (*envstr != QSE_WT('\0'))
+		{
+			qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
+			envstr += qse_wcslen(envstr) + 1;
+		}
+#else
+		while (*envstr != QSE_MT('\0'))
+		{
+			qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
+			envstr += qse_mbslen(envstr) + 1;
+		}
+#endif
+	}
+
+	qse_printf (QSE_T("=====\n"));
+	envarr = qse_env_getarr (env);
+	if (envarr)
+	{
+		while (*envarr)
+		{
+#if (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)) || \
+    (defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) 
+			qse_printf (QSE_T("%p [%s]\n"), *envarr, *envarr);
+#else
+			qse_printf (QSE_T("%p [%S]\n"), *envarr, *envarr);
+#endif
+			envarr++;
+		}
+	}
+}
+
 static int test1 (void)
 {
 	qse_env_t* env;
-	const qse_char_t* envstr;
-	qse_char_t** envarr;
 
 	env = qse_env_open (QSE_NULL, 0, 0);
 
@@ -30,30 +75,10 @@ static int test1 (void)
 	qse_env_insert (env, QSE_T("donkey"), QSE_T("mule"));
 	qse_env_insert (env, QSE_T("lily"), QSE_T("rose"));
 
-
 	qse_env_delete (env, QSE_T("cool"));
 	qse_env_insert (env, QSE_T("spider"), QSE_T("man"));
 
-	envstr = qse_env_getstr (env);
-	if (envstr)
-	{
-		while (*envstr != QSE_T('\0'))
-		{
-			qse_printf (QSE_T("%p [%s]\n"), envstr, envstr);
-			envstr += qse_strlen(envstr) + 1;
-		}
-	}
-
-	qse_printf (QSE_T("=====\n"));
-	envarr = qse_env_getarr (env);
-	if (envarr)
-	{
-		while (*envarr)
-		{
-			qse_printf (QSE_T("%p [%s]\n"), *envarr, *envarr);
-			envarr++;
-		}
-	}
+	dump (env);
 
 	qse_env_close (env);	
 	return 0;
@@ -62,8 +87,6 @@ static int test1 (void)
 static int test2 (void)
 {
 	qse_env_t* env;
-	const qse_char_t* envstr;
-	qse_char_t** envarr;
 
 	env = qse_env_open (QSE_NULL, 0, 1);
 
@@ -76,27 +99,7 @@ static int test2 (void)
 			QSE_T("SUCCESS"): QSE_T("FAILURE"))
 	);
 
-	envstr = qse_env_getstr (env);
-	if (envstr)
-	{
-		while (*envstr != QSE_T('\0'))
-		{
-			qse_printf (QSE_T("%p [%s]\n"), envstr, envstr);
-			envstr += qse_strlen(envstr) + 1;
-		}
-	}
-
-
-	qse_printf (QSE_T("=====\n"));
-	envarr = qse_env_getarr (env);
-	if (envarr)
-	{
-		while (*envarr)
-		{
-			qse_printf (QSE_T("%p [%s]\n"), *envarr, *envarr);
-			envarr++;
-		}
-	}
+	dump (env);
 
 	qse_env_close (env);	
 	return 0;

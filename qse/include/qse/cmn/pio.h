@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 533 2011-08-04 15:43:28Z hyunghwan.chung $
+ * $Id: pio.h 538 2011-08-09 16:08:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,6 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/cmn/tio.h>
+#include <qse/cmn/env.h>
 
 /** @file 
  * This file defines a piped interface to a child process. You can execute
@@ -190,12 +191,15 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
  * pipes to it. #QSE_PIO_SHELL causes the function to execute @a cmd via 
  * the default shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
  * On *nix systems, a full path to the command is needed if it is not specified.
+ * If @a env is #QSE_NULL, the environment of @a cmd inherits that of the 
+ * calling process.
  * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	qse_size_t        ext,    /**< extension size */
 	const qse_char_t* cmd,    /**< command to execute */
+	qse_env_t*        env,    /**< environment */
 	int               oflags  /**< 0 or a number OR'ed of the
 	                              #qse_pio_oflag_t enumerators*/
 );
@@ -218,6 +222,7 @@ qse_pio_t* qse_pio_init (
 	qse_pio_t*        pio,    /**< pio object */
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	const qse_char_t* cmd,    /**< command to execute */
+	qse_env_t*  env,          /**< environment */
 	int               oflags  /**< 0 or a number OR'ed of the
 	                              #qse_pio_oflag_t enumerators*/
 );

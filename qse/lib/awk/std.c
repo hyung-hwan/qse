@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 519 2011-07-24 14:42:23Z hyunghwan.chung $
+ * $Id: std.c 538 2011-08-09 16:08:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -780,6 +780,7 @@ static qse_ssize_t awk_rio_pipe (
 				rtx->awk->mmgr,
 				0, 
 				riod->name, 
+				QSE_NULL,
 				flags|QSE_PIO_SHELL|QSE_PIO_TEXT
 			);
 
