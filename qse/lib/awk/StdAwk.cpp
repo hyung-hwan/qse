@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.cpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: StdAwk.cpp 538 2011-08-09 16:08:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -165,6 +165,7 @@ int StdAwk::openPipe (Pipe& io)
 		this->getMmgr(),
 		0, 
 		io.getName(), 
+		QSE_NULL,
 		flags
 	);
 	if (pio == QSE_NULL) return -1;

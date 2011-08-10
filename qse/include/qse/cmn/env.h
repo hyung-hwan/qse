@@ -29,6 +29,15 @@
  * an environment block. 
  */
 
+
+#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+	typedef qse_wchar_t qse_env_char_t;
+#	define QSE_ENV_CHAR_IS_WCHAR
+#else
+	typedef qse_mchar_t qse_env_char_t;
+#	define QSE_ENV_CHAR_IS_MCHAR
+#endif
+
 /**
  * The qse_env_t type defines a cross-platform environment block.
  */
@@ -42,14 +51,14 @@ struct qse_env_t
 	{
 		qse_size_t  capa;
 		qse_size_t  len;
-		qse_char_t* ptr;
+		qse_env_char_t* ptr;
 	} str;
 
 	struct
 	{
 		qse_size_t   capa;
 		qse_size_t   len;
-		qse_char_t** ptr;
+		qse_env_char_t** ptr;
 	} arr;
 };
 
@@ -87,16 +96,35 @@ void qse_env_clear (
 #define qse_env_getstr(env) ((env)->str.ptr)
 #define qse_env_getarr(env) ((env)->arr.ptr)
 
-int qse_env_insert (
+int qse_env_insertw (
 	qse_env_t*        env,
-	const qse_char_t* name,
-	const qse_char_t* value
+	const qse_wchar_t* name,
+	const qse_wchar_t* value
 );
 
-int qse_env_delete (
+int qse_env_insertm (
 	qse_env_t*        env,
-	const qse_char_t* name
+	const qse_mchar_t* name,
+	const qse_mchar_t* value
 );
+
+int qse_env_deletew (
+	qse_env_t*        env,
+	const qse_wchar_t* name
+);
+
+int qse_env_deletem (
+	qse_env_t*        env,
+	const qse_mchar_t* name
+);
+
+#if defined(QSE_CHAR_IS_WCHAR)
+#	define qse_env_insert(env,name,value) qse_env_insertw(env,name,value)
+#	define qse_env_delete(env,name) qse_env_deletew(env,name)
+#else
+#	define qse_env_insert(env,name,value) qse_env_insertm(env,name,value)
+#	define qse_env_delete(env,name) qse_env_deletem(env,name)
+#endif
 
 #ifdef __cplusplus
 }

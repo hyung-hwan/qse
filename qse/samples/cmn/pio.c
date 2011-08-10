@@ -30,6 +30,7 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		QSE_NULL,
 		0,
 		cmd,
+		QSE_NULL,
 		oflags
 	);
 	if (pio == QSE_NULL)
@@ -89,6 +90,7 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		QSE_NULL,
 		0,
 		cmd,
+		QSE_NULL,
 		oflags | QSE_PIO_TEXT
 	);
 	if (pio == QSE_NULL)
@@ -254,6 +256,7 @@ static int test9 (void)
 #else
 		QSE_T("/bin/ls -laF"),
 #endif
+		QSE_NULL,
 		QSE_PIO_READOUT|QSE_PIO_READERR|QSE_PIO_WRITEIN
 	);
 	if (pio == QSE_NULL)
