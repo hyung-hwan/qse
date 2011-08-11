@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 538 2011-08-09 16:08:26Z hyunghwan.chung $
+ * $Id: pio.h 539 2011-08-10 16:18:35Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -44,6 +44,10 @@ enum qse_pio_oflag_t
 	 * (/bin/sh on *nix, cmd.exe on windows) */
 	QSE_PIO_SHELL      = (1 << 1),
 
+	/** indicate that the command to qse_pio_open() is a multi-byte string.
+	 *  it is useful if #QSE_CHAR_IS_WCHAR is defined. */
+	QSE_PIO_MBSCMD     = (1 << 2),
+
 	/** write to stdin of a child process */
 	QSE_PIO_WRITEIN    = (1 << 8),
 	/** read stdout of a child process */
@@ -51,9 +55,9 @@ enum qse_pio_oflag_t
 	/** read stderr of a child process */
 	QSE_PIO_READERR    = (1 << 10),
 
-	/** redirect stderr to stdout (2>&1, require QSE_PIO_READOUT) */
+	/** redirect stderr to stdout (2>&1, require #QSE_PIO_READOUT) */
 	QSE_PIO_ERRTOOUT   = (1 << 11),	
-	/** redirect stdout to stderr (1>&2, require QSE_PIO_READERR) */
+	/** redirect stdout to stderr (1>&2, require #QSE_PIO_READERR) */
 	QSE_PIO_OUTTOERR   = (1 << 12),
 
 	/** redirect stdin to the null device (</dev/null, <NUL) */
@@ -192,7 +196,10 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
  * the default shell of an underlying system: /bin/sh on *nix, cmd.exe on win32.
  * On *nix systems, a full path to the command is needed if it is not specified.
  * If @a env is #QSE_NULL, the environment of @a cmd inherits that of the 
- * calling process.
+ * calling process. If you want to pass an empty environment, you can pass
+ * an empty @a env object with no items inserted. If #QSE_PIO_MBSCMD is 
+ * specified in @a oflags, @a cmd is treated as a multi-byte string whose 
+ * character type is #qse_mchar_t.
  * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
 qse_pio_t* qse_pio_open (

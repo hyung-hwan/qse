@@ -34,7 +34,7 @@
 #ifdef HAVE_SYS_SENDFILE_H
 #	include <sys/sendfile.h>
 #else
-qse_ssize_t sendfile (
+static qse_ssize_t sendfile (
 	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
 {
 	qse_mchar_t buf[MAX_SEND_SIZE];
@@ -53,7 +53,6 @@ qse_ssize_t sendfile (
 	return n;
 }
 #endif
-
 
 
 /*------------------------------------------------------------------------*/
@@ -665,14 +664,16 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
 {
-	const qse_char_t* path;
-	qse_http_version_t version;
+	const qse_mchar_t* path;
+	const qse_htre_t* req;
 };
 
 typedef struct task_cgi_t task_cgi_t;
 struct task_cgi_t
 {
-	const qse_char_t* path;
+	int init_failed;
+
+	const qse_mchar_t* path;
 	qse_http_version_t version;
 
 	qse_env_t* env;
@@ -822,6 +823,45 @@ static qse_htrd_recbs_t cgi_htrd_cbs =
      QSE_NULL  /* not needed for CGI */
 };
 
+static qse_env_t* makecgienv (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, const qse_htre_t* req)
+{
+/* TODO: error check */
+	qse_env_t* env;
+
+	env = qse_env_open (httpd->mmgr, 0, 0);
+	if (env == QSE_NULL) goto oops;
+
+#ifdef _WIN32
+	qse_env_insertsys (env, QSE_T("PATH"));
+#else
+	qse_env_insertsysm (env, QSE_MT("LANG"));
+	qse_env_insertsysm (env, QSE_MT("PATH"));
+	//qse_env_insertm (env, QSE_MT("SERVER_PORT"), );
+
+	{
+		qse_mchar_t port[16];
+		snprintf (port, QSE_COUNTOF(port), 
+			"%d", (int)ntohs(client->addr.in4.sin_port));
+		qse_env_insertm (env, QSE_MT("REMOTE_PORT"), port);
+	}
+	//qse_env_insertm (env, QSE_MT("REMOTE_ADDR"), QSE_MT("what the hell"));
+#endif
+
+#if 0
+	qse_env_insertm (env, "SERVER_NAME",
+	qse_env_insertm (env, "SERVER_ROOT", 
+	qse_env_insertm (env, "DOCUMENT_ROOT", 
+	qse_env_insertm (env, "REMOTE_PORT", 
+	qse_env_insertm (env, "REQUEST_URI", 
+#endif
+	return env;
+
+oops:
+	if (env) qse_env_close (env);
+	return QSE_NULL;
+}
+
 static int task_init_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -829,9 +869,13 @@ static int task_init_cgi (
 	task_cgi_arg_t* arg = (task_cgi_arg_t*)task->ctx;
 
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
-	qse_strcpy ((qse_char_t*)(xtn + 1), arg->path);
-	xtn->path = (qse_char_t*)(xtn + 1);
-	xtn->version = arg->version;
+	qse_mbscpy ((qse_mchar_t*)(xtn + 1), arg->path);
+	xtn->path = (qse_mchar_t*)(xtn + 1);
+	xtn->version = *qse_htre_getversion(arg->req);
+
+	xtn->env = makecgienv (httpd, client, arg->req);
+	if (xtn->env == QSE_NULL) xtn->init_failed = 1;
+
 	task->ctx = xtn;
 	return 0;
 }
@@ -1090,6 +1134,10 @@ static int task_main_cgi (
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	cgi_htrd_xtn_t* xtn;
+/* TODO: get the message using callback */
+	const qse_mchar_t* msg = "Internal server error has occurred";
+
+	if (cgi->init_failed) goto oops;
 
 	cgi->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_htrd_xtn_t));
 	if (cgi->htrd == QSE_NULL) goto oops;
@@ -1106,29 +1154,29 @@ static int task_main_cgi (
 	cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
 	if (cgi->res == QSE_NULL) goto oops;
 
-	cgi->env = qse_env_open (httpd->mmgr, 0, 0);
-	if (cgi->env == QSE_NULL) goto oops;
-
-qse_env_insertm (cgi->env, QSE_MT("QUERY_STRING"), QSE_MT("what the hell"));
-qse_env_insertm (cgi->env, QSE_MT("CLIENT_IPADDR"), QSE_MT("2.3.4.5"));
-
-qse_printf (QSE_T("[pio open for %s]\n"), cgi->path);
 	cgi->pio = qse_pio_open (
-		httpd->mmgr, 0, cgi->path, cgi->env,
-		QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_ERRTONUL
+		httpd->mmgr, 0, (const qse_char_t*)cgi->path, cgi->env,
+		QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_ERRTONUL | QSE_PIO_MBSCMD
 	);
 	if (cgi->pio == QSE_NULL) goto oops;
 	
-qse_printf (QSE_T("[calling cgi_2 ]\n"));
 	task->main = task_main_cgi_2; /* cause this function to be called subsequently */
 	return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
 
 oops:
-/* TODO: internal server error */
-	if (cgi->env) qse_env_close (cgi->env);
 	if (cgi->res) qse_mbs_close (cgi->res);
 	if (cgi->htrd) qse_htrd_close (cgi->htrd);
-qse_printf (QSE_T("internal server error....\n"));
+
+	qse_httpd_entaskformat (
+		httpd, client, task,
+    		QSE_MT("HTTP/%d.%d 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: %lu\r\n\r\n%s"), 
+		cgi->version.major,
+		cgi->version.minor,
+		(unsigned long)qse_mbslen(msg),
+		msg
+	);
+/* TODO: can i return something else if this fails... */
+
 	return 0;
 }
 
@@ -1136,14 +1184,14 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	const qse_httpd_task_t* pred, 
-	const qse_char_t* path,
-	const qse_http_version_t* version)
+	const qse_mchar_t* path,
+	const qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
 
 	arg.path = path;
-	arg.version = *version;
+	arg.req = req;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
@@ -1153,7 +1201,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 
-		QSE_SIZEOF(task_cgi_t) + ((qse_strlen(path) + 1) * QSE_SIZEOF(*path))
+		QSE_SIZEOF(task_cgi_t) + ((qse_mbslen(path) + 1) * QSE_SIZEOF(*path))
 	);
 }
 

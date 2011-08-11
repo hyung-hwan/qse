@@ -95,6 +95,26 @@ void qse_env_clear (qse_env_t* env)
 	}
 }
 
+const qse_env_char_t* qse_env_getstr (qse_env_t* env)
+{
+	if (env->str.ptr) return env->str.ptr;
+	else
+	{
+		static qse_env_char_t empty[2] = { 0, 0 };
+		return empty;
+	}
+}
+
+qse_env_char_t** qse_env_getarr (qse_env_t* env)
+{
+	if (env->arr.ptr) return env->arr.ptr;
+	else
+	{
+		static qse_env_char_t* empty[1] = { QSE_NULL };
+		return empty;
+	}
+}
+
 static int expandarr (qse_env_t* env)
 {
 	qse_env_char_t** tmp;
@@ -165,7 +185,7 @@ static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* 
 	env->str.len += qse_wcscpy (&env->str.ptr[env->str.len], value);
 	env->str.ptr[++env->str.len] = QSE_WT('\0'); 
 
-	return -1;
+	return 0;
 }
 
 static int add_envstrw (qse_env_t* env, const qse_wchar_t* nv)
@@ -244,7 +264,7 @@ static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* 
 	env->str.len += qse_mbscpy (&env->str.ptr[env->str.len], value);
 	env->str.ptr[++env->str.len] = QSE_MT('\0'); 
 
-	return -1;
+	return 0;
 }
 
 static int add_envstrm (qse_env_t* env, const qse_mchar_t* nv)
@@ -392,6 +412,115 @@ int qse_env_deletem (qse_env_t* env, const qse_mchar_t* name)
 	return n;
 #else
 	return deletem (env, name);
+#endif
+}
+
+#if defined(_WIN32) 
+static qse_char_t* getenv (const qse_char_t* name, int* free)
+{
+	DWORD n;
+
+	n = GetEnvironmentVariable (name, QSE_NULL, 0);
+	if (n > 0) 
+	{
+		qse_char_t* buf;
+
+		buf = QSE_MMGR_ALLOC (env->mmgr, n * QSE_SIZEOF(*buf));
+		if (buf) 
+		{
+			if (GetEnvironmentVariable (name, buf, n) == n - 1)
+			{
+				*free = 1;
+				return buf;
+			}
+			QSE_MMGR_FREE (env->mmgr, buf);
+		}
+	}
+
+	return QSE_NULL;
+}
+
+#elif defined(__OS2__)
+	/* TODO: */
+#	error IMPLEMENT THIS
+
+#elif defined(__DOS__)
+	/* TODO: */
+#	error IMPLEMENT THIS
+
+#else
+static qse_mchar_t* getenv (const qse_mchar_t* name, int* free)
+{
+	extern char** environ;
+	char** p = environ;
+
+	while (*p)
+	{
+		qse_mchar_t* eq;
+		eq = qse_mbsbeg (*p, name);
+		if (eq && *eq == QSE_MT('=')) 
+		{
+			*free = 0;
+			return eq + 1;
+		}
+		p++;	
+	}
+				
+	return 0;
+}
+#endif
+
+int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
+{
+#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+	int ret, free;
+	qse_wchar_t* v;
+
+	v = getenv (name, &free);
+	if (v == QSE_NULL) return 0;
+	ret = insertw (env, name, v);
+	if (free) QSE_MMGR_FREE (env->mmgr, v);
+	return ret;
+#else
+	/* convert wchar to mchar */
+	qse_mchar_t* namedup;
+	int ret = -1;
+
+	namedup = qse_wcstombsdup (name, env->mmgr);
+	if (namedup)
+	{
+		ret = qse_env_insertsysm (env, namedup);
+		QSE_MMGR_FREE (env->mmgr, namedup);
+	}
+
+	return ret;
+#endif
+}
+
+int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
+{
+#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+	/* convert mchar to wchar */
+	qse_wchar_t* namedup;
+	int ret = -1;
+
+	namedup = qse_mbstowcsdup (name, env->mmgr);
+	if (namedup)
+	{
+		ret = qse_env_insertsysw (env, namedup);
+		QSE_MMGR_FREE (env->mmgr, namedup);
+	}
+
+	return ret;
+#else
+	int ret, free;
+	qse_mchar_t* v;
+
+	v = getenv (name, &free);
+	if (v == QSE_NULL) return -1;
+	ret = insertm (env, name, v);
+	if (free) QSE_MMGR_FREE (env->mmgr, v);
+	return ret;
 #endif
 }
 

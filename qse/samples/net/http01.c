@@ -62,7 +62,8 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
 		{
 			/* cgi */
-			x = qse_httpd_entaskcgi (httpd, client, QSE_NULL, QSE_T("/tmp/test.cgi"), qse_htre_getversion(req));
+			x = qse_httpd_entaskcgi (
+				httpd, client, QSE_NULL, qpath, req);
 			if (x == QSE_NULL) goto oops;
 
 #if 0
@@ -71,7 +72,7 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 		}
 		else
 		{
-			rangestr = qse_htre_getheaderval (req, "Range");
+			rangestr = qse_htre_getheaderval (req, QSE_MT("Range"));
 			if (rangestr && qse_parsehttprange (rangestr, &range) <= -1)
 			{
 #if 0

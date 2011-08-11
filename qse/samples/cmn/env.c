@@ -14,44 +14,38 @@ static void dump (qse_env_t* env)
 	qse_env_char_t** envarr;
 
 	envstr = qse_env_getstr (env);
-	if (envstr)
-	{
 #if (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)) || \
     (defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) 
-		while (*envstr != QSE_T('\0'))
-		{
-			qse_printf (QSE_T("%p [%s]\n"), envstr, envstr);
-			envstr += qse_strlen(envstr) + 1;
-		}
-#elif defined(QSE_ENV_CHAR_IS_WCHAR) 
-		while (*envstr != QSE_WT('\0'))
-		{
-			qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
-			envstr += qse_wcslen(envstr) + 1;
-		}
-#else
-		while (*envstr != QSE_MT('\0'))
-		{
-			qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
-			envstr += qse_mbslen(envstr) + 1;
-		}
-#endif
+	while (*envstr != QSE_T('\0'))
+	{
+		qse_printf (QSE_T("%p [%s]\n"), envstr, envstr);
+		envstr += qse_strlen(envstr) + 1;
 	}
-
-	qse_printf (QSE_T("=====\n"));
-	envarr = qse_env_getarr (env);
-	if (envarr)
+#elif defined(QSE_ENV_CHAR_IS_WCHAR) 
+	while (*envstr != QSE_WT('\0'))
 	{
-		while (*envarr)
-		{
+		qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
+		envstr += qse_wcslen(envstr) + 1;
+	}
+#else
+	while (*envstr != QSE_MT('\0'))
+	{
+		qse_printf (QSE_T("%p [%S]\n"), envstr, envstr);
+		envstr += qse_mbslen(envstr) + 1;
+	}
+#endif
+
+	qse_printf (QSE_T("-------------\n"));
+	envarr = qse_env_getarr (env);
+	while (*envarr)
+	{
 #if (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)) || \
     (defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) 
-			qse_printf (QSE_T("%p [%s]\n"), *envarr, *envarr);
+		qse_printf (QSE_T("%p [%s]\n"), *envarr, *envarr);
 #else
-			qse_printf (QSE_T("%p [%S]\n"), *envarr, *envarr);
+		qse_printf (QSE_T("%p [%S]\n"), *envarr, *envarr);
 #endif
-			envarr++;
-		}
+		envarr++;
 	}
 }
 
@@ -105,9 +99,28 @@ static int test2 (void)
 	return 0;
 }
 
+static int test3 (void)
+{
+
+	qse_env_t* env;
+
+	env = qse_env_open (QSE_NULL, 0, 0);
+
+	qse_printf (QSE_T("%d\n"), qse_env_insertsys (env, QSE_T("PATH")));
+	qse_printf (QSE_T("%d\n"), qse_env_insertsysm (env, QSE_MT("HOME")));
+	qse_printf (QSE_T("%d\n"), qse_env_insertsysw (env, QSE_WT("USER")));
+	qse_printf (QSE_T("%d\n"), qse_env_insertsys (env, QSE_T("WHAT")));
+
+	dump (env);
+
+	qse_env_close (env);	
+	return 0;
+
+}
 int main ()
 {
 	R (test1);
 	R (test2);
+	R (test3);
 	return 0;
 }
