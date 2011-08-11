@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 538 2011-08-09 16:08:26Z hyunghwan.chung $
+ * $Id: pio.c 539 2011-08-10 16:18:35Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -104,9 +104,7 @@ qse_pio_t* qse_pio_init (
 	SECURITY_ATTRIBUTES secattr; 
 	PROCESS_INFORMATION procinfo;
 	STARTUPINFO startup;
-	qse_char_t* dup = QSE_NULL;
 	HANDLE windevnul = INVALID_HANDLE_VALUE;
-	BOOL x;
 
 #elif defined(__OS2__)
 	APIRET rc;
@@ -245,46 +243,47 @@ qse_pio_t* qse_pio_init (
 	/* there is nothing to do for QSE_PIO_SHELL as CreateProcess
 	 * takes the entire command line */
 
-	if (oflags & QSE_PIO_SHELL) 
 	{
-		dup = QSE_MMGR_ALLOC (
-			mmgr, (11+qse_strlen(cmd)+1 )*QSE_SIZEOF(qse_char_t));
-		if (dup == QSE_NULL) goto oops;
+		const qse_char_t* dupcmd;
+		BOOL x;
 
-		qse_strcpy (dup, QSE_T("cmd.exe /c "));
-		qse_strcpy (&dup[11], cmd);
+		if (oflags & QSE_PIO_SHELL) 
+		{
+			dupcmd = QSE_MMGR_ALLOC (
+				mmgr, (11+qse_strlen(cmd)+1 )*QSE_SIZEOF(qse_char_t));
+			if (dupcmd == QSE_NULL) goto oops;
+
+			qse_strcpy (dupcmd, QSE_T("cmd.exe /c "));
+			qse_strcpy (&dupcmd[11], cmd);
+		}
+		else dupcmd = cmd;
+
+		x = CreateProcess (
+			QSE_NULL,  /* LPCTSTR lpApplicationName */
+			dupcmd,    /* LPTSTR lpCommandLine */
+			QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
+			QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
+			TRUE,      /* BOOL bInheritHandles */
+		#ifdef QSE_CHAR_IS_MCHAR
+			0,         /* DWORD dwCreationFlags */
+		#else
+			CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
+		#endif
+			(env? qse_env_getstr(env): QSE_NULL), /* LPVOID lpEnvironment */
+			QSE_NULL, /* LPCTSTR lpCurrentDirectory */
+			&startup, /* LPSTARTUPINFO lpStartupInfo */
+			&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
+		);
+
+		if (dupcmd != cmd) QSE_MMGR_FREE (mmgr, dupcmd); 
+		if (x == FALSE) goto oops;
 	}
-	else
-	{
-		dup = qse_strdup (cmd, mmgr);
-		if (dup == QSE_NULL) goto oops;
-	}
 
-	x = CreateProcess (
-		NULL, /* LPCTSTR lpApplicationName */
-		dup,  /* LPTSTR lpCommandLine */
-		NULL, /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
-		NULL, /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
-		TRUE, /* BOOL bInheritHandles */
-#ifdef QSE_CHAR_IS_MCHAR
-		0,    /* DWORD dwCreationFlags */
-#else
-		CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
-#endif
-		(env? qse_env_getstr(env): QSE_NULL), /* LPVOID lpEnvironment */
-		NULL, /* LPCTSTR lpCurrentDirectory */
-		&startup, /* LPSTARTUPINFO lpStartupInfo */
-		&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
-	);
-
-	QSE_MMGR_FREE (mmgr, dup); dup = QSE_NULL;
 	if (windevnul != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle (windevnul); 
 		windevnul = INVALID_HANDLE_VALUE;
 	}
-
-	if (x == FALSE) goto oops;
 
 	if (oflags & QSE_PIO_WRITEIN)
 	{
@@ -577,8 +576,6 @@ qse_pio_t* qse_pio_init (
 		qse_mchar_t* mcmd;
 		int fcnt = 0;
 	#ifndef QSE_CHAR_IS_MCHAR
-		qse_size_t n, mn, wl;
-		qse_char_t* wcmd = QSE_NULL;
 		qse_mchar_t buf[64];
 	#endif
 
@@ -694,69 +691,95 @@ qse_pio_t* qse_pio_init (
 			}
 		}
 	#else	
-		if (oflags & QSE_PIO_SHELL)
+		if (oflags & QSE_PIO_MBSCMD) 
 		{
-			n = qse_wcstombslen (cmd, &mn);
-			if (cmd[n] != QSE_WT('\0')) 
+			/* the cmd is flagged to be of qse_mchar_t 
+			 * while the default character type is qse_wchar_t. */
+
+			if (oflags & QSE_PIO_SHELL) mcmd = (qse_mchar_t*)cmd;
+			else
 			{
-				/* cmd has illegal sequence */
-				goto child_oops;
+				mcmd =  qse_mbsdup ((const qse_mchar_t*)cmd, pio->mmgr);
+				if (mcmd == QSE_NULL) goto child_oops;
+
+				fcnt = qse_mbsspl (mcmd, QSE_MT(""), 
+					QSE_MT('\"'), QSE_MT('\"'), QSE_MT('\\')); 
+				if (fcnt <= 0) 
+				{
+					/* no field or an error */
+					goto child_oops; 
+				}
 			}
 		}
 		else
 		{
-			wcmd = qse_strdup (cmd, pio->mmgr);
-			if (wcmd == QSE_NULL) goto child_oops;
+			qse_size_t n, mn, wl;
+			qse_char_t* wcmd = QSE_NULL;
 
-			fcnt = qse_strspl (wcmd, QSE_T(""), 
-				QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
-			if (fcnt <= 0)
+			if (oflags & QSE_PIO_SHELL)
 			{
-				/* no field or an error */
-				goto child_oops;
+				n = qse_wcstombslen (cmd, &mn);
+				if (cmd[n] != QSE_WT('\0')) 
+				{
+					/* cmd has illegal sequence */
+					goto child_oops;
+				}
 			}
-			
-			/* calculate the length of the string after splitting */
-			for (wl = 0, n = fcnt; n > 0; )
+			else
 			{
-				if (wcmd[wl++] == QSE_T('\0')) n--;
+				wcmd = qse_strdup (cmd, pio->mmgr);
+				if (wcmd == QSE_NULL) goto child_oops;
+	
+				fcnt = qse_strspl (wcmd, QSE_T(""), 
+					QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
+				if (fcnt <= 0)
+				{
+					/* no field or an error */
+					goto child_oops;
+				}
+				
+				/* calculate the length of the string after splitting */
+				for (wl = 0, n = fcnt; n > 0; )
+				{
+					if (wcmd[wl++] == QSE_T('\0')) n--;
+				}
+	
+				n = qse_wcsntombsnlen (wcmd, wl, &mn);
+				if (n != wl) goto child_oops;
 			}
-
-			n = qse_wcsntombsnlen (wcmd, wl, &mn);
-			if (n != wl) goto child_oops;
-		}
-
-		/* prepare to reserve 1 more slot for the terminating '\0'
-		 * by incrementing mn by 1. */
-		mn = mn + 1;
-
-		if (mn <= QSE_COUNTOF(buf)) 
-		{
-			mcmd = buf;
-			mn = QSE_COUNTOF(buf);
-		}
-		else
-		{
-			mcmd = QSE_MMGR_ALLOC (
-				pio->mmgr, mn*QSE_SIZEOF(*mcmd));
-			if (mcmd == QSE_NULL) goto child_oops;
-		}
-
-		if (oflags & QSE_PIO_SHELL)
-		{
-			/* qse_wcstombs() should succeed as 
-			 * qse_wcstombslen() was successful above */
-			qse_wcstombs (cmd, mcmd, &mn);
-			/* qse_wcstombs() null-terminate mcmd */
-		}
-		else
-		{
-			QSE_ASSERT (wcmd != QSE_NULL);
-			/* qse_wcsntombsn() should succeed as 
-			 * qse_wcsntombsnlen() was successful above */
-			qse_wcsntombsn (wcmd, wl, mcmd, &mn);
-			/* qse_wcsntombsn() doesn't null-terminate mcmd */
-			mcmd[mn] = QSE_MT('\0');
+	
+			/* prepare to reserve 1 more slot for the terminating '\0'
+			 * by incrementing mn by 1. */
+			mn = mn + 1;
+	
+			if (mn <= QSE_COUNTOF(buf)) 
+			{
+				mcmd = buf;
+				mn = QSE_COUNTOF(buf);
+			}
+			else
+			{
+				mcmd = QSE_MMGR_ALLOC (
+					pio->mmgr, mn*QSE_SIZEOF(*mcmd));
+				if (mcmd == QSE_NULL) goto child_oops;
+			}
+	
+			if (oflags & QSE_PIO_SHELL)
+			{
+				/* qse_wcstombs() should succeed as 
+				 * qse_wcstombslen() was successful above */
+				qse_wcstombs (cmd, mcmd, &mn);
+				/* qse_wcstombs() null-terminate mcmd */
+			}
+			else
+			{
+				QSE_ASSERT (wcmd != QSE_NULL);
+				/* qse_wcsntombsn() should succeed as 
+				 * qse_wcsntombsnlen() was successful above */
+				qse_wcsntombsn (wcmd, wl, mcmd, &mn);
+				/* qse_wcsntombsn() doesn't null-terminate mcmd */
+				mcmd[mn] = QSE_MT('\0');
+			}
 		}
 	#endif
 
@@ -880,7 +903,6 @@ oops:
 
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
-	if (dup) QSE_MMGR_FREE (mmgr, dup);
 
 #elif defined(__OS2__)
 	if (cmd_line) QSE_MMGR_FREE (mmgr, cmd_line);

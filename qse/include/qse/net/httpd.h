@@ -213,8 +213,8 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
-	const qse_char_t*         path,
-	const qse_http_version_t* version
+	const qse_mchar_t*        path,
+	const qse_htre_t*         req
 );
 
 void* qse_httpd_allocmem (

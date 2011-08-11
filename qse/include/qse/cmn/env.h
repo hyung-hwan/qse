@@ -93,8 +93,13 @@ void qse_env_clear (
 	qse_env_t* env
 );
 
-#define qse_env_getstr(env) ((env)->str.ptr)
-#define qse_env_getarr(env) ((env)->arr.ptr)
+const qse_env_char_t* qse_env_getstr (
+	qse_env_t* env
+);
+
+qse_env_char_t** qse_env_getarr (
+	qse_env_t* env
+);
 
 int qse_env_insertw (
 	qse_env_t*        env,
@@ -118,12 +123,26 @@ int qse_env_deletem (
 	const qse_mchar_t* name
 );
 
+
+int qse_env_insertsysw (
+	qse_env_t* env,
+	const qse_wchar_t* name
+);
+
+int qse_env_insertsysm (
+	qse_env_t* env,
+	const qse_mchar_t* name
+);
+
+
 #if defined(QSE_CHAR_IS_WCHAR)
 #	define qse_env_insert(env,name,value) qse_env_insertw(env,name,value)
 #	define qse_env_delete(env,name) qse_env_deletew(env,name)
+#	define qse_env_insertsys(env,name) qse_env_insertsysw(env,name)
 #else
 #	define qse_env_insert(env,name,value) qse_env_insertm(env,name,value)
 #	define qse_env_delete(env,name) qse_env_deletem(env,name)
+#	define qse_env_insertsys(env,name) qse_env_insertsysm(env,name)
 #endif
 
 #ifdef __cplusplus
