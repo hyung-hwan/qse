@@ -716,14 +716,20 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 
 #ifdef QSE_XMA_ENABLE_STAT
 	dumper (ctx, QSE_T("== statistics ==\n"));
-#if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
+#if (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_LONG)
 	dumper (ctx, QSE_T("total = %lu\n"), (unsigned long)xma->stat.total);
 	dumper (ctx, QSE_T("alloc = %lu\n"), (unsigned long)xma->stat.alloc);
 	dumper (ctx, QSE_T("avail = %lu\n"), (unsigned long)xma->stat.avail);
-#else
+#elif (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_LONG_LONG)
 	dumper (ctx, QSE_T("total = %llu\n"), (unsigned long long)xma->stat.total);
 	dumper (ctx, QSE_T("alloc = %llu\n"), (unsigned long long)xma->stat.alloc);
 	dumper (ctx, QSE_T("avail = %llu\n"), (unsigned long long)xma->stat.avail);
+#elif (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_INT)
+	dumper (ctx, QSE_T("total = %u\n"), (unsigned int)xma->stat.total);
+	dumper (ctx, QSE_T("alloc = %u\n"), (unsigned int)xma->stat.alloc);
+	dumper (ctx, QSE_T("avail = %u\n"), (unsigned int)xma->stat.avail);
+#else
+#	error weird size of qse_size_t. unsupported platform
 #endif
 #endif
 
@@ -731,14 +737,20 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 	dumper (ctx, QSE_T(" size               avail address\n"));
 	for (tmp = xma->head, fsum = 0, asum = 0; tmp; tmp = tmp->b.next)
 	{
-#if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
-		dumper (ctx, QSE_T(" %-18lu %-5d %p\n"), 
-			(unsigned long)tmp->size, tmp->avail, tmp
+#if (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_LONG)
+		dumper (ctx, QSE_T(" %-18lu %-5u %p\n"), 
+			(unsigned long)tmp->size, (unsigned int)tmp->avail, tmp
+		);
+#elif (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_LONG_LONG)
+		dumper (ctx, QSE_T(" %-18llu %-5u %p\n"), 
+			(unsigned long long)tmp->size, (unsigned int)tmp->avail, tmp
+		);
+#elif (QSE_SIZEOF_SIZE_T == QSE_SIZEOF_INT)
+		dumper (ctx, QSE_T(" %-18u %-5u %p\n"), 
+			(unsigned int)tmp->size, (unsigned int)tmp->avail, tmp
 		);
 #else
-		dumper (ctx, QSE_T(" %-18llu %-5d %p\n"), 
-			(unsigned long long)tmp->size, tmp->avail, tmp
-		);
+#	error weird size of qse_size_t. unsupported platform
 #endif
 		if (tmp->avail) fsum += tmp->size;
 		else asum += tmp->size;
@@ -749,21 +761,31 @@ void qse_xma_dump (qse_xma_t* xma, qse_xma_dumper_t dumper, void* ctx)
 #endif
 
 	dumper (ctx, QSE_T("---------------------------------------\n"));
-#if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
+#if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_LONG)
 	dumper (ctx, QSE_T("Allocated blocks: %18lu bytes\n"), (unsigned long)asum);
 	dumper (ctx, QSE_T("Available blocks: %18lu bytes\n"), (unsigned long)fsum);
-#else
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_LONG_LONG)
 	dumper (ctx, QSE_T("Allocated blocks: %18llu bytes\n"), (unsigned long long)asum);
 	dumper (ctx, QSE_T("Available blocks: %18llu bytes\n"), (unsigned long long)fsum);
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_INT)
+	dumper (ctx, QSE_T("Allocated blocks: %18u bytes\n"), (unsigned int)asum);
+	dumper (ctx, QSE_T("Available blocks: %18u bytes\n"), (unsigned int)fsum);
+#else
+#	error weird size of qse_ulong_t. unsupported platform
 #endif
 
 #ifdef QSE_XMA_ENABLE_STAT
-#if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
+#if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_LONG)
 	dumper (ctx, QSE_T("Internal use    : %18lu bytes\n"), (unsigned long)isum);
 	dumper (ctx, QSE_T("Total           : %18lu bytes\n"), (unsigned long)(asum + fsum + isum));
-#else
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_LONG_LONG)
 	dumper (ctx, QSE_T("Internal use    : %18llu bytes\n"), (unsigned long long)isum);
 	dumper (ctx, QSE_T("Total           : %18llu bytes\n"), (unsigned long long)(asum + fsum + isum));
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_INT)
+	dumper (ctx, QSE_T("Internal use    : %18u bytes\n"), (unsigned int)isum);
+	dumper (ctx, QSE_T("Total           : %18u bytes\n"), (unsigned int)(asum + fsum + isum));
+#else
+#	error weird size of qse_ulong_t. unsupported platform
 #endif
 #endif
 

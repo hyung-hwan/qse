@@ -169,7 +169,7 @@ PROGS="
 	lang-044.awk!lang-044.dat!!--newline=on -o-
 	lang-045.awk!!!--newline=on -o-
 
-	columnate.awk!./passwd.dat!!--newline=on -F:
+	columnate.awk!passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on --include=on
 	rcalc.awk!!!--newline=on -v target=89000
 	quicksort.awk!quicksort.dat!!
@@ -179,7 +179,16 @@ PROGS="
 	wordfreq.awk!wordfreq.awk!!
 	hanoi.awk!!!
 	indent.awk!indent.dat!!
+	lisp/awklisp!lisp/startup lisp/fib.lsp!!-o-
+	lisp/awklisp!lisp/startup lisp/numbers lisp/numbers.dat!!-o-
+	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/tail.lsp!!-o-
+	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/scheme.lsp!!-o-
 "
+
+#
+# I can't include this as eliza.lsp gives different output on each run.
+#	lisp/awklisp!lisp/startup lisp/lists lisp/eliza.lsp lisp/eliza.dat!!-o-
+#
 
 [ -x "${QSEAWK}" ] || 
 {

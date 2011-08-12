@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 539 2011-08-10 16:18:35Z hyunghwan.chung $
+ * $Id: pio.c 540 2011-08-11 15:11:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -244,19 +244,66 @@ qse_pio_t* qse_pio_init (
 	 * takes the entire command line */
 
 	{
-		const qse_char_t* dupcmd;
+		qse_char_t* dupcmd;
 		BOOL x;
 
 		if (oflags & QSE_PIO_SHELL) 
 		{
+			qse_size_t reqlen;
+		#if defined(QSE_CHAR_IS_WCHAR)
+			if (oflags & QSE_PIO_MBSCMD)
+			{
+				const qse_mchar_t* mbs = (const qse_mchar_t*)cmd;
+				qse_size_t ll = qse_mbstowcslen (mbs, &reqlen);
+				if (mbs[ll] != QSE_MT('\0')) goto oops; /* illegal sequence */
+			}
+			else
+			{
+		#endif
+				reqlen = qse_strlen(cmd);				
+		#if defined(QSE_CHAR_IS_WCHAR)
+			}
+		#endif
+
+			reqlen++; /* increment for a terminating null */
+
 			dupcmd = QSE_MMGR_ALLOC (
-				mmgr, (11+qse_strlen(cmd)+1 )*QSE_SIZEOF(qse_char_t));
+				mmgr, (11 + reqlen) * QSE_SIZEOF(*dupcmd)
+			);
 			if (dupcmd == QSE_NULL) goto oops;
 
 			qse_strcpy (dupcmd, QSE_T("cmd.exe /c "));
-			qse_strcpy (&dupcmd[11], cmd);
+
+		#if defined(QSE_CHAR_IS_WCHAR)
+			if (oflags & QSE_PIO_MBSCMD)
+			{
+				qse_mbstowcs ((const qse_mchar_t*)cmd, &dupcmd[11], &reqlen);
+			}
+			else
+			{
+		#endif
+				qse_strcpy (&dupcmd[11], cmd);
+		#if defined(QSE_CHAR_IS_WCHAR)
+			}
+		#endif
 		}
-		else dupcmd = cmd;
+		else 
+		{
+		#if defined(QSE_CHAR_IS_WCHAR)
+			if (oflags & QSE_PIO_MBSCMD)
+			{
+				dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, mmgr);
+			}
+			else
+			{
+		#endif
+				/* CreateProcess requires command buffer to be read-write. */
+				dupcmd = qse_strdup (cmd, mmgr);
+		#if defined(QSE_CHAR_IS_WCHAR)
+			}
+		#endif
+			if (dupcmd == QSE_NULL) goto oops;
+		}
 
 		x = CreateProcess (
 			QSE_NULL,  /* LPCTSTR lpApplicationName */
@@ -275,7 +322,7 @@ qse_pio_t* qse_pio_init (
 			&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
 		);
 
-		if (dupcmd != cmd) QSE_MMGR_FREE (mmgr, dupcmd); 
+		QSE_MMGR_FREE (mmgr, dupcmd); 
 		if (x == FALSE) goto oops;
 	}
 
@@ -459,11 +506,18 @@ qse_pio_t* qse_pio_init (
 	#ifdef QSE_CHAR_IS_MCHAR
 		mn = qse_strlen(cmd);
 	#else
-		n = qse_wcstombslen (cmd, &mn);
-		if (cmd[n] != QSE_WT('\0')) goto oops; /* illegal sequence found */
+		if (oflags & QSE_PIO_MBSCMD)
+		{
+			mn = qse_mbslen((const qse_mchar_t*)cmd);
+		}
+		else
+		{
+			n = qse_wcstombslen (cmd, &mn);
+			if (cmd[n] != QSE_WT('\0')) goto oops; /* illegal sequence found */
+		}
 	#endif
 		cmd_line = QSE_MMGR_ALLOC (
-			mmgr, ((11+mn+1+1) * QSE_SIZEOF(qse_mchar_t)));
+			mmgr, ((11+mn+1+1) * QSE_SIZEOF(*cmd_line)));
 		if (cmd_line == QSE_NULL) goto oops;
 
 		qse_mbscpy (cmd_line, QSE_MT("cmd.exe")); /* cmd.exe\0/c */ 
@@ -471,8 +525,15 @@ qse_pio_t* qse_pio_init (
 	#ifdef QSE_CHAR_IS_MCHAR
 		qse_mbscpy (&cmd_line[11], cmd);
 	#else
-		mn = mn + 1; /* update the buffer size */
-		n = qse_wcstombs (cmd, &cmd_line[11], &mn);
+		if (oflags & QSE_PIO_MBSCMD)
+		{
+			qse_mbscpy (&cmd_line[11], (const qse_mchar_t*)cmd);
+		}
+		else
+		{
+			mn = mn + 1; /* update the buffer size */
+			n = qse_wcstombs (cmd, &cmd_line[11], &mn);
+		}
 	#endif
 		cmd_line[11+mn+1] = QSE_MT('\0'); /* additional \0 after \0 */    
 		
@@ -487,15 +548,24 @@ qse_pio_t* qse_pio_init (
 		cmd_line = qse_strdup2 (cmd, QSE_T(" "), pio->mmgr);
 		if (cmd_line == QSE_NULL) goto oops;
 	#else   
-		qse_size_t n, mn;
-		n = qse_wcstombslen (cmd, &mn);
-		if (cmd[n] != QSE_T('\0')) goto oops; /* illegal sequence in cmd */
-
-		mn = mn + 1;
-		cmd_line = QSE_MMGR_ALLOC (pio->mmgr, mn * QSE_SIZEOF(qse_char_t));
-		if (cmd_line == QSE_NULL) goto oops;
+		if (oflags & QSE_PIO_MBSCMD)
+		{
+			qse_size_t mn = qse_mbslen((const qse_mchar_t*)cmd);
+			cmd_line = qse_mbsdup2 ((const qse_mchar_t*)cmd, QSE_MT(" "), pio->mmgr);
+			if (cmd_line == QSE_NULL) goto oops;
+		}
+		else
+		{
+			qse_size_t n, mn;
+			n = qse_wcstombslen (cmd, &mn);
+			if (cmd[n] != QSE_T('\0')) goto oops; /* illegal sequence in cmd */
+	
+			mn = mn + 1;
+			cmd_line = QSE_MMGR_ALLOC (pio->mmgr, mn * QSE_SIZEOF(qse_char_t));
+			if (cmd_line == QSE_NULL) goto oops;
   
-		qse_wcstombs (cmd, cmd_line, &mn);
+			qse_wcstombs (cmd, cmd_line, &mn);
+		}
 	#endif
 
 		/* TODO: enhance this part by:

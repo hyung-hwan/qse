@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 521 2011-07-25 08:25:13Z hyunghwan.chung $
+ * $Id: parse.c 540 2011-08-11 15:11:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4141,22 +4141,27 @@ static qse_awk_nde_t* parse_increment (
 	opcode2 = MATCH(awk,TOK_PLUSPLUS)? QSE_AWK_INCOP_PLUS:
 	          MATCH(awk,TOK_MINUSMINUS)? QSE_AWK_INCOP_MINUS: -1;
 
-	if (opcode1 != -1 && opcode2 != -1)
-	{
-		/* both prefix and postfix increment operator. 
-		 * not allowed */
-		qse_awk_clrpt (awk, left);
-		SETERR_LOC (awk, QSE_AWK_EPREPST, xloc);
-		return QSE_NULL;
+	if ((awk->option & QSE_AWK_EXPLICIT) && !(awk->option & QSE_AWK_IMPLICIT))
+	{	
+		if (opcode1 != -1 && opcode2 != -1)
+		{
+			/* both prefix and postfix increment operator. 
+			 * not allowed */
+			qse_awk_clrpt (awk, left);
+			SETERR_LOC (awk, QSE_AWK_EPREPST, xloc);
+			return QSE_NULL;
+		}
 	}
-	else if (opcode1 == -1 && opcode2 == -1)
+
+	if (opcode1 == -1 && opcode2 == -1)
 	{
 		/* no increment operators */
 		return left;
 	}
 	else if (opcode1 != -1) 
 	{
-		/* prefix increment operator */
+		/* prefix increment operator.
+		 * ignore a potential postfix operator */
 		type = QSE_AWK_NDE_EXP_INCPRE;
 		opcode = opcode1;
 	}
@@ -4175,9 +4180,18 @@ static qse_awk_nde_t* parse_increment (
 
 	if (!is_var(left) && left->type != QSE_AWK_NDE_POS)
 	{
-		qse_awk_clrpt (awk, left);
-		SETERR_LOC (awk, QSE_AWK_EINCDECOPR, xloc);
-		return QSE_NULL;
+		if (type == QSE_AWK_NDE_EXP_INCPST)
+		{
+			/* For an expression like 1 ++y,
+			 * left is 1. so we leave ++ for y. */
+			return left;
+		}
+		else
+		{
+			qse_awk_clrpt (awk, left);
+			SETERR_LOC (awk, QSE_AWK_EINCDECOPR, xloc);
+			return QSE_NULL;
+		}
 	}
 
 	nde = (qse_awk_nde_exp_t*) 
