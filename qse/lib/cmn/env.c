@@ -23,6 +23,10 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
+#if defined(_WIN32)
+#    include <windows.h>
+#endif
+
 #define STRSIZE 4096
 #define ARRSIZE 128
 
@@ -207,7 +211,7 @@ static int add_envstrw (qse_env_t* env, const qse_wchar_t* nv)
 	return 0;
 }
 
-static int deletem (qse_env_t* env, const qse_wchar_t* name)
+static int deletew (qse_env_t* env, const qse_wchar_t* name)
 {
 	qse_size_t i;
 
@@ -224,7 +228,7 @@ static int deletem (qse_env_t* env, const qse_wchar_t* name)
 			/* bingo */
 			qse_size_t len, rem;
 
-			len = qse_mbslen (vp) + 1;
+			len = qse_wcslen (vp) + 1;
 			rem = env->str.len - (vp + len - env->str.ptr) + 1;
 			QSE_MEMCPY (vp, vp + len, rem * QSE_SIZEOF(*vp));
 			env->str.len -= len;
@@ -416,7 +420,7 @@ int qse_env_deletem (qse_env_t* env, const qse_mchar_t* name)
 }
 
 #if defined(_WIN32) 
-static qse_char_t* getenv (const qse_char_t* name, int* free)
+static qse_char_t* get_env (qse_env_t* env, const qse_char_t* name, int* free)
 {
 	DWORD n;
 
@@ -449,7 +453,7 @@ static qse_char_t* getenv (const qse_char_t* name, int* free)
 #	error IMPLEMENT THIS
 
 #else
-static qse_mchar_t* getenv (const qse_mchar_t* name, int* free)
+static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 {
 	extern char** environ;
 	char** p = environ;
@@ -473,13 +477,16 @@ static qse_mchar_t* getenv (const qse_mchar_t* name, int* free)
 int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
 {
 #if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
-	int ret, free;
 	qse_wchar_t* v;
+	int free;
+	int ret = -1; 
 
-	v = getenv (name, &free);
-	if (v == QSE_NULL) return 0;
-	ret = insertw (env, name, v);
-	if (free) QSE_MMGR_FREE (env->mmgr, v);
+	v = get_env (env, name, &free);
+	if (v)
+	{
+		ret = insertw (env, name, v);
+		if (free) QSE_MMGR_FREE (env->mmgr, v);
+	}
 	return ret;
 #else
 	/* convert wchar to mchar */
@@ -513,13 +520,16 @@ int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
 
 	return ret;
 #else
-	int ret, free;
 	qse_mchar_t* v;
+	int free;
+	int ret = -1; 
 
-	v = getenv (name, &free);
-	if (v == QSE_NULL) return -1;
-	ret = insertm (env, name, v);
-	if (free) QSE_MMGR_FREE (env->mmgr, v);
+	v = get_env (env, name, &free);
+	if (v)
+	{
+		ret = insertm (env, name, v);
+		if (free) QSE_MMGR_FREE (env->mmgr, v);
+	}
 	return ret;
 #endif
 }
@@ -536,14 +546,24 @@ static int load_curenv (qse_env_t* env)
 #if defined(QSE_CHAR_IS_WCHAR)
 	while (*envstr != QSE_WT('\0'))
 	{
-		if (add_envstrw (env, envstr) <= -1) { ret = -1; goto done; }
-		envstr += qse_wcslen(evnstr) + 1;
+		/* It seems that entries like the followings exist in the 
+		 * environment variable string.
+		 *  - =::=::\
+		 *  - =C:=C:\Documents and Settings\Administrator
+		 *  - =ExitCode=00000000
+		 *
+		 * So entries beginning with = are excluded.
+		 */
+		if (*envstr != QSE_WT('=') &&
+		    add_envstrw (env, envstr) <= -1) { ret = -1; goto done; }
+		envstr += qse_wcslen (envstr) + 1;
 	}		
 #else
 	while (*envstr != QSE_MT('\0'))
 	{
-		if (add_envstrm (env, envstr) <= -1) { ret = -1; goto done; }
-		envstr += qse_mbslen(evnstr) + 1;
+		if (*envstr != QSE_MT('=') &&
+		    add_envstrm (env, envstr) <= -1) { ret = -1; goto done; }
+		envstr += qse_mbslen (envstr) + 1;
 	}		
 #endif
 

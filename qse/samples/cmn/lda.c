@@ -400,7 +400,7 @@ static int test5 ()
 
 	for (i = 0; i < 25; i++)
 	{
-		j = random () % 100;
+		j = rand () % 100;
 		qse_lda_pushheap (s1, &j, 1);
 	}
 
@@ -415,7 +415,7 @@ static int test5 ()
 
 	for (i = 0; i < 25; i++)
 	{
-		j = random () % 100;
+		j = rand () % 100;
 		qse_lda_pushheap (s1, &j, 1);
 	}
 
@@ -431,7 +431,7 @@ static int test5 ()
 	qse_lda_setcomper (s1, default_comparator);
 	for (i = 0; i < 25; i++)
 	{
-		j = random () % 100;
+		j = rand () % 100;
 		qse_lda_pushheap (s1, &j, 1);
 	}
 

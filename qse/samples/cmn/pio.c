@@ -245,6 +245,32 @@ static int test8 (void)
 
 static int test9 (void)
 {
+	return pio1 (
+#ifdef _WIN32
+		(const qse_char_t*)".\\sll.exe", 
+#else
+		(const qse_char_t*)"/bin/ls -laF", 
+#endif
+		QSE_PIO_MBSCMD|QSE_PIO_READOUT|QSE_PIO_WRITEIN,
+		QSE_PIO_OUT
+	);
+}
+
+static int test10 (void)
+{
+	return pio1 (
+#ifdef _WIN32
+		(const qse_char_t*)"dir /a",
+#else
+		(const qse_char_t*)"/bin/ls -laF", 
+#endif
+		QSE_PIO_MBSCMD|QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
+		QSE_PIO_OUT
+	);
+}
+
+static int test11 (void)
+{
 	qse_pio_t* pio;
 	int x;
 
@@ -272,7 +298,7 @@ static int test9 (void)
 		qse_printf (QSE_T("sleeping for %d seconds\n"), n);
 		Sleep (n * 1000);
 		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
-			WaitForSingleObject (pio->child, 0));
+			(int)WaitForSingleObject (pio->child, 0));
 	}
 #elif defined(__OS2__)
 	{
@@ -282,7 +308,7 @@ static int test9 (void)
 		qse_printf (QSE_T("sleeping for %d seconds\n"), n);
 		DosSleep (n * 1000);
 		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
-			WaitForSingleObject (pio->child, 0));
+			(int)WaitForSingleObject (pio->child, 0));
 		DosWaitChild (DCWA_PROCESS, DCWW_WAIT,..);
 	}
 #else
@@ -324,6 +350,8 @@ int main ()
 	R (test7);
 	R (test8);
 	R (test9);
+	R (test10);
+	R (test11);
 
 	return 0;
 }
