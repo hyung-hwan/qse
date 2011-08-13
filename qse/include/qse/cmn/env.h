@@ -29,7 +29,12 @@
  * an environment block. 
  */
 
-
+/* 
+ * Note:
+ * The wprintf function provided by Watcom C doesn't seem to be able to 
+ * print multibyte-characters properly at least on OS2. You may have 
+ * difficulty if you try to print the environment strings with Watcom C.
+ */
 #if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
 	typedef qse_wchar_t qse_env_char_t;
 #	define QSE_ENV_CHAR_IS_WCHAR
@@ -123,7 +128,6 @@ int qse_env_deletem (
 	const qse_mchar_t* name
 );
 
-
 int qse_env_insertsysw (
 	qse_env_t* env,
 	const qse_wchar_t* name
@@ -133,7 +137,6 @@ int qse_env_insertsysm (
 	qse_env_t* env,
 	const qse_mchar_t* name
 );
-
 
 #if defined(QSE_CHAR_IS_WCHAR)
 #	define qse_env_insert(env,name,value) qse_env_insertw(env,name,value)
