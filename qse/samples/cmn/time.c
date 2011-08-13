@@ -78,6 +78,7 @@ static int test1 (void)
 #endif
 		qse_ntime_t qnt = nt * 1000;
 		struct tm* tm;
+		qse_ntime_t xx;
 		
 		if (qnt >= 0) qnt += rand() % 1000;
 		else qnt -= rand() % 1000;
@@ -115,30 +116,28 @@ static int test1 (void)
 		}	
 		else
 		{
-			qse_ntime_t xx;
 			qse_printf (QSE_T("[GMTIME OK]"));
-
-			if (qse_timegm (&bt, &xx) == -1)
-			{
-				qse_printf (QSE_T("[TIMEGM FAIL]\n"));
-			}
-			else
-			{
-				if (xx == qnt) 
-				{
-					qse_printf (QSE_T("[TIMEGM OK %d/%d/%d %d:%d:%d]\n"), bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
-				}
-				else 
-				{
-#ifdef _WIN32
-					qse_printf (QSE_T("[TIMEGM ERROR %I64d, %d/%d/%d %d:%d:%d]\n"), (__int64)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
-#else
-					qse_printf (QSE_T("[TIMEGM ERROR %lld, %d/%d/%d %d:%d:%d]\n"), (long long)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
-#endif
-				}
-			}
 		}
 
+		if (qse_timegm (&bt, &xx) == -1)
+		{
+			qse_printf (QSE_T("[TIMEGM FAIL]\n"));
+		}
+		else
+		{
+			if (xx == qnt) 
+			{
+				qse_printf (QSE_T("[TIMEGM OK %d/%d/%d %d:%d:%d]\n"), bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+			}
+			else 
+			{
+#ifdef _WIN32
+				qse_printf (QSE_T("[TIMEGM ERROR %I64d, %d/%d/%d %d:%d:%d]\n"), (__int64)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+#else
+				qse_printf (QSE_T("[TIMEGM ERROR %lld, %d/%d/%d %d:%d:%d]\n"), (long long)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+#endif
+			}
+		}
 	}
 
 	return 0;
