@@ -1,7 +1,7 @@
 /* The standard CSS for doxygen */
 
 body, table, div, p, dl {
-	font-family: Ubuntu, Lucida Grande, Verdana, Geneva, Arial, sans-serif;
+	font-family: Ubuntu, "Trebuchet MS", Lucida Grande, Verdana, Geneva, Arial, sans-serif;
 	font-size: 13px;
 }
 

@@ -336,7 +336,7 @@ static int test12 (void)
 		qse_printf (QSE_T("sleeping for %d seconds\n"), n);
 		Sleep (n * 1000);
 		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
-			(int)WaitForSingleObject (pio->child, 0));
+			(int)WaitForSingleObject (pio->child, INFINITE));
 	}
 #elif defined(__OS2__)
 	{
