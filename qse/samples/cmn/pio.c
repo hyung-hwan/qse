@@ -1,4 +1,5 @@
 #include <qse/cmn/pio.h>
+#include <qse/cmn/env.h>
 #include <qse/cmn/stdio.h>
 
 #include <string.h>
@@ -9,6 +10,7 @@
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
+#	define INCL_DOSDATETIME
 #	include <os2.h>
 #else
 #	include <unistd.h>
@@ -21,7 +23,7 @@
 		if (f() == -1) return -1; \
 	} while (0)
 
-static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
+static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_t rhid)
 {
 	qse_pio_t* pio;
 	int x;
@@ -30,7 +32,7 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		QSE_NULL,
 		0,
 		cmd,
-		QSE_NULL,
+		env,
 		oflags
 	);
 	if (pio == QSE_NULL)
@@ -81,7 +83,7 @@ static int pio1 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 	return 0;
 }
 
-static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
+static int pio2 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_t rhid)
 {
 	qse_pio_t* pio;
 	int x;
@@ -90,7 +92,7 @@ static int pio2 (const qse_char_t* cmd, int oflags, qse_pio_hid_t rhid)
 		QSE_NULL,
 		0,
 		cmd,
-		QSE_NULL,
+		env,
 		oflags | QSE_PIO_TEXT
 	);
 	if (pio == QSE_NULL)
@@ -141,11 +143,12 @@ static int test1 (void)
 {
 
 	return pio1 (
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
+		QSE_NULL,
 		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
 		QSE_PIO_OUT
 	);
@@ -154,11 +157,12 @@ static int test1 (void)
 static int test2 (void)
 {
 	return pio1 (
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
+		QSE_NULL,
 		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
 		QSE_PIO_ERR
 	);
@@ -167,11 +171,12 @@ static int test2 (void)
 static int test3 (void)
 {
 	return pio1 (
-#ifdef _WIN32
-		QSE_T(".\\sll.exe"), 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("tree.com"), 
 #else
 		QSE_T("/bin/ls -laF"), 
 #endif
+		QSE_NULL,
 		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN,
 		QSE_PIO_ERR
 	);
@@ -180,11 +185,12 @@ static int test3 (void)
 static int test4 (void)
 {
 	return pio2 (
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"),
 #endif
+		QSE_NULL,
 		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL, 
 		QSE_PIO_OUT
 	);
@@ -193,11 +199,12 @@ static int test4 (void)
 static int test5 (void)
 {
 	return pio2 (
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		QSE_T("dir /a"), 
 #else
 		QSE_T("ls -laF"), 
 #endif
+		QSE_NULL,
 		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
 		QSE_PIO_ERR
 	);
@@ -206,11 +213,12 @@ static int test5 (void)
 static int test6 (void)
 {
 	return pio2 (
-#ifdef _WIN32
-		QSE_T(".\\sll.exe"), 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("tree.com"), 
 #else
 		QSE_T("/bin/ls -laF"),
 #endif
+		QSE_NULL,
 		QSE_PIO_READERR|QSE_PIO_OUTTOERR|QSE_PIO_WRITEIN,
 		QSE_PIO_ERR
 	);
@@ -219,11 +227,12 @@ static int test6 (void)
 static int test7 (void)
 {
 	return pio1 (
-#ifdef _WIN32
-		QSE_T(".\\sll.exe"), 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("tree.com"), 
 #else
 		QSE_T("/bin/ls -laF"), 
 #endif
+		QSE_NULL,
 		QSE_PIO_READOUT|QSE_PIO_ERRTOOUT|QSE_PIO_WRITEIN,
 		QSE_PIO_OUT
 	);
@@ -232,11 +241,12 @@ static int test7 (void)
 static int test8 (void)
 {
 	return pio1 (
-#ifdef _WIN32
-		QSE_T(".\\sll.exe"), 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("tree.com"), 
 #else
 		QSE_T("/bin/ls -laF"), 
 #endif
+		QSE_NULL,
 		QSE_PIO_READOUT|QSE_PIO_WRITEIN|
 		QSE_PIO_OUTTONUL|QSE_PIO_ERRTONUL|QSE_PIO_INTONUL,
 		QSE_PIO_OUT
@@ -246,11 +256,12 @@ static int test8 (void)
 static int test9 (void)
 {
 	return pio1 (
-#ifdef _WIN32
-		(const qse_char_t*)".\\sll.exe", 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		(const qse_char_t*)"tree.com", 
 #else
 		(const qse_char_t*)"/bin/ls -laF", 
 #endif
+		QSE_NULL,
 		QSE_PIO_MBSCMD|QSE_PIO_READOUT|QSE_PIO_WRITEIN,
 		QSE_PIO_OUT
 	);
@@ -259,11 +270,12 @@ static int test9 (void)
 static int test10 (void)
 {
 	return pio1 (
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		(const qse_char_t*)"dir /a",
 #else
-		(const qse_char_t*)"/bin/ls -laF", 
+		(const qse_char_t*)"ls -laF", 
 #endif
+		QSE_NULL,
 		QSE_PIO_MBSCMD|QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
 		QSE_PIO_OUT
 	);
@@ -271,14 +283,40 @@ static int test10 (void)
 
 static int test11 (void)
 {
+	qse_env_t* env;
+	int n;
+	
+	env = qse_env_open (QSE_NULL, 0, 0);
+	if (env == QSE_NULL) return -1;
+
+	qse_env_insertsys (env, QSE_T("PATH"));
+	qse_env_insert (env, QSE_T("HELLO"), QSE_T("WORLD"));
+
+	n = pio1 (
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("set"),
+#else
+		QSE_T("printenv"),
+#endif
+		env,
+		QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_SHELL,
+		QSE_PIO_OUT
+	);
+
+	qse_env_close (env);
+	return n;
+}
+
+static int test12 (void)
+{
 	qse_pio_t* pio;
 	int x;
 
 	pio = qse_pio_open (
 		QSE_NULL,
 		0,
-#if defined(_WIN32) || defined(__OS2__)
-		QSE_T(".\\sll.exe"),
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		QSE_T("tree.com"),
 #else
 		QSE_T("/bin/ls -laF"),
 #endif
@@ -303,14 +341,29 @@ static int test11 (void)
 #elif defined(__OS2__)
 	{
 		int n = 5;
+		RESULTCODES result;
+		PID pid;
 
-		#error NO IMPLEMENTED YET.
 		qse_printf (QSE_T("sleeping for %d seconds\n"), n);
 		DosSleep (n * 1000);
-		qse_printf (QSE_T("WaitForSingleObject....%d\n"),
-			(int)WaitForSingleObject (pio->child, 0));
-		DosWaitChild (DCWA_PROCESS, DCWW_WAIT,..);
+
+		/* it doesn't seem to proceed if the pipe is not read out.
+		 * maybe the OS2 pipe buffer is too smally?? */
+		while (1)
+		{
+			qse_mchar_t buf[100];
+			qse_ssize_t x = qse_pio_read (pio, buf, QSE_SIZEOF(buf), QSE_PIO_OUT);
+			if (x <= 0) break;
+		}
+
+		qse_printf (QSE_T("DosWaitChild....%d\n"),
+			(int)DosWaitChild (DCWA_PROCESS, DCWW_WAIT, &result, &pid, pio->child));
 	}
+
+#elif defined(__DOS__)
+
+	#error NOT SUPPORTED
+
 #else
 	{
 		int status;
@@ -352,6 +405,7 @@ int main ()
 	R (test9);
 	R (test10);
 	R (test11);
+	R (test12);
 
 	return 0;
 }

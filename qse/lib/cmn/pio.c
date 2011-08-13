@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 542 2011-08-12 14:39:18Z hyunghwan.chung $
+ * $Id: pio.c 543 2011-08-12 16:35:34Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -591,7 +591,7 @@ qse_pio_t* qse_pio_init (
 		QSE_SIZEOF(load_error), 
 		EXEC_ASYNCRESULT,
 		cmd_line,
-		NULL,
+		(env? qse_env_getstr(env): QSE_NULL),
 		&child_rc,
 		cmd_file
 	);

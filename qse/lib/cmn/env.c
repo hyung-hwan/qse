@@ -23,6 +23,8 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
+#include <qse/cmn/stdio.h>
+
 #if defined(_WIN32)
 #    include <windows.h>
 #endif
@@ -85,7 +87,7 @@ void qse_env_clear (qse_env_t* env)
 {
 	if (env->str.ptr) 
 	{
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 		env->str.ptr[0] = QSE_WT('\0');
 #else
 		env->str.ptr[0] = QSE_MT('\0');
@@ -166,7 +168,7 @@ static int expandstr (qse_env_t* env, qse_size_t inc)
 	return 0;
 }
 
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
 {
 	qse_size_t nl, vl, tl;
@@ -329,7 +331,7 @@ static int deletem (qse_env_t* env, const qse_mchar_t* name)
 int qse_env_insertw (
 	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* no conversion -> wchar */
 	return insertw (env, name, value);
 #else
@@ -356,7 +358,7 @@ int qse_env_insertw (
 int qse_env_insertm (
 	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
 	qse_wchar_t* namedup, * valuedup;
 	int n;
@@ -383,7 +385,7 @@ int qse_env_insertm (
 
 int qse_env_deletew (qse_env_t* env, const qse_wchar_t* name)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	return deletew (env, name);
 #else
 	/* convert wchar to mchar */
@@ -402,7 +404,7 @@ int qse_env_deletew (qse_env_t* env, const qse_wchar_t* name)
 
 int qse_env_deletem (qse_env_t* env, const qse_mchar_t* name)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
 	qse_wchar_t* namedup;
 	int n;
@@ -444,11 +446,61 @@ static qse_char_t* get_env (qse_env_t* env, const qse_char_t* name, int* free)
 	return QSE_NULL;
 }
 
+#elif defined(QSE_ENV_CHAR_IS_WCHAR)
+static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
+{
+	/*
+	 * This dindn't work with WATCOM C on OS2 because 
+	 * _wenviron resolved to NULL.
+
+	extern qse_wchar_t** _wenviron;
+	qse_wchar_t** p = _wenviron;
+
+	while (*p)
+	{
+		qse_wchar_t* eq;
+		eq = qse_wcsbeg (*p, name);
+		if (eq && *eq == QSE_WT('=')) 
+		{
+			*free = 0;
+			return eq + 1;
+		}
+		p++;	
+	}
+	*/
+
+	extern char** environ;
+	qse_mchar_t** p = environ;
+
+	while (*p)
+	{
+		qse_wchar_t* dup;
+		qse_wchar_t* eq;
+
+		dup = qse_mbstowcsdup (*p, env->mmgr);
+		if (dup == QSE_NULL) return QSE_NULL;
+
+		eq = qse_wcsbeg (dup, name);
+		if (eq && *eq == QSE_WT('=')) 
+		{
+			*free = 1;
+			return eq + 1;
+		}
+
+		QSE_MMGR_FREE (env->mmgr, dup);
+
+		p++;	
+	}
+				
+	return 0;
+}
+
 #else
+
 static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 {
 	extern char** environ;
-	char** p = environ;
+	qse_mchar_t** p = environ;
 
 	while (*p)
 	{
@@ -468,7 +520,7 @@ static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 
 int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	qse_wchar_t* v;
 	int free;
 	int ret = -1; 
@@ -498,7 +550,7 @@ int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
 
 int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
 {
-#if defined(_WIN32) && defined(QSE_CHAR_IS_WCHAR)
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
 	qse_wchar_t* namedup;
 	int ret = -1;
@@ -563,9 +615,44 @@ done:
 	FreeEnvironmentStrings (envstr);
 	return ret;
 
+#elif defined(QSE_ENV_CHAR_IS_WCHAR)
+	/*
+	 * This dindn't work with WATCOM C on OS2 because 
+	 * _wenviron resolved to NULL.
+	 *
+	extern qse_wchar_t** _wenviron;
+	qse_wchar_t** p = _wenviron;
+
+	while (*p)
+	{
+		if (add_envstrw (env, *p) <= -1) return -1;
+		p++;	
+	}
+	*/
+
+	extern char** environ;
+	qse_mchar_t** p = environ;
+
+	while (*p)
+	{
+		qse_wchar_t* dup;
+		int n;
+
+		dup = qse_mbstowcsdup (*p, env->mmgr);
+		if (dup == QSE_NULL) return -1;
+		n = add_envstrw (env, dup);
+		QSE_MMGR_FREE (env->mmgr, dup);
+		if (n <= -1) return -1;
+
+		p++;	
+	}
+				
+				
+	return 0;
+
 #else
 	extern char** environ;
-	char** p = environ;
+	qse_mchar_t** p = environ;
 
 	while (*p)
 	{
