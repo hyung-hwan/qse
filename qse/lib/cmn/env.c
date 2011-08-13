@@ -444,14 +444,6 @@ static qse_char_t* get_env (qse_env_t* env, const qse_char_t* name, int* free)
 	return QSE_NULL;
 }
 
-#elif defined(__OS2__)
-	/* TODO: */
-#	error IMPLEMENT THIS
-
-#elif defined(__DOS__)
-	/* TODO: */
-#	error IMPLEMENT THIS
-
 #else
 static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 {
@@ -571,12 +563,6 @@ done:
 	FreeEnvironmentStrings (envstr);
 	return ret;
 
-#elif defined(__OS2__)
-	/* TODO: */
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	return -1;
 #else
 	extern char** environ;
 	char** p = environ;
