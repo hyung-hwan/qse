@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 540 2011-08-11 15:11:02Z hyunghwan.chung $
+ * $Id: pio.c 542 2011-08-12 14:39:18Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -542,21 +542,23 @@ qse_pio_t* qse_pio_init (
 	else
 	{
 		qse_mchar_t* mptr;
+		qse_size_t mn;
 
 	#ifdef QSE_CHAR_IS_MCHAR
-		qse_size_t mn = qse_strlen(cmd);
+		mn = qse_strlen(cmd);
 		cmd_line = qse_strdup2 (cmd, QSE_T(" "), pio->mmgr);
 		if (cmd_line == QSE_NULL) goto oops;
 	#else   
 		if (oflags & QSE_PIO_MBSCMD)
 		{
-			qse_size_t mn = qse_mbslen((const qse_mchar_t*)cmd);
+			mn = qse_mbslen((const qse_mchar_t*)cmd);
 			cmd_line = qse_mbsdup2 ((const qse_mchar_t*)cmd, QSE_MT(" "), pio->mmgr);
 			if (cmd_line == QSE_NULL) goto oops;
 		}
 		else
 		{
-			qse_size_t n, mn;
+			qse_size_t n;
+
 			n = qse_wcstombslen (cmd, &mn);
 			if (cmd[n] != QSE_T('\0')) goto oops; /* illegal sequence in cmd */
 	
