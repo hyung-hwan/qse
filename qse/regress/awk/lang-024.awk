@@ -8,5 +8,7 @@ BEGIN {
 	print a;
 	print b;
 	print c;
+
+	print 99++c;
 }
 

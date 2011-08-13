@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 540 2011-08-11 15:11:02Z hyunghwan.chung $
+ * $Id: parse.c 541 2011-08-12 14:16:05Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4171,11 +4171,13 @@ static qse_awk_nde_t* parse_increment (
 		type = QSE_AWK_NDE_EXP_INCPST;
 		opcode = opcode2;
 
+		/* let's do it later 
 		if (get_token(awk) <= -1) 
 		{
 			qse_awk_clrpt (awk, left);
 			return QSE_NULL;
 		}
+		*/
 	}
 
 	if (!is_var(left) && left->type != QSE_AWK_NDE_POS)
@@ -4190,6 +4192,16 @@ static qse_awk_nde_t* parse_increment (
 		{
 			qse_awk_clrpt (awk, left);
 			SETERR_LOC (awk, QSE_AWK_EINCDECOPR, xloc);
+			return QSE_NULL;
+		}
+	}
+
+	if (type == QSE_AWK_NDE_EXP_INCPST)
+	{
+		/* consume the postfix operator */
+		if (get_token(awk) <= -1) 
+		{
+			qse_awk_clrpt (awk, left);
 			return QSE_NULL;
 		}
 	}
