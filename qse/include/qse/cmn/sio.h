@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sio.h 547 2011-08-13 16:04:14Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -50,6 +50,10 @@ enum qse_sio_open_flag_t
 typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
 
+/**
+ * The qse_sio_t type defines a simple text stream over a file. It also
+ * provides predefined streams for standard input, output, and error.
+ */
 typedef struct qse_sio_t qse_sio_t;
 
 struct qse_sio_t
@@ -145,7 +149,7 @@ qse_ssize_t qse_sio_putsn (
 );
 
 /**
- * The get_sio_getpos() gets the current position in a stream.
+ * The qse_sio_getpos() gets the current position in a stream.
  * Note that it may not return the desired postion due to buffering.
  * @return 0 on success, -1 on failure
  */

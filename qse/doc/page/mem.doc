@@ -1,0 +1,6 @@
+/** @page mem Memory Management
+
+@section mem_alloc Memory Allocator
+- Private heap allocator #qse_xma_t 
+- Fixed-size block allocator #qse_fma_t
+*/

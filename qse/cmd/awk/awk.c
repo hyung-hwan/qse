@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: awk.c 547 2011-08-13 16:04:14Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -78,6 +78,9 @@ struct arg_t
 	int          opton;
 	int          optoff;
 	qse_ulong_t  memlimit;
+#if defined(QSE_BUILD_DEBUG)
+	qse_ulong_t  failmalloc;
+#endif
 };
 
 struct gvmv_t
@@ -425,6 +428,9 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
 	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
+#if defined(QSE_BUILD_DEBUG)
+	qse_fprintf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
+#endif
 
 	for (j = 0; opttab[j].name != QSE_NULL; j++)
 	{
@@ -467,7 +473,11 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 	static qse_opt_t opt = 
 	{
+#if defined(QSE_BUILD_DEBUG)
+		QSE_T("dc:f:F:o:v:m:X:h"),
+#else
 		QSE_T("dc:f:F:o:v:m:h"),
+#endif
 		lng
 	};
 
@@ -597,6 +607,14 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				arg->memlimit = qse_strtoulong (opt.arg);
 				break;
 			}
+
+#if defined(QSE_BUILD_DEBUG)
+			case QSE_T('X'):
+			{
+				arg->failmalloc = qse_strtoulong (opt.arg);
+				break;
+			}
+#endif
 
 			case QSE_T('\0'):
 			{
@@ -774,6 +792,39 @@ static qse_mmgr_t xma_mmgr =
 	QSE_NULL
 };
 
+#if defined(QSE_BUILD_DEBUG)
+static qse_ulong_t debug_mmgr_count = 0;
+
+static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
+{
+	struct arg_t* arg = (struct arg_t*)ctx;
+	debug_mmgr_count++;
+	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
+	return malloc (size);
+}
+
+static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
+{
+	struct arg_t* arg = (struct arg_t*)ctx;
+	debug_mmgr_count++;
+	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
+	return realloc (ptr, size);
+}
+
+static void debug_mmgr_free (void* ctx, void* ptr)
+{
+	free (ptr);
+}
+
+static qse_mmgr_t debug_mmgr =
+{
+	debug_mmgr_alloc,
+	debug_mmgr_realloc,
+	debug_mmgr_free,
+	QSE_NULL
+};
+#endif
+
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
@@ -810,6 +861,14 @@ static int awk_main (int argc, qse_char_t* argv[])
 		psout.u.file = arg.osf;
 	}
 
+#if defined(QSE_BUILD_DEBUG)
+	if (arg.failmalloc > 0)
+	{
+		debug_mmgr.udd = &arg;
+		mmgr = &debug_mmgr;	
+	}
+	else 
+#endif
 	if (arg.memlimit > 0)
 	{
 		xma_mmgr.udd = qse_xma_open (QSE_NULL, 0, arg.memlimit);

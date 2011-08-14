@@ -1,5 +1,5 @@
 /*
- * $Id: tio.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: tio.h 547 2011-08-13 16:04:14Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -51,12 +51,12 @@ typedef enum qse_tio_errnum_t qse_tio_errnum_t;
 
 enum
 {
-        /* the size of input buffer should be at least equal to or greater
-         * than the maximum sequence length of the qse_mchar_t string.
-         * (i.e. 6 for utf8)
-         */
-        QSE_TIO_MAX_INBUF_LEN = 4096,
-        QSE_TIO_MAX_OUTBUF_LEN = 4096
+	/* the size of input buffer should be at least equal to or greater
+	 * than the maximum sequence length of the qse_mchar_t string.
+	 * (i.e. 6 for utf8)
+	 */
+	QSE_TIO_MAX_INBUF_LEN = 4096,
+	QSE_TIO_MAX_OUTBUF_LEN = 4096
 };
 
 enum 
@@ -98,12 +98,12 @@ struct qse_tio_t
 
 	/* for housekeeping */
 	int         input_status;
-        qse_size_t  inbuf_curp;
-        qse_size_t  inbuf_len;
-        qse_size_t  outbuf_len;
+	qse_size_t  inbuf_curp;
+	qse_size_t  inbuf_len;
+	qse_size_t  outbuf_len;
 
-        qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
-        qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
+	qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
+	qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
 };
 
 #ifdef __cplusplus
