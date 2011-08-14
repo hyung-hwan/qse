@@ -95,9 +95,8 @@ foundation for other modules. Specialized functions and data structures are
 organized to dedicated modules.  See relevant subpages for more information 
 on each module.
 
-- @subpage cmn "Common Functions" 
-  -# xma.h variable-size block memory allocator
-  -# fma.h fixed-size block memory allocator 
+- @subpage mem "Memory Management"
+- @subpage io  "I/O Handling"
 - @subpage awk "AWK Interpreter" 
 - @subpage cut "CUT Text Cutter" 
 - @subpage sed "SED Stream Editor" 

@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 541 2011-08-12 14:16:05Z hyunghwan.chung $
+ * $Id: parse.c 547 2011-08-13 16:04:14Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -4255,6 +4255,7 @@ static qse_awk_nde_t* parse_primary_nogetline (
 		if (nde->str == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, nde);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
 			return QSE_NULL;			
 		}
 		nde->len = QSE_STR_LEN(awk->tok.name);
@@ -4295,6 +4296,7 @@ static qse_awk_nde_t* parse_primary_nogetline (
 		if (nde->str == QSE_NULL)
 		{
 			QSE_AWK_FREE (awk, nde);
+			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
 			return QSE_NULL;			
 		}
 		nde->len = QSE_STR_LEN(awk->tok.name);
