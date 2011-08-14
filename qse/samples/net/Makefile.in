@@ -54,7 +54,7 @@ am_http01_OBJECTS = http01.$(OBJEXT)
 http01_OBJECTS = $(am_http01_OBJECTS)
 http01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-http01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+http01_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -83,7 +83,7 @@ AWK = @AWK@
 BUILD_MODE = @BUILD_MODE@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
-CFLAGS = @CFLAGS@ $(PTHREAD_CFLAGS)
+CFLAGS = @CFLAGS@
 CHAR_MODE = @CHAR_MODE@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -220,7 +220,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir) 
 
-LDADD = -lqsenet -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS)
 http01_SOURCES = http01.c
 all: all-am
 

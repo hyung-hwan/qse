@@ -203,16 +203,23 @@ AC_ARG_ENABLE([cxx], [AS_HELP_STRING([--enable-cxx],[build the library for C++ i
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
-# configure makefiles
+
+AC_CHECK_LIB([socket], [socket], [SOCKET_LIBS="-lsocket"], 
+	[
+		AC_CHECK_LIB([socket], [socket], 
+			[SOCKET_LIBS="-lsocket -lnsl"], [], [-lnsl]
+		)
+	]
+)
+
 AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
 if test "$enable_reentrant_is" = "yes"
 then
-	[CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"]
-	[CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"]
+	AX_PTHREAD()
+	[CFLAGS="$CFLAGS $PTHREAD_CFLAGS"]
+	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
 fi
-
-AX_PTHREAD()
 
 AC_MSG_CHECKING([for socklen_t in sys/socket.h])
 AC_TRY_COMPILE([#define _POSIX_PII_SOCKET
@@ -287,5 +294,7 @@ echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
 echo "  Wide character: ${enable_wchar_is}" 
 echo "  Math library: ${LIBM}"
+echo "  Pthread library: ${PTHREAD_LIBS}"
+echo "  Socket library: ${SOCKET_LIBS}"
 echo "-------------------------------------------------------------------------"
 ]

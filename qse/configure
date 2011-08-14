@@ -16644,7 +16644,93 @@ else
 fi
 
 
-# configure makefiles
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for socket in -lsocket" >&5
+$as_echo_n "checking for socket in -lsocket... " >&6; }
+if test "${ac_cv_lib_socket_socket+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsocket  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char socket ();
+int
+main ()
+{
+return socket ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_socket_socket=yes
+else
+  ac_cv_lib_socket_socket=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_socket_socket" >&5
+$as_echo "$ac_cv_lib_socket_socket" >&6; }
+if test "x$ac_cv_lib_socket_socket" = x""yes; then :
+  SOCKET_LIBS="-lsocket"
+else
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for socket in -lsocket" >&5
+$as_echo_n "checking for socket in -lsocket... " >&6; }
+if test "${ac_cv_lib_socket_socket+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsocket -lnsl
+		 $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char socket ();
+int
+main ()
+{
+return socket ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_socket_socket=yes
+else
+  ac_cv_lib_socket_socket=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_socket_socket" >&5
+$as_echo "$ac_cv_lib_socket_socket" >&6; }
+if test "x$ac_cv_lib_socket_socket" = x""yes; then :
+  SOCKET_LIBS="-lsocket -lnsl"
+fi
+
+
+
+fi
+
+
 # Check whether --enable-reentrant was given.
 if test "${enable_reentrant+set}" = set; then :
   enableval=$enable_reentrant; enable_reentrant_is=$enableval
@@ -16654,10 +16740,6 @@ fi
 
 if test "$enable_reentrant_is" = "yes"
 then
-	CFLAGS="$CFLAGS -D_REENTRANT -D_THREAD_SAFE"
-	CXXFLAGS="$CXXFLAGS -D_REENTRANT -D_THREAD_SAFE"
-fi
-
 
 
 ac_ext=c
@@ -17046,6 +17128,9 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+	CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+	CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for socklen_t in sys/socket.h" >&5
 $as_echo_n "checking for socklen_t in sys/socket.h... " >&6; }
@@ -19766,5 +19851,7 @@ echo "  C++ compiler: ${CXX} ${CXXFLAGS}"
 echo "  C++ support: ${enable_cxx_is}"
 echo "  Wide character: ${enable_wchar_is}"
 echo "  Math library: ${LIBM}"
+echo "  Pthread library: ${PTHREAD_LIBS}"
+echo "  Socket library: ${SOCKET_LIBS}"
 echo "-------------------------------------------------------------------------"
 
