@@ -7,7 +7,7 @@ AM_CPPFLAGS = \
 
 
 LDFLAGS = -L../../lib/cmn -L../../lib/sed
-LDADD = -lqsesed -lqsecmn $(LIBM)
+LDADD = -lqsesed -lqsecmn 
 
 bin_PROGRAMS = sed01
 

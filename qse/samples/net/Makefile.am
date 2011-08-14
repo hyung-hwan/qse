@@ -7,9 +7,8 @@ AM_CPPFLAGS = \
 	
 bin_PROGRAMS = http01 
 
-CFLAGS += $(PTHREAD_CFLAGS)
 LDFLAGS += -L../../lib/cmn -L../../lib/net 
-LDADD = -lqsenet -lqsecmn $(LIBM) $(PTHREAD_LIBS)
+LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS)
 
 http01_SOURCES = http01.c
 
