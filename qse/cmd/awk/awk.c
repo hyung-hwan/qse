@@ -1,5 +1,5 @@
 /*
- * $Id: awk.c 547 2011-08-13 16:04:14Z hyunghwan.chung $
+ * $Id: awk.c 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -864,15 +864,15 @@ static int awk_main (int argc, qse_char_t* argv[])
 #if defined(QSE_BUILD_DEBUG)
 	if (arg.failmalloc > 0)
 	{
-		debug_mmgr.udd = &arg;
+		debug_mmgr.ctx = &arg;
 		mmgr = &debug_mmgr;	
 	}
 	else 
 #endif
 	if (arg.memlimit > 0)
 	{
-		xma_mmgr.udd = qse_xma_open (QSE_NULL, 0, arg.memlimit);
-		if (xma_mmgr.udd == QSE_NULL)
+		xma_mmgr.ctx = qse_xma_open (QSE_NULL, 0, arg.memlimit);
+		if (xma_mmgr.ctx == QSE_NULL)
 		{
 			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
 			goto oops;
@@ -925,7 +925,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 #ifdef ENABLE_CALLBACK
 	rcb.stm = on_statement;
-	rcb.udd = &arg;
+	rcb.ctx = &arg;
 #endif
 
 	rtx = qse_awk_rtx_openstd (
@@ -973,7 +973,7 @@ oops:
 	if (rtx) qse_awk_rtx_close (rtx);
 	if (awk) qse_awk_close (awk);
 
-	if (xma_mmgr.udd) qse_xma_close (xma_mmgr.udd);
+	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
 	freearg (&arg);
 
 	return ret;

@@ -37,8 +37,8 @@ print_usage()
 ###################
 
 [ -z "${QSESED}" ] && {
-	QSESED=../../cmd/sed/.libs/qsesed
-	[ -f "${QSESED}" ] || QSESED=../../cmd/sed/qsesed
+	QSESED="@abs_top_builddir@/cmd/sed/.libs/qsesed"
+	[ -f "${QSESED}" ] || QSESED="@abs_top_builddir@/cmd/sed/qsesed"
 }
 [ -f "${QSESED}" -a -x "${QSESED}" ] || {
 	echo_so "the executable '${QSESED}' is not found or not executable"
@@ -46,6 +46,9 @@ print_usage()
 }
 
 QSESED_BASENAME="`basename "${QSESED}"`"
+
+BASE_OUTFILE="@abs_top_srcdir@/regress/sed/regress.out"
+BASE_OUTFILE_XMA="@abs_top_srcdir@/regress/sed/regress.out.xma"
 
 TMPFILE="${TMPFILE:=./regress.temp}"
 OUTFILE="${OUTFILE:=./regress.out}"
@@ -77,21 +80,32 @@ run_scripts()
 	
 		script="`echo ${prog} | cut -d/ -f1`"
 		datafile="`echo ${prog} | cut -d/ -f2`"
-		redinfile="`echo ${prog} | cut -d/ -f3`"
+		readinfile="`echo ${prog} | cut -d/ -f3`"
 		options="`echo ${prog} | cut -d/ -f4`"
 	
 		[ -z "${script}" ] && continue
 
-		[ -f "${script}" ] || 
+		script_path="@abs_srcdir@/${script}"
+		datafile_path="@abs_srcdir@/${datafile}"
+		readinfile_path="@abs_srcdir@/${readinfile}"
+
+		[ -f "${script_path}" ] || 
 		{
-			echo_so "${script} not found"
+			echo_so "${script_path} not found"
 			continue
 		}
 	
-		[ -z "${redinfile}" ] && redinfile="/dev/stdin"
+		[ -z "${readinfile}" ] && 
+		{
+			readinfile="/dev/stdin"
+			readinfile_path="/dev/stdin"
+		}
 
-		echo_title "${valgrind} ${QSESED_BASENAME} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1"
-		${valgrind} ${QSESED} ${extraopts} ${options} -f ${script} ${datafile} <${redinfile} 2>&1
+		# if the datafile does not exist, let's not use the original name
+		#[ -f "${datafile_path}" ] || datafile_path="$datafile"
+
+		echo_title "${valgrind} ${QSESED_BASENAME} ${extraopts} ${options} -f ${script} ${datafile} <${readinfile} 2>&1"
+		${valgrind} ${QSESED} ${extraopts} ${options} -f ${script_path} ${datafile_path} <${readinfile_path} 2>&1
 	
 	done < "${TMPFILE}" 
 	
@@ -100,39 +114,43 @@ run_scripts()
 
 run_test()
 {
-	outfile="${1}"
-	extraopts="${2}"
+	base_outfile="${1}"
+	outfile="${2}"
+	extraopts="${3}"
 
 	run_scripts "" "${extraopts}"> "${outfile}.test"
 
 	# diff -q is not supported on old platforms.
 	# redirect output to /dev/null instead.
-	diff "${outfile}" "${outfile}.test" > /dev/null || {
+	diff "${base_outfile}" "${outfile}.test" > /dev/null || {
 		echo_so "ERROR: Difference is found between expected output and actual output."
-		echo_so "       The expected output is stored in '${outfile}'."
+		echo_so "       The expected output is stored in '${base_outfile}'."
 		echo_so "       The actual output is stored in '${outfile}.test'."
-		echo_so "       You may execute 'diff ${outfile} ${outfile}.test' for more info."
+		echo_so "       You may execute 'diff ${base_outfile} ${outfile}.test' for more info."
 		return 1
 	}
-	rm -f "${outfile}.test"
+#	rm -f "${outfile}.test"
 	return 0
 }
 
 case $1 in
 init)
-	run_scripts "" "" > "${OUTFILE}"
-	run_scripts "" "${XMAOPTS}" > "${OUTFILE_XMA}"
+	run_scripts "" "" > "${BASE_OUTFILE}"
+	run_scripts "" "${XMAOPTS}" > "${BASE_OUTFILE_XMA}"
 	echo_so "INIT OK"
 	;;
 test)
-	run_test "${OUTFILE}" "" && {
-		run_test "${OUTFILE_XMA}" "${XMAOPTS}" && {
-			${QSESED} "s|${QSESED_BASENAME} ${XMAOPTS}|${QSESED_BASENAME} |" "${OUTFILE_XMA}" > "${OUTFILE_XMA}.$$"
-			diff "${OUTFILE}" "${OUTFILE_XMA}.$$"  || {
+	run_test "${BASE_OUTFILE}" "${OUTFILE}" "" && 
+	{
+		run_test "${BASE_OUTFILE_XMA}" "${OUTFILE_XMA}" "${XMAOPTS}" && 
+		{
+			${QSESED} "s|${QSESED_BASENAME} ${XMAOPTS}|${QSESED_BASENAME} |" "${OUTFILE_XMA}.test" > "${OUTFILE_XMA}.$$"
+			diff "${OUTFILE}.test" "${OUTFILE_XMA}.$$" || 
+			{
 				rm -f "${OUTFILE_XMA}.$$"
 				echo_so "ERROR: Difference is found between normal output and xma output."
-				echo_so "       The normal output is stored in '${OUTFILE}'."
-				echo_so "       The xma output is stored in '${OUTFILE_XMA}'."
+				echo_so "       The normal output is stored in '${OUTFILE}.test'."
+				echo_so "       The xma output is stored in '${OUTFILE_XMA}.test'."
 				echo_so "       Ignore lines staring with [CMD] in the difference."
 				exit 1;
 			}

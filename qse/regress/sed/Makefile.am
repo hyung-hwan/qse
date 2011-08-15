@@ -1,7 +1,9 @@
 AUTOMAKE_OPTIONS = no-dependencies
 
+noinst_SCRIPTS = regress.sh 
+
 EXTRA_DIST = \
-	regress.sh regress.out \
+	regress.out regress.out.xma \
 	s001.sed s001.dat \
 	s002.sed s002.dat \
 	s003.sed s003.dat \

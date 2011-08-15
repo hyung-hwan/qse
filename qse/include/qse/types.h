@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 524 2011-07-26 15:41:20Z hyunghwan.chung $
+ * $Id: types.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -555,22 +555,22 @@ typedef struct qse_xptl_t qse_xptl_t;
  * allocate a memory chunk of the size @a n.
  * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
-typedef void* (*qse_mmgr_alloc_t)   (void* udd, qse_size_t n);
+typedef void* (*qse_mmgr_alloc_t)   (void* ctx, qse_size_t n);
 /** 
  * resize a memory chunk pointed to by @a ptr to the size @a n.
  * @return pointer to a memory chunk on success, QSE_NULL on failure.
  */
-typedef void* (*qse_mmgr_realloc_t) (void* udd, void* ptr, qse_size_t n);
+typedef void* (*qse_mmgr_realloc_t) (void* ctx, void* ptr, qse_size_t n);
 /**
  * free a memory chunk pointed to by @a ptr.
  */
-typedef void  (*qse_mmgr_free_t)    (void* udd, void* ptr);
+typedef void  (*qse_mmgr_free_t)    (void* ctx, void* ptr);
 
 /**
  * The qse_mmgr_t type defines a set of functions for memory management.
  * As the type is merely a structure, it is just used as a single container
  * for memory management functions with a pointer to user-defined data. 
- * The user-defined data pointer @a udd is passed to each memory management 
+ * The user-defined data pointer @a ctx is passed to each memory management 
  * function whenever it is called. You can allocate, reallocate, and free 
  * a memory chunk.
  *
@@ -582,7 +582,7 @@ struct qse_mmgr_t
 	qse_mmgr_alloc_t   alloc;   /**< allocation function */
 	qse_mmgr_realloc_t realloc; /**< resizing function */
 	qse_mmgr_free_t    free;    /**< disposal function */
-	void*              udd;     /**< user-defined data pointer */
+	void*              ctx;     /**< user-defined data pointer */
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
 

@@ -8,6 +8,8 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsestx.la 
 
-libqsestx_la_SOURCES = stx.c err.c hash.c mem.c obj.c sym.c dic.c cls.c boot.c par.c
+libqsestx_la_SOURCES = \
+	stx.h hash.h mem.h obj.h sym.h dic.h cls.h boot.h \
+	stx.c err.c hash.c mem.c obj.c sym.c dic.c cls.c boot.c par.c
 libqsestx_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsestx_la_LIBADD = -lqsecmn

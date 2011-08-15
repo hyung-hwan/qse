@@ -10,6 +10,7 @@ libqsenet_la_SOURCES = \
 	http.c \
 	htre.c \
 	htrd.c \
+	httpd.h \
 	httpd.c \
 	httpd_task.c
 

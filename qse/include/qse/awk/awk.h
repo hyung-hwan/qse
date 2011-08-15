@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: awk.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -678,7 +678,7 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 typedef void (*qse_awk_rcb_stm_t) (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_awk_nde_t* nde, /**< node */
-	void*          udd  /**< user-defined data */
+	void*          ctx  /**< user-defined data */
 );
 
 /**
@@ -698,7 +698,7 @@ struct qse_awk_rcb_t
 	 * A caller may store a user-defined data pointer into this field. This
 	 * is passed to the actual callback.
 	 */
-	void*             udd;
+	void*             ctx;
 };
 typedef struct qse_awk_rcb_t qse_awk_rcb_t;
 

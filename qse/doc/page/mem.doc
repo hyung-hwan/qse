@@ -1,6 +1,60 @@
 /** @page mem Memory Management
 
-@section mem_alloc Memory Allocator
-- Private heap allocator #qse_xma_t 
-- Fixed-size block allocator #qse_fma_t
+@section mem_overview Overview
+
+A memory manager is an instance of a structure type #qse_mmgr_t. Creating 
+and/or initializing an object requires a memory manager to be passed in. 
+If you pass in #QSE_NULL for a memory manager, the object is created and/or
+initialized with the default memory manager.
+
+The default memory manager is merely a wrapper to memory allocation functions
+provided by underlying operating systems: HeapAlloc/HeapReAlloc/HeapFree 
+on _WIN32 and malloc/realloc/free on other platforms. You can get this default
+memory manager with qse_getdflmmgr() and can change it with qse_setdflmmgr().
+
+Typically, the name of a function creating an object begins with @b qse_, 
+ends with @b _open, and accepts a memory manager as the first parameter.
+See qse_mbs_open() for instance. So you can customize memory management 
+at the per-object level.
+
+@section mem_xma Priviate Heap
+
+While the default memory manager allocates memory from a system-wide heap,
+you can create a private heap and use it when you create an object. 
+The #qse_xma_t type defines a private heap manager and its functions offer
+sufficient interface to form a memory manager over a private heap.
+
+A typical usage is shown below:
+
+@code
+qse_mmgr_t mmgr;
+
+/* Create a heap */
+heap = qse_xma_open (QSE_NULL, 0, 1024 * 1024); /* 1M heap */
+
+/* Initialize a new memory  */
+mmgr.alloc = (qse_mmgr_alloc_t)qse_xma_alloc;
+mmgr.realloc = (qse_mmgr_realloc_t)qse_xma_realloc;
+mmgr.free = (qse_mmgr_free_t)qse_xma_realloc;
+mmgr.ctx = heap;
+
+/* 
+ * You can pass 'mmgr' when you create/initialize a different object 
+ */
+....
+....
+
+/* Destroy the heap */
+qse_xma_close (heap);
+@endcode
+
+Note that creating a private heap requires a memory manager, too. The example 
+above used the default memory manager to create a private heap within the
+global heap. This means that you can split a heap to smaller subheaps.
+
+@section mem_fma Fixed-size Block Allocator
+
+If the size of memory blocks to allocate share the same size, you can use
+#qse_fma_t for performance.
+
 */

@@ -275,8 +275,8 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (g_memlimit > 0)
 	{
-		xma_mmgr.udd = qse_xma_open (QSE_NULL, 0, g_memlimit);
-		if (xma_mmgr.udd == QSE_NULL)
+		xma_mmgr.ctx = qse_xma_open (QSE_NULL, 0, g_memlimit);
+		if (xma_mmgr.ctx == QSE_NULL)
 		{
 			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));
 			goto oops;
@@ -353,7 +353,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (sed) qse_sed_close (sed);
-	if (xma_mmgr.udd) qse_xma_close (xma_mmgr.udd);
+	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
 	if (g_script_file != QSE_NULL && g_script != QSE_NULL) 
 		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_script);
 	return ret;

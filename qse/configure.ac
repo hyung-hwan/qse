@@ -275,7 +275,9 @@ AC_CONFIG_FILES([
 	samples/net/Makefile
 	regress/Makefile
 	regress/awk/Makefile
+	regress/awk/regress.sh
 	regress/sed/Makefile
+	regress/sed/regress.sh
 	doc/Makefile
 	doc/page/Makefile
 	doc/Doxyfile

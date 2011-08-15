@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 536 2011-08-06 03:25:08Z hyunghwan.chung $
+ * $Id: str.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -2236,6 +2236,9 @@ qse_mchar_t* qse_wcstombsdup (
 
 QSE_DEFINE_COMMON_FUNCTIONS (mbs)
 
+/**
+ * The qse_mbs_open() function creates a dynamically resizable multibyte string.
+ */
 qse_mbs_t* qse_mbs_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext,
@@ -2405,6 +2408,11 @@ qse_size_t qse_mbs_pac (
 
 QSE_DEFINE_COMMON_FUNCTIONS (wcs)
 
+
+/**
+ * The qse_wcs_open() function creates a dynamically resizable wide-character
+ * string.
+ */
 qse_wcs_t* qse_wcs_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext,
