@@ -1,5 +1,5 @@
 /*
- * $Id: str_beg.c 443 2011-04-25 14:56:05Z hyunghwan.chung $
+ * $Id: str_beg.c 550 2011-08-14 15:59:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -19,6 +19,7 @@
  */
 
 #include <qse/cmn/str.h>
+#include <qse/cmn/chr.h>
 
 qse_mchar_t* qse_mbsbeg (const qse_mchar_t* str, const qse_mchar_t* sub)
 {
@@ -76,6 +77,18 @@ qse_mchar_t* qse_mbsxnbeg (
 	while (sub < end2)
 	{
 		if (str >= end1 || *str != *sub) return QSE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (qse_mchar_t*)str;
+}
+
+qse_mchar_t* qse_mbscasebeg (const qse_mchar_t* str, const qse_mchar_t* sub)
+{
+	while (*sub != QSE_MT('\0'))
+	{
+		if (QSE_TOMUPPER(*str) != QSE_TOMUPPER(*sub)) return QSE_NULL;
 		str++; sub++;
 	}
 
@@ -146,3 +159,14 @@ qse_wchar_t* qse_wcsxnbeg (
 	return (qse_wchar_t*)str;
 }
 
+qse_wchar_t* qse_wcscasebeg (const qse_wchar_t* str, const qse_wchar_t* sub)
+{
+	while (*sub != QSE_WT('\0'))
+	{
+		if (QSE_TOWUPPER(*str) != QSE_TOWUPPER(*sub)) return QSE_NULL;
+		str++; sub++;
+	}
+
+	/* returns the pointer to the next character of the match */
+	return (qse_wchar_t*)str;
+}

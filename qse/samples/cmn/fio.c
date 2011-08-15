@@ -80,6 +80,15 @@ static int test1 (void)
 	n = qse_fio_write (fio, x2, qse_mbslen(x2));
 	qse_printf (QSE_T("written %d bytes\n"), (int)n);
 
+	if (qse_fio_chmod (fio, QSE_FIO_RUSR|QSE_FIO_RGRP) <= -1)
+	{
+		qse_printf (QSE_T("failed to change mode\n"));
+	}
+	else
+	{
+		qse_printf (QSE_T("changed mode\n"));
+	}
+
 	qse_fio_close (fio);
 
 	return 0;
@@ -187,7 +196,17 @@ static int test2 (void)
 		qse_printf (QSE_T("file offset at %lld\n"), (long long)off);
 	}
 
-	qse_fio_chmod (fio, QSE_FIO_RUSR|QSE_FIO_RGRP);
+	/* on _WIN32, this will fail as this file is opened without 
+	 * QSE_FIO_READ. */
+	if (qse_fio_chmod (fio, QSE_FIO_RUSR|QSE_FIO_RGRP) <= -1)
+	{
+		qse_printf (QSE_T("failed to change mode\n"));
+	}
+	else
+	{
+		qse_printf (QSE_T("changed mode\n"));
+	}
+
 	qse_fio_close (fio);
 
 	return 0;

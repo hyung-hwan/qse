@@ -1,5 +1,5 @@
 /*
- * $Id: opt.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: opt.c 550 2011-08-14 15:59:55Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -54,10 +54,6 @@
  *
  * --------------------------------------------------------------------------
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define BADCH   QSE_T('?')
 #define BADARG  QSE_T(':')

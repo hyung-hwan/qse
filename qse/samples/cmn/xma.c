@@ -165,7 +165,7 @@ static int test5 ()
 		return -1;
 	}
 
-	xmammgr.xma = xma1;
+	xmammgr.ctx = xma1;
 
 	xma2 = qse_xma_open (&xmammgr, 0, 500000L);
 	if (xma1 == QSE_NULL) 
