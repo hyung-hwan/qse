@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 452 2011-05-04 15:11:23Z hyunghwan.chung $
+ * $Id: fio.c 550 2011-08-14 15:59:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -650,7 +650,7 @@ static int get_devname_from_handle (
 	/* create a file mapping object */
 	map = CreateFileMapping (
 		handle, 
-		NULL, 
+		NULL,
 		PAGE_READONLY,
 		0, 
 		1,
@@ -684,10 +684,10 @@ static int get_volname_from_handle (
 {
 	if (get_devname_from_handle (handle, buf, len) == -1) return -1;
 
-	if (_tcsnicmp(QSE_T("\\Device\\LanmanRedirector\\"), buf, 25) == 0)
+	if (qse_strcasebeg (buf, QSE_T("\\Device\\LanmanRedirector\\")))
 	{
-		buf[0] = QSE_T('\\');
-		_tcscpy (&buf[1], &buf[24]);
+		/*buf[0] = QSE_T('\\');*/
+		qse_strcpy (&buf[1], &buf[24]);
 	}
 	else
 	{
@@ -712,14 +712,14 @@ static int get_volname_from_handle (
 			drv[2] = QSE_T('\0');
 			if (QueryDosDevice (drv, path, QSE_COUNTOF(path)))
 			{
-				qse_size_t pl = _tcslen(path);
-				qse_size_t bl = _tcslen(buf);
+				qse_size_t pl = qse_strlen(path);
+				qse_size_t bl = qse_strlen(buf);
 				if (bl > pl && buf[pl] == QSE_T('\\') &&
-				    _tcsnicmp(path, buf, pl) == 0)
+				    qse_strxncasecmp(buf, pl, path, pl) == 0)
 				{
 					buf[0] = drv[0];
 					buf[1] = QSE_T(':');
-					_tcscpy (&buf[2], &buf[pl]);
+					qse_strcpy (&buf[2], &buf[pl]);
 					break;
 				}
 			}
@@ -741,6 +741,8 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 
 	/* it is a best effort implementation. if the file size is 0,
 	 * it can't even get the file name from the handle and thus fails. 
+	 * if GENERIC_READ is not set in CreateFile, CreateFileMapping fails. 
+	 * so if this fio is opened without QSE_FIO_READ, this function fails.
 	 */
 	if (get_volname_from_handle (
 		fio->handle, name, QSE_COUNTOF(name)) == -1) return -1;

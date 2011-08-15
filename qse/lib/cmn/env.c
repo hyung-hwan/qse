@@ -23,8 +23,6 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-#include <qse/cmn/stdio.h>
-
 #if defined(_WIN32)
 #    include <windows.h>
 #endif

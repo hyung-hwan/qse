@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 504 2011-07-11 16:31:33Z hyunghwan.chung $
+ * $Id: fio.h 550 2011-08-14 15:59:55Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -235,6 +235,12 @@ qse_ssize_t qse_fio_flush (
 
 /**
  * The qse_fio_chmod() function changes the file mode.
+ *
+ * @note
+ * On _WIN32, this function is implemented on the best-effort basis and 
+ * returns an error on the following conditions:
+ * - The file size is 0.
+ * - The file is opened without #QSE_FIO_READ.
  */
 int qse_fio_chmod (
 	qse_fio_t* fio,
