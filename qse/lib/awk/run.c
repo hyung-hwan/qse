@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 520 2011-07-25 07:32:49Z hyunghwan.chung $
+ * $Id: run.c 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1892,7 +1892,7 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 #define ON_STATEMENT(rtx,nde) \
 	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
-	if ((rtx)->rcb.stm) (rtx)->rcb.stm (rtx, nde, (rtx)->rcb.udd); 
+	if ((rtx)->rcb.stm) (rtx)->rcb.stm (rtx, nde, (rtx)->rcb.ctx); 
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: mem.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -42,22 +42,18 @@
  * The QSE_MMGR_ALLOC() macro allocates a memory block of the @a size bytes
  * using the @a mmgr memory manager.
  */
-#define QSE_MMGR_ALLOC(mmgr,size) \
-	((mmgr)->alloc((mmgr)->udd,size))
+#define QSE_MMGR_ALLOC(mmgr,size) ((mmgr)->alloc((mmgr)->ctx,size))
 
 /**
  * The QSE_MMGR_REALLOC() macro resizes a memory block pointed to by @a ptr 
  * to the @a size bytes using the @a mmgr memory manager.
  */
-#define QSE_MMGR_REALLOC(mmgr,ptr,size) \
-	((mmgr)->realloc((mmgr)->udd,ptr,size))
+#define QSE_MMGR_REALLOC(mmgr,ptr,size) ((mmgr)->realloc((mmgr)->ctx,ptr,size))
 
 /** 
  * The QSE_MMGR_FREE() macro deallocates the memory block pointed to by @a ptr.
  */
-#define QSE_MMGR_FREE(mmgr,ptr) \
-	((mmgr)->free((mmgr)->udd,ptr))
-
+#define QSE_MMGR_FREE(mmgr,ptr) ((mmgr)->free((mmgr)->ctx,ptr))
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,5 @@
 /*
- * $Id: mem.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: mem.c 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -19,7 +19,12 @@
  */
 
 #include <qse/cmn/mem.h>
-#include <stdlib.h>
+
+#if defined(_WIN32)
+#	include <windows.h>
+#else
+#	include <stdlib.h>
+#endif
 
 #if defined(__SPU__)
 #include <spu_intrinsics.h>
@@ -417,17 +422,40 @@ void* qse_memrmem (const void* hs, qse_size_t hl, const void* nd, qse_size_t nl)
 
 static void* mmgr_alloc (void* data, qse_size_t n)
 {
-        return malloc (n);
+#if defined(_WIN32)
+	HANDLE heap;
+	heap = GetProcessHeap ();
+	if (heap == NULL) return QSE_NULL;
+	return HeapAlloc (heap, 0, n);	
+#else
+/* TODO: need to rewrite this for __OS2__ using DosAllocMem()? */
+	return malloc (n);
+#endif
 }
 
 static void* mmgr_realloc (void* data, void* ptr, qse_size_t n)
 {
-        return realloc (ptr, n);
+#if defined(_WIN32)
+	HANDLE heap;
+	heap = GetProcessHeap ();
+	if (heap == NULL) return QSE_NULL;
+
+	return ptr? HeapReAlloc (heap, 0, ptr, n): 
+	            HeapAlloc (heap, 0, n);
+#else
+	return realloc (ptr, n);
+#endif
 }
 
 static void mmgr_free (void* data, void* ptr)
 {
-        free (ptr);
+#if defined(_WIN32)
+	HANDLE heap;
+	heap = GetProcessHeap ();
+	if (heap) HeapFree (heap, 0, ptr);
+#else
+	free (ptr);
+#endif
 }
 
 static qse_mmgr_t builtin_mmgr =

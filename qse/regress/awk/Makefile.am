@@ -1,8 +1,10 @@
 AUTOMAKE_OPTIONS = no-dependencies
 
+noinst_SCRIPTS = regress.sh
+
 EXTRA_DIST = \
-	regress.sh \
 	regress.out \
+	regress.out.xma \
 	adr-001.awk \
 	adr-002.awk \
 	asm.awk \
@@ -127,8 +129,28 @@ EXTRA_DIST = \
 	cou.dat \
 	emp.dat \
 	indent.dat \
+	passwd.dat \
 	quicksort2.dat \
 	quicksort.dat \
 	stripcomment.dat \
 	unr.dat \
-	asm.s
+	asm.s \
+	lisp/awklisp \
+	lisp/lists \
+	lisp/perlisp \
+	lisp/tail.lsp \
+	lisp/eliza.dat \
+	lisp/Manual \
+	lisp/README \
+	lisp/test.scm \
+	lisp/eliza.lsp \
+	lisp/numbers \
+	lisp/scheme.lsp \
+	lisp/trace \
+	lisp/fib.lsp \
+	lisp/numbers.dat \
+	lisp/scmhelp.lsp \
+	lisp/Impl-notes \
+	lisp/old-awklisp \
+	lisp/startup
+

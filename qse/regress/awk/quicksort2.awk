@@ -1,6 +1,6 @@
 BEGIN   { 
-         recurse1 = "../../cmd/awk/qseawk -f quicksort2.awk #" rand()
-         recurse2 = "../../cmd/awk/qseawk -f quicksort2.awk #" rand()
+         recurse1 = QSEAWK " -vQSEAWK=" QSEAWK " -vSCRIPT_PATH=" SCRIPT_PATH " -f " SCRIPT_PATH "/quicksort2.awk #" rand()
+         recurse2 = QSEAWK " -vQSEAWK=" QSEAWK " -vSCRIPT_PATH=" SCRIPT_PATH " -f " SCRIPT_PATH "/quicksort2.awk #" rand()
         }
 NR == 1 { 
 	pivot=$0; 

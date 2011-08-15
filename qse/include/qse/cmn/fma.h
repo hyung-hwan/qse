@@ -118,7 +118,7 @@
  *   }
  *
  *   // complete the qse_mmgr_t interface by providing the allocator.
- *   mmgr.udd = fma;
+ *   mmgr.ctx = fma;
  *
  *   // initializes the statically declared red-black tree.
  *   // can not call qse_rbt_open() which allocates the qse_rbt_t object.

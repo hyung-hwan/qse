@@ -110,7 +110,7 @@ static int test2 ()
 		return -1;
 	}
 
-	mmgr.udd = fma;
+	mmgr.ctx = fma;
 	if (qse_rbt_init (&rbt, &mmgr, QSE_SIZEOF(long), QSE_SIZEOF(long)) == QSE_NULL)
 	{
 		qse_printf (QSE_T("cannot initialize a tree\n"));

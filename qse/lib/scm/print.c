@@ -178,7 +178,7 @@ next:
 		{
 			qse_char_t buf[256];
 			scm->prm.sprintf (
-				scm->prm.udd,
+				scm->prm.ctx,
 				buf, QSE_COUNTOF(buf), 
 				QSE_T("%Lf"), 
 			#ifdef __MINGW32__

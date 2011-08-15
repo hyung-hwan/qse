@@ -49,7 +49,7 @@ public:
 		this->alloc = alloc_mem;
 		this->realloc = realloc_mem;
 		this->free = free_mem;
-		this->udd = this;
+		this->ctx = this;
 	}
 
 	///
@@ -90,17 +90,17 @@ protected:
 	///
 	/// bridge function from the #qse_mmgr_t type the allocMem() function.
 	///
-	static void* alloc_mem (void* udd, size_t n);
+	static void* alloc_mem (void* ctx, size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the reallocMem() function.
 	///
-	static void* realloc_mem (void* udd, void* ptr, size_t n);
+	static void* realloc_mem (void* ctx, void* ptr, size_t n);
 
 	///
 	/// bridge function from the #qse_mmgr_t type the freeMem() function.
 	///
-	static void  free_mem (void* udd, void* ptr);
+	static void  free_mem (void* ctx, void* ptr);
 };
 
 /////////////////////////////////
