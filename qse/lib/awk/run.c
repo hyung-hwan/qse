@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 549 2011-08-14 09:07:31Z hyunghwan.chung $
+ * $Id: run.c 551 2011-08-15 13:52:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -3278,6 +3278,7 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			eval_binop_idiv,
 			eval_binop_mod,
 			eval_binop_exp,
+			eval_binop_concat,
 			eval_binop_rshift,
 			eval_binop_lshift,
 			eval_binop_band,

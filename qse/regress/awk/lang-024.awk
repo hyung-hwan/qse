@@ -10,5 +10,10 @@ BEGIN {
 	print c;
 
 	print 99++c;
+
+
+	x="he" "ll" %% "o";
+	x%%=" world"
+	print x;
 }
 

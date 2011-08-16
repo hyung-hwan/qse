@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 547 2011-08-13 16:04:14Z hyunghwan.chung $
+ * $Id: parse.c 551 2011-08-15 13:52:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -38,6 +38,7 @@ enum tok_t
 	TOK_IDIV_ASSN,
 	TOK_MOD_ASSN,
 	TOK_EXP_ASSN,
+	TOK_CONCAT_ASSN,
 	TOK_RS_ASSN,
 	TOK_LS_ASSN,
 	TOK_BAND_ASSN,
@@ -70,6 +71,7 @@ enum tok_t
 	TOK_LS,
 	TOK_IN,
 	TOK_EXP,
+	TOK_CONCAT,
 
 	TOK_LPAREN,
 	TOK_RPAREN,
@@ -80,7 +82,6 @@ enum tok_t
 
 	TOK_DOLLAR,
 	TOK_COMMA,
-	TOK_PERIOD,
 	TOK_SEMICOLON,
 	TOK_COLON,
 	TOK_QUEST,
@@ -3090,6 +3091,7 @@ static int assign_to_opcode (qse_awk_t* awk)
 		QSE_AWK_ASSOP_IDIV,
 		QSE_AWK_ASSOP_MOD,
 		QSE_AWK_ASSOP_EXP,
+		QSE_AWK_ASSOP_CONCAT,
 		QSE_AWK_ASSOP_RS,
 		QSE_AWK_ASSOP_LS,
 		QSE_AWK_ASSOP_BAND,
@@ -3844,9 +3846,8 @@ static qse_awk_nde_t* parse_concat (
 		qse_awk_nde_t* tmp;
 		qse_awk_loc_t rloc;
 
-		if (MATCH(awk,TOK_PERIOD))
+		if (MATCH(awk,TOK_CONCAT))
 		{
-			if (!(awk->option & QSE_AWK_EXPLICIT)) break;
 			if (get_token(awk) <= -1) goto oops;
 		}
 		else if (MATCH(awk,TOK_LPAREN) ||
@@ -5759,6 +5760,8 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("/"),   1, TOK_DIV,          0 },
 		{ QSE_T("\\="), 2, TOK_IDIV_ASSN,    QSE_AWK_EXTRAOPS },
 		{ QSE_T("\\"),  1, TOK_IDIV,         QSE_AWK_EXTRAOPS },
+		{ QSE_T("%%="), 3, TOK_CONCAT_ASSN,  QSE_AWK_EXPLICIT },
+		{ QSE_T("%%"),  2, TOK_CONCAT,       QSE_AWK_EXPLICIT },
 		{ QSE_T("%="),  2, TOK_MOD_ASSN,     0 },
 		{ QSE_T("%"),   1, TOK_MOD,          0 },
 		{ QSE_T("~"),   1, TOK_TILDE,        0 },
@@ -5859,18 +5862,18 @@ retry:
 		lc = awk->sio.last;
 		GET_CHAR_TO (awk, c);
 
-		if (!(awk->option & QSE_AWK_EXPLICIT) && 
-		    QSE_AWK_ISDIGIT (awk, c))
+		unget_char (awk, &awk->sio.last);	
+		awk->sio.last = lc;
+
+		if (QSE_AWK_ISDIGIT (awk, c))
 		{
 			/* for a token such as .123 */
-			unget_char (awk, &awk->sio.last);	
-			awk->sio.last = lc;
 			if (get_number (awk, tok) <= -1) return -1;
 		}
-		else
+		else 
 		{
-			SET_TOKEN_TYPE (awk, tok, TOK_PERIOD);
-			ADD_TOKEN_CHAR (awk, tok, QSE_T('.'));
+			c = QSE_T('.');
+			goto try_get_symbols;
 		}
 	}
 	else if (c == QSE_T('_') || QSE_AWK_ISALPHA (awk, c))
@@ -5899,6 +5902,7 @@ retry:
 	}
 	else
 	{
+	try_get_symbols:
 		n = get_symbols (awk, c, tok);
 		if (n <= -1) return -1;
 		if (n == 0)

@@ -1,5 +1,5 @@
 /*
- * $Id: run.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: run.h 551 2011-08-15 13:52:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -33,6 +33,7 @@ enum qse_awk_assop_type_t
 	QSE_AWK_ASSOP_IDIV,   /* //= */
 	QSE_AWK_ASSOP_MOD,    /* %= */
 	QSE_AWK_ASSOP_EXP,    /* **= */
+	QSE_AWK_ASSOP_CONCAT, /* %%= */
 	QSE_AWK_ASSOP_RS,     /* >>= */
 	QSE_AWK_ASSOP_LS,     /* <<= */
 	QSE_AWK_ASSOP_BAND,   /* &= */
