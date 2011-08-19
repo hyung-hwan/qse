@@ -86,6 +86,12 @@ void* qse_pma_alloc (
 	qse_size_t size
 );	
 
+void* qse_pma_calloc (
+	qse_pma_t* pma,
+	qse_size_t size
+);	
+
+
 void* qse_pma_realloc (
 	qse_pma_t* pma,  /**< memory allocator */
 	void*      blk,  /**< memory block */

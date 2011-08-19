@@ -19,6 +19,11 @@
  */
 
 /*
+ * This is the TRE memory allocator modified for QSE.
+ * See the original license notice below.
+ */
+
+/*
  tre-mem.c - TRE memory allocator
 
  This software is released under a BSD-style license.
@@ -35,35 +40,15 @@
 #include <qse/cmn/pma.h>
 #include "mem.h"
 
-#define ALIGN(x,size) ((((x) + (size) - 1) / (size)) * (size))
+/* Returns number of bytes to add to (char *)ptr to make it
+   properly aligned for the type. */
+#define ALIGN(ptr, type) \
+	((((long)ptr) % sizeof(type))? \
+		(sizeof(type) - (((long)ptr) % QSE_SIZEOF(type))) : 0)
+
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (pma)
 
-qse_pma_t* qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
-{
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
-	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
-	pma->mmgr = mmgr;
-
-	return pma;	
-}
-
-/* Frees the memory allocator and all memory allocated with it. */
-void qse_pma_fini (qse_pma_t* pma)
-{
-	qse_pma_blk_t* tmp, * l = pma->blocks;
-
-	while (l != QSE_NULL)
-	{
-		QSE_MMGR_FREE (pma->mmgr, l->data);
-		tmp = l->next;
-		QSE_MMGR_FREE (pma->mmgr, l);
-		l = tmp;
-	}
-}
-
-/* Returns a new memory allocator or NULL if out of memory. */
 qse_pma_t* qse_pma_open (qse_mmgr_t* mmgr, qse_size_t xtnsize) 
 {
 	qse_pma_t* pma;
@@ -86,6 +71,31 @@ void qse_pma_close (qse_pma_t* pma)
 	QSE_MMGR_FREE (pma->mmgr, pma);
 }
 
+qse_pma_t* qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
+{
+	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
+
+	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
+	pma->mmgr = mmgr;
+
+	return pma;	
+}
+
+/* Frees the memory allocator and all memory allocated with it. */
+void qse_pma_fini (qse_pma_t* pma)
+{
+	qse_pma_blk_t* tmp, * l = pma->blocks;
+
+	while (l != QSE_NULL)
+	{
+		tmp = l->next;
+		QSE_MMGR_FREE (pma->mmgr, l);
+		l = tmp;
+	}
+}
+
+/* Returns a new memory allocator or NULL if out of memory. */
+
 /* Allocates a block of `size' bytes from `mem'.  Returns a pointer to the
  allocated block or NULL if an underlying malloc() failed. */
 void* qse_pma_alloc (qse_pma_t* pma, qse_size_t size)
@@ -106,19 +116,14 @@ void* qse_pma_alloc (qse_pma_t* pma, qse_size_t size)
 		else
 			block_size = QSE_PMA_BLOCK_SIZE;
 
-		l = QSE_MMGR_ALLOC (pma->mmgr, QSE_SIZEOF(*l));
+		l = QSE_MMGR_ALLOC (pma->mmgr, QSE_SIZEOF(*l) + block_size);
 		if (l == QSE_NULL)
 		{
 			pma->failed = 1;
 			return QSE_NULL;
 		}
-		l->data = QSE_MMGR_ALLOC (pma->mmgr, block_size);
-		if (l->data == QSE_NULL)
-		{
-			QSE_MMGR_FREE (pma->mmgr, l);
-			pma->failed = 1;
-			return QSE_NULL;
-		}
+		l->data = (void*)(l + 1);
+
 		l->next = QSE_NULL;
 		if (pma->current != QSE_NULL) pma->current->next = l;
 		if (pma->blocks == QSE_NULL) pma->blocks = l;
@@ -128,13 +133,20 @@ void* qse_pma_alloc (qse_pma_t* pma, qse_size_t size)
 	}
 
 	/* Make sure the next pointer will be aligned. */
-	size += ALIGN((long)(pma->ptr + size), QSE_SIZEOF(long));
+	size += ALIGN((long)(pma->ptr + size), long);
 
 	/* Allocate from current block. */
 	ptr = pma->ptr;
 	pma->ptr += size;
 	pma->n -= size;
 
+	return ptr;
+}
+
+void* qse_pma_calloc (qse_pma_t* pma, qse_size_t size)
+{
+	void* ptr = qse_pma_alloc (pma, size);
+	if (size) QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
 
