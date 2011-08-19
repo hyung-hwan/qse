@@ -34,11 +34,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) chr$(EXEEXT) str$(EXEEXT) \
-	sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) oht$(EXEEXT) \
-	htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) pio$(EXEEXT) \
-	sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) main2$(EXEEXT) \
-	rex01$(EXEEXT) env$(EXEEXT)
+bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
+	str$(EXEEXT) sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) \
+	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) \
+	pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) \
+	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -98,6 +98,10 @@ am_pio_OBJECTS = pio.$(OBJEXT)
 pio_OBJECTS = $(am_pio_OBJECTS)
 pio_LDADD = $(LDADD)
 pio_DEPENDENCIES =
+am_pma_OBJECTS = pma.$(OBJEXT)
+pma_OBJECTS = $(am_pma_OBJECTS)
+pma_LDADD = $(LDADD)
+pma_DEPENDENCIES =
 am_rbt_OBJECTS = rbt.$(OBJEXT)
 rbt_OBJECTS = $(am_rbt_OBJECTS)
 rbt_LDADD = $(LDADD)
@@ -141,14 +145,14 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) $(fio_SOURCES) \
 	$(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
-	$(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) $(rbt_SOURCES) \
-	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
-	$(time_SOURCES) $(xma_SOURCES)
+	$(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
+	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
+	$(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio_SOURCES) $(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) \
 	$(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
+	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
+	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -302,6 +306,7 @@ AM_CPPFLAGS = \
 LDADD = -lqsecmn 
 xma_SOURCES = xma.c
 fma_SOURCES = fma.c
+pma_SOURCES = pma.c
 chr_SOURCES = chr.c
 str_SOURCES = str.c
 sll_SOURCES = sll.c
@@ -428,6 +433,9 @@ oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
 	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
+pma$(EXEEXT): $(pma_OBJECTS) $(pma_DEPENDENCIES) 
+	@rm -f pma$(EXEEXT)
+	$(LINK) $(pma_OBJECTS) $(pma_LDADD) $(LIBS)
 rbt$(EXEEXT): $(rbt_OBJECTS) $(rbt_DEPENDENCIES) 
 	@rm -f rbt$(EXEEXT)
 	$(LINK) $(rbt_OBJECTS) $(rbt_LDADD) $(LIBS)
@@ -467,6 +475,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@

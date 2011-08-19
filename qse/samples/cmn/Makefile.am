@@ -6,13 +6,14 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 
-bin_PROGRAMS = xma fma chr str sll dll lda oht htb rbt fio pio sio time main main2 rex01 env
+bin_PROGRAMS = xma fma pma chr str sll dll lda oht htb rbt fio pio sio time main main2 rex01 env
 
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
 
 xma_SOURCES = xma.c
 fma_SOURCES = fma.c
+pma_SOURCES = pma.c
 chr_SOURCES = chr.c
 str_SOURCES = str.c
 sll_SOURCES = sll.c
