@@ -1,7 +1,5 @@
 AUTOMAKE_OPTIONS = no-dependencies
 
-noinst_SCRIPTS = regress.sh
-
 EXTRA_DIST = \
 	regress.out \
 	regress.out.xma \
@@ -154,3 +152,5 @@ EXTRA_DIST = \
 	lisp/old-awklisp \
 	lisp/startup
 
+all-local:
+	chmod +x $(DESTDIR)$(builddir)/regress.sh

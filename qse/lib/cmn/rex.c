@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 471 2011-05-22 14:14:36Z hyunghwan.chung $
+ * $Id: rex.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -497,7 +497,7 @@ struct ccinfo_t
 
 static int cc_isalnum (exec_t* e, qse_char_t c) { return QSE_ISALNUM (c); }
 static int cc_isalpha (exec_t* e, qse_char_t c) { return QSE_ISALPHA (c); }
-static int cc_isblank (exec_t* e, qse_char_t c) { return ISBLANK(c); }
+static int cc_isblank (exec_t* e, qse_char_t c) { return QSE_ISBLANK(c); }
 static int cc_iscntrl (exec_t* e, qse_char_t c) { return QSE_ISCNTRL (c); }
 static int cc_isdigit (exec_t* e, qse_char_t c) { return QSE_ISDIGIT (c); }
 static int cc_isgraph (exec_t* e, qse_char_t c) { return QSE_ISGRAPH (c); }

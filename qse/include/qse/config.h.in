@@ -72,6 +72,15 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `isblank' function. */
+#undef HAVE_ISBLANK
+
+/* Define to 1 if you have the `iswblank' function. */
+#undef HAVE_ISWBLANK
+
+/* Define to 1 if you have the `iswctype' function. */
+#undef HAVE_ISWCTYPE
+
 /* Define to 1 if you have the `log' function. */
 #undef HAVE_LOG
 
@@ -241,6 +250,9 @@
    */
 #undef LT_OBJDIR
 
+/* The size of `MB_LEN_MAX', as computed by valueof. */
+#undef NUMVALOF_MB_LEN_MAX
+
 /* Name of package */
 #undef PACKAGE
 
@@ -281,7 +293,10 @@
 /* Unknown Endian */
 #undef QSE_ENDIAN_UNKNOWN
 
-/* Author's contact */
+/* MB_LEN_MAX */
+#undef QSE_MBLEN_MAX
+
+/* Author */
 #undef QSE_PACKAGE_AUTHOR
 
 /* package name */
@@ -322,6 +337,9 @@
 
 /* sizeof(long long) */
 #undef QSE_SIZEOF_LONG_LONG
+
+/* sizeof(mbstate_t) */
+#undef QSE_SIZEOF_MBSTATE_T
 
 /* sizeof(off64_t) */
 #undef QSE_SIZEOF_OFF64_T
@@ -379,6 +397,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `mbstate_t', as computed by sizeof. */
+#undef SIZEOF_MBSTATE_T
 
 /* The size of `off64_t', as computed by sizeof. */
 #undef SIZEOF_OFF64_T

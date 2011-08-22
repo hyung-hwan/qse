@@ -1,5 +1,5 @@
 /*
- * $Id: tio.h 547 2011-08-13 16:04:14Z hyunghwan.chung $
+ * $Id: tio.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,6 +27,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 
 enum qse_tio_errnum_t
@@ -97,13 +98,21 @@ struct qse_tio_t
 	void* output_arg;
 
 	/* for housekeeping */
-	int         input_status;
-	qse_size_t  inbuf_curp;
-	qse_size_t  inbuf_len;
-	qse_size_t  outbuf_len;
+	int           input_status;
+	qse_size_t    inbuf_curp;
+	qse_size_t    inbuf_len;
+	qse_size_t    outbuf_len;
 
 	qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
 	qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
+
+#ifdef QSE_CHAR_IS_WCHAR
+	struct
+	{
+		qse_mbstate_t in;
+		qse_mbstate_t out;
+	} mbstate;
+#endif
 };
 
 #ifdef __cplusplus

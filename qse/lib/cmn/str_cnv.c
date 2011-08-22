@@ -1,5 +1,5 @@
 /*
- * $Id: str_cnv.c 504 2011-07-11 16:31:33Z hyunghwan.chung $
+ * $Id: str_cnv.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -134,18 +134,24 @@ qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
 	return v;
 }
 
+
+/*
+ * TODO: fix wrong mbstate handling 
+ */
+
 qse_size_t qse_mbstowcslen (const qse_mchar_t* mcs, qse_size_t* wcslen)
 {
 	qse_wchar_t wc;
 	qse_size_t n, ml, wl = 0;
 	const qse_mchar_t* p = mcs;
+	qse_mbstate_t state = {{ 0, }};
 	
 	while (*p != '\0') p++;
 	ml = p - mcs;
 	
 	for (p = mcs; ml > 0; p += n, ml -= n) 
 	{
-		n = qse_mbtowc (p, ml, &wc);
+		n = qse_mbrtowc (p, ml, &wc, &state);
 		/* insufficient input or wrong sequence */
 		if (n == 0 || n > ml) break;
 		wl++;
@@ -155,15 +161,17 @@ qse_size_t qse_mbstowcslen (const qse_mchar_t* mcs, qse_size_t* wcslen)
 	return p - mcs;
 }
 
-qse_size_t qse_mbsntowcsnlen (const qse_mchar_t* mcs, qse_size_t mcslen, qse_size_t* wcslen)
+qse_size_t qse_mbsntowcsnlen (
+	const qse_mchar_t* mcs, qse_size_t mcslen, qse_size_t* wcslen)
 {
 	qse_wchar_t wc;
 	qse_size_t n, ml = mcslen, wl = 0;
 	const qse_mchar_t* p = mcs;
+	qse_mbstate_t state = {{ 0, }};
 	
 	for (p = mcs; ml > 0; p += n, ml -= n) 
 	{
-		n = qse_mbtowc (p, ml, &wc);
+		n = qse_mbrtowc (p, ml, &wc, &state);
 		/* insufficient or invalid sequence */
 		if (n == 0 || n > ml) break;
 		wl++;
@@ -212,12 +220,13 @@ qse_size_t qse_mbsntowcsn (
 	qse_size_t mlen = mbslen, n;
 	const qse_mchar_t* p;
 	qse_wchar_t* q, * qend ;
+	qse_mbstate_t state = {{ 0, }};
 
 	qend = wcs + *wcslen;
 
 	for (p = mbs, q = wcs; mlen > 0 && q < qend; p += n, mlen -= n) 
 	{
-		n = qse_mbtowc (p, mlen, q);
+		n = qse_mbrtowc (p, mlen, q, &state);
 		if (n == 0 || n > mlen)
 		{
 			/* wrong sequence or insufficient input */
@@ -236,10 +245,11 @@ qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
 	const qse_wchar_t* p = wcs;
 	qse_mchar_t mbs[32];
 	qse_size_t mlen = 0;
+	qse_mbstate_t state = {{ 0, }};
 
 	while (*p != QSE_WT('\0'))
 	{
-		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
+		qse_size_t n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbs), &state);
 		if (n == 0) break; /* illegal character */
 
 		/* it assumes that mbs is large enough to hold a character */
@@ -265,10 +275,11 @@ qse_size_t qse_wcsntombsnlen (
 	const qse_wchar_t* end = wcs + wcslen;
 	qse_mchar_t mbs[32];
 	qse_size_t mlen = 0;
+	qse_mbstate_t state = {{ 0, }};
 
 	while (p < end)
 	{
-		qse_size_t n = qse_wctomb (*p, mbs, QSE_COUNTOF(mbs));
+		qse_size_t n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbs), &state);
 		if (n == 0) break; /* illegal character */
 
 		/* it assumes that mbs is large enough to hold a character */
@@ -291,10 +302,11 @@ qse_size_t qse_wcstombs (
 {
 	const qse_wchar_t* p = wcs;
 	qse_size_t rem = *mbslen;
+	qse_mbstate_t state = {{ 0, }};
 
 	while (*p != QSE_WT('\0') && rem > 1) 
 	{
-		qse_size_t n = qse_wctomb (*p, mbs, rem);
+		qse_size_t n = qse_wcrtomb (*p, mbs, rem, &state);
 		if (n == 0 || n > rem)
 		{
 			/* illegal character or buffer not enough */
@@ -330,10 +342,11 @@ qse_size_t qse_wcsntombsn (
 	const qse_wchar_t* p = wcs;
 	const qse_wchar_t* end = wcs + wcslen;
 	qse_size_t len = *mbslen;
+	qse_mbstate_t state = {{ 0, }};
 
 	while (p < end && len > 0) 
 	{
-		qse_size_t n = qse_wctomb (*p, mbs, len);
+		qse_size_t n = qse_wcrtomb (*p, mbs, len, &state);
 		if (n == 0 || n > len)
 		{
 			/* illegal character or buffer not enough */

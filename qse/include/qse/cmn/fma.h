@@ -260,6 +260,11 @@ void* qse_fma_alloc (
 	qse_size_t size     /**< block size in bytes*/
 );
 
+void* qse_fma_calloc (
+	qse_fma_t* fma,
+	qse_size_t size
+);
+
 /**
  * The qse_fma_realloc() function is provided for consistency with other 
  * generic memory allocator which provides a reallocation function.

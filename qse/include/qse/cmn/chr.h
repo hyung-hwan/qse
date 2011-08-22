@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: chr.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,6 +21,11 @@
 #ifndef _QSE_CMN_CHR_H_
 #define _QSE_CMN_CHR_H_
 
+
+/** @file
+ * This file provides functions, types, macros for character handling.
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -29,17 +34,18 @@
  */
 enum qse_ccls_id_t
 {
-        QSE_CCLS_UPPER,
-        QSE_CCLS_LOWER,
+        QSE_CCLS_ALNUM = 1,
         QSE_CCLS_ALPHA,
-        QSE_CCLS_DIGIT,
-        QSE_CCLS_XDIGIT,
-        QSE_CCLS_ALNUM,
-        QSE_CCLS_SPACE,
-        QSE_CCLS_PRINT,
-        QSE_CCLS_GRAPH,
+        QSE_CCLS_BLANK,
         QSE_CCLS_CNTRL,
-        QSE_CCLS_PUNCT
+        QSE_CCLS_DIGIT,
+        QSE_CCLS_GRAPH,
+        QSE_CCLS_LOWER,
+        QSE_CCLS_PRINT,
+        QSE_CCLS_PUNCT,
+        QSE_CCLS_SPACE,
+        QSE_CCLS_UPPER,
+        QSE_CCLS_XDIGIT
 };
 typedef enum qse_ccls_id_t qse_ccls_id_t;
 typedef qse_ccls_id_t qse_mccls_id_t;
@@ -56,6 +62,7 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #define QSE_MCCLS_GRAPH  QSE_CCLS_GRAPH
 #define QSE_MCCLS_CNTRL  QSE_CCLS_CNTRL
 #define QSE_MCCLS_PUNCT  QSE_CCLS_PUNCT
+#define QSE_MCCLS_BLANK  QSE_CCLS_BLANK
 
 #define QSE_WCCLS_UPPER  QSE_CCLS_UPPER
 #define QSE_WCCLS_LOWER  QSE_CCLS_LOWER
@@ -68,69 +75,46 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #define QSE_WCCLS_GRAPH  QSE_CCLS_GRAPH
 #define QSE_WCCLS_CNTRL  QSE_CCLS_CNTRL
 #define QSE_WCCLS_PUNCT  QSE_CCLS_PUNCT
+#define QSE_WCCLS_BLANK  QSE_CCLS_BLANK
 
-#ifdef USE_STDC
-#	include <ctype.h>
-#	include <wctype.h>
-#
-#	define QSE_ISMUPPER(c) isupper(c)
-#	define QSE_ISMLOWER(c) islower(c)
-#	define QSE_ISMALPHA(c) isalpha(c)
-#	define QSE_ISMDIGIT(c) isdigit(c)
-#	define QSE_ISMXDIGIT(c) isxdigit(c)
-#	define QSE_ISMALNUM(c) isalnum(c)
-#	define QSE_ISMSPACE(c) isspace(c)
-#	define QSE_ISMPRINT(c) isprint(c)
-#	define QSE_ISMGRAPH(c) isgraph(c)
-#	define QSE_ISMCNTRL(c) iscntrl(c)
-#	define QSE_ISMPUNCT(c) ispunct(c)
-#	define QSE_TOMUPPER(c) toupper(c)
-#	define QSE_TOMLOWER(c) tolower(c)
-#
-#	define QSE_ISWUPPER(c) iswupper(c)
-#	define QSE_ISWLOWER(c) iswlower(c)
-#	define QSE_ISWALPHA(c) iswalpha(c)
-#	define QSE_ISWDIGIT(c) iswdigit(c)
-#	define QSE_ISWXDIGIT(c) iswxdigit(c)
-#	define QSE_ISWALNUM(c) iswalnum(c)
-#	define QSE_ISWSPACE(c) iswspace(c)
-#	define QSE_ISWPRINT(c) iswprint(c)
-#	define QSE_ISWGRAPH(c) iswgraph(c)
-#	define QSE_ISWCNTRL(c) iswcntrl(c)
-#	define QSE_ISWPUNCT(c) iswpunct(c)
-#	define QSE_TOWUPPER(c) towupper(c)
-#	define QSE_TOWLOWER(c) towlower(c)
-#else
-#	define QSE_ISMUPPER(c) (qse_mccls_is(c,QSE_CCLS_UPPER))
-#	define QSE_ISMLOWER(c) (qse_mccls_is(c,QSE_CCLS_LOWER))
-#	define QSE_ISMALPHA(c) (qse_mccls_is(c,QSE_CCLS_ALPHA))
-#	define QSE_ISMDIGIT(c) (qse_mccls_is(c,QSE_CCLS_DIGIT))
-#	define QSE_ISMXDIGIT(c) (qse_mccls_is(c,QSE_CCLS_XDIGIT))
-#	define QSE_ISMALNUM(c) (qse_mccls_is(c,QSE_CCLS_ALNUM))
-#	define QSE_ISMSPACE(c) (qse_mccls_is(c,QSE_CCLS_SPACE))
-#	define QSE_ISMPRINT(c) (qse_mccls_is(c,QSE_CCLS_PRINT))
-#	define QSE_ISMGRAPH(c) (qse_mccls_is(c,QSE_CCLS_GRAPH))
-#	define QSE_ISMCNTRL(c) (qse_mccls_is(c,QSE_CCLS_CNTRL))
-#	define QSE_ISMPUNCT(c) (qse_mccls_is(c,QSE_CCLS_PUNCT))
-#	define QSE_TOMUPPER(c) (qse_mccls_to(c,QSE_CCLS_UPPER))
-#	define QSE_TOMLOWER(c) (qse_mccls_to(c,QSE_CCLS_LOWER))
-#
-#	define QSE_ISWUPPER(c) (qse_wccls_is(c,QSE_CCLS_UPPER))
-#	define QSE_ISWLOWER(c) (qse_wccls_is(c,QSE_CCLS_LOWER))
-#	define QSE_ISWALPHA(c) (qse_wccls_is(c,QSE_CCLS_ALPHA))
-#	define QSE_ISWDIGIT(c) (qse_wccls_is(c,QSE_CCLS_DIGIT))
-#	define QSE_ISWXDIGIT(c) (qse_wccls_is(c,QSE_CCLS_XDIGIT))
-#	define QSE_ISWALNUM(c) (qse_wccls_is(c,QSE_CCLS_ALNUM))
-#	define QSE_ISWSPACE(c) (qse_wccls_is(c,QSE_CCLS_SPACE))
-#	define QSE_ISWPRINT(c) (qse_wccls_is(c,QSE_CCLS_PRINT))
-#	define QSE_ISWGRAPH(c) (qse_wccls_is(c,QSE_CCLS_GRAPH))
-#	define QSE_ISWCNTRL(c) (qse_wccls_is(c,QSE_CCLS_CNTRL))
-#	define QSE_ISWPUNCT(c) (qse_wccls_is(c,QSE_CCLS_PUNCT))
-#	define QSE_TOWUPPER(c) (qse_wccls_to(c,QSE_CCLS_UPPER))
-#	define QSE_TOWLOWER(c) (qse_wccls_to(c,QSE_CCLS_LOWER))
-#endif
+#define QSE_MCTYPE(name) (qse_getmcclsid(name))
+#define QSE_ISMCTYPE(c,t) (qse_ismccls(c,t))
+#define QSE_ISMALNUM(c) (qse_ismccls(c,QSE_CCLS_ALNUM))
+#define QSE_ISMALPHA(c) (qse_ismccls(c,QSE_CCLS_ALPHA))
+#define QSE_ISMBLANK(c) (qse_ismccls(c,QSE_CCLS_BLANK))
+#define QSE_ISMCNTRL(c) (qse_ismccls(c,QSE_CCLS_CNTRL))
+#define QSE_ISMDIGIT(c) (qse_ismccls(c,QSE_CCLS_DIGIT))
+#define QSE_ISMGRAPH(c) (qse_ismccls(c,QSE_CCLS_GRAPH))
+#define QSE_ISMLOWER(c) (qse_ismccls(c,QSE_CCLS_LOWER))
+#define QSE_ISMPRINT(c) (qse_ismccls(c,QSE_CCLS_PRINT))
+#define QSE_ISMPUNCT(c) (qse_ismccls(c,QSE_CCLS_PUNCT))
+#define QSE_ISMSPACE(c) (qse_ismccls(c,QSE_CCLS_SPACE))
+#define QSE_ISMUPPER(c) (qse_ismccls(c,QSE_CCLS_UPPER))
+#define QSE_ISMXDIGIT(c) (qse_ismccls(c,QSE_CCLS_XDIGIT))
+#define QSE_TOMUPPER(c) (qse_tomccls(c,QSE_CCLS_UPPER))
+#define QSE_TOMLOWER(c) (qse_tomccls(c,QSE_CCLS_LOWER))
+
+#define QSE_WCTYPE(name) (qse_getwcclsid(name))
+#define QSE_ISWCTYPE(c,t) (qse_iswccls(c,t))
+#define QSE_ISWALNUM(c) (qse_iswccls(c,QSE_CCLS_ALNUM))
+#define QSE_ISWALPHA(c) (qse_iswccls(c,QSE_CCLS_ALPHA))
+#define QSE_ISWBLANK(c) (qse_iswccls(c,QSE_CCLS_BLANK))
+#define QSE_ISWCNTRL(c) (qse_iswccls(c,QSE_CCLS_CNTRL))
+#define QSE_ISWDIGIT(c) (qse_iswccls(c,QSE_CCLS_DIGIT))
+#define QSE_ISWGRAPH(c) (qse_iswccls(c,QSE_CCLS_GRAPH))
+#define QSE_ISWLOWER(c) (qse_iswccls(c,QSE_CCLS_LOWER))
+#define QSE_ISWPRINT(c) (qse_iswccls(c,QSE_CCLS_PRINT))
+#define QSE_ISWPUNCT(c) (qse_iswccls(c,QSE_CCLS_PUNCT))
+#define QSE_ISWSPACE(c) (qse_iswccls(c,QSE_CCLS_SPACE))
+#define QSE_ISWUPPER(c) (qse_iswccls(c,QSE_CCLS_UPPER))
+#define QSE_ISWXDIGIT(c) (qse_iswccls(c,QSE_CCLS_XDIGIT))
+#define QSE_TOWUPPER(c) (qse_towccls(c,QSE_CCLS_UPPER))
+#define QSE_TOWLOWER(c) (qse_towccls(c,QSE_CCLS_LOWER))
 
 #ifdef QSE_CHAR_IS_MCHAR
+#	define QSE_CTYPE(name) QSE_MCTYPE(name)
+#	define QSE_ISCTYPE(c,t) QSE_ISMCTYPE(c,t)
+#
 #	define QSE_ISUPPER(c)  QSE_ISMUPPER(c)
 #	define QSE_ISLOWER(c)  QSE_ISMLOWER(c) 
 #	define QSE_ISALPHA(c)  QSE_ISMALPHA(c) 
@@ -142,9 +126,14 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #	define QSE_ISGRAPH(c)  QSE_ISMGRAPH(c)
 #	define QSE_ISCNTRL(c)  QSE_ISMCNTRL(c)
 #	define QSE_ISPUNCT(c)  QSE_ISMPUNCT(c)
+#	define QSE_ISBLANK(c)  QSE_ISMBLANK(c)
+#
 #	define QSE_TOUPPER(c)  QSE_TOMUPPER(c)
 #	define QSE_TOLOWER(c)  QSE_TOMLOWER(c)
 #else
+#	define QSE_CTYPE(name) QSE_WCTYPE(name)
+#	define QSE_ISCTYPE(c,t) QSE_ISWCTYPE(c,t)
+#
 #	define QSE_ISUPPER(c)  QSE_ISWUPPER(c)
 #	define QSE_ISLOWER(c)  QSE_ISWLOWER(c) 
 #	define QSE_ISALPHA(c)  QSE_ISWALPHA(c) 
@@ -156,41 +145,114 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #	define QSE_ISGRAPH(c)  QSE_ISWGRAPH(c)
 #	define QSE_ISCNTRL(c)  QSE_ISWCNTRL(c)
 #	define QSE_ISPUNCT(c)  QSE_ISWPUNCT(c)
+#	define QSE_ISBLANK(c)  QSE_ISWBLANK(c)
+#
 #	define QSE_TOUPPER(c)  QSE_TOWUPPER(c)
 #	define QSE_TOLOWER(c)  QSE_TOWLOWER(c)
 #endif
+
+/**
+ * The qse_mbstate_t type defines a structure large enough to hold
+ * the standard mbstate_t.
+ */
+typedef struct qse_mbstate_t qse_mbstate_t;
+struct qse_mbstate_t
+{
+#if defined(QSE_SIZEOF_MBSTATE_T) && (QSE_SIZEOF_MBSTATE_T > 0)
+	char dummy[QSE_SIZEOF_MBSTATE_T];
+#else
+	char dummy[1];
+#endif
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-qse_bool_t qse_mccls_is (
+qse_bool_t qse_ismccls (
 	qse_mcint_t      c,
 	qse_mccls_id_t   type
 );
 
-qse_bool_t qse_wccls_is (
+qse_bool_t qse_iswccls (
 	qse_wcint_t      c,
 	qse_wccls_id_t   type
 );
 
-qse_mcint_t qse_mccls_to (
+qse_mcint_t qse_tomccls (
 	qse_mcint_t      c,
-	qse_mccls_id_t    type
+	qse_mccls_id_t   type
 );
 
-qse_wcint_t qse_wccls_to (
+qse_wcint_t qse_towccls (
 	qse_wcint_t      c,
-	qse_wccls_id_t    type
+	qse_wccls_id_t   type
+);
+
+int qse_getwcclsidbyname (
+	const qse_wchar_t* name,
+	qse_wccls_id_t*    id
+);
+
+int qse_getwcclsidbyxname (
+	const qse_wchar_t* name,
+	qse_size_t         len,
+	qse_wccls_id_t*    id
+);
+
+qse_wccls_id_t qse_getwcclsid (
+	const qse_wchar_t* name
+);
+
+int qse_getmcclsidbyname (
+	const qse_mchar_t* name,
+	qse_mccls_id_t*    id
+);
+
+int qse_getmcclsidbyxname (
+	const qse_mchar_t* name,
+	qse_size_t         len,
+	qse_mccls_id_t*    id
+);
+
+qse_mccls_id_t qse_getmcclsid (
+	const qse_mchar_t* name
 );
 
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_ccls_is(c,type) qse_mccls_is(c,type);
-#	define qse_ccls_to(c,type) qse_mccls_to(c,type);
+#	define qse_isccls(c,type) qse_ismccls(c,type)
+#	define qse_toccls(c,type) qse_tomccls(c,type)
+#	define qse_getcclsidbyname(name,id) qse_getmcclsidbyname(name,id)
+#	define qse_getcclsidbyxname(name,len,id) qse_getmcclsidbyxname(name,len,id)
+#	define qse_getcclsid(name) qse_getmcclsid(name)
 #else
-#	define qse_ccls_is(c,type) qse_wccls_is(c,type);
-#	define qse_ccls_to(c,type) qse_wccls_to(c,type);
+#	define qse_isccls(c,type) qse_iswccls(c,type)
+#	define qse_toccls(c,type) qse_towccls(c,type)
+#	define qse_getcclsidbyname(name,id) qse_getwcclsidbyname(name,id)
+#	define qse_getcclsidbyxname(name,len,id) qse_getwcclsidbyxname(name,len,id)
+#	define qse_getcclsid(name) qse_getwcclsid(name)
 #endif
+
+
+qse_size_t qse_mbrlen (
+	const qse_mchar_t* mb,
+	qse_size_t         mblen,
+	qse_mbstate_t*     state
+);
+
+qse_size_t qse_mbrtowc (
+	const qse_mchar_t* mb,
+	qse_size_t         mblen,
+	qse_wchar_t*       wc,
+	qse_mbstate_t*     state
+);
+
+qse_size_t qse_wcrtomb (
+	qse_wchar_t        wc,
+	qse_mchar_t*       mb,
+	qse_size_t         mblen,
+	qse_mbstate_t*     state
+);
 
 /**
  * The qse_mblen() function scans a multibyte sequence to get the number of 
@@ -199,6 +261,8 @@ qse_wcint_t qse_wccls_to (
  * @return number of bytes processed on success, 
  *         0 for invalid sequences, 
  *         mblen + 1 for incomplete sequences
+ * @note This function can not handle conversion producing non-initial
+ *       states. For each call, it assumes initial state.
  */
 qse_size_t qse_mblen (
 	const qse_mchar_t* mb,
@@ -210,6 +274,8 @@ qse_size_t qse_mblen (
  * It returns 0 if an invalid multibyte sequence is detected, mblen + 1 if the 
  * sequence is incomplete. It returns the number of bytes processed to form a 
  * wide character.
+ * @note This function can not handle conversion producing non-initial
+ *       states. For each call, it assumes initial state.
  */
 qse_size_t qse_mbtowc (
 	const qse_mchar_t* mb,
@@ -222,11 +288,21 @@ qse_size_t qse_mbtowc (
  * It returns 0 if the wide character is illegal, mblen + 1 if mblen is not 
  * large enough to hold the multibyte sequence. On successful conversion, it 
  * returns the number of bytes in the sequence.
+ * @note This function can not handle conversion producing non-initial
+ *       states. For each call, it assumes initial state.
  */
 qse_size_t qse_wctomb (
 	qse_wchar_t        wc,
 	qse_mchar_t*       mb,
 	qse_size_t         mblen
+);
+
+/**
+ * The qse_getmbcurmax() function returns the value of MB_CUR_MAX.
+ * Note that QSE_MBLEN_MAX defines MB_LEN_MAX.
+ */
+int qse_getmbcurmax (
+	void
 );
 
 #ifdef __cplusplus

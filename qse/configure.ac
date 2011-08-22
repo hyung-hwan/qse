@@ -93,7 +93,8 @@ dnl check functions
 AC_CHECK_FUNCS([uselocale])
 AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
-AC_CHECK_FUNCS([wctype wctrans towctrans])
+AC_CHECK_FUNCS([wctype iswctype wctrans towctrans])
+AC_CHECK_FUNCS([isblank iswblank])
 AC_CHECK_FUNCS([lseek64 stat64 fstat64 ftruncate64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
@@ -132,6 +133,9 @@ AC_CHECK_SIZEOF(wchar_t)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(off64_t)
 
+AC_CHECK_SIZEOF(mbstate_t,[],[#include <wchar.h>])
+AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
@@ -150,13 +154,15 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_MBSTATE_T, ${ac_cv_sizeof_mbstate_t}, [sizeof(mbstate_t)])
+AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION, "${VERSION}", [Package version])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
 
-AC_DEFINE_UNQUOTED(QSE_PACKAGE_AUTHOR,"${PACKAGE_BUGREPORT}", [Author's contact])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_AUTHOR,"${PACKAGE_BUGREPORT}", [Author])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_NAME,"${PACKAGE_NAME}", [package name])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_URL, "${PACKAGE_URL}", [Project URL])
 
