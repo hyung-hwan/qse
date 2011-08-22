@@ -521,6 +521,13 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 	return b;
 }
 
+void* qse_xma_calloc (qse_xma_t* xma, qse_size_t size)
+{
+	void* ptr = qse_xma_alloc (xma, size);
+	if (size) QSE_MEMSET (ptr, 0, size);
+	return ptr;
+}
+
 void* qse_xma_realloc (qse_xma_t* xma, void* b, qse_size_t size)
 {
 	void* n;

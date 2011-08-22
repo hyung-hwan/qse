@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: conf_msw.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -70,6 +70,9 @@ _M_X64 x64 platform
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       8
 #
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+#	define QSE_MBLEN_MAX          16
+#
 #	define QSE_CHAR_IS_WCHAR
 #elif defined(__GNUC__) || defined(__DMC__) || defined(__POCC__)
 #	define QSE_SIZEOF_CHAR        1
@@ -96,6 +99,9 @@ _M_X64 x64 platform
 #
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       8
+#
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+#	define QSE_MBLEN_MAX          16
 #
 #	define QSE_CHAR_IS_WCHAR
 #elif defined(_MSC_VER)
@@ -127,6 +133,9 @@ _M_X64 x64 platform
 #
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       8
+#
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+#	define QSE_MBLEN_MAX          16
 #
 #	define QSE_CHAR_IS_WCHAR
 #else

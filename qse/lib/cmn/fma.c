@@ -139,6 +139,13 @@ void* qse_fma_alloc (qse_fma_t* fma, qse_size_t size)
 	return blk;
 }
 
+void* qse_fma_calloc (qse_fma_t* fma, qse_size_t size)
+{
+	void* ptr = qse_fma_alloc (fma, size);
+	if (size) QSE_MEMSET (ptr, 0, size);
+	return ptr;
+}
+
 void* qse_fma_realloc (qse_fma_t* fma, void* blk, qse_size_t size)
 {
 	if (blk)

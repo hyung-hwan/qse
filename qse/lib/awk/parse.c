@@ -1,5 +1,5 @@
 /*
- * $Id: parse.c 551 2011-08-15 13:52:48Z hyunghwan.chung $
+ * $Id: parse.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -5909,9 +5909,11 @@ retry:
 		{
 			/* not handled yet */
 			if (c == QSE_T('\0'))
+			{
 				SETERR_ARG_LOC (
 					awk, QSE_AWK_ELXCHR,
 					QSE_T("<NUL>"), 5, &tok->loc);
+			}
 			else
 			{
 				qse_char_t cc = (qse_char_t)c;

@@ -175,6 +175,11 @@ void* qse_xma_alloc (
 	qse_size_t size /**< size in bytes */
 );
 
+void* qse_xma_calloc (
+	qse_xma_t* xma,
+	qse_size_t size
+);
+
 /**
  * The qse_xma_alloc() function resizes the memory block @a b to @a size bytes.
  * @return pointer to a resized memory block on success, #QSE_NULL on failure

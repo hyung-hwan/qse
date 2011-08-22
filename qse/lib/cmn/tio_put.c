@@ -1,5 +1,5 @@
 /*
- * $Id: tio_put.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: tio_put.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,9 +23,9 @@
 
 static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 {
-#ifndef QSE_CHAR_IS_MCHAR
+#ifdef QSE_CHAR_IS_WCHAR
 	qse_size_t n, i;
-	qse_mchar_t mc[50];
+	qse_mchar_t mc[QSE_MBLEN_MAX]; 
 #endif
 
 	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf)) 
@@ -38,12 +38,14 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 	}
 
 #ifdef QSE_CHAR_IS_MCHAR
+
 	tio->outbuf[tio->outbuf_len++] = c;	
 	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf))
 		return qse_tio_flush (tio);
-#else
 
-	n = qse_wctomb (c, mc, QSE_COUNTOF(mc));
+#else /*  QSE_CHAR_IS_WCHAR */
+
+	n = qse_wcrtomb (c, mc, QSE_COUNTOF(mc), &tio->mbstate.out);
 	if (n == 0) 
 	{
 		tio->errnum = QSE_TIO_EILCHR;
@@ -63,6 +65,7 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 			if (qse_tio_flush (tio) == -1) return -1;
 		}
 	}		
+
 #endif
 
 	if (c == QSE_T('\n') && tio->outbuf_len > 0) 

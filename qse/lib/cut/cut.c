@@ -167,7 +167,7 @@ void qse_cut_clear (qse_cut_t* cut)
 int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 {
 	const qse_char_t* p = str;
-	const qse_char_t* xnd = str + len;
+	const qse_char_t* lastp = str + len;
 	qse_cint_t c;
 	int sel = QSE_SED_SEL_CHAR;
 
@@ -189,13 +189,13 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 	if (len <= 0) return 0;
 
 	/* compile the selector string */
-	xnd--; c = CC (p, xnd);
+	lastp--; c = CC (p, lastp);
 	while (1)
 	{
 		qse_size_t start = 0, end = 0;
 		int mask = 0;
 
-		while (QSE_ISSPACE(c)) c = NC (p, xnd); 
+		while (QSE_ISSPACE(c)) c = NC (p, lastp); 
 		if (EOF(c)) 
 		{
 			if (cut->sel.count > 0)
@@ -212,7 +212,7 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 			/* the next character is the input delimiter.
 			 * the output delimiter defaults to the input 
 			 * delimiter. */
-			c = NC (p, xnd);
+			c = NC (p, lastp);
 			if (EOF(c))
 			{
 				SETERR0 (cut, QSE_CUT_ESELNV);
@@ -221,13 +221,13 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 			cut->sel.din = c;
 			cut->sel.dout = c;
 
-			c = NC (p, xnd);
+			c = NC (p, lastp);
 		}
 		else if (c == QSE_T('D'))
 		{
 			/* the next two characters are the input and 
 			 * the output delimiter each. */
-			c = NC (p, xnd);
+			c = NC (p, lastp);
 			if (EOF(c))
 			{
 				SETERR0 (cut, QSE_CUT_ESELNV);
@@ -235,7 +235,7 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 			}
 			cut->sel.din = c;
 
-			c = NC (p, xnd);
+			c = NC (p, lastp);
 			if (EOF(c))
 			{
 				SETERR0 (cut, QSE_CUT_ESELNV);
@@ -243,15 +243,15 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 			}
 			cut->sel.dout = c;
 
-			c = NC (p, xnd);
+			c = NC (p, lastp);
 		}
 		else 
 		{
 			if (c == QSE_T('c') || c == QSE_T('f'))
 			{
 				sel = c;
-				c = NC (p, xnd);
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+				c = NC (p, lastp);
+				while (QSE_ISSPACE(c)) c = NC (p, lastp);
 			}
 	
 			if (QSE_ISDIGIT(c))
@@ -259,33 +259,33 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 				do 
 				{ 
 					start = start * 10 + (c - QSE_T('0')); 
-					c = NC (p, xnd);
+					c = NC (p, lastp);
 				} 
 				while (QSE_ISDIGIT(c));
 	
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+				while (QSE_ISSPACE(c)) c = NC (p, lastp);
 				mask |= MASK_START;
 			}
 			else start++;
 
 			if (c == QSE_T('-'))
 			{
-				c = NC (p, xnd);
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+				c = NC (p, lastp);
+				while (QSE_ISSPACE(c)) c = NC (p, lastp);
 
 				if (QSE_ISDIGIT(c))
 				{
 					do 
 					{ 
 						end = end * 10 + (c - QSE_T('0')); 
-						c = NC (p, xnd);
+						c = NC (p, lastp);
 					} 
 					while (QSE_ISDIGIT(c));
 					mask |= MASK_END;
 				}
 				else end = MAX;
 
-				while (QSE_ISSPACE(c)) c = NC (p, xnd);
+				while (QSE_ISSPACE(c)) c = NC (p, lastp);
 			}
 			else end = start;
 
@@ -313,7 +313,7 @@ int qse_cut_comp (qse_cut_t* cut, const qse_char_t* str, qse_size_t len)
 		}
 
 		if (EOF(c)) break;
-		if (c == QSE_T(',')) c = NC (p, xnd);
+		if (c == QSE_T(',')) c = NC (p, lastp);
 	}
 
 	return 0;

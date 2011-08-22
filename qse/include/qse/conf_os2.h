@@ -52,6 +52,12 @@
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       8
 #
+/* I don't know the exact mbstate size. 
+ * but this should be large enough */
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+/* TODO: check the exact value */
+#	define QSE_MBLEN_MAX          16
+#
 #	define QSE_CHAR_IS_WCHAR
 #else
 #	error Define the size of various data types.

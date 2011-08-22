@@ -57,4 +57,9 @@ global heap. This means that you can split a heap to smaller subheaps.
 If the size of memory blocks to allocate share the same size, you can use
 #qse_fma_t for performance.
 
+@section mem_pma Simple Memory Pool Allocator
+
+If you want to allocate blocks quickly but ok not to be able to resize or 
+deallocate the blocks individually, you can use #qse_pma_t.
+
 */
