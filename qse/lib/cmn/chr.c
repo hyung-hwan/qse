@@ -1,5 +1,5 @@
 /*
- * $Id: chr.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
+ * $Id: chr.c 555 2011-08-24 06:54:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,9 +24,9 @@
 #include <ctype.h>
 #include <wctype.h>
 
-static qse_bool_t is_malpha (qse_mcint_t c) { return isalpha(c); }
-static qse_bool_t is_malnum (qse_mcint_t c) { return isalnum(c); }
-static qse_bool_t is_mblank (qse_mcint_t c) 
+static QSE_INLINE int is_malpha (qse_mcint_t c) { return isalpha(c); }
+static QSE_INLINE int is_malnum (qse_mcint_t c) { return isalnum(c); }
+static QSE_INLINE int is_mblank (qse_mcint_t c) 
 { 
 #ifdef HAVE_ISBLANK
 	return isblank(c); 
@@ -34,20 +34,20 @@ static qse_bool_t is_mblank (qse_mcint_t c)
 	return c == QSE_MT(' ') || c == QSE_MT('\t');
 #endif
 }
-static qse_bool_t is_mcntrl (qse_mcint_t c) { return iscntrl(c); }
-static qse_bool_t is_mdigit (qse_mcint_t c) { return isdigit(c); }
-static qse_bool_t is_mgraph (qse_mcint_t c) { return isgraph(c); }
-static qse_bool_t is_mlower (qse_mcint_t c) { return islower(c); }
-static qse_bool_t is_mprint (qse_mcint_t c) { return isprint(c); }
-static qse_bool_t is_mpunct (qse_mcint_t c) { return ispunct(c); }
-static qse_bool_t is_mspace (qse_mcint_t c) { return isspace(c); }
-static qse_bool_t is_mupper (qse_mcint_t c) { return isupper(c); }
-static qse_bool_t is_mxdigit (qse_mcint_t c) { return isxdigit(c); }
+static QSE_INLINE int is_mcntrl (qse_mcint_t c) { return iscntrl(c); }
+static QSE_INLINE int is_mdigit (qse_mcint_t c) { return isdigit(c); }
+static QSE_INLINE int is_mgraph (qse_mcint_t c) { return isgraph(c); }
+static QSE_INLINE int is_mlower (qse_mcint_t c) { return islower(c); }
+static QSE_INLINE int is_mprint (qse_mcint_t c) { return isprint(c); }
+static QSE_INLINE int is_mpunct (qse_mcint_t c) { return ispunct(c); }
+static QSE_INLINE int is_mspace (qse_mcint_t c) { return isspace(c); }
+static QSE_INLINE int is_mupper (qse_mcint_t c) { return isupper(c); }
+static QSE_INLINE int is_mxdigit (qse_mcint_t c) { return isxdigit(c); }
 
 
-static qse_bool_t is_walpha (qse_wcint_t c) { return iswalpha(c); }
-static qse_bool_t is_walnum (qse_wcint_t c) { return iswalnum(c); }
-static qse_bool_t is_wblank (qse_wcint_t c) 
+static QSE_INLINE int is_walpha (qse_wcint_t c) { return iswalpha(c); }
+static QSE_INLINE int is_walnum (qse_wcint_t c) { return iswalnum(c); }
+static QSE_INLINE int is_wblank (qse_wcint_t c) 
 { 
 #ifdef HAVE_ISWBLANK
 	return iswblank(c); 
@@ -55,22 +55,23 @@ static qse_bool_t is_wblank (qse_wcint_t c)
 	return c == QSE_WT(' ') || c == QSE_WT('\t');
 #endif
 }
-static qse_bool_t is_wcntrl (qse_wcint_t c) { return iswcntrl(c); }
-static qse_bool_t is_wdigit (qse_wcint_t c) { return iswdigit(c); }
-static qse_bool_t is_wgraph (qse_wcint_t c) { return iswgraph(c); }
-static qse_bool_t is_wlower (qse_wcint_t c) { return iswlower(c); }
-static qse_bool_t is_wprint (qse_wcint_t c) { return iswprint(c); }
-static qse_bool_t is_wpunct (qse_wcint_t c) { return iswpunct(c); }
-static qse_bool_t is_wspace (qse_wcint_t c) { return iswspace(c); }
-static qse_bool_t is_wupper (qse_wcint_t c) { return iswupper(c); }
-static qse_bool_t is_wxdigit (qse_wcint_t c) { return iswxdigit(c); }
+static QSE_INLINE int is_wcntrl (qse_wcint_t c) { return iswcntrl(c); }
+static QSE_INLINE int is_wdigit (qse_wcint_t c) { return iswdigit(c); }
+static QSE_INLINE int is_wgraph (qse_wcint_t c) { return iswgraph(c); }
+static QSE_INLINE int is_wlower (qse_wcint_t c) { return iswlower(c); }
+static QSE_INLINE int is_wprint (qse_wcint_t c) { return iswprint(c); }
+static QSE_INLINE int is_wpunct (qse_wcint_t c) { return iswpunct(c); }
+static QSE_INLINE int is_wspace (qse_wcint_t c) { return iswspace(c); }
+static QSE_INLINE int is_wupper (qse_wcint_t c) { return iswupper(c); }
+static QSE_INLINE int is_wxdigit (qse_wcint_t c) { return iswxdigit(c); }
 
-qse_bool_t qse_ismccls (qse_mcint_t c, qse_mccls_id_t type)
+int qse_ismctype (qse_mcint_t c, qse_mctype_t type)
 { 
 	/* TODO: use GetStringTypeW/A for WIN32 to implement these */
 
-	static qse_bool_t (*f[]) (qse_mcint_t) = 
+	static int (*f[]) (qse_mcint_t) = 
 	{
+#if 0
 		is_malnum,
 		is_malpha,
 		is_mblank,
@@ -83,24 +84,38 @@ qse_bool_t qse_ismccls (qse_mcint_t c, qse_mccls_id_t type)
 		is_mspace,
 		is_mupper,
 		is_mxdigit
+#endif
+
+		isalnum,
+		isalpha,
+		is_mblank,
+		iscntrl,
+		isdigit,
+		isgraph,
+		islower,
+		isprint,
+		ispunct,
+		isspace,
+		isupper,
+		isxdigit
 	};
 
-	QSE_ASSERTX (type >= QSE_WCCLS_ALNUM && type <= QSE_WCCLS_XDIGIT,
-		"The character type should be one of qse_mccls_id_t values");
+	QSE_ASSERTX (type >= QSE_WCTYPE_ALNUM && type <= QSE_WCTYPE_XDIGIT,
+		"The character type should be one of qse_mctype_t values");
 	return f[type-1] (c);
 }
 
-qse_mcint_t qse_tomccls (qse_mcint_t c, qse_mccls_id_t type)  
+qse_mcint_t qse_tomctype (qse_mcint_t c, qse_mctype_t type)  
 { 
-	QSE_ASSERTX (type == QSE_MCCLS_UPPER || type == QSE_MCCLS_LOWER,
-		"The character type should be one of QSE_MCCLS_UPPER and QSE_MCCLS_LOWER");
+	QSE_ASSERTX (type == QSE_MCTYPE_UPPER || type == QSE_MCTYPE_LOWER,
+		"The character type should be one of QSE_MCTYPE_UPPER and QSE_MCTYPE_LOWER");
 
-	if (type == QSE_MCCLS_UPPER) return toupper(c);
-	if (type == QSE_MCCLS_LOWER) return tolower(c);
+	if (type == QSE_MCTYPE_UPPER) return toupper(c);
+	if (type == QSE_MCTYPE_LOWER) return tolower(c);
 	return c;
 }
 
-qse_bool_t qse_iswccls (qse_wcint_t c, qse_wccls_id_t type)
+int qse_iswctype (qse_wcint_t c, qse_wctype_t type)
 { 
 /*
 #ifdef HAVE_WCTYPE
@@ -134,15 +149,16 @@ qse_bool_t qse_iswccls (qse_wcint_t c, qse_wccls_id_t type)
 		(wctype_t)0
 	};
 
-	QSE_ASSERTX (type >= QSE_CCLS_UPPER && type <= QSE_CCLS_PUNCT,
-		"The character type should be one of qse_wccls_id_t values");
+	QSE_ASSERTX (type >= QSE_CTYPE_UPPER && type <= QSE_CTYPE_PUNCT,
+		"The character type should be one of qse_wctype_t values");
 		
 	if (desc[type] == (wctype_t)0) desc[type] = wctype(name[type]);
 	return iswctype (c, desc[type]);
 #else
 */
-	static qse_bool_t (*f[]) (qse_wcint_t) = 
+	static int (*f[]) (qse_wcint_t) = 
 	{
+#if 0
 		is_walnum,
 		is_walpha,
 		is_wblank,
@@ -155,17 +171,30 @@ qse_bool_t qse_iswccls (qse_wcint_t c, qse_wccls_id_t type)
 		is_wspace,
 		is_wupper,
 		is_wxdigit
+#endif
+		iswalnum,
+		iswalpha,
+		is_wblank,
+		iswcntrl,
+		iswdigit,
+		iswgraph,
+		iswlower,
+		iswprint,
+		iswpunct,
+		iswspace,
+		iswupper,
+		iswxdigit
 	};
 
-	QSE_ASSERTX (type >= QSE_WCCLS_ALNUM && type <= QSE_WCCLS_XDIGIT,
-		"The character type should be one of qse_wccls_id_t values");
+	QSE_ASSERTX (type >= QSE_WCTYPE_ALNUM && type <= QSE_WCTYPE_XDIGIT,
+		"The character type should be one of qse_wctype_t values");
 	return f[type-1] (c);
 /*
 #endif
 */
 }
 
-qse_wcint_t qse_towccls (qse_wcint_t c, qse_wccls_id_t type)  
+qse_wcint_t qse_towctype (qse_wcint_t c, qse_wctype_t type)  
 { 
 /*
 #ifdef HAVE_WCTRANS
@@ -181,17 +210,17 @@ qse_wcint_t qse_towccls (qse_wcint_t c, qse_wccls_id_t type)
 		(wctrans_t)0
 	};
 
-	QSE_ASSERTX (type >= QSE_WCCLS_UPPER && type <= QSE_WCCLS_LOWER,
-		"The type should be one of QSE_WCCLS_UPPER and QSE_WCCLS_LOWER");
+	QSE_ASSERTX (type >= QSE_WCTYPE_UPPER && type <= QSE_WCTYPE_LOWER,
+		"The type should be one of QSE_WCTYPE_UPPER and QSE_WCTYPE_LOWER");
 
 	if (desc[type] == (wctrans_t)0) desc[type] = wctrans(name[type]);
 	return towctrans (c, desc[type]);
 #else
 */
-	QSE_ASSERTX (type == QSE_WCCLS_UPPER || type == QSE_WCCLS_LOWER,
-		"The type should be one of QSE_WCCLS_UPPER and QSE_WCCLS_LOWER");
-	if (type == QSE_WCCLS_UPPER) return towupper(c);
-	if (type == QSE_WCCLS_LOWER) return towlower(c);
+	QSE_ASSERTX (type == QSE_WCTYPE_UPPER || type == QSE_WCTYPE_LOWER,
+		"The type should be one of QSE_WCTYPE_UPPER and QSE_WCTYPE_LOWER");
+	if (type == QSE_WCTYPE_UPPER) return towupper(c);
+	if (type == QSE_WCTYPE_LOWER) return towlower(c);
 	return c;
 /*
 #endif
@@ -204,21 +233,21 @@ static struct wtab_t
 	int class;
 } wtab[] =
 {
-	{ QSE_WT("alnum"), QSE_WCCLS_ALNUM },
-	{ QSE_WT("alpha"), QSE_WCCLS_ALPHA },
-	{ QSE_WT("blank"), QSE_WCCLS_BLANK },
-	{ QSE_WT("cntrl"), QSE_WCCLS_CNTRL },
-	{ QSE_WT("digit"), QSE_WCCLS_DIGIT },
-	{ QSE_WT("graph"), QSE_WCCLS_GRAPH },
-	{ QSE_WT("lower"), QSE_WCCLS_LOWER },
-	{ QSE_WT("print"), QSE_WCCLS_PRINT },
-	{ QSE_WT("punct"), QSE_WCCLS_PUNCT },
-	{ QSE_WT("space"), QSE_WCCLS_SPACE },
-	{ QSE_WT("upper"), QSE_WCCLS_UPPER },
-	{ QSE_WT("xdigit"), QSE_WCCLS_XDIGIT }
+	{ QSE_WT("alnum"), QSE_WCTYPE_ALNUM },
+	{ QSE_WT("alpha"), QSE_WCTYPE_ALPHA },
+	{ QSE_WT("blank"), QSE_WCTYPE_BLANK },
+	{ QSE_WT("cntrl"), QSE_WCTYPE_CNTRL },
+	{ QSE_WT("digit"), QSE_WCTYPE_DIGIT },
+	{ QSE_WT("graph"), QSE_WCTYPE_GRAPH },
+	{ QSE_WT("lower"), QSE_WCTYPE_LOWER },
+	{ QSE_WT("print"), QSE_WCTYPE_PRINT },
+	{ QSE_WT("punct"), QSE_WCTYPE_PUNCT },
+	{ QSE_WT("space"), QSE_WCTYPE_SPACE },
+	{ QSE_WT("upper"), QSE_WCTYPE_UPPER },
+	{ QSE_WT("xdigit"), QSE_WCTYPE_XDIGIT }
 };
 
-int qse_getwcclsidbyname (const qse_wchar_t* name, qse_wccls_id_t* id)
+int qse_getwctypebyname (const qse_wchar_t* name, qse_wctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(wtab) - 1, mid;
 	while (left <= right)
@@ -249,7 +278,7 @@ int qse_getwcclsidbyname (const qse_wchar_t* name, qse_wccls_id_t* id)
 	return -1;
 }
 
-int qse_getwcclsidbyxname (const qse_wchar_t* name, qse_size_t len, qse_wccls_id_t* id)
+int qse_getwctypebyxname (const qse_wchar_t* name, qse_size_t len, qse_wctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(wtab) - 1, mid;
 	while (left <= right)
@@ -280,10 +309,10 @@ int qse_getwcclsidbyxname (const qse_wchar_t* name, qse_size_t len, qse_wccls_id
 	return -1;
 }
 
-qse_wccls_id_t qse_getwcclsid (const qse_wchar_t* name)
+qse_wctype_t qse_getwctype (const qse_wchar_t* name)
 {
-	qse_wccls_id_t id;
-	return (qse_getwcclsidbyname(name,&id) <= -1)? ((qse_wccls_id_t)0): id;
+	qse_wctype_t id;
+	return (qse_getwctypebyname(name,&id) <= -1)? ((qse_wctype_t)0): id;
 }
 
 static struct mtab_t
@@ -292,22 +321,22 @@ static struct mtab_t
 	int class;
 } mtab[] =
 {
-	{ QSE_MT("alnum"), QSE_MCCLS_ALNUM },
-	{ QSE_MT("alpha"), QSE_MCCLS_ALPHA },
-	{ QSE_MT("blank"), QSE_MCCLS_BLANK },
-	{ QSE_MT("cntrl"), QSE_MCCLS_CNTRL },
-	{ QSE_MT("digit"), QSE_MCCLS_DIGIT },
-	{ QSE_MT("graph"), QSE_MCCLS_GRAPH },
-	{ QSE_MT("lower"), QSE_MCCLS_LOWER },
-	{ QSE_MT("print"), QSE_MCCLS_PRINT },
-	{ QSE_MT("punct"), QSE_MCCLS_PUNCT },
-	{ QSE_MT("space"), QSE_MCCLS_SPACE },
-	{ QSE_MT("upper"), QSE_MCCLS_UPPER },
-	{ QSE_MT("xdigit"), QSE_MCCLS_XDIGIT },
+	{ QSE_MT("alnum"), QSE_MCTYPE_ALNUM },
+	{ QSE_MT("alpha"), QSE_MCTYPE_ALPHA },
+	{ QSE_MT("blank"), QSE_MCTYPE_BLANK },
+	{ QSE_MT("cntrl"), QSE_MCTYPE_CNTRL },
+	{ QSE_MT("digit"), QSE_MCTYPE_DIGIT },
+	{ QSE_MT("graph"), QSE_MCTYPE_GRAPH },
+	{ QSE_MT("lower"), QSE_MCTYPE_LOWER },
+	{ QSE_MT("print"), QSE_MCTYPE_PRINT },
+	{ QSE_MT("punct"), QSE_MCTYPE_PUNCT },
+	{ QSE_MT("space"), QSE_MCTYPE_SPACE },
+	{ QSE_MT("upper"), QSE_MCTYPE_UPPER },
+	{ QSE_MT("xdigit"), QSE_MCTYPE_XDIGIT },
 	{ QSE_NULL, 0 }
 };
 
-int qse_getmcclsidbyname (const qse_mchar_t* name, qse_mccls_id_t* id)
+int qse_getmctypebyname (const qse_mchar_t* name, qse_mctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(mtab) - 1, mid;
 	while (left <= right)
@@ -335,10 +364,10 @@ int qse_getmcclsidbyname (const qse_mchar_t* name, qse_mccls_id_t* id)
 		}
 	}
 
-	return (qse_mccls_id_t)0;
+	return (qse_mctype_t)0;
 }
 
-int qse_getmcclsidbyxname (const qse_mchar_t* name, qse_size_t len, qse_mccls_id_t* id)
+int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(mtab) - 1, mid;
 	while (left <= right)
@@ -366,11 +395,11 @@ int qse_getmcclsidbyxname (const qse_mchar_t* name, qse_size_t len, qse_mccls_id
 		}
 	}
 
-	return (qse_mccls_id_t)0;
+	return (qse_mctype_t)0;
 }
 
-qse_mccls_id_t qse_getmcclsid (const qse_mchar_t* name)
+qse_mctype_t qse_getmctype (const qse_mchar_t* name)
 {
-	qse_mccls_id_t id;
-	return (qse_getmcclsidbyname(name,&id) <= -1)? ((qse_mccls_id_t)0): id;
+	qse_mctype_t id;
+	return (qse_getmctypebyname(name,&id) <= -1)? ((qse_mctype_t)0): id;
 }
