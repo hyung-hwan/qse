@@ -1,5 +1,5 @@
 /*
- * $Id: chr.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
+ * $Id: chr.h 555 2011-08-24 06:54:19Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -30,91 +30,90 @@
 #include <qse/macros.h>
 
 /**
- * The qse_ccls_id_t type defines character class types.
+ * The qse_ctype_t type defines character class types.
  */
-enum qse_ccls_id_t
+enum qse_ctype_t
 {
-        QSE_CCLS_ALNUM = 1,
-        QSE_CCLS_ALPHA,
-        QSE_CCLS_BLANK,
-        QSE_CCLS_CNTRL,
-        QSE_CCLS_DIGIT,
-        QSE_CCLS_GRAPH,
-        QSE_CCLS_LOWER,
-        QSE_CCLS_PRINT,
-        QSE_CCLS_PUNCT,
-        QSE_CCLS_SPACE,
-        QSE_CCLS_UPPER,
-        QSE_CCLS_XDIGIT
+        QSE_CTYPE_ALNUM = 1,
+        QSE_CTYPE_ALPHA,
+        QSE_CTYPE_BLANK,
+        QSE_CTYPE_CNTRL,
+        QSE_CTYPE_DIGIT,
+        QSE_CTYPE_GRAPH,
+        QSE_CTYPE_LOWER,
+        QSE_CTYPE_PRINT,
+        QSE_CTYPE_PUNCT,
+        QSE_CTYPE_SPACE,
+        QSE_CTYPE_UPPER,
+        QSE_CTYPE_XDIGIT
 };
-typedef enum qse_ccls_id_t qse_ccls_id_t;
-typedef qse_ccls_id_t qse_mccls_id_t;
-typedef qse_ccls_id_t qse_wccls_id_t;
+typedef enum qse_ctype_t qse_ctype_t;
+typedef qse_ctype_t qse_mctype_t;
+typedef qse_ctype_t qse_wctype_t;
 
-#define QSE_MCCLS_UPPER  QSE_CCLS_UPPER
-#define QSE_MCCLS_LOWER  QSE_CCLS_LOWER
-#define QSE_MCCLS_ALPHA  QSE_CCLS_ALPHA
-#define QSE_MCCLS_DIGIT  QSE_CCLS_DIGIT
-#define QSE_MCCLS_XDIGIT QSE_CCLS_XDIGIT
-#define QSE_MCCLS_ALNUM  QSE_CCLS_ALNUM
-#define QSE_MCCLS_SPACE  QSE_CCLS_SPACE
-#define QSE_MCCLS_PRINT  QSE_CCLS_PRINT
-#define QSE_MCCLS_GRAPH  QSE_CCLS_GRAPH
-#define QSE_MCCLS_CNTRL  QSE_CCLS_CNTRL
-#define QSE_MCCLS_PUNCT  QSE_CCLS_PUNCT
-#define QSE_MCCLS_BLANK  QSE_CCLS_BLANK
+#define QSE_MCTYPE_UPPER  QSE_CTYPE_UPPER
+#define QSE_MCTYPE_LOWER  QSE_CTYPE_LOWER
+#define QSE_MCTYPE_ALPHA  QSE_CTYPE_ALPHA
+#define QSE_MCTYPE_DIGIT  QSE_CTYPE_DIGIT
+#define QSE_MCTYPE_XDIGIT QSE_CTYPE_XDIGIT
+#define QSE_MCTYPE_ALNUM  QSE_CTYPE_ALNUM
+#define QSE_MCTYPE_SPACE  QSE_CTYPE_SPACE
+#define QSE_MCTYPE_PRINT  QSE_CTYPE_PRINT
+#define QSE_MCTYPE_GRAPH  QSE_CTYPE_GRAPH
+#define QSE_MCTYPE_CNTRL  QSE_CTYPE_CNTRL
+#define QSE_MCTYPE_PUNCT  QSE_CTYPE_PUNCT
+#define QSE_MCTYPE_BLANK  QSE_CTYPE_BLANK
 
-#define QSE_WCCLS_UPPER  QSE_CCLS_UPPER
-#define QSE_WCCLS_LOWER  QSE_CCLS_LOWER
-#define QSE_WCCLS_ALPHA  QSE_CCLS_ALPHA
-#define QSE_WCCLS_DIGIT  QSE_CCLS_DIGIT
-#define QSE_WCCLS_XDIGIT QSE_CCLS_XDIGIT
-#define QSE_WCCLS_ALNUM  QSE_CCLS_ALNUM
-#define QSE_WCCLS_SPACE  QSE_CCLS_SPACE
-#define QSE_WCCLS_PRINT  QSE_CCLS_PRINT
-#define QSE_WCCLS_GRAPH  QSE_CCLS_GRAPH
-#define QSE_WCCLS_CNTRL  QSE_CCLS_CNTRL
-#define QSE_WCCLS_PUNCT  QSE_CCLS_PUNCT
-#define QSE_WCCLS_BLANK  QSE_CCLS_BLANK
+#define QSE_WCTYPE_UPPER  QSE_CTYPE_UPPER
+#define QSE_WCTYPE_LOWER  QSE_CTYPE_LOWER
+#define QSE_WCTYPE_ALPHA  QSE_CTYPE_ALPHA
+#define QSE_WCTYPE_DIGIT  QSE_CTYPE_DIGIT
+#define QSE_WCTYPE_XDIGIT QSE_CTYPE_XDIGIT
+#define QSE_WCTYPE_ALNUM  QSE_CTYPE_ALNUM
+#define QSE_WCTYPE_SPACE  QSE_CTYPE_SPACE
+#define QSE_WCTYPE_PRINT  QSE_CTYPE_PRINT
+#define QSE_WCTYPE_GRAPH  QSE_CTYPE_GRAPH
+#define QSE_WCTYPE_CNTRL  QSE_CTYPE_CNTRL
+#define QSE_WCTYPE_PUNCT  QSE_CTYPE_PUNCT
+#define QSE_WCTYPE_BLANK  QSE_CTYPE_BLANK
 
-#define QSE_MCTYPE(name) (qse_getmcclsid(name))
-#define QSE_ISMCTYPE(c,t) (qse_ismccls(c,t))
-#define QSE_ISMALNUM(c) (qse_ismccls(c,QSE_CCLS_ALNUM))
-#define QSE_ISMALPHA(c) (qse_ismccls(c,QSE_CCLS_ALPHA))
-#define QSE_ISMBLANK(c) (qse_ismccls(c,QSE_CCLS_BLANK))
-#define QSE_ISMCNTRL(c) (qse_ismccls(c,QSE_CCLS_CNTRL))
-#define QSE_ISMDIGIT(c) (qse_ismccls(c,QSE_CCLS_DIGIT))
-#define QSE_ISMGRAPH(c) (qse_ismccls(c,QSE_CCLS_GRAPH))
-#define QSE_ISMLOWER(c) (qse_ismccls(c,QSE_CCLS_LOWER))
-#define QSE_ISMPRINT(c) (qse_ismccls(c,QSE_CCLS_PRINT))
-#define QSE_ISMPUNCT(c) (qse_ismccls(c,QSE_CCLS_PUNCT))
-#define QSE_ISMSPACE(c) (qse_ismccls(c,QSE_CCLS_SPACE))
-#define QSE_ISMUPPER(c) (qse_ismccls(c,QSE_CCLS_UPPER))
-#define QSE_ISMXDIGIT(c) (qse_ismccls(c,QSE_CCLS_XDIGIT))
-#define QSE_TOMUPPER(c) (qse_tomccls(c,QSE_CCLS_UPPER))
-#define QSE_TOMLOWER(c) (qse_tomccls(c,QSE_CCLS_LOWER))
+#define QSE_MCTYPE(name) (qse_getmctype(name))
+#define QSE_ISMCTYPE(c,t) (qse_ismctype(c,t))
+#define QSE_ISMALNUM(c) (qse_ismctype(c,QSE_CTYPE_ALNUM))
+#define QSE_ISMALPHA(c) (qse_ismctype(c,QSE_CTYPE_ALPHA))
+#define QSE_ISMBLANK(c) (qse_ismctype(c,QSE_CTYPE_BLANK))
+#define QSE_ISMCNTRL(c) (qse_ismctype(c,QSE_CTYPE_CNTRL))
+#define QSE_ISMDIGIT(c) (qse_ismctype(c,QSE_CTYPE_DIGIT))
+#define QSE_ISMGRAPH(c) (qse_ismctype(c,QSE_CTYPE_GRAPH))
+#define QSE_ISMLOWER(c) (qse_ismctype(c,QSE_CTYPE_LOWER))
+#define QSE_ISMPRINT(c) (qse_ismctype(c,QSE_CTYPE_PRINT))
+#define QSE_ISMPUNCT(c) (qse_ismctype(c,QSE_CTYPE_PUNCT))
+#define QSE_ISMSPACE(c) (qse_ismctype(c,QSE_CTYPE_SPACE))
+#define QSE_ISMUPPER(c) (qse_ismctype(c,QSE_CTYPE_UPPER))
+#define QSE_ISMXDIGIT(c) (qse_ismctype(c,QSE_CTYPE_XDIGIT))
+#define QSE_TOMUPPER(c) (qse_ismctype(c,QSE_CTYPE_UPPER))
+#define QSE_TOMLOWER(c) (qse_ismctype(c,QSE_CTYPE_LOWER))
 
-#define QSE_WCTYPE(name) (qse_getwcclsid(name))
-#define QSE_ISWCTYPE(c,t) (qse_iswccls(c,t))
-#define QSE_ISWALNUM(c) (qse_iswccls(c,QSE_CCLS_ALNUM))
-#define QSE_ISWALPHA(c) (qse_iswccls(c,QSE_CCLS_ALPHA))
-#define QSE_ISWBLANK(c) (qse_iswccls(c,QSE_CCLS_BLANK))
-#define QSE_ISWCNTRL(c) (qse_iswccls(c,QSE_CCLS_CNTRL))
-#define QSE_ISWDIGIT(c) (qse_iswccls(c,QSE_CCLS_DIGIT))
-#define QSE_ISWGRAPH(c) (qse_iswccls(c,QSE_CCLS_GRAPH))
-#define QSE_ISWLOWER(c) (qse_iswccls(c,QSE_CCLS_LOWER))
-#define QSE_ISWPRINT(c) (qse_iswccls(c,QSE_CCLS_PRINT))
-#define QSE_ISWPUNCT(c) (qse_iswccls(c,QSE_CCLS_PUNCT))
-#define QSE_ISWSPACE(c) (qse_iswccls(c,QSE_CCLS_SPACE))
-#define QSE_ISWUPPER(c) (qse_iswccls(c,QSE_CCLS_UPPER))
-#define QSE_ISWXDIGIT(c) (qse_iswccls(c,QSE_CCLS_XDIGIT))
-#define QSE_TOWUPPER(c) (qse_towccls(c,QSE_CCLS_UPPER))
-#define QSE_TOWLOWER(c) (qse_towccls(c,QSE_CCLS_LOWER))
+#define QSE_WCTYPE(name) (qse_getwctype(name))
+#define QSE_ISWCTYPE(c,t) (qse_iswctype(c,t))
+#define QSE_ISWALNUM(c) (qse_iswctype(c,QSE_CTYPE_ALNUM))
+#define QSE_ISWALPHA(c) (qse_iswctype(c,QSE_CTYPE_ALPHA))
+#define QSE_ISWBLANK(c) (qse_iswctype(c,QSE_CTYPE_BLANK))
+#define QSE_ISWCNTRL(c) (qse_iswctype(c,QSE_CTYPE_CNTRL))
+#define QSE_ISWDIGIT(c) (qse_iswctype(c,QSE_CTYPE_DIGIT))
+#define QSE_ISWGRAPH(c) (qse_iswctype(c,QSE_CTYPE_GRAPH))
+#define QSE_ISWLOWER(c) (qse_iswctype(c,QSE_CTYPE_LOWER))
+#define QSE_ISWPRINT(c) (qse_iswctype(c,QSE_CTYPE_PRINT))
+#define QSE_ISWPUNCT(c) (qse_iswctype(c,QSE_CTYPE_PUNCT))
+#define QSE_ISWSPACE(c) (qse_iswctype(c,QSE_CTYPE_SPACE))
+#define QSE_ISWUPPER(c) (qse_iswctype(c,QSE_CTYPE_UPPER))
+#define QSE_ISWXDIGIT(c) (qse_iswctype(c,QSE_CTYPE_XDIGIT))
+#define QSE_TOWUPPER(c) (qse_towctype(c,QSE_CTYPE_UPPER))
+#define QSE_TOWLOWER(c) (qse_towctype(c,QSE_CTYPE_LOWER))
 
 #ifdef QSE_CHAR_IS_MCHAR
 #	define QSE_CTYPE(name) QSE_MCTYPE(name)
 #	define QSE_ISCTYPE(c,t) QSE_ISMCTYPE(c,t)
-#
 #	define QSE_ISUPPER(c)  QSE_ISMUPPER(c)
 #	define QSE_ISLOWER(c)  QSE_ISMLOWER(c) 
 #	define QSE_ISALPHA(c)  QSE_ISMALPHA(c) 
@@ -127,13 +126,11 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #	define QSE_ISCNTRL(c)  QSE_ISMCNTRL(c)
 #	define QSE_ISPUNCT(c)  QSE_ISMPUNCT(c)
 #	define QSE_ISBLANK(c)  QSE_ISMBLANK(c)
-#
 #	define QSE_TOUPPER(c)  QSE_TOMUPPER(c)
 #	define QSE_TOLOWER(c)  QSE_TOMLOWER(c)
 #else
 #	define QSE_CTYPE(name) QSE_WCTYPE(name)
 #	define QSE_ISCTYPE(c,t) QSE_ISWCTYPE(c,t)
-#
 #	define QSE_ISUPPER(c)  QSE_ISWUPPER(c)
 #	define QSE_ISLOWER(c)  QSE_ISWLOWER(c) 
 #	define QSE_ISALPHA(c)  QSE_ISWALPHA(c) 
@@ -146,7 +143,6 @@ typedef qse_ccls_id_t qse_wccls_id_t;
 #	define QSE_ISCNTRL(c)  QSE_ISWCNTRL(c)
 #	define QSE_ISPUNCT(c)  QSE_ISWPUNCT(c)
 #	define QSE_ISBLANK(c)  QSE_ISWBLANK(c)
-#
 #	define QSE_TOUPPER(c)  QSE_TOWUPPER(c)
 #	define QSE_TOLOWER(c)  QSE_TOWLOWER(c)
 #endif
@@ -169,70 +165,69 @@ struct qse_mbstate_t
 extern "C" {
 #endif
 
-qse_bool_t qse_ismccls (
-	qse_mcint_t      c,
-	qse_mccls_id_t   type
+int qse_ismctype (
+	qse_mcint_t    c,
+	qse_mctype_t   type
 );
 
-qse_bool_t qse_iswccls (
+int qse_iswctype (
+	qse_wcint_t    c,
+	qse_wctype_t   type
+);
+
+qse_mcint_t qse_tomctype (
+	qse_mcint_t    c,
+	qse_mctype_t   type
+);
+
+qse_wcint_t qse_towctype (
 	qse_wcint_t      c,
-	qse_wccls_id_t   type
+	qse_wctype_t   type
 );
 
-qse_mcint_t qse_tomccls (
-	qse_mcint_t      c,
-	qse_mccls_id_t   type
-);
-
-qse_wcint_t qse_towccls (
-	qse_wcint_t      c,
-	qse_wccls_id_t   type
-);
-
-int qse_getwcclsidbyname (
+int qse_getwctypebyname (
 	const qse_wchar_t* name,
-	qse_wccls_id_t*    id
+	qse_wctype_t*    id
 );
 
-int qse_getwcclsidbyxname (
+int qse_getwctypebyxname (
 	const qse_wchar_t* name,
 	qse_size_t         len,
-	qse_wccls_id_t*    id
+	qse_wctype_t*    id
 );
 
-qse_wccls_id_t qse_getwcclsid (
+qse_wctype_t qse_getwctype (
 	const qse_wchar_t* name
 );
 
-int qse_getmcclsidbyname (
+int qse_getmctypebyname (
 	const qse_mchar_t* name,
-	qse_mccls_id_t*    id
+	qse_mctype_t*    id
 );
 
-int qse_getmcclsidbyxname (
+int qse_getmctypebyxname (
 	const qse_mchar_t* name,
 	qse_size_t         len,
-	qse_mccls_id_t*    id
+	qse_mctype_t*    id
 );
 
-qse_mccls_id_t qse_getmcclsid (
+qse_mctype_t qse_getmctype (
 	const qse_mchar_t* name
 );
 
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_isccls(c,type) qse_ismccls(c,type)
-#	define qse_toccls(c,type) qse_tomccls(c,type)
-#	define qse_getcclsidbyname(name,id) qse_getmcclsidbyname(name,id)
-#	define qse_getcclsidbyxname(name,len,id) qse_getmcclsidbyxname(name,len,id)
-#	define qse_getcclsid(name) qse_getmcclsid(name)
+#	define qse_isctype(c,type) qse_ismctype(c,type)
+#	define qse_toctype(c,type) qse_ismctype(c,type)
+#	define qse_getctypebyname(name,id) qse_getmctypebyname(name,id)
+#	define qse_getctypebyxname(name,len,id) qse_getmctypebyxname(name,len,id)
+#	define qse_getctype(name) qse_getmctype(name)
 #else
-#	define qse_isccls(c,type) qse_iswccls(c,type)
-#	define qse_toccls(c,type) qse_towccls(c,type)
-#	define qse_getcclsidbyname(name,id) qse_getwcclsidbyname(name,id)
-#	define qse_getcclsidbyxname(name,len,id) qse_getwcclsidbyxname(name,len,id)
-#	define qse_getcclsid(name) qse_getwcclsid(name)
+#	define qse_isctype(c,type) qse_iswctype(c,type)
+#	define qse_toctype(c,type) qse_towctype(c,type)
+#	define qse_getctypebyname(name,id) qse_getwctypebyname(name,id)
+#	define qse_getctypebyxname(name,len,id) qse_getwctypebyxname(name,len,id)
+#	define qse_getctype(name) qse_getwctype(name)
 #endif
-
 
 qse_size_t qse_mbrlen (
 	const qse_mchar_t* mb,
