@@ -9,7 +9,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (oht)
 static QSE_INLINE_ALWAYS qse_size_t default_hasher (
 	qse_oht_t* oht, const void* data)
 {
-	size_t h = 5381;
+	qse_size_t h = 5381;
 	const qse_byte_t* p = (const qse_byte_t*)data;
 	const qse_byte_t* bound = p + oht->scale;
 	while (p < bound) h = ((h << 5) + h) + *p++;
@@ -61,7 +61,7 @@ qse_oht_t* qse_oht_open (
 	oht = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_oht_t) + xtnsize);
 	if (oht == QSE_NULL) return QSE_NULL;
 
-	if (qse_oht_init (oht, mmgr, scale, capa, limit) == QSE_NULL)
+	if (qse_oht_init (oht, mmgr, scale, capa, limit) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, oht);
 		return QSE_NULL;
@@ -76,7 +76,7 @@ void qse_oht_close (qse_oht_t* oht)
 	QSE_MMGR_FREE (oht->mmgr, oht);
 }
 
-qse_oht_t* qse_oht_init (
+int qse_oht_init (
 	qse_oht_t* oht, qse_mmgr_t* mmgr,
 	int scale, qse_size_t capa, qse_size_t limit) 
 {
@@ -99,17 +99,17 @@ qse_oht_t* qse_oht_init (
 	oht->copier = default_copier;*/
 
 	oht->mark = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_oht_mark_t) * capa);
-	if (!oht->mark) return QSE_NULL;
+	if (!oht->mark) return -1;
 
 	oht->data = QSE_MMGR_ALLOC (mmgr, scale * capa);
 	if (!oht->data)
 	{
 		QSE_MMGR_FREE (mmgr, oht->mark);
-		return QSE_NULL;
+		return -1;
 	}
 
 	for (i = 0; i < capa; i++) oht->mark[i] = QSE_OHT_EMPTY;
-	return oht;
+	return 0;
 }
 
 void qse_oht_fini (qse_oht_t* oht)

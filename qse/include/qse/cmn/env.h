@@ -84,7 +84,7 @@ void qse_env_close (
 	qse_env_t* env
 );
 
-qse_env_t* qse_env_init (
+int qse_env_init (
 	qse_env_t*  env,
 	qse_mmgr_t* mmgr,
 	int         fromcurenv

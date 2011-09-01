@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 522 2011-07-25 13:08:07Z hyunghwan.chung $
+ * $Id: misc.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1071,7 +1071,7 @@ void* qse_awk_buildrex (
 
 	p = qse_buildrex (
 		awk->mmgr, awk->rex.depth.max.build, 
-		((awk->option&QSE_AWK_REXBOUND)? 0:QSE_REX_NOBOUND),
+		((awk->option&QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
 		ptn, len, &err
 	);
 	if (p == QSE_NULL) *errnum = QSE_AWK_REXERRTOERR(err);

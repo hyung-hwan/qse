@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 454 2011-05-06 15:28:27Z hyunghwan.chung $
+ * $Id: sio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -176,7 +176,7 @@ qse_sio_t* qse_sio_open (
 	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + xtnsize);
 	if (sio == QSE_NULL) return QSE_NULL;
 
-	if (qse_sio_init (sio, mmgr, file, flags) == QSE_NULL)
+	if (qse_sio_init (sio, mmgr, file, flags) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, sio);
 		return QSE_NULL;
@@ -191,7 +191,7 @@ void qse_sio_close (qse_sio_t* sio)
 	QSE_MMGR_FREE (sio->mmgr, sio);
 }
 
-qse_sio_t* qse_sio_init (
+int qse_sio_init (
 	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
 {
 	int mode;
@@ -204,26 +204,23 @@ qse_sio_t* qse_sio_init (
 	mode = QSE_FIO_RUSR | QSE_FIO_WUSR | 
 	       QSE_FIO_RGRP | QSE_FIO_ROTH;
 
-	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) == QSE_NULL) 
-	{
-		return QSE_NULL;
-	}
+	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) <= -1) return -1;
 
-	if (qse_tio_init(&sio->tio, mmgr) == QSE_NULL) 
+	if (qse_tio_init(&sio->tio, mmgr) <= -1)
 	{
 		qse_fio_fini (&sio->fio);
-		return QSE_NULL;
+		return -1;
 	}
 
-	if (qse_tio_attachin(&sio->tio, __sio_input, sio) == -1 ||
-	    qse_tio_attachout(&sio->tio, __sio_output, sio) == -1) 
+	if (qse_tio_attachin(&sio->tio, __sio_input, sio) <= -1 ||
+	    qse_tio_attachout(&sio->tio, __sio_output, sio) <= -1) 
 	{
 		qse_tio_fini (&sio->tio);	
 		qse_fio_fini (&sio->fio);
-		return QSE_NULL;
+		return -1;
 	}
 
-	return sio;
+	return 0;
 }
 
 void qse_sio_fini (qse_sio_t* sio)

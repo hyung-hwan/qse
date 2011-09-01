@@ -1,5 +1,5 @@
 /*
- * $Id: dll.c 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: dll.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -29,8 +29,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (dll)
 
 static int default_comper (
 	qse_dll_t* dll, 
-	const void* dptr1, size_t dlen1, 
-	const void* dptr2, size_t dlen2)
+	const void* dptr1, qse_size_t dlen1, 
+	const void* dptr2, qse_size_t dlen2)
 {
 	if (dlen1 == dlen2) return QSE_MEMCMP (dptr1, dptr2, TOB(dll,dlen1));
 	/* it just returns 1 to indicate that they are different. */
@@ -64,7 +64,7 @@ qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	dll = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_dll_t) + xtnsize);
 	if (dll == QSE_NULL) return QSE_NULL;
 
-	if (qse_dll_init (dll, mmgr) == QSE_NULL)
+	if (qse_dll_init (dll, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, dll);
 		return QSE_NULL;
@@ -79,7 +79,7 @@ void qse_dll_close (qse_dll_t* dll)
 	QSE_MMGR_FREE (dll->mmgr, dll);
 }
 
-qse_dll_t* qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
+int qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -93,7 +93,7 @@ qse_dll_t* qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 	dll->copier = QSE_DLL_COPIER_SIMPLE;
 
 	QSE_DLL_INIT (dll);
-	return dll;
+	return 0;
 }
 
 void qse_dll_fini (qse_dll_t* dll)

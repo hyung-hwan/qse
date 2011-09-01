@@ -1,5 +1,5 @@
 /*
- * $Id: htb.c 492 2011-06-15 16:00:36Z hyunghwan.chung $
+ * $Id: htb.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -274,7 +274,7 @@ htb_t* qse_htb_open (
 	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, SIZEOF(htb_t) + xtnsize);
 	if (htb == QSE_NULL) return QSE_NULL;
 
-	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) == QSE_NULL)
+	if (qse_htb_init (htb, mmgr, capa, factor, kscale, vscale) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, htb);
 		return QSE_NULL;
@@ -289,7 +289,7 @@ void qse_htb_close (htb_t* htb)
 	QSE_MMGR_FREE (htb->mmgr, htb);
 }
 
-htb_t* qse_htb_init (
+int qse_htb_init (
 	htb_t* htb, mmgr_t* mmgr, size_t capa,
 	int factor, int kscale, int vscale)
 {
@@ -310,10 +310,10 @@ htb_t* qse_htb_init (
 	htb->mmgr = mmgr;
 
 	htb->bucket = QSE_MMGR_ALLOC (mmgr, capa*SIZEOF(pair_t*));
-	if (htb->bucket == QSE_NULL) return QSE_NULL;
+	if (htb->bucket == QSE_NULL) return -1;
 
 	/*for (i = 0; i < capa; i++) htb->bucket[i] = QSE_NULL;*/
-	QSE_MEMSET (htb->bucket, 0, capa*SIZEOF(pair_t*));
+	QSE_MEMSET (htb->bucket, 0, capa * SIZEOF(pair_t*));
 
 	htb->factor = factor;
 	htb->scale[QSE_HTB_KEY] = (kscale < 1)? 1: kscale;
@@ -325,7 +325,7 @@ htb_t* qse_htb_init (
 	if (htb->capa > 0 && htb->threshold <= 0) htb->threshold = 1;
 
 	htb->mancbs = &mancbs[0];
-	return htb;
+	return 0;
 }
 
 void qse_htb_fini (htb_t* htb)

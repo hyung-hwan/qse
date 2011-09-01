@@ -21,21 +21,18 @@
 #include <qse/net/htre.h>
 #include "../cmn/mem.h"
 
-qse_htre_t* qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
+int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (re, 0, QSE_SIZEOF(*re));
 	re->mmgr = mmgr;	
 
-	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) == QSE_NULL)
-	{
-		return QSE_NULL;
-	}
+	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
 
 	qse_mbs_init (&re->content, mmgr, 0);
 	qse_mbs_init (&re->qpath_or_smesg, mmgr, 0);
 	qse_mbs_init (&re->qparam, mmgr, 0);
 
-	return re;
+	return 0;
 }
 
 void qse_htre_fini (qse_htre_t* re)

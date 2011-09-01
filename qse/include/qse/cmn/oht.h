@@ -165,10 +165,9 @@ void qse_oht_close (
 );
 
 /**
- * The qse_oht_open() function initializes a statically declared 
- * open-addressed hash table.
+ * The qse_oht_open() function initializes an open-addressed hash table.
  */
-qse_oht_t* qse_oht_init (
+int qse_oht_init (
 	qse_oht_t*  oht,
 	qse_mmgr_t* mmgr,
 	int         scale,

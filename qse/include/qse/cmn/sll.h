@@ -1,5 +1,5 @@
 /*
- * $Id: sll.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: sll.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -192,12 +192,11 @@ void qse_sll_close (
  * to it. The caller may declare a static variable of the qse_sll_t type
  * and pass its address. A memory manager still needs to be passed for 
  * node manipulation later.
- *  
- * @return
+ * @return 0 on success, -1 on failure
  *  The qse_sll_init() function returns the first parameter on success and
  *  QSE_NULL on failure.
  */
-qse_sll_t* qse_sll_init (
+int qse_sll_init (
 	qse_sll_t*  sll,  /* singly linked list */
 	qse_mmgr_t* mmgr  /* memory manager */
 );

@@ -1,5 +1,5 @@
 /*
- * $Id: tio.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: tio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,7 +23,7 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (tio)
 
-qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t ext)
+qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_tio_t* tio;
 
@@ -37,10 +37,10 @@ qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t ext)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	tio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tio_t) + ext);
+	tio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tio_t) + xtnsize);
 	if (tio == QSE_NULL) return QSE_NULL;
 
-	if (qse_tio_init (tio, mmgr) == QSE_NULL)
+	if (qse_tio_init (tio, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, tio);
 		return QSE_NULL;
@@ -56,7 +56,7 @@ int qse_tio_close (qse_tio_t* tio)
 	return n;
 }
 
-qse_tio_t* qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr)
+int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -70,15 +70,15 @@ qse_tio_t* qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr)
 	tio->output_func = QSE_NULL;
 	tio->output_arg = QSE_NULL;
 
-        tio->input_status = 0;
-        tio->inbuf_curp = 0;
-        tio->inbuf_len = 0;
-        tio->outbuf_len = 0;
+	tio->input_status = 0;
+	tio->inbuf_curp = 0;
+	tio->inbuf_len = 0;
+	tio->outbuf_len = 0;
 	*/
 
 	tio->errnum = QSE_TIO_ENOERR;
 
-	return tio;
+	return 0;
 }
 
 int qse_tio_fini (qse_tio_t* tio)
@@ -135,9 +135,9 @@ int qse_tio_attachin (qse_tio_t* tio, qse_tio_io_t input, void* arg)
 	tio->input_func = input;
 	tio->input_arg = arg;
 
-        tio->input_status = 0;
-        tio->inbuf_curp = 0;
-        tio->inbuf_len = 0;
+	tio->input_status = 0;
+	tio->inbuf_curp = 0;
+	tio->inbuf_len = 0;
 
 	return 0;
 }

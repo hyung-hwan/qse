@@ -1,5 +1,5 @@
 /*
- * $Id: sll.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sll.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -117,7 +117,7 @@ sll_t* qse_sll_open (mmgr_t* mmgr, size_t ext)
 	sll = QSE_MMGR_ALLOC (mmgr, SIZEOF(sll_t) + ext);
 	if (sll == QSE_NULL) return QSE_NULL;
 
-	if (qse_sll_init (sll, mmgr) == QSE_NULL)
+	if (qse_sll_init (sll, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, sll);
 		return QSE_NULL;
@@ -132,7 +132,7 @@ void qse_sll_close (sll_t* sll)
 	QSE_MMGR_FREE (sll->mmgr, sll);
 }
 
-sll_t* qse_sll_init (sll_t* sll, mmgr_t* mmgr)
+int qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -145,7 +145,7 @@ sll_t* qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 
 	sll->comper = default_comper;
 	sll->copier = QSE_SLL_COPIER_SIMPLE;
-	return sll;
+	return 0;
 }
 
 void qse_sll_fini (sll_t* sll)

@@ -129,7 +129,7 @@ typedef int (*qse_htre_header_walker_t) (
 extern "C" {
 #endif
 
-qse_htre_t* qse_htre_init (
+int qse_htre_init (
 	qse_htre_t* re,
 	qse_mmgr_t* mmgr
 );

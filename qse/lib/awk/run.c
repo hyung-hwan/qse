@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 551 2011-08-15 13:52:48Z hyunghwan.chung $
+ * $Id: run.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -818,21 +818,21 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->inrec.maxflds = 0;
 	rtx->inrec.d0 = qse_awk_val_nil;
 	if (qse_str_init (
-		&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) == QSE_NULL)
+		&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
 	if (qse_str_init (
-		&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) == QSE_NULL)
+		&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1)
 	{
 		qse_str_fini (&rtx->inrec.line);
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 
-	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) == QSE_NULL)
+	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) <= -1)
 	{
 		qse_str_fini (&rtx->inrec.linew);
 		qse_str_fini (&rtx->inrec.line);
@@ -840,7 +840,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		return -1;
 	}
 
-	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) == QSE_NULL)
+	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) <= -1)
 	{
 		qse_str_fini (&rtx->format.out);
 		qse_str_fini (&rtx->inrec.linew);
@@ -6311,7 +6311,7 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	dst = (in == QSE_NULL)? QSE_T(""): in;
 
 	/* TODO: optimize the line buffer management */
-	if (qse_str_init (&buf, MMGR(run), DEF_BUF_CAPA) == QSE_NULL)
+	if (qse_str_init (&buf, MMGR(run), DEF_BUF_CAPA) <= -1)
 	{
 		if (in != QSE_NULL) QSE_AWK_FREE (run->awk, in);
 		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
@@ -6483,7 +6483,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 	}
 
 	if (qse_str_init (
-		&tmp, MMGR(run), QSE_STR_LEN(&run->inrec.line)) == QSE_NULL)
+		&tmp, MMGR(run), QSE_STR_LEN(&run->inrec.line)) <= -1)
 	{
 		if (ofs_free != QSE_NULL) 
 			QSE_AWK_FREE (run->awk, ofs_free);
@@ -6607,7 +6607,7 @@ static qse_char_t* idxnde_to_str (
 		out.type = QSE_AWK_RTX_VALTOSTR_STRPCAT;
 		out.u.strpcat = &idxstr;
 
-		if (qse_str_init (&idxstr, MMGR(run), DEF_BUF_CAPA) == QSE_NULL) 
+		if (qse_str_init (&idxstr, MMGR(run), DEF_BUF_CAPA) <= -1) 
 		{
 			SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
 			return QSE_NULL;

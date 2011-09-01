@@ -1,5 +1,5 @@
 /*
- * $Id: rex.h 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: rex.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -210,7 +210,7 @@ void qse_rex_close (
 	qse_rex_t* rex
 );
 
-qse_rex_t* qse_rex_init (
+int qse_rex_init (
 	qse_rex_t* rex, 
 	qse_mmgr_t* mmgr,
 	qse_rex_node_t* code

@@ -232,7 +232,7 @@ void qse_fma_close (
  * The qse_fma_init() function initializes an memory allocator statically 
  * declared.
  */
-qse_fma_t* qse_fma_init (
+int qse_fma_init (
 	qse_fma_t* fma,     /**< memory allocator */
 	qse_mmgr_t* mmgr,   /**< outer memory manager */
 	qse_size_t blksize, /**< fixed block size in bytes */

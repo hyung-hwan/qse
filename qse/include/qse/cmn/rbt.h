@@ -301,7 +301,7 @@ void qse_rbt_close (
 /**
  * The qse_rbt_init() function initializes a red-black tree
  */
-qse_rbt_t* qse_rbt_init (
+int qse_rbt_init (
 	qse_rbt_t*  rbt,    /**< red-black tree */
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	int         kscale, /**< key scale */

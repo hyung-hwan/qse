@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 539 2011-08-10 16:18:35Z hyunghwan.chung $
+ * $Id: pio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -117,6 +117,7 @@ enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0, /**< no error */
 	QSE_PIO_ENOMEM,     /**< out of memory */
+	QSE_PIO_EINVAL,     /**< out of memory */
 	QSE_PIO_ENOHND,     /**< no handle available */
 	QSE_PIO_ECHILD,     /**< the child is not valid */
 	QSE_PIO_EINTR,      /**< interrupted */
@@ -223,9 +224,9 @@ void qse_pio_close (
  * The qse_pio_init() functions performs the same task as the qse_pio_open()
  * except that you need to allocate a #qse_pio_t structure and pass it to the
  * function.
- * @return @a pio on success, #QSE_NULL on failure
+ * @return 0 on success, -1 on failure
  */
-qse_pio_t* qse_pio_init (
+int qse_pio_init (
 	qse_pio_t*        pio,    /**< pio object */
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	const qse_char_t* cmd,    /**< command to execute */

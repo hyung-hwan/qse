@@ -26,6 +26,7 @@ pkginclude_HEADERS = \
 	str.h \
 	time.h \
 	tio.h \
+	tre.h \
 	xma.h 
 
 if ENABLE_CXX

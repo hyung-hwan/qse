@@ -56,7 +56,7 @@ qse_pma_t* qse_pma_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	pma = (qse_pma_t*)QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*pma) + xtnsize);
 	if (pma == QSE_NULL) return QSE_NULL;
 
-	if (qse_pma_init (pma, mmgr) == QSE_NULL)
+	if (qse_pma_init (pma, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, pma);
 		return QSE_NULL;
@@ -71,14 +71,14 @@ void qse_pma_close (qse_pma_t* pma)
 	QSE_MMGR_FREE (pma->mmgr, pma);
 }
 
-qse_pma_t* qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
+int qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
 	pma->mmgr = mmgr;
 
-	return pma;	
+	return 0;
 }
 
 /* Frees the memory allocator and all memory allocated with it. */

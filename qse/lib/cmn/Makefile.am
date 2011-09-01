@@ -5,26 +5,84 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
+
 lib_LTLIBRARIES = libqsecmn.la
+
 libqsecmn_la_SOURCES = \
-	syscall.h mem.h \
-	mem.c xma.c fma.c pma.c chr.c chr_cnv.c rex.c \
-	str_beg.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c \
-	str_del.c str_dup.c str_dynm.c str_dynw.c str_end.c str_excl.c \
-	str_fcpy.c str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c \
-	str_rev.c str_rot.c str_set.c str_spl.c str_spn.c str_str.c \
-	str_subst.c str_tok.c str_trm.c str_word.c \
-	lda.c oht.c htb.c rbt.c sll.c gdl.c dll.c opt.c \
-	tio.c tio_get.c tio_put.c \
-	fio.c pio.c sio.c \
-	alg_search.c  \
-	alg_sort.c \
-	env.c \
-	time.c \
-	misc.c \
+	tre.h \
+	alg-search.c  \
+	alg-sort.c \
 	assert.c \
+	chr.c \
+	chr-cnv.c \
+	dll.c \
+	env.c \
+	gdl.c \
+	htb.c \
+	lda.c \
+	fio.c \
+	fma.c \
 	main.c \
-	stdio.c
+	mem.c \
+	mem.h \
+	misc.c \
+	oht.c \
+	opt.c \
+	pma.c \
+	pio.c \
+	rbt.c \
+	rex.c \
+	sio.c \
+	sll.c \
+	str-beg.c \
+	str-cat.c \
+	str-chr.c \
+	str-cnv.c \
+	str-cmp.c \
+	str-cpy.c \
+	str-del.c \
+	str-dup.c \
+	str-dynm.c \
+	str-dynw.c \
+	str-end.c \
+	str-excl.c \
+	str-fcpy.c \
+	str-incl.c \
+	str-len.c \
+	str-pac.c \
+	str-pbrk.c \
+	str-put.c \
+	str-rev.c \
+	str-rot.c \
+	str-set.c \
+	str-spl.c \
+	str-spn.c \
+	str-str.c \
+	str-subst.c \
+	str-tok.c \
+	str-trm.c \
+	str-word.c \
+	syscall.h \
+	time.c \
+	tio.c \
+	tio-get.c \
+	tio-put.c \
+	tre.c \
+	tre.h \
+	tre-ast.c \
+	tre-ast.h \
+	tre-compile.c \
+	tre-compile.h \
+	tre-match-backtrack.c \
+	tre-match-parallel.c \
+	tre-match-utils.h \
+	tre-parse.c \
+	tre-parse.h \
+	tre-stack.c \
+	tre-stack.h \
+	stdio.c \
+	xma.c
+
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 
 if WIN32 

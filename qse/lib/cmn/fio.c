@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 550 2011-08-14 15:59:55Z hyunghwan.chung $
+ * $Id: fio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -24,7 +24,7 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
-#	include <psapi.h>
+#	include <psapi.h> /* for GetMappedFileName() */
 #	include <tchar.h>
 #elif defined(__OS2__)
 #	define INCL_DOSFILEMGR
@@ -67,7 +67,7 @@ qse_fio_t* qse_fio_open (
 	fio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_fio_t) + ext);
 	if (fio == QSE_NULL) return QSE_NULL;
 
-	if (qse_fio_init (fio, mmgr, path, flags, mode) == QSE_NULL)
+	if (qse_fio_init (fio, mmgr, path, flags, mode) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, fio);
 		return QSE_NULL;
@@ -82,7 +82,7 @@ void qse_fio_close (qse_fio_t* fio)
 	QSE_MMGR_FREE (fio->mmgr, fio);
 }
 
-qse_fio_t* qse_fio_init (
+int qse_fio_init (
 	qse_fio_t* fio, qse_mmgr_t* mmgr,
 	const qse_char_t* path, int flags, int mode)
 {
@@ -157,13 +157,13 @@ qse_fio_t* qse_fio_init (
 			creation_disposition, flag_and_attr, 0
 		);
 	}
-	if (handle == INVALID_HANDLE_VALUE) return QSE_NULL;
+	if (handle == INVALID_HANDLE_VALUE) return -1;
 
 	/* some special check */
 	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
 	{
 		CloseHandle (handle);
-		return QSE_NULL;
+		return -1;
 	}
 
 	/* TODO: support more features on WIN32 - TEMPORARY, DELETE_ON_CLOSE */
@@ -186,7 +186,7 @@ qse_fio_t* qse_fio_init (
 	#else
 		qse_mchar_t path_mb[CCHMAXPATH];
 		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return QSE_NULL;
+			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
 	#endif
 
 		zero.ulLo = 0;
@@ -253,7 +253,7 @@ qse_fio_t* qse_fio_init (
 			0L                            
 		);
 
-		if (ret != NO_ERROR) return QSE_NULL;
+		if (ret != NO_ERROR) return -1;
 	}
 
 #elif defined(__DOS__)
@@ -272,7 +272,7 @@ qse_fio_t* qse_fio_init (
 	#else
 		qse_mchar_t path_mb[_MAX_PATH];
 		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return QSE_NULL;
+			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
 	#endif
 
 		if (flags & QSE_FIO_APPEND)
@@ -303,7 +303,7 @@ qse_fio_t* qse_fio_init (
 			oflags,
 			permission
 		);
-		if (handle <= -1) return QSE_NULL;
+		if (handle <= -1) return -1;
 	}
 
 #else
@@ -321,7 +321,7 @@ qse_fio_t* qse_fio_init (
 	#else
 		qse_mchar_t path_mb[PATH_MAX + 1];
 		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return QSE_NULL;
+			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND
@@ -358,7 +358,7 @@ qse_fio_t* qse_fio_init (
 		handle = QSE_OPEN (path_mb, desired_access, mode);
 	}
 
-	if (handle == -1) return QSE_NULL;
+	if (handle == -1) return -1;
 
 #endif
 
@@ -369,8 +369,8 @@ qse_fio_t* qse_fio_init (
 		tio = qse_tio_open (fio->mmgr, 0);
 		if (tio == QSE_NULL) QSE_THROW_ERR (tio);
 
-		if (qse_tio_attachin (tio, fio_input, fio) == -1 ||
-		    qse_tio_attachout (tio, fio_output, fio) == -1)
+		if (qse_tio_attachin (tio, fio_input, fio) <= -1 ||
+		    qse_tio_attachout (tio, fio_output, fio) <= -1)
 		{
 			qse_tio_close (tio);
 			QSE_THROW_ERR (tio);
@@ -387,7 +387,7 @@ qse_fio_t* qse_fio_init (
 		#else
 			QSE_CLOSE (handle);     
 		#endif
-			return QSE_NULL;
+			return -1;
 		}
 
 		fio->tio = tio;
@@ -395,7 +395,7 @@ qse_fio_t* qse_fio_init (
 
 	fio->handle = handle;
 
-	return fio;
+	return 0;
 }
 
 void qse_fio_fini (qse_fio_t* fio)
@@ -436,15 +436,17 @@ qse_fio_off_t qse_fio_seek (
 
 	QSE_ASSERT (QSE_SIZEOF(offset) <= QSE_SIZEOF(x.QuadPart));
 
+	/* SetFilePointerEx is not available on Windows NT 4.
+	 * So let's use SetFilePointerEx */
+#if 0
 	x.QuadPart = offset;
 	if (SetFilePointerEx (fio->handle, x, &y, seek_map[origin]) == FALSE)
 	{
 		return (qse_fio_off_t)-1;
 	}
-
 	return (qse_fio_off_t)y.QuadPart;
+#endif
 
-	/*
 	x.QuadPart = offset;
 	x.LowPart = SetFilePointer (
 		fio->handle, x.LowPart, &x.HighPart, seek_map[origin]);
@@ -452,9 +454,8 @@ qse_fio_off_t qse_fio_seek (
 	{
 		return (qse_fio_off_t)-1;
 	}
-
 	return (qse_fio_off_t)x.QuadPart;
-	*/
+
 #elif defined(__OS2__)
 	static int seek_map[] =
 	{
@@ -518,11 +519,15 @@ qse_fio_off_t qse_fio_seek (
 int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 {
 #if defined(_WIN32)
+#if 0
 	LARGE_INTEGER x;
 	x.QuadPart = size;
 
 	if (SetFilePointerEx(fio->handle,x,NULL,FILE_BEGIN) == FALSE ||
 	    SetEndOfFile(fio->handle) == FALSE) return -1;
+#endif
+	if (qse_fio_seek (fio, size, QSE_FIO_BEGIN) == (qse_fio_off_t)-1) return -1;
+	if (SetEndOfFile(fio->handle) == FALSE) return -1;
 
 	return 0;
 #elif defined(__OS2__)
@@ -636,7 +641,6 @@ qse_ssize_t qse_fio_flush (qse_fio_t* fio)
 	if (fio->tio == QSE_NULL) return 0;
 	return qse_tio_flush (fio->tio);
 }
-
 
 #if defined(_WIN32)
 

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 550 2011-08-14 15:59:55Z hyunghwan.chung $
+ * $Id: str.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -877,6 +877,19 @@ int qse_wcsxncasecmp (
 	qse_size_t         ln2  /**< length of the second string */
 );
 
+int qse_mbszcmp (
+	const qse_mchar_t* s1,
+	const qse_mchar_t* s2,
+	qse_size_t         n
+);
+
+int qse_wcszcmp (
+	const qse_wchar_t* s1,
+	const qse_wchar_t* s2,
+	qse_size_t         n
+);
+
+
 #ifdef QSE_CHAR_IS_MCHAR
 #	define qse_strcmp(s1,s2)               qse_mbscmp(s1,s2)
 #	define qse_strxcmp(s1,ln1,s2)          qse_mbsxcmp(s1,ln1,s2)
@@ -884,6 +897,7 @@ int qse_wcsxncasecmp (
 #	define qse_strcasecmp(s1,s2)           qse_mbscasecmp(s1,s2)
 #	define qse_strxcasecmp(s1,ln1,s2)      qse_mbsxcasecmp(s1,ln1,s2)
 #	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_mbsxncasecmp(s1,ln1,s2,ln2)
+#	define qse_strzcmp(s1,s2,n)            qse_mbszcmp(s1,s2,n)
 #else
 #	define qse_strcmp(s1,s2)               qse_wcscmp(s1,s2)
 #	define qse_strxcmp(s1,ln1,s2)          qse_wcsxcmp(s1,ln1,s2)
@@ -891,6 +905,7 @@ int qse_wcsxncasecmp (
 #	define qse_strcasecmp(s1,s2)           qse_wcscasecmp(s1,s2)
 #	define qse_strxcasecmp(s1,ln1,s2)      qse_wcsxcasecmp(s1,ln1,s2)
 #	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_wcsxncasecmp(s1,ln1,s2,ln2)
+#	define qse_strzcmp(s1,s2,n)            qse_wcszcmp(s1,s2,n)
 #endif
 
 qse_mchar_t* qse_mbsdup (
@@ -2265,9 +2280,9 @@ void qse_mbs_close (
  * The qse_mbs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
  * in advance and always succeeds.
- * @return @a mbs on success, #QSE_NULL on failure.
+ * @return 0 on success, -1 on failure.
  */
-qse_mbs_t* qse_mbs_init (
+int qse_mbs_init (
 	qse_mbs_t*  mbs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
@@ -2439,9 +2454,9 @@ void qse_wcs_close (
  * The qse_wcs_init() function initializes a dynamically resizable string
  * If the parameter capa is 0, it doesn't allocate the internal buffer 
  * in advance and always succeeds.
- * @return @a wcs on success, #QSE_NULL on failure.
+ * @return 0 on success, -1 on failure.
  */
-qse_wcs_t* qse_wcs_init (
+int qse_wcs_init (
 	qse_wcs_t*  wcs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa

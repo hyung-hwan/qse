@@ -24,7 +24,7 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (cut)
 
-static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr);
+static int qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr);
 static void qse_cut_fini (qse_cut_t* cut);
 
 #define SETERR0(cut,num) \
@@ -92,7 +92,7 @@ qse_cut_t* qse_cut_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 	cut = (qse_cut_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_cut_t) + xtn);
 	if (cut == QSE_NULL) return QSE_NULL;
 
-	if (qse_cut_init (cut, mmgr) == QSE_NULL)
+	if (qse_cut_init (cut, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (cut->mmgr, cut);
 		return QSE_NULL;
@@ -107,7 +107,7 @@ void qse_cut_close (qse_cut_t* cut)
 	QSE_MMGR_FREE (cut->mmgr, cut);
 }
 
-static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
+static int qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -125,13 +125,13 @@ static qse_cut_t* qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
 	cut->e.in.flds = cut->e.in.sflds;
 
 	if (qse_str_init (
-		&cut->e.in.line, QSE_MMGR(cut), DFL_LINE_CAPA) == QSE_NULL)
+		&cut->e.in.line, QSE_MMGR(cut), DFL_LINE_CAPA) <= -1)
 	{
 		SETERR0 (cut, QSE_CUT_ENOMEM);
-		return QSE_NULL;
+		return -1;
 	}
 
-	return cut;
+	return 0;
 }
 
 static void qse_cut_fini (qse_cut_t* cut)

@@ -7,15 +7,15 @@
 #include "boot.h"
 #include "../cmn/mem.h"
 
-qse_stx_t* qse_stx_init (qse_stx_t* stx, qse_mmgr_t* mmgr, qse_size_t memcapa)
+int qse_stx_init (qse_stx_t* stx, qse_mmgr_t* mmgr, qse_size_t memcapa)
 {
 	QSE_MEMSET (stx, 0, QSE_SIZEOF(*stx));
 	stx->mmgr = mmgr;
 
 	/* initialize object memory subsystem */
-	if (qse_stx_initmem (stx, memcapa) <= -1) return QSE_NULL;
+	if (qse_stx_initmem (stx, memcapa) <= -1) return -1;
 
-	return stx;
+	return 0;
 }
 
 void qse_stx_fini (qse_stx_t* stx)
@@ -41,7 +41,7 @@ qse_stx_t* qse_stx_open (
 	);
 	if (stx == QSE_NULL) return QSE_NULL;
 
-	if (qse_stx_init (stx, mmgr, memcapa) == QSE_NULL)
+	if (qse_stx_init (stx, mmgr, memcapa) <= -1)
 	{
 		QSE_MMGR_FREE (stx->mmgr, stx);
 		return QSE_NULL;

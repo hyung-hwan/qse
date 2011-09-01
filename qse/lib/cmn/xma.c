@@ -122,7 +122,7 @@ qse_xma_t* qse_xma_open (
 	xma = (qse_xma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xma) + xtnsize);
 	if (xma == QSE_NULL) return QSE_NULL;
 
-	if (qse_xma_init (xma, mmgr, zonesize) == QSE_NULL)
+	if (qse_xma_init (xma, mmgr, zonesize) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, xma);
 		return QSE_NULL;
@@ -137,7 +137,7 @@ void qse_xma_close (qse_xma_t* xma)
 	QSE_MMGR_FREE (xma->mmgr, xma);
 }
 
-qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
+int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 {
 	qse_xma_blk_t* free;
 	qse_size_t xfi;
@@ -152,7 +152,7 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 
 	/* allocate a memory chunk to use for actual memory allocation */
 	free = QSE_MMGR_ALLOC (mmgr, zonesize);
-	if (free == QSE_NULL) return QSE_NULL;
+	if (free == QSE_NULL) return -1;
 	
 	/* initialize the header part of the free chunk */
 	free->avail = 1;
@@ -184,7 +184,7 @@ qse_xma_t* qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 	xma->stat.nused = 0;
 #endif
 	
-	return xma;
+	return 0;
 }
 
 void qse_xma_fini (qse_xma_t* xma)

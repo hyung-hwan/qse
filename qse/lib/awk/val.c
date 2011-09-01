@@ -1,5 +1,5 @@
 /*
- * $Id: val.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: val.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -448,10 +448,9 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 	val->nstr = 0;
 	val->map = (qse_htb_t*)(val + 1);
 
-	val->map = qse_htb_init (
-		val->map, rtx->awk->mmgr, 256, 70, QSE_SIZEOF(qse_char_t), 1
-	);
-	if (val->map == QSE_NULL)
+	if (qse_htb_init (
+		val->map, rtx->awk->mmgr, 
+		256, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
 		QSE_AWK_FREE (rtx->awk, val);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -981,14 +980,14 @@ static int val_real_to_str (
 		tmp_len = rtx->gbl.convfmt.len;
 	}
 
-	if (qse_str_init (&buf, rtx->awk->mmgr, 256) == QSE_NULL)
+	if (qse_str_init (&buf, rtx->awk->mmgr, 256) <= -1)
 	{
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
 	buf_inited = 1;
 
-	if (qse_str_init (&fbu, rtx->awk->mmgr, 256) == QSE_NULL)
+	if (qse_str_init (&fbu, rtx->awk->mmgr, 256) <= -1)
 	{
 		qse_str_fini (&buf);
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);

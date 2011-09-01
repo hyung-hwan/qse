@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 543 2011-08-12 16:35:34Z hyunghwan.chung $
+ * $Id: pio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -62,7 +62,7 @@ qse_pio_t* qse_pio_open (
 	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
 	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pio_init (pio, mmgr, cmd, env, oflags) == QSE_NULL)
+	if (qse_pio_init (pio, mmgr, cmd, env, oflags) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
@@ -77,7 +77,7 @@ void qse_pio_close (qse_pio_t* pio)
 	QSE_MMGR_FREE (pio->mmgr, pio);
 }
 
-qse_pio_t* qse_pio_init (
+int qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
 	qse_env_t* env, int oflags)
 {
@@ -183,7 +183,11 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
-	if (maxidx == -1) goto oops;
+	if (maxidx == -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		goto oops;
+	}
 
 	if ((oflags & QSE_PIO_INTONUL) || 
 	    (oflags & QSE_PIO_OUTTONUL) ||
@@ -255,7 +259,11 @@ qse_pio_t* qse_pio_init (
 			{
 				const qse_mchar_t* mbs = (const qse_mchar_t*)cmd;
 				qse_size_t ll = qse_mbstowcslen (mbs, &reqlen);
-				if (mbs[ll] != QSE_MT('\0')) goto oops; /* illegal sequence */
+				if (mbs[ll] != QSE_MT('\0')) 
+				{
+					pio->errnum = QSE_PIO_EINVAL;
+					goto oops; /* illegal sequence */
+				}
 			}
 			else
 			{
@@ -270,7 +278,11 @@ qse_pio_t* qse_pio_init (
 			dupcmd = QSE_MMGR_ALLOC (
 				mmgr, (11 + reqlen) * QSE_SIZEOF(*dupcmd)
 			);
-			if (dupcmd == QSE_NULL) goto oops;
+			if (dupcmd == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
 
 			qse_strcpy (dupcmd, QSE_T("cmd.exe /c "));
 
@@ -302,7 +314,11 @@ qse_pio_t* qse_pio_init (
 		#if defined(QSE_CHAR_IS_WCHAR)
 			}
 		#endif
-			if (dupcmd == QSE_NULL) goto oops;
+			if (dupcmd == QSE_NULL)
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
 		}
 
 		x = CreateProcess (
@@ -403,7 +419,11 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
-	if (maxidx == -1) goto oops;
+	if (maxidx == -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		goto oops;
+	}
 
 	if ((oflags & QSE_PIO_INTONUL) || 
 	    (oflags & QSE_PIO_OUTTONUL) ||
@@ -513,12 +533,20 @@ qse_pio_t* qse_pio_init (
 		else
 		{
 			n = qse_wcstombslen (cmd, &mn);
-			if (cmd[n] != QSE_WT('\0')) goto oops; /* illegal sequence found */
+			if (cmd[n] != QSE_WT('\0')) 
+			{
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops; /* illegal sequence found */
+			}
 		}
 	#endif
 		cmd_line = QSE_MMGR_ALLOC (
 			mmgr, ((11+mn+1+1) * QSE_SIZEOF(*cmd_line)));
-		if (cmd_line == QSE_NULL) goto oops;
+		if (cmd_line == QSE_NULL) 
+		{		
+			pio->errnum = QSE_PIO_ENOMEM;
+			goto oops;
+		}
 
 		qse_mbscpy (cmd_line, QSE_MT("cmd.exe")); /* cmd.exe\0/c */ 
 		qse_mbscpy (&cmd_line[8], QSE_MT("/c "));
@@ -547,24 +575,40 @@ qse_pio_t* qse_pio_init (
 	#ifdef QSE_CHAR_IS_MCHAR
 		mn = qse_strlen(cmd);
 		cmd_line = qse_strdup2 (cmd, QSE_T(" "), pio->mmgr);
-		if (cmd_line == QSE_NULL) goto oops;
+		if (cmd_line == QSE_NULL) 
+		{
+			pio->errnum = QSE_PIO_ENOMEM;
+			goto oops;
+		}
 	#else   
 		if (oflags & QSE_PIO_MBSCMD)
 		{
 			mn = qse_mbslen((const qse_mchar_t*)cmd);
 			cmd_line = qse_mbsdup2 ((const qse_mchar_t*)cmd, QSE_MT(" "), pio->mmgr);
-			if (cmd_line == QSE_NULL) goto oops;
+			if (cmd_line == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
 		}
 		else
 		{
 			qse_size_t n;
 
 			n = qse_wcstombslen (cmd, &mn);
-			if (cmd[n] != QSE_T('\0')) goto oops; /* illegal sequence in cmd */
+			if (cmd[n] != QSE_T('\0')) 
+			{
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops; /* illegal sequence in cmd */
+			}
 	
 			mn = mn + 1;
 			cmd_line = QSE_MMGR_ALLOC (pio->mmgr, mn * QSE_SIZEOF(qse_char_t));
-			if (cmd_line == QSE_NULL) goto oops;
+			if (cmd_line == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
   
 			qse_wcstombs (cmd, cmd_line, &mn);
 		}
@@ -611,7 +655,7 @@ qse_pio_t* qse_pio_init (
 #elif defined(__DOS__)
 		
 	/* DOS not multi-processed. can't support pio */
-	return QSE_NULL;
+	return -1;
 
 #else
 
@@ -635,7 +679,11 @@ qse_pio_t* qse_pio_init (
 		maxidx = 5;
 	}
 
-	if (maxidx == -1) goto oops;
+	if (maxidx == -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		goto oops;
+	}
 
 	pid = QSE_FORK();
 	if (pid <= -1) goto oops;
@@ -956,7 +1004,11 @@ qse_pio_t* qse_pio_init (
 			int r;
 
 			tio[i] = qse_tio_open (pio->mmgr, 0);
-			if (tio[i] == QSE_NULL) goto oops;
+			if (tio[i] == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
 
 			r = (i == QSE_PIO_IN)?
 				qse_tio_attachout (tio[i], pio_output, &pio->pin[i]):
@@ -969,9 +1021,11 @@ qse_pio_t* qse_pio_init (
 	}
 
 	pio->option = 0;
-	return pio;
+	return 0;
 
 oops:
+	if (pio->errnum == QSE_PIO_ENOERR) 
+		pio->errnum = QSE_PIO_ESUBSYS;
 
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
@@ -1019,7 +1073,7 @@ oops:
 	}
 #endif
 
-	return QSE_NULL;
+	return -1;
 }
 
 void qse_pio_fini (qse_pio_t* pio)
@@ -1054,6 +1108,7 @@ const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
 	{
 		QSE_T("no error"),
 		QSE_T("out of memory"),
+		QSE_T("invalid parameter"),
 		QSE_T("no handle available"),
 		QSE_T("child process not valid"),
 		QSE_T("interruped"),

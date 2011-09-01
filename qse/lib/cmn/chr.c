@@ -1,5 +1,5 @@
 /*
- * $Id: chr.c 555 2011-08-24 06:54:19Z hyunghwan.chung $
+ * $Id: chr.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -289,8 +289,8 @@ int qse_getwctypebyxname (const qse_wchar_t* name, qse_size_t len, qse_wctype_t*
 		mid = (left + right) / 2;	
 		kwp = &wtab[mid];
 
-		n = qse_wcsxcmp (name, len, wtab->name);
-		if (n > 0) 
+		n = qse_wcsxcmp (name, len, kwp->name);
+		if (n < 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
 			 * you would need the following line. 
@@ -298,7 +298,7 @@ int qse_getwctypebyxname (const qse_wchar_t* name, qse_size_t len, qse_wctype_t*
 			 */
 			right = mid - 1;
 		}
-		else if (n < 0) left = mid + 1;
+		else if (n > 0) left = mid + 1;
 		else 
 		{ 
 			*id = kwp->class;
@@ -332,8 +332,7 @@ static struct mtab_t
 	{ QSE_MT("punct"), QSE_MCTYPE_PUNCT },
 	{ QSE_MT("space"), QSE_MCTYPE_SPACE },
 	{ QSE_MT("upper"), QSE_MCTYPE_UPPER },
-	{ QSE_MT("xdigit"), QSE_MCTYPE_XDIGIT },
-	{ QSE_NULL, 0 }
+	{ QSE_MT("xdigit"), QSE_MCTYPE_XDIGIT }
 };
 
 int qse_getmctypebyname (const qse_mchar_t* name, qse_mctype_t* id)
@@ -364,7 +363,7 @@ int qse_getmctypebyname (const qse_mchar_t* name, qse_mctype_t* id)
 		}
 	}
 
-	return (qse_mctype_t)0;
+	return -1;
 }
 
 int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
@@ -378,8 +377,8 @@ int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t*
 		mid = (left + right) / 2;	
 		kwp = &mtab[mid];
 
-		n = qse_mbsxcmp (name, len, mtab->name);
-		if (n > 0) 
+		n = qse_mbsxcmp (name, len, kwp->name);
+		if (n < 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
 			 * you would need the following line. 
@@ -387,7 +386,7 @@ int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t*
 			 */
 			right = mid - 1;
 		}
-		else if (n < 0) left = mid + 1;
+		else if (n > 0) left = mid + 1;
 		else
 		{ 
 			*id = kwp->class;
@@ -395,7 +394,7 @@ int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t*
 		}
 	}
 
-	return (qse_mctype_t)0;
+	return -1;
 }
 
 qse_mctype_t qse_getmctype (const qse_mchar_t* name)
