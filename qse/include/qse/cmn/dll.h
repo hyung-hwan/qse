@@ -1,5 +1,5 @@
 /*
- * $Id: dll.h 474 2011-05-23 16:52:37Z hyunghwan.chung $
+ * $Id: dll.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -257,7 +257,7 @@ void qse_dll_close (
 /**
  * The qse_dll_init() function initializes a statically declared list.
  */
-qse_dll_t* qse_dll_init (
+int qse_dll_init (
 	qse_dll_t*  dll, /**< doubly linked list */
 	qse_mmgr_t* mmgr /**< memory manager */
 );

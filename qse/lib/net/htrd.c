@@ -151,7 +151,7 @@ qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	);
 	if (htrd == QSE_NULL) return QSE_NULL;
 
-	if (qse_htrd_init (htrd, mmgr) == QSE_NULL)
+	if (qse_htrd_init (htrd, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (htrd->mmgr, htrd);
 		return QSE_NULL;
@@ -166,7 +166,7 @@ void qse_htrd_close (qse_htrd_t* htrd)
 	QSE_MMGR_FREE (htrd->mmgr, htrd);
 }
 
-qse_htrd_t* qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
+int qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -180,17 +180,17 @@ qse_htrd_t* qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 	qse_mbs_init (&htrd->fed.b.raw, htrd->mmgr, 0);
 	qse_mbs_init (&htrd->fed.b.tra, htrd->mmgr, 0);
 
-	if (qse_htre_init (&htrd->re, mmgr) == QSE_NULL)
+	if (qse_htre_init (&htrd->re, mmgr) <= -1)
 	{
 		qse_mbs_fini (&htrd->fed.b.tra);
 		qse_mbs_fini (&htrd->fed.b.raw);
 #if 0
 		qse_mbs_fini (&htrd->tmp.qparam);
 #endif
-		return QSE_NULL;
+		return -1;
 	}
 
-	return htrd;
+	return 0;
 }
 
 void qse_htrd_fini (qse_htrd_t* htrd)

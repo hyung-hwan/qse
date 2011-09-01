@@ -85,7 +85,7 @@ qse_stc_t* qse_stc_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_stx_t* stx)
 	stc = (qse_stc_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*stc) + xtnsize);		
 	if (stc == QSE_NULL) return QSE_NULL;
 
-	if (qse_stc_init (stc, mmgr, stx) == QSE_NULL)
+	if (qse_stc_init (stc, mmgr, stx) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, stc);
 		return QSE_NULL;
@@ -100,21 +100,21 @@ void qse_stc_close (qse_stc_t* stc)
 	QSE_MMGR_FREE (stc->mmgr, stc);
 }
 
-qse_stc_t* qse_stc_init (qse_stc_t* stc, qse_mmgr_t* mmgr, qse_stx_t* stx)
+int qse_stc_init (qse_stc_t* stc, qse_mmgr_t* mmgr, qse_stx_t* stx)
 {
 	QSE_MEMSET (stc, 0, QSE_SIZEOF(*stc));
 	stc->mmgr = mmgr;
 	stc->stx = stx;
 
-	if (qse_str_init (&stc->method_name, mmgr, 0) == QSE_NULL) 
+	if (qse_str_init (&stc->method_name, mmgr, 0) <= -1)
 	{
-		return QSE_NULL;
+		return -1;
 	}
 
-	if (qse_str_init (&stc->token.name, mmgr, 0) == QSE_NULL)
+	if (qse_str_init (&stc->token.name, mmgr, 0) <= -1)
 	{
 		qse_str_fini (&stc->method_name);
-		return QSE_NULL;
+		return -1;
 	}
 	stc->token.type = TOKEN_END;
 
@@ -125,7 +125,7 @@ qse_lba_t linear byte array
  */
 	if (qse_lda_init (
 		&stc->bytecode, mmgr, 256, 
-		QSE_SIZEOF(qse_byte_t), QSE_NULL) == QSE_NULL) 
+		QSE_SIZEOF(qse_byte_t), QSE_NULL) <= -1) 
 	{
 		qse_str_fini (&stc->method_name);
 		qse_str_fini (&stc->token.name);
@@ -1238,7 +1238,7 @@ static int __parse_keyword_message (qse_stc_t* stc, qse_bool_t is_super)
 	if (__parse_binary_message (stc, is_super) == -1) return -1;
 	if (stc->token.type != TOKEN_KEYWORD) return 0;
 
-	if (qse_str_init (&name, stc->mmgr, 0) == QSE_NULL) 
+	if (qse_str_init (&name, stc->mmgr, 0) <= -1) 
 	{
 		stc->error_code = QSE_STC_ERROR_MEMORY;
 		return -1;

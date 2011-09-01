@@ -42,7 +42,7 @@ qse_fma_t* qse_fma_open (
 	fma = (qse_fma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*fma) + xtnsize);
 	if (fma == QSE_NULL) return QSE_NULL;
 
-	if (qse_fma_init (fma, mmgr, blksize, maxblks, maxcnks) == QSE_NULL)
+	if (qse_fma_init (fma, mmgr, blksize, maxblks, maxcnks) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, fma);
 		return QSE_NULL;
@@ -57,7 +57,7 @@ void qse_fma_close (qse_fma_t* fma)
 	QSE_MMGR_FREE (fma->mmgr, fma);
 }
 
-qse_fma_t* qse_fma_init (
+int qse_fma_init (
 	qse_fma_t* fma, qse_mmgr_t* mmgr,
 	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
 {
@@ -74,7 +74,7 @@ qse_fma_t* qse_fma_init (
 	fma->maxblks = maxblks;
 	fma->maxcnks = maxcnks;
 
-	return fma;
+	return 0;
 }
 
 void qse_fma_fini (qse_fma_t* fma)

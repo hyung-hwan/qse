@@ -214,7 +214,7 @@ rbt_t* qse_rbt_open (mmgr_t* mmgr, size_t xtnsize, int kscale, int vscale)
 	rbt = (rbt_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(rbt_t) + xtnsize);
 	if (rbt == QSE_NULL) return QSE_NULL;
 
-	if (qse_rbt_init (rbt, mmgr, kscale, vscale) == QSE_NULL)
+	if (qse_rbt_init (rbt, mmgr, kscale, vscale) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, rbt);
 		return QSE_NULL;
@@ -229,7 +229,7 @@ void qse_rbt_close (rbt_t* rbt)
 	QSE_MMGR_FREE (rbt->mmgr, rbt);
 }
 
-rbt_t* qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
+int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -252,7 +252,7 @@ rbt_t* qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 	/* root is set to nil initially */
 	rbt->root = &rbt->nil;
 
-	return rbt;
+	return 0;
 }
 
 void qse_rbt_fini (rbt_t* rbt)

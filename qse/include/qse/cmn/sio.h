@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 547 2011-08-13 16:04:14Z hyunghwan.chung $
+ * $Id: sio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -92,7 +92,7 @@ void qse_sio_close (
 	qse_sio_t* sio  /**< stream */
 );
 
-qse_sio_t* qse_sio_init (
+int qse_sio_init (
 	qse_sio_t*        sio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* file,

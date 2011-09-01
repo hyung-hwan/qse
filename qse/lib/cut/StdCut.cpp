@@ -173,7 +173,7 @@ int StdCut::StringStream::open (Data& io)
 	{
 		if (!out.inited)
 		{
-			if (qse_str_init (&out.buf, ((Cut*)io)->getMmgr(), 256) == QSE_NULL)
+			if (qse_str_init (&out.buf, ((Cut*)io)->getMmgr(), 256) <= -1)
 			{
 				((Cut*)io)->setError (QSE_CUT_ENOMEM);
 				return -1;

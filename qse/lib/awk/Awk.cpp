@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: Awk.cpp 556 2011-08-31 15:43:46Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1066,7 +1066,8 @@ int Awk::open ()
 	QSE_ASSERT (awk == QSE_NULL && functionMap == QSE_NULL);
 
 	qse_awk_prm_t prm;
-	memset (&prm, 0, QSE_SIZEOF(prm));
+
+	QSE_MEMSET (&prm, 0, QSE_SIZEOF(prm));
 	prm.sprintf  = sprintf;
 	prm.math.pow = pow;
 	prm.math.mod = mod;

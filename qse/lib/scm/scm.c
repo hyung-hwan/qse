@@ -22,7 +22,7 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (scm)
 
-static qse_scm_t* qse_scm_init (
+static int qse_scm_init (
 	qse_scm_t*  scm,
 	qse_mmgr_t* mmgr,
 	qse_size_t  mem_ubound,
@@ -54,7 +54,7 @@ qse_scm_t* qse_scm_open (
 	);
 	if (scm == QSE_NULL) return QSE_NULL;
 
-	if (qse_scm_init (scm, mmgr, mem_ubound, mem_ubound_inc) == QSE_NULL)
+	if (qse_scm_init (scm, mmgr, mem_ubound, mem_ubound_inc) <= -1)
 	{
 		QSE_MMGR_FREE (scm->mmgr, scm);
 		return QSE_NULL;
@@ -183,7 +183,7 @@ static qse_scm_t* qse_scm_init (
 	scm->r.curc = QSE_CHAR_EOF;
 	scm->r.curloc.line = 1;
 	scm->r.curloc.colm = 0;
-	if (qse_str_init(&scm->r.t.name, mmgr, 256) == QSE_NULL) return QSE_NULL;
+	if (qse_str_init(&scm->r.t.name, mmgr, 256) <= -1) return -1;
 
 	/* initialize common values */
 	scm->nil    = &static_values[0];
@@ -220,12 +220,12 @@ static qse_scm_t* qse_scm_init (
 	scm->e.env = scm->gloenv;
 
 	if (build_syntax_entities (scm) <= -1) goto oops;
-	return scm;
+	return 0;
 
 oops:
 	delete_all_entity_blocks (scm);
 	qse_str_fini (&scm->r.t.name);
-	return QSE_NULL;
+	return -1;
 }
 
 static void qse_scm_fini (qse_scm_t* scm)

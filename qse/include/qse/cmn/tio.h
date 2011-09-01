@@ -1,5 +1,5 @@
 /*
- * $Id: tio.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
+ * $Id: tio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -126,7 +126,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (tio)
  */
 qse_tio_t* qse_tio_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t  ext
+	qse_size_t  xtnsize
 );
 
 /**
@@ -140,8 +140,8 @@ int qse_tio_close (
  * The qse_tio_init() function  initialize a statically declared 
  * text stream processor.
  */
-qse_tio_t* qse_tio_init (
-	qse_tio_t*  tip,
+int qse_tio_init (
+	qse_tio_t*  tio,
 	qse_mmgr_t* mmgr
 );
 

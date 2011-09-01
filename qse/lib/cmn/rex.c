@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 554 2011-08-22 05:26:26Z hyunghwan.chung $
+ * $Id: rex.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -118,7 +118,7 @@ struct cand_t
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (rex)
 
-qse_rex_t* qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
+int qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -132,7 +132,7 @@ qse_rex_t* qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 	 * is closed, the code delegated is destroyed. */
 
 	rex->code = code;
-	return rex;
+	return 0;
 }
 
 qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
@@ -152,7 +152,7 @@ qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
 	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
 	if (rex == QSE_NULL) return QSE_NULL;
 
-	if (qse_rex_init (rex, mmgr, code) == QSE_NULL)
+	if (qse_rex_init (rex, mmgr, code) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, rex);
 		return QSE_NULL;
@@ -1967,14 +1967,14 @@ static int comp_cand (qse_lda_t* lda,
 static int init_exec_dds (exec_t* e, qse_mmgr_t* mmgr)
 {
 	/* initializes dynamic data structures */
-	if (qse_lda_init (&e->cand.set[0], mmgr, 100) == QSE_NULL)
+	if (qse_lda_init (&e->cand.set[0], mmgr, 100) <= -1)
 	{
-		/* TOOD: set error */
+		e->rex->errnum = QSE_REX_ENOMEM;
 		return -1;
 	}
-	if (qse_lda_init (&e->cand.set[1], mmgr, 100) == QSE_NULL)
+	if (qse_lda_init (&e->cand.set[1], mmgr, 100) <= -1)
 	{
-		/* TOOD: set error */
+		e->rex->errnum = QSE_REX_ENOMEM;
 		qse_lda_fini (&e->cand.set[0]);
 		return -1;
 	}

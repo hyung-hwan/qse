@@ -71,7 +71,7 @@ void qse_pma_close (
 	qse_pma_t* pma /**< memory allocator */
 );
 
-qse_pma_t* qse_pma_init (
+int qse_pma_init (
 	qse_pma_t*  pma,     /**< memory allocator */
 	qse_mmgr_t* mmgr     /**< memory manager */
 );

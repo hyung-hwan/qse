@@ -139,7 +139,7 @@ struct qse_httpd_t
 extern "C" {
 #endif
 
-qse_httpd_t* qse_httpd_init (
+int qse_httpd_init (
 	qse_httpd_t* httpd,
 	qse_mmgr_t*  mmgr
 );

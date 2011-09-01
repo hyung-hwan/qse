@@ -73,16 +73,18 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
-am_libqsecmn_la_OBJECTS = mem.lo xma.lo fma.lo pma.lo chr.lo \
-	chr_cnv.lo rex.lo str_beg.lo str_cat.lo str_chr.lo str_cnv.lo \
-	str_cmp.lo str_cpy.lo str_del.lo str_dup.lo str_dynm.lo \
-	str_dynw.lo str_end.lo str_excl.lo str_fcpy.lo str_incl.lo \
-	str_len.lo str_pac.lo str_pbrk.lo str_put.lo str_rev.lo \
-	str_rot.lo str_set.lo str_spl.lo str_spn.lo str_str.lo \
-	str_subst.lo str_tok.lo str_trm.lo str_word.lo lda.lo oht.lo \
-	htb.lo rbt.lo sll.lo gdl.lo dll.lo opt.lo tio.lo tio_get.lo \
-	tio_put.lo fio.lo pio.lo sio.lo alg_search.lo alg_sort.lo \
-	env.lo time.lo misc.lo assert.lo main.lo stdio.lo
+am_libqsecmn_la_OBJECTS = alg-search.lo alg-sort.lo assert.lo chr.lo \
+	chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo fma.lo \
+	main.lo mem.lo misc.lo oht.lo opt.lo pma.lo pio.lo rbt.lo \
+	rex.lo sio.lo sll.lo str-beg.lo str-cat.lo str-chr.lo \
+	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
+	str-dynm.lo str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo \
+	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
+	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
+	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
+	time.lo tio.lo tio-get.lo tio-put.lo tre.lo tre-ast.lo \
+	tre-compile.lo tre-match-backtrack.lo tre-match-parallel.lo \
+	tre-parse.lo tre-stack.lo stdio.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -272,24 +274,79 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 libqsecmn_la_SOURCES = \
-	syscall.h mem.h \
-	mem.c xma.c fma.c pma.c chr.c chr_cnv.c rex.c \
-	str_beg.c str_cat.c str_chr.c str_cnv.c str_cmp.c str_cpy.c \
-	str_del.c str_dup.c str_dynm.c str_dynw.c str_end.c str_excl.c \
-	str_fcpy.c str_incl.c str_len.c str_pac.c str_pbrk.c str_put.c \
-	str_rev.c str_rot.c str_set.c str_spl.c str_spn.c str_str.c \
-	str_subst.c str_tok.c str_trm.c str_word.c \
-	lda.c oht.c htb.c rbt.c sll.c gdl.c dll.c opt.c \
-	tio.c tio_get.c tio_put.c \
-	fio.c pio.c sio.c \
-	alg_search.c  \
-	alg_sort.c \
-	env.c \
-	time.c \
-	misc.c \
+	tre.h \
+	alg-search.c  \
+	alg-sort.c \
 	assert.c \
+	chr.c \
+	chr-cnv.c \
+	dll.c \
+	env.c \
+	gdl.c \
+	htb.c \
+	lda.c \
+	fio.c \
+	fma.c \
 	main.c \
-	stdio.c
+	mem.c \
+	mem.h \
+	misc.c \
+	oht.c \
+	opt.c \
+	pma.c \
+	pio.c \
+	rbt.c \
+	rex.c \
+	sio.c \
+	sll.c \
+	str-beg.c \
+	str-cat.c \
+	str-chr.c \
+	str-cnv.c \
+	str-cmp.c \
+	str-cpy.c \
+	str-del.c \
+	str-dup.c \
+	str-dynm.c \
+	str-dynw.c \
+	str-end.c \
+	str-excl.c \
+	str-fcpy.c \
+	str-incl.c \
+	str-len.c \
+	str-pac.c \
+	str-pbrk.c \
+	str-put.c \
+	str-rev.c \
+	str-rot.c \
+	str-set.c \
+	str-spl.c \
+	str-spn.c \
+	str-str.c \
+	str-subst.c \
+	str-tok.c \
+	str-trm.c \
+	str-word.c \
+	syscall.h \
+	time.c \
+	tio.c \
+	tio-get.c \
+	tio-put.c \
+	tre.c \
+	tre.h \
+	tre-ast.c \
+	tre-ast.h \
+	tre-compile.c \
+	tre-compile.h \
+	tre-match-backtrack.c \
+	tre-match-parallel.c \
+	tre-match-utils.h \
+	tre-parse.c \
+	tre-parse.h \
+	tre-stack.c \
+	tre-stack.h \
+	stdio.c \
+	xma.c
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 @WIN32_TRUE@libqsecmn_la_LIBADD = -lpsapi
@@ -375,11 +432,11 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdMmgr.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg_search.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg_sort.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr-cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr_cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@
@@ -399,38 +456,45 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_beg.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cat.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_chr.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cmp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cnv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_cpy.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_del.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dup.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dynm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_dynw.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_end.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_excl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_fcpy.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_incl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_len.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_pac.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_pbrk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_put.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_rev.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_rot.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_set.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_spl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_spn.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_str.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_subst.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_tok.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_trm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str_word.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-beg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-cat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-chr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-cmp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-cnv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-cpy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-del.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-dup.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-dynm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-dynw.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-end.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-excl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-fcpy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-incl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-len.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pac.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pbrk.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-put.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-rev.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-rot.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-spl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-spn.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-str.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-subst.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-tok.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-trm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-word.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio-get.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio-put.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio_get.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio_put.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-ast.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-compile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-match-backtrack.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-match-parallel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-parse.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-stack.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Plo@am__quote@
 
 .c.o:

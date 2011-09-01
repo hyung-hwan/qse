@@ -53,8 +53,8 @@ SOURCES =
 DIST_SOURCES =
 am__pkginclude_HEADERS_DIST = alg.h chr.h dll.h env.h fio.h fma.h \
 	gdl.h htb.h lda.h main.h map.h mem.h misc.h oht.h opt.h pio.h \
-	pma.h rbt.h rex.h sio.h sll.h stdio.h str.h time.h tio.h xma.h \
-	Mmgr.hpp StdMmgr.hpp Mmged.hpp
+	pma.h rbt.h rex.h sio.h sll.h stdio.h str.h time.h tio.h tre.h \
+	xma.h Mmgr.hpp StdMmgr.hpp Mmged.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -225,7 +225,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = alg.h chr.h dll.h env.h fio.h fma.h gdl.h htb.h \
 	lda.h main.h map.h mem.h misc.h oht.h opt.h pio.h pma.h rbt.h \
-	rex.h sio.h sll.h stdio.h str.h time.h tio.h xma.h \
+	rex.h sio.h sll.h stdio.h str.h time.h tio.h tre.h xma.h \
 	$(am__append_1)
 all: all-am
 

@@ -1,5 +1,5 @@
 /*
- * $Id: lda.h 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: lda.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -176,7 +176,7 @@ void qse_lda_close (
 /**
  * The qse_lda_init() function initializes a linear dynamic array.
  */
-qse_lda_t* qse_lda_init (
+int qse_lda_init (
 	qse_lda_t*  lda,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa

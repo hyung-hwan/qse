@@ -150,9 +150,9 @@ void qse_xma_close (
  * to this function instead of calling qse_xma_open(). It obtains a memory zone
  * of @a zonesize bytes with the memory manager @a mmgr. Unlike qse_xma_open(),
  * it does not accept the extension size, thus not creating an extention area.
- * @return @a xma on success, #QSE_NULL on failure
+ * @return 0 on success, -1 on failure
  */
-qse_xma_t* qse_xma_init (
+int qse_xma_init (
 	qse_xma_t*  xma,     /**< memory allocator */
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  zonesize /**< zone size in bytes */

@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 462 2011-05-18 14:36:40Z hyunghwan.chung $
+ * $Id: sed.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,7 +28,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
 
-static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr);
+static int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr);
 static void qse_sed_fini (qse_sed_t* sed);
 
 #define SETERR0(sed,num,loc) \
@@ -58,7 +58,7 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtnsize);
 	if (sed == QSE_NULL) return QSE_NULL;
 
-	if (qse_sed_init (sed, mmgr) == QSE_NULL)
+	if (qse_sed_init (sed, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (sed->mmgr, sed);
 		return QSE_NULL;
@@ -73,7 +73,7 @@ void qse_sed_close (qse_sed_t* sed)
 	QSE_MMGR_FREE (sed->mmgr, sed);
 }
 
-static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
+static int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -81,75 +81,44 @@ static qse_sed_t* qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	sed->mmgr = mmgr;
 	sed->errstr = qse_sed_dflerrstr;
 
-	if (qse_str_init (&sed->tmp.rex, mmgr, 0) == QSE_NULL)
-	{
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return QSE_NULL;	
-	}	
-
-	if (qse_str_init (&sed->tmp.lab, mmgr, 0) == QSE_NULL)
-	{
-		qse_str_fini (&sed->tmp.lab);
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return QSE_NULL;	
-	}	
+	if (qse_str_init (&sed->tmp.rex, mmgr, 0) <= -1) goto oops_1;
+	if (qse_str_init (&sed->tmp.lab, mmgr, 0) <= -1) goto oops_2;
 
 	if (qse_map_init (&sed->tmp.labs, mmgr,
-		128, 70, QSE_SIZEOF(qse_char_t), 1) == QSE_NULL)
-	{
-		qse_str_fini (&sed->tmp.lab);
-		qse_str_fini (&sed->tmp.rex);
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return QSE_NULL;	
-	}
-	qse_map_setmancbs (&sed->tmp.labs, 
+		128, 70, QSE_SIZEOF(qse_char_t), 1) <= -1) goto oops_3;
+	qse_map_setmancbs (
+		&sed->tmp.labs, 
 		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
 	);
 
-	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) == QSE_NULL)
-	{
-		qse_map_fini (&sed->tmp.labs);
-		qse_str_fini (&sed->tmp.lab);
-		qse_str_fini (&sed->tmp.rex);
-		return QSE_NULL;
-	}
-
-	if (qse_str_init (&sed->e.txt.read, mmgr, 256) == QSE_NULL)
-	{
-		qse_lda_fini (&sed->e.txt.appended);
-		qse_map_fini (&sed->tmp.labs);
-		qse_str_fini (&sed->tmp.lab);
-		qse_str_fini (&sed->tmp.rex);
-		return QSE_NULL;
-	}
-
-	if (qse_str_init (&sed->e.txt.held, mmgr, 256) == QSE_NULL)
-	{
-		qse_str_fini (&sed->e.txt.read);
-		qse_lda_fini (&sed->e.txt.appended);
-		qse_map_fini (&sed->tmp.labs);
-		qse_str_fini (&sed->tmp.lab);
-		qse_str_fini (&sed->tmp.rex);
-		return QSE_NULL;
-	}
-
-	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) == QSE_NULL)
-	{
-		qse_str_fini (&sed->e.txt.held);
-		qse_str_fini (&sed->e.txt.read);
-		qse_lda_fini (&sed->e.txt.appended);
-		qse_map_fini (&sed->tmp.labs);
-		qse_str_fini (&sed->tmp.lab);
-		qse_str_fini (&sed->tmp.rex);
-		return QSE_NULL;
-	}
+	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) <= -1) goto oops_4;
+	if (qse_str_init (&sed->e.txt.read, mmgr, 256) <= -1) goto oops_5;
+	if (qse_str_init (&sed->e.txt.held, mmgr, 256) <= -1) goto oops_6;
+	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) <= -1) goto oops_7;
 
 	/* on init, the last points to the first */
 	sed->cmd.lb = &sed->cmd.fb; 
 	/* the block has no data yet */
 	sed->cmd.fb.len = 0;
 
-	return sed;
+	return 0;
+
+
+oops_7:
+	qse_str_fini (&sed->e.txt.held);
+oops_6:
+	qse_str_fini (&sed->e.txt.read);
+oops_5:
+	qse_lda_fini (&sed->e.txt.appended);
+oops_4:
+	qse_map_fini (&sed->tmp.labs);
+oops_3:
+	qse_str_fini (&sed->tmp.lab);
+oops_2:
+	qse_str_fini (&sed->tmp.rex);
+oops_1:
+	SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+	return -1;
 }
 
 static void qse_sed_fini (qse_sed_t* sed)
@@ -2659,8 +2628,9 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.out.fun = outf;
 	sed->e.out.eof = 0;
 	sed->e.out.len = 0;
-	if (qse_map_init (&sed->e.out.files, sed->mmgr, 
-		128, 70, QSE_SIZEOF(qse_char_t), 1) == QSE_NULL)
+	if (qse_map_init (
+		&sed->e.out.files, sed->mmgr, 
+		128, 70, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return -1;
@@ -2673,7 +2643,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.in.len = 0;
 	sed->e.in.pos = 0;
 	sed->e.in.num = 0;
-	if (qse_str_init (&sed->e.in.line, QSE_MMGR(sed), 256) == QSE_NULL)
+	if (qse_str_init (&sed->e.in.line, QSE_MMGR(sed), 256) <= -1)
 	{
 		qse_map_fini (&sed->e.out.files);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);

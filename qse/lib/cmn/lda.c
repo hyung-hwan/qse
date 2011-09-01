@@ -1,5 +1,5 @@
 /*
- * $Id: lda.c 479 2011-05-24 15:14:58Z hyunghwan.chung $
+ * $Id: lda.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -111,7 +111,7 @@ lda_t* qse_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 	lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + ext);
 	if (lda == QSE_NULL) return QSE_NULL;
 
-	if (qse_lda_init (lda, mmgr, capa) == QSE_NULL)
+	if (qse_lda_init (lda, mmgr, capa) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, lda);
 		return QSE_NULL;
@@ -126,7 +126,7 @@ void qse_lda_close (lda_t* lda)
 	QSE_MMGR_FREE (lda->mmgr, lda);
 }
 
-lda_t* qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
+int qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -140,8 +140,7 @@ lda_t* qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 	lda->copier = QSE_LDA_COPIER_SIMPLE;
 	lda->comper = default_comparator;
 
-	if (qse_lda_setcapa (lda, capa) == QSE_NULL) return QSE_NULL;
-	return lda;
+	return (qse_lda_setcapa (lda, capa) == QSE_NULL)? -1: 0;
 }
 
 void qse_lda_fini (lda_t* lda)

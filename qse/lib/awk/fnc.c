@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.c 518 2011-07-24 14:24:13Z hyunghwan.chung $
+ * $Id: fnc.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -979,7 +979,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 	}
 
-	if (qse_str_init (&new, run->awk->mmgr, s2.len) == QSE_NULL)
+	if (qse_str_init (&new, run->awk->mmgr, s2.len) <= -1)
 	{
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;
@@ -1343,14 +1343,14 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	nargs = qse_awk_rtx_getnargs (run);
 	QSE_ASSERT (nargs > 0);
 
-	if (qse_str_init (&out, run->awk->mmgr, 256) == QSE_NULL)
+	if (qse_str_init (&out, run->awk->mmgr, 256) <= -1)
 	{
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;
 	}
 	out_inited = 1;
 
-	if (qse_str_init (&fbu, run->awk->mmgr, 256) == QSE_NULL)
+	if (qse_str_init (&fbu, run->awk->mmgr, 256) <= -1)
 	{
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 		goto oops;

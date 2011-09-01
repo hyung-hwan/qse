@@ -38,7 +38,7 @@ bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
 	str$(EXEEXT) sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) \
 	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) \
 	pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) \
-	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT)
+	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) tre01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -127,6 +127,10 @@ am_time_OBJECTS = time.$(OBJEXT)
 time_OBJECTS = $(am_time_OBJECTS)
 time_LDADD = $(LDADD)
 time_DEPENDENCIES =
+am_tre01_OBJECTS = tre01.$(OBJEXT)
+tre01_OBJECTS = $(am_tre01_OBJECTS)
+tre01_LDADD = $(LDADD)
+tre01_DEPENDENCIES =
 am_xma_OBJECTS = xma.$(OBJEXT)
 xma_OBJECTS = $(am_xma_OBJECTS)
 xma_LDADD = $(LDADD)
@@ -148,12 +152,13 @@ SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) $(fio_SOURCES) \
 	$(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
 	$(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
+	$(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio_SOURCES) $(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) \
 	$(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) \
 	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
-	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) $(xma_SOURCES)
+	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) \
+	$(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -324,6 +329,7 @@ main_SOURCES = main.c
 main2_SOURCES = main2.c
 rex01_SOURCES = rex01.c
 env_SOURCES = env.c
+tre01_SOURCES = tre01.c
 all: all-am
 
 .SUFFIXES:
@@ -455,6 +461,9 @@ str$(EXEEXT): $(str_OBJECTS) $(str_DEPENDENCIES)
 time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) 
 	@rm -f time$(EXEEXT)
 	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
+tre01$(EXEEXT): $(tre01_OBJECTS) $(tre01_DEPENDENCIES) 
+	@rm -f tre01$(EXEEXT)
+	$(LINK) $(tre01_OBJECTS) $(tre01_LDADD) $(LIBS)
 xma$(EXEEXT): $(xma_OBJECTS) $(xma_DEPENDENCIES) 
 	@rm -f xma$(EXEEXT)
 	$(LINK) $(xma_OBJECTS) $(xma_LDADD) $(LIBS)
@@ -483,6 +492,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Po@am__quote@
 
 .c.o:

@@ -72,7 +72,7 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	);
 	if (httpd == QSE_NULL) return QSE_NULL;
 
-	if (qse_httpd_init (httpd, mmgr) == QSE_NULL)
+	if (qse_httpd_init (httpd, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (httpd->mmgr, httpd);
 		return QSE_NULL;
@@ -87,7 +87,7 @@ void qse_httpd_close (qse_httpd_t* httpd)
 	QSE_MMGR_FREE (httpd->mmgr, httpd);
 }
 
-qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
+int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
@@ -97,7 +97,7 @@ qse_httpd_t* qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	pthread_mutex_init (&httpd->listener.mutex, QSE_NULL);
 #endif
 
-	return httpd;
+	return 0;
 }
 
 void qse_httpd_fini (qse_httpd_t* httpd)

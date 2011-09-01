@@ -1,5 +1,5 @@
 /*
- * $Id: htb.h 477 2011-05-24 04:22:40Z hyunghwan.chung $
+ * $Id: htb.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -341,7 +341,7 @@ void qse_htb_close (
 /**
  * The qse_htb_init() function initializes a hash table
  */
-qse_htb_t* qse_htb_init (
+int qse_htb_init (
 	qse_htb_t*  htb,    /**< hash table */
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  capa,   /**< initial capacity */

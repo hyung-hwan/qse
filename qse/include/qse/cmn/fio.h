@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 550 2011-08-14 15:59:55Z hyunghwan.chung $
+ * $Id: fio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -152,7 +152,7 @@ void qse_fio_close (
 /***
  * The qse_fio_close() function opens a file into @a fio.
  */
-qse_fio_t* qse_fio_init (
+int qse_fio_init (
 	qse_fio_t*        fio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* path,

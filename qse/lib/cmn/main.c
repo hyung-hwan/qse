@@ -26,7 +26,8 @@
 int qse_runmain (
 	int argc, qse_achar_t* argv[], qse_runmain_handler_t handler)
 {
-	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
+	/* TODO: remove dependency on setlocale */
+	setlocale (LC_ALL, "");
 
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))

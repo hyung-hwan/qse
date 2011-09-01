@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.cpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: StdSed.cpp 556 2011-08-31 15:43:46Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -202,7 +202,7 @@ int StdSed::StringStream::open (Data& io)
 		{
 			if (!out.inited)
 			{
-				if (qse_str_init (&out.buf, ((Sed*)io)->getMmgr(), 256) == QSE_NULL)
+				if (qse_str_init (&out.buf, ((Sed*)io)->getMmgr(), 256) <= -1)
 				{
 					((Sed*)io)->setError (QSE_SED_ENOMEM);
 					return -1;

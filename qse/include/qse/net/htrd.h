@@ -127,7 +127,7 @@ void qse_htrd_close (
 	qse_htrd_t* htrd 
 );
 
-qse_htrd_t* qse_htrd_init (
+int qse_htrd_init (
 	qse_htrd_t* htrd,
 	qse_mmgr_t* mmgr
 );
