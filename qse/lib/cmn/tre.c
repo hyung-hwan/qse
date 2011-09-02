@@ -22,10 +22,9 @@
 #include "tre-compile.h"
 #include <qse/cmn/str.h>
 
-#if 0
 QSE_IMPLEMENT_COMMON_FUNCTIONS (tre)
 
-qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_tre_code_t* code)
+qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_tre_t* tre;
 
@@ -39,10 +38,10 @@ qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_tre_code_t* code)
 		if (mmgr == QSE_NULL) return QSE_NULL;
 	}
 
-	tre = (qse_tre_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tre_t) + xtn);
+	tre = (qse_tre_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tre_t) + xtnsize);
 	if (tre == QSE_NULL) return QSE_NULL;
 
-	if (qse_tre_init (tre, mmgr, code) <= -1)
+	if (qse_tre_init (tre, mmgr) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, tre);
 		return QSE_NULL;
@@ -56,15 +55,6 @@ void qse_tre_close (qse_tre_t* tre)
 	qse_tre_fini (tre);
 	QSE_MMGR_FREE (tre->mmgr, tre);
 }
-#endif
-
-/*
-  tre_regcomp.c - TRE POSIX compatible regex compilation functions.
-
-  This software is released under a BSD-style license.
-  See the file LICENSE for details and copyright.
-
-*/
 
 int qse_tre_init (qse_tre_t* tre, qse_mmgr_t* mmgr)
 {
@@ -78,38 +68,48 @@ int qse_tre_init (qse_tre_t* tre, qse_mmgr_t* mmgr)
 
 void qse_tre_fini (qse_tre_t* tre)
 {
-	if (tre->value) 
+	if (tre->TRE_REGEX_T_FIELD) 
 	{
 		tre_free (tre);
-		tre->value = QSE_NULL;
+		tre->TRE_REGEX_T_FIELD = QSE_NULL;
 	}
 }
 
-
-int qse_tre_compx (qse_tre_t* tre, const qse_char_t* regex, qse_size_t n, int cflags)
+int qse_tre_compx (
+	qse_tre_t* tre, const qse_char_t* regex, qse_size_t n,
+	unsigned int* nsubmat, int cflags)
 {
 	int ret;
 
-	if (tre->value) 
+	if (tre->TRE_REGEX_T_FIELD) 
 	{
 		tre_free (tre);
-		tre->value = QSE_NULL;
+		tre->TRE_REGEX_T_FIELD = QSE_NULL;
 	}
 
 	ret = tre_compile (tre, regex, n, cflags);
 	if (ret > 0) 
 	{
-		tre->value = QSE_NULL; /* just to make sure */
+		tre->TRE_REGEX_T_FIELD = QSE_NULL; /* just to make sure */
 		tre->errnum = ret;
 		return -1;	
 	}
 	
+	if (nsubmat) 
+	{
+		*nsubmat = ((struct tnfa*)tre->TRE_REGEX_T_FIELD)->num_submatches;
+	}
 	return 0;
 }
 
-int qse_tre_comp (qse_tre_t* tre,  const qse_char_t* regex, int cflags)
+int qse_tre_comp (
+	qse_tre_t* tre, const qse_char_t* regex,
+	unsigned int* nsubmat, int cflags)
 {
-	return qse_tre_compx (tre, regex, (regex? qse_strlen(regex):0), cflags);
+	return qse_tre_compx (
+		tre, regex, (regex? qse_strlen(regex):0), 
+		nsubmat, cflags
+	);
 }
 
 /* Fills the POSIX.2 regmatch_t array according to the TNFA tag and match
@@ -238,11 +238,11 @@ static int tre_match(
 
 int qse_tre_execx (
 	qse_tre_t* tre, const qse_char_t *str, qse_size_t len,
-	qse_size_t nmatch, regmatch_t pmatch[], int eflags)
+	regmatch_t* pmatch, qse_size_t nmatch, int eflags)
 {
 	int ret;
 
-	if (tre->value == QSE_NULL)
+	if (tre->TRE_REGEX_T_FIELD == QSE_NULL)
 	{
 		/* regular expression is bad as none is compiled yet */
 		tre->errnum = QSE_TRE_EBADPAT; 
@@ -264,9 +264,9 @@ int qse_tre_execx (
 
 int qse_tre_exec (
 	qse_tre_t* tre, const qse_char_t* str,
-	qse_size_t nmatch, regmatch_t pmatch[], int eflags)
+	regmatch_t* pmatch, qse_size_t nmatch, int eflags)
 {
-	return qse_tre_execx (tre, str, (unsigned)-1, nmatch, pmatch, eflags);
+	return qse_tre_execx (tre, str, (qse_size_t)-1, pmatch, nmatch, eflags);
 }
 
 #if 0
@@ -277,3 +277,33 @@ int qse_tre_execsrc (
 	return tre_match (preg, str, (unsigned)-1, STR_USER, nmatch, pmatch, eflags);
 }
 #endif
+
+qse_tre_errnum_t qse_tre_geterrnum (qse_tre_t* tre)
+{
+	return tre->errnum;
+}
+
+const qse_char_t* qse_tre_geterrmsg (qse_tre_t* tre)
+{
+	static const qse_char_t* errstr[] = 
+	{
+		QSE_T("no error"),
+		QSE_T("no sufficient memory available"),
+		QSE_T("no match"),
+		QSE_T("invalid regular expression"),
+		QSE_T("unknown collating element"),
+		QSE_T("unknown character class name"),
+		QSE_T("trailing backslash"),
+		QSE_T("invalid backreference"),
+		QSE_T("bracket imbalance"),
+		QSE_T("parenthesis imbalance"),
+		QSE_T("brace imbalance"),
+		QSE_T("invalid bracket content"),
+		QSE_T("invalid use of range operator"),
+		QSE_T("invalid use of repetition operators")
+	};
+	
+	return (tre->errnum >= 0 && tre->errnum < QSE_COUNTOF(errstr))?
+		errstr[tre->errnum]: QSE_T("unknown error");
+}
+

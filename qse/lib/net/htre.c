@@ -94,7 +94,7 @@ static qse_htb_walk_t walk_headers (qse_htb_t* htb, qse_htb_pair_t* pair, void* 
 		hwctx->ret = -1;
 		return QSE_HTB_WALK_STOP;
 	}
-     return QSE_HTB_WALK_FORWARD;
+	return QSE_HTB_WALK_FORWARD;
 }
 
 int qse_htre_walkheaders (

@@ -46,7 +46,7 @@ typedef enum qse_tre_errnum_t qse_tre_errnum_t;
 typedef struct qse_tre_t qse_tre_t;
 struct qse_tre_t
 {
-	qse_mmgr_t*      mmgr;
+	QSE_DEFINE_COMMON_FIELDS (tre)
 	qse_tre_errnum_t errnum; 
 
 	qse_size_t       re_nsub;  /* Number of parenthesized subexpressions. */
@@ -95,6 +95,17 @@ struct qse_tre_strsrc_t
 extern "C" {
 #endif
 
+QSE_DEFINE_COMMON_FUNCTIONS (tre)
+
+qse_tre_t* qse_tre_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize
+);
+	
+void qse_tre_close (
+	qse_tre_t*  tre
+);
+
 int qse_tre_init (
 	qse_tre_t*  tre,
 	qse_mmgr_t* mmgr
@@ -104,17 +115,26 @@ void qse_tre_fini (
 	qse_tre_t* tre
 );
 
+qse_tre_errnum_t qse_tre_geterrnum (
+	qse_tre_t* tre
+);
+
+const qse_char_t* qse_tre_geterrmsg (
+	qse_tre_t* tre
+);
 
 int qse_tre_compx (
 	qse_tre_t*        tre,
 	const qse_char_t* regex,
 	qse_size_t        n,
+	unsigned int*     nsubmat,
 	int               cflags
 );
 
 int qse_tre_comp (
 	qse_tre_t*        tre,
 	const qse_char_t* regex,
+	unsigned int*     nsubmat,
 	int               cflags
 );
 
@@ -122,8 +142,16 @@ int qse_tre_execx (
 	qse_tre_t*        tre,
 	const qse_char_t* str,
 	qse_size_t        len,
+	qse_tre_match_t*  pmatch,
      qse_size_t        nmatch,
-	qse_tre_match_t   pmatch[],
+	int               eflags
+);
+
+int qse_tre_exec (
+	qse_tre_t*        tre,
+	const qse_char_t* str,
+	qse_tre_match_t*  pmatch,
+     qse_size_t        nmatch,
 	int               eflags
 );
 
