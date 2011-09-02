@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: sed.c 557 2011-09-01 14:45:06Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -261,7 +261,7 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_APPEND:
 		case QSE_SED_CMD_INSERT:
 		case QSE_SED_CMD_CHANGE:
-			if (cmd->u.text.ptr != QSE_NULL) 
+			if (cmd->u.text.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.text.ptr);
 			break;
 
@@ -269,27 +269,27 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_READ_FILELN:
 		case QSE_SED_CMD_WRITE_FILE:
 		case QSE_SED_CMD_WRITE_FILELN:
-			if (cmd->u.file.ptr != QSE_NULL)
+			if (cmd->u.file.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.file.ptr);
 			break;
 
 		case QSE_SED_CMD_BRANCH:
 		case QSE_SED_CMD_BRANCH_COND:
-			if (cmd->u.branch.label.ptr != QSE_NULL) 
+			if (cmd->u.branch.label.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.branch.label.ptr);
 			break;
 	
 		case QSE_SED_CMD_SUBSTITUTE:
-			if (cmd->u.subst.file.ptr != QSE_NULL)
+			if (cmd->u.subst.file.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.file.ptr);
-			if (cmd->u.subst.rpl.ptr != QSE_NULL)
+			if (cmd->u.subst.rpl.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.rpl.ptr);
-			if (cmd->u.subst.rex != QSE_NULL)
+			if (cmd->u.subst.rex)
 				qse_freerex (sed->mmgr, cmd->u.subst.rex);
 			break;
 
 		case QSE_SED_CMD_TRANSLATE:
-			if (cmd->u.transet.ptr != QSE_NULL)
+			if (cmd->u.transet.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.transet.ptr);
 			break;
 
@@ -345,6 +345,39 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 			return QSE_NULL;
 		}
 	} 
+
+
+#if 0
+{
+	qse_tre_t* tre;
+
+	tre = qse_tre_open (sed->mmgr, 0);
+	if (tre)
+	{
+		if (qse_tre_comp (tre,
+			QSE_STR_PTR(&sed->tmp.rex), 
+			QSE_STR_LEN(&sed->tmp.rex),
+			QSE_NULL,
+			QSE_TRE_EXTENDED) <= -1)
+		{
+			qse_tre_close (tre);
+			goto fail:
+		}
+		return tre;
+	}
+	else
+	{
+		SETERR1 (
+			sed, QSE_SED_EREXBL,
+			QSE_STR_PTR(&sed->tmp.rex),
+			QSE_STR_LEN(&sed->tmp.rex),
+			&sed->src.loc
+		);
+		return QSE_NULL;
+	}
+
+}
+#endif
 
 	code = qse_buildrex (
 		sed->mmgr,

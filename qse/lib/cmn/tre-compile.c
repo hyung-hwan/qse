@@ -187,14 +187,14 @@ tre_purge_regset(int *regset, tre_tnfa_t *tnfa, int tag)
    subexpressions marked for submatch addressing can be traced. */
 static reg_errcode_t
 tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
-             tre_tnfa_t *tnfa)
+             tre_tnfa_t *tnfa, int first_pass)
 {
 	reg_errcode_t status = REG_OK;
 	tre_addtags_symbol_t symbol;
 	tre_ast_node_t *node = tree; /* Tree node we are currently looking at. */
 	int bottom = tre_stack_num_objects(stack);
 	/* True for first pass (counting number of needed tags) */
-	int first_pass = (mem == NULL || tnfa == NULL);
+	/*int first_pass = (mem == NULL || tnfa == NULL);*/
 	int *regset, *orig_regset;
 	int num_tags = 0; /* Total number of tags. */
 	int num_minimals = 0;	 /* Number of special minimal tags. */
@@ -1972,7 +1972,8 @@ int tre_compile (regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 		DPRINT(("tre_compile: setting up tags\n"));
 
 		/* Figure out how many tags we will need. */
-		errcode = tre_add_tags(NULL, stack, tree, tnfa);
+		/*errcode = tre_add_tags(NULL, stack, tree, tnfa); */
+		errcode = tre_add_tags(mem, stack, tree, tnfa, 1); 
 		if (errcode != REG_OK)
 			ERROR_EXIT(errcode);
 #ifdef TRE_DEBUG
@@ -2000,7 +2001,7 @@ int tre_compile (regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 			ERROR_EXIT(REG_ESPACE);
 		tnfa->submatch_data = submatch_data;
 
-		errcode = tre_add_tags(mem, stack, tree, tnfa);
+		errcode = tre_add_tags(mem, stack, tree, tnfa, 0);
 		if (errcode != REG_OK)
 			ERROR_EXIT(errcode);
 
