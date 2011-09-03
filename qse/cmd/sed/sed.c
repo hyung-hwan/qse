@@ -137,7 +137,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -h        show this message\n"));
 	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
 	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
-	qse_fprintf (out, QSE_T(" -r        allow {n,m} in a regular expression\n"));
+	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
 	qse_fprintf (out, QSE_T(" -s        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -l        ensure a newline at text end\n"));
 	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
@@ -190,7 +190,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('r'):
-				g_option |= QSE_SED_REXBOUND;
+				g_option |= QSE_SED_EXTENDEDREX;
 				break;
 
 			case QSE_T('s'):
@@ -237,26 +237,25 @@ qse_char_t* load_script_file (const qse_char_t* file)
 	fp = qse_fopen (file, QSE_T("r"));
 	if (fp == QSE_NULL) return QSE_NULL;
 
-	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) == QSE_NULL)
+	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) <= -1)
 	{
 		qse_fclose (fp);
 		return QSE_NULL;
 	}
 
-
 	while ((c = qse_fgetc (fp)) != QSE_CHAR_EOF)
 	{
 		if (qse_str_ccat (&script, c) == (qse_size_t)-1)
 		{
-			qse_fclose (fp);
 			qse_str_fini (&script);
+			qse_fclose (fp);
 			return QSE_NULL;
 		}		
 	}
 
-	qse_fclose (fp);
 	qse_str_yield (&script, &xstr, 0);
 	qse_str_fini (&script);
+	qse_fclose (fp);
 
 	return xstr.ptr;
 }
@@ -293,7 +292,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	
 	qse_sed_setoption (sed, g_option);
 
-	if (g_script_file != QSE_NULL)
+	if (g_script_file)
 	{
 		QSE_ASSERT (g_script == QSE_NULL);
 

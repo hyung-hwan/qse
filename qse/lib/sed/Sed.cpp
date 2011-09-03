@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: Sed.cpp 558 2011-09-02 15:27:44Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -80,6 +80,7 @@ void Sed::setOption (int opt)
 	qse_sed_setoption (sed, opt);
 }
 
+#if 0
 Sed::size_t Sed::getMaxDepth (depth_t id) const
 {
 	QSE_ASSERT (sed != QSE_NULL);
@@ -91,6 +92,7 @@ void Sed::setMaxDepth (int ids, size_t depth)
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_setmaxdepth (sed, ids, depth);
 }
+#endif
 
 const Sed::char_t* Sed::getErrorMessage () const
 {

@@ -143,7 +143,7 @@ int qse_tre_execx (
 	const qse_char_t* str,
 	qse_size_t        len,
 	qse_tre_match_t*  pmatch,
-     qse_size_t        nmatch,
+	qse_size_t        nmatch,
 	int               eflags
 );
 
@@ -151,7 +151,7 @@ int qse_tre_exec (
 	qse_tre_t*        tre,
 	const qse_char_t* str,
 	qse_tre_match_t*  pmatch,
-     qse_size_t        nmatch,
+	qse_size_t        nmatch,
 	int               eflags
 );
 

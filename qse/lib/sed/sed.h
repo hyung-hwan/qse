@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: sed.h 558 2011-09-02 15:27:44Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -28,6 +28,23 @@
 #define QSE_MAP_AS_RBT
 #include <qse/cmn/map.h>
 
+
+/* 
+ * Define USE_REX to use rex.h on behalf of tre.h 
+ * rex.h currently does not support backreference.
+ */
+#ifdef USE_REX
+enum qse_sed_depth_t
+{
+     QSE_SED_DEPTH_REX_BUILD = (1 << 0),
+     QSE_SED_DEPTH_REX_MATCH = (1 << 1)
+};
+typedef enum qse_sed_depth_t qse_sed_depth_t
+#endif
+
+#define QSE_SED_CMD_NOOP            QSE_T('\0')
+#define QSE_SED_CMD_QUIT            QSE_T('q')
+
 typedef struct qse_sed_adr_t qse_sed_adr_t; 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t;
 typedef struct qse_sed_cmd_blk_t qse_sed_cmd_blk_t;
@@ -50,8 +67,6 @@ struct qse_sed_adr_t
 	} u;
 };
 
-#define QSE_SED_CMD_NOOP            QSE_T('\0')
-#define QSE_SED_CMD_QUIT            QSE_T('q')
 #define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
 #define QSE_SED_CMD_APPEND          QSE_T('a')
 #define QSE_SED_CMD_INSERT          QSE_T('i')
@@ -262,7 +277,39 @@ struct qse_sed_t
 extern "C" {
 #endif
 
-const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum);
+int qse_sed_init (
+	qse_sed_t* sed, 
+	qse_mmgr_t* mmgr
+);
+
+void qse_sed_fini (
+	qse_sed_t* sed
+);
+
+const qse_char_t* qse_sed_dflerrstr (
+	qse_sed_t* sed, 
+	qse_sed_errnum_t errnum
+);
+
+
+#ifdef USE_REX
+/**
+ * The qse_sed_getmaxdepth() gets the maximum processing depth.
+ */
+qse_size_t qse_sed_getmaxdepth (
+	qse_sed_t*      sed, /**< stream editor */
+	qse_sed_depth_t id   /**< one of qse_sed_depth_t values */
+);
+
+/**
+ * The qse_sed_setmaxdepth() sets the maximum processing depth.
+ */
+void qse_sed_setmaxdepth (
+	qse_sed_t* sed,  /**< stream editor */
+	int        ids,  /**< 0 or a number OR'ed of #qse_sed_depth_t values */
+	qse_size_t depth /**< maximum depth level */
+);
+#endif
 
 #ifdef __cplusplus
 }

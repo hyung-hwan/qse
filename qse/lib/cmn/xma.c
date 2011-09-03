@@ -49,8 +49,8 @@ struct qse_xma_blk_t
 
 	struct
 	{
-		qse_xma_blk_t* prev; /**< link to the previous block */
-		qse_xma_blk_t* next; /**< link to the next block */
+		qse_xma_blk_t* prev; /**< link to the previous adjacent block */
+		qse_xma_blk_t* next; /**< link to the next adjacent block */
 	} b;
 };
 
@@ -379,7 +379,7 @@ void* qse_xma_alloc (qse_xma_t* xma, qse_size_t size)
 			for (++xfi; xfi < XFIMAX(xma) - 1; xfi++)
 			{
 				free = alloc_from_freelist (xma, xfi, size);
-				if (free != QSE_NULL) break;
+				if (free) break;
 			}
 			if (free == QSE_NULL) return QSE_NULL;
 		}
@@ -392,16 +392,20 @@ static void* _realloc_merge (qse_xma_t* xma, void* b, qse_size_t size)
 {
 	qse_xma_blk_t* blk = USR_TO_SYS(b);
 
+	/* rounds up 'size' to be multiples of ALIGN */ 
+	size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
+
 	if (size > blk->size)
 	{
 		/* 
 		 * grow the current block
 		 */
-
-		qse_size_t req = size - blk->size;
+		qse_size_t req;
 		qse_xma_blk_t* n;
 		qse_size_t rem;
 		
+		req = size - blk->size;
+
 		n = blk->b.next;
 
 		/* check if the next adjacent block is available */

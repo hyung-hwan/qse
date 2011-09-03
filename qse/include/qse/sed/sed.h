@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 507 2011-07-15 15:53:49Z hyunghwan.chung $
+ * $Id: sed.h 558 2011-09-02 15:27:44Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -131,28 +131,16 @@ typedef const qse_char_t* (*qse_sed_errstr_t) (
  */
 enum qse_sed_option_t
 {
-	QSE_SED_STRIPLS   = (1 << 0), /**< strip leading spaces from text */
-	QSE_SED_KEEPTBS   = (1 << 1), /**< keep an trailing backslash */
-	QSE_SED_ENSURENL  = (1 << 2), /**< ensure NL at the text end */
-	QSE_SED_QUIET     = (1 << 3), /**< do not print pattern space */
-	QSE_SED_STRICT    = (1 << 4), /**< do strict address check */
-	QSE_SED_STARTSTEP = (1 << 5), /**< allow start~step */
-	QSE_SED_REXBOUND  = (1 << 6), /**< allow {n,m} in regular expression */
-	QSE_SED_SAMELINE  = (1 << 7), /**< allow text on the same line as c, a, i */
+	QSE_SED_STRIPLS     = (1 << 0), /**< strip leading spaces from text */
+	QSE_SED_KEEPTBS     = (1 << 1), /**< keep an trailing backslash */
+	QSE_SED_ENSURENL    = (1 << 2), /**< ensure NL at the text end */
+	QSE_SED_QUIET       = (1 << 3), /**< do not print pattern space */
+	QSE_SED_STRICT      = (1 << 4), /**< do strict address check */
+	QSE_SED_STARTSTEP   = (1 << 5), /**< allow start~step */
+	QSE_SED_EXTENDEDREX = (1 << 6), /**< allow {n,m} in regular expression */
+	QSE_SED_SAMELINE    = (1 << 7), /**< allow text on the same line as c, a, i */
 };
 typedef enum qse_sed_option_t qse_sed_option_t;
-
-
-/**
- * The qse_sed_depth_t type defines IDs for qse_sed_getmaxdepth() and 
- * qse_sed_setmaxdepth().
- */
-enum qse_sed_depth_t
-{
-	QSE_SED_DEPTH_REX_BUILD = (1 << 0),
-	QSE_SED_DEPTH_REX_MATCH = (1 << 1)
-};
-typedef enum qse_sed_depth_t qse_sed_depth_t;
 
 /**
  * The qse_sed_io_cmd_t type defines I/O command codes. The code indicates 
@@ -244,23 +232,6 @@ int qse_sed_getoption (
 void qse_sed_setoption (
 	qse_sed_t* sed, /**< stream editor */
 	int        opt  /**< 0 or a number OR'ed of #qse_sed_option_t values */
-);
-
-/**
- * The qse_sed_getmaxdepth() gets the maximum processing depth.
- */
-qse_size_t qse_sed_getmaxdepth (
-	qse_sed_t*      sed, /**< stream editor */
-	qse_sed_depth_t id   /**< one of qse_sed_depth_t values */
-);
-
-/**
- * The qse_sed_setmaxdepth() sets the maximum processing depth.
- */
-void qse_sed_setmaxdepth (
-	qse_sed_t* sed,  /**< stream editor */
-	int        ids,  /**< 0 or a number OR'ed of #qse_sed_depth_t values */
-	qse_size_t depth /**< maximum depth level */
 );
 
 /**

@@ -47,7 +47,7 @@ qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
-	return QSE_NULL;
+	return tre;
 }
 
 void qse_tre_close (qse_tre_t* tre)

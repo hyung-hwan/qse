@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 557 2011-09-01 14:45:06Z hyunghwan.chung $
+ * $Id: sed.c 558 2011-09-02 15:27:44Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -20,16 +20,18 @@
 
 #include "sed.h"
 #include "../cmn/mem.h"
-#include <qse/cmn/rex.h>
 #include <qse/cmn/chr.h>
+
+#ifdef USE_REX
+#	include <qse/cmn/rex.h>
+#else
+#	include <qse/cmn/tre.h>
+#endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
-
-static int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr);
-static void qse_sed_fini (qse_sed_t* sed);
 
 #define SETERR0(sed,num,loc) \
 do { qse_sed_seterror (sed, num, QSE_NULL, loc); } while (0)
@@ -73,7 +75,7 @@ void qse_sed_close (qse_sed_t* sed)
 	QSE_MMGR_FREE (sed->mmgr, sed);
 }
 
-static int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
+int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -121,7 +123,7 @@ oops_1:
 	return -1;
 }
 
-static void qse_sed_fini (qse_sed_t* sed)
+void qse_sed_fini (qse_sed_t* sed)
 {
 	free_all_command_blocks (sed);
 
@@ -145,6 +147,8 @@ int qse_sed_getoption (qse_sed_t* sed)
 	return sed->option;
 }
 
+
+#ifdef USE_REX
 qse_size_t qse_sed_getmaxdepth (qse_sed_t* sed, qse_sed_depth_t id)
 {
 	return (id & QSE_SED_DEPTH_REX_BUILD)? sed->depth.rex.build:
@@ -156,6 +160,75 @@ void qse_sed_setmaxdepth (qse_sed_t* sed, int ids, qse_size_t depth)
 	if (ids & QSE_SED_DEPTH_REX_BUILD) sed->depth.rex.build = depth;
 	if (ids & QSE_SED_DEPTH_REX_MATCH) sed->depth.rex.match = depth;
 }
+#endif
+
+static qse_tre_t* maketre (
+	qse_sed_t* sed, const qse_cstr_t* str, const qse_sed_loc_t* loc)
+{
+	qse_tre_t* tre;
+
+	tre = qse_tre_open (sed->mmgr, 0);
+	if (tre == QSE_NULL)
+	{
+		SETERR0 (sed, QSE_SED_ENOMEM, loc);
+		return QSE_NULL;
+	}
+
+	if (qse_tre_compx (tre, str->ptr, str->len, QSE_NULL, 
+		((sed->option & QSE_SED_EXTENDEDREX)? QSE_TRE_EXTENDED: 0)) <= -1)
+	{
+		SETERR1 (sed, QSE_SED_EREXBL, str->ptr, str->len, loc);
+		qse_tre_close (tre);
+		return QSE_NULL;
+	}
+
+	return tre;
+}
+
+static QSE_INLINE void freetre (qse_sed_t* sed, qse_tre_t* tre)
+{
+	qse_tre_close (tre);
+}
+
+static int matchtre (
+	qse_sed_t* sed, qse_tre_t* tre, int opt, 
+	const qse_cstr_t* str, qse_cstr_t* mat,
+	qse_cstr_t submat[9], const qse_sed_loc_t* loc)
+{
+	int n;
+	qse_tre_match_t match[10];
+
+	n = qse_tre_execx (tre, str->ptr, str->len, match, 10, opt);
+	if (n <= -1)
+	{
+		if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMATCH) return 0;
+		SETERR0 (sed, QSE_SED_EREXMA, loc);
+		return -1;	
+	}
+	
+	QSE_ASSERT (match[0].rm_so != -1);
+	if (mat)
+	{
+		mat->ptr = &str->ptr[match[0].rm_so];
+		mat->len = match[0].rm_eo - match[0].rm_so;
+	}
+
+	if (submat)
+	{
+		int i;
+
+		/* you must intialize submat before you pass into this 
+		 * function because it can abort filling */
+		for (i = 1; i <= 10; i++)
+		{
+			if (match[i].rm_so == -1) break;
+			submat[i-1].ptr = &str->ptr[match[i].rm_so];
+			submat[i-1].len = match[i].rm_eo - match[i].rm_so;
+		}
+	}
+	return 1;
+}
+
 
 /* check if c is a space character */
 #define IS_SPACE(c) ((c) == QSE_T(' ') || (c) == QSE_T('\t') || (c) == QSE_T('\r'))
@@ -200,13 +273,15 @@ static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (cmd->a2.type == QSE_SED_ADR_REX)
 	{
 		QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
-		qse_freerex (sed->mmgr, cmd->a2.u.rex);
+		/*qse_freerex (sed->mmgr, cmd->a2.u.rex);*/
+		freetre (sed, cmd->a2.u.rex);
 		cmd->a2.type = QSE_SED_ADR_NONE;
 	}
 	if (cmd->a1.type == QSE_SED_ADR_REX)
 	{
 		QSE_ASSERT (cmd->a1.u.rex != QSE_NULL);
-		qse_freerex (sed->mmgr, cmd->a1.u.rex);
+		/*qse_freerex (sed->mmgr, cmd->a1.u.rex);*/
+		freetre (sed, cmd->a1.u.rex);
 		cmd->a1.type = QSE_SED_ADR_NONE;
 	}
 }
@@ -285,7 +360,8 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (cmd->u.subst.rpl.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.rpl.ptr);
 			if (cmd->u.subst.rex)
-				qse_freerex (sed->mmgr, cmd->u.subst.rex);
+				/*qse_freerex (sed->mmgr, cmd->u.subst.rex);*/
+				freetre (sed, cmd->u.subst.rex);
 			break;
 
 		case QSE_SED_CMD_TRANSLATE:
@@ -300,7 +376,9 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 {
+#ifdef USE_REX
 	void* code;
+#endif
 	qse_cint_t c;
 
 	qse_str_clear (&sed->tmp.rex);
@@ -346,43 +424,11 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 		}
 	} 
 
-
-#if 0
-{
-	qse_tre_t* tre;
-
-	tre = qse_tre_open (sed->mmgr, 0);
-	if (tre)
-	{
-		if (qse_tre_comp (tre,
-			QSE_STR_PTR(&sed->tmp.rex), 
-			QSE_STR_LEN(&sed->tmp.rex),
-			QSE_NULL,
-			QSE_TRE_EXTENDED) <= -1)
-		{
-			qse_tre_close (tre);
-			goto fail:
-		}
-		return tre;
-	}
-	else
-	{
-		SETERR1 (
-			sed, QSE_SED_EREXBL,
-			QSE_STR_PTR(&sed->tmp.rex),
-			QSE_STR_LEN(&sed->tmp.rex),
-			&sed->src.loc
-		);
-		return QSE_NULL;
-	}
-
-}
-#endif
-
+#ifdef USE_REX
 	code = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
-		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_NOBOUND),
+		((sed->option&QSE_SED_EXTENDEDREX)? 0:QSE_REX_NOBOUND),
 		QSE_STR_PTR(&sed->tmp.rex), 
 		QSE_STR_LEN(&sed->tmp.rex), 
 		QSE_NULL
@@ -399,6 +445,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 	}
 
 	return code;
+
+#else
+	return maketre (sed, QSE_STR_CSTR(&sed->tmp.rex), &sed->src.loc);
+#endif
 }
 
 static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
@@ -809,12 +859,14 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			CHECK_CMDIC (sed, cmd, c, goto oops);
 
+#if 0
 			if (c == QSE_T('\\'))
 			{
 				c = NXTSC (sed);
 				CHECK_CMDIC (sed, cmd, c, goto oops);
 				if (c == QSE_T('n')) c = QSE_T('\n');
 			}
+#endif
 
 			if (qse_str_ccat (t[i], c) == (qse_size_t)-1)
 			{
@@ -895,10 +947,12 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	    terminate_command (sed) <= -1) goto oops;
 
 	QSE_ASSERT (cmd->u.subst.rex == QSE_NULL);
+
+#ifdef USE_REX
 	cmd->u.subst.rex = qse_buildrex (
 		sed->mmgr,
 		sed->depth.rex.build,
-		((sed->option&QSE_SED_REXBOUND)? 0:QSE_REX_NOBOUND),
+		((sed->option&QSE_SED_EXTENDEDREX)? 0:QSE_REX_NOBOUND),
 		QSE_STR_PTR(t[0]),
 		QSE_STR_LEN(t[0]),
 		QSE_NULL
@@ -913,6 +967,10 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		);
 		goto oops;
 	}	
+#else
+	cmd->u.subst.rex = maketre (sed, QSE_STR_CSTR(t[0]), &sed->src.loc);
+	if (cmd->u.subst.rex == QSE_NULL) goto oops;
+#endif
 
 	qse_str_yield (t[1], &cmd->u.subst.rpl, 0);
 	if (cmd->u.subst.g == 0 && cmd->u.subst.occ == 0) cmd->u.subst.occ = 1;
@@ -1833,7 +1891,9 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cstr_t mat, pmat;
 	int opt = 0, repl = 0, n;
+#ifdef USE_REX
 	qse_rex_errnum_t errnum;
+#endif
 
 	qse_cstr_t str, cur;
 	const qse_char_t* str_end;
@@ -1842,7 +1902,11 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	QSE_ASSERT (cmd->type == QSE_SED_CMD_SUBSTITUTE);
 
 	qse_str_clear (&sed->e.txt.subst);
+#ifdef USE_REX
 	if (cmd->u.subst.i) opt = QSE_REX_IGNORECASE;
+#else
+	if (cmd->u.subst.i) opt = QSE_TRE_IGNORECASE;
+#endif
 
 	str.ptr = QSE_STR_PTR(&sed->e.in.line);
 	str.len = QSE_STR_LEN(&sed->e.in.line);
@@ -1863,6 +1927,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	 * end of string($) needs to be tested */
 	while (cur.ptr <= str_end)
 	{
+#ifdef USE_REX
 		if (max_count == 0 || sub_count < max_count)
 		{
 			n = qse_matchrex (
@@ -1871,14 +1936,29 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				cmd->u.subst.rex, opt,
 				&str, &cur, &mat, &errnum
 			);
+			if (n <= -1)
+			{
+				SETERR0 (sed, QSE_SED_EREXMA, &cmd->loc);
+				return -1;
+			}
 		}
 		else n = 0;
+#else
+		qse_cstr_t submat[9];
 
-		if (n <= -1)
+		QSE_MEMSET (submat, 0, QSE_SIZEOF(submat));
+		if (max_count == 0 || sub_count < max_count)
 		{
-			SETERR0 (sed, QSE_SED_EREXMA, &cmd->loc);
-			return -1;
+			n = matchtre (
+				sed,
+				cmd->u.subst.rex,
+				((str.ptr == cur.ptr)? opt: (opt | QSE_TRE_NOTBOL)),
+				&cur, &mat, submat, &cmd->loc
+			);
+			if (n <= -1) return -1;
 		}
+		else n = 0;
+#endif
 
 		if (n == 0) 
 		{
@@ -1930,11 +2010,49 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			for (i = 0; i < cmd->u.subst.rpl.len; i++)
 			{
 				if ((i+1) < cmd->u.subst.rpl.len && 
-				    cmd->u.subst.rpl.ptr[i] == QSE_T('\\') && 
-				    cmd->u.subst.rpl.ptr[i+1] == QSE_T('&'))
+				    cmd->u.subst.rpl.ptr[i] == QSE_T('\\'))
 				{
-					m = qse_str_ccat (
-						&sed->e.txt.subst, QSE_T('&'));
+					qse_char_t nc = cmd->u.subst.rpl.ptr[i+1];
+
+#ifndef USE_REX
+					if (nc >= QSE_T('1') && nc <= QSE_T('9'))
+					{
+						int smi = nc - QSE_T('1');
+						m = qse_str_ncat (&sed->e.txt.subst, submat[smi].ptr, submat[smi].len);
+					}
+					else
+					{
+#endif
+						switch (nc)
+						{
+							case QSE_T('n'):
+								nc = QSE_T('\n');
+								break;
+							case QSE_T('r'):
+								nc = QSE_T('\r');
+								break;
+							case QSE_T('t'):
+								nc = QSE_T('\t');
+								break;
+							case QSE_T('f'):
+								nc = QSE_T('\f');
+								break;
+							case QSE_T('b'):
+								nc = QSE_T('\b');
+								break;
+							case QSE_T('v'):
+								nc = QSE_T('\v');
+								break;
+							case QSE_T('a'):
+								nc = QSE_T('\a');
+								break;
+#ifndef USE_REX
+						}
+#endif
+
+						m = qse_str_ccat (&sed->e.txt.subst, nc);
+					}
+
 					i++;
 				}
 				else if (cmd->u.subst.rpl.ptr[i] == QSE_T('&'))
@@ -2032,10 +2150,12 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 
 		case QSE_SED_ADR_REX:
 		{
+#ifdef USE_REX
 			int n;
-			qse_cstr_t match;
-			qse_cstr_t line;
 			qse_rex_errnum_t errnum;
+			qse_cstr_t match;
+#endif
+			qse_cstr_t line;
 
 			QSE_ASSERT (a->u.rex != QSE_NULL);
 
@@ -2045,6 +2165,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			if (line.len > 0 &&
 			    line.ptr[line.len-1] == QSE_T('\n')) line.len--;
 
+#ifdef USE_REX
 			n = qse_matchrex (
 				sed->mmgr, 
 				sed->depth.rex.match,
@@ -2058,6 +2179,10 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			}			
 
 			return n;
+#else
+			return matchtre (sed, a->u.rex, 0, &line, QSE_NULL, QSE_NULL, &cmd->loc);
+#endif
+
 		}
 		case QSE_SED_ADR_DOL:
 		{
