@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 507 2011-07-15 15:53:49Z hyunghwan.chung $
+ * $Id: Sed.hpp 558 2011-09-02 15:27:44Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -54,8 +54,10 @@ public:
 	typedef qse_sed_io_arg_t io_arg_t;
 	/// The option_t type redefines an option type
 	typedef qse_sed_option_t option_t;
+#if 0
 	/// The depth_t type redefines an depth IDs
 	typedef qse_sed_depth_t depth_t;
+#endif
 
 	///
 	/// The Stream class is a base class for I/O operation during
@@ -214,6 +216,7 @@ public:
 		int opt ///< option code
 	);
 
+#if 0
 	///
 	/// The getMaxDepth() function gets the maximum processing depth for
 	/// an operation type identified by @a id.
@@ -229,6 +232,7 @@ public:
 		int    ids,  ///< 0 or a number OR'ed of depth_t values
 		size_t depth ///< 0 maximum depth
 	);
+#endif
 
 	///
 	/// The getErrorMessage() function gets the description of the last 
