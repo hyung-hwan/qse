@@ -1,5 +1,5 @@
 /*
- * $Id: tio-put.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: tio-put.c 559 2011-09-04 16:21:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,7 +21,7 @@
 #include <qse/cmn/tio.h>
 #include <qse/cmn/chr.h>
 
-static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
+static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c, int* flush_needed)
 {
 #ifdef QSE_CHAR_IS_WCHAR
 	qse_size_t n, i;
@@ -41,7 +41,10 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 
 	tio->outbuf[tio->outbuf_len++] = c;	
 	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf))
+	{
+		*flush_needed = 0;
 		return qse_tio_flush (tio);
+	}
 
 #else /*  QSE_CHAR_IS_WCHAR */
 
@@ -62,7 +65,8 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 		tio->outbuf[tio->outbuf_len++] = mc[i];
 		if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf)) 
 		{
-			if (qse_tio_flush (tio) == -1) return -1;
+			*flush_needed = 0;
+			if (qse_tio_flush (tio) <= -1) return -1;
 		}
 	}		
 
@@ -70,7 +74,8 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c)
 
 	if (c == QSE_T('\n') && tio->outbuf_len > 0) 
 	{
-		if (qse_tio_flush (tio) == -1) return -1;
+		/*if (qse_tio_flush (tio) <= -1) return -1;*/
+		*flush_needed = 1;
 	}
 
 	return 1;
@@ -80,6 +85,7 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 {
 	qse_ssize_t n;
 	const qse_char_t* p;
+	int flush_needed = 0;
 
 	if (size == 0) return 0;
 
@@ -89,8 +95,8 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 	{
 		while (*p != QSE_T('\0'))
 		{
-			n = tio_putc (tio, *p);
-			if (n == -1) return -1;
+			n = tio_putc (tio, *p, &flush_needed);
+			if (n <= -1) return -1;
 			if (n == 0) break;
 			p++;
 		}
@@ -100,13 +106,14 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 		const qse_char_t* end = str + size;
 		while (p < end) 
 		{
-			n = tio_putc (tio, *p);
-			if (n == -1) return -1;
+			n = tio_putc (tio, *p, &flush_needed);
+			if (n <= -1) return -1;
 			if (n == 0) break;
 			p++;
 		}
 	}
 
+	if (flush_needed && qse_tio_flush(tio) <= -1) return -1;
 	return p - str;
 }
 

@@ -56,7 +56,7 @@ OUTFILE_XMA="${OUTFILE}.xma"
 XMAOPTS="-m 500000"
 
 PROGS="
-	s001.sed/s001.dat//-n
+	s001.sed/s001.dat//-n -r
 	s002.sed/s002.dat//
 	s003.sed/s003.dat//
 	s004.sed/s004.dat//

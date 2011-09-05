@@ -115,6 +115,7 @@ static qse_ssize_t out (
 			return 1;
 
 		case QSE_SED_IO_CLOSE:
+			qse_sio_flush (arg->handle);
 			if (arg->handle != qse_sio_out) qse_sio_close (arg->handle);
 			return 0;
 
@@ -136,11 +137,12 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h        show this message\n"));
 	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
-	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
-	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
-	qse_fprintf (out, QSE_T(" -s        allow text on the same line as c, a, i\n"));
-	qse_fprintf (out, QSE_T(" -l        ensure a newline at text end\n"));
 	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
+	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
+	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
+	qse_fprintf (out, QSE_T(" -w        allow address format of start~step\n"));
+	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
+	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
 	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
 }
 
@@ -148,7 +150,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnarslf:m:"),
+		QSE_T("hnf:rawxym:"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -185,24 +187,28 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_option |= QSE_SED_QUIET;
 				break;
 
-			case QSE_T('a'):
-				g_option |= QSE_SED_STRICT;
+			case QSE_T('f'):
+				g_script_file = opt.arg;
 				break;
 
 			case QSE_T('r'):
 				g_option |= QSE_SED_EXTENDEDREX;
 				break;
 
-			case QSE_T('s'):
+			case QSE_T('a'):
+				g_option |= QSE_SED_STRICT;
+				break;
+
+			case QSE_T('w'):
+				g_option |= QSE_SED_STARTSTEP;
+				break;
+
+			case QSE_T('x'):
 				g_option |= QSE_SED_SAMELINE;
 				break;
 
-			case QSE_T('l'):
+			case QSE_T('y'):
 				g_option |= QSE_SED_ENSURENL;
-				break;
-
-			case QSE_T('f'):
-				g_script_file = opt.arg;
 				break;
 
 			case QSE_T('m'):

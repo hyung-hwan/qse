@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 558 2011-09-02 15:27:44Z hyunghwan.chung $
+ * $Id: sed.c 559 2011-09-04 16:21:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -177,7 +177,11 @@ static qse_tre_t* maketre (
 	if (qse_tre_compx (tre, str->ptr, str->len, QSE_NULL, 
 		((sed->option & QSE_SED_EXTENDEDREX)? QSE_TRE_EXTENDED: 0)) <= -1)
 	{
-		SETERR1 (sed, QSE_SED_EREXBL, str->ptr, str->len, loc);
+		qse_sed_errnum_t errnum;
+		errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
+			QSE_TRE_ENOMEM: QSE_SED_EREXBL;
+		SETERR1 (sed, errnum, str->ptr, str->len, loc);
+
 		qse_tre_close (tre);
 		return QSE_NULL;
 	}
@@ -201,8 +205,13 @@ static int matchtre (
 	n = qse_tre_execx (tre, str->ptr, str->len, match, 10, opt);
 	if (n <= -1)
 	{
+		qse_sed_errnum_t errnum;
+
 		if (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMATCH) return 0;
-		SETERR0 (sed, QSE_SED_EREXMA, loc);
+
+		errnum = (QSE_TRE_ERRNUM(tre) == QSE_TRE_ENOMEM)? 
+			QSE_TRE_ENOMEM: QSE_SED_EREXMA;
+		SETERR0 (sed, errnum, loc);
 		return -1;	
 	}
 	
@@ -374,6 +383,39 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 }
 
+static qse_cint_t trans_escaped (qse_cint_t c)
+{
+	switch (c)
+	{
+		case QSE_T('a'):
+			c = QSE_T('\a');
+			break;
+/*
+Omitted for clash with regular expression \b.
+		case QSE_T('b'):
+			c = QSE_T('\b');
+			break;
+*/
+
+		case QSE_T('f'):
+			c = QSE_T('\f');
+		case QSE_T('n'):
+			c = QSE_T('\n');
+			break;
+		case QSE_T('r'):
+			c = QSE_T('\r');
+			break;
+		case QSE_T('t'):
+			c = QSE_T('\t');
+			break;
+		case QSE_T('v'):
+			c = QSE_T('\v');
+			break;
+	}
+
+	return c;
+}
+
 static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 {
 #ifdef USE_REX
@@ -401,8 +443,10 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 
 		if (c == QSE_T('\\'))
 		{
-			c = NXTSC (sed);
-			if (c == QSE_CHAR_EOF || c == QSE_T('\n'))
+			qse_cint_t nc;
+
+			nc = NXTSC (sed);
+			if (nc == QSE_CHAR_EOF /*|| nc == QSE_T('\n')*/)
 			{
 				SETERR1 (
 					sed, QSE_SED_EREXIC, 
@@ -413,8 +457,25 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 				return QSE_NULL;
 			}
 
-			if (c == QSE_T('n')) c = QSE_T('\n');
-			/* TODO: support more escaped characters??  */
+			if (nc == QSE_T('\n')) c = nc;
+			else
+			{
+				qse_cint_t ec;
+
+				ec = trans_escaped (nc);
+				if (ec == nc)
+				{
+					/* if the character after a backslash is not special at the
+					 * this layer, add the backslash into the regular expression
+					 * buffer as it is. */
+					if (qse_str_ccat (&sed->tmp.rex, QSE_T('\\')) == (qse_size_t)-1)
+					{
+						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+						return QSE_NULL;
+					}
+				}
+				c = ec;
+			}
 		}
 
 		if (qse_str_ccat (&sed->tmp.rex, c) == (qse_size_t)-1)
@@ -824,6 +885,16 @@ do { \
 	} \
 } while (0)
 
+#define CHECK_CMDIC_ESCAPED(sed,cmd,c,action) \
+do { \
+	if (c == QSE_CHAR_EOF) \
+	{ \
+		SETERR1 (sed, QSE_SED_ECMDIC, \
+			&cmd->type, 1, &sed->src.loc); \
+		action; \
+	} \
+} while (0)
+
 static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 {
 	qse_cint_t c, delim;
@@ -859,14 +930,39 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			CHECK_CMDIC (sed, cmd, c, goto oops);
 
-#if 0
 			if (c == QSE_T('\\'))
 			{
-				c = NXTSC (sed);
-				CHECK_CMDIC (sed, cmd, c, goto oops);
-				if (c == QSE_T('n')) c = QSE_T('\n');
+				qse_cint_t nc;
+
+				nc = NXTSC (sed);
+				CHECK_CMDIC_ESCAPED (sed, cmd, nc, goto oops);
+
+				if (nc == QSE_T('\n')) c = nc;
+				else
+				{
+					qse_cint_t ec;
+	
+					/* Escaping a known speical character for the regular expression 
+					 * part is done here. However, Escaping a special character for 
+					 * the replacement part is done in do_subst() except '\n' because
+					 * it has more special characters like '&'. */
+
+					ec = trans_escaped (nc);
+					if (ec == nc)
+					{
+						/* if the character after a backslash is not special at the
+						 * this layer, add the backslash into the regular expression
+						 * buffer as it is. */
+						if (qse_str_ccat (t[i], QSE_T('\\')) == (qse_size_t)-1)
+						{
+							SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+							goto oops;
+						}
+					}
+
+					c = ec;
+				}
 			}
-#endif
 
 			if (qse_str_ccat (t[i], c) == (qse_size_t)-1)
 			{
@@ -1017,8 +1113,8 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		if (c == QSE_T('\\'))
 		{
 			c = NXTSC (sed);
-			CHECK_CMDIC (sed, cmd, c, goto oops);
-			if (c == QSE_T('n')) c = QSE_T('\n');
+			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
+			c = trans_escaped (c);
 		}
 
 		b[0] = c;
@@ -1039,8 +1135,8 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		if (c == QSE_T('\\'))
 		{
 			c = NXTSC (sed);
-			CHECK_CMDIC (sed, cmd, c, goto oops);
-			if (c == QSE_T('n')) c = QSE_T('\n');
+			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
+			c = trans_escaped (c);
 		}
 
 		if (pos >= QSE_STR_LEN(t))
@@ -1659,10 +1755,21 @@ static int write_char (qse_sed_t* sed, qse_char_t c)
 static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
 {
 	qse_size_t i;
+	int flush_needed = 0;
+
 	for (i = 0; i < len; i++)
 	{
-		if (write_char (sed, str[i]) <= -1) return -1;
+		/*if (write_char (sed, str[i]) <= -1) return -1;*/
+		sed->e.out.buf[sed->e.out.len++] = str[i];
+		if (sed->e.out.len >= QSE_COUNTOF(sed->e.out.buf))
+		{
+			if (flush (sed) <= -1) return -1;
+			flush_needed = 0;
+		}
+		else if (str[i] == QSE_T('\n')) flush_needed = 1;
 	}
+
+	if (flush_needed && flush(sed) <= -1) return -1;
 	return 0;
 }
 
@@ -1913,7 +2020,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	/* TODO: support different line end convension */
 	if (str.len > 0 && str.ptr[str.len-1] == QSE_T('\n')) str.len--;
-
+		
 	str_end = str.ptr + str.len;
 	cur = str;
 
@@ -1984,27 +2091,33 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (max_count > 0 && sub_count + 1 != max_count)
 		{
-			m = qse_str_ncat (
-				&sed->e.txt.subst,
-				cur.ptr, mat.ptr-cur.ptr+mat.len
-			);
-
-			if (m == (qse_size_t)-1)
+			if (cur.ptr < str_end)
 			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				return -1;
+				m = qse_str_ncat (
+					&sed->e.txt.subst,
+					cur.ptr, mat.ptr-cur.ptr+mat.len
+				);
+				if (m == (qse_size_t)-1)
+				{
+					SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+					return -1;
+				}
 			}
 		}
 		else
 		{
 			repl = 1;
 
-			m = qse_str_ncat (
-				&sed->e.txt.subst, cur.ptr, mat.ptr-cur.ptr);
-			if (m == (qse_size_t)-1)
+			if (cur.ptr < str_end)
 			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				return -1;
+				m = qse_str_ncat (
+					&sed->e.txt.subst, cur.ptr, mat.ptr-cur.ptr
+				);
+				if (m == (qse_size_t)-1)
+				{
+					SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+					return -1;
+				}
 			}
 
 			for (i = 0; i < cmd->u.subst.rpl.len; i++)
@@ -2018,40 +2131,20 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 					if (nc >= QSE_T('1') && nc <= QSE_T('9'))
 					{
 						int smi = nc - QSE_T('1');
-						m = qse_str_ncat (&sed->e.txt.subst, submat[smi].ptr, submat[smi].len);
+						m = qse_str_ncat (
+							&sed->e.txt.subst,
+							submat[smi].ptr, submat[smi].len
+						);
 					}
 					else
 					{
 #endif
-						switch (nc)
-						{
-							case QSE_T('n'):
-								nc = QSE_T('\n');
-								break;
-							case QSE_T('r'):
-								nc = QSE_T('\r');
-								break;
-							case QSE_T('t'):
-								nc = QSE_T('\t');
-								break;
-							case QSE_T('f'):
-								nc = QSE_T('\f');
-								break;
-							case QSE_T('b'):
-								nc = QSE_T('\b');
-								break;
-							case QSE_T('v'):
-								nc = QSE_T('\v');
-								break;
-							case QSE_T('a'):
-								nc = QSE_T('\a');
-								break;
-#ifndef USE_REX
-						}
-#endif
-
+						/* the know speical characters have been escaped
+						 * in get_subst(). so i don't call trans_escaped() here */
 						m = qse_str_ccat (&sed->e.txt.subst, nc);
+#ifndef USE_REX
 					}
+#endif
 
 					i++;
 				}
@@ -2085,13 +2178,15 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		if (mat.len == 0)
 		{
 		skip_one_char:
-			/* special treament is need if the match length is 0 */
-
-			m = qse_str_ncat (&sed->e.txt.subst, cur.ptr, 1);
-			if (m == (qse_size_t)-1)
+			if (cur.ptr < str_end)
 			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				return -1;
+				/* special treament is needed if the match length is 0 */
+				m = qse_str_ncat (&sed->e.txt.subst, cur.ptr, 1);
+				if (m == (qse_size_t)-1)
+				{
+					SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+					return -1;
+				}
 			}
 
 			cur.ptr++; cur.len--;

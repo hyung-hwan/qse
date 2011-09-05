@@ -1,5 +1,5 @@
 /*
- * $Id: tio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: tio.c 559 2011-09-04 16:21:54Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -174,7 +174,7 @@ int qse_tio_attachout (qse_tio_t* tio, qse_tio_io_t output, void* arg)
 
 	tio->output_func = output;
 	tio->output_arg = arg;
-        tio->outbuf_len = 0;
+	tio->outbuf_len = 0;
 
 	return 0;
 }
@@ -236,9 +236,9 @@ qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 
 void qse_tio_purge (qse_tio_t* tio)
 {
-        tio->input_status = 0;
-        tio->inbuf_curp = 0;
-        tio->inbuf_len = 0;
-        tio->outbuf_len = 0;
+	tio->input_status = 0;
+	tio->inbuf_curp = 0;
+	tio->inbuf_len = 0;
+	tio->outbuf_len = 0;
 	tio->errnum = QSE_TIO_ENOERR;
 }
