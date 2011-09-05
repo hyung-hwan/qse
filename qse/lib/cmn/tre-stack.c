@@ -117,7 +117,9 @@ tre_stack_push(tre_stack_t *s, union tre_stack_item value)
 	}
 	else
 	{
-		if (s->size >= s->max_size)
+/* QSE  added check for s->max_size > 0 
+		if (s->size >= s->max_size)*/
+		if (s->max_size > 0 && s->size >= s->max_size)
 		{
 			DPRINT(("tre_stack_push: stack full\n"));
 			return REG_ESPACE;
@@ -128,7 +130,9 @@ tre_stack_push(tre_stack_t *s, union tre_stack_item value)
 			int new_size;
 			DPRINT(("tre_stack_push: trying to realloc more space\n"));
 			new_size = s->size + s->increment;
-			if (new_size > s->max_size)
+/* QSE  added check for s->max_size > 0 
+			if (new_size > s->max_size) */
+			if (s->max_size > 0 && new_size > s->max_size) 
 				new_size = s->max_size;
 			new_buffer = xrealloc(s->mmgr, s->stack, sizeof(*new_buffer) * new_size);
 			if (new_buffer == NULL)

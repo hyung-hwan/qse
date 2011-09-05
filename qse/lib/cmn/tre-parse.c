@@ -218,98 +218,6 @@ tre_compare_items(const void *a, const void *b, void* ctx)
 		return 0;
 }
 
-#if 0
-#ifndef TRE_USE_SYSTEM_WCTYPE
-/* isalnum() and the rest may be macros, so wrap them to functions. */
-int tre_isalnum_func(tre_cint_t c)
-{
-	return tre_isalnum(c);
-}
-int tre_isalpha_func(tre_cint_t c)
-{
-	return tre_isalpha(c);
-}
-int tre_isascii_func(tre_cint_t c)
-{
-	return !(c >> 7);
-}
-int tre_isblank_func(tre_cint_t c)
-{
-	return tre_isblank(c);
-}
-int tre_iscntrl_func(tre_cint_t c)
-{
-	return tre_iscntrl(c);
-}
-int tre_isdigit_func(tre_cint_t c)
-{
-	return tre_isdigit(c);
-}
-int tre_isgraph_func(tre_cint_t c)
-{
-	return tre_isgraph(c);
-}
-int tre_islower_func(tre_cint_t c)
-{
-	return tre_islower(c);
-}
-int tre_isprint_func(tre_cint_t c)
-{
-	return tre_isprint(c);
-}
-int tre_ispunct_func(tre_cint_t c)
-{
-	return tre_ispunct(c);
-}
-int tre_isspace_func(tre_cint_t c)
-{
-	return tre_isspace(c);
-}
-int tre_isupper_func(tre_cint_t c)
-{
-	return tre_isupper(c);
-}
-int tre_isxdigit_func(tre_cint_t c)
-{
-	return tre_isxdigit(c);
-}
-
-struct
-{
-	char *name;
-	int (*func)(tre_cint_t);
-} tre_ctype_map[] =
-{
-	{ "alnum", &tre_isalnum_func },
-	{ "alpha", &tre_isalpha_func },
-	{ "ascii", &tre_isascii_func },
-	{ "blank", &tre_isblank_func },
-	{ "cntrl", &tre_iscntrl_func },
-	{ "digit", &tre_isdigit_func },
-	{ "graph", &tre_isgraph_func },
-	{ "lower", &tre_islower_func },
-	{ "print", &tre_isprint_func },
-	{ "punct", &tre_ispunct_func },
-	{ "space", &tre_isspace_func },
-	{ "upper", &tre_isupper_func },
-	{ "xdigit", &tre_isxdigit_func },
-	{ NULL, NULL}
-};
-
-tre_ctype_t tre_ctype(const char *name)
-{
-	int i;
-	for (i = 0; tre_ctype_map[i].name != NULL; i++)
-	{
-		if (qse_mbscmp(name, tre_ctype_map[i].name) == 0)
-			return tre_ctype_map[i].func;
-	}
-	return (tre_ctype_t)0;
-}
-
-#endif /* !TRE_USE_SYSTEM_WCTYPE */
-#endif
-
 /* Maximum number of character classes that can occur in a negated bracket
    expression.	*/
 #define MAX_NEG_CLASSES 64
@@ -882,11 +790,15 @@ tre_parse_bound(tre_parse_ctx_t *ctx, tre_ast_node_t **result)
 			minimal = !(ctx->cflags & REG_UNGREEDY);
 			r++;
 		}
+/* QSE - commented out for minimal impact on backward compatibility. 
+ *       X{x,y}* X{x,y}+ */
+#if 0
 		else if (*r == CHAR_STAR || *r == CHAR_PLUS)
 		{
 			/* These are reserved for future extensions. */
 			return REG_BADRPT;
 		}
+#endif
 	}
 
 	/* Create the AST node(s). */
@@ -1196,12 +1108,18 @@ tre_parse(tre_parse_ctx_t *ctx)
 					minimal = !(ctx->cflags & REG_UNGREEDY);
 					ctx->re++;
 				}
+/* QSE - TRE has provisions for ** or *+ as a special repetition operator.
+ *       however, that seems to break backward compatibility.
+ *       '+' in 'a*+' is not treated as a normal character with the
+ *       following block enabled. So let me comment it out */
+#if 0
 				else if (*(ctx->re + 1) == CHAR_STAR
 				         || *(ctx->re + 1) == CHAR_PLUS)
 				{
 					/* These are reserved for future extensions. */
 					return REG_BADRPT;
 				}
+#endif
 			}
 
 			DPRINT(("tre_parse: %s star: '%.*" STRF "'\n",
@@ -1512,6 +1430,7 @@ parse_brace:
 				ctx->re++;
 				if (ctx->re[0] != CHAR_LBRACE && ctx->re < ctx->re_end)
 				{
+				/* QSE */
 				#if 0
 					/* 8 bit hex char. */
 					char tmp[3] = {0, 0, 0};
@@ -1552,6 +1471,7 @@ parse_brace:
 				else if (ctx->re < ctx->re_end)
 				{
 					/* Wide char. */
+				/* QSE */
 				#if 0
 					char tmp[32];
 					long val;

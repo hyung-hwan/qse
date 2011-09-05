@@ -252,406 +252,410 @@ tre_add_tags(tre_mem_t mem, tre_stack_t *stack, tre_ast_node_t *tree,
 		switch (symbol)
 		{
 
-		case ADDTAGS_SET_SUBMATCH_END:
-		{
-			int id = tre_stack_pop_int(stack);
-			int i;
-
-			/* Add end of this submatch to regset. */
-			for (i = 0; regset[i] >= 0; i++);
-			regset[i] = id * 2 + 1;
-			regset[i + 1] = -1;
-
-			/* Pop this submatch from the parents stack. */
-			for (i = 0; parents[i] >= 0; i++);
-			parents[i - 1] = -1;
-			break;
-		}
-
-		case ADDTAGS_RECURSE:
-			node = tre_stack_pop_voidptr(stack);
-
-			if (node->submatch_id >= 0)
+			case ADDTAGS_SET_SUBMATCH_END:
 			{
-				int id = node->submatch_id;
+				int id = tre_stack_pop_int(stack);
 				int i;
 
-
-				/* Add start of this submatch to regset. */
+				/* Add end of this submatch to regset. */
 				for (i = 0; regset[i] >= 0; i++);
-				regset[i] = id * 2;
+				regset[i] = id * 2 + 1;
 				regset[i + 1] = -1;
 
-				if (!first_pass)
+				/* Pop this submatch from the parents stack. */
+				for (i = 0; parents[i] >= 0; i++);
+				parents[i - 1] = -1;
+				break;
+			}
+
+			case ADDTAGS_RECURSE:
+				node = tre_stack_pop_voidptr(stack);
+
+				if (node->submatch_id >= 0)
 				{
-					for (i = 0; parents[i] >= 0; i++);
-					tnfa->submatch_data[id].parents = NULL;
-					if (i > 0)
+					int id = node->submatch_id;
+					int i;
+
+
+					/* Add start of this submatch to regset. */
+					for (i = 0; regset[i] >= 0; i++);
+					regset[i] = id * 2;
+					regset[i + 1] = -1;
+
+					if (!first_pass)
 					{
-						int *p = xmalloc(mem->mmgr, sizeof(*p) * (i + 1));
-						if (p == NULL)
+						for (i = 0; parents[i] >= 0; i++);
+						tnfa->submatch_data[id].parents = NULL;
+						if (i > 0)
 						{
-							status = REG_ESPACE;
-							break;
+							int *p = xmalloc(mem->mmgr, sizeof(*p) * (i + 1));
+							if (p == NULL)
+							{
+								status = REG_ESPACE;
+								break;
+							}
+							assert(tnfa->submatch_data[id].parents == NULL);
+							tnfa->submatch_data[id].parents = p;
+							for (i = 0; parents[i] >= 0; i++)
+								p[i] = parents[i];
+							p[i] = -1;
 						}
-						assert(tnfa->submatch_data[id].parents == NULL);
-						tnfa->submatch_data[id].parents = p;
-						for (i = 0; parents[i] >= 0; i++)
-							p[i] = parents[i];
-						p[i] = -1;
+					}
+	
+					/* Add end of this submatch to regset after processing this
+							 node. */
+					STACK_PUSHX(stack, int, node->submatch_id);
+					STACK_PUSHX(stack, int, ADDTAGS_SET_SUBMATCH_END);
+				}
+
+				switch (node->type)
+				{
+					case LITERAL:
+					{
+						tre_literal_t *lit = node->obj;
+
+						if (!IS_SPECIAL(lit) || IS_BACKREF(lit))
+						{
+							int i;
+							DPRINT(("Literal %d-%d\n",
+							        (int)lit->code_min, (int)lit->code_max));
+							if (regset[0] >= 0)
+							{
+								/* Regset is not empty, so add a tag before the
+								   literal or backref. */
+								if (!first_pass)
+								{
+									status = tre_add_tag_left(mem, node, tag);
+									tnfa->tag_directions[tag] = direction;
+									if (minimal_tag >= 0)
+									{
+										DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
+										for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
+										tnfa->minimal_tags[i] = tag;
+										tnfa->minimal_tags[i + 1] = minimal_tag;
+										tnfa->minimal_tags[i + 2] = -1;
+										minimal_tag = -1;
+										num_minimals++;
+									}
+									tre_purge_regset(regset, tnfa, tag);
+								}
+								else
+								{
+									DPRINT(("  num_tags = 1\n"));
+									node->num_tags = 1;
+								}
+
+								DPRINT(("  num_tags++\n"));
+								regset[0] = -1;
+								tag = next_tag;
+								num_tags++;
+								next_tag++;
+							}
+						}
+						else
+						{
+							assert(!IS_TAG(lit));
+						}
+						break;
+					}
+
+
+					case CATENATION:
+					{
+						tre_catenation_t *cat = node->obj;
+						tre_ast_node_t *left = cat->left;
+						tre_ast_node_t *right = cat->right;
+						int reserved_tag = -1;
+						DPRINT(("Catenation, next_tag = %d\n", next_tag));
+		
+		
+						/* After processing right child. */
+						STACK_PUSHX(stack, voidptr, node);
+						STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_RIGHT);
+		
+						/* Process right child. */
+						STACK_PUSHX(stack, voidptr, right);
+						STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		
+						/* After processing left child. */
+						STACK_PUSHX(stack, int, next_tag + left->num_tags);
+						DPRINT(("  Pushing %d for after left\n",
+						        next_tag + left->num_tags));
+						if (left->num_tags > 0 && right->num_tags > 0)
+						{
+							/* Reserve the next tag to the right child. */
+							DPRINT(("  Reserving next_tag %d to right child\n",
+							        next_tag));
+							reserved_tag = next_tag;
+							next_tag++;
+						}
+						STACK_PUSHX(stack, int, reserved_tag);
+						STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_LEFT);
+		
+						/* Process left child. */
+						STACK_PUSHX(stack, voidptr, left);
+						STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+						break;
+					}
+
+
+					case ITERATION:
+					{
+						tre_iteration_t *iter = node->obj;
+						DPRINT(("Iteration\n"));
+		
+						if (first_pass)
+						{
+							STACK_PUSHX(stack, int, regset[0] >= 0 || iter->minimal);
+						}
+						else
+						{
+							STACK_PUSHX(stack, int, tag);
+							STACK_PUSHX(stack, int, iter->minimal);
+						}
+						STACK_PUSHX(stack, voidptr, node);
+						STACK_PUSHX(stack, int, ADDTAGS_AFTER_ITERATION);
+		
+						STACK_PUSHX(stack, voidptr, iter->arg);
+						STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		
+						/* Regset is not empty, so add a tag here. */
+						if (regset[0] >= 0 || iter->minimal)
+						{
+							if (!first_pass)
+							{
+								int i;
+								status = tre_add_tag_left(mem, node, tag);
+								if (iter->minimal)
+									tnfa->tag_directions[tag] = TRE_TAG_MAXIMIZE;
+								else
+									tnfa->tag_directions[tag] = direction;
+								if (minimal_tag >= 0)
+								{
+									DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
+									for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
+									tnfa->minimal_tags[i] = tag;
+									tnfa->minimal_tags[i + 1] = minimal_tag;
+									tnfa->minimal_tags[i + 2] = -1;
+									minimal_tag = -1;
+									num_minimals++;
+								}
+								tre_purge_regset(regset, tnfa, tag);
+							}
+		
+							DPRINT(("  num_tags++\n"));
+							regset[0] = -1;
+							tag = next_tag;
+							num_tags++;
+							next_tag++;
+						}
+						direction = TRE_TAG_MINIMIZE;
+						break;
+					}
+
+					case UNION:
+					{
+						tre_union_t *uni = node->obj;
+						tre_ast_node_t *left = uni->left;
+						tre_ast_node_t *right = uni->right;
+						int left_tag;
+						int right_tag;
+		
+						if (regset[0] >= 0)
+						{
+							left_tag = next_tag;
+							right_tag = next_tag + 1;
+						}
+						else
+						{
+							left_tag = tag;
+							right_tag = next_tag;
+						}
+		
+						DPRINT(("Union\n"));
+		
+						/* After processing right child. */
+						STACK_PUSHX(stack, int, right_tag);
+						STACK_PUSHX(stack, int, left_tag);
+						STACK_PUSHX(stack, voidptr, regset);
+						STACK_PUSHX(stack, int, regset[0] >= 0);
+						STACK_PUSHX(stack, voidptr, node);
+						STACK_PUSHX(stack, voidptr, right);
+						STACK_PUSHX(stack, voidptr, left);
+						STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_RIGHT);
+		
+						/* Process right child. */
+						STACK_PUSHX(stack, voidptr, right);
+						STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		
+						/* After processing left child. */
+						STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_LEFT);
+		
+						/* Process left child. */
+						STACK_PUSHX(stack, voidptr, left);
+						STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
+		
+						/* Regset is not empty, so add a tag here. */
+						if (regset[0] >= 0)
+						{
+							if (!first_pass)
+							{
+								int i;
+								status = tre_add_tag_left(mem, node, tag);
+								tnfa->tag_directions[tag] = direction;
+								if (minimal_tag >= 0)
+								{
+									DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
+									for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
+									tnfa->minimal_tags[i] = tag;
+									tnfa->minimal_tags[i + 1] = minimal_tag;
+									tnfa->minimal_tags[i + 2] = -1;
+									minimal_tag = -1;
+									num_minimals++;
+								}
+								tre_purge_regset(regset, tnfa, tag);
+							}
+		
+							DPRINT(("  num_tags++\n"));
+							regset[0] = -1;
+							tag = next_tag;
+							num_tags++;
+							next_tag++;
+						}
+		
+						if (node->num_submatches > 0)
+						{
+							/* The next two tags are reserved for markers. */
+							next_tag++;
+							tag = next_tag;
+							next_tag++;
+						}
+		
+						break;
 					}
 				}
 
-				/* Add end of this submatch to regset after processing this
-						 node. */
-				STACK_PUSHX(stack, int, node->submatch_id);
-				STACK_PUSHX(stack, int, ADDTAGS_SET_SUBMATCH_END);
-			}
-
-			switch (node->type)
-			{
-			case LITERAL:
-			{
-				tre_literal_t *lit = node->obj;
-
-				if (!IS_SPECIAL(lit) || IS_BACKREF(lit))
+				if (node->submatch_id >= 0)
 				{
 					int i;
-					DPRINT(("Literal %d-%d\n",
-					        (int)lit->code_min, (int)lit->code_max));
-					if (regset[0] >= 0)
-					{
-						/* Regset is not empty, so add a tag before the
-						   literal or backref. */
-						if (!first_pass)
-						{
-							status = tre_add_tag_left(mem, node, tag);
-							tnfa->tag_directions[tag] = direction;
-							if (minimal_tag >= 0)
-							{
-								DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
-								for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
-								tnfa->minimal_tags[i] = tag;
-								tnfa->minimal_tags[i + 1] = minimal_tag;
-								tnfa->minimal_tags[i + 2] = -1;
-								minimal_tag = -1;
-								num_minimals++;
-							}
-							tre_purge_regset(regset, tnfa, tag);
-						}
-						else
-						{
-							DPRINT(("  num_tags = 1\n"));
-							node->num_tags = 1;
-						}
+					/* Push this submatch on the parents stack. */
+					for (i = 0; parents[i] >= 0; i++);
+					parents[i] = node->submatch_id;
+					parents[i + 1] = -1;
+				}
 
-						DPRINT(("  num_tags++\n"));
-						regset[0] = -1;
-						tag = next_tag;
-						num_tags++;
-						next_tag++;
-					}
-				}
-				else
-				{
-					assert(!IS_TAG(lit));
-				}
-				break;
-			}
-			case CATENATION:
+				break; /* end case: ADDTAGS_RECURSE */
+
+			case ADDTAGS_AFTER_ITERATION:
 			{
-				tre_catenation_t *cat = node->obj;
-				tre_ast_node_t *left = cat->left;
-				tre_ast_node_t *right = cat->right;
-				int reserved_tag = -1;
-				DPRINT(("Catenation, next_tag = %d\n", next_tag));
-
-
-				/* After processing right child. */
-				STACK_PUSHX(stack, voidptr, node);
-				STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_RIGHT);
-
-				/* Process right child. */
-				STACK_PUSHX(stack, voidptr, right);
-				STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
-
-				/* After processing left child. */
-				STACK_PUSHX(stack, int, next_tag + left->num_tags);
-				DPRINT(("  Pushing %d for after left\n",
-				        next_tag + left->num_tags));
-				if (left->num_tags > 0 && right->num_tags > 0)
-				{
-					/* Reserve the next tag to the right child. */
-					DPRINT(("  Reserving next_tag %d to right child\n",
-					        next_tag));
-					reserved_tag = next_tag;
-					next_tag++;
-				}
-				STACK_PUSHX(stack, int, reserved_tag);
-				STACK_PUSHX(stack, int, ADDTAGS_AFTER_CAT_LEFT);
-
-				/* Process left child. */
-				STACK_PUSHX(stack, voidptr, left);
-				STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
-
-			}
-			break;
-			case ITERATION:
-			{
-				tre_iteration_t *iter = node->obj;
-				DPRINT(("Iteration\n"));
-
+				int minimal = 0;
+				int enter_tag;
+				node = tre_stack_pop_voidptr(stack);
 				if (first_pass)
 				{
-					STACK_PUSHX(stack, int, regset[0] >= 0 || iter->minimal);
+					node->num_tags = ((tre_iteration_t *)node->obj)->arg->num_tags
+					                 + tre_stack_pop_int(stack);
+					minimal_tag = -1;
 				}
 				else
 				{
-					STACK_PUSHX(stack, int, tag);
-					STACK_PUSHX(stack, int, iter->minimal);
+					minimal = tre_stack_pop_int(stack);
+					enter_tag = tre_stack_pop_int(stack);
+					if (minimal)
+						minimal_tag = enter_tag;
 				}
-				STACK_PUSHX(stack, voidptr, node);
-				STACK_PUSHX(stack, int, ADDTAGS_AFTER_ITERATION);
-
-				STACK_PUSHX(stack, voidptr, iter->arg);
-				STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
-
-				/* Regset is not empty, so add a tag here. */
-				if (regset[0] >= 0 || iter->minimal)
-				{
-					if (!first_pass)
-					{
-						int i;
-						status = tre_add_tag_left(mem, node, tag);
-						if (iter->minimal)
-							tnfa->tag_directions[tag] = TRE_TAG_MAXIMIZE;
-						else
-							tnfa->tag_directions[tag] = direction;
-						if (minimal_tag >= 0)
-						{
-							DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
-							for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
-							tnfa->minimal_tags[i] = tag;
-							tnfa->minimal_tags[i + 1] = minimal_tag;
-							tnfa->minimal_tags[i + 2] = -1;
-							minimal_tag = -1;
-							num_minimals++;
-						}
-						tre_purge_regset(regset, tnfa, tag);
-					}
-
-					DPRINT(("  num_tags++\n"));
-					regset[0] = -1;
-					tag = next_tag;
-					num_tags++;
-					next_tag++;
-				}
-				direction = TRE_TAG_MINIMIZE;
-			}
-			break;
-			case UNION:
-			{
-				tre_union_t *uni = node->obj;
-				tre_ast_node_t *left = uni->left;
-				tre_ast_node_t *right = uni->right;
-				int left_tag;
-				int right_tag;
-
-				if (regset[0] >= 0)
-				{
-					left_tag = next_tag;
-					right_tag = next_tag + 1;
-				}
-				else
-				{
-					left_tag = tag;
-					right_tag = next_tag;
-				}
-
-				DPRINT(("Union\n"));
-
-				/* After processing right child. */
-				STACK_PUSHX(stack, int, right_tag);
-				STACK_PUSHX(stack, int, left_tag);
-				STACK_PUSHX(stack, voidptr, regset);
-				STACK_PUSHX(stack, int, regset[0] >= 0);
-				STACK_PUSHX(stack, voidptr, node);
-				STACK_PUSHX(stack, voidptr, right);
-				STACK_PUSHX(stack, voidptr, left);
-				STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_RIGHT);
-
-				/* Process right child. */
-				STACK_PUSHX(stack, voidptr, right);
-				STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
-
-				/* After processing left child. */
-				STACK_PUSHX(stack, int, ADDTAGS_AFTER_UNION_LEFT);
-
-				/* Process left child. */
-				STACK_PUSHX(stack, voidptr, left);
-				STACK_PUSHX(stack, int, ADDTAGS_RECURSE);
-
-				/* Regset is not empty, so add a tag here. */
-				if (regset[0] >= 0)
-				{
-					if (!first_pass)
-					{
-						int i;
-						status = tre_add_tag_left(mem, node, tag);
-						tnfa->tag_directions[tag] = direction;
-						if (minimal_tag >= 0)
-						{
-							DPRINT(("Minimal %d, %d\n", minimal_tag, tag));
-							for (i = 0; tnfa->minimal_tags[i] >= 0; i++);
-							tnfa->minimal_tags[i] = tag;
-							tnfa->minimal_tags[i + 1] = minimal_tag;
-							tnfa->minimal_tags[i + 2] = -1;
-							minimal_tag = -1;
-							num_minimals++;
-						}
-						tre_purge_regset(regset, tnfa, tag);
-					}
-
-					DPRINT(("  num_tags++\n"));
-					regset[0] = -1;
-					tag = next_tag;
-					num_tags++;
-					next_tag++;
-				}
-
-				if (node->num_submatches > 0)
-				{
-					/* The next two tags are reserved for markers. */
-					next_tag++;
-					tag = next_tag;
-					next_tag++;
-				}
-
-				break;
-			}
-			}
-
-			if (node->submatch_id >= 0)
-			{
-				int i;
-				/* Push this submatch on the parents stack. */
-				for (i = 0; parents[i] >= 0; i++);
-				parents[i] = node->submatch_id;
-				parents[i + 1] = -1;
-			}
-
-			break; /* end case: ADDTAGS_RECURSE */
-
-		case ADDTAGS_AFTER_ITERATION:
-		{
-			int minimal = 0;
-			int enter_tag;
-			node = tre_stack_pop_voidptr(stack);
-			if (first_pass)
-			{
-				node->num_tags = ((tre_iteration_t *)node->obj)->arg->num_tags
-				                 + tre_stack_pop_int(stack);
-				minimal_tag = -1;
-			}
-			else
-			{
-				minimal = tre_stack_pop_int(stack);
-				enter_tag = tre_stack_pop_int(stack);
-				if (minimal)
-					minimal_tag = enter_tag;
-			}
-
-			DPRINT(("After iteration\n"));
-			if (!first_pass)
-			{
-				DPRINT(("  Setting direction to %s\n",
-				        minimal ? "minimize" : "maximize"));
-				if (minimal)
-					direction = TRE_TAG_MINIMIZE;
-				else
-					direction = TRE_TAG_MAXIMIZE;
-			}
-			break;
-		}
-
-		case ADDTAGS_AFTER_CAT_LEFT:
-		{
-			int new_tag = tre_stack_pop_int(stack);
-			next_tag = tre_stack_pop_int(stack);
-			DPRINT(("After cat left, tag = %d, next_tag = %d\n",
-			        tag, next_tag));
-			if (new_tag >= 0)
-			{
-				DPRINT(("  Setting tag to %d\n", new_tag));
-				tag = new_tag;
-			}
-			break;
-		}
-
-		case ADDTAGS_AFTER_CAT_RIGHT:
-			DPRINT(("After cat right\n"));
-			node = tre_stack_pop_voidptr(stack);
-			if (first_pass)
-				node->num_tags = ((tre_catenation_t *)node->obj)->left->num_tags
-				                 + ((tre_catenation_t *)node->obj)->right->num_tags;
-			break;
-
-		case ADDTAGS_AFTER_UNION_LEFT:
-			DPRINT(("After union left\n"));
-			/* Lift the bottom of the `regset' array so that when processing
-			   the right operand the items currently in the array are
-			   invisible.	 The original bottom was saved at ADDTAGS_UNION and
-			   will be restored at ADDTAGS_AFTER_UNION_RIGHT below. */
-			while (*regset >= 0)
-				regset++;
-			break;
-
-		case ADDTAGS_AFTER_UNION_RIGHT:
-		{
-			int added_tags, tag_left, tag_right;
-			tre_ast_node_t *left = tre_stack_pop_voidptr(stack);
-			tre_ast_node_t *right = tre_stack_pop_voidptr(stack);
-			DPRINT(("After union right\n"));
-			node = tre_stack_pop_voidptr(stack);
-			added_tags = tre_stack_pop_int(stack);
-			if (first_pass)
-			{
-				node->num_tags = ((tre_union_t *)node->obj)->left->num_tags
-				                 + ((tre_union_t *)node->obj)->right->num_tags + added_tags
-				                 + ((node->num_submatches > 0) ? 2 : 0);
-			}
-			regset = tre_stack_pop_voidptr(stack);
-			tag_left = tre_stack_pop_int(stack);
-			tag_right = tre_stack_pop_int(stack);
-
-			/* Add tags after both children, the left child gets a smaller
-			   tag than the right child.  This guarantees that we prefer
-			   the left child over the right child. */
-			/* XXX - This is not always necessary (if the children have
-			   tags which must be seen for every match of that child). */
-			/* XXX - Check if this is the only place where tre_add_tag_right
-			   is used.	 If so, use tre_add_tag_left (putting the tag before
-			   the child as opposed after the child) and throw away
-			   tre_add_tag_right. */
-			if (node->num_submatches > 0)
-			{
+	
+				DPRINT(("After iteration\n"));
 				if (!first_pass)
 				{
-					status = tre_add_tag_right(mem, left, tag_left);
-					tnfa->tag_directions[tag_left] = TRE_TAG_MAXIMIZE;
-					status = tre_add_tag_right(mem, right, tag_right);
-					tnfa->tag_directions[tag_right] = TRE_TAG_MAXIMIZE;
+					DPRINT(("  Setting direction to %s\n",
+					        minimal ? "minimize" : "maximize"));
+					if (minimal)
+						direction = TRE_TAG_MINIMIZE;
+					else
+						direction = TRE_TAG_MAXIMIZE;
 				}
-				DPRINT(("  num_tags += 2\n"));
-				num_tags += 2;
+				break;
 			}
-			direction = TRE_TAG_MAXIMIZE;
-			break;
-		}
-
-		default:
-			assert(0);
-			break;
+	
+			case ADDTAGS_AFTER_CAT_LEFT:
+			{
+				int new_tag = tre_stack_pop_int(stack);
+				next_tag = tre_stack_pop_int(stack);
+				DPRINT(("After cat left, tag = %d, next_tag = %d\n",
+				        tag, next_tag));
+				if (new_tag >= 0)
+				{
+					DPRINT(("  Setting tag to %d\n", new_tag));
+					tag = new_tag;
+				}
+				break;
+			}
+	
+			case ADDTAGS_AFTER_CAT_RIGHT:
+				DPRINT(("After cat right\n"));
+				node = tre_stack_pop_voidptr(stack);
+				if (first_pass)
+					node->num_tags = ((tre_catenation_t *)node->obj)->left->num_tags
+					                 + ((tre_catenation_t *)node->obj)->right->num_tags;
+				break;
+	
+			case ADDTAGS_AFTER_UNION_LEFT:
+				DPRINT(("After union left\n"));
+				/* Lift the bottom of the `regset' array so that when processing
+				   the right operand the items currently in the array are
+				   invisible.	 The original bottom was saved at ADDTAGS_UNION and
+				   will be restored at ADDTAGS_AFTER_UNION_RIGHT below. */
+				while (*regset >= 0)
+					regset++;
+				break;
+	
+			case ADDTAGS_AFTER_UNION_RIGHT:
+			{
+				int added_tags, tag_left, tag_right;
+				tre_ast_node_t *left = tre_stack_pop_voidptr(stack);
+				tre_ast_node_t *right = tre_stack_pop_voidptr(stack);
+				DPRINT(("After union right\n"));
+				node = tre_stack_pop_voidptr(stack);
+				added_tags = tre_stack_pop_int(stack);
+				if (first_pass)
+				{
+					node->num_tags = ((tre_union_t *)node->obj)->left->num_tags
+					                 + ((tre_union_t *)node->obj)->right->num_tags + added_tags
+					                 + ((node->num_submatches > 0) ? 2 : 0);
+				}
+				regset = tre_stack_pop_voidptr(stack);
+				tag_left = tre_stack_pop_int(stack);
+				tag_right = tre_stack_pop_int(stack);
+	
+				/* Add tags after both children, the left child gets a smaller
+				   tag than the right child.  This guarantees that we prefer
+				   the left child over the right child. */
+				/* XXX - This is not always necessary (if the children have
+				   tags which must be seen for every match of that child). */
+				/* XXX - Check if this is the only place where tre_add_tag_right
+				   is used.	 If so, use tre_add_tag_left (putting the tag before
+				   the child as opposed after the child) and throw away
+				   tre_add_tag_right. */
+				if (node->num_submatches > 0)
+				{
+					if (!first_pass)
+					{
+						status = tre_add_tag_right(mem, left, tag_left);
+						tnfa->tag_directions[tag_left] = TRE_TAG_MAXIMIZE;
+						status = tre_add_tag_right(mem, right, tag_right);
+						tnfa->tag_directions[tag_right] = TRE_TAG_MAXIMIZE;
+					}
+					DPRINT(("  num_tags += 2\n"));
+					num_tags += 2;
+				}
+				direction = TRE_TAG_MAXIMIZE;
+				break;
+			}
+	
+			default:
+				assert(0);
+				break;
 
 		} /* end switch(symbol) */
 	} /* end while(tre_stack_num_objects(stack) > bottom) */
@@ -1918,7 +1922,9 @@ int tre_compile (regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 
 	/* Allocate a stack used throughout the compilation process for various
 	   purposes. */
-	stack = tre_stack_new(preg->mmgr, 512, 10240, 128);
+/* QSE: deleted limit on the stack size 
+	stack = tre_stack_new(preg->mmgr, 512, 10240, 128); */
+	stack = tre_stack_new(preg->mmgr, 512, -1, 128); 
 	if (!stack)
 		return REG_ESPACE;
 	/* Allocate a fast memory allocator. */
