@@ -1539,8 +1539,7 @@ parse_brace:
 					/* Escaped character. */
 					DPRINT(("tre_parse:     escaped: '%.*" STRF "'\n",
 					        REST(ctx->re - 1)));
-					result = tre_ast_new_literal(ctx->mem, *ctx->re, *ctx->re,
-					                             ctx->position);
+					result = tre_ast_new_literal(ctx->mem, *ctx->re, *ctx->re, ctx->position);
 					ctx->position++;
 					ctx->re++;
 				}

@@ -246,6 +246,7 @@ qse_char_t* load_script_file (const qse_char_t* file)
 	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) <= -1)
 	{
 		qse_fclose (fp);
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot load %s\n"), file);
 		return QSE_NULL;
 	}
 
@@ -257,6 +258,13 @@ qse_char_t* load_script_file (const qse_char_t* file)
 			qse_fclose (fp);
 			return QSE_NULL;
 		}		
+	}
+	if (qse_ferror(fp)) 
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot read %s\n"), file);
+		qse_str_fini (&script);
+		qse_fclose (fp);
+		return QSE_NULL;		
 	}
 
 	qse_str_yield (&script, &xstr, 0);
@@ -303,11 +311,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		QSE_ASSERT (g_script == QSE_NULL);
 
 		g_script = load_script_file (g_script_file);
-		if (g_script == QSE_NULL)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot load %s\n"), g_script_file);
-			goto oops;
-		}	
+		if (g_script == QSE_NULL) goto oops;
 	}
 
 	if (qse_sed_comp (sed, g_script, qse_strlen(g_script)) == -1)

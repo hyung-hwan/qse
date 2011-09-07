@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: err.c 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -52,8 +52,9 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		QSE_T("multiple occurrence specifiers"),
 		QSE_T("occurrence specifier zero"),
 		QSE_T("occurrence specifier too large"),
-		QSE_T("io error with file '${0}'"),
-		QSE_T("error returned by user io handler")
+		QSE_T("no previous regular expression"),
+		QSE_T("I/O error with file '${0}'"),
+		QSE_T("error returned by user I/O handler")
 	};
 
 	return (errnum >= 0 && errnum < QSE_COUNTOF(errstr))?
