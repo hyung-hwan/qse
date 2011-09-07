@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 559 2011-09-04 16:21:54Z hyunghwan.chung $
+ * $Id: sed.c 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,6 +32,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
+
+#define EMPTY_REX ((void*)1)
 
 #define SETERR0(sed,num,loc) \
 do { qse_sed_seterror (sed, num, QSE_NULL, loc); } while (0)
@@ -160,7 +162,7 @@ void qse_sed_setmaxdepth (qse_sed_t* sed, int ids, qse_size_t depth)
 	if (ids & QSE_SED_DEPTH_REX_BUILD) sed->depth.rex.build = depth;
 	if (ids & QSE_SED_DEPTH_REX_MATCH) sed->depth.rex.match = depth;
 }
-#endif
+#else
 
 static qse_tre_t* maketre (
 	qse_sed_t* sed, const qse_cstr_t* str, const qse_sed_loc_t* loc)
@@ -237,7 +239,7 @@ static int matchtre (
 	}
 	return 1;
 }
-
+#endif
 
 /* check if c is a space character */
 #define IS_SPACE(c) ((c) == QSE_T(' ') || (c) == QSE_T('\t') || (c) == QSE_T('\r'))
@@ -282,15 +284,27 @@ static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (cmd->a2.type == QSE_SED_ADR_REX)
 	{
 		QSE_ASSERT (cmd->a2.u.rex != QSE_NULL);
-		/*qse_freerex (sed->mmgr, cmd->a2.u.rex);*/
-		freetre (sed, cmd->a2.u.rex);
+		if (cmd->a2.u.rex != EMPTY_REX)
+		{
+#ifdef USE_REX
+			qse_freerex (sed->mmgr, cmd->a2.u.rex);
+#else
+			freetre (sed, cmd->a2.u.rex);
+#endif
+		}
 		cmd->a2.type = QSE_SED_ADR_NONE;
 	}
 	if (cmd->a1.type == QSE_SED_ADR_REX)
 	{
 		QSE_ASSERT (cmd->a1.u.rex != QSE_NULL);
-		/*qse_freerex (sed->mmgr, cmd->a1.u.rex);*/
-		freetre (sed, cmd->a1.u.rex);
+		if (cmd->a1.u.rex != EMPTY_REX)
+		{
+#ifdef USE_REX
+			qse_freerex (sed->mmgr, cmd->a1.u.rex);
+#else
+			freetre (sed, cmd->a1.u.rex);
+#endif
+		}
 		cmd->a1.type = QSE_SED_ADR_NONE;
 	}
 }
@@ -368,9 +382,14 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.file.ptr);
 			if (cmd->u.subst.rpl.ptr)
 				QSE_MMGR_FREE (sed->mmgr, cmd->u.subst.rpl.ptr);
-			if (cmd->u.subst.rex)
-				/*qse_freerex (sed->mmgr, cmd->u.subst.rex);*/
+			if (cmd->u.subst.rex && cmd->u.subst.rex != EMPTY_REX)
+			{
+#ifdef USE_REX
+				qse_freerex (sed->mmgr, cmd->u.subst.rex);
+#else
 				freetre (sed, cmd->u.subst.rex);
+#endif
+			}
 			break;
 
 		case QSE_SED_CMD_TRANSLATE:
@@ -484,6 +503,8 @@ static void* compile_rex (qse_sed_t* sed, qse_char_t rxend)
 			return QSE_NULL;
 		}
 	} 
+
+	if (QSE_STR_LEN(&sed->tmp.rex) == 0) return EMPTY_REX;
 
 #ifdef USE_REX
 	code = qse_buildrex (
@@ -1044,29 +1065,33 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	QSE_ASSERT (cmd->u.subst.rex == QSE_NULL);
 
-#ifdef USE_REX
-	cmd->u.subst.rex = qse_buildrex (
-		sed->mmgr,
-		sed->depth.rex.build,
-		((sed->option&QSE_SED_EXTENDEDREX)? 0:QSE_REX_NOBOUND),
-		QSE_STR_PTR(t[0]),
-		QSE_STR_LEN(t[0]),
-		QSE_NULL
-	);
-	if (cmd->u.subst.rex == QSE_NULL)
+	if (QSE_STR_LEN(t[0]) <= 0) cmd->u.subst.rex = EMPTY_REX;
+	else
 	{
-		SETERR1 (
-			sed, QSE_SED_EREXBL,
-			QSE_STR_PTR(t[0]), 
+#ifdef USE_REX
+		cmd->u.subst.rex = qse_buildrex (
+			sed->mmgr,
+			sed->depth.rex.build,
+			((sed->option&QSE_SED_EXTENDEDREX)? 0:QSE_REX_NOBOUND),
+			QSE_STR_PTR(t[0]),
 			QSE_STR_LEN(t[0]),
-			&sed->src.loc
+			QSE_NULL
 		);
-		goto oops;
-	}	
+		if (cmd->u.subst.rex == QSE_NULL)
+		{
+			SETERR1 (
+				sed, QSE_SED_EREXBL,
+				QSE_STR_PTR(t[0]), 
+				QSE_STR_LEN(t[0]),
+				&sed->src.loc
+			);
+			goto oops;
+		}	
 #else
-	cmd->u.subst.rex = maketre (sed, QSE_STR_CSTR(t[0]), &sed->src.loc);
-	if (cmd->u.subst.rex == QSE_NULL) goto oops;
+		cmd->u.subst.rex = maketre (sed, QSE_STR_CSTR(t[0]), &sed->src.loc);
+		if (cmd->u.subst.rex == QSE_NULL) goto oops;
 #endif
+	}
 
 	qse_str_yield (t[1], &cmd->u.subst.rpl, 0);
 	if (cmd->u.subst.g == 0 && cmd->u.subst.occ == 0) cmd->u.subst.occ = 1;
@@ -1891,7 +1916,7 @@ static int write_str_clearly (
 				{
 				#ifdef QSE_CHAR_IS_MCHAR
 					WRITE_CHAR (sed, QSE_T('\\'));
-					WRITE_NUM (sed, c, 8, QSE_SIZEOF(qse_char_t)*3);
+					WRITE_NUM (sed, (unsigned char)c, 8, QSE_SIZEOF(qse_char_t)*3);
 				#else
 					if (QSE_SIZEOF(qse_char_t) <= 2)
 					{
@@ -2001,6 +2026,7 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 #ifdef USE_REX
 	qse_rex_errnum_t errnum;
 #endif
+	const qse_char_t* finalizer = QSE_NULL;
 
 	qse_cstr_t str, cur;
 	const qse_char_t* str_end;
@@ -2019,7 +2045,19 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	str.len = QSE_STR_LEN(&sed->e.in.line);
 
 	/* TODO: support different line end convension */
-	if (str.len > 0 && str.ptr[str.len-1] == QSE_T('\n')) str.len--;
+	if (str.len > 0 && str.ptr[str.len-1] == QSE_T('\n')) 
+	{
+		str.len--;
+		if (str.len > 0 && str.ptr[str.len-1] == QSE_T('\r')) 
+		{
+			finalizer = QSE_T("\r\n");
+			str.len--;
+		}
+		else
+		{
+			finalizer = QSE_T("\n");
+		}
+	}
 		
 	str_end = str.ptr + str.len;
 	cur = str;
@@ -2034,13 +2072,35 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	 * end of string($) needs to be tested */
 	while (cur.ptr <= str_end)
 	{
-#ifdef USE_REX
+#ifndef USE_REX
+		qse_cstr_t submat[9];
+		QSE_MEMSET (submat, 0, QSE_SIZEOF(submat));
+#endif
+
 		if (max_count == 0 || sub_count < max_count)
 		{
+			void* rex;
+
+			if (cmd->u.subst.rex == EMPTY_REX)
+			{
+				rex = sed->e.last_rex;
+				if (rex == QSE_NULL)
+				{
+					SETERR0 (sed, QSE_SED_ENPREX, &cmd->loc);
+					return -1;
+				}
+			}
+			else 
+			{
+				rex = cmd->u.subst.rex;
+				sed->e.last_rex = rex;
+			}
+
+#ifdef USE_REX
 			n = qse_matchrex (
 				sed->mmgr, 
 				sed->depth.rex.match,
-				cmd->u.subst.rex, opt,
+				rex, opt,
 				&str, &cur, &mat, &errnum
 			);
 			if (n <= -1)
@@ -2048,24 +2108,16 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				SETERR0 (sed, QSE_SED_EREXMA, &cmd->loc);
 				return -1;
 			}
-		}
-		else n = 0;
 #else
-		qse_cstr_t submat[9];
-
-		QSE_MEMSET (submat, 0, QSE_SIZEOF(submat));
-		if (max_count == 0 || sub_count < max_count)
-		{
 			n = matchtre (
-				sed,
-				cmd->u.subst.rex,
+				sed, rex,
 				((str.ptr == cur.ptr)? opt: (opt | QSE_TRE_NOTBOL)),
 				&cur, &mat, submat, &cmd->loc
 			);
 			if (n <= -1) return -1;
+#endif
 		}
 		else n = 0;
-#endif
 
 		if (n == 0) 
 		{
@@ -2193,10 +2245,9 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 	}
 
-	if (str.len < QSE_STR_LEN(&sed->e.in.line))
+	if (finalizer)
 	{
-		/* TODO: support different line ending convension */
-		m = qse_str_ccat (&sed->e.txt.subst, QSE_T('\n'));
+		m = qse_str_cat (&sed->e.txt.subst, finalizer);
 		if (m == (qse_size_t)-1)
 		{
 			SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -2251,6 +2302,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			qse_cstr_t match;
 #endif
 			qse_cstr_t line;
+			void* rex;
 
 			QSE_ASSERT (a->u.rex != QSE_NULL);
 
@@ -2258,13 +2310,31 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			line.len = QSE_STR_LEN(&sed->e.in.line);
 
 			if (line.len > 0 &&
-			    line.ptr[line.len-1] == QSE_T('\n')) line.len--;
+			    line.ptr[line.len-1] == QSE_T('\n')) 
+			{
+				line.len--;
+				if (line.len > 0 && line.ptr[line.len-1] == QSE_T('\r')) line.len--;
+			}
 
+			if (a->u.rex == EMPTY_REX)
+			{
+				rex = sed->e.last_rex;
+				if (rex == QSE_NULL)
+				{
+					SETERR0 (sed, QSE_SED_ENPREX, &cmd->loc);
+					return -1;
+				}
+			}
+			else 
+			{
+				rex = a->u.rex;
+				sed->e.last_rex = rex;
+			}
 #ifdef USE_REX
 			n = qse_matchrex (
 				sed->mmgr, 
 				sed->depth.rex.match,
-				a->u.rex, 0,
+				rex, 0,
 				&line, &line,
 				&match, &errnum);
 			if (n <= -1)
@@ -2275,7 +2345,7 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 
 			return n;
 #else
-			return matchtre (sed, a->u.rex, 0, &line, QSE_NULL, QSE_NULL, &cmd->loc);
+			return matchtre (sed, rex, 0, &line, QSE_NULL, QSE_NULL, &cmd->loc);
 #endif
 
 		}
@@ -2866,6 +2936,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 		QSE_MAP_HASHER_DEFAULT
 #endif
 	};
+
+	sed->e.last_rex = QSE_NULL;
 
 	sed->e.subst_done = 0;
 	qse_lda_clear (&sed->e.txt.appended);

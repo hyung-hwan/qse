@@ -1,5 +1,5 @@
 /*
- * $Id: types.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
+ * $Id: types.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -365,12 +365,14 @@ typedef qse_int_t qse_intptr_t;
  * The qse_mchar_t type defines a multi-byte character type.
  */
 typedef char qse_mchar_t;
+#define QSE_SIZEOF_MCHAR_T QSE_SIZEOF_CHAR 
 
 /**
  * The qse_mcint_t defines a type that can hold a qse_mchar_t value and 
  * #QSE_MCHAR_EOF.
  */
 typedef int qse_mcint_t;
+#define QSE_SIZEOF_MCINT_T QSE_SIZEOF_INT 
 
 /** @typedef qse_wchar_t
  * The qse_wchar_t type defines a wide character type. 

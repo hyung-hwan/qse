@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 558 2011-09-02 15:27:44Z hyunghwan.chung $
+ * $Id: sed.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -39,7 +39,7 @@ enum qse_sed_depth_t
      QSE_SED_DEPTH_REX_BUILD = (1 << 0),
      QSE_SED_DEPTH_REX_MATCH = (1 << 1)
 };
-typedef enum qse_sed_depth_t qse_sed_depth_t
+typedef enum qse_sed_depth_t qse_sed_depth_t;
 #endif
 
 #define QSE_SED_CMD_NOOP            QSE_T('\0')
@@ -270,6 +270,7 @@ struct qse_sed_t
 		/** indicates if a successful substitution has been made 
 		 *  since the last read on the input stream. */
 		int subst_done;
+		void* last_rex;	
 	} e;
 };
 

@@ -91,7 +91,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define tre_tolower(c)  QSE_TOLOWER(c)
 #define tre_toupper(c)  QSE_TOUPPER(c)
 
-typedef qse_char_t tre_char_t;
+#if defined(QSE_CHAR_IS_MCHAR) && (QSE_SIZEOF_MCHAR_T == QSE_SIZEOF_CHAR)
+	typedef unsigned char tre_char_t;
+#else
+	typedef qse_char_t tre_char_t;
+#endif
 typedef qse_cint_t tre_cint_t;
 
 #define size_t qse_size_t

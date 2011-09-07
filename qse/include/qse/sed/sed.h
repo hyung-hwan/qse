@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 558 2011-09-02 15:27:44Z hyunghwan.chung $
+ * $Id: sed.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -107,6 +107,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EOCSDU,  /**< multiple occurrence specifiers */
 	QSE_SED_EOCSZE,  /**< occurrence specifier zero */
 	QSE_SED_EOCSTL,  /**< occurrence specifier too large */
+	QSE_SED_ENPREX,  /**< no previous regular expression */
 	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_SED_EIOUSR   /**< error returned by user io handler */
 };
