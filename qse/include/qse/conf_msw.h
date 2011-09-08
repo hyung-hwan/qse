@@ -1,5 +1,5 @@
 /*
- * $Id: conf_msw.h 554 2011-08-22 05:26:26Z hyunghwan.chung $
+ * $Id: conf_msw.h 561 2011-09-07 07:17:05Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -135,7 +135,7 @@ _M_X64 x64 platform
 #	define QSE_SIZEOF_OFF_T       8
 #
 #	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
-#	define QSE_MBLEN_MAX          16
+#	define QSE_MBLEN_MAX          8
 #
 #	define QSE_CHAR_IS_WCHAR
 #else
