@@ -52,6 +52,9 @@
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       4
 #
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+#	define QSE_MBLEN_MAX          8
+#
 #	define QSE_CHAR_IS_WCHAR
 #elif defined(__WATCOMC__) && !defined(__386__)
 #	define QSE_SIZEOF_CHAR        1
@@ -76,7 +79,7 @@
 #	define QSE_SIZEOF_OFF_T       4
 #
 #	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
-#	define QSE_MBLEN_MAX          16
+#	define QSE_MBLEN_MAX          8
 #
 #	define QSE_CHAR_IS_WCHAR
 #else

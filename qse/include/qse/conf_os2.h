@@ -56,7 +56,7 @@
  * but this should be large enough */
 #	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
 /* TODO: check the exact value */
-#	define QSE_MBLEN_MAX          16
+#	define QSE_MBLEN_MAX          8
 #
 #	define QSE_CHAR_IS_WCHAR
 #else

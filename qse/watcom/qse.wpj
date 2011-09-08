@@ -4,8 +4,8 @@ projectIdent
 VpeMain
 1
 WRect
-0
-80
+540
+66
 9320
 9680
 2
@@ -125,7 +125,7 @@ VComponent
 29
 WRect
 2470
-93
+80
 5700
 4240
 1
@@ -280,4 +280,4 @@ WFileName
 debug/win32/cmd/awk/qseawk.tgt
 0
 1
-28
+25
