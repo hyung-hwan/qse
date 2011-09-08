@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 560 2011-09-06 14:18:36Z hyunghwan.chung $
+ * $Id: err.c 562 2011-09-07 15:36:08Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -34,6 +34,7 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		QSE_T("failed to compile regular expression '${0}'"),
 		QSE_T("failed to match regular expression"),
 		QSE_T("address 1 prohibited for '${0}'"),
+		QSE_T("address 1 missing or invalid"),
 		QSE_T("address 2 prohibited for '${0}'"),
 		QSE_T("address 2 missing or invalid"),
 		QSE_T("newline expected"),

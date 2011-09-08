@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
+ * $Id: sed.h 562 2011-09-07 15:36:08Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -89,6 +89,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EREXBL,  /**< failed to compile regular expression '${0}' */
 	QSE_SED_EREXMA,  /**< failed to match regular expression */
 	QSE_SED_EA1PHB,  /**< address 1 prohibited for '${0}' */
+	QSE_SED_EA1MOI,  /**< address 1 missing or invalid */
 	QSE_SED_EA2PHB,  /**< address 2 prohibited */
 	QSE_SED_EA2MOI,  /**< address 2 missing or invalid */
 	QSE_SED_ENEWLN,  /**< newline expected */

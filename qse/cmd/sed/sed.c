@@ -217,7 +217,6 @@ static int handle_args (int argc, qse_char_t* argv[])
 		}
 	}
 
-
 	if (opt.ind < argc && g_script_file == QSE_NULL) 
 		g_script = argv[opt.ind++];
 	if (opt.ind < argc) g_infile = argv[opt.ind++];
