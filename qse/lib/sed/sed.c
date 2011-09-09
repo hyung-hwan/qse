@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 562 2011-09-07 15:36:08Z hyunghwan.chung $
+ * $Id: sed.c 563 2011-09-08 07:49:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -198,6 +198,7 @@ static void* build_rex (
 	/* ignorecase is a compile option for TRE */
 	if (ignorecase) opt |= QSE_TRE_IGNORECASE; 
 	if (sed->option & QSE_SED_EXTENDEDREX) opt |= QSE_TRE_EXTENDED;
+	if (sed->option & QSE_SED_NONSTDEXTREX) opt |= QSE_TRE_NONSTDEXT;
 
 	if (qse_tre_compx (tre, str->ptr, str->len, QSE_NULL, opt) <= -1)
 	{
@@ -230,7 +231,7 @@ static int matchtre (
 	qse_cstr_t submat[9], const qse_sed_loc_t* loc)
 {
 	int n;
-	qse_tre_match_t match[10];
+	qse_tre_match_t match[10] = { { 0, 0 }, };
 
 	n = qse_tre_execx (tre, str->ptr, str->len, match, 10, opt);
 	if (n <= -1)
@@ -258,7 +259,7 @@ static int matchtre (
 
 		/* you must intialize submat before you pass into this 
 		 * function because it can abort filling */
-		for (i = 1; i <= 10; i++)
+		for (i = 1; i < QSE_COUNTOF(match); i++)
 		{
 			if (match[i].rm_so == -1) break;
 			submat[i-1].ptr = &str->ptr[match[i].rm_so];
@@ -569,6 +570,8 @@ static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 {
 	if (pickup_rex (sed, rxend, 1, QSE_NULL, &sed->tmp.rex) <= -1) return QSE_NULL;
 /* TODO: support ignore case option for address */
+
+	if (QSE_STR_LEN(&sed->tmp.rex) <= 0) return EMPTY_REX;
 	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), 0, &sed->src.loc);
 }
 
@@ -591,11 +594,6 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 			NXTSC (sed);
 		}
 		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
-
-#if 0
-		/* line number 0 is illegal */
-		if (lno == 0) return QSE_NULL;
-#endif
 
 		a->type = QSE_SED_ADR_LINE;
 		a->u.lno = lno;
@@ -985,8 +983,8 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	if (pickup_rex (sed, delim, 1, cmd, t[0]) <= -1) goto oops;
 	if (pickup_rex (sed, delim, 0, cmd, t[1]) <= -1) goto oops;
-
 #if 0
+/* calling pickup_rex twice above instead of commenting out this part */
 	for (i = 0; i < 2; i++)
 	{
 		c = NXTSC (sed);
@@ -2517,15 +2515,11 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 			
 		case QSE_SED_CMD_QUIT:
-			if (!(sed->option && QSE_SED_QUIET))
-			{
-				n = write_str (sed, 
-					QSE_STR_PTR(&sed->e.in.line),
-					QSE_STR_LEN(&sed->e.in.line));
-				if (n <= -1) return QSE_NULL;
-			}
-		case QSE_SED_CMD_QUIT_QUIET:
 			jumpto = &sed->cmd.quit;
+			break;
+
+		case QSE_SED_CMD_QUIT_QUIET:
+			jumpto = &sed->cmd.quit_quiet;
 			break;
 
 		case QSE_SED_CMD_APPEND:
@@ -3052,6 +3046,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	while (1)
 	{
 		qse_size_t i;
+		int quit = 0;
 
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
@@ -3081,7 +3076,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
-				if (j == &sed->cmd.quit) goto done;
+				if (j == &sed->cmd.quit_quiet) goto done;
+				if (j == &sed->cmd.quit) { quit = 1; break; }
 				if (j == &sed->cmd.again) goto again;
 
 				/* go to the next command */
@@ -3118,6 +3114,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 		 * in write functions */
 		n = flush (sed);
 		if (n <= -1) { ret = -1; goto done; }
+
+		if (quit) break;
 	}
 
 done:

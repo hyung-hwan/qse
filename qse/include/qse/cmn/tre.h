@@ -72,7 +72,14 @@ enum qse_tre_cflag_t
 	QSE_TRE_NOSUBREG    = (1 << 3),
 	QSE_TRE_LITERAL     = (1 << 4),
 	QSE_TRE_RIGHTASSOC  = (1 << 5),
-	QSE_TRE_UNGREEDY    = (1 << 6)
+	QSE_TRE_UNGREEDY    = (1 << 6),
+
+	/* Enable non-standard extensions:
+	 *  - Enable (?:text) for no submatch backreference.
+	 *  - Enable perl-like (?...) extensions like (?i) 
+	 *    if QSE_TRE_EXTENDED is also set.
+	 */
+	QSE_TRE_NONSTDEXT   = (1 << 7) 
 };
 
 enum qse_tre_eflag_t

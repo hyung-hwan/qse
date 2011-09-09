@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 562 2011-09-07 15:36:08Z hyunghwan.chung $
+ * $Id: sed.h 563 2011-09-08 07:49:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -133,14 +133,15 @@ typedef const qse_char_t* (*qse_sed_errstr_t) (
  */
 enum qse_sed_option_t
 {
-	QSE_SED_STRIPLS     = (1 << 0), /**< strip leading spaces from text */
-	QSE_SED_KEEPTBS     = (1 << 1), /**< keep an trailing backslash */
-	QSE_SED_ENSURENL    = (1 << 2), /**< ensure NL at the text end */
-	QSE_SED_QUIET       = (1 << 3), /**< do not print pattern space */
-	QSE_SED_STRICT      = (1 << 4), /**< do strict address check */
-	QSE_SED_STARTSTEP   = (1 << 5), /**< allow start~step */
-	QSE_SED_EXTENDEDREX = (1 << 6), /**< allow {n,m} in regular expression */
-	QSE_SED_SAMELINE    = (1 << 7), /**< allow text on the same line as c, a, i */
+	QSE_SED_STRIPLS      = (1 << 0), /**< strip leading spaces from text */
+	QSE_SED_KEEPTBS      = (1 << 1), /**< keep an trailing backslash */
+	QSE_SED_ENSURENL     = (1 << 2), /**< ensure NL at the text end */
+	QSE_SED_QUIET        = (1 << 3), /**< do not print pattern space */
+	QSE_SED_STRICT       = (1 << 4), /**< do strict address check */
+	QSE_SED_STARTSTEP    = (1 << 5), /**< allow start~step */
+	QSE_SED_EXTENDEDREX  = (1 << 6), /**< use extended regex */
+	QSE_SED_NONSTDEXTREX = (1 << 7), /**< enable non-standard extensions to regex */
+	QSE_SED_SAMELINE     = (1 << 8), /**< allow text on the same line as c, a, i */
 };
 typedef enum qse_sed_option_t qse_sed_option_t;
 

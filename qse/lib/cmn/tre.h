@@ -133,6 +133,7 @@ typedef qse_cint_t tre_cint_t;
 #define REG_LITERAL     QSE_TRE_LITERAL 
 #define REG_RIGHT_ASSOC QSE_TRE_RIGHTASSOC
 #define REG_UNGREEDY    QSE_TRE_UNGREEDY 
+#define REG_NONSTDEXT   QSE_TRE_NONSTDEXT
 
 /* POSIX tre_regexec() flags. */
 #define REG_NOTBOL QSE_TRE_NOTBOL
