@@ -139,6 +139,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
 	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
 	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
+	qse_fprintf (out, QSE_T(" -R        enable non-standard extensions to the regular expression\n"));
 	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
 	qse_fprintf (out, QSE_T(" -w        allow address format of start~step\n"));
 	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
@@ -150,7 +151,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnf:rawxym:"),
+		QSE_T("hnf:rRawxym:"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -193,6 +194,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('r'):
 				g_option |= QSE_SED_EXTENDEDREX;
+				break;
+
+			case QSE_T('R'):
+				g_option |= QSE_SED_NONSTDEXTREX;
 				break;
 
 			case QSE_T('a'):

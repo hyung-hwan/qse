@@ -1084,6 +1084,9 @@ tre_parse(tre_parse_ctx_t *ctx)
 				break;
 			/*FALLTHROUGH*/
 		case CHAR_STAR:
+/* QSE - added this label */
+parse_star:
+/* END QSE */
 		{
 			tre_ast_node_t *tmp_node;
 			int minimal = (ctx->cflags & REG_UNGREEDY) ? 1 : 0;
@@ -1093,9 +1096,9 @@ tre_parse(tre_parse_ctx_t *ctx)
 			const tre_char_t *tmp_re;
 #endif
 
-			if (*ctx->re == CHAR_PLUS)
+			if (*ctx->re == CHAR_PLUS) /* QSE: case CHAR_PLUS fell through down here */
 				rep_min = 1;
-			if (*ctx->re == CHAR_QUESTIONMARK)
+			if (*ctx->re == CHAR_QUESTIONMARK) /* QSE: case CHAR_QUESTIONMARK fell though down here */
 				rep_max = 1;
 #ifdef TRE_DEBUG
 			tmp_re = ctx->re;
@@ -1103,7 +1106,7 @@ tre_parse(tre_parse_ctx_t *ctx)
 
 			if (ctx->re + 1 < ctx->re_end)
 			{
-				if (*(ctx->re + 1) == CHAR_QUESTIONMARK)
+				if (*(ctx->re + 1) == CHAR_QUESTIONMARK) /* QSE: +?, ??, *? */
 				{
 					minimal = !(ctx->cflags & REG_UNGREEDY);
 					ctx->re++;
@@ -1136,6 +1139,8 @@ tre_parse(tre_parse_ctx_t *ctx)
 
 		case CHAR_BACKSLASH:
 			/* "\{" is special without REG_EXTENDED */
+			/* QSE  - also handle \+ and \? */
+			/*
 			if (!(ctx->cflags & REG_EXTENDED)
 			        && ctx->re + 1 < ctx->re_end
 			        && *(ctx->re + 1) == CHAR_LBRACE)
@@ -1145,6 +1150,24 @@ tre_parse(tre_parse_ctx_t *ctx)
 			}
 			else
 				break;
+			*/
+			if (!(ctx->cflags & REG_EXTENDED) && ctx->re + 1 < ctx->re_end)
+			{
+				if (*(ctx->re + 1) == CHAR_LBRACE) 
+				{
+					ctx->re++;
+					goto parse_brace;
+				}
+				else if (*(ctx->re + 1) == CHAR_PLUS || 
+				         *(ctx->re + 1) == CHAR_QUESTIONMARK) 
+				{
+					ctx->re++;
+					goto parse_star;
+				}
+			}
+			else break;
+			/* END QSE */
+
 
 		case CHAR_LBRACE:
 			/* "{" is literal without REG_EXTENDED */
@@ -1184,8 +1207,10 @@ parse_brace:
 
 			/* Handle "(?...)" extensions.  They work in a way similar
 			 to Perls corresponding extensions. */
-			if (ctx->cflags & REG_EXTENDED
-			        && *(ctx->re + 1) == CHAR_QUESTIONMARK)
+			/* QSE: added ctx->cflags & REG_NONSTDEXT */
+			if ((ctx->cflags & REG_NONSTDEXT) &&
+			    (ctx->cflags & REG_EXTENDED) && 
+			    *(ctx->re + 1) == CHAR_QUESTIONMARK)
 			{
 				int new_cflags = ctx->cflags;
 				int bit = 1;
@@ -1293,10 +1318,13 @@ parse_brace:
 			            && *(ctx->re - 1) == CHAR_BACKSLASH))
 			{
 				depth++;
-				if (ctx->re + 2 < ctx->re_end
-				        && *(ctx->re + 1) == CHAR_QUESTIONMARK
-				        && *(ctx->re + 2) == CHAR_COLON)
+				/* QSE: added ctx->cflags & REG_NONSTDEXT */
+				if ((ctx->cflags & REG_NONSTDEXT) &&
+				     ctx->re + 2 < ctx->re_end && 
+				     *(ctx->re + 1) == CHAR_QUESTIONMARK &&
+				     *(ctx->re + 2) == CHAR_COLON)
 				{
+					/* QSE: \(?: or (?: depending on REG_EXTENDED */
 					DPRINT(("tre_parse: group begin: '%.*" STRF
 					        "', no submatch\n", REST(ctx->re)));
 					/* Don't mark for submatching. */

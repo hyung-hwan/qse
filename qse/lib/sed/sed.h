@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 560 2011-09-06 14:18:36Z hyunghwan.chung $
+ * $Id: sed.h 563 2011-09-08 07:49:53Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -215,6 +215,7 @@ struct qse_sed_t
 		qse_sed_cmd_blk_t* lb; /**< points to the last block */
 
 		qse_sed_cmd_t      quit; 
+		qse_sed_cmd_t      quit_quiet; 
 		qse_sed_cmd_t      again;
 		qse_sed_cmd_t      over;
 	} cmd;
