@@ -280,40 +280,40 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 			else if (re + 1 < ctx->re_end
 			         && *re == CHAR_LBRACKET && *(re + 1) == CHAR_COLON)
 			{
-#if 0
-				char tmp_str[64];
-#endif
 				const tre_char_t *endptr = re + 2;
 				int len;
 				DPRINT(("tre_parse_bracket:  class: '%.*" STRF "'\n", REST(re)));
-				while (endptr < ctx->re_end && *endptr != CHAR_COLON)
-					endptr++;
+				while (endptr < ctx->re_end && *endptr != CHAR_COLON) endptr++;
 				if (endptr != ctx->re_end)
 				{
-					len = MIN(endptr - re - 2, 63);
-
-					if (qse_getctypebyxname (re + 2, len, &class) <= -1) status = REG_ECTYPE;
-
-					/* Optimize character classes for 8 bit character sets. */
-					if (status == REG_OK && TRE_MB_CUR_MAX == 1)
+					/* QSE: bug fix of not checking ending ] */
+					if (*(endptr + 1) != CHAR_RBRACKET) status = REG_ECTYPE;
+					else
 					{
-						status = tre_expand_ctype(ctx->mem, class, items,
+					/* END QSE */
+						len = MIN(endptr - re - 2, 63);
+
+						if (qse_getctypebyxname (re + 2, len, &class) <= -1) status = REG_ECTYPE;
+
+						/* Optimize character classes for 8 bit character sets. */
+						if (status == REG_OK && TRE_MB_CUR_MAX == 1)
+						{
+							status = tre_expand_ctype(ctx->mem, class, items,
 						                          &i, &max_i, ctx->cflags);
-						class = (tre_ctype_t)0;
-						skip = 1;
+							class = (tre_ctype_t)0;
+							skip = 1;
+						}
+						re = endptr + 2;
 					}
-					re = endptr + 2;
 				}
-				else
-					status = REG_ECTYPE;
+				else status = REG_ECTYPE;
 				min = 0;
 				max = TRE_CHAR_MAX;
 			}
 			else
 			{
 				DPRINT(("tre_parse_bracket:   char: '%.*" STRF "'\n", REST(re)));
-				if (*re == CHAR_MINUS && *(re + 1) != CHAR_RBRACKET
-				        && ctx->re != re)
+				if (*re == CHAR_MINUS && *(re + 1) != CHAR_RBRACKET && ctx->re != re)
 					/* Two ranges are not allowed to share and endpoint. */
 					status = REG_ERANGE;
 				min = max = *re++;

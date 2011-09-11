@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 563 2011-09-08 07:49:53Z hyunghwan.chung $
+ * $Id: sed.c 564 2011-09-10 16:14:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -95,8 +95,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
 	);
 
-	if (qse_lda_init (&sed->e.txt.appended, mmgr, 32) <= -1) goto oops_4;
-	if (qse_str_init (&sed->e.txt.read, mmgr, 256) <= -1) goto oops_5;
+	if (qse_str_init (&sed->e.txt.appended, mmgr, 256) <= -1) goto oops_5;
 	if (qse_str_init (&sed->e.txt.held, mmgr, 256) <= -1) goto oops_6;
 	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) <= -1) goto oops_7;
 
@@ -111,10 +110,8 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 oops_7:
 	qse_str_fini (&sed->e.txt.held);
 oops_6:
-	qse_str_fini (&sed->e.txt.read);
+	qse_str_fini (&sed->e.txt.appended);
 oops_5:
-	qse_lda_fini (&sed->e.txt.appended);
-oops_4:
 	qse_map_fini (&sed->tmp.labs);
 oops_3:
 	qse_str_fini (&sed->tmp.lab);
@@ -131,8 +128,7 @@ void qse_sed_fini (qse_sed_t* sed)
 
 	qse_str_fini (&sed->e.txt.subst);
 	qse_str_fini (&sed->e.txt.held);
-	qse_str_fini (&sed->e.txt.read);
-	qse_lda_fini (&sed->e.txt.appended);
+	qse_str_fini (&sed->e.txt.appended);
 
 	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
@@ -451,14 +447,16 @@ static int pickup_rex (
 	int really, const qse_sed_cmd_t* cmd, qse_str_t* buf)
 {
 	qse_cint_t c;
-	qse_size_t in_bracket = 0;
 	qse_size_t chars_from_opening_bracket = 0;
+	int bracket_state = 0;
 
 	qse_str_clear (buf);
 
-	for (;;)
+	while (1)
 	{
 		c = NXTSC (sed);
+
+	shortcut:
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
 			if (cmd)
@@ -480,7 +478,7 @@ static int pickup_rex (
 			return -1;
 		}
 
-		if (c == rxend && in_bracket <= 0) break;
+		if (c == rxend && bracket_state == 0) break;
 
 		if (c == QSE_T('\\'))
 		{
@@ -509,11 +507,19 @@ static int pickup_rex (
 				return -1;
 			}
 
-			if (in_bracket > 0 && nc == QSE_T(']'))
+			if (bracket_state > 0 && nc == QSE_T(']'))
 			{
-				/* if really is not set, in_bracket is alyway 0.
-				 * so this block is never reached */
-				if (chars_from_opening_bracket > 1) in_bracket--;
+				/*
+				 * if 'really' is not set, bracket_state is alyway 0.
+				 * so this block is never reached. 
+				 *
+				 * a backslashed closing bracket is seen. 
+				 * it is not :]. if bracket_state is 2, this \] 
+				 * makes an illegal regular expression. but,
+				 * let's not care.. just drop the state to 0
+				 * as if the outer [ is closed.
+				 */
+				if (chars_from_opening_bracket > 1) bracket_state = 0;
 			}
 	
 			if (nc == QSE_T('\n')) c = nc;
@@ -524,9 +530,9 @@ static int pickup_rex (
 				ec = trans_escaped (nc);
 				if (ec == nc)
 				{
-					/* if the character after a backslash is not special at the
-					 * this layer, add the backslash into the regular expression
-					 * buffer as it is. */
+					/* if the character after a backslash is not special 
+					 * at the this layer, add the backslash into the 
+					 * regular expression buffer as it is. */
 					if (qse_str_ccat (buf, QSE_T('\\')) == (qse_size_t)-1)
 					{
 						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -543,14 +549,40 @@ static int pickup_rex (
 
 			if (c == QSE_T('[')) 
 			{
-				if (in_bracket <= 0) chars_from_opening_bracket = 0;
-				in_bracket++;
+				if (bracket_state <= 0)
+				{
+					bracket_state = 1;
+					chars_from_opening_bracket = 0;
+				}
+				else if (bracket_state == 1)
+				{
+					qse_cint_t nc = NXTSC (sed);
+					if (nc == QSE_T(':')) bracket_state = 2;
+
+					if (qse_str_ccat (buf, c) == (qse_size_t)-1)
+					{
+						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+						return -1;
+					}
+					chars_from_opening_bracket++;
+					c = nc;
+					goto shortcut;
+				}
 			}
-			else if (in_bracket > 0 && c == QSE_T(']'))
+			else if (c == QSE_T(']'))
 			{
-				/* if it is the first character after [, 
-			 	* it is a normal character. */
-				if (chars_from_opening_bracket > 1) in_bracket--;
+				if (bracket_state == 1)
+				{
+					/* if it is the first character after [, 
+					 * it is a normal character. */
+					if (chars_from_opening_bracket > 1) bracket_state--;
+				}
+				else if (bracket_state == 2)
+				{
+					/* it doesn't really care if colon was for opening bracket 
+					 * like in [[:]] */
+					if (QSE_STR_LASTCHAR(buf) == QSE_T(':')) bracket_state--;
+				}
 			}
 		}
 
@@ -559,7 +591,6 @@ static int pickup_rex (
 			SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 			return -1;
 		}
-
 		chars_from_opening_bracket++;
 	} 
 
@@ -568,9 +599,10 @@ static int pickup_rex (
 
 static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 {
-	if (pickup_rex (sed, rxend, 1, QSE_NULL, &sed->tmp.rex) <= -1) return QSE_NULL;
-/* TODO: support ignore case option for address */
+	if (pickup_rex (sed, rxend, 1, QSE_NULL, &sed->tmp.rex) <= -1)
+		return QSE_NULL;
 
+/* TODO: support ignore case option for address */
 	if (QSE_STR_LEN(&sed->tmp.rex) <= 0) return EMPTY_REX;
 	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), 0, &sed->src.loc);
 }
@@ -1688,7 +1720,7 @@ static int read_file (
 
 			for (i = 0; i < n; i++)
 			{
-				if (qse_str_ccat (&sed->e.txt.read, buf[i]) == (qse_size_t)-1)
+				if (qse_str_ccat (&sed->e.txt.appended, buf[i]) == (qse_size_t)-1)
 				{
 					sed->e.in.fun (
 						sed, QSE_SED_IO_CLOSE,
@@ -1703,7 +1735,7 @@ static int read_file (
 		}
 		else
 		{
-			if (qse_str_ncat (&sed->e.txt.read, buf, n) == (qse_size_t)-1)
+			if (qse_str_ncat (&sed->e.txt.appended, buf, n) == (qse_size_t)-1)
 			{
 				sed->e.in.fun (
 					sed, QSE_SED_IO_CLOSE, 
@@ -2523,10 +2555,10 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_APPEND:
-			if (qse_lda_insert (
+			if (qse_str_ncat (
 				&sed->e.txt.appended,
-				QSE_LDA_SIZE(&sed->e.txt.appended),	
-				&cmd->u.text, 0) == (qse_size_t)-1) 
+				cmd->u.text.ptr,
+				cmd->u.text.len) == (qse_size_t)-1) 
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return QSE_NULL;
@@ -2801,7 +2833,11 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		 * if so, it has not mathing translation */
 
 			/* TODO: support different line end convension */
-			if (len > 0 && ptr[len-1] == QSE_T('\n')) len--;
+			if (len > 0 && ptr[len-1] == QSE_T('\n')) 
+			{
+				len--;
+				if (len > 0 && ptr[len-1] == QSE_T('\r')) len--;
+			}
 
 			for (i = 0; i < len; i++)
 			{
@@ -2941,6 +2977,39 @@ static int init_all_commands_for_exec (qse_sed_t* sed)
 	return 0;
 }
 
+static int emit_output (qse_sed_t* sed)
+{
+	int n;
+#if 0
+	qse_size_t i;
+#endif
+
+	if (!(sed->option & QSE_SED_QUIET))
+	{
+		/* write the pattern space */
+		n = write_str (sed, 
+			QSE_STR_PTR(&sed->e.in.line),
+			QSE_STR_LEN(&sed->e.in.line));
+		if (n <= -1) return -1;
+	}
+
+	/* write text appended by a and r */
+	n = write_str (
+		sed, 
+		QSE_STR_PTR(&sed->e.txt.appended),
+		QSE_STR_LEN(&sed->e.txt.appended)
+	);
+	if (n <= -1) return -1;
+
+	/* flush the output stream in case it's not flushed 
+	 * in write functions */
+	n = flush (sed);
+	if (n <= -1) return -1;
+
+	return 0;
+}
+
+
 int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 {
 	qse_ssize_t n;
@@ -2968,8 +3037,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.last_rex = QSE_NULL;
 
 	sed->e.subst_done = 0;
-	qse_lda_clear (&sed->e.txt.appended);
-	qse_str_clear (&sed->e.txt.read);
+	qse_str_clear (&sed->e.txt.appended);
 	qse_str_clear (&sed->e.txt.subst);
 	qse_str_clear (&sed->e.txt.held);
 	if (qse_str_ccat (&sed->e.txt.held, QSE_T('\n')) == (qse_size_t)-1)
@@ -3045,15 +3113,11 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 	while (1)
 	{
-		qse_size_t i;
-		int quit = 0;
-
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
 		if (n == 0) goto done;
 
-		qse_lda_clear (&sed->e.txt.appended);
-		qse_str_clear (&sed->e.txt.read);
+		qse_str_clear (&sed->e.txt.appended);
 
 		if (sed->cmd.fb.len > 0)
 		{
@@ -3077,7 +3141,11 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
 				if (j == &sed->cmd.quit_quiet) goto done;
-				if (j == &sed->cmd.quit) { quit = 1; break; }
+				if (j == &sed->cmd.quit) 
+				{ 
+					if (emit_output (sed) <= -1) ret = -1;
+					goto done;
+				}
 				if (j == &sed->cmd.again) goto again;
 
 				/* go to the next command */
@@ -3085,37 +3153,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 			}
 		}
 
-		if (!(sed->option & QSE_SED_QUIET))
-		{
-			/* write the pattern space */
-			n = write_str (sed, 
-				QSE_STR_PTR(&sed->e.in.line),
-				QSE_STR_LEN(&sed->e.in.line));
-			if (n <= -1) { ret = -1; goto done; }
-		}
 
-		/* write text read in by the r command */
-		n = write_str (
-			sed, 
-			QSE_STR_PTR(&sed->e.txt.read),
-			QSE_STR_LEN(&sed->e.txt.read)
-		);
-		if (n <= -1) { ret = -1; goto done; }
-
-		/* write appeneded text by the a command */
-		for (i = 0; i < QSE_LDA_SIZE(&sed->e.txt.appended); i++)
-		{
-			qse_xstr_t* t = QSE_LDA_DPTR(&sed->e.txt.appended, i);
-			n = write_str (sed, t->ptr, t->len);
-			if (n <= -1) { ret = -1; goto done; }
-		}
-
-		/* flush the output stream in case it's not flushed 
-		 * in write functions */
-		n = flush (sed);
-		if (n <= -1) { ret = -1; goto done; }
-
-		if (quit) break;
+		if (emit_output (sed) <= -1) { ret = -1; goto done; }
 	}
 
 done:

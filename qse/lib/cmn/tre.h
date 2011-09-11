@@ -55,6 +55,82 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _QSE_LIB_CMN_TRE_H_
 #define _QSE_LIB_CMN_TRE_H_
 
+/* TODO: MAKE TRE WORK LIKE GNU
+
+PATTERN: \(.\{0,1\}\)\(~[^,]*\)\([0-9]\)\(\.*\),\([^;]*\)\(;\([^;]*\(\3[^;]*\)\).*X*\1\(.*\)\)
+INPUT: ~02.,3~3;0123456789;9876543210
+
+------------------------------------------------------
+samples/cmn/tre01 gives the following output. this does not seem wrong, though.
+
+SUBMATCH[7],[8],[9].
+
+SUBMATCH[0] = [~02.,3~3;0123456789;9876543210]
+SUBMATCH[1] = []
+SUBMATCH[2] = [~0]
+SUBMATCH[3] = [2]
+SUBMATCH[4] = [.]
+SUBMATCH[5] = [3~3]
+SUBMATCH[6] = [;0123456789;9876543210]
+SUBMATCH[7] = [012]
+SUBMATCH[8] = [2]
+SUBMATCH[9] = [3456789;9876543210
+
+------------------------------------------------------
+
+Using the GNU regcomp(),regexec(), the following
+is printed.
+
+#include <sys/types.h>
+#include <regex.h>
+#include <stdio.h>
+int main (int argc, char* argv[])
+{
+     regex_t tre;
+     regmatch_t mat[10];
+     int i;
+     regcomp (&tre, argv[1], 0);
+     regexec (&tre, argv[2], 10, mat, 0);
+     for (i = 0; i < 10; i++)
+     {
+          if (mat[i].rm_so == -1) break;
+          printf ("SUBMATCH[%u] = [%.*s]\n", i,
+               (int)(mat[i].rm_eo - mat[i].rm_so), &argv[2][mat[i].rm_so]);
+     }
+     regfree (&tre);
+     return 0;
+}
+
+SUBMATCH[0] = [~02.,3~3;0123456789;9876543210]
+SUBMATCH[1] = []
+SUBMATCH[2] = [~0]
+SUBMATCH[3] = [2]
+SUBMATCH[4] = [.]
+SUBMATCH[5] = [3~3]
+SUBMATCH[6] = [;0123456789;9876543210]
+SUBMATCH[7] = [0123456789]
+SUBMATCH[8] = [23456789]
+SUBMATCH[9] = []
+
+
+------------------------------------------------------
+One more example here:
+$ ./tre01 "\(x*\)ab\(\(c*\1\)\(.*\)\)" "abcdefg"
+Match: YES
+SUBMATCH[0] = [abcdefg]
+SUBMATCH[1] = []
+SUBMATCH[2] = [cdefg]
+SUBMATCH[3] = []
+SUBMATCH[4] = [cdefg]
+
+$ ./reg "\(x*\)ab\(\(c*\1\)\(.*\)\)" "abcdefg"
+SUBMATCH[0] = [abcdefg]
+SUBMATCH[1] = []
+SUBMATCH[2] = [cdefg]
+SUBMATCH[3] = [c]
+SUBMATCH[4] = [defg]
+*/
+
 #include <qse/cmn/tre.h>
 
 #ifdef QSE_CHAR_IS_WCHAR

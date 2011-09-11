@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 563 2011-09-08 07:49:53Z hyunghwan.chung $
+ * $Id: sed.h 564 2011-09-10 16:14:38Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -23,7 +23,6 @@
 
 #include <qse/sed/sed.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/lda.h>
 
 #define QSE_MAP_AS_RBT
 #include <qse/cmn/map.h>
@@ -262,8 +261,7 @@ struct qse_sed_t
 		/** text buffers */
 		struct
 		{
-			qse_lda_t appended;
-			qse_str_t read;
+			qse_str_t appended;
 			qse_str_t held;
 			qse_str_t subst;
 		} txt;
