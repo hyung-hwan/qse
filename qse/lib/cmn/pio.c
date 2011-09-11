@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: pio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -40,8 +40,8 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (pio)
 
-static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext, 
@@ -999,11 +999,15 @@ int qse_pio_init (
 
 	if (oflags & QSE_PIO_TEXT)
 	{
+		int topt = 0;
+
+		if (oflags & QSE_PIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
+
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{
 			int r;
 
-			tio[i] = qse_tio_open (pio->mmgr, 0);
+			tio[i] = qse_tio_open (pio->mmgr, 0, topt);
 			if (tio[i] == QSE_NULL) 
 			{
 				pio->errnum = QSE_PIO_ENOMEM;
@@ -1565,7 +1569,7 @@ int qse_pio_kill (qse_pio_t* pio)
 #endif
 }
 
-static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);
@@ -1580,7 +1584,7 @@ static qse_ssize_t pio_input (int cmd, void* arg, void* buf, qse_size_t size)
 	return 0;
 }
 
-static qse_ssize_t pio_output (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);

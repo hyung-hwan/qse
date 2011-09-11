@@ -1,5 +1,5 @@
 /*
- * $Id: pio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: pio.h 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -38,15 +38,16 @@
 enum qse_pio_oflag_t
 {
 	/** enable text based I/O. */
-	QSE_PIO_TEXT       = (1 << 0),
+	QSE_PIO_TEXT          = (1 << 0),
+     QSE_PIO_IGNOREMBWCERR = (1 << 1),
 
 	/** execute the command via a system shell 
 	 * (/bin/sh on *nix, cmd.exe on windows) */
-	QSE_PIO_SHELL      = (1 << 1),
+	QSE_PIO_SHELL         = (1 << 3),
 
 	/** indicate that the command to qse_pio_open() is a multi-byte string.
 	 *  it is useful if #QSE_CHAR_IS_WCHAR is defined. */
-	QSE_PIO_MBSCMD     = (1 << 2),
+	QSE_PIO_MBSCMD        = (1 << 4),
 
 	/** write to stdin of a child process */
 	QSE_PIO_WRITEIN    = (1 << 8),

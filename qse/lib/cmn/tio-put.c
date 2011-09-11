@@ -1,5 +1,5 @@
 /*
- * $Id: tio-put.c 559 2011-09-04 16:21:54Z hyunghwan.chung $
+ * $Id: tio-put.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -51,6 +51,12 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c, int* flush_needed)
 	n = qse_wcrtomb (c, mc, QSE_COUNTOF(mc), &tio->mbstate.out);
 	if (n == 0) 
 	{
+		if (tio->flags & QSE_TIO_IGNOREMBWCERR) 
+		{
+			/* return 1 as if c has been written successfully */
+			return 1;
+		}
+
 		tio->errnum = QSE_TIO_EILCHR;
 		return -1;
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: fio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,8 +45,8 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
 
-static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
 
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -365,8 +365,11 @@ int qse_fio_init (
 	if (flags & QSE_FIO_TEXT)
 	{
 		qse_tio_t* tio;
+		int opt = 0;
 
-		tio = qse_tio_open (fio->mmgr, 0);
+		if (fio->flags & QSE_FIO_IGNOREMBWCERR) opt |= QSE_TIO_IGNOREMBWCERR;
+
+		tio = qse_tio_open (fio->mmgr, 0, opt);
 		if (tio == QSE_NULL) QSE_THROW_ERR (tio);
 
 		if (qse_tio_attachin (tio, fio_input, fio) <= -1 ||
@@ -826,7 +829,7 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 	return -1;
 }
 
-static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);
@@ -838,7 +841,7 @@ static qse_ssize_t fio_input (int cmd, void* arg, void* buf, qse_size_t size)
 	return 0;
 }
 
-static qse_ssize_t fio_output (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);

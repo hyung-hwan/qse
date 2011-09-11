@@ -237,43 +237,51 @@ static int handle_args (int argc, qse_char_t* argv[])
 	return 1;
 }
 
-qse_char_t* load_script_file (const qse_char_t* file)
+qse_char_t* load_script_file (qse_sed_t* sed, const qse_char_t* file)
 {
-	qse_cint_t c;
 	qse_str_t script;
-	QSE_FILE* fp;
+	qse_sio_t* fp;
 	qse_xstr_t xstr;
+	qse_char_t buf[256];
 
-	fp = qse_fopen (file, QSE_T("r"));
+	fp = qse_sio_open (
+		qse_sed_getmmgr(sed), 0, file, 
+		QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 	if (fp == QSE_NULL) return QSE_NULL;
 
 	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) <= -1)
 	{
-		qse_fclose (fp);
+		qse_sio_close (fp);
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot load %s\n"), file);
 		return QSE_NULL;
 	}
 
-	while ((c = qse_fgetc (fp)) != QSE_CHAR_EOF)
+	while (1)
 	{
-		if (qse_str_ccat (&script, c) == (qse_size_t)-1)
+		qse_ssize_t n;
+
+		n = qse_sio_gets (fp, buf, QSE_COUNTOF(buf));
+		if (n == 0) break;
+		if (n <= -1)
 		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot read %s\n"), file);
 			qse_str_fini (&script);
-			qse_fclose (fp);
+			qse_sio_close (fp);
+			return QSE_NULL;		
+		}
+
+		if (qse_str_ncat (&script, buf, n) == (qse_size_t)-1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+			qse_str_fini (&script);
+			qse_sio_close (fp);
 			return QSE_NULL;
 		}		
-	}
-	if (qse_ferror(fp)) 
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot read %s\n"), file);
-		qse_str_fini (&script);
-		qse_fclose (fp);
-		return QSE_NULL;		
 	}
 
 	qse_str_yield (&script, &xstr, 0);
 	qse_str_fini (&script);
-	qse_fclose (fp);
+	qse_sio_close (fp);
 
 	return xstr.ptr;
 }
@@ -314,7 +322,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	{
 		QSE_ASSERT (g_script == QSE_NULL);
 
-		g_script = load_script_file (g_script_file);
+		g_script = load_script_file (sed, g_script_file);
 		if (g_script == QSE_NULL) goto oops;
 	}
 

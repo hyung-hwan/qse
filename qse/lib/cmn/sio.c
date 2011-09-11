@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: sio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -21,8 +21,8 @@
 #include <qse/cmn/sio.h>
 #include "mem.h"
 
-static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -55,6 +55,7 @@ static qse_sio_t __sio_in =
 	/* tio */
 	{
 		QSE_NULL,
+		0,
 		0,
 
 		__sio_input,
@@ -97,6 +98,7 @@ static qse_sio_t __sio_out =
 	{
 		QSE_NULL,
 		0,
+		0,
 
 		__sio_input,
 		__sio_output,
@@ -138,6 +140,7 @@ static qse_sio_t __sio_err =
 	{
 		QSE_NULL,
 		0,
+		0, 
 
 		__sio_input,
 		__sio_output,
@@ -195,6 +198,7 @@ int qse_sio_init (
 	qse_sio_t* sio, qse_mmgr_t* mmgr, const qse_char_t* file, int flags)
 {
 	int mode;
+	int topt = 0;
 
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
@@ -206,7 +210,9 @@ int qse_sio_init (
 
 	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) <= -1) return -1;
 
-	if (qse_tio_init(&sio->tio, mmgr) <= -1)
+	if (flags & QSE_SIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
+
+	if (qse_tio_init(&sio->tio, mmgr, topt) <= -1)
 	{
 		qse_fio_fini (&sio->fio);
 		return -1;
@@ -329,7 +335,7 @@ int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
 }
 #endif
 
-static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_sio_t* sio = (qse_sio_t*)arg;
 
@@ -358,7 +364,7 @@ static qse_ssize_t __sio_input (int cmd, void* arg, void* buf, qse_size_t size)
 	return 0;
 }
 
-static qse_ssize_t __sio_output (int cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_sio_t* sio = (qse_sio_t*)arg;
 

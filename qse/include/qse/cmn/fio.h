@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: fio.h 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -33,10 +33,11 @@
 enum qse_fio_open_flag_t
 {
 	/* request qse_char_io based IO */
-	QSE_FIO_TEXT       = (1 << 0),
+	QSE_FIO_TEXT          = (1 << 0),
+	QSE_FIO_IGNOREMBWCERR = (1 << 1),
 
 	/* treat the file name pointer as a handle pointer */
-	QSE_FIO_HANDLE     = (1 << 1),
+	QSE_FIO_HANDLE        = (1 << 3),
 
 	QSE_FIO_READ       = (1 << 8),
 	QSE_FIO_WRITE      = (1 << 9),
