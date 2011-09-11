@@ -1,5 +1,5 @@
 /*
- * $Id: tio-get.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: tio-get.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -84,6 +84,12 @@ static qse_ssize_t tio_getc (qse_tio_t* tio, qse_char_t* c)
 	if (n == 0) 
 	{
 		/* illegal sequence */
+		if (tio->flags & QSE_TIO_IGNOREMBWCERR)
+		{
+			*c = tio->inbuf[tio->inbuf_curp++];
+			return 1;
+		}
+
 		tio->inbuf_curp++; /* skip one byte */
 		tio->errnum = QSE_TIO_EILSEQ;
 		return -1;

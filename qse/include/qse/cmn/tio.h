@@ -1,5 +1,5 @@
 /*
- * $Id: tio.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: tio.h 565 2011-09-11 02:48:21Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -60,11 +60,17 @@ enum
 	QSE_TIO_MAX_OUTBUF_LEN = 4096
 };
 
-enum 
+enum qse_tio_cmd_t
 {
 	QSE_TIO_IO_OPEN,
 	QSE_TIO_IO_CLOSE,
 	QSE_TIO_IO_DATA
+};
+typedef enum qse_tio_cmd_t qse_tio_cmd_t;
+
+enum qse_tio_flag_t
+{
+	QSE_TIO_IGNOREMBWCERR = (1 << 0)
 };
 
 #define QSE_TIO_ERRNUM(tio) ((const qse_tio_errnum_t)(tio)->errnum)
@@ -75,10 +81,10 @@ typedef struct qse_tio_t qse_tio_t;
  * The qse_tio_io_t types define a text I/O handler.
  */
 typedef qse_ssize_t (*qse_tio_io_t) (
-	int        cmd, 
-	void*      arg, 
-	void*      data, 
-	qse_size_t size
+	qse_tio_cmd_t cmd, 
+	void*         arg, 
+	void*         data, 
+	qse_size_t    size
 );
 
 /**
@@ -90,6 +96,7 @@ struct qse_tio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_tio_errnum_t errnum;
+	int flags;
 
 	/* io functions */
 	qse_tio_io_t input_func;
@@ -126,7 +133,8 @@ QSE_DEFINE_COMMON_FUNCTIONS (tio)
  */
 qse_tio_t* qse_tio_open (
 	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize
+	qse_size_t  xtnsize,
+	int         flags
 );
 
 /**
@@ -142,7 +150,8 @@ int qse_tio_close (
  */
 int qse_tio_init (
 	qse_tio_t*  tio,
-	qse_mmgr_t* mmgr
+	qse_mmgr_t* mmgr,
+	int         flags
 );
 
 /**
