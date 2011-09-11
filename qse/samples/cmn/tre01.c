@@ -20,7 +20,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 
 	qse_tre_init (&tre, QSE_NULL);
 
-	if (qse_tre_comp (&tre, argv[1], &nsubmat, QSE_TRE_EXTENDED) <= -1)
+	if (qse_tre_comp (&tre, argv[1], &nsubmat, 0 /*QSE_TRE_EXTENDED*/) <= -1)
 	{
 		qse_printf (QSE_T("ERROR: Cannot compile pattern [%s] - %s\n"), argv[1], qse_tre_geterrmsg(&tre));
 		goto oops;
