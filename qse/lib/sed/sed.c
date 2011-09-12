@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 564 2011-09-10 16:14:38Z hyunghwan.chung $
+ * $Id: sed.c 566 2011-09-11 12:44:56Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -144,7 +144,6 @@ int qse_sed_getoption (qse_sed_t* sed)
 {
 	return sed->option;
 }
-
 
 #ifdef USE_REX
 qse_size_t qse_sed_getmaxdepth (qse_sed_t* sed, qse_sed_depth_t id)
@@ -1015,60 +1014,6 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	if (pickup_rex (sed, delim, 1, cmd, t[0]) <= -1) goto oops;
 	if (pickup_rex (sed, delim, 0, cmd, t[1]) <= -1) goto oops;
-#if 0
-/* calling pickup_rex twice above instead of commenting out this part */
-	for (i = 0; i < 2; i++)
-	{
-		c = NXTSC (sed);
-
-		while (c != delim)
-		{
-			CHECK_CMDIC (sed, cmd, c, goto oops);
-
-			if (c == QSE_T('\\'))
-			{
-				qse_cint_t nc;
-
-				nc = NXTSC (sed);
-				CHECK_CMDIC_ESCAPED (sed, cmd, nc, goto oops);
-
-				if (nc == QSE_T('\n')) c = nc;
-				else
-				{
-					qse_cint_t ec;
-	
-					/* Escaping a known speical character for the regular expression 
-					 * part is done here. However, Escaping a special character for 
-					 * the replacement part is done in do_subst() except '\n' because
-					 * it has more special characters like '&'. */
-
-					ec = trans_escaped (nc);
-					if (ec == nc)
-					{
-						/* if the character after a backslash is not special at the
-						 * this layer, add the backslash into the regular expression
-						 * buffer as it is. */
-						if (qse_str_ccat (t[i], QSE_T('\\')) == (qse_size_t)-1)
-						{
-							SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-							goto oops;
-						}
-					}
-
-					c = ec;
-				}
-			}
-
-			if (qse_str_ccat (t[i], c) == (qse_size_t)-1)
-			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				goto oops;
-			}
-
-			c = NXTSC (sed);
-		}	
-	}
-#endif
 
 	/* skip spaces before options */
 	do { c = NXTSC(sed); } while (IS_SPACE(c));

@@ -1,5 +1,5 @@
 /*
- * $Id: tio-get.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id: tio-get.c 566 2011-09-11 12:44:56Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -55,7 +55,8 @@ static qse_ssize_t tio_getc (qse_tio_t* tio, qse_char_t* c)
 			&tio->inbuf[left], QSE_COUNTOF(tio->inbuf)-left);
 		if (n == 0) 
 		{
-			if (tio->inbuf_curp < tio->inbuf_len)
+			if (tio->inbuf_curp < tio->inbuf_len &&
+			    !(tio->flags & QSE_TIO_IGNOREMBWCERR))
 			{
 				/* gargage left in the buffer */
 				tio->errnum = QSE_TIO_EICSEQ;
@@ -86,7 +87,9 @@ static qse_ssize_t tio_getc (qse_tio_t* tio, qse_char_t* c)
 		/* illegal sequence */
 		if (tio->flags & QSE_TIO_IGNOREMBWCERR)
 		{
-			*c = tio->inbuf[tio->inbuf_curp++];
+			/* *c = tio->inbuf[tio->inbuf_curp++]; */
+			*c = QSE_WT('?');
+			tio->inbuf_curp++;
 			return 1;
 		}
 
