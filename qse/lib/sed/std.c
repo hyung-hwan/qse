@@ -84,7 +84,7 @@ static qse_ssize_t xin (
 						sed->mmgr,
 						0,
 						xtn->infile,
-						QSE_SIO_READ
+						QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 					);
 					if (sio == QSE_NULL)
 					{
@@ -105,7 +105,7 @@ static qse_ssize_t xin (
 					sed->mmgr,
 					0,
 					arg->path,
-					QSE_SIO_READ
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 				);
 			}
 
@@ -167,7 +167,8 @@ static qse_ssize_t xout (
 						xtn->outfile,
 						QSE_SIO_WRITE |
 						QSE_SIO_CREATE |
-						QSE_SIO_TRUNCATE
+						QSE_SIO_TRUNCATE |
+						QSE_SIO_IGNOREMBWCERR
 					);
 					if (sio == QSE_NULL)
 					{
@@ -190,7 +191,8 @@ static qse_ssize_t xout (
 					arg->path,
 					QSE_SIO_WRITE |
 					QSE_SIO_CREATE |
-					QSE_SIO_TRUNCATE
+					QSE_SIO_TRUNCATE |
+					QSE_SIO_IGNOREMBWCERR
 				);
 			}
 

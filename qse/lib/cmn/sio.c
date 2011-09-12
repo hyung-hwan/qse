@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id: sio.c 566 2011-09-11 12:44:56Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -56,7 +56,7 @@ static qse_sio_t __sio_in =
 	{
 		QSE_NULL,
 		0,
-		0,
+		QSE_TIO_IGNOREMBWCERR,
 
 		__sio_input,
 		__sio_output,
@@ -98,7 +98,7 @@ static qse_sio_t __sio_out =
 	{
 		QSE_NULL,
 		0,
-		0,
+		QSE_TIO_IGNOREMBWCERR,
 
 		__sio_input,
 		__sio_output,
@@ -140,7 +140,7 @@ static qse_sio_t __sio_err =
 	{
 		QSE_NULL,
 		0,
-		0, 
+		QSE_TIO_IGNOREMBWCERR,
 
 		__sio_input,
 		__sio_output,

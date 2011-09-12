@@ -67,7 +67,7 @@ static qse_ssize_t in (
 					qse_sed_getmmgr(sed),
 					0,
 					file,
-					QSE_SIO_READ
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 				);	
 
 				if (arg->handle == QSE_NULL) return -1;
@@ -107,7 +107,8 @@ static qse_ssize_t out (
 					arg->path,
 					QSE_SIO_WRITE |
 					QSE_SIO_CREATE |
-					QSE_SIO_TRUNCATE
+					QSE_SIO_TRUNCATE | 
+					QSE_SIO_IGNOREMBWCERR
 				);	
 
 				if (arg->handle == QSE_NULL) return -1;
@@ -247,7 +248,11 @@ qse_char_t* load_script_file (qse_sed_t* sed, const qse_char_t* file)
 	fp = qse_sio_open (
 		qse_sed_getmmgr(sed), 0, file, 
 		QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-	if (fp == QSE_NULL) return QSE_NULL;
+	if (fp == QSE_NULL) 
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), file);
+		return QSE_NULL;
+	}
 
 	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) <= -1)
 	{
