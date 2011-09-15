@@ -7,4 +7,6 @@ EXTRA_DIST = \
 	s001.sed s001.dat \
 	s002.sed s002.dat \
 	s003.sed s003.dat \
-	s004.sed s004.dat 
+	s004.sed s004.dat \
+	s005.sed s005.dat \
+	s006.sed s006.dat 
