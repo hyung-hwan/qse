@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id: sio.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -32,20 +32,20 @@
 
 enum qse_sio_open_flag_t
 {
-	QSE_SIO_HANDLE       = QSE_FIO_HANDLE,
+	QSE_SIO_HANDLE        = QSE_FIO_HANDLE,
 	QSE_SIO_IGNOREMBWCERR = QSE_FIO_IGNOREMBWCERR,
 
-	QSE_SIO_READ         = QSE_FIO_READ,
-	QSE_SIO_WRITE        = QSE_FIO_WRITE,
-	QSE_SIO_APPEND       = QSE_FIO_APPEND,
+	QSE_SIO_READ          = QSE_FIO_READ,
+	QSE_SIO_WRITE         = QSE_FIO_WRITE,
+	QSE_SIO_APPEND        = QSE_FIO_APPEND,
 
-	QSE_SIO_CREATE       = QSE_FIO_CREATE,
-	QSE_SIO_TRUNCATE     = QSE_FIO_TRUNCATE,
-	QSE_SIO_EXCLUSIVE    = QSE_FIO_EXCLUSIVE,
-	QSE_SIO_SYNC         = QSE_FIO_SYNC,
+	QSE_SIO_CREATE        = QSE_FIO_CREATE,
+	QSE_SIO_TRUNCATE      = QSE_FIO_TRUNCATE,
+	QSE_SIO_EXCLUSIVE     = QSE_FIO_EXCLUSIVE,
+	QSE_SIO_SYNC          = QSE_FIO_SYNC,
 
-	QSE_SIO_NOSHRD       = QSE_FIO_NOSHRD,
-	QSE_SIO_NOSHWR       = QSE_FIO_NOSHWR
+	QSE_SIO_NOSHRD        = QSE_FIO_NOSHRD,
+	QSE_SIO_NOSHWR        = QSE_FIO_NOSHWR
 };
 
 typedef qse_fio_off_t qse_sio_pos_t;

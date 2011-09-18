@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 563 2011-09-08 07:49:53Z hyunghwan.chung $
+ * $Id: sed.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -82,6 +82,7 @@ enum qse_sed_errnum_t
 {
 	QSE_SED_ENOERR,  /**< no error */
 	QSE_SED_ENOMEM,  /**< insufficient memory */
+	QSE_SED_EINVAL,  /**< invalid parameter or data */
 	QSE_SED_ECMDNR,  /**< command '${0}' not recognized */
 	QSE_SED_ECMDMS,  /**< command code missing */
 	QSE_SED_ECMDIC,  /**< command '${0}' incomplete */

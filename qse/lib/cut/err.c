@@ -27,6 +27,7 @@ const qse_char_t* qse_cut_dflerrstr (qse_cut_t* cut, qse_cut_errnum_t errnum)
  	{
 		QSE_T("no error"),
 		QSE_T("insufficient memory"),
+		QSE_T("invalid parameter or data"),
 		QSE_T("selector not valid"),
 		QSE_T("io error with file '${0}'"),
 		QSE_T("error returned by user io handler")

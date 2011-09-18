@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 567 2011-09-14 15:48:08Z hyunghwan.chung $
+ * $Id: sed.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -103,7 +103,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	);
 
 	if (qse_str_init (&sed->e.txt.appended, mmgr, 256) <= -1) goto oops_5;
-	if (qse_str_init (&sed->e.txt.held, mmgr, 256) <= -1) goto oops_6;
+	if (qse_str_init (&sed->e.txt.hold, mmgr, 256) <= -1) goto oops_6;
 	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) <= -1) goto oops_7;
 
 	/* on init, the last points to the first */
@@ -114,7 +114,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	return 0;
 
 oops_7:
-	qse_str_fini (&sed->e.txt.held);
+	qse_str_fini (&sed->e.txt.hold);
 oops_6:
 	qse_str_fini (&sed->e.txt.appended);
 oops_5:
@@ -133,7 +133,7 @@ void qse_sed_fini (qse_sed_t* sed)
 	free_all_command_blocks (sed);
 
 	qse_str_fini (&sed->e.txt.subst);
-	qse_str_fini (&sed->e.txt.held);
+	qse_str_fini (&sed->e.txt.hold);
 	qse_str_fini (&sed->e.txt.appended);
 
 	qse_map_fini (&sed->tmp.labs);
@@ -1817,6 +1817,7 @@ static int flush (qse_sed_t* sed)
 	while (sed->e.out.len > 0)
 	{
 		sed->errnum = QSE_SED_ENOERR;
+
 		n = sed->e.out.fun (
 			sed, QSE_SED_IO_WRITE, &sed->e.out.arg,
 			&sed->e.out.buf[pos], sed->e.out.len);
@@ -2694,7 +2695,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_SED_CMD_HOLD:
 			/* copy the pattern space to the hold space */
-			if (qse_str_ncpy (&sed->e.txt.held, 	
+			if (qse_str_ncpy (&sed->e.txt.hold, 	
 				QSE_STR_PTR(&sed->e.in.line),
 				QSE_STR_LEN(&sed->e.in.line)) == (qse_size_t)-1)
 			{
@@ -2705,7 +2706,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				
 		case QSE_SED_CMD_HOLD_APPEND:
 			/* append the pattern space to the hold space */
-			if (qse_str_ncat (&sed->e.txt.held, 	
+			if (qse_str_ncat (&sed->e.txt.hold, 	
 				QSE_STR_PTR(&sed->e.in.line),
 				QSE_STR_LEN(&sed->e.in.line)) == (qse_size_t)-1)
 			{
@@ -2717,8 +2718,8 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_RELEASE:
 			/* copy the hold space to the pattern space */
 			if (qse_str_ncpy (&sed->e.in.line,
-				QSE_STR_PTR(&sed->e.txt.held),
-				QSE_STR_LEN(&sed->e.txt.held)) == (qse_size_t)-1)
+				QSE_STR_PTR(&sed->e.txt.hold),
+				QSE_STR_LEN(&sed->e.txt.hold)) == (qse_size_t)-1)
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return QSE_NULL;	
@@ -2728,8 +2729,8 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_SED_CMD_RELEASE_APPEND:
 			/* append the hold space to the pattern space */
 			if (qse_str_ncat (&sed->e.in.line,
-				QSE_STR_PTR(&sed->e.txt.held),
-				QSE_STR_LEN(&sed->e.txt.held)) == (qse_size_t)-1)
+				QSE_STR_PTR(&sed->e.txt.hold),
+				QSE_STR_LEN(&sed->e.txt.hold)) == (qse_size_t)-1)
 			{
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return QSE_NULL;	
@@ -2738,7 +2739,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_SED_CMD_EXCHANGE:
 			/* exchange the pattern space and the hold space */
-			qse_str_swap (&sed->e.in.line, &sed->e.txt.held);
+			qse_str_swap (&sed->e.in.line, &sed->e.txt.hold);
 			break;
 
 		case QSE_SED_CMD_NEXT:
@@ -3042,8 +3043,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.subst_done = 0;
 	qse_str_clear (&sed->e.txt.appended);
 	qse_str_clear (&sed->e.txt.subst);
-	qse_str_clear (&sed->e.txt.held);
-	if (qse_str_ccat (&sed->e.txt.held, QSE_T('\n')) == (qse_size_t)-1)
+	qse_str_clear (&sed->e.txt.hold);
+	if (qse_str_ccat (&sed->e.txt.hold, QSE_T('\n')) == (qse_size_t)-1)
 	{
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 		return -1;
