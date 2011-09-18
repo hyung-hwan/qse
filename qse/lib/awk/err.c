@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 441 2011-04-22 14:28:43Z hyunghwan.chung $
+ * $Id: err.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -25,10 +25,9 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
-		QSE_T("unknown error"),
 
-		QSE_T("invalid parameter or data"),
 		QSE_T("insufficient memory"),
+		QSE_T("invalid parameter or data"),
 		QSE_T("not supported"),
 		QSE_T("operation not allowed"),
 		QSE_T("'${0}' not found"),

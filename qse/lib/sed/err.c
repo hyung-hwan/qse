@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 562 2011-09-07 15:36:08Z hyunghwan.chung $
+ * $Id: err.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,6 +27,7 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
  	{
 		QSE_T("no error"),
 		QSE_T("insufficient memory"),
+		QSE_T("invalid parameter or data"),
 		QSE_T("command '${0}' not recognized"),
 		QSE_T("command code missing"),
 		QSE_T("command '${0}' incomplete"),

@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
+ * $Id: awk.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -827,11 +827,10 @@ typedef enum qse_awk_option_t qse_awk_option_t;
 enum qse_awk_errnum_t
 {
 	QSE_AWK_ENOERR,  /**< no error */
-	QSE_AWK_EUNKNOWN,/**< unknown error */
 
 	/* common errors */
-	QSE_AWK_EINVAL,  /**< invalid parameter or data */
 	QSE_AWK_ENOMEM,  /**< insufficient memory */
+	QSE_AWK_EINVAL,  /**< invalid parameter or data */
 	QSE_AWK_ENOSUP,  /**< not supported */
 	QSE_AWK_ENOPER,  /**< operation not allowed */
 	QSE_AWK_ENOENT,  /**< '${0}' not found */

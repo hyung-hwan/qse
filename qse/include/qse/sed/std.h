@@ -22,6 +22,7 @@
 #define _QSE_SED_STD_H_
 
 #include <qse/sed/sed.h>
+#include <qse/cmn/sio.h>
 
 /** @file
  * This file defines easier-to-use helper interface for a stream editor.
@@ -34,6 +35,29 @@
  * This example shows how to write a simple stream editor using easy API 
  * functions.
  */
+
+/**
+ * The qse_sed_iostd_t type defines standard I/O resources.
+ */
+typedef struct qse_sed_iostd_t qse_sed_iostd_t;
+
+struct qse_sed_iostd_t
+{
+	enum
+	{
+		QSE_SED_IOSTD_NULL, /** invalid resource */
+		QSE_SED_IOSTD_SIO,
+		QSE_SED_IOSTD_FILE,
+		QSE_SED_IOSTD_MEM
+	} type;
+
+	union
+	{
+		qse_sio_t*        sio;
+		const qse_char_t* file;
+		qse_xstr_t        mem;
+	} u;
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,15 +106,22 @@ int qse_sed_compstd (
 
 /**
  * The qse_sed_execstd() function executes the compiled script
- * over an input file @a infile and an output file @a outfile.
- * If @a infile is #QSE_NULL, the standard console input is used.
- * If @a outfile is #QSE_NULL, the standard console output is used.
+ * over input streams @a in and an output stream @a out.
+ *
+ * If @a in is not #QSE_NULL, it must point to a null-terminated array
+ * of standard I/O resources. if in[0] is QSE_NULL, this function
+ * returns failure, requiring at least 1 valid resource to be included
+ * in the array.
+ *
+ * If @a in is #QSE_NULL, the standard console input is used.
+ * If @a out is #QSE_NULL, the standard console output is used.
+ *
  * @return 0 on success, -1 on failure
  */
 int qse_sed_execstd (
-	qse_sed_t*        sed,    /**< stream editor */
-	const qse_char_t* infile, /**< input file */
-	const qse_char_t* outfile /**< output file */
+	qse_sed_t*       sed,
+	qse_sed_iostd_t  in[],
+	qse_sed_iostd_t* out
 );
 
 #ifdef __cplusplus

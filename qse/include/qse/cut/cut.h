@@ -49,6 +49,7 @@ enum qse_cut_errnum_t
 {
 	QSE_CUT_ENOERR,  /**< no error */
 	QSE_CUT_ENOMEM,  /**< insufficient memory */
+	QSE_CUT_EINVAL,  /**< invalid parameter or data */
 	QSE_CUT_ESELNV,  /**< selector not valid */
 	QSE_CUT_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_CUT_EIOUSR   /**< error returned by user io handler */
