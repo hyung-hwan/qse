@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: sed.h 570 2011-09-20 04:40:45Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -261,7 +261,7 @@ struct qse_sed_t
 		/** text buffers */
 		struct
 		{
-			qse_str_t appended;
+			qse_str_t append;
 			qse_str_t hold; /* hold space */
 			qse_str_t subst;
 		} txt;
@@ -270,6 +270,9 @@ struct qse_sed_t
 		 *  since the last read on the input stream. */
 		int subst_done;
 		void* last_rex;	
+
+		/** stop requested */
+		int stopreq;
 	} e;
 };
 

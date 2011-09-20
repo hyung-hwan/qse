@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.cpp 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: Awk.cpp 570 2011-09-20 04:40:45Z hyunghwan.chung $
  * 
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -859,10 +859,10 @@ void Awk::Run::stop () const
 	qse_awk_rtx_stop (this->rtx);
 }
 
-bool Awk::Run::pendingStop () const
+bool Awk::Run::isStop () const
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
-	return qse_awk_rtx_pendingstop (this->rtx)? true: false;
+	return qse_awk_rtx_isstop (this->rtx)? true: false;
 }
 
 Awk::errnum_t Awk::Run::getErrorNumber () const 
