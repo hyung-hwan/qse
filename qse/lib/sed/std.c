@@ -85,18 +85,34 @@ static qse_sio_t* open_sio (qse_sed_t* sed, const qse_char_t* file, int flags)
 	return sio;
 }
 
+static qse_sio_t* open_sio_std (qse_sed_t* sed, qse_sio_std_t std, int flags)
+{
+	qse_sio_t* sio;
+	static const qse_char_t* std_names[] =
+	{
+		QSE_T("stdin"),
+		QSE_T("stdout"),
+		QSE_T("stderr"),
+	};
+
+	sio = qse_sio_openstd (sed->mmgr, 0, std, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = std_names[std];
+		ea.len = qse_strlen (std_names[std]);
+		qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+	}
+	return sio;
+}
+
 static void close_main_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
 {
-	if (io->type == QSE_SED_IOSTD_FILE)
-	{
-		qse_sio_t* sio = (qse_sio_t*)arg->handle;
-		if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-		qse_sio_close (sio);
-	}
+	if (io->type == QSE_SED_IOSTD_FILE) qse_sio_close (arg->handle);
 }
 
-static int open_main_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
+static int open_console_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
@@ -108,18 +124,15 @@ static int open_main_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_se
 			break;
 
 		case QSE_SED_IOSTD_FILE:
-			if (io->u.file == QSE_NULL)
-			{
-				arg->handle = qse_sio_in;
-			}
-			else
-			{
-				qse_sio_t* sio;
-				sio = open_sio (sed, io->u.file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-				if (sio == QSE_NULL) return -1;
-				arg->handle = sio;
-			}
+		{
+			qse_sio_t* sio;
+			sio = (io->u.file == QSE_NULL)?
+				open_sio_std (sed, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
+				open_sio (sed, io->u.file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			if (sio == QSE_NULL) return -1;
+			arg->handle = sio;
 			break;
+		}
 
 		case QSE_SED_IOSTD_MEM:
 			/* don't store anything to arg->handle */
@@ -130,7 +143,7 @@ static int open_main_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_se
 	return 0;
 }
 
-static int open_main_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
+static int open_console_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
@@ -142,23 +155,32 @@ static int open_main_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_s
 			break;
 
 		case QSE_SED_IOSTD_FILE:
+		{
+			qse_sio_t* sio;
 			if (io->u.file == QSE_NULL)
 			{
-				arg->handle = qse_sio_out;
-			}
-			else
-			{
-				qse_sio_t* sio;
-				sio = open_sio (sed, io->u.file,
+				sio = open_sio_std (
+					sed, QSE_SIO_STDOUT,
 					QSE_SIO_WRITE |
 					QSE_SIO_CREATE |
 					QSE_SIO_TRUNCATE |
 					QSE_SIO_IGNOREMBWCERR
 				);
-				if (sio == QSE_NULL) return -1;
-				arg->handle = sio;
 			}
+			else
+			{
+				sio = open_sio (
+					sed, io->u.file,
+					QSE_SIO_WRITE |
+					QSE_SIO_CREATE |
+					QSE_SIO_TRUNCATE |
+					QSE_SIO_IGNOREMBWCERR
+				);
+			}
+			if (sio == QSE_NULL) return -1;
+			arg->handle = sio;
 			break;
+		}
 
 		case QSE_SED_IOSTD_MEM:
 			/* don't store anything to arg->handle */
@@ -211,7 +233,7 @@ static qse_ssize_t read_main_input_stream (
 		old = arg->handle;
 
 		/* try to open the next input stream */
-		if (open_main_input_stream (sed, arg, next) <= -1)
+		if (open_console_input_stream (sed, arg, next) <= -1)
 		{
 			/* failed to open the next input stream */
 			n = -1;
@@ -243,11 +265,17 @@ static qse_ssize_t xin (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				/* main data stream */
-				if (xtn->e.in == QSE_NULL) arg->handle = qse_sio_in;
+				/* not file specified. console stream */
+				if (xtn->e.in == QSE_NULL) 
+				{
+					sio = open_sio_std (
+						sed, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+					if (sio == QSE_NULL) return -1;
+					arg->handle = sio;
+				}
 				else
 				{
-					if (open_main_input_stream (sed, arg, xtn->e.in_cur) <= -1) return -1;
+					if (open_console_input_stream (sed, arg, xtn->e.in_cur) <= -1) return -1;
 				}
 			}
 			else
@@ -265,13 +293,14 @@ static qse_ssize_t xin (
 			if (arg->path == QSE_NULL)
 			{
 				/* main data stream */
-				if (xtn->e.in) close_main_stream (sed, arg, xtn->e.in_cur);
+				if (xtn->e.in == QSE_NULL) 
+					qse_sio_close (arg->handle);
+				else
+					close_main_stream (sed, arg, xtn->e.in_cur);
 			}
 			else
 			{
-				sio = (qse_sio_t*)arg->handle;
-				if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-					qse_sio_close (sio);
+				qse_sio_close (arg->handle);
 			}
 
 			return 0;
@@ -311,10 +340,21 @@ static qse_ssize_t xout (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				if (xtn->e.out == QSE_NULL) arg->handle = qse_sio_out;
+				if (xtn->e.out == QSE_NULL) 
+				{
+					sio = open_sio_std (
+						sed, QSE_SIO_STDOUT,
+						QSE_SIO_WRITE |
+						QSE_SIO_CREATE |
+						QSE_SIO_TRUNCATE |
+						QSE_SIO_IGNOREMBWCERR
+					);
+					if (sio == QSE_NULL) return -1;
+					arg->handle = sio;
+				}
 				else
 				{
-					if (open_main_output_stream (sed, arg, xtn->e.out) <= -1) return -1;
+					if (open_console_output_stream (sed, arg, xtn->e.out) <= -1) return -1;
 				}
 			}
 			else
@@ -337,14 +377,14 @@ static qse_ssize_t xout (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				if (xtn->e.out) close_main_stream (sed, arg, xtn->e.out);
+				if (xtn->e.out == QSE_NULL) 
+					qse_sio_close (arg->handle);
+				else
+					close_main_stream (sed, arg, xtn->e.out);
 			}
 			else
 			{
-				sio = (qse_sio_t*)arg->handle;
-				qse_sio_flush (sio);
-				if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-					qse_sio_close (sio);
+				qse_sio_close (arg->handle);
 			}
 			return 0;
 		}
@@ -355,7 +395,9 @@ static qse_ssize_t xout (
 			{
 				/* main data stream */
 				if (xtn->e.out == QSE_NULL)
+				{
 					return qse_sio_putsn (arg->handle, dat, len);
+				}
 				else
 				{
 					qse_sed_iostd_t* io = xtn->e.out;
@@ -443,14 +485,30 @@ int qse_sed_execstd (
 	}
 	if (xtn->e.out_memstr) qse_str_close (xtn->e.out_memstr);
 
-	/* if some output without a newline is emitted before 
-	 * last flush, they can be lost because qse_sio_out
-	 * is not explicitly closed() with qse_sio_close()
-	 * which in turn calls qse_sio_flush(). let's call it
-	 * here directly. I don't care whether some other 
-	 * threads could have written to this. */
-	qse_sio_flush (qse_sio_out);
-
 	return n;
 }
 
+int qse_sed_execstdfile (
+	qse_sed_t* sed, const qse_char_t* infile, const qse_char_t* outfile)
+{
+	qse_sed_iostd_t in[2];
+	qse_sed_iostd_t out;
+	qse_sed_iostd_t* pin = QSE_NULL, * pout = QSE_NULL;
+
+	if (infile)
+	{
+		in[0].type = QSE_SED_IOSTD_FILE;
+		in[0].u.file = infile;
+		in[1].type = QSE_SED_IOSTD_NULL;
+		pin = in;
+	}
+
+	if (outfile)
+	{
+		out.type = QSE_SED_IOSTD_FILE;
+		out.u.file = outfile;
+		pout = &out;
+	}
+
+	return qse_sed_execstd (sed, pin, pout);
+}

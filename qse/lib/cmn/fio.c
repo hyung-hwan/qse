@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id: fio.c 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -45,8 +45,10 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
 
-static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t fio_input (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t fio_output (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
 
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -849,5 +851,36 @@ static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
+	return 0;
+}
+
+int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
+{
+	qse_fio_hnd_t tab[] =
+	{
+#if defined(_WIN32)
+		(HANDLE)STD_INPUT_HANDLE,
+		(HANDLE)STD_OUTPUT_HANDLE,
+		(HANDLE)STD_ERROR_HANDLE
+#elif defined(__OS2__)
+		(HFILE)0, (HFILE)1, (HFILE)2
+#elif defined(__DOS__)
+		0, 1, 2
+#else
+		0, 1, 2
+#endif
+	};
+
+	if (std < 0 || std >= QSE_COUNTOF(tab)) return -1;
+
+#if defined(_WIN32)
+	{
+		HANDLE tmp = GetStdHandle (tab[std]);
+		if (tmp == INVALID_HANDLE_VALUE) return -1;
+		*hnd = tmp;
+	}
+#else
+	*hnd = tab[std];
+#endif
 	return 0;
 }

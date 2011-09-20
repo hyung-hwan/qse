@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: sio.c 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -194,6 +194,14 @@ qse_sio_t* qse_sio_open (
 	return sio;
 }
 
+qse_sio_t* qse_sio_openstd (
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sio_std_t std, int flags)
+{
+	qse_fio_hnd_t hnd;
+	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
+	return qse_sio_open (mmgr, xtnsize, &hnd, flags | QSE_SIO_HANDLE);
+}
+
 void qse_sio_close (qse_sio_t* sio)
 {
 	qse_sio_fini (sio);
@@ -233,6 +241,14 @@ int qse_sio_init (
 	}
 
 	return 0;
+}
+
+int qse_sio_initstd (
+	qse_sio_t* sio, qse_mmgr_t* mmgr, qse_sio_std_t std, int flags)
+{
+	qse_fio_hnd_t hnd;
+	if (qse_getstdfiohandle (std, &hnd) <= -1) return -1;
+	return qse_sio_init (sio, mmgr, &hnd, flags | QSE_SIO_HANDLE);
 }
 
 void qse_sio_fini (qse_sio_t* sio)

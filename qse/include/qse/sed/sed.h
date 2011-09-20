@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: sed.h 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -140,9 +140,10 @@ enum qse_sed_option_t
 	QSE_SED_QUIET        = (1 << 3), /**< do not print pattern space */
 	QSE_SED_STRICT       = (1 << 4), /**< do strict address check */
 	QSE_SED_STARTSTEP    = (1 << 5), /**< allow start~step */
-	QSE_SED_EXTENDEDREX  = (1 << 6), /**< use extended regex */
-	QSE_SED_NONSTDEXTREX = (1 << 7), /**< enable non-standard extensions to regex */
-	QSE_SED_SAMELINE     = (1 << 8), /**< allow text on the same line as c, a, i */
+	QSE_SED_ZEROA1       = (1 << 6), /**< allow 0,/regex/ */
+	QSE_SED_SAMELINE     = (1 << 7), /**< allow text on the same line as c, a, i */
+	QSE_SED_EXTENDEDREX  = (1 << 8), /**< use extended regex */
+	QSE_SED_NONSTDEXTREX = (1 << 9)  /**< enable non-standard extensions to regex */
 };
 typedef enum qse_sed_option_t qse_sed_option_t;
 

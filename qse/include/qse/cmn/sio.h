@@ -1,5 +1,5 @@
 /*
- * $Id: sio.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: sio.h 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -50,6 +50,11 @@ enum qse_sio_open_flag_t
 
 typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
+typedef qse_fio_std_t qse_sio_std_t;
+
+#define QSE_SIO_STDIN  QSE_FIO_STDIN
+#define QSE_SIO_STDOUT QSE_FIO_STDOUT
+#define QSE_SIO_STDER  QSE_FIO_STDERR
 
 /**
  * The qse_sio_t type defines a simple text stream over a file. It also
@@ -86,6 +91,13 @@ qse_sio_t* qse_sio_open (
 	int               flags    /**< number OR'ed of #qse_sio_open_flag_t */
 );
 
+qse_sio_t* qse_sio_openstd (
+	qse_mmgr_t*       mmgr,    /**< memory manager */
+	qse_size_t        xtnsize, /**< extension size in bytes */
+	qse_sio_std_t     std,     /**< standard I/O identifier */
+	int               flags    /**< number OR'ed of #qse_sio_open_flag_t */
+);
+
 /**
  * The qse_sio_close() function destroys a stream object.
  */
@@ -97,6 +109,13 @@ int qse_sio_init (
 	qse_sio_t*        sio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* file,
+	int               flags
+);
+
+int qse_sio_initstd (
+	qse_sio_t*        sio,
+	qse_mmgr_t*       mmgr,
+	qse_sio_std_t     std,
 	int               flags
 );
 
