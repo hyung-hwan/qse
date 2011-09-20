@@ -105,13 +105,13 @@ int qse_sed_compstd (
 );
 
 /**
- * The qse_sed_execstd() function executes the compiled script
+ * The qse_sed_execstd() function executes a compiled script
  * over input streams @a in and an output stream @a out.
  *
  * If @a in is not #QSE_NULL, it must point to a null-terminated array
- * of standard I/O resources. if in[0] is QSE_NULL, this function
- * returns failure, requiring at least 1 valid resource to be included
- * in the array.
+ * of standard I/O resources. if in[0].type is QSE_SED_IOSTD_NULL, this 
+ * function returns failure, requiring at least 1 valid resource to be 
+ * included in the array.
  *
  * If @a in is #QSE_NULL, the standard console input is used.
  * If @a out is #QSE_NULL, the standard console output is used.
@@ -122,6 +122,21 @@ int qse_sed_execstd (
 	qse_sed_t*       sed,
 	qse_sed_iostd_t  in[],
 	qse_sed_iostd_t* out
+);
+
+/**
+ * The qse_sed_execstdfile() function executes a compiled script
+ * a single input file @a infile and a single output file @a outfile.
+ *
+ * If @a infile is #QSE_NULL, the standard console input is used.
+ * If @a outfile is #QSE_NULL, the standard console output is used.
+ *
+ * @return 0 on success, -1 on failure
+ */
+int qse_sed_execstdfile (
+     qse_sed_t*        sed,
+	const qse_char_t* infile,
+	const qse_char_t* outfile
 );
 
 #ifdef __cplusplus

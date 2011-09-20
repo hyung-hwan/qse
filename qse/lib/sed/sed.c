@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: sed.c 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1389,6 +1389,14 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			if (c != QSE_T('\\'))
 			{
+				if ((sed->option & QSE_SED_SAMELINE) && 
+				    c != QSE_CHAR_EOF && c != QSE_T('\n')) 
+				{
+					/* allow text without a starting backslash 
+					 * on the same line as a command */
+					goto sameline_ok;
+				}
+
 				SETERR0 (sed, QSE_SED_EBSEXP, &sed->src.loc);
 				return -1;
 			}
@@ -1399,7 +1407,11 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			if (c != QSE_CHAR_EOF && c != QSE_T('\n'))
 			{
 				if (sed->option & QSE_SED_SAMELINE) 
+				{
+					/* allow text with a starting backslash 
+					 * on the same line as a command */
 					goto sameline_ok;
+				}
 
 				SETERR0 (sed, QSE_SED_EGBABS, &sed->src.loc);
 				return -1;
@@ -1592,9 +1604,14 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		    cmd->a1.type == QSE_SED_ADR_LINE &&
 		    cmd->a1.u.lno <= 0)
 		{
-			/* 0 is not allowed as a normal line number */
-			SETERR0 (sed, QSE_SED_EA1MOI, &sed->src.loc);
-			goto oops;
+			if (!(sed->option & QSE_SED_ZEROA1) ||
+			    cmd->a2.type != QSE_SED_ADR_REX)
+			{
+				/* 0 is not allowed as a normal line number. 
+				 * 0,/regex/ is allowed */
+				SETERR0 (sed, QSE_SED_EA1MOI, &sed->src.loc);
+				goto oops;
+			}
 		}
 
 		/* skip white spaces */
@@ -2891,6 +2908,18 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 
 		/* clear states */
 		c->state.a1_matched = 0;
+
+		if (sed->option & QSE_SED_ZEROA1)
+		{
+			if (c->a2.type == QSE_SED_ADR_REX &&
+			    c->a1.type == QSE_SED_ADR_LINE &&
+			    c->a1.u.lno <= 0)
+			{
+				/* special handling for 0,/regex/ */
+				c->state.a1_matched = 1;
+			}
+		}
+
 		c->state.c_ready = 0;
 
 		/* let c point to the next command */

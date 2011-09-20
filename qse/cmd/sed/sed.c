@@ -37,6 +37,39 @@ static int g_option = 0;
 static int g_separate = 0;
 static qse_ulong_t g_memlimit = 0;
 
+#if defined(QSE_BUILD_DEBUG)
+#include <stdlib.h>
+static qse_ulong_t g_failmalloc;
+static qse_ulong_t debug_mmgr_count = 0;
+
+static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
+{
+	debug_mmgr_count++;
+	if (debug_mmgr_count % g_failmalloc == 0) return QSE_NULL;
+	return malloc (size);
+}
+
+static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
+{
+	debug_mmgr_count++;
+	if (debug_mmgr_count % g_failmalloc == 0) return QSE_NULL;
+	return realloc (ptr, size);
+}
+
+static void debug_mmgr_free (void* ctx, void* ptr)
+{
+	free (ptr);
+}
+
+static qse_mmgr_t debug_mmgr =
+{
+	debug_mmgr_alloc,
+	debug_mmgr_realloc,
+	debug_mmgr_free,
+	QSE_NULL
+};
+#endif
+
 static qse_mmgr_t xma_mmgr = 
 {
 	(qse_mmgr_alloc_t)qse_xma_alloc,
@@ -64,14 +97,22 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -w        allow address format of start~step\n"));
 	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
+	qse_fprintf (out, QSE_T(" -z        allow 0,/regex/ address\n"));
 	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
+#if defined(QSE_BUILD_DEBUG)
+	qse_fprintf (out, QSE_T(" -X number fail the number'th memory allocation\n"));
+#endif
 }
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
-		QSE_T("hnf:o:rRsawxym:"),
+#if defined(QSE_BUILD_DEBUG)
+		QSE_T("hnf:o:rRsawxyzm:X:"),
+#else
+		QSE_T("hnf:o:rRsawxyzm:"),
+#endif
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -144,9 +185,19 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_option |= QSE_SED_ENSURENL;
 				break;
 
+			case QSE_T('z'):
+				g_option |= QSE_SED_ZEROA1;
+				break;
+
 			case QSE_T('m'):
 				g_memlimit = qse_strtoulong (opt.arg);
 				break;
+
+#if defined(QSE_BUILD_DEBUG)
+			case QSE_T('X'):
+                    g_failmalloc = qse_strtoulong (opt.arg);
+				break;
+#endif
 		}
 	}
 
@@ -250,6 +301,14 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	ret = -1;
 
+#if defined(QSE_BUILD_DEBUG)
+	if (g_failmalloc > 0)
+	{
+		debug_mmgr.ctx = QSE_NULL;
+		mmgr = &debug_mmgr;
+	}
+	else
+#endif
 	if (g_memlimit > 0)
 	{
 		xma_mmgr.ctx = qse_xma_open (QSE_NULL, 0, g_memlimit);

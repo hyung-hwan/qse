@@ -51,7 +51,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	infile = (argc >= 3)? argv[2]: QSE_NULL;
 	outfile = (argc >= 4)? argv[3]: QSE_NULL;
 
-	if (qse_sed_execstd (sed, infile, outfile) <= -1)
+	if (qse_sed_execstdfile (sed, infile, outfile) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_sed_geterrmsg(sed));
 		goto oops;

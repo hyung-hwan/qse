@@ -1,5 +1,5 @@
 /*
- * $Id: fio.h 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id: fio.h 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -55,6 +55,14 @@ enum qse_fio_open_flag_t
 	QSE_FIO_SEQUENTIAL = (1 << 27)  /* hint that access is sequential */
 };
 
+enum qse_fio_std_t
+{
+	QSE_FIO_STDIN  = 0,
+	QSE_FIO_STDOUT = 1,
+	QSE_FIO_STDERR = 2
+};
+typedef enum qse_fio_std_t qse_fio_std_t;
+
 /* seek origin */
 enum qse_fio_ori_t
 {
@@ -62,6 +70,8 @@ enum qse_fio_ori_t
 	QSE_FIO_CURRENT = 1,
 	QSE_FIO_END     = 2
 };
+/* file origin for seek */
+typedef enum qse_fio_ori_t qse_fio_ori_t;
 
 enum qse_fio_mode_t
 {
@@ -94,9 +104,6 @@ enum qse_fio_mode_t
 
 /* file offset */
 typedef qse_foff_t qse_fio_off_t;
-
-/* file origin for seek */
-typedef enum qse_fio_ori_t qse_fio_ori_t;
 
 typedef struct qse_fio_t qse_fio_t;
 typedef struct qse_fio_lck_t qse_fio_lck_t;
@@ -143,14 +150,14 @@ qse_fio_t* qse_fio_open (
 	int               mode
 );
 
-/***
+/**
  * The qse_fio_close() function closes a file.
  */
 void qse_fio_close (
 	qse_fio_t* fio
 );
 
-/***
+/**
  * The qse_fio_close() function opens a file into @a fio.
  */
 int qse_fio_init (
@@ -161,13 +168,14 @@ int qse_fio_init (
 	int               mode
 );
 
-/***
+/**
  * The qse_fio_close() function finalizes a file by closing the handle 
  * stored in @a fio.
  */
 void qse_fio_fini (
 	qse_fio_t* fio
 );
+
 
 /**
  * The qse_fio_gethandle() function returns the native file handle.
@@ -269,6 +277,12 @@ int qse_fio_unlock (
 	qse_fio_t*     fio,
 	qse_fio_lck_t* lck,
 	int            flags
+);
+
+
+int qse_getstdfiohandle (
+	qse_fio_std_t  std,
+	qse_fio_hnd_t* hnd
 );
 
 #ifdef __cplusplus
