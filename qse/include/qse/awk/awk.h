@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id: awk.h 570 2011-09-20 04:40:45Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -1639,10 +1639,10 @@ void qse_awk_stopall (
 );
 
 /**
- * The qse_awk_pendingstop() function tests if qse_awk_rtx_stop() has been 
+ * The qse_awk_rtx_isstop() function tests if qse_awk_rtx_stop() has been 
  * called.
  */
-qse_bool_t qse_awk_rtx_pendingstop (
+qse_bool_t qse_awk_rtx_isstop (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 

@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 569 2011-09-19 06:51:02Z hyunghwan.chung $
+ * $Id: sed.c 570 2011-09-20 04:40:45Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -102,7 +102,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
 	);
 
-	if (qse_str_init (&sed->e.txt.appended, mmgr, 256) <= -1) goto oops_5;
+	if (qse_str_init (&sed->e.txt.append, mmgr, 256) <= -1) goto oops_5;
 	if (qse_str_init (&sed->e.txt.hold, mmgr, 256) <= -1) goto oops_6;
 	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) <= -1) goto oops_7;
 
@@ -116,7 +116,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 oops_7:
 	qse_str_fini (&sed->e.txt.hold);
 oops_6:
-	qse_str_fini (&sed->e.txt.appended);
+	qse_str_fini (&sed->e.txt.append);
 oops_5:
 	qse_map_fini (&sed->tmp.labs);
 oops_3:
@@ -134,7 +134,7 @@ void qse_sed_fini (qse_sed_t* sed)
 
 	qse_str_fini (&sed->e.txt.subst);
 	qse_str_fini (&sed->e.txt.hold);
-	qse_str_fini (&sed->e.txt.appended);
+	qse_str_fini (&sed->e.txt.append);
 
 	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
@@ -342,9 +342,7 @@ static int matchtre (
 	 c == QSE_T(';') || IS_LINTERM(c) || \
 	 c == QSE_T('{') || c == QSE_T('}'))
 /* check if c can compose a label */
-#define IS_LABCHAR(c) \
-	(QSE_ISALNUM(c) || c == QSE_T('.') || \
-	 c == QSE_T('-') || c == QSE_T('_'))
+#define IS_LABCHAR(c) (!IS_CMDTERM(c) && !IS_WSPACE(c))
 
 #define CURSC(sed) ((sed)->src.cc)
 #define NXTSC(sed) getnextsc(sed)
@@ -821,44 +819,52 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (!IS_LABCHAR(c))
 	{
 		/* label name is empty */
-		SETERR0 (sed, QSE_SED_ELABEM, &sed->src.loc);
-		return -1;
+		if (sed->option & QSE_SED_STRICT)
+		{
+			SETERR0 (sed, QSE_SED_ELABEM, &sed->src.loc);
+			return -1;
+		}
+
+		/* empty label. noop command. don't register anything */
+		qse_str_clear (&sed->tmp.lab);
 	}
-
-	qse_str_clear (&sed->tmp.lab);
-
-	do
+	else
 	{
-		if (qse_str_ccat (&sed->tmp.lab, c) == (qse_size_t)-1) 
+		qse_str_clear (&sed->tmp.lab);
+		do
+		{
+			if (qse_str_ccat (&sed->tmp.lab, c) == (qse_size_t)-1) 
+			{
+				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
+				return -1;
+			} 
+			c = NXTSC (sed);
+		}
+		while (IS_LABCHAR(c));
+
+		if (qse_map_search (
+			&sed->tmp.labs, 
+			QSE_STR_PTR(&sed->tmp.lab),
+			QSE_STR_LEN(&sed->tmp.lab)) != QSE_NULL)
+		{
+			SETERR1 (
+				sed, QSE_SED_ELABDU,
+				QSE_STR_PTR(&sed->tmp.lab),
+				QSE_STR_LEN(&sed->tmp.lab),
+				&sed->src.loc
+			);
+			return -1;
+		}
+
+		if (qse_map_insert (
+			&sed->tmp.labs, 
+			QSE_STR_PTR(&sed->tmp.lab), QSE_STR_LEN(&sed->tmp.lab),
+			cmd, 0) == QSE_NULL)
 		{
 			SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 			return -1;
-		} 
-		c = NXTSC (sed);
-	}
-	while (IS_LABCHAR(c));
+		}
 
-	if (qse_map_search (
-		&sed->tmp.labs, 
-		QSE_STR_PTR(&sed->tmp.lab),
-		QSE_STR_LEN(&sed->tmp.lab)) != QSE_NULL)
-	{
-		SETERR1 (
-			sed, QSE_SED_ELABDU,
-			QSE_STR_PTR(&sed->tmp.lab),
-			QSE_STR_LEN(&sed->tmp.lab),
-			&sed->src.loc
-		);
-		return -1;
-	}
-
-	if (qse_map_insert (
-		&sed->tmp.labs, 
-		QSE_STR_PTR(&sed->tmp.lab), QSE_STR_LEN(&sed->tmp.lab),
-		cmd, 0) == QSE_NULL)
-	{
-		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-		return -1;
 	}
 
 	while (IS_SPACE(c)) c = NXTSC (sed);
@@ -1748,7 +1754,7 @@ static int read_file (
 
 			for (i = 0; i < n; i++)
 			{
-				if (qse_str_ccat (&sed->e.txt.appended, buf[i]) == (qse_size_t)-1)
+				if (qse_str_ccat (&sed->e.txt.append, buf[i]) == (qse_size_t)-1)
 				{
 					sed->e.in.fun (
 						sed, QSE_SED_IO_CLOSE,
@@ -1763,7 +1769,7 @@ static int read_file (
 		}
 		else
 		{
-			if (qse_str_ncat (&sed->e.txt.appended, buf, n) == (qse_size_t)-1)
+			if (qse_str_ncat (&sed->e.txt.append, buf, n) == (qse_size_t)-1)
 			{
 				sed->e.in.fun (
 					sed, QSE_SED_IO_CLOSE, 
@@ -2585,7 +2591,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_SED_CMD_APPEND:
 			if (qse_str_ncat (
-				&sed->e.txt.appended,
+				&sed->e.txt.append,
 				cmd->u.text.ptr,
 				cmd->u.text.len) == (qse_size_t)-1) 
 			{
@@ -3024,15 +3030,15 @@ static int emit_output (qse_sed_t* sed, int skipline)
 		if (n <= -1) return -1;
 	}
 
-	/* write text appended by a and r */
+	/* write text append by a and r */
 	n = write_str (
 		sed, 
-		QSE_STR_PTR(&sed->e.txt.appended),
-		QSE_STR_LEN(&sed->e.txt.appended)
+		QSE_STR_PTR(&sed->e.txt.append),
+		QSE_STR_LEN(&sed->e.txt.append)
 	);
 	if (n <= -1) return -1;
 
-	qse_str_clear (&sed->e.txt.appended);
+	qse_str_clear (&sed->e.txt.append);
 
 	/* flush the output stream in case it's not flushed 
 	 * in write functions */
@@ -3067,10 +3073,11 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 #endif
 	};
 
+	sed->e.stopreq = 0;
 	sed->e.last_rex = QSE_NULL;
 
 	sed->e.subst_done = 0;
-	qse_str_clear (&sed->e.txt.appended);
+	qse_str_clear (&sed->e.txt.append);
 	qse_str_clear (&sed->e.txt.subst);
 	qse_str_clear (&sed->e.txt.hold);
 	if (qse_str_ccat (&sed->e.txt.hold, QSE_T('\n')) == (qse_size_t)-1)
@@ -3144,7 +3151,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 		goto done;
 	}
 
-	while (1)
+	while (!sed->e.stopreq)
 	{
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
@@ -3152,6 +3159,10 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 		if (sed->cmd.fb.len > 0)
 		{
+			/* the first command block contains at least 1 command
+			 * to execute. an empty script like ' ' has no commands,
+			 * so this block is skipped. */
+
 			qse_sed_cmd_t* c, * j;
 
 		again:
@@ -3177,6 +3188,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 					if (emit_output (sed, 0) <= -1) ret = -1;
 					goto done;
 				}
+				if (sed->e.stopreq) goto done;
 				if (j == &sed->cmd.again) goto again;
 
 				/* go to the next command */
@@ -3196,6 +3208,16 @@ done3:
 	qse_str_fini (&sed->e.in.line);
 	qse_map_fini (&sed->e.out.files);
 	return ret;
+}
+
+void qse_sed_stop (qse_sed_t* sed)
+{
+	sed->e.stopreq = 1;
+}
+
+int qse_sed_isstop (qse_sed_t* sed)
+{
+	return sed->e.stopreq;
 }
 
 qse_sed_lformatter_t qse_sed_getlformatter (qse_sed_t* sed)

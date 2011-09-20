@@ -1,5 +1,5 @@
 /*
- * $Id: Awk.hpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id: Awk.hpp 570 2011-09-20 04:40:45Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -743,7 +743,7 @@ public:
 		operator rtx_t* () const;
 
 		void stop () const;
-		bool pendingStop () const;
+		bool isStop () const;
 
 		errnum_t getErrorNumber () const;
 		loc_t getErrorLocation () const;

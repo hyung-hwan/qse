@@ -1,5 +1,5 @@
 /*
- * $Id: run.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: run.c 570 2011-09-20 04:40:45Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -747,7 +747,7 @@ void qse_awk_rtx_stop (qse_awk_rtx_t* rtx)
 	rtx->exit_level = EXIT_ABORT;
 }
 
-qse_bool_t qse_awk_rtx_pendingstop (qse_awk_rtx_t* rtx)
+qse_bool_t qse_awk_rtx_isstop (qse_awk_rtx_t* rtx)
 {
 	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
 }
@@ -6719,7 +6719,7 @@ qse_char_t* qse_awk_rtx_format (
 	for (i = 0; i < fmt_len; i++)
 	{
 		qse_long_t width = -1, prec = -1;
-		qse_bool_t minus = QSE_FALSE;
+		int minus = 0;
 
 		if (QSE_STR_LEN(fbu) == 0)
 		{
@@ -6733,7 +6733,7 @@ qse_char_t* qse_awk_rtx_format (
 		        fmt[i] == QSE_T('0') || fmt[i] == QSE_T('+') ||
 		        fmt[i] == QSE_T('-')))
 		{
-			if (fmt[i] == QSE_T('-')) minus = QSE_TRUE;
+			if (fmt[i] == QSE_T('-')) minus = 1;
 			FMT_CHAR (fmt[i]); i++;
 		}
 

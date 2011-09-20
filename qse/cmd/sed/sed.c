@@ -29,6 +29,25 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
+#if defined(_WIN32)
+#	include <windows.h>
+#	include <tchar.h>
+#	include <process.h>
+#elif defined(__OS2__)
+#	define INCL_DOSPROCESS
+#	define INCL_DOSEXCEPTIONS
+#	define INCL_ERRORS
+#	include <os2.h>
+#	include <signal.h>
+#elif defined(__DOS__)
+#	include <dos.h>
+#	include <signal.h>
+#else
+#	include <unistd.h>
+#	include <errno.h>
+#	include <signal.h>
+#endif
+
 static const qse_char_t* g_script_file = QSE_NULL;
 static qse_char_t* g_script = QSE_NULL;
 static qse_char_t* g_output_file = QSE_NULL;
@@ -36,6 +55,7 @@ static int g_infile_pos = 0;
 static int g_option = 0;
 static int g_separate = 0;
 static qse_ulong_t g_memlimit = 0;
+static qse_sed_t* g_sed = QSE_NULL;
 
 #if defined(QSE_BUILD_DEBUG)
 #include <stdlib.h>
@@ -93,7 +113,7 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
 	qse_fprintf (out, QSE_T(" -R        enable non-standard extensions to the regular expression\n"));
 	qse_fprintf (out, QSE_T(" -s        processes input files separately\n"));
-	qse_fprintf (out, QSE_T(" -a        perform strict address check\n"));
+	qse_fprintf (out, QSE_T(" -a        perform strict address and label check\n"));
 	qse_fprintf (out, QSE_T(" -w        allow address format of start~step\n"));
 	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
@@ -289,6 +309,126 @@ void print_exec_error (qse_sed_t* sed)
 	}
 }
 
+#if defined(_WIN32)
+static BOOL WINAPI stop_run (DWORD ctrl_type)
+{
+	if (ctrl_type == CTRL_C_EVENT ||
+	    ctrl_type == CTRL_CLOSE_EVENT)
+	{
+		qse_sed_stop (g_sed);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#elif defined(__OS2__)
+
+static ULONG _System stop_run (
+	PEXCEPTIONREPORTRECORD p1,
+	PEXCEPTIONREGISTRATIONRECORD p2,
+	PCONTEXTRECORD p3,
+	PVOID pv)
+{
+	if (p1->ExceptionNum == XCPT_SIGNAL)
+	{
+		if (p1->ExceptionInfo[0] == XCPT_SIGNAL_INTR ||
+		    p1->ExceptionInfo[0] == XCPT_SIGNAL_KILLPROC ||
+		    p1->ExceptionInfo[0] == XCPT_SIGNAL_BREAK)
+		{
+			APIRET rc;
+
+			qse_sed_stop (g_sed);
+			rc = DosAcknowledgeSignalException (p1->ExceptionInfo[0]);
+			return (rc != NO_ERROR)? 1: XCPT_CONTINUE_EXECUTION; 
+		}
+	}
+
+	return XCPT_CONTINUE_SEARCH; /* exception not resolved */
+}
+
+#elif defined(__DOS__)
+
+static void setsignal (int sig, void(*handler)(int))
+{
+	signal (sig, handler);
+}
+
+static void stop_run (int sig)
+{
+	qse_sed_stop (g_sed);
+}
+
+#else
+
+static int setsignal (int sig, void(*handler)(int), int restart)
+{
+	struct sigaction sa_int;
+
+	sa_int.sa_handler = handler;
+	sigemptyset (&sa_int.sa_mask);
+	
+	sa_int.sa_flags = 0;
+
+	if (restart)
+	{
+	#ifdef SA_RESTART
+		sa_int.sa_flags |= SA_RESTART;
+	#endif
+	}
+	else
+	{
+	#ifdef SA_INTERRUPT
+		sa_int.sa_flags |= SA_INTERRUPT;
+	#endif
+	}
+	return sigaction (sig, &sa_int, NULL);
+}
+
+static void stop_run (int sig)
+{
+	int e = errno;
+	qse_sed_stop (g_sed);
+	errno = e;
+}
+
+#endif
+
+#if defined(__OS2__)
+static EXCEPTIONREGISTRATIONRECORD os2_excrr = { 0 };
+#endif
+
+static void set_intr_run (void)
+{
+#if defined(_WIN32)
+	SetConsoleCtrlHandler (stop_run, TRUE);
+#elif defined(__OS2__)
+	APIRET rc;
+	os2_excrr.ExceptionHandler = (ERR)stop_run;
+	rc = DosSetExceptionHandler (&os2_excrr);
+	/*if (rc != NO_ERROR)...*/
+#elif defined(__DOS__)
+	setsignal (SIGINT, stop_run);
+#else
+	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
+	setsignal (SIGINT, stop_run, 0);
+#endif
+}
+
+static void unset_intr_run (void)
+{
+#if defined(_WIN32)
+	SetConsoleCtrlHandler (stop_run, FALSE);
+#elif defined(__OS2__)
+	APIRET rc;
+	rc = DosUnsetExceptionHandler (&os2_excrr);
+	/*if (rc != NO_ERROR) ...*/
+#elif defined(__DOS__)
+	setsignal (SIGINT, SIG_DFL);
+#else
+	setsignal (SIGINT, SIG_DFL, 1);
+#endif
+}
+
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_NULL;
@@ -402,6 +542,7 @@ int sed_main (int argc, qse_char_t* argv[])
 				print_exec_error (sed);
 				goto oops;
 			}
+			if (qse_sed_isstop (sed)) break;
 
 			g_infile_pos++;
 		}
@@ -446,8 +587,12 @@ int sed_main (int argc, qse_char_t* argv[])
 				QSE_NULL: g_output_file;
 		}
 
+		g_sed = sed;
+		set_intr_run ();
 		xx = qse_sed_execstd (sed, in, (g_output_file? &out: QSE_NULL));
 		if (in) QSE_MMGR_FREE (qse_sed_getmmgr(sed), in);
+		unset_intr_run ();
+		g_sed = QSE_NULL;
 
 		if (xx <= -1)
 		{
