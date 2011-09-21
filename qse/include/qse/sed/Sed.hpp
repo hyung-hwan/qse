@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 558 2011-09-02 15:27:44Z hyunghwan.chung $
+ * $Id: Sed.hpp 571 2011-09-20 14:04:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -201,6 +201,20 @@ public:
 	/// @return 0 on success, -1 on failure
 	///
 	int execute (Stream& iostream);
+
+
+	///
+	/// The stop() function makes a request to break a running loop
+	/// inside execute(). Note that this does not affect blocking 
+	/// operations in user-defined stream handlers.
+	///
+	void stop ();
+
+	///
+	/// The isStop() function returns true if stop() has been called
+	/// since the last call to execute(), false otherwise.
+	///
+	bool isStop () const;
 
 	///
 	/// The getOption() function gets the current options.
