@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 558 2011-09-02 15:27:44Z hyunghwan.chung $
+ * $Id: Sed.cpp 571 2011-09-20 14:04:48Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -66,6 +66,18 @@ int Sed::execute (Stream& iostream)
 
 	this->iostream = &iostream;
 	return qse_sed_exec (sed, xin, xout);
+}
+
+void Sed::stop ()
+{
+	QSE_ASSERT (sed != QSE_NULL);
+	return qse_sed_stop (sed);
+}
+
+bool Sed::isStop () const
+{
+	QSE_ASSERT (sed != QSE_NULL);
+	return qse_sed_isstop (sed);
 }
 
 int Sed::getOption() const
