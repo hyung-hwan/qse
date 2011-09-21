@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 570 2011-09-20 04:40:45Z hyunghwan.chung $
+ * $Id: sed.h 572 2011-09-21 05:10:09Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -91,6 +91,7 @@ struct qse_sed_adr_t
 #define QSE_SED_CMD_BRANCH_COND     QSE_T('t')
 #define QSE_SED_CMD_SUBSTITUTE      QSE_T('s')
 #define QSE_SED_CMD_TRANSLATE       QSE_T('y')
+#define QSE_SED_CMD_CLEAR_PATTERN   QSE_T('z')
 
 struct qse_sed_cmd_t
 {

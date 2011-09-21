@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 570 2011-09-20 04:40:45Z hyunghwan.chung $
+ * $Id: sed.c 572 2011-09-21 05:10:09Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -346,6 +346,7 @@ static int matchtre (
 
 #define CURSC(sed) ((sed)->src.cc)
 #define NXTSC(sed) getnextsc(sed)
+#define PEEPNXTSC(sed) ((sed->src.cur < sed->src.end)? *sed->src.cur: QSE_CHAR_EOF)
 
 static qse_cint_t getnextsc (qse_sed_t* sed)
 {
@@ -472,8 +473,18 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 }
 
-static qse_cint_t trans_escaped (qse_cint_t c)
+
+static QSE_INLINE int xdigit_to_num (qse_cint_t c)
 {
+	return (c >= QSE_T('0') && c <= QSE_T('9'))? (c - QSE_T('0')):
+	       (c >= QSE_T('A') && c <= QSE_T('F'))? (c - QSE_T('A') + 10):
+	       (c >= QSE_T('a') && c <= QSE_T('f'))? (c - QSE_T('a') + 10): -1;
+}
+
+static qse_cint_t trans_escaped (qse_sed_t* sed, qse_cint_t c, int* xamp)
+{
+	if (xamp) *xamp = 0;
+
 	switch (c)
 	{
 		case QSE_T('a'):
@@ -500,6 +511,51 @@ Omitted for clash with regular expression \b.
 		case QSE_T('v'):
 			c = QSE_T('\v');
 			break;
+
+		case QSE_T('x'):
+		{
+			/* \xnn */
+			int cc;
+
+			cc = xdigit_to_num(PEEPNXTSC(sed));
+			if (cc <= -1) break;
+			NXTSC(sed);
+			c = cc;
+
+			cc = xdigit_to_num(PEEPNXTSC(sed));
+			if (cc <= -1) break;
+			NXTSC(sed);
+			c = (c << 4) | cc;
+
+			/* let's indicate that '&' is built from \x26. */
+			if (xamp && c == QSE_T('&')) *xamp = 1;
+			break;
+		}
+
+#ifdef QSE_CHAR_IS_WCHAR
+		case QSE_T('X'):
+		{
+			/* \Xnnnnnnnn for wchar_t */
+			int cc, i;
+
+			cc = xdigit_to_num(PEEPNXTSC(sed));
+			if (cc <= -1) break;
+			NXTSC(sed);
+			c = cc;
+
+			for (i = 0; i < QSE_SIZEOF(qse_char_t) * 2; i++)
+			{
+				cc = xdigit_to_num(PEEPNXTSC(sed));
+				if (cc <= -1) break;
+				NXTSC(sed);
+				c = (c << 4) | cc;
+			}
+
+			/* let's indicate that '&' is built from \x26. */
+			if (xamp && c == QSE_T('&')) *xamp = 1;
+			break;
+		}
+#endif
 	}
 
 	return c;
@@ -507,8 +563,13 @@ Omitted for clash with regular expression \b.
 
 static int pickup_rex (
 	qse_sed_t* sed, qse_char_t rxend, 
-	int really, const qse_sed_cmd_t* cmd, qse_str_t* buf)
+	int replacement, const qse_sed_cmd_t* cmd, qse_str_t* buf)
 {
+	/* 
+	 * 'replacement' indicates that this functions is called for 
+	 * 'replacement' in 's/pattern/replacement'.
+	 */
+
 	qse_cint_t c;
 	qse_size_t chars_from_opening_bracket = 0;
 	int bracket_state = 0;
@@ -573,7 +634,7 @@ static int pickup_rex (
 			if (bracket_state > 0 && nc == QSE_T(']'))
 			{
 				/*
-				 * if 'really' is not set, bracket_state is alyway 0.
+				 * if 'replacement' is not set, bracket_state is alyway 0.
 				 * so this block is never reached. 
 				 *
 				 * a backslashed closing bracket is seen. 
@@ -589,13 +650,20 @@ static int pickup_rex (
 			else
 			{
 				qse_cint_t ec;
+				int xamp;
 
-				ec = trans_escaped (nc);
-				if (ec == nc)
+				ec = trans_escaped (sed, nc, &xamp);
+				if (ec == nc || (xamp && replacement))
 				{
 					/* if the character after a backslash is not special 
 					 * at the this layer, add the backslash into the 
-					 * regular expression buffer as it is. */
+					 * regular expression buffer as it is. 
+					 *
+					 * if \x26 is found in the replacement, i also need to 
+					 * transform it to \& so that it is not treated as a 
+					 * special &. 
+					 */
+
 					if (qse_str_ccat (buf, QSE_T('\\')) == (qse_size_t)-1)
 					{
 						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
@@ -605,7 +673,7 @@ static int pickup_rex (
 				c = ec;
 			}
 		}
-		else if (really) 
+		else if (!replacement) 
 		{
 			/* this block sets a flag to indicate that we are in [] 
 			 * of a regular expression. */
@@ -662,12 +730,22 @@ static int pickup_rex (
 
 static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 {
-	if (pickup_rex (sed, rxend, 1, QSE_NULL, &sed->tmp.rex) <= -1)
+	int ignorecase = 0;
+
+	if (pickup_rex (sed, rxend, 0, QSE_NULL, &sed->tmp.rex) <= -1)
 		return QSE_NULL;
 
-/* TODO: support ignore case option for address */
 	if (QSE_STR_LEN(&sed->tmp.rex) <= 0) return EMPTY_REX;
-	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), 0, &sed->src.loc);
+
+	/* handle a modifer after having handled an empty regex.
+	 * so a modifier is naturally disallowed for an empty regex. */
+	if (PEEPNXTSC(sed) == QSE_T('I')) 
+	{
+		ignorecase = 1;
+		NXTSC(sed);
+	}
+
+	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), ignorecase, &sed->src.loc);
 }
 
 static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
@@ -1084,8 +1162,8 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	if (pickup_rex (sed, delim, 1, cmd, t[0]) <= -1) goto oops;
-	if (pickup_rex (sed, delim, 0, cmd, t[1]) <= -1) goto oops;
+	if (pickup_rex (sed, delim, 0, cmd, t[0]) <= -1) goto oops;
+	if (pickup_rex (sed, delim, 1, cmd, t[1]) <= -1) goto oops;
 
 	/* skip spaces before options */
 	do { c = NXTSC(sed); } while (IS_SPACE(c));
@@ -1212,7 +1290,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			c = NXTSC (sed);
 			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
-			c = trans_escaped (c);
+			c = trans_escaped (sed, c, QSE_NULL);
 		}
 
 		b[0] = c;
@@ -1234,7 +1312,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			c = NXTSC (sed);
 			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
-			c = trans_escaped (c);
+			c = trans_escaped (sed, c, QSE_NULL);
 		}
 
 		if (pos >= QSE_STR_LEN(t))
@@ -1459,6 +1537,8 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_T('n'):
 		case QSE_T('N'):
+
+		case QSE_T('z'):
 			cmd->type = c;
 			NXTSC (sed);
 			if (terminate_command (sed) <= -1) return -1;
@@ -1491,6 +1571,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			NXTSC (sed);
 			if (get_transet (sed, cmd) <= -1) return -1;
 			break;
+
 	}
 
 	return 0;
@@ -2880,6 +2961,13 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 					}
 				}
 			}
+			break;
+		}
+
+		case QSE_SED_CMD_CLEAR_PATTERN:
+		{
+			/* clear pattern space */
+			qse_str_clear (&sed->e.in.line);
 			break;
 		}
 	}
