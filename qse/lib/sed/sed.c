@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 572 2011-09-21 05:10:09Z hyunghwan.chung $
+ * $Id: sed.c 575 2011-09-22 07:07:18Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -535,7 +535,7 @@ Omitted for clash with regular expression \b.
 #ifdef QSE_CHAR_IS_WCHAR
 		case QSE_T('X'):
 		{
-			/* \Xnnnnnnnn for wchar_t */
+			/* \Xnnnn or \Xnnnnnnnn for wchar_t */
 			int cc, i;
 
 			cc = xdigit_to_num(PEEPNXTSC(sed));
@@ -543,7 +543,7 @@ Omitted for clash with regular expression \b.
 			NXTSC(sed);
 			c = cc;
 
-			for (i = 0; i < QSE_SIZEOF(qse_char_t) * 2; i++)
+			for (i = 1; i < QSE_SIZEOF(qse_char_t) * 2; i++)
 			{
 				cc = xdigit_to_num(PEEPNXTSC(sed));
 				if (cc <= -1) break;
