@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 570 2011-09-20 04:40:45Z hyunghwan.chung $
+ * $Id: sed.h 576 2011-09-23 14:52:22Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -64,6 +64,8 @@
  * conforming to the ::qse_sed_io_fun_t type.
  */
 typedef struct qse_sed_t qse_sed_t;
+
+typedef struct qse_sed_cmd_t qse_sed_cmd_t;
 
 /** 
  * The qse_sed_loc_t defines a structure to store location information.
@@ -191,6 +193,21 @@ typedef int (*qse_sed_lformatter_t) (
 	const qse_char_t* str,
 	qse_size_t        len,
 	int (*cwriter) (qse_sed_t*, qse_char_t)
+);
+
+enum qse_sed_exec_op_t
+{
+	QSE_SED_EXEC_READ,
+	QSE_SED_EXEC_WRITE,
+	QSE_SED_EXEC_MATCH,
+	QSE_SED_EXEC_EXEC
+};
+typedef enum qse_sed_exec_op_t qse_sed_exec_op_t;
+
+typedef void (*qse_sed_exec_hook_t) (
+	qse_sed_t*           sed,
+	qse_sed_exec_op_t    op,
+	const qse_sed_cmd_t* cmd
 );
 
 #ifdef __cplusplus
@@ -413,6 +430,15 @@ qse_size_t qse_sed_getlinnum (
 void qse_sed_setlinnum (
 	qse_sed_t* sed,   /**< stream editor */
 	qse_size_t num    /**< a line number */
+);
+
+qse_sed_exec_hook_t qse_sed_getexechook (
+	qse_sed_t* sed
+);
+
+void qse_sed_setexechook (
+	qse_sed_t*          sed,
+	qse_sed_exec_hook_t hook
 );
 
 #ifdef __cplusplus

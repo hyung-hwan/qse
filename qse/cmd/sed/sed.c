@@ -429,6 +429,25 @@ static void unset_intr_run (void)
 #endif
 }
 
+static void trace (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_t* cmd)
+{
+	switch (op)
+	{
+		case QSE_SED_EXEC_READ:
+			qse_printf (QSE_T("reading...\n"));
+			break;
+		case QSE_SED_EXEC_WRITE:
+			qse_printf (QSE_T("wrting...\n"));
+			break;
+		case QSE_SED_EXEC_MATCH:
+			qse_printf (QSE_T("matching...\n"));
+			break;
+		case QSE_SED_EXEC_EXEC:
+			qse_printf (QSE_T("executing...\n"));
+			break;
+	}
+}
+
 int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_NULL;
@@ -498,6 +517,10 @@ int sed_main (int argc, qse_char_t* argv[])
 		}
 		goto oops;
 	}
+
+#if 0
+if (g_trace) qse_sed_setexechook (sed, trace);
+#endif
 
 	if (g_separate && g_infile_pos > 0)
 	{

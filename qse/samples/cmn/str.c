@@ -586,6 +586,59 @@ static int test14 (void)
 	return 0;
 }
 
+static int test15 (void)
+{
+	const qse_char_t* x = QSE_T("this is good");
+
+	qse_printf (QSE_T("[%s]\n"), qse_strpbrk (x, QSE_T("si")));
+	qse_printf (QSE_T("[%s]\n"), qse_strrpbrk (x, QSE_T("si")));
+	qse_printf (QSE_T("[%s]\n"), qse_strpbrk (x, QSE_T("d")));
+	qse_printf (QSE_T("[%s]\n"), qse_strrpbrk (x, QSE_T("d")));
+	qse_printf (QSE_T("[%s]\n"), qse_strpbrk (x, QSE_T("t")));
+	qse_printf (QSE_T("[%s]\n"), qse_strrpbrk (x, QSE_T("t")));
+	return 0;
+}
+
+static int test16 (void)
+{
+	const qse_char_t* ptn[] = 
+	{
+		QSE_T("*.c"),
+		QSE_T("h??lo.???"),
+		QSE_T("[a-z]*.cpp")
+	};
+
+	const qse_char_t* name[] = 
+	{
+		QSE_T("hello.c"),
+		QSE_T("hello.cpp"),
+		QSE_T("heLLo.Cpp"),
+		QSE_T("/tmp/hello.c"),
+		QSE_T("/tmp/Hello.c")
+	};
+
+	int i, j;
+
+
+	qse_printf (QSE_T("flags => 0\n"));
+	for (i = 0; i < QSE_COUNTOF(ptn); i++)
+		for (j = 0; j < QSE_COUNTOF(name); j++)
+			qse_printf (QSE_T("[%s] [%s] %d\n"), ptn[i], name[j], qse_strfnmat (name[j], ptn[i], 0));
+
+	qse_printf (QSE_T("flags => QSE_STRFNMAT_PATHNAME\n"));
+	for (i = 0; i < QSE_COUNTOF(ptn); i++)
+		for (j = 0; j < QSE_COUNTOF(name); j++)
+			qse_printf (QSE_T("[%s] [%s] %d\n"), ptn[i], name[j], qse_strfnmat (name[j], ptn[i], QSE_STRFNMAT_PATHNAME));
+
+	qse_printf (QSE_T("flags => QSE_STRFNMAT_PATHNAME | QSE_STRFNMAT_IGNORECASE\n"));
+	for (i = 0; i < QSE_COUNTOF(ptn); i++)
+		for (j = 0; j < QSE_COUNTOF(name); j++)
+			qse_printf (QSE_T("[%s] [%s] %d\n"), ptn[i], name[j], qse_strfnmat (name[j], ptn[i], QSE_STRFNMAT_PATHNAME | QSE_STRFNMAT_IGNORECASE));
+
+
+	return 0;
+}
+
 
 int main ()
 {
@@ -609,6 +662,8 @@ int main ()
 	R (test12);
 	R (test13);
 	R (test14);
+	R (test15);
+	R (test16);
 
 	return 0;
 }
