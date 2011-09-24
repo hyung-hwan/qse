@@ -47,6 +47,7 @@ libqsecmn_la_SOURCES = \
 	str-end.c \
 	str-excl.c \
 	str-fcpy.c \
+	str-fnmat.c \
 	str-incl.c \
 	str-len.c \
 	str-pac.c \

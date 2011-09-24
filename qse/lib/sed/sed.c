@@ -1,5 +1,5 @@
 /*
- * $Id: sed.c 575 2011-09-22 07:07:18Z hyunghwan.chung $
+ * $Id: sed.c 576 2011-09-23 14:52:22Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -3241,6 +3241,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 	while (!sed->e.stopreq)
 	{
+		if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_READ, QSE_NULL);
+
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
 		if (n == 0) goto done;
@@ -3249,7 +3251,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 		{
 			/* the first command block contains at least 1 command
 			 * to execute. an empty script like ' ' has no commands,
-			 * so this block is skipped. */
+			 * so we execute no commands */
 
 			qse_sed_cmd_t* c, * j;
 
@@ -3258,6 +3260,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 			while (c != &sed->cmd.over)
 			{
+				if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_MATCH, c);
+
 				n = match_address (sed, c);
 				if (n <= -1) { ret = -1; goto done; }
 	
@@ -3267,6 +3271,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 					c = c->state.next;
 					continue;
 				}
+
+				if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_EXEC, c);
 
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
@@ -3284,6 +3290,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 			}
 		}
 
+		if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_WRITE, QSE_NULL);
 		if (emit_output (sed, 0) <= -1) { ret = -1; goto done; }
 	}
 
@@ -3326,4 +3333,14 @@ qse_size_t qse_sed_getlinnum (qse_sed_t* sed)
 void qse_sed_setlinnum (qse_sed_t* sed, qse_size_t num)
 {
 	sed->e.in.num = num;
+}
+
+qse_sed_exec_hook_t qse_sed_getexechook (qse_sed_t* sed)
+{
+	return sed->e.hook;
+}
+
+void qse_sed_setexechook (qse_sed_t* sed, qse_sed_exec_hook_t hook)
+{
+	sed->e.hook = hook;
 }

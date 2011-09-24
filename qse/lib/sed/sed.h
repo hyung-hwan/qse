@@ -1,5 +1,5 @@
 /*
- * $Id: sed.h 572 2011-09-21 05:10:09Z hyunghwan.chung $
+ * $Id: sed.h 576 2011-09-23 14:52:22Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -27,7 +27,6 @@
 #define QSE_MAP_AS_RBT
 #include <qse/cmn/map.h>
 
-
 /* 
  * Define USE_REX to use rex.h on behalf of tre.h 
  * rex.h currently does not support backreference.
@@ -45,7 +44,6 @@ typedef enum qse_sed_depth_t qse_sed_depth_t;
 #define QSE_SED_CMD_QUIT            QSE_T('q')
 
 typedef struct qse_sed_adr_t qse_sed_adr_t; 
-typedef struct qse_sed_cmd_t qse_sed_cmd_t;
 typedef struct qse_sed_cmd_blk_t qse_sed_cmd_blk_t;
 
 struct qse_sed_adr_t
@@ -274,6 +272,9 @@ struct qse_sed_t
 
 		/** stop requested */
 		int stopreq;
+
+		/** hook function */
+		qse_sed_exec_hook_t hook;
 	} e;
 };
 

@@ -1,5 +1,5 @@
 /*
- * $Id: str.h 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id: str.h 576 2011-09-23 14:52:22Z hyunghwan.chung $
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -315,6 +315,34 @@ enum qse_wcstrmx_op_t
 #else
 #	define QSE_STRTRMX_LEFT QSE_WCSTRMX_LEFT
 #	define QSE_STRTRMX_RIGHT QSE_WCSTRMX_RIGHT
+#endif
+
+enum qse_mbsfnmat_flag_t
+{
+	QSE_MBSFNMAT_PATHNAME   = (1 << 0),
+	QSE_MBSFNMAT_NOESCAPE   = (1 << 1),
+	QSE_MBSFNMAT_PERIOD     = (1 << 2),
+	QSE_MBSFNMAT_IGNORECASE = (1 << 3)
+};
+
+enum qse_wcsfnmat_flag_t
+{
+	QSE_WCSFNMAT_PATHNAME   = (1 << 0),
+	QSE_WCSFNMAT_NOESCAPE   = (1 << 1),
+	QSE_WCSFNMAT_PERIOD     = (1 << 2),
+	QSE_WCSFNMAT_IGNORECASE = (1 << 3)
+};
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define QSE_STRFNMAT_PATHNAME   QSE_MBSFNMAT_PATHNAME
+#	define QSE_STRFNMAT_NOESCAPE   QSE_MBSFNMAT_NOESCAPE
+#	define QSE_STRFNMAT_PERIOD     QSE_MBSFNMAT_PERIOD
+#	define QSE_STRFNMAT_IGNORECASE QSE_MBSFNMAT_IGNORECASE
+#else
+#	define QSE_STRFNMAT_PATHNAME   QSE_WCSFNMAT_PATHNAME
+#	define QSE_STRFNMAT_NOESCAPE   QSE_WCSFNMAT_NOESCAPE
+#	define QSE_STRFNMAT_PERIOD     QSE_WCSFNMAT_PERIOD
+#	define QSE_STRFNMAT_IGNORECASE QSE_WCSFNMAT_IGNORECASE
 #endif
 
 #ifdef __cplusplus
@@ -1489,6 +1517,23 @@ qse_mchar_t* qse_mbspbrk (
 	const qse_mchar_t* str2
 );
 
+qse_mchar_t* qse_mbsxpbrk (
+	const qse_mchar_t* str1,
+	qse_size_t         len,
+	const qse_mchar_t* str2
+);
+
+qse_mchar_t* qse_mbsrpbrk (
+	const qse_mchar_t* str1,
+	const qse_mchar_t* str2
+);
+
+qse_mchar_t* qse_mbsxrpbrk (
+	const qse_mchar_t* str1,
+	qse_size_t         len,
+	const qse_mchar_t* str2
+);
+
 /*
  * The qse_wcspbrk() function searches @a str1 for the first occurrence of 
  * a character in @a str2.
@@ -1500,10 +1545,33 @@ qse_wchar_t* qse_wcspbrk (
 	const qse_wchar_t* str2
 );
 
+qse_wchar_t* qse_wcsxpbrk (
+	const qse_wchar_t* str1,
+	qse_size_t         len,
+	const qse_wchar_t* str2
+);
+
+qse_wchar_t* qse_wcsrpbrk (
+	const qse_wchar_t* str1,
+	const qse_wchar_t* str2
+);
+
+qse_wchar_t* qse_wcsxrpbrk (
+	const qse_wchar_t* str1,
+	qse_size_t         len,
+	const qse_wchar_t* str2
+);
+
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strpbrk(str1,str2) qse_mbspbrk(str1,str2)
+#	define qse_strpbrk(str1,str2)       qse_mbspbrk(str1,str2)
+#	define qse_strxpbrk(str1,len,str2)  qse_mbsxpbrk(str1,len,str2)
+#	define qse_strrpbrk(str1,str2)      qse_mbsrpbrk(str1,str2)
+#	define qse_strxrpbrk(str1,len,str2) qse_mbsxrpbrk(str1,len,str2)
 #else
-#	define qse_strpbrk(str1,str2) qse_wcspbrk(str1,str2)
+#	define qse_strpbrk(str1,str2)       qse_wcspbrk(str1,str2)
+#	define qse_strxpbrk(str1,len,str2)  qse_wcsxpbrk(str1,len,str2)
+#	define qse_strrpbrk(str1,str2)      qse_wcsrpbrk(str1,str2)
+#	define qse_strxrpbrk(str1,len,str2) qse_wcsxrpbrk(str1,len,str2)
 #endif
 
 /* 
@@ -2099,6 +2167,74 @@ qse_size_t qse_wcsxpac (
 #else
 #	define qse_strpac(str)      qse_wcspac(str)
 #	define qse_strxpac(str,len) qse_wcsxpac(str,len)
+#endif
+
+int qse_mbsfnmat (
+	const qse_mchar_t* str,
+	const qse_mchar_t* ptn,
+	int                flags
+);
+
+int qse_mbsxfnmat  (
+     const qse_mchar_t* str,
+	qse_size_t         slen,
+	const qse_mchar_t* ptn,
+	int                flags
+);
+
+int qse_mbsnfnmat  (
+     const qse_mchar_t* str,
+	const qse_mchar_t* ptn,
+	qse_size_t         plen,
+	int                flags
+);
+
+int qse_mbsxnfnmat (
+	const qse_mchar_t* str,
+	qse_size_t         slen,
+	const qse_mchar_t* ptn,
+	qse_size_t         plen,
+	int                flags
+);
+
+int qse_wcsfnmat (
+	const qse_wchar_t* str,
+	const qse_wchar_t* ptn,
+	int                flags
+);
+
+int qse_wcsxfnmat  (
+     const qse_wchar_t* str,
+	qse_size_t         slen,
+	const qse_wchar_t* ptn,
+	int                flags
+);
+
+int qse_wcsnfnmat  (
+     const qse_wchar_t* str,
+	const qse_wchar_t* ptn,
+	qse_size_t         plen,
+	int                flags
+);
+
+int qse_wcsxnfnmat (
+	const qse_wchar_t* str,
+	qse_size_t         slen,
+	const qse_wchar_t* ptn,
+	qse_size_t         plen,
+	int                flags
+);
+
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_strfnmat(str,ptn,flags)             qse_mbsfnmat(str,ptn,flags)
+#	define qse_strxfnmat(str,slen,ptn,flags)       qse_mbsxfnmat(str,slen,ptn,flags)
+#	define qse_strnfnmat(str,ptn,plen,flags)       qse_mbsnfnmat(str,ptn,plen,flags)
+#	define qse_strxnfnmat(str,slen,ptn,plen,flags) qse_mbsxnfnmat(str,slen,ptn,plen,flags)
+#else
+#	define qse_strfnmat(str,ptn,flags)             qse_wcsfnmat(str,ptn,flags)
+#	define qse_strxfnmat(str,slen,ptn,flags)       qse_wcsxfnmat(str,slen,ptn,flags)
+#	define qse_strnfnmat(str,ptn,plen,flags)       qse_wcsnfnmat(str,ptn,plen,flags)
+#	define qse_strxnfnmat(str,slen,ptn,plen,flags) qse_wcsxnfnmat(str,slen,ptn,plen,flags)
 #endif
 
 /**
