@@ -64,6 +64,18 @@ struct qse_sed_adr_t
 	} u;
 };
 
+typedef struct qse_sed_app_t qse_sed_app_t;
+struct qse_sed_app_t
+{
+	enum
+	{
+		QSE_SED_APP_STR,
+		QSE_SED_APP_FILE
+	};
+	qse_cstr_t text;
+	qse_sed_app_t* next;
+};
+
 #define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
 #define QSE_SED_CMD_APPEND          QSE_T('a')
 #define QSE_SED_CMD_INSERT          QSE_T('i')
@@ -260,6 +272,14 @@ struct qse_sed_t
 		/** text buffers */
 		struct
 		{
+#if 0
+			struct
+			{
+				qse_sed_app_t* head;
+				qse_sed_app_t* tail;
+			} append;
+#endif
+
 			qse_str_t append;
 			qse_str_t hold; /* hold space */
 			qse_str_t subst;
