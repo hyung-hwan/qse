@@ -67,12 +67,7 @@ struct qse_sed_adr_t
 typedef struct qse_sed_app_t qse_sed_app_t;
 struct qse_sed_app_t
 {
-	enum
-	{
-		QSE_SED_APP_STR,
-		QSE_SED_APP_FILE
-	};
-	qse_cstr_t text;
+	qse_sed_cmd_t* cmd;
 	qse_sed_app_t* next;
 };
 
@@ -269,18 +264,19 @@ struct qse_sed_t
 			qse_size_t num; /**< current line number */
 		} in;
 
-		/** text buffers */
 		struct
 		{
-#if 0
+			qse_size_t count; /* number of append entries in a static buffer. */
+			qse_sed_app_t s[16]; /* handle up to 16 appends in a static buffer */
 			struct
 			{
 				qse_sed_app_t* head;
 				qse_sed_app_t* tail;
-			} append;
-#endif
-
-			qse_str_t append;
+			} d;
+		} append;
+		/** text buffers */
+		struct
+		{
 			qse_str_t hold; /* hold space */
 			qse_str_t subst;
 		} txt;

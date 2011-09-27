@@ -83,6 +83,7 @@ typedef struct qse_sed_loc_t qse_sed_loc_t;
 enum qse_sed_errnum_t
 {
 	QSE_SED_ENOERR,  /**< no error */
+	QSE_SED_EINTERN, /**< internal error */
 	QSE_SED_ENOMEM,  /**< insufficient memory */
 	QSE_SED_EINVAL,  /**< invalid parameter or data */
 	QSE_SED_ECMDNR,  /**< command '${0}' not recognized */

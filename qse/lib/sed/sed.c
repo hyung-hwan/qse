@@ -38,6 +38,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
+static void free_appends (qse_sed_t* sed);
 static int emit_output (qse_sed_t* sed, int skipline);
 
 #define EMPTY_REX ((void*)1)
@@ -102,7 +103,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
 	);
 
-	if (qse_str_init (&sed->e.txt.append, mmgr, 256) <= -1) goto oops_5;
+	/* init_append (sed); */
 	if (qse_str_init (&sed->e.txt.hold, mmgr, 256) <= -1) goto oops_6;
 	if (qse_str_init (&sed->e.txt.subst, mmgr, 256) <= -1) goto oops_7;
 
@@ -116,8 +117,6 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 oops_7:
 	qse_str_fini (&sed->e.txt.hold);
 oops_6:
-	qse_str_fini (&sed->e.txt.append);
-oops_5:
 	qse_map_fini (&sed->tmp.labs);
 oops_3:
 	qse_str_fini (&sed->tmp.lab);
@@ -134,7 +133,7 @@ void qse_sed_fini (qse_sed_t* sed)
 
 	qse_str_fini (&sed->e.txt.subst);
 	qse_str_fini (&sed->e.txt.hold);
-	qse_str_fini (&sed->e.txt.append);
+	free_appends (sed);
 
 	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
@@ -1788,84 +1787,6 @@ static int read_char (qse_sed_t* sed, qse_char_t* c)
 	}	
 }
 
-static int read_file (
-	qse_sed_t* sed, qse_sed_cmd_t* cmd,
-	const qse_char_t* path, qse_size_t plen, int line)
-{
-	qse_ssize_t n;
-	qse_sed_io_arg_t arg;
-	qse_char_t buf[256];
-
-	arg.path = path;
-	sed->errnum = QSE_SED_ENOERR;
-	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &arg, QSE_NULL, 0);
-	if (n <= -1)
-	{
-		/*if (sed->errnum != QSE_SED_ENOERR)
-		 *	SETERR0 (sed, QSE_SED_EIOUSR, &cmd->loc);
-		 *return -1;*/
-		/* it is ok if it is not able to open a file */
-		return 0;	
-	}
-	if (n == 0) 
-	{
-		/* EOF - no data */
-		sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
-		return 0;
-	}
-
-	while (1)
-	{
-		sed->errnum = QSE_SED_ENOERR;
-		n = sed->e.in.fun (
-			sed, QSE_SED_IO_READ, &arg, buf, QSE_COUNTOF(buf));
-		if (n <= -1)
-		{
-			sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
-			if (sed->errnum == QSE_SED_ENOERR)
-				SETERR1 (sed, QSE_SED_EIOFIL, path, plen, &cmd->loc);
-			else sed->errloc = cmd->loc;
-			return -1;
-		}
-		if (n == 0) break;
-
-		if (line)
-		{
-			qse_size_t i;
-
-			for (i = 0; i < n; i++)
-			{
-				if (qse_str_ccat (&sed->e.txt.append, buf[i]) == (qse_size_t)-1)
-				{
-					sed->e.in.fun (
-						sed, QSE_SED_IO_CLOSE,
-						&arg, QSE_NULL, 0);
-					SETERR0 (sed, QSE_SED_ENOMEM, &cmd->loc);
-					return -1;
-				}
-
-				/* TODO: support different line end convension */
-				if (buf[i] == QSE_T('\n')) goto done;
-			}
-		}
-		else
-		{
-			if (qse_str_ncat (&sed->e.txt.append, buf, n) == (qse_size_t)-1)
-			{
-				sed->e.in.fun (
-					sed, QSE_SED_IO_CLOSE, 
-					&arg, QSE_NULL, 0);
-				SETERR0 (sed, QSE_SED_ENOMEM, &cmd->loc);
-				return -1;
-			}
-		}
-	}
-
-done:
-	sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
-	return 0;
-}
-
 static int read_line (qse_sed_t* sed, int append)
 {
 	qse_size_t len = 0;
@@ -1974,6 +1895,7 @@ static int write_str (qse_sed_t* sed, const qse_char_t* str, qse_size_t len)
 			if (flush (sed) <= -1) return -1;
 			flush_needed = 0;
 		}
+		/* TODO: handle different line ending convension... */
 		else if (str[i] == QSE_T('\n')) flush_needed = 1;
 	}
 
@@ -2197,6 +2119,162 @@ static int write_str_to_file (
 		}
 
 		len -= n;
+	}
+
+	return 0;
+}
+
+static int write_file (
+	qse_sed_t* sed, qse_sed_cmd_t* cmd, int first_line)
+{
+	qse_ssize_t n;
+	qse_sed_io_arg_t arg;
+#ifdef QSE_CHAR_IS_MCHAR
+	qse_char_t buf[1024];
+#else
+	qse_char_t buf[512];
+#endif
+
+	arg.path = cmd->u.file.ptr;
+	sed->errnum = QSE_SED_ENOERR;
+	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		/*if (sed->errnum != QSE_SED_ENOERR)
+		 *	SETERR0 (sed, QSE_SED_EIOUSR, &cmd->loc);
+		 *return -1;*/
+		/* it is ok if it is not able to open a file */
+		return 0;	
+	}
+	if (n == 0) 
+	{
+		/* EOF - no data */
+		sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
+		return 0;
+	}
+
+	while (1)
+	{
+		sed->errnum = QSE_SED_ENOERR;
+		n = sed->e.in.fun (
+			sed, QSE_SED_IO_READ, &arg, buf, QSE_COUNTOF(buf));
+		if (n <= -1)
+		{
+			sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
+			if (sed->errnum == QSE_SED_ENOERR)
+				SETERR1 (sed, QSE_SED_EIOFIL, cmd->u.file.ptr, cmd->u.file.len, &cmd->loc);
+			else sed->errloc = cmd->loc;
+			return -1;
+		}
+		if (n == 0) break;
+
+		if (first_line)
+		{
+			qse_size_t i;
+
+			for (i = 0; i < n; i++)
+			{
+				if (write_char (sed, buf[i]) <= -1) return -1;
+
+				/* TODO: support different line end convension */
+				if (buf[i] == QSE_T('\n')) goto done;
+			}
+		}
+		else
+		{
+			if (write_str (sed, buf, n) <= -1) return -1;
+		}
+	}
+
+done:
+	sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
+	return 0;
+}
+
+static int link_append (qse_sed_t* sed, qse_sed_cmd_t* cmd)
+{
+	if (sed->e.append.count < QSE_COUNTOF(sed->e.append.s))
+	{
+		/* link it to the static buffer if it is not full */
+		sed->e.append.s[sed->e.append.count++].cmd = cmd;
+	}
+	else
+	{
+		qse_sed_app_t* app;
+
+		/* otherwise, link it using a linked list */
+		app = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*app));
+		if (app == QSE_NULL)
+		{
+			SETERR0 (sed, QSE_SED_ENOMEM, &cmd->loc);
+			return -1;
+		}
+		app->cmd = cmd;
+		app->next = QSE_NULL;
+
+		if (sed->e.append.d.tail == QSE_NULL)
+			sed->e.append.d.head = app;
+		else
+			sed->e.append.d.tail->next = app;
+		sed->e.append.d.tail = app;
+		/*sed->e.append.count++; don't really care */
+	}
+
+	return 0;
+}
+
+static void free_appends (qse_sed_t* sed)
+{
+	qse_sed_app_t* app = sed->e.append.d.head;
+	qse_sed_app_t* next;
+	
+	while (app)
+	{	
+		next = app->next;
+		QSE_MMGR_FREE (sed->mmgr, app);
+		app = next;
+	}
+
+	sed->e.append.d.head = QSE_NULL;
+	sed->e.append.d.tail = QSE_NULL;
+	sed->e.append.count = 0;		
+}
+
+static int emit_append (qse_sed_t* sed, qse_sed_app_t* app)
+{
+	switch (app->cmd->type)
+	{
+		case QSE_SED_CMD_APPEND:
+			return write_str (sed, app->cmd->u.text.ptr, app->cmd->u.text.len);
+
+		case QSE_SED_CMD_READ_FILE:
+			return write_file (sed, app->cmd, 0);
+
+		case QSE_SED_CMD_READ_FILELN:
+			return write_file (sed, app->cmd, 1);
+
+		default:
+			QSE_ASSERT (!"should never happen - app->cmd->type must be one of APPEND,READ_FILE,READ_FILELN");
+			SETERR0 (sed, QSE_SED_EINTERN, &app->cmd->loc);
+			return -1;
+	}
+}
+
+static int emit_appends (qse_sed_t* sed)
+{
+	qse_sed_app_t* app;
+	qse_size_t i;
+
+	for (i = 0; i < sed->e.append.count; i++)
+	{
+		if (emit_append (sed, &sed->e.append.s[i]) <= -1) return -1;
+	}
+
+	app = sed->e.append.d.head;
+	while (app)
+	{	
+		if (emit_append (sed, app) <= -1) return -1;
+		app = app->next;
 	}
 
 	return 0;
@@ -2671,14 +2749,7 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 
 		case QSE_SED_CMD_APPEND:
-			if (qse_str_ncat (
-				&sed->e.txt.append,
-				cmd->u.text.ptr,
-				cmd->u.text.len) == (qse_size_t)-1) 
-			{
-				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
-				return QSE_NULL;
-			}
+			if (link_append (sed, cmd) <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_INSERT:
@@ -2873,15 +2944,11 @@ static qse_sed_cmd_t* exec_cmd (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			break;
 				
 		case QSE_SED_CMD_READ_FILE:
-			n = read_file (
-				sed, cmd, cmd->u.file.ptr, cmd->u.file.len, 0);
-			if (n <= -1) return QSE_NULL;
+			if (link_append (sed, cmd) <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_READ_FILELN:
-			n = read_file (
-				sed, cmd, cmd->u.file.ptr, cmd->u.file.len, 1);
-			if (n <= -1) return QSE_NULL; 
+			if (link_append (sed, cmd) <= -1) return QSE_NULL;
 			break;
 
 		case QSE_SED_CMD_WRITE_FILE:
@@ -3118,15 +3185,8 @@ static int emit_output (qse_sed_t* sed, int skipline)
 		if (n <= -1) return -1;
 	}
 
-	/* write text append by a and r */
-	n = write_str (
-		sed, 
-		QSE_STR_PTR(&sed->e.txt.append),
-		QSE_STR_LEN(&sed->e.txt.append)
-	);
-	if (n <= -1) return -1;
-
-	qse_str_clear (&sed->e.txt.append);
+	if (emit_appends (sed) <= -1) return -1;
+	free_appends (sed);
 
 	/* flush the output stream in case it's not flushed 
 	 * in write functions */
@@ -3165,7 +3225,8 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 	sed->e.last_rex = QSE_NULL;
 
 	sed->e.subst_done = 0;
-	qse_str_clear (&sed->e.txt.append);
+
+	free_appends (sed);
 	qse_str_clear (&sed->e.txt.subst);
 	qse_str_clear (&sed->e.txt.hold);
 	if (qse_str_ccat (&sed->e.txt.hold, QSE_T('\n')) == (qse_size_t)-1)

@@ -827,6 +827,7 @@ typedef enum qse_awk_option_t qse_awk_option_t;
 enum qse_awk_errnum_t
 {
 	QSE_AWK_ENOERR,  /**< no error */
+	QSE_AWK_EINTERN, /**< internal error */
 
 	/* common errors */
 	QSE_AWK_ENOMEM,  /**< insufficient memory */
@@ -843,7 +844,6 @@ enum qse_awk_errnum_t
 	QSE_AWK_EWRITE,  /**< cannot write '${0}' */
 	QSE_AWK_ECLOSE,  /**< cannot close '${0}' */
 
-	QSE_AWK_EINTERN, /**< internal error */
 	QSE_AWK_ERUNTIME,/**< general run-time error */
 	QSE_AWK_EBLKNST, /**< block nested too deeply */
 	QSE_AWK_EEXPRNST,/**< expression nested too deeply */
