@@ -26,6 +26,8 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
+		QSE_T("internal error that should never have happened"),
+
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
 		QSE_T("command '${0}' not recognized"),

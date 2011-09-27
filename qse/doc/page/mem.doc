@@ -29,22 +29,22 @@ A typical usage is shown below:
 @code
 qse_mmgr_t mmgr;
 
-/* Create a heap */
+/* Create a private heap using the default memory manager */
 heap = qse_xma_open (QSE_NULL, 0, 1024 * 1024); /* 1M heap */
 
-/* Initialize a new memory  */
+/* Initialize a memory manager with the heap */
 mmgr.alloc = (qse_mmgr_alloc_t)qse_xma_alloc;
 mmgr.realloc = (qse_mmgr_realloc_t)qse_xma_realloc;
 mmgr.free = (qse_mmgr_free_t)qse_xma_realloc;
 mmgr.ctx = heap;
 
 /* 
- * You can pass 'mmgr' when you create/initialize a different object 
+ * You can pass 'mmgr' when you create/initialize a different object.
  */
 ....
 ....
 
-/* Destroy the heap */
+/* Destroy the private heap */
 qse_xma_close (heap);
 @endcode
 
