@@ -142,8 +142,7 @@ enum qse_sed_option_t
 	QSE_SED_ENSURENL     = (1 << 2), /**< ensure NL at the text end */
 	QSE_SED_QUIET        = (1 << 3), /**< do not print pattern space */
 	QSE_SED_STRICT       = (1 << 4), /**< do strict address and label check */
-	QSE_SED_STARTSTEP    = (1 << 5), /**< allow start~step */
-	QSE_SED_ZEROA1       = (1 << 6), /**< allow 0,/regex/ */
+	QSE_SED_EXTENDEDADR  = (1 << 5), /**< allow start~step , addr1,+line, addr1,~line */
 	QSE_SED_SAMELINE     = (1 << 7), /**< allow text on the same line as c, a, i */
 	QSE_SED_EXTENDEDREX  = (1 << 8), /**< use extended regex */
 	QSE_SED_NONSTDEXTREX = (1 << 9)  /**< enable non-standard extensions to regex */
