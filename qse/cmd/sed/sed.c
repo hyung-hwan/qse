@@ -114,10 +114,10 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -R        enable non-standard extensions to the regular expression\n"));
 	qse_fprintf (out, QSE_T(" -s        processes input files separately\n"));
 	qse_fprintf (out, QSE_T(" -a        perform strict address and label check\n"));
-	qse_fprintf (out, QSE_T(" -w        allow address format of start~step\n"));
+	qse_fprintf (out, QSE_T(" -w        allow extended address formats\n"));
+	qse_fprintf (out, QSE_T("           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
 	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
-	qse_fprintf (out, QSE_T(" -z        allow 0,/regex/ address\n"));
 	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X number fail the number'th memory allocation\n"));
@@ -129,9 +129,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hnf:o:rRsawxyzm:X:"),
+		QSE_T("hnf:o:rRsawxym:X:"),
 #else
-		QSE_T("hnf:o:rRsawxyzm:"),
+		QSE_T("hnf:o:rRsawxym:"),
 #endif
 		QSE_NULL
 	};
@@ -194,7 +194,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('w'):
-				g_option |= QSE_SED_STARTSTEP;
+				g_option |= QSE_SED_EXTENDEDADR;
 				break;
 
 			case QSE_T('x'):
@@ -203,10 +203,6 @@ static int handle_args (int argc, qse_char_t* argv[])
 
 			case QSE_T('y'):
 				g_option |= QSE_SED_ENSURENL;
-				break;
-
-			case QSE_T('z'):
-				g_option |= QSE_SED_ZEROA1;
 				break;
 
 			case QSE_T('m'):

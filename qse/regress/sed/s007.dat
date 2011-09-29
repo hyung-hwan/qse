@@ -1,0 +1,9 @@
+
+# copy binaries to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"
+
+
+# copy binaries again to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"

@@ -50,11 +50,13 @@ struct qse_sed_adr_t
 {
 	enum
 	{
-		QSE_SED_ADR_NONE,  /* no address */
-		QSE_SED_ADR_DOL,   /* $ - last line */
-		QSE_SED_ADR_LINE,  /* specified line */
-		QSE_SED_ADR_REX,   /* lines matching regular expression */
-		QSE_SED_ADR_STEP   /* line steps - only in the second address */
+		QSE_SED_ADR_NONE,     /* no address */
+		QSE_SED_ADR_DOL,      /* $ - last line */
+		QSE_SED_ADR_LINE,     /* specified line */
+		QSE_SED_ADR_REX,      /* lines matching regular expression */
+		QSE_SED_ADR_STEP,     /* line steps - only in the second address */
+		QSE_SED_ADR_RELLINE,  /* relative line - only in second address */
+		QSE_SED_ADR_RELLINEM  /* relative line in the multiples - only in second address */
 	} type;
 
 	union 
@@ -144,6 +146,8 @@ struct qse_sed_cmd_t
 	struct
 	{
 		int a1_matched;
+		qse_size_t a1_match_line;
+
 		int c_ready;
 
 		/* points to the next command for fast traversal and 

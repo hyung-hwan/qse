@@ -747,7 +747,7 @@ static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), ignorecase, &sed->src.loc);
 }
 
-static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
+static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extended)
 {
 	qse_cint_t c;
 
@@ -793,6 +793,28 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a)
 		if (a->u.rex == QSE_NULL) return QSE_NULL;
 		a->type = QSE_SED_ADR_REX;
 		NXTSC (sed);
+	}
+	else if (extended && (c == QSE_T('+') || c == QSE_T('~')))
+	{
+		qse_size_t lno = 0;
+
+		a->type = (c == QSE_T('+'))? QSE_SED_ADR_RELLINE: QSE_SED_ADR_RELLINEM;
+
+		NXTSC (sed);
+		if (!((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9')))
+		{
+			SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
+			return QSE_NULL;
+		}
+
+		do
+		{
+			lno = lno * 10 + c - QSE_T('0');
+			NXTSC (sed);
+		}
+		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
+
+		a->u.lno = lno;
 	}
 	else
 	{
@@ -1633,7 +1655,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
 
 		/* process the first address */
-		if (get_address (sed, &cmd->a1) == QSE_NULL) 
+		if (get_address (sed, &cmd->a1, 0) == QSE_NULL) 
 		{
 			cmd = QSE_NULL;
 			SETERR0 (sed, QSE_SED_EA1MOI, &sed->src.loc);
@@ -1646,14 +1668,14 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 			while (IS_SPACE(c)) c = NXTSC (sed);
 
 			if (c == QSE_T(',') ||
-			    ((sed->option & QSE_SED_STARTSTEP) && c == QSE_T('~')))
+			    ((sed->option & QSE_SED_EXTENDEDADR) && c == QSE_T('~')))
 			{
 				qse_char_t delim = c;
 
 				/* maybe an address range */
 				do { c = NXTSC (sed); } while (IS_SPACE(c));
 
-				if (get_address (sed, &cmd->a2) == QSE_NULL) 
+				if (get_address (sed, &cmd->a2, (sed->option & QSE_SED_EXTENDEDADR)) == QSE_NULL) 
 				{
 					QSE_ASSERT (cmd->a2.type == QSE_SED_ADR_NONE);
 					SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
@@ -1667,8 +1689,17 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 						SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
 						goto oops;
 					}
+					if (cmd->a2.type == QSE_SED_ADR_RELLINE || 
+					    cmd->a2.type == QSE_SED_ADR_RELLINEM)
+					{
+						if (cmd->a2.u.lno <= 0) 
+						{
+							/* tranform 'addr1,+0' and 'addr1,~0' to 'addr1' */
+							cmd->a2.type = QSE_SED_ADR_NONE;
+						}
+					}
 				}
-				else if ((sed->option & QSE_SED_STARTSTEP) && 
+				else if ((sed->option & QSE_SED_EXTENDEDADR) && 
 				         (delim == QSE_T('~')))
 				{
 					if (cmd->a1.type != QSE_SED_ADR_LINE || 
@@ -1678,7 +1709,15 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 						goto oops;
 					}
 
-					cmd->a2.type = QSE_SED_ADR_STEP;	
+					if (cmd->a2.u.lno > 0)
+					{
+						cmd->a2.type = QSE_SED_ADR_STEP;	
+					}
+					else
+					{
+						/* transform 'X,~0' to 'X' */
+						cmd->a2.type = QSE_SED_ADR_NONE;
+					}
 				}
 
 				c = CURSC (sed);
@@ -1686,15 +1725,24 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 			else cmd->a2.type = QSE_SED_ADR_NONE;
 		}
 
-		if (cmd->a2.type != QSE_SED_ADR_STEP &&
-		    cmd->a1.type == QSE_SED_ADR_LINE &&
-		    cmd->a1.u.lno <= 0)
+		if (cmd->a1.type == QSE_SED_ADR_LINE && cmd->a1.u.lno <= 0)
 		{
-			if (!(sed->option & QSE_SED_ZEROA1) ||
-			    cmd->a2.type != QSE_SED_ADR_REX)
+			if (cmd->a2.type == QSE_SED_ADR_STEP || 
+			    ((sed->option & QSE_SED_EXTENDEDADR) && cmd->a2.type == QSE_SED_ADR_REX))
 			{
-				/* 0 is not allowed as a normal line number. 
-				 * 0,/regex/ is allowed */
+				/* 0 as the first address is allowed in this two contexts.
+				 *    0~step
+				 *    0,/regex/
+				 * however, '0~0' is not allowed. but at this point '0~0' is 
+				 * already transformed to '0'. and disallowing it is achieved 
+				 * gratuitously.
+				 */
+				/* nothing to do - adding negation to the condition dropped 
+				 * code readability so i decided to write this part of code this way. 
+				 */
+			}
+			else
+			{
 				SETERR0 (sed, QSE_SED_EA1MOI, &sed->src.loc);
 				goto oops;
 			}
@@ -2636,6 +2684,29 @@ static int match_a (qse_sed_t* sed, qse_sed_cmd_t* cmd, qse_sed_adr_t* a)
 			}
 		}
 
+		case QSE_SED_ADR_RELLINE:
+			/* this address type should be seen only when matching 
+			 * the second address */
+			QSE_ASSERT (cmd->state.a1_matched && cmd->state.a1_match_line >= 1);
+			return (sed->e.in.num >= cmd->state.a1_match_line + a->u.lno)? 1: 0;
+
+		case QSE_SED_ADR_RELLINEM:
+		{
+			/* this address type should be seen only when matching 
+			 * the second address */
+			qse_size_t tmp;
+
+			QSE_ASSERT (cmd->state.a1_matched && cmd->state.a1_match_line >= 1);
+			QSE_ASSERT (a->u.lno > 0);
+
+			/* TODO: is it better to store this value some in the state
+			 *       not to calculate this every time?? */
+			tmp = (cmd->state.a1_match_line + a->u.lno) - 
+			      (cmd->state.a1_match_line % a->u.lno);
+
+			return (sed->e.in.num >= tmp)? 1: 0;
+		}
+
 		default:
 			QSE_ASSERT (a->type == QSE_SED_ADR_NONE);
 			return 1; /* match */
@@ -2662,6 +2733,7 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		/* stepping address */
 		cmd->state.c_ready = 1;
 		if (sed->e.in.num < cmd->a1.u.lno) return 0;
+		QSE_ASSERT (cmd->a2.u.lno > 0);
 		if ((sed->e.in.num - cmd->a1.u.lno) % cmd->a2.u.lno == 0) return 1;
 		return 0;
 	}
@@ -2677,7 +2749,18 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				if (cmd->a2.type == QSE_SED_ADR_LINE &&
 				    sed->e.in.num > cmd->a2.u.lno)
 				{
-					/* exit the range */
+					/* This check is needed because matching of the second 
+					 * address could be skipped while it could match.
+					 * 
+					 * Consider commands like '1,3p;2N'.
+					 * '3' in '1,3p' is skipped because 'N' in '2N' triggers
+					 * reading of the third line.
+					 *
+					 * Unfortunately, I can't handle a non-line-number
+					 * second address like this. If 'abcxyz' is given as the third 
+					 * line for command '1,/abc/p;2N', 'abcxyz' is not matched
+					 * against '/abc/'. so it doesn't exit the range.
+					 */
 					cmd->state.a1_matched = 0;
 					return 0;
 				}
@@ -2714,6 +2797,7 @@ static int match_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				/* mark that the first is matched so as to
 				 * move on to the range test */
 				cmd->state.a1_matched = 1;
+				cmd->state.a1_match_line = sed->e.in.num;
 			}
 
 			return 1;
@@ -3070,7 +3154,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 		/* clear states */
 		c->state.a1_matched = 0;
 
-		if (sed->option & QSE_SED_ZEROA1)
+		if (sed->option & QSE_SED_EXTENDEDADR)
 		{
 			if (c->a2.type == QSE_SED_ADR_REX &&
 			    c->a1.type == QSE_SED_ADR_LINE &&
@@ -3078,6 +3162,7 @@ static int init_command_block_for_exec (qse_sed_t* sed, qse_sed_cmd_blk_t* b)
 			{
 				/* special handling for 0,/regex/ */
 				c->state.a1_matched = 1;
+				c->state.a1_match_line = 0;
 			}
 		}
 

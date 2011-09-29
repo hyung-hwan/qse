@@ -81,3 +81,43 @@ ADDRESS: 45.34.34.33
 4
 -------------------
 5
+--------------------------------------------------------------------------------
+[CMD]  qsesed -m 500000  -f s007.sed s007.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+
+# copy binaries to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"
+#COPY DISK TO /ramdisk/cdrom
+if [ -n "$FROMINIT" ];then
+	cp -af /image/* /ramdisk/cdrom/
+fi
+
+
+# copy binaries again to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"
+#COPY DISK TO /ramdisk/cdrom
+if [ -n "$FROMINIT" ];then
+	cp -af /image/* /ramdisk/cdrom/
+fi
+--------------------------------------------------------------------------------
+[CMD]  qsesed -m 500000 -w -f s008.sed s008.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+
+# copy binaries to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"
+#COPY DISK TO /ramdisk/cdrom
+if [ -n "$FROMINIT" ];then
+	cp -af /image/* /ramdisk/cdrom/
+fi
+
+
+# copy binaries again to ramdisk
+cp -a /bin/* /ramdisk/busybin/
+echo -n "done${CRE}"
+#COPY DISK TO /ramdisk/cdrom
+if [ -n "$FROMINIT" ];then
+	cp -af /image/* /ramdisk/cdrom/
+fi
