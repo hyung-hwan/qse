@@ -1602,6 +1602,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 {
 	qse_cint_t c;
 	qse_sed_cmd_t* cmd = QSE_NULL;
+	qse_sed_loc_t a1_loc;
 
 	/* store the source code pointers */
 	sed->src.ptr = sptr;
@@ -1655,6 +1656,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		QSE_MEMSET (cmd, 0, QSE_SIZEOF(*cmd));
 
 		/* process the first address */
+		a1_loc = sed->src.loc;
 		if (get_address (sed, &cmd->a1, 0) == QSE_NULL) 
 		{
 			cmd = QSE_NULL;
@@ -1743,7 +1745,7 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 			}
 			else
 			{
-				SETERR0 (sed, QSE_SED_EA1MOI, &sed->src.loc);
+				SETERR0 (sed, QSE_SED_EA1MOI, &a1_loc);
 				goto oops;
 			}
 		}
