@@ -151,7 +151,7 @@ static void close_main_stream (
 static int open_input_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io, xtn_in_t* base)
 {
-	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+/*	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);*/
 
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
@@ -284,23 +284,6 @@ static qse_ssize_t read_input_stream (
 		/* == end of file on the current input stream == */
 		/* ============================================= */
 
-		if (base == &xtn->s.in && !newline_forced)
-		{
-			/* == ONLY FOR A SCRIPT STREAM ==
-			 * squeeze in a new line in case the previous script 
-			 * stream doesn't end with a line terminator.*/  
-
-			/* TODO: support different line terminator */ 
-			buf[0] = QSE_T('\n'); 
-			buf++; len--;	
-			newline_forced = 1;
-
-			/* set the line number to 0 for the newline
-			 * squeezed in */
-			sed->src.loc.line = 0; 
-			sed->src.loc.colm = 0;
-		}
-
 		next = base->cur + 1;
 		if (next->type == QSE_SED_IOSTD_NULL) 
 		{
@@ -332,6 +315,23 @@ static qse_ssize_t read_input_stream (
 
 		arg->handle = new;
 		base->cur++;
+
+		if (base == &xtn->s.in && !newline_forced)
+		{
+			/* == ONLY FOR A SCRIPT STREAM ==
+			 * squeeze in a new line in case the previous script 
+			 * stream doesn't end with a line terminator.*/  
+
+			/* TODO: support different line terminator */ 
+			buf[0] = QSE_T('\n'); 
+			buf++; len--;	
+			newline_forced = 1;
+
+			/* set the line number to 0 for the newline
+			 * squeezed in */
+			sed->src.loc.line = 0; 
+			sed->src.loc.colm = 0;
+		}
 	}
 	while (1);
 
