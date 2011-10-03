@@ -177,23 +177,11 @@ public:
 	void close ();
 
 	///
-	/// The compile() function compiles a null-terminated string pointed
-	/// to by @a sptr.
+	/// The compile() function compiles a script from a stream 
+	/// @a iostream.
 	/// @return 0 on success, -1 on failure
 	///
-	int compile (
-		const char_t* sptr ///< a pointer to a null-terminated string
-	);
-
-	///
-	/// The compile() function compiles a string pointed to by @a sptr
-	/// and of the length @a slen.
-	///  @return 0 on success, -1 on failure
-	///
-	int compile (
-		const char_t* sptr, ///< a pointer to a string 
-		size_t slen         ///< the number of characters in the string
-	);
+	int compile (Stream& sstream);
 
 	///
 	/// The execute() function executes compiled commands over the I/O
@@ -201,7 +189,6 @@ public:
 	/// @return 0 on success, -1 on failure
 	///
 	int execute (Stream& iostream);
-
 
 	///
 	/// The stop() function makes a request to break a running loop
@@ -310,11 +297,15 @@ protected:
 	sed_t* sed;
 	/// default error formatting string getter
 	errstr_t dflerrstr; 
+	/// Stream to read script from
+	Stream* sstream;
 	/// I/O stream to read data from and write output to.
 	Stream* iostream;
 
 
 private:
+	static ssize_t sin (
+		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
 	static ssize_t xin (
 		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
 	static ssize_t xout (

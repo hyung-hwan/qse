@@ -109,31 +109,32 @@ AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf])
 LIBS="$OLDLIBS"
 
 dnl check the size of primitive data types
-AC_CHECK_SIZEOF(char)
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(__int8)
-AC_CHECK_SIZEOF(__int16)
-AC_CHECK_SIZEOF(__int32)
-AC_CHECK_SIZEOF(__int64)
-AC_CHECK_SIZEOF(__int128)
-AC_CHECK_SIZEOF(__int8_t)
-AC_CHECK_SIZEOF(__int16_t)
-AC_CHECK_SIZEOF(__int32_t)
-AC_CHECK_SIZEOF(__int64_t)
-AC_CHECK_SIZEOF(__int128_t)
+AC_CHECK_SIZEOF(char,,[[]])
+AC_CHECK_SIZEOF(short,,[[]])
+AC_CHECK_SIZEOF(int,,[[]])
+AC_CHECK_SIZEOF(long,,[[]])
+AC_CHECK_SIZEOF(long long,,[[]])
+AC_CHECK_SIZEOF(__int8,,[[]])
+AC_CHECK_SIZEOF(__int16,,[[]])
+AC_CHECK_SIZEOF(__int32,,[[]])
+AC_CHECK_SIZEOF(__int64,,[[]])
+AC_CHECK_SIZEOF(__int128,,[[]])
+AC_CHECK_SIZEOF(__int8_t,,[[]])
+AC_CHECK_SIZEOF(__int16_t,,[[]])
+AC_CHECK_SIZEOF(__int32_t,,[[]])
+AC_CHECK_SIZEOF(__int64_t,,[[]])
+AC_CHECK_SIZEOF(__int128_t,,[[]])
 dnl AC_CHECK_SIZEOF doesn't work without white-space between void and *
-AC_CHECK_SIZEOF(void *)
-AC_CHECK_SIZEOF(float)
-AC_CHECK_SIZEOF(double)
-AC_CHECK_SIZEOF(long double)
+AC_CHECK_SIZEOF(void *,,[[]])
+AC_CHECK_SIZEOF(float,,[[]])
+AC_CHECK_SIZEOF(double,,[[]])
+AC_CHECK_SIZEOF(long double,,[[]])
+
 AC_CHECK_SIZEOF(wchar_t)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(off64_t)
 
-AC_CHECK_SIZEOF(mbstate_t,[],[#include <wchar.h>])
+AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
@@ -286,6 +287,7 @@ AC_CONFIG_FILES([
 	regress/sed/regress.sh
 	doc/Makefile
 	doc/page/Makefile
+	doc/image/Makefile
 	doc/Doxyfile
 ])
 AC_OUTPUT

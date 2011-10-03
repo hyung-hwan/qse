@@ -43,8 +43,8 @@
 /* Returns number of bytes to add to (char *)ptr to make it
    properly aligned for the type. */
 #define ALIGN(ptr, type) \
-	((((long)ptr) % sizeof(type))? \
-		(sizeof(type) - (((long)ptr) % QSE_SIZEOF(type))) : 0)
+	((((qse_uintptr_t)ptr) % QSE_SIZEOF(type))? \
+		(QSE_SIZEOF(type) - (((qse_uintptr_t)ptr) % QSE_SIZEOF(type))) : 0)
 
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (pma)
@@ -133,7 +133,7 @@ void* qse_pma_alloc (qse_pma_t* pma, qse_size_t size)
 	}
 
 	/* Make sure the next pointer will be aligned. */
-	size += ALIGN((long)(pma->ptr + size), long);
+	size += ALIGN((qse_uintptr_t)(pma->ptr + size), qse_uintptr_t);
 
 	/* Allocate from current block. */
 	ptr = pma->ptr;

@@ -17,6 +17,11 @@ ends with @b _open, and accepts a memory manager as the first parameter.
 See qse_mbs_open() for instance. So you can customize memory management 
 at the per-object level.
 
+Three types of special memory allocators are provided in the library.
+- #qse_xma_t - generaic private heap allocator
+- #qse_fma_t - fixed-size block allocator
+- #qse_pma_t - pool-based block allocator
+
 @section mem_xma Priviate Heap
 
 While the default memory manager allocates memory from a system-wide heap,
@@ -29,22 +34,20 @@ A typical usage is shown below:
 @code
 qse_mmgr_t mmgr;
 
-/* Create a private heap using the default memory manager */
-heap = qse_xma_open (QSE_NULL, 0, 1024 * 1024); /* 1M heap */
+// Create a private heap using the default memory manager 
+heap = qse_xma_open (QSE_NULL, 0, 1024 * 1024); // 1M heap 
 
-/* Initialize a memory manager with the heap */
+// Initialize a memory manager with the heap 
 mmgr.alloc = (qse_mmgr_alloc_t)qse_xma_alloc;
 mmgr.realloc = (qse_mmgr_realloc_t)qse_xma_realloc;
 mmgr.free = (qse_mmgr_free_t)qse_xma_realloc;
 mmgr.ctx = heap;
 
-/* 
- * You can pass 'mmgr' when you create/initialize a different object.
- */
+// You can pass 'mmgr' when you create/initialize a different object.
 ....
 ....
 
-/* Destroy the private heap */
+// Destroy the private heap 
 qse_xma_close (heap);
 @endcode
 
@@ -54,12 +57,24 @@ global heap. This means that you can split a heap to smaller subheaps.
 
 @section mem_fma Fixed-size Block Allocator
 
-If the size of memory blocks to allocate share the same size, you can use
-#qse_fma_t for performance.
+If memory blocks to allocate share the same size, you can use #qse_fma_t 
+for performance. It achieves fast memory allocation as it knows the block
+size in advance. The blocks allocated with this memory allocator
+don't outlive the memory allocator itself. That is, qse_fma_close() or 
+qse_fma_fini() invalidates all the pointers allocated with qse_fma_alloc().
+
+@code
+qse_fma_t* fma; int* ptr;
+fma = qse_fma_open (QSE_NULL, 0, sizeof(int), 10, 0); // create an allocator 
+ptr = (int*)qse_fma_alloc (fma, sizeof(int)); // allocate a block
+ptr = 20; // access the block
+qse_fma_free (fma, ptr1); // free the block
+qse_fma_close (fma); // destroy the allocator
+@endcode
 
 @section mem_pma Simple Memory Pool Allocator
 
-If you want to allocate blocks quickly but ok not to be able to resize or 
+If you want to allocate blocks quickly but don't want to resize or 
 deallocate the blocks individually, you can use #qse_pma_t.
 
 */

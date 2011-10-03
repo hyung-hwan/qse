@@ -347,8 +347,101 @@ static int matchtre (
 #define NXTSC(sed) getnextsc(sed)
 #define PEEPNXTSC(sed) ((sed->src.cur < sed->src.end)? *sed->src.cur: QSE_CHAR_EOF)
 
+static int open_script_stream (qse_sed_t* sed)
+{
+	qse_ssize_t n;
+
+	sed->errnum = QSE_SED_ENOERR;
+	n = sed->src.fun (sed, QSE_SED_IO_OPEN, &sed->src.arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		if (sed->errnum == QSE_SED_ENOERR)
+			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
+		return -1;
+	}
+
+	sed->src.cur = sed->src.buf;
+	sed->src.end = sed->src.buf;
+	sed->src.cc  = QSE_CHAR_EOF;
+	sed->src.loc.line = 1;
+	sed->src.loc.colm = 0;
+
+	if (n == 0) 
+	{
+		sed->src.eof = 1;
+		return 0; /* end of file */
+	}
+	else
+	{
+		sed->src.eof = 0;
+		return 1;
+	}
+}
+
+static int close_script_stream (qse_sed_t* sed)
+{
+	qse_ssize_t n;
+
+	sed->errnum = QSE_SED_ENOERR;
+	n = sed->src.fun (sed, QSE_SED_IO_CLOSE, &sed->src.arg, QSE_NULL, 0);
+	if (n <= -1)
+	{
+		if (sed->errnum == QSE_SED_ENOERR)
+			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_script_stream (qse_sed_t* sed, qse_size_t rem)
+{
+	qse_ssize_t n;
+
+	sed->errnum = QSE_SED_ENOERR;
+	n = sed->src.fun (
+		sed, QSE_SED_IO_READ, &sed->src.arg, 
+		&sed->src.buf[rem], QSE_COUNTOF(sed->src.buf) - rem
+	);
+	if (n <= -1)
+	{
+		if (sed->errnum == QSE_SED_ENOERR)
+			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
+		return -1;
+	}
+
+	if (n == 0)
+	{
+		sed->src.eof = 1;
+		return 0;
+	}
+
+	sed->src.end = &sed->src.buf[rem] + n;
+	return 1;
+}
+
 static qse_cint_t getnextsc (qse_sed_t* sed)
 {
+	if (sed->src.cur + 1 >= sed->src.end && !sed->src.eof)
+	{
+		qse_size_t rem = sed->src.end - sed->src.cur;
+		if (sed->src.cur != sed->src.buf && rem > 0)
+		{
+			QSE_MEMCPY (sed->src.buf, sed->src.cur, rem * QSE_SIZEOF(qse_char_t));
+			sed->src.cur = sed->src.buf;
+			sed->src.end = sed->src.buf + rem;
+		}
+		if (read_script_stream (sed, rem) <= -1) return -1;
+
+		if (sed->src.cur + 1 >= sed->src.end && !sed->src.eof)
+		{
+			/* read again if it didn't read enough */
+			qse_size_t rem = sed->src.end - sed->src.cur;
+			QSE_ASSERT (sed->src.buf == sed->src.cur);
+			if (read_script_stream (sed, rem) <= -1) return -1;
+		}
+	}
+
 	if (sed->src.cur < sed->src.end) 
 	{
 		if (sed->src.cc == QSE_T('\n')) 
@@ -1598,16 +1691,22 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	return 0;
 }
 
-int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
+int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 {
 	qse_cint_t c;
 	qse_sed_cmd_t* cmd = QSE_NULL;
 	qse_sed_loc_t a1_loc;
 
+	if (inf == QSE_NULL)
+	{
+		qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+		return -1;	
+	}
+
 	/* store the source code pointers */
-	sed->src.ptr = sptr;
-	sed->src.end = sptr + slen;
-	sed->src.cur = sptr;
+	sed->src.fun = inf;
+	if (open_script_stream (sed) <= -1)  return -1;
+
 	sed->src.loc.line = 1;
 	sed->src.loc.colm = 0;
 	sed->src.cc = QSE_CHAR_EOF;
@@ -1730,17 +1829,19 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 		if (cmd->a1.type == QSE_SED_ADR_LINE && cmd->a1.u.lno <= 0)
 		{
 			if (cmd->a2.type == QSE_SED_ADR_STEP || 
-			    ((sed->option & QSE_SED_EXTENDEDADR) && cmd->a2.type == QSE_SED_ADR_REX))
+			    ((sed->option & QSE_SED_EXTENDEDADR) && 
+			     cmd->a2.type == QSE_SED_ADR_REX))
 			{
 				/* 0 as the first address is allowed in this two contexts.
 				 *    0~step
 				 *    0,/regex/
-				 * however, '0~0' is not allowed. but at this point '0~0' is 
-				 * already transformed to '0'. and disallowing it is achieved 
-				 * gratuitously.
+				 * '0~0' is not allowed. but at this point '0~0' 
+				 * is already transformed to '0'. and disallowing it is 
+				 * achieved gratuitously.
 				 */
 				/* nothing to do - adding negation to the condition dropped 
-				 * code readability so i decided to write this part of code this way. 
+				 * code readability so i decided to write this part of code
+				 * this way. 
 				 */
 			}
 			else
@@ -1785,13 +1886,15 @@ int qse_sed_comp (qse_sed_t* sed, const qse_char_t* sptr, qse_size_t slen)
 	if (sed->tmp.grp.level != 0)
 	{
 		SETERR0 (sed, QSE_SED_EGRNBA, &sed->src.loc);
-		return -1;
+		goto oops;
 	}
 
+	close_script_stream (sed);
 	return 0;
 
 oops:
 	if (cmd) free_address (sed, cmd);
+	close_script_stream (sed);
 	return -1;
 }
 
@@ -2185,6 +2288,7 @@ static int write_file (
 	qse_char_t buf[512];
 #endif
 
+	arg.handle = QSE_NULL;
 	arg.path = cmd->u.file.ptr;
 	sed->errnum = QSE_SED_ENOERR;
 	n = sed->e.in.fun (sed, QSE_SED_IO_OPEN, &arg, QSE_NULL, 0);
@@ -2304,7 +2408,10 @@ static int emit_append (qse_sed_t* sed, qse_sed_app_t* app)
 			return write_file (sed, app->cmd, 1);
 
 		default:
-			QSE_ASSERT (!"should never happen - app->cmd->type must be one of APPEND,READ_FILE,READ_FILELN");
+			QSE_ASSERTX (
+				!"should never happen", 
+				"app->cmd->type must be one of APPEND,READ_FILE,READ_FILELN"
+			);
 			SETERR0 (sed, QSE_SED_EINTERN, &app->cmd->loc);
 			return -1;
 	}

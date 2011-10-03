@@ -45,7 +45,9 @@ int sed_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	if (sed.compile (argv[1]) == -1)
+
+	QSE::StdSed::StringStream sstream (argv[1]);
+	if (sed.compile (sstream) == -1)
 	{
 		xcout << QSE_T("ERR: cannot compile - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();
@@ -54,9 +56,9 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	qse_char_t* infile = (argc >= 3)? argv[2]: QSE_NULL;
 	qse_char_t* outfile = (argc >= 4)? argv[3]: QSE_NULL;
-	QSE::StdSed::FileStream stream (infile, outfile);
+	QSE::StdSed::FileStream fstream (infile, outfile);
 
-	if (sed.execute (stream) == -1)
+	if (sed.execute (fstream) == -1)
 	{
 		xcout << QSE_T("ERR: cannot execute - ") << sed.getErrorMessage() << std::endl;
 		sed.close ();

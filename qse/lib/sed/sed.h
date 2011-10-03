@@ -191,8 +191,13 @@ struct qse_sed_t
 	/** source text pointers */
 	struct
 	{
-		qse_sed_loc_t loc;     /**< location */
-		qse_cint_t cc;         /**< last character read */
+		qse_sed_io_fun_t  fun; /**< input stream handler */
+		qse_sed_io_arg_t  arg;
+		qse_char_t        buf[1024];
+		int               eof;
+
+		qse_sed_loc_t     loc; /**< location */
+		qse_cint_t        cc;  /**< last character read */
 		const qse_char_t* ptr; /**< beginning of the source text */
 		const qse_char_t* end; /**< end of the source text */
 		const qse_char_t* cur; /**< current source text pointer */

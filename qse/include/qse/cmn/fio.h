@@ -32,27 +32,30 @@
 
 enum qse_fio_open_flag_t
 {
-	/* request qse_char_io based IO */
+	/** request qse_char_io based IO */
 	QSE_FIO_TEXT          = (1 << 0),
 	QSE_FIO_IGNOREMBWCERR = (1 << 1),
 
-	/* treat the file name pointer as a handle pointer */
+	/** treat the file name pointer as a handle pointer */
 	QSE_FIO_HANDLE        = (1 << 3),
 
-	QSE_FIO_READ       = (1 << 8),
-	QSE_FIO_WRITE      = (1 << 9),
-	QSE_FIO_APPEND     = (1 << 10),
+	/** don't close an I/O handle in qse_fio_fini() and qse_fio_close() */
+	QSE_FIO_NOCLOSE       = (1 << 4),
 
-	QSE_FIO_CREATE     = (1 << 11),
-	QSE_FIO_TRUNCATE   = (1 << 12),
-	QSE_FIO_EXCLUSIVE  = (1 << 13),
-	QSE_FIO_SYNC       = (1 << 14),
+	QSE_FIO_READ          = (1 << 8),
+	QSE_FIO_WRITE         = (1 << 9),
+	QSE_FIO_APPEND        = (1 << 10),
+
+	QSE_FIO_CREATE        = (1 << 11),
+	QSE_FIO_TRUNCATE      = (1 << 12),
+	QSE_FIO_EXCLUSIVE     = (1 << 13),
+	QSE_FIO_SYNC          = (1 << 14),
 
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
-	QSE_FIO_NOSHRD     = (1 << 24),
-	QSE_FIO_NOSHWR     = (1 << 25),
-	QSE_FIO_RANDOM     = (1 << 26), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL = (1 << 27)  /* hint that access is sequential */
+	QSE_FIO_NOSHRD        = (1 << 24),
+	QSE_FIO_NOSHWR        = (1 << 25),
+	QSE_FIO_RANDOM        = (1 << 26), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL    = (1 << 27)  /* hint that access is sequential */
 };
 
 enum qse_fio_std_t

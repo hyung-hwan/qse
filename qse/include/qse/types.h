@@ -119,6 +119,7 @@ typedef enum qse_tri_t qse_tri_t;
 /** @typedef qse_ulong_t
  * The qse_ulong_t type defines the largest unsigned integer type supported
  */
+/* TODO: use qse_int128_t in defining qse_long_t */
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
 	typedef long qse_long_t;
 	typedef unsigned long qse_ulong_t;

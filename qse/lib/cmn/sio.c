@@ -41,6 +41,8 @@ static qse_sio_t __sio_in =
 		0,                             /* errnum */
 
 	#if defined(_WIN32)
+		/* this is not a handle. it is adjusted to 
+		 * an actual handle in __sio_input () */
 		(HANDLE)STD_INPUT_HANDLE,      /* handle */
 	#elif defined(__OS2__)
 		(HFILE)0,                      /* handle */
@@ -85,6 +87,8 @@ static qse_sio_t __sio_out =
 		0,
 
 	#if defined(_WIN32)
+		/* this is not a handle. it is adjusted to 
+		 * an actual handle in __sio_output () */
 		(HANDLE)STD_OUTPUT_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)1,
@@ -129,6 +133,8 @@ static qse_sio_t __sio_err =
 		0,
 
 	#if defined(_WIN32)
+		/* this is not a handle. it is adjusted to 
+		 * an actual handle in __sio_output () */
 		(HANDLE)STD_ERROR_HANDLE,
 	#elif defined(__OS2__)
 		(HFILE)2,
@@ -200,7 +206,7 @@ qse_sio_t* qse_sio_openstd (
 	qse_fio_hnd_t hnd;
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
 	return qse_sio_open (mmgr, xtnsize, 
-		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE);
+		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE /*| QSE_SIO_NOCLOSE*/);
 }
 
 void qse_sio_close (qse_sio_t* sio)

@@ -281,8 +281,8 @@ typedef enum { STR_WIDE, STR_BYTE, STR_MBS, STR_USER } tre_str_type_t;
 /* Returns number of bytes to add to (char *)ptr to make it
    properly aligned for the type. */
 #define ALIGN(ptr, type) \
-  ((((long)ptr) % sizeof(type)) \
-   ? (sizeof(type) - (((long)ptr) % sizeof(type))) \
+  ((((qse_uintptr_t)ptr) % QSE_SIZEOF(type)) \
+   ? (QSE_SIZEOF(type) - (((qse_uintptr_t)ptr) % QSE_SIZEOF(type))) \
    : 0)
 
 #undef MAX
