@@ -95,13 +95,13 @@ void* qse_sed_getxtnstd (
 );
 
 /**
- * The qse_sed_compstd() function compiles a null-terminated sed script.
- * Call qse_sed_comp() for a length delimited script.
+ * The qse_sed_compstd() function compiles sed scripts specified in
+ * a null-terminated array of stream resources.
  * @return 0 on success, -1 on failure
  */
 int qse_sed_compstd (
 	qse_sed_t*        sed, /**< stream editor */
-	const qse_char_t* str  /**< null-terminated script */
+	qse_sed_iostd_t   in[] /**< input scripts */
 );
 
 /**
@@ -109,7 +109,7 @@ int qse_sed_compstd (
  * over input streams @a in and an output stream @a out.
  *
  * If @a in is not #QSE_NULL, it must point to a null-terminated array
- * of standard I/O resources. if in[0].type is QSE_SED_IOSTD_NULL, this 
+ * of stream resources. if in[0].type is QSE_SED_IOSTD_NULL, this 
  * function returns failure, requiring at least 1 valid resource to be 
  * included in the array.
  *

@@ -48,8 +48,18 @@
 #	include <signal.h>
 #endif
 
-static const qse_char_t* g_script_file = QSE_NULL;
-static qse_char_t* g_script = QSE_NULL;
+static struct
+{
+	qse_sed_iostd_t* io;
+	qse_size_t capa;
+	qse_size_t size;
+} g_script = 
+{
+	QSE_NULL,
+	0,
+	0
+};
+	
 static qse_char_t* g_output_file = QSE_NULL;
 static int g_infile_pos = 0;
 static int g_option = 0;
@@ -104,10 +114,12 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 
 	qse_fprintf (out, QSE_T("USAGE: %s [options] script [file]\n"), b);
 	qse_fprintf (out, QSE_T("       %s [options] -f script-file [file]\n"), b);
+	qse_fprintf (out, QSE_T("       %s [options] -e script [file]\n"), b);
 
 	qse_fprintf (out, QSE_T("options as follows:\n"));
 	qse_fprintf (out, QSE_T(" -h        show this message\n"));
 	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
+	qse_fprintf (out, QSE_T(" -e script specify a script.  \n"));
 	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
 	qse_fprintf (out, QSE_T(" -o file   specify an output file\n"));
 	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
@@ -124,14 +136,61 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 #endif
 }
 
+static int add_script (const qse_char_t* str, int mem)
+{
+	if (g_script.size >= g_script.capa)
+	{
+		qse_sed_iostd_t* tmp;
+
+		tmp = QSE_MMGR_REALLOC (
+			QSE_MMGR_GETDFL(), 
+			g_script.io, 
+			QSE_SIZEOF(*g_script.io) * (g_script.capa + 16 + 1));
+		if (tmp == QSE_NULL) 
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory while processing %s\n"), str);
+			return -1;
+		}
+
+		g_script.io = tmp;
+		g_script.capa += 16;
+	} 
+
+	if (mem)
+	{
+		g_script.io[g_script.size].type = QSE_SED_IOSTD_MEM;
+		g_script.io[g_script.size].u.mem.ptr = str;
+		g_script.io[g_script.size].u.mem.len = qse_strlen(str);
+	}
+	else
+	{
+		g_script.io[g_script.size].type = QSE_SED_IOSTD_FILE;
+		g_script.io[g_script.size].u.file = 
+			(qse_strcmp (str, QSE_T("-")) == 0)? QSE_NULL: str;
+	}
+	g_script.size++;
+	return 0;
+}
+
+static void free_scripts (void)
+{
+	if (g_script.io)
+	{
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_script.io);
+		g_script.io = QSE_NULL;
+		g_script.capa = 0;
+		g_script.size = 0;
+	}
+}
+
 static int handle_args (int argc, qse_char_t* argv[])
 {
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hnf:o:rRsawxym:X:"),
+		QSE_T("hne:f:o:rRsawxym:X:"),
 #else
-		QSE_T("hnf:o:rRsawxym:"),
+		QSE_T("hne:f:o:rRsawxym:"),
 #endif
 		QSE_NULL
 	};
@@ -143,7 +202,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 		{
 			default:
 				print_usage (QSE_STDERR, argc, argv);
-				return -1;
+				goto oops;
 
 			case QSE_T('?'):
 				qse_fprintf (QSE_STDERR, 
@@ -151,7 +210,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 					opt.opt
 				);
 				print_usage (QSE_STDERR, argc, argv);
-				return -1;
+				goto oops;
 
 			case QSE_T(':'):
 				qse_fprintf (QSE_STDERR, 
@@ -159,18 +218,22 @@ static int handle_args (int argc, qse_char_t* argv[])
 					opt.opt
 				);
 				print_usage (QSE_STDERR, argc, argv);
-				return -1;
+				goto oops;
 
 			case QSE_T('h'):
 				print_usage (QSE_STDOUT, argc, argv);
-				return 0;
+				goto done;
 
 			case QSE_T('n'):
 				g_option |= QSE_SED_QUIET;
 				break;
 
+			case QSE_T('e'):
+				if (add_script (opt.arg, 1) <= -1) goto oops;
+				break;
+
 			case QSE_T('f'):
-				g_script_file = opt.arg;
+				if (add_script (opt.arg, 0) <= -1) goto oops;
 				break;
 
 			case QSE_T('o'):
@@ -217,71 +280,28 @@ static int handle_args (int argc, qse_char_t* argv[])
 		}
 	}
 
-	if (opt.ind < argc && g_script_file == QSE_NULL) 
-		g_script = argv[opt.ind++];
+	if (opt.ind < argc && g_script.size <= 0) 
+	{
+		if (add_script (argv[opt.ind++], 1) <= -1) goto oops;
+	}
 	if (opt.ind < argc) g_infile_pos = opt.ind;
 
-	if (g_script_file == QSE_NULL && g_script == QSE_NULL)
+	if (g_script.size <= 0)
 	{
 		print_usage (QSE_STDERR, argc, argv);
-		return -1;
+		goto oops;
 	}
 
-
+	g_script.io[g_script.size].type = QSE_SED_IOSTD_NULL;
 	return 1;
-}
 
-qse_char_t* load_script_file (qse_sed_t* sed, const qse_char_t* file)
-{
-	qse_str_t script;
-	qse_sio_t* fp;
-	qse_xstr_t xstr;
-	qse_char_t buf[256];
+oops:
+	free_scripts ();
+	return -1;
 
-	fp = qse_sio_open (
-		qse_sed_getmmgr(sed), 0, file, 
-		QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-	if (fp == QSE_NULL) 
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), file);
-		return QSE_NULL;
-	}
-
-	if (qse_str_init (&script, QSE_MMGR_GETDFL(), 1024) <= -1)
-	{
-		qse_sio_close (fp);
-		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot load %s\n"), file);
-		return QSE_NULL;
-	}
-
-	while (1)
-	{
-		qse_ssize_t n;
-
-		n = qse_sio_gets (fp, buf, QSE_COUNTOF(buf));
-		if (n == 0) break;
-		if (n <= -1)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot read %s\n"), file);
-			qse_str_fini (&script);
-			qse_sio_close (fp);
-			return QSE_NULL;		
-		}
-
-		if (qse_str_ncat (&script, buf, n) == (qse_size_t)-1)
-		{
-			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
-			qse_str_fini (&script);
-			qse_sio_close (fp);
-			return QSE_NULL;
-		}		
-	}
-
-	qse_str_yield (&script, &xstr, 0);
-	qse_str_fini (&script);
-	qse_sio_close (fp);
-
-	return xstr.ptr;
+done:
+	free_scripts ();
+	return 0;
 }
 
 void print_exec_error (qse_sed_t* sed)
@@ -484,15 +504,7 @@ int sed_main (int argc, qse_char_t* argv[])
 	
 	qse_sed_setoption (sed, g_option);
 
-	if (g_script_file)
-	{
-		QSE_ASSERT (g_script == QSE_NULL);
-
-		g_script = load_script_file (sed, g_script_file);
-		if (g_script == QSE_NULL) goto oops;
-	}
-
-	if (qse_sed_compstd (sed, g_script) == -1)
+	if (qse_sed_compstd (sed, g_script.io) == -1)
 	{
 		const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
 		if (errloc->line > 0 || errloc->colm > 0)
@@ -625,8 +637,7 @@ if (g_trace) qse_sed_setexechook (sed, trace);
 oops:
 	if (sed) qse_sed_close (sed);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
-	if (g_script_file != QSE_NULL && g_script != QSE_NULL) 
-		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), g_script);
+	free_scripts ();
 	return ret;
 }
 

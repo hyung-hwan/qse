@@ -369,8 +369,7 @@ void qse_sed_seterror (
  */
 int qse_sed_comp (
 	qse_sed_t*        sed, /**< stream editor */
-	const qse_char_t* ptr, /**< pointer to a string containing commands */
-	qse_size_t        len  /**< the number of characters in the string */ 
+	qse_sed_io_fun_t  inf  /**< script stream reader */
 );
 
 /**

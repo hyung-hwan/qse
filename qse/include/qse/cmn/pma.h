@@ -29,6 +29,10 @@
 #ifndef _QSE_CMN_PMA_H_
 #define _QSE_CMN_PMA_H_
 
+/** @file
+ * This file defines a pool-based block allocator.
+ */
+
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -42,6 +46,9 @@ struct qse_pma_blk_t
 	qse_pma_blk_t* next;
 };
 
+/**
+ * The qse_pma_t type defines a pool-base block allocator.
+ */
 typedef struct qse_pma_t qse_pma_t;
 
 struct qse_pma_t

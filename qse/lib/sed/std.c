@@ -24,20 +24,35 @@
 #include <qse/cmn/sio.h>
 #include "../cmn/mem.h"
 
+typedef struct xtn_in_t xtn_in_t;
+struct xtn_in_t
+{
+	qse_sed_iostd_t* ptr;
+	qse_sed_iostd_t* cur;
+	qse_size_t       mempos;
+};
+
+typedef struct xtn_out_t xtn_out_t;
+struct xtn_out_t
+{
+	qse_sed_iostd_t* ptr;
+	qse_str_t*       memstr;
+};
+
+typedef struct xtn_t xtn_t;
 struct xtn_t
 {
 	struct
 	{
-		qse_sed_iostd_t* in;
-		qse_sed_iostd_t* out;
-
-		qse_sed_iostd_t* in_cur;
-		qse_size_t in_mempos;
-		qse_str_t* out_memstr;
+		xtn_in_t in;
+	} s;
+	struct
+	{
+		xtn_in_t  in;
+		xtn_out_t out;
 	} e;
 };
 
-typedef struct xtn_t xtn_t;
 
 qse_sed_t* qse_sed_openstd (qse_size_t xtnsize)
 {
@@ -65,9 +80,30 @@ void* qse_sed_getxtnstd (qse_sed_t* sed)
 	return (void*)((xtn_t*)QSE_XTN(sed) + 1);
 }
 
-int qse_sed_compstd (qse_sed_t* sed, const qse_char_t* sptr)
+static int verify_iostd_in  (qse_sed_t* sed, qse_sed_iostd_t in[])
 {
-	return qse_sed_comp (sed, sptr, qse_strlen(sptr));
+	qse_size_t i;
+
+	if (in[0].type == QSE_SED_IOSTD_NULL)
+	{
+		/* if 'in' is specified, it must contains at least one 
+		 * valid entry */
+		qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	for (i = 0; in[i].type != QSE_SED_IOSTD_NULL; i++)
+	{
+		if (in[i].type != QSE_SED_IOSTD_SIO &&
+		    in[i].type != QSE_SED_IOSTD_FILE &&
+		    in[i].type != QSE_SED_IOSTD_MEM)
+		{
+			qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 static qse_sio_t* open_sio (qse_sed_t* sed, const qse_char_t* file, int flags)
@@ -112,7 +148,8 @@ static void close_main_stream (
 	if (io->type == QSE_SED_IOSTD_FILE) qse_sio_close (arg->handle);
 }
 
-static int open_console_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
+static int open_input_stream (
+	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io, xtn_in_t* base)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
@@ -136,14 +173,21 @@ static int open_console_input_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse
 
 		case QSE_SED_IOSTD_MEM:
 			/* don't store anything to arg->handle */
-			xtn->e.in_mempos = 0;
+			base->mempos = 0;
 			break;
 	}
+
+#if 0
+	if (base == &xtn->s.in)
+	{
+		qse_sed_setfilename (sed, ....);
+	}
+#endif
 
 	return 0;
 }
 
-static int open_console_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
+static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
@@ -184,8 +228,8 @@ static int open_console_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qs
 
 		case QSE_SED_IOSTD_MEM:
 			/* don't store anything to arg->handle */
-			xtn->e.out_memstr = qse_str_open (sed->mmgr, 0, 512);
-			if (xtn->e.out_memstr == QSE_NULL)
+			xtn->e.out.memstr = qse_str_open (sed->mmgr, 0, 512);
+			if (xtn->e.out.memstr == QSE_NULL)
 			{
 				qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return -1;
@@ -196,34 +240,68 @@ static int open_console_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qs
 	return 0;
 }
 
-static qse_ssize_t read_main_input_stream (
-	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_char_t* buf, qse_size_t len)
+static qse_ssize_t read_input_stream (
+	qse_sed_t* sed, qse_sed_io_arg_t* arg,
+	qse_char_t* buf, qse_size_t len, xtn_in_t* base)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 	qse_sed_iostd_t* io, * next;
 	void* old, * new;
 	qse_ssize_t n = 0;
+	int newline_forced = 0;
 
 	if (len > QSE_TYPE_MAX(qse_ssize_t)) len = QSE_TYPE_MAX(qse_ssize_t);
 
 	do
 	{
-		io = xtn->e.in_cur;
+		io = base->cur;
 
 		QSE_ASSERT (io != QSE_NULL);
 		if (io->type == QSE_SED_IOSTD_MEM)
 		{
 			n = 0;
-			while (xtn->e.in_mempos < io->u.mem.len && n < len)
-				buf[n++] = io->u.mem.ptr[xtn->e.in_mempos++];
+			while (base->mempos < io->u.mem.len && n < len)
+				buf[n++] = io->u.mem.ptr[base->mempos++];
 		}
 		else n = qse_sio_getsn (arg->handle, buf, len);
-
-		if (n != 0) break;
+		if (n != 0) 
+		{
+			if (n <= -1)
+			{
+				if (io->type == QSE_SED_IOSTD_FILE)
+				{
+					qse_cstr_t ea;
+					ea.ptr = io->u.file;
+					ea.len = qse_strlen (io->u.file);
+					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+				}
+			}
+			else n += newline_forced; /* success */
+			break;
+		}
 	
-		/* end of file on the current input stream */
+		/* ============================================= */
+		/* == end of file on the current input stream == */
+		/* ============================================= */
 
-		next = xtn->e.in_cur + 1;
+		if (base == &xtn->s.in && !newline_forced)
+		{
+			/* == ONLY FOR A SCRIPT STREAM ==
+			 * squeeze in a new line in case the previous script 
+			 * stream doesn't end with a line terminator.*/  
+
+			/* TODO: support different line terminator */ 
+			buf[0] = QSE_T('\n'); 
+			buf++; len--;	
+			newline_forced = 1;
+
+			/* set the line number to 0 for the newline
+			 * squeezed in */
+			sed->src.loc.line = 0; 
+			sed->src.loc.colm = 0;
+		}
+
+		next = base->cur + 1;
 		if (next->type == QSE_SED_IOSTD_NULL) 
 		{
 			/* no next stream available - return 0 */	
@@ -233,9 +311,17 @@ static qse_ssize_t read_main_input_stream (
 		old = arg->handle;
 
 		/* try to open the next input stream */
-		if (open_console_input_stream (sed, arg, next) <= -1)
+		if (open_input_stream (sed, arg, next, base) <= -1)
 		{
 			/* failed to open the next input stream */
+			if (next->type == QSE_SED_IOSTD_FILE)
+			{
+				qse_cstr_t ea;
+				ea.ptr = next->u.file;
+				ea.len = qse_strlen (next->u.file);
+				qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+			}
+
 			n = -1;
 			break;
 		}
@@ -245,14 +331,51 @@ static qse_ssize_t read_main_input_stream (
 		close_main_stream (sed, arg, io);
 
 		arg->handle = new;
-		xtn->e.in_cur++;
+		base->cur++;
 	}
 	while (1);
 
 	return n;
 }
 
-static qse_ssize_t xin (
+static qse_ssize_t s_in (
+	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg,
+	qse_char_t* buf, qse_size_t len)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+
+	switch (cmd)
+	{
+		case QSE_SED_IO_OPEN:
+		{
+			if (open_input_stream (sed, arg, xtn->s.in.cur, &xtn->s.in) <= -1) return -1;
+			return 1;
+		}
+
+		case QSE_SED_IO_CLOSE:
+		{
+			close_main_stream (sed, arg, xtn->s.in.cur);
+			return 0;
+		}
+
+		case QSE_SED_IO_READ:
+		{
+			return read_input_stream (sed, arg, buf, len, &xtn->s.in);
+		}
+
+		default:
+		{
+			QSE_ASSERTX (
+				!"should never happen",
+				"cmd must be one of OPEN,CLOSE,READ"
+			);
+			qse_sed_seterrnum (sed, QSE_SED_EINTERN, QSE_NULL);
+			return -1;
+		}
+	}
+}
+
+static qse_ssize_t x_in (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg,
 	qse_char_t* buf, qse_size_t len)
 {
@@ -265,8 +388,8 @@ static qse_ssize_t xin (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				/* not file specified. console stream */
-				if (xtn->e.in == QSE_NULL) 
+				/* no file specified. console stream */
+				if (xtn->e.in.ptr == QSE_NULL) 
 				{
 					sio = open_sio_std (
 						sed, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
@@ -275,7 +398,7 @@ static qse_ssize_t xin (
 				}
 				else
 				{
-					if (open_console_input_stream (sed, arg, xtn->e.in_cur) <= -1) return -1;
+					if (open_input_stream (sed, arg, xtn->e.in.cur, &xtn->e.in) <= -1) return -1;
 				}
 			}
 			else
@@ -293,10 +416,10 @@ static qse_ssize_t xin (
 			if (arg->path == QSE_NULL)
 			{
 				/* main data stream */
-				if (xtn->e.in == QSE_NULL) 
+				if (xtn->e.in.ptr == QSE_NULL) 
 					qse_sio_close (arg->handle);
 				else
-					close_main_stream (sed, arg, xtn->e.in_cur);
+					close_main_stream (sed, arg, xtn->e.in.cur);
 			}
 			else
 			{
@@ -311,23 +434,48 @@ static qse_ssize_t xin (
 			if (arg->path == QSE_NULL)
 			{
 				/* main data stream */
-				if (xtn->e.in == QSE_NULL)
-					return qse_sio_getsn (arg->handle, buf, len);
+				if (xtn->e.in.ptr == QSE_NULL)
+				{
+					qse_ssize_t n;
+					n = qse_sio_getsn (arg->handle, buf, len);
+					if (n <= -1)
+					{
+						qse_cstr_t ea;
+						ea.ptr = QSE_T("stdin");
+						ea.len = 5;
+						qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+					}
+					return n;
+				}
 				else
-					return read_main_input_stream (sed, arg, buf, len);
+					return read_input_stream (sed, arg, buf, len, &xtn->e.in);
 			}
 			else
 			{
-				return qse_sio_getsn (arg->handle, buf, len);
+				qse_ssize_t n;
+				n = qse_sio_getsn (arg->handle, buf, len);
+				if (n <= -1)
+				{
+					qse_cstr_t ea;
+					ea.ptr = arg->path;
+					ea.len = qse_strlen (arg->path);
+					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+				}
+				return n;
 			}
 		}
 
 		default:
+			QSE_ASSERTX (
+				!"should never happen",
+				"cmd must be one of OPEN,CLOSE,READ"
+			);
+			qse_sed_seterrnum (sed, QSE_SED_EINTERN, QSE_NULL);
 			return -1;
 	}
 }
 
-static qse_ssize_t xout (
+static qse_ssize_t x_out (
 	qse_sed_t* sed, qse_sed_io_cmd_t cmd, qse_sed_io_arg_t* arg,
 	qse_char_t* dat, qse_size_t len)
 {
@@ -340,7 +488,7 @@ static qse_ssize_t xout (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				if (xtn->e.out == QSE_NULL) 
+				if (xtn->e.out.ptr== QSE_NULL) 
 				{
 					sio = open_sio_std (
 						sed, QSE_SIO_STDOUT,
@@ -354,7 +502,7 @@ static qse_ssize_t xout (
 				}
 				else
 				{
-					if (open_console_output_stream (sed, arg, xtn->e.out) <= -1) return -1;
+					if (open_output_stream (sed, arg, xtn->e.out.ptr) <= -1) return -1;
 				}
 			}
 			else
@@ -377,10 +525,10 @@ static qse_ssize_t xout (
 		{
 			if (arg->path == QSE_NULL)
 			{
-				if (xtn->e.out == QSE_NULL) 
+				if (xtn->e.out.ptr== QSE_NULL) 
 					qse_sio_close (arg->handle);
 				else
-					close_main_stream (sed, arg, xtn->e.out);
+					close_main_stream (sed, arg, xtn->e.out.ptr);
 			}
 			else
 			{
@@ -394,18 +542,27 @@ static qse_ssize_t xout (
 			if (arg->path == QSE_NULL)
 			{
 				/* main data stream */
-				if (xtn->e.out == QSE_NULL)
+				if (xtn->e.out.ptr== QSE_NULL)
 				{
-					return qse_sio_putsn (arg->handle, dat, len);
+					qse_ssize_t n;
+					n = qse_sio_putsn (arg->handle, dat, len);
+					if (n <= -1)
+					{
+						qse_cstr_t ea;
+						ea.ptr = QSE_T("stdin");
+						ea.len = 5;
+						qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+					}
+					return n;
 				}
 				else
 				{
-					qse_sed_iostd_t* io = xtn->e.out;
+					qse_sed_iostd_t* io = xtn->e.out.ptr;
 					if (io->type == QSE_SED_IOSTD_MEM)
 					{
 						if (len > QSE_TYPE_MAX(qse_ssize_t)) len = QSE_TYPE_MAX(qse_ssize_t);
 
-						if (qse_str_ncat (xtn->e.out_memstr, dat, len) == (qse_size_t)-1)
+						if (qse_str_ncat (xtn->e.out.memstr, dat, len) == (qse_size_t)-1)
 						{
 							qse_sed_seterrnum (sed, QSE_SED_ENOMEM, QSE_NULL);
 							return -1;
@@ -415,19 +572,61 @@ static qse_ssize_t xout (
 					}
 					else
 					{
-						return qse_sio_putsn (arg->handle, dat, len);
+						qse_ssize_t n;
+						n = qse_sio_putsn (arg->handle, dat, len);
+						if (n <= -1)
+						{
+							qse_cstr_t ea;
+							ea.ptr = io->u.file;
+							ea.len = qse_strlen(io->u.file);
+							qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+						}
+						return n;
 					}
 				}
 			}
 			else
 			{
-				return qse_sio_putsn (arg->handle, dat, len);
+				qse_ssize_t n;
+				n = qse_sio_putsn (arg->handle, dat, len);
+				if (n <= -1)
+				{
+					qse_cstr_t ea;
+					ea.ptr = arg->path;
+					ea.len = qse_strlen(arg->path);
+					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
+				}
+				return n;
 			}
 		}
 	
 		default:
+			QSE_ASSERTX (
+				!"should never happen",
+				"cmd must be one of OPEN,CLOSE,WRITE"
+			);
+			qse_sed_seterrnum (sed, QSE_SED_EINTERN, QSE_NULL);
 			return -1;
 	}
+}
+
+int qse_sed_compstd (qse_sed_t* sed, qse_sed_iostd_t in[])
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+
+	if (in == QSE_NULL)
+	{
+		/* it requires a valid array unlike qse_sed_execstd(). */
+		qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
+		return -1;
+	}
+	if (verify_iostd_in (sed, in) <= -1) return -1;
+
+	QSE_MEMSET (&xtn->s, 0, QSE_SIZEOF(xtn->s));
+	xtn->s.in.ptr = in;
+	xtn->s.in.cur = in;
+
+	return qse_sed_comp (sed, s_in);
 }
 
 int qse_sed_execstd (
@@ -436,29 +635,7 @@ int qse_sed_execstd (
 	int n;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
-	if (in)
-	{
-		qse_size_t i;
-
-		if (in[0].type == QSE_SED_IOSTD_NULL)
-		{
-			/* if 'in' is specified, it must contains at least one 
-			 * valid entry */
-			qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
-			return -1;
-		}
-
-		for (i = 0; in[i].type != QSE_SED_IOSTD_NULL; i++)
-		{
-			if (in[i].type != QSE_SED_IOSTD_SIO &&
-			    in[i].type != QSE_SED_IOSTD_FILE &&
-			    in[i].type != QSE_SED_IOSTD_MEM)
-			{
-				qse_sed_seterrnum (sed, QSE_SED_EINVAL, QSE_NULL);
-				return -1;
-			}
-		}
-	}
+	if (in && verify_iostd_in (sed, in) <= -1) return -1;
 
 	if (out)
 	{
@@ -472,18 +649,18 @@ int qse_sed_execstd (
 	}
 
 	QSE_MEMSET (&xtn->e, 0, QSE_SIZEOF(xtn->e));
-	xtn->e.in = in;
-	xtn->e.out = out;
-	xtn->e.in_cur = in;
+	xtn->e.in.ptr = in;
+	xtn->e.in.cur = in;
+	xtn->e.out.ptr= out;
 
-	n = qse_sed_exec (sed, xin, xout);
+	n = qse_sed_exec (sed, x_in, x_out);
 
 	if (n >= 0 && out && out->type == QSE_SED_IOSTD_MEM)
 	{
-		QSE_ASSERT (xtn->e.out_memstr != QSE_NULL);
-		qse_str_yield (xtn->e.out_memstr, &out->u.mem, 0);
+		QSE_ASSERT (xtn->e.out.memstr != QSE_NULL);
+		qse_str_yield (xtn->e.out.memstr, &out->u.mem, 0);
 	}
-	if (xtn->e.out_memstr) qse_str_close (xtn->e.out_memstr);
+	if (xtn->e.out.memstr) qse_str_close (xtn->e.out.memstr);
 
 	return n;
 }

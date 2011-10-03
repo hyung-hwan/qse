@@ -49,7 +49,8 @@ public:
 
 	void compile (const char_t* sptr)
 	{
-		if (QSE::StdSed::compile (sptr) <= -1)
+		QSE::StdSed::StringStream stream(sptr);
+		if (QSE::StdSed::compile (stream) <= -1)
 			throw Error (getErrorMessage());
 	}
 

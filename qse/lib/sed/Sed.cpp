@@ -48,16 +48,12 @@ void Sed::close ()
 	}
 }
 
-int Sed::compile (const char_t* sptr)
+int Sed::compile (Stream& sstream)
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_comp (sed, sptr, qse_strlen(sptr));
-}
 
-int Sed::compile (const char_t* sptr, size_t slen)
-{
-	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_comp (sed, sptr, slen);
+	this->sstream = &sstream;
+	return qse_sed_comp (sed, sin);
 }
 
 int Sed::execute (Stream& iostream)
@@ -143,6 +139,33 @@ void Sed::setConsoleLine (size_t num)
 {
 	QSE_ASSERT (sed != QSE_NULL);
 	qse_sed_setlinnum (sed, num);
+}
+
+Sed::ssize_t Sed::sin (
+	sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len)
+{
+	Sed* sed = *(Sed**)QSE_XTN(s);
+
+	Stream::Data iodata (sed, Stream::READ, arg);
+
+	try
+	{
+		switch (cmd)
+		{
+			case QSE_SED_IO_OPEN:
+				return sed->sstream->open (iodata);
+			case QSE_SED_IO_CLOSE:
+				return sed->sstream->close (iodata);
+			case QSE_SED_IO_READ:
+				return sed->sstream->read (iodata, buf, len);
+			default:
+				return -1;
+		}
+	}
+	catch (...)
+	{
+		return -1;
+	}
 }
 
 Sed::ssize_t Sed::xin (

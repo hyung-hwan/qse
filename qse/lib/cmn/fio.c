@@ -406,15 +406,19 @@ int qse_fio_init (
 void qse_fio_fini (qse_fio_t* fio)
 {
 	if (fio->tio != QSE_NULL) qse_tio_close (fio->tio);
+
+	if (!(fio->flags & QSE_FIO_NOCLOSE))
+	{
 #if defined(_WIN32)
-	CloseHandle (fio->handle);
+		CloseHandle (fio->handle);
 #elif defined(__OS2__)
-	DosClose (fio->handle);
+		DosClose (fio->handle);
 #elif defined(__DOS__)
-	close (fio->handle);
+		close (fio->handle);
 #else
-	QSE_CLOSE (fio->handle);
+		QSE_CLOSE (fio->handle);
 #endif
+	}
 }
 
 qse_fio_hnd_t qse_fio_gethandle (qse_fio_t* fio)
@@ -437,7 +441,10 @@ qse_fio_off_t qse_fio_seek (
 		FILE_CURRENT,
 		FILE_END
 	};
-	LARGE_INTEGER x, y;
+	LARGE_INTEGER x;
+#if 0
+	LARGE_INTEGER y;
+#endif
 
 	QSE_ASSERT (QSE_SIZEOF(offset) <= QSE_SIZEOF(x.QuadPart));
 
@@ -856,13 +863,18 @@ static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size
 
 int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 {
+#if defined(_WIN32)
+	DWORD tab[] =
+	{
+		STD_INPUT_HANDLE,
+		STD_OUTPUT_HANDLE,
+		STD_ERROR_HANDLE
+	};
+#else
+
 	qse_fio_hnd_t tab[] =
 	{
-#if defined(_WIN32)
-		(HANDLE)STD_INPUT_HANDLE,
-		(HANDLE)STD_OUTPUT_HANDLE,
-		(HANDLE)STD_ERROR_HANDLE
-#elif defined(__OS2__)
+#if defined(__OS2__)
 		(HFILE)0, (HFILE)1, (HFILE)2
 #elif defined(__DOS__)
 		0, 1, 2
@@ -870,6 +882,8 @@ int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 		0, 1, 2
 #endif
 	};
+
+#endif
 
 	if (std < 0 || std >= QSE_COUNTOF(tab)) return -1;
 
