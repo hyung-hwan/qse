@@ -180,7 +180,7 @@ static int open_input_stream (
 #if 0
 	if (base == &xtn->s.in)
 	{
-		qse_sed_setfilename (sed, ....);
+		qse_sed_setscriptname (sed, ....);
 	}
 #endif
 
@@ -276,7 +276,17 @@ static qse_ssize_t read_input_stream (
 					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
 				}
 			}
-			else n += newline_forced; /* success */
+			else if (newline_forced)
+			{
+				/* set the line number to 0 for the newline
+				 * squeezed in. see the getnextsc() in sed.c 
+				 * to know how line and column numbers are
+				 * incremented */
+				sed->src.loc.line = 0; 
+				sed->src.loc.colm = 0;
+				n += newline_forced; 
+			}
+
 			break;
 		}
 	
@@ -326,11 +336,6 @@ static qse_ssize_t read_input_stream (
 			buf[0] = QSE_T('\n'); 
 			buf++; len--;	
 			newline_forced = 1;
-
-			/* set the line number to 0 for the newline
-			 * squeezed in */
-			sed->src.loc.line = 0; 
-			sed->src.loc.colm = 0;
 		}
 	}
 	while (1);
