@@ -345,7 +345,7 @@ static int matchtre (
 
 #define CURSC(sed) ((sed)->src.cc)
 #define NXTSC(sed) getnextsc(sed)
-#define PEEPNXTSC(sed) ((sed->src.cur < sed->src.end)? *sed->src.cur: QSE_CHAR_EOF)
+#define PEEPNXTSC(sed) peepnextsc(sed)
 
 static int open_script_stream (qse_sed_t* sed)
 {
@@ -394,14 +394,14 @@ static int close_script_stream (qse_sed_t* sed)
 	return 0;
 }
 
-static int read_script_stream (qse_sed_t* sed, qse_size_t rem)
+static int read_script_stream (qse_sed_t* sed)
 {
 	qse_ssize_t n;
 
 	sed->errnum = QSE_SED_ENOERR;
 	n = sed->src.fun (
 		sed, QSE_SED_IO_READ, &sed->src.arg, 
-		&sed->src.buf[rem], QSE_COUNTOF(sed->src.buf) - rem
+		sed->src.buf, QSE_COUNTOF(sed->src.buf)
 	);
 	if (n <= -1)
 	{
@@ -416,48 +416,59 @@ static int read_script_stream (qse_sed_t* sed, qse_size_t rem)
 		return 0;
 	}
 
-	sed->src.end = &sed->src.buf[rem] + n;
+	sed->src.cur = sed->src.buf;
+	sed->src.end = sed->src.buf + n;
 	return 1;
 }
 
 static qse_cint_t getnextsc (qse_sed_t* sed)
 {
-	if (sed->src.cur + 1 >= sed->src.end && !sed->src.eof)
+	/* adjust the line and column number of the next
+	 * character based on the current character */
+	if (sed->src.cc == QSE_T('\n')) 
 	{
-		qse_size_t rem = sed->src.end - sed->src.cur;
-		if (sed->src.cur != sed->src.buf && rem > 0)
-		{
-			QSE_MEMCPY (sed->src.buf, sed->src.cur, rem * QSE_SIZEOF(qse_char_t));
-			sed->src.cur = sed->src.buf;
-			sed->src.end = sed->src.buf + rem;
-		}
-		if (read_script_stream (sed, rem) <= -1) return -1;
-
-		if (sed->src.cur + 1 >= sed->src.end && !sed->src.eof)
-		{
-			/* read again if it didn't read enough */
-			qse_size_t rem = sed->src.end - sed->src.cur;
-			QSE_ASSERT (sed->src.buf == sed->src.cur);
-			if (read_script_stream (sed, rem) <= -1) return -1;
-		}
-	}
-
-	if (sed->src.cur < sed->src.end) 
-	{
-		if (sed->src.cc == QSE_T('\n')) 
-		{
-			sed->src.loc.line++;
-			sed->src.loc.colm = 1;
-		}
-		else sed->src.loc.colm++;
-
-		sed->src.cc = *sed->src.cur++;
 		/* TODO: support different line end convension */
-		/*if (sed->src.cc == QSE_T('\n')) sed->src.loc.lin++;*/
+		sed->src.loc.line++;
+		sed->src.loc.colm = 1;
 	}
-	else sed->src.cc = QSE_CHAR_EOF;
+	else 
+	{
+		/* take note that if you keep on calling getnextsc()
+		 * after QSE_CHAR_EOF is read, this column number
+		 * keeps increasing also. there should be a bug of
+		 * reading more than necessary somewhere in the code
+		 * if this happens. */
+		sed->src.loc.colm++;
+	}
+
+	if (sed->src.cur >= sed->src.end && !sed->src.eof) 
+	{
+		/* read in more character if buffer is empty */
+		if (read_script_stream (sed) <= -1) return -1;
+	}
+
+	sed->src.cc = 
+		(sed->src.cur < sed->src.end)? 
+		(*sed->src.cur++): QSE_CHAR_EOF;
 
 	return sed->src.cc;
+}
+
+static qse_cint_t peepnextsc (qse_sed_t* sed)
+{
+	if (sed->src.cur >= sed->src.end && !sed->src.eof) 
+	{
+		/* read in more character if buffer is empty.
+		 * it is ok to fill the buffer in the peeping
+		 * function if it doesn't change sed->src.cc. */
+		if (read_script_stream (sed) <= -1) return -1;
+	}
+
+	/* no changes in line nubmers, the 'cur' pointer, and
+	 * most importantly 'cc' unlike getnextsc(). */
+	return
+		(sed->src.cur < sed->src.end)? 
+		(*sed->src.cur): QSE_CHAR_EOF;
 }
 
 static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
