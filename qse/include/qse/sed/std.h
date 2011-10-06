@@ -96,21 +96,29 @@ void* qse_sed_getxtnstd (
 
 /**
  * The qse_sed_compstd() function compiles sed scripts specified in
- * a null-terminated array of stream resources.
+ * an array of stream resources. The end of the array is indicated
+ * by an element whose type is #QSE_SED_IOSTD_NULL. However, the type
+ * of the first element shall not be #QSE_SED_IOSTD_NULL. The output 
+ * parameter @a count is set to the count of stream resources 
+ * opened on both success and failure. You can pass #QSE_NULL to @a
+ * count if the count is not needed.
+ *
  * @return 0 on success, -1 on failure
  */
 int qse_sed_compstd (
-	qse_sed_t*        sed, /**< stream editor */
-	qse_sed_iostd_t   in[] /**< input scripts */
+	qse_sed_t*        sed,  /**< stream editor */
+	qse_sed_iostd_t   in[], /**< input scripts */
+	qse_size_t*       count /**< number of input scripts opened */
 );
 
 /**
  * The qse_sed_execstd() function executes a compiled script
  * over input streams @a in and an output stream @a out.
  *
- * If @a in is not #QSE_NULL, it must point to a null-terminated array
- * of stream resources. if in[0].type is QSE_SED_IOSTD_NULL, this 
- * function returns failure, requiring at least 1 valid resource to be 
+ * If @a in is not #QSE_NULL, it must point to an array of stream 
+ * resources whose end is indicated by an element with #QSE_SED_IOSTD_NULL
+ * type. However, the type of the first element @ in[0].type show not
+ * be #QSE_SED_IOSTD_NULL. It requires at least 1 valid resource to be 
  * included in the array.
  *
  * If @a in is #QSE_NULL, the standard console input is used.

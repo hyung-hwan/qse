@@ -151,7 +151,7 @@ static void close_main_stream (
 static int open_input_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io, xtn_in_t* base)
 {
-/*	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);*/
+	/*xtn_t* xtn = (xtn_t*) QSE_XTN (sed);*/
 
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
@@ -175,14 +175,15 @@ static int open_input_stream (
 			/* don't store anything to arg->handle */
 			base->mempos = 0;
 			break;
-	}
 
-#if 0
-	if (base == &xtn->s.in)
-	{
-		qse_sed_setscriptname (sed, ....);
+		default:
+			QSE_ASSERTX (
+				!"should never happen",
+				"io-type must be one of SIO,FILE,MEM"
+			);
+			qse_sed_seterrnum (sed, QSE_SED_EINTERN, QSE_NULL);
+			return -1;
 	}
-#endif
 
 	return 0;
 }
@@ -235,6 +236,14 @@ static int open_output_stream (qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_io
 				return -1;
 			}
 			break;
+
+		default:
+			QSE_ASSERTX (
+				!"should never happen",
+				"io-type must be one of SIO,FILE,MEM"
+			);
+			qse_sed_seterrnum (sed, QSE_SED_EINTERN, QSE_NULL);
+			return -1;
 	}
 
 	return 0;
@@ -615,9 +624,10 @@ static qse_ssize_t x_out (
 	}
 }
 
-int qse_sed_compstd (qse_sed_t* sed, qse_sed_iostd_t in[])
+int qse_sed_compstd (qse_sed_t* sed, qse_sed_iostd_t in[], qse_size_t* count)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
+	int ret;
 
 	if (in == QSE_NULL)
 	{
@@ -631,7 +641,11 @@ int qse_sed_compstd (qse_sed_t* sed, qse_sed_iostd_t in[])
 	xtn->s.in.ptr = in;
 	xtn->s.in.cur = in;
 
-	return qse_sed_comp (sed, s_in);
+	ret = qse_sed_comp (sed, s_in);
+
+	if (count) *count = xtn->s.in.cur - xtn->s.in.ptr;
+
+	return ret;
 }
 
 int qse_sed_execstd (
