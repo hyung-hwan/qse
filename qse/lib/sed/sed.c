@@ -344,8 +344,12 @@ static int matchtre (
 #define IS_LABCHAR(c) (!IS_CMDTERM(c) && !IS_WSPACE(c))
 
 #define CURSC(sed) ((sed)->src.cc)
-#define NXTSC(sed) getnextsc(sed)
-#define PEEPNXTSC(sed) peepnextsc(sed)
+#define NXTSC(sed,c,errret) \
+	do { if (getnextsc(sed,&(c)) <= -1) return (errret); } while (0)
+#define NXTSC_GOTO(sed,c,label) \
+	do { if (getnextsc(sed,&(c)) <= -1) goto label; } while (0)
+#define PEEPNXTSC(sed,c,errret) \
+	do { if (peepnextsc(sed,&(c)) <= -1) return (errret); } while (0)
 
 static int open_script_stream (qse_sed_t* sed)
 {
@@ -407,21 +411,23 @@ static int read_script_stream (qse_sed_t* sed)
 	{
 		if (sed->errnum == QSE_SED_ENOERR)
 			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
-		return -1;
+		return -1; /* error */
 	}
 
 	if (n == 0)
 	{
+		/* don't change sed->src.cur and sed->src.end.
+		 * they remain the same on eof  */
 		sed->src.eof = 1;
-		return 0;
+		return 0; /* eof */
 	}
 
 	sed->src.cur = sed->src.buf;
 	sed->src.end = sed->src.buf + n;
-	return 1;
+	return 1; /* read something */
 }
 
-static qse_cint_t getnextsc (qse_sed_t* sed)
+static int getnextsc (qse_sed_t* sed, qse_cint_t* c)
 {
 	/* adjust the line and column number of the next
 	 * character based on the current character */
@@ -451,10 +457,11 @@ static qse_cint_t getnextsc (qse_sed_t* sed)
 		(sed->src.cur < sed->src.end)? 
 		(*sed->src.cur++): QSE_CHAR_EOF;
 
-	return sed->src.cc;
+	*c = sed->src.cc;
+	return 0;
 }
 
-static qse_cint_t peepnextsc (qse_sed_t* sed)
+static int peepnextsc (qse_sed_t* sed, qse_cint_t* c)
 {
 	if (sed->src.cur >= sed->src.end && !sed->src.eof) 
 	{
@@ -466,9 +473,8 @@ static qse_cint_t peepnextsc (qse_sed_t* sed)
 
 	/* no changes in line nubmers, the 'cur' pointer, and
 	 * most importantly 'cc' unlike getnextsc(). */
-	return
-		(sed->src.cur < sed->src.end)? 
-		(*sed->src.cur): QSE_CHAR_EOF;
+	*c = (sed->src.cur < sed->src.end)?  (*sed->src.cur): QSE_CHAR_EOF;
+	return 0;
 }
 
 static void free_address (qse_sed_t* sed, qse_sed_cmd_t* cmd)
@@ -584,7 +590,7 @@ static QSE_INLINE int xdigit_to_num (qse_cint_t c)
 	       (c >= QSE_T('a') && c <= QSE_T('f'))? (c - QSE_T('a') + 10): -1;
 }
 
-static qse_cint_t trans_escaped (qse_sed_t* sed, qse_cint_t c, int* xamp)
+static int trans_escaped (qse_sed_t* sed, qse_cint_t c, qse_cint_t* ec, int* xamp)
 {
 	if (xamp) *xamp = 0;
 
@@ -619,15 +625,18 @@ Omitted for clash with regular expression \b.
 		{
 			/* \xnn */
 			int cc;
+			qse_cint_t peeped;
 
-			cc = xdigit_to_num(PEEPNXTSC(sed));
+			PEEPNXTSC (sed, peeped, -1);
+			cc = xdigit_to_num (peeped);
 			if (cc <= -1) break;
-			NXTSC(sed);
+			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = cc;
 
-			cc = xdigit_to_num(PEEPNXTSC(sed));
+			PEEPNXTSC (sed, peeped, -1);
+			cc = xdigit_to_num (peeped);
 			if (cc <= -1) break;
-			NXTSC(sed);
+			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = (c << 4) | cc;
 
 			/* let's indicate that '&' is built from \x26. */
@@ -640,17 +649,20 @@ Omitted for clash with regular expression \b.
 		{
 			/* \Xnnnn or \Xnnnnnnnn for wchar_t */
 			int cc, i;
+			qse_cint_t peeped;
 
-			cc = xdigit_to_num(PEEPNXTSC(sed));
+			PEEPNXTSC (sed, peeped, -1);
+			cc = xdigit_to_num (peeped);
 			if (cc <= -1) break;
-			NXTSC(sed);
+			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = cc;
 
 			for (i = 1; i < QSE_SIZEOF(qse_char_t) * 2; i++)
 			{
-				cc = xdigit_to_num(PEEPNXTSC(sed));
+				PEEPNXTSC (sed, peeped, -1);
+				cc = xdigit_to_num (peeped);
 				if (cc <= -1) break;
-				NXTSC(sed);
+				NXTSC (sed, peeped, -1); /* consume the character peeped */
 				c = (c << 4) | cc;
 			}
 
@@ -661,7 +673,8 @@ Omitted for clash with regular expression \b.
 #endif
 	}
 
-	return c;
+	*ec = c;
+	return 0;
 }
 
 static int pickup_rex (
@@ -681,7 +694,7 @@ static int pickup_rex (
 
 	while (1)
 	{
-		c = NXTSC (sed);
+		NXTSC (sed, c, -1);
 
 	shortcut:
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
@@ -711,7 +724,7 @@ static int pickup_rex (
 		{
 			qse_cint_t nc;
 
-			nc = NXTSC (sed);
+			NXTSC (sed, nc, -1);
 			if (nc == QSE_CHAR_EOF /*|| IS_LINTERM(nc)*/)
 			{
 				if (cmd)
@@ -755,7 +768,7 @@ static int pickup_rex (
 				qse_cint_t ec;
 				int xamp;
 
-				ec = trans_escaped (sed, nc, &xamp);
+				if (trans_escaped (sed, nc, &ec, &xamp) <= -1) return -1;
 				if (ec == nc || (xamp && replacement))
 				{
 					/* if the character after a backslash is not special 
@@ -790,7 +803,9 @@ static int pickup_rex (
 				}
 				else if (bracket_state == 1)
 				{
-					qse_cint_t nc = NXTSC (sed);
+					qse_cint_t nc;
+
+					NXTSC (sed, nc, -1);
 					if (nc == QSE_T(':')) bracket_state = 2;
 
 					if (qse_str_ccat (buf, c) == (qse_size_t)-1)
@@ -834,6 +849,7 @@ static int pickup_rex (
 static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 {
 	int ignorecase = 0;
+	qse_cint_t peeped;
 
 	if (pickup_rex (sed, rxend, 0, QSE_NULL, &sed->tmp.rex) <= -1)
 		return QSE_NULL;
@@ -842,10 +858,11 @@ static QSE_INLINE void* compile_rex_address (qse_sed_t* sed, qse_char_t rxend)
 
 	/* handle a modifer after having handled an empty regex.
 	 * so a modifier is naturally disallowed for an empty regex. */
-	if (PEEPNXTSC(sed) == QSE_T('I')) 
+	PEEPNXTSC (sed, peeped, QSE_NULL);
+	if (peeped == QSE_T('I')) 
 	{
 		ignorecase = 1;
-		NXTSC(sed);
+		NXTSC (sed, peeped, QSE_NULL); /* consume the character peeped */
 	}
 
 	return build_rex (sed, QSE_STR_CSTR(&sed->tmp.rex), ignorecase, &sed->src.loc);
@@ -859,7 +876,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 	if (c == QSE_T('$'))
 	{
 		a->type = QSE_SED_ADR_DOL;
-		NXTSC (sed);
+		NXTSC (sed, c, QSE_NULL);
 	}
 	else if (c >= QSE_T('0') && c <= QSE_T('9'))
 	{
@@ -867,9 +884,9 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
-			NXTSC (sed);
+			NXTSC (sed, c, QSE_NULL);
 		}
-		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
+		while (c >= QSE_T('0') && c <= QSE_T('9'));
 
 		a->type = QSE_SED_ADR_LINE;
 		a->u.lno = lno;
@@ -880,12 +897,12 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 		a->u.rex = compile_rex_address (sed, c);
 		if (a->u.rex == QSE_NULL) return QSE_NULL;
 		a->type = QSE_SED_ADR_REX;
-		NXTSC (sed);
+		NXTSC (sed, c, QSE_NULL);
 	}
 	else if (c == QSE_T('\\'))
 	{
 		/* \cREGEXc */
-		c = NXTSC (sed);
+		NXTSC (sed, c, QSE_NULL);
 		if (c == QSE_CHAR_EOF || IS_LINTERM(c))
 		{
 			SETERR1 (sed, QSE_SED_EREXIC, 
@@ -896,7 +913,7 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 		a->u.rex = compile_rex_address (sed, c);
 		if (a->u.rex == QSE_NULL) return QSE_NULL;
 		a->type = QSE_SED_ADR_REX;
-		NXTSC (sed);
+		NXTSC (sed, c, QSE_NULL);
 	}
 	else if (extended && (c == QSE_T('+') || c == QSE_T('~')))
 	{
@@ -904,8 +921,8 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 
 		a->type = (c == QSE_T('+'))? QSE_SED_ADR_RELLINE: QSE_SED_ADR_RELLINEM;
 
-		NXTSC (sed);
-		if (!((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9')))
+		NXTSC (sed, c, QSE_NULL);
+		if (!(c >= QSE_T('0') && c <= QSE_T('9')))
 		{
 			SETERR0 (sed, QSE_SED_EA2MOI, &sed->src.loc);
 			return QSE_NULL;
@@ -914,9 +931,9 @@ static qse_sed_adr_t* get_address (qse_sed_t* sed, qse_sed_adr_t* a, int extende
 		do
 		{
 			lno = lno * 10 + c - QSE_T('0');
-			NXTSC (sed);
+			NXTSC (sed, c, QSE_NULL);
 		}
-		while ((c = CURSC(sed)) >= QSE_T('0') && c <= QSE_T('9'));
+		while (c >= QSE_T('0') && c <= QSE_T('9'));
 
 		a->u.lno = lno;
 	}
@@ -952,14 +969,14 @@ do { \
 	t = qse_str_open (sed->mmgr, 0, 128);
 	if (t == QSE_NULL) goto oops;
 
+	c = CURSC (sed);
+
 	do 
 	{
-		c = CURSC (sed);
-
 		if (sed->option & QSE_SED_STRIPLS)
 		{
 			/* get the first non-space character */
-			while (IS_SPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
 		}
 
 		while (c != QSE_CHAR_EOF)
@@ -968,27 +985,35 @@ do { \
 
 			if (c == QSE_T('\\'))
 			{
-				c = NXTSC (sed);
+				NXTSC_GOTO (sed, c, oops);
 				if (c == QSE_CHAR_EOF) 
 				{
 					if (sed->option & QSE_SED_KEEPTBS) 
 						ADD (sed, t, QSE_T('\\'), oops);
-
 					break;
 				}
 			}
-			else if (c == QSE_T('\n')) nl = 1;
+			else if (c == QSE_T('\n')) nl = 1; /* unescaped newline */
 
 			ADD (sed, t, c, oops);
 
 			if (c == QSE_T('\n'))
 			{
-				NXTSC (sed);
-				if (nl) goto done;
+				if (nl)
+				{
+					/* if newline is not escaped, stop */
+					qse_cint_t dump;
+					/* let's not pollute 'c' for ENSURELN check after done: */
+					NXTSC_GOTO (sed, dump, oops);
+					goto done;
+				}
+
+				/* else carry on reading the next line */
+				NXTSC_GOTO (sed, c, oops);
 				break;
 			}
 
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 		} 
 	}
 	while (c != QSE_CHAR_EOF);
@@ -1017,7 +1042,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	/* skip white spaces */
 	c = CURSC (sed);
-	while (IS_SPACE(c)) c = NXTSC (sed);
+	while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 	if (!IS_LABCHAR(c))
 	{
@@ -1041,7 +1066,7 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 				return -1;
 			} 
-			c = NXTSC (sed);
+			NXTSC (sed, c, -1);
 		}
 		while (IS_LABCHAR(c));
 
@@ -1070,13 +1095,13 @@ static int get_label (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	}
 
-	while (IS_SPACE(c)) c = NXTSC (sed);
+	while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 	if (IS_CMDTERM(c)) 
 	{
 		if (c != QSE_T('}') && 
 		    c != QSE_T('#') &&
-		    c != QSE_CHAR_EOF) NXTSC (sed);	
+		    c != QSE_CHAR_EOF) NXTSC (sed, c, -1);	
 	}
 
 	return 0;
@@ -1087,7 +1112,7 @@ static int terminate_command (qse_sed_t* sed)
 	qse_cint_t c;
 
 	c = CURSC (sed);
-	while (IS_SPACE(c)) c = NXTSC (sed);
+	while (IS_SPACE(c)) NXTSC (sed, c, -1);
 	if (!IS_CMDTERM(c))
 	{
 		SETERR0 (sed, QSE_SED_ESCEXP, &sed->src.loc);
@@ -1100,7 +1125,7 @@ static int terminate_command (qse_sed_t* sed)
 	if (c != QSE_T('#') && 
 	    c != QSE_T('{') &&
 	    c != QSE_T('}') && 
-	    c != QSE_CHAR_EOF) NXTSC (sed);	
+	    c != QSE_CHAR_EOF) NXTSC (sed, c, -1);	
 	return 0;
 }
 
@@ -1112,7 +1137,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 	/* skip white spaces */
 	c = CURSC(sed);
-	while (IS_SPACE(c)) c = NXTSC (sed);
+	while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 	if (IS_CMDTERM(c))
 	{
@@ -1141,7 +1166,7 @@ static int get_branch_target (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			goto oops;
 		} 
 
-		c = NXTSC (sed);
+		NXTSC_GOTO (sed, c, oops);
 	}
 
 	if (terminate_command (sed) <= -1) goto oops;
@@ -1176,7 +1201,7 @@ static int get_file (qse_sed_t* sed, qse_xstr_t* xstr)
 
 	/* skip white spaces */
 	c = CURSC(sed);
-	while (IS_SPACE(c)) c = NXTSC (sed);
+	while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 	if (IS_CMDTERM(c))
 	{
@@ -1205,7 +1230,7 @@ static int get_file (qse_sed_t* sed, qse_xstr_t* xstr)
 
 		if (c == QSE_T('\\'))
 		{
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			if (c == QSE_T('\0') || c == QSE_CHAR_EOF || IS_LINTERM(c))
 			{
 				SETERR0 (sed, QSE_SED_EFILIL, &sed->src.loc);
@@ -1221,7 +1246,7 @@ static int get_file (qse_sed_t* sed, qse_xstr_t* xstr)
 			goto oops;
 		} 
 
-		c = NXTSC (sed);
+		NXTSC_GOTO (sed, c, oops);
 	}
 	while (!IS_CMDTERM(c));
 
@@ -1291,7 +1316,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	if (pickup_rex (sed, delim, 1, cmd, t[1]) <= -1) goto oops;
 
 	/* skip spaces before options */
-	do { c = NXTSC(sed); } while (IS_SPACE(c));
+	do { NXTSC_GOTO (sed, c, oops); } while (IS_SPACE(c));
 
 	/* get options */
 	do
@@ -1299,17 +1324,17 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		if (c == QSE_T('p')) 
 		{
 			cmd->u.subst.p = 1;
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 		}
 		else if (c == QSE_T('i') || c == QSE_T('I')) 
 		{
 			cmd->u.subst.i = 1;
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 		}
 		else if (c == QSE_T('g')) 
 		{
 			cmd->u.subst.g = 1;
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 		}
 		else if (c >= QSE_T('0') && c <= QSE_T('9'))
 		{
@@ -1331,7 +1356,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 					SETERR0 (sed, QSE_SED_EOCSTL, &sed->src.loc);
 					goto oops;
 				}
-				c = NXTSC (sed); 
+				NXTSC_GOTO (sed, c, oops);
 			}
 			while (c >= QSE_T('0') && c <= QSE_T('9'));
 
@@ -1345,7 +1370,7 @@ static int get_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 		else if (c == QSE_T('w'))
 		{
-			NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			if (get_file (sed, &cmd->u.subst.file) <= -1) goto oops;
 			break;
 		}
@@ -1404,7 +1429,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	c = NXTSC (sed);
+	NXTSC_GOTO (sed, c, oops);
 	while (c != delim)
 	{
 		qse_char_t b[2];
@@ -1413,9 +1438,9 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		if (c == QSE_T('\\'))
 		{
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
-			c = trans_escaped (sed, c, QSE_NULL);
+			if (trans_escaped (sed, c, &c, QSE_NULL) <= -1) goto oops;
 		}
 
 		b[0] = c;
@@ -1425,19 +1450,19 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			goto oops;
 		}
 
-		c = NXTSC (sed);
+		NXTSC_GOTO (sed, c, oops);
 	}	
 
-	c = NXTSC (sed);
+	NXTSC_GOTO (sed, c, oops);
 	for (pos = 1; c != delim; pos += 2)
 	{
 		CHECK_CMDIC (sed, cmd, c, goto oops);
 
 		if (c == QSE_T('\\'))
 		{
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			CHECK_CMDIC_ESCAPED (sed, cmd, c, goto oops);
-			c = trans_escaped (sed, c, QSE_NULL);
+			if (trans_escaped (sed, c, &c, QSE_NULL) <= -1) goto oops;
 		}
 
 		if (pos >= QSE_STR_LEN(t))
@@ -1448,7 +1473,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		}
 
 		QSE_STR_CHAR(t,pos) = c;
-		c = NXTSC (sed);
+		NXTSC_GOTO (sed, c, oops);
 	}
 
 	if (pos < QSE_STR_LEN(t))
@@ -1458,7 +1483,7 @@ static int get_transet (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		goto oops;
 	}
 
-	NXTSC (sed);
+	NXTSC_GOTO (sed, c, oops);
 	if (terminate_command (sed) <= -1) goto oops;
 
 	qse_str_yield (t, &cmd->u.transet, 0);
@@ -1504,11 +1529,11 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 			cmd->type = QSE_SED_CMD_NOOP;
 
-			c = NXTSC (sed);
+			NXTSC (sed, c, -1);
 			if (get_label (sed, cmd) <= -1) return -1;
 
 			c = CURSC (sed);
-			while (IS_SPACE(c)) c = NXTSC(sed);
+			while (IS_SPACE(c)) NXTSC (sed, c, -1);
 			break;
 
 		case QSE_T('{'):
@@ -1527,7 +1552,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			}
 
 			sed->tmp.grp.cmd[sed->tmp.grp.level++] = cmd;
-			NXTSC (sed);
+			NXTSC (sed, c, -1);
 			break;
 
 		case QSE_T('}'):
@@ -1556,7 +1581,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 			tc = sed->tmp.grp.cmd[--sed->tmp.grp.level];
 			tc->u.branch.target = cmd;
 
-			NXTSC (sed);
+			NXTSC (sed, c, -1);
 			break;
 		}
 
@@ -1573,7 +1598,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				return -1;
 			}
 
-			NXTSC (sed);
+			NXTSC (sed, c, -1);
 			if (terminate_command (sed) <= -1) return -1;
 			break;
 
@@ -1593,8 +1618,8 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		{
 			cmd->type = c;
 
-			c = NXTSC (sed);
-			while (IS_SPACE(c)) c = NXTSC (sed);
+			NXTSC (sed, c, -1);
+			while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 			if (c != QSE_T('\\'))
 			{
@@ -1610,8 +1635,8 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				return -1;
 			}
 		
-			c = NXTSC (sed);
-			while (IS_SPACE(c)) c = NXTSC (sed);
+			NXTSC (sed, c, -1);
+			while (IS_SPACE(c)) NXTSC (sed, c, -1);
 
 			if (c != QSE_CHAR_EOF && c != QSE_T('\n'))
 			{
@@ -1626,7 +1651,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 				return -1;
 			}
 			
-			NXTSC (sed); /* skip the new line */
+			NXTSC (sed, c, -1); /* skip the new line */
 
 		sameline_ok:
 			/* get_text() starts from the next line */
@@ -1665,14 +1690,14 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 		case QSE_T('z'):
 			cmd->type = c;
-			NXTSC (sed);
+			NXTSC (sed, c, -1); 
 			if (terminate_command (sed) <= -1) return -1;
 			break;
 
 		case QSE_T('b'):
 		case QSE_T('t'):
 			cmd->type = c;
-			NXTSC (sed);
+			NXTSC (sed, c, -1); 
 			if (get_branch_target (sed, cmd) <= -1) return -1;
 			break;
 
@@ -1681,19 +1706,19 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 		case QSE_T('w'):
 		case QSE_T('W'):
 			cmd->type = c;
-			NXTSC (sed);
+			NXTSC (sed, c, -1); 
 			if (get_file (sed, &cmd->u.file) <= -1) return -1;
 			break;
 
 		case QSE_T('s'):
 			cmd->type = c;
-			NXTSC (sed);
+			NXTSC (sed, c, -1); 
 			if (get_subst (sed, cmd) <= -1) return -1;
 			break;
 
 		case QSE_T('y'):
 			cmd->type = c;
-			NXTSC (sed);
+			NXTSC (sed, c, -1); 
 			if (get_transet (sed, cmd) <= -1) return -1;
 			break;
 
@@ -1716,13 +1741,13 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 
 	/* store the source code pointers */
 	sed->src.fun = inf;
-	if (open_script_stream (sed) <= -1)  return -1;
+	if (open_script_stream (sed) <= -1) return -1;
 
 	sed->src.loc.line = 1;
 	sed->src.loc.colm = 0;
 	sed->src.cc = QSE_CHAR_EOF;
 	
-	c = NXTSC (sed);
+	NXTSC_GOTO (sed, c, oops);
 
 	/* free all the commands previously compiled */
 	free_all_command_blocks (sed);
@@ -1740,7 +1765,7 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		int n;
 
 		/* skip spaces including newlines */
-		while (IS_WSPACE(c)) c = NXTSC (sed);
+		while (IS_WSPACE(c)) NXTSC_GOTO (sed, c, oops);
 
 		/* check if the end has been reached */
 		if (c == QSE_CHAR_EOF) break;
@@ -1748,16 +1773,16 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		/* check if the line is commented out */
 		if (c == QSE_T('#'))
 		{
-			do c = NXTSC (sed); 
+			do NXTSC_GOTO (sed, c, oops); 
 			while (!IS_LINTERM(c) && c != QSE_CHAR_EOF) ;
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			continue;
 		}
 
 		if (c == QSE_T(';')) 
 		{
 			/* semicolon without a address-command pair */
-			c = NXTSC (sed);
+			NXTSC_GOTO (sed, c, oops);
 			continue;
 		}
 
@@ -1777,7 +1802,7 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		c = CURSC (sed);
 		if (cmd->a1.type != QSE_SED_ADR_NONE)
 		{
-			while (IS_SPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
 
 			if (c == QSE_T(',') ||
 			    ((sed->option & QSE_SED_EXTENDEDADR) && c == QSE_T('~')))
@@ -1785,7 +1810,7 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 				qse_char_t delim = c;
 
 				/* maybe an address range */
-				do { c = NXTSC (sed); } while (IS_SPACE(c));
+				do { NXTSC_GOTO (sed, c, oops); } while (IS_SPACE(c));
 
 				if (get_address (sed, &cmd->a2, (sed->option & QSE_SED_EXTENDEDADR)) == QSE_NULL) 
 				{
@@ -1863,18 +1888,18 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		}
 
 		/* skip white spaces */
-		while (IS_SPACE(c)) c = NXTSC (sed);
+		while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
 
 		if (c == QSE_T('!'))
 		{
 			/* allow any number of the negation indicators */
 			do { 
 				cmd->negated = !cmd->negated; 
-				c = NXTSC(sed);
+				NXTSC_GOTO (sed, c, oops);
 			} 
 			while (c == QSE_T('!'));
 
-			while (IS_SPACE(c)) c = NXTSC (sed);
+			while (IS_SPACE(c)) NXTSC_GOTO (sed, c, oops);
 		}
 	
 		n = get_command (sed, cmd);
@@ -3507,7 +3532,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 	while (!sed->e.stopreq)
 	{
-		if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_READ, QSE_NULL);
+		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_READ, QSE_NULL);
 
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
@@ -3526,7 +3551,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 			while (c != &sed->cmd.over)
 			{
-				if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_MATCH, c);
+				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_MATCH, c);
 
 				n = match_address (sed, c);
 				if (n <= -1) { ret = -1; goto done; }
@@ -3538,8 +3563,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 					continue;
 				}
 
-				if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_EXEC, c);
-
+				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_EXEC, c);
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
 				if (j == &sed->cmd.quit_quiet) goto done;
@@ -3556,7 +3580,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 			}
 		}
 
-		if (sed->e.hook) sed->e.hook (sed, QSE_SED_EXEC_WRITE, QSE_NULL);
+		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_WRITE, QSE_NULL);
 		if (emit_output (sed, 0) <= -1) { ret = -1; goto done; }
 	}
 
@@ -3601,12 +3625,12 @@ void qse_sed_setlinnum (qse_sed_t* sed, qse_size_t num)
 	sed->e.in.num = num;
 }
 
-qse_sed_exec_hook_t qse_sed_getexechook (qse_sed_t* sed)
+qse_sed_exec_tracer_t qse_sed_getexectracer (qse_sed_t* sed)
 {
-	return sed->e.hook;
+	return sed->e.tracer;
 }
 
-void qse_sed_setexechook (qse_sed_t* sed, qse_sed_exec_hook_t hook)
+void qse_sed_setexectracer (qse_sed_t* sed, qse_sed_exec_tracer_t tracer)
 {
-	sed->e.hook = hook;
+	sed->e.tracer = tracer;
 }

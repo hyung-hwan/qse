@@ -64,6 +64,7 @@ static qse_char_t* g_output_file = QSE_NULL;
 static int g_infile_pos = 0;
 static int g_option = 0;
 static int g_separate = 0;
+static int g_trace = 0;
 static qse_ulong_t g_memlimit = 0;
 static qse_sed_t* g_sed = QSE_NULL;
 
@@ -188,9 +189,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hne:f:o:rRsawxym:X:"),
+		QSE_T("hne:f:o:rRsawxytm:X:"),
 #else
-		QSE_T("hne:f:o:rRsawxym:"),
+		QSE_T("hne:f:o:rRsawxytm:"),
 #endif
 		QSE_NULL
 	};
@@ -268,6 +269,10 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_option |= QSE_SED_ENSURENL;
 				break;
 
+			case QSE_T('t'):
+				g_trace = 1;
+				break;
+ 
 			case QSE_T('m'):
 				g_memlimit = qse_strtoulong (opt.arg);
 				break;
@@ -445,21 +450,24 @@ static void unset_intr_run (void)
 #endif
 }
 
-static void trace (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_t* cmd)
+static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_t* cmd)
 {
 	switch (op)
 	{
+#if 0
 		case QSE_SED_EXEC_READ:
 			qse_printf (QSE_T("reading...\n"));
 			break;
 		case QSE_SED_EXEC_WRITE:
 			qse_printf (QSE_T("wrting...\n"));
 			break;
+#endif
 		case QSE_SED_EXEC_MATCH:
-			qse_printf (QSE_T("matching...\n"));
+			qse_printf (QSE_T("matching address for [%c] at line %lu\n"), cmd->type, (unsigned long)cmd->loc.line);
 			break;
+
 		case QSE_SED_EXEC_EXEC:
-			qse_printf (QSE_T("executing...\n"));
+			qse_printf (QSE_T("executing [%c] at line %lu\n"), cmd->type, (unsigned long)cmd->loc.line);
 			break;
 	}
 }
@@ -468,6 +476,7 @@ int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_NULL;
 	qse_sed_t* sed = QSE_NULL;
+	qse_size_t script_count;
 	int ret = -1;
 
 	ret = handle_args (argc, argv);
@@ -504,13 +513,30 @@ int sed_main (int argc, qse_char_t* argv[])
 	
 	qse_sed_setoption (sed, g_option);
 
-	if (qse_sed_compstd (sed, g_script.io) == -1)
+	if (qse_sed_compstd (sed, g_script.io, &script_count) <= -1)
 	{
 		const qse_sed_loc_t* errloc = qse_sed_geterrloc(sed);
+		const qse_char_t* target;
+		qse_char_t exprbuf[128];
+	
+		if (g_script.io[script_count].type == QSE_SED_IOSTD_FILE)
+		{
+			target = g_script.io[script_count].u.file;
+		}
+		else 
+		{
+			/* i dont' use QSE_SED_IOSTD_SIO for input */	
+			QSE_ASSERT (g_script.io[script_count].type == QSE_SED_IOSTD_MEM);
+			qse_sprintf (exprbuf, QSE_COUNTOF(exprbuf), 
+				QSE_T("expression #%lu"), (unsigned long)script_count);
+			target = exprbuf;
+		}
+
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot compile - %s at line %lu column %lu\n"),
+				QSE_T("cannot compile %s - %s at line %lu column %lu\n"),
+				target,
 				qse_sed_geterrmsg(sed),
 				(unsigned long)errloc->line,
 				(unsigned long)errloc->colm
@@ -519,16 +545,15 @@ int sed_main (int argc, qse_char_t* argv[])
 		else
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot compile - %s\n"),
+				QSE_T("cannot compile %s - %s\n"),
+				target,
 				qse_sed_geterrmsg(sed)
 			);
 		}
 		goto oops;
 	}
 
-#if 0
-if (g_trace) qse_sed_setexechook (sed, trace);
-#endif
+	if (g_trace) qse_sed_setexectracer (sed, trace_exec);
 
 	if (g_separate && g_infile_pos > 0)
 	{

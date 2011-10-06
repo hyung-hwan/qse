@@ -65,6 +65,8 @@
  */
 typedef struct qse_sed_t qse_sed_t;
 
+typedef struct qse_sed_loc_t qse_sed_loc_t;
+typedef struct qse_sed_adr_t qse_sed_adr_t; 
 typedef struct qse_sed_cmd_t qse_sed_cmd_t;
 
 /** 
@@ -75,7 +77,111 @@ struct qse_sed_loc_t
 	qse_size_t line; /**< line  */
 	qse_size_t colm; /**< column */
 };
-typedef struct qse_sed_loc_t qse_sed_loc_t;
+
+struct qse_sed_adr_t
+{
+	enum
+	{
+		QSE_SED_ADR_NONE,     /* no address */
+		QSE_SED_ADR_DOL,      /* $ - last line */
+		QSE_SED_ADR_LINE,     /* specified line */
+		QSE_SED_ADR_REX,      /* lines matching regular expression */
+		QSE_SED_ADR_STEP,     /* line steps - only in the second address */
+		QSE_SED_ADR_RELLINE,  /* relative line - only in second address */
+		QSE_SED_ADR_RELLINEM  /* relative line in the multiples - only in second address */
+	} type;
+
+	union 
+	{
+		qse_size_t lno;
+		void*      rex;
+	} u;
+};
+
+#define QSE_SED_CMD_NOOP            QSE_T('\0')
+#define QSE_SED_CMD_QUIT            QSE_T('q')
+#define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
+#define QSE_SED_CMD_APPEND          QSE_T('a')
+#define QSE_SED_CMD_INSERT          QSE_T('i')
+#define QSE_SED_CMD_CHANGE          QSE_T('c')
+#define QSE_SED_CMD_DELETE          QSE_T('d')
+#define QSE_SED_CMD_DELETE_FIRSTLN  QSE_T('D')
+#define QSE_SED_CMD_PRINT_LNNUM     QSE_T('=')
+#define QSE_SED_CMD_PRINT           QSE_T('p')
+#define QSE_SED_CMD_PRINT_FIRSTLN   QSE_T('P')
+#define QSE_SED_CMD_PRINT_CLEARLY   QSE_T('l')
+#define QSE_SED_CMD_HOLD            QSE_T('h')
+#define QSE_SED_CMD_HOLD_APPEND     QSE_T('H')
+#define QSE_SED_CMD_RELEASE         QSE_T('g')
+#define QSE_SED_CMD_RELEASE_APPEND  QSE_T('G')
+#define QSE_SED_CMD_EXCHANGE        QSE_T('x') 
+#define QSE_SED_CMD_NEXT            QSE_T('n')
+#define QSE_SED_CMD_NEXT_APPEND     QSE_T('N')
+#define QSE_SED_CMD_READ_FILE       QSE_T('r')
+#define QSE_SED_CMD_READ_FILELN     QSE_T('R')
+#define QSE_SED_CMD_WRITE_FILE      QSE_T('w')
+#define QSE_SED_CMD_WRITE_FILELN    QSE_T('W')
+#define QSE_SED_CMD_BRANCH          QSE_T('b') 
+#define QSE_SED_CMD_BRANCH_COND     QSE_T('t')
+#define QSE_SED_CMD_SUBSTITUTE      QSE_T('s')
+#define QSE_SED_CMD_TRANSLATE       QSE_T('y')
+#define QSE_SED_CMD_CLEAR_PATTERN   QSE_T('z')
+
+struct qse_sed_cmd_t
+{
+	qse_char_t type;
+	qse_sed_loc_t loc;
+
+	int negated;
+
+	qse_sed_adr_t a1; /* optional start address */
+	qse_sed_adr_t a2; /* optional end address */
+
+	union
+	{
+		/* text for the a, i, c commands */
+		qse_xstr_t text;  
+
+		/* file name for r, w, R, W */
+		qse_xstr_t file;
+
+		/* data for the s command */
+		struct
+		{
+			void* rex; /* regular expression */
+			qse_xstr_t rpl;  /* replacement */
+
+			/* flags */
+			qse_xstr_t file; /* file name for w */
+			unsigned short occ;
+			unsigned short g: 1; /* global */
+			unsigned short p: 1; /* print */
+			unsigned short i: 1; /* case insensitive */
+		} subst;
+
+		/* translation set for the y command */
+		qse_xstr_t transet;
+
+		/* branch target for b and t */
+		struct
+		{
+			qse_xstr_t label;
+			qse_sed_cmd_t* target;
+		} branch;
+	} u;	
+
+	struct
+	{
+		int a1_matched;
+		qse_size_t a1_match_line;
+
+		int c_ready;
+
+		/* points to the next command for fast traversal and 
+		 * fast random jumps */
+		qse_sed_cmd_t* next; 
+	} state;
+};
 
 /**
  * the qse_sed_errnum_t type defines error numbers.
@@ -204,7 +310,7 @@ enum qse_sed_exec_op_t
 };
 typedef enum qse_sed_exec_op_t qse_sed_exec_op_t;
 
-typedef void (*qse_sed_exec_hook_t) (
+typedef void (*qse_sed_exec_tracer_t) (
 	qse_sed_t*           sed,
 	qse_sed_exec_op_t    op,
 	const qse_sed_cmd_t* cmd
@@ -431,13 +537,13 @@ void qse_sed_setlinnum (
 	qse_size_t num    /**< a line number */
 );
 
-qse_sed_exec_hook_t qse_sed_getexechook (
+qse_sed_exec_tracer_t qse_sed_getexectracer (
 	qse_sed_t* sed
 );
 
-void qse_sed_setexechook (
-	qse_sed_t*          sed,
-	qse_sed_exec_hook_t hook
+void qse_sed_setexectracer (
+	qse_sed_t*            sed,
+	qse_sed_exec_tracer_t tracer
 );
 
 #ifdef __cplusplus
