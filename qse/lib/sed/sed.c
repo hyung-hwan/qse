@@ -38,6 +38,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
 
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
+static void free_all_cids (qse_sed_t* sed);
 static void free_appends (qse_sed_t* sed);
 static int emit_output (qse_sed_t* sed, int skipline);
 
@@ -130,6 +131,7 @@ oops_1:
 void qse_sed_fini (qse_sed_t* sed)
 {
 	free_all_command_blocks (sed);
+	free_all_cids (sed);
 
 	qse_str_fini (&sed->e.txt.subst);
 	qse_str_fini (&sed->e.txt.hold);
@@ -582,6 +584,15 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	}
 }
 
+static void free_all_cids (qse_sed_t* sed)
+{
+	while (sed->src.cid)
+	{
+		qse_sed_cid_t* next = sed->src.cid->next;
+		QSE_MMGR_FREE (sed->mmgr, sed->src.cid);
+		sed->src.cid = next;
+	}
+}
 
 static QSE_INLINE int xdigit_to_num (qse_cint_t c)
 {
@@ -1501,6 +1512,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	qse_cint_t c;
 
 	c = CURSC (sed);
+	cmd->lid = sed->src.cid? ((const qse_char_t*)(sed->src.cid + 1)): QSE_NULL;
 	cmd->loc = sed->src.loc;
 	switch (c)
 	{
@@ -1739,19 +1751,12 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		return -1;	
 	}
 
-	/* store the source code pointers */
-	sed->src.fun = inf;
-	if (open_script_stream (sed) <= -1) return -1;
-
-	sed->src.loc.line = 1;
-	sed->src.loc.colm = 0;
-	sed->src.cc = QSE_CHAR_EOF;
-	
-	NXTSC_GOTO (sed, c, oops);
-
 	/* free all the commands previously compiled */
 	free_all_command_blocks (sed);
 	QSE_ASSERT (sed->cmd.lb == &sed->cmd.fb && sed->cmd.lb->len == 0);
+
+	/* free all the compilation identifiers */
+	free_all_cids (sed);
 
 	/* clear the label table */
 	qse_map_clear (&sed->tmp.labs);
@@ -1759,6 +1764,11 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 	/* clear temporary data */
 	sed->tmp.grp.level = 0;
 	qse_str_clear (&sed->tmp.rex);
+
+	/* open script */
+	sed->src.fun = inf;
+	if (open_script_stream (sed) <= -1) return -1;
+	NXTSC_GOTO (sed, c, oops);
 
 	while (1)
 	{
@@ -3615,12 +3625,33 @@ void qse_sed_setlformatter (qse_sed_t* sed, qse_sed_lformatter_t lf)
 	sed->lformatter = lf;
 }
 
-qse_size_t qse_sed_getlinnum (qse_sed_t* sed)
+const qse_char_t* qse_sed_getcompid (qse_sed_t* sed)
+{
+	return sed->src.cid? ((const qse_char_t*)(sed->src.cid + 1)): QSE_NULL;
+}
+
+const qse_char_t* qse_sed_setcompid (qse_sed_t* sed, const qse_char_t* id)
+{
+	qse_sed_cid_t* cid;
+	qse_size_t len;
+	
+	len = qse_strlen (id);
+	cid = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
+	if (cid == QSE_NULL) return QSE_NULL;
+	
+	cid->next = sed->src.cid;
+	sed->src.cid = cid;
+	qse_strcpy ((qse_char_t*)(cid + 1), id);
+
+	return (const qse_char_t*)(cid + 1);
+}
+
+qse_size_t qse_sed_getlinenum (qse_sed_t* sed)
 {
 	return sed->e.in.num;
 }
 
-void qse_sed_setlinnum (qse_sed_t* sed, qse_size_t num)
+void qse_sed_setlinenum (qse_sed_t* sed, qse_size_t num)
 {
 	sed->e.in.num = num;
 }
@@ -3634,3 +3665,4 @@ void qse_sed_setexectracer (qse_sed_t* sed, qse_sed_exec_tracer_t tracer)
 {
 	sed->e.tracer = tracer;
 }
+

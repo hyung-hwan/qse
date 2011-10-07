@@ -112,7 +112,8 @@ Sed::loc_t Sed::getErrorLocation () const
 	if (sed == QSE_NULL) 
 	{
 		loc_t loc;
-		loc.line = 0; loc.colm = 0;
+		loc.line = 0; 
+		loc.colm = 0;
 		return loc;
 	}
 	return *qse_sed_geterrloc (sed);
@@ -129,16 +130,26 @@ void Sed::setError (errnum_t err, const cstr_t* args, const loc_t* loc)
 	qse_sed_seterror (sed, err, args, loc);
 }
 
+const Sed::char_t* Sed::getCompileId () const
+{
+	return qse_sed_getcompid (this->sed);
+}
+
+const Sed::char_t* Sed::setCompileId (const char_t* id)
+{
+	return qse_sed_setcompid (this->sed, id);
+}
+
 Sed::size_t Sed::getConsoleLine ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_getlinnum (sed);
+	return qse_sed_getlinenum (this->sed);
 }
 
 void Sed::setConsoleLine (size_t num)
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	qse_sed_setlinnum (sed, num);
+	qse_sed_setlinenum (this->sed, num);
 }
 
 Sed::ssize_t Sed::sin (

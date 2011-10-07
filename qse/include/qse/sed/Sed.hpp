@@ -267,6 +267,12 @@ public:
 		const loc_t*  loc = QSE_NULL   ///< error location
 	);
 
+	const char_t* getCompileId () const;
+
+	const char_t* setCompileId (
+		const char_t* id
+	);
+
 	///
 	/// The getConsoleLine() function returns the current line
 	/// number from an input console. 
