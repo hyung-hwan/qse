@@ -284,6 +284,9 @@
 /* char is wchar */
 #undef QSE_CHAR_IS_WCHAR
 
+/* enable qse_sed_setexectracer() */
+#undef QSE_ENABLE_SEDTRACER
+
 /* Big Endian */
 #undef QSE_ENDIAN_BIG
 
