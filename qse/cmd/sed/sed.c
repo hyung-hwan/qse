@@ -64,7 +64,9 @@ static qse_char_t* g_output_file = QSE_NULL;
 static int g_infile_pos = 0;
 static int g_option = 0;
 static int g_separate = 0;
+#if defined(QSE_ENABLE_SEDTRACER)
 static int g_trace = 0;
+#endif
 static qse_ulong_t g_memlimit = 0;
 static qse_sed_t* g_sed = QSE_NULL;
 
@@ -131,6 +133,9 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T("           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
 	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
 	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
+#if defined(QSE_ENABLE_SEDTRACER)
+	qse_fprintf (out, QSE_T(" -t        print command traces\n"));
+#endif
 	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X number fail the number'th memory allocation\n"));
@@ -160,7 +165,9 @@ static int add_script (const qse_char_t* str, int mem)
 	if (mem)
 	{
 		g_script.io[g_script.size].type = QSE_SED_IOSTD_MEM;
-		g_script.io[g_script.size].u.mem.ptr = str;
+		/* though its type is not qualified to be const, 
+		 * u.mem.ptr is actually const when used for input */
+		g_script.io[g_script.size].u.mem.ptr = (qse_char_t*)str;
 		g_script.io[g_script.size].u.mem.len = qse_strlen(str);
 	}
 	else
@@ -270,8 +277,13 @@ static int handle_args (int argc, qse_char_t* argv[])
 				break;
 
 			case QSE_T('t'):
+#if defined(QSE_ENABLE_SEDTRACER)
 				g_trace = 1;
 				break;
+#else
+				print_usage (QSE_STDERR, argc, argv);
+				goto oops;
+#endif
  
 			case QSE_T('m'):
 				g_memlimit = qse_strtoulong (opt.arg);
@@ -450,33 +462,39 @@ static void unset_intr_run (void)
 #endif
 }
 
+#if defined(QSE_ENABLE_SEDTRACER)
 static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_t* cmd)
 {
 	switch (op)
 	{
 #if 0
 		case QSE_SED_EXEC_READ:
-			qse_printf (QSE_T("reading...\n"));
+			qse_fprintf (QSE_STDERR, QSE_T("reading...\n"));
 			break;
 		case QSE_SED_EXEC_WRITE:
-			qse_printf (QSE_T("wrting...\n"));
+			qse_fprintf (QSE_STDERR, QSE_T("wrting...\n"));
 			break;
 #endif
+		/* TODO: use function to get hold space and pattern space and print them */
+
 		case QSE_SED_EXEC_MATCH:
-			qse_printf (QSE_T("matching address for [%c] in %s at line %lu\n"), 
-				cmd->type, 
-				(cmd->lid? cmd->lid: QSE_T("<<UNKNOWN>>")), 
-				(unsigned long)cmd->loc.line);
+			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] MA\n"), 
+				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
+				(unsigned long)cmd->loc.line,
+				cmd->type
+			);
 			break;
 
 		case QSE_SED_EXEC_EXEC:
-			qse_printf (QSE_T("executing [%c] in %s at line %lu\n"), 
-				cmd->type, 
-				(cmd->lid? cmd->lid: QSE_T("<<UNKNOWN>>")), 
-				(unsigned long)cmd->loc.line);
+			qse_fprintf (QSE_STDERR, QSE_T("%s:%lu [%c] EC\n"), 
+				((cmd->lid && cmd->lid[0])? cmd->lid: QSE_T("<<UNKNOWN>>")), 
+				(unsigned long)cmd->loc.line,
+				cmd->type
+			);
 			break;
 	}
 }
+#endif
 
 int sed_main (int argc, qse_char_t* argv[])
 {
@@ -559,7 +577,9 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
+#if defined(QSE_ENABLE_SEDTRACER)
 	if (g_trace) qse_sed_setexectracer (sed, trace_exec);
+#endif
 
 	if (g_separate && g_infile_pos > 0)
 	{

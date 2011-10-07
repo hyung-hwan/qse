@@ -61,6 +61,13 @@ struct qse_sed_cid_t
 	qse_sed_cid_t* next;		
 };
 
+typedef struct qse_sed_unknown_cid_t qse_sed_unknown_cid_t;
+struct qse_sed_unknown_cid_t
+{
+	qse_sed_cid_t* next;		
+	qse_char_t buf[1];
+};
+
 /** 
  * The qse_sed_t type defines a stream editor 
  */
@@ -94,7 +101,9 @@ struct qse_sed_t
 		qse_char_t        buf[1024];
 		int               eof;
 
-		qse_sed_cid_t*    cid;
+		qse_sed_cid_t*         cid;
+		qse_sed_unknown_cid_t  unknown_cid;
+
 		qse_sed_loc_t     loc; /**< location */
 		qse_cint_t        cc;  /**< last character read */
 		const qse_char_t* ptr; /**< beginning of the source text */
@@ -197,8 +206,10 @@ struct qse_sed_t
 		/** stop requested */
 		int stopreq;
 
+#ifdef QSE_ENABLE_SEDTRACER
 		/** trace function */
 		qse_sed_exec_tracer_t tracer;
+#endif
 	} e;
 };
 

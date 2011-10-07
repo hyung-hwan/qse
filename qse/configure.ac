@@ -228,6 +228,13 @@ then
 	[CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"]
 fi
 
+AC_ARG_ENABLE([sedtracer], [AS_HELP_STRING([--enable-sedtracer],[enable qse_sed_setexectracer() (default. yes)])],
+	enable_sedtracer_is=$enableval,enable_sedtracer_is=yes)
+if test "${enable_sedtracer_is}" = "yes"
+then
+	AC_DEFINE([QSE_ENABLE_SEDTRACER],[],[enable qse_sed_setexectracer()])
+fi
+
 AC_MSG_CHECKING([for socklen_t in sys/socket.h])
 AC_TRY_COMPILE([#define _POSIX_PII_SOCKET
 #include <sys/types.h>

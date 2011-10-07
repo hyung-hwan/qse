@@ -303,6 +303,7 @@ typedef int (*qse_sed_lformatter_t) (
 	int (*cwriter) (qse_sed_t*, qse_char_t)
 );
 
+#ifdef QSE_ENABLE_SEDTRACER
 enum qse_sed_exec_op_t
 {
 	QSE_SED_EXEC_READ,
@@ -317,6 +318,7 @@ typedef void (*qse_sed_exec_tracer_t) (
 	qse_sed_exec_op_t    op,
 	const qse_sed_cmd_t* cmd
 );
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -561,14 +563,24 @@ void qse_sed_setlinenum (
 	qse_size_t num    /**< a line number */
 );
 
+#ifdef QSE_ENABLE_SEDTRACER
+/**
+ * The qse_sed_getexectracer() function returns the execution tracer 
+ * function.
+ */
 qse_sed_exec_tracer_t qse_sed_getexectracer (
 	qse_sed_t* sed
 );
 
+/**
+ * The qse_sed_getexectracer() function sets a hook function via which 
+ * you can trace commands being executed.
+ */
 void qse_sed_setexectracer (
 	qse_sed_t*            sed,
 	qse_sed_exec_tracer_t tracer
 );
+#endif
 
 #ifdef __cplusplus
 }

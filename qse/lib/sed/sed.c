@@ -586,6 +586,9 @@ static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 
 static void free_all_cids (qse_sed_t* sed)
 {
+	if (sed->src.cid == (qse_sed_cid_t*)&sed->src.unknown_cid) 
+		sed->src.cid = sed->src.cid->next;
+
 	while (sed->src.cid)
 	{
 		qse_sed_cid_t* next = sed->src.cid->next;
@@ -3542,7 +3545,9 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 	while (!sed->e.stopreq)
 	{
+#ifdef QSE_ENABLE_SEDTRACER
 		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_READ, QSE_NULL);
+#endif
 
 		n = read_line (sed, 0);
 		if (n <= -1) { ret = -1; goto done; }
@@ -3561,7 +3566,9 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 
 			while (c != &sed->cmd.over)
 			{
+#ifdef QSE_ENABLE_SEDTRACER
 				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_MATCH, c);
+#endif
 
 				n = match_address (sed, c);
 				if (n <= -1) { ret = -1; goto done; }
@@ -3573,7 +3580,9 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 					continue;
 				}
 
+#ifdef QSE_ENABLE_SEDTRACER
 				if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_EXEC, c);
+#endif
 				j = exec_cmd (sed, c);
 				if (j == QSE_NULL) { ret = -1; goto done; }
 				if (j == &sed->cmd.quit_quiet) goto done;
@@ -3590,7 +3599,9 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
 			}
 		}
 
+#ifdef QSE_ENABLE_SEDTRACER
 		if (sed->e.tracer) sed->e.tracer (sed, QSE_SED_EXEC_WRITE, QSE_NULL);
+#endif
 		if (emit_output (sed, 0) <= -1) { ret = -1; goto done; }
 	}
 
@@ -3635,14 +3646,29 @@ const qse_char_t* qse_sed_setcompid (qse_sed_t* sed, const qse_char_t* id)
 	qse_sed_cid_t* cid;
 	qse_size_t len;
 	
+	if (sed->src.cid == (qse_sed_cid_t*)&sed->src.unknown_cid) 
+	{
+		/* if an error has occurred in a previously, you can't set it
+		 * any more */
+		return (const qse_char_t*)(sed->src.cid + 1);
+	}
+
 	len = qse_strlen (id);
-	cid = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
-	if (cid == QSE_NULL) return QSE_NULL;
-	
+	cid = QSE_MMGR_ALLOC (sed->mmgr, 
+		QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
+	if (cid == QSE_NULL) 
+	{
+		/* mark that an error has occurred */ 
+		sed->src.unknown_cid.buf[0] = QSE_T('\0');
+		cid = (qse_sed_cid_t*)&sed->src.unknown_cid;
+	}
+	else
+	{
+		qse_strcpy ((qse_char_t*)(cid + 1), id);
+	}
+
 	cid->next = sed->src.cid;
 	sed->src.cid = cid;
-	qse_strcpy ((qse_char_t*)(cid + 1), id);
-
 	return (const qse_char_t*)(cid + 1);
 }
 
@@ -3656,6 +3682,7 @@ void qse_sed_setlinenum (qse_sed_t* sed, qse_size_t num)
 	sed->e.in.num = num;
 }
 
+#ifdef QSE_ENABLE_SEDTRACER
 qse_sed_exec_tracer_t qse_sed_getexectracer (qse_sed_t* sed)
 {
 	return sed->e.tracer;
@@ -3665,4 +3692,5 @@ void qse_sed_setexectracer (qse_sed_t* sed, qse_sed_exec_tracer_t tracer)
 {
 	sed->e.tracer = tracer;
 }
+#endif
 
