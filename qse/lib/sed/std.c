@@ -45,6 +45,8 @@ struct xtn_t
 	struct
 	{
 		xtn_in_t in;
+		qse_char_t last;
+		int newline_squeezed;
 	} s;
 	struct
 	{
@@ -53,6 +55,44 @@ struct xtn_t
 	} e;
 };
 
+
+static int int_to_str (qse_size_t val, qse_char_t* buf, qse_size_t buflen)
+{
+	qse_size_t t;
+	qse_size_t rlen = 0;
+
+	t = val;
+	if (t == 0) rlen++;
+	else
+	{
+		/* non-zero values */
+		if (t < 0) { t = -t; rlen++; }
+		while (t > 0) { rlen++; t /= 10; }
+	}
+
+	if (rlen >= buflen) return -1; /* buffer too small */
+
+	buf[rlen] = QSE_T('\0');
+
+	t = val;
+	if (t == 0) buf[0] = QSE_T('0'); 
+	else
+	{
+		if (t < 0) t = -t;
+
+		/* fill in the buffer with digits */
+		while (t > 0) 
+		{
+			buf[--rlen] = (qse_char_t)(t % 10) + QSE_T('0');
+			t /= 10;
+		}
+
+		/* insert the negative sign if necessary */
+		if (val < 0) buf[--rlen] = QSE_T('-');
+	}
+
+	return 0;
+}
 
 qse_sed_t* qse_sed_openstd (qse_size_t xtnsize)
 {
@@ -151,7 +191,7 @@ static void close_main_stream (
 static int open_input_stream (
 	qse_sed_t* sed, qse_sed_io_arg_t* arg, qse_sed_iostd_t* io, xtn_in_t* base)
 {
-	/*xtn_t* xtn = (xtn_t*) QSE_XTN (sed);*/
+	xtn_t* xtn = (xtn_t*) QSE_XTN (sed);
 
 	QSE_ASSERT (io != QSE_NULL);
 	switch (io->type)
@@ -185,6 +225,25 @@ static int open_input_stream (
 			return -1;
 	}
 
+
+	if (base == &xtn->s.in)
+	{
+		/* reset script location */
+		if (io->type == QSE_SED_IOSTD_FILE) 
+		{
+			qse_sed_setcompid (sed, io->u.file);
+		}
+		else 
+		{
+			qse_char_t buf[64];
+			buf[0] = (io->type == QSE_SED_IOSTD_MEM)? QSE_T('M'): QSE_T('S');
+			buf[1] = QSE_T('#');
+			if (int_to_str (io - xtn->s.in.ptr, &buf[2], QSE_COUNTOF(buf) - 2) >= 0)
+				qse_sed_setcompid (sed, buf);
+		}
+		sed->src.loc.line = 1; 
+		sed->src.loc.colm = 1;
+	}
 	return 0;
 }
 
@@ -257,7 +316,6 @@ static qse_ssize_t read_input_stream (
 	qse_sed_iostd_t* io, * next;
 	void* old, * new;
 	qse_ssize_t n = 0;
-	int newline_forced = 0;
 
 	if (len > QSE_TYPE_MAX(qse_ssize_t)) len = QSE_TYPE_MAX(qse_ssize_t);
 
@@ -265,7 +323,14 @@ static qse_ssize_t read_input_stream (
 	{
 		io = base->cur;
 
+		if (base == &xtn->s.in && xtn->s.newline_squeezed) 
+		{
+			xtn->s.newline_squeezed = 0;
+			goto open_next;
+		}
+
 		QSE_ASSERT (io != QSE_NULL);
+
 		if (io->type == QSE_SED_IOSTD_MEM)
 		{
 			n = 0;
@@ -285,15 +350,9 @@ static qse_ssize_t read_input_stream (
 					qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
 				}
 			}
-			else if (newline_forced)
+			else if (base == &xtn->s.in)
 			{
-				/* set the line number to 0 for the newline
-				 * squeezed in. see the getnextsc() in sed.c 
-				 * to know how line and column numbers are
-				 * incremented */
-				sed->src.loc.line = 0; 
-				sed->src.loc.colm = 0;
-				n += newline_forced; 
+				xtn->s.last = buf[n-1];
 			}
 
 			break;
@@ -303,6 +362,16 @@ static qse_ssize_t read_input_stream (
 		/* == end of file on the current input stream == */
 		/* ============================================= */
 
+		if (base == &xtn->s.in && xtn->s.last != QSE_T('\n'))
+		{
+			/* TODO: different line termination convension */
+			buf[0] = QSE_T('\n'); 
+			n = 1;
+			xtn->s.newline_squeezed = 1;
+			break;
+		}
+
+	open_next:
 		next = base->cur + 1;
 		if (next->type == QSE_SED_IOSTD_NULL) 
 		{
@@ -327,25 +396,18 @@ static qse_ssize_t read_input_stream (
 			n = -1;
 			break;
 		}
+
+		/* successfuly opened the next input stream */
 		new = arg->handle;
 
 		arg->handle = old;
+
+		/* close the previous stream */
 		close_main_stream (sed, arg, io);
 
 		arg->handle = new;
+
 		base->cur++;
-
-		if (base == &xtn->s.in && !newline_forced)
-		{
-			/* == ONLY FOR A SCRIPT STREAM ==
-			 * squeeze in a new line in case the previous script 
-			 * stream doesn't end with a line terminator.*/  
-
-			/* TODO: support different line terminator */ 
-			buf[0] = QSE_T('\n'); 
-			buf++; len--;	
-			newline_forced = 1;
-		}
 	}
 	while (1);
 

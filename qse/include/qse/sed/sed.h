@@ -130,7 +130,9 @@ struct qse_sed_adr_t
 struct qse_sed_cmd_t
 {
 	qse_char_t type;
-	qse_sed_loc_t loc;
+
+	const qse_char_t* lid;
+	qse_sed_loc_t     loc;
 
 	int negated;
 
@@ -522,17 +524,39 @@ void qse_sed_setlformatter (
 );
 
 /**
+ * The qse_sed_getcompid() function returns the latest
+ * identifier successfully set with qse_sed_setcompid(). 
+ */
+const qse_char_t* qse_sed_getcompid (
+	qse_sed_t* sed
+);
+
+/**
+ * The qse_sed_setcompid() functions duplicates a string
+ * pointed to by @a id and stores it internally to identify
+ * the script currently being compiled. The lid field of the 
+ * current command being compiled in the script is set to the 
+ * lastest identifer successfully set with this function.
+ * If this function fails, the location set in the command
+ * may be wrong.
+ */
+const qse_char_t* qse_sed_setcompid (
+	qse_sed_t*        sed,
+	const qse_char_t* id
+);
+
+/**
  * The qse_sed_getlinnum() function gets the current input line number.
  * @return current input line number
  */
-qse_size_t qse_sed_getlinnum (
+qse_size_t qse_sed_getlinenum (
 	qse_sed_t* sed /**< stream editor */
 );
 
 /**
- * The qse_sed_setlinnum() function changes the current input line number.
+ * The qse_sed_setlinenum() function changes the current input line number.
  */
-void qse_sed_setlinnum (
+void qse_sed_setlinenum (
 	qse_sed_t* sed,   /**< stream editor */
 	qse_size_t num    /**< a line number */
 );

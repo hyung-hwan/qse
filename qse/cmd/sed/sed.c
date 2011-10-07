@@ -463,11 +463,17 @@ static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_
 			break;
 #endif
 		case QSE_SED_EXEC_MATCH:
-			qse_printf (QSE_T("matching address for [%c] at line %lu\n"), cmd->type, (unsigned long)cmd->loc.line);
+			qse_printf (QSE_T("matching address for [%c] in %s at line %lu\n"), 
+				cmd->type, 
+				(cmd->lid? cmd->lid: QSE_T("<<UNKNOWN>>")), 
+				(unsigned long)cmd->loc.line);
 			break;
 
 		case QSE_SED_EXEC_EXEC:
-			qse_printf (QSE_T("executing [%c] at line %lu\n"), cmd->type, (unsigned long)cmd->loc.line);
+			qse_printf (QSE_T("executing [%c] in %s at line %lu\n"), 
+				cmd->type, 
+				(cmd->lid? cmd->lid: QSE_T("<<UNKNOWN>>")), 
+				(unsigned long)cmd->loc.line);
 			break;
 	}
 }
