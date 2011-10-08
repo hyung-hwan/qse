@@ -161,22 +161,23 @@ static qse_sio_t* open_sio (qse_sed_t* sed, const qse_char_t* file, int flags)
 	return sio;
 }
 
+static const qse_char_t* sio_std_names[] =
+{
+	QSE_T("stdin"),
+	QSE_T("stdout"),
+	QSE_T("stderr"),
+};
+
 static qse_sio_t* open_sio_std (qse_sed_t* sed, qse_sio_std_t std, int flags)
 {
 	qse_sio_t* sio;
-	static const qse_char_t* std_names[] =
-	{
-		QSE_T("stdin"),
-		QSE_T("stdout"),
-		QSE_T("stderr"),
-	};
 
 	sio = qse_sio_openstd (sed->mmgr, 0, std, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
-		ea.ptr = std_names[std];
-		ea.len = qse_strlen (std_names[std]);
+		ea.ptr = sio_std_names[std];
+		ea.len = qse_strlen (sio_std_names[std]);
 		qse_sed_seterrnum (sed, QSE_SED_EIOFIL, &ea);
 	}
 	return sio;
@@ -231,15 +232,24 @@ static int open_input_stream (
 		/* reset script location */
 		if (io->type == QSE_SED_IOSTD_FILE) 
 		{
-			qse_sed_setcompid (sed, io->u.file);
+			qse_sed_setcompid (
+				sed, 
+				((io->u.file == QSE_NULL)? 
+					sio_std_names[QSE_SIO_STDIN]: io->u.file)
+			);
 		}
 		else 
 		{
 			qse_char_t buf[64];
+
+			/* format an identifier to be something like M#1, S#5 */
 			buf[0] = (io->type == QSE_SED_IOSTD_MEM)? QSE_T('M'): QSE_T('S');
 			buf[1] = QSE_T('#');
-			if (int_to_str (io - xtn->s.in.ptr, &buf[2], QSE_COUNTOF(buf) - 2) >= 0)
-				qse_sed_setcompid (sed, buf);
+			int_to_str (io - xtn->s.in.ptr, &buf[2], QSE_COUNTOF(buf) - 2);
+
+			/* don't care about failure int_to_str() though it's not 
+			 * likely to happen */
+			qse_sed_setcompid (sed, buf); 
 		}
 		sed->src.loc.line = 1; 
 		sed->src.loc.colm = 1;

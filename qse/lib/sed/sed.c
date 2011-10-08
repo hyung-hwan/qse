@@ -3653,6 +3653,8 @@ const qse_char_t* qse_sed_setcompid (qse_sed_t* sed, const qse_char_t* id)
 		return (const qse_char_t*)(sed->src.cid + 1);
 	}
 
+	if (id == QSE_NULL) id = QSE_T("");
+
 	len = qse_strlen (id);
 	cid = QSE_MMGR_ALLOC (sed->mmgr, 
 		QSE_SIZEOF(*cid) + ((len + 1) * QSE_SIZEOF(*id)));
