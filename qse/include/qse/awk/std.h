@@ -136,7 +136,7 @@ void* qse_awk_getxtnstd (
  * @endcode
  */
 int qse_awk_parsestd (
-	qse_awk_t*                      awk,
+	qse_awk_t*                   awk,
 	const qse_awk_parsestd_in_t* in,
 	qse_awk_parsestd_out_t*      out
 );

@@ -206,7 +206,7 @@ qse_sio_t* qse_sio_openstd (
 	qse_fio_hnd_t hnd;
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
 	return qse_sio_open (mmgr, xtnsize, 
-		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE /*| QSE_SIO_NOCLOSE*/);
+		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
 }
 
 void qse_sio_close (qse_sio_t* sio)
