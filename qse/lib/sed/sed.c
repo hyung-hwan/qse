@@ -113,6 +113,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 	/* the block has no data yet */
 	sed->cmd.fb.len = 0;
 
+
 	return 0;
 
 oops_7:
@@ -1927,7 +1928,8 @@ int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
 		sed->cmd.lb->len++;
 		if (sed->cmd.lb->len >= QSE_COUNTOF(sed->cmd.lb->buf))
 		{
-			/* increase a command buffer block as necessary */
+			/* the number of commands in the block has
+			 * reaches the maximum. add a new command block */
 			if (add_command_block (sed) <= -1) goto oops;
 		}
 	}

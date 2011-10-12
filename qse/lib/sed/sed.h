@@ -40,6 +40,8 @@ enum qse_sed_depth_t
 typedef enum qse_sed_depth_t qse_sed_depth_t;
 #endif
 
+/* structure to maintain data to append
+ * at the end of each cycle, triggered by r, R, and a */
 typedef struct qse_sed_app_t qse_sed_app_t;
 struct qse_sed_app_t
 {
@@ -55,12 +57,16 @@ struct qse_sed_cmd_blk_t
 	qse_sed_cmd_blk_t* next;
 };
 
+/* structure to maintain list of compiliation
+ * identifiers */
 typedef struct qse_sed_cid_t qse_sed_cid_t;
 struct qse_sed_cid_t
 {
 	qse_sed_cid_t* next;		
 };
 
+/* special structure to represent an unknown cid
+ * used once the action of setting a new cid fails */
 typedef struct qse_sed_unknown_cid_t qse_sed_unknown_cid_t;
 struct qse_sed_unknown_cid_t
 {

@@ -60,6 +60,20 @@
 #	undef QSE_HAVE_INLINE_NEVER
 #endif
 
+#if defined(_WIN32)
+#	define QSE_IMPORT __declspec(dllimport)
+#	define QSE_EXPORT __declspec(dllexport)
+#	define QSE_PRIVATE 
+#elif defined(__GNUC__) && (__GNUC__>=4)
+#	define QSE_IMPORT __attribute__((visibility("default")))
+#	define QSE_EXPORT __attribute__((visibility("default")))
+#	define QSE_PRIVATE __attribute__((visibility("hidden")))
+/*#	define QSE_PRIVATE __attribute__((visibility("internal")))*/
+#else
+#	define QSE_IMPORT
+#	define QSE_EXPORT
+#	define QSE_PRIVATE
+#endif
 
 /** 
  * The #QSE_NULL macro defines a special pointer value to indicate an error or

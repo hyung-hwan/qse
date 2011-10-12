@@ -624,6 +624,7 @@ int sed_main (int argc, qse_char_t* argv[])
 				print_exec_error (sed);
 				goto oops;
 			}
+
 			if (qse_sed_isstop (sed)) break;
 
 			g_infile_pos++;
