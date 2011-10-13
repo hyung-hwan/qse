@@ -24,13 +24,25 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+typedef struct qse_dir_ent_t qse_dir_ent_t;
+
+struct qse_dir_ent_t
+{
+	enum
+	{
+		QSE_DIR_ENT_UNKNOWN,
+		QSE_DIR_ENT_DIRECTORY,
+		QSE_DIR_ENT_REGULAR,
+		QSE_DIR_ENT_FIFO,
+		QSE_DIR_ENT_CHAR,
+		QSE_DIR_ENT_BLOCK,
+		QSE_DIR_ENT_LINK
+	} type;
+	qse_foff_t size;
+	const qse_char_t* name;
+};
 
 typedef struct qse_dir_t qse_dir_t;
-
-struct qse_dir_t
-{
-	QSE_DEFINE_COMMON_FIELDS (dir)
-};
 
 #ifdef __cplusplus
 extern "C" {
