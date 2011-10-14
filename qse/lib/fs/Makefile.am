@@ -7,7 +7,8 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsefs.la
 libqsefs_la_SOURCES = \
-	dir.c
+	dir.c \
+	path.c
 
 libqsefs_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
 libqsefs_la_LIBADD = -lqsecmn

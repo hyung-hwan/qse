@@ -48,6 +48,37 @@ typedef struct qse_dir_t qse_dir_t;
 extern "C" {
 #endif
 
+QSE_DEFINE_COMMON_FUNCTIONS (dir)
+
+qse_dir_t* qse_dir_open (
+	qse_mmgr_t*       mmgr, 
+	qse_size_t        xtnsize,
+	const qse_char_t* name
+);
+
+void qse_dir_close (
+	qse_dir_t*        dir
+);
+
+qse_dir_ent_t* qse_dir_read (
+	qse_dir_t*        dir
+);
+
+int qse_dir_change (
+	qse_dir_t*        dir,
+	const qse_char_t* name
+);
+
+int qse_dir_push (
+	qse_dir_t*        dir,
+	const qse_char_t* name
+);
+
+int qse_dir_pop (
+	qse_dir_t*        dir,
+	const qse_char_t* name
+);
+
 #ifdef __cplusplus
 }
 #endif

@@ -72,7 +72,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsefs_la_DEPENDENCIES =
-am_libqsefs_la_OBJECTS = dir.lo
+am_libqsefs_la_OBJECTS = dir.lo path.lo
 libqsefs_la_OBJECTS = $(am_libqsefs_la_OBJECTS)
 libqsefs_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -244,7 +244,8 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsefs.la
 libqsefs_la_SOURCES = \
-	dir.c
+	dir.c \
+	path.c
 
 libqsefs_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
 libqsefs_la_LIBADD = -lqsecmn
@@ -323,6 +324,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
