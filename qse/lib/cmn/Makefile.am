@@ -25,11 +25,12 @@ libqsecmn_la_SOURCES = \
 	main.c \
 	mem.c \
 	mem.h \
-	misc.c \
 	oht.c \
 	opt.c \
-	pma.c \
+	path-basename.c \
+	path-canon.c \
 	pio.c \
+	pma.c \
 	rbt.c \
 	rex.c \
 	sio.c \

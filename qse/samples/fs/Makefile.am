@@ -6,12 +6,10 @@ AM_CPPFLAGS = \
 	-I$(includedir) 
 	
 bin_PROGRAMS = \
-	dir01 \
-	path01
+	dir01
 
 LDFLAGS += -L../../lib/cmn -L../../lib/fs
 LDADD = -lqsefs -lqsecmn
 
 dir01_SOURCES = dir01.c
-path01_SOURCES = path01.c
 

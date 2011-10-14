@@ -75,17 +75,17 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-search.lo alg-sort.lo assert.lo chr.lo \
 	chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo fma.lo \
-	main.lo mem.lo misc.lo oht.lo opt.lo pma.lo pio.lo rbt.lo \
-	rex.lo sio.lo sll.lo str-beg.lo str-cat.lo str-chr.lo \
-	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
-	str-dynm.lo str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo \
-	str-fnmat.lo str-incl.lo str-len.lo str-pac.lo str-pbrk.lo \
-	str-put.lo str-rev.lo str-rot.lo str-set.lo str-spl.lo \
-	str-spn.lo str-str.lo str-subst.lo str-tok.lo str-trm.lo \
-	str-word.lo time.lo tio.lo tio-get.lo tio-put.lo tre.lo \
-	tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
-	tre-match-parallel.lo tre-parse.lo tre-stack.lo stdio.lo \
-	xma.lo
+	main.lo mem.lo oht.lo opt.lo path-basename.lo path-canon.lo \
+	pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo str-beg.lo \
+	str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo \
+	str-del.lo str-dup.lo str-dynm.lo str-dynw.lo str-end.lo \
+	str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo \
+	str-pac.lo str-pbrk.lo str-put.lo str-rev.lo str-rot.lo \
+	str-set.lo str-spl.lo str-spn.lo str-str.lo str-subst.lo \
+	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tio-get.lo \
+	tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
+	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
+	tre-stack.lo stdio.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -291,11 +291,12 @@ libqsecmn_la_SOURCES = \
 	main.c \
 	mem.c \
 	mem.h \
-	misc.c \
 	oht.c \
 	opt.c \
-	pma.c \
+	path-basename.c \
+	path-canon.c \
 	pio.c \
+	pma.c \
 	rbt.c \
 	rex.c \
 	sio.c \
@@ -448,9 +449,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path-basename.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path-canon.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Plo@am__quote@

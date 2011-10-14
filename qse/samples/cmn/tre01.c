@@ -2,7 +2,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/tre.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 
 static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])

@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 
 
 const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)

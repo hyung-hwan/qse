@@ -24,7 +24,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include "awk.h"
 
