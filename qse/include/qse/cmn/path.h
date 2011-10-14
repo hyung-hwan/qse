@@ -18,8 +18,12 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_CMN_MISC_H_
-#define _QSE_CMN_MISC_H_
+#ifndef _QSE_CMN_PATH_H_
+#define _QSE_CMN_PATH_H_
+
+/** @file
+ * This file provides functions for simple path name manipulation.
+ */
 
 #include <qse/types.h>
 #include <qse/macros.h>
@@ -40,6 +44,24 @@ const qse_mchar_t* qse_mbsbasename (
 
 const qse_wchar_t* qse_wcsbasename (
 	const qse_wchar_t* path
+);
+
+/*
+ * The qse_canonpath() function deletes unnecessary path segments
+ * from a path name 'path' and stores it to a memory buffer pointed
+ * to by 'canon'. It null-terminates the canonical path in 'canon' and
+ * returns the number of characters excluding the terminating null.
+ * The caller must ensure that it is large enough before calling this
+ * because this function does not check the size of the memory buffer.
+ * Since the canonical path cannot be larger than the original path,
+ * you can simply ensure this by providing a memory buffer as long as
+ * the number of characters and a terminating null in the original path.
+ *
+ * @return the number of characters in the resulting canonical path.
+ */
+qse_size_t qse_canonpath (
+	const qse_char_t* path,
+	qse_char_t*       canon
 );
 
 #ifdef __cplusplus

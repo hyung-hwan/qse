@@ -756,6 +756,29 @@ int qse_sed_execstd (
 	return n;
 }
 
+int qse_sed_compstdfile (qse_sed_t* sed, const qse_char_t* file)
+{
+	qse_sed_iostd_t in[2];
+
+	in[0].type = QSE_SED_IOSTD_FILE;
+	in[0].u.file = file;
+	in[1].type = QSE_SED_IOSTD_NULL;
+
+	return qse_sed_compstd (sed, in, QSE_NULL);
+}
+
+int qse_sed_compstdmem (qse_sed_t* sed, const qse_char_t* script)
+{
+	qse_sed_iostd_t in[2];
+
+	in[0].type = QSE_SED_IOSTD_MEM;
+	in[0].u.mem.ptr = script;
+	in[0].u.mem.len = qse_strlen(script);
+	in[1].type = QSE_SED_IOSTD_NULL;
+
+	return qse_sed_compstd (sed, in, QSE_NULL);
+}
+
 int qse_sed_execstdfile (
 	qse_sed_t* sed, const qse_char_t* infile, const qse_char_t* outfile)
 {

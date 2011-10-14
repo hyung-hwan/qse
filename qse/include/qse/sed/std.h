@@ -112,6 +112,26 @@ int qse_sed_compstd (
 );
 
 /**
+ * The qse_sed_compstdfile() function compiles a sed script from
+ * a single file @a infile. 
+ * @return 0 on success, -1 on failure
+ */
+int qse_sed_compstdfile (
+	qse_sed_t*        sed, 
+	const qse_char_t* infile
+);
+
+/**
+ * The qse_sed_compstdmem() function compiles a sed script stored
+ * in a null-terminated string pointed to by @a str.
+ * @return 0 on success, -1 on failure
+ */
+int qse_sed_compstdmem (
+	qse_sed_t*        sed, 
+	const qse_char_t* str
+);
+
+/**
  * The qse_sed_execstd() function executes a compiled script
  * over input streams @a in and an output stream @a out.
  *

@@ -1,5 +1,5 @@
 
-#include <qse/fs/dir.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>

@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/fs/path.h>
+#include <qse/cmn/path.h>
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #	define ISSEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
@@ -59,18 +59,23 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		has_root = 1;
 
 	#if defined(_WIN32)
-		/* handle UNC path */
+		/* handle UNC path for Windows */
 		if (ISSEP(*ptr)) 
 		{
 			*dst++ = *ptr++;
 
-			/* if it starts with \\, process host name */
-			while (!ISSEPNIL(*ptr)) *dst++ = *ptr++;
-
-			/* \ following the host name. note that
-			 * \\\ is treated as if the host name is empty. */
-
-			if (ISSEP(*ptr)) *dst++ = *ptr++;
+			if (ISSEPNIL(*ptr))
+			{
+				/* if there is another separator after \\,
+				 * it's not an UNC path. */
+				dst--;
+			}
+			else
+			{
+				/* if it starts with \\, process host name */
+				do { *dst++ = *ptr++; } while (!ISSEPNIL(*ptr));
+				if (ISSEP(*ptr)) *dst++ = *ptr++;
+			}
 		}
 	#endif
 	}
@@ -183,8 +188,13 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		else
 		{
 		normal:
-			while (seg <= ptr) *dst++ = *seg++;
-			if (ISSEP(*ptr)) ptr++;
+			while (seg < ptr) *dst++ = *seg++;
+			if (ISSEP(*ptr)) 
+			{
+				/* this segment ended with a separator */
+				*dst++ = *seg++; /* copy the separator */
+				ptr++; /* move forward the pointer */
+			}
 		}
 	}
 	while (1);

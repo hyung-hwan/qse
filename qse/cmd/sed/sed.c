@@ -25,7 +25,7 @@
 #include <qse/cmn/opt.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/xma.h>
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 

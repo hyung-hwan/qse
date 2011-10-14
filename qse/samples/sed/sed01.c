@@ -42,7 +42,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	if (qse_sed_compstd (sed, argv[1]) <= -1)
+	if (qse_sed_compstdmem (sed, argv[1]) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s\n"), qse_sed_geterrmsg(sed));
 		goto oops;

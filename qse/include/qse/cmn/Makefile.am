@@ -13,9 +13,9 @@ pkginclude_HEADERS = \
 	main.h \
 	map.h \
 	mem.h \
-	misc.h \
 	oht.h \
 	opt.h \
+	path.h \
 	pio.h \
 	pma.h \
 	rbt.h \

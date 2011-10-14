@@ -24,7 +24,7 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/xma.h>

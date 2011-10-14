@@ -38,7 +38,8 @@ bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
 	str$(EXEEXT) sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) \
 	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) \
 	pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) \
-	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) tre01$(EXEEXT)
+	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) path01$(EXEEXT) \
+	tre01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -95,6 +96,10 @@ am_oht_OBJECTS = oht.$(OBJEXT)
 oht_OBJECTS = $(am_oht_OBJECTS)
 oht_LDADD = $(LDADD)
 oht_DEPENDENCIES =
+am_path01_OBJECTS = path01.$(OBJEXT)
+path01_OBJECTS = $(am_path01_OBJECTS)
+path01_LDADD = $(LDADD)
+path01_DEPENDENCIES =
 am_pio_OBJECTS = pio.$(OBJEXT)
 pio_OBJECTS = $(am_pio_OBJECTS)
 pio_LDADD = $(LDADD)
@@ -150,15 +155,16 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) $(fio_SOURCES) \
 	$(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
-	$(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(main2_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
+	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) \
+	$(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio_SOURCES) $(fma_SOURCES) $(htb_SOURCES) $(lda_SOURCES) \
-	$(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) $(pio_SOURCES) \
-	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) \
-	$(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) \
-	$(xma_SOURCES)
+	$(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) \
+	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -329,6 +335,7 @@ main_SOURCES = main.c
 main2_SOURCES = main2.c
 rex01_SOURCES = rex01.c
 env_SOURCES = env.c
+path01_SOURCES = path01.c
 tre01_SOURCES = tre01.c
 all: all-am
 
@@ -437,6 +444,9 @@ main2$(EXEEXT): $(main2_OBJECTS) $(main2_DEPENDENCIES)
 oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) 
 	@rm -f oht$(EXEEXT)
 	$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
+path01$(EXEEXT): $(path01_OBJECTS) $(path01_DEPENDENCIES) 
+	@rm -f path01$(EXEEXT)
+	$(LINK) $(path01_OBJECTS) $(path01_LDADD) $(LIBS)
 pio$(EXEEXT): $(pio_OBJECTS) $(pio_DEPENDENCIES) 
 	@rm -f pio$(EXEEXT)
 	$(LINK) $(pio_OBJECTS) $(pio_LDADD) $(LIBS)
@@ -484,6 +494,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Po@am__quote@

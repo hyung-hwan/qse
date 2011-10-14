@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = dir01$(EXEEXT) path01$(EXEEXT)
+bin_PROGRAMS = dir01$(EXEEXT)
 subdir = samples/fs
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,10 +55,6 @@ am_dir01_OBJECTS = dir01.$(OBJEXT)
 dir01_OBJECTS = $(am_dir01_OBJECTS)
 dir01_LDADD = $(LDADD)
 dir01_DEPENDENCIES =
-am_path01_OBJECTS = path01.$(OBJEXT)
-path01_OBJECTS = $(am_path01_OBJECTS)
-path01_LDADD = $(LDADD)
-path01_DEPENDENCIES =
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -72,8 +68,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(dir01_SOURCES) $(path01_SOURCES)
-DIST_SOURCES = $(dir01_SOURCES) $(path01_SOURCES)
+SOURCES = $(dir01_SOURCES)
+DIST_SOURCES = $(dir01_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -226,7 +222,6 @@ AM_CPPFLAGS = \
 
 LDADD = -lqsefs -lqsecmn
 dir01_SOURCES = dir01.c
-path01_SOURCES = path01.c
 all: all-am
 
 .SUFFIXES:
@@ -307,9 +302,6 @@ clean-binPROGRAMS:
 dir01$(EXEEXT): $(dir01_OBJECTS) $(dir01_DEPENDENCIES) 
 	@rm -f dir01$(EXEEXT)
 	$(LINK) $(dir01_OBJECTS) $(dir01_LDADD) $(LIBS)
-path01$(EXEEXT): $(path01_OBJECTS) $(path01_DEPENDENCIES) 
-	@rm -f path01$(EXEEXT)
-	$(LINK) $(path01_OBJECTS) $(path01_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -318,7 +310,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -24,7 +24,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/misc.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 #include "../cmn/mem.h"
 
