@@ -24,8 +24,6 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-typedef struct qse_dir_ent_t qse_dir_ent_t;
-
 struct qse_dir_ent_t
 {
 	enum
@@ -38,8 +36,18 @@ struct qse_dir_ent_t
 		QSE_DIR_ENT_BLOCK,
 		QSE_DIR_ENT_LINK
 	} type;
-	qse_foff_t size;
-	const qse_char_t* name;
+	qse_foff_t  size;
+	qse_char_t* name;
+};
+
+typedef struct qse_dir_ent_t qse_dir_ent_t;
+
+struct qse_dir_t
+{
+	QSE_DEFINE_COMMON_FIELDS (dir)
+	qse_dir_ent_t ent;
+	qse_char_t*   curdir;
+	void*         info;
 };
 
 typedef struct qse_dir_t qse_dir_t;
@@ -52,12 +60,20 @@ QSE_DEFINE_COMMON_FUNCTIONS (dir)
 
 qse_dir_t* qse_dir_open (
 	qse_mmgr_t*       mmgr, 
-	qse_size_t        xtnsize,
-	const qse_char_t* name
+	qse_size_t        xtnsize
 );
 
 void qse_dir_close (
 	qse_dir_t*        dir
+);
+
+int qse_dir_init (
+	qse_dir_t*  dir,
+	qse_mmgr_t* mmgr
+);
+
+void qse_dir_fini (
+	qse_dir_t* dir
 );
 
 qse_dir_ent_t* qse_dir_read (
