@@ -961,6 +961,11 @@ qse_mchar_t* qse_mbsxdup2 (
 	qse_mmgr_t*        mmgr
 );
 
+qse_mchar_t* qse_mbsadup (
+	const qse_mchar_t* str[],
+	qse_mmgr_t*        mmgr
+);
+
 qse_wchar_t* qse_wcsdup (
 	const qse_wchar_t* str,
 	qse_mmgr_t*        mmgr
@@ -986,16 +991,23 @@ qse_wchar_t* qse_wcsxdup2 (
 	qse_mmgr_t*        mmgr
 );
 
+qse_wchar_t* qse_wcsadup (
+	const qse_wchar_t* str[],
+	qse_mmgr_t*        mmgr
+);
+
 #ifdef QSE_CHAR_IS_MCHAR
 #	define qse_strdup(s,mmgr)             qse_mbsdup(s,mmgr)
 #	define qse_strdup2(s1,s2,mmgr)        qse_mbsdup2(s1,s2,mmgr)
 #	define qse_strxdup(s,l,mmgr)          qse_mbsxdup(s,l,mmgr)
 #	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_mbsxdup(s1,l1,s2,l2,mmgr)
+#	define qse_stradup(sa,mmgr)           qse_mbsadup(sa,mmgr)
 #else
 #	define qse_strdup(s,mmgr)             qse_wcsdup(s,mmgr)
 #	define qse_strdup2(s1,s2,mmgr)        qse_wcsdup2(s1,s2,mmgr)
 #	define qse_strxdup(s,l,mmgr)          qse_wcsxdup(s,l,mmgr)
 #	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_wcsxdup(s1,l1,s2,l2,mmgr)
+#	define qse_stradup(sa,mmgr)           qse_wcsadup(sa,mmgr)
 #endif
 
 /**

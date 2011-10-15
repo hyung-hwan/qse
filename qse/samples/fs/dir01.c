@@ -3,24 +3,19 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
-int dir_main (int argc, qse_char_t* argv[])
+static void list (qse_dir_t* dir, const qse_char_t* name)
 {
-	int n;
-	qse_dir_t* dir;
 	qse_dir_ent_t* ent;
 
-	if (argc != 2)
+	if (qse_dir_change (dir, name) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <directory>\n"), argv[0]);
-		return -1;
-	}
+		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot change directory to %s\n"), name);
+		return;
+	}	
 
-	dir = qse_dir_open (QSE_NULL, 0, argv[1]);
-	if (dir == QSE_NULL)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot open directory\n"), argv[1]);
-		return -1;
-	}
+	qse_printf (QSE_T("----------------------------------------------------------------\n"), dir->curdir);
+	qse_printf (QSE_T("CURRENT DIRECTORY: [%s]\n"), dir->curdir);
+	qse_printf (QSE_T("----------------------------------------------------------------\n"), dir->curdir);
 
 	do
 	{
@@ -33,6 +28,29 @@ int dir_main (int argc, qse_char_t* argv[])
 			qse_printf (QSE_T("      %16lu %s\n"), (unsigned long)ent->size, ent->name);
 	}
 	while (1);
+
+}
+
+int dir_main (int argc, qse_char_t* argv[])
+{
+	int n;
+	qse_dir_t* dir;
+
+	if (argc != 2)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <directory>\n"), argv[0]);
+		return -1;
+	}
+
+	dir = qse_dir_open (QSE_NULL, 0);
+	if (dir == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot open directory\n"), argv[1]);
+		return -1;
+	}
+
+	list (dir, argv[1]);
+	list (dir, QSE_T(".."));
 
 	qse_dir_close (dir);
 	return n;
