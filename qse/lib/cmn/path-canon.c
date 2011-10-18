@@ -28,6 +28,23 @@
 
 #define ISSEPNIL(c) (ISSEP(c) || ((c) == QSE_T('\0')))
 
+#define ISDRIVE(s) \
+	(((s[0] >= QSE_T('A') && s[0] <= QSE_T('Z')) || \
+	  (s[0] >= QSE_T('a') && s[0] <= QSE_T('a'))) && \
+	 s[1] == QSE_T(':'))
+
+int qse_isabspath (const qse_char_t* path)
+{
+	if (ISSEP(path[0])) return 1;
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	/* a drive like c:tmp is absolute in positioning the drive.
+	 * but the path within the drive is kind of relative */
+	if (ISDRIVE(path)) return 1;
+#endif
+     return 0;
+
+}
+
 qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 {
 	const qse_char_t* ptr;
@@ -39,9 +56,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 	dst = canon;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	if (((ptr[0] >= QSE_T('A') && ptr[0] <= QSE_T('Z')) ||
-	     (ptr[0] >= QSE_T('a') && ptr[0] <= QSE_T('z'))) &&
-	    ptr[1] == QSE_T(':'))
+	if (ISDRIVE(ptr))
 	{
 		/* handle drive letter */
 		*dst++ = *ptr++; /* drive letter */
