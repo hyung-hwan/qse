@@ -147,6 +147,9 @@ int qse_fio_init (
 		if (flags & QSE_FIO_SYNC) 
 			flag_and_attr |= FILE_FLAG_WRITE_THROUGH;
 
+		if (flags & QSE_FIO_NOFOLLOW)
+			flag_and_attr |= FILE_FLAG_OPEN_REPARSE_POINT;
+
 		/* these two are just hints to OS */
 		if (flags & QSE_FIO_RANDOM) 
 			flag_and_attr |= FILE_FLAG_RANDOM_ACCESS;
@@ -349,6 +352,10 @@ int qse_fio_init (
 		if (flags & QSE_FIO_TRUNCATE) desired_access |= O_TRUNC;
 		if (flags & QSE_FIO_EXCLUSIVE) desired_access |= O_EXCL;
 		if (flags & QSE_FIO_SYNC) desired_access |= O_SYNC;
+
+	#if defined(O_NOFOLLOW)
+		if (flags & QSE_FIO_NOFOLLOW) desired_access |= O_NOFOLLOW;
+	#endif
 
 	#if defined(O_LARGEFILE)
 		desired_access |= O_LARGEFILE;

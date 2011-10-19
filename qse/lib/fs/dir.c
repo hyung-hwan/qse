@@ -31,6 +31,7 @@
 #	error NOT IMPLEMENTED
 #else
 #	include <sys/types.h>
+#    include <sys/stat.h>
 #	include <dirent.h>
 #endif
 
@@ -383,6 +384,25 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 		return QSE_NULL;
 	}
 
+#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
+	if (ent->d_type != DT_DIR)
+#endif
+	{
+		int x;
+	#if defined(HAVE_LSTAT64)
+		struct stat64 st;
+		x = lstat64 (ent->d_name, &st);
+	#else
+		struct stat st;
+		x = lstat (ent->d_name, &st);
+	#endif
+		if (x == -1)
+		{
+			/*TODO: dir->errnum = ... */
+			return QSE_NULL;
+		}
+	}
+
 	if (set_entry_name (dir, ent->d_name) <= -1) return QSE_NULL;
 
 	#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
@@ -393,15 +413,17 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 			dir->ent.type = QSE_DIR_ENT_DIRECTORY;
 			break;
 			
+		case DT_REG:
+			dir->ent.type = QSE_DIR_ENT_REGULAR;
+			break;
+			
 		default:
 			dir->ent.size = 0;
 			dir->ent.type = QSE_DIR_ENT_UNKNOWN;
 			break;
 	}
-
-	#else
-	/* call lstat??? */
 	#endif
+
 #endif
 	return &dir->ent;
 }

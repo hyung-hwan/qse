@@ -42,6 +42,7 @@ enum qse_fio_open_flag_t
 	/** don't close an I/O handle in qse_fio_fini() and qse_fio_close() */
 	QSE_FIO_NOCLOSE       = (1 << 4),
 
+	/* normal open flags */
 	QSE_FIO_READ          = (1 << 8),
 	QSE_FIO_WRITE         = (1 << 9),
 	QSE_FIO_APPEND        = (1 << 10),
@@ -50,10 +51,15 @@ enum qse_fio_open_flag_t
 	QSE_FIO_TRUNCATE      = (1 << 12),
 	QSE_FIO_EXCLUSIVE     = (1 << 13),
 	QSE_FIO_SYNC          = (1 << 14),
+	
+	/* do not follow a symbolic link, only on a supported platform */
+	QSE_FIO_NOFOLLOW      = (1 << 15),
 
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
 	QSE_FIO_NOSHRD        = (1 << 24),
 	QSE_FIO_NOSHWR        = (1 << 25),
+
+	/* for WIN32 only. harmless(no effect) when used on other platforms */
 	QSE_FIO_RANDOM        = (1 << 26), /* hint that access be random */
 	QSE_FIO_SEQUENTIAL    = (1 << 27)  /* hint that access is sequential */
 };
