@@ -60,6 +60,17 @@ const qse_wchar_t* qse_wcsbasename (
 );
 
 /**
+ * The qse_isabspath() function determines if a path name is absolute.
+ * A path name beginning with a segment separator is absolute.
+ * On Win32/OS2/DOS, it also returns 1 if a path name begins with a drive 
+ * letter followed by a colon.
+ * @return 1 if absolute, 0 if not.
+ */
+int qse_isabspath (
+	const qse_char_t* path
+);
+
+/**
  * The qse_canonpath() function canonicalizes a path name @a path by deleting 
  * unnecessary path segments from it and stores the result to a memory buffer 
  * pointed to by @a canon. Canonicalization is purely performed on the path
