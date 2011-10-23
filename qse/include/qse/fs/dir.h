@@ -24,6 +24,16 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+enum qse_dir_errnum_t
+{
+	QSE_DIR_ENOERR = 0,
+	QSE_DIR_EINTERN,
+
+	QSE_DIR_ENOMEM,
+	QSE_DIR_EINVAL
+};
+typedef enum qse_dir_errnum_t qse_dir_errnum_t;
+
 struct qse_dir_ent_t
 {
 	enum
@@ -36,8 +46,8 @@ struct qse_dir_ent_t
 		QSE_DIR_ENT_BLOCK,
 		QSE_DIR_ENT_LINK
 	} type;
-	qse_foff_t  size;
 	qse_char_t* name;
+	qse_foff_t  size;
 };
 
 typedef struct qse_dir_ent_t qse_dir_ent_t;
@@ -45,9 +55,10 @@ typedef struct qse_dir_ent_t qse_dir_ent_t;
 struct qse_dir_t
 {
 	QSE_DEFINE_COMMON_FIELDS (dir)
-	qse_dir_ent_t ent;
-	qse_char_t*   curdir;
-	void*         info;
+	qse_dir_errnum_t errnum;
+	qse_dir_ent_t    ent;
+	qse_char_t*      curdir;
+	void*            info;
 };
 
 typedef struct qse_dir_t qse_dir_t;
@@ -73,6 +84,14 @@ int qse_dir_init (
 );
 
 void qse_dir_fini (
+	qse_dir_t* dir
+);
+
+qse_dir_errnum_t qse_dir_geterrnum (
+	qse_dir_t* dir
+);
+
+const qse_char_t* qse_dir_geterrmsg (
 	qse_dir_t* dir
 );
 

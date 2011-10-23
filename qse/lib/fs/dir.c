@@ -433,3 +433,22 @@ int qse_dir_rewind (qse_dir_t* dir)
 	return 0;
 }
 
+qse_dir_errnum_t qse_dir_geterrnum (qse_dir_t* dir)
+{
+	return dir->errnum;
+}
+
+const qse_char_t* qse_dir_geterrmsg (qse_dir_t* dir)
+{
+	static const qse_char_t* errstr[] =
+ 	{
+		QSE_T("no error"),
+		QSE_T("internal error that should never have happened"),
+
+		QSE_T("insufficient memory"),
+		QSE_T("invalid parameter or data"),
+	};
+
+	return (dir->errnum >= 0 && dir->errnum < QSE_COUNTOF(errstr))?
+		errstr[dir->errnum]: QSE_T("unknown error");
+}
