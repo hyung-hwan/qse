@@ -44,7 +44,7 @@ struct info_t
 #if defined(_WIN32)
 	HANDLE handle;
 	WIN32_FIND_DATA wfd;
-	int no_more_files;
+	unsigned int first_after_change;
 #elif defined(__OS2__)
 #elif defined(__DOS__)
 #else
@@ -199,6 +199,13 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	 * otherwise, .\* would be transformed to * by qse_canonpath() */
 	dirname[idx-1] = QSE_T('*'); 
 
+	/*
+	I don't return a short name so FindExInfoBasic can speed up the function.
+	FindFirstFileEx (
+		dirname, FindExInfoBasic, 
+		&wfd, FindExSearchNameMatch, 
+		NULL, FIND_FIRST_EX_CASE_SENSITIVE);
+	*/
 	handle = FindFirstFile (dirname, &wfd);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{
@@ -222,8 +229,10 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	if (dir->curdir) QSE_MMGR_FREE (dir->mmgr, dir->curdir);
 	dirname[idx-1] = QSE_T('\0'); /* drop the asterisk */
 	dir->curdir = dirname;
+	dir->first_after_change = 1;
 
 	return 0;
+
 #elif defined(__OS2__)
 #	error NOT IMPLEMENTED
 #elif defined(__DOS__)
@@ -354,15 +363,48 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 
 #if defined(_WIN32)
 
+#if 0
 	if (info->no_more_files) 
 	{
 		dir->errnum = QSE_DIR_ENOERR;
 		return QSE_NULL;
 	}
+#endif
+	if (info->first_after_change)
+	{
+		/* call set_entry_name before changing other fields
+		 * in dir->ent not to pollute it in case set_entry_name fails */
+		if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
 
-	/* call set_entry_name before changing other fields
-	 * in dir->ent not to pollute it in case set_entry_name fails */
-	if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
+		info->first_after_change = 0;
+	}
+	else
+	{
+		if (FindNextFile (info->handle, &info->wfd) == FALSE) 
+		{
+			DWORD e = GetLastError();
+			if (e == ERROR_NO_MORE_FILES)
+			{
+				//info->no_more_files = 1;
+				dir->errnum = QSE_DIR_ENOERR;
+				return QSE_NULL;
+			}
+			else
+			{
+				dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
+				              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
+				              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
+				              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
+				                                           QSE_DIR_ESYSTEM;
+				return QSE_NULL;
+			}
+		}
+
+		/* call set_entry_name before changing other fields
+		 * in dir->ent not to pollute it in case set_entry_name fails */
+		if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
+	}
+
 
 	if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
@@ -378,24 +420,6 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 		dir->ent.type = QSE_DIR_ENT_UNKNOWN;
 	}
 
-	if (FindNextFile (info->handle, &info->wfd) == FALSE) 
-	{
-		/*if (GetLastError() == ERROR_NO_MORE_FILES) */
-		DWORD e = GetLastError();
-		if (e == ERROR_NO_MORE_FILES)
-		{
-			info->no_more_files = 1;
-		}
-		else
-		{
-			dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
-			              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
-			              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
-			              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
-			                                           QSE_DIR_ESYSTEM;
-			return QSE_NULL;
-		}
-	}
 #elif defined(__OS2__)
 #	error NOT IMPLEMENTED
 #elif defined(__DOS__)
