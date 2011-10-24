@@ -30,7 +30,11 @@ enum qse_dir_errnum_t
 	QSE_DIR_EINTERN,
 
 	QSE_DIR_ENOMEM,
-	QSE_DIR_EINVAL
+	QSE_DIR_EINVAL,
+	QSE_DIR_EACCES,
+	QSE_DIR_ENOENT,
+	QSE_DIR_ENOTDIR,
+	QSE_DIR_ESYSTEM
 };
 typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 

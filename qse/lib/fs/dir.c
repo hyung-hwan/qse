@@ -33,6 +33,7 @@
 #	include <sys/types.h>
 #    include <sys/stat.h>
 #	include <dirent.h>
+#	include <errno.h>
 #endif
 
 typedef struct info_t info_t;
@@ -157,7 +158,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 
 	if (name[0] == QSE_T('\0'))
 	{
-		/* dir->errnum = QSE_DIR_EINVAL; */
+		dir->errnum = QSE_DIR_EINVAL;
 		return -1;
 	}
 
@@ -165,7 +166,11 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	if (info == QSE_NULL)
 	{
 		info = QSE_MMGR_ALLOC (dir->mmgr, QSE_SIZEOF(*info));
-		if (info == QSE_NULL) return -1;
+		if (info == QSE_NULL) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return -1;
+		}
 
 		QSE_MEMSET (info, 0, QSE_SIZEOF(*info));
 #if defined(_WIN32)
@@ -185,7 +190,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	dirname = qse_stradup (tmp_name, dir->mmgr);
 	if (dirname == QSE_NULL) 
 	{
-	/*	dir->errnum = QSE_DIR_ENOMEM; */
+		dir->errnum = QSE_DIR_ENOMEM; 
 		return -1;
 	}
 
@@ -197,7 +202,12 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	handle = FindFirstFile (dirname, &wfd);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{
-	/*	dir->errnum = QSE_DIR_ESYSTEM; */
+		DWORD e = GetLastError();
+		dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
+		              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
+		              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
+		              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
+		                                           QSE_DIR_ESYSTEM;
 		QSE_MMGR_FREE (dir->mmgr, dirname);
 		return -1;
 	}
@@ -222,7 +232,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	dirname = qse_strdup (name, dir->mmgr);
 	if (dirname == QSE_NULL)
 	{	
-	/*	dir->errnum = QSE_DIR_ENOMEM; */
+		dir->errnum = QSE_DIR_ENOMEM;
 		return -1;
 	}
 
@@ -234,7 +244,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	mbsdirname = qse_wcstombsdup (name, dir->mmgr);
 	if (mbsdirname == QSE_NULL)
 	{
-		/* dir->errnum = QSE_DIR_ENOMEM */
+		dir->errnum = QSE_DIR_ENOMEM;
 		QSE_MMGR_FREE (dir->mmgr, dirname);
 		return -1;
 	}
@@ -250,7 +260,12 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 
 	if (handle == QSE_NULL)
 	{
-		/* dir->errnum = QSE_DIR... */
+		dir->errnum = (errno == EACCES)?  QSE_DIR_EACCES:
+		              (errno == ENOENT)?  QSE_DIR_ENOENT:
+		              (errno == ENOTDIR)? QSE_DIR_ENOTDIR:
+		              (errno == ENOMEM)?  QSE_DIR_ENOMEM:
+		                                  QSE_DIR_ESYSTEM;
+	
 		QSE_MMGR_FREE (dir->mmgr, dirname);
 		return -1;
 	}
@@ -305,7 +320,7 @@ static int set_entry_name (qse_dir_t* dir, const qse_mchar_t* name)
 		);
 		if (tmp == QSE_NULL)
 		{
-			/* dir->errnum = QSE_DIR_ENOMEM; */
+			dir->errnum = QSE_DIR_ENOMEM;
 			return -1;
 		}
 
@@ -341,9 +356,7 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 
 	if (info->no_more_files) 
 	{
-		/* 
-		dir->errnum = QSE_DIR_ENOENT;
-		*/
+		dir->errnum = QSE_DIR_ENOERR;
 		return QSE_NULL;
 	}
 
@@ -368,7 +381,20 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 	if (FindNextFile (info->handle, &info->wfd) == FALSE) 
 	{
 		/*if (GetLastError() == ERROR_NO_MORE_FILES) */
-		info->no_more_files = 1;
+		DWORD e = GetLastError();
+		if (e == ERROR_NO_MORE_FILES)
+		{
+			info->no_more_files = 1;
+		}
+		else
+		{
+			dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
+			              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
+			              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
+			              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
+			                                           QSE_DIR_ESYSTEM;
+			return QSE_NULL;
+		}
 	}
 #elif defined(__OS2__)
 #	error NOT IMPLEMENTED
@@ -380,7 +406,7 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 	ent = readdir (info->handle);
 	if (ent == QSE_NULL)
 	{
-		/* TODO: dir->errnum = ... */
+		/*dir->errnum = QSE_DIR_ENOENT;*/ /* TODO: to be more specific */
 		return QSE_NULL;
 	}
 
@@ -447,6 +473,10 @@ const qse_char_t* qse_dir_geterrmsg (qse_dir_t* dir)
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
+		QSE_T("permission denined"),
+		QSE_T("no such entry"),
+		QSE_T("not a directory"),
+		QSE_T("system error")
 	};
 
 	return (dir->errnum >= 0 && dir->errnum < QSE_COUNTOF(errstr))?
