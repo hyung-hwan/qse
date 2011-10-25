@@ -67,8 +67,17 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 	qse_char_t* dst;
 	qse_char_t* non_root_start;
 	int has_root = 0;
-	int begins_with_curdir = 0;
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	int is_drive = 0;
+#endif
 	qse_size_t canon_len;
+
+	if (path[0] == QSE_T('\0')) 
+	{
+		/* if the source is empty, no translation is needed */
+		canon[0] = QSE_T('\0');
+		return 0;
+	}
 
 	ptr = path;
 	dst = canon;
@@ -80,6 +89,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		*dst++ = *ptr++; /* drive letter */
 		*dst++ = *ptr++; /* colon */
 
+		is_drive = 1;
 		if (ISSEP(*ptr)) 
 		{
 			*dst++ = *ptr++; /* root directory */
@@ -112,19 +122,11 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		}
 	#endif
 	}
-	else if (ptr[0] == QSE_T('.') && ISSEPNIL(ptr[1])) 
-	{
-		begins_with_curdir = 1;
-	}
 #else
 	if (ISSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
-	}
-	else if (ptr[0] == QSE_T('.') && ISSEPNIL(ptr[1])) 
-	{
-		begins_with_curdir = 1;
 	}
 #endif
 
@@ -263,20 +265,55 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		canon_len = dst - canon;
 	}
 
-	if (canon_len <= 0 && begins_with_curdir)
+	if (canon_len <= 0) 
 	{
 		/* when resolving to a single dot, a trailing separator is not
-		 * retained though the orignal path name contains it */
-		dst[0] = QSE_T('.');
-		dst[1] = QSE_T('\0');
+		 * retained though the orignal path name contains it. */
+		canon[0] = QSE_T('.');
+		canon[1] = QSE_T('\0');
 		canon_len = 1;
+	}
+	else 
+	{
+		/* drop a traling separator if the last segment is 
+		 * double slashes */
+
+		int adj_base_len = 3;
+
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		if (is_drive && !has_root) 
+		{
+			/* A path like A:..\\\ need some adjustment for
+			 * finalization below. */
+			adj_base_len += 2;
+		}
+#endif
+
+		if (canon_len == adj_base_len)
+		{
+			/* i don't have to retains a trailing separator
+			 * if the last segment is double slashes because 
+			 * the double slahses indicate a directory obviously */
+			if (canon[canon_len-3] == QSE_T('.') &&
+			    canon[canon_len-2] == QSE_T('.') &&
+			    ISSEP(canon[canon_len-1]))
+			{
+				canon[--canon_len] = QSE_T('\0');
+			}
+		}
+		else if (canon_len > adj_base_len)
+		{
+	
+			if (ISSEP(canon[canon_len-4]) &&
+			    canon[canon_len-3] == QSE_T('.') &&
+			    canon[canon_len-2] == QSE_T('.') &&
+			    ISSEP(canon[canon_len-1]))
+			{
+				canon[--canon_len] = QSE_T('\0');
+			}
+		}
 	}
 
 	return canon_len;
 }
 
-qse_size_t qse_realpath (const qse_char_t* path, qse_char_t* real)
-{
-/* TODO: canonicalize path with symbolic links resolved */
-	return 0;
-}
