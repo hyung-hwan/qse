@@ -100,6 +100,11 @@ int qse_isdrivecurpath (
  * qse_printf (QSE_T("%s\n")); // prints /usr/bin/sh
  * @endcode
  *
+ * Note that the output is empty returning 0 if the input @a path is empty,
+ * whereas a single period is produced if canonicalization results in the
+ * current directory logically without a single period in the input @a path.
+ * For example, dir/.. is canonicalized to a single period.
+ * 
  * The caller must ensure that it is large enough to hold the resulting 
  * canonical path before calling because this function does not check the
  * size of the memory buffer. Since the canonical path cannot be larger 
