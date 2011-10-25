@@ -9,7 +9,7 @@ static void list (qse_dir_t* dir, const qse_char_t* name)
 
 	if (qse_dir_change (dir, name) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot change directory to %s\n"), name);
+		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot change directory to %s - %s\n"), name, qse_dir_geterrmsg(dir));
 		return;
 	}	
 
@@ -20,7 +20,13 @@ static void list (qse_dir_t* dir, const qse_char_t* name)
 	do
 	{
 		ent = qse_dir_read (dir);
-		if (ent == QSE_NULL) break;
+		if (ent == QSE_NULL) 
+		{
+			qse_dir_errnum_t e = qse_dir_geterrnum(dir);
+			if (e != QSE_DIR_ENOERR)
+				qse_fprintf (QSE_STDERR, QSE_T("Error: Read error - %s\n"), qse_dir_geterrmsg(dir));
+			break;
+		}
 
 		if (ent->type == QSE_DIR_ENT_DIRECTORY)
 			qse_printf (QSE_T("<DIR> %16lu %s\n"), (unsigned long)ent->size, ent->name);
