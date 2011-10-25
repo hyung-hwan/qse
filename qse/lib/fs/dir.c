@@ -44,13 +44,62 @@ struct info_t
 #if defined(_WIN32)
 	HANDLE handle;
 	WIN32_FIND_DATA wfd;
-	unsigned int first_after_change;
+	int just_changed_dir;
 #elif defined(__OS2__)
 #elif defined(__DOS__)
 #else
 	DIR* handle;
+	qse_mchar_t* mcurdir;
 #endif
 };
+
+#if defined(_WIN32)
+static QSE_INLINE qse_dir_errnum_t syserr_to_errnum (DWORD e)
+{
+	switch (e)
+	{
+		case ERROR_INVALID_NAME:
+		case ERROR_DIRECTORY:
+			return QSE_DIR_EINVAL;
+
+		case ERROR_ACCESS_DENIED:
+			return QSE_DIR_EACCES;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_DIR_ENOENT;
+
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_DIR_ENOMEM;
+	
+		default:
+			return QSE_DIR_ESYSTEM;
+	}
+}
+#else
+static QSE_INLINE qse_dir_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case EINVAL:
+			return QSE_DIR_EINVAL;
+
+		case EACCES:
+			return QSE_DIR_EACCES;
+
+		case ENOENT:
+		case ENOTDIR:
+			return QSE_DIR_ENOENT;
+
+		case ENOMEM:
+			return QSE_DIR_ENOMEM;
+
+		default:
+			return QSE_DIR_ESYSTEM;
+	}
+}
+#endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (dir)
 
@@ -119,6 +168,10 @@ void qse_dir_fini (qse_dir_t* dir)
 #elif defined(__DOS__)
 #	error NOT IMPLEMENTED
 #else
+		if (info->mcurdir && info->mcurdir != dir->curdir)
+			QSE_MMGR_FREE (dir->mmgr, info->mcurdir);
+		info->mcurdir = QSE_NULL;
+			
 		if (info->handle)
 		{
 			closedir (info->handle);
@@ -137,6 +190,30 @@ void qse_dir_fini (qse_dir_t* dir)
 	}
 }
 
+static QSE_INLINE info_t* get_info (qse_dir_t* dir)
+{
+	info_t* info;
+
+	info = dir->info;
+	if (info == QSE_NULL)
+	{
+		info = QSE_MMGR_ALLOC (dir->mmgr, QSE_SIZEOF(*info));
+		if (info == QSE_NULL) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
+
+		QSE_MEMSET (info, 0, QSE_SIZEOF(*info));
+#if defined(_WIN32)
+		info->handle = INVALID_HANDLE_VALUE;
+#endif
+		dir->info = info;
+	}
+
+	return info;
+}
+
 int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 {
 	qse_char_t* dirname;
@@ -153,7 +230,9 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 #	error NOT IMPLEMENTED
 #else
 	DIR* handle;
-	qse_mchar_t* mbsdirname;
+	qse_mchar_t* mdirname;
+	const qse_char_t* tmp_name[4];
+	qse_size_t idx;
 #endif
 
 	if (name[0] == QSE_T('\0'))
@@ -162,29 +241,20 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 		return -1;
 	}
 
-	info = dir->info;
-	if (info == QSE_NULL)
-	{
-		info = QSE_MMGR_ALLOC (dir->mmgr, QSE_SIZEOF(*info));
-		if (info == QSE_NULL) 
-		{
-			dir->errnum = QSE_DIR_ENOMEM;
-			return -1;
-		}
-
-		QSE_MEMSET (info, 0, QSE_SIZEOF(*info));
-#if defined(_WIN32)
-		info->handle = INVALID_HANDLE_VALUE;
-#endif
-		dir->info = info;
-	}
+	info = get_info (dir);
+	if (info == QSE_NULL) return -1;
 
 #if defined(_WIN32)
 	idx = 0;
 	if (!qse_isabspath(name) && dir->curdir)
 		tmp_name[idx++] = dir->curdir;
 	tmp_name[idx++] = name;
-	tmp_name[idx++] = QSE_T("\\ ");
+
+	if (qse_isdrivecurpath(name)) 
+		tmp_name[idx++] = QSE_T(" ");
+	else
+		tmp_name[idx++] = QSE_T("\\ ");
+
 	tmp_name[idx] = QSE_NULL;
 
 	dirname = qse_stradup (tmp_name, dir->mmgr);
@@ -195,26 +265,24 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	}
 
 	idx = qse_canonpath (dirname, dirname);
-	/* Put the asterisk after canonicalization to prevent side-effects.
+	/* Put an asterisk after canonicalization to prevent side-effects.
 	 * otherwise, .\* would be transformed to * by qse_canonpath() */
 	dirname[idx-1] = QSE_T('*'); 
 
-	/*
-	I don't return a short name so FindExInfoBasic can speed up the function.
-	FindFirstFileEx (
-		dirname, FindExInfoBasic, 
+	/* Using FindExInfoBasic won't resolve cAlternatFileName.
+	 * so it can get faster a little bit. The problem is that
+	 * it is not supported on old windows. just stick to the
+	 * simple API instead. */
+	#if 0
+	handle = FindFirstFileEx (
+		dirname, FindExInfoBasic,
 		&wfd, FindExSearchNameMatch, 
-		NULL, FIND_FIRST_EX_CASE_SENSITIVE);
-	*/
+		NULL, 0/*FIND_FIRST_EX_CASE_SENSITIVE*/);
+	#endif
 	handle = FindFirstFile (dirname, &wfd);
 	if (handle == INVALID_HANDLE_VALUE) 
 	{
-		DWORD e = GetLastError();
-		dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
-		              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
-		              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
-		              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
-		                                           QSE_DIR_ESYSTEM;
+		dir->errnum = syserr_to_errnum (GetLastError());
 		QSE_MMGR_FREE (dir->mmgr, dirname);
 		return -1;
 	}
@@ -225,11 +293,11 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	QSE_MEMSET (info, 0, QSE_SIZEOF(*info));
 	info->handle = handle;
 	info->wfd = wfd;
+	info->just_changed_dir = 1;
 
 	if (dir->curdir) QSE_MMGR_FREE (dir->mmgr, dir->curdir);
 	dirname[idx-1] = QSE_T('\0'); /* drop the asterisk */
 	dir->curdir = dirname;
-	dir->first_after_change = 1;
 
 	return 0;
 
@@ -238,7 +306,17 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 #elif defined(__DOS__)
 #	error NOT IMPLEMENTED
 #else
-	dirname = qse_strdup (name, dir->mmgr);
+
+	idx = 0;
+	if (!qse_isabspath(name) && dir->curdir)
+	{
+		tmp_name[idx++] = dir->curdir;
+		tmp_name[idx++] = QSE_T("/");
+	}
+	tmp_name[idx++] = name;
+	tmp_name[idx] = QSE_NULL;
+
+	dirname = qse_stradup (tmp_name, dir->mmgr);
 	if (dirname == QSE_NULL)
 	{	
 		dir->errnum = QSE_DIR_ENOMEM;
@@ -248,10 +326,10 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	qse_canonpath (dirname, dirname);
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mbsdirname = dirname;
+	mdirname = dirname;
 #else
-	mbsdirname = qse_wcstombsdup (name, dir->mmgr);
-	if (mbsdirname == QSE_NULL)
+	mdirname = qse_wcstombsdup (dirname, dir->mmgr);
+	if (mdirname == QSE_NULL)
 	{
 		dir->errnum = QSE_DIR_ENOMEM;
 		QSE_MMGR_FREE (dir->mmgr, dirname);
@@ -259,28 +337,23 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 	}
 #endif
 
-	handle = opendir (mbsdirname);
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* do nothing */
-#else
-	QSE_MMGR_FREE (dir->mmgr, mbsdirname);
-#endif
+	handle = opendir (mdirname);
 
 	if (handle == QSE_NULL)
 	{
-		dir->errnum = (errno == EACCES)?  QSE_DIR_EACCES:
-		              (errno == ENOENT)?  QSE_DIR_ENOENT:
-		              (errno == ENOTDIR)? QSE_DIR_ENOTDIR:
-		              (errno == ENOMEM)?  QSE_DIR_ENOMEM:
-		                                  QSE_DIR_ESYSTEM;
-	
+		dir->errnum = syserr_to_errnum (errno);
+		if (mdirname != dirname) 
+			QSE_MMGR_FREE (dir->mmgr, mdirname);
 		QSE_MMGR_FREE (dir->mmgr, dirname);
 		return -1;
 	}
 
 	if (info->handle) closedir (info->handle);
 	info->handle = handle;
+
+	if (info->mcurdir && info->mcurdir != dir->curdir)
+		QSE_MMGR_FREE (dir->mmgr, info->mcurdir);
+	info->mcurdir = mdirname;
 
 	if (dir->curdir) QSE_MMGR_FREE (dir->mmgr, dir->curdir);
 	dir->curdir = dirname;
@@ -349,34 +422,19 @@ static int set_entry_name (qse_dir_t* dir, const qse_mchar_t* name)
 
 qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 {
-
+#if defined(_WIN32)
 	info_t* info;
 
 	info = dir->info;
 	if (info == QSE_NULL) 
 	{
-		/*
-		dir->errnum = NO CHANGE DIR YET;
-		*/
+		dir->errnum = QSE_DIR_ENODIR;
 		return QSE_NULL;
 	}
 
-#if defined(_WIN32)
-
-#if 0
-	if (info->no_more_files) 
+	if (info->just_changed_dir)
 	{
-		dir->errnum = QSE_DIR_ENOERR;
-		return QSE_NULL;
-	}
-#endif
-	if (info->first_after_change)
-	{
-		/* call set_entry_name before changing other fields
-		 * in dir->ent not to pollute it in case set_entry_name fails */
-		if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
-
-		info->first_after_change = 0;
+		info->just_changed_dir = 0;
 	}
 	else
 	{
@@ -385,31 +443,31 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 			DWORD e = GetLastError();
 			if (e == ERROR_NO_MORE_FILES)
 			{
-				//info->no_more_files = 1;
 				dir->errnum = QSE_DIR_ENOERR;
 				return QSE_NULL;
 			}
 			else
 			{
-				dir->errnum = (e == ERROR_ACCESS_DENIED)?  QSE_DIR_EACCES:
-				              (e == ERROR_FILE_NOT_FOUND)? QSE_DIR_ENOENT:	
-				              (e == ERROR_INVALID_NAME)?   QSE_DIR_EINVAL:	
-				              (e == ERROR_DIRECTORY)?      QSE_DIR_EINVAL:	
-				                                           QSE_DIR_ESYSTEM;
+				dir->errnum = syserr_to_errnum (GetLastError());
 				return QSE_NULL;
 			}
 		}
-
-		/* call set_entry_name before changing other fields
-		 * in dir->ent not to pollute it in case set_entry_name fails */
-		if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
 	}
 
+	/* call set_entry_name before changing other fields
+	 * in dir->ent not to pollute it in case set_entry_name fails */
+	if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
 
 	if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 	{
 		dir->ent.size = 0;
 		dir->ent.type = QSE_DIR_ENT_DIRECTORY;
+	}
+	else if ((info->wfd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+		    (info->wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+	{
+		dir->ent.size = 0;
+		dir->ent.type = QSE_DIR_ENT_LINK;
 	}
 	else
 	{
@@ -425,56 +483,78 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 #elif defined(__DOS__)
 #	error NOT IMPLEMENTED
 #else
-	struct dirent* ent;
 
+	info_t* info;
+	struct dirent* ent;
+	int x;
+#if defined(HAVE_LSTAT64)
+	struct stat64 st;
+#else
+	struct stat st;
+#endif
+	qse_mchar_t* tmp_name[4];
+	qse_mchar_t* mfname;
+
+	info = dir->info;
+	if (info == QSE_NULL) 
+	{
+		dir->errnum = QSE_DIR_ENODIR;
+		return QSE_NULL;
+	}
+
+	errno = 0;
 	ent = readdir (info->handle);
 	if (ent == QSE_NULL)
 	{
-		/*dir->errnum = QSE_DIR_ENOENT;*/ /* TODO: to be more specific */
+		if (errno != 0) dir->errnum = syserr_to_errnum (errno);
 		return QSE_NULL;
 	}
 
 #if defined(HAVE_STRUCT_DIRENT_D_TYPE)
-	if (ent->d_type != DT_DIR)
+/* end->d_type */
 #endif
+
+/* TODO: use a buffer in info... instead of allocating an deallocating every time */
+	tmp_name[0] = info->mcurdir;
+	tmp_name[1] = QSE_MT("/");
+	tmp_name[2] = ent->d_name;
+	tmp_name[3] = QSE_NULL;
+	mfname = qse_mbsadup (tmp_name, dir->mmgr);
+	if (mfname == QSE_NULL)
 	{
-		int x;
+		dir->errnum = QSE_DIR_ENOMEM;
+		return QSE_NULL;
+	}
+	
 	#if defined(HAVE_LSTAT64)
-		struct stat64 st;
-		x = lstat64 (ent->d_name, &st);
+	x = lstat64 (mfname, &st);
 	#else
-		struct stat st;
-		x = lstat (ent->d_name, &st);
+	x = lstat (mfname, &st);
 	#endif
-		if (x == -1)
-		{
-			/*TODO: dir->errnum = ... */
-			return QSE_NULL;
-		}
+
+	QSE_MMGR_FREE (dir->mmgr, mfname);
+
+	if (x == -1)
+	{
+		dir->errnum = syserr_to_errnum (errno);
+		return QSE_NULL;
 	}
 
 	if (set_entry_name (dir, ent->d_name) <= -1) return QSE_NULL;
 
-	#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
-	switch (ent->d_type)
+	if (S_ISDIR(st.st_mode))
 	{
-		case DT_DIR:
-			dir->ent.size = 0;
-			dir->ent.type = QSE_DIR_ENT_DIRECTORY;
-			break;
-			
-		case DT_REG:
-			dir->ent.type = QSE_DIR_ENT_REGULAR;
-			break;
-			
-		default:
-			dir->ent.size = 0;
-			dir->ent.type = QSE_DIR_ENT_UNKNOWN;
-			break;
+		dir->ent.size = 0;
+		dir->ent.type = QSE_DIR_ENT_DIRECTORY;
 	}
-	#endif
+	else 
+	{
+		dir->ent.size = st.st_size;
+		dir->ent.type = QSE_DIR_ENT_UNKNOWN;
+	}
 
 #endif
+
 	return &dir->ent;
 }
 
@@ -499,7 +579,7 @@ const qse_char_t* qse_dir_geterrmsg (qse_dir_t* dir)
 		QSE_T("invalid parameter or data"),
 		QSE_T("permission denined"),
 		QSE_T("no such entry"),
-		QSE_T("not a directory"),
+		QSE_T("no working directory set"),
 		QSE_T("system error")
 	};
 

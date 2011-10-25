@@ -369,8 +369,9 @@ static int test8 (void)
 
 		while (1)
 		{
+			qse_size_t mlen;
 			memset (buf, 'A', sizeof(buf));
-			qse_size_t mlen = sizeof(buf);
+			mlen = sizeof(buf);
 			n = qse_wcstombs (p, buf, &mlen);
 			if (n == 0) break;
 
@@ -576,9 +577,9 @@ static int test14 (void)
 	{
 		qse_str_cpy (&x, a1);
 		qse_str_del (&x, 10, i);
-		qse_printf (QSE_T("deleleted %d from 10 => %llu [%s]\n"), 
+		qse_printf (QSE_T("deleleted %d from 10 => %lu [%s]\n"), 
 			i,
-			(unsigned long long)QSE_STR_LEN(&x),
+			(unsigned long)QSE_STR_LEN(&x),
 			QSE_STR_PTR(&x));
 	}
 

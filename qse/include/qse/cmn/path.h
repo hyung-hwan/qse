@@ -71,6 +71,22 @@ int qse_isabspath (
 );
 
 /**
+ * The qse_isdrivepath() function determines if a path name begins with
+ * a drive letter followed by a colon like A:.
+ */
+int qse_isdrivepath (
+	const qse_char_t* path
+);
+
+/**
+ * The qse_isdrivecurpath() function determines if a path name is in the form
+ * of a drive letter followed by a colon like A:, without any trailing path.
+ */
+int qse_isdrivecurpath (
+	const qse_char_t* path
+);
+
+/**
  * The qse_canonpath() function canonicalizes a path name @a path by deleting 
  * unnecessary path segments from it and stores the result to a memory buffer 
  * pointed to by @a canon. Canonicalization is purely performed on the path

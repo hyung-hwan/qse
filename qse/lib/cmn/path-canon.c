@@ -30,7 +30,7 @@
 
 #define ISDRIVE(s) \
 	(((s[0] >= QSE_T('A') && s[0] <= QSE_T('Z')) || \
-	  (s[0] >= QSE_T('a') && s[0] <= QSE_T('a'))) && \
+	  (s[0] >= QSE_T('a') && s[0] <= QSE_T('z'))) && \
 	 s[1] == QSE_T(':'))
 
 int qse_isabspath (const qse_char_t* path)
@@ -45,12 +45,30 @@ int qse_isabspath (const qse_char_t* path)
 
 }
 
+int qse_isdrivepath (const qse_char_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (ISDRIVE(path)) return 1;
+#endif
+	return 0;
+}
+
+int qse_isdrivecurpath (const qse_char_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (ISDRIVE(path) && path[2] == QSE_T('\0')) return 1;
+#endif
+	return 0;
+}
+
 qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 {
 	const qse_char_t* ptr;
 	qse_char_t* dst;
 	qse_char_t* non_root_start;
 	int has_root = 0;
+	int begins_with_curdir = 0;
+	qse_size_t canon_len;
 
 	ptr = path;
 	dst = canon;
@@ -94,11 +112,19 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		}
 	#endif
 	}
+	else if (ptr[0] == QSE_T('.') && ISSEPNIL(ptr[1])) 
+	{
+		begins_with_curdir = 1;
+	}
 #else
 	if (ISSEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
+	}
+	else if (ptr[0] == QSE_T('.') && ISSEPNIL(ptr[1])) 
+	{
+		begins_with_curdir = 1;
 	}
 #endif
 
@@ -228,14 +254,25 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		 *     the origial path ends with a separator
 		 */
 		dst[-1] = QSE_T('\0');
-		return dst - canon - 1;
+		canon_len = dst - canon - 1;
 	}
 	else 
 	{
 		/* just null-terminate the canonical path normally */
 		dst[0] = QSE_T('\0');	
-		return dst - canon;
+		canon_len = dst - canon;
 	}
+
+	if (canon_len <= 0 && begins_with_curdir)
+	{
+		/* when resolving to a single dot, a trailing separator is not
+		 * retained though the orignal path name contains it */
+		dst[0] = QSE_T('.');
+		dst[1] = QSE_T('\0');
+		canon_len = 1;
+	}
+
+	return canon_len;
 }
 
 qse_size_t qse_realpath (const qse_char_t* path, qse_char_t* real)
