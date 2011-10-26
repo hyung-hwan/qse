@@ -67,6 +67,15 @@ struct qse_dir_t
 
 typedef struct qse_dir_t qse_dir_t;
 
+enum qse_dir_option_t
+{ 
+	/**< don't follow a symbolic link in qse_dir_change() */
+	QSE_DIR_NOFOLLOW = (1 << 0),
+
+	/**< check directories against file system in qse_dir_change() */
+	QSE_DIR_REALPATH = (1 << 1)  
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif

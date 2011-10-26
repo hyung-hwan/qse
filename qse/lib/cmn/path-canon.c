@@ -61,7 +61,7 @@ int qse_isdrivecurpath (const qse_char_t* path)
 	return 0;
 }
 
-qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
+qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 {
 	const qse_char_t* ptr;
 	qse_char_t* dst;
@@ -155,7 +155,8 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 		{
 			/* eat up . */
 		}
-		else if (seglen == 2 && seg[0] == QSE_T('.') && seg[1] == QSE_T('.'))
+		else if (!(flags & QSE_CANONPATH_KEEPDOUBLEDOTS) &&
+			    seglen == 2 && seg[0] == QSE_T('.') && seg[1] == QSE_T('.'))
 		{
 			/* eat up the previous segment */
 			qse_char_t* tmp;
@@ -242,11 +243,13 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 	}
 	while (1);
 
-	if (dst > non_root_start && ISSEP(dst[-1]) && !ISSEP(ptr[-1])) 
+	if (dst > non_root_start && ISSEP(dst[-1]) && 
+	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !ISSEP(ptr[-1]))) 
 	{
 		/* if the canoncal path composed so far ends with a separator
 		 * and the original path didn't end with the separator, delete
-		 * the ending separator.
+		 * the ending separator. 
+		 * also delete it if QSE_CANONPATH_DROPTRAILINGSEP is set.
 		 *
 		 *   dst > non_root_start:
 		 *     there is at least 1 character after the root directory part.
@@ -267,11 +270,14 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon)
 
 	if (canon_len <= 0) 
 	{
-		/* when resolving to a single dot, a trailing separator is not
-		 * retained though the orignal path name contains it. */
-		canon[0] = QSE_T('.');
-		canon[1] = QSE_T('\0');
-		canon_len = 1;
+		if (!(flags & QSE_CANONPATH_EMPTYSINGLEDOT))
+		{
+			/* when resolving to a single dot, a trailing separator is not
+			 * retained though the orignal path name contains it. */
+			canon[0] = QSE_T('.');
+			canon[1] = QSE_T('\0');
+			canon_len = 1;
+		}
 	}
 	else 
 	{

@@ -39,6 +39,16 @@
 #	define	qse_basename(path) qse_wcsbasename(path)
 #endif
 
+enum qse_canonpath_flag_t
+{
+	/** if the final output is . logically, return an empty path */
+	QSE_CANONPATH_EMPTYSINGLEDOT  = (1 << 0),
+	/** keep the .. segment in the path name */
+	QSE_CANONPATH_KEEPDOUBLEDOTS  = (1 << 1),
+	/** drop a trailing separator even if the source contains one */
+	QSE_CANONPATH_DROPTRAILINGSEP = (1 << 2)
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -100,10 +110,14 @@ int qse_isdrivecurpath (
  * qse_printf (QSE_T("%s\n")); // prints /usr/bin/sh
  * @endcode
  *
- * Note that the output is empty returning 0 if the input @a path is empty,
- * whereas a single period is produced if canonicalization results in the
- * current directory logically without a single period in the input @a path.
- * For example, dir/.. is canonicalized to a single period.
+ * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
+ * is produced if the input @path resolves to the current directory logically.
+ * For example, dir/.. is canonicalized to a single period; If it is set, 
+ * an empty string is produced. Even a single period as an input produces
+ * an empty string if it is set.
+ *
+ * The output is empty returning 0 regardless of @a flags if the input 
+ * @a path is empty.
  * 
  * The caller must ensure that it is large enough to hold the resulting 
  * canonical path before calling because this function does not check the
@@ -117,7 +131,8 @@ int qse_isdrivecurpath (
  */
 qse_size_t qse_canonpath (
 	const qse_char_t* path,
-	qse_char_t*       canon
+	qse_char_t*       canon,
+	int               flags
 );
 
 #ifdef __cplusplus

@@ -264,7 +264,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 		return -1;
 	}
 
-	idx = qse_canonpath (dirname, dirname);
+	idx = qse_canonpath (dirname, dirname, 0);
 	/* Put an asterisk after canonicalization to prevent side-effects.
 	 * otherwise, .\* would be transformed to * by qse_canonpath() */
 	dirname[idx-1] = QSE_T('*'); 
@@ -323,7 +323,7 @@ int qse_dir_change (qse_dir_t* dir, const qse_char_t* name)
 		return -1;
 	}
 
-	qse_canonpath (dirname, dirname);
+	qse_canonpath (dirname, dirname, 0);
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	mdirname = dirname;
