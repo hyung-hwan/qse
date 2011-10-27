@@ -30,8 +30,7 @@
 #elif defined(__DOS__)
 #	error NOT IMPLEMENTED
 #else
-#	include <sys/types.h>
-#    include <sys/stat.h>
+#	include "../cmn/syscall.h"
 #	include <dirent.h>
 #	include <errno.h>
 #endif
@@ -487,7 +486,7 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 	info_t* info;
 	struct dirent* ent;
 	int x;
-#if defined(HAVE_LSTAT64)
+#if defined(QSE_LSTAT64)
 	struct stat64 st;
 #else
 	struct stat st;
@@ -526,11 +525,11 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 		return QSE_NULL;
 	}
 	
-	#if defined(HAVE_LSTAT64)
-	x = lstat64 (mfname, &st);
-	#else
-	x = lstat (mfname, &st);
-	#endif
+#if defined(QSE_LSTAT64)
+	x = QSE_LSTAT64 (mfname, &st);
+#else
+	x = QSE_LSTAT (mfname, &st);
+#endif
 
 	QSE_MMGR_FREE (dir->mmgr, mfname);
 
@@ -542,16 +541,15 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 
 	if (set_entry_name (dir, ent->d_name) <= -1) return QSE_NULL;
 
-	if (S_ISDIR(st.st_mode))
-	{
-		dir->ent.size = 0;
-		dir->ent.type = QSE_DIR_ENT_DIRECTORY;
-	}
-	else 
-	{
-		dir->ent.size = st.st_size;
-		dir->ent.type = QSE_DIR_ENT_UNKNOWN;
-	}
+
+	dir->ent.size = st.st_size;
+
+#define IS_TYPE(st,type) ((st.st_mode & S_IFMT) == S_IFDIR)
+	dir->ent.type = IS_TYPE(st,S_IFDIR)? QSE_DIR_ENT_DIR:
+	                IS_TYPE(st,S_IFCHR)? QSE_DIR_ENT_CHAR:
+	                IS_TYPE(st,S_IFBLK)? QSE_DIR_ENT_BLOCK:
+	                                     QSE_DIR_ENT_UNKNOWN;
+
 
 #endif
 
