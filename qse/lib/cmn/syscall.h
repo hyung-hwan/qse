@@ -88,7 +88,7 @@
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) _llseek(handle,hoffset,loffset,out,whence)
 #endif
 
-#if defined(SYS_lseek65)
+#if defined(SYS_lseek64)
 #	define QSE_LSEEK64(handle,offset,whence) syscall(SYS_lseek64,handle,offset,whence)
 #elif defined(HAVE_lseek64)
 #	define QSE_LSEEK64(handle,offset,whence) lseek64(handle,offset,whence)
@@ -98,6 +98,18 @@
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek,handle,offset,whence)
 #else
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
+#endif
+
+#if defined(SYS_lstat64)
+#	define QSE_LSTAT64(path,stbuf) syscall(SYS_lstat64,path,stbuf)
+#elif defined(HAVE_lstat64)
+#	define QSE_LSTAT64(path,stbuf) lstat64(path,stbuf)
+#endif
+
+#if defined(SYS_lstat)
+#	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
+#else
+#	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
 #endif
 
 #if !defined(_LP64) && defined(SYS_ftruncate64)

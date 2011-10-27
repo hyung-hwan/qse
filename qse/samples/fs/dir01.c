@@ -39,7 +39,6 @@ static void list (qse_dir_t* dir, const qse_char_t* name)
 
 int dir_main (int argc, qse_char_t* argv[])
 {
-	int n;
 	qse_dir_t* dir;
 
 	if (argc != 2)
@@ -59,7 +58,7 @@ int dir_main (int argc, qse_char_t* argv[])
 	list (dir, QSE_T(".."));
 
 	qse_dir_close (dir);
-	return n;
+	return 0;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
