@@ -23,6 +23,7 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/time.h>
 
 enum qse_dir_errnum_t
 {
@@ -38,20 +39,46 @@ enum qse_dir_errnum_t
 };
 typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 
+enum qse_dir_ent_flag_t
+{
+	QSE_DIR_ENT_NAME = (1 << 0),
+	QSE_DIR_ENT_TYPE = (1 << 1),
+	QSE_DIR_ENT_SIZE = (1 << 2),
+	QSE_DIR_ENT_TIME = (1 << 3)
+};
+
+enum qse_dir_ent_type_t
+{
+		QSE_DIR_ENT_UNKNOWN,
+		QSE_DIR_ENT_SUBDIR,
+		QSE_DIR_ENT_REGULAR,
+		QSE_DIR_ENT_CHRDEV,
+		QSE_DIR_ENT_BLKDEV,
+		QSE_DIR_ENT_SYMLINK,
+		QSE_DIR_ENT_PIPE
+};
+
+typedef enum qse_dir_ent_type_t qse_dir_ent_type_t;
+
 struct qse_dir_ent_t
 {
-	enum
+	int                flags;
+
+	struct
 	{
-		QSE_DIR_ENT_UNKNOWN,
-		QSE_DIR_ENT_DIR,
-		QSE_DIR_ENT_REG,
-		QSE_DIR_ENT_FIFO,
-		QSE_DIR_ENT_CHAR,
-		QSE_DIR_ENT_BLOCK,
-		QSE_DIR_ENT_LINK
-	} type;
-	qse_char_t* name;
-	qse_foff_t  size;
+		qse_char_t* base;
+		qse_char_t* path;
+	} name;
+	qse_dir_ent_type_t type;
+	qse_foff_t         size;
+
+	struct
+	{
+		qse_ntime_t create; 
+		qse_ntime_t access;
+		qse_ntime_t modify;
+		qse_ntime_t change;	 /* inode status change */
+	} time;
 };
 
 typedef struct qse_dir_ent_t qse_dir_ent_t;
@@ -70,10 +97,10 @@ typedef struct qse_dir_t qse_dir_t;
 enum qse_dir_option_t
 { 
 	/**< don't follow a symbolic link in qse_dir_change() */
-	QSE_DIR_NOFOLLOW = (1 << 0),
+	QSE_DIR_NOFOLLOW = (1 << 1),
 
 	/**< check directories against file system in qse_dir_change() */
-	QSE_DIR_REALPATH = (1 << 1)  
+	QSE_DIR_REALPATH = (1 << 2)  
 };
 
 #ifdef __cplusplus
@@ -109,7 +136,8 @@ const qse_char_t* qse_dir_geterrmsg (
 );
 
 qse_dir_ent_t* qse_dir_read (
-	qse_dir_t*        dir
+	qse_dir_t* dir,
+	int        flags
 );
 
 int qse_dir_change (

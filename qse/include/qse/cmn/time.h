@@ -53,11 +53,15 @@
 
 #define QSE_USECS_PER_MSEC (1000)
 #define QSE_NSECS_PER_USEC (1000)
+#define QSE_NSECS_PER_MSEC (QSE_NSECS_PER_USEC*QSE_USECS_PER_MSEC)
 #define QSE_USECS_PER_SEC  (QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
 
 #define QSE_IS_LEAPYEAR(year) ((!((year)%4) && ((year)%100)) || !((year)%400))
 #define QSE_DAYS_PER_YEAR(year) \
 	(QSE_IS_LEAPYEAR(year)? QSE_DAYS_PER_LEAPYEAR: QSE_DAYS_PER_NORMYEAR)
+
+#define QSE_SECNSEC_TO_MSEC(sec,nsec) \
+	(((qse_ntime_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_ntime_t)(nsec) / QSE_NSECS_PER_MSEC))
 
 /* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
 typedef qse_long_t qse_ntime_t;
@@ -95,7 +99,6 @@ int qse_gettime (
 int qse_settime (
 	qse_ntime_t nt
 );
-/******/
 
 
 /**
@@ -137,7 +140,7 @@ int qse_timelocal (
  * The qse_strftime() functions formats time.
  */
 qse_size_t qse_strftime (
-        qse_char_t*       buf, 
+	qse_char_t*       buf, 
 	qse_size_t        size, 
 	const qse_char_t* fmt,
 	qse_btime_t*      bt

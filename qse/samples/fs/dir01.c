@@ -19,7 +19,9 @@ static void list (qse_dir_t* dir, const qse_char_t* name)
 
 	do
 	{
-		ent = qse_dir_read (dir);
+		qse_btime_t bt;
+
+		ent = qse_dir_read (dir, QSE_DIR_ENT_SIZE | QSE_DIR_ENT_TYPE | QSE_DIR_ENT_TIME);
 		if (ent == QSE_NULL) 
 		{
 			qse_dir_errnum_t e = qse_dir_geterrnum(dir);
@@ -28,10 +30,13 @@ static void list (qse_dir_t* dir, const qse_char_t* name)
 			break;
 		}
 
-		if (ent->type == QSE_DIR_ENT_DIRECTORY)
-			qse_printf (QSE_T("<DIR> %16lu %s\n"), (unsigned long)ent->size, ent->name);
-		else
-			qse_printf (QSE_T("      %16lu %s\n"), (unsigned long)ent->size, ent->name);
+		qse_localtime (ent->time.modify, &bt);
+		qse_printf (QSE_T("%s %16lu %04d-%02d-%02d %02d:%02d %s\n"), 
+			((ent->type == QSE_DIR_ENT_SUBDIR)? QSE_T("<D>"): QSE_T("   ")),
+			(unsigned long)ent->size, 
+			bt.year + 1900, bt.mon+1, bt.mday, bt.hour, bt.min,
+			ent->name.base
+		);
 	}
 	while (1);
 
