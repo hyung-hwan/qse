@@ -415,11 +415,35 @@ static int set_entry_name (qse_dir_t* dir, const qse_mchar_t* name)
 	len++;
 	qse_mbstowcs (name, info->name.ptr, &len);
 #endif
-	dir->ent.name = info->name.ptr;
+
+	dir->ent.name.base = info->name.ptr;
+	dir->ent.flags |= QSE_DIR_ENT_NAME;
 	return 0;
 }
 
-qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
+#if defined(_WIN32)
+static QSE_INLINE qse_ntime_t filetime_to_ntime (const FILETIME* ft)
+{
+	/* reverse of http://support.microsoft.com/kb/167296/en-us */
+	ULARGE_INTEGER li;
+	li.LowPart = ft->dwLowDateTime;
+	li.HighPart = ft->dwHighDateTime;
+
+#if (QSE_SIZEOF_LONG_LONG>=8)
+	li.QuadPart -= 116444736000000000ull;
+#elif (QSE_SIZEOF___INT64>=8)
+	li.QuadPart -= 116444736000000000ui64;
+#else
+#	error Unsupported 64bit integer type
+#endif
+	/*li.QuadPart /= 10000000;*/
+	li.QuadPart /= 10000;
+
+	return li.QuadPart;
+}
+#endif
+
+qse_dir_ent_t* qse_dir_read (qse_dir_t* dir, int flags)
 {
 #if defined(_WIN32)
 	info_t* info;
@@ -455,26 +479,93 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 
 	/* call set_entry_name before changing other fields
 	 * in dir->ent not to pollute it in case set_entry_name fails */
+	QSE_MEMSET (&dir->ent, 0, QSE_SIZEOF(dir->ent));
 	if (set_entry_name (dir, info->wfd.cFileName) <= -1) return QSE_NULL;
 
-	if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	if (flags & QSE_DIR_ENT_TYPE)
 	{
-		dir->ent.size = 0;
-		dir->ent.type = QSE_DIR_ENT_DIRECTORY;
+		if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			dir->ent.type = QSE_DIR_ENT_SUBDIR;
+		}
+		else if ((info->wfd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
+			    (info->wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+		{
+			dir->ent.type = QSE_DIR_ENT_SYMLINK;
+		}
+		else
+		{
+			HANDLE h;
+			qse_char_t* tmp_name[4];
+			qse_char_t* fname;
+
+/* TODO: use a buffer in info... instead of allocating an deallocating every time */
+			tmp_name[0] = dir->curdir;
+			tmp_name[1] = QSE_T("\\");
+			tmp_name[2] = info->wfd.cFileName;
+			tmp_name[3] = QSE_NULL;
+			fname = qse_stradup (tmp_name, dir->mmgr);
+			if (fname == QSE_NULL)
+			{
+				dir->errnum = QSE_DIR_ENOMEM;
+				return QSE_NULL;
+			}
+
+			h = CreateFile (
+				fname,
+				GENERIC_READ, 
+				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 
+				QSE_NULL, 
+				OPEN_EXISTING,
+				FILE_ATTRIBUTE_NORMAL, 
+				0
+			);
+
+			QSE_MMGR_FREE (dir->mmgr, fname);
+
+			if (h != INVALID_HANDLE_VALUE)
+			{
+				DWORD t = GetFileType (h);
+				switch (t)
+				{
+					case FILE_TYPE_CHAR:
+						dir->ent.type = QSE_DIR_ENT_CHRDEV;
+						break;
+					case FILE_TYPE_DISK:
+						dir->ent.type = QSE_DIR_ENT_BLKDEV;
+						break;
+					case FILE_TYPE_PIPE:
+						dir->ent.type = QSE_DIR_ENT_PIPE;
+						break;
+					default:
+						dir->ent.type = QSE_DIR_ENT_UNKNOWN;
+						break;
+				}
+				CloseHandle (h);
+			}
+			else
+			{
+				dir->ent.type = QSE_DIR_ENT_UNKNOWN;
+			}
+		}
+		dir->ent.type |= QSE_DIR_ENT_TYPE;
 	}
-	else if ((info->wfd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-		    (info->wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+
+	if (flags & QSE_DIR_ENT_SIZE)
 	{
-		dir->ent.size = 0;
-		dir->ent.type = QSE_DIR_ENT_LINK;
-	}
-	else
-	{
-		LARGE_INTEGER li;
+		ULARGE_INTEGER li;
 		li.LowPart = info->wfd.nFileSizeLow;
 		li.HighPart = info->wfd.nFileSizeHigh;
 		dir->ent.size = li.QuadPart;
-		dir->ent.type = QSE_DIR_ENT_UNKNOWN;
+		dir->ent.type |= QSE_DIR_ENT_SIZE;
+	}
+
+	if (flags & QSE_DIR_ENT_TIME)
+	{
+		dir->ent.time.create = filetime_to_ntime (&info->wfd.ftCreationTime);
+		dir->ent.time.access = filetime_to_ntime (&info->wfd.ftLastAccessTime);
+		dir->ent.time.modify = filetime_to_ntime (&info->wfd.ftLastWriteTime);
+		dir->ent.type |= QSE_DIR_ENT_TIME;
 	}
 
 #elif defined(__OS2__)
@@ -486,13 +577,13 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 	info_t* info;
 	struct dirent* ent;
 	int x;
-#if defined(QSE_LSTAT64)
+
+	int stat_needed;
+	#if defined(QSE_LSTAT64)
 	struct stat64 st;
-#else
+	#else
 	struct stat st;
-#endif
-	qse_mchar_t* tmp_name[4];
-	qse_mchar_t* mfname;
+	#endif
 
 	info = dir->info;
 	if (info == QSE_NULL) 
@@ -509,48 +600,138 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir)
 		return QSE_NULL;
 	}
 
-#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
-/* end->d_type */
-#endif
-
-/* TODO: use a buffer in info... instead of allocating an deallocating every time */
-	tmp_name[0] = info->mcurdir;
-	tmp_name[1] = QSE_MT("/");
-	tmp_name[2] = ent->d_name;
-	tmp_name[3] = QSE_NULL;
-	mfname = qse_mbsadup (tmp_name, dir->mmgr);
-	if (mfname == QSE_NULL)
-	{
-		dir->errnum = QSE_DIR_ENOMEM;
-		return QSE_NULL;
-	}
-	
-#if defined(QSE_LSTAT64)
-	x = QSE_LSTAT64 (mfname, &st);
-#else
-	x = QSE_LSTAT (mfname, &st);
-#endif
-
-	QSE_MMGR_FREE (dir->mmgr, mfname);
-
-	if (x == -1)
-	{
-		dir->errnum = syserr_to_errnum (errno);
-		return QSE_NULL;
-	}
-
+	QSE_MEMSET (&dir->ent, 0, QSE_SIZEOF(dir->ent));
 	if (set_entry_name (dir, ent->d_name) <= -1) return QSE_NULL;
 
+	stat_needed =
+	#if !defined(HAVE_STRUCT_DIRENT_D_TYPE)
+		(flags & QSE_DIR_ENT_TYPE) ||
+	#endif
+		(flags & QSE_DIR_ENT_SIZE) ||
+		(flags & QSE_DIR_ENT_TIME);
+	if (stat_needed)
+	{
+		qse_mchar_t* tmp_name[4];
+		qse_mchar_t* mfname;
 
-	dir->ent.size = st.st_size;
+/* TODO: use a buffer in info... instead of allocating an deallocating every time */
+		tmp_name[0] = info->mcurdir;
+		tmp_name[1] = QSE_MT("/");
+		tmp_name[2] = ent->d_name;
+		tmp_name[3] = QSE_NULL;
+		mfname = qse_mbsadup (tmp_name, dir->mmgr);
+		if (mfname == QSE_NULL)
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
+	
+	#if defined(QSE_LSTAT64)
+		x = QSE_LSTAT64 (mfname, &st);
+	#else
+		x = QSE_LSTAT (mfname, &st);
+	#endif
+		QSE_MMGR_FREE (dir->mmgr, mfname);
 
-#define IS_TYPE(st,type) ((st.st_mode & S_IFMT) == S_IFDIR)
-	dir->ent.type = IS_TYPE(st,S_IFDIR)? QSE_DIR_ENT_DIR:
-	                IS_TYPE(st,S_IFCHR)? QSE_DIR_ENT_CHAR:
-	                IS_TYPE(st,S_IFBLK)? QSE_DIR_ENT_BLOCK:
-	                                     QSE_DIR_ENT_UNKNOWN;
+		if (x == -1)
+		{
+			dir->errnum = syserr_to_errnum (errno);
+			return QSE_NULL;
+		}
+	}
 
+	if (flags & QSE_DIR_ENT_TYPE)
+	{
+	#if defined(HAVE_STRUCT_DIRENT_D_TYPE)
+		switch (ent->d_type)
+		{
+			case DT_DIR:
+				dir->ent.type = QSE_DIR_ENT_SUBDIR;
+				break;
 
+			case DT_REG:
+				dir->ent.type = QSE_DIR_ENT_REGULAR;
+				break;
+
+			case DT_LNK:
+				dir->ent.type = QSE_DIR_ENT_SYMLINK;
+				break;
+	
+			case DT_BLK: 
+				dir->ent.type = QSE_DIR_ENT_BLKDEV;
+				break;
+
+			case DT_CHR:
+				dir->ent.type = QSE_DIR_ENT_CHRDEV;
+				break;
+
+			case DT_FIFO:
+	#if defined(DT_SOCK)
+			case DT_SOCK:
+	#endif
+				dir->ent.type = QSE_DIR_ENT_PIPE;
+				break;
+
+			default:
+				dir->ent.type = QSE_DIR_ENT_UNKNOWN;
+				break;
+		}	
+
+	#else
+		#define IS_TYPE(st,type) ((st.st_mode & S_IFMT) == S_IFDIR)
+		dir->ent.type = IS_TYPE(st,S_IFDIR)?  QSE_DIR_ENT_SUBDIR:
+		                IS_TYPE(st,S_IFREG)?  QSE_DIR_ENT_REGULAR:
+		                IS_TYPE(st,S_IFLNK)?  QSE_DIR_ENT_SYMLINK:
+		                IS_TYPE(st,S_IFCHR)?  QSE_DIR_ENT_CHRDEV:
+		                IS_TYPE(st,S_IFBLK)?  QSE_DIR_ENT_BLKDEV:
+		                IS_TYPE(st,S_IFIFO)?  QSE_DIR_ENT_PIPE:
+		                IS_TYPE(st,S_IFSOCK)? QSE_DIR_ENT_PIPE:
+		                                      QSE_DIR_ENT_UNKNOWN;
+		#undef IS_TYPE
+	#endif
+		dir->ent.flags |= QSE_DIR_ENT_TYPE;
+	}
+
+	if (flags & QSE_DIR_ENT_SIZE)
+	{
+		dir->ent.size = st.st_size;
+		dir->ent.flags |= QSE_DIR_ENT_SIZE;
+	}
+
+	if (flags & QSE_DIR_ENT_TIME)
+	{
+	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
+		dir->ent.time.create = 
+			QSE_SECNSEC_TO_MSEC(st.st_birthtim.tv_sec,st.st_birthtim.tv_nsec);
+		#endif
+		dir->ent.time.access = 
+			QSE_SECNSEC_TO_MSEC(st.st_atim.tv_sec,st.st_atim.tv_nsec);
+		dir->ent.time.modify = 
+			QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
+		dir->ent.time.change =
+			QSE_SECNSEC_TO_MSEC(st.st_ctim.tv_sec,st.st_ctim.tv_nsec);
+	#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
+		dir->ent.time.create = st.st_birthtime;
+			QSE_SECNSEC_TO_MSEC(st.st_birthtimespec.tv_sec,st.st_birthtimespec.tv_nsec);
+		#endif
+		dir->ent.time.access = 
+			QSE_SECNSEC_TO_MSEC(st.st_atimespec.tv_sec,st.st_atimespec.tv_nsec);
+		dir->ent.time.modify = 
+			QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
+		dir->ent.time.change =
+			QSE_SECNSEC_TO_MSEC(st.st_ctimespec.tv_sec,st.st_ctimespec.tv_nsec);
+	#else
+		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
+		dir->ent.time.create = st.st_birthtime * QSE_MSEC_PER_SEC;
+		#endif
+		dir->ent.time.access = st.st_atime * QSE_MSEC_PER_SEC;
+		dir->ent.time.modify = st.st_mtime * QSE_MSEC_PER_SEC;
+		dir->ent.time.change = st.st_ctime * QSE_MSEC_PER_SEC;
+	#endif
+		dir->ent.flags |= QSE_DIR_ENT_TIME;
+	}
 #endif
 
 	return &dir->ent;

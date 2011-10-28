@@ -109,6 +109,9 @@ AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf])
 LIBS="$OLDLIBS"
 
 AC_STRUCT_DIRENT_D_TYPE
+AC_CHECK_MEMBERS([struct stat.st_birthtime])
+AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 
 dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char,,[[]])
