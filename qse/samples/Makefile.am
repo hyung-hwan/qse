@@ -1,1 +1,1 @@
-SUBDIRS = cmn awk cut sed fs
+SUBDIRS = cmn awk cut sed fs net

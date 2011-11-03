@@ -1,4 +1,4 @@
-SUBDIRS = cmn awk cut sed stx fs
+SUBDIRS = cmn awk cut sed fs net stx
 
 pkgincludedir = $(includedir)/qse
 

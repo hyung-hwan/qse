@@ -553,7 +553,7 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir, int flags)
 
 	if (flags & QSE_DIR_ENT_SIZE)
 	{
-		ULARGE_INTEGER li;
+		LARGE_INTEGER li;
 		li.LowPart = info->wfd.nFileSizeLow;
 		li.HighPart = info->wfd.nFileSizeHigh;
 		dir->ent.size = li.QuadPart;
