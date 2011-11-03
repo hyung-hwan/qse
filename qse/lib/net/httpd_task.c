@@ -18,6 +18,11 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
+/* UNSUPPORTED YET..  */
+/* TODO: IMPLEMENT THIS */
+#else
+
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
@@ -1221,3 +1226,4 @@ qse_httpd_task_t* qse_httpd_entaskproxy (...)
 
 /*------------------------------------------------------------------------*/
 
+#endif

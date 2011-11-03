@@ -15,6 +15,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -36,7 +37,8 @@ build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = libqsecmnxx.la
 subdir = lib/cmn
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_numval.m4 \
 	$(top_srcdir)/m4/ax_pthread.m4 $(top_srcdir)/m4/libtool.m4 \
@@ -75,15 +77,15 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-search.lo alg-sort.lo assert.lo chr.lo \
 	chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo fma.lo \
-	main.lo mem.lo oht.lo opt.lo path-basename.lo path-canon.lo \
-	pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo str-beg.lo \
-	str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo \
-	str-del.lo str-dup.lo str-dynm.lo str-dynw.lo str-end.lo \
-	str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo \
-	str-pac.lo str-pbrk.lo str-put.lo str-rev.lo str-rot.lo \
-	str-set.lo str-spl.lo str-spn.lo str-str.lo str-subst.lo \
-	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tio-get.lo \
-	tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
+	fmt.lo main.lo mem.lo oht.lo opt.lo path-basename.lo \
+	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
+	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
+	str-cpy.lo str-del.lo str-dup.lo str-dynm.lo str-dynw.lo \
+	str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo \
+	str-len.lo str-pac.lo str-pbrk.lo str-put.lo str-rev.lo \
+	str-rot.lo str-set.lo str-spl.lo str-spn.lo str-str.lo \
+	str-subst.lo str-tok.lo str-trm.lo str-word.lo time.lo tio.lo \
+	tio-get.lo tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
 	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
 	tre-stack.lo stdio.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
@@ -123,6 +125,7 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(libqsecmn_la_SOURCES) $(libqsecmnxx_la_SOURCES)
 DIST_SOURCES = $(libqsecmn_la_SOURCES) \
 	$(am__libqsecmnxx_la_SOURCES_DIST)
+HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -274,8 +277,17 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
-libqsecmn_la_SOURCES = \
+noinst_HEADERS = \
+	mem.h \
+	syscall.h \
 	tre.h \
+	tre-ast.h \
+	tre-compile.h \
+	tre-match-utils.h \
+	tre-parse.h \
+	tre-stack.h
+
+libqsecmn_la_SOURCES = \
 	alg-search.c  \
 	alg-sort.c \
 	assert.c \
@@ -288,9 +300,9 @@ libqsecmn_la_SOURCES = \
 	lda.c \
 	fio.c \
 	fma.c \
+	fmt.c \
 	main.c \
 	mem.c \
-	mem.h \
 	oht.c \
 	opt.c \
 	path-basename.c \
@@ -330,24 +342,17 @@ libqsecmn_la_SOURCES = \
 	str-tok.c \
 	str-trm.c \
 	str-word.c \
-	syscall.h \
 	time.c \
 	tio.c \
 	tio-get.c \
 	tio-put.c \
 	tre.c \
-	tre.h \
 	tre-ast.c \
-	tre-ast.h \
 	tre-compile.c \
-	tre-compile.h \
 	tre-match-backtrack.c \
 	tre-match-parallel.c \
-	tre-match-utils.h \
 	tre-parse.c \
-	tre-parse.h \
 	tre-stack.c \
-	tre-stack.h \
 	stdio.c \
 	xma.c
 
@@ -444,6 +449,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
@@ -634,7 +640,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES)
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \

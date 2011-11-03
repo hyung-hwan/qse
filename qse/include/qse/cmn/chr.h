@@ -147,6 +147,21 @@ typedef qse_ctype_t qse_wctype_t;
 #	define QSE_TOLOWER(c)  QSE_TOWLOWER(c)
 #endif
 
+#define QSE_XDIGITTONUM(c) \
+	(((c) >= QSE_T('0') && (c) <= QSE_T('9'))? ((c) - QSE_T('0')): \
+	 ((c) >= QSE_T('A') && (c) <= QSE_T('F'))? ((c) - QSE_T('A') + 10): \
+	 ((c) >= QSE_T('a') && (c) <= QSE_T('f'))? ((c) - QSE_T('a') + 10): -1)
+
+#define QSE_MXDIGITTONUM(c) \
+	(((c) >= QSE_MT('0') && (c) <= QSE_MT('9'))? ((c) - QSE_MT('0')): \
+	 ((c) >= QSE_MT('A') && (c) <= QSE_MT('F'))? ((c) - QSE_MT('A') + 10): \
+	 ((c) >= QSE_MT('a') && (c) <= QSE_MT('f'))? ((c) - QSE_MT('a') + 10): -1)
+
+#define QSE_WXDIGITTONUM(c) \
+	(((c) >= QSE_WT('0') && (c) <= QSE_WT('9'))? ((c) - QSE_WT('0')): \
+	 ((c) >= QSE_WT('A') && (c) <= QSE_WT('F'))? ((c) - QSE_WT('A') + 10): \
+	 ((c) >= QSE_WT('a') && (c) <= QSE_WT('f'))? ((c) - QSE_WT('a') + 10): -1)
+
 /**
  * The qse_mbstate_t type defines a structure large enough to hold
  * the standard mbstate_t.

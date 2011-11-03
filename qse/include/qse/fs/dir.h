@@ -49,13 +49,13 @@ enum qse_dir_ent_flag_t
 
 enum qse_dir_ent_type_t
 {
-		QSE_DIR_ENT_UNKNOWN,
-		QSE_DIR_ENT_SUBDIR,
-		QSE_DIR_ENT_REGULAR,
-		QSE_DIR_ENT_CHRDEV,
-		QSE_DIR_ENT_BLKDEV,
-		QSE_DIR_ENT_SYMLINK,
-		QSE_DIR_ENT_PIPE
+	QSE_DIR_ENT_UNKNOWN,
+	QSE_DIR_ENT_SUBDIR,
+	QSE_DIR_ENT_REGULAR,
+	QSE_DIR_ENT_CHRDEV,
+	QSE_DIR_ENT_BLKDEV,
+	QSE_DIR_ENT_SYMLINK,
+	QSE_DIR_ENT_PIPE
 };
 
 typedef enum qse_dir_ent_type_t qse_dir_ent_type_t;

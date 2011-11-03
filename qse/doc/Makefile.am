@@ -3,4 +3,4 @@ AUTOMAKE_OPTIONS = no-dependencies
 
 EXTRA_DIST = Doxyfile.in gendoc.sh
 
-SUBDIRS = page  
+SUBDIRS = page image

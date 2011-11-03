@@ -7,6 +7,7 @@ pkginclude_HEADERS = \
 	env.h \
 	fio.h \
 	fma.h \
+	fmt.h \
 	gdl.h \
 	htb.h \
 	lda.h \

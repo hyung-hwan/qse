@@ -297,7 +297,9 @@ typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
 enum qse_mbstrmx_op_t
 {
 	QSE_MBSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
+#define QSE_MBSTRMX_LEFT QSE_MBSTRMX_LEFT
 	QSE_MBSTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
+#define QSE_MBSTRMX_RIGHT QSE_MBSTRMX_RIGHT
 };
 
 /**
@@ -306,7 +308,9 @@ enum qse_mbstrmx_op_t
 enum qse_wcstrmx_op_t
 {
 	QSE_WCSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
+#define QSE_WCSTRMX_LEFT QSE_WCSTRMX_LEFT
 	QSE_WCSTRMX_RIGHT = (1 << 1)  /**< trim trailing spaces */
+#define QSE_WCSTRMX_RIGHT QSE_WCSTRMX_RIGHT
 };
 
 #ifdef QSE_CHAR_IS_MCHAR
@@ -320,17 +324,25 @@ enum qse_wcstrmx_op_t
 enum qse_mbsfnmat_flag_t
 {
 	QSE_MBSFNMAT_PATHNAME   = (1 << 0),
+#define QSE_MBSFNMAT_PATHNAME   QSE_MBSFNMAT_PATHNAME
 	QSE_MBSFNMAT_NOESCAPE   = (1 << 1),
+#define QSE_MBSFNMAT_NOESCAPE   QSE_MBSFNMAT_NOESCAPE
 	QSE_MBSFNMAT_PERIOD     = (1 << 2),
+#define QSE_MBSFNMAT_PERIOD     QSE_MBSFNMAT_PERIOD
 	QSE_MBSFNMAT_IGNORECASE = (1 << 3)
+#define QSE_MBSFNMAT_IGNORECASE QSE_MBSFNMAT_IGNORECASE
 };
 
 enum qse_wcsfnmat_flag_t
 {
 	QSE_WCSFNMAT_PATHNAME   = (1 << 0),
+#define QSE_WCSFNMAT_PATHNAME   QSE_WCSFNMAT_PATHNAME
 	QSE_WCSFNMAT_NOESCAPE   = (1 << 1),
+#define QSE_WCSFNMAT_NOESCAPE   QSE_WCSFNMAT_NOESCAPE
 	QSE_WCSFNMAT_PERIOD     = (1 << 2),
+#define QSE_WCSFNMAT_PERIOD     QSE_WCSFNMAT_PERIOD
 	QSE_WCSFNMAT_IGNORECASE = (1 << 3)
+#define QSE_WCSFNMAT_IGNORECASE QSE_WCSFNMAT_IGNORECASE
 };
 
 #ifdef QSE_CHAR_IS_MCHAR

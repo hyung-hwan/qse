@@ -18,6 +18,11 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
+/* UNSUPPORTED YET..  */ 
+/* TODO: IMPLEMENT THIS */
+#else
+
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
@@ -1196,3 +1201,4 @@ void qse_httpd_markclientbad (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	client->bad = 1;
 }
 
+#endif

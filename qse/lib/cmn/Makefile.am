@@ -8,8 +8,17 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsecmn.la
 
-libqsecmn_la_SOURCES = \
+noinst_HEADERS = \
+	mem.h \
+	syscall.h \
 	tre.h \
+	tre-ast.h \
+	tre-compile.h \
+	tre-match-utils.h \
+	tre-parse.h \
+	tre-stack.h
+
+libqsecmn_la_SOURCES = \
 	alg-search.c  \
 	alg-sort.c \
 	assert.c \
@@ -22,9 +31,9 @@ libqsecmn_la_SOURCES = \
 	lda.c \
 	fio.c \
 	fma.c \
+	fmt.c \
 	main.c \
 	mem.c \
-	mem.h \
 	oht.c \
 	opt.c \
 	path-basename.c \
@@ -64,24 +73,17 @@ libqsecmn_la_SOURCES = \
 	str-tok.c \
 	str-trm.c \
 	str-word.c \
-	syscall.h \
 	time.c \
 	tio.c \
 	tio-get.c \
 	tio-put.c \
 	tre.c \
-	tre.h \
 	tre-ast.c \
-	tre-ast.h \
 	tre-compile.c \
-	tre-compile.h \
 	tre-match-backtrack.c \
 	tre-match-parallel.c \
-	tre-match-utils.h \
 	tre-parse.c \
-	tre-parse.h \
 	tre-stack.c \
-	tre-stack.h \
 	stdio.c \
 	xma.c
 

@@ -106,9 +106,7 @@ static const struct tre_macro_struct
 
 static QSE_INLINE int xdigit_to_num (qse_char_t c)
 {
-	return (c >= QSE_T('0') && c <= QSE_T('9'))? (c - QSE_T('0')):
-	       (c >= QSE_T('A') && c <= QSE_T('F'))? (c - QSE_T('A') + 10):
-	       (c >= QSE_T('a') && c <= QSE_T('f'))? (c - QSE_T('a') + 10): -1;
+	return QSE_XDIGITTONUM (c);
 }
 
 /* Expands a macro delimited by `regex' and `regex_end' to `buf', which

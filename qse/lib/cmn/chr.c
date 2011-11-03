@@ -402,3 +402,4 @@ qse_mctype_t qse_getmctype (const qse_mchar_t* name)
 	qse_mctype_t id;
 	return (qse_getmctypebyname(name,&id) <= -1)? ((qse_mctype_t)0): id;
 }
+
