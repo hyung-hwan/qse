@@ -19,6 +19,7 @@
  */
 
 #include "awk.h"
+#include <qse/cmn/fmt.h>
 
 #ifdef DEBUG_RUN
 #include <qse/cmn/stdio.h>
@@ -6777,14 +6778,19 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = qse_awk_sprintlong (
-					rtx->awk,
+				n = qse_fmtintmax (
 					rtx->format.tmp.ptr,
 					rtx->format.tmp.len,
-					width
-				);
-				if (n == -1)
+					width, 
+					10 | QSE_FMTINTMAX_NOTRUNC,
+					QSE_T('\0')
+				);	
+				if (n <= -1)
 				{
+					/* TODO: utilize n in GROW.
+					 * since -n is the number of characters required
+					 * including terminating null, it can be used there 
+					 * this doesn't have to be in the loop any more */
 					GROW (&rtx->format.tmp);
 					if (rtx->format.tmp.ptr == QSE_NULL)
 					{
@@ -6799,6 +6805,8 @@ qse_char_t* qse_awk_rtx_format (
 			}
 			while (1);
 
+			/* TODO: we know that n is the length.
+			 * the contents can be added without scanning the whole string again */
 			p = rtx->format.tmp.ptr;
 			while (*p != QSE_T('\0'))
 			{
@@ -6870,14 +6878,19 @@ qse_char_t* qse_awk_rtx_format (
 
 			do
 			{
-				n = qse_awk_sprintlong (
-					rtx->awk, 
+				n = qse_fmtintmax (
 					rtx->format.tmp.ptr,
 					rtx->format.tmp.len,
-					prec
-				);
-				if (n == -1)
+					prec, 
+					10 | QSE_FMTINTMAX_NOTRUNC,
+					QSE_T('\0')
+				);	
+				if (n <= -1)
 				{
+					/* TODO: utilize n in GROW.
+					 * since -n is the number of characters required
+					 * including terminating null, it can be used there.
+					 * this doesn't have to be in the loop any more */
 					GROW (&rtx->format.tmp);
 					if (rtx->format.tmp.ptr == QSE_NULL)
 					{
@@ -6891,6 +6904,8 @@ qse_char_t* qse_awk_rtx_format (
 			}
 			while (1);
 
+			/* TODO: we know that n is the length.
+			 * the contents can be added without scanning the whole string again */
 			p = rtx->format.tmp.ptr;
 			while (*p != QSE_T('\0'))
 			{

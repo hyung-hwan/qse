@@ -76,14 +76,6 @@ int qse_awk_matchrex (
 	qse_cstr_t* match, qse_awk_errnum_t* errnum
 );
 
-int qse_awk_sprintlong (
-	qse_awk_t*  awk, 
-	qse_char_t* buf,
-	qse_size_t  len,
-	qse_long_t  num
-);
-
-
 int qse_awk_sprintreal (
 	qse_awk_t*  awk,
 	qse_char_t* buf,
