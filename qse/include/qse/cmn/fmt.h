@@ -15,7 +15,7 @@
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public 
-    License along with QSE. If not, see <http://www.gnu.org/licenses/>.
+    License aintmax with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _QSE_CMN_FMT_H_
@@ -28,54 +28,210 @@
  * This file defines various formatting functions.
  */
 
-enum qse_fmtulongtowcs_flag_t
+/** 
+ * The qse_fmtintmaxtombs_flag_t type defines enumerators to change the
+ * behavior of qse_fmtintmaxtombs() and qse_fmtuintmaxtombs().
+ */
+enum qse_fmtintmaxtombs_flag_t
 {
-	QSE_FMTULONGTOWCS_UPPERCASE = (0x100 << 0),
-#define QSE_FMTULONGTOWCS_UPPERCASE QSE_FMTULONGTOWCS_UPPERCASE
-	QSE_FMTULONGTOWCS_FILLRIGHT = (0x100 << 1)
-#define QSE_FMTULONGTOWCS_FILLRIGHT QSE_FMTULONGTOWCS_FILLRIGHT
+	/** Don't truncate if the buffer is not large enough */
+	QSE_FMTINTMAXTOMBS_NOTRUNC = (0x100 << 0),
+	/** Don't append a terminating null */
+     QSE_FMTINTMAXTOMBS_NONULL = (0x100 << 1),
+	/** Use uppercase letters for alphabetic digits */
+	QSE_FMTINTMAXTOMBS_UPPERCASE = (0x100 << 2),
+	/** Insert a plus sign for a positive integer including 0 */
+	QSE_FMTINTMAXTOMBS_PLUSSIGN = (0x100 << 3),
+	/** Fill the right part of the string */
+	QSE_FMTINTMAXTOMBS_FILLRIGHT = (0x100 << 4),
+	/** Fill between the sign chacter and the digit part */
+	QSE_FMTINTMAXTOMBS_FILLCENTER = (0x100 << 5)
 };
+#define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAXTOMBS_NOTRUNC
+#define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAXTOMBS_NONULL
+#define QSE_FMTINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAXTOMBS_UPPERCASE
+#define QSE_FMTINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAXTOMBS_PLUSSIGN
+#define QSE_FMTINTMAXTOMBS_FILLRIGHT  QSE_FMTINTMAXTOMBS_FILLRIGHT
+#define QSE_FMTINTMAXTOMBS_FILLCENTER QSE_FMTINTMAXTOMBS_FILLCENTER
 
-enum qse_fmtulongtombs_flag_t
+/** 
+ * The qse_fmtintmaxtowcs_flag_t type defines enumerators to change the
+ * behavior of qse_fmtintmaxtowcs() and qse_fmtuintmaxtowcs().
+ */
+enum qse_fmtintmaxtowcs_flag_t
 {
-	QSE_FMTULONGTOMBS_UPPERCASE = (0x100 << 0),
-#define QSE_FMTULONGTOMBS_UPPERCASE QSE_FMTULONGTOMBS_UPPERCASE
-	QSE_FMTULONGTOMBS_FILLRIGHT = (0x100 << 1)
-#define QSE_FMTULONGTOMBS_FILLRIGHT QSE_FMTULONGTOMBS_FILLRIGHT
+	/** Don't truncate if the buffer is not large enough */
+	QSE_FMTINTMAXTOWCS_NOTRUNC = (0x100 << 0),
+	/** Don't append a terminating null */
+     QSE_FMTINTMAXTOWCS_NONULL = (0x100 << 1),
+	/** Use uppercase letters for alphabetic digits */
+	QSE_FMTINTMAXTOWCS_UPPERCASE = (0x100 << 2),
+	/** Insert a plus sign for a positive integer including 0 */
+	QSE_FMTINTMAXTOWCS_PLUSSIGN = (0x100 << 3),
+	/** Fill the right part of the string */
+	QSE_FMTINTMAXTOWCS_FILLRIGHT = (0x100 << 4),
+	/** Fill between the sign chacter and the digit part */
+	QSE_FMTINTMAXTOWCS_FILLCENTER = (0x100 << 5)
 };
+#define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAXTOWCS_NOTRUNC
+#define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAXTOWCS_NONULL
+#define QSE_FMTINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAXTOWCS_UPPERCASE
+#define QSE_FMTINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAXTOWCS_PLUSSIGN
+#define QSE_FMTINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAXTOWCS_FILLRIGHT
+#define QSE_FMTINTMAXTOWCS_FILLCENTER QSE_FMTINTMAXTOWCS_FILLCENTER
 
 #ifdef QSE_CHAR_IS_MCHAR
-#	define QSE_FMTULONG_UPPERCASE QSE_FMTULONGTOMBS_UPPERCASE
-#	define QSE_FMTULONG_FILLRIGHT QSE_FMTULONGTOMBS_FILLRIGHT
+#	define QSE_FMTINTMAX_NOTRUNC    QSE_FMTINTMAXTOMBS_NOTRUNC
+#	define QSE_FMTINTMAX_NONULL     QSE_FMTINTMAXTOMBS_NONULL
+#	define QSE_FMTINTMAX_UPPERCASE  QSE_FMTINTMAXTOMBS_UPPERCASE
+#	define QSE_FMTINTMAX_PLUSSIGN   QSE_FMTINTMAXTOMBS_PLUSSIGN
+#	define QSE_FMTINTMAX_FILLRIGHT  QSE_FMTINTMAXTOMBS_FILLRIGHT
+#	define QSE_FMTINTMAX_FILLCENTER QSE_FMTINTMAXTOMBS_FILLCENTER
 #else
-#	define QSE_FMTULONG_UPPERCASE QSE_FMTULONGTOWCS_UPPERCASE
-#	define QSE_FMTULONG_FILLRIGHT QSE_FMTULONGTOWCS_FILLRIGHT
+#	define QSE_FMTINTMAX_NOTRUNC    QSE_FMTINTMAXTOWCS_NOTRUNC
+#	define QSE_FMTINTMAX_NONULL     QSE_FMTINTMAXTOWCS_NONULL
+#	define QSE_FMTINTMAX_UPPERCASE  QSE_FMTINTMAXTOWCS_UPPERCASE
+#	define QSE_FMTINTMAX_PLUSSIGN   QSE_FMTINTMAXTOWCS_PLUSSIGN
+#	define QSE_FMTINTMAX_FILLRIGHT  QSE_FMTINTMAXTOWCS_FILLRIGHT
+#	define QSE_FMTINTMAX_FILLCENTER QSE_FMTINTMAXTOWCS_FILLCENTER
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-qse_size_t qse_fmtulongtombs (
-     qse_mchar_t* buf, 
-	qse_size_t   size,
-     qse_long_t   value, 
-	int          base_and_flags, 
-	qse_mchar_t  fill_char
+/**
+ * The qse_fmtintmaxtombs() function formats an integer @a value to a 
+ * multibyte string according to the given base and writes it to a buffer 
+ * pointed to by @a buf. It writes to the buffer at most @a size characters 
+ * including the terminating null. The base must be between 2 and 36 inclusive 
+ * and can be ORed with zero or more #qse_fmtintmaxtombs_flag_t enumerators. 
+ * This ORed value is passed to the function via the @a base_and_flags 
+ * parameter. If the formatted string is shorter than @a bufsize, the redundant
+ * slots are filled with the fill character @a fillchar if it is not a null 
+ * character. The filling behavior is determined by the flags shown below:
+ *
+ * - If #QSE_FMTINTMAXTOMBS_FILLRIGHT is set in @a base_and_flags, slots 
+ *   after the formatting string are filled.
+ * - If #QSE_FMTINTMAXTOMBS_FILLCENTER is set in @a base_and_flags, slots 
+ *   before the formatting string are filled. However, if it contains the
+ *   sign character, the slots between the sign character and the digit part
+ *   are filled.  
+ * - If neither #QSE_FMTINTMAXTOMBS_FILLRIGHT nor #QSE_FMTINTMAXTOMBS_FILLCENTER
+ *   , slots before the formatting string are filled.
+ *
+ * The terminating null is not added if #QSE_FMTINTMAXTOMBS_NONULL is set;
+ * The #QSE_FMTINTMAXTOMBS_UPPERCASE flag indicates that the function should
+ * use the uppercase letter for a alphabetic digit; 
+ * You can set #QSE_FMTINTMAXTOMBS_NOTRUNC if you require lossless formatting.
+ * The #QSE_FMTINTMAXTOMBS_PLUSSIGN flag ensures that the plug sign is added
+ * for a positive integer including 0.
+ * 
+ * @return
+ *  - -1 if the base is not between 2 and 36 inclusive. 
+ *  - negated number of characters required for lossless formatting 
+ *   - if @a bufsize is 0.
+ *   - if #QSE_FMTINTMAXTOMBS_NOTRUNC is set and @a bufsize is less than
+ *     the minimum required for lossless formatting.
+ *  - number of characters written to the buffer excluding a terminating 
+ *    null in all other cases.
+ */
+int qse_fmtintmaxtombs (
+	qse_mchar_t* buf,             /**< buffer pointer */
+	int          bufsize,         /**< buffer size */
+	qse_intmax_t value,           /**< integer to format */
+	int          base_and_flags,  /**< base ORed with flags */
+	qse_mchar_t  fillchar         /**< fill character */
 );
 
-qse_size_t qse_fmtulongtowcs (
-     qse_wchar_t* buf, 
-	qse_size_t   size,
-     qse_long_t   value, 
-	int          base_and_flags, 
-	qse_wchar_t  fill_char
+/**
+ * The qse_fmtintmaxtowcs() function formats an integer @a value to a 
+ * wide-character string according to the given base and writes it to a buffer 
+ * pointed to by @a buf. It writes to the buffer at most @a size characters 
+ * including the terminating null. The base must be between 2 and 36 inclusive 
+ * and can be ORed with zero or more #qse_fmtintmaxtowcs_flag_t enumerators. 
+ * This ORed value is passed to the function via the @a base_and_flags 
+ * parameter. If the formatted string is shorter than @a bufsize, the redundant
+ * slots are filled with the fill character @a fillchar if it is not a null 
+ * character. The filling behavior is determined by the flags shown below:
+ *
+ * - If #QSE_FMTINTMAXTOWCS_FILLRIGHT is set in @a base_and_flags, slots 
+ *   after the formatting string are filled.
+ * - If #QSE_FMTINTMAXTOWCS_FILLCENTER is set in @a base_and_flags, slots 
+ *   before the formatting string are filled. However, if it contains the
+ *   sign character, the slots between the sign character and the digit part
+ *   are filled.  
+ * - If neither #QSE_FMTINTMAXTOWCS_FILLRIGHT nor #QSE_FMTINTMAXTOWCS_FILLCENTER
+ *   , slots before the formatting string are filled.
+ *
+ * The terminating null is not added if #QSE_FMTINTMAXTOWCS_NONULL is set;
+ * The #QSE_FMTINTMAXTOWCS_UPPERCASE flag indicates that the function should
+ * use the uppercase letter for a alphabetic digit; 
+ * You can set #QSE_FMTINTMAXTOWCS_NOTRUNC if you require lossless formatting.
+ * The #QSE_FMTINTMAXTOWCS_PLUSSIGN flag ensures that the plug sign is added
+ * for a positive integer including 0.
+ * 
+ * @return
+ *  - -1 if the base is not between 2 and 36 inclusive. 
+ *  - negated number of characters required for lossless formatting 
+ *   - if @a bufsize is 0.
+ *   - if #QSE_FMTINTMAXTOWCS_NOTRUNC is set and @a bufsize is less than
+ *     the minimum required for lossless formatting.
+ *  - number of characters written to the buffer excluding a terminating 
+ *    null in all other cases.
+ */
+int qse_fmtintmaxtowcs (
+	qse_wchar_t* buf,             /**< buffer pointer */
+	int          bufsize,         /**< buffer size */
+	qse_intmax_t value,           /**< integer to format */
+	int          base_and_flags,  /**< base ORed with flags */
+	qse_wchar_t  fillchar         /**< fill character */
 );
 
+/** @def qse_fmtintmax
+ * The qse_fmtintmax() macro maps to qse_fmtintmaxtombs() if 
+ * #QSE_CHAR_IS_MCHAR, and qse_fmtintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
+ */
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_fmtulong(b,sz,v,bf,fc) qse_fmtulongtombs(b,sz,v,bf,fc)
+#	define qse_fmtintmax(b,sz,v,bf,fc) qse_fmtintmaxtombs(b,sz,v,bf,fc)
 #else
-#	define qse_fmtulong(b,sz,v,bf,fc) qse_fmtulongtowcs(b,sz,v,bf,fc)
+#	define qse_fmtintmax(b,sz,v,bf,fc) qse_fmtintmaxtowcs(b,sz,v,bf,fc)
+#endif
+
+/**
+ * The qse_fmtuintmaxtombs() function formats an unsigned integer @a value 
+ * to a multibyte string buffer. It behaves the same as qse_fmtuintmaxtombs() 
+ * except that it handles an unsigned integer.
+ */
+int qse_fmtuintmaxtombs (
+	qse_mchar_t*  buf,             /**< buffer pointer */
+	int           bufsize,         /**< buffer size */
+	qse_uintmax_t value,           /**< integer to format */
+	int           base_and_flags,  /**< base ORed with flags */
+	qse_mchar_t   fillchar         /**< fill character */
+);
+
+/**
+ * The qse_fmtuintmaxtowcs() function formats an unsigned integer @a value 
+ * to a wide-character string buffer. It behaves the same as 
+ * qse_fmtuintmaxtowcs() except that it handles an unsigned integer.
+ */
+int qse_fmtuintmaxtowcs (
+	qse_wchar_t*  buf,             /**< buffer pointer */
+	int           bufsize,         /**< buffer size */
+	qse_uintmax_t value,           /**< integer to format */
+	int           base_and_flags,  /**< base ORed with flags */
+	qse_wchar_t   fillchar         /**< fill character */
+);
+
+/** @def qse_fmtuintmax
+ * The qse_fmtuintmax() macro maps to qse_fmtuintmaxtombs() if 
+ * #QSE_CHAR_IS_MCHAR, and qse_fmtuintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
+ */
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_fmtuintmax(b,sz,v,bf,fc) qse_fmtuintmaxtombs(b,sz,v,bf,fc)
+#else
+#	define qse_fmtuintmax(b,sz,v,bf,fc) qse_fmtuintmaxtowcs(b,sz,v,bf,fc)
 #endif
 
 #ifdef __cplusplus

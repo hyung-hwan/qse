@@ -104,22 +104,41 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int32 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT32
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT32
+#elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT32_T
+	typedef __int32_t qse_int_t;
+	typedef unsigned __int32_t qse_uint_t;
+	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT32_T
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT32_T
 #elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT64
 	typedef __int64 qse_int_t;
 	typedef unsigned __int64 qse_uint_t;
 	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT64
 	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT64
+#elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT64_T
+	typedef __int64_t qse_int_t;
+	typedef unsigned __int64_t qse_uint_t;
+	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT64_T
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT64_T
+#elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT128
+	typedef __int128 qse_int_t;
+	typedef unsigned __int128 qse_uint_t;
+	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT128
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT128
+#elif QSE_SIZEOF_VOID_P == QSE_SIZEOF___INT128_T
+	typedef __int128_t qse_int_t;
+	typedef unsigned __int128_t qse_uint_t;
+	#define QSE_SIZEOF_INT_T QSE_SIZEOF___INT128_T
+	#define QSE_SIZEOF_UINT_T QSE_SIZEOF___INT128_T
 #else
 #	error unsupported pointer size
 #endif
 
 /** @typedef qse_long_t
- * The qse_long_t type defines the largest signed integer type supported
+ * The qse_long_t type defines the largest signed integer type that supported. 
  */
 /** @typedef qse_ulong_t
- * The qse_ulong_t type defines the largest unsigned integer type supported
+ * The qse_ulong_t type defines the largest unsigned integer type supported.
  */
-/* TODO: use qse_int128_t in defining qse_long_t */
 #if QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG
 	typedef long qse_long_t;
 	typedef unsigned long qse_ulong_t;
@@ -135,12 +154,22 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef unsigned __int64 qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF___INT64
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF___INT64
+#elif QSE_SIZEOF___INT64_T > 0
+	typedef __int64_t qse_long_t;
+	typedef unsigned __int64_t qse_ulong_t;
+	#define QSE_SIZEOF_LONG_T QSE_SIZEOF___INT64_T
+	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF___INT64_T
 #else
 	typedef long qse_long_t;
 	typedef unsigned long qse_ulong_t;
 	#define QSE_SIZEOF_LONG_T QSE_SIZEOF_LONG
 	#define QSE_SIZEOF_ULONG_T QSE_SIZEOF_LONG
 #endif
+
+/* these two items are revised whenever the size of a 
+ * fixed-size integer is determined */
+#define QSE_SIZEOF_INTMAX_T  0
+#define QSE_SIZEOF_UINTMAX_T 0
 
 /** @typedef qse_int8_t
  * The qse_int8_t defines an 8-bit signed integer type.
@@ -165,9 +194,16 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef __uint8_t qse_uint8_t;
 #endif
 
-#ifdef QSE_HAVE_INT32_T
-#	define QSE_SIZEOF_INT16_T 1
-#	define QSE_SIZEOF_UINT16_T 1
+#ifdef QSE_HAVE_INT8_T
+#	define QSE_SIZEOF_INT8_T 1
+#	define QSE_SIZEOF_UINT8_T 1
+#	undef  QSE_SIZEOF_INTMAX_T
+#	undef  QSE_SIZEOF_UINTMAX_T
+#	define QSE_SIZEOF_INTMAX_T 1
+#	define QSE_SIZEOF_UINTMAX_T 1
+#else
+#	define QSE_SIZEOF_INT8_T 0
+#	define QSE_SIZEOF_UINT8_T 0
 #endif
 
 /** @typedef qse_int16_t
@@ -193,9 +229,16 @@ typedef enum qse_tri_t qse_tri_t;
 	typedef __uint16_t qse_uint16_t;
 #endif
 
-#ifdef QSE_HAVE_INT32_T
+#ifdef QSE_HAVE_INT16_T
 #	define QSE_SIZEOF_INT16_T 2
 #	define QSE_SIZEOF_UINT16_T 2
+#	undef  QSE_SIZEOF_INTMAX_T
+#	undef  QSE_SIZEOF_UINTMAX_T
+#	define QSE_SIZEOF_INTMAX_T 2
+#	define QSE_SIZEOF_UINTMAX_T 2
+#else
+#	define QSE_SIZEOF_INT16_T 0
+#	define QSE_SIZEOF_UINT16_T 0
 #endif
 
 /** @typedef qse_int32_t
@@ -229,6 +272,13 @@ typedef enum qse_tri_t qse_tri_t;
 #ifdef QSE_HAVE_INT32_T
 #	define QSE_SIZEOF_INT32_T 4
 #	define QSE_SIZEOF_UINT32_T 4
+#	undef  QSE_SIZEOF_INTMAX_T
+#	undef  QSE_SIZEOF_UINTMAX_T
+#	define QSE_SIZEOF_INTMAX_T 4
+#	define QSE_SIZEOF_UINTMAX_T 4
+#else
+#	define QSE_SIZEOF_INT32_T 0
+#	define QSE_SIZEOF_UINT32_T 0
 #endif
 
 /** @typedef qse_int64_t
@@ -267,6 +317,13 @@ typedef enum qse_tri_t qse_tri_t;
 #ifdef QSE_HAVE_INT64_T
 #	define QSE_SIZEOF_INT64_T 8
 #	define QSE_SIZEOF_UINT64_T 8
+#	undef  QSE_SIZEOF_INTMAX_T
+#	undef  QSE_SIZEOF_UINTMAX_T
+#	define QSE_SIZEOF_INTMAX_T 8
+#	define QSE_SIZEOF_UINTMAX_T 8
+#else
+#	define QSE_SIZEOF_INT64_T 0
+#	define QSE_SIZEOF_UINT64_T 0
 #endif
 
 #if QSE_SIZEOF_INT == 16
@@ -299,12 +356,20 @@ typedef enum qse_tri_t qse_tri_t;
 #ifdef QSE_HAVE_INT128_T
 #	define QSE_SIZEOF_INT128_T 16
 #	define QSE_SIZEOF_UINT128_T 16
+#	undef  QSE_SIZEOF_INTMAX_T
+#	undef  QSE_SIZEOF_UINTMAX_T
+#	define QSE_SIZEOF_INTMAX_T 16
+#	define QSE_SIZEOF_UINTMAX_T 16
+#else
+#	define QSE_SIZEOF_INT128_T 0
+#	define QSE_SIZEOF_UINT128_T 0
 #endif
 
 /**
  * The qse_byte_t defines a byte type.
  */
 typedef qse_uint8_t qse_byte_t;
+#define QSE_SIZEOF_BYTE_T QSE_SIZEOF_UINT8_T
 
 /**
  * The qse_size_t type defines an unsigned integer type that is as large as
@@ -323,7 +388,7 @@ typedef qse_uint8_t qse_byte_t;
  * to hold a pointer value.
  */
 typedef qse_int_t qse_ssize_t;
-#	define QSE_SIZEOF_SSIZE_T QSE_SIZEOF_INT_T
+#define QSE_SIZEOF_SSIZE_T QSE_SIZEOF_INT_T
 
 /** 
  * The qse_word_t type redefines qse_uint_t. 
@@ -344,6 +409,47 @@ typedef qse_uint_t qse_uintptr_t;
  */
 typedef qse_int_t qse_intptr_t;
 #define QSE_SIZEOF_INTPTR_T QSE_SIZEOF_INT_T
+
+/** @typedef qse_intmax_t
+ * The qse_llong_t type defines the largest signed integer type supported.
+ */
+/** @typedef qse_uintmax_t
+ * The qse_ullong_t type defines the largest unsigned integer type supported.
+ */
+#if (QSE_SIZEOF_LONG >= QSE_SIZEOF_LONG_LONG) && \
+    (QSE_SIZEOF_LONG >= QSE_SIZEOF_INTMAX_T)
+	typedef long qse_intmax_t;
+	typedef unsigned long qse_uintmax_t;
+	#undef QSE_SIZEOF_INTMAX_T
+	#undef QSE_SIZEOF_UINTMAX_T
+	#define QSE_SIZEOF_INTMAX_T QSE_SIZEOF_LONG
+	#define QSE_SIZEOF_UINTMAX_T QSE_SIZEOF_LONG
+#elif (QSE_SIZEOF_LONG_LONG >= QSE_SIZEOF_INTMAX_T) 
+	typedef long long qse_intmax_t;
+	typedef unsigned long long qse_uintmax_t;
+	#undef QSE_SIZEOF_INTMAX_T
+	#undef QSE_SIZEOF_UINTMAX_T
+	#define QSE_SIZEOF_INTMAX_T QSE_SIZEOF_LONG_LONG
+	#define QSE_SIZEOF_UINTMAX_T QSE_SIZEOF_LONG_LONG
+#elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT128_T)
+	typedef qse_int128_t qse_intmax_t;
+	typedef qse_uint128_t qse_uintmax_t;
+#elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT64_T)
+	typedef qse_int64_t qse_intmax_t;
+	typedef qse_uint64_t qse_uintmax_t;
+#elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT32_T)
+	typedef qse_int32_t qse_intmax_t;
+	typedef qse_uint32_t qse_uintmax_t;
+#elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT16_T)
+	typedef qse_int16_t qse_intmax_t;
+	typedef qse_uint16_t qse_uintmax_t;
+#elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT8_T)
+	typedef qse_int8_t qse_intmax_t;
+	typedef qse_uint8_t qse_uintmax_t;
+#else
+#	error FATAL. THIS MUST NOT HAPPEN
+#endif
+
 
 /** @typedef qse_real_t
  * The qse_real_t type defines the largest floating-pointer number type
@@ -646,6 +752,8 @@ union qse_ubi_t
 	qse_word_t     word;
 	qse_intptr_t   intptr;
 	qse_uintptr_t  uintptr;
+	qse_intmax_t   intmax;
+	qse_uintmax_t  uintmax;
 	qse_real_t     real;
 
 	qse_char_t     cha;

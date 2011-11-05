@@ -19,6 +19,7 @@
  */
 
 #include "awk.h"
+#include <qse/cmn/fmt.h>
 
 static const qse_char_t* assop_str[] =
 {
@@ -268,10 +269,24 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			}
 			else
 			{
-				qse_char_t buf[64];
-				qse_awk_sprintlong (
-					awk, buf, QSE_COUNTOF(buf), 
-					((qse_awk_nde_int_t*)nde)->val);
+				/* Note that the array sizing fomula is not accurate 
+				 * but should be good enoug consiering the followings.
+				 *
+				 * size minval                               digits  sign
+				 *   1  -128                                      3  1
+				 *   2  -32768                                    5  1
+				 *   4  -2147483648                              10  1
+				 *   8  -9223372036854775808                     19  1
+				 *  16  -170141183460469231731687303715884105728 39  1
+				 */
+				qse_char_t buf[QSE_SIZEOF(qse_long_t) * 3 + 2]; 
+
+				qse_fmtintmax (
+					buf, QSE_COUNTOF(buf),
+					((qse_awk_nde_int_t*)nde)->val,
+					10, 
+					QSE_T('\0')
+				);
 				PUT_SRCSTR (awk, buf);
 			}
 			break;
