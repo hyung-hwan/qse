@@ -5,6 +5,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 {
 	qse_char_t buf[129];	
 	int bases[] = { 2, 8, 10, 16 };
+	qse_char_t* prefix[] = { QSE_T("0b"), QSE_T("0"), QSE_NULL, QSE_T("0x") };
 	int flags[] =
 	{
 		QSE_FMTINTMAX_PLUSSIGN,
@@ -26,7 +27,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		{
 			for (j = 0; j < QSE_COUNTOF(flags); j++)
 			{
-				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC, QSE_T('.'));
+				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC, QSE_T('.'), prefix[i]);
 				if (n <= -1)
 				{
 					qse_printf (QSE_T("%8d => [%4d:%04X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
