@@ -29,72 +29,50 @@
  */
 
 /** 
- * The qse_fmtintmaxtombs_flag_t type defines enumerators to change the
- * behavior of qse_fmtintmaxtombs() and qse_fmtuintmaxtombs().
+ * The qse_fmtintmax_flag_t type defines enumerators to change the
+ * behavior of qse_fmtintmax() and qse_fmtuintmax().
  */
-enum qse_fmtintmaxtombs_flag_t
+enum qse_fmtintmax_flag_t
 {
 	/** Don't truncate if the buffer is not large enough */
-	QSE_FMTINTMAXTOMBS_NOTRUNC = (0x100 << 0),
+	QSE_FMTINTMAX_NOTRUNC = (0x100 << 0),
 	/** Don't append a terminating null */
-     QSE_FMTINTMAXTOMBS_NONULL = (0x100 << 1),
+	QSE_FMTINTMAX_NONULL = (0x100 << 1),
 	/** Use uppercase letters for alphabetic digits */
-	QSE_FMTINTMAXTOMBS_UPPERCASE = (0x100 << 2),
+	QSE_FMTINTMAX_UPPERCASE = (0x100 << 2),
 	/** Insert a plus sign for a positive integer including 0 */
-	QSE_FMTINTMAXTOMBS_PLUSSIGN = (0x100 << 3),
+	QSE_FMTINTMAX_PLUSSIGN = (0x100 << 3),
+	/** Insert a space for a positive integer including 0 */
+	QSE_FMTINTMAX_EMPTYSIGN = (0x100 << 4),
 	/** Fill the right part of the string */
-	QSE_FMTINTMAXTOMBS_FILLRIGHT = (0x100 << 4),
+	QSE_FMTINTMAX_FILLRIGHT = (0x100 << 5),
 	/** Fill between the sign chacter and the digit part */
-	QSE_FMTINTMAXTOMBS_FILLCENTER = (0x100 << 5)
+	QSE_FMTINTMAX_FILLCENTER = (0x100 << 6)
 };
-#define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAXTOMBS_NOTRUNC
-#define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAXTOMBS_NONULL
-#define QSE_FMTINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAXTOMBS_UPPERCASE
-#define QSE_FMTINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAXTOMBS_PLUSSIGN
-#define QSE_FMTINTMAXTOMBS_FILLRIGHT  QSE_FMTINTMAXTOMBS_FILLRIGHT
-#define QSE_FMTINTMAXTOMBS_FILLCENTER QSE_FMTINTMAXTOMBS_FILLCENTER
 
-/** 
- * The qse_fmtintmaxtowcs_flag_t type defines enumerators to change the
- * behavior of qse_fmtintmaxtowcs() and qse_fmtuintmaxtowcs().
- */
-enum qse_fmtintmaxtowcs_flag_t
-{
-	/** Don't truncate if the buffer is not large enough */
-	QSE_FMTINTMAXTOWCS_NOTRUNC = (0x100 << 0),
-	/** Don't append a terminating null */
-     QSE_FMTINTMAXTOWCS_NONULL = (0x100 << 1),
-	/** Use uppercase letters for alphabetic digits */
-	QSE_FMTINTMAXTOWCS_UPPERCASE = (0x100 << 2),
-	/** Insert a plus sign for a positive integer including 0 */
-	QSE_FMTINTMAXTOWCS_PLUSSIGN = (0x100 << 3),
-	/** Fill the right part of the string */
-	QSE_FMTINTMAXTOWCS_FILLRIGHT = (0x100 << 4),
-	/** Fill between the sign chacter and the digit part */
-	QSE_FMTINTMAXTOWCS_FILLCENTER = (0x100 << 5)
-};
-#define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAXTOWCS_NOTRUNC
-#define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAXTOWCS_NONULL
-#define QSE_FMTINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAXTOWCS_UPPERCASE
-#define QSE_FMTINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAXTOWCS_PLUSSIGN
-#define QSE_FMTINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAXTOWCS_FILLRIGHT
-#define QSE_FMTINTMAXTOWCS_FILLCENTER QSE_FMTINTMAXTOWCS_FILLCENTER
+#define QSE_FMTINTMAX_NOTRUNC         QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTINTMAX_NONULL          QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAX_UPPERCASE       QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTINTMAX_PLUSSIGN        QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTINTMAX_EMPTYSIGN       QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTINTMAX_FILLRIGHT       QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTINTMAX_FILLCENTER      QSE_FMTINTMAX_FILLCENTER
 
-#ifdef QSE_CHAR_IS_MCHAR
-#	define QSE_FMTINTMAX_NOTRUNC    QSE_FMTINTMAXTOMBS_NOTRUNC
-#	define QSE_FMTINTMAX_NONULL     QSE_FMTINTMAXTOMBS_NONULL
-#	define QSE_FMTINTMAX_UPPERCASE  QSE_FMTINTMAXTOMBS_UPPERCASE
-#	define QSE_FMTINTMAX_PLUSSIGN   QSE_FMTINTMAXTOMBS_PLUSSIGN
-#	define QSE_FMTINTMAX_FILLRIGHT  QSE_FMTINTMAXTOMBS_FILLRIGHT
-#	define QSE_FMTINTMAX_FILLCENTER QSE_FMTINTMAXTOMBS_FILLCENTER
-#else
-#	define QSE_FMTINTMAX_NOTRUNC    QSE_FMTINTMAXTOWCS_NOTRUNC
-#	define QSE_FMTINTMAX_NONULL     QSE_FMTINTMAXTOWCS_NONULL
-#	define QSE_FMTINTMAX_UPPERCASE  QSE_FMTINTMAXTOWCS_UPPERCASE
-#	define QSE_FMTINTMAX_PLUSSIGN   QSE_FMTINTMAXTOWCS_PLUSSIGN
-#	define QSE_FMTINTMAX_FILLRIGHT  QSE_FMTINTMAXTOWCS_FILLRIGHT
-#	define QSE_FMTINTMAX_FILLCENTER QSE_FMTINTMAXTOWCS_FILLCENTER
-#endif
+#define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTINTMAXTOMBS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTINTMAXTOMBS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTINTMAXTOMBS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
+
+#define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTINTMAXTOWCS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTINTMAXTOWCS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
 
 #ifdef __cplusplus
 extern "C" {
@@ -124,8 +102,11 @@ extern "C" {
  * The #QSE_FMTINTMAXTOMBS_UPPERCASE flag indicates that the function should
  * use the uppercase letter for a alphabetic digit; 
  * You can set #QSE_FMTINTMAXTOMBS_NOTRUNC if you require lossless formatting.
- * The #QSE_FMTINTMAXTOMBS_PLUSSIGN flag ensures that the plug sign is added
- * for a positive integer including 0.
+ * The #QSE_FMTINTMAXTOMBS_PLUSSIGN flag and #QSE_FMTINTMAXTOMBS_EMPTYSIGN 
+ * ensures that the plus sign and a space is added for a positive integer 
+ * including 0 respectively.
+ * 
+ * If @a prefix is not #QSE_NULL, it is inserted before the digits.
  * 
  * @return
  *  - -1 if the base is not between 2 and 36 inclusive. 
@@ -137,11 +118,12 @@ extern "C" {
  *    null in all other cases.
  */
 int qse_fmtintmaxtombs (
-	qse_mchar_t* buf,             /**< buffer pointer */
-	int          bufsize,         /**< buffer size */
-	qse_intmax_t value,           /**< integer to format */
-	int          base_and_flags,  /**< base ORed with flags */
-	qse_mchar_t  fillchar         /**< fill character */
+	qse_mchar_t*       buf,             /**< buffer pointer */
+	int                bufsize,         /**< buffer size */
+	qse_intmax_t       value,           /**< integer to format */
+	int                base_and_flags,  /**< base ORed with flags */
+	qse_mchar_t        fillchar,        /**< fill character */
+	const qse_mchar_t* prefix           /**< prefix */
 );
 
 /**
@@ -168,8 +150,11 @@ int qse_fmtintmaxtombs (
  * The #QSE_FMTINTMAXTOWCS_UPPERCASE flag indicates that the function should
  * use the uppercase letter for a alphabetic digit; 
  * You can set #QSE_FMTINTMAXTOWCS_NOTRUNC if you require lossless formatting.
- * The #QSE_FMTINTMAXTOWCS_PLUSSIGN flag ensures that the plug sign is added
- * for a positive integer including 0.
+ * The #QSE_FMTINTMAXTOWCS_PLUSSIGN flag and #QSE_FMTINTMAXTOWCS_EMPTYSIGN 
+ * ensures that the plus sign and a space is added for a positive integer 
+ * including 0 respectively.
+ *
+ * If @a prefix is not #QSE_NULL, it is inserted before the digits.
  * 
  * @return
  *  - -1 if the base is not between 2 and 36 inclusive. 
@@ -181,11 +166,12 @@ int qse_fmtintmaxtombs (
  *    null in all other cases.
  */
 int qse_fmtintmaxtowcs (
-	qse_wchar_t* buf,             /**< buffer pointer */
-	int          bufsize,         /**< buffer size */
-	qse_intmax_t value,           /**< integer to format */
-	int          base_and_flags,  /**< base ORed with flags */
-	qse_wchar_t  fillchar         /**< fill character */
+	qse_wchar_t*       buf,             /**< buffer pointer */
+	int                bufsize,         /**< buffer size */
+	qse_intmax_t       value,           /**< integer to format */
+	int                base_and_flags,  /**< base ORed with flags */
+	qse_wchar_t        fillchar,        /**< fill character */
+	const qse_wchar_t* prefix           /**< prefix */
 );
 
 /** @def qse_fmtintmax
@@ -193,9 +179,9 @@ int qse_fmtintmaxtowcs (
  * #QSE_CHAR_IS_MCHAR, and qse_fmtintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_fmtintmax(b,sz,v,bf,fc) qse_fmtintmaxtombs(b,sz,v,bf,fc)
+#	define qse_fmtintmax(b,sz,v,bf,fc,pf) qse_fmtintmaxtombs(b,sz,v,bf,fc,pf)
 #else
-#	define qse_fmtintmax(b,sz,v,bf,fc) qse_fmtintmaxtowcs(b,sz,v,bf,fc)
+#	define qse_fmtintmax(b,sz,v,bf,fc,pf) qse_fmtintmaxtowcs(b,sz,v,bf,fc,pf)
 #endif
 
 /**
@@ -204,11 +190,12 @@ int qse_fmtintmaxtowcs (
  * except that it handles an unsigned integer.
  */
 int qse_fmtuintmaxtombs (
-	qse_mchar_t*  buf,             /**< buffer pointer */
-	int           bufsize,         /**< buffer size */
-	qse_uintmax_t value,           /**< integer to format */
-	int           base_and_flags,  /**< base ORed with flags */
-	qse_mchar_t   fillchar         /**< fill character */
+	qse_mchar_t*       buf,             /**< buffer pointer */
+	int                bufsize,         /**< buffer size */
+	qse_uintmax_t      value,           /**< integer to format */
+	int                base_and_flags,  /**< base ORed with flags */
+	qse_mchar_t        fillchar,        /**< fill character */
+	const qse_mchar_t* prefix           /**< prefix */
 );
 
 /**
@@ -217,11 +204,12 @@ int qse_fmtuintmaxtombs (
  * qse_fmtuintmaxtowcs() except that it handles an unsigned integer.
  */
 int qse_fmtuintmaxtowcs (
-	qse_wchar_t*  buf,             /**< buffer pointer */
-	int           bufsize,         /**< buffer size */
-	qse_uintmax_t value,           /**< integer to format */
-	int           base_and_flags,  /**< base ORed with flags */
-	qse_wchar_t   fillchar         /**< fill character */
+	qse_wchar_t*       buf,             /**< buffer pointer */
+	int                bufsize,         /**< buffer size */
+	qse_uintmax_t      value,           /**< integer to format */
+	int                base_and_flags,  /**< base ORed with flags */
+	qse_wchar_t        fillchar,        /**< fill character */
+	const qse_wchar_t* prefix           /**< prefix */
 );
 
 /** @def qse_fmtuintmax
@@ -229,9 +217,9 @@ int qse_fmtuintmaxtowcs (
  * #QSE_CHAR_IS_MCHAR, and qse_fmtuintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_fmtuintmax(b,sz,v,bf,fc) qse_fmtuintmaxtombs(b,sz,v,bf,fc)
+#	define qse_fmtuintmax(b,sz,v,bf,fc,pf) qse_fmtuintmaxtombs(b,sz,v,bf,fc,pf)
 #else
-#	define qse_fmtuintmax(b,sz,v,bf,fc) qse_fmtuintmaxtowcs(b,sz,v,bf,fc)
+#	define qse_fmtuintmax(b,sz,v,bf,fc,pf) qse_fmtuintmaxtowcs(b,sz,v,bf,fc,pf)
 #endif
 
 #ifdef __cplusplus

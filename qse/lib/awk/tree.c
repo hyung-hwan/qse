@@ -285,7 +285,8 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 					buf, QSE_COUNTOF(buf),
 					((qse_awk_nde_int_t*)nde)->val,
 					10, 
-					QSE_T('\0')
+					QSE_T('\0'),
+					QSE_NULL
 				);
 				PUT_SRCSTR (awk, buf);
 			}

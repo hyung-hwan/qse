@@ -691,8 +691,8 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 {
 	qse_awk_rtx_t* rtx;
 
-        QSE_ASSERTX (awk->prm.math.pow != QSE_NULL, "Call qse_awk_setprm() first");
-        QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
+	QSE_ASSERTX (awk->prm.math.pow != QSE_NULL, "Call qse_awk_setprm() first");
+	QSE_ASSERTX (awk->prm.sprintf != QSE_NULL, "Call qse_awk_setprm() first");
 
 	/* clear the awk error code */
 	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
@@ -6662,12 +6662,20 @@ qse_char_t* qse_awk_rtx_format (
 	const qse_char_t* fmt, qse_size_t fmt_len, 
 	qse_size_t nargs_on_stack, qse_awk_nde_t* args, qse_size_t* len)
 {
-	qse_size_t i, j;
+	qse_size_t i;
 	qse_size_t stack_arg_idx = 1;
 	qse_awk_val_t* val;
 
 #define OUT_CHAR(c) QSE_BLOCK( \
 	if (qse_str_ccat (out, (c)) == -1) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		return QSE_NULL; \
+	} \
+)
+
+#define OUT_STR(ptr,len) QSE_BLOCK( \
+	if (qse_str_ncat (out, (ptr), (len)) == -1) \
 	{ \
 		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
 		return QSE_NULL; \
@@ -6682,8 +6690,16 @@ qse_char_t* qse_awk_rtx_format (
 	} \
 )
 
+#define FMT_STR(ptr,len) QSE_BLOCK( \
+	if (qse_str_ncat (fbu, (ptr), (len)) == -1) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		return QSE_NULL; \
+	} \
+)
+
 #define GROW(buf) QSE_BLOCK( \
-	if ((buf)->ptr != QSE_NULL) \
+	if ((buf)->ptr) \
 	{ \
 		QSE_AWK_FREE (rtx->awk, (buf)->ptr); \
 		(buf)->ptr = QSE_NULL; \
@@ -6695,6 +6711,24 @@ qse_char_t* qse_awk_rtx_format (
 	{ \
 		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
 		(buf)->len = 0; \
+		return QSE_NULL; \
+	} \
+)
+
+#define GROW_WITH_INC(buf,incv) QSE_BLOCK( \
+	if ((buf)->ptr) \
+	{ \
+		QSE_AWK_FREE (rtx->awk, (buf)->ptr); \
+		(buf)->ptr = QSE_NULL; \
+	} \
+	(buf)->len += ((incv) > (buf)->inc)? (incv): (buf)->inc; \
+	(buf)->ptr = (qse_char_t*)QSE_AWK_ALLOC ( \
+		rtx->awk, (buf)->len * QSE_SIZEOF(qse_char_t)); \
+	if ((buf)->ptr == QSE_NULL) \
+	{ \
+		SETERR_COD (rtx, QSE_AWK_ENOMEM); \
+		(buf)->len = 0; \
+		return QSE_NULL; \
 	} \
 )
 
@@ -6719,16 +6753,36 @@ qse_char_t* qse_awk_rtx_format (
 
 	for (i = 0; i < fmt_len; i++)
 	{
-		qse_long_t width = -1, prec = -1;
-		int minus = 0;
+		qse_long_t wp[2];
+		int wp_idx;
+#define WP_WIDTH     0
+#define WP_PRECISION 1
+
+		int flags;
+#define FLAG_SPACE (1 << 0)
+#define FLAG_HASH  (1 << 1)
+#define FLAG_ZERO  (1 << 2)
+#define FLAG_PLUS  (1 << 3)
+#define FLAG_MINUS (1 << 4)
 
 		if (QSE_STR_LEN(fbu) == 0)
 		{
-			if (fmt[i] == QSE_T('%')) FMT_CHAR (fmt[i]);
-			else OUT_CHAR (fmt[i]);
+			/* format specifier is empty */
+			if (fmt[i] == QSE_T('%')) 
+			{
+				/* add % to format specifier (fbu) */
+				FMT_CHAR (fmt[i]);
+			}
+			else 
+			{
+				/* normal output */
+				OUT_CHAR (fmt[i]);
+			}
 			continue;
 		}
 
+		/* handle flags */
+#if 0
 		while (i < fmt_len &&
 		       (fmt[i] == QSE_T(' ') || fmt[i] == QSE_T('#') ||
 		        fmt[i] == QSE_T('0') || fmt[i] == QSE_T('+') ||
@@ -6737,111 +6791,47 @@ qse_char_t* qse_awk_rtx_format (
 			if (fmt[i] == QSE_T('-')) minus = 1;
 			FMT_CHAR (fmt[i]); i++;
 		}
+#endif
 
-		if (i < fmt_len && fmt[i] == QSE_T('*'))
+		flags = 0;
+		while (i < fmt_len)
 		{
-			qse_awk_val_t* v;
-			qse_char_t* p;
-			int n;
-
-			if (args == QSE_NULL)
+			switch (fmt[i])
 			{
-				if (stack_arg_idx >= nargs_on_stack)
-				{
-					SETERR_COD (rtx, QSE_AWK_EFMTARG);
-					return QSE_NULL;
-				}
-				v = qse_awk_rtx_getarg (rtx, stack_arg_idx);
-			}
-			else
-			{
-				if (val != QSE_NULL) 
-				{
-					if (stack_arg_idx >= nargs_on_stack)
-					{
-						SETERR_COD (rtx, QSE_AWK_EFMTARG);
-						return QSE_NULL;
-					}
-					v = val;
-				}
-				else 
-				{
-					v = eval_expression (rtx, args);
-					if (v == QSE_NULL) return QSE_NULL;
-				}
+				case QSE_T(' '):
+					flags |= FLAG_SPACE;
+					break;
+				case QSE_T('#'):
+					flags |= FLAG_HASH;
+					break;
+				case QSE_T('0'):
+					flags |= FLAG_ZERO;
+					break;
+				case QSE_T('+'):
+					flags |= FLAG_PLUS;
+					break;
+				case QSE_T('-'):
+					flags |= FLAG_MINUS;
+					break;
+				default:
+					goto wp_mod_init;
 			}
 
-			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtolong (rtx, v, &width);
-			qse_awk_rtx_refdownval (rtx, v);
-			if (n <= -1) return QSE_NULL; 
-
-			do
-			{
-				n = qse_fmtintmax (
-					rtx->format.tmp.ptr,
-					rtx->format.tmp.len,
-					width, 
-					10 | QSE_FMTINTMAX_NOTRUNC,
-					QSE_T('\0')
-				);	
-				if (n <= -1)
-				{
-					/* TODO: utilize n in GROW.
-					 * since -n is the number of characters required
-					 * including terminating null, it can be used there 
-					 * this doesn't have to be in the loop any more */
-					GROW (&rtx->format.tmp);
-					if (rtx->format.tmp.ptr == QSE_NULL)
-					{
-						SETERR_COD (rtx, QSE_AWK_ENOMEM);
-						return QSE_NULL;
-					}
-
-					continue;
-				}
-
-				break;
-			}
-			while (1);
-
-			/* TODO: we know that n is the length.
-			 * the contents can be added without scanning the whole string again */
-			p = rtx->format.tmp.ptr;
-			while (*p != QSE_T('\0'))
-			{
-				FMT_CHAR (*p);
-				p++;
-			}
-
-			if (args == QSE_NULL || val != QSE_NULL) stack_arg_idx++;
-			else args = args->next;
-			i++;
-		}
-		else
-		{
-			if (i < fmt_len && QSE_AWK_ISDIGIT(rtx->awk, fmt[i]))
-			{
-				width = 0;
-				do
-				{
-					width = width * 10 + fmt[i] - QSE_T('0');
-					FMT_CHAR (fmt[i]); i++;
-				}
-				while (i < fmt_len && QSE_AWK_ISDIGIT(rtx->awk, fmt[i]));
-			}
-		}
-
-		if (i < fmt_len && fmt[i] == QSE_T('.'))
-		{
-			prec = 0;
 			FMT_CHAR (fmt[i]); i++;
 		}
 
+wp_mod_init:
+		wp[WP_WIDTH] = -1; /* width */
+		wp[WP_PRECISION] = -1; /* precision */
+		wp_idx = WP_WIDTH; /* width first */
+
+wp_mod_main:
 		if (i < fmt_len && fmt[i] == QSE_T('*'))
 		{
+			/* variable width/precision modifier.
+			 * take the width/precision from a parameter and
+			 * transform it to a fixed length format */
 			qse_awk_val_t* v;
-			qse_char_t* p;
 			int n;
 
 			if (args == QSE_NULL)
@@ -6872,7 +6862,7 @@ qse_char_t* qse_awk_rtx_format (
 			}
 
 			qse_awk_rtx_refupval (rtx, v);
-			n = qse_awk_rtx_valtolong (rtx, v, &prec);
+			n = qse_awk_rtx_valtolong (rtx, v, &wp[wp_idx]);
 			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1) return QSE_NULL; 
 
@@ -6881,22 +6871,16 @@ qse_char_t* qse_awk_rtx_format (
 				n = qse_fmtintmax (
 					rtx->format.tmp.ptr,
 					rtx->format.tmp.len,
-					prec, 
-					10 | QSE_FMTINTMAX_NOTRUNC,
-					QSE_T('\0')
+					wp[wp_idx], 
+					10 | QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL,
+					QSE_T('\0'),
+					QSE_NULL
 				);	
 				if (n <= -1)
 				{
-					/* TODO: utilize n in GROW.
-					 * since -n is the number of characters required
-					 * including terminating null, it can be used there.
-					 * this doesn't have to be in the loop any more */
-					GROW (&rtx->format.tmp);
-					if (rtx->format.tmp.ptr == QSE_NULL)
-					{
-						SETERR_COD (rtx, QSE_AWK_ENOMEM);
-						return QSE_NULL;
-					}
+					/* -n is the number of characters required
+					 * including terminating null  */
+					GROW_WITH_INC (&rtx->format.tmp, -n);
 					continue;
 				}
 
@@ -6904,14 +6888,7 @@ qse_char_t* qse_awk_rtx_format (
 			}
 			while (1);
 
-			/* TODO: we know that n is the length.
-			 * the contents can be added without scanning the whole string again */
-			p = rtx->format.tmp.ptr;
-			while (*p != QSE_T('\0'))
-			{
-				FMT_CHAR (*p);
-				p++;
-			}
+			FMT_STR(rtx->format.tmp.ptr, n);
 
 			if (args == QSE_NULL || val != QSE_NULL) stack_arg_idx++;
 			else args = args->next;
@@ -6919,16 +6896,26 @@ qse_char_t* qse_awk_rtx_format (
 		}
 		else
 		{
+			/* fixed width/precision modifier */
 			if (i < fmt_len && QSE_AWK_ISDIGIT(rtx->awk, fmt[i]))
 			{
-				prec = 0;
+				wp[wp_idx] = 0;
 				do
 				{
-					prec = prec * 10 + fmt[i] - QSE_T('0');
+					wp[wp_idx] = wp[wp_idx] * 10 + fmt[i] - QSE_T('0');
 					FMT_CHAR (fmt[i]); i++;
 				}
 				while (i < fmt_len && QSE_AWK_ISDIGIT(rtx->awk, fmt[i]));
 			}
+		}
+
+		if (wp_idx == WP_WIDTH && i < fmt_len && fmt[i] == QSE_T('.'))
+		{
+			wp[WP_PRECISION] = 0;
+			FMT_CHAR (fmt[i]); i++;
+
+			wp_idx = WP_PRECISION; /* change index to precision */
+			goto wp_mod_main;
 		}
 
 		if (i >= fmt_len) break;
@@ -6939,26 +6926,7 @@ qse_char_t* qse_awk_rtx_format (
 		{
 			qse_awk_val_t* v;
 			qse_long_t l;
-			qse_char_t* p;
 			int n;
-
-		#if QSE_SIZEOF_LONG_LONG > 0
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF___INT64 > 0
-			FMT_CHAR (QSE_T('I'));
-			FMT_CHAR (QSE_T('6'));
-			FMT_CHAR (QSE_T('4'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF_LONG > 0
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF_INT > 0
-			FMT_CHAR (fmt[i]);
-		#else
-			#error unsupported integer size
-		#endif	
 
 			if (args == QSE_NULL)
 			{
@@ -6992,6 +6960,110 @@ qse_char_t* qse_awk_rtx_format (
 			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1) return QSE_NULL; 
 
+#if 0
+/* TODO: finish this part... replace sprintf */
+{
+int fmt_flags;
+int fmt_uint = 0;
+qse_char_t fmt_fill = QSE_T('\0');
+const qse_char_t* fmt_prefix = QSE_NULL;
+
+			if (l == 0 && wp[WP_PRECISION] == 0)
+			{
+			}
+
+			fmt_flags = QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL;
+			if (flags & FLAG_ZERO) 
+			{
+				fmt_fill = QSE_T('0');
+			}
+			else
+			{
+				if (!(flags & FLAG_MINUS)) fmt_flags |= QSE_FMTINTMAX_FILLCENTER;
+			}
+
+			switch (fmt[i])
+			{
+				case QSE_T('X'):
+					fmt_flags |= QSE_FMTINTMAX_UPPERCASE;
+				case QSE_T('x'):
+					fmt_flags |= 16;
+					fmt_uint = 1;
+					if (l && (flags & FLAG_HASH)) fmt_prefix = QSE_T("0x");
+					break;
+
+				case QSE_T('o'):
+					fmt_flags |= 8;
+					fmt_uint = 1;
+					if (l && (flags & FLAG_HASH)) fmt_prefix = QSE_T("0");
+					break;
+	
+				default:
+					fmt_flags |= 10;
+					if (flags & FLAG_PLUS) fmt_flags |= QSE_FMTINTMAX_PLUSSIGN;
+					if (flags & FLAG_SPACE) fmt_flags |= QSE_FMTINTMAX_EMPTYSIGN;
+					break;
+			}
+
+qse_printf (QSE_T("width=>%d precision=%d\n"), wp[0], wp[1]);
+			do
+			{
+				if (fmt_uint)
+				{
+					n = qse_fmtuintmax (
+						rtx->format.tmp.ptr,
+						rtx->format.tmp.len,
+						l,
+						fmt_flags,
+						fmt_fill,
+						fmt_prefix
+					);
+				}
+				else
+				{
+					n = qse_fmtintmax (
+						rtx->format.tmp.ptr,
+						rtx->format.tmp.len,
+						l,
+						fmt_flags,
+						fmt_fill,
+						fmt_prefix
+					);
+				}
+				if (n <= -1)
+				{
+					/* -n is the number of characters required
+					 * including terminating null  */
+					GROW_WITH_INC (&rtx->format.tmp, -n);
+					continue;
+				}
+
+				break;
+			}
+			while (1);
+
+			OUT_STR (rtx->format.tmp.ptr, n);
+}
+#endif
+
+		#if QSE_SIZEOF_LONG_LONG > 0
+			FMT_CHAR (QSE_T('l'));
+			FMT_CHAR (QSE_T('l'));
+			FMT_CHAR (fmt[i]);
+		#elif QSE_SIZEOF___INT64 > 0
+			FMT_CHAR (QSE_T('I'));
+			FMT_CHAR (QSE_T('6'));
+			FMT_CHAR (QSE_T('4'));
+			FMT_CHAR (fmt[i]);
+		#elif QSE_SIZEOF_LONG > 0
+			FMT_CHAR (QSE_T('l'));
+			FMT_CHAR (fmt[i]);
+		#elif QSE_SIZEOF_INT > 0
+			FMT_CHAR (fmt[i]);
+		#else
+			#error unsupported integer size
+		#endif	
+
 			do
 			{
 				n = rtx->awk->prm.sprintf (
@@ -7013,12 +7085,6 @@ qse_char_t* qse_awk_rtx_format (
 				if (n == -1)
 				{
 					GROW (&rtx->format.tmp);
-					if (rtx->format.tmp.ptr == QSE_NULL)
-					{
-						SETERR_COD (rtx, QSE_AWK_ENOMEM);
-						return QSE_NULL;
-					}
-
 					continue;
 				}
 
@@ -7026,12 +7092,7 @@ qse_char_t* qse_awk_rtx_format (
 			}
 			while (1);
 
-			p = rtx->format.tmp.ptr;
-			while (*p != QSE_T('\0'))
-			{
-				OUT_CHAR (*p);
-				p++;
-			}
+			OUT_STR (rtx->format.tmp.ptr, n);
 		}
 		else if (fmt[i] == QSE_T('e') || fmt[i] == QSE_T('E') ||
 		         fmt[i] == QSE_T('g') || fmt[i] == QSE_T('G') ||
@@ -7039,7 +7100,6 @@ qse_char_t* qse_awk_rtx_format (
 		{
 			qse_awk_val_t* v;
 			qse_real_t r;
-			qse_char_t* p;
 			int n;
 	
 			FMT_CHAR (QSE_T('L'));
@@ -7094,12 +7154,6 @@ qse_char_t* qse_awk_rtx_format (
 				if (n == -1)
 				{
 					GROW (&rtx->format.tmp);
-					if (rtx->format.tmp.ptr == QSE_NULL)
-					{
-						SETERR_COD (rtx, QSE_AWK_ENOMEM);
-						return QSE_NULL;
-					}
-
 					continue;
 				}
 
@@ -7107,12 +7161,7 @@ qse_char_t* qse_awk_rtx_format (
 			}
 			while (1);
 
-			p = rtx->format.tmp.ptr;
-			while (*p != QSE_T('\0'))
-			{
-				OUT_CHAR (*p);
-				p++;
-			}
+			OUT_STR (rtx->format.tmp.ptr, n);
 		}
 		else if (fmt[i] == QSE_T('c')) 
 		{
@@ -7180,16 +7229,17 @@ qse_char_t* qse_awk_rtx_format (
 				return QSE_NULL;
 			}
 
-			if (prec == -1 || prec == 0 || prec > (qse_long_t)ch_len) 
+			if (wp[WP_PRECISION] == -1 || wp[WP_PRECISION] == 0 || wp[WP_PRECISION] > (qse_long_t)ch_len) 
 			{
-				prec = (qse_long_t)ch_len;
+				wp[WP_PRECISION] = (qse_long_t)ch_len;
 			}
 
-			if (prec > width) width = prec;
+			if (wp[WP_PRECISION] > wp[WP_WIDTH]) wp[WP_WIDTH] = wp[WP_PRECISION];
 
-			if (!minus)
+			if (!(flags & FLAG_MINUS))
 			{
-				while (width > prec) 
+				/* right align */
+				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
@@ -7197,11 +7247,11 @@ qse_char_t* qse_awk_rtx_format (
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL; 
 					} 
-					width--;
+					wp[WP_WIDTH]--;
 				}
 			}
 
-			if (prec > 0)
+			if (wp[WP_PRECISION] > 0)
 			{
 				if (qse_str_ccat (out, ch) == -1) 
 				{ 
@@ -7211,9 +7261,10 @@ qse_char_t* qse_awk_rtx_format (
 				} 
 			}
 
-			if (minus)
+			if (flags & FLAG_MINUS)
 			{
-				while (width > prec) 
+				/* left align */
+				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
@@ -7221,7 +7272,7 @@ qse_char_t* qse_awk_rtx_format (
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL; 
 					} 
-					width--;
+					wp[WP_WIDTH]--;
 				}
 			}
 
@@ -7295,12 +7346,13 @@ qse_char_t* qse_awk_rtx_format (
 				str_free = str_ptr;
 			}
 
-			if (prec == -1 || prec > (qse_long_t)str_len) prec = (qse_long_t)str_len;
-			if (prec > width) width = prec;
+			if (wp[WP_PRECISION] == -1 || wp[WP_PRECISION] > (qse_long_t)str_len) wp[WP_PRECISION] = (qse_long_t)str_len;
+			if (wp[WP_PRECISION] > wp[WP_WIDTH]) wp[WP_WIDTH] = wp[WP_PRECISION];
 
-			if (!minus)
+			if (!(flags & FLAG_MINUS))
 			{
-				while (width > prec) 
+				/* right align */
+				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
@@ -7310,11 +7362,11 @@ qse_char_t* qse_awk_rtx_format (
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL; 
 					} 
-					width--;
+					wp[WP_WIDTH]--;
 				}
 			}
 
-			for (k = 0; k < prec; k++) 
+			for (k = 0; k < wp[WP_PRECISION]; k++) 
 			{
 				if (qse_str_ccat (out, str_ptr[k]) == -1) 
 				{ 
@@ -7328,9 +7380,10 @@ qse_char_t* qse_awk_rtx_format (
 
 			if (str_free != QSE_NULL) QSE_AWK_FREE (rtx->awk, str_free);
 
-			if (minus)
+			if (flags & FLAG_MINUS)
 			{
-				while (width > prec) 
+				/* left align */
+				while (wp[WP_WIDTH] > wp[WP_PRECISION]) 
 				{
 					if (qse_str_ccat (out, QSE_T(' ')) == -1) 
 					{ 
@@ -7338,7 +7391,7 @@ qse_char_t* qse_awk_rtx_format (
 						SETERR_COD (rtx, QSE_AWK_ENOMEM);
 						return QSE_NULL; 
 					} 
-					width--;
+					wp[WP_WIDTH]--;
 				}
 			}
 
@@ -7346,8 +7399,11 @@ qse_char_t* qse_awk_rtx_format (
 		}
 		else /*if (fmt[i] == QSE_T('%'))*/
 		{
+			OUT_STR (QSE_STR_PTR(fbu), QSE_STR_LEN(fbu));
+		#if 0
 			for (j = 0; j < QSE_STR_LEN(fbu); j++)
 				OUT_CHAR (QSE_STR_CHAR(fbu,j));
+		#endif
 			OUT_CHAR (fmt[i]);
 		}
 
@@ -7357,8 +7413,7 @@ qse_char_t* qse_awk_rtx_format (
 	}
 
 	/* flush uncompleted formatting sequence */
-	for (j = 0; j < QSE_STR_LEN(fbu); j++)
-		OUT_CHAR (QSE_STR_CHAR(fbu,j));
+	OUT_STR (QSE_STR_PTR(fbu), QSE_STR_LEN(fbu));
 
 	*len = QSE_STR_LEN(out);
 	return QSE_STR_PTR(out);
