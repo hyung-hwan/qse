@@ -44,6 +44,7 @@ libqsecmn_la_SOURCES = \
 	rex.c \
 	sio.c \
 	sll.c \
+	stdio.c \
 	str-beg.c \
 	str-cat.c \
 	str-chr.c \
@@ -84,7 +85,7 @@ libqsecmn_la_SOURCES = \
 	tre-match-parallel.c \
 	tre-parse.c \
 	tre-stack.c \
-	stdio.c \
+	utf8.c \
 	xma.c
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined

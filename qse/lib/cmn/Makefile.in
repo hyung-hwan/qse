@@ -79,15 +79,15 @@ am_libqsecmn_la_OBJECTS = alg-search.lo alg-sort.lo assert.lo chr.lo \
 	chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo fma.lo \
 	fmt.lo main.lo mem.lo oht.lo opt.lo path-basename.lo \
 	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
-	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
-	str-cpy.lo str-del.lo str-dup.lo str-dynm.lo str-dynw.lo \
-	str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo \
-	str-len.lo str-pac.lo str-pbrk.lo str-put.lo str-rev.lo \
-	str-rot.lo str-set.lo str-spl.lo str-spn.lo str-str.lo \
-	str-subst.lo str-tok.lo str-trm.lo str-word.lo time.lo tio.lo \
-	tio-get.lo tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
-	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
-	tre-stack.lo stdio.lo xma.lo
+	stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
+	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
+	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
+	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
+	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
+	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
+	time.lo tio.lo tio-get.lo tio-put.lo tre.lo tre-ast.lo \
+	tre-compile.lo tre-match-backtrack.lo tre-match-parallel.lo \
+	tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -313,6 +313,7 @@ libqsecmn_la_SOURCES = \
 	rex.c \
 	sio.c \
 	sll.c \
+	stdio.c \
 	str-beg.c \
 	str-cat.c \
 	str-chr.c \
@@ -353,7 +354,7 @@ libqsecmn_la_SOURCES = \
 	tre-match-parallel.c \
 	tre-parse.c \
 	tre-stack.c \
-	stdio.c \
+	utf8.c \
 	xma.c
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
@@ -506,6 +507,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-stack.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Plo@am__quote@
 
 .c.o:
