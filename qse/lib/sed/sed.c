@@ -598,13 +598,6 @@ static void free_all_cids (qse_sed_t* sed)
 	}
 }
 
-static QSE_INLINE int xdigit_to_num (qse_cint_t c)
-{
-	return (c >= QSE_T('0') && c <= QSE_T('9'))? (c - QSE_T('0')):
-	       (c >= QSE_T('A') && c <= QSE_T('F'))? (c - QSE_T('A') + 10):
-	       (c >= QSE_T('a') && c <= QSE_T('f'))? (c - QSE_T('a') + 10): -1;
-}
-
 static int trans_escaped (qse_sed_t* sed, qse_cint_t c, qse_cint_t* ec, int* xamp)
 {
 	if (xamp) *xamp = 0;
@@ -643,13 +636,13 @@ Omitted for clash with regular expression \b.
 			qse_cint_t peeped;
 
 			PEEPNXTSC (sed, peeped, -1);
-			cc = xdigit_to_num (peeped);
+			cc = QSE_XDIGITTONUM (peeped);
 			if (cc <= -1) break;
 			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = cc;
 
 			PEEPNXTSC (sed, peeped, -1);
-			cc = xdigit_to_num (peeped);
+			cc = QSE_XDIGITTONUM (peeped);
 			if (cc <= -1) break;
 			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = (c << 4) | cc;
@@ -667,7 +660,7 @@ Omitted for clash with regular expression \b.
 			qse_cint_t peeped;
 
 			PEEPNXTSC (sed, peeped, -1);
-			cc = xdigit_to_num (peeped);
+			cc = QSE_XDIGITTONUM (peeped);
 			if (cc <= -1) break;
 			NXTSC (sed, peeped, -1); /* consume the character peeped */
 			c = cc;
@@ -675,7 +668,7 @@ Omitted for clash with regular expression \b.
 			for (i = 1; i < QSE_SIZEOF(qse_char_t) * 2; i++)
 			{
 				PEEPNXTSC (sed, peeped, -1);
-				cc = xdigit_to_num (peeped);
+				cc = QSE_XDIGITTONUM (peeped);
 				if (cc <= -1) break;
 				NXTSC (sed, peeped, -1); /* consume the character peeped */
 				c = (c << 4) | cc;
@@ -2120,7 +2113,8 @@ static int write_first_line (
 	return 0;
 }
 
-#define NTOC(n) (((n) >= 10)? (((n) - 10) + QSE_T('A')): (n) + QSE_T('0'))
+#define NTOC(n) (QSE_T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")[n])
+
 static int write_num (qse_sed_t* sed, qse_ulong_t x, int base, int width)
 {
 	qse_ulong_t last = x % base;

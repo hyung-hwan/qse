@@ -43,7 +43,7 @@
 #	include "syscall.h"
 #endif
 
-#define NTOC(n) (((n) >= 10)? (((n) - 10) + QSE_T('A')): (n) + QSE_T('0'))
+#define NTOC(n) (QSE_T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")[n])
 #define WRITE_CHAR(c) \
 do { \
 	qse_char_t __xxx_c = c; \

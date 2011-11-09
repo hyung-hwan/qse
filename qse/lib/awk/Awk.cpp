@@ -189,12 +189,12 @@ Awk::Value::IntIndex::IntIndex (long_t x)
 	ptr = buf;
 	len = 0;
 
-#define NTOC(n) ((n) + QSE_T('0'))
+#define NTOC(n) (QSE_T("0123456789")[n])
 
 	int base = 10;
-        long_t last = x % base;
-        long_t y = 0;
-        int dig = 0;
+	long_t last = x % base;
+	long_t y = 0;
+	int dig = 0;
 
 	if (x < 0) buf[len++] = QSE_T('-');
 

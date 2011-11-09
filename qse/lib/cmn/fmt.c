@@ -30,20 +30,20 @@ static int fmt_unsigned_to_mbs (
 	qse_mchar_t tmp[(QSE_SIZEOF(qse_uintmax_t) * 8)];
 	int reslen, base, xsize, reqlen, pflen;
 	qse_mchar_t* p, * bp, * be;
-	qse_mchar_t xbasechar;
+	const qse_mchar_t* xbasestr;
 
 	base = base_and_flags & 0xFF;
 	if (base < 2 || base > 36) return -1;
 
-	xbasechar = (base_and_flags & QSE_FMTINTMAXTOMBS_UPPERCASE)? QSE_MT('A'): QSE_MT('a');
+	xbasestr = (base_and_flags & QSE_FMTINTMAXTOMBS_UPPERCASE)?
+		QSE_MT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+		QSE_MT("0123456789abcdefghijklmnopqrstuvwxyz");
 
 	/* store the resulting numeric string into 'tmp' first */
 	p = tmp; 
 	do
 	{
-		int digit = value % base;
-		if (digit < 10) *p++ = digit + QSE_MT('0');
-		else *p++ = digit + xbasechar - 10;
+		*p++ = xbasestr[value % base];
 		value /= base;
 	}
 	while (value > 0);
@@ -210,20 +210,20 @@ static int fmt_unsigned_to_wcs (
 	qse_wchar_t tmp[(QSE_SIZEOF(qse_uintmax_t) * 8)];
 	int reslen, base, xsize, reqlen, pflen;
 	qse_wchar_t* p, * bp, * be;
-	qse_wchar_t xbasechar;
+	const qse_wchar_t* xbasestr;
 
 	base = base_and_flags & 0xFF;
 	if (base < 2 || base > 36) return -1;
 
-	xbasechar = (base_and_flags & QSE_FMTINTMAXTOWCS_UPPERCASE)? QSE_WT('A'): QSE_WT('a');
+	xbasestr = (base_and_flags & QSE_FMTINTMAXTOWCS_UPPERCASE)?
+		QSE_WT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+		QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 
 	/* store the resulting numeric string into 'tmp' first */
 	p = tmp; 
 	do
 	{
-		int digit = value % base;
-		if (digit < 10) *p++ = digit + QSE_WT('0');
-		else *p++ = digit + xbasechar - 10;
+		*p++ = xbasestr[value % base];
 		value /= base;
 	}
 	while (value > 0);

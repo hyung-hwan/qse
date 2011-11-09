@@ -1,5 +1,5 @@
 /*
- * $Id: utf8.c 50 2009-02-10 05:48:05Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.

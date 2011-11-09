@@ -1,5 +1,6 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/stdio.h>
 
 static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 {
