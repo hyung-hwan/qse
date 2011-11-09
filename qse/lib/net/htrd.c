@@ -77,10 +77,7 @@ static QSE_INLINE int digit_to_num (qse_mchar_t c)
 
 static QSE_INLINE int xdigit_to_num (qse_mchar_t c)
 {
-	if (c >= QSE_MT('0') && c <= QSE_MT('9')) return c - QSE_MT('0');
-	if (c >= QSE_MT('A') && c <= QSE_MT('Z')) return c - QSE_MT('A') + 10;
-	if (c >= QSE_MT('a') && c <= QSE_MT('z')) return c - QSE_MT('a') + 10;
-	return -1;
+	return QSE_MXDIGITTONUM (c);
 }
 
 
