@@ -61,8 +61,7 @@ enum qse_fio_open_flag_t
 
 	/* hints to OS. harmless(no effect) when used on unsupported platforms */
 	QSE_FIO_RANDOM        = (1 << 26), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL    = (1 << 27), /* hint that access is sequential */
-	QSE_FIO_NOCACHE       = (1 << 28)  /* no system I/O cache */
+	QSE_FIO_SEQUENTIAL    = (1 << 27)  /* hint that access is sequential */
 };
 
 enum qse_fio_std_t

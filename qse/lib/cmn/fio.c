@@ -155,8 +155,6 @@ int qse_fio_init (
 			flag_and_attr |= FILE_FLAG_RANDOM_ACCESS;
 		if (flags & QSE_FIO_SEQUENTIAL) 
 			flag_and_attr |= FILE_FLAG_SEQUENTIAL_SCAN;
-		if (flags & QSE_FIO_NOCACHE)
-			flag_and_attr |= FILE_FLAG_NO_BUFFERING;
 
 		handle = CreateFile (
 			path, desired_access, share_mode, 
@@ -379,10 +377,6 @@ int qse_fio_init (
 	#if defined(POSIX_FADV_SEQUENTIAL)
 	if (flags & QSE_FIO_SEQUENTIAL) 
 		posix_fadvise (handle, 0, 0, POSIX_FADV_SEQUENTIAL);
-	#endif
-	#if defined(POSIX_FADV_DONTNEED)
-	if (flags & QSE_FIO_NOCACHE) 
-		posix_fadvise (handle, 0, 0, POSIX_FADV_DONTNEED);
 	#endif
 
 #endif

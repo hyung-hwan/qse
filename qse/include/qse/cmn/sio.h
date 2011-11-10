@@ -47,7 +47,10 @@ enum qse_sio_open_flag_t
 	QSE_SIO_NOFOLLOW      = QSE_FIO_NOFOLLOW,
 
 	QSE_SIO_NOSHRD        = QSE_FIO_NOSHRD,
-	QSE_SIO_NOSHWR        = QSE_FIO_NOSHWR
+	QSE_SIO_NOSHWR        = QSE_FIO_NOSHWR,
+
+	QSE_SIO_RANDOM        = QSE_FIO_RANDOM,
+	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL
 };
 
 typedef qse_fio_off_t qse_sio_pos_t;
