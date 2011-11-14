@@ -6873,6 +6873,7 @@ wp_mod_main:
 					rtx->format.tmp.len,
 					wp[wp_idx], 
 					10 | QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL,
+					-1,
 					QSE_T('\0'),
 					QSE_NULL
 				);	
@@ -6968,18 +6969,30 @@ int fmt_uint = 0;
 qse_char_t fmt_fill = QSE_T('\0');
 const qse_char_t* fmt_prefix = QSE_NULL;
 
+// TODO: WP_WIDTH...
+			fmt_flags = QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL;
+
 			if (l == 0 && wp[WP_PRECISION] == 0)
 			{
+				/* A zero value with a precision of zero produces
+				 * no character. */
+				fmt_flags |= QSE_FMTINTMAX_NOZERO;
 			}
 
-			fmt_flags = QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL;
-			if (flags & FLAG_ZERO) 
+			if ((flags & FLAG_ZERO) && 
+			    wp[WP_PRECISION] == -1 && 
+			    !(flag & FLAG_MINUS)) 
 			{
+				/* if precision is set or the minum flag is set,
+				   the zero flag is not honored */
 				fmt_fill = QSE_T('0');
 			}
 			else
 			{
-				if (!(flags & FLAG_MINUS)) fmt_flags |= QSE_FMTINTMAX_FILLCENTER;
+/* minus is left justificatin.
+meaningful iif width is set */
+				if (!(flags & FLAG_MINUS)) 
+					fmt_flags |= QSE_FMTINTMAX_FILLCENTER;
 			}
 
 			switch (fmt[i])
@@ -6989,32 +7002,62 @@ const qse_char_t* fmt_prefix = QSE_NULL;
 				case QSE_T('x'):
 					fmt_flags |= 16;
 					fmt_uint = 1;
-					if (l && (flags & FLAG_HASH)) fmt_prefix = QSE_T("0x");
+
+					if (l && (flags & FLAG_HASH)) 
+					{
+						/* A nonzero value is prefixed with 0x */
+						fmt_prefix = QSE_T("0x");
+					}
 					break;
 
 				case QSE_T('o'):
+					fmt_flags &= ~QSE_FMTINTMAX_NOZERO; /* weird */
 					fmt_flags |= 8;
 					fmt_uint = 1;
-					if (l && (flags & FLAG_HASH)) fmt_prefix = QSE_T("0");
+					if (l && (flags & FLAG_HASH)) 
+					{
+                    		/* The precision is increased 
+						   (only when necessary)
+                    		   to force a zero as the first digit. */
+						fmt_prefix = QSE_T("0");
+					}
 					break;
 	
 				default:
 					fmt_flags |= 10;
-					if (flags & FLAG_PLUS) fmt_flags |= QSE_FMTINTMAX_PLUSSIGN;
-					if (flags & FLAG_SPACE) fmt_flags |= QSE_FMTINTMAX_EMPTYSIGN;
+					if (flags & FLAG_PLUS) 
+						fmt_flags |= QSE_FMTINTMAX_PLUSSIGN;
+					if (flags & FLAG_SPACE)
+						fmt_flags |= QSE_FMTINTMAX_EMPTYSIGN;
 					break;
 			}
 
-qse_printf (QSE_T("width=>%d precision=%d\n"), wp[0], wp[1]);
 			do
 			{
 				if (fmt_uint)
 				{
+					/* Explicit type-casting for 'l' from qse_long_t 
+					 * to qse_ulong_t is needed before passing it to 
+					 * qse_fmtuintmax(). 
+ 					 *
+					 * Consider a value of -1 for example. 
+					 * -1 is a value with all bits set. 
+					 * If qse_long_t is 4 bytes and qse_uintmax_t
+					 * is 8 bytes, the value is shown below for 
+					 * each type respectively .
+					 *     -1 - 0xFFFFFFFF (qse_long_t)
+					 *     -1 - 0xFFFFFFFFFFFFFFFF (qse_uintmax_t)
+					 * 
+					 * Implicit typecasting of -1 from qse_long_t to
+					 * to qse_uintmax_t results in 0xFFFFFFFFFFFFFFFF,
+					 * though 0xFFFFFFF is expected in hexadecimal.
+					 */
 					n = qse_fmtuintmax (
 						rtx->format.tmp.ptr,
 						rtx->format.tmp.len,
-						l,
+						(qse_ulong_t)l, 
 						fmt_flags,
+						wp[WP_PRECISION],
 						fmt_fill,
 						fmt_prefix
 					);
@@ -7026,6 +7069,7 @@ qse_printf (QSE_T("width=>%d precision=%d\n"), wp[0], wp[1]);
 						rtx->format.tmp.len,
 						l,
 						fmt_flags,
+						wp[WP_PRECISION],
 						fmt_fill,
 						fmt_prefix
 					);
@@ -7046,6 +7090,7 @@ qse_printf (QSE_T("width=>%d precision=%d\n"), wp[0], wp[1]);
 }
 #endif
 
+#if 1
 		#if QSE_SIZEOF_LONG_LONG > 0
 			FMT_CHAR (QSE_T('l'));
 			FMT_CHAR (QSE_T('l'));
@@ -7093,6 +7138,7 @@ qse_printf (QSE_T("width=>%d precision=%d\n"), wp[0], wp[1]);
 			while (1);
 
 			OUT_STR (rtx->format.tmp.ptr, n);
+#endif
 		}
 		else if (fmt[i] == QSE_T('e') || fmt[i] == QSE_T('E') ||
 		         fmt[i] == QSE_T('g') || fmt[i] == QSE_T('G') ||
