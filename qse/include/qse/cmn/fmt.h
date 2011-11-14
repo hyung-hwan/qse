@@ -38,20 +38,23 @@ enum qse_fmtintmax_flag_t
 	QSE_FMTINTMAX_NOTRUNC = (0x100 << 0),
 	/** Don't append a terminating null */
 	QSE_FMTINTMAX_NONULL = (0x100 << 1),
+	/** Produce no digit for a value of zero  */
+	QSE_FMTINTMAX_NOZERO = (0x100 << 2),
 	/** Use uppercase letters for alphabetic digits */
-	QSE_FMTINTMAX_UPPERCASE = (0x100 << 2),
+	QSE_FMTINTMAX_UPPERCASE = (0x100 << 3),
 	/** Insert a plus sign for a positive integer including 0 */
-	QSE_FMTINTMAX_PLUSSIGN = (0x100 << 3),
+	QSE_FMTINTMAX_PLUSSIGN = (0x100 << 4),
 	/** Insert a space for a positive integer including 0 */
-	QSE_FMTINTMAX_EMPTYSIGN = (0x100 << 4),
+	QSE_FMTINTMAX_EMPTYSIGN = (0x100 << 5),
 	/** Fill the right part of the string */
-	QSE_FMTINTMAX_FILLRIGHT = (0x100 << 5),
+	QSE_FMTINTMAX_FILLRIGHT = (0x100 << 6),
 	/** Fill between the sign chacter and the digit part */
-	QSE_FMTINTMAX_FILLCENTER = (0x100 << 6)
+	QSE_FMTINTMAX_FILLCENTER = (0x100 << 7)
 };
 
 #define QSE_FMTINTMAX_NOTRUNC         QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAX_NONULL          QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAX_NOZERO          QSE_FMTINTMAX_NOZERO
 #define QSE_FMTINTMAX_UPPERCASE       QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAX_PLUSSIGN        QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAX_EMPTYSIGN       QSE_FMTINTMAX_EMPTYSIGN
@@ -60,6 +63,7 @@ enum qse_fmtintmax_flag_t
 
 #define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAXTOMBS_NOZERO     QSE_FMTINTMAX_NOZERO
 #define QSE_FMTINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAXTOMBS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
@@ -68,6 +72,7 @@ enum qse_fmtintmax_flag_t
 
 #define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTINTMAXTOWCS_NOZERO     QSE_FMTINTMAX_NOZERO
 #define QSE_FMTINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAXTOWCS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
@@ -122,6 +127,7 @@ int qse_fmtintmaxtombs (
 	int                bufsize,         /**< buffer size */
 	qse_intmax_t       value,           /**< integer to format */
 	int                base_and_flags,  /**< base ORed with flags */
+	int                precision,       /**< precision */
 	qse_mchar_t        fillchar,        /**< fill character */
 	const qse_mchar_t* prefix           /**< prefix */
 );
@@ -170,6 +176,7 @@ int qse_fmtintmaxtowcs (
 	int                bufsize,         /**< buffer size */
 	qse_intmax_t       value,           /**< integer to format */
 	int                base_and_flags,  /**< base ORed with flags */
+	int                precision,       /**< precision */
 	qse_wchar_t        fillchar,        /**< fill character */
 	const qse_wchar_t* prefix           /**< prefix */
 );
@@ -179,9 +186,9 @@ int qse_fmtintmaxtowcs (
  * #QSE_CHAR_IS_MCHAR, and qse_fmtintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_fmtintmax(b,sz,v,bf,fc,pf) qse_fmtintmaxtombs(b,sz,v,bf,fc,pf)
+#	define qse_fmtintmax(b,sz,v,bf,pr,fc,pf) qse_fmtintmaxtombs(b,sz,v,bf,pr,fc,pf)
 #else
-#	define qse_fmtintmax(b,sz,v,bf,fc,pf) qse_fmtintmaxtowcs(b,sz,v,bf,fc,pf)
+#	define qse_fmtintmax(b,sz,v,bf,pr,fc,pf) qse_fmtintmaxtowcs(b,sz,v,bf,pr,fc,pf)
 #endif
 
 /**
@@ -194,6 +201,7 @@ int qse_fmtuintmaxtombs (
 	int                bufsize,         /**< buffer size */
 	qse_uintmax_t      value,           /**< integer to format */
 	int                base_and_flags,  /**< base ORed with flags */
+	int                precision,       /**< precision */
 	qse_mchar_t        fillchar,        /**< fill character */
 	const qse_mchar_t* prefix           /**< prefix */
 );
@@ -208,6 +216,7 @@ int qse_fmtuintmaxtowcs (
 	int                bufsize,         /**< buffer size */
 	qse_uintmax_t      value,           /**< integer to format */
 	int                base_and_flags,  /**< base ORed with flags */
+	int                precision,       /**< precision */
 	qse_wchar_t        fillchar,        /**< fill character */
 	const qse_wchar_t* prefix           /**< prefix */
 );
@@ -217,9 +226,9 @@ int qse_fmtuintmaxtowcs (
  * #QSE_CHAR_IS_MCHAR, and qse_fmtuintmaxtowcs() if #QSE_CHAR_IS_WCHAR.
  */
 #ifdef QSE_CHAR_IS_MCHAR
-#	define qse_fmtuintmax(b,sz,v,bf,fc,pf) qse_fmtuintmaxtombs(b,sz,v,bf,fc,pf)
+#	define qse_fmtuintmax(b,sz,v,bf,pr,fc,pf) qse_fmtuintmaxtombs(b,sz,v,bf,pr,fc,pf)
 #else
-#	define qse_fmtuintmax(b,sz,v,bf,fc,pf) qse_fmtuintmaxtowcs(b,sz,v,bf,fc,pf)
+#	define qse_fmtuintmax(b,sz,v,bf,pr,fc,pf) qse_fmtuintmaxtowcs(b,sz,v,bf,pr,fc,pf)
 #endif
 
 #ifdef __cplusplus

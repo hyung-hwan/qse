@@ -33,7 +33,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 	{
 		for (j = 0; j < QSE_COUNTOF(flags); j++)
 		{
-			int n = qse_fmtuintmax (buf, QSE_COUNTOF(buf), num, bases[i] | flags[j], QSE_T('.'), prefix[i]);
+			int n = qse_fmtuintmax (buf, QSE_COUNTOF(buf), num, bases[i] | flags[j], -1, QSE_T('.'), prefix[i]);
 			if (n <= -1)
 			{
 				qse_printf (QSE_T("%8X => [%4d:%04X] ERROR[%d]\n"), num, bases[i], flags[j],  n);

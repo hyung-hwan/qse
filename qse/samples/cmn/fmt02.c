@@ -22,13 +22,35 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 	 */
 
 
+	qse_printf (QSE_T("[PRECISION -1]\n"));
 	for (k = 0; k < QSE_COUNTOF(nums) ; k++)
 	{
 		for (i = 0; i < QSE_COUNTOF(bases); i++)
 		{
 			for (j = 0; j < QSE_COUNTOF(flags); j++)
 			{
-				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC, QSE_T('.'), prefix[i]);
+				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC, -1, QSE_T('.'), prefix[i]);
+				if (n <= -1)
+				{
+					qse_printf (QSE_T("%8d => [%4d:%04X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
+				}
+				else
+				{
+					qse_printf (QSE_T("%8d => [%4d:%04X] [%s]\n"), (int)nums[k], bases[i], flags[j],  buf);
+				}
+			}
+		}
+		qse_printf (QSE_T("------------------------------\n"));
+	}
+
+	qse_printf (QSE_T("[PRECISION 0]\n"));
+	for (k = 0; k < QSE_COUNTOF(nums) ; k++)
+	{
+		for (i = 0; i < QSE_COUNTOF(bases); i++)
+		{
+			for (j = 0; j < QSE_COUNTOF(flags); j++)
+			{
+				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NOZERO, 0, QSE_T('*'), prefix[i]);
 				if (n <= -1)
 				{
 					qse_printf (QSE_T("%8d => [%4d:%04X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);

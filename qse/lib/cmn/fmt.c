@@ -24,7 +24,7 @@
 /* ==================== multibyte ===================================== */
 static int fmt_unsigned_to_mbs (
 	qse_mchar_t* buf, int size, 
-	qse_uintmax_t value, int base_and_flags, 
+	qse_uintmax_t value, int base_and_flags, int prec,
 	qse_mchar_t fillchar, qse_mchar_t signchar, const qse_mchar_t* prefix)
 {
 	qse_mchar_t tmp[(QSE_SIZEOF(qse_uintmax_t) * 8)];
@@ -145,7 +145,7 @@ static int fmt_unsigned_to_mbs (
 
 int qse_fmtintmaxtombs (
 	qse_mchar_t* buf, int size, 
-	qse_intmax_t value, int base_and_flags,
+	qse_intmax_t value, int base_and_flags, int prec,
 	qse_mchar_t fillchar, const qse_mchar_t* prefix)
 {
 	qse_mchar_t signchar;
@@ -172,12 +172,13 @@ int qse_fmtintmaxtombs (
 		absvalue = value;
 	}
 
-	return fmt_unsigned_to_mbs (buf, size, absvalue, base_and_flags, fillchar, signchar, prefix);
+	return fmt_unsigned_to_mbs (
+		buf, size, absvalue, base_and_flags, prec, fillchar, signchar, prefix);
 }
 
 int qse_fmtuintmaxtombs (
 	qse_mchar_t* buf, int size, 
-	qse_uintmax_t value, int base_and_flags,
+	qse_uintmax_t value, int base_and_flags, int prec,
 	qse_mchar_t fillchar, const qse_mchar_t* prefix)
 {
 	qse_mchar_t signchar;
@@ -196,7 +197,8 @@ int qse_fmtuintmaxtombs (
 		signchar = QSE_MT('\0');
 	}
 
-	return fmt_unsigned_to_mbs (buf, size, value, base_and_flags, fillchar, signchar, prefix);
+	return fmt_unsigned_to_mbs (
+		buf, size, value, base_and_flags, prec, fillchar, signchar, prefix);
 }
 
 
@@ -204,11 +206,11 @@ int qse_fmtuintmaxtombs (
 
 static int fmt_unsigned_to_wcs (
 	qse_wchar_t* buf, int size, 
-	qse_uintmax_t value, int base_and_flags, 
+	qse_uintmax_t value, int base_and_flags, int prec,
 	qse_wchar_t fillchar, qse_wchar_t signchar, const qse_wchar_t* prefix)
 {
 	qse_wchar_t tmp[(QSE_SIZEOF(qse_uintmax_t) * 8)];
-	int reslen, base, xsize, reqlen, pflen;
+	int reslen, base, xsize, reqlen, pflen, preczero;
 	qse_wchar_t* p, * bp, * be;
 	const qse_wchar_t* xbasestr;
 
@@ -219,6 +221,15 @@ static int fmt_unsigned_to_wcs (
 		QSE_WT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
 		QSE_WT("0123456789abcdefghijklmnopqrstuvwxyz");
 
+/*if (prec == 0 && value == 0) */
+if ((base_and_flags & QSE_FMTINTMAXTOWCS_NOZERO) && value == 0) 
+{
+	reslen = 0;
+	preczero = 0;
+	p = tmp; 
+}
+else
+{
 	/* store the resulting numeric string into 'tmp' first */
 	p = tmp; 
 	do
@@ -230,14 +241,30 @@ static int fmt_unsigned_to_wcs (
 
 	/* reslen is the length of the resulting string without padding. */
 	reslen = (int)(p - tmp);
+
+	/* precision specified the minum number of digits to produce.
+	 * so if the precision is larger that the digits produced, 
+	 * reslen should be adjusted to precision */
+	if (prec > reslen) 
+	{
+		preczero = prec - reslen;
+		reslen = prec;
+	}
+	else 
+	{
+		preczero = 0;
+	}
+}
+
 	if (signchar) reslen++; /* increment reslen for the sign character */
 	if (prefix)
 	{
 		/* since the length can be truncated for different type sizes,
 		 * don't pass in a very long prefix. */
-		pflen = (int)qse_wcslen(prefix); 
+		pflen = (int)qse_wcslen(prefix);
 		reslen += pflen;
 	}
+	else pflen = 0;
 
 	/* get the required buffer size for lossless formatting */
 	reqlen = (base_and_flags & QSE_FMTINTMAXTOWCS_NONULL)? reslen: (reslen + 1);
@@ -248,6 +275,7 @@ static int fmt_unsigned_to_wcs (
 		return -reqlen;
 	}
 
+	/* get the size to fill with fill characters */
 	xsize = (base_and_flags & QSE_FMTINTMAXTOWCS_NONULL)? size: (size - 1);
 	bp = buf;
 	be = buf + xsize;
@@ -261,7 +289,22 @@ static int fmt_unsigned_to_wcs (
 			if (signchar && bp < be) *bp++ = signchar;
 
 			/* copy prefix if necessary */
-			if (prefix) while (*prefix && bp < be) *bp++ = *prefix++;
+			if (prefix) 
+			{
+/*if (preczero > 0 && pflen == 1 && prefix[0] == QSE_WT('0')) goto skip; */
+if (preczero <= 0 || pflen != 1 || prefix[0] != QSE_WT('0'))
+{
+				while (*prefix && bp < be) *bp++ = *prefix++;
+}
+			}
+
+			/* add 0s for precision */
+			while (preczero > 0 && bp < be) 
+			{ 
+				*bp++ = QSE_T('0');
+				preczero--; 
+			}
+
 			/* copy the numeric string to the destination buffer */
 			while (p > tmp && bp < be) *bp++ = *--p;
 
@@ -285,7 +328,22 @@ static int fmt_unsigned_to_wcs (
 			}
 
 			/* copy prefix if necessary */
-			if (prefix) while (*prefix && bp < be) *bp++ = *prefix++;
+			if (prefix) 
+			{
+/*if (preczero > 0 && pflen == 1 && prefix[0] == QSE_WT('0')) goto skip; */
+if (preczero <= 0 || pflen != 1 || prefix[0] != QSE_WT('0'))
+{
+				while (*prefix && bp < be) *bp++ = *prefix++;
+}
+			}
+
+			/* add 0s for precision */
+			while (preczero > 0 && bp < be) 
+			{ 
+				*bp++ = QSE_T('0');
+				preczero--; 
+			}
+
 			/* copy the numeric string to the destination buffer */
 			while (p > tmp && bp < be) *bp++ = *--p;
 		}
@@ -302,7 +360,22 @@ static int fmt_unsigned_to_wcs (
 			if (signchar && bp < be) *bp++ = signchar;
 
 			/* copy prefix if necessary */
-			if (prefix) while (*prefix && bp < be) *bp++ = *prefix++;
+			if (prefix) 
+			{
+/*if (preczero > 0 && pflen == 1 && prefix[0] == QSE_WT('0')) goto skip; */
+if (preczero <= 0 || pflen != 1 || prefix[0] != QSE_WT('0'))
+{
+				while (*prefix && bp < be) *bp++ = *prefix++;
+}
+			}
+
+			/* add 0s for precision */
+			while (preczero > 0 && bp < be) 
+			{ 
+				*bp++ = QSE_T('0');
+				preczero--; 
+			}
+
 			/* copy the numeric string to the destination buffer */
 			while (p > tmp && bp < be) *bp++ = *--p;
 		}
@@ -313,7 +386,21 @@ static int fmt_unsigned_to_wcs (
 		if (signchar && bp < be) *bp++ = signchar;
 
 		/* copy prefix if necessary */
-		if (prefix) while (*prefix && bp < be) *bp++ = *prefix++;
+		if (prefix) 
+		{
+if (preczero <= 0 || pflen != 1 || prefix[0] != QSE_WT('0'))
+{
+			while (*prefix && bp < be) *bp++ = *prefix++;
+}
+		}
+
+		/* add 0s for precision */
+		while (preczero > 0 && bp < be) 
+		{ 
+			*bp++ = QSE_T('0');
+			preczero--; 
+		}
+
 		/* copy the numeric string to the destination buffer */
 		while (p > tmp && bp < be) *bp++ = *--p;
 	}
@@ -324,7 +411,7 @@ static int fmt_unsigned_to_wcs (
 
 int qse_fmtintmaxtowcs (
 	qse_wchar_t* buf, int size, 
-	qse_intmax_t value, int base_and_flags,
+	qse_intmax_t value, int base_and_flags, int prec,
 	qse_wchar_t fillchar, const qse_wchar_t* prefix)
 {
 	qse_wchar_t signchar;
@@ -351,12 +438,13 @@ int qse_fmtintmaxtowcs (
 		absvalue = value;
 	}
 
-	return fmt_unsigned_to_wcs (buf, size, absvalue, base_and_flags, fillchar, signchar, prefix);
+	return fmt_unsigned_to_wcs (
+		buf, size, absvalue, base_and_flags, prec, fillchar, signchar, prefix);
 }
 
 int qse_fmtuintmaxtowcs (
 	qse_wchar_t* buf, int size, 
-	qse_uintmax_t value, int base_and_flags, 
+	qse_uintmax_t value, int base_and_flags, int prec,
 	qse_wchar_t fillchar, const qse_wchar_t* prefix)
 {
 	qse_wchar_t signchar;
@@ -375,6 +463,7 @@ int qse_fmtuintmaxtowcs (
 		signchar = QSE_WT('\0');
 	}
 
-	return fmt_unsigned_to_wcs (buf, size, value, base_and_flags, fillchar, signchar, prefix);
+	return fmt_unsigned_to_wcs (
+		buf, size, value, base_and_flags, prec, fillchar, signchar, prefix);
 }
 
