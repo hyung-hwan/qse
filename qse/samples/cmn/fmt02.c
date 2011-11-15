@@ -32,11 +32,11 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC, -1, QSE_T('.'), prefix[i]);
 				if (n <= -1)
 				{
-					qse_printf (QSE_T("%8d => [%4d:%04X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
+					qse_printf (QSE_T("%8d => [%4d:%05X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
 				}
 				else
 				{
-					qse_printf (QSE_T("%8d => [%4d:%04X] [%s]\n"), (int)nums[k], bases[i], flags[j],  buf);
+					qse_printf (QSE_T("%8d => [%4d:%05X] [%s]\n"), (int)nums[k], bases[i], flags[j],  buf);
 				}
 			}
 		}
@@ -53,11 +53,11 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 				int n = qse_fmtintmax (buf, QSE_COUNTOF(buf), nums[k], bases[i] | flags[j] | QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NOZERO, 0, QSE_T('*'), prefix[i]);
 				if (n <= -1)
 				{
-					qse_printf (QSE_T("%8d => [%4d:%04X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
+					qse_printf (QSE_T("%8d => [%4d:%05X] ERROR[%d]\n"), (int)nums[k], bases[i], flags[j],  n);
 				}
 				else
 				{
-					qse_printf (QSE_T("%8d => [%4d:%04X] [%s]\n"), (int)nums[k], bases[i], flags[j],  buf);
+					qse_printf (QSE_T("%8d => [%4d:%05X] [%s]\n"), (int)nums[k], bases[i], flags[j],  buf);
 				}
 			}
 		}
