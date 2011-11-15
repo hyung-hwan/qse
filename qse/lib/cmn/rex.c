@@ -1958,7 +1958,7 @@ static int comp_cand (qse_lda_t* lda,
 {
 	cand_t* c1 = (cand_t*)dptr1;
 	cand_t* c2 = (cand_t*)dptr2;
-//qse_printf (QSE_T("%p(%d) %p(%d), %p %p, %d %d\n"), c1->node,c1->node->id, c2->node,c1->node->id, c1->mptr, c2->mptr, (int)c1->occ, (int)c2->occ);
+/*qse_printf (QSE_T("%p(%d) %p(%d), %p %p, %d %d\n"), c1->node,c1->node->id, c2->node,c1->node->id, c1->mptr, c2->mptr, (int)c1->occ, (int)c2->occ);*/
 	return (c1->node == c2->node && 
 	        c1->mptr == c2->mptr &&
 	        c1->occ == c2->occ)? 0: 1;

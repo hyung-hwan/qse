@@ -6782,17 +6782,6 @@ qse_char_t* qse_awk_rtx_format (
 		}
 
 		/* handle flags */
-#if 0
-		while (i < fmt_len &&
-		       (fmt[i] == QSE_T(' ') || fmt[i] == QSE_T('#') ||
-		        fmt[i] == QSE_T('0') || fmt[i] == QSE_T('+') ||
-		        fmt[i] == QSE_T('-')))
-		{
-			if (fmt[i] == QSE_T('-')) minus = 1;
-			FMT_CHAR (fmt[i]); i++;
-		}
-#endif
-
 		flags = 0;
 		while (i < fmt_len)
 		{
@@ -6923,11 +6912,18 @@ wp_mod_main:
 
 		if (fmt[i] == QSE_T('d') || fmt[i] == QSE_T('i') || 
 		    fmt[i] == QSE_T('x') || fmt[i] == QSE_T('X') ||
+		    fmt[i] == QSE_T('b') || fmt[i] == QSE_T('B') ||
 		    fmt[i] == QSE_T('o'))
 		{
 			qse_awk_val_t* v;
 			qse_long_t l;
 			int n;
+
+			int fmt_flags;
+			int fmt_uint = 0;
+			int fmt_width;
+			qse_char_t fmt_fill = QSE_T('\0');
+			const qse_char_t* fmt_prefix = QSE_NULL;
 
 			if (args == QSE_NULL)
 			{
@@ -6961,15 +6957,6 @@ wp_mod_main:
 			qse_awk_rtx_refdownval (rtx, v);
 			if (n <= -1) return QSE_NULL; 
 
-#if 0
-/* TODO: finish this part... replace sprintf */
-{
-int fmt_flags;
-int fmt_uint = 0;
-qse_char_t fmt_fill = QSE_T('\0');
-const qse_char_t* fmt_prefix = QSE_NULL;
-
-// TODO: WP_WIDTH...
 			fmt_flags = QSE_FMTINTMAX_NOTRUNC | QSE_FMTINTMAX_NONULL;
 
 			if (l == 0 && wp[WP_PRECISION] == 0)
@@ -6979,30 +6966,68 @@ const qse_char_t* fmt_prefix = QSE_NULL;
 				fmt_flags |= QSE_FMTINTMAX_NOZERO;
 			}
 
-			if ((flags & FLAG_ZERO) && 
-			    wp[WP_PRECISION] == -1 && 
-			    !(flag & FLAG_MINUS)) 
+			if (wp[WP_WIDTH] != -1)
 			{
-				/* if precision is set or the minum flag is set,
-				   the zero flag is not honored */
-				fmt_fill = QSE_T('0');
-			}
-			else
-			{
-/* minus is left justificatin.
-meaningful iif width is set */
-				if (!(flags & FLAG_MINUS)) 
-					fmt_flags |= QSE_FMTINTMAX_FILLCENTER;
+				QSE_ASSERTX (wp[WP_WIDTH] > 0, "Width must be greater than 0 if specified"); 
+
+				/* justification when width is specified. */
+				if (flags & FLAG_ZERO)
+				{
+					if (flags & FLAG_MINUS)
+					{
+						 /* FLAG_MINUS wins if both FLAG_ZERO 
+						  * and FLAG_MINUS are specified. */
+						fmt_fill = QSE_T(' ');
+						if (flags & FLAG_MINUS)
+						{
+							/* left justification. need to fill the right side */
+							fmt_flags |= QSE_FMTINTMAX_FILLRIGHT;
+						}
+					}
+					else
+					{
+						if (wp[WP_PRECISION] == -1)
+						{
+							/* precision not specified. 
+							 * FLAG_ZERO can take effect */
+							fmt_fill = QSE_T('0');
+							fmt_flags |= QSE_FMTINTMAX_FILLCENTER;
+						}
+						else
+						{
+							fmt_fill = QSE_T(' ');
+						}
+					}
+				}
+				else
+				{
+					fmt_fill = QSE_T(' ');
+					if (flags & FLAG_MINUS)
+					{
+						/* left justification. need to fill the right side */
+						fmt_flags |= QSE_FMTINTMAX_FILLRIGHT;
+					}
+				}
 			}
 
 			switch (fmt[i])
 			{
+				case QSE_T('B'):
+				case QSE_T('b'):
+					fmt_flags |= 2;
+					fmt_uint = 1;
+					if (l && (flags & FLAG_HASH)) 
+					{
+						/* A nonzero value is prefixed with 0b */
+						fmt_prefix = QSE_T("0b");
+					}
+					break;
+
 				case QSE_T('X'):
 					fmt_flags |= QSE_FMTINTMAX_UPPERCASE;
 				case QSE_T('x'):
 					fmt_flags |= 16;
 					fmt_uint = 1;
-
 					if (l && (flags & FLAG_HASH)) 
 					{
 						/* A nonzero value is prefixed with 0x */
@@ -7011,15 +7036,15 @@ meaningful iif width is set */
 					break;
 
 				case QSE_T('o'):
-					fmt_flags &= ~QSE_FMTINTMAX_NOZERO; /* weird */
 					fmt_flags |= 8;
 					fmt_uint = 1;
-					if (l && (flags & FLAG_HASH)) 
+					if (flags & FLAG_HASH)
 					{
-                    		/* The precision is increased 
-						   (only when necessary)
-                    		   to force a zero as the first digit. */
-						fmt_prefix = QSE_T("0");
+						/* Force a leading zero digit including zero.
+						 * 0 with FLAG_HASH and precision 0 still emits '0'.
+						 * On the contrary, 'X' and 'x' emit no digits
+						 * for 0 with FLAG_HASH and precision 0. */
+						fmt_flags |= QSE_FMTINTMAX_ZEROLEAD;
 					}
 					break;
 	
@@ -7032,6 +7057,15 @@ meaningful iif width is set */
 					break;
 			}
 
+
+			if (wp[WP_WIDTH] > 0)
+			{
+				if (wp[WP_WIDTH] > rtx->format.tmp.len)
+					GROW_WITH_INC (&rtx->format.tmp, wp[WP_WIDTH] - rtx->format.tmp.len);
+				fmt_width = wp[WP_WIDTH];
+			}
+			else fmt_width = rtx->format.tmp.len;
+			
 			do
 			{
 				if (fmt_uint)
@@ -7047,14 +7081,13 @@ meaningful iif width is set */
 					 * each type respectively .
 					 *     -1 - 0xFFFFFFFF (qse_long_t)
 					 *     -1 - 0xFFFFFFFFFFFFFFFF (qse_uintmax_t)
-					 * 
 					 * Implicit typecasting of -1 from qse_long_t to
 					 * to qse_uintmax_t results in 0xFFFFFFFFFFFFFFFF,
 					 * though 0xFFFFFFF is expected in hexadecimal.
 					 */
 					n = qse_fmtuintmax (
 						rtx->format.tmp.ptr,
-						rtx->format.tmp.len,
+						fmt_width,
 						(qse_ulong_t)l, 
 						fmt_flags,
 						wp[WP_PRECISION],
@@ -7066,7 +7099,7 @@ meaningful iif width is set */
 				{
 					n = qse_fmtintmax (
 						rtx->format.tmp.ptr,
-						rtx->format.tmp.len,
+						fmt_width,
 						l,
 						fmt_flags,
 						wp[WP_PRECISION],
@@ -7076,9 +7109,9 @@ meaningful iif width is set */
 				}
 				if (n <= -1)
 				{
-					/* -n is the number of characters required
-					 * including terminating null  */
+					/* -n is the number of characters required */
 					GROW_WITH_INC (&rtx->format.tmp, -n);
+					fmt_width = -n;
 					continue;
 				}
 
@@ -7087,58 +7120,6 @@ meaningful iif width is set */
 			while (1);
 
 			OUT_STR (rtx->format.tmp.ptr, n);
-}
-#endif
-
-#if 1
-		#if QSE_SIZEOF_LONG_LONG > 0
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF___INT64 > 0
-			FMT_CHAR (QSE_T('I'));
-			FMT_CHAR (QSE_T('6'));
-			FMT_CHAR (QSE_T('4'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF_LONG > 0
-			FMT_CHAR (QSE_T('l'));
-			FMT_CHAR (fmt[i]);
-		#elif QSE_SIZEOF_INT > 0
-			FMT_CHAR (fmt[i]);
-		#else
-			#error unsupported integer size
-		#endif	
-
-			do
-			{
-				n = rtx->awk->prm.sprintf (
-					rtx->awk,
-					rtx->format.tmp.ptr,
-					rtx->format.tmp.len,
-					QSE_STR_PTR(fbu),
-				#if QSE_SIZEOF_LONG_LONG > 0
-					(long long)l
-				#elif QSE_SIZEOF___INT64 > 0
-					(__int64)l
-				#elif QSE_SIZEOF_LONG > 0
-					(long)l
-				#elif QSE_SIZEOF_INT > 0
-					(int)l
-				#endif
-				);
-					
-				if (n == -1)
-				{
-					GROW (&rtx->format.tmp);
-					continue;
-				}
-
-				break;
-			}
-			while (1);
-
-			OUT_STR (rtx->format.tmp.ptr, n);
-#endif
 		}
 		else if (fmt[i] == QSE_T('e') || fmt[i] == QSE_T('E') ||
 		         fmt[i] == QSE_T('g') || fmt[i] == QSE_T('G') ||
@@ -7446,10 +7427,6 @@ meaningful iif width is set */
 		else /*if (fmt[i] == QSE_T('%'))*/
 		{
 			OUT_STR (QSE_STR_PTR(fbu), QSE_STR_LEN(fbu));
-		#if 0
-			for (j = 0; j < QSE_STR_LEN(fbu); j++)
-				OUT_CHAR (QSE_STR_CHAR(fbu,j));
-		#endif
 			OUT_CHAR (fmt[i]);
 		}
 

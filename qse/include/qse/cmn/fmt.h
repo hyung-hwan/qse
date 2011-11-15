@@ -34,27 +34,33 @@
  */
 enum qse_fmtintmax_flag_t
 {
+	/* Use lower 6 bits to represent base between 2 and 36 inclusive.
+	 * Upper bits are used for these flag options */
+
 	/** Don't truncate if the buffer is not large enough */
-	QSE_FMTINTMAX_NOTRUNC = (0x100 << 0),
+	QSE_FMTINTMAX_NOTRUNC = (0x40 << 0),
 	/** Don't append a terminating null */
-	QSE_FMTINTMAX_NONULL = (0x100 << 1),
+	QSE_FMTINTMAX_NONULL = (0x40 << 1),
 	/** Produce no digit for a value of zero  */
-	QSE_FMTINTMAX_NOZERO = (0x100 << 2),
+	QSE_FMTINTMAX_NOZERO = (0x40 << 2),
+	/** Produce a leading zero for a non-zero value */
+	QSE_FMTINTMAX_ZEROLEAD = (0x40 << 3),
 	/** Use uppercase letters for alphabetic digits */
-	QSE_FMTINTMAX_UPPERCASE = (0x100 << 3),
+	QSE_FMTINTMAX_UPPERCASE = (0x40 << 4),
 	/** Insert a plus sign for a positive integer including 0 */
-	QSE_FMTINTMAX_PLUSSIGN = (0x100 << 4),
+	QSE_FMTINTMAX_PLUSSIGN = (0x40 << 5),
 	/** Insert a space for a positive integer including 0 */
-	QSE_FMTINTMAX_EMPTYSIGN = (0x100 << 5),
+	QSE_FMTINTMAX_EMPTYSIGN = (0x40 << 6),
 	/** Fill the right part of the string */
-	QSE_FMTINTMAX_FILLRIGHT = (0x100 << 6),
+	QSE_FMTINTMAX_FILLRIGHT = (0x40 << 7),
 	/** Fill between the sign chacter and the digit part */
-	QSE_FMTINTMAX_FILLCENTER = (0x100 << 7)
+	QSE_FMTINTMAX_FILLCENTER = (0x40 << 8)
 };
 
 #define QSE_FMTINTMAX_NOTRUNC         QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAX_NONULL          QSE_FMTINTMAX_NONULL
 #define QSE_FMTINTMAX_NOZERO          QSE_FMTINTMAX_NOZERO
+#define QSE_FMTINTMAX_ZEROLEAD        QSE_FMTINTMAX_ZEROLEAD
 #define QSE_FMTINTMAX_UPPERCASE       QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAX_PLUSSIGN        QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAX_EMPTYSIGN       QSE_FMTINTMAX_EMPTYSIGN
@@ -64,6 +70,7 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAX_NONULL
 #define QSE_FMTINTMAXTOMBS_NOZERO     QSE_FMTINTMAX_NOZERO
+#define QSE_FMTINTMAXTOMBS_ZEROLEAD   QSE_FMTINTMAX_ZEROLEAD
 #define QSE_FMTINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAXTOMBS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
@@ -73,6 +80,7 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAX_NONULL
 #define QSE_FMTINTMAXTOWCS_NOZERO     QSE_FMTINTMAX_NOZERO
+#define QSE_FMTINTMAXTOWCS_ZEROLEAD   QSE_FMTINTMAX_ZEROLEAD
 #define QSE_FMTINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
 #define QSE_FMTINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
 #define QSE_FMTINTMAXTOWCS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN

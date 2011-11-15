@@ -75,9 +75,9 @@ qse_size_t qse_mbsfncpy (
 	{
 		if (*f == QSE_MT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_MT('\0')) f++;
 		}
 		else if (*f == QSE_MT('$'))
@@ -133,9 +133,9 @@ qse_size_t qse_mbsxfcpy (
 	{
 		if (*f == QSE_MT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_MT('\0')) f++;
 		}
 		else if (*f == QSE_MT('$'))
@@ -195,9 +195,9 @@ qse_size_t qse_mbsxfncpy (
 	{
 		if (*f == QSE_MT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_MT('\0')) f++;
 		}
 		else if (*f == QSE_MT('$'))
@@ -300,9 +300,9 @@ qse_size_t qse_wcsfncpy (
 	{
 		if (*f == QSE_WT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_WT('\0')) f++;
 		}
 		else if (*f == QSE_WT('$'))
@@ -358,9 +358,9 @@ qse_size_t qse_wcsxfcpy (
 	{
 		if (*f == QSE_WT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_WT('\0')) f++;
 		}
 		else if (*f == QSE_WT('$'))
@@ -420,9 +420,9 @@ qse_size_t qse_wcsxfncpy (
 	{
 		if (*f == QSE_WT('\\'))
 		{
-			// get the escaped character and treat it normally.
-			// if the escaper is the last character, treat it 
-			// normally also.
+			/* get the escaped character and treat it normally.
+			 * if the escaper is the last character, treat it 
+			 * normally also. */
 			if (f[1] != QSE_WT('\0')) f++;
 		}
 		else if (*f == QSE_WT('$'))
