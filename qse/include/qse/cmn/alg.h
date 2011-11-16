@@ -113,4 +113,13 @@ void qse_qsort (
 	void*             ctx
 );
 
+
+/**
+ * The qse_rand31() function implements Park-Miller's minimal standard
+ * 32 bit pseudo-random number generator.
+ */
+qse_uint32_t qse_rand31 (
+	qse_uint32_t seed
+);
+
 #endif

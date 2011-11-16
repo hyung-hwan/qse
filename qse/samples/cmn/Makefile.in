@@ -36,10 +36,10 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
 	str$(EXEEXT) sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) \
-	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio$(EXEEXT) \
-	pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) \
-	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) path01$(EXEEXT) \
-	tre01$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT)
+	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio01$(EXEEXT) \
+	fio02$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) \
+	main$(EXEEXT) main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) \
+	path01$(EXEEXT) tre01$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -68,10 +68,14 @@ am_env_OBJECTS = env.$(OBJEXT)
 env_OBJECTS = $(am_env_OBJECTS)
 env_LDADD = $(LDADD)
 env_DEPENDENCIES =
-am_fio_OBJECTS = fio.$(OBJEXT)
-fio_OBJECTS = $(am_fio_OBJECTS)
-fio_LDADD = $(LDADD)
-fio_DEPENDENCIES =
+am_fio01_OBJECTS = fio01.$(OBJEXT)
+fio01_OBJECTS = $(am_fio01_OBJECTS)
+fio01_LDADD = $(LDADD)
+fio01_DEPENDENCIES =
+am_fio02_OBJECTS = fio02.$(OBJEXT)
+fio02_OBJECTS = $(am_fio02_OBJECTS)
+fio02_LDADD = $(LDADD)
+fio02_DEPENDENCIES =
 am_fma_OBJECTS = fma.$(OBJEXT)
 fma_OBJECTS = $(am_fma_OBJECTS)
 fma_LDADD = $(LDADD)
@@ -161,19 +165,20 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) $(fio_SOURCES) \
-	$(fma_SOURCES) $(fmt01_SOURCES) $(fmt02_SOURCES) \
-	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
+	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
+	$(fmt01_SOURCES) $(fmt02_SOURCES) $(htb_SOURCES) \
+	$(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) \
+	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
-	$(fio_SOURCES) $(fma_SOURCES) $(fmt01_SOURCES) \
-	$(fmt02_SOURCES) $(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) \
-	$(main2_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
-	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
-	$(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) $(time_SOURCES) \
-	$(tre01_SOURCES) $(xma_SOURCES)
+	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
+	$(fmt01_SOURCES) $(fmt02_SOURCES) $(htb_SOURCES) \
+	$(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) $(oht_SOURCES) \
+	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) $(str_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -336,7 +341,8 @@ lda_SOURCES = lda.c
 oht_SOURCES = oht.c
 htb_SOURCES = htb.c
 rbt_SOURCES = rbt.c
-fio_SOURCES = fio.c
+fio01_SOURCES = fio01.c
+fio02_SOURCES = fio02.c
 pio_SOURCES = pio.c
 sio_SOURCES = sio.c
 time_SOURCES = time.c
@@ -434,9 +440,12 @@ dll$(EXEEXT): $(dll_OBJECTS) $(dll_DEPENDENCIES)
 env$(EXEEXT): $(env_OBJECTS) $(env_DEPENDENCIES) 
 	@rm -f env$(EXEEXT)
 	$(LINK) $(env_OBJECTS) $(env_LDADD) $(LIBS)
-fio$(EXEEXT): $(fio_OBJECTS) $(fio_DEPENDENCIES) 
-	@rm -f fio$(EXEEXT)
-	$(LINK) $(fio_OBJECTS) $(fio_LDADD) $(LIBS)
+fio01$(EXEEXT): $(fio01_OBJECTS) $(fio01_DEPENDENCIES) 
+	@rm -f fio01$(EXEEXT)
+	$(LINK) $(fio01_OBJECTS) $(fio01_LDADD) $(LIBS)
+fio02$(EXEEXT): $(fio02_OBJECTS) $(fio02_DEPENDENCIES) 
+	@rm -f fio02$(EXEEXT)
+	$(LINK) $(fio02_OBJECTS) $(fio02_LDADD) $(LIBS)
 fma$(EXEEXT): $(fma_OBJECTS) $(fma_DEPENDENCIES) 
 	@rm -f fma$(EXEEXT)
 	$(LINK) $(fma_OBJECTS) $(fma_LDADD) $(LIBS)
@@ -504,7 +513,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt02.Po@am__quote@

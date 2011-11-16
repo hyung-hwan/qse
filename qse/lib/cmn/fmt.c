@@ -60,14 +60,16 @@ static int fmt_unsigned_to_mbs (
 	}
 	else
 	{
+		qse_uintmax_t v = value;
+
 		/* store the resulting numeric string into 'tmp' first */
 		p = tmp; 
 		do
 		{
-			*p++ = xbasestr[value % base];
-			value /= base;
+			*p++ = xbasestr[v % base];
+			v /= base;
 		}
-		while (value > 0);
+		while (v > 0);
 
 		/* reslen is the length of the resulting string without padding. */
 		reslen = (int)(p - tmp);
@@ -87,8 +89,10 @@ static int fmt_unsigned_to_mbs (
 		else 
 		{
 			preczero = 0;
-			if (base_and_flags & QSE_FMTINTMAXTOMBS_ZEROLEAD) 
+			if ((base_and_flags & QSE_FMTINTMAXTOMBS_ZEROLEAD) && value != 0) 
 			{
+				/* if value is zero, 0 is emitted from it. 
+				 * so ZEROLEAD don't need to add another 0. */
 				preczero++;
 				reslen++;
 			}
@@ -319,14 +323,16 @@ static int fmt_unsigned_to_wcs (
 	}
 	else
 	{
+		qse_uintmax_t v = value;
+
 		/* store the resulting numeric string into 'tmp' first */
 		p = tmp; 
 		do
 		{
-			*p++ = xbasestr[value % base];
-			value /= base;
+			*p++ = xbasestr[v % base];
+			v /= base;
 		}
-		while (value > 0);
+		while (v > 0);
 
 		/* reslen is the length of the resulting string without padding. */
 		reslen = (int)(p - tmp);
@@ -346,8 +352,10 @@ static int fmt_unsigned_to_wcs (
 		else 
 		{
 			preczero = 0;
-			if (base_and_flags & QSE_FMTINTMAXTOWCS_ZEROLEAD) 
+			if ((base_and_flags & QSE_FMTINTMAXTOWCS_ZEROLEAD) && value != 0) 
 			{
+				/* if value is zero, 0 is emitted from it. 
+				 * so ZEROLEAD don't need to add another 0. */
 				preczero++;
 				reslen++;
 			}

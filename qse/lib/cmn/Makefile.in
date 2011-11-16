@@ -75,19 +75,19 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
-am_libqsecmn_la_OBJECTS = alg-search.lo alg-sort.lo assert.lo chr.lo \
-	chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo fma.lo \
-	fmt.lo main.lo mem.lo oht.lo opt.lo path-basename.lo \
-	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
-	stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
-	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
-	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
-	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
-	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
-	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
-	time.lo tio.lo tio-get.lo tio-put.lo tre.lo tre-ast.lo \
-	tre-compile.lo tre-match-backtrack.lo tre-match-parallel.lo \
-	tre-parse.lo tre-stack.lo utf8.lo xma.lo
+am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
+	assert.lo chr.lo chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo \
+	fio.lo fma.lo fmt.lo main.lo mem.lo oht.lo opt.lo \
+	path-basename.lo path-canon.lo pio.lo pma.lo rbt.lo rex.lo \
+	sio.lo sll.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo \
+	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
+	str-dynm.lo str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo \
+	str-fnmat.lo str-incl.lo str-len.lo str-pac.lo str-pbrk.lo \
+	str-put.lo str-rev.lo str-rot.lo str-set.lo str-spl.lo \
+	str-spn.lo str-str.lo str-subst.lo str-tok.lo str-trm.lo \
+	str-word.lo time.lo tio.lo tio-get.lo tio-put.lo tre.lo \
+	tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
+	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -288,6 +288,7 @@ noinst_HEADERS = \
 	tre-stack.h
 
 libqsecmn_la_SOURCES = \
+	alg-rand.c \
 	alg-search.c  \
 	alg-sort.c \
 	assert.c \
@@ -441,6 +442,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdMmgr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-rand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
