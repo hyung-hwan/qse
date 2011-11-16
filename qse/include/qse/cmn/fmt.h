@@ -67,6 +67,16 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTINTMAX_FILLRIGHT       QSE_FMTINTMAX_FILLRIGHT
 #define QSE_FMTINTMAX_FILLCENTER      QSE_FMTINTMAX_FILLCENTER
 
+#define QSE_FMTUINTMAX_NOTRUNC        QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTUINTMAX_NONULL         QSE_FMTINTMAX_NONULL
+#define QSE_FMTUINTMAX_NOZERO         QSE_FMTINTMAX_NOZERO
+#define QSE_FMTUINTMAX_ZEROLEAD       QSE_FMTINTMAX_ZEROLEAD
+#define QSE_FMTUINTMAX_UPPERCASE      QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTUINTMAX_PLUSSIGN       QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTUINTMAX_EMPTYSIGN      QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTUINTMAX_FILLRIGHT      QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTUINTMAX_FILLCENTER     QSE_FMTINTMAX_FILLCENTER
+
 #define QSE_FMTINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOMBS_NONULL     QSE_FMTINTMAX_NONULL
 #define QSE_FMTINTMAXTOMBS_NOZERO     QSE_FMTINTMAX_NOZERO
@@ -77,6 +87,16 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTINTMAXTOMBS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
 #define QSE_FMTINTMAXTOMBS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
 
+#define QSE_FMTUINTMAXTOMBS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTUINTMAXTOMBS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTUINTMAXTOMBS_NOZERO     QSE_FMTINTMAX_NOZERO
+#define QSE_FMTUINTMAXTOMBS_ZEROLEAD   QSE_FMTINTMAX_ZEROLEAD
+#define QSE_FMTUINTMAXTOMBS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTUINTMAXTOMBS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTUINTMAXTOMBS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTUINTMAXTOMBS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTUINTMAXTOMBS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
+
 #define QSE_FMTINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
 #define QSE_FMTINTMAXTOWCS_NONULL     QSE_FMTINTMAX_NONULL
 #define QSE_FMTINTMAXTOWCS_NOZERO     QSE_FMTINTMAX_NOZERO
@@ -86,6 +106,16 @@ enum qse_fmtintmax_flag_t
 #define QSE_FMTINTMAXTOWCS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
 #define QSE_FMTINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
 #define QSE_FMTINTMAXTOWCS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
+
+#define QSE_FMTUINTMAXTOWCS_NOTRUNC    QSE_FMTINTMAX_NOTRUNC
+#define QSE_FMTUINTMAXTOWCS_NONULL     QSE_FMTINTMAX_NONULL
+#define QSE_FMTUINTMAXTOWCS_NOZERO     QSE_FMTINTMAX_NOZERO
+#define QSE_FMTUINTMAXTOWCS_ZEROLEAD   QSE_FMTINTMAX_ZEROLEAD
+#define QSE_FMTUINTMAXTOWCS_UPPERCASE  QSE_FMTINTMAX_UPPERCASE
+#define QSE_FMTUINTMAXTOWCS_PLUSSIGN   QSE_FMTINTMAX_PLUSSIGN
+#define QSE_FMTUINTMAXTOWCS_EMPTYSIGN  QSE_FMTINTMAX_EMPTYSIGN
+#define QSE_FMTUINTMAXTOWCS_FILLRIGHT  QSE_FMTINTMAX_FILLRIGHT
+#define QSE_FMTUINTMAXTOWCS_FILLCENTER QSE_FMTINTMAX_FILLCENTER
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +141,12 @@ extern "C" {
  * - If neither #QSE_FMTINTMAXTOMBS_FILLRIGHT nor #QSE_FMTINTMAXTOMBS_FILLCENTER
  *   , slots before the formatting string are filled.
  *
+ * The @a precision parameter specified the minimum number of digits to
+ * produce from the @ value. If @a value produces fewer digits than
+ * @a precision, the actual digits are padded with '0' to meet the precision
+ * requirement. You can pass a negative number if you don't wish to specify
+ * precision.
+ *
  * The terminating null is not added if #QSE_FMTINTMAXTOMBS_NONULL is set;
  * The #QSE_FMTINTMAXTOMBS_UPPERCASE flag indicates that the function should
  * use the uppercase letter for a alphabetic digit; 
@@ -118,6 +154,11 @@ extern "C" {
  * The #QSE_FMTINTMAXTOMBS_PLUSSIGN flag and #QSE_FMTINTMAXTOMBS_EMPTYSIGN 
  * ensures that the plus sign and a space is added for a positive integer 
  * including 0 respectively.
+ * The #QSE_FMTINTMAXTOMBS_ZEROLEAD flag ensures that the numeric string
+ * begins with '0' before applying the prefix.
+ * You can set the #QSE_FMTINTMAXTOMBS_NOZERO flag if you want the value of
+ * 0 to produce nothing. If both #QSE_FMTINTMAXTOMBS_NOZERO and 
+ * #QSE_FMTINTMAXTOMBS_ZEROLEAD are specified, '0' is still produced.
  * 
  * If @a prefix is not #QSE_NULL, it is inserted before the digits.
  * 
@@ -159,6 +200,12 @@ int qse_fmtintmaxtombs (
  *   are filled.  
  * - If neither #QSE_FMTINTMAXTOWCS_FILLRIGHT nor #QSE_FMTINTMAXTOWCS_FILLCENTER
  *   , slots before the formatting string are filled.
+ * 
+ * The @a precision parameter specified the minimum number of digits to
+ * produce from the @ value. If @a value produces fewer digits than
+ * @a precision, the actual digits are padded with '0' to meet the precision
+ * requirement. You can pass a negative number if don't wish to specify
+ * precision.
  *
  * The terminating null is not added if #QSE_FMTINTMAXTOWCS_NONULL is set;
  * The #QSE_FMTINTMAXTOWCS_UPPERCASE flag indicates that the function should
@@ -167,6 +214,11 @@ int qse_fmtintmaxtombs (
  * The #QSE_FMTINTMAXTOWCS_PLUSSIGN flag and #QSE_FMTINTMAXTOWCS_EMPTYSIGN 
  * ensures that the plus sign and a space is added for a positive integer 
  * including 0 respectively.
+ * The #QSE_FMTINTMAXTOWCS_ZEROLEAD flag ensures that the numeric string
+ * begins with 0 before applying the prefix.
+ * You can set the #QSE_FMTINTMAXTOWCS_NOZERO flag if you want the value of
+ * 0 to produce nothing. If both #QSE_FMTINTMAXTOWCS_NOZERO and 
+ * #QSE_FMTINTMAXTOWCS_ZEROLEAD are specified, '0' is still produced.
  *
  * If @a prefix is not #QSE_NULL, it is inserted before the digits.
  * 

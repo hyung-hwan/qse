@@ -19,6 +19,7 @@ noinst_HEADERS = \
 	tre-stack.h
 
 libqsecmn_la_SOURCES = \
+	alg-rand.c \
 	alg-search.c  \
 	alg-sort.c \
 	assert.c \

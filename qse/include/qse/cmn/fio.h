@@ -39,8 +39,12 @@ enum qse_fio_open_flag_t
 	/** treat the file name pointer as a handle pointer */
 	QSE_FIO_HANDLE        = (1 << 3),
 
+	/** treate the file name pointer as a pointer to file name
+	 *  template to use when making a temporary file name */
+	QSE_FIO_TEMPORARY     = (1 << 4),
+
 	/** don't close an I/O handle in qse_fio_fini() and qse_fio_close() */
-	QSE_FIO_NOCLOSE       = (1 << 4),
+	QSE_FIO_NOCLOSE       = (1 << 5),
 
 	/* normal open flags */
 	QSE_FIO_READ          = (1 << 8),
@@ -58,10 +62,11 @@ enum qse_fio_open_flag_t
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
 	QSE_FIO_NOSHRD        = (1 << 24),
 	QSE_FIO_NOSHWR        = (1 << 25),
+	QSE_FIO_NOSHDL        = (1 << 26),
 
 	/* hints to OS. harmless(no effect) when used on unsupported platforms */
-	QSE_FIO_RANDOM        = (1 << 26), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL    = (1 << 27)  /* hint that access is sequential */
+	QSE_FIO_RANDOM        = (1 << 27), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL    = (1 << 28)  /* hint that access is sequential */
 };
 
 enum qse_fio_std_t
@@ -150,6 +155,16 @@ QSE_DEFINE_COMMON_FUNCTIONS (fio)
  * The qse_fio_open() function opens a file.
  * To open a file, you should set the flags with at least one of
  * QSE_FIO_READ, QSE_FIO_WRITE, QSE_FIO_APPEND.
+ *
+ * If the #QSE_FIO_HANDLE flag is set, the @a path parameter is interpreted
+ * as a pointer to qse_fio_hnd_t.
+ *
+ * If the #QSE_FIO_TEMPORARY flag is set, the @a path parameter is 
+ * interpreted as a path name template and an actual file name to open
+ * is internally generated using the template. The @a path parameter 
+ * is filled with the last actual path name attempted when the function
+ * returns. So, you must not pass a constant string to the @a path 
+ * parameter when #QSE_FIO_TEMPORARY is set.
  */
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t*       mmgr,

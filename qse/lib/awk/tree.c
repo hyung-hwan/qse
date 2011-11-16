@@ -325,26 +325,42 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			for (i = 0; i < len; i++)
 			{
 				/* TODO: maybe more de-escaping?? */
-				if (ptr[i] == QSE_T('\n'))
-					PUT_SRCSTR (awk, QSE_T("\\n"));
-				else if (ptr[i] == QSE_T('\r'))
-					PUT_SRCSTR (awk, QSE_T("\\r"));
-				else if (ptr[i] == QSE_T('\f'))
-					PUT_SRCSTR (awk, QSE_T("\\f"));
-				else if (ptr[i] == QSE_T('\b'))
-					PUT_SRCSTR (awk, QSE_T("\\b"));
-				else if (ptr[i] == QSE_T('\v'))
-					PUT_SRCSTR (awk, QSE_T("\\v"));
-				else if (ptr[i] == QSE_T('\a'))
-					PUT_SRCSTR (awk, QSE_T("\\a"));
-				else if (ptr[i] == QSE_T('\0'))
-					PUT_SRCSTR (awk, QSE_T("\\0"));
-				else if (ptr[i] == QSE_T('\"'))
-					PUT_SRCSTR (awk, QSE_T("\\\""));
-				else if (ptr[i] == QSE_T('\\'))
-					PUT_SRCSTR (awk, QSE_T("\\\\"));
-				else
-					PUT_SRCSTRX (awk, &ptr[i], 1);
+				switch (ptr[i])
+				{
+					case QSE_T('\n'):
+						PUT_SRCSTR (awk, QSE_T("\\n"));
+						break;
+					case QSE_T('\r'):
+						PUT_SRCSTR (awk, QSE_T("\\r"));
+						break;
+					case QSE_T('\t'):
+						PUT_SRCSTR (awk, QSE_T("\\t"));
+						break;
+					case QSE_T('\f'):
+						PUT_SRCSTR (awk, QSE_T("\\f"));
+						break;
+					case QSE_T('\b'):
+						PUT_SRCSTR (awk, QSE_T("\\b"));
+						break;
+					case QSE_T('\v'):
+						PUT_SRCSTR (awk, QSE_T("\\v"));
+						break;
+					case QSE_T('\a'):
+						PUT_SRCSTR (awk, QSE_T("\\a"));
+						break;
+					case QSE_T('\0'):
+						PUT_SRCSTR (awk, QSE_T("\\0"));
+						break;
+					case QSE_T('\"'):
+						PUT_SRCSTR (awk, QSE_T("\\\""));
+						break;
+					case QSE_T('\\'):
+						PUT_SRCSTR (awk, QSE_T("\\\\"));
+						break;
+					default:
+						PUT_SRCSTRX (awk, &ptr[i], 1);
+						break;
+				}
 			}
 			PUT_SRCSTR (awk, QSE_T("\""));
 			break;

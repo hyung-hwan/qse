@@ -724,11 +724,11 @@ qse_dir_ent_t* qse_dir_read (qse_dir_t* dir, int flags)
 			QSE_SECNSEC_TO_MSEC(st.st_ctimespec.tv_sec,st.st_ctimespec.tv_nsec);
 	#else
 		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
-		dir->ent.time.create = st.st_birthtime * QSE_MSEC_PER_SEC;
+		dir->ent.time.create = st.st_birthtime * QSE_MSECS_PER_SEC;
 		#endif
-		dir->ent.time.access = st.st_atime * QSE_MSEC_PER_SEC;
-		dir->ent.time.modify = st.st_mtime * QSE_MSEC_PER_SEC;
-		dir->ent.time.change = st.st_ctime * QSE_MSEC_PER_SEC;
+		dir->ent.time.access = st.st_atime * QSE_MSECS_PER_SEC;
+		dir->ent.time.modify = st.st_mtime * QSE_MSECS_PER_SEC;
+		dir->ent.time.change = st.st_ctime * QSE_MSECS_PER_SEC;
 	#endif
 		dir->ent.flags |= QSE_DIR_ENT_TIME;
 	}

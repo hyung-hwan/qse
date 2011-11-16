@@ -20,6 +20,9 @@
 
 #include <qse/cmn/fio.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/fmt.h>
+#include <qse/cmn/alg.h>
+#include <qse/cmn/time.h>
 #include "mem.h"
 
 #if defined(_WIN32)
@@ -90,14 +93,67 @@ int qse_fio_init (
 {
 	qse_fio_hnd_t handle;
 
+	qse_uint32_t temp_no;
+	qse_char_t* temp_ptr;
+	qse_size_t temp_tries;
+
 	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;
 
-	/* store the flags for later use though only OS/2 needs
+	/* Store the flags for later use though only OS/2 needs
 	 * this at this moment */
 	fio->flags = flags;
+
+	if (flags & QSE_FIO_TEMPORARY)
+	{
+		qse_ntime_t now;
+
+		QSE_ASSERTX (
+			(flags & QSE_FIO_HANDLE) == 0, 
+			"QSE_FIO_TEMPORARY and QSE_FIO_HANDLE are mutually exclusive"
+		);
+
+		temp_no = 0;
+		for (temp_ptr = path; *temp_ptr; temp_ptr++) 
+			temp_no += *temp_ptr;
+
+		/* The path name template must be at least 4 characters long
+		 * excluding the terminating null. this function fails if not */
+		if (temp_ptr - path < 4) return -1; 
+
+		qse_gettime (&now);
+		temp_no += (now & 0xFFFFFFFFlu);
+
+		temp_tries = 0;
+		temp_ptr -= 4;
+
+	retry_temporary:
+		temp_tries++;
+
+		/* Fails after 5000 tries. 5000 randomly chosen */
+		if (temp_tries > 5000) return -1; 
+
+		/* Generate the next random number to use to make a 
+		 * new path name */
+		temp_no = qse_rand31 (temp_no);
+
+		/* 
+		 * You must not pass a constant string for a path name
+		 * when QSE_FIO_TEMPORARY is set, because it changes
+		 * the path name with a random number generated
+		 */
+		qse_fmtuintmax (
+			temp_ptr,
+			4, 
+			temp_no % 0x10000, 
+			16 | QSE_FMTUINTMAX_NOTRUNC | QSE_FMTUINTMAX_NONULL,
+			4,
+			QSE_T('\0'),
+			QSE_NULL
+		);
+	}
 
 #if defined(_WIN32)
 	if (flags & QSE_FIO_HANDLE)
@@ -107,7 +163,7 @@ int qse_fio_init (
 	else
 	{
 		DWORD desired_access = 0;
-		DWORD share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+		DWORD share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 		DWORD creation_disposition = 0;
 		DWORD flag_and_attr = FILE_ATTRIBUTE_NORMAL;
 
@@ -141,6 +197,8 @@ int qse_fio_init (
 			share_mode &= ~FILE_SHARE_READ;
 		if (flags & QSE_FIO_NOSHWR)
 			share_mode &= ~FILE_SHARE_WRITE;
+		if (flags & QSE_FIO_NOSHDL)
+			share_mode &= ~FILE_SHARE_DELETE;
 
 		if (!(mode & QSE_FIO_WUSR)) 
 			flag_and_attr = FILE_ATTRIBUTE_READONLY;
@@ -162,7 +220,11 @@ int qse_fio_init (
 			creation_disposition, flag_and_attr, 0
 		);
 	}
-	if (handle == INVALID_HANDLE_VALUE) return -1;
+	if (handle == INVALID_HANDLE_VALUE) 
+	{
+		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+		return -1;
+	}
 
 	/* some special check */
 	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
@@ -258,7 +320,11 @@ int qse_fio_init (
 			0L                            
 		);
 
-		if (ret != NO_ERROR) return -1;
+		if (ret != NO_ERROR) 
+		{
+			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+			return -1;
+		}
 	}
 
 #elif defined(__DOS__)
@@ -308,7 +374,11 @@ int qse_fio_init (
 			oflags,
 			permission
 		);
-		if (handle <= -1) return -1;
+		if (handle <= -1) 
+		{
+			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+			return -1;
+		}
 	}
 
 #else
@@ -367,7 +437,11 @@ int qse_fio_init (
 		handle = QSE_OPEN (path_mb, desired_access, mode);
 	}
 
-	if (handle == -1) return -1;
+	if (handle == -1) 
+	{
+		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+		return -1;
+	}
 
 	/* set some file access hints */
 	#if defined(POSIX_FADV_RANDOM)
