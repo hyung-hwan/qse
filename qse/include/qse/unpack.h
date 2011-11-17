@@ -19,13 +19,13 @@
  */
 
 #if defined(__GNUC__)
-	#pragma pack()
+#	pragma pack()
 #elif defined(__HP_aCC) || defined(__HP_cc)
-	#pragma PACK
+#	pragma PACK
 #elif defined(_MSC_VER) || defined(__BORLANDC__)
-	#pragma pack(pop)
+#	pragma pack(pop)
 #elif defined(__DECC)
-	#pragma pack(pop)
+#	pragma pack(pop)
 #else
-	#pragma pack()
+#	pragma pack()
 #endif

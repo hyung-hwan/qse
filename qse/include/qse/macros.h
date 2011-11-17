@@ -119,7 +119,7 @@
 #define QSE_SIZEOF(n)  (sizeof(n))
 
 /**
- * The QSE_COUNTOF() macro gets the number elements in a array.
+ * The QSE_COUNTOF() macro returns the number elements in an array.
  * The following code snippet should print 128.
  * @code
  * int x[128];
@@ -129,16 +129,24 @@
 #define QSE_COUNTOF(n) (sizeof(n)/sizeof(n[0]))
 
 /**
- * The QSE_OFFSETOF() macro get the offset of a fields from the beginning
+ * The QSE_OFFSETOF() macro returns the offset of a field from the beginning
  * of a structure.
  */
-#define QSE_OFFSETOF(type,member) ((qse_size_t)&((type*)0)->member)
+#define QSE_OFFSETOF(type,member) \
+	((qse_size_t)&((type*)0)->member)
+
+/**
+ * The QSE_ALIGNOF() macro returns the alignment size of a structure.
+ * Note that this macro may not work reliably depending on the type given.
+ */
+#define QSE_ALIGNOF(type) QSE_OFFSETOF(struct { qse_uint8_t d1; type d2 }, d2)
+	/*(sizeof(struct { qse_uint8_t d1; type d2 }) - sizeof(type))*/
 
 /**
  * The QSE_TYPE_IS_SIGNED() macro determines if a type is signed. 
  * @code
- * printf ("%d\n", QSE_TYPE_IS_SIGNED(int));
- * printf ("%d\n", QSE_TYPE_IS_SIGNED(unsigned int));
+ * printf ("%d\n", (int)QSE_TYPE_IS_SIGNED(int));
+ * printf ("%d\n", (int)QSE_TYPE_IS_SIGNED(unsigned int));
  * @endcode
  */
 #define QSE_TYPE_IS_SIGNED(type) (((type)0) > ((type)-1))

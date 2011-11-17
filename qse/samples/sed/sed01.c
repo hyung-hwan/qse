@@ -62,7 +62,6 @@ oops:
 	return ret;
 }
 
-
 int qse_main (int argc, qse_achar_t* argv[])
 {
 	return qse_runmain (argc, argv, sed_main);
