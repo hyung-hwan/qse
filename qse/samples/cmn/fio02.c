@@ -1,8 +1,6 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/stdio.h>
-
 #include <string.h>
-#include <locale.h>
 
 #define R(f) \
 	do { \
@@ -25,7 +23,7 @@ static int test1 (void)
 		QSE_NULL, 
 		0, 
 		file,
-          QSE_FIO_CREATE | QSE_FIO_EXCLUSIVE | QSE_FIO_TEMPORARY | QSE_FIO_READ | QSE_FIO_WRITE,
+		QSE_FIO_CREATE | QSE_FIO_EXCLUSIVE | QSE_FIO_TEMPORARY | QSE_FIO_READ | QSE_FIO_WRITE,
 		QSE_FIO_RUSR|QSE_FIO_WUSR|QSE_FIO_RGRP|QSE_FIO_ROTH
 	);
 	if (fio == QSE_NULL)
@@ -81,13 +79,6 @@ static int test1 (void)
 
 int main ()
 {
-	setlocale (LC_ALL, "");
-
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-
 	R (test1);
-
 	return 0;
 }
