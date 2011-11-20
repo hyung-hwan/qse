@@ -26,6 +26,7 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/xma.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/fs.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 
@@ -64,6 +65,7 @@ static qse_char_t* g_output_file = QSE_NULL;
 static int g_infile_pos = 0;
 static int g_option = 0;
 static int g_separate = 0;
+static int g_inplace = 0;
 #if defined(QSE_ENABLE_SEDTRACER)
 static int g_trace = 0;
 #endif
@@ -127,7 +129,8 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T(" -o file   specify an output file\n"));
 	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
 	qse_fprintf (out, QSE_T(" -R        enable non-standard extensions to the regular expression\n"));
-	qse_fprintf (out, QSE_T(" -s        processes input files separately\n"));
+	qse_fprintf (out, QSE_T(" -i        perform in-place editing. imply -s\n"));
+	qse_fprintf (out, QSE_T(" -s        process input files separately\n"));
 	qse_fprintf (out, QSE_T(" -a        perform strict address and label check\n"));
 	qse_fprintf (out, QSE_T(" -w        allow extended address formats\n"));
 	qse_fprintf (out, QSE_T("           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
@@ -196,9 +199,9 @@ static int handle_args (int argc, qse_char_t* argv[])
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("hne:f:o:rRsawxytm:X:"),
+		QSE_T("hne:f:o:rRisawxytm:X:"),
 #else
-		QSE_T("hne:f:o:rRsawxytm:"),
+		QSE_T("hne:f:o:rRisawxytm:"),
 #endif
 		QSE_NULL
 	};
@@ -256,10 +259,14 @@ static int handle_args (int argc, qse_char_t* argv[])
 				g_option |= QSE_SED_NONSTDEXTREX;
 				break;
 
+			case QSE_T('i'):
+				/* 'i' implies 's'. */
+				g_inplace = 1;
+
 			case QSE_T('s'):
 				g_separate = 1;
 				break;
-
+		
 			case QSE_T('a'):
 				g_option |= QSE_SED_STRICT;
 				break;
@@ -327,7 +334,7 @@ void print_exec_error (qse_sed_t* sed)
 	if (errloc->line > 0 || errloc->colm > 0)
 	{
 		qse_fprintf (QSE_STDERR, 
-			QSE_T("cannot execute - %s at line %lu column %lu\n"),
+			QSE_T("ERROR: cannot execute - %s at line %lu column %lu\n"),
 			qse_sed_geterrmsg(sed),
 			(unsigned long)errloc->line,
 			(unsigned long)errloc->colm
@@ -336,7 +343,7 @@ void print_exec_error (qse_sed_t* sed)
 	else
 	{
 		qse_fprintf (QSE_STDERR, 
-			QSE_T("cannot execute - %s\n"),
+			QSE_T("ERROR: cannot execute - %s\n"),
 			qse_sed_geterrmsg(sed)
 		);
 	}
@@ -500,6 +507,7 @@ int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_NULL;
 	qse_sed_t* sed = QSE_NULL;
+	qse_fs_t* fs = QSE_NULL;
 	qse_size_t script_count;
 	int ret = -1;
 
@@ -528,10 +536,29 @@ int sed_main (int argc, qse_char_t* argv[])
 		mmgr = &xma_mmgr;
 	}
 
+	if (g_separate && g_infile_pos > 0 && g_inplace)
+	{
+		fs = qse_fs_open (mmgr, 0);
+		if (fs == QSE_NULL)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open file system handler\n"));
+			goto oops;
+		}
+
+		if (qse_fs_chdir (fs, QSE_T(".")) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, 
+				QSE_T("ERROR: cannot change direcotry in file system handler - %s\n"), 
+				qse_fs_geterrmsg(fs)
+			);
+			goto oops;
+		}
+	}
+
 	sed = qse_sed_openstdwithmmgr (mmgr, 0);
 	if (sed == QSE_NULL)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("cannot open a stream editor\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));
 		goto oops;
 	}
 	
@@ -559,7 +586,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		if (errloc->line > 0 || errloc->colm > 0)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot compile %s - %s at line %lu column %lu\n"),
+				QSE_T("ERROR: cannot compile %s - %s at line %lu column %lu\n"),
 				target,
 				qse_sed_geterrmsg(sed),
 				(unsigned long)errloc->line,
@@ -569,7 +596,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		else
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("cannot compile %s - %s\n"),
+				QSE_T("ERROR: cannot compile %s - %s\n"),
 				target,
 				qse_sed_geterrmsg(sed)
 			);
@@ -583,14 +610,18 @@ int sed_main (int argc, qse_char_t* argv[])
 
 	if (g_separate && g_infile_pos > 0)
 	{
-		qse_sed_iostd_t out;
+		/* 's' and input files are specified on the command line */
+
+		qse_sed_iostd_t out_file;
+		qse_sed_iostd_t out_inplace;
+		qse_sed_iostd_t* output_file = QSE_NULL;
 		qse_sed_iostd_t* output = QSE_NULL;
 
 		if (g_output_file && 
 		    qse_strcmp (g_output_file, QSE_T("-")) != 0)
 		{
-			out.type = QSE_SED_IOSTD_SIO;
-			out.u.sio = qse_sio_open (
+			out_file.type = QSE_SED_IOSTD_SIO;
+			out_file.u.sio = qse_sio_open (
 				qse_sed_getmmgr(sed),
 				0,
 				g_output_file,
@@ -599,18 +630,20 @@ int sed_main (int argc, qse_char_t* argv[])
 				QSE_SIO_TRUNCATE |
 				QSE_SIO_IGNOREMBWCERR
 			);
-			if (out.u.sio == QSE_NULL)
+			if (out_file.u.sio == QSE_NULL)
 			{
-				qse_fprintf (QSE_STDERR, QSE_T("cannot open %s\n"), g_output_file);
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), g_output_file);
 				goto oops;
 			}
 
-			output = &out;
+			output_file = &out_file;
+			output = output_file;
 		}
 
 		while (g_infile_pos < argc)
 		{
 			qse_sed_iostd_t in[2];
+			qse_char_t* tmpl_tmpfile;
 			
 			in[0].type = QSE_SED_IOSTD_FILE;
 			in[0].u.file =
@@ -618,11 +651,68 @@ int sed_main (int argc, qse_char_t* argv[])
 				QSE_NULL: argv[g_infile_pos];
 			in[1].type = QSE_SED_IOSTD_NULL;
 
+			tmpl_tmpfile = QSE_NULL;
+			if (g_inplace && in[0].u.file)
+			{
+				tmpl_tmpfile = qse_strdup2 (in[0].u.file, QSE_T(".XXXX"),  qse_sed_getmmgr(sed));
+				if (tmpl_tmpfile == QSE_NULL)
+				{
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+					goto oops;
+				}
+
+				out_inplace.type = QSE_SED_IOSTD_SIO;
+				out_inplace.u.sio = qse_sio_open (
+					qse_sed_getmmgr(sed),
+					0,
+					tmpl_tmpfile,
+					QSE_SIO_WRITE |
+					QSE_SIO_CREATE |
+					QSE_SIO_IGNOREMBWCERR |
+					QSE_SIO_EXCLUSIVE |
+					QSE_SIO_TEMPORARY
+				);
+				if (out_inplace.u.sio == QSE_NULL)
+				{
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), tmpl_tmpfile);
+					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
+					goto oops;
+				}
+
+				output = &out_inplace;
+			}
+
 			if (qse_sed_execstd (sed, in, output) <= -1)
 			{
 				if (output) qse_sio_close (output->u.sio);
+
+				if (tmpl_tmpfile) 
+				{
+/*
+TODO:
+					qse_fs_remove (fs, tmpl_tmpfile);
+*/
+					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
+				}
 				print_exec_error (sed);
 				goto oops;
+			}
+
+			if (tmpl_tmpfile)
+			{
+				QSE_ASSERT (output == &out_inplace);
+				qse_sio_close (output->u.sio);
+				output = output_file;
+
+				if (qse_fs_move (fs, tmpl_tmpfile, in[0].u.file) <= -1)
+				{
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s - %s\n"), 
+						tmpl_tmpfile, in[0].u.file, tmpl_tmpfile, qse_fs_geterrmsg(fs));
+					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
+					goto oops;
+				}
+
+				QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 			}
 
 			if (qse_sed_isstop (sed)) break;
@@ -642,11 +732,13 @@ int sed_main (int argc, qse_char_t* argv[])
 		{
 			int i, num_ins;
 
+			/* input files are specified on the command line */
+
 			num_ins = argc - g_infile_pos;
 			in = QSE_MMGR_ALLOC (qse_sed_getmmgr(sed), QSE_SIZEOF(*in) * (num_ins + 1));
 			if (in == QSE_NULL)
 			{
-				qse_fprintf (QSE_STDERR, QSE_T("out of memory\n"));
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
 				goto oops;
 			}
 
@@ -688,6 +780,7 @@ int sed_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (sed) qse_sed_close (sed);
+	if (fs) qse_fs_close (fs);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
 	free_scripts ();
 	return ret;

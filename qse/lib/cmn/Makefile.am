@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = libqsecmn.la
 
 noinst_HEADERS = \
+	fs.h \
 	mem.h \
 	syscall.h \
 	tre.h \
@@ -33,6 +34,9 @@ libqsecmn_la_SOURCES = \
 	fio.c \
 	fma.c \
 	fmt.c \
+	fs.c \
+	fs-err.c \
+	fs-move.c \
 	main.c \
 	mem.c \
 	oht.c \

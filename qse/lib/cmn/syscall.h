@@ -58,25 +58,25 @@
 #	include <sys/syscall.h>
 #endif
 
-#ifdef SYS_open
+#if defined(SYS_open)
 #	define QSE_OPEN(path,flags,mode) syscall(SYS_open,path,flags,mode)
 #else
 #	define QSE_OPEN(path,flags,mode) open(path,flags,mode)
 #endif
 
-#ifdef SYS_close
+#if defined(SYS_close)
 #	define QSE_CLOSE(handle) syscall(SYS_close,handle)
 #else
 #	define QSE_CLOSE(handle) close(handle)
 #endif
 
-#ifdef SYS_read
+#if defined(SYS_read)
 #	define QSE_READ(handle,buf,size) syscall(SYS_read,handle,buf,size)
 #else
 #	define QSE_READ(handle,buf,size) read(handle,buf,size)
 #endif
 
-#ifdef SYS_write
+#if defined(SYS_write)
 #	define QSE_WRITE(handle,buf,size) syscall(SYS_write,handle,buf,size)
 #else
 #	define QSE_WRITE(handle,buf,size) write(handle,buf,size)
@@ -100,18 +100,6 @@
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
 #endif
 
-#if defined(SYS_lstat64)
-#	define QSE_LSTAT64(path,stbuf) syscall(SYS_lstat64,path,stbuf)
-#elif defined(HAVE_lstat64)
-#	define QSE_LSTAT64(path,stbuf) lstat64(path,stbuf)
-#endif
-
-#if defined(SYS_lstat)
-#	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
-#else
-#	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
-#endif
-
 #if !defined(_LP64) && defined(SYS_ftruncate64)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate64,handle,size)
 #elif defined(SYS_ftruncate)
@@ -128,6 +116,12 @@
 #	define QSE_FCHMOD(handle,mode) fchmod(handle,mode)
 #endif
 
+#if defined(SYS_fchown)
+#	define QSE_FCHOWN(handle,owner,group) syscall(SYS_fchown,handle,owner,group)
+#else
+#	define QSE_FCHOWN(handle,owner,group) fchown(handle,owner,group)
+#endif
+
 #if defined(SYS_fsync)
 #	define QSE_FSYNC(handle) syscall(SYS_fsync,handle)
 #else
@@ -140,118 +134,193 @@
 #	define QSE_FCNTL(handle,cmd,arg) fcntl(handle,cmd,arg)
 #endif
 
-#ifdef SYS_dup2
+#if defined(SYS_dup2)
 #	define QSE_DUP2(ofd,nfd) syscall(SYS_dup2,ofd,nfd)
 #else
 #	define QSE_DUP2(ofd,nfd) dup2(ofd,nfd)
 #endif
 
-#ifdef SYS_pipe
+#if defined(SYS_pipe)
 #	define QSE_PIPE(pfds) syscall(SYS_pipe,pfds)
 #else
 #	define QSE_PIPE(pfds) pipe(pfds)
 #endif
 
-#ifdef SYS_exit
+#if defined(SYS_exit)
 #	define QSE_EXIT(code) syscall(SYS_exit,code)
 #else
 #	define QSE_EXIT(code) _exit(code)
 #endif
 
-#ifdef SYS_fork
+#if defined(SYS_fork)
 #	define QSE_FORK() syscall(SYS_fork)
 #else
 #	define QSE_FORK() fork()
 #endif
 
-#ifdef SYS_execve
+#if defined(SYS_execve)
 #	define QSE_EXECVE(path,argv,envp) syscall(SYS_execve,path,argv,envp)
 #else
 #	define QSE_EXECVE(path,argv,envp) execve(path,argv,envp)
 #endif
 
-#ifdef SYS_waitpid
+#if defined(SYS_waitpid)
 #	define QSE_WAITPID(pid,status,options) syscall(SYS_waitpid,pid,status,options)
 #else
 #	define QSE_WAITPID(pid,status,options) waitpid(pid,status,options)
 #endif
 
-#ifdef SYS_kill
+#if defined(SYS_kill)
 #	define QSE_KILL(pid,sig) syscall(SYS_kill,pid,sig)
 #else
 #	define QSE_KILL(pid,sig) kill(pid,sig)
 #endif
 
-#ifdef SYS_getpid
+#if defined(SYS_getpid)
 #	define QSE_GETPID() syscall(SYS_getpid)
 #else
 #	define QSE_GETPID() getpid()
 #endif
 
-#ifdef SYS_getuid
+#if defined(SYS_getuid)
 #	define QSE_GETUID() syscall(SYS_getuid)
 #else
 #	define QSE_GETUID() getuid()
 #endif
 
-#ifdef SYS_geteuid
+#if defined(SYS_geteuid)
 #	define QSE_GETEUID() syscall(SYS_geteuid)
 #else
 #	define QSE_GETEUID() geteuid()
 #endif
 
-#ifdef SYS_getgid
+#if defined(SYS_getgid)
 #	define QSE_GETGID() syscall(SYS_getgid)
 #else
 #	define QSE_GETGID() getgid()
 #endif
 
-#ifdef SYS_getegid
+#if defined(SYS_getegid)
 #	define QSE_GETEGID() syscall(SYS_getegid)
 #else
 #	define QSE_GETEGID() getegid()
 #endif
 
-#ifdef SYS_chroot
-#	define QSE_CHROOT(path) syscall(SYS_chroot,path)
-#else
-#	define QSE_cHROOT(path) chroot(path)
-#endif
-
-#ifdef SYS_gettimeofday
+#if defined(SYS_gettimeofday)
 #	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday,tv,tz)
 #else
 #	define QSE_GETTIMEOFDAY(tv,tz) gettimeofday(tv,tz)
 #endif
 
-#ifdef SYS_settimeofday
+#if defined(SYS_settimeofday)
 #	define QSE_SETTIMEOFDAY(tv,tz) syscall(SYS_settimeofday,tv,tz)
 #else
 #	define QSE_SETTIMEOFDAY(tv,tz) settimeofday(tv,tz)
 #endif
 
-#ifdef SYS_utime
-#	define QSE_UTIME(file,t) syscall(SYS_utime,file,t)
-#else
-#	define QSE_UTIME(file,t) utime(file,t)
-#endif
-
-#ifdef SYS_utimes
-#	define QSE_UTIMES(file,t) syscall(SYS_utimes,file,t)
-#else
-#	define QSE_UTIMES(file,t) utimes(file,t)
-#endif
-
-#ifdef SYS_getrlimit
+#if defined(SYS_getrlimit)
 #	define QSE_GETRLIMIT(res,lim) syscall(SYS_getrlimit,res,lim)
 #else
 #	define QSE_GETRLIMIT(res,lim) getrlimit(res,lim)
 #endif
 
-#ifdef SYS_setrlimit
+#if defined(SYS_setrlimit)
 #	define QSE_SETRLIMIT(res,lim) syscall(SYS_setrlimit,res,lim)
 #else
 #	define QSE_SETRLIMIT(res,lim) setrlimit(res,lim)
+#endif
+
+
+/* ===== FILE SYSTEM CALLS ===== */
+
+#if defined(SYS_chmod)
+#	define QSE_CHMOD(path,mode) syscall(SYS_chmod,path,mode)
+#else
+#	define QSE_CHMOD(path,mode) chmod(path,mode)
+#endif
+
+#if defined(SYS_chown)
+#	define QSE_CHOWN(path,owner,group) syscall(SYS_chown,path,owner,group)
+#else
+#	define QSE_CHOWN(path,owner,group) chown(path,owner,group)
+#endif
+
+#if defined(SYS_chroot)
+#	define QSE_CHROOT(path) syscall(SYS_chroot,path)
+#else
+#	define QSE_CHROOT(path) chroot(path)
+#endif
+
+#if defined(SYS_lchown)
+#	define QSE_LCHOWN(path,owner,group) syscall(SYS_lchown,path,owner,group)
+#else
+#	define QSE_LCHOWN(path,owner,group) lchown(path,owner,group)
+#endif
+
+#if defined(SYS_link)
+#	define QSE_LINK(oldpath,newpath) syscall(SYS_link,oldpath,newpath)
+#else
+#	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
+#endif
+
+#if defined(SYS_lstat64)
+#	define QSE_LSTAT64(path,stbuf) syscall(SYS_lstat64,path,stbuf)
+#elif defined(HAVE_lstat64)
+#	define QSE_LSTAT64(path,stbuf) lstat64(path,stbuf)
+#endif
+
+#if defined(SYS_lstat)
+#	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
+#else
+#	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
+#endif
+
+#if defined(SYS_rename)
+#	define QSE_RENAME(oldpath,newpath) syscall(SYS_rename,oldpath,newpath)
+#else
+#	define QSE_RENAME(oldpath,newpath) rename(oldpath,newpath)
+#endif
+
+#if defined(SYS_rmdir)
+#	define QSE_RMDIR(path) syscall(SYS_rmdir,path)
+#else
+#	define QSE_RMDIR(path) rmdir(path)
+#endif
+
+#if defined(SYS_stat64)
+#	define QSE_STAT64(path,stbuf) syscall(SYS_stat64,path,stbuf)
+#elif defined(HAVE_stat64)
+#	define QSE_STAT64(path,stbuf) stat64(path,stbuf)
+#endif
+
+#if defined(SYS_stat)
+#	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
+#else
+#	define QSE_STAT(path,stbuf) stat(path,stbuf)
+#endif
+
+#if defined(SYS_symlink)
+#	define QSE_SYMLINK(oldpath,newpath) syscall(SYS_symlink,oldpath,newpath)
+#else
+#	define QSE_SYMLINK(oldpath,newpath) symlink(oldpath,newpath)
+#endif
+
+#if defined(SYS_unlink)
+#	define QSE_UNLINK(path) syscall(SYS_unlink,path)
+#else
+#	define QSE_UNLINK(path) unlink(path)
+#endif
+
+#if defined(SYS_utime)
+#	define QSE_UTIME(path,t) syscall(SYS_utime,path,t)
+#else
+#	define QSE_UTIME(path,t) utime(path,t)
+#endif
+
+#if defined(SYS_utimes)
+#	define QSE_UTIMES(path,t) syscall(SYS_utimes,path,t)
+#else
+#	define QSE_UTIMES(path,t) utimes(path,t)
 #endif
 
 #endif

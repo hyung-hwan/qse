@@ -8,6 +8,7 @@ pkginclude_HEADERS = \
 	fio.h \
 	fma.h \
 	fmt.h \
+	fs.h \
 	gdl.h \
 	htb.h \
 	lda.h \

@@ -1,5 +1,5 @@
-/*
- * $Id
+/* 
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -18,28 +18,30 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _QSE_FS_PATH_H_
-#define _QSE_FS_PATH_H_
+#include <qse/cmn/fs.h>
 
-#include <qse/types.h>
-#include <qse/macros.h>
+#if defined(_WIN32)
+#	include <windows.h>
+	typedef DWORD qse_fs_syserr_t;
+#elif defined(__OS2__)
+#	error NOT IMPLEMENTED
+#elif defined(__DOS__)
+#	error NOT IMPLEMENTED
+#else
+#	include "syscall.h"
+#	include <errno.h>
+	typedef int qse_fs_syserr_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-qse_size_t qse_canonpath (
-	const qse_char_t* path,
-	qse_char_t*       canon
-);
-
-qse_size_t qse_realpath (
-	const qse_char_t* path,
-	qse_char_t* real
+qse_fs_errnum_t qse_fs_syserrtoerrnum (
+	qse_fs_t*       fs,
+	qse_fs_syserr_t e
 );
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

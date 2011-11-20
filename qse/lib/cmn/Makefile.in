@@ -77,16 +77,16 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo \
-	fio.lo fma.lo fmt.lo main.lo mem.lo oht.lo opt.lo \
-	path-basename.lo path-canon.lo pio.lo pma.lo rbt.lo rex.lo \
-	sio.lo sll.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo \
-	str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo str-dup.lo \
-	str-dynm.lo str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo \
-	str-fnmat.lo str-incl.lo str-len.lo str-pac.lo str-pbrk.lo \
-	str-put.lo str-rev.lo str-rot.lo str-set.lo str-spl.lo \
-	str-spn.lo str-str.lo str-subst.lo str-tok.lo str-trm.lo \
-	str-word.lo time.lo tio.lo tio-get.lo tio-put.lo tre.lo \
-	tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
+	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo main.lo mem.lo \
+	oht.lo opt.lo path-basename.lo path-canon.lo pio.lo pma.lo \
+	rbt.lo rex.lo sio.lo sll.lo stdio.lo str-beg.lo str-cat.lo \
+	str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo \
+	str-dup.lo str-dynm.lo str-dynw.lo str-end.lo str-excl.lo \
+	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-pac.lo \
+	str-pbrk.lo str-put.lo str-rev.lo str-rot.lo str-set.lo \
+	str-spl.lo str-spn.lo str-str.lo str-subst.lo str-tok.lo \
+	str-trm.lo str-word.lo time.lo tio.lo tio-get.lo tio-put.lo \
+	tre.lo tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
 	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -278,6 +278,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 noinst_HEADERS = \
+	fs.h \
 	mem.h \
 	syscall.h \
 	tre.h \
@@ -302,6 +303,9 @@ libqsecmn_la_SOURCES = \
 	fio.c \
 	fma.c \
 	fmt.c \
+	fs.c \
+	fs-err.c \
+	fs-move.c \
 	main.c \
 	mem.c \
 	oht.c \
@@ -453,6 +457,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs-err.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs-move.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
