@@ -6,7 +6,7 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 
-bin_PROGRAMS = xma fma pma chr str sll dll lda oht htb rbt fio01 fio02 pio sio time main main2 rex01 env path01 tre01 fmt01 fmt02
+bin_PROGRAMS = xma fma pma chr str sll dll lda oht htb rbt fio01 fio02 pio sio time main main2 rex01 env path01 tre01 fmt01 fmt02 fs01
 
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
@@ -35,6 +35,7 @@ path01_SOURCES = path01.c
 tre01_SOURCES = tre01.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
+fs01_SOURCES = fs01.c
 
 if ENABLE_CXX
 
