@@ -85,7 +85,7 @@ struct qse_stc_t
 		int type;
 		/*
 		qse_stx_int_t   ivalue;
-		qse_stx_real_t  fvalue;
+		qse_stx_flt_t  fvalue;
 		*/
 		qse_str_t name;
 	} token;

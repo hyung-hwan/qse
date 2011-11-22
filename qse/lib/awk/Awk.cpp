@@ -356,10 +356,10 @@ Awk::Value::operator Awk::long_t () const
 	return v;
 }
 
-Awk::Value::operator Awk::real_t () const
+Awk::Value::operator Awk::flt_t () const
 {
-	real_t v;
-	if (getReal (&v) <= -1) v = 0.0;
+	flt_t v;
+	if (getFlt (&v) <= -1) v = 0.0;
 	return v;
 }
 
@@ -393,9 +393,9 @@ int Awk::Value::getInt (long_t* v) const
 	return 0;
 }
 
-int Awk::Value::getReal (real_t* v) const
+int Awk::Value::getFlt (flt_t* v) const
 {
-	real_t rv = 0;
+	flt_t rv = 0;
 
 	QSE_ASSERT (val != QSE_NULL);
 
@@ -403,7 +403,7 @@ int Awk::Value::getReal (real_t* v) const
 	    val->type != QSE_AWK_VAL_NIL &&
 	    val->type != QSE_AWK_VAL_MAP)
 	{
-		int n = qse_awk_rtx_valtoreal (run->rtx, val, &rv);
+		int n = qse_awk_rtx_valtoflt (run->rtx, val, &rv);
 		if (n <= -1)
 		{
 			run->awk->retrieveError (run);
@@ -522,7 +522,7 @@ int Awk::Value::setInt (Run* r, long_t v)
 	return n;
 }
 
-int Awk::Value::setReal (real_t v)
+int Awk::Value::setFlt (flt_t v)
 {
 	if (this->run == QSE_NULL) 
 	{
@@ -530,13 +530,13 @@ int Awk::Value::setReal (real_t v)
 		 * set an error number for the same reason */
 		return -1;
 	}
-	return setReal (this->run, v);
+	return setFlt (this->run, v);
 }
 
-int Awk::Value::setReal (Run* r, real_t v)
+int Awk::Value::setFlt (Run* r, flt_t v)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makerealval (r->rtx, v);
+	tmp = qse_awk_rtx_makefltval (r->rtx, v);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);
@@ -686,15 +686,15 @@ int Awk::Value::setIndexedInt (Run* r, const Index& idx, long_t v)
 	return n;
 }
 
-int Awk::Value::setIndexedReal (const Index& idx, real_t v)
+int Awk::Value::setIndexedFlt (const Index& idx, flt_t v)
 {
 	if (run == QSE_NULL) return -1;
-	return setIndexedReal (run, idx, v);
+	return setIndexedFlt (run, idx, v);
 }
 
-int Awk::Value::setIndexedReal (Run* r, const Index& idx, real_t v)
+int Awk::Value::setIndexedFlt (Run* r, const Index& idx, flt_t v)
 {
-	val_t* tmp = qse_awk_rtx_makerealval (r->rtx, v);
+	val_t* tmp = qse_awk_rtx_makefltval (r->rtx, v);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -917,11 +917,11 @@ int Awk::Run::setGlobal (int id, long_t v)
 	return n;
 }
 
-int Awk::Run::setGlobal (int id, real_t v)
+int Awk::Run::setGlobal (int id, flt_t v)
 {
 	QSE_ASSERT (this->rtx != QSE_NULL);
 
-	val_t* tmp = qse_awk_rtx_makerealval (this->rtx, v);
+	val_t* tmp = qse_awk_rtx_makefltval (this->rtx, v);
 	if (tmp == QSE_NULL) return -1;
 
 	qse_awk_rtx_refupval (this->rtx, tmp);
@@ -1744,61 +1744,61 @@ int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,
 	return n;
 }
 
-Awk::real_t Awk::pow (awk_t* awk, real_t x, real_t y)
+Awk::flt_t Awk::pow (awk_t* awk, flt_t x, flt_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->pow (x, y);
 }
 
-Awk::real_t Awk::mod (awk_t* awk, real_t x, real_t y)
+Awk::flt_t Awk::mod (awk_t* awk, flt_t x, flt_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->mod (x, y);
 }
 
-Awk::real_t Awk::sin (awk_t* awk, real_t x)
+Awk::flt_t Awk::sin (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->sin (x);
 }
 
-Awk::real_t Awk::cos (awk_t* awk, real_t x)
+Awk::flt_t Awk::cos (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->cos (x);
 }
 
-Awk::real_t Awk::tan (awk_t* awk, real_t x)
+Awk::flt_t Awk::tan (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->tan (x);
 }
 
-Awk::real_t Awk::atan (awk_t* awk, real_t x)
+Awk::flt_t Awk::atan (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->atan (x);
 }
 
-Awk::real_t Awk::atan2 (awk_t* awk, real_t x, real_t y)
+Awk::flt_t Awk::atan2 (awk_t* awk, flt_t x, flt_t y)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->atan2 (x, y);
 }
 
-Awk::real_t Awk::log (awk_t* awk, real_t x)
+Awk::flt_t Awk::log (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->log (x);
 }
 
-Awk::real_t Awk::exp (awk_t* awk, real_t x)
+Awk::flt_t Awk::exp (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->exp (x);
 }
 
-Awk::real_t Awk::sqrt (awk_t* awk, real_t x)
+Awk::flt_t Awk::sqrt (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->sqrt (x);

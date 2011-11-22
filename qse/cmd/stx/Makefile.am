@@ -8,6 +8,6 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = qsestx 
 
 qsestx_SOURCES = stx.c
-qsestx_LDFLAGS = -L../../lib/stx  -L$(libdir)
-qsestx_LDADD = -lqsestx $(LIBM)
+qsestx_LDFLAGS = -L../../lib/stx -L../../lib/cmn -L$(libdir)
+qsestx_LDADD = -lqsestx -lqsecmn $(LIBM)
 

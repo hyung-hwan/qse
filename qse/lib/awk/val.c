@@ -127,19 +127,19 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 	return (qse_awk_val_t*)val;
 }
 
-qse_awk_val_t* qse_awk_rtx_makerealval (qse_awk_rtx_t* rtx, qse_real_t v)
+qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_flt_t v)
 {
-	qse_awk_val_real_t* val;
+	qse_awk_val_flt_t* val;
 
 	if (rtx->vmgr.rfree == QSE_NULL)
 	{
 		qse_awk_val_rchunk_t* c;
-		/*qse_awk_val_real_t* x;*/
+		/*qse_awk_val_flt_t* x;*/
 		qse_size_t i;
 
 		/* c = QSE_AWK_ALLOC (run->awk, 
 			QSE_SIZEOF(qse_awk_val_chunk_t)+
-			QSE_SIZEOF(qse_awk_val_real_t)*CHUNKSIZE); */
+			QSE_SIZEOF(qse_awk_val_flt_t)*CHUNKSIZE); */
 		c = QSE_AWK_ALLOC (rtx->awk, QSE_SIZEOF(qse_awk_val_rchunk_t));
 		if (c == QSE_NULL)
 		{
@@ -152,32 +152,32 @@ qse_awk_val_t* qse_awk_rtx_makerealval (qse_awk_rtx_t* rtx, qse_real_t v)
 		rtx->vmgr.rchunk = (qse_awk_val_chunk_t*)c;
 
 		/*
-		x = (qse_awk_val_real_t*)(c + 1);
+		x = (qse_awk_val_flt_t*)(c + 1);
 		for (i = 0; i < CHUNKSIZE-1; i++) 
-			x[i].nde = (qse_awk_nde_real_t*)&x[i+1];
+			x[i].nde = (qse_awk_nde_flt_t*)&x[i+1];
 		x[i].nde = QSE_NULL;
 
 		run->vmgr.rfree = x;
 		*/
 
 		for (i = 0; i < CHUNKSIZE-1; i++)
-			c->slot[i].nde = (qse_awk_nde_real_t*)&c->slot[i+1];
+			c->slot[i].nde = (qse_awk_nde_flt_t*)&c->slot[i+1];
 		c->slot[i].nde = QSE_NULL;
 
 		rtx->vmgr.rfree = &c->slot[0];
 	}
 
 	val = rtx->vmgr.rfree;
-	rtx->vmgr.rfree = (qse_awk_val_real_t*)val->nde;
+	rtx->vmgr.rfree = (qse_awk_val_flt_t*)val->nde;
 
-	val->type = QSE_AWK_VAL_REAL;
+	val->type = QSE_AWK_VAL_FLT;
 	val->ref = 0;
 	val->nstr = 0;
 	val->val = v;
 	val->nde = QSE_NULL;
 
 #ifdef DEBUG_VAL
-	qse_dprintf (QSE_T("makerealval => %Lf [%p]\n"), (double)v, val);
+	qse_dprintf (QSE_T("makefltval => %Lf [%p]\n"), (double)v, val);
 #endif
 	return (qse_awk_val_t*)val;
 }
@@ -312,7 +312,7 @@ qse_awk_val_t* qse_awk_rtx_makenstrval (
 	int x;
 	qse_awk_val_t* v;
 	qse_long_t l;
-	qse_real_t r;
+	qse_flt_t r;
 
 	x = qse_awk_rtx_strtonum (rtx, 1, str, len, &l, &r);
 	v = qse_awk_rtx_makestrval (rtx, str, len);
@@ -614,11 +614,11 @@ void qse_awk_rtx_freeval (
 			break;
 		}
 
-		case QSE_AWK_VAL_REAL:
+		case QSE_AWK_VAL_FLT:
 		{
-			((qse_awk_val_real_t*)val)->nde =
-				(qse_awk_nde_real_t*)rtx->vmgr.rfree;
-			rtx->vmgr.rfree = (qse_awk_val_real_t*)val;
+			((qse_awk_val_flt_t*)val)->nde =
+				(qse_awk_nde_flt_t*)rtx->vmgr.rfree;
+			rtx->vmgr.rfree = (qse_awk_val_flt_t*)val;
 			break;
 		}
 
@@ -744,8 +744,8 @@ qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 			return QSE_FALSE;
 		case QSE_AWK_VAL_INT:
 			return ((qse_awk_val_int_t*)val)->val != 0;
-		case QSE_AWK_VAL_REAL:
-			return ((qse_awk_val_real_t*)val)->val != 0.0;
+		case QSE_AWK_VAL_FLT:
+			return ((qse_awk_val_flt_t*)val)->val != 0.0;
 		case QSE_AWK_VAL_STR:
 			return ((qse_awk_val_str_t*)val)->val.len > 0;
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
@@ -959,8 +959,8 @@ static int val_int_to_str (
 	return 0;
 }
 
-static int val_real_to_str (
-	qse_awk_rtx_t* rtx, const qse_awk_val_real_t* v,
+static int val_flt_to_str (
+	qse_awk_rtx_t* rtx, const qse_awk_val_flt_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
@@ -1002,7 +1002,7 @@ static int val_real_to_str (
 	switch (type)
 	{
 		case QSE_AWK_RTX_VALTOSTR_CPL:
-			/* CPL and CPLCP behave the same for real_t.
+			/* CPL and CPLCP behave the same for flt_t.
 			 * i just fall through assuming that cplcpy 
 			 * and cpl are the same type. the following
 			 * assertion at least ensure that they have
@@ -1092,10 +1092,10 @@ int qse_awk_rtx_valtostr (
 				rtx, (qse_awk_val_int_t*)v, out);
 		}
 
-		case QSE_AWK_VAL_REAL:
+		case QSE_AWK_VAL_FLT:
 		{
-			return val_real_to_str (
-				rtx, (qse_awk_val_real_t*)v, out);
+			return val_flt_to_str (
+				rtx, (qse_awk_val_flt_t*)v, out);
 		}
 
 		case QSE_AWK_VAL_STR:
@@ -1128,7 +1128,7 @@ qse_char_t* qse_awk_rtx_valtocpldup (
 }
 
 int qse_awk_rtx_valtonum (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_real_t* r)
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_flt_t* r)
 {
 	switch (v->type)
 	{
@@ -1144,9 +1144,9 @@ int qse_awk_rtx_valtonum (
 			return 0; /* long */
 		}
 
-		case QSE_AWK_VAL_REAL:
+		case QSE_AWK_VAL_FLT:
 		{
-			*r = ((qse_awk_val_real_t*)v)->val;
+			*r = ((qse_awk_val_flt_t*)v)->val;
 			return 1; /* real */
 		}
 
@@ -1176,7 +1176,7 @@ int qse_awk_rtx_valtolong (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l)
 {
 	int n;
-	qse_real_t r;
+	qse_flt_t r;
 
 	n = qse_awk_rtx_valtonum (rtx, v, l, &r);
 	if (n == 1) 
@@ -1188,14 +1188,14 @@ int qse_awk_rtx_valtolong (
 	return n;
 }
 
-int qse_awk_rtx_valtoreal (
-	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_real_t* r)
+int qse_awk_rtx_valtoflt (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_flt_t* r)
 {
 	int n;
 	qse_long_t l;
 
 	n = qse_awk_rtx_valtonum (rtx, v, &l, r);
-	if (n == 0) *r = (qse_real_t)l;
+	if (n == 0) *r = (qse_flt_t)l;
 	else if (n == 1) n = 0;
 
 	return n;
@@ -1204,7 +1204,7 @@ int qse_awk_rtx_valtoreal (
 int qse_awk_rtx_strtonum (
 	qse_awk_rtx_t* rtx, int strict,
 	const qse_char_t* ptr, qse_size_t len, 
-	qse_long_t* l, qse_real_t* r)
+	qse_long_t* l, qse_flt_t* r)
 {
 	const qse_char_t* endptr;
 
@@ -1214,7 +1214,7 @@ int qse_awk_rtx_strtonum (
 	     *endptr == QSE_T('E') ||
 	     *endptr == QSE_T('e')))
 	{
-		*r = qse_awk_strxtoreal (rtx->awk, ptr, len, &endptr);
+		*r = qse_awk_strxtoflt (rtx->awk, ptr, len, &endptr);
 		if (strict && endptr < ptr + len) return -1;
 		return 1; /* real */
 	}
@@ -1271,13 +1271,13 @@ void qse_awk_dprintval (qse_awk_rtx_t* run, qse_awk_val_t* val)
 		#endif
 			break;
 
-		case QSE_AWK_VAL_REAL:
+		case QSE_AWK_VAL_FLT:
 		#if defined(__MINGW32__)
 			DPRINTF (DCUSTOM, QSE_T("%Lf"), 
-				(double)((qse_awk_val_real_t*)val)->val);
+				(double)((qse_awk_val_flt_t*)val)->val);
 		#else
 			DPRINTF (DCUSTOM, QSE_T("%Lf"), 
-				(long double)((qse_awk_val_real_t*)val)->val);
+				(long double)((qse_awk_val_flt_t*)val)->val);
 		#endif
 			break;
 

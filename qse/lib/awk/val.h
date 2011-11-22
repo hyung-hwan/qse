@@ -47,7 +47,7 @@ struct qse_awk_val_rchunk_t
 	/* make sure that it has the same fields as 
 	   qse_awk_val_chunk_t up to this point */
 
-	qse_awk_val_real_t slot[QSE_AWK_VAL_CHUNK_SIZE];
+	qse_awk_val_flt_t slot[QSE_AWK_VAL_CHUNK_SIZE];
 };
 
 #ifdef __cplusplus

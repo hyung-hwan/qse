@@ -85,13 +85,13 @@ static int run_awk (QSE::StdAwk& awk)
 
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)r.toInt());
-	qse_printf (QSE_T("        (real)[%Lf]\n"), (long double)r.toReal());
+	qse_printf (QSE_T("        (flt)[%Lf]\n"), (long double)r.toFlt());
 	qse_printf (QSE_T("        (str) [%s]\n"), r.toStr(QSE_NULL));
 
 	// get the value of 'FOO'
 	if (awk.getGlobal (foo, foov) <= -1) return -1;
 	qse_printf (QSE_T("FOO:    (int) [%lld]\n"), (long long)foov.toInt());
-	qse_printf (QSE_T("        (real)[%Lf]\n"), (long double)foov.toReal());
+	qse_printf (QSE_T("        (flt)[%Lf]\n"), (long double)foov.toFlt());
 	qse_printf (QSE_T("        (str) [%s]\n"), foov.toStr(QSE_NULL));
 
 	// call the 'pb' function

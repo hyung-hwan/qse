@@ -36,8 +36,8 @@ struct qse_stx_token_t
 	int type;
 
 	/*
-	qse_stx_int_t   ivalue;
-	qse_stx_real_t  fvalue;
+	qse_stx_int_t  ivalue;
+	qse_stx_flt_t  fvalue;
 	*/
 	qse_stx_name_t name;
 	qse_bool_t __dynamic;

@@ -51,6 +51,12 @@ typedef qse_search_comper_t qse_sort_comper_t;
 
 /**
  * The qse_bsearch() function performs binary search over a sorted array.
+ * It looks for an item matching @a key in an array @a base containing 
+ * @a nmemb items each of which is as large as @a size. The comparison
+ * function @a comper is invoked with @a key as the first parameter and
+ * an item being tested as the second parameter. The @a ctx parameter is
+ * passed to @a comper as the third parameter.
+ *
  * See the example below:
  * @code
  * static int compstr (const void* s1, const void* s2, void* ctx)

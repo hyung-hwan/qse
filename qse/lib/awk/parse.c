@@ -114,7 +114,7 @@ enum tok_t
 	TOK_GETLINE,
 	TOK_IDENT,
 	TOK_INT,
-	TOK_REAL,
+	TOK_FLT,
 	TOK_STR,
 	TOK_REX,
 
@@ -3266,19 +3266,19 @@ static qse_awk_nde_t* parse_expr_dc (
 #define INT_BINOP_INT(x,op,y) \
 	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_int_t*)y)->val)
 
-#define INT_BINOP_REAL(x,op,y) \
-	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
+#define INT_BINOP_FLT(x,op,y) \
+	(((qse_awk_nde_int_t*)x)->val op ((qse_awk_nde_flt_t*)y)->val)
 
-#define REAL_BINOP_INT(x,op,y) \
-	(((qse_awk_nde_real_t*)x)->val op ((qse_awk_nde_int_t*)y)->val)
+#define FLT_BINOP_INT(x,op,y) \
+	(((qse_awk_nde_flt_t*)x)->val op ((qse_awk_nde_int_t*)y)->val)
 
-#define REAL_BINOP_REAL(x,op,y) \
-	(((qse_awk_nde_real_t*)x)->val op ((qse_awk_nde_real_t*)y)->val)
+#define FLT_BINOP_FLT(x,op,y) \
+	(((qse_awk_nde_flt_t*)x)->val op ((qse_awk_nde_flt_t*)y)->val)
 
 union folded_t
 {
 	qse_long_t l;
-	qse_real_t r;
+	qse_flt_t r;
 };
 typedef union folded_t folded_t;
 
@@ -3312,9 +3312,9 @@ static int fold_constants_for_binop (
 			case QSE_AWK_BINOP_DIV:
 				if (INT_BINOP_INT(left,%,right))
 				{
-					folded->r = (qse_real_t)((qse_awk_nde_int_t*)left)->val / 
-					            (qse_real_t)((qse_awk_nde_int_t*)right)->val;
-					fold = QSE_AWK_NDE_REAL;
+					folded->r = (qse_flt_t)((qse_awk_nde_int_t*)left)->val / 
+					            (qse_flt_t)((qse_awk_nde_int_t*)right)->val;
+					fold = QSE_AWK_NDE_FLT;
 					break;
 				}
 				/* fall through here */
@@ -3331,38 +3331,38 @@ static int fold_constants_for_binop (
 				break;
 		}
 	}
-	else if (left->type == QSE_AWK_NDE_REAL &&
-	         right->type == QSE_AWK_NDE_REAL)
+	else if (left->type == QSE_AWK_NDE_FLT &&
+	         right->type == QSE_AWK_NDE_FLT)
 	{
-		fold = QSE_AWK_NDE_REAL;
+		fold = QSE_AWK_NDE_FLT;
 		switch (opcode)
 		{
 			case QSE_AWK_BINOP_PLUS:
-				folded->r = REAL_BINOP_REAL(left,+,right);
+				folded->r = FLT_BINOP_FLT(left,+,right);
 				break;
 
 			case QSE_AWK_BINOP_MINUS:
-				folded->r = REAL_BINOP_REAL(left,-,right);
+				folded->r = FLT_BINOP_FLT(left,-,right);
 				break;
 
 			case QSE_AWK_BINOP_MUL:
-				folded->r = REAL_BINOP_REAL(left,*,right);
+				folded->r = FLT_BINOP_FLT(left,*,right);
 				break;
 
 			case QSE_AWK_BINOP_DIV:
-				folded->r = REAL_BINOP_REAL(left,/,right);
+				folded->r = FLT_BINOP_FLT(left,/,right);
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
-				folded->l = (qse_long_t)REAL_BINOP_REAL(left,/,right);
+				folded->l = (qse_long_t)FLT_BINOP_FLT(left,/,right);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
 			case QSE_AWK_BINOP_MOD:
 				folded->r = awk->prm.math.mod (
 					awk, 
-					((qse_awk_nde_real_t*)left)->val, 
-					((qse_awk_nde_real_t*)right)->val
+					((qse_awk_nde_flt_t*)left)->val, 
+					((qse_awk_nde_flt_t*)right)->val
 				);
 				break;
 
@@ -3372,39 +3372,39 @@ static int fold_constants_for_binop (
 		}
 	}
 	else if (left->type == QSE_AWK_NDE_INT &&
-	         right->type == QSE_AWK_NDE_REAL)
+	         right->type == QSE_AWK_NDE_FLT)
 	{
-		fold = QSE_AWK_NDE_REAL;
+		fold = QSE_AWK_NDE_FLT;
 		switch (opcode)
 		{
 			case QSE_AWK_BINOP_PLUS:
-				folded->r = INT_BINOP_REAL(left,+,right);
+				folded->r = INT_BINOP_FLT(left,+,right);
 				break;
 
 			case QSE_AWK_BINOP_MINUS:
-				folded->r = INT_BINOP_REAL(left,-,right);
+				folded->r = INT_BINOP_FLT(left,-,right);
 				break;
 
 			case QSE_AWK_BINOP_MUL:
-				folded->r = INT_BINOP_REAL(left,*,right);
+				folded->r = INT_BINOP_FLT(left,*,right);
 				break;
 
 			case QSE_AWK_BINOP_DIV:
-				folded->r = INT_BINOP_REAL(left,/,right);
+				folded->r = INT_BINOP_FLT(left,/,right);
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
 				folded->l = (qse_long_t)
-					((qse_real_t)((qse_awk_nde_int_t*)left)->val / 
-					 ((qse_awk_nde_real_t*)right)->val);
+					((qse_flt_t)((qse_awk_nde_int_t*)left)->val / 
+					 ((qse_awk_nde_flt_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
 			case QSE_AWK_BINOP_MOD:
 				folded->r = awk->prm.math.mod (
 					awk, 
-					(qse_real_t)((qse_awk_nde_int_t*)left)->val, 
-					((qse_awk_nde_real_t*)right)->val
+					(qse_flt_t)((qse_awk_nde_int_t*)left)->val, 
+					((qse_awk_nde_flt_t*)right)->val
 				);
 				break;
 
@@ -3413,40 +3413,40 @@ static int fold_constants_for_binop (
 				break;
 		}
 	}
-	else if (left->type == QSE_AWK_NDE_REAL &&
+	else if (left->type == QSE_AWK_NDE_FLT &&
 	         right->type == QSE_AWK_NDE_INT)
 	{
-		fold = QSE_AWK_NDE_REAL;
+		fold = QSE_AWK_NDE_FLT;
 		switch (opcode)
 		{
 			case QSE_AWK_BINOP_PLUS:
-				folded->r = REAL_BINOP_INT(left,+,right);
+				folded->r = FLT_BINOP_INT(left,+,right);
 				break;
 
 			case QSE_AWK_BINOP_MINUS:
-				folded->r = REAL_BINOP_INT(left,-,right);
+				folded->r = FLT_BINOP_INT(left,-,right);
 				break;
 
 			case QSE_AWK_BINOP_MUL:
-				folded->r = REAL_BINOP_INT(left,*,right);
+				folded->r = FLT_BINOP_INT(left,*,right);
 				break;
 
 			case QSE_AWK_BINOP_DIV:
-				folded->r = REAL_BINOP_INT(left,/,right);
+				folded->r = FLT_BINOP_INT(left,/,right);
 				break;
 
 			case QSE_AWK_BINOP_IDIV:
 				folded->l = (qse_long_t)
 					(((qse_awk_nde_int_t*)left)->val / 
-					 (qse_real_t)((qse_awk_nde_int_t*)right)->val);
+					 (qse_flt_t)((qse_awk_nde_int_t*)right)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
 			case QSE_AWK_BINOP_MOD:
 				folded->r = awk->prm.math.mod (
 					awk, 
-					((qse_awk_nde_real_t*)left)->val, 
-					(qse_real_t)((qse_awk_nde_int_t*)right)->val
+					((qse_awk_nde_flt_t*)left)->val, 
+					(qse_flt_t)((qse_awk_nde_int_t*)right)->val
 				);
 				break;
 
@@ -3502,12 +3502,12 @@ static qse_awk_nde_t* new_int_node (
 	return (qse_awk_nde_t*)tmp;
 }
 
-static qse_awk_nde_t* new_real_node (	
-	qse_awk_t* awk, qse_real_t rv, const qse_awk_loc_t* loc)
+static qse_awk_nde_t* new_flt_node (	
+	qse_awk_t* awk, qse_flt_t rv, const qse_awk_loc_t* loc)
 {
-	qse_awk_nde_real_t* tmp;
+	qse_awk_nde_flt_t* tmp;
 
-	tmp = (qse_awk_nde_real_t*) QSE_AWK_ALLOC (awk, QSE_SIZEOF(*tmp));
+	tmp = (qse_awk_nde_flt_t*) QSE_AWK_ALLOC (awk, QSE_SIZEOF(*tmp));
 	if (tmp == QSE_NULL) 
 	{
 		SETERR_LOC (awk, QSE_AWK_ENOMEM, loc);
@@ -3515,7 +3515,7 @@ static qse_awk_nde_t* new_real_node (
 	}
 
 	QSE_MEMSET (tmp, 0, QSE_SIZEOF(*tmp));
-	tmp->type = QSE_AWK_NDE_REAL;
+	tmp->type = QSE_AWK_NDE_FLT;
 	tmp->loc = *loc;
 	tmp->val = rv;
 
@@ -3534,8 +3534,8 @@ static QSE_INLINE void update_int_node (
 	}
 }
 
-static QSE_INLINE void update_real_node (
-	qse_awk_t* awk, qse_awk_nde_real_t* node, qse_real_t rv)
+static QSE_INLINE void update_flt_node (
+	qse_awk_t* awk, qse_awk_nde_flt_t* node, qse_flt_t rv)
 {
 	node->val = rv;
 	if (node->str)
@@ -3615,17 +3615,17 @@ static qse_awk_nde_t* parse_binary (
 
 				break;
 
-			case QSE_AWK_NDE_REAL:
+			case QSE_AWK_NDE_FLT:
 				if (fold == left->type)
 				{
 					qse_awk_clrpt (awk, right);
 					right = QSE_NULL;
-					update_real_node (awk, (qse_awk_nde_real_t*)left, folded.r);
+					update_flt_node (awk, (qse_awk_nde_flt_t*)left, folded.r);
 				}
 				else if (fold == right->type)
 				{
 					qse_awk_clrpt (awk, left); 
-					update_real_node (awk, (qse_awk_nde_real_t*)right, folded.r);
+					update_flt_node (awk, (qse_awk_nde_flt_t*)right, folded.r);
 					left = right; 
 					right = QSE_NULL;
 				}
@@ -3634,7 +3634,7 @@ static qse_awk_nde_t* parse_binary (
 					qse_awk_clrpt (awk, right); right = QSE_NULL;
 					qse_awk_clrpt (awk, left); left = QSE_NULL;
 
-					left = new_real_node (awk, folded.r, xloc);
+					left = new_flt_node (awk, folded.r, xloc);
 					if (left == QSE_NULL) goto oops;
 				}
 
@@ -3973,25 +3973,25 @@ static qse_awk_nde_t* parse_unary (
 				break;
 		}
 	}
-	else if (left->type == QSE_AWK_NDE_REAL)
+	else if (left->type == QSE_AWK_NDE_FLT)
 	{
-		fold = QSE_AWK_NDE_REAL;
+		fold = QSE_AWK_NDE_FLT;
 		switch (opcode)
 		{
 			case QSE_AWK_UNROP_PLUS:
-				folded.r = ((qse_awk_nde_real_t*)left)->val;
+				folded.r = ((qse_awk_nde_flt_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_MINUS:
-				folded.r = -((qse_awk_nde_real_t*)left)->val;
+				folded.r = -((qse_awk_nde_flt_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_LNOT:
-				folded.r = !((qse_awk_nde_real_t*)left)->val;
+				folded.r = !((qse_awk_nde_flt_t*)left)->val;
 				break;
 
 			case QSE_AWK_UNROP_BNOT:
-				folded.l = ~((qse_long_t)((qse_awk_nde_real_t*)left)->val);
+				folded.l = ~((qse_long_t)((qse_awk_nde_flt_t*)left)->val);
 				fold = QSE_AWK_NDE_INT;
 				break;
 
@@ -4011,22 +4011,22 @@ static qse_awk_nde_t* parse_unary (
 			}
 			else
 			{
-				QSE_ASSERT (left->type == QSE_AWK_NDE_REAL);
+				QSE_ASSERT (left->type == QSE_AWK_NDE_FLT);
 				qse_awk_clrpt (awk, left);
 				return new_int_node (awk, folded.l, xloc);
 			}
 
-		case QSE_AWK_NDE_REAL:
+		case QSE_AWK_NDE_FLT:
 			if (left->type == fold)
 			{
-				update_real_node (awk, (qse_awk_nde_real_t*)left, folded.r);
+				update_flt_node (awk, (qse_awk_nde_flt_t*)left, folded.r);
 				return left;
 			}
 			else
 			{
 				QSE_ASSERT (left->type == QSE_AWK_NDE_INT);
 				qse_awk_clrpt (awk, left);
-				return new_real_node (awk, folded.r, xloc);
+				return new_flt_node (awk, folded.r, xloc);
 			}
 
 		default:
@@ -4274,14 +4274,14 @@ static qse_awk_nde_t* parse_primary_nogetline (
 
 		return (qse_awk_nde_t*)nde;
 	}
-	else if (MATCH(awk,TOK_REAL)) 
+	else if (MATCH(awk,TOK_FLT)) 
 	{
-		qse_awk_nde_real_t* nde;
+		qse_awk_nde_flt_t* nde;
 
 		/* create the node for the literal */
-		nde = (qse_awk_nde_real_t*) new_real_node (
+		nde = (qse_awk_nde_flt_t*) new_flt_node (
 			awk, 
-			qse_awk_strxtoreal (awk, 
+			qse_awk_strxtoflt (awk, 
 				QSE_STR_PTR(awk->tok.name), 
 				QSE_STR_LEN(awk->tok.name),
 				QSE_NULL
@@ -5347,7 +5347,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 	if (c == QSE_T('.'))
 	{
 		/* floating-point number */
-		SET_TOKEN_TYPE (awk, tok, TOK_REAL);
+		SET_TOKEN_TYPE (awk, tok, TOK_FLT);
 
 		ADD_TOKEN_CHAR (awk, tok, c);
 		GET_CHAR_TO (awk, c);
@@ -5361,7 +5361,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 
 	if (c == QSE_T('E') || c == QSE_T('e'))
 	{
-		SET_TOKEN_TYPE (awk, tok, TOK_REAL);
+		SET_TOKEN_TYPE (awk, tok, TOK_FLT);
 
 		ADD_TOKEN_CHAR (awk, tok, c);
 		GET_CHAR_TO (awk, c);

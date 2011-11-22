@@ -64,12 +64,12 @@ static int run_awk (QSE::StdAwk& awk)
 
 	// ret = div (ret, 2);
 	arg[0] = ret;
-	if (arg[1].setReal (run, 2) <= -1) return -1;
+	if (arg[1].setFlt (run, 2) <= -1) return -1;
 	if (awk.call (QSE_T("div"), &ret, arg, 2) <= -1) return -1;
 
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
-	qse_printf (QSE_T("        (real) [%Lf]\n"), (long double)ret.toReal());
+	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
 	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
 
 	// ret = sine (ret);
@@ -78,7 +78,7 @@ static int run_awk (QSE::StdAwk& awk)
 
 	// output the result in various types
 	qse_printf (QSE_T("RESULT: (int) [%lld]\n"), (long long)ret.toInt());
-	qse_printf (QSE_T("        (real) [%Lf]\n"), (long double)ret.toReal());
+	qse_printf (QSE_T("        (flt) [%Lf]\n"), (long double)ret.toFlt());
 	qse_printf (QSE_T("        (str) [%s]\n"), ret.toStr(QSE_NULL));
 
 	return 0;

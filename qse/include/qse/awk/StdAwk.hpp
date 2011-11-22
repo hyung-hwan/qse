@@ -141,16 +141,16 @@ protected:
 	int    vsprintf (char_t* buf, size_t size,
 	                 const char_t* fmt, va_list arg);
 
-	real_t pow (real_t x, real_t y);
-	real_t mod (real_t x, real_t y);
-	real_t sin (real_t x);
-	real_t cos (real_t x);
-	real_t tan (real_t x);
-	real_t atan (real_t x);
-	real_t atan2 (real_t x, real_t y);
-	real_t log (real_t x);
-	real_t exp (real_t x);
-	real_t sqrt (real_t x);
+	flt_t pow (flt_t x, flt_t y);
+	flt_t mod (flt_t x, flt_t y);
+	flt_t sin (flt_t x);
+	flt_t cos (flt_t x);
+	flt_t tan (flt_t x);
+	flt_t atan (flt_t x);
+	flt_t atan2 (flt_t x, flt_t y);
+	flt_t log (flt_t x);
+	flt_t exp (flt_t x);
+	flt_t sqrt (flt_t x);
 
 protected:
 	unsigned int seed; 

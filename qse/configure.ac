@@ -134,6 +134,7 @@ AC_CHECK_SIZEOF(void *,,[[]])
 AC_CHECK_SIZEOF(float,,[[]])
 AC_CHECK_SIZEOF(double,,[[]])
 AC_CHECK_SIZEOF(long double,,[[]])
+AC_CHECK_SIZEOF(__float128,,[[]])
 
 AC_CHECK_SIZEOF(wchar_t)
 AC_CHECK_SIZEOF(off_t)
@@ -157,9 +158,12 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_VOID_P, ${ac_cv_sizeof_void_p}, [sizeof(void*)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_FLOAT, ${ac_cv_sizeof_float}, [sizeof(float)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_DOUBLE, ${ac_cv_sizeof_double}, [sizeof(double)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_LONG_DOUBLE, ${ac_cv_sizeof_long_double}, [sizeof(long double)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF___FLOAT128, ${ac_cv_sizeof___float128}, [sizeof(__float128)])
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_WCHAR_T, ${ac_cv_sizeof_wchar_t}, [sizeof(wchar_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF_T, ${ac_cv_sizeof_off_t}, [sizeof(off_t)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)])
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_MBSTATE_T, ${ac_cv_sizeof_mbstate_t}, [sizeof(mbstate_t)])
 AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 

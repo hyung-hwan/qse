@@ -566,7 +566,7 @@ public:
 
 		operator val_t* () const { return val; }
 		operator long_t () const;
-		operator real_t () const;
+		operator flt_t () const;
 		operator const char_t* () const;
 
 		val_t* toVal () const
@@ -579,9 +579,9 @@ public:
 			return operator long_t ();
 		}
 
-		real_t toReal () const
+		flt_t toFlt () const
 		{
-			return operator real_t ();
+			return operator flt_t ();
 		}
 
 		const char_t* toStr (size_t* len) const
@@ -600,7 +600,7 @@ public:
 		}
 
 		int getInt (long_t* v) const;
-		int getReal (real_t* v) const;
+		int getFlt (flt_t* v) const;
 		int getStr (const char_t** str, size_t* len) const;
 
 		int setVal (val_t* v);
@@ -608,8 +608,8 @@ public:
 
 		int setInt (long_t v);
 		int setInt (Run* r, long_t v);
-		int setReal (real_t v);
-		int setReal (Run* r, real_t v);
+		int setFlt (flt_t v);
+		int setFlt (Run* r, flt_t v);
 		int setStr (const char_t* str, size_t len);
 		int setStr (Run* r, const char_t* str, size_t len);
 		int setStr (const char_t* str);
@@ -636,15 +636,15 @@ public:
 			const Index& idx,
 			long_t v);
 
-		int setIndexedReal (
+		int setIndexedFlt (
 			const Index&  idx,
-			real_t        v
+			flt_t        v
 		);
 
-		int setIndexedReal (
+		int setIndexedFlt (
 			Run*          r,
 			const Index&  idx,
-			real_t        v
+			flt_t        v
 		);
 
 		int setIndexedStr (
@@ -775,7 +775,7 @@ public:
 		/// to @a v.
 		/// @return 0 on success, -1 on failure
 		///
-		int setGlobal (int id, real_t v); 
+		int setGlobal (int id, flt_t v); 
 
 		/// 
 		/// The setGlobal() function sets the value of a global 
@@ -1091,16 +1091,16 @@ protected:
 	virtual int    vsprintf (char_t* buf, size_t size,
 	                         const char_t* fmt, va_list arg) = 0;
 
-	virtual real_t pow (real_t x, real_t y) = 0;
-	virtual real_t mod (real_t x, real_t y) = 0;
-	virtual real_t sin (real_t x) = 0;
-	virtual real_t cos (real_t x) = 0;
-	virtual real_t tan (real_t x) = 0;
-	virtual real_t atan (real_t x) = 0;
-	virtual real_t atan2 (real_t x, real_t y) = 0;
-	virtual real_t log (real_t x) = 0;
-	virtual real_t exp (real_t x) = 0;
-	virtual real_t sqrt (real_t x) = 0;
+	virtual flt_t pow (flt_t x, flt_t y) = 0;
+	virtual flt_t mod (flt_t x, flt_t y) = 0;
+	virtual flt_t sin (flt_t x) = 0;
+	virtual flt_t cos (flt_t x) = 0;
+	virtual flt_t tan (flt_t x) = 0;
+	virtual flt_t atan (flt_t x) = 0;
+	virtual flt_t atan2 (flt_t x, flt_t y) = 0;
+	virtual flt_t log (flt_t x) = 0;
+	virtual flt_t exp (flt_t x) = 0;
+	virtual flt_t sqrt (flt_t x) = 0;
 
 	// static glue members for various handlers
 	static ssize_t readSource (
@@ -1124,16 +1124,16 @@ protected:
 
 	static int    sprintf (awk_t* data, char_t* buf, size_t size,
 	                       const char_t* fmt, ...);
-	static real_t pow     (awk_t* data, real_t x, real_t y);
-	static real_t mod     (awk_t* data, real_t x, real_t y);
-	static real_t sin     (awk_t* data, real_t x);
-	static real_t cos     (awk_t* data, real_t x);
-	static real_t tan     (awk_t* data, real_t x);
-	static real_t atan    (awk_t* data, real_t x);
-	static real_t atan2   (awk_t* data, real_t x, real_t y);
-	static real_t log     (awk_t* data, real_t x);
-	static real_t exp     (awk_t* data, real_t x);
-	static real_t sqrt    (awk_t* data, real_t x);
+	static flt_t pow     (awk_t* data, flt_t x, flt_t y);
+	static flt_t mod     (awk_t* data, flt_t x, flt_t y);
+	static flt_t sin     (awk_t* data, flt_t x);
+	static flt_t cos     (awk_t* data, flt_t x);
+	static flt_t tan     (awk_t* data, flt_t x);
+	static flt_t atan    (awk_t* data, flt_t x);
+	static flt_t atan2   (awk_t* data, flt_t x, flt_t y);
+	static flt_t log     (awk_t* data, flt_t x);
+	static flt_t exp     (awk_t* data, flt_t x);
+	static flt_t sqrt    (awk_t* data, flt_t x);
 
 protected:
 	awk_t* awk;

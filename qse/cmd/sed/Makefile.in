@@ -223,8 +223,8 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 qsesed_SOURCES = sed.c
-qsesed_LDFLAGS = -L../../lib/sed -L$(libdir)
-qsesed_LDADD = -lqsesed 
+qsesed_LDFLAGS = -L../../lib/sed -L../../lib/cmn -L$(libdir)
+qsesed_LDADD = -lqsesed -lqsecmn
 all: all-am
 
 .SUFFIXES:
