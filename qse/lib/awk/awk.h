@@ -268,7 +268,7 @@ struct qse_awk_rtx_t
 	{
 		qse_awk_val_int_t* ifree;
 		qse_awk_val_chunk_t* ichunk;
-		qse_awk_val_real_t* rfree;
+		qse_awk_val_flt_t* rfree;
 		qse_awk_val_chunk_t* rchunk;
 	} vmgr;
 

@@ -1394,7 +1394,7 @@ static int fnc_math_1 (
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
-	qse_real_t rv;
+	qse_flt_t rv;
 	qse_awk_val_t* r;
 	int n;
 
@@ -1403,10 +1403,10 @@ static int fnc_math_1 (
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 
-	n = qse_awk_rtx_valtoreal (rtx, a0, &rv);
+	n = qse_awk_rtx_valtoflt (rtx, a0, &rv);
 	if (n <= -1) return -1;
 
-	r = qse_awk_rtx_makerealval (rtx, f (rtx->awk, rv));
+	r = qse_awk_rtx_makefltval (rtx, f (rtx->awk, rv));
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, r);
@@ -1418,7 +1418,7 @@ static int fnc_math_2 (
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0, * a1;
-	qse_real_t rv0, rv1;
+	qse_flt_t rv0, rv1;
 	qse_awk_val_t* r;
 	int n;
 
@@ -1428,13 +1428,13 @@ static int fnc_math_2 (
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 	a1 = qse_awk_rtx_getarg (rtx, 1);
 
-	n = qse_awk_rtx_valtoreal (rtx, a0, &rv0);
+	n = qse_awk_rtx_valtoflt (rtx, a0, &rv0);
 	if (n <= -1) return -1;
 
-	n = qse_awk_rtx_valtoreal (rtx, a1, &rv1);
+	n = qse_awk_rtx_valtoflt (rtx, a1, &rv1);
 	if (n <= -1) return -1;
 
-	r = qse_awk_rtx_makerealval (rtx, f (rtx->awk, rv0, rv1));
+	r = qse_awk_rtx_makefltval (rtx, f (rtx->awk, rv0, rv1));
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, r);

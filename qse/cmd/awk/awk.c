@@ -343,7 +343,7 @@ static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
 	qse_long_t lv;
-	qse_real_t rv;
+	qse_flt_t rv;
 	qse_awk_val_t* r;
 	int n;
 

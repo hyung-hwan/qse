@@ -183,16 +183,16 @@ struct qse_awk_val_int_t
 typedef struct qse_awk_val_int_t qse_awk_val_int_t;
 
 /**
- * The qse_awk_val_real_t type is a floating-point number type. The type field
- * is #QSE_AWK_VAL_REAL.
+ * The qse_awk_val_flt_t type is a floating-point number type. The type field
+ * is #QSE_AWK_VAL_FLT.
  */
-struct qse_awk_val_real_t
+struct qse_awk_val_flt_t
 {
 	QSE_AWK_VAL_HDR;
-	qse_real_t val;
-	void*      nde;
+	qse_flt_t val;
+	void*     nde;
 };
-typedef struct qse_awk_val_real_t qse_awk_val_real_t;
+typedef struct qse_awk_val_flt_t qse_awk_val_flt_t;
 
 /**
  * The qse_awk_val_str_t type is a string type. The type field is
@@ -318,7 +318,7 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_FNC,
 	QSE_AWK_NDE_FUN,
 	QSE_AWK_NDE_INT,
-	QSE_AWK_NDE_REAL,
+	QSE_AWK_NDE_FLT,
 	QSE_AWK_NDE_STR,
 	QSE_AWK_NDE_REX,
 
@@ -379,15 +379,15 @@ typedef int (*qse_awk_sprintf_t) (
 	...
 );
 
-typedef qse_real_t (*qse_awk_math1_t) (
+typedef qse_flt_t (*qse_awk_math1_t) (
 	qse_awk_t* awk,
-	qse_real_t x
+	qse_flt_t x
 );
 
-typedef qse_real_t (*qse_awk_math2_t) (
+typedef qse_flt_t (*qse_awk_math2_t) (
 	qse_awk_t* awk,
-	qse_real_t x, 
-	qse_real_t y
+	qse_flt_t x, 
+	qse_flt_t y
 );
 
 
@@ -1046,7 +1046,7 @@ enum qse_awk_val_type_t
 	 * function in run.c */
 	QSE_AWK_VAL_NIL  = 0, /**< nil */
 	QSE_AWK_VAL_INT  = 1, /**< integer */
-	QSE_AWK_VAL_REAL = 2, /**< floating-pointer number */
+	QSE_AWK_VAL_FLT  = 2, /**< floating-pointer number */
 	QSE_AWK_VAL_STR  = 3, /**< string */
 
 	QSE_AWK_VAL_REX  = 4, /**< regular expression */
@@ -1509,10 +1509,10 @@ qse_long_t qse_awk_strxtolong (
 );
 
 /**
- * The qse_awk_strxtoreal() function converts a string to a floating-point
+ * The qse_awk_strxtoflt() function converts a string to a floating-point
  * number.
  */
-qse_real_t qse_awk_strxtoreal (
+qse_flt_t qse_awk_strxtoflt (
 	qse_awk_t*         awk,
 	const qse_char_t*  str,
 	qse_size_t         len, 
@@ -1879,12 +1879,12 @@ qse_awk_val_t* qse_awk_rtx_makeintval (
 );
 
 /**
- * The qse_awk_rtx_makerealval() function creates a floating-point value.
+ * The qse_awk_rtx_makefltval() function creates a floating-point value.
  * @return value on success, QSE_NULL on failure
  */
-qse_awk_val_t* qse_awk_rtx_makerealval (
+qse_awk_val_t* qse_awk_rtx_makefltval (
 	qse_awk_rtx_t* rtx,
-	qse_real_t     v
+	qse_flt_t      v
 );
 
 /**
@@ -2196,7 +2196,7 @@ qse_char_t* qse_awk_rtx_valtocpldup (
  *
  * @code
  * qse_long_t l;
- * qse_real_t r;
+ * qse_flt_t r;
  * int n;
  * n = qse_awk_rtx_valtonum (v, &l, &r);
  * if (n <= -1) error ();
@@ -2211,7 +2211,7 @@ int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
 	qse_long_t*          l,
-	qse_real_t*          r
+	qse_flt_t*          r
 );
 
 int qse_awk_rtx_valtolong (
@@ -2220,10 +2220,10 @@ int qse_awk_rtx_valtolong (
 	qse_long_t*          l
 );
 
-int qse_awk_rtx_valtoreal (
+int qse_awk_rtx_valtoflt (
 	qse_awk_rtx_t*       rtx,
 	const qse_awk_val_t* val,
-	qse_real_t*          r
+	qse_flt_t*           r
 );
 
 /**
@@ -2246,7 +2246,7 @@ int qse_awk_rtx_strtonum (
 	const qse_char_t* ptr, /**< points to a string to convert */
 	qse_size_t        len, /**< number of characters in a string */
 	qse_long_t*       l,   /**< stores a converted integer */
-	qse_real_t*       r    /**< stores a converted floating-poing number */
+	qse_flt_t*        r    /**< stores a converted floating-poing number */
 );
 
 /**

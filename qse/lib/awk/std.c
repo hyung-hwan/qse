@@ -115,7 +115,7 @@ typedef struct rxtn_t
 
 } rxtn_t;
 
-static qse_real_t custom_awk_pow (qse_awk_t* awk, qse_real_t x, qse_real_t y)
+static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
 #if defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return powl (x, y);
@@ -128,7 +128,7 @@ static qse_real_t custom_awk_pow (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 #endif
 }
 
-static qse_real_t custom_awk_mod (qse_awk_t* awk, qse_real_t x, qse_real_t y)
+static qse_flt_t custom_awk_mod (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
 #if defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return fmodl (x, y);
@@ -141,7 +141,7 @@ static qse_real_t custom_awk_mod (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 #endif
 }
 
-static qse_real_t custom_awk_sin (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_sin (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return sinl (x);
@@ -154,7 +154,7 @@ static qse_real_t custom_awk_sin (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_cos (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_cos (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return cosl (x);
@@ -167,7 +167,7 @@ static qse_real_t custom_awk_cos (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_tan (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_tan (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return tanl (x);
@@ -180,7 +180,7 @@ static qse_real_t custom_awk_tan (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_atan (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_atan (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return atanl (x);
@@ -193,7 +193,7 @@ static qse_real_t custom_awk_atan (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_atan2 (qse_awk_t* awk, qse_real_t x, qse_real_t y)
+static qse_flt_t custom_awk_atan2 (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
 #if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return atan2l (x, y);
@@ -206,7 +206,7 @@ static qse_real_t custom_awk_atan2 (qse_awk_t* awk, qse_real_t x, qse_real_t y)
 #endif
 }
 
-static qse_real_t custom_awk_log (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_log (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return logl (x);
@@ -219,7 +219,7 @@ static qse_real_t custom_awk_log (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_exp (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_exp (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return expl (x);
@@ -232,7 +232,7 @@ static qse_real_t custom_awk_exp (qse_awk_t* awk, qse_real_t x)
 #endif
 }
 
-static qse_real_t custom_awk_sqrt (qse_awk_t* awk, qse_real_t x)
+static qse_flt_t custom_awk_sqrt (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return sqrtl (x);
@@ -1395,11 +1395,11 @@ static int fnc_rand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	/*
 	rxtn_t* rxtn;
 	rxtn = (rxtn_t*) QSE_XTN (run);
-	r = qse_awk_rtx_makerealval (
-		run, (qse_real_t)(rand_r(rxtn->seed) % RAND_MAX) / RAND_MAX );
+	r = qse_awk_rtx_makefltval (
+		run, (qse_flt_t)(rand_r(rxtn->seed) % RAND_MAX) / RAND_MAX );
 	*/
-	r = qse_awk_rtx_makerealval (
-		run, (qse_real_t)(rand() % RAND_MAX) / RAND_MAX);
+	r = qse_awk_rtx_makefltval (
+		run, (qse_flt_t)(rand() % RAND_MAX) / RAND_MAX);
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (run, r);

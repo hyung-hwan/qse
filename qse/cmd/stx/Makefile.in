@@ -224,8 +224,8 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 qsestx_SOURCES = stx.c
-qsestx_LDFLAGS = -L../../lib/stx  -L$(libdir)
-qsestx_LDADD = -lqsestx $(LIBM)
+qsestx_LDFLAGS = -L../../lib/stx -L../../lib/cmn -L$(libdir)
+qsestx_LDADD = -lqsestx -lqsecmn $(LIBM)
 all: all-am
 
 .SUFFIXES:

@@ -435,6 +435,9 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 
 	if (flags & QSE_FS_ENT_TYPE)
 	{
+#if !defined(IO_REPARSE_TAG_SYMLINK)
+#	define IO_REPARSE_TAG_SYMLINK 0xA000000C
+#endif
 		if (info->wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
 			fs->ent.type = QSE_FS_ENT_SUBDIR;

@@ -8,6 +8,6 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = qsecut
 
 qsecut_SOURCES = cut.c
-qsecut_LDFLAGS = -L../../lib/cut -L$(libdir)
-qsecut_LDADD = -lqsecut 
+qsecut_LDFLAGS = -L../../lib/cut -L../../lib/cmn -L$(libdir)
+qsecut_LDADD = -lqsecut -lqsecmn
 

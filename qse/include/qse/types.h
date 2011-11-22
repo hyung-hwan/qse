@@ -434,39 +434,60 @@ typedef qse_int_t qse_intptr_t;
 #elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT128_T)
 	typedef qse_int128_t qse_intmax_t;
 	typedef qse_uint128_t qse_uintmax_t;
+	/* QSE_SIZEOF_INTMAX_T and QSE_SIZEOF_UINTMAX_T are
+	 * defined when qse_int128_t is defined */
 #elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT64_T)
 	typedef qse_int64_t qse_intmax_t;
 	typedef qse_uint64_t qse_uintmax_t;
+	/* QSE_SIZEOF_INTMAX_T and QSE_SIZEOF_UINTMAX_T are
+	 * defined when qse_int64_t is defined */
 #elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT32_T)
 	typedef qse_int32_t qse_intmax_t;
 	typedef qse_uint32_t qse_uintmax_t;
+	/* QSE_SIZEOF_INTMAX_T and QSE_SIZEOF_UINTMAX_T are
+	 * defined when qse_int32_t is defined */
 #elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT16_T)
 	typedef qse_int16_t qse_intmax_t;
 	typedef qse_uint16_t qse_uintmax_t;
+	/* QSE_SIZEOF_INTMAX_T and QSE_SIZEOF_UINTMAX_T are
+	 * defined when qse_int16_t is defined */
 #elif (QSE_SIZEOF_INTMAX_T == QSE_SIZEOF_INT8_T)
 	typedef qse_int8_t qse_intmax_t;
 	typedef qse_uint8_t qse_uintmax_t;
+	/* QSE_SIZEOF_INTMAX_T and QSE_SIZEOF_UINTMAX_T are
+	 * defined when qse_int8_t is defined */
 #else
 #	error FATAL. THIS MUST NOT HAPPEN
 #endif
 
 
-/** @typedef qse_real_t
- * The qse_real_t type defines the largest floating-pointer number type
+/** @typedef qse_flt_t
+ * The qse_flt_t type defines the largest floating-pointer number type
  * supported.
  */
 #if defined(__FreeBSD__)
 	/* TODO: check if the support for long double is complete.
-	 *       if so, use long double for qse_real_t */
-#	define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
-	typedef double qse_real_t;
+	 *       if so, use long double for qse_flt_t */
+	typedef double qse_flt_t;
+#	define QSE_SIZEOF_FLT_T QSE_SIZEOF_DOUBLE
 #elif QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE
-#	define QSE_SIZEOF_REAL QSE_SIZEOF_LONG_DOUBLE
-	typedef long double qse_real_t;
+	typedef long double qse_flt_t;
+#	define QSE_SIZEOF_FLT_T QSE_SIZEOF_LONG_DOUBLE
 #else
-#	define QSE_SIZEOF_REAL QSE_SIZEOF_DOUBLE
-	typedef double qse_real_t;
+	typedef double qse_flt_t;
+#	define QSE_SIZEOF_FLT_T QSE_SIZEOF_DOUBLE
 #endif
+
+/* TODO: qse_fltmax_t to include the quadruple precision floating-point type. 
+ *
+#if QSE_SIZEOF___FLOAT128 > 0
+	typedef __float128 qse_fltmax_t;
+#	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF___FLOAT128
+#else
+	typedef qse_flt_t qse_fltmax_t;
+#	define QSE_SIZEOF_FLTMAX_T QSE_SIZEOF_FLT_T
+#endif
+ */
 
 /** 
  * The qse_mchar_t type defines a multi-byte character type.
@@ -754,11 +775,11 @@ union qse_ubi_t
 	qse_uintptr_t  uintptr;
 	qse_intmax_t   intmax;
 	qse_uintmax_t  uintmax;
-	qse_real_t     real;
+	qse_flt_t      flt;
 
-	qse_char_t     cha;
-	qse_mchar_t    mchar;
-	qse_wchar_t    wchar;
+	qse_char_t     ch;
+	qse_mchar_t    mch;
+	qse_wchar_t    wch;
 	qse_cint_t     cint;
 	qse_mcint_t    mcint;
 	qse_wcint_t    wcint;

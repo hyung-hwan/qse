@@ -78,7 +78,7 @@ void StdAwk::close ()
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.setReal ((real_t)(::rand() % RAND_MAX) / RAND_MAX);
+	return ret.setFlt ((flt_t)(::rand() % RAND_MAX) / RAND_MAX);
 }
 
 int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -647,7 +647,7 @@ int StdAwk::vsprintf (
 	return qse_vsprintf (buf, size, fmt, arg);
 }
 
-StdAwk::real_t StdAwk::pow (real_t x, real_t y) 
+StdAwk::flt_t StdAwk::pow (flt_t x, flt_t y) 
 { 
 #if defined(HAVE_POWL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::powl (x, y);
@@ -660,7 +660,7 @@ StdAwk::real_t StdAwk::pow (real_t x, real_t y)
 #endif
 }
 
-StdAwk::real_t StdAwk::mod (real_t x, real_t y) 
+StdAwk::flt_t StdAwk::mod (flt_t x, flt_t y) 
 { 
 #if defined(HAVE_FMODL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::fmodl (x, y);
@@ -673,7 +673,7 @@ StdAwk::real_t StdAwk::mod (real_t x, real_t y)
 #endif
 }
 
-StdAwk::real_t StdAwk::sin (real_t x)
+StdAwk::flt_t StdAwk::sin (flt_t x)
 { 
 #if defined(HAVE_SINL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::sinl (x);
@@ -686,7 +686,7 @@ StdAwk::real_t StdAwk::sin (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::cos (real_t x)
+StdAwk::flt_t StdAwk::cos (flt_t x)
 { 
 #if defined(HAVE_COSL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::cosl (x);
@@ -699,7 +699,7 @@ StdAwk::real_t StdAwk::cos (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::tan (real_t x)
+StdAwk::flt_t StdAwk::tan (flt_t x)
 { 
 #if defined(HAVE_TANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::tanl (x);
@@ -712,7 +712,7 @@ StdAwk::real_t StdAwk::tan (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::atan (real_t x)
+StdAwk::flt_t StdAwk::atan (flt_t x)
 { 
 #if defined(HAVE_ATANL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::atanl (x);
@@ -725,7 +725,7 @@ StdAwk::real_t StdAwk::atan (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::atan2 (real_t x, real_t y) 
+StdAwk::flt_t StdAwk::atan2 (flt_t x, flt_t y) 
 { 
 #if defined(HAVE_ATAN2L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::atan2l (x, y);
@@ -738,7 +738,7 @@ StdAwk::real_t StdAwk::atan2 (real_t x, real_t y)
 #endif
 }
 
-StdAwk::real_t StdAwk::log (real_t x)
+StdAwk::flt_t StdAwk::log (flt_t x)
 { 
 #if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::logl (x);
@@ -751,7 +751,7 @@ StdAwk::real_t StdAwk::log (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::exp (real_t x)
+StdAwk::flt_t StdAwk::exp (flt_t x)
 { 
 #if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::expl (x);
@@ -764,7 +764,7 @@ StdAwk::real_t StdAwk::exp (real_t x)
 #endif
 }
 
-StdAwk::real_t StdAwk::sqrt (real_t x)
+StdAwk::flt_t StdAwk::sqrt (flt_t x)
 { 
 #if defined(HAVE_SQRTL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::sqrtl (x);

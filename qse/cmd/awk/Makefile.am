@@ -8,6 +8,6 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = qseawk
 
 qseawk_SOURCES = awk.c
-qseawk_LDFLAGS = -L../../lib/awk -L$(libdir)
-qseawk_LDADD = -lqseawk $(LIBM)
+qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir)
+qseawk_LDADD = -lqseawk -lqsecmn $(LIBM)
 

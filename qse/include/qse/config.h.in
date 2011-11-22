@@ -389,6 +389,9 @@
 /* sizeof(wchar_t) */
 #undef QSE_SIZEOF_WCHAR_T
 
+/* sizeof(__float128) */
+#undef QSE_SIZEOF___FLOAT128
+
 /* sizeof(__int128) */
 #undef QSE_SIZEOF___INT128
 
@@ -448,6 +451,9 @@
 
 /* The size of `wchar_t', as computed by sizeof. */
 #undef SIZEOF_WCHAR_T
+
+/* The size of `__float128', as computed by sizeof. */
+#undef SIZEOF___FLOAT128
 
 /* The size of `__int128', as computed by sizeof. */
 #undef SIZEOF___INT128

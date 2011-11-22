@@ -7,7 +7,7 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = awk01 awk02 awk03 awk04 awk09 awk10
 
-LDFLAGS = -L../../lib/cmn -L../../lib/awk
+LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
 
 awk01_SOURCES = awk01.c

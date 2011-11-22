@@ -161,19 +161,19 @@ qse_long_t qse_awk_strxtolong (
 
 #define MAX_EXPONENT 511
 
-qse_real_t qse_awk_strtoreal (qse_awk_t* awk, const qse_char_t* str)
+qse_flt_t qse_awk_strtoreal (qse_awk_t* awk, const qse_char_t* str)
 {
 	/* 
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
 	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
-	static qse_real_t powers_of_10[] = 
+	static qse_flt_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	qse_real_t fraction, dbl_exp, * d;
+	qse_flt_t fraction, dbl_exp, * d;
 	const qse_char_t* p;
 	qse_cint_t c;
 	int exp = 0;		/* Esseonent read from "EX" field */
@@ -351,7 +351,7 @@ done:
 	return (negative)? -fraction: fraction;
 }
 
-qse_real_t qse_awk_strxtoreal (
+qse_flt_t qse_awk_strxtoflt (
 	qse_awk_t* awk, const qse_char_t* str, qse_size_t len, 
 	const qse_char_t** endptr)
 {
@@ -359,13 +359,13 @@ qse_real_t qse_awk_strxtoreal (
 	 * Table giving binary powers of 10. Entry is 10^2^i.  
 	 * Used to convert decimal exponents into floating-point numbers.
 	 */ 
-	static qse_real_t powers_of_10[] = 
+	static qse_flt_t powers_of_10[] = 
 	{
 		10.,    100.,   1.0e4,   1.0e8,   1.0e16,
 		1.0e32, 1.0e64, 1.0e128, 1.0e256
 	};
 
-	qse_real_t fraction, dbl_exp, * d;
+	qse_flt_t fraction, dbl_exp, * d;
 	const qse_char_t* p, * end;
 	qse_cint_t c;
 	int exp = 0; /* Esseonent read from "EX" field */
@@ -435,7 +435,7 @@ qse_real_t qse_awk_strxtoreal (
 		mant_size--;	/* One of the digits was the point */
 	}
 
-	if (mant_size > 18)  /* TODO: is 18 correct for qse_real_t??? */
+	if (mant_size > 18)  /* TODO: is 18 correct for qse_flt_t??? */
 	{
 		frac_exp = dec_pt - 18;
 		mant_size = 18;
@@ -1108,8 +1108,8 @@ void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 	qse_awk_freemem (rtx->awk, ptr);
 }
 
-int qse_awk_sprintreal (
-	qse_awk_t* awk, qse_char_t* buf, qse_size_t len, qse_real_t num)
+int qse_awk_sprintflt (
+	qse_awk_t* awk, qse_char_t* buf, qse_size_t len, qse_flt_t num)
 {
 	return awk->prm.sprintf (
 		awk, buf, len,
