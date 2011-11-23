@@ -88,16 +88,28 @@
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) _llseek(handle,hoffset,loffset,out,whence)
 #endif
 
-#if defined(SYS_lseek64)
-#	define QSE_LSEEK64(handle,offset,whence) syscall(SYS_lseek64,handle,offset,whence)
-#elif defined(HAVE_lseek64)
-#	define QSE_LSEEK64(handle,offset,whence) lseek64(handle,offset,whence)
-#endif
-
-#if defined(SYS_lseek)
+#if !defined(_LP64) && defined(SYS_lseek64)
+#	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek64,handle,offset,whence)
+#elif defined(SYS_lseek)
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek,handle,offset,whence)
+#elif !defined(_LP64) && defined(HAVE_LSEEK64)
+#	define QSE_LSEEK(handle,offset,whence) lseek64(handle,offset,whence)
 #else
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
+#endif
+
+#if !defined(_LP64) && defined(SYS_fstat64)
+#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat,path,stbuf)
+	typedef struct stat64 qse_fstat_t;
+#elif defined(SYS_fstat)
+#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat,path,stbuf)
+	typedef struct stat qse_fstat_t;
+#elif !defined(_LP64) && defined(HAVE_FSTAT64)
+#	define QSE_FSTAT(path,stbuf) fstat64(path,stbuf)
+	typedef struct stat64 qse_fstat_t;
+#else
+#	define QSE_FSTAT(path,stbuf) fstat(path,stbuf)
+	typedef struct stat qse_fstat_t;
 #endif
 
 #if !defined(_LP64) && defined(SYS_ftruncate64)
@@ -263,16 +275,18 @@
 #	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
 #endif
 
-#if defined(SYS_lstat64)
-#	define QSE_LSTAT64(path,stbuf) syscall(SYS_lstat64,path,stbuf)
-#elif defined(HAVE_lstat64)
-#	define QSE_LSTAT64(path,stbuf) lstat64(path,stbuf)
-#endif
-
-#if defined(SYS_lstat)
+#if !defined(_LP64) && defined(SYS_lstat64)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
+	typedef struct stat64 qse_lstat_t;
+#elif defined(SYS_lstat)
+#	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
+	typedef struct stat qse_lstat_t;
+#elif !defined(_LP64) && defined(HAVE_LSTAT64)
+#	define QSE_LSTAT(path,stbuf) lstat64(path,stbuf)
+	typedef struct stat64 qse_lstat_t;
 #else
 #	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
+	typedef struct stat qse_lstat_t;
 #endif
 
 #if defined(SYS_rename)
@@ -287,16 +301,18 @@
 #	define QSE_RMDIR(path) rmdir(path)
 #endif
 
-#if defined(SYS_stat64)
-#	define QSE_STAT64(path,stbuf) syscall(SYS_stat64,path,stbuf)
-#elif defined(HAVE_stat64)
-#	define QSE_STAT64(path,stbuf) stat64(path,stbuf)
-#endif
-
-#if defined(SYS_stat)
+#if !defined(_LP64) && defined(SYS_stat64)
+#	define QSE_STAT(path,stbuf) syscall(SYS_stat64,path,stbuf)
+	typedef struct stat64 qse_stat_t;
+#elif defined(SYS_stat)
 #	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
+	typedef struct stat qse_stat_t;
+#elif !defined(_LP64) && defined(HAVE_STAT64)
+#	define QSE_STAT(path,stbuf) stat64(path,stbuf)
+	typedef struct stat64 qse_stat_t;
 #else
 #	define QSE_STAT(path,stbuf) stat(path,stbuf)
+	typedef struct stat qse_stat_t;
 #endif
 
 #if defined(SYS_symlink)
