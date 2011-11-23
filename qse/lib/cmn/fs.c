@@ -533,11 +533,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 	int x;
 
 	int stat_needed;
-	#if defined(QSE_LSTAT64)
-	struct stat64 st;
-	#else
-	struct stat st;
-	#endif
+	qse_lstat_t st;
 
 	info = fs->info;
 	if (info == QSE_NULL) 
@@ -580,11 +576,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 			return QSE_NULL;
 		}
 	
-	#if defined(QSE_LSTAT64)
-		x = QSE_LSTAT64 (mfname, &st);
-	#else
 		x = QSE_LSTAT (mfname, &st);
-	#endif
 		QSE_MMGR_FREE (fs->mmgr, mfname);
 
 		if (x == -1)

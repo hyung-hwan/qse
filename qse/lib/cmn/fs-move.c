@@ -22,7 +22,16 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
+
+/*
+OVERWRITE AND FORCE handled by callback???
+QSE_FS_MOVE_UPDATE
+QSE_FS_MOVE_BACKUP_SIMPLE
+QSE_FS_MOVE_BACKUP_NUMBERED
+*/
+
+int qse_fs_move (
+	qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
 {
 #if defined(_WIN32)
 	/* TODO: improve it... */
@@ -58,6 +67,16 @@ int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newp
 	const qse_mchar_t* mbsoldpath;
 	const qse_mchar_t* mbsnewpath;
 
+#if 0
+	struct file_stat_t
+	{
+		int oldst_ok;
+		int newst_ok;
+		qse_lstat_t oldst;
+		qse_lstat_t newst;
+	};
+#endif
+
 #if defined(QSE_CHAR_IS_MCHAR)
 	mbsoldpath = oldpath;
 	mbsnewpath = newpath;
@@ -81,6 +100,27 @@ int qse_fs_move (qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newp
 		}
 	}
 */
+
+#if 0
+	if (opt)
+	{
+		/* use lstat because we need to move the symbolic link 
+		 * itself if the file is a symbolic link */ 
+		if (QSE_LSTAT (mboldpath, &oldst) == -1)
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+			goto oops;
+		}
+	}
+
+	if (QSE_LSTAT (mbnewpath, &newst) == -1)
+	{
+		if (errno == ENOENT)
+		{
+			/* entry doesn't exist */
+		}
+	}
+#endif
 
 /* TODO: make it better to be able to move non-empty diretories
          improve it to be able to move by copy/delete across volume */
