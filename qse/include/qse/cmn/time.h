@@ -70,6 +70,12 @@
 typedef qse_long_t qse_ntime_t;
 
 /**
+ * The qse_ntprd_t type represents a time period between two time points.
+ * This is period is defined to be unsigned since a time point is signed.
+ */
+typedef qse_ulong_t qse_ntprd_t;
+
+/**
  * The qse_ntoff_t type represents the amount of increment or decrement
  * from a certain time point. It is defined to be type-compatible with
  * #qse_ntime_t and expresses that you're dealing with time offset or amount, 
@@ -90,7 +96,7 @@ struct qse_btime_t
 	int year; /* the number of years since QSE_BTIME_YEAR_BASE */
 	int wday; /* 0(sun)-6(sat) */
 	int yday; /* 0(jan 1) to 365 */
-	int isdst;
+	int isdst; /* -1(unknown), 0(not in effect), 1 (in effect) */
 	/*int offset;*/
 };
 
