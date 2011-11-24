@@ -63,19 +63,31 @@
 #define QSE_SECNSEC_TO_MSEC(sec,nsec) \
 	(((qse_ntime_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_ntime_t)(nsec) / QSE_NSECS_PER_MSEC))
 
-/* number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970) */
+/**
+ * The qse_ntime_t type defines a numeric time type expressed in the 
+ *  number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970).
+ */
 typedef qse_long_t qse_ntime_t;
+
+/**
+ * The qse_ntoff_t type represents the amount of increment or decrement
+ * from a certain time point. It is defined to be type-compatible with
+ * #qse_ntime_t and expresses that you're dealing with time offset or amount, 
+ * not an absolute time point.
+ */
+typedef qse_ntime_t qse_ntoff_t;
+
 typedef struct qse_btime_t qse_btime_t;
 
 struct qse_btime_t
 {
-	int msec;
+	int msec; /* 0-999 */
 	int sec;  /* 0-61 */
 	int min;  /* 0-59 */
 	int hour; /* 0-23 */
 	int mday; /* 1-31 */
 	int mon;  /* 0(jan)-11(dec) */
-	int year; /* the number of years since 1900 */
+	int year; /* the number of years since QSE_BTIME_YEAR_BASE */
 	int wday; /* 0(sun)-6(sat) */
 	int yday; /* 0(jan 1) to 365 */
 	int isdst;

@@ -109,7 +109,7 @@ int qse_gettime (qse_ntime_t* t)
 	rc = DosGetDateTime (&dt);
 	if (rc != NO_ERROR) return -1;
 
-	bt.year = dt.year - 1900;
+	bt.year = dt.year - QSE_BTIME_YEAR_BASE;
 	bt.mon = dt.month - 1;
 	bt.mday = dt.day;
 	bt.hour = dt.hours;
@@ -130,7 +130,7 @@ int qse_gettime (qse_ntime_t* t)
 	_dos_gettime (&dt);
 	_dos_getdate (&dd);
 
-	bt.year = dd.year - 1900;
+	bt.year = dd.year - QSE_BTIME_YEAR_BASE;
 	bt.mon = dd.month - 1;
 	bt.mday = dd.day;
 	bt.hour = dt.hour;
@@ -175,7 +175,7 @@ int qse_settime (qse_ntime_t t)
 	if (qse_localtime (t, &bt) <= -1) return -1;
 
 	QSE_MEMSET (&dt, 0, QSE_SIZEOF(dt));
-	dt.year = bt.year + 1900;
+	dt.year = bt.year + QSE_BTIME_YEAR_BASE;
 	dt.month = bt.mon + 1;
 	dt.day = bt.mday;
 	dt.hours = bt.hour;
@@ -194,7 +194,7 @@ int qse_settime (qse_ntime_t t)
 
 	if (qse_localtime (t, &bt) <= -1) return -1;
 
-	dd.year = bt.year + 1900;
+	dd.year = bt.year + QSE_BTIME_YEAR_BASE;
 	dd.month = bt.mon + 1;
 	dd.day = bt.mday;
 	dt.hour = bt.hour;
