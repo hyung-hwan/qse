@@ -116,7 +116,7 @@ int qse_gettime (qse_ntime_t* t)
 	bt.min = dt.minutes;
 	bt.sec = dt.seconds;
 	bt.msec = dt.hundredths * 10;
-	bt.isdst = -1;
+	bt.isdst = -1; /* determine dst for me */
 
 	if (qse_timelocal (&bt, t) <= -1) return -1;
 	return 0;
@@ -137,7 +137,7 @@ int qse_gettime (qse_ntime_t* t)
 	bt.min = dt.minute;
 	bt.sec = dt.second;
 	bt.msec = dt.hsecond * 10;
-	bt.isdst = -1;
+	bt.isdst = -1; /* determine dst for me */
 
 	if (qse_timelocal (&bt, t) <= -1) return -1;
 	return 0;
@@ -231,7 +231,7 @@ int qse_settime (qse_ntime_t t)
 #endif
 }
 
-static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
+static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntoff_t offset)
 {
 	int midx;
 	qse_ntime_t days; /* total days */
@@ -295,7 +295,7 @@ static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntime_t offset)
 	}
 
 	bt->mday = days + 1;
-	bt->isdst = 0;
+	bt->isdst = 0; /* TODO: this may vary depeding on offset and time */
 	/*bt->offset = offset;*/
 }
 
