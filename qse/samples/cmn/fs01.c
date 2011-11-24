@@ -34,7 +34,7 @@ static void list (qse_fs_t* fs, const qse_char_t* name)
 		qse_printf (QSE_T("%s %16lu %04d-%02d-%02d %02d:%02d %s\n"), 
 			((ent->type == QSE_FS_ENT_SUBDIR)? QSE_T("<D>"): QSE_T("   ")),
 			(unsigned long)ent->size, 
-			bt.year + 1900, bt.mon+1, bt.mday, bt.hour, bt.min,
+			bt.year + QSE_BTIME_YEAR_BASE, bt.mon+1, bt.mday, bt.hour, bt.min,
 			ent->name.base
 		);
 	}
