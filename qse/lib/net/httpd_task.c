@@ -345,6 +345,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	task.main = task_main_format;
 	task.ctx = &data;
 
+qse_printf (QSE_T("SEND: [%.*S]\n"), (int)l, buf);
 	return qse_httpd_entask (
 		httpd, client, pred, &task, QSE_SIZEOF(data));
 }
@@ -553,11 +554,12 @@ qse_printf (QSE_T("opending file %S\n"), data->name);
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long long)(data->range.to - data->range.from + 1),
 			data->name,
 			(unsigned long long)data->range.from,
@@ -567,11 +569,12 @@ qse_printf (QSE_T("opending file %S\n"), data->name);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long)(data->range.to - data->range.from + 1),
 			data->name,
 			(unsigned long)data->range.from,
@@ -604,22 +607,24 @@ qse_printf (QSE_T("opending file %S\n"), data->name);
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long long)st.st_size,
 			data->name
 		);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(mime_type? QSE_MT("\r\nContent-Type: "): QSE_MT("")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long)st.st_size,
 			data->name
 		);
