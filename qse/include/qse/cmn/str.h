@@ -2387,24 +2387,30 @@ qse_size_t qse_wcsntombsn (
 );
 
 /**
- * The qse_mbstowcs_strict() function performs the same as the qse_mbstowcs() 
+ * The qse_mbstowcsrigid() function performs the same as the qse_mbstowcs() 
  * function except that it returns an error if it can't fully convert the
  * input string and/or the buffer is not large enough.
- * @return 0 on success, -1 on failure.
+ *
+ * @return 0 on success, 
+ *         -1 on failure for truncation, 
+ *         -2 on failure for invalid/incomplete input seqence.
  */
-int qse_mbstowcs_strict (
+int qse_mbstowcsrigid (
 	const qse_mchar_t* mbs,
 	qse_wchar_t*       wcs,
 	qse_size_t         wcslen
 );
 
 /**
- * The qse_wcstombs_strict() function performs the same as the qse_wcstombs() 
+ * The qse_wcstombsrigid() function performs the same as the qse_wcstombs() 
  * function except that it returns an error if it can't fully convert the
  * input string and/or the buffer is not large enough.
- * @return 0 on success, -1 on failure.
+ *
+ * @return 0 on success, 
+ *         -1 on failure for truncation, 
+ *         -2 on failure for erroneous input seqence.
  */
-int qse_wcstombs_strict (
+int qse_wcstombsrigid (
 	const qse_wchar_t* wcs,
 	qse_mchar_t*       mbs,
 	qse_size_t         mbslen
@@ -2413,12 +2419,18 @@ int qse_wcstombs_strict (
 
 qse_wchar_t* qse_mbstowcsdup (
 	const qse_mchar_t* mbs,
-	qse_mmgr_t* mmgr
+	qse_mmgr_t*        mmgr
 );
 
 qse_mchar_t* qse_wcstombsdup (
 	const qse_wchar_t* wcs,
-	qse_mmgr_t* mmgr
+	qse_mmgr_t*        mmgr
+);
+
+
+qse_mchar_t* qse_wcsatombsdup (
+	const qse_wchar_t* wcs[],
+	qse_mmgr_t*        mmgr
 );
 
 QSE_DEFINE_COMMON_FUNCTIONS (mbs)

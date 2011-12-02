@@ -20,6 +20,7 @@
 
 #include "fs.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/path.h>
 #include "mem.h"
 
 
@@ -29,6 +30,33 @@ QSE_FS_MOVE_UPDATE
 QSE_FS_MOVE_BACKUP_SIMPLE
 QSE_FS_MOVE_BACKUP_NUMBERED
 */
+enum fop_flag_t
+{
+	FOP_OLD_STAT = (1 << 0),
+	FOP_NEW_STAT = (1 << 1),
+
+	FOP_CROSS_DEV = (1 << 2)
+};
+
+struct fop_t
+{
+	int flags;
+
+	qse_lstat_t old_stat;
+	qse_lstat_t new_stat;
+
+#if defined(_WIN32)
+	qse_wchar_t* old_path;
+	qse_wchar_t* new_path;
+	qse_wchar_t* new_path2;
+#else
+	qse_mchar_t* old_path;
+	qse_mchar_t* new_path;
+	qse_mchar_t* new_path2;
+#endif
+};
+
+typedef struct fop_t fop_t;
 
 int qse_fs_move (
 	qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
@@ -64,31 +92,22 @@ int qse_fs_move (
 #	error NOT IMPLEMENTED
 #else
 
-	const qse_mchar_t* mbsoldpath;
-	const qse_mchar_t* mbsnewpath;
+	fop_t fop;
 
-#if 0
-	struct file_stat_t
-	{
-		int oldst_ok;
-		int newst_ok;
-		qse_lstat_t oldst;
-		qse_lstat_t newst;
-	};
-#endif
+	QSE_MEMSET (&fop, 0, QSE_SIZEOF(fop));
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mbsoldpath = oldpath;
-	mbsnewpath = newpath;
+	fop.old_path = oldpath;
+	fop.new_path = newpath;
 #else
-	mbsoldpath = qse_wcstombsdup (oldpath, fs->mmgr);
-	mbsnewpath = qse_wcstombsdup (newpath, fs->mmgr);	
-
-	if (mbsoldpath == QSE_NULL || mbsnewpath == QSE_NULL)
+	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
 		goto oops;
 	}
+#endif
 
 /* TOOD: implement confirmatio
 	if (overwrite_callback is set)
@@ -101,63 +120,130 @@ int qse_fs_move (
 	}
 */
 
-#if 0
-	if (opt)
+	/* use lstat because we need to move the symbolic link 
+	 * itself if the file is a symbolic link */ 
+	if (QSE_LSTAT (fop.old_path, &fop.old_stat) == -1)
 	{
-		/* use lstat because we need to move the symbolic link 
-		 * itself if the file is a symbolic link */ 
-		if (QSE_LSTAT (mboldpath, &oldst) == -1)
-		{
-			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-			goto oops;
-		}
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		goto oops;
 	}
+	else fop.flags |= FOP_OLD_STAT;
 
-	if (QSE_LSTAT (mbnewpath, &newst) == -1)
+	if (QSE_LSTAT (fop.new_path, &fop.new_stat) == -1)
 	{
 		if (errno == ENOENT)
 		{
 			/* entry doesn't exist */
 		}
 	}
-#endif
+	else fop.flags |= FOP_NEW_STAT;
 
-/* TODO: make it better to be able to move non-empty diretories
-         improve it to be able to move by copy/delete across volume */
-	if (QSE_RENAME (mbsoldpath, mbsnewpath) == -1)
+	if (fop.flags & FOP_NEW_STAT)
 	{
-		if (errno == EXDEV)
+		/* destination file exits */
+		if (fop.old_stat.st_dev != fop.new_stat.st_dev)
 		{
-			/* TODO: move it by copy and delete intead of returnign error... */
-			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-			goto oops;
+			/* cross-device */
+			fop.flags |= FOP_CROSS_DEV;
 		}
 		else
 		{
-			fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
-			goto oops;
+			if (fop.old_stat.st_ino == fop.new_stat.st_ino)
+			{
+				/* both source and destination are the same.
+				 * this operation is not allowed */
+				fs->errnum = QSE_FS_EPERM;
+				goto oops;
+			}
+
+/* TODO: destination should point to an actual file or directory for this check to work */
+/* TOOD: ask to overwrite the source */
+			if (S_ISDIR(fop.new_stat.st_mode))
+			{
+				/* the destination is a directory. move the source file
+				 * into the destination directory */
+				const qse_wchar_t* arr[4];
+
+				arr[0] = newpath;
+				arr[1] = QSE_T("/");
+				arr[2] = qse_basename(oldpath);
+				arr[3] = QSE_NULL;
+			#if defined(QSE_CHAR_IS_MCHAR)
+				fop.new_path2 = qse_stradup (arr, fs->mmgr);
+			#else
+				fop.new_path2 = qse_wcsatombsdup (arr, fs->mmgr);	
+			#endif
+				if (fop.new_path2 == QSE_NULL)
+				{
+					fs->errnum = QSE_FS_ENOMEM;
+					goto oops;
+				}
+qse_printf (QSE_T("new_path2 => [%S]\n"), fop.new_path2);
+			}
+			else
+			{
+				/* the destination file is not directory, unlink first 
+				 * TODO: but is this necessary? RENAME will do it */
+				QSE_UNLINK (fop.new_path);
+			}
 		}
 	}
 
+	if (!(fop.flags & FOP_CROSS_DEV))
+	{
+	/* TODO: make it better to be able to move non-empty diretories
+    	     improve it to be able to move by copy/delete across volume */
+		if (QSE_RENAME (fop.old_path, fop.new_path) == -1)
+		{
+			if (errno != EXDEV)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				goto oops;
+			}
+
+			fop.flags |= FOP_CROSS_DEV;
+		}
+		else goto done;
+	}
+
+	QSE_ASSERT (fop.flags & FOP_CROSS_DEV);
+
+	if (!S_ISDIR(fop.old_stat.st_mode))
+	{
+		/* copy a single file */
+qse_printf (QSE_T("TODO: cross-device copy....\n"));
+	}
+
+#if 0
+	if (!recursive)
+	{
+		fs->errnum = QSE_FS_E....;	
+		goto oops;
+	}
+
+	copy recursively...
+#endif
+
+done:
 #if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to free */
+	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
 #else
-	QSE_MMGR_FREE (fs->mmgr, mbsoldpath);
-	QSE_MMGR_FREE (fs->mmgr, mbsnewpath);
+	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
+	QSE_MMGR_FREE (fs->mmgr, fop.old_path);
+	QSE_MMGR_FREE (fs->mmgr, fop.new_path);
 #endif
 	return 0;
 
 oops:
 #if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to free */
+	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
 #else
-	if (mbsoldpath) QSE_MMGR_FREE (fs->mmgr, mbsoldpath);
-	if (mbsnewpath) QSE_MMGR_FREE (fs->mmgr, mbsnewpath);
+	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
+	if (fop.old_path) QSE_MMGR_FREE (fs->mmgr, fop.old_path);
+	if (fop.new_path) QSE_MMGR_FREE (fs->mmgr, fop.new_path);
 #endif
 
 	return -1;
-
-#endif
 
 #endif
 }

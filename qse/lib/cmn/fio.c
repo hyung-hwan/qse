@@ -252,8 +252,8 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[CCHMAXPATH];
-		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
+		if (qse_wcstombsrigid (path,
+			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
 	#endif
 
 		zero.ulLo = 0;
@@ -342,8 +342,8 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[_MAX_PATH];
-		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
+		if (qse_wcstombsrigid (path,
+			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
 	#endif
 
 		if (flags & QSE_FIO_APPEND)
@@ -395,8 +395,8 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[PATH_MAX + 1];
-		if (qse_wcstombs_strict (path,
-			path_mb, QSE_COUNTOF(path_mb)) == -1) return -1;
+		if (qse_wcstombsrigid (path,
+			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND

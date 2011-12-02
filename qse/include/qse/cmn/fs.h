@@ -33,9 +33,12 @@ enum qse_fs_errnum_t
 	QSE_FS_ENOMEM,
 	QSE_FS_EINVAL,
 	QSE_FS_EACCES,
+	QSE_FS_EPERM,
 	QSE_FS_ENOENT,
 	QSE_FS_ENODIR,
+	QSE_FS_EISDIR,
 	QSE_FS_EEXIST,
+	QSE_FS_EXDEV,
 	QSE_FS_ESYSTEM
 };
 typedef enum qse_fs_errnum_t qse_fs_errnum_t;
