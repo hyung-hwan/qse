@@ -292,6 +292,7 @@
 #if defined(SYS_rename)
 #	define QSE_RENAME(oldpath,newpath) syscall(SYS_rename,oldpath,newpath)
 #else
+	int rename(const char *oldpath, const char *newpath); /* not to include stdio.h */
 #	define QSE_RENAME(oldpath,newpath) rename(oldpath,newpath)
 #endif
 

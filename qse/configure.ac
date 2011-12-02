@@ -288,6 +288,7 @@ AC_CONFIG_FILES([
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/cut/Makefile 
+	cmd/fs/Makefile 
 	cmd/sed/Makefile 
 	cmd/stx/Makefile 
 	samples/Makefile 

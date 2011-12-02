@@ -1,2 +1,2 @@
-SUBDIRS = awk cut sed  stx
+SUBDIRS = awk cut fs sed stx
 DIST_SUBDIRS = $(SUBDIRS) 

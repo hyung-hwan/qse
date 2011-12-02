@@ -415,7 +415,7 @@ static int test9 (void)
 			qse_printf (QSE_T("[%s] => "), x[i]);
 		#endif
 
-		if (qse_wcstombs_strict (x[i], buf, QSE_COUNTOF(buf)) == -1)
+		if (qse_wcstombsrigid (x[i], buf, QSE_COUNTOF(buf)) == -1)
 		{
 			qse_printf (QSE_T("ERROR\n"));
 		}

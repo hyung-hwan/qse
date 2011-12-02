@@ -34,10 +34,13 @@ const qse_char_t* qse_fs_geterrmsg (qse_fs_t* fs)
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
-		QSE_T("permission denied"),
+		QSE_T("access denied"),
+		QSE_T("operation not permitted"),
 		QSE_T("no such entry"),
-		QSE_T("no working fsectory set"),
-		QSE_T("already exists"),
+		QSE_T("no working directory set"),
+		QSE_T("operation not permitted on directory"),
+		QSE_T("entry already exists"),
+		QSE_T("cross-device operation not allowed"),
 		QSE_T("system error")
 	};
 
@@ -78,19 +81,27 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 		case EINVAL:
 			return QSE_FS_EINVAL;
 
+		case ENOMEM:
+			return QSE_FS_ENOMEM;
+
 		case EACCES:
-		case EPERM:
 			return QSE_FS_EACCES;
+
+		case EPERM:
+			return QSE_FS_EPERM;
 
 		case ENOENT:
 		case ENOTDIR:
 			return QSE_FS_ENOENT;
 
-		case ENOMEM:
-			return QSE_FS_ENOMEM;
+		case EISDIR: 
+			return QSE_FS_EISDIR;
 
 		case EEXIST:
 			return QSE_FS_EEXIST;
+
+		case EXDEV:
+			return QSE_FS_EXDEV;
 
 		default:
 			return QSE_FS_ESYSTEM;

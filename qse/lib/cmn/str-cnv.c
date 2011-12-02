@@ -363,9 +363,10 @@ qse_size_t qse_wcsntombsn (
 	return p - wcs; 
 }
 
-int qse_mbstowcs_strict (
+int qse_mbstowcsrigid (
 	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t wcslen)
 {
+	/* no truncation is allowed in this function for any reasons */
 	qse_size_t n;
 	qse_size_t wn = wcslen;
 
@@ -380,15 +381,16 @@ int qse_mbstowcs_strict (
 	if (mbs[n] != QSE_MT('\0'))
 	{
 		/* incomplete sequence or invalid sequence */
-		return -1;
+		return -2;
 	}
 
 	return 0;
 }
 
-int qse_wcstombs_strict (
+int qse_wcstombsrigid (
 	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t mbslen)
 {
+	/* no truncation is allowed in this function for any reasons */
 	qse_size_t n;
 	qse_size_t mn = mbslen;
 
@@ -405,14 +407,13 @@ int qse_wcstombs_strict (
 		/* if qse_wcstombs() processed all wide characters,
 		 * the character at position 'n' should be a null character
 		 * as 'n' is the number of wide characters processed. */
-		return -1;
+		return -2;
 	}
 
 	return 0;
 }
 
-qse_wchar_t* qse_mbstowcsdup (
-	const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
 {
 	qse_size_t n, req;
 	qse_wchar_t* wcs;
@@ -429,8 +430,7 @@ qse_wchar_t* qse_mbstowcsdup (
 	return wcs;
 }
 
-qse_mchar_t* qse_wcstombsdup (
-	const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
 {
 	qse_size_t n, req;
 	qse_mchar_t* mbs;
@@ -445,6 +445,38 @@ qse_mchar_t* qse_wcstombsdup (
 
 	qse_wcstombs (wcs, mbs, &req);
 	return mbs;
+}
+
+
+qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
+{
+	qse_mchar_t* buf, * ptr;
+	qse_size_t i;
+	qse_size_t capa = 0;
+	qse_size_t wl, ml;
+
+	QSE_ASSERT (mmgr != QSE_NULL);
+
+	for (i = 0; wcs[i]; i++) 
+	{
+		wl = qse_wcstombslen(wcs[i], &ml);
+		if (wcs[i][wl] != QSE_WT('\0')) return QSE_NULL;
+		capa += ml;
+	}
+
+	buf = (qse_mchar_t*) QSE_MMGR_ALLOC (mmgr, (capa+1)*QSE_SIZEOF(*buf));
+	if (buf == QSE_NULL) return QSE_NULL;
+
+	ptr = buf;
+	for (i = 0; wcs[i]; i++) 
+	{
+		ml = capa + 1;
+		wl = qse_wcstombs (wcs[i], ptr, &ml);
+		ptr += ml;
+		capa -= ml;
+	}
+
+	return buf;
 }
 
 /* case conversion */
