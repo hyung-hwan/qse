@@ -75,39 +75,6 @@
 #	define QSE_PRIVATE
 #endif
 
-/** 
- * The #QSE_NULL macro defines a special pointer value to indicate an error or
- * that it does not point to anything.
- */
-#ifdef __cplusplus
-#	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
-#		define QSE_NULL (0)
-#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
-#		define QSE_NULL (0l)
-#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG_LONG
-#		define QSE_NULL (0ll)
-#	else
-#		define QSE_NULL (0)
-#	endif
-#else
-#	define QSE_NULL ((void*)0)
-#endif
-
-/**
- * The QSE_MCHAR_EOF macro defines an EOF character.
- */
-#define QSE_MCHAR_EOF ((qse_mcint_t)-1)
-
-/**
- * The QSE_WCHAR_EOF macro defines an EOF character.
- */
-#define QSE_WCHAR_EOF ((qse_wcint_t)-1)
-
-/**
- * The QSE_CHAR_EOF macro defines an EOF character.
- */
-#define QSE_CHAR_EOF  ((qse_cint_t)-1)
-
 /**
  * The QSE_SIZEOF() macro gets data size in bytes. It is equivalent to the
  * sizeof operator. The following code snippet should print sizeof(int)*128.
@@ -172,6 +139,39 @@
 	((QSE_TYPE_IS_SIGNED(type)? QSE_TYPE_SIGNED_MAX(type): QSE_TYPE_UNSIGNED_MAX(type)))
 #define QSE_TYPE_MIN(type) \
 	((QSE_TYPE_IS_SIGNED(type)? QSE_TYPE_SIGNED_MIN(type): QSE_TYPE_UNSIGNED_MIN(type)))
+
+/** 
+ * The #QSE_NULL macro defines a special pointer value to indicate an error or
+ * that it does not point to anything.
+ */
+#ifdef __cplusplus
+#	if QSE_SIZEOF_VOID_P == QSE_SIZEOF_INT
+#		define QSE_NULL (0)
+#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG
+#		define QSE_NULL (0l)
+#	elif QSE_SIZEOF_VOID_P == QSE_SIZEOF_LONG_LONG
+#		define QSE_NULL (0ll)
+#	else
+#		define QSE_NULL (0)
+#	endif
+#else
+#	define QSE_NULL ((void*)0)
+#endif
+
+/**
+ * The QSE_MCHAR_EOF macro defines an EOF character.
+ */
+#define QSE_MCHAR_EOF ((qse_mcint_t)-1)
+
+/**
+ * The QSE_WCHAR_EOF macro defines an EOF character.
+ */
+#define QSE_WCHAR_EOF ((qse_wcint_t)-1)
+
+/**
+ * The QSE_CHAR_EOF macro defines an EOF character.
+ */
+#define QSE_CHAR_EOF  ((qse_cint_t)-1)
 
 /**
  * The QSE_BLOCK macro encloses one or more statements in a block with 

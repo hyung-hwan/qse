@@ -365,7 +365,8 @@ int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
 }
 #endif
 
-static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t __sio_input (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_sio_t* sio = (qse_sio_t*)arg;
 
@@ -394,7 +395,8 @@ static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_siz
 	return 0;
 }
 
-static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t __sio_output (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_sio_t* sio = (qse_sio_t*)arg;
 

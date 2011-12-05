@@ -715,7 +715,7 @@ static void* response_thread (void* arg)
 		if (n <= -1)
 		{
 			/*if (errno == EINTR) continue; */
-qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %S\n"), strerror(errno));
+qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %hs\n"), strerror(errno));
 			/* break; */
 			continue;
 		}

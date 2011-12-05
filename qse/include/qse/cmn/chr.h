@@ -91,8 +91,8 @@ typedef qse_ctype_t qse_wctype_t;
 #define QSE_ISMSPACE(c) (qse_ismctype(c,QSE_CTYPE_SPACE))
 #define QSE_ISMUPPER(c) (qse_ismctype(c,QSE_CTYPE_UPPER))
 #define QSE_ISMXDIGIT(c) (qse_ismctype(c,QSE_CTYPE_XDIGIT))
-#define QSE_TOMUPPER(c) (qse_ismctype(c,QSE_CTYPE_UPPER))
-#define QSE_TOMLOWER(c) (qse_ismctype(c,QSE_CTYPE_LOWER))
+#define QSE_TOMUPPER(c) (qse_tomctype(c,QSE_CTYPE_UPPER))
+#define QSE_TOMLOWER(c) (qse_tomctype(c,QSE_CTYPE_LOWER))
 
 #define QSE_WCTYPE(name) (qse_getwctype(name))
 #define QSE_ISWCTYPE(c,t) (qse_iswctype(c,t))

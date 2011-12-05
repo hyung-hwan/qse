@@ -14,7 +14,7 @@ struct httpd_xtn_t
 
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
-qse_printf (QSE_T("HEADER OK %d[%S] %d[%S]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
+qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
 	return QSE_HTB_WALK_FORWARD;
 }
 
@@ -30,7 +30,7 @@ static int handle_request (
 #endif
 
 qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("REQUEST ==> [%S] version[%d.%d] method[%d]\n"), 
+qse_printf (QSE_T("REQUEST ==> [%hs] version[%d.%d] method[%d]\n"), 
      qse_htre_getqpathptr(req),
      qse_htre_getmajorversion(req),
      qse_htre_getminorversion(req),
@@ -38,7 +38,7 @@ qse_printf (QSE_T("REQUEST ==> [%S] version[%d.%d] method[%d]\n"),
 );
 if (qse_htre_getqparamlen(req) > 0)
 {
-qse_printf (QSE_T("PARAMS ==> [%S]\n"), qse_htre_getqparamptr(req));
+qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparamptr(req));
 }
 
 qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
