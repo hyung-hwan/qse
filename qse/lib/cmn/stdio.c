@@ -20,47 +20,16 @@
 
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/str.h>
+#include "mem.h"
 
 #include <wchar.h>
 #include <stdlib.h>
 #include <limits.h>
 
 #ifndef PATH_MAX
-#define PATH_MAX 2048
+#	define PATH_MAX 2048
 #endif
-
-#if defined(_WIN32) && !defined(__WATCOMC__)
-
-int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_list ap)
-{
-	int n;
-
-#ifdef QSE_CHAR_IS_MCHAR
-	n = _vsnprintf (buf, size, fmt, ap);
-#else
-	n = _vsnwprintf (buf, size, fmt, ap);
-#endif
-	if (n < 0 || (size_t)n >= size)
-	{
-		if (size > 0) buf[size-1] = QSE_T('\0');
-		n = -1;
-	}
-
-	return n;
-}
-
-int qse_sprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = qse_vsprintf (buf, size, fmt, ap);
-	va_end (ap);
-	return n;
-}
-
-#else
 
 static qse_char_t* __adjust_format (const qse_char_t* format);
 
@@ -70,12 +39,12 @@ int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 	qse_char_t* nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 	n = vfprintf (stream, nf, ap);
-#else
+	#else
 	n = vfwprintf (stream, nf, ap);
-#endif
-	free (nf);
+	#endif
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
 
@@ -112,20 +81,27 @@ int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_li
 	qse_char_t* nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-#if defined(QSE_CHAR_IS_MCHAR)
-	n = vsnprintf (buf, size, nf, ap);
-#elif defined(_WIN32) && !defined(__WATCOMC__)
-	n = _vsnwprintf (buf, size, nf, ap);
-#else
-	n = vswprintf (buf, size, nf, ap);
-#endif
+	#if defined(QSE_CHAR_IS_MCHAR)
+		#if defined(_WIN32) && !defined(__WATCOMC__)
+			n = _vsnprintf (buf, size, nf, ap);
+		#else
+			n = vsnprintf (buf, size, nf, ap);
+		#endif
+	#else
+		#if defined(_WIN32) && !defined(__WATCOMC__)
+			n = _vsnwprintf (buf, size, nf, ap);
+		#else
+			n = vswprintf (buf, size, nf, ap);
+		#endif
+	#endif
+
 	if (n < 0 || (size_t)n >= size)
 	{
 		if (size > 0) buf[size-1] = QSE_T('\0');
 		n = -1;
 	}
 
-	free (nf);
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
 
@@ -149,11 +125,12 @@ int qse_sprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, ...)
 		if (buf.len >= buf.cap) \
 		{ \
 			qse_char_t* tmp; \
-			tmp = (qse_char_t*)realloc ( \
-				buf.ptr, sizeof(qse_char_t)*(buf.cap+256+1)); \
+			tmp = (qse_char_t*) QSE_MMGR_REALLOC ( \
+				QSE_MMGR_GETDFL(), buf.ptr, \
+				QSE_SIZEOF(qse_char_t) * (buf.cap+256+1)); \
 			if (tmp == NULL) \
 			{ \
-				free (buf.ptr); \
+				QSE_MMGR_FREE (QSE_MMGR_GETDFL(), buf.ptr); \
 				return NULL; \
 			} \
 			buf.ptr = tmp; \
@@ -177,11 +154,9 @@ static qse_char_t* __adjust_format (const qse_char_t* format)
 
 	buf.len = 0;
 	buf.cap = 256;
-#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
-	buf.ptr = (qse_char_t*) _malloc32 (sizeof(qse_char_t)*(buf.cap+1));
-#else
-	buf.ptr = (qse_char_t*) malloc (sizeof(qse_char_t)*(buf.cap+1));
-#endif
+
+	buf.ptr = (qse_char_t*) QSE_MMGR_ALLOC (
+		QSE_MMGR_GETDFL(), QSE_SIZEOF(qse_char_t) * (buf.cap+1));
 	if (buf.ptr == NULL) return NULL;
 
 	while (*fp != QSE_T('\0')) 
@@ -267,62 +242,128 @@ static qse_char_t* __adjust_format (const qse_char_t* format)
 			ch = *fp++;
 		}		
 
-
 		/* type */
-		if (ch == QSE_T('%')) ADDC (buf, ch);
-		else if (ch == QSE_T('c') || ch == QSE_T('s')) 
+		switch (ch)
 		{
-#if !defined(QSE_CHAR_IS_MCHAR) && !defined(_WIN32)
-			ADDC (buf, 'l');
-#endif
-			ADDC (buf, ch);
-		}
-		else if (ch == QSE_T('C') || ch == QSE_T('S')) 
-		{
-#if defined(_WIN32) && !defined(__WATCOMC__)
-			ADDC (buf, ch);
-#else
-	#ifdef QSE_CHAR_IS_MCHAR
-			ADDC (buf, 'l');
-	#endif
-			ADDC (buf, QSE_TOLOWER(ch));
-#endif
-		}
-		else if (ch == QSE_T('d') || ch == QSE_T('i') || 
-		         ch == QSE_T('o') || ch == QSE_T('u') || 
-		         ch == QSE_T('x') || ch == QSE_T('X')) 
-		{
-			if (modifier == MOD_SHORT) 
+			case QSE_T('\0'):
+				goto done;
+
+			case QSE_T('%'):
 			{
-				ADDC (buf, 'h');
+				ADDC (buf, ch);
+				break;
 			}
-			else if (modifier == MOD_LONG) 
+
+			case QSE_T('c'):
+			case QSE_T('s'):
 			{
-				ADDC (buf, 'l');
+				if (modifier == MOD_SHORT)
+				{
+					/* always multibyte */
+				#if defined(QSE_CHAR_IS_MCHAR)
+					goto mchar_multi;
+				#else
+					ch = QSE_TOUPPER(ch);
+					goto wchar_multi;
+				#endif
+				}
+				else if (modifier == MOD_LONG)
+				{
+					/* always wide-character */
+				#if defined(QSE_CHAR_IS_MCHAR)
+					ch = QSE_TOUPPER(ch);
+					goto mchar_wide;
+				#else
+					goto wchar_wide;
+				#endif
+				}
+				else
+				{
+				#if defined(QSE_CHAR_IS_MCHAR) 
+				mchar_multi:
+					#if defined(_WIN32) && !defined(__WATCOMC__)
+					ADDC (buf, ch);
+					#else
+					ADDC (buf, ch);
+					#endif
+				#else
+				wchar_wide:
+					#if defined(_WIN32) && !defined(__WATCOMC__)
+					ADDC (buf, ch);
+					#else
+					ADDC (buf, QSE_WT('l'));
+					ADDC (buf, ch);
+					#endif
+				#endif
+				}
+				break;
 			}
-			else if (modifier == MOD_LONGLONG) 
+
+			case QSE_T('C'):
+			case QSE_T('S'):
 			{
-#if defined(_WIN32) && !defined(__LCC__)
-				ADDC (buf, 'I');
-				ADDC (buf, '6');
-				ADDC (buf, '4');
-#else
-				ADDC (buf, 'l');
-				ADDC (buf, 'l');
-#endif
+			#if defined(QSE_CHAR_IS_MCHAR)
+			mchar_wide:
+				#if defined(_WIN32) && !defined(__WATCOMC__)
+				ADDC (buf, ch);
+				#else		
+				ADDC (buf, QSE_MT('l'));
+				ADDC (buf, QSE_TOLOWER(ch));
+				#endif
+			#else
+			wchar_multi:
+				#if defined(_WIN32) && !defined(__WATCOMC__)
+				ADDC (buf, ch);
+				#else
+				ADDC (buf, QSE_TOLOWER(ch));
+				#endif
+			#endif
+	
+				break;
 			}
-			ADDC (buf, ch);
+
+			case QSE_T('d'):
+			case QSE_T('i'):
+			case QSE_T('o'):
+			case QSE_T('u'):
+			case QSE_T('x'):
+			case QSE_T('X'):
+			{
+				if (modifier == MOD_SHORT) 
+				{
+					ADDC (buf, 'h');
+				}
+				else if (modifier == MOD_LONG) 
+				{
+					ADDC (buf, 'l');
+				}
+				else if (modifier == MOD_LONGLONG) 
+				{
+				#if defined(_WIN32) && !defined(__LCC__)
+					ADDC (buf, 'I');
+					ADDC (buf, '6');
+					ADDC (buf, '4');
+				#else
+					ADDC (buf, 'l');
+					ADDC (buf, 'l');
+				#endif
+				}
+				ADDC (buf, ch);
+				break;
+			}
+
+			default:
+			{
+				ADDC (buf, ch);
+				break;
+			}
 		}
-		else if (ch == QSE_T('\0')) break;
-		else ADDC (buf, ch);
 	}
 
+done:
 	buf.ptr[buf.len] = QSE_T('\0');
-
 	return buf.ptr;
 }
-
-#endif
 
 int qse_dprintf (const qse_char_t* fmt, ...)
 {
@@ -330,7 +371,7 @@ int qse_dprintf (const qse_char_t* fmt, ...)
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = qse_vfprintf (stderr, fmt, ap);
+	n = qse_vfprintf (QSE_STDERR, fmt, ap);
 	va_end (ap);
 	return n;
 }
@@ -343,19 +384,23 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 	return _wfopen (path, mode);
 #else
 
-	char path_mb[PATH_MAX + 1];
-	char mode_mb[32];
-	size_t n;
+	QSE_FILE* fp = QSE_NULL;
+	qse_mchar_t* path_mb;
+	qse_mchar_t* mode_mb;
 
-	n = wcstombs (path_mb, path, QSE_COUNTOF(path_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == QSE_COUNTOF(path_mb)) path_mb[QSE_COUNTOF(path_mb)-1] = '\0';
+	path_mb = qse_wcstombsdup (path, QSE_MMGR_GETDFL());
+	mode_mb = qse_wcstombsdup (mode, QSE_MMGR_GETDFL());
 
-	n = wcstombs (mode_mb, mode, QSE_COUNTOF(mode_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == QSE_COUNTOF(mode_mb)) path_mb[QSE_COUNTOF(mode_mb)-1] = '\0';
+	if (path_mb && mode_mb)
+	{
+		fp = fopen (path_mb, mode_mb);
+	}
 
-	return fopen (path_mb, mode_mb);
+	if (mode_mb) QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mode_mb);
+	if (path_mb) QSE_MMGR_FREE (QSE_MMGR_GETDFL(), path_mb);
+
+	return fp;
+
 #endif
 }
 
@@ -378,19 +423,36 @@ QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
 	return QSE_NULL;
 
 #else
-	char cmd_mb[PATH_MAX + 1];
-	char mode_mb[32];
-	size_t n;
 
-	n = wcstombs (cmd_mb, cmd, QSE_COUNTOF(cmd_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == QSE_COUNTOF(cmd_mb)) cmd_mb[QSE_COUNTOF(cmd_mb)-1] = '\0';
+	QSE_FILE* fp = QSE_NULL;
+	qse_mchar_t* cmd_mb;
 
-	n = wcstombs (mode_mb, mode, QSE_COUNTOF(mode_mb));
-	if (n == (size_t)-1) return NULL;
-	if (n == QSE_COUNTOF(mode_mb)) cmd_mb[QSE_COUNTOF(mode_mb)-1] = '\0';
+	cmd_mb = qse_wcstombsdup (cmd, QSE_MMGR_GETDFL());
+	if (cmd_mb)
+	{
+		char mode_mb[3];
+		int mode_mb_len;
+		int mode_flag = 0;
 
-	return popen (cmd_mb, mode_mb);
+		fp = popen (cmd_mb, mode_mb);
+
+		while (*mode)
+		{
+			if (*mode == QSE_T('r')) mode_flag |= 1;
+			else if (*mode == QSE_T('w')) mode_flag |= 2;
+			mode++;
+		}
+
+		mode_mb_len = 0;
+		if (mode_flag & 1) mode_mb[mode_mb_len++] = QSE_MT('r');
+		if (mode_flag & 2) mode_mb[mode_mb_len++] = QSE_MT('w');
+		mode_mb[mode_mb_len++] = QSE_MT('\0');
+	
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), cmd_mb);
+	}
+
+	return fp;
+
 #endif
 }
 
@@ -423,11 +485,8 @@ qse_ssize_t qse_getdelim (
 	if (b == QSE_NULL)
 	{
 		capa = 256;
-	#if (defined(vms) || defined(__vms)) && (QSE_SIZEOF_VOID_P >= 8)
-		b = (qse_char_t*) _malloc32 (sizeof(qse_char_t)*(capa+1));
-	#else
-		b = (qse_char_t*) malloc (sizeof(qse_char_t)*(capa+1));
-	#endif
+		b = (qse_char_t*) QSE_MMGR_ALLOC (
+			QSE_MMGR_GETDFL(), QSE_SIZEOF(qse_char_t)*(capa+1));
 		if (b == QSE_NULL) return -2;
 	}
 
@@ -461,7 +520,8 @@ qse_ssize_t qse_getdelim (
 			qse_size_t ncapa = capa + 256;
 			qse_char_t* nb;
 
-			nb = realloc (b, ncapa*sizeof(qse_char_t));
+			nb = QSE_MMGR_REALLOC (
+				QSE_MMGR_GETDFL(), b, ncapa * QSE_SIZEOF(qse_char_t));
 			if (nb == QSE_NULL)
 			{
 				len = (qse_size_t)-2;

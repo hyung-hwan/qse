@@ -42,14 +42,15 @@ struct fop_t
 {
 	int flags;
 
-	qse_lstat_t old_stat;
-	qse_lstat_t new_stat;
 
 #if defined(_WIN32)
 	qse_wchar_t* old_path;
 	qse_wchar_t* new_path;
 	qse_wchar_t* new_path2;
 #else
+	qse_lstat_t old_stat;
+	qse_lstat_t new_stat;
+
 	qse_mchar_t* old_path;
 	qse_mchar_t* new_path;
 	qse_mchar_t* new_path2;
@@ -178,7 +179,7 @@ int qse_fs_move (
 					fs->errnum = QSE_FS_ENOMEM;
 					goto oops;
 				}
-qse_printf (QSE_T("new_path2 => [%S]\n"), fop.new_path2);
+qse_printf (QSE_T("new_path2 => [%hs]\n"), fop.new_path2);
 			}
 			else
 			{

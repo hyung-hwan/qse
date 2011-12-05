@@ -19,6 +19,7 @@
  */
 
 #include <qse/cmn/chr.h>
+#include <qse/cmn/utf8.h>
 #include "mem.h"
 
 #if !defined(QSE_HAVE_CONFIG_H)
@@ -41,7 +42,11 @@
 qse_size_t qse_mbrlen (
 	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
 {
-#ifdef HAVE_MBRLEN
+#if defined(_WIN32)
+	/* TODO: provide an option to use windows api */
+	return qse_utf8len (mb, mbl);
+
+#elif defined(HAVE_MBRLEN)
 	size_t n;
 
 	n = mbrlen (mb, mbl, (mbstate_t*)state);
@@ -67,7 +72,17 @@ qse_size_t qse_mbrtowc (
 	const qse_mchar_t* mb, qse_size_t mbl, 
 	qse_wchar_t* wc, qse_mbstate_t* state)
 {
-#ifdef HAVE_MBRTOWC
+#if defined(_WIN32)
+/*
+	int n;
+
+	n = MultiByteToWideChar (CP_ACP,  MB_ERR_INVALID_CHARS, mb, mbl, wc, 1);
+	if (n == 0) return 0;
+	return mbl;
+*/
+	return qse_utf8touc (mb, mbl, wc);
+
+#elif defined(HAVE_MBRTOWC)
 	size_t n;
 
 	n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
@@ -89,7 +104,10 @@ qse_size_t qse_wcrtomb (
 	qse_wchar_t wc, qse_mchar_t* mb,
 	qse_size_t mbl, qse_mbstate_t* state)
 {
-#ifdef HAVE_WCRTOMB
+#if defined(_WIN32)
+	return qse_uctoutf8 (wc, mb, mbl);
+
+#elif defined(HAVE_WCRTOMB)
 	size_t n;
 
 	if (mbl < QSE_MBLEN_MAX)
@@ -113,7 +131,7 @@ qse_size_t qse_wcrtomb (
 		if (n == (size_t)-1) return 0; /* illegal character */
 	}
 
-	return n;
+	return n; /* number of bytes written to the buffer */
 #else
 	#error #### NOT SUPPORTED ####
 #endif
@@ -147,5 +165,6 @@ qse_size_t qse_wctomb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mbl)
 
 int qse_mbcurmax (void)
 {
-	return MB_CUR_MAX;
+/* TODO: consider other encodings */	
+	return (QSE_UTF8LEN_MAX > MB_CUR_MAX)? QSE_UTF8LEN_MAX: MB_CUR_MAX;
 }

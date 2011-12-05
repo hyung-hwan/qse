@@ -67,6 +67,7 @@ static qse_ssize_t tio_putc (qse_tio_t* tio, qse_char_t c, int* flush_needed)
 		return -1;
 	}
 
+
 	for (i = 0; i < n; i++) 
 	{
 		tio->outbuf[tio->outbuf_len++] = mc[i];

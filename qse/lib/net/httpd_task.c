@@ -472,7 +472,7 @@ static int task_main_path (
 	struct stat st;
 	qse_httpd_task_t* x = task;
 
-qse_printf (QSE_T("opending file %S\n"), data->name);
+qse_printf (QSE_T("opending file %hs\n"), data->name);
 	handle.i = open (data->name, O_RDONLY);
 	if (handle.i <= -1)
 	{

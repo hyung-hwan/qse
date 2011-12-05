@@ -34,12 +34,6 @@
 
 #if defined(_WIN32) && !defined(__WATCOMC__)
 	#include <tchar.h>
-
-	#define qse_printf   _tprintf
-	#define qse_vprintf  _vtprintf
-	#define qse_fprintf  _ftprintf
-	#define qse_vfprintf _vftprintf
-
 	#define qse_fgets(x,y,s) _fgetts(x,y,s)
 	#define qse_fgetc(x) _fgettc(x)
 	#define qse_fputs(x,s) _fputts(x,s)
@@ -87,12 +81,10 @@ int qse_sprintf (
 	...
 );
 
-#if !defined(_WIN32) || defined(__WATCOMC__)
 int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap);
 int qse_vprintf (const qse_char_t* fmt, va_list ap);
 int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...);
 int qse_printf (const qse_char_t* fmt, ...);
-#endif
 
 int qse_dprintf (const qse_char_t* fmt, ...);
 QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode);

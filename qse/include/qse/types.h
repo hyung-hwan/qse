@@ -802,4 +802,17 @@ union qse_ubi_t
 };
 typedef union qse_ubi_t qse_ubi_t;
 
+/*
+ * Note QSE_MBLEN_MAX was set to 2 when autoconf ran for _WIN32 
+ * with mingw32. This is bad since it can't handle UTF-8. Here are
+ * some redefinitions. (_WIN64 with mingw64 gave me 5 though).
+ */
+#if (QSE_SIZEOF_WCHAR_T == 2) && (QSE_MBLEN_MAX < 3)
+#	undef QSE_MBLEN_MAX
+#	define QSE_MBLEN_MAX 3
+#elif (QSE_SIZEOF_WCHAR_T == 4) && (QSE_MBLEN_MAX < 6)
+#	undef QSE_MBLEN_MAX 
+#	define QSE_MBLEN_MAX 6
+#endif
+
 #endif

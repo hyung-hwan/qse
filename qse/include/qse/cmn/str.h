@@ -2360,12 +2360,21 @@ qse_size_t qse_wcsntombsnlen (
 /**
  * The qse_wcstombs() function converts a null-terminated wide character 
  * string to a multibyte string and stores it into the buffer pointed to
- * by mbs. The pointer to a variable holding the buffer length should be
+ * by @a mbs. The pointer to a variable holding the buffer length should be
  * passed to the function as the third parameter. After conversion, it holds 
  * the length of the multibyte string excluding the terminating-null character.
  * It may not null-terminate the resulting multibyte string if the buffer
- * is not large enough. You can check if the resulting mbslen is equal to 
- * the input mbslen to know it.
+ * is not large enough. 
+ * @code
+ *   const qse_wchar_t* QSE_T("hello");
+ *   qse_mchar_t mbs[10];
+ *   qse_size_t mbslen = QSE_COUNTOF(mbs);
+ *   n = qse_wcstombs (wcs, mbs, &mbslen);
+ *   if (wcs[n] == QSE_WT('\0') && mbslen < QSE_COUNTOF(mbs)) 
+ *   {
+ *       // wcs fully scanned and mbs null-terminated
+ *   }
+ * @endcode
  * @return number of wide characters processed
  */
 qse_size_t qse_wcstombs (
@@ -2427,6 +2436,11 @@ qse_mchar_t* qse_wcstombsdup (
 	qse_mmgr_t*        mmgr
 );
 
+
+qse_wchar_t* qse_mbsatombsdup (
+	const qse_mchar_t* mbs[],
+	qse_mmgr_t*        mmgr
+);
 
 qse_mchar_t* qse_wcsatombsdup (
 	const qse_wchar_t* wcs[],

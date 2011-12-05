@@ -138,7 +138,6 @@ qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
 /*
  * TODO: fix wrong mbstate handling 
  */
-
 qse_size_t qse_mbstowcslen (const qse_mchar_t* mcs, qse_size_t* wcslen)
 {
 	qse_wchar_t wc;
@@ -206,10 +205,9 @@ qse_size_t qse_mbstowcs (
 	}
 
 	/* if null-terminated properly, the input wcslen must be less than
-	 * the output wcslen. (input length includs the terminating null
+	 * the output wcslen. (input length includes the terminating null
 	 * while the output length excludes the terminating null) */
 	*wcslen = wlen; 
-
 	return mlen;
 }
 
@@ -243,7 +241,7 @@ qse_size_t qse_mbsntowcsn (
 qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
 {
 	const qse_wchar_t* p = wcs;
-	qse_mchar_t mbs[32];
+	qse_mchar_t mbs[QSE_MBLEN_MAX];
 	qse_size_t mlen = 0;
 	qse_mbstate_t state = {{ 0, }};
 
@@ -273,7 +271,7 @@ qse_size_t qse_wcsntombsnlen (
 {
 	const qse_wchar_t* p = wcs;
 	const qse_wchar_t* end = wcs + wcslen;
-	qse_mchar_t mbs[32];
+	qse_mchar_t mbs[QSE_MBLEN_MAX];
 	qse_size_t mlen = 0;
 	qse_mbstate_t state = {{ 0, }};
 
@@ -288,7 +286,8 @@ qse_size_t qse_wcsntombsnlen (
 		p++; mlen += n;
 	}
 
-	/* this length excludes the terminating null character. */
+	/* this length excludes the terminating null character. 
+	 * this function doesn't event null-terminate the result. */
 	*mbslen = mlen;
 
 	/* returns the number of characters handled. 
@@ -304,20 +303,12 @@ qse_size_t qse_wcstombs (
 	qse_size_t rem = *mbslen;
 	qse_mbstate_t state = {{ 0, }};
 
-	while (*p != QSE_WT('\0') && rem > 1) 
+	while (*p != QSE_WT('\0') && rem > 0) 
 	{
 		qse_size_t n = qse_wcrtomb (*p, mbs, rem, &state);
 		if (n == 0 || n > rem)
 		{
 			/* illegal character or buffer not enough */
-			break;
-		}
-
-		if (rem == n) 
-		{
-			/* the buffer is full without the space for a 
-			 * terminating null. should stop processing further
-			 * excluding this last character emitted. */
 			break;
 		}
 
@@ -371,16 +362,16 @@ int qse_mbstowcsrigid (
 	qse_size_t wn = wcslen;
 
 	n = qse_mbstowcs (mbs, wcs, &wn);
+	if (mbs[n] != QSE_MT('\0'))
+	{
+		/* incomplete sequence or invalid sequence */
+		return -1;
+	}
 	if (wn >= wcslen)
 	{
 		/* wcs not big enough to be null-terminated.
 		 * if it has been null-terminated properly, 
 		 * wn should be less than wcslen. */
-		return -1;
-	}
-	if (mbs[n] != QSE_MT('\0'))
-	{
-		/* incomplete sequence or invalid sequence */
 		return -2;
 	}
 
@@ -395,19 +386,19 @@ int qse_wcstombsrigid (
 	qse_size_t mn = mbslen;
 
 	n = qse_wcstombs (wcs, mbs, &mn);
-	if (mn >= mbslen) 
-	{
-		/* mbs not big enough to be null-terminated.
-		 * if it has been null-terminated properly, 
-		 * mn should be less than mbslen. */
-		return -1; 
-	}
 	if (wcs[n] != QSE_WT('\0')) 
 	{
 		/* if qse_wcstombs() processed all wide characters,
 		 * the character at position 'n' should be a null character
 		 * as 'n' is the number of wide characters processed. */
-		return -2;
+		return -1;
+	}
+	if (mn >= mbslen) 
+	{
+		/* mbs not big enough to be null-terminated.
+		 * if it has been null-terminated properly, 
+		 * mn should be less than mbslen. */
+		return -2; 
 	}
 
 	return 0;
@@ -447,6 +438,37 @@ qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
 	return mbs;
 }
 
+qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
+{
+	qse_wchar_t* buf, * ptr;
+	qse_size_t i;
+	qse_size_t capa = 0;
+	qse_size_t wl, ml;
+
+	QSE_ASSERT (mmgr != QSE_NULL);
+
+	for (i = 0; mbs[i]; i++) 
+	{
+		ml = qse_mbstowcslen(mbs[i], &wl);
+		if (mbs[i][ml] != QSE_MT('\0')) return QSE_NULL;
+		capa += wl;
+	}
+
+	buf = (qse_wchar_t*) QSE_MMGR_ALLOC (
+		mmgr, (capa + 1) * QSE_SIZEOF(*buf));
+	if (buf == QSE_NULL) return QSE_NULL;
+
+	ptr = buf;
+	for (i = 0; mbs[i]; i++) 
+	{
+		wl = capa + 1;
+		ml = qse_mbstowcs (mbs[i], ptr, &wl);
+		ptr += wl;
+		capa -= wl;
+	}
+
+	return buf;
+}
 
 qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 {
@@ -464,7 +486,8 @@ qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 		capa += ml;
 	}
 
-	buf = (qse_mchar_t*) QSE_MMGR_ALLOC (mmgr, (capa+1)*QSE_SIZEOF(*buf));
+	buf = (qse_mchar_t*) QSE_MMGR_ALLOC (
+		mmgr, (capa + 1) * QSE_SIZEOF(*buf));
 	if (buf == QSE_NULL) return QSE_NULL;
 
 	ptr = buf;

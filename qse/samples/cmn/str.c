@@ -1,10 +1,15 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
+#include <qse/cmn/sio.h>
 
 #include <locale.h>
 #include <wchar.h>
 #include <string.h>
+
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
 
 #define R(f) \
 	do { \
@@ -214,9 +219,9 @@ static int test6 (void)
 	int i;
 	const qse_mchar_t* x[] =
 	{
-		"",
-		"뛰어 올라봐. 멀리멀리 잘난척하기는",
-		"Fly to the universe. eat my shorts."
+		QSE_MT(""),
+		QSE_MT("뛰어 올라봐. 멀리멀리 잘난척하기는"),
+		QSE_MT("Fly to the universe. eat my shorts.")
 	};
 	qse_wchar_t buf[5];
 	qse_wchar_t buf2[50];
@@ -225,19 +230,25 @@ static int test6 (void)
 	{
 		qse_size_t n;
 		qse_size_t wlen = QSE_COUNTOF(buf);
+
 		n = qse_mbstowcs (x[i], buf, &wlen);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("[%s]=>"), x[i]);
-	#else
-		qse_printf (QSE_T("[%S]=>"), x[i]);
-	#endif
+		qse_printf (QSE_T("[%hs]=>"), x[i]);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("[%S] %d chars %d bytes\n"), buf, (int)wlen, (int)n);
-	#else
-		qse_printf (QSE_T("[%s] %d chars %d bytes\n"), buf, (int)wlen, (int)n);
-	#endif
+		/* the string should not be properly null terminated 
+		 * if buf is shorter than the necesary buffer size needed for 
+		 * full conversion */
+		qse_wcsxncpy (buf2, QSE_COUNTOF(buf2), buf, wlen); 
+
+		qse_printf (QSE_T("%s %d chars %d bytes [%ls]\n"), 
+			((x[i][n] == QSE_WT('\0') && wlen < QSE_COUNTOF(buf))? QSE_T("FULL"): QSE_T("PARTIAL")),
+			(int)wlen, (int)n, buf2);
+		qse_fflush (QSE_STDOUT);
+
+		qse_sio_puts (QSE_SIO_OUT, QSE_T("<<"));
+		qse_sio_puts (QSE_SIO_OUT, buf2);
+		qse_sio_puts (QSE_SIO_OUT, QSE_T(">>\n"));
+		qse_sio_flush (QSE_SIO_OUT);
 	}
 
 	qse_printf (QSE_T("-----------------\n"));
@@ -248,11 +259,15 @@ static int test6 (void)
 		qse_size_t wlen = QSE_COUNTOF(buf2);
 		n = qse_mbstowcs (x[i], buf2, &wlen);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("[%S] %d chars %d bytes\n"), buf2, (int)wlen, (int)n);
-	#else
-		qse_printf (QSE_T("[%s] %d chars %d bytes\n"), buf2, (int)wlen, (int)n);
-	#endif
+		qse_printf (QSE_T("%s %d chars %d bytes [%.*ls]\n"), 
+			((x[i][n] == QSE_WT('\0') && wlen < QSE_COUNTOF(buf))? QSE_T("FULL"): QSE_T("PARTIAL")),
+			(int)wlen, (int)n, (int)wlen, buf2);
+
+		qse_fflush (QSE_STDOUT);
+		qse_sio_puts (QSE_SIO_OUT, QSE_T("<<"));
+		qse_sio_puts (QSE_SIO_OUT, buf2);
+		qse_sio_puts (QSE_SIO_OUT, QSE_T(">>\n"));
+		qse_sio_flush (QSE_SIO_OUT);
 	}
 
 	return 0;
@@ -298,6 +313,8 @@ static int test7 (void)
 			}
 			else
 			{
+				qse_printf (QSE_T("%.*hs"), (int)mlen, buf);
+#if 0
 			#ifdef QSE_CHAR_IS_MCHAR
 				qse_printf (QSE_T("%.*s"), (int)mlen, buf);
 			#else
@@ -310,6 +327,7 @@ static int test7 (void)
 				qse_printf (QSE_T("%.*S"), n, buf);
 				#endif
 			#endif
+#endif
 			}
 		}
 
@@ -323,7 +341,7 @@ static int test8 (void)
 	const qse_wchar_t* x[] =
 	{
 		L"",
-		L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?",
+		L"\uB108 \uBB50\uAC00\uC798\uB0AC\uC5B4?",
 		L"Fly to the universe, kick you ass"
 	};
 	qse_mchar_t buf[10];
@@ -335,14 +353,12 @@ static int test8 (void)
 		qse_size_t n;
 		qse_size_t mlen = sizeof(buf);
 
-		memset (buf, 'A', sizeof(buf));
+		memset (buf, QSE_MT('A'), sizeof(buf));
 		n = qse_wcstombs (x[i], buf, &mlen);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("[%s] chars=%d bytes=%d\n"), buf, (int)n, (int)mlen);
-	#else
-		qse_printf (QSE_T("[%S] chars=%d bytes=%d\n"), buf, (int)n, (int)mlen);
-	#endif
+		qse_printf (QSE_T("%s chars=%d bytes=%d [%hs]\n"), 
+			((x[i][n] == QSE_WT('\0') && mlen < sizeof(buf))? QSE_T("FULL"): QSE_T("PARTIAL")),
+			(int)n, (int)mlen, buf);
 	}
 
 	qse_printf (QSE_T("-----------------\n"));
@@ -354,11 +370,9 @@ static int test8 (void)
 		memset (buf2, 'A', sizeof(buf2));
 		n = qse_wcstombs (x[i], buf2, &mlen);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		qse_printf (QSE_T("[%s] chars=%d bytes=%d\n"), buf2, (int)n, (int)mlen);
-	#else
-		qse_printf (QSE_T("[%S] chars=%d bytes=%d\n"), buf2, (int)n, (int)mlen);
-	#endif
+		qse_printf (QSE_T("%s chars=%d bytes=%d [%hs]\n"), 
+			((x[i][n] == QSE_WT('\0') && mlen < sizeof(buf2))? QSE_T("FULL"): QSE_T("PARTIAL")),
+			(int)n, (int)mlen, buf2);
 	}
 
 	qse_printf (QSE_T("-----------------\n"));
@@ -375,11 +389,9 @@ static int test8 (void)
 			n = qse_wcstombs (p, buf, &mlen);
 			if (n == 0) break;
 
-		#ifdef QSE_CHAR_IS_MCHAR
-			qse_printf (QSE_T("[%s] chars=%d bytes=%d\n"), buf, (int)n, (int)mlen);
-		#else
-			qse_printf (QSE_T("[%S] chars=%d bytes=%d\n"), buf, (int)n, (int)mlen);
-		#endif
+			qse_printf (QSE_T("%s chars=%d bytes=%d [%hs]\n"), 
+				((x[i][n] == QSE_WT('\0') && mlen < sizeof(buf))? QSE_T("FULL"): QSE_T("PARTIAL")),
+				(int)n, (int)mlen, buf);
 			p += n;
 		}
 	}
@@ -389,7 +401,7 @@ static int test8 (void)
 
 static int test9 (void)
 {
-	char buf[24];
+	qse_mchar_t buf[24];
 	int i;
 
 	const qse_wchar_t* x[] =
@@ -409,23 +421,15 @@ static int test9 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		#ifdef QSE_CHAR_IS_MCHAR
-			qse_printf (QSE_T("[%S] => "), x[i]);
-		#else
-			qse_printf (QSE_T("[%s] => "), x[i]);
-		#endif
+		qse_printf (QSE_T("[%ls] => "), x[i]);
 
-		if (qse_wcstombsrigid (x[i], buf, QSE_COUNTOF(buf)) == -1)
+		if (qse_wcstombsrigid (x[i], buf, QSE_COUNTOF(buf)) <= -1)
 		{
 			qse_printf (QSE_T("ERROR\n"));
 		}
 		else
 		{
-		#ifdef QSE_CHAR_IS_MCHAR
-			qse_printf (QSE_T("[%s]\n"), buf);
-		#else
-			qse_printf (QSE_T("[%S]\n"), buf);
-		#endif
+			qse_printf (QSE_T("[%hs]\n"), buf);
 		}
 	}
 
@@ -433,6 +437,30 @@ static int test9 (void)
 }
 
 static int test10 (void)
+{
+	qse_wchar_t* wa[] = { QSE_WT("hello"), QSE_WT(","), QSE_WT("world"), QSE_NULL };
+	qse_mchar_t* ma[] = { QSE_MT("HELLO"), QSE_MT(","), QSE_MT("WORLD"), QSE_NULL };
+	qse_wchar_t* w;
+	qse_mchar_t* m;
+
+	m = qse_wcsatombsdup (wa, QSE_MMGR_GETDFL());
+	if (m)
+	{
+		qse_printf (QSE_T("[%ms]\n"), m);
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), m);
+	}
+
+	w = qse_mbsatowcsdup (ma, QSE_MMGR_GETDFL());
+	if (w)
+	{
+		qse_printf (QSE_T("[%ws]\n"), w);
+		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), w);
+	}
+
+	return 0;
+}
+
+static int test11 (void)
 {
 	qse_char_t buf[1000];
 	const qse_char_t* arg3[] = 
@@ -480,7 +508,7 @@ static int test10 (void)
 	return 0;
 }
 
-static int test11 (void)
+static int test12 (void)
 {
 	qse_char_t buf[20];
 	int i, j;
@@ -524,7 +552,7 @@ qse_char_t* subst (qse_char_t* buf, qse_size_t bsz, const qse_cstr_t* ident, voi
 	return buf;
 }
 
-static int test12 (void)
+static int test13 (void)
 {
 	qse_char_t buf[24];
 	qse_size_t i, j;
@@ -546,7 +574,7 @@ static int test12 (void)
 	return 0;
 }
 
-static int test13 (void)
+static int test14 (void)
 {
 	qse_char_t a1[] = QSE_T("   this is a test string    ");
 	qse_char_t a2[] = QSE_T("   this is a test string    ");
@@ -565,7 +593,7 @@ static int test13 (void)
 	return 0;
 }
 
-static int test14 (void)
+static int test15 (void)
 {
 	qse_char_t a1[] = QSE_T("abcdefghijklmnopqrstuvwxyz");
 	qse_str_t x;
@@ -587,7 +615,7 @@ static int test14 (void)
 	return 0;
 }
 
-static int test15 (void)
+static int test16 (void)
 {
 	const qse_char_t* x = QSE_T("this is good");
 
@@ -600,7 +628,7 @@ static int test15 (void)
 	return 0;
 }
 
-static int test16 (void)
+static int test17 (void)
 {
 	const qse_char_t* ptn[] = 
 	{
@@ -643,7 +671,19 @@ static int test16 (void)
 
 int main ()
 {
+#if defined(_WIN32)
+	char codepage[100];
+	UINT old_cp = GetConsoleOutputCP();
+	SetConsoleOutputCP (CP_UTF8);
+
+	/* TODO: on windows this set locale only affects those mbcs fucntions in clib.
+	 * it doesn't support utf8 i guess find a working way. the following won't work 
+	sprintf (codepage, ".%d", GetACP());
+	setlocale (LC_ALL, codepage);
+	*/
+#else
 	setlocale (LC_ALL, "");
+#endif
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
@@ -659,12 +699,17 @@ int main ()
 	R (test8);
 	R (test9);
 	R (test10);
+
 	R (test11);
 	R (test12);
 	R (test13);
 	R (test14);
 	R (test15);
 	R (test16);
+	R (test17);
 
+#if defined(_WIN32)
+	SetConsoleOutputCP (old_cp);
+#endif
 	return 0;
 }
