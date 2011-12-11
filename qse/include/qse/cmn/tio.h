@@ -70,7 +70,8 @@ typedef enum qse_tio_cmd_t qse_tio_cmd_t;
 
 enum qse_tio_flag_t
 {
-	QSE_TIO_IGNOREMBWCERR = (1 << 0)
+	QSE_TIO_IGNOREMBWCERR = (1 << 0),
+	QSE_TIO_NOAUTOFLUSH   = (1 << 1)
 };
 
 #define QSE_TIO_ERRNUM(tio) ((const qse_tio_errnum_t)(tio)->errnum)
@@ -245,6 +246,18 @@ qse_ssize_t qse_tio_write (
 	qse_tio_t*        tio,
 	const qse_char_t* data,
 	qse_size_t        size
+);
+
+qse_ssize_t qse_tio_writem (
+	qse_tio_t*         tio,
+	const qse_mchar_t* data,
+	qse_size_t         size
+);
+
+qse_ssize_t qse_tio_writew (
+	qse_tio_t*         tio,
+	const qse_wchar_t* data,
+	qse_size_t         size
 );
 
 #ifdef __cplusplus
