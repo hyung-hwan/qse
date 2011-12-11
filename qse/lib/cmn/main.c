@@ -48,31 +48,12 @@ int qse_runmain (
 
 		for (i = 0; i < argc; i++)
 		{
-			qse_size_t n, len, nlen;
-			qse_size_t mbslen;
-
-			mbslen = qse_mbslen (argv[i]);
-
-			n = qse_mbstowcslen (argv[i], &len);
-			if (n < mbslen)	{ ret = -1; goto oops; }
-
-			len++; /* include the terminating null */
-
-			v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
-				mmgr, len*QSE_SIZEOF(qse_char_t));
-			if (v[i] == QSE_NULL) { ret = -1; goto oops; }
-
-			nlen = len;
-			n = qse_mbstowcs (argv[i], v[i], &nlen);
-			if (nlen >= len)
+			/* TODO: ignore MBWCERR */
+			v[i]= qse_mbstowcsdup (argv[i], mmgr);
+			if (v[i] == QSE_NULL)
 			{
-				/* no null-termination */
-				ret = -1; goto oops;
-			}
-			if (argv[i][n] != '\0')
-			{
-				/* partial processing */
-				ret = -1; goto oops;
+				ret = -1;
+				goto oops;
 			}
 		}
 
@@ -117,36 +98,18 @@ int qse_runmainwithenv (
 
 		for (i = 0; i < argc + 1 + envc; i++)
 		{
-			qse_size_t n, len, nlen;
-			qse_size_t mbslen;
 			qse_achar_t* x;
 
 			if (i < argc) x = argv[i];
 			else if (i == argc) continue;
 			else x = envp[i - argc - 1];
-		
-			mbslen = qse_mbslen (x);
 
-			n = qse_mbstowcslen (x, &len);
-			if (n < mbslen) { ret = -1; goto oops; }
-
-			len++; /* include the terminating null */
-
-			v[i] = (qse_char_t*) QSE_MMGR_ALLOC (
-				mmgr, len*QSE_SIZEOF(qse_char_t));
-			if (v[i] == QSE_NULL) { ret = -1; goto oops; }
-
-			nlen = len;
-			n = qse_mbstowcs (x, v[i], &nlen);
-			if (nlen >= len)
+			/* TODO: ignore MBWCERR */
+			v[i]= qse_mbstowcsdup (x, mmgr);
+			if (v[i] == QSE_NULL)
 			{
-				/* no null-termination */
-				ret = -1; goto oops;
-			}
-			if (x[n] != '\0')
-			{
-				/* partial processing */
-				ret = -1; goto oops;
+				ret = -1;
+				goto oops;
 			}
 		}
 

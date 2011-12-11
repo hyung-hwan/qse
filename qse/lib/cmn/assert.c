@@ -89,11 +89,6 @@ void qse_assert_failed (
 	void *btarray[128];
 	qse_size_t btsize, i;
 	char **btsyms;
-
-#ifdef QSE_CHAR_IS_WCHAR
-	qse_wchar_t wcs[256];
-#endif
-
 #endif
 
 	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
@@ -138,11 +133,15 @@ void qse_assert_failed (
 
 		for (i = 0; i < btsize; i++)
 		{
+			/* TODO:  call qse_sio_putms() instead of using ifdef */
 		#ifdef QSE_CHAR_IS_MCHAR
 			qse_sio_puts (QSE_SIO_ERR, btsyms[i]);
 		#else
+			qse_wchar_t wcs[256];
 			qse_size_t wcslen = QSE_COUNTOF(wcs);
-			qse_mbstowcs (btsyms[i], wcs, &wcslen);
+			qse_size_t mbslen;
+			qse_mbstowcs (btsyms[i], &mbslen, wcs, &wcslen);
+			wcs[QSE_COUNTOF(wcs) - 1] = QSE_T('\0');
 			qse_sio_puts (QSE_SIO_ERR, wcs);
 		#endif
 			qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));

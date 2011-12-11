@@ -838,8 +838,15 @@ int qse_pio_init (
 
 			if (oflags & QSE_PIO_SHELL)
 			{
+#if 0
 				n = qse_wcstombslen (cmd, &mn);
 				if (cmd[n] != QSE_WT('\0')) 
+				{
+					/* cmd has illegal sequence */
+					goto child_oops;
+				}
+#endif
+				if (qse_wcstombs (cmd, &wl, QSE_NULL, &mn) <= -1)
 				{
 					/* cmd has illegal sequence */
 					goto child_oops;
@@ -864,8 +871,11 @@ int qse_pio_init (
 					if (wcmd[wl++] == QSE_T('\0')) n--;
 				}
 	
+#if 0
 				n = qse_wcsntombsnlen (wcmd, wl, &mn);
 				if (n != wl) goto child_oops;
+#endif
+				if (qse_wcsntombsn (wcmd, &wl, QSE_NULL, &mn) <= -1) goto child_oops;
 			}
 	
 			/* prepare to reserve 1 more slot for the terminating '\0'
@@ -887,16 +897,16 @@ int qse_pio_init (
 			if (oflags & QSE_PIO_SHELL)
 			{
 				/* qse_wcstombs() should succeed as 
-				 * qse_wcstombslen() was successful above */
-				qse_wcstombs (cmd, mcmd, &mn);
+				 * it was successful above */
+				qse_wcstombs (cmd, &wl, mcmd, &mn);
 				/* qse_wcstombs() null-terminate mcmd */
 			}
 			else
 			{
 				QSE_ASSERT (wcmd != QSE_NULL);
 				/* qse_wcsntombsn() should succeed as 
-				 * qse_wcsntombsnlen() was successful above */
-				qse_wcsntombsn (wcmd, wl, mcmd, &mn);
+				 * it was was successful above */
+				qse_wcsntombsn (wcmd, &wl, mcmd, &mn);
 				/* qse_wcsntombsn() doesn't null-terminate mcmd */
 				mcmd[mn] = QSE_MT('\0');
 			}

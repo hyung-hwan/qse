@@ -252,8 +252,9 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[CCHMAXPATH];
-		if (qse_wcstombsrigid (path,
-			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
+		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
+/* TODO: use wcstombsdup??? */
+		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
 	#endif
 
 		zero.ulLo = 0;
@@ -342,8 +343,8 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[_MAX_PATH];
-		if (qse_wcstombsrigid (path,
-			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
+		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
+		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
 	#endif
 
 		if (flags & QSE_FIO_APPEND)
@@ -395,8 +396,9 @@ int qse_fio_init (
 		const qse_mchar_t* path_mb = path;
 	#else
 		qse_mchar_t path_mb[PATH_MAX + 1];
-		if (qse_wcstombsrigid (path,
-			path_mb, QSE_COUNTOF(path_mb)) <= -1) return -1;
+/* TODO: use qse_wcstombsdup(). path name may exceede PATH_MAX if it contains .. or . */
+		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
+		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND
@@ -655,7 +657,8 @@ static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 #if defined(_WIN32)
 
 	DWORD count;
-	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (ReadFile (fio->handle, 
 		buf, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
@@ -663,18 +666,22 @@ static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 #elif defined(__OS2__)
 
 	ULONG count;
-	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
 	if (DosRead (fio->handle, 
 		buf, (ULONG)size, &count) != NO_ERROR) return -1;
 	return (qse_ssize_t)count;
 
 #elif defined(__DOS__)
 
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 	return read (fio->handle, buf, size);
 
 #else
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 	return QSE_READ (fio->handle, buf, size);
 #endif
 }
@@ -690,8 +697,10 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 {
 #if defined(_WIN32)
+
 	DWORD count;
-	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (WriteFile (fio->handle,
 		data, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
 	return (qse_ssize_t)count;
@@ -699,19 +708,23 @@ static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 #elif defined(__OS2__)
 
 	ULONG count;
-	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
 	if (DosWrite(fio->handle, 
 		(PVOID)data, (ULONG)size, &count) != NO_ERROR) return -1;
 	return (qse_ssize_t)count;
 
 #elif defined(__DOS__)
 
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 	return write (fio->handle, data, size);
 
 #else
 
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 	return QSE_WRITE (fio->handle, data, size);
 
 #endif
@@ -932,7 +945,6 @@ static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_
 	QSE_ASSERT (fio != QSE_NULL);
 	if (cmd == QSE_TIO_IO_DATA) return fio_read (fio, buf, size);
 	
-
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
 	return 0;

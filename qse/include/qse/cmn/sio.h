@@ -149,9 +149,9 @@ qse_ssize_t qse_sio_getc (
 );
 
 qse_ssize_t qse_sio_gets (
-	qse_sio_t* sio,
+	qse_sio_t*  sio,
 	qse_char_t* buf,
-	qse_size_t size
+	qse_size_t  size
 );
 
 qse_ssize_t qse_sio_getsn (

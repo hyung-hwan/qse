@@ -321,22 +321,23 @@ static int set_entry_name (qse_fs_t* fs, const qse_mchar_t* name)
 	info_t* info;
 	qse_size_t len;
 
+#if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
+	/* nothing more to declare */
+#else
+	qse_size_t mlen;
+#endif
+
 	info = fs->info;
 	QSE_ASSERT (info != QSE_NULL);
 
 #if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
 	len = qse_strlen (name);
 #else
+	/* TODO: ignore MBWCERR */
+	if (qse_mbstowcs (name, &mlen, QSE_NULL, &len) <= -1)
 	{
-		qse_size_t mlen;
-
-		/* TODO: ignore MBWCERR */
-		mlen = qse_mbstowcslen (name, &len);	
-		if (name[mlen] != QSE_MT('\0')) 
-		{
-			/* invalid name ??? */
-			return -1;
-		}
+		/* invalid name ??? */
+		return -1;
 	}
 #endif
 
@@ -363,8 +364,8 @@ static int set_entry_name (qse_fs_t* fs, const qse_mchar_t* name)
 #if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
 	qse_strcpy (info->name.ptr, name);
 #else
-	len++;
-	qse_mbstowcs (name, info->name.ptr, &len);
+	len++; /* for terminating null */
+	qse_mbstowcs (name, &mlen, info->name.ptr, &len);
 #endif
 
 	fs->ent.name.base = info->name.ptr;

@@ -101,6 +101,7 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 
 	if (size == (qse_size_t)-1)
 	{
+/* TODO: should not write more than than QSE_TYPE_MAX(qse_ssize_t) */
 		while (*p != QSE_T('\0'))
 		{
 			n = tio_putc (tio, *p, &flush_needed);
@@ -111,7 +112,10 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 	}
 	else
 	{
-		const qse_char_t* end = str + size;
+		const qse_char_t* end;
+
+/* TODO: size should not be longer than QSE_TYPE_MAX(qse_ssize_t) */
+		end = str + size;
 		while (p < end) 
 		{
 			n = tio_putc (tio, *p, &flush_needed);
@@ -125,3 +129,84 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 	return p - str;
 }
 
+qse_ssize_t qse_tio_writemstr (
+	qse_tio_t* tio, const qse_mchar_t* mptr, qse_size_t mlen)
+{
+	const qse_mchar_t* xptr, * xend;
+	qse_size_t capa;
+	int nl = 0;
+
+	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf)) 
+	{
+		/* maybe, previous flush operation has failed a few 
+		 * times previously. so the buffer is full.
+		 */
+		tio->errnum = QSE_TIO_ENOSPC;	
+		return -1;
+	}
+
+	/* adjust mlen for the type difference between the parameter
+	 * and the return value */
+	if (mlen > QSE_TYPE_MAX(qse_ssize_t)) mlen = QSE_TYPE_MAX(qse_ssize_t);
+
+	/* handle the parts that can't fit into the internal buffer */
+	while (mlen >= (capa = QSE_COUNTOF(tio->outbuf) - tio->outbuf_len))
+	{
+		for (xend = xptr + capa; xptr < xend; xptr++)
+			tio->outbuf[tio->outbuf_len++] = *xptr;
+		if (qse_tio_flush (tio) == -1) return -1;
+		mlen -= capa;
+	}
+
+	/* handle the last part that can fit into the internal buffer */
+	for (xend = xptr + mlen; xptr < xend; xptr++)
+	{
+		/* TODO: support different line terminating characeter */
+		if (*xptr == QSE_MT('\n')) nl = 1; 
+		tio->outbuf[tio->outbuf_len++] = *xptr;
+	}
+
+	/* if the last part contains a new line, flush the internal
+	 * buffer. note that this flushes characters after nl also.*/
+	if (nl && qse_tio_flush (tio) == -1) return -1;
+
+	/* returns the number multi-bytes characters handled */
+	return xptr - mptr;
+}
+
+#if 0
+qse_ssize_t qse_tio_writewstr (
+	qse_tio_t* tio, const qse_wchar_t* wptr, qse_size_t wlen)
+{
+
+	if (wlen > QSE_TYPE_MAX(qse_ssize_t)) wlen = QSE_TYPE_MAX(qse_ssize_t);
+
+	while (1)
+	{
+		qse_size_t capa, mcnt, wcnt;
+
+		capa = QSE_COUNTOF(tio->outbuf) - tio->outbuf_len;
+		mcnt = capa;
+		wcnt = qse_wcsntombsn (wptr, wlen, &tio->outbuf[tio->outbuf_len], &mcnt);
+
+		if (wcnt == wlen)
+		{
+			/* process the all*/
+		}
+
+		if (mcnt >= capa) 
+		{
+			/* wcsntombsn doesn't null-terminate the result. *	/
+			/* buffer is not large enough. flush first before continuing */
+			if (qse_tio_flush (tio) == -1) return -1;
+			continue;	
+		}
+		else if (wcnt != wlen)
+		{
+			/* invalid wide-character is included. */
+			if (tio->flags & QSE_TIO_IGNOREMBWCERR)
+			{
+			}
+		}
+}
+#endif
