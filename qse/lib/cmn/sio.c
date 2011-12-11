@@ -320,6 +320,16 @@ qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
 	return qse_tio_write (&sio->tio, str, (qse_size_t)-1);
 }
 
+qse_size_t qse_sio_putms (qse_sio_t* sio, const qse_mchar_t* str)
+{
+	return qse_tio_write (&sio->tio, str, qse_mbslen(str));
+}
+
+qse_size_t qse_sio_putws (qse_sio_t* sio, const qse_wchar_t* str)
+{
+	return qse_tio_write (&sio->tio, str, qse_wcslen(str));
+}
+
 qse_ssize_t qse_sio_putsn (
 	qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
 {
