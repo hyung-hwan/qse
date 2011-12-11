@@ -2262,183 +2262,135 @@ int qse_wcsxnfnmat (
 #endif
 
 /**
- * The qse_mbstowcslen() function scans a null-terminated multibyte string
- * to calculate the number of wide characters it can be converted to.
- * The number of wide characters is returned via @a wcslen if it is not 
- * #QSE_NULL. The function may be aborted if it has encountered invalid
- * or incomplete multibyte sequences. The return value, in this case, 
- * is less than qse_strlen(mcs).
- * @return number of bytes scanned
- */
-qse_size_t qse_mbstowcslen (
-	const qse_mchar_t* mcs,
-	qse_size_t*        wcslen
-);
-
-/**
- * The qse_mbsntowcsnlen() function scans a multibyte string of @a mcslen bytes
- * to get the number of wide characters it can be converted to.
- * The number of wide characters is returned via @a wcslen if it is not 
- * #QSE_NULL. The function may be aborted if it has encountered invalid
- * or incomplete multibyte sequences. The return value, in this case, 
- * is less than @a mcslen.
- * @return number of bytes scanned
- */
-qse_size_t qse_mbsntowcsnlen (
-	const qse_mchar_t* mcs,
-	qse_size_t         mcslen,
-	qse_size_t*        wcslen
-);
-
-/**
- * The qse_mbstowcs() function converts a multibyte string to a wide 
- * character string.
+ * The qse_mbstowcs() function converts a null-terminated multibyte string to
+ * a wide character string.
+ *
+ * It never returns -2 if @a wcs is #QSE_NULL.
  *
  * @code
- *  const qse_mchar_t* mbs = "a multibyte string";
- *  qse_wchar_t buf[100];
- *  qse_size_t bufsz = QSE_COUNTOF(buf), n;
- *  n = qse_mbstowcs (mbs, buf, bufsz);
- *  if (bufsz >= QSE_COUNTOF(buf)) { buffer too small }
- *  if (mbs[n] != '\0') { incomplete processing  }
- *  //if (n != strlen(mbs)) { incomplete processing  }
+ *  const qse_mchar_t* mbs = QSE_MT("a multibyte string");
+ *  qse_wchar_t wcs[100];
+ *  qse_size_t wcslen = QSE_COUNTOF(buf), n;
+ *  qse_size_t mbslen;
+ *  int n;
+ *  n = qse_mbstowcs (mbs, &mbslen, wcs, &wcslen);
+ *  if (n <= -1) { invalid/incomplenete sequence or buffer to small }
  * @endcode
  *
- * @return number of multibyte characters processed.
+ * @return 0 on success. 
+ *         -1 if @a mbs contains an illegal character.
+ *         -2 if the wide-character string buffer is too small.
+ *         -3 if @a mbs is not a complete sequence.
  */
-qse_size_t qse_mbstowcs (
-	const qse_mchar_t* mbs,
-	qse_wchar_t*       wcs,
-	qse_size_t*        wcslen
+int qse_mbstowcs (
+	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
+	qse_size_t*        mbslen, /**< [out] number of multibyte characters
+	                                      handled */
+	qse_wchar_t*       wcs,    /**< [out] wide-character string buffer */
+	qse_size_t*        wcslen  /**< [in,out] buffer size for in, 
+	                                number of characters in the buffer for out */
 );
 
 /**
  * The qse_mbsntowcsn() function converts a multibyte string to a 
  * wide character string.
- * @return number of multibyte characters processed.
+ *
+ * It never returns -2 if @a wcs is #QSE_NULL.
+ *
+ * @return 0 on success. 
+ *         -1 if @a mbs contains an illegal character.
+ *         -2 if the wide-character string buffer is too small.
+ *         -3 if @a mbs is not a complete sequence.
  */
-qse_size_t qse_mbsntowcsn (
+int qse_mbsntowcsn (
 	const qse_mchar_t* mbs,
-	qse_size_t         mbslen,
+	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
-
-/**
- * The qse_wcstombslen() function scans a null-terminated wide character 
- * string @a wcs to get the total number of multibyte characters that it 
- * can be converted to. The resulting number of characters is stored into 
- * memory pointed to by @a mbslen.
- * Complete scanning is indicated by the following condition:
- * @code
- *  qse_wcstombslen(wcs,&xx) == qse_strlen(wcs)
- * @endcode
- * @return number of wide characters handled
- */
-qse_size_t qse_wcstombslen (
-	const qse_wchar_t* wcs,
-	qse_size_t*        mbslen
-);
-
-/**
- * The qse_wcsntombsnlen() function scans a wide character wcs as long as
- * @a wcslen characters to get the total number of multibyte characters 
- * that it can be converted to. The resulting number of characters is stored 
- * into memory pointed to by @a mbslen.
- * Complete scanning is indicated by the following condition:
- * @code
- *  qse_wcstombslen(wcs,&xx) == wcslen
- * @endcode
- * @return number of wide characters handled
- */
-qse_size_t qse_wcsntombsnlen (
-	const qse_wchar_t* wcs,
-	qse_size_t         wcslen,
-	qse_size_t*        mbslen
-);
-
-/**
- * The qse_wcstombs() function converts a null-terminated wide character 
- * string to a multibyte string and stores it into the buffer pointed to
- * by @a mbs. The pointer to a variable holding the buffer length should be
- * passed to the function as the third parameter. After conversion, it holds 
- * the length of the multibyte string excluding the terminating-null character.
- * It may not null-terminate the resulting multibyte string if the buffer
- * is not large enough. 
- * @code
- *   const qse_wchar_t* QSE_T("hello");
- *   qse_mchar_t mbs[10];
- *   qse_size_t mbslen = QSE_COUNTOF(mbs);
- *   n = qse_wcstombs (wcs, mbs, &mbslen);
- *   if (wcs[n] == QSE_WT('\0') && mbslen < QSE_COUNTOF(mbs)) 
- *   {
- *       // wcs fully scanned and mbs null-terminated
- *   }
- * @endcode
- * @return number of wide characters processed
- */
-qse_size_t qse_wcstombs (
-	const qse_wchar_t* wcs,   /**< wide-character string to convert */
-	qse_mchar_t*       mbs,   /**< multibyte string buffer */
-	qse_size_t*        mbslen /**< [IN] buffer size, [OUT] string length */
-);
-
-/**
- * The qse_wcsntombsn() function converts a wide character string to a
- * multibyte string.
- * @return the number of wide characters
- */
-qse_size_t qse_wcsntombsn (
-	const qse_wchar_t* wcs,   /**< wide string */
-	qse_size_t         wcslen,/**< wide string length */
-	qse_mchar_t*       mbs,   /**< multibyte string buffer */
-	qse_size_t*        mbslen /**< [IN] buffer size, [OUT] string length */
-);
-
-/**
- * The qse_mbstowcsrigid() function performs the same as the qse_mbstowcs() 
- * function except that it returns an error if it can't fully convert the
- * input string and/or the buffer is not large enough.
- *
- * @return 0 on success, 
- *         -1 on failure for truncation, 
- *         -2 on failure for invalid/incomplete input seqence.
- */
-int qse_mbstowcsrigid (
-	const qse_mchar_t* mbs,
-	qse_wchar_t*       wcs,
-	qse_size_t         wcslen
-);
-
-/**
- * The qse_wcstombsrigid() function performs the same as the qse_wcstombs() 
- * function except that it returns an error if it can't fully convert the
- * input string and/or the buffer is not large enough.
- *
- * @return 0 on success, 
- *         -1 on failure for truncation, 
- *         -2 on failure for erroneous input seqence.
- */
-int qse_wcstombsrigid (
-	const qse_wchar_t* wcs,
-	qse_mchar_t*       mbs,
-	qse_size_t         mbslen
-);
-
 
 qse_wchar_t* qse_mbstowcsdup (
 	const qse_mchar_t* mbs,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_wcstombsdup (
-	const qse_wchar_t* wcs,
+qse_wchar_t* qse_mbsatowcsdup (
+	const qse_mchar_t* mbs[],
 	qse_mmgr_t*        mmgr
 );
 
+/**
+ * The qse_wcstombs() function converts a null-terminated wide character 
+ * string @a wcs to a multibyte string and writes it into the buffer pointed to
+ * by @a mbs, but not more than @a mbslen bytes including the terminating null.
+ * 
+ * Upon return, @a mbslen is modifed to the actual bytes written to @a mbs
+ * excluding the terminating null; @a wcslen is modifed to the number of
+ * wide characters converted.
+ *
+ * You may pass #QSE_NULL for @a mbs to dry-run conversion or to get the 
+ * required buffer size for conversion. -2 is never returned in this case.
+ *
+ * @return 
+ * - 0 on full conversion, 
+ * - -1 on no or partial conversion for an illegal character encountered,
+ * - -2 on no or partial conversion for a small buffer.
+ *
+ * @code
+ *   const qse_wchar_t* wcs = QSE_T("hello");
+ *   qse_mchar_t mbs[10];
+ *   qse_size_t wcslen;
+ *   qse_size_t mbslen = QSE_COUNTOF(mbs);
+ *   n = qse_wcstombs (wcs, &wcslen, mbs, &mbslen);
+ *   if (n <= -1)
+ *   {
+ *       // wcs fully scanned and mbs null-terminated
+ *   }
+ * @endcode
+ */
+int qse_wcstombs (
+	const qse_wchar_t* wcs,    /**< [in] wide-character string to convert*/
+	qse_size_t*        wcslen, /**< [out] number of wide-characters handled */
+	qse_mchar_t*       mbs,    /**< [out] #QSE_NULL or buffer pointer */
+	qse_size_t*        mbslen  /**< [in,out] buffer size for in, 
+	                                         actual length  for out*/
+);
+	
+/**
+ * The qse_wcsntombsn() function converts the first @a wcslen characters from 
+ * a wide character string @a wcs to a multibyte string and writes it to a 
+ * buffer @a mbs not more than @a mbslen bytes. 
+ *
+ * Upon return, it modifies @a mbslen to the actual bytes written to @a mbs
+ * and @a wcslen to the number of wide characters converted.
+ * 
+ * You may pass #QSE_NULL for @a mbs to dry-run conversion or to get the 
+ * required buffer size for conversion.
+ *
+ * 0 is returned on full conversion. The number of wide characters handled
+ * is stored into @a wcslen and the number of produced multibyte characters
+ * is stored into @a mbslen. -1 is returned if an illegal character is 
+ * encounterd during conversion and -2 is returned if the buffer is not 
+ * large enough to perform full conversion. however, the number of wide 
+ * characters handled so far stored into @a wcslen and the number of produced 
+ * multibyte characters so far stored into @a mbslen are still valid.
+ * If @a mbs is #QSE_NULL, -2 is never returned.
+ * 
+ * @return 0 on success, 
+ *         -1 if @a wcs contains an illegal character,
+ *         -2 if the multibyte string buffer is too small.
+ */
+int qse_wcsntombsn (
+	const qse_wchar_t* wcs,   /**< [in] wide string */
+	qse_size_t*        wcslen,/**< [in,out] wide string length for in,
+	                               number of wide characters handled for out */
+	qse_mchar_t*       mbs,   /**< [out] #QSE_NULL or buffer pointer */
+	qse_size_t*        mbslen /**< [in,out] buffer size for in,
+	                                        actual size for out */
+);
 
-qse_wchar_t* qse_mbsatombsdup (
-	const qse_mchar_t* mbs[],
+qse_mchar_t* qse_wcstombsdup (
+	const qse_wchar_t* wcs,
 	qse_mmgr_t*        mmgr
 );
 

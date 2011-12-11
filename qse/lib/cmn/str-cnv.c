@@ -138,304 +138,132 @@ qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
 /*
  * TODO: fix wrong mbstate handling 
  */
-qse_size_t qse_mbstowcslen (const qse_mchar_t* mcs, qse_size_t* wcslen)
-{
-	qse_wchar_t wc;
-	qse_size_t n, ml, wl = 0;
-	const qse_mchar_t* p = mcs;
-	qse_mbstate_t state = {{ 0, }};
-	
-	while (*p != '\0') p++;
-	ml = p - mcs;
-	
-	for (p = mcs; ml > 0; p += n, ml -= n) 
-	{
-		n = qse_mbrtowc (p, ml, &wc, &state);
-		/* insufficient input or wrong sequence */
-		if (n == 0 || n > ml) break;
-		wl++;
-	}
 
-	if (wcslen) *wcslen = wl;
-	return p - mcs;
-}
 
-qse_size_t qse_mbsntowcsnlen (
-	const qse_mchar_t* mcs, qse_size_t mcslen, qse_size_t* wcslen)
-{
-	qse_wchar_t wc;
-	qse_size_t n, ml = mcslen, wl = 0;
-	const qse_mchar_t* p = mcs;
-	qse_mbstate_t state = {{ 0, }};
-	
-	for (p = mcs; ml > 0; p += n, ml -= n) 
-	{
-		n = qse_mbrtowc (p, ml, &wc, &state);
-		/* insufficient or invalid sequence */
-		if (n == 0 || n > ml) break;
-		wl++;
-	}
-
-	if (wcslen) *wcslen = wl;
-	return mcslen - ml;
-}
-
-qse_size_t qse_mbstowcs (
-	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t* wcslen)
-{
-	qse_size_t wlen, mlen;
-	const qse_mchar_t* mp;
-
-	/* get the length of mbs and pass it to qse_mbsntowcsn as 
-	 * qse_mbtowc called by qse_mbsntowcsn needs it. */
-	wlen = *wcslen;
-	if (wlen <= 0)
-	{
-		/* buffer too small. also cannot null-terminate it */
-		*wcslen = 0;
-		return 0; /* 0 byte processed */
-	}
-
-	for (mp = mbs; *mp != QSE_MT('\0'); mp++);
-	mlen = qse_mbsntowcsn (mbs, mp - mbs, wcs, &wlen);
-	if (wlen < *wcslen) 
-	{
-		/* null-terminate wcs if it is large enough. */
-		wcs[wlen] = QSE_WT('\0');
-	}
-
-	/* if null-terminated properly, the input wcslen must be less than
-	 * the output wcslen. (input length includes the terminating null
-	 * while the output length excludes the terminating null) */
-	*wcslen = wlen; 
-	return mlen;
-}
-
-qse_size_t qse_mbsntowcsn (
-	const qse_mchar_t* mbs, qse_size_t mbslen,
+int qse_mbstowcs (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen)
 {
-	qse_size_t mlen = mbslen, n;
+	const qse_mchar_t* mp;
+	qse_size_t mlen, wlen;
+	int n;
+
+	for (mp = mbs; *mp != QSE_MT('\0'); mp++);
+
+	mlen = mp - mbs; wlen = *wcslen;
+	n = qse_mbsntowcsn (mbs, &mlen, wcs, &wlen);
+	if (wcs)
+	{
+		if (wlen < *wcslen) wcs[wlen] = QSE_WT('\0');
+		else n = -2; /* buffer too small */
+	}
+	*mbslen = mlen; *wcslen = wlen;
+
+	return n;
+}
+
+int qse_mbsntowcsn (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen)
+{
 	const qse_mchar_t* p;
-	qse_wchar_t* q, * qend ;
 	qse_mbstate_t state = {{ 0, }};
+	int ret = 0;
+	qse_size_t mlen;
 
-	qend = wcs + *wcslen;
-
-	for (p = mbs, q = wcs; mlen > 0 && q < qend; p += n, mlen -= n) 
+	if (wcs)
 	{
-		n = qse_mbrtowc (p, mlen, q, &state);
-		if (n == 0 || n > mlen)
+		qse_wchar_t* q, * qend;
+
+		p = mbs;
+		q = wcs;
+		qend = wcs + *wcslen;
+		mlen = *mbslen;
+
+		while (mlen > 0)
 		{
-			/* wrong sequence or insufficient input */
-			break;
+			qse_size_t n;
+
+			if (q >= qend)
+			{
+				/* buffer too small */
+				ret = -2;
+				break;
+			}
+
+			n = qse_mbrtowc (p, mlen, q, &state);
+			if (n == 0)
+			{
+				/* invalid sequence */
+				ret = -1;
+				break;
+			}
+			if (n > mlen)
+			{
+				/* incomplete sequence */
+				ret = -3;
+				break;
+			}
+
+			q++;
+			p += n;
+			mlen -= n;
 		}
 
-		q++;
+		*wcslen = q - wcs;
+		*mbslen = p - mbs;
 	}
-
-	*wcslen = q - wcs;
-	return p - mbs; /* returns the number of bytes processed */
-}
-
-qse_size_t qse_wcstombslen (const qse_wchar_t* wcs, qse_size_t* mbslen)
-{
-	const qse_wchar_t* p = wcs;
-	qse_mchar_t mbs[QSE_MBLEN_MAX];
-	qse_size_t mlen = 0;
-	qse_mbstate_t state = {{ 0, }};
-
-	while (*p != QSE_WT('\0'))
+	else
 	{
-		qse_size_t n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbs), &state);
-		if (n == 0) break; /* illegal character */
+		qse_wchar_t w;
+		qse_size_t wlen = 0;
 
-		/* it assumes that mbs is large enough to hold a character */
-		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+		p = mbs;
+		mlen = *mbslen;
 
-		p++; mlen += n;
-	}
-
-	/* this length holds the number of resulting multi-byte characters 
-	 * excluding the terminating null character */
-	*mbslen = mlen;
-
-	/* returns the number of characters handled. 
-	 * if the function has encountered an illegal character in
-	 * the while loop above, wcs[p-wcs] will not be a null character */
-	return p - wcs;  
-}
-
-qse_size_t qse_wcsntombsnlen (
-	const qse_wchar_t* wcs, qse_size_t wcslen, qse_size_t* mbslen)
-{
-	const qse_wchar_t* p = wcs;
-	const qse_wchar_t* end = wcs + wcslen;
-	qse_mchar_t mbs[QSE_MBLEN_MAX];
-	qse_size_t mlen = 0;
-	qse_mbstate_t state = {{ 0, }};
-
-	while (p < end)
-	{
-		qse_size_t n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbs), &state);
-		if (n == 0) break; /* illegal character */
-
-		/* it assumes that mbs is large enough to hold a character */
-		QSE_ASSERT (n <= QSE_COUNTOF(mbs));
-
-		p++; mlen += n;
-	}
-
-	/* this length excludes the terminating null character. 
-	 * this function doesn't event null-terminate the result. */
-	*mbslen = mlen;
-
-	/* returns the number of characters handled. 
-	 * if the function has encountered an illegal character in
-	 * the while loop above, wcs[p-wcs] will not be a null character */
-	return p - wcs;  
-}
-
-qse_size_t qse_wcstombs (
-	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t* mbslen)
-{
-	const qse_wchar_t* p = wcs;
-	qse_size_t rem = *mbslen;
-	qse_mbstate_t state = {{ 0, }};
-
-	while (*p != QSE_WT('\0') && rem > 0) 
-	{
-		qse_size_t n = qse_wcrtomb (*p, mbs, rem, &state);
-		if (n == 0 || n > rem)
+		while (mlen > 0)
 		{
-			/* illegal character or buffer not enough */
-			break;
+			qse_size_t n;
+
+			n = qse_mbrtowc (p, mlen, &w, &state);
+			if (n == 0)
+			{
+				/* invalid sequence */
+				ret = -1;
+				break;
+			}
+			if (n > mlen)
+			{
+				/* incomplete sequence */
+				ret = -3;
+				break;
+			}
+
+			p += n;
+			mlen -= n;
+			wlen += 1;
 		}
 
-		mbs += n; rem -= n; p++;
+		*wcslen = wlen;
+		*mbslen = p - mbs;
 	}
 
-	/* update mbslen to the length of the mbs string converted excluding
-	 * terminating null */
-	*mbslen -= rem; 
-
-	/* null-terminate the multibyte sequence if it has sufficient space */
-	if (rem > 0) *mbs = QSE_MT('\0');
-
-	/* returns the number of characters handled. */
-	return p - wcs; 
-}
-
-qse_size_t qse_wcsntombsn (
-	const qse_wchar_t* wcs, qse_size_t wcslen,
-	qse_mchar_t* mbs, qse_size_t* mbslen)
-{
-	const qse_wchar_t* p = wcs;
-	const qse_wchar_t* end = wcs + wcslen;
-	qse_size_t len = *mbslen;
-	qse_mbstate_t state = {{ 0, }};
-
-	while (p < end && len > 0) 
-	{
-		qse_size_t n = qse_wcrtomb (*p, mbs, len, &state);
-		if (n == 0 || n > len)
-		{
-			/* illegal character or buffer not enough */
-			break;
-		}
-		mbs += n; len -= n; p++;
-	}
-
-	*mbslen -= len; 
-
-	/* returns the number of characters handled.
-	 * the caller can check if the return value is as large is wcslen
-	 * for an error. */
-	return p - wcs; 
-}
-
-int qse_mbstowcsrigid (
-	const qse_mchar_t* mbs, qse_wchar_t* wcs, qse_size_t wcslen)
-{
-	/* no truncation is allowed in this function for any reasons */
-	qse_size_t n;
-	qse_size_t wn = wcslen;
-
-	n = qse_mbstowcs (mbs, wcs, &wn);
-	if (mbs[n] != QSE_MT('\0'))
-	{
-		/* incomplete sequence or invalid sequence */
-		return -1;
-	}
-	if (wn >= wcslen)
-	{
-		/* wcs not big enough to be null-terminated.
-		 * if it has been null-terminated properly, 
-		 * wn should be less than wcslen. */
-		return -2;
-	}
-
-	return 0;
-}
-
-int qse_wcstombsrigid (
-	const qse_wchar_t* wcs, qse_mchar_t* mbs, qse_size_t mbslen)
-{
-	/* no truncation is allowed in this function for any reasons */
-	qse_size_t n;
-	qse_size_t mn = mbslen;
-
-	n = qse_wcstombs (wcs, mbs, &mn);
-	if (wcs[n] != QSE_WT('\0')) 
-	{
-		/* if qse_wcstombs() processed all wide characters,
-		 * the character at position 'n' should be a null character
-		 * as 'n' is the number of wide characters processed. */
-		return -1;
-	}
-	if (mn >= mbslen) 
-	{
-		/* mbs not big enough to be null-terminated.
-		 * if it has been null-terminated properly, 
-		 * mn should be less than mbslen. */
-		return -2; 
-	}
-
-	return 0;
+	return ret;
 }
 
 qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
 {
-	qse_size_t n, req;
+	qse_size_t mbslen, wcslen;
 	qse_wchar_t* wcs;
 
-	n = qse_mbstowcslen (mbs, &req);
-	if (mbs[n] != QSE_WT('\0')) return QSE_NULL;
+	if (qse_mbstowcs (mbs, &mbslen, QSE_NULL, &wcslen) <= -1) return QSE_NULL;
 
-	req++;
-
-	wcs = QSE_MMGR_ALLOC (mmgr, req * QSE_SIZEOF(*wcs));	
+	wcslen++; /* for terminating null */
+	wcs = QSE_MMGR_ALLOC (mmgr, wcslen * QSE_SIZEOF(*wcs));	
 	if (wcs == QSE_NULL) return QSE_NULL;
 
-	qse_mbstowcs (mbs, wcs, &req);
+	qse_mbstowcs (mbs, &mbslen, wcs, &wcslen);
 	return wcs;
-}
-
-qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
-{
-	qse_size_t n, req;
-	qse_mchar_t* mbs;
-
-	n = qse_wcstombslen (wcs, &req);
-	if (wcs[n] != QSE_WT('\0')) return QSE_NULL;
-
-	req++;
-
-	mbs = QSE_MMGR_ALLOC (mmgr, req * QSE_SIZEOF(*mbs));	
-	if (mbs == QSE_NULL) return QSE_NULL;
-
-	qse_wcstombs (wcs, mbs, &req);
-	return mbs;
 }
 
 qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
@@ -449,8 +277,7 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 
 	for (i = 0; mbs[i]; i++) 
 	{
-		ml = qse_mbstowcslen(mbs[i], &wl);
-		if (mbs[i][ml] != QSE_MT('\0')) return QSE_NULL;
+		if (qse_mbstowcs(mbs[i], &ml, QSE_NULL, &wl) <= -1) return QSE_NULL;
 		capa += wl;
 	}
 
@@ -462,7 +289,7 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 	for (i = 0; mbs[i]; i++) 
 	{
 		wl = capa + 1;
-		ml = qse_mbstowcs (mbs[i], ptr, &wl);
+		qse_mbstowcs (mbs[i], &ml, ptr, &wl);
 		ptr += wl;
 		capa -= wl;
 	}
@@ -470,19 +297,188 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 	return buf;
 }
 
+int qse_wcstombs (
+	const qse_wchar_t* wcs, qse_size_t* wcslen,
+	qse_mchar_t* mbs, qse_size_t* mbslen)
+{
+	const qse_wchar_t* p = wcs;
+	qse_mbstate_t state = {{ 0, }};
+	int ret = 0;
+
+	if (mbs)
+	{
+		qse_size_t rem = *mbslen;
+
+		while (*p != QSE_WT('\0'))
+		{
+			qse_size_t n;
+
+			if (rem <= 0)
+			{
+				ret = -2;
+				break;
+			}
+			
+			n = qse_wcrtomb (*p, mbs, rem, &state);
+			if (n == 0) 
+			{
+				ret = -1;
+				break; /* illegal character */
+			}
+			if (n > rem) 
+			{
+				ret = -2;
+				break; /* buffer too small */
+			}
+
+			mbs += n; rem -= n; p++;
+		}
+
+		/* update mbslen to the length of the mbs string converted excluding
+		 * terminating null */
+		*mbslen -= rem; 
+
+		/* null-terminate the multibyte sequence if it has sufficient space */
+		if (rem > 0) *mbs = QSE_MT('\0');
+		else 
+		{
+			/* if ret is -2 and wcs[wcslen] == QSE_T('\0'), 
+			 * this means that the mbs buffer was lacking one
+			 * slot for the terminating null */
+			ret = -2; /* buffer too small */
+		}
+	}
+	else
+	{
+		qse_mchar_t mbsbuf[QSE_MBLEN_MAX];
+		qse_size_t mlen = 0;
+
+		while (*p != QSE_WT('\0'))
+		{
+			qse_size_t n;
+
+			n = qse_wcrtomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf), &state);
+			if (n == 0) 
+			{
+				ret = -1;
+				break; /* illegal character */
+			}
+
+			/* it assumes that mbs is large enough to hold a character */
+			QSE_ASSERT (n <= QSE_COUNTOF(mbs));
+
+			p++; mlen += n;
+		}
+
+		/* this length holds the number of resulting multi-byte characters 
+		 * excluding the terminating null character */
+		*mbslen = mlen;
+	}
+
+	*wcslen = p - wcs;  /* the number of wide characters handled. */
+
+	return ret;	
+}
+
+int qse_wcsntombsn (
+	const qse_wchar_t* wcs, qse_size_t* wcslen,
+	qse_mchar_t* mbs, qse_size_t* mbslen)
+{
+	const qse_wchar_t* p = wcs;
+	const qse_wchar_t* end = wcs + *wcslen;
+	qse_mbstate_t state = {{ 0, }};
+	int ret = 0; 
+
+	if (mbs)
+	{
+		qse_size_t rem = *mbslen;
+
+		while (p < end) 
+		{
+			qse_size_t n;
+
+			if (rem <= 0)
+			{
+				ret = -2; /* buffer too small */
+				break;
+			}
+
+			n = qse_wcrtomb (*p, mbs, rem, &state);
+			if (n == 0) 
+			{
+				ret = -1;
+				break; /* illegal character */
+			}
+			if (n > rem) 
+			{
+				ret = -2; /* buffer too small */
+				break;
+			}
+			mbs += n; rem -= n; p++;
+		}
+
+		*mbslen -= rem; 
+	}
+	else
+	{
+		qse_mchar_t mbsbuf[QSE_MBLEN_MAX];
+		qse_size_t mlen = 0;
+
+		while (p < end)
+		{
+			qse_size_t n;
+
+			n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbsbuf), &state);
+			if (n == 0) 
+			{
+				ret = -1;
+				break; /* illegal character */
+			}
+
+			/* it assumes that mbs is large enough to hold a character */
+			QSE_ASSERT (n <= QSE_COUNTOF(mbsbuf));
+
+			p++; mlen += n;
+		}
+
+		/* this length excludes the terminating null character. 
+		 * this function doesn't event null-terminate the result. */
+		*mbslen = mlen;
+	}
+
+	*wcslen = p - wcs;
+
+	return ret;
+}
+
+qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
+{
+	qse_size_t wcslen, mbslen;
+	qse_mchar_t* mbs;
+
+	if (qse_wcstombs (wcs, &wcslen, QSE_NULL, &mbslen) <= -1) return QSE_NULL;
+
+	mbslen++; /* for the terminating null character */
+
+	mbs = QSE_MMGR_ALLOC (mmgr, mbslen * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	qse_wcstombs (wcs, &wcslen, mbs, &mbslen);
+	return mbs;
+}
+
 qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf, * ptr;
 	qse_size_t i;
-	qse_size_t capa = 0;
 	qse_size_t wl, ml;
+	qse_size_t capa = 0;
 
 	QSE_ASSERT (mmgr != QSE_NULL);
 
 	for (i = 0; wcs[i]; i++) 
 	{
-		wl = qse_wcstombslen(wcs[i], &ml);
-		if (wcs[i][wl] != QSE_WT('\0')) return QSE_NULL;
+		if (qse_wcstombs (wcs[i], &wl, QSE_NULL, &ml) <= -1) return QSE_NULL;
 		capa += ml;
 	}
 
@@ -494,7 +490,7 @@ qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 	for (i = 0; wcs[i]; i++) 
 	{
 		ml = capa + 1;
-		wl = qse_wcstombs (wcs[i], ptr, &ml);
+		qse_wcstombs (wcs[i], &wl, ptr, &ml);
 		ptr += ml;
 		capa -= ml;
 	}

@@ -7,12 +7,12 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 
 	for (i = 0; i < argc; i++)
 	{
-		qse_printf (QSE_T("%d => [%s]\n"), i, argv[i]);
+		qse_printf (QSE_T("ARG %d => [%s]\n"), i, argv[i]);
 	}
 
 	for (i = 0; envp[i]; i++)
 	{
-		qse_printf (QSE_T("%d => [%s]\n"), i, envp[i]);
+		qse_printf (QSE_T("ENV %d => [%s]\n"), i, envp[i]);
 	}
 
 	return 0;

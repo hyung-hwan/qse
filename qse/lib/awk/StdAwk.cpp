@@ -114,27 +114,19 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #elif defined(QSE_CHAR_IS_MCHAR)
 	return ret.setInt ((long_t)::system(ptr));
 #else
-	char* mbs = (char*) qse_awk_allocmem ((awk_t*)(Awk*)run, l*5+1);
-	if (mbs == QSE_NULL) return -1;
 
-	/* at this point, the string is guaranteed to be 
-	 * null-terminating. so qse_wcstombs() can be used to convert
-	 * the string, not qse_wcsntombsn(). */
-
-	qse_size_t mbl = l * 5;
-	if (qse_wcstombs (ptr, mbs, &mbl) != l && mbl >= l * 5) 
+	qse_mchar_t* mbs;
+	mbs = qse_wcstombsdup (ptr, ((awk_t*)(Awk*)run)->mmgr);
+	if (mbs == QSE_NULL)
 	{
-		/* not the entire string is converted.
-		 * mbs is not null-terminated properly. */
 		qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
 		return -1;
 	}
 
-	mbs[mbl] = '\0';
 	int n = ret.setInt ((long_t)::system(mbs));
-
 	qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
 	return n;
+
 #endif
 }
 

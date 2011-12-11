@@ -1446,7 +1446,7 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
+static int fnc_system (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
@@ -1454,10 +1454,10 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	qse_size_t len;
 	int n = 0;
 
-	nargs = qse_awk_rtx_getnargs (run);
+	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 1);
 	
-	v = qse_awk_rtx_getarg (run, 0);
+	v = qse_awk_rtx_getarg (rtx, 0);
 	if (v->type == QSE_AWK_VAL_STR)
 	{
 		str = ((qse_awk_val_str_t*)v)->val.ptr;
@@ -1465,7 +1465,7 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	}
 	else
 	{
-		str = qse_awk_rtx_valtocpldup (run, v, &len);
+		str = qse_awk_rtx_valtocpldup (rtx, v, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -1488,45 +1488,28 @@ static int fnc_system (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 #elif defined(QSE_CHAR_IS_MCHAR)
 	n = system (str);
 #else
-	{
-		char* mbs;
-		qse_size_t mbl;
 
-		mbs = (char*) qse_awk_allocmem (run->awk, len*5+1);
+	{
+		qse_mchar_t* mbs;
+		mbs = qse_wcstombsdup (str, rtx->awk->mmgr);
 		if (mbs == QSE_NULL) 
 		{
 			n = -1;
 			goto skip_system;
 		}
-
-		/* at this point, the string is guaranteed to be 
-		 * null-terminating. so qse_wcstombs() can be used to convert
-		 * the string, not qse_wcsntombsn(). */
-
-		mbl = len * 5;
-		if (qse_wcstombs (str, mbs, &mbl) != len && mbl >= len * 5) 
-		{
-			/* not the entire string is converted.
-			 * mbs is not null-terminated properly. */
-			n = -1;
-			goto skip_system_mbs;
-		}
-
-		mbs[mbl] = '\0';
 		n = system (mbs);
-
-	skip_system_mbs:
-		qse_awk_freemem (run->awk, mbs);
+		QSE_AWK_FREE (rtx->awk, mbs);
 	}
+
 #endif
 
 skip_system:
-	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str);
+	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, str);
 
-	v = qse_awk_rtx_makeintval (run, (qse_long_t)n);
+	v = qse_awk_rtx_makeintval (rtx, (qse_long_t)n);
 	if (v == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (run, v);
+	qse_awk_rtx_setretval (rtx, v);
 	return 0;
 }
 

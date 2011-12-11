@@ -35,12 +35,12 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
-	str$(EXEEXT) sll$(EXEEXT) dll$(EXEEXT) lda$(EXEEXT) \
-	oht$(EXEEXT) htb$(EXEEXT) rbt$(EXEEXT) fio01$(EXEEXT) \
-	fio02$(EXEEXT) pio$(EXEEXT) sio$(EXEEXT) time$(EXEEXT) \
-	main$(EXEEXT) main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) \
-	path01$(EXEEXT) tre01$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
-	fs01$(EXEEXT)
+	str01$(EXEEXT) str02$(EXEEXT) str03$(EXEEXT) sll$(EXEEXT) \
+	dll$(EXEEXT) lda$(EXEEXT) oht$(EXEEXT) htb$(EXEEXT) \
+	rbt$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) pio$(EXEEXT) \
+	sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) main2$(EXEEXT) \
+	rex01$(EXEEXT) env$(EXEEXT) path01$(EXEEXT) tre01$(EXEEXT) \
+	fmt01$(EXEEXT) fmt02$(EXEEXT) fs01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -141,10 +141,18 @@ am_sll_OBJECTS = sll.$(OBJEXT)
 sll_OBJECTS = $(am_sll_OBJECTS)
 sll_LDADD = $(LDADD)
 sll_DEPENDENCIES =
-am_str_OBJECTS = str.$(OBJEXT)
-str_OBJECTS = $(am_str_OBJECTS)
-str_LDADD = $(LDADD)
-str_DEPENDENCIES =
+am_str01_OBJECTS = str01.$(OBJEXT)
+str01_OBJECTS = $(am_str01_OBJECTS)
+str01_LDADD = $(LDADD)
+str01_DEPENDENCIES =
+am_str02_OBJECTS = str02.$(OBJEXT)
+str02_OBJECTS = $(am_str02_OBJECTS)
+str02_LDADD = $(LDADD)
+str02_DEPENDENCIES =
+am_str03_OBJECTS = str03.$(OBJEXT)
+str03_OBJECTS = $(am_str03_OBJECTS)
+str03_LDADD = $(LDADD)
+str03_DEPENDENCIES =
 am_time_OBJECTS = time.$(OBJEXT)
 time_OBJECTS = $(am_time_OBJECTS)
 time_LDADD = $(LDADD)
@@ -176,14 +184,16 @@ SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(str01_SOURCES) $(str02_SOURCES) $(str03_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str_SOURCES) $(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(str01_SOURCES) $(str02_SOURCES) $(str03_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -339,7 +349,9 @@ xma_SOURCES = xma.c
 fma_SOURCES = fma.c
 pma_SOURCES = pma.c
 chr_SOURCES = chr.c
-str_SOURCES = str.c
+str01_SOURCES = str01.c
+str02_SOURCES = str02.c
+str03_SOURCES = str03.c
 sll_SOURCES = sll.c
 dll_SOURCES = dll.c
 lda_SOURCES = lda.c
@@ -500,9 +512,15 @@ sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES)
 sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) 
 	@rm -f sll$(EXEEXT)
 	$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
-str$(EXEEXT): $(str_OBJECTS) $(str_DEPENDENCIES) 
-	@rm -f str$(EXEEXT)
-	$(LINK) $(str_OBJECTS) $(str_LDADD) $(LIBS)
+str01$(EXEEXT): $(str01_OBJECTS) $(str01_DEPENDENCIES) 
+	@rm -f str01$(EXEEXT)
+	$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
+str02$(EXEEXT): $(str02_OBJECTS) $(str02_DEPENDENCIES) 
+	@rm -f str02$(EXEEXT)
+	$(LINK) $(str02_OBJECTS) $(str02_LDADD) $(LIBS)
+str03$(EXEEXT): $(str03_OBJECTS) $(str03_DEPENDENCIES) 
+	@rm -f str03$(EXEEXT)
+	$(LINK) $(str03_OBJECTS) $(str03_LDADD) $(LIBS)
 time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) 
 	@rm -f time$(EXEEXT)
 	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
@@ -540,7 +558,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str03.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Po@am__quote@
