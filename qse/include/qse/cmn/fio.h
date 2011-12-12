@@ -60,13 +60,18 @@ enum qse_fio_open_flag_t
 	QSE_FIO_NOFOLLOW      = (1 << 15),
 
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
-	QSE_FIO_NOSHRD        = (1 << 24),
-	QSE_FIO_NOSHWR        = (1 << 25),
-	QSE_FIO_NOSHDL        = (1 << 26),
+	QSE_FIO_NOSHRD        = (1 << 20),
+	QSE_FIO_NOSHWR        = (1 << 21),
+	QSE_FIO_NOSHDL        = (1 << 22),
 
 	/* hints to OS. harmless(no effect) when used on unsupported platforms */
-	QSE_FIO_RANDOM        = (1 << 27), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL    = (1 << 28)  /* hint that access is sequential */
+	QSE_FIO_RANDOM        = (1 << 23), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL    = (1 << 24)  /* hint that access is sequential */
+
+	/* NOTE:
+	 *   NEVER (1 << 31) since QSE_SIO_NOAUTOFLUSH is defined to 
+	 *   that value in sio.h FIO doesn't have any bufferring.
+	 */
 };
 
 enum qse_fio_std_t

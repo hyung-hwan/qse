@@ -23,7 +23,9 @@
 
 #ifndef NDEBUG
 
+#include <stdio.h>
 #include <qse/cmn/sio.h>
+#include "mem.h"
 
 #ifdef HAVE_EXECINFO_H
 #	include <execinfo.h>
@@ -43,14 +45,14 @@
 #	include "syscall.h"
 #endif
 
-#define NTOC(n) (QSE_T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")[n])
-#define WRITE_CHAR(c) \
+#define NTOC(n) (QSE_MT("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")[n])
+#define WRITE_CHAR(sio,c) \
 do { \
-	qse_char_t __xxx_c = c; \
-	if (qse_sio_putsn (QSE_SIO_ERR, &__xxx_c, 1) != 1) return -1; \
+	qse_mchar_t __xxx_c = c; \
+	if (qse_sio_putmsn (sio, &__xxx_c, 1) != 1) return -1; \
 } while (0)
 
-static int write_num (qse_size_t x, int base)
+static int write_num (qse_sio_t* sio, qse_size_t x, int base)
 {
 	qse_size_t last = x % base;
 	qse_size_t y = 0; 
@@ -67,7 +69,7 @@ static int write_num (qse_size_t x, int base)
 
 	while (y > 0)
 	{
-		WRITE_CHAR (NTOC(y % base));
+		WRITE_CHAR (sio, NTOC(y % base));
 		y = y / base;
 		dig--;
 	}
@@ -75,9 +77,9 @@ static int write_num (qse_size_t x, int base)
 	while (dig > 0) 
 	{ 
 		dig--; 
-		WRITE_CHAR (QSE_T('0'));
+		WRITE_CHAR (sio, QSE_T('0'));
 	}
-	WRITE_CHAR (NTOC(last));
+	WRITE_CHAR (sio, NTOC(last));
 	return 0;
 }
 
@@ -90,38 +92,45 @@ void qse_assert_failed (
 	qse_size_t btsize, i;
 	char **btsyms;
 #endif
+	qse_sio_t* sio, siobuf;
 
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("=[ASSERTION FAILURE]============================================================\n"));
+	sio = &siobuf;
+	if (qse_sio_initstd (sio, QSE_MMGR_GETDFL(), QSE_SIO_STDERR, QSE_SIO_NOAUTOFLUSH) <= -1) 
+		sio = QSE_SIO_ERR;
+
+	qse_sio_putms (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
 
 #if 1
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("                         __ \n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T(" _____ _____ _____ _____|  |\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|     |     |  _  |   __|  |\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|  |  |  |  |   __|__   |__|\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|_____|_____|__|  |_____|__|\n"));
+	qse_sio_putms (sio, QSE_MT("                         __ \n"));
+	qse_sio_putms (sio, QSE_MT(" _____ _____ _____ _____|  |\n"));
+	qse_sio_putms (sio, QSE_MT("|     |     |  _  |   __|  |\n"));
+	qse_sio_putms (sio, QSE_MT("|  |  |  |  |   __|__   |__|\n"));
+	qse_sio_putms (sio, QSE_MT("|_____|_____|__|  |_____|__|\n"));
+	qse_sio_putms (sio, QSE_MT("                            \n"));
 #else
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("                            __ \n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T(" _____ _____ _____ _____   |  |\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|     |     |  _  |   __|  |  |\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|  |  |  |  |   __|__   |  |__|\n"));
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("|_____|_____|__|  |_____|  |__|\n"));
+	qse_sio_putms (sio, QSE_MT("                            __ \n"));
+	qse_sio_putms (sio, QSE_MT(" _____ _____ _____ _____   |  |\n"));
+	qse_sio_putms (sio, QSE_MT("|     |     |  _  |   __|  |  |\n"));
+	qse_sio_putms (sio, QSE_MT("|  |  |  |  |   __|__   |  |__|\n"));
+	qse_sio_putms (sio, QSE_MT("|_____|_____|__|  |_____|  |__|\n"));
+	qse_sio_putms (sio, QSE_MT("                            __ \n"));
 #endif
 
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("FILE "));
-	qse_sio_puts (QSE_SIO_ERR, file);
-	qse_sio_puts (QSE_SIO_ERR, QSE_T(" LINE "));
+	qse_sio_putms (sio, QSE_MT("FILE: "));
+	qse_sio_puts (sio, file);
+	qse_sio_putms (sio, QSE_MT(" LINE: "));
 
-	write_num (line, 10);
+	write_num (sio, line, 10);
 
-	qse_sio_puts (QSE_SIO_ERR, QSE_T(": "));
-	qse_sio_puts (QSE_SIO_ERR, expr);
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
+	qse_sio_putms (sio, QSE_MT("\nEXPRESSION: "));
+	qse_sio_puts (sio, expr);
+	qse_sio_putms (sio, QSE_MT("\n"));
 
 	if (desc != QSE_NULL)
 	{
-		qse_sio_puts (QSE_SIO_ERR, QSE_T("DESCRIPTION: "));
-		qse_sio_puts (QSE_SIO_ERR, desc);
-		qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
+		qse_sio_putms (sio, QSE_MT("DESCRIPTION: "));
+		qse_sio_puts (sio, desc);
+		qse_sio_putms (sio, QSE_MT("\n"));
 	}
 
 #ifdef HAVE_BACKTRACE
@@ -129,30 +138,21 @@ void qse_assert_failed (
 	btsyms = backtrace_symbols (btarray, btsize);
 	if (btsyms != QSE_NULL)
 	{
-		qse_sio_puts (QSE_SIO_ERR, QSE_T("=[BACKTRACES]===================================================================\n"));
+		qse_sio_putms (sio, QSE_MT("=[BACKTRACES]===================================================================\n"));
 
 		for (i = 0; i < btsize; i++)
 		{
-			/* TODO:  call qse_sio_putms() instead of using ifdef */
-		#ifdef QSE_CHAR_IS_MCHAR
-			qse_sio_puts (QSE_SIO_ERR, btsyms[i]);
-		#else
-			qse_wchar_t wcs[256];
-			qse_size_t wcslen = QSE_COUNTOF(wcs);
-			qse_size_t mbslen;
-			qse_mbstowcs (btsyms[i], &mbslen, wcs, &wcslen);
-			wcs[QSE_COUNTOF(wcs) - 1] = QSE_T('\0');
-			qse_sio_puts (QSE_SIO_ERR, wcs);
-		#endif
-			qse_sio_puts (QSE_SIO_ERR, QSE_T("\n"));
+			qse_sio_putms (sio, btsyms[i]);
+			qse_sio_putms (sio, QSE_MT("\n"));
 		}
 
 		free (btsyms);
 	}
 #endif
 
-	qse_sio_puts (QSE_SIO_ERR, QSE_T("================================================================================\n"));
-	qse_sio_flush (QSE_SIO_ERR);
+	qse_sio_putms (sio, QSE_MT("================================================================================\n"));
+	qse_sio_flush (sio);
+	if (sio != QSE_SIO_ERR) qse_sio_fini (sio);
 
 #if defined(_WIN32)
 	ExitProcess (249);

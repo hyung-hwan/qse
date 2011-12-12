@@ -199,6 +199,8 @@ qse_ssize_t qse_tio_writew (
 		wcnt = xwlen; mcnt = capa;
 
 		n = qse_wcsntombsn (wptr, &wcnt, &tio->outbuf[tio->outbuf_len], &mcnt);
+		tio->outbuf_len += mcnt;
+
 		if (n == -2)
 		{
 			/* the buffer is not large enough to 
@@ -234,10 +236,9 @@ qse_ssize_t qse_tio_writew (
 				for (i = 0; i < wcnt; i++)
 					if (wptr[i] == QSE_WT('\n')) nl = 1;
 			}
-		}
 
+		}
 		wptr += wcnt; xwlen -= wcnt;
-		tio->outbuf_len += mcnt;
 	}
 
 	if (nl && qse_tio_flush (tio) == -1) return -1;
