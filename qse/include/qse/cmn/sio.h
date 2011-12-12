@@ -53,7 +53,11 @@ enum qse_sio_open_flag_t
 	QSE_SIO_NOSHDL        = QSE_FIO_NOSHDL,
 
 	QSE_SIO_RANDOM        = QSE_FIO_RANDOM,
-	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL
+	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL,
+
+	/* Beware that this should not overlap with any QSE_FIO_XXXX.
+	 * See NOTE in fio.h */
+	QSE_SIO_NOAUTOFLUSH   = (1 << 31)
 };
 
 typedef qse_fio_off_t qse_sio_pos_t;
@@ -62,7 +66,7 @@ typedef qse_fio_std_t qse_sio_std_t;
 
 #define QSE_SIO_STDIN  QSE_FIO_STDIN
 #define QSE_SIO_STDOUT QSE_FIO_STDOUT
-#define QSE_SIO_STDER  QSE_FIO_STDERR
+#define QSE_SIO_STDERR QSE_FIO_STDERR
 
 /**
  * The qse_sio_t type defines a simple text stream over a file. It also
@@ -165,16 +169,36 @@ qse_ssize_t qse_sio_putc (
 	qse_char_t c
 );
 
-qse_ssize_t qse_sio_puts (
-	qse_sio_t*        sio,
-	const qse_char_t* str
+qse_ssize_t qse_sio_putms (
+	qse_sio_t*         sio,
+	const qse_mchar_t* str
 );
 
-qse_ssize_t qse_sio_putsn (
-	qse_sio_t*        sio, 
-	const qse_char_t* str,
-	qse_size_t        size
+qse_ssize_t qse_sio_putws (
+	qse_sio_t*         sio,
+	const qse_wchar_t* str
 );
+
+
+qse_ssize_t qse_sio_putmsn (
+	qse_sio_t*         sio, 
+	const qse_mchar_t* str,
+	qse_size_t         size
+);
+
+qse_ssize_t qse_sio_putwsn (
+	qse_sio_t*         sio, 
+	const qse_wchar_t* str,
+	qse_size_t         size
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_sio_puts(sio,str) qse_sio_putms(sio,str)
+#	define qse_sio_putsn(sio,str,size) qse_sio_putmsn(sio,str,size)
+#else
+#	define qse_sio_puts(sio,str) qse_sio_putws(sio,str)
+#	define qse_sio_putsn(sio,str,size) qse_sio_putwsn(sio,str,size)
+#endif
 
 /**
  * The qse_sio_getpos() gets the current position in a stream.

@@ -232,6 +232,7 @@ int qse_sio_init (
 	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) <= -1) return -1;
 
 	if (flags & QSE_SIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
+	if (flags & QSE_SIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
 	if (qse_tio_init(&sio->tio, mmgr, topt) <= -1)
 	{
@@ -315,25 +316,33 @@ qse_ssize_t qse_sio_putc (qse_sio_t* sio, qse_char_t c)
 	return qse_tio_write (&sio->tio, &c, 1);
 }
 
+#if 0
 qse_ssize_t qse_sio_puts (qse_sio_t* sio, const qse_char_t* str)
 {
 	return qse_tio_write (&sio->tio, str, (qse_size_t)-1);
 }
+#endif
 
-qse_size_t qse_sio_putms (qse_sio_t* sio, const qse_mchar_t* str)
+qse_ssize_t qse_sio_putms (qse_sio_t* sio, const qse_mchar_t* str)
 {
-	return qse_tio_write (&sio->tio, str, qse_mbslen(str));
+	return qse_tio_writem (&sio->tio, str, qse_mbslen(str));
 }
 
-qse_size_t qse_sio_putws (qse_sio_t* sio, const qse_wchar_t* str)
+qse_ssize_t qse_sio_putws (qse_sio_t* sio, const qse_wchar_t* str)
 {
-	return qse_tio_write (&sio->tio, str, qse_wcslen(str));
+	return qse_tio_writew (&sio->tio, str, qse_wcslen(str));
 }
 
-qse_ssize_t qse_sio_putsn (
-	qse_sio_t* sio, const qse_char_t* str, qse_size_t size)
+qse_ssize_t qse_sio_putmsn (
+	qse_sio_t* sio, const qse_mchar_t* str, qse_size_t size)
 {
-	return qse_tio_write (&sio->tio, str, size);
+	return qse_tio_writem (&sio->tio, str, size);
+}
+
+qse_ssize_t qse_sio_putwsn (
+	qse_sio_t* sio, const qse_wchar_t* str, qse_size_t size)
+{
+	return qse_tio_writew (&sio->tio, str, size);
 }
 
 int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)

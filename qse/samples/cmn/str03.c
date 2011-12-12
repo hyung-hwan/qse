@@ -67,7 +67,7 @@ static int test1 (void)
 		qse_mbsset (buf, QSE_MT('A'), QSE_COUNTOF(buf));
 		n = qse_wcstombs (x[i], &wlen, buf, &mlen);
 
-		QSE_ASSERT (buf[QSE_COUNTOF(buf)-1] == QSE_MT('A'));
+		QSE_ASSERT (buf[QSE_COUNTOF(buf)-1] != QSE_MT('A'));
 		buf[QSE_COUNTOF(buf)-1] = QSE_MT('\0');
 
 		qse_printf (QSE_T("%s chars=%d bytes=%d [%hs]\n"), 
