@@ -1,5 +1,4 @@
 #include <qse/cmn/sio.h>
-#include <string.h>
 #include <locale.h>
 
 #define R(f) \

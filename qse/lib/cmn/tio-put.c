@@ -129,7 +129,7 @@ qse_ssize_t qse_tio_write (qse_tio_t* tio, const qse_char_t* str, qse_size_t siz
 	return p - str;
 }
 
-qse_ssize_t qse_tio_writem (
+qse_ssize_t qse_tio_writembsn (
 	qse_tio_t* tio, const qse_mchar_t* mptr, qse_size_t mlen)
 {
 	const qse_mchar_t* xptr, * xend;
@@ -155,7 +155,7 @@ qse_ssize_t qse_tio_writem (
 	{
 		for (xend = xptr + capa; xptr < xend; xptr++)
 			tio->outbuf[tio->outbuf_len++] = *xptr;
-		if (qse_tio_flush (tio) == -1) return -1;
+		if (qse_tio_flush (tio) <= -1) return -1;
 		mlen -= capa;
 	}
 
@@ -171,20 +171,27 @@ qse_ssize_t qse_tio_writem (
 		for (xend = xptr + mlen; xptr < xend; xptr++)
 		{
 			/* TODO: support different line terminating characeter */
-			if (*xptr == QSE_MT('\n')) nl = 1; 
 			tio->outbuf[tio->outbuf_len++] = *xptr;
+			if (*xptr == QSE_MT('\n')) 
+			{
+				nl = 1; 
+				break;
+			}
 		}
+
+		for (; xptr < xend; xptr++)
+			tio->outbuf[tio->outbuf_len++] = *xptr;
 	}
 
 	/* if the last part contains a new line, flush the internal
 	 * buffer. note that this flushes characters after nl also.*/
-	if (nl && qse_tio_flush (tio) == -1) return -1;
+	if (nl && qse_tio_flush (tio) <= -1) return -1;
 
 	/* returns the number multi-bytes characters handled */
 	return xptr - mptr;
 }
 
-qse_ssize_t qse_tio_writew (
+qse_ssize_t qse_tio_writewcsn (
 	qse_tio_t* tio, const qse_wchar_t* wptr, qse_size_t wlen)
 {
 	qse_size_t capa, wcnt, mcnt, xwlen;
@@ -198,49 +205,69 @@ qse_ssize_t qse_tio_writew (
 		capa = QSE_COUNTOF(tio->outbuf) - tio->outbuf_len;
 		wcnt = xwlen; mcnt = capa;
 
-		n = qse_wcsntombsn (wptr, &wcnt, &tio->outbuf[tio->outbuf_len], &mcnt);
+		n = qse_wcsntombsn (
+			wptr, &wcnt, &tio->outbuf[tio->outbuf_len], &mcnt);
 		tio->outbuf_len += mcnt;
 
 		if (n == -2)
 		{
 			/* the buffer is not large enough to 
-			 * convert more. so flush now and continue */
-			if (qse_tio_flush (tio) == -1) return -1;
+			 * convert more. so flush now and continue.
+			 * note that the buffer may not be full though 
+			 * it not large enough in this case */
+			if (qse_tio_flush (tio) <= -1) return -1;
 			nl = 0;
 		}
-		else if (n <= -1)
+		else 
 		{
-			/* invalid wide-character is encountered. */
-			if (tio->flags & QSE_TIO_IGNOREMBWCERR)
+			if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf))
 			{
-				/* though an error occurred, wcnt and mcnt
-				 * are valid for the bytes and characters 
-				 * processed so far. so i can insert a question
-				 * mark using mcnt as an index */
-				tio->outbuf[tio->outbuf_len + mcnt] = QSE_MT('?');
-				mcnt++; wcnt++;
+				/* flush the full buffer regardless of conversion
+				 * result. */
+				if (qse_tio_flush (tio) <= -1) return -1;
+				nl = 0;		  
+			}
+
+			if (n <= -1)
+			{
+				/* an invalid wide-character is encountered. */
+				if (tio->flags & QSE_TIO_IGNOREMBWCERR)
+				{
+					/* insert a question mark for an illegal 
+					 * character. */
+					QSE_ASSERT (tio->outbuf_len < QSE_COUNTOF(tio->outbuf));
+					tio->outbuf[tio->outbuf_len++] = QSE_MT('?');
+					wcnt++; /* skip this illegal character */
+					/* don't need to increment mcnt since
+					 * it's not used below */
+				}
+				else
+				{
+					tio->errnum = QSE_TIO_EILCHR;
+					return -1;
+				}
 			}
 			else
 			{
-				tio->errnum = QSE_TIO_EILCHR;
-				return -1;
+				if (!(tio->flags & QSE_TIO_NOAUTOFLUSH) && !nl)
+				{
+					qse_size_t i;
+					/* checking for a newline this way looks damn ugly.
+					 * TODO: how can i do this more elegantly? */
+					for (i = 0; i < wcnt; i++)
+					{
+						if (wptr[i] == QSE_WT('\n')) 
+						{
+							nl = 1; 
+							break;
+						}
+					}
+				}
 			}
-		}
-		else
-		{
-			if (!(tio->flags & QSE_TIO_NOAUTOFLUSH))
-			{
-				qse_size_t i;
-				/* checking for a newline this way looks damn ugly.
-				 * TODO: how can i do this more elegantly? */
-				for (i = 0; i < wcnt; i++)
-					if (wptr[i] == QSE_WT('\n')) nl = 1;
-			}
-
 		}
 		wptr += wcnt; xwlen -= wcnt;
 	}
 
-	if (nl && qse_tio_flush (tio) == -1) return -1;
+	if (nl && qse_tio_flush (tio) <= -1) return -1;
 	return wlen;
 }

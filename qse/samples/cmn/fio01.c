@@ -1,7 +1,6 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/stdio.h>
 
-#include <string.h>
 #include <locale.h>
 
 #define R(f) \

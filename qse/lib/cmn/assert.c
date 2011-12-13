@@ -23,7 +23,6 @@
 
 #ifndef NDEBUG
 
-#include <stdio.h>
 #include <qse/cmn/sio.h>
 #include "mem.h"
 
@@ -95,8 +94,12 @@ void qse_assert_failed (
 	qse_sio_t* sio, siobuf;
 
 	sio = &siobuf;
-	if (qse_sio_initstd (sio, QSE_MMGR_GETDFL(), QSE_SIO_STDERR, QSE_SIO_NOAUTOFLUSH) <= -1) 
+	if (qse_sio_initstd (
+		sio, QSE_MMGR_GETDFL(), QSE_SIO_STDERR, 
+		QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH) <= -1) 
+	{
 		sio = QSE_SIO_ERR;
+	}
 
 	qse_sio_putms (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
 

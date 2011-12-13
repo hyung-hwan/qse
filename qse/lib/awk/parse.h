@@ -61,7 +61,7 @@ int qse_awk_putsrcstr (
 	const qse_char_t* str
 );
 
-int qse_awk_putsrcstrx (
+int qse_awk_putsrcstrn (
 	qse_awk_t*        awk,
 	const qse_char_t* str,
 	qse_size_t        len

@@ -20,7 +20,7 @@ qse_word_t qse_stx_hashstr (
 	const qse_char_t* str
 );
 
-qse_word_t qse_stx_hashstrx (
+qse_word_t qse_stx_hashstrn (
 	qse_stx_t*        stx,
 	const qse_char_t* str,
 	qse_word_t        len

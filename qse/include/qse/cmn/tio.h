@@ -248,13 +248,13 @@ qse_ssize_t qse_tio_write (
 	qse_size_t        size
 );
 
-qse_ssize_t qse_tio_writem (
+qse_ssize_t qse_tio_writembsn (
 	qse_tio_t*         tio,
 	const qse_mchar_t* data,
 	qse_size_t         size
 );
 
-qse_ssize_t qse_tio_writew (
+qse_ssize_t qse_tio_writewcsn (
 	qse_tio_t*         tio,
 	const qse_wchar_t* data,
 	qse_size_t         size
