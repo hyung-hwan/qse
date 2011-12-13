@@ -1,6 +1,5 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/stdio.h>
-#include <string.h>
 
 #define R(f) \
 	do { \
@@ -13,7 +12,6 @@ static int test1 (void)
 	qse_fio_t* fio;
 	qse_ssize_t n;
 	char x[] = "fio test";
-	char x2[] = "fio test2";
 	qse_fio_off_t off;
 	char buf[1000];
 	int i;

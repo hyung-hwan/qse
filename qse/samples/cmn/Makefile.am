@@ -6,7 +6,13 @@ AM_CPPFLAGS = \
 	-I$(includedir)
 
 
-bin_PROGRAMS = xma fma pma chr str01 str02 str03 sll dll lda oht htb rbt fio01 fio02 pio sio time main main2 rex01 env path01 tre01 fmt01 fmt02 fs01
+bin_PROGRAMS = \
+	xma fma pma chr \
+	str01 str02 str03 \
+	sll dll lda oht htb rbt fio01 fio02 pio \
+	sio01 sio02 \
+	time main main2 rex01 env path01 tre01 \
+	fmt01 fmt02 fs01
 
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
@@ -27,7 +33,8 @@ rbt_SOURCES = rbt.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
 pio_SOURCES = pio.c
-sio_SOURCES = sio.c
+sio01_SOURCES = sio01.c
+sio02_SOURCES = sio02.c
 time_SOURCES = time.c
 main_SOURCES = main.c
 main2_SOURCES = main2.c

@@ -6057,7 +6057,7 @@ static int deparse (qse_awk_t* awk)
 		QSE_ASSERT (awk->tree.ngbls > 0);
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_GLOBAL, &kw);
-		if (qse_awk_putsrcstrx(awk,kw.ptr,kw.len) <= -1)
+		if (qse_awk_putsrcstrn(awk,kw.ptr,kw.len) <= -1)
 		{
 			EXIT_DEPARSE ();
 		}
@@ -6073,7 +6073,7 @@ static int deparse (qse_awk_t* awk)
 			{
 				/* use the actual name if no named variable 
 				 * is allowed */
-				if (qse_awk_putsrcstrx (awk, 
+				if (qse_awk_putsrcstrn (awk, 
 					QSE_LDA_DPTR(awk->parse.gbls,i),
 					QSE_LDA_DLEN(awk->parse.gbls,i)) <= -1)
 				{
@@ -6086,7 +6086,7 @@ static int deparse (qse_awk_t* awk)
 					awk, (qse_long_t)i, 
 					10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 				QSE_ASSERT (len != (qse_size_t)-1);
-				if (qse_awk_putsrcstrx (awk, tmp, len) <= -1)
+				if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
 				{
 					EXIT_DEPARSE ();
 				}
@@ -6099,7 +6099,7 @@ static int deparse (qse_awk_t* awk)
 		if ((awk->option & QSE_AWK_EXPLICIT) && 
 		    !(awk->option & QSE_AWK_IMPLICIT))
 		{
-			if (qse_awk_putsrcstrx (awk, 
+			if (qse_awk_putsrcstrn (awk, 
 				QSE_LDA_DPTR(awk->parse.gbls,i),
 				QSE_LDA_DLEN(awk->parse.gbls,i)) <= -1)
 			{
@@ -6112,7 +6112,7 @@ static int deparse (qse_awk_t* awk)
 				awk, (qse_long_t)i, 
 				10, QSE_T("__g"), tmp, QSE_COUNTOF(tmp));
 			QSE_ASSERT (len != (qse_size_t)-1);
-			if (qse_awk_putsrcstrx (awk, tmp, len) <= -1)
+			if (qse_awk_putsrcstrn (awk, tmp, len) <= -1)
 			{
 				EXIT_DEPARSE ();
 			}
@@ -6151,7 +6151,7 @@ static int deparse (qse_awk_t* awk)
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_BEGIN, &kw);
 
-		if (qse_awk_putsrcstrx (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
+		if (qse_awk_putsrcstrn (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_prnnde (awk, nde) <= -1) EXIT_DEPARSE ();
 
@@ -6213,7 +6213,7 @@ static int deparse (qse_awk_t* awk)
 
 		qse_awk_getkwname (awk, QSE_AWK_KWID_END, &kw);
 
-		if (qse_awk_putsrcstrx (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
+		if (qse_awk_putsrcstrn (awk, kw.ptr, kw.len) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_putsrcstr (awk, QSE_T(" ")) <= -1) EXIT_DEPARSE ();
 		if (qse_awk_prnnde (awk, nde) <= -1) EXIT_DEPARSE ();
 		
@@ -6266,7 +6266,7 @@ static qse_htb_walk_t deparse_func (
 	}
 
 #define PUT_SX(x,str,len) \
-	if (qse_awk_putsrcstrx (x->awk, str, len) <= -1) { \
+	if (qse_awk_putsrcstrn (x->awk, str, len) <= -1) { \
 		x->ret = -1; return QSE_HTB_WALK_STOP; \
 	}
 
@@ -6356,7 +6356,7 @@ int qse_awk_putsrcstr (qse_awk_t* awk, const qse_char_t* str)
 	return 0;
 }
 
-int qse_awk_putsrcstrx (
+int qse_awk_putsrcstrn (
 	qse_awk_t* awk, const qse_char_t* str, qse_size_t len)
 {
 	const qse_char_t* end = str + len;

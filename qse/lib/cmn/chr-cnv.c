@@ -59,8 +59,8 @@ qse_size_t qse_mbrlen (
 
 	#if 0
 	n = mblen (mb, mbl);
-	if (n == 0) return 1; /* a null character */
 	if (n == (size_t)-1) return 0; /* invalid or incomplete sequence */
+	if (n == 0) return 1; /* a null character */
 	return (qse_size_t)n;
 	#endif
 #else
@@ -119,16 +119,20 @@ qse_size_t qse_wcrtomb (
 		qse_mchar_t buf[QSE_MBLEN_MAX];
 
 		n = wcrtomb (buf, wc, (mbstate_t*)state);
-		if (n > mbl) return mbl + 1; /* buffer to small */
+		/* it's important that n is checked againt (size_t)-1
+		 * before againt mbl. n > mbl is true if n is (size_t)-1.
+		 * if the check comes later, i won't have a chance to
+		 * determine the case of an illegal character */
 		if (n == (size_t)-1) return 0; /* illegal character */
+		if (n > mbl) return mbl + 1; /* buffer to small */
 
 		QSE_MEMCPY (mb, buf, mbl);
 	}
 	else
 	{
 		n = wcrtomb (mb, wc, (mbstate_t*)state);
-		if (n > mbl) return mbl + 1; /* buffer to small */
 		if (n == (size_t)-1) return 0; /* illegal character */
+		if (n > mbl) return mbl + 1; /* buffer to small */
 	}
 
 	return n; /* number of bytes written to the buffer */

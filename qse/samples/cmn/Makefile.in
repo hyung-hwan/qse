@@ -38,9 +38,9 @@ bin_PROGRAMS = xma$(EXEEXT) fma$(EXEEXT) pma$(EXEEXT) chr$(EXEEXT) \
 	str01$(EXEEXT) str02$(EXEEXT) str03$(EXEEXT) sll$(EXEEXT) \
 	dll$(EXEEXT) lda$(EXEEXT) oht$(EXEEXT) htb$(EXEEXT) \
 	rbt$(EXEEXT) fio01$(EXEEXT) fio02$(EXEEXT) pio$(EXEEXT) \
-	sio$(EXEEXT) time$(EXEEXT) main$(EXEEXT) main2$(EXEEXT) \
-	rex01$(EXEEXT) env$(EXEEXT) path01$(EXEEXT) tre01$(EXEEXT) \
-	fmt01$(EXEEXT) fmt02$(EXEEXT) fs01$(EXEEXT)
+	sio01$(EXEEXT) sio02$(EXEEXT) time$(EXEEXT) main$(EXEEXT) \
+	main2$(EXEEXT) rex01$(EXEEXT) env$(EXEEXT) path01$(EXEEXT) \
+	tre01$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) fs01$(EXEEXT)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -133,10 +133,14 @@ am_rex01_OBJECTS = rex01.$(OBJEXT)
 rex01_OBJECTS = $(am_rex01_OBJECTS)
 rex01_LDADD = $(LDADD)
 rex01_DEPENDENCIES =
-am_sio_OBJECTS = sio.$(OBJEXT)
-sio_OBJECTS = $(am_sio_OBJECTS)
-sio_LDADD = $(LDADD)
-sio_DEPENDENCIES =
+am_sio01_OBJECTS = sio01.$(OBJEXT)
+sio01_OBJECTS = $(am_sio01_OBJECTS)
+sio01_LDADD = $(LDADD)
+sio01_DEPENDENCIES =
+am_sio02_OBJECTS = sio02.$(OBJEXT)
+sio02_OBJECTS = $(am_sio02_OBJECTS)
+sio02_LDADD = $(LDADD)
+sio02_DEPENDENCIES =
 am_sll_OBJECTS = sll.$(OBJEXT)
 sll_OBJECTS = $(am_sll_OBJECTS)
 sll_LDADD = $(LDADD)
@@ -183,17 +187,19 @@ SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str01_SOURCES) $(str02_SOURCES) $(str03_SOURCES) \
-	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sll_SOURCES) $(str01_SOURCES) \
+	$(str02_SOURCES) $(str03_SOURCES) $(time_SOURCES) \
+	$(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(htb_SOURCES) $(lda_SOURCES) $(main_SOURCES) $(main2_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio_SOURCES) $(sll_SOURCES) \
-	$(str01_SOURCES) $(str02_SOURCES) $(str03_SOURCES) \
-	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
+	$(sio02_SOURCES) $(sll_SOURCES) $(str01_SOURCES) \
+	$(str02_SOURCES) $(str03_SOURCES) $(time_SOURCES) \
+	$(tre01_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -361,7 +367,8 @@ rbt_SOURCES = rbt.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
 pio_SOURCES = pio.c
-sio_SOURCES = sio.c
+sio01_SOURCES = sio01.c
+sio02_SOURCES = sio02.c
 time_SOURCES = time.c
 main_SOURCES = main.c
 main2_SOURCES = main2.c
@@ -506,9 +513,12 @@ rbt$(EXEEXT): $(rbt_OBJECTS) $(rbt_DEPENDENCIES)
 rex01$(EXEEXT): $(rex01_OBJECTS) $(rex01_DEPENDENCIES) 
 	@rm -f rex01$(EXEEXT)
 	$(LINK) $(rex01_OBJECTS) $(rex01_LDADD) $(LIBS)
-sio$(EXEEXT): $(sio_OBJECTS) $(sio_DEPENDENCIES) 
-	@rm -f sio$(EXEEXT)
-	$(LINK) $(sio_OBJECTS) $(sio_LDADD) $(LIBS)
+sio01$(EXEEXT): $(sio01_OBJECTS) $(sio01_DEPENDENCIES) 
+	@rm -f sio01$(EXEEXT)
+	$(LINK) $(sio01_OBJECTS) $(sio01_LDADD) $(LIBS)
+sio02$(EXEEXT): $(sio02_OBJECTS) $(sio02_DEPENDENCIES) 
+	@rm -f sio02$(EXEEXT)
+	$(LINK) $(sio02_OBJECTS) $(sio02_LDADD) $(LIBS)
 sll$(EXEEXT): $(sll_OBJECTS) $(sll_DEPENDENCIES) 
 	@rm -f sll$(EXEEXT)
 	$(LINK) $(sll_OBJECTS) $(sll_LDADD) $(LIBS)
@@ -556,7 +566,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pma.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rbt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex01.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str02.Po@am__quote@

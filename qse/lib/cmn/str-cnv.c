@@ -342,7 +342,7 @@ int qse_wcstombs (
 		if (rem > 0) *mbs = QSE_MT('\0');
 		else 
 		{
-			/* if ret is -2 and wcs[wcslen] == QSE_T('\0'), 
+			/* if ret is -2 and wcs[wcslen] == QSE_WT('\0'), 
 			 * this means that the mbs buffer was lacking one
 			 * slot for the terminating null */
 			ret = -2; /* buffer too small */
@@ -428,7 +428,7 @@ int qse_wcsntombsn (
 		{
 			qse_size_t n;
 
-			n = qse_wcrtomb (*p, mbs, QSE_COUNTOF(mbsbuf), &state);
+			n = qse_wcrtomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf), &state);
 			if (n == 0) 
 			{
 				ret = -1;

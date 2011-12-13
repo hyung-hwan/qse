@@ -4,8 +4,6 @@
 #include <qse/cmn/sio.h>
 
 #include <locale.h>
-#include <wchar.h>
-#include <string.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -158,30 +156,6 @@ static int test4 ()
 	qse_str_fini (&s1);
 
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), out.ptr);
-	return 0;
-}
-
-static int test10 (void)
-{
-	qse_wchar_t* wa[] = { QSE_WT("hello"), QSE_WT(","), QSE_WT("world"), QSE_NULL };
-	qse_mchar_t* ma[] = { QSE_MT("HELLO"), QSE_MT(","), QSE_MT("WORLD"), QSE_NULL };
-	qse_wchar_t* w;
-	qse_mchar_t* m;
-
-	m = qse_wcsatombsdup (wa, QSE_MMGR_GETDFL());
-	if (m)
-	{
-		qse_printf (QSE_T("[%ms]\n"), m);
-		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), m);
-	}
-
-	w = qse_mbsatowcsdup (ma, QSE_MMGR_GETDFL());
-	if (w)
-	{
-		qse_printf (QSE_T("[%ws]\n"), w);
-		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), w);
-	}
-
 	return 0;
 }
 
@@ -418,7 +392,6 @@ int main ()
 	R (test2);
 	R (test3);
 	R (test4);
-	R (test10);
 
 	R (test11);
 	R (test12);

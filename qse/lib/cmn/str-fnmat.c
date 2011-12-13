@@ -199,6 +199,7 @@ static int __mbsxnfnmat (
 
 					if (pl >= 9) 
 					{
+						/* TODO: binary search or something more efficient ? */
 						if (qse_mbszcmp(pp, QSE_MT("[:upper:]"), 9) == 0) 
 						{
 							matched = QSE_ISMUPPER(sc);

@@ -2,7 +2,6 @@
 #include <qse/cmn/env.h>
 #include <qse/cmn/stdio.h>
 
-#include <string.h>
 #include <locale.h>
 
 #if defined(_WIN32)
