@@ -114,7 +114,7 @@ int StdSed::FileStream::close (Data& io)
 
 StdSed::ssize_t StdSed::FileStream::read (Data& io, char_t* buf, size_t len)
 {
-	ssize_t n = qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	ssize_t n = qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
 
 	if (n == -1)
 	{
@@ -135,7 +135,7 @@ StdSed::ssize_t StdSed::FileStream::read (Data& io, char_t* buf, size_t len)
 
 StdSed::ssize_t StdSed::FileStream::write (Data& io, const char_t* buf, size_t len)
 {
-	ssize_t n = qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+	ssize_t n = qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
 
 	if (n == -1)
 	{
@@ -242,7 +242,7 @@ StdSed::ssize_t StdSed::StringStream::read (Data& io, char_t* buf, size_t len)
 	else
 	{
 		QSE_ASSERT (handle != &out.buf);
-		return qse_sio_getsn ((qse_sio_t*)handle, buf, len);
+		return qse_sio_getstrn ((qse_sio_t*)handle, buf, len);
 	}
 }
 
@@ -265,7 +265,7 @@ StdSed::ssize_t StdSed::StringStream::write (Data& io, const char_t* data, size_
 	else
 	{
 		QSE_ASSERT (handle != in.ptr);
-		return qse_sio_putsn ((qse_sio_t*)handle, data, len);
+		return qse_sio_putstrn ((qse_sio_t*)handle, data, len);
 	}
 }
 

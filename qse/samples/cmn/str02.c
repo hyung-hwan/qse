@@ -54,9 +54,9 @@ static int test1 (void)
 			(int)wlen, (int)mlen, (int)wlen1, (int)mlen1, buf2);
 		qse_fflush (QSE_STDOUT);
 
-		qse_sio_putws (QSE_SIO_OUT, QSE_T("<<"));
-		qse_sio_putws (QSE_SIO_OUT, buf2);
-		qse_sio_putws (QSE_SIO_OUT, QSE_T(">>\n"));
+		qse_sio_putwcs (QSE_SIO_OUT, QSE_T("<<"));
+		qse_sio_putwcs (QSE_SIO_OUT, buf2);
+		qse_sio_putwcs (QSE_SIO_OUT, QSE_T(">>\n"));
 		qse_sio_flush (QSE_SIO_OUT);
 	}
 
@@ -76,9 +76,9 @@ static int test1 (void)
 			(int)wlen, (int)mlen, (int)wlen, (int)wlen1, (int)mlen1, buf2);
 
 		qse_fflush (QSE_STDOUT);
-		qse_sio_putws (QSE_SIO_OUT, QSE_T("<<"));
-		qse_sio_putws (QSE_SIO_OUT, buf2);
-		qse_sio_putws (QSE_SIO_OUT, QSE_T(">>\n"));
+		qse_sio_putwcs (QSE_SIO_OUT, QSE_T("<<"));
+		qse_sio_putwcs (QSE_SIO_OUT, buf2);
+		qse_sio_putwcs (QSE_SIO_OUT, QSE_T(">>\n"));
 		qse_sio_flush (QSE_SIO_OUT);
 	}
 

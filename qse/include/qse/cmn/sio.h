@@ -30,7 +30,7 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/tio.h>
 
-enum qse_sio_open_flag_t
+enum qse_sio_oflag_t
 {
 	QSE_SIO_HANDLE        = QSE_FIO_HANDLE,
 	QSE_SIO_TEMPORARY     = QSE_FIO_TEMPORARY,
@@ -60,6 +60,15 @@ enum qse_sio_open_flag_t
 	QSE_SIO_NOAUTOFLUSH   = (1 << 31)
 };
 
+typedef qse_tio_errnum_t qse_sio_errnum_t;
+#define QSE_SIO_ENOERR QSE_TIO_ENOERR
+#define QSE_SIO_ENOMEM QSE_TIO_ENOMEM 
+#define QSE_SIO_ENOSPC QSE_TIO_ENOSPC
+#define QSE_SIO_EILSEQ QSE_TIO_EILSEQ 
+#define QSE_SIO_EICSEQ QSE_TIO_EICSEQ
+#define QSE_SIO_EILCHR QSE_TIO_EILCHR
+#define QSE_SIO_ERRNUM(sio) QSE_TIO_ERRNUM(&((sio)->tio))
+
 typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
 typedef qse_fio_std_t qse_sio_std_t;
@@ -76,9 +85,9 @@ typedef struct qse_sio_t qse_sio_t;
 
 struct qse_sio_t
 {
-	qse_mmgr_t* mmgr;
-	qse_fio_t   fio;
-	qse_tio_t   tio;
+	QSE_DEFINE_COMMON_FIELDS (tio)
+	qse_fio_t        fio;
+	qse_tio_t        tio;
 };
 
 #ifdef __cplusplus
@@ -100,14 +109,14 @@ qse_sio_t* qse_sio_open (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	const qse_char_t* file,    /**< file name */
-	int               flags    /**< number OR'ed of #qse_sio_open_flag_t */
+	int               oflags   /**< number OR'ed of #qse_sio_oflag_t */
 );
 
 qse_sio_t* qse_sio_openstd (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	qse_sio_std_t     std,     /**< standard I/O identifier */
-	int               flags    /**< number OR'ed of #qse_sio_open_flag_t */
+	int               oflags   /**< number OR'ed of #qse_sio_oflag_t */
 );
 
 /**
@@ -135,7 +144,11 @@ void qse_sio_fini (
 	qse_sio_t* sio
 );
 
-qse_fio_hnd_t qse_sio_gethandle (
+qse_sio_errnum_t qse_sio_geterrnum (
+	qse_sio_t* sio
+);
+
+qse_sio_hnd_t qse_sio_gethandle (
 	qse_sio_t* sio
 );
 
@@ -147,57 +160,91 @@ void qse_sio_purge (
 	qse_sio_t* sio
 );
 
-qse_ssize_t qse_sio_getc (
-	qse_sio_t*  sio,
-	qse_char_t* c
+qse_ssize_t qse_sio_getmc (
+	qse_sio_t*   sio,
+	qse_mchar_t* c
 );
 
-qse_ssize_t qse_sio_gets (
-	qse_sio_t*  sio,
-	qse_char_t* buf,
-	qse_size_t  size
+qse_ssize_t qse_sio_getwc (
+	qse_sio_t*   sio,
+	qse_wchar_t* c
 );
 
-qse_ssize_t qse_sio_getsn (
-	qse_sio_t*  sio,
-	qse_char_t* buf,
-	qse_size_t  size
+qse_ssize_t qse_sio_getmbs (
+	qse_sio_t*   sio,
+	qse_mchar_t* buf,
+	qse_size_t   size
 );
 
-qse_ssize_t qse_sio_putc (
-	qse_sio_t* sio, 
-	qse_char_t c
+qse_ssize_t qse_sio_getmbsn (
+	qse_sio_t*   sio,
+	qse_mchar_t* buf,
+	qse_size_t   size
 );
 
-qse_ssize_t qse_sio_putms (
+qse_ssize_t qse_sio_getwcs (
+	qse_sio_t*   sio,
+	qse_wchar_t* buf,
+	qse_size_t   size
+);
+
+qse_ssize_t qse_sio_getwcsn (
+	qse_sio_t*   sio,
+	qse_wchar_t* buf,
+	qse_size_t   size
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_sio_getc(sio,c) qse_sio_getmb(sio,c)
+#	define qse_sio_getstr(sio,buf,size) qse_sio_getmbs(sio,buf,size)
+#	define qse_sio_getstrn(sio,buf,size) qse_sio_getmbsn(sio,buf,size)
+#else
+#	define qse_sio_getc(sio,c) qse_sio_getwc(sio,c)
+#	define qse_sio_getstr(sio,buf,size) qse_sio_getwcs(sio,buf,size)
+#	define qse_sio_getstrn(sio,buf,size) qse_sio_getwcsn(sio,buf,size)
+#endif
+
+qse_ssize_t qse_sio_putmb (
+	qse_sio_t*  sio, 
+	qse_mchar_t c
+);
+
+qse_ssize_t qse_sio_putwc (
+	qse_sio_t*  sio, 
+	qse_wchar_t c
+);
+
+qse_ssize_t qse_sio_putmbs (
 	qse_sio_t*         sio,
 	const qse_mchar_t* str
 );
 
-qse_ssize_t qse_sio_putws (
+qse_ssize_t qse_sio_putwcs (
 	qse_sio_t*         sio,
 	const qse_wchar_t* str
 );
 
 
-qse_ssize_t qse_sio_putmsn (
+qse_ssize_t qse_sio_putmbsn (
 	qse_sio_t*         sio, 
 	const qse_mchar_t* str,
 	qse_size_t         size
 );
 
-qse_ssize_t qse_sio_putwsn (
+qse_ssize_t qse_sio_putwcsn (
 	qse_sio_t*         sio, 
 	const qse_wchar_t* str,
 	qse_size_t         size
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_sio_puts(sio,str) qse_sio_putms(sio,str)
-#	define qse_sio_putsn(sio,str,size) qse_sio_putmsn(sio,str,size)
+#	define qse_sio_putc(sio,c) qse_sio_putmb(sio,c)
+#	define qse_sio_putstr(sio,str) qse_sio_putmbs(sio,str)
+#	define qse_sio_putstrn(sio,str,size) qse_sio_putmbsn(sio,str,size)
 #else
-#	define qse_sio_puts(sio,str) qse_sio_putws(sio,str)
-#	define qse_sio_putsn(sio,str,size) qse_sio_putwsn(sio,str,size)
+#	define qse_sio_putc(sio,c) qse_sio_putwc(sio,c)
+#	define qse_sio_putstr(sio,str) qse_sio_putwcs(sio,str)
+#	define qse_sio_putstrn(sio,str,size) qse_sio_putwcsn(sio,str,size)
 #endif
 
 /**

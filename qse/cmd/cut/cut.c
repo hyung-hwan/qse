@@ -78,7 +78,7 @@ static qse_ssize_t in (
 
 		case QSE_CUT_IO_READ:
 		{
-			qse_ssize_t n = qse_sio_getsn (arg->handle, buf, size);
+			qse_ssize_t n = qse_sio_getstrn (arg->handle, buf, size);
 			if (n <= -1)
 			{
 				qse_cstr_t ea;
@@ -139,7 +139,7 @@ static qse_ssize_t out (
 
 		case QSE_CUT_IO_WRITE:
 		{
-			qse_ssize_t n = qse_sio_putsn (arg->handle, data, len);
+			qse_ssize_t n = qse_sio_putstrn (arg->handle, data, len);
 			if (n <= -1)
 			{
 				qse_cstr_t ea;

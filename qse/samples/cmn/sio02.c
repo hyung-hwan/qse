@@ -60,13 +60,70 @@ static int test1 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_sio_putws (sio, x[i]);
-		qse_sio_putws (sio, QSE_WT("\n"));
+		qse_sio_putwcs (sio, x[i]);
+		qse_sio_putwc (sio, QSE_WT('\n'));
 	}
 
 	qse_sio_close (sio);
 	return 0;
 }
+
+static int test2 (void)
+{
+     const qse_mchar_t* x[] =
+     {
+          QSE_MT("\0\0\0"),
+          QSE_MT("이거슨"),
+          QSE_MT("뭐냐이거"),
+          QSE_MT("過去一個月"),
+          QSE_MT("是成功的建商"),
+          QSE_MT("뛰어 올라봐. 멀리멀리 잘난척하기는"),
+          QSE_MT("Fly to the universe")
+     };
+	int i;
+	qse_sio_t* sio;
+
+	sio = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
+	if (sio == QSE_NULL) return -1;
+
+	for (i = 0; i < QSE_COUNTOF(x); i++)
+	{
+		qse_sio_putmbs (sio, x[i]);
+		qse_sio_putmb (sio, QSE_MT('\n'));
+	}
+
+	qse_sio_close (sio);
+	return 0;
+}
+
+static int test3 (void)
+{
+     const qse_mchar_t* x[] =
+     {
+          QSE_MT("\0\0\0"),
+          QSE_MT("이거슨"),
+          QSE_MT("뭐냐이거"),
+          QSE_MT("過去一個月"),
+          QSE_MT("是成功的建商"),
+          QSE_MT("뛰어 올라봐. 멀리멀리 잘난척하기는"),
+          QSE_MT("Fly to the universe")
+     };
+	int i;
+	qse_sio_t* sio;
+
+	sio = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
+	if (sio == QSE_NULL) return -1;
+
+	for (i = 0; i < QSE_COUNTOF(x); i++)
+	{
+		qse_sio_putmbsn (sio, x[i], qse_mbslen(x[i]));
+		qse_sio_putmb (sio, QSE_MT('\n'));
+	}
+
+	qse_sio_close (sio);
+	return 0;
+}
+
 
 int main ()
 {
@@ -89,6 +146,8 @@ int main ()
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	R (test1);
+	R (test2);
+	R (test3);
 
 #if defined(_WIN32)
 	SetConsoleOutputCP (old_cp);

@@ -22,45 +22,98 @@
 #include <qse/cmn/chr.h>
 #include "mem.h"
 
-#define STATUS_GETC_EILSEQ  (1 << 0)
+#define STATUS_ILLSEQ  (1 << 0)
+#define STATUS_EOF     (1 << 1)
 
-static qse_ssize_t tio_getc (qse_tio_t* tio, qse_char_t* c)
+qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 {
-	qse_size_t left = 0;
+	qse_size_t nread;
 	qse_ssize_t n;
-	qse_char_t curc;
 
-	/* TODO: more efficient way to check this?
-	 *       maybe better to use QSE_ASSERT 
-	 * QSE_ASSERT (tio->input_func != QSE_NULL);
-	 */
+	/*QSE_ASSERT (tio->input_func != QSE_NULL);*/
 	if (tio->input_func == QSE_NULL) 
 	{
 		tio->errnum = QSE_TIO_ENOINF;
 		return -1;
 	}
 
-	if (tio->input_status & STATUS_GETC_EILSEQ) 
+	/* note that this function doesn't check if
+	 * tio->input_status is set with STATUS_ILLSEQ
+	 * since this function can simply return the next
+	 * available byte. */
+
+	if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
+
+/* TODO: HOW TO HANDLE those already converted to wchar???? */
+	nread = 0;
+	while (nread < size)
 	{
-		tio->input_status &= ~STATUS_GETC_EILSEQ;
-		tio->errnum = QSE_TIO_EILSEQ;
-		return -1;
+		if (tio->inbuf_cur >= tio->inbuf_len) 
+		{
+			n = tio->input_func (
+				QSE_TIO_IO_DATA, tio->input_arg,
+				tio->inbuf, QSE_COUNTOF(tio->inbuf));
+			if (n == 0) break;
+			if (n <= -1) 
+			{
+				tio->errnum = QSE_TIO_EINPUT;
+				return -1;
+			}
+
+			tio->inbuf_cur = 0;
+			tio->inbuf_len = (qse_size_t)n;
+		}
+
+		do
+		{
+			buf[nread] = tio->inbuf[tio->inbuf_cur++];
+			/* TODO: support a different line terminator */
+			if (buf[nread++] == QSE_MT('\n')) goto done;
+		}
+		while (tio->inbuf_cur < tio->inbuf_len && nread < size);
 	}
 
-	if (tio->inbuf_curp >= tio->inbuf_len) 
+done:
+	return nread;
+}
+
+static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
+{
+	qse_size_t mlen, wlen;
+	qse_ssize_t n;
+	int x;
+
+	if (tio->inbuf_cur >= tio->inbuf_len) 
 	{
+		tio->inbuf_cur = 0;
+		tio->inbuf_len = 0;
+
 	getc_conv:
-		n = tio->input_func (
-			QSE_TIO_IO_DATA, tio->input_arg,
-			&tio->inbuf[left], QSE_COUNTOF(tio->inbuf)-left);
+		if (tio->input_status & STATUS_EOF) n = 0;
+		else
+		{
+			n = tio->input_func (
+				QSE_TIO_IO_DATA, tio->input_arg,
+				&tio->inbuf[tio->inbuf_len], QSE_COUNTOF(tio->inbuf) - tio->inbuf_len);
+		}
 		if (n == 0) 
 		{
-			if (tio->inbuf_curp < tio->inbuf_len &&
-			    !(tio->flags & QSE_TIO_IGNOREMBWCERR))
+			tio->input_status |= STATUS_EOF;
+
+			if (tio->inbuf_cur < tio->inbuf_len)
 			{
-				/* gargage left in the buffer */
-				tio->errnum = QSE_TIO_EICSEQ;
-				return -1;
+				/* no more input from the underlying input handler.
+				 * but some incomplete bytes in the buffer. */
+				if (tio->flags & QSE_TIO_IGNOREMBWCERR) 
+				{
+					/* tread them as illegal sequence */
+					goto ignore_illseq;
+				}
+				else
+				{
+					tio->errnum = QSE_TIO_EICSEQ;
+					return -1;
+				}
 			}
 
 			return 0;
@@ -71,78 +124,106 @@ static qse_ssize_t tio_getc (qse_tio_t* tio, qse_char_t* c)
 			return -1;
 		}
 
-		tio->inbuf_curp = 0;
-		tio->inbuf_len = (qse_size_t)n + left;	
+		tio->inbuf_len += n;
 	}
 
-#ifdef QSE_CHAR_IS_MCHAR
-	curc = tio->inbuf[tio->inbuf_curp++];
-#else
-	left = tio->inbuf_len - tio->inbuf_curp;
+	mlen = tio->inbuf_len - tio->inbuf_cur;
+	wlen = QSE_COUNTOF(tio->inwbuf);
 
-	n = qse_mbrtowc (
-		&tio->inbuf[tio->inbuf_curp], left, &curc, &tio->mbstate.in);
-	if (n == 0) 
+	x = qse_mbsntowcsn (&tio->inbuf[tio->inbuf_cur], &mlen, tio->inwbuf, &wlen);
+	tio->inbuf_cur += mlen;
+
+	if (x == -3)
+	{
+		/* incomplete sequence */
+		if (wlen <= 0)
+		{
+			/* not even a single character was handled. 
+			 * shift bytes in the buffer to the head. */
+			QSE_ASSERT (mlen <= 0);
+			tio->inbuf_len = tio->inbuf_len - tio->inbuf_cur;
+			QSE_MEMCPY (&tio->inbuf[0], 
+			            &tio->inbuf[tio->inbuf_cur],
+			            tio->inbuf_len * QSE_SIZEOF(tio->inbuf[0]));
+			tio->inbuf_cur = 0;
+			goto getc_conv; /* and read more */
+		}
+
+		/* get going if some characters are handled */
+	}
+	else if (x == -2)
+	{
+		/* buffer not large enough */
+		QSE_ASSERTX (wlen > 0, 
+			"You must enlarge the size of tio->inwbuf if this happens.");
+		
+		/* the wide-character buffer is not just large enough to
+		 * hold the entire conversion result. lets's go on so long as 
+		 * 1 wide-character is produced though it may be inefficient */
+	}
+	else if (x <= -1)
 	{
 		/* illegal sequence */
 		if (tio->flags & QSE_TIO_IGNOREMBWCERR)
 		{
-			/* *c = tio->inbuf[tio->inbuf_curp++]; */
-			*c = QSE_WT('?');
-			tio->inbuf_curp++;
-			return 1;
+		ignore_illseq:
+			tio->inbuf_cur++; /* skip one byte */
+			tio->inwbuf[wlen++] = QSE_WT('?');
 		}
-
-		tio->inbuf_curp++; /* skip one byte */
-		tio->errnum = QSE_TIO_EILSEQ;
-		return -1;
-	}
-	if (n > left)
-	{
-		/* incomplete sequence */
-		if (tio->inbuf_curp > 0)
+		else if (wlen <= 0)
 		{
-			QSE_MEMCPY (tio->inbuf, &tio->inbuf[tio->inbuf_curp], left);
-			tio->inbuf_curp = 0;
-			tio->inbuf_len = left;
+			tio->errnum = QSE_TIO_EILSEQ;
+			return -1;
 		}
-		goto getc_conv;
+		else
+		{
+			/* some characters are already handled.
+			 * mark that an illegal sequence encountered
+			 * and carry on. */
+			tio->input_status |= STATUS_ILLSEQ;
+		}
 	}
-
-	tio->inbuf_curp += n;
-#endif
-
-	*c = curc;
+	
+	tio->inwbuf_cur = 0;
+	tio->inwbuf_len = wlen;
 	return 1;
 }
 
-qse_ssize_t qse_tio_read (qse_tio_t* tio, qse_char_t* buf, qse_size_t size)
+qse_ssize_t qse_tio_readwcs (qse_tio_t* tio, qse_wchar_t* buf, qse_size_t size)
 {
-	qse_ssize_t n;
-	qse_char_t* p, * end, c;
+	qse_size_t nread = 0;
 
-	if (size <= 0) return 0;
-
-	p = buf; end = buf + size;
-	while (p < end) 
+	/*QSE_ASSERT (tio->input_func != QSE_NULL);*/
+	if (tio->input_func == QSE_NULL) 
 	{
-		n = tio_getc (tio, &c);
-		if (n == -1) 
-		{
-			if (p > buf && tio->errnum == QSE_TIO_EILSEQ) 
-			{
-				tio->input_status |= STATUS_GETC_EILSEQ;
-				break;
-			}
-			return -1;
-		}
-		if (n == 0) break;
-		*p++ = c;
-
-		/* TODO: support a different line breaker */
-		if (c == QSE_T('\n')) break;
+		tio->errnum = QSE_TIO_ENOINF;
+		return -1;
 	}
 
-	return p - buf;
-}
+	if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
 
+	while (nread < size)
+	{
+		if (tio->inwbuf_cur >= tio->inwbuf_len)
+		{
+			int n;
+
+			/* no more characters in the wide-charcter buffer */
+			if (tio->input_status & STATUS_ILLSEQ) 
+			{
+				tio->input_status &= ~STATUS_ILLSEQ;
+				tio->errnum = QSE_TIO_EILSEQ;
+				return -1;
+			}
+
+			n = tio_read_widechars (tio);	
+			if (n == 0) break;
+			if (n <= -1) return -1;
+		}
+
+		buf[nread] = tio->inwbuf[tio->inwbuf_cur++];
+		if (buf[nread++] == QSE_WT('\n')) break;
+	}
+
+	return nread;
+}

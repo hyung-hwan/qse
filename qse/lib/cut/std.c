@@ -64,6 +64,43 @@ int qse_cut_compstd (qse_cut_t* cut, const qse_char_t* sptr)
 	return qse_cut_comp (cut, sptr, qse_strlen(sptr));
 }
 
+static qse_sio_t* open_sio (qse_cut_t* cut, const qse_char_t* file, int flags)
+{
+	qse_sio_t* sio;
+
+	sio = qse_sio_open (cut->mmgr, 0, file, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = file;
+		ea.len = qse_strlen (file);
+		qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
+	}
+	return sio;
+}
+
+static const qse_char_t* sio_std_names[] =
+{
+	QSE_T("stdin"),
+	QSE_T("stdout"),
+	QSE_T("stderr"),
+};
+
+static qse_sio_t* open_sio_std (qse_cut_t* cut, qse_sio_std_t std, int flags)
+{
+	qse_sio_t* sio;
+
+	sio = qse_sio_openstd (cut->mmgr, 0, std, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = sio_std_names[std];
+		ea.len = qse_strlen (sio_std_names[std]);
+		qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
+	}
+	return sio;
+}
+
 static qse_ssize_t xin (
 	qse_cut_t* cut, qse_cut_io_cmd_t cmd, qse_cut_io_arg_t* arg,
 	qse_char_t* buf, qse_size_t len)
@@ -76,28 +113,9 @@ static qse_ssize_t xin (
 		case QSE_CUT_IO_OPEN:
 		{
 			/* main data stream */
-			if (xtn->infile == QSE_NULL) sio = qse_sio_in;
-			else
-			{
-				sio = qse_sio_open (
-					cut->mmgr,
-					0,
-					xtn->infile,
-					QSE_SIO_READ
-				);
-				if (sio == QSE_NULL)
-				{
-					/* set the error message explicitly
-					 * as the file name is different from
-					 * the standard console name (NULL) */
-					qse_cstr_t ea;
-					ea.ptr = xtn->infile;
-					ea.len = qse_strlen (xtn->infile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-					return -1;
-				}
-			}
-
+			sio = (xtn->infile == QSE_NULL)?
+				open_sio_std (cut, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
+				open_sio (cut, xtn->infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
 			return 1;
@@ -106,14 +124,13 @@ static qse_ssize_t xin (
 		case QSE_CUT_IO_CLOSE:
 		{
 			sio = (qse_sio_t*)arg->handle;
-			if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-				qse_sio_close (sio);
+			qse_sio_close (sio);
 			return 0;
 		}
 
 		case QSE_CUT_IO_READ:
 		{
-			qse_ssize_t n = qse_sio_getsn (arg->handle, buf, len);
+			qse_ssize_t n = qse_sio_getstrn (arg->handle, buf, len);
 
 			if (n == -1)
 			{
@@ -145,30 +162,9 @@ static qse_ssize_t xout (
 	{
 		case QSE_CUT_IO_OPEN:
 		{
-			if (xtn->outfile == QSE_NULL) sio = qse_sio_out;
-			else
-			{
-				sio = qse_sio_open (
-					cut->mmgr,
-					0,
-					xtn->outfile,
-					QSE_SIO_WRITE |
-					QSE_SIO_CREATE |
-					QSE_SIO_TRUNCATE
-				);
-				if (sio == QSE_NULL)
-				{
-					/* set the error message explicitly
-					 * as the file name is different from
-					 * the standard console name (NULL) */
-					qse_cstr_t ea;
-					ea.ptr = xtn->outfile;
-					ea.len = qse_strlen (xtn->outfile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-					return -1;
-				}
-			}
-
+			sio = (xtn->infile == QSE_NULL)?
+				open_sio_std (cut, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR):
+				open_sio (cut, xtn->outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
 			return 1;
@@ -178,14 +174,13 @@ static qse_ssize_t xout (
 		{
 			sio = (qse_sio_t*)arg->handle;
 			qse_sio_flush (sio);
-			if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-				qse_sio_close (sio);
+			qse_sio_close (sio);
 			return 0;
 		}
 
 		case QSE_CUT_IO_WRITE:
 		{
-			qse_ssize_t n = qse_sio_putsn (arg->handle, dat, len);
+			qse_ssize_t n = qse_sio_putstrn (arg->handle, dat, len);
 
 			if (n == -1)
 			{

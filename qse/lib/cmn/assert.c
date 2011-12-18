@@ -48,7 +48,7 @@
 #define WRITE_CHAR(sio,c) \
 do { \
 	qse_mchar_t __xxx_c = c; \
-	if (qse_sio_putmsn (sio, &__xxx_c, 1) != 1) return -1; \
+	if (qse_sio_putmbsn (sio, &__xxx_c, 1) != 1) return -1; \
 } while (0)
 
 static int write_num (qse_sio_t* sio, qse_size_t x, int base)
@@ -101,39 +101,39 @@ void qse_assert_failed (
 		sio = QSE_SIO_ERR;
 	}
 
-	qse_sio_putms (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
+	qse_sio_putmbs (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
 
 #if 1
-	qse_sio_putms (sio, QSE_MT("                         __ \n"));
-	qse_sio_putms (sio, QSE_MT(" _____ _____ _____ _____|  |\n"));
-	qse_sio_putms (sio, QSE_MT("|     |     |  _  |   __|  |\n"));
-	qse_sio_putms (sio, QSE_MT("|  |  |  |  |   __|__   |__|\n"));
-	qse_sio_putms (sio, QSE_MT("|_____|_____|__|  |_____|__|\n"));
-	qse_sio_putms (sio, QSE_MT("                            \n"));
+	qse_sio_putmbs (sio, QSE_MT("                         __ \n"));
+	qse_sio_putmbs (sio, QSE_MT(" _____ _____ _____ _____|  |\n"));
+	qse_sio_putmbs (sio, QSE_MT("|     |     |  _  |   __|  |\n"));
+	qse_sio_putmbs (sio, QSE_MT("|  |  |  |  |   __|__   |__|\n"));
+	qse_sio_putmbs (sio, QSE_MT("|_____|_____|__|  |_____|__|\n"));
+	qse_sio_putmbs (sio, QSE_MT("                            \n"));
 #else
-	qse_sio_putms (sio, QSE_MT("                            __ \n"));
-	qse_sio_putms (sio, QSE_MT(" _____ _____ _____ _____   |  |\n"));
-	qse_sio_putms (sio, QSE_MT("|     |     |  _  |   __|  |  |\n"));
-	qse_sio_putms (sio, QSE_MT("|  |  |  |  |   __|__   |  |__|\n"));
-	qse_sio_putms (sio, QSE_MT("|_____|_____|__|  |_____|  |__|\n"));
-	qse_sio_putms (sio, QSE_MT("                            __ \n"));
+	qse_sio_putmbs (sio, QSE_MT("                            __ \n"));
+	qse_sio_putmbs (sio, QSE_MT(" _____ _____ _____ _____   |  |\n"));
+	qse_sio_putmbs (sio, QSE_MT("|     |     |  _  |   __|  |  |\n"));
+	qse_sio_putmbs (sio, QSE_MT("|  |  |  |  |   __|__   |  |__|\n"));
+	qse_sio_putmbs (sio, QSE_MT("|_____|_____|__|  |_____|  |__|\n"));
+	qse_sio_putmbs (sio, QSE_MT("                            __ \n"));
 #endif
 
-	qse_sio_putms (sio, QSE_MT("FILE: "));
-	qse_sio_puts (sio, file);
-	qse_sio_putms (sio, QSE_MT(" LINE: "));
+	qse_sio_putmbs (sio, QSE_MT("FILE: "));
+	qse_sio_putstr (sio, file);
+	qse_sio_putmbs (sio, QSE_MT(" LINE: "));
 
 	write_num (sio, line, 10);
 
-	qse_sio_putms (sio, QSE_MT("\nEXPRESSION: "));
-	qse_sio_puts (sio, expr);
-	qse_sio_putms (sio, QSE_MT("\n"));
+	qse_sio_putmbs (sio, QSE_MT("\nEXPRESSION: "));
+	qse_sio_putstr (sio, expr);
+	qse_sio_putmbs (sio, QSE_MT("\n"));
 
 	if (desc != QSE_NULL)
 	{
-		qse_sio_putms (sio, QSE_MT("DESCRIPTION: "));
-		qse_sio_puts (sio, desc);
-		qse_sio_putms (sio, QSE_MT("\n"));
+		qse_sio_putmbs (sio, QSE_MT("DESCRIPTION: "));
+		qse_sio_putstr (sio, desc);
+		qse_sio_putmbs (sio, QSE_MT("\n"));
 	}
 
 #ifdef HAVE_BACKTRACE
@@ -141,19 +141,19 @@ void qse_assert_failed (
 	btsyms = backtrace_symbols (btarray, btsize);
 	if (btsyms != QSE_NULL)
 	{
-		qse_sio_putms (sio, QSE_MT("=[BACKTRACES]===================================================================\n"));
+		qse_sio_putmbs (sio, QSE_MT("=[BACKTRACES]===================================================================\n"));
 
 		for (i = 0; i < btsize; i++)
 		{
-			qse_sio_putms (sio, btsyms[i]);
-			qse_sio_putms (sio, QSE_MT("\n"));
+			qse_sio_putmbs (sio, btsyms[i]);
+			qse_sio_putmbs (sio, QSE_MT("\n"));
 		}
 
 		free (btsyms);
 	}
 #endif
 
-	qse_sio_putms (sio, QSE_MT("================================================================================\n"));
+	qse_sio_putmbs (sio, QSE_MT("================================================================================\n"));
 	qse_sio_flush (sio);
 	if (sio != QSE_SIO_ERR) qse_sio_fini (sio);
 

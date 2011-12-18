@@ -28,61 +28,59 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
+static qse_sio_t* open_sio (StdCut::Stream::Data& io, const qse_char_t* file, int flags)
+{
+	qse_sio_t* sio;
+
+	sio = qse_sio_open (((StdCut::cut_t*)io)->mmgr, 0, file, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = file;
+		ea.len = qse_strlen (file);
+		((StdCut::Cut*)io)->setError (QSE_CUT_EIOFIL, &ea);
+	}
+	return sio;
+}
+
+static qse_sio_t* open_sio_std (StdCut::Stream::Data& io, qse_sio_std_t std, int flags)
+{
+	qse_sio_t* sio;
+	static const qse_char_t* std_names[] =
+	{
+		QSE_T("stdin"),
+		QSE_T("stdout"),
+		QSE_T("stderr"),
+	};
+
+	sio = qse_sio_openstd (((StdCut::cut_t*)io)->mmgr, 0, std, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = std_names[std];
+		ea.len = qse_strlen (std_names[std]);
+		((StdCut::Cut*)io)->setError (QSE_CUT_EIOFIL, &ea);
+	}
+	return sio;
+}
+
 int StdCut::FileStream::open (Data& io)
 {
 	qse_sio_t* sio;
 
 	if (io.getMode() == READ)
 	{
-		if (infile == QSE_NULL) sio = qse_sio_in;
-		else
-		{
-			sio = qse_sio_open (
-				((cut_t*)io)->mmgr,
-				0,
-				infile,
-				QSE_SIO_READ
-			);
-			if (sio == QSE_NULL)
-			{
-				// set the error message explicitly
-				// as the file name is different from 
-				// the standard console name (NULL)
-				qse_cstr_t ea;
-				ea.ptr = infile;
-				ea.len = qse_strlen (infile);
-				((Cut*)io)->setError (
-					QSE_CUT_EIOFIL, &ea);
-				return -1;
-			}
-		}
+		sio = (infile == QSE_NULL)?
+			open_sio_std (io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
+			open_sio (io, infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+		if (sio == QSE_NULL) return -1;
 	}
 	else
 	{
-		if (outfile == QSE_NULL) sio = qse_sio_out;
-		else
-		{
-			sio = qse_sio_open (
-				((cut_t*)io)->mmgr,
-				0,
-				outfile,
-				QSE_SIO_WRITE |
-				QSE_SIO_CREATE |
-				QSE_SIO_TRUNCATE
-			);
-			if (sio == QSE_NULL)
-			{
-				// set the error message explicitly
-				// as the file name is different from 
-				// the standard console name (NULL)
-				qse_cstr_t ea;
-				ea.ptr = outfile;
-				ea.len = qse_strlen (outfile);
-				((Cut*)io)->setError (
-					QSE_CUT_EIOFIL, &ea);
-				return -1;
-			}
-		}
+		sio = (outfile == QSE_NULL)?
+			open_sio_std (io, QSE_SIO_STDIN, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR):
+			open_sio (io, outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+		if (sio == QSE_NULL) return -1;
 	}
 
 	io.setHandle (sio);
@@ -94,15 +92,14 @@ int StdCut::FileStream::close (Data& io)
 	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
 
 	qse_sio_flush (sio);
-	if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-		qse_sio_close (sio);
+	qse_sio_close (sio);
 
 	return 0;
 }
 
 StdCut::ssize_t StdCut::FileStream::read (Data& io, char_t* buf, size_t len)
 {
-	ssize_t n = qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	ssize_t n = qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
 
 	if (n == -1)
 	{
@@ -123,7 +120,7 @@ StdCut::ssize_t StdCut::FileStream::read (Data& io, char_t* buf, size_t len)
 
 StdCut::ssize_t StdCut::FileStream::write (Data& io, const char_t* buf, size_t len)
 {
-	ssize_t n = qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+	ssize_t n = qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
 
 	if (n == -1)
 	{

@@ -72,7 +72,7 @@ int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr, int flags)
 	tio->output_arg = QSE_NULL;
 
 	tio->input_status = 0;
-	tio->inbuf_curp = 0;
+	tio->inbuf_cur = 0;
 	tio->inbuf_len = 0;
 	tio->outbuf_len = 0;
 	*/
@@ -136,7 +136,7 @@ int qse_tio_attachin (qse_tio_t* tio, qse_tio_io_t input, void* arg)
 	tio->input_arg = arg;
 
 	tio->input_status = 0;
-	tio->inbuf_curp = 0;
+	tio->inbuf_cur = 0;
 	tio->inbuf_len = 0;
 
 	return 0;
@@ -237,7 +237,7 @@ qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 void qse_tio_purge (qse_tio_t* tio)
 {
 	tio->input_status = 0;
-	tio->inbuf_curp = 0;
+	tio->inbuf_cur = 0;
 	tio->inbuf_len = 0;
 	tio->outbuf_len = 0;
 	tio->errnum = QSE_TIO_ENOERR;
