@@ -133,7 +133,6 @@ struct qse_fio_t
 	 * in sio.c. make sure that you update the static instantiation
 	 * when you change the structure of qse_fio_t */
 	QSE_DEFINE_COMMON_FIELDS (fio)
-	int           errnum;
 	qse_fio_hnd_t handle;
 	int           flags; /* extra flags */
 	qse_tio_t*    tio;
@@ -147,7 +146,6 @@ struct qse_fio_lck_t
 	qse_fio_ori_t  origin; /* origin */
 };
 
-#define QSE_FIO_ERRNUM(fio) ((fio)->errnum)
 #define QSE_FIO_HANDLE(fio) ((fio)->handle)
 
 #ifdef __cplusplus

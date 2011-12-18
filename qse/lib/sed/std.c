@@ -347,7 +347,7 @@ static qse_ssize_t read_input_stream (
 			while (base->mempos < io->u.mem.len && n < len)
 				buf[n++] = io->u.mem.ptr[base->mempos++];
 		}
-		else n = qse_sio_getsn (arg->handle, buf, len);
+		else n = qse_sio_getstrn (arg->handle, buf, len);
 		if (n != 0) 
 		{
 			if (n <= -1)
@@ -523,7 +523,7 @@ static qse_ssize_t x_in (
 				if (xtn->e.in.ptr == QSE_NULL)
 				{
 					qse_ssize_t n;
-					n = qse_sio_getsn (arg->handle, buf, len);
+					n = qse_sio_getstrn (arg->handle, buf, len);
 					if (n <= -1)
 					{
 						qse_cstr_t ea;
@@ -539,7 +539,7 @@ static qse_ssize_t x_in (
 			else
 			{
 				qse_ssize_t n;
-				n = qse_sio_getsn (arg->handle, buf, len);
+				n = qse_sio_getstrn (arg->handle, buf, len);
 				if (n <= -1)
 				{
 					qse_cstr_t ea;
@@ -631,7 +631,7 @@ static qse_ssize_t x_out (
 				if (xtn->e.out.ptr== QSE_NULL)
 				{
 					qse_ssize_t n;
-					n = qse_sio_putsn (arg->handle, dat, len);
+					n = qse_sio_putstrn (arg->handle, dat, len);
 					if (n <= -1)
 					{
 						qse_cstr_t ea;
@@ -659,7 +659,7 @@ static qse_ssize_t x_out (
 					else
 					{
 						qse_ssize_t n;
-						n = qse_sio_putsn (arg->handle, dat, len);
+						n = qse_sio_putstrn (arg->handle, dat, len);
 						if (n <= -1)
 						{
 							qse_cstr_t ea;
@@ -674,7 +674,7 @@ static qse_ssize_t x_out (
 			else
 			{
 				qse_ssize_t n;
-				n = qse_sio_putsn (arg->handle, dat, len);
+				n = qse_sio_putstrn (arg->handle, dat, len);
 				if (n <= -1)
 				{
 					qse_cstr_t ea;

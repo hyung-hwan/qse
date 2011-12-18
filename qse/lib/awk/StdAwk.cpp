@@ -533,16 +533,7 @@ int StdAwk::openConsole (Console& io)
 
 int StdAwk::closeConsole (Console& io) 
 { 
-	qse_sio_t* sio;
-
-	sio = (qse_sio_t*)io.getHandle();
-	if (sio != qse_sio_in &&
-	    sio != qse_sio_out &&
-	    sio != qse_sio_err)
-	{
-		qse_sio_close (sio);
-	}
-
+	qse_sio_close ((qse_sio_t*)io.getHandle());
 	return 0;
 }
 
@@ -550,7 +541,7 @@ StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 {
 	qse_ssize_t nn;
 
-	while ((nn = qse_sio_getsn((qse_sio_t*)io.getHandle(),data,size)) == 0)
+	while ((nn = qse_sio_getstrn((qse_sio_t*)io.getHandle(),data,size)) == 0)
 	{
 		int n;
 		qse_sio_t* sio = (qse_sio_t*)io.getHandle();
@@ -564,13 +555,7 @@ StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 			return 0;
 		}
 
-		if (sio != QSE_NULL && 
-		    sio != qse_sio_in && 
-		    sio != qse_sio_out &&
-		    sio != qse_sio_err) 
-		{
-			qse_sio_close (sio);
-		}
+		if (sio) qse_sio_close (sio);
 	}
 
 	return nn;
@@ -578,7 +563,7 @@ StdAwk::ssize_t StdAwk::readConsole (Console& io, char_t* data, size_t size)
 
 StdAwk::ssize_t StdAwk::writeConsole (Console& io, const char_t* data, size_t size) 
 {
-	return qse_sio_putsn (
+	return qse_sio_putstrn (
 		(qse_sio_t*)io.getHandle(),
 		data,
 		size
@@ -605,14 +590,7 @@ int StdAwk::nextConsole (Console& io)
 		return 0;
 	}
 
-	if (sio != QSE_NULL && 
-	    sio != qse_sio_in && 
-	    sio != qse_sio_out &&
-	    sio != qse_sio_err)
-	{
-		qse_sio_close (sio);
-	}
-
+	if (sio) qse_sio_close (sio);
 	return n;
 }
 
@@ -872,25 +850,19 @@ int StdAwk::SourceFile::open (Data& io)
 int StdAwk::SourceFile::close (Data& io)
 {
 	qse_sio_t* sio = (qse_sio_t*)io.getHandle();
-
 	qse_sio_flush (sio);
-
-	if (sio != qse_sio_in && sio != qse_sio_out && sio != qse_sio_err)
-	{
-		qse_sio_close (sio);
-	}
-
+	qse_sio_close (sio);
 	return 0;
 }
 
 StdAwk::ssize_t StdAwk::SourceFile::read (Data& io, char_t* buf, size_t len)
 {
-	return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, const char_t* buf, size_t len)
 {
-	return qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+	return qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::SourceString::open (Data& io)
@@ -947,7 +919,7 @@ StdAwk::ssize_t StdAwk::SourceString::read (Data& io, char_t* buf, size_t len)
 	}
 	else
 	{
-		return qse_sio_getsn ((qse_sio_t*)io.getHandle(), buf, len);
+		return qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
 	}
 }
 
@@ -961,7 +933,7 @@ StdAwk::ssize_t StdAwk::SourceString::write (Data& io, const char_t* buf, size_t
 	{
 		// in fact, this block will never be reached as
 		// there is no included file concept for deparsing 
-		return qse_sio_putsn ((qse_sio_t*)io.getHandle(), buf, len);
+		return qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
 	}
 }
 

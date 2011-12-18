@@ -1012,6 +1012,7 @@ int qse_pio_init (
 		int topt = 0;
 
 		if (oflags & QSE_PIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
+		if (oflags & QSE_PIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{
@@ -1168,7 +1169,10 @@ static qse_ssize_t pio_read (
 	}
 
 #if defined(_WIN32)
-	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
+
 	if (ReadFile(hnd, buf, (DWORD)size, &count, QSE_NULL) == FALSE) 
 	{
 		/* ReadFile receives ERROR_BROKEN_PIPE when the write end
@@ -1180,7 +1184,10 @@ static qse_ssize_t pio_read (
 	return (qse_ssize_t)count;
 
 #elif defined(__OS2__)
-	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
+
 	rc = DosRead (hnd, buf, (ULONG)size, &count);
 	if (rc != NO_ERROR)
 	{
@@ -1192,8 +1199,9 @@ static qse_ssize_t pio_read (
 
 #elif defined(__DOS__)
 	/* TODO: verify this */
-	if (size > QSE_TYPE_MAX(unsigned int)) 
-		size = QSE_TYPE_MAX(unsigned int);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
 
 	n = read (hnd, buf, size);
 	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
@@ -1201,7 +1209,8 @@ static qse_ssize_t pio_read (
 
 #else
 
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 reread:
 	n = QSE_READ (hnd, buf, size);
@@ -1254,12 +1263,14 @@ static qse_ssize_t pio_write (
 	{
 		/* the stream is already closed */
 		pio->errnum = QSE_PIO_ENOHND;
-		return (qse_ssize_t)-1;
+		return -1;
 	}
 
 #if defined(_WIN32)
 
-	if (size > QSE_TYPE_MAX(DWORD)) size = QSE_TYPE_MAX(DWORD);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
+
 	if (WriteFile (hnd, data, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
 		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
@@ -1270,7 +1281,9 @@ static qse_ssize_t pio_write (
 
 #elif defined(__OS2__)
 
-	if (size > QSE_TYPE_MAX(ULONG)) size = QSE_TYPE_MAX(ULONG);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
+
 	rc = DosWrite (hnd, (PVOID)data, (ULONG)size, &count);
 	if (rc != NO_ERROR)
 	{
@@ -1281,8 +1294,9 @@ static qse_ssize_t pio_write (
 	return (qse_ssize_t)count;
 
 #elif defined(__DOS__)
-	if (size > QSE_TYPE_MAX(unsigned int)) 
-		size = QSE_TYPE_MAX(unsigned int);
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
 
 	n = write (hnd, data, size);
 	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
@@ -1290,7 +1304,8 @@ static qse_ssize_t pio_write (
 
 #else
 
-	if (size > QSE_TYPE_MAX(size_t)) size = QSE_TYPE_MAX(size_t);
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t)))
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 rewrite:
 	n = QSE_WRITE (hnd, data, size);

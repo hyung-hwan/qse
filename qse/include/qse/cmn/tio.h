@@ -57,7 +57,8 @@ enum
 	 * (i.e. 6 for utf8)
 	 */
 	QSE_TIO_MAX_INBUF_LEN = 4096,
-	QSE_TIO_MAX_OUTBUF_LEN = 4096
+	QSE_TIO_MAX_OUTBUF_LEN = 4096,
+	QSE_TIO_MAX_INWBUF_LEN = 1024
 };
 
 enum qse_tio_cmd_t
@@ -97,7 +98,7 @@ struct qse_tio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_tio_errnum_t errnum;
-	int flags;
+	int flags; 
 
 	/* io functions */
 	qse_tio_io_t input_func;
@@ -106,21 +107,16 @@ struct qse_tio_t
 	void* output_arg;
 
 	/* for housekeeping */
-	int           input_status;
-	qse_size_t    inbuf_curp;
-	qse_size_t    inbuf_len;
-	qse_size_t    outbuf_len;
+	int         input_status;
+	qse_size_t  inbuf_cur;
+	qse_size_t  inbuf_len;
+	qse_size_t  outbuf_len;
+	qse_size_t  inwbuf_cur;
+	qse_size_t  inwbuf_len;
 
 	qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
 	qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
-
-#ifdef QSE_CHAR_IS_WCHAR
-	struct
-	{
-		qse_mbstate_t in;
-		qse_mbstate_t out;
-	} mbstate;
-#endif
+	qse_wchar_t inwbuf[QSE_TIO_MAX_INWBUF_LEN];
 };
 
 #ifdef __cplusplus
@@ -133,9 +129,9 @@ QSE_DEFINE_COMMON_FUNCTIONS (tio)
  * The qse_tio_open() function creates an text stream processoor.
  */
 qse_tio_t* qse_tio_open (
-	qse_mmgr_t* mmgr,
-	qse_size_t  xtnsize,
-	int         flags
+	qse_mmgr_t* mmgr,    /**< memory manager */
+	qse_size_t  xtnsize, /**< extension size in bytes */
+	int         flags    /**< ORed of qse_tio_flag_t enumerators */
 );
 
 /**
@@ -228,37 +224,63 @@ void qse_tio_purge (
 	qse_tio_t* tio
 );
 
-/**
- * The qse_tio_read() functio reads text.
- */
-qse_ssize_t qse_tio_read (
-	qse_tio_t*  tio, 
-	qse_char_t* buf, 
-	qse_size_t  size
+qse_ssize_t qse_tio_readmbs (
+	qse_tio_t*   tio, 
+	qse_mchar_t* buf, 
+	qse_size_t   size
+);
+
+qse_ssize_t qse_tio_readwcs (
+	qse_tio_t*   tio, 
+	qse_wchar_t* buf, 
+	qse_size_t   size
 );
 
 /**
- * The qse_tio_write() function writes text.
- * If the size paramenter is (qse_size_t)-1, the function treats the data 
- * parameter as a pointer to a null-terminated string.
+ * The qse_tio_read() macro is character-type neutral. It maps
+ * to qse_tio_readmbs() or qse_tio_readwcs().
  */
-qse_ssize_t qse_tio_write (
-	qse_tio_t*        tio,
-	const qse_char_t* data,
-	qse_size_t        size
-);
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_tio_read(tio,buf,size) qse_tio_readmbs(tio,buf,size)
+#else
+#	define qse_tio_read(tio,buf,size) qse_tio_readwcs(tio,buf,size)
+#endif
 
-qse_ssize_t qse_tio_writembsn (
+/**
+ * The qse_tio_writembs() function writes the @a size characters 
+ * from a multibyte string @a str. If @a size is (qse_size_t)-1,
+ * it writes on until a terminating null is found. It doesn't 
+ * write more than QSE_TYPE_MAX(qse_ssize_t) characters.
+ * @return number of characters written on success, -1 on failure.
+ */
+qse_ssize_t qse_tio_writembs (
 	qse_tio_t*         tio,
-	const qse_mchar_t* data,
+	const qse_mchar_t* str,
 	qse_size_t         size
 );
 
-qse_ssize_t qse_tio_writewcsn (
+/**
+ * The qse_tio_writembs() function writes the @a size characters 
+ * from a wide-character string @a str. If @a size is (qse_size_t)-1,
+ * it writes on until a terminating null is found. It doesn't write 
+ * more than QSE_TYPE_MAX(qse_ssize_t) characters.
+ * @return number of characters written on success, -1 on failure.
+ */
+qse_ssize_t qse_tio_writewcs (
 	qse_tio_t*         tio,
-	const qse_wchar_t* data,
+	const qse_wchar_t* str,
 	qse_size_t         size
 );
+
+/**
+ * The qse_tio_write() macro is character-type neutral. It maps
+ * to qse_tio_writembs() or qse_tio_writewcs().
+ */
+#ifdef QSE_CHAR_IS_MCHAR
+#	define qse_tio_write(tio,str,size) qse_tio_writembs(tio,str,size)
+#else
+#	define qse_tio_write(tio,str,size) qse_tio_writewcs(tio,str,size)
+#endif
 
 #ifdef __cplusplus
 }

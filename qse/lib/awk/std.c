@@ -509,7 +509,7 @@ static qse_ssize_t sf_in_read (
 				qse_ssize_t n;
 
 				QSE_ASSERT (xtn->s.in.handle != QSE_NULL);
-				n = qse_sio_getsn (xtn->s.in.handle, data, size);
+				n = qse_sio_getstrn (xtn->s.in.handle, data, size);
 				if (n == -1)
 				{
 					qse_cstr_t ea;
@@ -549,7 +549,7 @@ static qse_ssize_t sf_in_read (
 		qse_ssize_t n;
 
 		QSE_ASSERT (arg->handle != QSE_NULL);
-		n = qse_sio_getsn (arg->handle, data, size);
+		n = qse_sio_getstrn (arg->handle, data, size);
 		if (n == -1)
 		{
 			qse_cstr_t ea;
@@ -672,7 +672,7 @@ static qse_ssize_t sf_out (
 				{
 					qse_ssize_t n;
 					QSE_ASSERT (xtn->s.out.handle != QSE_NULL);
-					n = qse_sio_putsn (xtn->s.out.handle, data, size);
+					n = qse_sio_putstrn (xtn->s.out.handle, data, size);
 					if (n == -1)
 					{
 						qse_cstr_t ea;
@@ -1220,7 +1220,7 @@ static qse_ssize_t awk_rio_console (
 		{
 			qse_ssize_t nn;
 
-			while ((nn = qse_sio_getsn((qse_sio_t*)riod->handle,data,size)) == 0)
+			while ((nn = qse_sio_getstrn((qse_sio_t*)riod->handle,data,size)) == 0)
 			{
 				int n;
 				qse_sio_t* sio = (qse_sio_t*)riod->handle;
@@ -1241,7 +1241,7 @@ static qse_ssize_t awk_rio_console (
 		}
 
 		case QSE_AWK_RIO_WRITE:
-			return qse_sio_putsn (	
+			return qse_sio_putstrn (	
 				(qse_sio_t*)riod->handle,
 				data,
 				size

@@ -40,6 +40,7 @@ enum qse_pio_oflag_t
 	/** enable text based I/O. */
 	QSE_PIO_TEXT          = (1 << 0),
      QSE_PIO_IGNOREMBWCERR = (1 << 1),
+	QSE_PIO_NOAUTOFLUSH   = (1 << 2),
 
 	/** execute the command via a system shell 
 	 * (/bin/sh on *nix, cmd.exe on windows) */
