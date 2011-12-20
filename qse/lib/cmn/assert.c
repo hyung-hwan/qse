@@ -94,12 +94,9 @@ void qse_assert_failed (
 	qse_sio_t* sio, siobuf;
 
 	sio = &siobuf;
-	if (qse_sio_initstd (
+	qse_sio_initstd (
 		sio, QSE_MMGR_GETDFL(), QSE_SIO_STDERR, 
-		QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH) <= -1) 
-	{
-		sio = QSE_SIO_ERR;
-	}
+		QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
 
 	qse_sio_putmbs (sio, QSE_MT("=[ASSERTION FAILURE]============================================================\n"));
 
@@ -155,7 +152,7 @@ void qse_assert_failed (
 
 	qse_sio_putmbs (sio, QSE_MT("================================================================================\n"));
 	qse_sio_flush (sio);
-	if (sio != QSE_SIO_ERR) qse_sio_fini (sio);
+	qse_sio_fini (sio);
 
 #if defined(_WIN32)
 	ExitProcess (249);

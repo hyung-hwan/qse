@@ -51,6 +51,46 @@ QSE_BEGIN_NAMESPACE(QSE)
 		} \
 	} while (0)
 
+static qse_sio_t* open_sio (Awk* awk, StdAwk::Run* run, const qse_char_t* file, int flags)
+{
+	qse_sio_t* sio;
+
+	//sio = qse_sio_open ((run? ((Awk::awk_t*)*(Awk*)*run)->mmgr: awk->getMmgr()), 0, file, flags);
+	sio = qse_sio_open ((run? ((Awk*)*run)->getMmgr(): awk->getMmgr()), 0, file, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = file;
+		ea.len = qse_strlen (file);
+		if (run) run->setError (QSE_AWK_EOPEN, &ea);
+		else awk->setError (QSE_AWK_EOPEN, &ea);
+	}
+	return sio;
+}
+
+static qse_sio_t* open_sio_std (Awk* awk, StdAwk::Run* run, qse_sio_std_t std, int flags)
+{
+	qse_sio_t* sio;
+	static const qse_char_t* std_names[] =
+	{
+		QSE_T("stdin"),
+		QSE_T("stdout"),
+		QSE_T("stderr"),
+	};
+
+	//sio = qse_sio_openstd ((run? ((Awk::awk_t*)*(Awk*)*run)->mmgr: awk->getMmgr()), 0, std, flags);
+	sio = qse_sio_openstd ((run? ((Awk*)*run)->getMmgr(): awk->getMmgr()), 0, std, flags);
+	if (sio == QSE_NULL)
+	{
+		qse_cstr_t ea;
+		ea.ptr = std_names[std];
+		ea.len = qse_strlen (std_names[std]);
+		if (run) run->setError (QSE_AWK_EOPEN, &ea);
+		else awk->setError (QSE_AWK_EOPEN, &ea);
+	}
+	return sio;
+}
+
 int StdAwk::open () 
 {
 	int n = Awk::open ();
@@ -116,17 +156,11 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #else
 
 	qse_mchar_t* mbs;
-	mbs = qse_wcstombsdup (ptr, ((awk_t*)(Awk*)run)->mmgr);
-	if (mbs == QSE_NULL)
-	{
-		qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
-		return -1;
-	}
-
+	mbs = qse_wcstombsdup (ptr, ((Awk*)run)->getMmgr());
+	if (mbs == QSE_NULL) return -1;
 	int n = ret.setInt ((long_t)::system(mbs));
-	qse_awk_freemem ((awk_t*)(Awk*)run, mbs);
+	QSE_MMGR_FREE (((Awk*)run)->getMmgr(), mbs);
 	return n;
-
 #endif
 }
 
@@ -263,7 +297,7 @@ int StdAwk::flushFile (File& io)
 int StdAwk::addConsoleOutput (const char_t* arg, size_t len) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = ofile.add (awk, arg, len);
+	int n = this->ofile.add (awk, arg, len);
 	if (n <= -1) setError (QSE_AWK_ENOMEM);
 	return n;
 }
@@ -275,21 +309,26 @@ int StdAwk::addConsoleOutput (const char_t* arg)
 
 void StdAwk::clearConsoleOutputs () 
 {
-	ofile.clear (awk);
+	this->ofile.clear (awk);
 }
 
 int StdAwk::open_console_in (Console& io) 
 { 
 	qse_awk_rtx_t* rtx = (rtx_t*)io;
 
-	if (runarg.ptr == QSE_NULL) 
+	if (this->runarg.ptr == QSE_NULL) 
 	{
-		QSE_ASSERT (runarg.len == 0 && runarg.capa == 0);
+		QSE_ASSERT (this->runarg.len == 0 && this->runarg.capa == 0);
 
-		if (runarg_count == 0) 
+		if (this->runarg_count == 0) 
 		{
-			io.setHandle (qse_sio_in);
-			runarg_count++;
+			qse_sio_t* sio;
+
+			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			if (sio == QSE_NULL) return -1;
+
+			io.setHandle (sio);
+			this->runarg_count++;
 			return 1;
 		}
 
@@ -308,13 +347,13 @@ int StdAwk::open_console_in (Console& io)
 		qse_awk_rtx_valtostr_out_t out;
 
 	nextfile:
-		file = runarg.ptr[runarg_index].ptr;
+		file = this->runarg.ptr[this->runarg_index].ptr;
 
 		if (file == QSE_NULL)
 		{
 			/* no more input file */
 
-			if (runarg_count == 0)
+			if (this->runarg_count == 0)
 			{
 				/* all ARGVs are empty strings. 
 				 * so no console files were opened.
@@ -323,15 +362,18 @@ int StdAwk::open_console_in (Console& io)
 				 * 'BEGIN { ARGV[1]=""; ARGV[2]=""; }
 				 *        { print $0; }' file1 file2
 				 */
-				io.setHandle (qse_sio_in);
-				runarg_count++;
+				sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+				if (sio == QSE_NULL) return -1;
+
+				io.setHandle (sio);
+				this->runarg_count++;
 				return 1;
 			}
 
 			return 0;
 		}
 
-		if (qse_strlen(file) != runarg.ptr[runarg_index].len)
+		if (qse_strlen(file) != this->runarg.ptr[this->runarg_index].len)
 		{
 			cstr_t arg;
 			arg.ptr = file;
@@ -354,10 +396,10 @@ int StdAwk::open_console_in (Console& io)
 		map = ((qse_awk_val_map_t*)argv)->map;
 		QSE_ASSERT (map != QSE_NULL);
 		
-		// ok to find ARGV[runarg_index] as ARGV[0]
+		// ok to find ARGV[this->runarg_index] as ARGV[0]
 		// has been skipped.
 		ibuflen = qse_awk_longtostr (
-			rtx->awk, runarg_index, 
+			rtx->awk, this->runarg_index, 
 			10, QSE_NULL,
 			ibuf, QSE_COUNTOF(ibuf)
 		);
@@ -375,7 +417,7 @@ int StdAwk::open_console_in (Console& io)
 		{
 			/* the name is empty */
 			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
-			runarg_index++;
+			this->runarg_index++;
 			goto nextfile;
 		}
 
@@ -393,29 +435,19 @@ int StdAwk::open_console_in (Console& io)
 		file = out.u.cpldup.ptr;
 
 		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
-		{
-			/* special file name '-' */
-			sio = qse_sio_in;
-		}
+			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 		else
+			sio = open_sio (QSE_NULL, io, file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+		if (sio == QSE_NULL) 
 		{
-			sio = qse_sio_open (
-				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
-			if (sio == QSE_NULL)
-			{
-				cstr_t arg;
-				arg.ptr = file;
-				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (QSE_AWK_EOPEN, &arg);
-				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
-				return -1;
-			}
+			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			return -1;
 		}
-
+		
 		if (qse_awk_rtx_setfilename (
 			rtx, file, qse_strlen(file)) == -1)
 		{
-			if (sio != qse_sio_in) qse_sio_close (sio);
+			qse_sio_close (sio);
 			qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
 			return -1;
 		}
@@ -424,8 +456,8 @@ int StdAwk::open_console_in (Console& io)
 		io.setHandle (sio);
 
 		/* increment the counter of files successfully opened */
-		runarg_count++;
-		runarg_index++;
+		this->runarg_count++;
+		this->runarg_index++;
 		return 1;
 	}
 
@@ -435,14 +467,17 @@ int StdAwk::open_console_out (Console& io)
 {
 	qse_awk_rtx_t* rtx = (rtx_t*)io;
 
-	if (ofile.ptr == QSE_NULL)
+	if (this->ofile.ptr == QSE_NULL)
 	{
-		QSE_ASSERT (ofile.len == 0 && ofile.capa == 0);
+		QSE_ASSERT (this->ofile.len == 0 && this->ofile.capa == 0);
 
-		if (ofile_count == 0) 
+		if (this->ofile_count == 0) 
 		{
-			io.setHandle (qse_sio_out);
-			ofile_count++;
+			qse_sio_t* sio;
+			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+			if (sio == QSE_NULL) return -1;
+			io.setHandle (sio);
+			this->ofile_count++;
 			return 1;
 		}
 
@@ -455,7 +490,7 @@ int StdAwk::open_console_out (Console& io)
 		qse_sio_t* sio;
 		const qse_char_t* file;
 
-		file = ofile.ptr[ofile_index].ptr;
+		file = this->ofile.ptr[this->ofile_index].ptr;
 
 		if (file == QSE_NULL)
 		{
@@ -463,7 +498,7 @@ int StdAwk::open_console_out (Console& io)
 			return 0;
 		}
 
-		if (qse_strlen(file) != ofile.ptr[ofile_index].len)
+		if (qse_strlen(file) != this->ofile.ptr[this->ofile_index].len)
 		{	
 			cstr_t arg;
 			arg.ptr = file;
@@ -473,23 +508,10 @@ int StdAwk::open_console_out (Console& io)
 		}
 
 		if (file[0] == QSE_T('-') && file[1] == QSE_T('\0'))
-		{
-			/* special file name '-' */
-			sio = qse_sio_out;
-		}
+			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 		else
-		{
-			sio = qse_sio_open (
-				rtx->awk->mmgr, 0, file, QSE_SIO_READ);
-			if (sio == QSE_NULL)
-			{
-				cstr_t arg;
-				arg.ptr = file;
-				arg.len = qse_strlen (arg.ptr);
-				((Run*)io)->setError (QSE_AWK_EOPEN, &arg);
-				return -1;
-			}
-		}
+			sio = open_sio (QSE_NULL, io, file, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+		if (sio == QSE_NULL) return -1;
 		
 		if (qse_awk_rtx_setofilename (
 			rtx, file, qse_strlen(file)) == -1)
@@ -500,8 +522,8 @@ int StdAwk::open_console_out (Console& io)
 
 		io.setHandle (sio);
 
-		ofile_index++;
-		ofile_count++;
+		this->ofile_index++;
+		this->ofile_count++;
 		return 1;
 	}
 }
@@ -512,12 +534,12 @@ int StdAwk::openConsole (Console& io)
 
 	if (mode == Console::READ)
 	{
-		runarg_count = 0;
-		runarg_index = 0;
-		if (runarg.len > 0) 
+		this->runarg_count = 0;
+		this->runarg_index = 0;
+		if (this->runarg.len > 0) 
 		{
 			// skip ARGV[0]
-			runarg_index++;
+			this->runarg_index++;
 		}
 		return open_console_in (io);
 	}
@@ -525,8 +547,8 @@ int StdAwk::openConsole (Console& io)
 	{
 		QSE_ASSERT (mode == Console::WRITE);
 
-		ofile_count = 0;
-		ofile_index = 0;
+		this->ofile_count = 0;
+		this->ofile_index = 0;
 		return open_console_out (io);
 	}
 }
@@ -756,36 +778,31 @@ int StdAwk::SourceFile::open (Data& io)
 	{
 		// open the main source file.
 
-		if (name[0] == QSE_T('-') && name[1] == QSE_T('\0'))
+		if (this->name[0] == QSE_T('-') && this->name[1] == QSE_T('\0'))
 		{
-			sio = (io.getMode() == READ)? qse_sio_in: qse_sio_out;
+			if (io.getMode() == READ)
+				sio = open_sio_std (io, QSE_NULL, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			else
+				sio = open_sio_std (io, QSE_NULL, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+			if (sio == QSE_NULL) return -1;
 		}
 		else
 		{
 			const qse_char_t* base;
 
-			sio = qse_sio_open (
-				((awk_t*)io)->mmgr,
-				0,
-				name,
+			sio = open_sio (
+				io, QSE_NULL, this->name,
 				(io.getMode() == READ? 
 					QSE_SIO_READ: 
-					(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+					(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE|QSE_SIO_IGNOREMBWCERR))
 			);
-			if (sio == QSE_NULL) 
-			{
-				qse_cstr_t ea;
-				ea.ptr = name;
-				ea.len = qse_strlen(name);
-				((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
-				return -1;
-			}
+			if (sio == QSE_NULL) return -1;
 
-			base = qse_basename (name);
-			if (base != name)
+			base = qse_basename (this->name);
+			if (base != this->name)
 			{
-				dir.ptr = name;
-				dir.len = base - name;
+				dir.ptr = this->name;
+				dir.len = base - this->name;
 			}
 		}
 	}
@@ -805,7 +822,7 @@ int StdAwk::SourceFile::open (Data& io)
 			if (totlen >= QSE_COUNTOF(fbuf))
 			{
 				dbuf = (qse_char_t*) QSE_MMGR_ALLOC (
-					((awk_t*)io)->mmgr,
+					((Awk*)io)->getMmgr(),
 					QSE_SIZEOF(qse_char_t) * (totlen + 1)
 				);
 				if (dbuf == QSE_NULL)
@@ -818,29 +835,18 @@ int StdAwk::SourceFile::open (Data& io)
 			}
 			else file = fbuf;
 
-			tmplen = qse_strncpy (
-				(char_t*)file, dir.ptr, dir.len);
+			tmplen = qse_strncpy ((char_t*)file, dir.ptr, dir.len);
 			qse_strcpy ((char_t*)file + tmplen, ioname);
 		}
 
-		sio = qse_sio_open (
-			((awk_t*)io)->mmgr,
-			0,
-			file,
+		sio = open_sio (
+			io, QSE_NULL, file,
 			(io.getMode() == READ? 
 				QSE_SIO_READ: 
-				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE))
+				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE|QSE_SIO_IGNOREMBWCERR))
 		);
-
-		if (dbuf != QSE_NULL) QSE_MMGR_FREE (((awk_t*)io)->mmgr, dbuf);
-		if (sio == QSE_NULL)
-		{
-			qse_cstr_t ea;
-			ea.ptr = file;
-			ea.len = qse_strlen(file);
-			((Awk*)io)->setError (QSE_AWK_EOPEN, &ea);
-			return -1;
-		}
+		if (dbuf) QSE_MMGR_FREE (((Awk*)io)->getMmgr(), dbuf);
+		if (sio == QSE_NULL) return -1;
 	}
 
 	io.setHandle (sio);
@@ -881,7 +887,7 @@ int StdAwk::SourceString::open (Data& io)
 	{
 		// open an included file 
 		sio = qse_sio_open (
-			((awk_t*)io)->mmgr,
+			((Awk*)io)->getMmgr(),
 			0,
 			ioname,
 			(io.getMode() == READ? 
