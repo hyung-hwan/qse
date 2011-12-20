@@ -31,154 +31,6 @@ static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_si
 #	include <os2.h>
 #endif
 
-static qse_sio_t __sio_in = 
-{
-	QSE_NULL, /* mmgr */
-
-	/* fio */
-	{
-		QSE_NULL,                      /* mmgr */
-
-	#if defined(_WIN32)
-		/* this is not a handle. it is adjusted to 
-		 * an actual handle in __sio_input () */
-		(HANDLE)STD_INPUT_HANDLE,      /* handle */
-	#elif defined(__OS2__)
-		(HFILE)0,                      /* handle */
-	#elif defined(__DOS__)
-		0,                             /* handle */
-	#else
-		0,                             /* handle */
-	#endif
-
-		0,                             /* flags */
-		QSE_NULL                       /* tio */
-	},
-
-	/* tio */
-	{
-		QSE_NULL,
-		QSE_TIO_ENOERR,
-		QSE_TIO_IGNOREMBWCERR,
-
-		__sio_input,
-		__sio_output,
-		&__sio_in,	
-		&__sio_in,
-
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-
-		{ 0 },
-		{ 0 },
-		{ 0 }
-	}
-};
-
-static qse_sio_t __sio_out = 
-{
-	QSE_NULL, /* mmgr */
-
-	/* fio */
-	{
-		QSE_NULL,
-
-	#if defined(_WIN32)
-		/* this is not a handle. it is adjusted to 
-		 * an actual handle in __sio_output () */
-		(HANDLE)STD_OUTPUT_HANDLE,
-	#elif defined(__OS2__)
-		(HFILE)1,
-	#elif defined(__DOS__)
-		1,
-	#else
-		1,
-	#endif
-
-		0,
-		QSE_NULL
-	},
-
-	/* tio */
-	{
-		QSE_NULL,
-		QSE_TIO_ENOERR,
-		QSE_TIO_IGNOREMBWCERR,
-
-		__sio_input,
-		__sio_output,
-		&__sio_out,	
-		&__sio_out,
-
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-
-		{ 0 },
-		{ 0 },
-		{ 0 }
-	}
-};
-
-static qse_sio_t __sio_err = 
-{
-	QSE_NULL, /* mmgr */
-
-	/* fio */
-	{
-		QSE_NULL,
-
-	#if defined(_WIN32)
-		/* this is not a handle. it is adjusted to 
-		 * an actual handle in __sio_output () */
-		(HANDLE)STD_ERROR_HANDLE,
-	#elif defined(__OS2__)
-		(HFILE)2,
-	#elif defined(__DOS__)
-		2,
-	#else
-		2,
-	#endif
-
-		0,
-		QSE_NULL
-	},
-
-	/* tio */
-	{
-		QSE_NULL,
-		QSE_TIO_ENOERR,
-		QSE_TIO_IGNOREMBWCERR,
-
-		__sio_input,
-		__sio_output,
-		&__sio_err,	
-		&__sio_err,
-
-		0,
-		0,
-		0,
-		0,
-		0,
-		0,
-
-		{ 0 },
-		{ 0 },
-		{ 0 }
-	}
-};
-
-qse_sio_t* qse_sio_in = &__sio_in;
-qse_sio_t* qse_sio_out = &__sio_out;
-qse_sio_t* qse_sio_err = &__sio_err;
-
 qse_sio_t* qse_sio_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* file, int flags)
 {
@@ -272,10 +124,6 @@ void qse_sio_fini (qse_sio_t* sio)
 	qse_sio_flush (sio);
 	qse_tio_fini (&sio->tio);
 	qse_fio_fini (&sio->fio);
-
-	if (sio == qse_sio_in) qse_sio_in = QSE_NULL;
-	else if (sio == qse_sio_out) qse_sio_out = QSE_NULL;
-	else if (sio == qse_sio_err) qse_sio_err = QSE_NULL;
 }
 
 qse_sio_errnum_t qse_sio_geterrnum (qse_sio_t* sio)
@@ -425,21 +273,6 @@ static qse_ssize_t __sio_input (
 
 	if (cmd == QSE_TIO_IO_DATA) 
 	{
-	#if defined(_WIN32)
-		/* TODO: I hate this way of adjusting the handle value
-		 *       Is there any good ways to do it statically? */
-		HANDLE h = sio->fio.handle;
-		if (h == (HANDLE)STD_INPUT_HANDLE ||
-		    h == (HANDLE)STD_OUTPUT_HANDLE ||
-		    h == (HANDLE)STD_ERROR_HANDLE)
-		{
-			h = GetStdHandle((DWORD)h);
-			if (h != INVALID_HANDLE_VALUE && h != NULL) 
-			{
-				sio->fio.handle = h; 
-			}
-		}
-	#endif
 		return qse_fio_read (&sio->fio, buf, size);
 	}
 
@@ -455,21 +288,6 @@ static qse_ssize_t __sio_output (
 
 	if (cmd == QSE_TIO_IO_DATA) 
 	{
-	#if defined(_WIN32)
-		/* TODO: I hate this way of adjusting the handle value
-		 *       Is there any good ways to do it statically? */
-		HANDLE h = sio->fio.handle;
-		if (h == (HANDLE)STD_INPUT_HANDLE ||
-		    h == (HANDLE)STD_OUTPUT_HANDLE ||
-		    h == (HANDLE)STD_ERROR_HANDLE)
-		{
-			h = GetStdHandle((DWORD)h);
-			if (h != INVALID_HANDLE_VALUE && h != NULL) 
-			{
-				sio->fio.handle = h; 
-			}
-		}
-	#endif
 		return qse_fio_write (&sio->fio, buf, size);
 	}
 

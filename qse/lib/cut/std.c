@@ -79,15 +79,15 @@ static qse_sio_t* open_sio (qse_cut_t* cut, const qse_char_t* file, int flags)
 	return sio;
 }
 
-static const qse_char_t* sio_std_names[] =
-{
-	QSE_T("stdin"),
-	QSE_T("stdout"),
-	QSE_T("stderr"),
-};
 
 static qse_sio_t* open_sio_std (qse_cut_t* cut, qse_sio_std_t std, int flags)
 {
+	static const qse_char_t* sio_std_names[] =
+	{
+		QSE_T("stdin"),
+		QSE_T("stdout"),
+		QSE_T("stderr"),
+	};
 	qse_sio_t* sio;
 
 	sio = qse_sio_openstd (cut->mmgr, 0, std, flags);
@@ -113,9 +113,9 @@ static qse_ssize_t xin (
 		case QSE_CUT_IO_OPEN:
 		{
 			/* main data stream */
-			sio = (xtn->infile == QSE_NULL)?
-				open_sio_std (cut, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
-				open_sio (cut, xtn->infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			sio = xtn->infile?
+				open_sio (cut, xtn->infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
+				open_sio_std (cut, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
 			return 1;
@@ -134,7 +134,7 @@ static qse_ssize_t xin (
 
 			if (n == -1)
 			{
-				if (xtn->infile != QSE_NULL)
+				if (xtn->infile)
 				{
 					qse_cstr_t ea;
 					ea.ptr = xtn->infile;
@@ -162,9 +162,9 @@ static qse_ssize_t xout (
 	{
 		case QSE_CUT_IO_OPEN:
 		{
-			sio = (xtn->infile == QSE_NULL)?
-				open_sio_std (cut, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR):
-				open_sio (cut, xtn->outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+			sio = xtn->outfile?
+				open_sio (cut, xtn->outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR):
+				open_sio_std (cut, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
 			return 1;
@@ -184,11 +184,11 @@ static qse_ssize_t xout (
 
 			if (n == -1)
 			{
-				if (xtn->infile != QSE_NULL)
+				if (xtn->outfile)
 				{
 					qse_cstr_t ea;
-					ea.ptr = xtn->infile;
-					ea.len = qse_strlen (xtn->infile);
+					ea.ptr = xtn->outfile;
+					ea.len = qse_strlen (xtn->outfile);
 					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 				}
 			}
