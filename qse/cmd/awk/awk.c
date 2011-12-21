@@ -794,25 +794,39 @@ static qse_mmgr_t xma_mmgr =
 
 #if defined(QSE_BUILD_DEBUG)
 static qse_ulong_t debug_mmgr_count = 0;
+static qse_ulong_t debug_mmgr_alloc_count = 0;
+static qse_ulong_t debug_mmgr_realloc_count = 0;
+static qse_ulong_t debug_mmgr_free_count = 0;
 
 static void* debug_mmgr_alloc (void* ctx, qse_size_t size)
 {
+	void* ptr;
 	struct arg_t* arg = (struct arg_t*)ctx;
 	debug_mmgr_count++;
 	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
-	return malloc (size);
+	ptr = malloc (size);
+	if (ptr) debug_mmgr_alloc_count++;
+	return ptr;
 }
 
 static void* debug_mmgr_realloc (void* ctx, void* ptr, qse_size_t size)
 {
+	void* rptr;
 	struct arg_t* arg = (struct arg_t*)ctx;
 	debug_mmgr_count++;
 	if (debug_mmgr_count % arg->failmalloc == 0) return QSE_NULL;
-	return realloc (ptr, size);
+	rptr = realloc (ptr, size);
+	if (rptr)
+	{
+		if (ptr) debug_mmgr_realloc_count++;
+		else debug_mmgr_alloc_count++;
+	}
+	return rptr;
 }
 
 static void debug_mmgr_free (void* ctx, void* ptr)
 {
+	debug_mmgr_free_count++;
 	free (ptr);
 }
 
@@ -975,6 +989,19 @@ oops:
 
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);
 	freearg (&arg);
+
+#if defined(QSE_BUILD_DEBUG)
+	if (arg.failmalloc > 0)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("-[MALLOC COUNTS]---------------------------------------\n"));
+		qse_fprintf (QSE_STDERR, QSE_T("ALLOC: %lu FREE: %lu: REALLOC: %lu\n"), 
+			(unsigned long)debug_mmgr_alloc_count,
+			(unsigned long)debug_mmgr_free_count,
+			(unsigned long)debug_mmgr_realloc_count);
+		qse_fprintf (QSE_STDERR, QSE_T("-------------------------------------------------------\n"));
+	}
+#endif
 
 	return ret;
 }

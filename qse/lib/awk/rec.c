@@ -423,32 +423,13 @@ static int recomp_record_fields (
 		 * number of fields that the current record can hold,
 		 * the field spaces are resized */
 
-		if (run->awk->mmgr->realloc != QSE_NULL)
+		tmp = QSE_AWK_REALLOC (
+			run->awk, run->inrec.flds, 
+			QSE_SIZEOF(*run->inrec.flds) * max);
+		if (tmp == QSE_NULL) 
 		{
-			tmp = QSE_AWK_REALLOC (
-				run->awk, run->inrec.flds, 
-				QSE_SIZEOF(*run->inrec.flds) * max);
-			if (tmp == QSE_NULL) 
-			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
-			}
-		}
-		else
-		{
-			tmp = QSE_AWK_ALLOC (
-				run->awk, QSE_SIZEOF(*run->inrec.flds) * max);
-			if (tmp == QSE_NULL)
-			{
-				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
-				return -1;
-			}
-			if (run->inrec.flds != QSE_NULL)
-			{
-				QSE_MEMCPY (tmp, run->inrec.flds, 
-					QSE_SIZEOF(*run->inrec.flds)*run->inrec.maxflds);
-				QSE_AWK_FREE (run->awk, run->inrec.flds);
-			}
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
+			return -1;
 		}
 
 		run->inrec.flds = tmp;
