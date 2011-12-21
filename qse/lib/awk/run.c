@@ -6385,25 +6385,10 @@ static int __raw_push (qse_awk_rtx_t* run, void* val)
 	       
 		n = run->stack_limit + STACK_INCREMENT;
 
-		if (MMGR(run)->realloc != QSE_NULL)
-		{
-			tmp = (void**) QSE_AWK_REALLOC (
-				run->awk, run->stack, n * QSE_SIZEOF(void*)); 
-			if (tmp == QSE_NULL) return -1;
-		}
-		else
-		{
-			tmp = (void**) QSE_AWK_ALLOC (
-				run->awk, n * QSE_SIZEOF(void*));
-			if (tmp == QSE_NULL) return -1;
-			if (run->stack != QSE_NULL)
-			{
-				QSE_MEMCPY (
-					tmp, run->stack, 
-					run->stack_limit * QSE_SIZEOF(void*)); 
-				QSE_AWK_FREE (run->awk, run->stack);
-			}
-		}
+		tmp = (void**) QSE_AWK_REALLOC (
+			run->awk, run->stack, n * QSE_SIZEOF(void*)); 
+		if (tmp == QSE_NULL) return -1;
+
 		run->stack = tmp;
 		run->stack_limit = n;
 	}
