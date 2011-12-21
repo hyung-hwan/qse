@@ -227,11 +227,13 @@ int qse_fio_init (
 	}
 
 	/* some special check */
+#if 0
 	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
 	{
 		CloseHandle (handle);
 		return -1;
 	}
+#endif
 
 	/* TODO: support more features on WIN32 - TEMPORARY, DELETE_ON_CLOSE */
 
