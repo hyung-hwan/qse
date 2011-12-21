@@ -420,11 +420,11 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), b);
 	qse_fprintf (out, QSE_T("Where options are:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
-	qse_fprintf (out, QSE_T(" -d                                show extra information\n"));
+	qse_fprintf (out, QSE_T(" -D                                show extra information\n"));
 	qse_fprintf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
 	qse_fprintf (out, QSE_T("                                   the pattern-action loop\n"));
 	qse_fprintf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
-	qse_fprintf (out, QSE_T(" -o/--deparsed-file   deparsedfile set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -d/--deparsed-file   deparsedfile set the deparsing output file\n"));
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
 	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
@@ -462,8 +462,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 		{ QSE_T(":call"),            QSE_T('c') },
 		{ QSE_T(":file"),            QSE_T('f') },
+		{ QSE_T(":deparsed-file"),   QSE_T('d') },
 		{ QSE_T(":field-separator"), QSE_T('F') },
-		{ QSE_T(":deparsed-file"),   QSE_T('o') },
 		{ QSE_T(":assign"),          QSE_T('v') },
 		{ QSE_T(":memory-limit"),    QSE_T('m') },
 
@@ -474,9 +474,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("dc:f:F:o:v:m:X:h"),
+		QSE_T("Dc:f:d:F:v:m:X:h"),
 #else
-		QSE_T("dc:f:F:o:v:m:h"),
+		QSE_T("Dc:f:d:F:v:m:h"),
 #endif
 		lng
 	};
@@ -529,7 +529,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				if (gvm != QSE_NULL) qse_htb_close (gvm);
 				return 0;
 
-			case QSE_T('d'):
+			case QSE_T('D'):
 			{
 				app_debug = 1;
 				break;
@@ -561,15 +561,15 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				break;
 			}
 
-			case QSE_T('F'):
+			case QSE_T('d'):
 			{
-				fs = opt.arg;
+				osf = opt.arg;
 				break;
 			}
 
-			case QSE_T('o'):
+			case QSE_T('F'):
 			{
-				osf = opt.arg;
+				fs = opt.arg;
 				break;
 			}
 

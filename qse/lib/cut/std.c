@@ -201,6 +201,7 @@ static qse_ssize_t xout (
 	}
 }
 
+/* TODO: refer to sed/std.c and make similar enhancements */
 int qse_cut_execstd (qse_cut_t* cut, const qse_char_t* infile, const qse_char_t* outfile)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (cut);

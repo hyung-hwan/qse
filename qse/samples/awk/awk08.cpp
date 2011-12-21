@@ -262,7 +262,8 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T("Where options are:\n"));
 	qse_fprintf (out, QSE_T(" -h                print this message\n"));
 	qse_fprintf (out, QSE_T(" -f sourcefile     set the source script file\n"));
-	qse_fprintf (out, QSE_T(" -o deparsedfile   set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -d deparsedfile   set the deparsing output file\n"));
+	qse_fprintf (out, QSE_T(" -o outputfile     set the console output file\n"));
 	qse_fprintf (out, QSE_T(" -F string         set a field separator(FS)\n"));
 }
 
@@ -271,6 +272,7 @@ struct cmdline_t
 	qse_char_t* ins;
 	qse_char_t* inf;
 	qse_char_t* outf;
+	qse_char_t* outc;
 	qse_char_t* fs;
 };
 
@@ -279,7 +281,7 @@ static int handle_cmdline (
 {
 	static qse_opt_t opt =
 	{
-		QSE_T("hF:f:o:"),
+		QSE_T("hF:f:d:o:"),
 		QSE_NULL
 	};
 	qse_cint_t c;
@@ -301,8 +303,12 @@ static int handle_cmdline (
 				cmdline->inf = opt.arg;
 				break;
 
-			case QSE_T('o'):
+			case QSE_T('d'):
 				cmdline->outf = opt.arg;
+				break;
+
+			case QSE_T('o'):
+				cmdline->outc = opt.arg;
 				break;
 
 			case QSE_T('?'):
@@ -382,6 +388,15 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 			return -1; 
 		}
 		if (awk.setGlobal (QSE_AWK_GBL_FS, fs) <= -1) 
+		{
+			print_error (awk); 
+			return -1; 
+		}
+	}
+
+	if (cmdline.outc) 
+	{
+		if (awk.addConsoleOutput (cmdline.outc) <= -1)
 		{
 			print_error (awk); 
 			return -1; 

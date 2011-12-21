@@ -94,14 +94,6 @@ struct qse_sio_t
 extern "C" {
 #endif
 
-extern qse_sio_t* qse_sio_in;
-extern qse_sio_t* qse_sio_out;
-extern qse_sio_t* qse_sio_err;
-
-#define QSE_SIO_IN  qse_sio_in
-#define QSE_SIO_OUT qse_sio_out
-#define QSE_SIO_ERR qse_sio_err
-
 /**
  * The qse_sio_open() fucntion creates a stream object.
  */

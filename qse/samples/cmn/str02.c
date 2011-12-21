@@ -53,11 +53,6 @@ static int test1 (void)
 			((n == -3)? QSE_T("INCOMPLETE-SEQ"): (n == -2)? QSE_T("BUFFER-SMALL"): (n == -1)? QSE_T("ILLEGAL-CHAR"): QSE_T("FULL")),
 			(int)wlen, (int)mlen, (int)wlen1, (int)mlen1, buf2);
 		qse_fflush (QSE_STDOUT);
-
-		qse_sio_putwcs (QSE_SIO_OUT, QSE_T("<<"));
-		qse_sio_putwcs (QSE_SIO_OUT, buf2);
-		qse_sio_putwcs (QSE_SIO_OUT, QSE_T(">>\n"));
-		qse_sio_flush (QSE_SIO_OUT);
 	}
 
 	qse_printf (QSE_T("-----------------\n"));
@@ -76,10 +71,6 @@ static int test1 (void)
 			(int)wlen, (int)mlen, (int)wlen, (int)wlen1, (int)mlen1, buf2);
 
 		qse_fflush (QSE_STDOUT);
-		qse_sio_putwcs (QSE_SIO_OUT, QSE_T("<<"));
-		qse_sio_putwcs (QSE_SIO_OUT, buf2);
-		qse_sio_putwcs (QSE_SIO_OUT, QSE_T(">>\n"));
-		qse_sio_flush (QSE_SIO_OUT);
 	}
 
 	return 0;

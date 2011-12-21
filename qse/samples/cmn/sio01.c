@@ -4,9 +4,9 @@
 
 #define R(f) \
 	do { \
-		qse_sio_putstr (qse_sio_out,QSE_T("== ")); \
-		qse_sio_putstr (qse_sio_out,QSE_T(#f)); \
-		qse_sio_putstr (qse_sio_out,QSE_T(" ==\n")); \
+		qse_printf (QSE_T("== ")); \
+		qse_printf (QSE_T(#f)); \
+		qse_printf (QSE_T(" ==\n")); \
 		if (f() == -1) return -1; \
 	} while (0)
 
@@ -48,15 +48,15 @@ static int test1 (void)
 
 	if (sio == QSE_NULL)
 	{
-		qse_sio_putstr (qse_sio_err, QSE_T("cannot open file\n"));
+		qse_printf (QSE_T("cannot open file\n"));
 		return -1;
 	}
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_sio_putstr (qse_sio_out, QSE_T("written: ["));
-		qse_sio_putstr (qse_sio_out, x[i]);
-		qse_sio_putstr (qse_sio_out, QSE_T("]\n"));
+		qse_printf (QSE_T("written: ["));
+		qse_printf (x[i]);
+		qse_printf (QSE_T("]\n"));
 
 		qse_sio_putstr (sio, x[i]);
 		qse_sio_putc (sio, QSE_T('\n'));
@@ -136,9 +136,9 @@ int main ()
 {
 	setlocale (LC_ALL, "");
 
-	qse_sio_putstr (qse_sio_out, QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_sio_putstr (qse_sio_out, QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
-	qse_sio_putstr (qse_sio_out, QSE_T("--------------------------------------------------------------------------------\n"));
+	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
+	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
+	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	R (test1);
 	R (test2);

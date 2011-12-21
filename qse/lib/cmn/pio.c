@@ -253,48 +253,19 @@ int qse_pio_init (
 
 		if (oflags & QSE_PIO_SHELL) 
 		{
-			qse_size_t reqlen;
 		#if defined(QSE_CHAR_IS_WCHAR)
 			if (oflags & QSE_PIO_MBSCMD)
 			{
-				const qse_mchar_t* mbs = (const qse_mchar_t*)cmd;
-				qse_size_t ll = qse_mbstowcslen (mbs, &reqlen);
-				if (mbs[ll] != QSE_MT('\0')) 
-				{
-					pio->errnum = QSE_PIO_EINVAL;
-					goto oops; /* illegal sequence */
-				}
+				const qse_mchar_t* x[3];
+				x[0] = QSE_MT("cmd.exe /c ");
+				x[1] = (const qse_mchar_t*)cmd;
+				x[2] = QSE_NULL;
+				dupcmd = qse_mbsatowcsdup (x, mmgr);
 			}
 			else
 			{
 		#endif
-				reqlen = qse_strlen(cmd);				
-		#if defined(QSE_CHAR_IS_WCHAR)
-			}
-		#endif
-
-			reqlen++; /* increment for a terminating null */
-
-			dupcmd = QSE_MMGR_ALLOC (
-				mmgr, (11 + reqlen) * QSE_SIZEOF(*dupcmd)
-			);
-			if (dupcmd == QSE_NULL) 
-			{
-				pio->errnum = QSE_PIO_ENOMEM;
-				goto oops;
-			}
-
-			qse_strcpy (dupcmd, QSE_T("cmd.exe /c "));
-
-		#if defined(QSE_CHAR_IS_WCHAR)
-			if (oflags & QSE_PIO_MBSCMD)
-			{
-				qse_mbstowcs ((const qse_mchar_t*)cmd, &dupcmd[11], &reqlen);
-			}
-			else
-			{
-		#endif
-				qse_strcpy (&dupcmd[11], cmd);
+				dupcmd = qse_strdup2 (QSE_T("cmd.exe /c "), cmd, mmgr);
 		#if defined(QSE_CHAR_IS_WCHAR)
 			}
 		#endif
@@ -314,11 +285,12 @@ int qse_pio_init (
 		#if defined(QSE_CHAR_IS_WCHAR)
 			}
 		#endif
-			if (dupcmd == QSE_NULL)
-			{
-				pio->errnum = QSE_PIO_ENOMEM;
-				goto oops;
-			}
+		}
+
+		if (dupcmd == QSE_NULL)
+		{
+			pio->errnum = QSE_PIO_ENOMEM;
+			goto oops;
 		}
 
 		x = CreateProcess (
@@ -532,8 +504,7 @@ int qse_pio_init (
 		}
 		else
 		{
-			n = qse_wcstombslen (cmd, &mn);
-			if (cmd[n] != QSE_WT('\0')) 
+			if (qse_wcstombs (cmd, &n, QSE_NULL, &mn) <= -1)
 			{
 				pio->errnum = QSE_PIO_EINVAL;
 				goto oops; /* illegal sequence found */
@@ -560,7 +531,7 @@ int qse_pio_init (
 		else
 		{
 			mn = mn + 1; /* update the buffer size */
-			n = qse_wcstombs (cmd, &cmd_line[11], &mn);
+			qse_wcstombs (cmd, &n, &cmd_line[11], &mn);
 		}
 	#endif
 		cmd_line[11+mn+1] = QSE_MT('\0'); /* additional \0 after \0 */    
@@ -595,8 +566,7 @@ int qse_pio_init (
 		{
 			qse_size_t n;
 
-			n = qse_wcstombslen (cmd, &mn);
-			if (cmd[n] != QSE_T('\0')) 
+			if (qse_wcstombs (cmd, &n, QSE_NULL, &mn) <= -1)
 			{
 				pio->errnum = QSE_PIO_EINVAL;
 				goto oops; /* illegal sequence in cmd */
@@ -610,7 +580,7 @@ int qse_pio_init (
 				goto oops;
 			}
   
-			qse_wcstombs (cmd, cmd_line, &mn);
+			qse_wcstombs (cmd, &n, cmd_line, &mn);
 		}
 	#endif
 
@@ -639,6 +609,9 @@ int qse_pio_init (
 		&child_rc,
 		cmd_file
 	);
+
+	QSE_MMGR_FREE (mmgr, cmd_line);
+	cmd_line = QSE_NULL;
 
 	/* Once execution is completed regardless of success or failure,
 	 * Restore stdin/out/err using handles duplicated into old_in/out/err */
@@ -838,14 +811,6 @@ int qse_pio_init (
 
 			if (oflags & QSE_PIO_SHELL)
 			{
-#if 0
-				n = qse_wcstombslen (cmd, &mn);
-				if (cmd[n] != QSE_WT('\0')) 
-				{
-					/* cmd has illegal sequence */
-					goto child_oops;
-				}
-#endif
 				if (qse_wcstombs (cmd, &wl, QSE_NULL, &mn) <= -1)
 				{
 					/* cmd has illegal sequence */

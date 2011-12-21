@@ -36,125 +36,6 @@ static const qse_char_t* g_infile = QSE_NULL;
 static const qse_char_t* g_outfile = QSE_NULL;
 static int g_option = 0;
 
-static qse_ssize_t in (
-	qse_cut_t* cut, qse_cut_io_cmd_t cmd,
-	qse_cut_io_arg_t* arg, qse_char_t* buf, qse_size_t size)
-{
-	switch (cmd)
-	{
-		case QSE_CUT_IO_OPEN:
-		{
-			if (g_infile == QSE_NULL ||
-			    (g_infile[0] == QSE_T('-') &&
-			     g_infile[1] == QSE_T('\0'))) 
-			{
-				arg->handle = qse_sio_in;
-			}
-			else
-			{
-				arg->handle = qse_sio_open (
-					qse_cut_getmmgr(cut),
-					0,
-					g_infile,
-					QSE_SIO_READ
-				);	
-
-				if (arg->handle == QSE_NULL) 
-				{
-					qse_cstr_t ea;
-					ea.ptr = g_infile;
-					ea.len = qse_strlen (g_infile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-					return -1;
-				}
-			}
-
-			return 1;
-		}
-
-		case QSE_CUT_IO_CLOSE:
-			if (arg->handle != qse_sio_in) qse_sio_close (arg->handle);
-			return 0;
-
-		case QSE_CUT_IO_READ:
-		{
-			qse_ssize_t n = qse_sio_getstrn (arg->handle, buf, size);
-			if (n <= -1)
-			{
-				qse_cstr_t ea;
-				ea.ptr = g_infile;
-				ea.len = qse_strlen (g_infile);
-				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-			}
-
-			return n;
-		}
-
-		default:
-			return -1;
-	}
-}
-
-static qse_ssize_t out (
-	qse_cut_t* cut, qse_cut_io_cmd_t cmd,
-	qse_cut_io_arg_t* arg, qse_char_t* data, qse_size_t len)
-{
-	switch (cmd)
-	{
-		case QSE_CUT_IO_OPEN:
-			if (g_outfile == QSE_NULL ||
-			    (g_outfile[0] == QSE_T('-') &&
-			     g_outfile[1] == QSE_T('\0'))) 
-			{
-				arg->handle = qse_sio_out;
-			}
-			else
-			{
-				arg->handle = qse_sio_open (
-					qse_cut_getmmgr(cut),
-					0,
-					g_outfile,
-					QSE_SIO_WRITE |
-					QSE_SIO_CREATE |
-					QSE_SIO_TRUNCATE
-				);	
-
-				if (arg->handle == QSE_NULL) 
-				{
-					/* set the error message explicitly
-					 * as the file name is different from
-					 * the standard console name (NULL) */
-					qse_cstr_t ea;
-					ea.ptr = g_outfile;
-					ea.len = qse_strlen (g_outfile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-					return -1;
-				}
-			}
-			return 1;
-
-		case QSE_CUT_IO_CLOSE:
-			if (arg->handle != qse_sio_out) qse_sio_close (arg->handle);
-			return 0;
-
-		case QSE_CUT_IO_WRITE:
-		{
-			qse_ssize_t n = qse_sio_putstrn (arg->handle, data, len);
-			if (n <= -1)
-			{
-				qse_cstr_t ea;
-				ea.ptr = g_outfile;
-				ea.len = qse_strlen (g_outfile);
-				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
-			}
-			return n;
-		}
-
-		default:
-			return -1;
-	}
-}
-
 static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
@@ -363,7 +244,7 @@ int cut_main (int argc, qse_char_t* argv[])
 
 	ret = -1;
 
-	cut = qse_cut_open (QSE_NULL, 0);
+	cut = qse_cut_openstd (0);
 	if (cut == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("cannot open cut\n"));
@@ -372,7 +253,7 @@ int cut_main (int argc, qse_char_t* argv[])
 	
 	qse_cut_setoption (cut, g_option);
 
-	if (qse_cut_comp (cut, g_selector, qse_strlen(g_selector)) == -1)
+	if (qse_cut_compstd (cut, g_selector) <= -1)
 	{
 		qse_fprintf (QSE_STDERR, 
 			QSE_T("cannot compile - %s\n"),
@@ -386,7 +267,8 @@ int cut_main (int argc, qse_char_t* argv[])
 		do
 		{
 			g_infile = argv[g_infile_start];
-			if (qse_cut_exec (cut, in, out) == -1)
+			if (g_infile && g_infile[0] == QSE_T('-') && g_infile[1] == QSE_T('\0')) g_infile = QSE_NULL;
+			if (qse_cut_execstd (cut, g_infile, g_outfile) <= -1)
 			{
 				qse_fprintf (QSE_STDERR, 
 					QSE_T("cannot execute - %s\n"),
@@ -401,7 +283,7 @@ int cut_main (int argc, qse_char_t* argv[])
 	}
 	else
 	{
-		if (qse_cut_exec (cut, in, out) == -1)
+		if (qse_cut_execstd (cut, QSE_NULL, g_outfile) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, 
 				QSE_T("cannot execute - %s\n"),
