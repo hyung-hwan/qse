@@ -40,10 +40,6 @@
 #	include "syscall.h"
 #	include <sys/types.h>
 #	include <fcntl.h>
-#	include <limits.h>
-#	ifndef PATH_MAX
-#		define PATH_MAX 2048
-#	endif
 #endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
@@ -250,13 +246,23 @@ int qse_fio_init (
 		ULONG open_action, open_mode, open_attr;
 		LONGLONG zero;
 
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		const qse_mchar_t* path_mb = path;
 	#else
-		qse_mchar_t path_mb[CCHMAXPATH];
-		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
-/* TODO: use wcstombsdup??? */
-		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
+		qse_mchar_t path_mb_buf[CCHMAXPATH];
+		qse_mchar_t* path_mb;
+		qse_size_t wl, ml;
+		int px;
+
+		path_mb = path_mb_buf;
+		ml = QSE_COUNTOF(path_mb_buf);
+		px = qse_wcstombs (path, &wl, path_mb, &ml);
+		if (px == -2)
+		{
+			path_mb = qse_wcstombsdup (path, mmgr);
+			if (path_mb == QSE_NULL) return -1;
+		}
+		else if (px <= -1) return -1;
 	#endif
 
 		zero.ulLo = 0;
@@ -323,6 +329,12 @@ int qse_fio_init (
 			0L                            
 		);
 
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing to do */
+	#else
+		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+
 		if (ret != NO_ERROR) 
 		{
 			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
@@ -341,12 +353,23 @@ int qse_fio_init (
 		int oflags = 0;
 		int permission = 0;
 
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		const qse_mchar_t* path_mb = path;
 	#else
-		qse_mchar_t path_mb[_MAX_PATH];
-		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
-		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
+		qse_mchar_t path_mb_buf[_MAX_PATH];
+		qse_mchar_t* path_mb;
+		qse_size_t wl, ml;
+		int px;
+
+		path_mb = path_mb_buf;
+		ml = QSE_COUNTOF(path_mb_buf);
+		px = qse_wcstombs (path, &wl, path_mb, &ml);
+		if (px == -2)
+		{
+			path_mb = qse_wcstombsdup (path, mmgr);
+			if (path_mb == QSE_NULL) return -1;
+		}
+		else if (px <= -1) return -1;
 	#endif
 
 		if (flags & QSE_FIO_APPEND)
@@ -377,6 +400,13 @@ int qse_fio_init (
 			oflags,
 			permission
 		);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing to do */
+	#else
+		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+
 		if (handle <= -1) 
 		{
 			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
@@ -394,13 +424,23 @@ int qse_fio_init (
 	{
 		int desired_access = 0;
 
-	#ifdef QSE_CHAR_IS_MCHAR
+	#if defined(QSE_CHAR_IS_MCHAR)
 		const qse_mchar_t* path_mb = path;
 	#else
-		qse_mchar_t path_mb[PATH_MAX + 1];
-/* TODO: use qse_wcstombsdup(). path name may exceede PATH_MAX if it contains .. or . */
-		qse_size_t wl, ml = QSE_COUNTOF(path_mb);
-		if (qse_wcstombs (path, &wl, path_mb, &ml) <= -1) return -1;
+		qse_mchar_t path_mb_buf[1024];  /* PATH_MAX instead? */
+		qse_mchar_t* path_mb;
+		qse_size_t wl, ml;
+		int px;
+
+		path_mb = path_mb_buf;
+		ml = QSE_COUNTOF(path_mb_buf);
+		px = qse_wcstombs (path, &wl, path_mb, &ml);
+		if (px == -2)
+		{
+			path_mb = qse_wcstombsdup (path, mmgr);
+			if (path_mb == QSE_NULL) return -1;
+		}
+		else if (px <= -1) return -1;
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND
@@ -439,6 +479,12 @@ int qse_fio_init (
 	#endif
 
 		handle = QSE_OPEN (path_mb, desired_access, mode);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing to do */
+	#else
+		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
 	}
 
 	if (handle == -1) 

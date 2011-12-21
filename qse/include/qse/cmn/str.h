@@ -2309,6 +2309,18 @@ int qse_mbsntowcsn (
 	qse_size_t*        wcslen
 );
 
+/**
+ * The qse_mbsntowcsnupto() function is the same as qse_mbsntowcsn()
+ * except that it stops once it has processed the @a stopper character.
+ */
+int qse_mbsntowcsnupto (
+	const qse_mchar_t* mbs,
+	qse_size_t*        mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen,
+	qse_wchar_t        stopper
+);
+
 qse_wchar_t* qse_mbstowcsdup (
 	const qse_mchar_t* mbs,
 	qse_mmgr_t*        mmgr

@@ -44,7 +44,6 @@ qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 
 	if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
 
-/* TODO: HOW TO HANDLE those already converted to wchar???? */
 	nread = 0;
 	while (nread < size)
 	{
@@ -77,7 +76,8 @@ done:
 	return nread;
 }
 
-static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
+static QSE_INLINE qse_ssize_t tio_read_widechars (
+	qse_tio_t* tio, qse_wchar_t* buf, qse_size_t bufsize)
 {
 	qse_size_t mlen, wlen;
 	qse_ssize_t n;
@@ -128,9 +128,9 @@ static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
 	}
 
 	mlen = tio->inbuf_len - tio->inbuf_cur;
-	wlen = QSE_COUNTOF(tio->inwbuf);
+	wlen = bufsize;
 
-	x = qse_mbsntowcsn (&tio->inbuf[tio->inbuf_cur], &mlen, tio->inwbuf, &wlen);
+	x = qse_mbsntowcsnupto (&tio->inbuf[tio->inbuf_cur], &mlen, buf, &wlen, QSE_WT('\n'));
 	tio->inbuf_cur += mlen;
 
 	if (x == -3)
@@ -154,12 +154,12 @@ static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
 	else if (x == -2)
 	{
 		/* buffer not large enough */
-		QSE_ASSERTX (wlen > 0, 
-			"You must enlarge the size of tio->inwbuf if this happens.");
+		QSE_ASSERT (wlen > 0);
 		
 		/* the wide-character buffer is not just large enough to
 		 * hold the entire conversion result. lets's go on so long as 
-		 * 1 wide-character is produced though it may be inefficient */
+		 * 1 wide-character is produced though it may be inefficient.
+		 */
 	}
 	else if (x <= -1)
 	{
@@ -168,7 +168,7 @@ static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
 		{
 		ignore_illseq:
 			tio->inbuf_cur++; /* skip one byte */
-			tio->inwbuf[wlen++] = QSE_WT('?');
+			buf[wlen++] = QSE_WT('?');
 		}
 		else if (wlen <= 0)
 		{
@@ -184,14 +184,13 @@ static QSE_INLINE int tio_read_widechars (qse_tio_t* tio)
 		}
 	}
 	
-	tio->inwbuf_cur = 0;
-	tio->inwbuf_len = wlen;
-	return 1;
+	return wlen;
 }
 
 qse_ssize_t qse_tio_readwcs (qse_tio_t* tio, qse_wchar_t* buf, qse_size_t size)
 {
 	qse_size_t nread = 0;
+	qse_ssize_t n;
 
 	/*QSE_ASSERT (tio->input_func != QSE_NULL);*/
 	if (tio->input_func == QSE_NULL) 
@@ -204,25 +203,19 @@ qse_ssize_t qse_tio_readwcs (qse_tio_t* tio, qse_wchar_t* buf, qse_size_t size)
 
 	while (nread < size)
 	{
-		if (tio->inwbuf_cur >= tio->inwbuf_len)
+		if (tio->input_status & STATUS_ILLSEQ) 
 		{
-			int n;
-
-			/* no more characters in the wide-charcter buffer */
-			if (tio->input_status & STATUS_ILLSEQ) 
-			{
-				tio->input_status &= ~STATUS_ILLSEQ;
-				tio->errnum = QSE_TIO_EILSEQ;
-				return -1;
-			}
-
-			n = tio_read_widechars (tio);	
-			if (n == 0) break;
-			if (n <= -1) return -1;
+			tio->input_status &= ~STATUS_ILLSEQ;
+			tio->errnum = QSE_TIO_EILSEQ;
+			return -1;
 		}
+		
+		n = tio_read_widechars (tio, &buf[nread], size - nread);
+		if (n == 0) break;
+		if (n <= -1) return -1;
 
-		buf[nread] = tio->inwbuf[tio->inwbuf_cur++];
-		if (buf[nread++] == QSE_WT('\n')) break;
+		nread += n;
+		if (buf[nread-1] == QSE_WT('\n')) break;
 	}
 
 	return nread;

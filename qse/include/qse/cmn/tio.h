@@ -57,8 +57,7 @@ enum
 	 * (i.e. 6 for utf8)
 	 */
 	QSE_TIO_MAX_INBUF_LEN = 4096,
-	QSE_TIO_MAX_OUTBUF_LEN = 4096,
-	QSE_TIO_MAX_INWBUF_LEN = 1024
+	QSE_TIO_MAX_OUTBUF_LEN = 4096
 };
 
 enum qse_tio_cmd_t
@@ -111,12 +110,9 @@ struct qse_tio_t
 	qse_size_t  inbuf_cur;
 	qse_size_t  inbuf_len;
 	qse_size_t  outbuf_len;
-	qse_size_t  inwbuf_cur;
-	qse_size_t  inwbuf_len;
 
 	qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
 	qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
-	qse_wchar_t inwbuf[QSE_TIO_MAX_INWBUF_LEN];
 };
 
 #ifdef __cplusplus

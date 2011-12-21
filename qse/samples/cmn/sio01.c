@@ -1,12 +1,19 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/fmt.h>
+#include <qse/cmn/stdio.h>
 #include <locale.h>
+
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
+
 
 #define R(f) \
 	do { \
 		qse_printf (QSE_T("== ")); \
 		qse_printf (QSE_T(#f)); \
 		qse_printf (QSE_T(" ==\n")); \
+		qse_fflush (QSE_STDOUT); \
 		if (f() == -1) return -1; \
 	} while (0)
 
@@ -17,7 +24,7 @@ static int test1 (void)
 
 	const qse_wchar_t unistr[] =
 	{
-		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?",*/
+		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4!",*/
 		0xB108,
 		L' ',
 		0xBB50,
@@ -26,7 +33,7 @@ static int test1 (void)
 		0xC798,
 		0xB0AC,
 		0xC5B4,
-		L'?',
+		L'!',
 		L'\0'
      };
 
@@ -76,7 +83,7 @@ static int test2 (void)
 	in = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 	out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 	
-	qse_sio_putstr (out, QSE_T("Type something...\n"));
+	qse_sio_putstr (out, QSE_T("Type something here:\n"));
 	while (1)
 	{
 		n = qse_sio_getwcs (in, buf, QSE_COUNTOF(buf));
@@ -85,7 +92,7 @@ static int test2 (void)
 		{
 			qse_char_t buf[32];
 			qse_fmtintmax (buf, QSE_COUNTOF(buf), qse_sio_geterrnum(in), 10, -1, QSE_T('\0'), QSE_NULL);
-			qse_sio_putstr (out, QSE_T("error .... "));
+			qse_sio_putstr (out, QSE_T("ERROR .... "));
 			qse_sio_putstr (out, buf);
 			qse_sio_putstr (out, QSE_T("\n"));
 			break;
@@ -108,7 +115,7 @@ static int test3 (void)
 	in = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 	out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
-	qse_sio_putstr (out, QSE_T("Type something...\n"));
+	qse_sio_putstr (out, QSE_T("Type something here:\n"));
 	while (1)
 	{
 		n = qse_sio_getmbs (in, buf, QSE_COUNTOF(buf));
@@ -134,6 +141,11 @@ static int test3 (void)
 
 int main ()
 {
+#if defined(_WIN32)
+	UINT old_cp = GetConsoleOutputCP();
+	SetConsoleOutputCP (CP_UTF8);
+#endif
+
 	setlocale (LC_ALL, "");
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -144,5 +156,8 @@ int main ()
 	R (test2);
 	R (test3);
 
+#if defined(_WIN32)
+	SetConsoleOutputCP (old_cp);
+#endif
 	return 0;
 }
