@@ -18,7 +18,7 @@ static int test1 (void)
 	const qse_wchar_t unistr[] = 
 	{
 		/* ugly hack for old compilers that don't support \u */
-		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?",*/
+		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4!",*/
 		0xB108,
 		L' ',
 		0xBB50,
@@ -27,7 +27,7 @@ static int test1 (void)
 		0xC798,
 		0xB0AC,
 		0xC5B4,
-		L'?',
+		L'!',
 		L'\0'
 	};
 

@@ -251,6 +251,65 @@ int qse_mbsntowcsn (
 	return ret;
 }
 
+int qse_mbsntowcsnupto (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_wchar_t stopper)
+{
+	const qse_mchar_t* p;
+	qse_mbstate_t state = {{ 0, }};
+	int ret = 0;
+	qse_size_t mlen;
+
+	qse_wchar_t w;
+	qse_size_t wlen = 0;
+	qse_wchar_t* wend;
+
+	p = mbs;
+	mlen = *mbslen;
+
+	if (wcs) wend = wcs + *wcslen;
+
+	/* since it needs to break when a stopper is met,
+	 * i can't perform bulky conversion using the buffer
+	 * provided. so conversion is conducted character by
+	 * character */
+	while (mlen > 0)
+	{
+		qse_size_t n;
+
+		n = qse_mbrtowc (p, mlen, &w, &state);
+		if (n == 0)
+		{
+			/* invalid sequence */
+			ret = -1;
+			break;
+		}
+		if (n > mlen)
+		{
+			/* incomplete sequence */
+			ret = -3;
+			break;
+		}
+
+		if (wcs) 
+		{
+			if (wcs >= wend) break;
+			*wcs++ = w;
+		}
+
+		p += n;
+		mlen -= n;
+		wlen += 1;
+
+		if (w == stopper) break;
+	}
+
+	*wcslen = wlen;
+	*mbslen = p - mbs;
+
+	return ret;
+}
+
 qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
 {
 	qse_size_t mbslen, wcslen;
