@@ -133,6 +133,15 @@ static int handle_expect_continue (
 	return xtn->orgcbs->handle_expect_continue (httpd, client, req);
 }
 
+const qse_mchar_t* get_mime_type (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+	if (qse_mbsend (path, QSE_MT(".html"))) return QSE_MT("text/html");
+	if (qse_mbsend (path, QSE_MT(".txt"))) return QSE_MT("text/plain");
+	if (qse_mbsend (path, QSE_MT(".jpg"))) return QSE_MT("image/jpeg");
+	if (qse_mbsend (path, QSE_MT(".mp4"))) return QSE_MT("video/mp4");
+	return QSE_NULL;
+}
+
 static qse_httpd_t* httpd = NULL;
 
 static void sigint (int sig)
@@ -142,7 +151,7 @@ static void sigint (int sig)
 
 static qse_httpd_cbs_t httpd_cbs =
 {
-	{ QSE_NULL },
+	{ get_mime_type, QSE_NULL,  },
 	handle_request,
 	handle_expect_continue
 };
