@@ -34,44 +34,44 @@ enum qse_tio_errnum_t
 {
 	QSE_TIO_ENOERR = 0,
 	QSE_TIO_ENOMEM, /* out of memory */
+	QSE_TIO_EINVAL, /* invalid parameter */
 	QSE_TIO_ENOSPC, /* no more space */
 	QSE_TIO_EILSEQ, /* illegal sequence */
 	QSE_TIO_EICSEQ, /* incomplete sequence */
 	QSE_TIO_EILCHR, /* illegal character */
-	QSE_TIO_ENOINF, /* no input function attached */
-	QSE_TIO_EINPUT, /* input function returned an error */
-	QSE_TIO_EINPOP, /* input function failed to open */
-	QSE_TIO_EINPCL, /* input function failed to close */
+	QSE_TIO_ENINPF, /* no input function attached */
 	QSE_TIO_ENOUTF, /* no output function attached */
-	QSE_TIO_EOUTPT, /* output function returned an error */
-	QSE_TIO_EOUTOP, /* output function failed to open */
-	QSE_TIO_EOUTCL  /* output function failed to close */
+	QSE_TIO_EIOERR  /* I/O error */
 };
 
 typedef enum qse_tio_errnum_t qse_tio_errnum_t;
 
-enum
-{
-	/* the size of input buffer should be at least equal to or greater
-	 * than the maximum sequence length of the qse_mchar_t string.
-	 * (i.e. 6 for utf8)
-	 */
-	QSE_TIO_MAX_INBUF_LEN = 4096,
-	QSE_TIO_MAX_OUTBUF_LEN = 4096
-};
-
 enum qse_tio_cmd_t
 {
-	QSE_TIO_IO_OPEN,
-	QSE_TIO_IO_CLOSE,
-	QSE_TIO_IO_DATA
+	QSE_TIO_OPEN,
+	QSE_TIO_CLOSE,
+	QSE_TIO_DATA
 };
 typedef enum qse_tio_cmd_t qse_tio_cmd_t;
 
 enum qse_tio_flag_t
 {
+	/**< ignore multibyte/wide-character conversion error by
+	 *   inserting a question mark for each error occurrence */
 	QSE_TIO_IGNOREMBWCERR = (1 << 0),
-	QSE_TIO_NOAUTOFLUSH   = (1 << 1)
+
+	/**< do not flush data in the buffer until the buffer gets full. */
+	QSE_TIO_NOAUTOFLUSH   = (1 << 1),
+
+	/* for internal use only. */
+	QSE_TIO_DYNINBUF      = (1 << 30),
+	QSE_TIO_DYNOUTBUF     = (1 << 31)
+};
+
+enum qse_tio_misc_t
+{
+	QSE_TIO_MININBUFCAPA  = 32,
+	QSE_TIO_MINOUTBUFCAPA = 32
 };
 
 #define QSE_TIO_ERRNUM(tio) ((const qse_tio_errnum_t)(tio)->errnum)
@@ -79,14 +79,27 @@ enum qse_tio_flag_t
 typedef struct qse_tio_t qse_tio_t;
 
 /**
- * The qse_tio_io_t types define a text I/O handler.
+ * The qse_tio_io_fun_t types define a text I/O handler.
  */
-typedef qse_ssize_t (*qse_tio_io_t) (
+typedef qse_ssize_t (*qse_tio_io_fun_t) (
 	qse_tio_cmd_t cmd, 
 	void*         arg, 
 	void*         data, 
 	qse_size_t    size
 );
+
+struct qse_tio_io_t
+{
+	qse_tio_io_fun_t fun;
+	void*            arg;	
+	struct
+	{
+		qse_size_t   capa;
+		qse_mchar_t* ptr;
+	} buf;
+};
+
+typedef struct qse_tio_io_t qse_tio_io_t;
 
 /**
  * The qse_tio_t type defines a generic type for text IO. If #qse_char_t is
@@ -99,20 +112,14 @@ struct qse_tio_t
 	qse_tio_errnum_t errnum;
 	int flags; 
 
-	/* io functions */
-	qse_tio_io_t input_func;
-	qse_tio_io_t output_func;
-	void* input_arg;
-	void* output_arg;
+	qse_tio_io_t in;
+	qse_tio_io_t out;
 
-	/* for housekeeping */
+	/* for house keeping from here */
 	int         input_status;
 	qse_size_t  inbuf_cur;
 	qse_size_t  inbuf_len;
 	qse_size_t  outbuf_len;
-
-	qse_mchar_t inbuf[QSE_TIO_MAX_INBUF_LEN];
-	qse_mchar_t outbuf[QSE_TIO_MAX_OUTBUF_LEN];
 };
 
 #ifdef __cplusplus
@@ -174,9 +181,11 @@ const qse_char_t* qse_tio_geterrmsg (
  * @return 0 on success, -1 on failure
  */
 int qse_tio_attachin (
-	qse_tio_t*   tio,
-	qse_tio_io_t input,
-	void*        arg
+	qse_tio_t*       tio,
+	qse_tio_io_fun_t input,
+	void*            arg,
+	qse_mchar_t*     bufptr,
+	qse_size_t       bufcapa
 );
 
 /**
@@ -192,9 +201,11 @@ int qse_tio_detachin (
  * @return 0 on success, -1 on failure
  */
 int qse_tio_attachout (
-	qse_tio_t* tio,
-	qse_tio_io_t output,
-	void* arg
+	qse_tio_t*       tio,
+	qse_tio_io_fun_t output,
+	void*            arg,
+	qse_mchar_t*     bufptr,
+	qse_size_t       bufcapa
 );
 
 /**

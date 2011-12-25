@@ -126,52 +126,52 @@ PROGS="
 
 	unr-001.awk!unr.dat!!
 
-	lang-001.awk!!!--strictnaming=off --newline=on -o-
-	lang-002.awk!!!--newline=on -o-
-	lang-003.awk!!!--newline=on -o-
-	lang-004.awk!!!--newline=on -o-
-	lang-005.awk!!!--implicit=off --explicit=on --newline=on -o-
-	lang-006.awk!!!--implicit=off --explicit=on --newline=on -o-
-	lang-007.awk!!!--implicit=on --explicit=on --newline=on -o-
-	lang-008.awk!!!--implicit=off --explicit=on --newline=on -o-
-	lang-009.awk!lang-009.awk!!--implicit=off --explicit=on --newline=on --strictnaming=off -o-
-	lang-010.awk!this is just a test!!--newline=on -o-
-	lang-011.awk!!!--newline=on -o-
-	lang-012.awk!!!--newline=on -o-
-	lang-013.awk!!!--newline=on -o-
-	lang-014.awk!!!--newline=on -o-
-	lang-015.awk!!!--newline=on -o-
-	lang-016.awk!!!--newline=on -o-
-	lang-017.awk!!!--newline=on -o-
-	lang-017.awk!!!--call main --newline=on -o-
-	lang-018.awk!!!--explicit=on --newline=on -o-
-	lang-019.awk!!!--explicit=on --newline=on -o-
-	lang-020.awk!!!--explicit=on --newline=on -o-
-	lang-021.awk!!!--explicit=on --newline=on -o-
-	lang-022.awk!!!--newline=on -o-
-	lang-023.awk!!!--explicit=on --newline=on -o-
-	lang-024.awk!!!--explicit=on --newline=on -o-
-	lang-025.awk!!!--newline=on -o-
-	lang-026.awk!!!--newline=on -o-
-	lang-027.awk!!!--newline=on -o-
-	lang-028.awk!!!--newline=on -o-
-	lang-029.awk!!!--explicit=on --newline=on -o-
-	lang-030.awk!!!--newline=on -o-
-	lang-031.awk!!!--newline=on -o-
-	lang-032.awk!!!--newline=on -o-
-	lang-033.awk!!!--newline=on -o-
-	lang-034.awk!!!--newline=on --rwpipe=on -o-
-	lang-035.awk!lang-035.dat2!!--newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035
-	lang-036.awk!lang-036.dat!!--newline=on -o-
-	lang-037.awk!lang-037.dat!!--newline=on -o-
-	lang-038.awk!!!--newline=on -o-
-	lang-039.awk!!!--newline=on -o-
-	lang-040.awk!!!--newline=on -o-
-	lang-041.awk!!!--newline=on -o-
-	lang-042.awk!!!--newline=on -o-
-	lang-043.awk!lang-043.dat!!--newline=on -o-
-	lang-044.awk!lang-044.dat!!--newline=on -o-
-	lang-045.awk!!!--newline=on -o-
+	lang-001.awk!!!--strictnaming=off --newline=on -d-
+	lang-002.awk!!!--newline=on -d-
+	lang-003.awk!!!--newline=on -d-
+	lang-004.awk!!!--newline=on -d-
+	lang-005.awk!!!--implicit=off --explicit=on --newline=on -d-
+	lang-006.awk!!!--implicit=off --explicit=on --newline=on -d-
+	lang-007.awk!!!--implicit=on --explicit=on --newline=on -d-
+	lang-008.awk!!!--implicit=off --explicit=on --newline=on -d-
+	lang-009.awk!lang-009.awk!!--implicit=off --explicit=on --newline=on --strictnaming=off -d-
+	lang-010.awk!this is just a test!!--newline=on -d-
+	lang-011.awk!!!--newline=on -d-
+	lang-012.awk!!!--newline=on -d-
+	lang-013.awk!!!--newline=on -d-
+	lang-014.awk!!!--newline=on -d-
+	lang-015.awk!!!--newline=on -d-
+	lang-016.awk!!!--newline=on -d-
+	lang-017.awk!!!--newline=on -d-
+	lang-017.awk!!!--call main --newline=on -d-
+	lang-018.awk!!!--explicit=on --newline=on -d-
+	lang-019.awk!!!--explicit=on --newline=on -d-
+	lang-020.awk!!!--explicit=on --newline=on -d-
+	lang-021.awk!!!--explicit=on --newline=on -d-
+	lang-022.awk!!!--newline=on -d-
+	lang-023.awk!!!--explicit=on --newline=on -d-
+	lang-024.awk!!!--explicit=on --newline=on -d-
+	lang-025.awk!!!--newline=on -d-
+	lang-026.awk!!!--newline=on -d-
+	lang-027.awk!!!--newline=on -d-
+	lang-028.awk!!!--newline=on -d-
+	lang-029.awk!!!--explicit=on --newline=on -d-
+	lang-030.awk!!!--newline=on -d-
+	lang-031.awk!!!--newline=on -d-
+	lang-032.awk!!!--newline=on -d-
+	lang-033.awk!!!--newline=on -d-
+	lang-034.awk!!!--newline=on --rwpipe=on -d-
+	lang-035.awk!lang-035.dat2!!--newline=on -d- -vdatafile=lang-035.dat1 -vgroupname=lang-035
+	lang-036.awk!lang-036.dat!!--newline=on -d-
+	lang-037.awk!lang-037.dat!!--newline=on -d-
+	lang-038.awk!!!--newline=on -d-
+	lang-039.awk!!!--newline=on -d-
+	lang-040.awk!!!--newline=on -d-
+	lang-041.awk!!!--newline=on -d-
+	lang-042.awk!!!--newline=on -d-
+	lang-043.awk!lang-043.dat!!--newline=on -d-
+	lang-044.awk!lang-044.dat!!--newline=on -d-
+	lang-045.awk!!!--newline=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on --include=on
@@ -183,15 +183,15 @@ PROGS="
 	wordfreq.awk!wordfreq.awk!!
 	hanoi.awk!!!
 	indent.awk!indent.dat!!
-	lisp/awklisp!lisp/startup lisp/fib.lsp!!-o-
-	lisp/awklisp!lisp/startup lisp/numbers lisp/numbers.dat!!-o-
-	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/tail.lsp!!-o-
-	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/scheme.lsp!!-o-
+	lisp/awklisp!lisp/startup lisp/fib.lsp!!-d-
+	lisp/awklisp!lisp/startup lisp/numbers lisp/numbers.dat!!-d-
+	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/tail.lsp!!-d-
+	lisp/awklisp!lisp/startup lisp/scmhelp.lsp lisp/scheme.lsp!!-d-
 "
 
 #
 # I can't include this as eliza.lsp gives different output on each run.
-#	lisp/awklisp!lisp/startup lisp/lists lisp/eliza.lsp lisp/eliza.dat!!-o-
+#	lisp/awklisp!lisp/startup lisp/lists lisp/eliza.lsp lisp/eliza.dat!!-d-
 #
 
 [ -x "${QSEAWK}" ] || 
@@ -239,7 +239,7 @@ run_scripts()
 		[ -f "${datafile_path}" ] || datafile_path="$datafile"
 
 		echo_title "${valgrind} ${QSEAWK_BASENAME} ${extraopts} ${awkopts} -f ${orgscript} ${datafile} <${readinfile} 2>&1"
-		${valgrind} ${QSEAWK} ${extraopts} -o "${script}.dp" ${awkopts} -f ${script_path} ${datafile_path} <${readinfile_path} 2>&1
+		${valgrind} ${QSEAWK} ${extraopts} -d "${script}.dp" ${awkopts} -f ${script_path} ${datafile_path} <${readinfile_path} 2>&1
 	
 	done < "${TMPFILE}" 
 	

@@ -30,10 +30,10 @@ qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 	qse_size_t nread;
 	qse_ssize_t n;
 
-	/*QSE_ASSERT (tio->input_func != QSE_NULL);*/
-	if (tio->input_func == QSE_NULL) 
+	/*QSE_ASSERT (tio->in.fun != QSE_NULL);*/
+	if (tio->in.fun == QSE_NULL) 
 	{
-		tio->errnum = QSE_TIO_ENOINF;
+		tio->errnum = QSE_TIO_ENINPF;
 		return -1;
 	}
 
@@ -49,13 +49,14 @@ qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 	{
 		if (tio->inbuf_cur >= tio->inbuf_len) 
 		{
-			n = tio->input_func (
-				QSE_TIO_IO_DATA, tio->input_arg,
-				tio->inbuf, QSE_COUNTOF(tio->inbuf));
+			n = tio->in.fun (
+				QSE_TIO_DATA, tio->in.arg,
+				tio->in.buf.ptr, 
+				tio->in.buf.capa);
 			if (n == 0) break;
 			if (n <= -1) 
 			{
-				tio->errnum = QSE_TIO_EINPUT;
+				tio->errnum = QSE_TIO_EIOERR;
 				return -1;
 			}
 
@@ -65,7 +66,7 @@ qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 
 		do
 		{
-			buf[nread] = tio->inbuf[tio->inbuf_cur++];
+			buf[nread] = tio->in.buf.ptr[tio->inbuf_cur++];
 			/* TODO: support a different line terminator */
 			if (buf[nread++] == QSE_MT('\n')) goto done;
 		}
@@ -92,9 +93,10 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 		if (tio->input_status & STATUS_EOF) n = 0;
 		else
 		{
-			n = tio->input_func (
-				QSE_TIO_IO_DATA, tio->input_arg,
-				&tio->inbuf[tio->inbuf_len], QSE_COUNTOF(tio->inbuf) - tio->inbuf_len);
+			n = tio->in.fun (
+				QSE_TIO_DATA, tio->in.arg,
+				&tio->in.buf.ptr[tio->inbuf_len], 
+				tio->in.buf.capa - tio->inbuf_len);
 		}
 		if (n == 0) 
 		{
@@ -120,7 +122,7 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 		}
 		if (n <= -1) 
 		{
-			tio->errnum = QSE_TIO_EINPUT;
+			tio->errnum = QSE_TIO_EIOERR;
 			return -1;
 		}
 
@@ -130,7 +132,9 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 	mlen = tio->inbuf_len - tio->inbuf_cur;
 	wlen = bufsize;
 
-	x = qse_mbsntowcsnupto (&tio->inbuf[tio->inbuf_cur], &mlen, buf, &wlen, QSE_WT('\n'));
+	x = qse_mbsntowcsnupto (
+		&tio->in.buf.ptr[tio->inbuf_cur],
+		&mlen, buf, &wlen, QSE_WT('\n'));
 	tio->inbuf_cur += mlen;
 
 	if (x == -3)
@@ -142,9 +146,9 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 			 * shift bytes in the buffer to the head. */
 			QSE_ASSERT (mlen <= 0);
 			tio->inbuf_len = tio->inbuf_len - tio->inbuf_cur;
-			QSE_MEMCPY (&tio->inbuf[0], 
-			            &tio->inbuf[tio->inbuf_cur],
-			            tio->inbuf_len * QSE_SIZEOF(tio->inbuf[0]));
+			QSE_MEMCPY (&tio->in.buf.ptr[0], 
+			            &tio->in.buf.ptr[tio->inbuf_cur],
+			            tio->inbuf_len * QSE_SIZEOF(tio->in.buf.ptr[0]));
 			tio->inbuf_cur = 0;
 			goto getc_conv; /* and read more */
 		}
@@ -192,10 +196,10 @@ qse_ssize_t qse_tio_readwcs (qse_tio_t* tio, qse_wchar_t* buf, qse_size_t size)
 	qse_size_t nread = 0;
 	qse_ssize_t n;
 
-	/*QSE_ASSERT (tio->input_func != QSE_NULL);*/
-	if (tio->input_func == QSE_NULL) 
+	/*QSE_ASSERT (tio->in.fun != QSE_NULL);*/
+	if (tio->in.fun == QSE_NULL) 
 	{
-		tio->errnum = QSE_TIO_ENOINF;
+		tio->errnum = QSE_TIO_ENINPF;
 		return -1;
 	}
 

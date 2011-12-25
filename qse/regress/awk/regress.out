@@ -413,7 +413,7 @@ Mark	5.00	20
 Mary	5.5	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --strictnaming=off --newline=on -o- -f lang-001.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --strictnaming=off --newline=on -d- -f lang-001.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -426,7 +426,7 @@ BEGIN {
 
 hello
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-002.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-002.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -939,7 +939,7 @@ my hello
 my hello
 ERROR: CODE 15 LINE 6 COLUMN 1 - block nested too deeply
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-003.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function fn (__p0)
 {
@@ -954,11 +954,11 @@ BEGIN {
 
 50
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-004.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 42 LINE 3 COLUMN 9 - function 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --implicit=off --explicit=on --newline=on -o- -f lang-005.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --implicit=off --explicit=on --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -982,11 +982,11 @@ BEGIN {
 50
 100
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --implicit=off --explicit=on --newline=on -o- -f lang-006.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --implicit=off --explicit=on --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 43 LINE 5 COLUMN 10 - global variable 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --implicit=on --explicit=on --newline=on -o- -f lang-007.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --implicit=on --explicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global __g17;
 
@@ -1005,7 +1005,7 @@ BEGIN {
 20
 30
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --implicit=off --explicit=on --newline=on -o- -f lang-008.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --implicit=off --explicit=on --newline=on -d- -f lang-008.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global x;
 
@@ -1027,7 +1027,7 @@ BEGIN {
 2
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --implicit=off --explicit=on --newline=on --strictnaming=off -o- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
+[CMD]  qseawk  --implicit=off --explicit=on --newline=on --strictnaming=off -d- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -1044,7 +1044,7 @@ END {
 }
 1000
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-010.awk this is just a test </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-010.awk this is just a test </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "ARGC=",ARGC;
@@ -1101,7 +1101,7 @@ ARGC [+10124.1123000000] is positive
 [A         ] [-000000000000000000000000000000000000000000000001]
 abc10 000000000000000000000000000040 g good K
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-011.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-011.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a[1,2,3] = 20;
@@ -1144,7 +1144,7 @@ BEGIN {
 (1,2,3) in a ==> 20
 (4,5) not in a
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-012.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-012.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	OFS = "		";
@@ -1345,7 +1345,7 @@ a <  " " :		1
 -0.123
 122.877
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-013.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-013.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	CONVFMT = "%s";
@@ -1354,7 +1354,7 @@ BEGIN {
 
 ERROR: CODE 103 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a = (10 + 20);
@@ -1365,11 +1365,11 @@ BEGIN {
 
 30 30 30
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-015.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 15 LINE 3 COLUMN 50 - block nested too deeply
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-016.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	printf "[[[[[%s]]]]\n",sprintf("abc %s abc",sprintf("def %s %s",sprintf("%s %s %s","xyz",1.2342,"xyz"),sprintf("ttt %s tttt",123.12)));
@@ -1379,7 +1379,7 @@ BEGIN {
 [[[[[abc def xyz 1.2342 xyz ttt 123.12 tttt abc]]]]
 [[[[ttt 123.12 tttt]]]]
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1430,7 +1430,7 @@ END {
 END OF PROGRAM
 END OF PROGRAM 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --call main --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --call main --newline=on -d- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1479,31 +1479,31 @@ END {
 0
 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-018.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 47 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-019.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 49 LINE 1 COLUMN 15 - '+' not a valid parameter name
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-020.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 50 LINE 1 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-021.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 50 LINE 3 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-022.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 23 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-023.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 28 LINE 5 COLUMN 20 - colon expected in place of ';'
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-024.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	local __l0;
@@ -1513,7 +1513,7 @@ BEGIN {
 
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-025.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-025.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix = 20;
@@ -1522,7 +1522,7 @@ BEGIN {
 
 ERROR: CODE 78 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	abc[20] = "abc";
@@ -1534,19 +1534,19 @@ BEGIN {
 abc
 ERROR: CODE 86 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 17 LINE 2 COLUMN 1 - invalid character '<NUL>'
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-028.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 41 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --explicit=on --newline=on -o- -f lang-029.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --explicit=on --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 42 LINE 9 COLUMN 9 - function 'abc' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-030.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print (1 + 0);
@@ -1598,7 +1598,7 @@ BEGIN {
 0
 0
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-031.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-031.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print match("hhhheeeo",/e+/);
@@ -1632,7 +1632,7 @@ BEGIN {
 0 -1
 --------------------------
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-032.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-032.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a = 91;
@@ -1654,7 +1654,7 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-033.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	while ((("cat lang-033.awk" | getline x) > 0))
@@ -1666,7 +1666,7 @@ BEGIN {
 		print x
 }
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on --rwpipe=on -o- -f lang-034.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on --rwpipe=on -d- -f lang-034.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "15" || "sort";
@@ -1687,7 +1687,7 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
@@ -1931,7 +1931,7 @@ lease 10.218.255.151 {
   uid "\001\000\033[\234\220\000";
 }
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 {
 	if (($0 ~ /^-+$/))
@@ -1963,7 +1963,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "\n-+\n";
@@ -1991,7 +1991,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-038.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-038.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	xstr = "abcdefabcdefabcdef";
@@ -2020,7 +2020,7 @@ BEGIN {
 7 abc
 13 abc
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-039.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-039.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print (length()   11);
@@ -2030,7 +2030,7 @@ BEGIN {
 011
 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-040.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-040.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	for (x in y)
@@ -2038,7 +2038,7 @@ BEGIN {
 }
 
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-041.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-041.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	abc = 20;
@@ -2047,7 +2047,7 @@ BEGIN {
 
 2010
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-042.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-042.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print //;
@@ -2087,7 +2087,7 @@ IGNORECASE= 1
 1
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-043.awk lang-043.dat </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-043.awk lang-043.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "[	\n\v\f\r ]*[\r\n]+[	\n\v\f\r ]*";
@@ -2101,7 +2101,7 @@ abcd
 dcba
 j
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-044.awk lang-044.dat </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-044.awk lang-044.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "";
@@ -2119,7 +2119,7 @@ this is the second second line]
 [   ttttt
 killer]
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -o- -f lang-045.awk  </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -f lang-045.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	for (i = (-(10.0)); (i < 10.0); (i)++)
