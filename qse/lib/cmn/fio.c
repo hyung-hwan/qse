@@ -189,11 +189,11 @@ int qse_fio_init (
 		}
 		else creation_disposition = OPEN_EXISTING;
 
-		if (flags & QSE_FIO_NOSHRD)
+		if (flags & QSE_FIO_NOSHREAD)
 			share_mode &= ~FILE_SHARE_READ;
-		if (flags & QSE_FIO_NOSHWR)
+		if (flags & QSE_FIO_NOSHWRITE)
 			share_mode &= ~FILE_SHARE_WRITE;
-		if (flags & QSE_FIO_NOSHDL)
+		if (flags & QSE_FIO_NOSHDELETE)
 			share_mode &= ~FILE_SHARE_DELETE;
 
 		if (!(mode & QSE_FIO_WUSR)) 
@@ -302,11 +302,11 @@ int qse_fio_init (
 		if (flags & QSE_FIO_SYNC) 
 			open_mode |= OPEN_FLAGS_WRITE_THROUGH;
 
-		if ((flags & QSE_FIO_NOSHRD) && (flags & QSE_FIO_NOSHWR))
+		if ((flags & QSE_FIO_NOSHREAD) && (flags & QSE_FIO_NOSHWRITE))
 			open_mode |= OPEN_SHARE_DENYREADWRITE;
-		else if (flags & QSE_FIO_NOSHRD)
+		else if (flags & QSE_FIO_NOSHREAD)
 			open_mode |= OPEN_SHARE_DENYREAD;
-		else if (flags & QSE_FIO_NOSHWR)
+		else if (flags & QSE_FIO_NOSHWRITE)
 			open_mode |= OPEN_SHARE_DENYWRITE;
 		else
 			open_mode |= OPEN_SHARE_DENYNONE;
@@ -511,12 +511,13 @@ int qse_fio_init (
 		int opt = 0;
 
 		if (fio->flags & QSE_FIO_IGNOREMBWCERR) opt |= QSE_TIO_IGNOREMBWCERR;
+		if (fio->flags & QSE_FIO_NOAUTOFLUSH) opt |= QSE_TIO_NOAUTOFLUSH;
 
 		tio = qse_tio_open (fio->mmgr, 0, opt);
 		if (tio == QSE_NULL) QSE_THROW_ERR (tio);
 
-		if (qse_tio_attachin (tio, fio_input, fio) <= -1 ||
-		    qse_tio_attachout (tio, fio_output, fio) <= -1)
+		if (qse_tio_attachin (tio, fio_input, fio, QSE_NULL, 4096) <= -1 ||
+		    qse_tio_attachout (tio, fio_output, fio, QSE_NULL, 4096) <= -1)
 		{
 			qse_tio_close (tio);
 			QSE_THROW_ERR (tio);
@@ -991,7 +992,7 @@ static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) return fio_read (fio, buf, size);
+	if (cmd == QSE_TIO_DATA) return fio_read (fio, buf, size);
 	
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */
@@ -1002,7 +1003,7 @@ static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size
 {
 	qse_fio_t* fio = (qse_fio_t*)arg;
 	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) return fio_write (fio, buf, size);
+	if (cmd == QSE_TIO_DATA) return fio_write (fio, buf, size);
 
 	/* take no actions for OPEN and CLOSE as they are handled
 	 * by fio */

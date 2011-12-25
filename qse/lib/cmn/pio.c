@@ -991,8 +991,8 @@ int qse_pio_init (
 			}
 
 			r = (i == QSE_PIO_IN)?
-				qse_tio_attachout (tio[i], pio_output, &pio->pin[i]):
-				qse_tio_attachin (tio[i], pio_input, &pio->pin[i]);
+				qse_tio_attachout (tio[i], pio_output, &pio->pin[i], QSE_NULL, 4096):
+				qse_tio_attachin (tio[i], pio_input, &pio->pin[i], QSE_NULL, 4096);
 
 			if (r <= -1) goto oops;
 
@@ -1563,7 +1563,7 @@ static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_DATA) 
 	{
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_read (pin->self, buf, size, pin->handle);
@@ -1578,7 +1578,7 @@ static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);
-	if (cmd == QSE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_DATA) 
 	{
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_write (pin->self, buf, size, pin->handle);

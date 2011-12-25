@@ -30,12 +30,13 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/tio.h>
 
-enum qse_sio_oflag_t
+enum qse_sio_flag_t
 {
+	QSE_SIO_IGNOREMBWCERR = QSE_FIO_IGNOREMBWCERR,
+	QSE_SIO_NOAUTOFLUSH   = QSE_FIO_NOAUTOFLUSH,
+
 	QSE_SIO_HANDLE        = QSE_FIO_HANDLE,
 	QSE_SIO_TEMPORARY     = QSE_FIO_TEMPORARY,
-
-	QSE_SIO_IGNOREMBWCERR = QSE_FIO_IGNOREMBWCERR,
 	QSE_SIO_NOCLOSE       = QSE_FIO_NOCLOSE,
 
 	QSE_SIO_READ          = QSE_FIO_READ,
@@ -48,16 +49,12 @@ enum qse_sio_oflag_t
 	QSE_SIO_SYNC          = QSE_FIO_SYNC,
 	QSE_SIO_NOFOLLOW      = QSE_FIO_NOFOLLOW,
 
-	QSE_SIO_NOSHRD        = QSE_FIO_NOSHRD,
-	QSE_SIO_NOSHWR        = QSE_FIO_NOSHWR,
-	QSE_SIO_NOSHDL        = QSE_FIO_NOSHDL,
+	QSE_SIO_NOSHREAD      = QSE_FIO_NOSHREAD,
+	QSE_SIO_NOSHWRITE     = QSE_FIO_NOSHWRITE,
+	QSE_SIO_NOSHDELETE    = QSE_FIO_NOSHDELETE,
 
 	QSE_SIO_RANDOM        = QSE_FIO_RANDOM,
-	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL,
-
-	/* Beware that this should not overlap with any QSE_FIO_XXXX.
-	 * See NOTE in fio.h */
-	QSE_SIO_NOAUTOFLUSH   = (1 << 31)
+	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL
 };
 
 typedef qse_tio_errnum_t qse_sio_errnum_t;
@@ -88,6 +85,13 @@ struct qse_sio_t
 	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_fio_t        fio;
 	qse_tio_t        tio;
+
+	qse_mchar_t      inbuf[2048];
+	qse_mchar_t      outbuf[2048];
+
+#if defined(_WIN32)
+	int              status;
+#endif
 };
 
 #ifdef __cplusplus
@@ -101,14 +105,14 @@ qse_sio_t* qse_sio_open (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	const qse_char_t* file,    /**< file name */
-	int               oflags   /**< number OR'ed of #qse_sio_oflag_t */
+	int               flags   /**< number OR'ed of #qse_sio_flag_t */
 );
 
 qse_sio_t* qse_sio_openstd (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	qse_sio_std_t     std,     /**< standard I/O identifier */
-	int               oflags   /**< number OR'ed of #qse_sio_oflag_t */
+	int               flags   /**< number OR'ed of #qse_sio_flag_t */
 );
 
 /**

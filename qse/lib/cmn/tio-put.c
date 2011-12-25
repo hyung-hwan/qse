@@ -24,7 +24,7 @@
 qse_ssize_t qse_tio_writembs (
 	qse_tio_t* tio, const qse_mchar_t* mptr, qse_size_t mlen)
 {
-	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf)) 
+	if (tio->outbuf_len >= tio->out.buf.capa) 
 	{
 		/* maybe, previous flush operation has failed a few 
 		 * times previously. so the buffer is full.
@@ -41,8 +41,8 @@ qse_ssize_t qse_tio_writembs (
 		{
 			while (mptr[pos]) 
 			{
-				tio->outbuf[tio->outbuf_len++] = mptr[pos++];
-				if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf) &&
+				tio->out.buf.ptr[tio->outbuf_len++] = mptr[pos++];
+				if (tio->outbuf_len >= tio->out.buf.capa &&
 				    qse_tio_flush (tio) <= -1) return -1;
 				if (pos >= QSE_TYPE_MAX(qse_ssize_t)) break;
 			}
@@ -52,8 +52,8 @@ qse_ssize_t qse_tio_writembs (
 			int nl = 0;
 			while (mptr[pos]) 
 			{
-				tio->outbuf[tio->outbuf_len++] = mptr[pos];
-				if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf))
+				tio->out.buf.ptr[tio->outbuf_len++] = mptr[pos];
+				if (tio->outbuf_len >= tio->out.buf.capa)
 				{
 					if (qse_tio_flush (tio) <= -1) return -1;
 					nl = 0;
@@ -79,10 +79,10 @@ qse_ssize_t qse_tio_writembs (
 		xptr = mptr;
 
 		/* handle the parts that can't fit into the internal buffer */
-		while (mlen >= (capa = QSE_COUNTOF(tio->outbuf) - tio->outbuf_len))
+		while (mlen >= (capa = tio->out.buf.capa - tio->outbuf_len))
 		{
 			for (xend = xptr + capa; xptr < xend; xptr++)
-				tio->outbuf[tio->outbuf_len++] = *xptr;
+				tio->out.buf.ptr[tio->outbuf_len++] = *xptr;
 			if (qse_tio_flush (tio) <= -1) return -1;
 			mlen -= capa;
 		}
@@ -91,7 +91,7 @@ qse_ssize_t qse_tio_writembs (
 		{
 			/* handle the last part that can fit into the internal buffer */
 			for (xend = xptr + mlen; xptr < xend; xptr++)
-				tio->outbuf[tio->outbuf_len++] = *xptr;
+				tio->out.buf.ptr[tio->outbuf_len++] = *xptr;
 		}
 		else
 		{
@@ -99,14 +99,14 @@ qse_ssize_t qse_tio_writembs (
 			for (xend = xptr + mlen; xptr < xend; xptr++)
 			{
 				/* TODO: support different line terminating characeter */
-				tio->outbuf[tio->outbuf_len++] = *xptr;
+				tio->out.buf.ptr[tio->outbuf_len++] = *xptr;
 				if (*xptr == QSE_MT('\n')) 
 				{
 					nl = 1; 
 					break;
 				}
 			}
-			while (xptr < xend) tio->outbuf[tio->outbuf_len++] = *xptr++;
+			while (xptr < xend) tio->out.buf.ptr[tio->outbuf_len++] = *xptr++;
 		}
 
 		/* if the last part contains a new line, flush the internal
@@ -124,7 +124,7 @@ qse_ssize_t qse_tio_writewcs (
 	qse_size_t capa, wcnt, mcnt, xwlen;
 	int n, nl = 0;
 
-	if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf)) 
+	if (tio->outbuf_len >= tio->out.buf.capa) 
 	{
 		/* maybe, previous flush operation has failed a few 
 		 * times previously. so the buffer is full.
@@ -139,11 +139,11 @@ qse_ssize_t qse_tio_writewcs (
 	xwlen = wlen;
 	while (xwlen > 0)
 	{
-		capa = QSE_COUNTOF(tio->outbuf) - tio->outbuf_len;
+		capa = tio->out.buf.capa - tio->outbuf_len;
 		wcnt = xwlen; mcnt = capa;
 
 		n = qse_wcsntombsn (
-			wptr, &wcnt, &tio->outbuf[tio->outbuf_len], &mcnt);
+			wptr, &wcnt, &tio->out.buf.ptr[tio->outbuf_len], &mcnt);
 		tio->outbuf_len += mcnt;
 
 		if (n == -2)
@@ -157,7 +157,7 @@ qse_ssize_t qse_tio_writewcs (
 		}
 		else 
 		{
-			if (tio->outbuf_len >= QSE_COUNTOF(tio->outbuf))
+			if (tio->outbuf_len >= tio->out.buf.capa)
 			{
 				/* flush the full buffer regardless of conversion
 				 * result. */
@@ -172,8 +172,8 @@ qse_ssize_t qse_tio_writewcs (
 				{
 					/* insert a question mark for an illegal 
 					 * character. */
-					QSE_ASSERT (tio->outbuf_len < QSE_COUNTOF(tio->outbuf));
-					tio->outbuf[tio->outbuf_len++] = QSE_MT('?');
+					QSE_ASSERT (tio->outbuf_len < tio->out.buf.capa);
+					tio->out.buf.ptr[tio->outbuf_len++] = QSE_MT('?');
 					wcnt++; /* skip this illegal character */
 					/* don't need to increment mcnt since
 					 * it's not used below */

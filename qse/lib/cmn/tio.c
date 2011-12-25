@@ -23,6 +23,9 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (tio)
 
+static int detach_in (qse_tio_t* tio, int fini);
+static int detach_out (qse_tio_t* tio, int fini);
+
 qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)
 {
 	qse_tio_t* tio;
@@ -63,7 +66,8 @@ int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr, int flags)
 	QSE_MEMSET (tio, 0, QSE_SIZEOF(*tio));
 
 	tio->mmgr = mmgr;
-	tio->flags = flags;
+	/* mask off internal bits when storing the flags for safety */
+	tio->flags = flags & ~(QSE_TIO_DYNINBUF | QSE_TIO_DYNOUTBUF);
 
 	/*
 	tio->input_func = QSE_NULL;
@@ -83,10 +87,13 @@ int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr, int flags)
 
 int qse_tio_fini (qse_tio_t* tio)
 {
+	int ret = 0;
+
 	qse_tio_flush (tio); /* don't care about the result */
-	if (qse_tio_detachin(tio) == -1) return -1;
-	if (qse_tio_detachout(tio) == -1) return -1;
-	return 0;
+	if (detach_in (tio, 1) <= -1) ret = -1;
+	if (detach_out (tio, 1) <= -1) ret = -1;
+
+	return ret;
 }
 
 qse_tio_errnum_t qse_tio_geterrnum (qse_tio_t* tio)
@@ -100,18 +107,14 @@ const qse_char_t* qse_tio_geterrmsg (qse_tio_t* tio)
 	{
 		QSE_T("no error"),
 		QSE_T("out of memory"),
+		QSE_T("invalid parameter"),
 		QSE_T("no more space"),
 		QSE_T("illegal multibyte sequence"),
 		QSE_T("incomplete multibyte sequence"),
 		QSE_T("illegal wide character"),
 		QSE_T("no input function attached"),
-		QSE_T("input function returned an error"),
-		QSE_T("input function failed to open"),
-		QSE_T("input function failed to closed"),
 		QSE_T("no output function attached"),
-		QSE_T("output function returned an error"),
-		QSE_T("output function failed to open"),
-		QSE_T("output function failed to closed"),
+		QSE_T("I/O error"),
 		QSE_T("unknown error")
 	};
 
@@ -120,112 +123,219 @@ const qse_char_t* qse_tio_geterrmsg (qse_tio_t* tio)
 		QSE_COUNTOF(__errmsg) - 1: tio->errnum];
 }
 
-int qse_tio_attachin (qse_tio_t* tio, qse_tio_io_t input, void* arg)
+int qse_tio_attachin (
+	qse_tio_t* tio, qse_tio_io_fun_t input, void* arg,
+	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
-	if (qse_tio_detachin(tio) == -1) return -1;
+	qse_mchar_t* xbufptr;
 
-	QSE_ASSERT (tio->input_func == QSE_NULL);
-
-	if (input(QSE_TIO_IO_OPEN, arg, QSE_NULL, 0) == -1) 
+	if (input == QSE_NULL || bufcapa < QSE_TIO_MININBUFCAPA) 
 	{
-		tio->errnum = QSE_TIO_EINPOP;
+		tio->errnum = QSE_TIO_EINVAL;
 		return -1;
 	}
 
-	tio->input_func = input;
-	tio->input_arg = arg;
+	if (qse_tio_detachin(tio) <= -1) return -1;
+
+	QSE_ASSERT (tio->in.fun == QSE_NULL);
+
+	xbufptr = bufptr;
+	if (xbufptr == QSE_NULL)
+	{
+		xbufptr = QSE_MMGR_ALLOC (
+			tio->mmgr, QSE_SIZEOF(qse_mchar_t) * bufcapa);
+		if (xbufptr == QSE_NULL)
+		{
+			tio->errnum = QSE_TIO_ENOMEM;
+			return -1;	
+		}
+	}
+
+	if (input (QSE_TIO_OPEN, arg, QSE_NULL, 0) <= -1) 
+	{
+		if (xbufptr != bufptr) QSE_MMGR_FREE (tio->mmgr, xbufptr);
+		tio->errnum = QSE_TIO_EIOERR;
+		return -1;
+	}
+
+	/* if i defined tio->io[2] instead of tio->in and tio-out, 
+	 * i would be able to shorten code amount. but fields to initialize
+	 * are not symmetric between input and output.
+	 * so it's just a bit clumsy that i repeat almost the same code
+	 * in qse_tio_attachout().
+	 */
+
+	tio->in.fun = input;
+	tio->in.arg = arg;
+	tio->in.buf.ptr = xbufptr;
+	tio->in.buf.capa = bufcapa;
 
 	tio->input_status = 0;
 	tio->inbuf_cur = 0;
 	tio->inbuf_len = 0;
 
+	if (xbufptr != bufptr) tio->flags |= QSE_TIO_DYNINBUF;
 	return 0;
+}
+
+static int detach_in (qse_tio_t* tio, int fini)
+{
+	int ret = 0;
+
+	if (tio->in.fun)
+	{
+		if (tio->in.fun (
+			QSE_TIO_CLOSE, tio->in.arg, QSE_NULL, 0) <= -1) 
+		{
+			tio->errnum = QSE_TIO_EIOERR;
+
+			/* returning with an error here allows you to retry detaching */
+			if (!fini) return -1; 
+
+			/* otherwise, you can't retry since the input handler information
+			 * is reset below */
+			ret = -1; 
+		}
+
+		if (tio->flags & QSE_TIO_DYNINBUF) 
+		{
+			QSE_MMGR_FREE (tio->mmgr, tio->in.buf.ptr);
+			tio->flags &= ~QSE_TIO_DYNINBUF;
+		}
+
+		tio->in.fun = QSE_NULL;
+		tio->in.arg = QSE_NULL;
+		tio->in.buf.ptr = QSE_NULL;
+		tio->in.buf.capa = 0;
+	}
+		
+	return ret;
 }
 
 int qse_tio_detachin (qse_tio_t* tio)
 {
-	if (tio->input_func != QSE_NULL) 
-	{
-		if (tio->input_func (
-			QSE_TIO_IO_CLOSE, tio->input_arg, QSE_NULL, 0) == -1) 
-		{
-			tio->errnum = QSE_TIO_EINPCL;
-			return -1;
-		}
-
-		tio->input_func = QSE_NULL;
-		tio->input_arg = QSE_NULL;
-	}
-		
-	return 0;
+	return detach_in (tio, 0);
 }
 
-int qse_tio_attachout (qse_tio_t* tio, qse_tio_io_t output, void* arg)
+int qse_tio_attachout (
+	qse_tio_t* tio, qse_tio_io_fun_t output, void* arg,
+	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
-	if (qse_tio_detachout(tio) == -1) return -1;
+	qse_mchar_t* xbufptr;
 
-	QSE_ASSERT (tio->output_func == QSE_NULL);
-
-	if (output(QSE_TIO_IO_OPEN, arg, QSE_NULL, 0) == -1) 
+	if (output == QSE_NULL || bufcapa < QSE_TIO_MINOUTBUFCAPA)  
 	{
-		tio->errnum = QSE_TIO_EOUTOP;
+		tio->errnum = QSE_TIO_EINVAL;
 		return -1;
 	}
 
-	tio->output_func = output;
-	tio->output_arg = arg;
+	if (qse_tio_detachout(tio) == -1) return -1;
+
+	QSE_ASSERT (tio->out.fun == QSE_NULL);
+
+	xbufptr = bufptr;
+	if (xbufptr == QSE_NULL)
+	{
+		xbufptr = QSE_MMGR_ALLOC (
+			tio->mmgr, QSE_SIZEOF(qse_mchar_t) * bufcapa);
+		if (xbufptr == QSE_NULL)
+		{
+			tio->errnum = QSE_TIO_ENOMEM;
+			return -1;	
+		}
+	}
+
+	if (output (QSE_TIO_OPEN, arg, QSE_NULL, 0) == -1) 
+	{
+		if (xbufptr != bufptr) QSE_MMGR_FREE (tio->mmgr, xbufptr);
+		tio->errnum = QSE_TIO_EIOERR;
+		return -1;
+	}
+
+	tio->out.fun = output;
+	tio->out.arg = arg;
+	tio->out.buf.ptr = xbufptr;
+	tio->out.buf.capa = bufcapa;
+
 	tio->outbuf_len = 0;
 
+	if (xbufptr != bufptr) tio->flags |= QSE_TIO_DYNOUTBUF;
 	return 0;
+}
+
+static int detach_out (qse_tio_t* tio, int fini)
+{
+	int ret = 0;
+
+	if (tio->out.fun)
+	{
+		qse_tio_flush (tio); /* don't care about the result */
+
+		if (tio->out.fun (
+			QSE_TIO_CLOSE, tio->out.arg, QSE_NULL, 0) <= -1) 
+		{
+			tio->errnum = QSE_TIO_EIOERR;
+			/* returning with an error here allows you to retry detaching */
+			if (!fini) return -1;
+
+			/* otherwise, you can't retry since the input handler information
+			 * is reset below */
+			ret = -1;
+		}
+	
+		if (tio->flags & QSE_TIO_DYNOUTBUF) 
+		{
+			QSE_MMGR_FREE (tio->mmgr, tio->out.buf.ptr);
+			tio->flags &= ~QSE_TIO_DYNOUTBUF;
+		}
+
+		tio->out.fun = QSE_NULL;
+		tio->out.arg = QSE_NULL;
+		tio->out.buf.ptr = QSE_NULL;
+		tio->out.buf.capa = 0;
+	}
+		
+	return ret;
 }
 
 int qse_tio_detachout (qse_tio_t* tio)
 {
-	if (tio->output_func != QSE_NULL) 
-	{
-		qse_tio_flush (tio); /* don't care about the result */
-
-		if (tio->output_func (
-			QSE_TIO_IO_CLOSE, tio->output_arg, QSE_NULL, 0) == -1) 
-		{
-			tio->errnum = QSE_TIO_EOUTCL;
-			return -1;
-		}
-
-		tio->output_func = QSE_NULL;
-		tio->output_arg = QSE_NULL;
-	}
-		
-	return 0;
+	return detach_out (tio, 0);
 }
 
 qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 {
 	qse_size_t left, count;
+	qse_ssize_t n;
+	qse_mchar_t* cur;
 
-	if (tio->output_func == QSE_NULL) 
+	if (tio->out.fun == QSE_NULL)
 	{
 		tio->errnum = QSE_TIO_ENOUTF;
 		return (qse_ssize_t)-1;
 	}
 
 	left = tio->outbuf_len;
+	cur = tio->out.buf.ptr;
 	while (left > 0) 
 	{
-		qse_ssize_t n;
-
-		n = tio->output_func (
-			QSE_TIO_IO_DATA, tio->output_arg, tio->outbuf, left);
+		n = tio->out.fun (
+			QSE_TIO_DATA, tio->out.arg, cur, left);
 		if (n <= -1) 
 		{
+			QSE_MEMCPY (tio->out.buf.ptr, cur, left);
 			tio->outbuf_len = left;
-			tio->errnum = QSE_TIO_EOUTPT;
+			tio->errnum = QSE_TIO_EIOERR;
 			return -1;
 		}
-		if (n == 0) break;
+		if (n == 0) 
+		{
+			QSE_MEMCPY (tio->out.buf.ptr, cur, left);
+			break;
+		}
 	
 		left -= n;
-		QSE_MEMCPY (tio->outbuf, &tio->inbuf[n], left);
+		cur += n;
 	}
 
 	count = tio->outbuf_len - left;

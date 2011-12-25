@@ -7,13 +7,14 @@
 #	include <windows.h>
 #endif
 
+static qse_sio_t* g_out;
 
 #define R(f) \
 	do { \
-		qse_printf (QSE_T("== ")); \
-		qse_printf (QSE_T(#f)); \
-		qse_printf (QSE_T(" ==\n")); \
-		qse_fflush (QSE_STDOUT); \
+		qse_sio_putstr (g_out,QSE_T("== ")); \
+		qse_sio_putstr (g_out,QSE_T(#f)); \
+		qse_sio_putstr (g_out,QSE_T(" ==\n")); \
+		qse_sio_flush (g_out); \
 		if (f() == -1) return -1; \
 	} while (0)
 
@@ -61,11 +62,11 @@ static int test1 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_printf (QSE_T("written: ["));
-		qse_printf (x[i]);
-		qse_printf (QSE_T("]\n"));
+		qse_sio_putstr (g_out, QSE_T("Written ["));
+		qse_sio_putwcs (g_out, x[i]);
+		qse_sio_putstr (g_out, QSE_T("]\n"));
 
-		qse_sio_putstr (sio, x[i]);
+		qse_sio_putwcs (sio, x[i]);
 		qse_sio_putc (sio, QSE_T('\n'));
 	}
 
@@ -141,23 +142,27 @@ static int test3 (void)
 
 int main ()
 {
+#if 0
 #if defined(_WIN32)
 	UINT old_cp = GetConsoleOutputCP();
 	SetConsoleOutputCP (CP_UTF8);
 #endif
+#endif
 
 	setlocale (LC_ALL, "");
 
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
+	g_out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
 	R (test1);
 	R (test2);
 	R (test3);
 
+	qse_sio_close (g_out);
+
+#if 0
 #if defined(_WIN32)
 	SetConsoleOutputCP (old_cp);
+#endif
 #endif
 	return 0;
 }

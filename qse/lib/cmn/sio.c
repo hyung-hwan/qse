@@ -25,10 +25,7 @@ static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_siz
 static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
 
 #if defined(_WIN32)
-#	include <windows.h>
-#elif defined(__OS2__)
-#	define INCL_DOSFILEMGR
-#	include <os2.h>
+#	include <windows.h> /* for the UGLY hack */
 #endif
 
 qse_sio_t* qse_sio_open (
@@ -61,10 +58,22 @@ qse_sio_t* qse_sio_open (
 qse_sio_t* qse_sio_openstd (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_sio_std_t std, int flags)
 {
+	qse_sio_t* sio;
 	qse_fio_hnd_t hnd;
+
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
-	return qse_sio_open (mmgr, xtnsize, 
+	sio = qse_sio_open (mmgr, xtnsize, 
 		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
+
+#if defined(_WIN32)
+	if (sio) 
+	{
+		QSE_ASSERT (std >= 0 && std < QSE_TYPE_MAX(int));
+		sio->status = std + 1;
+	}
+#endif
+
+	return sio;
 }
 
 void qse_sio_close (qse_sio_t* sio)
@@ -87,7 +96,12 @@ int qse_sio_init (
 	mode = QSE_FIO_RUSR | QSE_FIO_WUSR | 
 	       QSE_FIO_RGRP | QSE_FIO_ROTH;
 
-	if (qse_fio_init (&sio->fio, mmgr, file, flags, mode) <= -1) return -1;
+	/* sio flags redefines most fio flags. fio can be opened in the
+	 * text mode. that way, fio is also buffered. since sio performs
+	 * its own buffering, i don't want a caller to specify text mode
+	 * flags accidentally. i mask off those bits here to avoid mishap. */
+	if (qse_fio_init (&sio->fio, mmgr, file, 
+		(flags & ~(QSE_FIO_TEXT|QSE_FIO_NOAUTOFLUSH)), mode) <= -1) return -1;
 
 	if (flags & QSE_SIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
 	if (flags & QSE_SIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
@@ -98,8 +112,8 @@ int qse_sio_init (
 		return -1;
 	}
 
-	if (qse_tio_attachin(&sio->tio, __sio_input, sio) <= -1 ||
-	    qse_tio_attachout(&sio->tio, __sio_output, sio) <= -1) 
+	if (qse_tio_attachin (&sio->tio, __sio_input, sio, sio->inbuf, QSE_COUNTOF(sio->inbuf)) <= -1 ||
+	    qse_tio_attachout (&sio->tio, __sio_output, sio, sio->outbuf, QSE_COUNTOF(sio->outbuf)) <= -1)
 	{
 		qse_tio_fini (&sio->tio);	
 		qse_fio_fini (&sio->fio);
@@ -112,10 +126,22 @@ int qse_sio_init (
 int qse_sio_initstd (
 	qse_sio_t* sio, qse_mmgr_t* mmgr, qse_sio_std_t std, int flags)
 {
+	int n;
 	qse_fio_hnd_t hnd;
+
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return -1;
-	return qse_sio_init (sio, mmgr, 
-		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE);
+	n = qse_sio_init (sio, mmgr, 
+		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
+
+#if defined(_WIN32)
+	if (n >= 0) 
+	{
+		QSE_ASSERT (std >= 0 && std < QSE_TYPE_MAX(int));
+		sio->status = std + 1;
+	}
+#endif
+
+	return n;
 }
 
 void qse_sio_fini (qse_sio_t* sio)
@@ -163,7 +189,14 @@ qse_ssize_t qse_sio_getmbs (
 	qse_ssize_t n;
 
 	if (size <= 0) return 0;
+
+#if defined(_WIN32)
+	/* Using ReadConsoleA() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
+
 	n = qse_tio_readmbs (&sio->tio, buf, size - 1);
+
 	if (n <= -1) return -1;
 	buf[n] = QSE_MT('\0');
 	return n;
@@ -172,6 +205,11 @@ qse_ssize_t qse_sio_getmbs (
 qse_ssize_t qse_sio_getmbsn (
 	qse_sio_t* sio, qse_mchar_t* buf, qse_size_t size)
 {
+#if defined(_WIN32)
+	/* Using ReadConsoleA() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
+
 	return qse_tio_readmbs (&sio->tio, buf, size);
 }
 
@@ -181,7 +219,14 @@ qse_ssize_t qse_sio_getwcs (
 	qse_ssize_t n;
 
 	if (size <= 0) return 0;
+
+#if defined(_WIN32)
+	/* Using ReadConsoleA() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
+
 	n = qse_tio_readwcs (&sio->tio, buf, size - 1);
+
 	if (n <= -1) return -1;
 	buf[n] = QSE_WT('\0');
 	return n;
@@ -190,6 +235,10 @@ qse_ssize_t qse_sio_getwcs (
 qse_ssize_t qse_sio_getwcsn (
 	qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 {
+#if defined(_WIN32)
+	/* Using ReadConsoleW() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
 	return qse_tio_readwcs (&sio->tio, buf, size);
 }
 
@@ -205,23 +254,99 @@ qse_ssize_t qse_sio_putwc (qse_sio_t* sio, qse_wchar_t c)
 
 qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 {
-	return qse_tio_writembs (&sio->tio, str, (qse_size_t)-1);
-}
+#if defined(_WIN32)
+	/* Using WriteConsoleA() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
 
-qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
-{
-	return qse_tio_writewcs (&sio->tio, str, (qse_size_t)-1);
+	return qse_tio_writembs (&sio->tio, str, (qse_size_t)-1);
 }
 
 qse_ssize_t qse_sio_putmbsn (
 	qse_sio_t* sio, const qse_mchar_t* str, qse_size_t size)
 {
+#if defined(_WIN32)
+	/* Using WriteConsoleA() didn't help at all.
+	 * so I don't implement any hack here */
+#endif
+
 	return qse_tio_writembs (&sio->tio, str, size);
+}
+
+qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
+{
+#if defined(_WIN32)
+	/* DAMN UGLY: See comment in qse_sio_putwcsn() */
+	if (sio->status)
+	{
+		DWORD mode;
+
+		if (GetConsoleMode (sio->fio.handle, &mode) == FALSE)
+		{
+			return qse_tio_writewcs (&sio->tio, str, (qse_size_t)-1);
+		}
+		else
+		{
+			DWORD count, left;
+			const qse_wchar_t* cur;
+			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+			for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
+			{
+				if (WriteConsoleW (
+					sio->fio.handle, cur, left,
+					&count, QSE_NULL) == FALSE) return -1;
+				if (count == 0) break;
+			}
+			return cur - str;	
+		}
+	}
+#endif
+
+	return qse_tio_writewcs (&sio->tio, str, (qse_size_t)-1);
 }
 
 qse_ssize_t qse_sio_putwcsn (
 	qse_sio_t* sio, const qse_wchar_t* str, qse_size_t size)
 {
+#if defined(_WIN32)
+	/* DAMN UGLY:
+	 *  WriteFile returns wrong number of bytes written if it is 
+	 *  requested to write a utf8 string on utf8 console (codepage 65001). 
+	 *  it seems to return a number of characters written instead. so 
+	 *  i have to use an alternate API for console output for 
+	 *  wide-character strings. Conversion to either an OEM codepage or 
+	 *  the utf codepage is handled by the API. This hack at least
+	 *  lets you do proper utf8 output on utf8 console using wide-character.
+	 * 
+	 *  Note that the multibyte functions qse_sio_putmbs() and
+	 *  qse_sio_putmbsn() doesn't handle this. So you may still suffer.
+	 */
+	if (sio->status)
+	{
+		DWORD mode;
+
+		if (GetConsoleMode (sio->fio.handle, &mode) == FALSE)
+		{
+			return qse_tio_writewcs (&sio->tio, str, size);
+		}
+		else
+		{
+			DWORD count, left;
+			const qse_wchar_t* cur;
+	
+			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+			for (cur = str, left = size; left > 0; cur += count, left -= count)
+			{
+				if (WriteConsoleW (
+					sio->fio.handle, cur, left, 
+					&count, QSE_NULL) == FALSE) return -1;
+				if (count == 0) break;
+			}
+			return cur - str;
+		}
+	}	
+#endif
+
 	return qse_tio_writewcs (&sio->tio, str, size);
 }
 
@@ -271,7 +396,7 @@ static qse_ssize_t __sio_input (
 
 	QSE_ASSERT (sio != QSE_NULL);
 
-	if (cmd == QSE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_DATA) 
 	{
 		return qse_fio_read (&sio->fio, buf, size);
 	}
@@ -286,7 +411,7 @@ static qse_ssize_t __sio_output (
 
 	QSE_ASSERT (sio != QSE_NULL);
 
-	if (cmd == QSE_TIO_IO_DATA) 
+	if (cmd == QSE_TIO_DATA) 
 	{
 		return qse_fio_write (&sio->fio, buf, size);
 	}
