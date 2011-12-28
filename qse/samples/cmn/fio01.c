@@ -1,4 +1,5 @@
 #include <qse/cmn/fio.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
 #include <locale.h>
@@ -19,7 +20,7 @@ static int test1 (void)
 	char buf[1000];
 
 	fio = qse_fio_open (
-		QSE_NULL,
+		QSE_MMGR_GETDFL(),
 		0,
 		QSE_T("fio1.txt"), 
 		QSE_FIO_READ|QSE_FIO_WRITE|QSE_FIO_CREATE|QSE_FIO_TRUNCATE, 
@@ -104,7 +105,7 @@ static int test2 (void)
 	int i;
 
 	fio = qse_fio_open (
-		QSE_NULL, 
+		QSE_MMGR_GETDFL(), 
 		0, 
 		QSE_T("fio2.txt"), 
 		QSE_FIO_CREATE | QSE_FIO_TRUNCATE | QSE_FIO_APPEND, 
@@ -220,7 +221,7 @@ static int test3 (void)
 	qse_char_t buf[1000];
 
 	fio = qse_fio_open (
-		QSE_NULL,
+		QSE_MMGR_GETDFL(),
 		0,
 		QSE_T("fio3.txt"), 
 

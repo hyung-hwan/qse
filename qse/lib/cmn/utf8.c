@@ -194,20 +194,26 @@ qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t len)
 		{
 			int i;
 
-			if (len < cur->length) 
+			/* if len is less that cur->length, the incomplete-seqeunce 
+			 * error is naturally indicated. so validate the string
+			 * only if len is as large as cur->length. */
+
+			if (len >= cur->length) 
 			{
-				/* the input is not as large as 
-				 * the expected number of bytes */
-				return len + 1; /* incomplete sequence */
+				for (i = 1; i < cur->length; i++)
+				{
+					/* in utf8, trailing bytes are all
+					 * set with 0x80. if not, invalid */
+					if (!(utf8[i] & 0x80)) return 0; 
+				}
 			}
 
-			for (i = 1; i < cur->length; i++)
-			{
-				/* in utf8, trailing bytes are all
-				 * set with 0x80. if not, invalid */
-				if (!(utf8[i] & 0x80)) return 0; 
-			}
-			return (qse_size_t)cur->length;
+			/* this return value can indicate both 
+			 *    the correct length (len >= cur->length) 
+			 * and 
+			 *    the incomplete seqeunce error (len < cur->length).
+			 */
+			return (qse_size_t)cur->length; 
 		}
 		cur++;
 	}

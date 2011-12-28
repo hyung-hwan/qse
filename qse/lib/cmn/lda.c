@@ -98,16 +98,6 @@ lda_t* qse_lda_open (mmgr_t* mmgr, size_t ext, size_t capa)
 {
 	lda_t* lda;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	lda = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(lda_t) + ext);
 	if (lda == QSE_NULL) return QSE_NULL;
 
@@ -128,8 +118,6 @@ void qse_lda_close (lda_t* lda)
 
 int qse_lda_init (lda_t* lda, mmgr_t* mmgr, size_t capa)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (lda, 0, QSE_SIZEOF(*lda));
 
 	lda->mmgr = mmgr;

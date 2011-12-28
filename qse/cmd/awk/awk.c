@@ -507,7 +507,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	}
 
 	gvm = qse_htb_open (
-		QSE_NULL, 0, 30, 70,
+		QSE_MMGR_GETDFL(), 0, 30, 70,
 		QSE_SIZEOF(qse_char_t), QSE_SIZEOF(struct gvmv_t)
 	); 
 	if (gvm == QSE_NULL)
@@ -885,7 +885,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 #endif
 	if (arg.memlimit > 0)
 	{
-		xma_mmgr.ctx = qse_xma_open (QSE_NULL, 0, arg.memlimit);
+		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, arg.memlimit);
 		if (xma_mmgr.ctx == QSE_NULL)
 		{
 			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));

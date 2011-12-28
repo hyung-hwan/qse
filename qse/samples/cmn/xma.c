@@ -1,4 +1,5 @@
 #include <qse/cmn/xma.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
 #define R(f) \
@@ -11,7 +12,7 @@ static int test1 ()
 {
 	void* ptr[100];
 
-	qse_xma_t* xma = qse_xma_open (QSE_NULL, 0, 100000L);
+	qse_xma_t* xma = qse_xma_open (QSE_MMGR_GETDFL(), 0, 100000L);
 	if (xma == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open xma\n"));
@@ -40,7 +41,7 @@ static int test2 ()
 {
 	void* ptr[100];
 
-	qse_xma_t* xma = qse_xma_open (QSE_NULL, 0, 100000L);
+	qse_xma_t* xma = qse_xma_open (QSE_MMGR_GETDFL(), 0, 100000L);
 	if (xma == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open xma\n"));
@@ -67,7 +68,7 @@ static int test3 ()
 {
 	void* ptr[100];
 
-	qse_xma_t* xma = qse_xma_open (QSE_NULL, 0, 100000L);
+	qse_xma_t* xma = qse_xma_open (QSE_MMGR_GETDFL(), 0, 100000L);
 	if (xma == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open xma\n"));
@@ -97,7 +98,7 @@ static int test4 ()
 	int i;
 	void* ptr[100];
 
-	qse_xma_t* xma = qse_xma_open (QSE_NULL, 0, 2000000L);
+	qse_xma_t* xma = qse_xma_open (QSE_MMGR_GETDFL(), 0, 2000000L);
 	if (xma == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open xma\n"));
@@ -158,7 +159,7 @@ static int test5 ()
 
 	qse_xma_t* xma1, * xma2, * xma3;
 
-	xma1 = qse_xma_open (QSE_NULL, 0, 2000000L);
+	xma1 = qse_xma_open (QSE_MMGR_GETDFL(), 0, 2000000L);
 	if (xma1 == QSE_NULL) 
 	{
 		qse_printf (QSE_T("cannot open outer xma\n"));

@@ -55,16 +55,6 @@ qse_fio_t* qse_fio_open (
 {
 	qse_fio_t* fio;
 
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	fio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_fio_t) + ext);
 	if (fio == QSE_NULL) return QSE_NULL;
 
@@ -92,8 +82,6 @@ int qse_fio_init (
 	qse_uint32_t temp_no;
 	qse_char_t* temp_ptr;
 	qse_size_t temp_tries;
-
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;

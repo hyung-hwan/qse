@@ -541,7 +541,7 @@ int sed_main (int argc, qse_char_t* argv[])
 #endif
 	if (g_memlimit > 0)
 	{
-		xma_mmgr.ctx = qse_xma_open (QSE_NULL, 0, g_memlimit);
+		xma_mmgr.ctx = qse_xma_open (QSE_MMGR_GETDFL(), 0, g_memlimit);
 		if (xma_mmgr.ctx == QSE_NULL)
 		{
 			qse_printf (QSE_T("ERROR: cannot open memory heap\n"));

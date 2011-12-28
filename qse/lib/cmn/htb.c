@@ -261,16 +261,6 @@ htb_t* qse_htb_open (
 {
 	htb_t* htb;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	htb = (htb_t*) QSE_MMGR_ALLOC (mmgr, SIZEOF(htb_t) + xtnsize);
 	if (htb == QSE_NULL) return QSE_NULL;
 
@@ -293,8 +283,6 @@ int qse_htb_init (
 	htb_t* htb, mmgr_t* mmgr, size_t capa,
 	int factor, int kscale, int vscale)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_ASSERTX (capa > 0,
 		"The initial capacity should be greater than 0. Otherwise, it is adjusted to 1 in the release mode");
 	QSE_ASSERTX (factor >= 0 && factor <= 100,

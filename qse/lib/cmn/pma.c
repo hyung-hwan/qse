@@ -73,8 +73,6 @@ void qse_pma_close (qse_pma_t* pma)
 
 int qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
 	pma->mmgr = mmgr;
 

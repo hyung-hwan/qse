@@ -133,16 +133,6 @@ qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_htrd_t* htrd;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	htrd = (qse_htrd_t*) QSE_MMGR_ALLOC (
 		mmgr, QSE_SIZEOF(qse_htrd_t) + xtnsize
 	);
@@ -165,8 +155,6 @@ void qse_htrd_close (qse_htrd_t* htrd)
 
 int qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (htrd, 0, QSE_SIZEOF(*htrd));
 	htrd->mmgr = mmgr;
 	htrd->option = QSE_HTRD_REQUEST | QSE_HTRD_RESPONSE;

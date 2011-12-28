@@ -109,16 +109,6 @@ qse_xma_t* qse_xma_open (
 {
 	qse_xma_t* xma;
 
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	xma = (qse_xma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*xma) + xtnsize);
 	if (xma == QSE_NULL) return QSE_NULL;
 
@@ -141,8 +131,6 @@ int qse_xma_init (qse_xma_t* xma, qse_mmgr_t* mmgr, qse_size_t zonesize)
 {
 	qse_xma_blk_t* free;
 	qse_size_t xfi;
-
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	/* round 'zonesize' to be the multiples of ALIGN */
 	zonesize = ((zonesize + ALIGN - 1) / ALIGN) * ALIGN;

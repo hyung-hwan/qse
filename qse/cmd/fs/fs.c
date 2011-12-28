@@ -19,6 +19,7 @@
  */
 
 #include <qse/cmn/fs.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/stdio.h>
 
@@ -46,7 +47,7 @@ int fs_main (int argc, qse_char_t* argv[])
 	qse_fs_t* fs;
 
 
-	fs = qse_fs_open (QSE_NULL, 0);
+	fs = qse_fs_open (QSE_MMGR_GETDFL(), 0);
 	if (fs == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR,  QSE_T("ERROR: cannot open fs\n"));

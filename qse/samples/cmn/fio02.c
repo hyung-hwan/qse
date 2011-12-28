@@ -1,4 +1,5 @@
 #include <qse/cmn/fio.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
 #define R(f) \
@@ -18,7 +19,7 @@ static int test1 (void)
 	qse_char_t file[] = QSE_T("fio02-XXXX");
 
 	fio = qse_fio_open (
-		QSE_NULL, 
+		QSE_MMGR_GETDFL(), 
 		0, 
 		file,
 		QSE_FIO_CREATE | QSE_FIO_EXCLUSIVE | QSE_FIO_TEMPORARY | QSE_FIO_READ | QSE_FIO_WRITE,

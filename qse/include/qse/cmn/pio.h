@@ -33,9 +33,9 @@
  */
 
 /**
- * The qse_pio_oflag_t defines enumerators to compose flags to qse_pio_open().
+ * The qse_pio_flag_t defines enumerators to compose flags to qse_pio_open().
  */
-enum qse_pio_oflag_t
+enum qse_pio_flag_t
 {
 	/** enable text based I/O. */
 	QSE_PIO_TEXT          = (1 << 0),
@@ -201,7 +201,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
  * If @a env is #QSE_NULL, the environment of @a cmd inherits that of the 
  * calling process. If you want to pass an empty environment, you can pass
  * an empty @a env object with no items inserted. If #QSE_PIO_MBSCMD is 
- * specified in @a oflags, @a cmd is treated as a multi-byte string whose 
+ * specified in @a flags, @a cmd is treated as a multi-byte string whose 
  * character type is #qse_mchar_t.
  * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
@@ -210,8 +210,8 @@ qse_pio_t* qse_pio_open (
 	qse_size_t        ext,    /**< extension size */
 	const qse_char_t* cmd,    /**< command to execute */
 	qse_env_t*        env,    /**< environment */
-	int               oflags  /**< 0 or a number OR'ed of the
-	                              #qse_pio_oflag_t enumerators*/
+	int               flags   /**< 0 or a number OR'ed of the
+	                               #qse_pio_flag_t enumerators*/
 );
 
 /**
@@ -232,9 +232,9 @@ int qse_pio_init (
 	qse_pio_t*        pio,    /**< pio object */
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	const qse_char_t* cmd,    /**< command to execute */
-	qse_env_t*  env,          /**< environment */
-	int               oflags  /**< 0 or a number OR'ed of the
-	                              #qse_pio_oflag_t enumerators*/
+	qse_env_t*        env,    /**< environment */
+	int               flags   /**< 0 or a number OR'ed of the
+	                               #qse_pio_flag_t enumerators*/
 );
 
 /**

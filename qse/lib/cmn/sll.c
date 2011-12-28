@@ -104,16 +104,6 @@ sll_t* qse_sll_open (mmgr_t* mmgr, size_t ext)
 {
 	sll_t* sll;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	sll = QSE_MMGR_ALLOC (mmgr, SIZEOF(sll_t) + ext);
 	if (sll == QSE_NULL) return QSE_NULL;
 
@@ -134,8 +124,6 @@ void qse_sll_close (sll_t* sll)
 
 int qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	/* do not zero out the extension */
 	QSE_MEMSET (sll, 0, SIZEOF(*sll));
 

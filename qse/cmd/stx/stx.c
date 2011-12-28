@@ -1,5 +1,6 @@
 /*#include <qse/stx/stx.h>*/
 #include "../../lib/stx/stx.h"
+#include <qse/cmn/mem.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/stdio.h>
 
@@ -198,7 +199,7 @@ static int stx_main (int argc, qse_char_t* argv[])
 	}
 #endif
 
-	stx = qse_stx_open (QSE_NULL, 0, 10000);
+	stx = qse_stx_open (QSE_MMGR_GETDFL(), 0, 10000);
 	if (stx == QSE_NULL)
 	{
 		qse_printf (QSE_T("cannot open stx\n"));

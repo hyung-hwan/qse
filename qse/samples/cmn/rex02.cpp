@@ -1,4 +1,5 @@
 #include <qse/cmn/rex.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
 
@@ -197,7 +198,7 @@ void MyFrame::OnComp(wxCommandEvent& WXUNUSED(event))
 {
 	if (rex == NULL)
 	{
-		rex = qse_rex_open (QSE_NULL, 0, QSE_NULL);
+		rex = qse_rex_open (QSE_MMGR_GETDFL(), 0, QSE_NULL);
 		if (rex == NULL)
 		{
 			wxMessageBox(_T("Cannot open rex"),

@@ -47,7 +47,7 @@ static int test1 ()
 	long x;
 	qse_oht_t* oht;
 
-	oht = qse_oht_open (QSE_NULL, 0, QSE_SIZEOF(x), 10, 5);
+	oht = qse_oht_open (QSE_MMGR_GETDFL(), 0, QSE_SIZEOF(x), 10, 5);
 	if (oht == QSE_NULL)
 	{
 		qse_printf (QSE_T("failed to open a table\n"));
@@ -84,7 +84,7 @@ static int test2 ()
 	item_t x;
 	qse_oht_t* oht;
 
-	oht = qse_oht_open (QSE_NULL, 0, QSE_SIZEOF(x), 10, 10);
+	oht = qse_oht_open (QSE_MMGR_GETDFL(), 0, QSE_SIZEOF(x), 10, 10);
 	if (oht == QSE_NULL)
 	{
 		qse_printf (QSE_T("failed to open a table\n"));

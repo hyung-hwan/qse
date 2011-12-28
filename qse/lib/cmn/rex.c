@@ -120,8 +120,6 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (rex)
 
 int qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
 	rex->mmgr = mmgr;
 
@@ -138,16 +136,6 @@ int qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 qse_rex_t* qse_rex_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_rex_node_t* code)
 {
 	qse_rex_t* rex;
-
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
 
 	rex = (qse_rex_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_rex_t) + xtn);
 	if (rex == QSE_NULL) return QSE_NULL;
