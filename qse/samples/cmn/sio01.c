@@ -1,4 +1,5 @@
 #include <qse/cmn/sio.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/stdio.h>
 #include <locale.h>
@@ -51,7 +52,7 @@ static int test1 (void)
 	x[0] = unistr;
 	x[2] = unistr;
 	x[5] = unistr;
-	sio = qse_sio_open (QSE_NULL, 0, QSE_T("sio.txt"), 
+	sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, QSE_T("sio.txt"), 
 		QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE);
 
 	if (sio == QSE_NULL)
@@ -81,8 +82,8 @@ static int test2 (void)
 	qse_wchar_t buf[20];
 	qse_sio_t* in, * out;
 	
-	in = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-	out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+	in = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+	out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 	
 	qse_sio_putstr (out, QSE_T("Type something here:\n"));
 	while (1)
@@ -113,8 +114,8 @@ static int test3 (void)
 	qse_mchar_t buf[20];
 	qse_sio_t* in, * out;
 	
-	in = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-	out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+	in = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+	out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
 	qse_sio_putstr (out, QSE_T("Type something here:\n"));
 	while (1)
@@ -151,7 +152,7 @@ int main ()
 
 	setlocale (LC_ALL, "");
 
-	g_out = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+	g_out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
 	R (test1);
 	R (test2);

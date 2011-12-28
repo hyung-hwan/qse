@@ -45,24 +45,14 @@ static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext, 
-	const qse_char_t* cmd, qse_env_t* env, int oflags)
+	const qse_char_t* cmd, qse_env_t* env, int flags)
 {
 	qse_pio_t* pio;
-
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
 
 	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
 	if (pio == QSE_NULL) return QSE_NULL;
 
-	if (qse_pio_init (pio, mmgr, cmd, env, oflags) <= -1)
+	if (qse_pio_init (pio, mmgr, cmd, env, flags) <= -1)
 	{
 		QSE_MMGR_FREE (mmgr, pio);
 		return QSE_NULL;
@@ -79,7 +69,7 @@ void qse_pio_close (qse_pio_t* pio)
 
 int qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
-	qse_env_t* env, int oflags)
+	qse_env_t* env, int flags)
 {
 	qse_pio_hnd_t handle[6] = 
 	{ 
@@ -127,8 +117,6 @@ int qse_pio_init (
 	qse_pio_pid_t pid;
 #endif
 
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;
 
@@ -139,7 +127,7 @@ int qse_pio_init (
 	secattr.bInheritHandle = TRUE;
 	secattr.lpSecurityDescriptor = QSE_NULL;
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* child reads, parent writes */
 		if (CreatePipe (
@@ -153,7 +141,7 @@ int qse_pio_init (
 		minidx = 0; maxidx = 1;
 	}
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		/* child writes, parent reads */
 		if (CreatePipe (
@@ -168,7 +156,7 @@ int qse_pio_init (
 		maxidx = 3;
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		/* child writes, parent reads */
 		if (CreatePipe (
@@ -189,9 +177,9 @@ int qse_pio_init (
 		goto oops;
 	}
 
-	if ((oflags & QSE_PIO_INTONUL) || 
-	    (oflags & QSE_PIO_OUTTONUL) ||
-	    (oflags & QSE_PIO_ERRTONUL))
+	if ((flags & QSE_PIO_INTONUL) || 
+	    (flags & QSE_PIO_OUTTONUL) ||
+	    (flags & QSE_PIO_ERRTONUL))
 	{
 		windevnul = CreateFile(
 			QSE_T("NUL"), GENERIC_READ | GENERIC_WRITE,
@@ -220,27 +208,27 @@ int qse_pio_init (
 	    startup.hStdOutput == INVALID_HANDLE_VALUE ||
 	    startup.hStdError == INVALID_HANDLE_VALUE) goto oops;
 
-	if (oflags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
+	if (flags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		startup.hStdOutput = handle[3];
-		if (oflags & QSE_PIO_ERRTOOUT) startup.hStdError = handle[3];
+		if (flags & QSE_PIO_ERRTOOUT) startup.hStdError = handle[3];
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		startup.hStdError = handle[5];
-		if (oflags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
+		if (flags & QSE_PIO_OUTTOERR) startup.hStdOutput = handle[5];
 	}
 
-	if (oflags & QSE_PIO_INTONUL) startup.hStdInput = windevnul;
-	if (oflags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
-	if (oflags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
+	if (flags & QSE_PIO_INTONUL) startup.hStdInput = windevnul;
+	if (flags & QSE_PIO_OUTTONUL) startup.hStdOutput = windevnul;
+	if (flags & QSE_PIO_ERRTONUL) startup.hStdError = windevnul;
 
-	if (oflags & QSE_PIO_DROPIN) startup.hStdInput = INVALID_HANDLE_VALUE;
-	if (oflags & QSE_PIO_DROPOUT) startup.hStdOutput = INVALID_HANDLE_VALUE;
-	if (oflags & QSE_PIO_DROPERR) startup.hStdError = INVALID_HANDLE_VALUE;
+	if (flags & QSE_PIO_DROPIN) startup.hStdInput = INVALID_HANDLE_VALUE;
+	if (flags & QSE_PIO_DROPOUT) startup.hStdOutput = INVALID_HANDLE_VALUE;
+	if (flags & QSE_PIO_DROPERR) startup.hStdError = INVALID_HANDLE_VALUE;
 
 	startup.dwFlags |= STARTF_USESTDHANDLES;
 
@@ -251,10 +239,10 @@ int qse_pio_init (
 		qse_char_t* dupcmd;
 		BOOL x;
 
-		if (oflags & QSE_PIO_SHELL) 
+		if (flags & QSE_PIO_SHELL) 
 		{
 		#if defined(QSE_CHAR_IS_WCHAR)
-			if (oflags & QSE_PIO_MBSCMD)
+			if (flags & QSE_PIO_MBSCMD)
 			{
 				const qse_mchar_t* x[3];
 				x[0] = QSE_MT("cmd.exe /c ");
@@ -273,7 +261,7 @@ int qse_pio_init (
 		else 
 		{
 		#if defined(QSE_CHAR_IS_WCHAR)
-			if (oflags & QSE_PIO_MBSCMD)
+			if (flags & QSE_PIO_MBSCMD)
 			{
 				dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, mmgr);
 			}
@@ -320,17 +308,17 @@ int qse_pio_init (
 		windevnul = INVALID_HANDLE_VALUE;
 	}
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		CloseHandle (handle[0]);
 		handle[0] = QSE_PIO_HND_NIL;
 	}
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		CloseHandle (handle[3]);
 		handle[3] = QSE_PIO_HND_NIL;
 	}
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		CloseHandle (handle[5]);
 		handle[5] = QSE_PIO_HND_NIL;
@@ -345,7 +333,7 @@ int qse_pio_init (
 		if (DosDupHandle(x,y) != NO_ERROR) goto oops; \
 	)
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* child reads, parent writes */		
 		if (DosCreatePipe (
@@ -363,7 +351,7 @@ int qse_pio_init (
 		minidx = 0; maxidx = 1;
 	}
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		/* child writes, parent reads */
 		if (DosCreatePipe (
@@ -377,7 +365,7 @@ int qse_pio_init (
 		maxidx = 3;
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		/* child writes, parent reads */
 		if (DosCreatePipe (
@@ -397,9 +385,9 @@ int qse_pio_init (
 		goto oops;
 	}
 
-	if ((oflags & QSE_PIO_INTONUL) || 
-	    (oflags & QSE_PIO_OUTTONUL) ||
-	    (oflags & QSE_PIO_ERRTONUL))
+	if ((flags & QSE_PIO_INTONUL) || 
+	    (flags & QSE_PIO_OUTTONUL) ||
+	    (flags & QSE_PIO_ERRTONUL))
 	{
 		ULONG action_taken;
 		LONGLONG zero;
@@ -444,7 +432,7 @@ int qse_pio_init (
 	DosSetFHState (old_out, OPEN_FLAGS_NOINHERIT); 
 	DosSetFHState (old_err, OPEN_FLAGS_NOINHERIT);
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* the child reads from handle[0] inherited and expects it to
 		 * be stdin(0). so we duplicate handle[0] to stdin */
@@ -455,27 +443,27 @@ int qse_pio_init (
 		DosClose (handle[0]); handle[0] = QSE_PIO_HND_NIL;
 	}
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		/* the child writes to handle[3] inherited and expects it to
 		 * be stdout(1). so we duplicate handle[3] to stdout. */
 		DOS_DUP_HANDLE (handle[3], &std_out);
-		if (oflags & QSE_PIO_ERRTOOUT) DOS_DUP_HANDLE (handle[3], &std_err);
+		if (flags & QSE_PIO_ERRTOOUT) DOS_DUP_HANDLE (handle[3], &std_err);
 		/* the parent reads from handle[2] but does not write to handle[3].
 		 * so we close it */
 		DosClose (handle[3]); handle[3] = QSE_PIO_HND_NIL;
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		DOS_DUP_HANDLE (handle[5], &std_err);
-		if (oflags & QSE_PIO_OUTTOERR) DOS_DUP_HANDLE (handle[5], &std_out);
+		if (flags & QSE_PIO_OUTTOERR) DOS_DUP_HANDLE (handle[5], &std_out);
 		DosClose (handle[5]); handle[5] = QSE_PIO_HND_NIL;
 	}
 
-	if (oflags & QSE_PIO_INTONUL) DOS_DUP_HANDLE (os2devnul, &std_in);
-	if (oflags & QSE_PIO_OUTTONUL) DOS_DUP_HANDLE (os2devnul, &std_out);
-	if (oflags & QSE_PIO_ERRTONUL) DOS_DUP_HANDLE (os2devnul, &std_err);
+	if (flags & QSE_PIO_INTONUL) DOS_DUP_HANDLE (os2devnul, &std_in);
+	if (flags & QSE_PIO_OUTTONUL) DOS_DUP_HANDLE (os2devnul, &std_out);
+	if (flags & QSE_PIO_ERRTONUL) DOS_DUP_HANDLE (os2devnul, &std_err);
 
 	if (os2devnul != QSE_PIO_HND_NIL)
 	{
@@ -487,18 +475,18 @@ int qse_pio_init (
 	/* at this moment, stdin/out/err are already redirected to pipes
 	 * if proper flags have been set. we close them selectively if 
 	 * dropping is requested */
-	if (oflags & QSE_PIO_DROPIN) DosClose (std_in);
-	if (oflags & QSE_PIO_DROPOUT) DosClose (std_out);
-	if (oflags & QSE_PIO_DROPERR) DosClose (std_err);
+	if (flags & QSE_PIO_DROPIN) DosClose (std_in);
+	if (flags & QSE_PIO_DROPOUT) DosClose (std_out);
+	if (flags & QSE_PIO_DROPERR) DosClose (std_err);
 
-	if (oflags & QSE_PIO_SHELL) 
+	if (flags & QSE_PIO_SHELL) 
 	{
 		qse_size_t n, mn;
 
 	#ifdef QSE_CHAR_IS_MCHAR
 		mn = qse_strlen(cmd);
 	#else
-		if (oflags & QSE_PIO_MBSCMD)
+		if (flags & QSE_PIO_MBSCMD)
 		{
 			mn = qse_mbslen((const qse_mchar_t*)cmd);
 		}
@@ -524,7 +512,7 @@ int qse_pio_init (
 	#ifdef QSE_CHAR_IS_MCHAR
 		qse_mbscpy (&cmd_line[11], cmd);
 	#else
-		if (oflags & QSE_PIO_MBSCMD)
+		if (flags & QSE_PIO_MBSCMD)
 		{
 			qse_mbscpy (&cmd_line[11], (const qse_mchar_t*)cmd);
 		}
@@ -552,7 +540,7 @@ int qse_pio_init (
 			goto oops;
 		}
 	#else   
-		if (oflags & QSE_PIO_MBSCMD)
+		if (flags & QSE_PIO_MBSCMD)
 		{
 			mn = qse_mbslen((const qse_mchar_t*)cmd);
 			cmd_line = qse_mbsdup2 ((const qse_mchar_t*)cmd, QSE_MT(" "), pio->mmgr);
@@ -632,20 +620,20 @@ int qse_pio_init (
 
 #else
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		if (QSE_PIPE(&handle[0]) <= -1) goto oops;
 		minidx = 0; maxidx = 1;
 	}
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		if (QSE_PIPE(&handle[2]) <= -1) goto oops;
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		if (QSE_PIPE(&handle[4]) <= -1) goto oops;
 		if (minidx == -1) minidx = 4;
@@ -699,7 +687,7 @@ int qse_pio_init (
 			    fd != handle[5]) QSE_CLOSE (fd);
 		}
 
-		if (oflags & QSE_PIO_WRITEIN)
+		if (flags & QSE_PIO_WRITEIN)
 		{
 			/* child should read */
 			QSE_CLOSE (handle[1]);
@@ -709,14 +697,14 @@ int qse_pio_init (
 			handle[0] = QSE_PIO_HND_NIL;
 		}
 
-		if (oflags & QSE_PIO_READOUT)
+		if (flags & QSE_PIO_READOUT)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[2]);
 			handle[2] = QSE_PIO_HND_NIL;
 			if (QSE_DUP2 (handle[3], 1) <= -1) goto child_oops;
 
-			if (oflags & QSE_PIO_ERRTOOUT)
+			if (flags & QSE_PIO_ERRTOOUT)
 			{
 				if (QSE_DUP2 (handle[3], 2) <= -1) goto child_oops;
 			}
@@ -725,14 +713,14 @@ int qse_pio_init (
 			handle[3] = QSE_PIO_HND_NIL;
 		}
 
-		if (oflags & QSE_PIO_READERR)
+		if (flags & QSE_PIO_READERR)
 		{
 			/* child should write */
 			QSE_CLOSE (handle[4]); 
 			handle[4] = QSE_PIO_HND_NIL;
 			if (QSE_DUP2 (handle[5], 2) <= -1) goto child_oops;
 
-			if (oflags & QSE_PIO_OUTTOERR)
+			if (flags & QSE_PIO_OUTTOERR)
 			{
 				if (QSE_DUP2 (handle[5], 1) <= -1) goto child_oops;
 			}
@@ -741,9 +729,9 @@ int qse_pio_init (
 			handle[5] = QSE_PIO_HND_NIL;
 		}
 
-		if ((oflags & QSE_PIO_INTONUL) || 
-		    (oflags & QSE_PIO_OUTTONUL) ||
-		    (oflags & QSE_PIO_ERRTONUL))
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL))
 		{
 		#ifdef O_LARGEFILE
 			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
@@ -753,23 +741,23 @@ int qse_pio_init (
 			if (devnull <= -1) goto child_oops;
 		}
 
-		if ((oflags & QSE_PIO_INTONUL)  &&
+		if ((flags & QSE_PIO_INTONUL)  &&
 		    QSE_DUP2(devnull,0) <= -1) goto child_oops;
-		if ((oflags & QSE_PIO_OUTTONUL) &&
+		if ((flags & QSE_PIO_OUTTONUL) &&
 		    QSE_DUP2(devnull,1) <= -1) goto child_oops;
-		if ((oflags & QSE_PIO_ERRTONUL) &&
+		if ((flags & QSE_PIO_ERRTONUL) &&
 		    QSE_DUP2(devnull,2) <= -1) goto child_oops;
 
-		if ((oflags & QSE_PIO_INTONUL) || 
-		    (oflags & QSE_PIO_OUTTONUL) ||
-		    (oflags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
 
-		if (oflags & QSE_PIO_DROPIN) QSE_CLOSE(0);
-		if (oflags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
-		if (oflags & QSE_PIO_DROPERR) QSE_CLOSE(2);
+		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
+		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
+		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
 
 	#ifdef QSE_CHAR_IS_MCHAR
-		if (oflags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
+		if (flags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
 		else
 		{
 			mcmd =  qse_strdup (cmd, pio->mmgr);
@@ -784,12 +772,12 @@ int qse_pio_init (
 			}
 		}
 	#else	
-		if (oflags & QSE_PIO_MBSCMD) 
+		if (flags & QSE_PIO_MBSCMD) 
 		{
 			/* the cmd is flagged to be of qse_mchar_t 
 			 * while the default character type is qse_wchar_t. */
 
-			if (oflags & QSE_PIO_SHELL) mcmd = (qse_mchar_t*)cmd;
+			if (flags & QSE_PIO_SHELL) mcmd = (qse_mchar_t*)cmd;
 			else
 			{
 				mcmd =  qse_mbsdup ((const qse_mchar_t*)cmd, pio->mmgr);
@@ -809,7 +797,7 @@ int qse_pio_init (
 			qse_size_t n, mn, wl;
 			qse_char_t* wcmd = QSE_NULL;
 
-			if (oflags & QSE_PIO_SHELL)
+			if (flags & QSE_PIO_SHELL)
 			{
 				if (qse_wcstombs (cmd, &wl, QSE_NULL, &mn) <= -1)
 				{
@@ -859,7 +847,7 @@ int qse_pio_init (
 				if (mcmd == QSE_NULL) goto child_oops;
 			}
 	
-			if (oflags & QSE_PIO_SHELL)
+			if (flags & QSE_PIO_SHELL)
 			{
 				/* qse_wcstombs() should succeed as 
 				 * it was successful above */
@@ -878,7 +866,7 @@ int qse_pio_init (
 		}
 	#endif
 
-		if (oflags & QSE_PIO_SHELL)
+		if (flags & QSE_PIO_SHELL)
 		{
 			const qse_mchar_t* argv[4];
 			extern char** environ;
@@ -924,7 +912,7 @@ int qse_pio_init (
 	/* parent */
 	pio->child = pid;
 
-	if (oflags & QSE_PIO_WRITEIN)
+	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* 
 		 * 012345
@@ -936,7 +924,7 @@ int qse_pio_init (
 		handle[0] = QSE_PIO_HND_NIL;
 	}
 
-	if (oflags & QSE_PIO_READOUT)
+	if (flags & QSE_PIO_READOUT)
 	{
 		/* 
 		 * 012345
@@ -948,7 +936,7 @@ int qse_pio_init (
 		handle[3] = QSE_PIO_HND_NIL;
 	}
 
-	if (oflags & QSE_PIO_READERR)
+	if (flags & QSE_PIO_READERR)
 	{
 		/* 
 		 * 012345
@@ -972,12 +960,12 @@ int qse_pio_init (
 	pio->pin[QSE_PIO_OUT].handle = handle[2];
 	pio->pin[QSE_PIO_ERR].handle = handle[4];
 
-	if (oflags & QSE_PIO_TEXT)
+	if (flags & QSE_PIO_TEXT)
 	{
 		int topt = 0;
 
-		if (oflags & QSE_PIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
-		if (oflags & QSE_PIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
+		if (flags & QSE_PIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
+		if (flags & QSE_PIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{

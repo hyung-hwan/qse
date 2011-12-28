@@ -79,16 +79,6 @@ qse_cut_t* qse_cut_open (qse_mmgr_t* mmgr, qse_size_t xtn)
 {
 	qse_cut_t* cut;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	cut = (qse_cut_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_cut_t) + xtn);
 	if (cut == QSE_NULL) return QSE_NULL;
 
@@ -109,8 +99,6 @@ void qse_cut_close (qse_cut_t* cut)
 
 static int qse_cut_init (qse_cut_t* cut, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (cut, 0, QSE_SIZEOF(*cut));
 
 	cut->mmgr = mmgr;

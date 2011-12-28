@@ -30,16 +30,6 @@ qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)
 {
 	qse_tio_t* tio;
 
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	tio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tio_t) + xtnsize);
 	if (tio == QSE_NULL) return QSE_NULL;
 
@@ -61,8 +51,6 @@ int qse_tio_close (qse_tio_t* tio)
 
 int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr, int flags)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (tio, 0, QSE_SIZEOF(*tio));
 
 	tio->mmgr = mmgr;

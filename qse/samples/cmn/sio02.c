@@ -1,5 +1,6 @@
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/sio.h>
+#include <qse/cmn/mem.h>
+#include <qse/cmn/stdio.h>
 
 #include <locale.h>
 
@@ -55,7 +56,7 @@ static int test1 (void)
 	x[1] = unistr;
 	x[2] = unistr2;
 
-	sio = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
+	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
 	if (sio == QSE_NULL) return -1;
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
@@ -83,7 +84,7 @@ static int test2 (void)
 	int i;
 	qse_sio_t* sio;
 
-	sio = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
+	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
 	if (sio == QSE_NULL) return -1;
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
@@ -111,7 +112,7 @@ static int test3 (void)
 	int i;
 	qse_sio_t* sio;
 
-	sio = qse_sio_openstd (QSE_NULL, 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
+	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
 	if (sio == QSE_NULL) return -1;
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)

@@ -52,7 +52,7 @@ int dir_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	dir = qse_dir_open (QSE_NULL, 0);
+	dir = qse_dir_open (QSE_MMGR_GETDFL(), 0);
 	if (dir == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot open directory\n"), argv[1]);

@@ -201,16 +201,6 @@ rbt_t* qse_rbt_open (mmgr_t* mmgr, size_t xtnsize, int kscale, int vscale)
 {
 	rbt_t* rbt;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	rbt = (rbt_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(rbt_t) + xtnsize);
 	if (rbt == QSE_NULL) return QSE_NULL;
 
@@ -231,8 +221,6 @@ void qse_rbt_close (rbt_t* rbt)
 
 int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	/* do not zero out the extension */
 	QSE_MEMSET (rbt, 0, SIZEOF(*rbt));
 	rbt->mmgr = mmgr;

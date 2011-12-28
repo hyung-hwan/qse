@@ -1,4 +1,5 @@
 #include <qse/cmn/pio.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/env.h>
 #include <qse/cmn/stdio.h>
 
@@ -28,7 +29,7 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 	int x;
 
 	pio = qse_pio_open (
-		QSE_NULL,
+		QSE_MMGR_GETDFL(),
 		0,
 		cmd,
 		env,
@@ -88,7 +89,7 @@ static int pio2 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 	int x;
 
 	pio = qse_pio_open (
-		QSE_NULL,
+		QSE_MMGR_GETDFL(),
 		0,
 		cmd,
 		env,
@@ -285,7 +286,7 @@ static int test11 (void)
 	qse_env_t* env;
 	int n;
 	
-	env = qse_env_open (QSE_NULL, 0, 0);
+	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 	if (env == QSE_NULL) return -1;
 
 	qse_env_insertsys (env, QSE_T("PATH"));
@@ -312,7 +313,7 @@ static int test12 (void)
 	int x;
 
 	pio = qse_pio_open (
-		QSE_NULL,
+		QSE_MMGR_GETDFL(),
 		0,
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 		QSE_T("tree.com"),

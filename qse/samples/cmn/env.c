@@ -1,4 +1,5 @@
 #include <qse/cmn/env.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
 
@@ -53,7 +54,7 @@ static int test1 (void)
 {
 	qse_env_t* env;
 
-	env = qse_env_open (QSE_NULL, 0, 0);
+	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 
 	qse_env_clear (env);
 	qse_env_insert (env, QSE_T("alice"), QSE_T("wonderland"));
@@ -82,7 +83,7 @@ static int test2 (void)
 {
 	qse_env_t* env;
 
-	env = qse_env_open (QSE_NULL, 0, 1);
+	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 1);
 
 	qse_printf (QSE_T("DELETING HOME => %s\n"),
 		(qse_env_delete (env, QSE_T("HOME")) == 0? 
@@ -103,7 +104,7 @@ static int test3 (void)
 {
 	qse_env_t* env;
 
-	env = qse_env_open (QSE_NULL, 0, 0);
+	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 
 	qse_printf (QSE_T("inserting PATH => %d\n"), qse_env_insertsys (env, QSE_T("PATH")));
 	qse_printf (QSE_T("inserting HOME => %d\n"), qse_env_insertsysm (env, QSE_MT("HOME")));

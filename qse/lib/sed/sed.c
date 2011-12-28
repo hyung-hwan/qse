@@ -58,16 +58,6 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_sed_t* sed;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	sed = (qse_sed_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sed_t) + xtnsize);
 	if (sed == QSE_NULL) return QSE_NULL;
 
@@ -88,8 +78,6 @@ void qse_sed_close (qse_sed_t* sed)
 
 int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (sed, 0, QSE_SIZEOF(*sed));
 	sed->mmgr = mmgr;
 	sed->errstr = qse_sed_dflerrstr;

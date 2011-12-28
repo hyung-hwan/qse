@@ -3,6 +3,7 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mem.h>
 #include <signal.h>
 
 #define MAX_SENDFILE_SIZE 4096
@@ -168,7 +169,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	}
 
 
-	httpd = qse_httpd_open (QSE_NULL, QSE_SIZEOF(httpd_xtn_t));
+	httpd = qse_httpd_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(httpd_xtn_t));
 	if (httpd == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open httpd\n"));

@@ -18,7 +18,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		return -1;
 	}
 
-	qse_tre_init (&tre, QSE_NULL);
+	qse_tre_init (&tre, QSE_MMGR_GETDFL());
 
 	if (qse_tre_comp (&tre, argv[1], &nsubmat, 0 /*QSE_TRE_EXTENDED*/) <= -1)
 	{

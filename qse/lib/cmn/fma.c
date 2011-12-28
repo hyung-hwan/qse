@@ -29,16 +29,6 @@ qse_fma_t* qse_fma_open (
 {
 	qse_fma_t* fma;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	fma = (qse_fma_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*fma) + xtnsize);
 	if (fma == QSE_NULL) return QSE_NULL;
 
@@ -61,8 +51,6 @@ int qse_fma_init (
 	qse_fma_t* fma, qse_mmgr_t* mmgr,
 	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (fma, 0, QSE_SIZEOF(*fma));
 	fma->mmgr = mmgr;
 	

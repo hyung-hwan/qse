@@ -62,16 +62,6 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_httpd_t* httpd;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	httpd = (qse_httpd_t*) QSE_MMGR_ALLOC (
 		mmgr, QSE_SIZEOF(*httpd) + xtnsize
 	);

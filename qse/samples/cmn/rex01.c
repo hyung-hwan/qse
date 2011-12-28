@@ -1,4 +1,5 @@
 #include <qse/cmn/rex.h>
+#include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/path.h>
@@ -19,7 +20,7 @@ static int rex_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-	rex = qse_rex_open (QSE_NULL, 0, QSE_NULL);
+	rex = qse_rex_open (QSE_MMGR_GETDFL(), 0, QSE_NULL);
 	if (rex == QSE_NULL)
 	{
 		qse_printf (QSE_T("ERROR: cannot open rex\n"));

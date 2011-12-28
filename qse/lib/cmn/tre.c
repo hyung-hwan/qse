@@ -28,16 +28,6 @@ qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_tre_t* tre;
 
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-		             "Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	tre = (qse_tre_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_tre_t) + xtnsize);
 	if (tre == QSE_NULL) return QSE_NULL;
 
@@ -58,8 +48,6 @@ void qse_tre_close (qse_tre_t* tre)
 
 int qse_tre_init (qse_tre_t* tre, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	QSE_MEMSET (tre, 0, QSE_SIZEOF(*tre));
 	tre->mmgr = mmgr;
 

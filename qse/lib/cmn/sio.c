@@ -33,16 +33,6 @@ qse_sio_t* qse_sio_open (
 {
 	qse_sio_t* sio;
 
-	if (mmgr == QSE_NULL)
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	sio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_sio_t) + xtnsize);
 	if (sio == QSE_NULL) return QSE_NULL;
 
@@ -87,8 +77,6 @@ int qse_sio_init (
 {
 	int mode;
 	int topt = 0;
-
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
 
 	QSE_MEMSET (sio, 0, QSE_SIZEOF(*sio));
 	sio->mmgr = mmgr;

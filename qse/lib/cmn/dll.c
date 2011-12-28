@@ -51,16 +51,6 @@ qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_dll_t* dll;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	dll = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_dll_t) + xtnsize);
 	if (dll == QSE_NULL) return QSE_NULL;
 
@@ -81,8 +71,6 @@ void qse_dll_close (qse_dll_t* dll)
 
 int qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 {
-	if (mmgr == QSE_NULL) mmgr = QSE_MMGR_GETDFL();
-
 	/* do not zero out the xtnsizeension */
 	QSE_MEMSET (dll, 0, QSE_SIZEOF(*dll));
 

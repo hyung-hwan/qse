@@ -28,14 +28,6 @@ qse_stx_t* qse_stx_open (
 {
 	qse_stx_t* stx;
 
-	if (mmgr == QSE_NULL) 
-	{
-		mmgr = QSE_MMGR_GETDFL();
-		QSE_ASSERTX (mmgr != QSE_NULL,
-			"Set the memory manager with QSE_MMGR_SETDFL()");
-		if (mmgr == QSE_NULL) return QSE_NULL;
-	}
-
 	stx = (qse_stx_t*) QSE_MMGR_ALLOC (
 		mmgr, QSE_SIZEOF(qse_stx_t) + xtnsize
 	);
