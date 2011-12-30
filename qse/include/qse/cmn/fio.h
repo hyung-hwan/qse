@@ -200,6 +200,22 @@ void qse_fio_fini (
 	qse_fio_t* fio
 );
 
+/**
+ * The qse_fio_getcmgr() funcfion returns the current character manager.
+ * It returns #QSE_NULL is @a fio is not opened with #QSE_FIO_TEXT.
+ */
+qse_cmgr_t* qse_fio_getcmgr (
+	qse_fio_t* fio
+);
+
+/**
+ * The qse_fio_setcmgr() funcfion changes the character manager to @a cmgr.
+ * The character manager is used only if @a fio is opened with #QSE_FIO_TEXT.
+ */
+void qse_fio_setcmgr (
+	qse_fio_t*  fio,
+	qse_cmgr_t* cmgr
+);
 
 /**
  * The qse_fio_gethandle() function returns the native file handle.

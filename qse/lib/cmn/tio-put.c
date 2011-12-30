@@ -142,8 +142,8 @@ qse_ssize_t qse_tio_writewcs (
 		capa = tio->out.buf.capa - tio->outbuf_len;
 		wcnt = xwlen; mcnt = capa;
 
-		n = qse_wcsntombsn (
-			wptr, &wcnt, &tio->out.buf.ptr[tio->outbuf_len], &mcnt);
+		n = qse_wcsntombsnwithcmgr (
+			wptr, &wcnt, &tio->out.buf.ptr[tio->outbuf_len], &mcnt, tio->cmgr);
 		tio->outbuf_len += mcnt;
 
 		if (n == -2)

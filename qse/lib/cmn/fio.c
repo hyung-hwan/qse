@@ -551,6 +551,16 @@ void qse_fio_fini (qse_fio_t* fio)
 	}
 }
 
+qse_cmgr_t* qse_fio_getcmgr (qse_fio_t* fio)
+{
+	return fio->tio? qse_tio_getcmgr (fio->tio): QSE_NULL;
+}
+
+void qse_fio_setcmgr (qse_fio_t* fio, qse_cmgr_t* cmgr)
+{
+	if (fio->tio) qse_tio_setcmgr (fio->tio, cmgr);
+}
+
 qse_fio_hnd_t qse_fio_gethandle (qse_fio_t* fio)
 {
 	return fio->handle;

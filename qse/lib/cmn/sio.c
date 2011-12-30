@@ -140,6 +140,16 @@ void qse_sio_fini (qse_sio_t* sio)
 	qse_fio_fini (&sio->fio);
 }
 
+qse_cmgr_t* qse_sio_getcmgr (qse_sio_t* sio)
+{
+	return qse_tio_getcmgr (&sio->tio);
+}
+
+void qse_sio_setcmgr (qse_sio_t* sio, qse_cmgr_t* cmgr)
+{
+	qse_tio_setcmgr (&sio->tio, cmgr);
+}
+
 qse_sio_errnum_t qse_sio_geterrnum (qse_sio_t* sio)
 {
 	return QSE_TIO_ERRNUM(&sio->tio);

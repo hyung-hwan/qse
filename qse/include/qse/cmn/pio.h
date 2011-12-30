@@ -77,7 +77,6 @@ enum qse_pio_flag_t
 	QSE_PIO_DROPERR    = (1 << 18)
 };
 
-
 /**
  * The qse_pio_hid_t type defines pipe IDs established to a child process.
  */
@@ -138,7 +137,7 @@ typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 	/* <os2def.h> => typedef LHANDLE HFILE;
 	                 typedef LHANDLE PID;
 	                 typedef unsigned long LHANDLE; */
-        typedef unsigned long qse_pio_hnd_t; /**< defines a pipe handle type */
+	typedef unsigned long qse_pio_hnd_t; /**< defines a pipe handle type */
 	typedef unsigned long qse_pio_pid_t; /**< defined a process handle type */
 #	define  QSE_PIO_HND_NIL ((qse_pio_hnd_t)-1)
 #	define  QSE_PIO_PID_NIL ((qse_pio_pid_t)-1)
@@ -281,6 +280,25 @@ const qse_char_t* qse_pio_geterrmsg (
 );
 
 /**
+ * The qse_pio_getcmgr() function returns the current character manager.
+ * It returns #QSE_NULL is @a pio is not opened with #QSE_PIO_TEXT.
+ */
+qse_cmgr_t* qse_pio_getcmgr (
+	qse_pio_t*    pio,
+	qse_pio_hid_t hid
+);
+
+/**
+ * The qse_pio_setcmgr() function changes the character manager to @a cmgr.
+ * The character manager is used only if @a pio is opened with #QSE_PIO_TEXT.
+ */
+void qse_pio_setcmgr (
+	qse_pio_t*    pio,
+	qse_pio_hid_t hid,
+	qse_cmgr_t*   cmgr
+);
+
+/**
  * The qse_pio_gethandle() function gets a pipe handle.
  * @return pipe handle
  */
@@ -303,9 +321,9 @@ qse_pio_pid_t qse_pio_getchild (
  */
 qse_ssize_t qse_pio_read (
 	qse_pio_t*    pio,  /**< pio object */
+	qse_pio_hid_t hid,  /**< handle ID */
 	void*         buf,  /**< buffer to fill */
-	qse_size_t    size, /**< buffer size */
-	qse_pio_hid_t hid   /**< handle ID */
+	qse_size_t    size  /**< buffer size */
 );
 
 /**
@@ -316,9 +334,9 @@ qse_ssize_t qse_pio_read (
  */
 qse_ssize_t qse_pio_write (
 	qse_pio_t*    pio,   /**< pio object */
+	qse_pio_hid_t hid,   /**< handle ID */
 	const void*   data,  /**< data to write */
-	qse_size_t    size,  /**< data size */
-	qse_pio_hid_t hid    /**< handle ID */
+	qse_size_t    size   /**< data size */
 );
 
 /**

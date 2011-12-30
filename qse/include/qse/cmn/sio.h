@@ -144,6 +144,15 @@ qse_sio_errnum_t qse_sio_geterrnum (
 	qse_sio_t* sio
 );
 
+qse_cmgr_t* qse_sio_getcmgr (
+	qse_sio_t* sio
+);
+
+void qse_sio_setcmgr (
+	qse_sio_t*  sio,
+	qse_cmgr_t* cmgr
+);
+
 qse_sio_hnd_t qse_sio_gethandle (
 	qse_sio_t* sio
 );

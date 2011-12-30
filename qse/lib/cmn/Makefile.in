@@ -82,12 +82,13 @@ am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	rbt.lo rex.lo sio.lo sll.lo stdio.lo str-beg.lo str-cat.lo \
 	str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo \
 	str-dup.lo str-dynm.lo str-dynw.lo str-end.lo str-excl.lo \
-	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-pac.lo \
-	str-pbrk.lo str-put.lo str-rev.lo str-rot.lo str-set.lo \
-	str-spl.lo str-spn.lo str-str.lo str-subst.lo str-tok.lo \
-	str-trm.lo str-word.lo time.lo tio.lo tio-get.lo tio-put.lo \
-	tre.lo tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
-	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
+	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-mbwc.lo \
+	str-pac.lo str-pbrk.lo str-put.lo str-rev.lo str-rot.lo \
+	str-set.lo str-spl.lo str-spn.lo str-str.lo str-subst.lo \
+	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tio-get.lo \
+	tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
+	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
+	tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -335,6 +336,7 @@ libqsecmn_la_SOURCES = \
 	str-fnmat.c \
 	str-incl.c \
 	str-len.c \
+	str-mbwc.c \
 	str-pac.c \
 	str-pbrk.c \
 	str-put.c \
@@ -492,6 +494,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-fnmat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-incl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-len.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pbrk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-put.Plo@am__quote@

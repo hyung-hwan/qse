@@ -224,12 +224,12 @@ int StdAwk::closePipe (Pipe& io)
 
 StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
 { 
-	return qse_pio_read ((qse_pio_t*)io.getHandle(), buf, len, QSE_PIO_OUT);
+	return qse_pio_read ((qse_pio_t*)io.getHandle(), QSE_PIO_OUT, buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writePipe (Pipe& io, const char_t* buf, size_t len) 
 { 
-	return qse_pio_write ((qse_pio_t*)io.getHandle(), buf, len, QSE_PIO_IN);
+	return qse_pio_write ((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
 }
 
 int StdAwk::flushPipe (Pipe& io) 

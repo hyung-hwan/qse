@@ -854,7 +854,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	/* TODO: change it to support multiple source files */
 	qse_awk_parsestd_in_t psin;
 	qse_awk_parsestd_out_t psout;
-	qse_mmgr_t* mmgr = QSE_NULL;
+	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 
 	memset (&arg, 0, QSE_SIZEOF(arg));
 
