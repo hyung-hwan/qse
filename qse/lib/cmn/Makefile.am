@@ -66,6 +66,7 @@ libqsecmn_la_SOURCES = \
 	str-fnmat.c \
 	str-incl.c \
 	str-len.c \
+	str-mbwc.c \
 	str-pac.c \
 	str-pbrk.c \
 	str-put.c \

@@ -863,9 +863,7 @@ static qse_ssize_t awk_rio_pipe (
 		{
 			return qse_pio_read (
 				(qse_pio_t*)riod->handle,
-				data,	
-				size,
-				QSE_PIO_OUT
+				QSE_PIO_OUT, data, size
 			);
 		}
 
@@ -873,9 +871,7 @@ static qse_ssize_t awk_rio_pipe (
 		{
 			return qse_pio_write (
 				(qse_pio_t*)riod->handle,
-				data,	
-				size,
-				QSE_PIO_IN
+				QSE_PIO_IN, data, size
 			);
 		}
 

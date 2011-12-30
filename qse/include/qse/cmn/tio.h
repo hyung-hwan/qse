@@ -110,16 +110,17 @@ struct qse_tio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_tio_errnum_t errnum;
-	int flags; 
+	int              flags; 
+	qse_cmgr_t*      cmgr;
 
-	qse_tio_io_t in;
-	qse_tio_io_t out;
+	qse_tio_io_t     in;
+	qse_tio_io_t     out;
 
 	/* for house keeping from here */
-	int         input_status;
-	qse_size_t  inbuf_cur;
-	qse_size_t  inbuf_len;
-	qse_size_t  outbuf_len;
+	int              input_status;
+	qse_size_t       inbuf_cur;
+	qse_size_t       inbuf_len;
+	qse_size_t       outbuf_len;
 };
 
 #ifdef __cplusplus
@@ -174,6 +175,21 @@ qse_tio_errnum_t qse_tio_geterrnum (
  */
 const qse_char_t* qse_tio_geterrmsg (
 	qse_tio_t* tio
+);
+
+/**
+ * The qse_tio_getcmgr() function returns the character manager.
+ */
+qse_cmgr_t* qse_tio_getcmgr (
+	qse_tio_t* tio
+);
+
+/**
+ * The qse_tio_setcmgr() function changes the character manager.
+ */
+void qse_tio_setcmgr (
+	qse_tio_t*  tio,
+	qse_cmgr_t* cmgr
 );
 
 /**

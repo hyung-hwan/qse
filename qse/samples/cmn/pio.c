@@ -47,7 +47,7 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		qse_ssize_t i;
 
 		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, buf, QSE_SIZEOF(buf), rhid);
+		qse_ssize_t n = qse_pio_read (pio, rhid, buf, QSE_SIZEOF(buf));
 		if (n == 0) break;
 		if (n <= -1)
 		{
@@ -106,7 +106,7 @@ static int pio2 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		qse_char_t buf[128];
 		qse_ssize_t i;
 
-		qse_ssize_t n = qse_pio_read (pio, buf, QSE_COUNTOF(buf), rhid);
+		qse_ssize_t n = qse_pio_read (pio, rhid, buf, QSE_COUNTOF(buf));
 		if (n == 0) break;
 		if (n < 0)
 		{
@@ -352,7 +352,7 @@ static int test12 (void)
 		while (1)
 		{
 			qse_mchar_t buf[100];
-			qse_ssize_t x = qse_pio_read (pio, buf, QSE_SIZEOF(buf), QSE_PIO_OUT);
+			qse_ssize_t x = qse_pio_read (pio, QSE_PIO_OUT, buf, QSE_SIZEOF(buf));
 			if (x <= 0) break;
 		}
 

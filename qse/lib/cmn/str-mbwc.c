@@ -19,128 +19,11 @@
  */
 
 #include <qse/cmn/str.h>
-#include <qse/cmn/chr.h>
 #include "mem.h"
 
-int qse_strtoi (const qse_char_t* str)
-{
-	int v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-long qse_strtol (const qse_char_t* str)
-{
-	long v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-unsigned int qse_strtoui (const qse_char_t* str)
-{
-	unsigned int v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-unsigned long qse_strtoul (const qse_char_t* str)
-{
-	unsigned long v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-int qse_strxtoi (const qse_char_t* str, qse_size_t len)
-{
-	int v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-long qse_strxtol (const qse_char_t* str, qse_size_t len)
-{
-	long v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-unsigned int qse_strxtoui (const qse_char_t* str, qse_size_t len)
-{
-	unsigned int v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-unsigned long qse_strxtoul (const qse_char_t* str, qse_size_t len)
-{
-	unsigned long v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-qse_int_t qse_strtoint (const qse_char_t* str)
-{
-	qse_int_t v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-qse_long_t qse_strtolong (const qse_char_t* str)
-{
-	qse_long_t v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-qse_uint_t qse_strtouint (const qse_char_t* str)
-{
-	qse_uint_t v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-qse_ulong_t qse_strtoulong (const qse_char_t* str)
-{
-	qse_ulong_t v;
-	QSE_STRTONUM (v, str, QSE_NULL, 10);
-	return v;
-}
-
-qse_int_t qse_strxtoint (const qse_char_t* str, qse_size_t len)
-{
-	qse_int_t v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-qse_long_t qse_strxtolong (const qse_char_t* str, qse_size_t len)
-{
-	qse_long_t v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-qse_uint_t qse_strxtouint (const qse_char_t* str, qse_size_t len)
-{
-	qse_uint_t v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-qse_ulong_t qse_strxtoulong (const qse_char_t* str, qse_size_t len)
-{
-	qse_ulong_t v;
-	QSE_STRXTONUM (v, str, len, QSE_NULL, 10);
-	return v;
-}
-
-/*
- * TODO: fix wrong mbstate handling 
- */
-
-int qse_mbstowcs (
+int qse_mbstowcswithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
-	qse_wchar_t* wcs, qse_size_t* wcslen)
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
 	const qse_mchar_t* mp;
 	qse_size_t mlen, wlen;
@@ -149,7 +32,7 @@ int qse_mbstowcs (
 	for (mp = mbs; *mp != QSE_MT('\0'); mp++);
 
 	mlen = mp - mbs; wlen = *wcslen;
-	n = qse_mbsntowcsn (mbs, &mlen, wcs, &wlen);
+	n = qse_mbsntowcsnwithcmgr (mbs, &mlen, wcs, &wlen, cmgr);
 	if (wcs)
 	{
 		if (wlen < *wcslen) wcs[wlen] = QSE_WT('\0');
@@ -160,12 +43,11 @@ int qse_mbstowcs (
 	return n;
 }
 
-int qse_mbsntowcsn (
+int qse_mbsntowcsnwithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
-	qse_wchar_t* wcs, qse_size_t* wcslen)
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
 {
 	const qse_mchar_t* p;
-	qse_mbstate_t state = {{ 0, }};
 	int ret = 0;
 	qse_size_t mlen;
 
@@ -189,7 +71,7 @@ int qse_mbsntowcsn (
 				break;
 			}
 
-			n = qse_mbrtowc (p, mlen, q, &state);
+			n = cmgr->mbtowc (p, mlen, q);
 			if (n == 0)
 			{
 				/* invalid sequence */
@@ -223,7 +105,7 @@ int qse_mbsntowcsn (
 		{
 			qse_size_t n;
 
-			n = qse_mbrtowc (p, mlen, &w, &state);
+			n = cmgr->mbtowc (p, mlen, &w);
 			if (n == 0)
 			{
 				/* invalid sequence */
@@ -249,12 +131,11 @@ int qse_mbsntowcsn (
 	return ret;
 }
 
-int qse_mbsntowcsnupto (
+int qse_mbsntowcsnuptowithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
-	qse_wchar_t* wcs, qse_size_t* wcslen, qse_wchar_t stopper)
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_wchar_t stopper, qse_cmgr_t* cmgr)
 {
 	const qse_mchar_t* p;
-	qse_mbstate_t state = {{ 0, }};
 	int ret = 0;
 	qse_size_t mlen;
 
@@ -275,7 +156,7 @@ int qse_mbsntowcsnupto (
 	{
 		qse_size_t n;
 
-		n = qse_mbrtowc (p, mlen, &w, &state);
+		n = cmgr->mbtowc (p, mlen, &w);
 		if (n == 0)
 		{
 			/* invalid sequence */
@@ -308,22 +189,24 @@ int qse_mbsntowcsnupto (
 	return ret;
 }
 
-qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbstowcsdupwithcmgr (
+	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	qse_size_t mbslen, wcslen;
 	qse_wchar_t* wcs;
 
-	if (qse_mbstowcs (mbs, &mbslen, QSE_NULL, &wcslen) <= -1) return QSE_NULL;
+	if (qse_mbstowcswithcmgr (mbs, &mbslen, QSE_NULL, &wcslen, cmgr) <= -1) return QSE_NULL;
 
 	wcslen++; /* for terminating null */
 	wcs = QSE_MMGR_ALLOC (mmgr, wcslen * QSE_SIZEOF(*wcs));	
 	if (wcs == QSE_NULL) return QSE_NULL;
 
-	qse_mbstowcs (mbs, &mbslen, wcs, &wcslen);
+	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, cmgr);
 	return wcs;
 }
 
-qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbsatowcsdupwithcmgr (
+	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	qse_wchar_t* buf, * ptr;
 	qse_size_t i;
@@ -334,7 +217,7 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 
 	for (i = 0; mbs[i]; i++) 
 	{
-		if (qse_mbstowcs(mbs[i], &ml, QSE_NULL, &wl) <= -1) return QSE_NULL;
+		if (qse_mbstowcswithcmgr (mbs[i], &ml, QSE_NULL, &wl, cmgr) <= -1) return QSE_NULL;
 		capa += wl;
 	}
 
@@ -346,7 +229,7 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 	for (i = 0; mbs[i]; i++) 
 	{
 		wl = capa + 1;
-		qse_mbstowcs (mbs[i], &ml, ptr, &wl);
+		qse_mbstowcswithcmgr (mbs[i], &ml, ptr, &wl, cmgr);
 		ptr += wl;
 		capa -= wl;
 	}
@@ -354,12 +237,11 @@ qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
 	return buf;
 }
 
-int qse_wcstombs (
+int qse_wcstombswithcmgr (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
-	qse_mchar_t* mbs, qse_size_t* mbslen)
+	qse_mchar_t* mbs, qse_size_t* mbslen, qse_cmgr_t* cmgr)
 {
 	const qse_wchar_t* p = wcs;
-	qse_mbstate_t state = {{ 0, }};
 	int ret = 0;
 
 	if (mbs)
@@ -376,7 +258,7 @@ int qse_wcstombs (
 				break;
 			}
 			
-			n = qse_wcrtomb (*p, mbs, rem, &state);
+			n = cmgr->wctomb (*p, mbs, rem);
 			if (n == 0) 
 			{
 				ret = -1;
@@ -414,7 +296,7 @@ int qse_wcstombs (
 		{
 			qse_size_t n;
 
-			n = qse_wcrtomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf), &state);
+			n = cmgr->wctomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf));
 			if (n == 0) 
 			{
 				ret = -1;
@@ -437,13 +319,12 @@ int qse_wcstombs (
 	return ret;	
 }
 
-int qse_wcsntombsn (
+int qse_wcsntombsnwithcmgr (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
-	qse_mchar_t* mbs, qse_size_t* mbslen)
+	qse_mchar_t* mbs, qse_size_t* mbslen, qse_cmgr_t* cmgr)
 {
 	const qse_wchar_t* p = wcs;
 	const qse_wchar_t* end = wcs + *wcslen;
-	qse_mbstate_t state = {{ 0, }};
 	int ret = 0; 
 
 	if (mbs)
@@ -460,7 +341,7 @@ int qse_wcsntombsn (
 				break;
 			}
 
-			n = qse_wcrtomb (*p, mbs, rem, &state);
+			n = cmgr->wctomb (*p, mbs, rem);
 			if (n == 0) 
 			{
 				ret = -1;
@@ -485,7 +366,7 @@ int qse_wcsntombsn (
 		{
 			qse_size_t n;
 
-			n = qse_wcrtomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf), &state);
+			n = cmgr->wctomb (*p, mbsbuf, QSE_COUNTOF(mbsbuf));
 			if (n == 0) 
 			{
 				ret = -1;
@@ -508,23 +389,23 @@ int qse_wcsntombsn (
 	return ret;
 }
 
-qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcstombsdupwithcmgr (const qse_wchar_t* wcs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	qse_size_t wcslen, mbslen;
 	qse_mchar_t* mbs;
 
-	if (qse_wcstombs (wcs, &wcslen, QSE_NULL, &mbslen) <= -1) return QSE_NULL;
+	if (qse_wcstombswithcmgr (wcs, &wcslen, QSE_NULL, &mbslen, cmgr) <= -1) return QSE_NULL;
 
 	mbslen++; /* for the terminating null character */
 
 	mbs = QSE_MMGR_ALLOC (mmgr, mbslen * QSE_SIZEOF(*mbs));	
 	if (mbs == QSE_NULL) return QSE_NULL;
 
-	qse_wcstombs (wcs, &wcslen, mbs, &mbslen);
+	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, cmgr);
 	return mbs;
 }
 
-qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcsatombsdupwithcmgr (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	qse_mchar_t* buf, * ptr;
 	qse_size_t i;
@@ -535,7 +416,7 @@ qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 
 	for (i = 0; wcs[i]; i++) 
 	{
-		if (qse_wcstombs (wcs[i], &wl, QSE_NULL, &ml) <= -1) return QSE_NULL;
+		if (qse_wcstombswithcmgr (wcs[i], &wl, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
 		capa += ml;
 	}
 
@@ -547,40 +428,10 @@ qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 	for (i = 0; wcs[i]; i++) 
 	{
 		ml = capa + 1;
-		qse_wcstombs (wcs[i], &wl, ptr, &ml);
+		qse_wcstombswithcmgr (wcs[i], &wl, ptr, &ml, cmgr);
 		ptr += ml;
 		capa -= ml;
 	}
 
 	return buf;
-}
-
-/* case conversion */
-
-qse_size_t qse_mbslwr (qse_mchar_t* str)
-{
-	qse_mchar_t* p = str;
-	for (p = str; *p != QSE_MT('\0'); p++) *p = QSE_TOMLOWER (*p);
-	return p - str;
-}
-
-qse_size_t qse_mbsupr (qse_mchar_t* str)
-{
-	qse_mchar_t* p = str;
-	for (p = str; *p != QSE_MT('\0'); p++) *p = QSE_TOMUPPER (*p);
-	return p - str;
-}
-
-qse_size_t qse_wcslwr (qse_wchar_t* str)
-{
-	qse_wchar_t* p = str;
-	for (p = str; *p != QSE_WT('\0'); p++) *p = QSE_TOWLOWER (*p);
-	return p - str;
-}
-
-qse_size_t qse_wcsupr (qse_wchar_t* str)
-{
-	qse_wchar_t* p = str;
-	for (p = str; *p != QSE_WT('\0'); p++) *p = QSE_TOWUPPER (*p);
-	return p - str;
 }

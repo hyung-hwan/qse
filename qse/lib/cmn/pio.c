@@ -967,6 +967,7 @@ int qse_pio_init (
 		if (flags & QSE_PIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
 		if (flags & QSE_PIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
+		QSE_ASSERT (QSE_COUNTOF(tio) == QSE_COUNTOF(pio->pin));
 		for (i = 0; i < QSE_COUNTOF(tio); i++)
 		{
 			int r;
@@ -979,8 +980,10 @@ int qse_pio_init (
 			}
 
 			r = (i == QSE_PIO_IN)?
-				qse_tio_attachout (tio[i], pio_output, &pio->pin[i], QSE_NULL, 4096):
-				qse_tio_attachin (tio[i], pio_input, &pio->pin[i], QSE_NULL, 4096);
+				qse_tio_attachout (
+					tio[i], pio_output, &pio->pin[i], QSE_NULL, 4096):
+				qse_tio_attachin (
+					tio[i], pio_input, &pio->pin[i], QSE_NULL, 4096);
 
 			if (r <= -1) goto oops;
 
@@ -1090,6 +1093,17 @@ const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
 		QSE_COUNTOF(__errstr) - 1: pio->errnum];
 }
 
+qse_cmgr_t* qse_pio_getcmgr (qse_pio_t* pio, qse_pio_hid_t hid)
+{
+	return pio->pin[hid].tio? 
+		qse_tio_getcmgr(pio->pin[hid].tio): QSE_NULL;
+}
+
+void qse_pio_setcmgr (qse_pio_t* pio, qse_pio_hid_t hid, qse_cmgr_t* cmgr)
+{
+	if (pio->pin[hid].tio) qse_tio_setcmgr (pio->pin[hid].tio, cmgr);
+}
+
 qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->pin[hid].handle;
@@ -1190,7 +1204,7 @@ reread:
 }
 
 qse_ssize_t qse_pio_read (
-	qse_pio_t* pio, void* buf, qse_size_t size, qse_pio_hid_t hid)
+	qse_pio_t* pio, qse_pio_hid_t hid, void* buf, qse_size_t size)
 {
 	if (pio->pin[hid].tio == QSE_NULL) 
 		return pio_read (pio, buf, size, pio->pin[hid].handle);
@@ -1285,8 +1299,8 @@ rewrite:
 }
 
 qse_ssize_t qse_pio_write (
-	qse_pio_t* pio, const void* data, qse_size_t size,
-	qse_pio_hid_t hid)
+	qse_pio_t* pio, qse_pio_hid_t hid,
+	const void* data, qse_size_t size)
 {
 	if (pio->pin[hid].tio == QSE_NULL)
 		return pio_write (pio, data, size, pio->pin[hid].handle);
@@ -1547,7 +1561,8 @@ int qse_pio_kill (qse_pio_t* pio)
 #endif
 }
 
-static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_input (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);
@@ -1562,7 +1577,8 @@ static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_
 	return 0;
 }
 
-static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t pio_output (
+	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
 {
 	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
 	QSE_ASSERT (pin != QSE_NULL);

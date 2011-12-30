@@ -955,10 +955,9 @@ qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
 
 			n = qse_pio_read (
-				cgi->pio, 
+				cgi->pio, QSE_PIO_OUT,
 				&cgi->buf[cgi->buflen + QSE_SIZEOF(chunklen) - 1], 
-				count - extra,
-				QSE_PIO_OUT
+				count - extra
 			);
 			if (n <= -1)
 			{
@@ -994,10 +993,9 @@ qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 	{
 qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
 		n = qse_pio_read (
-			cgi->pio, 
+			cgi->pio, QSE_PIO_OUT,
 			&cgi->buf[cgi->buflen], 
-			QSE_SIZEOF(cgi->buf) - cgi->buflen,
-			QSE_PIO_OUT
+			QSE_SIZEOF(cgi->buf) - cgi->buflen
 		);
 		if (n <= -1)
 		{
@@ -1088,10 +1086,9 @@ static int task_main_cgi_2 (
 qse_printf (QSE_T("[cgi_2 ]\n"));
 	 /* <- can i make it non-block?? or use select??? pio_tryread()? */
 	n = qse_pio_read (
-		cgi->pio, 
+		cgi->pio, QSE_PIO_OUT,
 		&cgi->buf[cgi->buflen], 
-		QSE_SIZEOF(cgi->buf) - cgi->buflen,
-		QSE_PIO_OUT
+		QSE_SIZEOF(cgi->buf) - cgi->buflen
 	);
 	if (n <= -1)
 	{

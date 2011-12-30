@@ -132,9 +132,9 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 	mlen = tio->inbuf_len - tio->inbuf_cur;
 	wlen = bufsize;
 
-	x = qse_mbsntowcsnupto (
+	x = qse_mbsntowcsnuptowithcmgr (
 		&tio->in.buf.ptr[tio->inbuf_cur],
-		&mlen, buf, &wlen, QSE_WT('\n'));
+		&mlen, buf, &wlen, QSE_WT('\n'), tio->cmgr);
 	tio->inbuf_cur += mlen;
 
 	if (x == -3)

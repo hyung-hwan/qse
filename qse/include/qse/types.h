@@ -716,6 +716,30 @@ struct qse_mmgr_t
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
 
+
+typedef qse_size_t (*qse_cmgr_mbtowc_t) (
+	const qse_mchar_t* mb, 
+	qse_size_t         size,
+	qse_wchar_t*       wc
+);
+
+typedef qse_size_t (*qse_cmgr_wctomb_t) (
+	qse_wchar_t  wc,
+	qse_mchar_t* mb,
+	qse_size_t   size
+);
+
+/**
+ * The qse_cmgr_t type defines the interface to various character handling.
+ */
+struct qse_cmgr_t
+{
+	qse_cmgr_mbtowc_t mbtowc;
+	qse_cmgr_wctomb_t wctomb;
+};
+
+typedef struct qse_cmgr_t qse_cmgr_t;
+
 /**
  * The #qse_foff_t type defines an integer that can represent a file offset.
  * Depending on your system, it's defined to one of #qse_int64_t, #qse_int32_t,

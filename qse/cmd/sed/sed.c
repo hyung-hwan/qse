@@ -519,7 +519,7 @@ static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_
 
 int sed_main (int argc, qse_char_t* argv[])
 {
-	qse_mmgr_t* mmgr = QSE_NULL;
+	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_sed_t* sed = QSE_NULL;
 	qse_fs_t* fs = QSE_NULL;
 	qse_size_t script_count;
