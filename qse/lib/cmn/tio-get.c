@@ -19,7 +19,7 @@
  */
 
 #include <qse/cmn/tio.h>
-#include <qse/cmn/chr.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
 
 #define STATUS_ILLSEQ  (1 << 0)

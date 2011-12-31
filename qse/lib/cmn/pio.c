@@ -19,7 +19,7 @@
  */
 
 #include <qse/cmn/pio.h>
-#include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
 
 #if defined(_WIN32)

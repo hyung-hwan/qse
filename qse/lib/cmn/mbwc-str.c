@@ -1,5 +1,5 @@
 /*
- * $Id: str-cnv.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
 
 int qse_mbstowcswithcmgr (

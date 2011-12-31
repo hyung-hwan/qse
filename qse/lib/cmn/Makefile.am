@@ -25,7 +25,6 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
-	chr-cnv.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -38,6 +37,9 @@ libqsecmn_la_SOURCES = \
 	fs-err.c \
 	fs-move.c \
 	main.c \
+	mbwc.c \
+	mbwc-chr.c \
+	mbwc-str.c \
 	mem.c \
 	oht.c \
 	opt.c \
@@ -66,7 +68,6 @@ libqsecmn_la_SOURCES = \
 	str-fnmat.c \
 	str-incl.c \
 	str-len.c \
-	str-mbwc.c \
 	str-pac.c \
 	str-pbrk.c \
 	str-put.c \

@@ -23,6 +23,7 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
