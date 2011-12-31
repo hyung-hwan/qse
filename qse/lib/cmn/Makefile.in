@@ -76,19 +76,19 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
-	assert.lo chr.lo chr-cnv.lo dll.lo env.lo gdl.lo htb.lo lda.lo \
-	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo main.lo mem.lo \
-	oht.lo opt.lo path-basename.lo path-canon.lo pio.lo pma.lo \
-	rbt.lo rex.lo sio.lo sll.lo stdio.lo str-beg.lo str-cat.lo \
-	str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo \
-	str-dup.lo str-dynm.lo str-dynw.lo str-end.lo str-excl.lo \
-	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-mbwc.lo \
-	str-pac.lo str-pbrk.lo str-put.lo str-rev.lo str-rot.lo \
-	str-set.lo str-spl.lo str-spn.lo str-str.lo str-subst.lo \
-	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tio-get.lo \
-	tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
-	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
-	tre-stack.lo utf8.lo xma.lo
+	assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo \
+	fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo main.lo mbwc.lo \
+	mbwc-chr.lo mbwc-str.lo mem.lo oht.lo opt.lo path-basename.lo \
+	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
+	stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
+	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
+	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
+	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
+	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
+	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
+	time.lo tio.lo tio-get.lo tio-put.lo tre.lo tre-ast.lo \
+	tre-compile.lo tre-match-backtrack.lo tre-match-parallel.lo \
+	tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -295,7 +295,6 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
-	chr-cnv.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -308,6 +307,9 @@ libqsecmn_la_SOURCES = \
 	fs-err.c \
 	fs-move.c \
 	main.c \
+	mbwc.c \
+	mbwc-chr.c \
+	mbwc-str.c \
 	mem.c \
 	oht.c \
 	opt.c \
@@ -336,7 +338,6 @@ libqsecmn_la_SOURCES = \
 	str-fnmat.c \
 	str-incl.c \
 	str-len.c \
-	str-mbwc.c \
 	str-pac.c \
 	str-pbrk.c \
 	str-put.c \
@@ -452,7 +453,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr-cnv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
@@ -466,6 +466,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-chr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
@@ -494,7 +497,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-fnmat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-incl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-len.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pac.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-pbrk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-put.Plo@am__quote@

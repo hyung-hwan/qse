@@ -18,7 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/chr.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/utf8.h>
 #include "mem.h"
 

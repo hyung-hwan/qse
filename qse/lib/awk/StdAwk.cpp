@@ -20,6 +20,7 @@
 
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>

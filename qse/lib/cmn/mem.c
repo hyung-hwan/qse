@@ -468,7 +468,7 @@ static qse_mmgr_t builtin_mmgr =
 
 static qse_mmgr_t* dfl_mmgr = &builtin_mmgr;
 
-qse_mmgr_t* qse_getdflmmgr ()
+qse_mmgr_t* qse_getdflmmgr (void)
 {
 	return dfl_mmgr;
 }

@@ -14,6 +14,7 @@ pkginclude_HEADERS = \
 	lda.h \
 	main.h \
 	map.h \
+	mbwc.h \
 	mem.h \
 	oht.h \
 	opt.h \

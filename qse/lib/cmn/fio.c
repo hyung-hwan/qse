@@ -20,6 +20,7 @@
 
 #include <qse/cmn/fio.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/time.h>
@@ -100,7 +101,9 @@ int qse_fio_init (
 		);
 
 		temp_no = 0;
-		for (temp_ptr = path; *temp_ptr; temp_ptr++) 
+		/* if QSE_FIO_TEMPORARY is used, the path name must 
+		 * be writable. */
+		for (temp_ptr = (qse_char_t*)path; *temp_ptr; temp_ptr++) 
 			temp_no += *temp_ptr;
 
 		/* The path name template must be at least 4 characters long
