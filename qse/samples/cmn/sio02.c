@@ -1,24 +1,31 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/fmt.h>
 #include <qse/cmn/stdio.h>
-
 #include <locale.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
 #endif
 
+static qse_sio_t* g_out;
+
 #define R(f) \
 	do { \
-		qse_printf (QSE_T("== %s ==\n"), QSE_T(#f)); \
+		qse_sio_putstr (g_out,QSE_T("== ")); \
+		qse_sio_putstr (g_out,QSE_T(#f)); \
+		qse_sio_putstr (g_out,QSE_T(" ==\n")); \
+		qse_sio_flush (g_out); \
 		if (f() == -1) return -1; \
 	} while (0)
 
 static int test1 (void)
 {
-	const qse_wchar_t unistr[] = 
+	qse_sio_t* sio;
+	int i;
+
+	const qse_wchar_t unistr[] =
 	{
-		/* ugly hack for old compilers that don't support \u */
 		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4!",*/
 		0xB108,
 		L' ',
@@ -30,128 +37,133 @@ static int test1 (void)
 		0xC5B4,
 		L'!',
 		L'\0'
-	};
+     };
 
-	const qse_wchar_t unistr2[] = 
-	{
-		/* this include an illegal unicode character.
-		 * a strict converter should return an error so a question mark 
-		 * should be printed for such a character */
-		0xFFFF53C0u,
-		0xFFFF4912u,
-		0xBA00u,
-		0xFFFF1234u,
-		L'\0'
-	};
 	const qse_wchar_t* x[] =
 	{
 		L"",
+		L"Fly to the universe, kick you ass",
 		L"",
-		L"",
-		L"Fly to the universe, kick your ass"
-	};
-	int i;
-	qse_sio_t* sio;
+		L"Fly to the universe, kick you ass",
+		L"Fly to the universe, kick you ass",
+		L""
+        };
 
-	x[1] = unistr;
-	x[2] = unistr2;
+	x[0] = unistr;
+	x[2] = unistr;
+	x[5] = unistr;
+	sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, QSE_T("sio.txt"), 
+		QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE);
 
-	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
-	if (sio == QSE_NULL) return -1;
+	if (sio == QSE_NULL)
+	{
+		qse_printf (QSE_T("cannot open file\n"));
+		return -1;
+	}
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
+		qse_sio_putstr (g_out, QSE_T("Written ["));
+		qse_sio_putwcs (g_out, x[i]);
+		qse_sio_putstr (g_out, QSE_T("]\n"));
+
 		qse_sio_putwcs (sio, x[i]);
-		qse_sio_putwc (sio, QSE_WT('\n'));
+		qse_sio_putc (sio, QSE_T('\n'));
 	}
 
 	qse_sio_close (sio);
+
 	return 0;
 }
 
 static int test2 (void)
 {
-     const qse_mchar_t* x[] =
-     {
-          QSE_MT("\0\0\0"),
-          QSE_MT("이거슨"),
-          QSE_MT("뭐냐이거"),
-          QSE_MT("過去一個月"),
-          QSE_MT("是成功的建商"),
-          QSE_MT("뛰어 올라봐. 멀리멀리 잘난척하기는"),
-          QSE_MT("Fly to the universe")
-     };
-	int i;
-	qse_sio_t* sio;
-
-	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
-	if (sio == QSE_NULL) return -1;
-
-	for (i = 0; i < QSE_COUNTOF(x); i++)
+	qse_ssize_t n;
+	qse_wchar_t buf[20];
+	qse_sio_t* in, * out;
+	
+	in = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+	out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+	
+	qse_sio_putstr (out, QSE_T("Type something here:\n"));
+	while (1)
 	{
-		qse_sio_putmbs (sio, x[i]);
-		qse_sio_putmb (sio, QSE_MT('\n'));
+		n = qse_sio_getwcs (in, buf, QSE_COUNTOF(buf));
+		if (n == 0) break;
+		if (n <= -1) 
+		{
+			qse_char_t buf[32];
+			qse_fmtintmax (buf, QSE_COUNTOF(buf), qse_sio_geterrnum(in), 10, -1, QSE_T('\0'), QSE_NULL);
+			qse_sio_putstr (out, QSE_T("ERROR .... "));
+			qse_sio_putstr (out, buf);
+			qse_sio_putstr (out, QSE_T("\n"));
+			break;
+		}
+
+		qse_sio_putwcs (out, buf);
 	}
 
-	qse_sio_close (sio);
+	qse_sio_close (out);
+	qse_sio_close (in);
 	return 0;
 }
 
 static int test3 (void)
 {
-     const qse_mchar_t* x[] =
-     {
-          QSE_MT("\0\0\0"),
-          QSE_MT("이거슨"),
-          QSE_MT("뭐냐이거"),
-          QSE_MT("過去一個月"),
-          QSE_MT("是成功的建商"),
-          QSE_MT("뛰어 올라봐. 멀리멀리 잘난척하기는"),
-          QSE_MT("Fly to the universe")
-     };
-	int i;
-	qse_sio_t* sio;
+	qse_ssize_t n;
+	qse_mchar_t buf[20];
+	qse_sio_t* in, * out;
+	
+	in = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+	out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
-	sio = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR | QSE_SIO_NOAUTOFLUSH);
-	if (sio == QSE_NULL) return -1;
-
-	for (i = 0; i < QSE_COUNTOF(x); i++)
+	qse_sio_putstr (out, QSE_T("Type something here:\n"));
+	while (1)
 	{
-		qse_sio_putmbsn (sio, x[i], qse_mbslen(x[i]));
-		qse_sio_putmb (sio, QSE_MT('\n'));
+		n = qse_sio_getmbs (in, buf, QSE_COUNTOF(buf));
+		if (n == 0) break;
+		if (n < 0) 
+		{
+			qse_char_t buf[32];
+			qse_fmtintmax (buf, QSE_COUNTOF(buf), qse_sio_geterrnum(in), 10, -1, QSE_T('\0'), QSE_NULL);
+			qse_sio_putstr (out, QSE_T("error .... "));
+			qse_sio_putstr (out, buf);
+			qse_sio_putstr (out, QSE_T("\n"));
+			break;
+		}
+
+		qse_sio_putmbs (out, buf);
 	}
 
-	qse_sio_close (sio);
+	qse_sio_close (out);
+	qse_sio_close (in);
 	return 0;
 }
 
 
 int main ()
 {
+#if 0
 #if defined(_WIN32)
-	char codepage[100];
 	UINT old_cp = GetConsoleOutputCP();
 	SetConsoleOutputCP (CP_UTF8);
-
-	/* TODO: on windows this set locale only affects those mbcs fucntions in clib.
-	 * it doesn't support utf8 i guess find a working way. the following won't work 
-	sprintf (codepage, ".%d", GetACP());
-	setlocale (LC_ALL, codepage);
-	*/
-#else
-	setlocale (LC_ALL, "");
+#endif
 #endif
 
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
+	setlocale (LC_ALL, "");
+
+	g_out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 
 	R (test1);
 	R (test2);
 	R (test3);
 
+	qse_sio_close (g_out);
+
+#if 0
 #if defined(_WIN32)
 	SetConsoleOutputCP (old_cp);
+#endif
 #endif
 	return 0;
 }

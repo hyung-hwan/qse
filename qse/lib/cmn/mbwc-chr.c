@@ -42,11 +42,7 @@
 qse_size_t qse_mbrlen (
 	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
-	/* TODO: provide an option to use windows api */
-	return qse_utf8len (mb, mbl);
-
-#elif defined(HAVE_MBRLEN)
+#if defined(HAVE_MBRLEN)
 	size_t n;
 
 	n = mbrlen (mb, mbl, (mbstate_t*)state);
@@ -72,17 +68,7 @@ qse_size_t qse_mbrtowc (
 	const qse_mchar_t* mb, qse_size_t mbl, 
 	qse_wchar_t* wc, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
-/*
-	int n;
-
-	n = MultiByteToWideChar (CP_ACP,  MB_ERR_INVALID_CHARS, mb, mbl, wc, 1);
-	if (n == 0) return 0;
-	return mbl;
-*/
-	return qse_utf8touc (mb, mbl, wc);
-
-#elif defined(HAVE_MBRTOWC)
+#if defined(HAVE_MBRTOWC)
 	size_t n;
 
 	n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
@@ -104,10 +90,7 @@ qse_size_t qse_wcrtomb (
 	qse_wchar_t wc, qse_mchar_t* mb,
 	qse_size_t mbl, qse_mbstate_t* state)
 {
-#if defined(_WIN32)
-	return qse_uctoutf8 (wc, mb, mbl);
-
-#elif defined(HAVE_WCRTOMB)
+#if defined(HAVE_WCRTOMB)
 	size_t n;
 
 	if (mbl < QSE_MBLEN_MAX)

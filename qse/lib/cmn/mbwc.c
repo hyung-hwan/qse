@@ -22,13 +22,19 @@
 #include <qse/cmn/utf8.h>
 
 
-static qse_cmgr_t builtin_cmgr =
+static qse_cmgr_t utf8_cmgr =
 {
 	qse_utf8touc,
 	qse_uctoutf8
 };
 
-static qse_cmgr_t* dfl_cmgr = &builtin_cmgr;
+static qse_cmgr_t locale_cmgr =
+{
+	qse_mbtowc,
+	qse_wctomb
+};
+
+static qse_cmgr_t* dfl_cmgr = &locale_cmgr;
 
 qse_cmgr_t* qse_getdflcmgr (void)
 {
@@ -37,10 +43,8 @@ qse_cmgr_t* qse_getdflcmgr (void)
 
 void qse_setdflcmgr (qse_cmgr_t* cmgr)
 {
-	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr);
+	dfl_cmgr = (cmgr? cmgr: &locale_cmgr);
 }
-
-
 
 /* string conversion function using default character conversion manager */
 
