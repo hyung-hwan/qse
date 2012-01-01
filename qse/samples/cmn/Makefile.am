@@ -8,9 +8,10 @@ AM_CPPFLAGS = \
 
 bin_PROGRAMS = \
 	xma fma pma chr \
-	str01 str02 str03 \
+	str01 \
+	mbwc01 mbwc02 \
 	sll dll lda oht htb rbt fio01 fio02 pio \
-	sio01 sio02 \
+	sio01 sio02 sio03 \
 	time main main2 rex01 env path01 tre01 \
 	fmt01 fmt02 fs01
 
@@ -22,8 +23,8 @@ fma_SOURCES = fma.c
 pma_SOURCES = pma.c
 chr_SOURCES = chr.c
 str01_SOURCES = str01.c
-str02_SOURCES = str02.c
-str03_SOURCES = str03.c
+mbwc01_SOURCES = mbwc01.c
+mbwc02_SOURCES = mbwc02.c
 sll_SOURCES = sll.c
 dll_SOURCES = dll.c
 lda_SOURCES = lda.c
@@ -35,6 +36,7 @@ fio02_SOURCES = fio02.c
 pio_SOURCES = pio.c
 sio01_SOURCES = sio01.c
 sio02_SOURCES = sio02.c
+sio03_SOURCES = sio03.c
 time_SOURCES = time.c
 main_SOURCES = main.c
 main2_SOURCES = main2.c
