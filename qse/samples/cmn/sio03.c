@@ -1,4 +1,5 @@
 #include <qse/cmn/sio.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/stdio.h>
 
@@ -129,17 +130,22 @@ static int test3 (void)
 int main ()
 {
 #if defined(_WIN32)
-	char codepage[100];
-	UINT old_cp = GetConsoleOutputCP();
-	SetConsoleOutputCP (CP_UTF8);
-
-	/* TODO: on windows this set locale only affects those mbcs fucntions in clib.
-	 * it doesn't support utf8 i guess find a working way. the following won't work 
-	sprintf (codepage, ".%d", GetACP());
-	setlocale (LC_ALL, codepage);
-	*/
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_loccmgr);
+	}
 #else
-	setlocale (LC_ALL, "");
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_loccmgr);
 #endif
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -150,8 +156,5 @@ int main ()
 	R (test2);
 	R (test3);
 
-#if defined(_WIN32)
-	SetConsoleOutputCP (old_cp);
-#endif
 	return 0;
 }

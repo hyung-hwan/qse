@@ -21,20 +21,23 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/utf8.h>
 
-
-static qse_cmgr_t utf8_cmgr =
+static qse_cmgr_t builtin_cmgr[] =
 {
-	qse_utf8touc,
-	qse_uctoutf8
+	{
+		qse_mbtowc,
+		qse_wctomb
+	},
+
+	{
+		qse_utf8touc,
+		qse_uctoutf8
+	}
 };
 
-static qse_cmgr_t locale_cmgr =
-{
-	qse_mbtowc,
-	qse_wctomb
-};
+qse_cmgr_t* qse_loccmgr = &builtin_cmgr[0];
+qse_cmgr_t* qse_utf8cmgr = &builtin_cmgr[1];
 
-static qse_cmgr_t* dfl_cmgr = &locale_cmgr;
+static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[0];
 
 qse_cmgr_t* qse_getdflcmgr (void)
 {
@@ -43,7 +46,7 @@ qse_cmgr_t* qse_getdflcmgr (void)
 
 void qse_setdflcmgr (qse_cmgr_t* cmgr)
 {
-	dfl_cmgr = (cmgr? cmgr: &locale_cmgr);
+	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[0]);
 }
 
 /* string conversion function using default character conversion manager */
@@ -66,7 +69,8 @@ int qse_mbsntowcsnupto (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_wchar_t stopper)
 {
-	return qse_mbsntowcsnuptowithcmgr (mbs, mbslen, wcs, wcslen, stopper, dfl_cmgr);
+	return qse_mbsntowcsnuptowithcmgr (
+		mbs, mbslen, wcs, wcslen, stopper, dfl_cmgr);
 }
 
 qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)

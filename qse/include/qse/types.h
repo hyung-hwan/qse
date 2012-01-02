@@ -716,7 +716,6 @@ struct qse_mmgr_t
 };
 typedef struct qse_mmgr_t qse_mmgr_t;
 
-
 typedef qse_size_t (*qse_cmgr_mbtowc_t) (
 	const qse_mchar_t* mb, 
 	qse_size_t         size,
@@ -730,7 +729,8 @@ typedef qse_size_t (*qse_cmgr_wctomb_t) (
 );
 
 /**
- * The qse_cmgr_t type defines the interface to various character handling.
+ * The qse_cmgr_t type defines the character-level interface to 
+ * multibyte/wide-character string conversion.
  */
 struct qse_cmgr_t
 {
