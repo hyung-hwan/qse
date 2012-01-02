@@ -1,4 +1,5 @@
 #include <qse/cmn/sio.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/stdio.h>
@@ -143,11 +144,24 @@ static int test3 (void)
 
 int main ()
 {
-#if 0
+
 #if defined(_WIN32)
-	UINT old_cp = GetConsoleOutputCP();
-	SetConsoleOutputCP (CP_UTF8);
-#endif
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOutputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_loccmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_loccmgr);
 #endif
 
 	setlocale (LC_ALL, "");
@@ -159,11 +173,5 @@ int main ()
 	R (test3);
 
 	qse_sio_close (g_out);
-
-#if 0
-#if defined(_WIN32)
-	SetConsoleOutputCP (old_cp);
-#endif
-#endif
 	return 0;
 }

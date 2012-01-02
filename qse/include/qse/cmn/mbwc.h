@@ -42,6 +42,9 @@ struct qse_mbstate_t
 extern "C" {
 #endif
 
+extern qse_cmgr_t* qse_utf8cmgr;
+extern qse_cmgr_t* qse_loccmgr;
+
 qse_cmgr_t* qse_getdflcmgr (
 	void
 );
