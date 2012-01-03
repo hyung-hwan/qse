@@ -166,6 +166,7 @@ tre_new_item(tre_mem_t mem, int min, int max, int *i, int *max_i,
 }
 
 
+#if defined(QSE_CHAR_IS_MCHAR)
 /* Expands a character class to character ranges. */
 static reg_errcode_t
 tre_expand_ctype(tre_mem_t mem, tre_ctype_t class, tre_ast_node_t ***items,
@@ -174,7 +175,9 @@ tre_expand_ctype(tre_mem_t mem, tre_ctype_t class, tre_ast_node_t ***items,
 	reg_errcode_t status = REG_OK;
 	tre_cint_t c;
 	int j, min = -1, max = 0;
-	assert(TRE_MB_CUR_MAX == 1);
+	/* QSE: deleted */
+	/*assert(TRE_MB_CUR_MAX == 1);*/
+	/* END QSE */
 
 	DPRINT(("  expanding class to character ranges\n"));
 	for (j = 0; (j < 256) && (status == REG_OK); j++)
@@ -198,6 +201,7 @@ tre_expand_ctype(tre_mem_t mem, tre_ctype_t class, tre_ast_node_t ***items,
 		status = tre_new_item(mem, min, max, i, max_i, items);
 	return status;
 }
+#endif
 
 
 static int
@@ -294,13 +298,20 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 						if (qse_getctypebyxname (re + 2, len, &class) <= -1) status = REG_ECTYPE;
 
 						/* Optimize character classes for 8 bit character sets. */
-						if (status == REG_OK && TRE_MB_CUR_MAX == 1)
+#if defined(QSE_CHAR_IS_MCHAR)
+						/* QSE: not possible to count on MB_CUR_MAX since
+						 *      this library is designed to support per-object 
+						 *      or per-context character encoding using qse_cmgr_t */
+						/* if (status == REG_OK && TRE_MB_CUR_MAX == 1) */
+						/* END QSE */
+						if (status == REG_OK)	
 						{
 							status = tre_expand_ctype(ctx->mem, class, items,
 						                          &i, &max_i, ctx->cflags);
 							class = (tre_ctype_t)0;
 							skip = 1;
 						}
+#endif
 						re = endptr + 2;
 					}
 				}

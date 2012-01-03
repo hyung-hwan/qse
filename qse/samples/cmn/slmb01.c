@@ -1,9 +1,14 @@
+#include <qse/cmn/slmb.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
 
 #include <locale.h>
+
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
 
 #define R(f) \
 	do { \
@@ -13,23 +18,11 @@
 
 static int test1 (void)
 {
-	qse_char_t c;
-
-	for (c = QSE_T('a'); c <= QSE_T('z'); c++)
-	{
-		qse_printf (QSE_T("%c => %c\n"), c, QSE_TOUPPER(c));
-	}
-
-	return 0;
-}
-
-static int test2 (void)
-{
 	int i;
 	const qse_mchar_t* x[] =
 	{
 		"\0",
-		"뛰어 올라봐",
+		"뛰어 올라봐", /* this text is in utf8. so some conversions fail on a non-utf8 locale */
 		"Fly to the universe"
 	};
 
@@ -44,7 +37,7 @@ static int test2 (void)
 		qse_printf (QSE_T("["));
 		while (j < k)
 		{
-			qse_size_t y = qse_mblen (&x[i][j], k-j);
+			qse_size_t y = qse_slmblen (&x[i][j], k-j);
 
 			if (y == 0) 
 			{
@@ -58,7 +51,7 @@ static int test2 (void)
 			}
 			else
 			{
-				qse_size_t y2 = qse_mbtowc (&x[i][j], y, &wc);
+				qse_size_t y2 = qse_slmbtoslwc (&x[i][j], y, &wc);
 				if (y2 != y)
 				{
 					qse_printf (QSE_T("***y(%d) != y2(%d). something is wrong*** "), (int)y, (int)y2);
@@ -87,26 +80,44 @@ static int test2 (void)
 	return 0;
 }
 
-static int test3 (void)
+static int test2 (void)
 {
+	const qse_wchar_t unistr[] =
+	{
+		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4!",*/
+		0xB108,
+		L' ',
+		0xBB50,
+		0xAC00,
+		L' ',
+		0xC798,
+		0xB0AC,
+		0xC5B4,
+		L'!',
+		L'\0'
+     };
+
 	const qse_wchar_t* x[] =
 	{
 		L"\0",
-		L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?",
+		L"",
 		L"Fly to the universe"
 	};
 	char buf[100];
 	int i, j;
 
+	x[1] = unistr;
+
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
+		int nbytes = 0;
 		int len = qse_wcslen (x[i]);
 		if (len == 0) len++; /* for x[0] */
 
 		qse_printf (QSE_T("["));
 		for (j = 0; j < len; j++)
 		{
-			qse_size_t n = qse_wctomb (x[i][j], buf, sizeof(buf));
+			qse_size_t n = qse_slwctoslmb (x[i][j], buf, sizeof(buf) - 1);
 
 			if (n == 0)
 			{
@@ -124,30 +135,40 @@ static int test3 (void)
 				}
 				else
 				{
-				#ifdef QSE_CHAR_IS_MCHAR
-					qse_printf (QSE_T("%.*s"), (int)n, buf);
-				#else
-					qse_printf (QSE_T("%.*S"), (int)n, buf);
-				#endif
+					buf[n] = QSE_MT('\0');
+					qse_printf (QSE_T("%hs"), buf);
 				}
+				nbytes += n;
 			}
 		}
-		qse_printf (QSE_T("] => %d chars\n"), (int)len);
+		qse_printf (QSE_T("] => %d chars, %d bytes\n"), (int)len, (int)nbytes);
 	}
 	return 0;
 }
 
 int main ()
 {
-	setlocale (LC_ALL, "");
-
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_printf (QSE_T("Set the environment LANG to a Unicode locale such as UTF-8 if you see the illegal XXXXX errors. If you see such errors in Unicode locales, this program might be buggy. It is normal to see such messages in non-Unicode locales as it uses Unicode data\n"));
-	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
+#if defined(_WIN32)
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 
 	R (test1);
 	R (test2);
-	R (test3);
 
 	return 0;
 }

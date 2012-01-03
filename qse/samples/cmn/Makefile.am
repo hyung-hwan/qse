@@ -7,46 +7,70 @@ AM_CPPFLAGS = \
 
 
 bin_PROGRAMS = \
-	xma fma pma chr \
+	chr01 \
+	env \
+	dll \
+	fio01 \
+	fio02 \
+	fma \
+	fmt01 \
+	fmt02 \
+	fs01 \
+	htb \
+	lda \
+	main01 \
+	main02 \
+	mbwc01 \
+	mbwc02 \
+	oht \
+	path01 \
+	pio \
+	pma \
+	rex01 \
+	rbt \
+	sio01 \
+	sio02 \
+	sio03 \
+	sll \
+	slmb01 \
 	str01 \
-	mbwc01 mbwc02 \
-	sll dll lda oht htb rbt fio01 fio02 pio \
-	sio01 sio02 sio03 \
-	time main main2 rex01 env path01 tre01 \
-	fmt01 fmt02 fs01
-
+	time \
+	tre01 \
+	xma 
+	
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
 
-xma_SOURCES = xma.c
-fma_SOURCES = fma.c
-pma_SOURCES = pma.c
-chr_SOURCES = chr.c
-str01_SOURCES = str01.c
-mbwc01_SOURCES = mbwc01.c
-mbwc02_SOURCES = mbwc02.c
-sll_SOURCES = sll.c
+chr01_SOURCES = chr01.c
+env_SOURCES = env.c
 dll_SOURCES = dll.c
-lda_SOURCES = lda.c
-oht_SOURCES = oht.c
-htb_SOURCES = htb.c
-rbt_SOURCES = rbt.c
 fio01_SOURCES = fio01.c
 fio02_SOURCES = fio02.c
-pio_SOURCES = pio.c
-sio01_SOURCES = sio01.c
-sio02_SOURCES = sio02.c
-sio03_SOURCES = sio03.c
-time_SOURCES = time.c
-main_SOURCES = main.c
-main2_SOURCES = main2.c
-rex01_SOURCES = rex01.c
-env_SOURCES = env.c
-path01_SOURCES = path01.c
-tre01_SOURCES = tre01.c
+fma_SOURCES = fma.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
 fs01_SOURCES = fs01.c
+htb_SOURCES = htb.c
+lda_SOURCES = lda.c
+main01_SOURCES = main01.c
+main02_SOURCES = main02.c
+mbwc01_SOURCES = mbwc01.c
+mbwc02_SOURCES = mbwc02.c
+oht_SOURCES = oht.c
+path01_SOURCES = path01.c
+pio_SOURCES = pio.c
+pma_SOURCES = pma.c
+rex01_SOURCES = rex01.c
+rbt_SOURCES = rbt.c
+sio01_SOURCES = sio01.c
+sio02_SOURCES = sio02.c
+sio03_SOURCES = sio03.c
+sll_SOURCES = sll.c
+slmb01_SOURCES = slmb01.c
+str01_SOURCES = str01.c
+time_SOURCES = time.c
+tre01_SOURCES = tre01.c
+xma_SOURCES = xma.c
 
 if ENABLE_CXX
 

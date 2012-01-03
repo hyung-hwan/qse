@@ -19,13 +19,21 @@
  */
 
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/slmb.h>
 #include <qse/cmn/utf8.h>
+
+/* TODO: there is no guarantee that slwc is a unicode charater or vice versa.
+ *       the ctype handling functions should be made wide-character
+ *       dependent. 
+ */
+
+/* TODO: binary cmgr -> simply expands a byte to wchar and vice versa. */
 
 static qse_cmgr_t builtin_cmgr[] =
 {
 	{
-		qse_mbtowc,
-		qse_wctomb
+		qse_slmbtoslwc,
+		qse_slwctoslmb
 	},
 
 	{
@@ -34,7 +42,7 @@ static qse_cmgr_t builtin_cmgr[] =
 	}
 };
 
-qse_cmgr_t* qse_loccmgr = &builtin_cmgr[0];
+qse_cmgr_t* qse_slmbcmgr = &builtin_cmgr[0];
 qse_cmgr_t* qse_utf8cmgr = &builtin_cmgr[1];
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[0];

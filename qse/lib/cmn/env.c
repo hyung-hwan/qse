@@ -352,9 +352,9 @@ int qse_env_insertm (
 	qse_wchar_t* namedup, * valuedup;
 	int n;
 
-	namedup = qse_mbstowcsdup (name, env->mmgr);
+	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
 	if (namedup == QSE_NULL) return -1;
-	valuedup = qse_mbstowcsdup (value, env->mmgr);
+	valuedup = qse_mbstowcsdup (value, env->mmgr); /* TODO: ignroe mbwcerr */
 	if (valuedup == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
@@ -398,7 +398,7 @@ int qse_env_deletem (qse_env_t* env, const qse_mchar_t* name)
 	qse_wchar_t* namedup;
 	int n;
 
-	namedup = qse_mbstowcsdup (name, env->mmgr);
+	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
 	if (namedup == QSE_NULL) return -1;
 
 	n = deletew (env, namedup);
@@ -466,7 +466,7 @@ static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 		qse_wchar_t* dup;
 		qse_wchar_t* eq;
 
-		dup = qse_mbstowcsdup (*p, env->mmgr);
+		dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
 		if (dup == QSE_NULL) return QSE_NULL;
 
 		eq = qse_wcsbeg (dup, name);
@@ -544,7 +544,7 @@ int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
 	qse_wchar_t* namedup;
 	int ret = -1;
 
-	namedup = qse_mbstowcsdup (name, env->mmgr);
+	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
 	if (namedup)
 	{
 		ret = qse_env_insertsysw (env, namedup);
@@ -627,7 +627,7 @@ done:
 		qse_wchar_t* dup;
 		int n;
 
-		dup = qse_mbstowcsdup (*p, env->mmgr);
+		dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
 		if (dup == QSE_NULL) return -1;
 		n = add_envstrw (env, dup);
 		QSE_MMGR_FREE (env->mmgr, dup);

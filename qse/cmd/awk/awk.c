@@ -27,12 +27,15 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
+
 
 #include <string.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <locale.h>
 
 #define ENABLE_CALLBACK
 #define ABORT(label) goto label
@@ -1008,6 +1011,24 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+#if defined(_WIN32)
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 	return qse_runmain (argc, argv, awk_main);
 }
 

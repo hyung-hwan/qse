@@ -1,5 +1,5 @@
 /*
- * $Id: chr-cnv.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
@@ -18,8 +18,7 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <qse/cmn/mbwc.h>
-#include <qse/cmn/utf8.h>
+#include <qse/cmn/slmb.h>
 #include "mem.h"
 
 #if !defined(QSE_HAVE_CONFIG_H)
@@ -39,7 +38,7 @@
 #	include <stdlib.h>
 #endif
 
-qse_size_t qse_mbrlen (
+qse_size_t qse_slmbrlen (
 	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
 {
 #if defined(HAVE_MBRLEN)
@@ -64,7 +63,7 @@ qse_size_t qse_mbrlen (
 #endif
 }
 
-qse_size_t qse_mbrtowc (
+qse_size_t qse_slmbrtoslwc (
 	const qse_mchar_t* mb, qse_size_t mbl, 
 	qse_wchar_t* wc, qse_mbstate_t* state)
 {
@@ -86,7 +85,7 @@ qse_size_t qse_mbrtowc (
 #endif
 }
 
-qse_size_t qse_wcrtomb (
+qse_size_t qse_slwcrtoslmb (
 	qse_wchar_t wc, qse_mchar_t* mb,
 	qse_size_t mbl, qse_mbstate_t* state)
 {
@@ -132,26 +131,25 @@ qse_size_t qse_wcrtomb (
  * mbrtowc(3) do produce non-initial states when interrupted in the middle
  * of a character.
  */
-qse_size_t qse_mblen (const qse_mchar_t* mb, qse_size_t mbl)
+qse_size_t qse_slmblen (const qse_mchar_t* mb, qse_size_t mbl)
 {
 	qse_mbstate_t state = { { 0, } };
-	return qse_mbrlen (mb, mbl, &state);
+	return qse_slmbrlen (mb, mbl, &state);
 }
 
-qse_size_t qse_mbtowc (const qse_mchar_t* mb, qse_size_t mbl, qse_wchar_t* wc)
+qse_size_t qse_slmbtoslwc (const qse_mchar_t* mb, qse_size_t mbl, qse_wchar_t* wc)
 {
 	qse_mbstate_t state = { { 0, } };
-	return qse_mbrtowc (mb, mbl, wc, &state);
+	return qse_slmbrtoslwc (mb, mbl, wc, &state);
 }
 
-qse_size_t qse_wctomb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mbl)
+qse_size_t qse_slwctoslmb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mbl)
 {
 	qse_mbstate_t state = { { 0, } };
-	return qse_wcrtomb (wc, mb, mbl, &state);
+	return qse_slwcrtoslmb (wc, mb, mbl, &state);
 }
 
-int qse_mbcurmax (void)
+int qse_slmblenmax (void)
 {
-/* TODO: consider other encodings */	
-	return (QSE_UTF8LEN_MAX > MB_CUR_MAX)? QSE_UTF8LEN_MAX: MB_CUR_MAX;
+	return MB_CUR_MAX;
 }

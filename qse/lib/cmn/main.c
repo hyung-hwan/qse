@@ -20,15 +20,11 @@
 
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
-#include <locale.h>
 #include "mem.h"
 
 int qse_runmain (
 	int argc, qse_achar_t* argv[], qse_runmain_handler_t handler)
 {
-	/* TODO: remove dependency on setlocale */
-	setlocale (LC_ALL, "");
-
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
 	{
@@ -75,8 +71,6 @@ int qse_runmainwithenv (
 	int argc, qse_achar_t* argv[], 
 	qse_achar_t* envp[], qse_runmainwithenv_handler_t handler)
 {
-	setlocale (LC_ALL, ""); /* TODO: remove dependency on setlocale */
-
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
 	{
