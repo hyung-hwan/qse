@@ -19,7 +19,7 @@
  */
 
 #include <qse/cmn/tio.h>
-#include <qse/cmn/utf8.h> 
+#include <qse/cmn/mbwc.h> 
 #include "mem.h"
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (tio)
@@ -52,18 +52,10 @@ int qse_tio_close (qse_tio_t* tio)
 
 int qse_tio_init (qse_tio_t* tio, qse_mmgr_t* mmgr, int flags)
 {
-	/* TODO: set this default_cmgr differently depending on
-	 *       build options and platforms */
-	static qse_cmgr_t default_cmgr =
-	{
-		qse_utf8touc,
-		qse_uctoutf8
-	};
-
 	QSE_MEMSET (tio, 0, QSE_SIZEOF(*tio));
 
 	tio->mmgr = mmgr;
-	tio->cmgr = &default_cmgr;
+	tio->cmgr = qse_getdflcmgr();
 
 	/* mask off internal bits when storing the flags for safety */
 	tio->flags = flags & ~(QSE_TIO_DYNINBUF | QSE_TIO_DYNOUTBUF);

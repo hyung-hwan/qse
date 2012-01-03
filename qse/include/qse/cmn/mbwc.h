@@ -24,26 +24,12 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/**
- * The qse_mbstate_t type defines a structure large enough to hold
- * the standard mbstate_t.
- */
-typedef struct qse_mbstate_t qse_mbstate_t;
-struct qse_mbstate_t
-{
-#if defined(QSE_SIZEOF_MBSTATE_T) && (QSE_SIZEOF_MBSTATE_T > 0)
-	char dummy[QSE_SIZEOF_MBSTATE_T];
-#else
-	char dummy[1];
-#endif
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern qse_cmgr_t* qse_utf8cmgr;
-extern qse_cmgr_t* qse_loccmgr;
+extern qse_cmgr_t* qse_slmbcmgr;
 
 qse_cmgr_t* qse_getdflcmgr (
 	void
@@ -53,81 +39,6 @@ void qse_setdflcmgr (
 	qse_cmgr_t* cmgr
 );
 
-
-/* --------------------------------------------------- */
-/* CHARACTER CONVERSION                                */
-/* --------------------------------------------------- */
-
-qse_size_t qse_mbrlen (
-	const qse_mchar_t* mb,
-	qse_size_t         mblen,
-	qse_mbstate_t*     state
-);
-
-qse_size_t qse_mbrtowc (
-	const qse_mchar_t* mb,
-	qse_size_t         mblen,
-	qse_wchar_t*       wc,
-	qse_mbstate_t*     state
-);
-
-qse_size_t qse_wcrtomb (
-	qse_wchar_t        wc,
-	qse_mchar_t*       mb,
-	qse_size_t         mblen,
-	qse_mbstate_t*     state
-);
-
-/**
- * The qse_mblen() function scans a multibyte sequence to get the number of 
- * bytes needed to form a wide character. It does not scan more than @a mblen
- * bytes.
- * @return number of bytes processed on success, 
- *         0 for invalid sequences, 
- *         mblen + 1 for incomplete sequences
- * @note This function can not handle conversion producing non-initial
- *       states. For each call, it assumes initial state.
- */
-qse_size_t qse_mblen (
-	const qse_mchar_t* mb,
-	qse_size_t         mblen
-);
-
-/**
- * The qse_mbtowc() function converts a multibyte sequence to a wide character.
- * It returns 0 if an invalid multibyte sequence is detected, mblen + 1 if the 
- * sequence is incomplete. It returns the number of bytes processed to form a 
- * wide character.
- * @note This function can not handle conversion producing non-initial
- *       states. For each call, it assumes initial state.
- */
-qse_size_t qse_mbtowc (
-	const qse_mchar_t* mb,
-	qse_size_t         mblen,
-	qse_wchar_t*       wc
-);
-
-/**
- * The qse_wctomb() function converts a wide character to a multibyte sequence.
- * It returns 0 if the wide character is illegal, mblen + 1 if mblen is not 
- * large enough to hold the multibyte sequence. On successful conversion, it 
- * returns the number of bytes in the sequence.
- * @note This function can not handle conversion producing non-initial
- *       states. For each call, it assumes initial state.
- */
-qse_size_t qse_wctomb (
-	qse_wchar_t        wc,
-	qse_mchar_t*       mb,
-	qse_size_t         mblen
-);
-
-/**
- * The qse_getmbcurmax() function returns the value of MB_CUR_MAX.
- * Note that QSE_MBLEN_MAX defines MB_LEN_MAX.
- */
-int qse_getmbcurmax (
-	void
-);
 
 /* --------------------------------------------------- */
 /* STRING CONVERSION USING CMGR                        */

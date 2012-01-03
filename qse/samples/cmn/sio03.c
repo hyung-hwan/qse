@@ -72,6 +72,8 @@ static int test1 (void)
 
 static int test2 (void)
 {
+	/* this file is in utf8, the following strings may not be shown properly
+	 * if your locale/codepage is not utf8 */
      const qse_mchar_t* x[] =
      {
           QSE_MT("\0\0\0"),
@@ -100,6 +102,8 @@ static int test2 (void)
 
 static int test3 (void)
 {
+	/* this file is in utf8, the following strings may not be shown properly
+	 * if your locale/codepage is not utf8 */
      const qse_mchar_t* x[] =
      {
           QSE_MT("\0\0\0"),
@@ -141,11 +145,11 @@ int main ()
 	{
      	sprintf (locale, ".%u", (unsigned int)codepage);
      	setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_loccmgr);
+		qse_setdflcmgr (qse_slmbcmgr);
 	}
 #else
      setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_loccmgr);
+	qse_setdflcmgr (qse_slmbcmgr);
 #endif
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));

@@ -2,8 +2,14 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
+
+#include <locale.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
 
 static int rex_main (int argc, qse_char_t* argv[])
 {
@@ -27,7 +33,7 @@ static int rex_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-qse_rex_setoption (rex, QSE_REX_STRICT);
+	qse_rex_setoption (rex, QSE_REX_STRICT);
 
 	start = qse_rex_comp (rex, argv[1], qse_strlen(argv[1]));
 	if (start == QSE_NULL)
@@ -64,6 +70,24 @@ qse_rex_setoption (rex, QSE_REX_STRICT);
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+#if defined(_WIN32)
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 	return qse_runmain (argc, argv, rex_main);
 }
 

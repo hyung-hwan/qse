@@ -21,6 +21,12 @@
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/mbwc.h>
+
+#include <locale.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
 
 static void print_error (
 	const QSE::StdAwk::loc_t& loc, const QSE::StdAwk::char_t* msg)
@@ -103,5 +109,23 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+#if defined(_WIN32)
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 	return qse_runmain (argc,argv,awk_main);
 }

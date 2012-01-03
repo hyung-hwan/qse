@@ -135,10 +135,9 @@ SUBMATCH[4] = [defg]
 
 #ifdef QSE_CHAR_IS_WCHAR
 #	define TRE_WCHAR
-/*
-#	define TRE_MULTIBYTE
-#	define TRE_MBSTATE
-*/
+
+/*#	define TRE_MULTIBYTE*/
+/*#	define TRE_MBSTATE*/
 #endif
 
 #define TRE_REGEX_T_FIELD value
@@ -261,14 +260,16 @@ typedef qse_pma_t* tre_mem_t;
 /* Define the character types and functions. */
 #ifdef TRE_WCHAR
 #	define TRE_CHAR_MAX QSE_TYPE_MAX(qse_wchar_t)
+/*
 #	ifdef TRE_MULTIBYTE
 #		define TRE_MB_CUR_MAX (qse_getmbcurmax())
-#	else /* !TRE_MULTIBYTE */
+#	else 
 #		define TRE_MB_CUR_MAX 1
-#	endif /* !TRE_MULTIBYTE */
+#	endif 
+*/
 #else /* !TRE_WCHAR */
 #	define TRE_CHAR_MAX 255
-#	define TRE_MB_CUR_MAX 1
+/*#	define TRE_MB_CUR_MAX 1*/
 #endif /* !TRE_WCHAR */
 
 #define DPRINT(msg) 
@@ -394,7 +395,9 @@ struct tnfa
 	tre_tnfa_transition_t *initial;
 	tre_tnfa_transition_t *final;
 	tre_submatch_data_t *submatch_data;
+#if 0
 	char *firstpos_chars;
+#endif
 	int first_char;
 	unsigned int num_submatches;
 	tre_tag_direction_t *tag_directions;

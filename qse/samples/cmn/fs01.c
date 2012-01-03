@@ -1,7 +1,14 @@
 #include <qse/cmn/fs.h>
 #include <qse/cmn/mem.h>
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/mbwc.h>
+#include <qse/cmn/stdio.h>
+
+#include <locale.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
+
 
 static void list (qse_fs_t* fs, const qse_char_t* name)
 {
@@ -68,6 +75,24 @@ int fs_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+#if defined(_WIN32)
+     char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+     	sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+     setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 	return qse_runmain (argc, argv, fs_main);
 }
 

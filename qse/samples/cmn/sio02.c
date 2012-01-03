@@ -157,11 +157,11 @@ int main ()
 	{
      	sprintf (locale, ".%u", (unsigned int)codepage);
      	setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_loccmgr);
+		qse_setdflcmgr (qse_slmbcmgr);
 	}
 #else
      setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_loccmgr);
+	qse_setdflcmgr (qse_slmbcmgr);
 #endif
 
 	setlocale (LC_ALL, "");

@@ -38,7 +38,6 @@ libqsecmn_la_SOURCES = \
 	fs-move.c \
 	main.c \
 	mbwc.c \
-	mbwc-chr.c \
 	mbwc-str.c \
 	mem.c \
 	oht.c \
@@ -51,6 +50,7 @@ libqsecmn_la_SOURCES = \
 	rex.c \
 	sio.c \
 	sll.c \
+	slmb.c \
 	stdio.c \
 	str-beg.c \
 	str-cat.c \

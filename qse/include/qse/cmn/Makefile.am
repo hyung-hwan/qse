@@ -25,6 +25,7 @@ pkginclude_HEADERS = \
 	rex.h \
 	sio.h \
 	sll.h \
+	slmb.h \
 	stdio.h \
 	str.h \
 	time.h \

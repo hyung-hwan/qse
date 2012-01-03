@@ -21,8 +21,11 @@
 #include <qse/awk/StdAwk.hpp>
 #include <qse/cmn/opt.h>
 #include <qse/cmn/main.h>
+#include <qse/cmn/mbwc.h>
 #include <qse/cmn/stdio.h>
 #include <cstring>
+
+#include <locale.h>
 
 #if defined(_WIN32)
 #	include <windows.h>

@@ -2083,6 +2083,9 @@ int tre_compile (regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 	/* If in eight bit mode, compute a table of characters that can be the
 	   first character of a match. */
 	tnfa->first_char = -1;
+
+/* QSE: deleted */
+/*
 	if (TRE_MB_CUR_MAX == 1 && !tmp_ast_l->nullable)
 	{
 		int count = 0;
@@ -2125,6 +2128,8 @@ int tre_compile (regex_t *preg, const tre_char_t *regex, size_t n, int cflags)
 	}
 	else
 		tnfa->firstpos_chars = NULL;
+*/
+/* END QSE */
 
 
 	p = tree->firstpos;
@@ -2273,8 +2278,12 @@ void tre_free (regex_t *preg)
 
 	if (tnfa->tag_directions)
 		xfree(preg->mmgr,tnfa->tag_directions);
+/* QSE: deleted */
+/*
 	if (tnfa->firstpos_chars)
 		xfree(preg->mmgr,tnfa->firstpos_chars);
+*/
+/* END QSE */
 	if (tnfa->minimal_tags)
 		xfree(preg->mmgr,tnfa->minimal_tags);
 	xfree(preg->mmgr,tnfa);

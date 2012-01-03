@@ -78,9 +78,9 @@ libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo \
 	fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo main.lo mbwc.lo \
-	mbwc-chr.lo mbwc-str.lo mem.lo oht.lo opt.lo path-basename.lo \
+	mbwc-str.lo mem.lo oht.lo opt.lo path-basename.lo \
 	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
-	stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
+	slmb.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
 	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
 	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
 	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
@@ -308,7 +308,6 @@ libqsecmn_la_SOURCES = \
 	fs-move.c \
 	main.c \
 	mbwc.c \
-	mbwc-chr.c \
 	mbwc-str.c \
 	mem.c \
 	oht.c \
@@ -321,6 +320,7 @@ libqsecmn_la_SOURCES = \
 	rex.c \
 	sio.c \
 	sll.c \
+	slmb.c \
 	stdio.c \
 	str-beg.c \
 	str-cat.c \
@@ -466,7 +466,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
@@ -480,6 +479,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/slmb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stdio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-beg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-cat.Plo@am__quote@
