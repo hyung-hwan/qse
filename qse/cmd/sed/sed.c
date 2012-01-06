@@ -184,17 +184,18 @@ static int add_script (const qse_char_t* str, int mem)
 
 	if (mem)
 	{
-		g_script.io[g_script.size].type = QSE_SED_IOSTD_MEM;
+		g_script.io[g_script.size].type = QSE_SED_IOSTD_STR;
 		/* though its type is not qualified to be const, 
 		 * u.mem.ptr is actually const when used for input */
-		g_script.io[g_script.size].u.mem.ptr = (qse_char_t*)str;
-		g_script.io[g_script.size].u.mem.len = qse_strlen(str);
+		g_script.io[g_script.size].u.str.ptr = (qse_char_t*)str;
+		g_script.io[g_script.size].u.str.len = qse_strlen(str);
 	}
 	else
 	{
 		g_script.io[g_script.size].type = QSE_SED_IOSTD_FILE;
-		g_script.io[g_script.size].u.file = 
+		g_script.io[g_script.size].u.file.path = 
 			(qse_strcmp (str, QSE_T("-")) == 0)? QSE_NULL: str;
+		g_script.io[g_script.size].u.file.cmgr = QSE_NULL;
 	}
 	g_script.size++;
 	return 0;
@@ -589,12 +590,12 @@ int sed_main (int argc, qse_char_t* argv[])
 	
 		if (g_script.io[script_count].type == QSE_SED_IOSTD_FILE)
 		{
-			target = g_script.io[script_count].u.file;
+			target = g_script.io[script_count].u.file.path;
 		}
 		else 
 		{
 			/* i dont' use QSE_SED_IOSTD_SIO for input */	
-			QSE_ASSERT (g_script.io[script_count].type == QSE_SED_IOSTD_MEM);
+			QSE_ASSERT (g_script.io[script_count].type == QSE_SED_IOSTD_STR);
 			qse_sprintf (exprbuf, QSE_COUNTOF(exprbuf), 
 				QSE_T("expression #%lu"), (unsigned long)script_count);
 			target = exprbuf;
@@ -663,15 +664,16 @@ int sed_main (int argc, qse_char_t* argv[])
 			qse_char_t* tmpl_tmpfile;
 			
 			in[0].type = QSE_SED_IOSTD_FILE;
-			in[0].u.file =
+			in[0].u.file.path =
 				(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
 				QSE_NULL: argv[g_infile_pos];
+			in[0].u.file.cmgr = QSE_NULL;
 			in[1].type = QSE_SED_IOSTD_NULL;
 
 			tmpl_tmpfile = QSE_NULL;
-			if (g_inplace && in[0].u.file)
+			if (g_inplace && in[0].u.file.path)
 			{
-				tmpl_tmpfile = qse_strdup2 (in[0].u.file, QSE_T(".XXXX"),  qse_sed_getmmgr(sed));
+				tmpl_tmpfile = qse_strdup2 (in[0].u.file.path, QSE_T(".XXXX"),  qse_sed_getmmgr(sed));
 				if (tmpl_tmpfile == QSE_NULL)
 				{
 					qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
@@ -721,10 +723,10 @@ TODO:
 				qse_sio_close (output->u.sio);
 				output = output_file;
 
-				if (qse_fs_move (fs, tmpl_tmpfile, in[0].u.file) <= -1)
+				if (qse_fs_move (fs, tmpl_tmpfile, in[0].u.file.path) <= -1)
 				{
 					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s - %s\n"), 
-						tmpl_tmpfile, in[0].u.file, tmpl_tmpfile, qse_fs_geterrmsg(fs));
+						tmpl_tmpfile, in[0].u.file.path, tmpl_tmpfile, qse_fs_geterrmsg(fs));
 					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 					goto oops;
 				}
@@ -762,9 +764,10 @@ TODO:
 			for (i = 0; i < num_ins; i++)
 			{
 				in[i].type = QSE_SED_IOSTD_FILE;
-				in[i].u.file =
+				in[i].u.file.path =
 					(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
 					QSE_NULL: argv[g_infile_pos];
+				in[i].u.file.cmgr = QSE_NULL;
 				g_infile_pos++;
 			}
 
@@ -774,9 +777,10 @@ TODO:
 		if (g_output_file)
 		{
 			out.type = QSE_SED_IOSTD_FILE;
-			out.u.file = 
+			out.u.file.path = 
 				(qse_strcmp (g_output_file, QSE_T("-")) == 0)? 
 				QSE_NULL: g_output_file;
+			out.u.file.cmgr = QSE_NULL;
 		}
 
 		g_sed = sed;

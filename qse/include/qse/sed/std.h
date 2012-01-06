@@ -46,16 +46,20 @@ struct qse_sed_iostd_t
 	enum
 	{
 		QSE_SED_IOSTD_NULL, /** invalid resource */
-		QSE_SED_IOSTD_SIO,
 		QSE_SED_IOSTD_FILE,
-		QSE_SED_IOSTD_MEM
+		QSE_SED_IOSTD_STR,
+		QSE_SED_IOSTD_SIO
 	} type;
 
 	union
 	{
+		struct
+		{
+			const qse_char_t* path;
+			qse_cmgr_t*       cmgr; 
+		} file;
+		qse_xstr_t        str;
 		qse_sio_t*        sio;
-		const qse_char_t* file;
-		qse_xstr_t        mem;
 	} u;
 };
 
@@ -113,22 +117,28 @@ int qse_sed_compstd (
 
 /**
  * The qse_sed_compstdfile() function compiles a sed script from
- * a single file @a infile. 
+ * a single file @a infile.  If @a infile is #QSE_NULL, it reads
+ * the script from the standard input.
+ * When #QSE_CHAR_IS_WCHAR is defined, it converts the multibyte 
+ * sequences in the file @a infile to wide characters via the 
+ * #qse_cmgr_t interface @a cmgr. If @a cmgr is #QSE_NULL, it uses 
+ * the default interface. It calls cmgr->mbtowc() for conversion.
  * @return 0 on success, -1 on failure
  */
 int qse_sed_compstdfile (
 	qse_sed_t*        sed, 
-	const qse_char_t* infile
+	const qse_char_t* infile,
+	qse_cmgr_t*       cmgr
 );
 
 /**
- * The qse_sed_compstdmem() function compiles a sed script stored
- * in a null-terminated string pointed to by @a str.
+ * The qse_sed_compstd() function compiles a sed script stored
+ * in a null-terminated string pointed to by @a script.
  * @return 0 on success, -1 on failure
  */
-int qse_sed_compstdmem (
+int qse_sed_compstdstr (
 	qse_sed_t*        sed, 
-	const qse_char_t* str
+	const qse_char_t* script
 );
 
 /**
@@ -164,7 +174,8 @@ int qse_sed_execstd (
 int qse_sed_execstdfile (
      qse_sed_t*        sed,
 	const qse_char_t* infile,
-	const qse_char_t* outfile
+	const qse_char_t* outfile,
+	qse_cmgr_t*       cmgr
 );
 
 #ifdef __cplusplus

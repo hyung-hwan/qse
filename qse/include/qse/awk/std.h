@@ -22,6 +22,7 @@
 #define _QSE_AWK_STD_H_
 
 #include <qse/awk/awk.h>
+#include <qse/cmn/sio.h>
 
 /** @file
  * This file defines functions and data types that help you create
@@ -38,49 +39,34 @@
  * This programs shows how to specify multiple console output files.
  */
 
-/**
- * The qse_awk_parsestd_type_t type defines a source script type
- */
 enum qse_awk_parsestd_type_t
 {
-	QSE_AWK_PARSESTD_FILE  = 0, /**< file name */
-	QSE_AWK_PARSESTD_CP    = 1, /**< character pointer */
-	QSE_AWK_PARSESTD_CPL   = 2, /**< character pointer + length */
-	QSE_AWK_PARSESTD_STDIO = 3  /**< standard input/output */
+	QSE_AWK_PARSESTD_FILE = 1,
+	QSE_AWK_PARSESTD_STR  = 2 
 };
+
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
 
 /**
- * The qse_awk_parsestd_in_t type defines a source input.
+ * The qse_awk_parsestd_t type defines a source I/O.
  */
-struct qse_awk_parsestd_in_t
+struct qse_awk_parsestd_t
 {
 	qse_awk_parsestd_type_t type;
 
 	union
 	{
-		const qse_char_t* file; 
-		const qse_char_t* cp;
-		qse_cstr_t        cpl;
+		qse_sio_t* sio;
+		struct
+		{
+			const qse_char_t* path; 
+			qse_cmgr_t*       cmgr;
+		} file;
+		qse_xstr_t str;
 	} u;
 };
-typedef struct qse_awk_parsestd_in_t qse_awk_parsestd_in_t;
 
-/**
- * The qse_awk_parsestd_out_t type defines a source output.
- */
-struct qse_awk_parsestd_out_t
-{
-	qse_awk_parsestd_type_t type;
-
-	union
-	{
-		const qse_char_t* file; 
-		qse_char_t*       cp;
-		qse_xstr_t        cpl;
-	} u;
-};
-typedef struct qse_awk_parsestd_out_t qse_awk_parsestd_out_t;
+typedef struct qse_awk_parsestd_t qse_awk_parsestd_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -136,9 +122,9 @@ void* qse_awk_getxtnstd (
  * @endcode
  */
 int qse_awk_parsestd (
-	qse_awk_t*                   awk,
-	const qse_awk_parsestd_in_t* in,
-	qse_awk_parsestd_out_t*      out
+	qse_awk_t*          awk,
+	qse_awk_parsestd_t* in,
+	qse_awk_parsestd_t* out
 );
 
 /**

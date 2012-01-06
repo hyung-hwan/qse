@@ -4,8 +4,6 @@
 
 A memory manager is an instance of a structure type #qse_mmgr_t. Creating 
 and/or initializing an object requires a memory manager to be passed in. 
-If you pass in #QSE_NULL for a memory manager, the object is created and/or
-initialized with the default memory manager.
 
 The default memory manager is merely a wrapper to memory allocation functions
 provided by underlying operating systems: HeapAlloc/HeapReAlloc/HeapFree 

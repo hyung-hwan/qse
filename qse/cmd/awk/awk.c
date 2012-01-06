@@ -30,7 +30,6 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
 
-
 #include <string.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -69,7 +68,6 @@ struct arg_t
 	} isp;
 	qse_size_t   isfl; /* the number of input source files */
 
-	qse_awk_parsestd_type_t ost;  /* output source type */
 	qse_char_t*  osf;  /* output source file */
 
 	qse_char_t** icf;  /* input console files */
@@ -678,7 +676,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		}
 
 		/* the source code is the string, not from the file */
-		arg->ist = QSE_AWK_PARSESTD_CP;
+		arg->ist = QSE_AWK_PARSESTD_STR;
 		arg->isp.str = argv[opt.ind++];
 
 		free (isf);
@@ -714,7 +712,6 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		icf[icfl] = QSE_NULL;
 	}
 
-	arg->ost = QSE_AWK_PARSESTD_FILE;
 	arg->osf = osf;
 
 	arg->icf = icf;
@@ -855,8 +852,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int ret = -1;
 
 	/* TODO: change it to support multiple source files */
-	qse_awk_parsestd_in_t psin;
-	qse_awk_parsestd_out_t psout;
+	qse_awk_parsestd_t psin;
+	qse_awk_parsestd_t psout;
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 
 	memset (&arg, 0, QSE_SIZEOF(arg));
@@ -869,13 +866,22 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 	psin.type = arg.ist;
-	if (arg.ist == QSE_AWK_PARSESTD_CP) psin.u.cp = arg.isp.str;
-	else psin.u.file = arg.isp.files[0];
+	if (arg.ist == QSE_AWK_PARSESTD_STR) 
+	{
+		psin.u.str.ptr = arg.isp.str;
+		psin.u.str.len = qse_strlen(arg.isp.str);
+	}
+	else 
+	{
+		psin.u.file.path = arg.isp.files[0];
+		psin.u.file.cmgr = QSE_NULL;
+	}
 
 	if (arg.osf != QSE_NULL)
 	{
-		psout.type = arg.ost;
-		psout.u.file = arg.osf;
+		psout.type = QSE_AWK_PARSESTD_FILE;
+		psout.u.file.path = arg.osf;
+		psout.u.file.cmgr = QSE_NULL;
 	}
 
 #if defined(QSE_BUILD_DEBUG)

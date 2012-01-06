@@ -24,6 +24,14 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/** @file
+ * This file provides functions, types, macros for utf8 conversion.
+ */
+
+/**
+ * The QSE_UTF8LEN_MAX macro defines the maximum number of bytes
+ * needed to form a single unicode character.
+ */
 #if QSE_SIZEOF_WCHAR_T == 2
 #	define QSE_UTF8LEN_MAX 3
 #elif QSE_SIZEOF_WCHAR_T == 4
@@ -37,23 +45,18 @@ extern "C" {
 #endif
 
 /** 
- * The qse_uctoutf8len() function returns the number bytes in the utf8 sequence
- * that would result from the original unicode character.
- * @return 
- * - 0 is returned if @a uc is invalid. 
- * - A positive integer is returned in all other cases.
- */
-qse_size_t qse_uctoutf8len (
-	qse_wchar_t uc
-);
-
-/** 
  * The qse_uctoutf8() function converts a unicode character to a utf8 sequence.
  * @return 
  * - 0 is returned if @a uc is invalid. 
- * - An integer greater than @a size is returned if the utf8 sequence buffer is 
- *   not large enough. 
+ * - An integer greater than @a size is returned if the @a utf8 sequence buffer 
+ *   is not #QSE_NULL and not large enough. This integer is actually the number 
+ *   of bytes needed.
+ * - If @a utf8 is #QSE_NULL, the number of bytes that would have been stored 
+ *   into @a utf8 if it had not been #QSE_NULL is returned.
  * - An integer between 1 and size inclusive is returned in all other cases.
+ * @note
+ * This function doesn't check invalid unicode code points and performs
+ * conversion compuationally.
  */
 qse_size_t qse_uctoutf8 (
 	qse_wchar_t  uc,
@@ -61,17 +64,40 @@ qse_size_t qse_uctoutf8 (
 	qse_size_t   size
 );
 
+/**
+ * The qse_utf8touc() function converts a utf8 sequence to a unicode character.
+ * @return
+ * - 0 is returned if the @a utf8 sequence is invalid.
+ * - An integer greater than @a size is returned if the @a utf8 sequence is 
+ *   not complete.
+ * - An integer between 1 and size inclusive is returned in all other cases.
+ */
 qse_size_t qse_utf8touc (
 	const qse_mchar_t* utf8,
 	qse_size_t         size, 
 	qse_wchar_t*       uc
 );
 
+/**
+ * The qse_utf8lenmax() function scans at most @a size bytes from the @a utf8 
+ * sequence and returns the number of bytes needed to form a single unicode
+ * character.
+ * @return
+ * - 0 is returned if the @a utf8 sequence is invalid.
+ * - An integer greater than @a size is returned if the @a utf8 sequence is 
+ *   not complete.
+ * - An integer between 1 and size inclusive is returned in all other cases.
+ */ 
 qse_size_t qse_utf8len (
 	const qse_mchar_t* utf8,
-	qse_size_t         len
+	qse_size_t         size
 );
 
+/**
+ * The qse_utf8lenmax() function returns the maximum number of bytes needed 
+ * to form a single unicode character. Use #QSE_UTF8LEN_MAX if you need a 
+ * compile-time constant.
+ */
 qse_size_t qse_utf8lenmax (
 	void
 );

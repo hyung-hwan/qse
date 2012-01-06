@@ -18,6 +18,12 @@
 
 static int test1 (void)
 {
+	qse_printf (QSE_T("slmblenmax=%d\n"), (int)qse_slmblenmax());
+	return 0;
+}
+
+static int test2 (void)
+{
 	int i;
 	const qse_mchar_t* x[] =
 	{
@@ -80,9 +86,9 @@ static int test1 (void)
 	return 0;
 }
 
-static int test2 (void)
+static int test3 (void)
 {
-	const qse_wchar_t unistr[] =
+	const qse_wchar_t unistr_kr[] =
 	{
 		/*L"\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4!",*/
 		0xB108,
@@ -97,16 +103,31 @@ static int test2 (void)
 		L'\0'
      };
 
+	const qse_wchar_t unistr_cn[] =
+	{
+		/* 智慧手機帶頭 */
+		/* \u667A\u6167\u624B\u6A5F\u5E36\u982D */
+		0x667A,
+		0x6167,
+		0x624B,
+		0x6A5F,
+		0x5E36,
+		0x982D,
+		L'\0'
+	}; 
+
 	const qse_wchar_t* x[] =
 	{
 		L"\0",
+		L"",
 		L"",
 		L"Fly to the universe"
 	};
 	char buf[100];
 	int i, j;
 
-	x[1] = unistr;
+	x[1] = unistr_kr;
+	x[2] = unistr_cn;
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
@@ -162,6 +183,15 @@ int main ()
      	setlocale (LC_ALL, locale);
 		qse_setdflcmgr (qse_slmbcmgr);
 	}
+
+#if 0
+	{
+		WORD LangID = MAKELANGID(LANG_CHINESE, SUBLANG_DEFAULT);
+		SetThreadLocale(MAKELCID(LangID, SORT_DEFAULT));
+		/* SetThreadUILanguage(), SetThreadPreferredUILanguage(). */
+	}
+#endif
+
 #else
      setlocale (LC_ALL, "");
 	qse_setdflcmgr (qse_slmbcmgr);
@@ -169,6 +199,7 @@ int main ()
 
 	R (test1);
 	R (test2);
+	R (test3);
 
 	return 0;
 }

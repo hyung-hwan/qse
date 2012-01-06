@@ -64,7 +64,7 @@ int qse_cut_compstd (qse_cut_t* cut, const qse_char_t* sptr)
 	return qse_cut_comp (cut, sptr, qse_strlen(sptr));
 }
 
-static qse_sio_t* open_sio (qse_cut_t* cut, const qse_char_t* file, int flags)
+static qse_sio_t* open_sio_file (qse_cut_t* cut, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
 
@@ -79,23 +79,29 @@ static qse_sio_t* open_sio (qse_cut_t* cut, const qse_char_t* file, int flags)
 	return sio;
 }
 
+struct sio_std_name_t
+{
+	const qse_char_t* ptr;
+	qse_size_t        len;
+};
+
+static struct sio_std_name_t sio_std_names[] =
+{
+	{ QSE_T("stdin"),   5 },
+	{ QSE_T("stdout"),  6 },
+	{ QSE_T("stderr"),  6 }
+};
 
 static qse_sio_t* open_sio_std (qse_cut_t* cut, qse_sio_std_t std, int flags)
 {
-	static const qse_char_t* sio_std_names[] =
-	{
-		QSE_T("stdin"),
-		QSE_T("stdout"),
-		QSE_T("stderr"),
-	};
 	qse_sio_t* sio;
 
 	sio = qse_sio_openstd (cut->mmgr, 0, std, flags);
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std];
-		ea.len = qse_strlen (sio_std_names[std]);
+		ea.ptr = sio_std_names[std].ptr;
+		ea.len = sio_std_names[std].len;
 		qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 	}
 	return sio;
@@ -114,7 +120,7 @@ static qse_ssize_t xin (
 		{
 			/* main data stream */
 			sio = xtn->infile?
-				open_sio (cut, xtn->infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
+				open_sio_file (cut, xtn->infile, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR):
 				open_sio_std (cut, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
@@ -132,15 +138,20 @@ static qse_ssize_t xin (
 		{
 			qse_ssize_t n = qse_sio_getstrn (arg->handle, buf, len);
 
-			if (n == -1)
+			if (n <= -1)
 			{
+				qse_cstr_t ea;
 				if (xtn->infile)
 				{
-					qse_cstr_t ea;
 					ea.ptr = xtn->infile;
 					ea.len = qse_strlen (xtn->infile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 				}
+				else
+				{
+					ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
+					ea.len = sio_std_names[QSE_SIO_STDIN].len;
+				}
+				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 			}
 
 			return n;
@@ -163,7 +174,7 @@ static qse_ssize_t xout (
 		case QSE_CUT_IO_OPEN:
 		{
 			sio = xtn->outfile?
-				open_sio (cut, xtn->outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR):
+				open_sio_file (cut, xtn->outfile, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR):
 				open_sio_std (cut, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 			arg->handle = sio;
@@ -182,15 +193,20 @@ static qse_ssize_t xout (
 		{
 			qse_ssize_t n = qse_sio_putstrn (arg->handle, dat, len);
 
-			if (n == -1)
+			if (n <= -1)
 			{
+				qse_cstr_t ea;
 				if (xtn->outfile)
 				{
-					qse_cstr_t ea;
 					ea.ptr = xtn->outfile;
 					ea.len = qse_strlen (xtn->outfile);
-					qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 				}
+				else
+				{
+					ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
+					ea.len = sio_std_names[QSE_SIO_STDOUT].len;
+				}
+				qse_cut_seterrnum (cut, QSE_CUT_EIOFIL, &ea);
 			}
 
 			return n;
@@ -202,6 +218,7 @@ static qse_ssize_t xout (
 }
 
 /* TODO: refer to sed/std.c and make similar enhancements */
+/* TODO: accept cmgr */
 int qse_cut_execstd (qse_cut_t* cut, const qse_char_t* infile, const qse_char_t* outfile)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (cut);

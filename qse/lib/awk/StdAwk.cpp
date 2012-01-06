@@ -169,7 +169,7 @@ int StdAwk::openPipe (Pipe& io)
 { 
 	Awk::Pipe::Mode mode = io.getMode();
 	qse_pio_t* pio = QSE_NULL;
-	int flags = QSE_PIO_TEXT | QSE_PIO_SHELL;
+	int flags = QSE_PIO_TEXT | QSE_PIO_SHELL | QSE_PIO_IGNOREMBWCERR;
 
 	switch (mode)
 	{

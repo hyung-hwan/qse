@@ -34,16 +34,14 @@ static const qse_char_t* src = QSE_T(
 	"}"
 );
 
-static qse_char_t srcout[5000];
-
 int main ()
 {
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
 
-	qse_awk_parsestd_in_t psin;
-	qse_awk_parsestd_out_t psout;
+	qse_awk_parsestd_t psin;
+	qse_awk_parsestd_t psout;
 
 	int ret;
 
@@ -54,13 +52,13 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	qse_memset (srcout, QSE_T(' '), QSE_COUNTOF(srcout)-1);
-	srcout[QSE_COUNTOF(srcout)-1] = QSE_T('\0');
+	psin.type = QSE_AWK_PARSESTD_STR;
+	psin.u.str.ptr = src;
+	psin.u.str.len = qse_strlen(src);
 
-	psin.type = QSE_AWK_PARSESTD_CP;
-	psin.u.cp  = src;
-	psout.type = QSE_AWK_PARSESTD_CP;
-	psout.u.cp  = srcout;
+	psout.type = QSE_AWK_PARSESTD_STR;
+	/* ps.out.u.str.ptr and ps.out.u.str.len are set when qse_awk_parsestd() 
+	 * returns success */
 
 	ret = qse_awk_parsestd (awk, &psin, &psout);
 	if (ret <= -1)
@@ -70,9 +68,11 @@ int main ()
 		ret = -1; goto oops;
 	}
 
-	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), srcout);
+	qse_printf (QSE_T("DEPARSED SOURCE:\n%s\n"), psout.u.str.ptr);
 	qse_printf (QSE_T("=================================\n"));
 	qse_fflush (QSE_STDOUT);
+
+	QSE_MMGR_FREE (qse_awk_getmmgr(awk), psout.u.str.ptr);
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 
