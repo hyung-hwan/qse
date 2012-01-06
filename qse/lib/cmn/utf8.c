@@ -73,53 +73,40 @@ static QSE_INLINE __utf8_t* get_utf8_slot (qse_wchar_t uc)
 	return QSE_NULL; /* invalid character */
 }
 
-qse_size_t qse_uctoutf8len (qse_wchar_t uc)
-{
-	__utf8_t* cur = get_utf8_slot (uc);
-	return (cur == QSE_NULL)? 0: (qse_size_t)cur->length;
-}
-
-/* wctomb for utf8/unicode */
 qse_size_t qse_uctoutf8 (qse_wchar_t uc, qse_mchar_t* utf8, qse_size_t size)
 {
 	__utf8_t* cur = get_utf8_slot (uc);
-	int index;
 
 	if (cur == QSE_NULL) return 0; /* illegal character */
 
-	if (cur->length > size)
+	if (utf8 && cur->length <= size)
 	{
-		/* buffer not big enough. index indicates the buffer 
-		 * size needed */
-		return size + 1;
+		int index = cur->length;
+		while (index > 1) 
+		{
+			/*
+			 * 0x3F: 00111111
+			 * 0x80: 10000000
+			 */
+			utf8[--index] = (uc & 0x3F) | 0x80;
+			uc >>= 6;
+		}
+
+		utf8[0] = uc | cur->fbyte;
 	}
 
-	index = cur->length;
-	while (index > 1) 
-	{
-		/*
-		 * 0x3F: 00111111
-		 * 0x80: 10000000
-		 */
-		utf8[--index] = (uc & 0x3F) | 0x80;
-		uc >>= 6;
-	}
-
-	utf8[0] = uc | cur->fbyte;
+	/* small buffer is also indicated by this return value
+	 * greater than 'size'. */
 	return (qse_size_t)cur->length;
 }
 
-/* mbtowc for utf8/unicode */
 qse_size_t qse_utf8touc (
 	const qse_mchar_t* utf8, qse_size_t size, qse_wchar_t* uc)
 {
 	__utf8_t* cur, * end;
-#if 0
-	qse_mchar_t c, t;
-	int count = 0;
-#endif
 
 	QSE_ASSERT (utf8 != QSE_NULL);
+	QSE_ASSERT (size > 0);
 	QSE_ASSERT (QSE_SIZEOF(qse_mchar_t) == 1);
 	QSE_ASSERT (QSE_SIZEOF(qse_wchar_t) >= 2);
 
@@ -130,81 +117,37 @@ qse_size_t qse_utf8touc (
 	{
 		if ((utf8[0] & cur->mask) == cur->fbyte) 
 		{
-			int i;
-			qse_wchar_t w;
 
-			if (size < cur->length) return size + 1; 
-
-			w = utf8[0] & cur->fmask;
-			for (i = 1; i < cur->length; i++)
-			{
-				if (!(utf8[i] & 0x80)) return 0; 
-				w = (w << 6) | (utf8[i] & 0x3F);
-			}
-
-			*uc = w;
-			return (qse_size_t)cur->length;
-		}
-		cur++;
-	}
-
-	return 0; /* error - invalid sequence */
-	
-#if 0
-	c = *utf8;
-	w = c;
-
-	while (cur < end) 
-	{
-		count++;
-
-		if ((c & cur->mask) == cur->fbyte) 
-		{
-			w &= cur->upper;
-			if (w < cur->lower) break; /* wrong value */
-			*uc = w;
-			return (qse_size_t)count;
-		}
-
-		if (size <= count) break; /* insufficient input */
-		utf8++; /* advance to the next character in the sequence */
-
-		t = (*utf8 ^ 0x80) & 0xFF;
-		if (t & 0xC0) break;
-		w = (w << 6) | t;
-
-		cur++;
-	}
-
-	return 0; /* error - invalid sequence */
-#endif
-}
-
-/* mblen for utf8 */
-qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t len)
-{
-	__utf8_t* cur, * end;
-
-	end = utf8_table + QSE_COUNTOF(utf8_table);
-	cur = utf8_table;
-
-	while (cur < end) 
-	{
-		if ((utf8[0] & cur->mask) == cur->fbyte) 
-		{
-			int i;
-
-			/* if len is less that cur->length, the incomplete-seqeunce 
+			/* if size is less that cur->length, the incomplete-seqeunce 
 			 * error is naturally indicated. so validate the string
-			 * only if len is as large as cur->length. */
+			 * only if size is as large as cur->length. */
 
-			if (len >= cur->length) 
+			if (size >= cur->length) 
 			{
-				for (i = 1; i < cur->length; i++)
+				int i;
+
+				if (uc)
 				{
-					/* in utf8, trailing bytes are all
-					 * set with 0x80. if not, invalid */
-					if (!(utf8[i] & 0x80)) return 0; 
+					qse_wchar_t w;
+
+					w = utf8[0] & cur->fmask;
+					for (i = 1; i < cur->length; i++)
+					{
+						/* in utf8, trailing bytes are all
+						 * set with 0x80. if not, invalid */
+						if (!(utf8[i] & 0x80)) return 0; 
+						w = (w << 6) | (utf8[i] & 0x3F);
+					}
+					*uc = w;
+				}
+				else
+				{
+					for (i = 1; i < cur->length; i++)
+					{
+						/* in utf8, trailing bytes are all
+						 * set with 0x80. if not, invalid */
+						if (!(utf8[i] & 0x80)) return 0; 
+					}
 				}
 			}
 
@@ -213,7 +156,7 @@ qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t len)
 			 * and 
 			 *    the incomplete seqeunce error (len < cur->length).
 			 */
-			return (qse_size_t)cur->length; 
+			return (qse_size_t)cur->length;
 		}
 		cur++;
 	}
@@ -221,7 +164,13 @@ qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t len)
 	return 0; /* error - invalid sequence */
 }
 
+qse_size_t qse_utf8len (const qse_mchar_t* utf8, qse_size_t size)
+{
+	return qse_utf8touc (utf8, size, QSE_NULL);
+}
+
 qse_size_t qse_utf8lenmax (void)
 {
 	return QSE_UTF8LEN_MAX;
 }
+

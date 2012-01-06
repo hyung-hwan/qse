@@ -37,59 +37,31 @@
 #ifdef HAVE_STDLIB_H
 #	include <stdlib.h>
 #endif
-
-qse_size_t qse_slmbrlen (
-	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
-{
-#if defined(HAVE_MBRLEN)
-	size_t n;
-
-	n = mbrlen (mb, mbl, (mbstate_t*)state);
-	if (n == 0) return 1; /* a null character */
-
-	if (n == (size_t)-1) return 0; /* invalid sequence */
-	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
-
-	return (qse_size_t)n;
-
-	#if 0
-	n = mblen (mb, mbl);
-	if (n == (size_t)-1) return 0; /* invalid or incomplete sequence */
-	if (n == 0) return 1; /* a null character */
-	return (qse_size_t)n;
-	#endif
-#else
-	#error #### NOT SUPPORTED ####
+#if defined(_WIN32)
+#	include <windows.h>
 #endif
-}
-
-qse_size_t qse_slmbrtoslwc (
-	const qse_mchar_t* mb, qse_size_t mbl, 
-	qse_wchar_t* wc, qse_mbstate_t* state)
-{
-#if defined(HAVE_MBRTOWC)
-	size_t n;
-
-	n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
-	if (n == 0) 
-	{
-		*wc = QSE_WT('\0');
-		return 1;
-	}
-
-	if (n == (size_t)-1) return 0; /* invalid sequence */
-	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
-	return (qse_size_t)n;
-#else
-	#error #### NOT SUPPORTED ####
-#endif
-}
 
 qse_size_t qse_slwcrtoslmb (
 	qse_wchar_t wc, qse_mchar_t* mb,
 	qse_size_t mbl, qse_mbstate_t* state)
 {
-#if defined(HAVE_WCRTOMB)
+#if defined(_WIN32)
+	int n;
+
+	n = WideCharToMultiByte (
+		CP_THREAD_ACP, 0 /*WC_ERR_INVALID_CHARS*/, 
+		&wc, 1, mb, mbl, NULL, NULL);
+	if (n == 0)
+	{
+		DWORD e = GetLastError();
+		if (e == ERROR_INSUFFICIENT_BUFFER) return mbl + 1;
+		/*if (e == ERROR_NO_UNICODE_TRANSLATION) return 0;*/
+		/* treat all other erros as invalid unicode character */
+	}
+
+	return (qse_size_t)n;
+
+#elif defined(HAVE_WCRTOMB)
 	size_t n;
 
 	if (mbl < QSE_MBLEN_MAX)
@@ -123,6 +95,90 @@ qse_size_t qse_slwcrtoslmb (
 #endif
 }
 
+qse_size_t qse_slmbrtoslwc (
+	const qse_mchar_t* mb, qse_size_t mbl, 
+	qse_wchar_t* wc, qse_mbstate_t* state)
+{
+#if defined(_WIN32)
+	qse_size_t dbcslen;
+	int n;
+
+	QSE_ASSERT (mb != QSE_NULL);
+	QSE_ASSERT (mbl > 0);
+
+	dbcslen = IsDBCSLeadByteEx(CP_THREAD_ACP, *mb)? 2: 1;
+	if (mbl < dbcslen) return mbl + 1; /* incomplete sequence */
+
+	n = MultiByteToWideChar (
+		CP_THREAD_ACP, MB_ERR_INVALID_CHARS, mb, dbcslen, wc, 1);
+	if (n == 0) 
+	{
+		/*DWORD e = GetLastError();*/
+		/*if (e == ERROR_NO_UNICODE_TRANSLATION) return 0;*/
+		/*if (e == ERROR_INSUFFICIENT_BUFFER) return mbl + 1;*/
+		return 0;
+	}
+
+	return dbcslen;
+
+#elif defined(HAVE_MBRTOWC)
+	size_t n;
+
+	QSE_ASSERT (mb != QSE_NULL);
+	QSE_ASSERT (mbl > 0);
+
+	n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
+	if (n == 0) 
+	{
+		if (wc) *wc = QSE_WT('\0');
+		return 1;
+	}
+
+	if (n == (size_t)-1) return 0; /* invalid sequence */
+	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
+	return (qse_size_t)n;
+#else
+	#error #### NOT SUPPORTED ####
+#endif
+}
+
+qse_size_t qse_slmbrlen (
+	const qse_mchar_t* mb, qse_size_t mbl, qse_mbstate_t* state)
+{
+#if defined(_WIN32)
+	qse_size_t dbcslen;
+
+	QSE_ASSERT (mb != QSE_NULL);
+	QSE_ASSERT (mbl > 0);
+
+	dbcslen = IsDBCSLeadByteEx(CP_THREAD_ACP, *mb)? 2: 1;
+	if (mbl < dbcslen) return mbl + 1; /* incomplete sequence */
+	return dbcslen;
+#elif defined(HAVE_MBRLEN)
+	size_t n;
+
+	QSE_ASSERT (mb != QSE_NULL);
+	QSE_ASSERT (mbl > 0);
+
+	n = mbrlen (mb, mbl, (mbstate_t*)state);
+	if (n == 0) return 1; /* a null character */
+
+	if (n == (size_t)-1) return 0; /* invalid sequence */
+	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
+
+	return (qse_size_t)n;
+
+	#if 0
+	n = mblen (mb, mbl);
+	if (n == (size_t)-1) return 0; /* invalid or incomplete sequence */
+	if (n == 0) return 1; /* a null character */
+	return (qse_size_t)n;
+	#endif
+#else
+	#error #### NOT SUPPORTED ####
+#endif
+}
+
 /* man mbsinit
  * For 8-bit encodings, all states are equivalent to  the  initial  state.
  * For multibyte encodings like UTF-8, EUC-*, BIG5 or SJIS, the wide char‐
@@ -131,11 +187,6 @@ qse_size_t qse_slwcrtoslmb (
  * mbrtowc(3) do produce non-initial states when interrupted in the middle
  * of a character.
  */
-qse_size_t qse_slmblen (const qse_mchar_t* mb, qse_size_t mbl)
-{
-	qse_mbstate_t state = { { 0, } };
-	return qse_slmbrlen (mb, mbl, &state);
-}
 
 qse_size_t qse_slmbtoslwc (const qse_mchar_t* mb, qse_size_t mbl, qse_wchar_t* wc)
 {
@@ -149,7 +200,20 @@ qse_size_t qse_slwctoslmb (qse_wchar_t wc, qse_mchar_t* mb, qse_size_t mbl)
 	return qse_slwcrtoslmb (wc, mb, mbl, &state);
 }
 
-int qse_slmblenmax (void)
+qse_size_t qse_slmblen (const qse_mchar_t* mb, qse_size_t mbl)
 {
+	qse_mbstate_t state = { { 0, } };
+	return qse_slmbrlen (mb, mbl, &state);
+}
+
+qse_size_t qse_slmblenmax (void)
+{
+#if defined(_WIN32)
+	/* Windows doesn't handle utf8 properly even when your code page
+	 * is CP_UTF8(65001). you should use functions in utf8.c for utf8 
+	 * handleing on windows. */
+	return 2; 
+#else
 	return MB_CUR_MAX;
+#endif
 }

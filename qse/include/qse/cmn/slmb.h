@@ -24,6 +24,12 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/** @file
+ * This file provides functions, types, macros for 
+ * multibyte/wide-character conversion based on system locale.
+ *
+ * 
+ */
 
 /**
  * The qse_mbstate_t type defines a structure large enough to hold
@@ -114,7 +120,7 @@ qse_size_t qse_slmblen (
  * The qse_slmblenmax() function returns the value of MB_CUR_MAX.
  * Note that QSE_MBLEN_MAX defines MB_LEN_MAX.
  */
-int qse_slmblenmax (
+qse_size_t qse_slmblenmax (
 	void
 );
 

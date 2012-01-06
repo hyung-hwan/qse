@@ -697,7 +697,7 @@ typedef void* (*qse_mmgr_realloc_t) (void* ctx, void* ptr, qse_size_t n);
 typedef void  (*qse_mmgr_free_t)    (void* ctx, void* ptr);
 
 /**
- * The qse_mmgr_t type defines a set of functions for memory management.
+ * The qse_mmgr_t type defines the memory management interface.
  * As the type is merely a structure, it is just used as a single container
  * for memory management functions with a pointer to user-defined data. 
  * The user-defined data pointer @a ctx is passed to each memory management 
@@ -730,7 +730,10 @@ typedef qse_size_t (*qse_cmgr_wctomb_t) (
 
 /**
  * The qse_cmgr_t type defines the character-level interface to 
- * multibyte/wide-character string conversion.
+ * multibyte/wide-character conversion. This interface doesn't 
+ * provide any facility to store conversion state in a context
+ * independent manner. This leads to the limitation that it can
+ * handle a stateless multibyte encoding only.
  */
 struct qse_cmgr_t
 {

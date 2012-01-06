@@ -58,36 +58,40 @@ typedef struct xtn_t
 	{
 		struct 
 		{
-			qse_awk_parsestd_type_t type;
+			qse_awk_parsestd_t* x;
 			union
 			{
-				const qse_char_t* file; 
-				const qse_char_t* cp;
+				struct 
+				{
+					qse_sio_t* sio; /* the handle to an open file */
+					qse_cstr_t dir;
+				} file;
 				struct 
 				{
 					const qse_char_t* ptr;	
 					const qse_char_t* end;	
-				} cpl;
+				} str;
 			} u;
-			qse_cstr_t dir;
-			qse_sio_t* handle; /* the handle to an open file */
 		} in;
 
 		struct
 		{
-			qse_awk_parsestd_type_t type;
+			qse_awk_parsestd_t* x;
 			union
 			{
-				const qse_char_t* file;
-				qse_char_t*       cp;
+				struct
+				{
+					qse_sio_t* sio;
+				} file;
 				struct 
 				{
-					qse_xstr_t* osp;
+					qse_str_t* buf;
+#if 0
 					qse_char_t* ptr;	
 					qse_char_t* end;	
-				} cpl;
+#endif
+				} str;
 			} u;
-			qse_sio_t* handle;
 		} out;
 
 	} s;
@@ -337,11 +341,17 @@ static qse_sio_t* open_sio_rtx (qse_awk_rtx_t* rtx, const qse_char_t* file, int 
 	return sio;
 }
 
-static const qse_char_t* sio_std_names[] =
+struct sio_std_name_t
 {
-	QSE_T("stdin"),
-	QSE_T("stdout"),
-	QSE_T("stderr"),
+	const qse_char_t* ptr;
+	qse_size_t        len;
+};
+
+static struct sio_std_name_t sio_std_names[] =
+{
+	{ QSE_T("stdin"),   5 },
+	{ QSE_T("stdout"),  6 },
+	{ QSE_T("stderr"),  6 }
 };
 
 static qse_sio_t* open_sio_std (qse_awk_t* awk, qse_sio_std_t std, int flags)
@@ -351,8 +361,8 @@ static qse_sio_t* open_sio_std (qse_awk_t* awk, qse_sio_std_t std, int flags)
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std];
-		ea.len = qse_strlen (sio_std_names[std]);
+		ea.ptr = sio_std_names[std].ptr;
+		ea.len = sio_std_names[std].len;
 		qse_awk_seterrnum (awk, QSE_AWK_EOPEN, &ea);
 	}
 	return sio;
@@ -366,8 +376,8 @@ static qse_sio_t* open_sio_std_rtx (qse_awk_rtx_t* rtx, qse_sio_std_t std, int f
 	if (sio == QSE_NULL)
 	{
 		qse_cstr_t ea;
-		ea.ptr = sio_std_names[std];
-		ea.len = qse_strlen (sio_std_names[std]);
+		ea.ptr = sio_std_names[std].ptr;
+		ea.len = sio_std_names[std].len;
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &ea);
 	}
 	return sio;
@@ -379,47 +389,42 @@ static qse_ssize_t sf_in_open (
 {
 	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
-		switch (xtn->s.in.type)
+		switch (xtn->s.in.x->type)
 		{
 			case QSE_AWK_PARSESTD_FILE:
-				if (xtn->s.in.u.file == QSE_NULL) return -1;
-
-				if (xtn->s.in.u.file[0] == QSE_T('-') &&
-				    xtn->s.in.u.file[1] == QSE_T('\0'))
+				if (xtn->s.in.x->u.file.path == QSE_NULL ||
+				    (xtn->s.in.x->u.file.path[0] == QSE_T('-') &&
+				     xtn->s.in.x->u.file.path[1] == QSE_T('\0')))
 				{
 					/* special file name '-' */
-					xtn->s.in.handle = open_sio_std (
+					xtn->s.in.u.file.sio = open_sio_std (
 						awk, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-					if (xtn->s.in.handle == QSE_NULL) return -1;
+					if (xtn->s.in.u.file.sio == QSE_NULL) return -1;
 				}
 				else
 				{
 					const qse_char_t* base;
 
-					xtn->s.in.handle = open_sio (
-						awk, xtn->s.in.u.file,
+					xtn->s.in.u.file.sio = open_sio (
+						awk, xtn->s.in.x->u.file.path,
 						QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 					);
-					if (xtn->s.in.handle == QSE_NULL) return -1;
+					if (xtn->s.in.u.file.sio == QSE_NULL) return -1;
 
-					base = qse_basename (xtn->s.in.u.file);
-					if (base != xtn->s.in.u.file)
+					base = qse_basename (xtn->s.in.x->u.file.path);
+					if (base != xtn->s.in.x->u.file.path)
 					{
-						xtn->s.in.dir.ptr = xtn->s.in.u.file;
-						xtn->s.in.dir.len = base - xtn->s.in.u.file;
+						xtn->s.in.u.file.dir.ptr = xtn->s.in.x->u.file.path;
+						xtn->s.in.u.file.dir.len = base - xtn->s.in.x->u.file.path;
 					}
 				}
+				if (xtn->s.in.x->u.file.cmgr)
+					qse_sio_setcmgr (xtn->s.in.u.file.sio, xtn->s.in.x->u.file.cmgr);
 				return 1;
 
-			case QSE_AWK_PARSESTD_STDIO:
-				xtn->s.in.handle = open_sio_std (
-					awk, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
-				if (xtn->s.in.handle == QSE_NULL) return -1;
-				return 1;
-
-			case QSE_AWK_PARSESTD_CP:
-			case QSE_AWK_PARSESTD_CPL:
-				xtn->s.in.handle = QSE_NULL;
+			case QSE_AWK_PARSESTD_STR:
+				xtn->s.in.u.str.ptr = xtn->s.in.x->u.str.ptr;
+				xtn->s.in.u.str.end = xtn->s.in.x->u.str.ptr + xtn->s.in.x->u.str.len;
 				return 1;
 		}
 
@@ -433,11 +438,11 @@ static qse_ssize_t sf_in_open (
 		qse_char_t fbuf[64];
 		qse_char_t* dbuf = QSE_NULL;
 	
-		if (xtn->s.in.dir.len > 0 && arg->name[0] != QSE_T('/'))
+		if (xtn->s.in.u.file.dir.len > 0 && arg->name[0] != QSE_T('/'))
 		{
 			qse_size_t tmplen, totlen;
 			
-			totlen = qse_strlen(arg->name) + xtn->s.in.dir.len;
+			totlen = qse_strlen(arg->name) + xtn->s.in.u.file.dir.len;
 			if (totlen >= QSE_COUNTOF(fbuf))
 			{
 				dbuf = QSE_MMGR_ALLOC (
@@ -456,8 +461,8 @@ static qse_ssize_t sf_in_open (
 
 			tmplen = qse_strncpy (
 				(qse_char_t*)file,
-				xtn->s.in.dir.ptr,
-				xtn->s.in.dir.len
+				xtn->s.in.u.file.dir.ptr,
+				xtn->s.in.u.file.dir.len
 			);
 			qse_strcpy ((qse_char_t*)file + tmplen, arg->name);
 		}
@@ -485,7 +490,16 @@ static qse_ssize_t sf_in_close (
 {
 	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
-		if (xtn->s.in.handle) qse_sio_close (xtn->s.in.handle);
+		switch (xtn->s.in.x->type)
+		{
+			case QSE_AWK_PARSESTD_FILE:
+				qse_sio_close (xtn->s.in.u.file.sio);
+				break;
+			
+			case QSE_AWK_PARSESTD_STR:
+				/* nothing to close */
+				break;
+		}
 	}
 	else
 	{
@@ -502,41 +516,38 @@ static qse_ssize_t sf_in_read (
 {
 	if (arg == QSE_NULL || arg->name == QSE_NULL)
 	{
-		switch (xtn->s.in.type)
+		switch (xtn->s.in.x->type)
 		{
 			case QSE_AWK_PARSESTD_FILE:
-			case QSE_AWK_PARSESTD_STDIO:
 			{
 				qse_ssize_t n;
 
-				QSE_ASSERT (xtn->s.in.handle != QSE_NULL);
-				n = qse_sio_getstrn (xtn->s.in.handle, data, size);
-				if (n == -1)
+				QSE_ASSERT (xtn->s.in.u.file.sio != QSE_NULL);
+				n = qse_sio_getstrn (xtn->s.in.u.file.sio, data, size);
+				if (n <= -1)
 				{
 					qse_cstr_t ea;
-					ea.ptr = xtn->s.in.u.file;
-					ea.len = qse_strlen(ea.ptr);
+					if (xtn->s.in.x->u.file.path)
+					{
+						ea.ptr = xtn->s.in.x->u.file.path;
+						ea.len = qse_strlen(ea.ptr);
+					}
+					else
+					{
+						ea.ptr = sio_std_names[QSE_SIO_STDIN].ptr;
+						ea.len = sio_std_names[QSE_SIO_STDIN].len;
+					}
 					qse_awk_seterrnum (awk, QSE_AWK_EREAD, &ea);
 				}
 				return n;
 			}
 
-			case QSE_AWK_PARSESTD_CP:
+			case QSE_AWK_PARSESTD_STR:
 			{
 				qse_size_t n = 0;
-				while (n < size && *xtn->s.in.u.cp != QSE_T('\0'))
+				while (n < size && xtn->s.in.u.str.ptr < xtn->s.in.u.str.end)
 				{
-					data[n++] = *xtn->s.in.u.cp++;
-				}
-				return n;
-			}
-		
-			case QSE_AWK_PARSESTD_CPL:
-			{
-				qse_size_t n = 0;
-				while (n < size && xtn->s.in.u.cpl.ptr < xtn->s.in.u.cpl.end)
-				{
-					data[n++] = *xtn->s.in.u.cpl.ptr++;
+					data[n++] = *xtn->s.in.u.str.ptr++;
 				}
 				return n;
 			}
@@ -551,7 +562,7 @@ static qse_ssize_t sf_in_read (
 
 		QSE_ASSERT (arg->handle != QSE_NULL);
 		n = qse_sio_getstrn (arg->handle, data, size);
-		if (n == -1)
+		if (n <= -1)
 		{
 			qse_cstr_t ea;
 			ea.ptr = arg->name;
@@ -595,43 +606,42 @@ static qse_ssize_t sf_out (
 	{
 		case QSE_AWK_SIO_OPEN:
 		{
-			switch (xtn->s.out.type)
+			switch (xtn->s.out.x->type)
 			{
 				case QSE_AWK_PARSESTD_FILE:
-					if (xtn->s.out.u.file == QSE_NULL) return -1;
-	
-					if (xtn->s.out.u.file[0] == QSE_T('-') &&
-					    xtn->s.out.u.file[1] == QSE_T('\0'))
+					if (xtn->s.out.x->u.file.path == QSE_NULL || 
+					    (xtn->s.out.x->u.file.path[0] == QSE_T('-') &&
+					     xtn->s.out.x->u.file.path[1] == QSE_T('\0')))
 					{
 						/* special file name '-' */
-						xtn->s.out.handle = open_sio_std (
+						xtn->s.out.u.file.sio = open_sio_std (
 							awk, QSE_SIO_STDOUT, 
 							QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR
 						);
-						if (xtn->s.out.handle == QSE_NULL) return -1;
+						if (xtn->s.out.u.file.sio == QSE_NULL) return -1;
 					}
 					else
 					{
-						xtn->s.out.handle = open_sio (
-							awk, xtn->s.out.u.file, 
+						xtn->s.out.u.file.sio = open_sio (
+							awk, xtn->s.out.x->u.file.path, 
 							QSE_SIO_WRITE | QSE_SIO_CREATE | 
 							QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR
 						);
-						if (xtn->s.out.handle == QSE_NULL) return -1;
+						if (xtn->s.out.u.file.sio == QSE_NULL) return -1;
 					}
+
+					if (xtn->s.out.x->u.file.cmgr)
+						qse_sio_setcmgr (xtn->s.out.u.file.sio, xtn->s.out.x->u.file.cmgr);
 					return 1;
 
-				case QSE_AWK_PARSESTD_STDIO:
-					xtn->s.out.handle = open_sio_std (
-						awk, QSE_SIO_STDOUT,
-						QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR
-					);
-					if (xtn->s.out.handle == QSE_NULL) return -1;
-					return 1;
+				case QSE_AWK_PARSESTD_STR:
+					xtn->s.out.u.str.buf = qse_str_open (awk->mmgr, 0, 512);
+					if (xtn->s.out.u.str.buf == QSE_NULL)
+					{
+						qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+						return -1;
+					}
 
-				case QSE_AWK_PARSESTD_CP:
-				case QSE_AWK_PARSESTD_CPL:
-					xtn->s.out.handle = QSE_NULL;
 					return 1;
 			}
 
@@ -641,23 +651,15 @@ static qse_ssize_t sf_out (
 
 		case QSE_AWK_SIO_CLOSE:
 		{
-			switch (xtn->s.out.type)
+			switch (xtn->s.out.x->type)
 			{
 				case QSE_AWK_PARSESTD_FILE:
-				case QSE_AWK_PARSESTD_STDIO:
-	
-					qse_sio_flush (xtn->s.out.handle);
-					qse_sio_close (xtn->s.out.handle);
+					qse_sio_close (xtn->s.out.u.file.sio);
 					return 0;
 
-				case QSE_AWK_PARSESTD_CP:
-					*xtn->s.out.u.cp = QSE_T('\0');
-					return 0;
-	
-				case QSE_AWK_PARSESTD_CPL:
-					xtn->s.out.u.cpl.osp->len = 
-						xtn->s.out.u.cpl.ptr -
-						xtn->s.out.u.cpl.osp->ptr;
+				case QSE_AWK_PARSESTD_STR:
+					/* i don't close xtn->s.out.u.str.buf intentionally here.
+					 * it will be closed at the end of qse_awk_parsestd() */
 					return 0;
 			}
 
@@ -666,43 +668,41 @@ static qse_ssize_t sf_out (
 
 		case QSE_AWK_SIO_WRITE:
 		{
-			switch (xtn->s.out.type)
+			switch (xtn->s.out.x->type)
 			{
 				case QSE_AWK_PARSESTD_FILE:
-				case QSE_AWK_PARSESTD_STDIO:
 				{
 					qse_ssize_t n;
-					QSE_ASSERT (xtn->s.out.handle != QSE_NULL);
-					n = qse_sio_putstrn (xtn->s.out.handle, data, size);
-					if (n == -1)
+					QSE_ASSERT (xtn->s.out.u.file.sio != QSE_NULL);
+					n = qse_sio_putstrn (xtn->s.out.u.file.sio, data, size);
+					if (n <= -1)
 					{
 						qse_cstr_t ea;
-						ea.ptr = xtn->s.in.u.file;
-						ea.len = qse_strlen(ea.ptr);
+						if (xtn->s.out.x->u.file.path)
+						{
+							ea.ptr = xtn->s.out.x->u.file.path;
+							ea.len = qse_strlen(ea.ptr);
+						}
+						else
+						{
+							ea.ptr = sio_std_names[QSE_SIO_STDOUT].ptr;
+							ea.len = sio_std_names[QSE_SIO_STDOUT].len;
+						}
 						qse_awk_seterrnum (awk, QSE_AWK_EWRITE, &ea);
 					}
 	
 					return n;
 				}
 	
-				case QSE_AWK_PARSESTD_CP:
+				case QSE_AWK_PARSESTD_STR:
 				{
-					qse_size_t n = 0;
-					while (n < size && *xtn->s.out.u.cp != QSE_T('\0'))
+					if (size > QSE_TYPE_MAX(qse_ssize_t)) size = QSE_TYPE_MAX(qse_ssize_t);
+					if (qse_str_ncat (xtn->s.out.u.str.buf, data, size) == (qse_size_t)-1)
 					{
-						*xtn->s.out.u.cp++ = data[n++];
+						qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+						return -1;
 					}
-					return n;
-				}
-
-				case QSE_AWK_PARSESTD_CPL:
-				{
-					qse_size_t n = 0;
-					while (n < size && xtn->s.out.u.cpl.ptr < xtn->s.out.u.cpl.end)
-					{
-						*xtn->s.out.u.cpl.ptr++ = data[n++];
-					}
-					return n;
+					return size;
 				}
 			}
 
@@ -715,12 +715,11 @@ static qse_ssize_t sf_out (
 }
 
 int qse_awk_parsestd (
-	qse_awk_t* awk, 
-        const qse_awk_parsestd_in_t* in,
-        qse_awk_parsestd_out_t* out)
+	qse_awk_t* awk, qse_awk_parsestd_t* in, qse_awk_parsestd_t* out)
 {
 	qse_awk_sio_t sio;
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	int n;
 
 	if (in == QSE_NULL)
 	{
@@ -729,67 +728,41 @@ int qse_awk_parsestd (
 		return -1;
 	}
 
-	switch (in->type)
+	if (in->type != QSE_AWK_PARSESTD_FILE &&
+	    in->type != QSE_AWK_PARSESTD_STR)
 	{
-		case QSE_AWK_PARSESTD_FILE:
-			xtn->s.in.u.file = in->u.file;
-			break;
-
-		case QSE_AWK_PARSESTD_CP:
-			xtn->s.in.u.cp = in->u.cp;
-			break;
-
-		case QSE_AWK_PARSESTD_CPL:
-			xtn->s.in.u.cpl.ptr = in->u.cpl.ptr;
-			xtn->s.in.u.cpl.end = in->u.cpl.ptr + in->u.cpl.len;
-			break;
-
-		case QSE_AWK_PARSESTD_STDIO:
-			/* nothing to do */
-			break;
-
-		default:
-			qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
-			return -1;
+		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+		return -1;
 	}
-
-	xtn->s.in.type = in->type;
-	xtn->s.in.handle = QSE_NULL;
 	sio.in = sf_in;
+	xtn->s.in.x = in;
 
 	if (out == QSE_NULL) sio.out = QSE_NULL;
 	else
 	{
-		switch (out->type)
+		if (out->type != QSE_AWK_PARSESTD_FILE &&
+		    out->type != QSE_AWK_PARSESTD_STR)
 		{
-			case QSE_AWK_PARSESTD_FILE:
-				xtn->s.out.u.file = out->u.file;
-				break;
-	
-			case QSE_AWK_PARSESTD_CP:
-				xtn->s.out.u.cp = out->u.cp;
-				break;
-	
-			case QSE_AWK_PARSESTD_CPL:
-				xtn->s.out.u.cpl.osp = &out->u.cpl;
-				xtn->s.out.u.cpl.ptr = out->u.cpl.ptr;
-				xtn->s.out.u.cpl.end = out->u.cpl.ptr + out->u.cpl.len;
-				break;
-
-			case QSE_AWK_PARSESTD_STDIO:
-				/* nothing to do */
-				break;
-	
-			default:
-				qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
-				return -1;
+			qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+			return -1;
 		}
-		xtn->s.out.type = out->type;
-		xtn->s.out.handle = QSE_NULL;
 		sio.out = sf_out;
+		xtn->s.out.x = out;
 	}
 
-	return qse_awk_parse (awk, &sio);
+	n = qse_awk_parse (awk, &sio);
+
+	if (out && out->type == QSE_AWK_PARSESTD_STR)
+	{
+		if (n >= 0)
+		{
+			QSE_ASSERT (xtn->s.out.u.str.buf != QSE_NULL);
+			qse_str_yield (xtn->s.out.u.str.buf, &out->u.str, 0);
+		}
+		if (xtn->s.out.u.str.buf) qse_str_close (xtn->s.out.u.str.buf);
+	}
+
+	return n;
 }
 
 /*** RTX_OPENSTD ***/
@@ -827,7 +800,7 @@ static qse_ssize_t awk_rio_pipe (
 				0, 
 				riod->name, 
 				QSE_NULL,
-				flags|QSE_PIO_SHELL|QSE_PIO_TEXT
+				flags|QSE_PIO_SHELL|QSE_PIO_TEXT|QSE_PIO_IGNOREMBWCERR
 			);
 
 			if (handle == QSE_NULL) return -1;
@@ -1271,6 +1244,13 @@ static qse_ssize_t awk_rio_console (
 	return -1;
 }
 
+/* TODO: provide a way to set cmgr for console files icf and ocf... 
+ *       should i accept something similar to qse_awk_parsestd_t? 
+ * 
+ *       what is the best way to change cmgr for pipes and files?
+ *       currently there is no way to change cmgr for each pipe and file.
+ *       you can change the global cmgr only with qse_setdflcmgr().
+ */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*             awk,
 	qse_size_t             xtnsize,
@@ -1288,8 +1268,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_cstr_t argv[16];
 	qse_cstr_t* argvp = QSE_NULL, * p2;
 	
-	rio.pipe    = awk_rio_pipe;
-	rio.file    = awk_rio_file;
+	rio.pipe = awk_rio_pipe;
+	rio.file = awk_rio_file;
 	rio.console = awk_rio_console;
 
 	if (icf != QSE_NULL)

@@ -37,7 +37,7 @@ int main ()
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
-	qse_awk_parsestd_in_t psin;
+	qse_awk_parsestd_t psin;
 	int ret = -1;
 
 	awk = qse_awk_openstd (0);
@@ -47,8 +47,9 @@ int main ()
 		goto oops;
 	}
 
-	psin.type = QSE_AWK_PARSESTD_CP;
-	psin.u.cp  = src;
+	psin.type = QSE_AWK_PARSESTD_STR;
+	psin.u.str.ptr = src;
+	psin.u.str.len = qse_strlen(src);
 
 	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
 	{
