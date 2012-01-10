@@ -5,6 +5,7 @@
 #include <qse/cmn/stdio.h>
 
 #include <locale.h>
+#include <wchar.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -29,6 +30,15 @@ static int test2 (void)
 	{
 		"\0",
 		"뛰어 올라봐", /* this text is in utf8. so some conversions fail on a non-utf8 locale */
+#if defined(QSE_ENDIAN_BIG)
+		/* this text is in cp949. 뛰어올라봐 */
+		"\xD9\xB6\xEE\xBE \xC3\xBF\xF3\xB6\xC1\xBA", 
+#elif defined(QSE_ENDIAN_LITTLE)
+		/* this text is in cp949. 뛰어올라봐 */
+		"\xB6\xD9\xBE\xEE \xBF\xC3\xB6\xF3\xBA\xC1", 
+#else
+#	error ENDIAN UNKNOWN
+#endif
 		"Fly to the universe"
 	};
 
@@ -43,11 +53,26 @@ static int test2 (void)
 		qse_printf (QSE_T("["));
 		while (j < k)
 		{
-			qse_size_t y = qse_slmblen (&x[i][j], k-j);
+			mbstate_t state;
+			qse_size_t y, ym, ymr;
+
+			y = qse_slmblen (&x[i][j], k-j);
+			ym = mblen (&x[i][j], k-j);
+
+			memset (&state, 0, sizeof(state));
+			ymr = mbrlen (&x[i][j], k-j, &state);
+
+			if (ym != ymr) 
+			{
+				/* if this line is shown, the c runtime library is buggy.
+				 * note that i assume we handle stateless encoding only
+				 * since the state is initlized to 0 above all the time */
+				qse_printf (QSE_T("***buggy clib [mblen=%d],[mbrlen=%d]***"), (int)ym, (int)ymr); 
+			}
 
 			if (y == 0) 
 			{
-				qse_printf (QSE_T("***illegal sequence***"));
+				qse_printf (QSE_T("***illegal sequence[y=%d][ym=%d][ymr=%d]***"), (int)y, (int)ym, (int)ymr);
 				break;
 			}
 			else if (y > k-j) 

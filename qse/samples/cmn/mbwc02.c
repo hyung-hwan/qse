@@ -149,7 +149,7 @@ static int test2 (void)
 		qse_printf (QSE_T("Converting %d wide-character - "), (int)len);
 
 		wlen = len;
-		n = qse_wcsntombsn (&x[i][j], &wlen, QSE_NULL, &mlen);
+		n = qse_wcsntombsn (x[i], &wlen, QSE_NULL, &mlen);
 		if (n == -1)
 		{
 			qse_printf (QSE_T("***illegal character[mlen=%d/wlen=%d]*** ["), (int)mlen, (int)wlen);
@@ -294,17 +294,22 @@ static int test4 (void)
 int main ()
 {
 #if defined(_WIN32)
-	char codepage[100];
-	UINT old_cp = GetConsoleOutputCP();
-	SetConsoleOutputCP (CP_UTF8);
-
-	/* TODO: on windows this set locale only affects those mbcs fucntions in clib.
-	 * it doesn't support utf8 i guess find a working way. the following won't work 
-	sprintf (codepage, ".%d", GetACP());
-	setlocale (LC_ALL, codepage);
-	*/
+	char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
 #else
 	setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
 #endif
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -316,8 +321,5 @@ int main ()
 	R (test3);
 	R (test4);
 
-#if defined(_WIN32)
-	SetConsoleOutputCP (old_cp);
-#endif
 	return 0;
 }

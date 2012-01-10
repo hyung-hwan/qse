@@ -220,13 +220,32 @@ AC_ARG_ENABLE([cxx], [AS_HELP_STRING([--enable-cxx],[build the library for C++ i
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
 
 
-AC_CHECK_LIB([socket], [socket], [SOCKET_LIBS="-lsocket"], 
-	[
-		AC_CHECK_LIB([socket], [socket], 
-			[SOCKET_LIBS="-lsocket -lnsl"], [], [-lnsl]
-		)
-	]
-)
+OLDLIBS="$LIBS"
+AC_SEARCH_LIBS([gethostbyname], [nsl])
+LIBS="$OLDLIBS"
+if test "$ac_cv_search_gethostbyname" != "none required" -a "$ac_cv_search_gethostbyname" != "no"
+then
+	SOCKET_LIBS="$SOCKET_LIBS -lnsl"
+fi
+
+OLDLIBS="$LIBS"
+AC_SEARCH_LIBS([socket], [socket])
+LIBS="$OLDLIBS"
+if test "$ac_cv_search_socket" != "none required" -a "$ac_cv_search_socket" != "no"
+then
+	SOCKET_LIBS="$SOCKET_LIBS -lsocket"
+fi
+
+AC_SUBST(SOCKET_LIBS)
+
+OLDLIBS="$LIBS"
+AC_SEARCH_LIBS([sendfile], [sendfile])
+LIBS="$OLDLIBS"
+if test "$ac_cv_search_sendfile" != "none required" -a "$ac_cv_search_socket" != "no"
+then
+	SENDFILE_LIBS="$SENDFILE_LIBS -lsendfile"
+fi
+AC_SUBST(SENDFILE_LIBS)
 
 AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)
@@ -323,5 +342,6 @@ echo "  Wide character: ${enable_wchar_is}"
 echo "  Math library: ${LIBM}"
 echo "  Pthread library: ${PTHREAD_LIBS}"
 echo "  Socket library: ${SOCKET_LIBS}"
+echo "  Sendfile library: ${SENDFILE_LIBS}"
 echo "-------------------------------------------------------------------------"
 ]

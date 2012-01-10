@@ -102,7 +102,6 @@ int qse_wcsntombsn (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,
 	qse_mchar_t* mbs, qse_size_t* mbslen)
 {
-
 	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, dfl_cmgr);
 }
 
