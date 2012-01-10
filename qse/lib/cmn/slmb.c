@@ -120,6 +120,35 @@ qse_size_t qse_slmbrtoslwc (
 	}
 
 	return dbcslen;
+#elif defined(__sun__) && defined(HAVE_MBRTOWC)
+	/* 
+	 * Read comments in qse_slmbrlen().
+	 */
+
+	size_t n;
+
+	QSE_ASSERT (mb != QSE_NULL);
+	QSE_ASSERT (mbl > 0);
+
+	if (wc)
+	{
+		n = mbrtowc (wc, mb, mbl, (mbstate_t*)state);
+		if (n == 0) 
+		{
+			*wc = QSE_WT('\0');
+			return 1;
+		}
+	}
+	else
+	{
+		qse_wchar_t dummy;
+		n = mbrtowc (&dummy, mb, mbl, (mbstate_t*)state);
+		if (n == 0) return 1;
+	}
+
+	if (n == (size_t)-1) return 0; /* invalid sequence */
+	if (n == (size_t)-2) return mbl + 1; /* incomplete sequence */
+	return (qse_size_t)n;
 
 #elif defined(HAVE_MBRTOWC)
 	size_t n;
@@ -151,9 +180,50 @@ qse_size_t qse_slmbrlen (
 	QSE_ASSERT (mb != QSE_NULL);
 	QSE_ASSERT (mbl > 0);
 
+	/* IsDBCSLeadByte() or IsDBCSLeadByteEx() doesn't validate
+	 * the actual sequence. So it can't actually detect an invalid 
+	 * sequence. Thus, qse_slmbrtowc() may return a different length
+	 * for an invalid sequence form qse_slmbrlen(). */
 	dbcslen = IsDBCSLeadByteEx(CP_THREAD_ACP, *mb)? 2: 1;
 	if (mbl < dbcslen) return mbl + 1; /* incomplete sequence */
 	return dbcslen;
+
+#elif defined(__sun__) && defined(HAVE_MBRLEN)
+	/* on solaris 8, 
+	 *   for a valid utf8 sequence on the utf8-locale,
+	 *     mbrlen() returned -1.
+	 *     mbrtowc(NULL, mbs, mbl, state) also returned -1.
+	 *     mblen() returned the right length.
+	 *     mbrtowc(wc, mbs, mbl, state) returned the right length.
+	 *   for a cp949 sequence on the cp949 locale,
+	 *     mbrlen() returned the right length.
+	 *     mbrtowc(NULL, mbs, mbl, state) returned the right length.
+	 *     mblen() returned the right length.
+	 *     mbrtowc(wc, mbs, mbl, state) returned the right length.
+	 *
+	 * The problem is buggy mbrlen() that can't handle utf8 sequence 
+	 * properly. here is my quick and dirty workaround for solaris.
+	 *
+	 * Newer solaris 9 and 10 or later should be also affected since
+	 * i don't check any version or something.
+	 *
+	 * There could be other platforms with the same issue.
+	 */
+
+	/* TODO:
+	 * it seems that solaris is not the only platform with
+	 * this kind of a bug. 
+	 *
+	 *    checking this in autoconf doesn't solve the problem.
+	 *    the underlying system could have fixed the problem already.
+	 *
+	 *    checking this during library initialization makes sense.
+	 *    qse_slmbinit() or qse_initlib() tests if mblen() and mbrlen()
+	 *    returns consistant results and arranges properly method 
+	 *    for this slmb routine.
+	 */
+	return qse_slmbrtoslwc (mb, mbl, QSE_NULL, state);
+
 #elif defined(HAVE_MBRLEN)
 	size_t n;
 
@@ -211,7 +281,7 @@ qse_size_t qse_slmblenmax (void)
 #if defined(_WIN32)
 	/* Windows doesn't handle utf8 properly even when your code page
 	 * is CP_UTF8(65001). you should use functions in utf8.c for utf8 
-	 * handleing on windows. */
+	 * handleing on windows. 2 is the maximum for DBCS encodings. */
 	return 2; 
 #else
 	return MB_CUR_MAX;

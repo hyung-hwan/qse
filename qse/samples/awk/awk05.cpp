@@ -83,7 +83,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 int qse_main (int argc, qse_achar_t* argv[])
 {
 #if defined(_WIN32)
-     char locale[100];
+	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
 	{
@@ -92,13 +92,14 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgr (qse_slmbcmgr);
 	}
 #else
-     setlocale (LC_ALL, "");
+	setlocale (LC_ALL, "");
 	qse_setdflcmgr (qse_slmbcmgr);
 #endif
+
 	return qse_runmain (argc,argv,awk_main);
 }

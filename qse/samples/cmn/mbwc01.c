@@ -17,12 +17,15 @@
 	} while (0)
 
 
+/* the texts here are all in utf-8. you will see many errors 
+ * on a non-utf8 locale */
 static int test1 (void)
 {
 	int i;
 	const qse_mchar_t* x[] =
 	{
 		QSE_MT(""),
+		QSE_MT("This is good."),
 		QSE_MT("이거슨"),
 		QSE_MT("뭐냐이거"),
 		QSE_MT("過去一個月"),
@@ -83,6 +86,7 @@ static int test2 (void)
 	const qse_mchar_t* x[] =
 	{
 		QSE_MT("\0\0\0"),
+		QSE_MT("This is good."),
 		QSE_MT("이거슨"),
 		QSE_MT("뭐냐이거"),
 		QSE_MT("過去一個月"),
@@ -107,10 +111,12 @@ static int test2 (void)
 
 		while (j < k)
 		{
+			int y;
+
 			wlen = QSE_COUNTOF(buf);
 			mlen = k - j;
 
-			int y = qse_mbsntowcsn (&x[i][j], &mlen, buf, &wlen);
+			y = qse_mbsntowcsn (&x[i][j], &mlen, buf, &wlen);
 
 
 			if (y <= -1 && y != -2)
@@ -148,6 +154,7 @@ static int test3 (void)
 	const qse_mchar_t* x[] =
 	{
 		QSE_MT(""),
+		QSE_MT("This is good."),
 		QSE_MT("이거슨"),
 		QSE_MT("뭐냐이거"),
 		QSE_MT("過去一個月"),
@@ -180,6 +187,7 @@ static int test4 (void)
 	const qse_mchar_t* x[] =
 	{
 		QSE_MT("\0\0\0"),
+		QSE_MT("This is good."),
 		QSE_MT("이거슨"),
 		QSE_MT("뭐냐이거"),
 		QSE_MT("過去一個月"),
@@ -206,17 +214,22 @@ static int test4 (void)
 int main ()
 {
 #if defined(_WIN32)
-	char codepage[100];
-	UINT old_cp = GetConsoleOutputCP();
-	SetConsoleOutputCP (CP_UTF8);
-
-	/* TODO: on windows this set locale only affects those mbcs fucntions in clib.
-	 * it doesn't support utf8 i guess find a working way. the following won't work 
-	sprintf (codepage, ".%d", GetACP());
-	setlocale (LC_ALL, codepage);
-	*/
+	char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+		sprintf (locale, ".%u", (unsigned int)codepage);
+     	setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
 #else
 	setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
 #endif
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
@@ -228,8 +241,5 @@ int main ()
 	R (test3);
 	R (test4);
 
-#if defined(_WIN32)
-	SetConsoleOutputCP (old_cp);
-#endif
 	return 0;
 }
