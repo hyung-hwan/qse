@@ -4,7 +4,13 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/mbwc.h>
+
 #include <signal.h>
+#include <locale.h>
+#if	defined(_WIN32)
+#	include <windows.h>
+#endif
 
 #define MAX_SENDFILE_SIZE 4096
 typedef struct httpd_xtn_t httpd_xtn_t;
@@ -168,7 +174,6 @@ int httpd_main (int argc, qse_char_t* argv[])
 		return -1;
 	}
 
-
 	httpd = qse_httpd_open (QSE_MMGR_GETDFL(), QSE_SIZEOF(httpd_xtn_t));
 	if (httpd == QSE_NULL)
 	{
@@ -196,12 +201,35 @@ int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);
 
+	if (n <= -1)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Httpd error\n"));
+	}
+
 	qse_httpd_close (httpd);
 	return n;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+#if defined(_WIN32)
+	char locale[100];
+	UINT codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+#else
+	setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
 	return qse_runmain (argc, argv, httpd_main);
 }
 
