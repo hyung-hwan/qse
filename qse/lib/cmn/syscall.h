@@ -82,29 +82,29 @@
 #	define QSE_WRITE(handle,buf,size) write(handle,buf,size)
 #endif
 
-#if !defined(_LP64) && defined(SYS__llseek)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS__llseek)
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) syscall(SYS__llseek,handle,hoffset,loffset,out,whence)
-#elif !defined(_LP64) && defined(HAVE__LLSEEK)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE__LLSEEK)
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) _llseek(handle,hoffset,loffset,out,whence)
 #endif
 
-#if !defined(_LP64) && defined(SYS_lseek64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lseek64)
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek64,handle,offset,whence)
 #elif defined(SYS_lseek)
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek,handle,offset,whence)
-#elif !defined(_LP64) && defined(HAVE_LSEEK64)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_LSEEK64)
 #	define QSE_LSEEK(handle,offset,whence) lseek64(handle,offset,whence)
 #else
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
 #endif
 
-#if !defined(_LP64) && defined(SYS_fstat64)
-#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat,path,stbuf)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64)
+#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat64,path,stbuf)
 	typedef struct stat64 qse_fstat_t;
 #elif defined(SYS_fstat)
 #	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat,path,stbuf)
 	typedef struct stat qse_fstat_t;
-#elif !defined(_LP64) && defined(HAVE_FSTAT64)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTAT64)
 #	define QSE_FSTAT(path,stbuf) fstat64(path,stbuf)
 	typedef struct stat64 qse_fstat_t;
 #else
@@ -112,11 +112,11 @@
 	typedef struct stat qse_fstat_t;
 #endif
 
-#if !defined(_LP64) && defined(SYS_ftruncate64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_ftruncate64)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate64,handle,size)
 #elif defined(SYS_ftruncate)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate,handle,size)
-#elif !defined(_LP64) && defined(HAVE_FTRUNCATE64)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FTRUNCATE64)
 #	define QSE_FTRUNCATE(handle,size) ftruncate64(handle,size)
 #else
 #	define QSE_FTRUNCATE(handle,size) ftruncate(handle,size)
@@ -275,13 +275,13 @@
 #	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
 #endif
 
-#if !defined(_LP64) && defined(SYS_lstat64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lstat64)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
 	typedef struct stat64 qse_lstat_t;
 #elif defined(SYS_lstat)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
 	typedef struct stat qse_lstat_t;
-#elif !defined(_LP64) && defined(HAVE_LSTAT64)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_LSTAT64)
 #	define QSE_LSTAT(path,stbuf) lstat64(path,stbuf)
 	typedef struct stat64 qse_lstat_t;
 #else
@@ -302,13 +302,13 @@
 #	define QSE_RMDIR(path) rmdir(path)
 #endif
 
-#if !defined(_LP64) && defined(SYS_stat64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_stat64)
 #	define QSE_STAT(path,stbuf) syscall(SYS_stat64,path,stbuf)
 	typedef struct stat64 qse_stat_t;
 #elif defined(SYS_stat)
 #	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
 	typedef struct stat qse_stat_t;
-#elif !defined(_LP64) && defined(HAVE_STAT64)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_STAT64)
 #	define QSE_STAT(path,stbuf) stat64(path,stbuf)
 	typedef struct stat64 qse_stat_t;
 #else

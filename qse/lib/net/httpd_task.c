@@ -36,10 +36,18 @@
 
 #define MAX_SEND_SIZE 4096
 
-#ifdef HAVE_SYS_SENDFILE_H
+#if defined(HAVE_SYS_SENDFILE_H)
 #	include <sys/sendfile.h>
+
+#	if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+#		define xsendfile sendfile64
+#	else
+#		define xsendfile sendfile
+#	endif
+
 #else
-static qse_ssize_t sendfile (
+
+static qse_ssize_t xsendfile (
 	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
 {
 	qse_mchar_t buf[MAX_SEND_SIZE];
@@ -389,7 +397,7 @@ static int task_main_file (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: more adjustment needed for OS with different sendfile semantics... */
-	n = sendfile (
+	n = xsendfile (
 		client->handle.i,
 		ctx->handle.i,
 		&ctx->offset,
@@ -978,8 +986,10 @@ qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 			}
 
 			/* set the chunk length */
-			snprintf (chunklen, QSE_COUNTOF(chunklen), QSE_MT("%-4lX\r\n"), n);
-			QSE_MEMCPY (&cgi->buf[cgi->buflen], chunklen, QSE_SIZEOF(chunklen) - 1);
+			snprintf (chunklen, QSE_COUNTOF(chunklen), 
+				QSE_MT("%-4lX\r\n"), (unsigned long)n);
+			QSE_MEMCPY (&cgi->buf[cgi->buflen],
+				chunklen, QSE_SIZEOF(chunklen) - 1);
 			cgi->buflen += QSE_SIZEOF(chunklen) - 1 + n;
 	
 			/* set the trailing CR & LF for a chunk */
