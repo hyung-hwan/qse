@@ -38,12 +38,57 @@
 
 #if defined(HAVE_SYS_SENDFILE_H)
 #	include <sys/sendfile.h>
+#endif
 
+#if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 #	if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 #		define xsendfile sendfile64
 #	else
 #		define xsendfile sendfile
 #	endif
+#elif defined(HAVE_SENDFILE)
+#	define xsendfile sendfile
+#elif defined(HAVE_SENDFILE64)
+#	define xsendfile sendfile64
+#elif defined(HAVE_SENDFILEV) || defined(HAVE_SENDFILEV64)
+
+static qse_ssize_t xsendfile (
+	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
+{
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+	struct sendfilevec64 vec;
+#else
+	struct sendfilevec vec;
+#endif
+	size_t xfer;
+	ssize_t n;
+
+	vec.sfv_fd = in_fd;
+	vec.sfv_flag = 0;
+	if (offset)
+	{
+		vec.sfv_off = *offset; 
+	}
+	else
+	{
+		vec.sfv_off = lseek (in_fd, 0, SEEK_CUR); /* TODO: lseek64 or llseek.. */
+		if (vec.sfv_off == (off_t)-1) return (qse_ssize_t)-1;
+	}
+	vec.sfv_len = count;
+
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+	n = sendfilev64 (out_fd, &vec, 1, &xfer);
+#else
+	n = sendfilev (out_fd, &vec, 1, &xfer);
+#endif
+	if (offset) *offset = *offset + xfer;
+
+/* TODO: xfer contains number of byte written even on failure
+on success xfer == n.
+on failure xfer != n.
+ */
+	return n;
+}
 
 #else
 
@@ -53,7 +98,7 @@ static qse_ssize_t xsendfile (
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t n;
 
-	if (offset && lseek (in_fd, *offset, SEEK_SET) != *offset) 
+	if (offset && lseek (in_fd, *offset, SEEK_SET) != *offset)  //* 64bit version of lseek...
 		return (qse_ssize_t)-1;
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
@@ -404,7 +449,11 @@ static int task_main_file (
 		count
 	);
 
-	if (n <= -1) return -1; /* TODO: any logging */
+	if (n <= -1) 
+	{
+// HANDLE EGAIN specially???
+		return -1; /* TODO: any logging */
+	}
 
 	if (n == 0 && count > 0)
 	{

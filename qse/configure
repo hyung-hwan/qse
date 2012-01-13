@@ -762,12 +762,12 @@ PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
 ax_pthread_config
-SENDFILE_LIBS
-SOCKET_LIBS
 ENABLE_CXX_FALSE
 ENABLE_CXX_TRUE
 BUILD_MODE
 CHAR_MODE
+SENDFILE_LIBS
+SOCKET_LIBS
 LIBM
 WIN32_FALSE
 WIN32_TRUE
@@ -15559,6 +15559,316 @@ done
 
 LIBS="$OLDLIBS"
 
+for ac_func in connect gethostbyname
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+if test "$ac_cv_func_gethostbyname" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gethostbyname in -lnsl" >&5
+$as_echo_n "checking for gethostbyname in -lnsl... " >&6; }
+if test "${ac_cv_lib_nsl_gethostbyname+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnsl  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gethostbyname ();
+int
+main ()
+{
+return gethostbyname ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_nsl_gethostbyname=yes
+else
+  ac_cv_lib_nsl_gethostbyname=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_nsl_gethostbyname" >&5
+$as_echo "$ac_cv_lib_nsl_gethostbyname" >&6; }
+if test "x$ac_cv_lib_nsl_gethostbyname" = x""yes; then :
+
+		SOCKET_LIBS="$SOCKET_LIBS -lnsl"
+		$as_echo "#define HAVE_GETHOSTBYNAME 1" >>confdefs.h
+
+
+fi
+
+fi
+if test "$ac_cv_func_connect" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for connect in -lsocket" >&5
+$as_echo_n "checking for connect in -lsocket... " >&6; }
+if test "${ac_cv_lib_socket_connect+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsocket  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char connect ();
+int
+main ()
+{
+return connect ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_socket_connect=yes
+else
+  ac_cv_lib_socket_connect=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_socket_connect" >&5
+$as_echo "$ac_cv_lib_socket_connect" >&6; }
+if test "x$ac_cv_lib_socket_connect" = x""yes; then :
+
+		SOCKET_LIBS="$SOCKET_LIBS -lsocket"
+		$as_echo "#define HAVE_CONNECT 1" >>confdefs.h
+
+
+fi
+
+fi
+
+
+for ac_func in sendfile sendfile64 sendfilev sendfilev64
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+if test "$ac_cv_func_sendfile" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sendfile in -lsendfile" >&5
+$as_echo_n "checking for sendfile in -lsendfile... " >&6; }
+if test "${ac_cv_lib_sendfile_sendfile+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsendfile  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sendfile ();
+int
+main ()
+{
+return sendfile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sendfile_sendfile=yes
+else
+  ac_cv_lib_sendfile_sendfile=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sendfile_sendfile" >&5
+$as_echo "$ac_cv_lib_sendfile_sendfile" >&6; }
+if test "x$ac_cv_lib_sendfile_sendfile" = x""yes; then :
+
+		SENDFILE_LIBS="-lsendfile"
+		$as_echo "#define HAVE_SENDFILE 1" >>confdefs.h
+
+
+fi
+
+fi
+if test "$ac_cv_func_sendfile64" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sendfile64 in -lsendfile" >&5
+$as_echo_n "checking for sendfile64 in -lsendfile... " >&6; }
+if test "${ac_cv_lib_sendfile_sendfile64+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsendfile  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sendfile64 ();
+int
+main ()
+{
+return sendfile64 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sendfile_sendfile64=yes
+else
+  ac_cv_lib_sendfile_sendfile64=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sendfile_sendfile64" >&5
+$as_echo "$ac_cv_lib_sendfile_sendfile64" >&6; }
+if test "x$ac_cv_lib_sendfile_sendfile64" = x""yes; then :
+
+		SENDFILE_LIBS="-lsendfile"
+		$as_echo "#define HAVE_SENDFILE64 1" >>confdefs.h
+
+
+fi
+
+fi
+if test "$ac_cv_func_sendfilev" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sendfilev in -lsendfile" >&5
+$as_echo_n "checking for sendfilev in -lsendfile... " >&6; }
+if test "${ac_cv_lib_sendfile_sendfilev+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsendfile  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sendfilev ();
+int
+main ()
+{
+return sendfilev ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sendfile_sendfilev=yes
+else
+  ac_cv_lib_sendfile_sendfilev=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sendfile_sendfilev" >&5
+$as_echo "$ac_cv_lib_sendfile_sendfilev" >&6; }
+if test "x$ac_cv_lib_sendfile_sendfilev" = x""yes; then :
+
+		SENDFILE_LIBS="-lsendfile"
+		$as_echo "#define HAVE_SENDFILEV 1" >>confdefs.h
+
+
+fi
+
+fi
+if test "$ac_cv_func_sendfilev64" = "no"
+then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sendfilev64 in -lsendfile" >&5
+$as_echo_n "checking for sendfilev64 in -lsendfile... " >&6; }
+if test "${ac_cv_lib_sendfile_sendfilev64+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lsendfile  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sendfilev64 ();
+int
+main ()
+{
+return sendfilev64 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_sendfile_sendfilev64=yes
+else
+  ac_cv_lib_sendfile_sendfilev64=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sendfile_sendfilev64" >&5
+$as_echo "$ac_cv_lib_sendfile_sendfilev64" >&6; }
+if test "x$ac_cv_lib_sendfile_sendfilev64" = x""yes; then :
+
+		SENDFILE_LIBS="-lsendfile"
+		$as_echo "#define HAVE_SENDFILEV64 1" >>confdefs.h
+
+
+fi
+
+fi
+
+
 ac_header_dirent=no
 for ac_hdr in dirent.h sys/ndir.h sys/dir.h ndir.h; do
   as_ac_Header=`$as_echo "ac_cv_header_dirent_$ac_hdr" | $as_tr_sh`
@@ -17066,199 +17376,6 @@ test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"
 else
   ENABLE_CXX_TRUE='#'
   ENABLE_CXX_FALSE=
-fi
-
-
-
-OLDLIBS="$LIBS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname" >&5
-$as_echo_n "checking for library containing gethostbyname... " >&6; }
-if test "${ac_cv_search_gethostbyname+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gethostbyname ();
-int
-main ()
-{
-return gethostbyname ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' nsl; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_gethostbyname=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_gethostbyname+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_gethostbyname+set}" = set; then :
-
-else
-  ac_cv_search_gethostbyname=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethostbyname" >&5
-$as_echo "$ac_cv_search_gethostbyname" >&6; }
-ac_res=$ac_cv_search_gethostbyname
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_gethostbyname" != "none required" -a "$ac_cv_search_gethostbyname" != "no"
-then
-	SOCKET_LIBS="$SOCKET_LIBS -lnsl"
-fi
-
-OLDLIBS="$LIBS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing socket" >&5
-$as_echo_n "checking for library containing socket... " >&6; }
-if test "${ac_cv_search_socket+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char socket ();
-int
-main ()
-{
-return socket ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' socket; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_socket=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_socket+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_socket+set}" = set; then :
-
-else
-  ac_cv_search_socket=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_socket" >&5
-$as_echo "$ac_cv_search_socket" >&6; }
-ac_res=$ac_cv_search_socket
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_socket" != "none required" -a "$ac_cv_search_socket" != "no"
-then
-	SOCKET_LIBS="$SOCKET_LIBS -lsocket"
-fi
-
-
-
-OLDLIBS="$LIBS"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing sendfile" >&5
-$as_echo_n "checking for library containing sendfile... " >&6; }
-if test "${ac_cv_search_sendfile+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sendfile ();
-int
-main ()
-{
-return sendfile ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' sendfile; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_sendfile=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_sendfile+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_sendfile+set}" = set; then :
-
-else
-  ac_cv_search_sendfile=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_sendfile" >&5
-$as_echo "$ac_cv_search_sendfile" >&6; }
-ac_res=$ac_cv_search_sendfile
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_sendfile" != "none required" -a "$ac_cv_search_socket" != "no"
-then
-	SENDFILE_LIBS="$SENDFILE_LIBS -lsendfile"
 fi
 
 
