@@ -108,6 +108,64 @@ AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log exp sqrt])
 AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf])
 LIBS="$OLDLIBS"
 
+dnl OLDLIBS="$LIBS"
+dnl AC_SEARCH_LIBS([connect], [socket])
+dnl LIBS="$OLDLIBS"
+dnl if test "$ac_cv_search_connect" != "none required" -a "$ac_cv_search_connect" != "no"
+dnl then
+dnl	SOCKET_LIBS="$SOCKET_LIBS -lsocket"
+dnl fi
+dnl AC_SUBST(SOCKET_LIBS)
+AC_CHECK_FUNCS([connect gethostbyname])
+if test "$ac_cv_func_gethostbyname" = "no"
+then
+	AC_CHECK_LIB([nsl], [gethostbyname], [
+		SOCKET_LIBS="$SOCKET_LIBS -lnsl"
+		AC_DEFINE(HAVE_GETHOSTBYNAME, 1)
+	])
+fi
+if test "$ac_cv_func_connect" = "no"
+then
+	AC_CHECK_LIB([socket], [connect], [
+		SOCKET_LIBS="$SOCKET_LIBS -lsocket"
+		AC_DEFINE(HAVE_CONNECT, 1)
+	])
+fi
+AC_SUBST(SOCKET_LIBS)
+
+dnl check if sendfile and its variants exist in the standard c library
+dnl it inspects the existence of each missing function in the sendfile library.
+AC_CHECK_FUNCS([sendfile sendfile64 sendfilev sendfilev64])
+if test "$ac_cv_func_sendfile" = "no"
+then
+	AC_CHECK_LIB([sendfile], [sendfile], [
+		SENDFILE_LIBS="-lsendfile"
+		AC_DEFINE(HAVE_SENDFILE, 1)
+	])
+fi
+if test "$ac_cv_func_sendfile64" = "no"
+then
+	AC_CHECK_LIB([sendfile], [sendfile64], [
+		SENDFILE_LIBS="-lsendfile"
+		AC_DEFINE(HAVE_SENDFILE64, 1)
+	])
+fi
+if test "$ac_cv_func_sendfilev" = "no"
+then
+	AC_CHECK_LIB([sendfile], [sendfilev], [
+		SENDFILE_LIBS="-lsendfile"
+		AC_DEFINE(HAVE_SENDFILEV, 1)
+	])
+fi
+if test "$ac_cv_func_sendfilev64" = "no"
+then
+	AC_CHECK_LIB([sendfile], [sendfilev64], [
+		SENDFILE_LIBS="-lsendfile"
+		AC_DEFINE(HAVE_SENDFILEV64, 1)
+	])
+fi
+AC_SUBST(SENDFILE_LIBS)
+
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([struct stat.st_birthtime])
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])
@@ -218,34 +276,6 @@ AC_ARG_ENABLE([cxx], [AS_HELP_STRING([--enable-cxx],[build the library for C++ i
 	enable_cxx_is=$enableval,enable_cxx_is=yes) 
 [test "${HAVE_CXX}" = "yes" || enable_cxx_is="no"]
 AM_CONDITIONAL(ENABLE_CXX, test "${enable_cxx_is}" = "yes" )
-
-
-OLDLIBS="$LIBS"
-AC_SEARCH_LIBS([gethostbyname], [nsl])
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_gethostbyname" != "none required" -a "$ac_cv_search_gethostbyname" != "no"
-then
-	SOCKET_LIBS="$SOCKET_LIBS -lnsl"
-fi
-
-OLDLIBS="$LIBS"
-AC_SEARCH_LIBS([socket], [socket])
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_socket" != "none required" -a "$ac_cv_search_socket" != "no"
-then
-	SOCKET_LIBS="$SOCKET_LIBS -lsocket"
-fi
-
-AC_SUBST(SOCKET_LIBS)
-
-OLDLIBS="$LIBS"
-AC_SEARCH_LIBS([sendfile], [sendfile])
-LIBS="$OLDLIBS"
-if test "$ac_cv_search_sendfile" != "none required" -a "$ac_cv_search_socket" != "no"
-then
-	SENDFILE_LIBS="$SENDFILE_LIBS -lsendfile"
-fi
-AC_SUBST(SENDFILE_LIBS)
 
 AC_ARG_ENABLE([reentrant], [AS_HELP_STRING([--enable-reentrant],[define _REENTRANT (default. yes)])],
 	enable_reentrant_is=$enableval,enable_reentrant_is=yes)

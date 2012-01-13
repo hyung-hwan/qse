@@ -27,6 +27,9 @@
 /* Define to 1 if you have the `backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
 
+/* Define to 1 if you have the `connect' function. */
+#undef HAVE_CONNECT
+
 /* Define to 1 if you have the `cos' function. */
 #undef HAVE_COS
 
@@ -72,6 +75,9 @@
 
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
+
+/* Define to 1 if you have the `gethostbyname' function. */
+#undef HAVE_GETHOSTBYNAME
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -132,6 +138,18 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `sendfile' function. */
+#undef HAVE_SENDFILE
+
+/* Define to 1 if you have the `sendfile64' function. */
+#undef HAVE_SENDFILE64
+
+/* Define to 1 if you have the `sendfilev' function. */
+#undef HAVE_SENDFILEV
+
+/* Define to 1 if you have the `sendfilev64' function. */
+#undef HAVE_SENDFILEV64
 
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H

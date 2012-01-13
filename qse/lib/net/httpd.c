@@ -322,6 +322,7 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 /* TODO: suport https... */
 	sockaddr_t addr;
 	int s = -1, flag;
+	int addrsize;
 
 	QSE_ASSERT (l->handle <= -1);
 
@@ -339,6 +340,7 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 			addr.in4.sin_family = l->family;	
 			addr.in4.sin_addr = l->addr.in4;
 			addr.in4.sin_port = htons (l->port);
+			addrsize = QSE_SIZEOF(addr.in4);
 			break;
 		}
 
@@ -349,6 +351,7 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 			addr.in6.sin6_addr = l->addr.in6;
 			addr.in6.sin6_port = htons (l->port);
 			/* TODO: addr.in6.sin6_scope_id  */
+			addrsize = QSE_SIZEOF(addr.in6);
 			break;
 		}
 #endif
@@ -359,7 +362,10 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 		}
 	}
 
-	if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;
+	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
+	 * address size for AF_INET. */
+	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
+	if (bind (s, (struct sockaddr*)&addr, addrsize) <= -1) goto oops_esocket;
 	if (listen (s, 10) <= -1) goto oops_esocket;
 	
 	flag = fcntl (s, F_GETFL);
