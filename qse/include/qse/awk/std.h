@@ -137,7 +137,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_size_t             xtn,
 	const qse_char_t*      id,
 	const qse_char_t*const icf[],
-	const qse_char_t*const ocf[]
+	const qse_char_t*const ocf[],
+	qse_cmgr_t*            cmgr
 );
 
 /**

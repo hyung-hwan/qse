@@ -953,7 +953,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
-		(const qse_char_t*const*)arg.icf, QSE_NULL);
+		(const qse_char_t*const*)arg.icf, QSE_NULL, QSE_NULL);
 	if (rtx == QSE_NULL) 
 	{
 		print_awkerr (awk);

@@ -86,10 +86,6 @@ typedef struct xtn_t
 				struct 
 				{
 					qse_str_t* buf;
-#if 0
-					qse_char_t* ptr;	
-					qse_char_t* end;	
-#endif
 				} str;
 			} u;
 		} out;
@@ -116,6 +112,8 @@ typedef struct rxtn_t
 			qse_size_t index;
 			qse_size_t count;
 		} out;
+
+		qse_cmgr_t* cmgr;
 	} c;  /* console */
 
 } rxtn_t;
@@ -976,6 +974,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				);
 				if (sio == QSE_NULL) return -1;
 
+				if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
 				riod->handle = sio;
 				rxtn->c.in.count++;
 				return 1;
@@ -1017,6 +1016,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 						QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 					);
 					if (sio == QSE_NULL) return -1;
+
+					if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
 
 					riod->handle = sio;
 					rxtn->c.in.count++;
@@ -1256,7 +1257,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_size_t             xtnsize,
 	const qse_char_t*      id,
 	const qse_char_t*const icf[],
-	const qse_char_t*const ocf[])
+	const qse_char_t*const ocf[],
+	qse_cmgr_t*            cmgr)
 {
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
@@ -1272,7 +1274,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rio.file = awk_rio_file;
 	rio.console = awk_rio_console;
 
-	if (icf != QSE_NULL)
+	if (icf)
 	{
 		for (p = icf; *p != QSE_NULL; p++);
 		argc = p - icf;
@@ -1298,9 +1300,9 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	p2->len = qse_strlen(id);
 	p2++;
 	
-	if (icf != QSE_NULL)
+	if (icf)
 	{
-		for (p = icf; *p != QSE_NULL; p++, p2++) 
+		for (p = icf; *p; p++, p2++) 
 		{
 			p2->ptr = *p;
 			p2->len = qse_strlen(*p);
@@ -1317,7 +1319,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 		argvp
 	);
 
-	if (argvp != QSE_NULL && argvp != argv) QSE_AWK_FREE (awk, argvp);
+	if (argvp && argvp != argv) QSE_AWK_FREE (awk, argvp);
 	if (rtx == QSE_NULL) return QSE_NULL;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -1333,6 +1335,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.out.files = ocf;
 	rxtn->c.out.index = 0;
 	rxtn->c.out.count = 0;
+	rxtn->c.cmgr = cmgr;
 
 	
 	/* FILENAME can be set when the input console is opened.
