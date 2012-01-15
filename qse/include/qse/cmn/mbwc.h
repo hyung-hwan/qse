@@ -52,7 +52,23 @@ int qse_mbstowcswithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
+int qse_mbstowcsallwithcmgr (
+	const qse_mchar_t* mbs,
+	qse_size_t*        mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen,
+	qse_cmgr_t*        cmgr
+);
+
 int qse_mbsntowcsnwithcmgr (
+	const qse_mchar_t* mbs,
+	qse_size_t*        mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen,
+	qse_cmgr_t*        cmgr
+);
+
+int qse_mbsntowcsnallwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -75,7 +91,19 @@ qse_wchar_t* qse_mbstowcsdupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
+qse_wchar_t* qse_mbstowcsalldupwithcmgr (
+	const qse_mchar_t* mbs,
+	qse_mmgr_t*        mmgr,
+	qse_cmgr_t*        cmgr
+);
+
 qse_wchar_t* qse_mbsatowcsdupwithcmgr (
+	const qse_mchar_t* mbs[],
+	qse_mmgr_t*        mmgr,
+	qse_cmgr_t*        cmgr
+);
+
+qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
 	const qse_mchar_t* mbs[],
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
@@ -147,6 +175,15 @@ int qse_mbstowcs (
 	                                number of characters in the buffer for out */
 );
 
+int qse_mbstowcsall (
+	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
+	qse_size_t*        mbslen, /**< [out] number of multibyte characters
+	                                      handled */
+	qse_wchar_t*       wcs,    /**< [out] wide-character string buffer */
+	qse_size_t*        wcslen  /**< [in,out] buffer size for in, 
+	                                number of characters in the buffer for out */
+);
+
 /**
  * The qse_mbsntowcsn() function converts a multibyte string to a 
  * wide character string.
@@ -159,6 +196,13 @@ int qse_mbstowcs (
  *         -3 if @a mbs is not a complete sequence.
  */
 int qse_mbsntowcsn (
+	const qse_mchar_t* mbs,
+	qse_size_t*        mbslen,
+	qse_wchar_t*       wcs,
+	qse_size_t*        wcslen
+);
+
+int qse_mbsntowcsnall (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -182,7 +226,17 @@ qse_wchar_t* qse_mbstowcsdup (
 	qse_mmgr_t*        mmgr
 );
 
+qse_wchar_t* qse_mbstowcsalldup (
+	const qse_mchar_t* mbs,
+	qse_mmgr_t*        mmgr
+);
+
 qse_wchar_t* qse_mbsatowcsdup (
+	const qse_mchar_t* mbs[],
+	qse_mmgr_t*        mmgr
+);
+
+qse_wchar_t* qse_mbsatowcsalldup (
 	const qse_mchar_t* mbs[],
 	qse_mmgr_t*        mmgr
 );

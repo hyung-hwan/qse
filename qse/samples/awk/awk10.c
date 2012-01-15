@@ -83,7 +83,9 @@ int main ()
 		0,
 		QSE_T("awk10"),
 		QSE_NULL, /* stdin */
-		QSE_NULL  /* stdout */
+		QSE_NULL, /* stdout */
+		QSE_NULL  /* default cmgr */
+	
 	);
 	if (rtx == QSE_NULL) 
 	{
