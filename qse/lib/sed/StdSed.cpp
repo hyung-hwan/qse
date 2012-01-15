@@ -102,6 +102,7 @@ int StdSed::FileStream::open (Data& io)
 	}
 	if (sio == QSE_NULL) return -1;
 
+	if (this->cmgr) qse_sio_setcmgr (sio, this->cmgr);
 	io.setHandle (sio);
 	return 1;
 }

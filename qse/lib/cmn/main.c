@@ -44,8 +44,7 @@ int qse_runmain (
 
 		for (i = 0; i < argc; i++)
 		{
-			/* TODO: ignore MBWCERR */
-			v[i]= qse_mbstowcsdup (argv[i], mmgr);
+			v[i]= qse_mbstowcsalldup (argv[i], mmgr);
 			if (v[i] == QSE_NULL)
 			{
 				ret = -1;
@@ -98,8 +97,7 @@ int qse_runmainwithenv (
 			else if (i == argc) continue;
 			else x = envp[i - argc - 1];
 
-			/* TODO: ignore MBWCERR */
-			v[i]= qse_mbstowcsdup (x, mmgr);
+			v[i]= qse_mbstowcsalldup (x, mmgr);
 			if (v[i] == QSE_NULL)
 			{
 				ret = -1;

@@ -81,7 +81,8 @@ int main ()
 		0,
 		QSE_T("awk09"),
 		QSE_NULL, /* stdin */
-		output_files
+		output_files,
+		QSE_NULL  /* default cmgr */
 	);
 	if (rtx == QSE_NULL) 
 	{

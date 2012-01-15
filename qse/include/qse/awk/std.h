@@ -39,8 +39,12 @@
  * This programs shows how to specify multiple console output files.
  */
 
+/**
+ * The qse_awk_parsestd_type_t type defines the types of source I/O.
+ */
 enum qse_awk_parsestd_type_t
 {
+	QSE_AWK_PARSESTD_NULL = 0, /* invalid type */
 	QSE_AWK_PARSESTD_FILE = 1,
 	QSE_AWK_PARSESTD_STR  = 2 
 };
@@ -56,12 +60,30 @@ struct qse_awk_parsestd_t
 
 	union
 	{
+		/**
+		 * You can create a sio stream in advance and pass it to 
+		 * qse_awk_parsestd() via this field. */
 		qse_sio_t* sio;
+
 		struct
 		{
+			/** file path to open. QSE_NULL or '-' for stdin/stdout. */
 			const qse_char_t* path; 
-			qse_cmgr_t*       cmgr;
+			/* the streams created with the file path is set with this
+			 * cmgr if it is not #QSE_NULL. */
+			qse_cmgr_t*       cmgr; 
 		} file;
+
+		/** 
+		 * For input, the ptr and the len field of str indicates the 
+		 * pointer and the length of a string to read.
+		 *
+		 * For output, the ptr and the len field of str indicates the
+		 * pointer and the length of a deparsed source string. The output
+		 * string is dynamically allocated. You must free this output 
+		 * pointer using #QSE_MMGR_FREE once you're done with it to avoid 
+		 * memory leaks. 
+		 */
 		qse_xstr_t str;
 	} u;
 };
@@ -107,18 +129,19 @@ void* qse_awk_getxtnstd (
  * and deparses it out to a buffer 'buf'.
  * @code
  * int n;
- * qse_awk_parsestd_in_t in;
- * qse_awk_parsestd_out_t out;
- * qse_char_t buf[1000];
+ * qse_awk_parsestd_t in;
+ * qse_awk_parsestd_t out;
  *
- * qse_memset (buf, QSE_T(' '), QSE_COUNTOF(buf));
- * buf[QSE_COUNTOF(buf)-1] = QSE_T('\0');
- * in.type = QSE_AWK_PARSESTD_CP;
- * in.u.cp = QSE_T("BEGIN { print 10; }");
- * out.type = QSE_AWK_PARSESTD_CP;
- * out.u.cp = buf;
- *
+ * in.type = QSE_AWK_PARSESTD_STR;
+ * in.u.str.ptr = QSE_T("BEGIN { print 10; }");
+ * in.u.str.len = qse_strlen(in.u.str.ptr);
+ * out.type = QSE_AWK_PARSESTD_STR;
  * n = qse_awk_parsestd (awk, &in, &out);
+ * if (n >= 0) 
+ * {
+ *   qse_printf (QSE_T("%s\n"), out.u.str.ptr);
+ *   QSE_MMGR_FREE (out.u.str.ptr);
+ * }
  * @endcode
  */
 int qse_awk_parsestd (
@@ -130,7 +153,8 @@ int qse_awk_parsestd (
 /**
  * The qse_awk_rtx_openstd() function creates a standard runtime context.
  * The caller should keep the contents of @a icf and @a ocf valid throughout
- * the lifetime of the runtime context created. 
+ * the lifetime of the runtime context created. The @a cmgr is set to the
+ * streams created with @a icf and @a ocf if it is not #QSE_NULL.
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*             awk,

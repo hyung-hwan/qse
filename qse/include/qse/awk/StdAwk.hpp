@@ -58,7 +58,8 @@ public:
 	class SourceFile: public Source 
 	{
 	public:
-		SourceFile (const char_t* name): name (name) 
+		SourceFile (const char_t* name, qse_cmgr_t* cmgr = QSE_NULL): 
+			name (name), cmgr (cmgr)
 		{
 			dir.ptr = QSE_NULL; dir.len = 0; 
 		}
@@ -71,6 +72,7 @@ public:
 	protected:
 		const char_t* name;
 		qse_cstr_t dir;
+		qse_cmgr_t* cmgr;
 	};
 
 	///

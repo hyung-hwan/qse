@@ -21,9 +21,13 @@
 #include <qse/cmn/mbwc.h>
 #include "mem.h"
 
-int qse_mbstowcswithcmgr (
+static int mbsn_to_wcsn_with_cmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
-	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr, int all);
+
+static int mbs_to_wcs_with_cmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr, int all)
 {
 	const qse_mchar_t* mp;
 	qse_size_t mlen, wlen;
@@ -32,7 +36,7 @@ int qse_mbstowcswithcmgr (
 	for (mp = mbs; *mp != QSE_MT('\0'); mp++);
 
 	mlen = mp - mbs; wlen = *wcslen;
-	n = qse_mbsntowcsnwithcmgr (mbs, &mlen, wcs, &wlen, cmgr);
+	n = mbsn_to_wcsn_with_cmgr (mbs, &mlen, wcs, &wlen, cmgr, all);
 	if (wcs)
 	{
 		if (wlen < *wcslen) wcs[wlen] = QSE_WT('\0');
@@ -43,9 +47,23 @@ int qse_mbstowcswithcmgr (
 	return n;
 }
 
-int qse_mbsntowcsnwithcmgr (
+int qse_mbstowcswithcmgr (
 	const qse_mchar_t* mbs, qse_size_t* mbslen,
 	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
+{
+	return mbs_to_wcs_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 0);
+}
+
+int qse_mbstowcsallwithcmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
+{
+	return mbs_to_wcs_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 1);
+}
+
+static int mbsn_to_wcsn_with_cmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr, int all)
 {
 	const qse_mchar_t* p;
 	int ret = 0;
@@ -75,14 +93,30 @@ int qse_mbsntowcsnwithcmgr (
 			if (n == 0)
 			{
 				/* invalid sequence */
-				ret = -1;
-				break;
+				if (all)
+				{
+					n = 1;
+					*q = QSE_WT('?');	
+				}
+				else
+				{
+					ret = -1;
+					break;
+				}
 			}
 			if (n > mlen)
 			{
 				/* incomplete sequence */
-				ret = -3;
-				break;
+				if (all)
+				{
+					n = 1;
+					*q = QSE_WT('?');	
+				}
+				else
+				{
+					ret = -3;
+					break;
+				}
 			}
 
 			q++;
@@ -109,14 +143,22 @@ int qse_mbsntowcsnwithcmgr (
 			if (n == 0)
 			{
 				/* invalid sequence */
-				ret = -1;
-				break;
+				if (all) n = 1;
+				else
+				{
+					ret = -1;
+					break;
+				}
 			}
 			if (n > mlen)
 			{
 				/* incomplete sequence */
-				ret = -3;
-				break;
+				if (all) n = 1;
+				else
+				{
+					ret = -3;
+					break;
+				}
 			}
 
 			p += n;
@@ -129,6 +171,20 @@ int qse_mbsntowcsnwithcmgr (
 	}
 
 	return ret;
+}
+
+int qse_mbsntowcsnwithcmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
+{
+	return mbsn_to_wcsn_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 0);
+}
+
+int qse_mbsntowcsnallwithcmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen,
+	qse_wchar_t* wcs, qse_size_t* wcslen, qse_cmgr_t* cmgr)
+{
+	return mbsn_to_wcsn_with_cmgr (mbs, mbslen, wcs, wcslen, cmgr, 1);
 }
 
 int qse_mbsntowcsnuptowithcmgr (
@@ -189,24 +245,37 @@ int qse_mbsntowcsnuptowithcmgr (
 	return ret;
 }
 
-qse_wchar_t* qse_mbstowcsdupwithcmgr (
-	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+static qse_wchar_t* mbs_to_wcs_dup_with_cmgr (
+	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
 {
 	qse_size_t mbslen, wcslen;
 	qse_wchar_t* wcs;
 
-	if (qse_mbstowcswithcmgr (mbs, &mbslen, QSE_NULL, &wcslen, cmgr) <= -1) return QSE_NULL;
+	if (mbs_to_wcs_with_cmgr (
+		mbs, &mbslen, QSE_NULL, &wcslen, cmgr, all) <= -1) return QSE_NULL;
 
 	wcslen++; /* for terminating null */
 	wcs = QSE_MMGR_ALLOC (mmgr, wcslen * QSE_SIZEOF(*wcs));	
 	if (wcs == QSE_NULL) return QSE_NULL;
 
-	qse_mbstowcswithcmgr (mbs, &mbslen, wcs, &wcslen, cmgr);
+	mbs_to_wcs_with_cmgr (mbs, &mbslen, wcs, &wcslen, cmgr, all);
 	return wcs;
 }
 
-qse_wchar_t* qse_mbsatowcsdupwithcmgr (
-	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+qse_wchar_t* qse_mbstowcsdupwithcmgr (
+	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbs_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 0);
+}
+
+qse_wchar_t* qse_mbstowcsalldupwithcmgr (
+	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbs_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 1);
+}
+
+static qse_wchar_t* mbsa_to_wcs_dup_with_cmgr (
+	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
 {
 	qse_wchar_t* buf, * ptr;
 	qse_size_t i;
@@ -217,7 +286,8 @@ qse_wchar_t* qse_mbsatowcsdupwithcmgr (
 
 	for (i = 0; mbs[i]; i++) 
 	{
-		if (qse_mbstowcswithcmgr (mbs[i], &ml, QSE_NULL, &wl, cmgr) <= -1) return QSE_NULL;
+		if (mbs_to_wcs_with_cmgr (mbs[i], &ml, QSE_NULL, &wl, cmgr, all) <= -1) 
+			return QSE_NULL;
 		capa += wl;
 	}
 
@@ -229,13 +299,27 @@ qse_wchar_t* qse_mbsatowcsdupwithcmgr (
 	for (i = 0; mbs[i]; i++) 
 	{
 		wl = capa + 1;
-		qse_mbstowcswithcmgr (mbs[i], &ml, ptr, &wl, cmgr);
+		mbs_to_wcs_with_cmgr (mbs[i], &ml, ptr, &wl, cmgr, all);
 		ptr += wl;
 		capa -= wl;
 	}
 
 	return buf;
 }
+
+qse_wchar_t* qse_mbsatowcsdupwithcmgr (
+	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbsa_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 0);
+}
+
+qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
+	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbsa_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 1);
+}
+
+/* ======================================================================== */
 
 int qse_wcstombswithcmgr (
 	const qse_wchar_t* wcs, qse_size_t* wcslen,

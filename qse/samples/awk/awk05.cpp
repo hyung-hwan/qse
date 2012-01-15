@@ -44,7 +44,7 @@ static int run_awk (QSE::StdAwk& awk)
 	if (awk.addArgument (QSE_T("awk05")) <= -1) return -1;
 
 	// ARGV[1] and/or the first console input file
-	if (awk.addArgument (QSE_T("awk05.cpp")) <= -1) return -1;
+	if (awk.addArgument (QSE_T("Makefile")) <= -1) return -1;
 
 	const qse_char_t* script = QSE_T(
 		"BEGIN { print \">> PRINT ALL LINES WHOSE LENGTH IS GREATER THAN 0\"; }\n" 

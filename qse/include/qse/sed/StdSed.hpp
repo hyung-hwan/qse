@@ -48,8 +48,9 @@ public:
 	{
 	public:
 		FileStream (const char_t* infile = QSE_NULL,
-		            const char_t* outfile = QSE_NULL): 
-			infile(infile), outfile(outfile) 
+		            const char_t* outfile = QSE_NULL,
+		            qse_cmgr_t* cmgr = QSE_NULL): 
+			infile(infile), outfile(outfile), cmgr(cmgr) 
 		{
 		}
 
@@ -61,6 +62,7 @@ public:
 	protected:
 		const char_t* infile;
 		const char_t* outfile;
+		qse_cmgr_t*   cmgr;
 	};
 
 	class StringStream: public Stream

@@ -799,6 +799,7 @@ int StdAwk::SourceFile::open (Data& io)
 			);
 			if (sio == QSE_NULL) return -1;
 
+			if (this->cmgr) qse_sio_setcmgr (sio, this->cmgr);
 			base = qse_basename (this->name);
 			if (base != this->name)
 			{
@@ -848,6 +849,7 @@ int StdAwk::SourceFile::open (Data& io)
 		);
 		if (dbuf) QSE_MMGR_FREE (((Awk*)io)->getMmgr(), dbuf);
 		if (sio == QSE_NULL) return -1;
+		if (this->cmgr) qse_sio_setcmgr (sio, this->cmgr);
 	}
 
 	io.setHandle (sio);
