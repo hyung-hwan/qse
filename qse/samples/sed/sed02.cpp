@@ -25,6 +25,7 @@
 
 #include <locale.h>
 #if defined(_WIN32)
+#	include <stdio.h>
 #    include <windows.h>
 #endif
 

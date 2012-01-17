@@ -40,7 +40,7 @@ static int test1 ()
 		qse_printf (QSE_T("cannot open a table\n"));
 		return -1;
 	}
-	qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+	qse_rbt_setmancbs (s1, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
 	for (i = 0; i < 20; i++)
 	{
@@ -100,7 +100,7 @@ static int test2 ()
 		qse_printf (QSE_T("cannot open a table\n"));
 		return -1;
 	}
-	qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+	qse_rbt_setmancbs (s1, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
 	qse_rbt_insert (s1, QSE_T("hello"), 5, QSE_T("mr. monkey"), 10);
 	qse_rbt_insert (s1, QSE_T("world"), 5, QSE_T("ms. panda"), 9);
@@ -192,7 +192,7 @@ static int test5 ()
 		qse_printf (QSE_T("cannot open a hash table\n"));
 		return -1;
 	}
-	qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+	qse_rbt_setmancbs (s1, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
 	for (i = 0; i < QSE_COUNTOF(vals); i++)
 	{

@@ -98,6 +98,7 @@ public:
 
 	int open ();
 	void close ();
+	Run* parse (Source& in, Source& out);
 
 	int addConsoleOutput (const char_t* arg, size_t len);
 	int addConsoleOutput (const char_t* arg);
@@ -111,6 +112,14 @@ protected:
 		const char_t* name, size_t len);
 	int system (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_cmgr_t* getcmgr (const char_t* ioname);
+	int setenc (Run& run, Value& ret, const Value* args, size_t nargs,
+		const char_t* name, size_t len);
+	int unsetenc (Run& run, Value& ret, const Value* args, size_t nargs,
+		const char_t* name, size_t len);
+#endif
 
 	// pipe io handlers 
 	int openPipe (Pipe& io);
@@ -140,8 +149,8 @@ protected:
 	void  freeMem    (void* ptr);
 
 
-	int    vsprintf (char_t* buf, size_t size,
-	                 const char_t* fmt, va_list arg);
+	int vsprintf (char_t* buf, size_t size,
+	              const char_t* fmt, va_list arg);
 
 	flt_t pow (flt_t x, flt_t y);
 	flt_t mod (flt_t x, flt_t y);
@@ -156,6 +165,8 @@ protected:
 
 protected:
 	unsigned int seed; 
+	qse_htb_t cmgrtab;
+	bool cmgrtab_inited;
 
 	/* standard input console - reuse runarg */
 	size_t runarg_index;

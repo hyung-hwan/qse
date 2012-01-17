@@ -157,7 +157,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	if (awk->sio.names == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->sio.names) = awk;
 	qse_htb_setmancbs (awk->sio.names, 
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
 	);
 	awk->sio.inp = &awk->sio.arg;
 
@@ -175,7 +175,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	if (awk->parse.funs == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.funs) = awk;
 	qse_htb_setmancbs (awk->parse.funs,
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
 	);
 
 	awk->parse.named = qse_htb_open (
@@ -184,7 +184,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	if (awk->parse.named == QSE_NULL) goto oops;
 	*(qse_awk_t**)QSE_XTN(awk->parse.named) = awk;
 	qse_htb_setmancbs (awk->parse.named,
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
+		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER)
 	);
 
 	awk->parse.gbls = qse_lda_open (mmgr, QSE_SIZEOF(awk), 128);

@@ -295,7 +295,6 @@ struct qse_awk_rtx_t
 			qse_size_t        len;
 			qse_awk_val_t*    val; /* $1 .. $NF */
 		}* flds;
-
 	} inrec;
 
 	struct
@@ -372,7 +371,7 @@ struct qse_awk_rtx_t
 	qse_awk_errinf_t errinf;
 
 	qse_awk_t* awk;
-	qse_awk_rcb_t rcb;
+	qse_awk_rcb_t* rcb;
 };
 
 

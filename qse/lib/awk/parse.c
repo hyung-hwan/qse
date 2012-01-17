@@ -4832,7 +4832,7 @@ static qse_awk_nde_t* parse_primary_ident (
 
 	/* check if namedup is an intrinsic function name */
 	fnc = qse_awk_getfnc (awk, namedup, namelen);
-	if (fnc != QSE_NULL)
+	if (fnc)
 	{
 		if (MATCH(awk,TOK_LPAREN))
 		{

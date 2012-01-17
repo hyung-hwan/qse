@@ -26,6 +26,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/htb.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 #include "../cmn/mem.h"
 
@@ -116,7 +117,15 @@ typedef struct rxtn_t
 		qse_cmgr_t* cmgr;
 	} c;  /* console */
 
+#if defined(QSE_CHAR_IS_WCHAR)
+	int cmgrtab_inited;
+	qse_htb_t cmgrtab;
+#endif
 } rxtn_t;
+
+#if defined(QSE_CHAR_IS_WCHAR)
+static qse_cmgr_t* getcmgr_from_cmgrtab (qse_awk_rtx_t* rtx, const qse_char_t* ioname);
+#endif
 
 static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
@@ -466,7 +475,7 @@ static qse_ssize_t sf_in_open (
 		}
 
 		arg->handle = qse_sio_open (
-			awk->mmgr, 0, file, QSE_SIO_READ
+			awk->mmgr, 0, file, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR
 		);
 
 		if (dbuf != QSE_NULL) QSE_MMGR_FREE (awk->mmgr, dbuf);
@@ -800,8 +809,20 @@ static qse_ssize_t awk_rio_pipe (
 				QSE_NULL,
 				flags|QSE_PIO_SHELL|QSE_PIO_TEXT|QSE_PIO_IGNOREMBWCERR
 			);
-
 			if (handle == QSE_NULL) return -1;
+
+#if defined(QSE_CHAR_IS_WCHAR)
+			{
+				qse_cmgr_t* cmgr = getcmgr_from_cmgrtab (rtx, riod->name);
+				if (cmgr)	
+				{
+					qse_pio_setcmgr (handle, QSE_PIO_IN, cmgr);
+					qse_pio_setcmgr (handle, QSE_PIO_OUT, cmgr);
+					qse_pio_setcmgr (handle, QSE_PIO_ERR, cmgr);
+				}
+			}
+#endif
+
 			riod->handle = (void*)handle;
 			return 1;
 		}
@@ -870,44 +891,45 @@ static qse_ssize_t awk_rio_file (
 	{
 		case QSE_AWK_RIO_OPEN:
 		{
-			qse_fio_t* handle;
-			int flags;
+			qse_sio_t* handle;
+			int flags = QSE_SIO_IGNOREMBWCERR;
 
-			if (riod->mode == QSE_AWK_RIO_FILE_READ)
+			switch (riod->mode)
 			{
-				flags = QSE_FIO_READ;
+				case QSE_AWK_RIO_FILE_READ: 
+					flags |= QSE_SIO_READ;
+					break;
+				case QSE_AWK_RIO_FILE_WRITE:
+					flags |= QSE_SIO_WRITE |
+					         QSE_SIO_CREATE |
+					         QSE_SIO_TRUNCATE;
+					break;
+				case QSE_AWK_RIO_FILE_APPEND:
+					flags |= QSE_SIO_APPEND |
+					         QSE_SIO_CREATE;
+					break;
+				default:
+					/* this must not happen */
+					qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINTERN, QSE_NULL);
+					return -1; 
 			}
-			else if (riod->mode == QSE_AWK_RIO_FILE_WRITE)
-			{
-				flags = QSE_FIO_WRITE |
-				        QSE_FIO_CREATE |
-				        QSE_FIO_TRUNCATE;
-			}
-			else if (riod->mode == QSE_AWK_RIO_FILE_APPEND)
-			{
-				flags = QSE_FIO_APPEND |
-				        QSE_FIO_CREATE;
-			}
-			else return -1; /* TODO: any way to set the error number? */
 
-			handle = qse_fio_open (
-				rtx->awk->mmgr,
-				0,
-				riod->name, 
-				flags | QSE_FIO_TEXT,
-				QSE_FIO_RUSR | QSE_FIO_WUSR | 
-				QSE_FIO_RGRP | QSE_FIO_ROTH
-			);
+			handle = qse_sio_open (rtx->awk->mmgr, 0, riod->name, flags);
 			if (handle == QSE_NULL) 
 			{
 				qse_cstr_t errarg;
-
 				errarg.ptr = riod->name;
 				errarg.len = qse_strlen(riod->name);
-
 				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EOPEN, &errarg);
 				return -1;
 			}
+
+#if defined(QSE_CHAR_IS_WCHAR)
+			{
+				qse_cmgr_t* cmgr = getcmgr_from_cmgrtab (rtx, riod->name);
+				if (cmgr) qse_sio_setcmgr (handle, cmgr);
+			}
+#endif
 
 			riod->handle = (void*)handle;
 			return 1;
@@ -915,15 +937,15 @@ static qse_ssize_t awk_rio_file (
 
 		case QSE_AWK_RIO_CLOSE:
 		{
-			qse_fio_close ((qse_fio_t*)riod->handle);
+			qse_sio_close ((qse_sio_t*)riod->handle);
 			riod->handle = QSE_NULL;
 			return 0;
 		}
 
 		case QSE_AWK_RIO_READ:
 		{
-			return qse_fio_read (
-				(qse_fio_t*)riod->handle,
+			return qse_sio_getstrn (
+				(qse_sio_t*)riod->handle,
 				data,	
 				size
 			);
@@ -931,8 +953,8 @@ static qse_ssize_t awk_rio_file (
 
 		case QSE_AWK_RIO_WRITE:
 		{
-			return qse_fio_write (
-				(qse_fio_t*)riod->handle,
+			return qse_sio_putstrn (
+				(qse_sio_t*)riod->handle,
 				data,	
 				size
 			);
@@ -940,7 +962,7 @@ static qse_ssize_t awk_rio_file (
 
 		case QSE_AWK_RIO_FLUSH:
 		{
-			return qse_fio_flush ((qse_fio_t*)riod->handle);
+			return qse_sio_flush ((qse_sio_t*)riod->handle);
 		}
 
 		case QSE_AWK_RIO_NEXT:
@@ -1245,13 +1267,19 @@ static qse_ssize_t awk_rio_console (
 	return -1;
 }
 
-/* TODO: provide a way to set cmgr for console files icf and ocf... 
- *       should i accept something similar to qse_awk_parsestd_t? 
- * 
- *       what is the best way to change cmgr for pipes and files?
- *       currently there is no way to change cmgr for each pipe and file.
- *       you can change the global cmgr only with qse_setdflcmgr().
- */
+static void fini_rxtn (qse_awk_rtx_t* rtx, void* ctx)
+{
+	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	if (rxtn->cmgrtab_inited)
+	{
+		qse_htb_fini (&rxtn->cmgrtab);
+		rxtn->cmgrtab_inited = 0;
+	}
+#endif
+}
+
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*             awk,
 	qse_size_t             xtnsize,
@@ -1260,6 +1288,13 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	const qse_char_t*const ocf[],
 	qse_cmgr_t*            cmgr)
 {
+	static qse_awk_rcb_t rcb =
+	{
+		fini_rxtn,	
+		QSE_NULL,
+		QSE_NULL
+	};
+
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
 	rxtn_t* rxtn;
@@ -1325,6 +1360,25 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_MEMSET (rxtn, 0, QSE_SIZEOF(rxtn_t));
 
+#if defined(QSE_CHAR_IS_WCHAR)
+	if (rtx->awk->option & QSE_AWK_RIO)
+	{
+		if (qse_htb_init (
+			&rxtn->cmgrtab, awk->mmgr, 256, 70, 
+			QSE_SIZEOF(qse_char_t), 1) <= -1)
+		{
+			qse_awk_rtx_close (rtx);
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+			return QSE_NULL;
+		}
+		qse_htb_setmancbs (&rxtn->cmgrtab, 
+			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER));
+		rxtn->cmgrtab_inited = 1;
+	}
+#endif
+
+	qse_awk_rtx_pushrcb (rtx, &rcb);
+
 	if (qse_gettime (&now) <= -1) rxtn->seed = 0;
 	else rxtn->seed = (unsigned int) now;
 	srand (rxtn->seed);
@@ -1336,7 +1390,6 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->c.out.index = 0;
 	rxtn->c.out.count = 0;
 	rxtn->c.cmgr = cmgr;
-
 	
 	/* FILENAME can be set when the input console is opened.
 	 * so we skip setting it here even if an explicit console file
@@ -1430,7 +1483,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
-	qse_char_t* str, * ptr, * end;
+	qse_char_t* str;
 	qse_size_t len;
 	int n = 0;
 
@@ -1451,16 +1504,10 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	/* the target name contains a null character.
 	 * make system return -1 */
-	ptr = str; end = str + len;
-	while (ptr < end)
+	if (qse_strxchr (str, len, QSE_T('\0')))
 	{
-		if (*ptr == QSE_T('\0')) 
-		{
-			n = -1;
-			goto skip_system;
-		}
-
-		ptr++;
+		n = -1;
+		goto skip_system;
 	}
 
 #if defined(_WIN32)
@@ -1493,15 +1540,143 @@ skip_system:
 	return 0;
 }
 
-#define ADDFNC(awk,name,min,max,fnc) \
+#if defined(QSE_CHAR_IS_WCHAR)
+static qse_cmgr_t* getcmgr_from_cmgrtab (qse_awk_rtx_t* rtx, const qse_char_t* ioname)
+{
+	rxtn_t* rxtn;
+	qse_htb_pair_t* pair;
+
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
+
+	pair = qse_htb_search (&rxtn->cmgrtab, ioname, qse_strlen(ioname));
+	if (pair) return QSE_HTB_VPTR(pair);
+
+	return QSE_NULL;
+}
+
+static int fnc_setenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	rxtn_t* rxtn;
+	qse_size_t nargs;
+	qse_awk_val_t* v[2];
+	qse_char_t* ptr[2];
+	qse_size_t len[2];
+	int i, ret = 0, fret = 0;
+	qse_cmgr_t* cmgr;
+
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 2);
+	
+	for (i = 0; i < 2; i++)
+	{
+		v[i] = qse_awk_rtx_getarg (rtx, i);
+		if (v[i]->type == QSE_AWK_VAL_STR)
+		{
+			ptr[i] = ((qse_awk_val_str_t*)v[i])->val.ptr;
+			len[i] = ((qse_awk_val_str_t*)v[i])->val.len;
+		}
+		else
+		{
+			ptr[i] = qse_awk_rtx_valtocpldup (rtx, v[i], &len[i]);
+			if (ptr[i] == QSE_NULL) 
+			{
+				ret = -1;
+				goto done;
+			}
+		}
+
+		if (qse_strxchr (ptr[i], len[i], QSE_T('\0')))
+		{
+			fret = -1;
+			goto done;
+		}
+	}
+
+	cmgr = qse_getcmgrbyname (ptr[1]);
+	if (cmgr == QSE_NULL) fret = -1;
+	else
+	{
+		if (qse_htb_upsert (
+			&rxtn->cmgrtab, ptr[0], len[0], cmgr, 0) == QSE_NULL)
+		{
+			ret = -1;
+		}
+	}
+
+done:
+	while (i > 0)
+	{
+		i--;
+		if (v[i]->type != QSE_AWK_VAL_STR) 
+			QSE_AWK_FREE (rtx->awk, ptr[i]);
+	}
+
+	if (ret >= 0)
+	{
+		v[0] = qse_awk_rtx_makeintval (rtx, (qse_long_t)fret);
+		if (v[0] == QSE_NULL) return -1;
+		qse_awk_rtx_setretval (rtx, v[0]);
+	}
+
+	return ret;
+}
+
+static int fnc_unsetenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	rxtn_t* rxtn;
+	qse_size_t nargs;
+	qse_awk_val_t* v;
+	qse_char_t* ptr;
+	qse_size_t len;
+	int fret = 0;
+
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 1);
+	
+	v = qse_awk_rtx_getarg (rtx, 0);
+	if (v->type == QSE_AWK_VAL_STR)
+	{
+		ptr = ((qse_awk_val_str_t*)v)->val.ptr;
+		len = ((qse_awk_val_str_t*)v)->val.len;
+	}
+	else
+	{
+		ptr = qse_awk_rtx_valtocpldup (rtx, v, &len);
+		if (ptr == QSE_NULL) return -1; 
+	}
+
+	fret = qse_htb_delete (&rxtn->cmgrtab, ptr, len);
+
+	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, ptr);
+
+	v = qse_awk_rtx_makeintval (rtx, fret);
+	if (v == QSE_NULL) return -1;
+	qse_awk_rtx_setretval (rtx, v);
+
+	return 0;
+}
+#endif
+
+#define ADDFNC(awk,name,min,max,fnc,valid) \
         if (qse_awk_addfnc (\
 		(awk), (name), qse_strlen(name), \
-		0, (min), (max), QSE_NULL, (fnc)) == QSE_NULL) return -1;
+		valid, (min), (max), QSE_NULL, (fnc)) == QSE_NULL) return -1;
 
 static int add_functions (qse_awk_t* awk)
 {
-	ADDFNC (awk, QSE_T("rand"),       0, 0, fnc_rand);
-	ADDFNC (awk, QSE_T("srand"),      0, 1, fnc_srand);
-	ADDFNC (awk, QSE_T("system"),     1, 1, fnc_system);
+	ADDFNC (awk, QSE_T("rand"),     0, 0, fnc_rand,     0);
+	ADDFNC (awk, QSE_T("srand"),    0, 1, fnc_srand,    0);
+	ADDFNC (awk, QSE_T("system"),   1, 1, fnc_system,   0);
+#if defined(QSE_CHAR_IS_WCHAR)
+	ADDFNC (awk, QSE_T("setenc"),   2, 2, fnc_setenc,   QSE_AWK_RIO);
+	ADDFNC (awk, QSE_T("unsetenc"), 1, 1, fnc_unsetenc, QSE_AWK_RIO);
+#endif
 	return 0;
 }

@@ -49,7 +49,7 @@
  *   int i;
  * 
  *   s1 = qse_htb_open (QSE_MMGR_GETDFL(), 0, 30, 75, 1, 1); // error handling skipped
- *   qse_htb_setmancbs (s1, qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
+ *   qse_htb_setmancbs (s1, qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
  * 
  *   for (i = 0; i < 20; i++)
  *   {
@@ -302,10 +302,10 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (htb)
 
 /**
- * The qse_htb_mancbs() functions returns a predefined callback set for
+ * The qse_gethtbmancbs() functions returns a predefined callback set for
  * pair manipulation.
  */
-const qse_htb_mancbs_t* qse_htb_mancbs (
+const qse_htb_mancbs_t* qse_gethtbmancbs (
 	qse_htb_mancbs_kind_t kind
 );
 

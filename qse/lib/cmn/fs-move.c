@@ -21,6 +21,7 @@
 #include "fs.h"
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/str.h>
 #include "mem.h"
 
 

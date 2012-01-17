@@ -21,6 +21,10 @@
 #ifndef _QSE_CMN_MBWC_H_
 #define _QSE_CMN_MBWC_H_
 
+/** @file
+ * This file provides functions and definitions needed for 
+ * multibyte/wide-characer conversion.
+ */
 #include <qse/types.h>
 #include <qse/macros.h>
 
@@ -28,9 +32,25 @@
 extern "C" {
 #endif
 
+/* --------------------------------------------------- */
+/* BUILTIN CMGR                                        */
+/* --------------------------------------------------- */
 extern qse_cmgr_t* qse_utf8cmgr;
 extern qse_cmgr_t* qse_slmbcmgr;
 
+/**
+ * The qse_getcmgrbyname() function find a builtin cmgr matching a given 
+ * @a name and returns it. It returns #QSE_NULL if no match is found.
+ * The @a name can be one of "utf8", "slmb", and an empty string. Calling this
+ * function with an empty string is the same as calling qse_getdflcmgr().
+ */
+qse_cmgr_t* qse_getcmgrbyname (
+	const qse_char_t* name
+);
+
+/* --------------------------------------------------- */
+/* DEFAULT GLOBAL CMGR                                 */
+/* --------------------------------------------------- */
 qse_cmgr_t* qse_getdflcmgr (
 	void
 );
@@ -38,7 +58,6 @@ qse_cmgr_t* qse_getdflcmgr (
 void qse_setdflcmgr (
 	qse_cmgr_t* cmgr
 );
-
 
 /* --------------------------------------------------- */
 /* STRING CONVERSION USING CMGR                        */
@@ -142,7 +161,7 @@ qse_mchar_t* qse_wcsatombsdupwithcmgr (
 
 
 /* --------------------------------------------------- */
-/* STRING CONVERSION                                   */
+/* STRING CONVERSION WITH DEFAULT GLOBAL CMGR          */
 /* --------------------------------------------------- */
 
 /**
