@@ -1026,10 +1026,11 @@ public:
 	/// function.
 	///
 	int addFunction (
-		const char_t* name,     ///< function name
-		size_t minArgs,         ///< minimum numbers of arguments
-		size_t maxArgs,         ///< maximum numbers of arguments
-		FunctionHandler handler ///< function handler
+		const char_t* name,      ///< function name
+		size_t minArgs,          ///< minimum numbers of arguments
+		size_t maxArgs,          ///< maximum numbers of arguments
+		FunctionHandler handler, ///< function handler
+		int    validOpts = 0     ///< valid if these options are set
 	);
 
 	///

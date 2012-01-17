@@ -1510,7 +1510,7 @@ int Awk::getGlobal (int id, Value& v)
 
 int Awk::addFunction (
 	const char_t* name, size_t minArgs, size_t maxArgs, 
-	FunctionHandler handler) 
+	FunctionHandler handler, int validOpts) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
@@ -1529,7 +1529,7 @@ int Awk::addFunction (
 
 	void* p = qse_awk_addfnc (
 		awk, name, nameLen,
-		0, minArgs, maxArgs,
+		validOpts, minArgs, maxArgs,
 #ifdef PASS_BY_REFERENCE
 		QSE_T("R"), // pass all arguments by reference
 #else

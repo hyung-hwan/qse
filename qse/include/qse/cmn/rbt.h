@@ -49,7 +49,7 @@
  *   int i;
  * 
  *   s1 = qse_rbt_open (QSE_MMGR_GETDFL(), 0, 1, 1); // error handling skipped
- *   qse_rbt_setmancbs (s1, qse_rbt_mancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
+ *   qse_rbt_setmancbs (s1, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
  * 
  *   for (i = 0; i < 20; i++)
  *   {
@@ -273,10 +273,10 @@ extern "C" {
 QSE_DEFINE_COMMON_FUNCTIONS (rbt)
 
 /**
- * The qse_rbt_mancbs() functions returns a predefined callback set for
+ * The qse_getrbtmancbs() functions returns a predefined callback set for
  * pair manipulation.
  */
-const qse_rbt_mancbs_t* qse_rbt_mancbs (
+const qse_rbt_mancbs_t* qse_getrbtmancbs (
 	qse_rbt_mancbs_kind_t kind
 );
 

@@ -250,7 +250,7 @@ static mancbs_t mancbs[] =
 	}
 };
 
-const mancbs_t* qse_htb_mancbs (mancbs_kind_t kind)
+const mancbs_t* qse_gethtbmancbs (mancbs_kind_t kind)
 {
 	return &mancbs[kind];
 };

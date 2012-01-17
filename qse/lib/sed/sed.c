@@ -89,7 +89,7 @@ int qse_sed_init (qse_sed_t* sed, qse_mmgr_t* mmgr)
 		128, 70, QSE_SIZEOF(qse_char_t), 1) <= -1) goto oops_3;
 	qse_map_setmancbs (
 		&sed->tmp.labs, 
-		qse_map_mancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
+		qse_getmapmancbs(QSE_MAP_MANCBS_INLINE_KEY_COPIER)
 	);
 
 	/* init_append (sed); */

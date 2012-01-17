@@ -21,6 +21,7 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/slmb.h>
 #include <qse/cmn/utf8.h>
+#include <qse/cmn/str.h>
 
 /* TODO: there is no guarantee that slwc is a unicode charater or vice versa.
  *       the ctype handling functions should be made wide-character
@@ -55,6 +56,19 @@ qse_cmgr_t* qse_getdflcmgr (void)
 void qse_setdflcmgr (qse_cmgr_t* cmgr)
 {
 	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[0]);
+}
+
+qse_cmgr_t* qse_getcmgrbyname (const qse_char_t* name)
+{
+	if (name)
+	{
+		/* TODO: binary search */
+		if (qse_strcmp(name, QSE_T("")) == 0) return dfl_cmgr;
+		if (qse_strcmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
+		if (qse_strcmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
+		/* TODO: add more */
+	}
+	return QSE_NULL;
 }
 
 /* string conversion function using default character conversion manager */

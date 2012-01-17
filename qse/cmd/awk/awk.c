@@ -518,7 +518,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	}
 
 	qse_htb_setmancbs (gvm,
-		qse_htb_mancbs(QSE_HTB_MANCBS_INLINE_VALUE_COPIER)
+		qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_VALUE_COPIER)
 	);
 
 	while ((c = qse_getopt (argc, argv, &opt)) != QSE_CHAR_EOF)
@@ -947,7 +947,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 
 #ifdef ENABLE_CALLBACK
-	rcb.stm = on_statement;
+	qse_memset (&rcb, 0, QSE_SIZEOF(rcb));
+	rcb.stmt = on_statement;
 	rcb.ctx = &arg;
 #endif
 
@@ -968,7 +969,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	app_rtx = rtx;
 #ifdef ENABLE_CALLBACK
-	qse_awk_rtx_setrcb (rtx, &rcb);
+	qse_awk_rtx_pushrcb (rtx, &rcb);
 #endif
 
 	set_intr_run ();

@@ -22,7 +22,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
-#include <qse/cmn/fio.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
 #include <qse/cmn/path.h>
@@ -42,10 +41,10 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-#define ADDFNC(name,min,max,impl) \
+#define ADDFNC(name,min,max,impl,vopts) \
 	do { \
 		if (addFunction (name, min, max, \
-			(FunctionHandler)impl) == -1)  \
+			(FunctionHandler)impl, vopts) == -1)  \
 		{ \
 			Awk::close (); \
 			return -1; \
@@ -97,9 +96,14 @@ int StdAwk::open ()
 	int n = Awk::open ();
 	if (n == -1) return n;
 
-	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand);
-	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand);
-	ADDFNC (QSE_T("system"),     1, 1, &StdAwk::system);
+	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand,     0);
+	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand,    0);
+	ADDFNC (QSE_T("system"),     1, 1, &StdAwk::system,   0);
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	ADDFNC (QSE_T("setenc"),     2, 2, &StdAwk::setenc,   QSE_AWK_RIO);
+	ADDFNC (QSE_T("unsetenc"),   1, 1, &StdAwk::unsetenc, QSE_AWK_RIO);
+#endif
 
 	qse_ntime_t now;
 
@@ -107,14 +111,57 @@ int StdAwk::open ()
 	else this->seed = (unsigned int)now;
 
 	::srand (this->seed);
+	this->cmgrtab_inited = false;
 	return 0;
 }
 
 void StdAwk::close () 
 {
+#if defined(QSE_CHAR_IS_WCHAR)
+	if (this->cmgrtab_inited) 
+	{
+		qse_htb_fini (&this->cmgrtab);
+		this->cmgrtab_inited = false;
+	}
+#endif
 	clearConsoleOutputs ();
 	Awk::close ();
 }
+
+StdAwk::Run* StdAwk::parse (Source& in, Source& out)
+{
+	Run* run = Awk::parse (in, out);
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	if (this->cmgrtab_inited) 
+	{
+		// if cmgrtab has already been initialized,
+		// just clear the contents regardless of 
+		// parse() result.
+		qse_htb_clear (&this->cmgrtab);
+	}
+	else if (run && (this->getOption() & QSE_AWK_RIO))
+	{
+		// it initialized cmgrtab only if QSE_AWK_RIO is set.
+		// but if you call parse() multiple times while
+		// setting and unsetting QSE_AWK_RIO in-between,
+		// cmgrtab can still be initialized when QSE_AWK_RIO is not set.
+		if (qse_htb_init (
+			&this->cmgrtab, this->getMmgr(), 256, 70,
+			QSE_SIZEOF(qse_char_t), 1) <= -1)
+		{
+			this->setError (QSE_AWK_ENOMEM);
+			return QSE_NULL;
+		}
+		qse_htb_setmancbs (&this->cmgrtab,
+			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER));
+		this->cmgrtab_inited = true;
+	}
+#endif
+
+	return run;
+}
+
 
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
@@ -165,6 +212,53 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #endif
 }
 
+#if defined(QSE_CHAR_IS_WCHAR)
+qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
+{
+	QSE_ASSERT (this->cmgrtab_inited == true);
+
+	qse_htb_pair_t* pair = qse_htb_search (&this->cmgrtab, ioname, qse_strlen(ioname));
+	if (pair) return (qse_cmgr_t*)QSE_HTB_VPTR(pair);
+	return QSE_NULL;
+}
+
+int StdAwk::setenc (Run& run, Value& ret, const Value* args, size_t nargs,
+	const char_t* name, size_t len)
+{
+	QSE_ASSERT (this->cmgrtab_inited == true);
+	size_t l[2];
+	const char_t* ptr[2];
+
+	ptr[0] = args[0].toStr(&l[0]);
+	ptr[1] = args[1].toStr(&l[1]);
+
+	if (qse_strxchr (ptr[0], l[0], QSE_T('\0')) ||
+	    qse_strxchr (ptr[1], l[1], QSE_T('\0')))
+	{
+		return ret.setInt ((long_t)-1);
+	}
+	
+	qse_cmgr_t* cmgr = qse_getcmgrbyname (ptr[1]);
+	if (cmgr == QSE_NULL)
+	{
+		return ret.setInt ((long_t)-1);
+	}
+	
+	qse_htb_pair_t* pair = qse_htb_upsert (&this->cmgrtab, (char_t*)ptr[0], l[0], cmgr, 0);
+	return ret.setInt ((long_t)(pair? 0: -1));
+}
+
+int StdAwk::unsetenc (Run& run, Value& ret, const Value* args, size_t nargs,
+	const char_t* name, size_t len)
+{
+	QSE_ASSERT (this->cmgrtab_inited == true);
+
+	size_t l;
+	const char_t* ptr = args[0].toStr(&l);
+	return ret.setInt ((long_t)qse_htb_delete (&this->cmgrtab, ptr, l));
+}
+#endif
+
 int StdAwk::openPipe (Pipe& io) 
 { 
 	Awk::Pipe::Mode mode = io.getMode();
@@ -197,6 +291,15 @@ int StdAwk::openPipe (Pipe& io)
 	);
 	if (pio == QSE_NULL) return -1;
 
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	if (cmgr) 
+	{
+		qse_pio_setcmgr (pio, QSE_PIO_IN, cmgr);
+		qse_pio_setcmgr (pio, QSE_PIO_OUT, cmgr);
+		qse_pio_setcmgr (pio, QSE_PIO_ERR, cmgr);
+	}
+#endif
 	io.setHandle (pio);
 	return 1;
 }
@@ -241,58 +344,55 @@ int StdAwk::flushPipe (Pipe& io)
 int StdAwk::openFile (File& io) 
 { 
 	Awk::File::Mode mode = io.getMode();
-	qse_fio_t* fio = QSE_NULL;
-	int flags = QSE_FIO_TEXT;
+	qse_sio_t* sio = QSE_NULL;
+	int flags = QSE_SIO_IGNOREMBWCERR;
 
 	switch (mode)
 	{
 		case Awk::File::READ:
-			flags |= QSE_FIO_READ;
+			flags |= QSE_SIO_READ;
 			break;
 		case Awk::File::WRITE:
-			flags |= QSE_FIO_WRITE | 
-			         QSE_FIO_CREATE | 
-			         QSE_FIO_TRUNCATE;
+			flags |= QSE_SIO_WRITE | 
+			         QSE_SIO_CREATE | 
+			         QSE_SIO_TRUNCATE;
 			break;
 		case Awk::File::APPEND:
-			flags |= QSE_FIO_APPEND |
-			         QSE_FIO_CREATE;
+			flags |= QSE_SIO_APPEND |
+			         QSE_SIO_CREATE;
 			break;
 	}
 
-	fio = qse_fio_open (
-		this->getMmgr(),
-		0, 
-		io.getName(), 
-		flags,
-		QSE_FIO_RUSR | QSE_FIO_WUSR |
-		QSE_FIO_RGRP | QSE_FIO_ROTH
-	);	
-	if (fio == NULL) return -1;
+	sio = qse_sio_open (this->getMmgr(), 0, io.getName(), flags);	
+	if (sio == NULL) return -1;
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	if (cmgr) qse_sio_setcmgr (sio, cmgr);
+#endif
 
-	io.setHandle (fio);
+	io.setHandle (sio);
 	return 1;
 }
 
 int StdAwk::closeFile (File& io) 
 { 
-	qse_fio_close ((qse_fio_t*)io.getHandle());
+	qse_sio_close ((qse_sio_t*)io.getHandle());
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readFile (File& io, char_t* buf, size_t len) 
 {
-	return qse_fio_read ((qse_fio_t*)io.getHandle(), buf, len);
+	return qse_sio_getstrn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writeFile (File& io, const char_t* buf, size_t len)
 {
-	return qse_fio_write ((qse_fio_t*)io.getHandle(), buf, len);
+	return qse_sio_putstrn ((qse_sio_t*)io.getHandle(), buf, len);
 }
 
 int StdAwk::flushFile (File& io) 
 { 
-	return qse_fio_flush ((qse_fio_t*)io.getHandle());
+	return qse_sio_flush ((qse_sio_t*)io.getHandle());
 }
 
 int StdAwk::addConsoleOutput (const char_t* arg, size_t len) 
@@ -782,9 +882,14 @@ int StdAwk::SourceFile::open (Data& io)
 		if (this->name[0] == QSE_T('-') && this->name[1] == QSE_T('\0'))
 		{
 			if (io.getMode() == READ)
-				sio = open_sio_std (io, QSE_NULL, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+				sio = open_sio_std (
+					io, QSE_NULL, QSE_SIO_STDIN, 
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			else
-				sio = open_sio_std (io, QSE_NULL, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_CREATE | QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
+				sio = open_sio_std (
+					io, QSE_NULL, QSE_SIO_STDOUT, 
+					QSE_SIO_WRITE | QSE_SIO_CREATE | 
+					QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
 		}
 		else
@@ -794,8 +899,9 @@ int StdAwk::SourceFile::open (Data& io)
 			sio = open_sio (
 				io, QSE_NULL, this->name,
 				(io.getMode() == READ? 
-					QSE_SIO_READ: 
-					(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE|QSE_SIO_IGNOREMBWCERR))
+					(QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR): 
+					(QSE_SIO_WRITE | QSE_SIO_CREATE | 
+					 QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
 			);
 			if (sio == QSE_NULL) return -1;
 
@@ -811,7 +917,6 @@ int StdAwk::SourceFile::open (Data& io)
 	else
 	{
 		// open an included file
-
 		const char_t* file = ioname;
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
@@ -844,8 +949,9 @@ int StdAwk::SourceFile::open (Data& io)
 		sio = open_sio (
 			io, QSE_NULL, file,
 			(io.getMode() == READ? 
-				QSE_SIO_READ: 
-				(QSE_SIO_WRITE|QSE_SIO_CREATE|QSE_SIO_TRUNCATE|QSE_SIO_IGNOREMBWCERR))
+				(QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR): 
+				(QSE_SIO_WRITE | QSE_SIO_CREATE | 
+				 QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR))
 		);
 		if (dbuf) QSE_MMGR_FREE (((Awk*)io)->getMmgr(), dbuf);
 		if (sio == QSE_NULL) return -1;

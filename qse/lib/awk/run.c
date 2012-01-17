@@ -739,7 +739,19 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 
 void qse_awk_rtx_close (qse_awk_rtx_t* rtx)
 {
+	qse_awk_rcb_t* rcb;
+
+	for (rcb = rtx->rcb; rcb; rcb = rcb->next)
+		if (rcb->close) rcb->close (rtx, rcb->ctx);
+
+	/* NOTE:
+	 *  the close callbacks are called before data in rtx
+	 *  is destroyed. if the destruction count on any data
+	 *  destroyed by the close callback, something bad 
+	 *  will happen.
+	 */
 	fini_rtx (rtx, 1);
+
 	QSE_AWK_FREE (rtx->awk, rtx);
 }
 
@@ -753,14 +765,17 @@ qse_bool_t qse_awk_rtx_isstop (qse_awk_rtx_t* rtx)
 	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
 }
 
-qse_awk_rcb_t* qse_awk_rtx_getrcb (qse_awk_rtx_t* rtx)
+qse_awk_rcb_t* qse_awk_rtx_poprcb (qse_awk_rtx_t* rtx)
 {
-	return &rtx->rcb;
+	qse_awk_rcb_t* top = rtx->rcb;
+	if (top) rtx->rcb = top->next;
+	return top;
 }
 
-void qse_awk_rtx_setrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
+void qse_awk_rtx_pushrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
 {
-	rtx->rcb = *rcb;
+	rcb->next = rtx->rcb;
+	rtx->rcb = rcb;
 }
 
 static void free_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
@@ -1891,9 +1906,12 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 	return n;
 }
 
-#define ON_STATEMENT(rtx,nde) \
+#define ON_STATEMENT(rtx,nde) QSE_BLOCK ( \
+	qse_awk_rcb_t* rcb; \
 	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
-	if ((rtx)->rcb.stm) (rtx)->rcb.stm (rtx, nde, (rtx)->rcb.ctx); 
+	for (rcb = (rtx)->rcb; rcb; rcb = rcb->next) \
+		if (rcb->stmt) rcb->stmt (rtx, nde, rcb->ctx);  \
+)
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {

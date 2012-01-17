@@ -100,6 +100,7 @@ void* qse_awk_addfnc (
 	qse_awk_fnc_fun_t handler)
 {
 	qse_awk_fnc_t* fnc;
+	qse_size_t fnc_size;
 	qse_size_t spec_len;
 
 	if (name_len <= 0)
@@ -121,15 +122,18 @@ void* qse_awk_addfnc (
 
 	spec_len = (arg_spec == QSE_NULL)? 0: qse_strlen(arg_spec);
 
-	fnc = (qse_awk_fnc_t*) QSE_AWK_ALLOC (awk, 
+	fnc_size = 
 		QSE_SIZEOF(qse_awk_fnc_t) + 
 		(name_len+1) * QSE_SIZEOF(qse_char_t) +
-		(spec_len+1) * QSE_SIZEOF(qse_char_t));
+		(spec_len+1) * QSE_SIZEOF(qse_char_t);
+	fnc = (qse_awk_fnc_t*) QSE_AWK_ALLOC (awk, fnc_size);
 	if (fnc == QSE_NULL)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
+
+	QSE_MEMSET (fnc, 0, fnc_size);
 
 	fnc->name.ptr = (qse_char_t*)(fnc + 1);
 	fnc->name.len = name_len;
@@ -187,8 +191,12 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	qse_awk_fnc_t* fnc;
 	qse_htb_pair_t* pair;
 
-	/* search the system function table */
-/* TODO: some speed up? binary search by ordering the table? */
+	/* search the system function table 
+	 * though some optimization like binary search can
+	 * speed up the search, i don't do that since this
+	 * function is called durting parse-time only. 
+	 * TODO: binary search.
+      */
 	for (fnc = sys_fnc; fnc->name.ptr != QSE_NULL; fnc++)
 	{
 		if (fnc->valid != 0 && 
