@@ -27,6 +27,7 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/mbwc.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -451,7 +452,8 @@ static void delete_from_client_array (qse_httpd_t* httpd, int fd)
 	{
 		purge_tasks_locked (httpd, &array->data[fd]);
 #if defined(HAVE_PTHREAD)
-		if (httpd->threaded) pthread_mutex_destroy (&array->data[fd].task.mutex);
+		if (httpd->threaded) 
+			pthread_mutex_destroy (&array->data[fd].task.mutex);
 #endif
 
 		qse_htrd_close (array->data[fd].htrd);
@@ -609,7 +611,6 @@ httpd->cbs.on_error (httpd, l).... */
 		}
 	}
 }
-
 
 static int make_fd_set_from_client_array (
 	qse_httpd_t* httpd, fd_set* r, fd_set* w)
@@ -955,136 +956,123 @@ static void free_listener_list (qse_httpd_t* httpd, listener_t* l)
 	}
 }
 
-static listener_t* parse_listener_string (
-	qse_httpd_t* httpd, const qse_char_t* str, listener_t** ltail)
+static listener_t* parse_listener_uri (
+	qse_httpd_t* httpd, const qse_char_t* uri)
 {
-	const qse_char_t* p = str;
-	listener_t* lhead = QSE_NULL, * ltmp = QSE_NULL, * lend = QSE_NULL;
+	const qse_char_t* p = uri;
+	listener_t* ltmp = QSE_NULL;
+	qse_cstr_t tmp;
+	qse_mchar_t* host;
+	int x;
 
-	do
+	ltmp = qse_httpd_allocmem (httpd, QSE_SIZEOF(*ltmp));
+	if (ltmp == QSE_NULL) goto oops; /* alloc set error number. so goto oops */
+
+	QSE_MEMSET (ltmp, 0, QSE_SIZEOF(*ltmp));
+	ltmp->handle = -1;
+
+	/* check the protocol part */
+	tmp.ptr = p;
+	while (*p != QSE_T(':')) 
 	{
-		qse_cstr_t tmp;
-		qse_mchar_t* host;
-		int x;
+		if (*p == QSE_T('\0')) goto oops_einval;
+		p++;
+	}
+	tmp.len = p - tmp.ptr;
+	if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
+	{
+		ltmp->secure = 0;
+		ltmp->port = DEFAULT_PORT;
+	}
+	else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
+	{
+		ltmp->secure = 1;
+		ltmp->port = DEFAULT_SECURE_PORT;
+	}
+	else goto oops;
+	
+	p++; /* skip : */ 
+	if (*p != QSE_T('/')) goto oops_einval;
+	p++; /* skip / */
+	if (*p != QSE_T('/')) goto oops_einval;
+	p++; /* skip / */
 
-		/* skip spaces */
-		while (QSE_ISSPACE(*p)) p++;
+#ifdef AF_INET6
+	if (*p == QSE_T('['))	
+	{
+		/* IPv6 address */
+		p++; /* skip [ */
 
-		ltmp = qse_httpd_allocmem (httpd, QSE_SIZEOF(*ltmp));
-		if (ltmp == QSE_NULL) goto oops; /* alloc set error number. so goto oops */
-
-		QSE_MEMSET (ltmp, 0, QSE_SIZEOF(*ltmp));
-		ltmp->handle = -1;
-
-		/* check the protocol part */
-		tmp.ptr = p;
-		while (*p != QSE_T(':')) 
+		for (tmp.ptr = p; *p != QSE_T(']'); p++)
 		{
 			if (*p == QSE_T('\0')) goto oops_einval;
-			p++;
+		}
+
+		tmp.len = p - tmp.ptr;
+		ltmp->family = AF_INET6;
+
+		p++; /* skip ] */
+		if (*p != QSE_T(':') && *p != QSE_T('\0'))  goto oops_einval;
+	}
+	else
+	{
+#endif
+		/* host name or IPv4 address */
+		for (tmp.ptr = p; ; p++)
+		{
+			if (*p == QSE_T(':') || *p == QSE_T('\0')) break;
 		}
 		tmp.len = p - tmp.ptr;
-		if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
-		{
-			ltmp->secure = 0;
-			ltmp->port = DEFAULT_PORT;
-		}
-		else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
-		{
-			ltmp->secure = 1;
-			ltmp->port = DEFAULT_SECURE_PORT;
-		}
-		else goto oops;
-		
-		p++; /* skip : */ 
-		if (*p != QSE_T('/')) goto oops_einval;
-		p++; /* skip / */
-		if (*p != QSE_T('/')) goto oops_einval;
-		p++; /* skip / */
-
+		ltmp->family = AF_INET;
 #ifdef AF_INET6
-		if (*p == QSE_T('['))	
-		{
-			/* IPv6 address */
-			p++; /* skip [ */
-			tmp.ptr = p;
-			while (*p != QSE_T(']')) 
-			{
-				if (*p == QSE_T('\0')) goto oops_einval;
-				p++;
-			}
-			tmp.len = p - tmp.ptr;
-
-			ltmp->family = AF_INET6;
-			p++; /* skip ] */
-		}
-		else
-		{
-#endif
-			/* host name or IPv4 address */
-			tmp.ptr = p;
-			while (!QSE_ISSPACE(*p) &&
-			       *p != QSE_T(':') && 
-			       *p != QSE_T('\0')) p++;
-			tmp.len = p - tmp.ptr;
-			ltmp->family = AF_INET;
-#ifdef AF_INET6
-		}
+	}
 #endif
 
-		ltmp->host = qse_strxdup (tmp.ptr, tmp.len, httpd->mmgr);
-		if (ltmp->host == QSE_NULL) goto oops_enomem;
+	ltmp->host = qse_strxdup (tmp.ptr, tmp.len, httpd->mmgr);
+	if (ltmp->host == QSE_NULL) goto oops_enomem;
 
 #ifdef QSE_CHAR_IS_WCHAR
-		host = qse_wcstombsdup (ltmp->host, httpd->mmgr);
-		if (host == QSE_NULL) goto oops_enomem;
+	host = qse_wcstombsdup (ltmp->host, httpd->mmgr);
+	if (host == QSE_NULL) goto oops_enomem;
 #else
-		host = ltmp->host;
+	host = ltmp->host;
 #endif
 
-		x = inet_pton (ltmp->family, host, &ltmp->addr);
+	x = inet_pton (ltmp->family, host, &ltmp->addr);
 #ifdef QSE_CHAR_IS_WCHAR
-		qse_httpd_freemem (httpd, host);
+	qse_httpd_freemem (httpd, host);
 #endif
-		if (x != 1)
-		{
-			/* TODO: need to support host names??? 
-			if (getaddrinfo... )....
+	if (x != 1)
+	{
+		/* TODO: need to support host names??? 
+		if (getaddrinfo... )....
 or CALL a user callback for name resolution? 
-			if (httpd->cbs.resolve_hostname (httpd, ltmp->host) <= -1) must call this with host before freeing it up????
-			 */
-			goto oops_einval;
-		}
+		if (httpd->cbs.resolve_hostname (httpd, ltmp->host) <= -1) must call this with host before freeing it up????
+		 */
+		goto oops_einval;
+	}
 
-		if (*p == QSE_T(':')) 
-		{
-			unsigned int port = 0;
-			/* port number */
-			p++;
+	if (*p == QSE_T(':')) 
+	{
+		unsigned int port = 0;
 
-			tmp.ptr = p;
-			while (QSE_ISDIGIT(*p)) 
-			{
-				port = port * 10 + (*p - QSE_T('0'));
-				p++;
-			}
-			tmp.len = p - tmp.ptr;
-			if (tmp.len > 5 || port > QSE_TYPE_MAX(unsigned short)) goto oops_einval;
-			ltmp->port = port;
-		}
+		/* port number */
+		p++;
 
-		/* skip spaces */
-		while (QSE_ISSPACE(*p)) p++;
+		for (tmp.ptr = p; QSE_ISDIGIT(*p); p++)
+			port = port * 10 + (*p - QSE_T('0'));
 
-		if (lhead == QSE_NULL) lend = ltmp;
-		ltmp->next = lhead;
-		lhead = ltmp;
-		ltmp = QSE_NULL;
-	} 
-	while (*p != QSE_T('\0'));
+		tmp.len = p - tmp.ptr;
+		if (tmp.len <= 0 ||
+		    tmp.len >= 6 || 
+		    port > QSE_TYPE_MAX(unsigned short)) goto oops_einval;
+		ltmp->port = port;
+	}
 
-	if (ltail) *ltail = lend;
-	return lhead;
+	/* skip spaces */
+	while (QSE_ISSPACE(*p)) p++;
+
+	return ltmp;
 
 oops_einval:
 	httpd->errnum = QSE_HTTPD_EINVAL;
@@ -1096,19 +1084,18 @@ oops_enomem:
 
 oops:
 	if (ltmp) free_listener (httpd, ltmp);
-	if (lhead) free_listener_list (httpd, lhead);
 	return QSE_NULL;
 }
 
-static int add_listeners (qse_httpd_t* httpd, const qse_char_t* uri)
+static int add_listener (qse_httpd_t* httpd, const qse_char_t* uri)
 {
-	listener_t* lh, * lt;
+	listener_t* lsn;
 
-	lh = parse_listener_string (httpd, uri, &lt);
-	if (lh == QSE_NULL) return -1;
+	lsn = parse_listener_uri (httpd, uri);
+	if (lsn == QSE_NULL) return -1;
 
-	lt->next = httpd->listener.list;
-	httpd->listener.list = lh;
+	lsn->next = httpd->listener.list;
+	httpd->listener.list = lsn;
 /* 
 TODO: mutex protection...
 if in the activated state...
@@ -1124,7 +1111,7 @@ static int delete_listeners (qse_httpd_t* httpd, const qse_char_t* uri)
 {
 	listener_t* lh, * li, * hl;
 
-	lh = parse_listener_string (httpd, uri, QSE_NULL);
+	lh = parse_listener_uri (httpd, uri, QSE_NULL);
 	if (lh == QSE_NULL) return -1;
 
 	for (li = lh; li; li = li->next)
@@ -1142,21 +1129,21 @@ static int delete_listeners (qse_httpd_t* httpd, const qse_char_t* uri)
 }
 #endif
 
-int qse_httpd_addlisteners (qse_httpd_t* httpd, const qse_char_t* uri)
+int qse_httpd_addlistener (qse_httpd_t* httpd, const qse_char_t* uri)
 {
 #if defined(HAVE_PTHREAD)
 	int n;
 	pthread_mutex_lock (&httpd->listener.mutex);
-	n = add_listeners (httpd, uri);
+	n = add_listener (httpd, uri);
 	pthread_mutex_unlock (&httpd->listener.mutex);
 	return n;
 #else
-	return add_listeners (httpd, uri);
+	return add_listener (httpd, uri);
 #endif
 }
 
 #if 0
-int qse_httpd_dellisteners (qse_httpd_t* httpd, const qse_char_t* uri)
+int qse_httpd_dellistener (qse_httpd_t* httpd, const qse_char_t* uri)
 {
 	int n;
 	pthread_mutex_lock (&httpd->listener.mutex);

@@ -58,6 +58,11 @@ void qse_setdflcmgr (qse_cmgr_t* cmgr)
 	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[0]);
 }
 
+/* TODO: 
+qse_addcmgr (const qse_char_t* name, qse_cmgr_t* cmgr);
+qse_delcmgr (const qse_char_t* name);
+*/
+
 qse_cmgr_t* qse_getcmgrbyname (const qse_char_t* name)
 {
 	if (name)
@@ -66,7 +71,7 @@ qse_cmgr_t* qse_getcmgrbyname (const qse_char_t* name)
 		if (qse_strcmp(name, QSE_T("")) == 0) return dfl_cmgr;
 		if (qse_strcmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
 		if (qse_strcmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
-		/* TODO: add more */
+		/* TODO: add more - handle those added with qse_addcmgr() */
 	}
 	return QSE_NULL;
 }

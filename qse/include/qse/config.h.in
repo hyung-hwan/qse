@@ -61,6 +61,9 @@
 /* Define to 1 if you have the `expl' function. */
 #undef HAVE_EXPL
 
+/* Define to 1 if you have the `fdopendir' function. */
+#undef HAVE_FDOPENDIR
+
 /* Define to 1 if you have the `fmod' function. */
 #undef HAVE_FMOD
 

@@ -15518,6 +15518,17 @@ _ACEOF
 fi
 done
 
+for ac_func in fdopendir
+do :
+  ac_fn_c_check_func "$LINENO" "fdopendir" "ac_cv_func_fdopendir"
+if test "x$ac_cv_func_fdopendir" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_FDOPENDIR 1
+_ACEOF
+
+fi
+done
+
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"

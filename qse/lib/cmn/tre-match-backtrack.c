@@ -132,28 +132,22 @@ typedef struct tre_backtrack_struct
 	  s = tre_bt_mem_alloc(mem, sizeof(*s));			      \
 	  if (!s)							      \
 	    {								      \
-	      tre_bt_mem_destroy(mem);					      \
-	      if (tags)							      \
-		xfree(_mmgr,tags);						      \
-	      if (pmatch)						      \
-		xfree(_mmgr,pmatch);						      \
-	      if (states_seen)						      \
-		xfree(_mmgr,states_seen);					      \
+	      tre_bt_mem_destroy(mem);				 \
+	      if (tags) xfree(_mmgr,tags);				 \
+	      if (pmatch)  xfree(_mmgr,pmatch);			 \
+	      if (states_seen) xfree(_mmgr,states_seen);	 \
 	      return REG_ESPACE;					      \
 	    }								      \
 	  s->prev = stack;						      \
 	  s->next = NULL;						      \
-	  s->item.tags = tre_bt_mem_alloc(mem,				      \
-					  sizeof(*tags) * tnfa->num_tags);    \
-	  if (!s->item.tags)						      \
-	    {								      \
-	      tre_bt_mem_destroy(mem);					      \
-	      if (tags)							      \
-		xfree(_mmgr,tags);						      \
-	      if (pmatch)						      \
-		xfree(_mmgr,pmatch);						      \
-	      if (states_seen)						      \
-		xfree(_mmgr,states_seen);					      \
+	  s->item.tags = tre_bt_mem_alloc(mem,		\
+		  sizeof(*tags) * tnfa->num_tags);    \
+	  if (!s->item.tags)						\
+	    {								     \
+	      tre_bt_mem_destroy(mem);				\
+	      if (tags) xfree(_mmgr,tags);				\
+	      if (pmatch) xfree(_mmgr,pmatch);			\
+	      if (states_seen) xfree(_mmgr,states_seen);	\
 	      return REG_ESPACE;					      \
 	    }								      \
 	  stack->next = s;						      \
@@ -539,8 +533,8 @@ retry:
 			        trans_i->code_min, trans_i->code_max,
 			        trans_i->code_min, trans_i->code_max,
 			        trans_i->assertions, trans_i->state_id));
-			if (trans_i->code_min <= (tre_cint_t)prev_c
-			        && trans_i->code_max >= (tre_cint_t)prev_c)
+			if (trans_i->code_min <= (tre_cint_t)prev_c && 
+			    trans_i->code_max >= (tre_cint_t)prev_c)
 			{
 				if (trans_i->assertions
 				        && (CHECK_ASSERTIONS(trans_i->assertions)

@@ -997,6 +997,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				if (sio == QSE_NULL) return -1;
 
 				if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
+
 				riod->handle = sio;
 				rxtn->c.in.count++;
 				return 1;
@@ -1114,6 +1115,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				return -1;
 			}
 
+			if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
+
 			if (qse_awk_rtx_setfilename (
 				rtx, file, qse_strlen(file)) <= -1)
 			{
@@ -1146,6 +1149,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 				);
 				if (sio == QSE_NULL) return -1;
 
+				if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
+
 				riod->handle = sio;
 				rxtn->c.out.count++;
 				return 1;
@@ -1177,6 +1182,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 					QSE_SIO_WRITE | QSE_SIO_CREATE | 
 					QSE_SIO_TRUNCATE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
+
+			if (rxtn->c.cmgr) qse_sio_setcmgr (sio, rxtn->c.cmgr);	
 			
 			if (qse_awk_rtx_setofilename (
 				rtx, file, qse_strlen(file)) <= -1)

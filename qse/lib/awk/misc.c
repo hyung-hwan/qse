@@ -1089,7 +1089,7 @@ int qse_awk_matchrex (
 	x = qse_matchrex (
 		awk->mmgr, awk->rex.depth.max.match,
 		code, option, str, substr, match, &err);
-	if (x < 0) *errnum = QSE_AWK_REXERRTOERR(err);
+	if (x <= -1) *errnum = QSE_AWK_REXERRTOERR(err);
 	return x;
 }
 

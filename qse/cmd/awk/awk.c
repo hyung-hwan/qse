@@ -75,6 +75,8 @@ struct arg_t
 	qse_htb_t*   gvm;  /* global variable map */
 	qse_char_t*  fs;   /* field separator */
 	qse_char_t*  call; /* function to call */
+	qse_cmgr_t*  script_cmgr;
+	qse_cmgr_t*  console_cmgr;
 
 	int          opton;
 	int          optoff;
@@ -429,13 +431,19 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
 	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_fprintf (out, QSE_T(" --script-encoding    string       specify script encoding name\n"));
+	qse_fprintf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
+#endif
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
 #endif
 
-	for (j = 0; opttab[j].name != QSE_NULL; j++)
+	for (j = 0; opttab[j].name; j++)
 	{
-		qse_fprintf (out, QSE_T(" --%-18s on/off       %s\n"), opttab[j].name, opttab[j].desc);
+		qse_fprintf (out, 
+			QSE_T(" --%-18s on/off       %s\n"), 
+			opttab[j].name, opttab[j].desc);
 	}
 }
 
@@ -467,6 +475,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":field-separator"), QSE_T('F') },
 		{ QSE_T(":assign"),          QSE_T('v') },
 		{ QSE_T(":memory-limit"),    QSE_T('m') },
+
+		{ QSE_T(":script-encoding"),  QSE_T('\0') },
+		{ QSE_T(":console-encoding"), QSE_T('\0') },
 
 		{ QSE_T("help"),             QSE_T('h') },
 		{ QSE_NULL,                  QSE_T('\0') }                  
@@ -621,7 +632,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			{
 				/* a long option with no corresponding short option */
 				qse_size_t i;
-				for (i = 0; opttab[i].name != QSE_NULL; i++)
+				for (i = 0; opttab[i].name; i++)
 				{
 					if (qse_strcmp (opt.lngopt, opttab[i].name) == 0)
 					{
@@ -635,6 +646,25 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 							goto oops;
 						}
 						break;
+					}
+				}
+
+				if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
+				{
+					arg->script_cmgr = qse_getcmgrbyname (opt.arg);
+					if (arg->script_cmgr == QSE_NULL)
+					{
+						print_err (QSE_T("unknown script encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("console-encoding")) == 0)
+				{
+					arg->console_cmgr = qse_getcmgrbyname (opt.arg);
+					if (arg->console_cmgr == QSE_NULL)
+					{
+						print_err (QSE_T("unknown console encoding - %s\n"), opt.arg);
+						goto oops;
 					}
 				}
 				break;
@@ -874,14 +904,14 @@ static int awk_main (int argc, qse_char_t* argv[])
 	else 
 	{
 		psin.u.file.path = arg.isp.files[0];
-		psin.u.file.cmgr = QSE_NULL;
+		psin.u.file.cmgr = arg.script_cmgr;
 	}
 
 	if (arg.osf != QSE_NULL)
 	{
 		psout.type = QSE_AWK_PARSESTD_FILE;
 		psout.u.file.path = arg.osf;
-		psout.u.file.cmgr = QSE_NULL;
+		psout.u.file.cmgr = arg.script_cmgr;
 	}
 
 #if defined(QSE_BUILD_DEBUG)
@@ -954,7 +984,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
-		(const qse_char_t*const*)arg.icf, QSE_NULL, QSE_NULL);
+		(const qse_char_t*const*)arg.icf, QSE_NULL, arg.console_cmgr);
 	if (rtx == QSE_NULL) 
 	{
 		print_awkerr (awk);

@@ -101,7 +101,8 @@ qse_httpd_entaskstatictext (httpd, client, QSE_NULL, QSE_MT("HTTP/1.1 416 Reques
 					httpd, client, QSE_NULL,
 					qse_htre_getqpathptr(req),
 					(rangestr? &range: QSE_NULL),
-					qse_htre_getversion(req)
+					qse_htre_getversion(req),
+					req->attr.keepalive	
 				);
 				if (x == QSE_NULL) goto oops;
 			}
@@ -120,7 +121,7 @@ qse_httpd_entaskstatictext (httpd, client, QSE_NULL, QSE_MT("HTTP/1.1 416 Reques
 	}
 
 done:
-	if (req->attr.connection_close)
+	if (!req->attr.keepalive)
 	{
 		x = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 		if (x == QSE_NULL) goto oops;
@@ -149,6 +150,11 @@ const qse_mchar_t* get_mime_type (qse_httpd_t* httpd, const qse_mchar_t* path)
 	return QSE_NULL;
 }
 
+int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+	return 404;
+}
+
 static qse_httpd_t* httpd = NULL;
 
 static void sigint (int sig)
@@ -158,9 +164,10 @@ static void sigint (int sig)
 
 static qse_httpd_cbs_t httpd_cbs =
 {
-	{ get_mime_type, QSE_NULL,  },
 	handle_request,
-	handle_expect_continue
+	handle_expect_continue,
+	get_mime_type,
+	list_directory
 };
 
 int httpd_main (int argc, qse_char_t* argv[])
@@ -168,9 +175,9 @@ int httpd_main (int argc, qse_char_t* argv[])
 	int n;
 	httpd_xtn_t* xtn;
 
-	if (argc != 2)
+	if (argc <= 1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <listener_uri>\n"), argv[0]);
+		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <listener_uri> ...\n"), argv[0]);
 		return -1;
 	}
 
@@ -184,11 +191,15 @@ int httpd_main (int argc, qse_char_t* argv[])
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 	xtn->orgcbs = qse_httpd_getcbs (httpd);
 
-	if (qse_httpd_addlisteners (httpd, argv[1]) <= -1)
+	for (n = 1; n < argc; n++)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Failed to add httpd listeners\n"));
-		qse_httpd_close (httpd);
-		return -1;
+		if (qse_httpd_addlistener (httpd, argv[n]) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, 	
+				QSE_T("Failed to add httpd listener - %s\n"), argv[n]);
+			qse_httpd_close (httpd);
+			return -1;
+		}
 	}
 
 	qse_httpd_setcbs (httpd, &httpd_cbs);
