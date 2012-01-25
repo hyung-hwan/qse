@@ -409,7 +409,7 @@ tre_tnfa_run_parallel(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *stri
 			{
 				/* Does this transition match the input symbol? */
 				if (trans_i->code_min <= (tre_cint_t)prev_c &&
-				        trans_i->code_max >= (tre_cint_t)prev_c)
+				    trans_i->code_max >= (tre_cint_t)prev_c)
 				{
 					if (trans_i->assertions
 					        && (CHECK_ASSERTIONS(trans_i->assertions)

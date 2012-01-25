@@ -46,19 +46,13 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
-	struct
-	{
-		const qse_mchar_t* (*getmimetype) (qse_httpd_t* httpd, const qse_mchar_t* path);
-
-		qse_ubi_t (*open)    (qse_httpd_t* httpd, const qse_mchar_t* path);
-		void      (*close)   (qse_httpd_t* httpd, qse_ubi_t handle);
-		int       (*getsize) (qse_httpd_t* httpd, qse_ubi_t handle, qse_foff_t* size);
-	} file;
-
 	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_expect_continue) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+
+	const qse_mchar_t* (*getmimetype) (qse_httpd_t* httpd, const qse_mchar_t* path);
+	int (*listdir) (qse_httpd_t* httpd, const qse_mchar_t* path);
 };
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;
@@ -142,7 +136,7 @@ void qse_httpd_stop (
 );
 
 
-int qse_httpd_addlisteners (
+int qse_httpd_addlistener (
 	qse_httpd_t*      httpd,
 	const qse_char_t* uri
 );
@@ -200,13 +194,21 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_foff_t              size
 );
 
+qse_httpd_task_t* qse_httpd_entaskdir (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	qse_ubi_t               handle
+);
+
 qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        name,
 	const qse_http_range_t*   range,
-	const qse_http_version_t* version
+	const qse_http_version_t* version,
+	int                       keepalive
 );
 
 qse_httpd_task_t* qse_httpd_entaskcgi (

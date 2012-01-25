@@ -275,11 +275,11 @@ static qse_mchar_t* parse_initial_line (
 	
 		if (qse_htre_setsmessagefromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
 
-		/* adjust Connection: close for HTTP 1.0 or eariler */
-		if (htrd->re.version.major < 1 || 
-		    (htrd->re.version.major == 1 && htrd->re.version.minor == 0))
+		/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
+		if (htrd->re.version.major > 1 || 
+		    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
 		{
-			htrd->re.attr.connection_close = 1;
+			htrd->re.attr.keepalive = 1;
 		}
 	}
 	else
@@ -379,11 +379,11 @@ static qse_mchar_t* parse_initial_line (
 		/* skip trailing spaces on the line */
 		while (is_space_octet(*p)) p++;
 
-		/* adjust Connection: close for HTTP 1.0 or eariler */
-		if (htrd->re.version.major < 1 || 
-		    (htrd->re.version.major == 1 && htrd->re.version.minor == 0))
+		/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
+		if (htrd->re.version.major > 1 || 
+		    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
 		{
-			htrd->re.attr.connection_close = 1;
+			htrd->re.attr.keepalive = 1;
 		}
 	}
 	
@@ -427,58 +427,46 @@ void qse_htrd_setrecbs (qse_htrd_t* htrd, const qse_htrd_recbs_t* recbs)
 	htrd->recbs = recbs;
 }
 
-#define octet_tolower(c) (((c) >= 'A' && (c) <= 'Z') ? ((c) | 0x20) : (c))
-#define octet_toupper(c) (((c) >= 'a' && (c) <= 'z') ? ((c) & ~0x20) : (c))
-
-static QSE_INLINE int compare_octets (
-     const qse_mchar_t* s1, qse_size_t len1,
-     const qse_mchar_t* s2, qse_size_t len2)
-{
-	qse_char_t c1, c2;
-	const qse_mchar_t* end1 = s1 + len1;
-	const qse_mchar_t* end2 = s2 + len2;
-
-	while (s1 < end1)
-	{
-		c1 = octet_toupper (*s1);
-		if (s2 < end2)
-		{
-			c2 = octet_toupper (*s2);
-			if (c1 > c2) return 1;
-			if (c1 < c2) return -1;
-		}
-		else return 1;
-		s1++; s2++;
-	}
-
-	return (s2 < end2)? -1: 0;
-}
-
-static QSE_INLINE int capture_connection (
-	qse_htrd_t* htrd, qse_htb_pair_t* pair)
+static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
-	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "close", 5);
+	n = qse_mbsxncasecmp (
+		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair),
+		"close", 5);
 	if (n == 0)
 	{
-		htrd->re.attr.connection_close = 1;
+		htrd->re.attr.keepalive = 0;
 		return 0;
 	}
 
-	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "Keep-Alive", 10);
+	n = qse_mbsxncasecmp (
+		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), 
+		"Keep-Alive", 10);
 	if (n == 0)
 	{
-		htrd->re.attr.connection_close = 0;
+		htrd->re.attr.keepalive = 1;
 		return 0;
 	}
 
-	/* don't care about other values */
+	/* Basically i don't care about other values.
+	 * but for HTTP 1.0, other values will set connection to 'close'.
+	 *
+	 * Other values include even Keep-Alive specified multiple times.
+	 *  Connection: Keep-Alive
+	 *  Connection: Keep-Alive
+	 * For the second Keep-Alive, this function sees 'Keep-Alive,Keep-Alive'
+	 * That's because values of the same keys are concatenated.
+	 */
+	if (htrd->re.version.major < 1  || 
+	    (htrd->re.version.major == 1 && htrd->re.version.minor <= 0))
+	{
+		htrd->re.attr.keepalive = 0;
+	}
 	return 0;
 }
 
-static QSE_INLINE int capture_content_length (
-	qse_htrd_t* htrd, qse_htb_pair_t* pair)
+static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	qse_size_t len = 0, off = 0, tmp;
 	const qse_mchar_t* ptr = QSE_HTB_VPTR(pair);
@@ -525,12 +513,12 @@ static QSE_INLINE int capture_content_length (
 	return 0;
 }
 
-static QSE_INLINE int capture_expect (
-	qse_htrd_t* htrd, qse_htb_pair_t* pair)
+static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
-	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "100-continue", 12);
+	n = qse_mbsxncasecmp (
+		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "100-continue", 12);
 	if (n == 0)
 	{
 		
@@ -542,12 +530,12 @@ static QSE_INLINE int capture_expect (
 	return 0;
 }
 
-static QSE_INLINE int capture_transfer_encoding (
-	qse_htrd_t* htrd, qse_htb_pair_t* pair)
+static int capture_transfer_encoding (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
 
-	n = compare_octets (QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
+	n = qse_mbsxncasecmp (
+		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
 	if (n == 0)
 	{
 		/* if (htrd->re.attr.content_length > 0) */
@@ -591,7 +579,7 @@ static QSE_INLINE int capture_key_header (
 	{
 		mid = base + count / 2;
 
-		n = compare_octets (
+		n = qse_mbsxncasecmp (
 			QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair),
 			hdrtab[mid].ptr, hdrtab[mid].len
 		);

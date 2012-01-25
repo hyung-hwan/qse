@@ -44,7 +44,7 @@ struct qse_htre_t
 		int chunked;		
 		int content_length_set;
 		qse_size_t content_length;
-		int connection_close;
+		int keepalive;
 		int expect_continue;
 
 		/* indicates if the content has been filled */

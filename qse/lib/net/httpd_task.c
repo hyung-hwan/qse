@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <dirent.h>
 
 #define MAX_SEND_SIZE 4096
 
@@ -111,7 +112,6 @@ static qse_ssize_t xsendfile (
 	return n;
 }
 #endif
-
 
 /*------------------------------------------------------------------------*/
 
@@ -497,6 +497,125 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 }
 
 /*------------------------------------------------------------------------*/
+typedef struct task_dir_t task_dir_t;
+struct task_dir_t
+{
+	qse_ubi_t handle;
+	qse_size_t count;
+	int eod;
+
+	qse_mchar_t buf[4096];
+	qse_size_t  buflen;
+	qse_size_t  bufsent;
+	
+};
+
+static int task_init_dir (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_dir_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+
+	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
+	xtn->handle = *(qse_ubi_t*)task->ctx;
+qse_printf (QSE_T(">>>> handle %p\n"), xtn->handle.ptr);
+	task->ctx = xtn;
+	return 0;
+}
+
+static void task_fini_dir (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_dir_t* ctx = (task_file_t*)task->ctx;
+	closedir (ctx->handle.ptr);
+}
+
+static int task_main_dir (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_dir_t* ctx = (task_dir_t*)task->ctx;
+	qse_ssize_t n;
+	char buf[100];
+
+	if (ctx->bufsent < ctx->buflen) goto send_dirlist;
+
+	ctx->buflen = 0;
+	ctx->bufsent = 0;
+
+	if (ctx->count == 0) 
+	{
+		ctx->buflen += snprintf (
+			&ctx->buf[ctx->buflen], 
+			QSE_COUNTOF(ctx->buf) - ctx->buflen, 
+			"<html><head><title>Directory Listing</title></head><body>index of xxxx<ul>"
+		);
+	}
+
+	do
+	{
+		struct dirent* ent;
+
+		ent = readdir (ctx->handle.ptr);
+		if (ent == QSE_NULL)
+		{
+			// TODO: check if errno has changed from before readdir().
+			//       and return -1 if so.
+			ctx->eod = 1;
+			ctx->buflen += snprintf (
+				&ctx->buf[ctx->buflen], 
+				QSE_COUNTOF(ctx->buf) - ctx->buflen, 
+				"</ul></body></html>");
+			break;
+		}
+		else
+		{
+			// TODO: check if snprintf has truncated....
+			ctx->buflen += snprintf (
+				&ctx->buf[ctx->buflen], 
+				QSE_COUNTOF(ctx->buf) - ctx->buflen, 
+				"<li><a href='%s%s'>%s%s</a></li>", 
+				ent->d_name,
+				(ent->d_type == DT_DIR? "/": ""),
+				ent->d_name,
+				(ent->d_type == DT_DIR? "/": "")
+			);
+		}
+
+		ctx->count++;
+	}
+	while (1);
+
+send_dirlist:
+
+	snprintf (buf, QSE_COUNTOF(buf), "%lX\r\n", (unsigned long)(ctx->buflen - ctx->bufsent));
+	send (client->handle.i, buf, strlen(buf), 0);
+
+	n = send (client->handle.i, ctx->buf, ctx->buflen, 0);
+	if (n <= -1) return -1;
+		
+	send (client->handle.i, "0\r\n", 3, 0);
+
+	ctx->bufsent += n;
+	return (ctx->bufsent < ctx->buflen || !ctx->eod)? 1: 0;
+}
+
+qse_httpd_task_t* qse_httpd_entaskdir (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	qse_ubi_t handle)
+{
+	qse_httpd_task_t task;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.init = task_init_dir;
+	task.main = task_main_dir;
+	task.fini = task_fini_dir;
+	task.ctx = &handle;
+
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(task_dir_t));
+}
+
+/*------------------------------------------------------------------------*/
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -508,6 +627,7 @@ struct task_path_t
 	const qse_mchar_t* name;
 	qse_http_range_t   range;
 	qse_http_version_t version;
+	int                keepalive;
 };
 
 static int task_init_path (
@@ -521,6 +641,46 @@ static int task_init_path (
 	return 0;
 }
 
+static qse_httpd_task_t* entask_path_error (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task, int code)
+{
+	task_path_t* data = (task_path_t*)task->ctx;
+
+	const qse_mchar_t* smsg;
+	const qse_mchar_t* lmsg;
+
+	switch (code)
+	{
+		case 403:
+			smsg = QSE_MT("Forbidden");
+			lmsg = QSE_MT("<html><head><title>Directory Listing Forbidden</title></head><body><b>DIRECTORY LISTING FORBIDDEN<b></body></html>");
+			break;
+
+		case 404:
+			smsg = QSE_MT("Not Found");
+			lmsg = QSE_MT("<html><head><title>Not Found</title></head><body><b>REQUESTED PATH NOT FOUND<b></body></html>");
+			break;
+
+		case 416:
+			smsg = QSE_MT("Requested Range Not Satisfiable");
+			lmsg = QSE_MT("<html><head><title>Requested Range Not Satsfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE<b></body></html>");
+			break;
+		
+		default:
+			smsg = QSE_MT("Unknown");
+			lmsg = QSE_MT("<html><head><title>Unknown Error</title></head><body><b>UNKNOWN ERROR<b></body></html>");
+			break;
+	}
+
+	return qse_httpd_entaskformat (
+		httpd, client, task,
+		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+		data->version.major, data->version.minor, code, smsg,
+		(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+		(int)qse_mbslen(lmsg) + 4, lmsg
+	);
+}
+
 static int task_main_path (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
@@ -529,45 +689,48 @@ static int task_main_path (
 	struct stat st;
 	qse_httpd_task_t* x = task;
 
-qse_printf (QSE_T("opending file %hs\n"), data->name);
+qse_printf (QSE_T("opening file %hs\n"), data->name);
 	handle.i = open (data->name, O_RDONLY);
 	if (handle.i <= -1)
 	{
-		const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
-		x = qse_httpd_entaskformat (
-				httpd, client, x,
-				QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-				data->version.major, data->version.minor,
-				(int)qse_mbslen(msg) + 4, msg
-		);
+		x = entask_path_error (httpd, client, x, 404);
 		goto no_file_send;
 	}
 	fcntl (handle.i, F_SETFD, FD_CLOEXEC);
 
 	if (fstat (handle.i, &st) <= -1)
 	{
-		const qse_mchar_t* msg = QSE_MT("<html><head><title>Not found</title></head><body><b>REQUESTED FILE NOT FOUND</b></body></html>");
-
-		x = qse_httpd_entaskformat (
-			httpd, client, x,
-			QSE_MT("HTTP/%d.%d 404 Not found\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-			data->version.major, data->version.minor,
-			(int)qse_mbslen(msg) + 4, msg
-		);
+		x = entask_path_error (httpd, client, x, 404);
 		goto no_file_send;
 	}
 
 	if (S_ISDIR(st.st_mode))
 	{
-/* TODO: directory listing */
-		const qse_mchar_t* msg = QSE_MT("<html><head><title>Directory Listing</title></head><body><li>file1<li>file2<li>file3</body></html>");
+		qse_ubi_t dir;
 
-		x = qse_httpd_entaskformat (
-			httpd, client, x,
-			QSE_MT("HTTP/%d.%d 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-			data->version.major, data->version.minor,
-			(int)qse_mbslen(msg) + 4, msg
-		);
+	/*#if defined(HAVE_FDOPENDIR)
+		dir.ptr = fdopendir (handle.i);	
+	#else */
+		dir.ptr = opendir (data->name);
+	/*#endif */
+		if (dir.ptr)
+		{
+qse_printf (QSE_T(">>>> entask dir handle %p\n"), dir.ptr);
+			x = qse_httpd_entaskformat (
+				httpd, client, x,
+    				QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Location: %s\r\nTransfer-Encoding: chunked\r\n\r\n"), 
+				data->version.major, data->version.minor,
+				(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+				data->name
+			);
+
+			x = qse_httpd_entaskdir (httpd, client, x, dir);
+			if (x == QSE_NULL) closedir (dir.ptr);
+		}
+		else
+		{
+			x = entask_path_error (httpd, client, x, 403);
+		}
 		goto no_file_send;
 	}
 
@@ -587,33 +750,26 @@ qse_printf (QSE_T("opending file %hs\n"), data->name);
 
 		if (data->range.from >= st.st_size)
 		{
-			const qse_mchar_t* msg;
-
-			msg = QSE_MT("<html><head><title>Requested range not satisfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE</b></body></html>");
-			x = qse_httpd_entaskformat (
-				httpd, client, x,
-				QSE_MT("HTTP/%d.%d 416 Requested range not satisfiable\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"),
-				data->version.major, data->version.minor,
-				(int)qse_mbslen(msg) + 4, msg
-			);
+			x = entask_path_error (httpd, client, x, 416);
 			goto no_file_send;
 		}
 
 		if (data->range.to >= st.st_size) data->range.to = st.st_size - 1;
 
-		if (httpd->cbs->file.getmimetype)
+		if (httpd->cbs->getmimetype)
 		{
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			mime_type = httpd->cbs->file.getmimetype (httpd, data->name);
+			mime_type = httpd->cbs->getmimetype (httpd, data->name);
 			/*TODO: how to handle an error... */
 		}
 
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
@@ -626,9 +782,10 @@ qse_printf (QSE_T("opending file %hs\n"), data->name);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial content\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
@@ -642,10 +799,10 @@ qse_printf (QSE_T("opending file %hs\n"), data->name);
 		if (x)
 		{
 			x = qse_httpd_entaskfile (
-					httpd, client, x,
-					handle, 
-					data->range.from, 
-					(data->range.to - data->range.from + 1)
+				httpd, client, x,
+				handle, 
+				data->range.from, 
+				(data->range.to - data->range.from + 1)
 			);
 		}
 	}
@@ -654,19 +811,22 @@ qse_printf (QSE_T("opending file %hs\n"), data->name);
 /* TODO: int64 format.... don't hard code it llu */
 		const qse_mchar_t* mime_type = QSE_NULL;
 
-		if (httpd->cbs->file.getmimetype)
+		if (httpd->cbs->getmimetype)
 		{
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			mime_type = httpd->cbs->file.getmimetype (httpd, data->name);
+			mime_type = httpd->cbs->getmimetype (httpd, data->name);
 /*TODO: how to handle an error... */
 		}
 
+		/* wget 1.8.2 set 'Connection: Keep-Alive' in the http 1.0 header.
+		 * if the reply doesn't contain 'Connection: Keep-Alive', it didn't
+		 * close connection.*/
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
-			data->version.major,
-			data->version.minor,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+			data->version.major, data->version.minor,
+			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
@@ -676,9 +836,10 @@ qse_printf (QSE_T("opending file %hs\n"), data->name);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
+			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
@@ -706,7 +867,8 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	const qse_httpd_task_t* pred,
 	const qse_mchar_t* name,
 	const qse_http_range_t* range, 
-	const qse_http_version_t* verison)
+	const qse_http_version_t* verison,
+	int   keepalive)
 {
 	qse_httpd_task_t task;
 	task_path_t data;
@@ -716,6 +878,7 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	if (range) data.range = *range;
 	else data.range.type = QSE_HTTP_RANGE_NONE;
 	data.version = *verison;
+	data.keepalive = keepalive;
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_path;

@@ -100,6 +100,7 @@ AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
 AC_CHECK_FUNCS([sysconf])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
+AC_CHECK_FUNCS([fdopendir])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"

@@ -30,8 +30,9 @@
 #else
 #	if defined(QSE_CHAR_IS_MCHAR) && defined(USE_REGEX)
 #		include <regex.h>
+#	else
+#		include <qse/cmn/tre.h>
 #	endif
-#	include <qse/cmn/tre.h>
 #endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
