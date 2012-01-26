@@ -231,6 +231,19 @@ static qse_flt_t custom_awk_log (qse_awk_t* awk, qse_flt_t x)
 #endif
 }
 
+static qse_flt_t custom_awk_log10 (qse_awk_t* awk, qse_flt_t x)
+{
+#if defined(HAVE_LOG10L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return log10l (x);
+#elif defined(HAVE_LOG10)
+	return log10 (x);
+#elif defined(HAVE_LOG10F)
+	return log10f (x);
+#else
+	#error ### no log10 function available ###
+#endif
+}
+
 static qse_flt_t custom_awk_exp (qse_awk_t* awk, qse_flt_t x)
 {
 #if defined(HAVE_EXPL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
@@ -294,6 +307,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	prm.math.atan = custom_awk_atan;
 	prm.math.atan2 = custom_awk_atan2;
 	prm.math.log = custom_awk_log;
+	prm.math.log10 = custom_awk_log10;
 	prm.math.exp = custom_awk_exp;
 	prm.math.sqrt = custom_awk_sqrt;
 

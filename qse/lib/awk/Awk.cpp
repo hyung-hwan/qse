@@ -1077,6 +1077,7 @@ int Awk::open ()
 	prm.math.atan = atan;
 	prm.math.atan2 = atan2;
 	prm.math.log = log;
+	prm.math.log10 = log10;
 	prm.math.exp = exp;
 	prm.math.sqrt = sqrt;
 
@@ -1790,6 +1791,12 @@ Awk::flt_t Awk::log (awk_t* awk, flt_t x)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
 	return xtn->awk->log (x);
+}
+
+Awk::flt_t Awk::log10 (awk_t* awk, flt_t x)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->log10 (x);
 }
 
 Awk::flt_t Awk::exp (awk_t* awk, flt_t x)

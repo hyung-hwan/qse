@@ -1100,6 +1100,7 @@ protected:
 	virtual flt_t atan (flt_t x) = 0;
 	virtual flt_t atan2 (flt_t x, flt_t y) = 0;
 	virtual flt_t log (flt_t x) = 0;
+	virtual flt_t log10 (flt_t x) = 0;
 	virtual flt_t exp (flt_t x) = 0;
 	virtual flt_t sqrt (flt_t x) = 0;
 
@@ -1133,6 +1134,7 @@ protected:
 	static flt_t atan    (awk_t* data, flt_t x);
 	static flt_t atan2   (awk_t* data, flt_t x, flt_t y);
 	static flt_t log     (awk_t* data, flt_t x);
+	static flt_t log10   (awk_t* data, flt_t x);
 	static flt_t exp     (awk_t* data, flt_t x);
 	static flt_t sqrt    (awk_t* data, flt_t x);
 

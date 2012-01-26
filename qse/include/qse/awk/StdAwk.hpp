@@ -160,6 +160,7 @@ protected:
 	flt_t atan (flt_t x);
 	flt_t atan2 (flt_t x, flt_t y);
 	flt_t log (flt_t x);
+	flt_t log10 (flt_t x);
 	flt_t exp (flt_t x);
 	flt_t sqrt (flt_t x);
 

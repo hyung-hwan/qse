@@ -501,13 +501,16 @@ typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
 	qse_ubi_t handle;
-	qse_size_t count;
-	int eod;
 
-	qse_mchar_t buf[4096];
+	int header_added;
+	int footer_pending;
+	struct dirent* dent;
+
+	qse_mchar_t buf[512];
+	qse_size_t  bufpos;
 	qse_size_t  buflen;
-	qse_size_t  bufsent;
-	
+	qse_size_t  bufrem;
+	qse_size_t  chunklen;
 };
 
 static int task_init_dir (
@@ -517,7 +520,6 @@ static int task_init_dir (
 
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 	xtn->handle = *(qse_ubi_t*)task->ctx;
-qse_printf (QSE_T(">>>> handle %p\n"), xtn->handle.ptr);
 	task->ctx = xtn;
 	return 0;
 }
@@ -525,7 +527,7 @@ qse_printf (QSE_T(">>>> handle %p\n"), xtn->handle.ptr);
 static void task_fini_dir (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_dir_t* ctx = (task_file_t*)task->ctx;
+	task_dir_t* ctx = (task_dir_t*)task->ctx;
 	closedir (ctx->handle.ptr);
 }
 
@@ -534,81 +536,282 @@ static int task_main_dir (
 {
 	task_dir_t* ctx = (task_dir_t*)task->ctx;
 	qse_ssize_t n;
-	char buf[100];
+	int x;
 
-	if (ctx->bufsent < ctx->buflen) goto send_dirlist;
+	if (ctx->bufpos < ctx->buflen) goto send_dirlist;
 
-	ctx->buflen = 0;
-	ctx->bufsent = 0;
+	/* the buffer size is fixed to QSE_COUNTOF(ctx->buf).
+	 * the number of digits need to hold the the size converted to
+	 * a hexadecimal notation is roughly (log16(QSE_COUNTOF(ctx->buf) + 1).
+	 * it should be safter to use ceil(log16(QSE_COUNTOF(ctx->buf)) + 1
+	 * for precision issues. 
+	 *
+	 *  16**X = QSE_COUNTOF(ctx->buf). 
+	 *  X = log16(QSE_COUNTOF(ctx->buf).
+	 *  X + 1 is a required number of digits.
+	 *
+	 * Since log16 is not provided, we should use a natural log function
+	 * whose base is the constant e (2.718).
+	 * 
+	 *  log16(n) = log(n) / log(16)
+	 *
+	 * The final fomula is here.
+	 *
+	 *  X = ceil((log(QSE_COUNTOF(ctx->buf)) / log(16))) + 1;
+	 *  
+ 	 * However, i won't use these floating-point opertions.
+	 * instead i'll reserve a hardcoded size. so when you change
+	 * the size of the buffer arrray, you should check this size. 
+	 */
+	
+	/* reserve space to fill with the chunk length
+	 * 4 for the actual chunk length and +2 for \r\n */
+	ctx->buflen = 4 + 2; 
 
-	if (ctx->count == 0) 
+	/* free space remaing in the buffer for the chunk data */
+	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - 2; 
+
+	if (ctx->footer_pending)
 	{
-		ctx->buflen += snprintf (
+		x = snprintf (
 			&ctx->buf[ctx->buflen], 
-			QSE_COUNTOF(ctx->buf) - ctx->buflen, 
+			ctx->bufrem,
+			"</ul></body></html>\r\n0\r\n");
+		if (x == -1 || x >= ctx->bufrem) 
+		{
+			/* return an error if the buffer is too small to hold the 
+			 * trailing footer. you need to increate the buffer size */
+			return -1;
+		}
+
+		ctx->buflen += x;
+		ctx->chunklen = ctx->buflen - 5;
+		ctx->buf[ctx->buflen++] = '\r';
+		ctx->buf[ctx->buflen++] = '\n';
+		goto set_chunklen;
+	}
+
+	if (!ctx->header_added)
+	{
+		/* compose the header since this is the first time. */
+
+/* TODO: get the actual path ... and use it in the body or title. */
+		x = snprintf (
+			&ctx->buf[ctx->buflen], 
+			ctx->bufrem,
 			"<html><head><title>Directory Listing</title></head><body>index of xxxx<ul>"
 		);
+		if (x == -1 || x >= ctx->bufrem) 
+		{
+			/* return an error if the buffer is too small to hold the header.
+			 * you need to increate the buffer size */
+			return -1;
+		}
+
+		ctx->buflen += x;
+		ctx->bufrem -= x;
+
+		ctx->header_added = 1;
 	}
+
+	if (ctx->dent == QSE_NULL) 
+		ctx->dent = readdir (ctx->handle.ptr);
 
 	do
 	{
-		struct dirent* ent;
-
-		ent = readdir (ctx->handle.ptr);
-		if (ent == QSE_NULL)
+		if (ctx->dent == QSE_NULL)
 		{
 			// TODO: check if errno has changed from before readdir().
 			//       and return -1 if so.
-			ctx->eod = 1;
-			ctx->buflen += snprintf (
+			x = snprintf (
 				&ctx->buf[ctx->buflen], 
-				QSE_COUNTOF(ctx->buf) - ctx->buflen, 
-				"</ul></body></html>");
-			break;
+				ctx->bufrem,
+				"</ul></body></html>\r\n0\r\n");
+			if (x == -1 || x >= ctx->bufrem) 
+			{
+				ctx->footer_pending = 1;
+				ctx->chunklen = ctx->buflen;
+				ctx->buf[ctx->buflen++] = '\r';
+				ctx->buf[ctx->buflen++] = '\n';
+			}
+			else
+			{
+				ctx->buflen += x;
+				ctx->chunklen = ctx->buflen - 5;
+				ctx->buf[ctx->buflen++] = '\r';
+				ctx->buf[ctx->buflen++] = '\n';
+			}
+			break;	
 		}
 		else
 		{
-			// TODO: check if snprintf has truncated....
-			ctx->buflen += snprintf (
+			x = snprintf (
 				&ctx->buf[ctx->buflen], 
-				QSE_COUNTOF(ctx->buf) - ctx->buflen, 
+				ctx->bufrem,
 				"<li><a href='%s%s'>%s%s</a></li>", 
-				ent->d_name,
-				(ent->d_type == DT_DIR? "/": ""),
-				ent->d_name,
-				(ent->d_type == DT_DIR? "/": "")
+				ctx->dent->d_name,
+				(ctx->dent->d_type == DT_DIR? "/": ""),
+				ctx->dent->d_name,
+				(ctx->dent->d_type == DT_DIR? "/": "")
 			);
+			if (x == -1 || x >= ctx->bufrem)
+			{
+				/* buffer not large enough to hold this entry */
+				ctx->chunklen = ctx->buflen;
+				ctx->buf[ctx->buflen++] = '\r';
+				ctx->buf[ctx->buflen++] = '\n';
+				break;
+			}
+			else
+			{
+				ctx->buflen += x;
+				ctx->bufrem -= x;
+			}
 		}
 
-		ctx->count++;
+		ctx->dent = readdir (ctx->handle.ptr);
+	}
+	while (1);
+
+set_chunklen:
+	x = snprintf (
+		ctx->buf, (4 + 2) - 1, 
+		"%*lX", (int)(4 + 2 - 2), 
+		(unsigned long)(ctx->chunklen - (4 + 2)));
+	ctx->buf[x] = '\r';
+	ctx->buf[x+1] = '\n';
+	for (x = 0; ctx->buf[x] == ' '; x++) ctx->buflen--;
+	ctx->bufpos = x;
+
+send_dirlist:
+	n = send (client->handle.i, &ctx->buf[ctx->bufpos], ctx->buflen, 0);
+	if (n <= -1) return -1;
+		
+	ctx->bufpos += n;
+	ctx->buflen -= n;
+	return (ctx->bufpos < ctx->buflen || ctx->footer_pending || ctx->dent)? 1: 0;
+}
+
+static int task_main_dir_nochunk (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_dir_t* ctx = (task_dir_t*)task->ctx;
+	qse_ssize_t n;
+	int x;
+
+	if (ctx->bufpos < ctx->buflen) goto send_dirlist;
+
+	ctx->bufpos = 0;
+	ctx->buflen = 0;
+	ctx->bufrem = QSE_COUNTOF(ctx->buf);
+
+	if (ctx->footer_pending)
+	{
+		x = snprintf (
+			&ctx->buf[ctx->buflen], 
+			ctx->bufrem,
+			"</ul></body></html>");
+		if (x == -1 || x >= ctx->bufrem) 
+		{
+			/* return an error if the buffer is too small to hold the 
+			 * trailing footer. you need to increate the buffer size */
+			return -1;
+		}
+
+		ctx->buflen += x;
+		goto send_dirlist;
+	}
+
+	if (!ctx->header_added)
+	{
+		/* compose the header since this is the first time. */
+		x = snprintf (
+			&ctx->buf[ctx->buflen], 
+			ctx->bufrem,
+			"<html><head><title>Directory Listing</title></head><body>index of xxxx<ul>"
+		);
+		if (x == -1 || x >= ctx->bufrem) 
+		{
+			/* return an error if the buffer is too small to hold the header.
+			 * you need to increate the buffer size */
+			return -1;
+		}
+
+		ctx->buflen += x;
+		ctx->bufrem -= x;
+		ctx->header_added = 1;
+	}
+
+	if (ctx->dent == QSE_NULL) 
+		ctx->dent = readdir (ctx->handle.ptr);
+
+	do
+	{
+		if (ctx->dent == QSE_NULL)
+		{
+			// TODO: check if errno has changed from before readdir().
+			//       and return -1 if so.
+			x = snprintf (
+				&ctx->buf[ctx->buflen], 
+				ctx->bufrem,
+				"</ul></body></html>");
+			if (x == -1 || x >= ctx->bufrem) 
+			{
+				ctx->footer_pending = 1;
+			}
+			else
+			{
+				ctx->buflen += x;
+			}
+			break;	
+		}
+		else
+		{
+			x = snprintf (
+				&ctx->buf[ctx->buflen], 
+				ctx->bufrem,
+				"<li><a href='%s%s'>%s%s</a></li>", 
+				ctx->dent->d_name,
+				(ctx->dent->d_type == DT_DIR? "/": ""),
+				ctx->dent->d_name,
+				(ctx->dent->d_type == DT_DIR? "/": "")
+			);
+			if (x == -1 || x >= ctx->bufrem)
+			{
+				/* buffer not large enough to hold this entry */
+				break;
+			}
+			else
+			{
+				ctx->buflen += x;
+				ctx->bufrem -= x;
+			}
+		}
+
+		ctx->dent = readdir (ctx->handle.ptr);
 	}
 	while (1);
 
 send_dirlist:
-
-	snprintf (buf, QSE_COUNTOF(buf), "%lX\r\n", (unsigned long)(ctx->buflen - ctx->bufsent));
-	send (client->handle.i, buf, strlen(buf), 0);
-
-	n = send (client->handle.i, ctx->buf, ctx->buflen, 0);
+	n = send (client->handle.i, &ctx->buf[ctx->bufpos], ctx->buflen, 0);
 	if (n <= -1) return -1;
-		
-	send (client->handle.i, "0\r\n", 3, 0);
 
-	ctx->bufsent += n;
-	return (ctx->bufsent < ctx->buflen || !ctx->eod)? 1: 0;
+	ctx->bufpos += n;
+	ctx->buflen -= n;
+	return (ctx->bufpos < ctx->buflen || ctx->footer_pending || ctx->dent)? 1: 0;
 }
 
 qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
 	const qse_httpd_task_t* pred,
-	qse_ubi_t handle)
+	qse_ubi_t handle, int chunked)
 {
 	qse_httpd_task_t task;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_dir;
-	task.main = task_main_dir;
+	task.main = chunked? task_main_dir: task_main_dir_nochunk;
 	task.fini = task_fini_dir;
 	task.ctx = &handle;
 
@@ -674,9 +877,9 @@ static qse_httpd_task_t* entask_path_error (
 
 	return qse_httpd_entaskformat (
 		httpd, client, task,
-		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
 		data->version.major, data->version.minor, code, smsg,
-		(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+		(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 		(int)qse_mbslen(lmsg) + 4, lmsg
 	);
 }
@@ -706,30 +909,60 @@ qse_printf (QSE_T("opening file %hs\n"), data->name);
 
 	if (S_ISDIR(st.st_mode))
 	{
-		qse_ubi_t dir;
-
-	/*#if defined(HAVE_FDOPENDIR)
-		dir.ptr = fdopendir (handle.i);	
-	#else */
-		dir.ptr = opendir (data->name);
-	/*#endif */
-		if (dir.ptr)
+		if (qse_mbsend (data->name, QSE_MT("/")))
 		{
-qse_printf (QSE_T(">>>> entask dir handle %p\n"), dir.ptr);
-			x = qse_httpd_entaskformat (
-				httpd, client, x,
-    				QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Location: %s\r\nTransfer-Encoding: chunked\r\n\r\n"), 
-				data->version.major, data->version.minor,
-				(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
-				data->name
-			);
+			qse_ubi_t dir;
 
-			x = qse_httpd_entaskdir (httpd, client, x, dir);
-			if (x == QSE_NULL) closedir (dir.ptr);
+		/*#if defined(HAVE_FDOPENDIR)
+			dir.ptr = fdopendir (handle.i);	
+		#else */
+			dir.ptr = opendir (data->name);
+		/*#endif */
+			if (dir.ptr)
+			{
+				if (data->version.major < 1 ||
+				    (data->version.major == 1 && data->version.minor == 0))
+				{
+					data->keepalive = 0;
+				}
+
+				if (data->keepalive)
+				{
+					x = qse_httpd_entaskformat (
+						httpd, client, x,
+    						QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: keep-alive\r\nContent-Type: text/html;charset=utf-8\r\nTransfer-Encoding: chunked\r\n\r\n"), 
+						data->version.major, data->version.minor
+					);
+					if (x) x = qse_httpd_entaskdir (httpd, client, x, dir, data->keepalive);
+				}
+				else
+				{
+					x = qse_httpd_entaskformat (
+						httpd, client, x,
+    						QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: close\r\nContent-Type: text/html;charset=utf-8\r\n\r\n"), 
+						data->version.major, data->version.minor
+					);
+
+					if (x) x = qse_httpd_entaskdir (httpd, client, x, dir, data->keepalive);
+					if (x) x = qse_httpd_entaskdisconnect (httpd, client, x);
+				}
+
+				if (!x) closedir (dir.ptr);
+			}
+			else
+			{
+				x = entask_path_error (httpd, client, x, 403);
+			}
 		}
 		else
 		{
-			x = entask_path_error (httpd, client, x, 403);
+			x = qse_httpd_entaskformat (
+				httpd, client, x,
+    				QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\nContent-Length: 0\r\nConnection: %s\r\nLocation: %s/\r\n\r\n"), 
+				data->version.major, data->version.minor,
+				(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+				data->name	
+			);
 		}
 		goto no_file_send;
 	}
@@ -766,15 +999,14 @@ qse_printf (QSE_T(">>>> entask dir handle %p\n"), dir.ptr);
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+			(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long long)(data->range.to - data->range.from + 1),
-			data->name,
 			(unsigned long long)data->range.from,
 			(unsigned long long)data->range.to,
 			(unsigned long long)st.st_size
@@ -782,15 +1014,14 @@ qse_printf (QSE_T(">>>> entask dir handle %p\n"), dir.ptr);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+			(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
 			(unsigned long)(data->range.to - data->range.from + 1),
-			data->name,
 			(unsigned long)data->range.from,
 			(unsigned long)data->range.to,
 			(unsigned long)st.st_size
@@ -818,33 +1049,31 @@ qse_printf (QSE_T(">>>> entask dir handle %p\n"), dir.ptr);
 /*TODO: how to handle an error... */
 		}
 
-		/* wget 1.8.2 set 'Connection: Keep-Alive' in the http 1.0 header.
-		 * if the reply doesn't contain 'Connection: Keep-Alive', it didn't
+		/* wget 1.8.2 set 'Connection: keep-alive' in the http 1.0 header.
+		 * if the reply doesn't contain 'Connection: keep-alive', it didn't
 		 * close connection.*/
 #if (QSE_SIZEOF_LONG_LONG > 0)
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\n\r\n"), 
 			data->version.major, data->version.minor,
-			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+			(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long long)st.st_size,
-			data->name
+			(unsigned long long)st.st_size
 		);
 #else
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Location: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\n\r\n"), 
 			data->version.major,
 			data->version.minor,
-			(data->keepalive? QSE_MT("Keep-Alive"): QSE_MT("Close")),
+			(data->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
 			(mime_type? mime_type: QSE_MT("")),
 			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long)st.st_size,
-			data->name
+			(unsigned long)st.st_size
 		);
 #endif
 		if (x)

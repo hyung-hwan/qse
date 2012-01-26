@@ -147,6 +147,7 @@ const qse_mchar_t* get_mime_type (qse_httpd_t* httpd, const qse_mchar_t* path)
 	if (qse_mbsend (path, QSE_MT(".txt"))) return QSE_MT("text/plain");
 	if (qse_mbsend (path, QSE_MT(".jpg"))) return QSE_MT("image/jpeg");
 	if (qse_mbsend (path, QSE_MT(".mp4"))) return QSE_MT("video/mp4");
+	if (qse_mbsend (path, QSE_MT(".mp3"))) return QSE_MT("audio/mpeg");
 	return QSE_NULL;
 }
 

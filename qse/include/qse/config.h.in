@@ -27,6 +27,15 @@
 /* Define to 1 if you have the `backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
 
+/* Define to 1 if you have the `ceil' function. */
+#undef HAVE_CEIL
+
+/* Define to 1 if you have the `ceilf' function. */
+#undef HAVE_CEILF
+
+/* Define to 1 if you have the `ceill' function. */
+#undef HAVE_CEILL
+
 /* Define to 1 if you have the `connect' function. */
 #undef HAVE_CONNECT
 
@@ -64,6 +73,15 @@
 /* Define to 1 if you have the `fdopendir' function. */
 #undef HAVE_FDOPENDIR
 
+/* Define to 1 if you have the `floor' function. */
+#undef HAVE_FLOOR
+
+/* Define to 1 if you have the `floorf' function. */
+#undef HAVE_FLOORF
+
+/* Define to 1 if you have the `floorl' function. */
+#undef HAVE_FLOORL
+
 /* Define to 1 if you have the `fmod' function. */
 #undef HAVE_FMOD
 
@@ -96,6 +114,15 @@
 
 /* Define to 1 if you have the `log' function. */
 #undef HAVE_LOG
+
+/* Define to 1 if you have the `log10' function. */
+#undef HAVE_LOG10
+
+/* Define to 1 if you have the `log10f' function. */
+#undef HAVE_LOG10F
+
+/* Define to 1 if you have the `log10l' function. */
+#undef HAVE_LOG10L
 
 /* Define to 1 if you have the `logf' function. */
 #undef HAVE_LOGF
@@ -141,6 +168,15 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `round' function. */
+#undef HAVE_ROUND
+
+/* Define to 1 if you have the `roundf' function. */
+#undef HAVE_ROUNDF
+
+/* Define to 1 if you have the `roundl' function. */
+#undef HAVE_ROUNDL
 
 /* Define to 1 if you have the `sendfile' function. */
 #undef HAVE_SENDFILE
