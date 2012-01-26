@@ -128,6 +128,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	QSE_ASSERT (prm->math.atan  != QSE_NULL);
 	QSE_ASSERT (prm->math.atan2 != QSE_NULL);
 	QSE_ASSERT (prm->math.log   != QSE_NULL);
+	QSE_ASSERT (prm->math.log10 != QSE_NULL);
 	QSE_ASSERT (prm->math.exp   != QSE_NULL);
 	QSE_ASSERT (prm->math.sqrt  != QSE_NULL);
 	if (prm             == QSE_NULL || 
@@ -139,6 +140,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	    prm->math.atan  == QSE_NULL ||
 	    prm->math.atan2 == QSE_NULL ||
 	    prm->math.log   == QSE_NULL ||
+	    prm->math.log10 == QSE_NULL ||
 	    prm->math.exp   == QSE_NULL ||
 	    prm->math.sqrt  == QSE_NULL)
 	{

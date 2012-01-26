@@ -104,9 +104,9 @@ AC_CHECK_FUNCS([fdopendir])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
-AC_CHECK_FUNCS([powl fmodl sinl cosl tanl atanl atan2l logl expl sqrtl])
-AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log exp sqrt])
-AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf expf sqrtf])
+AC_CHECK_FUNCS([powl fmodl sinl cosl tanl atanl atan2l logl log10l expl sqrtl ceill floorl roundl])
+AC_CHECK_FUNCS([pow fmod sin cos tan atan atan2 log log10 exp sqrt ceil floor round])
+AC_CHECK_FUNCS([powf fmodf sinf cosf tanf atanf atan2f logf log10f expf sqrtf ceilf floorf roundf])
 LIBS="$OLDLIBS"
 
 dnl OLDLIBS="$LIBS"

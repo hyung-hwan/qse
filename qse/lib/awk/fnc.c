@@ -39,6 +39,7 @@ static int fnc_tan     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_atan    (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_atan2   (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_log     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
+static int fnc_log10   (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_exp     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_sqrt    (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
 static int fnc_int     (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm);
@@ -84,6 +85,7 @@ static qse_awk_fnc_t sys_fnc[] =
 	{ {QSE_T("atan"),    4}, 0, 0,  {1,   1, QSE_NULL},     fnc_atan},
 	{ {QSE_T("atan2"),   5}, 0, 0,  {2,   2, QSE_NULL},     fnc_atan2},
 	{ {QSE_T("log"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_log},
+	{ {QSE_T("log10"),   5}, 0, 0,  {1,   1, QSE_NULL},     fnc_log10},
 	{ {QSE_T("exp"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_exp},
 	{ {QSE_T("sqrt"),    4}, 0, 0,  {1,   1, QSE_NULL},     fnc_sqrt},
 	{ {QSE_T("int"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_int},
@@ -1472,6 +1474,10 @@ static int fnc_atan2 (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 static int fnc_log (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	return fnc_math_1 (rtx, fnm, rtx->awk->prm.math.log);
+}
+static int fnc_log10 (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	return fnc_math_1 (rtx, fnm, rtx->awk->prm.math.log10);
 }
 static int fnc_exp (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {

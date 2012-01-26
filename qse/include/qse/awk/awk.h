@@ -595,6 +595,7 @@ struct qse_awk_prm_t
 		qse_awk_math1_t atan;
 		qse_awk_math2_t atan2;
 		qse_awk_math1_t log;
+		qse_awk_math1_t log10;
 		qse_awk_math1_t exp;
 		qse_awk_math1_t sqrt;
 	} math;

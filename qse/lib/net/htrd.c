@@ -442,7 +442,7 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 
 	n = qse_mbsxncasecmp (
 		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), 
-		"Keep-Alive", 10);
+		"keep-alive", 10);
 	if (n == 0)
 	{
 		htrd->re.attr.keepalive = 1;

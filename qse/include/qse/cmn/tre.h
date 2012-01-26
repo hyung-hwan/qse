@@ -85,12 +85,8 @@ enum qse_tre_cflag_t
 enum qse_tre_eflag_t
 {
 	QSE_TRE_BACKTRACKING = (1 << 0),
-
-	/* you can use QSE_TRE_IGNORECASE for execution */
-	/*QSE_TRE_IGNORECASE   = (1 << 1),*/ 
-
-	QSE_TRE_NOTBOL       = (1 << 2),
-	QSE_TRE_NOTEOL       = (1 << 3)
+	QSE_TRE_NOTBOL       = (1 << 1),
+	QSE_TRE_NOTEOL       = (1 << 2)
 };
 
 typedef struct qse_tre_strsrc_t qse_tre_strsrc_t;

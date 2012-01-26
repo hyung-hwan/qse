@@ -198,7 +198,8 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	const qse_httpd_task_t* pred,
-	qse_ubi_t               handle
+	qse_ubi_t               handle,
+	int                     chunked
 );
 
 qse_httpd_task_t* qse_httpd_entaskpath (

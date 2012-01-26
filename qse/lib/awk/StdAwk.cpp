@@ -833,6 +833,7 @@ StdAwk::flt_t StdAwk::atan2 (flt_t x, flt_t y)
 
 StdAwk::flt_t StdAwk::log (flt_t x)
 { 
+	/* natural logarithm */
 #if defined(HAVE_LOGL) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
 	return ::logl (x);
 #elif defined(HAVE_LOG)
@@ -841,6 +842,20 @@ StdAwk::flt_t StdAwk::log (flt_t x)
 	return ::logf (x);
 #else
 	#error ### no log function available ###
+#endif
+}
+
+StdAwk::flt_t StdAwk::log10 (flt_t x)
+{ 
+	/* common logarithm */
+#if defined(HAVE_LOG10L) && (QSE_SIZEOF_LONG_DOUBLE > QSE_SIZEOF_DOUBLE)
+	return ::log10l (x);
+#elif defined(HAVE_LOG10)
+	return ::log10 (x);
+#elif defined(HAVE_LOG10F)
+	return ::log10f (x);
+#else
+	#error ### no log10 function available ###
 #endif
 }
 
