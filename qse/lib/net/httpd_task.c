@@ -526,6 +526,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_task_t task;
 	task_file_t data;
 	
+qse_printf (QSE_T("Debug: sending file to %d\n"), client->handle.i);
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.handle = handle;
 	data.offset = offset;
@@ -608,12 +609,16 @@ static int task_main_dir (
 	 * the size of the buffer arrray, you should check this size. 
 	 */
 	
+#define SIZE_CHLEN     4
+#define SIZE_CHLENCRLF 2
+#define SIZE_CHENDCRLF 2
+
 	/* reserve space to fill with the chunk length
 	 * 4 for the actual chunk length and +2 for \r\n */
-	ctx->buflen = 4 + 2; 
+	ctx->buflen = SIZE_CHLEN + SIZE_CHLENCRLF; 
 
 	/* free space remaing in the buffer for the chunk data */
-	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - 2; 
+	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - CHENDCRLF; 
 
 	if (ctx->footer_pending)
 	{
@@ -629,9 +634,12 @@ static int task_main_dir (
 		}
 
 		ctx->buflen += x;
-		ctx->chunklen = ctx->buflen - 5;
+		ctx->chunklen = ctx->buflen - 5; /* -5 for \r\n0\r\n added above */
+
+		/* CHENDCRLF */
 		ctx->buf[ctx->buflen++] = '\r';
 		ctx->buf[ctx->buflen++] = '\n';
+
 		goto set_chunklen;
 	}
 
@@ -675,6 +683,8 @@ static int task_main_dir (
 			{
 				ctx->footer_pending = 1;
 				ctx->chunklen = ctx->buflen;
+
+				/* CHENDCRLF */
 				ctx->buf[ctx->buflen++] = '\r';
 				ctx->buf[ctx->buflen++] = '\n';
 			}
@@ -682,6 +692,8 @@ static int task_main_dir (
 			{
 				ctx->buflen += x;
 				ctx->chunklen = ctx->buflen - 5;
+
+				/* CHENDCRLF */
 				ctx->buf[ctx->buflen++] = '\r';
 				ctx->buf[ctx->buflen++] = '\n';
 			}
@@ -702,6 +714,8 @@ static int task_main_dir (
 			{
 				/* buffer not large enough to hold this entry */
 				ctx->chunklen = ctx->buflen;
+
+				/* CHENDCRLF */
 				ctx->buf[ctx->buflen++] = '\r';
 				ctx->buf[ctx->buflen++] = '\n';
 				break;
@@ -718,18 +732,25 @@ static int task_main_dir (
 	while (1);
 
 set_chunklen:
+	/* right alignment with space padding on the left */
 	x = snprintf (
-		ctx->buf, (4 + 2) - 1, 
-		"%*lX", (int)(4 + 2 - 2), 
-		(unsigned long)(ctx->chunklen - (4 + 2)));
+		ctx->buf, (SIZE_CHLEN + SIZE_CHLENCRLF) - 1, 
+		"%*lX", (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
+		(unsigned long)(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)));
+
+	/* CHLENCRLF */
 	ctx->buf[x] = '\r';
 	ctx->buf[x+1] = '\n';
+
+	/* skip leading space padding */
 	for (x = 0; ctx->buf[x] == ' '; x++) ctx->buflen--;
 	ctx->bufpos = x;
 
 send_dirlist:
 	n = send (client->handle.i, &ctx->buf[ctx->bufpos], ctx->buflen, 0);
 	if (n <= -1) return -1;
+
+	/* NOTE if (n == 0), it will enter an infinite loop */
 		
 	ctx->bufpos += n;
 	ctx->buflen -= n;

@@ -458,6 +458,7 @@ static void delete_from_client_array (qse_httpd_t* httpd, int fd)
 
 		qse_htrd_close (array->data[fd].htrd);
 		array->data[fd].htrd = QSE_NULL;	
+qse_fprintf (QSE_STDERR, QSE_T("Debug: closing socket %d\n"), array->data[fd].handle.i);
 		close (array->data[fd].handle.i);
 		array->size--;
 	}
@@ -777,6 +778,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->handle.
 	/* feed may have called the request callback multiple times... 
  	 * that's because we don't know how many valid requests
 	 * are included in 'buf' */ 
+qse_fprintf (QSE_STDERR, QSE_T("Debug: read from a client %d\n"), client->handle.i);
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	if (qse_htrd_feed (client->htrd, buf, m) <= -1)
 	{

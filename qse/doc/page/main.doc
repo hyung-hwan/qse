@@ -56,14 +56,22 @@ For additional command line options to @b configure, run @b configure @b --help.
 
 @subsection crosscompile_win32 CROSS-COMPILING FOR WIN32
 
-While the package does not provide any build files for native WIN32 compilers,
-you can cross-compile it for WIN32 with a cross-compiler. Get a cross-compiler 
-installed first and run @b configure with a host and a target.
+While the package does not provide build files for native WIN32/WIN64 compilers,
+you can cross-compile it for WIN32/WIN64 with a cross-compiler. Get a 
+cross-compiler installed first and run @b configure with a host and a target.
 
-With MINGW32, you may run @b configure as shown below:
+With MINGW-W64, you may run @b configure as shown below for WIN32:
 
 @code
-$ ./configure --host=i586-mingw32msvc --target=i586-mingw32msvc 
+$ ./configure --host=i686-w64-mingw32 --target=i686-w64-mingw32
+$ make
+$ make install
+@endcode
+
+With MINGW-W64, you may run @b configure as shown below for WIN64:
+
+@code
+$ ./configure --host=x86_64-w64-mingw32 --target=x86_64-w64-mingw32
 $ make
 $ make install
 @endcode
@@ -92,6 +100,4 @@ Under the wide character mode:
 - #qse_char_t maps to #qse_wchar_t.
 
 #qse_mchar_t maps to @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
-
-
 */
