@@ -113,50 +113,6 @@ static qse_ssize_t xsendfile (
 }
 #endif
 
-static qse_httpd_task_t* entask_error (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task, 
-	int code, qse_http_version_t* version, int keepalive)
-{
-	const qse_mchar_t* smsg;
-	const qse_mchar_t* lmsg;
-
-	switch (code)
-	{
-		case 403:
-			smsg = QSE_MT("Forbidden");
-			lmsg = QSE_MT("<html><head><title>Directory Listing Forbidden</title></head><body><b>DIRECTORY LISTING FORBIDDEN<b></body></html>");
-			break;
-
-		case 404:
-			smsg = QSE_MT("Not Found");
-			lmsg = QSE_MT("<html><head><title>Not Found</title></head><body><b>REQUESTED PATH NOT FOUND<b></body></html>");
-			break;
-
-		case 416:
-			smsg = QSE_MT("Requested Range Not Satisfiable");
-			lmsg = QSE_MT("<html><head><title>Requested Range Not Satsfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE<b></body></html>");
-			break;
-
-		case 500:
-			smsg = QSE_MT("Internal Server Error");
-			lmsg = QSE_MT("<html><head><title>Internal Server Error</title></head><body><b>INTERNAL SERVER ERROR<b></body></html>");
-		
-		default:
-			smsg = QSE_MT("Unknown");
-			lmsg = QSE_MT("<html><head><title>Unknown Error</title></head><body><b>UNKNOWN ERROR<b></body></html>");
-			break;
-	}
-
-	return qse_httpd_entaskformat (
-		httpd, client, task,
-		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
-		version->major, version->minor, code, smsg,
-		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-		(int)qse_mbslen(lmsg) + 4, lmsg
-	);
-}
-
-
 /*------------------------------------------------------------------------*/
 
 static int task_main_disconnect (
@@ -451,6 +407,80 @@ qse_printf (QSE_T("SEND: [%.*S]\n"), (int)l, buf);
 
 /*------------------------------------------------------------------------*/
 
+static qse_httpd_task_t* entask_error (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	const qse_httpd_task_t* task, int code, 
+	const qse_http_version_t* version, int keepalive)
+{
+	const qse_mchar_t* smsg;
+	const qse_mchar_t* lmsg;
+
+	switch (code)
+	{
+		case 403:
+			smsg = QSE_MT("Forbidden");
+			lmsg = QSE_MT("<html><head><title>Forbidden</title></head><body><b>FORBIDDEN<b></body></html>");
+			break;
+
+		case 404:
+			smsg = QSE_MT("Not Found");
+			lmsg = QSE_MT("<html><head><title>Not Found</title></head><body><b>REQUESTED PATH NOT FOUND<b></body></html>");
+			break;
+
+		case 405:
+			smsg = QSE_MT("Method Not Allowed");
+			lmsg = QSE_MT("<html><head><title>Method Not Allowed</title></head><body><b>REQUESTED METHOD NOT ALLOWED<b></body></html>");
+			break;
+
+		case 416:
+			smsg = QSE_MT("Requested Range Not Satisfiable");
+			lmsg = QSE_MT("<html><head><title>Requested Range Not Satsfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE<b></body></html>");
+			break;
+
+		case 500:
+			smsg = QSE_MT("Internal Server Error");
+			lmsg = QSE_MT("<html><head><title>Internal Server Error</title></head><body><b>INTERNAL SERVER ERROR<b></body></html>");
+			break;
+
+		case 501:
+			smsg = QSE_MT("Not Implemented");
+			lmsg = QSE_MT("<html><head><title>Not Implemented</title></head><body><b>NOT IMPLEMENTED<b></body></html>");
+			break;
+
+		case 502:
+			smsg = QSE_MT("Bad Gateway");
+			lmsg = QSE_MT("<html><head><title>Bad Gateway</title></head><body><b>BAD GATEWAY<b></body></html>");
+			break;
+
+		case 503:
+			smsg = QSE_MT("Service Unavailable");
+			lmsg = QSE_MT("<html><head><title>Service Unavailable</title></head><body><b>SERVICE UNAVAILABLE<b></body></html>");
+			break;
+		
+		default:
+			smsg = QSE_MT("Unknown");
+			lmsg = QSE_MT("<html><head><title>Unknown Error</title></head><body><b>UNKNOWN ERROR<b></body></html>");
+			break;
+	}
+
+	return qse_httpd_entaskformat (
+		httpd, client, task,
+		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+		version->major, version->minor, code, smsg,
+		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+		(int)qse_mbslen(lmsg) + 4, lmsg
+	);
+}
+
+qse_httpd_task_t* qse_httpd_entaskerror (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	const qse_httpd_task_t* task, int code, const qse_htre_t* req)
+{
+	return entask_error (httpd, client, task, code, qse_htre_getversion(req), req->attr.keepalive);
+}
+
+/*------------------------------------------------------------------------*/
+
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
@@ -618,14 +648,14 @@ static int task_main_dir (
 	ctx->buflen = SIZE_CHLEN + SIZE_CHLENCRLF; 
 
 	/* free space remaing in the buffer for the chunk data */
-	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - CHENDCRLF; 
+	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - SIZE_CHENDCRLF; 
 
 	if (ctx->footer_pending)
 	{
 		x = snprintf (
 			&ctx->buf[ctx->buflen], 
 			ctx->bufrem,
-			"</ul></body></html>\r\n0\r\n");
+			QSE_MT("</ul></body></html>\r\n0\r\n"));
 		if (x == -1 || x >= ctx->bufrem) 
 		{
 			/* return an error if the buffer is too small to hold the 
@@ -637,8 +667,8 @@ static int task_main_dir (
 		ctx->chunklen = ctx->buflen - 5; /* -5 for \r\n0\r\n added above */
 
 		/* CHENDCRLF */
-		ctx->buf[ctx->buflen++] = '\r';
-		ctx->buf[ctx->buflen++] = '\n';
+		ctx->buf[ctx->buflen++] = QSE_MT('\r');
+		ctx->buf[ctx->buflen++] = QSE_MT('\n');
 
 		goto set_chunklen;
 	}
@@ -651,7 +681,7 @@ static int task_main_dir (
 		x = snprintf (
 			&ctx->buf[ctx->buflen], 
 			ctx->bufrem,
-			"<html><head><title>Directory Listing</title></head><body>index of xxxx<ul>"
+			QSE_MT("<html><head><title>Directory Listing</title></head><body>index of xxxx<ul>")
 		);
 		if (x == -1 || x >= ctx->bufrem) 
 		{
@@ -678,15 +708,15 @@ static int task_main_dir (
 			x = snprintf (
 				&ctx->buf[ctx->buflen], 
 				ctx->bufrem,
-				"</ul></body></html>\r\n0\r\n");
+				QSE_MT("</ul></body></html>\r\n0\r\n"));
 			if (x == -1 || x >= ctx->bufrem) 
 			{
 				ctx->footer_pending = 1;
 				ctx->chunklen = ctx->buflen;
 
 				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = '\r';
-				ctx->buf[ctx->buflen++] = '\n';
+				ctx->buf[ctx->buflen++] = QSE_MT('\r');
+				ctx->buf[ctx->buflen++] = QSE_MT('\n');
 			}
 			else
 			{
@@ -694,8 +724,8 @@ static int task_main_dir (
 				ctx->chunklen = ctx->buflen - 5;
 
 				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = '\r';
-				ctx->buf[ctx->buflen++] = '\n';
+				ctx->buf[ctx->buflen++] = QSE_MT('\r');
+				ctx->buf[ctx->buflen++] = QSE_MT('\n');
 			}
 			break;	
 		}
@@ -704,11 +734,11 @@ static int task_main_dir (
 			x = snprintf (
 				&ctx->buf[ctx->buflen], 
 				ctx->bufrem,
-				"<li><a href='%s%s'>%s%s</a></li>", 
+				QSE_MT("<li><a href='%s%s'>%s%s</a></li>"),
 				ctx->dent->d_name,
-				(ctx->dent->d_type == DT_DIR? "/": ""),
+				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT("")),
 				ctx->dent->d_name,
-				(ctx->dent->d_type == DT_DIR? "/": "")
+				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT(""))
 			);
 			if (x == -1 || x >= ctx->bufrem)
 			{
@@ -716,8 +746,8 @@ static int task_main_dir (
 				ctx->chunklen = ctx->buflen;
 
 				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = '\r';
-				ctx->buf[ctx->buflen++] = '\n';
+				ctx->buf[ctx->buflen++] = QSE_MT('\r');
+				ctx->buf[ctx->buflen++] = QSE_MT('\n');
 				break;
 			}
 			else
@@ -735,15 +765,15 @@ set_chunklen:
 	/* right alignment with space padding on the left */
 	x = snprintf (
 		ctx->buf, (SIZE_CHLEN + SIZE_CHLENCRLF) - 1, 
-		"%*lX", (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
+		QSE_MT("%*lX"), (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
 		(unsigned long)(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)));
 
 	/* CHLENCRLF */
-	ctx->buf[x] = '\r';
-	ctx->buf[x+1] = '\n';
+	ctx->buf[x] = QSE_MT('\r');
+	ctx->buf[x+1] = QSE_MT('\n');
 
 	/* skip leading space padding */
-	for (x = 0; ctx->buf[x] == ' '; x++) ctx->buflen--;
+	for (x = 0; ctx->buf[x] == QSE_MT(' '); x++) ctx->buflen--;
 	ctx->bufpos = x;
 
 send_dirlist:
@@ -1140,19 +1170,29 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_client_t* client, 
 	const qse_httpd_task_t* pred,
 	const qse_mchar_t* name,
-	const qse_http_range_t* range, 
-	const qse_http_version_t* verison,
-	int   keepalive)
+	const qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_path_t data;
+	const qse_mchar_t* range;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.name = name;
-	if (range) data.range = *range;
-	else data.range.type = QSE_HTTP_RANGE_NONE;
-	data.version = *verison;
-	data.keepalive = keepalive;
+	data.version = *qse_htre_getversion(req);
+	data.keepalive = req->attr.keepalive;
+
+	range = qse_htre_getheaderval(req, QSE_MT("Range"));
+	if (range) 
+	{
+		if (qse_parsehttprange (range, &data.range) <= -1)
+		{
+			return entask_error (httpd, client, pred, 416, &data.version, data.keepalive);
+		}
+	}
+	else 
+	{
+		data.range.type = QSE_HTTP_RANGE_NONE;
+	}
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_path;
@@ -1179,6 +1219,7 @@ struct task_cgi_t
 
 	const qse_mchar_t* path;
 	qse_http_version_t version;
+	int keepalive; /* taken from the request */
 
 	qse_env_t* env;
 	qse_pio_t* pio;
@@ -1376,6 +1417,7 @@ static int task_init_cgi (
 	qse_mbscpy ((qse_mchar_t*)(xtn + 1), arg->path);
 	xtn->path = (qse_mchar_t*)(xtn + 1);
 	xtn->version = *qse_htre_getversion(arg->req);
+	xtn->keepalive = arg->req->attr.keepalive;
 
 	xtn->env = makecgienv (httpd, client, arg->req);
 	if (xtn->env == QSE_NULL) xtn->init_failed = 1;
@@ -1541,7 +1583,7 @@ static int task_main_cgi_3 (
 	qse_ssize_t n;
 	qse_size_t count;
 
-qse_printf (QSE_T("task_main_cgi_3\n"));
+qse_printf (QSE_T("cgi_3\n"));
 	count = MAX_SEND_SIZE;
 	if (count >= cgi->res_left) count = cgi->res_left;
 
@@ -1665,11 +1707,18 @@ static int task_main_cgi (
 	return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
 
 oops:
-	if (cgi->res) qse_mbs_close (cgi->res);
-	if (cgi->htrd) qse_htrd_close (cgi->htrd);
+	if (cgi->res) 
+	{
+		qse_mbs_close (cgi->res);
+		cgi->res = QSE_NULL;
+	}
+	if (cgi->htrd) 
+	{
+		qse_htrd_close (cgi->htrd);
+		cgi->htrd = QSE_NULL;
+	}
 
-/* TODO: keep alive.... cgi->disconnect???? */
-	return (entask_error (httpd, client, task, 500, &cgi->version, 0) == QSE_NULL)? -1: 0;
+	return (entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 qse_httpd_task_t* qse_httpd_entaskcgi (
