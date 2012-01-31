@@ -157,6 +157,8 @@ qse_httpd_task_t* qse_httpd_entask (
 	qse_size_t              xtnsize
 );
 
+/* -------------------------------------------- */
+
 qse_httpd_task_t* qse_httpd_entaskdisconnect (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
@@ -185,6 +187,8 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	...
 );
 
+/* -------------------------------------------- */
+
 qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
@@ -202,14 +206,22 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	int                     chunked
 );
 
+/* -------------------------------------------- */
+
+qse_httpd_task_t* qse_httpd_entaskerror (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   task,
+     int                       code, 
+	const qse_htre_t*         req
+);
+
 qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        name,
-	const qse_http_range_t*   range,
-	const qse_http_version_t* version,
-	int                       keepalive
+	const qse_htre_t*         req
 );
 
 qse_httpd_task_t* qse_httpd_entaskcgi (
@@ -219,6 +231,8 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	const qse_mchar_t*        path,
 	const qse_htre_t*         req
 );
+
+/* -------------------------------------------- */
 
 void* qse_httpd_allocmem (
 	qse_httpd_t* httpd, 
