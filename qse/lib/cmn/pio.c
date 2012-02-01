@@ -36,6 +36,9 @@
 #	include "syscall.h"
 #	include <fcntl.h>
 #	include <sys/wait.h>
+#	if defined(HAVE_SPAWN_H)
+#		include <spawn.h>
+#	endif
 #endif
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (pio)
@@ -66,6 +69,254 @@ void qse_pio_close (qse_pio_t* pio)
 	qse_pio_fini (pio);
 	QSE_MMGR_FREE (pio->mmgr, pio);
 }
+
+#if !defined(_WIN32) && !defined(__OS2__) && !defined(__DOS__)
+struct param_t
+{
+	qse_mchar_t* mcmd;
+	qse_mchar_t* fixed_argv[4];
+	qse_mchar_t** argv;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothign extra */
+#else
+	qse_mchar_t fixed_mbuf[64];
+#endif
+};
+typedef struct param_t param_t;
+
+static void free_param (qse_pio_t* pio, param_t* param)
+{
+	if (param->argv && param->argv != param->fixed_argv) 
+		QSE_MMGR_FREE (pio->mmgr, param->argv);
+	if (param->mcmd) QSE_MMGR_FREE (pio->mmgr, param->mcmd);
+}
+
+static int make_param (
+	qse_pio_t* pio, const qse_char_t* cmd, int flags, param_t* param)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mchar_t* mcmd = QSE_NULL;
+#else
+	qse_mchar_t* mcmd = QSE_NULL;
+	qse_char_t* wcmd = QSE_NULL;
+#endif
+	int fcnt = 0;
+
+	QSE_MEMSET (param, 0, QSE_SIZEOF(*param));
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	if (flags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
+	else
+	{
+		mcmd = qse_strdup (cmd, pio->mmgr);
+		if (mcmd == QSE_NULL) 
+		{
+			pio->errnum = QSE_PIO_ENOMEM;
+			goto oops;
+		}
+
+		fcnt = qse_strspl (mcmd, QSE_T(""), 
+			QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
+		if (fcnt <= 0) 
+		{
+			/* no field or an error */
+			pio->errnum = QSE_PIO_EINVAL;
+			goto oops; 
+		}
+	}
+#else	
+	if (flags & QSE_PIO_MBSCMD) 
+	{
+		/* the cmd is flagged to be of qse_mchar_t 
+		 * while the default character type is qse_wchar_t. */
+
+		if (flags & QSE_PIO_SHELL) mcmd = (qse_mchar_t*)cmd;
+		else
+		{
+			mcmd = qse_mbsdup ((const qse_mchar_t*)cmd, pio->mmgr);
+			if (mcmd == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
+
+			fcnt = qse_mbsspl (mcmd, QSE_MT(""), 
+				QSE_MT('\"'), QSE_MT('\"'), QSE_MT('\\')); 
+			if (fcnt <= 0) 
+			{
+				/* no field or an error */
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops; 
+			}
+		}
+	}
+	else
+	{
+		qse_size_t n, mn, wl;
+
+		if (flags & QSE_PIO_SHELL)
+		{
+			if (qse_wcstombs (cmd, &wl, QSE_NULL, &mn) <= -1)
+			{
+				/* cmd has illegal sequence */
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops;
+			}
+		}
+		else
+		{
+			wcmd = qse_strdup (cmd, pio->mmgr);
+			if (wcmd == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
+
+			fcnt = qse_strspl (wcmd, QSE_T(""), 
+				QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
+			if (fcnt <= 0)
+			{
+				/* no field or an error */
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops;
+			}
+			
+			/* calculate the length of the string after splitting */
+			for (wl = 0, n = fcnt; n > 0; )
+			{
+				if (wcmd[wl++] == QSE_T('\0')) n--;
+			}
+
+			if (qse_wcsntombsn (wcmd, &wl, QSE_NULL, &mn) <= -1) 
+			{
+				pio->errnum = QSE_PIO_EINVAL;
+				goto oops;
+			}
+		}
+
+		/* prepare to reserve 1 more slot for the terminating '\0'
+		 * by incrementing mn by 1. */
+		mn = mn + 1;
+
+		if (mn <= QSE_COUNTOF(param->fixed_mbuf))
+		{
+			mcmd = param->fixed_mbuf;
+			mn = QSE_COUNTOF(param->fixed_mbuf);
+		}
+		else
+		{
+			mcmd = QSE_MMGR_ALLOC (pio->mmgr, mn * QSE_SIZEOF(*mcmd));
+			if (mcmd == QSE_NULL) 
+			{
+				pio->errnum = QSE_PIO_ENOMEM;
+				goto oops;
+			}
+		}
+
+		if (flags & QSE_PIO_SHELL)
+		{
+			QSE_ASSERT (wcmd == QSE_NULL);
+			/* qse_wcstombs() should succeed as 
+			 * it was successful above */
+			qse_wcstombs (cmd, &wl, mcmd, &mn);
+			/* qse_wcstombs() null-terminate mcmd */
+		}
+		else
+		{
+			QSE_ASSERT (wcmd != QSE_NULL);
+			/* qse_wcsntombsn() should succeed as 
+			 * it was was successful above */
+			qse_wcsntombsn (wcmd, &wl, mcmd, &mn);
+			/* qse_wcsntombsn() doesn't null-terminate mcmd */
+			mcmd[mn] = QSE_MT('\0');
+
+			QSE_MMGR_FREE (pio->mmgr, wcmd);
+			wcmd = QSE_NULL;
+		}
+	}
+#endif
+
+	if (flags & QSE_PIO_SHELL)
+	{
+		param->argv = param->fixed_argv;
+		param->argv[0] = QSE_MT("/bin/sh");
+		param->argv[1] = QSE_MT("-c");
+		param->argv[2] = mcmd;
+		param->argv[3] = QSE_NULL;
+	}
+	else
+	{
+		int i;
+		qse_mchar_t** argv;
+		qse_mchar_t* mcmdptr;
+
+		param->argv = QSE_MMGR_ALLOC (
+			pio->mmgr, (fcnt + 1) * QSE_SIZEOF(argv[0]));
+		if (param->argv == QSE_NULL) 
+		{
+			pio->errnum = QSE_PIO_ENOMEM;
+			goto oops;
+		}
+
+		mcmdptr = mcmd;
+		for (i = 0; i < fcnt; i++)
+		{
+			param->argv[i] = mcmdptr;
+			while (*mcmdptr != QSE_MT('\0')) mcmdptr++;
+			mcmdptr++;
+		}
+		param->argv[i] = QSE_NULL;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	if (mcmd && mcmd != cmd) param->mcmd = mcmd;
+#else
+	if (mcmd && mcmd != cmd && mcmd != param->fixed_mbuf) param->mcmd = mcmd;
+#endif
+	return 0;
+
+oops:
+#if defined(QSE_CHAR_IS_MCHAR)
+	if (mcmd && mcmd != cmd) QSE_MMGR_FREE (pio->mmgr, mcmd);
+#else
+	if (mcmd && mcmd != cmd && mcmd != param->fixed_mbuf) QSE_MMGR_FREE (pio->mmgr, mcmd);
+	if (wcmd) QSE_MMGR_FREE (pio->mmgr, wcmd);
+#endif
+	return -1;
+}
+
+static QSE_INLINE int is_fd_valid (int fd)
+{
+	return fcntl (fd, F_GETFL) != -1 || errno != EBADF;
+}
+
+static int get_highest_fd (void)
+{
+	/* TODO: consider if reading from /proc/self/fd is 
+	 *       a better idea. */
+	struct rlimit rlim;
+	int fd = -1;
+
+#if defined(F_MAXFD)
+	fd = fcntl (0, F_MAXFD);
+#endif
+	if (fd == -1)
+	{
+		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
+		    rlim.rlim_max == RLIM_INFINITY) 
+		{
+		#if defined(HAVE_SYSCONF)
+			fd = sysconf (_SC_OPEN_MAX);
+		#endif
+		}
+		else fd = rlim.rlim_max;
+	}
+	if (fd == -1) fd = 1024; /* fallback */
+	return fd;
+}
+
+#endif
 
 int qse_pio_init (
 	qse_pio_t* pio, qse_mmgr_t* mmgr, const qse_char_t* cmd, 
@@ -113,8 +364,17 @@ int qse_pio_init (
 
 	/* DOS not multi-processed. can't support pio */
 
+#elif defined(HAVE_POSIX_SPAWN)
+	posix_spawn_file_actions_t fa;
+	int fa_inited = 0;
+	int spawn_ret;
+	qse_pio_pid_t pid;
+	param_t param;
+	extern char** environ;
 #else
 	qse_pio_pid_t pid;
+	param_t param;
+	extern char** environ;
 #endif
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
@@ -618,6 +878,137 @@ int qse_pio_init (
 	/* DOS not multi-processed. can't support pio */
 	return -1;
 
+#elif defined(HAVE_POSIX_SPAWN)
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		if (QSE_PIPE(&handle[0]) <= -1) goto oops;
+		minidx = 0; maxidx = 1;
+	}
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		if (QSE_PIPE(&handle[2]) <= -1) goto oops;
+		if (minidx == -1) minidx = 2;
+		maxidx = 3;
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		if (QSE_PIPE(&handle[4]) <= -1) goto oops;
+		if (minidx == -1) minidx = 4;
+		maxidx = 5;
+	}
+
+	if (maxidx == -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		goto oops;
+	}
+
+	if (posix_spawn_file_actions_init (&fa) != 0) goto oops;
+	fa_inited = 1;
+
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		/* child should read */
+		if (posix_spawn_file_actions_addclose (&fa, handle[1]) != 0) goto oops;
+		if (posix_spawn_file_actions_adddup2 (&fa, handle[0], 0) != 0) goto oops;
+		if (posix_spawn_file_actions_addclose (&fa, handle[0]) != 0) goto oops;
+	}
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		/* child should write */
+		if (posix_spawn_file_actions_addclose (&fa, handle[2]) != 0) goto oops;
+		if (posix_spawn_file_actions_adddup2 (&fa, handle[3], 1) != 0) goto oops;
+		if ((flags & QSE_PIO_ERRTOOUT) &&
+		    posix_spawn_file_actions_adddup2 (&fa, handle[3], 2) != 0) goto oops;
+		if (posix_spawn_file_actions_addclose (&fa, handle[3]) != 0) goto oops;
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		/* child should write */
+		if (posix_spawn_file_actions_addclose (&fa, handle[4]) != 0) goto oops;
+		if (posix_spawn_file_actions_adddup2 (&fa, handle[5], 2) != 0) goto oops;
+		if ((flags & QSE_PIO_OUTTOERR) &&
+		    posix_spawn_file_actions_adddup2 (&fa, handle[5], 1) != 0) goto oops;
+		if (posix_spawn_file_actions_addclose (&fa, handle[5]) != 0) goto oops;
+	}
+
+	{
+		int oflags = O_RDWR;
+	#if defined(O_LARGEFILE)
+		oflags |= O_LARGEFILE;
+	#endif
+
+		if ((flags & QSE_PIO_INTONUL) &&
+		    posix_spawn_file_actions_addopen (&fa, 0, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+		if ((flags & QSE_PIO_OUTTONUL) &&
+		    posix_spawn_file_actions_addopen (&fa, 1, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+		if ((flags & QSE_PIO_ERRTONUL) &&
+		    posix_spawn_file_actions_addopen (&fa, 2, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+	}
+
+	/* there remains the chance of race condition that
+	 * 0, 1, 2 can be closed between addclose() and posix_spawn().
+	 * so checking the file descriptors with is_fd_valid() is
+	 * just on the best-effort basis.
+	 */
+	if ((flags & QSE_PIO_DROPIN) && is_fd_valid(0) &&
+	    posix_spawn_file_actions_addclose (&fa, 0) != 0) goto oops;
+	if ((flags & QSE_PIO_DROPOUT) && is_fd_valid(1) &&
+	    posix_spawn_file_actions_addclose (&fa, 1) != 0) goto oops;
+	if ((flags & QSE_PIO_DROPERR) && is_fd_valid(2) &&
+	    posix_spawn_file_actions_addclose (&fa, 2) != 0) goto oops;
+
+	{
+		int fd = get_highest_fd ();
+		while (--fd > 2)
+		{
+			if (fd != handle[0] &&
+			    fd != handle[1] &&
+			    fd != handle[2] &&
+			    fd != handle[3] &&
+			    fd != handle[4] &&
+			    fd != handle[5]) 
+			{
+				/* closing attempt on a best-effort basis */
+				if (is_fd_valid(fd) && 
+				    posix_spawn_file_actions_addclose (&fa, fd) != 0) goto oops;
+			}
+		}
+	}
+
+	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+	spawn_ret = posix_spawn(
+		&pid, param.argv[0], &fa, QSE_NULL, param.argv,
+		(env? qse_env_getarr(env): environ));
+	free_param (pio, &param); 
+	if (fa_inited) 
+	{
+		posix_spawn_file_actions_destroy (&fa);
+		fa_inited = 0;
+	}
+	if (spawn_ret != 0) goto oops;
+
+	pio->child = pid;
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		QSE_CLOSE (handle[0]);
+		handle[0] = QSE_PIO_HND_NIL;
+	}
+	if (flags & QSE_PIO_READOUT)
+	{
+		QSE_CLOSE (handle[3]);
+		handle[3] = QSE_PIO_HND_NIL;
+	}
+	if (flags & QSE_PIO_READERR)
+	{
+		QSE_CLOSE (handle[5]);
+		handle[5] = QSE_PIO_HND_NIL;
+	}
+
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -652,31 +1043,10 @@ int qse_pio_init (
 	if (pid == 0)
 	{
 		/* child */
+		qse_pio_hnd_t devnull = -1;
+		int fd = get_highest_fd ();
 
-		qse_pio_hnd_t devnull;
-		qse_mchar_t* mcmd;
-		int fcnt = 0;
-	#ifndef QSE_CHAR_IS_MCHAR
-		qse_mchar_t buf[64];
-	#endif
-
-		/* TODO: consider if reading from /proc/self/fd is 
-		 *       a better idea. */
-
-		struct rlimit rlim;
-		int fd;
-
-		if (QSE_GETRLIMIT (RLIMIT_NOFILE, &rlim) <= -1 ||
-		    rlim.rlim_max == RLIM_INFINITY) 
-		{
-		#ifdef HAVE_SYSCONF
-			fd = sysconf (_SC_OPEN_MAX);
-			if (fd <= 0)
-		#endif
-				fd = 1024;
-		}
-		else fd = rlim.rlim_max;
-
+		/* don't close stdin/out/err and the pipes */
 		while (--fd > 2)
 		{
 			if (fd != handle[0] &&
@@ -733,7 +1103,7 @@ int qse_pio_init (
 		    (flags & QSE_PIO_OUTTONUL) ||
 		    (flags & QSE_PIO_ERRTONUL))
 		{
-		#ifdef O_LARGEFILE
+		#if defined(O_LARGEFILE)
 			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
 		#else
 			devnull = QSE_OPEN (QSE_MT("/dev/null"), O_RDWR, 0);
@@ -750,162 +1120,22 @@ int qse_pio_init (
 
 		if ((flags & QSE_PIO_INTONUL) || 
 		    (flags & QSE_PIO_OUTTONUL) ||
-		    (flags & QSE_PIO_ERRTONUL)) QSE_CLOSE (devnull);
+		    (flags & QSE_PIO_ERRTONUL)) 
+		{
+			QSE_CLOSE (devnull);
+			devnull = -1;
+		}
 
 		if (flags & QSE_PIO_DROPIN) QSE_CLOSE(0);
 		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
 		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
 
-	#ifdef QSE_CHAR_IS_MCHAR
-		if (flags & QSE_PIO_SHELL) mcmd = (qse_char_t*)cmd;
-		else
-		{
-			mcmd =  qse_strdup (cmd, pio->mmgr);
-			if (mcmd == QSE_NULL) goto child_oops;
-
-			fcnt = qse_strspl (mcmd, QSE_T(""), 
-				QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
-			if (fcnt <= 0) 
-			{
-				/* no field or an error */
-				goto child_oops; 
-			}
-		}
-	#else	
-		if (flags & QSE_PIO_MBSCMD) 
-		{
-			/* the cmd is flagged to be of qse_mchar_t 
-			 * while the default character type is qse_wchar_t. */
-
-			if (flags & QSE_PIO_SHELL) mcmd = (qse_mchar_t*)cmd;
-			else
-			{
-				mcmd =  qse_mbsdup ((const qse_mchar_t*)cmd, pio->mmgr);
-				if (mcmd == QSE_NULL) goto child_oops;
-
-				fcnt = qse_mbsspl (mcmd, QSE_MT(""), 
-					QSE_MT('\"'), QSE_MT('\"'), QSE_MT('\\')); 
-				if (fcnt <= 0) 
-				{
-					/* no field or an error */
-					goto child_oops; 
-				}
-			}
-		}
-		else
-		{
-			qse_size_t n, mn, wl;
-			qse_char_t* wcmd = QSE_NULL;
-
-			if (flags & QSE_PIO_SHELL)
-			{
-				if (qse_wcstombs (cmd, &wl, QSE_NULL, &mn) <= -1)
-				{
-					/* cmd has illegal sequence */
-					goto child_oops;
-				}
-			}
-			else
-			{
-				wcmd = qse_strdup (cmd, pio->mmgr);
-				if (wcmd == QSE_NULL) goto child_oops;
-	
-				fcnt = qse_strspl (wcmd, QSE_T(""), 
-					QSE_T('\"'), QSE_T('\"'), QSE_T('\\')); 
-				if (fcnt <= 0)
-				{
-					/* no field or an error */
-					goto child_oops;
-				}
-				
-				/* calculate the length of the string after splitting */
-				for (wl = 0, n = fcnt; n > 0; )
-				{
-					if (wcmd[wl++] == QSE_T('\0')) n--;
-				}
-	
-#if 0
-				n = qse_wcsntombsnlen (wcmd, wl, &mn);
-				if (n != wl) goto child_oops;
-#endif
-				if (qse_wcsntombsn (wcmd, &wl, QSE_NULL, &mn) <= -1) goto child_oops;
-			}
-	
-			/* prepare to reserve 1 more slot for the terminating '\0'
-			 * by incrementing mn by 1. */
-			mn = mn + 1;
-	
-			if (mn <= QSE_COUNTOF(buf)) 
-			{
-				mcmd = buf;
-				mn = QSE_COUNTOF(buf);
-			}
-			else
-			{
-				mcmd = QSE_MMGR_ALLOC (
-					pio->mmgr, mn*QSE_SIZEOF(*mcmd));
-				if (mcmd == QSE_NULL) goto child_oops;
-			}
-	
-			if (flags & QSE_PIO_SHELL)
-			{
-				/* qse_wcstombs() should succeed as 
-				 * it was successful above */
-				qse_wcstombs (cmd, &wl, mcmd, &mn);
-				/* qse_wcstombs() null-terminate mcmd */
-			}
-			else
-			{
-				QSE_ASSERT (wcmd != QSE_NULL);
-				/* qse_wcsntombsn() should succeed as 
-				 * it was was successful above */
-				qse_wcsntombsn (wcmd, &wl, mcmd, &mn);
-				/* qse_wcsntombsn() doesn't null-terminate mcmd */
-				mcmd[mn] = QSE_MT('\0');
-			}
-		}
-	#endif
-
-		if (flags & QSE_PIO_SHELL)
-		{
-			const qse_mchar_t* argv[4];
-			extern char** environ;
-
-			argv[0] = QSE_MT("/bin/sh");
-			argv[1] = QSE_MT("-c");
-			argv[2] = mcmd;
-			argv[3] = QSE_NULL;
-
-			QSE_EXECVE (
-				QSE_MT("/bin/sh"),
-				(qse_mchar_t*const*)argv, 
-				(env? qse_env_getarr(env): environ)
-			);
-		}
-		else
-		{
-			int i;
-			qse_mchar_t** argv;
-			extern char** environ;
-
-			argv = QSE_MMGR_ALLOC (pio->mmgr, (fcnt+1)*QSE_SIZEOF(argv[0]));
-			if (argv == QSE_NULL) goto child_oops;
-
-			for (i = 0; i < fcnt; i++)
-			{
-				argv[i] = mcmd;
-				while (*mcmd != QSE_MT('\0')) mcmd++;
-				mcmd++;
-			}
-			argv[i] = QSE_NULL;
-
-			QSE_EXECVE (argv[0], argv, (env? qse_env_getarr(env): environ));
-
-			/* this won't be reached if execve succeeds */
-			QSE_MMGR_FREE (pio->mmgr, argv);
-		}
+		if (make_param (pio, cmd, flags, &param) <= -1) goto child_oops;
+		QSE_EXECVE (param.argv[0], param.argv, (env? qse_env_getarr(env): environ));
+		free_param (pio, &param); 
 
 	child_oops:
+		if (devnull >= 0) QSE_CLOSE (devnull);
 		QSE_EXIT (128);
 	}
 
@@ -995,8 +1225,7 @@ int qse_pio_init (
 	return 0;
 
 oops:
-	if (pio->errnum == QSE_PIO_ENOERR) 
-		pio->errnum = QSE_PIO_ESUBSYS;
+	if (pio->errnum == QSE_PIO_ENOERR) pio->errnum = QSE_PIO_ESUBSYS;
 
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
@@ -1036,7 +1265,16 @@ oops:
 #elif defined(__DOS__)
 
 	/* DOS not multi-processed. can't support pio */
-
+#elif defined(HAVE_POSIX_SPAWN)
+	if (fa_inited) 
+	{
+		posix_spawn_file_actions_destroy (&fa);
+		fa_inited = 0;
+	}
+	for (i = minidx; i < maxidx; i++) 
+	{
+    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+	}
 #else
 	for (i = minidx; i < maxidx; i++) 
 	{

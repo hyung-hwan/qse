@@ -232,6 +232,14 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	const qse_htre_t*         req
 );
 
+qse_httpd_task_t* qse_httpd_entasknph (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   pred,
+	const qse_mchar_t*        path,
+	const qse_htre_t*         req
+);
+
 /* -------------------------------------------- */
 
 void* qse_httpd_allocmem (
