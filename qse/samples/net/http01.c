@@ -69,12 +69,13 @@ qse_printf (QSE_T("content = [%.*S]\n"),
 			x = qse_httpd_entaskcgi (
 				httpd, client, QSE_NULL, qpath, req);
 			if (x == QSE_NULL) goto oops;
-
-#if 0
-			x = qse_httpd_entasknphcgi (
+		}
+		else if (dot && qse_mbscmp (dot, QSE_MT(".nph")) == 0)
+		{
+			/* nph-cgi */
+			x = qse_httpd_entasknph (
 				httpd, client, QSE_NULL, qpath, req);
 			if (x == QSE_NULL) goto oops;
-#endif
 		}
 		else
 		{

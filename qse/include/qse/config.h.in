@@ -154,6 +154,9 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
+/* Define to 1 if you have the `posix_spawn' function. */
+#undef HAVE_POSIX_SPAWN
+
 /* Define to 1 if you have the `pow' function. */
 #undef HAVE_POW
 
@@ -204,6 +207,9 @@
 
 /* Define it socklen_t typedef is in sys/socket.h. */
 #undef HAVE_SOCKLEN_T
+
+/* Define to 1 if you have the <spawn.h> header file. */
+#undef HAVE_SPAWN_H
 
 /* Define to 1 if you have the `sqrt' function. */
 #undef HAVE_SQRT

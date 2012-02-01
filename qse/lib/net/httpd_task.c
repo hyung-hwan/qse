@@ -1210,6 +1210,7 @@ struct task_cgi_arg_t
 {
 	const qse_mchar_t* path;
 	const qse_htre_t* req;
+	int nph;
 };
 
 typedef struct task_cgi_t task_cgi_t;
@@ -1220,6 +1221,7 @@ struct task_cgi_t
 	const qse_mchar_t* path;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
+	int nph;
 
 	qse_env_t* env;
 	qse_pio_t* pio;
@@ -1254,7 +1256,7 @@ int walk_cgi_headers (qse_htre_t* req, const qse_mchar_t* key, const qse_mchar_t
 {
 	task_cgi_t* cgi = (task_cgi_t*)ctx;
 
-	if (qse_mbscmp (key, "Status") != 0)
+	if (qse_mbscmp (key, QSE_MT("Status")) != 0)
 	{
 		if (qse_mbs_cat (cgi->res, key) == (qse_size_t)-1) return -1;
 		if (qse_mbs_cat (cgi->res, QSE_MT(": ")) == (qse_size_t)-1) return -1;
@@ -1275,6 +1277,7 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 	QSE_ASSERT (req->attr.hurried);
 
 	status = qse_htre_getheaderval (req, QSE_MT("Status"));
+
 	if (status)
 	{
 		qse_mchar_t buf[128];
@@ -1282,8 +1285,7 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		qse_mchar_t* endptr;
 
 /* TODO: check the syntax of status value??? */
-
-		QSE_MSTRTONUM (nstatus,status,&endptr,10);
+		QSE_MSTRTONUM (nstatus, status, &endptr, 10);
 
 		snprintf (buf, QSE_COUNTOF(buf), 	
 			QSE_MT("HTTP/%d.%d %d "),
@@ -1302,14 +1304,31 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 		if (qse_mbs_cat (cgi->res, endptr) == (qse_size_t)-1) return -1;
 		if (qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
 	}
-	else
+	else 
 	{
+		qse_mchar_t* location;
 		qse_mchar_t buf[128];
-		snprintf (buf, QSE_COUNTOF(buf), 	
-			QSE_MT("HTTP/%d.%d 200 OK\r\n"),
-			cgi->version.major, cgi->version.minor
-		);
-		if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+
+		location = qse_htre_getheaderval (req, QSE_MT("Location"));
+		if (location)
+		{
+			snprintf (buf, QSE_COUNTOF(buf), 	
+				QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\n"),
+				cgi->version.major, cgi->version.minor
+			);
+			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+
+			/* the actual Location hearer is added by 
+			 * qse_htre_walkheaders() below */
+		}
+		else
+		{
+			snprintf (buf, QSE_COUNTOF(buf), 	
+				QSE_MT("HTTP/%d.%d 200 OK\r\n"),
+				cgi->version.major, cgi->version.minor
+			);
+			if (qse_mbs_cat (cgi->res, buf) == (qse_size_t)-1) return -1;
+		}
 	}
 
 	if (req->attr.content_length_set) 
@@ -1319,20 +1338,29 @@ static int cgi_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 	}
 	else
 	{
-		/* no Content-Length returned by CGI */
+		/* no Content-Length returned by CGI. */
 		if (qse_comparehttpversions (&cgi->version, &v11) >= 0) 
+		{
 			cgi->content_chunked = 1;
-		else cgi->disconnect = 1;
+		}
+		else 
+		{
+			/* If CGI doesn't specify Content-Length, i can't
+			 * honor cgi->keepalive in HTTP/1.0 or earlier.
+			 * Closing the connection is the only way to
+			 * specify how long the content is */
+			cgi->disconnect = 1;
+		}
 	}
 
-	if (cgi->content_chunked)
-	{
-		if (qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) return -1;
-	}
+	if (cgi->content_chunked &&
+	    qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) return -1;
 
 	if (qse_htre_walkheaders (req, walk_cgi_headers, cgi) <= -1) return -1;
-	if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) return -1;
+	/* end of header */
+	if (qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
 
+	/* content body begins here */
 	cgi->content_received = qse_htre_getcontentlen(req);
 	if (cgi->content_length_set && 
 	    cgi->content_received > cgi->content_length)
@@ -1379,6 +1407,14 @@ static qse_env_t* makecgienv (
 
 #ifdef _WIN32
 	qse_env_insertsys (env, QSE_T("PATH"));
+
+	{
+		qse_char_t proto[32];
+		qse_http_version_t* v = qse_htre_getversion(req);
+		snprintf (proto, QSE_COUNTOF(proto), 
+			QSE_T("HTTP/%d.%d"), (int)v->major, (int)v->minor);
+		qse_env_insert (env, QSE_T("SERVER_PROTOCOL"), proto);
+	}
 #else
 	qse_env_insertsysm (env, QSE_MT("LANG"));
 	qse_env_insertsysm (env, QSE_MT("PATH"));
@@ -1387,8 +1423,16 @@ static qse_env_t* makecgienv (
 	{
 		qse_mchar_t port[16];
 		snprintf (port, QSE_COUNTOF(port), 
-			"%d", (int)ntohs(client->addr.in4.sin_port));
+			QSE_MT("%d"), (int)ntohs(client->addr.in4.sin_port));
 		qse_env_insertm (env, QSE_MT("REMOTE_PORT"), port);
+	}
+
+	{
+		qse_mchar_t proto[32];
+		qse_http_version_t* v = qse_htre_getversion(req);
+		snprintf (proto, QSE_COUNTOF(proto), 
+			QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
+		qse_env_insertm (env, QSE_MT("SERVER_PROTOCOL"), proto);
 	}
 	//qse_env_insertm (env, QSE_MT("REMOTE_ADDR"), QSE_MT("what the hell"));
 #endif
@@ -1418,6 +1462,7 @@ static int task_init_cgi (
 	xtn->path = (qse_mchar_t*)(xtn + 1);
 	xtn->version = *qse_htre_getversion(arg->req);
 	xtn->keepalive = arg->req->attr.keepalive;
+	xtn->nph = arg->nph;
 
 	xtn->env = makecgienv (httpd, client, arg->req);
 	if (xtn->env == QSE_NULL) xtn->init_failed = 1;
@@ -1678,24 +1723,35 @@ static int task_main_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
-	cgi_htrd_xtn_t* xtn;
 
 	if (cgi->init_failed) goto oops;
 
-	cgi->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_htrd_xtn_t));
-	if (cgi->htrd == QSE_NULL) goto oops;
-	xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (cgi->htrd);
-	xtn->cgi = cgi;
-	qse_htrd_setrecbs (cgi->htrd, &cgi_htrd_cbs);
-	qse_htrd_setoption (
-		cgi->htrd, 
-		QSE_HTRD_SKIPINITIALLINE | 
-		QSE_HTRD_HURRIED | 
-		QSE_HTRD_REQUEST
-	);
+	if (cgi->nph)
+	{
+		/* i cannot know how long the content will be
+		 * since i don't parse the header. so i have to close
+		 * the connection regardless of content-length or transfer-encoding
+		 * in the actual header. */
+		if (qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) return -1;
+	}
+	else
+	{
+		cgi_htrd_xtn_t* xtn;
+		cgi->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(cgi_htrd_xtn_t));
+		if (cgi->htrd == QSE_NULL) goto oops;
+		xtn = (cgi_htrd_xtn_t*) qse_htrd_getxtn (cgi->htrd);
+		xtn->cgi = cgi;
+		qse_htrd_setrecbs (cgi->htrd, &cgi_htrd_cbs);
+		qse_htrd_setoption (
+			cgi->htrd, 
+			QSE_HTRD_SKIPINITIALLINE | 
+			QSE_HTRD_HURRIED | 
+			QSE_HTRD_REQUEST
+		);
 
-	cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
-	if (cgi->res == QSE_NULL) goto oops;
+		cgi->res = qse_mbs_open (httpd->mmgr, 0, 256);
+		if (cgi->res == QSE_NULL) goto oops;
+	}
 
 	cgi->pio = qse_pio_open (
 		httpd->mmgr, 0, (const qse_char_t*)cgi->path, cgi->env,
@@ -1703,8 +1759,17 @@ static int task_main_cgi (
 	);
 	if (cgi->pio == QSE_NULL) goto oops;
 	
-	task->main = task_main_cgi_2; /* cause this function to be called subsequently */
-	return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
+	if (cgi->nph)
+	{
+		/* skip various header processing */
+		task->main = task_main_cgi_4; 
+		return task_main_cgi_4 (httpd, client, task);
+	}
+	else
+	{
+		task->main = task_main_cgi_2; /* cause this function to be called subsequently */
+		return task_main_cgi_2 (httpd, client, task); /* let me call it here once */
+	}
 
 oops:
 	if (cgi->res) 
@@ -1721,6 +1786,10 @@ oops:
 	return (entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
+/* TODO: global option or individual paramter for max cgi lifetime 
+*        non-blocking pio read ...
+*/
+
 qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
@@ -1733,6 +1802,33 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 
 	arg.path = path;
 	arg.req = req;
+	arg.nph = 0;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.init = task_init_cgi;
+	task.fini = task_fini_cgi;
+	task.main = task_main_cgi;
+	task.ctx = &arg;
+
+	return qse_httpd_entask (
+		httpd, client, pred, &task, 
+		QSE_SIZEOF(task_cgi_t) + ((qse_mbslen(path) + 1) * QSE_SIZEOF(*path))
+	);
+}
+
+qse_httpd_task_t* qse_httpd_entasknph (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, 
+	const qse_mchar_t* path,
+	const qse_htre_t* req)
+{
+	qse_httpd_task_t task;
+	task_cgi_arg_t arg;
+
+	arg.path = path;
+	arg.req = req;
+	arg.nph = 1;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
