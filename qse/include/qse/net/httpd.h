@@ -43,6 +43,11 @@ enum qse_httpd_errnum_t
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
+enum qse_httpd_option_t
+{
+	QSE_HTTPD_CGINOCLOEXEC = (1 << 0)
+};
+
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
@@ -77,10 +82,15 @@ typedef int (*qse_httpd_task_main_t) (
 
 struct qse_httpd_task_t
 {
-	/* you must not call another entask functions from within initailizer */
+	/* you must not call another entask functions from within 
+	 * an initailizer. you can call entask functions from within 
+	 * a finalizer and a main function. */
 	qse_httpd_task_init_t init;
 	qse_httpd_task_fini_t fini;
 	qse_httpd_task_main_t main;
+
+	qse_ubi_t             trigger;
+
 	void*                 ctx;
 };
 
@@ -103,6 +113,15 @@ qse_httpd_t* qse_httpd_open (
  */
 void qse_httpd_close (
 	qse_httpd_t* httpd 
+);
+
+int qse_httpd_getoption (
+	qse_httpd_t* httpd
+);
+
+void qse_httpd_setoption (
+	qse_httpd_t* httpd,
+	int          option
 );
 
 const qse_httpd_cbs_t* qse_httpd_getcbs (

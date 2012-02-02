@@ -112,6 +112,7 @@ struct qse_httpd_t
 	qse_httpd_errnum_t errnum;
 	qse_httpd_cbs_t* cbs;
 
+	int option;
 	int stopreq;
 	int threaded;
 

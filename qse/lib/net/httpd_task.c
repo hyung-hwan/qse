@@ -25,12 +25,12 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
+#include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/pio.h>
 
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -131,6 +131,7 @@ qse_httpd_task_t* qse_httpd_entaskdisconnect (
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.main = task_main_disconnect;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (httpd, client, pred, &task, 0);
 }
@@ -177,6 +178,7 @@ qse_httpd_task_t* qse_httpd_entaskstatictext (
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.main = task_main_statictext;
 	task.ctx = (void*)text;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (httpd, client, pred, &task, 0);
 }
@@ -247,6 +249,7 @@ qse_httpd_task_t* qse_httpd_entasktext (
 	task.init = task_init_text;
 	task.main = task_main_text;
 	task.ctx = &data;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, QSE_SIZEOF(data) + data.left);
@@ -397,8 +400,9 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	task.fini = task_fini_format;
 	task.main = task_main_format;
 	task.ctx = &data;
+	task.trigger.i = -1;
 
-qse_printf (QSE_T("SEND: [%.*S]\n"), (int)l, buf);
+qse_printf (QSE_T("SEND: [%.*hs]\n"), (int)l, buf);
 	return qse_httpd_entask (
 		httpd, client, pred, &task, QSE_SIZEOF(data));
 }
@@ -502,7 +506,7 @@ static void task_fini_file (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_file_t* ctx = (task_file_t*)task->ctx;
-	close (ctx->handle.i);
+	QSE_CLOSE (ctx->handle.i);
 }
 
 static int task_main_file (
@@ -567,6 +571,7 @@ qse_printf (QSE_T("Debug: sending file to %d\n"), client->handle.i);
 	task.main = task_main_file;
 	task.fini = task_fini_file;
 	task.ctx = &data;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data));
 }
@@ -581,7 +586,8 @@ struct task_dir_t
 	int footer_pending;
 	struct dirent* dent;
 
-	qse_mchar_t buf[512];
+	/*qse_mchar_t buf[4096];*/
+	qse_mchar_t buf[512]; /* TOOD: increate size */
 	qse_size_t  bufpos;
 	qse_size_t  buflen;
 	qse_size_t  bufrem;
@@ -909,15 +915,12 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	task.main = chunked? task_main_dir: task_main_dir_nochunk;
 	task.fini = task_fini_dir;
 	task.ctx = &handle;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(task_dir_t));
 }
 
 /*------------------------------------------------------------------------*/
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 
 typedef struct task_path_t task_path_t;
 struct task_path_t
@@ -945,19 +948,27 @@ static QSE_INLINE int task_main_path_file (
 	task_path_t* data = (task_path_t*)task->ctx;
 	qse_httpd_task_t* x = task;
 	qse_ubi_t handle;
+	int oflags;
 
 	/* when it comes to the file size, using fstat after opening 
 	 * can be more accurate. but this function uses information
 	 * set into the task context before the call to this function */
 
 qse_printf (QSE_T("opening file %hs\n"), data->name);
-	handle.i = open (data->name, O_RDONLY);
+
+	oflags = O_RDONLY;
+#if defined(O_LARGEFILE)
+	oflags |= O_LARGEFILE;
+#endif
+	handle.i = QSE_OPEN (data->name, oflags, 0);
 	if (handle.i <= -1)
 	{
 		x = entask_error (httpd, client, x, 404, &data->version, data->keepalive);
 		goto no_file_send;
 	}
-	fcntl (handle.i, F_SETFD, FD_CLOEXEC);
+	oflags = QSE_FCNTL (handle.i, F_GETFD, 0);
+	if (oflags >= 0) 
+		QSE_FCNTL (handle.i, F_SETFD, oflags | FD_CLOEXEC);
 
 	if (data->range.type != QSE_HTTP_RANGE_NONE)
 	{ 
@@ -1147,9 +1158,9 @@ static int task_main_path (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_path_t* data = (task_path_t*)task->ctx;
-	struct stat st;
+	qse_lstat_t st;
 
-	if (lstat (data->name, &st) <= -1)
+	if (QSE_LSTAT (data->name, &st) <= -1)
 	{
 		return (entask_error (httpd, client, task, 404, &data->version, data->keepalive) == QSE_NULL)? -1: 0;
 	}	
@@ -1198,6 +1209,7 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	task.init = task_init_path;
 	task.main = task_main_path;
 	task.ctx = &data;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (httpd, client, pred, &task, 
 		QSE_SIZEOF(task_path_t) + qse_mbslen(name) + 1);
@@ -1476,7 +1488,13 @@ static void task_fini_cgi (
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	if (cgi->env) qse_env_close (cgi->env);
-	if (cgi->pio) qse_pio_close (cgi->pio);
+	if (cgi->pio) 
+	{
+		/* kill cgi in case it is still alive.
+		 * qse_pio_wait() in qse_pio_close() can block. */
+		qse_pio_kill (cgi->pio); 
+		qse_pio_close (cgi->pio);
+	}
 	if (cgi->res) qse_mbs_close (cgi->res);
 	if (cgi->htrd) qse_htrd_close (cgi->htrd);
 qse_printf (QSE_T("task_fini_cgi\n"));
@@ -1604,6 +1622,7 @@ qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
 		return -1;
 	}
 
+qse_printf (QSE_T("CGI SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
 	{
@@ -1615,6 +1634,7 @@ qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
 
+qse_printf (QSE_T("CGI SEND DONE\n"));
 	return 1;
 }
 
@@ -1684,7 +1704,6 @@ qse_printf (QSE_T("[cgi_2 ]\n"));
 		/* end of output from cgi before it has seen a header.
 		 * the cgi script must be crooked. */
 /* TODO: logging */
-		qse_pio_kill (cgi->pio);
 		return -1;
 	}
 			
@@ -1723,8 +1742,16 @@ static int task_main_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
+	int pio_options;
+	int error_code = 500;
 
 	if (cgi->init_failed) goto oops;
+
+	if (QSE_ACCESS (cgi->path, X_OK) == -1) 
+	{
+		error_code = (errno == EACCES)? 403: 404;
+		goto oops;
+	}
 
 	if (cgi->nph)
 	{
@@ -1753,12 +1780,21 @@ static int task_main_cgi (
 		if (cgi->res == QSE_NULL) goto oops;
 	}
 
+	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | 
+	              QSE_PIO_ERRTONUL | QSE_PIO_MBSCMD;
+	if (httpd->option & QSE_HTTPD_CGINOCLOEXEC) 
+		pio_options |= QSE_PIO_NOCLOEXEC;
+
 	cgi->pio = qse_pio_open (
-		httpd->mmgr, 0, (const qse_char_t*)cgi->path, cgi->env,
-		QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_ERRTONUL | QSE_PIO_MBSCMD
+		httpd->mmgr, 0, (const qse_char_t*)cgi->path, 
+		cgi->env, pio_options
 	);
 	if (cgi->pio == QSE_NULL) goto oops;
 	
+	/* set the trigger that the main loop can use this
+	 * handle for multiplexing */
+	task->trigger.i = qse_pio_gethandle (cgi->pio, QSE_PIO_OUT);
+
 	if (cgi->nph)
 	{
 		/* skip various header processing */
@@ -1783,7 +1819,7 @@ oops:
 		cgi->htrd = QSE_NULL;
 	}
 
-	return (entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+	return (entask_error (httpd, client, task, error_code, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 /* TODO: global option or individual paramter for max cgi lifetime 
@@ -1809,6 +1845,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	task.fini = task_fini_cgi;
 	task.main = task_main_cgi;
 	task.ctx = &arg;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 
@@ -1835,6 +1872,7 @@ qse_httpd_task_t* qse_httpd_entasknph (
 	task.fini = task_fini_cgi;
 	task.main = task_main_cgi;
 	task.ctx = &arg;
+	task.trigger.i = -1;
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 
@@ -1845,16 +1883,22 @@ qse_httpd_task_t* qse_httpd_entasknph (
 
 /*------------------------------------------------------------------------*/
 
-/* 
+#if 0
 typedef struct task_proxy_t task_proxy_t;
 struct task_proxy_t
 {
 }
 
-qse_httpd_task_t* qse_httpd_entaskproxy (...) 
+qse_httpd_task_t* qse_httpd_entaskproxy (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, 
+	const qse_mchar_t* host,  
+	const qse_htre_t* req)
 {
+	
 }
-*/
+#endif
 
 /*------------------------------------------------------------------------*/
 

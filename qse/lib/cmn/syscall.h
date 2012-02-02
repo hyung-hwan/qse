@@ -99,16 +99,16 @@
 #endif
 
 #if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64)
-#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat64,path,stbuf)
+#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat64,handle,stbuf)
 	typedef struct stat64 qse_fstat_t;
 #elif defined(SYS_fstat)
-#	define QSE_FSTAT(path,stbuf) syscall(SYS_fstat,path,stbuf)
+#	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat,handle,stbuf)
 	typedef struct stat qse_fstat_t;
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTAT64)
-#	define QSE_FSTAT(path,stbuf) fstat64(path,stbuf)
+#	define QSE_FSTAT(handle,stbuf) fstat64(handle,stbuf)
 	typedef struct stat64 qse_fstat_t;
 #else
-#	define QSE_FSTAT(path,stbuf) fstat(path,stbuf)
+#	define QSE_FSTAT(handle,stbuf) fstat(handle,stbuf)
 	typedef struct stat qse_fstat_t;
 #endif
 
@@ -287,6 +287,12 @@
 #else
 #	define QSE_LSTAT(path,stbuf) lstat(path,stbuf)
 	typedef struct stat qse_lstat_t;
+#endif
+
+#if defined(SYS_access)
+#	define QSE_ACCESS(path,mode) syscall(SYS_access,path,mode)
+#else
+#	define QSE_ACCESS(path,mode) access(path,mode)
 #endif
 
 #if defined(SYS_rename)
