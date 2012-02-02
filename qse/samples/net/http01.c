@@ -178,7 +178,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGINT, sigint);
 	signal (SIGPIPE, SIG_IGN);
 
-	n = qse_httpd_loop (httpd, 0);
+	n = qse_httpd_loop (httpd, 1);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);

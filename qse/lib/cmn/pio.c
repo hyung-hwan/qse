@@ -270,9 +270,10 @@ static int make_param (
 	}
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	if (mcmd && mcmd != cmd) param->mcmd = mcmd;
+	if (mcmd && mcmd != (qse_mchar_t*)cmd) param->mcmd = mcmd;
 #else
-	if (mcmd && mcmd != cmd && mcmd != param->fixed_mbuf) param->mcmd = mcmd;
+	if (mcmd && mcmd != (qse_mchar_t*)cmd && 
+	    mcmd != param->fixed_mbuf) param->mcmd = mcmd;
 #endif
 	return 0;
 
@@ -280,7 +281,8 @@ oops:
 #if defined(QSE_CHAR_IS_MCHAR)
 	if (mcmd && mcmd != cmd) QSE_MMGR_FREE (pio->mmgr, mcmd);
 #else
-	if (mcmd && mcmd != cmd && mcmd != param->fixed_mbuf) QSE_MMGR_FREE (pio->mmgr, mcmd);
+	if (mcmd && mcmd != (qse_mchar_t*)cmd && 
+	    mcmd != param->fixed_mbuf) QSE_MMGR_FREE (pio->mmgr, mcmd);
 	if (wcmd) QSE_MMGR_FREE (pio->mmgr, wcmd);
 #endif
 	return -1;
@@ -288,7 +290,18 @@ oops:
 
 static QSE_INLINE int is_fd_valid (int fd)
 {
-	return fcntl (fd, F_GETFL) != -1 || errno != EBADF;
+	return fcntl (fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+static QSE_INLINE int is_fd_valid_and_nocloexec (int fd)
+{
+	int flags = fcntl (fd, F_GETFD);
+	if (flags == -1)
+	{
+		if (errno == EBADF) return 0; /* invalid. return false */
+		return -1; /* unknown. true but negative to indicate unknown */
+	}
+	return !(flags & FD_CLOEXEC)? 1: 0;
 }
 
 static int get_highest_fd (void)
@@ -962,21 +975,21 @@ int qse_pio_init (
 	if ((flags & QSE_PIO_DROPERR) && is_fd_valid(2) &&
 	    posix_spawn_file_actions_addclose (&fa, 2) != 0) goto oops;
 
+	if (!(flags & QSE_PIO_NOCLOEXEC))
 	{
 		int fd = get_highest_fd ();
 		while (--fd > 2)
 		{
-			if (fd != handle[0] &&
-			    fd != handle[1] &&
-			    fd != handle[2] &&
-			    fd != handle[3] &&
-			    fd != handle[4] &&
-			    fd != handle[5]) 
-			{
-				/* closing attempt on a best-effort basis */
-				if (is_fd_valid(fd) && 
-				    posix_spawn_file_actions_addclose (&fa, fd) != 0) goto oops;
-			}
+			if (fd == handle[0] || fd == handle[1] ||
+			    fd == handle[2] || fd == handle[3] ||
+			    fd == handle[4] || fd == handle[5]) continue;
+
+			/* closing attempt on a best-effort basis.
+			 * posix_spawn() fails if the file descriptor added
+			 * with addclose() is closed before posix_spawn().
+			 * addclose() if no FD_CLOEXEC is set or it's unknown. */
+			if (is_fd_valid_and_nocloexec(fd) && 
+			    posix_spawn_file_actions_addclose (&fa, fd) != 0) goto oops;
 		}
 	}
 
@@ -1044,17 +1057,19 @@ int qse_pio_init (
 	{
 		/* child */
 		qse_pio_hnd_t devnull = -1;
-		int fd = get_highest_fd ();
 
-		/* don't close stdin/out/err and the pipes */
-		while (--fd > 2)
+		if (!(flags & QSE_PIO_NOCLOEXEC))
 		{
-			if (fd != handle[0] &&
-			    fd != handle[1] &&
-			    fd != handle[2] &&
-			    fd != handle[3] &&
-			    fd != handle[4] &&
-			    fd != handle[5]) QSE_CLOSE (fd);
+			int fd = get_highest_fd ();
+
+			/* close all other unknown open handles except 
+			 * stdin/out/err and the pipes. */
+			while (--fd > 2)
+			{
+				if (fd != handle[0] && fd != handle[1] &&
+				    fd != handle[2] && fd != handle[3] &&
+				    fd != handle[4] && fd != handle[5]) QSE_CLOSE (fd);
+			}
 		}
 
 		if (flags & QSE_PIO_WRITEIN)

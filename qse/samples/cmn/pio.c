@@ -283,6 +283,21 @@ static int test10 (void)
 
 static int test11 (void)
 {
+	return pio1 (
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		(const qse_char_t*)"dir /a",
+#else
+		(const qse_char_t*)"ls -laF", 
+#endif
+		QSE_NULL,
+		QSE_PIO_MBSCMD|QSE_PIO_READOUT|QSE_PIO_WRITEIN|QSE_PIO_DROPERR|QSE_PIO_INTONUL|QSE_PIO_SHELL,
+		QSE_PIO_OUT
+	);
+}
+
+
+static int test12 (void)
+{
 	qse_env_t* env;
 	int n;
 	
@@ -307,7 +322,7 @@ static int test11 (void)
 	return n;
 }
 
-static int test12 (void)
+static int test13 (void)
 {
 	qse_pio_t* pio;
 	int x;
@@ -406,6 +421,7 @@ int main ()
 	R (test10);
 	R (test11);
 	R (test12);
+	R (test13);
 
 	return 0;
 }

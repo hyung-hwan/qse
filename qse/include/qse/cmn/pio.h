@@ -43,38 +43,47 @@ enum qse_pio_flag_t
 	QSE_PIO_NOAUTOFLUSH   = (1 << 2),
 
 	/** execute the command via a system shell 
-	 * (/bin/sh on *nix, cmd.exe on windows) */
+	 * (/bin/sh on unix/linux, cmd.exe on windows and os2) */
 	QSE_PIO_SHELL         = (1 << 3),
 
 	/** indicate that the command to qse_pio_open() is a multi-byte string.
 	 *  it is useful if #QSE_CHAR_IS_WCHAR is defined. */
 	QSE_PIO_MBSCMD        = (1 << 4),
 
+	/** don't attempt to close open file descriptors unknown to pio.
+	 *  it is useful only on a unix-like systems where file descriptors
+	 *  not set with FD_CLOEXEC are inherited by a child process.
+	 *  you're advised to set this option if all normal file descriptors 
+	 *  in your application are open with FD_CLOEXEC set. it can skip 
+	 *  checking a bunch of file descriptors and arranging to close
+	 *  them to prevent inheritance. */
+	QSE_PIO_NOCLOEXEC     = (1 << 5),
+
 	/** write to stdin of a child process */
-	QSE_PIO_WRITEIN    = (1 << 8),
+	QSE_PIO_WRITEIN       = (1 << 8),
 	/** read stdout of a child process */
-	QSE_PIO_READOUT    = (1 << 9),
+	QSE_PIO_READOUT       = (1 << 9),
 	/** read stderr of a child process */
-	QSE_PIO_READERR    = (1 << 10),
+	QSE_PIO_READERR       = (1 << 10),
 
 	/** redirect stderr to stdout (2>&1, require #QSE_PIO_READOUT) */
-	QSE_PIO_ERRTOOUT   = (1 << 11),	
+	QSE_PIO_ERRTOOUT      = (1 << 11),	
 	/** redirect stdout to stderr (1>&2, require #QSE_PIO_READERR) */
-	QSE_PIO_OUTTOERR   = (1 << 12),
+	QSE_PIO_OUTTOERR      = (1 << 12),
 
 	/** redirect stdin to the null device (</dev/null, <NUL) */
-	QSE_PIO_INTONUL    = (1 << 13),
+	QSE_PIO_INTONUL       = (1 << 13),
 	/** redirect stdin to the null device (>/dev/null, >NUL) */
-	QSE_PIO_ERRTONUL   = (1 << 14),
+	QSE_PIO_ERRTONUL      = (1 << 14),
 	/** redirect stderr to the null device (2>/dev/null, 2>NUL) */
-	QSE_PIO_OUTTONUL   = (1 << 15),
+	QSE_PIO_OUTTONUL      = (1 << 15),
 
 	/** drop stdin */
-	QSE_PIO_DROPIN     = (1 << 16), 
+	QSE_PIO_DROPIN        = (1 << 16), 
 	/** drop stdout */
-	QSE_PIO_DROPOUT    = (1 << 17),
+	QSE_PIO_DROPOUT       = (1 << 17),
 	/** drop stderr */
-	QSE_PIO_DROPERR    = (1 << 18)
+	QSE_PIO_DROPERR       = (1 << 18)
 };
 
 /**
