@@ -37,7 +37,8 @@ static int handle_request (
 #endif
 
 qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("REQUEST ==> [%hs] version[%d.%d] method[%d]\n"), 
+qse_printf (QSE_T("[%lu] REQUEST ==> [%hs] version[%d.%d] method[%d]\n"), 
+	(unsigned long)time(NULL),
      qse_htre_getqpathptr(req),
      qse_htre_getmajorversion(req),
      qse_htre_getminorversion(req),

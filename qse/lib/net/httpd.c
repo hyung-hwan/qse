@@ -25,6 +25,7 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
+#include "../cmn/syscall.h"
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
@@ -627,66 +628,92 @@ httpd->cbs.on_error (httpd, l).... */
 static int make_fd_set_from_client_array (
 	qse_httpd_t* httpd, fd_set* r, fd_set* w, int for_rdwr)
 {
+	/* qse_http_loop() sets for_rdwr to true.
+	 * response_thread() sets for_rdwr to false.
+	 * 
+	 * qse_http_loop() 
+	 *  - accepts a new client connection
+	 *  - reads a client request
+	 *  - writes back a response to a client request if not threaded.
+	 *
+	 * response_thread()
+	 *  - writes back a response to a client request if threaded.
+	 */
+
 	int fd, max = -1;
 	client_array_t* ca = &httpd->client.array;
 
-	if (r && for_rdwr)
+	if (for_rdwr)
 	{
+		/* qse_http_loop() needs to monitor listner handles
+		 * to handle a new client connection. */
 		max = httpd->listener.max;
 		*r = httpd->listener.set;
 	}
-	if (w)
+	else 
 	{
-		FD_ZERO (w);
+		FD_ZERO (r);
+
+#if defined(HAVE_PTHREAD)
+		/* select() in response_thread() needs to be aborted
+		 * if it's blocking on a fd_set previously composed
+		 * when a new task is enqueued. it can select() on new
+		 * fd_set quickly.  
+		 */
+		QSE_ASSERT (httpd->threaded);
+		FD_SET (httpd->client.pfd[0], r);
+		max = httpd->client.pfd[0];
+#endif
 	}
+	FD_ZERO (w);
 
 	for (fd = 0; fd < ca->capa; fd++)
 	{
 		if (ca->data[fd].htrd) 
 		{
-			if (r && !ca->data[fd].bad) 
+			if (!ca->data[fd].bad) 
 			{
 				if (for_rdwr)
 				{
-					/* add a client-side handle to the read set */
+					/* add a client-side handle to the read set
+					 * only for qse_httpd_loop(). */
 					FD_SET (ca->data[fd].handle.i, r);
 					if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
 				}
 
-				if (ca->data[fd].task.queue.head && 
-				    ca->data[fd].task.queue.head->task.trigger.i >= 0)
+				if (!httpd->threaded || !for_rdwr)
 				{
-					/* if a trigger is available, add it to the read set also */
-					FD_SET (ca->data[fd].task.queue.head->task.trigger.i, r);
-					if (ca->data[fd].task.queue.head->task.trigger.i > max) 
-						max = ca->data[fd].task.queue.head->task.trigger.i;
+					/* a trigger is a handle to monitor to check
+					 * if there is data avaiable to write back to the client.
+					 * if it is not threaded, qse_httpd_loop() needs to
+					 * monitor trigger handles. if it is threaded, 
+					 * response_thread() needs to monitor these handles */
+
+					if (ca->data[fd].task.queue.head && 
+					    ca->data[fd].task.queue.head->task.trigger.i >= 0)
+					{
+						/* if a trigger is available, add it to the read set also. */
+						FD_SET (ca->data[fd].task.queue.head->task.trigger.i, r);
+						if (ca->data[fd].task.queue.head->task.trigger.i > max) 
+							max = ca->data[fd].task.queue.head->task.trigger.i;
+					}
 				}
 			}
-#if 0
-			if (w && (ca->data[fd].task.queue.count > 0 || ca->data[fd].bad))
+
+			if (ca->data[fd].bad ||
+			    (ca->data[fd].task.queue.head && 
+			     ca->data[fd].task.queue.head->task.trigger.i <= -1))
 			{
-				/* add it to the set if it has a response to send */
+				/* add a client-side handle to the write set 
+				 * if the client is already marked bad or
+				 * the current task enqueued didn't specify a trigger.
+				 *
+				 * if the task doesn't have a trigger, i perform
+				 * the task so long as the client side-handle is
+				 * available for writing in the main loop.
+				 */
 				FD_SET (ca->data[fd].handle.i, w);
 				if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
-			}
-#endif
-			if (w)
-			{
-				if (ca->data[fd].bad ||
-				    (ca->data[fd].task.queue.head && 
-				     ca->data[fd].task.queue.head->task.trigger.i <= -1))
-				{
-					/* add a client-side handle to the write set 
-					 * if the client is already marked bad or
-					 * the current task enqueued didn't specify a trigger.
-					 *
-					 * if the task doesn't have a trigger, i perform
-					 * the task so long as the client side-handle is
-					 * available for writing in the main loop.
-					 */
-					FD_SET (ca->data[fd].handle.i, w);
-					if (ca->data[fd].handle.i > max) max = ca->data[fd].handle.i;
-				}
 			}
 		}
 	}
@@ -727,9 +754,6 @@ static void* response_thread (void* arg)
 		fd_set r, w;
 		struct timeval tv;
 
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-
 		pthread_mutex_lock (&httpd->client.mutex);
 		max = make_fd_set_from_client_array (httpd, &r, &w, 0);
 		pthread_mutex_unlock (&httpd->client.mutex);
@@ -742,16 +766,20 @@ static void* response_thread (void* arg)
 			pthread_mutex_lock (&httpd->client.mutex);
 
 			gettimeofday (&now, QSE_NULL);
-			timeout.tv_sec = now.tv_sec + 2;
+			timeout.tv_sec = now.tv_sec + 1;
 			timeout.tv_nsec = now.tv_usec * 1000;
 
-			pthread_cond_timedwait (&httpd->client.cond, &httpd->client.mutex, &timeout);
+			pthread_cond_timedwait (
+				&httpd->client.cond, &httpd->client.mutex, &timeout);
 			max = make_fd_set_from_client_array (httpd, &r, &w, 0);
 
 			pthread_mutex_unlock (&httpd->client.mutex);
 		}
 
 		if (httpd->stopreq) break;
+
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
 
 		n = select (max + 1, &r, &w, QSE_NULL, &tv);
 		if (n <= -1)
@@ -766,29 +794,18 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %hs\n"), strerr
 			continue;
 		}
 
+		if (FD_ISSET (httpd->client.pfd[0], &r))
+		{
+			qse_mchar_t dummy;
+			QSE_READ (httpd->client.pfd[0], &dummy, 1);
+		}
+
 		for (fd = 0; fd < httpd->client.array.capa; fd++)
 		{
 			qse_httpd_client_t* client = &httpd->client.array.data[fd];
 
 			if (!client->htrd) continue;
 
-			/* ---------------------------------------------- */
-#if 0
-			if (FD_ISSET(client->handle.i, &w)) 
-			{
-				if (client->bad) 
-				{
-				}
-				else if (client->task.queue.count > 0) 
-				{
-					if (client->task.queue.head->task.trigger.i <= -1 ||
-					    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
-					{
-						perform_task (httpd, client);
-					}
-				}
-			}
-#endif
 			if (client->bad)
 			{
 				/*shutdown (client->handle.i, SHUT_RDWR);*/
@@ -796,7 +813,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %hs\n"), strerr
 				delete_from_client_array (httpd, fd);     
 				pthread_mutex_unlock (&httpd->client.mutex);
 			}
-			else
+			else if (client->task.queue.head)
 			{
 				if (client->task.queue.head->task.trigger.i <= -1 ||
 				    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
@@ -805,12 +822,13 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %hs\n"), strerr
 					tv.tv_usec = 0;
 					FD_ZERO (&w);
 					FD_SET (client->handle.i, &w);
-					n = select (max + 1, QSE_NULL, &w, QSE_NULL, &tv);
+					n = select (client->handle.i + 1, QSE_NULL, &w, QSE_NULL, &tv);
 					if (n > 0 && FD_ISSET(client->handle.i, &w)) 
+					{
 						perform_task (httpd, client);
+					}
 				}
 			}
-			/* ---------------------------------------------- */
 		}
 	}
 
@@ -903,17 +921,30 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 	/* start the response sender as a thread */
 	if (threaded)
 	{
-		pthread_mutex_init (&httpd->client.mutex, QSE_NULL);
-		pthread_cond_init (&httpd->client.cond, QSE_NULL);
-
-		if (pthread_create (
-			&response_thread_id, QSE_NULL,
-			response_thread, httpd) != 0) 
+		if (QSE_PIPE(httpd->client.pfd) == 0)
 		{
-			pthread_cond_destroy (&httpd->client.cond);
-			pthread_mutex_destroy (&httpd->client.mutex);
+			int i;
+			for (i = 0; i < 2; i++)
+			{
+				int flags = QSE_FCNTL (httpd->client.pfd[i], F_GETFD, 0);
+				if (flags >= 0)
+					QSE_FCNTL (httpd->client.pfd[i], F_SETFD, flags | FD_CLOEXEC);
+			}
+		
+			pthread_mutex_init (&httpd->client.mutex, QSE_NULL);
+			pthread_cond_init (&httpd->client.cond, QSE_NULL);
+
+			if (pthread_create (
+				&response_thread_id, QSE_NULL,
+				response_thread, httpd) != 0) 
+			{
+				pthread_cond_destroy (&httpd->client.cond);
+				pthread_mutex_destroy (&httpd->client.mutex);
+				QSE_CLOSE (httpd->client.pfd[1]);
+				QSE_CLOSE (httpd->client.pfd[0]);
+			}
+			else httpd->threaded = 1;
 		}
-		else httpd->threaded = 1;
 	}
 #endif
 
@@ -935,7 +966,6 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 		if (httpd->threaded) pthread_mutex_unlock (&httpd->client.mutex);
 #endif
 
-		/*n = select (max + 1, &r, &w, QSE_NULL, &tv);*/
 		n = select (max + 1, &r, &w, QSE_NULL, &tv);
 		if (n <= -1)
 		{
@@ -984,31 +1014,6 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 			}
 
 
-			/*----------------------------------------------------------*/
-#if 0
-			if (!httpd->threaded && FD_ISSET(client->handle.i, &w)) 
-			{
-				/* output is handled in the main loop if and 
-				 * only if it is not threaded */
-				if (client->bad) 
-				{
-					/*send (client->handle, i, "INTERNAL SERVER ERROR..", ...);*/
-					/*shutdown (client->handle.i, SHUT_RDWR);*/
-
-					/*pthread_mutex_lock (&httpd->client.mutex);*/
-					delete_from_client_array (httpd, fd);     
-					/*pthread_mutex_unlock (&httpd->client.mutex);*/
-				}
-				else if (client->task.queue.count > 0) 
-				{
-					if (client->task.queue.head->task.trigger.i <= -1 ||
-					    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
-					{
-						perform_task (httpd, client);
-					}
-				}
-			}
-#endif
 			if (!httpd->threaded)
 			{
 				if (client->bad)
@@ -1018,7 +1023,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 					delete_from_client_array (httpd, fd);     
 					/*pthread_mutex_unlock (&httpd->client.mutex);*/
 				}
-				else if (client->task.queue.count > 0)
+				else if (client->task.queue.head)
 				{
 					if (client->task.queue.head->task.trigger.i <= -1 ||
 					    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
@@ -1027,7 +1032,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 						tv.tv_usec = 0;
 						FD_ZERO (&w);
 						FD_SET (client->handle.i, &w);
-						n = select (max + 1, QSE_NULL, &w, QSE_NULL, &tv);
+						n = select (client->handle.i + 1, QSE_NULL, &w, QSE_NULL, &tv);
 
 						/* TODO: logging if n == -1 */
 
@@ -1036,8 +1041,6 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 					}
 				}
 			}
-
-			/*----------------------------------------------------------*/
 		}
 	}
 
@@ -1047,6 +1050,8 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 		pthread_join (response_thread_id, QSE_NULL);
 		pthread_cond_destroy (&httpd->client.cond);
 		pthread_mutex_destroy (&httpd->client.mutex);
+		QSE_CLOSE (httpd->client.pfd[1]);
+		QSE_CLOSE (httpd->client.pfd[0]);
 	}
 #endif
 
@@ -1287,7 +1292,15 @@ qse_httpd_task_t* qse_httpd_entask (
 	ret = enqueue_task_locked (httpd, client, pred, task, xtnsize);
 	if (ret == QSE_NULL) client->bad = 1; /* mark this client bad */
 #if defined(HAVE_PTHREAD)
-	else if (httpd->threaded) pthread_cond_signal (&httpd->client.cond);
+	else if (httpd->threaded) 
+	{
+		static qse_byte_t dummy = 0x01;
+		/* write to the pipe to wake up select() in 
+		 * the response thread if it was blocking. */
+		QSE_WRITE (httpd->client.pfd[1], &dummy, 1); 
+
+		pthread_cond_signal (&httpd->client.cond);
+	}
 #endif
 	return ret;
 }
