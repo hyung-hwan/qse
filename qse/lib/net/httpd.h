@@ -114,11 +114,13 @@ struct qse_httpd_t
 
 	int option;
 	int stopreq;
+
 	int threaded;
 
 	struct
 	{
 #if defined(HAVE_PTHREAD)
+		int pfd[2];
 		pthread_mutex_t mutex;
 		pthread_cond_t  cond;
 #endif
@@ -148,6 +150,7 @@ int qse_httpd_init (
 void qse_httpd_fini (
 	qse_httpd_t* httpd
 );
+
 
 #ifdef __cplusplus
 }

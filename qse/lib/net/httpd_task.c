@@ -1622,7 +1622,9 @@ qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
 		return -1;
 	}
 
+#if 0
 qse_printf (QSE_T("CGI SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
+#endif
 	n = send (client->handle.i, cgi->buf, cgi->buflen, 0);
 	if (n <= -1)
 	{
@@ -1634,7 +1636,9 @@ qse_printf (QSE_T("CGI SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
 	QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 	cgi->buflen -= n;
 
+#if 0
 qse_printf (QSE_T("CGI SEND DONE\n"));
+#endif
 	return 1;
 }
 
