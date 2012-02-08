@@ -27,6 +27,20 @@
 
 /* header and contents of request/response */
 typedef struct qse_htre_t qse_htre_t;
+
+enum qse_htre_flag_t
+{
+	QSE_HTRE_DISCARDED = (1 << 0), /** content has been discarded */
+	QSE_HTRE_COMPLETED = (1 << 1)  /** complete content has been seen */
+};
+
+typedef int (*qse_htre_concb_t) (
+	qse_htre_t*        re,
+	const qse_mchar_t* ptr,
+	qse_size_t         len,
+	void*              ctx
+);
+
 struct qse_htre_t 
 {
 	qse_mmgr_t* mmgr;
@@ -45,10 +59,7 @@ struct qse_htre_t
 		int content_length_set;
 		qse_size_t content_length;
 		int keepalive;
-		int expect_continue;
-
-		/* indicates if the content has been filled */
-		int hurried;
+		const qse_mchar_t* expect;
 	} attr;
 
 	/* header table */
@@ -57,8 +68,12 @@ struct qse_htre_t
 	/* content octets */
 	qse_mbs_t content;
 
-	/* if set, the rest of the contents are discarded */
-	int discard;
+	/* content callback */
+	qse_htre_concb_t concb;
+	void* concb_ctx;
+
+	/* ORed of qse_htre_flag_t */
+	int flags;
 };
 
 #define qse_htre_getversion(re) (&((re)->version))
@@ -111,12 +126,11 @@ struct qse_htre_t
 #define qse_htre_setsmessagefromxstr(re,v) \
 	qse_htre_setstrfromxstr((re),qse_htre_getsmessage(re),(v))
 
+/* NOTE: setcontent() doesn't execute concb. use this with care */
 #define qse_htre_setcontentfromcstr(re,v) \
 	qse_htre_setstrfromcstr((re),qse_htre_getcontent(re),(v))
 #define qse_htre_setcontentfromxstr(re,v) \
 	qse_htre_setstrfromxstr((re),qse_htre_getcontent(re),(v))
-
-#define qse_htre_setdiscard(re,v) QSE_BLOCK((re)->discard = (v);)
 
 typedef int (*qse_htre_header_walker_t) (
 	qse_htre_t*        re,
@@ -163,6 +177,26 @@ int qse_htre_walkheaders (
 	qse_htre_t*              re,
 	qse_htre_header_walker_t walker,
 	void*                    ctx
+);
+
+int qse_htre_addcontent (
+	qse_htre_t*        re,
+	const qse_mchar_t* ptr,
+	qse_size_t         len
+);
+
+void qse_htre_unsetconcb (
+	qse_htre_t*      re
+);
+
+void qse_htre_setconcb (
+	qse_htre_t*      re,
+	qse_htre_concb_t concb, 
+	void*            ctx
+);
+
+const qse_mchar_t* qse_htre_getqmethodname (
+	qse_htre_t*      re
 );
 
 #ifdef __cplusplus

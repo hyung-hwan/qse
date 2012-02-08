@@ -106,46 +106,41 @@ qse_env_char_t** qse_env_getarr (
 	qse_env_t* env
 );
 
-int qse_env_insertw (
-	qse_env_t*        env,
+/**
+ * The qse_env_insertwcs() function adds a new environment variable
+ * @a name with the @a value. If the @a value is #QSE_NULL, it takes
+ * the actual value from the system environment 
+ *
+ * @return 0 on success, -1 on failure
+ */
+int qse_env_insertwcs (
+	qse_env_t*         env,
 	const qse_wchar_t* name,
 	const qse_wchar_t* value
 );
 
-int qse_env_insertm (
-	qse_env_t*        env,
+int qse_env_insertmbs (
+	qse_env_t*         env,
 	const qse_mchar_t* name,
 	const qse_mchar_t* value
 );
 
-int qse_env_deletew (
-	qse_env_t*        env,
+int qse_env_deletewcs (
+	qse_env_t*         env,
 	const qse_wchar_t* name
 );
 
-int qse_env_deletem (
-	qse_env_t*        env,
-	const qse_mchar_t* name
-);
-
-int qse_env_insertsysw (
-	qse_env_t* env,
-	const qse_wchar_t* name
-);
-
-int qse_env_insertsysm (
-	qse_env_t* env,
+int qse_env_deletembs (
+	qse_env_t*         env,
 	const qse_mchar_t* name
 );
 
 #if defined(QSE_CHAR_IS_WCHAR)
-#	define qse_env_insert(env,name,value) qse_env_insertw(env,name,value)
-#	define qse_env_delete(env,name) qse_env_deletew(env,name)
-#	define qse_env_insertsys(env,name) qse_env_insertsysw(env,name)
+#	define qse_env_insert(env,name,value) qse_env_insertwcs(env,name,value)
+#	define qse_env_delete(env,name) qse_env_deletewcs(env,name)
 #else
-#	define qse_env_insert(env,name,value) qse_env_insertm(env,name,value)
-#	define qse_env_delete(env,name) qse_env_deletem(env,name)
-#	define qse_env_insertsys(env,name) qse_env_insertsysm(env,name)
+#	define qse_env_insert(env,name,value) qse_env_insertmbs(env,name,value)
+#	define qse_env_delete(env,name) qse_env_deletembs(env,name)
 #endif
 
 #ifdef __cplusplus

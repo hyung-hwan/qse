@@ -45,6 +45,12 @@ void qse_htre_fini (qse_htre_t* re)
 
 void qse_htre_clear (qse_htre_t* re)
 {
+	if (re->concb) 
+	{
+		re->concb (re, QSE_NULL, 0, re->concb_ctx); /* indicate end of content */
+		qse_htre_unsetconcb (re);
+	}
+
 	QSE_MEMSET (&re->version, 0, QSE_SIZEOF(re->version));
 	QSE_MEMSET (&re->attr, 0, QSE_SIZEOF(re->attr));
 
@@ -53,8 +59,7 @@ void qse_htre_clear (qse_htre_t* re)
 	qse_mbs_clear (&re->content);
 	qse_mbs_clear (&re->qpath_or_smesg);
 	qse_mbs_clear (&re->qparam);
-
-	re->discard = 0;
+	re->flags = 0;
 }
 
 int qse_htre_setstrfromcstr (
@@ -109,3 +114,29 @@ int qse_htre_walkheaders (
 	return hwctx.ret;
 }
 	
+int qse_htre_addcontent (
+	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)
+{
+	/* if the callback is set, the content goes to the callback. */
+	if (re->concb) return re->concb (re, ptr, len, re->concb_ctx);
+	/* if the callback is not set, the contents goes to the internal buffer */
+     if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) return -1;
+	return 0;
+}
+
+void qse_htre_unsetconcb (qse_htre_t* re)
+{
+	re->concb = QSE_NULL;
+	re->concb_ctx = QSE_NULL;
+}
+
+void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
+{
+	re->concb = concb;
+	re->concb_ctx = ctx;
+}
+
+const qse_mchar_t* qse_htre_getqmethodname (qse_htre_t* re)
+{
+	return qse_gethttpmethodname (re->qmethod_or_sstatus);
+}

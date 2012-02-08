@@ -61,8 +61,13 @@ struct task_queue_node_t
 struct qse_httpd_client_t
 {
 	qse_ubi_t               handle;
+	qse_ubi_t               handle2;
+
+	int                     ready;
 	int                     bad;
-	sockaddr_t              addr;
+	int                     secure;
+	sockaddr_t              local_addr;
+	sockaddr_t              remote_addr;
 	qse_htrd_t*             htrd;
 
 	struct

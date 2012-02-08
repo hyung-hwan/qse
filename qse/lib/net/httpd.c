@@ -296,27 +296,26 @@ static void purge_tasks_locked (qse_httpd_t* httpd, qse_httpd_client_t* client)
 #endif
 }
 
+static int htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
+{
+	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	qse_httpd_client_t* client = 
+		&xtn->httpd->client.array.data[xtn->client_index];
+	return xtn->httpd->cbs->peek_request (xtn->httpd, client, req);
+}
+
 static int htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
+	qse_httpd_client_t* client = 
+		&xtn->httpd->client.array.data[xtn->client_index];
 	return xtn->httpd->cbs->handle_request (xtn->httpd, client, req);
-}
-
-static int htrd_handle_expect_continue (qse_htrd_t* htrd, qse_htre_t* req)
-{
-	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	qse_httpd_client_t* client = &xtn->httpd->client.array.data[xtn->client_index];
-	return xtn->httpd->cbs->handle_expect_continue (xtn->httpd, client, req);
 }
 
 static qse_htrd_recbs_t htrd_recbs =
 {
-	htrd_handle_request,
-	htrd_handle_expect_continue,
-
-	/* The response handler is not needed  as QSE_HTRD_RESPONSE is truned off */
-	QSE_NULL
+	htrd_peek_request,
+	htrd_handle_request
 };
 
 static void deactivate_listener (qse_httpd_t* httpd, listener_t* l)
@@ -329,41 +328,31 @@ static void deactivate_listener (qse_httpd_t* httpd, listener_t* l)
 	l->handle = -1;
 }
 
-static int activate_listener (qse_httpd_t* httpd, listener_t* l)
+static int get_listener_sockaddr (const listener_t* l, sockaddr_t* addr)
 {
-/* TODO: suport https... */
-	sockaddr_t addr;
-	int s = -1, flag;
 	int addrsize;
 
-	QSE_ASSERT (l->handle <= -1);
+	QSE_MEMSET (addr, 0, QSE_SIZEOF(*addr));
 
-	s = socket (l->family, SOCK_STREAM, IPPROTO_TCP);
-	if (s <= -1) goto oops_esocket;
-
-	flag = 1;
-	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
-
-	QSE_MEMSET (&addr, 0, QSE_SIZEOF(addr));
 	switch (l->family)
 	{
 		case AF_INET:
 		{
-			addr.in4.sin_family = l->family;	
-			addr.in4.sin_addr = l->addr.in4;
-			addr.in4.sin_port = htons (l->port);
-			addrsize = QSE_SIZEOF(addr.in4);
+			addr->in4.sin_family = l->family;	
+			addr->in4.sin_addr = l->addr.in4;
+			addr->in4.sin_port = htons (l->port);
+			addrsize = QSE_SIZEOF(addr->in4);
 			break;
 		}
 
 #ifdef AF_INET6
 		case AF_INET6:
 		{
-			addr.in6.sin6_family = l->family;	
-			addr.in6.sin6_addr = l->addr.in6;
-			addr.in6.sin6_port = htons (l->port);
+			addr->in6.sin6_family = l->family;	
+			addr->in6.sin6_addr = l->addr.in6;
+			addr->in6.sin6_port = htons (l->port);
 			/* TODO: addr.in6.sin6_scope_id  */
-			addrsize = QSE_SIZEOF(addr.in6);
+			addrsize = QSE_SIZEOF(addr->in6);
 			break;
 		}
 #endif
@@ -374,6 +363,26 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 		}
 	}
 
+	return addrsize;
+}
+
+static int activate_listener (qse_httpd_t* httpd, listener_t* l)
+{
+/* TODO: suport https... */
+	int s = -1, flag;
+	sockaddr_t addr;
+	int addrsize;
+
+	QSE_ASSERT (l->handle <= -1);
+
+	s = socket (l->family, SOCK_STREAM, IPPROTO_TCP);
+	if (s <= -1) goto oops_esocket;
+
+	flag = 1;
+	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
+
+	addrsize = get_listener_sockaddr (l, &addr);
+
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
 	 * address size for AF_INET. */
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
@@ -383,18 +392,6 @@ static int activate_listener (qse_httpd_t* httpd, listener_t* l)
 	flag = fcntl (s, F_GETFL);
 	if (flag >= 0) fcntl (s, F_SETFL, flag | O_NONBLOCK);
 	fcntl (s, F_SETFD, FD_CLOEXEC);
-
-#if 0
-/* TODO: */
-	if (l->secure)
-	{
-		SSL_CTX* ctx;
-		SSL* ssl;
-
-		ctx = SSL_ctx_new (SSLv3_method());
-		ssl =  SSL_new (ctx);
-	}
-#endif
 
 	l->handle = s;
 	s = -1;
@@ -470,6 +467,12 @@ static void delete_from_client_array (qse_httpd_t* httpd, int fd)
 		qse_htrd_close (array->data[fd].htrd);
 		array->data[fd].htrd = QSE_NULL;	
 qse_fprintf (QSE_STDERR, QSE_T("Debug: closing socket %d\n"), array->data[fd].handle.i);
+
+		/* note that client.closed is not a counterpart to client.accepted. 
+		 * so it is called even if client.closed failed. */
+		if (httpd->cbs->client.closed)
+			httpd->cbs->client.closed (httpd, &array->data[fd]);
+		
 		close (array->data[fd].handle.i);
 		array->size--;
 	}
@@ -492,19 +495,23 @@ static void fini_client_array (qse_httpd_t* httpd)
 	}
 }
 
-static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd, sockaddr_t* addr)
+static qse_httpd_client_t* insert_into_client_array (
+	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	htrd_xtn_t* xtn;
 	client_array_t* array = &httpd->client.array;
-	int opt;
+	int opt, fd = client->handle.i;
 
+/* TODO: is an array is the best??? 
+ *       i do use an array for direct access by fd. */
 	if (fd >= array->capa)
 	{
 	#define ALIGN 512
 		qse_httpd_client_t* tmp;
 		qse_size_t capa = ((fd + ALIGN) / ALIGN) * ALIGN;
 
-		tmp = qse_httpd_reallocmem (httpd, array->data, capa * QSE_SIZEOF(*tmp));
+		tmp = qse_httpd_reallocmem (
+			httpd, array->data, capa * QSE_SIZEOF(*tmp));
 		if (tmp == QSE_NULL) return QSE_NULL;
 
 		QSE_MEMSET (&tmp[array->capa], 0,
@@ -523,9 +530,13 @@ static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd,
 	opt &= ~QSE_HTRD_RESPONSE;
 	qse_htrd_setoption (array->data[fd].htrd, opt);
 
+	array->data[fd].ready = httpd->cbs->client.accepted? 0 : 1;
 	array->data[fd].bad = 0;
-	array->data[fd].handle.i = fd;	
-	array->data[fd].addr = *addr;
+	array->data[fd].secure = client->secure;
+	array->data[fd].handle = client->handle;
+	array->data[fd].handle2 = client->handle2;
+	array->data[fd].local_addr = client->local_addr;
+	array->data[fd].remote_addr = client->remote_addr;
 
 #if defined(HAVE_PTHREAD)
 	if (httpd->threaded) 
@@ -543,25 +554,23 @@ static qse_httpd_client_t* insert_into_client_array (qse_httpd_t* httpd, int fd,
 
 static int accept_client_from_listener (qse_httpd_t* httpd, listener_t* l)
 {
-	int flag, c;
-	sockaddr_t addr;
+	int flag;
+
 #ifdef HAVE_SOCKLEN_T
-	socklen_t addrlen = QSE_SIZEOF(addr);
+	socklen_t addrlen;
 #else
-	int addrlen = QSE_SIZEOF(addr);
+	int addrlen;
 #endif
+	qse_httpd_client_t clibuf;
 	qse_httpd_client_t* client;
 
-/* TODO:
-	if (l->secure)
-	{
-SSL_Accept
-	....
-	}
-*/
+	QSE_MEMSET (&clibuf, 0, QSE_SIZEOF(clibuf));
+	clibuf.secure = l->secure;
 
-	c = accept (l->handle, (struct sockaddr*)&addr, &addrlen);
-	if (c <= -1)
+	addrlen = QSE_SIZEOF(clibuf.remote_addr);
+	clibuf.handle.i = accept (
+		l->handle, (struct sockaddr*)&clibuf.remote_addr, &addrlen);
+	if (clibuf.handle.i <= -1)
 	{
 		httpd->errnum = QSE_HTTPD_ESOCKET;
 qse_fprintf (QSE_STDERR, QSE_T("Error: accept returned failure\n"));
@@ -570,39 +579,42 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: accept returned failure\n"));
 
 	/* select() uses a fixed-size array so the file descriptor can not
 	 * exceeded FD_SETSIZE */
-	if (c >= FD_SETSIZE)
+	if (clibuf.handle.i >= FD_SETSIZE)
 	{
-		close (c);
-
+		close (clibuf.handle.i);
 qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		/* httpd->errnum = QSE_HTTPD_EOVERFLOW; */
 		goto oops;
 	}
 
+	addrlen = QSE_SIZEOF(clibuf.local_addr);
+	if (getsockname (clibuf.handle.i, (struct sockaddr*)&clibuf.local_addr, &addrlen) <= -1)
+		get_listener_sockaddr (l, &clibuf.local_addr);
+
 	/* set the nonblock flag in case read() after select() blocks
 	 * for various reasons - data received may be dropped after 
 	 * arrival for wrong checksum, for example. */
-	flag = fcntl (c, F_GETFL);
-	if (flag >= 0) fcntl (c, F_SETFL, flag | O_NONBLOCK);
+	flag = fcntl (clibuf.handle.i, F_GETFL);
+	if (flag >= 0) fcntl (clibuf.handle.i, F_SETFL, flag | O_NONBLOCK);
 
-	flag = fcntl (c, F_GETFD);
-	if (flag >= 0) fcntl (c, F_SETFD, flag | FD_CLOEXEC);
+	flag = fcntl (clibuf.handle.i, F_GETFD);
+	if (flag >= 0) fcntl (clibuf.handle.i, F_SETFD, flag | FD_CLOEXEC);
 
 #if defined(HAVE_PTHREAD)
 	if (httpd->threaded) pthread_mutex_lock (&httpd->client.mutex);
 #endif
-	client = insert_into_client_array (httpd, c, &addr);
+	client = insert_into_client_array (httpd, &clibuf);
 #if defined(HAVE_PTHREAD)
 	if (httpd->threaded) pthread_mutex_unlock (&httpd->client.mutex);
 #endif
 
 	if (client == QSE_NULL)
 	{
-		close (c);
+		close (clibuf.handle.i);
 		goto oops;
 	}
 
-qse_printf (QSE_T("connection %d accepted\n"), c);
+qse_printf (QSE_T("connection %d accepted\n"), clibuf.handle.i);
 
 	return 0;
 
@@ -683,26 +695,39 @@ static int make_fd_set_from_client_array (
 
 				if (!httpd->threaded || !for_rdwr)
 				{
-					/* a trigger is a handle to monitor to check
-					 * if there is data avaiable to write back to the client.
-					 * if it is not threaded, qse_httpd_loop() needs to
-					 * monitor trigger handles. if it is threaded, 
-					 * response_thread() needs to monitor these handles */
-
-					if (ca->data[fd].task.queue.head && 
-					    ca->data[fd].task.queue.head->task.trigger.i >= 0)
+					/* trigger[0] is a handle to monitor to check
+					 * if there is data avaiable to read to write back to 
+					 * the client. if it is not threaded, qse_httpd_loop() 
+					 * needs to monitor trigger handles. if it is threaded, 
+					 * response_thread() needs to monitor these handles.
+					 *
+					 * trigger[1] is a user-defined handle to monitor to 
+					 * check if httpd can post data to. but this is not 
+					 * a client-side handle.
+					 */
+					if (ca->data[fd].task.queue.head)
 					{
-						/* if a trigger is available, add it to the read set also. */
-						FD_SET (ca->data[fd].task.queue.head->task.trigger.i, r);
-						if (ca->data[fd].task.queue.head->task.trigger.i > max) 
-							max = ca->data[fd].task.queue.head->task.trigger.i;
+						qse_httpd_task_t* task = &ca->data[fd].task.queue.head->task;
+						if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ)
+						{
+							/* if a trigger is available, add it to the read set also. */
+qse_printf (QSE_T(">>>>ADDING TRIGGER[0] %d\n"), task->trigger[0].i);
+							FD_SET (task->trigger[0].i, r);
+							if (task->trigger[0].i > max) max = task->trigger[0].i;
+						}
+						if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE)
+						{
+							/* if a trigger is available, add it to the read set also. */
+qse_printf (QSE_T(">>>>ADDING TRIGGER[1] %d\n"), task->trigger[1].i);
+							FD_SET (task->trigger[1].i, w);
+							if (task->trigger[1].i > max) max = task->trigger[1].i;
+						}
 					}
 				}
 			}
 
 			if (ca->data[fd].bad ||
-			    (ca->data[fd].task.queue.head && 
-			     ca->data[fd].task.queue.head->task.trigger.i <= -1))
+			    (ca->data[fd].task.queue.head && !(ca->data[fd].task.queue.head->task.trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ)))
 			{
 				/* add a client-side handle to the write set 
 				 * if the client is already marked bad or
@@ -815,8 +840,42 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure - %hs\n"), strerr
 			}
 			else if (client->task.queue.head)
 			{
-				if (client->task.queue.head->task.trigger.i <= -1 ||
-				    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
+				qse_httpd_task_t* task;
+				int perform = 0;
+
+				task = &client->task.queue.head->task;
+
+				task->trigger_mask &=
+					~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
+					  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+
+				if (!(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+				    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
+				{
+					/* no trigger set. set the flag to 
+					 * non-readable and non-writable */
+					perform = 1;
+				}
+				else 
+				{
+				     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+					    FD_ISSET(task->trigger[0].i, &r))
+					{
+						/* set the flag to readable */
+						task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
+						perform = 1;
+					}
+
+				     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE) &&
+					    FD_ISSET(task->trigger[1].i, &w))
+					{
+						/* set the flag to writable */
+						task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
+						perform = 1;
+					}
+				}
+				
+				if (perform)
 				{
 					tv.tv_sec = 0;
 					tv.tv_usec = 0;
@@ -842,10 +901,16 @@ static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	qse_mchar_t buf[1024];
 	qse_ssize_t m;
 
+	QSE_ASSERT (httpd->cbs->client.recv != QSE_NULL);
+
 reread:
-	m = read (client->handle.i, buf, QSE_SIZEOF(buf));
+	httpd->errnum = QSE_HTTPD_ENOERR;
+	m = httpd->cbs->client.recv (httpd, client, buf, QSE_SIZEOF(buf));
 	if (m <= -1)
 	{
+// TODO: handle errno in the callback... and devise a new return value
+//       to indicate no data at this momemnt (EAGAIN, EWOULDBLOCK)...
+//       EINTR to be hnalded inside callback if needed...
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
 			/* nothing to read yet. */
@@ -871,6 +936,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->handle.
  	 * that's because we don't know how many valid requests
 	 * are included in 'buf' */ 
 qse_fprintf (QSE_STDERR, QSE_T("Debug: read from a client %d\n"), client->handle.i);
+
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	if (qse_htrd_feed (client->htrd, buf, m) <= -1)
 	{
@@ -889,14 +955,15 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: http error while processing \n"));
 	return 0;
 }
 
-int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
+int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_cbs_t* cbs, int threaded)
 {
 #if defined(HAVE_PTHREAD)
 	pthread_t response_thread_id;
 #endif
 
-	httpd->stopreq = 0;
 	httpd->threaded = 0;
+	httpd->stopreq = 0;
+	httpd->cbs = cbs;
 
 	QSE_ASSERTX (httpd->listener.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()"
@@ -934,16 +1001,22 @@ int qse_httpd_loop (qse_httpd_t* httpd, int threaded)
 			pthread_mutex_init (&httpd->client.mutex, QSE_NULL);
 			pthread_cond_init (&httpd->client.cond, QSE_NULL);
 
+			/* set this before creating a thread
+			 * because this is accessed in a thread.
+			 * if i set this after pthread_create, a thread
+			 * function may still see 0. */
+			httpd->threaded = 1; 
+
 			if (pthread_create (
 				&response_thread_id, QSE_NULL,
 				response_thread, httpd) != 0) 
 			{
+				httpd->threaded = 0;
 				pthread_cond_destroy (&httpd->client.cond);
 				pthread_mutex_destroy (&httpd->client.mutex);
 				QSE_CLOSE (httpd->client.pfd[1]);
 				QSE_CLOSE (httpd->client.pfd[0]);
 			}
-			else httpd->threaded = 1;
 		}
 	}
 #endif
@@ -994,25 +1067,37 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 			if (FD_ISSET(client->handle.i, &r))
 			{
 				/* got input */
-				if (read_from_client (httpd, client) <= -1)
+				if (!client->ready)
 				{
-					if (httpd->threaded)
+					/* if client.accepted() returns 0, it is called
+					 * again next time. */
+					QSE_ASSERT (httpd->cbs->client.accepted != QSE_NULL);
+					int x = httpd->cbs->client.accepted (httpd, client); /* is this correct???? what if ssl handshaking got stalled because writing failed in SSL_accept()? */
+					if (x >= 1) client->ready = 1;
+					else if (x <= -1) goto bad_client;
+				}
+				else
+				{
+					if (read_from_client (httpd, client) <= -1)
 					{
-						/* let the writing part handle it,  
-						 * probably in the next iteration */
-						qse_httpd_markclientbad (httpd, client);
-						shutdown (client->handle.i, SHUT_RDWR);
-					}
-					else
-					{
-						/*pthread_mutex_lock (&httpd->client.mutex);*/
-						delete_from_client_array (httpd, fd);     
-						/*pthread_mutex_unlock (&httpd->client.mutex);*/
-						continue; /* don't need to go to the writing part */		
+					bad_client:
+						if (httpd->threaded)
+						{
+							/* let the writing part handle it,  
+							 * probably in the next iteration */
+							qse_httpd_markbadclient (httpd, client);
+							shutdown (client->handle.i, SHUT_RDWR);
+						}
+						else
+						{
+							/*pthread_mutex_lock (&httpd->client.mutex);*/
+							delete_from_client_array (httpd, fd);     
+							/*pthread_mutex_unlock (&httpd->client.mutex);*/
+							continue; /* don't need to go to the writing part */		
+						}
 					}
 				}
 			}
-
 
 			if (!httpd->threaded)
 			{
@@ -1025,8 +1110,41 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 				}
 				else if (client->task.queue.head)
 				{
-					if (client->task.queue.head->task.trigger.i <= -1 ||
-					    FD_ISSET(client->task.queue.head->task.trigger.i, &r))
+					qse_httpd_task_t* task;
+					int perform = 0;
+
+					task = &client->task.queue.head->task;
+					task->trigger_mask &=
+						~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
+						  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+
+					if (!(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+					    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
+					{
+						/* no trigger set. set the flag to 
+						 * non-readable and non-writable */
+						perform = 1;
+					}
+					else 
+					{
+					     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+						    FD_ISSET(task->trigger[0].i, &r))
+						{
+							/* set the flag to readable */
+							task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
+							perform = 1;
+						}
+	
+					     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE) &&
+						    FD_ISSET(task->trigger[1].i, &w))
+						{
+							/* set the flag to writable */
+							task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
+							perform = 1;
+						}
+					}
+	
+					if (perform)
 					{
 						tv.tv_sec = 0;
 						tv.tv_usec = 0;
@@ -1305,12 +1423,20 @@ qse_httpd_task_t* qse_httpd_entask (
 	return ret;
 }
 
-void qse_httpd_markclientbad (qse_httpd_t* httpd, qse_httpd_client_t* client)
+void qse_httpd_markbadclient (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	/* mark that something is wrong in processing requests from this client.
 	 * this client could be bad... or the system could encounter some errors
 	 * like memory allocation failure */
 	client->bad = 1;
+}
+
+void qse_httpd_discardcontent (qse_httpd_t* httpd, qse_htre_t* req)
+{
+	req->flags |= QSE_HTRE_DISCARDED;
+	/* clear the content buffer in case it has received contents 
+	 * partially already */
+	qse_mbs_clear (&req->content);
 }
 
 #endif

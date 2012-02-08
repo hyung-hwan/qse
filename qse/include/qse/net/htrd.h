@@ -32,7 +32,8 @@ enum qse_htrd_errnum_t
 	QSE_HTRD_ENOMEM,
 	QSE_HTRD_EBADRE,
 	QSE_HTRD_EBADHDR,
-	QSE_HTRD_ERECBS
+	QSE_HTRD_ERECBS,
+	QSE_HTRD_ECONCB
 };
 
 typedef enum qse_htrd_errnum_t qse_htrd_errnum_t;
@@ -45,7 +46,7 @@ enum qse_htrd_option_t
 {
 	QSE_HTRD_SKIPEMPTYLINES  = (1 << 0), /**< skip leading empty lines before the initial line */
 	QSE_HTRD_SKIPINITIALLINE = (1 << 1), /**< skip processing an initial line */
-	QSE_HTRD_HURRIED         = (1 << 2), /**< trigger a callback also after headers without processing contents */
+	QSE_HTRD_PEEKONLY        = (1 << 2), /**< trigger a peek callback after headers without processing contents */
 	QSE_HTRD_REQUEST         = (1 << 3), /**< parse input as a request */
 	QSE_HTRD_RESPONSE        = (1 << 4)  /**< parse input as a response */
 };
@@ -56,9 +57,8 @@ typedef struct qse_htrd_recbs_t qse_htrd_recbs_t;
 
 struct qse_htrd_recbs_t
 {
-	int         (*request)         (qse_htrd_t* htrd, qse_htre_t* req);
-	int         (*expect_continue) (qse_htrd_t* htrd, qse_htre_t* req);
-	int         (*response)        (qse_htrd_t* htrd, qse_htre_t* res);
+	int  (*peek)    (qse_htrd_t* htrd, qse_htre_t* re);
+	int  (*handle)  (qse_htrd_t* htrd, qse_htre_t* re);
 };
 
 struct qse_htrd_t
