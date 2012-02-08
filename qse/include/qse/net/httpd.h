@@ -51,9 +51,33 @@ enum qse_httpd_option_t
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
-	int (*handle_request) (
+	struct
+	{
+		/* action */
+		int (*recv) (qse_httpd_t* httpd, 
+			qse_httpd_client_t* client,
+			qse_mchar_t* buf, qse_size_t bufsize);
+
+		int (*send) (qse_httpd_t* httpd,
+			qse_httpd_client_t* client,
+			const qse_mchar_t* buf, qse_size_t bufsize);
+
+		int (*sendfile) (qse_httpd_t* httpd,
+			qse_httpd_client_t* client,
+			qse_ubi_t handle, qse_foff_t* offset, qse_size_t count);
+
+		/* event notification */
+		int (*accepted) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);  /* optional */
+		void (*closed) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);  /* optional */
+	} client;
+		
+	int (*peek_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-	int (*handle_expect_continue) (
+	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 
 	const qse_mchar_t* (*getmimetype) (qse_httpd_t* httpd, const qse_mchar_t* path);
@@ -80,6 +104,15 @@ typedef int (*qse_httpd_task_main_t) (
 	qse_httpd_task_t* task
 );
 
+
+enum qse_httpd_task_trigger_mask_t
+{
+	QSE_HTTPD_TASK_TRIGGER_READ      = (1 << 0),
+	QSE_HTTPD_TASK_TRIGGER_WRITE     = (1 << 1),
+	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 2),
+	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 3)
+};
+
 struct qse_httpd_task_t
 {
 	/* you must not call another entask functions from within 
@@ -89,7 +122,8 @@ struct qse_httpd_task_t
 	qse_httpd_task_fini_t fini;
 	qse_httpd_task_main_t main;
 
-	qse_ubi_t             trigger;
+	int                   trigger_mask;
+	qse_ubi_t             trigger[2];
 
 	void*                 ctx;
 };
@@ -143,8 +177,9 @@ void qse_httpd_setcbs (
  * specify the number of output threads.
  */
 int qse_httpd_loop (
-	qse_httpd_t* httpd, 
-	int          threaded 
+	qse_httpd_t*     httpd, 
+	qse_httpd_cbs_t* cbs,
+	int              threaded 
 );
 
 /**
@@ -161,9 +196,14 @@ int qse_httpd_addlistener (
 );
 
 
-void qse_httpd_markclientbad (
+void qse_httpd_markbadclient (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client
+);
+
+void qse_httpd_discardcontent (
+	qse_httpd_t*        httpd,
+	qse_htre_t*         req
 );
 
 #define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
@@ -232,6 +272,13 @@ qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   task,
      int                       code, 
+	const qse_htre_t*         req
+);
+
+qse_httpd_task_t* qse_httpd_entaskcontinue (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   task,
 	const qse_htre_t*         req
 );
 

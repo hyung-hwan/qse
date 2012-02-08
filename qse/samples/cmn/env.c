@@ -106,11 +106,11 @@ static int test3 (void)
 
 	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 
-	qse_printf (QSE_T("inserting PATH => %d\n"), qse_env_insertsys (env, QSE_T("PATH")));
-	qse_printf (QSE_T("inserting HOME => %d\n"), qse_env_insertsysm (env, QSE_MT("HOME")));
-	qse_printf (QSE_T("inserting USER => %d\n"), qse_env_insertsysw (env, QSE_WT("USER")));
-	qse_printf (QSE_T("inserting WHAT => %d\n"), qse_env_insertsys (env, QSE_T("WHAT")));
-	qse_printf (QSE_T("inserting an empty string => %d\n"), qse_env_insertsys (env, QSE_T("")));
+	qse_printf (QSE_T("inserting PATH => %d\n"), qse_env_insert (env, QSE_T("PATH"), QSE_NULL));
+	qse_printf (QSE_T("inserting HOME => %d\n"), qse_env_insertmbs (env, QSE_MT("HOME"), QSE_NULL));
+	qse_printf (QSE_T("inserting USER => %d\n"), qse_env_insertwcs (env, QSE_WT("USER"), QSE_NULL));
+	qse_printf (QSE_T("inserting WHAT => %d\n"), qse_env_insert (env, QSE_T("WHAT"), QSE_NULL));
+	qse_printf (QSE_T("inserting an empty string => %d\n"), qse_env_insert (env, QSE_T(""), QSE_NULL));
 
 	dump (env);
 

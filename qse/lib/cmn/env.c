@@ -34,6 +34,8 @@
 QSE_IMPLEMENT_COMMON_FUNCTIONS(env)
 
 static int load_curenv (qse_env_t* env);
+static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name);
+static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name);
 
 qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int fromcurenv)
 {
@@ -314,10 +316,9 @@ static int deletem (qse_env_t* env, const qse_mchar_t* name)
 
 	return -1;
 }
-
 #endif
 
-int qse_env_insertw (
+static QSE_INLINE int insert_wcs (
 	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
@@ -328,9 +329,9 @@ int qse_env_insertw (
 	qse_mchar_t* namedup, * valuedup;
 	int n;
 
-	namedup = qse_wcstombsdup (name, env->mmgr);
+	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup == QSE_NULL) return -1;
-	valuedup = qse_wcstombsdup (value, env->mmgr);
+	valuedup = qse_wcstombsdup (value, env->mmgr); /* TODO: ignore mbwcerr */
 	if (valuedup == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
@@ -344,7 +345,7 @@ int qse_env_insertw (
 #endif
 }
 
-int qse_env_insertm (
+static QSE_INLINE int insert_mbs (
 	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
@@ -352,9 +353,9 @@ int qse_env_insertm (
 	qse_wchar_t* namedup, * valuedup;
 	int n;
 
-	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
+	namedup = qse_mbstowcsalldup (name, env->mmgr); 
 	if (namedup == QSE_NULL) return -1;
-	valuedup = qse_mbstowcsdup (value, env->mmgr); /* TODO: ignroe mbwcerr */
+	valuedup = qse_mbstowcsalldup (value, env->mmgr); 
 	if (valuedup == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
@@ -370,44 +371,6 @@ int qse_env_insertm (
 	return insertm (env, name, value);
 #endif
 
-}
-
-int qse_env_deletew (qse_env_t* env, const qse_wchar_t* name)
-{
-#if defined(QSE_ENV_CHAR_IS_WCHAR)
-	return deletew (env, name);
-#else
-	/* convert wchar to mchar */
-	qse_mchar_t* namedup;
-	int n;
-
-	namedup = qse_wcstombsdup (name, env->mmgr);
-	if (namedup == QSE_NULL) return -1;
-
-	n = deletem (env, namedup);
-
-	QSE_MMGR_FREE (env->mmgr, namedup);
-	return n;
-#endif
-}
-
-int qse_env_deletem (qse_env_t* env, const qse_mchar_t* name)
-{
-#if defined(QSE_ENV_CHAR_IS_WCHAR)
-	/* convert mchar to wchar */
-	qse_wchar_t* namedup;
-	int n;
-
-	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
-	if (namedup == QSE_NULL) return -1;
-
-	n = deletew (env, namedup);
-
-	QSE_MMGR_FREE (env->mmgr, namedup);
-	return n;
-#else
-	return deletem (env, name);
-#endif
 }
 
 #if defined(_WIN32) 
@@ -507,7 +470,7 @@ static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 }
 #endif
 
-int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
+static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	qse_wchar_t* v;
@@ -526,10 +489,10 @@ int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
 	qse_mchar_t* namedup;
 	int ret = -1;
 
-	namedup = qse_wcstombsdup (name, env->mmgr);
+	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup)
 	{
-		ret = qse_env_insertsysm (env, namedup);
+		ret = insert_sys_mbs (env, namedup);
 		QSE_MMGR_FREE (env->mmgr, namedup);
 	}
 
@@ -537,7 +500,7 @@ int qse_env_insertsysw (qse_env_t* env, const qse_wchar_t* name)
 #endif
 }
 
-int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
+static insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
@@ -547,7 +510,7 @@ int qse_env_insertsysm (qse_env_t* env, const qse_mchar_t* name)
 	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
 	if (namedup)
 	{
-		ret = qse_env_insertsysw (env, namedup);
+		ret = insert_sys_wcs (env, namedup);
 		QSE_MMGR_FREE (env->mmgr, namedup);
 	}
 
@@ -650,6 +613,59 @@ done:
 	}
 				
 	return 0;
+#endif
+}
+
+/* ------------------------------------------------------------------- */
+
+int qse_env_insertwcs (
+	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
+{
+	return value? insert_wcs (env, name, value): insert_sys_wcs (env, name);
+}
+
+int qse_env_insertmbs (
+	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
+{
+	return value? insert_mbs (env, name, value): insert_sys_mbs (env, name);
+}
+
+
+int qse_env_deletewcs (qse_env_t* env, const qse_wchar_t* name)
+{
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
+	return deletew (env, name);
+#else
+	/* convert wchar to mchar */
+	qse_mchar_t* namedup;
+	int n;
+
+	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
+	if (namedup == QSE_NULL) return -1;
+
+	n = deletem (env, namedup);
+
+	QSE_MMGR_FREE (env->mmgr, namedup);
+	return n;
+#endif
+}
+
+int qse_env_deletembs (qse_env_t* env, const qse_mchar_t* name)
+{
+#if defined(QSE_ENV_CHAR_IS_WCHAR)
+	/* convert mchar to wchar */
+	qse_wchar_t* namedup;
+	int n;
+
+	namedup = qse_mbstowcsalldup (name, env->mmgr);
+	if (namedup == QSE_NULL) return -1;
+
+	n = deletew (env, namedup);
+
+	QSE_MMGR_FREE (env->mmgr, namedup);
+	return n;
+#else
+	return deletem (env, name);
 #endif
 }
 

@@ -93,6 +93,17 @@ static QSE_INLINE int push_to_buffer (
 	return 0;
 }
 
+static QSE_INLINE int push_content (
+	qse_htrd_t* htrd, const qse_mchar_t* ptr, qse_size_t len)
+{
+	if (qse_htre_addcontent (&htrd->re, ptr, len) <= -1) 
+	{
+		htrd->errnum = QSE_HTRD_ENOMEM;
+		return -1;
+	}
+	return 0;
+}
+
 struct hdr_cmb_t
 {
 	struct hdr_cmb_t* next;
@@ -515,18 +526,7 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 
 static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
-	int n;
-
-	n = qse_mbsxncasecmp (
-		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "100-continue", 12);
-	if (n == 0)
-	{
-		
-		htrd->re.attr.expect_continue = 1;
-		return 0;
-	}
-
-	/* don't care about other values */
+	htrd->re.attr.expect = QSE_HTB_VPTR(pair);
 	return 0;
 }
 
@@ -998,6 +998,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 {
 	const qse_mchar_t* end = req + len;
 	const qse_mchar_t* ptr = req;
+	int header_completed_during_this_feed = 0;
+	qse_size_t avail;
 
 	/* does this goto drop code maintainability? */
 	if (htrd->fed.s.need > 0) 
@@ -1067,7 +1069,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					 *   => 2nd CR before LF
 					 */
 
-					/* we got a complete request. */
+					/* we got a complete request header. */
 					QSE_ASSERT (htrd->fed.s.crlf <= 3);
 	
 					/* reset the crlf state */
@@ -1078,86 +1080,41 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1)
 						return -1;
 
-					if (htrd->option & QSE_HTRD_HURRIED)
+					/* compelete request header is received */
+					header_completed_during_this_feed = 1;
+					if (htrd->option & QSE_HTRD_PEEKONLY)
 					{
-						int n;
-
-						/* it pushes any trailing data into the content in this mode.
-						 * so the handler knows if there is contents fed to this reader. */
-						if (push_to_buffer (htrd, &htrd->re.content, ptr, end - ptr) <= -1) 
-							return -1;
-					
-
-						htrd->re.attr.hurried = 1;
-						htrd->errnum = QSE_HTRD_ENOERR;	
-						if (htrd->retype == QSE_HTRD_RETYPE_S)
-						{
-							QSE_ASSERTX (
-								htrd->recbs->response != QSE_NULL,
-								"set response callback before feeding"
-							);
-							n = htrd->recbs->response (htrd, &htrd->re);
-						}
-						else
-						{
-							QSE_ASSERTX (
-								htrd->recbs->request != QSE_NULL,
-								"set request callback before feeding"
-							);
-							n = htrd->recbs->request (htrd, &htrd->re);
-						}
-
-						/* qse_mbs_clear (&htrd->re.content); */
-
-						if (n <= -1)
-						{
-							if (htrd->errnum == QSE_HTRD_ENOERR)
-								htrd->errnum = QSE_HTRD_ERECBS;	
-	
-							/* need to clear request on error? 
-							clear_feed (htrd); */
-							return -1;
-						}
-
-						/* if QSE_HTRD_HURRIED is set, we do not handle expect_continue */
-						/* if QSE_HTRD_HURRIED is set, we handle a single request only */
-
-						return 0;
-					}
-
-					if (htrd->retype == QSE_HTRD_RETYPE_Q && 
-					    htrd->re.attr.expect_continue && 
-					    htrd->recbs->expect_continue && ptr >= end)
-					{
-						int n;
-
-						/* the 'ptr >= end' check is for not executing the 
-						 * callback if the message body has been seen already.
-						 * however, this is not perfect as it is based on
-						 * the current feed. what if it has been received but
-						 * not fed here?
-						 */ 
-
-						htrd->re.attr.hurried = 0;
-						htrd->errnum = QSE_HTRD_ENOERR;	
-						n = htrd->recbs->expect_continue (htrd, &htrd->re);
-
-						if (n <= -1)
-						{
-							if (htrd->errnum == QSE_HTRD_ENOERR)
-								htrd->errnum = QSE_HTRD_ERECBS;	
-
-							/* need to clear request on error? 
-							clear_feed (htrd); */
-							return -1;
-						}
-
-						/* the expect_continue handler can set discard to non-zero 
-						 * to force discard the contents body 
-						htrd->re.discard = 1;
+						/* when QSE_HTRD_PEEKONCE is set,
+						 * the peek callback is invoked once
+						 * a complete header is seen. the caller
+						 * should not feed more data by calling
+						 * this function again once the callback is
+						 * invoked. the trailing data is appended
+						 * to the content buffer.
+						 *
+						 * NOTE: if the current feed that completed 
+						 *  the header contains the next request, 
+						 *  the next request is treated as if it 
+						 *  belongs to the current request.
+						 *
+						 * In priciple, this option was added for
+						 * reading CGI outputs. So it comes with
+						 * awkwardity described above.
 						 */
+						if (!(htrd->re.flags & QSE_HTRE_DISCARDED) &&
+						    push_content (htrd, ptr, end - ptr) <= -1) return -1;
+						/* this jump is only to invoke the peek 
+						 * callback. this function should not be fed
+						 * more. */
+
+						/* i don't really know if it is really completed 	
+						 * with content. QSE_HTRD_PEEKONLY is not compatible
+						 * with the completed flag. */
+						htrd->re.flags &= QSE_HTRE_COMPLETED; 
+						goto feedme_more; 
 					}
-	
+
+					/* carry on processing content body fed together with the header */
 					if (htrd->re.attr.chunked)
 					{
 						/* transfer-encoding: chunked */
@@ -1203,16 +1160,14 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					{
 						/* content-length or chunked data length 
 						 * specified */
-
-						qse_size_t avail;
-	
 					content_resume:
 						avail = end - ptr;
 	
 						if (avail < htrd->fed.s.need)
 						{
 							/* the data is not as large as needed */
-							if (push_to_buffer (htrd, &htrd->re.content, ptr, avail) <= -1) return -1;
+							if (!(htrd->re.flags & QSE_HTRE_DISCARDED) && 
+							    push_content (htrd, ptr, avail) <= -1) return -1;
 							htrd->fed.s.need -= avail;
 							/* we didn't get a complete content yet */
 							goto feedme_more; 
@@ -1220,9 +1175,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						else 
 						{
 							/* we got all or more than needed */
-							if (push_to_buffer (
-								htrd, &htrd->re.content, ptr, 
-								htrd->fed.s.need) <= -1) return -1;
+							if (!(htrd->re.flags & QSE_HTRE_DISCARDED) && 
+							    push_content (htrd, ptr, htrd->fed.s.need) <= -1) return -1;
 							ptr += htrd->fed.s.need;
 							htrd->fed.s.need = 0;
 						}
@@ -1272,42 +1226,50 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						}
 					}
 
-					if (!htrd->re.discard)
+					if (header_completed_during_this_feed && htrd->recbs->peek)
 					{
+						/* the peek handler has not been executed.
+						 * this can happen if this function is fed with
+						 * at least the ending part of a complete header
+						 * plus complete content body and the header 
+						 * of the next request. */
 						int n;
-
-						htrd->re.attr.hurried = 0;
-						htrd->errnum = QSE_HTRD_ENOERR;
-
-						if (htrd->retype == QSE_HTRD_RETYPE_S)
-						{
-							QSE_ASSERTX (
-								htrd->recbs->response != QSE_NULL,
-								"set response callback before feeding"
-							);
-	
-							n = htrd->recbs->response (htrd, &htrd->re);
-						}
-						else
-						{
-							QSE_ASSERTX (
-								htrd->recbs->request != QSE_NULL,
-								"set request callback before feeding"
-							);
-	
-							n = htrd->recbs->request (htrd, &htrd->re);
-						}
-		
+						htrd->re.flags |= QSE_HTRE_COMPLETED; 
+						htrd->errnum = QSE_HTRD_ENOERR;	
+						n = htrd->recbs->peek (htrd, &htrd->re);
 						if (n <= -1)
 						{
 							if (htrd->errnum == QSE_HTRD_ENOERR)
 								htrd->errnum = QSE_HTRD_ERECBS;	
-	
+							/* need to clear request on error? 
+							clear_feed (htrd); */
+							return -1;
+						}
+
+						header_completed_during_this_feed = 0;
+					}
+
+					if (htrd->recbs->handle)
+					{
+						int n;
+						htrd->re.flags |= QSE_HTRE_COMPLETED; 
+						htrd->errnum = QSE_HTRD_ENOERR;
+						n = htrd->recbs->handle (htrd, &htrd->re);
+						if (n <= -1)
+						{
+							if (htrd->errnum == QSE_HTRD_ENOERR)
+								htrd->errnum = QSE_HTRD_ERECBS;	
 							/* need to clear request on error? 
 							clear_feed (htrd); */
 							return -1;
 						}
 					}
+
+#if 0
+qse_printf (QSE_T("CONTENT_LENGTH %d, RAW HEADER LENGTH %d\n"), 
+	(int)QSE_MBS_LEN(&htrd->re.content),
+	(int)QSE_MBS_LEN(&htrd->fed.b.raw));
+#endif
 
 					clear_feed (htrd);
 
@@ -1340,6 +1302,21 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 	}
 
 feedme_more:
+	if (header_completed_during_this_feed && htrd->recbs->peek)
+	{
+		int n;
+		htrd->errnum = QSE_HTRD_ENOERR;	
+		n = htrd->recbs->peek (htrd, &htrd->re);
+		if (n <= -1)
+		{
+			if (htrd->errnum == QSE_HTRD_ENOERR)
+				htrd->errnum = QSE_HTRD_ERECBS;	
+			/* need to clear request on error? 
+			clear_feed (htrd); */
+			return -1;
+		}
+	}
+
 	return 0;
 }
 

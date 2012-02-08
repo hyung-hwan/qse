@@ -304,7 +304,7 @@ static int test12 (void)
 	env = qse_env_open (QSE_MMGR_GETDFL(), 0, 0);
 	if (env == QSE_NULL) return -1;
 
-	qse_env_insertsys (env, QSE_T("PATH"));
+	qse_env_insert (env, QSE_T("PATH"), QSE_NULL);
 	qse_env_insert (env, QSE_T("HELLO"), QSE_T("WORLD"));
 
 	n = pio1 (
