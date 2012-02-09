@@ -25,13 +25,11 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
-#include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/chr.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/fmt.h>
 
-#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <dirent.h>
@@ -242,7 +240,8 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	{
 		qse_size_t capa = 256;
 
-		buf = (qse_mchar_t*) qse_httpd_allocmem (httpd, (capa + 1) * QSE_SIZEOF(*buf));
+		buf = (qse_mchar_t*) qse_httpd_allocmem (
+			httpd, (capa + 1) * QSE_SIZEOF(*buf));
 		if (buf == QSE_NULL) return QSE_NULL;
 
 		/* an old vsnprintf behaves differently from C99 standard.
@@ -393,7 +392,9 @@ qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	const qse_httpd_task_t* task, int code, qse_htre_t* req)
 {
-	return entask_error (httpd, client, task, code, qse_htre_getversion(req), req->attr.keepalive);
+	return entask_error (
+		httpd, client, task, code,
+		qse_htre_getversion(req), req->attr.keepalive);
 }
 
 /*------------------------------------------------------------------------*/
@@ -410,6 +411,7 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
 
 /*------------------------------------------------------------------------*/
 
+#if 0
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
@@ -1144,6 +1146,304 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 }
 
 /*------------------------------------------------------------------------*/
+#endif
+
+typedef struct task_file_t task_file_t;
+struct task_file_t
+{
+	const qse_mchar_t* path;
+	qse_http_range_t   range;
+	qse_http_version_t version;
+	int                keepalive;
+};
+
+typedef struct task_fseg_t task_fseg_t;
+struct task_fseg_t
+{
+	qse_ubi_t handle;
+	qse_foff_t left;
+	qse_foff_t offset;
+};
+
+static int task_init_fseg (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_fseg_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
+	task->ctx = xtn;
+	return 0;
+}
+
+static void task_fini_fseg (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
+	httpd->cbs->file.close (httpd, ctx->handle);
+}
+
+static int task_main_fseg (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	qse_ssize_t n;
+	qse_size_t count;
+	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
+
+	count = MAX_SEND_SIZE;
+	if (count >= ctx->left) count = ctx->left;
+
+/* TODO: more adjustment needed for OS with different sendfile semantics... */
+	n = httpd->cbs->client.sendfile (
+		httpd, client, ctx->handle, &ctx->offset, count);
+	if (n <= -1) 
+	{
+// HANDLE EGAIN specially???
+		return -1; /* TODO: any logging */
+	}
+
+	if (n == 0 && count > 0)
+	{
+		/* The file could be truncated when this condition is set.
+		 * The content-length sent in the header can't be fulfilled. 
+		 * So let's return an error here so that the main loop abort 
+		 * the connection. */
+/* TODO: any logging....??? */
+		return -1;	
+	}
+
+	ctx->left -= n;
+	if (ctx->left <= 0) return 0;
+
+	return 1; /* more work to do */
+}
+
+static qse_httpd_task_t* entask_file_segment (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	qse_ubi_t handle, qse_foff_t offset, qse_foff_t size)
+{
+	qse_httpd_task_t task;
+	task_fseg_t data;
+	
+	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
+	data.handle = handle;
+	data.offset = offset;
+	data.left = size;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.init = task_init_fseg;
+	task.main = task_main_fseg;
+	task.fini = task_fini_fseg;
+	task.ctx = &data;
+
+qse_printf (QSE_T("Debug: entasking file segment (%d)\n"), client->handle.i);
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data));
+}
+
+/*------------------------------------------------------------------------*/
+
+
+static int task_init_file (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
+	qse_mbscpy ((qse_mchar_t*)(xtn + 1), xtn->path);
+	xtn->path = (qse_mchar_t*)(xtn + 1);
+	task->ctx = xtn;
+	return 0;
+}
+
+static QSE_INLINE int task_main_file (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_file_t* file;
+	qse_httpd_task_t* x;
+	qse_ubi_t handle;
+	qse_foff_t filesize;
+	int fileopen = 0;
+
+	file = (task_file_t*)task->ctx;
+	x = task;
+
+/* TODO: if you should deal with files on a network-mounted drive,
+         setting a trigger or non-blocking I/O are needed. */
+
+	/* when it comes to the file size, using fstat after opening 
+	 * can be more accurate. but this function uses information
+	 * set into the task context before the call to this function */
+
+qse_printf (QSE_T("opening file %hs\n"), file->path);
+
+	if (httpd->cbs->file.ropen (httpd, file->path, &handle, &filesize) <= -1)
+	{
+/* TODO: depending on the error type, either 404 or 403??? */
+		x = entask_error (
+			httpd, client, x, 404, &file->version, file->keepalive);
+		goto no_file_send;
+	}	
+	fileopen = 1;
+
+	if (file->range.type != QSE_HTTP_RANGE_NONE)
+	{ 
+		const qse_mchar_t* mime_type = QSE_NULL;
+
+		if (file->range.type == QSE_HTTP_RANGE_SUFFIX)
+		{
+			if (file->range.to > filesize) file->range.to = filesize;
+			file->range.from = filesize - file->range.to;
+			file->range.to = file->range.to + file->range.from;
+			if (filesize > 0) file->range.to--;
+		}
+
+		if (file->range.from >= filesize)
+		{
+			x = entask_error (
+				httpd, client, x, 416, &file->version, file->keepalive);
+			goto no_file_send;
+		}
+
+		if (file->range.to >= filesize) file->range.to = filesize - 1;
+
+		if (httpd->cbs->getmimetype)
+		{
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			mime_type = httpd->cbs->getmimetype (httpd, file->path);
+			/*TODO: how to handle an error... */
+		}
+
+#if (QSE_SIZEOF_LONG_LONG > 0)
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
+			file->version.major,
+			file->version.minor,
+			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
+			(unsigned long long)(file->range.to - file->range.from + 1),
+			(unsigned long long)file->range.from,
+			(unsigned long long)file->range.to,
+			(unsigned long long)filesize
+		);
+#else
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
+			file->version.major,
+			file->version.minor,
+			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
+			(unsigned long)(file->range.to - file->range.from + 1),
+			(unsigned long)file->range.from,
+			(unsigned long)file->range.to,
+			(unsigned long)filesize
+		);
+#endif
+		if (x)
+		{
+			x = entask_file_segment (
+				httpd, client, x,
+				handle, 
+				file->range.from, 
+				(file->range.to - file->range.from + 1)
+			);
+		}
+	}
+	else
+	{
+/* TODO: int64 format.... don't hard code it llu */
+		const qse_mchar_t* mime_type = QSE_NULL;
+
+		if (httpd->cbs->getmimetype)
+		{
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			mime_type = httpd->cbs->getmimetype (httpd, file->path);
+/*TODO: how to handle an error... */
+		}
+
+		/* wget 1.8.2 set 'Connection: keep-alive' in the http 1.0 header.
+		 * if the reply doesn't contain 'Connection: keep-alive', it didn't
+		 * close connection.*/
+#if (QSE_SIZEOF_LONG_LONG > 0)
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\n\r\n"), 
+			file->version.major, file->version.minor,
+			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
+			(unsigned long long)filesize
+		);
+#else
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\n\r\n"), 
+			file->version.major,
+			file->version.minor,
+			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(mime_type? QSE_MT("Content-Type: "): QSE_MT("")),
+			(mime_type? mime_type: QSE_MT("")),
+			(mime_type? QSE_MT("\r\n"): QSE_MT("")),
+			(unsigned long)filesize
+		);
+#endif
+		if (x)
+		{
+			x = entask_file_segment (
+				httpd, client, x, handle, 0, filesize);
+		}
+	}
+
+	return (x == QSE_NULL)? -1: 0;
+
+no_file_send:
+	if (fileopen) httpd->cbs->file.close (httpd, handle);
+	return (x == QSE_NULL)? -1: 0;
+}
+
+qse_httpd_task_t* qse_httpd_entaskfile (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client, 
+	const qse_httpd_task_t* pred,
+	const qse_mchar_t* path,
+	qse_htre_t* req)
+{
+	qse_httpd_task_t task;
+	task_file_t data;
+	const qse_mchar_t* range;
+
+	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
+	data.path = path;
+	data.version = *qse_htre_getversion(req);
+	data.keepalive = req->attr.keepalive;
+
+	range = qse_htre_getheaderval(req, QSE_MT("Range"));
+	if (range) 
+	{
+		if (qse_parsehttprange (range, &data.range) <= -1)
+		{
+			return qse_httpd_entaskerror (httpd, client, pred, 416, req);
+		}
+	}
+	else 
+	{
+		data.range.type = QSE_HTTP_RANGE_NONE;
+	}
+	
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.init = task_init_file;
+	task.main = task_main_file;
+	task.ctx = &data;
+
+	return qse_httpd_entask (httpd, client, pred, &task, 
+		QSE_SIZEOF(task_file_t) + qse_mbslen(path) + 1);
+}
+
+/*------------------------------------------------------------------------*/
 
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
@@ -1518,6 +1818,10 @@ else qse_printf (QSE_T("!!!SNATCHING DONE\n"));
 		 * abortion for an error */
 		QSE_ASSERT (len == 0);
 		cgi->req = QSE_NULL;
+/* TODO: probably need to add a write trigger....
+until cgi->reqcon is emptied...
+cannot clear triogters since there are jobs depending on readbility or realyableilityy
+*/
 	}
 	else if (!cgi->reqfwderr)
 	{
@@ -2161,6 +2465,8 @@ static QSE_INLINE qse_httpd_task_t* entask_cgi (
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
+
+#if 0
 	int x;
 
 /* TODO: NEED TO CHECK IF it's a regular file and executable?? 
@@ -2171,6 +2477,7 @@ directory may be treated as executable???
 		return qse_httpd_entaskerror (httpd, client, pred, 403, req);
 	else if (x <= -1)
 		return qse_httpd_entaskerror (httpd, client, pred, 404, req);
+#endif
 
 	arg.path = path;
 	arg.req = req;

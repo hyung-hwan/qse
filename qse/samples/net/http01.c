@@ -13,6 +13,8 @@
 #else
 #	include <unistd.h>
 #	include <errno.h>
+#	include <fcntl.h>
+#	include <sys/stat.h>
 #endif
 
 #include <openssl/ssl.h>
@@ -228,6 +230,87 @@ static int path_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
 	if (access (path, X_OK) == -1)
 		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
 	return 1; /* yes */
+}
+
+/* ------------------------------------------------------------------- */
+
+static int file_ropen (
+	qse_httpd_t* httpd, const qse_mchar_t* path, 
+	qse_ubi_t* handle, qse_foff_t* size)
+{
+	int fd;
+	int flags;
+	struct stat st;
+
+	flags = O_RDONLY;
+#if defined(O_LARGEFILE)
+	flags |= O_LARGEFILE;
+#endif
+
+qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
+	fd = open (path, flags, 0);
+	if (fd <= -1) return -1;
+
+     flags = fcntl (fd, F_GETFD);
+     if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
+
+/* TODO: fstat64??? */
+	if (fstat (fd, &st) <= -1)
+     {
+		close (fd);
+		return -1;
+     }    
+
+	if (S_ISDIR(st.st_mode))
+	{
+		close (fd);
+		return -1;
+	}
+
+     *size = (st.st_size <= 0)? 0: st.st_size;
+	handle->i = fd;
+qse_printf (QSE_T("opened file %hs\n"), path);
+	return 0;
+}
+
+static int file_wopen (
+	qse_httpd_t* httpd, const qse_mchar_t* path, 
+	qse_ubi_t* handle)
+{
+	int fd;
+	int flags;
+
+	flags = O_WRONLY | O_CREAT | O_TRUNC;
+#if defined(O_LARGEFILE)
+	flags |= O_LARGEFILE;
+#endif
+
+qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
+	fd = open (path, flags, 0644);
+	if (fd <= -1) return -1;
+
+	handle->i = fd;
+	return 0;
+}
+
+static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
+{
+qse_printf (QSE_T("closing file %d\n"), handle.i);
+	close (handle.i);
+}
+
+static qse_ssize_t file_read (
+	qse_httpd_t* httpd, qse_ubi_t handle, 
+	qse_mchar_t* buf, qse_size_t len)
+{
+	return read (handle.i, buf, len);
+}
+
+static qse_ssize_t file_write (
+	qse_httpd_t* httpd, qse_ubi_t handle, 
+	const qse_mchar_t* buf, qse_size_t len)
+{
+	return write (handle.i, buf, len);
 }
 
 /* ------------------------------------------------------------------- */
@@ -472,7 +555,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 			if (!peek)
 			{
 				/* file or directory */
-				task = qse_httpd_entaskpath (
+				task = qse_httpd_entaskfile (
 					httpd, client, QSE_NULL, qpath, req);
 				if (task == QSE_NULL) goto oops;
 			}
@@ -537,6 +620,14 @@ static qse_httpd_cbs_t httpd_cbs =
 
 	/* path operation */
 	{ path_executable },
+
+	/* file operation */
+	{ file_ropen,
+	  file_wopen,
+	  file_close,
+	  file_read,
+	  file_write
+	},
 
 	/* client connection */
 	{ client_recv, 
