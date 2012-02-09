@@ -55,14 +55,34 @@ struct qse_httpd_cbs_t
 {
 	struct
 	{
-		int (*readable) (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
-		int (*writable) (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+		int (*readable) (
+			qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+		int (*writable) (
+			qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
 	} mux;
 
 	struct
 	{
 		int (*executable) (qse_httpd_t* httpd, const qse_mchar_t* path);
 	} path;
+
+	struct
+	{
+		int (*ropen) (
+			qse_httpd_t* httpd, const qse_mchar_t* path, 
+			qse_ubi_t* handle, qse_foff_t* size);
+		int (*wopen) (
+			qse_httpd_t* httpd, const qse_mchar_t* path, 
+			qse_ubi_t* handle);
+		void (*close) (qse_httpd_t* httpd, qse_ubi_t handle);
+
+		qse_ssize_t (*read) (
+			qse_httpd_t* httpd, qse_ubi_t handle,
+			qse_mchar_t* buf, qse_size_t len);
+		qse_ssize_t (*write) (
+			qse_httpd_t* httpd, qse_ubi_t handle,
+			const qse_mchar_t* buf, qse_size_t len);
+	} file;
 
 	struct
 	{
@@ -251,6 +271,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 
 /* -------------------------------------------- */
 
+#if 0
 qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
@@ -267,6 +288,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_ubi_t               handle,
 	int                     chunked
 );
+#endif
 
 /* -------------------------------------------- */
 
@@ -285,7 +307,15 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskpath (
+qse_httpd_task_t* qse_httpd_entaskdir (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   pred,
+	const qse_mchar_t*        name,
+	qse_htre_t*               req
+);
+
+qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
