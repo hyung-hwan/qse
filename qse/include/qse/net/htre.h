@@ -28,7 +28,7 @@
 /* header and contents of request/response */
 typedef struct qse_htre_t qse_htre_t;
 
-enum qse_htre_flag_t
+enum qse_htre_state_t
 {
 	QSE_HTRE_DISCARDED = (1 << 0), /** content has been discarded */
 	QSE_HTRE_COMPLETED = (1 << 1)  /** complete content has been seen */
@@ -72,8 +72,8 @@ struct qse_htre_t
 	qse_htre_concb_t concb;
 	void* concb_ctx;
 
-	/* ORed of qse_htre_flag_t */
-	int flags;
+	/* ORed of qse_htre_state_t */
+	int state;
 };
 
 #define qse_htre_getversion(re) (&((re)->version))
@@ -169,7 +169,7 @@ int qse_htre_setstrfromxstr (
 );
 
 const qse_mchar_t* qse_htre_getheaderval (
-	qse_htre_t*        re, 
+	const qse_htre_t*  re, 
 	const qse_mchar_t* key
 );
 
@@ -179,10 +179,25 @@ int qse_htre_walkheaders (
 	void*                    ctx
 );
 
+/**
+ * The qse_htre_addcontent() function adds a content semgnet pointed to by
+ * @a ptr of @a len bytes to the content buffer. If @a re is already completed
+ * or discarded, this function returns 0 without adding the segment to the 
+ * content buffer. 
+ * @return 1 on success, -1 on failure, 0 if adding is skipped.
+ */
 int qse_htre_addcontent (
 	qse_htre_t*        re,
 	const qse_mchar_t* ptr,
 	qse_size_t         len
+);
+
+void qse_htre_completecontent (
+	qse_htre_t*      re
+);
+
+void qse_htre_discardcontent (
+	qse_htre_t*      re
 );
 
 void qse_htre_unsetconcb (
@@ -196,7 +211,7 @@ void qse_htre_setconcb (
 );
 
 const qse_mchar_t* qse_htre_getqmethodname (
-	qse_htre_t*      re
+	const qse_htre_t* re
 );
 
 #ifdef __cplusplus

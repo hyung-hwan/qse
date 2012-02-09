@@ -10,6 +10,9 @@
 #include <locale.h>
 #if	defined(_WIN32)
 #	include <windows.h>
+#else
+#	include <unistd.h>
+#	include <errno.h>
 #endif
 
 #include <openssl/ssl.h>
@@ -24,7 +27,6 @@
 #if defined(HAVE_SYS_SENDFILE_H)
 #	include <sys/sendfile.h>
 #endif
-#include <unistd.h>
 
 #if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 #	if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
@@ -180,6 +182,55 @@ static void fini_xtn_ssl (httpd_xtn_t* xtn)
 }
 
 /* ------------------------------------------------------------------- */
+
+static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
+{
+	fd_set r;
+	struct timeval tv, * tvp;
+
+	if (msec >= 0)
+	{
+		tv.tv_sec = (msec / 1000);
+		tv.tv_usec = ((msec % 1000) * 1000);
+		tvp = &tv;
+	}
+	else tvp = QSE_NULL;
+
+	FD_ZERO (&r);
+	FD_SET (handle.i, &r);
+
+	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp); 
+}
+
+static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
+{
+	fd_set w;
+	struct timeval tv, * tvp;
+
+	if (msec >= 0)
+	{
+		tv.tv_sec = (msec / 1000);
+		tv.tv_usec = ((msec % 1000) * 1000);
+		tvp = &tv;
+	}
+	else tvp = QSE_NULL;
+
+	FD_ZERO (&w);
+	FD_SET (handle.i, &w);
+
+	return select (handle.i + 1, QSE_NULL, &w, QSE_NULL, tvp);
+}
+
+/* ------------------------------------------------------------------- */
+
+static int path_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+	if (access (path, X_OK) == -1)
+		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
+	return 1; /* yes */
+}
+
+/* ------------------------------------------------------------------- */
 static qse_ssize_t client_recv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_mchar_t* buf, qse_size_t bufsize)
@@ -300,13 +351,13 @@ static int process_request (
 	content_received = (qse_htre_getcontentlen(req) > 0);
 
 qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d] method[%d]\n"), 
+qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d] method[%hs]\n"), 
 	(unsigned long)time(NULL),
 	(peek? QSE_MT("PEEK"): QSE_MT("HANDLE")),
      qse_htre_getqpathptr(req),
      qse_htre_getmajorversion(req),
      qse_htre_getminorversion(req),
-	method
+	qse_htre_getqmethodname(req)
 );
 if (qse_htre_getqparamlen(req) > 0) qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparamptr(req));
 qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
@@ -364,9 +415,44 @@ if (qse_htre_getcontentlen(req) > 0)
 			if (peek)
 			{
 				/* cgi */
-				task = qse_httpd_entaskcgi (
-					httpd, client, QSE_NULL, qpath, req);
-				if (task == QSE_NULL) goto oops;
+				if (req->attr.chunked)
+				{
+qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
+				#if 0
+					req->attr.keepalive = 0;
+					task = qse_httpd_entaskerror (
+						httpd, client, QSE_NULL, 411, req);
+					/* 411 can't keep alive */
+					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				#endif
+				}
+				else if (method == QSE_HTTP_POST && 
+				         !req->attr.content_length_set)
+				{
+					req->attr.keepalive = 0;
+					task = qse_httpd_entaskerror (
+						httpd, client, QSE_NULL, 411, req);
+					/* 411 can't keep alive */
+					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				}
+				else
+				{
+					task = qse_httpd_entaskcgi (
+						httpd, client, QSE_NULL, qpath, req);
+					if (task == QSE_NULL) goto oops;
+				}
+			}
+			else
+			{
+				/* to support the chunked request,
+				 * i need to wait until it's compelted and invoke cgi */
+				if (req->attr.chunked)
+				{
+qse_printf (QSE_T("Entasking chunked CGI...\n"));
+					task = qse_httpd_entaskcgi (
+						httpd, client, QSE_NULL, qpath, req);
+					if (task == QSE_NULL) goto oops;
+				}
 			}
 			return 0;
 		}
@@ -446,9 +532,18 @@ int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
 
 static qse_httpd_cbs_t httpd_cbs =
 {
+	/* multiplexer */
+	{ mux_readable, mux_writable },
+
+	/* path operation */
+	{ path_executable },
+
 	/* client connection */
-	{ client_recv, client_send, client_sendfile,
-	  client_accepted, client_closed },
+	{ client_recv, 
+	  client_send, 
+	  client_sendfile,
+	  client_accepted, 
+	  client_closed },
 
 	/* http request */
 	peek_request,
@@ -508,7 +603,8 @@ int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGINT, sigint);
 	signal (SIGPIPE, SIG_IGN);
 
-	ret = qse_httpd_loop (httpd, &httpd_cbs, 0);
+	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
+	ret = qse_httpd_loop (httpd, &httpd_cbs);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);
