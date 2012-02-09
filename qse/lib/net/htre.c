@@ -59,7 +59,7 @@ void qse_htre_clear (qse_htre_t* re)
 	qse_mbs_clear (&re->content);
 	qse_mbs_clear (&re->qpath_or_smesg);
 	qse_mbs_clear (&re->qparam);
-	re->flags = 0;
+	re->state = 0;
 }
 
 int qse_htre_setstrfromcstr (
@@ -75,7 +75,7 @@ int qse_htre_setstrfromxstr (
 }
 
 const qse_mchar_t* qse_htre_getheaderval (
-	qse_htre_t* re, const qse_mchar_t* name)
+	const qse_htre_t* re, const qse_mchar_t* name)
 {
 	qse_htb_pair_t* pair;
 	pair = qse_htb_search (&re->hdrtab, name, qse_mbslen(name));
@@ -117,11 +117,25 @@ int qse_htre_walkheaders (
 int qse_htre_addcontent (
 	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)
 {
+	if (re->state & (QSE_HTRE_COMPLETED | QSE_HTRE_DISCARDED)) return 0;
+
 	/* if the callback is set, the content goes to the callback. */
 	if (re->concb) return re->concb (re, ptr, len, re->concb_ctx);
 	/* if the callback is not set, the contents goes to the internal buffer */
      if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) return -1;
-	return 0;
+
+	return 1; /* added successfully */
+}
+
+void qse_htre_completecontent (qse_htre_t* re)
+{
+	re->state |= QSE_HTRE_COMPLETED;
+}
+
+void qse_htre_discardcontent (qse_htre_t* re)
+{
+	re->state |= QSE_HTRE_DISCARDED;
+	qse_mbs_clear (&re->content);
 }
 
 void qse_htre_unsetconcb (qse_htre_t* re)
@@ -136,7 +150,7 @@ void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
 	re->concb_ctx = ctx;
 }
 
-const qse_mchar_t* qse_htre_getqmethodname (qse_htre_t* re)
+const qse_mchar_t* qse_htre_getqmethodname (const qse_htre_t* re)
 {
 	return qse_gethttpmethodname (re->qmethod_or_sstatus);
 }

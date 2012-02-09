@@ -391,7 +391,7 @@ static qse_httpd_task_t* entask_error (
 
 qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, int code, const qse_htre_t* req)
+	const qse_httpd_task_t* task, int code, qse_htre_t* req)
 {
 	return entask_error (httpd, client, task, code, qse_htre_getversion(req), req->attr.keepalive);
 }
@@ -399,9 +399,9 @@ qse_httpd_task_t* qse_httpd_entaskerror (
 /*------------------------------------------------------------------------*/
 qse_httpd_task_t* qse_httpd_entaskcontinue (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, const qse_htre_t* req)
+	const qse_httpd_task_t* task, qse_htre_t* req)
 {
-	qse_http_version_t* version = qse_htre_getversion(req);
+	const qse_http_version_t* version = qse_htre_getversion(req);
 	return qse_httpd_entaskformat (
 		httpd, client, task,
 		QSE_MT("HTTP/%d.%d 100 Continue\r\n\r\n"),
@@ -866,12 +866,16 @@ static int task_init_path (
 }
 
 static QSE_INLINE int task_main_path_file (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task, qse_foff_t filesize)
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* task, qse_foff_t filesize)
 {
 	task_path_t* data = (task_path_t*)task->ctx;
 	qse_httpd_task_t* x = task;
 	qse_ubi_t handle;
 	int oflags;
+
+/* TODO: if you should deal with files on a network-mounted drive,
+         setting a trigger or non-blocking I/O are needed. */
 
 	/* when it comes to the file size, using fstat after opening 
 	 * can be more accurate. but this function uses information
@@ -886,7 +890,8 @@ qse_printf (QSE_T("opening file %hs\n"), data->name);
 	handle.i = QSE_OPEN (data->name, oflags, 0);
 	if (handle.i <= -1)
 	{
-		x = entask_error (httpd, client, x, 404, &data->version, data->keepalive);
+		x = entask_error (
+			httpd, client, x, 404, &data->version, data->keepalive);
 		goto no_file_send;
 	}
 	oflags = QSE_FCNTL (handle.i, F_GETFD, 0);
@@ -907,7 +912,8 @@ qse_printf (QSE_T("opening file %hs\n"), data->name);
 
 		if (data->range.from >= filesize)
 		{
-			x = entask_error (httpd, client, x, 416, &data->version, data->keepalive);
+			x = entask_error (
+				httpd, client, x, 416, &data->version, data->keepalive);
 			goto no_file_send;
 		}
 
@@ -1104,7 +1110,7 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_client_t* client, 
 	const qse_httpd_task_t* pred,
 	const qse_mchar_t* name,
-	const qse_htre_t* req)
+	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_path_t data;
@@ -1143,7 +1149,7 @@ typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
 {
 	const qse_mchar_t* path;
-	const qse_htre_t* req;
+	qse_htre_t* req;
 	int nph;
 };
 
@@ -1270,7 +1276,7 @@ static int cgi_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 	}
 	else 
 	{
-		qse_mchar_t* location;
+		const qse_mchar_t* location;
 		qse_mchar_t buf[128];
 
 		location = qse_htre_getheaderval (req, QSE_MT("Location"));
@@ -1364,11 +1370,10 @@ static qse_htrd_recbs_t cgi_htrd_cbs =
 
 static qse_env_t* makecgienv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_htre_t* req, const qse_mchar_t* path)
+	const qse_htre_t* req, const qse_mchar_t* path, qse_size_t content_length)
 {
 /* TODO: error check */
 	qse_env_t* env;
-	cgi_req_hdr_ctx_t ctx;
 
 	env = qse_env_open (httpd->mmgr, 0, 0);
 	if (env == QSE_NULL) goto oops;
@@ -1404,13 +1409,10 @@ qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), qse_htre_getqpathptr(req), qse_htre_getqpat
 	qse_env_insertmbs (
 		env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
 
-
-	if (req->attr.content_length_set)
 	{
 		qse_mchar_t tmp[64];
 		qse_fmtuintmaxtombs (
-			tmp, QSE_COUNTOF(tmp), 
-			req->attr.content_length, 10, 
+			tmp, QSE_COUNTOF(tmp), content_length, 10, 
 			-1, QSE_MT('\0'), QSE_NULL);
 		qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), tmp);
 	}
@@ -1507,6 +1509,9 @@ static int cgi_snatch_content (
 {
 	task_cgi_t* cgi = (task_cgi_t*)ctx;
 
+if (ptr) qse_printf (QSE_T("!!!SNATCHING [%.*hs]\n"), len, ptr);
+else qse_printf (QSE_T("!!!SNATCHING DONE\n"));
+
 	if (ptr == QSE_NULL)
 	{
 		/* request ended. this could be a real end or 
@@ -1514,19 +1519,20 @@ static int cgi_snatch_content (
 		QSE_ASSERT (len == 0);
 		cgi->req = QSE_NULL;
 	}
-	else
+	else if (!cgi->reqfwderr)
 	{
 		/* push the contents to the own buffer */
 		if (qse_mbs_ncat (cgi->reqcon, ptr, len) == (qse_size_t)-1)
 		{
 			return -1;
 		}
+qse_printf (QSE_T("!!!SNACHED [%.*hs]\n"), len, ptr);
 	}
 
 	return 0;
 }
 
-static int cgi_forward_content (qse_httpd_task_t* task)
+static void cgi_forward_content (qse_httpd_t* httpd, qse_httpd_task_t* task)
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 
@@ -1534,50 +1540,71 @@ static int cgi_forward_content (qse_httpd_task_t* task)
 
 	if (QSE_MBS_LEN(cgi->reqcon) > 0)
 	{
-		qse_ssize_t n;
-
-		if (!cgi->reqfwderr)
+		if (cgi->reqfwderr) 
 		{
-qse_printf (QSE_T("@@@@@@@WRITING %d bytes TO CGI\n"), (int)QSE_MBS_LEN(cgi->reqcon));
-			n = qse_pio_write (
-				cgi->pio, QSE_PIO_IN,
-				QSE_MBS_PTR(cgi->reqcon),
-				QSE_MBS_LEN(cgi->reqcon)
-			);
+			qse_mbs_clear (cgi->reqcon);
+		}
+		else
+		{
+			qse_ubi_t handle;
+			qse_ssize_t n;
+
+			/* TODO: handle = qse_pio_getubihandle(); */
+			handle.i = qse_pio_gethandle (cgi->pio, QSE_PIO_IN);
+
+			n = httpd->cbs->mux.writable (httpd, handle, 0);
+			if (n >= 1)
+			{
+				/* writable */
+qse_printf (QSE_T("@@@@@@@@@@WRITING[%.*hs]\n"),
+	(int)QSE_MBS_LEN(cgi->reqcon),
+	QSE_MBS_PTR(cgi->reqcon));
+				n = qse_pio_write (
+					cgi->pio, QSE_PIO_IN,
+					QSE_MBS_PTR(cgi->reqcon),
+					QSE_MBS_LEN(cgi->reqcon)
+				);
+/* TODO: improve performance.. instead of copying the remaing part to the head all the time..
+grow the buffer to a certain limit. */
+				if (n > 0) qse_mbs_del (cgi->reqcon, 0, n);
+			}
+
 			if (n <= -1)
 			{
 qse_printf (QSE_T("@@@@@@@@WRITE TO CGI FAILED\n"));
 /* TODO: logging ... */
 				cgi->reqfwderr = 1;
-				if (cgi->req) cgi->req->flags |= QSE_HTRE_DISCARDED;	
+				qse_mbs_clear (cgi->reqcon); 
+				if (cgi->req) qse_htre_discardcontent (cgi->req);
 			}
 		}
-
-/* TODO: performance improvement...
-deleting keeps on moving contents to the head... 
-can't we grow the buffer to a certain limit? 
-if the limit is reached, copy the tail to the head... */
-		/* can write return 0? */
-		qse_mbs_del (cgi->reqcon, 0, n);
 	}
 	else if (cgi->req == QSE_NULL)
 	{
 		/* no more request content */
 qse_printf (QSE_T("@@@@@@@@NOTHING MORE TO WRITE TO CGI\n"));
 		task->trigger_mask &= 
-			~(QSE_HTTPD_TASK_TRIGGER_WRITE |
-			  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+			~(QSE_HTTPD_TASK_TRIGGER_RELAY |
+			  QSE_HTTPD_TASK_TRIGGER_RELAYABLE);
 	}
-
-	return 0;
 }
-
 
 static int task_init_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_cgi_t* cgi = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
-	task_cgi_arg_t* arg = (task_cgi_arg_t*)task->ctx;
+	task_cgi_t* cgi;
+	task_cgi_arg_t* arg;
+	qse_size_t content_length;
+	qse_size_t len;
+	const qse_mchar_t* ptr;
+
+	cgi = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
+	arg = (task_cgi_arg_t*)task->ctx;
+
+/* TODO: can content length be a different type???
+ *  maybe qse_uintmax_t.... it thinks the data size can be larger than the max pointer size 
+ * qse_htre_t and qse_htrd_t also needs changes to support it
+ */
 
 	QSE_MEMSET (cgi, 0, QSE_SIZEOF(*cgi));
 	qse_mbscpy ((qse_mchar_t*)(cgi + 1), arg->path);
@@ -1586,41 +1613,100 @@ static int task_init_cgi (
 	cgi->keepalive = arg->req->attr.keepalive;
 	cgi->nph = arg->nph;
 
-	if (!(arg->req->flags & QSE_HTRE_DISCARDED))
+	if (arg->req->state & QSE_HTRE_DISCARDED) 
 	{
-		/* CGI entasking is invoked probably from the peek handler
-		 * that was triggered after the request header is received 
-		 * in principle. In that case, arrange to forward content
-		 * bypassing the buffer in the request object itself. */
-		const qse_mchar_t* ptr = qse_htre_getcontentptr(arg->req);
-		qse_size_t len = qse_htre_getcontentlen(arg->req);
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXX\n"));
+		content_length = 0;
+		goto done;
+	}
 
+	len = qse_htre_getcontentlen(arg->req);
+	if ((arg->req->state & QSE_HTRE_COMPLETED) && len <= 0)
+	{
+qse_printf (QSE_T("YYYYYYYYYYYYYYYYy\n"));
+		/* the content part is completed and no content 
+		 * in the content buffer. there is nothing to forward */
+		content_length = 0;
+		goto done;
+	}
+
+	if (!(arg->req->state & QSE_HTRE_COMPLETED) &&
+	    !arg->req->attr.content_length_set)
+	{
+qse_printf (QSE_T("ZZZZZZZZZZZZZZZ\n"));
+		/* if the request is not completed and doesn't have
+		 * content-length set, it's not really possible to
+		 * pass the content. this function, however, allows
+		 * such a request to entask a cgi script dropping the
+		 * content */
+		qse_htre_discardcontent (arg->req);
+		content_length = 0;		
+	}
+	else
+	{	
 		/* create a buffer to hold request content from the client
 		 * and copy content received already */
 		cgi->reqcon = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
-		if (cgi->reqcon == QSE_NULL ||
-		    qse_mbs_ncpy (cgi->reqcon, ptr, len) == (qse_size_t)-1)
+		if (cgi->reqcon == QSE_NULL) goto oops;
+
+		ptr = qse_htre_getcontentptr(arg->req);
+		if (qse_mbs_ncpy (cgi->reqcon, ptr, len) == (qse_size_t)-1) 
 		{
-			cgi->init_failed = 1;
+			qse_mbs_close (cgi->reqcon);
+			cgi->reqcon = QSE_NULL;
+			goto oops;
 		}
-		else if (!(arg->req->flags & QSE_HTRE_COMPLETED))
+
+		if (arg->req->state & QSE_HTRE_COMPLETED)
 		{
+			/* no furthur forwarding is needed. 
+			 * even a chunked request entaksed when completed 
+			 * should reach here. if content-length is set
+			 * the length should match len. */
+			QSE_ASSERT (len > 0);
+			QSE_ASSERT (!arg->req->attr.content_length_set ||
+			            (arg->req->attr.content_length_set && arg->req->attr.content_length == len));
+qse_printf (QSE_T("HHHHHHHHHHHHHHHHhh %d\n"), (int)len);
+			content_length = len;
+		}
+		else
+		{
+			/* CGI entasking is invoked probably from the peek handler
+			 * that was triggered after the request header is received.
+			 * you can know this because the request is not completed.
+			 * In this case, arrange to forward content
+			 * bypassing the buffer in the request object itself. */
+
 /* TODO: callback chain instead of a single pointer??? 
-if the request is already set up with a callback, something will go wrong.
- */
+       if the request is already set up with a callback, something will go wrong.
+*/
 			/* set up a callback to be called when the request content
-			 * is fed to the htrd reader */
-			cgi->req = (qse_htre_t*)arg->req;
+			 * is fed to the htrd reader. qse_htre_addcontent() called
+			 * by htrd invokes this callback. */
+			cgi->req = arg->req;
 			qse_htre_setconcb (cgi->req, cgi_snatch_content, cgi);
+
+			QSE_ASSERT (arg->req->attr.content_length_set);
+			content_length = arg->req->attr.content_length;
+qse_printf (QSE_T("TTTTTTTTTTTTTTTTTTTT %d\n"), (int)content_length);
 		}
-	}
-	
-	if (!cgi->init_failed)
-	{
-		cgi->env = makecgienv (httpd, client, arg->req, arg->path);
-		if (cgi->env == QSE_NULL) cgi->init_failed = 1;
 	}
 
+done:
+	cgi->env = makecgienv (httpd, client, arg->req, arg->path, content_length);
+	if (cgi->env == QSE_NULL) goto oops;
+
+	/* i don't set triggers yet. triggers will be set task_main_cgi().
+	 * this way, task_main_cgi() is called regardless of data availability */
+
+	task->ctx = cgi;
+	return 0;
+
+oops:
+	/* since a new task can't be added in the initializer,
+	 * i mark that initialization failed and let task_main_cgi()
+	 * add an error task */
+	cgi->init_failed = 1;
 	task->ctx = cgi;
 	return 0;
 }
@@ -1659,9 +1745,9 @@ static int task_main_cgi_5 (
 
 	QSE_ASSERT (cgi->pio != QSE_NULL);
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
 	{
-		if (cgi_forward_content (task) <= -1) return -1;
+		cgi_forward_content (httpd, task);
 		/* if forwarding didn't finish, something is not really right... 
 		 * so long as the output from CGI is finished, no more forwarding
 		 * is performed */
@@ -1692,9 +1778,9 @@ static int task_main_cgi_4 (
 	
 	QSE_ASSERT (cgi->pio != QSE_NULL);
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
 	{
-		if (cgi_forward_content (task) <= -1) return -1;
+		cgi_forward_content (httpd, task);
 	}
 
 	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
@@ -1744,6 +1830,8 @@ static int task_main_cgi_4 (
 					cgi->buf[cgi->buflen++] = QSE_MT('\n');
 	
 					task->main = task_main_cgi_5;
+					/* ok to chain-call since this task is called
+					 * if the client-side is writable */
 					return task_main_cgi_5 (httpd, client, task);
 				}
 	
@@ -1781,6 +1869,8 @@ static int task_main_cgi_4 (
 					~(QSE_HTTPD_TASK_TRIGGER_READ |
 				       QSE_HTTPD_TASK_TRIGGER_READABLE);
 				task->main = task_main_cgi_5;
+				/* ok to chain-call since this task is called
+				 * if the client-side is writable */
 				return task_main_cgi_5 (httpd, client, task);
 			}
 	
@@ -1796,24 +1886,25 @@ static int task_main_cgi_4 (
 			return -1;
 		}
 	
-	#if 0
-	qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
-	#endif
+#if 0
+qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
+#endif
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->cbs->client.send (httpd, client, cgi->buf, cgi->buflen);
 		if (n <= -1)
 		{
 			/* can't return internal server error any more... */
 	/* TODO: logging ... */
+	qse_printf (QSE_T("CGI SEND FAILURE\n"));
 			return -1;
 		}
 	
 		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 		cgi->buflen -= n;
 	
-	#if 0
-	qse_printf (QSE_T("CGI SEND DONE\n"));
-	#endif
+#if 0
+qse_printf (QSE_T("CGI SEND DONE\n"));
+#endif
 	}
 
 	return 1;
@@ -1829,9 +1920,9 @@ static int task_main_cgi_3 (
 	qse_ssize_t n;
 	qse_size_t count;
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
 	{
-		if (cgi_forward_content (task) <= -1) return -1;
+		cgi_forward_content (httpd, task);
 	}
 
 	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
@@ -1843,7 +1934,11 @@ qse_printf (QSE_T("[cgi_3 sending %d bytes]\n"), (int)count);
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->cbs->client.send (httpd, client, cgi->res_ptr, count);
 
-		if (n <= -1) return -1;
+		if (n <= -1) 
+		{
+qse_printf (QSE_T("[cgi-3 send failure....\n"));
+			return -1;
+		}
 
 		cgi->res_left -= n;
 		if (cgi->res_left <= 0) 
@@ -1877,10 +1972,10 @@ static int task_main_cgi_2 (
 	QSE_ASSERT (cgi->pio != QSE_NULL);
 
 qse_printf (QSE_T("[cgi_2 ]\n"));
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
 	{
 qse_printf (QSE_T("[cgi_2 write]\n"));
-		if (cgi_forward_content (task) <= -1) return -1;
+		cgi_forward_content (httpd, task);
 	}
 
 	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
@@ -1896,17 +1991,15 @@ qse_printf (QSE_T("[cgi_2 read]\n"));
 		{
 			/* can't return internal server error any more... */
 /* TODO: logging ... */
-			return -1;
+			goto oops;
 		}
 		if (n == 0) 
 		{
 			/* end of output from cgi before it has seen a header.
 			 * the cgi script must be crooked. */
 /* TODO: logging */
-			task->trigger_mask &= 
-				~(QSE_HTTPD_TASK_TRIGGER_READ |
-				  QSE_HTTPD_TASK_TRIGGER_READABLE);
-			return -1;
+qse_printf (QSE_T("#####PREMATURE EOF FROM CHILD\n"));
+			goto oops;
 		}
 			
 		cgi->buflen += n;
@@ -1914,7 +2007,8 @@ qse_printf (QSE_T("[cgi_2 read]\n"));
 		if (qse_htrd_feed (cgi->htrd, cgi->buf, cgi->buflen) <= -1)
 		{
 /* TODO: logging */
-			return -1;
+qse_printf (QSE_T("#####INVALID HEADER FROM FROM CHILD [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
+			goto oops;
 		}
 
 		cgi->buflen = 0;
@@ -1932,13 +2026,18 @@ qse_printf (QSE_T("[cgi_2 read]\n"));
 			 */
 
 			if (cgi->disconnect && 
-			    qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) return -1;
+			    qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) 
+			{
+				goto oops;
+			}
 
 			cgi->res_ptr = QSE_MBS_PTR(cgi->res);
 			cgi->res_left = QSE_MBS_LEN(cgi->res);
 
 qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MBS_PTR(cgi->res));
 			task->main = task_main_cgi_3;
+			/* ok to chain-call since this task is called
+			 * only if the client-side is writable */
 			return task_main_cgi_3 (httpd, client, task);
 		}
 
@@ -1946,6 +2045,9 @@ qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MB
 
 	/* complete headers not seen yet. i need to be called again */
 	return 1;
+
+oops:
+	return (entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_cgi (
@@ -1953,15 +2055,8 @@ static int task_main_cgi (
 {
 	task_cgi_t* cgi = (task_cgi_t*)task->ctx;
 	int pio_options;
-	int error_code = 500;
 
 	if (cgi->init_failed) goto oops;
-
-	if (QSE_ACCESS (cgi->path, X_OK) == -1) 
-	{
-		error_code = (errno == EACCES)? 403: 404;
-		goto oops;
-	}
 
 	if (cgi->nph)
 	{
@@ -1969,7 +2064,8 @@ static int task_main_cgi (
 		 * since i don't parse the header. so i have to close
 		 * the connection regardless of content-length or transfer-encoding
 		 * in the actual header. */
-		if (qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) return -1;
+		if (qse_httpd_entaskdisconnect (
+			httpd, client, task) == QSE_NULL) goto oops;
 	}
 	else
 	{
@@ -1990,8 +2086,11 @@ static int task_main_cgi (
 		if (cgi->res == QSE_NULL) goto oops;
 	}
 
-	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | 
-	              QSE_PIO_ERRTONUL | QSE_PIO_MBSCMD;
+	pio_options = QSE_PIO_READOUT | QSE_PIO_WRITEIN | QSE_PIO_MBSCMD;
+	if (httpd->option & QSE_HTTPD_CGIERRTONUL)
+		pio_options |= QSE_PIO_ERRTONUL;
+	else
+		pio_options |= QSE_PIO_ERRTOOUT;
 	if (httpd->option & QSE_HTTPD_CGINOCLOEXEC) 
 		pio_options |= QSE_PIO_NOCLOEXEC;
 
@@ -2010,8 +2109,24 @@ HANDLE for win32???
 	task->trigger[0].i = qse_pio_gethandle (cgi->pio, QSE_PIO_OUT);
 	if (cgi->reqcon)
 	{
+		/* not meaningful to check writability to the child process
+		 * in the main loop. it is checked in cgi_forward_content(). 
+		 * so the following 2 lines are commented out.
 		task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-		task->trigger[1].i = qse_pio_gethandle (cgi->pio, QSE_PIO_IN);
+		task->trigger[1].i = qse_pio_gethandle (cgi->pio, QSE_PIO_IN);*/
+
+		task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_RELAY;
+		task->trigger[1].i = client->handle.i;
+	}
+
+	if (cgi->reqcon)
+	{
+		/* since i didn't set triggers in the initializer (task_init_cgi()),
+		 * it is possible that some contents has been read in already, 
+		 * forward them first. cgi_forward_content() is called after
+		 * triggers are added above because cgi_forwrad_content() 
+		 * manipulates triggers when a forwarding error occurs. */
+		cgi_forward_content (httpd, task);
 	}
 
 	task->main = cgi->nph? task_main_cgi_4: task_main_cgi_2;
@@ -2032,26 +2147,34 @@ oops:
 		cgi->htrd = QSE_NULL;
 	}
 
-	return (entask_error (httpd, client, task, error_code, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+	return (entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 /* TODO: global option or individual paramter for max cgi lifetime 
 *        non-blocking pio read ...
 */
 
-qse_httpd_task_t* qse_httpd_entaskcgi (
-	qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, 
-	const qse_mchar_t* path,
-	const qse_htre_t* req)
+static QSE_INLINE qse_httpd_task_t* entask_cgi (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, const qse_mchar_t* path,
+	qse_htre_t* req, int nph)
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
+	int x;
+
+/* TODO: NEED TO CHECK IF it's a regular file and executable?? 
+directory may be treated as executable???
+*/
+	x = httpd->cbs->path.executable (httpd, path);
+	if (x == 0)
+		return qse_httpd_entaskerror (httpd, client, pred, 403, req);
+	else if (x <= -1)
+		return qse_httpd_entaskerror (httpd, client, pred, 404, req);
 
 	arg.path = path;
 	arg.req = req;
-	arg.nph = 0;
+	arg.nph = nph;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_cgi;
@@ -2063,34 +2186,21 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 		httpd, client, pred, &task, 
 		QSE_SIZEOF(task_cgi_t) + ((qse_mbslen(path) + 1) * QSE_SIZEOF(*path))
 	);
+}
+
+qse_httpd_task_t* qse_httpd_entaskcgi (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
+{
+	return entask_cgi (httpd, client, pred, path, req, 0);
 }
 
 qse_httpd_task_t* qse_httpd_entasknph (
-	qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, 
-	const qse_mchar_t* path,
-	const qse_htre_t* req)
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	const qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
 {
-	qse_httpd_task_t task;
-	task_cgi_arg_t arg;
-
-	arg.path = path;
-	arg.req = req;
-	arg.nph = 1;
-
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = task_init_cgi;
-	task.fini = task_fini_cgi;
-	task.main = task_main_cgi;
-	task.ctx = &arg;
-
-	return qse_httpd_entask (
-		httpd, client, pred, &task, 
-		QSE_SIZEOF(task_cgi_t) + ((qse_mbslen(path) + 1) * QSE_SIZEOF(*path))
-	);
+	return entask_cgi (httpd, client, pred, path, req, 1);
 }
-
 
 /*------------------------------------------------------------------------*/
 

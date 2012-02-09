@@ -24,6 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/net/htre.h>
+#include <qse/cmn/time.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
@@ -45,7 +46,8 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
 enum qse_httpd_option_t
 {
-	QSE_HTTPD_CGINOCLOEXEC = (1 << 0)
+	QSE_HTTPD_CGIERRTONUL  = (1 << 0),
+	QSE_HTTPD_CGINOCLOEXEC = (1 << 1)
 };
 
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
@@ -53,16 +55,27 @@ struct qse_httpd_cbs_t
 {
 	struct
 	{
+		int (*readable) (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+		int (*writable) (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+	} mux;
+
+	struct
+	{
+		int (*executable) (qse_httpd_t* httpd, const qse_mchar_t* path);
+	} path;
+
+	struct
+	{
 		/* action */
-		int (*recv) (qse_httpd_t* httpd, 
+		qse_ssize_t (*recv) (qse_httpd_t* httpd, 
 			qse_httpd_client_t* client,
 			qse_mchar_t* buf, qse_size_t bufsize);
 
-		int (*send) (qse_httpd_t* httpd,
+		qse_ssize_t (*send) (qse_httpd_t* httpd,
 			qse_httpd_client_t* client,
 			const qse_mchar_t* buf, qse_size_t bufsize);
 
-		int (*sendfile) (qse_httpd_t* httpd,
+		qse_ssize_t (*sendfile) (qse_httpd_t* httpd,
 			qse_httpd_client_t* client,
 			qse_ubi_t handle, qse_foff_t* offset, qse_size_t count);
 
@@ -74,7 +87,7 @@ struct qse_httpd_cbs_t
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);  /* optional */
 	} client;
-		
+
 	int (*peek_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_request) (
@@ -108,9 +121,11 @@ typedef int (*qse_httpd_task_main_t) (
 enum qse_httpd_task_trigger_mask_t
 {
 	QSE_HTTPD_TASK_TRIGGER_READ      = (1 << 0),
-	QSE_HTTPD_TASK_TRIGGER_WRITE     = (1 << 1),
-	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 2),
-	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 3)
+	QSE_HTTPD_TASK_TRIGGER_RELAY     = (1 << 1),
+	QSE_HTTPD_TASK_TRIGGER_WRITE     = (1 << 2),
+	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 3),
+	QSE_HTTPD_TASK_TRIGGER_RELAYABLE = (1 << 4),
+	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 5)
 };
 
 struct qse_httpd_task_t
@@ -123,7 +138,7 @@ struct qse_httpd_task_t
 	qse_httpd_task_main_t main;
 
 	int                   trigger_mask;
-	qse_ubi_t             trigger[2];
+	qse_ubi_t             trigger[3];
 
 	void*                 ctx;
 };
@@ -158,28 +173,12 @@ void qse_httpd_setoption (
 	int          option
 );
 
-const qse_httpd_cbs_t* qse_httpd_getcbs (
-	qse_httpd_t* httpd
-);
-
-void qse_httpd_setcbs (
-	qse_httpd_t*     httpd,
-	qse_httpd_cbs_t* cbs
-);
-
 /**
  * The qse_httpd_loop() function starts a httpd server loop.
- * If @a threaded is non-zero, it creates a separate output thread.
- * If no thread support is available, it is ignored.
- *
- * @note
- * In the future, the @a threaded parameter will be extended to
- * specify the number of output threads.
  */
 int qse_httpd_loop (
 	qse_httpd_t*     httpd, 
-	qse_httpd_cbs_t* cbs,
-	int              threaded 
+	qse_httpd_cbs_t* cbs
 );
 
 /**
@@ -195,13 +194,17 @@ int qse_httpd_addlistener (
 	const qse_char_t* uri
 );
 
-
 void qse_httpd_markbadclient (
 	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client
 );
 
 void qse_httpd_discardcontent (
+	qse_httpd_t*        httpd,
+	qse_htre_t*         req
+);
+
+void qse_httpd_completecontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
 );
@@ -272,14 +275,14 @@ qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   task,
      int                       code, 
-	const qse_htre_t*         req
+	qse_htre_t*               req
 );
 
 qse_httpd_task_t* qse_httpd_entaskcontinue (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   task,
-	const qse_htre_t*         req
+	qse_htre_t*               req
 );
 
 qse_httpd_task_t* qse_httpd_entaskpath (
@@ -287,7 +290,7 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        name,
-	const qse_htre_t*         req
+	qse_htre_t*               req
 );
 
 qse_httpd_task_t* qse_httpd_entaskcgi (
@@ -295,7 +298,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        path,
-	const qse_htre_t*         req
+	qse_htre_t*               req
 );
 
 qse_httpd_task_t* qse_httpd_entasknph (
@@ -303,7 +306,7 @@ qse_httpd_task_t* qse_httpd_entasknph (
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   pred,
 	const qse_mchar_t*        path,
-	const qse_htre_t*         req
+	qse_htre_t*               req
 );
 
 /* -------------------------------------------- */

@@ -101,6 +101,9 @@ static QSE_INLINE int push_content (
 		htrd->errnum = QSE_HTRD_ENOMEM;
 		return -1;
 	}
+
+	/* qse_htre_addcontent() returns 1 on full success and 0 if adding is 
+	 * skipped. i treat both as success */
 	return 0;
 }
 
@@ -1101,16 +1104,16 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 * reading CGI outputs. So it comes with
 						 * awkwardity described above.
 						 */
-						if (!(htrd->re.flags & QSE_HTRE_DISCARDED) &&
-						    push_content (htrd, ptr, end - ptr) <= -1) return -1;
+						if (push_content (htrd, ptr, end - ptr) <= -1) return -1;
 						/* this jump is only to invoke the peek 
 						 * callback. this function should not be fed
 						 * more. */
 
 						/* i don't really know if it is really completed 	
 						 * with content. QSE_HTRD_PEEKONLY is not compatible
-						 * with the completed flag. */
-						htrd->re.flags &= QSE_HTRE_COMPLETED; 
+						 * with the completed state. anyway, let me complete
+						 * it. */
+						qse_htre_completecontent (&htrd->re);
 						goto feedme_more; 
 					}
 
@@ -1166,8 +1169,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						if (avail < htrd->fed.s.need)
 						{
 							/* the data is not as large as needed */
-							if (!(htrd->re.flags & QSE_HTRE_DISCARDED) && 
-							    push_content (htrd, ptr, avail) <= -1) return -1;
+							if (push_content (htrd, ptr, avail) <= -1) return -1;
 							htrd->fed.s.need -= avail;
 							/* we didn't get a complete content yet */
 							goto feedme_more; 
@@ -1175,8 +1177,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						else 
 						{
 							/* we got all or more than needed */
-							if (!(htrd->re.flags & QSE_HTRE_DISCARDED) && 
-							    push_content (htrd, ptr, htrd->fed.s.need) <= -1) return -1;
+							if (push_content (htrd, ptr, htrd->fed.s.need) <= -1) return -1;
 							ptr += htrd->fed.s.need;
 							htrd->fed.s.need = 0;
 						}
@@ -1226,6 +1227,9 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						}
 					}
 
+					/* the content has been received fully */
+					qse_htre_completecontent (&htrd->re);
+
 					if (header_completed_during_this_feed && htrd->recbs->peek)
 					{
 						/* the peek handler has not been executed.
@@ -1234,7 +1238,6 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 * plus complete content body and the header 
 						 * of the next request. */
 						int n;
-						htrd->re.flags |= QSE_HTRE_COMPLETED; 
 						htrd->errnum = QSE_HTRD_ENOERR;	
 						n = htrd->recbs->peek (htrd, &htrd->re);
 						if (n <= -1)
@@ -1252,7 +1255,6 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					if (htrd->recbs->handle)
 					{
 						int n;
-						htrd->re.flags |= QSE_HTRE_COMPLETED; 
 						htrd->errnum = QSE_HTRD_ENOERR;
 						n = htrd->recbs->handle (htrd, &htrd->re);
 						if (n <= -1)
