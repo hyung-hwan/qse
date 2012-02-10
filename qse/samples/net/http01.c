@@ -249,7 +249,13 @@ static int file_ropen (
 
 qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 	fd = open (path, flags, 0);
-	if (fd <= -1) return -1;
+	if (fd <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, 
+			(errno == ENOENT? QSE_HTTPD_ENOENT:
+			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		return -1;
+	}
 
      flags = fcntl (fd, F_GETFD);
      if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
@@ -257,12 +263,16 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 /* TODO: fstat64??? */
 	if (fstat (fd, &st) <= -1)
      {
+		qse_httpd_seterrnum (httpd, 
+			(errno == ENOENT? QSE_HTTPD_ENOENT:
+			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
 		close (fd);
 		return -1;
      }    
 
-	if (S_ISDIR(st.st_mode))
+	if (!S_ISREG(st.st_mode))
 	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
 		close (fd);
 		return -1;
 	}
@@ -287,7 +297,13 @@ static int file_wopen (
 
 qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 	fd = open (path, flags, 0644);
-	if (fd <= -1) return -1;
+	if (fd <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, 
+			(errno == ENOENT? QSE_HTTPD_ENOENT:
+			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		return -1;
+	}
 
 	handle->i = fd;
 	return 0;
@@ -488,6 +504,7 @@ if (qse_htre_getcontentlen(req) > 0)
 	qse_printf (QSE_T("CONTENT after discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
 
+
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
 		const qse_mchar_t* qpath = qse_htre_getqpathptr(req);
@@ -583,7 +600,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 
 oops:
 	/*qse_httpd_markbadclient (httpd, client);*/
-	return 0; /* TODO: return failure??? */
+	return -1;
 }
 
 static int peek_request (

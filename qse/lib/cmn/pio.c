@@ -288,6 +288,35 @@ oops:
 	return -1;
 }
 
+static int assert_executable (qse_pio_t* pio, const qse_mchar_t* path)
+{
+	qse_lstat_t st;
+
+	if (QSE_ACCESS(path, X_OK) <= -1) 
+	{
+		if (errno == EACCES) pio->errnum = QSE_PIO_EACCES;
+		else if (errno == ENOENT) pio->errnum = QSE_PIO_ENOENT;
+		else if (errno == ENOMEM) pio->errnum = QSE_PIO_ENOMEM;
+		return -1;
+	}
+
+	if (QSE_LSTAT(path, &st) <= -1)
+	{
+		if (errno == EACCES) pio->errnum = QSE_PIO_EACCES;
+		else if (errno == ENOENT) pio->errnum = QSE_PIO_ENOENT;
+		else if (errno == ENOMEM) pio->errnum = QSE_PIO_ENOMEM;
+		return -1;
+	}
+
+	if (!S_ISREG(st.st_mode)) 
+	{
+		pio->errnum = QSE_PIO_EACCES;
+		return -1;
+	}
+
+	return 0;
+}
+
 static QSE_INLINE int is_fd_valid (int fd)
 {
 	return fcntl (fd, F_GETFD) != -1 || errno != EBADF;
@@ -572,7 +601,26 @@ int qse_pio_init (
 		);
 
 		QSE_MMGR_FREE (mmgr, dupcmd); 
-		if (x == FALSE) goto oops;
+		if (x == FALSE) 
+		{
+			DWORD e = GetLastError ();
+			switch (e)
+			{
+				case ERROR_ACCESS_DENIED:
+					pio->errnum = QSE_PIO_EACCES;
+					break;
+
+				case ERROR_FILE_NOT_FOUND:
+				case ERROR_PATH_NOT_FOUND:
+					pio->errnum = QSE_PIO_ENOENT;
+					break;
+
+				case ERROR_NOT_ENOUGH_MEMORY:
+				case ERROR_OUTOFMEMORY:
+					pio->errnum = QSE_PIO_ENOMEM;
+					break;
+			}
+		}
 	}
 
 	if (windevnul != INVALID_HANDLE_VALUE)
@@ -871,6 +919,8 @@ int qse_pio_init (
 		cmd_file
 	);
 
+/* TODO: translate error code ... */
+
 	QSE_MMGR_FREE (mmgr, cmd_line);
 	cmd_line = QSE_NULL;
 
@@ -994,6 +1044,16 @@ int qse_pio_init (
 	}
 
 	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+	/* check if the command(the command requested or /bin/sh) is 
+	 * exectuable to return an error without trying to execute it
+	 * though this check alone isn't sufficient */
+	if (assert_executable (pio, param.argv[0]) <= -1)
+	{
+		free_param (pio, &param); 
+		goto oops;
+	}
+
 	spawn_ret = posix_spawn(
 		&pid, param.argv[0], &fa, QSE_NULL, param.argv,
 		(env? qse_env_getarr(env): environ));
@@ -1050,8 +1110,23 @@ int qse_pio_init (
 		goto oops;
 	}
 
+	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+	/* check if the command(the command requested or /bin/sh) is 
+	 * exectuable to return an error without trying to execute it
+	 * though this check alone isn't sufficient */
+	if (assert_executable (pio, param.argv[0]) <= -1)
+	{
+		free_param (pio, &param); 
+		goto oops;
+	}
+
 	pid = QSE_FORK();
-	if (pid <= -1) goto oops;
+	if (pid <= -1) 
+	{
+		free_param (pio, &param);
+		goto oops;
+	}
 
 	if (pid == 0)
 	{
@@ -1145,7 +1220,7 @@ int qse_pio_init (
 		if (flags & QSE_PIO_DROPOUT) QSE_CLOSE(1);
 		if (flags & QSE_PIO_DROPERR) QSE_CLOSE(2);
 
-		if (make_param (pio, cmd, flags, &param) <= -1) goto child_oops;
+		/*if (make_param (pio, cmd, flags, &param) <= -1) goto child_oops;*/
 		QSE_EXECVE (param.argv[0], param.argv, (env? qse_env_getarr(env): environ));
 		free_param (pio, &param); 
 
@@ -1155,6 +1230,7 @@ int qse_pio_init (
 	}
 
 	/* parent */
+	free_param (pio, &param);
 	pio->child = pid;
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -1337,6 +1413,8 @@ const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
 		QSE_T("child process not valid"),
 		QSE_T("interruped"),
 		QSE_T("broken pipe"),
+		QSE_T("access denied"),
+		QSE_T("no such file"),
 		QSE_T("systeam call error"),
 		QSE_T("unknown error")
 	};
@@ -1360,6 +1438,23 @@ void qse_pio_setcmgr (qse_pio_t* pio, qse_pio_hid_t hid, qse_cmgr_t* cmgr)
 qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->pin[hid].handle;
+}
+
+qse_ubi_t qse_pio_gethandleasubi (qse_pio_t* pio, qse_pio_hid_t hid)
+{
+	qse_ubi_t handle;
+
+#if defined(_WIN32)
+	handle.ptr = pio->pin[hid].handle;
+#elif defined(__OS2__)
+	handle.ul = pio->pin[hid].handle;
+#elif defined(__DOS__)
+	handle.i = pio->pin[hid].handle;
+#else
+	handle.i = pio->pin[hid].handle;
+#endif
+
+	return handle;
 }
 
 qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)

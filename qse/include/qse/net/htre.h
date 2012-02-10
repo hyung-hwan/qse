@@ -126,12 +126,6 @@ struct qse_htre_t
 #define qse_htre_setsmessagefromxstr(re,v) \
 	qse_htre_setstrfromxstr((re),qse_htre_getsmessage(re),(v))
 
-/* NOTE: setcontent() doesn't execute concb. use this with care */
-#define qse_htre_setcontentfromcstr(re,v) \
-	qse_htre_setstrfromcstr((re),qse_htre_getcontent(re),(v))
-#define qse_htre_setcontentfromxstr(re,v) \
-	qse_htre_setstrfromxstr((re),qse_htre_getcontent(re),(v))
-
 typedef int (*qse_htre_header_walker_t) (
 	qse_htre_t*        re,
 	const qse_mchar_t* key,

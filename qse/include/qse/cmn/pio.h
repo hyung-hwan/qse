@@ -132,6 +132,8 @@ enum qse_pio_errnum_t
 	QSE_PIO_ECHILD,     /**< the child is not valid */
 	QSE_PIO_EINTR,      /**< interrupted */
 	QSE_PIO_EPIPE,      /**< broken pipe */
+	QSE_PIO_EACCES,     /**< access denied */
+	QSE_PIO_ENOENT,     /**< no such file */
 	QSE_PIO_ESUBSYS     /**< subsystem(system call) error */
 };
 typedef enum qse_pio_errnum_t qse_pio_errnum_t;
@@ -312,6 +314,16 @@ void qse_pio_setcmgr (
  * @return pipe handle
  */
 qse_pio_hnd_t qse_pio_gethandle (
+	qse_pio_t*    pio, /**< pio object */
+	qse_pio_hid_t hid  /**< handle ID */
+);
+
+/**
+ * The qse_pio_gethandleasubi() function gets a pipe handle wrapped 
+ * in the #qse_ubi_t type.
+ * @return pipe handle
+ */
+qse_ubi_t qse_pio_gethandleasubi (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );

@@ -45,10 +45,14 @@ void qse_htre_fini (qse_htre_t* re)
 
 void qse_htre_clear (qse_htre_t* re)
 {
-	if (re->concb) 
+	if (!(re->state & QSE_HTRE_COMPLETED) && 
+	    !(re->state & QSE_HTRE_DISCARDED))
 	{
-		re->concb (re, QSE_NULL, 0, re->concb_ctx); /* indicate end of content */
-		qse_htre_unsetconcb (re);
+		if (re->concb)
+		{
+			re->concb (re, QSE_NULL, 0, re->concb_ctx); /* indicate end of content */
+			qse_htre_unsetconcb (re);
+		}
 	}
 
 	QSE_MEMSET (&re->version, 0, QSE_SIZEOF(re->version));
@@ -117,25 +121,73 @@ int qse_htre_walkheaders (
 int qse_htre_addcontent (
 	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)
 {
-	if (re->state & (QSE_HTRE_COMPLETED | QSE_HTRE_DISCARDED)) return 0;
+	/* see comments in qse_htre_discardcontent() */
 
-	/* if the callback is set, the content goes to the callback. */
-	if (re->concb) return re->concb (re, ptr, len, re->concb_ctx);
-	/* if the callback is not set, the contents goes to the internal buffer */
-     if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) return -1;
+	if (re->state & (QSE_HTRE_COMPLETED | QSE_HTRE_DISCARDED)) return 0; /* skipped */
+
+	if (re->concb) 
+	{
+		/* if the callback is set, the content goes to the callback. */
+		if (re->concb (re, ptr, len, re->concb_ctx) <= -1) return -1;
+	}
+	else
+	{
+		/* if the callback is not set, the contents goes to the internal buffer */
+     	if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) 
+			return -1;
+	}
 
 	return 1; /* added successfully */
 }
 
 void qse_htre_completecontent (qse_htre_t* re)
 {
-	re->state |= QSE_HTRE_COMPLETED;
+	/* see comments in qse_htre_discardcontent() */
+
+	if (!(re->state & QSE_HTRE_COMPLETED) && 
+	    !(re->state & QSE_HTRE_DISCARDED))
+	{
+		re->state |= QSE_HTRE_COMPLETED;
+		if (re->concb)
+		{
+			/* indicate end of content */
+			re->concb (re, QSE_NULL, 0, re->concb_ctx); 
+		}
+	}
 }
 
 void qse_htre_discardcontent (qse_htre_t* re)
 {
-	re->state |= QSE_HTRE_DISCARDED;
-	qse_mbs_clear (&re->content);
+	/* you can't discard this if it's completed.
+	 * you can't complete this if it's discarded 
+	 * you can't add contents to this if it's completed or discarded
+	 */
+
+	if (!(re->state & QSE_HTRE_COMPLETED) &&
+	    !(re->state & QSE_HTRE_DISCARDED))
+	{
+		re->state |= QSE_HTRE_DISCARDED;
+
+		/* qse_htre_addcontent()...
+		 * qse_thre_setconcb()...
+		 * qse_htre_discardcontent()... <-- POINT A.
+		 *
+		 * at point A, the content must contain something
+		 * and concb is also set. for simplicity, 
+		 * clear the content buffer and invoke the callback 
+		 *
+		 * likewise, you may produce many weird combinations
+		 * of these functions. however, these functions are
+		 * designed to serve a certain usage pattern not including
+		 * weird combinations.
+		 */
+		qse_mbs_clear (&re->content);
+		if (re->concb)
+		{
+			/* indicate end of content */
+			re->concb (re, QSE_NULL, 0, re->concb_ctx); 
+		}
+	}
 }
 
 void qse_htre_unsetconcb (qse_htre_t* re)
