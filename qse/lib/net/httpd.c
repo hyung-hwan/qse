@@ -97,6 +97,16 @@ void qse_httpd_stop (qse_httpd_t* httpd)
 	httpd->stopreq = 1;
 }
 
+qse_httpd_errnum_t qse_httpd_geterrnum (qse_httpd_t* httpd)
+{
+	return httpd->errnum;
+}
+
+void qse_httpd_seterrnum (qse_httpd_t* httpd, qse_httpd_errnum_t errnum)
+{
+	httpd->errnum = errnum;
+}
+
 int qse_httpd_getoption (qse_httpd_t* httpd)
 {
 	return httpd->option;
@@ -665,7 +675,7 @@ static void perform_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	{
 		dequeue_task (httpd, client);
 		/*shutdown (client->handle.i, SHUT_RDWR);*/
-		client->bad = 1;
+		client->bad = 1; 
 	}
 	else if (n == 0)
 	{
@@ -675,7 +685,7 @@ static void perform_task (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_mchar_t buf[1024];
+	qse_mchar_t buf[2048]; /* TODO: adjust this buffer size */
 	qse_ssize_t m;
 
 	QSE_ASSERT (httpd->cbs->client.recv != QSE_NULL);
@@ -803,87 +813,87 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 					QSE_ASSERT (httpd->cbs->client.accepted != QSE_NULL);
 					int x = httpd->cbs->client.accepted (httpd, client); /* is this correct???? what if ssl handshaking got stalled because writing failed in SSL_accept()? */
 					if (x >= 1) client->ready = 1;
-					else if (x <= -1) goto bad_client;
+					else if (x <= -1) 
+					{
+						delete_from_client_array (httpd, fd);     
+						continue;
+					}
 				}
 				else
 				{
+// TODO: any way to suspend read while  a request is being processed???
 					if (read_from_client (httpd, client) <= -1)
 					{
-					bad_client:
-						if (httpd->threaded)
-						{
-							/* let the writing part handle it,  
-							 * probably in the next iteration */
-							qse_httpd_markbadclient (httpd, client);
-							shutdown (client->handle.i, SHUT_RDWR);
-						}
-						else
-						{
-							delete_from_client_array (httpd, fd);     
-							continue; /* don't need to go to the writing part */		
-						}
+						delete_from_client_array (httpd, fd);     
+						continue;
 					}
 				}
 			}
 
-			if (!httpd->threaded)
+			/* perform a client task enqued to a client */
+			if (client->task.queue.head)
 			{
-				if (client->bad)
+				qse_httpd_task_t* task;
+				int perform = 0;
+
+qse_printf (QSE_T(".....CLIENT %d HAS TASK\n"), fd);
+				task = &client->task.queue.head->task;
+				task->trigger_mask &=
+					~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
+					  QSE_HTTPD_TASK_TRIGGER_RELAYABLE |
+					  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+
+				if (!(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+				    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY) &&
+				    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
 				{
-					/*shutdown (client->handle.i, SHUT_RDWR);*/
-					delete_from_client_array (httpd, fd);     
+qse_printf (QSE_T(".....NO TRIGGER ACTION....\n"));
+					/* no trigger set. set the flag to 
+					 * non-readable and non-writable */
+					perform = 1;
 				}
-				else if (client->task.queue.head)
+				else 
 				{
-					qse_httpd_task_t* task;
-					int perform = 0;
-
-					task = &client->task.queue.head->task;
-					task->trigger_mask &=
-						~(QSE_HTTPD_TASK_TRIGGER_READABLE | 
-						  QSE_HTTPD_TASK_TRIGGER_RELAYABLE |
-						  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
-
-					if (!(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
-					    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY) &&
-					    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
+if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ)
+qse_printf (QSE_T(".....CLIENT %d HAS READ TREIGGER %d\n"), fd, task->trigger[0].i);
+if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY)
+qse_printf (QSE_T(".....CLIENT %d HAS RELAY TREIGGER %d\n"), fd, task->trigger[1].i);
+if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE)
+qse_printf (QSE_T(".....CLIENT %d HAS WRITE TREIGGER %d\n"), fd, task->trigger[2].i);
+					if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
+					    FD_ISSET(task->trigger[0].i, &r))
 					{
-						/* no trigger set. set the flag to 
-						 * non-readable and non-writable */
+						task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
 						perform = 1;
+qse_printf (QSE_T(".....TRIGGER READABLE....\n"));
 					}
-					else 
-					{
-					     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READ) &&
-						    FD_ISSET(task->trigger[0].i, &r))
-						{
-							task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_READABLE;
-							perform = 1;
-						}
 
-					     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY) &&
-						    FD_ISSET(task->trigger[1].i, &r))
-						{
-							task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_RELAYABLE;
-							perform = 1;
-						}
-	
-					     if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY) &&
-						    FD_ISSET(task->trigger[2].i, &w))
-						{
-							task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
-							perform = 1;
-						}
-					}
-	
-					if (perform)
+					if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAY) &&
+					    FD_ISSET(task->trigger[1].i, &r))
 					{
-						/* TODO: error handling -> writable() returns <= -1 */
-						/* TODO: though the client side is not writable, can't i still exeucte the task?
-						 *       if the task needs to transfer anything yet.. it can do that.
-						 *       i probably need a new trigger type??? */
-						if (httpd->cbs->mux.writable (httpd, client->handle, 0) >= 1)
-							perform_task (httpd, client);
+						task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_RELAYABLE;
+						perform = 1;
+qse_printf (QSE_T(".....TRIGGER RELAYABLE....\n"));
+					}
+
+					if ((task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE) &&
+					    FD_ISSET(task->trigger[2].i, &w))
+					{
+						task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITABLE;
+						perform = 1;
+qse_printf (QSE_T(".....TRIGGER WRITABLE....\n"));
+					}
+				}
+
+				if (perform)
+				{
+					/* TODO: error handling -> writable() returns <= -1 */
+					/* TODO: though the client side is not writable, can't i still exeucte the task?
+					 *       if the task needs to transfer anything yet.. it can do that.
+					 *       i probably need a new trigger type??? */
+					if (httpd->cbs->mux.writable (httpd, client->handle, 0) >= 1)
+					{
+						perform_task (httpd, client);
 					}
 				}
 			}
@@ -1109,18 +1119,7 @@ qse_httpd_task_t* qse_httpd_entask (
 	const qse_httpd_task_t* pred, const qse_httpd_task_t* task,
 	qse_size_t xtnsize)
 {
-	qse_httpd_task_t* ret;
-	ret = enqueue_task (httpd, client, pred, task, xtnsize);
-	if (ret == QSE_NULL) client->bad = 1; /* mark this client bad */
-	return ret;
-}
-
-void qse_httpd_markbadclient (qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	/* mark that something is wrong in processing requests from this client.
-	 * this client could be bad... or the system could encounter some errors
-	 * like memory allocation failure */
-	client->bad = 1;
+	return enqueue_task (httpd, client, pred, task, xtnsize);
 }
 
 void qse_httpd_discardcontent (qse_httpd_t* httpd, qse_htre_t* req)

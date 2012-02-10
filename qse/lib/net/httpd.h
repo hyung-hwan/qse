@@ -30,10 +30,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if defined(HAVE_PTHREAD)
-#	include <pthread.h>
-#endif
-
 #ifndef SHUT_RDWR
 #	define SHUT_RDWR 2
 #endif
@@ -64,17 +60,14 @@ struct qse_httpd_client_t
 	qse_ubi_t               handle2;
 
 	int                     ready;
-	int                     bad;
 	int                     secure;
+	int                     bad;
 	sockaddr_t              local_addr;
 	sockaddr_t              remote_addr;
 	qse_htrd_t*             htrd;
 
 	struct
 	{
-#if defined(HAVE_PTHREAD)
-		pthread_mutex_t  mutex;
-#endif
 		struct
 		{
 			int count;
@@ -120,23 +113,13 @@ struct qse_httpd_t
 	int option;
 	int stopreq;
 
-	int threaded;
-
 	struct
 	{
-#if defined(HAVE_PTHREAD)
-		int pfd[2];
-		pthread_mutex_t mutex;
-		pthread_cond_t  cond;
-#endif
 		client_array_t array;
 	} client;
 
 	struct
 	{
-#if defined(HAVE_PTHREAD)
-		pthread_mutex_t mutex;
-#endif
 		listener_t*     list;
 		fd_set          set;
 		int             max;

@@ -34,13 +34,15 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOERR,
 	QSE_HTTPD_ENOMEM,
 	QSE_HTTPD_EINVAL,
+	QSE_HTTPD_ENOENT,
+	QSE_HTTPD_EACCES,
 	QSE_HTTPD_EINTERN,
 	QSE_HTTPD_EIOMUX,
+	QSE_HTTPD_ESUBSYS,
 	QSE_HTTPD_ESOCKET,
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
-	QSE_HTTPD_ETASK,
-	QSE_HTTPD_ECOMCBS
+	QSE_HTTPD_ETASK
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
@@ -184,6 +186,15 @@ void qse_httpd_close (
 	qse_httpd_t* httpd 
 );
 
+qse_httpd_errnum_t qse_httpd_geterrnum (
+	qse_httpd_t* httpd
+);
+
+void qse_httpd_seterrnum (
+	qse_httpd_t*       httpd,
+	qse_httpd_errnum_t errnum
+);
+
 int qse_httpd_getoption (
 	qse_httpd_t* httpd
 );
@@ -212,11 +223,6 @@ void qse_httpd_stop (
 int qse_httpd_addlistener (
 	qse_httpd_t*      httpd,
 	const qse_char_t* uri
-);
-
-void qse_httpd_markbadclient (
-	qse_httpd_t*        httpd,
-	qse_httpd_client_t* client
 );
 
 void qse_httpd_discardcontent (
