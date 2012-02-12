@@ -209,7 +209,6 @@ static qse_mchar_t* parse_initial_line (
 {
 	qse_mchar_t* p = line;
 	qse_mcstr_t tmp;
-	qse_http_method_t mtype;
 
 #if 0
 	/* ignore leading spaces excluding crlf */
@@ -225,10 +224,9 @@ static qse_mchar_t* parse_initial_line (
 	tmp.len = p - tmp.ptr;
 
 	htrd->retype = QSE_HTRD_RETYPE_Q;
-	if ((htrd->option & QSE_HTRD_REQUEST) &&
-	    qse_gethttpmethodtypefromstr (&tmp, &mtype) >= 0)
+	if (htrd->option & QSE_HTRD_REQUEST)
 	{
-		qse_htre_setqmethod (&htrd->re, mtype);
+		qse_htre_setqmethod (&htrd->re, qse_mcstrtohttpmethod (&tmp));
 	}
 	else if ((htrd->option & QSE_HTRD_RESPONSE) &&
 	         qse_mbsxcmp (tmp.ptr, tmp.len, QSE_MT("HTTP")) == 0)

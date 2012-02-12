@@ -49,14 +49,14 @@ qse_ssize_t qse_tio_readmbs (qse_tio_t* tio, qse_mchar_t* buf, qse_size_t size)
 	{
 		if (tio->inbuf_cur >= tio->inbuf_len) 
 		{
+			tio->errnum = QSE_TIO_ENOERR;
 			n = tio->in.fun (
-				QSE_TIO_DATA, tio->in.arg,
-				tio->in.buf.ptr, 
-				tio->in.buf.capa);
+				tio, QSE_TIO_DATA, 
+				tio->in.buf.ptr, tio->in.buf.capa);
 			if (n == 0) break;
 			if (n <= -1) 
 			{
-				tio->errnum = QSE_TIO_EIOERR;
+				if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 				return -1;
 			}
 
@@ -93,8 +93,9 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 		if (tio->input_status & STATUS_EOF) n = 0;
 		else
 		{
+			tio->errnum = QSE_TIO_ENOERR;
 			n = tio->in.fun (
-				QSE_TIO_DATA, tio->in.arg,
+				tio, QSE_TIO_DATA,
 				&tio->in.buf.ptr[tio->inbuf_len], 
 				tio->in.buf.capa - tio->inbuf_len);
 		}
@@ -122,7 +123,7 @@ static QSE_INLINE qse_ssize_t tio_read_widechars (
 		}
 		if (n <= -1) 
 		{
-			tio->errnum = QSE_TIO_EIOERR;
+			if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 			return -1;
 		}
 

@@ -52,8 +52,8 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		if (n <= -1)
 		{
 			qse_printf (
-				QSE_T("qse_pio_read() returned error - %s\n"),
-				qse_pio_geterrmsg(pio)
+				QSE_T("qse_pio_read() returned error - %d\n"),
+				(int)qse_pio_geterrnum(pio)
 			);
 			break;
 		}	
@@ -74,8 +74,7 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x <= -1)
 	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"),
-			(int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
+		qse_printf (QSE_T("error code : %d\n"), (int)qse_pio_geterrnum(pio));
 	}
 
 	qse_pio_close (pio);
@@ -111,8 +110,8 @@ static int pio2 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		if (n < 0)
 		{
 			qse_printf (
-				QSE_T("qse_pio_read() returned error - %s\n"),
-				qse_pio_geterrmsg(pio)
+				QSE_T("qse_pio_read() returned error - %d\n"),
+				(int)qse_pio_geterrnum(pio)
 			);
 			break;
 		}	
@@ -129,8 +128,7 @@ static int pio2 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x <= -1)
 	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"),
-			(int)qse_pio_geterrnum(pio), qse_pio_geterrmsg(pio));
+		qse_printf (QSE_T("error code : %d\n"), (int)qse_pio_geterrnum(pio));
 	}
 
 	qse_pio_close (pio);
@@ -394,7 +392,7 @@ static int test13 (void)
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x == -1)
 	{
-		qse_printf (QSE_T("error code : %d, error string: %s\n"), (int)QSE_PIO_ERRNUM(pio), qse_pio_geterrmsg(pio));
+		qse_printf (QSE_T("error code : %d\n"), (int)QSE_PIO_ERRNUM(pio));
 	}
 
 	qse_pio_close (pio);

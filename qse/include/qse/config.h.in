@@ -70,6 +70,9 @@
 /* Define to 1 if you have the `expl' function. */
 #undef HAVE_EXPL
 
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
 /* Define to 1 if you have the `fdopendir' function. */
 #undef HAVE_FDOPENDIR
 
@@ -278,6 +281,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/wait.h> header file. */
+#undef HAVE_SYS_WAIT_H
 
 /* Define to 1 if you have the `tan' function. */
 #undef HAVE_TAN

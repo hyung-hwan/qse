@@ -95,7 +95,8 @@ struct header_walker_ctx_t
 	int ret;
 };
 
-static qse_htb_walk_t walk_headers (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
+static qse_htb_walk_t walk_headers (
+	qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
 	struct header_walker_ctx_t* hwctx = (struct header_walker_ctx_t*)ctx;
 	if (hwctx->walker (hwctx->re, QSE_HTB_KPTR(pair), QSE_HTB_VPTR(pair), hwctx->ctx) <= -1) 
@@ -204,5 +205,5 @@ void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
 
 const qse_mchar_t* qse_htre_getqmethodname (const qse_htre_t* re)
 {
-	return qse_gethttpmethodname (re->qmethod_or_sstatus);
+	return qse_httpmethodtombs (re->qmethod_or_sstatus);
 }

@@ -31,17 +31,20 @@ int qse_comparehttpversions (
 	return v1->major - v2->major;
 }
 
-const qse_mchar_t* qse_gethttpmethodname (qse_http_method_t type)
+const qse_mchar_t* qse_httpmethodtombs (qse_http_method_t type)
 {
+	/* keep this table in the same order as qse_httpd_method_t enumerators */
 	static qse_mchar_t* names[]  =
 	{
-		QSE_MT("GET"),
+		QSE_MT("OTHER"),
+
 		QSE_MT("HEAD"),
+		QSE_MT("GET"),
 		QSE_MT("POST"),
 		QSE_MT("PUT"),
 		QSE_MT("DELETE"),
-		QSE_MT("TRACE"),
 		QSE_MT("OPTIONS"),
+		QSE_MT("TRACE"),
 		QSE_MT("CONNECT")
 	}; 
 
@@ -67,11 +70,8 @@ static struct mtab_t mtab[] =
 	{ QSE_MT("TRACE"),   QSE_HTTP_TRACE }
 };
 
-int qse_gethttpmethodtype (
-	const qse_mchar_t* name,
-	qse_http_method_t* type)
+qse_http_method_t qse_mbstohttpmethod (const qse_mchar_t* name)
 {
-
 	/* perform binary search */
 
 	/* declaring left, right, mid to be of int is ok
@@ -96,19 +96,13 @@ int qse_gethttpmethodtype (
 			right = mid - 1;
 		}
 		else if (n > 0) left = mid + 1;
-		else 
-		{
-			*type = entry->type;
-			return 0;
-		}
+		else return entry->type;
 	}
 
-	return -1;
+	return QSE_HTTP_OTHER;
 }
 
-int qse_gethttpmethodtypefromstr (
-	const qse_mcstr_t* name,
-	qse_http_method_t* type)
+qse_http_method_t qse_mcstrtohttpmethod (const qse_mcstr_t* name)
 {
 	/* perform binary search */
 
@@ -134,14 +128,10 @@ int qse_gethttpmethodtypefromstr (
 			right = mid - 1;
 		}
 		else if (n > 0) left = mid + 1;
-		else 
-		{
-			*type = entry->type;
-			return 0;
-		}
+		else return entry->type;
 	}
 
-	return -1;
+	return QSE_HTTP_OTHER;
 }
 
 int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)

@@ -20,10 +20,10 @@
 
 #include <qse/cmn/fio.h>
 #include <qse/cmn/str.h>
-#include <qse/cmn/mbwc.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/mbwc.h>
 #include "mem.h"
 
 #if defined(_WIN32)
@@ -39,16 +39,120 @@
 #	include <fcntl.h>
 #else
 #	include "syscall.h"
-#	include <sys/types.h>
-#	include <fcntl.h>
 #endif
+
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
 
-static qse_ssize_t fio_input (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t fio_output (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+#if defined(_WIN32)
+static qse_fio_errnum_t syserr_to_errnum (DWORD e)
+{
+
+	switch (e)
+	{
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
+		case ERROR_INVALID_NAME:
+			return QSE_FIO_EINVAL;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_FIO_ENOENT;
+
+		case ERROR_ACCESS_DENIED:
+			return QSE_FIO_EACCES;
+
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_FIO_ENOMEM;
+
+		case ERROR_ALREADY_EXISTS:
+		case ERROR_FILE_EXISTS:
+			return QSE_FIO_EEXIST;
+
+		default:
+			return QSE_FIO_ESUBSYS;
+	}
+}
+#elif defined(__OS2__)
+static qse_fio_errnum_t syserr_to_errnum (APIRET e)
+{
+	switch (e)
+	{
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
+		case ERROR_INVALID_NAME:
+			return QSE_FIO_EINVAL;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_FIO_ENOENT;
+
+		case ERROR_ACCESS_DENIED:
+			return QSE_FIO_EACCES;
+
+		case ERROR_NOT_ENOUGH_MEMORY:
+			return QSE_FIO_ENOMEM;
+
+		case ERROR_ALREADY_EXISTS:
+			return QSE_FIO_EEXIST;
+
+		default:
+			return QSE_FIO_ESUBSYS;
+	}
+}
+#elif defined(__DOS__)
+static qse_fio_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_FIO_ENOMEM;
+
+		case EINVAL:
+			return QSE_FIO_EINVAL;
+
+		case ENOENT:
+			return QSE_FIO_ENOENT;
+
+		case EACCES:
+			return QSE_FIO_EACCES;
+
+		case EEXIST:
+			return QSE_FIO_EEXIST;
+	
+		default:
+			return QSE_FIO_ESUBSYS;
+	}
+}
+#else
+static qse_fio_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_FIO_ENOMEM;
+
+		case EINVAL:
+			return QSE_FIO_EINVAL;
+
+		case ENOENT:
+			return QSE_FIO_ENOENT;
+
+		case EACCES:
+			return QSE_FIO_EACCES;
+
+		case EEXIST:
+			return QSE_FIO_EEXIST;
+	
+		case EINTR:
+			return QSE_FIO_EINTR;
+
+		default:
+			return QSE_FIO_ESUBSYS;
+	}
+}
+#endif
 
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
@@ -108,7 +212,11 @@ int qse_fio_init (
 
 		/* The path name template must be at least 4 characters long
 		 * excluding the terminating null. this function fails if not */
-		if (temp_ptr - path < 4) return -1; 
+		if (temp_ptr - path < 4) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1; 
+		}
 
 		qse_gettime (&now);
 		temp_no += (now & 0xFFFFFFFFlu);
@@ -120,7 +228,11 @@ int qse_fio_init (
 		temp_tries++;
 
 		/* Fails after 5000 tries. 5000 randomly chosen */
-		if (temp_tries > 5000) return -1; 
+		if (temp_tries > 5000) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1; 
+		}
 
 		/* Generate the next random number to use to make a 
 		 * new path name */
@@ -210,6 +322,7 @@ int qse_fio_init (
 	if (handle == INVALID_HANDLE_VALUE) 
 	{
 		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+		fio->errnum = syserr_to_errnum(GetLastError());
 		return -1;
 	}
 
@@ -217,6 +330,7 @@ int qse_fio_init (
 #if 0
 	if (GetFileType(handle) == FILE_TYPE_UNKNOWN)
 	{
+		fio->errnum = syserr_to_errnum(GetLastError());
 		CloseHandle (handle);
 		return -1;
 	}
@@ -250,10 +364,20 @@ int qse_fio_init (
 		px = qse_wcstombs (path, &wl, path_mb, &ml);
 		if (px == -2)
 		{
+			/* the static buffer is too small.
+			 * dynamically allocate a buffer */
 			path_mb = qse_wcstombsdup (path, mmgr);
-			if (path_mb == QSE_NULL) return -1;
+			if (path_mb == QSE_NULL) 
+			{
+				fio->errnum = QSE_FIO_ENOMEM;
+				return -1;
+			}
 		}
-		else if (px <= -1) return -1;
+		else if (px <= -1) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1;
+		}
 	#endif
 
 		zero.ulLo = 0;
@@ -329,6 +453,7 @@ int qse_fio_init (
 		if (ret != NO_ERROR) 
 		{
 			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+			fio->errnum = syserr_to_errnum(ret);
 			return -1;
 		}
 	}
@@ -358,9 +483,17 @@ int qse_fio_init (
 		if (px == -2)
 		{
 			path_mb = qse_wcstombsdup (path, mmgr);
-			if (path_mb == QSE_NULL) return -1;
+			if (path_mb == QSE_NULL) 
+			{
+				fio->errnum = QSE_FIO_ENOMEM;
+				return -1;
+			}
 		}
-		else if (px <= -1) return -1;
+		else if (px <= -1) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1;
+		}
 	#endif
 
 		if (flags & QSE_FIO_APPEND)
@@ -401,6 +534,7 @@ int qse_fio_init (
 		if (handle <= -1) 
 		{
 			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+			fio->errnum = syserr_to_errnum (errno);
 			return -1;
 		}
 	}
@@ -428,10 +562,20 @@ int qse_fio_init (
 		px = qse_wcstombs (path, &wl, path_mb, &ml);
 		if (px == -2)
 		{
+			/* the static buffer is too small.
+			 * allocate a buffer */
 			path_mb = qse_wcstombsdup (path, mmgr);
-			if (path_mb == QSE_NULL) return -1;
+			if (path_mb == QSE_NULL) 
+			{
+				fio->errnum = QSE_FIO_ENOMEM;
+				return -1;
+			}
 		}
-		else if (px <= -1) return -1;
+		else if (px <= -1) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1;
+		}
 	#endif
 		/*
 		 * rwa -> RDWR   | APPEND
@@ -481,6 +625,7 @@ int qse_fio_init (
 	if (handle == -1) 
 	{
 		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+		fio->errnum = syserr_to_errnum (errno);
 		return -1;
 	}
 
@@ -496,50 +641,12 @@ int qse_fio_init (
 
 #endif
 
-	if (flags & QSE_FIO_TEXT)
-	{
-		qse_tio_t* tio;
-		int opt = 0;
-
-		if (fio->flags & QSE_FIO_IGNOREMBWCERR) opt |= QSE_TIO_IGNOREMBWCERR;
-		if (fio->flags & QSE_FIO_NOAUTOFLUSH) opt |= QSE_TIO_NOAUTOFLUSH;
-
-		tio = qse_tio_open (fio->mmgr, 0, opt);
-		if (tio == QSE_NULL) QSE_THROW_ERR (tio);
-
-		if (qse_tio_attachin (tio, fio_input, fio, QSE_NULL, 4096) <= -1 ||
-		    qse_tio_attachout (tio, fio_output, fio, QSE_NULL, 4096) <= -1)
-		{
-			qse_tio_close (tio);
-			QSE_THROW_ERR (tio);
-		}
-
-		QSE_CATCH_ERR (tio) 
-		{
-		#if defined(_WIN32)
-			CloseHandle (handle);
-		#elif defined(__OS2__)
-			DosClose (handle);
-		#elif defined(__DOS__)
-			close (handle);
-		#else
-			QSE_CLOSE (handle);     
-		#endif
-			return -1;
-		}
-
-		fio->tio = tio;
-	}
-
 	fio->handle = handle;
-
 	return 0;
 }
 
 void qse_fio_fini (qse_fio_t* fio)
 {
-	if (fio->tio != QSE_NULL) qse_tio_close (fio->tio);
-
 	if (!(fio->flags & QSE_FIO_NOCLOSE))
 	{
 #if defined(_WIN32)
@@ -554,24 +661,26 @@ void qse_fio_fini (qse_fio_t* fio)
 	}
 }
 
-qse_cmgr_t* qse_fio_getcmgr (qse_fio_t* fio)
-{
-	return fio->tio? qse_tio_getcmgr (fio->tio): QSE_NULL;
-}
-
-void qse_fio_setcmgr (qse_fio_t* fio, qse_cmgr_t* cmgr)
-{
-	if (fio->tio) qse_tio_setcmgr (fio->tio, cmgr);
-}
-
 qse_fio_hnd_t qse_fio_gethandle (qse_fio_t* fio)
 {
 	return fio->handle;
 }
 
-void qse_fio_sethandle (qse_fio_t* fio, qse_fio_hnd_t handle)
+qse_ubi_t qse_fio_gethandleasubi (qse_fio_t* fio)
 {
-	fio->handle = handle;
+	qse_ubi_t handle;
+
+#if defined(_WIN32)
+	handle.ptr = fio->handle;
+#elif defined(__OS2__)
+	handle.ul = fio->handle;
+#elif defined(__DOS__)
+	handle.i = fio->handle;
+#else
+	handle.i = fio->handle;
+#endif
+
+	return handle;
 }
 
 qse_fio_off_t qse_fio_seek (
@@ -607,6 +716,7 @@ qse_fio_off_t qse_fio_seek (
 		fio->handle, x.LowPart, &x.HighPart, seek_map[origin]);
 	if (x.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
 	{
+		fio->errnum = syserr_to_errnum (GetLastError());
 		return (qse_fio_off_t)-1;
 	}
 	return (qse_fio_off_t)x.QuadPart;
@@ -628,7 +738,11 @@ qse_fio_off_t qse_fio_seek (
 	pos.ulHi = (ULONG)(offset>>32);
 
 	ret = DosSetFilePtrL (fio->handle, pos, seek_map[origin], &newpos);
-	if (ret != NO_ERROR) return (qse_fio_off_t)-1;
+	if (ret != NO_ERROR) 
+	{
+		fio->errnum = syserr_to_errnum (ret);
+		return (qse_fio_off_t)-1;
+	}
 
 	return ((qse_fio_off_t)pos.ulHi << 32) | pos.ulLo;
 #elif defined(__DOS__)
@@ -657,6 +771,7 @@ qse_fio_off_t qse_fio_seek (
 		&tmp,
 		seek_map[origin]) == -1)
 	{
+		fio->errnum = syserr_to_errnum (errno);
 		return (qse_fio_off_t)-1;
 	}
 
@@ -679,7 +794,11 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	    SetEndOfFile(fio->handle) == FALSE) return -1;
 #endif
 	if (qse_fio_seek (fio, size, QSE_FIO_BEGIN) == (qse_fio_off_t)-1) return -1;
-	if (SetEndOfFile(fio->handle) == FALSE) return -1;
+	if (SetEndOfFile(fio->handle) == FALSE) 
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
 
 	return 0;
 #elif defined(__OS2__)
@@ -691,18 +810,30 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	sz.ulHi = (ULONG)(size>>32);
 
 	ret = DosSetFileSizeL (fio->handle, sz);
-	return (ret == NO_ERROR)? 0: -1;
+	if (ret != NO_ERROR)
+	{
+		fio->errnum = syserr_to_errnum (ret);
+		return -1;
+		
+	}
+	return 0;
 
 #elif defined(__DOS__)
 
-	return chsize (fio->handle, size);
+	int n;
+	n = chsize (fio->handle, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 
 #else
-	return QSE_FTRUNCATE (fio->handle, size);
+	int n;
+	n = QSE_FTRUNCATE (fio->handle, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 #endif
 }
 
-static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
+qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 {
 #if defined(_WIN32)
 
@@ -710,41 +841,48 @@ static qse_ssize_t fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (ReadFile (fio->handle, 
-		buf, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
+		buf, (DWORD)size, &count, QSE_NULL) == FALSE) 
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
 	return (qse_ssize_t)count;
 
 #elif defined(__OS2__)
 
+	APIRET ret;
 	ULONG count;
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
-	if (DosRead (fio->handle, 
-		buf, (ULONG)size, &count) != NO_ERROR) return -1;
+	ret = DosRead (fio->handle, buf, (ULONG)size, &count);
+	if (ret != NO_ERROR) 
+	{
+		fio->errnum = syserr_to_errnum (ret);
+		return -1;
+	}
 	return (qse_ssize_t)count;
 
 #elif defined(__DOS__)
 
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
-	return read (fio->handle, buf, size);
+	int n;
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
+	n = read (fio->handle, buf, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 
 #else
 
+	ssize_t n;
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
-	return QSE_READ (fio->handle, buf, size);
+	n = QSE_READ (fio->handle, buf, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 #endif
 }
 
-qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
-{
-	if (fio->tio == QSE_NULL) 
-		return fio_read (fio, buf, size);
-	else
-		return qse_tio_read (fio->tio, buf, size);
-}
-
-static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
+qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 {
 #if defined(_WIN32)
 
@@ -752,37 +890,18 @@ static qse_ssize_t fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (WriteFile (fio->handle,
-		data, (DWORD)size, &count, QSE_NULL) == FALSE) return -1;
+		data, (DWORD)size, &count, QSE_NULL) == FALSE) 
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
 	return (qse_ssize_t)count;
 
 #elif defined(__OS2__)
 
+	APIRET ret;
 	ULONG count;
 
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
-	if (DosWrite(fio->handle, 
-		(PVOID)data, (ULONG)size, &count) != NO_ERROR) return -1;
-	return (qse_ssize_t)count;
-
-#elif defined(__DOS__)
-
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
-	return write (fio->handle, data, size);
-
-#else
-
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
-	return QSE_WRITE (fio->handle, data, size);
-
-#endif
-}
-
-qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
-{
-#if defined(__OS2__)
    	if (fio->flags & QSE_FIO_APPEND)
 	{
 		/* i do this on a best-effort basis */
@@ -791,24 +910,42 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 		pos.ulHi = (ULONG)0;
     		DosSetFilePtrL (fio->handle, pos, FILE_END, &newpos);
     	}
+
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
+	ret = DosWrite(fio->handle, 
+		(PVOID)data, (ULONG)size, &count);
+	if (ret != NO_ERROR) 
+	{
+		fio->errnum = syserr_to_errnum (ret);
+		return -1;
+	}
+	return (qse_ssize_t)count;
+
+#elif defined(__DOS__)
+
+	int n;
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
+	n = write (fio->handle, data, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
+
+#else
+
+	ssize_t n;
+	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t))) 
+		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
+	n = QSE_WRITE (fio->handle, data, size);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 #endif
-
-	if (fio->tio == QSE_NULL)
-		return fio_write (fio, data, size);
-	else
-		return qse_tio_write (fio->tio, data, size);
-}
-
-qse_ssize_t qse_fio_flush (qse_fio_t* fio)
-{
-	if (fio->tio == QSE_NULL) return 0;
-	return qse_tio_flush (fio->tio);
 }
 
 #if defined(_WIN32)
 
 static int get_devname_from_handle (
-	HANDLE handle, qse_char_t* buf, qse_size_t len) 
+	qse_fio_t* fio, qse_char_t* buf, qse_size_t len) 
 {
 	HANDLE map = NULL;
 	void* mem = NULL;
@@ -816,19 +953,24 @@ static int get_devname_from_handle (
 
 	/* create a file mapping object */
 	map = CreateFileMapping (
-		handle, 
+		fio->handle, 
 		NULL,
 		PAGE_READONLY,
 		0, 
 		1,
 		NULL
 	);
-	if (map == NULL) return -1;
+	if (map == NULL) 
+	{
+		mem = MapViewOfFile (map, FILE_MAP_READ, 0, 0, 1);
+		return -1;
+	}	
 
 	/* create a file mapping to get the file name. */
 	mem = MapViewOfFile (map, FILE_MAP_READ, 0, 0, 1);
 	if (mem == NULL)
 	{
+		fio->errnum = syserr_to_errnum (GetLastError());
 		CloseHandle (map);
 		return -1;
 	}
@@ -836,6 +978,7 @@ static int get_devname_from_handle (
 	olen = GetMappedFileName (GetCurrentProcess(), mem, buf, len); 
 	if (olen == 0)
 	{
+		fio->errnum = syserr_to_errnum (GetLastError());
 		UnmapViewOfFile (mem);
 		CloseHandle (map);
 		return -1;
@@ -847,9 +990,9 @@ static int get_devname_from_handle (
 }
 
 static int get_volname_from_handle (
-	HANDLE handle, qse_char_t* buf, qse_size_t len) 
+	qse_fio_t* fio, qse_char_t* buf, qse_size_t len) 
 {
-	if (get_devname_from_handle (handle, buf, len) == -1) return -1;
+	if (get_devname_from_handle (fio, buf, len) == -1) return -1;
 
 	if (qse_strcasebeg (buf, QSE_T("\\Device\\LanmanRedirector\\")))
 	{
@@ -866,6 +1009,7 @@ static int get_volname_from_handle (
 		if (n == 0 /* error */ || 
 		    n > QSE_COUNTOF(drives) /* buffer small */) 
 		{
+			fio->errnum = syserr_to_errnum (GetLastError());
 			return -1;	
 		}
 
@@ -911,25 +1055,41 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	 * if GENERIC_READ is not set in CreateFile, CreateFileMapping fails. 
 	 * so if this fio is opened without QSE_FIO_READ, this function fails.
 	 */
-	if (get_volname_from_handle (
-		fio->handle, name, QSE_COUNTOF(name)) == -1) return -1;
+	if (get_volname_from_handle (fio, name, QSE_COUNTOF(name)) == -1) return -1;
 
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_ATTRIBUTE_READONLY;
-	return (SetFileAttributes (name, flags) == FALSE)? -1: 0;
+	if (SetFileAttributes (name, flags) == FALSE)
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
+	return 0;
 
 #elif defined(__OS2__)
 
+	APIRET n;
 	int flags = FILE_NORMAL;
 	FILESTATUS3L stat;
 	ULONG size = QSE_SIZEOF(stat);
 
-	if (DosQueryFileInfo (fio->handle,
-		FIL_STANDARDL, &stat, size) != NO_ERROR) return -1;
+	n = DosQueryFileInfo (fio->handle, FIL_STANDARDL, &stat, size);
+	if (n != NO_ERROR)
+	{
+		fio->errnum = syserr_to_errnum (n);
+		return -1;
+	}
 
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_READONLY;
 	
 	stat.attrFile = flags;
-	return (DosSetFileInfo (fio->handle, FIL_STANDARDL, &stat, size) != NO_ERROR)? -1: 0;
+	n = DosSetFileInfo (fio->handle, FIL_STANDARDL, &stat, size);
+	if (n != NO_ERROR)
+	{
+		fio->errnum = syserr_to_errnum (n);
+		return -1;
+	}
+
+	return 0;
 
 #elif defined(__DOS__)
 
@@ -941,10 +1101,14 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	/* TODO: fchmod not available. find a way to do this
 	return fchmod (fio->handle, permission); */
 
+	fio->errnum = QSE_FIO_ENOIMPL;
 	return -1;
 
 #else
-	return QSE_FCHMOD (fio->handle, mode);
+	int n;
+	n = QSE_FCHMOD (fio->handle, mode);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 #endif
 }
 
@@ -952,20 +1116,37 @@ int qse_fio_sync (qse_fio_t* fio)
 {
 #if defined(_WIN32)
 
-	return (FlushFileBuffers (fio->handle) == FALSE)? -1: 0;
+	if (FlushFileBuffers (fio->handle) == FALSE)
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
+	return 0;
 
 #elif defined(__OS2__)
 
-	return (DosResetBuffer (fio->handle) == NO_ERROR)? 0: -1;
+	APIRET n;
+	n = DosResetBuffer (fio->handle); 
+	if (n != NO_ERROR)
+	{
+		fio->errnum = syserr_to_errnum (n);
+		return -1;
+	}
+	return 0;
 
 #elif defined(__DOS__)
 
-	return fsync (fio->handle);
+	int n;
+	n = fsync (fio->handle);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 
 #else
 
-	return QSE_FSYNC (fio->handle);
-
+	int n;
+	n = QSE_FSYNC (fio->handle);
+	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
+	return n;
 #endif
 }
 
@@ -976,6 +1157,7 @@ int qse_fio_lock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 	 * fl.l_type = F_RDLCK, F_WRLCK;
 	 * QSE_FCNTL (fio->handle, F_SETLK, &fl);
 	 */
+	fio->errnum = QSE_FIO_ENOIMPL;
 	return -1;
 }
 
@@ -986,29 +1168,8 @@ int qse_fio_unlock (qse_fio_t* fio, qse_fio_lck_t* lck, int flags)
 	 * fl.l_type = F_UNLCK;
 	 * QSE_FCNTL (fio->handle, F_SETLK, &fl);
 	 */
+	fio->errnum = QSE_FIO_ENOIMPL;
 	return -1;
-}
-
-static qse_ssize_t fio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
-{
-	qse_fio_t* fio = (qse_fio_t*)arg;
-	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_DATA) return fio_read (fio, buf, size);
-	
-	/* take no actions for OPEN and CLOSE as they are handled
-	 * by fio */
-	return 0;
-}
-
-static qse_ssize_t fio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
-{
-	qse_fio_t* fio = (qse_fio_t*)arg;
-	QSE_ASSERT (fio != QSE_NULL);
-	if (cmd == QSE_TIO_DATA) return fio_write (fio, buf, size);
-
-	/* take no actions for OPEN and CLOSE as they are handled
-	 * by fio */
-	return 0;
 }
 
 int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)

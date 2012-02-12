@@ -33,15 +33,19 @@
 enum qse_tio_errnum_t
 {
 	QSE_TIO_ENOERR = 0,
+
 	QSE_TIO_ENOMEM, /* out of memory */
 	QSE_TIO_EINVAL, /* invalid parameter */
+	QSE_TIO_EACCES, /**< access denied */
+	QSE_TIO_ENOENT, /**< no such file */
 	QSE_TIO_ENOSPC, /* no more space */
 	QSE_TIO_EILSEQ, /* illegal sequence */
 	QSE_TIO_EICSEQ, /* incomplete sequence */
 	QSE_TIO_EILCHR, /* illegal character */
 	QSE_TIO_ENINPF, /* no input function attached */
 	QSE_TIO_ENOUTF, /* no output function attached */
-	QSE_TIO_EIOERR  /* I/O error */
+
+	QSE_TIO_EOTHER  /* other error */
 };
 
 typedef enum qse_tio_errnum_t qse_tio_errnum_t;
@@ -82,8 +86,8 @@ typedef struct qse_tio_t qse_tio_t;
  * The qse_tio_io_fun_t types define a text I/O handler.
  */
 typedef qse_ssize_t (*qse_tio_io_fun_t) (
+	qse_tio_t*    tio,
 	qse_tio_cmd_t cmd, 
-	void*         arg, 
 	void*         data, 
 	qse_size_t    size
 );
@@ -91,7 +95,6 @@ typedef qse_ssize_t (*qse_tio_io_fun_t) (
 struct qse_tio_io_t
 {
 	qse_tio_io_fun_t fun;
-	void*            arg;	
 	struct
 	{
 		qse_size_t   capa;
@@ -170,14 +173,6 @@ qse_tio_errnum_t qse_tio_geterrnum (
 );
 
 /**
- * The qse_tio_geterrmsg() function translates an error code to a string.
- * @return pointer to a constant string describing the last error occurred.
- */
-const qse_char_t* qse_tio_geterrmsg (
-	qse_tio_t* tio
-);
-
-/**
  * The qse_tio_getcmgr() function returns the character manager.
  */
 qse_cmgr_t* qse_tio_getcmgr (
@@ -199,7 +194,6 @@ void qse_tio_setcmgr (
 int qse_tio_attachin (
 	qse_tio_t*       tio,
 	qse_tio_io_fun_t input,
-	void*            arg,
 	qse_mchar_t*     bufptr,
 	qse_size_t       bufcapa
 );
@@ -219,7 +213,6 @@ int qse_tio_detachin (
 int qse_tio_attachout (
 	qse_tio_t*       tio,
 	qse_tio_io_fun_t output,
-	void*            arg,
 	qse_mchar_t*     bufptr,
 	qse_size_t       bufcapa
 );
