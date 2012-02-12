@@ -92,6 +92,11 @@ qse_tio_errnum_t qse_tio_geterrnum (qse_tio_t* tio)
 	return tio->errnum;
 }
 
+void qse_tio_seterrnum (qse_tio_t* tio, qse_tio_errnum_t errnum)
+{
+	tio->errnum = errnum;
+}
+
 qse_cmgr_t* qse_tio_getcmgr (qse_tio_t* tio)
 {
 	return tio->cmgr;

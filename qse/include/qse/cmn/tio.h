@@ -166,10 +166,19 @@ int qse_tio_fini (
 );
 
 /**
- * The qse_tio_geterrnum() function return an error code.
+ * The qse_tio_geterrnum() function returns the current error code.
  */
 qse_tio_errnum_t qse_tio_geterrnum (
 	qse_tio_t* tio
+);
+
+/**
+ * The qse_tio_geterrnum() function changes the current error code.
+ * typically from within the I/O handler attached.
+ */
+void qse_tio_seterrnum (
+	qse_tio_t*       tio,
+	qse_tio_errnum_t errnum
 );
 
 /**

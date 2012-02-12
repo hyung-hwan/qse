@@ -172,7 +172,7 @@ int qse_sio_init (
 	if (qse_tio_attachin (&sio->tio.io, file_input, sio->inbuf, QSE_COUNTOF(sio->inbuf)) <= -1 ||
 	    qse_tio_attachout (&sio->tio.io, file_output, sio->outbuf, QSE_COUNTOF(sio->outbuf)) <= -1)
 	{
-		if (sio->errnum = QSE_SIO_ENOERR) 
+		if (sio->errnum == QSE_SIO_ENOERR) 
 			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
 		qse_tio_fini (&sio->tio.io);	
 		qse_fio_fini (&sio->u.file);
