@@ -19,7 +19,7 @@
  */
 
 #include <qse/cmn/tio.h>
-#include <qse/cmn/chr.h>
+#include <qse/cmn/mbwc.h>
 
 qse_ssize_t qse_tio_writembs (
 	qse_tio_t* tio, const qse_mchar_t* mptr, qse_size_t mlen)

@@ -500,7 +500,7 @@ static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name)
 #endif
 }
 
-static insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
+static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
