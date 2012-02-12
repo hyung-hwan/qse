@@ -92,28 +92,6 @@ qse_tio_errnum_t qse_tio_geterrnum (qse_tio_t* tio)
 	return tio->errnum;
 }
 
-const qse_char_t* qse_tio_geterrmsg (qse_tio_t* tio)
-{
-	static const qse_char_t* __errmsg[] =
-	{
-		QSE_T("no error"),
-		QSE_T("out of memory"),
-		QSE_T("invalid parameter"),
-		QSE_T("no more space"),
-		QSE_T("illegal multibyte sequence"),
-		QSE_T("incomplete multibyte sequence"),
-		QSE_T("illegal wide character"),
-		QSE_T("no input function attached"),
-		QSE_T("no output function attached"),
-		QSE_T("I/O error"),
-		QSE_T("unknown error")
-	};
-
-	return __errmsg[
-		(tio->errnum < 0 || tio->errnum >= QSE_COUNTOF(__errmsg))? 
-		QSE_COUNTOF(__errmsg) - 1: tio->errnum];
-}
-
 qse_cmgr_t* qse_tio_getcmgr (qse_tio_t* tio)
 {
 	return tio->cmgr;
@@ -125,7 +103,7 @@ void qse_tio_setcmgr (qse_tio_t* tio, qse_cmgr_t* cmgr)
 }
 
 int qse_tio_attachin (
-	qse_tio_t* tio, qse_tio_io_fun_t input, void* arg,
+	qse_tio_t* tio, qse_tio_io_fun_t input,
 	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
 	qse_mchar_t* xbufptr;
@@ -152,10 +130,11 @@ int qse_tio_attachin (
 		}
 	}
 
-	if (input (QSE_TIO_OPEN, arg, QSE_NULL, 0) <= -1) 
+	tio->errnum = QSE_TIO_ENOERR;
+	if (input (tio, QSE_TIO_OPEN, QSE_NULL, 0) <= -1) 
 	{
+		if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 		if (xbufptr != bufptr) QSE_MMGR_FREE (tio->mmgr, xbufptr);
-		tio->errnum = QSE_TIO_EIOERR;
 		return -1;
 	}
 
@@ -167,7 +146,6 @@ int qse_tio_attachin (
 	 */
 
 	tio->in.fun = input;
-	tio->in.arg = arg;
 	tio->in.buf.ptr = xbufptr;
 	tio->in.buf.capa = bufcapa;
 
@@ -185,10 +163,10 @@ static int detach_in (qse_tio_t* tio, int fini)
 
 	if (tio->in.fun)
 	{
-		if (tio->in.fun (
-			QSE_TIO_CLOSE, tio->in.arg, QSE_NULL, 0) <= -1) 
+		tio->errnum = QSE_TIO_ENOERR;
+		if (tio->in.fun (tio, QSE_TIO_CLOSE, QSE_NULL, 0) <= -1) 
 		{
-			tio->errnum = QSE_TIO_EIOERR;
+			if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 
 			/* returning with an error here allows you to retry detaching */
 			if (!fini) return -1; 
@@ -205,7 +183,6 @@ static int detach_in (qse_tio_t* tio, int fini)
 		}
 
 		tio->in.fun = QSE_NULL;
-		tio->in.arg = QSE_NULL;
 		tio->in.buf.ptr = QSE_NULL;
 		tio->in.buf.capa = 0;
 	}
@@ -219,7 +196,7 @@ int qse_tio_detachin (qse_tio_t* tio)
 }
 
 int qse_tio_attachout (
-	qse_tio_t* tio, qse_tio_io_fun_t output, void* arg,
+	qse_tio_t* tio, qse_tio_io_fun_t output, 
 	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
 	qse_mchar_t* xbufptr;
@@ -246,15 +223,15 @@ int qse_tio_attachout (
 		}
 	}
 
-	if (output (QSE_TIO_OPEN, arg, QSE_NULL, 0) == -1) 
+	tio->errnum = QSE_TIO_ENOERR;
+	if (output (tio, QSE_TIO_OPEN, QSE_NULL, 0) == -1) 
 	{
+		if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 		if (xbufptr != bufptr) QSE_MMGR_FREE (tio->mmgr, xbufptr);
-		tio->errnum = QSE_TIO_EIOERR;
 		return -1;
 	}
 
 	tio->out.fun = output;
-	tio->out.arg = arg;
 	tio->out.buf.ptr = xbufptr;
 	tio->out.buf.capa = bufcapa;
 
@@ -272,10 +249,10 @@ static int detach_out (qse_tio_t* tio, int fini)
 	{
 		qse_tio_flush (tio); /* don't care about the result */
 
-		if (tio->out.fun (
-			QSE_TIO_CLOSE, tio->out.arg, QSE_NULL, 0) <= -1) 
+		tio->errnum = QSE_TIO_ENOERR;
+		if (tio->out.fun (tio, QSE_TIO_CLOSE, QSE_NULL, 0) <= -1) 
 		{
-			tio->errnum = QSE_TIO_EIOERR;
+			if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 			/* returning with an error here allows you to retry detaching */
 			if (!fini) return -1;
 
@@ -291,7 +268,6 @@ static int detach_out (qse_tio_t* tio, int fini)
 		}
 
 		tio->out.fun = QSE_NULL;
-		tio->out.arg = QSE_NULL;
 		tio->out.buf.ptr = QSE_NULL;
 		tio->out.buf.capa = 0;
 	}
@@ -320,13 +296,13 @@ qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 	cur = tio->out.buf.ptr;
 	while (left > 0) 
 	{
-		n = tio->out.fun (
-			QSE_TIO_DATA, tio->out.arg, cur, left);
+		tio->errnum = QSE_TIO_ENOERR;
+		n = tio->out.fun (tio, QSE_TIO_DATA, cur, left);
 		if (n <= -1) 
 		{
+			if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 			QSE_MEMCPY (tio->out.buf.ptr, cur, left);
 			tio->outbuf_len = left;
-			tio->errnum = QSE_TIO_EIOERR;
 			return -1;
 		}
 		if (n == 0) 

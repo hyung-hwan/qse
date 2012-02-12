@@ -34,8 +34,6 @@
 #	include <io.h>
 #else
 #	include "syscall.h"
-#	include <fcntl.h>
-#	include <sys/wait.h>
 #	if defined(HAVE_SPAWN_H)
 #		include <spawn.h>
 #	endif
@@ -43,8 +41,154 @@
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (pio)
 
-static qse_ssize_t pio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t pio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
+static qse_ssize_t pio_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+static qse_ssize_t pio_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+
+#if defined(_WIN32)
+static qse_pio_errnum_t syserr_to_errnum (DWORD e)
+{
+
+	switch (e)
+	{
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
+		case ERROR_INVALID_NAME:
+			return QSE_PIO_EINVAL;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_PIO_ENOENT;
+
+		case ERROR_ACCESS_DENIED:
+			return QSE_PIO_EACCES;
+
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_PIO_ENOMEM;
+
+		case ERROR_ALREADY_EXISTS:
+		case ERROR_FILE_EXISTS:
+			return QSE_PIO_EEXIST;
+
+		case ERROR_BROKEN_PIPE:
+			return QSE_PIO_EPIPE;
+
+		default:
+			return QSE_PIO_ESUBSYS;
+	}
+}
+#elif defined(__OS2__)
+static qse_pio_errnum_t syserr_to_errnum (APIRET e)
+{
+	switch (e)
+	{
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
+		case ERROR_INVALID_NAME:
+			return QSE_PIO_EINVAL;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_PIO_ENOENT;
+
+		case ERROR_ACCESS_DENIED:
+			return QSE_PIO_EACCES;
+
+		case ERROR_NOT_ENOUGH_MEMORY:
+			return QSE_PIO_ENOMEM;
+
+		case ERROR_ALREADY_EXISTS:
+			return QSE_PIO_EEXIST;
+
+		case ERROR_BROKEN_PIPE:
+			return QSE_PIO_EPIPE;
+
+		default:
+			return QSE_PIO_ESUBSYS;
+	}
+}
+#elif defined(__DOS__)
+static qse_pio_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_PIO_ENOMEM;
+
+		case EINVAL:
+			return QSE_PIO_EINVAL;
+
+		case ENOENT:
+			return QSE_PIO_ENOENT;
+
+		case EACCES:
+			return QSE_PIO_EACCES;
+
+		case EEXIST:
+			return QSE_PIO_EEXIST;
+	
+		default:
+			return QSE_PIO_ESUBSYS;
+	}
+}
+#else
+static qse_pio_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_PIO_ENOMEM;
+
+		case EINVAL:
+			return QSE_PIO_EINVAL;
+
+		case ENOENT:
+			return QSE_PIO_ENOENT;
+
+		case EACCES:
+			return QSE_PIO_EACCES;
+
+		case EEXIST:
+			return QSE_PIO_EEXIST;
+	
+		case EINTR:
+			return QSE_PIO_EINTR;
+
+		case EPIPE:
+			return QSE_PIO_EPIPE;
+
+		default:
+			return QSE_PIO_ESUBSYS;
+	}
+}
+#endif
+
+static qse_pio_errnum_t tio_errnum_to_pio_errnum (qse_tio_t* tio)
+{
+	/* i only translate error codes that's relevant
+	 * to pio. all other errors becom QSE_PIO_EOTHER */
+	switch (tio->errnum)
+	{
+		case QSE_TIO_ENOMEM:
+			return QSE_PIO_ENOMEM;
+		case QSE_TIO_EINVAL:
+			return QSE_PIO_EINVAL;
+		case QSE_TIO_ENOENT:
+			return QSE_PIO_ENOENT;
+		case QSE_TIO_EACCES:
+			return QSE_PIO_EACCES;
+		case QSE_TIO_EILSEQ:
+			return QSE_PIO_EILSEQ;
+		case QSE_TIO_EICSEQ:
+			return QSE_PIO_EICSEQ;
+		case QSE_TIO_EILCHR:
+			return QSE_PIO_EILCHR;
+		default:
+			return QSE_PIO_EOTHER;
+	}
+}
 
 qse_pio_t* qse_pio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext, 
@@ -294,17 +438,14 @@ static int assert_executable (qse_pio_t* pio, const qse_mchar_t* path)
 
 	if (QSE_ACCESS(path, X_OK) <= -1) 
 	{
-		if (errno == EACCES) pio->errnum = QSE_PIO_EACCES;
-		else if (errno == ENOENT) pio->errnum = QSE_PIO_ENOENT;
-		else if (errno == ENOMEM) pio->errnum = QSE_PIO_ENOMEM;
+		pio->errnum = syserr_to_errnum (errno);
 		return -1;
 	}
 
-	if (QSE_LSTAT(path, &st) <= -1)
+	/*if (QSE_LSTAT(path, &st) <= -1)*/
+	if (QSE_STAT(path, &st) <= -1)
 	{
-		if (errno == EACCES) pio->errnum = QSE_PIO_EACCES;
-		else if (errno == ENOENT) pio->errnum = QSE_PIO_ENOENT;
-		else if (errno == ENOMEM) pio->errnum = QSE_PIO_ENOMEM;
+		pio->errnum = syserr_to_errnum (errno);
 		return -1;
 	}
 
@@ -1063,7 +1204,11 @@ int qse_pio_init (
 		posix_spawn_file_actions_destroy (&fa);
 		fa_inited = 0;
 	}
-	if (spawn_ret != 0) goto oops;
+	if (spawn_ret != 0) 
+	{
+		pio->errnum = syserr_to_errnum (errno);
+		goto oops;
+	}
 
 	pio->child = pid;
 	if (flags & QSE_PIO_WRITEIN)
@@ -1293,20 +1438,25 @@ int qse_pio_init (
 		{
 			int r;
 
-			tio[i] = qse_tio_open (pio->mmgr, 0, topt);
+			tio[i] = qse_tio_open (pio->mmgr, QSE_SIZEOF(&pio->pin[i]), topt);
 			if (tio[i] == QSE_NULL) 
 			{
 				pio->errnum = QSE_PIO_ENOMEM;
 				goto oops;
 			}
+			
+			/**(qse_pio_pin_t**)qse_tio_getxtn(tio[i]) = &pio->pin[i]; */
+			*(qse_pio_pin_t**)QSE_XTN(tio[i]) = &pio->pin[i];
 
 			r = (i == QSE_PIO_IN)?
-				qse_tio_attachout (
-					tio[i], pio_output, &pio->pin[i], QSE_NULL, 4096):
-				qse_tio_attachin (
-					tio[i], pio_input, &pio->pin[i], QSE_NULL, 4096);
-
-			if (r <= -1) goto oops;
+				qse_tio_attachout (tio[i], pio_output, QSE_NULL, 4096):
+				qse_tio_attachin (tio[i], pio_input, QSE_NULL, 4096);
+			if (r <= -1) 
+			{
+				if (pio->errnum == QSE_PIO_ENOERR) 
+					pio->errnum = tio_errnum_to_pio_errnum (tio[i]);
+				goto oops;
+			}
 
 			pio->pin[i].tio = tio[i];
 		}
@@ -1402,28 +1552,6 @@ qse_pio_errnum_t qse_pio_geterrnum (qse_pio_t* pio)
 	return pio->errnum;
 }
 
-const qse_char_t* qse_pio_geterrmsg (qse_pio_t* pio)
-{
-	static const qse_char_t* __errstr[] =
-	{
-		QSE_T("no error"),
-		QSE_T("out of memory"),
-		QSE_T("invalid parameter"),
-		QSE_T("no handle available"),
-		QSE_T("child process not valid"),
-		QSE_T("interruped"),
-		QSE_T("broken pipe"),
-		QSE_T("access denied"),
-		QSE_T("no such file"),
-		QSE_T("systeam call error"),
-		QSE_T("unknown error")
-	};
-
-	return __errstr[
-		(pio->errnum < 0 || pio->errnum >= QSE_COUNTOF(__errstr))? 
-		QSE_COUNTOF(__errstr) - 1: pio->errnum];
-}
-
 qse_cmgr_t* qse_pio_getcmgr (qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->pin[hid].tio? 
@@ -1493,7 +1621,7 @@ static qse_ssize_t pio_read (
 		/* ReadFile receives ERROR_BROKEN_PIPE when the write end
 		 * is closed in the child process */
 		if (GetLastError() == ERROR_BROKEN_PIPE) return 0;
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = syserr_to_errnum(GetLastError());
 		return -1;
 	}
 	return (qse_ssize_t)count;
@@ -1507,7 +1635,7 @@ static qse_ssize_t pio_read (
 	if (rc != NO_ERROR)
 	{
     		if (rc == ERROR_BROKEN_PIPE) return 0; /* TODO: check this */
-    		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = syserr_to_errnum(rc);
     		return -1;
     	}
 	return (qse_ssize_t)count;
@@ -1519,7 +1647,7 @@ static qse_ssize_t pio_read (
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
 
 	n = read (hnd, buf, size);
-	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
+	if (n <= -1) pio->errnum = syserr_to_errnum(errno);
 	return n;
 
 #else
@@ -1529,7 +1657,7 @@ static qse_ssize_t pio_read (
 
 reread:
 	n = QSE_READ (hnd, buf, size);
-	if (n == -1) 
+	if (n <= -1) 
 	{
 		if (errno == EINTR)
 		{
@@ -1537,13 +1665,9 @@ reread:
 				pio->errnum = QSE_PIO_EINTR;
 			else goto reread;
 		}
-		else if (errno == EPIPE)
-		{
-			pio->errnum = QSE_PIO_EPIPE;
-		}
 		else
 		{
-			pio->errnum = QSE_PIO_ESUBSYS;
+			pio->errnum = syserr_to_errnum (errno);
 		}
 	}
 
@@ -1557,7 +1681,16 @@ qse_ssize_t qse_pio_read (
 	if (pio->pin[hid].tio == QSE_NULL) 
 		return pio_read (pio, buf, size, pio->pin[hid].handle);
 	else
-		return qse_tio_read (pio->pin[hid].tio, buf, size);
+	{
+		qse_ssize_t n;
+
+		pio->errnum = QSE_PIO_ENOERR;
+		n = qse_tio_read (pio->pin[hid].tio, buf, size);
+		if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
+			pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
+
+		return n;
+	}
 }
 
 static qse_ssize_t pio_write (
@@ -1578,7 +1711,7 @@ static qse_ssize_t pio_write (
 	{
 		/* the stream is already closed */
 		pio->errnum = QSE_PIO_ENOHND;
-		return -1;
+		return (qse_ssize_t)-1;
 	}
 
 #if defined(_WIN32)
@@ -1588,8 +1721,7 @@ static qse_ssize_t pio_write (
 
 	if (WriteFile (hnd, data, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
-		pio->errnum = (GetLastError() == ERROR_BROKEN_PIPE)?
-			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS;
+		pio->errnum = syserr_to_errnum(GetLastError());
 		return -1;
 	}
 	return (qse_ssize_t)count;
@@ -1602,8 +1734,7 @@ static qse_ssize_t pio_write (
 	rc = DosWrite (hnd, (PVOID)data, (ULONG)size, &count);
 	if (rc != NO_ERROR)
 	{
-    		pio->errnum = (rc == ERROR_BROKEN_PIPE)? 
-			QSE_PIO_EPIPE: QSE_PIO_ESUBSYS; /* TODO: check this */
+		pio->errnum = syserr_to_errnum(rc);
     		return -1;
 	}
 	return (qse_ssize_t)count;
@@ -1614,7 +1745,7 @@ static qse_ssize_t pio_write (
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
 
 	n = write (hnd, data, size);
-	if (n == -1) pio->errnum = QSE_PIO_ESUBSYS;
+	if (n <= -1) pio->errnum = syserro_to_errnum (errno);
 	return n;
 
 #else
@@ -1624,7 +1755,7 @@ static qse_ssize_t pio_write (
 
 rewrite:
 	n = QSE_WRITE (hnd, data, size);
-	if (n == -1) 
+	if (n <= -1) 
 	{
 		if (errno == EINTR)
 		{
@@ -1632,13 +1763,9 @@ rewrite:
 				pio->errnum = QSE_PIO_EINTR;
 			else goto rewrite;
 		}
-		else if (errno == EPIPE)
-		{
-			pio->errnum = QSE_PIO_EPIPE;
-		}
 		else
 		{
-			pio->errnum = QSE_PIO_ESUBSYS;
+			pio->errnum = syserr_to_errnum (errno);
 		}
 	}
 	return n;
@@ -1653,13 +1780,30 @@ qse_ssize_t qse_pio_write (
 	if (pio->pin[hid].tio == QSE_NULL)
 		return pio_write (pio, data, size, pio->pin[hid].handle);
 	else
-		return qse_tio_write (pio->pin[hid].tio, data, size);
+	{
+		qse_ssize_t n;
+
+		pio->errnum = QSE_PIO_ENOERR;	
+		n = qse_tio_write (pio->pin[hid].tio, data, size);
+		if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
+			pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
+
+		return n;
+	}
 }
 
 qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
 {
+	qse_ssize_t n;
+
 	if (pio->pin[hid].tio == QSE_NULL) return 0;
-	return qse_tio_flush (pio->pin[hid].tio);
+
+	pio->errnum = QSE_PIO_ENOERR;	
+	n = qse_tio_flush (pio->pin[hid].tio);
+	if (n <= -1 && pio->errnum == QSE_PIO_ENOERR) 
+		pio->errnum = tio_errnum_to_pio_errnum (pio->pin[hid].tio);
+
+	return n;
 }
 
 void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
@@ -1815,7 +1959,7 @@ int qse_pio_wait (qse_pio_t* pio)
 					pio->errnum = QSE_PIO_EINTR;
 				else continue;
 			}
-			else pio->errnum = QSE_PIO_ESUBSYS;
+			else pio->errnum = syserr_to_errnum (errno);
 
 			break;
 		}
@@ -1910,12 +2054,13 @@ int qse_pio_kill (qse_pio_t* pio)
 }
 
 static qse_ssize_t pio_input (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
-	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
-	QSE_ASSERT (pin != QSE_NULL);
 	if (cmd == QSE_TIO_DATA) 
 	{
+		/*qse_pio_pin_t* pin = (qse_pio_pin_t*)qse_tio_getxtn(tio);*/
+		qse_pio_pin_t* pin = *(qse_pio_pin_t**)QSE_XTN(tio);
+		QSE_ASSERT (pin != QSE_NULL);
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_read (pin->self, buf, size, pin->handle);
 	}
@@ -1926,12 +2071,13 @@ static qse_ssize_t pio_input (
 }
 
 static qse_ssize_t pio_output (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
-	qse_pio_pin_t* pin = (qse_pio_pin_t*)arg;
-	QSE_ASSERT (pin != QSE_NULL);
 	if (cmd == QSE_TIO_DATA) 
 	{
+		/*qse_pio_pin_t* pin = (qse_pio_pin_t*)qse_tio_getxtn(tio);*/
+		qse_pio_pin_t* pin = *(qse_pio_pin_t**)QSE_XTN(tio);
+		QSE_ASSERT (pin != QSE_NULL);
 		QSE_ASSERT (pin->self != QSE_NULL);
 		return pio_write (pin->self, buf, size, pin->handle);
 	}

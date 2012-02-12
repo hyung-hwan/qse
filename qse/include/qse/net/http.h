@@ -53,14 +53,52 @@ typedef struct qse_http_version_t qse_http_version_t;
  */
 enum qse_http_method_t
 {
-	QSE_HTTP_GET,
+	QSE_HTTP_OTHER,
+
+	/* rfc 2616 */
 	QSE_HTTP_HEAD,
+	QSE_HTTP_GET,
 	QSE_HTTP_POST,
 	QSE_HTTP_PUT,
 	QSE_HTTP_DELETE,
-	QSE_HTTP_TRACE,
 	QSE_HTTP_OPTIONS,
+	QSE_HTTP_TRACE,
 	QSE_HTTP_CONNECT
+
+#if 0
+	/* rfc 2518 */
+	QSE_HTTP_PROPFIND,
+	QSE_HTTP_PROPPATCH,
+	QSE_HTTP_MKCOL,
+	QSE_HTTP_COPY,
+	QSE_HTTP_MOVE,
+	QSE_HTTP_LOCK,
+	QSE_HTTP_UNLOCK,
+
+	/* rfc 3253 */
+	QSE_HTTP_VERSION_CONTROL,
+	QSE_HTTP_REPORT,
+	QSE_HTTP_CHECKOUT,
+	QSE_HTTP_CHECKIN,
+	QSE_HTTP_UNCHECKOUT,
+	QSE_HTTP_MKWORKSPACE,
+	QSE_HTTP_UPDATE,
+	QSE_HTTP_LABEL,
+	QSE_HTTP_MERGE,
+	QSE_HTTP_BASELINE_CONTROL,
+	QSE_HTTP_MKACTIVITY,
+	
+	/* microsoft */
+	QSE_HTTP_BPROPFIND,
+	QSE_HTTP_BPROPPATCH,
+	QSE_HTTP_BCOPY,
+	QSE_HTTP_BDELETE,
+	QSE_HTTP_BMOVE,
+	QSE_HTTP_NOTIFY,
+	QSE_HTTP_POLL,
+	QSE_HTTP_SUBSCRIBE,
+	QSE_HTTP_UNSUBSCRIBE,
+#endif
 };
 
 typedef enum qse_http_method_t qse_http_method_t;
@@ -125,18 +163,16 @@ int qse_comparehttpversions (
 	const qse_http_version_t* v2
 );
 
-const qse_mchar_t* qse_gethttpmethodname (
+const qse_mchar_t* qse_httpmethodtombs (
 	qse_http_method_t type
 );
 
-int qse_gethttpmethodtype (
-	const qse_mchar_t* name, 
-	qse_http_method_t* method
+qse_http_method_t qse_mbstohttpmethod (
+	const qse_mchar_t* name
 );
 
-int qse_gethttpmethodtypefromstr (
-	const qse_mcstr_t* name,
-	qse_http_method_t* type
+qse_http_method_t qse_mcstrtohttpmethod (
+	const qse_mcstr_t* name
 );
 
 int qse_parsehttprange (

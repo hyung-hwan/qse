@@ -32,39 +32,52 @@
 
 enum qse_sio_flag_t
 {
-	QSE_SIO_IGNOREMBWCERR = QSE_FIO_IGNOREMBWCERR,
-	QSE_SIO_NOAUTOFLUSH   = QSE_FIO_NOAUTOFLUSH,
+	/* ensure that these enumerators never overlap with
+	 * qse_fio_flag_t enumerators. you can use values between
+	 * (1<<0) and (1<<7) inclusive reserved in qse_fio_flag_t.
+	 * the range is represented by QSE_FIO_RESERVED. */
+	QSE_SIO_URI           = (1 << 0),
+	QSE_SIO_IGNOREMBWCERR = (1 << 1),
+	QSE_SIO_NOAUTOFLUSH   = (1 << 2),
 
+	/* ensure that the following enumerators are one of
+	 * qse_fio_flags_t enumerators */
 	QSE_SIO_HANDLE        = QSE_FIO_HANDLE,
 	QSE_SIO_TEMPORARY     = QSE_FIO_TEMPORARY,
 	QSE_SIO_NOCLOSE       = QSE_FIO_NOCLOSE,
-
 	QSE_SIO_READ          = QSE_FIO_READ,
 	QSE_SIO_WRITE         = QSE_FIO_WRITE,
 	QSE_SIO_APPEND        = QSE_FIO_APPEND,
-
 	QSE_SIO_CREATE        = QSE_FIO_CREATE,
 	QSE_SIO_TRUNCATE      = QSE_FIO_TRUNCATE,
 	QSE_SIO_EXCLUSIVE     = QSE_FIO_EXCLUSIVE,
 	QSE_SIO_SYNC          = QSE_FIO_SYNC,
 	QSE_SIO_NOFOLLOW      = QSE_FIO_NOFOLLOW,
-
 	QSE_SIO_NOSHREAD      = QSE_FIO_NOSHREAD,
 	QSE_SIO_NOSHWRITE     = QSE_FIO_NOSHWRITE,
 	QSE_SIO_NOSHDELETE    = QSE_FIO_NOSHDELETE,
-
 	QSE_SIO_RANDOM        = QSE_FIO_RANDOM,
 	QSE_SIO_SEQUENTIAL    = QSE_FIO_SEQUENTIAL
 };
 
-typedef qse_tio_errnum_t qse_sio_errnum_t;
-#define QSE_SIO_ENOERR QSE_TIO_ENOERR
-#define QSE_SIO_ENOMEM QSE_TIO_ENOMEM 
-#define QSE_SIO_ENOSPC QSE_TIO_ENOSPC
-#define QSE_SIO_EILSEQ QSE_TIO_EILSEQ 
-#define QSE_SIO_EICSEQ QSE_TIO_EICSEQ
-#define QSE_SIO_EILCHR QSE_TIO_EILCHR
-#define QSE_SIO_ERRNUM(sio) QSE_TIO_ERRNUM(&((sio)->tio))
+enum qse_sio_errnum_t
+{
+	QSE_SIO_ENOERR = 0, /**< no error */
+
+	QSE_SIO_ENOMEM,     /**< out of memory */
+	QSE_SIO_EINVAL,     /**< invalid parameter */
+	QSE_SIO_EACCES,     /**< access denied */
+	QSE_SIO_ENOENT,     /**< no such file */
+	QSE_SIO_EEXIST,     /**< already exist */
+	QSE_SIO_EINTR,     /**< already exist */
+	QSE_SIO_EILSEQ,     /**< illegal sequence */
+	QSE_SIO_EICSEQ,     /**< incomplete sequence */
+	QSE_SIO_EILCHR,     /**< illegal character */
+	QSE_SIO_ESUBSYS,    /**< subsystem(system call) error */
+
+	QSE_SIO_EOTHER      /**< other error */
+};
+typedef enum qse_sio_errnum_t qse_sio_errnum_t;
 
 typedef qse_fio_off_t qse_sio_pos_t;
 typedef qse_fio_hnd_t qse_sio_hnd_t;
@@ -82,17 +95,59 @@ typedef struct qse_sio_t qse_sio_t;
 
 struct qse_sio_t
 {
-	QSE_DEFINE_COMMON_FIELDS (tio)
-	qse_fio_t        fio;
-	qse_tio_t        tio;
+	QSE_DEFINE_COMMON_FIELDS (sio)
+	qse_sio_errnum_t errnum;
 
-	qse_mchar_t      inbuf[2048];
-	qse_mchar_t      outbuf[2048];
+	/*
+	depending on the stream type... FILE, FIFO, TCP, UDP
+	qse_sio_type_t type;
+	*/
+	union
+	{
+		qse_fio_t file;
+		int sck;
+	} u;
+
+	struct
+	{
+		qse_tio_t  io;
+		qse_sio_t* xtn; /* static extension for tio */
+	} tio;
+
+	qse_mchar_t inbuf[2048];
+	qse_mchar_t outbuf[2048];
 
 #if defined(_WIN32)
-	int              status;
+	int status;
 #endif
 };
+
+/** access the @a errnum field of the #qse_sio_t structure */
+#define QSE_SIO_ERRNUM(sio)    ((sio)->errnum)
+
+#if 0
+typedef struct qse_sio_uri_t qse_sio_uri_t;
+struct qse_sio_uri_t
+{
+	enum
+	{
+		QSE_SIO_FILE,
+		QSE_SIO_FIFO,
+		QSE_SIO_PIPE,
+		QSE_SIO_TCP,
+		QSE_SIO_UDP
+	};
+
+	union
+	{
+		const qse_char_t* file;
+		const qse_char_t* fifo;
+		/* nothing needed for pipe */
+	/*	qse_ipap_t        tcp;
+		qse_ipap_t        udp; */
+	} u;
+};
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -154,6 +209,10 @@ void qse_sio_setcmgr (
 );
 
 qse_sio_hnd_t qse_sio_gethandle (
+	qse_sio_t* sio
+);
+
+qse_ubi_t qse_sio_gethandleasubi (
 	qse_sio_t* sio
 );
 

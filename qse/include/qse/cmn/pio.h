@@ -126,15 +126,22 @@ enum qse_pio_option_t
 enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0, /**< no error */
+
 	QSE_PIO_ENOMEM,     /**< out of memory */
 	QSE_PIO_EINVAL,     /**< invalid parameter */
-	QSE_PIO_ENOHND,     /**< no handle available */
-	QSE_PIO_ECHILD,     /**< the child is not valid */
-	QSE_PIO_EINTR,      /**< interrupted */
-	QSE_PIO_EPIPE,      /**< broken pipe */
 	QSE_PIO_EACCES,     /**< access denied */
 	QSE_PIO_ENOENT,     /**< no such file */
-	QSE_PIO_ESUBSYS     /**< subsystem(system call) error */
+	QSE_PIO_EEXIST,     /**< already exist */
+	QSE_PIO_EINTR,      /**< interrupted */
+	QSE_PIO_ENOHND,     /**< no handle available */
+	QSE_PIO_ECHILD,     /**< the child is not valid */
+	QSE_PIO_EPIPE,      /**< broken pipe */
+	QSE_PIO_EILSEQ,     /**< illegal sequence */
+	QSE_PIO_EICSEQ,     /**< incomplete sequence */
+	QSE_PIO_EILCHR,     /**< illegal character */
+	QSE_PIO_ESUBSYS,    /**< subsystem error */
+
+	QSE_PIO_EOTHER     /**< unknown error */
 };
 typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 
@@ -278,15 +285,6 @@ void qse_pio_setoption (
  * @return error number
  */
 qse_pio_errnum_t qse_pio_geterrnum (
-	qse_pio_t* pio /**< pio object */
-);
-
-/**
- * The qse_pio_geterrmsg() function returns the pointer to a constant string 
- * describing the last error occurred.
- * @return error message
- */
-const qse_char_t* qse_pio_geterrmsg (
 	qse_pio_t* pio /**< pio object */
 );
 

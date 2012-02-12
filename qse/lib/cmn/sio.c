@@ -21,12 +21,72 @@
 #include <qse/cmn/sio.h>
 #include "mem.h"
 
-static qse_ssize_t __sio_input (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
-static qse_ssize_t __sio_output (qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size);
-
 #if defined(_WIN32)
 #	include <windows.h> /* for the UGLY hack */
+#elif defined(__OS2__)
+	/* nothing */
+#elif defined(__DOS__)
+	/* nothing */
+#else
+#	include "syscall.h"
 #endif
+
+static qse_ssize_t file_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+static qse_ssize_t file_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+
+static qse_ssize_t socket_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+static qse_ssize_t socket_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+
+static qse_sio_errnum_t fio_errnum_to_sio_errnum (qse_fio_t* fio)
+{
+/* TODO:  finish this after adding fio->errnum */
+	switch (fio->errnum)
+	{
+		case QSE_FIO_ENOMEM:
+			return QSE_SIO_ENOMEM;
+		case QSE_FIO_EINVAL:
+			return QSE_SIO_EINVAL;
+		case QSE_FIO_EACCES:
+			return QSE_SIO_EACCES;
+		case QSE_FIO_ENOENT:
+			return QSE_SIO_ENOENT;
+		case QSE_FIO_EEXIST:
+			return QSE_SIO_EEXIST;
+		case QSE_FIO_EINTR:
+			return QSE_SIO_EINTR;
+		case QSE_FIO_ESUBSYS:
+			return QSE_SIO_ESUBSYS;
+		default:
+			return QSE_SIO_EOTHER;
+	}
+}
+
+static qse_sio_errnum_t tio_errnum_to_sio_errnum (qse_tio_t* tio)
+{
+	switch (tio->errnum)
+	{
+		case QSE_TIO_ENOMEM:
+			return QSE_SIO_ENOMEM;
+		case QSE_TIO_EINVAL:
+			return QSE_SIO_EINVAL;
+		case QSE_TIO_EACCES:
+			return QSE_SIO_EACCES;
+		case QSE_TIO_ENOENT:
+			return QSE_SIO_ENOENT;
+		case QSE_TIO_EILSEQ:
+			return QSE_SIO_EILSEQ;
+		case QSE_TIO_EICSEQ:
+			return QSE_SIO_EICSEQ;
+		case QSE_TIO_EILCHR:
+			return QSE_SIO_EILCHR;
+		default:
+			return QSE_SIO_EOTHER;
+	}
+}
 
 qse_sio_t* qse_sio_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* file, int flags)
@@ -84,27 +144,38 @@ int qse_sio_init (
 	mode = QSE_FIO_RUSR | QSE_FIO_WUSR | 
 	       QSE_FIO_RGRP | QSE_FIO_ROTH;
 
-	/* sio flags redefines most fio flags. fio can be opened in the
-	 * text mode. that way, fio is also buffered. since sio performs
-	 * its own buffering, i don't want a caller to specify text mode
-	 * flags accidentally. i mask off those bits here to avoid mishap. */
-	if (qse_fio_init (&sio->fio, mmgr, file, 
-		(flags & ~(QSE_FIO_TEXT|QSE_FIO_NOAUTOFLUSH)), mode) <= -1) return -1;
+	/* sio flag enumerators redefines most fio flag enumerators and 
+	 * compose a superset of fio flag enumerators. when a user calls 
+	 * this function, a user can specify a sio flag enumerator not 
+	 * present in the fio flag enumerator. mask off such an enumerator. */
+	if (qse_fio_init (
+		&sio->u.file, mmgr, file, 
+		(flags & ~QSE_FIO_RESERVED), mode) <= -1) 
+	{
+		sio->errnum = fio_errnum_to_sio_errnum (&sio->u.file);
+		return -1;
+	}
 
 	if (flags & QSE_SIO_IGNOREMBWCERR) topt |= QSE_TIO_IGNOREMBWCERR;
 	if (flags & QSE_SIO_NOAUTOFLUSH) topt |= QSE_TIO_NOAUTOFLUSH;
 
-	if (qse_tio_init(&sio->tio, mmgr, topt) <= -1)
+	if (qse_tio_init(&sio->tio.io, mmgr, topt) <= -1)
 	{
-		qse_fio_fini (&sio->fio);
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		qse_fio_fini (&sio->u.file);
 		return -1;
 	}
+	/* store the back-reference to sio in the extension area.*/
+	QSE_ASSERT (QSE_XTN(&sio->tio.io) == &sio->tio.xtn);
+	*(qse_sio_t**)QSE_XTN(&sio->tio.io) = sio;
 
-	if (qse_tio_attachin (&sio->tio, __sio_input, sio, sio->inbuf, QSE_COUNTOF(sio->inbuf)) <= -1 ||
-	    qse_tio_attachout (&sio->tio, __sio_output, sio, sio->outbuf, QSE_COUNTOF(sio->outbuf)) <= -1)
+	if (qse_tio_attachin (&sio->tio.io, file_input, sio->inbuf, QSE_COUNTOF(sio->inbuf)) <= -1 ||
+	    qse_tio_attachout (&sio->tio.io, file_output, sio->outbuf, QSE_COUNTOF(sio->outbuf)) <= -1)
 	{
-		qse_tio_fini (&sio->tio);	
-		qse_fio_fini (&sio->fio);
+		if (sio->errnum = QSE_SIO_ENOERR) 
+			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		qse_tio_fini (&sio->tio.io);	
+		qse_fio_fini (&sio->u.file);
 		return -1;
 	}
 
@@ -136,49 +207,74 @@ void qse_sio_fini (qse_sio_t* sio)
 {
 	/*if (qse_sio_flush (sio) <= -1) return -1;*/
 	qse_sio_flush (sio);
-	qse_tio_fini (&sio->tio);
-	qse_fio_fini (&sio->fio);
+	qse_tio_fini (&sio->tio.io);
+	qse_fio_fini (&sio->u.file);
 }
 
 qse_cmgr_t* qse_sio_getcmgr (qse_sio_t* sio)
 {
-	return qse_tio_getcmgr (&sio->tio);
+	return qse_tio_getcmgr (&sio->tio.io);
 }
 
 void qse_sio_setcmgr (qse_sio_t* sio, qse_cmgr_t* cmgr)
 {
-	qse_tio_setcmgr (&sio->tio, cmgr);
+	qse_tio_setcmgr (&sio->tio.io, cmgr);
 }
 
 qse_sio_errnum_t qse_sio_geterrnum (qse_sio_t* sio)
 {
-	return QSE_TIO_ERRNUM(&sio->tio);
+	return sio->errnum;
 }
 
 qse_sio_hnd_t qse_sio_gethandle (qse_sio_t* sio)
 {
-	/*return qse_fio_gethandle (&sio->fio);*/
-	return QSE_FIO_HANDLE(&sio->fio);
+	/*return qse_fio_gethandle (&sio->u.file);*/
+	return QSE_FIO_HANDLE(&sio->u.file);
+}
+
+qse_ubi_t qse_sio_gethandleasubi (qse_sio_t* sio)
+{
+	return qse_fio_gethandleasubi (&sio->u.file);
 }
 
 qse_ssize_t qse_sio_flush (qse_sio_t* sio)
 {
-	return qse_tio_flush (&sio->tio);
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_flush (&sio->tio.io);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	return n;
 }
 
 void qse_sio_purge (qse_sio_t* sio)
 {
-	qse_tio_purge (&sio->tio);
+	qse_tio_purge (&sio->tio.io);
 }
 
 qse_ssize_t qse_sio_getmb (qse_sio_t* sio, qse_mchar_t* c)
 {
-	return qse_tio_readmbs (&sio->tio, c, 1);
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readmbs (&sio->tio.io, c, 1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_getwc (qse_sio_t* sio, qse_wchar_t* c)
 {
-	return qse_tio_readwcs (&sio->tio, c, 1);
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readwcs (&sio->tio.io, c, 1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_getmbs (
@@ -193,9 +289,14 @@ qse_ssize_t qse_sio_getmbs (
 	 * so I don't implement any hack here */
 #endif
 
-	n = qse_tio_readmbs (&sio->tio, buf, size - 1);
-
-	if (n <= -1) return -1;
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readmbs (&sio->tio.io, buf, size - 1);
+	if (n <= -1) 
+	{
+		if (sio->errnum == QSE_SIO_ENOERR)
+			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		return -1;
+	}
 	buf[n] = QSE_MT('\0');
 	return n;
 }
@@ -203,12 +304,17 @@ qse_ssize_t qse_sio_getmbs (
 qse_ssize_t qse_sio_getmbsn (
 	qse_sio_t* sio, qse_mchar_t* buf, qse_size_t size)
 {
+	qse_ssize_t n;
 #if defined(_WIN32)
 	/* Using ReadConsoleA() didn't help at all.
 	 * so I don't implement any hack here */
 #endif
 
-	return qse_tio_readmbs (&sio->tio, buf, size);
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readmbs (&sio->tio.io, buf, size);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	return n;
 }
 
 qse_ssize_t qse_sio_getwcs (
@@ -223,9 +329,14 @@ qse_ssize_t qse_sio_getwcs (
 	 * so I don't implement any hack here */
 #endif
 
-	n = qse_tio_readwcs (&sio->tio, buf, size - 1);
-
-	if (n <= -1) return -1;
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readwcs (&sio->tio.io, buf, size - 1);
+	if (n <= -1) 
+	{
+		if (sio->errnum == QSE_SIO_ENOERR)
+			sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+		return -1;
+	}
 	buf[n] = QSE_WT('\0');
 	return n;
 }
@@ -233,55 +344,98 @@ qse_ssize_t qse_sio_getwcs (
 qse_ssize_t qse_sio_getwcsn (
 	qse_sio_t* sio, qse_wchar_t* buf, qse_size_t size)
 {
+	qse_ssize_t n;
+
 #if defined(_WIN32)
 	/* Using ReadConsoleW() didn't help at all.
 	 * so I don't implement any hack here */
 #endif
-	return qse_tio_readwcs (&sio->tio, buf, size);
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_readwcs (&sio->tio.io, buf, size);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_putmb (qse_sio_t* sio, qse_mchar_t c)
 {
-	return qse_tio_writembs (&sio->tio, &c, 1);
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_writembs (&sio->tio.io, &c, 1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_putwc (qse_sio_t* sio, qse_wchar_t c)
 {
-	return qse_tio_writewcs (&sio->tio, &c, 1);
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_writewcs (&sio->tio.io, &c, 1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 {
+	qse_ssize_t n;
+
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
 	 * so I don't implement any hack here */
 #endif
 
-	return qse_tio_writembs (&sio->tio, str, (qse_size_t)-1);
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_writembs (&sio->tio.io, str, (qse_size_t)-1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_putmbsn (
 	qse_sio_t* sio, const qse_mchar_t* str, qse_size_t size)
 {
+	qse_ssize_t n;
+
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
 	 * so I don't implement any hack here */
 #endif
 
-	return qse_tio_writembs (&sio->tio, str, size);
+	sio->errnum = QSE_SIO_ENOERR;
+	n = qse_tio_writembs (&sio->tio.io, str, size);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+
+	return n;
 }
 
 qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 {
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+
 #if defined(_WIN32)
 	/* DAMN UGLY: See comment in qse_sio_putwcsn() */
 	if (sio->status)
 	{
 		DWORD mode;
 
-		if (GetConsoleMode (sio->fio.handle, &mode) == FALSE)
+		if (GetConsoleMode (sio->u.file.handle, &mode) == FALSE)
 		{
-			return qse_tio_writewcs (&sio->tio, str, (qse_size_t)-1);
+			n = qse_tio_writewcs (&sio->tio.io, str, (qse_size_t)-1);
+			if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+				sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+			return n;
 		}
 		else
 		{
@@ -291,8 +445,12 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 			for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
 			{
 				if (WriteConsoleW (
-					sio->fio.handle, cur, left,
-					&count, QSE_NULL) == FALSE) return -1;
+					sio->u.file.handle, cur, left,
+					&count, QSE_NULL) == FALSE) 
+				{
+					sio->errnum = QSE_SIO_EOTHER;
+					return -1;
+				}
 				if (count == 0) break;
 			}
 			return cur - str;	
@@ -300,12 +458,19 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 	}
 #endif
 
-	return qse_tio_writewcs (&sio->tio, str, (qse_size_t)-1);
+	n = qse_tio_writewcs (&sio->tio.io, str, (qse_size_t)-1);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	return n;
 }
 
 qse_ssize_t qse_sio_putwcsn (
 	qse_sio_t* sio, const qse_wchar_t* str, qse_size_t size)
 {
+	qse_ssize_t n;
+
+	sio->errnum = QSE_SIO_ENOERR;
+
 #if defined(_WIN32)
 	/* DAMN UGLY:
 	 *  WriteFile returns wrong number of bytes written if it is 
@@ -323,9 +488,12 @@ qse_ssize_t qse_sio_putwcsn (
 	{
 		DWORD mode;
 
-		if (GetConsoleMode (sio->fio.handle, &mode) == FALSE)
+		if (GetConsoleMode (sio->u.file.handle, &mode) == FALSE)
 		{
-			return qse_tio_writewcs (&sio->tio, str, size);
+			n = qse_tio_writewcs (&sio->tio.io, str, size);
+			if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+				sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+			return n;
 		}
 		else
 		{
@@ -336,7 +504,7 @@ qse_ssize_t qse_sio_putwcsn (
 			for (cur = str, left = size; left > 0; cur += count, left -= count)
 			{
 				if (WriteConsoleW (
-					sio->fio.handle, cur, left, 
+					sio->u.file.handle, cur, left, 
 					&count, QSE_NULL) == FALSE) return -1;
 				if (count == 0) break;
 			}
@@ -345,15 +513,22 @@ qse_ssize_t qse_sio_putwcsn (
 	}	
 #endif
 
-	return qse_tio_writewcs (&sio->tio, str, size);
+	n = qse_tio_writewcs (&sio->tio.io, str, size);
+	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
+		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
+	return n;
 }
 
 int qse_sio_getpos (qse_sio_t* sio, qse_sio_pos_t* pos)
 {
 	qse_fio_off_t off;
 
-	off = qse_fio_seek (&sio->fio, 0, QSE_FIO_CURRENT);
-	if (off == (qse_fio_off_t)-1) return -1;
+	off = qse_fio_seek (&sio->u.file, 0, QSE_FIO_CURRENT);
+	if (off == (qse_fio_off_t)-1) 
+	{
+		sio->errnum = fio_errnum_to_sio_errnum (&sio->u.file);
+		return -1;
+	}
 
 	*pos = off;
 	return 0;
@@ -364,9 +539,14 @@ int qse_sio_setpos (qse_sio_t* sio, qse_sio_pos_t pos)
    	qse_fio_off_t off;
 
 	if (qse_sio_flush(sio) <= -1) return -1;
-	off = qse_fio_seek (&sio->fio, pos, QSE_FIO_BEGIN);
+	off = qse_fio_seek (&sio->u.file, pos, QSE_FIO_BEGIN);
+	if (off == (qse_fio_off_t)-1)
+	{
+		sio->errnum = fio_errnum_to_sio_errnum (&sio->u.file);
+		return -1;
+	}
 
-	return (off == (qse_fio_off_t)-1)? -1: 0;
+	return 0;
 }
 
 #if 0
@@ -376,44 +556,103 @@ int qse_sio_seek (qse_sio_t* sio, qse_sio_seek_t pos)
 	 *       can move to the end of the stream also.... */
 
 	if (qse_sio_flush(sio) <= -1) return -1;
-	return (qse_fio_seek (&sio->fio, 
+	return (qse_fio_seek (&sio->u.file, 
 		0, QSE_FIO_END) == (qse_fio_off_t)-1)? -1: 0;
 
 	/* TODO: write this function */
 	if (qse_sio_flush(sio) <= -1) return -1;
-	return (qse_fio_seek (&sio->fio, 
+	return (qse_fio_seek (&sio->u.file, 
 		0, QSE_FIO_BEGIN) == (qse_fio_off_t)-1)? -1: 0;
 
 }
 #endif
 
-static qse_ssize_t __sio_input (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t file_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
-	qse_sio_t* sio = (qse_sio_t*)arg;
-
-	QSE_ASSERT (sio != QSE_NULL);
 
 	if (cmd == QSE_TIO_DATA) 
 	{
-		return qse_fio_read (&sio->fio, buf, size);
+		qse_ssize_t n;
+		qse_sio_t* sio;
+
+		sio = *(qse_sio_t**)QSE_XTN(tio);
+		QSE_ASSERT (sio != QSE_NULL);
+
+		n = qse_fio_read (&sio->u.file, buf, size);
+		if (n <= -1) sio->errnum = fio_errnum_to_sio_errnum (&sio->u.file);
+		return n;
 	}
 
 	return 0;
 }
 
-static qse_ssize_t __sio_output (
-	qse_tio_cmd_t cmd, void* arg, void* buf, qse_size_t size)
+static qse_ssize_t file_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
 {
-	qse_sio_t* sio = (qse_sio_t*)arg;
-
-	QSE_ASSERT (sio != QSE_NULL);
-
 	if (cmd == QSE_TIO_DATA) 
 	{
-		return qse_fio_write (&sio->fio, buf, size);
+		qse_ssize_t n;
+		qse_sio_t* sio;
+
+		sio = *(qse_sio_t**)QSE_XTN(tio);
+		QSE_ASSERT (sio != QSE_NULL);
+
+		n = qse_fio_write (&sio->u.file, buf, size);
+		if (n <= -1) sio->errnum = fio_errnum_to_sio_errnum (&sio->u.file);
+		return n;
 	}
 
 	return 0;
 }
 
+/* ---------------------------------------------------------- */
+
+#if 0
+
+#if defined(_WIN32)
+#	include <winsock2.h>
+#else
+#	include <sys/socket.h>
+#endif
+
+static qse_ssize_t socket_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
+{
+
+	if (cmd == QSE_TIO_DATA) 
+	{
+		qse_ssize_t n;
+		qse_sio_t* sio;
+
+		sio = *(qse_sio_t**)QSE_XTN(tio);
+		QSE_ASSERT (sio != QSE_NULL);
+
+		n = recv (sio->u.sck, buf, size, 0);
+		if (n <= -1) sio->errnum = syserr_to_errnum (errno);
+		return n;
+	}
+
+	return 0;
+}
+
+static qse_ssize_t socket_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size)
+{
+	if (cmd == QSE_TIO_DATA) 
+	{
+		qse_ssize_t n;
+		qse_sio_t* sio;
+
+		sio = *(qse_sio_t**)QSE_XTN(tio);
+		QSE_ASSERT (sio != QSE_NULL);
+
+		n = send (sio->u.sck, buf, size, 0);
+		if (n <= -1) sio->errnum = syserr_to_errnum (errno);
+		return n;
+	}
+
+	return 0;
+}
+
+#endif

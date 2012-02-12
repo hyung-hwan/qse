@@ -30,6 +30,7 @@
 #	include <sys/sendfile.h>
 #endif
 
+/* TODO: WIN32 TransmitFile */
 #if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 #	if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 #		define xsendfile sendfile64
@@ -270,6 +271,7 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 		return -1;
      }    
 
+/* check if it is a link. symbolic link??? */
 	if (!S_ISREG(st.st_mode))
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);

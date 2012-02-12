@@ -38,6 +38,9 @@
 #ifdef HAVE_ERRNO_H
 #	include <errno.h>
 #endif
+#ifdef HAVE_FCNTL_H
+#	include <fcntl.h>
+#endif
 #ifdef HAVE_TIME_H
 #	include <time.h>
 #endif

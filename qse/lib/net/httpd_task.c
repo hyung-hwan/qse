@@ -2079,9 +2079,9 @@ static void task_fini_cgi (
 	if (cgi->pio_inited) 
 	{
 		/* kill cgi in case it is still alive.
-		 * qse_pio_wait() in qse_pio_close() can block. */
+		 * qse_pio_wait() in qse_pio_fini() can block. */
 		qse_pio_kill (&cgi->pio); 
-		qse_pio_close (&cgi->pio);
+		qse_pio_fini (&cgi->pio);
 	}
 	if (cgi->res) qse_mbs_close (cgi->res);
 	if (cgi->htrd) qse_htrd_close (cgi->htrd);

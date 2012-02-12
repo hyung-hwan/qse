@@ -22,7 +22,7 @@ static int test1 (void)
 	fio = qse_fio_open (
 		QSE_MMGR_GETDFL(),
 		0,
-		QSE_T("fio1.txt"), 
+		QSE_T("fio01-1.txt"), 
 		QSE_FIO_READ|QSE_FIO_WRITE|QSE_FIO_CREATE|QSE_FIO_TRUNCATE, 
 		QSE_FIO_RUSR|QSE_FIO_WUSR|QSE_FIO_RGRP|QSE_FIO_ROTH
 	);
@@ -107,7 +107,7 @@ static int test2 (void)
 	fio = qse_fio_open (
 		QSE_MMGR_GETDFL(), 
 		0, 
-		QSE_T("fio2.txt"), 
+		QSE_T("fio01-2.txt"), 
 		QSE_FIO_CREATE | QSE_FIO_TRUNCATE | QSE_FIO_APPEND, 
 		QSE_FIO_RUSR|QSE_FIO_WUSR|QSE_FIO_RGRP|QSE_FIO_ROTH
 	);
@@ -216,16 +216,16 @@ static int test3 (void)
 {
 	qse_fio_t* fio;
 	qse_ssize_t n;
-	const qse_char_t* x = QSE_T("\uB108 \uBB50\uAC00 \uC798\uB0AC\uC5B4?");
+	const qse_mchar_t* x = QSE_MT("this is a test string");
 	qse_fio_off_t off;
-	qse_char_t buf[1000];
+	qse_mchar_t buf[1000];
 
 	fio = qse_fio_open (
 		QSE_MMGR_GETDFL(),
 		0,
-		QSE_T("fio3.txt"), 
+		QSE_T("fio01-3.txt"), 
 
-		QSE_FIO_TEXT | QSE_FIO_READ | QSE_FIO_WRITE |
+		QSE_FIO_READ | QSE_FIO_WRITE |
 		QSE_FIO_CREATE | QSE_FIO_TRUNCATE, 
 
 		QSE_FIO_RUSR|QSE_FIO_WUSR|QSE_FIO_RGRP|QSE_FIO_ROTH
@@ -236,11 +236,8 @@ static int test3 (void)
 		return -1;
 	}
 
-	n = qse_fio_write (fio, x, qse_strlen(x));
+	n = qse_fio_write (fio, x, qse_mbslen(x));
 	qse_printf (QSE_T("written %d chars\n"), (int)n);
-
-	n = qse_fio_flush (fio);
-	qse_printf (QSE_T("flushed %d chars\n"), (int)n);
 
 	off = qse_fio_seek (fio, 0, QSE_FIO_BEGIN);
 	if (off == (qse_fio_off_t)-1)
@@ -248,17 +245,15 @@ static int test3 (void)
 		qse_printf (QSE_T("failed to get file offset\n"));
 	}
 
-
 	n = qse_fio_read (fio, buf, QSE_COUNTOF(buf));
 	qse_printf (QSE_T("read %d chars\n"), (int)n);
 	if (n > 0)
 	{
-		qse_printf (QSE_T("[%.*s]\n"), (int)n,  buf);
+		qse_printf (QSE_T("[%.*hs]\n"), (int)n,  buf);
 	}
 
 	
 	qse_fio_close (fio);
-
 	return 0;
 }
 
@@ -275,7 +270,7 @@ int main ()
 	R (test3);
 
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
-	qse_printf (QSE_T("Run \"rm -f fio?.txt\" to delete garbages\n"));
+	qse_printf (QSE_T("Run \"rm -f fio01-?.txt\" to delete garbages\n"));
 	qse_printf (QSE_T("--------------------------------------------------------------------------------\n"));
 
 	return 0;

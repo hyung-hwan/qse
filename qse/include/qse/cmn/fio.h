@@ -28,48 +28,61 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#include <qse/cmn/tio.h>
-
-enum qse_fio_open_flag_t
+enum qse_fio_flag_t
 {
-	/** request text-based based IO */
-	QSE_FIO_TEXT          = (1 << 0),
-	QSE_FIO_IGNOREMBWCERR = (1 << 1), /* useful if QSE_FIO_TEXT is set */
-	QSE_FIO_NOAUTOFLUSH   = (1 << 2), /* useful if QSE_FIO_TEXT is set */
+	/* (1 << 0) to (1 << 7) reserved for qse_sio_flag_t. 
+	 * see <qse/cmn/sio.h>. nerver use this value. */
+	QSE_FIO_RESERVED      = 0xFF,
 
 	/** treat the file name pointer as a handle pointer */
-	QSE_FIO_HANDLE        = (1 << 3),
+	QSE_FIO_HANDLE        = (1 << 8),
 
 	/** treate the file name pointer as a pointer to file name
 	 *  template to use when making a temporary file name */
-	QSE_FIO_TEMPORARY     = (1 << 4),
+	QSE_FIO_TEMPORARY     = (1 << 9),
 
 	/** don't close an I/O handle in qse_fio_fini() and qse_fio_close() */
-	QSE_FIO_NOCLOSE       = (1 << 5),
+	QSE_FIO_NOCLOSE       = (1 << 10),
 
 	/* normal open flags */
-	QSE_FIO_READ          = (1 << 8),
-	QSE_FIO_WRITE         = (1 << 9),
-	QSE_FIO_APPEND        = (1 << 10),
+	QSE_FIO_READ          = (1 << 14),
+	QSE_FIO_WRITE         = (1 << 15),
+	QSE_FIO_APPEND        = (1 << 16),
 
-	QSE_FIO_CREATE        = (1 << 11),
-	QSE_FIO_TRUNCATE      = (1 << 12),
-	QSE_FIO_EXCLUSIVE     = (1 << 13),
-	QSE_FIO_SYNC          = (1 << 14),
+	QSE_FIO_CREATE        = (1 << 17),
+	QSE_FIO_TRUNCATE      = (1 << 18),
+	QSE_FIO_EXCLUSIVE     = (1 << 19),
+	QSE_FIO_SYNC          = (1 << 20),
 	
 	/* do not follow a symbolic link, only on a supported platform */
-	QSE_FIO_NOFOLLOW      = (1 << 15),
+	QSE_FIO_NOFOLLOW      = (1 << 23),
 
 	/* for WIN32 only. harmless(no effect) when used on other platforms */
-	QSE_FIO_NOSHREAD      = (1 << 20),
-	QSE_FIO_NOSHWRITE     = (1 << 21),
-	QSE_FIO_NOSHDELETE    = (1 << 22),
+	QSE_FIO_NOSHREAD      = (1 << 24),
+	QSE_FIO_NOSHWRITE     = (1 << 25),
+	QSE_FIO_NOSHDELETE    = (1 << 26),
 
 	/* hints to OS. harmless(no effect) when used on unsupported platforms */
-	QSE_FIO_RANDOM        = (1 << 23), /* hint that access be random */
-	QSE_FIO_SEQUENTIAL    = (1 << 24)  /* hint that access is sequential */
-
+	QSE_FIO_RANDOM        = (1 << 27), /* hint that access be random */
+	QSE_FIO_SEQUENTIAL    = (1 << 28)  /* hint that access is sequential */
 };
+
+enum qse_fio_errnum_t
+{
+	QSE_FIO_ENOERR = 0, /**< no error */
+
+	QSE_FIO_ENOMEM,     /**< out of memory */
+	QSE_FIO_EINVAL,     /**< invalid parameter */
+	QSE_FIO_EACCES,     /**< access denied */
+	QSE_FIO_ENOENT,     /**< no such file */
+	QSE_FIO_EEXIST,     /**< already exist */
+	QSE_FIO_EINTR,      /**< interrupted */
+	QSE_FIO_ENOIMPL,    /**< not implemented */
+	QSE_FIO_ESUBSYS,    /**< subsystem(system call) error */
+
+	QSE_FIO_EOTHER      /**< other error */
+};
+typedef enum qse_fio_errnum_t qse_fio_errnum_t;
 
 enum qse_fio_std_t
 {
@@ -126,13 +139,10 @@ typedef struct qse_fio_lck_t qse_fio_lck_t;
 
 struct qse_fio_t
 {
-	/* note that qse_fio_t is instantiated statically 
-	 * in sio.c. make sure that you update the static instantiation
-	 * when you change the structure of qse_fio_t */
 	QSE_DEFINE_COMMON_FIELDS (fio)
-	qse_fio_hnd_t handle;
-	int           flags; /* extra flags */
-	qse_tio_t*    tio;
+	qse_fio_errnum_t errnum;
+	qse_fio_hnd_t    handle;
+	int              flags; /* extra flags */
 };
 
 struct qse_fio_lck_t
@@ -201,38 +211,14 @@ void qse_fio_fini (
 );
 
 /**
- * The qse_fio_getcmgr() funcfion returns the current character manager.
- * It returns #QSE_NULL is @a fio is not opened with #QSE_FIO_TEXT.
- */
-qse_cmgr_t* qse_fio_getcmgr (
-	qse_fio_t* fio
-);
-
-/**
- * The qse_fio_setcmgr() funcfion changes the character manager to @a cmgr.
- * The character manager is used only if @a fio is opened with #QSE_FIO_TEXT.
- */
-void qse_fio_setcmgr (
-	qse_fio_t*  fio,
-	qse_cmgr_t* cmgr
-);
-
-/**
  * The qse_fio_gethandle() function returns the native file handle.
  */
 qse_fio_hnd_t qse_fio_gethandle (
 	qse_fio_t* fio
 );
 
-/**
- * The qse_fio_sethandle() function sets the file handle
- * Avoid using this function if you don't know what you are doing.
- * You may have to retrieve the previous handle using qse_fio_gethandle()
- * to take relevant actions before resetting it with qse_fio_sethandle().
- */
-void qse_fio_sethandle (
-	qse_fio_t* fio,
-	qse_fio_hnd_t handle
+qse_ubi_t qse_fio_gethandleasubi (
+	qse_fio_t* fio
 );
 
 /**
@@ -271,15 +257,6 @@ qse_ssize_t qse_fio_write (
 	qse_fio_t*  fio,
 	const void* data,
 	qse_size_t  size
-);
-
-
-/**
- * The qse_fio_flush() function flushes data. It is useful if #QSE_FIO_TEXT is 
- * set for the file handle @a fio.
- */
-qse_ssize_t qse_fio_flush (
-        qse_fio_t*    fio
 );
 
 /**
