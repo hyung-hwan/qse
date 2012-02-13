@@ -11,11 +11,14 @@ pkginclude_HEADERS = \
 	fs.h \
 	gdl.h \
 	htb.h \
+	hton.h \
+	ipad.h \
 	lda.h \
 	main.h \
 	map.h \
 	mbwc.h \
 	mem.h \
+	nwad.h \
 	oht.h \
 	opt.h \
 	path.h \

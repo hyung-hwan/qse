@@ -651,7 +651,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 				if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
 				{
-					arg->script_cmgr = qse_getcmgrbyname (opt.arg);
+					arg->script_cmgr = qse_findcmgr (opt.arg);
 					if (arg->script_cmgr == QSE_NULL)
 					{
 						print_err (QSE_T("unknown script encoding - %s\n"), opt.arg);
@@ -660,7 +660,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				}
 				else if (qse_strcmp(opt.lngopt, QSE_T("console-encoding")) == 0)
 				{
-					arg->console_cmgr = qse_getcmgrbyname (opt.arg);
+					arg->console_cmgr = qse_findcmgr (opt.arg);
 					if (arg->console_cmgr == QSE_NULL)
 					{
 						print_err (QSE_T("unknown console encoding - %s\n"), opt.arg);

@@ -238,7 +238,7 @@ int StdAwk::setenc (Run& run, Value& ret, const Value* args, size_t nargs,
 		return ret.setInt ((long_t)-1);
 	}
 	
-	qse_cmgr_t* cmgr = qse_getcmgrbyname (ptr[1]);
+	qse_cmgr_t* cmgr = qse_findcmgr (ptr[1]);
 	if (cmgr == QSE_NULL)
 	{
 		return ret.setInt ((long_t)-1);

@@ -47,6 +47,7 @@ qse_cmgr_t* qse_slmbcmgr = &builtin_cmgr[0];
 qse_cmgr_t* qse_utf8cmgr = &builtin_cmgr[1];
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[0];
+static qse_cmgr_finder_t cmgr_finder = QSE_NULL;
 
 qse_cmgr_t* qse_getdflcmgr (void)
 {
@@ -58,22 +59,32 @@ void qse_setdflcmgr (qse_cmgr_t* cmgr)
 	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[0]);
 }
 
-/* TODO: 
-qse_addcmgr (const qse_char_t* name, qse_cmgr_t* cmgr);
-qse_delcmgr (const qse_char_t* name);
-*/
-
-qse_cmgr_t* qse_getcmgrbyname (const qse_char_t* name)
+qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 {
 	if (name)
 	{
-		/* TODO: binary search */
+		if (cmgr_finder)
+		{
+			qse_cmgr_t* cmgr;
+			cmgr = cmgr_finder (name);
+			if (cmgr) return cmgr;
+		}
+
 		if (qse_strcmp(name, QSE_T("")) == 0) return dfl_cmgr;
 		if (qse_strcmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
 		if (qse_strcmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
-		/* TODO: add more - handle those added with qse_addcmgr() */
 	}
 	return QSE_NULL;
+}
+
+void qse_setcmgrfinder (qse_cmgr_finder_t finder)
+{
+	cmgr_finder = finder;
+}
+
+qse_cmgr_finder_t qse_getcmgrfinder (void)
+{
+	return cmgr_finder;
 }
 
 /* string conversion function using default character conversion manager */

@@ -52,6 +52,14 @@ enum qse_httpd_option_t
 	QSE_HTTPD_CGINOCLOEXEC = (1 << 1)
 };
 
+typedef struct qse_httpd_stat_t qse_httpd_stat_t;
+struct qse_httpd_stat_t
+{
+	qse_foff_t size;
+	qse_ntime_t mtime;
+	const qse_mchar_t* mime;
+};
+
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
@@ -65,14 +73,16 @@ struct qse_httpd_cbs_t
 
 	struct
 	{
-		int (*executable) (qse_httpd_t* httpd, const qse_mchar_t* path);
-	} path;
+		int (*executable) (
+			qse_httpd_t* httpd, const qse_mchar_t* path);
 
-	struct
-	{
+		int (*stat) (
+			qse_httpd_t* httpd, const qse_mchar_t* path, 
+			qse_httpd_stat_t* stat);
+			
 		int (*ropen) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
-			qse_ubi_t* handle, qse_foff_t* size);
+			qse_ubi_t* handle);
 		int (*wopen) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
 			qse_ubi_t* handle);
@@ -115,7 +125,6 @@ struct qse_httpd_cbs_t
 	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 
-	const qse_mchar_t* (*getmimetype) (qse_httpd_t* httpd, const qse_mchar_t* path);
 	int (*listdir) (qse_httpd_t* httpd, const qse_mchar_t* path);
 };
 
@@ -310,6 +319,14 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	const qse_httpd_task_t*   task,
+	qse_htre_t*               req
+);
+
+qse_httpd_task_t* qse_httpd_entaskauth (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	const qse_httpd_task_t*   task,
+	const qse_mchar_t*        realm,
 	qse_htre_t*               req
 );
 
