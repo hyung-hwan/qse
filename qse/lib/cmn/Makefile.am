@@ -36,10 +36,13 @@ libqsecmn_la_SOURCES = \
 	fs.c \
 	fs-err.c \
 	fs-move.c \
+	hton.c \
+	ipad.c \
 	main.c \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
+	nwad.c \
 	oht.c \
 	opt.c \
 	path-basename.c \

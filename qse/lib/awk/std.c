@@ -124,7 +124,8 @@ typedef struct rxtn_t
 } rxtn_t;
 
 #if defined(QSE_CHAR_IS_WCHAR)
-static qse_cmgr_t* getcmgr_from_cmgrtab (qse_awk_rtx_t* rtx, const qse_char_t* ioname);
+static qse_cmgr_t* getcmgr_from_cmgrtab (
+	qse_awk_rtx_t* rtx, const qse_char_t* ioname);
 #endif
 
 static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
@@ -1562,7 +1563,8 @@ skip_system:
 }
 
 #if defined(QSE_CHAR_IS_WCHAR)
-static qse_cmgr_t* getcmgr_from_cmgrtab (qse_awk_rtx_t* rtx, const qse_char_t* ioname)
+static qse_cmgr_t* getcmgr_from_cmgrtab (
+	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
 	rxtn_t* rxtn;
 	qse_htb_pair_t* pair;
@@ -1617,7 +1619,7 @@ static int fnc_setenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		}
 	}
 
-	cmgr = qse_getcmgrbyname (ptr[1]);
+	cmgr = qse_findcmgr (ptr[1]);
 	if (cmgr == QSE_NULL) fret = -1;
 	else
 	{

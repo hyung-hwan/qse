@@ -5,9 +5,11 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/time.h>
 
 #include <signal.h>
 #include <locale.h>
+#include <string.h>
 #if	defined(_WIN32)
 #	include <windows.h>
 #else
@@ -18,6 +20,8 @@
 #endif
 
 #include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/engine.h>
 
 
 // TODO: remove this and export structured needed like qse_httpd_client_t
@@ -226,22 +230,59 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 
 /* ------------------------------------------------------------------- */
 
-static int path_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
+static int file_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
 {
 	if (access (path, X_OK) == -1)
 		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
 	return 1; /* yes */
 }
 
-/* ------------------------------------------------------------------- */
+static int file_stat (
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
+{
+	struct stat st;
+
+/* TODO: lstat? or stat? */
+	if (stat (path, &st) <= -1)
+     {
+		qse_httpd_seterrnum (httpd, 
+			(errno == ENOENT? QSE_HTTPD_ENOENT:
+			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		return -1;
+     }    
+
+	/* stating for a file. it should be a regular file. 
+	 * i don't allow other file types. */
+	if (!S_ISREG(st.st_mode))
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
+		return -1;
+	}
+
+	memset (hst, 0, QSE_SIZEOF(*hst));
+
+	hst->size = st.st_size;
+#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
+#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
+#else
+	hst->mtime = st.st_mtime * QSE_MSECS_PER_SEC;
+#endif
+
+	hst->mime = qse_mbsend (path, QSE_MT(".html"))? QSE_MT("text/html"):
+	            qse_mbsend (path, QSE_MT(".txt"))?  QSE_MT("text/plain"):
+	            qse_mbsend (path, QSE_MT(".jpg"))?  QSE_MT("image/jpeg"):
+	            qse_mbsend (path, QSE_MT(".mp4"))?  QSE_MT("video/mp4"):
+	            qse_mbsend (path, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): QSE_NULL;
+	return 0;
+}
 
 static int file_ropen (
-	qse_httpd_t* httpd, const qse_mchar_t* path, 
-	qse_ubi_t* handle, qse_foff_t* size)
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
 {
 	int fd;
 	int flags;
-	struct stat st;
 
 	flags = O_RDONLY;
 #if defined(O_LARGEFILE)
@@ -261,25 +302,6 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
      flags = fcntl (fd, F_GETFD);
      if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
 
-/* TODO: fstat64??? */
-	if (fstat (fd, &st) <= -1)
-     {
-		qse_httpd_seterrnum (httpd, 
-			(errno == ENOENT? QSE_HTTPD_ENOENT:
-			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
-		close (fd);
-		return -1;
-     }    
-
-/* check if it is a link. symbolic link??? */
-	if (!S_ISREG(st.st_mode))
-	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
-		close (fd);
-		return -1;
-	}
-
-     *size = (st.st_size <= 0)? 0: st.st_size;
 	handle->i = fd;
 qse_printf (QSE_T("opened file %hs\n"), path);
 	return 0;
@@ -617,16 +639,6 @@ static int handle_request (
 	return process_request (httpd, client, req, 0);
 }
 
-const qse_mchar_t* get_mime_type (qse_httpd_t* httpd, const qse_mchar_t* path)
-{
-	if (qse_mbsend (path, QSE_MT(".html"))) return QSE_MT("text/html");
-	if (qse_mbsend (path, QSE_MT(".txt"))) return QSE_MT("text/plain");
-	if (qse_mbsend (path, QSE_MT(".jpg"))) return QSE_MT("image/jpeg");
-	if (qse_mbsend (path, QSE_MT(".mp4"))) return QSE_MT("video/mp4");
-	if (qse_mbsend (path, QSE_MT(".mp3"))) return QSE_MT("audio/mpeg");
-	return QSE_NULL;
-}
-
 int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
 {
 	return 404;
@@ -637,11 +649,10 @@ static qse_httpd_cbs_t httpd_cbs =
 	/* multiplexer */
 	{ mux_readable, mux_writable },
 
-	/* path operation */
-	{ path_executable },
-
 	/* file operation */
-	{ file_ropen,
+	{ file_executable,
+	  file_stat,
+	  file_ropen,
 	  file_wopen,
 	  file_close,
 	  file_read,
@@ -659,7 +670,6 @@ static qse_httpd_cbs_t httpd_cbs =
 	peek_request,
 	handle_request,
 
-	get_mime_type,
 	list_directory
 };
 

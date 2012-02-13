@@ -77,18 +77,18 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_DEPENDENCIES =
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo \
-	fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo main.lo mbwc.lo \
-	mbwc-str.lo mem.lo oht.lo opt.lo path-basename.lo \
-	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
-	slmb.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
-	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
-	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
-	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
-	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
-	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
-	time.lo tio.lo tio-get.lo tio-put.lo tre.lo tre-ast.lo \
-	tre-compile.lo tre-match-backtrack.lo tre-match-parallel.lo \
-	tre-parse.lo tre-stack.lo utf8.lo xma.lo
+	fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo ipad.lo \
+	main.lo mbwc.lo mbwc-str.lo mem.lo nwad.lo oht.lo opt.lo \
+	path-basename.lo path-canon.lo pio.lo pma.lo rbt.lo rex.lo \
+	sio.lo sll.lo slmb.lo stdio.lo str-beg.lo str-cat.lo \
+	str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo \
+	str-dup.lo str-dynm.lo str-dynw.lo str-end.lo str-excl.lo \
+	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-pac.lo \
+	str-pbrk.lo str-put.lo str-rev.lo str-rot.lo str-set.lo \
+	str-spl.lo str-spn.lo str-str.lo str-subst.lo str-tok.lo \
+	str-trm.lo str-word.lo time.lo tio.lo tio-get.lo tio-put.lo \
+	tre.lo tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
+	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -310,10 +310,13 @@ libqsecmn_la_SOURCES = \
 	fs.c \
 	fs-err.c \
 	fs-move.c \
+	hton.c \
+	ipad.c \
 	main.c \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
+	nwad.c \
 	oht.c \
 	opt.c \
 	path-basename.c \
@@ -468,11 +471,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hton.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path-basename.Plo@am__quote@

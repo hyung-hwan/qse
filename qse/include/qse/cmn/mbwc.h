@@ -28,6 +28,8 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,13 +41,21 @@ extern qse_cmgr_t* qse_utf8cmgr;
 extern qse_cmgr_t* qse_slmbcmgr;
 
 /**
- * The qse_getcmgrbyname() function find a builtin cmgr matching a given 
+ * The qse_getfindcmgr() function find a builtin cmgr matching a given 
  * @a name and returns it. It returns #QSE_NULL if no match is found.
  * The @a name can be one of "utf8", "slmb", and an empty string. Calling this
  * function with an empty string is the same as calling qse_getdflcmgr().
  */
-qse_cmgr_t* qse_getcmgrbyname (
+qse_cmgr_t* qse_findcmgr (
 	const qse_char_t* name
+);
+
+void qse_setcmgrfinder (
+	qse_cmgr_finder_t finder
+);
+
+qse_cmgr_finder_t qse_getcmgrfinder (
+	void
 );
 
 /* --------------------------------------------------- */

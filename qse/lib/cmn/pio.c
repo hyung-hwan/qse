@@ -49,7 +49,6 @@ static qse_ssize_t pio_output (
 #if defined(_WIN32)
 static qse_pio_errnum_t syserr_to_errnum (DWORD e)
 {
-
 	switch (e)
 	{
 		case ERROR_INVALID_PARAMETER:
@@ -573,13 +572,18 @@ int qse_pio_init (
 	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* child reads, parent writes */
-		if (CreatePipe (
-			&handle[0], &handle[1], 
-			&secattr, 0) == FALSE) goto oops;
+		if (CreatePipe (&handle[0], &handle[1], &secattr, 0) == FALSE) 
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		/* don't inherit write handle */
-		if (SetHandleInformation (
-			handle[1], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+		if (SetHandleInformation (handle[1], HANDLE_FLAG_INHERIT, 0) == FALSE) 
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		minidx = 0; maxidx = 1;
 	}
@@ -587,13 +591,18 @@ int qse_pio_init (
 	if (flags & QSE_PIO_READOUT)
 	{
 		/* child writes, parent reads */
-		if (CreatePipe (
-			&handle[2], &handle[3],
-			&secattr, 0) == FALSE) goto oops;
+		if (CreatePipe (&handle[2], &handle[3], &secattr, 0) == FALSE) 
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		/* don't inherit read handle */
-		if (SetHandleInformation (
-			handle[2], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+		if (SetHandleInformation (handle[2], HANDLE_FLAG_INHERIT, 0) == FALSE) 
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
@@ -602,13 +611,18 @@ int qse_pio_init (
 	if (flags & QSE_PIO_READERR)
 	{
 		/* child writes, parent reads */
-		if (CreatePipe (
-			&handle[4], &handle[5],
-			&secattr, 0) == FALSE) goto oops;
+		if (CreatePipe (&handle[4], &handle[5], &secattr, 0) == FALSE)
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		/* don't inherit read handle */
-		if (SetHandleInformation (
-			handle[4], HANDLE_FLAG_INHERIT, 0) == FALSE) goto oops;
+		if (SetHandleInformation (handle[4], HANDLE_FLAG_INHERIT, 0) == FALSE)
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
@@ -629,7 +643,11 @@ int qse_pio_init (
 			FILE_SHARE_READ | FILE_SHARE_WRITE, 
 			&secattr, OPEN_EXISTING, 0, NULL
 		);
-		if (windevnul == INVALID_HANDLE_VALUE) goto oops;
+		if (windevnul == INVALID_HANDLE_VALUE) 
+		{
+			pio->errnum = syserr_to_errnum (GetLastError());
+			goto oops;
+		}
 	}
 
 	QSE_MEMSET (&procinfo, 0, QSE_SIZEOF(procinfo));
@@ -743,25 +761,7 @@ int qse_pio_init (
 
 		QSE_MMGR_FREE (mmgr, dupcmd); 
 		if (x == FALSE) 
-		{
-			DWORD e = GetLastError ();
-			switch (e)
-			{
-				case ERROR_ACCESS_DENIED:
-					pio->errnum = QSE_PIO_EACCES;
-					break;
-
-				case ERROR_FILE_NOT_FOUND:
-				case ERROR_PATH_NOT_FOUND:
-					pio->errnum = QSE_PIO_ENOENT;
-					break;
-
-				case ERROR_NOT_ENOUGH_MEMORY:
-				case ERROR_OUTOFMEMORY:
-					pio->errnum = QSE_PIO_ENOMEM;
-					break;
-			}
-		}
+			pio->errnum = syserr_to_errnum (GetLastError());
 	}
 
 	if (windevnul != INVALID_HANDLE_VALUE)
@@ -792,18 +792,32 @@ int qse_pio_init (
 #elif defined(__OS2__)
 
 	#define DOS_DUP_HANDLE(x,y) QSE_BLOCK ( \
-		if (DosDupHandle(x,y) != NO_ERROR) goto oops; \
+		rc = DosDupHandle(x,y); \
+		if (rc != NO_ERROR) \
+		{ \
+			pio->errnum = syserr_to_errnum (rc); \
+			goto oops; \
+		} \
 	)
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* child reads, parent writes */		
-		if (DosCreatePipe (
-			&handle[0], &handle[1], pipe_size) != NO_ERROR) goto oops;
+		rc = DosCreatePipe (&handle[0], &handle[1], pipe_size);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		/* the parent writes to handle[1] and the child reads from 
 		 * handle[0] inherited. set the flag not to inherit handle[1]. */
-		if (DosSetFHState (handle[1], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		rc = DosSetFHState (handle[1], OPEN_FLAGS_NOINHERIT);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		/* Need to do somthing like this to set the flag instead? 
 		ULONG state;               
@@ -816,12 +830,21 @@ int qse_pio_init (
 	if (flags & QSE_PIO_READOUT)
 	{
 		/* child writes, parent reads */
-		if (DosCreatePipe (
-			&handle[2], &handle[3], pipe_size) != NO_ERROR) goto oops;
+		rc = DosCreatePipe (&handle[2], &handle[3], pipe_size);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		/* the parent reads from handle[2] and the child writes to 
 		 * handle[3] inherited. set the flag not to inherit handle[2] */
-		if (DosSetFHState (handle[2], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		rc = DosSetFHState (handle[2], OPEN_FLAGS_NOINHERIT);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
@@ -830,12 +853,21 @@ int qse_pio_init (
 	if (flags & QSE_PIO_READERR)
 	{
 		/* child writes, parent reads */
-		if (DosCreatePipe (
-			&handle[4], &handle[5], pipe_size) != NO_ERROR) goto oops;
+		rc = DosCreatePipe (&handle[4], &handle[5], pipe_size);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		/* the parent reads from handle[4] and the child writes to 
 		 * handle[5] inherited. set the flag not to inherit handle[4] */
-		if (DosSetFHState (handle[4], OPEN_FLAGS_NOINHERIT) != NO_ERROR) goto oops;
+		rc = DosSetFHState (handle[4], OPEN_FLAGS_NOINHERIT);
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
@@ -867,22 +899,32 @@ int qse_pio_init (
 			OPEN_FLAGS_NOINHERIT | OPEN_SHARE_DENYNONE,
 			0L
 		);
-		if (rc != NO_ERROR) goto oops;
+		if (rc != NO_ERROR) 
+		{
+			pio->errnum = syserr_to_errnum (rc);
+			goto oops;
+		}
 	}
 
 	/* duplicate the current stdin/out/err to old_in/out/err as a new handle */
 	
-	if (DosDupHandle (std_in, &old_in) != NO_ERROR) 
+	rc = DosDupHandle (std_in, &old_in);
+	if (rc != NO_ERROR) 
 	{
+		pio->errnum = syserr_to_errnum (rc);
 		goto oops;
 	}
-	if (DosDupHandle (std_out, &old_out) != NO_ERROR) 
+	rc = DosDupHandle (std_out, &old_out);
+	if (rc != NO_ERROR) 
 	{
+		pio->errnum = syserr_to_errnum (rc);
 		DosClose (old_in); old_in = QSE_PIO_HND_NIL;
 		goto oops;
 	}
-	if (DosDupHandle (std_err, &old_err) != NO_ERROR)
+	rc = DosDupHandle (std_err, &old_err);
+	if (rc != NO_ERROR) 
 	{
+		pio->errnum = syserr_to_errnum (rc);
 		DosClose (old_out); old_out = QSE_PIO_HND_NIL;
 		DosClose (old_in); old_in = QSE_PIO_HND_NIL;
 		goto oops;
@@ -1060,8 +1102,6 @@ int qse_pio_init (
 		cmd_file
 	);
 
-/* TODO: translate error code ... */
-
 	QSE_MMGR_FREE (mmgr, cmd_line);
 	cmd_line = QSE_NULL;
 
@@ -1074,7 +1114,11 @@ int qse_pio_init (
 	DosDupHandle (old_err, &std_err);
 	DosClose (old_err); old_err = QSE_PIO_HND_NIL;
 
-	if (rc != NO_ERROR) goto oops;
+	if (rc != NO_ERROR) 
+	{
+		pio->errnum = syserr_to_errnum (rc);
+		goto oops;
+	}
 	pio->child = child_rc.codeTerminate;
 
 #elif defined(__DOS__)
@@ -1085,20 +1129,32 @@ int qse_pio_init (
 #elif defined(HAVE_POSIX_SPAWN)
 	if (flags & QSE_PIO_WRITEIN)
 	{
-		if (QSE_PIPE(&handle[0]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[0]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		minidx = 0; maxidx = 1;
 	}
 
 	if (flags & QSE_PIO_READOUT)
 	{
-		if (QSE_PIPE(&handle[2]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[2]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
 	}
 
 	if (flags & QSE_PIO_READERR)
 	{
-		if (QSE_PIPE(&handle[4]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[4]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
 	}
