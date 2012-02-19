@@ -584,9 +584,28 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 		{
 			if (peek)
 			{
-				/* nph-cgi */
-				task = qse_httpd_entasknph (
-					httpd, client, QSE_NULL, qpath, req);
+				const qse_mchar_t* auth;
+				int authorized = 0;
+
+				auth = qse_htre_getheaderval (req, QSE_MT("Authorization"));
+				if (auth)
+				{
+					/* TODO: PERFORM authorization... */	
+					/* BASE64 decode... */
+					authorized = 1;
+				}
+
+				if (authorized)
+				{
+					/* nph-cgi */
+					task = qse_httpd_entasknph (
+						httpd, client, QSE_NULL, qpath, req);
+				}
+				else
+				{
+					task = qse_httpd_entaskauth (
+						httpd, client, QSE_NULL, QSE_MT("Secure Area"), req);
+				}
 				if (task == QSE_NULL) goto oops;
 			}
 			return 0;

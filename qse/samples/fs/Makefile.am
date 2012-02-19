@@ -11,5 +11,9 @@ bin_PROGRAMS = \
 LDFLAGS += -L../../lib/cmn -L../../lib/fs
 LDADD = -lqsefs -lqsecmn
 
+if WIN32 
+LDADD += $(UNICOWS_LIBS)
+endif
+
 dir01_SOURCES = dir01.c
 

@@ -28,7 +28,7 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
-#	include <psapi.h> /* for GetMappedFileName() */
+/*#	include <psapi.h>*/ /* for GetMappedFileName(). but dynamically loaded */
 #	include <tchar.h>
 #elif defined(__OS2__)
 #	define INCL_DOSFILEMGR
@@ -41,6 +41,12 @@
 #	include "syscall.h"
 #endif
 
+/* internal status codes */
+enum
+{
+	STATUS_APPEND  = (1 << 0),
+	STATUS_NOCLOSE = (1 << 1)	
+};
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
 
@@ -188,21 +194,35 @@ int qse_fio_init (
 	qse_char_t* temp_ptr;
 	qse_size_t temp_tries;
 
+#if defined(_WIN32)
+	int fellback = 0;
+#endif
+
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
 	fio->mmgr = mmgr;
 
-	/* Store the flags for later use though only OS/2 needs
-	 * this at this moment */
-	fio->flags = flags;
+	if (!(flags & (QSE_FIO_READ | QSE_FIO_WRITE | QSE_FIO_APPEND | QSE_FIO_HANDLE)))
+	{
+		/* one of QSE_FIO_READ, QSE_FIO_WRITE, QSE_FIO_APPEND, 
+		 * and QSE_FIO_HANDLE must be specified */
+		fio->errnum = QSE_FIO_EINVAL;
+		return -1;
+	}
+
+	/* Store some flags for later use */
+	if (flags & QSE_FIO_NOCLOSE) 
+		fio->status |= STATUS_NOCLOSE;
 
 	if (flags & QSE_FIO_TEMPORARY)
 	{
 		qse_ntime_t now;
 
-		QSE_ASSERTX (
-			(flags & QSE_FIO_HANDLE) == 0, 
-			"QSE_FIO_TEMPORARY and QSE_FIO_HANDLE are mutually exclusive"
-		);
+		if (flags & QSE_FIO_HANDLE)
+		{
+			/* QSE_FIO_TEMPORARY and QSE_FIO_HANDLE are mutually exclusive */
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1;
+		}
 
 		temp_no = 0;
 		/* if QSE_FIO_TEMPORARY is used, the path name must 
@@ -258,6 +278,10 @@ int qse_fio_init (
 	if (flags & QSE_FIO_HANDLE)
 	{
 		handle = *(qse_fio_hnd_t*)path;
+		QSE_ASSERTX (
+			handle != INVALID_HANDLE_VALUE,
+			"Do not specify an invalid handle value"
+		);
 	}
 	else
 	{
@@ -266,11 +290,21 @@ int qse_fio_init (
 		DWORD creation_disposition = 0;
 		DWORD flag_and_attr = FILE_ATTRIBUTE_NORMAL;
 
+		if (fellback) share_mode &= ~FILE_SHARE_DELETE;
+
 		if (flags & QSE_FIO_APPEND)
 		{
-			/* this is not officially documented for CreateFile.
-			 * ZwCreateFile (kernel) seems to document it */
-			desired_access |= FILE_APPEND_DATA;
+			if (fellback)
+			{
+				desired_access |= GENERIC_WRITE;
+			}
+			else
+			{
+				/* this is not officially documented for CreateFile.
+				 * ZwCreateFile (kernel) seems to document it */
+				fio->status &= ~STATUS_APPEND;
+				desired_access |= FILE_APPEND_DATA;
+			}
 		}
 		else if (flags & QSE_FIO_WRITE)
 		{
@@ -318,12 +352,44 @@ int qse_fio_init (
 			QSE_NULL, /* set noinherit by setting no secattr */
 			creation_disposition, flag_and_attr, 0
 		);
-	}
-	if (handle == INVALID_HANDLE_VALUE) 
-	{
-		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
-		fio->errnum = syserr_to_errnum(GetLastError());
-		return -1;
+		if (handle == INVALID_HANDLE_VALUE) 
+		{
+			DWORD e = GetLastError();	
+			if (!fellback && e == ERROR_INVALID_PARAMETER && 
+			    ((share_mode & FILE_SHARE_DELETE) || (flags & QSE_FIO_APPEND)))
+			{
+				/* old windows fails with ERROR_INVALID_PARAMETER
+				 * when some advanced flags are used. so try again
+				 * with fallback flags */
+				fellback = 1;
+
+				share_mode &= ~FILE_SHARE_DELETE;
+				if (flags & QSE_FIO_APPEND)
+				{
+					fio->status |= STATUS_APPEND;
+					desired_access &= ~FILE_APPEND_DATA;
+					desired_access |= GENERIC_WRITE;
+				}
+			
+				handle = CreateFile (
+					path, desired_access, share_mode, 
+					QSE_NULL, /* set noinherit by setting no secattr */
+					creation_disposition, flag_and_attr, 0
+				);
+				if (handle == INVALID_HANDLE_VALUE) 
+				{
+					if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+					fio->errnum = syserr_to_errnum(GetLastError());
+					return -1;
+				}
+			}
+			else
+			{
+				if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+				fio->errnum = syserr_to_errnum(e);
+				return -1;
+			}
+		}
 	}
 
 	/* some special check */
@@ -382,6 +448,9 @@ int qse_fio_init (
 
 		zero.ulLo = 0;
 		zero.ulHi = 0;
+
+		if (flags & QSE_FIO_APPEND) 
+			fio->stats |= STATUS_APPEND;
 
 		if (flags & QSE_FIO_CREATE)
 		{
@@ -463,6 +532,10 @@ int qse_fio_init (
 	if (flags & QSE_FIO_HANDLE)
 	{
 		handle = *(qse_fio_hnd_t*)path;
+		QSE_ASSERTX (
+			handle >= 0,
+			"Do not specify an invalid handle value"
+		);
 	}
 	else
 	{
@@ -544,6 +617,10 @@ int qse_fio_init (
 	if (flags & QSE_FIO_HANDLE)
 	{
 		handle = *(qse_fio_hnd_t*)path;
+		QSE_ASSERTX (
+			handle >= 0,
+			"Do not specify an invalid handle value"
+		);
 	}
 	else
 	{
@@ -620,25 +697,23 @@ int qse_fio_init (
 	#else
 		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
 	#endif
+		if (handle == -1) 
+		{
+			if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
+			fio->errnum = syserr_to_errnum (errno);
+			return -1;
+		}
+
+		/* set some file access hints */
+		#if defined(POSIX_FADV_RANDOM)
+		if (flags & QSE_FIO_RANDOM) 
+			posix_fadvise (handle, 0, 0, POSIX_FADV_RANDOM);
+		#endif
+		#if defined(POSIX_FADV_SEQUENTIAL)
+		if (flags & QSE_FIO_SEQUENTIAL) 
+			posix_fadvise (handle, 0, 0, POSIX_FADV_SEQUENTIAL);
+		#endif
 	}
-
-	if (handle == -1) 
-	{
-		if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
-		fio->errnum = syserr_to_errnum (errno);
-		return -1;
-	}
-
-	/* set some file access hints */
-	#if defined(POSIX_FADV_RANDOM)
-	if (flags & QSE_FIO_RANDOM) 
-		posix_fadvise (handle, 0, 0, POSIX_FADV_RANDOM);
-	#endif
-	#if defined(POSIX_FADV_SEQUENTIAL)
-	if (flags & QSE_FIO_SEQUENTIAL) 
-		posix_fadvise (handle, 0, 0, POSIX_FADV_SEQUENTIAL);
-	#endif
-
 #endif
 
 	fio->handle = handle;
@@ -647,7 +722,7 @@ int qse_fio_init (
 
 void qse_fio_fini (qse_fio_t* fio)
 {
-	if (!(fio->flags & QSE_FIO_NOCLOSE))
+	if (!(fio->status & STATUS_NOCLOSE))
 	{
 #if defined(_WIN32)
 		CloseHandle (fio->handle);
@@ -701,7 +776,7 @@ qse_fio_off_t qse_fio_seek (
 	QSE_ASSERT (QSE_SIZEOF(offset) <= QSE_SIZEOF(x.QuadPart));
 
 	/* SetFilePointerEx is not available on Windows NT 4.
-	 * So let's use SetFilePointerEx */
+	 * So let's use SetFilePointer */
 #if 0
 	x.QuadPart = offset;
 	if (SetFilePointerEx (fio->handle, x, &y, seek_map[origin]) == FALSE)
@@ -887,6 +962,14 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 #if defined(_WIN32)
 
 	DWORD count;
+
+   	if (fio->status & STATUS_APPEND)
+	{
+/* TODO: only when FILE_APPEND_DATA failed???  how do i know this??? */
+		/* i do this on a best-effort basis */
+    		SetFilePointer (fio->handle, 0, QSE_NULL, FILE_END);
+    	}
+
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (WriteFile (fio->handle,
@@ -902,7 +985,7 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	APIRET ret;
 	ULONG count;
 
-   	if (fio->flags & QSE_FIO_APPEND)
+   	if (fio->status & STATUS_APPEND)
 	{
 		/* i do this on a best-effort basis */
 		LONGLONG pos, newpos;
@@ -950,6 +1033,36 @@ static int get_devname_from_handle (
 	HANDLE map = NULL;
 	void* mem = NULL;
 	DWORD olen;
+	HINSTANCE psapi;
+
+	typedef DWORD (WINAPI*getmappedfilename_t) (
+		HANDLE hProcess,
+		LPVOID lpv,
+		LPTSTR lpFilename,
+		DWORD nSize
+	);
+	getmappedfilename_t getmappedfilename;
+
+	/* try to load psapi.dll dynamially for 
+	 * systems without it. direct linking to the library
+	 * may end up with dependency failure on such systems. 
+	 * this way, the worst case is that this function simply 
+	 * fails. */
+	psapi = LoadLibrary (QSE_T("PSAPI.DLL"));
+	if (!psapi)
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
+
+	getmappedfilename = (getmappedfilename_t) 
+		GetProcAddress (psapi, QSE_T("GetMappedFileName"));
+	if (!getmappedfilename)
+	{
+		fio->errnum = syserr_to_errnum (GetLastError());
+		FreeLibrary (psapi);
+		return -1;
+	}
 
 	/* create a file mapping object */
 	map = CreateFileMapping (
@@ -962,7 +1075,8 @@ static int get_devname_from_handle (
 	);
 	if (map == NULL) 
 	{
-		mem = MapViewOfFile (map, FILE_MAP_READ, 0, 0, 1);
+		fio->errnum = syserr_to_errnum (GetLastError());
+		FreeLibrary (psapi);
 		return -1;
 	}	
 
@@ -972,20 +1086,23 @@ static int get_devname_from_handle (
 	{
 		fio->errnum = syserr_to_errnum (GetLastError());
 		CloseHandle (map);
+		FreeLibrary (psapi);
 		return -1;
 	}
 
-	olen = GetMappedFileName (GetCurrentProcess(), mem, buf, len); 
+	olen = getmappedfilename (GetCurrentProcess(), mem, buf, len); 
 	if (olen == 0)
 	{
 		fio->errnum = syserr_to_errnum (GetLastError());
 		UnmapViewOfFile (mem);
 		CloseHandle (map);
+		FreeLibrary (psapi);
 		return -1;
 	}
 
 	UnmapViewOfFile (mem);
 	CloseHandle (map);
+	FreeLibrary (psapi);
 	return 0;
 }
 

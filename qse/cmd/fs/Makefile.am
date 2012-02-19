@@ -11,3 +11,6 @@ qsefs_SOURCES = fs.c
 qsefs_LDFLAGS = -L../../lib/cmn -L$(libdir)
 qsefs_LDADD = -lqsecmn
 
+if WIN32 
+qsefs_LDADD += $(UNICOWS_LIBS)
+endif

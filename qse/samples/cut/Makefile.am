@@ -8,6 +8,10 @@ AM_CPPFLAGS = \
 LDFLAGS = -L../../lib/cmn -L../../lib/cut
 LDADD = -lqsecut -lqsecmn $(LIBM)
 
+if WIN32 
+LDADD += $(UNICOWS_LIBS)
+endif
+
 bin_PROGRAMS = cut01
 
 cut01_SOURCES = cut01.c

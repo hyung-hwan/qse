@@ -9,6 +9,10 @@ AM_CPPFLAGS = \
 LDFLAGS = -L../../lib/cmn -L../../lib/sed
 LDADD = -lqsesed -lqsecmn 
 
+if WIN32 
+LDADD += $(UNICOWS_LIBS)
+endif
+
 bin_PROGRAMS = sed01
 
 sed01_SOURCES = sed01.c

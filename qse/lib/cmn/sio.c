@@ -43,7 +43,6 @@ static qse_ssize_t socket_output (
 
 static qse_sio_errnum_t fio_errnum_to_sio_errnum (qse_fio_t* fio)
 {
-/* TODO:  finish this after adding fio->errnum */
 	switch (fio->errnum)
 	{
 		case QSE_FIO_ENOMEM:
@@ -60,6 +59,8 @@ static qse_sio_errnum_t fio_errnum_to_sio_errnum (qse_fio_t* fio)
 			return QSE_SIO_EINTR;
 		case QSE_FIO_ESUBSYS:
 			return QSE_SIO_ESUBSYS;
+		case QSE_FIO_ENOIMPL:
+			return QSE_SIO_ENOIMPL;
 		default:
 			return QSE_SIO_EOTHER;
 	}
@@ -422,42 +423,43 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 {
 	qse_ssize_t n;
 
-	sio->errnum = QSE_SIO_ENOERR;
-
 #if defined(_WIN32)
 	/* DAMN UGLY: See comment in qse_sio_putwcsn() */
 	if (sio->status)
 	{
 		DWORD mode;
 
-		if (GetConsoleMode (sio->u.file.handle, &mode) == FALSE)
-		{
-			n = qse_tio_writewcs (&sio->tio.io, str, (qse_size_t)-1);
-			if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
-				sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
-			return n;
-		}
-		else
+		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
+		    GetConsoleOutputCP() == CP_UTF8)
 		{
 			DWORD count, left;
 			const qse_wchar_t* cur;
+
 			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+
 			for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
 			{
 				if (WriteConsoleW (
 					sio->u.file.handle, cur, left,
 					&count, QSE_NULL) == FALSE) 
 				{
-					sio->errnum = QSE_SIO_EOTHER;
+					sio->errnum = QSE_SIO_ESUBSYS;
 					return -1;
 				}
 				if (count == 0) break;
+
+				if (count > left) 
+				{
+					sio->errnum = QSE_SIO_ESUBSYS;
+					return -1;
+				}
 			}
 			return cur - str;	
 		}
 	}
 #endif
 
+	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writewcs (&sio->tio.io, str, (qse_size_t)-1);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
@@ -468,8 +470,6 @@ qse_ssize_t qse_sio_putwcsn (
 	qse_sio_t* sio, const qse_wchar_t* str, qse_size_t size)
 {
 	qse_ssize_t n;
-
-	sio->errnum = QSE_SIO_ENOERR;
 
 #if defined(_WIN32)
 	/* DAMN UGLY:
@@ -488,31 +488,46 @@ qse_ssize_t qse_sio_putwcsn (
 	{
 		DWORD mode;
 
-		if (GetConsoleMode (sio->u.file.handle, &mode) == FALSE)
-		{
-			n = qse_tio_writewcs (&sio->tio.io, str, size);
-			if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
-				sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);
-			return n;
-		}
-		else
+		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
+		    GetConsoleOutputCP() == CP_UTF8)
 		{
 			DWORD count, left;
 			const qse_wchar_t* cur;
 	
 			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+
 			for (cur = str, left = size; left > 0; cur += count, left -= count)
 			{
 				if (WriteConsoleW (
 					sio->u.file.handle, cur, left, 
-					&count, QSE_NULL) == FALSE) return -1;
+					&count, QSE_NULL) == FALSE) 
+				{
+					sio->errnum = QSE_SIO_ESUBSYS;
+					return -1;
+				}
 				if (count == 0) break;
+
+				/* Note:
+				 * WriteConsoleW() in unicosw.dll on win 9x/me returns
+				 * the number of bytes via 'count'. If a double byte 
+				 * string is given, 'count' can be greater than 'left'.
+				 * this case is a miserable failure. however, i don't
+				 * think there is CP_UTF8 codepage for console on win9x/me.
+				 * so let me make this function fail if that ever happens.
+				 */
+				if (count > left) 
+				{
+					sio->errnum = QSE_SIO_ESUBSYS;
+					return -1;
+				}
 			}
 			return cur - str;
 		}
 	}	
+
 #endif
 
+	sio->errnum = QSE_SIO_ENOERR;
 	n = qse_tio_writewcs (&sio->tio.io, str, size);
 	if (n <= -1 && sio->errnum == QSE_SIO_ENOERR) 
 		sio->errnum = tio_errnum_to_sio_errnum (&sio->tio.io);

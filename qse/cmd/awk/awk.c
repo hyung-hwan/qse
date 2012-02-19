@@ -63,8 +63,8 @@ struct arg_t
 	qse_awk_parsestd_type_t ist;  /* input source type */
 	union
 	{
-		const qse_char_t* str;
-		qse_char_t**      files;
+		qse_char_t*  str;
+		qse_char_t** files;
 	} isp;
 	qse_size_t   isfl; /* the number of input source files */
 

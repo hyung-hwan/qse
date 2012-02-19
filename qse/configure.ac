@@ -169,6 +169,13 @@ then
 fi
 AC_SUBST(SENDFILE_LIBS)
 
+dnl check is the import library for unicows.dll exists
+dnl this check doesn't look for a particular symbol
+dnl but for the symbol 'main' since i want to check 
+dnl the existence of the libaray.
+AC_CHECK_LIB([unicows], [main], [UNICOWS_LIBS="-lunicows"])
+AC_SUBST(UNICOWS_LIBS)
+
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([struct stat.st_birthtime])
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])

@@ -635,6 +635,7 @@ ENABLE_CXX_FALSE
 ENABLE_CXX_TRUE
 BUILD_MODE
 CHAR_MODE
+UNICOWS_LIBS
 SENDFILE_LIBS
 SOCKET_LIBS
 LIBM
@@ -16537,6 +16538,42 @@ if test "x$ac_cv_lib_sendfile_sendfilev64" = xyes; then :
 fi
 
 fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lunicows" >&5
+$as_echo_n "checking for main in -lunicows... " >&6; }
+if ${ac_cv_lib_unicows_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lunicows  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_unicows_main=yes
+else
+  ac_cv_lib_unicows_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_unicows_main" >&5
+$as_echo "$ac_cv_lib_unicows_main" >&6; }
+if test "x$ac_cv_lib_unicows_main" = xyes; then :
+  UNICOWS_LIBS="-lunicows"
+fi
+
 
 
 ac_header_dirent=no

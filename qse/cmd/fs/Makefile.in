@@ -35,6 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = qsefs$(EXEEXT)
+@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = cmd/fs
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -53,7 +54,9 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_qsefs_OBJECTS = fs.$(OBJEXT)
 qsefs_OBJECTS = $(am_qsefs_OBJECTS)
-qsefs_DEPENDENCIES =
+am__DEPENDENCIES_1 =
+@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+qsefs_DEPENDENCIES = $(am__DEPENDENCIES_2)
 qsefs_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qsefs_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -165,6 +168,7 @@ SHELL = @SHELL@
 SOCKET_LIBS = @SOCKET_LIBS@
 STRIP = @STRIP@
 TRUE = @TRUE@
+UNICOWS_LIBS = @UNICOWS_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -228,7 +232,7 @@ AM_CPPFLAGS = \
 
 qsefs_SOURCES = fs.c
 qsefs_LDFLAGS = -L../../lib/cmn -L$(libdir)
-qsefs_LDADD = -lqsecmn
+qsefs_LDADD = -lqsecmn $(am__append_1)
 all: all-am
 
 .SUFFIXES:

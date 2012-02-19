@@ -27,9 +27,9 @@ int qse_runmain (
 {
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
-	{
-		return handler (argc, (qse_char_t**)argv);
-	}
+
+	return handler (argc, (qse_char_t**)argv);
+
 #else
 	{
 		int i, ret;

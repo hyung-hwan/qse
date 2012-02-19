@@ -34,6 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 bin_PROGRAMS = cut01$(EXEEXT)
 subdir = samples/cut
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -54,8 +55,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am_cut01_OBJECTS = cut01.$(OBJEXT)
 cut01_OBJECTS = $(am_cut01_OBJECTS)
 am__DEPENDENCIES_1 =
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-cut01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+cut01_DEPENDENCIES = $(am__DEPENDENCIES_3)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -164,6 +166,7 @@ SHELL = @SHELL@
 SOCKET_LIBS = @SOCKET_LIBS@
 STRIP = @STRIP@
 TRUE = @TRUE@
+UNICOWS_LIBS = @UNICOWS_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -225,7 +228,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-LDADD = -lqsecut -lqsecmn $(LIBM)
+LDADD = -lqsecut -lqsecmn $(LIBM) $(am__append_1)
 cut01_SOURCES = cut01.c
 cut01_LDADD = $(LDADD)
 all: all-am
