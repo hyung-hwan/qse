@@ -100,9 +100,9 @@ libqsecmn_la_SOURCES = \
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 
-if WIN32 
-libqsecmn_la_LIBADD = -lpsapi
-endif
+#if WIN32 
+#libqsecmn_la_LIBADD = -lpsapi
+#endif
 
 if ENABLE_CXX
 

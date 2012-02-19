@@ -143,6 +143,7 @@ SHELL = @SHELL@
 SOCKET_LIBS = @SOCKET_LIBS@
 STRIP = @STRIP@
 TRUE = @TRUE@
+UNICOWS_LIBS = @UNICOWS_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@

@@ -8,7 +8,6 @@
 #	include <windows.h>
 #endif
 
-
 static int test_main (int argc, qse_char_t* argv[])
 {
 	int i;
@@ -33,8 +32,8 @@ int qse_main (int argc, qse_achar_t* argv[])
 	}
 	else
 	{
-     	sprintf (locale, ".%u", (unsigned int)codepage);
-     	setlocale (LC_ALL, locale);
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
 		qse_setdflcmgr (qse_slmbcmgr);
 	}
 #else

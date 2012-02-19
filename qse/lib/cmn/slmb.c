@@ -48,8 +48,10 @@ qse_size_t qse_slwcrtoslmb (
 #if defined(_WIN32)
 	int n;
 
+	/* CP_THREAD_ACP results in ERROR_INVALID_PARAMETER
+	 * on an old windows os like win95 */
 	n = WideCharToMultiByte (
-		CP_THREAD_ACP, 0 /*WC_ERR_INVALID_CHARS*/, 
+		CP_ACP/*CP_THREAD_ACP*/, 0 /*WC_ERR_INVALID_CHARS*/, 
 		&wc, 1, mb, mbl, NULL, NULL);
 	if (n == 0)
 	{
@@ -106,11 +108,11 @@ qse_size_t qse_slmbrtoslwc (
 	QSE_ASSERT (mb != QSE_NULL);
 	QSE_ASSERT (mbl > 0);
 
-	dbcslen = IsDBCSLeadByteEx(CP_THREAD_ACP, *mb)? 2: 1;
+	dbcslen = IsDBCSLeadByteEx(CP_ACP/*CP_THREAD_ACP*/, *mb)? 2: 1;
 	if (mbl < dbcslen) return mbl + 1; /* incomplete sequence */
 
 	n = MultiByteToWideChar (
-		CP_THREAD_ACP, MB_ERR_INVALID_CHARS, mb, dbcslen, wc, 1);
+		CP_ACP/*CP_THREAD_ACP*/, MB_ERR_INVALID_CHARS, mb, dbcslen, wc, 1);
 	if (n == 0) 
 	{
 		/*DWORD e = GetLastError();*/
@@ -184,7 +186,7 @@ qse_size_t qse_slmbrlen (
 	 * the actual sequence. So it can't actually detect an invalid 
 	 * sequence. Thus, qse_slmbrtowc() may return a different length
 	 * for an invalid sequence form qse_slmbrlen(). */
-	dbcslen = IsDBCSLeadByteEx(CP_THREAD_ACP, *mb)? 2: 1;
+	dbcslen = IsDBCSLeadByteEx(CP_ACP/*CP_THREAD_ACP*/, *mb)? 2: 1;
 	if (mbl < dbcslen) return mbl + 1; /* incomplete sequence */
 	return dbcslen;
 

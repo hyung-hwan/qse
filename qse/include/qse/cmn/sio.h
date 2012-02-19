@@ -74,6 +74,7 @@ enum qse_sio_errnum_t
 	QSE_SIO_EICSEQ,     /**< incomplete sequence */
 	QSE_SIO_EILCHR,     /**< illegal character */
 	QSE_SIO_ESUBSYS,    /**< subsystem(system call) error */
+	QSE_SIO_ENOIMPL,    /**< not implemented */
 
 	QSE_SIO_EOTHER      /**< other error */
 };

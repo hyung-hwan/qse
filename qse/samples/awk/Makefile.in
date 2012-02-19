@@ -36,7 +36,8 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
 	awk04$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) $(am__EXEEXT_1)
-@ENABLE_CXX_TRUE@am__append_1 = awk05 awk06 awk07 awk08
+@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@ENABLE_CXX_TRUE@am__append_2 = awk05 awk06 awk07 awk08
 subdir = samples/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -59,48 +60,49 @@ am_awk01_OBJECTS = awk01.$(OBJEXT)
 awk01_OBJECTS = $(am_awk01_OBJECTS)
 awk01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-awk01_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+awk01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk02_OBJECTS = awk02.$(OBJEXT)
 awk02_OBJECTS = $(am_awk02_OBJECTS)
 awk02_LDADD = $(LDADD)
-awk02_DEPENDENCIES = $(am__DEPENDENCIES_1)
+awk02_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk03_OBJECTS = awk03.$(OBJEXT)
 awk03_OBJECTS = $(am_awk03_OBJECTS)
 awk03_LDADD = $(LDADD)
-awk03_DEPENDENCIES = $(am__DEPENDENCIES_1)
+awk03_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk04_OBJECTS = awk04.$(OBJEXT)
 awk04_OBJECTS = $(am_awk04_OBJECTS)
 awk04_LDADD = $(LDADD)
-awk04_DEPENDENCIES = $(am__DEPENDENCIES_1)
+awk04_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am__awk05_SOURCES_DIST = awk05.cpp
 @ENABLE_CXX_TRUE@am_awk05_OBJECTS = awk05.$(OBJEXT)
 awk05_OBJECTS = $(am_awk05_OBJECTS)
-am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 @ENABLE_CXX_TRUE@awk05_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 am__awk06_SOURCES_DIST = awk06.cpp
 @ENABLE_CXX_TRUE@am_awk06_OBJECTS = awk06.$(OBJEXT)
 awk06_OBJECTS = $(am_awk06_OBJECTS)
 @ENABLE_CXX_TRUE@awk06_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 am__awk07_SOURCES_DIST = awk07.cpp
 @ENABLE_CXX_TRUE@am_awk07_OBJECTS = awk07.$(OBJEXT)
 awk07_OBJECTS = $(am_awk07_OBJECTS)
 @ENABLE_CXX_TRUE@awk07_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 am__awk08_SOURCES_DIST = awk08.cpp
 @ENABLE_CXX_TRUE@am_awk08_OBJECTS = awk08.$(OBJEXT)
 awk08_OBJECTS = $(am_awk08_OBJECTS)
 @ENABLE_CXX_TRUE@awk08_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_2)
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 am_awk09_OBJECTS = awk09.$(OBJEXT)
 awk09_OBJECTS = $(am_awk09_OBJECTS)
 awk09_LDADD = $(LDADD)
-awk09_DEPENDENCIES = $(am__DEPENDENCIES_1)
+awk09_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk10_OBJECTS = awk10.$(OBJEXT)
 awk10_OBJECTS = $(am_awk10_OBJECTS)
 awk10_LDADD = $(LDADD)
-awk10_DEPENDENCIES = $(am__DEPENDENCIES_1)
+awk10_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -224,6 +226,7 @@ SHELL = @SHELL@
 SOCKET_LIBS = @SOCKET_LIBS@
 STRIP = @STRIP@
 TRUE = @TRUE@
+UNICOWS_LIBS = @UNICOWS_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -285,7 +288,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-LDADD = -lqseawk -lqsecmn $(LIBM)
+LDADD = -lqseawk -lqsecmn $(LIBM) $(am__append_1)
 awk01_SOURCES = awk01.c
 awk02_SOURCES = awk02.c
 awk03_SOURCES = awk03.c

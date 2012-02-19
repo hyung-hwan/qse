@@ -77,8 +77,8 @@ enum qse_fio_errnum_t
 	QSE_FIO_ENOENT,     /**< no such file */
 	QSE_FIO_EEXIST,     /**< already exist */
 	QSE_FIO_EINTR,      /**< interrupted */
-	QSE_FIO_ENOIMPL,    /**< not implemented */
 	QSE_FIO_ESUBSYS,    /**< subsystem(system call) error */
+	QSE_FIO_ENOIMPL,    /**< not implemented */
 
 	QSE_FIO_EOTHER      /**< other error */
 };
@@ -142,7 +142,7 @@ struct qse_fio_t
 	QSE_DEFINE_COMMON_FIELDS (fio)
 	qse_fio_errnum_t errnum;
 	qse_fio_hnd_t    handle;
-	int              flags; /* extra flags */
+	int              status; 
 };
 
 struct qse_fio_lck_t

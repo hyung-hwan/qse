@@ -41,6 +41,10 @@ bin_PROGRAMS = \
 LDFLAGS = -L../../lib/cmn 
 LDADD = -lqsecmn 
 
+if WIN32 
+LDADD += $(UNICOWS_LIBS)
+endif
+
 chr01_SOURCES = chr01.c
 env_SOURCES = env.c
 dll_SOURCES = dll.c

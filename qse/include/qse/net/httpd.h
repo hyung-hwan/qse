@@ -322,6 +322,9 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
 	qse_htre_t*               req
 );
 
+/**
+ * The qse_httpd_entaskauth() function adds a basic authorization task.
+ */
 qse_httpd_task_t* qse_httpd_entaskauth (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,

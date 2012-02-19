@@ -381,10 +381,10 @@ static qse_httpd_task_t* entask_error (
 
 	return qse_httpd_entaskformat (
 		httpd, client, task,
-		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html;charset=utf-8\r\nContent-Length: %d\r\n\r\n%s\r\n\r\n"), 
+		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"), 
 		version->major, version->minor, code, smsg,
 		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-		(int)qse_mbslen(lmsg) + 4, lmsg
+		(unsigned long)qse_mbslen(lmsg) + 4, lmsg
 	);
 }
 
@@ -415,12 +415,18 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	const qse_httpd_task_t* task, const qse_mchar_t* realm, qse_htre_t* req)
 {
-	const qse_http_version_t* version = qse_htre_getversion(req);
-/* TODO: */
+	const qse_http_version_t* version;
+	const qse_mchar_t* lmsg;
+
+	version = qse_htre_getversion(req);
+	lmsg = QSE_MT("<html><head><title>Unauthorized</title></head><body><b>UNAUTHORIZED<b></body></html>");
+
 	return qse_httpd_entaskformat (
 		httpd, client, task,
-		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nContent-Length: 0\r\nWWW-Authenticate: Digest realm=\"%s\", qop=\"auth\", nonce=\"%s\""),
-		version->major, version->minor);
+		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
+		version->major, version->minor, 
+		(req->attr.keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+		realm, (unsigned long)qse_mbslen(lmsg) + 4, lmsg);
 }
 
 /*------------------------------------------------------------------------*/
@@ -816,7 +822,7 @@ static QSE_INLINE int task_main_path_dir (
 			{
 				x = qse_httpd_entaskformat (
 					httpd, client, x,
-    					QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: keep-alive\r\nContent-Type: text/html;charset=utf-8\r\nTransfer-Encoding: chunked\r\n\r\n"), 
+    					QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n"), 
 					data->version.major, data->version.minor
 				);
 				if (x) x = qse_httpd_entaskdir (httpd, client, x, handle, data->keepalive);
@@ -825,7 +831,7 @@ static QSE_INLINE int task_main_path_dir (
 			{
 				x = qse_httpd_entaskformat (
 					httpd, client, x,
-    					QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: close\r\nContent-Type: text/html;charset=utf-8\r\n\r\n"), 
+    					QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n"), 
 					data->version.major, data->version.minor
 				);
 

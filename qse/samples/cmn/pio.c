@@ -25,19 +25,13 @@
 
 static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_t rhid)
 {
-	qse_pio_t* pio;
+	qse_pio_t pio;
 	int x;
 
-	pio = qse_pio_open (
-		QSE_MMGR_GETDFL(),
-		0,
-		cmd,
-		env,
-		oflags
-	);
-	if (pio == QSE_NULL)
+	if (qse_pio_init (&pio, QSE_MMGR_GETDFL(), cmd, env, oflags) <= -1)
 	{
-		qse_printf (QSE_T("cannot open program through pipe\n"));
+		qse_printf (QSE_T("cannot open program through pipe - %d\n"), 
+			(int)qse_pio_geterrnum(&pio));
 		return -1;
 	}
 
@@ -46,14 +40,14 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		qse_byte_t buf[128];
 		qse_ssize_t i;
 
-		/*qse_pio_canread (pio, QSE_PIO_ERR, 1000)*/
-		qse_ssize_t n = qse_pio_read (pio, rhid, buf, QSE_SIZEOF(buf));
+		/*qse_pio_canread (&pio, QSE_PIO_ERR, 1000)*/
+		qse_ssize_t n = qse_pio_read (&pio, rhid, buf, QSE_SIZEOF(buf));
 		if (n == 0) break;
 		if (n <= -1)
 		{
 			qse_printf (
 				QSE_T("qse_pio_read() returned error - %d\n"),
-				(int)qse_pio_geterrnum(pio)
+				(int)qse_pio_geterrnum(&pio)
 			);
 			break;
 		}	
@@ -70,14 +64,14 @@ static int pio1 (const qse_char_t* cmd, qse_env_t* env, int oflags, qse_pio_hid_
 		qse_printf (QSE_T("]\n"));
 	}
 
-	x = qse_pio_wait (pio);
+	x = qse_pio_wait (&pio);
 	qse_printf (QSE_T("qse_pio_wait returns %d\n"), x);
 	if (x <= -1)
 	{
-		qse_printf (QSE_T("error code : %d\n"), (int)qse_pio_geterrnum(pio));
+		qse_printf (QSE_T("error code : %d\n"), (int)qse_pio_geterrnum(&pio));
 	}
 
-	qse_pio_close (pio);
+	qse_pio_fini (&pio);
 
 	return 0;
 }

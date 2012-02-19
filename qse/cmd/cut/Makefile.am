@@ -11,3 +11,6 @@ qsecut_SOURCES = cut.c
 qsecut_LDFLAGS = -L../../lib/cut -L../../lib/cmn -L$(libdir)
 qsecut_LDADD = -lqsecut -lqsecmn
 
+if WIN32 
+qsecut_LDADD += $(UNICOWS_LIBS)
+endif

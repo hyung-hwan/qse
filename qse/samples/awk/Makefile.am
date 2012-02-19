@@ -10,6 +10,10 @@ bin_PROGRAMS = awk01 awk02 awk03 awk04 awk09 awk10
 LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
 
+if WIN32 
+LDADD += $(UNICOWS_LIBS)
+endif
+
 awk01_SOURCES = awk01.c
 awk02_SOURCES = awk02.c
 awk03_SOURCES = awk03.c

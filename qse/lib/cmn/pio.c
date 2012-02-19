@@ -221,7 +221,7 @@ struct param_t
 	qse_mchar_t** argv;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	/* nothign extra */
+	/* nothing extra */
 #else
 	qse_mchar_t fixed_mbuf[64];
 #endif
@@ -528,6 +528,9 @@ int qse_pio_init (
 	PROCESS_INFORMATION procinfo;
 	STARTUPINFO startup;
 	HANDLE windevnul = INVALID_HANDLE_VALUE;
+	BOOL apiret;
+	qse_char_t* dupcmd;
+	int create_retried;
 
 #elif defined(__OS2__)
 	APIRET rc;
@@ -549,7 +552,7 @@ int qse_pio_init (
 #elif defined(HAVE_POSIX_SPAWN)
 	posix_spawn_file_actions_t fa;
 	int fa_inited = 0;
-	int spawn_ret;
+	int pserr;
 	qse_pio_pid_t pid;
 	param_t param;
 	extern char** environ;
@@ -581,8 +584,14 @@ int qse_pio_init (
 		/* don't inherit write handle */
 		if (SetHandleInformation (handle[1], HANDLE_FLAG_INHERIT, 0) == FALSE) 
 		{
-			pio->errnum = syserr_to_errnum (GetLastError());
-			goto oops;
+			DWORD e = GetLastError();
+			if (e != ERROR_CALL_NOT_IMPLEMENTED)
+			{
+				/* SetHandleInformation() is not implemented on win9x.
+				 * so let's care only if it is implemented */
+				pio->errnum = syserr_to_errnum (e);
+				goto oops;
+			}
 		}
 
 		minidx = 0; maxidx = 1;
@@ -600,8 +609,14 @@ int qse_pio_init (
 		/* don't inherit read handle */
 		if (SetHandleInformation (handle[2], HANDLE_FLAG_INHERIT, 0) == FALSE) 
 		{
-			pio->errnum = syserr_to_errnum (GetLastError());
-			goto oops;
+			DWORD e = GetLastError();
+			if (e != ERROR_CALL_NOT_IMPLEMENTED)
+			{
+				/* SetHandleInformation() is not implemented on win9x.
+				 * so let's care only if it is implemented */
+				pio->errnum = syserr_to_errnum (e);
+				goto oops;
+			}
 		}
 
 		if (minidx == -1) minidx = 2;
@@ -620,8 +635,14 @@ int qse_pio_init (
 		/* don't inherit read handle */
 		if (SetHandleInformation (handle[4], HANDLE_FLAG_INHERIT, 0) == FALSE)
 		{
-			pio->errnum = syserr_to_errnum (GetLastError());
-			goto oops;
+			DWORD e = GetLastError();
+			if (e != ERROR_CALL_NOT_IMPLEMENTED)
+			{
+				/* SetHandleInformation() is not implemented on win9x.
+				 * so let's care only if it is implemented */
+				pio->errnum = syserr_to_errnum (e);
+				goto oops;
+			}
 		}
 
 		if (minidx == -1) minidx = 4;
@@ -664,12 +685,18 @@ int qse_pio_init (
 	startup.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
 	startup.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
 	startup.hStdOutput = GetStdHandle (STD_ERROR_HANDLE);
-
 	if (startup.hStdInput == INVALID_HANDLE_VALUE ||
 	    startup.hStdOutput == INVALID_HANDLE_VALUE ||
-	    startup.hStdError == INVALID_HANDLE_VALUE) goto oops;
+	    startup.hStdError == INVALID_HANDLE_VALUE) 
+	{
+		pio->errnum = syserr_to_errnum (GetLastError());
+		goto oops;
+	}
 
-	if (flags & QSE_PIO_WRITEIN) startup.hStdInput = handle[0];
+	if (flags & QSE_PIO_WRITEIN) 
+	{
+		startup.hStdInput = handle[0];
+	}
 
 	if (flags & QSE_PIO_READOUT)
 	{
@@ -696,72 +723,95 @@ int qse_pio_init (
 	/* there is nothing to do for QSE_PIO_SHELL as CreateProcess
 	 * takes the entire command line */
 
+	create_retried = 0;
+
+create_process:	
+	if (flags & QSE_PIO_SHELL) 
 	{
-		qse_char_t* dupcmd;
-		BOOL x;
-
-		if (flags & QSE_PIO_SHELL) 
+		static const qse_char_t* cmdname[] =
 		{
-		#if defined(QSE_CHAR_IS_WCHAR)
-			if (flags & QSE_PIO_MBSCMD)
-			{
-				const qse_mchar_t* x[3];
-				x[0] = QSE_MT("cmd.exe /c ");
-				x[1] = (const qse_mchar_t*)cmd;
-				x[2] = QSE_NULL;
-				dupcmd = qse_mbsatowcsdup (x, mmgr);
-			}
-			else
-			{
-		#endif
-				dupcmd = qse_strdup2 (QSE_T("cmd.exe /c "), cmd, mmgr);
-		#if defined(QSE_CHAR_IS_WCHAR)
-			}
-		#endif
-		}
-		else 
+			QSE_T("cmd.exe /c "),
+			QSE_T("command.com /c ")
+		};
+		static const qse_mchar_t* mcmdname[] =
 		{
-		#if defined(QSE_CHAR_IS_WCHAR)
-			if (flags & QSE_PIO_MBSCMD)
-			{
-				dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, mmgr);
-			}
-			else
-			{
-		#endif
-				/* CreateProcess requires command buffer to be read-write. */
-				dupcmd = qse_strdup (cmd, mmgr);
-		#if defined(QSE_CHAR_IS_WCHAR)
-			}
-		#endif
-		}
+			QSE_MT("cmd.exe /c "),
+			QSE_MT("command.com /c ")
+		};
 
-		if (dupcmd == QSE_NULL)
+	#if defined(QSE_CHAR_IS_WCHAR)
+		if (flags & QSE_PIO_MBSCMD)
 		{
-			pio->errnum = QSE_PIO_ENOMEM;
-			goto oops;
+			const qse_mchar_t* x[3];
+			x[0] = mcmdname[create_retried];
+			x[1] = (const qse_mchar_t*)cmd;
+			x[2] = QSE_NULL;
+			dupcmd = qse_mbsatowcsdup (x, mmgr);
+		}
+		else
+		{
+	#endif
+			dupcmd = qse_strdup2 (cmdname[create_retried], cmd, mmgr);
+	#if defined(QSE_CHAR_IS_WCHAR)
+		}
+	#endif
+	}
+	else 
+	{
+	#if defined(QSE_CHAR_IS_WCHAR)
+		if (flags & QSE_PIO_MBSCMD)
+		{
+			dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, mmgr);
+		}
+		else
+		{
+	#endif
+			/* CreateProcess requires command buffer to be read-write. */
+			dupcmd = qse_strdup (cmd, mmgr);
+	#if defined(QSE_CHAR_IS_WCHAR)
+		}
+	#endif
+	}
+
+	if (dupcmd == QSE_NULL)
+	{
+		pio->errnum = QSE_PIO_ENOMEM;
+		goto oops;
+	}
+
+	apiret = CreateProcess (
+		QSE_NULL,  /* LPCTSTR lpApplicationName */
+		dupcmd,    /* LPTSTR lpCommandLine */
+		QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
+		QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
+		TRUE,      /* BOOL bInheritHandles */
+	#ifdef QSE_CHAR_IS_MCHAR
+		0,         /* DWORD dwCreationFlags */
+	#else
+		CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
+	#endif
+		(env? qse_env_getstr(env): QSE_NULL), /* LPVOID lpEnvironment */
+		QSE_NULL, /* LPCTSTR lpCurrentDirectory */
+		&startup, /* LPSTARTUPINFO lpStartupInfo */
+		&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
+	);
+
+	QSE_MMGR_FREE (mmgr, dupcmd); 
+	if (apiret == FALSE) 
+	{
+		DWORD e = GetLastError();
+		if (create_retried == 0 && (flags & QSE_PIO_SHELL) && 
+		    e == ERROR_FILE_NOT_FOUND)
+		{
+			/* if it failed to exeucte cmd.exe, 
+			 * attempt to execute command.com.
+			 * this is provision for old windows platforms */
+			create_retried = 1;
+			goto create_process;
 		}
 
-		x = CreateProcess (
-			QSE_NULL,  /* LPCTSTR lpApplicationName */
-			dupcmd,    /* LPTSTR lpCommandLine */
-			QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpProcessAttributes */
-			QSE_NULL,  /* LPSECURITY_ATTRIBUTES lpThreadAttributes */
-			TRUE,      /* BOOL bInheritHandles */
-		#ifdef QSE_CHAR_IS_MCHAR
-			0,         /* DWORD dwCreationFlags */
-		#else
-			CREATE_UNICODE_ENVIRONMENT, /* DWORD dwCreationFlags */
-		#endif
-			(env? qse_env_getstr(env): QSE_NULL), /* LPVOID lpEnvironment */
-			QSE_NULL, /* LPCTSTR lpCurrentDirectory */
-			&startup, /* LPSTARTUPINFO lpStartupInfo */
-			&procinfo /* LPPROCESS_INFORMATION lpProcessInformation */
-		);
-
-		QSE_MMGR_FREE (mmgr, dupcmd); 
-		if (x == FALSE) 
-			pio->errnum = syserr_to_errnum (GetLastError());
+		pio->errnum = syserr_to_errnum (e);
+		goto oops;
 	}
 
 	if (windevnul != INVALID_HANDLE_VALUE)
@@ -1124,6 +1174,7 @@ int qse_pio_init (
 #elif defined(__DOS__)
 		
 	/* DOS not multi-processed. can't support pio */
+	pio->errnum = QSE_PIO_ENOIMPL;
 	return -1;
 
 #elif defined(HAVE_POSIX_SPAWN)
@@ -1165,35 +1216,83 @@ int qse_pio_init (
 		goto oops;
 	}
 
-	if (posix_spawn_file_actions_init (&fa) != 0) goto oops;
+	if ((pserr = posix_spawn_file_actions_init (&fa)) != 0) 
+	{
+		pio->errnum = syserr_to_errnum (pserr);
+		goto oops;
+	}
 	fa_inited = 1;
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
 		/* child should read */
-		if (posix_spawn_file_actions_addclose (&fa, handle[1]) != 0) goto oops;
-		if (posix_spawn_file_actions_adddup2 (&fa, handle[0], 0) != 0) goto oops;
-		if (posix_spawn_file_actions_addclose (&fa, handle[0]) != 0) goto oops;
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[1])) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[0]), 0) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[0])) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 	}
 
 	if (flags & QSE_PIO_READOUT)
 	{
 		/* child should write */
-		if (posix_spawn_file_actions_addclose (&fa, handle[2]) != 0) goto oops;
-		if (posix_spawn_file_actions_adddup2 (&fa, handle[3], 1) != 0) goto oops;
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[2])) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 1)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 		if ((flags & QSE_PIO_ERRTOOUT) &&
-		    posix_spawn_file_actions_adddup2 (&fa, handle[3], 2) != 0) goto oops;
-		if (posix_spawn_file_actions_addclose (&fa, handle[3]) != 0) goto oops;
+		    (pserr = posix_spawn_file_actions_adddup2 (&fa, handle[3], 2)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[3])) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 	}
 
 	if (flags & QSE_PIO_READERR)
 	{
 		/* child should write */
-		if (posix_spawn_file_actions_addclose (&fa, handle[4]) != 0) goto oops;
-		if (posix_spawn_file_actions_adddup2 (&fa, handle[5], 2) != 0) goto oops;
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[4])) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 2)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 		if ((flags & QSE_PIO_OUTTOERR) &&
-		    posix_spawn_file_actions_adddup2 (&fa, handle[5], 1) != 0) goto oops;
-		if (posix_spawn_file_actions_addclose (&fa, handle[5]) != 0) goto oops;
+		    (pserr = posix_spawn_file_actions_adddup2 (&fa, handle[5], 1)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
+		if ((pserr = posix_spawn_file_actions_addclose (&fa, handle[5])) != 0) 
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 	}
 
 	{
@@ -1203,11 +1302,23 @@ int qse_pio_init (
 	#endif
 
 		if ((flags & QSE_PIO_INTONUL) &&
-		    posix_spawn_file_actions_addopen (&fa, 0, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+		    (pserr = posix_spawn_file_actions_addopen (&fa, 0, QSE_MT("/dev/null"), oflags, 0)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 		if ((flags & QSE_PIO_OUTTONUL) &&
-		    posix_spawn_file_actions_addopen (&fa, 1, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+		    (pserr = posix_spawn_file_actions_addopen (&fa, 1, QSE_MT("/dev/null"), oflags, 0)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 		if ((flags & QSE_PIO_ERRTONUL) &&
-		    posix_spawn_file_actions_addopen (&fa, 2, QSE_MT("/dev/null"), oflags, 0) != 0) goto oops;
+		    (pserr = posix_spawn_file_actions_addopen (&fa, 2, QSE_MT("/dev/null"), oflags, 0)) != 0)
+		{
+			pio->errnum = syserr_to_errnum (pserr);
+			goto oops;
+		}
 	}
 
 	/* there remains the chance of race condition that
@@ -1216,11 +1327,23 @@ int qse_pio_init (
 	 * just on the best-effort basis.
 	 */
 	if ((flags & QSE_PIO_DROPIN) && is_fd_valid(0) &&
-	    posix_spawn_file_actions_addclose (&fa, 0) != 0) goto oops;
+	    (pserr = posix_spawn_file_actions_addclose (&fa, 0)) != 0) 
+	{
+		pio->errnum = syserr_to_errnum (pserr);
+		goto oops;
+	}
 	if ((flags & QSE_PIO_DROPOUT) && is_fd_valid(1) &&
-	    posix_spawn_file_actions_addclose (&fa, 1) != 0) goto oops;
+	    (pserr = posix_spawn_file_actions_addclose (&fa, 1)) != 0) 
+	{
+		pio->errnum = syserr_to_errnum (pserr);
+		goto oops;
+	}
 	if ((flags & QSE_PIO_DROPERR) && is_fd_valid(2) &&
-	    posix_spawn_file_actions_addclose (&fa, 2) != 0) goto oops;
+	    (pserr = posix_spawn_file_actions_addclose (&fa, 2)) != 0)
+	{
+		pio->errnum = syserr_to_errnum (pserr);
+		goto oops;
+	}
 
 	if (!(flags & QSE_PIO_NOCLOEXEC))
 	{
@@ -1236,7 +1359,11 @@ int qse_pio_init (
 			 * with addclose() is closed before posix_spawn().
 			 * addclose() if no FD_CLOEXEC is set or it's unknown. */
 			if (is_fd_valid_and_nocloexec(fd) && 
-			    posix_spawn_file_actions_addclose (&fa, fd) != 0) goto oops;
+			    (pserr = posix_spawn_file_actions_addclose (&fa, fd)) != 0) 
+			{
+				pio->errnum = syserr_to_errnum (pserr);
+				goto oops;
+			}
 		}
 	}
 
@@ -1251,7 +1378,7 @@ int qse_pio_init (
 		goto oops;
 	}
 
-	spawn_ret = posix_spawn(
+	pserr = posix_spawn(
 		&pid, param.argv[0], &fa, QSE_NULL, param.argv,
 		(env? qse_env_getarr(env): environ));
 	free_param (pio, &param); 
@@ -1260,9 +1387,9 @@ int qse_pio_init (
 		posix_spawn_file_actions_destroy (&fa);
 		fa_inited = 0;
 	}
-	if (spawn_ret != 0) 
+	if (pserr != 0) 
 	{
-		pio->errnum = syserr_to_errnum (errno);
+		pio->errnum = syserr_to_errnum (pserr);
 		goto oops;
 	}
 
@@ -1287,20 +1414,32 @@ int qse_pio_init (
 
 	if (flags & QSE_PIO_WRITEIN)
 	{
-		if (QSE_PIPE(&handle[0]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[0]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		minidx = 0; maxidx = 1;
 	}
 
 	if (flags & QSE_PIO_READOUT)
 	{
-		if (QSE_PIPE(&handle[2]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[2]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		if (minidx == -1) minidx = 2;
 		maxidx = 3;
 	}
 
 	if (flags & QSE_PIO_READERR)
 	{
-		if (QSE_PIPE(&handle[4]) <= -1) goto oops;
+		if (QSE_PIPE(&handle[4]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
 		if (minidx == -1) minidx = 4;
 		maxidx = 5;
 	}
@@ -1325,6 +1464,7 @@ int qse_pio_init (
 	pid = QSE_FORK();
 	if (pid <= -1) 
 	{
+		pio->errnum = QSE_PIO_EINVAL;
 		free_param (pio, &param);
 		goto oops;
 	}
@@ -1979,7 +2119,8 @@ int qse_pio_wait (qse_pio_t* pio)
 		child_rc.codeResult: (255 + 1 + child_rc.codeTerminate);
 
 #elif defined(__DOS__)
-	/* TOOD: implement this */
+
+	pio->errnum = QSE_PIO_ENOIMPL;
 	return -1;
 
 #else
@@ -2099,7 +2240,8 @@ int qse_pio_kill (qse_pio_t* pio)
 	return 0;	
 
 #elif defined(__DOS__)
-	/* TODO: implement this*/
+
+	pio->errnum = QSE_PIO_ENOIMPL;
 	return -1;
 
 #else

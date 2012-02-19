@@ -11,3 +11,6 @@ qsestx_SOURCES = stx.c
 qsestx_LDFLAGS = -L../../lib/stx -L../../lib/cmn -L$(libdir)
 qsestx_LDADD = -lqsestx -lqsecmn $(LIBM)
 
+if WIN32 
+qsestx_LDADD += $(UNICOWS_LIBS)
+endif
