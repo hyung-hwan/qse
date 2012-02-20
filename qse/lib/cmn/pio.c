@@ -32,6 +32,7 @@
 #	include <os2.h>
 #elif defined(__DOS__)
 #	include <io.h>
+#	include <errno.h>
 #else
 #	include "syscall.h"
 #	if defined(HAVE_SPAWN_H)
@@ -1941,7 +1942,7 @@ static qse_ssize_t pio_write (
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
 
 	n = write (hnd, data, size);
-	if (n <= -1) pio->errnum = syserro_to_errnum (errno);
+	if (n <= -1) pio->errnum = syserr_to_errnum (errno);
 	return n;
 
 #else
