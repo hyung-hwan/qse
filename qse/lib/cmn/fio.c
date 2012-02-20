@@ -37,6 +37,7 @@
 #elif defined(__DOS__)
 #	include <io.h>
 #	include <fcntl.h>
+#	include <errno.h>
 #else
 #	include "syscall.h"
 #endif
@@ -450,7 +451,7 @@ int qse_fio_init (
 		zero.ulHi = 0;
 
 		if (flags & QSE_FIO_APPEND) 
-			fio->stats |= STATUS_APPEND;
+			fio->status |= STATUS_APPEND;
 
 		if (flags & QSE_FIO_CREATE)
 		{

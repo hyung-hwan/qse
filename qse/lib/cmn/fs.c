@@ -105,9 +105,9 @@ void qse_fs_fini (qse_fs_t* fs)
 			info->handle = INVALID_HANDLE_VALUE;
 		}
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+		/* TODO: implement this */
 #elif defined(__DOS__)
-#	error NOT IMPLEMENTED
+		/* TODO: implement this */
 #else
 		if (info->mcurdir && info->mcurdir != fs->curdir)
 			QSE_MMGR_FREE (fs->mmgr, info->mcurdir);
@@ -166,9 +166,9 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 	const qse_char_t* tmp_name[4];
 	qse_size_t idx;
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #elif defined(__DOS__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #else
 	DIR* handle;
 	qse_mchar_t* mfsname;
@@ -243,9 +243,9 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 	return 0;
 
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #elif defined(__DOS__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #else
 
 	idx = 0;
@@ -515,9 +515,9 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 	}
 
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #elif defined(__DOS__)
-#	error NOT IMPLEMENTED
+	/* TODO: implement this */
 #else
 
 	info_t* info;

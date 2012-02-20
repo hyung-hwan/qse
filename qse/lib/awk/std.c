@@ -48,6 +48,7 @@
 #		define HAVE_ATAN
 #		define HAVE_ATAN2
 #		define HAVE_LOG
+#		define HAVE_LOG10
 #		define HAVE_EXP
 #		define HAVE_SQRT
 #	endif
