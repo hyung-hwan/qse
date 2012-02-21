@@ -52,21 +52,21 @@ static qse_pio_errnum_t syserr_to_errnum (DWORD e)
 {
 	switch (e)
 	{
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_PIO_ENOMEM;
+
 		case ERROR_INVALID_PARAMETER:
 		case ERROR_INVALID_HANDLE:
 		case ERROR_INVALID_NAME:
 			return QSE_PIO_EINVAL;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_PIO_ENOENT;
-
 		case ERROR_ACCESS_DENIED:
 			return QSE_PIO_EACCES;
 
-		case ERROR_NOT_ENOUGH_MEMORY:
-		case ERROR_OUTOFMEMORY:
-			return QSE_PIO_ENOMEM;
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_PIO_ENOENT;
 
 		case ERROR_ALREADY_EXISTS:
 		case ERROR_FILE_EXISTS:
@@ -76,7 +76,7 @@ static qse_pio_errnum_t syserr_to_errnum (DWORD e)
 			return QSE_PIO_EPIPE;
 
 		default:
-			return QSE_PIO_ESUBSYS;
+			return QSE_PIO_ESYSERR;
 	}
 }
 #elif defined(__OS2__)
@@ -84,20 +84,20 @@ static qse_pio_errnum_t syserr_to_errnum (APIRET e)
 {
 	switch (e)
 	{
+		case ERROR_NOT_ENOUGH_MEMORY:
+			return QSE_PIO_ENOMEM;
+
 		case ERROR_INVALID_PARAMETER:
 		case ERROR_INVALID_HANDLE:
 		case ERROR_INVALID_NAME:
 			return QSE_PIO_EINVAL;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_PIO_ENOENT;
-
 		case ERROR_ACCESS_DENIED:
 			return QSE_PIO_EACCES;
 
-		case ERROR_NOT_ENOUGH_MEMORY:
-			return QSE_PIO_ENOMEM;
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_PIO_ENOENT;
 
 		case ERROR_ALREADY_EXISTS:
 			return QSE_PIO_EEXIST;
@@ -106,7 +106,7 @@ static qse_pio_errnum_t syserr_to_errnum (APIRET e)
 			return QSE_PIO_EPIPE;
 
 		default:
-			return QSE_PIO_ESUBSYS;
+			return QSE_PIO_ESYSERR;
 	}
 }
 #elif defined(__DOS__)
@@ -120,17 +120,17 @@ static qse_pio_errnum_t syserr_to_errnum (int e)
 		case EINVAL:
 			return QSE_PIO_EINVAL;
 
-		case ENOENT:
-			return QSE_PIO_ENOENT;
-
 		case EACCES:
 			return QSE_PIO_EACCES;
+
+		case ENOENT:
+			return QSE_PIO_ENOENT;
 
 		case EEXIST:
 			return QSE_PIO_EEXIST;
 	
 		default:
-			return QSE_PIO_ESUBSYS;
+			return QSE_PIO_ESYSERR;
 	}
 }
 #else
@@ -144,11 +144,11 @@ static qse_pio_errnum_t syserr_to_errnum (int e)
 		case EINVAL:
 			return QSE_PIO_EINVAL;
 
-		case ENOENT:
-			return QSE_PIO_ENOENT;
-
 		case EACCES:
 			return QSE_PIO_EACCES;
+
+		case ENOENT:
+			return QSE_PIO_ENOENT;
 
 		case EEXIST:
 			return QSE_PIO_EEXIST;
@@ -160,7 +160,7 @@ static qse_pio_errnum_t syserr_to_errnum (int e)
 			return QSE_PIO_EPIPE;
 
 		default:
-			return QSE_PIO_ESUBSYS;
+			return QSE_PIO_ESYSERR;
 	}
 }
 #endif
@@ -1663,7 +1663,7 @@ create_process:
 	return 0;
 
 oops:
-	if (pio->errnum == QSE_PIO_ENOERR) pio->errnum = QSE_PIO_ESUBSYS;
+	if (pio->errnum == QSE_PIO_ENOERR) pio->errnum = QSE_PIO_ESYSERR;
 
 #if defined(_WIN32)
 	if (windevnul != INVALID_HANDLE_VALUE) CloseHandle (windevnul);
@@ -2049,7 +2049,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	if (w != WAIT_OBJECT_0)
 	{
 		/* WAIT_FAILED, WAIT_ABANDONED */
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 
@@ -2062,7 +2062,7 @@ int qse_pio_wait (qse_pio_t* pio)
 		CloseHandle (pio->child); 
 		pio->child = QSE_PIO_PID_NIL;
 
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 
@@ -2075,7 +2075,7 @@ int qse_pio_wait (qse_pio_t* pio)
 		/* this should not happen as the control reaches here
 		 * only when WaitforSingleObject() is successful.
 		 * if it happends,  close the handle and return an error */
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 
@@ -2108,7 +2108,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	if (rc != NO_ERROR)
 	{
 		/* WAIT_FAILED, WAIT_ABANDONED */
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 
@@ -2225,7 +2225,7 @@ int qse_pio_kill (qse_pio_t* pio)
 	n = TerminateProcess (pio->child, 255 + 1 + 9);
 	if (n == FALSE) 
 	{
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 	return 0;
@@ -2235,7 +2235,7 @@ int qse_pio_kill (qse_pio_t* pio)
 	rc = DosKillProcess (pio->child, DKP_PROCESSTREE);
 	if (rc != NO_ERROR)
 	{
-		pio->errnum = QSE_PIO_ESUBSYS;
+		pio->errnum = QSE_PIO_ESYSERR;
 		return -1;
 	}
 	return 0;	
@@ -2247,7 +2247,7 @@ int qse_pio_kill (qse_pio_t* pio)
 
 #else
 	n = QSE_KILL (pio->child, SIGKILL);
-	if (n <= -1) pio->errnum = QSE_PIO_ESUBSYS;
+	if (n <= -1) pio->errnum = QSE_PIO_ESYSERR;
 	return n;
 #endif
 }

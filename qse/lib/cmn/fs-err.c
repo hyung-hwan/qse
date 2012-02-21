@@ -25,34 +25,17 @@ qse_fs_errnum_t qse_fs_geterrnum (qse_fs_t* fs)
 	return fs->errnum;
 }
 
-const qse_char_t* qse_fs_geterrmsg (qse_fs_t* fs)
-{
-	static const qse_char_t* errstr[] =
- 	{
-		QSE_T("no error"),
-		QSE_T("internal error that should never have happened"),
-
-		QSE_T("insufficient memory"),
-		QSE_T("invalid parameter or data"),
-		QSE_T("access denied"),
-		QSE_T("operation not permitted"),
-		QSE_T("no such entry"),
-		QSE_T("no working directory set"),
-		QSE_T("operation not permitted on directory"),
-		QSE_T("entry already exists"),
-		QSE_T("cross-device operation not allowed"),
-		QSE_T("system error")
-	};
-
-	return (fs->errnum >= 0 && fs->errnum < QSE_COUNTOF(errstr))?
-		errstr[fs->errnum]: QSE_T("unknown error");
-}
-
 qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 {
 #if defined(_WIN32)
 	switch (e)
 	{
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_FS_ENOMEM;
+
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
 		case ERROR_INVALID_NAME:
 		case ERROR_DIRECTORY:
 			return QSE_FS_EINVAL;
@@ -64,47 +47,104 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 		case ERROR_PATH_NOT_FOUND:
 			return QSE_FS_ENOENT;
 
-		case ERROR_NOT_ENOUGH_MEMORY:
-		case ERROR_OUTOFMEMORY:
-			return QSE_FS_ENOMEM;
-
 		case ERROR_ALREADY_EXISTS:
 		case ERROR_FILE_EXISTS:
 			return QSE_FS_EEXIST;
+
+		case ERROR_NOT_SAME_DEVICE:
+			return QSE_FS_EXDEV;
 	
 		default:
-			return QSE_FS_ESYSTEM;
+			return QSE_FS_ESYSERR;
 	}
-#else
+#elif defined(__OS2__)
+
 	switch (e)
 	{
-		case EINVAL:
+		case ERROR_NOT_ENOUGH_MEMORY:
+			return QSE_FS_ENOMEM;
+
+		case ERROR_INVALID_PARAMETER:
+		case ERROR_INVALID_HANDLE:
+		case ERROR_INVALID_NAME:
 			return QSE_FS_EINVAL;
 
+		case ERROR_ACCESS_DENIED:
+			return QSE_FS_EACCES;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_FS_ENOENT;
+
+		case ERROR_ALREADY_EXISTS:
+			return QSE_FS_EEXIST;
+
+		case ERROR_NOT_SAME_DEVICE:
+			return QSE_FS_EXDEV;
+
+		default:
+			return QSE_FS_ESYSERR;
+	}
+
+#elif defined(__DOS__)
+
+	switch (e)
+	{
 		case ENOMEM:
 			return QSE_FS_ENOMEM;
 
-		case EACCES:
-			return QSE_FS_EACCES;
+		case EINVAL:
+			return QSE_FS_EINVAL;
 
+		case EACCES:
 		case EPERM:
-			return QSE_FS_EPERM;
+			return QSE_FS_EACCES;
 
 		case ENOENT:
 		case ENOTDIR:
 			return QSE_FS_ENOENT;
 
+		case EEXIST:
+			return QSE_FS_EEXIST;
+
 		case EISDIR: 
 			return QSE_FS_EISDIR;
 
+		default:
+			return QSE_FS_ESYSERR;
+	}
+
+#else
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_FS_ENOMEM;
+
+		case EINVAL:
+			return QSE_FS_EINVAL;
+
+		case EACCES:
+		case EPERM:
+			return QSE_FS_EACCES;
+
+		case ENOENT:
+		case ENOTDIR:
+			return QSE_FS_ENOENT;
+
 		case EEXIST:
 			return QSE_FS_EEXIST;
+
+		case EINTR:
+			return QSE_FS_EINTR;
+
+		case EISDIR: 
+			return QSE_FS_EISDIR;
 
 		case EXDEV:
 			return QSE_FS_EXDEV;
 
 		default:
-			return QSE_FS_ESYSTEM;
+			return QSE_FS_ESYSERR;
 	}
 #endif
 }

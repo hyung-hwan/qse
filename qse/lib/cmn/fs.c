@@ -244,8 +244,10 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 
 #elif defined(__OS2__)
 	/* TODO: implement this */
+	return 0;
 #elif defined(__DOS__)
 	/* TODO: implement this */
+	return 0;
 #else
 
 	idx = 0;

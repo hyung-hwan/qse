@@ -57,28 +57,28 @@ static qse_fio_errnum_t syserr_to_errnum (DWORD e)
 
 	switch (e)
 	{
+		case ERROR_NOT_ENOUGH_MEMORY:
+		case ERROR_OUTOFMEMORY:
+			return QSE_FIO_ENOMEM;
+
 		case ERROR_INVALID_PARAMETER:
 		case ERROR_INVALID_HANDLE:
 		case ERROR_INVALID_NAME:
 			return QSE_FIO_EINVAL;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_FIO_ENOENT;
-
 		case ERROR_ACCESS_DENIED:
 			return QSE_FIO_EACCES;
 
-		case ERROR_NOT_ENOUGH_MEMORY:
-		case ERROR_OUTOFMEMORY:
-			return QSE_FIO_ENOMEM;
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_FIO_ENOENT;
 
 		case ERROR_ALREADY_EXISTS:
 		case ERROR_FILE_EXISTS:
 			return QSE_FIO_EEXIST;
 
 		default:
-			return QSE_FIO_ESUBSYS;
+			return QSE_FIO_ESYSERR;
 	}
 }
 #elif defined(__OS2__)
@@ -86,26 +86,26 @@ static qse_fio_errnum_t syserr_to_errnum (APIRET e)
 {
 	switch (e)
 	{
+		case ERROR_NOT_ENOUGH_MEMORY:
+			return QSE_FIO_ENOMEM;
+
 		case ERROR_INVALID_PARAMETER:
 		case ERROR_INVALID_HANDLE:
 		case ERROR_INVALID_NAME:
 			return QSE_FIO_EINVAL;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_FIO_ENOENT;
-
 		case ERROR_ACCESS_DENIED:
 			return QSE_FIO_EACCES;
 
-		case ERROR_NOT_ENOUGH_MEMORY:
-			return QSE_FIO_ENOMEM;
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return QSE_FIO_ENOENT;
 
 		case ERROR_ALREADY_EXISTS:
 			return QSE_FIO_EEXIST;
 
 		default:
-			return QSE_FIO_ESUBSYS;
+			return QSE_FIO_ESYSERR;
 	}
 }
 #elif defined(__DOS__)
@@ -119,17 +119,17 @@ static qse_fio_errnum_t syserr_to_errnum (int e)
 		case EINVAL:
 			return QSE_FIO_EINVAL;
 
-		case ENOENT:
-			return QSE_FIO_ENOENT;
-
 		case EACCES:
 			return QSE_FIO_EACCES;
+
+		case ENOENT:
+			return QSE_FIO_ENOENT;
 
 		case EEXIST:
 			return QSE_FIO_EEXIST;
 	
 		default:
-			return QSE_FIO_ESUBSYS;
+			return QSE_FIO_ESYSERR;
 	}
 }
 #else
@@ -156,7 +156,7 @@ static qse_fio_errnum_t syserr_to_errnum (int e)
 			return QSE_FIO_EINTR;
 
 		default:
-			return QSE_FIO_ESUBSYS;
+			return QSE_FIO_ESYSERR;
 	}
 }
 #endif

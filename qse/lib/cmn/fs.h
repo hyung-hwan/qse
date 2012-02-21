@@ -24,12 +24,14 @@
 #	include <windows.h>
 	typedef DWORD qse_fs_syserr_t;
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
+#	define INCL_DOSERRORS
+#	include <os2.h>
+	typedef APIRET qse_fs_syserr_t;
 #elif defined(__DOS__)
-#	error NOT IMPLEMENTED
+#	include <errno.h>
+	typedef int qse_fs_syserr_t;
 #else
 #	include "syscall.h"
-#	include <errno.h>
 	typedef int qse_fs_syserr_t;
 #endif
 

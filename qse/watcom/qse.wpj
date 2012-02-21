@@ -4,8 +4,8 @@ projectIdent
 VpeMain
 1
 WRect
-540
-0
+390
+40
 9320
 9680
 2
@@ -148,14 +148,14 @@ WRect
 1360
 5700
 4240
-1
+0
 0
 35
 WFileName
 28
 debug/os2/lib/cmn/qsecmn.tgt
-14
-22
+8
+12
 36
 VComponent
 37
@@ -196,7 +196,7 @@ WRect
 2440
 5700
 4240
-0
+1
 0
 44
 WFileName
@@ -228,7 +228,7 @@ WRect
 360
 5700
 4240
-0
+1
 0
 50
 WFileName
@@ -244,7 +244,7 @@ WRect
 1080
 5700
 4240
-1
+0
 0
 53
 WFileName
@@ -380,4 +380,4 @@ WFileName
 debug/win32/lib/sed/qsesed.tgt
 0
 0
-48
+51
