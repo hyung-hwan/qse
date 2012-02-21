@@ -164,6 +164,11 @@ int qse_fs_move (
 	const qse_char_t* newpath
 );
 	
+int qse_fs_delete (
+	qse_fs_t*         fs,
+	const qse_char_t* path
+);
+
 #ifdef __cplusplus
 }
 #endif

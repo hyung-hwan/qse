@@ -43,7 +43,6 @@ struct fop_t
 {
 	int flags;
 
-
 #if defined(_WIN32)
 	/* nothing yet */
 #elif defined(__OS2__)
@@ -255,7 +254,7 @@ int qse_fs_move (
 			{
 				/* both source and destination are the same.
 				 * this operation is not allowed */
-				fs->errnum = QSE_FS_EPERM;
+				fs->errnum = QSE_FS_EACCES;
 				goto oops;
 			}
 
@@ -281,7 +280,6 @@ int qse_fs_move (
 					fs->errnum = QSE_FS_ENOMEM;
 					goto oops;
 				}
-qse_printf (QSE_T("new_path2 => [%hs]\n"), fop.new_path2);
 			}
 			else
 			{
@@ -314,7 +312,7 @@ qse_printf (QSE_T("new_path2 => [%hs]\n"), fop.new_path2);
 	if (!S_ISDIR(fop.old_stat.st_mode))
 	{
 		/* copy a single file */
-qse_printf (QSE_T("TODO: cross-device copy....\n"));
+		/* ............ */	
 	}
 
 #if 0
@@ -347,6 +345,168 @@ oops:
 	if (fop.new_path) QSE_MMGR_FREE (fs->mmgr, fop.new_path);
 	#endif
 	return -1;
+	/* ------------------------------------------------------ */
+
+#endif
+}
+
+typedef struct del_op_t del_op_t;
+struct del_op_t
+{
+#if defined(_WIN32)
+	/* nothing */
+#elif defined(__OS2__)
+	qse_mchar_t* path;
+#elif defined(__DOS__)
+	qse_mchar_t* path;
+#else
+	qse_mchar_t* path;
+#endif
+};
+
+int qse_fs_delete (qse_fs_t* fs, const qse_char_t* path)
+{
+	/* TODO: improve this function to support fs->curdir ... etc 
+	 * delete directory ... etc */
+
+#if defined(_WIN32)
+
+	if (DeleteFile (path) == FALSE)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, GetLastError());
+		return -1;
+	}
+
+	return 0;
+
+
+#elif defined(__OS2__)
+
+	/* ------------------------------------------------------ */
+
+	APIRET rc;
+	del_op_t dop;
+	
+
+	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	dop.path = path;
+	#else
+	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	if (dop.path == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		goto oops;
+	}
+	#endif
+
+	rc = DosDelete (dop.path);
+	if (rc != NO_ERROR)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
+		goto oops;
+	}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return 0;
+
+	/* ------------------------------------------------------ */
+
+oops:
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return -1;
+
+#elif defined(__DOS__)
+
+	/* ------------------------------------------------------ */
+
+	del_op_t dop;
+
+	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	dop.path = path;
+	#else
+	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	if (dop.path == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		goto oops;
+	}
+	#endif
+
+	if (unlink (dop.path) <= -1)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		goto oops;
+	}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return 0;
+
+oops:
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return -1;
+
+	/* ------------------------------------------------------ */
+
+#else
+
+	/* ------------------------------------------------------ */
+
+	del_op_t dop;
+
+	QSE_MEMSET (&dop, 0, QSE_SIZEOF(dop));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	dop.path = path;
+	#else
+	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	if (dop.path == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		goto oops;
+	}
+	#endif
+
+	if (QSE_UNLINK (dop.path) <= -1)
+	{
+		fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+		goto oops;
+	}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return 0;
+
+oops:
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	if (dop.path) QSE_MMGR_FREE (fs->mmgr, dop.path);
+	#endif
+	return -1;
+
 	/* ------------------------------------------------------ */
 
 #endif
