@@ -1232,7 +1232,7 @@ create_process:
 			pio->errnum = syserr_to_errnum (pserr);
 			goto oops;
 		}
-		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[0]), 0) != 0)
+		if ((pserr = posix_spawn_file_actions_adddup2 (&fa, handle[0], 0)) != 0)
 		{
 			pio->errnum = syserr_to_errnum (pserr);
 			goto oops;

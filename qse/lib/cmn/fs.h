@@ -29,6 +29,8 @@
 	typedef APIRET qse_fs_syserr_t;
 #elif defined(__DOS__)
 #	include <errno.h>
+#	include <io.h>
+#	include <stdio.h> /* for rename() */
 	typedef int qse_fs_syserr_t;
 #else
 #	include "syscall.h"
