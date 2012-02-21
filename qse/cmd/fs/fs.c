@@ -57,7 +57,7 @@ int fs_main (int argc, qse_char_t* argv[])
 
 	if (qse_fs_move (fs, argv[1], argv[2]) <= -1)
 	{
-		qse_fprintf (QSE_STDERR,  QSE_T("ERROR: cannot move %s to %s - %s\n"), argv[1], argv[2], qse_fs_geterrmsg(fs));
+		qse_fprintf (QSE_STDERR,  QSE_T("ERROR: cannot move %s to %s - code %s\n"), argv[1], argv[2], (int)qse_fs_geterrnum(fs));
 		qse_fs_close (fs);
 		return -1;		
 	}

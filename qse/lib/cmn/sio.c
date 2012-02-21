@@ -57,8 +57,8 @@ static qse_sio_errnum_t fio_errnum_to_sio_errnum (qse_fio_t* fio)
 			return QSE_SIO_EEXIST;
 		case QSE_FIO_EINTR:
 			return QSE_SIO_EINTR;
-		case QSE_FIO_ESUBSYS:
-			return QSE_SIO_ESUBSYS;
+		case QSE_FIO_ESYSERR:
+			return QSE_SIO_ESYSERR;
 		case QSE_FIO_ENOIMPL:
 			return QSE_SIO_ENOIMPL;
 		default:
@@ -443,14 +443,14 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 					sio->u.file.handle, cur, left,
 					&count, QSE_NULL) == FALSE) 
 				{
-					sio->errnum = QSE_SIO_ESUBSYS;
+					sio->errnum = QSE_SIO_ESYSERR;
 					return -1;
 				}
 				if (count == 0) break;
 
 				if (count > left) 
 				{
-					sio->errnum = QSE_SIO_ESUBSYS;
+					sio->errnum = QSE_SIO_ESYSERR;
 					return -1;
 				}
 			}
@@ -502,7 +502,7 @@ qse_ssize_t qse_sio_putwcsn (
 					sio->u.file.handle, cur, left, 
 					&count, QSE_NULL) == FALSE) 
 				{
-					sio->errnum = QSE_SIO_ESUBSYS;
+					sio->errnum = QSE_SIO_ESYSERR;
 					return -1;
 				}
 				if (count == 0) break;
@@ -517,7 +517,7 @@ qse_ssize_t qse_sio_putwcsn (
 				 */
 				if (count > left) 
 				{
-					sio->errnum = QSE_SIO_ESUBSYS;
+					sio->errnum = QSE_SIO_ESYSERR;
 					return -1;
 				}
 			}

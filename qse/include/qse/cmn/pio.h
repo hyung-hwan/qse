@@ -139,7 +139,7 @@ enum qse_pio_errnum_t
 	QSE_PIO_EILSEQ,     /**< illegal sequence */
 	QSE_PIO_EICSEQ,     /**< incomplete sequence */
 	QSE_PIO_EILCHR,     /**< illegal character */
-	QSE_PIO_ESUBSYS,    /**< subsystem error */
+	QSE_PIO_ESYSERR,    /**< subsystem error */
 	QSE_PIO_ENOIMPL,    /**< not implemented */
 
 	QSE_PIO_EOTHER     /**< unknown error */

@@ -566,9 +566,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		if (qse_fs_chdir (fs, QSE_T(".")) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, 
-				QSE_T("ERROR: cannot change direcotry in file system handler - %s\n"), 
-				qse_fs_geterrmsg(fs)
-			);
+				QSE_T("ERROR: cannot change direcotry in file system handler\n"));
 			goto oops;
 		}
 	}
@@ -673,6 +671,8 @@ int sed_main (int argc, qse_char_t* argv[])
 			tmpl_tmpfile = QSE_NULL;
 			if (g_inplace && in[0].u.file.path)
 			{
+				int retried = 0;
+
 				tmpl_tmpfile = qse_strdup2 (in[0].u.file.path, QSE_T(".XXXX"),  qse_sed_getmmgr(sed));
 				if (tmpl_tmpfile == QSE_NULL)
 				{
@@ -680,6 +680,7 @@ int sed_main (int argc, qse_char_t* argv[])
 					goto oops;
 				}
 
+			open_temp:
 				out_inplace.type = QSE_SED_IOSTD_SIO;
 				out_inplace.u.sio = qse_sio_open (
 					qse_sed_getmmgr(sed),
@@ -693,9 +694,25 @@ int sed_main (int argc, qse_char_t* argv[])
 				);
 				if (out_inplace.u.sio == QSE_NULL)
 				{
-					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), tmpl_tmpfile);
-					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
-					goto oops;
+					if (retried) 
+					{
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open %s\n"), tmpl_tmpfile);
+						QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
+						goto oops;
+					}
+					else
+					{
+						/* retry to open the file with shorter names */
+						QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
+						tmpl_tmpfile = qse_strdup (QSE_T("TMP-XXXX"),  qse_sed_getmmgr(sed));
+						if (tmpl_tmpfile == QSE_NULL)
+						{
+							qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+							goto oops;
+						}
+						retried = 1;
+						goto open_temp;
+					}
 				}
 
 				output = &out_inplace;
@@ -725,8 +742,8 @@ TODO:
 
 				if (qse_fs_move (fs, tmpl_tmpfile, in[0].u.file.path) <= -1)
 				{
-					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s - %s\n"), 
-						tmpl_tmpfile, in[0].u.file.path, tmpl_tmpfile, qse_fs_geterrmsg(fs));
+					qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot rename %s to %s. not deleting %s\n"), 
+						tmpl_tmpfile, in[0].u.file.path, tmpl_tmpfile);
 					QSE_MMGR_FREE (qse_sed_getmmgr(sed), tmpl_tmpfile);
 					goto oops;
 				}

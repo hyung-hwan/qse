@@ -28,18 +28,21 @@
 enum qse_fs_errnum_t
 {
 	QSE_FS_ENOERR = 0,
-	QSE_FS_EINTERN,
 
-	QSE_FS_ENOMEM,
-	QSE_FS_EINVAL,
-	QSE_FS_EACCES,
-	QSE_FS_EPERM,
-	QSE_FS_ENOENT,
+     QSE_FS_ENOMEM,     /**< out of memory */
+     QSE_FS_EINVAL,     /**< invalid parameter */
+     QSE_FS_EACCES,     /**< access denied */
+     QSE_FS_ENOENT,     /**< no such file */
+     QSE_FS_EEXIST,     /**< already exist */
+     QSE_FS_EINTR,      /**< interrupted */
 	QSE_FS_ENODIR,
 	QSE_FS_EISDIR,
-	QSE_FS_EEXIST,
 	QSE_FS_EXDEV,
-	QSE_FS_ESYSTEM
+
+     QSE_FS_ESYSERR,    /**< subsystem error */
+     QSE_FS_ENOIMPL,    /**< not implemented */
+
+	QSE_FS_EOTHER
 };
 typedef enum qse_fs_errnum_t qse_fs_errnum_t;
 
@@ -132,10 +135,6 @@ void qse_fs_fini (
 );
 
 qse_fs_errnum_t qse_fs_geterrnum (
-	qse_fs_t* fs
-);
-
-const qse_char_t* qse_fs_geterrmsg (
 	qse_fs_t* fs
 );
 

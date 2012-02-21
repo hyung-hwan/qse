@@ -45,16 +45,20 @@ struct fop_t
 
 
 #if defined(_WIN32)
-	qse_wchar_t* old_path;
-	qse_wchar_t* new_path;
-	qse_wchar_t* new_path2;
+	/* nothing yet */
+#elif defined(__OS2__)
+	qse_mchar_t* old_path;
+	qse_mchar_t* new_path;
+#elif defined(__DOS__)
+	qse_mchar_t* old_path;
+	qse_mchar_t* new_path;
 #else
-	qse_lstat_t old_stat;
-	qse_lstat_t new_stat;
-
 	qse_mchar_t* old_path;
 	qse_mchar_t* new_path;
 	qse_mchar_t* new_path2;
+
+	qse_lstat_t old_stat;
+	qse_lstat_t new_stat;
 #endif
 };
 
@@ -63,7 +67,9 @@ typedef struct fop_t fop_t;
 int qse_fs_move (
 	qse_fs_t* fs, const qse_char_t* oldpath, const qse_char_t* newpath)
 {
+
 #if defined(_WIN32)
+	/* ------------------------------------------------------ */
 	/* TODO: improve it... */
 
 /* TODO: support cross-volume move, move by copy/delete, etc ... */
@@ -87,21 +93,116 @@ int qse_fs_move (
 	}
 
 	return 0;
+	/* ------------------------------------------------------ */
 
 #elif defined(__OS2__)
-#	error NOT IMPLEMENTED
-#elif defined(__DOS__)
-#	error NOT IMPLEMENTED
-#else
+	/* ------------------------------------------------------ */
 
+	/* TODO: improve it */
+	int ret = 0;
 	fop_t fop;
 
 	QSE_MEMSET (&fop, 0, QSE_SIZEOF(fop));
 
-#if defined(QSE_CHAR_IS_MCHAR)
+	#if defined(QSE_CHAR_IS_MCHAR)
 	fop.old_path = oldpath;
 	fop.new_path = newpath;
+	#else
+	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		ret = -1;
+	}
+	#endif
+
+	if (ret == 0)
+	{
+		APIRET rc;
+
+		rc = DosMove (fop.old_path, fop.new_path);
+		if (rc == ERROR_ALREADY_EXISTS)
+		{
+			DosDelete (fop.new_path);
+			rc = DosMove (fop.old_path, fop.new_path);
+		}
+		if (rc != NO_ERROR)
+		{
+			fs->errnum = qse_fs_syserrtoerrnum (fs, rc);
+			ret = -1;
+		}
+	}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing special */
+	#else
+	if (fop.old_path) QSE_MMGR_FREE (fs->mmgr, fop.old_path);
+	if (fop.new_path) QSE_MMGR_FREE (fs->mmgr, fop.new_path);
+	#endif
+	return ret;
+
+
+	/* ------------------------------------------------------ */
+
+#elif defined(__DOS__)
+
+	/* ------------------------------------------------------ */
+/* TODO: improve it */
+	fop_t fop;
+	int ret = 0;
+
+	QSE_MEMSET (&fop, 0, QSE_SIZEOF(fop));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	fop.old_path = oldpath;
+	fop.new_path = newpath;
+	#else
+	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
+	{
+		fs->errnum = QSE_FS_ENOMEM;
+		ret = -1;
+	}
+	#endif
+
+	if (ret == 0)
+	{
+		if (rename (fop.old_path, fop.new_path) <= -1)
+		{
+			/* FYI, rename() on watcom seems to set 
+			 * errno to EACCES when the new path exists. */
+
+			unlink (fop.new_path);
+			if (rename (fop.old_path, fop.new_path) <= -1)
+			{
+				fs->errnum = qse_fs_syserrtoerrnum (fs, errno);
+				ret = -1;
+			}
+		}
+	}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing special */
+	#else
+	if (fop.old_path) QSE_MMGR_FREE (fs->mmgr, fop.old_path);
+	if (fop.new_path) QSE_MMGR_FREE (fs->mmgr, fop.new_path);
+	#endif
+	return ret;
+
+	/* ------------------------------------------------------ */
+
 #else
+
+	/* ------------------------------------------------------ */
+	fop_t fop;
+	QSE_MEMSET (&fop, 0, QSE_SIZEOF(fop));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	fop.old_path = oldpath;
+	fop.new_path = newpath;
+	#else
 	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
 	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
@@ -109,7 +210,7 @@ int qse_fs_move (
 		fs->errnum = QSE_FS_ENOMEM;
 		goto oops;
 	}
-#endif
+	#endif
 
 /* TOOD: implement confirmatio
 	if (overwrite_callback is set)
@@ -226,26 +327,27 @@ qse_printf (QSE_T("TODO: cross-device copy....\n"));
 	copy recursively...
 #endif
 
+
 done:
-#if defined(QSE_CHAR_IS_MCHAR)
+	#if defined(QSE_CHAR_IS_MCHAR)
 	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
-#else
+	#else
 	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
 	QSE_MMGR_FREE (fs->mmgr, fop.old_path);
 	QSE_MMGR_FREE (fs->mmgr, fop.new_path);
-#endif
+	#endif
 	return 0;
 
 oops:
-#if defined(QSE_CHAR_IS_MCHAR)
+	#if defined(QSE_CHAR_IS_MCHAR)
 	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
-#else
+	#else
 	if (fop.new_path2) QSE_MMGR_FREE (fs->mmgr, fop.new_path2);
 	if (fop.old_path) QSE_MMGR_FREE (fs->mmgr, fop.old_path);
 	if (fop.new_path) QSE_MMGR_FREE (fs->mmgr, fop.new_path);
-#endif
-
+	#endif
 	return -1;
+	/* ------------------------------------------------------ */
 
 #endif
 }
