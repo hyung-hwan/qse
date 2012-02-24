@@ -80,11 +80,11 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsecmn_la_LIBADD =
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
-	assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo lda.lo fio.lo \
-	fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo ipad.lo \
-	main.lo mbwc.lo mbwc-str.lo mem.lo nwad.lo oht.lo opt.lo \
-	path-basename.lo path-canon.lo pio.lo pma.lo rbt.lo rex.lo \
-	sio.lo sll.lo slmb.lo stdio.lo str-beg.lo str-cat.lo \
+	assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo gdl.lo htb.lo \
+	lda.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo \
+	ipad.lo main.lo mbwc.lo mbwc-str.lo mem.lo nwad.lo oht.lo \
+	opt.lo path-basename.lo path-canon.lo pio.lo pma.lo rbt.lo \
+	rex.lo sio.lo sll.lo slmb.lo stdio.lo str-beg.lo str-cat.lo \
 	str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo str-del.lo \
 	str-dup.lo str-dynm.lo str-dynw.lo str-end.lo str-excl.lo \
 	str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo str-pac.lo \
@@ -288,6 +288,8 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsecmn.la $(am__append_1)
 noinst_HEADERS = \
+	cp949.h \
+	cp950.h \
 	fs.h \
 	mem.h \
 	syscall.h \
@@ -304,6 +306,8 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
+	cp949.c \
+	cp950.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -465,6 +469,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/assert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cp949.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cp950.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@

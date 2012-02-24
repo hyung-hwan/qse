@@ -1509,29 +1509,33 @@ qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), qse_htre_getqpathptr(req), qse_htre_getqpat
 		qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), port);
 	}
 
-	if (client->local_addr.in4.sin_family == AF_INET)
-	{
-		qse_mchar_t ipaddr[128];
-		inet_ntop (client->local_addr.in4.sin_family, &client->local_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), ipaddr);
-	}
-	else
+#if defined(AF_INET6)
+	if (client->local_addr.in4.sin_family == AF_INET6)
 	{
 		qse_mchar_t ipaddr[128];
 		inet_ntop (client->local_addr.in6.sin6_family, &client->local_addr.in6.sin6_addr, ipaddr, QSE_COUNTOF(ipaddr));
 		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), ipaddr);
 	}
-
-	if (client->remote_addr.in4.sin_family == AF_INET)
+	else
+#endif
 	{
 		qse_mchar_t ipaddr[128];
-		inet_ntop (client->remote_addr.in4.sin_family, &client->remote_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), ipaddr);
+		inet_ntop (client->local_addr.in4.sin_family, &client->local_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
+		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), ipaddr);
 	}
-	else
+
+#if defined(AF_INET6)
+	if (client->remote_addr.in4.sin_family == AF_INET6)
 	{
 		qse_mchar_t ipaddr[128];
 		inet_ntop (client->remote_addr.in6.sin6_family, &client->remote_addr.in6.sin6_addr, ipaddr, QSE_COUNTOF(ipaddr));
+		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), ipaddr);
+	}
+	else
+#endif
+	{
+		qse_mchar_t ipaddr[128];
+		inet_ntop (client->remote_addr.in4.sin_family, &client->remote_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
 		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), ipaddr);
 	}
 

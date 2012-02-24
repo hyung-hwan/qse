@@ -810,8 +810,11 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 				{
 					/* if client.accepted() returns 0, it is called
 					 * again next time. */
+					int x;
+
 					QSE_ASSERT (httpd->cbs->client.accepted != QSE_NULL);
-					int x = httpd->cbs->client.accepted (httpd, client); /* is this correct???? what if ssl handshaking got stalled because writing failed in SSL_accept()? */
+
+					x = httpd->cbs->client.accepted (httpd, client); /* is this correct???? what if ssl handshaking got stalled because writing failed in SSL_accept()? */
 					if (x >= 1) client->ready = 1;
 					else if (x <= -1) 
 					{
