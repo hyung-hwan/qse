@@ -2645,6 +2645,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+
 ac_config_headers="$ac_config_headers include/qse/config.h"
 
 ac_aux_dir=
@@ -18563,7 +18564,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/awk/Makefile include/qse/cut/Makefile include/qse/sed/Makefile include/qse/stx/Makefile include/qse/net/Makefile lib/Makefile lib/cmn/Makefile lib/awk/Makefile lib/cut/Makefile lib/sed/Makefile lib/stx/Makefile lib/net/Makefile cmd/Makefile cmd/awk/Makefile cmd/cut/Makefile cmd/fs/Makefile cmd/sed/Makefile cmd/stx/Makefile samples/Makefile samples/cmn/Makefile samples/awk/Makefile samples/cut/Makefile samples/sed/Makefile samples/net/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/page/Makefile doc/image/Makefile doc/Doxyfile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/awk/Makefile include/qse/cut/Makefile include/qse/sed/Makefile include/qse/stx/Makefile include/qse/net/Makefile lib/Makefile lib/cmn/Makefile lib/awk/Makefile lib/cut/Makefile lib/sed/Makefile lib/stx/Makefile lib/net/Makefile cmd/Makefile cmd/awk/Makefile cmd/cut/Makefile cmd/fs/Makefile cmd/sed/Makefile cmd/stx/Makefile samples/Makefile samples/cmn/Makefile samples/awk/Makefile samples/cut/Makefile samples/sed/Makefile samples/net/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/page/Makefile doc/image/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19726,6 +19727,7 @@ do
     "doc/page/Makefile") CONFIG_FILES="$CONFIG_FILES doc/page/Makefile" ;;
     "doc/image/Makefile") CONFIG_FILES="$CONFIG_FILES doc/image/Makefile" ;;
     "doc/Doxyfile") CONFIG_FILES="$CONFIG_FILES doc/Doxyfile" ;;
+    "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

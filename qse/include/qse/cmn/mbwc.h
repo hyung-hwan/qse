@@ -37,8 +37,10 @@ extern "C" {
 /* --------------------------------------------------- */
 /* BUILTIN CMGR                                        */
 /* --------------------------------------------------- */
-extern qse_cmgr_t* qse_utf8cmgr;
 extern qse_cmgr_t* qse_slmbcmgr;
+extern qse_cmgr_t* qse_utf8cmgr;
+extern qse_cmgr_t* qse_cp949cmgr;
+extern qse_cmgr_t* qse_cp950cmgr;
 
 /**
  * The qse_getfindcmgr() function find a builtin cmgr matching a given 

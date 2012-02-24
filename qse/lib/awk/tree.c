@@ -28,7 +28,7 @@ static const qse_char_t* assop_str[] =
 	QSE_T("-="),
 	QSE_T("*="),
 	QSE_T("/="),
-	QSE_T("//="),
+	QSE_T("\\="),
 	QSE_T("%="),
 	QSE_T("**="),
 	QSE_T(">>="),
@@ -62,7 +62,7 @@ static const qse_char_t* binop_str[][2] =
 	{ QSE_T("-"),  QSE_T("-") },
 	{ QSE_T("*"),  QSE_T("*") },
 	{ QSE_T("/"),  QSE_T("/") },
-	{ QSE_T("//"), QSE_T("//") },
+	{ QSE_T("\\"), QSE_T("\\") },
 	{ QSE_T("%"),  QSE_T("%") },
 	{ QSE_T("**"), QSE_T("**") },
 

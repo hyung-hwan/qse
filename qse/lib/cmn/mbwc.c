@@ -21,6 +21,8 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/slmb.h>
 #include <qse/cmn/utf8.h>
+#include <qse/cmn/cp949.h>
+#include <qse/cmn/cp950.h>
 #include <qse/cmn/str.h>
 
 /* TODO: there is no guarantee that slwc is a unicode charater or vice versa.
@@ -40,11 +42,23 @@ static qse_cmgr_t builtin_cmgr[] =
 	{
 		qse_utf8touc,
 		qse_uctoutf8
+	},
+
+	{
+		qse_cp949touc,
+		qse_uctocp949
+	},
+
+	{
+		qse_cp950touc,
+		qse_uctocp950
 	}
 };
 
 qse_cmgr_t* qse_slmbcmgr = &builtin_cmgr[0];
 qse_cmgr_t* qse_utf8cmgr = &builtin_cmgr[1];
+qse_cmgr_t* qse_cp949cmgr = &builtin_cmgr[2];
+qse_cmgr_t* qse_cp950cmgr = &builtin_cmgr[3];
 
 static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[0];
 static qse_cmgr_finder_t cmgr_finder = QSE_NULL;
@@ -72,6 +86,8 @@ qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 
 		if (qse_strcmp(name, QSE_T("")) == 0) return dfl_cmgr;
 		if (qse_strcmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
+		if (qse_strcmp(name, QSE_T("cp949")) == 0) return qse_cp949cmgr;	
+		if (qse_strcmp(name, QSE_T("cp950")) == 0) return qse_cp950cmgr;	
 		if (qse_strcmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
 	}
 	return QSE_NULL;

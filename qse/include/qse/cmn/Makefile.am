@@ -3,6 +3,8 @@ pkgincludedir = $(includedir)/qse/cmn
 pkginclude_HEADERS = \
 	alg.h \
 	chr.h \
+	cp949.h \
+	cp950.h \
 	dll.h \
 	env.h \
 	fio.h \

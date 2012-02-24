@@ -315,6 +315,7 @@ static qse_char_t* __adjust_format (const qse_char_t* format)
 				#if defined(_WIN32) && !defined(__WATCOMC__)
 				ADDC (buf, ch);
 				#else
+				ADDC (buf, QSE_MT('h'));
 				ADDC (buf, QSE_TOLOWER(ch));
 				#endif
 			#endif

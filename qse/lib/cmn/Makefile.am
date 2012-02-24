@@ -9,6 +9,8 @@ AM_CPPFLAGS = \
 lib_LTLIBRARIES = libqsecmn.la
 
 noinst_HEADERS = \
+	cp949.h \
+	cp950.h \
 	fs.h \
 	mem.h \
 	syscall.h \
@@ -25,6 +27,8 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
+	cp949.c \
+	cp950.c \
 	dll.c \
 	env.c \
 	gdl.c \

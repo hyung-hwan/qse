@@ -376,12 +376,16 @@ static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static void print_err (const qse_char_t* fmt, ...)
+static void print_version (void)
+{
+	qse_printf (QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
+}
+
+static void print_error (const qse_char_t* fmt, ...)
 {
 	va_list va;
 
 	qse_fprintf (QSE_STDERR, QSE_T("ERROR: "));
-
 	va_start (va, fmt);
 	qse_vfprintf (QSE_STDERR, fmt, va);
 	va_end (va);
@@ -423,6 +427,7 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T("       %s [options] [ -- ] sourcestring [datafile]*\n"), b);
 	qse_fprintf (out, QSE_T("Where options are:\n"));
 	qse_fprintf (out, QSE_T(" -h/--help                         print this message\n"));
+	qse_fprintf (out, QSE_T(" --version                         print version\n"));
 	qse_fprintf (out, QSE_T(" -D                                show extra information\n"));
 	qse_fprintf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
 	qse_fprintf (out, QSE_T("                                   the pattern-action loop\n"));
@@ -431,12 +436,12 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
 	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
-#if defined(QSE_CHAR_IS_WCHAR)
-	qse_fprintf (out, QSE_T(" --script-encoding    string       specify script encoding name\n"));
-	qse_fprintf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
-#endif
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
+#endif
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_fprintf (out, QSE_T(" --script-encoding    string       specify script file encoding name\n"));
+	qse_fprintf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
 #endif
 
 	for (j = 0; opttab[j].name; j++)
@@ -479,6 +484,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":script-encoding"),  QSE_T('\0') },
 		{ QSE_T(":console-encoding"), QSE_T('\0') },
 
+		{ QSE_T("version"),          QSE_T('\0') },
 		{ QSE_T("help"),             QSE_T('h') },
 		{ QSE_NULL,                  QSE_T('\0') }                  
 	};
@@ -509,12 +515,14 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	qse_char_t* fs = QSE_NULL; /* field separator */
 	qse_char_t* call = QSE_NULL; /* function to call */
 
+	int oops_ret = -1;
+
 	memset (arg, 0, QSE_SIZEOF(*arg));
 
 	isf = (qse_char_t**) malloc (QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
 	{
-		print_err (QSE_T("out of memory\n"));
+		print_error (QSE_T("out of memory\n"));
 		goto oops;
 	}
 
@@ -524,7 +532,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	); 
 	if (gvm == QSE_NULL)
 	{
-		print_err (QSE_T("out of memory\n"));
+		print_error (QSE_T("out of memory\n"));
 		goto oops;
 	}
 
@@ -537,9 +545,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		switch (c)
 		{
 			case QSE_T('h'):
-				if (isf != QSE_NULL) free (isf);
-				if (gvm != QSE_NULL) qse_htb_close (gvm);
-				return 0;
+				oops_ret = 0;
+				goto oops;
 
 			case QSE_T('D'):
 			{
@@ -561,7 +568,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					tmp = (qse_char_t**) realloc (isf, QSE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == QSE_NULL)
 					{
-						print_err (QSE_T("out of memory\n"));
+						print_error (QSE_T("out of memory\n"));
 						goto oops;
 					}
 
@@ -594,9 +601,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				if (eq == QSE_NULL) 
 				{
 					if (opt.lngopt)
-						print_err (QSE_T("no value for '%s' in '%s'\n"), opt.arg, opt.lngopt);
+						print_error (QSE_T("no value for '%s' in '%s'\n"), opt.arg, opt.lngopt);
 					else
-						print_err (QSE_T("no value for '%s' in '%c'\n"), opt.arg, opt.opt);
+						print_error (QSE_T("no value for '%s' in '%c'\n"), opt.arg, opt.opt);
 					goto oops;
 				}
 
@@ -608,7 +615,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 				if (qse_htb_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
 				{
-					print_err (QSE_T("out of memory\n"));
+					print_error (QSE_T("out of memory\n"));
 					goto oops;
 				}
 				break;
@@ -632,6 +639,32 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			{
 				/* a long option with no corresponding short option */
 				qse_size_t i;
+
+				if (qse_strcmp(opt.lngopt, QSE_T("version")) == 0)
+				{
+					print_version ();
+					oops_ret = 2;
+					goto oops;
+				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
+				{
+					arg->script_cmgr = qse_findcmgr (opt.arg);
+					if (arg->script_cmgr == QSE_NULL)
+					{
+						print_error (QSE_T("unknown script encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("console-encoding")) == 0)
+				{
+					arg->console_cmgr = qse_findcmgr (opt.arg);
+					if (arg->console_cmgr == QSE_NULL)
+					{
+						print_error (QSE_T("unknown console encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+
 				for (i = 0; opttab[i].name; i++)
 				{
 					if (qse_strcmp (opt.lngopt, opttab[i].name) == 0)
@@ -642,40 +675,22 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 							arg->opton |= opttab[i].opt;
 						else
 						{
-							print_err (QSE_T("invalid value for '%s' - '%s'\n"), opt.lngopt, opt.arg);
+							print_error (QSE_T("invalid value for '%s' - '%s'\n"), opt.lngopt, opt.arg);
 							goto oops;
 						}
 						break;
 					}
 				}
 
-				if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
-				{
-					arg->script_cmgr = qse_findcmgr (opt.arg);
-					if (arg->script_cmgr == QSE_NULL)
-					{
-						print_err (QSE_T("unknown script encoding - %s\n"), opt.arg);
-						goto oops;
-					}
-				}
-				else if (qse_strcmp(opt.lngopt, QSE_T("console-encoding")) == 0)
-				{
-					arg->console_cmgr = qse_findcmgr (opt.arg);
-					if (arg->console_cmgr == QSE_NULL)
-					{
-						print_err (QSE_T("unknown console encoding - %s\n"), opt.arg);
-						goto oops;
-					}
-				}
 				break;
 			}
 			
 			case QSE_T('?'):
 			{
 				if (opt.lngopt)
-					print_err (QSE_T("illegal option - '%s'\n"), opt.lngopt);
+					print_error (QSE_T("illegal option - '%s'\n"), opt.lngopt);
 				else
-					print_err (QSE_T("illegal option - '%c'\n"), opt.opt);
+					print_error (QSE_T("illegal option - '%c'\n"), opt.opt);
 
 				goto oops;
 			}
@@ -683,9 +698,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			case QSE_T(':'):
 			{
 				if (opt.lngopt)
-					print_err (QSE_T("bad argument for '%s'\n"), opt.lngopt);
+					print_error (QSE_T("bad argument for '%s'\n"), opt.lngopt);
 				else
-					print_err (QSE_T("bad argument for '%c'\n"), opt.opt);
+					print_error (QSE_T("bad argument for '%c'\n"), opt.opt);
 
 				goto oops;
 			}
@@ -725,7 +740,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
 		if (icf == QSE_NULL)
 		{
-			print_err (QSE_T("out of memory\n"));
+			print_error (QSE_T("out of memory\n"));
 			goto oops;
 		}
 
@@ -756,7 +771,7 @@ oops:
 	if (gvm != QSE_NULL) qse_htb_close (gvm);
 	if (icf != QSE_NULL) free (icf);
 	if (isf != QSE_NULL) free (isf);
-	return -1;
+	return oops_ret;
 }
 
 static void freearg (struct arg_t* arg)
@@ -772,7 +787,7 @@ static void print_awkerr (qse_awk_t* awk)
 {
 	const qse_awk_loc_t* loc = qse_awk_geterrloc (awk);
 
-	print_err ( 
+	print_error ( 
 		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"), 
 		qse_awk_geterrnum(awk),
 		(unsigned int)loc->line,
@@ -788,7 +803,7 @@ static void print_rtxerr (qse_awk_rtx_t* rtx)
 {
 	const qse_awk_loc_t* loc = qse_awk_rtx_geterrloc (rtx);
 
-	print_err (
+	print_error (
 		QSE_T("CODE %d LINE %u COLUMN %u %s%s%s- %s\n"),
 		qse_awk_rtx_geterrnum(rtx),
 		(unsigned int)loc->line,
@@ -894,6 +909,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		print_usage (((i == 0)? QSE_STDOUT: QSE_STDERR), argv[0]);
 		return i;
 	}
+	if (i == 2) return 0;
 
 	psin.type = arg.ist;
 	if (arg.ist == QSE_AWK_PARSESTD_STR) 

@@ -75,6 +75,10 @@ static int g_trace = 0;
 static qse_ulong_t g_memlimit = 0;
 static qse_sed_t* g_sed = QSE_NULL;
 
+static qse_cmgr_t* g_script_cmgr = QSE_NULL;
+static qse_cmgr_t* g_infile_cmgr = QSE_NULL;
+static qse_cmgr_t* g_outfile_cmgr = QSE_NULL;
+
 #if defined(QSE_BUILD_DEBUG)
 #include <stdlib.h>
 static qse_ulong_t g_failmalloc = 0;
@@ -130,6 +134,11 @@ static qse_mmgr_t xma_mmgr =
 	QSE_NULL
 };
 
+static void print_version (void)
+{
+	qse_printf (QSE_T("QSESED version %hs\n"), QSE_PACKAGE_VERSION);
+}
+
 static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 {
 	const qse_char_t* b = qse_basename (argv[0]);
@@ -139,26 +148,33 @@ static void print_usage (QSE_FILE* out, int argc, qse_char_t* argv[])
 	qse_fprintf (out, QSE_T("       %s [options] -e script [file]\n"), b);
 
 	qse_fprintf (out, QSE_T("options as follows:\n"));
-	qse_fprintf (out, QSE_T(" -h        show this message\n"));
-	qse_fprintf (out, QSE_T(" -n        disable auto-print\n"));
-	qse_fprintf (out, QSE_T(" -e script specify a script.  \n"));
-	qse_fprintf (out, QSE_T(" -f file   specify a script file\n"));
-	qse_fprintf (out, QSE_T(" -o file   specify an output file\n"));
-	qse_fprintf (out, QSE_T(" -r        use the extended regular expression\n"));
-	qse_fprintf (out, QSE_T(" -R        enable non-standard extensions to the regular expression\n"));
-	qse_fprintf (out, QSE_T(" -i        perform in-place editing. imply -s\n"));
-	qse_fprintf (out, QSE_T(" -s        process input files separately\n"));
-	qse_fprintf (out, QSE_T(" -a        perform strict address and label check\n"));
-	qse_fprintf (out, QSE_T(" -w        allow extended address formats\n"));
-	qse_fprintf (out, QSE_T("           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
-	qse_fprintf (out, QSE_T(" -x        allow text on the same line as c, a, i\n"));
-	qse_fprintf (out, QSE_T(" -y        ensure a newline at text end\n"));
+	qse_fprintf (out, QSE_T(" -h/--help                 show this message\n"));
+	qse_fprintf (out, QSE_T(" --version                 show version\n"));
+	qse_fprintf (out, QSE_T(" -n                        disable auto-print\n"));
+	qse_fprintf (out, QSE_T(" -e                 script specify a script\n"));
+	qse_fprintf (out, QSE_T(" -f                 file   specify a script file\n"));
+	qse_fprintf (out, QSE_T(" -o                 file   specify an output file\n"));
+	qse_fprintf (out, QSE_T(" -r                        use the extended regular expression\n"));
+	qse_fprintf (out, QSE_T(" -R                        enable non-standard extensions to the regular\n"));
+	qse_fprintf (out, QSE_T("                           expression\n"));
+	qse_fprintf (out, QSE_T(" -i                        perform in-place editing. imply -s\n"));
+	qse_fprintf (out, QSE_T(" -s                        process input files separately\n"));
+	qse_fprintf (out, QSE_T(" -a                        perform strict address and label check\n"));
+	qse_fprintf (out, QSE_T(" -w                        allow extended address formats\n"));
+	qse_fprintf (out, QSE_T("                           <start~step>,<start,+line>,<start,~line>,<0,/regex/>\n"));
+	qse_fprintf (out, QSE_T(" -x                        allow text on the same line as c, a, i\n"));
+	qse_fprintf (out, QSE_T(" -y                        ensure a newline at text end\n"));
+	qse_fprintf (out, QSE_T(" -m                 number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_ENABLE_SEDTRACER)
-	qse_fprintf (out, QSE_T(" -t        print command traces\n"));
+	qse_fprintf (out, QSE_T(" -t                        print command traces\n"));
 #endif
-	qse_fprintf (out, QSE_T(" -m number specify the maximum amount of memory to use in bytes\n"));
 #if defined(QSE_BUILD_DEBUG)
-	qse_fprintf (out, QSE_T(" -X number fail the number'th memory allocation\n"));
+	qse_fprintf (out, QSE_T(" -X                 number fail the number'th memory allocation\n"));
+#endif
+#if defined(QSE_CHAR_IS_WCHAR)
+     qse_fprintf (out, QSE_T(" --script-encoding  string specify script file encoding name\n"));
+     qse_fprintf (out, QSE_T(" --infile-encoding  string specify input file encoding name\n"));
+     qse_fprintf (out, QSE_T(" --outfile-encoding string specify output file encoding name\n"));
 #endif
 }
 
@@ -195,7 +211,7 @@ static int add_script (const qse_char_t* str, int mem)
 		g_script.io[g_script.size].type = QSE_SED_IOSTD_FILE;
 		g_script.io[g_script.size].u.file.path = 
 			(qse_strcmp (str, QSE_T("-")) == 0)? QSE_NULL: str;
-		g_script.io[g_script.size].u.file.cmgr = QSE_NULL;
+		g_script.io[g_script.size].u.file.cmgr = g_script_cmgr;
 	}
 	g_script.size++;
 	return 0;
@@ -214,6 +230,18 @@ static void free_scripts (void)
 
 static int handle_args (int argc, qse_char_t* argv[])
 {
+	static qse_opt_lng_t lng[] = 
+	{
+#if defined(QSE_CHAR_IS_WCHAR)
+		{ QSE_T(":script-encoding"),  QSE_T('\0') },
+		{ QSE_T(":infile-encoding"),  QSE_T('\0') },
+		{ QSE_T(":outfile-encoding"), QSE_T('\0') },
+#endif
+
+		{ QSE_T("version"),          QSE_T('\0') },
+		{ QSE_T("help"),             QSE_T('h') },
+		{ QSE_NULL,                  QSE_T('\0') }                  
+	};
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
@@ -221,7 +249,7 @@ static int handle_args (int argc, qse_char_t* argv[])
 #else
 		QSE_T("hne:f:o:rRisawxytm:"),
 #endif
-		QSE_NULL
+		lng
 	};
 	qse_cint_t c;
 
@@ -319,6 +347,44 @@ static int handle_args (int argc, qse_char_t* argv[])
                     g_failmalloc = qse_strtoulong (opt.arg);
 				break;
 #endif
+
+			case QSE_T('\0'):
+			{
+				if (qse_strcmp(opt.lngopt, QSE_T("version")) == 0)
+				{
+					print_version ();
+                         goto done;
+                    }
+				else if (qse_strcmp(opt.lngopt, QSE_T("script-encoding")) == 0)
+				{
+					g_script_cmgr = qse_findcmgr (opt.arg);
+					if (g_script_cmgr == QSE_NULL)
+					{
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown script encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("infile-encoding")) == 0)
+				{
+					g_infile_cmgr = qse_findcmgr (opt.arg);
+					if (g_infile_cmgr == QSE_NULL)
+					{
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown input file encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("outfile-encoding")) == 0)
+				{
+					g_outfile_cmgr = qse_findcmgr (opt.arg);
+					if (g_outfile_cmgr == QSE_NULL)
+					{
+						qse_fprintf (QSE_STDERR, QSE_T("ERROR: unknown output file encoding - %s\n"), opt.arg);
+						goto oops;
+					}
+				}
+				break;
+			}
+
 		}
 	}
 
@@ -665,7 +731,7 @@ int sed_main (int argc, qse_char_t* argv[])
 			in[0].u.file.path =
 				(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
 				QSE_NULL: argv[g_infile_pos];
-			in[0].u.file.cmgr = QSE_NULL;
+			in[0].u.file.cmgr = g_infile_cmgr;
 			in[1].type = QSE_SED_IOSTD_NULL;
 
 			tmpl_tmpfile = QSE_NULL;
@@ -781,7 +847,7 @@ int sed_main (int argc, qse_char_t* argv[])
 				in[i].u.file.path =
 					(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
 					QSE_NULL: argv[g_infile_pos];
-				in[i].u.file.cmgr = QSE_NULL;
+				in[i].u.file.cmgr = g_infile_cmgr;
 				g_infile_pos++;
 			}
 
@@ -794,12 +860,22 @@ int sed_main (int argc, qse_char_t* argv[])
 			out.u.file.path = 
 				(qse_strcmp (g_output_file, QSE_T("-")) == 0)? 
 				QSE_NULL: g_output_file;
-			out.u.file.cmgr = QSE_NULL;
+			out.u.file.cmgr = g_outfile_cmgr;
+		}
+		else
+		{
+			/* arrange to be able to specify cmgr.
+			 * if not for cmgr, i could simply pass QSE_NULL 
+			 * to qse_sed_execstd() below like
+			 *   xx = qse_sed_execstd (sed, in, QSE_NULL); */
+			out.type = QSE_SED_IOSTD_FILE;
+			out.u.file.path = QSE_NULL;
+			out.u.file.cmgr = g_outfile_cmgr;
 		}
 
 		g_sed = sed;
 		set_intr_run ();
-		xx = qse_sed_execstd (sed, in, (g_output_file? &out: QSE_NULL));
+		xx = qse_sed_execstd (sed, in, &out);
 		if (in) QSE_MMGR_FREE (qse_sed_getmmgr(sed), in);
 		unset_intr_run ();
 		g_sed = QSE_NULL;
