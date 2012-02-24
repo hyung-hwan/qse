@@ -254,7 +254,7 @@ AUTOMAKE_OPTION = foreign
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = LICENSE
 SUBDIRS = include lib cmd 
-DIST_SUBDIRS = $(SUBDIRS) regress samples doc
+DIST_SUBDIRS = $(SUBDIRS) regress samples doc tools
 all: all-recursive
 
 .SUFFIXES:
