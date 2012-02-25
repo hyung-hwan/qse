@@ -169,7 +169,7 @@ int qse_tio_fini (
  * The qse_tio_geterrnum() function returns the current error code.
  */
 qse_tio_errnum_t qse_tio_geterrnum (
-	qse_tio_t* tio
+	const qse_tio_t* tio
 );
 
 /**

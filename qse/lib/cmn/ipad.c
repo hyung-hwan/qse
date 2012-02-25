@@ -35,6 +35,9 @@
  */
 
 #include <qse/cmn/ipad.h>
+#include <qse/cmn/hton.h>
+#include <qse/cmn/str.h>
+#include "mem.h"
 
 #if 0
 const qse_ipad4_t qse_ipad4_any =
@@ -64,7 +67,6 @@ const qse_ipad6_t qse_ipad6_loopback =
 };
 #endif
 
-#if 0
 int qse_strtoipad4 (const qse_char_t* str, qse_ipad4_t* ipad)
 {
 	qse_char_t c;
@@ -218,7 +220,7 @@ int qse_strtoipad6 (const qse_char_t* src, qse_ipad6_t* ipad)
 	int saw_xdigit;
 	unsigned int val;
 
-	qse_memset (&tmp, 0, QSE_SIZEOF(tmp));
+	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tp = &tmp.value[0];
 	endp = &tmp.value[QSE_COUNTOF(tmp.value)];
 	colonp = QSE_NULL;
@@ -347,7 +349,7 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 
 	src_end = src + len;
 
-	qse_memset (&tmp, 0, QSE_SIZEOF(tmp));
+	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
 	tp = &tmp.value[0];
 	endp = &tmp.value[QSE_COUNTOF(tmp.value)];
 	colonp = QSE_NULL;
@@ -472,7 +474,7 @@ qse_size_t qse_ipad6tostrx (
 	 *	Copy the input (bytewise) array into a wordwise array.
 	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
 	 */
-	qse_memset (words, 0, QSE_SIZEOF(words));
+	QSE_MEMSET (words, 0, QSE_SIZEOF(words));
 	for (i = 0; i < QSE_SIZEOF(ipad->value); i++)
 		words[i / 2] |= (ipad->value[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
@@ -529,7 +531,7 @@ qse_size_t qse_ipad6tostrx (
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) 
 		{
 			qse_ipad4_t ipad4;
-			qse_memcpy (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
+			QSE_MEMCPY (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
 			tp += qse_ipad4tostrx (&ipad4, tp, QSE_SIZEOF(tmp) - (tp - tmp));
 			break;
 		}
@@ -547,6 +549,7 @@ qse_size_t qse_ipad6tostrx (
 #undef IP6ADDR_NWORDS
 }
 
+#if 0
 int qse_strtoipad (const qse_char_t* str, qse_ipad_t* ipad)
 {
 	if (qse_strtoipad4 (str, &ipad->u.ip4) <= -1)

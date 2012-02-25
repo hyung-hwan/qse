@@ -197,7 +197,7 @@ void qse_sio_fini (
 );
 
 qse_sio_errnum_t qse_sio_geterrnum (
-	qse_sio_t* sio
+	const qse_sio_t* sio
 );
 
 qse_cmgr_t* qse_sio_getcmgr (
@@ -210,11 +210,11 @@ void qse_sio_setcmgr (
 );
 
 qse_sio_hnd_t qse_sio_gethandle (
-	qse_sio_t* sio
+	const qse_sio_t* sio
 );
 
 qse_ubi_t qse_sio_gethandleasubi (
-	qse_sio_t* sio
+	const qse_sio_t* sio
 );
 
 qse_ssize_t qse_sio_flush (

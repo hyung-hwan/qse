@@ -239,7 +239,7 @@ const Sed::char_t* Sed::getErrorString (errnum_t num) const
 	return dflerrstr (sed, num);
 }
 
-const Sed::char_t* Sed::xerrstr (sed_t* s, errnum_t num)
+const Sed::char_t* Sed::xerrstr (const sed_t* s, errnum_t num)
 {
 	Sed* sed = *(Sed**)QSE_XTN(s);
 	try

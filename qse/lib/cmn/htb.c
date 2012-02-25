@@ -322,7 +322,7 @@ void qse_htb_fini (htb_t* htb)
 	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
 }
 
-const mancbs_t* qse_htb_getmancbs (htb_t* htb)
+const mancbs_t* qse_htb_getmancbs (const htb_t* htb)
 {
 	return htb->mancbs;
 }
@@ -333,17 +333,17 @@ void qse_htb_setmancbs (htb_t* htb, const mancbs_t* mancbs)
 	htb->mancbs = mancbs;
 }
 
-size_t qse_htb_getsize (htb_t* htb)
+size_t qse_htb_getsize (const htb_t* htb)
 {
 	return htb->size;
 }
 
-size_t qse_htb_getcapa (htb_t* htb)
+size_t qse_htb_getcapa (const htb_t* htb)
 {
 	return htb->capa;
 }
 
-pair_t* qse_htb_search (htb_t* htb, const void* kptr, size_t klen)
+pair_t* qse_htb_search (const htb_t* htb, const void* kptr, size_t klen)
 {
 	pair_t* pair;
 	size_t hc;
@@ -709,7 +709,8 @@ pair_t* qse_htb_getnextpair (htb_t* htb, pair_t* pair, size_t* buckno)
 	return QSE_NULL;
 }
 
-size_t qse_htb_dflhash (htb_t* htb, const void* kptr, size_t klen)
+size_t qse_htb_dflhash (
+	const htb_t* htb, const void* kptr, size_t klen)
 {
 	/*size_t h = 2166136261;*/
 	/*size_t h = 0;*/
@@ -727,7 +728,8 @@ size_t qse_htb_dflhash (htb_t* htb, const void* kptr, size_t klen)
 	return h ; 
 }
 
-int qse_htb_dflcomp (htb_t* htb, 
+int qse_htb_dflcomp (
+	const htb_t* htb, 
 	const void* kptr1, size_t klen1, 
 	const void* kptr2, size_t klen2)
 {

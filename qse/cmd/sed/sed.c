@@ -558,14 +558,13 @@ static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_
 {
 	switch (op)
 	{
-#if 0
 		case QSE_SED_EXEC_READ:
-			qse_fprintf (QSE_STDERR, QSE_T("reading...\n"));
+			/*qse_fprintf (QSE_STDERR, QSE_T("reading...\n"));*/
 			break;
 		case QSE_SED_EXEC_WRITE:
-			qse_fprintf (QSE_STDERR, QSE_T("wrting...\n"));
+			/*qse_fprintf (QSE_STDERR, QSE_T("wrting...\n"));*/
 			break;
-#endif
+
 		/* TODO: use function to get hold space and pattern space and print them */
 
 		case QSE_SED_EXEC_MATCH:

@@ -376,7 +376,7 @@ qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
 	return &awk->prm;
 }
 
-int qse_awk_getoption (qse_awk_t* awk)
+int qse_awk_getoption (const qse_awk_t* awk)
 {
 	return awk->option;
 }
@@ -391,7 +391,7 @@ void qse_awk_stopall (qse_awk_t* awk)
 	awk->stopall = QSE_TRUE;
 }
 
-qse_size_t qse_awk_getmaxdepth (qse_awk_t* awk, qse_awk_depth_t type)
+qse_size_t qse_awk_getmaxdepth (const qse_awk_t* awk, qse_awk_depth_t type)
 {
 	return (type == QSE_AWK_DEPTH_BLOCK_PARSE)? awk->parse.depth.max.block:
 	       (type == QSE_AWK_DEPTH_BLOCK_RUN)? awk->run.depth.max.block:

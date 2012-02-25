@@ -137,13 +137,13 @@ void qse_sed_setoption (qse_sed_t* sed, int option)
 	sed->option = option;
 }
 
-int qse_sed_getoption (qse_sed_t* sed)
+int qse_sed_getoption (const qse_sed_t* sed)
 {
 	return sed->option;
 }
 
 #if defined(USE_REX)
-qse_size_t qse_sed_getmaxdepth (qse_sed_t* sed, qse_sed_depth_t id)
+qse_size_t qse_sed_getmaxdepth (const qse_sed_t* sed, qse_sed_depth_t id)
 {
 	return (id & QSE_SED_DEPTH_REX_BUILD)? sed->depth.rex.build:
 	       (id & QSE_SED_DEPTH_REX_MATCH)? sed->depth.rex.match: 0;

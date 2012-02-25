@@ -87,7 +87,7 @@ int qse_tio_fini (qse_tio_t* tio)
 	return ret;
 }
 
-qse_tio_errnum_t qse_tio_geterrnum (qse_tio_t* tio)
+qse_tio_errnum_t qse_tio_geterrnum (const qse_tio_t* tio)
 {
 	return tio->errnum;
 }

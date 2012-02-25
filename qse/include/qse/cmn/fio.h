@@ -210,15 +210,19 @@ void qse_fio_fini (
 	qse_fio_t* fio
 );
 
+qse_fio_errnum_t qse_fio_geterrnum (
+	const qse_fio_t* fio
+);
+
 /**
  * The qse_fio_gethandle() function returns the native file handle.
  */
 qse_fio_hnd_t qse_fio_gethandle (
-	qse_fio_t* fio
+	const qse_fio_t* fio
 );
 
 qse_ubi_t qse_fio_gethandleasubi (
-	qse_fio_t* fio
+	const qse_fio_t* fio
 );
 
 /**

@@ -208,6 +208,10 @@ static void close_main_stream (
 			 * i close this in qse_awk_execstd()
 			 */
 			break;
+
+		default:
+			/* do nothing */
+			break;
 	}
 
 }
@@ -827,7 +831,7 @@ int qse_sed_compstdstr (qse_sed_t* sed, const qse_char_t* script)
 	qse_sed_iostd_t in[2];
 
 	in[0].type = QSE_SED_IOSTD_STR;
-	in[0].u.str.ptr = script;
+	in[0].u.str.ptr = (qse_char_t*)script;
 	in[0].u.str.len = qse_strlen(script);
 	in[1].type = QSE_SED_IOSTD_NULL;
 

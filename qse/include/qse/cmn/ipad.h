@@ -1,4 +1,3 @@
-
 /*
  * $Id$
  *
@@ -25,7 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-typedef struct qse_ipad_t qse_ipad_t;
+typedef struct qse_ipad_t  qse_ipad_t;
 typedef struct qse_ipad4_t qse_ipad4_t;
 typedef struct qse_ipad6_t qse_ipad6_t;
 
@@ -44,20 +43,52 @@ struct qse_ipad_t
 {
 	enum
 	{
-		QSE_IPAD_IP4,
-		QSE_IPAD_IP6
+		QSE_IPAD_V4,
+		QSE_IPAD_V6
 	} type;
 
 	union
 	{
-		qse_ipad4_t ip4;
-		qse_ipad4_t ip6;
+		qse_ipad4_t v4;
+		qse_ipad6_t v6;
 	} u;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int qse_mbstoipad4 (
+	const qse_mchar_t* mbs,
+	qse_ipad4_t*       ipad
+);
+
+int qse_mbsntoipad4 (
+	const qse_mchar_t* mbs,
+	qse_size_t         len
+);
+
+int qse_ipad4tombs (
+	const qse_ipad4_t* ipad,
+	qse_mchar_t*       mbs,
+	qse_size_t         len
+);
+
+int qse_wcstoipad4 (
+	const qse_wchar_t* wcs,
+	qse_ipad4_t*       ipad
+);
+
+int qse_wcstoipad4 (
+	const qse_wchar_t* wcs,
+	qse_ipad4_t*       ipad
+);
+
+int qse_ipad4towcs (
+	const qse_ipad4_t* ipad,
+	qse_wchar_t*       wcs,
+	qse_size_t         len
+);
 
 #ifdef __cplusplus
 }

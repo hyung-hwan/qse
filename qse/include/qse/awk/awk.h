@@ -999,7 +999,7 @@ typedef struct qse_awk_errinf_t qse_awk_errinf_t;
  * object with the qse_awk_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_awk_errstr_t) (
-	qse_awk_t*       awk,   /**< awk */
+	const qse_awk_t* awk,   /**< awk */
 	qse_awk_errnum_t num    /**< error number */
 );
 
@@ -1205,7 +1205,7 @@ int qse_awk_clear (
  * The qse_awk_geterrstr() gets an error string getter.
  */
 qse_awk_errstr_t qse_awk_geterrstr (
-	qse_awk_t*       awk    /**< awk */
+	const qse_awk_t* awk    /**< awk */
 );
 
 /**
@@ -1243,7 +1243,7 @@ void qse_awk_seterrstr (
  * @return error number
  */
 qse_awk_errnum_t qse_awk_geterrnum (
-	qse_awk_t* awk /**< awk */
+	const qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1251,7 +1251,7 @@ qse_awk_errnum_t qse_awk_geterrnum (
  * last error has occurred.
  */
 const qse_awk_loc_t* qse_awk_geterrloc (
-	qse_awk_t* awk /**< awk */
+	const qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1261,7 +1261,7 @@ const qse_awk_loc_t* qse_awk_geterrloc (
  * @return error message
  */
 const qse_char_t* qse_awk_geterrmsg (
-	qse_awk_t* awk /**< awk */
+	const qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1269,7 +1269,7 @@ const qse_char_t* qse_awk_geterrmsg (
  * pointed to by @a errinf from @a awk.
  */
 void qse_awk_geterrinf (
-	qse_awk_t*        awk,   /**< awk */
+	const qse_awk_t*  awk,   /**< awk */
 	qse_awk_errinf_t* errinf /**< error information buffer */
 );
 
@@ -1300,7 +1300,7 @@ void qse_awk_seterrinf (
  * The qse_awk_geterror() function gets error information via parameters.
  */
 void qse_awk_geterror (
-	qse_awk_t*         awk,    /**< awk */
+	const qse_awk_t*   awk,    /**< awk */
 	qse_awk_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
 	qse_awk_loc_t*     errloc  /**< error location */
@@ -1322,7 +1322,7 @@ void qse_awk_seterror (
  * @return 0 or a number ORed of #qse_awk_option_t enumerators.
  */
 int qse_awk_getoption (
-	qse_awk_t* awk /**< awk */
+	const qse_awk_t* awk /**< awk */
 );
 
 /**
@@ -1340,8 +1340,8 @@ void qse_awk_setoption (
  * @return maximum depth
  */
 qse_size_t qse_awk_getmaxdepth (
-	qse_awk_t*      awk, /**< awk */
-	qse_awk_depth_t type /**< operation type */
+	const qse_awk_t* awk, /**< awk */
+	qse_awk_depth_t  type /**< operation type */
 );
 
 /**
@@ -1797,7 +1797,7 @@ qse_htb_t* qse_awk_rtx_getnvmap (
  * @return error number
  */
 qse_awk_errnum_t qse_awk_rtx_geterrnum (
-	qse_awk_rtx_t* rtx /**< runtime context */
+	const qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -1806,7 +1806,7 @@ qse_awk_errnum_t qse_awk_rtx_geterrnum (
  * @return error location
  */
 const qse_awk_loc_t* qse_awk_rtx_geterrloc (
-	qse_awk_rtx_t* rtx /**< runtime context */
+	const qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -1815,7 +1815,7 @@ const qse_awk_loc_t* qse_awk_rtx_geterrloc (
  * @return error message
  */
 const qse_char_t* qse_awk_rtx_geterrmsg (
-	qse_awk_rtx_t* rtx /**< runtime context */
+	const qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
@@ -1823,8 +1823,8 @@ const qse_char_t* qse_awk_rtx_geterrmsg (
  * pointed to by @a errinf from a runtime context @a rtx.
  */
 void qse_awk_rtx_geterrinf (
-	qse_awk_rtx_t*    rtx,   /**< runtime context */
-	qse_awk_errinf_t* errinf /**< error information */
+	const qse_awk_rtx_t* rtx,   /**< runtime context */
+	qse_awk_errinf_t*    errinf /**< error information */
 );
 
 /**
@@ -1834,10 +1834,10 @@ void qse_awk_rtx_geterrinf (
  * @a errmsg; the error line into memory pointed to by @a errlin.
  */
 void qse_awk_rtx_geterror (
-	qse_awk_rtx_t*     rtx,    /**< runtime context */
-	qse_awk_errnum_t*  errnum, /**< error number */
-	const qse_char_t** errmsg, /**< error message */
-	qse_awk_loc_t*     errloc  /**< error location */
+	const qse_awk_rtx_t* rtx,    /**< runtime context */
+	qse_awk_errnum_t*    errnum, /**< error number */
+	const qse_char_t**   errmsg, /**< error message */
+	qse_awk_loc_t*       errloc  /**< error location */
 );
 
 /** 

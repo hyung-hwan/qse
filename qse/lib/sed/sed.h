@@ -243,8 +243,8 @@ const qse_char_t* qse_sed_dflerrstr (
  * The qse_sed_getmaxdepth() gets the maximum processing depth.
  */
 qse_size_t qse_sed_getmaxdepth (
-	qse_sed_t*      sed, /**< stream editor */
-	qse_sed_depth_t id   /**< one of qse_sed_depth_t values */
+	const qse_sed_t* sed, /**< stream editor */
+	qse_sed_depth_t  id   /**< one of qse_sed_depth_t values */
 );
 
 /**
