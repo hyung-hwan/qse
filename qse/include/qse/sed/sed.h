@@ -234,7 +234,7 @@ typedef enum qse_sed_errnum_t qse_sed_errnum_t;
  * editor with the qse_sed_seterrstr() function to customize an error string.
  */
 typedef const qse_char_t* (*qse_sed_errstr_t) (
-	qse_sed_t*       sed,   /**< stream editor */
+	const qse_sed_t* sed,   /**< stream editor */
 	qse_sed_errnum_t num    /**< an error number */
 );
 
@@ -355,7 +355,7 @@ void qse_sed_close (
  * @return 0 or a number OR'ed of #qse_sed_option_t values 
  */
 int qse_sed_getoption (
-	qse_sed_t* sed /**< stream editor */
+	const qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -370,7 +370,7 @@ void qse_sed_setoption (
  * The qse_sed_geterrstr() gets an error string getter.
  */
 qse_sed_errstr_t qse_sed_geterrstr (
-	qse_sed_t*       sed    /**< stream editor */
+	const qse_sed_t* sed    /**< stream editor */
 );
 
 /**
@@ -407,7 +407,7 @@ void qse_sed_seterrstr (
  * @return the number of the last error
  */
 qse_sed_errnum_t qse_sed_geterrnum (
-	qse_sed_t* sed /**< stream editor */
+	const qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -416,7 +416,7 @@ qse_sed_errnum_t qse_sed_geterrnum (
  * @return error location
  */
 const qse_sed_loc_t* qse_sed_geterrloc (
-	qse_sed_t* sed /**< stream editor */
+	const qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -424,7 +424,7 @@ const qse_sed_loc_t* qse_sed_geterrloc (
  * @return a pointer to an error message
  */
 const qse_char_t* qse_sed_geterrmsg (
-	qse_sed_t* sed /**< stream editor */
+	const qse_sed_t* sed /**< stream editor */
 );
 
 /**
@@ -433,7 +433,7 @@ const qse_char_t* qse_sed_geterrmsg (
  * to by each parameter.
  */
 void qse_sed_geterror (
-	qse_sed_t*         sed,    /**< stream editor */
+	const qse_sed_t*   sed,    /**< stream editor */
 	qse_sed_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
 	qse_sed_loc_t*     errloc  /**< error location */

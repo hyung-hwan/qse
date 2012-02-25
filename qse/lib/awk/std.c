@@ -449,11 +449,13 @@ static qse_ssize_t sf_in_open (
 				xtn->s.in.u.str.ptr = xtn->s.in.x->u.str.ptr;
 				xtn->s.in.u.str.end = xtn->s.in.x->u.str.ptr + xtn->s.in.x->u.str.len;
 				return 1;
+
+			default:
+				/* this should never happen */
+				qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
+				return -1;
 		}
 
-		/* this should never happen */
-		qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
-		return -1;
 	}
 	else
 	{
@@ -522,6 +524,10 @@ static qse_ssize_t sf_in_close (
 			case QSE_AWK_PARSESTD_STR:
 				/* nothing to close */
 				break;
+
+			default:
+				/* nothing to close */
+				break;
 		}
 	}
 	else
@@ -574,10 +580,13 @@ static qse_ssize_t sf_in_read (
 				}
 				return n;
 			}
+
+			default:
+				/* this should never happen */
+				qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
+				return -1;
 		}
 
-		qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
-		return -1;
 	}
 	else
 	{
@@ -613,10 +622,10 @@ static qse_ssize_t sf_in (
 		case QSE_AWK_SIO_READ:
 			return sf_in_read (awk, arg, data, size, xtn);
 
+		default:
+			qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
+			return -1;
 	}
-
-	qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
-	return -1;
 }
 
 static qse_ssize_t sf_out (

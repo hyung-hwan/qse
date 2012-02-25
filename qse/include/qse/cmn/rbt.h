@@ -116,11 +116,11 @@ typedef void (*qse_rbt_freeer_t) (
  * key is greater than the second key, -1 otherwise.
  */
 typedef int (*qse_rbt_comper_t) (
-	qse_rbt_t*  rbt,    /**< red-black tree */ 
-	const void* kptr1,  /**< key pointer */
-	qse_size_t  klen1,  /**< key length */ 
-	const void* kptr2,  /**< key pointer */
-	qse_size_t  klen2   /**< key length */
+	const qse_rbt_t* rbt,    /**< red-black tree */ 
+	const void*      kptr1,  /**< key pointer */
+	qse_size_t       klen1,  /**< key length */ 
+	const void*      kptr2,  /**< key pointer */
+	qse_size_t       klen2   /**< key length */
 );
 
 /**
@@ -319,7 +319,7 @@ void qse_rbt_fini (
  * The qse_rbt_getmancbs() function gets manipulation callback function set.
  */
 const qse_rbt_mancbs_t* qse_rbt_getmancbs (
-	qse_rbt_t* rbt /**< red-black tree */
+	const qse_rbt_t* rbt /**< red-black tree */
 );
 
 /**
@@ -335,7 +335,7 @@ void qse_rbt_setmancbs (
  * The qse_rbt_getsize() function gets the number of pairs in red-black tree.
  */
 qse_size_t qse_rbt_getsize (
-	qse_rbt_t* rbt  /**< red-black tree */
+	const qse_rbt_t* rbt  /**< red-black tree */
 );
 
 /**
@@ -346,9 +346,9 @@ qse_size_t qse_rbt_getsize (
  *         or QSE_NULL if no match is found.
  */
 qse_rbt_pair_t* qse_rbt_search (
-	qse_rbt_t*  rbt,   /**< red-black tree */
-	const void* kptr,  /**< key pointer */
-	qse_size_t  klen   /**< the size of the key */
+	const qse_rbt_t* rbt,   /**< red-black tree */
+	const void*      kptr,  /**< key pointer */
+	qse_size_t       klen   /**< the size of the key */
 );
 
 /**
@@ -574,11 +574,11 @@ void qse_rbt_freepair (
  * The qse_rbt_dflcomp() function defines the default key comparator.
  */
 int qse_rbt_dflcomp (
-	qse_rbt_t*  rbt,
-	const void* kptr1,
-	qse_size_t  klen1,
-	const void* kptr2,
-	qse_size_t  klen2
+	const qse_rbt_t* rbt,
+	const void*      kptr1,
+	qse_size_t       klen1,
+	const void*      kptr2,
+	qse_size_t       klen2
 );
 
 #ifdef __cplusplus

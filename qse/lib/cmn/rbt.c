@@ -248,7 +248,7 @@ void qse_rbt_fini (rbt_t* rbt)
 	qse_rbt_clear (rbt);
 }
 
-const mancbs_t* qse_rbt_getmancbs (rbt_t* rbt)
+const mancbs_t* qse_rbt_getmancbs (const rbt_t* rbt)
 {
 	return rbt->mancbs;
 }
@@ -259,12 +259,12 @@ void qse_rbt_setmancbs (rbt_t* rbt, const mancbs_t* mancbs)
 	rbt->mancbs = mancbs;
 }
 
-size_t qse_rbt_getsize (rbt_t* rbt)
+size_t qse_rbt_getsize (const rbt_t* rbt)
 {
 	return rbt->size;
 }
 
-pair_t* qse_rbt_search (rbt_t* rbt, const void* kptr, size_t klen)
+pair_t* qse_rbt_search (const rbt_t* rbt, const void* kptr, size_t klen)
 {
 	pair_t* pair = rbt->root;
 
@@ -972,7 +972,7 @@ void qse_rbt_rwalk (rbt_t* rbt, walker_t walker, void* ctx)
 }
 
 int qse_rbt_dflcomp (
-	qse_rbt_t* rbt,
+	const qse_rbt_t* rbt,
 	const void* kptr1, size_t klen1,
 	const void* kptr2, size_t klen2)
 {

@@ -238,7 +238,7 @@ qse_rex_node_t* qse_rex_yield (
  * The qse_rex_getoption() function returns the current options.
  */
 int qse_rex_getoption (
-	qse_rex_t* rex /**< regular expression processor */
+	const qse_rex_t* rex /**< regular expression processor */
 );
 
 /**
@@ -250,11 +250,11 @@ void qse_rex_setoption (
 );
 
 qse_rex_errnum_t qse_rex_geterrnum (
-	qse_rex_t* rex
+	const qse_rex_t* rex
 );
 
 const qse_char_t* qse_rex_geterrmsg (
-	qse_rex_t* rex
+	const qse_rex_t* rex
 );
 
 qse_rex_node_t* qse_rex_comp (

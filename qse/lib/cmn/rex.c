@@ -200,7 +200,7 @@ qse_rex_node_t* qse_rex_yield (qse_rex_t* rex)
 	return code;
 }
 
-int qse_rex_getoption (qse_rex_t* rex)
+int qse_rex_getoption (const qse_rex_t* rex)
 {
 	return rex->option;
 }
@@ -210,12 +210,12 @@ void qse_rex_setoption (qse_rex_t* rex, int opts)
 	rex->option = opts;
 }
 
-qse_rex_errnum_t qse_rex_geterrnum (qse_rex_t* rex)
+qse_rex_errnum_t qse_rex_geterrnum (const qse_rex_t* rex)
 {
 	return rex->errnum;
 }
 
-const qse_char_t* qse_rex_geterrmsg (qse_rex_t* rex)
+const qse_char_t* qse_rex_geterrmsg (const qse_rex_t* rex)
 {
 	static const qse_char_t* errstr[] = 
 	{

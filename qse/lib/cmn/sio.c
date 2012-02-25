@@ -31,6 +31,14 @@
 #	include "syscall.h"
 #endif
 
+
+/* internal status codes */
+enum
+{
+	STATUS_UTF8_CONSOLE = (1 << 0)
+};
+
+
 static qse_ssize_t file_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
 static qse_ssize_t file_output (
@@ -113,14 +121,19 @@ qse_sio_t* qse_sio_openstd (
 	qse_fio_hnd_t hnd;
 
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return QSE_NULL;
+
 	sio = qse_sio_open (mmgr, xtnsize, 
 		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
 
 #if defined(_WIN32)
 	if (sio) 
 	{
-		QSE_ASSERT (std >= 0 && std < QSE_TYPE_MAX(int));
-		sio->status = std + 1;
+		DWORD mode;
+		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
+		    GetConsoleOutputCP() == CP_UTF8)
+		{
+			sio->status |= STATUS_UTF8_CONSOLE;
+		}
 	}
 #endif
 
@@ -190,14 +203,19 @@ int qse_sio_initstd (
 	qse_fio_hnd_t hnd;
 
 	if (qse_getstdfiohandle (std, &hnd) <= -1) return -1;
+
 	n = qse_sio_init (sio, mmgr, 
 		(const qse_char_t*)&hnd, flags | QSE_SIO_HANDLE | QSE_SIO_NOCLOSE);
 
 #if defined(_WIN32)
 	if (n >= 0) 
 	{
-		QSE_ASSERT (std >= 0 && std < QSE_TYPE_MAX(int));
-		sio->status = std + 1;
+		DWORD mode;
+		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
+		    GetConsoleOutputCP() == CP_UTF8)
+		{
+			sio->status |= STATUS_UTF8_CONSOLE;
+		}
 	}
 #endif
 
@@ -212,6 +230,11 @@ void qse_sio_fini (qse_sio_t* sio)
 	qse_fio_fini (&sio->u.file);
 }
 
+qse_sio_errnum_t qse_sio_geterrnum (const qse_sio_t* sio)
+{
+	return sio->errnum;
+}
+
 qse_cmgr_t* qse_sio_getcmgr (qse_sio_t* sio)
 {
 	return qse_tio_getcmgr (&sio->tio.io);
@@ -222,18 +245,13 @@ void qse_sio_setcmgr (qse_sio_t* sio, qse_cmgr_t* cmgr)
 	qse_tio_setcmgr (&sio->tio.io, cmgr);
 }
 
-qse_sio_errnum_t qse_sio_geterrnum (qse_sio_t* sio)
-{
-	return sio->errnum;
-}
-
-qse_sio_hnd_t qse_sio_gethandle (qse_sio_t* sio)
+qse_sio_hnd_t qse_sio_gethandle (const qse_sio_t* sio)
 {
 	/*return qse_fio_gethandle (&sio->u.file);*/
 	return QSE_FIO_HANDLE(&sio->u.file);
 }
 
-qse_ubi_t qse_sio_gethandleasubi (qse_sio_t* sio)
+qse_ubi_t qse_sio_gethandleasubi (const qse_sio_t* sio)
 {
 	return qse_fio_gethandleasubi (&sio->u.file);
 }
@@ -390,7 +408,7 @@ qse_ssize_t qse_sio_putmbs (qse_sio_t* sio, const qse_mchar_t* str)
 
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
-	 * so I don't implement any hack here */
+	 * so I don't implement any hacks here */
 #endif
 
 	sio->errnum = QSE_SIO_ENOERR;
@@ -408,7 +426,7 @@ qse_ssize_t qse_sio_putmbsn (
 
 #if defined(_WIN32)
 	/* Using WriteConsoleA() didn't help at all.
-	 * so I don't implement any hack here */
+	 * so I don't implement any hacks here */
 #endif
 
 	sio->errnum = QSE_SIO_ENOERR;
@@ -425,37 +443,31 @@ qse_ssize_t qse_sio_putwcs (qse_sio_t* sio, const qse_wchar_t* str)
 
 #if defined(_WIN32)
 	/* DAMN UGLY: See comment in qse_sio_putwcsn() */
-	if (sio->status)
+	if (sio->status & STATUS_UTF8_CONSOLE)
 	{
-		DWORD mode;
+		DWORD count, left;
+		const qse_wchar_t* cur;
 
-		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
-		    GetConsoleOutputCP() == CP_UTF8)
+		if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+
+		for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
 		{
-			DWORD count, left;
-			const qse_wchar_t* cur;
-
-			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
-
-			for (cur = str, left = qse_wcslen(str); left > 0; cur += count, left -= count)
+			if (WriteConsoleW (
+				sio->u.file.handle, cur, left,
+				&count, QSE_NULL) == FALSE) 
 			{
-				if (WriteConsoleW (
-					sio->u.file.handle, cur, left,
-					&count, QSE_NULL) == FALSE) 
-				{
-					sio->errnum = QSE_SIO_ESYSERR;
-					return -1;
-				}
-				if (count == 0) break;
-
-				if (count > left) 
-				{
-					sio->errnum = QSE_SIO_ESYSERR;
-					return -1;
-				}
+				sio->errnum = QSE_SIO_ESYSERR;
+				return -1;
 			}
-			return cur - str;	
+			if (count == 0) break;
+
+			if (count > left) 
+			{
+				sio->errnum = QSE_SIO_ESYSERR;
+				return -1;
+			}
 		}
+		return cur - str;	
 	}
 #endif
 
@@ -484,45 +496,39 @@ qse_ssize_t qse_sio_putwcsn (
 	 *  Note that the multibyte functions qse_sio_putmbs() and
 	 *  qse_sio_putmbsn() doesn't handle this. So you may still suffer.
 	 */
-	if (sio->status)
+	if (sio->status & STATUS_UTF8_CONSOLE)
 	{
-		DWORD mode;
+		DWORD count, left;
+		const qse_wchar_t* cur;
 
-		if (GetConsoleMode (sio->u.file.handle, &mode) == TRUE &&
-		    GetConsoleOutputCP() == CP_UTF8)
+		if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
+
+		for (cur = str, left = size; left > 0; cur += count, left -= count)
 		{
-			DWORD count, left;
-			const qse_wchar_t* cur;
-	
-			if (qse_sio_flush (sio) <= -1) return -1; /* can't do buffering */
-
-			for (cur = str, left = size; left > 0; cur += count, left -= count)
+			if (WriteConsoleW (
+				sio->u.file.handle, cur, left, 
+				&count, QSE_NULL) == FALSE) 
 			{
-				if (WriteConsoleW (
-					sio->u.file.handle, cur, left, 
-					&count, QSE_NULL) == FALSE) 
-				{
-					sio->errnum = QSE_SIO_ESYSERR;
-					return -1;
-				}
-				if (count == 0) break;
-
-				/* Note:
-				 * WriteConsoleW() in unicosw.dll on win 9x/me returns
-				 * the number of bytes via 'count'. If a double byte 
-				 * string is given, 'count' can be greater than 'left'.
-				 * this case is a miserable failure. however, i don't
-				 * think there is CP_UTF8 codepage for console on win9x/me.
-				 * so let me make this function fail if that ever happens.
-				 */
-				if (count > left) 
-				{
-					sio->errnum = QSE_SIO_ESYSERR;
-					return -1;
-				}
+				sio->errnum = QSE_SIO_ESYSERR;
+				return -1;
 			}
-			return cur - str;
+			if (count == 0) break;
+
+			/* Note:
+			 * WriteConsoleW() in unicosw.dll on win 9x/me returns
+			 * the number of bytes via 'count'. If a double byte 
+			 * string is given, 'count' can be greater than 'left'.
+			 * this case is a miserable failure. however, i don't
+			 * think there is CP_UTF8 codepage for console on win9x/me.
+			 * so let me make this function fail if that ever happens.
+			 */
+			if (count > left) 
+			{
+				sio->errnum = QSE_SIO_ESYSERR;
+				return -1;
+			}
 		}
+		return cur - str;
 	}	
 
 #endif

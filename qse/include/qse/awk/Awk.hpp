@@ -1171,7 +1171,7 @@ private:
 
 	int dispatch_function (Run* run, const cstr_t* name);
 
-	static const char_t* xerrstr (awk_t* a, errnum_t num);
+	static const char_t* xerrstr (const awk_t* a, errnum_t num);
 
 private:
 	Awk (const Awk&);

@@ -1734,7 +1734,12 @@ void qse_pio_fini (qse_pio_t* pio)
 	qse_pio_wait (pio);
 }
 
-int qse_pio_getoption (qse_pio_t* pio)
+qse_pio_errnum_t qse_pio_geterrnum (const qse_pio_t* pio)
+{
+	return pio->errnum;
+}
+
+int qse_pio_getoption (const qse_pio_t* pio)
 {
 	return pio->option;
 }
@@ -1742,11 +1747,6 @@ int qse_pio_getoption (qse_pio_t* pio)
 void qse_pio_setoption (qse_pio_t* pio, int opt)
 {
 	pio->option = opt;
-}
-
-qse_pio_errnum_t qse_pio_geterrnum (qse_pio_t* pio)
-{
-	return pio->errnum;
 }
 
 qse_cmgr_t* qse_pio_getcmgr (qse_pio_t* pio, qse_pio_hid_t hid)
@@ -1760,12 +1760,12 @@ void qse_pio_setcmgr (qse_pio_t* pio, qse_pio_hid_t hid, qse_cmgr_t* cmgr)
 	if (pio->pin[hid].tio) qse_tio_setcmgr (pio->pin[hid].tio, cmgr);
 }
 
-qse_pio_hnd_t qse_pio_gethandle (qse_pio_t* pio, qse_pio_hid_t hid)
+qse_pio_hnd_t qse_pio_gethandle (const qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	return pio->pin[hid].handle;
 }
 
-qse_ubi_t qse_pio_gethandleasubi (qse_pio_t* pio, qse_pio_hid_t hid)
+qse_ubi_t qse_pio_gethandleasubi (const qse_pio_t* pio, qse_pio_hid_t hid)
 {
 	qse_ubi_t handle;
 
@@ -1782,7 +1782,7 @@ qse_ubi_t qse_pio_gethandleasubi (qse_pio_t* pio, qse_pio_hid_t hid)
 	return handle;
 }
 
-qse_pio_pid_t qse_pio_getchild (qse_pio_t* pio)
+qse_pio_pid_t qse_pio_getchild (const qse_pio_t* pio)
 {
 	return pio->child;
 }

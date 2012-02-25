@@ -65,7 +65,7 @@ const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
 		errstr[errnum]: QSE_T("unknown error");
 }
 
-qse_sed_errstr_t qse_sed_geterrstr (qse_sed_t* sed)
+qse_sed_errstr_t qse_sed_geterrstr (const qse_sed_t* sed)
 {
 	return sed->errstr;
 }
@@ -75,24 +75,24 @@ void qse_sed_seterrstr (qse_sed_t* sed, qse_sed_errstr_t errstr)
 	sed->errstr = errstr;
 }
 
-qse_sed_errnum_t qse_sed_geterrnum (qse_sed_t* sed)
+qse_sed_errnum_t qse_sed_geterrnum (const qse_sed_t* sed)
 {
 	return sed->errnum;
 }
 
-const qse_sed_loc_t* qse_sed_geterrloc (qse_sed_t* sed)
+const qse_sed_loc_t* qse_sed_geterrloc (const qse_sed_t* sed)
 {
 	return &sed->errloc;
 }
 
-const qse_char_t* qse_sed_geterrmsg (qse_sed_t* sed)
+const qse_char_t* qse_sed_geterrmsg (const qse_sed_t* sed)
 {
 	return (sed->errmsg[0] == QSE_T('\0'))?
 		qse_sed_geterrstr(sed)(sed,sed->errnum): sed->errmsg;
 }
 
 void qse_sed_geterror (
-	qse_sed_t* sed, qse_sed_errnum_t* errnum, 
+	const qse_sed_t* sed, qse_sed_errnum_t* errnum, 
 	const qse_char_t** errmsg, qse_sed_loc_t* errloc)
 {
 	if (errnum != QSE_NULL) *errnum = sed->errnum;

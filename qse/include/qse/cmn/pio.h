@@ -264,11 +264,20 @@ void qse_pio_fini (
 );
 
 /**
+ * The qse_pio_geterrnum() function returns the number of the last error 
+ * occurred. 
+ * @return error number
+ */
+qse_pio_errnum_t qse_pio_geterrnum (
+	const qse_pio_t* pio /**< pio object */
+);
+
+/**
  * The qse_pio_getoption() function gets the current option.
  * @return option number OR'ed of #qse_pio_option_t enumerators
  */
 int qse_pio_getoption (
-	qse_pio_t* pio    /**< pio object */
+	const qse_pio_t* pio    /**< pio object */
 );
 
 /**
@@ -278,15 +287,6 @@ void qse_pio_setoption (
 	qse_pio_t* pio, /**< pio object */
 	int        opt  /**< 0 or a number OR'ed of #qse_pio_option_t
 	                     enumerators */
-);
-
-/**
- * The qse_pio_geterrnum() function returns the number of the last error 
- * occurred. 
- * @return error number
- */
-qse_pio_errnum_t qse_pio_geterrnum (
-	qse_pio_t* pio /**< pio object */
 );
 
 /**
@@ -313,8 +313,8 @@ void qse_pio_setcmgr (
  * @return pipe handle
  */
 qse_pio_hnd_t qse_pio_gethandle (
-	qse_pio_t*    pio, /**< pio object */
-	qse_pio_hid_t hid  /**< handle ID */
+	const qse_pio_t* pio, /**< pio object */
+	qse_pio_hid_t    hid  /**< handle ID */
 );
 
 /**
@@ -323,8 +323,8 @@ qse_pio_hnd_t qse_pio_gethandle (
  * @return pipe handle
  */
 qse_ubi_t qse_pio_gethandleasubi (
-	qse_pio_t*    pio, /**< pio object */
-	qse_pio_hid_t hid  /**< handle ID */
+	const qse_pio_t* pio, /**< pio object */
+	qse_pio_hid_t    hid  /**< handle ID */
 );
 
 /**
@@ -332,7 +332,7 @@ qse_ubi_t qse_pio_gethandleasubi (
  * @return process handle
  */
 qse_pio_pid_t qse_pio_getchild (
-	qse_pio_t*    pio /**< pio object */
+	const qse_pio_t* pio /**< pio object */
 );
 
 /**

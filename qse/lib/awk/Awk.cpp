@@ -979,7 +979,7 @@ const Awk::char_t* Awk::getErrorString (errnum_t num) const
 	return dflerrstr (awk, num);
 }
 
-const Awk::char_t* Awk::xerrstr (awk_t* a, errnum_t num) 
+const Awk::char_t* Awk::xerrstr (const awk_t* a, errnum_t num) 
 {
 	Awk* awk = *(Awk**)QSE_XTN(a);
 	return awk->getErrorString (num);

@@ -316,7 +316,7 @@ private:
 		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* buf, size_t len);
 	static ssize_t xout (
 		sed_t* s, io_cmd_t cmd, io_arg_t* arg, char_t* dat, size_t len);
-	static const char_t* xerrstr (sed_t* s, errnum_t num);
+	static const char_t* xerrstr (const sed_t* s, errnum_t num);
 
 private:
 	Sed (const Sed&);

@@ -121,11 +121,11 @@ typedef void (*qse_htb_freeer_t) (
  * integer otherwise.
  */
 typedef int (*qse_htb_comper_t) (
-	qse_htb_t*  htb,    /**< hash table */ 
-	const void* kptr1,  /**< key pointer */
-	qse_size_t  klen1,  /**< key length */ 
-	const void* kptr2,  /**< key pointer */ 
-	qse_size_t  klen2   /**< key length */
+	const qse_htb_t* htb,    /**< hash table */ 
+	const void*      kptr1,  /**< key pointer */
+	qse_size_t       klen1,  /**< key length */ 
+	const void*      kptr2,  /**< key pointer */ 
+	qse_size_t       klen2   /**< key length */
 );
 
 /**
@@ -154,9 +154,9 @@ typedef qse_size_t (*qse_htb_sizer_t) (
  * The qse_htb_hasher_t type defines a key hash function
  */
 typedef qse_size_t (*qse_htb_hasher_t) (
-	qse_htb_t*  htb,   /**< hash table */
-	const void* kptr,  /**< key pointer */
-	qse_size_t  klen   /**< key length in bytes */
+	const qse_htb_t*  htb,   /**< hash table */
+	const void*       kptr,  /**< key pointer */
+	qse_size_t        klen   /**< key length in bytes */
 );
 
 /**
@@ -361,7 +361,7 @@ void qse_htb_fini (
  * The qse_htb_getmancbs() function gets manipulation callback function set.
  */
 const qse_htb_mancbs_t* qse_htb_getmancbs (
-	qse_htb_t* htb /**< hash table */
+	const qse_htb_t* htb /**< hash table */
 );
 
 /**
@@ -377,7 +377,7 @@ void qse_htb_setmancbs (
  * The qse_htb_getsize() function gets the number of pairs in hash table.
  */
 qse_size_t qse_htb_getsize (
-	qse_htb_t* htb
+	const qse_htb_t* htb
 );
 
 /**
@@ -385,7 +385,7 @@ qse_size_t qse_htb_getsize (
  * in a hash bucket.
  */
 qse_size_t qse_htb_getcapa (
-	qse_htb_t* htb /**< hash table */
+	const qse_htb_t* htb /**< hash table */
 );
 
 /**
@@ -396,9 +396,9 @@ qse_size_t qse_htb_getcapa (
  *         or #QSE_NULL if no match is found.
  */
 qse_htb_pair_t* qse_htb_search (
-	qse_htb_t*  htb,   /**< hash table */
-	const void* kptr,  /**< key pointer */
-	qse_size_t  klen   /**< key length */
+	const qse_htb_t* htb,   /**< hash table */
+	const void*      kptr,  /**< key pointer */
+	qse_size_t       klen   /**< key length */
 );
 
 /**
@@ -632,20 +632,20 @@ void qse_htb_freepair (
  * The qse_htb_dflhash() function is a default hash function.
  */
 qse_size_t qse_htb_dflhash (
-	qse_htb_t*  htb,
-	const void* kptr,
-	qse_size_t  klen
+	const qse_htb_t*  htb,
+	const void*       kptr,
+	qse_size_t        klen
 );
 
 /**
  * The qse_htb_dflcomp() function is default comparator.
  */
 int qse_htb_dflcomp (
-	qse_htb_t*  htb,
-	const void* kptr1,
-	qse_size_t  klen1,
-	const void* kptr2,
-	qse_size_t  klen2
+	const qse_htb_t* htb,
+	const void*      kptr1,
+	qse_size_t       klen1,
+	const void*      kptr2,
+	qse_size_t       klen2
 );
 
 #ifdef __cplusplus
