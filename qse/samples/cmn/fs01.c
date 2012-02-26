@@ -16,7 +16,7 @@ static void list (qse_fs_t* fs, const qse_char_t* name)
 
 	if (qse_fs_chdir (fs, name) <= -1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot change directory to %s - %s\n"), name, qse_fs_geterrmsg(fs));
+		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot change directory to %s - code %d\n"), name, (int)qse_fs_geterrnum(fs));
 		return;
 	}	
 
@@ -33,7 +33,7 @@ static void list (qse_fs_t* fs, const qse_char_t* name)
 		{
 			qse_fs_errnum_t e = qse_fs_geterrnum(fs);
 			if (e != QSE_FS_ENOERR)
-				qse_fprintf (QSE_STDERR, QSE_T("Error: Read error - %s\n"), qse_fs_geterrmsg(fs));
+				qse_fprintf (QSE_STDERR, QSE_T("Error: Read error - code %d\n"), (int)qse_fs_geterrnum(fs));
 			break;
 		}
 

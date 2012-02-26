@@ -67,38 +67,50 @@ const qse_ipad6_t qse_ipad6_loopback =
 };
 #endif
 
-int qse_strtoipad4 (const qse_char_t* str, qse_ipad4_t* ipad)
+static int str_to_ipad4 (int mbs, const void* str, qse_size_t len, qse_ipad4_t* ipad)
 {
-	qse_char_t c;
+	const void* end;
 	int dots = 0, digits = 0;
 	qse_uint32_t acc = 0, addr = 0;	
+	qse_wchar_t c;
+
+	end = (mbs? (const void*)((const qse_mchar_t*)str + len):
+	            (const void*)((const qse_wchar_t*)str + len));
 
 	do
 	{
-		c = *str;	
-
-		if (c == QSE_T('\0')) 
+		if (str >= end)
 		{
 			if (dots < 3 || digits == 0) return -1;
 			addr = (addr << 8) | acc;
 			break;
 		}
-		else if (c >= QSE_T('0') && c <= QSE_T('9')) 
+
+		if (mbs)
+		{
+			c = *(const qse_mchar_t*)str;
+			str = (const qse_mchar_t*)str + 1;
+		}
+		else
+		{
+			c = *(const qse_wchar_t*)str;
+			str = (const qse_wchar_t*)str + 1;
+		}
+
+		if (c >= QSE_WT('0') && c <= QSE_WT('9')) 
 		{
 			if (digits > 0 && acc == 0) return -1;
 			acc = acc * 10 + (c - QSE_T('0'));
 			if (acc > 255) return -1;
 			digits++;
 		}
-		else if (c == QSE_T('.')) 
+		else if (c == QSE_WT('.')) 
 		{
 			if (dots >= 3 || digits == 0) return -1;
 			addr = (addr << 8) | acc;
 			dots++; acc = 0; digits = 0;
 		}
 		else return -1;
-
-		str++;
 	}
 	while (1);
 
@@ -106,62 +118,40 @@ int qse_strtoipad4 (const qse_char_t* str, qse_ipad4_t* ipad)
 	return 0;
 }
 
-int qse_strxtoipad4 (
-	const qse_char_t* str, qse_size_t len, qse_ipad4_t* ipad)
+int qse_mbstoipad4 (const qse_mchar_t* str, qse_ipad4_t* ipad)
 {
-	qse_char_t c;
-	int dots = 0, digits = 0;
-	qse_uint32_t acc = 0, addr = 0;	
-	const qse_char_t* end = str + len;
-
-	do
-	{
-		if (str >= end) 
-		{
-			if (dots < 3 || digits == 0) return -1;
-			addr = (addr << 8) | acc;
-			break;
-		}
-
-		c = *str;	
-
-		if (c >= QSE_T('0') && c <= QSE_T('9'))  
-		{
-			if (digits > 0 && acc == 0) return -1;
-			acc = acc * 10 + (c - QSE_T('0'));
-			if (acc > 255) return -1;
-			digits++;
-		}
-		else if (c == QSE_T('.')) 
-		{
-			if (dots >= 3 || digits == 0) return -1;
-			addr = (addr << 8) | acc;
-			dots++; acc = 0; digits = 0;
-		}
-		else return -1;
-
-		str++;
-	} 
-	while (1);
-
-	if (ipad != QSE_NULL) ipad->value = qse_hton32(addr);
-	return 0;
+	return str_to_ipad4 (1, str, qse_mbslen(str), ipad);
 }
 
-#define __BTOA(b,p,end) \
+int qse_wcstoipad4 (const qse_wchar_t* str, qse_ipad4_t* ipad)
+{
+	return str_to_ipad4 (0, str, qse_wcslen(str), ipad);
+}
+
+int qse_mbsntoipad4 (const qse_mchar_t* str, qse_size_t len, qse_ipad4_t* ipad)
+{
+	return str_to_ipad4 (1, str, len, ipad);
+}
+
+int qse_wcsntoipad4 (const qse_wchar_t* str, qse_size_t len, qse_ipad4_t* ipad)
+{
+	return str_to_ipad4 (0, str, len, ipad);
+}
+
+#define __BTOA(type_t,b,p,end) \
 	do { \
-		qse_char_t* sp = p; \
+		type_t* sp = p; \
 		do {  \
 			if (p >= end) { \
 				if (p == sp) break; \
 				if (p - sp > 1) p[-2] = p[-1]; \
-				p[-1] = (b % 10) + QSE_T('0'); \
+				p[-1] = (b % 10) + '0'; \
 			} \
-			else *p++ = (b % 10) + QSE_T('0'); \
+			else *p++ = (b % 10) + '0'; \
 			b /= 10; \
 		} while (b > 0); \
 		if (p - sp > 1) { \
-			qse_char_t t = sp[0]; \
+			type_t t = sp[0]; \
 			sp[0] = p[-1]; \
 			p[-1] = t; \
 		} \
@@ -170,14 +160,14 @@ int qse_strxtoipad4 (
 #define __ADDDOT(p, end) \
 	do { \
 		if (p >= end) break; \
-		*p++ = QSE_T('.'); \
+		*p++ = '.'; \
 	} while (0)
 
-qse_size_t qse_ipad4tostrx (
-	const qse_ipad4_t* ipad, qse_char_t* buf, qse_size_t size)
+qse_size_t qse_ipad4tombs (
+	const qse_ipad4_t* ipad, qse_mchar_t* buf, qse_size_t size)
 {
 	qse_byte_t b;
-	qse_char_t* p, * end;
+	qse_mchar_t* p, * end;
 	qse_uint32_t ip;
 
 	if (size <= 0) return 0;
@@ -188,23 +178,56 @@ qse_size_t qse_ipad4tostrx (
 	end = buf + size - 1;
 
 #if defined(QSE_ENDIAN_BIG)
-	b = (ip >> 24) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >> 16) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >>  8) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >>  0) & 0xFF; __BTOA (b, p, end);
+	b = (ip >> 24) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 16) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  8) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  0) & 0xFF; __BTOA (qse_mchar_t, b, p, end);
 #elif defined(QSE_ENDIAN_LITTLE)
-	b = (ip >>  0) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >>  8) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >> 16) & 0xFF; __BTOA (b, p, end); __ADDDOT (p, end);
-	b = (ip >> 24) & 0xFF; __BTOA (b, p, end);
+	b = (ip >>  0) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  8) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 16) & 0xFF; __BTOA (qse_mchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 24) & 0xFF; __BTOA (qse_mchar_t, b, p, end);
 #else
 #	error Unknown Endian
 #endif
 
-	*p = QSE_T('\0');
+	*p = QSE_MT('\0');
 	return p - buf;
 }
 
+qse_size_t qse_ipad4towcs (
+	const qse_ipad4_t* ipad, qse_wchar_t* buf, qse_size_t size)
+{
+	qse_byte_t b;
+	qse_wchar_t* p, * end;
+	qse_uint32_t ip;
+
+	if (size <= 0) return 0;
+
+	ip = ipad->value;
+
+	p = buf;
+	end = buf + size - 1;
+
+#if defined(QSE_ENDIAN_BIG)
+	b = (ip >> 24) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 16) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  8) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  0) & 0xFF; __BTOA (qse_wchar_t, b, p, end);
+#elif defined(QSE_ENDIAN_LITTLE)
+	b = (ip >>  0) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >>  8) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 16) & 0xFF; __BTOA (qse_wchar_t, b, p, end); __ADDDOT (p, end);
+	b = (ip >> 24) & 0xFF; __BTOA (qse_wchar_t, b, p, end);
+#else
+#	error Unknown Endian
+#endif
+
+	*p = QSE_WT('\0');
+	return p - buf;
+}
+
+#if 0
 int qse_strtoipad6 (const qse_char_t* src, qse_ipad6_t* ipad)
 {
 #if 0
@@ -549,28 +572,4 @@ qse_size_t qse_ipad6tostrx (
 #undef IP6ADDR_NWORDS
 }
 
-#if 0
-int qse_strtoipad (const qse_char_t* str, qse_ipad_t* ipad)
-{
-	if (qse_strtoipad4 (str, &ipad->u.ip4) <= -1)
-	{
-		if (qse_strtoipad6 (str, &ipad->u.ip6) <= -1) return -1;
-		ipad->type = QSE_IPAD_IP6;
-	}
-	else ipad->type = QSE_IPAD_IP4;
-
-	return 0;
-}
-
-int qse_strxtoipad (const qse_char_t* str, qse_size_t len, qse_ipad_t* ipad)
-{
-	if (qse_strxtoipad4 (str, len, &ipad->u.ip4) <= -1)
-	{
-		if (qse_strxtoipad6 (str, len, &ipad->u.ip6) <= -1) return -1;
-		ipad->type = QSE_IPAD_IP6;
-	}
-	else ipad->type = QSE_IPAD_IP4;
-
-	return 0;
-}
 #endif

@@ -65,30 +65,42 @@ int qse_mbstoipad4 (
 
 int qse_mbsntoipad4 (
 	const qse_mchar_t* mbs,
-	qse_size_t         len
+	qse_size_t         len,
+	qse_ipad4_t*       ipad
 );
 
-int qse_ipad4tombs (
+int qse_wcstoipad4 (
+	const qse_wchar_t* wcs,
+	qse_ipad4_t*       ipad
+);
+
+int qse_wcsntoipad4 (
+	const qse_wchar_t* wcs,
+	qse_size_t         len,
+	qse_ipad4_t*       ipad
+);
+
+qse_size_t qse_ipad4tombs (
 	const qse_ipad4_t* ipad,
 	qse_mchar_t*       mbs,
 	qse_size_t         len
 );
 
-int qse_wcstoipad4 (
-	const qse_wchar_t* wcs,
-	qse_ipad4_t*       ipad
-);
-
-int qse_wcstoipad4 (
-	const qse_wchar_t* wcs,
-	qse_ipad4_t*       ipad
-);
-
-int qse_ipad4towcs (
+qse_size_t qse_ipad4towcs (
 	const qse_ipad4_t* ipad,
 	qse_wchar_t*       wcs,
 	qse_size_t         len
 );
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strtoipad4(ptr,ipad)      qse_mbstoipad4(ptr,ipad)
+#	define qse_strntoipad4(ptr,len,ipad) qse_mbsntoipad4(ptr,len,ipad)
+#	define qse_ipad4tostr(ipad,ptr,len)  qse_ipad4tombs(ipad,ptr,len)
+#else
+#	define qse_strtoipad4(ptr,ipad)      qse_wcstoipad4(ptr,ipad)
+#	define qse_strntoipad4(ptr,len,ipad) qse_wcsntoipad4(ptr,len,ipad)
+#	define qse_ipad4tostr(ipad,ptr,len)  qse_ipad4towcs(ipad,ptr,len)
+#endif
 
 #ifdef __cplusplus
 }
