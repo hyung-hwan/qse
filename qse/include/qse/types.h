@@ -743,6 +743,14 @@ struct qse_cmgr_t
 
 typedef struct qse_cmgr_t qse_cmgr_t;
 
+#if 0
+struct qse_tmgr_t
+{
+	int gettimeoffset
+};
+typedef struct qse_tmgr_t qse_tmgr_t;
+#endif
+
 /**
  * The #qse_foff_t type defines an integer that can represent a file offset.
  * Depending on your system, it's defined to one of #qse_int64_t, #qse_int32_t,

@@ -36,12 +36,12 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
 	fio02$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
-	fs01$(EXEEXT) htb$(EXEEXT) lda$(EXEEXT) main01$(EXEEXT) \
-	main02$(EXEEXT) mbwc01$(EXEEXT) mbwc02$(EXEEXT) oht$(EXEEXT) \
-	path01$(EXEEXT) pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) \
-	rbt$(EXEEXT) sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) \
-	sll$(EXEEXT) slmb01$(EXEEXT) str01$(EXEEXT) time$(EXEEXT) \
-	tre01$(EXEEXT) xma$(EXEEXT)
+	fs01$(EXEEXT) htb$(EXEEXT) ipad01$(EXEEXT) lda$(EXEEXT) \
+	main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
+	mbwc02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
+	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
+	sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
+	str01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) xma$(EXEEXT)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -101,6 +101,10 @@ am_htb_OBJECTS = htb.$(OBJEXT)
 htb_OBJECTS = $(am_htb_OBJECTS)
 htb_LDADD = $(LDADD)
 htb_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_ipad01_OBJECTS = ipad01.$(OBJEXT)
+ipad01_OBJECTS = $(am_ipad01_OBJECTS)
+ipad01_LDADD = $(LDADD)
+ipad01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_lda_OBJECTS = lda.$(OBJEXT)
 lda_OBJECTS = $(am_lda_OBJECTS)
 lda_LDADD = $(LDADD)
@@ -197,23 +201,23 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
-	$(htb_SOURCES) $(lda_SOURCES) $(main01_SOURCES) \
-	$(main02_SOURCES) $(mbwc01_SOURCES) $(mbwc02_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) $(time_SOURCES) \
-	$(tre01_SOURCES) $(xma_SOURCES)
+	$(htb_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
+	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
+	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
-	$(htb_SOURCES) $(lda_SOURCES) $(main01_SOURCES) \
-	$(main02_SOURCES) $(mbwc01_SOURCES) $(mbwc02_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) $(time_SOURCES) \
-	$(tre01_SOURCES) $(xma_SOURCES)
+	$(htb_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
+	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
+	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
+	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) \
+	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -380,6 +384,7 @@ fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
 fs01_SOURCES = fs01.c
 htb_SOURCES = htb.c
+ipad01_SOURCES = ipad01.c
 lda_SOURCES = lda.c
 main01_SOURCES = main01.c
 main02_SOURCES = main02.c
@@ -507,6 +512,9 @@ fs01$(EXEEXT): $(fs01_OBJECTS) $(fs01_DEPENDENCIES)
 htb$(EXEEXT): $(htb_OBJECTS) $(htb_DEPENDENCIES) 
 	@rm -f htb$(EXEEXT)
 	$(LINK) $(htb_OBJECTS) $(htb_LDADD) $(LIBS)
+ipad01$(EXEEXT): $(ipad01_OBJECTS) $(ipad01_DEPENDENCIES) 
+	@rm -f ipad01$(EXEEXT)
+	$(LINK) $(ipad01_OBJECTS) $(ipad01_LDADD) $(LIBS)
 lda$(EXEEXT): $(lda_OBJECTS) $(lda_DEPENDENCIES) 
 	@rm -f lda$(EXEEXT)
 	$(LINK) $(lda_OBJECTS) $(lda_LDADD) $(LIBS)
@@ -584,6 +592,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htb.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipad01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lda.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main02.Po@am__quote@
