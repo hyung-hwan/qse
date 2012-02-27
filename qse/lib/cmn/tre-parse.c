@@ -295,7 +295,7 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 					/* END QSE */
 						len = MIN(endptr - re - 2, 63);
 
-						if (qse_getctypebyxname (re + 2, len, &class) <= -1) status = REG_ECTYPE;
+						if (qse_strntoctype (re + 2, len, &class) <= -1) status = REG_ECTYPE;
 
 						/* Optimize character classes for 8 bit character sets. */
 #if defined(QSE_CHAR_IS_MCHAR)

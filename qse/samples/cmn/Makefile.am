@@ -23,6 +23,7 @@ bin_PROGRAMS = \
 	main02 \
 	mbwc01 \
 	mbwc02 \
+	nwad01 \
 	oht \
 	path01 \
 	pio \
@@ -62,6 +63,7 @@ main01_SOURCES = main01.c
 main02_SOURCES = main02.c
 mbwc01_SOURCES = mbwc01.c
 mbwc02_SOURCES = mbwc02.c
+nwad01_SOURCES = nwad01.c
 oht_SOURCES = oht.c
 path01_SOURCES = path01.c
 pio_SOURCES = pio.c

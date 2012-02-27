@@ -102,6 +102,50 @@ qse_size_t qse_ipad4towcs (
 #	define qse_ipad4tostr(ipad,ptr,len)  qse_ipad4towcs(ipad,ptr,len)
 #endif
 
+int qse_mbstoipad6 (
+	const qse_mchar_t* mbs,
+	qse_ipad6_t*       ipad
+);
+
+int qse_mbsntoipad6 (
+	const qse_mchar_t* mbs,
+	qse_size_t         len,
+	qse_ipad6_t*       ipad
+);
+
+int qse_wcstoipad6 (
+	const qse_wchar_t* wcs,
+	qse_ipad6_t*       ipad
+);
+
+int qse_wcsntoipad6 (
+	const qse_wchar_t* wcs,
+	qse_size_t         len,
+	qse_ipad6_t*       ipad
+);
+
+qse_size_t qse_ipad6tombs (
+	const qse_ipad6_t* ipad,
+	qse_mchar_t*       mbs,
+	qse_size_t         len
+);
+
+qse_size_t qse_ipad6towcs (
+	const qse_ipad6_t* ipad,
+	qse_wchar_t*       wcs,
+	qse_size_t         len
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strtoipad6(ptr,ipad)      qse_mbstoipad6(ptr,ipad)
+#	define qse_strntoipad6(ptr,len,ipad) qse_mbsntoipad6(ptr,len,ipad)
+#	define qse_ipad6tostr(ipad,ptr,len)  qse_ipad6tombs(ipad,ptr,len)
+#else
+#	define qse_strtoipad6(ptr,ipad)      qse_wcstoipad6(ptr,ipad)
+#	define qse_strntoipad6(ptr,len,ipad) qse_wcsntoipad6(ptr,len,ipad)
+#	define qse_ipad6tostr(ipad,ptr,len)  qse_ipad6towcs(ipad,ptr,len)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

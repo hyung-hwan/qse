@@ -188,17 +188,13 @@ qse_wcint_t qse_towctype (
 
 int qse_getwctypebyname (
 	const qse_wchar_t* name,
-	qse_wctype_t*    id
+	qse_wctype_t*      id
 );
 
 int qse_getwctypebyxname (
 	const qse_wchar_t* name,
 	qse_size_t         len,
-	qse_wctype_t*    id
-);
-
-qse_wctype_t qse_getwctype (
-	const qse_wchar_t* name
+	qse_wctype_t*      id
 );
 
 int qse_getmctypebyname (
@@ -209,25 +205,19 @@ int qse_getmctypebyname (
 int qse_getmctypebyxname (
 	const qse_mchar_t* name,
 	qse_size_t         len,
-	qse_mctype_t*    id
+	qse_mctype_t*      id
 );
 
-qse_mctype_t qse_getmctype (
-	const qse_mchar_t* name
-);
-
-#ifdef QSE_CHAR_IS_MCHAR
-#	define qse_isctype(c,type) qse_ismctype(c,type)
-#	define qse_toctype(c,type) qse_ismctype(c,type)
-#	define qse_getctypebyname(name,id) qse_getmctypebyname(name,id)
-#	define qse_getctypebyxname(name,len,id) qse_getmctypebyxname(name,len,id)
-#	define qse_getctype(name) qse_getmctype(name)
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_isctype(c,type)              qse_ismctype(c,type)
+#	define qse_toctype(c,type)              qse_ismctype(c,type)
+#	define qse_strtoctype(name,id)          qse_mbstoctype(name,id)
+#	define qse_strntoctype(name,len,id)     qse_mbsntoctype(name,len,id)
 #else
-#	define qse_isctype(c,type) qse_iswctype(c,type)
-#	define qse_toctype(c,type) qse_towctype(c,type)
-#	define qse_getctypebyname(name,id) qse_getwctypebyname(name,id)
-#	define qse_getctypebyxname(name,len,id) qse_getwctypebyxname(name,len,id)
-#	define qse_getctype(name) qse_getwctype(name)
+#	define qse_isctype(c,type)              qse_iswctype(c,type)
+#	define qse_toctype(c,type)              qse_towctype(c,type)
+#	define qse_strtoctype(name,id)          qse_wcstoctype(name,id)
+#	define qse_strntoctype(name,len,id)     qse_wcsntoctype(name,len,id)
 #endif
 
 #ifdef __cplusplus
