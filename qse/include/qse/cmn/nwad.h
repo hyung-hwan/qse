@@ -25,28 +25,83 @@
 #include <qse/macros.h>
 #include <qse/cmn/ipad.h>
 
+typedef struct qse_nwad_t qse_nwad_t;
+
 struct qse_nwad_t
 {
 	enum
 	{
-		QSE_NWAD_IP4,
-		QSE_NWAD_IP6
+		QSE_NWAD_IN4,
+		QSE_NWAD_IN6
 	} type;
 
 	union
 	{
 		struct
 		{
-			qse_ipad4_t  addr;
 			qse_uint16_t port;
-		} ip4;
+			qse_ipad4_t  addr;
+		} in4;
 
 		struct
 		{
-			qse_ipad6_t  addr;
 			qse_uint16_t port;
-		} ip6;	
+			qse_ipad6_t  addr;
+			qse_uint32_t scope;
+		} in6;	
 	} u;	
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int qse_mbstonwad (
+	const qse_mchar_t* mbs,
+	qse_nwad_t*        nwad
+);
+
+int qse_mbsntonwad (
+	const qse_mchar_t* mbs,
+	qse_size_t         len,
+	qse_nwad_t*        nwad
+);
+
+int qse_wcstonwad (
+	const qse_wchar_t* wcs,
+	qse_nwad_t*        nwad
+);
+
+int qse_wcsntonwad (
+	const qse_wchar_t* wcs,
+	qse_size_t         len,
+	qse_nwad_t*        nwad
+);
+
+qse_size_t qse_nwadtombs (
+	const qse_nwad_t* nwad,
+	qse_mchar_t*      mbs,
+	qse_size_t        len
+);
+
+qse_size_t qse_nwadtowcs (
+	const qse_nwad_t* nwad,
+	qse_wchar_t*      wcs,
+	qse_size_t        len
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strtonwad(ptr,nwad)      qse_mbstonwad(ptr,nwad)
+#	define qse_strntonwad(ptr,len,nwad) qse_mbsntonwad(ptr,len,nwad)
+#	define qse_nwadtostr(nwad,ptr,len)  qse_nwadtombs(nwad,ptr,len)
+#else
+#	define qse_strtonwad(ptr,nwad)      qse_wcstonwad(ptr,nwad)
+#	define qse_strntonwad(ptr,len,nwad) qse_wcsntonwad(ptr,len,nwad)
+#	define qse_nwadtostr(nwad,ptr,len)  qse_nwadtowcs(nwad,ptr,len)
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

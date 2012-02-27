@@ -37,6 +37,7 @@
 #include <qse/cmn/ipad.h>
 #include <qse/cmn/hton.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/fmt.h>
 #include "mem.h"
 
 #if 0
@@ -227,148 +228,20 @@ qse_size_t qse_ipad4towcs (
 	return p - buf;
 }
 
-#if 0
-int qse_strtoipad6 (const qse_char_t* src, qse_ipad6_t* ipad)
+int qse_mbstoipad6 (const qse_mchar_t* src, qse_ipad6_t* ipad)
 {
-#if 0
-	static const qse_char_t xdigits_l[] = QSE_T("0123456789abcdef"),
-		                  xdigits_u[] = QSE_T("0123456789ABCDEF");
-	const qse_char_t* xdigits;
-#endif
-
-	qse_ipad6_t tmp;
-	qse_byte_t* tp, * endp, * colonp;
-	const qse_char_t* curtok;
-	qse_char_t ch;
-	int saw_xdigit;
-	unsigned int val;
-
-	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
-	tp = &tmp.value[0];
-	endp = &tmp.value[QSE_COUNTOF(tmp.value)];
-	colonp = QSE_NULL;
-
-	/* Leading :: requires some special handling. */
-	if (*src == QSE_T(':'))
-	{
-		 if (*++src != QSE_T(':')) return -1;
-	}
-
-	curtok = src;
-	saw_xdigit = 0;
-	val = 0;
-	while ((ch = *src++) != QSE_T('\0')) 
-	{
-	#if 0
-		const char *pch;
-		if ((pch = qse_strchr((xdigits = xdigits_l), ch)) == QSE_NULL)
-			pch = qse_strchr((xdigits = xdigits_u), ch);
-		if (pch != QSE_NULL) 
-		{
-			val <<= 4;
-			val |= (pch - xdigits);
-			if (val > 0xffff) return -1;
-			saw_xdigit = 1;
-			continue;
-		}
-	#endif
-		int v1;
-		if (ch >= QSE_T('0') && ch <= QSE_T('9'))
-			v1 = ch - QSE_T('0');
-		else if (ch >= QSE_T('A') && ch <= QSE_T('F'))
-			v1 = ch - QSE_T('A') + 10;
-		else if (ch >= QSE_T('a') && ch <= QSE_T('f'))
-			v1 = ch - QSE_T('a') + 10;
-		else v1 = -1;
-		if (v1 >= 0)
-		{
-			val <<= 4;
-			val |= v1;
-			if (val > 0xffff) return -1;
-			saw_xdigit = 1;
-			continue;
-		}
-
-		if (ch == QSE_T(':')) 
-		{
-			curtok = src;
-			if (!saw_xdigit) 
-			{
-				if (colonp) return -1;
-				colonp = tp;
-				continue;
-			}
-			else if (*src == QSE_T('\0')) 
-			{
-				/* a colon can't be the last character */
-				return -1;
-			}
-
-			if (tp + QSE_SIZEOF(qse_uint16_t) > endp) return -1;
-			*tp++ = (qse_byte_t) (val >> 8) & 0xff;
-			*tp++ = (qse_byte_t) val & 0xff;
-			saw_xdigit = 0;
-			val = 0;
-			continue;
-		}
-	#if 0
-		if (ch == QSE_T('.') && ((tp + NS_INADDRSZ) <= endp) &&
-		    inet_pton4(curtok, tp) > 0) 
-		{
-			tp += NS_INADDRSZ;
-			saw_xdigit = 0;
-			break;  /* '\0' was seen by inet_pton4(). */
-		}
-	#endif
-		if (ch == QSE_T('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
-		    qse_strtoipad4(curtok, (qse_ipad4_t*)tp) == 0) 
-		{
-			tp += QSE_SIZEOF(qse_ipad4_t);
-			saw_xdigit = 0;
-			break; 
-		}
-
-		return -1;
-	}
-
-	if (saw_xdigit) 
-	{
-		if (tp + QSE_SIZEOF(qse_uint16_t) > endp) return -1;
-		*tp++ = (qse_byte_t) (val >> 8) & 0xff;
-		*tp++ = (qse_byte_t) val & 0xff;
-	}
-	if (colonp != QSE_NULL) 
-	{
-		/*
-		 * Since some memmove()'s erroneously fail to handle
-		 * overlapping regions, we'll do the shift by hand.
-		 */
-		qse_size_t n = tp - colonp;
-		qse_size_t i;
- 
-		for (i = 1; i <= n; i++) 
-		{
-			endp[-i] = colonp[n - i];
-			colonp[n - i] = 0;
-		}
-		tp = endp;
-	}
-
-	if (tp != endp) return -1;
-
-	*ipad = tmp;
-	return 0;
+	return qse_mbsntoipad6 (src, qse_mbslen(src), ipad);
 }
 
-int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
+int qse_mbsntoipad6 (const qse_mchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
 {
 	qse_ipad6_t tmp;
-	qse_byte_t* tp, * endp, * colonp;
-	const qse_char_t* curtok;
-	qse_char_t ch;
+	qse_uint8_t* tp, * endp, * colonp;
+	const qse_mchar_t* curtok;
+	qse_mchar_t ch;
 	int saw_xdigit;
 	unsigned int val;
-	const qse_char_t* src_end;
+	const qse_mchar_t* src_end;
 
 	src_end = src + len;
 
@@ -378,10 +251,10 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 	colonp = QSE_NULL;
 
 	/* Leading :: requires some special handling. */
-	if (src < src_end && *src == QSE_T(':'))
+	if (src < src_end && *src == QSE_MT(':'))
 	{
 		src++;
-		if (src >= src_end || *src != QSE_T(':')) return -1;
+		if (src >= src_end || *src != QSE_MT(':')) return -1;
 	}
 
 	curtok = src;
@@ -394,12 +267,12 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 
 		ch = *src++;
 
-		if (ch >= QSE_T('0') && ch <= QSE_T('9'))
-			v1 = ch - QSE_T('0');
-		else if (ch >= QSE_T('A') && ch <= QSE_T('F'))
-			v1 = ch - QSE_T('A') + 10;
-		else if (ch >= QSE_T('a') && ch <= QSE_T('f'))
-			v1 = ch - QSE_T('a') + 10;
+		if (ch >= QSE_MT('0') && ch <= QSE_MT('9'))
+			v1 = ch - QSE_MT('0');
+		else if (ch >= QSE_MT('A') && ch <= QSE_MT('F'))
+			v1 = ch - QSE_MT('A') + 10;
+		else if (ch >= QSE_MT('a') && ch <= QSE_MT('f'))
+			v1 = ch - QSE_MT('a') + 10;
 		else v1 = -1;
 		if (v1 >= 0)
 		{
@@ -410,7 +283,7 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 			continue;
 		}
 
-		if (ch == QSE_T(':')) 
+		if (ch == QSE_MT(':')) 
 		{
 			curtok = src;
 			if (!saw_xdigit) 
@@ -425,15 +298,15 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 				return -1;
 			}
 
-			*tp++ = (qse_byte_t) (val >> 8) & 0xff;
-			*tp++ = (qse_byte_t) val & 0xff;
+			*tp++ = (qse_uint8_t)(val >> 8) & 0xff;
+			*tp++ = (qse_uint8_t)val & 0xff;
 			saw_xdigit = 0;
 			val = 0;
 			continue;
 		}
 
-		if (ch == QSE_T('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
-		    qse_strxtoipad4(curtok, src_end - curtok, (qse_ipad4_t*)tp) == 0) 
+		if (ch == QSE_MT('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
+		    qse_mbsntoipad4(curtok, src_end - curtok, (qse_ipad4_t*)tp) == 0) 
 		{
 			tp += QSE_SIZEOF(qse_ipad4_t);
 			saw_xdigit = 0;
@@ -446,8 +319,8 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 	if (saw_xdigit) 
 	{
 		if (tp + QSE_SIZEOF(qse_uint16_t) > endp) return -1;
-		*tp++ = (qse_byte_t) (val >> 8) & 0xff;
-		*tp++ = (qse_byte_t) val & 0xff;
+		*tp++ = (qse_uint8_t)(val >> 8) & 0xff;
+		*tp++ = (qse_uint8_t)val & 0xff;
 	}
 	if (colonp != QSE_NULL) 
 	{
@@ -472,8 +345,126 @@ int qse_strxtoipad6 (const qse_char_t* src, qse_size_t len, qse_ipad6_t* ipad)
 	return 0;
 }
 
-qse_size_t qse_ipad6tostrx (
-	const qse_ipad6_t* ipad, qse_char_t* buf, qse_size_t size)
+
+int qse_wcstoipad6 (const qse_wchar_t* src, qse_ipad6_t* ipad)
+{
+	return qse_wcsntoipad6 (src, qse_wcslen(src), ipad);
+}
+
+int qse_wcsntoipad6 (const qse_wchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
+{
+	qse_ipad6_t tmp;
+	qse_uint8_t* tp, * endp, * colonp;
+	const qse_wchar_t* curtok;
+	qse_wchar_t ch;
+	int saw_xdigit;
+	unsigned int val;
+	const qse_wchar_t* src_end;
+
+	src_end = src + len;
+
+	QSE_MEMSET (&tmp, 0, QSE_SIZEOF(tmp));
+	tp = &tmp.value[0];
+	endp = &tmp.value[QSE_COUNTOF(tmp.value)];
+	colonp = QSE_NULL;
+
+	/* Leading :: requires some special handling. */
+	if (src < src_end && *src == QSE_WT(':'))
+	{
+		src++;
+		if (src >= src_end || *src != QSE_WT(':')) return -1;
+	}
+
+	curtok = src;
+	saw_xdigit = 0;
+	val = 0;
+
+	while (src < src_end)
+	{
+		int v1;
+
+		ch = *src++;
+
+		if (ch >= QSE_WT('0') && ch <= QSE_WT('9'))
+			v1 = ch - QSE_WT('0');
+		else if (ch >= QSE_WT('A') && ch <= QSE_WT('F'))
+			v1 = ch - QSE_WT('A') + 10;
+		else if (ch >= QSE_WT('a') && ch <= QSE_WT('f'))
+			v1 = ch - QSE_WT('a') + 10;
+		else v1 = -1;
+		if (v1 >= 0)
+		{
+			val <<= 4;
+			val |= v1;
+			if (val > 0xffff) return -1;
+			saw_xdigit = 1;
+			continue;
+		}
+
+		if (ch == QSE_WT(':')) 
+		{
+			curtok = src;
+			if (!saw_xdigit) 
+			{
+				if (colonp) return -1;
+				colonp = tp;
+				continue;
+			}
+			else if (src >= src_end)
+			{
+				/* a colon can't be the last character */
+				return -1;
+			}
+
+			*tp++ = (qse_uint8_t)(val >> 8) & 0xff;
+			*tp++ = (qse_uint8_t)val & 0xff;
+			saw_xdigit = 0;
+			val = 0;
+			continue;
+		}
+
+		if (ch == QSE_WT('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
+		    qse_wcsntoipad4(curtok, src_end - curtok, (qse_ipad4_t*)tp) == 0) 
+		{
+			tp += QSE_SIZEOF(qse_ipad4_t);
+			saw_xdigit = 0;
+			break; 
+		}
+
+		return -1;
+	}
+
+	if (saw_xdigit) 
+	{
+		if (tp + QSE_SIZEOF(qse_uint16_t) > endp) return -1;
+		*tp++ = (qse_uint8_t)(val >> 8) & 0xff;
+		*tp++ = (qse_uint8_t)val & 0xff;
+	}
+	if (colonp != QSE_NULL) 
+	{
+		/*
+		 * Since some memmove()'s erroneously fail to handle
+		 * overlapping regions, we'll do the shift by hand.
+		 */
+		qse_size_t n = tp - colonp;
+		qse_size_t i;
+ 
+		for (i = 1; i <= n; i++) 
+		{
+			endp[-i] = colonp[n - i];
+			colonp[n - i] = 0;
+		}
+		tp = endp;
+	}
+
+	if (tp != endp) return -1;
+
+	*ipad = tmp;
+	return 0;
+}
+
+qse_size_t qse_ipad6tombs (
+	const qse_ipad6_t* ipad, qse_mchar_t* buf, qse_size_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
@@ -485,7 +476,7 @@ qse_size_t qse_ipad6tostrx (
 
 #define IP6ADDR_NWORDS (QSE_SIZEOF(ipad->value) / QSE_SIZEOF(qse_uint16_t))
 
-	qse_char_t tmp[QSE_COUNTOF(QSE_T("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))], *tp;
+	qse_mchar_t tmp[QSE_COUNTOF(QSE_MT("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))], *tp;
 	struct { int base, len; } best, cur;
 	qse_uint16_t words[IP6ADDR_NWORDS];
 	int i;
@@ -542,12 +533,12 @@ qse_size_t qse_ipad6tostrx (
 		if (best.base != -1 && i >= best.base &&
 		    i < (best.base + best.len)) 
 		{
-			if (i == best.base) *tp++ = QSE_T(':');
+			if (i == best.base) *tp++ = QSE_MT(':');
 			continue;
 		}
 
 		/* Are we following an initial run of 0x00s or any real hex? */
-		if (i != 0) *tp++ = QSE_T(':');
+		if (i != 0) *tp++ = QSE_MT(':');
 
 		/* Is this address an encapsulated IPv4? ipv4-compatible or ipv4-mapped */
 		if (i == 6 && best.base == 0 &&
@@ -555,21 +546,124 @@ qse_size_t qse_ipad6tostrx (
 		{
 			qse_ipad4_t ipad4;
 			QSE_MEMCPY (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
-			tp += qse_ipad4tostrx (&ipad4, tp, QSE_SIZEOF(tmp) - (tp - tmp));
+			tp += qse_ipad4tombs (&ipad4, tp, QSE_COUNTOF(tmp) - (tp - tmp));
 			break;
 		}
 
-		tp += qse_uint16tostr_lower (words[i], tp, QSE_SIZEOF(tmp) - (tp - tmp), 16, QSE_T('\0'));
+		tp += qse_fmtuintmaxtombs (
+			tp, QSE_COUNTOF(tmp) - (tp - tmp), 
+			words[i], 16, 0, QSE_WT('\0'), QSE_NULL);
 	}
 
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && 
-	    (best.base + best.len) == IP6ADDR_NWORDS) *tp++ = QSE_T(':');
-	*tp++ = QSE_T('\0');
+	    (best.base + best.len) == IP6ADDR_NWORDS) *tp++ = QSE_MT(':');
+	*tp++ = QSE_MT('\0');
 
-	return qse_strxcpy (buf, size, tmp);
+	return qse_mbsxcpy (buf, size, tmp);
 
 #undef IP6ADDR_NWORDS
 }
 
-#endif
+qse_size_t qse_ipad6towcs (
+	const qse_ipad6_t* ipad, qse_wchar_t* buf, qse_size_t size)
+{
+	/*
+	 * Note that int32_t and int16_t need only be "at least" large enough
+	 * to contain a value of the specified size.  On some systems, like
+	 * Crays, there is no such thing as an integer variable with 16 bits.
+	 * Keep this in mind if you think this function should have been coded
+	 * to use pointer overlays.  All the world's not a VAX.
+	 */
+
+#define IP6ADDR_NWORDS (QSE_SIZEOF(ipad->value) / QSE_SIZEOF(qse_uint16_t))
+
+	qse_wchar_t tmp[QSE_COUNTOF(QSE_MT("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"))], *tp;
+	struct { int base, len; } best, cur;
+	qse_uint16_t words[IP6ADDR_NWORDS];
+	int i;
+
+	if (size <= 0) return 0;
+
+	/*
+	 * Preprocess:
+	 *	Copy the input (bytewise) array into a wordwise array.
+	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
+	 */
+	QSE_MEMSET (words, 0, QSE_SIZEOF(words));
+	for (i = 0; i < QSE_SIZEOF(ipad->value); i++)
+		words[i / 2] |= (ipad->value[i] << ((1 - (i % 2)) << 3));
+	best.base = -1;
+	cur.base = -1;
+
+	for (i = 0; i < IP6ADDR_NWORDS; i++) 
+	{
+		if (words[i] == 0) 
+		{
+			if (cur.base == -1)
+			{
+				cur.base = i;
+				cur.len = 1;
+			}
+			else
+			{
+				cur.len++;
+			}
+		}
+		else 
+		{
+			if (cur.base != -1) 
+			{
+				if (best.base == -1 || cur.len > best.len) best = cur;
+				cur.base = -1;
+			}
+		}
+	}
+	if (cur.base != -1) 
+	{
+		if (best.base == -1 || cur.len > best.len) best = cur;
+	}
+	if (best.base != -1 && best.len < 2) best.base = -1;
+
+	/*
+	 * Format the result.
+	 */
+	tp = tmp;
+	for (i = 0; i < IP6ADDR_NWORDS; i++) 
+	{
+		/* Are we inside the best run of 0x00's? */
+		if (best.base != -1 && i >= best.base &&
+		    i < (best.base + best.len)) 
+		{
+			if (i == best.base) *tp++ = QSE_MT(':');
+			continue;
+		}
+
+		/* Are we following an initial run of 0x00s or any real hex? */
+		if (i != 0) *tp++ = QSE_MT(':');
+
+		/* Is this address an encapsulated IPv4? ipv4-compatible or ipv4-mapped */
+		if (i == 6 && best.base == 0 &&
+		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) 
+		{
+			qse_ipad4_t ipad4;
+			QSE_MEMCPY (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
+			tp += qse_ipad4towcs (&ipad4, tp, QSE_COUNTOF(tmp) - (tp - tmp));
+			break;
+		}
+
+		tp += qse_fmtuintmaxtowcs (
+			tp, QSE_COUNTOF(tmp) - (tp - tmp), 
+			words[i], 16, 0, QSE_WT('\0'), QSE_NULL);
+	}
+
+	/* Was it a trailing run of 0x00's? */
+	if (best.base != -1 && 
+	    (best.base + best.len) == IP6ADDR_NWORDS) *tp++ = QSE_MT(':');
+	*tp++ = QSE_MT('\0');
+
+	return qse_wcsxcpy (buf, size, tmp);
+
+#undef IP6ADDR_NWORDS
+}
+

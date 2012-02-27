@@ -38,10 +38,11 @@ bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
 	fio02$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
 	fs01$(EXEEXT) htb$(EXEEXT) ipad01$(EXEEXT) lda$(EXEEXT) \
 	main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
-	mbwc02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
-	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
-	sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
-	str01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) xma$(EXEEXT)
+	mbwc02$(EXEEXT) nwad01$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) \
+	pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) \
+	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) \
+	slmb01$(EXEEXT) str01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
+	xma$(EXEEXT)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -125,6 +126,10 @@ am_mbwc02_OBJECTS = mbwc02.$(OBJEXT)
 mbwc02_OBJECTS = $(am_mbwc02_OBJECTS)
 mbwc02_LDADD = $(LDADD)
 mbwc02_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am_nwad01_OBJECTS = nwad01.$(OBJEXT)
+nwad01_OBJECTS = $(am_nwad01_OBJECTS)
+nwad01_LDADD = $(LDADD)
+nwad01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_oht_OBJECTS = oht.$(OBJEXT)
 oht_OBJECTS = $(am_oht_OBJECTS)
 oht_LDADD = $(LDADD)
@@ -203,21 +208,23 @@ SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(htb_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
-	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
-	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
-	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
-	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) \
-	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(mbwc02_SOURCES) $(nwad01_SOURCES) $(oht_SOURCES) \
+	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
+	$(sio03_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
+	$(str01_SOURCES) $(time_SOURCES) $(tre01_SOURCES) \
+	$(xma_SOURCES)
 DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(htb_SOURCES) $(ipad01_SOURCES) $(lda_SOURCES) \
 	$(main01_SOURCES) $(main02_SOURCES) $(mbwc01_SOURCES) \
-	$(mbwc02_SOURCES) $(oht_SOURCES) $(path01_SOURCES) \
-	$(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
-	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
-	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) \
-	$(time_SOURCES) $(tre01_SOURCES) $(xma_SOURCES)
+	$(mbwc02_SOURCES) $(nwad01_SOURCES) $(oht_SOURCES) \
+	$(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) $(rbt_SOURCES) \
+	$(rex01_SOURCES) $(sio01_SOURCES) $(sio02_SOURCES) \
+	$(sio03_SOURCES) $(sll_SOURCES) $(slmb01_SOURCES) \
+	$(str01_SOURCES) $(time_SOURCES) $(tre01_SOURCES) \
+	$(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -390,6 +397,7 @@ main01_SOURCES = main01.c
 main02_SOURCES = main02.c
 mbwc01_SOURCES = mbwc01.c
 mbwc02_SOURCES = mbwc02.c
+nwad01_SOURCES = nwad01.c
 oht_SOURCES = oht.c
 path01_SOURCES = path01.c
 pio_SOURCES = pio.c
@@ -530,6 +538,9 @@ mbwc01$(EXEEXT): $(mbwc01_OBJECTS) $(mbwc01_DEPENDENCIES)
 mbwc02$(EXEEXT): $(mbwc02_OBJECTS) $(mbwc02_DEPENDENCIES) 
 	@rm -f mbwc02$(EXEEXT)
 	$(LINK) $(mbwc02_OBJECTS) $(mbwc02_LDADD) $(LIBS)
+nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) 
+	@rm -f nwad01$(EXEEXT)
+	$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
 oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) 
 	@rm -f oht$(EXEEXT)
 	$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
@@ -598,6 +609,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc02.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@

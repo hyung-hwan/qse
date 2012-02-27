@@ -247,7 +247,7 @@ static struct wtab_t
 	{ QSE_WT("xdigit"), QSE_WCTYPE_XDIGIT }
 };
 
-int qse_getwctypebyname (const qse_wchar_t* name, qse_wctype_t* id)
+int qse_wcstoctype (const qse_wchar_t* name, qse_wctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(wtab) - 1, mid;
 	while (left <= right)
@@ -278,7 +278,7 @@ int qse_getwctypebyname (const qse_wchar_t* name, qse_wctype_t* id)
 	return -1;
 }
 
-int qse_getwctypebyxname (const qse_wchar_t* name, qse_size_t len, qse_wctype_t* id)
+int qse_wcsntoctype (const qse_wchar_t* name, qse_size_t len, qse_wctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(wtab) - 1, mid;
 	while (left <= right)
@@ -309,12 +309,6 @@ int qse_getwctypebyxname (const qse_wchar_t* name, qse_size_t len, qse_wctype_t*
 	return -1;
 }
 
-qse_wctype_t qse_getwctype (const qse_wchar_t* name)
-{
-	qse_wctype_t id;
-	return (qse_getwctypebyname(name,&id) <= -1)? ((qse_wctype_t)0): id;
-}
-
 static struct mtab_t
 {
 	const qse_mchar_t* name;
@@ -335,7 +329,7 @@ static struct mtab_t
 	{ QSE_MT("xdigit"), QSE_MCTYPE_XDIGIT }
 };
 
-int qse_getmctypebyname (const qse_mchar_t* name, qse_mctype_t* id)
+int qse_mbstoctype (const qse_mchar_t* name, qse_mctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(mtab) - 1, mid;
 	while (left <= right)
@@ -366,7 +360,7 @@ int qse_getmctypebyname (const qse_mchar_t* name, qse_mctype_t* id)
 	return -1;
 }
 
-int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
+int qse_mbsntoctype (const qse_mchar_t* name, qse_size_t len, qse_mctype_t* id)
 {
 	int left = 0, right = QSE_COUNTOF(mtab) - 1, mid;
 	while (left <= right)
@@ -395,11 +389,5 @@ int qse_getmctypebyxname (const qse_mchar_t* name, qse_size_t len, qse_mctype_t*
 	}
 
 	return -1;
-}
-
-qse_mctype_t qse_getmctype (const qse_mchar_t* name)
-{
-	qse_mctype_t id;
-	return (qse_getmctypebyname(name,&id) <= -1)? ((qse_mctype_t)0): id;
 }
 
