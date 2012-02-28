@@ -105,7 +105,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		}
 		else
 		{
-			qse_nwadtostr (&nwad, buf, QSE_COUNTOF(buf));
+			qse_nwadtostr (&nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
 			qse_printf (QSE_T("Converted <%s> to <%s>\n"), ipstr[i], buf);
 		}
 	}
@@ -119,7 +119,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		}
 		else
 		{
-			qse_nwadtombs (&nwad, mbsbuf, QSE_COUNTOF(mbsbuf));
+			qse_nwadtombs (&nwad, mbsbuf, QSE_COUNTOF(mbsbuf), QSE_NWADTOMBS_ALL);
 			qse_printf (QSE_T("Converted <%hs> to <%hs>\n"), ipstr_mbs[i], mbsbuf);
 		}
 	}
@@ -133,7 +133,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		}
 		else
 		{
-			qse_nwadtowcs (&nwad, wcsbuf, QSE_COUNTOF(wcsbuf));
+			qse_nwadtowcs (&nwad, wcsbuf, QSE_COUNTOF(wcsbuf), QSE_NWADTOWCS_ALL);
 			qse_printf (QSE_T("Converted <%ls> to <%ls>\n"), ipstr_wcs[i], wcsbuf);
 		}
 	}

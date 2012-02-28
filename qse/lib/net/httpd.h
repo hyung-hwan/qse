@@ -25,26 +25,15 @@
 
 #include <qse/net/httpd.h>
 #include <qse/net/htrd.h>
+#include <qse/cmn/nwad.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+/* REMOVE THESE headers after abstracting away select()/fd_set */
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#ifndef SHUT_RDWR
-#	define SHUT_RDWR 2
-#endif
 
 typedef struct client_array_t client_array_t;
-
-union sockaddr_t
-{
-	struct sockaddr_in in4;
-#ifdef AF_INET6
-	struct sockaddr_in6 in6;
-#endif
-};
-
-typedef union sockaddr_t sockaddr_t;
 
 typedef struct task_queue_node_t task_queue_node_t;
 struct task_queue_node_t
@@ -58,12 +47,14 @@ struct qse_httpd_client_t
 {
 	qse_ubi_t               handle;
 	qse_ubi_t               handle2;
+	qse_nwad_t              local_addr;
+	qse_nwad_t              remote_addr;
+
+	/* ------------------------------ */
 
 	int                     ready;
 	int                     secure;
 	int                     bad;
-	sockaddr_t              local_addr;
-	sockaddr_t              remote_addr;
 	qse_htrd_t*             htrd;
 
 	struct
@@ -84,26 +75,6 @@ struct client_array_t
 	qse_httpd_client_t* data;
 };
 
-typedef struct listener_t listener_t;
-struct listener_t
-{
-	int family;/* AF_INET, AF_INET6 */
-	int secure;
-	
-	qse_char_t* host;
-	union
-	{
-		struct in_addr in4;
-#ifdef AF_INET6
-		struct in6_addr in6;
-#endif
-	} addr;
-
-	int port;
-	int handle;
-	listener_t* next;
-};
-
 struct qse_httpd_t
 {
 	QSE_DEFINE_COMMON_FIELDS (httpd)
@@ -120,10 +91,10 @@ struct qse_httpd_t
 
 	struct
 	{
-		listener_t*     list;
-		fd_set          set;
-		int             max;
-	} listener;
+		qse_httpd_server_t* list;
+		fd_set              set;
+		int                 max;
+	} server;
 };
 
 #ifdef __cplusplus

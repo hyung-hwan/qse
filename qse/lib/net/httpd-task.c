@@ -41,7 +41,7 @@
 static int task_main_disconnect (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	shutdown (client->handle.i, SHUT_RDWR);
+	httpd->cbs->client.shutdown (httpd, client);
 	return 0;
 }
 
@@ -1497,46 +1497,20 @@ qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), qse_htre_getqpathptr(req), qse_htre_getqpat
 		qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), tmp);
 	}
 
-	// TODO: SERVER_HOST, REMOTE_HOST,  
 	{
-		qse_mchar_t port[16];
-		snprintf (port, QSE_COUNTOF(port), 
-			QSE_MT("%d"), (int)ntohs(client->local_addr.in4.sin_port));
-		qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), port);
-
-		snprintf (port, QSE_COUNTOF(port), 
-			QSE_MT("%d"), (int)ntohs(client->remote_addr.in4.sin_port));
-		qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), port);
-	}
-
-#if defined(AF_INET6)
-	if (client->local_addr.in4.sin_family == AF_INET6)
-	{
-		qse_mchar_t ipaddr[128];
-		inet_ntop (client->local_addr.in6.sin6_family, &client->local_addr.in6.sin6_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), ipaddr);
-	}
-	else
-#endif
-	{
-		qse_mchar_t ipaddr[128];
-		inet_ntop (client->local_addr.in4.sin_family, &client->local_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), ipaddr);
-	}
-
-#if defined(AF_INET6)
-	if (client->remote_addr.in4.sin_family == AF_INET6)
-	{
-		qse_mchar_t ipaddr[128];
-		inet_ntop (client->remote_addr.in6.sin6_family, &client->remote_addr.in6.sin6_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), ipaddr);
-	}
-	else
-#endif
-	{
-		qse_mchar_t ipaddr[128];
-		inet_ntop (client->remote_addr.in4.sin_family, &client->remote_addr.in4.sin_addr, ipaddr, QSE_COUNTOF(ipaddr));
-		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), ipaddr);
+		qse_mchar_t addr[128];
+		qse_nwadtombs (&client->local_addr, 
+			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_PORT);
+		qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), addr);
+		qse_nwadtombs (&client->local_addr, 
+			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_ADDR);
+		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), addr);
+		qse_nwadtombs (&client->remote_addr,
+			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_PORT);
+		qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), addr);
+		qse_nwadtombs (&client->remote_addr,
+			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_ADDR);
+		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), addr);
 	}
 
 	{

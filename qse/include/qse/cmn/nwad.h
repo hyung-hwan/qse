@@ -52,6 +52,22 @@ struct qse_nwad_t
 	} u;	
 };
 
+enum qse_nwadtostr_flag_t
+{
+	QSE_NWADTOSTR_ADDR = (1 << 0),
+#define QSE_NWADTOMBS_ADDR QSE_NWADTOSTR_ADDR
+#define QSE_NWADTOWCS_ADDR QSE_NWADTOSTR_ADDR
+
+	QSE_NWADTOSTR_PORT = (1 << 1),
+#define QSE_NWADTOMBS_PORT QSE_NWADTOSTR_PORT
+#define QSE_NWADTOWCS_PORT QSE_NWADTOSTR_PORT
+
+	QSE_NWADTOSTR_ALL  = (QSE_NWADTOSTR_ADDR | QSE_NWADTOSTR_PORT)
+#define QSE_NWADTOMBS_ALL  QSE_NWADTOSTR_ALL
+#define QSE_NWADTOWCS_ALL  QSE_NWADTOSTR_ALL
+};
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,23 +97,25 @@ int qse_wcsntonwad (
 qse_size_t qse_nwadtombs (
 	const qse_nwad_t* nwad,
 	qse_mchar_t*      mbs,
-	qse_size_t        len
+	qse_size_t        len,
+	int               flags
 );
 
 qse_size_t qse_nwadtowcs (
 	const qse_nwad_t* nwad,
 	qse_wchar_t*      wcs,
-	qse_size_t        len
+	qse_size_t        len,
+	int               flags
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strtonwad(ptr,nwad)      qse_mbstonwad(ptr,nwad)
-#	define qse_strntonwad(ptr,len,nwad) qse_mbsntonwad(ptr,len,nwad)
-#	define qse_nwadtostr(nwad,ptr,len)  qse_nwadtombs(nwad,ptr,len)
+#	define qse_strtonwad(ptr,nwad)           qse_mbstonwad(ptr,nwad)
+#	define qse_strntonwad(ptr,len,nwad)      qse_mbsntonwad(ptr,len,nwad)
+#	define qse_nwadtostr(nwad,ptr,len,flags) qse_nwadtombs(nwad,ptr,len,flags)
 #else
-#	define qse_strtonwad(ptr,nwad)      qse_wcstonwad(ptr,nwad)
-#	define qse_strntonwad(ptr,len,nwad) qse_wcsntonwad(ptr,len,nwad)
-#	define qse_nwadtostr(nwad,ptr,len)  qse_nwadtowcs(nwad,ptr,len)
+#	define qse_strtonwad(ptr,nwad)           qse_wcstonwad(ptr,nwad)
+#	define qse_strntonwad(ptr,len,nwad)      qse_wcsntonwad(ptr,len,nwad)
+#	define qse_nwadtostr(nwad,ptr,len,flags) qse_nwadtowcs(nwad,ptr,len,flags)
 #endif
 
 #ifdef __cplusplus
