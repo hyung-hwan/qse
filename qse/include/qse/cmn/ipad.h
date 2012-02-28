@@ -39,21 +39,6 @@ struct qse_ipad6_t
 };
 #include <qse/unpack.h>
 
-struct qse_ipad_t
-{
-	enum
-	{
-		QSE_IPAD_V4,
-		QSE_IPAD_V6
-	} type;
-
-	union
-	{
-		qse_ipad4_t v4;
-		qse_ipad6_t v6;
-	} u;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif

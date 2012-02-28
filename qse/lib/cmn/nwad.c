@@ -397,140 +397,194 @@ done:
 	return 0;
 }
 
-qse_size_t qse_nwadtombs (const qse_nwad_t* nwad, qse_mchar_t* buf, qse_size_t len)
+qse_size_t qse_nwadtombs (
+	const qse_nwad_t* nwad, qse_mchar_t* buf, qse_size_t len, int flags)
 {
 	qse_size_t xlen = 0;
+
+	/* unsupported types will result in an empty string */
 
 	switch (nwad->type)
 	{
 		case QSE_NWAD_IN4:
-			if (xlen + 1 < len)
+			if (flags & QSE_NWADTOMBS_ADDR)
 			{
-				xlen = qse_ipad4tombs (&nwad->u.in4.addr, buf, len);
-				if (xlen + 1 < len && nwad->u.in4.port != 0) 
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_ipad4tombs (&nwad->u.in4.addr, buf, len);
+			}
+
+			if (flags & QSE_NWADTOMBS_PORT)
+			{
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in4.port != 0)
 				{
-					buf[xlen++] = QSE_MT(':');
-					if (xlen + 1 < len)
+					if (flags & QSE_NWADTOMBS_ADDR)
 					{
-						xlen += qse_fmtuintmaxtombs (
-							&buf[xlen], len - xlen, 
-							qse_ntoh16(nwad->u.in4.port),
-							10, 0, QSE_WT('\0'), QSE_NULL);
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_MT(':');
 					}
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtombs (
+						&buf[xlen], len - xlen, 
+						qse_ntoh16(nwad->u.in4.port),
+						10, 0, QSE_MT('\0'), QSE_NULL);
 				}
 			}
 			break;
 
 		case QSE_NWAD_IN6:
-			if (xlen + 1 < len)
+			if (flags & QSE_NWADTOMBS_PORT)
 			{
-				if (nwad->u.in6.port != 0) buf[xlen++] = QSE_MT('[');	
-
-				if (xlen + 1 < len)
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in6.port != 0)
 				{
-					xlen += qse_ipad6tombs (&nwad->u.in6.addr, buf, len);
-					if (xlen + 1 < len && nwad->u.in6.scope != 0)
-					{
-						buf[xlen++] = QSE_MT('%');
-						if (xlen + 1 < len)
-						{
-							xlen += qse_fmtuintmaxtombs (
-								&buf[xlen], len - xlen, 
-								nwad->u.in6.scope, 10, 0, QSE_WT('\0'), QSE_NULL);
-						}
-					}
-	
-					if (xlen + 1 < len && nwad->u.in6.port != 0) 
-					{
-						buf[xlen++] = QSE_MT(']');	
-						if (xlen + 1 < len) 
-						{
-							buf[xlen++] = QSE_MT(':');
-							if (xlen + 1 < len)
-							{
-								xlen += qse_fmtuintmaxtombs (
-									&buf[xlen], len - xlen, 
-									qse_ntoh16(nwad->u.in6.port),
-									10, 0, QSE_WT('\0'), QSE_NULL);
-							}
-						}
-					}
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_MT('[');	
 				}
-
 			}
+
+			if (flags & QSE_NWADTOMBS_ADDR)
+			{
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_ipad6tombs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
+			
+				if (nwad->u.in6.scope != 0)
+				{
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_MT('%');
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtombs (
+						&buf[xlen], len - xlen, 
+						nwad->u.in6.scope, 10, 0, QSE_MT('\0'), QSE_NULL);
+				}
+			}
+
+			if (flags & QSE_NWADTOMBS_PORT)
+			{
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in6.port != 0) 
+				{
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_MT(']');	
+
+					if (flags & QSE_NWADTOMBS_ADDR)
+					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_MT(':');
+					}
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtombs (
+						&buf[xlen], len - xlen, 
+						qse_ntoh16(nwad->u.in6.port),
+						10, 0, QSE_MT('\0'), QSE_NULL);
+				}
+			}
+
 			break;
 
 	}
 
-	if (xlen + 1 < len) buf[xlen] = QSE_MT('\0');
+done:
+	if (xlen < len) buf[xlen] = QSE_MT('\0');
 	return xlen;
 }
 
-qse_size_t qse_nwadtowcs (const qse_nwad_t* nwad, qse_wchar_t* buf, qse_size_t len)
+
+qse_size_t qse_nwadtowcs (
+	const qse_nwad_t* nwad, qse_wchar_t* buf, qse_size_t len, int flags)
 {
 	qse_size_t xlen = 0;
+
+	/* unsupported types will result in an empty string */
 
 	switch (nwad->type)
 	{
 		case QSE_NWAD_IN4:
-			if (xlen + 1 < len)
+			if (flags & QSE_NWADTOWCS_ADDR)
 			{
-				xlen = qse_ipad4towcs (&nwad->u.in4.addr, buf, len);
-				if (xlen + 1 < len && nwad->u.in4.port != 0) 
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_ipad4towcs (&nwad->u.in4.addr, buf, len);
+			}
+
+			if (flags & QSE_NWADTOWCS_PORT)
+			{
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in4.port != 0)
 				{
-					buf[xlen++] = QSE_WT(':');
-					if (xlen + 1 < len)
+					if (flags & QSE_NWADTOMBS_ADDR)
 					{
-						xlen += qse_fmtuintmaxtowcs (
-							&buf[xlen], len - xlen, 
-							qse_ntoh16(nwad->u.in4.port),
-							10, 0, QSE_WT('\0'), QSE_NULL);
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_WT(':');
 					}
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtowcs (
+						&buf[xlen], len - xlen, 
+						qse_ntoh16(nwad->u.in4.port),
+						10, 0, QSE_WT('\0'), QSE_NULL);
 				}
 			}
 			break;
 
 		case QSE_NWAD_IN6:
-			if (xlen + 1 < len)
+			if (flags & QSE_NWADTOWCS_PORT)
 			{
-				if (nwad->u.in6.port != 0) buf[xlen++] = QSE_WT('[');	
-
-				if (xlen + 1 < len)
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in6.port != 0)
 				{
-					xlen += qse_ipad6towcs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
-					if (xlen + 1 < len && nwad->u.in6.scope != 0)
-					{
-						buf[xlen++] = QSE_WT('%');
-						if (xlen + 1 < len)
-						{
-							xlen += qse_fmtuintmaxtowcs (
-								&buf[xlen], len - xlen, 
-								nwad->u.in6.scope, 10, 0, QSE_WT('\0'), QSE_NULL);
-						}
-					}
-
-					if (xlen + 1 < len && nwad->u.in6.port != 0) 
-					{
-						buf[xlen++] = QSE_WT(']');	
-						if (xlen + 1 < len) 
-						{
-							buf[xlen++] = QSE_WT(':');
-							if (xlen + 1 < len)
-							{
-								xlen += qse_fmtuintmaxtowcs (
-									&buf[xlen], len - xlen, 
-									qse_ntoh16(nwad->u.in6.port),
-									10, 0, QSE_WT('\0'), QSE_NULL);
-							}
-						}
-					}
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_WT('[');	
 				}
-
 			}
+
+			if (flags & QSE_NWADTOWCS_ADDR)
+			{
+				if (xlen + 1 >= len) goto done;
+				xlen += qse_ipad6towcs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
+			
+				if (nwad->u.in6.scope != 0)
+				{
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_WT('%');
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtowcs (
+						&buf[xlen], len - xlen, 
+						nwad->u.in6.scope, 10, 0, QSE_WT('\0'), QSE_NULL);
+				}
+			}
+
+			if (flags & QSE_NWADTOWCS_PORT)
+			{
+				if (!(flags & QSE_NWADTOMBS_ADDR) || 
+				    nwad->u.in6.port != 0) 
+				{
+					if (xlen + 1 >= len) goto done;
+					buf[xlen++] = QSE_WT(']');	
+
+					if (flags & QSE_NWADTOMBS_ADDR)
+					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_WT(':');
+					}
+
+					if (xlen + 1 >= len) goto done;
+					xlen += qse_fmtuintmaxtowcs (
+						&buf[xlen], len - xlen, 
+						qse_ntoh16(nwad->u.in6.port),
+						10, 0, QSE_WT('\0'), QSE_NULL);
+				}
+			}
+
 			break;
 
 	}
 
+done:
 	if (xlen < len) buf[xlen] = QSE_WT('\0');
 	return xlen;
 }
+

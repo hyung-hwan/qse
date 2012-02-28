@@ -24,6 +24,7 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 #include <qse/net/htre.h>
+#include <qse/cmn/nwad.h>
 #include <qse/cmn/time.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
@@ -32,17 +33,25 @@ typedef struct qse_httpd_client_t qse_httpd_client_t;
 enum qse_httpd_errnum_t
 {
 	QSE_HTTPD_ENOERR,
+
 	QSE_HTTPD_ENOMEM,
 	QSE_HTTPD_EINVAL,
-	QSE_HTTPD_ENOENT,
 	QSE_HTTPD_EACCES,
-	QSE_HTTPD_EINTERN,
+	QSE_HTTPD_ENOENT,
+	QSE_HTTPD_EEXIST,
+	QSE_HTTPD_EINTR,
+	QSE_HTTPD_EAGAIN,
+
 	QSE_HTTPD_EIOMUX,
-	QSE_HTTPD_ESUBSYS,
-	QSE_HTTPD_ESOCKET,
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
-	QSE_HTTPD_ETASK
+	QSE_HTTPD_ETASK,
+
+	QSE_HTTPD_EINTERN,
+	QSE_HTTPD_ESYSERR,
+	QSE_HTTPD_ENOIMPL,
+
+	QSE_HTTPD_EOTHER
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
@@ -60,9 +69,28 @@ struct qse_httpd_stat_t
 	const qse_mchar_t* mime;
 };
 
+typedef struct qse_httpd_server_t qse_httpd_server_t;
+struct qse_httpd_server_t
+{
+	qse_httpd_server_t* next;
+
+	qse_nwad_t nwad;
+	int        secure;
+
+	/* set by server.open callback */
+	qse_ubi_t  handle;
+};
+
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
+	struct
+	{
+		int (*open) (qse_httpd_t* httpd, qse_httpd_server_t* server);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_server_t* server);
+		int (*accept) (qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client);
+	} server;
+
 	struct
 	{
 		int (*readable) (
@@ -98,16 +126,27 @@ struct qse_httpd_cbs_t
 
 	struct
 	{
+		void (*close) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);
+
+		void (*shutdown) (
+			qse_httpd_t* httpd,
+			qse_httpd_client_t* client);
+
 		/* action */
-		qse_ssize_t (*recv) (qse_httpd_t* httpd, 
+		qse_ssize_t (*recv) (
+			qse_httpd_t* httpd, 
 			qse_httpd_client_t* client,
 			qse_mchar_t* buf, qse_size_t bufsize);
 
-		qse_ssize_t (*send) (qse_httpd_t* httpd,
+		qse_ssize_t (*send) (
+			qse_httpd_t* httpd,
 			qse_httpd_client_t* client,
 			const qse_mchar_t* buf, qse_size_t bufsize);
 
-		qse_ssize_t (*sendfile) (qse_httpd_t* httpd,
+		qse_ssize_t (*sendfile) (
+			qse_httpd_t* httpd,
 			qse_httpd_client_t* client,
 			qse_ubi_t handle, qse_foff_t* offset, qse_size_t count);
 
@@ -229,7 +268,7 @@ void qse_httpd_stop (
 );
 
 
-int qse_httpd_addlistener (
+int qse_httpd_addserver (
 	qse_httpd_t*      httpd,
 	const qse_char_t* uri
 );

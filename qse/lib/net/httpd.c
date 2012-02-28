@@ -29,11 +29,7 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
+#include <qse/cmn/hton.h>
 
 #include <qse/cmn/stdio.h>
 
@@ -50,7 +46,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443
 
-static void free_listener_list (qse_httpd_t* httpd, listener_t* l);
+static void free_server_list (
+	qse_httpd_t* httpd, qse_httpd_server_t* server);
 
 qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -80,7 +77,9 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
-	httpd->listener.max = -1;
+
+/* TODO: abstract away this field */
+	httpd->server.max = -1;
 
 	return 0;
 }
@@ -88,8 +87,8 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
 	/* TODO */
-	free_listener_list (httpd, httpd->listener.list);
-	httpd->listener.list = QSE_NULL;
+	free_server_list (httpd, httpd->server.list);
+	httpd->server.list = QSE_NULL;
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -255,132 +254,150 @@ static qse_htrd_recbs_t htrd_recbs =
 	htrd_handle_request
 };
 
-static void deactivate_listener (qse_httpd_t* httpd, listener_t* l)
+/* --------------------------------------------------- */
+
+static void deactivate_servers (qse_httpd_t* httpd)
 {
-	QSE_ASSERT (l->handle >= 0);
+	qse_httpd_server_t* server;
 
-/* TODO: callback httpd->cbs.listener_deactivated (httpd, l);*/
-/* TODO: suport https... */
-	close (l->handle);
-	l->handle = -1;
-}
-
-static int get_listener_sockaddr (const listener_t* l, sockaddr_t* addr)
-{
-	int addrsize;
-
-	QSE_MEMSET (addr, 0, QSE_SIZEOF(*addr));
-
-	switch (l->family)
+	for (server = httpd->server.list; server; server = server->next)
 	{
-		case AF_INET:
-		{
-			addr->in4.sin_family = l->family;	
-			addr->in4.sin_addr = l->addr.in4;
-			addr->in4.sin_port = htons (l->port);
-			addrsize = QSE_SIZEOF(addr->in4);
-			break;
-		}
-
-#ifdef AF_INET6
-		case AF_INET6:
-		{
-			addr->in6.sin6_family = l->family;	
-			addr->in6.sin6_addr = l->addr.in6;
-			addr->in6.sin6_port = htons (l->port);
-			/* TODO: addr.in6.sin6_scope_id  */
-			addrsize = QSE_SIZEOF(addr->in6);
-			break;
-		}
-#endif
-
-		default:
-		{
-			QSE_ASSERT (!"This should never happen");
-		}
+		httpd->cbs->server.close (httpd, server);
 	}
 
-	return addrsize;
+	FD_ZERO (&httpd->server.set);
+	httpd->server.max = -1;
 }
 
-static int activate_listener (qse_httpd_t* httpd, listener_t* l)
+static int activate_servers (qse_httpd_t* httpd)
 {
-/* TODO: suport https... */
-	int s = -1, flag;
-	sockaddr_t addr;
-	int addrsize;
+	qse_httpd_server_t* server;
 
-	QSE_ASSERT (l->handle <= -1);
+/* TODO: delete these two variables */
+	fd_set server_set;
+	int server_max = -1;
 
-	s = socket (l->family, SOCK_STREAM, IPPROTO_TCP);
-	if (s <= -1) goto oops_esocket;
+	FD_ZERO (&server_set);	
 
-	flag = 1;
-	setsockopt (s, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
+	for (server = httpd->server.list; server; server = server->next)
+	{
+		if (httpd->cbs->server.open (httpd, server) <= -1)
+		{
+		}
 
-	addrsize = get_listener_sockaddr (l, &addr);
+/* TODO: abstract away these 2 lines to a callback ... */
+		FD_SET (server->handle.i, &server_set);
+		if (server->handle.i >= server_max) server_max = server->handle.i;
+	}
 
-	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
-	 * address size for AF_INET. */
-	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
-	if (bind (s, (struct sockaddr*)&addr, addrsize) <= -1) goto oops_esocket;
-	if (listen (s, 10) <= -1) goto oops_esocket;
+/* abstract away these 2 lines also */
+	httpd->server.set = server_set;
+	httpd->server.max = server_max;
+	return 0;
+}
+
+static void free_server_list (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	while (server)
+	{
+		qse_httpd_server_t* next = server->next;
+
+		httpd->cbs->server.close (httpd, server);
+		qse_httpd_freemem (httpd, server);
+
+		server = next;
+	}
+}
+
+static qse_httpd_server_t* parse_server_uri (
+	qse_httpd_t* httpd, const qse_char_t* uri)
+{
+	qse_httpd_server_t* server;
+	qse_uint16_t default_port;
+	qse_cstr_t tmp;
+
+	server = qse_httpd_allocmem (httpd, QSE_SIZEOF(*server));
+	if (server == QSE_NULL) goto oops; /* alloc set error number. */
+
+	QSE_MEMSET (server, 0, QSE_SIZEOF(*server));
+
+	/* check the protocol part */
+	tmp.ptr = uri;
+	while (*uri != QSE_T(':')) 
+	{
+		if (*uri == QSE_T('\0'))
+		{
+			httpd->errnum = QSE_HTTPD_EINVAL;
+			goto oops;
+		}
+		uri++;
+	}
+	tmp.len = uri - tmp.ptr;
+	if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
+	{
+		server->secure = 0;
+		default_port = DEFAULT_PORT;
+	}
+	else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
+	{
+		server->secure = 1;
+		default_port = DEFAULT_SECURE_PORT;
+	}
+	else goto oops;
 	
-	flag = fcntl (s, F_GETFL);
-	if (flag >= 0) fcntl (s, F_SETFL, flag | O_NONBLOCK);
-	fcntl (s, F_SETFD, FD_CLOEXEC);
-
-	l->handle = s;
-	s = -1;
-
-	return 0;
-
-oops_esocket:
-	httpd->errnum = QSE_HTTPD_ESOCKET;
-	if (s >= 0) close (s);
-	return -1;
-}
-
-static void deactivate_listeners (qse_httpd_t* httpd)
-{
-	listener_t* l;
-
-	for (l = httpd->listener.list; l; l = l->next)
+	uri++; /* skip : */ 
+	if (*uri != QSE_T('/')) 
 	{
-		if (l->handle >= 0) deactivate_listener (httpd, l);
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		goto oops;
+	}
+	uri++; /* skip / */
+	if (*uri != QSE_T('/')) 
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		goto oops;
+	}
+	uri++; /* skip / */
+
+	if (qse_strtonwad (uri, &server->nwad) <= -1)
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		goto oops;
 	}
 
-	FD_ZERO (&httpd->listener.set);
-	httpd->listener.max = -1;
-}
-
-static int activate_listeners (qse_httpd_t* httpd)
-{
-	listener_t* l;
-	fd_set listener_set;
-	int listener_max = -1;
-
-	FD_ZERO (&listener_set);	
-	for (l = httpd->listener.list; l; l = l->next)
+	if (server->nwad.type == QSE_NWAD_IN4)
 	{
-		if (l->handle <= -1)
-		{
-			if (activate_listener (httpd, l) <= -1) goto oops;
-/*TODO: callback httpd->cbs.listener_activated (httpd, l);*/
-		}
-
-		FD_SET (l->handle, &listener_set);
-		if (l->handle >= listener_max) listener_max = l->handle;
+		if (server->nwad.u.in4.port == 0) 
+			server->nwad.u.in4.port = qse_hton16(default_port);
+	}
+	else if (server->nwad.type == QSE_NWAD_IN6)
+	{
+		if (server->nwad.u.in6.port == 0) 
+			server->nwad.u.in6.port = qse_hton16(default_port);
 	}
 
-	httpd->listener.set = listener_set;
-	httpd->listener.max = listener_max;
-	return 0;
+	return server;
 
 oops:
-	deactivate_listeners (httpd);
-	return -1;
+	if (server) qse_httpd_freemem (httpd, server);
+	return QSE_NULL;
 }
+
+
+int qse_httpd_addserver (qse_httpd_t* httpd, const qse_char_t* uri)
+{
+	qse_httpd_server_t* server;
+
+	server = parse_server_uri (httpd, uri);
+	if (server == QSE_NULL) return -1;
+
+	server->next = httpd->server.list;
+	httpd->server.list = server;
+	
+	return 0;
+}
+
+/* --------------------------------------------------- */
 
 static void init_client_array (qse_httpd_t* httpd)
 {
@@ -406,7 +423,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Debug: closing socket %d\n"), array->data[fd].ha
 		if (httpd->cbs->client.closed)
 			httpd->cbs->client.closed (httpd, &array->data[fd]);
 		
-		close (array->data[fd].handle.i);
+		httpd->cbs->client.close (httpd, &array->data[fd]);
 		array->size--;
 	}
 }
@@ -480,79 +497,41 @@ static qse_httpd_client_t* insert_into_client_array (
 	return &array->data[fd];
 }
 
-static int accept_client_from_listener (qse_httpd_t* httpd, listener_t* l)
+static int accept_client_from_server (
+	qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	int flag;
-
-#ifdef HAVE_SOCKLEN_T
-	socklen_t addrlen;
-#else
-	int addrlen;
-#endif
 	qse_httpd_client_t clibuf;
 	qse_httpd_client_t* client;
 
 	QSE_MEMSET (&clibuf, 0, QSE_SIZEOF(clibuf));
-	clibuf.secure = l->secure;
 
-	addrlen = QSE_SIZEOF(clibuf.remote_addr);
-	clibuf.handle.i = accept (
-		l->handle, (struct sockaddr*)&clibuf.remote_addr, &addrlen);
-	if (clibuf.handle.i <= -1)
-	{
-		httpd->errnum = QSE_HTTPD_ESOCKET;
-qse_fprintf (QSE_STDERR, QSE_T("Error: accept returned failure\n"));
-		goto oops;
-	}
+	if (httpd->cbs->server.accept (httpd, server, &clibuf) <= -1) return -1;
 
-	/* select() uses a fixed-size array so the file descriptor can not
-	 * exceeded FD_SETSIZE */
-	if (clibuf.handle.i >= FD_SETSIZE)
-	{
-		close (clibuf.handle.i);
-qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
-		/* httpd->errnum = QSE_HTTPD_EOVERFLOW; */
-		goto oops;
-	}
+/* TODO: check maximum number of client. if exceed call client.close */
 
-	addrlen = QSE_SIZEOF(clibuf.local_addr);
-	if (getsockname (clibuf.handle.i, (struct sockaddr*)&clibuf.local_addr, &addrlen) <= -1)
-		get_listener_sockaddr (l, &clibuf.local_addr);
-
-	/* set the nonblock flag in case read() after select() blocks
-	 * for various reasons - data received may be dropped after 
-	 * arrival for wrong checksum, for example. */
-	flag = fcntl (clibuf.handle.i, F_GETFL);
-	if (flag >= 0) fcntl (clibuf.handle.i, F_SETFL, flag | O_NONBLOCK);
-
-	flag = fcntl (clibuf.handle.i, F_GETFD);
-	if (flag >= 0) fcntl (clibuf.handle.i, F_SETFD, flag | FD_CLOEXEC);
-
+	clibuf.secure = server->secure;
 	client = insert_into_client_array (httpd, &clibuf);
-
 	if (client == QSE_NULL)
 	{
-		close (clibuf.handle.i);
-		goto oops;
+		httpd->cbs->client.close (httpd, &clibuf);
+		return -1;
 	}
 
 qse_printf (QSE_T("connection %d accepted\n"), clibuf.handle.i);
-
 	return 0;
-
-oops:
-	return -1;
 }
 
-static void accept_client_from_listeners (qse_httpd_t* httpd, fd_set* r)
+static void accept_client_from_servers (qse_httpd_t* httpd, fd_set* r)
 {
-	listener_t* l;
+	qse_httpd_server_t* server;
 
-	for (l = httpd->listener.list; l; l = l->next)
+	for (server = httpd->server.list; server; server = server->next)
 	{
-		if (FD_ISSET(l->handle, r))
+		/* TODO: abstract this part... */
+		if (FD_ISSET(server->handle.i, r))
 		{
-			accept_client_from_listener (httpd, l);
+			accept_client_from_server (httpd, server);
+
 /* TODO: if (accept_client_from_listener (httpd, l) <= -1)
 httpd->cbs.on_error (httpd, l).... */
 		}
@@ -570,8 +549,8 @@ static int make_fd_set_from_client_array (
 
 	/* qse_http_loop() needs to monitor listner handles
 	 * to handle a new client connection. */
-	max = httpd->listener.max;
-	*r = httpd->listener.set;
+	max = httpd->server.max;
+	*r = httpd->server.set;
 	FD_ZERO (w);
 
 	for (fd = 0; fd < ca->capa; fd++)
@@ -695,22 +674,22 @@ reread:
 	m = httpd->cbs->client.recv (httpd, client, buf, QSE_SIZEOF(buf));
 	if (m <= -1)
 	{
-// TODO: handle errno in the callback... and devise a new return value
-//       to indicate no data at this momemnt (EAGAIN, EWOULDBLOCK)...
-//       EINTR to be hnalded inside callback if needed...
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		if (httpd->errnum == QSE_HTTPD_EAGAIN)
 		{
 			/* nothing to read yet. */
 qse_fprintf (QSE_STDERR, QSE_T("Warning: Nothing to read from a client %d\n"), client->handle.i);
 			return 0; /* return ok */
 		}
-		else if (errno != EINTR)
+		else if (httpd->errnum == QSE_HTTPD_EINTR)
 		{
-			httpd->errnum = QSE_HTTPD_ESOCKET;
+			goto reread;
+		}
+		else
+		{
+			/* TOOD: if (httpd->errnum == QSE_HTTPD_ENOERR) httpd->errnum = QSE_HTTPD_ECALLBACK; */
 qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), client->handle.i);
 			return -1;
 		}
-		goto reread;
 	}
 	else if (m == 0)
 	{
@@ -748,7 +727,7 @@ int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_cbs_t* cbs)
 	httpd->stopreq = 0;
 	httpd->cbs = cbs;
 
-	QSE_ASSERTX (httpd->listener.list != QSE_NULL,
+	QSE_ASSERTX (httpd->server.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()"
 	);	
 
@@ -756,14 +735,14 @@ int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_cbs_t* cbs)
 		"Set httpd callbacks before calling qse_httpd_loop()"
 	);	
 
-	if (httpd->listener.list == QSE_NULL)
+	if (httpd->server.list == QSE_NULL)
 	{
 		/* no listener specified */
 		httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;
 	}
 
-	if (activate_listeners (httpd) <= -1) return -1;
+	if (activate_servers (httpd) <= -1) return -1;
 
 	init_client_array (httpd);
 
@@ -794,7 +773,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: select returned failure\n"));
 		}
 
 		/* check the listener activity */
-		accept_client_from_listeners (httpd, &r);
+		accept_client_from_servers (httpd, &r);
 
 		/* check the client activity */
 		for (fd = 0; fd < httpd->client.array.capa; fd++)
@@ -904,218 +883,11 @@ qse_printf (QSE_T(".....TRIGGER WRITABLE....\n"));
 	}
 
 	fini_client_array (httpd);
-	deactivate_listeners (httpd);
+	deactivate_servers (httpd);
 	return 0;
 }
 
-static void free_listener (qse_httpd_t* httpd, listener_t* l)
-{
-	if (l->host) qse_httpd_freemem (httpd, l->host);
-	if (l->handle >= 0) close (l->handle);
-	qse_httpd_freemem (httpd, l);
-}
-
-static void free_listener_list (qse_httpd_t* httpd, listener_t* l)
-{
-	while (l)
-	{
-		listener_t* cur = l;
-		l = l->next;
-		free_listener (httpd, cur);
-	}
-}
-
-static listener_t* parse_listener_uri (
-	qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	const qse_char_t* p = uri;
-	listener_t* ltmp = QSE_NULL;
-	qse_cstr_t tmp;
-	qse_mchar_t* host;
-	int x;
-
-	ltmp = qse_httpd_allocmem (httpd, QSE_SIZEOF(*ltmp));
-	if (ltmp == QSE_NULL) goto oops; /* alloc set error number. so goto oops */
-
-	QSE_MEMSET (ltmp, 0, QSE_SIZEOF(*ltmp));
-	ltmp->handle = -1;
-
-	/* check the protocol part */
-	tmp.ptr = p;
-	while (*p != QSE_T(':')) 
-	{
-		if (*p == QSE_T('\0')) goto oops_einval;
-		p++;
-	}
-	tmp.len = p - tmp.ptr;
-	if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
-	{
-		ltmp->secure = 0;
-		ltmp->port = DEFAULT_PORT;
-	}
-	else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
-	{
-		ltmp->secure = 1;
-		ltmp->port = DEFAULT_SECURE_PORT;
-	}
-	else goto oops;
-	
-	p++; /* skip : */ 
-	if (*p != QSE_T('/')) goto oops_einval;
-	p++; /* skip / */
-	if (*p != QSE_T('/')) goto oops_einval;
-	p++; /* skip / */
-
-#ifdef AF_INET6
-	if (*p == QSE_T('['))	
-	{
-		/* IPv6 address */
-		p++; /* skip [ */
-
-		for (tmp.ptr = p; *p != QSE_T(']'); p++)
-		{
-			if (*p == QSE_T('\0')) goto oops_einval;
-		}
-
-		tmp.len = p - tmp.ptr;
-		ltmp->family = AF_INET6;
-
-		p++; /* skip ] */
-		if (*p != QSE_T(':') && *p != QSE_T('\0'))  goto oops_einval;
-	}
-	else
-	{
-#endif
-		/* host name or IPv4 address */
-		for (tmp.ptr = p; ; p++)
-		{
-			if (*p == QSE_T(':') || *p == QSE_T('\0')) break;
-		}
-		tmp.len = p - tmp.ptr;
-		ltmp->family = AF_INET;
-#ifdef AF_INET6
-	}
-#endif
-
-	ltmp->host = qse_strxdup (tmp.ptr, tmp.len, httpd->mmgr);
-	if (ltmp->host == QSE_NULL) goto oops_enomem;
-
-#ifdef QSE_CHAR_IS_WCHAR
-	host = qse_wcstombsdup (ltmp->host, httpd->mmgr);
-	if (host == QSE_NULL) goto oops_enomem;
-#else
-	host = ltmp->host;
-#endif
-
-	x = inet_pton (ltmp->family, host, &ltmp->addr);
-#ifdef QSE_CHAR_IS_WCHAR
-	qse_httpd_freemem (httpd, host);
-#endif
-	if (x != 1)
-	{
-		/* TODO: need to support host names??? 
-		if (getaddrinfo... )....
-or CALL a user callback for name resolution? 
-		if (httpd->cbs.resolve_hostname (httpd, ltmp->host) <= -1) must call this with host before freeing it up????
-		 */
-		goto oops_einval;
-	}
-
-	if (*p == QSE_T(':')) 
-	{
-		unsigned int port = 0;
-
-		/* port number */
-		p++;
-
-		for (tmp.ptr = p; QSE_ISDIGIT(*p); p++)
-			port = port * 10 + (*p - QSE_T('0'));
-
-		tmp.len = p - tmp.ptr;
-		if (tmp.len <= 0 ||
-		    tmp.len >= 6 || 
-		    port > QSE_TYPE_MAX(unsigned short)) goto oops_einval;
-		ltmp->port = port;
-	}
-
-	/* skip spaces */
-	while (QSE_ISSPACE(*p)) p++;
-
-	return ltmp;
-
-oops_einval:
-	httpd->errnum = QSE_HTTPD_EINVAL;
-	goto oops;
-
-oops_enomem:
-	httpd->errnum = QSE_HTTPD_ENOMEM;
-	goto oops;
-
-oops:
-	if (ltmp) free_listener (httpd, ltmp);
-	return QSE_NULL;
-}
-
-static int add_listener (qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	listener_t* lsn;
-
-	lsn = parse_listener_uri (httpd, uri);
-	if (lsn == QSE_NULL) return -1;
-
-	lsn->next = httpd->listener.list;
-	httpd->listener.list = lsn;
-/* 
-TODO: mutex protection...
-if in the activated state...
-activate_additional_listeners (httpd, l) 
-recalc httpd->listener.set.
-recalc httpd->listener.max.
-*/
-	return 0;
-}
-
-#if 0
-static int delete_listeners (qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	listener_t* lh, * li, * hl;
-
-	lh = parse_listener_uri (httpd, uri, QSE_NULL);
-	if (lh == QSE_NULL) return -1;
-
-	for (li = lh; li; li = li->next)
-	{
-		for (hl = httpd->listener.list; hl; hl = hl->next)
-		{
-			if (li->secure == hl->secuire &&
-			    li->addr == hl->addr &&
-			    li->port == hl->port)
-			{
-				mark_delete	
-			}	
-		}
-	}
-}
-#endif
-
-int qse_httpd_addlistener (qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	return add_listener (httpd, uri);
-}
-
-#if 0
-int qse_httpd_dellistener (qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	return delete_listeners (httpd, uri);
-}
-
-void qse_httpd_clearlisteners (qse_httpd_t* httpd)
-{
-	deactivate_listeners (httpd);
-	free_listener_list (httpd, httpd->listener.list);
-	httpd->listener.list = QSE_NULL;
-}
-#endif
+/* --------------------------------------------------- */
 
 qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 

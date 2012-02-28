@@ -17,6 +17,8 @@
 #	include <errno.h>
 #	include <fcntl.h>
 #	include <sys/stat.h>
+#	include <sys/socket.h>
+#	include <netinet/in.h>
 #endif
 
 #include <openssl/ssl.h>
@@ -125,6 +127,37 @@ static qse_ssize_t xsendfile_ssl (
 
 	return n;
 }
+/* ------------------------------------------------------------------- */
+static qse_httpd_errnum_t syserr_to_errnum (int e)
+{
+	switch (e)
+	{
+		case ENOMEM:
+			return QSE_HTTPD_ENOMEM;
+
+		case EINVAL:
+			return QSE_HTTPD_EINVAL;
+
+		case EACCES:
+			return QSE_HTTPD_EACCES;
+
+		case ENOENT:
+			return QSE_HTTPD_ENOENT;
+
+		case EEXIST:
+			return QSE_HTTPD_EEXIST;
+	
+		case EINTR:
+			return QSE_HTTPD_EINTR;
+
+		case EAGAIN:
+		/*case EWOULDBLOCK:*/
+			return QSE_HTTPD_EAGAIN;
+
+		default:
+			return QSE_HTTPD_ESYSERR;
+	}
+}
 
 /* ------------------------------------------------------------------- */
 typedef struct httpd_xtn_t httpd_xtn_t;
@@ -190,6 +223,190 @@ static void fini_xtn_ssl (httpd_xtn_t* xtn)
 
 /* ------------------------------------------------------------------- */
 
+static int sockaddr_to_nwad (
+	const struct sockaddr_storage* addr, qse_nwad_t* nwad)
+{
+	int addrsize = -1;
+
+	switch (addr->ss_family)
+	{
+		case AF_INET:
+		{
+			struct sockaddr_in* in; 
+			in = (struct sockaddr_in*)addr;
+			addrsize = QSE_SIZEOF(*in);
+
+			memset (nwad, 0, QSE_SIZEOF(*nwad));
+			nwad->type = QSE_NWAD_IN4;
+			nwad->u.in4.addr.value = in->sin_addr.s_addr;
+			nwad->u.in4.port = in->sin_port;
+			break;
+		}
+
+#if defined(AF_INET6)
+		case AF_INET6:
+		{
+			struct sockaddr_in6* in; 
+			in = (struct sockaddr_in6*)addr;
+			addrsize = QSE_SIZEOF(*in);
+
+			memset (nwad, 0, QSE_SIZEOF(*nwad));
+			nwad->type = QSE_NWAD_IN6;
+			memcpy (&nwad->u.in6.addr, &in->sin6_addr, QSE_SIZEOF(nwad->u.in6.addr));
+			nwad->u.in6.scope = in->sin6_scope_id;
+			nwad->u.in6.port = in->sin6_port;
+			break;
+		}
+#endif
+	}
+
+	return addrsize;
+}
+
+static int nwad_to_sockaddr (
+	const qse_nwad_t* nwad, struct sockaddr_storage* addr)
+{
+	int addrsize = -1;
+
+	switch (nwad->type)
+	{
+		case QSE_NWAD_IN4:
+		{
+			struct sockaddr_in* in; 
+
+			in = (struct sockaddr_in*)addr;
+			addrsize = QSE_SIZEOF(*in);
+			memset (in, 0, addrsize);
+
+			in->sin_family = AF_INET;
+			in->sin_addr.s_addr = nwad->u.in4.addr.value;
+			in->sin_port = nwad->u.in4.port;
+			break;
+		}
+
+		case QSE_NWAD_IN6:
+		{
+#if defined(AF_INET6)
+			struct sockaddr_in6* in; 
+
+			in = (struct sockaddr_in6*)addr;
+			addrsize = QSE_SIZEOF(*in);
+			memset (in, 0, addrsize);
+
+			in->sin6_family = AF_INET6;
+			memcpy (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
+			in->sin6_scope_id = nwad->u.in6.scope;
+			in->sin6_port = nwad->u.in6.port;
+#endif
+			break;
+		}
+	}
+
+	return addrsize;
+}
+
+static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	int fd = -1, flag;
+/* TODO: if AF_INET6 is not defined sockaddr_storage is not available...
+ * create your own union or somehting similar... */
+	struct sockaddr_storage addr;
+	int addrsize;
+
+	addrsize = nwad_to_sockaddr (&server->nwad, &addr);
+	if (addrsize <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	}
+
+	fd = socket (addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	if (fd <= -1) goto oops;
+
+	flag = 1;
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
+
+	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
+	 * address size for AF_INET. */
+	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
+	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1) goto oops;
+	if (listen (fd, 10) <= -1) goto oops;
+
+	flag = fcntl (fd, F_GETFL);
+	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
+
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+
+	server->handle.i = fd;
+	return 0;
+
+oops:
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	if (fd >= 0) close (fd);
+	return -1;
+}
+
+static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	close (server->handle.i);
+}
+
+static int server_accept (
+	qse_httpd_t* httpd, 
+	qse_httpd_server_t* server, qse_httpd_client_t* client)
+{
+	struct sockaddr_storage addr;
+
+#ifdef HAVE_SOCKLEN_T
+	socklen_t addrlen;
+#else
+	int addrlen;
+#endif
+	int fd, flag;
+
+	addrlen = QSE_SIZEOF(addr);
+	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
+	if (fd <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum (errno));
+		return -1;
+	}
+
+	if (fd >= FD_SETSIZE)
+	{
+qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
+		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
+		close (fd);
+		return -1;
+	}
+
+	flag = fcntl (fd, F_GETFL);
+	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
+
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+
+	if (sockaddr_to_nwad (&addr, &client->remote_addr) <= -1)
+	{
+/* TODO: logging */
+          client->remote_addr = server->nwad;
+	}
+
+	addrlen = QSE_SIZEOF(addr);
+	if (getsockname (fd, (struct sockaddr*)&addr, &addrlen) <= -1 ||
+	    sockaddr_to_nwad (&addr, &client->local_addr) <= -1)
+	{
+/* TODO: logging */
+          client->local_addr = server->nwad;
+	}
+		
+	client->handle.i = fd;
+	return 0;
+}
+
+/* ------------------------------------------------------------------- */
+
 static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 {
 	fd_set r;
@@ -245,9 +462,7 @@ static int file_stat (
 /* TODO: lstat? or stat? */
 	if (stat (path, &st) <= -1)
      {
-		qse_httpd_seterrnum (httpd, 
-			(errno == ENOENT? QSE_HTTPD_ENOENT:
-			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
      }    
 
@@ -293,9 +508,7 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 	fd = open (path, flags, 0);
 	if (fd <= -1) 
 	{
-		qse_httpd_seterrnum (httpd, 
-			(errno == ENOENT? QSE_HTTPD_ENOENT:
-			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
 	}
 
@@ -323,9 +536,7 @@ qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 	fd = open (path, flags, 0644);
 	if (fd <= -1) 
 	{
-		qse_httpd_seterrnum (httpd, 
-			(errno == ENOENT? QSE_HTTPD_ENOENT:
-			 errno == EACCES? QSE_HTTPD_EACCES: QSE_HTTPD_ESUBSYS));
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
 	}
 
@@ -354,17 +565,39 @@ static qse_ssize_t file_write (
 }
 
 /* ------------------------------------------------------------------- */
+static void client_close (
+	qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	close (client->handle.i);
+}
+
+static void client_shutdown (
+	qse_httpd_t* httpd, qse_httpd_client_t* client)
+{
+	shutdown (client->handle.i, SHUT_RDWR);
+}
+	
 static qse_ssize_t client_recv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
 	if (client->secure)
 	{
-		return SSL_read (client->handle2.ptr, buf, bufsize);
+		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
+		if (ret <= -1)
+		{
+			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_READ) 
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+		return ret;
 	}
 	else
 	{
-		return read (client->handle.i, buf, bufsize);
+		ssize_t ret = read (client->handle.i, buf, bufsize);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return ret;
 	}
 }
 
@@ -374,11 +607,21 @@ static qse_ssize_t client_send (
 {
 	if (client->secure)
 	{
-		return SSL_write (client->handle2.ptr, buf, bufsize);
+		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
+		if (ret <= -1)
+		{
+			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_WRITE) 
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
+			else
+				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
+		}
+		return ret;
 	}
 	else
 	{
-		return write (client->handle.i, buf, bufsize);
+		ssize_t ret = write (client->handle.i, buf, bufsize);
+		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return ret;
 	}
 }
 
@@ -665,6 +908,9 @@ int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
 
 static qse_httpd_cbs_t httpd_cbs =
 {
+	/* server */
+	{ server_open, server_close, server_accept },
+
 	/* multiplexer */
 	{ mux_readable, mux_writable },
 
@@ -679,7 +925,9 @@ static qse_httpd_cbs_t httpd_cbs =
 	},
 
 	/* client connection */
-	{ client_recv, 
+	{ client_close,
+	  client_shutdown, 
+	  client_recv, 
 	  client_send, 
 	  client_sendfile,
 	  client_accepted, 
@@ -730,7 +978,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_addlistener (httpd, argv[i]) <= -1)
+		if (qse_httpd_addserver (httpd, argv[i]) <= -1)
 		{
 			qse_fprintf (QSE_STDERR, 	
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
