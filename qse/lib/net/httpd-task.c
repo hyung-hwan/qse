@@ -48,7 +48,7 @@ static int task_main_disconnect (
 qse_httpd_task_t* qse_httpd_entaskdisconnect (
 	qse_httpd_t* httpd, 
 	qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred)
+	qse_httpd_task_t* pred)
 {
 	qse_httpd_task_t task;
 	
@@ -86,7 +86,7 @@ static int task_main_statictext (
 qse_httpd_task_t* qse_httpd_entaskstatictext (
      qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, 
+	qse_httpd_task_t* pred, 
 	const qse_mchar_t* text)
 {
 	qse_httpd_task_t task;
@@ -144,7 +144,7 @@ static int task_main_text (
 qse_httpd_task_t* qse_httpd_entasktext (
      qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, 
+	qse_httpd_task_t* pred, 
 	const qse_mchar_t* text)
 {
 	qse_httpd_task_t task;
@@ -217,7 +217,7 @@ static int task_main_format (
 qse_httpd_task_t* qse_httpd_entaskformat (
      qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	const qse_mchar_t* fmt, ...)
 {
 	qse_httpd_task_t task;
@@ -315,7 +315,7 @@ qse_printf (QSE_T("SEND: [%.*hs]\n"), (int)l, buf);
 
 static qse_httpd_task_t* entask_error (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, int code, 
+	qse_httpd_task_t* pred, int code, 
 	const qse_http_version_t* version, int keepalive)
 {
 	const qse_mchar_t* smsg;
@@ -380,7 +380,7 @@ static qse_httpd_task_t* entask_error (
 	}
 
 	return qse_httpd_entaskformat (
-		httpd, client, task,
+		httpd, client, pred,
 		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"), 
 		version->major, version->minor, code, smsg,
 		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
@@ -390,21 +390,21 @@ static qse_httpd_task_t* entask_error (
 
 qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, int code, qse_htre_t* req)
+	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
 	return entask_error (
-		httpd, client, task, code,
+		httpd, client, pred, code,
 		qse_htre_getversion(req), req->attr.keepalive);
 }
 
 /*------------------------------------------------------------------------*/
 qse_httpd_task_t* qse_httpd_entaskcontinue (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, qse_htre_t* req)
+	qse_httpd_task_t* pred, qse_htre_t* req)
 {
 	const qse_http_version_t* version = qse_htre_getversion(req);
 	return qse_httpd_entaskformat (
-		httpd, client, task,
+		httpd, client, pred,
 		QSE_MT("HTTP/%d.%d 100 Continue\r\n\r\n"),
 		version->major, version->minor);
 }
@@ -413,7 +413,7 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
 
 qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* task, const qse_mchar_t* realm, qse_htre_t* req)
+	qse_httpd_task_t* pred, const qse_mchar_t* realm, qse_htre_t* req)
 {
 	const qse_http_version_t* version;
 	const qse_mchar_t* lmsg;
@@ -422,7 +422,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	lmsg = QSE_MT("<html><head><title>Unauthorized</title></head><body><b>UNAUTHORIZED<b></body></html>");
 
 	return qse_httpd_entaskformat (
-		httpd, client, task,
+		httpd, client, pred,
 		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
 		version->major, version->minor, 
 		(req->attr.keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
@@ -764,7 +764,7 @@ send_dirlist:
 qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	qse_ubi_t handle, int chunked)
 {
 	qse_httpd_task_t task;
@@ -888,7 +888,7 @@ static int task_main_path (
 qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	const qse_mchar_t* name,
 	qse_htre_t* req)
 {
@@ -996,7 +996,7 @@ static int task_main_fseg (
 
 static qse_httpd_task_t* entask_file_segment (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	qse_ubi_t handle, qse_foff_t offset, qse_foff_t size)
 {
 	qse_httpd_task_t task;
@@ -1179,7 +1179,7 @@ no_file_send:
 qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client, 
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t* pred,
 	const qse_mchar_t* path,
 	qse_htre_t* req)
 {
@@ -1896,6 +1896,7 @@ static int task_main_cgi_4 (
 	
 	QSE_ASSERT (cgi->pio_inited);
 
+qse_printf (QSE_T("task_main_cgi_4 trigger_mask = %d\n"), task->trigger_mask);
 	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
 	{
 		cgi_forward_content (httpd, task, 0);
@@ -2069,6 +2070,7 @@ qse_printf (QSE_T("[cgi-3 send failure....\n"));
 		cgi->res_left -= n;
 		if (cgi->res_left <= 0) 
 		{
+qse_printf (QSE_T("[switching to cgi-4....\n"));
 			task->main = task_main_cgi_4;
 			/* don't chain-call task_main_cgi_4 since it has another send
 			 * and it has already been sent here. so the writability must
@@ -2317,7 +2319,7 @@ oops:
 
 static QSE_INLINE qse_httpd_task_t* entask_cgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, const qse_mchar_t* path,
+	qse_httpd_task_t* pred, const qse_mchar_t* path,
 	qse_htre_t* req, int nph)
 {
 	qse_httpd_task_t task;
@@ -2341,14 +2343,14 @@ static QSE_INLINE qse_httpd_task_t* entask_cgi (
 
 qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
+	qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
 {
 	return entask_cgi (httpd, client, pred, path, req, 0);
 }
 
 qse_httpd_task_t* qse_httpd_entasknph (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	const qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
+	qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
 {
 	return entask_cgi (httpd, client, pred, path, req, 1);
 }

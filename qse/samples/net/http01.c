@@ -19,15 +19,12 @@
 #	include <sys/stat.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+#	include <sys/epoll.h>
 #endif
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
-
-
-// TODO: remove this and export structured needed like qse_httpd_client_t
-#include "../../lib/net/httpd.h"
 
 /* ------------------------------------------------------------------- */
 
@@ -373,6 +370,7 @@ static int server_accept (
 		return -1;
 	}
 
+#if 0
 	if (fd >= FD_SETSIZE)
 	{
 qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
@@ -380,6 +378,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		close (fd);
 		return -1;
 	}
+#endif
 
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
@@ -406,6 +405,161 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 }
 
 /* ------------------------------------------------------------------- */
+
+struct mux_ev_t
+{
+	qse_ubi_t handle;
+	int reqmask;
+	qse_httpd_muxcb_t cbfun;
+	void* cbarg;
+	struct mux_ee_t* next;
+};
+
+struct mux_t
+{
+	int fd;
+
+	struct
+	{
+		struct epoll_event* ptr;
+		qse_size_t len;	
+		qse_size_t capa;
+	} ee;
+};
+
+static void* mux_open (qse_httpd_t* httpd)
+{
+	struct mux_t* mux;
+
+	mux = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mux));
+	if (mux == QSE_NULL) return QSE_NULL;
+
+	memset (mux, 0, QSE_SIZEOF(*mux));
+
+	mux->fd = epoll_create (100);
+	if (mux->fd <= -1) 
+	{
+		qse_httpd_freemem (httpd, mux);
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return QSE_NULL;
+	}
+
+	return mux;
+}
+
+static void mux_close (qse_httpd_t* httpd, void* vmux)
+{
+	struct mux_t* mux = (struct mux_t*)vmux;
+	if (mux->ee.ptr) qse_httpd_freemem (httpd, mux->ee.ptr);
+	close (mux->fd);
+	qse_httpd_freemem (httpd, mux);
+}
+
+static int mux_addhnd (
+	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle, 
+	int mask, qse_httpd_muxcb_t cbfun, void* cbarg)
+{
+	struct mux_t* mux = (struct mux_t*)vmux;
+	struct epoll_event ev;
+	struct mux_ev_t* mev;
+
+	ev.events = 0;
+	if (mask & QSE_HTTPD_MUX_READ) ev.events |= EPOLLIN;
+	if (mask & QSE_HTTPD_MUX_WRITE) ev.events |= EPOLLOUT;
+
+	if (ev.events == 0)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+		return -1;
+	}
+
+	mev = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mev));
+	if (mev == QSE_NULL) return -1;
+
+	if (mux->ee.len >= mux->ee.capa)
+	{
+		struct epoll_event* tmp;
+
+		tmp = qse_httpd_reallocmem (
+			httpd, mux->ee.ptr, 
+			QSE_SIZEOF(*mux->ee.ptr) * (mux->ee.capa + 1) * 2);
+		if (tmp == QSE_NULL)
+		{
+			qse_httpd_freemem (httpd, mev);
+			return -1;
+		}
+
+		mux->ee.ptr = tmp;
+		mux->ee.capa = (mux->ee.capa + 1) * 2;
+	}
+
+	mev->handle = handle;
+	mev->reqmask = mask;
+	mev->cbfun = cbfun;
+	mev->cbarg = cbarg;
+
+	ev.data.ptr = mev;
+
+	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, handle.i, &ev) <= -1)
+	{
+		/* don't rollback ee.ptr */
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		qse_httpd_freemem (httpd, mev);
+		return -1;
+	}
+
+	mux->ee.len++;
+	return 0;
+}
+
+static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
+{
+	struct mux_t* mux = (struct mux_t*)vmux;
+
+	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, handle.i, QSE_NULL) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+
+	mux->ee.len--;
+	return 0;
+}
+
+static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
+{
+	struct mux_t* mux = (struct mux_t*)vmux;
+	struct mux_ev_t* mev;
+	int mask, nfds, i;
+
+	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
+	if (nfds <= -1)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+
+	for (i = 0; i < nfds; i++)
+	{
+		mev = mux->ee.ptr[i].data.ptr;
+
+		mask = 0;
+
+		if (mux->ee.ptr[i].events & EPOLLIN) mask |= QSE_HTTPD_MUX_READ;
+		if (mux->ee.ptr[i].events & EPOLLOUT) mask |= QSE_HTTPD_MUX_WRITE;
+
+		if (mux->ee.ptr[i].events & EPOLLHUP) 
+		{
+			if (mev->reqmask & QSE_HTTPD_MUX_READ) mask |= QSE_HTTPD_MUX_READ;
+			if (mev->reqmask & QSE_HTTPD_MUX_WRITE) mask |= QSE_HTTPD_MUX_WRITE;
+		}
+
+		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);
+
+//if (cbfun fails and the client is deleted???) other pending events should also be dropped???
+	}
+	return 0;
+}
 
 static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 {
@@ -574,7 +728,11 @@ static void client_close (
 static void client_shutdown (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
+#if defined(SHUT_RDWR)
 	shutdown (client->handle.i, SHUT_RDWR);
+#else
+	shutdown (client->handle.i, 2);
+#endif
 }
 	
 static qse_ssize_t client_recv (
@@ -912,7 +1070,15 @@ static qse_httpd_cbs_t httpd_cbs =
 	{ server_open, server_close, server_accept },
 
 	/* multiplexer */
-	{ mux_readable, mux_writable },
+	{ mux_open,
+	  mux_close,
+	  mux_addhnd,
+	  mux_delhnd,
+	  mux_poll,
+	
+	  mux_readable,
+	  mux_writable 
+	},
 
 	/* file operation */
 	{ file_executable,
@@ -991,7 +1157,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loop (httpd, &httpd_cbs);
+	ret = qse_httpd_loop (httpd, &httpd_cbs, 10000);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);
