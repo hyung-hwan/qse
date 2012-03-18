@@ -24,56 +24,6 @@
 /* private header file for httpd */
 
 #include <qse/net/httpd.h>
-#include <qse/net/htrd.h>
-#include <qse/cmn/nwad.h>
-
-/* REMOVE THESE headers after abstracting away select()/fd_set */
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-
-typedef struct client_array_t client_array_t;
-
-typedef struct task_queue_node_t task_queue_node_t;
-struct task_queue_node_t
-{
-	task_queue_node_t* next;
-	task_queue_node_t* prev;
-	qse_httpd_task_t   task;
-};
-
-struct qse_httpd_client_t
-{
-	qse_ubi_t               handle;
-	qse_ubi_t               handle2;
-	qse_nwad_t              local_addr;
-	qse_nwad_t              remote_addr;
-
-	/* ------------------------------ */
-
-	int                     ready;
-	int                     secure;
-	int                     bad;
-	qse_htrd_t*             htrd;
-
-	struct
-	{
-		struct
-		{
-			int count;
-			task_queue_node_t* head;
-			task_queue_node_t* tail;
-		} queue;
-	} task;
-};
-
-struct client_array_t
-{
-	int                 capa;
-	int                 size;
-	qse_httpd_client_t* data;
-};
 
 struct qse_httpd_t
 {
@@ -86,15 +36,29 @@ struct qse_httpd_t
 
 	struct
 	{
-		client_array_t array;
+		struct
+		{
+			qse_httpd_client_t* head;
+			qse_httpd_client_t* tail;
+		} list;
+
+		struct
+		{
+			qse_httpd_client_t* head;
+			qse_httpd_client_t* tail;
+		} tasked;
+
+		qse_httpd_client_t* bad;
 	} client;
 
 	struct
 	{
 		qse_httpd_server_t* list;
-		fd_set              set;
-		int                 max;
+		qse_size_t          navail;
+		qse_size_t          nactive;
 	} server;
+
+	void* mux;
 };
 
 #ifdef __cplusplus
