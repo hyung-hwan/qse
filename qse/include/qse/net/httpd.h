@@ -220,7 +220,17 @@ enum qse_httpd_task_trigger_mask_t
 	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 3),
 	QSE_HTTPD_TASK_TRIGGER_RELAYABLE = (1 << 4),
 	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 5)
+
 };
+
+typedef struct qse_httpd_task_trigger_t qse_httpd_task_trigger_t;
+struct qse_httpd_task_trigger_t
+{
+	int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
+	qse_ubi_t handle;
+};
+
+#define QSE_HTTPD_TASK_TRIGGER_MAX 3
 
 struct qse_httpd_task_t
 {
@@ -229,22 +239,11 @@ struct qse_httpd_task_t
 	/* you must not call another entask functions from within 
 	 * an initailizer. you can call entask functions from within 
 	 * a finalizer and a main function. */
-	qse_httpd_task_init_t init;
-	qse_httpd_task_fini_t fini;
-	qse_httpd_task_main_t main;
-
-	int                   trigger_mask;
-	qse_ubi_t             trigger[3];
-
-#if 0
-	struct
-	{
-		int       mask; /* QSE_HTTPD_TASK_TRIGGER_READ | QSE_HTTPD_TASK_TRIGGER_WRITE */
-		qse_ubi_t handle;
-	} trigger[3];
-#endif
-
-	void*                 ctx;
+	qse_httpd_task_init_t    init;
+	qse_httpd_task_fini_t    fini;
+	qse_httpd_task_main_t    main;
+	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
+	void*                    ctx;
 
 	/* == PRIVATE  == */
 	qse_httpd_task_t*     prev;
@@ -256,23 +255,25 @@ struct qse_httpd_client_t
 {
 	/* == PUBLIC  == */
 
-	qse_ubi_t               handle;
-	qse_ubi_t               handle2;
-	qse_nwad_t              local_addr;
-	qse_nwad_t              remote_addr;
+	qse_ubi_t                handle;
+	qse_ubi_t                handle2;
+	qse_nwad_t               local_addr;
+	qse_nwad_t               remote_addr;
 
 	/* == PRIVATE == */
-	qse_htrd_t*             htrd;
-	int                     secure;
-	int                     status;
+	qse_htrd_t*              htrd;
+	int                      secure;
+	int                      status;
+	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
+	qse_ntime_t              last_active;
 
-	qse_httpd_client_t*     prev;
-	qse_httpd_client_t*     next;
+	qse_httpd_client_t*      prev;
+	qse_httpd_client_t*      next;
+ 
+	qse_httpd_client_t*      bad_next;
 
-	qse_httpd_client_t*     bad_next;
-
-	qse_httpd_client_t*     prev_tasked;
-	qse_httpd_client_t*     next_tasked;
+	qse_httpd_client_t*      prev_tasked;
+	qse_httpd_client_t*      next_tasked;
 
 	struct
 	{
