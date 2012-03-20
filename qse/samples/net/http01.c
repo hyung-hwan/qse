@@ -412,7 +412,6 @@ struct mux_ev_t
 	int reqmask;
 	qse_httpd_muxcb_t cbfun;
 	void* cbarg;
-	struct mux_ee_t* next;
 };
 
 struct mux_t
@@ -425,7 +424,19 @@ struct mux_t
 		qse_size_t len;	
 		qse_size_t capa;
 	} ee;
+
+	struct
+	{
+		struct mux_ev_t* ptr;
+		qse_size_t       capa;
+	} mev;
+
+#if 0
+	qse_fma_t* fma;
+#endif
 };
+
+#define MUX_EV_ALIGN 64
 
 static void* mux_open (qse_httpd_t* httpd)
 {
@@ -444,6 +455,13 @@ static void* mux_open (qse_httpd_t* httpd)
 		return QSE_NULL;
 	}
 
+#if 0
+	mux->fma = qse_fma_open (qse_getmmgr(httpd), QSE_NULL);
+	if (mux->fma == QSE_NULL)
+	{
+	}
+#endif
+
 	return mux;
 }
 
@@ -451,6 +469,7 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
 	if (mux->ee.ptr) qse_httpd_freemem (httpd, mux->ee.ptr);
+	if (mux->mev.ptr) qse_httpd_freemem (httpd, mux->mev.ptr);
 	close (mux->fd);
 	qse_httpd_freemem (httpd, mux);
 }
@@ -473,8 +492,27 @@ static int mux_addhnd (
 		return -1;
 	}
 
+#if 0
 	mev = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mev));
 	if (mev == QSE_NULL) return -1;
+#endif
+
+	if (handle.i >= mux->mev.capa)
+	{
+		struct mux_ev_t* tmp;
+		qse_size_t tmpcapa;
+		
+		tmpcapa = (((handle.i + MUX_EV_ALIGN - 1) / MUX_EV_ALIGN) * MUX_EV_ALIGN) + 1;
+
+/* TODO: allocate this from fma ... */
+		tmp = qse_httpd_reallocmem (
+			httpd, mux->mev.ptr, 
+			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa); /* TODO: round up handle.i ... */
+		if (tmp == QSE_NULL) return -1;
+
+		mux->mev.ptr = tmp;
+		mux->mev.capa = tmpcapa;
+	}
 
 	if (mux->ee.len >= mux->ee.capa)
 	{
@@ -485,13 +523,15 @@ static int mux_addhnd (
 			QSE_SIZEOF(*mux->ee.ptr) * (mux->ee.capa + 1) * 2);
 		if (tmp == QSE_NULL)
 		{
-			qse_httpd_freemem (httpd, mev);
+			/*qse_httpd_freemem (httpd, mev);*/
 			return -1;
 		}
 
 		mux->ee.ptr = tmp;
 		mux->ee.capa = (mux->ee.capa + 1) * 2;
 	}
+
+	mev = &mux->mev.ptr[handle.i];
 
 	mev->handle = handle;
 	mev->reqmask = mask;
@@ -504,7 +544,7 @@ static int mux_addhnd (
 	{
 		/* don't rollback ee.ptr */
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-		qse_httpd_freemem (httpd, mev);
+		/*qse_httpd_freemem (httpd, mev);*/
 		return -1;
 	}
 
@@ -515,6 +555,8 @@ static int mux_addhnd (
 static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
+
+/* TODO: delete mev associated with handle.i */
 
 	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, handle.i, QSE_NULL) <= -1)
 	{

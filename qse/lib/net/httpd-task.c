@@ -1591,20 +1591,17 @@ else qse_printf (QSE_T("!!!SNATCHING DONE\n"));
 
 		/* since there is no more to read from the client side.
 		 * the relay trigger is not needed any more. */
-		task->trigger_mask &= 
-			~(QSE_HTTPD_TASK_TRIGGER_RELAY |
-			  QSE_HTTPD_TASK_TRIGGER_RELAYABLE);
+		task->trigger[2].mask = 0;
 
 		if (QSE_MBS_LEN(cgi->reqfwdbuf) > 0 && cgi->pio_inited &&
-		    !(task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
+		    !(task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
 		{
 			/* there's nothing more to read from the client side.
 			 * there's something to forward in the forwarding buffer.
 			 * but no write trigger is set. add the write trigger 
 			 * for task invocation. */
-			task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-			task->trigger_mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITABLE;
-			task->trigger[2] = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN);
+			task->trigger[1].mask = QSE_HTTPD_TASK_TRIGGER_WRITE;
+			task->trigger[1].handle = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN);
 		}
 	}
 	else if (!cgi->reqfwderr)
@@ -1691,11 +1688,8 @@ qse_printf (QSE_T("FORWARD: @@@@@@@@WRITE TO CGI FAILED\n"));
 		 * clear the relay and write triggers.
 		 */
 qse_printf (QSE_T("FORWARD: @@@@@@@@NOTHING MORE TO WRITE TO CGI\n"));
-		task->trigger_mask &= 
-			~(QSE_HTTPD_TASK_TRIGGER_RELAY |
-			  QSE_HTTPD_TASK_TRIGGER_RELAYABLE |
-			  QSE_HTTPD_TASK_TRIGGER_WRITE |
-			  QSE_HTTPD_TASK_TRIGGER_WRITABLE);
+		task->trigger[1].mask = 0;
+		task->trigger[2].mask = 0;
 	}
 }
 
@@ -1855,11 +1849,11 @@ static int task_main_cgi_5 (
 
 	QSE_ASSERT (cgi->pio_inited);
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		cgi_forward_content (httpd, task, 0);
 	}
-	else if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	else if (task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
 		cgi_forward_content (httpd, task, 1);
 	}
@@ -1896,17 +1890,19 @@ static int task_main_cgi_4 (
 	
 	QSE_ASSERT (cgi->pio_inited);
 
-qse_printf (QSE_T("task_main_cgi_4 trigger_mask = %d\n"), task->trigger_mask);
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
+qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		cgi_forward_content (httpd, task, 0);
 	}
-	else if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	else if (task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
 		cgi_forward_content (httpd, task, 1);
 	}
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		/* this function assumes that the chunk length does not exceeded 
 		 * 4 hexadecimal digits. */
@@ -1942,9 +1938,7 @@ qse_printf (QSE_T("task_main_cgi_4 trigger_mask = %d\n"), task->trigger_mask);
 				if (n == 0) 
 				{
 					/* the cgi script closed the output */
-					task->trigger_mask &= 
-						~(QSE_HTTPD_TASK_TRIGGER_READ |
-					       QSE_HTTPD_TASK_TRIGGER_READABLE);
+					task->trigger[0].mask = 0;
 
 					cgi->buf[cgi->buflen++] = QSE_MT('0');
 					cgi->buf[cgi->buflen++] = QSE_MT('\r');
@@ -1988,9 +1982,7 @@ qse_printf (QSE_T("task_main_cgi_4 trigger_mask = %d\n"), task->trigger_mask);
 			}
 			if (n == 0)
 			{
-				task->trigger_mask &= 
-					~(QSE_HTTPD_TASK_TRIGGER_READ |
-				       QSE_HTTPD_TASK_TRIGGER_READABLE);
+				task->trigger[0].mask = 0;
 				task->main = task_main_cgi_5;
 				/* ok to chain-call since this task is called
 				 * if the client-side is writable */
@@ -2043,16 +2035,16 @@ static int task_main_cgi_3 (
 	qse_ssize_t n;
 	qse_size_t count;
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		cgi_forward_content (httpd, task, 0);
 	}
-	else if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	else if (task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
 		cgi_forward_content (httpd, task, 1);
 	}
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		count = MAX_SEND_SIZE;
 		if (count >= cgi->res_left) count = cgi->res_left;
@@ -2100,17 +2092,17 @@ static int task_main_cgi_2 (
 	QSE_ASSERT (cgi->pio_inited);
 
 qse_printf (QSE_T("[cgi_2 ]\n"));
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_RELAYABLE)
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 qse_printf (QSE_T("[cgi_2 write]\n"));
 		cgi_forward_content (httpd, task, 0);
 	}
-	else if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
+	else if (task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
 		cgi_forward_content (httpd, task, 1);
 	}
 
-	if (task->trigger_mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 qse_printf (QSE_T("[cgi_2 read]\n"));
 		 /* <- can i make it non-block?? or use select??? pio_tryread()? */
@@ -2248,8 +2240,8 @@ static int task_main_cgi (
 	 * it the output from the child is available, this task
 	 * writes it back to the client. so add a trigger for
 	 * checking the data availability from the child process */
-	task->trigger_mask = QSE_HTTPD_TASK_TRIGGER_READ;
-	task->trigger[0] = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_OUT);
+	task->trigger[0].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+	task->trigger[0].handle = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_OUT);
 	if (cgi->reqfwdbuf)
 	{
 		/* the existence of the forwarding buffer leads to a trigger
@@ -2259,8 +2251,8 @@ static int task_main_cgi (
 		{
 			/* there are still things to forward from the client-side. 
 			 * i can rely on this relay trigger for task invocation. */
-			task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_RELAY;
-			task->trigger[1].i = client->handle.i;
+			task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+			task->trigger[2].handle = client->handle;
 		}
 		else if (QSE_MBS_LEN(cgi->reqfwdbuf) > 0)
 		{
@@ -2284,8 +2276,8 @@ qse_printf (QSE_T("FORWARDING INITIAL PART OF CONTENT...\n"));
 				 * a trigger for invocation. ask the main loop to
 				 * invoke this task so long as it is able to write
 				 * to the child process */
-				task->trigger_mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-				task->trigger[2] = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN);
+				task->trigger[1].mask = QSE_HTTPD_TASK_TRIGGER_WRITE;
+				task->trigger[1].handle = qse_pio_gethandleasubi (&cgi->pio, QSE_PIO_IN);
 			}
 		}
 	}
