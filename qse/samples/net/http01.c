@@ -430,10 +430,6 @@ struct mux_t
 		struct mux_ev_t* ptr;
 		qse_size_t       capa;
 	} mev;
-
-#if 0
-	qse_fma_t* fma;
-#endif
 };
 
 #define MUX_EV_ALIGN 64
@@ -454,13 +450,6 @@ static void* mux_open (qse_httpd_t* httpd)
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return QSE_NULL;
 	}
-
-#if 0
-	mux->fma = qse_fma_open (qse_getmmgr(httpd), QSE_NULL);
-	if (mux->fma == QSE_NULL)
-	{
-	}
-#endif
 
 	return mux;
 }
@@ -486,28 +475,22 @@ static int mux_addhnd (
 	if (mask & QSE_HTTPD_MUX_READ) ev.events |= EPOLLIN;
 	if (mask & QSE_HTTPD_MUX_WRITE) ev.events |= EPOLLOUT;
 
-	if (ev.events == 0)
+	if (ev.events == 0 || handle.i <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
 		return -1;
 	}
 
-#if 0
-	mev = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mev));
-	if (mev == QSE_NULL) return -1;
-#endif
-
 	if (handle.i >= mux->mev.capa)
 	{
 		struct mux_ev_t* tmp;
 		qse_size_t tmpcapa;
-		
-		tmpcapa = (((handle.i + MUX_EV_ALIGN - 1) / MUX_EV_ALIGN) * MUX_EV_ALIGN) + 1;
+	
+		tmpcapa = (((handle.i + MUX_EV_ALIGN) / MUX_EV_ALIGN) * MUX_EV_ALIGN);
 
-/* TODO: allocate this from fma ... */
 		tmp = qse_httpd_reallocmem (
 			httpd, mux->mev.ptr, 
-			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa); /* TODO: round up handle.i ... */
+			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa); 
 		if (tmp == QSE_NULL) return -1;
 
 		mux->mev.ptr = tmp;
@@ -521,11 +504,7 @@ static int mux_addhnd (
 		tmp = qse_httpd_reallocmem (
 			httpd, mux->ee.ptr, 
 			QSE_SIZEOF(*mux->ee.ptr) * (mux->ee.capa + 1) * 2);
-		if (tmp == QSE_NULL)
-		{
-			/*qse_httpd_freemem (httpd, mev);*/
-			return -1;
-		}
+		if (tmp == QSE_NULL) return -1;
 
 		mux->ee.ptr = tmp;
 		mux->ee.capa = (mux->ee.capa + 1) * 2;
@@ -544,7 +523,6 @@ static int mux_addhnd (
 	{
 		/* don't rollback ee.ptr */
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-		/*qse_httpd_freemem (httpd, mev);*/
 		return -1;
 	}
 
@@ -555,8 +533,6 @@ static int mux_addhnd (
 static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
-
-/* TODO: delete mev associated with handle.i */
 
 	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, handle.i, QSE_NULL) <= -1)
 	{
@@ -597,8 +573,6 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 		}
 
 		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);
-
-//if (cbfun fails and the client is deleted???) other pending events should also be dropped???
 	}
 	return 0;
 }
@@ -971,7 +945,6 @@ if (qse_htre_getcontentlen(req) > 0)
 	qse_printf (QSE_T("CONTENT after discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
 
-
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
 		const qse_mchar_t* qpath = qse_htre_getqpathptr(req);
@@ -1088,6 +1061,80 @@ oops:
 	/*qse_httpd_markbadclient (httpd, client);*/
 	return -1;
 }
+
+#if 0
+static int proxy_request (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
+{
+	const qse_mchar_t* qpath;
+
+	qpath = qse_htre_qpathptr (eq);
+	if (qpath[0] == QSE_MT('/'))
+	{
+		host = qse_htre_getheaderval (req, QSE_MT("Host"));
+		if (host == QSE_NULL)
+		{
+qse_printf (QSE_T("Host not included....\n"));
+			goto oops;
+		}
+	}
+	else 
+	{
+		const qse_mchar_t* host;
+		qse_parseuri ();
+	}
+
+
+#if 0
+	if (peek)
+	{
+		if (req->attr.expect && 
+		    (req->version.major > 1 || 
+		     (req->version.major == 1 && req->version.minor >= 1)) && 
+		    !content_received)
+		{
+/* TODO: check method.... */
+			/* "expect" in the header, version 1.1 or higher, 
+			 * and no content received yet */
+	
+			if (qse_mbscasecmp(req->attr.expect, QSE_MT("100-continue")) != 0)
+			{
+				if (qse_httpd_entaskerror (
+					httpd, client, QSE_NULL, 417, req) == QSE_NULL) return -1;
+				if (qse_httpd_entaskdisconnect (
+					httpd, client, QSE_NULL) == QSE_NULL) return -1;
+			}
+			else
+			{
+				/* TODO: determine if to return 100-continue or other errors */
+				if (qse_httpd_entaskcontinue (
+					httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
+			}
+		}
+	}
+#endif
+
+if (qse_htre_getqparamlen(req) > 0) qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparamptr(req));
+
+
+	task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, qpath, req);
+	if (task == QSE_NULL) goto oops;
+
+	if (!req->attr.keepalive)
+	{
+		if (!peek)
+		{
+			task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+			if (task == QSE_NULL) goto oops;
+		}
+	}
+
+	return 0;
+
+oops:
+	return -1;
+}
+#endif
 
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)

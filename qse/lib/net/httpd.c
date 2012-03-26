@@ -775,10 +775,6 @@ static int invoke_client_task (
 		}
 	}
 
-	/* locate an active client to the tail of the client list */
-	qse_gettime (&client->last_active); /* TODO: error check??? */
-	move_client_to_tail (httpd, client);
-
 	n = task->main (httpd, client, task);
 qse_printf (QSE_T("task returend %d\n"), n);
 	if (n <= -1) return -1;
@@ -943,6 +939,10 @@ static int perform_client_task (
 	}
 	else
 	{
+		/* locate an active client to the tail of the client list */
+		qse_gettime (&client->last_active); /* TODO: error check??? */
+		move_client_to_tail (httpd, client);
+
 		if (invoke_client_task (httpd, client, handle, mask) <= -1) goto oops;
 	}
 
