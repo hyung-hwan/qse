@@ -1572,8 +1572,8 @@ static int cgi_snatch_content (
 	task = (qse_httpd_task_t*)ctx;
 	cgi = (task_cgi_t*)task->ctx;
 
-if (ptr) qse_printf (QSE_T("!!!SNATCHING [%.*hs]\n"), len, ptr);
-else qse_printf (QSE_T("!!!SNATCHING DONE\n"));
+if (ptr) qse_printf (QSE_T("!!!CGI SNATCHING [%.*hs]\n"), len, ptr);
+else qse_printf (QSE_T("!!!CGI SNATCHING DONE\n"));
 
 	if (ptr == QSE_NULL)
 	{
@@ -1614,7 +1614,7 @@ else qse_printf (QSE_T("!!!SNATCHING DONE\n"));
 		{
 			return -1;
 		}
-qse_printf (QSE_T("!!!SNATCHED [%.*hs]\n"), len, ptr);
+qse_printf (QSE_T("!!!CGI SNATCHED [%.*hs]\n"), len, ptr);
 	}
 
 	return 0;
@@ -1800,8 +1800,10 @@ done:
 	cgi->env = makecgienv (httpd, client, arg->req, arg->path, content_length);
 	if (cgi->env == QSE_NULL) goto oops;
 
-	/* i don't set triggers yet. triggers will be set task_main_cgi().
-	 * this way, task_main_cgi() is called regardless of data availability */
+	/* no triggers yet since the main loop doesn't allow me to set 
+	 * triggers in the task initializer. however the main task handler
+	 * will be invoked so long as the client handle is writable by
+	 * the main loop. */
 
 	task->ctx = cgi;
 	return 0;
@@ -2349,10 +2351,278 @@ qse_httpd_task_t* qse_httpd_entasknph (
 
 /*------------------------------------------------------------------------*/
 
-#if 0
+typedef struct task_proxy_arg_t task_proxy_arg_t;
+struct task_proxy_arg_t 
+{
+	const qse_mchar_t* host;
+	qse_htre_t* req;
+	int nph;
+};
+
 typedef struct task_proxy_t task_proxy_t;
 struct task_proxy_t
 {
+	int init_failed;
+
+	const qse_mchar_t* host;
+	qse_http_version_t version;
+	int keepalive; /* taken from the request */
+
+	qse_htrd_t* htrd;
+
+	qse_htre_t*  req; /* original request associated with this */
+	qse_mbs_t*   reqfwdbuf; /* content from the request */
+	int          reqfwderr;
+
+	qse_mbs_t*   res;
+	qse_mchar_t* res_ptr;
+	qse_size_t   res_left;	
+};
+
+typedef struct proxy_htrd_xtn_t proxy_htrd_xtn_t;
+struct proxy_htrd_xtn_t
+{
+	task_proxy_t* proxy;
+};
+
+static int proxy_snatch_content (
+	qse_htre_t* req, const qse_mchar_t* ptr, qse_size_t len, void* ctx)
+{
+	qse_httpd_task_t* task;
+	task_proxy_t* proxy; 
+
+	task = (qse_httpd_task_t*)ctx;
+	proxy = (task_proxy_t*)task->ctx;
+
+if (ptr) qse_printf (QSE_T("!!!PROXY SNATCHING [%.*hs]\n"), len, ptr);
+else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
+
+	if (ptr == QSE_NULL)
+	{
+		/*
+		 * this callback is called with ptr of QSE_NULL 
+		 * when the request is completed or discarded. 
+		 * and this indicates that there's nothing more to read
+		 * from the client side. this can happen when the end of
+		 * a request is seen or when an error occurs 
+		 */
+		QSE_ASSERT (len == 0);
+
+		/* mark the there's nothing to read form the client side */
+		proxy->req = QSE_NULL; 
+
+		/* since there is no more to read from the client side.
+		 * the relay trigger is not needed any more. */
+		task->trigger[2].mask = 0;
+
+#if 0
+		if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0 && proxy->pio_inited &&
+		    !(task->trigger[1].mask & QSE_HTTPD_TASK_TRIGGER_WRITE))
+		{
+			/* there's nothing more to read from the client side.
+			 * there's something to forward in the forwarding buffer.
+			 * but no write trigger is set. add the write trigger 
+			 * for task invocation. */
+			task->trigger[1].mask = QSE_HTTPD_TASK_TRIGGER_WRITE;
+			task->trigger[1].handle = qse_pio_gethandleasubi (&proxy->pio, QSE_PIO_IN);
+		}
+#endif
+	}
+	else if (!proxy->reqfwderr)
+	{
+		/* we can write to the child process if a forwarding error 
+		 * didn't occur previously. we store data from the client side
+		 * to the forwaring buffer only if there's no such previous
+		 * error. if an error occurred, we simply drop the data. */
+		if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1)
+		{
+			return -1;
+		}
+qse_printf (QSE_T("!!!PROXY SNATCHED [%.*hs]\n"), len, ptr);
+	}
+
+	return 0;
+}
+
+static int proxy_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
+{
+	return -1;
+}
+
+static qse_htrd_recbs_t proxy_htrd_cbs =
+{
+	proxy_htrd_peek_request,
+	QSE_NULL /* not needed for proxy */
+};
+
+static int task_init_proxy (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_proxy_t* proxy;
+	task_proxy_arg_t* arg;
+	qse_size_t content_length;
+	qse_size_t len;
+	const qse_mchar_t* ptr;
+
+	proxy = (task_proxy_t*)qse_httpd_gettaskxtn (httpd, task);
+	arg = (task_proxy_arg_t*)task->ctx;
+
+/* TODO: can content length be a different type???
+ *  maybe qse_uintmax_t.... it thinks the data size can be larger than the max pointer size 
+ * qse_htre_t and qse_htrd_t also needs changes to support it
+ */
+
+	QSE_MEMSET (proxy, 0, QSE_SIZEOF(*proxy));
+	qse_mbscpy ((qse_mchar_t*)(proxy + 1), arg->host);
+	proxy->host = (qse_mchar_t*)(proxy + 1);
+	proxy->version = *qse_htre_getversion(arg->req);
+	proxy->keepalive = arg->req->attr.keepalive;
+
+	if (arg->req->state & QSE_HTRE_DISCARDED) 
+	{
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXX\n"));
+		content_length = 0;
+		goto done;
+	}
+
+	len = qse_htre_getcontentlen(arg->req);
+	if ((arg->req->state & QSE_HTRE_COMPLETED) && len <= 0)
+	{
+qse_printf (QSE_T("YYYYYYYYYYYYYYYYy\n"));
+		/* the content part is completed and no content 
+		 * in the content buffer. there is nothing to forward */
+		content_length = 0;
+		goto done;
+	}
+
+	if (!(arg->req->state & QSE_HTRE_COMPLETED) &&
+	    !arg->req->attr.content_length_set)
+	{
+qse_printf (QSE_T("ZZZZZZZZZZZZZZZ\n"));
+		/* if the request is not completed and doesn't have
+		 * content-length set, it's not really possible to
+		 * pass the content. this function, however, allows
+		 * such a request to entask a proxy script dropping the
+		 * content */
+		qse_htre_discardcontent (arg->req);
+		content_length = 0;		
+	}
+	else
+	{	
+		/* create a buffer to hold request content from the client
+		 * and copy content received already */
+		proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+		if (proxy->reqfwdbuf == QSE_NULL) goto oops;
+
+		ptr = qse_htre_getcontentptr(arg->req);
+		if (qse_mbs_ncpy (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) 
+		{
+			qse_mbs_close (proxy->reqfwdbuf);
+			proxy->reqfwdbuf = QSE_NULL;
+			goto oops;
+		}
+
+		if (arg->req->state & QSE_HTRE_COMPLETED)
+		{
+			/* no furthur forwarding is needed. 
+			 * even a chunked request entaksed when completed 
+			 * should reach here. if content-length is set
+			 * the length should match len. */
+			QSE_ASSERT (len > 0);
+			QSE_ASSERT (!arg->req->attr.content_length_set ||
+			            (arg->req->attr.content_length_set && arg->req->attr.content_length == len));
+qse_printf (QSE_T("HHHHHHHHHHHHHHHHhh %d\n"), (int)len);
+			content_length = len;
+		}
+		else
+		{
+			/* CGI entasking is invoked probably from the peek handler
+			 * that was triggered after the request header is received.
+			 * you can know this because the request is not completed.
+			 * In this case, arrange to forward content
+			 * bypassing the buffer in the request object itself. */
+
+/* TODO: callback chain instead of a single pointer??? 
+       if the request is already set up with a callback, something will go wrong.
+*/
+			/* set up a callback to be called when the request content
+			 * is fed to the htrd reader. qse_htre_addcontent() that 
+			 * htrd calls invokes this callback. */
+			proxy->req = arg->req;
+			qse_htre_setconcb (proxy->req, proxy_snatch_content, task);
+
+			QSE_ASSERT (arg->req->attr.content_length_set);
+			content_length = arg->req->attr.content_length;
+qse_printf (QSE_T("TTTTTTTTTTTTTTTTTTTT %d\n"), (int)content_length);
+		}
+	}
+
+done:
+	/* no triggers yet since the main loop doesn't allow me to set 
+	 * triggers in the task initializer. however the main task handler
+	 * will be invoked so long as the client handle is writable by
+	 * the main loop. */
+
+	task->ctx = proxy;
+	return 0;
+
+oops:
+	/* since a new task can't be added in the initializer,
+	 * i mark that initialization failed and let task_main_proxy()
+	 * add an error task */
+	proxy->init_failed = 1;
+	task->ctx = proxy;
+	return 0;
+}
+
+static void task_fini_proxy (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+}
+
+static int task_main_proxy (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
+{
+	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
+	proxy_htrd_xtn_t* xtn;
+	int http_errnum = 500;
+
+	if (proxy->init_failed) goto oops;
+
+	proxy->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(proxy_htrd_xtn_t));
+	if (proxy->htrd == QSE_NULL) goto oops;
+	xtn = (proxy_htrd_xtn_t*) qse_htrd_getxtn (proxy->htrd);
+	xtn->proxy = proxy;
+	qse_htrd_setrecbs (proxy->htrd, &proxy_htrd_cbs);
+	qse_htrd_setoption (
+		proxy->htrd, 
+		QSE_HTRD_SKIPINITIALLINE | 
+		QSE_HTRD_PEEKONLY | 
+		QSE_HTRD_REQUEST
+	);
+
+	proxy->res = qse_mbs_open (httpd->mmgr, 0, 256);
+	if (proxy->res == QSE_NULL) goto oops;
+
+///////////////////////
+
+	return 1;
+
+oops:
+	if (proxy->res) 
+	{
+		qse_mbs_close (proxy->res);
+		proxy->res = QSE_NULL;
+	}
+	if (proxy->htrd) 
+	{
+		qse_htrd_close (proxy->htrd);
+		proxy->htrd = QSE_NULL;
+	}
+
+	return (entask_error (
+		httpd, client, task, http_errnum, 
+		&proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 qse_httpd_task_t* qse_httpd_entaskproxy (
@@ -2362,9 +2632,23 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 	const qse_mchar_t* host,  
 	const qse_htre_t* req)
 {
-	
+	qse_httpd_task_t task;
+	task_proxy_arg_t arg;
+
+	arg.host = host;
+	arg.req = req;
+
+	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
+	task.init = task_init_proxy;
+	task.fini = task_fini_proxy;
+	task.main = task_main_proxy;
+	task.ctx = &arg;
+
+	return qse_httpd_entask (
+		httpd, client, pred, &task, 
+		QSE_SIZEOF(task_proxy_t) + ((qse_mbslen(host) + 1) * QSE_SIZEOF(*host))
+	);
 }
-#endif
 
 /*------------------------------------------------------------------------*/
 

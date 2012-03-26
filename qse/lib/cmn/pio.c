@@ -550,13 +550,23 @@ int qse_pio_init (
 
 	/* DOS not multi-processed. can't support pio */
 
-#elif defined(HAVE_POSIX_SPAWN)
+#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
 	posix_spawn_file_actions_t fa;
 	int fa_inited = 0;
 	int pserr;
+#if defined(__linux)
+	posix_spawnattr_t psattr;
+#endif
 	qse_pio_pid_t pid;
 	param_t param;
 	extern char** environ;
+#elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
+	qse_pio_pid_t pid;
+	param_t param;
+	extern char** environ;
+	char** envarr;
+	int highest_fd;
+	int dummy;
 #else
 	qse_pio_pid_t pid;
 	param_t param;
@@ -1178,7 +1188,7 @@ create_process:
 	pio->errnum = QSE_PIO_ENOIMPL;
 	return -1;
 
-#elif defined(HAVE_POSIX_SPAWN)
+#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
 	if (flags & QSE_PIO_WRITEIN)
 	{
 		if (QSE_PIPE(&handle[0]) <= -1) 
@@ -1379,9 +1389,22 @@ create_process:
 		goto oops;
 	}
 
+#if defined(__linux)
+	posix_spawnattr_init (&psattr);
+#if !defined(POSIX_SPAWN_USEVFORK)
+#	define POSIX_SPAWN_USEVFORK 0x40
+#endif
+	posix_spawnattr_setflags (&psattr, POSIX_SPAWN_USEVFORK);
+#endif
+
 	pserr = posix_spawn(
-		&pid, param.argv[0], &fa, QSE_NULL, param.argv,
+		&pid, param.argv[0], &fa, &psattr, param.argv,
 		(env? qse_env_getarr(env): environ));
+
+#if defined(__linux)
+	posix_spawnattr_destroy (&psattr);
+#endif
+
 	free_param (pio, &param); 
 	if (fa_inited) 
 	{
@@ -1411,6 +1434,210 @@ create_process:
 		handle[5] = QSE_PIO_HND_NIL;
 	}
 
+#elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		if (QSE_PIPE(&handle[0]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
+		minidx = 0; maxidx = 1;
+	}
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		if (QSE_PIPE(&handle[2]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
+		if (minidx == -1) minidx = 2;
+		maxidx = 3;
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		if (QSE_PIPE(&handle[4]) <= -1) 
+		{
+			pio->errnum = syserr_to_errnum (errno);
+			goto oops;
+		}
+		if (minidx == -1) minidx = 4;
+		maxidx = 5;
+	}
+
+	if (maxidx == -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		goto oops;
+	}
+
+	if (make_param (pio, cmd, flags, &param) <= -1) goto oops;
+
+	/* check if the command(the command requested or /bin/sh) is 
+	 * exectuable to return an error without trying to execute it
+	 * though this check alone isn't sufficient */
+	if (assert_executable (pio, param.argv[0]) <= -1)
+	{
+		free_param (pio, &param); 
+		goto oops;
+	}
+
+	if (!(flags & QSE_PIO_NOCLOEXEC)) 
+		highest_fd = get_highest_fd ();
+	envarr = env? qse_env_getarr(env): environ;
+
+	QSE_SYSCALL0 (pid, SYS_vfork);
+	if (pid <= -1) 
+	{
+		pio->errnum = QSE_PIO_EINVAL;
+		free_param (pio, &param);
+		goto oops;
+	}
+
+	if (pid == 0)
+	{
+		/* child */
+		qse_pio_hnd_t devnull = -1;
+
+		if (!(flags & QSE_PIO_NOCLOEXEC))
+		{
+			int fd = highest_fd;
+
+			/* close all other unknown open handles except 
+			 * stdin/out/err and the pipes. */
+			while (--fd > 2)
+			{
+				if (fd != handle[0] && fd != handle[1] &&
+				    fd != handle[2] && fd != handle[3] &&
+				    fd != handle[4] && fd != handle[5]) 
+				{
+					QSE_SYSCALL1 (dummy, SYS_close, fd);
+				}
+			}
+		}
+
+		if (flags & QSE_PIO_WRITEIN)
+		{
+			/* child should read */
+			QSE_SYSCALL1 (dummy, SYS_close, handle[1]);
+			/*handle[1] = QSE_PIO_HND_NIL;*/
+			QSE_SYSCALL2 (dummy, SYS_dup2, handle[0], 0);
+			if (dummy <= -1) goto child_oops;
+			QSE_SYSCALL1 (dummy, SYS_close, handle[0]);
+			/*handle[0] = QSE_PIO_HND_NIL;*/
+		}
+
+		if (flags & QSE_PIO_READOUT)
+		{
+			/* child should write */
+			QSE_SYSCALL1 (dummy, SYS_close, handle[2]);
+			/*handle[2] = QSE_PIO_HND_NIL;*/
+			QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 1);
+			if (dummy <= -1) goto child_oops;
+
+			if (flags & QSE_PIO_ERRTOOUT)
+			{
+				QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 2);
+				if (dummy <= -1) goto child_oops;
+			}
+
+			QSE_SYSCALL1 (dummy, SYS_close, handle[3]);
+			/*handle[3] = QSE_PIO_HND_NIL;*/
+		}
+
+		if (flags & QSE_PIO_READERR)
+		{
+			/* child should write */
+			QSE_SYSCALL1 (dummy, SYS_close, handle[4]);
+			/*handle[4] = QSE_PIO_HND_NIL;*/
+			QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 2);
+			if (dummy <= -1) goto child_oops;
+
+			if (flags & QSE_PIO_OUTTOERR)
+			{
+				QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 1);
+				if (dummy <= -1) goto child_oops;
+			}
+
+			QSE_SYSCALL1 (dummy, SYS_close, handle[5]);
+			/*handle[5] = QSE_PIO_HND_NIL;*/
+		}
+
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL))
+		{
+		#if defined(O_LARGEFILE)
+			QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR|O_LARGEFILE, 0);
+		#else
+			QSE_SYSCALL3 (devnull, SYS_open, QSE_MT("/dev/null"), O_RDWR, 0);
+		#endif
+			if (devnull <= -1) goto child_oops;
+		}
+
+		if (flags & QSE_PIO_INTONUL)
+		{
+			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 0);
+			if (dummy <= -1) goto child_oops;
+		}
+		if (flags & QSE_PIO_OUTTONUL)
+		{
+			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 1);
+			if (dummy <= -1) goto child_oops;
+		}
+		if (flags & QSE_PIO_ERRTONUL)
+		{
+			QSE_SYSCALL2 (dummy, SYS_dup2, devnull, 2);
+			if (dummy <= -1) goto child_oops;
+		}
+
+		if ((flags & QSE_PIO_INTONUL) || 
+		    (flags & QSE_PIO_OUTTONUL) ||
+		    (flags & QSE_PIO_ERRTONUL)) 
+		{
+			QSE_SYSCALL1 (dummy, SYS_close, devnull);
+			devnull = -1;
+		}
+
+		if (flags & QSE_PIO_DROPIN) QSE_SYSCALL1 (dummy, SYS_close, 0);
+		if (flags & QSE_PIO_DROPOUT) QSE_SYSCALL1 (dummy, SYS_close, 1);
+		if (flags & QSE_PIO_DROPERR) QSE_SYSCALL1 (dummy, SYS_close, 2);
+
+		QSE_SYSCALL3 (dummy, SYS_execve, param.argv[0], param.argv, envarr);
+		if (dummy == -1)
+		{
+printf ("hello\n");
+		}
+		/*free_param (pio, &param); */
+
+	child_oops:
+		if (devnull >= 0) QSE_SYSCALL1 (dummy, SYS_close, devnull);
+		QSE_SYSCALL1 (dummy, SYS_exit, 128);
+	}
+
+	/* parent */
+	free_param (pio, &param);
+	pio->child = pid;
+
+	if (flags & QSE_PIO_WRITEIN)
+	{
+		QSE_CLOSE (handle[0]);
+		handle[0] = QSE_PIO_HND_NIL;
+	}
+
+	if (flags & QSE_PIO_READOUT)
+	{
+		QSE_CLOSE (handle[3]);
+		handle[3] = QSE_PIO_HND_NIL;
+	}
+
+	if (flags & QSE_PIO_READERR)
+	{
+		QSE_CLOSE (handle[5]);
+		handle[5] = QSE_PIO_HND_NIL;
+	}
 #else
 
 	if (flags & QSE_PIO_WRITEIN)
@@ -1485,7 +1712,10 @@ create_process:
 			{
 				if (fd != handle[0] && fd != handle[1] &&
 				    fd != handle[2] && fd != handle[3] &&
-				    fd != handle[4] && fd != handle[5]) QSE_CLOSE (fd);
+				    fd != handle[4] && fd != handle[5]) 
+				{
+					QSE_CLOSE (fd);
+				}
 			}
 		}
 
@@ -1703,12 +1933,17 @@ oops:
 #elif defined(__DOS__)
 
 	/* DOS not multi-processed. can't support pio */
-#elif defined(HAVE_POSIX_SPAWN)
+#elif defined(HAVE_POSIX_SPAWN) && !(defined(QSE_SYSCALL0) && defined(SYS_vfork))
 	if (fa_inited) 
 	{
 		posix_spawn_file_actions_destroy (&fa);
 		fa_inited = 0;
 	}
+	for (i = minidx; i < maxidx; i++) 
+	{
+    		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);
+	}
+#elif defined(QSE_SYSCALL0) && defined(SYS_vfork)
 	for (i = minidx; i < maxidx; i++) 
 	{
     		if (handle[i] != QSE_PIO_HND_NIL) QSE_CLOSE (handle[i]);

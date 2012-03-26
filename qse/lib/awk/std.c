@@ -1453,25 +1453,25 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
 }
 
-static int fnc_rand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
+static int fnc_rand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_awk_val_t* r;
 
 	/*
 	rxtn_t* rxtn;
-	rxtn = (rxtn_t*) QSE_XTN (run);
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	r = qse_awk_rtx_makefltval (
-		run, (qse_flt_t)(rand_r(rxtn->seed) % RAND_MAX) / RAND_MAX );
+		rtx, (qse_flt_t)(rand_r(rxtn->seed) % RAND_MAX) / RAND_MAX );
 	*/
 	r = qse_awk_rtx_makefltval (
-		run, (qse_flt_t)(rand() % RAND_MAX) / RAND_MAX);
+		rtx, (qse_flt_t)(rand() % RAND_MAX) / RAND_MAX);
 	if (r == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (run, r);
+	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
 
-static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
+static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -1481,16 +1481,16 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 	unsigned int prev;
 	rxtn_t* rxtn;
 
-	rxtn = (rxtn_t*) QSE_XTN (run);
-	nargs = qse_awk_rtx_getnargs (run);
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 0 || nargs == 1);
 
 	prev = rxtn->seed;
 
 	if (nargs == 1)
 	{
-		a0 = qse_awk_rtx_getarg (run, 0);
-		n = qse_awk_rtx_valtolong (run, a0, &lv);
+		a0 = qse_awk_rtx_getarg (rtx, 0);
+		n = qse_awk_rtx_valtolong (rtx, a0, &lv);
 		if (n <= -1) return -1;
 
 		rxtn->seed = lv;
@@ -1504,10 +1504,10 @@ static int fnc_srand (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
 
 	srand (rxtn->seed);
 
-	r = qse_awk_rtx_makeintval (run, prev);
+	r = qse_awk_rtx_makeintval (rtx, prev);
 	if (r == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (run, r);
+	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
 
@@ -1569,6 +1569,20 @@ skip_system:
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, v);
+	return 0;
+}
+
+static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	qse_awk_val_t* r;
+	qse_ntime_t now;
+
+	if (qse_gettime (&now) <= -1) now = 0;
+
+	r = qse_awk_rtx_makeintval (rtx, now);
+	if (r == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
 
@@ -1707,6 +1721,7 @@ static int add_functions (qse_awk_t* awk)
 	ADDFNC (awk, QSE_T("rand"),     0, 0, fnc_rand,     0);
 	ADDFNC (awk, QSE_T("srand"),    0, 1, fnc_srand,    0);
 	ADDFNC (awk, QSE_T("system"),   1, 1, fnc_system,   0);
+	ADDFNC (awk, QSE_T("time"),     0, 0, fnc_time,     0);
 #if defined(QSE_CHAR_IS_WCHAR)
 	ADDFNC (awk, QSE_T("setenc"),   2, 2, fnc_setenc,   QSE_AWK_RIO);
 	ADDFNC (awk, QSE_T("unsetenc"), 1, 1, fnc_unsetenc, QSE_AWK_RIO);
