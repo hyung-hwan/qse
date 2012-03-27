@@ -83,6 +83,13 @@ struct qse_httpd_server_t
 	qse_ubi_t  handle;
 };
 
+typedef struct qse_httpd_peer_t qse_httpd_peer_t;
+struct qse_httpd_peer_t
+{
+	qse_nwad_t nwad;
+	qse_ubi_t  handle;
+};
+
 enum qse_httpd_mux_mask_t
 {
 	QSE_HTTPD_MUX_READ  = (1 << 0),
@@ -106,6 +113,23 @@ struct qse_httpd_cbs_t
 		void (*close) (qse_httpd_t* httpd, qse_httpd_server_t* server);
 		int (*accept) (qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client);
 	} server;
+
+	struct
+	{
+		int (*open) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
+		void (*close) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
+		int (*connected) (qse_httpd_t* httpd, qse_httpd_peer_t* peer);
+
+		qse_ssize_t (*recv) (
+			qse_httpd_t* httpd, 
+			qse_httpd_peer_t* peer,
+			qse_mchar_t* buf, qse_size_t bufsize);
+
+		qse_ssize_t (*send) (
+			qse_httpd_t* httpd,
+			qse_httpd_peer_t* peer,
+			const qse_mchar_t* buf, qse_size_t bufsize);
+	} peer;
 
 	struct
 	{
@@ -452,6 +476,14 @@ qse_httpd_task_t* qse_httpd_entasknph (
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        path,
 	qse_htre_t*               req
+);
+
+qse_httpd_task_t* qse_httpd_entaskproxy (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	const qse_httpd_task_t* pred,
+	const qse_nwad_t*       nwad,
+	const qse_htre_t*       req
 );
 
 /* -------------------------------------------- */

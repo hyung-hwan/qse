@@ -320,6 +320,9 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	fd = socket (addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
 
@@ -331,9 +334,6 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-
-	flag = fcntl (fd, F_GETFD);
-	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 
 	server->handle.i = fd;
 	return 0;
@@ -379,12 +379,12 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		return -1;
 	}
 #endif
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
 
-	flag = fcntl (fd, F_GETFD);
-	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
 
 	if (sockaddr_to_nwad (&addr, &client->remote_addr) <= -1)
 	{
@@ -402,6 +402,92 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		
 	client->handle.i = fd;
 	return 0;
+}
+
+/* ------------------------------------------------------------------- */
+
+static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+{
+	int fd = -1, flag;
+/* TODO: if AF_INET6 is not defined sockaddr_storage is not available...
+ * create your own union or somehting similar... */
+	struct sockaddr_storage addr;
+	int addrsize;
+	int connected = 1;
+
+	addrsize = nwad_to_sockaddr (&peer->nwad, &addr);
+	if (addrsize <= -1)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+		return -1;
+	}
+
+	fd = socket (addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	if (fd <= -1) goto oops;
+
+	flag = fcntl (fd, F_GETFD);
+	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+
+	flag = fcntl (fd, F_GETFL);
+	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
+
+	if (connect (fd, (struct sockaddr*)&addr, addrsize) <= -1) 
+	{
+		if (errno != EINPROGRESS) goto oops;
+		connected = 0;
+	}
+
+	/* restore flags */
+	if (fcntl (fd, F_SETFL, flag) <= -1) goto oops;
+
+	peer->handle.i = fd;
+	return connected;
+
+oops:
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	if (fd >= 0) close (fd);
+	return -1;
+}
+
+static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+{
+	close (peer->handle.i);
+}
+
+static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
+{
+#ifdef HAVE_SOCKLEN_T
+	socklen_t len;
+#else
+	int len;
+#endif
+	int ret;
+
+	len = QSE_SIZEOF(ret);
+	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) return -1;
+
+	if (ret == EINPROGRESS) return 0;
+	if (ret != 0) return -1;
+
+	return 1; /* connection completed */
+}
+
+static qse_ssize_t peer_recv (
+	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
+	qse_mchar_t* buf, qse_size_t bufsize)
+{
+	ssize_t ret = read (peer->handle.i, buf, bufsize);
+	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	return ret;
+}
+
+static qse_ssize_t peer_send (
+	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
+	const qse_mchar_t* buf, qse_size_t bufsize)
+{
+	ssize_t ret = write (peer->handle.i, buf, bufsize);
+	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	return ret;
 }
 
 /* ------------------------------------------------------------------- */
@@ -682,8 +768,8 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 		return -1;
 	}
 
-     flags = fcntl (fd, F_GETFD);
-     if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
+	flags = fcntl (fd, F_GETFD);
+	if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
 
 	handle->i = fd;
 qse_printf (QSE_T("opened file %hs\n"), path);
@@ -934,6 +1020,11 @@ if (qse_htre_getcontentlen(req) > 0)
 			else
 			{
 				/* TODO: determine if to return 100-continue or other errors */
+{
+qse_ntime_t now;
+qse_gettime (&now);
+qse_printf (QSE_T("entasking continue at %lld\n"), (long long)now);
+}
 				if (qse_httpd_entaskcontinue (
 					httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
 			}
@@ -1062,10 +1153,12 @@ oops:
 	return -1;
 }
 
-#if 0
 static int proxy_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
 {
+	qse_httpd_task_t* task;
+
+#if 0
 	const qse_mchar_t* qpath;
 
 	qpath = qse_htre_qpathptr (eq);
@@ -1083,6 +1176,7 @@ qse_printf (QSE_T("Host not included....\n"));
 		const qse_mchar_t* host;
 		qse_parseuri ();
 	}
+#endif
 
 
 #if 0
@@ -1114,11 +1208,13 @@ qse_printf (QSE_T("Host not included....\n"));
 	}
 #endif
 
-if (qse_htre_getqparamlen(req) > 0) qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparamptr(req));
-
-
-	task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, qpath, req);
-	if (task == QSE_NULL) goto oops;
+	if (peek)
+	{
+		qse_nwad_t nwad;
+		qse_strtonwad (QSE_T("192.168.1.3:80"), &nwad);
+		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
+		if (task == QSE_NULL) goto oops;
+	}
 
 	if (!req->attr.keepalive)
 	{
@@ -1134,18 +1230,19 @@ if (qse_htre_getqparamlen(req) > 0) qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse
 oops:
 	return -1;
 }
-#endif
 
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	return process_request (httpd, client, req, 1);
+	//return process_request (httpd, client, req, 1);
+	return proxy_request (httpd, client, req, 1);
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	return process_request (httpd, client, req, 0);
+	//return process_request (httpd, client, req, 0);
+	return proxy_request (httpd, client, req, 0);
 }
 
 int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
@@ -1157,6 +1254,12 @@ static qse_httpd_cbs_t httpd_cbs =
 {
 	/* server */
 	{ server_open, server_close, server_accept },
+
+	{ peer_open, 
+	  peer_close,
+	  peer_connected,
+	  peer_recv,
+	  peer_send },
 
 	/* multiplexer */
 	{ mux_open,

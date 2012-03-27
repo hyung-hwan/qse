@@ -1484,6 +1484,9 @@ create_process:
 		goto oops;
 	}
 
+	/* prepare some data before vforking for vfork limitation.
+	 * the child in vfork should not make function calls or 
+	 * change data shared with the parent. */
 	if (!(flags & QSE_PIO_NOCLOEXEC)) 
 		highest_fd = get_highest_fd ();
 	envarr = env? qse_env_getarr(env): environ;
@@ -1498,7 +1501,11 @@ create_process:
 
 	if (pid == 0)
 	{
-		/* child */
+		/* the child after vfork should not make function calls.
+		 * since the system call like close() are also normal
+		 * functions, i have to use assembly macros to make
+		 * system calls. */
+
 		qse_pio_hnd_t devnull = -1;
 
 		if (!(flags & QSE_PIO_NOCLOEXEC))
@@ -1522,18 +1529,15 @@ create_process:
 		{
 			/* child should read */
 			QSE_SYSCALL1 (dummy, SYS_close, handle[1]);
-			/*handle[1] = QSE_PIO_HND_NIL;*/
 			QSE_SYSCALL2 (dummy, SYS_dup2, handle[0], 0);
 			if (dummy <= -1) goto child_oops;
 			QSE_SYSCALL1 (dummy, SYS_close, handle[0]);
-			/*handle[0] = QSE_PIO_HND_NIL;*/
 		}
 
 		if (flags & QSE_PIO_READOUT)
 		{
 			/* child should write */
 			QSE_SYSCALL1 (dummy, SYS_close, handle[2]);
-			/*handle[2] = QSE_PIO_HND_NIL;*/
 			QSE_SYSCALL2 (dummy, SYS_dup2, handle[3], 1);
 			if (dummy <= -1) goto child_oops;
 
@@ -1544,14 +1548,12 @@ create_process:
 			}
 
 			QSE_SYSCALL1 (dummy, SYS_close, handle[3]);
-			/*handle[3] = QSE_PIO_HND_NIL;*/
 		}
 
 		if (flags & QSE_PIO_READERR)
 		{
 			/* child should write */
 			QSE_SYSCALL1 (dummy, SYS_close, handle[4]);
-			/*handle[4] = QSE_PIO_HND_NIL;*/
 			QSE_SYSCALL2 (dummy, SYS_dup2, handle[5], 2);
 			if (dummy <= -1) goto child_oops;
 
@@ -1562,7 +1564,6 @@ create_process:
 			}
 
 			QSE_SYSCALL1 (dummy, SYS_close, handle[5]);
-			/*handle[5] = QSE_PIO_HND_NIL;*/
 		}
 
 		if ((flags & QSE_PIO_INTONUL) || 
@@ -1606,11 +1607,7 @@ create_process:
 		if (flags & QSE_PIO_DROPERR) QSE_SYSCALL1 (dummy, SYS_close, 2);
 
 		QSE_SYSCALL3 (dummy, SYS_execve, param.argv[0], param.argv, envarr);
-		if (dummy == -1)
-		{
-printf ("hello\n");
-		}
-		/*free_param (pio, &param); */
+		/*free_param (pio, &param); don't free this in the vfork version */
 
 	child_oops:
 		if (devnull >= 0) QSE_SYSCALL1 (dummy, SYS_close, devnull);
