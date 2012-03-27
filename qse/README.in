@@ -1,19 +1,12 @@
-QSE is a code library that implements various Unix utilities in an
-embeddable form and provides a set of APIs to embed them into an application.
-The APIs have been designed to be flexible enough to access various aspects of
-a hosting application and an embedded object from each other. By embedding
-a Unix utility into an application, a developer is relieved of problems caused
-by interacting with external programs and is given tighter control over it.
+The QSE library implements AWK, SED, and other Unix commands in an embeddable 
+form and defines data types, functions, and classes that you can use when you 
+embed them into an application. It also provides more fundamental data types 
+and functions needed when you deal with memory, streams, data structures. The 
+interface has been designed to be flexible enough to access various aspects of
+embedding application and an embedded object from each other.
 
-Currently the library implements the following utilities:
-- SED Stream Editor
-- CUT Text Cutter
-- AWK Interpreter
-
-As the library grows, more utilities will be added.
-
-The library is licensed under LGPLv3.
-
-The project webpage: @QSE_PROJECT_URL@
+* The library is licensed under the GNU Lesser General Public License 
+  version 3: http://www.gnu.org/licenses/
+* The project webpage is at @QSE_PROJECT_URL@
 
 For further information, contact: @QSE_PROJECT_AUTHOR@
