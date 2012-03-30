@@ -97,12 +97,6 @@ struct qse_htrd_t
 		void* chl;
 	} fed; 
 
-	enum 
-	{
-		QSE_HTRD_RETYPE_Q,
-		QSE_HTRD_RETYPE_S
-	} retype;
-
 	qse_htre_t re;
 };
 

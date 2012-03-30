@@ -45,12 +45,38 @@ struct qse_htre_t
 {
 	qse_mmgr_t* mmgr;
 
+	enum
+	{
+		QSE_HTRE_Q,
+		QSE_HTRE_S	
+	} type;
+
 	/* version */
 	qse_http_version_t version;
+	const qse_mchar_t* verstr; /* version string include HTTP/ */
 
-	int qmethod_or_sstatus; 
-	qse_mbs_t qpath_or_smesg;
-	qse_mbs_t qparam;
+	union
+	{
+		struct 
+		{
+			struct
+			{
+				qse_http_method_t type;
+				const qse_mchar_t* name;
+			} method;
+			const qse_mchar_t* path;
+			const qse_mchar_t* param;
+		} q;
+		struct
+		{
+			struct
+			{
+				int val;
+				const qse_mchar_t* str;
+			} code;
+			const qse_mchar_t* mesg;
+		} s;	
+	} u;
 
 	/* special attributes derived from the header */
 	struct
@@ -79,52 +105,23 @@ struct qse_htre_t
 #define qse_htre_getversion(re) (&((re)->version))
 #define qse_htre_getmajorversion(re) ((re)->version.major)
 #define qse_htre_getminorversion(re) ((re)->version.minor)
-#define qse_htre_setversion(re,v) QSE_BLOCK((re)->version = *(v);)
+#define qse_htre_getverstr(re) ((re)->verstr)
 
-#define qse_htre_getqmethod(re) ((re)->qmethod_or_sstatus)
-#define qse_htre_setqmethod(re,v) QSE_BLOCK((re)->qmethod_or_sstatus=(v);)
+#define qse_htre_getqmethodtype(re) ((re)->u.q.method.type)
+#define qse_htre_getqmethodname(re) ((re)->u.q.method.name)
 
-#define qse_htre_getsstatus(re) ((re)->qmethod_or_sstatus)
-#define qse_htre_setsstatus(re,v) QSE_BLOCK((re)->qmethod_or_sstatus=(v);)
+#define qse_htre_getqpath(re) ((re)->u.q.path)
+#define qse_htre_getqparam(re) ((re)->u.q.param)
 
-#define qse_htre_getqpath(re)     (&(re)->qpath_or_smesg)
-#define qse_htre_getqpathxstr(re) QSE_MBS_XSTR(&(re)->qpath_or_smesg)
-#define qse_htre_getqpathcstr(re) QSE_MBS_CSTR(&(re)->qpath_or_smesg)
-#define qse_htre_getqpathptr(re)  QSE_MBS_PTR(&(re)->qpath_or_smesg)
-#define qse_htre_getqpathlen(re)  QSE_MBS_LEN(&(re)->qpath_or_smesg)
-
-#define qse_htre_getqparam(re)     (&(re)->qparam)
-#define qse_htre_getqparamxstr(re) QSE_MBS_XSTR(&(re)->qparam)
-#define qse_htre_getqparamcstr(re) QSE_MBS_CSTR(&(re)->qparam)
-#define qse_htre_getqparamptr(re)  QSE_MBS_PTR(&(re)->qparam)
-#define qse_htre_getqparamlen(re)  QSE_MBS_LEN(&(re)->qparam)
-
-#define qse_htre_getsmessage(re)     (&(re)->qpath_or_smesg)
-#define qse_htre_getsmessagexstr(re) QSE_MBS_XSTR(&(re)->qpath_or_smesg)
-#define qse_htre_getsmessagecstr(re) QSE_MBS_CSTR(&(re)->qpath_or_smesg)
-#define qse_htre_getsmessageptr(re)  QSE_MBS_PTR(&(re)->qpath_or_smesg)
-#define qse_htre_getsmessagelen(re)  QSE_MBS_LEN(&(re)->qpath_or_smesg)
+#define qse_htre_getscodeval(re) ((re)->u.s.code.val)
+#define qse_htre_getscodestr(re) ((re)->u.s.code.str)
+#define qse_htre_getsmesg(re) ((re)->u.s.mesg)
 
 #define qse_htre_getcontent(re)     (&(re)->content)
 #define qse_htre_getcontentxstr(re) QSE_MBS_XSTR(&(re)->content)
 #define qse_htre_getcontentcstr(re) QSE_MBS_CSTR(&(re)->content)
 #define qse_htre_getcontentptr(re)  QSE_MBS_PTR(&(re)->content)
 #define qse_htre_getcontentlen(re)  QSE_MBS_LEN(&(re)->content)
-
-#define qse_htre_setqpathfromcstr(re,v) \
-	qse_htre_setstrfromcstr((re),qse_htre_getqpath(re),(v))
-#define qse_htre_setqpathfromxstr(re,v) \
-	qse_htre_setstrfromxstr((re),qse_htre_getqpath(re),(v))
-
-#define qse_htre_setqparamfromcstr(re,v) \
-	qse_htre_setstrfromcstr((re),qse_htre_getqparam(re),(v))
-#define qse_htre_setqparamfromxstr(re,v) \
-	qse_htre_setstrfromxstr((re),qse_htre_getqparam(re),(v))
-
-#define qse_htre_setsmessagefromcstr(re,v) \
-	qse_htre_setstrfromcstr((re),qse_htre_getsmessage(re),(v))
-#define qse_htre_setsmessagefromxstr(re,v) \
-	qse_htre_setstrfromxstr((re),qse_htre_getsmessage(re),(v))
 
 typedef int (*qse_htre_header_walker_t) (
 	qse_htre_t*        re,
@@ -202,10 +199,6 @@ void qse_htre_setconcb (
 	qse_htre_t*      re,
 	qse_htre_concb_t concb, 
 	void*            ctx
-);
-
-const qse_mchar_t* qse_htre_getqmethodname (
-	const qse_htre_t* re
 );
 
 #ifdef __cplusplus
