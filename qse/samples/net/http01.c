@@ -967,25 +967,29 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 }
 
 static int process_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_htre_t* req, int peek)
 {
 	int method;
 	qse_httpd_task_t* task;
 	int content_received;
 
-	method = qse_htre_getqmethod(req);
+	method = qse_htre_getqmethodtype(req);
 	content_received = (qse_htre_getcontentlen(req) > 0);
 
 qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d] method[%hs]\n"), 
+qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"), 
 	(unsigned long)time(NULL),
 	(peek? QSE_MT("PEEK"): QSE_MT("HANDLE")),
-     qse_htre_getqpathptr(req),
-     qse_htre_getmajorversion(req),
-     qse_htre_getminorversion(req),
+	qse_htre_getqpath(req),
+	qse_htre_getmajorversion(req),
+	qse_htre_getminorversion(req),
+	qse_htre_getverstr(req),
 	qse_htre_getqmethodname(req)
 );
-if (qse_htre_getqparamlen(req) > 0) qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparamptr(req));
+if (qse_htre_getqparam(req)) 
+	qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparam(req));
+
 qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
 if (qse_htre_getcontentlen(req) > 0) 
 {
@@ -1038,7 +1042,7 @@ if (qse_htre_getcontentlen(req) > 0)
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
-		const qse_mchar_t* qpath = qse_htre_getqpathptr(req);
+		const qse_mchar_t* qpath = qse_htre_getqpath(req);
 		const qse_mchar_t* dot = qse_mbsrchr (qpath, QSE_MT('.'));
 
 		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
@@ -1211,6 +1215,7 @@ qse_printf (QSE_T("Host not included....\n"));
 	if (peek)
 	{
 		qse_nwad_t nwad;
+		//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
 		qse_strtonwad (QSE_T("192.168.1.3:80"), &nwad);
 		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
 		if (task == QSE_NULL) goto oops;

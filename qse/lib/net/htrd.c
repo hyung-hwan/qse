@@ -223,21 +223,28 @@ static qse_mchar_t* parse_initial_line (
 	do { p++; } while (is_upalpha_octet(*p));
 	tmp.len = p - tmp.ptr;
 
-	htrd->retype = QSE_HTRD_RETYPE_Q;
+	htrd->re.type = QSE_HTRE_Q;
 	if (htrd->option & QSE_HTRD_REQUEST)
 	{
-		qse_htre_setqmethod (&htrd->re, qse_mcstrtohttpmethod (&tmp));
+		/* method name must be followed by space */
+		if (!is_space_octet(*p)) goto badre;
+
+		*p = QSE_MT('\0'); /* null-terminate the method name */
+
+		htrd->re.u.q.method.type = qse_mcstrtohttpmethod (&tmp);
+		htrd->re.u.q.method.name = tmp.ptr;
 	}
 	else if ((htrd->option & QSE_HTRD_RESPONSE) &&
 	         qse_mbsxcmp (tmp.ptr, tmp.len, QSE_MT("HTTP")) == 0)
 	{
 		/* it begins with HTTP. it may be a response */
-		htrd->retype = QSE_HTRD_RETYPE_S;
+		htrd->re.type = QSE_HTRE_S;
 	}
 	else goto badre;
 
-	if (htrd->retype == QSE_HTRD_RETYPE_S)
+	if (htrd->re.type == QSE_HTRE_S)
 	{
+		/* response */
 		int n, status;
 
 		if (*p == QSE_MT('/') && p[1] != QSE_MT('\0') && p[2] == QSE_MT('.'))
@@ -254,8 +261,11 @@ static qse_mchar_t* parse_initial_line (
 		}
 		else goto badre;
 
-		/* htrd version must be followed by space */
+		/* version must be followed by space */
 		if (!is_space_octet(*p)) goto badre;
+
+		*p = QSE_MT('\0'); /* null-terminate version string */
+		htrd->re.verstr = tmp.ptr;
 
 		/* skip spaces */
 		do p++; while (is_space_octet(*p));
@@ -263,6 +273,7 @@ static qse_mchar_t* parse_initial_line (
 		n = digit_to_num(*p);
 		if (n <= -1) goto badre;
 
+		tmp.ptr = p;
 		status = 0;
 		do
 		{
@@ -271,36 +282,38 @@ static qse_mchar_t* parse_initial_line (
 		} 
 		while ((n = digit_to_num(*p)) >= 0);
 
-		qse_htre_setsstatus (&htrd->re, status);
+		if (!is_space_octet(*p)) goto badre;
+		*p = QSE_MT('\0'); /* null-terminate the status code */
 
-		/* i don't treat the following weird messages as bad message
+		htrd->re.u.s.code.val = status;
+		htrd->re.u.s.code.str = tmp.ptr;
+
+		/* i don't treat the following weird messages as bad message:
 		 *    no status message follows the status code
-		 *    no space between the status code and the status message
 		 */
 
 		/* skip spaces */
-		while (is_space_octet(*p)) p++;
+		do p++; while (is_space_octet(*p));
 	
 		tmp.ptr = p;
-		while (*p != QSE_MT('\0') && *p != QSE_MT('\n')) p++;
-		tmp.len = p - tmp.ptr;
-	
-		if (qse_htre_setsmessagefromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
-
-		/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
-		if (htrd->re.version.major > 1 || 
-		    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
+		tmp.len = 0;
+		while (*p != QSE_MT('\0') && *p != QSE_MT('\n')) 
 		{
-			htrd->re.attr.keepalive = 1;
+			if (!is_space_octet(*p)) tmp.len = p - tmp.ptr + 1;
+			p++;
 		}
+	
+		/* if the line does not end with a new line, it is a bad request */
+		if (*p != QSE_T('\n')) goto badre;
+
+		/* null-terminate the message */
+		((qse_mchar_t*)tmp.ptr)[tmp.len] = QSE_MT('\0');
+		htrd->re.u.s.mesg = tmp.ptr;
 	}
 	else
 	{
 		qse_mchar_t* out;
 		qse_mcstr_t param;
-
-		/* method name must be followed by space */
-		if (!is_space_octet(*p)) goto badre;
 
 		/* skip spaces */
 		do p++; while (is_space_octet(*p));
@@ -314,8 +327,8 @@ static qse_mchar_t* parse_initial_line (
 		{
 			if (*p == QSE_MT('%') && param.ptr == QSE_NULL)
 			{
-				/* decode percence-encoded charaters in the 
-				 * path part.  if we're in the parameter string
+				/* decode percent-encoded charaters in the 
+				 * path part. if we're in the parameter string
 				 * part, we don't decode them. */
 
 				int q = xdigit_to_num(*(p+1));
@@ -339,7 +352,7 @@ static qse_mchar_t* parse_initial_line (
 			{
 				if (!param.ptr)
 				{
-					/* ? must be explicit to be a argument instroducer. 
+					/* ? must be explicit to be an argument instroducer. 
 					 * %3f is just a literal. */
 					tmp.len = out - tmp.ptr;
 					*out++ = QSE_MT('\0'); /* null-terminate the path part */
@@ -360,15 +373,20 @@ static qse_mchar_t* parse_initial_line (
 		if (param.ptr)
 		{
 			param.len = out - param.ptr;
-			if (qse_htre_setqparamfromcstr (&htrd->re, &param) <= -1) goto outofmem;
+			htrd->re.u.q.path = tmp.ptr;
+			htrd->re.u.q.param = param.ptr;
 		}
-		else tmp.len = out - tmp.ptr;
-
-		if (qse_htre_setqpathfromcstr (&htrd->re, &tmp) <= -1) goto outofmem;
+		else 
+		{
+			tmp.len = out - tmp.ptr;
+			htrd->re.u.q.path = tmp.ptr;
+			htrd->re.u.q.param = QSE_NULL;
+		}
 
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
 	
+		tmp.ptr = p;
 		/* check protocol version */
 		if ((p[0] == 'H' || p[0] == 'h') &&
 		    (p[1] == 'T' || p[1] == 't') &&
@@ -388,30 +406,30 @@ static qse_mchar_t* parse_initial_line (
 		}
 		else goto badre;
 	
+		tmp.len = p - tmp.ptr;
+
 		/* skip trailing spaces on the line */
 		while (is_space_octet(*p)) p++;
 
-		/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
-		if (htrd->re.version.major > 1 || 
-		    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
-		{
-			htrd->re.attr.keepalive = 1;
-		}
+		/* if the line does not end with a new line, it is a bad request */
+		if (*p != QSE_T('\n')) goto badre;
+
+		((qse_mchar_t*)tmp.ptr)[tmp.len] = QSE_MT('\0');
+		htrd->re.verstr = tmp.ptr;
 	}
 	
-	/* if the line does not end with a new line, it is a bad request */
-	if (*p != QSE_T('\n')) goto badre;
-	
+	/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
+	if (htrd->re.version.major > 1 || 
+	    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
+	{
+		htrd->re.attr.keepalive = 1;
+	}
+
 	return ++p;
 
 badre:
 	htrd->errnum = QSE_HTRD_EBADRE;
 	return QSE_NULL;
-
-outofmem:
-	htrd->errnum = QSE_HTRD_ENOMEM;
-	return QSE_NULL;
-
 }
 
 void qse_htrd_clear (qse_htrd_t* htrd)
@@ -1085,7 +1103,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					header_completed_during_this_feed = 1;
 					if (htrd->option & QSE_HTRD_PEEKONLY)
 					{
-						/* when QSE_HTRD_PEEKONCE is set,
+						/* when QSE_HTRD_PEEKONLY is set,
 						 * the peek callback is invoked once
 						 * a complete header is seen. the caller
 						 * should not feed more data by calling

@@ -1469,20 +1469,18 @@ static qse_env_t* makecgienv (
 
 {
 /* TODO: corrent all these name???  */
-qse_mchar_t tmp[1024];
-qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), qse_htre_getqpathptr(req), qse_htre_getqpathlen(req));
-	//qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), tmp);
-	//qse_env_insertmbs (env, QSE_MT("PATH_INFO"), tmp);
-	//qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), tmp);
+	//qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), qse_htre_getqpath(req));
+	//qse_env_insertmbs (env, QSE_MT("PATH_INFO"), qse_htre_getqpath(req));
+	//qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), qse_htre_getqpath(req));
 	//qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), QSE_MT("/"));
 }
 
 
 	//qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
-	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpathptr(req));
+	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req));
 
 	{
-		qse_mchar_t* tmp = qse_htre_getqparamptr(req);
+		qse_mchar_t* tmp = qse_htre_getqparam(req);
 		if (tmp) qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), tmp);
 	}
 
@@ -1855,21 +1853,24 @@ static int task_main_cgi_5 (
 		cgi_forward_content (httpd, task, 1);
 	}
 
-qse_printf (QSE_T("task_main_cgi_5\n"));
-	if (cgi->buflen > 0)
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
-/* TODO: check if cgi outputs more than content-length if it is set... */
-		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->client.send (httpd, client, cgi->buf, cgi->buflen);
-		if (n <= -1)
+qse_printf (QSE_T("task_main_cgi_5\n"));
+		if (cgi->buflen > 0)
 		{
+/* TODO: check if cgi outputs more than content-length if it is set... */
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			n = httpd->cbs->client.send (httpd, client, cgi->buf, cgi->buflen);
+			if (n <= -1)
+			{
 		/* can't return internal server error any more... */
 /* TODO: logging ... */
-			return -1;
-		}
+				return -1;
+			}
 
-		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
-		cgi->buflen -= n;
+			QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
+			cgi->buflen -= n;
+		}
 	}
 
 	/* if forwarding didn't finish, something is not really right... 
@@ -1901,26 +1902,22 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
-		/* this function assumes that the chunk length does not exceeded 
-		 * 4 hexadecimal digits. */
-		QSE_ASSERT (QSE_SIZEOF(cgi->buf) <= 0xFFFF);
 	
-	qse_printf (QSE_T("task_main_cgi_4\n"));
-	
+qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 		if (cgi->content_chunked)
 		{
 			qse_size_t count, extra;
 			qse_mchar_t chunklen[7];
+
+			/* this function assumes that the chunk length does not 
+			 * exceed 4 hexadecimal digits. */
+			QSE_ASSERT (QSE_SIZEOF(cgi->buf) <= 0xFFFF);
 	
 	qse_printf (QSE_T("READING CHUNKED MODE...\n"));
 			extra = (QSE_SIZEOF(chunklen) - 1) + 2;
 			count = QSE_SIZEOF(cgi->buf) - cgi->buflen;
 			if (count > extra)
 			{
-	
-	/* TODO: check if cgi outputs more than content-length if it is set... */
-		 /* <- can i make it non-block?? or use select??? pio_tryread()? */
-	
 				n = qse_pio_read (
 					&cgi->pio, QSE_PIO_OUT,
 					&cgi->buf[cgi->buflen + QSE_SIZEOF(chunklen) - 1], 
@@ -1935,7 +1932,6 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 				if (n == 0) 
 				{
 					/* the cgi script closed the output */
-					task->trigger[0].mask = 0;
 
 					cgi->buf[cgi->buflen++] = QSE_MT('0');
 					cgi->buf[cgi->buflen++] = QSE_MT('\r');
@@ -1944,9 +1940,9 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 					cgi->buf[cgi->buflen++] = QSE_MT('\n');
 	
 					task->main = task_main_cgi_5;
-					/* ok to chain-call since this task is called
-					 * if the client-side is writable */
-					return task_main_cgi_5 (httpd, client, task);
+					task->trigger[0].mask = 0;
+					task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					return 1;
 				}
 	
 				/* set the chunk length */
@@ -1961,46 +1957,57 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 				cgi->buf[cgi->buflen++] = QSE_MT('\n');
 	
 				cgi->content_received += n;
+
+				if (cgi->content_length_set && 
+				    cgi->content_received > cgi->content_length)
+				{
+	/* TODO: cgi returning too much data... something is wrong in CGI */
+	qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
+					return -1;
+				}
 			}
 		}
 		else
 		{
 	qse_printf (QSE_T("READING IN NON-CHUNKED MODE...\n"));
-			n = qse_pio_read (
-				&cgi->pio, QSE_PIO_OUT,
-				&cgi->buf[cgi->buflen], 
-				QSE_SIZEOF(cgi->buf) - cgi->buflen
-			);
-			if (n <= -1)
+			if (cgi->buflen < QSE_SIZEOF(cgi->buf))
 			{
-				/* can't return internal server error any more... */
+				n = qse_pio_read (
+					&cgi->pio, QSE_PIO_OUT,
+					&cgi->buf[cgi->buflen], 
+					QSE_SIZEOF(cgi->buf) - cgi->buflen
+				);
+				if (n <= -1)
+				{
+					/* can't return internal server error any more... */
 	/* TODO: loggig ... */
 				return -1;
-			}
-			if (n == 0)
-			{
-				task->trigger[0].mask = 0;
-				task->main = task_main_cgi_5;
-				/* ok to chain-call since this task is called
-				 * if the client-side is writable */
-				return task_main_cgi_5 (httpd, client, task);
-			}
+				}
+				if (n == 0)
+				{
+					task->main = task_main_cgi_5;
+					task->trigger[0].mask = 0;
+					task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+					return 1;
+				}
 	
-			cgi->buflen += n;
-			cgi->content_received += n;
-		}
-	
-		if (cgi->content_length_set && 
-		    cgi->content_received > cgi->content_length)
-		{
+				cgi->buflen += n;
+				cgi->content_received += n;
+
+				if (cgi->content_length_set && 
+				    cgi->content_received > cgi->content_length)
+				{
 	/* TODO: cgi returning too much data... something is wrong in CGI */
 	qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
-			return -1;
+					return -1;
+				}
+			}
 		}
 	
-#if 0
-qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
-#endif
+		/* the main loop invokes the task function only if the client 
+		 * side is writable. it should be safe to write whenever
+		 * this task function is called. */
+	
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->cbs->client.send (httpd, client, cgi->buf, cgi->buflen);
 		if (n <= -1)
@@ -2013,10 +2020,6 @@ qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)cgi->buflen, cgi->buf);
 	
 		QSE_MEMCPY (&cgi->buf[0], &cgi->buf[n], cgi->buflen - n);
 		cgi->buflen -= n;
-	
-#if 0
-qse_printf (QSE_T("CGI SEND DONE\n"));
-#endif
 	}
 
 	return 1;
@@ -2041,7 +2044,9 @@ static int task_main_cgi_3 (
 		cgi_forward_content (httpd, task, 1);
 	}
 
-	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+	/* send the partial reponse received with the initial line and headers
+	 * so long as the client-side handle is writable... */
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
 		count = MAX_SEND_SIZE;
 		if (count >= cgi->res_left) count = cgi->res_left;
@@ -2061,10 +2066,7 @@ qse_printf (QSE_T("[cgi-3 send failure....\n"));
 		{
 qse_printf (QSE_T("[switching to cgi-4....\n"));
 			task->main = task_main_cgi_4;
-			/* don't chain-call task_main_cgi_4 since it has another send
-			 * and it has already been sent here. so the writability must
-			 * be checked again in the main loop.
-			 * => return task_main_cgi_4 (httpd, client, task);*/
+			task->trigger[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			return 1;
 		}
 
@@ -2161,9 +2163,8 @@ qse_printf (QSE_T("#####INVALID HEADER FROM FROM CHILD [%.*hs]\n"), (int)cgi->bu
 
 qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MBS_PTR(cgi->res));
 			task->main = task_main_cgi_3;
-			/* ok to chain-call since this task is called
-			 * only if the client-side is writable */
-			return task_main_cgi_3 (httpd, client, task);
+			task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+			return 1;
 		}
 
 	}
@@ -2255,7 +2256,8 @@ static int task_main_cgi (
 			task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
 			task->trigger[2].handle = client->handle;
 		}
-		else if (QSE_MBS_LEN(cgi->reqfwdbuf) > 0)
+
+		if (QSE_MBS_LEN(cgi->reqfwdbuf) > 0)
 		{
 			/* there's nothing more to read from the client side but
 			 * some contents are already read into the forwarding buffer.
@@ -2284,9 +2286,6 @@ qse_printf (QSE_T("FORWARDING INITIAL PART OF CONTENT...\n"));
 	}
 
 	task->main = cgi->nph? task_main_cgi_4: task_main_cgi_2;
-	/* no chain call since readability and writability needs 
-	 * to be checked in the main loop
-	return task->main (httpd, client, task); */
 	return 1;
 
 oops:
@@ -2379,13 +2378,13 @@ struct task_proxy_t
 	int          reqfwderr;
 
 	qse_mbs_t*   res;
-	qse_mchar_t* res_ptr;
-	qse_size_t   res_left;	
+	qse_size_t   res_consumed;
+	qse_size_t   res_pending;
+
+	int expect_100;
 
 	/* if true, close connection after response is sent out */
 	int disconnect;
-	/* if true, the content of response is chunked */
-	int content_chunked;
 	/* if true, content_length is set. */
 	int content_length_set;
 	/* content-length that CGI returned */
@@ -2460,16 +2459,77 @@ qse_printf (QSE_T("!!!PROXY SNATCHED [%.*hs]\n"), len, ptr);
 	return 0;
 }
 
+static int add_header_to_proxy_resbuf (qse_htre_t* req, const qse_mchar_t* key, const qse_mchar_t* val, void* ctx)
+{
+	task_proxy_t* proxy = (task_proxy_t*)ctx;
+
+	if (qse_mbs_cat (proxy->res, key) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->res, QSE_MT(": ")) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->res, val) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
+
+	return 0;
+}
+
 static int proxy_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	proxy_htrd_xtn_t* xtn = (proxy_htrd_xtn_t*) qse_htrd_getxtn (htrd);
 	task_proxy_t* proxy = xtn->proxy;
+	const qse_mchar_t* mbsptr;
 
-	/* add initial line and headers to proxy->res */
-	if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
+	mbsptr = QSE_MBS_PTR(proxy->res);
 
-	/* add any contents received so far to cgi->res */
-	if (qse_mbs_ncat (proxy->res, qse_htre_getcontentptr(req), qse_htre_getcontentlen(req)) == (qse_size_t)-1) return -1;
+	if (proxy->expect_100 > 0 && qse_htre_getscodeval(req) == 100)
+	{
+/* TODO: check if the request contained Expect... */
+qse_printf (QSE_T("10000000000000000000000000000 CONTINUE 10000000000000000000000000000000\n"));
+		proxy->expect_100 = 0;
+
+		if (qse_mbs_cat (proxy->res, qse_htre_getverstr(req)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;;
+		if (qse_mbs_cat (proxy->res, qse_htre_getscodestr(req)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, qse_htre_getsmesg(req)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) return -1; 
+
+		/* '100 continue' should not include contents. drop them if any */
+		qse_htre_discardcontent (req); 
+	}
+	else
+	{
+		/* add initial line and headers to proxy->res */
+		proxy->expect_100 = -1;
+
+qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
+		if (qse_mbs_cat (proxy->res, qse_htre_getverstr(req)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;;
+		if (qse_mbs_cat (proxy->res, qse_htre_getscodestr(req)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, qse_htre_getsmesg(req)) == (qse_size_t)-1) return -1;
+
+		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
+		if (qse_htre_walkheaders (req, add_header_to_proxy_resbuf, proxy) <= -1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
+
+		/* add any contents received so far to cgi->res */
+		if (qse_mbs_ncat (proxy->res, qse_htre_getcontentptr(req), qse_htre_getcontentlen(req)) == (qse_size_t)-1) return -1;
+qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY [%hs]\n"), QSE_MBS_PTR(proxy->res));
+	}
+
+	proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
+	return 0;
+}
+
+static int proxy_htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
+{
+	proxy_htrd_xtn_t* xtn = (proxy_htrd_xtn_t*) qse_htrd_getxtn (htrd);
+	task_proxy_t* proxy = xtn->proxy;
+
+	if (proxy->expect_100 == 0 || proxy->expect_100 == -2)
+	{
+qse_printf (QSE_T("SETTIG HTRD TO PEEK ONLY >>>>>>>>>>>>>>>>>>>>>>>>.\n"));
+		qse_htrd_setoption (htrd, qse_htrd_getoption(htrd) | QSE_HTRD_PEEKONLY);
+	}
 
 	return 0;
 }
@@ -2477,7 +2537,7 @@ static int proxy_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 static qse_htrd_recbs_t proxy_htrd_cbs =
 {
 	proxy_htrd_peek_request,
-	QSE_NULL /* not needed for proxy */
+	proxy_htrd_handle_request
 };
 
 static void proxy_forward_content (
@@ -2552,6 +2612,17 @@ qse_printf (QSE_T("FORWARD: @@@@@@@@NOTHING MORE TO WRITE TO PROXY\n"));
 	}
 }
 
+static int add_header_to_proxy_fwdbuf (qse_htre_t* req, const qse_mchar_t* key, const qse_mchar_t* val, void* ctx)
+{
+	task_proxy_t* proxy = (task_proxy_t*)ctx;
+
+	if (qse_mbs_cat (proxy->reqfwdbuf, key) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(": ")) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->reqfwdbuf, val) == (qse_size_t)-1) return -1;
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) return -1;
+
+	return 0;
+}
 
 static int task_init_proxy (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
@@ -2565,11 +2636,6 @@ static int task_init_proxy (
 	proxy = (task_proxy_t*)qse_httpd_gettaskxtn (httpd, task);
 	arg = (task_proxy_arg_t*)task->ctx;
 
-/* TODO: can content length be a different type???
- *  maybe qse_uintmax_t.... it thinks the data size can be larger than the max pointer size 
- * qse_htre_t and qse_htrd_t also needs changes to support it
- */
-
 	QSE_MEMSET (proxy, 0, QSE_SIZEOF(*proxy));
 	proxy->version = *qse_htre_getversion(arg->req);
 	proxy->keepalive = arg->req->attr.keepalive;
@@ -2579,6 +2645,36 @@ static int task_init_proxy (
  * TODO: compose headers to send to peer and push them to fwdbuf... 
  * TODO: also change the content length check logic below...
  * -------------------------------------------------------------------- */
+
+/* TODO: DETERMINE THIS SIZE */
+len = 1024;
+	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+	if (proxy->reqfwdbuf == QSE_NULL) goto oops;
+
+	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqmethodname(arg->req)) == (qse_size_t)-1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto oops;
+	if (qse_htre_getqparam(arg->req))
+	{
+		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1) goto oops;
+		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto oops;
+	}
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1) goto oops;
+
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+	if (qse_htre_walkheaders (arg->req, add_header_to_proxy_fwdbuf, proxy) <= -1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+
+	if (arg->req->attr.expect &&
+	    (arg->req->version.major > 1 || 
+	     (arg->req->version.major == 1 && arg->req->version.minor >= 1)))
+	{
+		if (qse_mbscasecmp(arg->req->attr.expect, QSE_MT("100-continue")) == 0)
+		{
+			proxy->expect_100 = 1;
+		}
+	}
 
 	if (arg->req->state & QSE_HTRE_DISCARDED) 
 	{
@@ -2610,17 +2706,8 @@ static int task_init_proxy (
 	{	
 		/* create a buffer to hold request content from the client
 		 * and copy content received already */
-		proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
-		if (proxy->reqfwdbuf == QSE_NULL) goto oops;
-
 		ptr = qse_htre_getcontentptr(arg->req);
-		if (qse_mbs_ncpy (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) 
-		{
-			qse_mbs_close (proxy->reqfwdbuf);
-			proxy->reqfwdbuf = QSE_NULL;
-			goto oops;
-		}
-
+		if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto oops;
 
 		if (arg->req->state & QSE_HTRE_COMPLETED)
 		{
@@ -2635,7 +2722,7 @@ static int task_init_proxy (
 		}
 		else
 		{
-			/* CGI entasking is invoked probably from the peek handler
+			/* proxy entasking is invoked probably from the peek handler
 			 * that was triggered after the request header is received.
 			 * you can know this because the request is not completed.
 			 * In this case, arrange to forward content
@@ -2661,6 +2748,7 @@ done:
 	 * will be invoked so long as the client handle is writable by
 	 * the main loop. */
 
+qse_printf (QSE_T("GOING TO PROXY [%hs]\n"), QSE_MBS_PTR(proxy->reqfwdbuf));
 	task->ctx = proxy;
 	return 0;
 
@@ -2668,6 +2756,11 @@ oops:
 	/* since a new task can't be added in the initializer,
 	 * i mark that initialization failed and let task_main_proxy()
 	 * add an error task */
+	if (proxy->reqfwdbuf)
+	{
+		qse_mbs_close (proxy->reqfwdbuf);
+		proxy->reqfwdbuf = QSE_NULL;
+	}
 	proxy->init_failed = 1;
 	task->ctx = proxy;
 	return 0;
@@ -2704,20 +2797,23 @@ static int task_main_proxy_5 (
 	}
 
 qse_printf (QSE_T("task_main_proxy_5\n"));
-	if (proxy->buflen > 0)
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
-/* TODO: check if proxy outputs more than content-length if it is set... */
-		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->client.send (httpd, client, proxy->buf, proxy->buflen);
-		if (n <= -1)
+		if (proxy->buflen > 0)
 		{
-		/* can't return internal server error any more... */
+/* TODO: check if proxy outputs more than content-length if it is set... */
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			n = httpd->cbs->client.send (httpd, client, proxy->buf, proxy->buflen);
+			if (n <= -1)
+			{
+			/* can't return internal server error any more... */
 /* TODO: logging ... */
-			return -1;
-		}
+				return -1;
+			}
 
-		QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
-		proxy->buflen -= n;
+			QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
+			proxy->buflen -= n;
+		}
 	}
 
 	/* if forwarding didn't finish, something is not really right... 
@@ -2747,48 +2843,58 @@ qse_printf (QSE_T("task_main_proxy_4 trigger[0].mask=%d trigger[1].mask=%d trigg
 		proxy_forward_content (httpd, task, 1);
 	}
 
+qse_printf (QSE_T("task_main_proxy_4 about to read from PEER...\n"));
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
-		/* this function assumes that the chunk length does not exceeded 
-		 * 4 hexadecimal digits. */
-		QSE_ASSERT (QSE_SIZEOF(proxy->buf) <= 0xFFFF);
-	
-	qse_printf (QSE_T("task_main_proxy_4\n"));
-	
-		n = httpd->cbs->peer.recv (
-			httpd, &proxy->peer,
-			&proxy->buf[proxy->buflen], 
-			QSE_SIZEOF(proxy->buf) - proxy->buflen
-		);
-		if (n <= -1)
+		if (proxy->buflen < QSE_SIZEOF(proxy->buf))
 		{
-			/* can't return internal server error any more... */
+qse_printf (QSE_T("task_main_proxy_4 reading from PEER... %d %d\n"), (int)proxy->content_length, (int)proxy->content_received);
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			n = httpd->cbs->peer.recv (
+				httpd, &proxy->peer,
+				&proxy->buf[proxy->buflen], 
+				QSE_SIZEOF(proxy->buf) - proxy->buflen
+			);
+qse_printf (QSE_T("task_main_proxy_4 read from PEER...%d\n"), (int)n);
+			if (n <= -1)
+			{
+				/* can't return internal server error any more... */
 	/* TODO: loggig ... */
-			return -1;
-		}
-		if (n == 0)
-		{
-			task->trigger[0].mask = 0;
-			task->main = task_main_proxy_5;
-			/* ok to chain-call since this task is called
-			 * if the client-side is writable */
-			return task_main_proxy_5 (httpd, client, task);
+				return -1;
+			}
+			if (n == 0)
+			{
+				task->main = task_main_proxy_5;
+				task->trigger[0].mask = 0;
+				task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				return 1;
+			}
+
+			proxy->buflen += n;
+			proxy->content_received += n;
+	
+			if (proxy->content_length_set && 
+			    proxy->content_received > proxy->content_length)
+			{
+	/* TODO: proxy returning too much data... something is wrong in PROXY */
+	qse_printf (QSE_T("PROXY FUCKED UP...RETURNING TOO MUCH DATA\n"));
+				return -1;
+			}
+
+			if (proxy->content_length_set && 
+			    proxy->content_received == proxy->content_length)
+			{
+	qse_printf (QSE_T("PROXY DONE READING\n"));
+				task->main = task_main_proxy_5;
+				task->trigger[0].mask = 0;
+				task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+				return 1;
+			}
 		}
 
-		proxy->buflen += n;
-		proxy->content_received += n;
-	
-		if (proxy->content_length_set && 
-		    proxy->content_received > proxy->content_length)
-		{
-	/* TODO: proxy returning too much data... something is wrong in CGI */
-	qse_printf (QSE_T("CGI FUCKED UP...RETURNING TOO MUCH DATA\n"));
-			return -1;
-		}
-	
-#if 0
-qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)proxy->buflen, proxy->buf);
-#endif
+		/* the main loop invokes the task function only if the client 
+		 * side is writable. it should be safe to write whenever
+		 * this task function is called. */
 		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->cbs->client.send (httpd, client, proxy->buf, proxy->buflen);
 		if (n <= -1)
@@ -2801,10 +2907,6 @@ qse_printf (QSE_T("CGI_4 SEND [%.*hs]\n"), (int)proxy->buflen, proxy->buf);
 	
 		QSE_MEMCPY (&proxy->buf[0], &proxy->buf[n], proxy->buflen - n);
 		proxy->buflen -= n;
-	
-#if 0
-qse_printf (QSE_T("CGI SEND DONE\n"));
-#endif
 	}
 
 	return 1;
@@ -2817,8 +2919,6 @@ static int task_main_proxy_3 (
 	 * returned by peer. it may include some contents as well */
 
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
-	qse_ssize_t n;
-	qse_size_t count;
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
@@ -2829,34 +2929,42 @@ static int task_main_proxy_3 (
 		proxy_forward_content (httpd, task, 1);
 	}
 
-	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
+qse_printf (QSE_T("[PROXY-----3]\n"));
+	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
-		count = MAX_SEND_SIZE;
-		if (count >= proxy->res_left) count = proxy->res_left;
+		qse_ssize_t n;
+		qse_size_t count;
 
-qse_printf (QSE_T("[proxy_3 sending %d bytes]\n"), (int)count);
-		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->client.send (httpd, client, proxy->res_ptr, count);
+qse_printf (QSE_T("[PROXY-----3 SENDING XXXXX]\n"));
+		count = proxy->res_pending;
+		if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
 
-		if (n <= -1) 
+		if (count > 0)
 		{
+qse_printf (QSE_T("[proxy_3 sending %d bytes]\n"), (int)count);
+			httpd->errnum = QSE_HTTPD_ENOERR;
+			n = httpd->cbs->client.send (
+				httpd, client, 
+				&QSE_MBS_CHAR(proxy->res,proxy->res_consumed), 
+				count
+			);
+
+			if (n <= -1) 
+			{
 qse_printf (QSE_T("[proxy-3 send failure....\n"));
-			return -1;
+				return -1;
+			}
+
+			proxy->res_consumed += n;
+			proxy->res_pending -= n;
 		}
 
-		proxy->res_left -= n;
-		if (proxy->res_left <= 0) 
+		if (proxy->res_pending <= 0)
 		{
-qse_printf (QSE_T("[switching to proxy-4....\n"));
 			task->main = task_main_proxy_4;
-			/* don't chain-call task_main_proxy_4 since it has another send
-			 * and it has already been sent here. so the writability must
-			 * be checked again in the main loop.
-			 * => return task_main_proxy_4 (httpd, client, task);*/
+			task->trigger[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			return 1;
 		}
-
-		proxy->res_ptr += n;
 	}
 
 	return 1; /* more work to do */
@@ -2867,8 +2975,6 @@ static int task_main_proxy_2 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
-	qse_ssize_t n;
-	qse_size_t count;
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
@@ -2879,9 +2985,45 @@ static int task_main_proxy_2 (
 		proxy_forward_content (httpd, task, 1);
 	}
 
+	if (proxy->res_pending > 0)
+	{
+		/* the 'if' condition becomes true only if '100 Continue'
+		 * is received without an actual reply in a previous call to 
+		 * qse_htrd_feed() below. Since the actual reply is not
+		 * received yet, i just want to read more while realying 
+		 * '100 Continue' to the client. this task handler is called
+		 * only if the client side handle is writable. i can safely
+		 * write to the client without a check. */
+
+		qse_ssize_t n;
+		qse_size_t count;
+
+		count = proxy->res_pending;
+		if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
+
+qse_printf (QSE_T("[proxy_2 sending %d bytes] [%.*hs]\n"), (int)count, (int)count, &QSE_MBS_CHAR(proxy->res,proxy->res_consumed));
+		httpd->errnum = QSE_HTTPD_ENOERR;
+		n = httpd->cbs->client.send (
+			httpd, client, 
+			&QSE_MBS_CHAR(proxy->res,proxy->res_consumed), 
+			count
+		);
+		if (n <= -1) 
+		{
+qse_printf (QSE_T("[proxy-2 send failure....\n"));
+			return -1;
+		}
+
+		proxy->res_consumed += n;
+		proxy->res_pending -= n;
+	}
+
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
+		qse_ssize_t n;
+
 		/* there is something to read from peer */
+		httpd->errnum = QSE_HTTPD_ENOERR;
 		n = httpd->cbs->peer.recv (
 			httpd, &proxy->peer,
 			&proxy->buf[proxy->buflen], 
@@ -2904,32 +3046,55 @@ qse_printf (QSE_T("#####PREMATURE EOF FROM PEER\n"));
 			
 		proxy->buflen += n;
 
+qse_printf (QSE_T("#####PROXY FEEDING [%.*hs]\n"), (int)proxy->buflen, proxy->buf);
 		if (qse_htrd_feed (proxy->htrd, proxy->buf, proxy->buflen) <= -1)
 		{
 /* TODO: logging */
-qse_printf (QSE_T("#####INVALID HEADER FROM FROM PEER [%.*hs]\n"), (int)proxy->buflen, proxy->buf);
+qse_printf (QSE_T("#####INVALID HEADER FROM PEER [%.*hs]\n"), (int)proxy->buflen, proxy->buf);
 			goto oops;
 		}
 
 		proxy->buflen = 0;
 
-
 		if (QSE_MBS_LEN(proxy->res) > 0)
 		{
-			if (proxy->disconnect &&
-			    qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) 
+qse_printf (QSE_T("proxy->expect_100 %d\n"), proxy->expect_100);
+			if (proxy->expect_100 == -1)
 			{
-				goto oops;
+				/* the peek handler for proxy->htrd sets 
+				 * proxy->expect_100 to either -1 or 0. 
+				 * it's set to 0 if it's called with
+				 * '100 Continue', -1 with other responses.
+				 * But at this point, the handler could
+				 * be called with both '100 Continue' and
+				 * another response for a single feed.
+				 * if it's already set to -1, proxy->res
+				 * should contains at least the part of
+				 * the actual reply. so i can switch to the
+				 * next phase */
+
+				if (proxy->disconnect &&
+				    qse_httpd_entaskdisconnect (httpd, client, task) == QSE_NULL) 
+				{
+					goto oops;
+				}
+
+qse_printf (QSE_T("TRAILING DATA=[%hs]\n"), &QSE_MBS_CHAR(proxy->res,proxy->res_consumed));
+				/* switch to the next phase */
+				task->main = task_main_proxy_3;
+				task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
+
+				return 1;
 			}
-
-			proxy->res_ptr = QSE_MBS_PTR(proxy->res);
-			proxy->res_left = QSE_MBS_LEN(proxy->res);
-
-qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(proxy->res), QSE_MBS_PTR(proxy->res));
-			task->main = task_main_proxy_3;
-			/* ok to chain-call since this task is called
-			 * only if the client-side is writable */
-			return task_main_proxy_3 (httpd, client, task);
+			else if (proxy->expect_100 == 0)
+			{
+				/* if it's set to 0, it's seen '100 Continue'
+				 * without an actual response. so i need to
+				 * arrange to relay '100 Continue' while
+				 * waiting for at least the header of an
+				 * actual reponse */
+				proxy->expect_100 = -2;
+			}
 		}
 	}
 
@@ -2940,7 +3105,7 @@ oops:
 	return (entask_error (httpd, client, task, 500, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
-static int task_main_proxy_0 (
+static int task_main_proxy_1 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
@@ -2956,26 +3121,22 @@ static int task_main_proxy_0 (
 		if (n >= 1) 
 		{
 			proxy->peer_status |= PEER_CONNECTED;
-			task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
-			if (proxy->reqfwdbuf)
+
+			if (proxy->req)
 			{
-				if (proxy->req)
+				task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+				task->trigger[2].handle = client->handle;
+			}
+
+			task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+			if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
+			{
+				proxy_forward_content (httpd, task, 0);
+				if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 				{
-					task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-					task->trigger[2].handle = client->handle;
-				}
-				else if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
-				{
-					proxy_forward_content (httpd, task, 0);
-					if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
-					{
-						task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-					}
+					task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				}
 			}
-qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
-qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
-qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
 qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
 			task->main = task_main_proxy_2;
 		}
@@ -2999,14 +3160,16 @@ static int task_main_proxy (
 	xtn = (proxy_htrd_xtn_t*) qse_htrd_getxtn (proxy->htrd);
 	xtn->proxy = proxy;
 	qse_htrd_setrecbs (proxy->htrd, &proxy_htrd_cbs);
-	qse_htrd_setoption (
-		proxy->htrd, 
-		QSE_HTRD_PEEKONLY | 
-		QSE_HTRD_REQUEST
-	);
+
+	if (proxy->expect_100 == 1)
+		qse_htrd_setoption (proxy->htrd, QSE_HTRD_RESPONSE);
+	else
+		qse_htrd_setoption (proxy->htrd, QSE_HTRD_PEEKONLY | QSE_HTRD_RESPONSE);
 
 	proxy->res = qse_mbs_open (httpd->mmgr, 0, 256);
 	if (proxy->res == QSE_NULL) goto oops;
+	proxy->res_consumed = 0;
+	proxy->res_pending = 0;
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	n = httpd->cbs->peer.open (httpd, &proxy->peer);
@@ -3026,27 +3189,24 @@ static int task_main_proxy (
 	{
 		/* peer not connected yet */
 		task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-		task->main = task_main_proxy_0;
+		task->main = task_main_proxy_1;
 	}
 	else
 	{
 		/* peer connected already */
 		proxy->peer_status |= PEER_CONNECTED;
-		if (proxy->reqfwdbuf)
+		if (proxy->req)
 		{
-			if (proxy->req)
+			task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
+			task->trigger[2].handle = client->handle;
+		}
+
+		if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
+		{
+			proxy_forward_content (httpd, task, 0);
+			if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 			{
-				task->trigger[2].mask = QSE_HTTPD_TASK_TRIGGER_READ;
-				task->trigger[2].handle = client->handle;
-			}
-			else if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
-			{
-				proxy_forward_content (httpd, task, 0);
-			
-				if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
-				{
-					task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
-				}
+				task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
 		}
 		task->main = task_main_proxy_2;

@@ -29,16 +29,18 @@ int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
 
 	qse_mbs_init (&re->content, mmgr, 0);
-	qse_mbs_init (&re->qpath_or_smesg, mmgr, 0);
-	qse_mbs_init (&re->qparam, mmgr, 0);
+#if 0
+	qse_mbs_init (&re->iniline, mmgr, 0);
+#endif
 
 	return 0;
 }
 
 void qse_htre_fini (qse_htre_t* re)
 {
-	qse_mbs_fini (&re->qparam);
-	qse_mbs_fini (&re->qpath_or_smesg);
+#if 0
+	qse_mbs_fini (&re->iniline);
+#endif
 	qse_mbs_fini (&re->content);
 	qse_htb_fini (&re->hdrtab);
 }
@@ -55,14 +57,17 @@ void qse_htre_clear (qse_htre_t* re)
 		}
 	}
 
+	re->state = 0;
+
 	QSE_MEMSET (&re->version, 0, QSE_SIZEOF(re->version));
 	QSE_MEMSET (&re->attr, 0, QSE_SIZEOF(re->attr));
 
 	qse_htb_clear (&re->hdrtab);
 
 	qse_mbs_clear (&re->content);
-	qse_mbs_clear (&re->qpath_or_smesg);
-	qse_mbs_clear (&re->qparam);
+#if 0 
+	qse_mbs_clear (&re->iniline);
+#endif
 	re->state = 0;
 }
 
@@ -134,8 +139,7 @@ int qse_htre_addcontent (
 	else
 	{
 		/* if the callback is not set, the contents goes to the internal buffer */
-     	if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) 
-			return -1;
+		if (qse_mbs_ncat (&re->content, ptr, len) == (qse_size_t)-1) return -1;
 	}
 
 	return 1; /* added successfully */
@@ -203,7 +207,3 @@ void qse_htre_setconcb (qse_htre_t* re, qse_htre_concb_t concb, void* ctx)
 	re->concb_ctx = ctx;
 }
 
-const qse_mchar_t* qse_htre_getqmethodname (const qse_htre_t* re)
-{
-	return qse_httpmethodtombs (re->qmethod_or_sstatus);
-}
