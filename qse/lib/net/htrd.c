@@ -322,6 +322,8 @@ static qse_mchar_t* parse_initial_line (
 		tmp.ptr = p; /* remember the beginning of path*/
 		param.ptr = QSE_NULL;
 	
+/* TODO: maintain undecode path....???? */
+
 		out = p;
 		while (*p != QSE_MT('\0') && !is_space_octet(*p)) 
 		{
@@ -418,7 +420,8 @@ static qse_mchar_t* parse_initial_line (
 		htrd->re.verstr = tmp.ptr;
 	}
 	
-	/* adjust Connection: Keep-Alive for HTTP 1.1 or later */
+	/* adjust Connection: Keep-Alive for HTTP 1.1 or later.
+	 * this is initial. it can be adjusted further in capture_connection(). */
 	if (htrd->re.version.major > 1 || 
 	    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
 	{
