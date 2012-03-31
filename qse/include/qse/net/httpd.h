@@ -481,9 +481,9 @@ qse_httpd_task_t* qse_httpd_entasknph (
 qse_httpd_task_t* qse_httpd_entaskproxy (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
-	const qse_httpd_task_t* pred,
+	qse_httpd_task_t*       pred,
 	const qse_nwad_t*       nwad,
-	const qse_htre_t*       req
+	qse_htre_t*             req
 );
 
 /* -------------------------------------------- */
