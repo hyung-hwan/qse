@@ -1260,7 +1260,7 @@ struct task_cgi_t
 	/* if true, close connection after response is sent out */
 	int disconnect;
 	/* if true, the content of response is chunked */
-	int content_chunked;
+	int chunk_res;
 	/* if true, content_length is set. */
 	int content_length_set;
 	/* content-length that CGI returned */
@@ -1403,7 +1403,7 @@ static int cgi_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 		/* no Content-Length returned by CGI. */
 		if (qse_comparehttpversions (&cgi->version, &http_v11) >= 0) 
 		{
-			cgi->content_chunked = 1;
+			cgi->chunk_res = 1;
 		}
 		else 
 		{
@@ -1415,7 +1415,7 @@ static int cgi_htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 		}
 	}
 
-	if (cgi->content_chunked &&
+	if (cgi->chunk_res &&
 	    qse_mbs_cat (cgi->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) 
 	{
 		cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -1442,7 +1442,7 @@ qse_printf (QSE_T("CGI SCRIPT FUCKED - RETURNING TOO MUCH...\n"));
 		/* the initial part of the content body has been received 
 		 * along with the header. it need to be added to the result 
 		 * buffer. */
-		if (cgi->content_chunked)
+		if (cgi->chunk_res)
 		{
 			qse_mchar_t buf[64];
 			snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)cgi->content_received);
@@ -1459,7 +1459,7 @@ qse_printf (QSE_T("CGI SCRIPT FUCKED - RETURNING TOO MUCH...\n"));
 			return -1;
 		}
 
-		if (cgi->content_chunked)
+		if (cgi->chunk_res)
 		{
 			if (qse_mbs_ncat (cgi->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) 
 			{
@@ -1936,7 +1936,7 @@ qse_printf (QSE_T("task_main_cgi_4 trigger[0].mask=%d trigger[1].mask=%d trigger
 	if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
-		if (cgi->content_chunked)
+		if (cgi->chunk_res)
 		{
 			qse_size_t count, extra;
 			qse_mchar_t chunklen[7];
@@ -2441,7 +2441,7 @@ struct task_proxy_t
 	/* if true, close connection after response is sent out */
 	int disconnect;
 	/* if true, the content of response is chunked */
-	int content_chunked;
+	int chunk_res;
 	/* if true, content_length is set. */
 	int content_length_set;
 	/* content-length that CGI returned */
@@ -2577,7 +2577,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 			if (qse_comparehttpversions (&proxy->version, &http_v11) >= 0 &&
 			    req->attr.chunked) 
 			{
-				proxy->content_chunked = 1;
+				proxy->chunk_res = 1;
 			}
 			else 
 			{
@@ -2590,7 +2590,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		}
 
 		/* begin headers */
-		if (proxy->content_chunked &&
+		if (proxy->chunk_res &&
 		    qse_mbs_cat (proxy->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) 
 		{
 			proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
@@ -2617,7 +2617,7 @@ qse_printf (QSE_T("PROXY SCRIPT FUCKED - RETURNING TOO MUCH...\n"));
 			/* the initial part of the content body has been received 
 			 * along with the header. it need to be added to the result 
 			 * buffer. */
-			if (proxy->content_chunked)
+			if (proxy->chunk_res)
 			{
 				qse_mchar_t buf[64];
 				snprintf (buf, QSE_COUNTOF(buf), QSE_MT("%lX\r\n"), (unsigned long)proxy->content_received);
@@ -2634,7 +2634,7 @@ qse_printf (QSE_T("PROXY SCRIPT FUCKED - RETURNING TOO MUCH...\n"));
 				return -1;
 			}
 
-			if (proxy->content_chunked)
+			if (proxy->chunk_res)
 			{
 				if (qse_mbs_ncat (proxy->res, QSE_MT("\r\n"), 2) == (qse_size_t)-1) 
 				{
