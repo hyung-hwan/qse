@@ -156,7 +156,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 			/* eat up . */
 		}
 		else if (!(flags & QSE_CANONPATH_KEEPDOUBLEDOTS) &&
-			    seglen == 2 && seg[0] == QSE_T('.') && seg[1] == QSE_T('.'))
+		         seglen == 2 && seg[0] == QSE_T('.') && seg[1] == QSE_T('.'))
 		{
 			/* eat up the previous segment */
 			qse_char_t* tmp;
@@ -185,9 +185,9 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 				/*
 				 * Eat up the previous segment if it exists.
 				 *
-				 * If it doesn't exist, tmp == dst so dst = tmp keeps dst
-				 * unchanged. If it exists, tmp != dst. so dst = tmp 
-				 * changes dst.
+				 * If it doesn't exist, tmp == dst so dst = tmp
+				 * keeps dst unchanged. If it exists, 
+				 * tmp != dst. so dst = tmp changes dst.
 				 *
 				 * path  /abc/def/..
 				 *                ^ ^
@@ -252,11 +252,12 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		 * also delete it if QSE_CANONPATH_DROPTRAILINGSEP is set.
 		 *
 		 *   dst > non_root_start:
-		 *     there is at least 1 character after the root directory part.
+		 *     there is at least 1 character after the root directory 
+		 *     part.
 		 *   ISSEP(dst[-1]):
 		 *     the canonical path ends with a separator.
 		 *   ISSEP(ptr[-1]):
-		 *     the origial path ends with a separator
+		 *     the origial path ends with a separator.
 		 */
 		dst[-1] = QSE_T('\0');
 		canon_len = dst - canon - 1;
@@ -297,7 +298,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 
 		if (canon_len == adj_base_len)
 		{
-			/* i don't have to retains a trailing separator
+			/* i don't have to retain a trailing separator
 			 * if the last segment is double slashes because 
 			 * the double slahses indicate a directory obviously */
 			if (canon[canon_len-3] == QSE_T('.') &&
@@ -309,7 +310,6 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		}
 		else if (canon_len > adj_base_len)
 		{
-	
 			if (ISSEP(canon[canon_len-4]) &&
 			    canon[canon_len-3] == QSE_T('.') &&
 			    canon[canon_len-2] == QSE_T('.') &&

@@ -605,6 +605,7 @@ static int mux_addhnd (
 
 	ev.data.ptr = mev;
 
+qse_printf (QSE_T("MUX ADDING %d\n"), (int)handle.i);
 	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, handle.i, &ev) <= -1)
 	{
 		/* don't rollback ee.ptr */
@@ -626,6 +627,7 @@ static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 		return -1;
 	}
 
+qse_printf (QSE_T("MUX DELETING %d\n"), (int)handle.i);
 	mux->ee.len--;
 	return 0;
 }
@@ -658,6 +660,7 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 			if (mev->reqmask & QSE_HTTPD_MUX_WRITE) mask |= QSE_HTTPD_MUX_WRITE;
 		}
 
+qse_printf (QSE_T("MUX EXEC %d\n"), (int)mev->handle.i);
 		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);
 	}
 	return 0;
@@ -1216,7 +1219,7 @@ qse_printf (QSE_T("Host not included....\n"));
 	{
 		qse_nwad_t nwad;
 		//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
-		qse_strtonwad (QSE_T("192.168.1.3:80"), &nwad);
+		qse_strtonwad (QSE_T("1.234.53.142:80"), &nwad);
 		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
 		if (task == QSE_NULL) goto oops;
 	}
