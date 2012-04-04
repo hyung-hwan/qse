@@ -879,7 +879,7 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 	/* this function must be called in the GET_CHUNK_LEN context */
 	QSE_ASSERT (htrd->fed.s.chunk.phase == GET_CHUNK_LEN);
 
-/*qse_printf (QSE_T("CALLING getchunklen [%d]\n"), *ptr);*/
+/*qse_printf (QSE_T("CALLING getchunklen [%hs]\n"), ptr);*/
 	if (htrd->fed.s.chunk.count <= 0)
 	{
 		/* skip leading spaces if the first character of
@@ -948,7 +948,7 @@ static const qse_mchar_t* get_trailing_headers (
 	while (ptr < end)
 	{
 		register qse_mchar_t b = *ptr++;
-
+/*qse_printf (QSE_T("[%hc], %d\n"), b, htrd->fed.s.crlf);*/
 		switch (b)
 		{
 			case '\0':
@@ -1005,6 +1005,7 @@ static const qse_mchar_t* get_trailing_headers (
 			default:
 				/* mark that neither CR nor LF was seen */
 				htrd->fed.s.crlf = 0;
+				break;
 		}
 	}
 
@@ -1159,6 +1160,14 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						}
 						else if (htrd->fed.s.chunk.phase == GET_CHUNK_TRAILERS)
 						{
+							/* this state is reached after the
+							 * last chunk length 0 is read. The next
+							 * empty line immediately completes 
+							 * a content body. so i need to adjust
+							 * this crlf status to 2 as if a trailing
+							 * header line has been read. */
+							htrd->fed.s.crlf = 2;
+
 						dechunk_get_trailers:
 							ptr = get_trailing_headers (htrd, ptr, end);
 							if (ptr == QSE_NULL) return -1;

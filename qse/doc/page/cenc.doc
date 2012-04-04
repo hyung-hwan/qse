@@ -1,0 +1,13 @@
+/** @page cenc Character Encoding
+
+@section cenc_overview Overview
+
+The library contains functions and data types for handling different character
+encodings. It uses the current system locale by default.
+
+@section cenc_cmgr qse_cmgr_t
+
+The #qse_cmgr_t type defines a simple callback interface for conversion between
+a multi-byte character and a wide character.
+
+*/

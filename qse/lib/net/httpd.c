@@ -322,7 +322,7 @@ static void free_client (
 
 	qse_htrd_close (client->htrd);
 
-qse_fprintf (QSE_STDERR, QSE_T("Debug: closing socket %d\n"), client->handle.i);
+qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
 
 	if (client->status & CLIENT_HANDLE_IN_MUX)
 	{
@@ -940,6 +940,7 @@ static int perform_client_task (
 	else
 	{
 		/* locate an active client to the tail of the client list */
+
 		qse_gettime (&client->last_active); /* TODO: error check??? */
 		move_client_to_tail (httpd, client);
 

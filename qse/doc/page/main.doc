@@ -24,6 +24,7 @@ Chung, Hyung-Hwan <hyunghwan.chung@gmail.com>
 See the subpages for various modules available in this library.
 
 - @subpage mem "Memory Management"
+- @subpage cenc "Character Encoding"
 - @subpage io  "I/O Handling"
 - @subpage awk "AWK Interpreter" 
 - @subpage cut "CUT Text Cutter" 
