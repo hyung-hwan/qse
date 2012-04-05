@@ -605,7 +605,6 @@ static int mux_addhnd (
 
 	ev.data.ptr = mev;
 
-qse_printf (QSE_T("MUX ADDING %d\n"), (int)handle.i);
 	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, handle.i, &ev) <= -1)
 	{
 		/* don't rollback ee.ptr */
@@ -627,7 +626,6 @@ static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 		return -1;
 	}
 
-qse_printf (QSE_T("MUX DELETING %d\n"), (int)handle.i);
 	mux->ee.len--;
 	return 0;
 }
@@ -660,7 +658,6 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 			if (mev->reqmask & QSE_HTTPD_MUX_WRITE) mask |= QSE_HTTPD_MUX_WRITE;
 		}
 
-qse_printf (QSE_T("MUX EXEC %d\n"), (int)mev->handle.i);
 		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);
 	}
 	return 0;

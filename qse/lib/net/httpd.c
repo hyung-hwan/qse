@@ -163,7 +163,8 @@ static qse_httpd_task_t* enqueue_task (
 		qse_httpd_allocmem (httpd, QSE_SIZEOF(*new_task) + xtnsize);
 	if (new_task == QSE_NULL) return QSE_NULL;
 
-	QSE_MEMCPY (new_task, task, QSE_SIZEOF(*new_task));
+	QSE_MEMSET (new_task, 0, QSE_SIZEOF(*new_task) + xtnsize);
+	*new_task = *task;
 
 	if (new_task->init)
 	{
@@ -430,6 +431,7 @@ qse_printf (QSE_T("failed to accept from server %s\n"), tmp);
 			return -1;
 		}
 
+qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
 		if (httpd->cbs->mux.addhnd (
 			httpd, mux, client->handle, QSE_HTTPD_MUX_READ, 
 			perform_client_task, client) <= -1)
@@ -533,6 +535,7 @@ qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....\n"));
 			continue;
 		}
 
+qse_printf (QSE_T("MUX ADDHND SERVER %d\n"), server->handle.i);
 		if (httpd->cbs->mux.addhnd (
 			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, 
 			accept_client, server) <= -1)
@@ -1001,8 +1004,14 @@ qse_httpd_task_t* qse_httpd_entask (
 {
 	qse_httpd_task_t* new_task;
 
+	if (client->status & CLIENT_BAD) return QSE_NULL;
+
 	new_task = enqueue_task (httpd, client, pred, task, xtnsize);
-	if (new_task == QSE_NULL) purge_client (httpd, client);
+	if (new_task == QSE_NULL) 
+	{
+		/*purge_client (httpd, client);*/
+		client->status |= CLIENT_BAD;
+	}
 	else if (new_task->prev == QSE_NULL)
 	{
 		/* this new task is the first task for a client */
@@ -1014,12 +1023,14 @@ qse_httpd_task_t* qse_httpd_entask (
 		httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
 		client->status &= ~CLIENT_HANDLE_IN_MUX;
 
+qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 		if (httpd->cbs->mux.addhnd (
 			httpd, httpd->mux, client->handle, 
 			QSE_HTTPD_MUX_READ | QSE_HTTPD_MUX_WRITE, 
 			perform_client_task, client) <= -1)
 		{
-			purge_client (httpd, client);
+			/*purge_client (httpd, client);*/
+			client->status |= CLIENT_BAD;
 			new_task = QSE_NULL;
 		}
 		client->status |= CLIENT_HANDLE_IN_MUX; /* READ | WRITE */
