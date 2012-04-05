@@ -86,6 +86,7 @@ struct qse_htre_t
 		qse_size_t content_length;
 		int keepalive;
 		const qse_mchar_t* expect;
+		const qse_mchar_t* status;
 	} attr;
 
 	/* header table */

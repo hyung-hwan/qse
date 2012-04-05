@@ -552,6 +552,12 @@ static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	return 0;
 }
 
+static int capture_status (qse_htrd_t* htrd, qse_htb_pair_t* pair)
+{
+	htrd->re.attr.status = QSE_HTB_VPTR(pair);
+	return 0;
+}
+
 static int capture_transfer_encoding (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
@@ -590,6 +596,7 @@ static QSE_INLINE int capture_key_header (
 		{ "Connection",         10, capture_connection },
 		{ "Content-Length",     14, capture_content_length },
 		{ "Expect",             6,  capture_expect },
+		{ "Status",             6,  capture_status },
 		{ "Transfer-Encoding",  17, capture_transfer_encoding  }
 	};
 
