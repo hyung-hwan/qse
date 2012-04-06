@@ -3180,7 +3180,6 @@ qse_printf (QSE_T("task_main_proxy_5\n"));
 	        (proxy->reqfwdbuf && QSE_MBS_LEN(proxy->reqfwdbuf) > 0))? 1: 0;
 }
 
-
 static int task_main_proxy_4 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {

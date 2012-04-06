@@ -1239,15 +1239,15 @@ oops:
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	//return process_request (httpd, client, req, 1);
-	return proxy_request (httpd, client, req, 1);
+	return process_request (httpd, client, req, 1);
+	//return proxy_request (httpd, client, req, 1);
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	//return process_request (httpd, client, req, 0);
-	return proxy_request (httpd, client, req, 0);
+	return process_request (httpd, client, req, 0);
+	//return proxy_request (httpd, client, req, 0);
 }
 
 int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)

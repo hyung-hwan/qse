@@ -736,7 +736,8 @@ Change it to doubly linked for this?
 	}
 }
 
-qse_mchar_t* parse_header_fields (qse_htrd_t* htrd, qse_mchar_t* line)
+qse_mchar_t* parse_header_fields (
+	qse_htrd_t* htrd, qse_mchar_t* line, qse_htb_t* tab)
 {
 	qse_mchar_t* p = line, * last;
 	struct
@@ -812,7 +813,7 @@ qse_mchar_t* parse_header_fields (qse_htrd_t* htrd, qse_mchar_t* line)
 
 		htrd->errnum = QSE_HTRD_ENOERR;
 		if (qse_htb_cbsert (
-			&htrd->re.hdrtab, name.ptr, name.len, 
+			tab, name.ptr, name.len, 
 			hdr_cbserter, &ctx) == QSE_NULL)
 		{
 			if (htrd->errnum == QSE_HTRD_ENOERR) 
@@ -864,7 +865,7 @@ static QSE_INLINE int parse_initial_line_and_headers (
 		/* TODO: return error if protocol is 0.9.
 		 * HTTP/0.9 must not get headers... */
 
-		p = parse_header_fields (htrd, p);
+		p = parse_header_fields (htrd, p, &htrd->re.hdrtab);
 		if (p == QSE_NULL) return -1;
 	}
 	while (1);
@@ -994,7 +995,10 @@ static const qse_mchar_t* get_trailing_headers (
 						/* TODO: return error if protocol is 0.9.
 						 * HTTP/0.9 must not get headers... */
 	
-						p = parse_header_fields (htrd, p);
+						p = parse_header_fields (
+							htrd, p, 
+							((htrd->option & QSE_HTRD_TRAILERS)? &htrd->re.trailers: &htrd->re.hdrtab)
+						);
 						if (p == QSE_NULL) return QSE_NULL;
 					}
 					while (1);
