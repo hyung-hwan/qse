@@ -281,8 +281,9 @@ struct qse_httpd_client_t
 
 	qse_ubi_t                handle;
 	qse_ubi_t                handle2;
-	qse_nwad_t               local_addr;
 	qse_nwad_t               remote_addr;
+	qse_nwad_t               local_addr;
+	qse_nwad_t               orgdst_addr;
 
 	/* == PRIVATE == */
 	qse_htrd_t*              htrd;
