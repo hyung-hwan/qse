@@ -22,6 +22,11 @@
 #	include <sys/epoll.h>
 #endif
 
+#if defined(__linux__)
+#	include <limits.h>
+#	include <linux/netfilter_ipv4.h>
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/engine.h>
@@ -389,7 +394,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	if (sockaddr_to_nwad (&addr, &client->remote_addr) <= -1)
 	{
 /* TODO: logging */
-          client->remote_addr = server->nwad;
+		client->remote_addr = server->nwad;
 	}
 
 	addrlen = QSE_SIZEOF(addr);
@@ -397,8 +402,23 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	    sockaddr_to_nwad (&addr, &client->local_addr) <= -1)
 	{
 /* TODO: logging */
-          client->local_addr = server->nwad;
+		client->local_addr = server->nwad;
 	}
+
+#if defined(SO_ORIGINAL_DST)
+	addrlen = QSE_SIZEOF(addr);
+	if (getsockopt (fd, SOL_IP, SO_ORIGINAL_DST, (char*)&addr, &addrlen) <= -1 ||
+	    sockaddr_to_nwad (&addr, &client->orgdst_addr) <= -1)
+	{
+		client->orgdst_addr = client->local_addr;
+	}
+#endif
+
+{
+qse_char_t buf[100];
+qse_nwadtostr (&client->orgdst_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+qse_printf (QSE_T("ORGDST address : (%s)\n"), buf);
+}
 		
 	client->handle.i = fd;
 	return 0;
@@ -1215,8 +1235,16 @@ qse_printf (QSE_T("Host not included....\n"));
 	if (peek)
 	{
 		qse_nwad_t nwad;
-		//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
-		qse_strtonwad (QSE_T("1.234.53.142:80"), &nwad);
+
+		if (qse_nwadequal (&client->local_addr, &client->orgdst_addr))
+		{
+			//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
+			//qse_strtonwad (QSE_T("1.234.53.142:80"), &nwad);
+		}
+		else
+		{
+			nwad = client->orgdst_addr;
+		}
 		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
 		if (task == QSE_NULL) goto oops;
 	}
@@ -1239,15 +1267,15 @@ oops:
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	return process_request (httpd, client, req, 1);
-	//return proxy_request (httpd, client, req, 1);
+	//return process_request (httpd, client, req, 1);
+	return proxy_request (httpd, client, req, 1);
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	return process_request (httpd, client, req, 0);
-	//return proxy_request (httpd, client, req, 0);
+	//return process_request (httpd, client, req, 0);
+	return proxy_request (httpd, client, req, 0);
 }
 
 int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
