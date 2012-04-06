@@ -27,6 +27,7 @@ int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 	re->mmgr = mmgr;	
 
 	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
+	if (qse_htb_init (&re->trailers, mmgr, 20, 70, 1, 1) <= -1) return -1;
 
 	qse_mbs_init (&re->content, mmgr, 0);
 #if 0
@@ -42,6 +43,7 @@ void qse_htre_fini (qse_htre_t* re)
 	qse_mbs_fini (&re->iniline);
 #endif
 	qse_mbs_fini (&re->content);
+	qse_htb_fini (&re->trailers);
 	qse_htb_fini (&re->hdrtab);
 }
 
@@ -63,6 +65,7 @@ void qse_htre_clear (qse_htre_t* re)
 	QSE_MEMSET (&re->attr, 0, QSE_SIZEOF(re->attr));
 
 	qse_htb_clear (&re->hdrtab);
+	qse_htb_clear (&re->trailers);
 
 	qse_mbs_clear (&re->content);
 #if 0 
@@ -88,6 +91,15 @@ const qse_mchar_t* qse_htre_getheaderval (
 {
 	qse_htb_pair_t* pair;
 	pair = qse_htb_search (&re->hdrtab, name, qse_mbslen(name));
+	if (pair == QSE_NULL) return QSE_NULL;
+	return QSE_HTB_VPTR(pair);
+}
+
+const qse_mchar_t* qse_htre_gettrailerval (
+	const qse_htre_t* re, const qse_mchar_t* name)
+{
+	qse_htb_pair_t* pair;
+	pair = qse_htb_search (&re->trailers, name, qse_mbslen(name));
 	if (pair == QSE_NULL) return QSE_NULL;
 	return QSE_HTB_VPTR(pair);
 }
@@ -123,6 +135,19 @@ int qse_htre_walkheaders (
 	qse_htb_walk (&re->hdrtab, walk_headers, &hwctx);
 	return hwctx.ret;
 }
+
+int qse_htre_walktrailers (
+	qse_htre_t* re, qse_htre_header_walker_t walker, void* ctx)
+{
+	struct header_walker_ctx_t hwctx;
+	hwctx.re = re;
+	hwctx.walker = walker;
+	hwctx.ctx = ctx;
+	hwctx.ret = 0;
+	qse_htb_walk (&re->trailers, walk_headers, &hwctx);
+	return hwctx.ret;
+}
+	
 	
 int qse_htre_addcontent (
 	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)

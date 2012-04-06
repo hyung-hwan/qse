@@ -91,6 +91,7 @@ struct qse_htre_t
 
 	/* header table */
 	qse_htb_t hdrtab;
+	qse_htb_t trailers;
 	
 	/* content octets */
 	qse_mbs_t content;
@@ -165,7 +166,18 @@ const qse_mchar_t* qse_htre_getheaderval (
 	const qse_mchar_t* key
 );
 
+const qse_mchar_t* qse_htre_gettrailerval (
+	const qse_htre_t*  re, 
+	const qse_mchar_t* key
+);
+
 int qse_htre_walkheaders (
+	qse_htre_t*              re,
+	qse_htre_header_walker_t walker,
+	void*                    ctx
+);
+
+int qse_htre_walktrailers (
 	qse_htre_t*              re,
 	qse_htre_header_walker_t walker,
 	void*                    ctx
