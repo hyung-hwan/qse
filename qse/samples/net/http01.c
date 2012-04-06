@@ -1080,7 +1080,7 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 			else
 			{
 				/* to support the chunked request,
-				 * i need to wait until it's compelted and invoke cgi */
+				 * i need to wait until it's completed and invoke cgi */
 				if (req->attr.chunked)
 				{
 qse_printf (QSE_T("Entasking chunked CGI...\n"));
