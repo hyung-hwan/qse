@@ -26,6 +26,8 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (htrd)
 
 static const qse_mchar_t NUL = QSE_MT('\0');
 
+#define CONSUME_UNTIL_CLOSE (1 << 0)
+
 static QSE_INLINE int is_whspace_octet (qse_mchar_t c)
 {
 	return c == QSE_MT(' ') || c == QSE_MT('\t') || c == QSE_MT('\r') || c == QSE_MT('\n');
@@ -425,7 +427,7 @@ static qse_mchar_t* parse_initial_line (
 	if (htrd->re.version.major > 1 || 
 	    (htrd->re.version.major == 1 && htrd->re.version.minor >= 1))
 	{
-		htrd->re.attr.keepalive = 1;
+		htrd->re.attr.flags |= QSE_HTRE_ATTR_KEEPALIVE;
 	}
 
 	return ++p;
@@ -469,7 +471,7 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		"close", 5);
 	if (n == 0)
 	{
-		htrd->re.attr.keepalive = 0;
+		htrd->re.attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
@@ -478,7 +480,7 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		"keep-alive", 10);
 	if (n == 0)
 	{
-		htrd->re.attr.keepalive = 1;
+		htrd->re.attr.flags |= QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
@@ -494,7 +496,7 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	if (htrd->re.version.major < 1  || 
 	    (htrd->re.version.major == 1 && htrd->re.version.minor <= 0))
 	{
-		htrd->re.attr.keepalive = 0;
+		htrd->re.attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 	}
 	return 0;
 }
@@ -533,7 +535,7 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		return -1;
 	}
 
-	if (htrd->re.attr.chunked && len > 0)
+	if ((htrd->re.attr.flags & QSE_HTRE_ATTR_CHUNKED) && len > 0)
 	{
 		/* content-length is greater than 0 
 		 * while transfer-encoding: chunked is specified. */
@@ -541,8 +543,8 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 		return -1;
 	}
 
+	htrd->re.attr.flags |= QSE_HTRE_ATTR_LENGTH;
 	htrd->re.attr.content_length = len;
-	htrd->re.attr.content_length_set = 1;
 	return 0;
 }
 
@@ -567,13 +569,13 @@ static int capture_transfer_encoding (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 	if (n == 0)
 	{
 		/* if (htrd->re.attr.content_length > 0) */
-		if (htrd->re.attr.content_length_set)
+		if (htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH)
 		{
 			/* both content-length and 'transfer-encoding: chunked' are specified. */
 			goto badre;
 		}
 
-		htrd->re.attr.chunked = 1;
+		htrd->re.attr.flags |= QSE_HTRE_ATTR_CHUNKED;
 		return 0;
 	}
 
@@ -1111,8 +1113,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					/* reset the raw request length */
 					htrd->fed.s.plen = 0;
 	
-					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1)
-						return -1;
+					if (parse_initial_line_and_headers (htrd, req, ptr - req) <= -1) return -1;
 
 					/* compelete request header is received */
 					header_completed_during_this_feed = 1;
@@ -1149,10 +1150,10 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					}
 
 					/* carry on processing content body fed together with the header */
-					if (htrd->re.attr.chunked)
+					if (htrd->re.attr.flags & QSE_HTRE_ATTR_CHUNKED)
 					{
 						/* transfer-encoding: chunked */
-						QSE_ASSERT (!htrd->re.attr.content_length_set);
+						QSE_ASSERT (!(htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH));
 	
 					dechunk_start:
 						htrd->fed.s.chunk.phase = GET_CHUNK_LEN;
@@ -1195,7 +1196,31 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					{
 						/* we need to read as many octets as
 						 * Content-Length */
-						htrd->fed.s.need = htrd->re.attr.content_length;
+						if ((htrd->option & QSE_HTRD_RESPONSE) && 
+						    !(htrd->re.attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+						    !(htrd->re.attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
+						{
+							/* for a response, no content-length and 
+							 * no chunk are specified and 'connection' 
+							 * is to close. i must read until the 
+							 * connection is closed. however, there isn't 
+							 * any good way to know when to stop from 
+							 * within this function. so the caller
+							 * can call qse_htrd_halt() for this. */
+
+							/* set this to the maximum in a type safe way
+							 * assuming it's unsigned. the problem of
+							 * the current implementation is that 
+							 * it can't receive more than  */
+							htrd->fed.s.need = 0;
+							htrd->fed.s.need = ~htrd->fed.s.need; 
+							htrd->fed.s.flags |= CONSUME_UNTIL_CLOSE;
+						}
+						else
+						{
+							htrd->fed.s.need = htrd->re.attr.content_length;
+						}
+				
 					}
 
 					if (htrd->fed.s.need > 0)
@@ -1209,7 +1234,17 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						{
 							/* the data is not as large as needed */
 							if (push_content (htrd, ptr, avail) <= -1) return -1;
-							htrd->fed.s.need -= avail;
+
+							if (!(htrd->fed.s.flags & CONSUME_UNTIL_CLOSE)) 
+							{
+								/* i don't decrement htrd->fed.s.need
+								 * if i should read until connection is closed.
+								 * well, unless set your own callback,
+								 * push_content() above will fail 
+								 * if too much has been received already */
+								htrd->fed.s.need -= avail;
+							}
+
 							/* we didn't get a complete content yet */
 							goto feedme_more; 
 						}
@@ -1218,7 +1253,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 							/* we got all or more than needed */
 							if (push_content (htrd, ptr, htrd->fed.s.need) <= -1) return -1;
 							ptr += htrd->fed.s.need;
-							htrd->fed.s.need = 0;
+							if (!(htrd->fed.s.flags & CONSUME_UNTIL_CLOSE)) 
+								htrd->fed.s.need = 0;
 						}
 					}
 	
@@ -1356,6 +1392,33 @@ feedme_more:
 			clear_feed (htrd); */
 			return -1;
 		}
+	}
+
+	return 0;
+}
+
+int qse_htrd_halt (qse_htrd_t* htrd)
+{
+	if (htrd->fed.s.flags & CONSUME_UNTIL_CLOSE)
+	{
+		qse_htre_completecontent (&htrd->re);
+
+		if (htrd->recbs->handle)
+		{
+			int n;
+			htrd->errnum = QSE_HTRD_ENOERR;
+			n = htrd->recbs->handle (htrd, &htrd->re);
+			if (n <= -1)
+			{
+				if (htrd->errnum == QSE_HTRD_ENOERR)
+					htrd->errnum = QSE_HTRD_ERECBS;	
+				/* need to clear request on error? 
+				clear_feed (htrd); */
+				return -1;
+			}
+		}
+
+		clear_feed (htrd);
 	}
 
 	return 0;

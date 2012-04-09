@@ -302,8 +302,9 @@ static qse_httpd_client_t* new_client (
 	client->status = tmpl->status;
 	client->handle = tmpl->handle;
 	client->handle2 = tmpl->handle2;
-	client->local_addr = tmpl->local_addr;
 	client->remote_addr = tmpl->remote_addr;
+	client->local_addr = tmpl->local_addr;
+	client->orgdst_addr = tmpl->orgdst_addr;
 
 	xtn = (htrd_xtn_t*)qse_htrd_getxtn (client->htrd);	
 	xtn->httpd = httpd;
@@ -458,10 +459,11 @@ qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
 
 {
 /* TODO: proper logging */
-qse_char_t tmp[128], tmp2[128];
+qse_char_t tmp[128], tmp2[128], tmp3[128];
 qse_nwadtostr (&client->local_addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
-qse_nwadtostr (&client->remote_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("connection %d accepted %s from %s\n"), client->handle.i, tmp, tmp2);
+qse_nwadtostr (&client->orgdst_addr, tmp2, QSE_COUNTOF(tmp2), QSE_NWADTOSTR_ALL);
+qse_nwadtostr (&client->remote_addr, tmp3, QSE_COUNTOF(tmp3), QSE_NWADTOSTR_ALL);
+qse_printf (QSE_T("connection %d accepted %s(%s from %s\n"), client->handle.i, tmp, tmp2, tmp3);
 }
 	}
 	return 0;
