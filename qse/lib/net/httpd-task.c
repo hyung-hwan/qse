@@ -36,6 +36,11 @@
 
 #define MAX_SEND_SIZE 4096
 
+/* TODO:
+ * many functions in this file use qse_size_t.
+ * so the size data transfers is limited by this type.
+ * break this barrier... */
+
 static qse_http_version_t http_v11 = { 1, 1 };
 /*------------------------------------------------------------------------*/
 
@@ -400,7 +405,8 @@ qse_httpd_task_t* qse_httpd_entaskerror (
 {
 	return entask_error (
 		httpd, client, pred, code,
-		qse_htre_getversion(req), req->attr.keepalive);
+		qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 /*------------------------------------------------------------------------*/
@@ -431,7 +437,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 		httpd, client, pred,
 		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
 		version->major, version->minor, 
-		(req->attr.keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
 		realm, (unsigned long)qse_mbslen(lmsg) + 4, lmsg);
 }
 
@@ -1196,7 +1202,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path = path;
 	data.version = *qse_htre_getversion(req);
-	data.keepalive = req->attr.keepalive;
+	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 
 	tmp = qse_htre_getheaderval(req, QSE_MT("Range"));
 	if (tmp) 
@@ -1414,7 +1420,7 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 	}
 
 	keepalive = cgi->keepalive;
-	if (req->attr.content_length_set) 
+	if (req->attr.flags & QSE_HTRE_ATTR_LENGTH)
 	{
 		cgi->resflags |= CGI_RES_SCRIPT_LENGTH;
 		cgi->script_output_length = req->attr.content_length;
@@ -1805,7 +1811,7 @@ static int task_init_cgi (
 	qse_mbscpy ((qse_mchar_t*)(cgi + 1), arg->path);
 	cgi->path = (qse_mchar_t*)(cgi + 1);
 	cgi->version = *qse_htre_getversion(arg->req);
-	cgi->keepalive = arg->req->attr.keepalive;
+	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
 	cgi->req = QSE_NULL;	
 
@@ -1826,7 +1832,7 @@ static int task_init_cgi (
 	}
 
 	if (!(arg->req->state & QSE_HTRE_COMPLETED) &&
-	    !arg->req->attr.content_length_set)
+	    !(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH))
 	{
 		/* if the request is not completed and doesn't have
 		 * content-length set, it's not really possible to
@@ -1859,8 +1865,9 @@ static int task_init_cgi (
 			 * should reach here. if content-length is set
 			 * the length should match len. */
 			QSE_ASSERT (len > 0);
-			QSE_ASSERT (!arg->req->attr.content_length_set ||
-			            (arg->req->attr.content_length_set && arg->req->attr.content_length == len));
+			QSE_ASSERT (!(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) ||
+			            ((arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) && 
+			             arg->req->attr.content_length == len));
 			cgi->reqflags |= CGI_REQ_GOTALL;
 			content_length = len;
 		}
@@ -1885,7 +1892,7 @@ static int task_init_cgi (
 			cgi->req = arg->req; 
 			qse_htre_setconcb (cgi->req, cgi_snatch_client_input, task);
 
-			QSE_ASSERT (arg->req->attr.content_length_set);
+			QSE_ASSERT (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH);
 			content_length = arg->req->attr.content_length;
 		}
 	}
@@ -2663,7 +2670,6 @@ static int proxy_snatch_peer_output (
 	 * the client should be chunked */
 	QSE_ASSERT (proxy->resflags & PROXY_RES_CLIENT_CHUNK);
 
-
 	/* TODO: better condition for compaction??? */
 	if (proxy->res_pending > 0 && proxy->res_consumed > 0)
 	{
@@ -2740,6 +2746,7 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		/* this peek handler is being called again. 
 		 * this can happen if qse_htrd_feed() is fed with
 		 * multiple responses in task_main_proxy_2 (). */
+qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXxx\n"));
 		proxy->httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;
 	}
@@ -2772,17 +2779,9 @@ qse_printf (QSE_T("10000000000000000000000000000 CONTINUE 1000000000000000000000
 		proxy->resflags |= PROXY_RES_RECEIVED_RESHDR;
 
 qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
-		/* begin initial line */
-		if (qse_mbs_cat (proxy->res, qse_htre_getverstr(res)) == (qse_size_t)-1) return -1;
-		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;;
-		if (qse_mbs_cat (proxy->res, qse_htre_getscodestr(res)) == (qse_size_t)-1) return -1;
-		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;
-		if (qse_mbs_cat (proxy->res, qse_htre_getsmesg(res)) == (qse_size_t)-1) return -1;
-		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
-		/* end initial line */
 
 		keepalive = proxy->keepalive;
-		if (res->attr.content_length_set) 
+		if (res->attr.flags & QSE_HTRE_ATTR_LENGTH)
 		{
 			/* the response from the peer is length based */
 			proxy->resflags |= PROXY_RES_PEER_LENGTH;
@@ -2797,13 +2796,7 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 				/* chunk response when writing back to client */
 				proxy->resflags |= PROXY_RES_CLIENT_CHUNK;
 
-				if (qse_mbs_cat (proxy->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) 
-				{
-					proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
-					return -1;
-				}
-
-				if (res->attr.chunked)
+				if (res->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 				{
 					/* mark the peer output is chunked */
 					proxy->resflags |= PROXY_RES_PEER_CHUNK;
@@ -2822,10 +2815,39 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 				proxy->resflags |= PROXY_RES_CLIENT_DISCON;
 				if (qse_httpd_entaskdisconnect (proxy->httpd, xtn->client, xtn->task) == QSE_NULL) return -1;
 
-				if (res->attr.chunked)
+				if (res->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 					proxy->resflags |= PROXY_RES_PEER_CHUNK;
 				else
 					proxy->resflags |= PROXY_RES_PEER_CLOSE;
+			}
+		}
+
+		/* begin initial line */
+		if (proxy->resflags & PROXY_RES_CLIENT_CHUNK &&
+		    qse_comparehttpversions (&res->version, &http_v11) < 0)
+		{
+			qse_mchar_t vbuf[64];
+			snprintf (vbuf, QSE_COUNTOF(vbuf), QSE_MT("HTTP/%d.%d"), 
+				(int)proxy->version.major, (int)proxy->version.minor);
+			if (qse_mbs_cat (proxy->res, vbuf) == (qse_size_t)-1) return -1;
+		}
+		else
+		{
+			if (qse_mbs_cat (proxy->res, qse_htre_getverstr(res)) == (qse_size_t)-1) return -1;
+		}
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;;
+		if (qse_mbs_cat (proxy->res, qse_htre_getscodestr(res)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT(" ")) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, qse_htre_getsmesg(res)) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cat (proxy->res, QSE_MT("\r\n")) == (qse_size_t)-1) return -1; 
+		/* end initial line */
+
+		if (proxy->resflags & PROXY_RES_CLIENT_CHUNK)
+		{
+			if (qse_mbs_cat (proxy->res, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1) 
+			{
+				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
 			}
 		}
 
@@ -2883,6 +2905,7 @@ qse_printf (QSE_T("PROXY PEER FUCKED - RETURNING TOO MUCH...\n"));
 			/* arrange to store further contents received to proxy->res */
 			qse_htre_setconcb (res, proxy_snatch_peer_output, xtn->task);
 		}
+qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY OK\n"));
 	}
 
 	proxy->res_pending = QSE_MBS_LEN(proxy->res) - proxy->res_consumed;
@@ -3000,7 +3023,7 @@ static int task_init_proxy (
 	proxy->httpd = httpd;
 
 	proxy->version = *qse_htre_getversion(arg->req);
-	proxy->keepalive = arg->req->attr.keepalive;
+	proxy->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	proxy->peer.nwad = arg->peer_nwad;
 	proxy->req = QSE_NULL;
 
@@ -3051,7 +3074,7 @@ len = 1024;
 	}
 
 	if (!(arg->req->state & QSE_HTRE_COMPLETED) &&
-	    !arg->req->attr.content_length_set)
+	    !(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH))
 	{
 		/* if the request is not completed and doesn't have
 		 * content-length set, it's not really possible to
@@ -3074,8 +3097,9 @@ len = 1024;
 			 * should reach here. if content-length is set
 			 * the length should match len. */
 			QSE_ASSERT (len > 0);
-			QSE_ASSERT (!arg->req->attr.content_length_set ||
-			            (arg->req->attr.content_length_set && arg->req->attr.content_length == len));
+			QSE_ASSERT (!(arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) ||
+			            ((arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) && 
+			             arg->req->attr.content_length == len));
 		}
 		else
 		{
@@ -3093,7 +3117,7 @@ len = 1024;
 			 * htrd calls invokes this callback. */
 			proxy->req = arg->req;
 			qse_htre_setconcb (proxy->req, proxy_snatch_client_input, task);
-			QSE_ASSERT (arg->req->attr.content_length_set);
+			QSE_ASSERT (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH);
 		}
 	}
 
@@ -3449,20 +3473,20 @@ qse_printf (QSE_T("#####PREMATURE EOF FROM PEER\n"));
 			}
 			else 
 			{
-qse_printf (QSE_T("#####PREMATURE EOF FROM PEER CLIENT CHUNK\n"));
 				QSE_ASSERT (proxy->resflags & PROXY_RES_CLIENT_CHUNK);
 
 				if (proxy->resflags & PROXY_RES_PEER_CLOSE)
 				{
-					/* i should compelte the content manually
-					 * since the end of content is indicated by
-					 * close in this case. */
-					qse_htre_completecontent (&proxy->peer_htrd->re);
+					/* i should stop the reader manually since the 
+					 * end of content is indicated by close in this
+					 * case. call qse_htrd_halt() for this. */
+					qse_htrd_halt (proxy->peer_htrd);
 					task->main = task_main_proxy_3;
 					task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 					return 1;
 				}
 
+qse_printf (QSE_T("#####PREMATURE EOF FROM PEER CLIENT CHUNK\n"));
 				return -1;
 			}
 		}
@@ -3550,6 +3574,7 @@ static int task_main_proxy_1 (
 			/* improve error conversion */
 			if (httpd->errnum == QSE_HTTPD_ENOENT) http_errnum = 404;
 			else if (httpd->errnum == QSE_HTTPD_EACCES) http_errnum = 403;
+qse_printf (QSE_T("task_main_proxy_1.... ERROR \n"));
 			goto oops;
 		}
 
@@ -3589,11 +3614,13 @@ static int task_main_proxy (
 	proxy_peer_htrd_xtn_t* xtn;
 	int http_errnum = 500;
 	int n;
+qse_printf (QSE_T("task_main_proxy....\n"));
 
 	if (proxy->init_failed) goto oops;
 
 	/* set up a http reader to read a response from the peer */
-	proxy->peer_htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(proxy_peer_htrd_xtn_t));
+	proxy->peer_htrd = qse_htrd_open (
+		httpd->mmgr, QSE_SIZEOF(proxy_peer_htrd_xtn_t));
 	if (proxy->peer_htrd == QSE_NULL) goto oops;
 	xtn = (proxy_peer_htrd_xtn_t*) qse_htrd_getxtn (proxy->peer_htrd);
 	xtn->proxy = proxy;
@@ -3614,6 +3641,7 @@ static int task_main_proxy (
 /* TODO: translate error code to http error... */
 		if (httpd->errnum == QSE_HTTPD_ENOENT) http_errnum = 404;
 		else if (httpd->errnum == QSE_HTTPD_EACCES) http_errnum = 403;
+qse_printf (QSE_T("caanot open peer....\n"));
 		goto oops;
 	}
 

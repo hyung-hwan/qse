@@ -141,6 +141,7 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 			return QSE_HTTPD_EINVAL;
 
 		case EACCES:
+		case ECONNREFUSED:
 			return QSE_HTTPD_EACCES;
 
 		case ENOENT:
@@ -414,12 +415,6 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	}
 #endif
 
-{
-qse_char_t buf[100];
-qse_nwadtostr (&client->orgdst_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
-qse_printf (QSE_T("ORGDST address : (%s)\n"), buf);
-}
-		
 	client->handle.i = fd;
 	return 0;
 }
@@ -487,7 +482,11 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) return -1;
 
 	if (ret == EINPROGRESS) return 0;
-	if (ret != 0) return -1;
+	if (ret != 0) 
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		return -1;
+	}
 
 	return 1; /* connection completed */
 }
@@ -533,8 +532,8 @@ struct mux_t
 
 	struct
 	{
-		struct mux_ev_t* ptr;
-		qse_size_t       capa;
+		struct mux_ev_t** ptr;
+		qse_size_t        capa;
 	} mev;
 };
 
@@ -564,7 +563,13 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
 	if (mux->ee.ptr) qse_httpd_freemem (httpd, mux->ee.ptr);
-	if (mux->mev.ptr) qse_httpd_freemem (httpd, mux->mev.ptr);
+	if (mux->mev.ptr) 
+	{
+		qse_size_t i;
+		for (i = 0; i < mux->mev.capa; i++)
+			if (mux->mev.ptr[i]) qse_httpd_freemem (httpd, mux->mev.ptr[i]);
+		qse_httpd_freemem (httpd, mux->mev.ptr);
+	}
 	close (mux->fd);
 	qse_httpd_freemem (httpd, mux);
 }
@@ -589,19 +594,32 @@ static int mux_addhnd (
 
 	if (handle.i >= mux->mev.capa)
 	{
-		struct mux_ev_t* tmp;
-		qse_size_t tmpcapa;
+		struct mux_ev_t** tmp;
+		qse_size_t tmpcapa, i;
 	
 		tmpcapa = (((handle.i + MUX_EV_ALIGN) / MUX_EV_ALIGN) * MUX_EV_ALIGN);
 
-		tmp = qse_httpd_reallocmem (
+		tmp = (struct mux_ev_t**) qse_httpd_reallocmem (
 			httpd, mux->mev.ptr, 
 			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa); 
 		if (tmp == QSE_NULL) return -1;
 
+		for (i = mux->mev.capa; i < tmpcapa; i++) tmp[i] = QSE_NULL;
 		mux->mev.ptr = tmp;
 		mux->mev.capa = tmpcapa;
 	}
+
+	if (mux->mev.ptr[handle.i] == QSE_NULL) 
+	{
+		/* the location of the data passed to epoll_ctl()
+		 * must not change unless i update the info with epoll()
+		 * whenever there is reallocation. so i simply
+		 * make mux-mev.ptr reallocatable but auctual
+		 * data fixed once allocated. */
+		mux->mev.ptr[handle.i] = qse_httpd_allocmem (
+			httpd, QSE_SIZEOF(*mux->mev.ptr[handle.i]));
+		if (mux->mev.ptr[handle.i] == QSE_NULL) return -1;
+	}	
 
 	if (mux->ee.len >= mux->ee.capa)
 	{
@@ -616,8 +634,7 @@ static int mux_addhnd (
 		mux->ee.capa = (mux->ee.capa + 1) * 2;
 	}
 
-	mev = &mux->mev.ptr[handle.i];
-
+	mev = mux->mev.ptr[handle.i];
 	mev->handle = handle;
 	mev->reqmask = mask;
 	mev->cbfun = cbfun;
@@ -1070,7 +1087,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			if (peek)
 			{
 				/* cgi */
-				if (req->attr.chunked)
+				if (req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 				{
 qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 				#if 0
@@ -1081,10 +1098,9 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 				#endif
 				}
-				else if (method == QSE_HTTP_POST && 
-				         !req->attr.content_length_set)
+				else if (method == QSE_HTTP_POST && !(req->attr.flags & QSE_HTRE_ATTR_LENGTH))
 				{
-					req->attr.keepalive = 0;
+					req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 					task = qse_httpd_entaskerror (
 						httpd, client, QSE_NULL, 411, req);
 					/* 411 can't keep alive */
@@ -1101,7 +1117,7 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 			{
 				/* to support the chunked request,
 				 * i need to wait until it's completed and invoke cgi */
-				if (req->attr.chunked)
+				if (req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 				{
 qse_printf (QSE_T("Entasking chunked CGI...\n"));
 					task = qse_httpd_entaskcgi (
@@ -1161,7 +1177,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 		}
 	}
 
-	if (!req->attr.keepalive)
+	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
 	{
 		if (!peek)
 		{
@@ -1236,6 +1252,7 @@ qse_printf (QSE_T("Host not included....\n"));
 	{
 		qse_nwad_t nwad;
 
+#if 0
 		if (qse_nwadequal (&client->local_addr, &client->orgdst_addr))
 		{
 			//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
@@ -1243,13 +1260,16 @@ qse_printf (QSE_T("Host not included....\n"));
 		}
 		else
 		{
+#endif
 			nwad = client->orgdst_addr;
+#if 0
 		}
+#endif
 		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
 		if (task == QSE_NULL) goto oops;
 	}
 
-	if (!req->attr.keepalive)
+	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
 	{
 		if (!peek)
 		{

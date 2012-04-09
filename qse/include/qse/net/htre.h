@@ -81,10 +81,11 @@ struct qse_htre_t
 	/* special attributes derived from the header */
 	struct
 	{
-		int chunked;		
-		int content_length_set;
+#define QSE_HTRE_ATTR_CHUNKED   (1 << 0)
+#define QSE_HTRE_ATTR_LENGTH    (1 << 1)
+#define QSE_HTRE_ATTR_KEEPALIVE (1 << 2)
+		int flags;
 		qse_size_t content_length;
-		int keepalive;
 		const qse_mchar_t* expect;
 		const qse_mchar_t* status;
 	} attr;

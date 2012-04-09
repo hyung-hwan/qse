@@ -74,6 +74,8 @@ struct qse_htrd_t
 	{
 		struct
 		{
+			int flags;
+
 			int crlf; /* crlf status */
 			qse_size_t plen; /* raw request length excluding crlf */
 			qse_size_t need; /* number of octets needed for contents */
@@ -86,8 +88,7 @@ struct qse_htrd_t
 			} chunk;
 		} s; /* state */
 
-
-		/* buffers needed to for processing a request */
+		/* buffers needed for processing a request */
 		struct
 		{
 			qse_htob_t raw; /* buffer to hold raw octets */
@@ -163,8 +164,13 @@ int qse_htrd_feed (
 	qse_size_t         len   /**< number of octets */
 );
 
-int qse_htrd_read (
-	qse_htrd_t* htrd /**< htrd */
+/**
+ * The qse_htrd_halt() function indicates the end of feeeding
+ * if the current response should be processed until the 
+ * connection is closed.
+ */ 
+int qse_htrd_halt (
+	qse_htrd_t* htrd
 );
 
 int qse_htrd_scanqparam (
