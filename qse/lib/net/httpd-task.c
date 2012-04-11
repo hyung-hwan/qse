@@ -1338,9 +1338,9 @@ static int cgi_capture_script_header (qse_htre_t* req, const qse_mchar_t* key, c
 	task_cgi_t* cgi = (task_cgi_t*)ctx;
 
 	/* capture a header excluding Status and Connection */
-	if (qse_mbscmp (key, QSE_MT("Status")) != 0 && 
-	    qse_mbscmp (key, QSE_MT("Connection")) != 0 &&
-	    qse_mbscmp (key, QSE_MT("Transfer-Encoding")) != 0)
+	if (qse_mbscasecmp (key, QSE_MT("Status")) != 0 && 
+	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
 	{
 		/* multiple items with the same keys are also 
 		 * copied back to the response buffer */
@@ -2675,8 +2675,8 @@ static int proxy_capture_peer_header (qse_htre_t* req, const qse_mchar_t* key, c
 {
 	task_proxy_t* proxy = (task_proxy_t*)ctx;
 
-	if (qse_mbscmp (key, QSE_MT("Connection")) != 0 &&
-	    qse_mbscmp (key, QSE_MT("Transfer-Encoding")) != 0)
+	if (qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
 	{
 		return proxy_add_header_to_buffer (proxy, proxy->res, key, val);
 	}
@@ -3647,7 +3647,8 @@ qse_printf (QSE_T("task_main_proxy_2....\n"));
 			qse_ssize_t n;
 			qse_size_t count;
 	
-			QSE_ASSERT ((proxy->resflags & PROXY_RES_AWAIT_RESHDR) || (proxy->resflags & PROXY_RES_CLIENT_CHUNK));
+			QSE_ASSERT ((proxy->resflags & PROXY_RES_AWAIT_RESHDR) || 
+			            (proxy->resflags & PROXY_RES_CLIENT_CHUNK));
 
 			count = proxy->res_pending;
 			if (count > MAX_SEND_SIZE) count = MAX_SEND_SIZE;
