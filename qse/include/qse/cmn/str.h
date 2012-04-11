@@ -39,6 +39,8 @@
 #define QSE_MBS_LEN(s)      ((s)->val.len)
 /** string pointer */
 #define QSE_MBS_PTR(s)      ((s)->val.ptr)
+/** pointer to a particular position */
+#define QSE_MBS_CPTR(s,idx) (&(s)->val.ptr[idx])
 /** string capacity */
 #define QSE_MBS_CAPA(s)     ((s)->capa)
 /** character at the given position */
@@ -54,6 +56,8 @@
 #define QSE_WCS_LEN(s)      ((s)->val.len)
 /** string pointer */
 #define QSE_WCS_PTR(s)      ((s)->val.ptr)
+/** pointer to a particular position */
+#define QSE_WCS_CPTR(s,idx) (&(s)->val.ptr[idx])
 /** string capacity */
 #define QSE_WCS_CAPA(s)     ((s)->capa)
 /** character at the given position */
@@ -79,6 +83,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define QSE_STR_CSTR(s)     ((qse_cstr_t*)QSE_MBS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_MBS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_MBS_PTR(s)
+#	define QSE_STR_CPTR(s,idx) QSE_MBS_CPTR(s,idx)
 #	define QSE_STR_CAPA(s)     QSE_MBS_CAPA(s)
 #	define QSE_STR_CHAR(s,idx) QSE_MBS_CHAR(s,idx)
 #	define QSE_STR_LASTCHAR(s) QSE_MBS_LASTCHAR(s)
@@ -89,6 +94,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 #	define QSE_STR_CSTR(s)     ((qse_cstr_t*)QSE_WCS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_WCS_LEN(s)
 #	define QSE_STR_PTR(s)      QSE_WCS_PTR(s)
+#	define QSE_STR_CPTR(s,idx) QSE_WCS_CPTR(s,idx)
 #	define QSE_STR_CAPA(s)     QSE_WCS_CAPA(s)
 #	define QSE_STR_CHAR(s,idx) QSE_WCS_CHAR(s,idx)
 #	define QSE_STR_LASTCHAR(s) QSE_WCS_LASTCHAR(s)

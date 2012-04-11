@@ -189,6 +189,7 @@ static QSE_INLINE pair_t* change_pair_val (
 
 static mancbs_t mancbs[] =
 {
+    	/* == QSE_HTB_MANCBS_DEFAULT == */
 	{
 		{
 			QSE_HTB_COPIER_DEFAULT,
@@ -204,6 +205,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
+     /* == QSE_HTB_MANCBS_INLINE_COPIERS == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -219,6 +221,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
+     /* == QSE_HTB_MANCBS_INLINE_KEY_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -234,6 +237,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
+     /* == QSE_HTB_MANCBS_INLINE_VALUE_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_DEFAULT,
@@ -287,7 +291,6 @@ int qse_htb_init (
 		"The initial capacity should be greater than 0. Otherwise, it is adjusted to 1 in the release mode");
 	QSE_ASSERTX (factor >= 0 && factor <= 100,
 		"The load factor should be between 0 and 100 inclusive. In the release mode, a value out of the range is adjusted to 100");
-
 
 	/* some initial adjustment */
 	if (capa <= 0) capa = 1;

@@ -114,20 +114,6 @@ struct hdr_cmb_t
 	struct hdr_cmb_t* next;
 };
 
-static QSE_INLINE void clear_combined_headers (qse_htrd_t* htrd)
-{
-	struct hdr_cmb_t* cmb = (struct hdr_cmb_t*)htrd->fed.chl;	
-	
-	while (cmb)
-	{	
-		struct hdr_cmb_t* next = cmb->next;
-		QSE_MMGR_FREE (htrd->mmgr, cmb);
-		cmb = next;
-	}
-
-	htrd->fed.chl = QSE_NULL;
-}
-
 static QSE_INLINE void clear_feed (qse_htrd_t* htrd)
 {
 	/* clear necessary part of the request/response before 
@@ -136,7 +122,6 @@ static QSE_INLINE void clear_feed (qse_htrd_t* htrd)
 
 	qse_mbs_clear (&htrd->fed.b.tra);
 	qse_mbs_clear (&htrd->fed.b.raw);
-	clear_combined_headers (htrd);
 
 	QSE_MEMSET (&htrd->fed.s, 0, QSE_SIZEOF(htrd->fed.s));
 }
@@ -198,7 +183,6 @@ void qse_htrd_fini (qse_htrd_t* htrd)
 {
 	qse_htre_fini (&htrd->re);
 
-	clear_combined_headers (htrd);
 	qse_mbs_fini (&htrd->fed.b.tra);
 	qse_mbs_fini (&htrd->fed.b.raw);
 #if 0
@@ -465,19 +449,19 @@ void qse_htrd_setrecbs (qse_htrd_t* htrd, const qse_htrd_recbs_t* recbs)
 static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
+	qse_htre_hdrval_t* val;
 
-	n = qse_mbsxncasecmp (
-		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair),
-		"close", 5);
+	val = QSE_HTB_VPTR(pair);
+	while (val->next) val = val->next;
+
+	n = qse_mbscmp (val->ptr, QSE_MT("close"));
 	if (n == 0)
 	{
 		htrd->re.attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 		return 0;
 	}
 
-	n = qse_mbsxncasecmp (
-		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), 
-		"keep-alive", 10);
+	n = qse_mbscmp (val->ptr, QSE_MT("keep-alive"));
 	if (n == 0)
 	{
 		htrd->re.attr.flags |= QSE_HTRE_ATTR_KEEPALIVE;
@@ -504,9 +488,15 @@ static int capture_connection (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	qse_size_t len = 0, off = 0, tmp;
-	const qse_mchar_t* ptr = QSE_HTB_VPTR(pair);
+	const qse_mchar_t* ptr;
+	qse_htre_hdrval_t* val;
 
-	while (off < QSE_HTB_VLEN(pair))
+	/* get the last content_length */
+	val = QSE_HTB_VPTR(pair);
+	while (val->next) val = val->next;
+
+	ptr = val->ptr;
+	while (off < val->len)
 	{
 		int num = digit_to_num (ptr[off]);
 		if (num <= -1)
@@ -550,22 +540,37 @@ static int capture_content_length (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 
 static int capture_expect (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
-	htrd->re.attr.expect = QSE_HTB_VPTR(pair);
+	qse_htre_hdrval_t* val;
+
+	val = QSE_HTB_VPTR(pair);
+	while (val->next) val = val->next;
+
+	if (qse_mbscmp (val->ptr, QSE_MT("100-continue")) == 0)
+		htrd->re.attr.flags |= QSE_HTRE_ATTR_EXPECT100;
+
 	return 0;
 }
 
 static int capture_status (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
-	htrd->re.attr.status = QSE_HTB_VPTR(pair);
+	qse_htre_hdrval_t* val;
+
+	val = QSE_HTB_VPTR(pair);
+	while (val->next) val = val->next;
+
+	htrd->re.attr.status = val->ptr;
 	return 0;
 }
 
 static int capture_transfer_encoding (qse_htrd_t* htrd, qse_htb_pair_t* pair)
 {
 	int n;
+	qse_htre_hdrval_t* val;
 
-	n = qse_mbsxncasecmp (
-		QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair), "chunked", 7);
+	val = QSE_HTB_VPTR(pair);
+	while (val->next) val = val->next;
+
+	n = qse_mbscasecmp (val->ptr, QSE_MT("chunked"));
 	if (n == 0)
 	{
 		/* if (htrd->re.attr.content_length > 0) */
@@ -645,10 +650,26 @@ static qse_htb_pair_t* hdr_cbserter (
 	{
 		/* the key is new. let's create a new pair. */
 		qse_htb_pair_t* p; 
+		qse_htre_hdrval_t *val;
 
-		p = qse_htb_allocpair (htb, kptr, klen, tx->vptr, tx->vlen);
+		val = QSE_MMGR_ALLOC (htb->mmgr, QSE_SIZEOF(*val));
+		if (val == QSE_NULL)
+		{
+			tx->htrd->errnum = QSE_HTRD_ENOMEM;
+			return QSE_NULL;
+		}
 
-		if (p == QSE_NULL) tx->htrd->errnum = QSE_HTRD_ENOMEM;
+		QSE_MEMSET (val, 0, QSE_SIZEOF(*val));
+		val->ptr = tx->vptr;
+		val->len = tx->vlen;
+		val->next = QSE_NULL;
+
+		p = qse_htb_allocpair (htb, kptr, klen, val, 0);
+		if (p == QSE_NULL) 
+		{
+			QSE_MMGR_FREE (htb->mmgr, val);
+			tx->htrd->errnum = QSE_HTRD_ENOMEM;
+		}
 		else 
 		{
 			if (capture_key_header (tx->htrd, p) <= -1)
@@ -664,88 +685,72 @@ static qse_htb_pair_t* hdr_cbserter (
 	}
 	else
 	{
-		/* the key exists. let's combine values, each separated 
-		 * by a comma */
-		struct hdr_cmb_t* cmb;
-		qse_mchar_t* ptr;
-		qse_size_t len;
+		/* RFC2616 
+		 * Multiple message-header fields with the same field-name 
+		 * MAY be present in a message if and only if the entire 
+		 * field-value for that header field is defined as a 
+		 * comma-separated list [i.e., #(values)]. It MUST be possible 
+		 * to combine the multiple header fields into one 
+		 * "field-name: field-value" pair, without changing the semantics
+		 * of the message, by appending each subsequent field-value 
+		 * to the first, each separated by a comma. The order in which 
+		 * header fields with the same field-name are received is therefore
+		 * significant to the interpretation of the combined field value,
+		 * and thus a proxy MUST NOT change the order of these field values 
+		 * when a message is forwarded. 
 
-		/* TODO: reduce waste in case the same key appears again.
-		 *
-		 *  the current implementation is not space nor performance 
-		 *  efficient. it allocates a new buffer again whenever it
-		 *  encounters the same key. memory is wasted and performance
-		 *  is sacrificed. 
-
-		 *  hopefully, a htrd header does not include a lot of 
-		 *  duplicate fields and this implmentation can afford wastage.
+		 * RFC6265 defines the syntax for Set-Cookie and Cookie.
+		 * this seems to be conflicting with RFC2616.
+		 * 
+		 * Origin servers SHOULD NOT fold multiple Set-Cookie header fields 
+		 * into a single header field. The usual mechanism for folding HTTP 
+		 * headers fields (i.e., as defined in [RFC2616]) might change the 
+		 * semantics of the Set-Cookie header field because the %x2C (",")
+		 * character is used by Set-Cookie in a way that conflicts with 
+		 * such folding.
+		 * 	
+		 * So i just maintain the list of valuea for a key instead of
+		 * folding them.
 		 */
 
-		/* allocate a block to combine the existing value and the new value */
-		cmb = (struct hdr_cmb_t*) QSE_MMGR_ALLOC (
-			tx->htrd->mmgr, 
-			QSE_SIZEOF(*cmb) + 
-			QSE_SIZEOF(qse_mchar_t) * (QSE_HTB_VLEN(pair) + 1 + tx->vlen + 1)
-		);
-		if (cmb == QSE_NULL)
+		qse_htre_hdrval_t* val;
+		qse_htre_hdrval_t* tmp;
+
+		val = (qse_htre_hdrval_t*) QSE_MMGR_ALLOC (
+			tx->htrd->mmgr, QSE_SIZEOF(*val));
+		if (val == QSE_NULL)
 		{
 			tx->htrd->errnum = QSE_HTRD_ENOMEM;
 			return QSE_NULL;
 		}
 
-		/* let 'ptr' point to the actual space for the combined value */
-		ptr = (qse_mchar_t*)(cmb + 1);
-		len = 0;
+		QSE_MEMSET (val, 0, QSE_SIZEOF(*val));
+		val->ptr = tx->vptr;
+		val->len = tx->vlen;
+		val->next = QSE_NULL;
 
-		/* fill the space with the value */
-		QSE_MEMCPY (&ptr[len], QSE_HTB_VPTR(pair), QSE_HTB_VLEN(pair));
-		len += QSE_HTB_VLEN(pair);
-		ptr[len++] = ',';
-		QSE_MEMCPY (&ptr[len], tx->vptr, tx->vlen);
-		len += tx->vlen;
-		ptr[len] = '\0';
+/* TODO: doubly linked list for speed-up??? */
+		tmp = QSE_HTB_VPTR(pair);
+		QSE_ASSERT (tmp != QSE_NULL);
 
-#if 0
-TODO:
-Not easy to unlink when using a singly linked list...
-Change it to doubly linked for this?
-
-		/* let's destroy the old buffer at least */
-		if (!(ptr >= tx->htrd->fed.b.raw.data && ptr < 
-		      &tx->htrd->fed.b.raw.data[tx->htrd->fed.b.raw.size]))
-		{
-			/* NOTE the range check in 'if' assumes that raw.data is never
-			 * relocated for resizing */
-
-			QSE_MMGR_FREE (
-				tx->htrd->mmgr, 
-				((struct hdr_cmb_t*)QSE_HTB_VPTR(pair)) - 1
-			);
-		}
-#endif
-		
-		/* update the value pointer and length */
-		QSE_HTB_VPTR(pair) = ptr;
-		QSE_HTB_VLEN(pair) = len;
-
-		/* link the new combined value block */
-		cmb->next = tx->htrd->fed.chl;
-		tx->htrd->fed.chl = cmb;
+		/* find the tail */
+		while (tmp->next) tmp = tmp->next;
+		/* append it to the list*/
+		tmp->next = val; 
 
 		if (capture_key_header (tx->htrd, pair) <= -1) return QSE_NULL;
-
 		return pair;
 	}
 }
 
-qse_mchar_t* parse_header_fields (
+qse_mchar_t* parse_header_field (
 	qse_htrd_t* htrd, qse_mchar_t* line, qse_htb_t* tab)
 {
 	qse_mchar_t* p = line, * last;
 	struct
 	{
 		qse_mchar_t* ptr;
-		qse_size_t      len;
+		qse_size_t   len;
 	} name, value;
 
 #if 0
@@ -757,26 +762,26 @@ qse_mchar_t* parse_header_fields (
 
 	/* check the field name */
 	name.ptr = last = p;
-	while (*p != '\0' && *p != '\n' && *p != ':')
+	while (*p != QSE_MT('\0') && *p != QSE_MT('\n') && *p != QSE_MT(':'))
 	{
 		if (!is_space_octet(*p++)) last = p;
 	}
 	name.len = last - name.ptr;
 
-	if (*p != ':') goto badhdr;
+	if (*p != QSE_MT(':')) goto badhdr;
 	*last = '\0';
 
 	/* skip the colon and spaces after it */
 	do { p++; } while (is_space_octet(*p));
 
 	value.ptr = last = p;
-	while (*p != '\0' && *p != '\n')
+	while (*p != QSE_MT('\0') && *p != QSE_MT('\n'))
 	{
 		if (!is_space_octet(*p++)) last = p;
 	}
 
 	value.len = last - value.ptr;
-	if (*p != '\n') goto badhdr; /* not ending with a new line */
+	if (*p != QSE_MT('\n')) goto badhdr; /* not ending with a new line */
 
 	/* peep at the beginning of the next line to check if it is 
 	 * the continuation */
@@ -785,25 +790,25 @@ qse_mchar_t* parse_header_fields (
 		qse_mchar_t* cpydst;
 
 		cpydst = p - 1;
-		if (*(cpydst-1) == '\r') cpydst--;
+		if (*(cpydst-1) == QSE_MT('\r')) cpydst--;
 
 		/* process all continued lines */
 		do 
 		{
-			while (*p != '\0' && *p != '\n')
+			while (*p != QSE_MT('\0') && *p != QSE_MT('\n'))
 			{
 				*cpydst = *p++; 
 				if (!is_space_octet(*cpydst++)) last = cpydst;
 			} 
 	
 			value.len = last - value.ptr;
-			if (*p != '\n') goto badhdr;
+			if (*p != QSE_MT('\n')) goto badhdr;
 
-			if (*(cpydst-1) == '\r') cpydst--;
+			if (*(cpydst-1) == QSE_MT('\r')) cpydst--;
 		}
 		while (is_purespace_octet(*++p));
 	}
-	*last = '\0';
+	*last = QSE_MT('\0');
 
 	/* insert the new field to the header table */
 	{
@@ -867,10 +872,11 @@ static QSE_INLINE int parse_initial_line_and_headers (
 		/* TODO: return error if protocol is 0.9.
 		 * HTTP/0.9 must not get headers... */
 
-		p = parse_header_fields (htrd, p, &htrd->re.hdrtab);
+		p = parse_header_field (htrd, p, &htrd->re.hdrtab);
 		if (p == QSE_NULL) return -1;
 	}
 	while (1);
+
 		
 	return 0;
 }
@@ -997,7 +1003,7 @@ static const qse_mchar_t* get_trailing_headers (
 						/* TODO: return error if protocol is 0.9.
 						 * HTTP/0.9 must not get headers... */
 	
-						p = parse_header_fields (
+						p = parse_header_field (
 							htrd, p, 
 							((htrd->option & QSE_HTRD_TRAILERS)? &htrd->re.trailers: &htrd->re.hdrtab)
 						);

@@ -25,8 +25,15 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/str.h>
 
+/* 
+ * You should not manipulate an object of the #qse_htre_t 
+ * type directly since it's complex. Use #qse_htrd_t to 
+ * create an object of the qse_htre_t type.
+ */
+
 /* header and contents of request/response */
 typedef struct qse_htre_t qse_htre_t;
+typedef struct qse_htre_hdrval_t qse_htre_hdrval_t;
 
 enum qse_htre_state_t
 {
@@ -40,6 +47,13 @@ typedef int (*qse_htre_concb_t) (
 	qse_size_t         len,
 	void*              ctx
 );
+
+struct qse_htre_hdrval_t
+{
+	const qse_mchar_t* ptr;
+	qse_size_t         len;
+	qse_htre_hdrval_t* next;
+};
 
 struct qse_htre_t 
 {
@@ -84,10 +98,10 @@ struct qse_htre_t
 #define QSE_HTRE_ATTR_CHUNKED   (1 << 0)
 #define QSE_HTRE_ATTR_LENGTH    (1 << 1)
 #define QSE_HTRE_ATTR_KEEPALIVE (1 << 2)
+#define QSE_HTRE_ATTR_EXPECT100 (1 << 3)
 		int flags;
 		qse_size_t content_length;
-		const qse_mchar_t* expect;
-		const qse_mchar_t* status;
+		const qse_mchar_t* status; /* for cgi */
 	} attr;
 
 	/* header table */
@@ -127,10 +141,10 @@ struct qse_htre_t
 #define qse_htre_getcontentlen(re)  QSE_MBS_LEN(&(re)->content)
 
 typedef int (*qse_htre_header_walker_t) (
-	qse_htre_t*        re,
-	const qse_mchar_t* key,
-	const qse_mchar_t* val,
-	void*              ctx
+	qse_htre_t*              re,
+	const qse_mchar_t*       key,
+	const qse_htre_hdrval_t* val,
+	void*                    ctx
 );
 
 #ifdef __cplusplus
@@ -162,12 +176,12 @@ int qse_htre_setstrfromxstr (
 	const qse_mxstr_t* xstr
 );
 
-const qse_mchar_t* qse_htre_getheaderval (
+const qse_htre_hdrval_t* qse_htre_getheaderval (
 	const qse_htre_t*  re, 
 	const qse_mchar_t* key
 );
 
-const qse_mchar_t* qse_htre_gettrailerval (
+const qse_htre_hdrval_t* qse_htre_gettrailerval (
 	const qse_htre_t*  re, 
 	const qse_mchar_t* key
 );

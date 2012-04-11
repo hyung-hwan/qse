@@ -49,10 +49,12 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 #define CLIENT_BAD                    (1 << 0)
 #define CLIENT_READY                  (1 << 1)
 #define CLIENT_SECURE                 (1 << 2)
-#define CLIENT_HANDLE_READ_IN_MUX     (1 << 3)
-#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 4)
+#define CLIENT_MUTE                   (1 << 3)
+#define CLIENT_MUTE_DELETED           (1 << 4)
+#define CLIENT_HANDLE_READ_IN_MUX     (1 << 5)
+#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 6)
 #define CLIENT_HANDLE_IN_MUX          (CLIENT_HANDLE_READ_IN_MUX|CLIENT_HANDLE_WRITE_IN_MUX)
-#define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 5))
+#define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 7))
 
 static void free_server_list (
 	qse_httpd_t* httpd, qse_httpd_server_t* server);
@@ -276,7 +278,6 @@ static qse_httpd_client_t* new_client (
 {
 	qse_httpd_client_t* client;
 	htrd_xtn_t* xtn;
-	int opt;
 
 	client = qse_httpd_allocmem (httpd, QSE_SIZEOF(*client));
 	if (client == QSE_NULL) return QSE_NULL;
@@ -291,10 +292,7 @@ static qse_httpd_client_t* new_client (
 		return QSE_NULL;
 	}
 
-	opt = qse_htrd_getoption (client->htrd);
-	opt |= QSE_HTRD_REQUEST;
-	opt &= ~QSE_HTRD_RESPONSE;
-	qse_htrd_setoption (client->htrd, opt);
+	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS);
 
 	if (httpd->cbs->client.accepted == QSE_NULL) 
 		client->status |= CLIENT_READY;
@@ -661,7 +659,7 @@ int qse_httpd_addserver (qse_httpd_t* httpd, const qse_char_t* uri)
 
 static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	qse_mchar_t buf[2048]; /* TODO: adjust this buffer size */
+	qse_mchar_t buf[4096]; /* TODO: adjust this buffer size */
 	qse_ssize_t m;
 	
 	QSE_ASSERT (httpd->cbs->client.recv != QSE_NULL);
@@ -674,7 +672,7 @@ reread:
 		if (httpd->errnum == QSE_HTTPD_EAGAIN)
 		{
 			/* nothing to read yet. */
-qse_fprintf (QSE_STDERR, QSE_T("Warning: Nothing to read from a client %d\n"), client->handle.i);
+qse_printf (QSE_T("Warning: Nothing to read from a client %d\n"), client->handle.i);
 			return 0; /* return ok */
 		}
 		else if (httpd->errnum == QSE_HTTPD_EINTR)
@@ -684,25 +682,38 @@ qse_fprintf (QSE_STDERR, QSE_T("Warning: Nothing to read from a client %d\n"), c
 		else
 		{
 			/* TOOD: if (httpd->errnum == QSE_HTTPD_ENOERR) httpd->errnum = QSE_HTTPD_ECALLBACK; */
-qse_fprintf (QSE_STDERR, QSE_T("Error: failed to read from a client %d\n"), client->handle.i);
+qse_printf (QSE_T("Error: failed to read from a client %d\n"), client->handle.i);
 	/* TODO: find a way to disconnect */
 			return -1;
 		}
 	}
 	else if (m == 0)
 	{
-		httpd->errnum = QSE_HTTPD_EDISCON;
-qse_fprintf (QSE_STDERR, QSE_T("Debug: connection closed %d\n"), client->handle.i);
-		return -1;
+qse_printf (QSE_T("Debug: connection closed %d - errno %d\n"), client->handle.i, errno);
+		if (client->task.head)
+		{
+			/* there is still more tasks to finish */
+			client->status |= CLIENT_MUTE;
+			return 0;
+		}
+		else
+		{
+			httpd->errnum = QSE_HTTPD_EDISCON;
+			return -1;
+		}
 	}
 	
 	/* feed may have called the request callback multiple times... 
  	 * that's because we don't know how many valid requests
 	 * are included in 'buf' */ 
-qse_fprintf (QSE_STDERR, QSE_T("Debug: read from a client %d\n"), client->handle.i);
-	
 	httpd->errnum = QSE_HTTPD_ENOERR;
-qse_printf (QSE_T("!!!!!FEEDING [%.*hs]\n"), (int)m, buf);
+qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
+{
+int i;
+for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
+}
+qse_printf (QSE_T("]\n"));
+
 	if (qse_htrd_feed (client->htrd, buf, m) <= -1)
 	{
 		if (httpd->errnum == QSE_HTTPD_ENOERR)
@@ -713,7 +724,12 @@ qse_printf (QSE_T("!!!!!FEEDING [%.*hs]\n"), (int)m, buf);
 			else httpd->errnum = QSE_HTTPD_ENOMEM; /* TODO: better translate error code */
 		}
 	
-qse_fprintf (QSE_STDERR, QSE_T("Error: http error while processing \n"));
+qse_printf (QSE_T("Error: http error while processing %d ["), (int)client->handle.i);
+{
+int i;
+for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
+}
+qse_printf (QSE_T("]\n"));
 		return -1;
 	}
 
@@ -731,19 +747,31 @@ static int invoke_client_task (
 /* TODO: handle comparison callback ... */
 	if (handle.i == client->handle.i && (mask & QSE_HTTPD_MUX_READ)) /* TODO: no direct comparision */
 	{
-		if (read_from_client (httpd, client) <= -1) 
+		if (!(client->status & CLIENT_MUTE) && 
+		    read_from_client (httpd, client) <= -1) 
 		{
 			/* return failure on disconnection also in order to
 			 * purge the client in perform_client_task().
 			 * thus the following line isn't necessary.
 			 *if (httpd->errnum == QSE_HTTPD_EDISCON) return 0;*/
+qse_printf (QSE_T("ERROR: read from client [%d] failed...\n"), (int)handle.i);
 			return -1;
 		}
 	}
 
 	/* this client doesn't have any task */
 	task = client->task.head;
-	if (task == QSE_NULL) return 0;
+	if (task == QSE_NULL) 
+	{
+		if (client->status & CLIENT_MUTE)
+		{
+			/* handle this delayed client disconnection */
+qse_printf (QSE_T("ERROR: mute client got no more task [%d] failed...\n"), (int)client->handle.i);
+			return -1;
+		}
+
+		return 0;
+	}
 
 	trigger_fired = 0;
 	client_handle_writable = 0;
@@ -793,7 +821,6 @@ qse_printf (QSE_T("task returend %d\n"), n);
 		 * from the mux. so i don't clear them explicitly here */
 
 		dequeue_task (httpd, client); 
-
 		mux_mask = QSE_HTTPD_MUX_READ;
 		mux_status = CLIENT_HANDLE_READ_IN_MUX;
 		if (client->task.head) 
@@ -802,6 +829,23 @@ qse_printf (QSE_T("task returend %d\n"), n);
 			 * trigger it as if it is just entasked */
 			mux_mask |= QSE_HTTPD_MUX_WRITE;
 			mux_status |= CLIENT_HANDLE_WRITE_IN_MUX;
+
+			if (client->status & CLIENT_MUTE)
+			{
+qse_printf (QSE_T("REMOVING XXXXX FROM READING....\n"));
+				mux_mask &= ~QSE_HTTPD_MUX_READ;
+				mux_status &= ~CLIENT_HANDLE_READ_IN_MUX;
+			}
+		}
+		else 
+		{
+			if (client->status & CLIENT_MUTE)
+			{
+				/* no more task. but this client
+				 * has closed connection previously */
+qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
+				return -1;
+			}
 		}
 
 		if ((client->status & CLIENT_HANDLE_IN_MUX) != 
@@ -810,10 +854,16 @@ qse_printf (QSE_T("task returend %d\n"), n);
 			httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
 			client->status &= ~CLIENT_HANDLE_IN_MUX;
 
-			if (httpd->cbs->mux.addhnd (
-				httpd, httpd->mux, client->handle, 
-				mux_mask, perform_client_task, client) <= -1) return -1;
-			client->status |= mux_status;
+			if (mux_status)
+			{
+				if (httpd->cbs->mux.addhnd (
+					httpd, httpd->mux, client->handle, 
+					mux_mask, perform_client_task, client) <= -1) 
+				{
+					return -1;
+				}
+				client->status |= mux_status;
+			}
 		}
 
 		QSE_MEMSET (client->trigger, 0, QSE_SIZEOF(client->trigger));
@@ -832,7 +882,8 @@ qse_printf (QSE_T("task returend %d\n"), n);
 			                           QSE_HTTPD_TASK_TRIGGER_WRITABLE);
 		}
 
-		if (QSE_MEMCMP (client->trigger, task->trigger, QSE_SIZEOF(client->trigger)) != 0)
+		if (QSE_MEMCMP (client->trigger, task->trigger, QSE_SIZEOF(client->trigger)) != 0 || 
+		    ((client->status & CLIENT_MUTE) && !(client->status & CLIENT_MUTE_DELETED)))
 		{
 			/* manipulate muxtiplexer settings if there are trigger changes */
 
@@ -852,14 +903,30 @@ qse_printf (QSE_T("task returend %d\n"), n);
 			}
 
 			has_trigger = 0;
-			client_handle_mux_mask = QSE_HTTPD_MUX_READ;
+			client_handle_mux_mask = 0;
+			client_handle_mux_status = 0;
+			if (client->status & CLIENT_MUTE)
+			{
+				client->status |= CLIENT_MUTE_DELETED;
+			}
+			else
+			{
+				client_handle_mux_mask |= QSE_HTTPD_MUX_READ;
+				client_handle_mux_status |= CLIENT_HANDLE_READ_IN_MUX; 
+			}
 
 			/* add new trigger handles */
 			for (i = 0; i < QSE_COUNTOF(task->trigger); i++)
 			{
 				trigger_mux_mask = 0;
 				if (task->trigger[i].mask & QSE_HTTPD_TASK_TRIGGER_READ) 
-					trigger_mux_mask |= QSE_HTTPD_MUX_READ;
+				{
+					if (task->trigger[i].handle.i != client->handle.i ||
+					    !(client->status & CLIENT_MUTE))
+					{
+						trigger_mux_mask |= QSE_HTTPD_MUX_READ;
+					}
+				}
 				if (task->trigger[i].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) 
 					trigger_mux_mask |= QSE_HTTPD_MUX_WRITE;
 	
@@ -878,15 +945,15 @@ qse_printf (QSE_T("task returend %d\n"), n);
 					{
 						if (httpd->cbs->mux.addhnd (
 							httpd, httpd->mux, task->trigger[i].handle,
-							trigger_mux_mask, perform_client_task, client) <= -1) return -1;
+							trigger_mux_mask, perform_client_task, client) <= -1) 
+						{
+							return -1;
+						}
 						client->status |= CLIENT_TASK_TRIGGER_IN_MUX(i);
 					}
 				}
 			}
 	
-			/* manipulate the client handle. reading is always enabled
-			 * on the cleint handle */
-			client_handle_mux_status = CLIENT_HANDLE_READ_IN_MUX; 
 			if (client_handle_mux_mask)
 			{
 				/* if the client handle is included in the trigger
@@ -908,10 +975,16 @@ qse_printf (QSE_T("task returend %d\n"), n);
 				httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
 				client->status &= ~CLIENT_HANDLE_IN_MUX;
 	
-				if (httpd->cbs->mux.addhnd (
-					httpd, httpd->mux, client->handle,
-					client_handle_mux_mask, perform_client_task, client) <= -1) return -1;
-				client->status |= client_handle_mux_status;
+				if (client_handle_mux_mask)
+				{
+					if (httpd->cbs->mux.addhnd (
+						httpd, httpd->mux, client->handle,
+						client_handle_mux_mask, perform_client_task, client) <= -1) 
+					{
+						return -1;
+					}
+					client->status |= client_handle_mux_status;
+				}
 			}
 	
 			QSE_MEMCPY (client->trigger, task->trigger, QSE_SIZEOF(client->trigger));
@@ -949,13 +1022,17 @@ static int perform_client_task (
 		qse_gettime (&client->last_active); /* TODO: error check??? */
 		move_client_to_tail (httpd, client);
 
-		if (invoke_client_task (httpd, client, handle, mask) <= -1) goto oops;
+		if (invoke_client_task (httpd, client, handle, mask) <= -1) 
+		{
+qse_printf (QSE_T("OOPS AFTER CLIENT TASK BAD XXXXXXXXXXXXXX [%d]\n"), (int)handle.i);
+			goto oops;
+		}
 	}
 
 	return 0;
 
 oops:
-qse_printf (QSE_T("MARKING BAD XXXXXXXXXXXXXX\n"));
+qse_printf (QSE_T("MARKING BAD XXXXXXXXXXXXXX [%d]\n"), (int)handle.i);
 	/*purge_client (httpd, client);*/
 	client->status |= CLIENT_BAD;
 	client->bad_next = httpd->client.bad;
