@@ -218,21 +218,21 @@ struct qse_httpd_cbs_t
 typedef struct qse_httpd_task_t qse_httpd_task_t;
 
 typedef int (*qse_httpd_task_init_t) (
-	qse_httpd_t* httpd,
+	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
-	qse_httpd_task_t* task
+	qse_httpd_task_t*   task
 );
 
 typedef void (*qse_httpd_task_fini_t) (	
-	qse_httpd_t* httpd,
+	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
-	qse_httpd_task_t* task
+	qse_httpd_task_t*   task
 );
 
 typedef int (*qse_httpd_task_main_t) (
-	qse_httpd_t* httpd,
+	qse_httpd_t*        httpd,
 	qse_httpd_client_t* client,
-	qse_httpd_task_t* task
+	qse_httpd_task_t*   task
 );
 
 

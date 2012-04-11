@@ -94,9 +94,6 @@ struct qse_htrd_t
 			qse_htob_t raw; /* buffer to hold raw octets */
 			qse_htob_t tra; /* buffer for handling trailers */
 		} b; 
-
-		/* points to the head of the combined header list */
-		void* chl;
 	} fed; 
 
 	qse_htre_t re;

@@ -892,7 +892,7 @@ static qse_ssize_t client_recv (
 	}
 	else
 	{
-		ssize_t ret = read (client->handle.i, buf, bufsize);
+		ssize_t ret = recv (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return ret;
 	}
@@ -916,7 +916,7 @@ static qse_ssize_t client_send (
 	}
 	else
 	{
-		ssize_t ret = write (client->handle.i, buf, bufsize);
+		ssize_t ret = send (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return ret;
 	}
@@ -999,7 +999,14 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 /* ------------------------------------------------------------------- */
 static qse_htb_walk_t walk (qse_htb_t* htb, qse_htb_pair_t* pair, void* ctx)
 {
-qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)QSE_HTB_VLEN(pair), QSE_HTB_VPTR(pair));
+	qse_htre_hdrval_t* val;
+
+	val = QSE_HTB_VPTR(pair);
+	while (val)
+	{
+qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_HTB_KPTR(pair), (int)val->len, val->ptr);
+		val = val->next;
+	}
 	return QSE_HTB_WALK_FORWARD;
 }
 
@@ -1042,7 +1049,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			qse_httpd_discardcontent (httpd, req);
 		}
 
-		if (req->attr.expect && 
+		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
 		    (req->version.major > 1 || 
 		     (req->version.major == 1 && req->version.minor >= 1)) && 
 		    !content_received)
@@ -1051,24 +1058,14 @@ if (qse_htre_getcontentlen(req) > 0)
 			/* "expect" in the header, version 1.1 or higher, 
 			 * and no content received yet */
 	
-			if (qse_mbscasecmp(req->attr.expect, QSE_MT("100-continue")) != 0)
-			{
-				if (qse_httpd_entaskerror (
-					httpd, client, QSE_NULL, 417, req) == QSE_NULL) return -1;
-				if (qse_httpd_entaskdisconnect (
-					httpd, client, QSE_NULL) == QSE_NULL) return -1;
-			}
-			else
-			{
 				/* TODO: determine if to return 100-continue or other errors */
 {
 qse_ntime_t now;
 qse_gettime (&now);
 qse_printf (QSE_T("entasking continue at %lld\n"), (long long)now);
 }
-				if (qse_httpd_entaskcontinue (
-					httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
-			}
+			if (qse_httpd_entaskcontinue (
+				httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
 		}
 	}
 
@@ -1131,7 +1128,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 		{
 			if (peek)
 			{
-				const qse_mchar_t* auth;
+				const qse_htre_hdrval_t* auth;
 				int authorized = 0;
 
 				auth = qse_htre_getheaderval (req, QSE_MT("Authorization"));
@@ -1139,6 +1136,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 				{
 					/* TODO: PERFORM authorization... */	
 					/* BASE64 decode... */
+					while (auth->next) auth = auth->next;
 					authorized = 1;
 				}
 
@@ -1436,6 +1434,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	setlocale (LC_ALL, "");
 	qse_setdflcmgr (qse_slmbcmgr);
 #endif
+
 	return qse_runmain (argc, argv, httpd_main);
 }
 

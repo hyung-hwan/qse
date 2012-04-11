@@ -21,13 +21,46 @@
 #include <qse/net/htre.h>
 #include "../cmn/mem.h"
 
+static void free_hdrval (qse_htb_t* htb, void* vptr, qse_size_t vlen)
+{
+	qse_htre_hdrval_t* val;
+	qse_htre_hdrval_t* tmp;
+
+	val = vptr;
+	while (val)
+	{
+		tmp = val;
+		val = val->next;
+		QSE_MMGR_FREE (htb->mmgr, tmp);
+	}
+}
+
 int qse_htre_init (qse_htre_t* re, qse_mmgr_t* mmgr)
 {
+	static qse_htb_mancbs_t mancbs =
+	{
+          {
+               QSE_HTB_COPIER_DEFAULT,
+               QSE_HTB_COPIER_DEFAULT
+          },
+          {
+               QSE_HTB_FREEER_DEFAULT,
+               free_hdrval
+          },
+          QSE_HTB_COMPER_DEFAULT,
+          QSE_HTB_KEEPER_DEFAULT,
+          QSE_HTB_SIZER_DEFAULT,
+          QSE_HTB_HASHER_DEFAULT
+	};
+
 	QSE_MEMSET (re, 0, QSE_SIZEOF(*re));
 	re->mmgr = mmgr;	
 
 	if (qse_htb_init (&re->hdrtab, mmgr, 60, 70, 1, 1) <= -1) return -1;
 	if (qse_htb_init (&re->trailers, mmgr, 20, 70, 1, 1) <= -1) return -1;
+
+	qse_htb_setmancbs (&re->hdrtab, &mancbs);
+	qse_htb_setmancbs (&re->trailers, &mancbs);
 
 	qse_mbs_init (&re->content, mmgr, 0);
 #if 0
@@ -86,7 +119,7 @@ int qse_htre_setstrfromxstr (
 	return (qse_mbs_ncpy (str, xstr->ptr, xstr->len) == (qse_size_t)-1)? -1: 0;
 }
 
-const qse_mchar_t* qse_htre_getheaderval (
+const qse_htre_hdrval_t* qse_htre_getheaderval (
 	const qse_htre_t* re, const qse_mchar_t* name)
 {
 	qse_htb_pair_t* pair;
@@ -95,7 +128,7 @@ const qse_mchar_t* qse_htre_getheaderval (
 	return QSE_HTB_VPTR(pair);
 }
 
-const qse_mchar_t* qse_htre_gettrailerval (
+const qse_htre_hdrval_t* qse_htre_gettrailerval (
 	const qse_htre_t* re, const qse_mchar_t* name)
 {
 	qse_htb_pair_t* pair;
@@ -147,7 +180,6 @@ int qse_htre_walktrailers (
 	qse_htb_walk (&re->trailers, walk_headers, &hwctx);
 	return hwctx.ret;
 }
-	
 	
 int qse_htre_addcontent (
 	qse_htre_t* re, const qse_mchar_t* ptr, qse_size_t len)
