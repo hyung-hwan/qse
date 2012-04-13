@@ -97,6 +97,7 @@ struct qse_htrd_t
 	} fed; 
 
 	qse_htre_t re;
+	int        clean;
 };
 
 #ifdef __cplusplus

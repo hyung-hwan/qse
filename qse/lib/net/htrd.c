@@ -98,6 +98,8 @@ static QSE_INLINE int push_to_buffer (
 static QSE_INLINE int push_content (
 	qse_htrd_t* htrd, const qse_mchar_t* ptr, qse_size_t len)
 {
+	QSE_ASSERT (len > 0);
+
 	if (qse_htre_addcontent (&htrd->re, ptr, len) <= -1) 
 	{
 		htrd->errnum = QSE_HTRD_ENOMEM;
@@ -109,15 +111,11 @@ static QSE_INLINE int push_content (
 	return 0;
 }
 
-struct hdr_cmb_t
-{
-	struct hdr_cmb_t* next;
-};
-
 static QSE_INLINE void clear_feed (qse_htrd_t* htrd)
 {
 	/* clear necessary part of the request/response before 
 	 * reading the next request/response */
+	htrd->clean = 1;
 	qse_htre_clear (&htrd->re);
 
 	qse_mbs_clear (&htrd->fed.b.tra);
@@ -125,10 +123,6 @@ static QSE_INLINE void clear_feed (qse_htrd_t* htrd)
 
 	QSE_MEMSET (&htrd->fed.s, 0, QSE_SIZEOF(htrd->fed.s));
 }
-
-#define QSE_HTRD_STATE_REQ  1
-#define QSE_HTRD_STATE_HDR  2
-#define QSE_HTRD_STATE_POST 3
 
 qse_htrd_t* qse_htrd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
@@ -176,6 +170,7 @@ int qse_htrd_init (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
 		return -1;
 	}
 
+	htrd->clean = 1;
 	return 0;
 }
 
@@ -849,9 +844,11 @@ static QSE_INLINE int parse_initial_line_and_headers (
 
 	p = QSE_MBS_PTR(&htrd->fed.b.raw);
 
+#if 0
 	if (htrd->option & QSE_HTRD_SKIPEMPTYLINES)
 		while (is_whspace_octet(*p)) p++;
 	else
+#endif
 		while (is_space_octet(*p)) p++;
 	
 	QSE_ASSERT (*p != '\0');
@@ -895,7 +892,6 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 	/* this function must be called in the GET_CHUNK_LEN context */
 	QSE_ASSERT (htrd->fed.s.chunk.phase == GET_CHUNK_LEN);
 
-/*qse_printf (QSE_T("CALLING getchunklen [%hs]\n"), ptr);*/
 	if (htrd->fed.s.chunk.count <= 0)
 	{
 		/* skip leading spaces if the first character of
@@ -925,7 +921,6 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 			if (htrd->fed.s.chunk.count <= 0)
 			{
 				/* empty line - no more chunk */
-/*qse_printf (QSE_T("empty line chunk done....\n"));*/
 				htrd->fed.s.chunk.phase = GET_CHUNK_DONE;
 			}
 			else if (htrd->fed.s.chunk.len <= 0)
@@ -933,13 +928,11 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 				/* length explicity specified to 0
 				   get trailing headers .... */
 				htrd->fed.s.chunk.phase = GET_CHUNK_TRAILERS;
-/*qse_printf (QSE_T("SWITCH TO GET_CHUNK_TRAILERS....\n"));*/
 			}
 			else
 			{
 				/* ready to read the chunk data... */
 				htrd->fed.s.chunk.phase = GET_CHUNK_DATA;
-/*qse_printf (QSE_T("SWITCH TO GET_CHUNK_DATA....\n"));*/
 			}
 
 			htrd->fed.s.need = htrd->fed.s.chunk.len;
@@ -947,7 +940,6 @@ static const qse_mchar_t* getchunklen (qse_htrd_t* htrd, const qse_mchar_t* ptr,
 		}
 		else
 		{
-/*qse_printf (QSE_T("XXXXXXXXXXXXXXXXXxxx [%c]\n"), *ptr);*/
 			htrd->errnum = QSE_HTRD_EBADRE;
 			return QSE_NULL;
 		}
@@ -964,7 +956,6 @@ static const qse_mchar_t* get_trailing_headers (
 	while (ptr < end)
 	{
 		register qse_mchar_t b = *ptr++;
-/*qse_printf (QSE_T("[%hc], %d\n"), b, htrd->fed.s.crlf);*/
 		switch (b)
 		{
 			case '\0':
@@ -1043,6 +1034,8 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 	int header_completed_during_this_feed = 0;
 	qse_size_t avail;
 
+	QSE_ASSERT (len > 0);
+
 	/* does this goto drop code maintainability? */
 	if (htrd->fed.s.need > 0) 
 	{
@@ -1069,10 +1062,13 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 			goto dechunk_get_trailers;
 	}
 
+	htrd->clean = 0; /* mark that the htrd is in need of some data */
+
 	while (ptr < end)
 	{
 		register qse_mchar_t b = *ptr++;
 
+#if 0
 		if (htrd->option & QSE_HTRD_SKIPEMPTYLINES &&
 		    htrd->fed.s.plen <= 0 && is_whspace_octet(b)) 
 		{
@@ -1081,6 +1077,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 			req++;
 			continue;
 		}
+#endif
 
 		switch (b)
 		{
@@ -1142,16 +1139,17 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 * reading CGI outputs. So it comes with
 						 * awkwardity described above.
 						 */
-						if (push_content (htrd, ptr, end - ptr) <= -1) return -1;
-						/* this jump is only to invoke the peek 
-						 * callback. this function should not be fed
-						 * more. */
+						if (ptr < end && push_content (htrd, ptr, end - ptr) <= -1) return -1;
 
 						/* i don't really know if it is really completed 	
 						 * with content. QSE_HTRD_PEEKONLY is not compatible
 						 * with the completed state. anyway, let me complete
 						 * it. */
 						qse_htre_completecontent (&htrd->re);
+
+						/* this jump is only to invoke the peek 
+						 * callback. this function should not be fed
+						 * more. */
 						goto feedme_more; 
 					}
 
@@ -1169,7 +1167,7 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 					dechunk_resume:
 						ptr = getchunklen (htrd, ptr, end - ptr);
 						if (ptr == QSE_NULL) return -1;
-	
+
 						if (htrd->fed.s.chunk.phase == GET_CHUNK_LEN)
 						{
 							/* still in the GET_CHUNK_LEN state.
@@ -1235,8 +1233,17 @@ int qse_htrd_feed (qse_htrd_t* htrd, const qse_mchar_t* req, qse_size_t len)
 						 * specified */
 					content_resume:
 						avail = end - ptr;
-	
-						if (avail < htrd->fed.s.need)
+						if (avail <= 0)
+						{
+							/* we didn't get a complete content yet */
+
+							/* avail can be 0 if data fed ends with
+							 * a chunk length withtout actual data. 
+							 * so i check if avail is greater than 0
+							 * in order not to push empty content. */
+							goto feedme_more; 
+						}
+						else if (avail < htrd->fed.s.need)
 						{
 							/* the data is not as large as needed */
 							if (push_content (htrd, ptr, avail) <= -1) return -1;
@@ -1355,10 +1362,17 @@ qse_printf (QSE_T("CONTENT_LENGTH %d, RAW HEADER LENGTH %d\n"),
 #endif
 
 					clear_feed (htrd);
+					if (ptr >= end) return 0; /* no more feeds to handle */
 
 					/* let ptr point to the next character to LF or 
 					 * the optional contents */
 					req = ptr; 
+
+					/* since there are more to handle, i mark that
+					 * htrd is in need of some data. this may
+					 * not be really compatible with SKIPEMPTYLINES. 
+					 * SHOULD I simply remove the option? */
+					htrd->clean = 0; 
 				}
 				break;
 			}

@@ -46,6 +46,7 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443
 
+/* client->status */
 #define CLIENT_BAD                    (1 << 0)
 #define CLIENT_READY                  (1 << 1)
 #define CLIENT_SECURE                 (1 << 2)
@@ -531,7 +532,9 @@ static int activate_servers (qse_httpd_t* httpd)
 	{
 		if (httpd->cbs->server.open (httpd, server) <= -1)
 		{
-qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....\n"));
+qse_char_t buf[64];
+qse_nwadtostr (&server->nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
+qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....[%s]\n"), buf);
 			continue;
 		}
 
@@ -690,9 +693,10 @@ qse_printf (QSE_T("Error: failed to read from a client %d\n"), client->handle.i)
 	else if (m == 0)
 	{
 qse_printf (QSE_T("Debug: connection closed %d - errno %d\n"), client->handle.i, errno);
-		if (client->task.head)
+		if (client->task.head && client->htrd->clean)
 		{
-			/* there is still more tasks to finish */
+			/* there is still more tasks to finish and 
+			 * http reader is not waiting for any more feeds.  */
 			client->status |= CLIENT_MUTE;
 			return 0;
 		}

@@ -1263,9 +1263,10 @@ struct task_cgi_t
 	qse_pio_t pio;
 	int pio_inited;
 
-#define CGI_REQ_GOTALL (1 << 0)
-#define CGI_REQ_FWDALL (1 << 1)
-#define CGI_REQ_FWDERR (1 << 2)
+#define CGI_REQ_GOTALL     (1 << 0)
+#define CGI_REQ_FWDALL     (1 << 1)
+#define CGI_REQ_FWDERR     (1 << 2)
+#define CGI_REQ_FWDCHUNKED (1 << 3)
 	int          reqflags;
 	qse_htre_t*  req; /* original request associated with this */
 	qse_mbs_t*   reqfwdbuf; /* content from the request */
@@ -1306,31 +1307,82 @@ static int cgi_capture_client_header (
 	qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
 {
 	cgi_client_req_hdr_ctx_t* hdrctx;
-	qse_mchar_t* http_key;
-	int ret;
 
 	hdrctx = (cgi_client_req_hdr_ctx_t*)ctx;
 
-/* convert value to uppercase, change - to _ */
-	http_key = qse_mbsdup2 (QSE_MT("HTTP_"), key, req->mmgr);
-	if (http_key == QSE_NULL)
+	if (qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0)
 	{
-		hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
-		return -1;
+		qse_mchar_t* http_key, * ptr;
+		int ret;
+
+		http_key = qse_mbsdup2 (QSE_MT("HTTP_"), key, req->mmgr);
+		if (http_key == QSE_NULL)
+		{
+			hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+
+		for (ptr = http_key; *ptr; ptr++)
+		{
+			*ptr = QSE_TOMUPPER((unsigned)*ptr);
+			if (*ptr == QSE_MT('-')) *ptr = '_';
+		}
+
+		/* insert the last value only */
+		while (val->next) val = val->next;
+		ret = qse_env_insertmbs (hdrctx->env, http_key, val->ptr);
+		if (ret <= -1) 
+		{
+			QSE_MMGR_FREE (req->mmgr, http_key);
+			hdrctx->httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+
+		QSE_MMGR_FREE (req->mmgr, http_key);
 	}
 
-/* TODO EXCLUDE VARIOUS FIELDS  like transfer-encoding or should i let cgi handle transfer-encoding: chunked??? */
-/* TODO: special handling for Cookie??? */
+	return 0;
+}
+
+static int cgi_add_header_to_buffer (
+	task_cgi_t* cgi, qse_mbs_t* buf, const qse_mchar_t* key, const qse_htre_hdrval_t* val)
+{
+	QSE_ASSERT (val != QSE_NULL);
+
 	do
 	{
-		ret = qse_env_insertmbs (hdrctx->env, http_key, val->ptr);
-		if (ret <= -1) break;
+		if (qse_mbs_cat (buf, key) == (qse_size_t)-1 ||
+		    qse_mbs_cat (buf, QSE_MT(": ")) == (qse_size_t)-1 ||
+		    qse_mbs_cat (buf, val->ptr) == (qse_size_t)-1 ||
+		    qse_mbs_cat (buf, QSE_MT("\r\n")) == (qse_size_t)-1) 
+		{
+			/* multiple items with the same keys are also 
+			 * copied back to the response buffer */
+			cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+
 		val = val->next;
 	}
 	while (val);
 
-	QSE_MMGR_FREE (req->mmgr, http_key);
-	return ret;
+	return 0;
+}
+
+static int cgi_capture_client_trailer (qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
+{
+	task_cgi_t* cgi = (task_cgi_t*)ctx;
+
+	if (qse_mbscasecmp (key, QSE_MT("Content-Length")) != 0 && 
+	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
+	{
+		return cgi_add_header_to_buffer (cgi, cgi->reqfwdbuf, key, val);
+	}
+
+	return 0;
 }
 
 static int cgi_capture_script_header (qse_htre_t* req, const qse_mchar_t* key, const qse_htre_hdrval_t* val, void* ctx)
@@ -1342,22 +1394,7 @@ static int cgi_capture_script_header (qse_htre_t* req, const qse_mchar_t* key, c
 	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
 	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
 	{
-		/* multiple items with the same keys are also 
-		 * copied back to the response buffer */
-		do
-		{
-			if (qse_mbs_cat (cgi->res, key) == (qse_size_t)-1 ||
-			    qse_mbs_cat (cgi->res, QSE_MT(": ")) == (qse_size_t)-1 ||
-			    qse_mbs_cat (cgi->res, val->ptr) == (qse_size_t)-1 ||
-			    qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1)
-			{
-				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
-				return -1;
-			}
-
-			val = val->next;
-		}
-		while (val);
+		return cgi_add_header_to_buffer (cgi, cgi->res, key, val);
 	}
 
 	return 0;
@@ -1553,15 +1590,19 @@ static qse_htrd_recbs_t cgi_script_htrd_cbs =
 	QSE_NULL /* not needed for CGI */
 };
 
-static qse_env_t* makecgienv (
+static int cgi_add_env (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	const qse_htre_t* req, const qse_mchar_t* path, qse_size_t content_length)
+	qse_env_t* env, qse_htre_t* req, const 
+	qse_mchar_t* path, qse_size_t length, int chunked)
 {
 /* TODO: error check */
-	qse_env_t* env;
+	cgi_client_req_hdr_ctx_t ctx;
+	qse_mchar_t buf[128];
+	const qse_http_version_t* v;
+	const qse_mchar_t* qparam;
 
-	env = qse_env_open (httpd->mmgr, 0, 0);
-	if (env == QSE_NULL) goto oops;
+	v = qse_htre_getversion(req);
+	qparam = qse_htre_getqparam(req);
 
 #ifdef _WIN32
 	qse_env_insert (env, QSE_T("PATH"), QSE_NULL);
@@ -1571,6 +1612,8 @@ static qse_env_t* makecgienv (
 #endif
 
 	qse_env_insertmbs (env, QSE_MT("GATEWAY_INTERFACE"), QSE_MT("CGI/1.1"));
+	snprintf (buf, QSE_COUNTOF(buf), QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
+	qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), buf);
 
 {
 /* TODO: corrent all these name???  */
@@ -1582,110 +1625,38 @@ static qse_env_t* makecgienv (
 
 
 	//qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
+	qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
 	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req));
+	if (qparam) qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), qparam);
 
-	{
-		const qse_mchar_t* tmp = qse_htre_getqparam(req);
-		if (tmp) qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), tmp);
-	}
+	qse_fmtuintmaxtombs (buf, QSE_COUNTOF(buf), length, 10, -1, QSE_MT('\0'), QSE_NULL);
+	qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), buf);
 
-	qse_env_insertmbs (
-		env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
+	if (chunked) qse_env_insertmbs (env, QSE_MT("TRANSFER_ENCODING"), QSE_MT("chunked"));
 
-	{
-		qse_mchar_t tmp[64];
-		qse_fmtuintmaxtombs (
-			tmp, QSE_COUNTOF(tmp), content_length, 
-			10, -1, QSE_MT('\0'), QSE_NULL);
-		qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), tmp);
-	}
-
-	{
-		qse_mchar_t addr[128];
-		qse_nwadtombs (&client->local_addr, 
-			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_PORT);
-		qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), addr);
-		qse_nwadtombs (&client->local_addr, 
-			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_ADDR);
-		qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), addr);
-		qse_nwadtombs (&client->remote_addr,
-			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_PORT);
-		qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), addr);
-		qse_nwadtombs (&client->remote_addr,
-			addr, QSE_COUNTOF(addr), QSE_NWADTOMBS_ADDR);
-		qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), addr);
-	}
-
-	{
-		qse_mchar_t proto[32];
-		const qse_http_version_t* v = qse_htre_getversion(req);
-		snprintf (proto, QSE_COUNTOF(proto), 
-			QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
-		qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), proto);
-	}
-// TODO: HTTP_ headers.
-// TODO: REMOTE_USER ...
+	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
+	qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), buf);
+	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
+	qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), buf);
+	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
+	qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), buf);
+	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
+	qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf);
 
 #if 0
 	qse_env_insertmbs (env, "SERVER_NAME",
 	qse_env_insertmbs (env, "SERVER_ROOT", 
 	qse_env_insertmbs (env, "DOCUMENT_ROOT", 
 	qse_env_insertmbs (env, "REMOTE_PORT", 
-	qse_env_insertmbs (env, "REQUEST_URI", 
+	qse_env_insertmbs (env, "REMOTE_USER",
 #endif
 
-#if 0
 	ctx.httpd = httpd;
 	ctx.env = env;
 	if (qse_htre_walkheaders (req, cgi_capture_client_header, &ctx) <= -1) return -1;
-#endif
+	if (qse_htre_walktrailers (req, cgi_capture_client_header, &ctx) <= -1) return -1;
 
-/* TODO: memory error check */
-	{
-		const qse_htre_hdrval_t* tmp;
-
-		tmp = qse_htre_getheaderval(req, QSE_MT("Content-Type"));
-		if (tmp) 
-		{
-			while (tmp->next) tmp = tmp->next;
-			qse_env_insertmbs (env, QSE_MT("CONTENT_TYPE"), tmp->ptr);
-		}
-
-		tmp = qse_htre_getheaderval(req, QSE_MT("Cookie"));
-		if (tmp) 
-		{
-/* TODO: should cookie be combined into 1??? */
-			while (tmp->next) tmp = tmp->next;
-			qse_env_insertmbs (env, QSE_MT("HTTP_COOKIE"), tmp->ptr);
-		}
-
-		tmp = qse_htre_getheaderval(req, QSE_MT("Host"));
-		if (tmp) 
-		{
-			while (tmp->next) tmp = tmp->next;
-			qse_env_insertmbs (env, QSE_MT("HTTP_HOST"), tmp->ptr);
-		}
-
-		tmp = qse_htre_getheaderval(req, QSE_MT("Referer"));
-		if (tmp) 
-		{
-			while (tmp->next) tmp = tmp->next;
-			qse_env_insertmbs (env, QSE_MT("HTTP_REFERER"), tmp->ptr);
-		}
-
-		tmp = qse_htre_getheaderval(req, QSE_MT("User-Agent"));
-		if (tmp) 
-		{
-			while (tmp->next) tmp = tmp->next;
-			qse_env_insertmbs (env, QSE_MT("HTTP_USER_AGENT"), tmp->ptr);
-		}
-	}
-
-	return env;
-
-oops:
-	if (env) qse_env_close (env);
-	return QSE_NULL;
+	return 0;
 }
 
 static int cgi_snatch_client_input (
@@ -1713,6 +1684,18 @@ else qse_printf (QSE_T("!!!CGI SNATCHING DONE\n"));
 		 * a request is seen or when an error occurs 
 		 */
 		QSE_ASSERT (len == 0);
+
+		if (cgi->reqflags & CGI_REQ_FWDCHUNKED)
+		{
+			/* add the 0-sized chunk and trailers */
+			if (qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("0\r\n")) == (qse_size_t)-1 ||
+			    qse_htre_walktrailers (req, cgi_capture_client_trailer, cgi) <= -1 ||
+			    qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1)
+			{
+				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
+		}
 
 		/* mark the there's nothing to read form the client side */
 		cgi->reqflags |= CGI_REQ_GOTALL;
@@ -1743,11 +1726,34 @@ else qse_printf (QSE_T("!!!CGI SNATCHING DONE\n"));
 		 * didn't occur previously. we store data from the client side
 		 * to the forwaring buffer only if there's no such previous
 		 * error. if an error occurred, we simply drop the data. */
-		if (qse_mbs_ncat (cgi->reqfwdbuf, ptr, len) == (qse_size_t)-1)
+		if (cgi->reqflags & CGI_REQ_FWDCHUNKED)
 		{
-			cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
-			return -1;
+			qse_mchar_t buf[64];
+			qse_fmtuintmaxtombs (
+				buf, QSE_COUNTOF(buf), len,
+				16 | QSE_FMTUINTMAXTOMBS_UPPERCASE,
+				-1, QSE_MT('\0'), QSE_NULL);
+
+			if (qse_mbs_cat (cgi->reqfwdbuf, buf) == (qse_size_t)-1 ||
+			    qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
+			    qse_mbs_ncat (cgi->reqfwdbuf, ptr, len) == (qse_size_t)-1 ||
+			    qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1)
+			{
+				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
 		}
+		else
+		{
+			if (qse_mbs_ncat (cgi->reqfwdbuf, ptr, len) == (qse_size_t)-1)
+			{
+				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
+		}
+
+		/* output pipe to child */
+		task->trigger[1].mask = QSE_HTTPD_TASK_TRIGGER_WRITE;
 qse_printf (QSE_T("!!!CGI SNATCHED [%.*hs]\n"), len, ptr);
 	}
 
@@ -1798,6 +1804,11 @@ qse_printf (QSE_T("FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
 /* TODO: improve performance.. instead of copying the remaing part 
 to the head all the time..  grow the buffer to a certain limit. */
 					qse_mbs_del (cgi->reqfwdbuf, 0, n);
+					if (QSE_MBS_LEN(cgi->reqfwdbuf) <= 0)
+					{
+						if (cgi->reqflags & CGI_REQ_GOTALL) goto done;
+						else task->trigger[1].mask = 0; /* pipe output to child */
+					}
 				}
 			}
 
@@ -1821,17 +1832,26 @@ qse_printf (QSE_T("FORWARD: @@@@@@@@WRITE TO CGI FAILED\n"));
 					QSE_ASSERT (!cgi->req);
 					QSE_ASSERT (cgi->reqflags & CGI_REQ_GOTALL);
 				}
+
+				/* mark the end of input to the child explicitly. */
+				qse_pio_end (&cgi->pio, QSE_PIO_IN);
+				task->trigger[1].mask = 0; /* pipe output to child */
 			}
 		}
 	}
 	else if (cgi->reqflags & CGI_REQ_GOTALL)
 	{
+	done:
 		/* there is nothing to read from the client side and
 		 * there is nothing more to forward in the forwarding buffer.
 		 * clear the relay and write triggers for the time being.
 		 */
 qse_printf (QSE_T("FORWARD: @@@@@@@@NOTHING MORE TO WRITE TO CGI\n"));
 		QSE_ASSERT (cgi->req == QSE_NULL);
+
+		/* mark the end of input to the child explicitly. */
+		qse_pio_end (&cgi->pio, QSE_PIO_IN);
+
 		task->trigger[1].mask = 0; /* pipe output to child */
 		task->trigger[2].mask = 0; /* client-side */
 	}
@@ -1864,11 +1884,8 @@ static int task_init_cgi (
 	cgi->nph = arg->nph;
 	cgi->req = QSE_NULL;	
 
-	if (arg->req->state & QSE_HTRE_DISCARDED) 
-	{
-		content_length = 0;
-		goto done;
-	}
+	content_length = 0;
+	if (arg->req->state & QSE_HTRE_DISCARDED) goto done;
 
 	len = qse_htre_getcontentlen(arg->req);
 	if ((arg->req->state & QSE_HTRE_COMPLETED) && len <= 0)
@@ -1876,7 +1893,6 @@ static int task_init_cgi (
 		/* the content part is completed and no content 
 		 * in the content buffer. there is nothing to forward */
 		cgi->reqflags |= CGI_REQ_GOTALL;
-		content_length = 0;
 		goto done;
 	}
 
@@ -1888,22 +1904,63 @@ static int task_init_cgi (
 		 * pass the content. this function, however, allows
 		 * such a request to entask a cgi script dropping the
 		 * content */
-		qse_htre_discardcontent (arg->req);
-		cgi->reqflags |= CGI_REQ_GOTALL;
-		content_length = 0;		
+
+		if (httpd->option & QSE_HTTPD_CGINOCHUNKED)
+		{
+			qse_htre_discardcontent (arg->req);
+			cgi->reqflags |= CGI_REQ_GOTALL;
+		}
+		else 
+		{
+			/* do chunking to cgi */
+			cgi->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
+			if (cgi->reqfwdbuf == QSE_NULL) 
+			{
+				httpd->errnum = QSE_HTTPD_ENOMEM;
+				goto oops;
+			}
+
+			if (len > 0)
+			{
+				qse_mchar_t buf[64];
+
+				qse_fmtuintmaxtombs (
+					buf, QSE_COUNTOF(buf), len,
+					16 | QSE_FMTUINTMAXTOMBS_UPPERCASE,
+					-1, QSE_MT('\0'), QSE_NULL);
+
+				ptr = qse_htre_getcontentptr(arg->req);
+				if (qse_mbs_cat (cgi->reqfwdbuf, buf) == (qse_size_t)-1 ||
+				    qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
+				    qse_mbs_ncat (cgi->reqfwdbuf, ptr, len) == (qse_size_t)-1 ||
+				    qse_mbs_cat (cgi->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) 
+				{
+					httpd->errnum = QSE_HTTPD_ENOMEM;
+					goto oops;
+				}
+
+			}
+
+			cgi->reqflags |= CGI_REQ_FWDCHUNKED;
+			cgi->req = arg->req; 
+			qse_htre_setconcb (cgi->req, cgi_snatch_client_input, task);
+		}
 	}
 	else
 	{	
 		/* create a buffer to hold request content from the client
 		 * and copy content received already */
 		cgi->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
-		if (cgi->reqfwdbuf == QSE_NULL) goto oops;
+		if (cgi->reqfwdbuf == QSE_NULL) 
+		{
+			httpd->errnum = QSE_HTTPD_ENOMEM;
+			goto oops;
+		}
 
 		ptr = qse_htre_getcontentptr(arg->req);
 		if (qse_mbs_ncpy (cgi->reqfwdbuf, ptr, len) == (qse_size_t)-1) 
 		{
-			qse_mbs_close (cgi->reqfwdbuf);
-			cgi->reqfwdbuf = QSE_NULL;
+			httpd->errnum = QSE_HTTPD_ENOMEM;
 			goto oops;
 		}
 
@@ -1947,8 +2004,19 @@ static int task_init_cgi (
 	}
 
 done:
-	cgi->env = makecgienv (httpd, client, arg->req, arg->path, content_length);
-	if (cgi->env == QSE_NULL) goto oops;
+	cgi->env = qse_env_open (httpd->mmgr, 0, 0);
+	if (cgi->env == QSE_NULL) 
+	{
+		httpd->errnum = QSE_HTTPD_ENOMEM;
+		goto oops;
+	}
+
+	if (cgi_add_env (
+		httpd, client, cgi->env, arg->req, arg->path, content_length, 
+		(cgi->reqflags & CGI_REQ_FWDCHUNKED)) <= -1)
+	{
+		goto oops;
+	}
 
 	/* no triggers yet since the main loop doesn't allow me to set 
 	 * triggers in the task initializer. however the main task handler
@@ -1964,6 +2032,18 @@ oops:
 	 * add an error task */
 	cgi->init_failed = 1;
 	task->ctx = cgi;
+
+	if (cgi->env)
+	{
+		qse_env_close (cgi->env);
+		cgi->env = QSE_NULL;
+	}
+	if (cgi->reqfwdbuf)
+	{
+		qse_mbs_close (cgi->reqfwdbuf);
+		cgi->reqfwdbuf = QSE_NULL;
+	}
+
 	return 0;
 }
 
@@ -2245,6 +2325,8 @@ static int task_main_cgi_3 (
 
 	QSE_ASSERT (!cgi->nph);
 
+qse_printf (QSE_T("task_main_cgi_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		cgi_forward_client_input_to_script (httpd, task, 0);
@@ -2324,11 +2406,9 @@ static int task_main_cgi_2 (
 	QSE_ASSERT (!cgi->nph);
 	QSE_ASSERT (cgi->pio_inited);
 
-{
-qse_ntime_t now;
-qse_gettime(&now);
-qse_printf (QSE_T("[cgi_2 at %lld]\n"), now);
-}
+qse_printf (QSE_T("task_main_cgi_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 qse_printf (QSE_T("[cgi_2 write]\n"));
@@ -2604,11 +2684,11 @@ struct task_proxy_t
 #define PROXY_PEER_CONNECTED (1 << 1)
 	int peer_status;
 
-#define PROXY_REQ_CHUNKED (1 << 0)
+#define PROXY_REQ_FWDERR     (1 << 0)
+#define PROXY_REQ_FWDCHUNKED (1 << 1)
 	int          reqflags;
 	qse_htre_t*  req; /* original client request associated with this */
 	qse_mbs_t*   reqfwdbuf; /* content from the request */
-	int          reqfwderr;
 
 	qse_mbs_t*   res;
 	qse_size_t   res_consumed;
@@ -2748,7 +2828,7 @@ else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
 		 */
 		QSE_ASSERT (len == 0);
 
-		if (proxy->reqflags & PROXY_REQ_CHUNKED)
+		if (proxy->reqflags & PROXY_REQ_FWDCHUNKED)
 		{
 			/* add the 0-sized chunk and trailers */
 			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("0\r\n")) == (qse_size_t)-1 ||
@@ -2778,15 +2858,14 @@ else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
 			 * for task invocation. */
 			task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 		}
-
 	}
-	else if (!proxy->reqfwderr)
+	else if (!(proxy->reqflags & PROXY_REQ_FWDERR))
 	{
 		/* we can write to the peer if a forwarding error 
 		 * didn't occur previously. we store data from the client side
 		 * to the forwaring buffer only if there's no such previous
 		 * error. if an error occurred, we simply drop the data. */
-		if (proxy->reqflags & PROXY_REQ_CHUNKED)
+		if (proxy->reqflags & PROXY_REQ_FWDCHUNKED)
 		{
 			qse_mchar_t buf[64];
 			qse_fmtuintmaxtombs (
@@ -2811,6 +2890,8 @@ else qse_printf (QSE_T("!!!PROXY SNATCHING DONE\n"));
 				return -1;
 			}
 		}
+
+		task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 qse_printf (QSE_T("!!!PROXY SNATCHED [%.*hs]\n"), len, ptr);
 	}
 
@@ -2897,7 +2978,6 @@ static int proxy_htrd_peek_peer_output (qse_htrd_t* htrd, qse_htre_t* res)
 		/* this peek handler is being called again. 
 		 * this can happen if qse_htrd_feed() is fed with
 		 * multiple responses in task_main_proxy_2 (). */
-qse_printf (QSE_T("XXXXXXXXXXXXXXXXXXXXXXxx\n"));
 		proxy->httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;
 	}
@@ -3142,7 +3222,7 @@ static void proxy_forward_client_input_to_peer (
 	{
 		/* there is something to forward in the forwarding buffer. */
 
-		if (proxy->reqfwderr) 
+		if (proxy->reqflags & PROXY_REQ_FWDERR)
 		{
 			/* a forwarding error has occurred previously.
 			 * clear the forwarding buffer */
@@ -3173,14 +3253,22 @@ qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
 
 /* TODO: improve performance.. instead of copying the remaing part 
 to the head all the time..  grow the buffer to a certain limit. */
-				if (n > 0) qse_mbs_del (proxy->reqfwdbuf, 0, n);
+				if (n > 0) 
+				{
+					qse_mbs_del (proxy->reqfwdbuf, 0, n);
+					if (QSE_MBS_LEN(proxy->reqfwdbuf) <= 0)
+					{
+						if (proxy->req == QSE_NULL) goto done;
+						else task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
+					}
+				}
 			}
 
 			if (n <= -1)
 			{
 qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@WRITE TO PROXY FAILED\n"));
 /* TODO: logging ... */
-				proxy->reqfwderr = 1;
+				proxy->reqflags |= PROXY_REQ_FWDERR;
 				qse_mbs_clear (proxy->reqfwdbuf); 
 				if (proxy->req) 
 				{
@@ -3189,17 +3277,21 @@ qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@WRITE TO PROXY FAILED\n"));
 					 *       in proxy_snatch_client_input() triggered by
 					 *       qse_htre_discardcontent() */
 				}
+
+				task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE; /* peer */
 			}
 		}
 	}
 	else if (proxy->req == QSE_NULL)
 	{
+	done:
 		/* there is nothing to read from the client side and
 		 * there is nothing more to forward in the forwarding buffer.
-		 * clear the relay and write triggers.
+		 * clear the read and write triggers.
 		 */
 qse_printf (QSE_T("FORWARD: @@@@@@@@NOTHING MORE TO WRITE TO PROXY\n"));
-		task->trigger[2].mask = 0;
+		task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE; /* peer */
+		task->trigger[2].mask = 0; /* client-side */
 	}
 }
 
@@ -3233,19 +3325,19 @@ len = 1024;
 	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
 	if (proxy->reqfwdbuf == QSE_NULL) goto oops;
 
-	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqmethodname(arg->req)) == (qse_size_t)-1) goto oops;
-	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto oops;
-	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqmethodname(arg->req)) == (qse_size_t)-1 ||
+	    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1 ||
+	    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqpath(arg->req)) == (qse_size_t)-1) goto oops;
+
 	if (qse_htre_getqparam(arg->req))
 	{
-		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1) goto oops;
-		if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto oops;
+		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("?")) == (qse_size_t)-1 ||
+		    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getqparam(arg->req)) == (qse_size_t)-1) goto oops;
 	}
-	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1) goto oops;
-	if (qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1) goto oops;
-
-	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
-	if (qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto oops;
+	if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT(" ")) == (qse_size_t)-1 ||
+	    qse_mbs_cat (proxy->reqfwdbuf, qse_htre_getverstr(arg->req)) == (qse_size_t)-1 ||
+	    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 ||
+	    qse_htre_walkheaders (arg->req, proxy_capture_client_header, proxy) <= -1) goto oops;
 
 	proxy->resflags |= PROXY_RES_AWAIT_RESHDR;
 	if ((arg->req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
@@ -3259,20 +3351,20 @@ len = 1024;
 	if (arg->req->state & QSE_HTRE_DISCARDED)
 	{
 		/* no content to add */
-		/*if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: 0\r\n")) == (qse_size_t)-1) goto oops;*/
-
-		/* i don't also add chunk traiers if the 
-		 * request content has been discarded */
-
-		/* end of header */
-		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+		if ((arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) || 
+		    (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+		{
+			/* i don't add chunk traiers if the 
+			 * request content has been discarded */
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: 0\r\n\r\n")) == (qse_size_t)-1) goto oops;
+		}
+		else
+		{
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
+		}
 	}
 	else if (arg->req->state & QSE_HTRE_COMPLETED)
 	{
-		qse_mchar_t buf[64];
-
-		len = qse_htre_getcontentlen(arg->req);
-
 		if (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 		{
 			/* add trailers if any */
@@ -3280,21 +3372,32 @@ len = 1024;
 				arg->req, proxy_capture_client_trailer, proxy) <= -1) goto oops;
 		}
 
-		qse_fmtuintmaxtombs (
-			buf, QSE_COUNTOF(buf), len,
-			10, -1, QSE_MT('\0'), QSE_NULL);
-
-		/* force-insert content-length. content-length is added
-		 * even if the original request dones't contain it */
-		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: ")) == (qse_size_t)-1 ||
-		    qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
-		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto oops;
-
-		if (len > 0)
+		len = qse_htre_getcontentlen(arg->req);
+		if (len > 0 || (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH) || 
+		               (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 		{
-			/* content */
-			ptr = qse_htre_getcontentptr(arg->req);
-			if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto oops;
+			qse_mchar_t buf[64];
+
+			qse_fmtuintmaxtombs (
+				buf, QSE_COUNTOF(buf), len,
+				10, -1, QSE_MT('\0'), QSE_NULL);
+
+			/* force-insert content-length. content-length is added
+			 * even if the original request dones't contain it */
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Content-Length: ")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n\r\n")) == (qse_size_t)-1) goto oops;
+
+			if (len > 0)
+			{
+				/* content */
+				ptr = qse_htre_getcontentptr(arg->req);
+				if (qse_mbs_ncat (proxy->reqfwdbuf, ptr, len) == (qse_size_t)-1) goto oops;
+			}
+		}
+		else
+		{
+			if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1) goto oops;
 		}
 	}
 	else if (arg->req->attr.flags & QSE_HTRE_ATTR_LENGTH)
@@ -3321,9 +3424,12 @@ len = 1024;
 	}
 	else
 	{
+		/* if this request is not chunked nor not length based,
+		 * the state should be QSE_HTRE_COMPLETED. so only a
+		 * chunked request should reach here */
 		QSE_ASSERT (arg->req->attr.flags & QSE_HTRE_ATTR_CHUNKED);
 
-		proxy->reqflags |= PROXY_REQ_CHUNKED;
+		proxy->reqflags |= PROXY_REQ_FWDCHUNKED;
 		if (qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("Transfer-Encoding: chunked\r\n")) == (qse_size_t)-1 ||
 		    qse_mbs_cat (proxy->reqfwdbuf, QSE_MT("\r\n")) == (qse_size_t)-1 /* end of header */) goto oops; 
 
@@ -3332,11 +3438,12 @@ len = 1024;
 		{
 			qse_mchar_t buf[64];
 
-			ptr = qse_htre_getcontentptr(arg->req);
 			qse_fmtuintmaxtombs (
 				buf, QSE_COUNTOF(buf), len,
 				16 | QSE_FMTUINTMAXTOMBS_UPPERCASE, 
 				-1, QSE_MT('\0'), QSE_NULL);
+
+			ptr = qse_htre_getcontentptr(arg->req);
 
 			/* chunk length and chunk content */
 			if (qse_mbs_cat (proxy->reqfwdbuf, buf) == (qse_size_t)-1 ||
@@ -3402,17 +3509,20 @@ static int task_main_proxy_5 (
 	qse_ssize_t n;
 
 	//QSE_ASSERT (proxy->pio_inited);
+qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
+		/* if the client side is readable */
 		proxy_forward_client_input_to_peer (httpd, task, 0);
 	}
 	else if (task->trigger[0].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE)
 	{
+		/* if the peer side is writable */
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
-qse_printf (QSE_T("task_main_proxy_5\n"));
 	if (!(task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
 	    (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
@@ -3621,7 +3731,9 @@ static int task_main_proxy_2 (
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 	int http_errnum = 0;
 
-qse_printf (QSE_T("task_main_proxy_2....\n"));
+qse_printf (QSE_T("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
+
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
 		proxy_forward_client_input_to_peer (httpd, task, 0);
@@ -3740,7 +3852,13 @@ qse_printf (QSE_T("#####PREMATURE EOF FROM PEER CLIENT CHUNK\n"));
 			
 		proxy->buflen += n;
 
-qse_printf (QSE_T("#####PROXY FEEDING %d [%.*hs]\n"), (int)proxy->buflen, (int)proxy->buflen, proxy->buf);
+qse_printf (QSE_T("#####PROXY FEEDING %d [\n"), (int)proxy->buflen);
+{
+int i;
+for (i = 0; i < proxy->buflen; i++) qse_printf (QSE_T("%hc"), proxy->buf[i]);
+}
+qse_printf (QSE_T("]\n"));
+
 		if (qse_htrd_feed (proxy->peer_htrd, proxy->buf, proxy->buflen) <= -1)
 		{
 /* TODO: logging */
@@ -3829,6 +3947,7 @@ qse_printf (QSE_T("task_main_proxy_1.... ERROR \n"));
 		if (n >= 1) 
 		{
 			proxy->peer_status |= PROXY_PEER_CONNECTED;
+qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
 
 			if (proxy->req)
 			{
@@ -3838,13 +3957,16 @@ qse_printf (QSE_T("task_main_proxy_1.... ERROR \n"));
 			task->trigger[0].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 			{
+				/* forward the initial part of the input to the peer */
 				proxy_forward_client_input_to_peer (httpd, task, 0);
 				if (QSE_MBS_LEN(proxy->reqfwdbuf) > 0)
 				{
+					/* there are still more to forward in the buffer
+					 * request the task invocation when the peer
+					 * is writable */
 					task->trigger[0].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
 				}
 			}
-qse_printf (QSE_T("FINALLY connected to peer ...............................\n"));
 			task->main = task_main_proxy_2;
 		}
 	}
@@ -3968,5 +4090,17 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 }
 
 /*------------------------------------------------------------------------*/
+
+#if 0
+qse_httpd_task_t* qse_httpd_entaskconnect (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* pred, 
+	const qse_nwad_t* nwad,
+	qse_htre_t* req)
+{
+	return -1;
+}
+#endif
 
 #endif

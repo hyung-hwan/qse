@@ -335,7 +335,20 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
 	 * address size for AF_INET. */
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
-	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1) goto oops;
+	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1) 
+	{
+#ifdef IPV6_V6ONLY
+		if (errno == EADDRINUSE && addr.ss_family == AF_INET6)
+		{
+			int on = 1;
+			setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
+			if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)  goto oops;
+		}
+		else goto oops;
+#else
+		goto oops;
+#endif
+	}
 	if (listen (fd, 10) <= -1) goto oops;
 
 	flag = fcntl (fd, F_GETFL);
@@ -1084,6 +1097,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			if (peek)
 			{
 				/* cgi */
+#if 0
 				if (req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
 				{
 qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
@@ -1095,7 +1109,13 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 				#endif
 				}
-				else if (method == QSE_HTTP_POST && !(req->attr.flags & QSE_HTRE_ATTR_LENGTH))
+				else 
+#endif
+
+				/*if (method == QSE_HTTP_POST && !(req->attr.flags & QSE_HTRE_ATTR_LENGTH))*/
+				if (method == QSE_HTTP_POST && 
+				    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+				    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 				{
 					req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
 					task = qse_httpd_entaskerror (
@@ -1110,6 +1130,7 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 					if (task == QSE_NULL) goto oops;
 				}
 			}
+#if 0
 			else
 			{
 				/* to support the chunked request,
@@ -1122,6 +1143,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 					if (task == QSE_NULL) goto oops;
 				}
 			}
+#endif
 			return 0;
 		}
 		else if (dot && qse_mbscmp (dot, QSE_MT(".nph")) == 0)
@@ -1285,15 +1307,27 @@ oops:
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	//return process_request (httpd, client, req, 1);
-	return proxy_request (httpd, client, req, 1);
+	if (memcmp (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
+	{
+		return process_request (httpd, client, req, 1);
+	}
+	else
+	{
+		return proxy_request (httpd, client, req, 1);
+	}
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	//return process_request (httpd, client, req, 0);
-	return proxy_request (httpd, client, req, 0);
+	if (memcmp (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
+	{
+		return process_request (httpd, client, req, 0);
+	}
+	else
+	{
+		return proxy_request (httpd, client, req, 0);
+	}
 }
 
 int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
