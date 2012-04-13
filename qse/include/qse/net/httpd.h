@@ -59,7 +59,8 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 enum qse_httpd_option_t
 {
 	QSE_HTTPD_CGIERRTONUL  = (1 << 0),
-	QSE_HTTPD_CGINOCLOEXEC = (1 << 1)
+	QSE_HTTPD_CGINOCLOEXEC = (1 << 1),
+	QSE_HTTPD_CGINOCHUNKED = (1 << 2) 
 };
 
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
