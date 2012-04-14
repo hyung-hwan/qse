@@ -699,13 +699,17 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 
 		mask = 0;
 
-		if (mux->ee.ptr[i].events & EPOLLIN) mask |= QSE_HTTPD_MUX_READ;
-		if (mux->ee.ptr[i].events & EPOLLOUT) mask |= QSE_HTTPD_MUX_WRITE;
+		if (mux->ee.ptr[i].events & EPOLLIN) 
+			mask |= QSE_HTTPD_MUX_READ;
+		if (mux->ee.ptr[i].events & EPOLLOUT)
+			mask |= QSE_HTTPD_MUX_WRITE;
 
 		if (mux->ee.ptr[i].events & EPOLLHUP) 
 		{
-			if (mev->reqmask & QSE_HTTPD_MUX_READ) mask |= QSE_HTTPD_MUX_READ;
-			if (mev->reqmask & QSE_HTTPD_MUX_WRITE) mask |= QSE_HTTPD_MUX_WRITE;
+			if (mev->reqmask & QSE_HTTPD_MUX_READ) 
+				mask |= QSE_HTTPD_MUX_READ;
+			if (mev->reqmask & QSE_HTTPD_MUX_WRITE)
+				mask |= QSE_HTTPD_MUX_WRITE;
 		}
 
 		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);

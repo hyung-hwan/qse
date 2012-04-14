@@ -693,15 +693,25 @@ qse_printf (QSE_T("Error: failed to read from a client %d\n"), client->handle.i)
 	else if (m == 0)
 	{
 qse_printf (QSE_T("Debug: connection closed %d - errno %d\n"), client->handle.i, errno);
-		if (client->task.head && client->htrd->clean)
+		/* reading from the client returned 0. this typically
+		 * happens when the client closes the connection or
+		 * shutdown the writing half of the socket. it's
+		 * not really easy to determine one from the other.
+		 * if QSE_HTTPD_MUTECLIENT is on, attempt to handle
+		 * it as a half-close under a certain condition. */
+
+		if (httpd->option & QSE_HTTPD_MUTECLIENT &&
+		    client->task.head && client->htrd->clean)
 		{
 			/* there is still more tasks to finish and 
 			 * http reader is not waiting for any more feeds.  */
 			client->status |= CLIENT_MUTE;
+qse_printf (QSE_T(">>>>> Marking client %d as MUTE\n"), client->handle.i);
 			return 0;
 		}
 		else
 		{
+qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
 			httpd->errnum = QSE_HTTPD_EDISCON;
 			return -1;
 		}
@@ -820,7 +830,7 @@ qse_printf (QSE_T("task returend %d\n"), n);
 		int mux_mask;
 		int mux_status;
 
-		/* the current task is over. remove remove the task 
+		/* the current task is over. remove the task 
 		 * from the queue. dequeue_task() clears task triggers
 		 * from the mux. so i don't clear them explicitly here */
 

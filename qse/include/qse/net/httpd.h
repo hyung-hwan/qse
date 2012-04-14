@@ -58,9 +58,10 @@ typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 
 enum qse_httpd_option_t
 {
-	QSE_HTTPD_CGIERRTONUL  = (1 << 0),
-	QSE_HTTPD_CGINOCLOEXEC = (1 << 1),
-	QSE_HTTPD_CGINOCHUNKED = (1 << 2) 
+	QSE_HTTPD_MUTECLIENT   = (1 << 0),
+	QSE_HTTPD_CGIERRTONUL  = (1 << 1),
+	QSE_HTTPD_CGINOCLOEXEC = (1 << 2),
+	QSE_HTTPD_CGINOCHUNKED = (1 << 3)
 };
 
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
@@ -240,12 +241,9 @@ typedef int (*qse_httpd_task_main_t) (
 enum qse_httpd_task_trigger_mask_t
 {
 	QSE_HTTPD_TASK_TRIGGER_READ      = (1 << 0),
-	QSE_HTTPD_TASK_TRIGGER_RELAY     = (1 << 1),
-	QSE_HTTPD_TASK_TRIGGER_WRITE     = (1 << 2),
-	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 3),
-	QSE_HTTPD_TASK_TRIGGER_RELAYABLE = (1 << 4),
-	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 5)
-
+	QSE_HTTPD_TASK_TRIGGER_WRITE     = (1 << 1),
+	QSE_HTTPD_TASK_TRIGGER_READABLE  = (1 << 2),
+	QSE_HTTPD_TASK_TRIGGER_WRITABLE  = (1 << 3)
 };
 
 typedef struct qse_httpd_task_trigger_t qse_httpd_task_trigger_t;

@@ -1419,7 +1419,7 @@ feedme_more:
 
 int qse_htrd_halt (qse_htrd_t* htrd)
 {
-	if (htrd->fed.s.flags & CONSUME_UNTIL_CLOSE)
+	if (htrd->fed.s.flags & CONSUME_UNTIL_CLOSE || !htrd->clean)
 	{
 		qse_htre_completecontent (&htrd->re);
 

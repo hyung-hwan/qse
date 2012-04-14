@@ -2701,6 +2701,7 @@ struct task_proxy_t
 #define PROXY_RES_PEER_LENGTH     (1 << 5)  /* peer's output is set with 
                                              * the content-length */
 #define PROXY_RES_PEER_LENGTH_FAKE (1 << 6) /* peer_output_length is fake */
+#define PROXY_RES_EVER_SENTBACK    (1 << 7) /* any single byte sent back to a client */
 #define PROXY_RES_AWAIT_100       (1 << 10) /* waiting for 100 continue */
 #define PROXY_RES_AWAIT_RESHDR    (1 << 11) /* waiting for response header */
 #define PROXY_RES_AWAIT_RESCON    (1 << 12) /* waiting for response content. 
@@ -3652,10 +3653,15 @@ qse_printf (QSE_T("task_main_proxy_4 read from PEER...%d\n"), (int)n);
 static int task_main_proxy_3 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	/* send the http initial line and headers built using the headers
-	 * returned by peer. it may include some contents as well */
+	/* let's send up the http initial line and headers before
+	 * attempting to read the reset of content. it may already 
+	 * include some contents as well received together with 
+	 * the header. */
 
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
+
+qse_printf (QSE_T("task_main_proxy_3 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
+	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
 
 	if (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_READABLE)
 	{
@@ -3666,7 +3672,6 @@ static int task_main_proxy_3 (
 		proxy_forward_client_input_to_peer (httpd, task, 1);
 	}
 
-qse_printf (QSE_T("[PROXY-----3]\n"));
 	if (!(task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITE) ||
 	    (task->trigger[2].mask & QSE_HTTPD_TASK_TRIGGER_WRITABLE))
 	{
@@ -3693,6 +3698,7 @@ qse_printf (QSE_T("[proxy-3 send failure....\n"));
 				return -1;
 			}
 
+			proxy->resflags |= PROXY_RES_EVER_SENTBACK;
 			proxy->res_consumed += n;
 			proxy->res_pending -= n;
 		}
@@ -3713,7 +3719,7 @@ qse_printf (QSE_T("SWITINCG TO 55555555555555555555555555 %d %d %d %d\n"),
 			}
 			else
 			{
-qse_printf (QSE_T("SWITINCG TO 4444444444444444444444444444\n"));
+qse_printf (QSE_T("SWITICHING TO 4444444444444444444444444444\n"));
 				task->main = task_main_proxy_4;
 				task->trigger[2].mask &= ~QSE_HTTPD_TASK_TRIGGER_WRITE;
 			}
@@ -3729,7 +3735,7 @@ static int task_main_proxy_2 (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
-	int http_errnum = 0;
+	int http_errnum = 500;
 
 qse_printf (QSE_T("task_main_proxy_2 trigger[0].mask=%d trigger[1].mask=%d trigger[2].mask=%d\n"), 
 	task->trigger[0].mask, task->trigger[1].mask, task->trigger[2].mask);
@@ -3782,9 +3788,10 @@ qse_printf (QSE_T("]\n"));
 			if (n <= -1) 
 			{
 qse_printf (QSE_T("[proxy-2 send failure....\n"));
-				return -1;
+				goto oops;
 			}
 
+			proxy->resflags |= PROXY_RES_EVER_SENTBACK;
 			proxy->res_consumed += n;
 			proxy->res_pending -= n;
 
@@ -3822,13 +3829,8 @@ qse_printf (QSE_T("[proxy-2 send failure....\n"));
 				 * the proxy script must be crooked. */
 /* TODO: logging */
 qse_printf (QSE_T("#####PREMATURE EOF FROM PEER\n"));
-				if (!(proxy->resflags & PROXY_RES_RECEIVED_100)) 
-				{
-					http_errnum = 502;
-					goto oops;
-				}
-
-				return -1;
+				if (!(proxy->resflags & PROXY_RES_RECEIVED_100)) http_errnum = 502;
+				goto oops;
 			}
 			else 
 			{
@@ -3846,7 +3848,7 @@ qse_printf (QSE_T("#####PREMATURE EOF FROM PEER\n"));
 				}
 
 qse_printf (QSE_T("#####PREMATURE EOF FROM PEER CLIENT CHUNK\n"));
-				return -1;
+				goto oops;
 			}
 		}
 			
@@ -3893,7 +3895,7 @@ qse_printf (QSE_T("#####INVALID HEADER FROM PEER [%.*hs]\n"), (int)proxy->buflen
 				}
 				else
 				{
-qse_printf (QSE_T("TRAILING DATA=[%hs]\n"), QSE_MBS_CPTR(proxy->res,proxy->res_consumed));
+qse_printf (QSE_T("TRAILING DATA=%d, [%hs]\n"), (int)QSE_MBS_LEN(proxy->res), QSE_MBS_CPTR(proxy->res,proxy->res_consumed));
 					/* switch to the next phase */
 					task->main = task_main_proxy_3;
 					task->trigger[2].mask |= QSE_HTTPD_TASK_TRIGGER_WRITE;
@@ -3916,6 +3918,7 @@ qse_printf (QSE_T("TRAILING DATA=[%hs]\n"), QSE_MBS_CPTR(proxy->res,proxy->res_c
 	return 1;
 
 oops:
+	if (proxy->resflags & PROXY_RES_EVER_SENTBACK) return -1;
 	return (entask_error (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
