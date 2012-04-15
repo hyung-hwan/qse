@@ -302,9 +302,7 @@ static qse_mchar_t* parse_initial_line (
 		/* process the url part */
 		tmp.ptr = p; /* remember the beginning of path*/
 		param.ptr = QSE_NULL;
-	
-/* TODO: maintain undecode path....???? */
-
+#if 0
 		out = p;
 		while (*p != QSE_MT('\0') && !is_space_octet(*p)) 
 		{
@@ -325,7 +323,7 @@ static qse_mchar_t* parse_initial_line (
 						/* percent enconding contains a null character */
 						goto badre;
 					}
-	
+
 					*out++ = t;
 					p += 3;
 				}
@@ -333,7 +331,7 @@ static qse_mchar_t* parse_initial_line (
 			}
 			else if (*p == QSE_MT('?'))
 			{
-				if (!param.ptr)
+				if (param.ptr == QSE_NULL)
 				{
 					/* ? must be explicit to be an argument instroducer. 
 					 * %3f is just a literal. */
@@ -346,7 +344,7 @@ static qse_mchar_t* parse_initial_line (
 			}
 			else *out++ = *p++;
 		}
-	
+
 		/* the url must be followed by a space */
 		if (!is_space_octet(*p)) goto badre;
 	
@@ -365,7 +363,33 @@ static qse_mchar_t* parse_initial_line (
 			htrd->re.u.q.path = tmp.ptr;
 			htrd->re.u.q.param = QSE_NULL;
 		}
+#else
+		while (*p != QSE_MT('\0') && !is_space_octet(*p)) 
+		{
+			if (*p == QSE_MT('?') && param.ptr == QSE_NULL)
+			{
+				*p++ = QSE_MT('\0'); /* null-terminate the path part */
+				param.ptr = p;
+			}
+			else p++;
+		}
 
+		/* the url must be followed by a space */
+		if (!is_space_octet(*p)) goto badre;
+		*p = QSE_MT('\0');  /* null-terminate the path or param part */
+
+		if (param.ptr)
+		{
+			htrd->re.u.q.path = tmp.ptr;
+			htrd->re.u.q.param = param.ptr;
+		}
+		else
+		{
+			htrd->re.u.q.path = tmp.ptr;
+			htrd->re.u.q.param = QSE_NULL;
+		}
+#endif
+	
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));
 	
@@ -763,7 +787,20 @@ qse_mchar_t* parse_header_field (
 	}
 	name.len = last - name.ptr;
 
-	if (*p != QSE_MT(':')) goto badhdr;
+	if (*p != QSE_MT(':')) 
+	{
+		if (!(htrd->option & QSE_HTRD_STRICT))
+		{
+			while (is_space_octet(*p)) p++;
+			if (*p == QSE_MT('\n')) 
+			{
+				/* ignore a line without a colon */
+				p++;
+				return p;		
+			}
+		}
+		goto badhdr;
+	}
 	*last = '\0';
 
 	/* skip the colon and spaces after it */

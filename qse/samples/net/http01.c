@@ -1038,6 +1038,11 @@ static int process_request (
 	method = qse_htre_getqmethodtype(req);
 	content_received = (qse_htre_getcontentlen(req) > 0);
 
+	/* percent-decode the query path to the original buffer
+	 * since i'm not gonna need it in the original form 
+	 * any more */
+	qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
+
 qse_printf (QSE_T("================================\n"));
 qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"), 
 	(unsigned long)time(NULL),

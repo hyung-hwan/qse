@@ -187,6 +187,11 @@ int qse_parsehttpdatetime (
 );
 */
 
+qse_size_t qse_perdechttpstr (
+	const qse_mchar_t* str, 
+	qse_mchar_t*       buf
+);
+
 #ifdef __cplusplus
 }
 #endif

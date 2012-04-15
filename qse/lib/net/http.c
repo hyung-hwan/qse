@@ -194,5 +194,33 @@ int qse_parsehttpdatetime (const qse_mchar_t* str, qse_ntime_t* t)
 }
 #endif
 
+qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
+{
+	const qse_mchar_t* p = str;
+	qse_mchar_t* out = buf;
+	
+	while (*p != QSE_T('\0'))
+	{
+		if (*p == QSE_MT('%') && *(p+1) != QSE_MT('\0') && *(p+2) != QSE_MT('\0'))
+		{
+			int q =  QSE_MXDIGITTONUM (*(p+1));
+			if (q >= 0)
+			{
+				int w = QSE_MXDIGITTONUM (*(p+2));
+				if (w >= 0)
+				{
+					/* unlike the path part, we don't care if it 
+					 * contains a null character */
+					*out++ = ((q << 4) + w);
+					p += 3;
+					continue;
+				}
+			}
+		}
 
+		*out++ = *p++;
+	}
 
+	*out = QSE_MT('\0');
+	return out - buf;
+}
