@@ -717,10 +717,6 @@ qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
 		}
 	}
 	
-	/* feed may have called the request callback multiple times... 
- 	 * that's because we don't know how many valid requests
-	 * are included in 'buf' */ 
-	httpd->errnum = QSE_HTTPD_ENOERR;
 qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
 {
 int i;
@@ -728,6 +724,10 @@ for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
 qse_printf (QSE_T("]\n"));
 
+	/* qse_htrd_feed() may call the request callback 
+	 * multiple times. that's because we don't know 
+	 * how many valid requests are included in 'buf'. */ 
+	httpd->errnum = QSE_HTTPD_ENOERR;
 	if (qse_htrd_feed (client->htrd, buf, m) <= -1)
 	{
 		if (httpd->errnum == QSE_HTTPD_ENOERR)
@@ -744,6 +744,8 @@ int i;
 for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
 qse_printf (QSE_T("]\n"));
+
+
 		return -1;
 	}
 

@@ -49,7 +49,8 @@ enum qse_htrd_option_t
 	QSE_HTRD_PEEKONLY        = (1 << 2), /**< trigger a peek callback after headers without processing contents */
 	QSE_HTRD_REQUEST         = (1 << 3), /**< parse input as a request */
 	QSE_HTRD_RESPONSE        = (1 << 4), /**< parse input as a response */
-	QSE_HTRD_TRAILERS        = (1 << 5)  /**< store trailers in a separate table */
+	QSE_HTRD_TRAILERS        = (1 << 5), /**< store trailers in a separate table */
+	QSE_HTRD_STRICT          = (1 << 6)  /**< be more picky */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;
