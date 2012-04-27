@@ -1675,6 +1675,24 @@ void qse_awk_rtx_stop (
 );
 
 /**
+ * The qse_awk_rtx_getrio() function copies runtime I/O handlers
+ * to the memory buffer pointed to by @a rio.
+ */
+void qse_awk_rtx_getrio (
+	qse_awk_rtx_t* rtx,
+	qse_awk_rio_t* rio
+);
+
+/**
+ * The qse_awk_rtx_getrio() function sets runtime I/O handlers
+ * with the functions pointed to by @a rio.
+ */
+void qse_awk_rtx_setrio (
+	qse_awk_rtx_t*       rtx,
+	const qse_awk_rio_t* rio
+);
+
+/**
  * The qse_awk_rtx_poprcb() function pops a runtime callback set
  * and returns the pointer to it. If no callback set can be popped,
  * it returns #QSE_NULL.

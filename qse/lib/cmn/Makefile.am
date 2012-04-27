@@ -47,6 +47,7 @@ libqsecmn_la_SOURCES = \
 	mbwc-str.c \
 	mem.c \
 	nwad.c \
+	nwio.c \
 	oht.c \
 	opt.c \
 	path-basename.c \

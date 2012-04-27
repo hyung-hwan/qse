@@ -91,10 +91,9 @@ typedef struct xtn_t
 				} str;
 			} u;
 		} out;
+	} s; /* script/source handling */
 
-	} s;
 } xtn_t;
-
 
 typedef struct rxtn_t
 {
@@ -123,11 +122,6 @@ typedef struct rxtn_t
 	qse_htb_t cmgrtab;
 #endif
 } rxtn_t;
-
-#if defined(QSE_CHAR_IS_WCHAR)
-static qse_cmgr_t* getcmgr_from_cmgrtab (
-	qse_awk_rtx_t* rtx, const qse_char_t* ioname);
-#endif
 
 static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
@@ -798,6 +792,7 @@ int qse_awk_parsestd (
 }
 
 /*** RTX_OPENSTD ***/
+
 static qse_ssize_t awk_rio_pipe (
 	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
 	qse_char_t* data, qse_size_t size)
@@ -811,7 +806,7 @@ static qse_ssize_t awk_rio_pipe (
 
 			if (riod->mode == QSE_AWK_RIO_PIPE_READ)
 			{
-				/* TODO: should we specify ERRTOOUT? */
+				/* TODO: should ERRTOOUT be unset? */
 				flags = QSE_PIO_READOUT | 
 				        QSE_PIO_ERRTOOUT;
 			}
@@ -825,7 +820,12 @@ static qse_ssize_t awk_rio_pipe (
 				        QSE_PIO_ERRTOOUT |
 				        QSE_PIO_WRITEIN;
 			}
-			else return -1; /* TODO: any way to set the error number? */
+			else 
+			{
+				/* this must not happen */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINTERN, QSE_NULL);
+				return -1;
+			}
 
 			handle = qse_pio_open (
 				rtx->awk->mmgr,
@@ -838,7 +838,7 @@ static qse_ssize_t awk_rio_pipe (
 
 #if defined(QSE_CHAR_IS_WCHAR)
 			{
-				qse_cmgr_t* cmgr = getcmgr_from_cmgrtab (rtx, riod->name);
+				qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
 				if (cmgr)	
 				{
 					qse_pio_setcmgr (handle, QSE_PIO_IN, cmgr);
@@ -951,7 +951,7 @@ static qse_ssize_t awk_rio_file (
 
 #if defined(QSE_CHAR_IS_WCHAR)
 			{
-				qse_cmgr_t* cmgr = getcmgr_from_cmgrtab (rtx, riod->name);
+				qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
 				if (cmgr) qse_sio_setcmgr (handle, cmgr);
 			}
 #endif
@@ -1587,7 +1587,7 @@ static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 }
 
 #if defined(QSE_CHAR_IS_WCHAR)
-static qse_cmgr_t* getcmgr_from_cmgrtab (
+qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
 	rxtn_t* rxtn;

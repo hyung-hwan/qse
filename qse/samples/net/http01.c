@@ -19,7 +19,12 @@
 #	include <sys/stat.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <sys/epoll.h>
+#endif
+
+#if defined(HAVE_EPOLL)
+#	if defined(HAVE_SYS_EPOLL_H)
+#		include <sys/epoll.h>
+#	endif
 #endif
 
 #if defined(__linux__)
@@ -332,12 +337,20 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
 
+#if defined(IP_TRANSPARENT)
+	/* remove the ip routing restriction that a packet can only
+	 * be sent using a local ip address. this option is useful
+	 * if transparency is achieved with TPROXY */
+	flag = 1;
+	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
+#endif
+
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
 	 * address size for AF_INET. */
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
 	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1) 
 	{
-#ifdef IPV6_V6ONLY
+#if defined(IPV6_V6ONLY)
 		if (errno == EADDRINUSE && addr.ss_family == AF_INET6)
 		{
 			int on = 1;
@@ -561,13 +574,24 @@ static void* mux_open (qse_httpd_t* httpd)
 
 	memset (mux, 0, QSE_SIZEOF(*mux));
 
+#if defined(HAVE_EPOLL_CREATE1)
+	mux->fd = epoll_create1 (O_CLOEXEC);
+#else
 	mux->fd = epoll_create (100);
+#endif
 	if (mux->fd <= -1) 
 	{
 		qse_httpd_freemem (httpd, mux);
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return QSE_NULL;
 	}
+
+#if defined(HAVE_EPOLL_CREATE1)
+	/* nothing else to do */
+#else
+	flag = fcntl (mux->fd, F_GETFD);
+	if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
+#endif
 
 	return mux;
 }
@@ -1188,6 +1212,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 		}
 		else
 		{
+#if 0
 			if (!peek)
 			{
 				/* file or directory */
@@ -1195,6 +1220,15 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 					httpd, client, QSE_NULL, qpath, req);
 				if (task == QSE_NULL) goto oops;
 			}
+#else
+			if (peek)
+			{
+				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskfile (
+					httpd, client, QSE_NULL, qpath, req);
+				if (task == QSE_NULL) goto oops;
+			}
+#endif
 		}
 	}
 	else

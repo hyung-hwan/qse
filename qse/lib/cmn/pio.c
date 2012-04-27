@@ -575,6 +575,7 @@ int qse_pio_init (
 
 	QSE_MEMSET (pio, 0, QSE_SIZEOF(*pio));
 	pio->mmgr = mmgr;
+	pio->flags = flags;
 
 #if defined(_WIN32)
 	/* http://msdn.microsoft.com/en-us/library/ms682499(VS.85).aspx */
@@ -1886,7 +1887,6 @@ create_process:
 		}
 	}
 
-	pio->option = 0;
 	return 0;
 
 oops:
@@ -1961,24 +1961,15 @@ void qse_pio_fini (qse_pio_t* pio)
 	qse_pio_end (pio, QSE_PIO_OUT);
 	qse_pio_end (pio, QSE_PIO_IN);
 
-	pio->option &= ~QSE_PIO_WAIT_NOBLOCK;
-	pio->option &= ~QSE_PIO_WAIT_NORETRY;
+	/* when closing, enable blocking and retrying */
+	pio->flags &= ~QSE_PIO_WAITNOBLOCK;
+	pio->flags &= ~QSE_PIO_WAITNORETRY;
 	qse_pio_wait (pio);
 }
 
 qse_pio_errnum_t qse_pio_geterrnum (const qse_pio_t* pio)
 {
 	return pio->errnum;
-}
-
-int qse_pio_getoption (const qse_pio_t* pio)
-{
-	return pio->option;
-}
-
-void qse_pio_setoption (qse_pio_t* pio, int opt)
-{
-	pio->option = opt;
 }
 
 qse_cmgr_t* qse_pio_getcmgr (qse_pio_t* pio, qse_pio_hid_t hid)
@@ -2090,7 +2081,7 @@ reread:
 	{
 		if (errno == EINTR)
 		{
-			if (pio->option & QSE_PIO_READ_NORETRY) 
+			if (pio->flags & QSE_PIO_READNORETRY) 
 				pio->errnum = QSE_PIO_EINTR;
 			else goto reread;
 		}
@@ -2188,7 +2179,7 @@ rewrite:
 	{
 		if (errno == EINTR)
 		{
-			if (pio->option & QSE_PIO_WRITE_NORETRY)
+			if (pio->flags & QSE_PIO_WRITENORETRY)
 				pio->errnum = QSE_PIO_EINTR;
 			else goto rewrite;
 		}
@@ -2235,9 +2226,14 @@ qse_ssize_t qse_pio_flush (qse_pio_t* pio, qse_pio_hid_t hid)
 	return n;
 }
 
+void qse_pio_purge (qse_pio_t* pio, qse_pio_hid_t hid)
+{
+	if (pio->pin[hid].tio) qse_tio_purge (pio->pin[hid].tio);
+}
+
 void qse_pio_end (qse_pio_t* pio, qse_pio_hid_t hid)
 {
-	if (pio->pin[hid].tio != QSE_NULL)
+	if (pio->pin[hid].tio)
 	{
 		qse_tio_close (pio->pin[hid].tio);
 		pio->pin[hid].tio = QSE_NULL;
@@ -2271,7 +2267,7 @@ int qse_pio_wait (qse_pio_t* pio)
 	}
 
 	w = WaitForSingleObject (pio->child, 
-		((pio->option & QSE_PIO_WAIT_NOBLOCK)? 0: INFINITE)
+		((pio->flags & QSE_PIO_WAITNOBLOCK)? 0: INFINITE)
 	);
 	if (w == WAIT_TIMEOUT)
 	{
@@ -2327,7 +2323,7 @@ int qse_pio_wait (qse_pio_t* pio)
 
 	rc = DosWaitChild (
 		DCWA_PROCESSTREE,
-		((pio->option & QSE_PIO_WAIT_NOBLOCK)? DCWW_NOWAIT: DCWW_WAIT),
+		((pio->flags & QSE_PIO_WAITNOBLOCK)? DCWW_NOWAIT: DCWW_WAIT),
 		&child_rc,
 		&ppid,
 		pio->child
@@ -2367,7 +2363,7 @@ int qse_pio_wait (qse_pio_t* pio)
 		return -1;
 	}
 
-	if (pio->option & QSE_PIO_WAIT_NOBLOCK) opt |= WNOHANG;
+	if (pio->flags & QSE_PIO_WAITNOBLOCK) opt |= WNOHANG;
 
 	while (1)
 	{
@@ -2385,7 +2381,7 @@ int qse_pio_wait (qse_pio_t* pio)
 			}
 			else if (errno == EINTR)
 			{
-				if (pio->option & QSE_PIO_WAIT_NORETRY) 
+				if (pio->flags & QSE_PIO_WAITNORETRY) 
 					pio->errnum = QSE_PIO_EINTR;
 				else continue;
 			}
@@ -2397,7 +2393,7 @@ int qse_pio_wait (qse_pio_t* pio)
 		if (n == 0) 
 		{
 			/* when WNOHANG is not specified, 0 can't be returned */
-			QSE_ASSERT (pio->option & QSE_PIO_WAIT_NOBLOCK);
+			QSE_ASSERT (pio->flags & QSE_PIO_WAITNOBLOCK);
 
 			ret = 255 + 1;
 			/* the child process is still alive */

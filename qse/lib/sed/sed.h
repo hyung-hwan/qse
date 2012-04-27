@@ -233,10 +233,9 @@ void qse_sed_fini (
 );
 
 const qse_char_t* qse_sed_dflerrstr (
-	qse_sed_t* sed, 
+	const qse_sed_t* sed, 
 	qse_sed_errnum_t errnum
 );
-
 
 #ifdef USE_REX
 /**
