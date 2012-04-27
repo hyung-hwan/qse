@@ -40,6 +40,9 @@
 #elif defined(__DOS__)
 #	include <dos.h>
 #	include <dosfunc.h>
+#elif defined(vms) || defined(__vms)
+#	include <starlet.h> /* (SYS$...) */
+#	include <ssdef.h> /* (SS$...) */
 #else
 #	include "syscall.h"
 #endif
@@ -165,6 +168,9 @@ void qse_assert_failed (
 		regs.h.al = 249;
 		intdos (&regs, &regs);
 	}
+#elif defined(vms) || defined(__vms)
+	sys$exit (SS$_ABORT); /* this condition code can be shown with 
+	                       * 'show symbol $status' from the command-line. */
 #else
 	QSE_KILL (QSE_GETPID(), SIGABRT);
 	QSE_EXIT (1);

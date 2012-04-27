@@ -29,6 +29,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
+#include <qse/cmn/nwio.h>
 
 #include <string.h>
 #include <signal.h>
@@ -54,6 +55,10 @@
 #	include <unistd.h>
 #	include <errno.h>
 #endif
+
+
+
+#include <sys/socket.h>
 
 static qse_awk_rtx_t* app_rtx = QSE_NULL;
 static int app_debug = 0;
@@ -91,6 +96,11 @@ struct gvmv_t
 	int         idx;
 	qse_char_t* ptr;
 	qse_size_t  len;
+};
+
+struct rtx_xtn_t
+{
+	qse_awk_rio_fun_t old_pipe_handler;
 };
 
 static void dprint (const qse_char_t* fmt, ...)
@@ -884,6 +894,101 @@ static qse_mmgr_t debug_mmgr =
 };
 #endif
 
+static qse_ssize_t nwio_handler (
+	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
+	qse_char_t* data, qse_size_t size, qse_nwad_t* nwad)
+{
+	switch (cmd)
+	{
+		case QSE_AWK_RIO_OPEN:
+		{
+			qse_nwio_t* handle;
+
+			handle = qse_nwio_open (
+				qse_awk_rtx_getmmgr(rtx), 0, nwad, 
+				QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
+				QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
+			);
+			if (handle == QSE_NULL) return -1;
+
+#if defined(QSE_CHAR_IS_WCHAR)
+			{
+				qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
+				if (cmgr)	qse_nwio_setcmgr (handle, cmgr);
+			}
+#endif
+
+			riod->handle = (void*)handle;
+			return 1;
+		}
+
+		case QSE_AWK_RIO_CLOSE:
+		{
+			qse_nwio_close ((qse_nwio_t*)riod->handle);
+			riod->handle = QSE_NULL;
+			return 0;
+		}
+
+		case QSE_AWK_RIO_READ:
+		{
+			return qse_nwio_read ((qse_nwio_t*)riod->handle, data, size);
+		}
+
+		case QSE_AWK_RIO_WRITE:
+		{
+			return qse_nwio_write ((qse_nwio_t*)riod->handle, data, size);
+		}
+
+		case QSE_AWK_RIO_FLUSH:
+		{
+			/*if (riod->mode == QSE_AWK_RIO_PIPE_READ) return -1;*/
+			return qse_nwio_flush ((qse_nwio_t*)riod->handle);
+		}
+
+		case QSE_AWK_RIO_NEXT:
+		{
+			return -1;
+		}
+	}
+
+	return -1;
+}
+
+static qse_ssize_t new_pipe_handler (
+	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
+	qse_char_t* data, qse_size_t size)
+{
+	struct rtx_xtn_t* xtn;
+	qse_nwad_t nwad;
+	
+	xtn = qse_awk_rtx_getxtnstd (rtx);
+
+	if (qse_strtonwad (riod->name, &nwad) >= 0)
+		return nwio_handler (rtx, cmd, riod, data, size, &nwad);
+
+	return xtn->old_pipe_handler (rtx, cmd, riod, data, size);
+}
+
+static void extend_pipe_handler (qse_awk_rtx_t* rtx)
+{
+	struct rtx_xtn_t* xtn;
+	qse_awk_rio_t rio;
+
+	xtn = qse_awk_rtx_getxtnstd (rtx);
+
+	/* get the previous handler functions */
+	qse_awk_rtx_getrio (rtx, &rio); 
+
+	/* remember the old pipe handler function */
+	xtn->old_pipe_handler = rio.pipe;
+
+	/* change the pipe handler to a new one */
+	rio.pipe = new_pipe_handler;
+
+	/* changes the handlers with a new set */
+	qse_awk_rtx_setrio (rtx, &rio);
+}
+
 static int awk_main (int argc, qse_char_t* argv[])
 {
 	qse_awk_t* awk = QSE_NULL;
@@ -999,7 +1104,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 #endif
 
 	rtx = qse_awk_rtx_openstd (
-		awk, 0, QSE_T("qseawk"),
+		awk, QSE_SIZEOF(struct rtx_xtn_t), QSE_T("qseawk"),
 		(const qse_char_t*const*)arg.icf, QSE_NULL, arg.console_cmgr);
 	if (rtx == QSE_NULL) 
 	{
@@ -1012,6 +1117,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 		print_awkerr (awk);
 		goto oops;
 	}
+	
+	extend_pipe_handler (rtx);
 
 	app_rtx = rtx;
 #ifdef ENABLE_CALLBACK

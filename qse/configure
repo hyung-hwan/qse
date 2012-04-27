@@ -16002,7 +16002,7 @@ fi
 
 done
 
-for ac_header in time.h sys/time.h utime.h spawn.h
+for ac_header in time.h sys/time.h utime.h spawn.h execinfo.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -16015,25 +16015,13 @@ fi
 
 done
 
-for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h
+for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-for ac_header in execinfo.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "execinfo.h" "ac_cv_header_execinfo_h" "$ac_includes_default"
-if test "x$ac_cv_header_execinfo_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_EXECINFO_H 1
 _ACEOF
 
 fi
@@ -16541,6 +16529,27 @@ fi
 
 fi
 
+
+
+$as_echo "#define HAVE_EPOLL /**/" >>confdefs.h
+
+for ac_func in epoll_create epoll_create1
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+if test "$ac_cv_func_epoll_create" = "yes"
+then
+	$as_echo "#define HAVE_EPOLL 1" >>confdefs.h
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lunicows" >&5
 $as_echo_n "checking for main in -lunicows... " >&6; }

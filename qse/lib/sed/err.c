@@ -21,7 +21,8 @@
 #include "sed.h"
 #include "../cmn/mem.h"
 
-const qse_char_t* qse_sed_dflerrstr (qse_sed_t* sed, qse_sed_errnum_t errnum)
+const qse_char_t* qse_sed_dflerrstr (
+	const qse_sed_t* sed, qse_sed_errnum_t errnum)
 {
 	static const qse_char_t* errstr[] =
  	{

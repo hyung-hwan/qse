@@ -99,15 +99,7 @@ struct qse_sio_t
 	QSE_DEFINE_COMMON_FIELDS (sio)
 	qse_sio_errnum_t errnum;
 
-	/*
-	depending on the stream type... FILE, FIFO, TCP, UDP
-	qse_sio_type_t type;
-	*/
-	union
-	{
-		qse_fio_t file;
-		int sck;
-	} u;
+	qse_fio_t file;
 
 	struct
 	{
@@ -125,30 +117,6 @@ struct qse_sio_t
 
 /** access the @a errnum field of the #qse_sio_t structure */
 #define QSE_SIO_ERRNUM(sio)    ((sio)->errnum)
-
-#if 0
-typedef struct qse_sio_uri_t qse_sio_uri_t;
-struct qse_sio_uri_t
-{
-	enum
-	{
-		QSE_SIO_FILE,
-		QSE_SIO_FIFO,
-		QSE_SIO_PIPE,
-		QSE_SIO_TCP,
-		QSE_SIO_UDP
-	};
-
-	union
-	{
-		const qse_char_t* file;
-		const qse_char_t* fifo;
-		/* nothing needed for pipe */
-	/*	qse_ipap_t        tcp;
-		qse_ipap_t        udp; */
-	} u;
-};
-#endif
 
 #ifdef __cplusplus
 extern "C" {

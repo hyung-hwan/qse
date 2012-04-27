@@ -83,7 +83,16 @@ enum qse_pio_flag_t
 	/** drop stdout */
 	QSE_PIO_DROPOUT       = (1 << 17),
 	/** drop stderr */
-	QSE_PIO_DROPERR       = (1 << 18)
+	QSE_PIO_DROPERR       = (1 << 18),
+
+	/** do not reread if read has been interrupted */
+	QSE_PIO_READNORETRY   = (1 << 21), 
+	/** do not rewrite if write has been interrupted */
+	QSE_PIO_WRITENORETRY  = (1 << 22),
+	/** return immediately from qse_pio_wait() if a child has not exited */
+	QSE_PIO_WAITNOBLOCK   = (1 << 23),
+	/** do not wait again if waitpid has been interrupted */
+	QSE_PIO_WAITNORETRY   = (1 << 24)
 };
 
 /**
@@ -96,29 +105,6 @@ enum qse_pio_hid_t
 	QSE_PIO_ERR = 2  /**< stderr of a child process */
 };
 typedef enum qse_pio_hid_t qse_pio_hid_t;
-
-/** 
- * The qse_pio_option_t type defines options to change the behavior of
- * qse_pio_xxx functions.
- */
-enum qse_pio_option_t
-{
-	/*QSE_PIO_READ_NOBLOCK   = (1 << 0),*/
-
-	/** do not reread if read has been interrupted */
-	QSE_PIO_READ_NORETRY   = (1 << 1), 
-
-	/*QSE_PIO_WRITE_NOBLOCK  = (1 << 2),*/
-
-	/** do not rewrite if write has been interrupted */
-	QSE_PIO_WRITE_NORETRY  = (1 << 3),
-
-	/** return immediately from qse_pio_wait() if a child has not exited */
-	QSE_PIO_WAIT_NOBLOCK   = (1 << 4),
-
-	/** do not wait again if waitpid has been interrupted */
-	QSE_PIO_WAIT_NORETRY   = (1 << 5)
-};
 
 /**
  * The qse_pio_errnum_t type defines error numbers.
@@ -190,7 +176,7 @@ struct qse_pio_pin_t
 struct qse_pio_t
 {
 	QSE_DEFINE_COMMON_FIELDS(pio)
-	int              option;  /**< options */
+	int              flags;  /**< options */
 	qse_pio_errnum_t errnum;  /**< error number */
 	qse_pio_pid_t    child;   /**< handle to a child process */
 	qse_pio_pin_t    pin[3];
@@ -198,8 +184,6 @@ struct qse_pio_t
 
 /** access the @a errnum field of the #qse_pio_t structure */
 #define QSE_PIO_ERRNUM(pio)    ((pio)->errnum)
-/** access the @a option field of the #qse_pio_t structure */
-#define QSE_PIO_OPTION(pio)    ((pio)->option)
 /** access the @a child field of the #qse_pio_t structure */
 #define QSE_PIO_CHILD(pio)     ((pio)->child)
 /** get the native handle from the #qse_pio_t structure */
@@ -270,23 +254,6 @@ void qse_pio_fini (
  */
 qse_pio_errnum_t qse_pio_geterrnum (
 	const qse_pio_t* pio /**< pio object */
-);
-
-/**
- * The qse_pio_getoption() function gets the current option.
- * @return option number OR'ed of #qse_pio_option_t enumerators
- */
-int qse_pio_getoption (
-	const qse_pio_t* pio    /**< pio object */
-);
-
-/**
- * The qse_pio_setoption() function sets the option.
- */ 
-void qse_pio_setoption (
-	qse_pio_t* pio, /**< pio object */
-	int        opt  /**< 0 or a number OR'ed of #qse_pio_option_t
-	                     enumerators */
 );
 
 /**
@@ -364,6 +331,15 @@ qse_ssize_t qse_pio_write (
  * specified to qse_pio_open() and qse_pio_init().
  */
 qse_ssize_t qse_pio_flush (
+	qse_pio_t*    pio, /**< pio object */
+	qse_pio_hid_t hid  /**< handle ID */
+);
+
+/**
+ * The qse_pio_purge() drops unflushed input and output data in the 
+ * buffer. 
+ */
+void qse_pio_purge (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );

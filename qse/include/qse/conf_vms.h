@@ -101,7 +101,19 @@
 #endif
 
 #define QSE_SIZEOF_WCHAR_T 4
+#define QSE_CHAR_IS_WCHAR
+ 
+#if defined(vax) || defined(__vax)
+#	define QSE_SIZEOF_OFF_T 4
+#elif defined(_LARGEFILE)
+#	define QSE_SIZEOF_OFF_T 8
+#else
+#	define QSE_SIZEOF_OFF_T 4
+#endif
 
+#define QSE_SIZEOF_OFF64_T     0
+#define QSE_SIZEOF_MBSTATE_T   24 
+#define QSE_MBLEN_MAX          8
 
 /* make sure you change these when you change 
  * the version in configure.ac */

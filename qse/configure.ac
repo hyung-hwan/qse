@@ -83,9 +83,8 @@ AC_SUBST(LIBM, $LIBM)
 dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h])
-AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h])
-AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h])
-AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h])
+AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -172,6 +171,13 @@ then
 	])
 fi
 AC_SUBST(SENDFILE_LIBS)
+
+AC_DEFINE(HAVE_EPOLL, [], [epoll support])
+AC_CHECK_FUNCS([epoll_create epoll_create1])
+if test "$ac_cv_func_epoll_create" = "yes"
+then
+	AC_DEFINE(HAVE_EPOLL, 1)
+fi
 
 dnl check is the import library for unicows.dll exists
 dnl this check doesn't look for a particular symbol

@@ -135,6 +135,8 @@ static int find_rio_in (
 			return -1;
 		}
 
+		QSE_MEMSET (p, 0, QSE_SIZEOF(*p));
+
 		p->name = QSE_AWK_STRDUP (run->awk, name);
 		if (p->name == QSE_NULL)
 		{
@@ -146,6 +148,7 @@ static int find_rio_in (
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
 		p->rwcmode = QSE_AWK_RIO_CLOSE_FULL;
+		/*
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
 		p->rwcstate = 0;
@@ -155,6 +158,7 @@ static int find_rio_in (
 		p->in.len = 0;
 		p->in.eof = 0;
 		p->in.eos = 0;
+		*/
 
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 
@@ -718,6 +722,8 @@ int qse_awk_rtx_writeio_str (
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
+		
+		QSE_MEMSET (p, 0, QSE_SIZEOF(*p));
 
 		p->name = QSE_AWK_STRDUP (run->awk, name);
 		if (p->name == QSE_NULL)
@@ -730,12 +736,14 @@ int qse_awk_rtx_writeio_str (
 		p->type = (io_type | io_mask);
 		p->mode = io_mode;
 		p->rwcmode = QSE_AWK_RIO_CLOSE_FULL;
+		/*
 		p->handle = QSE_NULL;
 		p->next = QSE_NULL;
 		p->rwcstate = 0;
 
 		p->out.eof = 0;
 		p->out.eos = 0;
+		*/
 
 		qse_awk_rtx_seterrnum (run, QSE_AWK_ENOERR, QSE_NULL);
 		n = handler (run, QSE_AWK_RIO_OPEN, p, QSE_NULL, 0);

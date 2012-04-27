@@ -765,6 +765,20 @@ qse_bool_t qse_awk_rtx_isstop (qse_awk_rtx_t* rtx)
 	return (rtx->exit_level == EXIT_ABORT || rtx->awk->stopall);
 }
 
+void qse_awk_rtx_getrio (qse_awk_rtx_t* rtx, qse_awk_rio_t* rio)
+{
+	rio->pipe = rtx->rio.handler[QSE_AWK_RIO_PIPE];
+	rio->file = rtx->rio.handler[QSE_AWK_RIO_FILE];
+	rio->console = rtx->rio.handler[QSE_AWK_RIO_CONSOLE];
+}
+
+void qse_awk_rtx_setrio (qse_awk_rtx_t* rtx, const qse_awk_rio_t* rio)
+{
+	rtx->rio.handler[QSE_AWK_RIO_PIPE] = rio->pipe;
+	rtx->rio.handler[QSE_AWK_RIO_FILE] = rio->file;
+	rtx->rio.handler[QSE_AWK_RIO_CONSOLE] = rio->console;
+}
+
 qse_awk_rcb_t* qse_awk_rtx_poprcb (qse_awk_rtx_t* rtx)
 {
 	qse_awk_rcb_t* top = rtx->rcb;
@@ -917,7 +931,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	}
 	else rtx->pattern_range_state = QSE_NULL;
 
-	if (rio != QSE_NULL)
+	if (rio)
 	{
 		rtx->rio.handler[QSE_AWK_RIO_PIPE] = rio->pipe;
 		rtx->rio.handler[QSE_AWK_RIO_FILE] = rio->file;

@@ -166,10 +166,21 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 );
 
 /**
- * The qse_awk_rtx_getxtnstd() gets the pointer to extension space.
+ * The qse_awk_rtx_getxtnstd() function gets the pointer to extension space.
  */
 void* qse_awk_rtx_getxtnstd (
 	qse_awk_rtx_t* rtx
+);
+
+
+/**
+ * The qse_awk_rtx_getcmgrstd() function gets the current character 
+ * manager associated with a particular I/O target indicated by the name 
+ * @a ioname.
+ */
+qse_cmgr_t* qse_awk_rtx_getcmgrstd (
+	qse_awk_rtx_t*    rtx,
+	const qse_char_t* ioname
 );
 
 #ifdef __cplusplus
