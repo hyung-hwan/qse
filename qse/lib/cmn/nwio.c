@@ -6,8 +6,8 @@
 
     QSE is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as 
-    published by the Free Software Foundation, either vernwion 3 of 
-    the License, or (at your option) any later vernwion.
+    published by the Free Software Foundation, either version 3 of 
+    the License, or (at your option) any later version.
 
     QSE is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,6 +33,16 @@
 #	include <netinet/in.h>
 #endif
 
+enum
+{
+	UDP_CONNECT_NEEDED = (1 << 0)
+};
+
+union sockaddr_t
+{
+	struct sockaddr_in in4;
+	struct sockaddr_in6 in6;
+};
 
 static qse_ssize_t socket_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
@@ -260,13 +270,14 @@ void qse_nwio_close (qse_nwio_t* nwio)
 int qse_nwio_init (
 	qse_nwio_t* nwio, qse_mmgr_t* mmgr, const qse_nwad_t* nwad, int flags)
 {
-	union
-	{
-		struct sockaddr_in in4;
-		struct sockaddr_in6 in6;
-	} addr;
+	union sockaddr_t addr;
+#ifdef HAVE_SOCKLEN_T
+	socklen_t addrlen;
+#else
 	int addrlen;
+#endif
 	int family;
+	int type;
 
 	QSE_MEMSET (nwio, 0, QSE_SIZEOF(*nwio));
 	nwio->mmgr = mmgr;
@@ -281,7 +292,15 @@ int qse_nwio_init (
 #elif defined(__DOS__)
 /* TODO: */
 #else
-	nwio->handle = socket (family, SOCK_STREAM, 0);
+	if (flags & QSE_NWIO_TCP) type = SOCK_STREAM;
+	else if (flags & QSE_NWIO_UDP) type = SOCK_DGRAM;
+	else
+	{
+		nwio->errnum = QSE_NWIO_EINVAL;
+		return -1;
+	}
+
+	nwio->handle = socket (family, type, 0);
 	if (nwio->handle <= -1)
 	{
 		nwio->errnum = syserr_to_errnum (errno);
@@ -295,27 +314,38 @@ int qse_nwio_init (
 	}
 #endif
 
-	if (flags & QSE_NWIO_LISTEN)
+	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
 
-		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1 ||
-		    listen (nwio->handle, 10) <= -1)
+		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
 		{
 			nwio->errnum = syserr_to_errnum (errno);
 			goto oops;
 		}
 
-/* TODO: socklen_t */
-		handle = accept (nwio->handle, &addr, &addrlen);
-		if (handle <= -1)
+		if (flags & QSE_NWIO_TCP)
 		{
-			nwio->errnum = syserr_to_errnum (errno);
-			goto oops;
-		}
+			if (listen (nwio->handle, 10) <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (errno);
+				goto oops;
+			}
 
-		close (nwio->handle);
-		nwio->handle = handle;
+			handle = accept (nwio->handle, (struct sockaddr*)&addr, &addrlen);
+			if (handle <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (errno);
+				goto oops;
+			}
+
+			QSE_CLOSE (nwio->handle);
+			nwio->handle = handle;
+		}
+		else if (flags & QSE_NWIO_UDP)
+		{
+			nwio->status |= UDP_CONNECT_NEEDED;
+		}
 	}
 	else
 	{
@@ -365,7 +395,7 @@ oops:
 #elif defined(__DOS__)
 /* TODO: */
 #else
-	close (nwio->handle);
+	QSE_CLOSE (nwio->handle);
 #endif
 	return -1;
 }
@@ -454,62 +484,72 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 #endif
 
 #if defined(_WIN32)
-
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
-
-	if (ReadFile(nwio->handle, buf, (DWORD)size, &count, QSE_NULL) == FALSE) 
-	{
-		/* ReadFile receives ERROR_BROKEN_PIPE when the write end
-		 * is closed in the child process */
-		if (GetLastError() == ERROR_BROKEN_PIPE) return 0;
-		nwio->errnum = syserr_to_errnum(GetLastError());
-		return -1;
-	}
-	return (qse_ssize_t)count;
+	/* TODO: */
 
 #elif defined(__OS2__)
-
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
-
-	rc = DosRead (nwio->handle, buf, (ULONG)size, &count);
-	if (rc != NO_ERROR)
-	{
-    		if (rc == ERROR_BROKEN_PIPE) return 0; /* TODO: check this */
-		nwio->errnum = syserr_to_errnum(rc);
-    		return -1;
-    	}
-	return (qse_ssize_t)count;
+	/* TODO: */
 
 #elif defined(__DOS__)
-	/* TODO: verify this */
-
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
-
-	n = read (nwio->handle, buf, size);
-	if (n <= -1) nwio->errnum = syserr_to_errnum(errno);
-	return n;
-
+	/* TODO: */
 #else
 
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t)))
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 reread:
-	n = recv (nwio->handle, buf, size, 0);
-	if (n <= -1) 
+	if (nwio->status & UDP_CONNECT_NEEDED)
 	{
-		if (errno == EINTR)
+		union sockaddr_t addr;
+#ifdef HAVE_SOCKLEN_T
+		socklen_t addrlen;
+#else
+		int addrlen;
+#endif
+
+		addrlen = QSE_SIZEOF(addr);
+		n = recvfrom (
+			nwio->handle, buf, size, 0, 
+			(struct sockaddr*)&addr, &addrlen);
+		if (n <= -1) 
 		{
-			if (nwio->flags & QSE_NWIO_READNORETRY) 
-				nwio->errnum = QSE_NWIO_EINTR;
-			else goto reread;
+			if (errno == EINTR)
+			{
+				if (nwio->flags & QSE_NWIO_READNORETRY) 
+					nwio->errnum = QSE_NWIO_EINTR;
+				else goto reread;
+			}
+			else
+			{
+				nwio->errnum = syserr_to_errnum (errno);
+			}
 		}
-		else
+		else if (n >= 1)
 		{
-			nwio->errnum = syserr_to_errnum (errno);
+			/* for udp, it just creates a stream with the
+			 * first sender */
+			if (connect (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (errno);
+				return -1;			
+			}
+			nwio->status &= ~UDP_CONNECT_NEEDED;
+		}
+	}
+	else
+	{
+		n = recv (nwio->handle, buf, size, 0);
+		if (n <= -1) 
+		{
+			if (errno == EINTR)
+			{
+				if (nwio->flags & QSE_NWIO_READNORETRY) 
+					nwio->errnum = QSE_NWIO_EINTR;
+				else goto reread;
+			}
+			else
+			{
+				nwio->errnum = syserr_to_errnum (errno);
+			}
 		}
 	}
 
@@ -549,37 +589,15 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 
 #if defined(_WIN32)
 
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
-
-	if (WriteFile (nwio->handle, data, (DWORD)size, &count, QSE_NULL) == FALSE)
-	{
-		nwio->errnum = syserr_to_errnum(GetLastError());
-		return -1;
-	}
-	return (qse_ssize_t)count;
+	/* TODO: */
 
 #elif defined(__OS2__)
 
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG);
-
-	rc = DosWrite (nwio->handle, (PVOID)data, (ULONG)size, &count);
-	if (rc != NO_ERROR)
-	{
-		nwio->errnum = syserr_to_errnum(rc);
-    		return -1;
-	}
-	return (qse_ssize_t)count;
+	/* TODO: */
 
 #elif defined(__DOS__)
 
-	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int)))
-		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(unsigned int);
-
-	n = write (nwio->handle, data, size);
-	if (n <= -1) nwio->errnum = syserr_to_errnum (errno);
-	return n;
+	/* TODO: */
 
 #else
 
@@ -656,4 +674,3 @@ static qse_ssize_t socket_output (
 
 	return 0;
 }
-

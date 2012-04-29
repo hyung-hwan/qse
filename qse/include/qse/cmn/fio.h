@@ -253,9 +253,6 @@ qse_ssize_t qse_fio_read (
 
 /**
  * The qse_fio_write() function writes data.
- * If QSE_FIO_TEXT is used and the size parameter is (qse_size_t)-1,
- * the function treats the data parameter as a pointer to a null-terminated
- * string.
  */
 qse_ssize_t qse_fio_write (
 	qse_fio_t*  fio,

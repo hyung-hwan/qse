@@ -538,10 +538,11 @@ typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
  */
 struct qse_awk_rio_arg_t 
 {
-	qse_awk_rio_mode_t    mode;    /**< opening mode */
-	qse_char_t*           name;    /**< name of I/O object */
-	qse_awk_rio_rwcmode_t rwcmode; /**< closing mode for rwpipe */
-	void*                 handle;  /**< I/O handle set by a handler */
+	qse_awk_rio_mode_t    mode;      /**< opening mode */
+	qse_char_t*           name;      /**< name of I/O object */
+	qse_awk_rio_rwcmode_t rwcmode;   /**< closing mode for rwpipe */
+	void*                 handle;    /**< I/O handle set by a handler */
+	void*                 handle2;   /**< secondary I/O handle set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 

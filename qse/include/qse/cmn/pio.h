@@ -303,7 +303,8 @@ qse_pio_pid_t qse_pio_getchild (
 );
 
 /**
- * The qse_pio_read() fucntion reads data.
+ * The qse_pio_read() fucntion reads at most @a size bytes/characters
+ * and stores them to the buffer pointed to by @a buf.
  * @return -1 on failure, 0 on EOF, data length read on success
  */
 qse_ssize_t qse_pio_read (
@@ -314,9 +315,10 @@ qse_ssize_t qse_pio_read (
 );
 
 /**
- * The qse_pio_write() function writes data.
- * If @a size is zero, qse_pio_write() closes the the writing
- * stream causing the child process reach the end of the stream.
+ * The qse_pio_write() function writes up @a size bytes/characters 
+ * from the buffer pointed to by @a data. If #QSE_PIO_TEXT is used 
+ * and the @a size parameter is (qse_size_t)-1, the function treats 
+ * the @a data parameter as a pointer to a null-terminated string.
  * @return -1 on failure, data length written on success
  */
 qse_ssize_t qse_pio_write (
