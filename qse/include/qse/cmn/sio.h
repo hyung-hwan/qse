@@ -36,7 +36,6 @@ enum qse_sio_flag_t
 	 * qse_fio_flag_t enumerators. you can use values between
 	 * (1<<0) and (1<<7) inclusive reserved in qse_fio_flag_t.
 	 * the range is represented by QSE_FIO_RESERVED. */
-	QSE_SIO_URI           = (1 << 0),
 	QSE_SIO_IGNOREMBWCERR = (1 << 1),
 	QSE_SIO_NOAUTOFLUSH   = (1 << 2),
 

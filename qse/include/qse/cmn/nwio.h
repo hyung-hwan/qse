@@ -37,14 +37,14 @@ enum qse_nwio_flag_t
 	QSE_NWIO_NOAUTOFLUSH   = (1 << 2),
 
 	/* normal open flags */
-	QSE_NWIO_READ          = (1 << 8),
-	QSE_NWIO_WRITE         = (1 << 9),
+	QSE_NWIO_PASSIVE       = (1 << 8),
+	QSE_NWIO_TCP           = (1 << 9),
+	QSE_NWIO_UDP           = (1 << 10),
 
 	/** do not reread if read has been interrupted */
-	QSE_NWIO_READNORETRY   = (1 << 10),
+	QSE_NWIO_READNORETRY   = (1 << 14),
 	/** do not rewrite if write has been interrupted */
-	QSE_NWIO_WRITENORETRY  = (1 << 11),
-	QSE_NWIO_LISTEN        = (1 << 12)
+	QSE_NWIO_WRITENORETRY  = (1 << 15),
 };
 
 enum qse_nwio_errnum_t
@@ -89,6 +89,7 @@ struct qse_nwio_t
 	qse_nwio_errnum_t errnum;
 	qse_nwio_hnd_t    handle;
 	qse_tio_t*        tio;
+	int               status;
 };
 
 #define QSE_NWIO_HANDLE(nwio) ((nwio)->handle)

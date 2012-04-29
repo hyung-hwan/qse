@@ -894,60 +894,99 @@ static qse_mmgr_t debug_mmgr =
 };
 #endif
 
-static qse_ssize_t nwio_handler (
+static qse_ssize_t nwio_handler_open (
+	qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod, int flags, qse_nwad_t* nwad)
+{
+	qse_nwio_t* handle;
+
+	handle = qse_nwio_open (
+		qse_awk_rtx_getmmgr(rtx), 0, nwad, 
+		flags | QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
+		QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
+	);
+	if (handle == QSE_NULL) return -1;
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	{
+		qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
+		if (cmgr)	qse_nwio_setcmgr (handle, cmgr);
+	}
+#endif
+
+	riod->handle2 = (void*)handle;
+	return 1;
+}
+
+static qse_ssize_t nwio_handler_rest (
 	qse_awk_rtx_t* rtx, qse_awk_rio_cmd_t cmd, qse_awk_rio_arg_t* riod,
-	qse_char_t* data, qse_size_t size, qse_nwad_t* nwad)
+	qse_char_t* data, qse_size_t size)
 {
 	switch (cmd)
 	{
 		case QSE_AWK_RIO_OPEN:
 		{
-			qse_nwio_t* handle;
-
-			handle = qse_nwio_open (
-				qse_awk_rtx_getmmgr(rtx), 0, nwad, 
-				QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
-				QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
-			);
-			if (handle == QSE_NULL) return -1;
-
-#if defined(QSE_CHAR_IS_WCHAR)
-			{
-				qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
-				if (cmgr)	qse_nwio_setcmgr (handle, cmgr);
-			}
-#endif
-
-			riod->handle = (void*)handle;
-			return 1;
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINTERN, QSE_NULL);
+			return -1;
 		}
 
 		case QSE_AWK_RIO_CLOSE:
 		{
-			qse_nwio_close ((qse_nwio_t*)riod->handle);
-			riod->handle = QSE_NULL;
+			qse_nwio_close ((qse_nwio_t*)riod->handle2);
+			riod->handle2 = QSE_NULL;
 			return 0;
 		}
 
 		case QSE_AWK_RIO_READ:
 		{
-			return qse_nwio_read ((qse_nwio_t*)riod->handle, data, size);
+			return qse_nwio_read ((qse_nwio_t*)riod->handle2, data, size);
 		}
 
 		case QSE_AWK_RIO_WRITE:
 		{
-			return qse_nwio_write ((qse_nwio_t*)riod->handle, data, size);
+			return qse_nwio_write ((qse_nwio_t*)riod->handle2, data, size);
 		}
 
 		case QSE_AWK_RIO_FLUSH:
 		{
 			/*if (riod->mode == QSE_AWK_RIO_PIPE_READ) return -1;*/
-			return qse_nwio_flush ((qse_nwio_t*)riod->handle);
+			return qse_nwio_flush ((qse_nwio_t*)riod->handle2);
 		}
 
 		case QSE_AWK_RIO_NEXT:
 		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINTERN, QSE_NULL);
 			return -1;
+		}
+	}
+
+	qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINTERN, QSE_NULL);
+	return -1;
+}
+
+static int parse_pipe_uri (const qse_char_t* uri, int* flags, qse_nwad_t* nwad)
+{
+	static struct
+	{
+		qse_char_t* prefix;
+		qse_size_t  len;
+		int         flags;
+	} x[] =
+	{
+		{ QSE_T("tcp://"),  6, QSE_NWIO_TCP },
+		{ QSE_T("udp://"),  6, QSE_NWIO_UDP },
+		{ QSE_T("tcpd://"), 7, QSE_NWIO_TCP | QSE_NWIO_PASSIVE },
+		{ QSE_T("udpd://"), 7, QSE_NWIO_UDP | QSE_NWIO_PASSIVE }
+	};
+	int i;
+
+
+	for (i = 0; i < QSE_COUNTOF(x); i++)
+	{
+		if (qse_strzcmp (uri, x[i].prefix, x[i].len) == 0)
+		{
+			if (qse_strtonwad (uri + x[i].len, nwad) <= -1) return -1;
+			*flags = x[i].flags;
+			return 0;
 		}
 	}
 
@@ -959,14 +998,17 @@ static qse_ssize_t new_pipe_handler (
 	qse_char_t* data, qse_size_t size)
 {
 	struct rtx_xtn_t* xtn;
+	int flags;
 	qse_nwad_t nwad;
 	
 	xtn = qse_awk_rtx_getxtnstd (rtx);
 
-	if (qse_strtonwad (riod->name, &nwad) >= 0)
-		return nwio_handler (rtx, cmd, riod, data, size, &nwad);
-
-	return xtn->old_pipe_handler (rtx, cmd, riod, data, size);
+	if (cmd == QSE_AWK_RIO_OPEN && parse_pipe_uri (riod->name, &flags, &nwad) >= 0) 
+		return nwio_handler_open (rtx, riod, flags, &nwad);
+	else if (riod->handle2)
+		return nwio_handler_rest (rtx, cmd, riod, data, size);
+	else
+		return xtn->old_pipe_handler (rtx, cmd, riod, data, size);
 }
 
 static void extend_pipe_handler (qse_awk_rtx_t* rtx)

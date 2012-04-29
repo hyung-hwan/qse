@@ -306,13 +306,17 @@ qse_ssize_t qse_tio_flush (qse_tio_t* tio)
 		if (n <= -1) 
 		{
 			if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
-			QSE_MEMCPY (tio->out.buf.ptr, cur, left);
-			tio->outbuf_len = left;
+			if (cur != tio->out.buf.ptr)
+			{
+				QSE_MEMCPY (tio->out.buf.ptr, cur, left);
+				tio->outbuf_len = left;
+			}
 			return -1;
 		}
 		if (n == 0) 
 		{
-			QSE_MEMCPY (tio->out.buf.ptr, cur, left);
+			if (cur != tio->out.buf.ptr)
+				QSE_MEMCPY (tio->out.buf.ptr, cur, left);
 			break;
 		}
 	
