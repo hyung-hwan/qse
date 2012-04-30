@@ -37,6 +37,11 @@
 /**
  * @example awk09.c
  * This programs shows how to specify multiple console output files.
+ *
+ * @example awk11.c
+ * This programs shows how to extend an I/O handler implemented by 
+ * qse_awk_rtx_openstd().
+ *
  */
 
 /**
@@ -44,9 +49,9 @@
  */
 enum qse_awk_parsestd_type_t
 {
-	QSE_AWK_PARSESTD_NULL = 0, /* invalid type */
-	QSE_AWK_PARSESTD_FILE = 1,
-	QSE_AWK_PARSESTD_STR  = 2 
+	QSE_AWK_PARSESTD_NULL = 0, /**< invalid type */
+	QSE_AWK_PARSESTD_FILE = 1, /**< file */
+	QSE_AWK_PARSESTD_STR  = 2  /**< length-bounded string */
 };
 
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;

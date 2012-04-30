@@ -104,10 +104,7 @@ libqsecmn_la_SOURCES = \
 	xma.c
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
-
-#if WIN32 
-#libqsecmn_la_LIBADD = -lpsapi
-#endif
+libqsecmn_la_LIBADD = $(SOCKET_LIBS)
 
 if ENABLE_CXX
 
@@ -115,6 +112,7 @@ lib_LTLIBRARIES += libqsecmnxx.la
 libqsecmnxx_la_SOURCES = \
 	Mmgr.cpp StdMmgr.cpp
 libqsecmnxx_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
+libqsecmnxx_la_LIBADD = 
 
 endif
 

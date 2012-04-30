@@ -45,8 +45,9 @@ extern qse_cmgr_t* qse_cp950cmgr;
 /**
  * The qse_getfindcmgr() function find a builtin cmgr matching a given 
  * @a name and returns it. It returns #QSE_NULL if no match is found.
- * The @a name can be one of "utf8", "slmb", and an empty string. Calling this
- * function with an empty string is the same as calling qse_getdflcmgr().
+ * The @a name can be one of "utf8", "slmb", "cp949", "cp950", and an 
+ * empty string. Calling this function with an empty string is the same
+ * as calling qse_getdflcmgr().
  */
 qse_cmgr_t* qse_findcmgr (
 	const qse_char_t* name

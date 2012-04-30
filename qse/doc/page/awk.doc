@@ -1,14 +1,26 @@
 /** @page awk AWK
 
+@section awk_content CONTENTS
+- @ref awk_intro "INTRODUCTION"
+- @ref awk_lang "AWK LANGUAGE"
+- @ref awk_ext "AWK LANGUAGE EXTENSIONS"
+ - @ref awk_ext_vardecl " VARIABLE DECLARATION"
+ - @ref awk_ext_include  "INCLUDE"
+ - @ref awk_ext_rwpipe   "TWO-WAY PIPE"
+ - @ref awk_ext_return   "RETURN"
+ - @ref awk_ext_comment  "COMMENT"
+ - @ref awk_ext_fnc      "EXTENDED FUNCTIONS"
+ - @ref awk_ext_fs       "EXTENDED FS"
+ - @ref awk_ext_binnum   "BINARY NUMBER"
+ - @ref awk_ext_unicode  "UNICODE ESCAPE SEQUENCE"
+ - @ref awk_ext_ioenc    "I/O ENCODING"
+
+
 @section awk_intro INTRODUCTION
 
 QSEAWK is an embeddable AWK interpreter and is a part of the @ref qse_intro 
-"QSE" library. The interpreter implements the language described in the book
-<a class="el" href="http://cm.bell-labs.com/cm/cs/awkbook/">
-The AWK Proramming Language</a>
-with @ref awk_ext "extensions". Its design focuses on building a flexible 
-and robust embedding API with minimal platform dependency. An embedding 
-application is capable of
+"QSE" library. Its design focuses on building a flexible and robust embedding
+API with minimal platform dependency. An embedding application is capable of
 - adding new global variables and functions.
 - getting and set the value of a global variable.
 - calling a function with or without parameters and getting its return value.
@@ -39,40 +51,42 @@ The code example below demonstrates the steps in C. It executes the one liner
 
 int main ()
 {
-	qse_awk_t* awk = QSE_NULL;
-	qse_awk_rtx_t* rtx = QSE_NULL;
-	qse_awk_val_t* retv;
-	qse_awk_parsestd_in_t psin;
-	int ret = -1;
+     qse_awk_t* awk = QSE_NULL;
+     qse_awk_rtx_t* rtx = QSE_NULL;
+     qse_awk_val_t* retv;
+     qse_awk_parsestd_t psin;
+     int ret = -1;
 
-	awk = qse_awk_openstd (0); /* open a new interpreter */
-	if (!awk) FAIL ("cannot open awk");
+     awk = qse_awk_openstd (0); /* open a new interpreter */
+     if (!awk) FAIL ("cannot open awk");
 
-	/* parse the hello world script from a string */
-	psin.type = QSE_AWK_PARSESTD_CP;
-	psin.u.cp = QSE_T("BEGIN { print \"hello, world\" }");
-	if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1) 
-		FAIL (qse_awk_geterrmsg(awk));
+     /* parse the hello world script from a string */
+     psin.type = QSE_AWK_PARSESTD_STR;
+     psin.u.str.ptr = QSE_T("BEGIN { print \"hello, world\" }");
+     psin.u.str.len = qse_strlen(psin.u.str.ptr);
+     if (qse_awk_parsestd (awk, &psin, QSE_NULL) <= -1)
+          FAIL (qse_awk_geterrmsg(awk));
 
-	rtx = qse_awk_rtx_openstd ( /* open a runtime context */
-		awk, 0,             /* no extension */
-		QSE_T("hello"),     /* ARGV[0] */
-		QSE_NULL,           /* stdin */
-		QSE_NULL            /* stdout */               
-	);
-	if (!rtx) FAIL (qse_awk_geterrmsg(awk));
+     rtx = qse_awk_rtx_openstd ( /* open a runtime context */
+          awk, 0,             /* no extension */
+          QSE_T("hello"),     /* ARGV[0] */
+          QSE_NULL,           /* stdin */
+          QSE_NULL,           /* stdout */
+          QSE_NULL            /* default cmgr */
+     );
+     if (!rtx) FAIL (qse_awk_geterrmsg(awk));
 
-	/* exeucte BEGIN,pattern-action,END blocks */
-	retv = qse_awk_rtx_loop (rtx); 
-	if (!retv) FAIL (qse_awk_rtx_geterrmsg(rtx));
+     /* exeucte BEGIN,pattern-action,END blocks */
+     retv = qse_awk_rtx_loop (rtx);
+     if (!retv) FAIL (qse_awk_rtx_geterrmsg(rtx));
 
-	qse_awk_rtx_refdownval (rtx, retv); /* destroy the return value */
-	ret = 0;
+     qse_awk_rtx_refdownval (rtx, retv); /* destroy the return value */
+     ret = 0;
 
 oops:
-	if (rtx) qse_awk_rtx_close (rtx); /* close the runtime context */
-	if (awk) qse_awk_close (awk); /* close the interpreter */
-	return ret;
+     if (rtx) qse_awk_rtx_close (rtx); /* close the runtime context */
+     if (awk) qse_awk_close (awk); /* close the interpreter */
+     return ret;
 }
 @endcode
 
@@ -119,9 +133,63 @@ int main (int argc, char* argv[])
 }
 @endcode
 
-@section awk_ext EXTENSIONS
-Some language extensions are implemented and they can be enabled by setting the
-corresponding options.
+This library also provides a stand-alone AWK interpreter that you can use
+in a console environment. The source code is located under the 
+<project-root>/cmd/awk subdirectory.
+
+@code
+$ qseawk
+USAGE: qseawk [options] -f sourcefile [ -- ] [datafile]*
+       qseawk [options] [ -- ] sourcestring [datafile]*
+Where options are:
+ -h/--help                         print this message
+ --version                         print version
+ -D                                show extra information
+ -c/--call            name         call a function instead of entering
+                                   the pattern-action loop
+ -f/--file            sourcefile   set the source script file
+ -d/--deparsed-file   deparsedfile set the deparsing output file
+ -F/--field-separator string       set a field separator(FS)
+ -v/--assign          var=value    add a global variable with a value
+ -m/--memory-limit    number       limit the memory usage (bytes)
+ -X                   number       fail the number'th memory allocation
+ --script-encoding    string       specify script file encoding name
+ --console-encoding   string       specify console encoding name
+ --implicit           on/off       allow undeclared variables
+ --explicit           on/off       allow declared variables(local,global)
+ --extraops           on/off       enable extra operators(<<,>>,^^,\)
+ --rio                on/off       enable builtin I/O including getline & print
+ --rwpipe             on/off       allow a dual-directional pipe
+ --newline            on/off       enable a newline to terminate a statement
+ --striprecspc        on/off       strip spaces in splitting a record
+ --stripstrspc        on/off       strip spaces in converting a string to a number
+ --nextofile          on/off       enable 'nextofile'
+ --reset              on/off       enable 'reset'
+ --crlf               on/off       use CRLF for a newline
+ --maptovar           on/off       allow a map to be assigned or returned
+ --pablock            on/off       enable pattern-action loop
+ --rexbound           on/off       enable {n,m} in a regular expression
+ --ncmponstr          on/off       perform numeric comparsion on numeric strings
+ --strictnaming       on/off       enable the strict naming rule
+ --include            on/off       enable 'include'
+@endcode
+
+@section awk_lang AWK LANGUAGE
+QSEAWK implements the language described in the book
+<a class="el" href="http://cm.bell-labs.com/cm/cs/awkbook/"> 
+The AWK Proramming Language</a> with various @ref awk_ext "extensions".
+
+- BEGIN block
+- END block
+- Pattern-action block
+- User-defined functions
+- Expressions
+- Statements
+- Streams
+
+@section awk_ext AWK LANGUAGE EXTENSIONS
+Some language extensions are implemented and those can be enabled by setting 
+the corresponding options.
 
 @subsection awk_ext_vardecl VARIABLE DECLARATION
 
@@ -186,6 +254,29 @@ BEGIN {
 }
 @endcode
 
+This two-way pipe can create a TCP or UDP connection if the pipe command
+string is prefixed with one of the followings:
+
+- tcp:// - establishes a TCP connection to a specified IP address/port.
+- udp:// - establishes a TCP connection to a specified IP address/port.
+- tcpd:// - binds a TCP socket to a specified IP address/port and waits for the first connection.
+- udpd:// - binds a TCP socket to a specified IP address/port and waits for the first sender.
+
+@code
+BEGIN { 
+	# it binds a TCP socket to the IPv6 address :: and the port number 
+	# 9999 and waits for the first coming connection. It repeats writing
+	# "hello world" to the first connected peer and reading a line from
+	# it until the session is torn down.
+	do { 
+		print "hello world" || "tcpd://[::]:9999"; 
+		if (("tcpd://[::]:9999" || getline x) <= 0) break; 
+		print x; 
+	} 
+	while(1);  
+}
+@endcode
+
 @subsection awk_ext_return RETURN
 The return statement is valid in BEGIN blocks, END blocks, and pattern-action 
 blocks as well as in functions. The execution of a calling block is aborted
@@ -232,17 +323,57 @@ BEGIN {
 @endcode
 
 @subsection awk_ext_fs EXTENDED FS
+
+If the value for FS begins with a question mark followed by 4 
+additional letters, QSEAWK can split a record with quoted fields 
+delimited by a single-letter separator.
+
+The 4 additional letters are composed of a field separator,
+an escaper, a opening quote, and a closing quote.
+
 @code
-BEGIN { FS="?:\\\"\""; }
+$ cat x.awk
+BEGIN { FS="?:\\[]"; }
+{
+     for (i = 1; i <= NF; i++)
+          print "$" i ": " $i;
+     print "---------------";
+}
 @endcode
+
+The value of FS above means the following.
+- : is a field separator.
+- a backslash is an escaper.
+- a left bracket is an opening quote.
+- a right bracket is a closing quote.
+
+See the following output.
+@code
+$ cat x.dat
+[fx1]:[fx2]:[f\[x\]3]
+abc:def:[a b c]
+$ qseawk -f x.awk x.dat
+$1: fx1
+$2: fx2
+$3: f[x]3
+---------------
+$1: abc
+$2: def
+$3: a b c
+---------------
+@endcode
+	
 
 
 @subsection awk_ext_binnum BINARY NUMBER
 Use 0b to begin a binary number sequence.
 
 @code 
-BEGIN { print 0b1101; }
+$ qseawk 'BEGIN { printf ("%b %o %d %x\n", 0b1101, 0b1101, 0b1101, 0b1101); }'
+1101 15 13 d
 @endcode
+
+
 
 @subsection awk_ext_unicode UNICODE ESCAPE SEQUENCE 
 
@@ -250,6 +381,65 @@ If QSE is compiled for #QSE_CHAR_IS_WCHAR, you can use \\u and \\U in a
 string to specify a character by unicode.
 
 @code
-BEGIN { print "string=>[\uB313\U0000B313]"; }
+$ qseawk 'BEGIN { print "\uC720\uB2C8\uCF54\uB4DC \U00007D71\U00004E00\U000078BC"; }'
+유니코드 統一碼
 @endcode
+
+
+@subsection awk_ext_ioenc I/O ENCODING
+You can call setenc() to set the character encoding of a stream resource like
+a pipe or a file. See qse_findcmgr() for a list of supported encoding names.
+
+Let's say you run this simple echoing script on a WIN32 platform that has
+the active code page of 949 and is reachable at the IP address 192.168.2.8.
+
+@code
+C:\> chcp
+Active code page: 949
+C:\> type s.awk
+BEGIN {
+     sock = "tcpd://0.0.0.0:9999";
+     setenc (sock, "cp949"); # this is not needed since the active 
+                             # code page is already 949.
+     do {
+
+          if ((sock || getline x) <= 0) break;
+          print "PEER: " x;
+          print x || sock;
+     }
+     while(1);
+}
+C:\> qseawk --rwpipe=on -f r.awk
+PEER: 안녕
+PEER: ?好!
+@endcode
+
+Now you run the following script on a UTF-8 console of a Linux box.
+
+@code
+$ echo $LANG
+en_US.UTF-8
+$ cat  c.awk
+BEGIN {
+     peer = "tcp://192.168.2.8:9999";
+     setenc (peer, "cp949");
+     do
+     {
+          printf "> ";
+          if ((getline x) <= 0) break;
+          print x || peer;
+          if ((peer || getline line) <= -1) break;
+          print "PEER: " line;
+     }
+     while (1);
+}
+$ qseawk --rwpipe=on -f c.awk
+> 안녕
+PEER: 안녕
+> 你好!
+PEER: ?好!
+@endcode
+
+Note that 你 has been converted to a question mark since the letter is
+not supported by cp949.
 */

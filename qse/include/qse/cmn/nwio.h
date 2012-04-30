@@ -22,7 +22,7 @@
 #define _QSE_CMN_NWIO_H_
 
 /** @file
- * This file defines a generic text I/O interface.
+ * This file defines a network-based text I/O interface.
  */
 
 #include <qse/types.h>
@@ -70,18 +70,20 @@ enum qse_nwio_errnum_t
 typedef enum qse_nwio_errnum_t qse_nwio_errnum_t;
 
 #if defined(_WIN32)
-/* TODO: */
+	typedef qse_intptr_t qse_nwio_hnd_t;
 #elif defined(__OS2__)
 /* TODO: */
 #elif defined(__DOS__)
 /* TODO: */
 #else
      typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
-#    define  QSE_NWIO_HND_NIL ((qse_nwio_hnd_t)-1)
 #endif
 
 typedef struct qse_nwio_t qse_nwio_t;
 
+/**
+ * The qse_nwio_t type defines a structure for a network-based stream.
+ */
 struct qse_nwio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (nwio)
