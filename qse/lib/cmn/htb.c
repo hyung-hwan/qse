@@ -257,7 +257,7 @@ static mancbs_t mancbs[] =
 const mancbs_t* qse_gethtbmancbs (mancbs_kind_t kind)
 {
 	return &mancbs[kind];
-};
+}
 
 htb_t* qse_htb_open (
 	mmgr_t* mmgr, size_t xtnsize, size_t capa, 

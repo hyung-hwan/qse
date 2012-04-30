@@ -68,8 +68,8 @@ enum qse_tio_flag_t
 	QSE_TIO_NOAUTOFLUSH   = (1 << 1),
 
 	/* for internal use only. */
-	QSE_TIO_DYNINBUF      = (1 << 30),
-	QSE_TIO_DYNOUTBUF     = (1 << 31)
+	QSE_TIO_DYNINBUF      = (1 << 29),
+	QSE_TIO_DYNOUTBUF     = (1 << 30)
 };
 
 enum qse_tio_misc_t

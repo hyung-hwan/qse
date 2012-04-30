@@ -43,7 +43,9 @@ enum
 union sockaddr_t
 {
 	struct sockaddr_in in4;
+#if defined(AF_INET6)
 	struct sockaddr_in6 in6;
+#endif
 };
 
 static qse_ssize_t socket_input (
