@@ -91,8 +91,6 @@ libqsecmn_la_SOURCES = \
 	str-word.c \
 	time.c \
 	tio.c \
-	tio-get.c \
-	tio-put.c \
 	tre.c \
 	tre-ast.c \
 	tre-compile.c \
