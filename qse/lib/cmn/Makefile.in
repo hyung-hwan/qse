@@ -87,10 +87,9 @@ am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo \
 	str-pac.lo str-pbrk.lo str-put.lo str-rev.lo str-rot.lo \
 	str-set.lo str-spl.lo str-spn.lo str-str.lo str-subst.lo \
-	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tio-get.lo \
-	tio-put.lo tre.lo tre-ast.lo tre-compile.lo \
-	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
-	tre-stack.lo utf8.lo xma.lo
+	str-tok.lo str-trm.lo str-word.lo time.lo tio.lo tre.lo \
+	tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
+	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -368,8 +367,6 @@ libqsecmn_la_SOURCES = \
 	str-word.c \
 	time.c \
 	tio.c \
-	tio-get.c \
-	tio-put.c \
 	tre.c \
 	tre-ast.c \
 	tre-compile.c \
@@ -533,8 +530,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-trm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-word.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio-get.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio-put.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-ast.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-compile.Plo@am__quote@

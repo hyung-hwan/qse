@@ -65,11 +65,7 @@ enum qse_tio_flag_t
 	QSE_TIO_IGNOREMBWCERR = (1 << 0),
 
 	/**< do not flush data in the buffer until the buffer gets full. */
-	QSE_TIO_NOAUTOFLUSH   = (1 << 1),
-
-	/* for internal use only. */
-	QSE_TIO_DYNINBUF      = (1 << 29),
-	QSE_TIO_DYNOUTBUF     = (1 << 30)
+	QSE_TIO_NOAUTOFLUSH   = (1 << 1)
 };
 
 enum qse_tio_misc_t
@@ -113,14 +109,14 @@ struct qse_tio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (tio)
 	qse_tio_errnum_t errnum;
-	int              flags; 
+	int              flags;
 	qse_cmgr_t*      cmgr;
 
 	qse_tio_io_t     in;
 	qse_tio_io_t     out;
 
 	/* for house keeping from here */
-	int              input_status;
+	int              status;
 	qse_size_t       inbuf_cur;
 	qse_size_t       inbuf_len;
 	qse_size_t       outbuf_len;

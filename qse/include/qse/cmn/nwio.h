@@ -72,9 +72,9 @@ typedef enum qse_nwio_errnum_t qse_nwio_errnum_t;
 #if defined(_WIN32)
 	typedef qse_intptr_t qse_nwio_hnd_t;
 #elif defined(__OS2__)
-/* TODO: */
+     typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
 #elif defined(__DOS__)
-/* TODO: */
+     typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
 #else
      typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
 #endif

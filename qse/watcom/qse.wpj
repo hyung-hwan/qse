@@ -5,7 +5,7 @@ VpeMain
 1
 WRect
 440
-160
+173
 9320
 9680
 2
@@ -87,7 +87,7 @@ WFileName
 30
 release/os2/lib/cmn/qsecmn.tgt
 0
-0
+5
 22
 VComponent
 23
@@ -112,7 +112,7 @@ WRect
 1400
 5700
 4240
-0
+1
 0
 27
 WFileName
@@ -124,18 +124,18 @@ release/os2/cmd/sed/qsesed.tgt
 VComponent
 29
 WRect
-1030
-1360
+780
+480
 5700
 4240
-1
+0
 0
 30
 WFileName
 28
 debug/os2/lib/cmn/qsecmn.tgt
-0
-5
+10
+13
 31
 VComponent
 32
@@ -189,7 +189,7 @@ VComponent
 41
 WRect
 2700
-1906
+1893
 5700
 4240
 1
@@ -198,8 +198,8 @@ WRect
 WFileName
 30
 debug/dos32/lib/cmn/qsecmn.tgt
-8
-13
+18
+23
 43
 VComponent
 44
@@ -268,7 +268,7 @@ debug/dos32/cmd/sed/qsesed.tgt
 VComponent
 56
 WRect
--10
+0
 0
 5700
 4240
@@ -280,4 +280,4 @@ WFileName
 debug/os2/cmd/sed/qsesed.tgt
 0
 0
-25
+28
