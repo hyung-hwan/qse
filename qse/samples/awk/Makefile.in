@@ -35,7 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
-	awk04$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) $(am__EXEEXT_1)
+	awk04$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) awk11$(EXEEXT) \
+	$(am__EXEEXT_1)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 @ENABLE_CXX_TRUE@am__append_2 = awk05 awk06 awk07 awk08
 subdir = samples/awk
@@ -103,6 +104,10 @@ am_awk10_OBJECTS = awk10.$(OBJEXT)
 awk10_OBJECTS = $(am_awk10_OBJECTS)
 awk10_LDADD = $(LDADD)
 awk10_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_awk11_OBJECTS = awk11.$(OBJEXT)
+awk11_OBJECTS = $(am_awk11_OBJECTS)
+awk11_LDADD = $(LDADD)
+awk11_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -128,11 +133,12 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
 	$(awk04_SOURCES) $(awk05_SOURCES) $(awk06_SOURCES) \
 	$(awk07_SOURCES) $(awk08_SOURCES) $(awk09_SOURCES) \
-	$(awk10_SOURCES)
+	$(awk10_SOURCES) $(awk11_SOURCES)
 DIST_SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
 	$(awk04_SOURCES) $(am__awk05_SOURCES_DIST) \
 	$(am__awk06_SOURCES_DIST) $(am__awk07_SOURCES_DIST) \
-	$(am__awk08_SOURCES_DIST) $(awk09_SOURCES) $(awk10_SOURCES)
+	$(am__awk08_SOURCES_DIST) $(awk09_SOURCES) $(awk10_SOURCES) \
+	$(awk11_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -295,6 +301,7 @@ awk03_SOURCES = awk03.c
 awk04_SOURCES = awk04.c
 awk09_SOURCES = awk09.c
 awk10_SOURCES = awk10.c
+awk11_SOURCES = awk11.c
 @ENABLE_CXX_TRUE@CXXLIB = -lqseawkxx -lqsecmnxx
 @ENABLE_CXX_TRUE@awk05_SOURCES = awk05.cpp
 @ENABLE_CXX_TRUE@awk06_SOURCES = awk06.cpp
@@ -411,6 +418,9 @@ awk09$(EXEEXT): $(awk09_OBJECTS) $(awk09_DEPENDENCIES)
 awk10$(EXEEXT): $(awk10_OBJECTS) $(awk10_DEPENDENCIES) 
 	@rm -f awk10$(EXEEXT)
 	$(LINK) $(awk10_OBJECTS) $(awk10_LDADD) $(LIBS)
+awk11$(EXEEXT): $(awk11_OBJECTS) $(awk11_DEPENDENCIES) 
+	@rm -f awk11$(EXEEXT)
+	$(LINK) $(awk11_OBJECTS) $(awk11_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -428,6 +438,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk08.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk09.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk10.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk11.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

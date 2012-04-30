@@ -35,10 +35,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-
-#if WIN32 
-#libqsecmn_la_LIBADD = -lpsapi
-#endif
 @ENABLE_CXX_TRUE@am__append_1 = libqsecmnxx.la
 subdir = lib/cmn
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
@@ -78,7 +74,8 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libqsecmn_la_LIBADD =
+am__DEPENDENCIES_1 =
+libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo gdl.lo htb.lo \
 	lda.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo \
@@ -98,7 +95,7 @@ libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqsecmn_la_LDFLAGS) $(LDFLAGS) -o $@
-libqsecmnxx_la_LIBADD =
+libqsecmnxx_la_DEPENDENCIES =
 am__libqsecmnxx_la_SOURCES_DIST = Mmgr.cpp StdMmgr.cpp
 @ENABLE_CXX_TRUE@am_libqsecmnxx_la_OBJECTS = Mmgr.lo StdMmgr.lo
 libqsecmnxx_la_OBJECTS = $(am_libqsecmnxx_la_OBJECTS)
@@ -384,10 +381,12 @@ libqsecmn_la_SOURCES = \
 	xma.c
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
+libqsecmn_la_LIBADD = $(SOCKET_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
 @ENABLE_CXX_TRUE@	Mmgr.cpp StdMmgr.cpp
 
 @ENABLE_CXX_TRUE@libqsecmnxx_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
+@ENABLE_CXX_TRUE@libqsecmnxx_la_LIBADD = 
 all: all-am
 
 .SUFFIXES:

@@ -278,7 +278,7 @@ run_test()
 		echo_so "       You may execute 'diff ${base_outfile} ${outfile}.test' for more info."
 		return 1
 	}
-	rm -f "${outfile}.test"
+	#rm -f "${outfile}.test"
 	return 0
 }
 

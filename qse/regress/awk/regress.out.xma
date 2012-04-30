@@ -144,19 +144,19 @@ USA	3615	237	North America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-019.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-cou.dat: USSR	8649	275	Asia
-cou.dat: Canada	3852	25	North America
-cou.dat: China	3705	1032	Asia
-cou.dat: USA	3615	237	North America
-cou.dat: Brazil	3286	134	South America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Canada	3852	25	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: China	3705	1032	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USA	3615	237	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-020.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-cou.dat: USSR	8649	275	Asia
-cou.dat: Canada	3852	25	North America
-cou.dat: China	3705	1032	Asia
-cou.dat: USA	3615	237	North America
-cou.dat: Brazil	3286	134	South America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Canada	3852	25	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: China	3705	1032	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USA	3615	237	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-021.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -413,7 +413,7 @@ Mark	5.00	20
 Mary	5.5	22
 Susie	4.25	18
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --strictnaming=off --newline=on -o- -f lang-001.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --strictnaming=off --newline=on -d- -f lang-001.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -426,7 +426,7 @@ BEGIN {
 
 hello
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-002.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-002.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function f (__p0)
 {
@@ -937,9 +937,9 @@ my hello
 my hello
 my hello
 my hello
-ERROR: CODE 15 LINE 6 COLUMN 1 - block nested too deeply
+ERROR: CODE 14 LINE 6 COLUMN 1 - block nested too deeply
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-003.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function fn (__p0)
 {
@@ -954,11 +954,11 @@ BEGIN {
 
 50
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-004.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 42 LINE 3 COLUMN 9 - function 'a' redefined
+ERROR: CODE 41 LINE 3 COLUMN 9 - function 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -o- -f lang-005.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -982,11 +982,11 @@ BEGIN {
 50
 100
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -o- -f lang-006.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 5 COLUMN 10 - global variable 'a' redefined
+ERROR: CODE 42 LINE 5 COLUMN 10 - global variable 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=on --explicit=on --newline=on -o- -f lang-007.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=on --explicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global __g17;
 
@@ -1005,7 +1005,7 @@ BEGIN {
 20
 30
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -o- -f lang-008.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-008.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 global x;
 
@@ -1027,7 +1027,7 @@ BEGIN {
 2
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on --strictnaming=off -o- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on --strictnaming=off -d- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -1044,7 +1044,7 @@ END {
 }
 1000
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-010.awk this is just a test </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-010.awk this is just a test </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "ARGC=",ARGC;
@@ -1072,7 +1072,7 @@ BEGIN {
 	if ((ARGC >= 0))
 		printf ("ARGC [%++#10.10f] is positive\n",10124.1123);
 	printf ("[%d], [%f], [%s]\n",10124.1123,10124.1123,10124.1123);
-	printf ("[%-10c] [% 0*.*d]\n",65,45,48,(-(1)));
+	printf ("[%-10c] [% 0*.*d]\n",65,45,48,-1);
 	print sprintf("abc%d %*.*d %c %s %c",10,20,30,40,"good","good",75.34);
 }
 
@@ -1101,7 +1101,7 @@ ARGC [+10124.1123000000] is positive
 [A         ] [-000000000000000000000000000000000000000000000001]
 abc10 000000000000000000000000000040 g good K
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-011.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-011.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a[1,2,3] = 20;
@@ -1144,10 +1144,10 @@ BEGIN {
 (1,2,3) in a ==> 20
 (4,5) not in a
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-012.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-012.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	OFS = "		";
+	OFS = "\t\t";
 	print "1==1 :",(1 == 1);
 	print "1==0 :",(1 == 0);
 	print "1.0==1 :",(1.0 == 1);
@@ -1236,15 +1236,15 @@ BEGIN {
 	print "\"10\" <= 10.1",("10" <= 10.1);
 	print "\"10\" >  10.1",("10" > 10.1);
 	print "\"10\" <  10.1",("10" < 10.1);
-	print (0.234 + 1.01123);
+	print 1.245230;
 	print 12345678901234567890E20;
 	print .123;
-	print (+(.123));
-	print (-(.123));
+	print 0.123000;
+	print -0.123000;
 	print .123E-;
-	print (+(.123E-));
-	print (-(.123E-));
-	print ((-(.123E-)) + "123");
+	print 0.123000;
+	print -0.123000;
+	print (-0.123000 + "123");
 }
 
 1==1 :		1
@@ -1345,31 +1345,31 @@ a <  " " :		1
 -0.123
 122.877
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-013.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-013.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	CONVFMT = "%s";
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 103 LINE 3 COLUMN 2 - recursion detected in format conversion
+ERROR: CODE 102 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-014.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	a = (10 + 20);
-	b = (10 + 20);
-	c = (10 + 20);
+	a = 30;
+	b = 30;
+	c = 30;
 	print a,b,c;
 }
 
 30 30 30
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-015.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 15 LINE 3 COLUMN 50 - block nested too deeply
+ERROR: CODE 14 LINE 3 COLUMN 50 - block nested too deeply
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-016.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	printf "[[[[[%s]]]]\n",sprintf("abc %s abc",sprintf("def %s %s",sprintf("%s %s %s","xyz",1.2342,"xyz"),sprintf("ttt %s tttt",123.12)));
@@ -1379,7 +1379,7 @@ BEGIN {
 [[[[[abc def xyz 1.2342 xyz ttt 123.12 tttt abc]]]]
 [[[[ttt 123.12 tttt]]]]
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1430,7 +1430,7 @@ END {
 END OF PROGRAM
 END OF PROGRAM 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --call main --newline=on -o- -f lang-017.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --call main --newline=on -d- -f lang-017.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function gety ()
 {
@@ -1479,50 +1479,63 @@ END {
 0
 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-018.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 47 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
+ERROR: CODE 46 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-019.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 49 LINE 1 COLUMN 15 - '+' not a valid parameter name
+ERROR: CODE 48 LINE 1 COLUMN 15 - '+' not a valid parameter name
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-020.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 50 LINE 1 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 49 LINE 1 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-021.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 50 LINE 3 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 49 LINE 3 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-022.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 23 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
+ERROR: CODE 22 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-023.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 28 LINE 5 COLUMN 20 - colon expected in place of ';'
+ERROR: CODE 27 LINE 5 COLUMN 20 - colon expected in place of ';'
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-024.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	local __l0;
 	__l0 = 21;
 	print ((__l0 > 20))?1:2;
+	c = ((__l0)++   ++(b));
+	print __l0;
+	print b;
+	print c;
+	print (99   ++(c));
+	x = (("he"   "ll")   "o");
+	x >>= " world";
+	print x;
 }
 
 1
+22
+1
+211
+99212
+hello world
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-025.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-025.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix = 20;
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 78 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 77 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-026.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	abc[20] = "abc";
@@ -1532,46 +1545,46 @@ BEGIN {
 }
 
 abc
-ERROR: CODE 86 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
+ERROR: CODE 85 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-027.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 17 LINE 2 COLUMN 1 - invalid character '<NUL>'
+ERROR: CODE 16 LINE 2 COLUMN 1 - invalid character '<NUL>'
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-028.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 41 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
+ERROR: CODE 40 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -o- -f lang-029.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 42 LINE 9 COLUMN 9 - function 'abc' redefined
+ERROR: CODE 41 LINE 9 COLUMN 9 - function 'abc' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-030.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	print (1 + 0);
-	print (0B11111111 + 0);
-	print (10 + 0);
-	print (0x10 + 0);
-	print (0b00000010 + 0);
-	print (0b + 0);
-	print (0x + 0);
+	print 1;
+	print 255;
+	print 10;
+	print 16;
+	print 2;
+	print 0;
+	print 0;
 	print "-----------------------";
-	print ((+(1)) + 0);
-	print ((+(0B11111111)) + 0);
-	print ((+(10)) + 0);
-	print ((+(0x10)) + 0);
-	print ((+(0b00000010)) + 0);
-	print ((+(0b)) + 0);
-	print ((+(0x)) + 0);
+	print 1;
+	print 255;
+	print 10;
+	print 16;
+	print 2;
+	print 0;
+	print 0;
 	print "-----------------------";
-	print ((-(1)) + 0);
-	print ((-(0B11111111)) + 0);
-	print ((-(10)) + 0);
-	print ((-(0x10)) + 0);
-	print ((-(0b00000010)) + 0);
-	print ((-(0b)) + 0);
-	print ((-(0x)) + 0);
+	print -1;
+	print -255;
+	print -10;
+	print -16;
+	print -2;
+	print 0;
+	print 0;
 }
 
 1
@@ -1598,7 +1611,7 @@ BEGIN {
 0
 0
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-031.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-031.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print match("hhhheeeo",/e+/);
@@ -1632,7 +1645,7 @@ BEGIN {
 0 -1
 --------------------------
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-032.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-032.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	a = 91;
@@ -1654,19 +1667,55 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-033.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	while ((("cat lang-033.awk" | getline x) > 0))
+	while ((("cat /etc/passwd" | getline x) > 0))
 		print x;
 }
 
-BEGIN {
-	while ("cat lang-033.awk" | getline x > 0) 
-		print x
-}
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+bin:x:2:2:bin:/bin:/bin/sh
+sys:x:3:3:sys:/dev:/bin/sh
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/bin/sh
+man:x:6:12:man:/var/cache/man:/bin/sh
+lp:x:7:7:lp:/var/spool/lpd:/bin/sh
+mail:x:8:8:mail:/var/mail:/bin/sh
+news:x:9:9:news:/var/spool/news:/bin/sh
+uucp:x:10:10:uucp:/var/spool/uucp:/bin/sh
+proxy:x:13:13:proxy:/bin:/bin/sh
+www-data:x:33:33:www-data:/var/www:/bin/sh
+backup:x:34:34:backup:/var/backups:/bin/sh
+list:x:38:38:Mailing List Manager:/var/list:/bin/sh
+irc:x:39:39:ircd:/var/run/ircd:/bin/sh
+gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
+nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+libuuid:x:100:101::/var/lib/libuuid:/bin/sh
+syslog:x:101:103::/home/syslog:/bin/false
+messagebus:x:102:105::/var/run/dbus:/bin/false
+avahi-autoipd:x:103:108:Avahi autoip daemon,,,:/var/lib/avahi-autoipd:/bin/false
+avahi:x:104:109:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/bin/false
+couchdb:x:105:113:CouchDB Administrator,,,:/var/lib/couchdb:/bin/bash
+usbmux:x:106:46:usbmux daemon,,,:/home/usbmux:/bin/false
+speech-dispatcher:x:107:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/bin/sh
+kernoops:x:108:65534:Kernel Oops Tracking Daemon,,,:/:/bin/false
+pulse:x:109:114:PulseAudio daemon,,,:/var/run/pulse:/bin/false
+rtkit:x:110:117:RealtimeKit,,,:/proc:/bin/false
+saned:x:111:118::/home/saned:/bin/false
+hplip:x:112:7:HPLIP system user,,,:/var/run/hplip:/bin/false
+gdm:x:113:120:Gnome Display Manager:/var/lib/gdm:/bin/false
+hyung-hwan:x:1000:1000:Hyung-Hwan Chung,,,:/home/hyung-hwan:/bin/bash
+sshd:x:114:65534::/var/run/sshd:/usr/sbin/nologin
+haldaemon:x:115:123:Hardware abstraction layer,,,:/var/run/hald:/bin/false
+statd:x:116:65534::/var/lib/nfs:/bin/false
+freerad:x:117:124::/etc/freeradius:/bin/false
+lightdm:x:118:128:Light Display Manager:/var/lib/lightdm:/bin/false
+colord:x:119:129:colord colour management daemon,,,:/var/lib/colord:/bin/false
+uml-net:x:120:132::/home/uml-net:/bin/false
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on --rwpipe=on -o- -f lang-034.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on --rwpipe=on -d- -f lang-034.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print "15" || "sort";
@@ -1687,7 +1736,7 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
@@ -1766,7 +1815,6 @@ lease 20.1.20.57 {
   next binding state free;
   hardware ethernet 00:13:5e:50:23:6b;
   info awk.groupname "lang-035";
-  info awk.voice-no-0 "68599021";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/1 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1778,7 +1826,6 @@ lease 20.1.20.54 {
   next binding state free;
   hardware ethernet 00:13:5e:50:25:aa;
   info awk.groupname "lang-035";
-  info awk.voice-no-0 "68599011";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/2 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1790,7 +1837,6 @@ lease 20.1.20.55 {
   next binding state free;
   hardware ethernet 00:13:5e:50:20:af;
   info awk.groupname "lang-035";
-  info awk.voice-no-0 "68599012";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/1 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1802,7 +1848,6 @@ lease 20.1.20.56 {
   next binding state free;
   hardware ethernet 00:13:5e:50:20:29;
   info awk.groupname "lang-035";
-  info awk.voice-no-0 "68599022";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/2 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1855,8 +1900,6 @@ lease 10.218.255.55 {
   hardware ethernet 00:1b:5b:9c:90:00;
   info awk.groupname "lang-035";
   uid "\001\000\033[\234\220\000";
-  info awk.voice-no-0 "68599019";
-  info awk.voice-no-1 "68599014";
   option agent.circuit-id "AR_Remote atm 1/1/03/12:2.100";
   option agent.remote-id "22M-fast";
 }
@@ -1899,7 +1942,6 @@ lease 10.218.255.66 {
   hardware ethernet 00:1a:04:f9:e2:90;
   info awk.groupname "lang-035";
   uid "\001\000\032\004\371\342\220";
-  info awk.voice-no-0 "68599018";
   option agent.circuit-id "AR_Remote atm 1/1/03/02:2.100";
   option agent.remote-id "3play";
 }
@@ -1912,8 +1954,6 @@ lease 10.218.255.60 {
   hardware ethernet 00:1e:c7:fb:29:1d;
   info awk.groupname "lang-035";
   uid "\001\000\036\307\373)\035";
-  info awk.voice-no-0 "68599017";
-  info awk.voice-no-1 "68599013";
   option agent.circuit-id "AL_AM3_LAB atm 1/1/01/01:2.100";
   option agent.remote-id "Testing DHCP";
 }
@@ -1931,7 +1971,7 @@ lease 10.218.255.151 {
   uid "\001\000\033[\234\220\000";
 }
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-036.awk lang-036.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 {
 	if (($0 ~ /^-+$/))
@@ -1963,7 +2003,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-037.awk lang-037.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "\n-+\n";
@@ -1991,7 +2031,7 @@ pq...r AAA2
 kbs ddd
 dif cccc
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-038.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-038.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	xstr = "abcdefabcdefabcdef";
@@ -2020,7 +2060,7 @@ BEGIN {
 7 abc
 13 abc
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-039.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-039.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print (length()   11);
@@ -2030,7 +2070,7 @@ BEGIN {
 011
 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-040.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-040.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	for (x in y)
@@ -2038,7 +2078,7 @@ BEGIN {
 }
 
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-041.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-041.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	abc = 20;
@@ -2047,7 +2087,7 @@ BEGIN {
 
 2010
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-042.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-042.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	print //;
@@ -2087,10 +2127,10 @@ IGNORECASE= 1
 1
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-043.awk lang-043.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-043.awk lang-043.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	RS = "[	\n\v\f\r ]*[\r\n]+[	\n\v\f\r ]*";
+	RS = "[\t\n\v\f\r ]*[\r\n]+[\t\n\v\f\r ]*";
 }
 
 {
@@ -2101,7 +2141,7 @@ abcd
 dcba
 j
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-044.awk lang-044.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-044.awk lang-044.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	RS = "";
@@ -2119,10 +2159,10 @@ this is the second second line]
 [   ttttt
 killer]
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -o- -f lang-045.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-045.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	for (i = (-(10.0)); (i < 10.0); (i)++)
+	for (i = -10.000000; (i < 10.0); (i)++)
 	{
 		print sin(i);
 		print cos(i);
@@ -2296,7 +2336,7 @@ nan
 8103.08
 3
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -F: -f columnate.awk ./passwd.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -F: -f columnate.awk passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 root               x  0      0      root                                /root                       /bin/bash
 daemon             x  1      1      daemon                              /usr/sbin                   /bin/sh
@@ -2382,7 +2422,7 @@ Result      Ra   Rb  Connect    Error
 1.E12
 99X
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000  -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 -vQSEAWK="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/cmd/awk/qseawk" -vSCRIPT_PATH="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk" -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000
 0.11111111111111111111111111111
@@ -2416,7 +2456,7 @@ int main ()
 	printf ("hello, world\n");
 	return 0;
 }
---------------------------------------------------------------------------------
+ --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f wordfreq.awk wordfreq.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 _ 2
@@ -2590,3 +2630,2295 @@ while true
 do
     sleep 20
 done
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 -d- -f lisp/awklisp lisp/startup lisp/fib.lsp </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+function eval_rands (__p0)
+{
+	for (; (__p0 != NIL); __p0 = cdr[__p0])
+		stack[(stack_ptr)++] = eval(car[__p0]);
+}
+
+function def_prim (__p0, __p1, __p2)
+{
+	__p2 = string_to_symbol(__p0);
+	value[__p2] = string_to_symbol(sprintf("#<Primitive %s>",__p0));
+	if ((__p1 != ""))
+		num_params[value[__p2]] = __p1;
+	return value[__p2];
+}
+
+function is_symbol (__p0)
+{
+	return ((__p0 % 4) == 2);
+}
+
+function is_number (__p0)
+{
+	return ((__p0 % 4) == 0);
+}
+
+function read (__p0, __p1)
+{
+	skip_blanks();
+	if ((token == eof))
+		if (__p0)
+			error("Unexpected EOF");
+		else
+			return THE_EOF_OBJECT;
+	if ((token == "("))
+	{
+		advance();
+		__p1 = NIL;
+		for (; ; )
+		{
+			skip_blanks();
+			if ((token == "."))
+			{
+				advance();
+				after_dot = read(1);
+				skip_blanks();
+				if ((token != ")"))
+					error("')' expected");
+				advance();
+				return nreverse(__p1,after_dot);
+			}
+			else
+				if ((token == ")"))
+				{
+					advance();
+					return nreverse(__p1,NIL);
+				}
+				else
+				{
+					protect(__p1);
+					__p1 = cons(read(1),__p1);
+					unprotect();
+				}
+		}
+	}
+	else
+		if ((token == "'"))
+		{
+			advance();
+			return cons(QUOTE,cons(read(1),NIL));
+		}
+		else
+			if ((token ~ /^-?[0-9]+$/))
+			{
+				__p1 = make_number(token);
+				advance();
+				return __p1;
+			}
+			else
+			{
+				__p1 = string_to_symbol(token);
+				advance();
+				return __p1;
+			}
+}
+
+function protect (__p0)
+{
+	protected[++(protected_ptr)] = __p0;
+}
+
+function mark (__p0)
+{
+	while ((is_pair(__p0) && (!((__p0 in marks)))))
+	{
+		marks[__p0] = 1;
+		mark(car[__p0]);
+		__p0 = cdr[__p0];
+	}
+}
+
+function write_expr (__p0)
+{
+	if (is_atom(__p0))
+	{
+		if ((!(is_symbol(__p0))))
+			printf ("%d",numeric_value(__p0));
+		else
+		{
+			if ((!((__p0 in printname))))
+				error((("BUG: "   __p0)   " has no printname"));
+			printf ("%s",printname[__p0]);
+		}
+	}
+	else
+	{
+		printf "(";
+		write_expr(car[__p0]);
+		for (__p0 = cdr[__p0]; is_pair(__p0); __p0 = cdr[__p0])
+		{
+			printf " ";
+			write_expr(car[__p0]);
+		}
+		if ((__p0 != NIL))
+		{
+			printf " . ";
+			write_expr(__p0);
+		}
+		printf ")";
+	}
+}
+
+function make_number (__p0)
+{
+	return (__p0 * 4);
+}
+
+function print_expr (__p0)
+{
+	write_expr(__p0);
+	print "";
+}
+
+function progn (__p0)
+{
+	for (; (cdr[__p0] != NIL); __p0 = cdr[__p0])
+		eval(car[__p0]);
+	return eval(car[__p0]);
+}
+
+function string_to_symbol (__p0)
+{
+	if ((__p0 in intern))
+		return intern[__p0];
+	symbol_ptr += 4;
+	intern[__p0] = symbol_ptr;
+	printname[symbol_ptr] = __p0;
+	return symbol_ptr;
+}
+
+function cons (__p0, __p1)
+{
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+		gc(__p0,__p1);
+	car[pair_ptr] = __p0;
+	cdr[pair_ptr] = __p1;
+	pair_ptr += 4;
+	return (pair_ptr - 4);
+}
+
+function listify_args (__p0, __p1)
+{
+	__p1 = NIL;
+	for (__p0 = (stack_ptr - 1); (frame_ptr <= __p0); --(__p0))
+		__p1 = cons(stack[__p0],__p1);
+	return __p1;
+}
+
+function numeric_value (__p0)
+{
+	if (((__p0 % 4) != 0))
+		error("Not a number");
+	return (__p0 / 4);
+}
+
+function skip_blanks ()
+{
+	while ((token ~ /^[ 	]*$/))
+		advance();
+}
+
+function apply (__p0)
+{
+	if (profiling)
+		++(call_count[__p0]);
+	if ((car[__p0] == LAMBDA))
+	{
+		extend_env(car[cdr[__p0]]);
+		result = progn(cdr[cdr[__p0]]);
+		unwind_env(car[cdr[__p0]]);
+		return result;
+	}
+	if (((__p0 in num_params) && (num_params[__p0] != (stack_ptr - frame_ptr))))
+		error(("Wrong number of arguments to "   printname[cdr[__p0]]));
+	if ((__p0 == CAR))
+		return car[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CDR))
+		return cdr[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CONS))
+		return cons(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == NULL))
+		return ((stack[frame_ptr] == NIL))?T:NIL;
+	if ((__p0 == EQ))
+		return ((stack[frame_ptr] == stack[(frame_ptr + 1)]))?T:NIL;
+	if ((__p0 == ATOMP))
+		return (is_atom(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == ADD))
+		return (is(a_number,stack[frame_ptr]) + is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == SUB))
+		return (is(a_number,stack[frame_ptr]) - is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == MUL))
+		return make_number((numeric_value(stack[frame_ptr]) * numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == DIV))
+		return make_number(int((numeric_value(stack[frame_ptr]) / numeric_value(stack[(frame_ptr + 1)]))));
+	if ((__p0 == MOD))
+		return make_number((numeric_value(stack[frame_ptr]) % numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == LT))
+		return (((stack[frame_ptr] + 0) < (stack[(frame_ptr + 1)] + 0)))?T:NIL;
+	if ((__p0 == GET))
+		return (((stack[frame_ptr],stack[(frame_ptr + 1)]) in property))?property[stack[frame_ptr],stack[(frame_ptr + 1)]]:NIL;
+	if ((__p0 == PUT))
+		return property[stack[frame_ptr],stack[(frame_ptr + 1)]] = stack[(frame_ptr + 2)];
+	if ((__p0 == CADR))
+		return car[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == CDDR))
+		return cdr[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == LIST))
+		return listify_args();
+	if ((__p0 == SYMBOLP))
+		return (is_symbol(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == PAIRP))
+		return (is_pair(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == NUMBERP))
+		return (is_number(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == SETCAR))
+		return car[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == SETCDR))
+		return cdr[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == APPLY))
+		return do_apply(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == EVAL))
+		return eval(stack[frame_ptr]);
+	if ((__p0 == NREV))
+		return nreverse(stack[frame_ptr],NIL);
+	if ((__p0 == WRITE))
+	{
+		write_expr(stack[frame_ptr]);
+		printf " ";
+		return NIL;
+	}
+	if ((__p0 == NEWLINE))
+	{
+		printf "\n";
+		return NIL;
+	}
+	if ((__p0 == READ))
+		return read();
+	if ((__p0 == RANDOM))
+		return make_number(int((rand() * numeric_value(stack[frame_ptr]))));
+	if ((__p0 == GENSYM))
+		return string_to_symbol(("#G"   ++(gensym_counter)));
+	if ((__p0 == ERROR))
+	{
+		printf "Error!\n";
+		print_expr(listify_args());
+		exit 1;
+	}
+	error("Unknown procedure type");
+}
+
+function error (__p0)
+{
+	print ("ERROR: "   __p0) > "/dev/stderr";
+	exit 1;
+}
+
+function gc (__p0, __p1, __p2, __p3)
+{
+	if (loud_gc)
+		printf "\nGC..." > "/dev/stderr";
+	mark(__p0);
+	mark(__p1);
+	for (__p2 in protected)
+		mark(protected[__p2]);
+	for (__p2 in stack)
+		mark(stack[__p2]);
+	for (__p2 in value)
+		mark(value[__p2]);
+	for (__p2 in property)
+	{
+		__p3 = index(SUBSEP,__p2);
+		mark(substr(__p2,1,(__p3 - 1)));
+		mark(substr(__p2,(__p3 + 1)));
+		mark(property[__p2]);
+	}
+	pair_ptr = a_pair;
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+	{
+		if (loud_gc)
+			printf "Expanding heap..." > "/dev/stderr";
+		pair_limit += (4 * heap_increment);
+	}
+}
+
+function extend_env (__p0, __p1, __p2)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((__p1 == stack_ptr))
+			error("Too many arguments to procedure");
+		__p2 = value[car[__p0]];
+		value[car[__p0]] = stack[__p1];
+		stack[__p1] = __p2;
+		++(__p1);
+	}
+	if ((__p1 != stack_ptr))
+		error("Not enough arguments to procedure");
+}
+
+function is_atom (__p0)
+{
+	return ((__p0 % 4) != 1);
+}
+
+function is_pair (__p0)
+{
+	return ((__p0 % 4) == 1);
+}
+
+function eval (__p0, __p1)
+{
+	if (is_atom(__p0))
+		if (is_symbol(__p0))
+		{
+			if ((!((__p0 in value))))
+				error(("Unbound variable: "   printname[__p0]));
+			return value[__p0];
+		}
+		else
+			return __p0;
+	op = car[__p0];
+	if ((!((op in is_special))))
+	{
+		__p1 = frame_ptr;
+		frame_ptr = stack_ptr;
+		eval_rands(cdr[__p0]);
+		protect(proc = eval(car[__p0]));
+		result = apply(proc);
+		unprotect();
+		stack_ptr = frame_ptr;
+		frame_ptr = __p1;
+		return result;
+	}
+	if ((op == QUOTE))
+		return car[cdr[__p0]];
+	if ((op == LAMBDA))
+		return __p0;
+	if ((op == IF))
+		return ((eval(car[cdr[__p0]]) != NIL))?eval(car[cdr[cdr[__p0]]]):eval(car[cdr[cdr[cdr[__p0]]]]);
+	if ((op == PROGN))
+		return progn(cdr[__p0]);
+	if ((op == SETQ))
+	{
+		if ((!((car[cdr[__p0]] in value))))
+			error(("Unbound variable: "   printname[car[cdr[__p0]]]));
+		return value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+	}
+	if ((op == WHILE))
+	{
+		while ((eval(car[cdr[__p0]]) != NIL))
+			progn(cdr[cdr[__p0]]);
+		return NIL;
+	}
+	if ((op == DEFINE))
+	{
+		value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+		return car[cdr[__p0]];
+	}
+	error("BUG: Unknown special form");
+}
+
+function is (__p0, __p1)
+{
+	if (((__p1 % 4) != __p0))
+		error(((("Expected a "   type_name[__p0])   ", not a ")   type_name[(__p1 % 4)]));
+	return __p1;
+}
+
+function unwind_env (__p0, __p1)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((stack[__p1] == ""))
+			delete value[car[__p0]];
+		else
+			value[car[__p0]] = stack[__p1];
+		++(__p1);
+	}
+}
+
+function nreverse (__p0, __p1, __p2)
+{
+	while (is_pair(__p0))
+	{
+		__p2 = cdr[__p0];
+		cdr[__p0] = __p1;
+		__p1 = __p0;
+		__p0 = __p2;
+	}
+	if ((__p0 != NIL))
+		error("Not a proper list - reverse!");
+	return __p1;
+}
+
+function advance ()
+{
+	if ((token == eof))
+		return eof;
+	if ((token == ""))
+	{
+		if (((getline line) <= 0))
+		{
+			token = eof;
+			return;
+		}
+	}
+	if (((match(line,"^[()'.]") || match(line,"^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+")) || match(line,"^[ \\t]+")))
+	{
+		token = substr(line,RSTART,RLENGTH);
+		line = substr(line,(RLENGTH + 1));
+	}
+	else
+		if (((line == "") || (substr(line,1,1) == ";")))
+			token = "";
+		else
+			error(("Lexical error starting at "   line));
+}
+
+function do_apply (__p0, __p1, __p2)
+{
+	__p2 = frame_ptr;
+	frame_ptr = stack_ptr;
+	for (; is_pair(__p1); __p1 = cdr[__p1])
+		stack[(stack_ptr)++] = car[__p1];
+	if ((__p1 != NIL))
+		error("Bad argument to APPLY: not a proper list");
+	result = apply(__p0);
+	stack_ptr = frame_ptr;
+	frame_ptr = __p2;
+	return result;
+}
+
+function unprotect ()
+{
+	--(protected_ptr);
+}
+
+BEGIN {
+	a_number = 0;
+	pair_ptr = a_pair = 1;
+	symbol_ptr = a_symbol = 2;
+	type_name[a_number] = "number";
+	type_name[a_pair] = "pair";
+	type_name[a_symbol] = "symbol";
+}
+
+BEGIN {
+	srand();
+	frame_ptr = stack_ptr = 0;
+	if ((heap_increment == ""))
+		heap_increment = 1500;
+	pair_limit = (a_pair + (4 * heap_increment));
+	NIL = string_to_symbol("nil");
+	T = string_to_symbol("t");
+	value[NIL] = NIL;
+	value[T] = T;
+	car[NIL] = cdr[NIL] = NIL;
+	THE_EOF_OBJECT = string_to_symbol("#eof");
+	value[string_to_symbol("the-eof-object")] = THE_EOF_OBJECT;
+	eof = "(eof)";
+	QUOTE = string_to_symbol("quote");
+	is_special[QUOTE] = 1;
+	LAMBDA = string_to_symbol("lambda");
+	is_special[LAMBDA] = 1;
+	IF = string_to_symbol("if");
+	is_special[IF] = 1;
+	SETQ = string_to_symbol("set!");
+	is_special[SETQ] = 1;
+	DEFINE = string_to_symbol("define");
+	is_special[DEFINE] = 1;
+	PROGN = string_to_symbol("begin");
+	is_special[PROGN] = 1;
+	WHILE = string_to_symbol("while");
+	is_special[WHILE] = 1;
+	EQ = def_prim("eq?",2);
+	NULL = def_prim("null?",1);
+	CAR = def_prim("car",1);
+	CDR = def_prim("cdr",1);
+	CADR = def_prim("cadr",1);
+	CDDR = def_prim("cddr",1);
+	CONS = def_prim("cons",2);
+	LIST = def_prim("list");
+	EVAL = def_prim("eval",1);
+	APPLY = def_prim("apply",2);
+	READ = def_prim("read",0);
+	WRITE = def_prim("write",1);
+	NEWLINE = def_prim("newline",0);
+	ADD = def_prim("+",2);
+	SUB = def_prim("-",2);
+	MUL = def_prim("*",2);
+	DIV = def_prim("quotient",2);
+	MOD = def_prim("remainder",2);
+	LT = def_prim("<",2);
+	GET = def_prim("get",2);
+	PUT = def_prim("put",3);
+	ATOMP = def_prim("atom?",1);
+	PAIRP = def_prim("pair?",1);
+	SYMBOLP = def_prim("symbol?",1);
+	NUMBERP = def_prim("number?",1);
+	SETCAR = def_prim("set-car!",2);
+	SETCDR = def_prim("set-cdr!",2);
+	NREV = def_prim("reverse!",1);
+	GENSYM = def_prim("gensym",0);
+	RANDOM = def_prim("random",1);
+	ERROR = def_prim("error");
+	DRIVER = string_to_symbol("top-level-driver");
+}
+
+BEGIN {
+	for (; ; )
+	{
+		if (((DRIVER in value) && (value[DRIVER] != NIL)))
+			apply(value[DRIVER]);
+		else
+		{
+			expr = read();
+			if ((expr == THE_EOF_OBJECT))
+				break;
+			protect(expr);
+			print_expr(eval(expr));
+			unprotect();
+		}
+	}
+	if (profiling)
+		for (proc in call_count)
+		{
+			printf ("%5d ",call_count[proc]);
+			print_expr(proc);
+		}
+}
+
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 -d- -f lisp/awklisp lisp/startup lisp/numbers lisp/numbers.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+function eval_rands (__p0)
+{
+	for (; (__p0 != NIL); __p0 = cdr[__p0])
+		stack[(stack_ptr)++] = eval(car[__p0]);
+}
+
+function def_prim (__p0, __p1, __p2)
+{
+	__p2 = string_to_symbol(__p0);
+	value[__p2] = string_to_symbol(sprintf("#<Primitive %s>",__p0));
+	if ((__p1 != ""))
+		num_params[value[__p2]] = __p1;
+	return value[__p2];
+}
+
+function is_symbol (__p0)
+{
+	return ((__p0 % 4) == 2);
+}
+
+function is_number (__p0)
+{
+	return ((__p0 % 4) == 0);
+}
+
+function read (__p0, __p1)
+{
+	skip_blanks();
+	if ((token == eof))
+		if (__p0)
+			error("Unexpected EOF");
+		else
+			return THE_EOF_OBJECT;
+	if ((token == "("))
+	{
+		advance();
+		__p1 = NIL;
+		for (; ; )
+		{
+			skip_blanks();
+			if ((token == "."))
+			{
+				advance();
+				after_dot = read(1);
+				skip_blanks();
+				if ((token != ")"))
+					error("')' expected");
+				advance();
+				return nreverse(__p1,after_dot);
+			}
+			else
+				if ((token == ")"))
+				{
+					advance();
+					return nreverse(__p1,NIL);
+				}
+				else
+				{
+					protect(__p1);
+					__p1 = cons(read(1),__p1);
+					unprotect();
+				}
+		}
+	}
+	else
+		if ((token == "'"))
+		{
+			advance();
+			return cons(QUOTE,cons(read(1),NIL));
+		}
+		else
+			if ((token ~ /^-?[0-9]+$/))
+			{
+				__p1 = make_number(token);
+				advance();
+				return __p1;
+			}
+			else
+			{
+				__p1 = string_to_symbol(token);
+				advance();
+				return __p1;
+			}
+}
+
+function protect (__p0)
+{
+	protected[++(protected_ptr)] = __p0;
+}
+
+function mark (__p0)
+{
+	while ((is_pair(__p0) && (!((__p0 in marks)))))
+	{
+		marks[__p0] = 1;
+		mark(car[__p0]);
+		__p0 = cdr[__p0];
+	}
+}
+
+function write_expr (__p0)
+{
+	if (is_atom(__p0))
+	{
+		if ((!(is_symbol(__p0))))
+			printf ("%d",numeric_value(__p0));
+		else
+		{
+			if ((!((__p0 in printname))))
+				error((("BUG: "   __p0)   " has no printname"));
+			printf ("%s",printname[__p0]);
+		}
+	}
+	else
+	{
+		printf "(";
+		write_expr(car[__p0]);
+		for (__p0 = cdr[__p0]; is_pair(__p0); __p0 = cdr[__p0])
+		{
+			printf " ";
+			write_expr(car[__p0]);
+		}
+		if ((__p0 != NIL))
+		{
+			printf " . ";
+			write_expr(__p0);
+		}
+		printf ")";
+	}
+}
+
+function make_number (__p0)
+{
+	return (__p0 * 4);
+}
+
+function print_expr (__p0)
+{
+	write_expr(__p0);
+	print "";
+}
+
+function progn (__p0)
+{
+	for (; (cdr[__p0] != NIL); __p0 = cdr[__p0])
+		eval(car[__p0]);
+	return eval(car[__p0]);
+}
+
+function string_to_symbol (__p0)
+{
+	if ((__p0 in intern))
+		return intern[__p0];
+	symbol_ptr += 4;
+	intern[__p0] = symbol_ptr;
+	printname[symbol_ptr] = __p0;
+	return symbol_ptr;
+}
+
+function cons (__p0, __p1)
+{
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+		gc(__p0,__p1);
+	car[pair_ptr] = __p0;
+	cdr[pair_ptr] = __p1;
+	pair_ptr += 4;
+	return (pair_ptr - 4);
+}
+
+function listify_args (__p0, __p1)
+{
+	__p1 = NIL;
+	for (__p0 = (stack_ptr - 1); (frame_ptr <= __p0); --(__p0))
+		__p1 = cons(stack[__p0],__p1);
+	return __p1;
+}
+
+function numeric_value (__p0)
+{
+	if (((__p0 % 4) != 0))
+		error("Not a number");
+	return (__p0 / 4);
+}
+
+function skip_blanks ()
+{
+	while ((token ~ /^[ 	]*$/))
+		advance();
+}
+
+function apply (__p0)
+{
+	if (profiling)
+		++(call_count[__p0]);
+	if ((car[__p0] == LAMBDA))
+	{
+		extend_env(car[cdr[__p0]]);
+		result = progn(cdr[cdr[__p0]]);
+		unwind_env(car[cdr[__p0]]);
+		return result;
+	}
+	if (((__p0 in num_params) && (num_params[__p0] != (stack_ptr - frame_ptr))))
+		error(("Wrong number of arguments to "   printname[cdr[__p0]]));
+	if ((__p0 == CAR))
+		return car[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CDR))
+		return cdr[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CONS))
+		return cons(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == NULL))
+		return ((stack[frame_ptr] == NIL))?T:NIL;
+	if ((__p0 == EQ))
+		return ((stack[frame_ptr] == stack[(frame_ptr + 1)]))?T:NIL;
+	if ((__p0 == ATOMP))
+		return (is_atom(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == ADD))
+		return (is(a_number,stack[frame_ptr]) + is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == SUB))
+		return (is(a_number,stack[frame_ptr]) - is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == MUL))
+		return make_number((numeric_value(stack[frame_ptr]) * numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == DIV))
+		return make_number(int((numeric_value(stack[frame_ptr]) / numeric_value(stack[(frame_ptr + 1)]))));
+	if ((__p0 == MOD))
+		return make_number((numeric_value(stack[frame_ptr]) % numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == LT))
+		return (((stack[frame_ptr] + 0) < (stack[(frame_ptr + 1)] + 0)))?T:NIL;
+	if ((__p0 == GET))
+		return (((stack[frame_ptr],stack[(frame_ptr + 1)]) in property))?property[stack[frame_ptr],stack[(frame_ptr + 1)]]:NIL;
+	if ((__p0 == PUT))
+		return property[stack[frame_ptr],stack[(frame_ptr + 1)]] = stack[(frame_ptr + 2)];
+	if ((__p0 == CADR))
+		return car[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == CDDR))
+		return cdr[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == LIST))
+		return listify_args();
+	if ((__p0 == SYMBOLP))
+		return (is_symbol(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == PAIRP))
+		return (is_pair(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == NUMBERP))
+		return (is_number(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == SETCAR))
+		return car[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == SETCDR))
+		return cdr[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == APPLY))
+		return do_apply(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == EVAL))
+		return eval(stack[frame_ptr]);
+	if ((__p0 == NREV))
+		return nreverse(stack[frame_ptr],NIL);
+	if ((__p0 == WRITE))
+	{
+		write_expr(stack[frame_ptr]);
+		printf " ";
+		return NIL;
+	}
+	if ((__p0 == NEWLINE))
+	{
+		printf "\n";
+		return NIL;
+	}
+	if ((__p0 == READ))
+		return read();
+	if ((__p0 == RANDOM))
+		return make_number(int((rand() * numeric_value(stack[frame_ptr]))));
+	if ((__p0 == GENSYM))
+		return string_to_symbol(("#G"   ++(gensym_counter)));
+	if ((__p0 == ERROR))
+	{
+		printf "Error!\n";
+		print_expr(listify_args());
+		exit 1;
+	}
+	error("Unknown procedure type");
+}
+
+function error (__p0)
+{
+	print ("ERROR: "   __p0) > "/dev/stderr";
+	exit 1;
+}
+
+function gc (__p0, __p1, __p2, __p3)
+{
+	if (loud_gc)
+		printf "\nGC..." > "/dev/stderr";
+	mark(__p0);
+	mark(__p1);
+	for (__p2 in protected)
+		mark(protected[__p2]);
+	for (__p2 in stack)
+		mark(stack[__p2]);
+	for (__p2 in value)
+		mark(value[__p2]);
+	for (__p2 in property)
+	{
+		__p3 = index(SUBSEP,__p2);
+		mark(substr(__p2,1,(__p3 - 1)));
+		mark(substr(__p2,(__p3 + 1)));
+		mark(property[__p2]);
+	}
+	pair_ptr = a_pair;
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+	{
+		if (loud_gc)
+			printf "Expanding heap..." > "/dev/stderr";
+		pair_limit += (4 * heap_increment);
+	}
+}
+
+function extend_env (__p0, __p1, __p2)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((__p1 == stack_ptr))
+			error("Too many arguments to procedure");
+		__p2 = value[car[__p0]];
+		value[car[__p0]] = stack[__p1];
+		stack[__p1] = __p2;
+		++(__p1);
+	}
+	if ((__p1 != stack_ptr))
+		error("Not enough arguments to procedure");
+}
+
+function is_atom (__p0)
+{
+	return ((__p0 % 4) != 1);
+}
+
+function is_pair (__p0)
+{
+	return ((__p0 % 4) == 1);
+}
+
+function eval (__p0, __p1)
+{
+	if (is_atom(__p0))
+		if (is_symbol(__p0))
+		{
+			if ((!((__p0 in value))))
+				error(("Unbound variable: "   printname[__p0]));
+			return value[__p0];
+		}
+		else
+			return __p0;
+	op = car[__p0];
+	if ((!((op in is_special))))
+	{
+		__p1 = frame_ptr;
+		frame_ptr = stack_ptr;
+		eval_rands(cdr[__p0]);
+		protect(proc = eval(car[__p0]));
+		result = apply(proc);
+		unprotect();
+		stack_ptr = frame_ptr;
+		frame_ptr = __p1;
+		return result;
+	}
+	if ((op == QUOTE))
+		return car[cdr[__p0]];
+	if ((op == LAMBDA))
+		return __p0;
+	if ((op == IF))
+		return ((eval(car[cdr[__p0]]) != NIL))?eval(car[cdr[cdr[__p0]]]):eval(car[cdr[cdr[cdr[__p0]]]]);
+	if ((op == PROGN))
+		return progn(cdr[__p0]);
+	if ((op == SETQ))
+	{
+		if ((!((car[cdr[__p0]] in value))))
+			error(("Unbound variable: "   printname[car[cdr[__p0]]]));
+		return value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+	}
+	if ((op == WHILE))
+	{
+		while ((eval(car[cdr[__p0]]) != NIL))
+			progn(cdr[cdr[__p0]]);
+		return NIL;
+	}
+	if ((op == DEFINE))
+	{
+		value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+		return car[cdr[__p0]];
+	}
+	error("BUG: Unknown special form");
+}
+
+function is (__p0, __p1)
+{
+	if (((__p1 % 4) != __p0))
+		error(((("Expected a "   type_name[__p0])   ", not a ")   type_name[(__p1 % 4)]));
+	return __p1;
+}
+
+function unwind_env (__p0, __p1)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((stack[__p1] == ""))
+			delete value[car[__p0]];
+		else
+			value[car[__p0]] = stack[__p1];
+		++(__p1);
+	}
+}
+
+function nreverse (__p0, __p1, __p2)
+{
+	while (is_pair(__p0))
+	{
+		__p2 = cdr[__p0];
+		cdr[__p0] = __p1;
+		__p1 = __p0;
+		__p0 = __p2;
+	}
+	if ((__p0 != NIL))
+		error("Not a proper list - reverse!");
+	return __p1;
+}
+
+function advance ()
+{
+	if ((token == eof))
+		return eof;
+	if ((token == ""))
+	{
+		if (((getline line) <= 0))
+		{
+			token = eof;
+			return;
+		}
+	}
+	if (((match(line,"^[()'.]") || match(line,"^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+")) || match(line,"^[ \\t]+")))
+	{
+		token = substr(line,RSTART,RLENGTH);
+		line = substr(line,(RLENGTH + 1));
+	}
+	else
+		if (((line == "") || (substr(line,1,1) == ";")))
+			token = "";
+		else
+			error(("Lexical error starting at "   line));
+}
+
+function do_apply (__p0, __p1, __p2)
+{
+	__p2 = frame_ptr;
+	frame_ptr = stack_ptr;
+	for (; is_pair(__p1); __p1 = cdr[__p1])
+		stack[(stack_ptr)++] = car[__p1];
+	if ((__p1 != NIL))
+		error("Bad argument to APPLY: not a proper list");
+	result = apply(__p0);
+	stack_ptr = frame_ptr;
+	frame_ptr = __p2;
+	return result;
+}
+
+function unprotect ()
+{
+	--(protected_ptr);
+}
+
+BEGIN {
+	a_number = 0;
+	pair_ptr = a_pair = 1;
+	symbol_ptr = a_symbol = 2;
+	type_name[a_number] = "number";
+	type_name[a_pair] = "pair";
+	type_name[a_symbol] = "symbol";
+}
+
+BEGIN {
+	srand();
+	frame_ptr = stack_ptr = 0;
+	if ((heap_increment == ""))
+		heap_increment = 1500;
+	pair_limit = (a_pair + (4 * heap_increment));
+	NIL = string_to_symbol("nil");
+	T = string_to_symbol("t");
+	value[NIL] = NIL;
+	value[T] = T;
+	car[NIL] = cdr[NIL] = NIL;
+	THE_EOF_OBJECT = string_to_symbol("#eof");
+	value[string_to_symbol("the-eof-object")] = THE_EOF_OBJECT;
+	eof = "(eof)";
+	QUOTE = string_to_symbol("quote");
+	is_special[QUOTE] = 1;
+	LAMBDA = string_to_symbol("lambda");
+	is_special[LAMBDA] = 1;
+	IF = string_to_symbol("if");
+	is_special[IF] = 1;
+	SETQ = string_to_symbol("set!");
+	is_special[SETQ] = 1;
+	DEFINE = string_to_symbol("define");
+	is_special[DEFINE] = 1;
+	PROGN = string_to_symbol("begin");
+	is_special[PROGN] = 1;
+	WHILE = string_to_symbol("while");
+	is_special[WHILE] = 1;
+	EQ = def_prim("eq?",2);
+	NULL = def_prim("null?",1);
+	CAR = def_prim("car",1);
+	CDR = def_prim("cdr",1);
+	CADR = def_prim("cadr",1);
+	CDDR = def_prim("cddr",1);
+	CONS = def_prim("cons",2);
+	LIST = def_prim("list");
+	EVAL = def_prim("eval",1);
+	APPLY = def_prim("apply",2);
+	READ = def_prim("read",0);
+	WRITE = def_prim("write",1);
+	NEWLINE = def_prim("newline",0);
+	ADD = def_prim("+",2);
+	SUB = def_prim("-",2);
+	MUL = def_prim("*",2);
+	DIV = def_prim("quotient",2);
+	MOD = def_prim("remainder",2);
+	LT = def_prim("<",2);
+	GET = def_prim("get",2);
+	PUT = def_prim("put",3);
+	ATOMP = def_prim("atom?",1);
+	PAIRP = def_prim("pair?",1);
+	SYMBOLP = def_prim("symbol?",1);
+	NUMBERP = def_prim("number?",1);
+	SETCAR = def_prim("set-car!",2);
+	SETCDR = def_prim("set-cdr!",2);
+	NREV = def_prim("reverse!",1);
+	GENSYM = def_prim("gensym",0);
+	RANDOM = def_prim("random",1);
+	ERROR = def_prim("error");
+	DRIVER = string_to_symbol("top-level-driver");
+}
+
+BEGIN {
+	for (; ; )
+	{
+		if (((DRIVER in value) && (value[DRIVER] != NIL)))
+			apply(value[DRIVER]);
+		else
+		{
+			expr = read();
+			if ((expr == THE_EOF_OBJECT))
+				break;
+			protect(expr);
+			print_expr(eval(expr));
+			unprotect();
+		}
+	}
+	if (profiling)
+		for (proc in call_count)
+		{
+			printf ("%5d ",call_count[proc]);
+			print_expr(proc);
+		}
+}
+
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 -d- -f lisp/awklisp lisp/startup lisp/scmhelp.lsp lisp/tail.lsp </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+function eval_rands (__p0)
+{
+	for (; (__p0 != NIL); __p0 = cdr[__p0])
+		stack[(stack_ptr)++] = eval(car[__p0]);
+}
+
+function def_prim (__p0, __p1, __p2)
+{
+	__p2 = string_to_symbol(__p0);
+	value[__p2] = string_to_symbol(sprintf("#<Primitive %s>",__p0));
+	if ((__p1 != ""))
+		num_params[value[__p2]] = __p1;
+	return value[__p2];
+}
+
+function is_symbol (__p0)
+{
+	return ((__p0 % 4) == 2);
+}
+
+function is_number (__p0)
+{
+	return ((__p0 % 4) == 0);
+}
+
+function read (__p0, __p1)
+{
+	skip_blanks();
+	if ((token == eof))
+		if (__p0)
+			error("Unexpected EOF");
+		else
+			return THE_EOF_OBJECT;
+	if ((token == "("))
+	{
+		advance();
+		__p1 = NIL;
+		for (; ; )
+		{
+			skip_blanks();
+			if ((token == "."))
+			{
+				advance();
+				after_dot = read(1);
+				skip_blanks();
+				if ((token != ")"))
+					error("')' expected");
+				advance();
+				return nreverse(__p1,after_dot);
+			}
+			else
+				if ((token == ")"))
+				{
+					advance();
+					return nreverse(__p1,NIL);
+				}
+				else
+				{
+					protect(__p1);
+					__p1 = cons(read(1),__p1);
+					unprotect();
+				}
+		}
+	}
+	else
+		if ((token == "'"))
+		{
+			advance();
+			return cons(QUOTE,cons(read(1),NIL));
+		}
+		else
+			if ((token ~ /^-?[0-9]+$/))
+			{
+				__p1 = make_number(token);
+				advance();
+				return __p1;
+			}
+			else
+			{
+				__p1 = string_to_symbol(token);
+				advance();
+				return __p1;
+			}
+}
+
+function protect (__p0)
+{
+	protected[++(protected_ptr)] = __p0;
+}
+
+function mark (__p0)
+{
+	while ((is_pair(__p0) && (!((__p0 in marks)))))
+	{
+		marks[__p0] = 1;
+		mark(car[__p0]);
+		__p0 = cdr[__p0];
+	}
+}
+
+function write_expr (__p0)
+{
+	if (is_atom(__p0))
+	{
+		if ((!(is_symbol(__p0))))
+			printf ("%d",numeric_value(__p0));
+		else
+		{
+			if ((!((__p0 in printname))))
+				error((("BUG: "   __p0)   " has no printname"));
+			printf ("%s",printname[__p0]);
+		}
+	}
+	else
+	{
+		printf "(";
+		write_expr(car[__p0]);
+		for (__p0 = cdr[__p0]; is_pair(__p0); __p0 = cdr[__p0])
+		{
+			printf " ";
+			write_expr(car[__p0]);
+		}
+		if ((__p0 != NIL))
+		{
+			printf " . ";
+			write_expr(__p0);
+		}
+		printf ")";
+	}
+}
+
+function make_number (__p0)
+{
+	return (__p0 * 4);
+}
+
+function print_expr (__p0)
+{
+	write_expr(__p0);
+	print "";
+}
+
+function progn (__p0)
+{
+	for (; (cdr[__p0] != NIL); __p0 = cdr[__p0])
+		eval(car[__p0]);
+	return eval(car[__p0]);
+}
+
+function string_to_symbol (__p0)
+{
+	if ((__p0 in intern))
+		return intern[__p0];
+	symbol_ptr += 4;
+	intern[__p0] = symbol_ptr;
+	printname[symbol_ptr] = __p0;
+	return symbol_ptr;
+}
+
+function cons (__p0, __p1)
+{
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+		gc(__p0,__p1);
+	car[pair_ptr] = __p0;
+	cdr[pair_ptr] = __p1;
+	pair_ptr += 4;
+	return (pair_ptr - 4);
+}
+
+function listify_args (__p0, __p1)
+{
+	__p1 = NIL;
+	for (__p0 = (stack_ptr - 1); (frame_ptr <= __p0); --(__p0))
+		__p1 = cons(stack[__p0],__p1);
+	return __p1;
+}
+
+function numeric_value (__p0)
+{
+	if (((__p0 % 4) != 0))
+		error("Not a number");
+	return (__p0 / 4);
+}
+
+function skip_blanks ()
+{
+	while ((token ~ /^[ 	]*$/))
+		advance();
+}
+
+function apply (__p0)
+{
+	if (profiling)
+		++(call_count[__p0]);
+	if ((car[__p0] == LAMBDA))
+	{
+		extend_env(car[cdr[__p0]]);
+		result = progn(cdr[cdr[__p0]]);
+		unwind_env(car[cdr[__p0]]);
+		return result;
+	}
+	if (((__p0 in num_params) && (num_params[__p0] != (stack_ptr - frame_ptr))))
+		error(("Wrong number of arguments to "   printname[cdr[__p0]]));
+	if ((__p0 == CAR))
+		return car[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CDR))
+		return cdr[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CONS))
+		return cons(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == NULL))
+		return ((stack[frame_ptr] == NIL))?T:NIL;
+	if ((__p0 == EQ))
+		return ((stack[frame_ptr] == stack[(frame_ptr + 1)]))?T:NIL;
+	if ((__p0 == ATOMP))
+		return (is_atom(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == ADD))
+		return (is(a_number,stack[frame_ptr]) + is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == SUB))
+		return (is(a_number,stack[frame_ptr]) - is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == MUL))
+		return make_number((numeric_value(stack[frame_ptr]) * numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == DIV))
+		return make_number(int((numeric_value(stack[frame_ptr]) / numeric_value(stack[(frame_ptr + 1)]))));
+	if ((__p0 == MOD))
+		return make_number((numeric_value(stack[frame_ptr]) % numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == LT))
+		return (((stack[frame_ptr] + 0) < (stack[(frame_ptr + 1)] + 0)))?T:NIL;
+	if ((__p0 == GET))
+		return (((stack[frame_ptr],stack[(frame_ptr + 1)]) in property))?property[stack[frame_ptr],stack[(frame_ptr + 1)]]:NIL;
+	if ((__p0 == PUT))
+		return property[stack[frame_ptr],stack[(frame_ptr + 1)]] = stack[(frame_ptr + 2)];
+	if ((__p0 == CADR))
+		return car[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == CDDR))
+		return cdr[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == LIST))
+		return listify_args();
+	if ((__p0 == SYMBOLP))
+		return (is_symbol(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == PAIRP))
+		return (is_pair(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == NUMBERP))
+		return (is_number(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == SETCAR))
+		return car[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == SETCDR))
+		return cdr[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == APPLY))
+		return do_apply(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == EVAL))
+		return eval(stack[frame_ptr]);
+	if ((__p0 == NREV))
+		return nreverse(stack[frame_ptr],NIL);
+	if ((__p0 == WRITE))
+	{
+		write_expr(stack[frame_ptr]);
+		printf " ";
+		return NIL;
+	}
+	if ((__p0 == NEWLINE))
+	{
+		printf "\n";
+		return NIL;
+	}
+	if ((__p0 == READ))
+		return read();
+	if ((__p0 == RANDOM))
+		return make_number(int((rand() * numeric_value(stack[frame_ptr]))));
+	if ((__p0 == GENSYM))
+		return string_to_symbol(("#G"   ++(gensym_counter)));
+	if ((__p0 == ERROR))
+	{
+		printf "Error!\n";
+		print_expr(listify_args());
+		exit 1;
+	}
+	error("Unknown procedure type");
+}
+
+function error (__p0)
+{
+	print ("ERROR: "   __p0) > "/dev/stderr";
+	exit 1;
+}
+
+function gc (__p0, __p1, __p2, __p3)
+{
+	if (loud_gc)
+		printf "\nGC..." > "/dev/stderr";
+	mark(__p0);
+	mark(__p1);
+	for (__p2 in protected)
+		mark(protected[__p2]);
+	for (__p2 in stack)
+		mark(stack[__p2]);
+	for (__p2 in value)
+		mark(value[__p2]);
+	for (__p2 in property)
+	{
+		__p3 = index(SUBSEP,__p2);
+		mark(substr(__p2,1,(__p3 - 1)));
+		mark(substr(__p2,(__p3 + 1)));
+		mark(property[__p2]);
+	}
+	pair_ptr = a_pair;
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+	{
+		if (loud_gc)
+			printf "Expanding heap..." > "/dev/stderr";
+		pair_limit += (4 * heap_increment);
+	}
+}
+
+function extend_env (__p0, __p1, __p2)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((__p1 == stack_ptr))
+			error("Too many arguments to procedure");
+		__p2 = value[car[__p0]];
+		value[car[__p0]] = stack[__p1];
+		stack[__p1] = __p2;
+		++(__p1);
+	}
+	if ((__p1 != stack_ptr))
+		error("Not enough arguments to procedure");
+}
+
+function is_atom (__p0)
+{
+	return ((__p0 % 4) != 1);
+}
+
+function is_pair (__p0)
+{
+	return ((__p0 % 4) == 1);
+}
+
+function eval (__p0, __p1)
+{
+	if (is_atom(__p0))
+		if (is_symbol(__p0))
+		{
+			if ((!((__p0 in value))))
+				error(("Unbound variable: "   printname[__p0]));
+			return value[__p0];
+		}
+		else
+			return __p0;
+	op = car[__p0];
+	if ((!((op in is_special))))
+	{
+		__p1 = frame_ptr;
+		frame_ptr = stack_ptr;
+		eval_rands(cdr[__p0]);
+		protect(proc = eval(car[__p0]));
+		result = apply(proc);
+		unprotect();
+		stack_ptr = frame_ptr;
+		frame_ptr = __p1;
+		return result;
+	}
+	if ((op == QUOTE))
+		return car[cdr[__p0]];
+	if ((op == LAMBDA))
+		return __p0;
+	if ((op == IF))
+		return ((eval(car[cdr[__p0]]) != NIL))?eval(car[cdr[cdr[__p0]]]):eval(car[cdr[cdr[cdr[__p0]]]]);
+	if ((op == PROGN))
+		return progn(cdr[__p0]);
+	if ((op == SETQ))
+	{
+		if ((!((car[cdr[__p0]] in value))))
+			error(("Unbound variable: "   printname[car[cdr[__p0]]]));
+		return value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+	}
+	if ((op == WHILE))
+	{
+		while ((eval(car[cdr[__p0]]) != NIL))
+			progn(cdr[cdr[__p0]]);
+		return NIL;
+	}
+	if ((op == DEFINE))
+	{
+		value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+		return car[cdr[__p0]];
+	}
+	error("BUG: Unknown special form");
+}
+
+function is (__p0, __p1)
+{
+	if (((__p1 % 4) != __p0))
+		error(((("Expected a "   type_name[__p0])   ", not a ")   type_name[(__p1 % 4)]));
+	return __p1;
+}
+
+function unwind_env (__p0, __p1)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((stack[__p1] == ""))
+			delete value[car[__p0]];
+		else
+			value[car[__p0]] = stack[__p1];
+		++(__p1);
+	}
+}
+
+function nreverse (__p0, __p1, __p2)
+{
+	while (is_pair(__p0))
+	{
+		__p2 = cdr[__p0];
+		cdr[__p0] = __p1;
+		__p1 = __p0;
+		__p0 = __p2;
+	}
+	if ((__p0 != NIL))
+		error("Not a proper list - reverse!");
+	return __p1;
+}
+
+function advance ()
+{
+	if ((token == eof))
+		return eof;
+	if ((token == ""))
+	{
+		if (((getline line) <= 0))
+		{
+			token = eof;
+			return;
+		}
+	}
+	if (((match(line,"^[()'.]") || match(line,"^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+")) || match(line,"^[ \\t]+")))
+	{
+		token = substr(line,RSTART,RLENGTH);
+		line = substr(line,(RLENGTH + 1));
+	}
+	else
+		if (((line == "") || (substr(line,1,1) == ";")))
+			token = "";
+		else
+			error(("Lexical error starting at "   line));
+}
+
+function do_apply (__p0, __p1, __p2)
+{
+	__p2 = frame_ptr;
+	frame_ptr = stack_ptr;
+	for (; is_pair(__p1); __p1 = cdr[__p1])
+		stack[(stack_ptr)++] = car[__p1];
+	if ((__p1 != NIL))
+		error("Bad argument to APPLY: not a proper list");
+	result = apply(__p0);
+	stack_ptr = frame_ptr;
+	frame_ptr = __p2;
+	return result;
+}
+
+function unprotect ()
+{
+	--(protected_ptr);
+}
+
+BEGIN {
+	a_number = 0;
+	pair_ptr = a_pair = 1;
+	symbol_ptr = a_symbol = 2;
+	type_name[a_number] = "number";
+	type_name[a_pair] = "pair";
+	type_name[a_symbol] = "symbol";
+}
+
+BEGIN {
+	srand();
+	frame_ptr = stack_ptr = 0;
+	if ((heap_increment == ""))
+		heap_increment = 1500;
+	pair_limit = (a_pair + (4 * heap_increment));
+	NIL = string_to_symbol("nil");
+	T = string_to_symbol("t");
+	value[NIL] = NIL;
+	value[T] = T;
+	car[NIL] = cdr[NIL] = NIL;
+	THE_EOF_OBJECT = string_to_symbol("#eof");
+	value[string_to_symbol("the-eof-object")] = THE_EOF_OBJECT;
+	eof = "(eof)";
+	QUOTE = string_to_symbol("quote");
+	is_special[QUOTE] = 1;
+	LAMBDA = string_to_symbol("lambda");
+	is_special[LAMBDA] = 1;
+	IF = string_to_symbol("if");
+	is_special[IF] = 1;
+	SETQ = string_to_symbol("set!");
+	is_special[SETQ] = 1;
+	DEFINE = string_to_symbol("define");
+	is_special[DEFINE] = 1;
+	PROGN = string_to_symbol("begin");
+	is_special[PROGN] = 1;
+	WHILE = string_to_symbol("while");
+	is_special[WHILE] = 1;
+	EQ = def_prim("eq?",2);
+	NULL = def_prim("null?",1);
+	CAR = def_prim("car",1);
+	CDR = def_prim("cdr",1);
+	CADR = def_prim("cadr",1);
+	CDDR = def_prim("cddr",1);
+	CONS = def_prim("cons",2);
+	LIST = def_prim("list");
+	EVAL = def_prim("eval",1);
+	APPLY = def_prim("apply",2);
+	READ = def_prim("read",0);
+	WRITE = def_prim("write",1);
+	NEWLINE = def_prim("newline",0);
+	ADD = def_prim("+",2);
+	SUB = def_prim("-",2);
+	MUL = def_prim("*",2);
+	DIV = def_prim("quotient",2);
+	MOD = def_prim("remainder",2);
+	LT = def_prim("<",2);
+	GET = def_prim("get",2);
+	PUT = def_prim("put",3);
+	ATOMP = def_prim("atom?",1);
+	PAIRP = def_prim("pair?",1);
+	SYMBOLP = def_prim("symbol?",1);
+	NUMBERP = def_prim("number?",1);
+	SETCAR = def_prim("set-car!",2);
+	SETCDR = def_prim("set-cdr!",2);
+	NREV = def_prim("reverse!",1);
+	GENSYM = def_prim("gensym",0);
+	RANDOM = def_prim("random",1);
+	ERROR = def_prim("error");
+	DRIVER = string_to_symbol("top-level-driver");
+}
+
+BEGIN {
+	for (; ; )
+	{
+		if (((DRIVER in value) && (value[DRIVER] != NIL)))
+			apply(value[DRIVER]);
+		else
+		{
+			expr = read();
+			if ((expr == THE_EOF_OBJECT))
+				break;
+			protect(expr);
+			print_expr(eval(expr));
+			unprotect();
+		}
+	}
+	if (profiling)
+		for (proc in call_count)
+		{
+			printf ("%5d ",call_count[proc]);
+			print_expr(proc);
+		}
+}
+
+--------------------------------------------------------------------------------
+[CMD]  qseawk -m 500000 -d- -f lisp/awklisp lisp/startup lisp/scmhelp.lsp lisp/scheme.lsp </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+function eval_rands (__p0)
+{
+	for (; (__p0 != NIL); __p0 = cdr[__p0])
+		stack[(stack_ptr)++] = eval(car[__p0]);
+}
+
+function def_prim (__p0, __p1, __p2)
+{
+	__p2 = string_to_symbol(__p0);
+	value[__p2] = string_to_symbol(sprintf("#<Primitive %s>",__p0));
+	if ((__p1 != ""))
+		num_params[value[__p2]] = __p1;
+	return value[__p2];
+}
+
+function is_symbol (__p0)
+{
+	return ((__p0 % 4) == 2);
+}
+
+function is_number (__p0)
+{
+	return ((__p0 % 4) == 0);
+}
+
+function read (__p0, __p1)
+{
+	skip_blanks();
+	if ((token == eof))
+		if (__p0)
+			error("Unexpected EOF");
+		else
+			return THE_EOF_OBJECT;
+	if ((token == "("))
+	{
+		advance();
+		__p1 = NIL;
+		for (; ; )
+		{
+			skip_blanks();
+			if ((token == "."))
+			{
+				advance();
+				after_dot = read(1);
+				skip_blanks();
+				if ((token != ")"))
+					error("')' expected");
+				advance();
+				return nreverse(__p1,after_dot);
+			}
+			else
+				if ((token == ")"))
+				{
+					advance();
+					return nreverse(__p1,NIL);
+				}
+				else
+				{
+					protect(__p1);
+					__p1 = cons(read(1),__p1);
+					unprotect();
+				}
+		}
+	}
+	else
+		if ((token == "'"))
+		{
+			advance();
+			return cons(QUOTE,cons(read(1),NIL));
+		}
+		else
+			if ((token ~ /^-?[0-9]+$/))
+			{
+				__p1 = make_number(token);
+				advance();
+				return __p1;
+			}
+			else
+			{
+				__p1 = string_to_symbol(token);
+				advance();
+				return __p1;
+			}
+}
+
+function protect (__p0)
+{
+	protected[++(protected_ptr)] = __p0;
+}
+
+function mark (__p0)
+{
+	while ((is_pair(__p0) && (!((__p0 in marks)))))
+	{
+		marks[__p0] = 1;
+		mark(car[__p0]);
+		__p0 = cdr[__p0];
+	}
+}
+
+function write_expr (__p0)
+{
+	if (is_atom(__p0))
+	{
+		if ((!(is_symbol(__p0))))
+			printf ("%d",numeric_value(__p0));
+		else
+		{
+			if ((!((__p0 in printname))))
+				error((("BUG: "   __p0)   " has no printname"));
+			printf ("%s",printname[__p0]);
+		}
+	}
+	else
+	{
+		printf "(";
+		write_expr(car[__p0]);
+		for (__p0 = cdr[__p0]; is_pair(__p0); __p0 = cdr[__p0])
+		{
+			printf " ";
+			write_expr(car[__p0]);
+		}
+		if ((__p0 != NIL))
+		{
+			printf " . ";
+			write_expr(__p0);
+		}
+		printf ")";
+	}
+}
+
+function make_number (__p0)
+{
+	return (__p0 * 4);
+}
+
+function print_expr (__p0)
+{
+	write_expr(__p0);
+	print "";
+}
+
+function progn (__p0)
+{
+	for (; (cdr[__p0] != NIL); __p0 = cdr[__p0])
+		eval(car[__p0]);
+	return eval(car[__p0]);
+}
+
+function string_to_symbol (__p0)
+{
+	if ((__p0 in intern))
+		return intern[__p0];
+	symbol_ptr += 4;
+	intern[__p0] = symbol_ptr;
+	printname[symbol_ptr] = __p0;
+	return symbol_ptr;
+}
+
+function cons (__p0, __p1)
+{
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+		gc(__p0,__p1);
+	car[pair_ptr] = __p0;
+	cdr[pair_ptr] = __p1;
+	pair_ptr += 4;
+	return (pair_ptr - 4);
+}
+
+function listify_args (__p0, __p1)
+{
+	__p1 = NIL;
+	for (__p0 = (stack_ptr - 1); (frame_ptr <= __p0); --(__p0))
+		__p1 = cons(stack[__p0],__p1);
+	return __p1;
+}
+
+function numeric_value (__p0)
+{
+	if (((__p0 % 4) != 0))
+		error("Not a number");
+	return (__p0 / 4);
+}
+
+function skip_blanks ()
+{
+	while ((token ~ /^[ 	]*$/))
+		advance();
+}
+
+function apply (__p0)
+{
+	if (profiling)
+		++(call_count[__p0]);
+	if ((car[__p0] == LAMBDA))
+	{
+		extend_env(car[cdr[__p0]]);
+		result = progn(cdr[cdr[__p0]]);
+		unwind_env(car[cdr[__p0]]);
+		return result;
+	}
+	if (((__p0 in num_params) && (num_params[__p0] != (stack_ptr - frame_ptr))))
+		error(("Wrong number of arguments to "   printname[cdr[__p0]]));
+	if ((__p0 == CAR))
+		return car[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CDR))
+		return cdr[is(a_pair,stack[frame_ptr])];
+	if ((__p0 == CONS))
+		return cons(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == NULL))
+		return ((stack[frame_ptr] == NIL))?T:NIL;
+	if ((__p0 == EQ))
+		return ((stack[frame_ptr] == stack[(frame_ptr + 1)]))?T:NIL;
+	if ((__p0 == ATOMP))
+		return (is_atom(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == ADD))
+		return (is(a_number,stack[frame_ptr]) + is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == SUB))
+		return (is(a_number,stack[frame_ptr]) - is(a_number,stack[(frame_ptr + 1)]));
+	if ((__p0 == MUL))
+		return make_number((numeric_value(stack[frame_ptr]) * numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == DIV))
+		return make_number(int((numeric_value(stack[frame_ptr]) / numeric_value(stack[(frame_ptr + 1)]))));
+	if ((__p0 == MOD))
+		return make_number((numeric_value(stack[frame_ptr]) % numeric_value(stack[(frame_ptr + 1)])));
+	if ((__p0 == LT))
+		return (((stack[frame_ptr] + 0) < (stack[(frame_ptr + 1)] + 0)))?T:NIL;
+	if ((__p0 == GET))
+		return (((stack[frame_ptr],stack[(frame_ptr + 1)]) in property))?property[stack[frame_ptr],stack[(frame_ptr + 1)]]:NIL;
+	if ((__p0 == PUT))
+		return property[stack[frame_ptr],stack[(frame_ptr + 1)]] = stack[(frame_ptr + 2)];
+	if ((__p0 == CADR))
+		return car[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == CDDR))
+		return cdr[is(a_pair,cdr[is(a_pair,stack[frame_ptr])])];
+	if ((__p0 == LIST))
+		return listify_args();
+	if ((__p0 == SYMBOLP))
+		return (is_symbol(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == PAIRP))
+		return (is_pair(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == NUMBERP))
+		return (is_number(stack[frame_ptr]))?T:NIL;
+	if ((__p0 == SETCAR))
+		return car[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == SETCDR))
+		return cdr[is(a_pair,stack[frame_ptr])] = stack[(frame_ptr + 1)];
+	if ((__p0 == APPLY))
+		return do_apply(stack[frame_ptr],stack[(frame_ptr + 1)]);
+	if ((__p0 == EVAL))
+		return eval(stack[frame_ptr]);
+	if ((__p0 == NREV))
+		return nreverse(stack[frame_ptr],NIL);
+	if ((__p0 == WRITE))
+	{
+		write_expr(stack[frame_ptr]);
+		printf " ";
+		return NIL;
+	}
+	if ((__p0 == NEWLINE))
+	{
+		printf "\n";
+		return NIL;
+	}
+	if ((__p0 == READ))
+		return read();
+	if ((__p0 == RANDOM))
+		return make_number(int((rand() * numeric_value(stack[frame_ptr]))));
+	if ((__p0 == GENSYM))
+		return string_to_symbol(("#G"   ++(gensym_counter)));
+	if ((__p0 == ERROR))
+	{
+		printf "Error!\n";
+		print_expr(listify_args());
+		exit 1;
+	}
+	error("Unknown procedure type");
+}
+
+function error (__p0)
+{
+	print ("ERROR: "   __p0) > "/dev/stderr";
+	exit 1;
+}
+
+function gc (__p0, __p1, __p2, __p3)
+{
+	if (loud_gc)
+		printf "\nGC..." > "/dev/stderr";
+	mark(__p0);
+	mark(__p1);
+	for (__p2 in protected)
+		mark(protected[__p2]);
+	for (__p2 in stack)
+		mark(stack[__p2]);
+	for (__p2 in value)
+		mark(value[__p2]);
+	for (__p2 in property)
+	{
+		__p3 = index(SUBSEP,__p2);
+		mark(substr(__p2,1,(__p3 - 1)));
+		mark(substr(__p2,(__p3 + 1)));
+		mark(property[__p2]);
+	}
+	pair_ptr = a_pair;
+	while ((pair_ptr in marks))
+	{
+		delete marks[pair_ptr];
+		pair_ptr += 4;
+	}
+	if ((pair_ptr == pair_limit))
+	{
+		if (loud_gc)
+			printf "Expanding heap..." > "/dev/stderr";
+		pair_limit += (4 * heap_increment);
+	}
+}
+
+function extend_env (__p0, __p1, __p2)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((__p1 == stack_ptr))
+			error("Too many arguments to procedure");
+		__p2 = value[car[__p0]];
+		value[car[__p0]] = stack[__p1];
+		stack[__p1] = __p2;
+		++(__p1);
+	}
+	if ((__p1 != stack_ptr))
+		error("Not enough arguments to procedure");
+}
+
+function is_atom (__p0)
+{
+	return ((__p0 % 4) != 1);
+}
+
+function is_pair (__p0)
+{
+	return ((__p0 % 4) == 1);
+}
+
+function eval (__p0, __p1)
+{
+	if (is_atom(__p0))
+		if (is_symbol(__p0))
+		{
+			if ((!((__p0 in value))))
+				error(("Unbound variable: "   printname[__p0]));
+			return value[__p0];
+		}
+		else
+			return __p0;
+	op = car[__p0];
+	if ((!((op in is_special))))
+	{
+		__p1 = frame_ptr;
+		frame_ptr = stack_ptr;
+		eval_rands(cdr[__p0]);
+		protect(proc = eval(car[__p0]));
+		result = apply(proc);
+		unprotect();
+		stack_ptr = frame_ptr;
+		frame_ptr = __p1;
+		return result;
+	}
+	if ((op == QUOTE))
+		return car[cdr[__p0]];
+	if ((op == LAMBDA))
+		return __p0;
+	if ((op == IF))
+		return ((eval(car[cdr[__p0]]) != NIL))?eval(car[cdr[cdr[__p0]]]):eval(car[cdr[cdr[cdr[__p0]]]]);
+	if ((op == PROGN))
+		return progn(cdr[__p0]);
+	if ((op == SETQ))
+	{
+		if ((!((car[cdr[__p0]] in value))))
+			error(("Unbound variable: "   printname[car[cdr[__p0]]]));
+		return value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+	}
+	if ((op == WHILE))
+	{
+		while ((eval(car[cdr[__p0]]) != NIL))
+			progn(cdr[cdr[__p0]]);
+		return NIL;
+	}
+	if ((op == DEFINE))
+	{
+		value[car[cdr[__p0]]] = eval(car[cdr[cdr[__p0]]]);
+		return car[cdr[__p0]];
+	}
+	error("BUG: Unknown special form");
+}
+
+function is (__p0, __p1)
+{
+	if (((__p1 % 4) != __p0))
+		error(((("Expected a "   type_name[__p0])   ", not a ")   type_name[(__p1 % 4)]));
+	return __p1;
+}
+
+function unwind_env (__p0, __p1)
+{
+	for (__p1 = frame_ptr; (__p0 != NIL); __p0 = cdr[__p0])
+	{
+		if ((stack[__p1] == ""))
+			delete value[car[__p0]];
+		else
+			value[car[__p0]] = stack[__p1];
+		++(__p1);
+	}
+}
+
+function nreverse (__p0, __p1, __p2)
+{
+	while (is_pair(__p0))
+	{
+		__p2 = cdr[__p0];
+		cdr[__p0] = __p1;
+		__p1 = __p0;
+		__p0 = __p2;
+	}
+	if ((__p0 != NIL))
+		error("Not a proper list - reverse!");
+	return __p1;
+}
+
+function advance ()
+{
+	if ((token == eof))
+		return eof;
+	if ((token == ""))
+	{
+		if (((getline line) <= 0))
+		{
+			token = eof;
+			return;
+		}
+	}
+	if (((match(line,"^[()'.]") || match(line,"^[_A-Za-z0-9=!@$%&*<>?+\\-*/:]+")) || match(line,"^[ \\t]+")))
+	{
+		token = substr(line,RSTART,RLENGTH);
+		line = substr(line,(RLENGTH + 1));
+	}
+	else
+		if (((line == "") || (substr(line,1,1) == ";")))
+			token = "";
+		else
+			error(("Lexical error starting at "   line));
+}
+
+function do_apply (__p0, __p1, __p2)
+{
+	__p2 = frame_ptr;
+	frame_ptr = stack_ptr;
+	for (; is_pair(__p1); __p1 = cdr[__p1])
+		stack[(stack_ptr)++] = car[__p1];
+	if ((__p1 != NIL))
+		error("Bad argument to APPLY: not a proper list");
+	result = apply(__p0);
+	stack_ptr = frame_ptr;
+	frame_ptr = __p2;
+	return result;
+}
+
+function unprotect ()
+{
+	--(protected_ptr);
+}
+
+BEGIN {
+	a_number = 0;
+	pair_ptr = a_pair = 1;
+	symbol_ptr = a_symbol = 2;
+	type_name[a_number] = "number";
+	type_name[a_pair] = "pair";
+	type_name[a_symbol] = "symbol";
+}
+
+BEGIN {
+	srand();
+	frame_ptr = stack_ptr = 0;
+	if ((heap_increment == ""))
+		heap_increment = 1500;
+	pair_limit = (a_pair + (4 * heap_increment));
+	NIL = string_to_symbol("nil");
+	T = string_to_symbol("t");
+	value[NIL] = NIL;
+	value[T] = T;
+	car[NIL] = cdr[NIL] = NIL;
+	THE_EOF_OBJECT = string_to_symbol("#eof");
+	value[string_to_symbol("the-eof-object")] = THE_EOF_OBJECT;
+	eof = "(eof)";
+	QUOTE = string_to_symbol("quote");
+	is_special[QUOTE] = 1;
+	LAMBDA = string_to_symbol("lambda");
+	is_special[LAMBDA] = 1;
+	IF = string_to_symbol("if");
+	is_special[IF] = 1;
+	SETQ = string_to_symbol("set!");
+	is_special[SETQ] = 1;
+	DEFINE = string_to_symbol("define");
+	is_special[DEFINE] = 1;
+	PROGN = string_to_symbol("begin");
+	is_special[PROGN] = 1;
+	WHILE = string_to_symbol("while");
+	is_special[WHILE] = 1;
+	EQ = def_prim("eq?",2);
+	NULL = def_prim("null?",1);
+	CAR = def_prim("car",1);
+	CDR = def_prim("cdr",1);
+	CADR = def_prim("cadr",1);
+	CDDR = def_prim("cddr",1);
+	CONS = def_prim("cons",2);
+	LIST = def_prim("list");
+	EVAL = def_prim("eval",1);
+	APPLY = def_prim("apply",2);
+	READ = def_prim("read",0);
+	WRITE = def_prim("write",1);
+	NEWLINE = def_prim("newline",0);
+	ADD = def_prim("+",2);
+	SUB = def_prim("-",2);
+	MUL = def_prim("*",2);
+	DIV = def_prim("quotient",2);
+	MOD = def_prim("remainder",2);
+	LT = def_prim("<",2);
+	GET = def_prim("get",2);
+	PUT = def_prim("put",3);
+	ATOMP = def_prim("atom?",1);
+	PAIRP = def_prim("pair?",1);
+	SYMBOLP = def_prim("symbol?",1);
+	NUMBERP = def_prim("number?",1);
+	SETCAR = def_prim("set-car!",2);
+	SETCDR = def_prim("set-cdr!",2);
+	NREV = def_prim("reverse!",1);
+	GENSYM = def_prim("gensym",0);
+	RANDOM = def_prim("random",1);
+	ERROR = def_prim("error");
+	DRIVER = string_to_symbol("top-level-driver");
+}
+
+BEGIN {
+	for (; ; )
+	{
+		if (((DRIVER in value) && (value[DRIVER] != NIL)))
+			apply(value[DRIVER]);
+		else
+		{
+			expr = read();
+			if ((expr == THE_EOF_OBJECT))
+				break;
+			protect(expr);
+			print_expr(eval(expr));
+			unprotect();
+		}
+	}
+	if (profiling)
+		for (proc in call_count)
+		{
+			printf ("%5d ",call_count[proc]);
+			print_expr(proc);
+		}
+}
+

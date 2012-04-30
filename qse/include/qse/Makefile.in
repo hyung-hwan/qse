@@ -661,10 +661,10 @@ uninstall-am: uninstall-pkgincludeHEADERS
 
 
 install-data-hook:
-	@$(ECHO) "#ifndef _QSE_CONFIG_H_" > "$(DESTDIR)$(pkgincludedir)/config.h"
-	@$(ECHO) "#define _QSE_CONFIG_H_" >> "$(DESTDIR)$(pkgincludedir)/config.h"
+	@echo "#ifndef _QSE_CONFIG_H_" > "$(DESTDIR)$(pkgincludedir)/config.h"
+	@echo "#define _QSE_CONFIG_H_" >> "$(DESTDIR)$(pkgincludedir)/config.h"
 	@$(EGREP) "#define[ ]+QSE_" "$(top_builddir)/include/qse/config.h" >> "$(DESTDIR)$(pkgincludedir)/config.h" 
-	@$(ECHO) "#endif" >> "$(DESTDIR)$(pkgincludedir)/config.h"
+	@echo "#endif" >> "$(DESTDIR)$(pkgincludedir)/config.h"
 	@$(RM) "$(DESTDIR)$(pkgincludedir)/config.h.in"
 	@$(SED) 's|/\*#define QSE_HAVE_CONFIG_H\*/|#define QSE_HAVE_CONFIG_H|' "$(srcdir)/types.h" > "$(DESTDIR)$(pkgincludedir)/types.h" 
 

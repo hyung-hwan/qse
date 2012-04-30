@@ -56,6 +56,7 @@
  * @example awk10.c
  * This programs shows how to manipuate a map using qse_awk_rtx_makemapval()
  * and qse_awk_rtx_setmapvalfld().
+ *
  */
 
 /** @struct qse_awk_t

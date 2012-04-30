@@ -16326,6 +16326,10 @@ if test "x$ac_cv_lib_socket_connect" = xyes; then :
 fi
 
 fi
+if test "${platform_win32}" = "yes"
+then
+	SOCKET_LIBS="$SOCKET_LIBS -lws2_32"
+fi
 
 
 for ac_func in sendfile sendfile64 sendfilev sendfilev64

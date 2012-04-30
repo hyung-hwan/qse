@@ -137,6 +137,10 @@ then
 		AC_DEFINE(HAVE_CONNECT, 1)
 	])
 fi
+if test "${platform_win32}" = "yes"
+then
+	SOCKET_LIBS="$SOCKET_LIBS -lws2_32"
+fi
 AC_SUBST(SOCKET_LIBS)
 
 dnl check if sendfile and its variants exist in the standard c library

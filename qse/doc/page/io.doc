@@ -4,5 +4,5 @@
 - Generic text stream interface #qse_tio_t
 - Simple text stream over a file #qse_sio_t 
 - Pipe stream to/from a process #qse_pio_t
-
+- Network stream to/from a remote/local host #qse_nwio_t
 */
