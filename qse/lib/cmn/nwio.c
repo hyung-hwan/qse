@@ -282,14 +282,20 @@ int qse_nwio_init (
 #else
 	int addrlen;
 #endif
-	int family;
-	int type;
+	int family, type;
+	int tmp;
 
 	QSE_MEMSET (nwio, 0, QSE_SIZEOF(*nwio));
 	nwio->mmgr = mmgr;
 	nwio->flags = flags;
 
-	addrlen = nwad_to_sockaddr (nwad, &family, &addr);
+	tmp = nwad_to_sockaddr (nwad, &family, &addr);
+	if (tmp <= -1) 
+	{
+		nwio->errnum = QSE_NWIO_EINVAL;
+		return -1;
+	}
+	addrlen = tmp;
 
 	if (flags & QSE_NWIO_TCP) type = SOCK_STREAM;
 	else if (flags & QSE_NWIO_UDP) type = SOCK_DGRAM;
