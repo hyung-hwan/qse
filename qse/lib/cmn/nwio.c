@@ -30,8 +30,9 @@
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	include <nerrno.h>
+#	pragma library("tcpip32.lib")
 #elif defined(__DOS__)
-/* TODO: */
+ 	/* TODO:  consider watt-32 */
 #else
 #	include "syscall.h"
 #	include <sys/socket.h>
@@ -45,6 +46,12 @@ enum
 	STATUS_UDP_CONNECT = (1 << 0)
 };
 
+static qse_ssize_t socket_output (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+static qse_ssize_t socket_input (
+	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
+
+#if defined(AF_INET)
 union sockaddr_t
 {
 	struct sockaddr_in in4;
@@ -52,12 +59,7 @@ union sockaddr_t
 	struct sockaddr_in6 in6;
 #endif
 };
-
-static qse_ssize_t socket_input (
-	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
-static qse_ssize_t socket_output (
-	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
-
+#endif
 
 static int nwad_to_sockaddr (const qse_nwad_t* nwad, int* family, void* addr)
 {
@@ -67,6 +69,7 @@ static int nwad_to_sockaddr (const qse_nwad_t* nwad, int* family, void* addr)
 	{
 		case QSE_NWAD_IN4:
 		{
+#if defined(AF_INET)
 			struct sockaddr_in* in; 
 
 			in = (struct sockaddr_in*)addr;
@@ -77,6 +80,7 @@ static int nwad_to_sockaddr (const qse_nwad_t* nwad, int* family, void* addr)
 			in->sin_family = AF_INET;
 			in->sin_addr.s_addr = nwad->u.in4.addr.value;
 			in->sin_port = nwad->u.in4.port;
+#endif
 			break;
 		}
 
@@ -170,27 +174,8 @@ static qse_nwio_errnum_t syserr_to_errnum (int e)
 #elif defined(__DOS__)
 static qse_nwio_errnum_t syserr_to_errnum (int e)
 {
-	switch (e)
-	{
-		case ENOMEM:
-			return QSE_NWIO_ENOMEM;
-
-		case EINVAL:
-			return QSE_NWIO_EINVAL;
-
-		case EACCES:
-			return QSE_NWIO_EACCES;
-
-		case ENOENT:
-			return QSE_NWIO_ENOENT;
-
-		case EEXIST:
-			return QSE_NWIO_EEXIST;
-		
-	
-		default:
-			return QSE_NWIO_ESYSERR;
-	}
+	/* TODO: */
+	return QSE_NWIO_ESYSERR;
 }
 #else
 static qse_nwio_errnum_t syserr_to_errnum (int e)
@@ -289,8 +274,10 @@ void qse_nwio_close (qse_nwio_t* nwio)
 int qse_nwio_init (
 	qse_nwio_t* nwio, qse_mmgr_t* mmgr, const qse_nwad_t* nwad, int flags)
 {
+#if defined(AF_INET)
 	union sockaddr_t addr;
-#ifdef HAVE_SOCKLEN_T
+#endif
+#if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
 #else
 	int addrlen;
@@ -303,6 +290,7 @@ int qse_nwio_init (
 	nwio->flags = flags;
 	nwio->errnum = QSE_NWIO_ENOERR;
 
+#if defined(AF_INET)
 	tmp = nwad_to_sockaddr (nwad, &family, &addr);
 	if (tmp <= -1) 
 	{
@@ -314,6 +302,7 @@ int qse_nwio_init (
 	if (flags & QSE_NWIO_TCP) type = SOCK_STREAM;
 	else if (flags & QSE_NWIO_UDP) type = SOCK_DGRAM;
 	else
+#endif
 	{
 		nwio->errnum = QSE_NWIO_EINVAL;
 		return -1;
@@ -711,7 +700,7 @@ reread:
 	if (nwio->status & STATUS_UDP_CONNECT)
 	{
 		union sockaddr_t addr;
-#ifdef HAVE_SOCKLEN_T
+#if defined(HAVE_SOCKLEN_T)
 		socklen_t addrlen;
 #else
 		int addrlen;
