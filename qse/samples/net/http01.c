@@ -574,7 +574,7 @@ static void* mux_open (qse_httpd_t* httpd)
 
 	memset (mux, 0, QSE_SIZEOF(*mux));
 
-#if defined(HAVE_EPOLL_CREATE1)
+#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
 	mux->fd = epoll_create1 (O_CLOEXEC);
 #else
 	mux->fd = epoll_create (100);
@@ -586,11 +586,13 @@ static void* mux_open (qse_httpd_t* httpd)
 		return QSE_NULL;
 	}
 
-#if defined(HAVE_EPOLL_CREATE1)
+#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
 	/* nothing else to do */
 #else
-	flag = fcntl (mux->fd, F_GETFD);
-	if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
+	{
+		int flag = fcntl (mux->fd, F_GETFD);
+		if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
+	}
 #endif
 
 	return mux;
