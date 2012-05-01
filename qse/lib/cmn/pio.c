@@ -554,9 +554,7 @@ int qse_pio_init (
 	posix_spawn_file_actions_t fa;
 	int fa_inited = 0;
 	int pserr;
-#if defined(__linux)
 	posix_spawnattr_t psattr;
-#endif
 	qse_pio_pid_t pid;
 	param_t param;
 	extern char** environ;
@@ -1390,8 +1388,8 @@ create_process:
 		goto oops;
 	}
 
-#if defined(__linux)
 	posix_spawnattr_init (&psattr);
+#if defined(__linux)
 #if !defined(POSIX_SPAWN_USEVFORK)
 #	define POSIX_SPAWN_USEVFORK 0x40
 #endif

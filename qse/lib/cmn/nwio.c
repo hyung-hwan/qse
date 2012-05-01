@@ -320,6 +320,11 @@ int qse_nwio_init (
 	{
 		qse_nwio_hnd_t handle;
 
+		{
+			int optval = 1;
+			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
+		}
+
 		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) == SOCKET_ERROR)
 		{
 			nwio->errnum = syserr_to_errnum (WSAGetLastError());
@@ -369,6 +374,11 @@ int qse_nwio_init (
 	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
+
+		{
+			int optval = 1;
+			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
+		}
 
 		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
 		{
@@ -430,6 +440,13 @@ int qse_nwio_init (
 	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
+
+	#if defined(SO_REUSEADDR)
+		{
+			int optval = 1;
+			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
+		}
+	#endif
 
 		if (bind (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
 		{
