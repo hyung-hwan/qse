@@ -806,7 +806,7 @@ static qse_ssize_t nwio_handler_open (
 	handle = qse_nwio_open (
 		qse_awk_rtx_getmmgr(rtx), 0, nwad, 
 		flags | QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
-		QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
+		QSE_NWIO_REUSEADDR | QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
 	);
 	if (handle == QSE_NULL) return -1;
 

@@ -41,6 +41,8 @@ enum qse_nwio_flag_t
 	QSE_NWIO_TCP           = (1 << 9),
 	QSE_NWIO_UDP           = (1 << 10),
 
+	QSE_NWIO_REUSEADDR     = (1 << 12),
+	QSE_NWIO_KEEPALIVE     = (1 << 13),
 	/** do not reread if read has been interrupted */
 	QSE_NWIO_READNORETRY   = (1 << 14),
 	/** do not rewrite if write has been interrupted */

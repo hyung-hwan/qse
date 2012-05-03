@@ -127,6 +127,8 @@ enum qse_fio_mode_t
 	typedef unsigned long qse_fio_hnd_t;
 #elif defined(__DOS__)
 	typedef int qse_fio_hnd_t;
+#elif defined(vms) || defined(__vms)
+	typedef void* qse_fio_hnd_t; /* struct FAB* */
 #else
 	typedef int qse_fio_hnd_t;
 #endif

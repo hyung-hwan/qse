@@ -316,10 +316,17 @@ int qse_nwio_init (
 		goto oops;
 	}
 
+	if ((flags & QSE_NWIO_TCP) && (flags & QSE_NWIO_KEEPALIVE))
+	{
+		int optval = 1;
+		setsockopt (nwio->handle, SOL_SOCKET, SO_KEEPALIVE, (void*)&optval, QSE_SIZEOF(optval));
+	}
+
 	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
 
+		if (flags & QSE_NWIO_REUSEADDR)
 		{
 			int optval = 1;
 			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
@@ -371,10 +378,17 @@ int qse_nwio_init (
 		goto oops;
 	}
 
+	if ((flags & QSE_NWIO_TCP) && (flags & QSE_NWIO_KEEPALIVE))
+	{
+		int optval = 1;
+		setsockopt (nwio->handle, SOL_SOCKET, SO_KEEPALIVE, (void*)&optval, QSE_SIZEOF(optval));
+	}
+
 	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
 
+		if (flags & QSE_NWIO_REUSEADDR)
 		{
 			int optval = 1;
 			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));
@@ -437,11 +451,18 @@ int qse_nwio_init (
 	}
 	#endif
 
+	if ((flags & QSE_NWIO_TCP) && (flags & QSE_NWIO_KEEPALIVE))
+	{
+		int optval = 1;
+		setsockopt (nwio->handle, SOL_SOCKET, SO_KEEPALIVE, (void*)&optval, QSE_SIZEOF(optval));
+	}
+
 	if (flags & QSE_NWIO_PASSIVE)
 	{
 		qse_nwio_hnd_t handle;
 
 	#if defined(SO_REUSEADDR)
+		if (flags & QSE_NWIO_REUSEADDR)
 		{
 			int optval = 1;
 			setsockopt (nwio->handle, SOL_SOCKET, SO_REUSEADDR, (void*)&optval, QSE_SIZEOF(optval));

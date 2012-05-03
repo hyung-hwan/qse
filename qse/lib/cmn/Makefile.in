@@ -78,10 +78,10 @@ am__DEPENDENCIES_1 =
 libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo gdl.lo htb.lo \
-	lda.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo \
-	ipad.lo main.lo mbwc.lo mbwc-str.lo mem.lo nwad.lo nwio.lo \
-	oht.lo opt.lo path-basename.lo path-canon.lo pio.lo pma.lo \
-	rbt.lo rex.lo sio.lo sll.lo slmb.lo stdio.lo str-beg.lo \
+	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo hton.lo \
+	ipad.lo lda.lo main.lo mbwc.lo mbwc-str.lo mem.lo nwad.lo \
+	nwio.lo oht.lo opt.lo path-basename.lo path-canon.lo pio.lo \
+	pma.lo rbt.lo rex.lo sio.lo sll.lo slmb.lo stdio.lo str-beg.lo \
 	str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo str-cpy.lo \
 	str-del.lo str-dup.lo str-dynm.lo str-dynw.lo str-end.lo \
 	str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo str-len.lo \
@@ -309,7 +309,6 @@ libqsecmn_la_SOURCES = \
 	env.c \
 	gdl.c \
 	htb.c \
-	lda.c \
 	fio.c \
 	fma.c \
 	fmt.c \
@@ -318,6 +317,7 @@ libqsecmn_la_SOURCES = \
 	fs-move.c \
 	hton.c \
 	ipad.c \
+	lda.c \
 	main.c \
 	mbwc.c \
 	mbwc-str.c \
