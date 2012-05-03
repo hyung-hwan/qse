@@ -33,7 +33,6 @@ libqsecmn_la_SOURCES = \
 	env.c \
 	gdl.c \
 	htb.c \
-	lda.c \
 	fio.c \
 	fma.c \
 	fmt.c \
@@ -42,6 +41,7 @@ libqsecmn_la_SOURCES = \
 	fs-move.c \
 	hton.c \
 	ipad.c \
+	lda.c \
 	main.c \
 	mbwc.c \
 	mbwc-str.c \
