@@ -1,5 +1,6 @@
 #include <qse/cmn/fio.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/str.h>
 #include <qse/cmn/stdio.h>
 
 #include <locale.h>

@@ -43,6 +43,7 @@
 #elif defined(vms) || defined(__vms)
 #	include <starlet.h> /* (SYS$...) */
 #	include <ssdef.h> /* (SS$...) */
+#	include <lib$routines.h> /* (lib$...) */
 #else
 #	include "syscall.h"
 #endif
@@ -169,6 +170,9 @@ void qse_assert_failed (
 		intdos (&regs, &regs);
 	}
 #elif defined(vms) || defined(__vms)
+	lib$stop (SS$_ABORT); /* use SS$_OPCCUS instead? */
+
+	/* this won't be reached since lib$stop() terminates the process */
 	sys$exit (SS$_ABORT); /* this condition code can be shown with 
 	                       * 'show symbol $status' from the command-line. */
 #else
