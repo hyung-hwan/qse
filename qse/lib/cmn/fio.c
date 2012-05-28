@@ -38,6 +38,8 @@
 #	include <io.h>
 #	include <fcntl.h>
 #	include <errno.h>
+#elif defined(vms) || defined(__vms)
+#	include <starlet.h>
 #else
 #	include "syscall.h"
 #endif
