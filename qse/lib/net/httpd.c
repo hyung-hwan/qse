@@ -62,6 +62,8 @@ static void free_server_list (
 static int perform_client_task (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
 
+qse_http_version_t qse_http_v11 = { 1, 1 };
+
 qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_httpd_t* httpd;
