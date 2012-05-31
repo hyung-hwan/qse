@@ -12,6 +12,9 @@ libqsenet_la_SOURCES = \
 	htrd.c \
 	httpd.h \
 	httpd.c \
+	httpd-cgi.c \
+	httpd-proxy.c \
+	httpd-resol.c \
 	httpd-task.c
 
 libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)

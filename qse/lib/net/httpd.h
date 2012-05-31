@@ -61,9 +61,14 @@ struct qse_httpd_t
 	void* mux;
 };
 
+
+#define MAX_SEND_SIZE 4096
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern qse_http_version_t qse_http_v11;
 
 int qse_httpd_init (
 	qse_httpd_t* httpd,
@@ -74,6 +79,14 @@ void qse_httpd_fini (
 	qse_httpd_t* httpd
 );
 
+qse_httpd_task_t* qse_httpd_entask_error (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+     qse_httpd_task_t* pred,
+	int code,
+     const qse_http_version_t* version,
+	int keepalive
+);
 
 #ifdef __cplusplus
 }
