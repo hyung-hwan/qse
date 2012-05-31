@@ -39,7 +39,9 @@
 #	include <fcntl.h>
 #	include <errno.h>
 #elif defined(vms) || defined(__vms)
+#	define __NEW_STARLET 1
 #	include <starlet.h>
+#	include <rms.h>
 #else
 #	include "syscall.h"
 #endif
@@ -130,6 +132,20 @@ static qse_fio_errnum_t syserr_to_errnum (int e)
 		case EEXIST:
 			return QSE_FIO_EEXIST;
 	
+		default:
+			return QSE_FIO_ESYSERR;
+	}
+}
+#elif defined(vms) || defined(__vms)
+static qse_fio_errnum_t syserr_to_errnum (unsigned long e)
+{
+	switch (e)
+	{
+		case RMS$_NORMAL:
+			return QSE_FIO_ENOERR;
+		
+		/* TODO: add more */
+
 		default:
 			return QSE_FIO_ESYSERR;
 	}
@@ -615,6 +631,130 @@ int qse_fio_init (
 		}
 	}
 
+#elif defined(vms) || defined(__vms)
+
+	if (flags & QSE_FIO_HANDLE)
+	{
+		/* TODO: implement this */
+		fio->errnum = QSE_FIO_ENOIMPL;
+		return -1;
+	}
+	else
+	{
+		struct FAB* fab;
+		struct RAB* rab;
+		unsigned long r0;
+		
+	#if defined(QSE_CHAR_IS_MCHAR)
+		const qse_mchar_t* path_mb = path;
+	#else
+		qse_mchar_t path_mb_buf[1024];
+		qse_mchar_t* path_mb;
+		qse_size_t wl, ml;
+		int px;
+
+		path_mb = path_mb_buf;
+		ml = QSE_COUNTOF(path_mb_buf);
+		px = qse_wcstombs (path, &wl, path_mb, &ml);
+		if (px == -2)
+		{
+			/* the static buffer is too small.
+			 * allocate a buffer */
+			path_mb = qse_wcstombsdup (path, mmgr);
+			if (path_mb == QSE_NULL) 
+			{
+				fio->errnum = QSE_FIO_ENOMEM;
+				return -1;
+			}
+		}
+		else if (px <= -1) 
+		{
+			fio->errnum = QSE_FIO_EINVAL;
+			return -1;
+		}
+	#endif
+
+		rab = (struct RAB*)QSE_MMGR_ALLOC (
+			mmgr, QSE_SIZEOF(*rab) + QSE_SIZEOF(*fab));
+		if (rab == QSE_NULL)
+		{
+	#if defined(QSE_CHAR_IS_MCHAR)
+			/* nothing to do */
+	#else
+			if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+			fio->errnum = QSE_FIO_ENOMEM;
+			return -1;			
+		}
+	
+		fab = (struct FAB*)(rab + 1);
+		*rab = cc$rms_rab;
+		rab->rab$l_fab = fab;
+
+		*fab = cc$rms_fab;
+		fab->fab$l_fna = path_mb;
+		fab->fab$b_fns = strlen(path_mb);
+		fab->fab$b_org = FAB$C_SEQ;
+		fab->fab$b_rfm = FAB$C_VAR; /* FAB$C_STM, FAB$C_STMLF, FAB$C_VAR, etc... */
+		fab->fab$b_fac = FAB$M_GET | FAB$M_PUT;
+
+		fab->fab$b_fac = FAB$M_NIL;
+		if (flags & QSE_FIO_READ) fab->fab$b_fac |= FAB$M_GET;
+		if (flags & (QSE_FIO_WRITE | QSE_FIO_APPEND)) fab->fab$b_fac |= FAB$M_PUT | FAB$M_TRN; /* put, truncate */
+		
+		fab->fab$b_shr |= FAB$M_SHRPUT | FAB$M_SHRGET; /* FAB$M_NIL */
+		if (flags & QSE_FIO_NOSHREAD) fab->fab$b_shr &= ~FAB$M_SHRGET;
+		if (flags & QSE_FIO_NOSHWRITE) fab->fab$b_shr &= ~FAB$M_SHRPUT;
+
+		if (flags & QSE_FIO_APPEND) rab->rab$l_rop |= RAB$M_EOF;
+
+		if (flags & QSE_FIO_CREATE) 
+		{
+			if (flags & QSE_FIO_EXCLUSIVE) 
+				fab->fab$l_fop &= ~FAB$M_CIF;
+			else
+				fab->fab$l_fop |= FAB$M_CIF;
+
+			r0 = sys$create (&fab, 0, 0);
+		}
+		else
+		{
+			r0 = sys$open (&fab, 0, 0);
+		}
+
+		if (r0 != RMS$_NORMAL && r0 != RMS$_CREATED)
+		{
+	#if defined(QSE_CHAR_IS_MCHAR)
+			/* nothing to do */
+	#else
+			if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+			fio->errnum = syserr_to_errnum (r0);
+			return -1;
+		}
+
+
+		r0 = sys$connect (&rab, 0, 0);
+		if (r0 != RMS$_NORMAL)
+		{
+	#if defined(QSE_CHAR_IS_MCHAR)
+			/* nothing to do */
+	#else
+			if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+			fio->errnum = syserr_to_errnum (r0);
+			return -1;
+		}
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		/* nothing to do */
+	#else
+		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+	#endif
+
+		handle = rab;
+	}
+
 #else
 
 	if (flags & QSE_FIO_HANDLE)
@@ -708,14 +848,14 @@ int qse_fio_init (
 		}
 
 		/* set some file access hints */
-		#if defined(POSIX_FADV_RANDOM)
+	#if defined(POSIX_FADV_RANDOM)
 		if (flags & QSE_FIO_RANDOM) 
 			posix_fadvise (handle, 0, 0, POSIX_FADV_RANDOM);
-		#endif
-		#if defined(POSIX_FADV_SEQUENTIAL)
+	#endif
+	#if defined(POSIX_FADV_SEQUENTIAL)
 		if (flags & QSE_FIO_SEQUENTIAL) 
 			posix_fadvise (handle, 0, 0, POSIX_FADV_SEQUENTIAL);
-		#endif
+	#endif
 	}
 #endif
 
@@ -729,10 +869,19 @@ void qse_fio_fini (qse_fio_t* fio)
 	{
 #if defined(_WIN32)
 		CloseHandle (fio->handle);
+
 #elif defined(__OS2__)
 		DosClose (fio->handle);
+
 #elif defined(__DOS__)
 		close (fio->handle);
+
+#elif defined(vms) || defined(__vms)
+		struct RAB* rab = (struct RAB*)fio->handle;
+		sys$disconnect (rab, 0, 0);
+		sys$close ((struct FAB*)(rab + 1), 0, 0);
+		QSE_MMGR_FREE (fio->mmgr, fio->handle);
+
 #else
 		QSE_CLOSE (fio->handle);
 #endif
@@ -759,6 +908,8 @@ qse_ubi_t qse_fio_gethandleasubi (const qse_fio_t* fio)
 	handle.ul = fio->handle;
 #elif defined(__DOS__)
 	handle.i = fio->handle;
+#elif defined(vms) || defined(__vms)
+	handle.ptr = fio->handle;
 #else
 	handle.i = fio->handle;
 #endif
@@ -837,6 +988,11 @@ qse_fio_off_t qse_fio_seek (
 	};
 
 	return lseek (fio->handle, offset, seek_map[origin]);
+#elif defined(vms) || defined(__vms)
+
+	/* TODO: */
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return (qse_fio_off_t)-1;
 #else
 	static int seek_map[] =
 	{
@@ -908,6 +1064,19 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
 
+#elif defined(vms) || defined(__vms)
+
+	unsigned long r0;
+	struct RAB* rab = (struct RAB*)fio->handle;
+	
+	if ((r0 = sys$rewind (rab, 0, 0)) != RMS$_NORMAL ||
+	    (r0 = sys$truncate (rab, 0, 0)) != RMS$_NORMAL)
+	{
+		fio->errnum = syserr_to_errnum (r0);
+		return -1;
+	}
+
+	return 0;
 #else
 	int n;
 	n = QSE_FTRUNCATE (fio->handle, size);
@@ -954,6 +1123,24 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
 
+#elif defined(vms) || defined(__vms)
+
+	unsigned long r0;
+	struct RAB* rab = (struct RAB*)fio->handle;
+
+	if (size > 32767) size = 32767;
+
+	rab->rab$l_ubf = buf;
+	rab->rab$w_usz = size;
+
+	r0 = sys$get (rab, 0, 0);
+	if (r0 != RMS$_NORMAL)
+	{
+		fio->errnum = syserr_to_errnum (r0);
+		return -1;
+	}
+
+	return rab->rab$w_rsz;
 #else
 
 	ssize_t n;
@@ -1021,6 +1208,25 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	n = write (fio->handle, data, size);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
+
+#elif defined(vms) || defined(__vms)
+
+	unsigned long r0;
+	struct RAB* rab = (struct RAB*)fio->handle;
+
+	if (size > 32767) size = 32767;
+
+	rab->rab$l_rbf = (char*)data;
+	rab->rab$w_rsz = size;
+
+	r0 = sys$put (rab, 0, 0);
+	if (r0 != RMS$_NORMAL)
+	{
+		fio->errnum = syserr_to_errnum (r0);
+		return -1;
+	}
+
+	return rab->rab$w_rsz;
 
 #else
 
@@ -1229,6 +1435,12 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	fio->errnum = QSE_FIO_ENOIMPL;
 	return -1;
 
+#elif defined(vms) || defined(__vms)
+
+	/* TODO: */
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return (qse_fio_off_t)-1;
+
 #else
 	int n;
 	n = QSE_FCHMOD (fio->handle, mode);
@@ -1265,6 +1477,12 @@ int qse_fio_sync (qse_fio_t* fio)
 	n = fsync (fio->handle);
 	if (n <= -1) fio->errnum = syserr_to_errnum (errno);
 	return n;
+
+#elif defined(vms) || defined(__vms)
+
+	/* TODO: */
+	fio->errnum = QSE_FIO_ENOIMPL;
+	return (qse_fio_off_t)-1;
 
 #else
 
@@ -1306,6 +1524,9 @@ int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 		STD_OUTPUT_HANDLE,
 		STD_ERROR_HANDLE
 	};
+#elif defined(vms) || defined(__vms)
+	/* TODO */
+	int tab[] = { 0, 1, 2 };
 #else
 
 	qse_fio_hnd_t tab[] =
@@ -1329,6 +1550,9 @@ int qse_getstdfiohandle (qse_fio_std_t std, qse_fio_hnd_t* hnd)
 		if (tmp == INVALID_HANDLE_VALUE) return -1;
 		*hnd = tmp;
 	}
+#elif defined(vms) || defined(__vms)
+	/* TODO: */
+	return -1;
 #else
 	*hnd = tab[std];
 #endif

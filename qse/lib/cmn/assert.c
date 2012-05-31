@@ -41,6 +41,7 @@
 #	include <dos.h>
 #	include <dosfunc.h>
 #elif defined(vms) || defined(__vms)
+#	define __NEW_STARLET 1
 #	include <starlet.h> /* (SYS$...) */
 #	include <ssdef.h> /* (SS$...) */
 #	include <lib$routines.h> /* (lib$...) */
