@@ -39,6 +39,9 @@
 /// @example awk08.cpp
 /// This program shows how to add intrinsic functions.
 ///
+/// @example awk12.cpp
+/// This program shows how to override console methods to use a
+/// string buffers for console input and output.
 
 /////////////////////////////////
 QSE_BEGIN_NAMESPACE(QSE)
