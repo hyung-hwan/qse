@@ -4,7 +4,7 @@ dnl Make sure you change the version information
 dnl in include/qse/conf_*.h whenever you change the version 
 dnl here. Those files don't depend on autoconf, thus requiring
 dnl manual change.
-AC_INIT([qse],[0.5.6],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
+AC_INIT([qse],[0.5.7],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
 
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])

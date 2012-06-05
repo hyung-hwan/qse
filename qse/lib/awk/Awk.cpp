@@ -1176,8 +1176,19 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 		return QSE_NULL;
 	}
 
-	if (init_runctx () <= -1) return QSE_NULL;
+	if (init_runctx() <= -1) return QSE_NULL;
 	return &runctx;
+}
+
+Awk::Run* Awk::resetRunContext ()
+{
+	if (this->runctx.rtx)
+	{
+		fini_runctx ();
+		if (init_runctx() <= -1) return QSE_NULL;
+		return &this->runctx;
+	}
+	else return QSE_NULL;
 }
 
 int Awk::loop (Value* ret)
@@ -1250,7 +1261,7 @@ void Awk::stop ()
 
 int Awk::init_runctx () 
 {
-	if (runctx.rtx != QSE_NULL) return 0;
+	if (this->runctx.rtx) return 0;
 
 	qse_awk_rio_t rio;
 
@@ -1276,10 +1287,10 @@ int Awk::init_runctx ()
 
 void Awk::fini_runctx () 
 {
-	if (runctx.rtx != QSE_NULL)
+	if (this->runctx.rtx)
 	{
-		qse_awk_rtx_close (runctx.rtx);
-		runctx.rtx = QSE_NULL;
+		qse_awk_rtx_close (this->runctx.rtx);
+		this->runctx.rtx = QSE_NULL;
 	}
 }
 

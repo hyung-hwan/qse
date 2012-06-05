@@ -26,17 +26,19 @@ if ENABLE_CXX
 
 CXXLIB = -lqseawkxx -lqsecmnxx
 
-bin_PROGRAMS += awk05 awk06 awk07 awk08 awk12
+bin_PROGRAMS += awk05 awk06 awk07 awk08 awk12 awk13
 
 awk05_SOURCES = awk05.cpp
 awk06_SOURCES = awk06.cpp
 awk07_SOURCES = awk07.cpp
 awk08_SOURCES = awk08.cpp
 awk12_SOURCES = awk12.cpp
+awk13_SOURCES = awk13.cpp
 
 awk05_LDADD = $(CXXLIB) $(LDADD)
 awk06_LDADD = $(CXXLIB) $(LDADD)
 awk07_LDADD = $(CXXLIB) $(LDADD)
 awk08_LDADD = $(CXXLIB) $(LDADD)
 awk12_LDADD = $(CXXLIB) $(LDADD)
+awk13_LDADD = $(CXXLIB) $(LDADD)
 endif
