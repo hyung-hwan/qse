@@ -874,6 +874,14 @@ public:
 	}
 
 	///
+	/// The resetRunContext() function closes an existing 
+	/// execution context and creates a new execution context.
+	/// You may want to call this function if you want to
+	/// reset it without calling the parse() function again
+	/// after the first call to it. 
+	Awk::Run* resetRunContext ();
+	
+	///
 	/// The loop() function executes the BEGIN block, pattern-action blocks,
 	/// and the END block. The return value is stored into @a ret.
 	/// @return 0 on succes, -1 on failure
