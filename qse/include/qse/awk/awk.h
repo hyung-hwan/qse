@@ -850,6 +850,7 @@ enum qse_awk_errnum_t
 {
 	QSE_AWK_ENOERR,  /**< no error */
 	QSE_AWK_EINTERN, /**< internal error */
+	QSE_AWK_ENOIMPL, /**< not implemented */
 
 	/* common errors */
 	QSE_AWK_ENOMEM,  /**< insufficient memory */

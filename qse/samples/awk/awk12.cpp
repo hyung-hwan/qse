@@ -153,7 +153,7 @@ static int run_awk (MyAwk& awk)
 	if (x >= 0)
 	{
 		qse_printf (QSE_T("%s"), awk.getOutput()); // print the console output
-		qse_printf (QSE_T("-----------------------------\n"), awk.getOutput());
+		qse_printf (QSE_T("-----------------------------\n"));
 
 		// prepare a string to print lines with A in the fourth column
 		MyAwk::SourceString in2 (QSE_T("$4 == \"A\" { print $1; }")); 
@@ -167,7 +167,7 @@ static int run_awk (MyAwk& awk)
 		if (x >= 0)
 		{
 			qse_printf (QSE_T("%s"), awk.getOutput());
-			qse_printf (QSE_T("-----------------------------\n"), awk.getOutput());
+			qse_printf (QSE_T("-----------------------------\n"));
 		}
 	}
 

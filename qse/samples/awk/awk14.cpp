@@ -40,35 +40,31 @@ typedef QSE::StdAwk StdAwk;
 typedef QSE::StdAwk::Run Run;
 typedef QSE::StdAwk::Value Value;
 
-class MyAwk: public StdAwk
+class MyConsoleHandler: public StdAwk::Console::Handler
 {
 public:
-	//
-	// this class overrides console methods to use
-	// string buffers for console input and output.
-	//
-	MyAwk () { }
-	~MyAwk () { close (); }
+	// this class defines a console handler that can be
+	// registered into an awk object.
 
-	void setInput (const char_t* instr)
+	void setInput (const StdAwk::char_t* instr)
 	{
 		this->input = instr;
 		this->inptr = this->input.c_str();
 		this->inend = inptr + this->input.length();
 	}
 
-	const char_t* getOutput () { return this->output.c_str(); }
+	const StdAwk::char_t* getOutput () { return this->output.c_str(); }
 
 protected:
 	String input; // console input buffer 
-	const char_t* inptr;
-	const char_t* inend;
+	const StdAwk::char_t* inptr;
+	const StdAwk::char_t* inend;
 
 	String output; // console output buffer
 	
-	int openConsole (Console& io) 
+	int open (StdAwk::Console& io) 
 	{ 
-		if (io.getMode() == Console::READ)
+		if (io.getMode() == StdAwk::Console::READ)
 		{
 			this->inptr = this->input.c_str();
 			this->inend = inptr + this->input.length();
@@ -81,25 +77,25 @@ protected:
 		return 1; // return open-success
 	}
 
-	int closeConsole (Console& io) 
+	int close (StdAwk::Console& io) 
 	{ 
 		return 0; // return success
 	} 
 
-	int flushConsole (Console& io) 
+	int flush (StdAwk::Console& io) 
 	{
 		// there is nothing to flush since a string buffer
 		// is used for a console output. just return success.
 		return 0; 
 	} 
-	int nextConsole (Console& io) 
+	int next (StdAwk::Console& io) 
 	{ 
 		// this stripped-down awk doesn't honor the nextfile statement
 		// or the nextofile statement. just return failure.
 		return -1; 
 	} 
 
-	ssize_t readConsole (Console& io, char_t* data, size_t size) 
+	ssize_t read (StdAwk::Console& io, StdAwk::char_t* data, size_t size) 
 	{
 		if (this->inptr >= this->inend) return 0; // EOF
 		size_t x = qse_strxncpy (data, size, inptr, inend - inptr);
@@ -107,12 +103,12 @@ protected:
 		return x;
 	}
 
-	ssize_t writeConsole (Console& io, const char_t* data, size_t size) 
+	ssize_t write (StdAwk::Console& io, const StdAwk::char_t* data, size_t size) 
 	{
 		try { this->output.append (data, size); }
 		catch (...) 
 		{ 
-			((Run*)io)->setError (QSE_AWK_ENOMEM);
+			((StdAwk::Run*)io)->setError (QSE_AWK_ENOMEM);
 			return -1; 
 		}
 		return size;
@@ -120,7 +116,7 @@ protected:
 };
 
 static void print_error (
-	const MyAwk::loc_t& loc, const MyAwk::char_t* msg)
+	const StdAwk::loc_t& loc, const StdAwk::char_t* msg)
 {
 	if (loc.line > 0 || loc.colm > 0)
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: %s at LINE %lu COLUMN %lu\n"), msg, loc.line, loc.colm);
@@ -129,7 +125,7 @@ static void print_error (
 	
 }
 
-static int run_awk (MyAwk& awk)
+static int run_awk (StdAwk& awk)
 {
 	// sample input string
 	const qse_char_t* instr = QSE_T(
@@ -159,24 +155,26 @@ static int run_awk (MyAwk& awk)
 		"sabafoo      555-2127     1200/300          A\n");
 
 	// ARGV[0]
-	if (awk.addArgument (QSE_T("awk13")) <= -1) return -1;
+	if (awk.addArgument (QSE_T("awk14")) <= -1) return -1;
 
 	// prepare a string to print lines with A in the fourth column
-	MyAwk::SourceString in (QSE_T("$4 == \"A\" { print $2, $1, $3; }")); 
+	StdAwk::SourceString in (QSE_T("$4 == \"A\" { print $2, $1, $3; }")); 
 	
 	// parse the script.
-	if (awk.parse (in, MyAwk::Source::NONE) == QSE_NULL) return -1;
-	MyAwk::Value r;
+	if (awk.parse (in, StdAwk::Source::NONE) == QSE_NULL) return -1;
+	StdAwk::Value r;
 
-	awk.setInput (instr); // locate the input string
+	MyConsoleHandler* mch = (MyConsoleHandler*)awk.getConsoleHandler();
+
+	mch->setInput (instr); // locate the input string
 	int x = awk.loop (&r); // execute the BEGIN, pattern-action, END blocks.
 
 	if (x >= 0)
 	{
-		qse_printf (QSE_T("%s"), awk.getOutput()); // print the console output
+		qse_printf (QSE_T("%s"), mch->getOutput()); // print the console output
 		qse_printf (QSE_T("-----------------------------\n"));
 
-		awk.setInput (instr2);
+		mch->setInput (instr2);
 
 		// reset the runtime context so that the next loop() method
 		// is performed over a new console stream.
@@ -186,7 +184,7 @@ static int run_awk (MyAwk& awk)
 
 		if (x >= 0)
 		{
-			qse_printf (QSE_T("%s"), awk.getOutput());
+			qse_printf (QSE_T("%s"), mch->getOutput());
 			qse_printf (QSE_T("-----------------------------\n"));
 		}
 	}
@@ -196,14 +194,20 @@ static int run_awk (MyAwk& awk)
 
 static int awk_main (int argc, qse_char_t* argv[])
 {
-	MyAwk awk;
+	
+	MyConsoleHandler mch;
+	StdAwk awk;
 
 	int ret = awk.open ();
-	if (ret >= 0) ret = run_awk (awk);
+	if (ret >= 0) 
+	{
+		awk.setConsoleHandler (&mch);
+		ret = run_awk (awk);
+	}
 
 	if (ret <= -1) 
 	{
-		MyAwk::loc_t loc = awk.getErrorLocation();
+		StdAwk::loc_t loc = awk.getErrorLocation();
 		print_error (loc, awk.getErrorMessage());
 	}
 

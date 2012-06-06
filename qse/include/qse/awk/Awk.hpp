@@ -319,6 +319,16 @@ public:
 			CLOSE_WRITE = QSE_AWK_RIO_CLOSE_WRITE
 		};
 
+		class Handler 
+		{
+		public:
+			virtual int     open  (Pipe& io) = 0;
+			virtual int     close (Pipe& io) = 0;
+			virtual ssize_t read  (Pipe& io, char_t* buf, size_t len) = 0;
+			virtual ssize_t write (Pipe& io, const char_t* buf, size_t len) = 0;
+			virtual int     flush (Pipe& io) = 0;
+		};
+
 	protected:
 		Pipe (Run* run, rio_arg_t* riod);
 
@@ -351,6 +361,16 @@ public:
 			APPEND = QSE_AWK_RIO_FILE_APPEND
 		};
 
+		class Handler 
+		{
+		public:
+			virtual int     open  (File& io) = 0;
+			virtual int     close (File& io) = 0;
+			virtual ssize_t read  (File& io, char_t* buf, size_t len) = 0;
+			virtual ssize_t write (File& io, const char_t* buf, size_t len) = 0;
+			virtual int     flush (File& io) = 0;
+		};
+
 	protected:
 		File (Run* run, rio_arg_t* riod);
 
@@ -373,6 +393,17 @@ public:
 			WRITE = QSE_AWK_RIO_CONSOLE_WRITE
 		};
 
+		class Handler 
+		{
+		public:
+			virtual int     open  (Console& io) = 0;
+			virtual int     close (Console& io) = 0;
+			virtual ssize_t read  (Console& io, char_t* buf, size_t len) = 0;
+			virtual ssize_t write (Console& io, const char_t* buf, size_t len) = 0;
+			virtual int     flush (Console& io) = 0;
+			virtual int     next  (Console& io) = 0;
+		};
+
 	protected:
 		Console (Run* run, rio_arg_t* riod);
 		~Console ();
@@ -385,6 +416,7 @@ public:
 	protected:
 		char_t* filename;
 	};
+
 
 	///
 	/// The Value class wraps around #qse_awk_val_t to provide a more 
@@ -1050,50 +1082,119 @@ public:
 	);
 	/// @}
 
+	Pipe::Handler* getPipeHandler ()
+	{
+		return this->pipe_handler;
+	}
+
+	const Pipe::Handler* getPipeHandler () const
+	{
+		return this->pipe_handler;
+	}
+
+	///
+	/// The setPipeHandler() function registers an external pipe
+	/// handler object. An external pipe handler can be implemented
+	/// outside this class without overriding various pipe functions.
+	/// Note that an external pipe handler must outlive an outer
+	/// awk object.
+	/// 
+	void setPipeHandler (Pipe::Handler* handler)
+	{
+		this->pipe_handler = handler;
+	}
+
+	File::Handler* getFileHandler ()
+	{
+		return this->file_handler;
+	}
+
+	const File::Handler* getFileHandler () const
+	{
+		return this->file_handler;
+	}
+
+	///
+	/// The setFileHandler() function registers an external file
+	/// handler object. An external file handler can be implemented
+	/// outside this class without overriding various file functions.
+	/// Note that an external file handler must outlive an outer
+	/// awk object.
+	/// 
+	void setFileHandler (File::Handler* handler)
+	{
+		this->file_handler = handler;
+	}
+
+	Console::Handler* getConsoleHandler ()
+	{
+		return this->console_handler;
+	}
+
+	const Console::Handler* getConsoleHandler () const
+	{
+		return this->console_handler;
+	}
+
+	///
+	/// The setConsoleHandler() function registers an external console
+	/// handler object. An external file handler can be implemented
+	/// outside this class without overriding various console functions.
+	/// Note that an external console handler must outlive an outer
+	/// awk object.
+	/// 
+	void setConsoleHandler (Console::Handler* handler)
+	{
+		this->console_handler = handler;
+	}
+
 protected:
 	/// 
 	/// @name Pipe I/O handlers
-	/// Pipe operations are achieved through the following functions.
+	/// Pipe operations are achieved through the following functions
+	/// if no external pipe handler is set with setPipeHandler().
 	/// @{
 
 	/// The openPipe() function is a pure virtual function that must be
 	/// overridden by a child class to open a pipe. It must return 1
 	/// on success, 0 on end of a pipe, and -1 on failure.
-	virtual int     openPipe  (Pipe& io) = 0;
+	virtual int     openPipe  (Pipe& io);
 
 	/// The closePipe() function is a pure virtual function that must be
 	/// overridden by a child class to close a pipe. It must return 0
 	/// on success and -1 on failure.
-	virtual int     closePipe (Pipe& io) = 0;
+	virtual int     closePipe (Pipe& io);
 
-	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len) = 0;
-	virtual int     flushPipe (Pipe& io) = 0;
+	virtual ssize_t readPipe  (Pipe& io, char_t* buf, size_t len);
+	virtual ssize_t writePipe (Pipe& io, const char_t* buf, size_t len);
+	virtual int     flushPipe (Pipe& io);
 	/// @}
 
 	/// 
 	/// @name File I/O handlers
-	/// File operations are achieved through the following functions.
+	/// File operations are achieved through the following functions
+	/// if no external file handler is set with setFileHandler().
 	/// @{
 	///
-	virtual int     openFile  (File& io) = 0;
-	virtual int     closeFile (File& io) = 0;
-	virtual ssize_t readFile  (File& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len) = 0;
-	virtual int     flushFile (File& io) = 0;
+	virtual int     openFile  (File& io);
+	virtual int     closeFile (File& io);
+	virtual ssize_t readFile  (File& io, char_t* buf, size_t len);
+	virtual ssize_t writeFile (File& io, const char_t* buf, size_t len);
+	virtual int     flushFile (File& io);
 	/// @}
 
 	/// 
 	/// @name Console I/O handlers
 	/// Console operations are achieved through the following functions.
+	/// if no external console handler is set with setConsoleHandler().
 	/// @{
 	///
-	virtual int     openConsole  (Console& io) = 0;
-	virtual int     closeConsole (Console& io) = 0;
-	virtual ssize_t readConsole  (Console& io, char_t* buf, size_t len) = 0;
-	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len) = 0;
-	virtual int     flushConsole (Console& io) = 0;
-	virtual int     nextConsole  (Console& io) = 0;
+	virtual int     openConsole  (Console& io);
+	virtual int     closeConsole (Console& io);
+	virtual ssize_t readConsole  (Console& io, char_t* buf, size_t len);
+	virtual ssize_t writeConsole (Console& io, const char_t* buf, size_t len);
+	virtual int     flushConsole (Console& io);
+	virtual int     nextConsole  (Console& io);
 	/// @}
 
 	// primitive handlers 
@@ -1132,8 +1233,9 @@ protected:
 
 	static int functionHandler (rtx_t* rtx, const cstr_t* name);
 
-	static int    sprintf (awk_t* data, char_t* buf, size_t size,
-	                       const char_t* fmt, ...);
+
+	static int   sprintf (awk_t* data, char_t* buf, size_t size,
+	                      const char_t* fmt, ...);
 	static flt_t pow     (awk_t* data, flt_t x, flt_t y);
 	static flt_t mod     (awk_t* data, flt_t x, flt_t y);
 	static flt_t sin     (awk_t* data, flt_t x);
@@ -1154,8 +1256,12 @@ protected:
 
 	htb_t* functionMap;
 
-	Source* sourceReader;
-	Source* sourceWriter;
+	Source* source_reader;
+	Source* source_writer;
+
+	Pipe::Handler* pipe_handler;
+	File::Handler* file_handler;
+	Console::Handler* console_handler;
 
 	struct xstrs_t
 	{

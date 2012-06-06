@@ -38,7 +38,7 @@ bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
 	awk04$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) awk11$(EXEEXT) \
 	$(am__EXEEXT_1)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
-@ENABLE_CXX_TRUE@am__append_2 = awk05 awk06 awk07 awk08 awk12 awk13
+@ENABLE_CXX_TRUE@am__append_2 = awk05 awk06 awk07 awk08 awk12 awk13 awk14
 subdir = samples/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,7 +55,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @ENABLE_CXX_TRUE@am__EXEEXT_1 = awk05$(EXEEXT) awk06$(EXEEXT) \
 @ENABLE_CXX_TRUE@	awk07$(EXEEXT) awk08$(EXEEXT) awk12$(EXEEXT) \
-@ENABLE_CXX_TRUE@	awk13$(EXEEXT)
+@ENABLE_CXX_TRUE@	awk13$(EXEEXT) awk14$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_awk01_OBJECTS = awk01.$(OBJEXT)
@@ -119,6 +119,11 @@ am__awk13_SOURCES_DIST = awk13.cpp
 awk13_OBJECTS = $(am_awk13_OBJECTS)
 @ENABLE_CXX_TRUE@awk13_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
+am__awk14_SOURCES_DIST = awk14.cpp
+@ENABLE_CXX_TRUE@am_awk14_OBJECTS = awk14.$(OBJEXT)
+awk14_OBJECTS = $(am_awk14_OBJECTS)
+@ENABLE_CXX_TRUE@awk14_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_3)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -145,13 +150,13 @@ SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
 	$(awk04_SOURCES) $(awk05_SOURCES) $(awk06_SOURCES) \
 	$(awk07_SOURCES) $(awk08_SOURCES) $(awk09_SOURCES) \
 	$(awk10_SOURCES) $(awk11_SOURCES) $(awk12_SOURCES) \
-	$(awk13_SOURCES)
+	$(awk13_SOURCES) $(awk14_SOURCES)
 DIST_SOURCES = $(awk01_SOURCES) $(awk02_SOURCES) $(awk03_SOURCES) \
 	$(awk04_SOURCES) $(am__awk05_SOURCES_DIST) \
 	$(am__awk06_SOURCES_DIST) $(am__awk07_SOURCES_DIST) \
 	$(am__awk08_SOURCES_DIST) $(awk09_SOURCES) $(awk10_SOURCES) \
 	$(awk11_SOURCES) $(am__awk12_SOURCES_DIST) \
-	$(am__awk13_SOURCES_DIST)
+	$(am__awk13_SOURCES_DIST) $(am__awk14_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -322,12 +327,14 @@ awk11_SOURCES = awk11.c
 @ENABLE_CXX_TRUE@awk08_SOURCES = awk08.cpp
 @ENABLE_CXX_TRUE@awk12_SOURCES = awk12.cpp
 @ENABLE_CXX_TRUE@awk13_SOURCES = awk13.cpp
+@ENABLE_CXX_TRUE@awk14_SOURCES = awk14.cpp
 @ENABLE_CXX_TRUE@awk05_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk06_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk07_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk08_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk12_LDADD = $(CXXLIB) $(LDADD)
 @ENABLE_CXX_TRUE@awk13_LDADD = $(CXXLIB) $(LDADD)
+@ENABLE_CXX_TRUE@awk14_LDADD = $(CXXLIB) $(LDADD)
 all: all-am
 
 .SUFFIXES:
@@ -444,6 +451,9 @@ awk12$(EXEEXT): $(awk12_OBJECTS) $(awk12_DEPENDENCIES) $(EXTRA_awk12_DEPENDENCIE
 awk13$(EXEEXT): $(awk13_OBJECTS) $(awk13_DEPENDENCIES) $(EXTRA_awk13_DEPENDENCIES) 
 	@rm -f awk13$(EXEEXT)
 	$(CXXLINK) $(awk13_OBJECTS) $(awk13_LDADD) $(LIBS)
+awk14$(EXEEXT): $(awk14_OBJECTS) $(awk14_DEPENDENCIES) $(EXTRA_awk14_DEPENDENCIES) 
+	@rm -f awk14$(EXEEXT)
+	$(CXXLINK) $(awk14_OBJECTS) $(awk14_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -464,6 +474,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk11.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk12.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk13.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk14.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
