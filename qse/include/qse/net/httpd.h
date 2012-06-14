@@ -1,5 +1,5 @@
 /*
- * $Id: htrd.h 223 2008-06-26 06:44:41Z baconevi $
+ * $Id$
  *
     Copyright 2006-2011 Chung, Hyung-Hwan.
     This file is part of QSE.
