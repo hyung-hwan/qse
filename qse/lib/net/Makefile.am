@@ -15,7 +15,8 @@ libqsenet_la_SOURCES = \
 	httpd-cgi.c \
 	httpd-proxy.c \
 	httpd-resol.c \
-	httpd-task.c
+	httpd-task.c \
+	upxd.c
 
 libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
 libqsenet_la_LIBADD = -lqsecmn
