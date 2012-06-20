@@ -1753,7 +1753,7 @@ static qse_lda_walk_t walk_cands_for_match (
 			{
 				int equal;
 
-				equal =(e->rex->option & QSE_REX_IGNORECASE)?
+				equal = (e->rex->option & QSE_REX_IGNORECASE)?
 					(QSE_TOUPPER(node->u.c) == QSE_TOUPPER(*cand->mptr)):
 					(node->u.c == *cand->mptr) ;
 

@@ -10,7 +10,8 @@
 #include <signal.h>
 #include <locale.h>
 #include <string.h>
-#if	defined(_WIN32)
+
+#if defined(_WIN32)
 #	include <windows.h>
 #else
 #	include <unistd.h>
@@ -71,7 +72,7 @@ static qse_ssize_t xsendfile (
 	vec.sfv_flag = 0;
 	if (offset)
 	{
-		vec.sfv_off = *offset; 
+		vec.sfv_off = *offset;
 	}
 	else
 	{
@@ -154,7 +155,7 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 
 		case EEXIST:
 			return QSE_HTTPD_EEXIST;
-	
+
 		case EINTR:
 			return QSE_HTTPD_EINTR;
 
@@ -177,8 +178,8 @@ struct httpd_xtn_t
 /* ------------------------------------------------------------------- */
 
 static int init_xtn_ssl (
-	httpd_xtn_t* xtn, 
-	const qse_mchar_t* pemfile, 
+	httpd_xtn_t* xtn,
+	const qse_mchar_t* pemfile,
 	const qse_mchar_t* keyfile/*,
 	const qse_mchar_t* chainfile*/)
 {
@@ -195,7 +196,7 @@ static int init_xtn_ssl (
 
 	if (SSL_CTX_use_certificate_file (ctx, pemfile, SSL_FILETYPE_PEM) == 0 ||
 	    SSL_CTX_use_PrivateKey_file (ctx, keyfile, SSL_FILETYPE_PEM) == 0 ||
-	    SSL_CTX_check_private_key (ctx) == 0 /*|| 
+	    SSL_CTX_check_private_key (ctx) == 0 /*||
 	    SSL_CTX_use_certificate_chain_file (ctx, chainfile) == 0*/)
 	{
 		qse_mchar_t buf[128];
@@ -240,7 +241,7 @@ static int sockaddr_to_nwad (
 	{
 		case AF_INET:
 		{
-			struct sockaddr_in* in; 
+			struct sockaddr_in* in;
 			in = (struct sockaddr_in*)addr;
 			addrsize = QSE_SIZEOF(*in);
 
@@ -254,7 +255,7 @@ static int sockaddr_to_nwad (
 #if defined(AF_INET6)
 		case AF_INET6:
 		{
-			struct sockaddr_in6* in; 
+			struct sockaddr_in6* in;
 			in = (struct sockaddr_in6*)addr;
 			addrsize = QSE_SIZEOF(*in);
 
@@ -280,7 +281,7 @@ static int nwad_to_sockaddr (
 	{
 		case QSE_NWAD_IN4:
 		{
-			struct sockaddr_in* in; 
+			struct sockaddr_in* in;
 
 			in = (struct sockaddr_in*)addr;
 			addrsize = QSE_SIZEOF(*in);
@@ -295,7 +296,7 @@ static int nwad_to_sockaddr (
 		case QSE_NWAD_IN6:
 		{
 #if defined(AF_INET6)
-			struct sockaddr_in6* in; 
+			struct sockaddr_in6* in;
 
 			in = (struct sockaddr_in6*)addr;
 			addrsize = QSE_SIZEOF(*in);
@@ -345,10 +346,10 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 #endif
 
-	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the 
+	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the
 	 * address size for AF_INET. */
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
-	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1) 
+	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
 #if defined(IPV6_V6ONLY)
 		if (errno == EADDRINUSE && addr.ss_family == AF_INET6)
@@ -382,7 +383,7 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 }
 
 static int server_accept (
-	qse_httpd_t* httpd, 
+	qse_httpd_t* httpd,
 	qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
 	struct sockaddr_storage addr;
@@ -396,7 +397,7 @@ static int server_accept (
 
 	addrlen = QSE_SIZEOF(addr);
 	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
-	if (fd <= -1) 
+	if (fd <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum (errno));
 		return -1;
@@ -472,7 +473,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
 
-	if (connect (fd, (struct sockaddr*)&addr, addrsize) <= -1) 
+	if (connect (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
 		if (errno != EINPROGRESS) goto oops;
 		connected = 0;
@@ -508,7 +509,7 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) return -1;
 
 	if (ret == EINPROGRESS) return 0;
-	if (ret != 0) 
+	if (ret != 0)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
 		return -1;
@@ -552,7 +553,7 @@ struct mux_t
 	struct
 	{
 		struct epoll_event* ptr;
-		qse_size_t len;	
+		qse_size_t len;
 		qse_size_t capa;
 	} ee;
 
@@ -579,7 +580,7 @@ static void* mux_open (qse_httpd_t* httpd)
 #else
 	mux->fd = epoll_create (100);
 #endif
-	if (mux->fd <= -1) 
+	if (mux->fd <= -1)
 	{
 		qse_httpd_freemem (httpd, mux);
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -602,7 +603,7 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
 	if (mux->ee.ptr) qse_httpd_freemem (httpd, mux->ee.ptr);
-	if (mux->mev.ptr) 
+	if (mux->mev.ptr)
 	{
 		qse_size_t i;
 		for (i = 0; i < mux->mev.capa; i++)
@@ -614,7 +615,7 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 }
 
 static int mux_addhnd (
-	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle, 
+	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle,
 	int mask, qse_httpd_muxcb_t cbfun, void* cbarg)
 {
 	struct mux_t* mux = (struct mux_t*)vmux;
@@ -635,12 +636,12 @@ static int mux_addhnd (
 	{
 		struct mux_ev_t** tmp;
 		qse_size_t tmpcapa, i;
-	
+
 		tmpcapa = (((handle.i + MUX_EV_ALIGN) / MUX_EV_ALIGN) * MUX_EV_ALIGN);
 
 		tmp = (struct mux_ev_t**) qse_httpd_reallocmem (
-			httpd, mux->mev.ptr, 
-			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa); 
+			httpd, mux->mev.ptr,
+			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa);
 		if (tmp == QSE_NULL) return -1;
 
 		for (i = mux->mev.capa; i < tmpcapa; i++) tmp[i] = QSE_NULL;
@@ -648,7 +649,7 @@ static int mux_addhnd (
 		mux->mev.capa = tmpcapa;
 	}
 
-	if (mux->mev.ptr[handle.i] == QSE_NULL) 
+	if (mux->mev.ptr[handle.i] == QSE_NULL)
 	{
 		/* the location of the data passed to epoll_ctl()
 		 * must not change unless i update the info with epoll()
@@ -658,14 +659,14 @@ static int mux_addhnd (
 		mux->mev.ptr[handle.i] = qse_httpd_allocmem (
 			httpd, QSE_SIZEOF(*mux->mev.ptr[handle.i]));
 		if (mux->mev.ptr[handle.i] == QSE_NULL) return -1;
-	}	
+	}
 
 	if (mux->ee.len >= mux->ee.capa)
 	{
 		struct epoll_event* tmp;
 
 		tmp = qse_httpd_reallocmem (
-			httpd, mux->ee.ptr, 
+			httpd, mux->ee.ptr,
 			QSE_SIZEOF(*mux->ee.ptr) * (mux->ee.capa + 1) * 2);
 		if (tmp == QSE_NULL) return -1;
 
@@ -725,14 +726,14 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 
 		mask = 0;
 
-		if (mux->ee.ptr[i].events & EPOLLIN) 
+		if (mux->ee.ptr[i].events & EPOLLIN)
 			mask |= QSE_HTTPD_MUX_READ;
 		if (mux->ee.ptr[i].events & EPOLLOUT)
 			mask |= QSE_HTTPD_MUX_WRITE;
 
-		if (mux->ee.ptr[i].events & EPOLLHUP) 
+		if (mux->ee.ptr[i].events & EPOLLHUP)
 		{
-			if (mev->reqmask & QSE_HTTPD_MUX_READ) 
+			if (mev->reqmask & QSE_HTTPD_MUX_READ)
 				mask |= QSE_HTTPD_MUX_READ;
 			if (mev->reqmask & QSE_HTTPD_MUX_WRITE)
 				mask |= QSE_HTTPD_MUX_WRITE;
@@ -759,7 +760,7 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 	FD_ZERO (&r);
 	FD_SET (handle.i, &r);
 
-	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp); 
+	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp);
 }
 
 static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
@@ -800,9 +801,9 @@ static int file_stat (
      {
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
-     }    
+     }
 
-	/* stating for a file. it should be a regular file. 
+	/* stating for a file. it should be a regular file.
 	 * i don't allow other file types. */
 	if (!S_ISREG(st.st_mode))
 	{
@@ -842,7 +843,7 @@ static int file_ropen (
 
 qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 	fd = open (path, flags, 0);
-	if (fd <= -1) 
+	if (fd <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
@@ -857,7 +858,7 @@ qse_printf (QSE_T("opened file %hs\n"), path);
 }
 
 static int file_wopen (
-	qse_httpd_t* httpd, const qse_mchar_t* path, 
+	qse_httpd_t* httpd, const qse_mchar_t* path,
 	qse_ubi_t* handle)
 {
 	int fd;
@@ -870,7 +871,7 @@ static int file_wopen (
 
 qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 	fd = open (path, flags, 0644);
-	if (fd <= -1) 
+	if (fd <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
@@ -887,14 +888,14 @@ qse_printf (QSE_T("closing file %d\n"), handle.i);
 }
 
 static qse_ssize_t file_read (
-	qse_httpd_t* httpd, qse_ubi_t handle, 
+	qse_httpd_t* httpd, qse_ubi_t handle,
 	qse_mchar_t* buf, qse_size_t len)
 {
 	return read (handle.i, buf, len);
 }
 
 static qse_ssize_t file_write (
-	qse_httpd_t* httpd, qse_ubi_t handle, 
+	qse_httpd_t* httpd, qse_ubi_t handle,
 	const qse_mchar_t* buf, qse_size_t len)
 {
 	return write (handle.i, buf, len);
@@ -916,7 +917,7 @@ static void client_shutdown (
 	shutdown (client->handle.i, 2);
 #endif
 }
-	
+
 static qse_ssize_t client_recv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_mchar_t* buf, qse_size_t bufsize)
@@ -926,7 +927,7 @@ static qse_ssize_t client_recv (
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
-			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_READ) 
+			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_READ)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -950,7 +951,7 @@ static qse_ssize_t client_send (
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
-			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_WRITE) 
+			if (SSL_get_error(client->handle2.ptr,ret) == SSL_ERROR_WANT_WRITE)
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_EAGAIN);
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
@@ -1003,7 +1004,7 @@ qse_printf (QSE_T("SSL ACCEPTING %d\n"), client->handle.i);
 qse_fflush (QSE_STDOUT);
 			if (SSL_set_fd (ssl, client->handle.i) == 0)
 			{
-				/* don't free ssl here since client_closed() 
+				/* don't free ssl here since client_closed()
 				 * will be closed */
 				return -1;
 			}
@@ -1012,7 +1013,7 @@ qse_fflush (QSE_STDOUT);
 		ret = SSL_accept (ssl);
 		if (ret <= 0)
 		{
-			if (SSL_get_error(ssl,ret) == SSL_ERROR_WANT_READ) 
+			if (SSL_get_error(ssl,ret) == SSL_ERROR_WANT_READ)
 			{
 				/* handshaking isn't complete. */
 				return 0;
@@ -1054,7 +1055,7 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 }
 
 static int process_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_htre_t* req, int peek)
 {
 	int method;
@@ -1065,12 +1066,12 @@ static int process_request (
 	content_received = (qse_htre_getcontentlen(req) > 0);
 
 	/* percent-decode the query path to the original buffer
-	 * since i'm not gonna need it in the original form 
+	 * since i'm not gonna need it in the original form
 	 * any more */
 	qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
 
 qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"), 
+qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"),
 	(unsigned long)time(NULL),
 	(peek? QSE_MT("PEEK"): QSE_MT("HANDLE")),
 	qse_htre_getqpath(req),
@@ -1079,11 +1080,11 @@ qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"
 	qse_htre_getverstr(req),
 	qse_htre_getqmethodname(req)
 );
-if (qse_htre_getqparam(req)) 
+if (qse_htre_getqparam(req))
 	qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparam(req));
 
 qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
-if (qse_htre_getcontentlen(req) > 0) 
+if (qse_htre_getcontentlen(req) > 0)
 {
 	qse_printf (QSE_T("CONTENT before discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
@@ -1091,21 +1092,21 @@ if (qse_htre_getcontentlen(req) > 0)
 	if (peek)
 	{
 		if (method != QSE_HTTP_POST && method != QSE_HTTP_PUT)
-		{	
-			/* i'll discard request contents if the method is none of 
+		{
+			/* i'll discard request contents if the method is none of
 			 * post and put */
 			qse_httpd_discardcontent (httpd, req);
 		}
 
 		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
-		    (req->version.major > 1 || 
-		     (req->version.major == 1 && req->version.minor >= 1)) && 
+		    (req->version.major > 1 ||
+		     (req->version.major == 1 && req->version.minor >= 1)) &&
 		    !content_received)
 		{
 /* TODO: check method.... */
-			/* "expect" in the header, version 1.1 or higher, 
+			/* "expect" in the header, version 1.1 or higher,
 			 * and no content received yet */
-	
+
 				/* TODO: determine if to return 100-continue or other errors */
 {
 qse_ntime_t now;
@@ -1117,7 +1118,7 @@ qse_printf (QSE_T("entasking continue at %lld\n"), (long long)now);
 		}
 	}
 
-if (qse_htre_getcontentlen(req) > 0) 
+if (qse_htre_getcontentlen(req) > 0)
 {
 	qse_printf (QSE_T("CONTENT after discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
@@ -1144,11 +1145,11 @@ qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
 					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 				#endif
 				}
-				else 
+				else
 #endif
 
 				/*if (method == QSE_HTTP_POST && !(req->attr.flags & QSE_HTRE_ATTR_LENGTH))*/
-				if (method == QSE_HTTP_POST && 
+				if (method == QSE_HTTP_POST &&
 				    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
 				    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
 				{
@@ -1191,7 +1192,7 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 				auth = qse_htre_getheaderval (req, QSE_MT("Authorization"));
 				if (auth)
 				{
-					/* TODO: PERFORM authorization... */	
+					/* TODO: PERFORM authorization... */
 					/* BASE64 decode... */
 					while (auth->next) auth = auth->next;
 					authorized = 1;
@@ -1276,7 +1277,7 @@ qse_printf (QSE_T("Host not included....\n"));
 			goto oops;
 		}
 	}
-	else 
+	else
 	{
 		const qse_mchar_t* host;
 		qse_parseuri ();
@@ -1287,15 +1288,15 @@ qse_printf (QSE_T("Host not included....\n"));
 #if 0
 	if (peek)
 	{
-		if (req->attr.expect && 
-		    (req->version.major > 1 || 
-		     (req->version.major == 1 && req->version.minor >= 1)) && 
+		if (req->attr.expect &&
+		    (req->version.major > 1 ||
+		     (req->version.major == 1 && req->version.minor >= 1)) &&
 		    !content_received)
 		{
 /* TODO: check method.... */
-			/* "expect" in the header, version 1.1 or higher, 
+			/* "expect" in the header, version 1.1 or higher,
 			 * and no content received yet */
-	
+
 			if (qse_mbscasecmp(req->attr.expect, QSE_MT("100-continue")) != 0)
 			{
 				if (qse_httpd_entaskerror (
@@ -1385,7 +1386,7 @@ static qse_httpd_cbs_t httpd_cbs =
 	/* server */
 	{ server_open, server_close, server_accept },
 
-	{ peer_open, 
+	{ peer_open,
 	  peer_close,
 	  peer_connected,
 	  peer_recv,
@@ -1397,9 +1398,9 @@ static qse_httpd_cbs_t httpd_cbs =
 	  mux_addhnd,
 	  mux_delhnd,
 	  mux_poll,
-	
+
 	  mux_readable,
-	  mux_writable 
+	  mux_writable
 	},
 
 	/* file operation */
@@ -1414,11 +1415,11 @@ static qse_httpd_cbs_t httpd_cbs =
 
 	/* client connection */
 	{ client_close,
-	  client_shutdown, 
-	  client_recv, 
-	  client_send, 
+	  client_shutdown,
+	  client_recv,
+	  client_send,
 	  client_sendfile,
-	  client_accepted, 
+	  client_accepted,
 	  client_closed },
 
 	/* http request */
@@ -1468,7 +1469,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	{
 		if (qse_httpd_addserver (httpd, argv[i]) <= -1)
 		{
-			qse_fprintf (QSE_STDERR, 	
+			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
 			goto oops;
 		}
@@ -1497,7 +1498,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 {
 #if defined(_WIN32)
 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();	
+	UINT codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/

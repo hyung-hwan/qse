@@ -298,7 +298,7 @@ qse_wchar_t* qse_mbsatowcsalldup (
  *   n = qse_wcstombs (wcs, &wcslen, mbs, &mbslen);
  *   if (n <= -1)
  *   {
- *       // wcs fully scanned and mbs null-terminated
+ *      // conversion error
  *   }
  * @endcode
  */

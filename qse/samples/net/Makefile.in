@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = http01$(EXEEXT)
+bin_PROGRAMS = http01$(EXEEXT) upxd01$(EXEEXT)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/net
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -59,6 +59,11 @@ am__DEPENDENCIES_1 =
 @WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 http01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+am_upxd01_OBJECTS = upxd01.$(OBJEXT)
+upxd01_OBJECTS = $(am_upxd01_OBJECTS)
+upxd01_LDADD = $(LDADD)
+upxd01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -72,8 +77,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(http01_SOURCES)
-DIST_SOURCES = $(http01_SOURCES)
+SOURCES = $(http01_SOURCES) $(upxd01_SOURCES)
+DIST_SOURCES = $(http01_SOURCES) $(upxd01_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -232,6 +237,7 @@ AM_CPPFLAGS = \
 LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) \
 	$(SENDFILE_LIBS) -lssl $(am__append_1)
 http01_SOURCES = http01.c
+upxd01_SOURCES = upxd01.c
 all: all-am
 
 .SUFFIXES:
@@ -312,6 +318,9 @@ clean-binPROGRAMS:
 http01$(EXEEXT): $(http01_OBJECTS) $(http01_DEPENDENCIES) $(EXTRA_http01_DEPENDENCIES) 
 	@rm -f http01$(EXEEXT)
 	$(LINK) $(http01_OBJECTS) $(http01_LDADD) $(LIBS)
+upxd01$(EXEEXT): $(upxd01_OBJECTS) $(upxd01_DEPENDENCIES) $(EXTRA_upxd01_DEPENDENCIES) 
+	@rm -f upxd01$(EXEEXT)
+	$(LINK) $(upxd01_OBJECTS) $(upxd01_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -320,6 +329,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/upxd01.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
