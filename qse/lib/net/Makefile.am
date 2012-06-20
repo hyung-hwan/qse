@@ -7,10 +7,11 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = libqsenet.la
 libqsenet_la_SOURCES = \
+	httpd.h \
+	upxd.h \
 	http.c \
 	htre.c \
 	htrd.c \
-	httpd.h \
 	httpd.c \
 	httpd-cgi.c \
 	httpd-proxy.c \
