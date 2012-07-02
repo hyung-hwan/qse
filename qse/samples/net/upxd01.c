@@ -5,10 +5,12 @@
 #include <qse/cmn/mem.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/sio.h>
 
 #include <signal.h>
 #include <locale.h>
 #include <string.h>
+#include <stdlib.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -466,31 +468,30 @@ static int mux_poll (qse_upxd_t* upxd, void* vmux, qse_ntime_t timeout)
 	struct mux_ev_t* mev;
 	int nfds, i;
 
-	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
-	if (nfds <= -1)
+	if (mux->ee.len < 0)
 	{
-		qse_upxd_seterrnum (upxd, syserr_to_errnum(errno));
-		return -1;
+		/* nothing to monitor yet */
+		sleep (timeout / 1000);
 	}
-
-	for (i = 0; i < nfds; i++)
+	else
 	{
-		mev = mux->ee.ptr[i].data.ptr;
+		nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
+		if (nfds <= -1)
+		{
+			qse_upxd_seterrnum (upxd, syserr_to_errnum(errno));
+			return -1;
+		}
 
-		if (mux->ee.ptr[i].events & (EPOLLIN | EPOLLHUP))
-			mev->cbfun (upxd, mux, mev->handle, mev->cbarg);
+		for (i = 0; i < nfds; i++)
+		{
+			mev = mux->ee.ptr[i].data.ptr;
+
+			if (mux->ee.ptr[i].events & (EPOLLIN | EPOLLHUP))
+				mev->cbfun (upxd, mux, mev->handle, mev->cbarg);
+		}
 	}
+	
 	return 0;
-}
-
-/* ------------------------------------------------------------------- */
-
-void lock_acquire (qse_upxd_t* upxd)
-{
-}
-
-void lock_release (qse_upxd_t* upxd)
-{
 }
 
 /* ------------------------------------------------------------------- */
@@ -503,11 +504,178 @@ static qse_upxd_cbs_t upxd_cbs =
 	{ session_config, session_error },
 
 	/* multiplexer */
-	{ mux_open, mux_close, mux_addhnd, mux_delhnd, mux_poll },
-
-	/* lock */
-	{ lock_acquire, lock_release }
+	{ mux_open, mux_close, mux_addhnd, mux_delhnd, mux_poll }
 };
+
+
+/* ------------------------------------------------------------------- */
+typedef struct tr_t tr_t;
+struct tr_t
+{
+	qse_sio_t* sio;
+	qse_str_t* t;
+};
+
+tr_t* tr_open (const qse_char_t* name)
+{
+	tr_t* tr;
+
+	tr = malloc (QSE_SIZEOF(*tr));
+	if (tr == QSE_NULL) return QSE_NULL;
+
+	tr->sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, name, QSE_SIO_READ);
+	if (tr->sio == QSE_NULL) 
+	{
+		free (tr);
+		return QSE_NULL;
+	}
+
+	tr->t = qse_str_open (QSE_MMGR_GETDFL(), 0, 128);
+	if (tr->t == QSE_NULL)
+	{
+		qse_sio_close (tr->sio);
+		free (tr);
+		return QSE_NULL;
+	}
+
+	return tr;
+}
+
+void tr_close (tr_t* tr)
+{
+	qse_str_close (tr->t);
+	qse_sio_close (tr->sio);
+	free (tr);	
+}
+
+qse_char_t* tr_getnext (tr_t* tr)
+{
+	qse_char_t c;
+
+	qse_str_clear (tr->t);
+
+	while (1)
+	{
+		if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
+		if (c == QSE_CHAR_EOF) return QSE_NULL;
+		if (!QSE_ISSPACE(c)) 
+		{
+			if (qse_str_ccat (tr->t, c) == (qse_ssize_t)-1) return QSE_NULL;
+			break;
+		}
+	}
+
+	while (1)
+	{
+		if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
+		if (c == QSE_CHAR_EOF || QSE_ISSPACE(c)) break;
+
+		if (qse_str_ccat (tr->t, c) == (qse_ssize_t)-1) return QSE_NULL;
+	}
+
+	return QSE_STR_PTR(tr->t);
+}
+
+/* ------------------------------------------------------------------- */
+
+#if 0
+struct svc_rule_t
+{
+	struct
+	{
+		qse_ipad_t ipad;
+		qse_ipad_t mask;
+	} src;
+
+	int action; /* DROP, FORWARD */
+
+	struct
+	{
+		qse_nwad_t via;
+		qse_char_t via_dev[64];
+		qse_nwad_t to_nwad;
+	} fwd;
+};
+
+struct svc_t
+{
+	qse_nwad_t nwad;
+	qse_char_t* dev;
+};
+#endif
+
+typedef struct cfg_t cfg_t;
+struct cfg_t
+{
+	qse_nwad_t nwad;
+};
+
+static cfg_t* load_cfg (const qse_char_t* name)
+{
+	tr_t* tr;
+
+	tr = tr_open (name);
+	if (tr == QSE_NULL) return QSE_NULL;
+
+	do
+	{
+		t = tr_getnext(tr);
+		if (qse_strcmp (t, QSE_T("listen")) == 0)
+		{
+			nwad = tr_getnext (tr);	
+			dev = tr_getnext (tr);
+
+			tmp = tr_getnext (tr);
+			if (qse_strcmp (tmp, QSE_T("{")) != 0)
+			{
+			}
+
+			while (1)
+			{
+				from = tr_getnext (tr);
+				if (qse_strcmp (tmp, QSE_T("from")) != 0)
+				{
+				}
+
+				src.nwad = tr_getnext (tr);
+				action = tr_getnext(tr);
+
+
+				if (qse_strcmp (action, QSE_T("drop")) == 0)
+				{
+				}
+				else if (qse_strcmp (action, QSE_T("forward")) == 0)
+				{
+				}
+				else
+				{
+				}
+
+				tmp = tr_getnext (tr);
+				if (qse_strcmp (tmp, QSE_T(";")) != 0)
+				{
+				}
+			}
+
+			tmp = tr_getnext (tr);
+			if (qse_strcmp (tmp, QSE_T("}")) != 0)
+			{
+			}
+		}
+		else break;
+	}
+	while (1);
+
+	tr_close (tr);
+}
+
+static void free_cfg (cfg_t* cfg)
+{
+}
+
+
+/* ------------------------------------------- */
+
 
 static qse_upxd_t* g_upxd = QSE_NULL;
 
@@ -519,11 +687,19 @@ static void sigint (int sig)
 int upxd_main (int argc, qse_char_t* argv[])
 {
 	qse_upxd_t* upxd = QSE_NULL;
+	cfg_t* cfg = QSE_NULL;
 	int ret = -1, i;
 
 	if (argc <= 1)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s <server-address> ...\n"), argv[0]);
+		goto oops;
+	}
+
+	cfg = load_cfg (argv[1]);
+	if (cfg == QSE_NULL)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Error: Cannot load %s\n"), argv[1]);
 		goto oops;
 	}
 
@@ -569,6 +745,7 @@ int upxd_main (int argc, qse_char_t* argv[])
 
 oops:
 	if (upxd) qse_upxd_close (upxd);
+	if (cfg) free_cfg (cfg);
 	return ret;
 }
 

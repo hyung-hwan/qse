@@ -126,13 +126,8 @@ struct qse_upxd_cbs_t
 		int (*delhnd) (qse_upxd_t* upxd, void* mux, qse_ubi_t handle);
 		int (*poll) (qse_upxd_t* upxd, void* mux, qse_ntime_t timeout);
 	} mux;
-
-	struct
-	{
-		void (*acquire) (qse_upxd_t* upxd);
-		void (*release) (qse_upxd_t* upxd);
-	} lock;
 };
+
 typedef struct qse_upxd_cbs_t qse_upxd_cbs_t;
 
 #ifdef __cplusplus
@@ -190,6 +185,11 @@ qse_upxd_server_t* qse_upxd_addserver (
 	const qse_char_t* dev
 );
 
+void qse_upxd_delserver (
+	qse_upxd_t*        upxd,
+	qse_upxd_server_t* server
+);
+	
 void* qse_upxd_getserverctx (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server
@@ -208,6 +208,21 @@ void qse_upxd_stop (
 int qse_upxd_loop (
 	qse_upxd_t* upxd,
 	qse_ntime_t timeout
+);
+
+int qse_upxd_enableserver (
+	qse_upxd_t*        upxd,
+	qse_upxd_server_t* server
+);
+
+int qse_upxd_disableserver (
+	qse_upxd_t*        upxd,
+	qse_upxd_server_t* server
+);
+
+int qse_upxd_poll (
+	qse_upxd_t*  upxd,
+	qse_ntime_t  timeout
 );
 
 #ifdef __cplusplus

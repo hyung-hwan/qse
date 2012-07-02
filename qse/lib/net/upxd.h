@@ -29,9 +29,9 @@ typedef struct qse_upxd_server_session_t qse_upxd_server_session_t;
 struct qse_upxd_server_t
 {
 	qse_upxd_server_t* next;
+	qse_upxd_server_t* prev;
 
-#define QSE_UPXD_SERVER_ACTIVE (1 << 0)
-#define QSE_UPXD_SERVER_DELETED (1 << 1)
+#define QSE_UPXD_SERVER_ENABLED (1 << 0)
 	int flags;
 	
 	/* the socket can be bound to this interface.

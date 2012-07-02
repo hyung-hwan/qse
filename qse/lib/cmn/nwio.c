@@ -437,14 +437,18 @@ int qse_nwio_init (
 	return -1;
 
 #else
+	#if defined(SOCK_CLOEXEC)
+	nwio->handle = socket (family, type | SOCK_CLOEXEC, 0);
+	#else
 	nwio->handle = socket (family, type, 0);
+	#endif
 	if (nwio->handle <= -1)
 	{
 		nwio->errnum = syserr_to_errnum (errno);
 		goto oops;
 	}
 
-	#if defined(FD_CLOEXEC)
+	#if !defined(SOCK_CLOEXEC) && defined(FD_CLOEXEC)
 	{ 
 		int tmp = fcntl (nwio->handle, F_GETFD);
 		if (tmp >= 0) fcntl (nwio->handle, F_SETFD, tmp | FD_CLOEXEC);

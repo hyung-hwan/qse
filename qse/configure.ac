@@ -85,6 +85,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
+AC_CHECK_HEADERS([net/if.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -106,6 +107,7 @@ AC_CHECK_FUNCS([sysconf])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
 AC_CHECK_FUNCS([fork vfork posix_spawn])
+AC_CHECK_FUNCS([if_nametoindex if_indextoname])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
