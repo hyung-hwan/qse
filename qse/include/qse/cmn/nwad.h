@@ -25,15 +25,18 @@
 #include <qse/macros.h>
 #include <qse/cmn/ipad.h>
 
+enum qse_nwad_type_t
+{
+	QSE_NWAD_IN4,
+	QSE_NWAD_IN6
+};
+typedef enum qse_nwad_type_t qse_nwad_type_t;
+
 typedef struct qse_nwad_t qse_nwad_t;
 
 struct qse_nwad_t
 {
-	enum
-	{
-		QSE_NWAD_IN4,
-		QSE_NWAD_IN6
-	} type;
+	qse_nwad_type_t type;
 
 	union
 	{

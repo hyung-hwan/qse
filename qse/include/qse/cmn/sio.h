@@ -214,12 +214,22 @@ qse_ssize_t qse_sio_getmbsn (
 	qse_size_t   size
 );
 
+/**
+ * The qse_sio_getwcs() function reads at most @a size - 1 characters 
+ * from the stream @a sio into the buffer @a buf. If a new line or EOF
+ * is encountered, it stops reading from the stream. It null-terminates
+ * the buffer if @a size is greater than 0. */
 qse_ssize_t qse_sio_getwcs (
 	qse_sio_t*   sio,
 	qse_wchar_t* buf,
 	qse_size_t   size
 );
 
+/**
+ * The qse_sio_getwcsn() function reads at most @a size characters 
+ * from the stream @a sio into the buffer @a buf. If a new line or EOF
+ * is encountered, it stops reading from the stream. 
+ */
 qse_ssize_t qse_sio_getwcsn (
 	qse_sio_t*   sio,
 	qse_wchar_t* buf,

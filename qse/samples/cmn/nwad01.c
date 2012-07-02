@@ -33,6 +33,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_T("::ffff:0:0"),
 		QSE_T("::ffff:192.168.1.1"),
 		QSE_T("::ffff:192.168.1.1%88"),
+		QSE_T("::ffff:192.168.1.1%eth0"),
+		QSE_T("::ffff:192.168.1.1%eth1"),
 		QSE_T("[::]:10"),
 		QSE_T("[::1]:20"),
 		QSE_T("[fe80::f27b:cbff:fea3:f40c]:30"),
@@ -40,7 +42,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_T("[2001:db8:1234:ffff:ffff:ffff:ffff:ffff]:50"),
 		QSE_T("[::ffff:0:0]:60"),
 		QSE_T("[::ffff:192.168.1.1]:70"),
-		QSE_T("[::ffff:192.168.1.1%999]:70")
+		QSE_T("[::ffff:192.168.1.1%999]:70"),
+		QSE_T("[::ffff:192.168.1.1%eth0]:70")
 	};
 
 	static qse_mchar_t* ipstr_mbs[] =
@@ -60,6 +63,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_MT("::ffff:0:0"),
 		QSE_MT("::ffff:192.168.1.1"),
 		QSE_MT("::ffff:192.168.1.1%88"),
+		QSE_MT("::ffff:192.168.1.1%eth0"),
+		QSE_MT("::ffff:192.168.1.1%eth1"),
 		QSE_MT("[::]:10"),
 		QSE_MT("[::1]:20"),
 		QSE_MT("[fe80::f27b:cbff:fea3:f40c]:30"),
@@ -67,7 +72,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_MT("[2001:db8:1234:ffff:ffff:ffff:ffff:ffff]:50"),
 		QSE_MT("[::ffff:0:0]:60"),
 		QSE_MT("[::ffff:192.168.1.1]:70"),
-		QSE_MT("[::ffff:192.168.1.1%999]:70")
+		QSE_MT("[::ffff:192.168.1.1%999]:70"),
+		QSE_MT("[::ffff:192.168.1.1%eth0]:70")
 	};
 
 	static qse_wchar_t* ipstr_wcs[] =
@@ -87,6 +93,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_WT("::ffff:0:0"),
 		QSE_WT("::ffff:192.168.1.1"),
 		QSE_WT("::ffff:192.168.1.1%88"),
+		QSE_WT("::ffff:192.168.1.1%eth0"),
+		QSE_WT("::ffff:192.168.1.1%eth1"),
 		QSE_WT("[::]:10"),
 		QSE_WT("[::1]:20"),
 		QSE_WT("[fe80::f27b:cbff:fea3:f40c]:30"),
@@ -94,14 +102,15 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_WT("[2001:db8:1234:ffff:ffff:ffff:ffff:ffff]:50"),
 		QSE_WT("[::ffff:0:0]:60"),
 		QSE_WT("[::ffff:192.168.1.1]:70"),
-		QSE_WT("[::ffff:192.168.1.1%999]:70")
+		QSE_WT("[::ffff:192.168.1.1%999]:70"),
+		QSE_WT("[::ffff:192.168.1.1%eth0]:70")
 	};
 
 	for (i = 0; i < QSE_COUNTOF(ipstr); i++)
 	{
 		if (qse_strtonwad (ipstr[i], &nwad) <= -1)
 		{
-			qse_printf (QSE_T("Failed to convert %s\n"), ipstr[i]);
+			qse_printf (QSE_T("Failed to convert <%s>\n"), ipstr[i]);
 		}
 		else
 		{
@@ -115,7 +124,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 	{
 		if (qse_mbstonwad (ipstr_mbs[i], &nwad) <= -1)
 		{
-			qse_printf (QSE_T("Failed to convert %hs\n"), ipstr_mbs[i]);
+			qse_printf (QSE_T("Failed to convert <%hs>\n"), ipstr_mbs[i]);
 		}
 		else
 		{
@@ -129,7 +138,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 	{
 		if (qse_wcstonwad (ipstr_wcs[i], &nwad) <= -1)
 		{
-			qse_printf (QSE_T("Failed to convert %ls\n"), ipstr_wcs[i]);
+			qse_printf (QSE_T("Failed to convert <%ls>\n"), ipstr_wcs[i]);
 		}
 		else
 		{
@@ -138,6 +147,7 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		}
 	}
 
+	qse_printf (QSE_T("================================================\n"));
 	return 0;
 }
 
