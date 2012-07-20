@@ -1,7 +1,7 @@
 /*
  * $Id: Sed.hpp 127 2009-05-07 13:15:04Z baconevi $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

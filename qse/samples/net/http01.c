@@ -993,6 +993,13 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 		{
 			ssl = client->handle2.ptr;
 		}
+		else if (!xtn->ssl_ctx)
+		{
+			/* no ssl */
+qse_printf (QSE_T("NO SSL\n"));
+qse_fflush (QSE_STDOUT);
+			return -1;
+		}
 		else
 		{
 			ssl = SSL_new (xtn->ssl_ctx);
@@ -1005,7 +1012,7 @@ qse_fflush (QSE_STDOUT);
 			if (SSL_set_fd (ssl, client->handle.i) == 0)
 			{
 				/* don't free ssl here since client_closed()
-				 * will be closed */
+				 * will free it */
 				return -1;
 			}
 		}
@@ -1439,9 +1446,8 @@ static void sigint (int sig)
 int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
-	httpd_xtn_t* xtn;
+	httpd_xtn_t* xtn = QSE_NULL;
 	int ret = -1, i;
-	int ssl_xtn_inited = 0;
 
 	if (argc <= 1)
 	{
@@ -1457,13 +1463,8 @@ int httpd_main (int argc, qse_char_t* argv[])
 	}
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
-
-	if (init_xtn_ssl (xtn, "http01.pem", "http01.key") <= -1)
-	{
-		qse_fprintf (QSE_STDERR, QSE_T("Cannot open httpd\n"));
-		goto oops;
-	}
-	ssl_xtn_inited = 1;
+	xtn->ssl_ctx = QSE_NULL;
+	init_xtn_ssl (xtn, "http01.pem", "http01.key");
 
 	for (i = 1; i < argc; i++)
 	{
@@ -1489,7 +1490,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	if (ret <= -1) qse_fprintf (QSE_STDERR, QSE_T("Httpd error\n"));
 
 oops:
-	if (ssl_xtn_inited) fini_xtn_ssl (xtn);
+	if (xtn && xtn->ssl_ctx) fini_xtn_ssl (xtn);
 	if (httpd) qse_httpd_close (httpd);
 	return ret;
 }

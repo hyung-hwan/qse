@@ -1,7 +1,7 @@
 /*
  * $Id: tree.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

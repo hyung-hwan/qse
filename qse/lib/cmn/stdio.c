@@ -1,7 +1,7 @@
 /*
  * $Id: stdio.c 463 2008-12-09 06:52:03Z baconevi $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

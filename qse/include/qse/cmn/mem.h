@@ -1,7 +1,7 @@
 /*
  * $Id: mem.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

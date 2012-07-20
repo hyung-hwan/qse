@@ -1,7 +1,7 @@
 /*
  * $Id: err.c 287 2009-09-15 10:01:02Z baconevi $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

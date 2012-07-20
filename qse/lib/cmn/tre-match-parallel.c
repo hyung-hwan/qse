@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
@@ -318,7 +318,7 @@ tre_tnfa_run_parallel(qse_mmgr_t* mmgr, const tre_tnfa_t *tnfa, const void *stri
 		else
 		{
 			if (num_tags == 0 || reach_next_i == reach_next)
-				/* We have found a match. */
+				/*?We have found a match. */
 				break;
 		}
 

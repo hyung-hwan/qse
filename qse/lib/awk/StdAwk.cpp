@@ -1,7 +1,7 @@
 /*
  * $Id: StdAwk.cpp 538 2011-08-09 16:08:26Z hyunghwan.chung $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
