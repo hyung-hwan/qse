@@ -65,8 +65,8 @@ qse_fma_fini() invalidates all the pointers allocated with qse_fma_alloc().
 qse_fma_t* fma; int* ptr;
 fma = qse_fma_open (QSE_NULL, 0, sizeof(int), 10, 0); // create an allocator 
 ptr = (int*)qse_fma_alloc (fma, sizeof(int)); // allocate a block
-ptr = 20; // access the block
-qse_fma_free (fma, ptr1); // free the block
+*ptr = 20; // access the block
+qse_fma_free (fma, ptr); // free the block
 qse_fma_close (fma); // destroy the allocator
 @endcode
 
@@ -74,5 +74,13 @@ qse_fma_close (fma); // destroy the allocator
 
 If you want to allocate blocks quickly but don't want to resize or 
 deallocate the blocks individually, you can use #qse_pma_t.
+
+@code
+qse_pma_t* pma; int* ptr;
+pma = qse_pma_open (QSE_NULL, 0); // create an allocator 
+ptr = (int*)qse_pma_alloc (pma, sizeof(int)); // allocate a block
+*ptr = 20; // access the block
+qse_pma_close (pma); // destroy the allocator
+@endcode
 
 */

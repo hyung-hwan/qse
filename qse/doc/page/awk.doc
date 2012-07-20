@@ -91,7 +91,7 @@ oops:
 @endcode
 
 Things can get simpler when you use C++ API. Note that the C++ API supports 
-just a single runtime context for each interpreter.
+1 single runtime context for each interpreter.
 
 @code
 /* c++ -o hello hello.cpp -lqseawkxx -lqseawk -lqsecmnxx -lqsecmn -lm */
