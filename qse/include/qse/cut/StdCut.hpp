@@ -1,7 +1,7 @@
 /*
  * $Id: StdCut.hpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

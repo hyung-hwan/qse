@@ -534,7 +534,7 @@ static int sketch_key_objects (qse_stx_t* stx)
 	/* Symbol */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.class_symbol, QSE_STX_CLASS_SIZE, 0);
 	/* Metaclass */
-	ALLOC_WORDOBJ_TO (stx, stx->ref.class_metaclass, QSE_STX_CLASS_SIZE, 0);
+	ALLOC_WORDOBJ_TO (stx, stx->ref.class_metaclass, QSE_STX_CLASS_SIZE, 0); 
 	/* Association */
 	ALLOC_WORDOBJ_TO (stx, stx->ref.class_association, QSE_STX_CLASS_SIZE, 0);
 

@@ -1,7 +1,7 @@
 /*
  * $Id: fio.h 569 2011-09-19 06:51:02Z hyunghwan.chung $
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify

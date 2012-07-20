@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
-    Copyright 2006-2011 Chung, Hyung-Hwan.
+    Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
 
     QSE is free software: you can redistribute it and/or modify
@@ -75,23 +75,30 @@ int qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
 	pma->mmgr = mmgr;
-
 	return 0;
 }
 
 /* Frees the memory allocator and all memory allocated with it. */
 void qse_pma_fini (qse_pma_t* pma)
 {
+	qse_pma_clear (pma);
+}
+
+void qse_pma_clear (qse_pma_t* pma)
+{
+	qse_mmgr_t* mmgr = pma->mmgr;
 	qse_pma_blk_t* tmp, * l = pma->blocks;
 
 	while (l != QSE_NULL)
 	{
 		tmp = l->next;
-		QSE_MMGR_FREE (pma->mmgr, l);
+		QSE_MMGR_FREE (mmgr, l);
 		l = tmp;
 	}
+	
+	QSE_MEMSET (pma, 0, QSE_SIZEOF(*pma));
+	pma->mmgr = mmgr;
 }
-
 /* Returns a new memory allocator or NULL if out of memory. */
 
 /* Allocates a block of `size' bytes from `mem'.  Returns a pointer to the
