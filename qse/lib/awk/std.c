@@ -118,11 +118,16 @@ typedef struct rxtn_t
 		qse_cmgr_t* cmgr;
 	} c;  /* console */
 
-#if defined(QSE_CHAR_IS_WCHAR)
 	int cmgrtab_inited;
 	qse_htb_t cmgrtab;
-#endif
 } rxtn_t;
+
+typedef struct ioattr_t
+{
+        qse_cmgr_t* cmgr;
+	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
+        qse_long_t timeout[3];
+} ioattr_t;
 
 static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
@@ -813,7 +818,7 @@ static qse_ssize_t nwio_handler_open (
 #if defined(QSE_CHAR_IS_WCHAR)
 	{
 		qse_cmgr_t* cmgr = qse_awk_rtx_getcmgrstd (rtx, riod->name);
-		if (cmgr)	qse_nwio_setcmgr (handle, cmgr);
+		if (cmgr) qse_nwio_setcmgr (handle, cmgr);
 	}
 #endif
 
@@ -1431,13 +1436,11 @@ static void fini_rxtn (qse_awk_rtx_t* rtx, void* ctx)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 
-#if defined(QSE_CHAR_IS_WCHAR)
 	if (rxtn->cmgrtab_inited)
 	{
 		qse_htb_fini (&rxtn->cmgrtab);
 		rxtn->cmgrtab_inited = 0;
 	}
-#endif
 }
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
@@ -1520,22 +1523,20 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_MEMSET (rxtn, 0, QSE_SIZEOF(rxtn_t));
 
-#if defined(QSE_CHAR_IS_WCHAR)
 	if (rtx->awk->option & QSE_AWK_RIO)
 	{
 		if (qse_htb_init (
 			&rxtn->cmgrtab, awk->mmgr, 256, 70, 
-			QSE_SIZEOF(qse_char_t), 1) <= -1)
+			QSE_SIZEOF(qse_char_t), 0) <= -1)
 		{
 			qse_awk_rtx_close (rtx);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return QSE_NULL;
 		}
 		qse_htb_setmancbs (&rxtn->cmgrtab, 
-			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER));
+			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_COPIERS));
 		rxtn->cmgrtab_inited = 1;
 	}
-#endif
 
 	qse_awk_rtx_pushrcb (rtx, &rcb);
 
@@ -1714,31 +1715,198 @@ static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-#if defined(QSE_CHAR_IS_WCHAR)
 qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
 	rxtn_t* rxtn;
 	qse_htb_pair_t* pair;
+	ioattr_t* ioattr;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
 	pair = qse_htb_search (&rxtn->cmgrtab, ioname, qse_strlen(ioname));
-	if (pair) return QSE_HTB_VPTR(pair);
+	if (pair) 
+	{
+		ioattr = (ioattr_t*)QSE_HTB_VPTR(pair);
+		return ioattr->cmgr;
+	}
 
 	return QSE_NULL;
 }
 
-static int fnc_setenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int timeout_code (const qse_char_t* name)
+{
+	if (qse_strcmp (name, QSE_T("rtimeout")) == 0) return 0;
+	if (qse_strcmp (name, QSE_T("wtimeout")) == 0) return 1;
+	if (qse_strcmp (name, QSE_T("ctimeout")) == 0) return 2;
+	return -1;
+}
+
+static QSE_INLINE void init_ioattr (ioattr_t* ioattr)
+{
+	int i;
+	QSE_MEMSET (ioattr, 0, QSE_SIZEOF(*ioattr));
+	for (i = 0; i < QSE_COUNTOF(ioattr->timeout); i++) ioattr->timeout[i] = -1;
+}
+
+static qse_htb_pair_t* find_or_make_ioattr (
+	qse_awk_rtx_t* rtx, qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len)
+{
+	qse_htb_pair_t* pair;
+
+	pair = qse_htb_search (tab, ptr, len);
+	if (pair == QSE_NULL)
+	{
+		ioattr_t ioattr;
+
+		init_ioattr (&ioattr);
+
+		pair = qse_htb_insert (tab, ptr, len, &ioattr, QSE_SIZEOF(ioattr));
+		if (pair == QSE_NULL)
+		{
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		}
+	}
+
+	return pair;
+}
+
+static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	rxtn_t* rxtn;
+	qse_size_t nargs;
+	qse_awk_val_t* v[3];
+	qse_char_t* ptr[3];
+	qse_size_t len[3];
+	int i, ret = 0, fret = 0;
+	qse_cmgr_t* cmgr;
+	int tmout;
+
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 3);
+	
+	for (i = 0; i < 3; i++)
+	{
+		v[i] = qse_awk_rtx_getarg (rtx, i);
+		if (v[i]->type == QSE_AWK_VAL_STR)
+		{
+			ptr[i] = ((qse_awk_val_str_t*)v[i])->val.ptr;
+			len[i] = ((qse_awk_val_str_t*)v[i])->val.len;
+		}
+		else
+		{
+			ptr[i] = qse_awk_rtx_valtocpldup (rtx, v[i], &len[i]);
+			if (ptr[i] == QSE_NULL) 
+			{
+				ret = -1;
+				goto done;
+			}
+		}
+
+		if (qse_strxchr (ptr[i], len[i], QSE_T('\0')))
+		{
+			fret = -1;
+			goto done;
+		}
+	}
+
+	if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	{
+		qse_htb_pair_t* pair;
+		ioattr_t* ioattr;
+
+		if (ptr[2][0] == QSE_T('\0')) 
+		{
+			cmgr = QSE_NULL;
+		}
+		else
+		{
+			cmgr = qse_findcmgr (ptr[2]);
+			if (cmgr == QSE_NULL) 
+			{
+				fret = -1;
+				goto done;
+			}
+		}
+
+		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		if (pair == QSE_NULL) 
+		{
+			ret = -1;
+			goto done;
+		}
+
+		ioattr = QSE_HTB_VPTR(pair);
+		ioattr->cmgr = cmgr;
+		qse_strxcpy (ioattr->cmgr_name, QSE_COUNTOF(ioattr->cmgr_name), ptr[2]);
+	}
+	else if ((tmout = timeout_code (ptr[1])) >= 0)
+	{
+		qse_htb_pair_t* pair;
+		ioattr_t* ioattr;
+
+		qse_long_t l;
+		qse_flt_t r;
+		int x;
+
+		/* no error is returned by qse_awk_rtx_strnum() if the second 
+		 * parameter is 0. so i don't check for an error */
+		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
+		if (x >= 1) l = (qse_long_t)r;
+	
+		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		if (pair == QSE_NULL) 
+		{
+			ret = -1;
+			goto done;
+		}
+
+		ioattr = QSE_HTB_VPTR(pair);
+		ioattr->timeout[tmout] = l;
+	}
+	else
+	{
+		/* unknown attribute name */
+		fret = -1;
+		goto done;
+	}
+
+done:
+	while (i > 0)
+	{
+		i--;
+		if (v[i]->type != QSE_AWK_VAL_STR) 
+			QSE_AWK_FREE (rtx->awk, ptr[i]);
+	}
+
+	if (ret >= 0)
+	{
+		v[0] = qse_awk_rtx_makeintval (rtx, (qse_long_t)fret);
+		if (v[0] == QSE_NULL) return -1;
+		qse_awk_rtx_setretval (rtx, v[0]);
+	}
+
+	return ret;
+}
+
+static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	rxtn_t* rxtn;
 	qse_size_t nargs;
 	qse_awk_val_t* v[2];
 	qse_char_t* ptr[2];
 	qse_size_t len[2];
-	int i, ret = 0, fret = 0;
-	qse_cmgr_t* cmgr;
+	int i, ret = 0;
+	int tmout;
+	qse_awk_val_t* rv = QSE_NULL;
+
+	qse_htb_pair_t* pair;
+	ioattr_t* ioattr;
+	ioattr_t ioattr_buf;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
@@ -1764,22 +1932,42 @@ static int fnc_setenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 			}
 		}
 
-		if (qse_strxchr (ptr[i], len[i], QSE_T('\0')))
+		if (qse_strxchr (ptr[i], len[i], QSE_T('\0'))) goto done;
+	}
+
+	pair = qse_htb_search (&rxtn->cmgrtab, ptr[0], len[0]);
+	if (pair == QSE_NULL)
+	{
+		init_ioattr (&ioattr_buf);
+		ioattr = &ioattr_buf;
+	}
+	else
+	{
+		ioattr = QSE_HTB_VPTR(pair);
+	}
+
+	if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	{
+		rv = qse_awk_rtx_makestrval0 (rtx, ioattr->cmgr_name);
+		if (rv == QSE_NULL)
 		{
-			fret = -1;
+			ret = -1;
 			goto done;
 		}
 	}
-
-	cmgr = qse_findcmgr (ptr[1]);
-	if (cmgr == QSE_NULL) fret = -1;
-	else
+	else if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		if (qse_htb_upsert (
-			&rxtn->cmgrtab, ptr[0], len[0], cmgr, 0) == QSE_NULL)
+		rv = qse_awk_rtx_makeintval (rtx, ioattr->timeout[tmout]);
+		if (rv == QSE_NULL) 
 		{
 			ret = -1;
+			goto done;
 		}
+	}
+	else
+	{
+		/* unknown attribute name */
+		goto done;
 	}
 
 done:
@@ -1792,52 +1980,15 @@ done:
 
 	if (ret >= 0)
 	{
-		v[0] = qse_awk_rtx_makeintval (rtx, (qse_long_t)fret);
-		if (v[0] == QSE_NULL) return -1;
-		qse_awk_rtx_setretval (rtx, v[0]);
+		/* the return value of -1 for an error may be confusing since 
+		 * a literal value of -1 can be returned for some attribute 
+		 * names */
+		if (rv == QSE_NULL) rv = qse_awk_rtx_makeintval (rtx, -1);;
+		qse_awk_rtx_setretval (rtx, rv);
 	}
 
 	return ret;
 }
-
-static int fnc_unsetenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
-{
-	rxtn_t* rxtn;
-	qse_size_t nargs;
-	qse_awk_val_t* v;
-	qse_char_t* ptr;
-	qse_size_t len;
-	int fret = 0;
-
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
-	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
-
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 1);
-	
-	v = qse_awk_rtx_getarg (rtx, 0);
-	if (v->type == QSE_AWK_VAL_STR)
-	{
-		ptr = ((qse_awk_val_str_t*)v)->val.ptr;
-		len = ((qse_awk_val_str_t*)v)->val.len;
-	}
-	else
-	{
-		ptr = qse_awk_rtx_valtocpldup (rtx, v, &len);
-		if (ptr == QSE_NULL) return -1; 
-	}
-
-	fret = qse_htb_delete (&rxtn->cmgrtab, ptr, len);
-
-	if (v->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (rtx->awk, ptr);
-
-	v = qse_awk_rtx_makeintval (rtx, fret);
-	if (v == QSE_NULL) return -1;
-	qse_awk_rtx_setretval (rtx, v);
-
-	return 0;
-}
-#endif
 
 #define ADDFNC(awk,name,min,max,fnc,valid) \
         if (qse_awk_addfnc (\
@@ -1846,13 +1997,13 @@ static int fnc_unsetenc (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 static int add_functions (qse_awk_t* awk)
 {
-	ADDFNC (awk, QSE_T("rand"),     0, 0, fnc_rand,     0);
-	ADDFNC (awk, QSE_T("srand"),    0, 1, fnc_srand,    0);
-	ADDFNC (awk, QSE_T("system"),   1, 1, fnc_system,   0);
-	ADDFNC (awk, QSE_T("time"),     0, 0, fnc_time,     0);
+	ADDFNC (awk, QSE_T("rand"),      0, 0, fnc_rand,      0);
+	ADDFNC (awk, QSE_T("srand"),     0, 1, fnc_srand,     0);
+	ADDFNC (awk, QSE_T("system"),    1, 1, fnc_system,    0);
+	ADDFNC (awk, QSE_T("time"),      0, 0, fnc_time,      0);
 #if defined(QSE_CHAR_IS_WCHAR)
-	ADDFNC (awk, QSE_T("setenc"),   2, 2, fnc_setenc,   QSE_AWK_RIO);
-	ADDFNC (awk, QSE_T("unsetenc"), 1, 1, fnc_unsetenc, QSE_AWK_RIO);
+	ADDFNC (awk, QSE_T("setioattr"), 3, 3, fnc_setioattr, QSE_AWK_RIO);
+	ADDFNC (awk, QSE_T("getioattr"), 2, 2, fnc_getioattr, QSE_AWK_RIO);
 #endif
 	return 0;
 }

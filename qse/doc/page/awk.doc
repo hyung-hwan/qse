@@ -387,8 +387,8 @@ $ qseawk 'BEGIN { print "\uC720\uB2C8\uCF54\uB4DC \U00007D71\U00004E00\U000078BC
 
 
 @subsection awk_ext_ioenc I/O ENCODING
-You can call setenc() to set the character encoding of a stream resource like
-a pipe or a file. See qse_findcmgr() for a list of supported encoding names.
+You can call setioattr() to set the character encoding of a stream resource 
+like a pipe or a file. See qse_findcmgr() for a list of supported encoding names.
 
 Let's say you run this simple echoing script on a WIN32 platform that has
 the active code page of 949 and is reachable at the IP address 192.168.2.8.
@@ -399,8 +399,8 @@ Active code page: 949
 C:\> type s.awk
 BEGIN {
      sock = "tcpd://0.0.0.0:9999";
-     setenc (sock, "cp949"); # this is not needed since the active 
-                             # code page is already 949.
+     setioattr (sock, "codepage", "cp949"); # this is not needed since the active 
+                                            # code page is already 949.
      do {
 
           if ((sock || getline x) <= 0) break;
@@ -422,7 +422,7 @@ en_US.UTF-8
 $ cat  c.awk
 BEGIN {
      peer = "tcp://192.168.2.8:9999";
-     setenc (peer, "cp949");
+     setioattr (peer, "codepage", "cp949");
      do
      {
           printf "> ";

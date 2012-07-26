@@ -205,7 +205,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-     /* == QSE_HTB_MANCBS_INLINE_COPIERS == */
+	/* == QSE_HTB_MANCBS_INLINE_COPIERS == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -221,7 +221,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-     /* == QSE_HTB_MANCBS_INLINE_KEY_COPIER == */
+	/* == QSE_HTB_MANCBS_INLINE_KEY_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_INLINE,
@@ -237,7 +237,7 @@ static mancbs_t mancbs[] =
 		QSE_HTB_HASHER_DEFAULT
 	},
 
-     /* == QSE_HTB_MANCBS_INLINE_VALUE_COPIER == */
+	/* == QSE_HTB_MANCBS_INLINE_VALUE_COPIER == */
 	{
 		{
 			QSE_HTB_COPIER_DEFAULT,
