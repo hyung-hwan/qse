@@ -292,6 +292,9 @@ int qse_htb_init (
 	QSE_ASSERTX (factor >= 0 && factor <= 100,
 		"The load factor should be between 0 and 100 inclusive. In the release mode, a value out of the range is adjusted to 100");
 
+	QSE_ASSERT (kscale >= 0 && kscale <= QSE_TYPE_MAX(qse_byte_t));
+	QSE_ASSERT (vscale >= 0 && vscale <= QSE_TYPE_MAX(qse_byte_t));
+
 	/* some initial adjustment */
 	if (capa <= 0) capa = 1;
 	if (factor > 100) factor = 100;
