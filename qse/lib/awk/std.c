@@ -1718,6 +1718,7 @@ static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
 {
+#if defined(QSE_CHAR_IS_WCHAR)
 	rxtn_t* rxtn;
 	qse_htb_pair_t* pair;
 	ioattr_t* ioattr;
@@ -1731,7 +1732,7 @@ qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 		ioattr = (ioattr_t*)QSE_HTB_VPTR(pair);
 		return ioattr->cmgr;
 	}
-
+#endif
 	return QSE_NULL;
 }
 
@@ -1747,7 +1748,11 @@ static QSE_INLINE void init_ioattr (ioattr_t* ioattr)
 {
 	int i;
 	QSE_MEMSET (ioattr, 0, QSE_SIZEOF(*ioattr));
-	for (i = 0; i < QSE_COUNTOF(ioattr->timeout); i++) ioattr->timeout[i] = -1;
+	for (i = 0; i < QSE_COUNTOF(ioattr->timeout); i++) 
+	{
+		/* a negative number for no timeout */
+		ioattr->timeout[i] = -999;
+	}
 }
 
 static qse_htb_pair_t* find_or_make_ioattr (
@@ -1814,7 +1819,32 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		}
 	}
 
-	if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	if ((tmout = timeout_code (ptr[1])) >= 0)
+	{
+		qse_htb_pair_t* pair;
+		ioattr_t* ioattr;
+
+		qse_long_t l;
+		qse_flt_t r;
+		int x;
+
+		/* no error is returned by qse_awk_rtx_strnum() if the second 
+		 * parameter is 0. so i don't check for an error */
+		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
+		if (x >= 1) l = (qse_long_t)r;
+	
+		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		if (pair == QSE_NULL) 
+		{
+			ret = -1;
+			goto done;
+		}
+
+		ioattr = QSE_HTB_VPTR(pair);
+		ioattr->timeout[tmout] = l;
+	}
+#if defined(QSE_CHAR_IS_WCHAR)
+	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
 	{
 		qse_htb_pair_t* pair;
 		ioattr_t* ioattr;
@@ -1844,30 +1874,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		ioattr->cmgr = cmgr;
 		qse_strxcpy (ioattr->cmgr_name, QSE_COUNTOF(ioattr->cmgr_name), ptr[2]);
 	}
-	else if ((tmout = timeout_code (ptr[1])) >= 0)
-	{
-		qse_htb_pair_t* pair;
-		ioattr_t* ioattr;
-
-		qse_long_t l;
-		qse_flt_t r;
-		int x;
-
-		/* no error is returned by qse_awk_rtx_strnum() if the second 
-		 * parameter is 0. so i don't check for an error */
-		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
-		if (x >= 1) l = (qse_long_t)r;
-	
-		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
-		if (pair == QSE_NULL) 
-		{
-			ret = -1;
-			goto done;
-		}
-
-		ioattr = QSE_HTB_VPTR(pair);
-		ioattr->timeout[tmout] = l;
-	}
+#endif
 	else
 	{
 		/* unknown attribute name */
@@ -1946,16 +1953,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		ioattr = QSE_HTB_VPTR(pair);
 	}
 
-	if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
-	{
-		rv = qse_awk_rtx_makestrval0 (rtx, ioattr->cmgr_name);
-		if (rv == QSE_NULL)
-		{
-			ret = -1;
-			goto done;
-		}
-	}
-	else if ((tmout = timeout_code (ptr[1])) >= 0)
+	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
 		rv = qse_awk_rtx_makeintval (rtx, ioattr->timeout[tmout]);
 		if (rv == QSE_NULL) 
@@ -1964,6 +1962,17 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 			goto done;
 		}
 	}
+#if defined(QSE_CHAR_IS_WCHAR)
+	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	{
+		rv = qse_awk_rtx_makestrval0 (rtx, ioattr->cmgr_name);
+		if (rv == QSE_NULL)
+		{
+			ret = -1;
+			goto done;
+		}
+	}
+#endif
 	else
 	{
 		/* unknown attribute name */
@@ -2001,9 +2010,7 @@ static int add_functions (qse_awk_t* awk)
 	ADDFNC (awk, QSE_T("srand"),     0, 1, fnc_srand,     0);
 	ADDFNC (awk, QSE_T("system"),    1, 1, fnc_system,    0);
 	ADDFNC (awk, QSE_T("time"),      0, 0, fnc_time,      0);
-#if defined(QSE_CHAR_IS_WCHAR)
 	ADDFNC (awk, QSE_T("setioattr"), 3, 3, fnc_setioattr, QSE_AWK_RIO);
 	ADDFNC (awk, QSE_T("getioattr"), 2, 2, fnc_getioattr, QSE_AWK_RIO);
-#endif
 	return 0;
 }
