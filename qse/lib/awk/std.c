@@ -126,8 +126,10 @@ typedef struct ioattr_t
 {
         qse_cmgr_t* cmgr;
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
-        qse_long_t timeout[3];
+        qse_long_t tmout[4];
 } ioattr_t;
+
+static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
 
 static qse_flt_t custom_awk_pow (qse_awk_t* awk, qse_flt_t x, qse_flt_t y)
 {
@@ -804,14 +806,16 @@ int qse_awk_parsestd (
 /*** RTX_OPENSTD ***/
 
 static qse_ssize_t nwio_handler_open (
-	qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod, int flags, qse_nwad_t* nwad)
+	qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod, int flags, 
+	qse_nwad_t* nwad, qse_nwio_tmout_t* tmout)
 {
 	qse_nwio_t* handle;
 
 	handle = qse_nwio_open (
 		qse_awk_rtx_getmmgr(rtx), 0, nwad, 
 		flags | QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
-		QSE_NWIO_REUSEADDR | QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY
+		QSE_NWIO_REUSEADDR | QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY,
+		tmout
 	);
 	if (handle == QSE_NULL) return -1;
 
@@ -1031,9 +1035,30 @@ static qse_ssize_t awk_rio_pipe (
 
 		if (riod->mode != QSE_AWK_RIO_PIPE_RW ||
 		    parse_rwpipe_uri (riod->name, &flags, &nwad) <= -1) 
+		{
 			return pio_handler_open (rtx, riod);
+		}
 		else
-			return nwio_handler_open (rtx, riod, flags, &nwad);
+		{
+			qse_nwio_tmout_t tmout_buf;
+			qse_nwio_tmout_t* tmout = QSE_NULL;
+			ioattr_t* ioattr;
+			rxtn_t* rxtn;
+
+			rxtn = (rxtn_t*) QSE_XTN (rtx);
+
+			ioattr = get_ioattr (&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
+			if (ioattr)
+			{
+				tmout = &tmout_buf;
+				tmout->r = ioattr->tmout[0];
+				tmout->w = ioattr->tmout[1];
+				tmout->c = ioattr->tmout[2];
+				tmout->a = ioattr->tmout[3];
+			}
+
+			return nwio_handler_open (rtx, riod, flags, &nwad, tmout);
+		}
 	}
 	else if (riod->handle2)
 		return nwio_handler_rest (rtx, cmd, riod, data, size);
@@ -1715,32 +1740,12 @@ static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-qse_cmgr_t* qse_awk_rtx_getcmgrstd (
-	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
-{
-#if defined(QSE_CHAR_IS_WCHAR)
-	rxtn_t* rxtn;
-	qse_htb_pair_t* pair;
-	ioattr_t* ioattr;
-
-	rxtn = (rxtn_t*) QSE_XTN (rtx);
-	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
-
-	pair = qse_htb_search (&rxtn->cmgrtab, ioname, qse_strlen(ioname));
-	if (pair) 
-	{
-		ioattr = (ioattr_t*)QSE_HTB_VPTR(pair);
-		return ioattr->cmgr;
-	}
-#endif
-	return QSE_NULL;
-}
-
 static int timeout_code (const qse_char_t* name)
 {
 	if (qse_strcmp (name, QSE_T("rtimeout")) == 0) return 0;
 	if (qse_strcmp (name, QSE_T("wtimeout")) == 0) return 1;
 	if (qse_strcmp (name, QSE_T("ctimeout")) == 0) return 2;
+	if (qse_strcmp (name, QSE_T("atimeout")) == 0) return 3;
 	return -1;
 }
 
@@ -1748,11 +1753,22 @@ static QSE_INLINE void init_ioattr (ioattr_t* ioattr)
 {
 	int i;
 	QSE_MEMSET (ioattr, 0, QSE_SIZEOF(*ioattr));
-	for (i = 0; i < QSE_COUNTOF(ioattr->timeout); i++) 
+	for (i = 0; i < QSE_COUNTOF(ioattr->tmout); i++) 
 	{
 		/* a negative number for no timeout */
-		ioattr->timeout[i] = -999;
+		ioattr->tmout[i] = -999;
 	}
+}
+
+static ioattr_t* get_ioattr (
+	qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len)
+{
+	qse_htb_pair_t* pair;
+
+	pair = qse_htb_search (tab, ptr, len);
+	if (pair) return QSE_HTB_VPTR(pair);
+
+	return QSE_NULL;
 }
 
 static qse_htb_pair_t* find_or_make_ioattr (
@@ -1767,7 +1783,7 @@ static qse_htb_pair_t* find_or_make_ioattr (
 
 		init_ioattr (&ioattr);
 
-		pair = qse_htb_insert (tab, ptr, len, &ioattr, QSE_SIZEOF(ioattr));
+		pair = qse_htb_insert (tab, (void*)ptr, len, (void*)&ioattr, QSE_SIZEOF(ioattr));
 		if (pair == QSE_NULL)
 		{
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
@@ -1841,7 +1857,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		}
 
 		ioattr = QSE_HTB_VPTR(pair);
-		ioattr->timeout[tmout] = l;
+		ioattr->tmout[tmout] = l;
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
@@ -1955,7 +1971,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		rv = qse_awk_rtx_makeintval (rtx, ioattr->timeout[tmout]);
+		rv = qse_awk_rtx_makeintval (rtx, ioattr->tmout[tmout]);
 		if (rv == QSE_NULL) 
 		{
 			ret = -1;
@@ -1997,6 +2013,22 @@ done:
 	}
 
 	return ret;
+}
+
+qse_cmgr_t* qse_awk_rtx_getcmgrstd (
+	qse_awk_rtx_t* rtx, const qse_char_t* ioname)
+{
+#if defined(QSE_CHAR_IS_WCHAR)
+	rxtn_t* rxtn;
+	ioattr_t* ioattr;
+
+	rxtn = (rxtn_t*) QSE_XTN (rtx);
+	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
+
+	ioattr = get_ioattr (&rxtn->cmgrtab, ioname, qse_strlen(ioname));
+	if (ioattr) return ioattr->cmgr;
+#endif
+	return QSE_NULL;
 }
 
 #define ADDFNC(awk,name,min,max,fnc,valid) \
