@@ -277,6 +277,27 @@ BEGIN {
 }
 @endcode
 
+You can specify TCP or UDP timeouts for connection, accepting, reading, and 
+writing with setioattr (pipe-name, timeout-name, timeout-value). timeout-name 
+should be one of "ctimeout", "atimeout", "rtimeout", and "wtimeout". 
+timeout-value is a number specifying the actual timeout in milliseconds. 
+A negative value indicates no timeout. 
+
+You can call getioattr (pipe-name, timeout-name) to get the current 
+timeout-value set.
+
+See the example below.
+
+@code
+BEGIN { 
+	setioattr ("tcp://127.0.0.1:9999", "ctimeout", 3000);
+	setioattr ("tcp://127.0.0.1:9999", "rtimeout", 5000);
+	print "hello world" || "tcp://127.0.0.1:9999"; 
+	"tcp://127.0.0.1:9999" || getline x; 
+	print x;
+}
+@endcode
+
 @subsection awk_ext_return RETURN
 The return statement is valid in BEGIN blocks, END blocks, and pattern-action 
 blocks as well as in functions. The execution of a calling block is aborted
