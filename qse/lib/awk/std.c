@@ -126,7 +126,7 @@ typedef struct ioattr_t
 {
         qse_cmgr_t* cmgr;
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
-        qse_long_t tmout[4];
+        int tmout[4];
 } ioattr_t;
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
@@ -1848,6 +1848,12 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		 * parameter is 0. so i don't check for an error */
 		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
 		if (x >= 1) l = (qse_long_t)r;
+
+		if (l < QSE_TYPE_MIN(int) || l > QSE_TYPE_MAX(int)) 
+		{
+			fret = -1;
+			goto done;
+		}
 	
 		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
 		if (pair == QSE_NULL) 
