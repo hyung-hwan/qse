@@ -182,7 +182,7 @@ void* qse_awk_rtx_getxtnstd (
  * The qse_awk_rtx_getcmgrstd() function gets the current character 
  * manager associated with a particular I/O target indicated by the name 
  * @a ioname if #QSE_CHAR_IS_WCHAR is defined. It always returns #QSE_NULL
- * if #QSE_CHAR_IS_MCHAR.
+ * if #QSE_CHAR_IS_MCHAR is defined.
  */
 qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	qse_awk_rtx_t*    rtx,

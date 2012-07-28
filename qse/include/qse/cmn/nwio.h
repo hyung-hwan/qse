@@ -59,6 +59,7 @@ enum qse_nwio_errnum_t
 	QSE_NWIO_ENOENT,     /**< no such file */
 	QSE_NWIO_EEXIST,     /**< already exist */
 	QSE_NWIO_EINTR,      /**< interrupted */
+	QSE_NWIO_ETMOUT,     /**< timed out */
 	QSE_NWIO_EPIPE,      /**< broken pipe */
 	QSE_NWIO_ECONN,      /**< connection refused */
 	QSE_NWIO_EILSEQ,     /**< illegal sequence */
@@ -70,6 +71,13 @@ enum qse_nwio_errnum_t
 	QSE_NWIO_EOTHER      /**< other error */
 };
 typedef enum qse_nwio_errnum_t qse_nwio_errnum_t;
+
+struct qse_nwio_tmout_t 
+{
+	int r, w, c, a;
+};
+
+typedef struct qse_nwio_tmout_t qse_nwio_tmout_t;
 
 #if defined(_WIN32)
 	typedef qse_intptr_t qse_nwio_hnd_t;
@@ -89,11 +97,12 @@ typedef struct qse_nwio_t qse_nwio_t;
 struct qse_nwio_t
 {
 	QSE_DEFINE_COMMON_FIELDS (nwio)
-	int               flags;
-	qse_nwio_errnum_t errnum;
-	qse_nwio_hnd_t    handle;
-	qse_tio_t*        tio;
-	int               status;
+	int                flags;
+	qse_nwio_errnum_t  errnum;
+	qse_nwio_tmout_t tmout;
+	qse_nwio_hnd_t     handle;
+	qse_tio_t*         tio;
+	int                status;
 };
 
 #define QSE_NWIO_HANDLE(nwio) ((nwio)->handle)
@@ -113,10 +122,11 @@ QSE_DEFINE_COMMON_FUNCTIONS (nwio)
  * as a pointer to qse_nwio_hnd_t.
  */
 qse_nwio_t* qse_nwio_open (
-	qse_mmgr_t*       mmgr,
-	qse_size_t        ext,
-	const qse_nwad_t* nwad,
-	int               flags
+	qse_mmgr_t*               mmgr,
+	qse_size_t                ext,
+	const qse_nwad_t*         nwad,
+	int                       flags,
+	const qse_nwio_tmout_t* tmout
 );
 
 /**
@@ -130,10 +140,11 @@ void qse_nwio_close (
  * The qse_nwio_close() function opens a file into @a nwio.
  */
 int qse_nwio_init (
-	qse_nwio_t*       nwio,
-	qse_mmgr_t*       mmgr,
-	const qse_nwad_t* nwad,
-	int               flags
+	qse_nwio_t*             nwio,
+	qse_mmgr_t*             mmgr,
+	const qse_nwad_t*       nwad,
+	int                     flags,
+	const qse_nwio_tmout_t* tmout
 );
 
 /**
