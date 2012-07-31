@@ -1560,8 +1560,8 @@ qse_size_t qse_awk_longtostr (
  * You can get the pointer to the beginning of the block with 
  * qse_awk_rtx_getxtn(). The block is destroyed when the runtime context is
  * destroyed. The argument array @a arg, if not #QSE_NULL, is used to set 
- * @b ARGV. The @b ptr field and the @b len field of the last member of the
- * array must be set to #QSE_NULL and 0 respectively.
+ * @b ARGV. The @b ptr field and the @b len field of the last member of 
+ * this array must be set to #QSE_NULL and 0 respectively.
  *
  * @return new runtime context on success, #QSE_NULL on failure
  */
@@ -1569,7 +1569,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk, /**< awk */
 	qse_size_t        xtn, /**< size of extension in bytes */
 	qse_awk_rio_t*    rio, /**< runtime IO handlers */
-	const qse_cstr_t* arg  /**< argument array to set ARGV */
+	const qse_cstr_t* arg /**< argument array to set ARGV */
 );
 
 /**

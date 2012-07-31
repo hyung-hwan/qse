@@ -686,7 +686,7 @@ qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 }
 
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t* awk, qse_size_t xtn, 
+	qse_awk_t* awk, qse_size_t xtn,
 	qse_awk_rio_t* rio, const qse_cstr_t* arg)
 {
 	qse_awk_rtx_t* rtx;
@@ -1094,8 +1094,7 @@ static int build_runarg (
 
 	qse_awk_rtx_refupval (rtx, v_argv);
 
-	if (runarg == QSE_NULL) argc = 0;
-	else
+	if (runarg)
 	{
 		for (argc = 0, p = runarg; p->ptr != QSE_NULL; argc++, p++)
 		{
@@ -1132,6 +1131,7 @@ static int build_runarg (
 			}
 		}
 	}
+	else argc = 0;
 
 	v_argc = qse_awk_rtx_makeintval (rtx, (qse_long_t)argc);
 	if (v_argc == QSE_NULL)
@@ -1241,11 +1241,11 @@ static int prepare_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* runarg)
 
 	/* override NF to zero */
 	if (qse_awk_rtx_setgbl (
-		rtx, QSE_AWK_GBL_NF, qse_awk_val_zero) == -1) goto oops;
+		rtx, QSE_AWK_GBL_NF, qse_awk_val_zero) <= -1) goto oops;
 
 	/* override ARGC and ARGV if necessary */
-	if (runarg && build_runarg (rtx, runarg, &nrunargs) == -1) goto oops;
-
+	if (runarg && build_runarg (rtx, runarg, &nrunargs) <= -1) goto oops;
+	
 	/* return success */
 	return 0;
 
