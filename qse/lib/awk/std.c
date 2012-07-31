@@ -28,6 +28,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/htb.h>
+#include <qse/cmn/env.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 #include "../cmn/mem.h"
 
@@ -37,6 +38,12 @@
 
 #if defined(_WIN32)
 #	include <tchar.h>
+#elif defined(__OS2__)
+	/* anything ? */
+#elif defined(__DOS__)
+	/* anything ? */
+#else
+#	include <unistd.h>
 #endif
 
 #ifndef QSE_HAVE_CONFIG_H
@@ -94,6 +101,8 @@ typedef struct xtn_t
 		} out;
 	} s; /* script/source handling */
 
+	int gbl_environ;
+	int gbl_procinfo;
 } xtn_t;
 
 typedef struct rxtn_t
@@ -288,6 +297,7 @@ static int custom_awk_sprintf (
 	return n;
 }
 
+static int add_globals (qse_awk_t* awk);
 static int add_functions (qse_awk_t* awk);
 
 qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
@@ -323,8 +333,9 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	xtn = (xtn_t*) QSE_XTN (awk);
 	QSE_MEMSET (xtn, 0, QSE_SIZEOF(xtn_t));
 
-	/* add intrinsic functions */
-	if (add_functions (awk) <= -1)
+	/* add intrinsic global variables and functions */
+	if (add_globals(awk) <= -1 ||
+	    add_functions (awk) <= -1)
 	{
 		qse_awk_close (awk);
 		return QSE_NULL;
@@ -1468,6 +1479,262 @@ static void fini_rxtn (qse_awk_rtx_t* rtx, void* ctx)
 	}
 }
 
+static int __build_environ (
+	qse_awk_rtx_t* rtx, int gbl_id, qse_env_char_t* envarr[])
+{
+	qse_awk_val_t* v_env;
+	qse_awk_val_t* v_tmp;
+
+	v_env = qse_awk_rtx_makemapval (rtx);
+	if (v_env == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (rtx, v_env);
+
+	if (envarr)
+	{
+		qse_env_char_t* eq;
+		qse_char_t* kptr, * vptr;
+		qse_size_t klen, count;
+
+		for (count = 0; envarr[count]; count++)
+		{
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+			eq = qse_strchr (envarr[count], QSE_T('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			kptr = envarr[count];
+			klen = eq - envarr[count];
+			vptr = eq + 1;
+		#elif defined(QSE_ENV_CHAR_IS_MCHAR)
+			eq = qse_mbschr (envarr[count], QSE_MT('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			*eq = QSE_MT('\0');
+
+			kptr = qse_mbstowcsdup (envarr[count], rtx->awk->mmgr); 
+			vptr = qse_mbstowcsdup (eq + 1, rtx->awk->mmgr);
+			if (kptr == QSE_NULL || vptr == QSE_NULL)
+			{
+				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				qse_awk_rtx_refdownval (rtx, v_env);
+
+				/* mbstowcsdup() may fail for invalid encoding.
+				 * so setting the error code to ENOMEM may not
+				 * be really accurate */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
+				return -1;
+			}			
+
+			klen = qse_wcslen (kptr);
+			*eq = QSE_MT('=');
+		#else
+			eq = qse_wcschr (envarr[count], QSE_WT('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			*eq = QSE_WT('\0');
+
+			kptr = qse_wcstombsdup (envarr[count], rtx->awk->mmgr); 
+			vptr = qse_wcstombsdup (eq + 1, rtx->awk->mmgr);
+			if (kptr == QSE_NULL || vptr == QSE_NULL)
+			{
+				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+				qse_awk_rtx_refdownval (rtx, v_env);
+
+				/* mbstowcsdup() may fail for invalid encoding.
+				 * so setting the error code to ENOMEM may not
+				 * be really accurate */
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}			
+
+			klen = qse_mbslen (kptr);
+			*eq = QSE_WT('=');
+		#endif
+
+			v_tmp = qse_awk_rtx_makestrval0 (rtx, vptr);
+			if (v_tmp == QSE_NULL)
+			{
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+				/* nothing to do */
+		#else
+				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
+				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+		#endif
+				qse_awk_rtx_refdownval (rtx, v_env);
+				return -1;
+			}
+
+
+			/* increment reference count of v_tmp in advance as if 
+			 * it has successfully been assigned into ARGV. */
+			qse_awk_rtx_refupval (rtx, v_tmp);
+
+			if (qse_htb_upsert (
+				((qse_awk_val_map_t*)v_env)->map,
+				kptr, klen, v_tmp, 0) == QSE_NULL)
+			{
+				/* if the assignment operation fails, decrements
+				 * the reference of v_tmp to free it */
+				qse_awk_rtx_refdownval (rtx, v_tmp);
+
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+				/* nothing to do */
+		#else
+				if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
+				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+		#endif
+
+				/* the values previously assigned into the
+				 * map will be freeed when v_env is freed */
+				qse_awk_rtx_refdownval (rtx, v_env);
+
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+				return -1;
+			}
+
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+				/* nothing to do */
+		#else
+			if (vptr) QSE_MMGR_FREE (rtx->awk->mmgr, vptr);
+			if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
+		#endif
+		}
+	}
+
+	if (qse_awk_rtx_setgbl (rtx, gbl_id, v_env) == -1)
+	{
+		qse_awk_rtx_refdownval (rtx, v_env);
+		return -1;
+	}
+
+	qse_awk_rtx_refdownval (rtx, v_env);
+	return 0;
+}
+
+static int build_environ (qse_awk_rtx_t* rtx, int gbl_id)
+{
+	qse_env_t env;
+	int xret;
+
+	if (qse_env_init (&env, rtx->awk->mmgr, 1) <= -1)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return -1;
+	}
+
+	xret = __build_environ (rtx, gbl_id, qse_env_getarr(&env));
+
+	qse_env_fini (&env);
+	return xret;
+}
+
+static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
+{
+	qse_awk_val_t* v_info;
+	qse_awk_val_t* v_tmp;
+	qse_size_t i;
+
+	static qse_cstr_t names[] =
+	{
+		{ QSE_T("pid"),    4 },
+		{ QSE_T("ppid"),   5 },
+		{ QSE_T("pgrp"),   4 },
+		{ QSE_T("uid"),    3 },
+		{ QSE_T("gid"),    3 },
+		{ QSE_T("euid"),   4 },
+		{ QSE_T("egid"),   4 }
+	};
+
+	v_info = qse_awk_rtx_makemapval (rtx);
+	if (v_info == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (rtx, v_info);
+
+	if (qse_awk_rtx_setgbl (rtx, gbl_id, v_info) == -1)
+	{
+		qse_awk_rtx_refdownval (rtx, v_info);
+		return -1;
+	}
+
+	for (i = 0; i < QSE_COUNTOF(names); i++)
+	{
+		qse_long_t val;
+
+
+		switch (i)
+		{
+			case 0: 
+				val = getpid();
+				break;
+	
+			case 1:
+				val = getppid();
+				break;
+
+			case 2:
+				val = getpgrp();
+				break;
+
+			case 3:
+				val = getuid();
+				break;
+
+			case 4:
+				val = getgid();
+				break;
+
+			case 5:
+				val = geteuid();
+				break;
+
+			case 6:
+				val = getegid();
+				break;
+		}
+
+		v_tmp = qse_awk_rtx_makeintval (rtx, val);
+		if (v_tmp == QSE_NULL)
+		{
+			qse_awk_rtx_refdownval (rtx, v_info);
+			return -1;
+		}
+
+		/* increment reference count of v_tmp in advance as if 
+		 * it has successfully been assigned into ARGV. */
+		qse_awk_rtx_refupval (rtx, v_tmp);
+
+		if (qse_htb_upsert (
+			((qse_awk_val_map_t*)v_info)->map,
+			names[i].ptr, names[i].len, v_tmp, 0) == QSE_NULL)
+		{
+			/* if the assignment operation fails, decrements
+			 * the reference of v_tmp to free it */
+			qse_awk_rtx_refdownval (rtx, v_tmp);
+
+			/* the values previously assigned into the
+			 * map will be freeed when v_env is freed */
+			qse_awk_rtx_refdownval (rtx, v_info);
+
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+			return -1;
+		}
+	}
+
+	qse_awk_rtx_refdownval (rtx, v_info);
+	return 0;
+}
+
+static int make_additional_globals (qse_awk_rtx_t* rtx, xtn_t* xtn)
+{
+	if (build_environ (rtx, xtn->gbl_environ) <= -1) return -1;
+	if (build_procinfo (rtx, xtn->gbl_procinfo) <= -1) return -1;
+	return 0;
+}
+
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*             awk,
 	qse_size_t             xtnsize,
@@ -1486,13 +1753,18 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_rtx_t* rtx;
 	qse_awk_rio_t rio;
 	rxtn_t* rxtn;
+	xtn_t* xtn;
 	qse_ntime_t now;
 
 	const qse_char_t*const* p;
+	qse_cstr_t* p2;
+
 	qse_size_t argc = 0;
 	qse_cstr_t argv[16];
-	qse_cstr_t* argvp = QSE_NULL, * p2;
-	
+	qse_cstr_t* argvp = QSE_NULL;
+
+	xtn = (xtn_t*)QSE_XTN (awk);
+
 	rio.pipe = awk_rio_pipe;
 	rio.file = awk_rio_file;
 	rio.console = awk_rio_console;
@@ -1597,6 +1869,13 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 			qse_awk_rtx_close (rtx);
 			return QSE_NULL;
 		}
+	}
+
+	if (make_additional_globals (rtx, xtn) <= -1)
+	{
+		awk->errinf = rtx->errinf; /* transfer error info */
+		qse_awk_rtx_close (rtx);
+		return QSE_NULL;
 	}
 
 	return rtx;
@@ -2014,7 +2293,7 @@ done:
 		/* the return value of -1 for an error may be confusing since 
 		 * a literal value of -1 can be returned for some attribute 
 		 * names */
-		if (rv == QSE_NULL) rv = qse_awk_rtx_makeintval (rtx, -1);;
+		if (rv == QSE_NULL) rv = qse_awk_val_negone;
 		qse_awk_rtx_setretval (rtx, rv);
 	}
 
@@ -2035,6 +2314,21 @@ qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	if (ioattr) return ioattr->cmgr;
 #endif
 	return QSE_NULL;
+}
+
+static int add_globals (qse_awk_t* awk)
+{
+	xtn_t* xtn;
+
+	xtn = (xtn_t*) QSE_XTN (awk);
+
+	xtn->gbl_environ = qse_awk_addgbl (awk,  QSE_T("ENVIRON"), 7);
+	if (xtn->gbl_environ <= -1) return -1;
+
+	xtn->gbl_procinfo = qse_awk_addgbl (awk,  QSE_T("PROCINFO"), 8);
+	if (xtn->gbl_procinfo <= -1) return -1;
+
+	return 0;
 }
 
 #define ADDFNC(awk,name,min,max,fnc,valid) \
