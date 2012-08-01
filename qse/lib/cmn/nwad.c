@@ -55,15 +55,15 @@ static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size
 	return if_nametoindex (tmp);
 }
 #else
-staitc QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
+static QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
 {
 	return 0U;
 }
-staitc QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
+static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
 {
 	return 0U;
 }
-#endif
+#endif /* HAVE_IF_NAMETOINDEX */
 
 #if defined(HAVE_IF_INDEXTONAME)
 static QSE_INLINE int ifindex_to_mbsn (unsigned int index, qse_mchar_t* buf, qse_size_t len)
@@ -96,10 +96,28 @@ static QSE_INLINE int ifindex_to_wcsn (unsigned int index, qse_wchar_t* buf, qse
 {
 	return 0;
 }
-#endif
+#endif /* HAVE_IF_INDEXTONAME */
 
-#endif
+#else /* HAVE_NET_IF_H */
 
+static QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
+{
+	return 0U;
+}
+static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
+{
+	return 0U;
+}
+
+static QSE_INLINE int ifindex_to_mbsn (unsigned int index, qse_mchar_t* buf, qse_size_t len)
+{
+	return 0;
+}
+static QSE_INLINE int ifindex_to_wcsn (unsigned int index, qse_wchar_t* buf, qse_size_t len)
+{
+	return 0;
+}
+#endif /* HAVE_NET_IF_H */
 
 int qse_mbstonwad (const qse_mchar_t* str, qse_nwad_t* nwad)
 {

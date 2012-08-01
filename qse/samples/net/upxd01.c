@@ -509,11 +509,15 @@ static qse_upxd_cbs_t upxd_cbs =
 
 
 /* ------------------------------------------------------------------- */
+
 typedef struct tr_t tr_t;
 struct tr_t
 {
+	unsigned int line;
 	qse_sio_t* sio;
 	qse_str_t* t;
+	unsigned int tl;
+	qse_char_t last;
 };
 
 tr_t* tr_open (const qse_char_t* name)
@@ -523,6 +527,9 @@ tr_t* tr_open (const qse_char_t* name)
 	tr = malloc (QSE_SIZEOF(*tr));
 	if (tr == QSE_NULL) return QSE_NULL;
 
+	memset (tr, 0, sizeof(*tr));
+	tr->line = 1;
+	
 	tr->sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, name, QSE_SIO_READ);
 	if (tr->sio == QSE_NULL) 
 	{
@@ -554,32 +561,56 @@ qse_char_t* tr_getnext (tr_t* tr)
 
 	qse_str_clear (tr->t);
 
-	while (1)
+	if (tr->last)
 	{
-		if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
-		if (c == QSE_CHAR_EOF) return QSE_NULL;
-		if (!QSE_ISSPACE(c)) 
+		tr->tl = tr->line;
+		if (qse_str_ccat (tr->t, tr->last) == (qse_ssize_t)-1) return QSE_NULL;
+		tr->last = 0;
+	}
+	else
+	{
+		/* skip spaces */
+		while (1)
+		{
+			if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
+			if (c == QSE_CHAR_EOF) return QSE_NULL;
+			if (c == QSE_T('\n')) tr->line++; 
+			if (!QSE_ISSPACE(c)) break;
+		}
+
+		tr->tl = tr->line;
+		
+		if (c == QSE_T(';') || c == QSE_T('{') || c == QSE_T('}')) 
 		{
 			if (qse_str_ccat (tr->t, c) == (qse_ssize_t)-1) return QSE_NULL;
-			break;
 		}
-	}
-
-	while (1)
-	{
-		if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
-		if (c == QSE_CHAR_EOF || QSE_ISSPACE(c)) break;
-
-		if (qse_str_ccat (tr->t, c) == (qse_ssize_t)-1) return QSE_NULL;
+		else
+		{
+			do
+			{
+				if (qse_str_ccat (tr->t, c) == (qse_ssize_t)-1) return QSE_NULL;
+				if (qse_sio_getc (tr->sio, &c) <= -1) return QSE_NULL;
+		
+				if (c == QSE_CHAR_EOF) break;
+				
+				if (c == QSE_T('\n'))  tr->line++; 
+				if (QSE_ISSPACE(c)) break;
+				else if (c == QSE_T(';') || c == QSE_T('{') || c == QSE_T('}')) 
+				{
+					tr->last = c;
+					break;
+				}
+			}
+			while (1);
+		}
 	}
 
 	return QSE_STR_PTR(tr->t);
 }
-
+ 
 /* ------------------------------------------------------------------- */
 
-#if 0
-struct svc_rule_t
+struct cfg_rule_t
 {
 	struct
 	{
@@ -597,48 +628,131 @@ struct svc_rule_t
 	} fwd;
 };
 
-struct svc_t
+typedef struct cfg_listen_t cfg_listen_t;
+struct cfg_listen_t
 {
 	qse_nwad_t nwad;
-	qse_char_t* dev;
+	qse_char_t dev[64];
+	cfg_rule_t* rule;
 };
-#endif
 
 typedef struct cfg_t cfg_t;
 struct cfg_t
 {
-	qse_nwad_t nwad;
+	cfg_listen_t* list;
 };
+
+cfg_t* cfg_open (void)
+{
+	cfg_t* cfg;
+	
+	cfg = malloc (QSE_SIZEOF(*cfg));
+	if (cfg == QSE_NULL) return QSE_NULL;
+	
+	return cfg;
+}
+
+void cfg_close (cfg_t*)
+{
+	free (cfg);
+}
+
+cfg_listen_t* cfg_addlisten (cfg_t* cfg, qse_nwad_t nwad, const qse_char_t* dev)
+{
+	cfg_listen_t* ptr;
+	
+	ptr = malloc (QSE_SIZEOF(*ptr));
+	if (ptr == QSE_NULL) return QSE_NULL;
+	
+	ptr->nwad = nwad;
+	qse_strxcpy (ptr->dev, QSE_COUNTOF(ptr->dev), dev);
+	ptr->rule = QSE_NULL;
+	
+	return ptr;
+} 
 
 static cfg_t* load_cfg (const qse_char_t* name)
 {
 	tr_t* tr;
+	const qse_char_t* t;
+	cfg_t* cfg;
+	cfg_listen_t cfglis;
+	qse_nwad_t nwad;
 
+	cfg = malloc (QSE_SIZEOF(*cfg));
+	if (cfg == QSE_NULL) return QSE_NULL;
+	
 	tr = tr_open (name);
-	if (tr == QSE_NULL) return QSE_NULL;
+	if (tr == QSE_NULL) goto oops;
 
 	do
 	{
 		t = tr_getnext(tr);
+		if (t == QSE_NULL) break;
+		
 		if (qse_strcmp (t, QSE_T("listen")) == 0)
 		{
-			nwad = tr_getnext (tr);	
-			dev = tr_getnext (tr);
-
-			tmp = tr_getnext (tr);
-			if (qse_strcmp (tmp, QSE_T("{")) != 0)
+			tmp = tr_getnext(tr);
+			if (tmp == QSE_NULL || qse_strtonwad (tmp, &nwad) <= -1)
 			{
+				qse_printf (QSE_T("line %u: ipaddr:port expected after 'listen'\n"), (unsigned int)tr->tl);
+				goto oops;
 			}
+			
+			tmp = tr_getnext (tr);
+			if (tmp == QSE_NULL)
+			{
+				qse_printf (QSE_T("line %u: 'dev' or { expected\n"), (unsigned int)tr->tl);
+				goto oops;
+			}
+			
+			if (qse_strcmp (tmp, QSE_T("dev")) == 0)
+			{
+				tmp = tr_getnext (tr);
+				if (tmp == QSE_NULL)
+				{
+					qse_printf (QSE_T("line %u: device name expected\n"), (unsigned int)tr->tl);
+					goto oops;
+				}
+				
+				if (cfg_addlisten (cfg, &nwad, tmp) <= -1)
+				{
+					qse_printf (QSE_T("line %u: failed to add a new service\n"), (unsigned int)tr->tl);
+					goto oops;
+				}
+				
+				tmp = tr_getnext (tr);
+				if (tmp == QSE_NULL)
+				{
+					qse_printf (QSE_T("line %u: { expected\n"), (unsigned int)tr->tl);
+					goto oops;
+				}
+			}
+			
+			if (qse_strcmp (tmp, QSE_T('{')) != 0)
+			{
+				qse_printf (QSE_T("line %u: { expected\n"), (unsigned int)tr->tl);
+				goto oops;
+			}
+
 
 			while (1)
 			{
-				from = tr_getnext (tr);
-				if (qse_strcmp (tmp, QSE_T("from")) != 0)
+				tmp = tr_getnext (tr);
+				if (tmp == QSE_NULL)
 				{
+					qse_printf (QSE_T("line %u: } expected\n"), (unsigned int)tr->tl);
+					goto oops;
 				}
 
-				src.nwad = tr_getnext (tr);
-				action = tr_getnext(tr);
+				if (qse_strcmp (tmp, QSE_T("}")) == 0) break;
+				
+				if (qse_strcmp (tmp, QSE_T("from")) != 0)
+				{
+					qse_printf (QSE_T("line %u: 'from' expected\n"), (unsigned int)tr->tl);
+				}
+
+				tmp = tr_getnext (tr);
 
 
 				if (qse_strcmp (action, QSE_T("drop")) == 0)
@@ -662,11 +776,19 @@ static cfg_t* load_cfg (const qse_char_t* name)
 			{
 			}
 		}
-		else break;
+		else 
+		{
+			qse_printf (QSE_T("line %u: 'listen' expected\n"), (unsigned int)tr->tl);
+			goto oops;
+		}
 	}
 	while (1);
 
-	tr_close (tr);
+	return cfg;
+	
+oops:
+	if (tr) tr_close (tr);
+	return QSE_NULL;
 }
 
 static void free_cfg (cfg_t* cfg)
