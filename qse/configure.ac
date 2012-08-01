@@ -106,7 +106,7 @@ AC_CHECK_FUNCS([utime utimes])
 AC_CHECK_FUNCS([sysconf])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
-AC_CHECK_FUNCS([fork vfork posix_spawn])
+AC_CHECK_FUNCS([fork vfork posix_spawn gettid])
 AC_CHECK_FUNCS([if_nametoindex if_indextoname])
 
 OLDLIBS="$LIBS"

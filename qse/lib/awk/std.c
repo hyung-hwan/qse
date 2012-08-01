@@ -37,6 +37,7 @@
 #include <math.h>
 
 #if defined(_WIN32)
+#	include <windows.h>
 #	include <tchar.h>
 #elif defined(__OS2__)
 	/* anything ? */
@@ -1640,13 +1641,14 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 
 	static qse_cstr_t names[] =
 	{
-		{ QSE_T("pid"),    4 },
+		{ QSE_T("pid"),    3 },
 		{ QSE_T("ppid"),   5 },
 		{ QSE_T("pgrp"),   4 },
 		{ QSE_T("uid"),    3 },
 		{ QSE_T("gid"),    3 },
 		{ QSE_T("euid"),   4 },
-		{ QSE_T("egid"),   4 }
+		{ QSE_T("egid"),   4 },
+		{ QSE_T("tid"),    3 }
 	};
 
 	v_info = qse_awk_rtx_makemapval (rtx);
@@ -1662,39 +1664,34 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 
 	for (i = 0; i < QSE_COUNTOF(names); i++)
 	{
-		qse_long_t val;
+		qse_long_t val = -99931; /* -99931 randomly chosen */
 
-
+#if defined(_WIN32)
 		switch (i)
 		{
-			case 0: 
-				val = getpid();
-				break;
-	
-			case 1:
-				val = getppid();
-				break;
-
-			case 2:
-				val = getpgrp();
-				break;
-
-			case 3:
-				val = getuid();
-				break;
-
-			case 4:
-				val = getgid();
-				break;
-
-			case 5:
-				val = geteuid();
-				break;
-
-			case 6:
-				val = getegid();
-				break;
+			case 0: val = GetCurrentProcessId(); break;
+			case 7: val = GetCurrentThreadId(); break;
 		}
+#elif defined(__OS2__)
+		/* TODO: */
+#elif defined(__DOS__)
+		/* TODO: */
+#else
+		switch (i)
+		{
+			case 0: val = getpid(); break;
+			case 1: val = getppid(); break;
+			case 2: val = getpgrp(); break;
+			case 3: val = getuid(); break;
+			case 4: val = getgid(); break;
+			case 5: val = geteuid(); break;
+			case 6: val = getegid(); break;
+		#if defined(HAVE_GETTID)
+			case 7: val = gettid(); break;
+		#endif
+		}
+#endif
+		if (val == -99931) continue;
 
 		v_tmp = qse_awk_rtx_makeintval (rtx, val);
 		if (v_tmp == QSE_NULL)
@@ -1709,7 +1706,7 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 
 		if (qse_htb_upsert (
 			((qse_awk_val_map_t*)v_info)->map,
-			names[i].ptr, names[i].len, v_tmp, 0) == QSE_NULL)
+			(void*)names[i].ptr, names[i].len, v_tmp, 0) == QSE_NULL)
 		{
 			/* if the assignment operation fails, decrements
 			 * the reference of v_tmp to free it */
