@@ -283,7 +283,7 @@ static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
 	count[what]++;
 
 	xret = select (&nwio->handle, count[0], count[1], 0, tmout);
-	if (xret == -1)
+	if (xret <= -1)
 	{	
 		nwio->errnum = syserr_to_errnum (sock_errno());
 		return -1;
@@ -472,13 +472,11 @@ int qse_nwio_init (
 		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
 		{
 			unsigned long cmd = 0;
-			int wsaerr;
 			
-			wsaerr = WSAGetLastError ();
-			if (ioctlsocket (nwio->handle, FIONBIO, &cmd) == SOCKET_ERROR ||
-			    (xret == SOCKET_ERROR && wsaerr != WSAEWOULDBLOCK))
+			if ((xret == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK) ||
+			    ioctlsocket (nwio->handle, FIONBIO, &cmd) == SOCKET_ERROR)
 			{
-				nwio->errnum = syserr_to_errnum (wsaerr);
+				nwio->errnum = syserr_to_errnum (WSAGetLastError());
 				goto oops;
 			}
 
@@ -488,7 +486,7 @@ int qse_nwio_init (
 				int xlen;
 				DWORD xerr;
 
-				xlen = QSE_SIZEOF(xret);
+				xlen = QSE_SIZEOF(xerr);
 				if (getsockopt (nwio->handle, SOL_SOCKET, SO_ERROR, (char*)&xerr, &xlen) == SOCKET_ERROR)
 				{
 					nwio->errnum = syserr_to_errnum (WSAGetLastError());
@@ -569,10 +567,57 @@ int qse_nwio_init (
 	}
 	else
 	{
-		if (connect (nwio->handle, (struct sockaddr*)&addr, addrlen) <= -1)
+		int xret;
+
+		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
 		{
-			nwio->errnum = syserr_to_errnum (sock_errno());
-			goto oops;
+			int noblk = 1;
+
+			if (ioctl (nwio->handle, FIONBIO, &noblk, QSE_SIZEOF(noblk)) <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (sock_errno());
+				goto oops;
+			}
+		}
+
+		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
+
+		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		{
+			int noblk = 0;
+			
+			if ((xret <= -1 && sock_errno() != SOCEWOULDBLOCK) ||
+			    ioctl (nwio->handle, FIONBIO, &noblk, QSE_SIZEOF(noblk)) <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (sock_errno());
+				goto oops;
+			}
+
+			if (wait_for_data (nwio, nwio->tmout.c, 1) <= -1) goto oops;
+			else 
+			{
+				int xlen, xerr;
+
+				xlen = QSE_SIZEOF(xerr);
+				if (getsockopt (nwio->handle, SOL_SOCKET, SO_ERROR, (char*)&xerr, &xlen) <= -1)
+				{
+					nwio->errnum = syserr_to_errnum (sock_errno());
+					goto oops;
+				}
+				else if (xerr != 0)
+				{
+					nwio->errnum = syserr_to_errnum (xerr);
+					goto oops;
+				}
+			}
+		}
+		else
+		{
+			if (xret <= -1)
+			{
+				nwio->errnum = syserr_to_errnum (sock_errno());
+				goto oops;
+			}
 		}
 	}
 
