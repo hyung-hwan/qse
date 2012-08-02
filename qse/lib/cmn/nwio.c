@@ -30,6 +30,8 @@
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+#	include <tcpustd.h>
+#	include <sys/ioctl.h>
 #	include <nerrno.h>
 #	pragma library("tcpip32.lib")
 #elif defined(__DOS__)
@@ -282,7 +284,7 @@ static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
 	
 	count[what]++;
 
-	xret = select (&nwio->handle, count[0], count[1], 0, tmout);
+	xret = os2_select (&nwio->handle, count[0], count[1], 0, tmout);
 	if (xret <= -1)
 	{	
 		nwio->errnum = syserr_to_errnum (sock_errno());
@@ -586,7 +588,7 @@ int qse_nwio_init (
 		{
 			int noblk = 0;
 			
-			if ((xret <= -1 && sock_errno() != SOCEWOULDBLOCK) ||
+			if ((xret <= -1 && sock_errno() != SOCEINPROGRESS) ||
 			    ioctl (nwio->handle, FIONBIO, &noblk, QSE_SIZEOF(noblk)) <= -1)
 			{
 				nwio->errnum = syserr_to_errnum (sock_errno());

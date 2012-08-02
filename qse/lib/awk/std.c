@@ -40,7 +40,9 @@
 #	include <windows.h>
 #	include <tchar.h>
 #elif defined(__OS2__)
-	/* anything ? */
+#	define INCL_DOSPROCESS
+#	define INCL_DOSERRORS
+#    include <os2.h>
 #elif defined(__DOS__)
 	/* anything ? */
 #else
@@ -1639,6 +1641,11 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 	qse_awk_val_t* v_tmp;
 	qse_size_t i;
 
+#if defined(__OS2__)
+	PTIB tib;
+	PPIB pib;
+#endif
+
 	static qse_cstr_t names[] =
 	{
 		{ QSE_T("pid"),    3 },
@@ -1662,6 +1669,14 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 		return -1;
 	}
 
+#if defined(__OS2__)
+	if (DosGetInfoBlocks (&tib, &pib) != NO_ERROR)
+	{
+		tib = QSE_NULL;
+		pib = QSE_NULL;
+	}
+#endif
+
 	for (i = 0; i < QSE_COUNTOF(names); i++)
 	{
 		qse_long_t val = -99931; /* -99931 randomly chosen */
@@ -1673,7 +1688,11 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 			case 7: val = GetCurrentThreadId(); break;
 		}
 #elif defined(__OS2__)
-		/* TODO: */
+		switch (i)
+		{
+			case 0: if (pib) val = pib->pib_ulpid; break;
+			case 7: if (tib && tib->tib_ptib2) val = tib->tib_ptib2->tib2_ultid; break;
+		}
 #elif defined(__DOS__)
 		/* TODO: */
 #else
