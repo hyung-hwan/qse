@@ -35,7 +35,7 @@ Embedding an interpreter typically involves the following steps.
 - open a new interpreter
 - parse in a source script
 - open a new runtime context
-- execute BEGIN,pattern-action,END blocks or call a function
+- execute pattern-action blocks or call a function
 - close the runtime context
 - close the interpter
 
@@ -76,7 +76,7 @@ int main ()
      );
      if (!rtx) FAIL (qse_awk_geterrmsg(awk));
 
-     /* exeucte BEGIN,pattern-action,END blocks */
+     /* exeucte pattern-action blocks */
      retv = qse_awk_rtx_loop (rtx);
      if (!retv) FAIL (qse_awk_rtx_geterrmsg(rtx));
 
@@ -125,7 +125,7 @@ int main (int argc, char* argv[])
 	MyAwk::SourceString in(QSE_T("BEGIN { print \"hello, world\" }"));
 	if (awk.parse (in, MyAwk::Source::NONE) == QSE_NULL) FAIL (awk);
 
-	// execute BEGIN, pattern-action, END blocks.
+	// execute pattern-action blocks.
 	MyAwk::Value r;
 	if (awk.loop (&r) <= -1) FAIL (awk);
 
@@ -179,13 +179,53 @@ QSEAWK implements the language described in the book
 <a class="el" href="http://cm.bell-labs.com/cm/cs/awkbook/"> 
 The AWK Proramming Language</a> with various @ref awk_ext "extensions".
 
-- BEGIN block
-- END block
-- Pattern-action block
-- User-defined functions
-- Expressions
-- Statements
-- Streams
+An AWK program, at the top level, can composed of the following elements shown below. Each language element requires the option in the second column to be on. 
+
+<table>
+<tr><th>Element                    </th><th>Option             </th></tr>
+<tr><td>Global variable declaration</td><td>#QSE_AWK_EXPLICIT  </td></tr>
+<tr><td>Pattern-action block       </td><td>#QSE_AWK_PABLOCK   </td></tr>
+<tr><td>User-defined function      </td><td>                   </td></tr>
+<tr><td>\@include                  </td><td>#QSE_AWK_INCLUDE   </td></tr>
+</table>
+
+- pattern-action-block := pattern action-block
+- pattern := BEGIN | END | expression | expression-range
+- expression-range := expression , expression
+
+A pattern in a pattern action block can be omitted.
+The action part can be omitted if the pattern is not BEGIN nor END.
+
+A pattern-action block, and a user-defined function can have the following elements.
+
+<table>
+<tr><th>Element                    </th><th>Option            </th></tr>
+<tr><td>Local variable declaration</td><td>#QSE_AWK_EXPLICIT  </td></tr>
+<tr><td>Statement                 </td><td>                   </td></tr>
+<tr><td>getline                   </td><td>#QSE_AWK_RIO       </td></tr>
+<tr><td>print                     </td><td>#QSE_AWK_RIO       </td></tr>
+<tr><td>nextofile                 </td><td>#QSE_AWK_NEXTOFILE </td></tr>
+<tr><td>reset                     </td><td>#QSE_AWK_RESET     </td></tr>
+</table>
+
+
+AWK has the following statement constructs.
+- if
+- while
+- for
+- do .. while
+- break
+- continue
+- return
+- exit
+- next
+- nextfile
+- nextofile
+- delete
+- reset
+- print
+- printf
+- expression
 
 @section awk_ext AWK LANGUAGE EXTENSIONS
 Some language extensions are implemented and those can be enabled by setting 
@@ -299,9 +339,7 @@ BEGIN {
 @endcode
 
 @subsection awk_ext_return RETURN
-The return statement is valid in BEGIN blocks, END blocks, and pattern-action 
-blocks as well as in functions. The execution of a calling block is aborted
-once the return statement is executed.
+The return statement is valid in pattern-action blocks as well as in functions. The execution of a calling block is aborted once the return statement is executed.
 
 If #QSE_AWK_MAPTOVAR is on, you can return an arrayed value from a function.
 @code
