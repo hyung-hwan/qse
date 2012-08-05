@@ -104,6 +104,8 @@ typedef struct xtn_t
 		} out;
 	} s; /* script/source handling */
 
+	int gbl_argc;
+	int gbl_argv;
 	int gbl_environ;
 	int gbl_procinfo;
 } xtn_t;
@@ -1179,6 +1181,8 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 
 	if (riod->mode == QSE_AWK_RIO_CONSOLE_READ)
 	{
+		xtn_t* xtn = (xtn_t*)QSE_XTN (rtx->awk);
+
 		if (rxtn->c.in.files == QSE_NULL)
 		{
 			/* if no input files is specified, 
@@ -1254,7 +1258,7 @@ static int open_rio_console (qse_awk_rtx_t* rtx, qse_awk_rio_arg_t* riod)
 			 * 'BEGIN { ARGV[1]="file3"; } 
 			 *        { print $0; }' file1 file2
 			 */
-			argv = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_ARGV);
+			argv = qse_awk_rtx_getgbl (rtx, xtn->gbl_argv);
 			QSE_ASSERT (argv != QSE_NULL);
 			QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
 
@@ -1480,6 +1484,112 @@ static void fini_rxtn (qse_awk_rtx_t* rtx, void* ctx)
 		qse_htb_fini (&rxtn->cmgrtab);
 		rxtn->cmgrtab_inited = 0;
 	}
+}
+
+static int build_argcv (
+	qse_awk_rtx_t* rtx, int argc_id, int argv_id, 
+	const qse_char_t* id, const qse_char_t*const icf[])
+{
+	const qse_char_t*const* p;
+	qse_size_t argc;
+	qse_awk_val_t* v_argc;
+	qse_awk_val_t* v_argv;
+	qse_awk_val_t* v_tmp;
+	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
+	qse_size_t key_len;
+
+	v_argv = qse_awk_rtx_makemapval (rtx);
+	if (v_argv == QSE_NULL) return -1;
+
+	qse_awk_rtx_refupval (rtx, v_argv);
+
+	/* make ARGV[0] */
+	v_tmp = qse_awk_rtx_makestrval0 (rtx, id);
+	if (v_tmp == QSE_NULL) 
+	{
+		qse_awk_rtx_refdownval (rtx, v_argv);
+		return -1;
+	}
+
+	/* increment reference count of v_tmp in advance as if 
+	 * it has successfully been assigned into ARGV. */
+	qse_awk_rtx_refupval (rtx, v_tmp);
+
+	key_len = qse_strxcpy (key, QSE_COUNTOF(key), QSE_T("0"));
+	if (qse_htb_upsert (
+		((qse_awk_val_map_t*)v_argv)->map,
+		key, key_len, v_tmp, 0) == QSE_NULL)
+	{
+		/* if the assignment operation fails, decrements
+		 * the reference of v_tmp to free it */
+		qse_awk_rtx_refdownval (rtx, v_tmp);
+
+		/* the values previously assigned into the
+		 * map will be freeed when v_argv is freed */
+		qse_awk_rtx_refdownval (rtx, v_argv);
+
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
+		return -1;
+	}
+
+	if (icf)
+	{
+		for (argc = 1, p = icf; *p; p++, argc++) 
+		{
+			v_tmp = qse_awk_rtx_makestrval0 (rtx, *p);
+			if (v_tmp == QSE_NULL)
+			{
+				qse_awk_rtx_refdownval (rtx, v_argv);
+				return -1;
+			}
+
+			key_len = qse_awk_longtostr (
+				rtx->awk, argc, 10,
+				QSE_NULL, key, QSE_COUNTOF(key));
+			QSE_ASSERT (key_len != (qse_size_t)-1);
+
+			qse_awk_rtx_refupval (rtx, v_tmp);
+
+			if (qse_htb_upsert (
+				((qse_awk_val_map_t*)v_argv)->map,
+				key, key_len, v_tmp, 0) == QSE_NULL)
+			{
+				qse_awk_rtx_refdownval (rtx, v_tmp);
+				qse_awk_rtx_refdownval (rtx, v_argv);
+				qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL); 
+				return -1;
+			}
+		}
+	}
+	else argc = 1;
+
+	v_argc = qse_awk_rtx_makeintval (rtx, (qse_long_t)argc);
+	if (v_argc == QSE_NULL)
+	{
+		qse_awk_rtx_refdownval (rtx, v_argv);
+		return -1;
+	}
+
+	qse_awk_rtx_refupval (rtx, v_argc);
+
+	if (qse_awk_rtx_setgbl (rtx, argc_id, v_argc) <= -1)
+	{
+		qse_awk_rtx_refdownval (rtx, v_argc);
+		qse_awk_rtx_refdownval (rtx, v_argv);
+		return -1;
+	}
+
+	if (qse_awk_rtx_setgbl (rtx, argv_id, v_argv) <= -1)
+	{
+		qse_awk_rtx_refdownval (rtx, v_argc);
+		qse_awk_rtx_refdownval (rtx, v_argv);
+		return -1;
+	}
+
+	qse_awk_rtx_refdownval (rtx, v_argc);
+	qse_awk_rtx_refdownval (rtx, v_argv);
+
+	return 0;
 }
 
 static int __build_environ (
@@ -1744,10 +1854,14 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 	return 0;
 }
 
-static int make_additional_globals (qse_awk_rtx_t* rtx, xtn_t* xtn)
+static int make_additional_globals (
+	qse_awk_rtx_t* rtx, xtn_t* xtn, 
+	const qse_char_t* id, const qse_char_t*const icf[])
 {
-	if (build_environ (rtx, xtn->gbl_environ) <= -1) return -1;
-	if (build_procinfo (rtx, xtn->gbl_procinfo) <= -1) return -1;
+	if (build_argcv (rtx, xtn->gbl_argc, xtn->gbl_argv, id, icf) <= -1 ||
+	    build_environ (rtx, xtn->gbl_environ) <= -1 ||
+	    build_procinfo (rtx, xtn->gbl_procinfo) <= -1) return -1;
+
 	return 0;
 }
 
@@ -1772,65 +1886,18 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	xtn_t* xtn;
 	qse_ntime_t now;
 
-	const qse_char_t*const* p;
-	qse_cstr_t* p2;
-
-	qse_size_t argc = 0;
-	qse_cstr_t argv[16];
-	qse_cstr_t* argvp = QSE_NULL;
-
 	xtn = (xtn_t*)QSE_XTN (awk);
 
 	rio.pipe = awk_rio_pipe;
 	rio.file = awk_rio_file;
 	rio.console = awk_rio_console;
 
-	if (icf)
-	{
-		for (p = icf; *p != QSE_NULL; p++);
-		argc = p - icf;
-	}
-
-	argc++; /* for id */
-
-	if (argc < QSE_COUNTOF(argv)) argvp = argv;
-	else
-	{
-		argvp = QSE_AWK_ALLOC (
-			awk, QSE_SIZEOF(*argvp) * (argc + 1));
-		if (argvp == QSE_NULL)
-		{
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			return QSE_NULL;
-		}
-	}
-
-	p2 = argvp;
-
-	p2->ptr = id;
-	p2->len = qse_strlen(id);
-	p2++;
-	
-	if (icf)
-	{
-		for (p = icf; *p; p++, p2++) 
-		{
-			p2->ptr = *p;
-			p2->len = qse_strlen(*p);
-		}
-	}
-
-	p2->ptr = QSE_NULL;
-	p2->len = 0;
-
 	rtx = qse_awk_rtx_open (
 		awk, 
 		QSE_SIZEOF(rxtn_t) + xtnsize,
-		&rio,
-		argvp
+		&rio
 	);
 
-	if (argvp && argvp != argv) QSE_AWK_FREE (awk, argvp);
 	if (rtx == QSE_NULL) return QSE_NULL;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -1887,7 +1954,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 		}
 	}
 
-	if (make_additional_globals (rtx, xtn) <= -1)
+	if (make_additional_globals (rtx, xtn, id, icf) <= -1)
 	{
 		awk->errinf = rtx->errinf; /* transfer error info */
 		qse_awk_rtx_close (rtx);
@@ -2338,11 +2405,13 @@ static int add_globals (qse_awk_t* awk)
 
 	xtn = (xtn_t*) QSE_XTN (awk);
 
+	xtn->gbl_argc = qse_awk_addgbl (awk, QSE_T("ARGC"), 4);
+	xtn->gbl_argv = qse_awk_addgbl (awk, QSE_T("ARGV"), 4);
 	xtn->gbl_environ = qse_awk_addgbl (awk,  QSE_T("ENVIRON"), 7);
-	if (xtn->gbl_environ <= -1) return -1;
-
 	xtn->gbl_procinfo = qse_awk_addgbl (awk,  QSE_T("PROCINFO"), 8);
-	if (xtn->gbl_procinfo <= -1) return -1;
+
+	if (xtn->gbl_argc <= -1 || xtn->gbl_argv <= -1 ||
+	    xtn->gbl_environ <= -1 || xtn->gbl_procinfo <= -1) return -1;
 
 	return 0;
 }

@@ -71,11 +71,10 @@
  * qse_awk_rtx_t* rtx;
  * qse_awk_sio_t sio; // need to initialize it with callback functions
  * qse_awk_rio_t rio; // need to initialize it with callback functions
- * qse_cstr_t args[5]; // need to initialize it with strings
  *
  * awk = qse_awk_open (mmgr, 0, prm); // create an interpreter 
  * qse_awk_parse (awk, &sio);          // parse a script 
- * rtx = qse_awk_rtx_open (awk, 0, &rio, args); // create a runtime context 
+ * rtx = qse_awk_rtx_open (awk, 0, &rio); // create a runtime context 
  * retv = qse_awk_rtx_loop (rtx);     // run a standard AWK loop 
  * if (retv != QSE_NULL) 
  *    qse_awk_rtx_refdownval (rtx, retv); // free return value
@@ -1029,10 +1028,15 @@ enum qse_awk_gbl_id_t
 {
 	/* this table should match gtab in parse.c.
 	 * in addition, qse_awk_rtx_setgbl also counts 
-	 * on the order of these values */
+	 * on the order of these values.
+	 * 
+	 * note that set_global() in run.c contains code 
+	 * preventing these global variables from being assigned
+	 * with a map value. if you happen to add one that can 
+	 * be a map, don't forget to change code in set_global().
+	 * but is this check really necessary???
+	 */
 
-	QSE_AWK_GBL_ARGC,
-	QSE_AWK_GBL_ARGV,
 	QSE_AWK_GBL_CONVFMT,
 	QSE_AWK_GBL_FILENAME,
 	QSE_AWK_GBL_FNR,
@@ -1052,7 +1056,7 @@ enum qse_awk_gbl_id_t
 	/* these are not not the actual IDs and are used internally only 
 	 * Make sure you update these values properly if you add more 
 	 * ID definitions, however */
-	QSE_AWK_MIN_GBL_ID = QSE_AWK_GBL_ARGC,
+	QSE_AWK_MIN_GBL_ID = QSE_AWK_GBL_CONVFMT,
 	QSE_AWK_MAX_GBL_ID = QSE_AWK_GBL_SUBSEP
 };
 typedef enum qse_awk_gbl_id_t qse_awk_gbl_id_t;
@@ -1559,17 +1563,14 @@ qse_size_t qse_awk_longtostr (
  * It also allocates an extra memory block as large as the @a xtn bytes.
  * You can get the pointer to the beginning of the block with 
  * qse_awk_rtx_getxtn(). The block is destroyed when the runtime context is
- * destroyed. The argument array @a arg, if not #QSE_NULL, is used to set 
- * @b ARGV. The @b ptr field and the @b len field of the last member of 
- * this array must be set to #QSE_NULL and 0 respectively.
+ * destroyed. 
  *
  * @return new runtime context on success, #QSE_NULL on failure
  */
 qse_awk_rtx_t* qse_awk_rtx_open (
 	qse_awk_t*        awk, /**< awk */
 	qse_size_t        xtn, /**< size of extension in bytes */
-	qse_awk_rio_t*    rio, /**< runtime IO handlers */
-	const qse_cstr_t* arg /**< argument array to set ARGV */
+	qse_awk_rio_t*    rio  /**< runtime IO handlers */
 );
 
 /**
