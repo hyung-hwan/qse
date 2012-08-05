@@ -284,9 +284,6 @@ struct global_t
 
 static global_t gtab[] =
 {
-	{ QSE_T("ARGC"),         4,  0 },
-	{ QSE_T("ARGV"),         4,  0 },
-
 	/* output real-to-str conversion format for other cases than 'print' */
 	{ QSE_T("CONVFMT"),      7,  0 },
 

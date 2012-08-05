@@ -101,7 +101,7 @@ static qse_size_t push_arg_from_vals (
 static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio);
 static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals);
 
-static int init_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* arg);
+static int init_globals (qse_awk_rtx_t* rtx);
 static void refdown_globals (qse_awk_rtx_t* run, int pop);
 
 static int run_pblocks  (qse_awk_rtx_t* rtx);
@@ -326,10 +326,12 @@ static int set_global (
 		return -1;
 	}
 
-	/* builtin variables except ARGV cannot be assigned a map */
-	if (val->type == QSE_AWK_VAL_MAP &&
-	    (idx >= QSE_AWK_GBL_ARGC && idx <= QSE_AWK_GBL_SUBSEP) &&
-	    idx != QSE_AWK_GBL_ARGV)
+	/* all the basic builtin variables cannot be assigned a map.
+	 * if you happen to add one and if that's allowed to be a map,
+	 * you may have to change the condition here. 
+	 * but is this check really necessary??? */
+	if (val->type == QSE_AWK_VAL_MAP && 
+	    idx >= QSE_AWK_MIN_GBL_ID && idx <= QSE_AWK_MAX_GBL_ID)
 	{
 		/* TODO: better error code */
 		SETERR_COD (rtx, QSE_AWK_ESCALARTOMAP);
@@ -686,8 +688,7 @@ qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 }
 
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t* awk, qse_size_t xtn,
-	qse_awk_rio_t* rio, const qse_cstr_t* arg)
+	qse_awk_t* awk, qse_size_t xtn, qse_awk_rio_t* rio)
 {
 	qse_awk_rtx_t* rtx;
 
@@ -726,7 +727,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 		return QSE_NULL;
 	}
 
-	if (init_globals (rtx, arg) <= -1)
+	if (init_globals (rtx) <= -1)
 	{
 		awk->errinf = rtx->errinf; /* transfer error info */
 		fini_rtx (rtx, 0);
@@ -1078,101 +1079,6 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	rtx->vmgr.rchunk = QSE_NULL;
 }
 
-static int build_runarg (
-	qse_awk_rtx_t* rtx, const qse_cstr_t* runarg, qse_size_t* nargs)
-{
-	const qse_cstr_t* p;
-	qse_size_t argc;
-	qse_awk_val_t* v_argc;
-	qse_awk_val_t* v_argv;
-	qse_awk_val_t* v_tmp;
-	qse_char_t key[QSE_SIZEOF(qse_long_t)*8+2];
-	qse_size_t key_len;
-
-	v_argv = qse_awk_rtx_makemapval (rtx);
-	if (v_argv == QSE_NULL) return -1;
-
-	qse_awk_rtx_refupval (rtx, v_argv);
-
-	if (runarg)
-	{
-		for (argc = 0, p = runarg; p->ptr != QSE_NULL; argc++, p++)
-		{
-			v_tmp = qse_awk_rtx_makestrval (rtx, p->ptr, p->len);
-			if (v_tmp == QSE_NULL)
-			{
-				qse_awk_rtx_refdownval (rtx, v_argv);
-				return -1;
-			}
-
-			key_len = qse_awk_longtostr (
-				rtx->awk, argc, 10,
-				QSE_NULL, key, QSE_COUNTOF(key));
-			QSE_ASSERT (key_len != (qse_size_t)-1);
-
-			/* increment reference count of v_tmp in advance as if 
-			 * it has successfully been assigned into ARGV. */
-			qse_awk_rtx_refupval (rtx, v_tmp);
-
-			if (qse_htb_upsert (
-				((qse_awk_val_map_t*)v_argv)->map,
-				key, key_len, v_tmp, 0) == QSE_NULL)
-			{
-				/* if the assignment operation fails, decrements
-				 * the reference of v_tmp to free it */
-				qse_awk_rtx_refdownval (rtx, v_tmp);
-
-				/* the values previously assigned into the
-				 * map will be freeed when v_argv is freed */
-				qse_awk_rtx_refdownval (rtx, v_argv);
-
-				SETERR_COD (rtx, QSE_AWK_ENOMEM);
-				return -1;
-			}
-		}
-	}
-	else argc = 0;
-
-	v_argc = qse_awk_rtx_makeintval (rtx, (qse_long_t)argc);
-	if (v_argc == QSE_NULL)
-	{
-		qse_awk_rtx_refdownval (rtx, v_argv);
-		return -1;
-	}
-
-	qse_awk_rtx_refupval (rtx, v_argc);
-
-	QSE_ASSERT (
-		STACK_GBL(rtx,QSE_AWK_GBL_ARGC) == qse_awk_val_nil);
-
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_ARGC, v_argc) == -1)
-	{
-		qse_awk_rtx_refdownval (rtx, v_argc);
-		qse_awk_rtx_refdownval (rtx, v_argv);
-		return -1;
-	}
-
-	if (qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_ARGV, v_argv) == -1)
-	{
-		/* ARGC is assigned nil when ARGV assignment has failed.
-		 * However, this requires preconditions, as follows:
-		 *  1. build_runarg should be called in a proper place
-		 *     as it is not a generic-purpose routine.
-		 *  2. ARGC should be nil before build_runarg is called 
-		 * If the restoration fails, nothing can salvage it. */
-		qse_awk_rtx_setgbl (rtx, QSE_AWK_GBL_ARGC, qse_awk_val_nil);
-		qse_awk_rtx_refdownval (rtx, v_argc);
-		qse_awk_rtx_refdownval (rtx, v_argv);
-		return -1;
-	}
-
-	qse_awk_rtx_refdownval (rtx, v_argc);
-	qse_awk_rtx_refdownval (rtx, v_argv);
-
-	*nargs = argc;
-	return 0;
-}
-
 static int update_fnr (qse_awk_rtx_t* rtx, qse_long_t fnr, qse_long_t nr)
 {
 	qse_awk_val_t* tmp1, * tmp2;
@@ -1217,13 +1123,11 @@ static int update_fnr (qse_awk_rtx_t* rtx, qse_long_t fnr, qse_long_t nr)
 /* 
  * create global variables into the runtime stack
  * each variable is initialized to nil or zero.
- * ARGC and ARGV are built in this function
  */
-static int prepare_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* runarg)
+static int prepare_globals (qse_awk_rtx_t* rtx)
 {
 	qse_size_t saved_stack_top;
 	qse_size_t ngbls;
-	qse_size_t nrunargs;
 
 	saved_stack_top = rtx->stack_top;
 	ngbls = rtx->awk->tree.ngbls;
@@ -1243,9 +1147,6 @@ static int prepare_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* runarg)
 	if (qse_awk_rtx_setgbl (
 		rtx, QSE_AWK_GBL_NF, qse_awk_val_zero) <= -1) goto oops;
 
-	/* override ARGC and ARGV if necessary */
-	if (runarg && build_runarg (rtx, runarg, &nrunargs) <= -1) goto oops;
-	
 	/* return success */
 	return 0;
 
@@ -1337,13 +1238,13 @@ static void refdown_globals (qse_awk_rtx_t* run, int pop)
 	}
 }
 
-static int init_globals (qse_awk_rtx_t* rtx, const qse_cstr_t* arg)
+static int init_globals (qse_awk_rtx_t* rtx)
 {
 	/* the stack must be clean when this function is invoked */
 	QSE_ASSERTX (rtx->stack_base == 0, "stack not clean");
 	QSE_ASSERTX (rtx->stack_top == 0, "stack not clean");
 
-	if (prepare_globals (rtx, arg) == -1) return -1;
+	if (prepare_globals (rtx) == -1) return -1;
 	if (update_fnr (rtx, 0, 0) == -1) goto oops;
 	if (defaultify_globals (rtx) == -1) goto oops;
 	return 0;
