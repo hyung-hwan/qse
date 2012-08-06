@@ -2416,18 +2416,13 @@ static int add_globals (qse_awk_t* awk)
 	return 0;
 }
 
-#define ADDFNC(awk,name,min,max,fnc,valid) \
-        if (qse_awk_addfnc (\
-		(awk), (name), qse_strlen(name), \
-		valid, (min), (max), QSE_NULL, (fnc)) == QSE_NULL) return -1;
-
 static int add_functions (qse_awk_t* awk)
 {
-	ADDFNC (awk, QSE_T("rand"),      0, 0, fnc_rand,      0);
-	ADDFNC (awk, QSE_T("srand"),     0, 1, fnc_srand,     0);
-	ADDFNC (awk, QSE_T("system"),    1, 1, fnc_system,    0);
-	ADDFNC (awk, QSE_T("time"),      0, 0, fnc_time,      0);
-	ADDFNC (awk, QSE_T("setioattr"), 3, 3, fnc_setioattr, QSE_AWK_RIO);
-	ADDFNC (awk, QSE_T("getioattr"), 2, 2, fnc_getioattr, QSE_AWK_RIO);
+	if (qse_awk_addfnc (awk, QSE_T("rand"),      4, 0,           0, 0, QSE_NULL, fnc_rand) <= -1 ||
+	    qse_awk_addfnc (awk, QSE_T("srand"),     5, 0,           0, 1, QSE_NULL, fnc_srand) <= -1 ||
+	    qse_awk_addfnc (awk, QSE_T("system"),    6, 0,           1, 1, QSE_NULL, fnc_system) <= -1 ||
+	    qse_awk_addfnc (awk, QSE_T("time"),      4, 0,           0, 0, QSE_NULL, fnc_time) <= -1 ||
+	    qse_awk_addfnc (awk, QSE_T("setioattr"), 9, QSE_AWK_RIO, 3, 3, QSE_NULL, fnc_setioattr) <= -1 ||
+	    qse_awk_addfnc (awk, QSE_T("getioattr"), 9, QSE_AWK_RIO, 2, 2, QSE_NULL, fnc_getioattr) <= -1) return -1;
 	return 0;
 }

@@ -96,14 +96,29 @@ int StdAwk::open ()
 	int n = Awk::open ();
 	if (n == -1) return n;
 
-	ADDFNC (QSE_T("rand"),       0, 0, &StdAwk::rand,     0);
-	ADDFNC (QSE_T("srand"),      0, 1, &StdAwk::srand,    0);
-	ADDFNC (QSE_T("system"),     1, 1, &StdAwk::system,   0);
+	this->gbl_argc = addGlobal (QSE_T("ARGC"));
+	this->gbl_argv = addGlobal (QSE_T("ARGV"));
+	this->gbl_environ = addGlobal (QSE_T("ENVIRON"));
+	this->gbl_procinfo = addGlobal (QSE_T("PROCINFO"));
+	if (this->gbl_argc <= -1 ||
+	    this->gbl_argv <= -1 ||
+	    this->gbl_environ <= -1 ||
+	    this->gbl_procinfo <= -1) 
+	{
+		Awk::close ();
+		return -1;
+	}
 
-#if defined(QSE_CHAR_IS_WCHAR)
-	ADDFNC (QSE_T("setenc"),     2, 2, &StdAwk::setenc,   QSE_AWK_RIO);
-	ADDFNC (QSE_T("unsetenc"),   1, 1, &StdAwk::unsetenc, QSE_AWK_RIO);
-#endif
+	if (addFunction (QSE_T("rand"),       0, 0, (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
+	    addFunction (QSE_T("srand"),      0, 1, (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
+	    addFunction (QSE_T("system"),     1, 1, (FunctionHandler)&StdAwk::system,    0) <= -1 ||
+	    addFunction (QSE_T("time"),       1, 1, (FunctionHandler)&StdAwk::time,      0) <= -1 ||
+	    addFunction (QSE_T("setioattr"),  3, 3, (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
+	    addFunction (QSE_T("getioattr"),  2, 2, (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
+	{
+		Awk::close ();
+		return -1;
+	}
 
 	qse_ntime_t now;
 
@@ -197,7 +212,7 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 	size_t l;
 	const char_t* ptr = args[0].toStr(&l);
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	return ret.setInt ((long_t)::_tsystem(ptr));
 #elif defined(QSE_CHAR_IS_MCHAR)
 	return ret.setInt ((long_t)::system(ptr));
@@ -212,7 +227,13 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #endif
 }
 
-#if defined(QSE_CHAR_IS_WCHAR)
+int StdAwk::time (Run& run, Value& ret, const Value* args, size_t nargs,
+	const char_t* name, size_t len)
+{
+	/* TODO: */
+	return 0;
+}
+
 qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -222,7 +243,7 @@ qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
 	return QSE_NULL;
 }
 
-int StdAwk::setenc (Run& run, Value& ret, const Value* args, size_t nargs,
+int StdAwk::setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -248,7 +269,7 @@ int StdAwk::setenc (Run& run, Value& ret, const Value* args, size_t nargs,
 	return ret.setInt ((long_t)(pair? 0: -1));
 }
 
-int StdAwk::unsetenc (Run& run, Value& ret, const Value* args, size_t nargs,
+int StdAwk::getioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -257,7 +278,6 @@ int StdAwk::unsetenc (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* ptr = args[0].toStr(&l);
 	return ret.setInt ((long_t)qse_htb_delete (&this->cmgrtab, ptr, l));
 }
-#endif
 
 int StdAwk::openPipe (Pipe& io) 
 { 
@@ -490,7 +510,7 @@ int StdAwk::open_console_in (Console& io)
 		 * 'BEGIN { ARGV[1]="file3"; } 
 		 *        { print $0; }' file1 file2
 		 */
-		argv = qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_ARGV);
+		argv = qse_awk_rtx_getgbl (rtx, this->gbl_argv);
 		QSE_ASSERT (argv != QSE_NULL);
 		QSE_ASSERT (argv->type == QSE_AWK_VAL_MAP);
 
