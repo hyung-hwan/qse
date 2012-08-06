@@ -126,14 +126,14 @@ protected:
 		const char_t* name, size_t len);
 	int system (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
+	int time (Run& run, Value& ret, const Value* args, size_t nargs,
+		const char_t* name, size_t len);
 
-#if defined(QSE_CHAR_IS_WCHAR)
 	qse_cmgr_t* getcmgr (const char_t* ioname);
-	int setenc (Run& run, Value& ret, const Value* args, size_t nargs,
+	int setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-	int unsetenc (Run& run, Value& ret, const Value* args, size_t nargs,
+	int getioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
-#endif
 
 	// pipe io handlers 
 	int openPipe (Pipe& io);
@@ -182,6 +182,12 @@ protected:
 	unsigned int seed; 
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
+
+	/* global variables */
+	int gbl_argc;
+	int gbl_argv;
+	int gbl_environ;
+	int gbl_procinfo;
 
 	/* standard input console - reuse runarg */
 	size_t runarg_index;
