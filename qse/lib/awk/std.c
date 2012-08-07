@@ -1773,12 +1773,6 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 
 	qse_awk_rtx_refupval (rtx, v_info);
 
-	if (qse_awk_rtx_setgbl (rtx, gbl_id, v_info) == -1)
-	{
-		qse_awk_rtx_refdownval (rtx, v_info);
-		return -1;
-	}
-
 #if defined(__OS2__)
 	if (DosGetInfoBlocks (&tib, &pib) != NO_ERROR)
 	{
@@ -1848,6 +1842,12 @@ static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
 			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
+	}
+
+	if (qse_awk_rtx_setgbl (rtx, gbl_id, v_info) == -1)
+	{
+		qse_awk_rtx_refdownval (rtx, v_info);
+		return -1;
 	}
 
 	qse_awk_rtx_refdownval (rtx, v_info);
@@ -2418,11 +2418,11 @@ static int add_globals (qse_awk_t* awk)
 
 static int add_functions (qse_awk_t* awk)
 {
-	if (qse_awk_addfnc (awk, QSE_T("rand"),      4, 0,           0, 0, QSE_NULL, fnc_rand) <= -1 ||
-	    qse_awk_addfnc (awk, QSE_T("srand"),     5, 0,           0, 1, QSE_NULL, fnc_srand) <= -1 ||
-	    qse_awk_addfnc (awk, QSE_T("system"),    6, 0,           1, 1, QSE_NULL, fnc_system) <= -1 ||
-	    qse_awk_addfnc (awk, QSE_T("time"),      4, 0,           0, 0, QSE_NULL, fnc_time) <= -1 ||
-	    qse_awk_addfnc (awk, QSE_T("setioattr"), 9, QSE_AWK_RIO, 3, 3, QSE_NULL, fnc_setioattr) <= -1 ||
-	    qse_awk_addfnc (awk, QSE_T("getioattr"), 9, QSE_AWK_RIO, 2, 2, QSE_NULL, fnc_getioattr) <= -1) return -1;
+	if (qse_awk_addfnc (awk, QSE_T("rand"),      4, 0,           0, 0, QSE_NULL, fnc_rand) == QSE_NULL ||
+	    qse_awk_addfnc (awk, QSE_T("srand"),     5, 0,           0, 1, QSE_NULL, fnc_srand) == QSE_NULL ||
+	    qse_awk_addfnc (awk, QSE_T("system"),    6, 0,           1, 1, QSE_NULL, fnc_system) == QSE_NULL ||
+	    qse_awk_addfnc (awk, QSE_T("time"),      4, 0,           0, 0, QSE_NULL, fnc_time) == QSE_NULL ||
+	    qse_awk_addfnc (awk, QSE_T("setioattr"), 9, QSE_AWK_RIO, 3, 3, QSE_NULL, fnc_setioattr) == QSE_NULL ||
+	    qse_awk_addfnc (awk, QSE_T("getioattr"), 9, QSE_AWK_RIO, 2, 2, QSE_NULL, fnc_getioattr) == QSE_NULL) return -1;
 	return 0;
 }

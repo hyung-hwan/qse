@@ -119,6 +119,12 @@ public:
 	void clearConsoleOutputs ();
 
 protected:
+	int make_additional_globals (Run* run);
+	int build_argcv (Run* run);
+	int build_environ (Run* run);
+	int __build_environ (Run* run, void* envptr);
+	int build_procinfo (Run* run);
+
 	// intrinsic functions 
 	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);

@@ -31,10 +31,33 @@
 #include <stdlib.h>
 #include <math.h>
 
-#ifdef _WIN32
-	#include <tchar.h>
+#if defined(_WIN32)
+#	include <windows.h>
+#	include <tchar.h>
+#elif defined(__OS2__)
+#	define INCL_DOSPROCESS
+#	define INCL_DOSERRORS
+#	include <os2.h>
+#elif defined(__DOS__)
+	/* anything ? */
 #else
-	#include <wchar.h>
+#    include <unistd.h>
+#endif
+
+#ifndef QSE_HAVE_CONFIG_H
+#    if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#		define HAVE_POW
+#		define HAVE_FMOD
+#		define HAVE_SIN
+#		define HAVE_COS
+#		define HAVE_TAN
+#		define HAVE_ATAN
+#		define HAVE_ATAN2
+#		define HAVE_LOG
+#		define HAVE_LOG10
+#		define HAVE_EXP
+#		define HAVE_SQRT
+#	endif
 #endif
 
 /////////////////////////////////
@@ -172,9 +195,203 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 		this->cmgrtab_inited = true;
 	}
 
-
+	if (run && make_additional_globals (run) <= -1) return QSE_NULL;
 	
 	return run;
+}
+
+int StdAwk::build_argcv (Run* run)
+{
+	Value argv (run);
+
+	for (size_t i = 0; i < this->runarg.len; i++)
+	{
+		if (argv.setIndexedStr (
+			Value::IntIndex(i), 
+			this->runarg.ptr[i].ptr, 
+			this->runarg.ptr[i].len) <= -1) return -1;
+	}
+		
+	run->setGlobal (this->gbl_argc, (long_t)this->runarg.len);
+	run->setGlobal (this->gbl_argv, argv);
+	return 0;
+}
+
+int StdAwk::__build_environ (Run* run, void* envptr)
+{
+	qse_env_char_t** envarr = (qse_env_char_t**)envptr;
+	Value v_env (run);
+
+	if (envarr)
+	{
+		qse_env_char_t* eq;
+		qse_char_t* kptr, * vptr;
+		qse_size_t klen, count;
+		qse_mmgr_t* mmgr = ((Awk*)*run)->getMmgr();
+
+		for (count = 0; envarr[count]; count++)
+		{
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+			eq = qse_strchr (envarr[count], QSE_T('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			kptr = envarr[count];
+			klen = eq - envarr[count];
+			vptr = eq + 1;
+		#elif defined(QSE_ENV_CHAR_IS_MCHAR)
+			eq = qse_mbschr (envarr[count], QSE_MT('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			*eq = QSE_MT('\0');
+
+			kptr = qse_mbstowcsdup (envarr[count], mmgr);
+			vptr = qse_mbstowcsdup (eq + 1, mmgr);
+			if (kptr == QSE_NULL || vptr == QSE_NULL)
+			{
+				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
+
+				/* mbstowcsdup() may fail for invalid encoding.
+				 * so setting the error code to ENOMEM may not
+				 * be really accurate */
+				setError (QSE_AWK_ENOMEM);
+				return -1;
+			}			
+
+			klen = qse_wcslen (kptr);
+			*eq = QSE_MT('=');
+		#else
+			eq = qse_wcschr (envarr[count], QSE_WT('='));
+			if (eq == QSE_NULL || eq == envarr[count]) continue;
+
+			*eq = QSE_WT('\0');
+
+			kptr = qse_wcstombsdup (envarr[count], mmgr); 
+			vptr = qse_wcstombsdup (eq + 1, mmgr);
+			if (kptr == QSE_NULL || vptr == QSE_NULL)
+			{
+				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
+
+				/* mbstowcsdup() may fail for invalid encoding.
+				 * so setting the error code to ENOMEM may not
+				 * be really accurate */
+				setError (QSE_AWK_ENOMEM);
+				return -1;
+			}			
+
+			klen = qse_mbslen (kptr);
+			*eq = QSE_WT('=');
+		#endif
+
+			v_env.setIndexedStr (Value::Index (kptr, klen), vptr);
+
+		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
+		     (defined(QSE_ENV_CHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR)))
+				/* nothing to do */
+		#else
+			if (vptr) QSE_MMGR_FREE (mmgr, vptr);
+			if (kptr) QSE_MMGR_FREE (mmgr, kptr);
+		#endif
+		}
+	}
+
+	return run->setGlobal (this->gbl_environ, v_env);
+}
+
+int StdAwk::build_environ (Run* run)
+{
+	qse_env_t env;
+	int xret;
+
+	if (qse_env_init (&env, ((Awk*)*run)->getMmgr(), 1) <= -1)
+	{
+		setError (QSE_AWK_ENOMEM);
+		return -1;
+	}
+
+	xret = __build_environ (run, qse_env_getarr(&env));
+
+	qse_env_fini (&env);
+	return xret;
+}
+
+int StdAwk::build_procinfo (Run* run)
+{
+	static qse_cstr_t names[] =
+	{
+		{ QSE_T("pid"),    3 },
+		{ QSE_T("ppid"),   5 },
+		{ QSE_T("pgrp"),   4 },
+		{ QSE_T("uid"),    3 },
+		{ QSE_T("gid"),    3 },
+		{ QSE_T("euid"),   4 },
+		{ QSE_T("egid"),   4 },
+		{ QSE_T("tid"),    3 }
+	};
+
+#if defined(__OS2__)
+	PTIB tib;
+	PPIB pib;
+	
+	if (DosGetInfoBlocks (&tib, &pib) != NO_ERROR)
+	{
+		tib = QSE_NULL;
+		pib = QSE_NULL;
+	}
+#endif
+
+	Value v_procinfo (run);
+
+	for (size_t i = 0; i < QSE_COUNTOF(names); i++)
+	{
+		qse_long_t val = -99931; /* -99931 randomly chosen */
+
+#if defined(_WIN32)
+		switch (i)
+		{
+			case 0: val = GetCurrentProcessId(); break;
+			case 7: val = GetCurrentThreadId(); break;
+		}
+#elif defined(__OS2__)
+		switch (i)
+		{
+			case 0: if (pib) val = pib->pib_ulpid; break;
+			case 7: if (tib && tib->tib_ptib2) val = tib->tib_ptib2->tib2_ultid; break;
+		}
+#elif defined(__DOS__)
+		/* TODO: */
+#else
+		switch (i)
+		{
+			case 0: val = getpid(); break;
+			case 1: val = getppid(); break;
+			case 2: val = getpgrp(); break;
+			case 3: val = getuid(); break;
+			case 4: val = getgid(); break;
+			case 5: val = geteuid(); break;
+			case 6: val = getegid(); break;
+		#if defined(HAVE_GETTID)
+			case 7: val = gettid(); break;
+		#endif
+		}
+#endif
+		if (val == -99931) continue;
+
+		if (v_procinfo.setIndexedInt (
+			Value::Index (names[i].ptr, names[i].len), val) <= -1) return -1;
+
+	}
+	
+	return run->setGlobal (this->gbl_procinfo, v_procinfo);
+}
+
+int StdAwk::make_additional_globals (Run* run)
+{
+	if (build_argcv (run) <= -1 ||
+	    build_environ (run) <= -1 ||
+	    build_procinfo (run) <= -1) return -1;
+	    
+	return 0;
 }
 
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
