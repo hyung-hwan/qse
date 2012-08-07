@@ -147,7 +147,6 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 {
 	Run* run = Awk::parse (in, out);
 
-#if defined(QSE_CHAR_IS_WCHAR)
 	if (this->cmgrtab_inited) 
 	{
 		// if cmgrtab has already been initialized,
@@ -172,11 +171,11 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 			qse_gethtbmancbs(QSE_HTB_MANCBS_INLINE_KEY_COPIER));
 		this->cmgrtab_inited = true;
 	}
-#endif
 
+
+	
 	return run;
 }
-
 
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
@@ -230,8 +229,11 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 int StdAwk::time (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	/* TODO: */
-	return 0;
+	qse_ntime_t now;
+
+	if (qse_gettime (&now) <= -1) now = 0;
+
+	return ret.setInt (now);
 }
 
 qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
