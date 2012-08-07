@@ -1180,7 +1180,7 @@ Awk::Run* Awk::parse (Source& in, Source& out)
 	}
 
 	if (init_runctx() <= -1) return QSE_NULL;
-	return &runctx;
+	return &this->runctx;
 }
 
 Awk::Run* Awk::resetRunContext ()
@@ -1196,18 +1196,18 @@ Awk::Run* Awk::resetRunContext ()
 
 int Awk::loop (Value* ret)
 {
-	QSE_ASSERT (awk != QSE_NULL);
-	QSE_ASSERT (runctx.rtx != QSE_NULL);
+	QSE_ASSERT (this->awk != QSE_NULL);
+	QSE_ASSERT (this->runctx.rtx != QSE_NULL);
 
-	val_t* rv = qse_awk_rtx_loop (runctx.rtx);
+	val_t* rv = qse_awk_rtx_loop (this->runctx.rtx);
 	if (rv == QSE_NULL) 
 	{
-		retrieveError (&runctx);
+		retrieveError (&this->runctx);
 		return -1;
 	}
 
-	ret->setVal (&runctx, rv);
-	qse_awk_rtx_refdownval (runctx.rtx, rv);
+	ret->setVal (&this->runctx, rv);
+	qse_awk_rtx_refdownval (this->runctx.rtx, rv);
 	
 	return 0;
 }
@@ -1216,8 +1216,8 @@ int Awk::call (
 	const char_t* name, Value* ret,
 	const Value* args, size_t nargs)
 {
-	QSE_ASSERT (awk != QSE_NULL);
-	QSE_ASSERT (runctx.rtx != QSE_NULL);
+	QSE_ASSERT (this->awk != QSE_NULL);
+	QSE_ASSERT (this->runctx.rtx != QSE_NULL);
 
 	val_t* buf[16];
 	val_t** ptr = QSE_NULL;
@@ -1231,8 +1231,8 @@ int Awk::call (
 				awk, QSE_SIZEOF(val_t*) * nargs);
 			if (ptr == QSE_NULL)
 			{
-				runctx.setError (QSE_AWK_ENOMEM);
-				retrieveError (&runctx);
+				this->runctx.setError (QSE_AWK_ENOMEM);
+				retrieveError (&this->runctx);
 				return -1;
 			}
 		}
@@ -1240,19 +1240,19 @@ int Awk::call (
 		for (size_t i = 0; i < nargs; i++) ptr[i] = (val_t*)args[i];
 	}
 
-	val_t* rv = qse_awk_rtx_call (runctx.rtx, name, ptr, nargs);
+	val_t* rv = qse_awk_rtx_call (this->runctx.rtx, name, ptr, nargs);
 
 	if (ptr != QSE_NULL && ptr != buf) qse_awk_freemem (awk, ptr);
 
 	if (rv == QSE_NULL) 
 	{
-		retrieveError (&runctx);
+		retrieveError (&this->runctx);
 		return -1;
 	}
 
-	ret->setVal (&runctx, rv);
+	ret->setVal (&this->runctx, rv);
 
-	qse_awk_rtx_refdownval (runctx.rtx, rv);
+	qse_awk_rtx_refdownval (this->runctx.rtx, rv);
 	return 0;
 }
 
