@@ -74,6 +74,9 @@ QSE_BEGIN_NAMESPACE(QSE)
 		} \
 	} while (0)
 
+
+StdAwk::ioattr_t StdAwk::default_ioattr;
+
 static qse_sio_t* open_sio (Awk* awk, StdAwk::Run* run, const qse_char_t* file, int flags)
 {
 	qse_sio_t* sio;
@@ -462,7 +465,106 @@ qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
 	return QSE_NULL;
 }
 
-int StdAwk::setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
+StdAwk::ioattr_t* StdAwk::get_ioattr (const char_t* ptr, size_t len)
+{
+	qse_htb_pair_t* pair;
+
+	pair = qse_htb_search (&this->cmgrtab, ptr, len);
+	if (pair == QSE_NULL) return QSE_NULL;
+
+	return (ioattr_t*)QSE_HTB_VPTR(pair);
+}
+
+StdAwk::ioattr_t* StdAwk::find_or_make_ioattr (const char_t* ptr, size_t len)
+{
+	qse_htb_pair_t* pair;
+
+	pair = qse_htb_search (&this->cmgrtab, ptr, len);
+	if (pair == QSE_NULL)
+	{
+		ioattr_t ioattr;
+		pair = qse_htb_insert (
+			&this->cmgrtab, (void*)ptr, len, 
+			(void*)&ioattr, QSE_SIZEOF(ioattr));
+		if (pair == QSE_NULL) setError (QSE_AWK_ENOMEM);
+	}
+
+	return (ioattr_t*)QSE_HTB_VPTR(pair);
+}
+
+static int timeout_code (const qse_char_t* name)
+{
+	if (qse_strcmp (name, QSE_T("rtimeout")) == 0) return 0;
+	if (qse_strcmp (name, QSE_T("wtimeout")) == 0) return 1;
+	if (qse_strcmp (name, QSE_T("ctimeout")) == 0) return 2;
+	if (qse_strcmp (name, QSE_T("atimeout")) == 0) return 3;
+	return -1;
+}
+
+int StdAwk::setioattr (
+	Run& run, Value& ret, const Value* args, size_t nargs,
+	const char_t* name, size_t len)
+{
+	QSE_ASSERT (this->cmgrtab_inited == true);
+	size_t l[3];
+	const char_t* ptr[3];
+
+	ptr[0] = args[0].toStr(&l[0]);
+	ptr[1] = args[1].toStr(&l[1]);
+	ptr[2] = args[2].toStr(&l[2]);
+
+	if (qse_strxchr (ptr[0], l[0], QSE_T('\0')) ||
+	    qse_strxchr (ptr[1], l[1], QSE_T('\0')) ||
+	    qse_strxchr (ptr[2], l[2], QSE_T('\0')))
+	{
+		return ret.setInt ((long_t)-1);
+	}
+	
+	int tmout;
+	if ((tmout = timeout_code (ptr[1])) >= 0)
+	{
+		long_t tmout_val = args[2].toInt();
+
+		if (tmout_val < QSE_TYPE_MIN(int) || 
+		    tmout_val > QSE_TYPE_MAX(int))
+			return ret.setInt ((long_t)-1);
+			
+		ioattr_t* ioattr = find_or_make_ioattr (ptr[0], l[0]);
+		if (ioattr == QSE_NULL) return -1;
+
+		ioattr->tmout[tmout] = tmout_val;
+		return ret.setInt ((long_t)0);
+	}
+#if defined(QSE_CHAR_IS_WCHAR)
+	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	{
+		ioattr_t* ioattr;
+		qse_cmgr_t* cmgr;
+
+		if (ptr[2][0] == QSE_T('\0')) cmgr = QSE_NULL;
+		else
+		{
+			cmgr = qse_findcmgr (ptr[1]);
+			if (cmgr == QSE_NULL) return ret.setInt ((long_t)-1);
+		}
+		
+		ioattr = find_or_make_ioattr (ptr[0], l[0]);
+		if (ioattr == QSE_NULL) return -1;
+
+		ioattr->cmgr = cmgr;
+		qse_strxcpy (ioattr->cmgr_name, QSE_COUNTOF(ioattr->cmgr_name), ptr[2]);
+		return 0;
+#endif
+	}
+	else
+	{
+		// unknown attribute name
+		return ret.setInt ((long_t)-1);
+	}
+}
+
+int StdAwk::getioattr (
+	Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
@@ -477,25 +579,26 @@ int StdAwk::setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 	{
 		return ret.setInt ((long_t)-1);
 	}
-	
-	qse_cmgr_t* cmgr = qse_findcmgr (ptr[1]);
-	if (cmgr == QSE_NULL)
+
+	ioattr_t* ioattr = get_ioattr (ptr[0], l[0]);
+	if (ioattr == QSE_NULL) ioattr = &StdAwk::default_ioattr;
+
+	int tmout;
+	if ((tmout = timeout_code(ptr[1])) >= 0)
 	{
+		return ret.setInt ((long_t)ioattr->tmout[tmout]);
+	}
+#if defined(QSE_CHAR_IS_WCHAR)
+	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	{
+		return ret.setStr (ioattr->cmgr_name);
+	}
+#endif
+	else
+	{
+		// unknown attribute name
 		return ret.setInt ((long_t)-1);
 	}
-	
-	qse_htb_pair_t* pair = qse_htb_upsert (&this->cmgrtab, (char_t*)ptr[0], l[0], cmgr, 0);
-	return ret.setInt ((long_t)(pair? 0: -1));
-}
-
-int StdAwk::getioattr (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	QSE_ASSERT (this->cmgrtab_inited == true);
-
-	size_t l;
-	const char_t* ptr = args[0].toStr(&l);
-	return ret.setInt ((long_t)qse_htb_delete (&this->cmgrtab, ptr, l));
 }
 
 int StdAwk::openPipe (Pipe& io) 
@@ -511,9 +614,11 @@ int StdAwk::openPipe (Pipe& io)
 			flags |= QSE_PIO_READOUT |
 			         QSE_PIO_ERRTOOUT;
 			break;
+
 		case Awk::Pipe::WRITE:
 			flags |= QSE_PIO_WRITEIN;
 			break;
+
 		case Awk::Pipe::RW:
 			flags |= QSE_PIO_READOUT |
 			         QSE_PIO_ERRTOOUT |
