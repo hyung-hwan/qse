@@ -136,6 +136,7 @@ protected:
 		const char_t* name, size_t len);
 
 	qse_cmgr_t* getcmgr (const char_t* ioname);
+
 	int setioattr (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 	int getioattr (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -203,6 +204,27 @@ protected:
 	xstrs_t ofile;
 	size_t ofile_index;
 	size_t ofile_count;
+
+public:
+	struct ioattr_t
+	{
+		qse_cmgr_t* cmgr;
+		char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
+		int tmout[4];
+
+		ioattr_t (): cmgr (QSE_NULL)
+		{
+			this->cmgr_name[0] = QSE_T('\0');
+			for (size_t i = 0; i < QSE_COUNTOF(this->tmout); i++)
+				this->tmout[i] = -999;
+		}
+	};
+
+	static ioattr_t default_ioattr;
+
+protected:
+	ioattr_t* get_ioattr (const char_t* ptr, size_t len);
+	ioattr_t* find_or_make_ioattr (const char_t* ptr, size_t len);
 
 private:
 	int open_console_in (Console& io);

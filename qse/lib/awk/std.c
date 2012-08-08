@@ -138,9 +138,9 @@ typedef struct rxtn_t
 
 typedef struct ioattr_t
 {
-        qse_cmgr_t* cmgr;
+	qse_cmgr_t* cmgr;
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
-        int tmout[4];
+	int tmout[4];
 } ioattr_t;
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
@@ -1907,7 +1907,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	{
 		if (qse_htb_init (
 			&rxtn->cmgrtab, awk->mmgr, 256, 70, 
-			QSE_SIZEOF(qse_char_t), 0) <= -1)
+			QSE_SIZEOF(qse_char_t), 1) <= -1)
 		{
 			qse_awk_rtx_close (rtx);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -2133,7 +2133,7 @@ static ioattr_t* get_ioattr (
 	return QSE_NULL;
 }
 
-static qse_htb_pair_t* find_or_make_ioattr (
+static ioattr_t* find_or_make_ioattr (
 	qse_awk_rtx_t* rtx, qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len)
 {
 	qse_htb_pair_t* pair;
@@ -2152,7 +2152,7 @@ static qse_htb_pair_t* find_or_make_ioattr (
 		}
 	}
 
-	return pair;
+	return (ioattr_t*)QSE_HTB_VPTR(pair);
 }
 
 static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
@@ -2163,7 +2163,6 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	qse_char_t* ptr[3];
 	qse_size_t len[3];
 	int i, ret = 0, fret = 0;
-	qse_cmgr_t* cmgr;
 	int tmout;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -2199,7 +2198,6 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		qse_htb_pair_t* pair;
 		ioattr_t* ioattr;
 
 		qse_long_t l;
@@ -2217,21 +2215,20 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 			goto done;
 		}
 	
-		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
-		if (pair == QSE_NULL) 
+		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		if (ioattr == QSE_NULL) 
 		{
 			ret = -1;
 			goto done;
 		}
 
-		ioattr = QSE_HTB_VPTR(pair);
 		ioattr->tmout[tmout] = l;
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
 	{
-		qse_htb_pair_t* pair;
 		ioattr_t* ioattr;
+		qse_cmgr_t* cmgr;
 
 		if (ptr[2][0] == QSE_T('\0')) 
 		{
@@ -2247,14 +2244,13 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 			}
 		}
 
-		pair = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
-		if (pair == QSE_NULL) 
+		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
+		if (ioattr == QSE_NULL) 
 		{
 			ret = -1;
 			goto done;
 		}
 
-		ioattr = QSE_HTB_VPTR(pair);
 		ioattr->cmgr = cmgr;
 		qse_strxcpy (ioattr->cmgr_name, QSE_COUNTOF(ioattr->cmgr_name), ptr[2]);
 	}
@@ -2295,7 +2291,6 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	int tmout;
 	qse_awk_val_t* rv = QSE_NULL;
 
-	qse_htb_pair_t* pair;
 	ioattr_t* ioattr;
 	ioattr_t ioattr_buf;
 
@@ -2326,15 +2321,11 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		if (qse_strxchr (ptr[i], len[i], QSE_T('\0'))) goto done;
 	}
 
-	pair = qse_htb_search (&rxtn->cmgrtab, ptr[0], len[0]);
-	if (pair == QSE_NULL)
+	ioattr = get_ioattr  (&rxtn->cmgrtab, ptr[0], len[0]);
+	if (ioattr == QSE_NULL) 
 	{
 		init_ioattr (&ioattr_buf);
 		ioattr = &ioattr_buf;
-	}
-	else
-	{
-		ioattr = QSE_HTB_VPTR(pair);
 	}
 
 	if ((tmout = timeout_code (ptr[1])) >= 0)
