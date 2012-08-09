@@ -28,6 +28,7 @@ const qse_char_t* qse_sed_dflerrstr (
  	{
 		QSE_T("no error"),
 		QSE_T("internal error that should never have happened"),
+		QSE_T("not implemented"),
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
