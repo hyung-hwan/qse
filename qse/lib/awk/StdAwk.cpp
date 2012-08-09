@@ -561,8 +561,8 @@ int StdAwk::setioattr (
 		ioattr->cmgr = cmgr;
 		qse_strxcpy (ioattr->cmgr_name, QSE_COUNTOF(ioattr->cmgr_name), ptr[2]);
 		return 0;
-#endif
 	}
+#endif
 	else
 	{
 		// unknown attribute name
