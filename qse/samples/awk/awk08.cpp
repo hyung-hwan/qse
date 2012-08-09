@@ -438,5 +438,42 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
-	return qse_runmain (argc,argv,awk_main);
+	int ret;
+
+#if defined(_WIN32)
+	char locale[100];
+	UINT codepage;
+	WSADATA wsadata;
+
+	codepage = GetConsoleOutputCP();	
+	if (codepage == CP_UTF8)
+	{
+		/*SetConsoleOUtputCP (CP_UTF8);*/
+		qse_setdflcmgr (qse_utf8cmgr);
+	}
+	else
+	{
+		sprintf (locale, ".%u", (unsigned int)codepage);
+		setlocale (LC_ALL, locale);
+		qse_setdflcmgr (qse_slmbcmgr);
+	}
+
+	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+	{
+		print_error (QSE_T("Failed to start up winsock\n"));
+		return -1;
+	}
+
+#else
+	setlocale (LC_ALL, "");
+	qse_setdflcmgr (qse_slmbcmgr);
+#endif
+
+	ret = qse_runmain (argc, argv, awk_main);
+
+#if defined(_WIN32)
+	WSACleanup ();
+#endif
+
+	return ret;
 }

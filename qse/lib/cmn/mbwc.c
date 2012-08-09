@@ -84,11 +84,11 @@ qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 			if (cmgr) return cmgr;
 		}
 
-		if (qse_strcmp(name, QSE_T("")) == 0) return dfl_cmgr;
-		if (qse_strcmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
-		if (qse_strcmp(name, QSE_T("cp949")) == 0) return qse_cp949cmgr;	
-		if (qse_strcmp(name, QSE_T("cp950")) == 0) return qse_cp950cmgr;	
-		if (qse_strcmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
+		if (qse_strcasecmp(name, QSE_T("")) == 0) return dfl_cmgr;
+		if (qse_strcasecmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
+		if (qse_strcasecmp(name, QSE_T("cp949")) == 0) return qse_cp949cmgr;	
+		if (qse_strcasecmp(name, QSE_T("cp950")) == 0) return qse_cp950cmgr;	
+		if (qse_strcasecmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
 	}
 	return QSE_NULL;
 }

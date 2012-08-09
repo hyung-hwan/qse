@@ -538,11 +538,14 @@ typedef enum qse_awk_rio_rwcmode_t qse_awk_rio_rwcmode_t;
  */
 struct qse_awk_rio_arg_t 
 {
+	/* read-only. a user handler shouldn't change any of these fields */
 	qse_awk_rio_mode_t    mode;      /**< opening mode */
 	qse_char_t*           name;      /**< name of I/O object */
 	qse_awk_rio_rwcmode_t rwcmode;   /**< closing mode for rwpipe */
+
+	/* read-write. a user handler can do whatever it likes to do with these. */
 	void*                 handle;    /**< I/O handle set by a handler */
-	void*                 handle2;   /**< secondary I/O handle set by a handler */
+	int                   uflags;    /**< flags set by a handler */
 
 	/*--  from here down, internal use only --*/
 	int type; 

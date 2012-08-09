@@ -108,14 +108,30 @@ public:
 		const char_t* ptr;
 	};
         
-	StdAwk (Mmgr* mmgr = &StdMmgr::DFL): Awk (mmgr) {}
+	StdAwk (Mmgr* mmgr = &StdMmgr::DFL): 
+		Awk (mmgr), console_cmgr (QSE_NULL) 
+	{
+	}
 
 	int open ();
 	void close ();
 	Run* parse (Source& in, Source& out);
 
+	/// The setConsoleCmgr() function sets the encoding type of 
+	/// the console streams. They include both the input and the output
+	/// streams. It provides no way to specify a different encoding
+	/// type for the input and the output stream.
+	void setConsoleCmgr (const qse_cmgr_t* cmgr);
+
+	/// The getConsoleCmgr() function returns the current encoding
+	/// type set for the console streams.
+	const qse_cmgr_t* getConsoleCmgr () const;
+
+	/// The addConsoleOutput() function adds a file to form an
+	/// output console stream.
 	int addConsoleOutput (const char_t* arg, size_t len);
 	int addConsoleOutput (const char_t* arg);
+
 	void clearConsoleOutputs ();
 
 protected:
@@ -169,7 +185,6 @@ protected:
 	void* reallocMem (void* ptr, size_t n);
 	void  freeMem    (void* ptr);
 
-
 	int vsprintf (char_t* buf, size_t size,
 	              const char_t* fmt, va_list arg);
 
@@ -190,17 +205,19 @@ protected:
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
 
-	/* global variables */
+	qse_cmgr_t* console_cmgr;
+
+	// global variables 
 	int gbl_argc;
 	int gbl_argv;
 	int gbl_environ;
 	int gbl_procinfo;
 
-	/* standard input console - reuse runarg */
+	// standard input console - reuse runarg 
 	size_t runarg_index;
 	size_t runarg_count;
 
-	/* standard output console */
+	// standard output console 
 	xstrs_t ofile;
 	size_t ofile_index;
 	size_t ofile_count;
@@ -209,7 +226,7 @@ public:
 	struct ioattr_t
 	{
 		qse_cmgr_t* cmgr;
-		char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
+		char_t cmgr_name[64]; // i assume that the cmgr name never exceeds this length.
 		int tmout[4];
 
 		ioattr_t (): cmgr (QSE_NULL)
@@ -226,9 +243,13 @@ protected:
 	ioattr_t* get_ioattr (const char_t* ptr, size_t len);
 	ioattr_t* find_or_make_ioattr (const char_t* ptr, size_t len);
 
+
 private:
 	int open_console_in (Console& io);
 	int open_console_out (Console& io);
+
+	int open_pio (Pipe& io);
+	int open_nwio (Pipe& io, int flags, void* nwad);
 };
 
 /////////////////////////////////
