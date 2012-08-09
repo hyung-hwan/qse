@@ -269,8 +269,12 @@ public:
 
 	public:
 		const char_t* getName() const;
+
 		const void* getHandle () const;
-		void  setHandle (void* handle);
+		void setHandle (void* handle);
+
+		int getUflags () const;
+		void setUflags (int uflags);
 
 		operator Awk* () const;
 		operator awk_t* () const;

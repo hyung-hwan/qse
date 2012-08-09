@@ -69,6 +69,16 @@ void Awk::RIOBase::setHandle (void* handle)
 	this->riod->handle = handle;
 }
 
+int Awk::RIOBase::getUflags () const
+{
+	return this->riod->uflags;
+}
+
+void Awk::RIOBase::setUflags (int uflags)
+{
+	this->riod->uflags = uflags;
+}
+
 Awk::RIOBase::operator Awk* () const 
 {
 	return this->run->awk;

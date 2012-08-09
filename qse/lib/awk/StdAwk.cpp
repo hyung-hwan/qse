@@ -24,6 +24,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/pio.h>
 #include <qse/cmn/sio.h>
+#include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h>
 #include "awk.h"
@@ -460,8 +461,10 @@ qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
 {
 	QSE_ASSERT (this->cmgrtab_inited == true);
 
-	qse_htb_pair_t* pair = qse_htb_search (&this->cmgrtab, ioname, qse_strlen(ioname));
-	if (pair) return (qse_cmgr_t*)QSE_HTB_VPTR(pair);
+#if defined(QSE_CHAR_IS_WCHAR)
+	ioattr_t* ioattr = get_ioattr (ioname, qse_strlen(ioname));
+	if (ioattr) return ioattr->cmgr;
+#endif
 	return QSE_NULL;
 }
 
@@ -482,11 +485,15 @@ StdAwk::ioattr_t* StdAwk::find_or_make_ioattr (const char_t* ptr, size_t len)
 	pair = qse_htb_search (&this->cmgrtab, ptr, len);
 	if (pair == QSE_NULL)
 	{
-		ioattr_t ioattr;
 		pair = qse_htb_insert (
 			&this->cmgrtab, (void*)ptr, len, 
-			(void*)&ioattr, QSE_SIZEOF(ioattr));
-		if (pair == QSE_NULL) setError (QSE_AWK_ENOMEM);
+			(void*)&StdAwk::default_ioattr, 
+			QSE_SIZEOF(StdAwk::default_ioattr));
+		if (pair == QSE_NULL) 
+		{
+			setError (QSE_AWK_ENOMEM);
+			return QSE_NULL;
+		}
 	}
 
 	return (ioattr_t*)QSE_HTB_VPTR(pair);
@@ -494,10 +501,10 @@ StdAwk::ioattr_t* StdAwk::find_or_make_ioattr (const char_t* ptr, size_t len)
 
 static int timeout_code (const qse_char_t* name)
 {
-	if (qse_strcmp (name, QSE_T("rtimeout")) == 0) return 0;
-	if (qse_strcmp (name, QSE_T("wtimeout")) == 0) return 1;
-	if (qse_strcmp (name, QSE_T("ctimeout")) == 0) return 2;
-	if (qse_strcmp (name, QSE_T("atimeout")) == 0) return 3;
+	if (qse_strcasecmp (name, QSE_T("rtimeout")) == 0) return 0;
+	if (qse_strcasecmp (name, QSE_T("wtimeout")) == 0) return 1;
+	if (qse_strcasecmp (name, QSE_T("ctimeout")) == 0) return 2;
+	if (qse_strcasecmp (name, QSE_T("atimeout")) == 0) return 3;
 	return -1;
 }
 
@@ -536,7 +543,7 @@ int StdAwk::setioattr (
 		return ret.setInt ((long_t)0);
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
 	{
 		ioattr_t* ioattr;
 		qse_cmgr_t* cmgr;
@@ -544,7 +551,7 @@ int StdAwk::setioattr (
 		if (ptr[2][0] == QSE_T('\0')) cmgr = QSE_NULL;
 		else
 		{
-			cmgr = qse_findcmgr (ptr[1]);
+			cmgr = qse_findcmgr (ptr[2]);
 			if (cmgr == QSE_NULL) return ret.setInt ((long_t)-1);
 		}
 		
@@ -589,7 +596,7 @@ int StdAwk::getioattr (
 		return ret.setInt ((long_t)ioattr->tmout[tmout]);
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
 	{
 		return ret.setStr (ioattr->cmgr_name);
 	}
@@ -601,7 +608,42 @@ int StdAwk::getioattr (
 	}
 }
 
-int StdAwk::openPipe (Pipe& io) 
+int StdAwk::open_nwio (Pipe& io, int flags, void* nwad)
+{
+	qse_nwio_tmout_t tmout_buf;
+	qse_nwio_tmout_t* tmout = QSE_NULL;
+
+	const qse_char_t* name = io.getName();
+	ioattr_t* ioattr = get_ioattr (name, qse_strlen(name));
+	if (ioattr)
+	{
+		tmout = &tmout_buf;
+		tmout->r = ioattr->tmout[0];
+		tmout->w = ioattr->tmout[1];
+		tmout->c = ioattr->tmout[2];
+		tmout->a = ioattr->tmout[3];
+	}
+
+	qse_nwio_t* handle = qse_nwio_open (
+		this->getMmgr(), 0, (qse_nwad_t*)nwad,
+		flags | QSE_NWIO_TEXT | QSE_NWIO_IGNOREMBWCERR |
+		QSE_NWIO_REUSEADDR | QSE_NWIO_READNORETRY | QSE_NWIO_WRITENORETRY,
+		tmout
+	);
+	if (handle == QSE_NULL) return -1;
+
+#if defined(QSE_CHAR_IS_WCHAR)
+	qse_cmgr_t* cmgr = this->getcmgr (io.getName());
+	if (cmgr) qse_nwio_setcmgr (handle, cmgr);
+#endif
+
+	io.setHandle ((void*)handle);
+	io.setUflags (1);
+
+	return 1;
+}
+
+int StdAwk::open_pio (Pipe& io) 
 { 
 	Awk::Pipe::Mode mode = io.getMode();
 	qse_pio_t* pio = QSE_NULL;
@@ -645,44 +687,104 @@ int StdAwk::openPipe (Pipe& io)
 	}
 #endif
 	io.setHandle (pio);
+	io.setUflags (0);
 	return 1;
 }
 
-int StdAwk::closePipe (Pipe& io) 
+static int parse_rwpipe_uri (const qse_char_t* uri, int* flags, qse_nwad_t* nwad)
 {
-	qse_pio_t* pio = (qse_pio_t*)io.getHandle();
-	if (io.getMode() == Awk::Pipe::RW)
+	static struct
 	{
-		Pipe::CloseMode rwcopt = io.getCloseMode();
-		if (rwcopt == Awk::Pipe::CLOSE_READ)
+		const qse_char_t* prefix;
+		qse_size_t        len;
+		int               flags;
+	} x[] =
+	{
+		{ QSE_T("tcp://"),  6, QSE_NWIO_TCP },
+		{ QSE_T("udp://"),  6, QSE_NWIO_UDP },
+		{ QSE_T("tcpd://"), 7, QSE_NWIO_TCP | QSE_NWIO_PASSIVE },
+		{ QSE_T("udpd://"), 7, QSE_NWIO_UDP | QSE_NWIO_PASSIVE }
+	};
+	StdAwk::size_t i;
+
+	for (i = 0; i < QSE_COUNTOF(x); i++)
+	{
+		if (qse_strzcmp (uri, x[i].prefix, x[i].len) == 0)
 		{
-			qse_pio_end (pio, QSE_PIO_IN);
-			return 0;
-		}
-		else if (rwcopt == Awk::Pipe::CLOSE_WRITE)
-		{
-			qse_pio_end (pio, QSE_PIO_OUT);
+			if (qse_strtonwad (uri + x[i].len, nwad) <= -1) return -1;
+			*flags = x[i].flags;
 			return 0;
 		}
 	}
 
-	qse_pio_close (pio);
+	return -1;
+}
+
+int StdAwk::openPipe (Pipe& io) 
+{ 
+	int flags;
+	qse_nwad_t nwad;
+
+	if (io.getMode() != Awk::Pipe::RW ||
+	    parse_rwpipe_uri (io.getName(), &flags, &nwad) <= -1)
+	{
+		return open_pio (io);
+	}
+	else
+	{
+		return open_nwio (io, flags, &nwad);
+	}
+}
+
+int StdAwk::closePipe (Pipe& io) 
+{
+	if (io.getUflags() > 0)
+	{
+		/* nwio can't honor partical close */
+		qse_nwio_close ((qse_nwio_t*)io.getHandle());
+	}
+	else
+	{
+		qse_pio_t* pio = (qse_pio_t*)io.getHandle();
+		if (io.getMode() == Awk::Pipe::RW)
+		{
+			Pipe::CloseMode rwcopt = io.getCloseMode();
+			if (rwcopt == Awk::Pipe::CLOSE_READ)
+			{
+				qse_pio_end (pio, QSE_PIO_IN);
+				return 0;
+			}
+			else if (rwcopt == Awk::Pipe::CLOSE_WRITE)
+			{
+				qse_pio_end (pio, QSE_PIO_OUT);
+				return 0;
+			}
+		}
+
+		qse_pio_close (pio);
+	}
 	return 0; 
 }
 
 StdAwk::ssize_t StdAwk::readPipe (Pipe& io, char_t* buf, size_t len) 
 { 
-	return qse_pio_read ((qse_pio_t*)io.getHandle(), QSE_PIO_OUT, buf, len);
+	return (io.getUflags() > 0)?
+		qse_nwio_read ((qse_nwio_t*)io.getHandle(), buf, len):
+		qse_pio_read ((qse_pio_t*)io.getHandle(), QSE_PIO_OUT, buf, len);
 }
 
 StdAwk::ssize_t StdAwk::writePipe (Pipe& io, const char_t* buf, size_t len) 
 { 
-	return qse_pio_write ((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
+	return (io.getUflags() > 0)?
+		qse_nwio_write ((qse_nwio_t*)io.getHandle(), buf, len):
+		qse_pio_write ((qse_pio_t*)io.getHandle(), QSE_PIO_IN, buf, len);
 }
 
 int StdAwk::flushPipe (Pipe& io) 
 { 
-	return qse_pio_flush ((qse_pio_t*)io.getHandle(), QSE_PIO_IN); 
+	return (io.getUflags() > 0)?
+		qse_nwio_flush ((qse_nwio_t*)io.getHandle()):
+		qse_pio_flush ((qse_pio_t*)io.getHandle(), QSE_PIO_IN);
 }
 
 int StdAwk::openFile (File& io) 
@@ -739,6 +841,16 @@ int StdAwk::flushFile (File& io)
 	return qse_sio_flush ((qse_sio_t*)io.getHandle());
 }
 
+void StdAwk::setConsoleCmgr (const qse_cmgr_t* cmgr)
+{
+	this->console_cmgr = (qse_cmgr_t*)cmgr;	
+}
+
+const qse_cmgr_t* StdAwk::getConsoleCmgr () const
+{
+	return this->console_cmgr;
+}
+
 int StdAwk::addConsoleOutput (const char_t* arg, size_t len) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
@@ -769,8 +881,13 @@ int StdAwk::open_console_in (Console& io)
 		{
 			qse_sio_t* sio;
 
-			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+			sio = open_sio_std (
+				QSE_NULL, io, QSE_SIO_STDIN,
+				QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
+
+			if (this->console_cmgr) 
+				qse_sio_setcmgr (sio, this->console_cmgr);
 
 			io.setHandle (sio);
 			this->runarg_count++;
@@ -807,8 +924,13 @@ int StdAwk::open_console_in (Console& io)
 				 * 'BEGIN { ARGV[1]=""; ARGV[2]=""; }
 				 *        { print $0; }' file1 file2
 				 */
-				sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDIN, QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
+				sio = open_sio_std (
+					QSE_NULL, io, QSE_SIO_STDIN,
+					QSE_SIO_READ | QSE_SIO_IGNOREMBWCERR);
 				if (sio == QSE_NULL) return -1;
+
+				if (this->console_cmgr)
+					qse_sio_setcmgr (sio, this->console_cmgr);
 
 				io.setHandle (sio);
 				this->runarg_count++;
@@ -898,6 +1020,10 @@ int StdAwk::open_console_in (Console& io)
 		}
 
 		qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+
+		if (this->console_cmgr) 
+			qse_sio_setcmgr (sio, this->console_cmgr);
+
 		io.setHandle (sio);
 
 		/* increment the counter of files successfully opened */
@@ -919,8 +1045,14 @@ int StdAwk::open_console_out (Console& io)
 		if (this->ofile_count == 0) 
 		{
 			qse_sio_t* sio;
-			sio = open_sio_std (QSE_NULL, io, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
+			sio = open_sio_std (
+				QSE_NULL, io, QSE_SIO_STDOUT,
+				QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);
 			if (sio == QSE_NULL) return -1;
+
+			if (this->console_cmgr)
+				qse_sio_setcmgr (sio, this->console_cmgr);
+
 			io.setHandle (sio);
 			this->ofile_count++;
 			return 1;
@@ -965,6 +1097,8 @@ int StdAwk::open_console_out (Console& io)
 			return -1;
 		}
 
+		if (this->console_cmgr) 
+			qse_sio_setcmgr (sio, this->console_cmgr);
 		io.setHandle (sio);
 
 		this->ofile_index++;

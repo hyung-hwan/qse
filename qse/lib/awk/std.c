@@ -842,7 +842,8 @@ static qse_ssize_t nwio_handler_open (
 	}
 #endif
 
-	riod->handle2 = (void*)handle;
+	riod->handle = (void*)handle;
+	riod->uflags = 1; /* nwio indicator */
 	return 1;
 }
 
@@ -860,25 +861,24 @@ static qse_ssize_t nwio_handler_rest (
 
 		case QSE_AWK_RIO_CLOSE:
 		{
-			qse_nwio_close ((qse_nwio_t*)riod->handle2);
-			riod->handle2 = QSE_NULL;
+			qse_nwio_close ((qse_nwio_t*)riod->handle);
 			return 0;
 		}
 
 		case QSE_AWK_RIO_READ:
 		{
-			return qse_nwio_read ((qse_nwio_t*)riod->handle2, data, size);
+			return qse_nwio_read ((qse_nwio_t*)riod->handle, data, size);
 		}
 
 		case QSE_AWK_RIO_WRITE:
 		{
-			return qse_nwio_write ((qse_nwio_t*)riod->handle2, data, size);
+			return qse_nwio_write ((qse_nwio_t*)riod->handle, data, size);
 		}
 
 		case QSE_AWK_RIO_FLUSH:
 		{
 			/*if (riod->mode == QSE_AWK_RIO_PIPE_READ) return -1;*/
-			return qse_nwio_flush ((qse_nwio_t*)riod->handle2);
+			return qse_nwio_flush ((qse_nwio_t*)riod->handle);
 		}
 
 		case QSE_AWK_RIO_NEXT:
@@ -893,9 +893,9 @@ static int parse_rwpipe_uri (const qse_char_t* uri, int* flags, qse_nwad_t* nwad
 {
 	static struct
 	{
-		qse_char_t* prefix;
-		qse_size_t  len;
-		int         flags;
+		const qse_char_t* prefix;
+		qse_size_t        len;
+		int               flags;
 	} x[] =
 	{
 		{ QSE_T("tcp://"),  6, QSE_NWIO_TCP },
@@ -970,6 +970,7 @@ static qse_ssize_t pio_handler_open (
 #endif
 
 	riod->handle = (void*)handle;
+	riod->uflags = 0; /* pio indicator */
 	return 1;
 }
 
@@ -990,7 +991,7 @@ static qse_ssize_t pio_handler_rest (
 			qse_pio_t* pio = (qse_pio_t*)riod->handle;
 			if (riod->mode == QSE_AWK_RIO_PIPE_RW)
 			{
-				/* specialy treatment is needef for rwpipe.
+				/* specialy treatment is needed for rwpipe.
 				 * inspect rwcmode to see if partial closing is
 				 * requested. */
 				if (riod->rwcmode == QSE_AWK_RIO_CLOSE_READ)
@@ -1006,7 +1007,6 @@ static qse_ssize_t pio_handler_rest (
 			}
 
 			qse_pio_close (pio);
-			riod->handle = QSE_NULL;
 			return 0;
 		}
 
@@ -1063,7 +1063,8 @@ static qse_ssize_t awk_rio_pipe (
 
 			rxtn = (rxtn_t*) QSE_XTN (rtx);
 
-			ioattr = get_ioattr (&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
+			ioattr = get_ioattr (
+				&rxtn->cmgrtab, riod->name, qse_strlen(riod->name));
 			if (ioattr)
 			{
 				tmout = &tmout_buf;
@@ -1076,7 +1077,7 @@ static qse_ssize_t awk_rio_pipe (
 			return nwio_handler_open (rtx, riod, flags, &nwad, tmout);
 		}
 	}
-	else if (riod->handle2)
+	else if (riod->uflags > 0)
 		return nwio_handler_rest (rtx, cmd, riod, data, size);
 	else
 		return pio_handler_rest (rtx, cmd, riod, data, size);
@@ -2104,10 +2105,10 @@ static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 static int timeout_code (const qse_char_t* name)
 {
-	if (qse_strcmp (name, QSE_T("rtimeout")) == 0) return 0;
-	if (qse_strcmp (name, QSE_T("wtimeout")) == 0) return 1;
-	if (qse_strcmp (name, QSE_T("ctimeout")) == 0) return 2;
-	if (qse_strcmp (name, QSE_T("atimeout")) == 0) return 3;
+	if (qse_strcasecmp (name, QSE_T("rtimeout")) == 0) return 0;
+	if (qse_strcasecmp (name, QSE_T("wtimeout")) == 0) return 1;
+	if (qse_strcasecmp (name, QSE_T("ctimeout")) == 0) return 2;
+	if (qse_strcasecmp (name, QSE_T("atimeout")) == 0) return 3;
 	return -1;
 }
 
@@ -2225,7 +2226,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		ioattr->tmout[tmout] = l;
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
 	{
 		ioattr_t* ioattr;
 		qse_cmgr_t* cmgr;
@@ -2338,7 +2339,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		}
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
-	else if (qse_strcmp (ptr[1], QSE_T("codepage")) == 0)
+	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
 	{
 		rv = qse_awk_rtx_makestrval0 (rtx, ioattr->cmgr_name);
 		if (rv == QSE_NULL)
