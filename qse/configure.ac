@@ -192,6 +192,11 @@ dnl the existence of the libaray.
 AC_CHECK_LIB([unicows], [main], [UNICOWS_LIBS="-lunicows"])
 AC_SUBST(UNICOWS_LIBS)
 
+dnl MPI
+LX_FIND_MPI(C)
+AM_CONDITIONAL(HAVE_C_MPI, test "${have_C_mpi}" = "yes" )
+dnl AM_CONDITIONAL(HAVE_CXX_MPI, test "${have_CXX_mpi}" = "yes" )
+
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([struct stat.st_birthtime])
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])

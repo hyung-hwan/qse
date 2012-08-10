@@ -2813,8 +2813,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 			QSE_STR_LEN(&rtx->inrec.line));
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
-			if (out != QSE_NULL) 
-				QSE_AWK_FREE (rtx->awk, out);
+			if (out) QSE_AWK_FREE (rtx->awk, out);
 			ADJERR_LOC (rtx, &nde->loc);
 			return -1;
 		}
@@ -2843,8 +2842,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 					rtx->gbl.ofs.len);
 				if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 				{
-					if (out != QSE_NULL)
-						QSE_AWK_FREE (rtx->awk, out);
+					if (out) QSE_AWK_FREE (rtx->awk, out);
 					ADJERR_LOC (rtx, &nde->loc);
 					return -1;
 				}
@@ -2853,8 +2851,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 			v = eval_expression (rtx, np);
 			if (v == QSE_NULL) 
 			{
-				if (out != QSE_NULL)
-					QSE_AWK_FREE (rtx->awk, out);
+				if (out) QSE_AWK_FREE (rtx->awk, out);
 				return -1;
 			}
 			qse_awk_rtx_refupval (rtx, v);
@@ -2863,9 +2860,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				rtx, nde->out_type, dst, v);
 			if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 			{
-				if (out != QSE_NULL) 
-					QSE_AWK_FREE (rtx->awk, out);
-
+				if (out) QSE_AWK_FREE (rtx->awk, out);
 				qse_awk_rtx_refdownval (rtx, v);
 				ADJERR_LOC (rtx, &nde->loc);
 				return -1;
@@ -2881,7 +2876,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		rtx->gbl.ors.ptr, rtx->gbl.ors.len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 	{
-		if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
+		if (out) QSE_AWK_FREE (rtx->awk, out);
 		ADJERR_LOC (rtx, &nde->loc);
 		return -1;
 	}
@@ -2889,7 +2884,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	/* unlike printf, flushio() is not needed here as print 
 	 * inserts <NL> that triggers auto-flush */
 
-	if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
+	if (out) QSE_AWK_FREE (rtx->awk, out);
 
 /*skip_write:*/
 	return 0;

@@ -55,6 +55,10 @@
 #	include <errno.h>
 #endif
 
+#if defined(ENABLE_MPI)
+#	include <mpi.h>
+#endif
+
 static qse_awk_rtx_t* app_rtx = QSE_NULL;
 static int app_debug = 0;
 
@@ -206,6 +210,7 @@ static void set_intr_run (void)
 #else
 	/*setsignal (SIGINT, stop_run, 1); TO BE MORE COMPATIBLE WITH WIN32*/
 	setsignal (SIGINT, stop_run, 0);
+	setsignal (SIGPIPE, SIG_IGN, 0);
 #endif
 }
 
@@ -221,6 +226,7 @@ static void unset_intr_run (void)
 	setsignal (SIGINT, SIG_DFL);
 #else
 	setsignal (SIGINT, SIG_DFL, 1);
+	setsignal (SIGPIPE, SIG_DFL, 0);
 #endif
 }
 
@@ -1095,7 +1101,15 @@ int qse_main (int argc, qse_achar_t* argv[])
 	qse_setdflcmgr (qse_slmbcmgr);
 #endif
 
+#if defined(ENABLE_MPI)
+	MPI_Init (&argc, &argv);
+#endif
+
 	ret = qse_runmain (argc, argv, awk_main);
+
+#if defined(ENABLE_MPI)
+	MPI_Finalize ();
+#endif
 
 #if defined(_WIN32)
 	WSACleanup ();
