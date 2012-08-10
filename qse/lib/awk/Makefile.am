@@ -1,4 +1,3 @@
-
 AUTOMAKE_OPTIONS = nostdinc
 
 AM_CPPFLAGS = \
@@ -16,4 +15,12 @@ lib_LTLIBRARIES += libqseawkxx.la
 libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM)
+endif
+
+if HAVE_C_MPI
+lib_LTLIBRARIES += libqseawkp.la
+libqseawkp_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+libqseawkp_la_SOURCES = mpi.c
+libqseawkp_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined $(MPI_CLDFLAGS)
+libqseawkp_la_LIBADD = -lqseawk -lqsecmn $(LIBM)
 endif
