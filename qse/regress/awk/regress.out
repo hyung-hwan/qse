@@ -1736,12 +1736,13 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-[CMD]  qseawk  --newline=on -d- -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk  --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
+	datapath = ((datadir   "/")   datafile);
 	first = 1;
-	while (((getline x < datafile) > 0))
+	while (((getline x < datapath) > 0))
 	{
 		if (first)
 		{
@@ -1815,6 +1816,7 @@ lease 20.1.20.57 {
   next binding state free;
   hardware ethernet 00:13:5e:50:23:6b;
   info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599021";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/1 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1826,6 +1828,7 @@ lease 20.1.20.54 {
   next binding state free;
   hardware ethernet 00:13:5e:50:25:aa;
   info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599011";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/1/2 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1837,6 +1840,7 @@ lease 20.1.20.55 {
   next binding state free;
   hardware ethernet 00:13:5e:50:20:af;
   info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599012";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/1 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1848,6 +1852,7 @@ lease 20.1.20.56 {
   next binding state free;
   hardware ethernet 00:13:5e:50:20:29;
   info awk.groupname "lang-035";
+  info awk.voice-no-0 "68599022";
   option agent.circuit-id "BLM1500_AR3_ILAB ONT/9/2/2 /0.0";
   option agent.unknown-9 0:0:0:c1:8:45:52:49:43:53:53:4f:4e;
 }
@@ -1900,6 +1905,8 @@ lease 10.218.255.55 {
   hardware ethernet 00:1b:5b:9c:90:00;
   info awk.groupname "lang-035";
   uid "\001\000\033[\234\220\000";
+  info awk.voice-no-0 "68599019";
+  info awk.voice-no-1 "68599014";
   option agent.circuit-id "AR_Remote atm 1/1/03/12:2.100";
   option agent.remote-id "22M-fast";
 }
@@ -1942,6 +1949,7 @@ lease 10.218.255.66 {
   hardware ethernet 00:1a:04:f9:e2:90;
   info awk.groupname "lang-035";
   uid "\001\000\032\004\371\342\220";
+  info awk.voice-no-0 "68599018";
   option agent.circuit-id "AR_Remote atm 1/1/03/02:2.100";
   option agent.remote-id "3play";
 }
@@ -1954,6 +1962,8 @@ lease 10.218.255.60 {
   hardware ethernet 00:1e:c7:fb:29:1d;
   info awk.groupname "lang-035";
   uid "\001\000\036\307\373)\035";
+  info awk.voice-no-0 "68599017";
+  info awk.voice-no-1 "68599013";
   option agent.circuit-id "AL_AM3_LAB atm 1/1/01/01:2.100";
   option agent.remote-id "Testing DHCP";
 }
@@ -2335,6 +2345,21 @@ nan
 2.19722
 8103.08
 3
+--------------------------------------------------------------------------------
+[CMD]  qseawk  --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=lang-046.dat1 -f lang-046.awk lang-046.dat2 </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+1
+
+((getline < ((datadir   "/")   datafile)) >= 0)
+
+2 AAAAAAAAAAAAAAAAAAAAAAAAA
+1 AAAAAAAAAAAAAAAAAAAAAAAAA
+2 BBBBBBBBBBBBBBBBBBBBBBBBB
+1 BBBBBBBBBBBBBBBBBBBBBBBBB
+2 CCCCCCCCCCCCCCCCCCCCCCCCC
+1 CCCCCCCCCCCCCCCCCCCCCCCCC
+2 DDDDDDDDDDDDDDDDDDDDDDDDD
+1 DDDDDDDDDDDDDDDDDDDDDDDDD
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -F: -f columnate.awk passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

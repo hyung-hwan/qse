@@ -2,9 +2,11 @@ BEGIN {
 	# the maximum numbers of different voice 
 	# numbers for a single circuit ID
 	max_cid_vars = 100; 
+	
+	datapath = datadir "/" datafile;
 
 	first = 1;
-	while ((getline x < datafile) > 0)
+	while ((getline x < datapath) > 0)
 	{
 		# check if it is the first line.
 		if (first) 
