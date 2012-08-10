@@ -928,6 +928,10 @@ retry:
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
 		if (parse_action_block (
 			awk, QSE_NULL, QSE_FALSE) == QSE_NULL) return QSE_NULL;
+
+		/* skip a semicolon after an action block if any */
+		if (MATCH(awk,TOK_SEMICOLON) && 
+		    get_token (awk) <= -1) return QSE_NULL;
 	}
 	else
 	{
@@ -941,6 +945,7 @@ retry:
 		pattern, pattern
 		*/
 		qse_awk_nde_t* ptn;
+		qse_awk_loc_t eloc;
 
 		if ((awk->option & QSE_AWK_PABLOCK) == 0)
 		{
@@ -950,10 +955,8 @@ retry:
 
 		awk->parse.id.block = PARSE_PATTERN;
 
-		{
-			qse_awk_loc_t eloc = awk->tok.loc;
-			ptn = parse_expr_dc (awk, &eloc);
-		}
+		eloc = awk->tok.loc;
+		ptn = parse_expr_dc (awk, &eloc);
 		if (ptn == QSE_NULL) return QSE_NULL;
 
 		QSE_ASSERT (ptn->next == QSE_NULL);
@@ -966,10 +969,9 @@ retry:
 				return QSE_NULL;
 			}	
 
-			{
-				qse_awk_loc_t eloc = awk->tok.loc;
-				ptn->next = parse_expr_dc (awk, &eloc);
-			}
+			eloc = awk->tok.loc;
+			ptn->next = parse_expr_dc (awk, &eloc);
+
 			if (ptn->next == QSE_NULL) 
 			{
 				qse_awk_clrpt (awk, ptn);
@@ -977,10 +979,10 @@ retry:
 			}
 		}
 
-		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_EOF))
+		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_SEMICOLON) || MATCH(awk,TOK_EOF))
 		{
 			/* blockless pattern */
-			qse_bool_t newline = MATCH(awk,TOK_NEWLINE);
+			qse_bool_t eof = MATCH(awk,TOK_EOF);
 			qse_awk_loc_t ploc = awk->ptok.loc;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
@@ -990,11 +992,11 @@ retry:
 				return QSE_NULL;	
 			}
 
-			if (newline)
+			if (!eof)
 			{
 				if (get_token(awk) <= -1) 
 				{
-					/* ptn has been added to the chain. 
+					/* 'ptn' has been added to the chain. 
 					 * it doesn't have to be cleared here
 					 * as qse_awk_clear does it */
 					/*qse_awk_clrpt (awk, ptn);*/
@@ -1027,6 +1029,10 @@ retry:
 				qse_awk_clrpt (awk, ptn);
 				return QSE_NULL;	
 			}
+
+			/* skip a semicolon after an action block if any */
+			if (MATCH(awk,TOK_SEMICOLON) && 
+			    get_token (awk) <= -1) return QSE_NULL;
 		}
 	}
 
