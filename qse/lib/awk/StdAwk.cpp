@@ -149,8 +149,8 @@ int StdAwk::open ()
 
 	qse_ntime_t now;
 
-	if (qse_gettime(&now) == -1) this->seed = 0;
-	else this->seed = (unsigned int)now;
+	this->seed = (qse_gettime(&now) <= -1)? 0u: (unsigned int)now;
+	this->seed += (qse_uintptr_t)&now;
 
 	::srand (this->seed);
 	this->cmgrtab_inited = false;
@@ -409,18 +409,19 @@ int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
 {
 	unsigned int prevSeed = this->seed;
 
-	if (nargs == 0)
+	if (nargs <= 0)
 	{
 		qse_ntime_t now;
 
-		if (qse_gettime (&now) == -1)
-			this->seed = (unsigned int)now;
-		else this->seed >>= 1;
+		this->seed = (qse_gettime (&now) <= -1)?
+			(this->seed >> 1): (unsigned int)now;
+		this->seed += (qse_uintptr_t)&now;
 	}
 	else
 	{
 		this->seed = (unsigned int)args[0].toInt();
 	}
+
 
 	::srand (this->seed);
 	return ret.setInt ((long_t)prevSeed);

@@ -38,7 +38,7 @@ bin_PROGRAMS = qseawk$(EXEEXT) $(am__EXEEXT_1)
 @WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 
 #####################################################################3
-@HAVE_C_MPI_TRUE@am__append_2 = qseawkp
+@HAVE_C_MPI_TRUE@am__append_2 = qseawkmp
 @HAVE_C_MPI_TRUE@@WIN32_TRUE@am__append_3 = $(UNICOWS_LIBS)
 subdir = cmd/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -54,7 +54,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/qse/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@HAVE_C_MPI_TRUE@am__EXEEXT_1 = qseawkp$(EXEEXT)
+@HAVE_C_MPI_TRUE@am__EXEEXT_1 = qseawkmp$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_qseawk_OBJECTS = awk.$(OBJEXT)
@@ -65,15 +65,15 @@ qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 qseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawk_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__qseawkp_SOURCES_DIST = mpi.c
-@HAVE_C_MPI_TRUE@am_qseawkp_OBJECTS = qseawkp-mpi.$(OBJEXT)
-qseawkp_OBJECTS = $(am_qseawkp_OBJECTS)
+am__qseawkmp_SOURCES_DIST = mpi.c
+@HAVE_C_MPI_TRUE@am_qseawkmp_OBJECTS = qseawkmp-mpi.$(OBJEXT)
+qseawkmp_OBJECTS = $(am_qseawkmp_OBJECTS)
 @HAVE_C_MPI_TRUE@@WIN32_TRUE@am__DEPENDENCIES_3 =  \
 @HAVE_C_MPI_TRUE@@WIN32_TRUE@	$(am__DEPENDENCIES_1)
-@HAVE_C_MPI_TRUE@qseawkp_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@HAVE_C_MPI_TRUE@qseawkmp_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @HAVE_C_MPI_TRUE@	$(am__DEPENDENCIES_3)
-qseawkp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawkp_LDFLAGS) \
+qseawkmp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawkmp_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
@@ -88,8 +88,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(qseawk_SOURCES) $(qseawkp_SOURCES)
-DIST_SOURCES = $(qseawk_SOURCES) $(am__qseawkp_SOURCES_DIST)
+SOURCES = $(qseawk_SOURCES) $(qseawkmp_SOURCES)
+DIST_SOURCES = $(qseawk_SOURCES) $(am__qseawkmp_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -251,10 +251,10 @@ AM_CPPFLAGS = \
 qseawk_SOURCES = awk.c
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir)
 qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(am__append_1)
-@HAVE_C_MPI_TRUE@qseawkp_SOURCES = mpi.c
-@HAVE_C_MPI_TRUE@qseawkp_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-@HAVE_C_MPI_TRUE@qseawkp_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir) $(MPI_CLDFLAGS)
-@HAVE_C_MPI_TRUE@qseawkp_LDADD = -lqseawkp -lqseawk -lqsecmn $(LIBM) \
+@HAVE_C_MPI_TRUE@qseawkmp_SOURCES = mpi.c
+@HAVE_C_MPI_TRUE@qseawkmp_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+@HAVE_C_MPI_TRUE@qseawkmp_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir) $(MPI_CLDFLAGS)
+@HAVE_C_MPI_TRUE@qseawkmp_LDADD = -lqseawkmp -lqseawk -lqsecmn $(LIBM) \
 @HAVE_C_MPI_TRUE@	$(am__append_3)
 all: all-am
 
@@ -336,9 +336,9 @@ clean-binPROGRAMS:
 qseawk$(EXEEXT): $(qseawk_OBJECTS) $(qseawk_DEPENDENCIES) 
 	@rm -f qseawk$(EXEEXT)
 	$(qseawk_LINK) $(qseawk_OBJECTS) $(qseawk_LDADD) $(LIBS)
-qseawkp$(EXEEXT): $(qseawkp_OBJECTS) $(qseawkp_DEPENDENCIES) 
-	@rm -f qseawkp$(EXEEXT)
-	$(qseawkp_LINK) $(qseawkp_OBJECTS) $(qseawkp_LDADD) $(LIBS)
+qseawkmp$(EXEEXT): $(qseawkmp_OBJECTS) $(qseawkmp_DEPENDENCIES) 
+	@rm -f qseawkmp$(EXEEXT)
+	$(qseawkmp_LINK) $(qseawkmp_OBJECTS) $(qseawkmp_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -347,7 +347,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qseawkp-mpi.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qseawkmp-mpi.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -370,19 +370,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-qseawkp-mpi.o: mpi.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qseawkp-mpi.o -MD -MP -MF $(DEPDIR)/qseawkp-mpi.Tpo -c -o qseawkp-mpi.o `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qseawkp-mpi.Tpo $(DEPDIR)/qseawkp-mpi.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='qseawkp-mpi.o' libtool=no @AMDEPBACKSLASH@
+qseawkmp-mpi.o: mpi.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkmp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qseawkmp-mpi.o -MD -MP -MF $(DEPDIR)/qseawkmp-mpi.Tpo -c -o qseawkmp-mpi.o `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qseawkmp-mpi.Tpo $(DEPDIR)/qseawkmp-mpi.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='qseawkmp-mpi.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qseawkp-mpi.o `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkmp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qseawkmp-mpi.o `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
 
-qseawkp-mpi.obj: mpi.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qseawkp-mpi.obj -MD -MP -MF $(DEPDIR)/qseawkp-mpi.Tpo -c -o qseawkp-mpi.obj `if test -f 'mpi.c'; then $(CYGPATH_W) 'mpi.c'; else $(CYGPATH_W) '$(srcdir)/mpi.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qseawkp-mpi.Tpo $(DEPDIR)/qseawkp-mpi.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='qseawkp-mpi.obj' libtool=no @AMDEPBACKSLASH@
+qseawkmp-mpi.obj: mpi.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkmp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qseawkmp-mpi.obj -MD -MP -MF $(DEPDIR)/qseawkmp-mpi.Tpo -c -o qseawkmp-mpi.obj `if test -f 'mpi.c'; then $(CYGPATH_W) 'mpi.c'; else $(CYGPATH_W) '$(srcdir)/mpi.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qseawkmp-mpi.Tpo $(DEPDIR)/qseawkmp-mpi.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='qseawkmp-mpi.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qseawkp-mpi.obj `if test -f 'mpi.c'; then $(CYGPATH_W) 'mpi.c'; else $(CYGPATH_W) '$(srcdir)/mpi.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(qseawkmp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qseawkmp-mpi.obj `if test -f 'mpi.c'; then $(CYGPATH_W) 'mpi.c'; else $(CYGPATH_W) '$(srcdir)/mpi.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

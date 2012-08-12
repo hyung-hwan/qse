@@ -23,7 +23,7 @@
 /* Park-Miller "minimal standard" 31 bit 
  * pseudo-random number generator, implemented
  * with David G. Carta's optimisation: with
- * 32 bit math and wihtout division.
+ * 32 bit math and without division.
  */
 qse_uint32_t qse_rand31 (qse_uint32_t seed)
 {
