@@ -20,15 +20,15 @@ endif
 #####################################################################3
 
 if HAVE_C_MPI
-bin_PROGRAMS += qseawkp
+bin_PROGRAMS += qseawkmp
 
-qseawkp_SOURCES = mpi.c
-qseawkp_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-qseawkp_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir) $(MPI_CLDFLAGS)
-qseawkp_LDADD = -lqseawkp -lqseawk -lqsecmn $(LIBM)
+qseawkmp_SOURCES = mpi.c
+qseawkmp_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+qseawkmp_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir) $(MPI_CLDFLAGS)
+qseawkmp_LDADD = -lqseawkmp -lqseawk -lqsecmn $(LIBM)
 
 if WIN32 
-qseawkp_LDADD += $(UNICOWS_LIBS)
+qseawkmp_LDADD += $(UNICOWS_LIBS)
 endif
 
 endif

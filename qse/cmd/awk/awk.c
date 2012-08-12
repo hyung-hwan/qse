@@ -1102,13 +1102,24 @@ int qse_main (int argc, qse_achar_t* argv[])
 #endif
 
 #if defined(ENABLE_MPI)
-	MPI_Init (&argc, &argv);
+	/* I didn't manage to find a good way to change the
+	 * default error handler to MPI_ERRORS_RETURN. 
+	 * so MPI_Init() will simply abort the program if it fails */
+	if (MPI_Init (&argc, &argv) != MPI_SUCCESS)
+	{
+		print_error (QSE_T("Failed to initialize MPI\n"));
+		ret = -1;
+		goto oops;
+	}
+
+	MPI_Comm_set_errhandler (MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
 
 	ret = qse_runmain (argc, argv, awk_main);
 
 #if defined(ENABLE_MPI)
 	MPI_Finalize ();
+oops:
 #endif
 
 #if defined(_WIN32)

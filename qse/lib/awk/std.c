@@ -1921,8 +1921,8 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	qse_awk_rtx_pushrcb (rtx, &rcb);
 
-	if (qse_gettime (&now) <= -1) rxtn->seed = 0;
-	else rxtn->seed = (unsigned int) now;
+	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: (unsigned int)now;
+	rxtn->seed += (qse_uintptr_t)&now;
 	srand (rxtn->seed);
 
 	rxtn->c.in.files = icf;
@@ -2004,19 +2004,19 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	prev = rxtn->seed;
 
-	if (nargs == 1)
+	if (nargs <= 0)
+	{
+		qse_ntime_t now;
+		rxtn->seed = (qse_gettime (&now) <= -1)? 
+			(rxtn->seed >> 1): (unsigned int)now;
+		rxtn->seed += (qse_uintptr_t)&now;
+	}
+	else
 	{
 		a0 = qse_awk_rtx_getarg (rtx, 0);
 		n = qse_awk_rtx_valtolong (rtx, a0, &lv);
 		if (n <= -1) return -1;
-
 		rxtn->seed = lv;
-	}
-	else
-	{
-		qse_ntime_t now;
-		if (qse_gettime(&now) <= -1) rxtn->seed >>= 1;
-		else rxtn->seed = (unsigned int)now;
 	}
 
 	srand (rxtn->seed);
