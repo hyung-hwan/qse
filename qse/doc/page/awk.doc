@@ -18,9 +18,9 @@
 
 @section awk_intro INTRODUCTION
 
-QSEAWK is an embeddable AWK interpreter and is a part of the @ref qse_intro 
-"QSE" library. Its design focuses on building a flexible and robust embedding
-API with minimal platform dependency. An embedding application is capable of
+QSEAWK is an AWK interpreter and is a part of the @ref qse_intro "QSE" library. 
+Its design focuses on building a flexible and robust embedding API with minimal 
+platform dependency. An embedding application is capable of:
 - adding new global variables and functions.
 - getting and set the value of a global variable.
 - calling a function with or without parameters and getting its return value.
@@ -30,7 +30,21 @@ API with minimal platform dependency. An embedding application is capable of
 - changing language features by setting options.
 - and more
 
-Embedding an interpreter typically involves the following steps. 
+The library implements AWK in multiple levels: 
+
+- base interpreter
+- standard interpreter
+- parallel interpreter
+
+The base interpreter provides most core language features while minimizing 
+platform dependence. When working with the base interpreter, you're required
+to write primtive operation handlers like I/O and pass them in to make it 
+useful. The standard interpreter is usable immediately since it implements 
+all the primitive operations required by the base interpreter and adds 
+standard AWK functions. The parallel interpreter enables parallel processing
+by adding various MPI variables and functions to the standard interpreter.
+
+Embedding a standard interpreter typically involves the following steps. 
 
 - open a new interpreter
 - parse in a source script
@@ -135,7 +149,7 @@ int main (int argc, char* argv[])
 
 This library also provides a stand-alone AWK interpreter that you can use
 in a console environment. The source code is located under the 
-<project-root>/cmd/awk subdirectory.
+<project-root>/cmd/awk subdirectory. See the usage below.
 
 @code
 $ qseawk
