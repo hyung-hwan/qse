@@ -1,5 +1,5 @@
 /*
- * $Id: mem.h 549 2011-08-14 09:07:31Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

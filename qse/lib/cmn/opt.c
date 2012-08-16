@@ -1,5 +1,5 @@
 /*
- * $Id: opt.c 550 2011-08-14 15:59:55Z hyunghwan.chung $
+ * $Id$
  * 
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

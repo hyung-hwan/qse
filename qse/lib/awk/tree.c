@@ -1,5 +1,5 @@
 /*
- * $Id: tree.c 514 2011-07-22 15:37:46Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

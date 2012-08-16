@@ -1,5 +1,5 @@
 /*
- * $Id: StdSed.hpp 507 2011-07-15 15:53:49Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

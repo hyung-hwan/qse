@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.cpp 571 2011-09-20 14:04:48Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

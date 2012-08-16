@@ -1,5 +1,5 @@
 /*
- * $Id: run.h 551 2011-08-15 13:52:48Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

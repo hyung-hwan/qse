@@ -1,5 +1,5 @@
 /*
- * $Id: StdAwk.hpp 516 2011-07-23 09:03:48Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

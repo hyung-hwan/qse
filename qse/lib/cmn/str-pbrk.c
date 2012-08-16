@@ -1,5 +1,5 @@
 /*
- * $Id: str-pbrk.c 576 2011-09-23 14:52:22Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

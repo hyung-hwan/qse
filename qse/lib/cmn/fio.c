@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c 569 2011-09-19 06:51:02Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

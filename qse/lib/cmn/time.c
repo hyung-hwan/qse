@@ -1,5 +1,5 @@
 /*
- * $Id: time.c 478 2011-05-24 05:11:42Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

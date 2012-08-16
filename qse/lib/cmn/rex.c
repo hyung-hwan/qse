@@ -1,5 +1,5 @@
 /*
- * $Id: rex.c 556 2011-08-31 15:43:46Z hyunghwan.chung $
+ * $Id$
  * 
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

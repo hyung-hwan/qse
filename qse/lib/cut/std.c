@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 306 2009-11-22 13:58:53Z baconevi $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

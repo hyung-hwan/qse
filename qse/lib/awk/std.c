@@ -1,5 +1,5 @@
 /*
- * $Id: std.c 538 2011-08-09 16:08:26Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

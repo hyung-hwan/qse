@@ -1,5 +1,5 @@
 /*
- * $Id: sio.c 573 2011-09-21 05:50:23Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

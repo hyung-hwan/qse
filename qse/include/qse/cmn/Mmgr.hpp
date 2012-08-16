@@ -1,5 +1,5 @@
 /*
- * $Id: Sed.hpp 127 2009-05-07 13:15:04Z baconevi $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

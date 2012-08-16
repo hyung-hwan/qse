@@ -1,5 +1,5 @@
 /*
- * $Id: fnc.h 473 2011-05-23 03:38:03Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
