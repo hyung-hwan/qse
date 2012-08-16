@@ -1,5 +1,5 @@
 /*
- * $Id: StdCut.hpp 319 2009-12-19 03:06:28Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

@@ -1,5 +1,5 @@
 /*
- * $Id: err.c 568 2011-09-17 15:41:26Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

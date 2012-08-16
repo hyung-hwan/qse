@@ -1,5 +1,5 @@
 /*
- * $Id: pio.c 565 2011-09-11 02:48:21Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

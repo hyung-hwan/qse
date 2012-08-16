@@ -1,5 +1,5 @@
 /*
- * $Id: awk.h 483 2011-05-25 15:25:51Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

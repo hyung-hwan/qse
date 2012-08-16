@@ -1,5 +1,5 @@
 /*
- * $Id: assert.c 223 2008-06-26 06:44:41Z baconevi $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.

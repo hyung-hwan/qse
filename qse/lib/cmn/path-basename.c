@@ -1,5 +1,5 @@
 /*
- * $Id: misc.c 451 2011-05-03 14:00:38Z hyunghwan.chung $
+ * $Id$
  *
     Copyright 2006-2012 Chung, Hyung-Hwan.
     This file is part of QSE.
