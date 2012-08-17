@@ -1918,7 +1918,7 @@ static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 				/* destroy the value if not referenced */
 				qse_awk_rtx_refupval (rtx, tmp);
 				qse_awk_rtx_refdownval (rtx, tmp);
-				xret = 1;
+				xret = 0;
 			}
 			break;
 	}
