@@ -173,6 +173,7 @@ PROGS="
 	lang-044.awk!lang-044.dat!!--newline=on -d-
 	lang-045.awk!!!--newline=on -d-
 	lang-046.awk!lang-046.dat2!!--newline=on -d- -vdatadir=@abs_srcdir@ -vdatafile=lang-046.dat1
+	lang-047.awk!!!--newline=on --tolerant=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
 	levenshtein-utests.awk!!!--newline=on --include=on

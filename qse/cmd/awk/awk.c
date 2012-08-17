@@ -421,6 +421,7 @@ struct opttab_t
 	{ QSE_T("ncmponstr"),    QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
 	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,   QSE_T("enable the strict naming rule") },
 	{ QSE_T("include"),      QSE_AWK_INCLUDE,        QSE_T("enable 'include'") },
+	{ QSE_T("tolerant"),     QSE_AWK_TOLERANT,       QSE_T("make more I/O fault-tolerant") },
 	{ QSE_NULL,              0,                      QSE_NULL }
 };
 
@@ -479,6 +480,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":ncmponstr"),       QSE_T('\0') },
 		{ QSE_T(":strictnaming"),    QSE_T('\0') },
 		{ QSE_T(":include"),         QSE_T('\0') },
+		{ QSE_T(":tolerant"),        QSE_T('\0') },
 
 		{ QSE_T(":call"),            QSE_T('c') },
 		{ QSE_T(":file"),            QSE_T('f') },

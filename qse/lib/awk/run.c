@@ -25,6 +25,8 @@
 #include <qse/cmn/stdio.h>
 #endif
 
+#define PRINT_IOERR -99
+
 #define CMP_ERROR -99
 #define DEF_BUF_CAPA 256
 #define STACK_INCREMENT 512
@@ -242,6 +244,8 @@ static qse_awk_val_t* eval_lclidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_argidx (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_pos (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_print (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
+static qse_awk_val_t* eval_printf (qse_awk_rtx_t* run, qse_awk_nde_t* nde);
 
 static int __raw_push (qse_awk_rtx_t* run, void* val);
 #define __raw_pop(run) \
@@ -1830,138 +1834,96 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
+	int xret;
+	qse_awk_val_t* tmp;
+
 	ON_STATEMENT (rtx, nde);
 
 	switch (nde->type) 
 	{
 		case QSE_AWK_NDE_NULL:
-		{
 			/* do nothing */
+			xret = 0;
 			break;
-		}
 
 		case QSE_AWK_NDE_BLK:
-		{
-			if (run_block (rtx,
-				(qse_awk_nde_blk_t*)nde) == -1) return -1;
+			xret = run_block (rtx, (qse_awk_nde_blk_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_IF:
-		{
-			if (run_if (rtx,
-				(qse_awk_nde_if_t*)nde) == -1) return -1;	
+			xret = run_if (rtx, (qse_awk_nde_if_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_WHILE:
 		case QSE_AWK_NDE_DOWHILE:
-		{
-			if (run_while (rtx,
-				(qse_awk_nde_while_t*)nde) == -1) return -1;
+			xret = run_while (rtx, (qse_awk_nde_while_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_FOR:
-		{
-			if (run_for (rtx,
-				(qse_awk_nde_for_t*)nde) == -1) return -1;
+			xret = run_for (rtx, (qse_awk_nde_for_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_FOREACH:
-		{
-			if (run_foreach (rtx,
-				(qse_awk_nde_foreach_t*)nde) == -1) return -1;
+			xret = run_foreach (rtx, (qse_awk_nde_foreach_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_BREAK:
-		{
-			if (run_break (rtx,
-				(qse_awk_nde_break_t*)nde) == -1) return -1;
+			xret = run_break (rtx, (qse_awk_nde_break_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_CONTINUE:
-		{
-			if (run_continue (rtx,
-				(qse_awk_nde_continue_t*)nde) == -1) return -1;
+			xret = run_continue (rtx, (qse_awk_nde_continue_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_RETURN:
-		{
-			if (run_return (rtx,
-				(qse_awk_nde_return_t*)nde) == -1) return -1;
+			xret = run_return (rtx, (qse_awk_nde_return_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_EXIT:
-		{
-			if (run_exit (rtx,
-				(qse_awk_nde_exit_t*)nde) == -1) return -1;
+			xret = run_exit (rtx, (qse_awk_nde_exit_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_NEXT:
-		{
-			if (run_next (rtx,
-				(qse_awk_nde_next_t*)nde) == -1) return -1;
+			xret = run_next (rtx, (qse_awk_nde_next_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_NEXTFILE:
-		{
-			if (run_nextfile (rtx,
-				(qse_awk_nde_nextfile_t*)nde) == -1) return -1;
+			xret = run_nextfile (rtx, (qse_awk_nde_nextfile_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_DELETE:
-		{
-			if (run_delete (rtx,
-				(qse_awk_nde_delete_t*)nde) == -1) return -1;
+			xret = run_delete (rtx, (qse_awk_nde_delete_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_RESET:
-		{
-			if (run_reset (rtx,
-				(qse_awk_nde_reset_t*)nde) == -1) return -1;
+			xret = run_reset (rtx, (qse_awk_nde_reset_t*)nde);
 			break;
-		}
-
 
 		case QSE_AWK_NDE_PRINT:
-		{
-			if (run_print (rtx,
-				(qse_awk_nde_print_t*)nde) == -1) return -1;
+			if (rtx->awk->option & QSE_AWK_TOLERANT) goto __fallback__;
+			xret = run_print (rtx, (qse_awk_nde_print_t*)nde);
 			break;
-		}
 
 		case QSE_AWK_NDE_PRINTF:
-		{
-			if (run_printf (rtx,
-				(qse_awk_nde_print_t*)nde) == -1) return -1;
+			if (rtx->awk->option & QSE_AWK_TOLERANT) goto __fallback__;
+			xret = run_printf (rtx, (qse_awk_nde_print_t*)nde);
 			break;
-		}
 
 		default:
-		{
-			qse_awk_val_t* v;
-			v = eval_expression (rtx, nde);
-			if (v == QSE_NULL) return -1;
-
-			/* destroy the value if not referenced */
-			qse_awk_rtx_refupval (rtx, v);
-			qse_awk_rtx_refdownval (rtx, v);
-
+		__fallback__:
+			tmp = eval_expression (rtx, nde);
+			if (tmp == QSE_NULL) xret = -1;
+			else
+			{
+				/* destroy the value if not referenced */
+				qse_awk_rtx_refupval (rtx, tmp);
+				qse_awk_rtx_refdownval (rtx, tmp);
+				xret = 1;
+			}
 			break;
-		}
 	}
 
-	return 0;
+	return xret;
 }
 
 static int run_if (qse_awk_rtx_t* rtx, qse_awk_nde_if_t* nde)
@@ -2738,7 +2700,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	qse_char_t* out = QSE_NULL;
 	const qse_char_t* dst;
 	qse_awk_val_t* v;
-	int n;
+	int n, xret = 0;
 
 	QSE_ASSERT (
 		(nde->out_type == QSE_AWK_OUT_PIPE && nde->out != QSE_NULL) ||
@@ -2813,9 +2775,16 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 			QSE_STR_LEN(&rtx->inrec.line));
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
-			if (out) QSE_AWK_FREE (rtx->awk, out);
-			ADJERR_LOC (rtx, &nde->loc);
-			return -1;
+			if (rtx->awk->option & QSE_AWK_TOLERANT)
+			{
+				xret = PRINT_IOERR;
+			}
+			else
+			{
+				if (out) QSE_AWK_FREE (rtx->awk, out);
+				ADJERR_LOC (rtx, &nde->loc);
+				return -1;
+			}
 		}
 	}
 	else
@@ -2842,9 +2811,16 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 					rtx->gbl.ofs.len);
 				if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 				{
-					if (out) QSE_AWK_FREE (rtx->awk, out);
-					ADJERR_LOC (rtx, &nde->loc);
-					return -1;
+					if (rtx->awk->option & QSE_AWK_TOLERANT)
+					{
+						xret = PRINT_IOERR;
+					}
+					else
+					{
+						if (out) QSE_AWK_FREE (rtx->awk, out);
+						ADJERR_LOC (rtx, &nde->loc);
+						return -1;
+					}
 				}
 			}
 
@@ -2860,10 +2836,17 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				rtx, nde->out_type, dst, v);
 			if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 			{
-				if (out) QSE_AWK_FREE (rtx->awk, out);
-				qse_awk_rtx_refdownval (rtx, v);
-				ADJERR_LOC (rtx, &nde->loc);
-				return -1;
+				if (rtx->awk->option & QSE_AWK_TOLERANT)
+				{
+					xret = PRINT_IOERR;
+				}
+				else
+				{
+					if (out) QSE_AWK_FREE (rtx->awk, out);
+					qse_awk_rtx_refdownval (rtx, v);
+					ADJERR_LOC (rtx, &nde->loc);
+					return -1;
+				}
 			}
 
 			qse_awk_rtx_refdownval (rtx, v);
@@ -2876,9 +2859,16 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		rtx->gbl.ors.ptr, rtx->gbl.ors.len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 	{
-		if (out) QSE_AWK_FREE (rtx->awk, out);
-		ADJERR_LOC (rtx, &nde->loc);
-		return -1;
+		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		{
+			xret = PRINT_IOERR;
+		}
+		else
+		{
+			if (out) QSE_AWK_FREE (rtx->awk, out);
+			ADJERR_LOC (rtx, &nde->loc);
+			return -1;
+		}
 	}
 
 	/* unlike printf, flushio() is not needed here as print 
@@ -2887,7 +2877,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	if (out) QSE_AWK_FREE (rtx->awk, out);
 
 /*skip_write:*/
-	return 0;
+	return xret;
 }
 
 static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
@@ -2896,7 +2886,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	const qse_char_t* dst;
 	qse_awk_val_t* v;
 	qse_awk_nde_t* head;
-	int n;
+	int n, xret = 0;
 
 	QSE_ASSERT (
 		(nde->out_type == QSE_AWK_OUT_PIPE && nde->out != QSE_NULL) ||
@@ -2957,7 +2947,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	dst = (out == QSE_NULL)? QSE_T(""): out;
 
 	QSE_ASSERTX (nde->args != QSE_NULL, 
-		"a valid printf statement should have at least one argument. the parser must ensure this.");
+		"valid printf statement should have at least one argument. the parser must ensure this.");
 
 	if (nde->args->type == QSE_AWK_NDE_GRP)
 	{
@@ -2968,7 +2958,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 	else head = nde->args;
 
 	QSE_ASSERTX (head != QSE_NULL,
-		"a valid printf statement should have at least one argument. the parser must ensure this.");
+		"valid printf statement should have at least one argument. the parser must ensure this.");
 
 	v = eval_expression (rtx, head);
 	if (v == QSE_NULL) 
@@ -2985,36 +2975,58 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		n = qse_awk_rtx_writeio_val (rtx, nde->out_type, dst, v);
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
-			if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
-			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, &nde->loc);
-			return -1;
+			if (rtx->awk->option & QSE_AWK_TOLERANT)
+			{
+				xret = PRINT_IOERR;
+			}
+			else
+			{
+				if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
+				qse_awk_rtx_refdownval (rtx, v);
+				ADJERR_LOC (rtx, &nde->loc);
+				return -1;
+			}
 		}
 	}
 	else
 	{
 		/* perform the formatted output */
-		if (output_formatted (
+		n = output_formatted (
 			rtx, nde->out_type, dst,
 			((qse_awk_val_str_t*)v)->val.ptr,
 			((qse_awk_val_str_t*)v)->val.len,
-			head->next) == -1)
+			head->next);
+		if (n <= -1)
 		{
-			if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
-			qse_awk_rtx_refdownval (rtx, v);
-			ADJERR_LOC (rtx, &nde->loc);
-			return -1;
+			if (n == PRINT_IOERR) xret = n;
+			else
+			{
+				if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
+				qse_awk_rtx_refdownval (rtx, v);
+				ADJERR_LOC (rtx, &nde->loc);
+				return -1;
+			}
 		}
 	}
 	qse_awk_rtx_refdownval (rtx, v);
 
 
 /*skip_write:*/
-	n = qse_awk_rtx_flushio (rtx, nde->out_type, dst);
+	if (qse_awk_rtx_flushio (rtx, nde->out_type, dst) <= -1)
+	{
+		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		{
+			xret = PRINT_IOERR;
+		}
+		else
+		{
+			if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
+			return -1;
+		}
+	}
 
 	if (out != QSE_NULL) QSE_AWK_FREE (rtx->awk, out);
-
-	return n;
+	return xret;
 }
 
 static int output_formatted (
@@ -3030,7 +3042,17 @@ static int output_formatted (
 	if (ptr == QSE_NULL) return -1;
 
 	n = qse_awk_rtx_writeio_str (rtx, out_type, dst, ptr, len);
-	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) return -1;
+	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
+	{
+		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		{
+			return PRINT_IOERR;
+		}
+		else
+		{
+			return -1;
+		}
+	}
 
 	return 0;
 }
@@ -3145,7 +3167,9 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		eval_lclidx,
 		eval_argidx,
 		eval_pos,
-		eval_getline
+		eval_getline,
+		eval_print,
+		eval_printf
 	};
 
 	qse_awk_val_t* v;
@@ -3173,11 +3197,44 @@ static qse_awk_val_t* eval_expression0 (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 static qse_awk_val_t* eval_group (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
+#if 0
 	/* eval_binop_in evaluates the QSE_AWK_NDE_GRP specially.
 	 * so this function should never be reached. */
 	QSE_ASSERT (!"should never happen - NDE_GRP only for in");
 	SETERR_LOC (rtx, QSE_AWK_EINTERN, &nde->loc);
 	return QSE_NULL;
+#endif
+
+	/* a group can be evauluated in a normal context
+	 * if a program is parsed with QSE_AWK_TOLERANT on. 
+	 * before the introduction of this option, the grouped
+	 * expression was valid only coerced with the 'in' 
+	 * operator. 
+	 * */
+
+	/* when a group is evaluated in a normal context,
+	 * we return the last expression as a value. */
+
+	qse_awk_val_t* val;
+	qse_awk_nde_t* np;
+
+	np = ((qse_awk_nde_grp_t*)nde)->body;
+
+	QSE_ASSERT (np != QSE_NULL);
+
+loop:
+	val = eval_expression (rtx, np);
+	if (val == QSE_NULL) return QSE_NULL;
+
+	np = np->next;
+	if (np)
+	{
+		qse_awk_rtx_refupval (rtx, val);
+		qse_awk_rtx_refdownval (rtx, val);
+		goto loop;
+	}
+
+	return val;
 }
 
 static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
@@ -6302,6 +6359,22 @@ skip_read:
 	res = qse_awk_rtx_makeintval (run, n);
 	if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 	return res;
+}
+
+static qse_awk_val_t* eval_print (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+{
+	int n = run_print (run, (qse_awk_nde_print_t*)nde);
+	if (n == PRINT_IOERR) n = -1; /* let print return -1 */
+	else if (n <= -1) return QSE_NULL;
+	return qse_awk_rtx_makeintval (run, n);
+}
+
+static qse_awk_val_t* eval_printf (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+{
+	int n = run_printf (run, (qse_awk_nde_print_t*)nde);
+	if (n == PRINT_IOERR) n = -1; /* let print return -1 */
+	else if (n <= -1) return QSE_NULL;
+	return qse_awk_rtx_makeintval (run, n);
 }
 
 static int __raw_push (qse_awk_rtx_t* run, void* val)
