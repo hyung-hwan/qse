@@ -149,6 +149,38 @@ static int print_tabs (qse_awk_t* awk, int depth)
 	return 0;
 }
 
+static int print_printx (qse_awk_t* awk, qse_awk_nde_print_t* px)
+{
+	qse_cstr_t kw;
+
+	if (px->type == QSE_AWK_NDE_PRINT) 
+	{
+		qse_awk_getkwname (awk, QSE_AWK_KWID_PRINT, &kw);
+		PUT_SRCSTRN (awk, kw.ptr, kw.len);
+	}
+	else
+	{
+		qse_awk_getkwname (awk, QSE_AWK_KWID_PRINTF, &kw);
+		PUT_SRCSTRN (awk, kw.ptr, kw.len);
+	}
+
+	if (px->args != QSE_NULL)
+	{
+		PUT_SRCSTR (awk, QSE_T(" "));
+		PRINT_EXPR_LIST (awk, px->args);
+	}
+
+	if (px->out != QSE_NULL)
+	{
+		PUT_SRCSTR (awk, QSE_T(" "));
+		PUT_SRCSTR (awk, print_outop_str[px->out_type]);
+		PUT_SRCSTR (awk, QSE_T(" "));
+		PRINT_EXPR (awk, px->out);
+	}
+
+	return 0;
+}
+
 static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 {
 	qse_cstr_t kw;
@@ -650,8 +682,18 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			break;
 		}
 
+		case QSE_AWK_NDE_PRINT:
+		case QSE_AWK_NDE_PRINTF:
+		{
+			PUT_SRCSTR (awk, QSE_T("("));
+			if (print_printx (awk, (qse_awk_nde_print_t*)nde) <= -1) return -1;
+			PUT_SRCSTR (awk, QSE_T(")"));
+			break;
+		}
+
 		default:
 		{
+			qse_awk_seterrnum (awk, QSE_AWK_EINTERN, QSE_NULL);
 			return -1;
 		}
 	}
@@ -998,35 +1040,8 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_PRINT:
 		case QSE_AWK_NDE_PRINTF:
 		{
-			qse_awk_nde_print_t* px = (qse_awk_nde_print_t*)p;
-
 			PRINT_TABS (awk, depth);
-
-			if (p->type == QSE_AWK_NDE_PRINT) 
-			{
-				qse_awk_getkwname (awk, QSE_AWK_KWID_PRINT, &kw);
-				PUT_SRCSTRN (awk, kw.ptr, kw.len);
-			}
-			else
-			{
-				qse_awk_getkwname (awk, QSE_AWK_KWID_PRINTF, &kw);
-				PUT_SRCSTRN (awk, kw.ptr, kw.len);
-			}
-
-			if (px->args != QSE_NULL)
-			{
-				PUT_SRCSTR (awk, QSE_T(" "));
-				PRINT_EXPR_LIST (awk, px->args);
-			}
-
-			if (px->out != QSE_NULL)
-			{
-				PUT_SRCSTR (awk, QSE_T(" "));
-				PUT_SRCSTR (awk, print_outop_str[px->out_type]);
-				PUT_SRCSTR (awk, QSE_T(" "));
-				PRINT_EXPR (awk, px->out);
-			}
-
+			if (print_printx (awk, (qse_awk_nde_print_t*)p) <= -1) return -1;
 			PUT_SRCSTR (awk, QSE_T(";"));
 			PUT_NL (awk);
 			break;
@@ -1038,6 +1053,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			PRINT_EXPR (awk, p);
 			PUT_SRCSTR (awk, QSE_T(";"));
 			PUT_NL (awk);
+			break;
 		}
 	}
 

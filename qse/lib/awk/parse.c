@@ -311,7 +311,7 @@ static global_t gtab[] =
 	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
 
 	/* output real-to-str conversion format for 'print' */
-	{ QSE_T("OFMT"),         4,  QSE_AWK_RIO}, 
+	{ QSE_T("OFMT"),         4,  QSE_AWK_RIO }, 
 
 	/* output field separator for 'print' */
 	{ QSE_T("OFS"),          3,  QSE_AWK_RIO },
@@ -2727,6 +2727,16 @@ static qse_awk_nde_t* parse_print (
 		qse_awk_nde_t* args_tail;
 		qse_awk_nde_t* tail_prev;
 
+		/* print and printf provide weird syntaxs.
+		 * 
+		 *    1. print 10, 20;
+		 *    2. print (10, 20);
+		 *    3. print (10,20,30) in a;
+		 *    4. print ((10,20,30) in a);
+		 *
+		 * Due the case 3, i can't consume LPAREN
+		 * here and expect RPAREN later. 
+		 */
 		{
 			qse_awk_loc_t eloc = awk->tok.loc;
 			args = parse_expr_dc (awk, &eloc);
@@ -2831,11 +2841,11 @@ static qse_awk_nde_t* parse_print (
 	if (out == QSE_NULL)
 	{
 		out_type = MATCH(awk,TOK_GT)?       QSE_AWK_OUT_FILE:
-		           MATCH(awk,TOK_RS)?   QSE_AWK_OUT_APFILE:
+		           MATCH(awk,TOK_RS)?       QSE_AWK_OUT_APFILE:
 		           MATCH(awk,TOK_BOR)?      QSE_AWK_OUT_PIPE:
 		           ((awk->option & QSE_AWK_RWPIPE) &&
-			    MATCH(awk,TOK_LOR))?    QSE_AWK_OUT_RWPIPE:
-		                                      QSE_AWK_OUT_CONSOLE;
+		            MATCH(awk,TOK_LOR))?    QSE_AWK_OUT_RWPIPE:
+		                                    QSE_AWK_OUT_CONSOLE;
 
 		if (out_type != QSE_AWK_OUT_CONSOLE)
 		{
@@ -2977,15 +2987,21 @@ static qse_awk_nde_t* parse_statement_nb (
 		if (get_token(awk) <= -1) return QSE_NULL;
 		nde = parse_reset (awk, xloc);
 	}
-	else if (MATCH(awk,TOK_PRINT))
+	else if (!(awk->option & QSE_AWK_TOLERANT))
 	{
-		if (get_token(awk) <= -1) return QSE_NULL;
-		nde = parse_print (awk, xloc, QSE_AWK_NDE_PRINT);
-	}
-	else if (MATCH(awk,TOK_PRINTF))
-	{
-		if (get_token(awk) <= -1) return QSE_NULL;
-		nde = parse_print (awk, xloc, QSE_AWK_NDE_PRINTF);
+		/* in the non-tolerant mode, we treat print and printf
+		 * as a separate statement */
+		if (MATCH(awk,TOK_PRINT))
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+			nde = parse_print (awk, xloc, QSE_AWK_NDE_PRINT);
+		}
+		else if (MATCH(awk,TOK_PRINTF))
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+			nde = parse_print (awk, xloc, QSE_AWK_NDE_PRINTF);
+		}
+		else nde = parse_expr_dc (awk, xloc);
 	}
 	else 
 	{
@@ -3860,6 +3876,8 @@ static qse_awk_nde_t* parse_concat (
 		         MATCH(awk,TOK_PLUSPLUS) ||
 		         MATCH(awk,TOK_MINUSMINUS) ||
 		         MATCH(awk,TOK_LNOT) ||
+			    ((awk->option & QSE_AWK_TOLERANT) && 
+		          (awk->tok.type == TOK_PRINT || awk->tok.type == TOK_PRINTF)) ||
 		         awk->tok.type >= TOK_GETLINE)
 		{
 			/* TODO: is the check above sufficient? */
@@ -4514,9 +4532,9 @@ static qse_awk_nde_t* parse_primary_nogetline (
 		}
 
 		/* check if it is a chained node */
-		if (nde->next != QSE_NULL)
+		if (nde->next)
 		{
-			/* if so, it is a expression group */
+			/* if so, it is an expression group */
 			/* (expr1, expr2, expr2) */
 
 			qse_awk_nde_grp_t* tmp;
@@ -4525,7 +4543,8 @@ static qse_awk_nde_t* parse_primary_nogetline (
 			     awk->parse.id.stmt != TOK_PRINTF) ||
 			    awk->parse.depth.cur.expr != 1)
 			{
-				if (!MATCH(awk,TOK_IN))
+				if (!(awk->option & QSE_AWK_TOLERANT) &&
+				    !MATCH(awk,TOK_IN))
 				{
 					qse_awk_clrpt (awk, nde);
 					SETERR_TOK (awk, QSE_AWK_EKWIN);
@@ -4610,6 +4629,21 @@ static qse_awk_nde_t* parse_primary_nogetline (
 		nde->in = in;
 
 		return (qse_awk_nde_t*)nde;
+	}
+	else if (awk->option & QSE_AWK_TOLERANT)
+	{
+		/* in the tolerant mode, we treat print and printf 
+		 * as a function like getline */
+		if (MATCH(awk,TOK_PRINT))
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+			return parse_print (awk, xloc, QSE_AWK_NDE_PRINT);
+		}
+		else if (MATCH(awk,TOK_PRINTF))
+		{
+			if (get_token(awk) <= -1) return QSE_NULL;
+			return parse_print (awk, xloc, QSE_AWK_NDE_PRINTF);
+		}
 	}
 
 	/* valid expression introducer is expected */

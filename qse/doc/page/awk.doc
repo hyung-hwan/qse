@@ -4,16 +4,18 @@
 - @ref awk_intro "INTRODUCTION"
 - @ref awk_lang "AWK LANGUAGE"
 - @ref awk_ext "AWK LANGUAGE EXTENSIONS"
- - @ref awk_ext_vardecl " VARIABLE DECLARATION"
- - @ref awk_ext_include  "INCLUDE"
- - @ref awk_ext_rwpipe   "TWO-WAY PIPE"
- - @ref awk_ext_return   "RETURN"
- - @ref awk_ext_comment  "COMMENT"
- - @ref awk_ext_fnc      "EXTENDED FUNCTIONS"
- - @ref awk_ext_fs       "EXTENDED FS"
- - @ref awk_ext_binnum   "BINARY NUMBER"
- - @ref awk_ext_unicode  "UNICODE ESCAPE SEQUENCE"
- - @ref awk_ext_ioenc    "I/O ENCODING"
+ - @ref awk_ext_vardecl   "VARIABLE DECLARATION"
+ - @ref awk_ext_include   "INCLUDE"
+ - @ref awk_ext_print     "EXTENDED PRINT/PRINTF"
+ - @ref awk_ext_exprgroup "GROUPED EXPRESSION"
+ - @ref awk_ext_rwpipe    "TWO-WAY PIPE"
+ - @ref awk_ext_return    "RETURN"
+ - @ref awk_ext_comment   "COMMENT"
+ - @ref awk_ext_fnc       "EXTENDED FUNCTIONS"
+ - @ref awk_ext_fs        "EXTENDED FS"
+ - @ref awk_ext_binnum    "BINARY NUMBER"
+ - @ref awk_ext_unicode   "UNICODE ESCAPE SEQUENCE"
+ - @ref awk_ext_ioenc     "I/O ENCODING"
 
 
 @section awk_intro INTRODUCTION
@@ -289,6 +291,51 @@ blocks appear. To use \@include, you must turn on #QSE_AWK_INCLUDE.
 BEGIN { func_in_abc (); }
 @endcode
 
+@subsection awk_ext_print EXTENDED PRINT/PRINTF
+When #QSE_AWK_TOLERANT is on, print and printf are treated as if
+they are function calls.  In this mode, they return a negative number
+on failure and a zero on success and any I/O failure doesn't abort
+a running program. 
+
+@code
+BEGIN {
+	a = print "hello, world" > "/dev/null";
+	print a;	
+	a = print ("hello, world") > "/dev/null";
+	print a;	
+}
+@endcode
+
+Since print and printf are like function calls, you can use them
+in any context where a normal expression is allowed. For example,
+printf is used as a conditional expression in an 'if' statement 
+in the sample code below.
+@code
+BEGIN {
+	if ((printf "hello, world\n" || "tcp://127.0.0.1:9999") <= -1)
+		print "FAILURE";
+	else
+		print "SUCCESS";
+}
+@endcode
+
+@subsection awk_ext_exprgroup GROUPED EXPRESSION
+When #QSE_AWK_TOLERANT is on, you can use a grouped expression without
+the 'in' operator. A grouped expression is a parentheses-enclosed list
+of expressions separated with a comma. Each expression in the group is
+evaluated in the appearing order. The evaluation result of the last 
+expression in the group is returned as that of the group.
+
+@code
+BEGIN {
+	c = (1, 2, 9);
+	a=((1*c, 3*c), (3 - c), ((k = 6+(c+1, c+2)), (-7 * c)));
+	print c; # 9;
+	print a; # -63	
+	print k; # 17
+}
+@endcode
+
 @subsection awk_ext_rwpipe TWO-WAY PIPE
 
 The two-way pipe indicated by @b || is supproted, in addition to the one-way 
@@ -349,6 +396,77 @@ BEGIN {
 	print "hello world" || "tcp://127.0.0.1:9999"; 
 	"tcp://127.0.0.1:9999" || getline x; 
 	print x;
+}
+@endcode
+
+Here is a more interesting example adopting Michael Sanders'
+AWK web server, modified for QSEAWK.
+
+@code
+# 
+# Michael Sanders' AWK web server for QSEAWK.
+# Orginal code in http://awk.info/?tools/server
+#
+# qseawk --tolerant=on --rwpipe=on webserver.awk
+#
+BEGIN {
+  x        = 1                         # script exits if x < 1 
+  port     = 8080                      # port number 
+  host     = "tcpd://0.0.0.0:" port    # host string 
+  url      = "http://localhost:" port  # server url 
+  status   = 200                       # 200 == OK 
+  reason   = "OK"                      # server response 
+  RS = ORS = "\r\n"                    # header line terminators 
+  doc      = Setup()                   # html document 
+  len      = length(doc) + length(ORS) # length of document 
+  while (x) {
+     if ($1 == "GET") RunApp(substr($2, 2))
+     if (! x) break
+     print "HTTP/1.0", status, reason || host
+     print "Connection: Close"        || host
+     print "Pragma: no-cache"         || host
+     print "Content-length:", len     || host
+     print ORS doc                    || host
+     close(host)     # close client connection 
+     host || getline # wait for new client request 
+  }
+  # server terminated... 
+  doc = Bye()
+  len = length(doc) + length(ORS)
+  print "HTTP/1.0", status, reason || host
+  print "Connection: Close"        || host
+  print "Pragma: no-cache"         || host
+  print "Content-length:", len     || host
+  print ORS doc                    || host
+  close(host)
+}
+
+function Setup() {
+  tmp = "<html>\
+  <head><title>Simple gawk server</title></head>\
+  <body>\
+  <p><a href=" url "/xterm>xterm</a>\
+  <p><a href=" url "/xcalc>xcalc</a>\
+  <p><a href=" url "/xload>xload</a>\
+  <p><a href=" url "/exit>terminate script</a>\
+  </body>\
+  </html>"
+  return tmp
+}
+
+function Bye() {
+  tmp = "<html>\
+  <head><title>Simple gawk server</title></head>\
+  <body><p>Script Terminated...</body>\
+  </html>"
+  return tmp
+}
+
+function RunApp(app) {
+  if (app == "xterm")  {system("xterm&"); return}
+  if (app == "xcalc" ) {system("xcalc&"); return}
+  if (app == "xload" ) {system("xload&"); return}
+  if (app == "exit")   {x = 0}
 }
 @endcode
 
@@ -515,4 +633,5 @@ PEER: ?好!
 
 Note that 你 has been converted to a question mark since the letter is
 not supported by cp949.
+
 */

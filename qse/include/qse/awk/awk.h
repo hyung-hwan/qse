@@ -301,8 +301,6 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_NEXTFILE,
 	QSE_AWK_NDE_DELETE,
 	QSE_AWK_NDE_RESET,
-	QSE_AWK_NDE_PRINT,
-	QSE_AWK_NDE_PRINTF,
 
 	/* expression */
 	/* if you change the following values including their order,
@@ -336,7 +334,9 @@ enum qse_awk_nde_type_t
 	QSE_AWK_NDE_POS,
 	/* ---------------------------------- */
 
-	QSE_AWK_NDE_GETLINE
+	QSE_AWK_NDE_GETLINE,
+	QSE_AWK_NDE_PRINT,
+	QSE_AWK_NDE_PRINTF
 };
 typedef enum qse_awk_nde_type_t qse_awk_nde_type_t;
 
@@ -751,16 +751,16 @@ enum qse_awk_option_t
 	 * - @b ~  bitwise-not
 	 * - @b // idiv (get quotient)
 	 */
-	QSE_AWK_EXTRAOPS    = (1 << 2), 
+	QSE_AWK_EXTRAOPS = (1 << 2), 
 
 	/** supports @b getline and @b print */
-	QSE_AWK_RIO         = (1 << 3), 
+	QSE_AWK_RIO = (1 << 3), 
 
 	/** enables the two-way pipe if #QSE_AWK_RIO is on */
-	QSE_AWK_RWPIPE      = (1 << 4),
+	QSE_AWK_RWPIPE = (1 << 4),
 
 	/** a new line can terminate a statement */
-	QSE_AWK_NEWLINE     = (1 << 5),
+	QSE_AWK_NEWLINE = (1 << 5),
 
 	/** 
 	 * removes empty fields when splitting a record if FS is a regular
@@ -787,30 +787,30 @@ enum qse_awk_option_t
 	 * [], [h], [my], [n], [dle], []. Note that the first empty field is not 
 	 * removed as the field separator is not all spaces. (space + 'o').
 	 */
-	QSE_AWK_STRIPRECSPC    = (1 << 6),
+	QSE_AWK_STRIPRECSPC = (1 << 6),
 
 	/**
 	 * strips off leading spaces when converting a string to a number.
 	 */
-	QSE_AWK_STRIPSTRSPC    = (1 << 7),
+	QSE_AWK_STRIPSTRSPC = (1 << 7),
 
 	/** enables @b nextofile */
-	QSE_AWK_NEXTOFILE   = (1 << 8),
+	QSE_AWK_NEXTOFILE = (1 << 8),
 
 	/** enables @b reset */
-	QSE_AWK_RESET       = (1 << 9),
+	QSE_AWK_RESET = (1 << 9),
 
 	/** CR + LF by default */
-	QSE_AWK_CRLF        = (1 << 10),
+	QSE_AWK_CRLF = (1 << 10),
 
 	/** allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR    = (1 << 11),
+	QSE_AWK_MAPTOVAR = (1 << 11),
 
 	/** allows @b BEGIN, @b END, pattern-action blocks */
-	QSE_AWK_PABLOCK     = (1 << 12),
+	QSE_AWK_PABLOCK = (1 << 12),
 
 	/** allows {n,m} in a regular expression. */
-	QSE_AWK_REXBOUND    = (1 << 13),
+	QSE_AWK_REXBOUND = (1 << 13),
 
 	/** 
 	 * performs numeric comparison when a string convertable
@@ -834,6 +834,19 @@ enum qse_awk_option_t
 	 * supports file inclusion by enabling a keyword 'include'
 	 */
 	QSE_AWK_INCLUDE = (1 << 16),
+
+	/**
+	 * makes AWK more fault-tolerant.
+	 * - prevents termination due to print and printf failure.
+	 * - achieves this by handling print and printf as if
+	 *   they are functions like getline.
+	 * - allows an expression group in a normal context
+	 *   without the 'in' operator. the evaluation result
+	 *   of the last expression is returned as that of
+	 *   the expression group.
+	 * - e.g.) a = (1, 3 * 3, 4, 5 + 1);  # a is assigned 6.
+	 */
+	QSE_AWK_TOLERANT = (1 << 17),
 
 	/** 
 	 * makes #qse_awk_t to behave compatibly with classical AWK
