@@ -2291,7 +2291,7 @@ static int run_exit (qse_awk_rtx_t* run, qse_awk_nde_exit_t* nde)
 		qse_awk_rtx_refupval (run, val);
 	}
 
-	run->exit_level = EXIT_GLOBAL;
+	run->exit_level = (nde->abort)? EXIT_ABORT: EXIT_GLOBAL;
 	return 0;
 }
 
