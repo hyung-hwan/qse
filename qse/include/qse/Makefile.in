@@ -267,7 +267,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = cmn awk cut sed net stx
+SUBDIRS = cmn awk sed net stx
 pkginclude_HEADERS = conf_msw.h conf_os2.h conf_dos.h conf_vms.h \
 	types.h macros.h pack1.h unpack.h $(am__append_1)
 all: config.h

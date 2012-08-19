@@ -848,6 +848,9 @@ enum qse_awk_option_t
 	 */
 	QSE_AWK_TOLERANT = (1 << 17),
 
+	/** enables @b abort */
+	QSE_AWK_ABORT = (1 << 18),
+
 	/** 
 	 * makes #qse_awk_t to behave compatibly with classical AWK
 	 * implementations

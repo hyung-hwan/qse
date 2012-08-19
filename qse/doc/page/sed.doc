@@ -258,6 +258,28 @@ be empty; You can combine the following options into @b opts:
 Replaces all occurrences of characters in @b src with characters in @b dst.
 @b src and @b dst must contain equal number of characters.
 
+- <b>c/selector/opts</b>
+Selects characters or fields from the pattern space as specified by the
+@b selector and update the pattern space with the selected text. A selector
+is a comma-separated list of selector atoms. A selector atom is one of
+the followings:
+<ul>
+ <li>@b d specifies the input field delimiter with the next character. e.g) d:
+ <li>@b D sepcifies the output field delimiter with the next character. e.g) D;
+ <li>@b c specifies a position or a range of characters to select. e.g) c23-25
+ <li>@b f specifies a position or a range of fields to select. e.g) f1,f4-3
+</ul>
+@b opts may be empty; You can combine the following options into @b opts:
+<ul>
+ <li>@b f folds consecutive delimiters into one.
+ <li>@b w uses white spaces for a field delimiter regardless of the input
+      delimiter specified in the selector.
+ <li>@b d deletes the pattern space if the line is not delimited by 
+      the input field delimiter
+</ul>
+
+In principle, this can replace the @b cut utility.
+
 Let's see actual examples:
 - <b>G;G;G</b>
 Triple spaces input lines. If #QSE_SED_QUIET is on, <b>G;G;G;p</b>. 

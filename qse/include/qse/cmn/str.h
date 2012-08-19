@@ -2415,6 +2415,12 @@ qse_size_t qse_mbs_ncat (
 	qse_size_t         len
 );
 
+qse_size_t qse_mbs_nrcat (
+	qse_mbs_t*         str,
+	const qse_mchar_t* s,
+	qse_size_t         len
+);
+
 qse_size_t qse_mbs_ccat (
 	qse_mbs_t*  str,
 	qse_mchar_t c
@@ -2589,6 +2595,12 @@ qse_size_t qse_wcs_ncat (
 	qse_size_t         len
 );
 
+qse_size_t qse_wcs_nrcat (
+	qse_wcs_t*         str,
+	const qse_wchar_t* s,
+	qse_size_t         len
+);
+
 qse_size_t qse_wcs_ccat (
 	qse_wcs_t*  str,
 	qse_wchar_t c
@@ -2635,6 +2647,7 @@ qse_size_t qse_wcs_pac (
 #	define qse_str_ncpy(str,s,len)      qse_mbs_ncpy(str,s,len)
 #	define qse_str_cat(str,s)           qse_mbs_cat(str,s)
 #	define qse_str_ncat(str,s,len)      qse_mbs_ncat(str,s,len)
+#	define qse_str_nrcat(str,s,len)     qse_mbs_nrcat(str,s,len)
 #	define qse_str_ccat(str,c)          qse_mbs_ccat(str,c)
 #	define qse_str_nccat(str,c,len)     qse_mbs_nccat(str,c,len)
 #	define qse_str_del(str,index,size)  qse_mbs_del(str,index,size)
@@ -2661,6 +2674,7 @@ qse_size_t qse_wcs_pac (
 #	define qse_str_ncpy(str,s,len)      qse_wcs_ncpy(str,s,len)
 #	define qse_str_cat(str,s)           qse_wcs_cat(str,s)
 #	define qse_str_ncat(str,s,len)      qse_wcs_ncat(str,s,len)
+#	define qse_str_nrcat(str,s,len)     qse_wcs_nrcat(str,s,len)
 #	define qse_str_ccat(str,c)          qse_wcs_ccat(str,c)
 #	define qse_str_nccat(str,c,len)     qse_wcs_nccat(str,c,len)
 #	define qse_str_del(str,index,size)  qse_wcs_del(str,index,size)

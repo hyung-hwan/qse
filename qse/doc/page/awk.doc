@@ -10,6 +10,8 @@
  - @ref awk_ext_exprgroup "GROUPED EXPRESSION"
  - @ref awk_ext_rwpipe    "TWO-WAY PIPE"
  - @ref awk_ext_return    "RETURN"
+ - @ref awk_ext_reset     "RESET"
+ - @ref awk_ext_abort     "ABORT"
  - @ref awk_ext_comment   "COMMENT"
  - @ref awk_ext_fnc       "EXTENDED FUNCTIONS"
  - @ref awk_ext_fs        "EXTENDED FS"
@@ -187,7 +189,9 @@ Where options are:
  --rexbound           on/off       enable {n,m} in a regular expression
  --ncmponstr          on/off       perform numeric comparsion on numeric strings
  --strictnaming       on/off       enable the strict naming rule
- --include            on/off       enable 'include'
+ --include            on/off       enable '@include'
+ --tolerant           on/off       make more I/O fault-tolerant
+ --abort              on/off       enable 'abort'
 @endcode
 
 @section awk_lang AWK LANGUAGE
@@ -222,6 +226,7 @@ A pattern-action block, and a user-defined function can have the following eleme
 <tr><td>print                     </td><td>#QSE_AWK_RIO       </td></tr>
 <tr><td>nextofile                 </td><td>#QSE_AWK_NEXTOFILE </td></tr>
 <tr><td>reset                     </td><td>#QSE_AWK_RESET     </td></tr>
+<tr><td>abort                     </td><td>#QSE_AWK_ABORT     </td></tr>
 </table>
 
 
@@ -234,6 +239,7 @@ AWK has the following statement constructs.
 - continue
 - return
 - exit
+- abort
 - next
 - nextfile
 - nextofile
@@ -471,7 +477,13 @@ function RunApp(app) {
 @endcode
 
 @subsection awk_ext_return RETURN
-The return statement is valid in pattern-action blocks as well as in functions. The execution of a calling block is aborted once the return statement is executed.
+The return statement is valid in pattern-action blocks as well as in functions.
+The execution of a calling block is aborted once the return statement is executed.
+
+@code
+$ qseawk 'BEGIN { return 20; }' ; echo $?
+20
+@endcode
 
 If #QSE_AWK_MAPTOVAR is on, you can return an arrayed value from a function.
 @code
@@ -488,6 +500,36 @@ BEGIN {
 
 	x = getarray();
 	for (i in x) print i, x[i];
+}
+@endcode
+
+@subsection awk_ext_reset RESET
+The reset statement resets an array variable back to the initial state.
+After that, the array variable can also be used as a scalar variable again.
+You must have #QSE_AWK_RESET on to be able to be able to use this 
+statement.
+
+@code
+BEGIN {
+	a[1] = 20;
+	reset a;
+	a = 20; # this is legal
+	print a;
+}
+@endcode
+
+@subsection awk_ext_abort ABORT
+The abort statment is similar to the exit statement except that
+it skips executing the END block. You must have #QSE_AWK_ABORT on to be
+able to use this statement.
+
+@code
+BEGIN {
+	print "--- BEGIN ---";
+	abort 10;
+}
+END {
+	print "--- END ---"; # this must not be printed
 }
 @endcode
 

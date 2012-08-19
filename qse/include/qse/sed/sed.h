@@ -98,6 +98,26 @@ struct qse_sed_adr_t
 	} u;
 };
 
+typedef struct qse_sed_cut_sel_t qse_sed_cut_sel_t;
+
+struct qse_sed_cut_sel_t
+{
+	qse_size_t len;
+
+	struct
+	{
+		enum
+		{
+			QSE_SED_CUT_SEL_CHAR = QSE_T('c'),
+			QSE_SED_CUT_SEL_FIELD = QSE_T('f')
+		} id;
+		qse_size_t start;
+		qse_size_t end;
+	} range[128];
+
+	qse_sed_cut_sel_t* next;
+};
+
 #define QSE_SED_CMD_NOOP            QSE_T('\0')
 #define QSE_SED_CMD_QUIT            QSE_T('q')
 #define QSE_SED_CMD_QUIT_QUIET      QSE_T('Q')
@@ -126,6 +146,7 @@ struct qse_sed_adr_t
 #define QSE_SED_CMD_SUBSTITUTE      QSE_T('s')
 #define QSE_SED_CMD_TRANSLATE       QSE_T('y')
 #define QSE_SED_CMD_CLEAR_PATTERN   QSE_T('z')
+#define QSE_SED_CMD_CUT             QSE_T('C')
 
 struct qse_sed_cmd_t
 {
@@ -170,6 +191,22 @@ struct qse_sed_cmd_t
 			qse_xstr_t label;
 			qse_sed_cmd_t* target;
 		} branch;
+
+		/* cut command information */
+		struct
+		{
+			qse_sed_cut_sel_t* fb;/**< points to the first block */
+			qse_sed_cut_sel_t* lb; /**< points to the last block */
+
+			qse_char_t         delim[2]; /**< input/output field delimiters */
+			unsigned short     w: 1; /* whitespace for input delimiters. ignore delim[0]. */
+			unsigned short     f: 1; /* fold delimiters */
+			unsigned short     d: 1; /* delete if not delimited */
+
+			qse_size_t         count;
+			qse_size_t         fcount;
+			qse_size_t         ccount;
+		} cut;
 	} u;	
 
 	struct
@@ -222,6 +259,7 @@ enum qse_sed_errnum_t
 	QSE_SED_EOCSZE,  /**< occurrence specifier zero */
 	QSE_SED_EOCSTL,  /**< occurrence specifier too large */
 	QSE_SED_ENPREX,  /**< no previous regular expression */
+	QSE_SED_ECSLNV,  /**< cut selector not valid */
 	QSE_SED_EIOFIL,  /**< io error with file '${0}'*/
 	QSE_SED_EIOUSR   /**< error returned by user io handler */
 };

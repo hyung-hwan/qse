@@ -64,6 +64,7 @@ PROGS="
 	s006.sed/s006.dat//
 	s007.sed/s007.dat//
 	s008.sed/s008.dat//-w
+	s009.sed/s009.dat//
 "
 
 [ -x "${QSESED}" ] || 

@@ -121,3 +121,10 @@ echo -n "done${CRE}"
 if [ -n "$FROMINIT" ];then
 	cp -af /image/* /ramdisk/cdrom/
 fi
+--------------------------------------------------------------------------------
+[CMD]  qsesed   -f s009.sed s009.dat </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+0;root;/root;/bin/bash
+1;daemon;/usr/sbin;/bin/sh
+2;bin;/bin;/bin/sh
+3;sys;/dev;/bin/sh
