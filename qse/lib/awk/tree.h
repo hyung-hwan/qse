@@ -273,6 +273,7 @@ struct qse_awk_nde_exit_t
 {
 	QSE_AWK_NDE_HDR;
 	qse_awk_nde_t* val; /* optional (no exit code if QSE_NULL) */
+	int abort;
 };
 
 /* QSE_AWK_NDE_NEXT */

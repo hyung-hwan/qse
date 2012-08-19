@@ -103,6 +103,7 @@ enum tok_t
 	TOK_CONTINUE,
 	TOK_RETURN,
 	TOK_EXIT,
+	TOK_ABORT,
 	TOK_NEXT,
 	TOK_NEXTFILE,
 	TOK_NEXTOFILE,
@@ -249,6 +250,7 @@ static kwent_t kwtab[] =
 	 * also keep it sorted by the first field for binary search */
 	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
 	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
+	{ { QSE_T("abort"),        5 }, TOK_ABORT,       QSE_AWK_ABORT },
 	{ { QSE_T("break"),        5 }, TOK_BREAK,       0 },
 	{ { QSE_T("continue"),     8 }, TOK_CONTINUE,    0 },
 	{ { QSE_T("delete"),       6 }, TOK_DELETE,      0 },
@@ -2530,7 +2532,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	qse_awk_nde_exit_t* nde;
 	qse_awk_nde_t* val;
 
-	QSE_ASSERT (awk->ptok.type == TOK_EXIT);
+	QSE_ASSERT (awk->ptok.type == TOK_EXIT || awk->ptok.type == TOK_ABORT);
 
 	nde = (qse_awk_nde_exit_t*) 
 		QSE_AWK_ALLOC (awk, QSE_SIZEOF(qse_awk_nde_exit_t));
@@ -2542,6 +2544,7 @@ static qse_awk_nde_t* parse_exit (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 
 	nde->type = QSE_AWK_NDE_EXIT;
 	nde->loc = *xloc;
+	nde->abort = (awk->ptok.type == TOK_ABORT);
 	nde->next = QSE_NULL;
 
 	if (MATCH_TERMINATOR(awk)) 
@@ -2957,7 +2960,7 @@ static qse_awk_nde_t* parse_statement_nb (
 		if (get_token(awk) <= -1) return QSE_NULL;
 		nde = parse_return (awk, xloc);
 	}
-	else if (MATCH(awk,TOK_EXIT)) 
+	else if (MATCH(awk,TOK_EXIT) || MATCH(awk,TOK_ABORT)) 
 	{
 		if (get_token(awk) <= -1) return QSE_NULL;
 		nde = parse_exit (awk, xloc);

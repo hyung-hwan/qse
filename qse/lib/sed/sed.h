@@ -201,8 +201,17 @@ struct qse_sed_t
 		struct
 		{
 			qse_str_t hold; /* hold space */
-			qse_str_t subst;
+			qse_str_t scratch;
 		} txt;
+
+		struct
+		{
+			qse_size_t  nflds; /**< the number of fields */
+			qse_size_t  cflds; /**< capacity of flds field */
+			qse_cstr_t  sflds[128]; /**< static field buffer */
+			qse_cstr_t* flds;
+			int delimited;
+		} cutf;
 
 		/** indicates if a successful substitution has been made 
 		 *  since the last read on the input stream. */

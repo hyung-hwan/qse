@@ -257,8 +257,55 @@ qse_size_t qse_wcs_cat (qse_wcs_t* str, const qse_wchar_t* s)
 	return qse_wcs_ncat (str, s, qse_wcslen(s));
 }
 
+static int resize_for_ncat (qse_wcs_t* str, qse_size_t len)
+{
+	if (len > str->capa - str->val.len) 
+	{
+		qse_size_t ncapa, mincapa;
+
+		/* let the minimum capacity be as large as 
+		 * to fit in the new substring */
+		mincapa = str->val.len + len;
+
+		if (str->sizer == QSE_NULL)
+		{
+			/* increase the capacity by the length to add */
+			ncapa = mincapa;
+			/* if the new capacity is less than the double,
+			 * just double it */
+			if (ncapa < str->capa * 2) ncapa = str->capa * 2;
+		}
+		else
+		{
+			/* let the user determine the new capacity.
+			 * pass the minimum capacity required as a hint */
+			ncapa = str->sizer (str, mincapa);
+			/* if no change in capacity, return current length */
+			if (ncapa == str->capa) return 0;
+		}
+
+		/* change the capacity */
+		do
+		{
+			if (qse_wcs_setcapa (str, ncapa) != (qse_size_t)-1) break;
+			if (ncapa <= mincapa) return -1;
+			ncapa--;
+		}
+		while (1);
+	}
+	else if (str->capa <= 0 && len <= 0)
+	{
+		QSE_ASSERT (str->val.ptr == QSE_NULL);
+		QSE_ASSERT (str->val.len <= 0);
+		if (qse_wcs_setcapa (str, 1) == (qse_size_t)-1) return -1;
+	}
+
+	return 1;
+}
+
 qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 {
+#if 0
 	if (len > str->capa - str->val.len) 
 	{
 		qse_size_t ncapa, mincapa;
@@ -299,6 +346,12 @@ qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 		QSE_ASSERT (str->val.len <= 0);
 		if (qse_wcs_setcapa (str, 1) == (qse_size_t)-1) return (qse_size_t)-1;
 	}
+#endif
+	int n;
+
+	n = resize_for_ncat (str, len);
+	if (n <= -1) return (qse_size_t)-1;
+	if (n == 0) return str->val.len;
 
 	if (len > str->capa - str->val.len) 
 	{
@@ -317,6 +370,24 @@ qse_size_t qse_wcs_ncat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
 #if 0
 	}
 #endif
+
+	return str->val.len;
+}
+
+qse_size_t qse_wcs_nrcat (qse_wcs_t* str, const qse_wchar_t* s, qse_size_t len)
+{
+	int n;
+	qse_size_t i, j;
+
+	n = resize_for_ncat (str, len);
+	if (n <= -1) return (qse_size_t)-1;
+	if (n == 0) return str->val.len;
+
+	if (len > str->capa - str->val.len) len = str->capa - str->val.len;
+
+	for (i = len, j = str->val.len ; i > 0; j++) str->val.ptr[j] = s[--i];	
+	str->val.ptr[j] = QSE_WT('\0');
+	str->val.len = j;
 
 	return str->val.len;
 }

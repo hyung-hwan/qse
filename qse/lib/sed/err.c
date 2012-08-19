@@ -59,6 +59,7 @@ const qse_char_t* qse_sed_dflerrstr (
 		QSE_T("occurrence specifier zero"),
 		QSE_T("occurrence specifier too large"),
 		QSE_T("no previous regular expression"),
+		QSE_T("cut selector not valid"),
 		QSE_T("I/O error with file '${0}'"),
 		QSE_T("error returned by user I/O handler")
 	};
