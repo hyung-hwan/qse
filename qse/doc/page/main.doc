@@ -27,7 +27,6 @@ See the subpages for various modules available in this library.
 - @subpage cenc "Character Encoding"
 - @subpage io  "I/O Handling"
 - @subpage awk "AWK Interpreter" 
-- @subpage cut "CUT Text Cutter" 
 - @subpage sed "SED Stream Editor" 
 
 @section installation INSTALLATION
