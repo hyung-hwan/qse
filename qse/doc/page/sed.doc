@@ -3,7 +3,6 @@
 @section sed_contents CONTENTS
 - \ref sed_intro
 - \ref sed_command
-- \ref sed_embed
 
 @section sed_intro INTRODUCTION
 
@@ -261,8 +260,7 @@ Replaces all occurrences of characters in @b src with characters in @b dst.
 - <b>c/selector/opts</b>
 Selects characters or fields from the pattern space as specified by the
 @b selector and update the pattern space with the selected text. A selector
-is a comma-separated list of selector atoms. A selector atom is one of
-the followings:
+is a comma-separated list of specifiers. A specifier is one of the followings:
 <ul>
  <li>@b d specifies the input field delimiter with the next character. e.g) d:
  <li>@b D sepcifies the output field delimiter with the next character. e.g) D;
@@ -291,16 +289,29 @@ Prints the last line. If #QSE_SED_QUIET is on, try <b>$p</b>.
 - <b>1!G;h;$!d</b>
 Prints input lines in the reverse order. That is, it prints the last line 
 first and the first line last.
+@code
+$ echo -e "a\nb\nc" | qsesed '1!G;h;$!d'
+c
+b
+a
+@endcode
 
 - <b>s/[[:space:]]{2,}/ /g</b>
 Compacts whitespaces if #QSE_SED_REXBOUND is on.
 
-@section sed_embed HOW TO EMBED
-
-In the simplest form, 
-- Create a stream editor - qse_sed_open()
-- Compile editing commands - qse_sed_comp()
-- Executes compiled commands - qse_sed_exec()
-- Destroy the stream editor - qse_sed_close()
+- <b>C/d:,f3,1/</b>
+Prints the third field and the first field from a colon separated text.
+@code
+$ head -5 /etc/passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+bin:x:2:2:bin:/bin:/bin/sh
+sys:x:3:3:sys:/dev:/bin/sh
+sync:x:4:65534:sync:/bin:/bin/sync
+$ qsesed '1,3C/d:,f3,1/;4,$d' /etc/passwd 
+0 root
+1 daemon
+2 bin
+@endcode
 
 */

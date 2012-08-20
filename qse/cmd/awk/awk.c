@@ -421,7 +421,7 @@ struct opttab_t
 	{ QSE_T("ncmponstr"),    QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
 	{ QSE_T("strictnaming"), QSE_AWK_STRICTNAMING,   QSE_T("enable the strict naming rule") },
 	{ QSE_T("include"),      QSE_AWK_INCLUDE,        QSE_T("enable '@include'") },
-	{ QSE_T("tolerant"),     QSE_AWK_TOLERANT,       QSE_T("make more I/O fault-tolerant") },
+	{ QSE_T("tolerant"),     QSE_AWK_TOLERANT,       QSE_T("make more fault-tolerant") },
 	{ QSE_T("abort"),        QSE_AWK_ABORT,          QSE_T("enable 'abort'") },
 	{ QSE_NULL,              0,                      QSE_NULL }
 };

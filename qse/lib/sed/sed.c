@@ -2981,12 +2981,6 @@ static int do_subst (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	return 0;
 }
 
-static QSE_INLINE int isdelim (qse_sed_cmd_t* cmd, qse_char_t c)
-{
-	return (cmd->u.cut.w && QSE_ISSPACE(c)) ||
-	       (!cmd->u.cut.w && c == cmd->u.cut.delim[0]);
-}
-
 static int split_into_fields_for_cut (
 	qse_sed_t* sed, qse_sed_cmd_t* cmd, const qse_cstr_t* str)
 {
@@ -2997,15 +2991,34 @@ static int split_into_fields_for_cut (
 
 	for (i = 0; i < str->len; )
 	{
+		int isdelim = 0;
 		qse_char_t c = str->ptr[i++];
 
-		if (isdelim(cmd,c))
-		{
-			if (cmd->u.cut.f)
+		if (cmd->u.cut.w)
+		{ 
+			/* the w option ignores the d specifier */
+			if (QSE_ISSPACE(c))
 			{
-				while (i < str->len && isdelim(cmd,str->ptr[i])) i++;
+				/* the w option assumes the f option */
+				while (i < str->len && QSE_ISSPACE(str->ptr[i])) i++;
+				isdelim = 1;
 			}
+		}
+		else
+		{
+			if (c == cmd->u.cut.delim[0])
+			{
+				if (cmd->u.cut.f)
+				{
+					/* fold consecutive delimiters */
+					while (i < str->len && str->ptr[i] == cmd->u.cut.delim[0]) i++;
+				}
+				isdelim = 1;
+			}
+		}
 
+		if (isdelim)
+		{
 			sed->e.cutf.flds[x++].len = xl;
 
 			if (x >= sed->e.cutf.cflds)
@@ -3014,10 +3027,10 @@ static int split_into_fields_for_cut (
 				qse_size_t nsz;
 
 				nsz = sed->e.cutf.cflds;
-				if (nsz > 100000) nsz += 100000;
+				if (nsz > 50000) nsz += 50000;
 				else nsz *= 2;
 				
-				if (sed->e.cutf.flds != sed->e.cutf.sflds)
+				if (sed->e.cutf.flds == sed->e.cutf.sflds)
 				{
 					tmp = QSE_MMGR_ALLOC (sed->mmgr, QSE_SIZEOF(*tmp) * nsz);
 					if (tmp == QSE_NULL) 
@@ -3025,12 +3038,7 @@ static int split_into_fields_for_cut (
 						SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);
 						return -1;
 					}
-
 					QSE_MEMCPY (tmp, sed->e.cutf.flds, QSE_SIZEOF(*tmp) * sed->e.cutf.cflds);
-					QSE_MMGR_FREE (sed->mmgr, sed->e.cutf.flds);
-
-					if (sed->e.cutf.flds != sed->e.cutf.sflds)
-						QSE_MMGR_FREE (sed->mmgr, sed->e.cutf.flds);
 				}
 				else
 				{
@@ -3048,7 +3056,9 @@ static int split_into_fields_for_cut (
 
 			xl = 0;
 			sed->e.cutf.flds[x].ptr = &str->ptr[i];
-			sed->e.cutf.delimited = 1;
+
+			/* mark that this line is delimited at least once */
+			sed->e.cutf.delimited = 1; 
 		}
 		else xl++;
 	}
