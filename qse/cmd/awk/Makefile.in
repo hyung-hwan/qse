@@ -35,11 +35,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = qseawk$(EXEEXT) $(am__EXEEXT_1)
-@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 
 #####################################################################3
 @HAVE_C_MPI_TRUE@am__append_2 = qseawkmp
-@HAVE_C_MPI_TRUE@@WIN32_TRUE@am__append_3 = $(UNICOWS_LIBS)
+@HAVE_C_MPI_TRUE@@WCHAR_TRUE@@WIN32_TRUE@am__append_3 = $(UNICOWS_LIBS)
 subdir = cmd/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -60,7 +60,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_qseawk_OBJECTS = awk.$(OBJEXT)
 qseawk_OBJECTS = $(am_qseawk_OBJECTS)
 am__DEPENDENCIES_1 =
-@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 qseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawk_LDFLAGS) \
@@ -68,8 +68,7 @@ qseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 am__qseawkmp_SOURCES_DIST = mpi.c
 @HAVE_C_MPI_TRUE@am_qseawkmp_OBJECTS = qseawkmp-mpi.$(OBJEXT)
 qseawkmp_OBJECTS = $(am_qseawkmp_OBJECTS)
-@HAVE_C_MPI_TRUE@@WIN32_TRUE@am__DEPENDENCIES_3 =  \
-@HAVE_C_MPI_TRUE@@WIN32_TRUE@	$(am__DEPENDENCIES_1)
+@HAVE_C_MPI_TRUE@@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1)
 @HAVE_C_MPI_TRUE@qseawkmp_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 @HAVE_C_MPI_TRUE@	$(am__DEPENDENCIES_3)
 qseawkmp_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \

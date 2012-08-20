@@ -634,6 +634,8 @@ ax_pthread_config
 ENABLE_CXX_FALSE
 ENABLE_CXX_TRUE
 BUILD_MODE
+WCHAR_FALSE
+WCHAR_TRUE
 CHAR_MODE
 HAVE_C_MPI_FALSE
 HAVE_C_MPI_TRUE
@@ -18439,6 +18441,14 @@ $as_echo "#define QSE_CHAR_IS_MCHAR /**/" >>confdefs.h
 	CHAR_MODE="QSE_CHAR_IS_MCHAR"
 
 fi
+ if test "${enable_wchar_is}" = "yes" ; then
+  WCHAR_TRUE=
+  WCHAR_FALSE='#'
+else
+  WCHAR_TRUE='#'
+  WCHAR_FALSE=
+fi
+
 
 # Check whether --enable-syscall was given.
 if test "${enable_syscall+set}" = set; then :
@@ -19108,6 +19118,10 @@ if test -z "${HAVE_C_MPI_TRUE}" && test -z "${HAVE_C_MPI_FALSE}"; then
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
+if test -z "${WCHAR_TRUE}" && test -z "${WCHAR_FALSE}"; then
+  as_fn_error $? "conditional \"WCHAR\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${ENABLE_CXX_TRUE}" && test -z "${ENABLE_CXX_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_CXX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5

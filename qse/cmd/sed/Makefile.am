@@ -12,5 +12,7 @@ qsesed_LDFLAGS = -L../../lib/sed -L../../lib/cmn -L$(libdir)
 qsesed_LDADD = -lqsesed -lqsecmn
 
 if WIN32 
+if WCHAR
 qsesed_LDADD += $(UNICOWS_LIBS)
+endif
 endif

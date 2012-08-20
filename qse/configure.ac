@@ -282,6 +282,7 @@ else
 	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[char is mchar])
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
+AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes" )
 
 AC_ARG_ENABLE([syscall], [AS_HELP_STRING([--enable-syscall],[use the syscall() function to call system calls (default. no)])],
 	enable_syscall_is=$enableval,enable_syscall_is=no)

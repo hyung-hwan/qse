@@ -75,6 +75,12 @@
 #	define QSE_PRIVATE
 #endif
 
+#if defined(__GNUC__)
+#	define QSE_OPTIMIZE_NEVER __attribute__((optimize("O0")))
+#else
+#	define QSE_OPTIMIZE_NEVER 
+#endif
+
 /**
  * The QSE_SIZEOF() macro gets data size in bytes. It is equivalent to the
  * sizeof operator. The following code snippet should print sizeof(int)*128.
