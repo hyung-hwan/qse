@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = qsesed$(EXEEXT)
-@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = cmd/sed
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,7 +55,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_qsesed_OBJECTS = sed.$(OBJEXT)
 qsesed_OBJECTS = $(am_qsesed_OBJECTS)
 am__DEPENDENCIES_1 =
-@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 qsesed_DEPENDENCIES = $(am__DEPENDENCIES_2)
 qsesed_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qsesed_LDFLAGS) \

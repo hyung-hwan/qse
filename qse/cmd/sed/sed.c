@@ -929,5 +929,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 	setlocale (LC_ALL, "");
 	qse_setdflcmgr (qse_slmbcmgr);
 #endif
+
 	return qse_runmain (argc, argv, sed_main);
 }
