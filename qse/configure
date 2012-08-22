@@ -637,6 +637,9 @@ BUILD_MODE
 WCHAR_FALSE
 WCHAR_TRUE
 CHAR_MODE
+PACKAGE_VERSION_PATCH
+PACKAGE_VERSION_MINOR
+PACKAGE_VERSION_MAJOR
 HAVE_C_MPI_FALSE
 HAVE_C_MPI_TRUE
 MPI_CLDFLAGS
@@ -18153,24 +18156,34 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+qse_package_version_major="`echo ${PACKAGE_VERSION} | cut -d. -f1`"
+qse_package_version_minor="`echo ${PACKAGE_VERSION} | cut -d. -f2`"
+qse_package_version_patch="`echo ${PACKAGE_VERSION} | cut -d. -f3`"
+PACKAGE_VERSION_MAJOR=${qse_package_version_major}
+
+PACKAGE_VERSION_MINOR=${qse_package_version_minor}
+
+PACKAGE_VERSION_PATCH=${qse_package_version_patch}
+
+
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PACKAGE_VERSION "${VERSION}"
+#define QSE_PACKAGE_VERSION "${PACKAGE_VERSION}"
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PACKAGE_VERSION_MAJOR $(echo ${VERSION} | cut -d. -f1)
+#define QSE_PACKAGE_VERSION_MAJOR ${qse_package_version_major}
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PACKAGE_VERSION_MINOR $(echo ${VERSION} | cut -d. -f2)
+#define QSE_PACKAGE_VERSION_MINOR ${qse_package_version_minor}
 _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define QSE_PACKAGE_VERSION_PATCH $(echo ${VERSION} | cut -d. -f3)
+#define QSE_PACKAGE_VERSION_PATCH ${qse_package_version_patch}
 _ACEOF
 
 

@@ -142,9 +142,4 @@ _M_X64 x64 platform
 #	error Define the size of various data types.
 #endif
 
-/* make sure you change these when you change 
- * the version in configure.ac */
-#define QSE_PACKAGE_VERSION "0.5.6"
-#define QSE_PACKAGE_VERSION_MAJOR 0
-#define QSE_PACKAGE_VERSION_MINOR 5
-#define QSE_PACKAGE_VERSION_PATCH 6
+#include "conf-inf.h"
