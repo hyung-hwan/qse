@@ -115,10 +115,5 @@
 #define QSE_SIZEOF_MBSTATE_T   24 
 #define QSE_MBLEN_MAX          8
 
-/* make sure you change these when you change 
- * the version in configure.ac */
-#define QSE_PACKAGE_VERSION "0.5.6"
-#define QSE_PACKAGE_VERSION_MAJOR 0
-#define QSE_PACKAGE_VERSION_MINOR 5
-#define QSE_PACKAGE_VERSION_PATCH 6
 
+#include "conf-inf.h"

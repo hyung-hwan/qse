@@ -33,13 +33,13 @@
 #if defined(QSE_HAVE_CONFIG_H)
 #	include <qse/config.h>
 #elif defined(_WIN32)
-#	include <qse/conf_msw.h>
+#	include <qse/conf-msw.h>
 #elif defined(__OS2__)
-#	include <qse/conf_os2.h>
+#	include <qse/conf-os2.h>
 #elif defined(__DOS__)
-#	include <qse/conf_dos.h>
+#	include <qse/conf-dos.h>
 #elif defined(vms) || defined(__vms)
-#	include <qse/conf_vms.h>
+#	include <qse/conf-vms.h>
 #else
 #	error Unsupported operating system
 #endif

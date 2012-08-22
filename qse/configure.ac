@@ -256,10 +256,20 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_MBSTATE_T, ${ac_cv_sizeof_mbstate_t}, [sizeof(mbstate_t)])
 AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
 
-AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION, "${VERSION}", [Package version])
-AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
-AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
-AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
+qse_package_version_major="`echo ${PACKAGE_VERSION} | cut -d. -f1`"
+qse_package_version_minor="`echo ${PACKAGE_VERSION} | cut -d. -f2`"
+qse_package_version_patch="`echo ${PACKAGE_VERSION} | cut -d. -f3`"
+AC_SUBST(PACKAGE_VERSION_MAJOR, ${qse_package_version_major})
+AC_SUBST(PACKAGE_VERSION_MINOR, ${qse_package_version_minor})
+AC_SUBST(PACKAGE_VERSION_PATCH, ${qse_package_version_patch})
+
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION, "${PACKAGE_VERSION}", [Package version])
+dnl AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MAJOR, $(echo ${VERSION} | cut -d. -f1), [Major version number])
+dnl AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MINOR, $(echo ${VERSION} | cut -d. -f2), [Minor version number])
+dnl AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_PATCH, $(echo ${VERSION} | cut -d. -f3), [Patch level])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MAJOR, ${qse_package_version_major}, [Major version number])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_MINOR, ${qse_package_version_minor}, [Minor version number])
+AC_DEFINE_UNQUOTED(QSE_PACKAGE_VERSION_PATCH, ${qse_package_version_patch}, [Patch level])
 
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_AUTHOR,"${PACKAGE_BUGREPORT}", [Author])
 AC_DEFINE_UNQUOTED(QSE_PACKAGE_NAME,"${PACKAGE_NAME}", [package name])

@@ -58,8 +58,9 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	install-pdf-recursive install-ps-recursive install-recursive \
 	installcheck-recursive installdirs-recursive pdf-recursive \
 	ps-recursive uninstall-recursive
-am__pkginclude_HEADERS_DIST = conf_msw.h conf_os2.h conf_dos.h \
-	conf_vms.h types.h macros.h pack1.h unpack.h Types.hpp
+am__pkginclude_HEADERS_DIST = conf-msw.h conf-os2.h conf-dos.h \
+	conf-vms.h conf-inf.h types.h macros.h pack1.h unpack.h \
+	Types.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -185,6 +186,9 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PACKAGE_VERSION_MAJOR = @PACKAGE_VERSION_MAJOR@
+PACKAGE_VERSION_MINOR = @PACKAGE_VERSION_MINOR@
+PACKAGE_VERSION_PATCH = @PACKAGE_VERSION_PATCH@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PTHREAD_CC = @PTHREAD_CC@
 PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
@@ -268,8 +272,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = cmn awk sed net stx
-pkginclude_HEADERS = conf_msw.h conf_os2.h conf_dos.h conf_vms.h \
-	types.h macros.h pack1.h unpack.h $(am__append_1)
+pkginclude_HEADERS = conf-msw.h conf-os2.h conf-dos.h conf-vms.h \
+	conf-inf.h types.h macros.h pack1.h unpack.h $(am__append_1)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
