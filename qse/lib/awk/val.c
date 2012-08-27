@@ -844,16 +844,19 @@ static int val_int_to_str (
 	qse_awk_rtx_valtostr_out_t* out)
 {
 	qse_char_t* tmp;
-	qse_long_t t;
+	qse_ulong_t t;
 	qse_size_t rlen = 0;
 	int type = out->type & ~QSE_AWK_RTX_VALTOSTR_PRINT;
 
-	t = v->val; 
-	if (t == 0) rlen++;
+	if (v->val == 0) rlen++;
 	else
 	{
 		/* non-zero values */
-		if (t < 0) { t = -t; rlen++; }
+		if (v->val < 0) 
+		{
+			t = v->val * -1; rlen++; 
+		}
+		else t = v->val;
 		while (t > 0) { rlen++; t /= 10; }
 	}
 
@@ -939,11 +942,10 @@ static int val_int_to_str (
 		}
 	}
 
-	t = v->val; 
-	if (t == 0) tmp[0] = QSE_T('0'); 
+	if (v->val == 0) tmp[0] = QSE_T('0'); 
 	else
 	{
-		if (t < 0) t = -t;
+		t = (v->val < 0)? (v->val * -1): v->val;
 
 		/* fill in the buffer with digits */
 		while (t > 0) 
