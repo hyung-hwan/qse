@@ -201,7 +201,8 @@ protected:
 	flt_t sqrt (flt_t x);
 
 protected:
-	unsigned int seed; 
+	qse_long_t seed; 
+	qse_ulong_t prand;
 	qse_htb_t cmgrtab;
 	bool cmgrtab_inited;
 

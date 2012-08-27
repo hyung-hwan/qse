@@ -476,7 +476,7 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	return 0;
 #else
 	*nt = ((qse_ntime_t)mktime(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
-	return -1;
+	return 0;
 #endif
 }
 

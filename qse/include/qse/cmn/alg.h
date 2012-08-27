@@ -49,6 +49,10 @@ typedef int (*qse_search_comper_t) (
  */
 typedef qse_search_comper_t qse_sort_comper_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The qse_bsearch() function performs binary search over a sorted array.
  * It looks for an item matching @a key in an array @a base containing 
@@ -127,5 +131,47 @@ void qse_qsort (
 qse_uint32_t qse_rand31 (
 	qse_uint32_t seed
 );
+
+
+#if (QSE_SIZEOF_UINT32_T > 0)
+/**
+ * The qse_randxs32() function implements the xorshift random number generator
+ * by George Marsaglia. 
+ */
+qse_uint32_t qse_randxs32 (
+	qse_uint32_t seed
+);
+#endif
+
+#if (QSE_SIZEOF_UINT64_T > 0)
+/**
+ * The qse_randxs64() function implements the xorshift random number generator
+ * by George Marsaglia. 
+ */
+qse_uint64_t qse_randxs64 (
+	qse_uint64_t seed
+);
+#endif
+
+#if (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT64_T)
+#	define qse_randxsulong(seed) qse_randxs64(seed)
+#elif (QSE_SIZEOF_ULONG_T == QSE_SIZEOF_UINT32_T)
+#	define qse_randxsulong(seed) qse_randxs32(seed)
+#else
+#	error Unsupported
+#endif
+
+#if (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT64_T)
+#	define qse_randxsuint(seed) qse_randxs64(seed)
+#elif (QSE_SIZEOF_UINT_T == QSE_SIZEOF_UINT32_T)
+#	define qse_randxsuint(seed) qse_randxs32(seed)
+#else
+#	error Unsupported
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
