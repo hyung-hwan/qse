@@ -26,6 +26,7 @@
 #include <qse/cmn/sio.h>
 #include <qse/cmn/nwio.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/alg.h>
 #include <qse/cmn/stdio.h>
 #include "awk.h"
 
@@ -139,7 +140,7 @@ int StdAwk::open ()
 	if (addFunction (QSE_T("rand"),       0, 0, (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
 	    addFunction (QSE_T("srand"),      0, 1, (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
 	    addFunction (QSE_T("system"),     1, 1, (FunctionHandler)&StdAwk::system,    0) <= -1 ||
-	    addFunction (QSE_T("time"),       1, 1, (FunctionHandler)&StdAwk::time,      0) <= -1 ||
+	    addFunction (QSE_T("time"),       0, 0, (FunctionHandler)&StdAwk::time,      0) <= -1 ||
 	    addFunction (QSE_T("setioattr"),  3, 3, (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
 	    addFunction (QSE_T("getioattr"),  2, 2, (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
 	{
@@ -149,10 +150,13 @@ int StdAwk::open ()
 
 	qse_ntime_t now;
 
-	this->seed = (qse_gettime(&now) <= -1)? 0u: (unsigned int)now;
-	this->seed += (qse_uintptr_t)&now;
+	this->seed = (qse_gettime(&now) <= -1)? 0u: (long_t)now;
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	this->prand = (qse_ulong_t)(this->seed * this->seed * this->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (this->prand == 0) this->prand++;
 
-	::srand (this->seed);
 	this->cmgrtab_inited = false;
 	return 0;
 }
@@ -401,29 +405,44 @@ int StdAwk::make_additional_globals (Run* run)
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	return ret.setFlt ((flt_t)(::rand() % RAND_MAX) / RAND_MAX);
+#if (QSE_SIZEOF_ULONG_T == 2)
+#	define RANDV_MAX 0x7FFFl
+#elif (QSE_SIZEOF_ULONG_T == 4)
+#	define RANDV_MAX 0x7FFFFFFFl
+#elif (QSE_SIZEOF_ULONG_T == 8)
+#	define RANDV_MAX 0x7FFFFFFFFFFFFFFl
+#else
+#	error Unsupported
+#endif
+
+	this->prand = qse_randxsulong (this->prand);
+     long_t randv = this->prand % RANDV_MAX;
+	return ret.setFlt ((flt_t)randv / RANDV_MAX);
 }
 
 int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-	unsigned int prevSeed = this->seed;
+	long_t prevSeed = (long_t)this->seed;
+
+	qse_ntime_t now;
 
 	if (nargs <= 0)
 	{
-		qse_ntime_t now;
-
 		this->seed = (qse_gettime (&now) <= -1)?
-			(this->seed >> 1): (unsigned int)now;
-		this->seed += (qse_uintptr_t)&now;
+			(this->seed * this->seed): (long_t)now;
 	}
 	else
 	{
-		this->seed = (unsigned int)args[0].toInt();
+		this->seed = args[0].toInt();
 	}
 
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	this->prand = (qse_ulong_t)(this->seed * this->seed * this->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (this->prand == 0) this->prand++;
 
-	::srand (this->seed);
 	return ret.setInt ((long_t)prevSeed);
 }
 

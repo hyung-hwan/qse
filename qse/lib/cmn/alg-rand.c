@@ -41,3 +41,43 @@ qse_uint32_t qse_rand31 (qse_uint32_t seed)
 
 	return lo;
 }
+
+/*
+ * Xorshift RNGs by George Marsaglia, The Florida State University
+ * http://www.jstatsoft.org/v08/i14/paper
+ */
+
+
+#if (QSE_SIZEOF_UINT32_T > 0)
+qse_uint32_t qse_randxs32 (qse_uint32_t seed)
+{
+	qse_uint32_t x;
+
+	QSE_ASSERT (seed != 0);
+
+	x = seed;
+
+	x ^= (x << 13);
+	x ^= (x >> 17); 
+	x ^= (x << 5);
+
+	return x;
+}
+#endif
+
+#if (QSE_SIZEOF_UINT64_T > 0)
+qse_uint64_t qse_randxs64 (qse_uint64_t seed)
+{
+	qse_uint64_t x;
+
+	QSE_ASSERT (seed != 0);
+
+	x = seed;
+
+	x ^= (x << 21);
+	x ^= (x >> 35);
+	x ^= (x << 4);
+
+	return x;
+}
+#endif

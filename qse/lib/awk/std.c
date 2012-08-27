@@ -29,6 +29,7 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/htb.h>
 #include <qse/cmn/env.h>
+#include <qse/cmn/alg.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
 #include "../cmn/mem.h"
 
@@ -112,7 +113,8 @@ typedef struct xtn_t
 
 typedef struct rxtn_t
 {
-	unsigned int seed;	
+	qse_long_t seed;	
+	qse_ulong_t prand; /* last random value returned */
 
 	struct
 	{
@@ -1921,9 +1923,12 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	qse_awk_rtx_pushrcb (rtx, &rcb);
 
-	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: (unsigned int)now;
-	rxtn->seed += (qse_uintptr_t)&now;
-	srand (rxtn->seed);
+	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: (qse_long_t)now;
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	rxtn->prand = (qse_ulong_t)(rxtn->seed * rxtn->seed * rxtn->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (rxtn->prand == 0) rxtn->prand++;
 
 	rxtn->c.in.files = icf;
 	rxtn->c.in.index = 0;
@@ -1972,16 +1977,26 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 
 static int fnc_rand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
-	qse_awk_val_t* r;
+#if (QSE_SIZEOF_ULONG_T == 2)
+#	define RANDV_MAX 0x7FFFl
+#elif (QSE_SIZEOF_ULONG_T == 4)
+#	define RANDV_MAX 0x7FFFFFFFl
+#elif (QSE_SIZEOF_ULONG_T == 8)
+#	define RANDV_MAX 0x7FFFFFFFFFFFFFFl
+#else
+#	error Unsupported
+#endif
 
-	/*
+	qse_awk_val_t* r;
+	qse_long_t randv;
 	rxtn_t* rxtn;
+
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
-	r = qse_awk_rtx_makefltval (
-		rtx, (qse_flt_t)(rand_r(rxtn->seed) % RAND_MAX) / RAND_MAX );
-	*/
-	r = qse_awk_rtx_makefltval (
-		rtx, (qse_flt_t)(rand() % RAND_MAX) / RAND_MAX);
+
+	rxtn->prand = qse_randxsulong (rxtn->prand);
+	randv = rxtn->prand % RANDV_MAX;
+
+	r = qse_awk_rtx_makefltval (rtx, (qse_flt_t)randv / RANDV_MAX);
 	if (r == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, r);
@@ -1995,7 +2010,8 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	qse_long_t lv;
 	qse_awk_val_t* r;
 	int n;
-	unsigned int prev;
+	qse_long_t prev;
+	qse_ntime_t now;
 	rxtn_t* rxtn;
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
@@ -2006,10 +2022,8 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	if (nargs <= 0)
 	{
-		qse_ntime_t now;
 		rxtn->seed = (qse_gettime (&now) <= -1)? 
-			(rxtn->seed >> 1): (unsigned int)now;
-		rxtn->seed += (qse_uintptr_t)&now;
+			(rxtn->seed * rxtn->seed): (qse_long_t)now;
 	}
 	else
 	{
@@ -2018,8 +2032,11 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		if (n <= -1) return -1;
 		rxtn->seed = lv;
 	}
-
-	srand (rxtn->seed);
+	/* i don't care if the seed becomes negative or overflows.
+	 * i just convert the signed value to the unsigned one. */
+	rxtn->prand = (qse_ulong_t)(rxtn->seed * rxtn->seed * rxtn->seed);
+	/* make sure that the actual seeding is not 0 */
+	if (rxtn->prand == 0) rxtn->prand++;
 
 	r = qse_awk_rtx_makeintval (rtx, prev);
 	if (r == QSE_NULL) return -1;
