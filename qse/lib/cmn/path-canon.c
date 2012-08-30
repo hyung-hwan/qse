@@ -21,12 +21,13 @@
 #include <qse/cmn/path.h>
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define ISSEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
+#	define IS_SEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
 #else
-#	define ISSEP(c) ((c) == QSE_T('/'))
+#	define IS_SEP(c) ((c) == QSE_T('/'))
 #endif
 
-#define ISSEPNIL(c) (ISSEP(c) || ((c) == QSE_T('\0')))
+#define IS_NIL(c) ((c) == QSE_T('\0'))
+#define IS_SEP_OR_NIL(c) (IS_SEP(c) || IS_NIL(c))
 
 #define ISDRIVE(s) \
 	(((s[0] >= QSE_T('A') && s[0] <= QSE_T('Z')) || \
@@ -35,7 +36,7 @@
 
 int qse_isabspath (const qse_char_t* path)
 {
-	if (ISSEP(path[0])) return 1;
+	if (IS_SEP(path[0])) return 1;
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	/* a drive like c:tmp is absolute in positioning the drive.
 	 * but the path within the drive is kind of relative */
@@ -90,24 +91,24 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		*dst++ = *ptr++; /* colon */
 
 		is_drive = 1;
-		if (ISSEP(*ptr)) 
+		if (IS_SEP(*ptr)) 
 		{
 			*dst++ = *ptr++; /* root directory */
 			has_root = 1;
 		}
 	}
-	else if (ISSEP(*ptr)) 
+	else if (IS_SEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
 
 	#if defined(_WIN32)
 		/* handle UNC path for Windows */
-		if (ISSEP(*ptr)) 
+		if (IS_SEP(*ptr)) 
 		{
 			*dst++ = *ptr++;
 
-			if (ISSEPNIL(*ptr))
+			if (IS_SEP_OR_NIL(*ptr))
 			{
 				/* if there is another separator after \\,
 				 * it's not an UNC path. */
@@ -116,14 +117,14 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 			else
 			{
 				/* if it starts with \\, process host name */
-				do { *dst++ = *ptr++; } while (!ISSEPNIL(*ptr));
-				if (ISSEP(*ptr)) *dst++ = *ptr++;
+				do { *dst++ = *ptr++; } while (!IS_SEP_OR_NIL(*ptr));
+				if (IS_SEP(*ptr)) *dst++ = *ptr++;
 			}
 		}
 	#endif
 	}
 #else
-	if (ISSEP(*ptr)) 
+	if (IS_SEP(*ptr)) 
 	{
 		*dst++ = *ptr++; /* root directory */
 		has_root = 1;
@@ -140,14 +141,14 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		qse_size_t seglen;
 
 		/* skip duplicate separators */
-		while (ISSEP(*ptr)) ptr++;
+		while (IS_SEP(*ptr)) ptr++;
 
 		/* end of path reached */
 		if (*ptr == QSE_T('\0')) break;
 
 		/* find the next segment */
 		seg = ptr;
-		while (!ISSEPNIL(*ptr)) ptr++;
+		while (!IS_SEP_OR_NIL(*ptr)) ptr++;
 		seglen = ptr - seg;
 
 		/* handle the segment */
@@ -172,7 +173,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 				while (tmp > non_root_start)
 				{
 					tmp--;
-					if (ISSEP(*tmp)) 
+					if (IS_SEP(*tmp)) 
 					{
 						tmp++; /* position it next to the separator */
 						break; 
@@ -233,7 +234,7 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		{
 		normal:
 			while (seg < ptr) *dst++ = *seg++;
-			if (ISSEP(*ptr)) 
+			if (IS_SEP(*ptr)) 
 			{
 				/* this segment ended with a separator */
 				*dst++ = *seg++; /* copy the separator */
@@ -243,8 +244,8 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 	}
 	while (1);
 
-	if (dst > non_root_start && ISSEP(dst[-1]) && 
-	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !ISSEP(ptr[-1]))) 
+	if (dst > non_root_start && IS_SEP(dst[-1]) && 
+	    ((flags & QSE_CANONPATH_DROPTRAILINGSEP) || !IS_SEP(ptr[-1]))) 
 	{
 		/* if the canoncal path composed so far ends with a separator
 		 * and the original path didn't end with the separator, delete
@@ -254,9 +255,9 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 		 *   dst > non_root_start:
 		 *     there is at least 1 character after the root directory 
 		 *     part.
-		 *   ISSEP(dst[-1]):
+		 *   IS_SEP(dst[-1]):
 		 *     the canonical path ends with a separator.
-		 *   ISSEP(ptr[-1]):
+		 *   IS_SEP(ptr[-1]):
 		 *     the origial path ends with a separator.
 		 */
 		dst[-1] = QSE_T('\0');
@@ -303,17 +304,17 @@ qse_size_t qse_canonpath (const qse_char_t* path, qse_char_t* canon, int flags)
 			 * the double slahses indicate a directory obviously */
 			if (canon[canon_len-3] == QSE_T('.') &&
 			    canon[canon_len-2] == QSE_T('.') &&
-			    ISSEP(canon[canon_len-1]))
+			    IS_SEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_T('\0');
 			}
 		}
 		else if (canon_len > adj_base_len)
 		{
-			if (ISSEP(canon[canon_len-4]) &&
+			if (IS_SEP(canon[canon_len-4]) &&
 			    canon[canon_len-3] == QSE_T('.') &&
 			    canon[canon_len-2] == QSE_T('.') &&
-			    ISSEP(canon[canon_len-1]))
+			    IS_SEP(canon[canon_len-1]))
 			{
 				canon[--canon_len] = QSE_T('\0');
 			}

@@ -12,6 +12,7 @@ pkginclude_HEADERS = \
 	fmt.h \
 	fs.h \
 	gdl.h \
+	glob.h \
 	htb.h \
 	hton.h \
 	ipad.h \

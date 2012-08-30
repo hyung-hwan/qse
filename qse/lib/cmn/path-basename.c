@@ -20,13 +20,12 @@
 
 #include <qse/cmn/path.h>
 
-
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define ISMSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
-#	define ISWSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
+#	define IS_MSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
+#	define IS_WSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
 #else
-#	define ISMSEP(c) ((c) == QSE_MT('/'))
-#	define ISWSEP(c) ((c) == QSE_WT('/'))
+#	define IS_MSEP(c) ((c) == QSE_MT('/'))
+#	define IS_WSEP(c) ((c) == QSE_WT('/'))
 #endif
 
 const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
@@ -35,7 +34,7 @@ const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
 
 	for (p = path; *p != QSE_MT('\0'); p++)
 	{
-		if (ISMSEP(*p)) last = p;
+		if (IS_MSEP(*p)) last = p;
 	}
 
 	return (last == QSE_NULL)? path: (last + 1);
@@ -47,7 +46,7 @@ const qse_wchar_t* qse_wcsbasename (const qse_wchar_t* path)
 
 	for (p = path; *p != QSE_WT('\0'); p++)
 	{
-		if (ISWSEP(*p)) last = p;
+		if (IS_WSEP(*p)) last = p;
 	}
 
 	return (last == QSE_NULL)? path: (last + 1);

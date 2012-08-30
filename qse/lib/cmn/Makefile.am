@@ -39,6 +39,7 @@ libqsecmn_la_SOURCES = \
 	fs.c \
 	fs-err.c \
 	fs-move.c \
+	glob.c \
 	hton.c \
 	ipad.c \
 	lda.c \
