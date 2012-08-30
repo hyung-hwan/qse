@@ -182,6 +182,7 @@ qse_size_t qse_wcs_setlen (qse_wcs_t* str, qse_size_t len)
 	}
 
 	while (str->val.len < len) str->val.ptr[str->val.len++] = QSE_WT(' ');
+	str->val.ptr[str->val.len] = QSE_WT('\0');
 	return str->val.len;
 }
 

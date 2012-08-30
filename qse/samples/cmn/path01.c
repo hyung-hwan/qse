@@ -10,7 +10,7 @@
 #	include <windows.h>
 #endif
 
-int path_main (int argc, qse_char_t* argv[])
+static int path_main (int argc, qse_char_t* argv[])
 {
 	qse_char_t* canon;
 	qse_size_t len;

@@ -182,6 +182,7 @@ qse_size_t qse_mbs_setlen (qse_mbs_t* str, qse_size_t len)
 	}
 
 	while (str->val.len < len) str->val.ptr[str->val.len++] = QSE_MT(' ');
+	str->val.ptr[str->val.len] = QSE_MT('\0');
 	return str->val.len;
 }
 

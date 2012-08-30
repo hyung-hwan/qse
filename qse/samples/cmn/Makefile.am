@@ -17,6 +17,7 @@ bin_PROGRAMS = \
 	fmt02 \
 	fs01 \
 	htb \
+	glob01 \
 	ipad01 \
 	lda \
 	main01 \
@@ -56,6 +57,7 @@ fma_SOURCES = fma.c
 fmt01_SOURCES = fmt01.c
 fmt02_SOURCES = fmt02.c
 fs01_SOURCES = fs01.c
+glob01_SOURCES = glob01.c
 htb_SOURCES = htb.c
 ipad01_SOURCES = ipad01.c
 lda_SOURCES = lda.c
