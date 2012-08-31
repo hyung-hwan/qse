@@ -4,15 +4,36 @@
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
+#include <qse/cmn/path.h>
+
 
 #include <locale.h>
 #if defined(_WIN32)
 #	include <windows.h>
 #endif
 
+static int print (const qse_cstr_t* path, void* ctx)
+{
+	qse_printf  (QSE_T("%.*s\n"), (int)path->len, path->ptr);
+	return 0;
+}
+
 static int glob_main (int argc, qse_char_t* argv[])
 {
-	return qse_glob (argv[1], QSE_MMGR_GETDFL());
+	int i;
+
+	if (argc <= 1)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Usage: %S file-pattern ...\n"), qse_basename(argv[0]));
+		return -1;
+	}
+
+	for (i = 1; i < argc; i++)
+	{
+		if (qse_glob (argv[i], print, QSE_NULL, QSE_GLOB_PERIOD, QSE_MMGR_GETDFL()) <= -1) return -1;
+	}
+
+	return 0;
 }
 
 int qse_main (int argc, qse_achar_t* argv[])

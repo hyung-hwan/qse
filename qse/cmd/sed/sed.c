@@ -30,6 +30,7 @@
 #include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
+#include <qse/cmn/glob.h>
 
 #include <locale.h>
 
@@ -586,13 +587,93 @@ static void trace_exec (qse_sed_t* sed, qse_sed_exec_op_t op, const qse_sed_cmd_
 }
 #endif
 
-int sed_main (int argc, qse_char_t* argv[])
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+
+struct xarg_t
+{
+	qse_mmgr_t*  mmgr;
+	qse_char_t** ptr;
+	qse_size_t   size;
+	qse_size_t   capa;
+};
+
+typedef struct xarg_t xarg_t;
+
+static int collect (const qse_cstr_t* path, void* ctx)
+{
+	xarg_t* xarg = (xarg_t*)ctx;
+
+	if (xarg->size <= xarg->capa)
+	{
+		qse_char_t** tmp;
+
+		tmp = QSE_MMGR_REALLOC (xarg->mmgr, xarg->ptr, QSE_SIZEOF(*tmp) * (xarg->capa + 128));
+		if (tmp == QSE_NULL) return -1;
+
+		xarg->ptr = tmp;
+		xarg->capa += 128;
+	}
+
+	xarg->ptr[xarg->size] = qse_strdup (path->ptr, xarg->mmgr);
+	if (xarg->ptr[xarg->size] == QSE_NULL) return -1;
+	xarg->size++;
+
+	return 0;
+}
+
+static void purge_xarg (xarg_t* xarg)
+{
+	if (xarg->ptr)
+	{
+		qse_size_t i;
+
+		for (i = 0; i < xarg->size; i++)
+			QSE_MMGR_FREE (xarg->mmgr, xarg->ptr[i]);
+		QSE_MMGR_FREE (xarg->mmgr, xarg->ptr);
+
+		xarg->size = 0;
+		xarg->capa = 0;
+	}
+}
+
+static int expand (int argc, qse_char_t* argv[], xarg_t* xarg)
+{
+	int i;
+	qse_cstr_t tmp;
+
+	for (i = 0; i < argc; i++)
+	{
+		int x;
+		x = qse_glob (argv[i], collect, xarg, QSE_GLOB_PERIOD, xarg->mmgr);
+
+		if (x <= -1) return -1;
+
+		if (x == 0)
+		{
+			/* not expanded. just use it as is */
+			tmp.ptr = argv[i];
+			tmp.len = qse_strlen(argv[i]);
+			if (collect (&tmp, xarg) <= -1) return -1;
+		}
+	}
+
+	return 0;
+}
+
+#endif
+
+static int sed_main (int argc, qse_char_t* argv[])
 {
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 	qse_sed_t* sed = QSE_NULL;
 	qse_fs_t* fs = QSE_NULL;
 	qse_size_t script_count;
 	int ret = -1;
+
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	xarg_t xarg;
+	int xarg_inited = 0;
+#endif
 
 	ret = handle_args (argc, argv);
 	if (ret <= -1) return -1;
@@ -642,7 +723,7 @@ int sed_main (int argc, qse_char_t* argv[])
 		qse_fprintf (QSE_STDERR, QSE_T("ERROR: cannot open stream editor\n"));
 		goto oops;
 	}
-	
+
 	qse_sed_setoption (sed, g_option);
 
 	if (qse_sed_compstd (sed, g_script.io, &script_count) <= -1)
@@ -689,14 +770,21 @@ int sed_main (int argc, qse_char_t* argv[])
 	if (g_trace) qse_sed_setexectracer (sed, trace_exec);
 #endif
 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	qse_memset (&xarg, 0, QSE_SIZEOF(xarg));
+	xarg.mmgr = qse_sed_getmmgr(sed);	
+	xarg_inited = 1;
+#endif
+
 	if (g_separate && g_infile_pos > 0)
 	{
 		/* 's' and input files are specified on the command line */
-
 		qse_sed_iostd_t out_file;
 		qse_sed_iostd_t out_inplace;
 		qse_sed_iostd_t* output_file = QSE_NULL;
 		qse_sed_iostd_t* output = QSE_NULL;
+		qse_char_t** inptr;
+		int inpos, num_ins;
 
 		if (g_output_file && 
 		    qse_strcmp (g_output_file, QSE_T("-")) != 0)
@@ -721,15 +809,29 @@ int sed_main (int argc, qse_char_t* argv[])
 			output = output_file;
 		}
 
-		while (g_infile_pos < argc)
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		/* perform wild-card expansions for non-unix platforms */
+		if (expand (argc - g_infile_pos, &argv[g_infile_pos], &xarg) <= -1)
+		{
+			qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+			goto oops;
+		}
+
+		num_ins = xarg.size;
+		inptr = xarg.ptr;
+#else
+		num_ins = argc - g_infile_pos;
+		inptr = &argv[g_infile_pos];
+#endif
+
+		for (inpos = 0; inpos < num_ins; inpos++)
 		{
 			qse_sed_iostd_t in[2];
 			qse_char_t* tmpl_tmpfile;
 			
 			in[0].type = QSE_SED_IOSTD_FILE;
 			in[0].u.file.path =
-				(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
-				QSE_NULL: argv[g_infile_pos];
+				(qse_strcmp (inptr[inpos], QSE_T("-")) == 0)?  QSE_NULL: inptr[inpos];
 			in[0].u.file.cmgr = g_infile_cmgr;
 			in[1].type = QSE_SED_IOSTD_NULL;
 
@@ -814,8 +916,6 @@ int sed_main (int argc, qse_char_t* argv[])
 			}
 
 			if (qse_sed_isstop (sed)) break;
-
-			g_infile_pos++;
 		}
 
 		if (output) qse_sio_close (output->u.sio);
@@ -829,10 +929,23 @@ int sed_main (int argc, qse_char_t* argv[])
 		if (g_infile_pos > 0)
 		{
 			int i, num_ins;
+			const qse_char_t* tmp;
 
 			/* input files are specified on the command line */
 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+			/* perform wild-card expansions for non-unix platforms */
+			if (expand (argc - g_infile_pos, &argv[g_infile_pos], &xarg) <= -1)
+			{
+				qse_fprintf (QSE_STDERR, QSE_T("ERROR: out of memory\n"));
+				goto oops;
+			}
+
+			num_ins = xarg.size;
+#else
 			num_ins = argc - g_infile_pos;
+#endif
+
 			in = QSE_MMGR_ALLOC (qse_sed_getmmgr(sed), QSE_SIZEOF(*in) * (num_ins + 1));
 			if (in == QSE_NULL)
 			{
@@ -843,11 +956,14 @@ int sed_main (int argc, qse_char_t* argv[])
 			for (i = 0; i < num_ins; i++)
 			{
 				in[i].type = QSE_SED_IOSTD_FILE;
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+				tmp = xarg.ptr[i];
+#else
+				tmp = argv[g_infile_pos++];
+#endif
 				in[i].u.file.path =
-					(qse_strcmp (argv[g_infile_pos], QSE_T("-")) == 0)? 
-					QSE_NULL: argv[g_infile_pos];
+					(qse_strcmp (tmp, QSE_T("-")) == 0)? QSE_NULL: tmp;
 				in[i].u.file.cmgr = g_infile_cmgr;
-				g_infile_pos++;
 			}
 
 			in[i].type = QSE_SED_IOSTD_NULL;
@@ -889,6 +1005,10 @@ int sed_main (int argc, qse_char_t* argv[])
 	ret = 0;
 
 oops:
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (xarg_inited) purge_xarg (&xarg);
+#endif
+
 	if (sed) qse_sed_close (sed);
 	if (fs) qse_fs_close (fs);
 	if (xma_mmgr.ctx) qse_xma_close (xma_mmgr.ctx);

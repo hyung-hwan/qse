@@ -24,7 +24,16 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+typedef int (*qse_glob_cbfun_t) (
+	const qse_cstr_t* path,
+	void*             cbctx
+);
 
+enum qse_glob_flags_t
+{
+	QSE_GLOB_NOESCAPE = (1 << 0),
+	QSE_GLOB_PERIOD   = (1 << 1)
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,13 +41,19 @@ extern "C" {
 
 int qse_glob (
 	const qse_char_t* pattern,
+	qse_glob_cbfun_t  cbfun,
+	void*             cbctx,
+	int               flags,
 	qse_mmgr_t*       mmgr
 );
 
 int qse_globwithcmgr (
 	const qse_char_t* pattern,
+	qse_glob_cbfun_t  cbfun,
+	void*             cbctx,
+	int               flags,
 	qse_mmgr_t*       mmgr,
-	qse_mmgr_t*       cmgr
+	qse_cmgr_t*       cmgr
 );
 
 #ifdef __cplusplus
