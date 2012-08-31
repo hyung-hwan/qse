@@ -24,7 +24,6 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-
 /*
 OVERWRITE AND FORCE handled by callback???
 QSE_FS_MOVE_UPDATE
@@ -121,7 +120,7 @@ int qse_fs_move (
 		APIRET rc;
 
 		rc = DosMove (fop.old_path, fop.new_path);
-		if (rc == ERROR_ALREADY_EXISTS)
+		if (rc == ERROR_ALREADY_EXISTS || rc == ERROR_ACCESS_DENIED)
 		{
 			DosDelete (fop.new_path);
 			rc = DosMove (fop.old_path, fop.new_path);
