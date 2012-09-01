@@ -14,7 +14,7 @@
 
 static int print (const qse_cstr_t* path, void* ctx)
 {
-	qse_printf  (QSE_T("%.*s\n"), (int)path->len, path->ptr);
+	qse_printf  (QSE_T("[%.*s]\n"), (int)path->len, path->ptr);
 	return 0;
 }
 
@@ -24,7 +24,7 @@ static int glob_main (int argc, qse_char_t* argv[])
 
 	if (argc <= 1)
 	{
-		qse_fprintf (QSE_STDERR, QSE_T("Usage: %S file-pattern ...\n"), qse_basename(argv[0]));
+		qse_fprintf (QSE_STDERR, QSE_T("Usage: %s file-pattern ...\n"), qse_basename(argv[0]));
 		return -1;
 	}
 
