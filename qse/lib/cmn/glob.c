@@ -31,7 +31,8 @@
 #	define INCL_ERRORS
 #	include <os2.h>
 #elif defined(__DOS__) 
-	/* what? */
+#	include <dos.h>
+#	include <errno.h>
 #else
 #	include <dirent.h>
 #	include <sys/stat.h>
@@ -66,6 +67,12 @@
  */
 #define IS_WILD(c) ((c) == QSE_T('*') || (c) == QSE_T('?') || (c) == QSE_T('['))
 
+#define NO_RECURSION 1
+
+#if defined(NO_RECURSION)
+typedef struct stack_node_t stack_node_t;
+#endif
+
 struct glob_t
 {
 	qse_glob_cbfun_t cbfun;
@@ -79,7 +86,11 @@ struct glob_t
 
 	int expanded;
 	int fnmat_flags;
-	int depth;
+
+#if defined(NO_RECURSION)
+	stack_node_t* stack;
+	stack_node_t* free;
+#endif
 };
 
 typedef struct glob_t glob_t;
@@ -88,18 +99,62 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 {
 #if defined(_WIN32)
 
+	/* ------------------------------------------------------------------- */
 	return (GetFileAttributes(name) != INVALID_FILE_ATTRIBUTES)? 1: 0;
+	/* ------------------------------------------------------------------- */
 
 #elif defined(__OS2__)
 
-	return -1;
+	/* ------------------------------------------------------------------- */
+	FILESTATUS3 fs;
+	APIRET rc;
+
+	qse_mchar_t* mptr;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mptr = name;
+#else
+	mptr = qse_wcstombsdup (name, g->mmgr);
+	if (mptr == QSE_NULL) return -1;
+#endif
+
+	rc = DosQueryPathInfo (mptr, FIL_STANDARD, &fs, QSE_SIZEOF(fs));
+#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+#else
+	QSE_MMGR_FREE (g->mmgr, mptr);
+#endif
+
+	return (rc == NO_ERROR)? 1:
+	       (rc == ERROR_PATH_NOT_FOUND)? 0: -1;
+	/* ------------------------------------------------------------------- */
 
 #elif defined(__DOS__)
 
-	return -1;
+	/* ------------------------------------------------------------------- */
+	unsigned int x, attr;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+
+	x =  _dos_getfileattr (name, &attr);
+
+#else
+	qse_mchar_t* mptr;
+
+	mptr = qse_wcstombsdup (name, g->mmgr);
+	if (mptr == QSE_NULL) return -1;
+
+	x = _dos_getfileattr (mptr, &attr);
+	QSE_MMGR_FREE (g->mmgr, mptr);
+
+#endif
+	return (x == 0)? 1: 
+	       (errno == ENOENT)? 0: -1;
+	/* ------------------------------------------------------------------- */
 
 #else
 
+	/* ------------------------------------------------------------------- */
 	struct stat st;
 	int x;
 
@@ -108,16 +163,17 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 	x =  lstat (name, &st);
 
 #else
-	qse_mchar_t* ptr;
+	qse_mchar_t* mptr;
 
-	ptr = qse_wcstombsdup (name, g->mmgr);
-	if (ptr == QSE_NULL) return -1;
+	mptr = qse_wcstombsdup (name, g->mmgr);
+	if (mptr == QSE_NULL) return -1;
 
-	x = lstat (ptr, &st);
-	QSE_MMGR_FREE (g->mmgr, ptr);
+	x = lstat (mptr, &st);
+	QSE_MMGR_FREE (g->mmgr, mptr);
 
 #endif
 	return (x == 0)? 1: 0;
+	/* ------------------------------------------------------------------- */
 
 #endif
 }
@@ -134,7 +190,7 @@ struct segment_t
 	const qse_char_t* ptr;
 	qse_size_t        len;
 
-	qse_char_t        sep; /* preceeding separator */
+	qse_char_t sep; /* preceeding separator */
 	unsigned int wild: 1;  /* indicate that it contains wildcards */
 	unsigned int esc: 1;  /* indicate that it contains escaped letters */
 	unsigned int next: 1;  /* indicate that it has the following segment */
@@ -260,6 +316,7 @@ struct DIR
 {
 	HANDLE h;
 	WIN32_FIND_DATA wfd;	
+	int done;
 };
 typedef struct DIR DIR;
 
@@ -276,7 +333,8 @@ typedef struct DIR DIR;
 #elif defined(__DOS__)
 struct DIR
 {
-	int xxx;
+	struct find_t f;
+	int done;
 };
 typedef struct DIR DIR;
 
@@ -291,6 +349,8 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 
 	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
 	if (dp == QSE_NULL) return QSE_NULL;
+
+	dp->done = 0;
 
 	if (path->len <= 0)
 	{
@@ -393,7 +453,61 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 #elif defined(__DOS__)
 
 	/* ------------------------------------------------------------------- */
-	return QSE_NULL;
+	DIR* dp;
+	unsigned int rc;
+	qse_mchar_t* mptr;
+
+	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
+	if (dp == QSE_NULL) return QSE_NULL;
+
+	dp->done = 0;
+
+	if (path->len <= 0)
+	{
+		if (qse_str_cpy (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		{
+			QSE_MMGR_FREE (g->mmgr, dp);
+			return QSE_NULL;
+		}
+	}
+	else
+	{
+		if (qse_str_cpy (&g->segtmp, path->ptr) == (qse_size_t)-1 ||
+		    (!IS_SEP(path->ptr[path->len-1]) && 
+		     !qse_isdrivecurpath(path->ptr) &&
+		     qse_str_ccat (&g->segtmp, QSE_T('\\')) == (qse_size_t)-1) ||
+		    qse_str_cat (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		{
+			QSE_MMGR_FREE (g->mmgr, dp);
+			return QSE_NULL;
+		}
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	mptr = QSE_STR_PTR(&g->segtmp);
+#else
+	mptr = qse_wcstombsdup (QSE_STR_PTR(&g->segtmp), g->mmgr);
+	if (mptr == QSE_NULL)
+	{
+		QSE_MMGR_FREE (g->mmgr, dp);
+		return QSE_NULL;
+	}
+#endif
+
+	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dp->f);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+#else
+	QSE_MMGR_FREE (g->mmgr, mptr);
+#endif
+	if (rc != 0)
+	{
+		QSE_MMGR_FREE (g->mmgr, dp);
+		return QSE_NULL;
+	}
+
+	return dp;
 	/* ------------------------------------------------------------------- */
 
 #else
@@ -432,10 +546,12 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 #if defined(_WIN32)
 
 	/* ------------------------------------------------------------------- */
+	if (dp->done) return (dp->done > 0)? 0: -1;
+
 	if (qse_str_cat (path, dp->wfd.cFileName) == (qse_size_t)-1) return -1;
 
 	if (FindNextFile (dp->h, &dp->wfd) == FALSE) 
-		return (GetLastError() == ERROR_NO_MORE_FILES)? 0: -1;
+		dp->done = (GetLastError() == ERROR_NO_MORE_FILES)? 1: -1;
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -462,7 +578,8 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 #endif
 
 	rc = DosFindNext (dp->h, &dp->ffb, QSE_SIZEOF(dp->ffb), &dp->count);
-	if (rc != NO_ERROR) return -1;
+	if (rc == ERROR_NO_MORE_FILES) dp->count = 0;
+	else if (rc != NO_ERROR) return -1;
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -470,7 +587,28 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 #elif defined(__DOS__)
 
 	/* ------------------------------------------------------------------- */
-	return -1;
+	unsigned int rc;
+#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing */
+#else
+	qse_size_t ml, wl, tmp;
+#endif
+
+	if (dp->done) return (dp->done > 0)? 0: -1;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	if (qse_str_cat (path, dp->f.name) == (qse_size_t)-1) return -1;
+#else
+	tmp = QSE_STR_LEN(path);
+	if (qse_mbstowcswithcmgr (dp->f.name, &ml, QSE_NULL, &wl, g->cmgr) <= -1 ||
+	    qse_str_setlen (path, tmp + wl) == (qse_size_t)-1) return -1;
+	qse_mbstowcswithcmgr (dp->f.name, &ml, QSE_STR_CPTR(&g->path,tmp), &wl, g->cmgr);
+#endif
+
+	rc = _dos_findnext (&dp->f);
+	if (rc != 0) dp->done = (errno == ENOENT)? 1: -1;
+
+	return 1;
 	/* ------------------------------------------------------------------- */
 
 #else
@@ -483,14 +621,8 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 	qse_size_t ml, wl, tmp;
 #endif
 
-read_more:
 	de = readdir (dp);
 	if (de == NULL) return 0;
-
-	/*
-	if (qse_mbscmp (de->d_name, QSE_MT(".")) == 0 ||
-	    qse_mbscmp (de->d_name, QSE_MT("..")) == 0) goto read_more;
-	*/
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	if (qse_str_cat (path, de->d_name) == (qse_size_t)-1) return -1;
@@ -516,129 +648,229 @@ static void xclosedir (glob_t* g, DIR* dp)
 	DosFindClose (dp->h);
 	QSE_MMGR_FREE (g->mmgr, dp);
 #elif defined(__DOS__)
+	_dos_findclose (&dp->f);
 	QSE_MMGR_FREE (g->mmgr, dp);
 #else
 	closedir (dp);
 #endif
 }
 
-static int search (glob_t* g, segment_t* seg)
+static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 {
-	segment_t save = *seg;
-	g->depth++;
-
-	while (get_next_segment(g, seg) != NONE)
+	while (get_next_segment(g, seg) != NONE && !seg->wild)
 	{
-		QSE_ASSERT (seg->type != NONE);
+		QSE_ASSERT (seg->type != NONE && !seg->wild);
 
-		if (seg->wild)
+		if (seg->sep && qse_str_ccat (&g->path, seg->sep) == (qse_size_t)-1) return -1;
+
+		if (seg->esc)
 		{
-			DIR* dp;
+			/* if the segment contains escape sequences,
+			 * strip the escape letters off the segment */
 
-			dp = xopendir (g, QSE_STR_CSTR(&g->path));
-			if (dp)
+			qse_xstr_t tmp;
+			qse_size_t i;
+			int escaped = 0;
+
+			if (QSE_STR_CAPA(&g->segtmp) < seg->len &&
+			    qse_str_setcapa (&g->segtmp, seg->len) == (qse_size_t)-1) return -1;
+
+			tmp.ptr = QSE_STR_PTR(&g->segtmp);
+			tmp.len = 0;
+
+			/* the following loop drops the last character 
+			 * if it is the escape character */
+			for (i = 0; i < seg->len; i++)
 			{
-				qse_size_t tmp, tmp2;
-
-				tmp = QSE_STR_LEN(&g->path);
-
-				if (seg->sep && qse_str_ccat (&g->path, seg->sep) == (qse_size_t)-1) 
+				if (escaped)
 				{
-					xclosedir (g, dp);
-					return -1;
+					escaped = 0;
+					tmp.ptr[tmp.len++] = seg->ptr[i];
 				}
-				tmp2 = QSE_STR_LEN(&g->path);
-
-				while (1)
+				else
 				{
-					qse_str_setlen (&g->path, tmp2);
-
-					if (xreaddir (g, dp, &g->path) <= 0) break;
-
-					if (seg->next)
-					{
-						if (qse_strnfnmat (QSE_STR_CPTR(&g->path,tmp2), seg->ptr, seg->len, g->fnmat_flags) > 0 &&
-						    search (g, seg) <= -1) 
-						{
-							xclosedir (g, dp);
-							return -1;
-						}
-					}
+					if (IS_ESC(seg->ptr[i])) 
+						escaped = 1;
 					else
-					{
-						if (qse_strnfnmat (QSE_STR_CPTR(&g->path,tmp2), seg->ptr, seg->len, g->fnmat_flags) > 0)
-						{
-							if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) 
-							{
-								xclosedir (g, dp);
-								return -1;
-							}
-							g->expanded = 1;
-						}
-					}
+						tmp.ptr[tmp.len++] = seg->ptr[i];
 				}
-
-				qse_str_setlen (&g->path, tmp);
-				xclosedir (g, dp);
 			}
 
-			break;
+			if (qse_str_ncat (&g->path, tmp.ptr, tmp.len) == (qse_size_t)-1) return -1;
 		}
 		else
 		{
-			if (seg->sep && qse_str_ccat (&g->path, seg->sep) == (qse_size_t)-1) return -1;
+			/* if the segmetn doesn't contain escape sequences,
+			 * append the segment to the path without special handling */
+			if (qse_str_ncat (&g->path, seg->ptr, seg->len) == (qse_size_t)-1) return -1;
+		}
 
-			if (seg->esc)
-			{
-				/* if the segment contains escape sequences,
-				 * strip the escape letters off the segment */
-
-				qse_xstr_t tmp;
-				qse_size_t i;
-				int escaped = 0;
-
-				if (QSE_STR_CAPA(&g->segtmp) < seg->len &&
-				    qse_str_setcapa (&g->segtmp, seg->len) == (qse_size_t)-1) return -1;
-
-				tmp.ptr = QSE_STR_PTR(&g->segtmp);
-				tmp.len = 0;
-
-				/* the following loop drops the last character 
-				 * if it is the escape character */
-				for (i = 0; i < seg->len; i++)
-				{
-					if (escaped)
-					{
-						escaped = 0;
-						tmp.ptr[tmp.len++] = seg->ptr[i];
-					}
-					else
-					{
-						if (IS_ESC(seg->ptr[i])) 
-							escaped = 1;
-						else
-							tmp.ptr[tmp.len++] = seg->ptr[i];
-					}
-				}
-
-				if (qse_str_ncat (&g->path, tmp.ptr, tmp.len) == (qse_size_t)-1) return -1;
-			}
-			else
-			{
-				if (qse_str_ncat (&g->path, seg->ptr, seg->len) == (qse_size_t)-1) return -1;
-			}
-
-			if (!seg->next && path_exists(g, QSE_STR_PTR(&g->path)))
-			{
-				if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) return -1;
-				g->expanded = 1;
-			}
+		if (!seg->next && path_exists(g, QSE_STR_PTR(&g->path)) > 0)
+		{
+			/* reached the last segment. match if the path exists */
+			if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) return -1;
+			g->expanded = 1;
 		}
 	}
 
-	*seg = save;
-	g->depth--;
 	return 0;
+}
+
+#if defined(NO_RECURSION)
+typedef struct stack_node_t stack_node_t;
+struct stack_node_t
+{
+	qse_size_t tmp;
+	qse_size_t tmp2;
+	DIR* dp;
+	segment_t seg;
+
+	stack_node_t* next;
+};
+#endif
+
+static int search (glob_t* g, segment_t* seg)
+{
+	DIR* dp;
+	qse_size_t tmp, tmp2;
+
+#if defined(NO_RECURSION)
+	stack_node_t* r;
+
+entry:
+#endif
+
+	dp = QSE_NULL;
+
+	if (handle_non_wild_segments (g, seg) <= -1) goto oops;
+
+	if (seg->wild)
+	{
+		dp = xopendir (g, QSE_STR_CSTR(&g->path));
+		if (dp)
+		{
+			tmp = QSE_STR_LEN(&g->path);
+
+			if (seg->sep && qse_str_ccat (&g->path, seg->sep) == (qse_size_t)-1) goto oops;
+			tmp2 = QSE_STR_LEN(&g->path);
+
+			while (1)
+			{
+				qse_str_setlen (&g->path, tmp2);
+
+				if (xreaddir (g, dp, &g->path) <= 0) break;
+
+				if (qse_strnfnmat (QSE_STR_CPTR(&g->path,tmp2), seg->ptr, seg->len, g->fnmat_flags) > 0)
+				{
+					if (seg->next)
+					{
+#if defined(NO_RECURSION)
+						if (g->free) 
+						{
+							r = g->free;
+							g->free = r->next;
+						}
+						else
+						{
+							r = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*r));
+							if (r == QSE_NULL) goto oops;
+						}
+						
+						/* push key variables that must be restored 
+						 * into the stack. */
+						r->tmp = tmp;
+						r->tmp2 = tmp2;
+						r->dp = dp;
+						r->seg = *seg;
+
+						r->next = g->stack;
+						g->stack = r;
+		
+						/* move to the function entry point as if
+						 * a recursive call has been made */
+						goto entry;
+
+					resume:
+						;
+
+#else
+						segment_t save;
+						int x;
+
+						save = *seg;
+						x = search (g, seg);
+						*seg = save;
+						if (x <= -1) goto oops;
+#endif
+					}
+					else
+					{
+						if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) goto oops;
+						g->expanded = 1;
+					}
+				}
+			}
+
+			qse_str_setlen (&g->path, tmp);
+			xclosedir (g, dp); dp = QSE_NULL;
+		}
+	}
+
+	QSE_ASSERT (dp == QSE_NULL);
+
+#if defined(NO_RECURSION)
+	if (g->stack)
+	{
+		/* the stack is not empty. the emulated recusive call
+		 * must have been made. restore the variables pushed
+		 * and jump to the resumption point */
+		r = g->stack;
+		g->stack = r->next;
+
+		tmp = r->tmp;
+		tmp2 = r->tmp2;
+		dp = r->dp;
+		*seg = r->seg;
+
+		/* link the stack node to the free list 
+		 * instead of freeing it here */
+		r->next = g->free;
+		g->free = r;
+
+		goto resume;
+	}
+
+	while (g->free)
+	{
+		/* destory the free list */
+		r = g->free;
+		g->free = r->next;
+		QSE_MMGR_FREE (g->mmgr, r);
+	}
+#endif
+
+	return 0;
+
+oops:
+	if (dp) xclosedir (g, dp);	
+
+#if defined(NO_RECURSION)
+	while (g->stack)
+	{
+		r = g->stack;
+		g->stack = r->next;
+		xclosedir (g, r->dp);
+		QSE_MMGR_FREE (g->mmgr, r);
+	}
+
+	while (g->free)
+	{
+		r = g->stack;
+		g->free = r->next;
+		QSE_MMGR_FREE (g->mmgr, r);
+	}
+#endif
+	return -1;
 }
 
 int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* cbctx, int flags, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
