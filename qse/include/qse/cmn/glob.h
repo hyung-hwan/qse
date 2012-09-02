@@ -24,6 +24,11 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
+/** @file
+ * This file provides functions, types, macros for wildcard expansion
+ * in a path name.
+ */
+
 typedef int (*qse_glob_cbfun_t) (
 	const qse_cstr_t* path,
 	void*             cbctx
@@ -31,14 +36,28 @@ typedef int (*qse_glob_cbfun_t) (
 
 enum qse_glob_flags_t
 {
-	QSE_GLOB_NOESCAPE = (1 << 0),
-	QSE_GLOB_PERIOD   = (1 << 1)
+	/** Don't use the backslash as an escape charcter.
+	 *  This option is on in Win32/OS2/DOS. */
+	QSE_GLOB_NOESCAPE   = (1 << 0),
+
+	/** Match a leading period explicitly by a literal period in the pattern */
+	QSE_GLOB_PERIOD     = (1 << 1),
+
+	/** Perform case-insensitive matching. 
+	 *  This option is always on in Win32/OS2/DOS. */
+	QSE_GLOB_IGNORECASE = (1 << 2)
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * The qse_glob() function finds path names matchin the @a pattern.
+ * It calls the call-back function @a cbfun for each path name found.
+ * 
+ * @return -1 on failure, 0 on no match, 1 if matches are found.
+ */
 int qse_glob (
 	const qse_char_t* pattern,
 	qse_glob_cbfun_t  cbfun,

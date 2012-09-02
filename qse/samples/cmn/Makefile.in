@@ -43,7 +43,7 @@ bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
 	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) \
 	slmb01$(EXEEXT) str01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
 	xma$(EXEEXT)
-@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -64,7 +64,7 @@ am_chr01_OBJECTS = chr01.$(OBJEXT)
 chr01_OBJECTS = $(am_chr01_OBJECTS)
 chr01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 chr01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_dll_OBJECTS = dll.$(OBJEXT)
 dll_OBJECTS = $(am_dll_OBJECTS)

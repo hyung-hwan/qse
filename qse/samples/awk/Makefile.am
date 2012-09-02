@@ -11,7 +11,9 @@ LDFLAGS = -L../../lib/awk -L../../lib/cmn
 LDADD = -lqseawk -lqsecmn $(LIBM)
 
 if WIN32 
+if WCHAR
 LDADD += $(UNICOWS_LIBS)
+endif
 endif
 
 awk01_SOURCES = awk01.c

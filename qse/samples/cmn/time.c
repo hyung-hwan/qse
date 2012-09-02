@@ -1,3 +1,8 @@
+/*
+ * NOTE  Targets without a 64-bit or bigger integer will suffer 
+ * since milliseconds could be too large for a 32-bit integer.
+ */
+
 #include <qse/cmn/time.h>
 #include <qse/cmn/stdio.h>
 #include <locale.h>
@@ -14,10 +19,12 @@
 
 void print_time (qse_ntime_t nt, const qse_btime_t* bt)
 {
-#ifdef _WIN32
+#if defined(_WIN32)
 	qse_printf (QSE_T("TIME: %I64d\n"), (__int64)nt);
-#else
+#elif (QSE_SIZEOF_LONG_LONG > 0)
 	qse_printf (QSE_T("TIME: %lld\n"), (long long)nt);
+#else
+	qse_printf (QSE_T("TIME: %ld\n"), (long)nt);
 #endif
 	qse_printf (QSE_T("year: %d\n"), bt->year + QSE_BTIME_YEAR_BASE);
 	qse_printf (QSE_T("mon: %d\n"), bt->mon + 1);
@@ -54,8 +61,10 @@ static int test1 (void)
 	{
 #ifdef _WIN32
 		qse_printf (QSE_T("back to ntime: %I64d\n"), (__int64)nt);
-#else
+#elif (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("back to ntime: %lld\n"), (long long)nt);
+#else
+		qse_printf (QSE_T("back to ntime: %ld\n"), (long)nt);
 #endif
 		qse_gmtime (nt, &bt);
 		print_time (nt, &bt);
@@ -68,8 +77,11 @@ static int test1 (void)
 	qse_printf (QSE_T("-------------------------------\n"));
 
 
-	for (nt = (qse_ntime_t)QSE_TYPE_MIN(int); 
-	     nt <= (qse_ntime_t)QSE_TYPE_MAX(int); nt += QSE_SECS_PER_DAY)
+#if (QSE_SIZEOF_LONG_LONG > 0)
+	for (nt = (qse_ntime_t)QSE_TYPE_MIN(int); nt <= (qse_ntime_t)QSE_TYPE_MAX(int); nt += QSE_SECS_PER_DAY)
+#else
+	for (nt = QSE_TYPE_MIN(int); nt < (QSE_TYPE_MAX(int) - QSE_SECS_PER_DAY * 2); nt += QSE_SECS_PER_DAY) 
+#endif
 	{
 #ifdef _WIN32
 		__time64_t t = (__time64_t)nt;
@@ -92,8 +104,10 @@ static int test1 (void)
 
 #ifdef _WIN32
 		qse_printf (QSE_T(">>> time %I64d: "), (__int64)qnt);
-#else
+#elif (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T(">>> time %lld: "), (long long)qnt);
+#else
+		qse_printf (QSE_T(">>> time %ld: "), (long)qnt);
 #endif
 
 		if (tm == QSE_NULL ||
@@ -107,8 +121,10 @@ static int test1 (void)
 		{
 #ifdef _WIN32
 			qse_printf (QSE_T("[GMTIME ERROR %I64d]\n"), (__int64)t);
-#else
+#elif (QSE_SIZEOF_LONG_LONG > 0)
 			qse_printf (QSE_T("[GMTIME ERROR %lld]\n"), (long long)t);
+#else
+			qse_printf (QSE_T("[GMTIME ERROR %ld]\n"), (long)t);
 #endif
 			if (tm == QSE_NULL) qse_printf (QSE_T(">> GMTIME RETURNED NULL\n"));
 			print_time (qnt, &bt);
@@ -133,8 +149,10 @@ static int test1 (void)
 			{
 #ifdef _WIN32
 				qse_printf (QSE_T("[TIMEGM ERROR %I64d, %d/%d/%d %d:%d:%d]\n"), (__int64)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
-#else
+#elif (QSE_SIZEOF_LONG_LONG > 0)
 				qse_printf (QSE_T("[TIMEGM ERROR %lld, %d/%d/%d %d:%d:%d]\n"), (long long)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
+#else
+				qse_printf (QSE_T("[TIMEGM ERROR %ld, %d/%d/%d %d:%d:%d]\n"), (long)xx, bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday, bt.hour, bt.min, bt.sec);
 #endif
 			}
 		}

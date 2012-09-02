@@ -45,7 +45,9 @@ LDFLAGS = -L../../lib/cmn
 LDADD = -lqsecmn 
 
 if WIN32 
+if WCHAR
 LDADD += $(UNICOWS_LIBS)
+endif
 endif
 
 chr01_SOURCES = chr01.c

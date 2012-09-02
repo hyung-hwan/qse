@@ -644,7 +644,10 @@ static int expand (int argc, qse_char_t* argv[], xarg_t* xarg)
 	for (i = 0; i < argc; i++)
 	{
 		int x;
-		x = qse_glob (argv[i], collect, xarg, QSE_GLOB_PERIOD, xarg->mmgr);
+		x = qse_glob (argv[i], collect, xarg, 
+			QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE, 
+			xarg->mmgr
+		);
 
 		if (x <= -1) return -1;
 

@@ -40,6 +40,13 @@
 #endif
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	/* i don't support escaping in these systems */
+#	define IS_ESC(c) (0)
+#else
+#	define IS_ESC(c) ((c) == QSE_T('\\'))
+#endif
+
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #	define SEPC QSE_T('\\')
 #else
 #	define SEPC QSE_T('/')
@@ -54,12 +61,11 @@
 #define IS_NIL(c) ((c) == QSE_T('\0'))
 #define IS_SEP_OR_NIL(c) (IS_SEP(c) || IS_NIL(c))
 
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	/* i don't support escaping in these systems */
-#	define IS_ESC(c) (0)
-#else
-#	define IS_ESC(c) ((c) == QSE_T('\\'))
-#endif
+/* only for win32/os2/dos */
+#define IS_DRIVE(s) \
+     (((s[0] >= QSE_T('A') && s[0] <= QSE_T('Z')) || \
+       (s[0] >= QSE_T('a') && s[0] <= QSE_T('z'))) && \
+      s[1] == QSE_T(':'))
 
 /* this macro only checks for top-level wild-cards among these.
  *  *, ?, [], !, -  
@@ -82,7 +88,12 @@ struct glob_t
 	qse_cmgr_t* cmgr;
 
 	qse_str_t path;
-	qse_str_t segtmp;
+	qse_str_t tbuf; /* temporary buffer */
+#if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
+	/* nothing */
+#else
+	qse_mbs_t mbuf;
+#endif
 
 	int expanded;
 	int fnmat_flags;
@@ -94,6 +105,17 @@ struct glob_t
 };
 
 typedef struct glob_t glob_t;
+
+static qse_mchar_t* wcs_to_mbuf (glob_t* g, const qse_wchar_t* wcs, qse_mbs_t* mbs)
+{
+	qse_size_t ml, wl;
+
+	if (qse_wcstombswithcmgr (wcs, &wl, QSE_NULL, &ml, g->cmgr) <= -1 ||
+	    qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) return QSE_NULL;
+
+	qse_wcstombswithcmgr (wcs, &wl, QSE_MBS_PTR(mbs), &ml, g->cmgr);
+	return QSE_MBS_PTR(mbs);
+}
 
 static int path_exists (glob_t* g, const qse_char_t* name)
 {
@@ -108,22 +130,16 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 	/* ------------------------------------------------------------------- */
 	FILESTATUS3 fs;
 	APIRET rc;
-
-	qse_mchar_t* mptr;
+	const qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
 	mptr = name;
 #else
-	mptr = qse_wcstombsdup (name, g->mmgr);
+	mptr = wcs_to_mbuf (g, name, &g->mbuf);
 	if (mptr == QSE_NULL) return -1;
 #endif
 
 	rc = DosQueryPathInfo (mptr, FIL_STANDARD, &fs, QSE_SIZEOF(fs));
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-#else
-	QSE_MMGR_FREE (g->mmgr, mptr);
-#endif
 
 	return (rc == NO_ERROR)? 1:
 	       (rc == ERROR_PATH_NOT_FOUND)? 0: -1;
@@ -133,21 +149,16 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 
 	/* ------------------------------------------------------------------- */
 	unsigned int x, attr;
+	const qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-
-	x =  _dos_getfileattr (name, &attr);
-
+	mptr = name;
 #else
-	qse_mchar_t* mptr;
-
-	mptr = qse_wcstombsdup (name, g->mmgr);
+	mptr = wcs_to_mbuf (g, name, &g->mbuf);
 	if (mptr == QSE_NULL) return -1;
+#endif
 
 	x = _dos_getfileattr (mptr, &attr);
-	QSE_MMGR_FREE (g->mmgr, mptr);
-
-#endif
 	return (x == 0)? 1: 
 	       (errno == ENOENT)? 0: -1;
 	/* ------------------------------------------------------------------- */
@@ -156,23 +167,16 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 
 	/* ------------------------------------------------------------------- */
 	struct stat st;
-	int x;
+	const qse_mchar_t* mptr;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-
-	x =  lstat (name, &st);
-
+	mptr = name;
 #else
-	qse_mchar_t* mptr;
-
-	mptr = qse_wcstombsdup (name, g->mmgr);
+	mptr = wcs_to_mbuf (g, name, &g->mbuf);
 	if (mptr == QSE_NULL) return -1;
-
-	x = lstat (mptr, &st);
-	QSE_MMGR_FREE (g->mmgr, mptr);
-
 #endif
-	return (x == 0)? 1: 0;
+
+	return (lstat (mptr, &st) == 0)? 1: 0;
 	/* ------------------------------------------------------------------- */
 
 #endif
@@ -200,8 +204,6 @@ typedef struct segment_t segment_t;
 
 static int get_next_segment (glob_t* g, segment_t* seg)
 {
-/* TODO: WIN32 X: drive letter segment... */
-
 	if (seg->type == NONE)
 	{
 		/* seg->ptr must point to the beginning of the pattern
@@ -219,6 +221,18 @@ static int get_next_segment (glob_t* g, segment_t* seg)
 			seg->wild = 0;
 			seg->esc = 0;
 		}
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+		else if (IS_DRIVE(seg->ptr))
+		{
+			seg->type = ROOT;
+			seg->len = 2;
+			if (IS_SEP(seg->ptr[2])) seg->len++;
+			seg->next = IS_NIL(seg->ptr[seg->len])? 0: 1;
+			seg->sep = QSE_T('\0');
+			seg->wild = 0;
+			seg->esc = 0;
+		}
+#endif
 		else
 		{
 			int escaped = 0;
@@ -354,7 +368,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 
 	if (path->len <= 0)
 	{
-		if (qse_str_cpy (&g->segtmp, QSE_T("*")) == (qse_size_t)-1)
+		if (qse_str_cpy (&g->tbuf, QSE_T("*")) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
@@ -362,18 +376,18 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	}
 	else
 	{
-		if (qse_str_cpy (&g->segtmp, path->ptr) == (qse_size_t)-1 ||
+		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
 		    (!IS_SEP(path->ptr[path->len-1]) && 
 		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->segtmp, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_ccat (&g->segtmp, QSE_T('*')) == (qse_size_t)-1)
+		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
+		    qse_str_ccat (&g->tbuf, QSE_T('*')) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
 		}
 	}
 
-	dp->h = FindFirstFile (QSE_STR_PTR(&g->segtmp), &dp->wfd);
+	dp->h = FindFirstFile (QSE_STR_PTR(&g->tbuf), &dp->wfd);
 	if (dp->h == INVALID_HANDLE_VALUE) 
 	{
 		QSE_MMGR_FREE (g->mmgr, dp);
@@ -395,7 +409,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 
 	if (path->len <= 0)
 	{
-		if (qse_str_cpy (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		if (qse_str_cpy (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
@@ -403,11 +417,11 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	}
 	else
 	{
-		if (qse_str_cpy (&g->segtmp, path->ptr) == (qse_size_t)-1 ||
+		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
 		    (!IS_SEP(path->ptr[path->len-1]) && 
 		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->segtmp, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_cat (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
+		    qse_str_cat (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
@@ -418,9 +432,9 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	dp->count = 1;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mptr = QSE_STR_PTR(&g->segtmp);
+	mptr = QSE_STR_PTR(&g->tbuf);
 #else
-	mptr = qse_wcstombsdup (QSE_STR_PTR(&g->segtmp), g->mmgr);
+	mptr = wcs_to_mbuf (g, QSE_STR_PTR(&g->tbuf), &g->mbuf);
 	if (mptr == QSE_NULL)
 	{
 		QSE_MMGR_FREE (g->mmgr, dp);
@@ -436,11 +450,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 		QSE_SIZEOF(dp->ffb),
 		&dp->count,
 		FIL_STANDARDL);
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-#else
-	QSE_MMGR_FREE (g->mmgr, mptr);
-#endif
+
 	if (rc != NO_ERROR)
 	{
 		QSE_MMGR_FREE (g->mmgr, dp);
@@ -456,6 +466,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	DIR* dp;
 	unsigned int rc;
 	qse_mchar_t* mptr;
+	qse_size_t wl, ml;
 
 	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
 	if (dp == QSE_NULL) return QSE_NULL;
@@ -464,7 +475,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 
 	if (path->len <= 0)
 	{
-		if (qse_str_cpy (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		if (qse_str_cpy (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
@@ -472,11 +483,11 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	}
 	else
 	{
-		if (qse_str_cpy (&g->segtmp, path->ptr) == (qse_size_t)-1 ||
+		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
 		    (!IS_SEP(path->ptr[path->len-1]) && 
 		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->segtmp, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_cat (&g->segtmp, QSE_T("*.*")) == (qse_size_t)-1)
+		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
+		    qse_str_cat (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
 		{
 			QSE_MMGR_FREE (g->mmgr, dp);
 			return QSE_NULL;
@@ -484,10 +495,10 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	}
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mptr = QSE_STR_PTR(&g->segtmp);
+	mptr = QSE_STR_PTR(&g->tbuf);
 #else
-	mptr = qse_wcstombsdup (QSE_STR_PTR(&g->segtmp), g->mmgr);
-	if (mptr == QSE_NULL)
+	mptr = wcs_to_mbuf (g, QSE_STR_PTR(&g->tbuf), &g->mbuf);
+	if (mptr == QSE_NULL) 
 	{
 		QSE_MMGR_FREE (g->mmgr, dp);
 		return QSE_NULL;
@@ -496,11 +507,6 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 
 	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dp->f);
 
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing to do */
-#else
-	QSE_MMGR_FREE (g->mmgr, mptr);
-#endif
 	if (rc != 0)
 	{
 		QSE_MMGR_FREE (g->mmgr, dp);
@@ -515,7 +521,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	/* ------------------------------------------------------------------- */
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	return opendir ((path->len <= 0)? p = QSE_T("."): path->ptr);
+	return opendir ((path->len <= 0)? QSE_T("."): path->ptr);
 #else
 	if (path->len <= 0)
 	{
@@ -523,17 +529,12 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 	}
 	else
 	{
-		DIR* dp;
 		qse_mchar_t* mptr;
-	
-		mptr = qse_wcstombsdup (path->ptr, g->mmgr);
+
+		mptr = wcs_to_mbuf (g, path->ptr, &g->mbuf);
 		if (mptr == QSE_NULL) return QSE_NULL;
 
-		dp = opendir (mptr);
-
-		QSE_MMGR_FREE (g->mmgr, mptr);
-
-		return dp;
+		return opendir (mptr);
 	}
 #endif 
 	/* ------------------------------------------------------------------- */
@@ -672,10 +673,10 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 			qse_size_t i;
 			int escaped = 0;
 
-			if (QSE_STR_CAPA(&g->segtmp) < seg->len &&
-			    qse_str_setcapa (&g->segtmp, seg->len) == (qse_size_t)-1) return -1;
+			if (QSE_STR_CAPA(&g->tbuf) < seg->len &&
+			    qse_str_setcapa (&g->tbuf, seg->len) == (qse_size_t)-1) return -1;
 
-			tmp.ptr = QSE_STR_PTR(&g->segtmp);
+			tmp.ptr = QSE_STR_PTR(&g->tbuf);
 			tmp.len = 0;
 
 			/* the following loop drops the last character 
@@ -886,18 +887,30 @@ int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* c
 	g.cmgr = cmgr;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-	g.fnmat_flags |= QSE_STRFNMAT_NOESCAPE | QSE_STRFNMAT_IGNORECASE;
+	g.fnmat_flags |= QSE_STRFNMAT_IGNORECASE;
+	g.fnmat_flags |= QSE_STRFNMAT_NOESCAPE;
 #else
+	if (flags & QSE_GLOB_IGNORECASE) g.fnmat_flags |= QSE_STRFNMAT_IGNORECASE;
 	if (flags & QSE_GLOB_NOESCAPE) g.fnmat_flags |= QSE_STRFNMAT_NOESCAPE;
 #endif
 	if (flags & QSE_GLOB_PERIOD) g.fnmat_flags |= QSE_STRFNMAT_PERIOD;
 
 	if (qse_str_init (&g.path, mmgr, 512) <= -1) return -1;
-	if (qse_str_init (&g.segtmp, mmgr, 256) <= -1) 
+	if (qse_str_init (&g.tbuf, mmgr, 256) <= -1) 
 	{
 		qse_str_fini (&g.path);
 		return -1;
 	}
+#if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
+	/* nothing */
+#else
+	if (qse_mbs_init (&g.mbuf, mmgr, 512) <= -1) 
+	{
+		qse_str_fini (&g.path);
+		qse_str_fini (&g.path);
+		return -1;
+	}
+#endif
 
 	QSE_MEMSET (&seg, 0, QSE_SIZEOF(seg));
 	seg.type = NONE;
@@ -906,7 +919,12 @@ int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* c
 
 	x = search (&g, &seg);
 
-	qse_str_fini (&g.segtmp);
+#if defined(QSE_CHAR_IS_MCHAR) || defined(_WIN32)
+	/* nothing */
+#else
+	qse_mbs_fini (&g.mbuf);
+#endif
+	qse_str_fini (&g.tbuf);
 	qse_str_fini (&g.path);
 
 	if (x <= -1) return -1;
