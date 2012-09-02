@@ -627,13 +627,16 @@ qse_ssize_t qse_tio_writembs (
 			for (xend = xptr + mlen; xptr < xend; xptr++)
 			{
 				/* TODO: support different line terminating characeter */
-				tio->out.buf.ptr[tio->outbuf_len++] = *xptr;
-				if (*xptr == QSE_MT('\n')) 
+				if (*xptr == QSE_MT('\n'))
 				{
 					nl = 1; 
 					break;
 				}
+
+				tio->out.buf.ptr[tio->outbuf_len++] = *xptr;
 			}
+
+			/* continue copying without checking for nl */
 			while (xptr < xend) tio->out.buf.ptr[tio->outbuf_len++] = *xptr++;
 		}
 
@@ -655,8 +658,7 @@ qse_ssize_t qse_tio_writewcs (
 	if (tio->outbuf_len >= tio->out.buf.capa) 
 	{
 		/* maybe, previous flush operation has failed a few 
-		 * times previously. so the buffer is full.
-		 */
+		 * times previously. so the buffer is full. */
 		tio->errnum = QSE_TIO_ENOSPC;	
 		return -1;
 	}

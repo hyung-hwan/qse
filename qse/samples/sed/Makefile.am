@@ -10,7 +10,9 @@ LDFLAGS = -L../../lib/cmn -L../../lib/sed
 LDADD = -lqsesed -lqsecmn 
 
 if WIN32 
+if WCHAR
 LDADD += $(UNICOWS_LIBS)
+endif
 endif
 
 bin_PROGRAMS = sed01

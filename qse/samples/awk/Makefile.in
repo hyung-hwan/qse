@@ -37,7 +37,7 @@ host_triplet = @host@
 bin_PROGRAMS = awk01$(EXEEXT) awk02$(EXEEXT) awk03$(EXEEXT) \
 	awk04$(EXEEXT) awk09$(EXEEXT) awk10$(EXEEXT) awk11$(EXEEXT) \
 	$(am__EXEEXT_1)
-@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 @ENABLE_CXX_TRUE@am__append_2 = awk05 awk06 awk07 awk08 awk12 awk13 awk14
 subdir = samples/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -62,7 +62,7 @@ am_awk01_OBJECTS = awk01.$(OBJEXT)
 awk01_OBJECTS = $(am_awk01_OBJECTS)
 awk01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 awk01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_awk02_OBJECTS = awk02.$(OBJEXT)
 awk02_OBJECTS = $(am_awk02_OBJECTS)

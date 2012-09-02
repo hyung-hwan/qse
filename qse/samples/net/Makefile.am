@@ -11,7 +11,9 @@ LDFLAGS += -L../../lib/cmn -L../../lib/net
 LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) $(SENDFILE_LIBS) -lssl
 
 if WIN32 
+if WCHAR
 LDADD += $(UNICOWS_LIBS)
+endif
 endif
 
 http01_SOURCES = http01.c

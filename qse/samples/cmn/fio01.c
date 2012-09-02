@@ -44,7 +44,11 @@ static int test1 (void)
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("file offset at %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("file offset at %ld\n"), (long)off);
+#endif
 	}
 
 	off = qse_fio_seek (fio, 0, QSE_FIO_BEGIN);
@@ -54,7 +58,11 @@ static int test1 (void)
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("moved file offset to %ld\n"), (long)off);
+#endif
 	}
 
 	n = qse_fio_read (fio, buf, sizeof(buf));
@@ -68,14 +76,22 @@ static int test1 (void)
 	#endif
 	}
 
+#if (QSE_SIZEOF_LONG_LONG > 0)
 	off = qse_fio_seek (fio, QSE_TYPE_MAX(int) * 3llu, QSE_FIO_BEGIN);
+#else
+	off = qse_fio_seek (fio, QSE_TYPE_MAX(int), QSE_FIO_BEGIN);
+#endif
 	if (off == (qse_fio_off_t)-1)
 	{
 		qse_printf (QSE_T("failed to set file offset\n"));
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("moved file offset to %ld\n"), (long)off);
+#endif
 	}
 
 	n = qse_fio_write (fio, x2, qse_mbslen(x2));
@@ -130,7 +146,11 @@ static int test2 (void)
 		}
 		else
 		{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 			qse_printf (QSE_T("file offset at %lld\n"), (long long)off);
+#else
+			qse_printf (QSE_T("file offset at %ld\n"), (long)off);
+#endif
 		}
 
 		off = qse_fio_seek (fio, 0, QSE_FIO_BEGIN);
@@ -140,7 +160,11 @@ static int test2 (void)
 		}
 		else
 		{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 			qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
+#else
+			qse_printf (QSE_T("moved file offset to %ld\n"), (long)off);
+#endif
 		}
 	}
 
@@ -156,14 +180,22 @@ static int test2 (void)
 	#endif
 	}
 
+#if (QSE_SIZEOF_LONG_LONG > 0)
 	off = qse_fio_seek (fio, QSE_TYPE_MAX(int) * 2llu, QSE_FIO_BEGIN);
+#else
+	off = qse_fio_seek (fio, QSE_TYPE_MAX(int) + 99999lu, QSE_FIO_BEGIN);
+#endif
 	if (off == (qse_fio_off_t)-1)
 	{
 		qse_printf (QSE_T("failed to set file offset\n"));
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("moved file offset to %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("moved file offset to %ld\n"), (long)off);
+#endif
 	}
 
 	n = qse_fio_write (fio, x2, qse_mbslen(x2));
@@ -176,7 +208,11 @@ static int test2 (void)
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("file offset at %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("file offset at %ld\n"), (long)off);
+#endif
 	}
 
 	if (qse_fio_truncate (fio, 20000) == -1)
@@ -194,7 +230,11 @@ static int test2 (void)
 	}
 	else
 	{
+#if (QSE_SIZEOF_LONG_LONG > 0)
 		qse_printf (QSE_T("file offset at %lld\n"), (long long)off);
+#else
+		qse_printf (QSE_T("file offset at %ld\n"), (long)off);
+#endif
 	}
 
 	/* on _WIN32, this will fail as this file is opened without 

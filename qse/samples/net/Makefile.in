@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = http01$(EXEEXT) upxd01$(EXEEXT)
-@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
+@WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/net
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -56,7 +56,7 @@ am_http01_OBJECTS = http01.$(OBJEXT)
 http01_OBJECTS = $(am_http01_OBJECTS)
 http01_LDADD = $(LDADD)
 am__DEPENDENCIES_1 =
-@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
+@WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 http01_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 am_upxd01_OBJECTS = upxd01.$(OBJEXT)
