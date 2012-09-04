@@ -29,6 +29,7 @@
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
+#include <qse/cmn/glob.h>
 
 #include <string.h>
 #include <signal.h>
@@ -62,6 +63,17 @@
 static qse_awk_rtx_t* app_rtx = QSE_NULL;
 static int app_debug = 0;
 
+typedef struct arg_t arg_t;
+typedef struct xarg_t xarg_t;
+
+struct xarg_t
+{
+	qse_mmgr_t*  mmgr;
+	qse_char_t** ptr;
+	qse_size_t   size;
+	qse_size_t   capa;
+};
+
 struct arg_t
 {
 	qse_awk_parsestd_type_t ist;  /* input source type */
@@ -71,11 +83,9 @@ struct arg_t
 		qse_char_t** files;
 	} isp;
 	qse_size_t   isfl; /* the number of input source files */
-
 	qse_char_t*  osf;  /* output source file */
+	xarg_t       icf; /* input console files */
 
-	qse_char_t** icf;  /* input console files */
-	qse_size_t   icfl; /* the number of input console files */
 	qse_htb_t*   gvm;  /* global variable map */
 	qse_char_t*  fs;   /* field separator */
 	qse_char_t*  call; /* function to call */
@@ -444,6 +454,8 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
 	qse_fprintf (out, QSE_T(" -v/--assign          var=value    add a global variable with a value\n"));
 	qse_fprintf (out, QSE_T(" -m/--memory-limit    number       limit the memory usage (bytes)\n"));
+	qse_fprintf (out, QSE_T(" -w                                expand datafile wildcards\n"));
+	
 #if defined(QSE_BUILD_DEBUG)
 	qse_fprintf (out, QSE_T(" -X                   number       fail the number'th memory allocation\n"));
 #endif
@@ -459,6 +471,86 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 			opttab[j].name, opttab[j].desc);
 	}
 }
+
+/* ---------------------------------------------------------------------- */
+
+static int collect_into_xarg (const qse_cstr_t* path, void* ctx)
+{
+	xarg_t* xarg = (xarg_t*)ctx;
+
+	if (xarg->size <= xarg->capa)
+	{
+		qse_char_t** tmp;
+
+		tmp = QSE_MMGR_REALLOC (
+			xarg->mmgr, xarg->ptr, 
+			QSE_SIZEOF(*tmp) * (xarg->capa + 128 + 1));
+		if (tmp == QSE_NULL) return -1;
+
+		xarg->ptr = tmp;
+		xarg->capa += 128;
+	}
+
+	xarg->ptr[xarg->size] = qse_strdup (path->ptr, xarg->mmgr);
+	if (xarg->ptr[xarg->size] == QSE_NULL) return -1;
+	xarg->size++;
+
+	return 0;
+}
+
+static void purge_xarg (xarg_t* xarg)
+{
+	if (xarg->ptr)
+	{
+		qse_size_t i;
+
+		for (i = 0; i < xarg->size; i++)
+			QSE_MMGR_FREE (xarg->mmgr, xarg->ptr[i]);
+		QSE_MMGR_FREE (xarg->mmgr, xarg->ptr);
+
+		xarg->size = 0;
+		xarg->capa = 0;
+		xarg->ptr = QSE_NULL;
+	}
+}
+
+static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg)
+{
+	int i;
+	qse_cstr_t tmp;
+
+	for (i = 0; i < argc; i++)
+	{
+		int x;
+
+		if (glob)
+		{
+			x = qse_glob (argv[i], collect_into_xarg, xarg, 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+				QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE, 
+#else
+				QSE_GLOB_PERIOD,
+#endif
+				xarg->mmgr
+			);
+			if (x <= -1) return -1;
+		}
+		else x = 0;
+
+		if (x == 0)
+		{
+			/* not expanded. just use it as is */
+			tmp.ptr = argv[i];
+			tmp.len = qse_strlen(argv[i]);
+			if (collect_into_xarg (&tmp, xarg) <= -1) return -1;
+		}
+	}
+
+	xarg->ptr[xarg->size] = QSE_NULL;
+	return 0;
+}
+
+/* ---------------------------------------------------------------------- */
 
 static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 {
@@ -502,9 +594,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	static qse_opt_t opt = 
 	{
 #if defined(QSE_BUILD_DEBUG)
-		QSE_T("Dc:f:d:F:v:m:X:h"),
+		QSE_T("hDc:f:d:F:v:m:wX:"),
 #else
-		QSE_T("Dc:f:d:F:v:m:h"),
+		QSE_T("hDc:f:d:F:v:m:w"),
 #endif
 		lng
 	};
@@ -513,21 +605,14 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 	qse_size_t isfc = 16; /* the capacity of isf */
 	qse_size_t isfl = 0; /* number of input source files */
-
-	qse_size_t icfc = 0; /* the capacity of icf */
-	qse_size_t icfl = 0; /* the number of input console files */
-
 	qse_char_t** isf = QSE_NULL; /* input source files */
 	qse_char_t*  osf = QSE_NULL; /* output source file */
-	qse_char_t** icf = QSE_NULL; /* input console files */
-
 	qse_htb_t* gvm = QSE_NULL;  /* global variable map */
 	qse_char_t* fs = QSE_NULL; /* field separator */
 	qse_char_t* call = QSE_NULL; /* function to call */
 
 	int oops_ret = -1;
-
-	memset (arg, 0, QSE_SIZEOF(*arg));
+	int do_glob = 0;
 
 	isf = (qse_char_t**) malloc (QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
@@ -634,6 +719,12 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			case QSE_T('m'):
 			{
 				arg->memlimit = qse_strtoulong (opt.arg);
+				break;
+			}
+
+			case QSE_T('w'):
+			{
+				do_glob = 1;
 				break;
 			}
 
@@ -745,32 +836,14 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	if (opt.ind < argc) 
 	{
 		/* the remaining arguments are input console file names */
-
-		icfc = argc - opt.ind + 1;
-		icf = (qse_char_t**) malloc (QSE_SIZEOF(qse_char_t*)*icfc);
-		if (icf == QSE_NULL)
+		if (expand_wildcard (argc - opt.ind,  &argv[opt.ind], do_glob, &arg->icf) <= -1)
 		{
 			print_error (QSE_T("out of memory\n"));
 			goto oops;
 		}
-
-		if (opt.ind >= argc)
-		{
-			/* no input(console) file names are specified.
-			 * the standard input becomes the input console */
-			icf[icfl++] = QSE_T("");
-		}
-		else
-		{	
-			do { icf[icfl++] = argv[opt.ind++]; } while (opt.ind < argc);
-		}
-		icf[icfl] = QSE_NULL;
 	}
 
 	arg->osf = osf;
-
-	arg->icf = icf;
-	arg->icfl = icfl;
 	arg->gvm = gvm;
 	arg->fs = fs;
 	arg->call = call;
@@ -779,7 +852,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 oops:
 	if (gvm != QSE_NULL) qse_htb_close (gvm);
-	if (icf != QSE_NULL) free (icf);
+	purge_xarg (&arg->icf);
 	if (isf != QSE_NULL) free (isf);
 	return oops_ret;
 }
@@ -789,7 +862,7 @@ static void freearg (struct arg_t* arg)
 	if (arg->ist == QSE_AWK_PARSESTD_FILE &&
 	    arg->isp.files != QSE_NULL) free (arg->isp.files);
 	/*if (arg->osf != QSE_NULL) free (arg->osf);*/
-	if (arg->icf != QSE_NULL) free (arg->icf);
+	purge_xarg (&arg->icf);
 	if (arg->gvm != QSE_NULL) qse_htb_close (arg->gvm);
 }
 
@@ -912,6 +985,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 
 	memset (&arg, 0, QSE_SIZEOF(arg));
+	arg.icf.mmgr = mmgr;
 
 	i = comparg (argc, argv, &arg);
 	if (i <= 0)
@@ -1010,7 +1084,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
-		(const qse_char_t*const*)arg.icf, QSE_NULL, arg.console_cmgr);
+		(const qse_char_t*const*)arg.icf.ptr,
+		QSE_NULL, arg.console_cmgr);
 	if (rtx == QSE_NULL) 
 	{
 		print_awkerr (awk);
