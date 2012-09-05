@@ -434,6 +434,9 @@
 /* Unknown Endian */
 #undef QSE_ENDIAN_UNKNOWN
 
+/* include more built-in cmgrs like cp949 and cp950 */
+#undef QSE_INCLUDE_MORE_CMGRS
+
 /* MB_LEN_MAX */
 #undef QSE_MBLEN_MAX
 

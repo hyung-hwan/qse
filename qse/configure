@@ -785,6 +785,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_wchar
+enable_more_cmgrs
 enable_syscall
 enable_debug
 enable_cxx
@@ -1433,6 +1434,8 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-wchar          use wchar_t a default charater type when enabled
                           (default. yes)
+  --enable-more-cmgrs     include more built-in cmgrs like cp949 and cp950
+                          when enabled (default. yes)
   --enable-syscall        use the syscall() function to call system calls
                           (default. no)
   --enable-debug          build the library in the debug mode (default. no)
@@ -16474,7 +16477,7 @@ $as_echo "$ac_cv_lib_sendfile_sendfile" >&6; }
 if test "x$ac_cv_lib_sendfile_sendfile" = xyes; then :
 
 		SENDFILE_LIBS="-lsendfile"
-		$as_echo "#define HAVE_SENDFILE 1" >>confdefs.h
+				$as_echo "#define HAVE_SENDFILE 1" >>confdefs.h
 
 
 fi
@@ -16521,7 +16524,7 @@ $as_echo "$ac_cv_lib_sendfile_sendfile64" >&6; }
 if test "x$ac_cv_lib_sendfile_sendfile64" = xyes; then :
 
 		SENDFILE_LIBS="-lsendfile"
-		$as_echo "#define HAVE_SENDFILE64 1" >>confdefs.h
+				$as_echo "#define HAVE_SENDFILE64 1" >>confdefs.h
 
 
 fi
@@ -16568,7 +16571,7 @@ $as_echo "$ac_cv_lib_sendfile_sendfilev" >&6; }
 if test "x$ac_cv_lib_sendfile_sendfilev" = xyes; then :
 
 		SENDFILE_LIBS="-lsendfile"
-		$as_echo "#define HAVE_SENDFILEV 1" >>confdefs.h
+				$as_echo "#define HAVE_SENDFILEV 1" >>confdefs.h
 
 
 fi
@@ -16615,7 +16618,7 @@ $as_echo "$ac_cv_lib_sendfile_sendfilev64" >&6; }
 if test "x$ac_cv_lib_sendfile_sendfilev64" = xyes; then :
 
 		SENDFILE_LIBS="-lsendfile"
-		$as_echo "#define HAVE_SENDFILEV64 1" >>confdefs.h
+				$as_echo "#define HAVE_SENDFILEV64 1" >>confdefs.h
 
 
 fi
@@ -16689,15 +16692,19 @@ _ACEOF
 fi
 done
 
-if test "$ac_cv_func_SSL_library_init" = "no"
+if test "$ac_cv_func_SSL_library_init" = "yes"
 then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sendfile in -lsendfile" >&5
-$as_echo_n "checking for sendfile in -lsendfile... " >&6; }
-if ${ac_cv_lib_sendfile_sendfile+:} false; then :
+
+$as_echo "#define HAVE_SSL 1" >>confdefs.h
+
+else
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
+$as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
+if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lsendfile  $LIBS"
+LIBS="-lssl  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -16707,31 +16714,34 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char sendfile ();
+char SSL_library_init ();
 int
 main ()
 {
-return sendfile ();
+return SSL_library_init ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_sendfile_sendfile=yes
+  ac_cv_lib_ssl_SSL_library_init=yes
 else
-  ac_cv_lib_sendfile_sendfile=no
+  ac_cv_lib_ssl_SSL_library_init=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_sendfile_sendfile" >&5
-$as_echo "$ac_cv_lib_sendfile_sendfile" >&6; }
-if test "x$ac_cv_lib_sendfile_sendfile" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_SSL_library_init" >&5
+$as_echo "$ac_cv_lib_ssl_SSL_library_init" >&6; }
+if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
 
 		SSL_LIBS="-lssl"
 
 $as_echo "#define HAVE_SSL 1" >>confdefs.h
+
+
+				$as_echo "#define HAVE_SSL_LIBRARY_INIT 1" >>confdefs.h
 
 
 fi
@@ -18526,6 +18536,20 @@ else
   WCHAR_FALSE=
 fi
 
+
+# Check whether --enable-more-cmgrs was given.
+if test "${enable_more_cmgrs+set}" = set; then :
+  enableval=$enable_more_cmgrs; enable_more_cmgrs_is=$enableval
+else
+  enable_more_cmgrs_is=yes
+fi
+
+if test "${enable_more_cmgrs_is}" = "yes"
+then
+
+$as_echo "#define QSE_INCLUDE_MORE_CMGRS /**/" >>confdefs.h
+
+fi
 
 # Check whether --enable-syscall was given.
 if test "${enable_syscall+set}" = set; then :

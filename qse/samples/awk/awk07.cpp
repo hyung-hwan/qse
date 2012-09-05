@@ -166,11 +166,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 	{
 		sprintf (locale, ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_slmbcmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
 	setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_slmbcmgr);
+	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 	return qse_runmain (argc,argv,awk_main);
 }

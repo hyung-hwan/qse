@@ -206,7 +206,7 @@ int main ()
 	{
      	sprintf (locale, ".%u", (unsigned int)codepage);
      	setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_slmbcmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 
 #if 0
@@ -219,7 +219,7 @@ int main ()
 
 #else
      setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_slmbcmgr);
+	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
 	R (test1);

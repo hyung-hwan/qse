@@ -39,11 +39,7 @@ static qse_cmgr_t builtin_cmgr[] =
 		qse_slwctoslmb
 	},
 
-	{
-		qse_utf8touc,
-		qse_uctoutf8
-	},
-
+#if defined(QSE_INCLUDE_MORE_CMGRS)
 	{
 		qse_cp949touc,
 		qse_uctocp949
@@ -52,15 +48,16 @@ static qse_cmgr_t builtin_cmgr[] =
 	{
 		qse_cp950touc,
 		qse_uctocp950
+	},
+#endif
+
+	{
+		qse_utf8touc,
+		qse_uctoutf8
 	}
 };
 
-qse_cmgr_t* qse_slmbcmgr = &builtin_cmgr[0];
-qse_cmgr_t* qse_utf8cmgr = &builtin_cmgr[1];
-qse_cmgr_t* qse_cp949cmgr = &builtin_cmgr[2];
-qse_cmgr_t* qse_cp950cmgr = &builtin_cmgr[3];
-
-static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[0];
+static qse_cmgr_t* dfl_cmgr = &builtin_cmgr[QSE_CMGR_SLMB];
 static qse_cmgr_finder_t cmgr_finder = QSE_NULL;
 
 qse_cmgr_t* qse_getdflcmgr (void)
@@ -70,13 +67,41 @@ qse_cmgr_t* qse_getdflcmgr (void)
 
 void qse_setdflcmgr (qse_cmgr_t* cmgr)
 {
-	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[0]);
+	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[QSE_CMGR_SLMB]);
+}
+
+void qse_setdflcmgrbyid (qse_cmgr_id_t id)
+{
+	qse_cmgr_t* cmgr = qse_findcmgrbyid (id);
+	dfl_cmgr = (cmgr? cmgr: &builtin_cmgr[QSE_CMGR_SLMB]);
+}
+
+qse_cmgr_t* qse_findcmgrbyid (qse_cmgr_id_t id)
+{
+	if (id < 0 || id >= QSE_COUNTOF(builtin_cmgr)) return QSE_NULL;
+	return &builtin_cmgr[id];
 }
 
 qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 {
+	static struct 
+	{
+		const qse_char_t* name;
+		qse_cmgr_id_t     id;
+	} tab[] =
+	{
+		{ QSE_T("utf8"),   QSE_CMGR_UTF8 },
+#if defined(QSE_INCLUDE_MORE_CMGRS)
+		{ QSE_T("cp949"),  QSE_CMGR_CP949 },
+		{ QSE_T("cp950"),  QSE_CMGR_CP950 },
+#endif
+		{ QSE_T("slmb"),   QSE_CMGR_UTF8 }
+	};
+
 	if (name)
 	{
+		qse_size_t i;
+
 		if (cmgr_finder)
 		{
 			qse_cmgr_t* cmgr;
@@ -85,11 +110,16 @@ qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 		}
 
 		if (qse_strcasecmp(name, QSE_T("")) == 0) return dfl_cmgr;
-		if (qse_strcasecmp(name, QSE_T("utf8")) == 0) return qse_utf8cmgr;	
-		if (qse_strcasecmp(name, QSE_T("cp949")) == 0) return qse_cp949cmgr;	
-		if (qse_strcasecmp(name, QSE_T("cp950")) == 0) return qse_cp950cmgr;	
-		if (qse_strcasecmp(name, QSE_T("slmb")) == 0) return qse_slmbcmgr;	
+
+		for (i = 0; i < QSE_COUNTOF(tab); i++)
+		{
+			if (qse_strcasecmp(name, tab[i].name) == 0) 
+			{
+				return &builtin_cmgr[tab[i].id];
+			}
+		}
 	}
+
 	return QSE_NULL;
 }
 
