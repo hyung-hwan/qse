@@ -178,11 +178,10 @@ then
 fi
 AC_SUBST(SENDFILE_LIBS)
 
-AC_DEFINE(HAVE_EPOLL, [], [epoll support])
 AC_CHECK_FUNCS([epoll_create epoll_create1])
 if test "$ac_cv_func_epoll_create" = "yes"
 then
-	AC_DEFINE(HAVE_EPOLL, 1)
+	AC_DEFINE(HAVE_EPOLL, 1, [epoll support])
 fi
 
 dnl check is the import library for unicows.dll exists
@@ -193,7 +192,14 @@ AC_CHECK_LIB([unicows], [main], [UNICOWS_LIBS="-lunicows"])
 AC_SUBST(UNICOWS_LIBS)
 
 dnl check for an SSL library
-AC_CHECK_LIB([ssl], [SSL_library_init], [SSL_LIBS="-lssl"])
+AC_CHECK_FUNCS([SSL_library_init])
+if test "$ac_cv_func_SSL_library_init" = "no"
+then
+	AC_CHECK_LIB([sendfile], [sendfile], [
+		SSL_LIBS="-lssl"
+		AC_DEFINE(HAVE_SSL, 1, [ssl support])
+	])
+fi
 AC_SUBST(SSL_LIBS)
 
 dnl MPI

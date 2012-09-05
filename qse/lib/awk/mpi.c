@@ -19,6 +19,7 @@
  */
 
 #include <qse/awk/mpi.h>
+#include <qse/cmn/mbwc.h>
 #include "../cmn/mem.h"
 
 #include <mpi.h>
@@ -58,7 +59,7 @@ qse_awk_t* qse_awk_openmpiwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		xtn = (xtn_t*) qse_awk_getxtnstd (awk);
 		QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 
-		xtn->gbl_mpi[0] = qse_awk_addgbl (awk, QSE_T("MPI_NODE"), 8);
+		xtn->gbl_mpi[0] = qse_awk_addgbl (awk, QSE_T("MPI_HOST"), 8);
 
 		xtn->gbl_mpi[1] = qse_awk_addgbl (awk, QSE_T("MPI_RANK"), 8);
 		xtn->gbl_mpi[2] = qse_awk_addgbl (awk, QSE_T("MPI_SIZE"), 8);
@@ -131,7 +132,7 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 
 			switch (i)
 			{
-				case 0: /* MPI_NODE */
+				case 0: /* MPI_HOST */
 				{
 					char buf[MPI_MAX_PROCESSOR_NAME];
 					int len;
@@ -273,8 +274,22 @@ softfail:
 	return 0;
 }
 
+static int fnc_barrier (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	int x;
+	qse_awk_val_t* tmp;
+
+	x = (MPI_Barrier (MPI_COMM_WORLD) == MPI_SUCCESS)? 0: -1;
+
+	tmp = qse_awk_rtx_makeintval (rtx, x);
+	if (tmp == QSE_NULL) return -1;
+	qse_awk_rtx_setretval (rtx, tmp);
+	return 0;
+}
+
 static int add_functions (qse_awk_t* awk)
 {
 	if (qse_awk_addfnc (awk, QSE_T("mpi_reduce"), 10, 0, 2, 2, QSE_NULL, fnc_reduce) == QSE_NULL) return -1;
+	if (qse_awk_addfnc (awk, QSE_T("mpi_barrier"), 11, 0, 0, 0, QSE_NULL, fnc_barrier) == QSE_NULL) return -1;
      return 0;
 }
