@@ -32,20 +32,22 @@
 
 enum qse_tio_errnum_t
 {
-	QSE_TIO_ENOERR = 0,
+	QSE_TIO_ENOERR = 0, /**< no error */
+	QSE_TIO_EOTHER, /**< other error */
+	QSE_TIO_ENOIMPL, /**< not implmeneted */
+	QSE_TIO_ESYSERR, /**< subsystem error */
+	QSE_TIO_EINTERN, /**< internal error */
 
-	QSE_TIO_ENOMEM, /* out of memory */
-	QSE_TIO_EINVAL, /* invalid parameter */
+	QSE_TIO_ENOMEM, /**< out of memory */
+	QSE_TIO_EINVAL, /**< invalid parameter */
 	QSE_TIO_EACCES, /**< access denied */
 	QSE_TIO_ENOENT, /**< no such file */
-	QSE_TIO_ENOSPC, /* no more space */
-	QSE_TIO_EILSEQ, /* illegal sequence */
-	QSE_TIO_EICSEQ, /* incomplete sequence */
-	QSE_TIO_EILCHR, /* illegal character */
-	QSE_TIO_ENINPF, /* no input function attached */
-	QSE_TIO_ENOUTF, /* no output function attached */
-
-	QSE_TIO_EOTHER  /* other error */
+	QSE_TIO_ENOSPC, /**< no more space */
+	QSE_TIO_EILSEQ, /**< illegal sequence */
+	QSE_TIO_EICSEQ, /**< incomplete sequence */
+	QSE_TIO_EILCHR, /**< illegal character */
+	QSE_TIO_ENINPF, /**< no input function attached */
+	QSE_TIO_ENOUTF  /**< no output function attached */
 };
 
 typedef enum qse_tio_errnum_t qse_tio_errnum_t;

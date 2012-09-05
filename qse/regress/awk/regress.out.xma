@@ -937,7 +937,7 @@ my hello
 my hello
 my hello
 my hello
-ERROR: CODE 15 LINE 6 COLUMN 1 - block nested too deeply
+ERROR: CODE 16 LINE 6 COLUMN 1 - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -956,7 +956,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 42 LINE 3 COLUMN 9 - function 'a' redefined
+ERROR: CODE 43 LINE 3 COLUMN 9 - function 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -984,7 +984,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 5 COLUMN 10 - global variable 'a' redefined
+ERROR: CODE 44 LINE 5 COLUMN 10 - global variable 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --implicit=on --explicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 103 LINE 3 COLUMN 2 - recursion detected in format conversion
+ERROR: CODE 104 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1367,7 +1367,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 15 LINE 3 COLUMN 50 - block nested too deeply
+ERROR: CODE 16 LINE 3 COLUMN 50 - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1481,27 +1481,27 @@ END {
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 47 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
+ERROR: CODE 48 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 49 LINE 1 COLUMN 15 - '+' not a valid parameter name
+ERROR: CODE 50 LINE 1 COLUMN 15 - '+' not a valid parameter name
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 50 LINE 1 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 51 LINE 1 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 50 LINE 3 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 51 LINE 3 COLUMN 8 - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 23 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
+ERROR: CODE 24 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 28 LINE 5 COLUMN 20 - colon expected in place of ';'
+ERROR: CODE 29 LINE 5 COLUMN 20 - colon expected in place of ';'
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1533,7 +1533,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 78 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 79 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1545,19 +1545,19 @@ BEGIN {
 }
 
 abc
-ERROR: CODE 86 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
+ERROR: CODE 87 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 17 LINE 2 COLUMN 1 - invalid character '<NUL>'
+ERROR: CODE 18 LINE 2 COLUMN 1 - invalid character '<NUL>'
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 41 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
+ERROR: CODE 42 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 42 LINE 9 COLUMN 9 - function 'abc' redefined
+ERROR: CODE 43 LINE 9 COLUMN 9 - function 'abc' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1667,10 +1667,10 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -d- -f lang-033.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=passwd.dat -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	while ((("cat /etc/passwd" | getline x) > 0))
+	while (((((("cat "   datadir)   "/")   datafile) | getline x) > 0))
 		print x;
 }
 
@@ -1693,27 +1693,25 @@ irc:x:39:39:ircd:/var/run/ircd:/bin/sh
 gnats:x:41:41:Gnats Bug-Reporting System (admin):/var/lib/gnats:/bin/sh
 nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
 libuuid:x:100:101::/var/lib/libuuid:/bin/sh
-syslog:x:101:103::/home/syslog:/bin/false
-messagebus:x:102:105::/var/run/dbus:/bin/false
-avahi-autoipd:x:103:108:Avahi autoip daemon,,,:/var/lib/avahi-autoipd:/bin/false
-avahi:x:104:109:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/bin/false
-couchdb:x:105:113:CouchDB Administrator,,,:/var/lib/couchdb:/bin/bash
-usbmux:x:106:46:usbmux daemon,,,:/home/usbmux:/bin/false
-speech-dispatcher:x:107:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/bin/sh
-kernoops:x:108:65534:Kernel Oops Tracking Daemon,,,:/:/bin/false
-pulse:x:109:114:PulseAudio daemon,,,:/var/run/pulse:/bin/false
-rtkit:x:110:117:RealtimeKit,,,:/proc:/bin/false
-saned:x:111:118::/home/saned:/bin/false
-hplip:x:112:7:HPLIP system user,,,:/var/run/hplip:/bin/false
-gdm:x:113:120:Gnome Display Manager:/var/lib/gdm:/bin/false
-hyung-hwan:x:1000:1000:Hyung-Hwan Chung,,,:/home/hyung-hwan:/bin/bash
-sshd:x:114:65534::/var/run/sshd:/usr/sbin/nologin
-haldaemon:x:115:123:Hardware abstraction layer,,,:/var/run/hald:/bin/false
-statd:x:116:65534::/var/lib/nfs:/bin/false
-freerad:x:117:124::/etc/freeradius:/bin/false
-lightdm:x:118:128:Light Display Manager:/var/lib/lightdm:/bin/false
-colord:x:119:129:colord colour management daemon,,,:/var/lib/colord:/bin/false
-uml-net:x:120:132::/home/uml-net:/bin/false
+syslog:x:101:102::/home/syslog:/bin/false
+klog:x:102:103::/home/klog:/bin/false
+hplip:x:103:7:HPLIP system user,,,:/var/run/hplip:/bin/false
+avahi-autoipd:x:104:110:Avahi autoip daemon,,,:/var/lib/avahi-autoipd:/bin/false
+gdm:x:105:111:Gnome Display Manager:/var/lib/gdm:/bin/false
+saned:x:106:113::/home/saned:/bin/false
+pulse:x:107:114:PulseAudio daemon,,,:/var/run/pulse:/bin/false
+messagebus:x:108:117::/var/run/dbus:/bin/false
+polkituser:x:109:118:PolicyKit,,,:/var/run/PolicyKit:/bin/false
+avahi:x:110:119:Avahi mDNS daemon,,,:/var/run/avahi-daemon:/bin/false
+haldaemon:x:111:120:Hardware abstraction layer,,,:/var/run/hald:/bin/false
+statd:x:112:65534::/var/lib/nfs:/bin/false
+sshd:x:113:65534::/var/run/sshd:/usr/sbin/nologin
+speech-dispatcher:x:114:29:Speech Dispatcher,,,:/var/run/speech-dispatcher:/bin/sh
+couchdb:x:115:116:CouchDB Administrator,,,:/var/lib/couchdb:/bin/bash
+kernoops:x:116:65534:Kernel Oops Tracking Daemon,,,:/:/bin/false
+mysql:x:117:124:MySQL Server,,,:/var/lib/mysql:/bin/false
+openldap:x:118:125:OpenLDAP Server Account,,,:/nonexistent:/bin/false
+postfix:x:119:126::/var/spool/postfix:/bin/false
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on --rwpipe=on -d- -f lang-034.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

@@ -84,6 +84,11 @@ enum qse_rex_option_t
 enum qse_rex_errnum_t
 {
 	QSE_REX_ENOERR = 0,
+	QSE_REX_EOTHER,
+	QSE_REX_ENOIMPL,
+	QSE_REX_ESYSERR,
+	QSE_REX_EINTERN,
+
 	QSE_REX_ENOMEM,        /**< no sufficient memory available */
 	QSE_REX_ENOCOMP,       /**< no expression compiled */
 	QSE_REX_ERECUR,        /**< recursion too deep */

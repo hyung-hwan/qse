@@ -62,6 +62,10 @@ enum qse_sio_flag_t
 enum qse_sio_errnum_t
 {
 	QSE_SIO_ENOERR = 0, /**< no error */
+	QSE_SIO_EOTHER,     /**< other error */
+	QSE_SIO_ENOIMPL,    /**< not implemented */
+	QSE_SIO_ESYSERR,    /**< subsystem(system call) error */
+	QSE_SIO_EINTERN,    /**< internal error */
 
 	QSE_SIO_ENOMEM,     /**< out of memory */
 	QSE_SIO_EINVAL,     /**< invalid parameter */
@@ -71,11 +75,7 @@ enum qse_sio_errnum_t
 	QSE_SIO_EINTR,      /**< interrupted */
 	QSE_SIO_EILSEQ,     /**< illegal sequence */
 	QSE_SIO_EICSEQ,     /**< incomplete sequence */
-	QSE_SIO_EILCHR,     /**< illegal character */
-	QSE_SIO_ESYSERR,    /**< subsystem(system call) error */
-	QSE_SIO_ENOIMPL,    /**< not implemented */
-
-	QSE_SIO_EOTHER      /**< other error */
+	QSE_SIO_EILCHR      /**< illegal character */
 };
 typedef enum qse_sio_errnum_t qse_sio_errnum_t;
 

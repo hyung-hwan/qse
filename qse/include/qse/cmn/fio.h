@@ -70,17 +70,17 @@ enum qse_fio_flag_t
 enum qse_fio_errnum_t
 {
 	QSE_FIO_ENOERR = 0, /**< no error */
+	QSE_FIO_EOTHER,     /**< other error */
+	QSE_FIO_ENOIMPL,    /**< not implemented */
+	QSE_FIO_ESYSERR,    /**< subsystem(system call) error */
+	QSE_FIO_EINTERN,    /**< internal error */
 
 	QSE_FIO_ENOMEM,     /**< out of memory */
 	QSE_FIO_EINVAL,     /**< invalid parameter */
 	QSE_FIO_EACCES,     /**< access denied */
 	QSE_FIO_ENOENT,     /**< no such file */
 	QSE_FIO_EEXIST,     /**< already exist */
-	QSE_FIO_EINTR,      /**< interrupted */
-	QSE_FIO_ESYSERR,    /**< subsystem(system call) error */
-	QSE_FIO_ENOIMPL,    /**< not implemented */
-
-	QSE_FIO_EOTHER      /**< other error */
+	QSE_FIO_EINTR       /**< interrupted */
 };
 typedef enum qse_fio_errnum_t qse_fio_errnum_t;
 

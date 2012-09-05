@@ -29,6 +29,11 @@ typedef struct qse_htrd_t qse_htrd_t;
 enum qse_htrd_errnum_t
 {
 	QSE_HTRD_ENOERR,
+	QSE_HTRD_EOTHER,
+	QSE_HTRD_ENOIMPL,
+	QSE_HTRD_ESYSERR,
+	QSE_HTRD_EINTERN,
+
 	QSE_HTRD_ENOMEM,
 	QSE_HTRD_EBADRE,
 	QSE_HTRD_EBADHDR,

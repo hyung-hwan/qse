@@ -159,7 +159,7 @@ PROGS="
 	lang-030.awk!!!--newline=on -d-
 	lang-031.awk!!!--newline=on -d-
 	lang-032.awk!!!--newline=on -d-
-	lang-033.awk!!!--newline=on -d-
+	lang-033.awk!!!--newline=on -d- -vdatadir=@abs_srcdir@ -vdatafile=passwd.dat
 	lang-034.awk!!!--newline=on --rwpipe=on -d-
 	lang-035.awk!lang-035.dat2!!--newline=on -d- -vdatadir=@abs_srcdir@ -vdatafile=lang-035.dat1 -vgroupname=lang-035
 	lang-036.awk!lang-036.dat!!--newline=on -d-

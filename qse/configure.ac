@@ -192,6 +192,10 @@ dnl the existence of the libaray.
 AC_CHECK_LIB([unicows], [main], [UNICOWS_LIBS="-lunicows"])
 AC_SUBST(UNICOWS_LIBS)
 
+dnl check for an SSL library
+AC_CHECK_LIB([ssl], [SSL_library_init], [SSL_LIBS="-lssl"])
+AC_SUBST(SSL_LIBS)
+
 dnl MPI
 LX_FIND_MPI(C)
 AM_CONDITIONAL(HAVE_C_MPI, test "${have_C_mpi}" = "yes" )
@@ -411,5 +415,6 @@ echo "  Math library: ${LIBM}"
 echo "  Pthread library: ${PTHREAD_LIBS}"
 echo "  Socket library: ${SOCKET_LIBS}"
 echo "  Sendfile library: ${SENDFILE_LIBS}"
+echo "  SSL library: ${SSL_LIBS}"
 echo "-------------------------------------------------------------------------"
 ]

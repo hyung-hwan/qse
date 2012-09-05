@@ -34,6 +34,10 @@ typedef struct qse_httpd_client_t qse_httpd_client_t;
 enum qse_httpd_errnum_t
 {
 	QSE_HTTPD_ENOERR,
+	QSE_HTTPD_EOTHER,
+	QSE_HTTPD_ENOIMPL,
+	QSE_HTTPD_ESYSERR,
+	QSE_HTTPD_EINTERN,
 
 	QSE_HTTPD_ENOMEM,
 	QSE_HTTPD_EINVAL,
@@ -46,13 +50,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EIOMUX,
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
-	QSE_HTTPD_ETASK,
-
-	QSE_HTTPD_EINTERN,
-	QSE_HTTPD_ESYSERR,
-	QSE_HTTPD_ENOIMPL,
-
-	QSE_HTTPD_EOTHER
+	QSE_HTTPD_ETASK
 };
 typedef enum qse_httpd_errnum_t qse_httpd_errnum_t;
 

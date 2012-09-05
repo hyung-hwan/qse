@@ -20,13 +20,14 @@
 
 #include <qse/awk/mpi.h>
 #include "../cmn/mem.h"
+
 #include <mpi.h>
 
 typedef struct xtn_t xtn_t;
 
 struct xtn_t
 {
-	int gbl_mpi[8];
+	int gbl_mpi[9];
 };
 
 typedef struct rxtn_t rxtn_t;
@@ -57,15 +58,17 @@ qse_awk_t* qse_awk_openmpiwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		xtn = (xtn_t*) qse_awk_getxtnstd (awk);
 		QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 
-		xtn->gbl_mpi[0] = qse_awk_addgbl (awk, QSE_T("MPI_RANK"), 8);
-		xtn->gbl_mpi[1] = qse_awk_addgbl (awk, QSE_T("MPI_SIZE"), 8);
+		xtn->gbl_mpi[0] = qse_awk_addgbl (awk, QSE_T("MPI_NODE"), 8);
 
-		xtn->gbl_mpi[2] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MIN"),  14);
-		xtn->gbl_mpi[3] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MAX"),  14);
-		xtn->gbl_mpi[4] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_SUM"),  14);
-		xtn->gbl_mpi[5] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_PROD"), 15);
-		xtn->gbl_mpi[6] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_LAND"), 15);
-		xtn->gbl_mpi[7] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_LOR"),  14);
+		xtn->gbl_mpi[1] = qse_awk_addgbl (awk, QSE_T("MPI_RANK"), 8);
+		xtn->gbl_mpi[2] = qse_awk_addgbl (awk, QSE_T("MPI_SIZE"), 8);
+
+		xtn->gbl_mpi[3] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MIN"),  14);
+		xtn->gbl_mpi[4] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MAX"),  14);
+		xtn->gbl_mpi[5] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_SUM"),  14);
+		xtn->gbl_mpi[6] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_PROD"), 15);
+		xtn->gbl_mpi[7] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_LAND"), 15);
+		xtn->gbl_mpi[8] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_LOR"),  14);
 
 		for (i = 0; i < QSE_COUNTOF(xtn->gbl_mpi); i++) 
 		{
@@ -124,35 +127,71 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 		for (i = 0; i < QSE_COUNTOF(xtn->gbl_mpi); i++)
 		{
 			int iv;
-			qse_long_t lv;
 			qse_awk_val_t* v_tmp;
 
 			switch (i)
 			{
-				case 0: /* MPI_RANK */
+				case 0: /* MPI_NODE */
+				{
+					char buf[MPI_MAX_PROCESSOR_NAME];
+					int len;
+#if defined(QSE_CHAR_IS_MCHAR)
+					/* nothing */
+#else
+					qse_mmgr_t* mmgr;
+					qse_char_t* tmp;	
+#endif
+
+					if (MPI_Get_processor_name(buf, &len) != MPI_SUCCESS)
+					{
+						qse_awk_rtx_close (rtx);
+						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
+						return QSE_NULL;
+					}
+#if defined(QSE_CHAR_IS_MCHAR)
+					v_tmp = qse_awk_rtx_makestrval (rtx, buf, len);
+#else
+		
+					mmgr = qse_awk_getmmgr(awk);
+					tmp = qse_mbstowcsdup (buf, mmgr);
+					if (tmp == QSE_NULL)
+					{
+						qse_awk_rtx_close (rtx);
+						qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);	
+						return QSE_NULL;
+					}
+				
+					v_tmp = qse_awk_rtx_makestrval0 (rtx, tmp);
+					QSE_MMGR_FREE (mmgr, tmp);
+#endif
+					break;
+				}
+
+				case 1: /* MPI_RANK */
 					if (MPI_Comm_rank (MPI_COMM_WORLD, &iv) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
+						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
 						return QSE_NULL;
 					}
-					lv = iv;
+					v_tmp = qse_awk_rtx_makeintval (rtx, iv);
 					break;
 
-				case 1: /* MPI_SIZE */
+				case 2: /* MPI_SIZE */
 					if (MPI_Comm_size (MPI_COMM_WORLD, &iv) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
+						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
 						return QSE_NULL;
 					}
-					lv = iv;
+					v_tmp = qse_awk_rtx_makeintval (rtx, iv);
 					break;
 	
 				default: /* MPI_REDUCE_XXXX */
-					lv = i - 2;
+					v_tmp = qse_awk_rtx_makeintval (rtx, i - 3);
 					break;
 			}
 
-			v_tmp = qse_awk_rtx_makeintval (rtx, lv);
 			if (v_tmp == QSE_NULL)
 			{
 				qse_awk_rtx_close (rtx);
@@ -185,7 +224,7 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	qse_awk_val_t* tmp, * a0, * a1;
 	qse_long_t opidx, lv;
 	qse_flt_t rv;
-	int ret = 0, n;
+	int n;
 
 	static MPI_Op optab[] =
 	{
