@@ -27,6 +27,11 @@
 enum qse_tre_errnum_t
 {
 	QSE_TRE_ENOERR,
+	QSE_TRE_EOTHER,
+	QSE_TRE_ENOIMPL,
+	QSE_TRE_ESYSERR,
+	QSE_TRE_EINTERN,
+
 	QSE_TRE_ENOMEM,   /* Out of memory */
 	QSE_TRE_ENOMATCH, /* No match */
 	QSE_TRE_EBADPAT,  /* Invalid regular expression */

@@ -186,26 +186,26 @@ qse_wcint_t qse_towctype (
 	qse_wctype_t   type
 );
 
-int qse_getwctypebyname (
-	const qse_wchar_t* name,
-	qse_wctype_t*      id
-);
-
-int qse_getwctypebyxname (
-	const qse_wchar_t* name,
-	qse_size_t         len,
-	qse_wctype_t*      id
-);
-
-int qse_getmctypebyname (
+int qse_mbstoctype (
 	const qse_mchar_t* name,
 	qse_mctype_t*    id
 );
 
-int qse_getmctypebyxname (
+int qse_mbsntoctype (
 	const qse_mchar_t* name,
 	qse_size_t         len,
 	qse_mctype_t*      id
+);
+
+int qse_wcstoctype (
+	const qse_wchar_t* name,
+	qse_wctype_t* id
+);
+
+int qse_wcsntoctype (
+	const qse_wchar_t* name,
+	qse_size_t         len,
+	qse_wctype_t*      id
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)

@@ -718,7 +718,6 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 }
 
 #if defined(NO_RECURSION)
-typedef struct stack_node_t stack_node_t;
 struct stack_node_t
 {
 	qse_size_t tmp;

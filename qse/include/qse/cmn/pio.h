@@ -112,6 +112,10 @@ typedef enum qse_pio_hid_t qse_pio_hid_t;
 enum qse_pio_errnum_t
 {
 	QSE_PIO_ENOERR = 0, /**< no error */
+	QSE_PIO_EOTHER,     /**< unknown error */
+	QSE_PIO_ENOIMPL,    /**< not implemented */
+	QSE_PIO_ESYSERR,    /**< subsystem error */
+	QSE_PIO_EINTERN,    /**< internal error */
 
 	QSE_PIO_ENOMEM,     /**< out of memory */
 	QSE_PIO_EINVAL,     /**< invalid parameter */
@@ -124,11 +128,7 @@ enum qse_pio_errnum_t
 	QSE_PIO_EPIPE,      /**< broken pipe */
 	QSE_PIO_EILSEQ,     /**< illegal sequence */
 	QSE_PIO_EICSEQ,     /**< incomplete sequence */
-	QSE_PIO_EILCHR,     /**< illegal character */
-	QSE_PIO_ESYSERR,    /**< subsystem error */
-	QSE_PIO_ENOIMPL,    /**< not implemented */
-
-	QSE_PIO_EOTHER     /**< unknown error */
+	QSE_PIO_EILCHR      /**< illegal character */
 };
 typedef enum qse_pio_errnum_t qse_pio_errnum_t;
 

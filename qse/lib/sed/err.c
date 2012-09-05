@@ -27,8 +27,10 @@ const qse_char_t* qse_sed_dflerrstr (
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
-		QSE_T("internal error that should never have happened"),
+		QSE_T("other error"),
 		QSE_T("not implemented"),
+		QSE_T("subsystem error"),
+		QSE_T("internal error that should never have happened"),
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),

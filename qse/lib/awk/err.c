@@ -25,8 +25,10 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 	static const qse_char_t* errstr[] =
  	{
 		QSE_T("no error"),
-		QSE_T("internal error that should never have happened"),
+		QSE_T("other error"),
 		QSE_T("not implemented"),
+		QSE_T("subsystem error"),
+		QSE_T("internal error that should never have happened"),
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
@@ -41,7 +43,6 @@ const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum)
 		QSE_T("cannot write '${0}'"),
 		QSE_T("cannot close '${0}'"),
 		
-		QSE_T("general runtime error"),
 		QSE_T("block nested too deeply"),
 		QSE_T("expression nested too deeply"),
 

@@ -31,18 +31,18 @@ typedef struct qse_upxd_t qse_upxd_t;
 enum qse_upxd_errnum_t
 {
 	QSE_UPXD_ENOERR,
+	QSE_UPXD_EOTHER,
+	QSE_UPXD_ENOIMPL,
+	QSE_UPXD_ESYSERR,
+	QSE_UPXD_EINTERN,
+
 	QSE_UPXD_ENOMEM,
 	QSE_UPXD_EINVAL,
 	QSE_UPXD_EACCES,
 	QSE_UPXD_ENOENT,
 	QSE_UPXD_EEXIST,
 	QSE_UPXD_EINTR,
-	QSE_UPXD_EAGAIN,
-
-	QSE_UPXD_EINTERN,
-	QSE_UPXD_ESYSERR,
-	QSE_UPXD_ENOIMPL,
-	QSE_UPXD_EOTHER
+	QSE_UPXD_EAGAIN
 };
 typedef enum qse_upxd_errnum_t qse_upxd_errnum_t;
 

@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 bin_PROGRAMS = http01 upxd01
 
 LDFLAGS += -L../../lib/cmn -L../../lib/net 
-LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) $(SENDFILE_LIBS) -lssl
+LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) $(SENDFILE_LIBS)
 
 if WIN32 
 if WCHAR
@@ -19,3 +19,4 @@ endif
 http01_SOURCES = http01.c
 upxd01_SOURCES = upxd01.c
 
+http01_LDADD = $(LDADD) $(SSL_LIBS)

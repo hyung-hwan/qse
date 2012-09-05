@@ -52,6 +52,10 @@ enum qse_nwio_flag_t
 enum qse_nwio_errnum_t
 {
 	QSE_NWIO_ENOERR = 0, /**< no error */
+	QSE_NWIO_EOTHER,     /**< other error */
+	QSE_NWIO_ENOIMPL,    /**< not implemented */
+	QSE_NWIO_ESYSERR,    /**< subsystem(system call) error */
+	QSE_NWIO_EINTERN,    /**< internal error */
 
 	QSE_NWIO_ENOMEM,     /**< out of memory */
 	QSE_NWIO_EINVAL,     /**< invalid parameter */
@@ -64,11 +68,7 @@ enum qse_nwio_errnum_t
 	QSE_NWIO_ECONN,      /**< connection refused */
 	QSE_NWIO_EILSEQ,     /**< illegal sequence */
 	QSE_NWIO_EICSEQ,     /**< incomplete sequence */
-	QSE_NWIO_EILCHR,     /**< illegal character */
-	QSE_NWIO_ESYSERR,    /**< subsystem(system call) error */
-	QSE_NWIO_ENOIMPL,    /**< not implemented */
-
-	QSE_NWIO_EOTHER      /**< other error */
+	QSE_NWIO_EILCHR      /**< illegal character */
 };
 typedef enum qse_nwio_errnum_t qse_nwio_errnum_t;
 
