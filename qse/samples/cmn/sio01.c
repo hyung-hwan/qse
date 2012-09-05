@@ -104,11 +104,11 @@ int main ()
 	{
      	sprintf (locale, ".%u", (unsigned int)codepage);
      	setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_slmbcmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 #else
      setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_slmbcmgr);
+	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
 	g_out = qse_sio_openstd (QSE_MMGR_GETDFL(), 0, QSE_SIO_STDOUT, QSE_SIO_WRITE | QSE_SIO_IGNOREMBWCERR);

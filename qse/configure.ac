@@ -152,6 +152,7 @@ if test "$ac_cv_func_sendfile" = "no"
 then
 	AC_CHECK_LIB([sendfile], [sendfile], [
 		SENDFILE_LIBS="-lsendfile"
+		dnl only for consistency with AC_CHECK_FUNCS
 		AC_DEFINE(HAVE_SENDFILE, 1)
 	])
 fi
@@ -159,6 +160,7 @@ if test "$ac_cv_func_sendfile64" = "no"
 then
 	AC_CHECK_LIB([sendfile], [sendfile64], [
 		SENDFILE_LIBS="-lsendfile"
+		dnl only for consistency with AC_CHECK_FUNCS
 		AC_DEFINE(HAVE_SENDFILE64, 1)
 	])
 fi
@@ -166,6 +168,7 @@ if test "$ac_cv_func_sendfilev" = "no"
 then
 	AC_CHECK_LIB([sendfile], [sendfilev], [
 		SENDFILE_LIBS="-lsendfile"
+		dnl only for consistency with AC_CHECK_FUNCS
 		AC_DEFINE(HAVE_SENDFILEV, 1)
 	])
 fi
@@ -173,6 +176,7 @@ if test "$ac_cv_func_sendfilev64" = "no"
 then
 	AC_CHECK_LIB([sendfile], [sendfilev64], [
 		SENDFILE_LIBS="-lsendfile"
+		dnl only for consistency with AC_CHECK_FUNCS
 		AC_DEFINE(HAVE_SENDFILEV64, 1)
 	])
 fi
@@ -193,11 +197,16 @@ AC_SUBST(UNICOWS_LIBS)
 
 dnl check for an SSL library
 AC_CHECK_FUNCS([SSL_library_init])
-if test "$ac_cv_func_SSL_library_init" = "no"
+if test "$ac_cv_func_SSL_library_init" = "yes"
 then
-	AC_CHECK_LIB([sendfile], [sendfile], [
+	AC_DEFINE(HAVE_SSL, 1, [ssl support])
+else
+	AC_CHECK_LIB([ssl], [SSL_library_init], [
 		SSL_LIBS="-lssl"
 		AC_DEFINE(HAVE_SSL, 1, [ssl support])
+
+		dnl only for consistency with AC_CHECK_FUNCS
+		AC_DEFINE(HAVE_SSL_LIBRARY_INIT, 1)
 	])
 fi
 AC_SUBST(SSL_LIBS)
@@ -303,6 +312,13 @@ else
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
 AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes" )
+
+AC_ARG_ENABLE([more-cmgrs], [AS_HELP_STRING([--enable-more-cmgrs],[include more built-in cmgrs like cp949 and cp950 when enabled (default. yes)])],
+	enable_more_cmgrs_is=$enableval,enable_more_cmgrs_is=yes)
+if test "${enable_more_cmgrs_is}" = "yes"
+then
+	AC_DEFINE([QSE_INCLUDE_MORE_CMGRS],[],[include more built-in cmgrs like cp949 and cp950])
+fi
 
 AC_ARG_ENABLE([syscall], [AS_HELP_STRING([--enable-syscall],[use the syscall() function to call system calls (default. no)])],
 	enable_syscall_is=$enableval,enable_syscall_is=no)

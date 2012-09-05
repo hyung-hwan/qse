@@ -753,6 +753,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					if (arg->script_cmgr == QSE_NULL)
 					{
 						print_error (QSE_T("unknown script encoding - %s\n"), opt.arg);
+						oops_ret = 3;
 						goto oops;
 					}
 				}
@@ -762,6 +763,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					if (arg->console_cmgr == QSE_NULL)
 					{
 						print_error (QSE_T("unknown console encoding - %s\n"), opt.arg);
+						oops_ret = 3;
 						goto oops;
 					}
 				}
@@ -776,7 +778,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 							arg->opton |= opttab[i].opt;
 						else
 						{
-							print_error (QSE_T("invalid value for '%s' - '%s'\n"), opt.lngopt, opt.arg);
+							print_error (QSE_T("invalid value '%s' for '%s' - use 'on' or 'off'\n"), opt.arg, opt.lngopt);
+							oops_ret = 3;
 							goto oops;
 						}
 						break;
@@ -994,6 +997,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		return i;
 	}
 	if (i == 2) return 0;
+	if (i == 3) return -1;
 
 	psin.type = arg.ist;
 	if (arg.ist == QSE_AWK_PARSESTD_STR) 
@@ -1169,7 +1173,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 	{
 		sprintf (locale, ".%u", (unsigned int)codepage);
 		setlocale (LC_ALL, locale);
-		qse_setdflcmgr (qse_slmbcmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
 
 	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
@@ -1180,7 +1184,7 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 #else
 	setlocale (LC_ALL, "");
-	qse_setdflcmgr (qse_slmbcmgr);
+	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
 #if defined(ENABLE_MPI)

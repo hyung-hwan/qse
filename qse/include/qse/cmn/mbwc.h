@@ -30,20 +30,33 @@
 
 typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
 
+/** 
+ * The qse_cmgr_id_t type defines the builtin-in cmgr IDs.
+ */
+enum qse_cmgr_id_t
+{
+	QSE_CMGR_SLMB,
+#if defined(QSE_INCLUDE_MORE_CMGRS)
+	QSE_CMGR_CP949,
+	QSE_CMGR_CP950,
+#endif
+	QSE_CMGR_UTF8
+};
+typedef enum qse_cmgr_id_t qse_cmgr_id_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* --------------------------------------------------- */
-/* BUILTIN CMGR                                        */
-/* --------------------------------------------------- */
-extern qse_cmgr_t* qse_slmbcmgr;
-extern qse_cmgr_t* qse_utf8cmgr;
-extern qse_cmgr_t* qse_cp949cmgr;
-extern qse_cmgr_t* qse_cp950cmgr;
+/**
+ * The qse_findcmgrbyid() function returns a built-in cmgr for a given @a id.
+ */
+qse_cmgr_t* qse_findcmgrbyid (
+	qse_cmgr_id_t id
+);
 
 /**
- * The qse_getfindcmgr() function find a builtin cmgr matching a given 
+ * The qse_getfindcmgr() function find a built-in cmgr matching a given 
  * @a name and returns it. It returns #QSE_NULL if no match is found.
  * The @a name can be one of "utf8", "slmb", "cp949", "cp950", and an 
  * empty string. Calling this function with an empty string is the same
@@ -70,6 +83,14 @@ qse_cmgr_t* qse_getdflcmgr (
 
 void qse_setdflcmgr (
 	qse_cmgr_t* cmgr
+);
+
+/**
+ * The qse_setdflcmgrbyid() function finds a built-in
+ * cmgr for the @a id and sets it as a default cmgr.
+ */
+void qse_setdflcmgrbyid (
+	qse_cmgr_id_t id
 );
 
 /* --------------------------------------------------- */
