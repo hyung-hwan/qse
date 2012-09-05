@@ -33,9 +33,11 @@
 #	include <linux/netfilter_ipv4.h>
 #endif
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/engine.h>
+#if defined(HAVE_SSL)
+#	include <openssl/ssl.h>
+#	include <openssl/err.h>
+#	include <openssl/engine.h>
+#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -117,6 +119,7 @@ static qse_ssize_t xsendfile (
 }
 #endif
 
+#if defined(HAVE_SSL)
 static qse_ssize_t xsendfile_ssl (
 	SSL* out, int in_fd, qse_foff_t* offset, qse_size_t count)
 {
@@ -135,6 +138,8 @@ static qse_ssize_t xsendfile_ssl (
 
 	return n;
 }
+#endif
+
 /* ------------------------------------------------------------------- */
 static qse_httpd_errnum_t syserr_to_errnum (int e)
 {
@@ -172,11 +177,14 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
+#if defined(HAVE_SSL)
 	SSL_CTX* ssl_ctx;
+#endif
 };
 
 /* ------------------------------------------------------------------- */
 
+#if defined(HAVE_SSL)
 static int init_xtn_ssl (
 	httpd_xtn_t* xtn,
 	const qse_mchar_t* pemfile,
@@ -229,6 +237,7 @@ static void fini_xtn_ssl (httpd_xtn_t* xtn)
 	EVP_cleanup ();
 	CRYPTO_cleanup_all_ex_data ();
 }
+#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -924,6 +933,7 @@ static qse_ssize_t client_recv (
 {
 	if (client->secure)
 	{
+#if defined(HAVE_SSL)
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
@@ -933,6 +943,9 @@ static qse_ssize_t client_recv (
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		}
 		return ret;
+#else
+		return -1;
+#endif
 	}
 	else
 	{
@@ -948,6 +961,7 @@ static qse_ssize_t client_send (
 {
 	if (client->secure)
 	{
+#if defined(HAVE_SSL)
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
 		if (ret <= -1)
 		{
@@ -957,6 +971,9 @@ static qse_ssize_t client_send (
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		}
 		return ret;
+#else
+		return -1;
+#endif
 	}
 	else
 	{
@@ -972,7 +989,11 @@ static qse_ssize_t client_sendfile (
 {
 	if (client->secure)
 	{
+#if defined(HAVE_SSL)
 		return xsendfile_ssl (client->handle2.ptr, handle.i, offset, count);
+#else
+		return -1;
+#endif
 	}
 	else
 	{
@@ -986,6 +1007,7 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 
 	if (client->secure)
 	{
+#if defined(HAVE_SSL)
 		int ret;
 		SSL* ssl;
 
@@ -1030,6 +1052,9 @@ qse_fflush (QSE_STDOUT);
 			/* SSL_free (ssl); */
 			return -1;
 		}
+#else
+		return -1;
+#endif
 	}
 
 	return 1; /* accept completed */
@@ -1039,11 +1064,13 @@ static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	if (client->secure)
 	{
+#if defined(HAVE_SSL)
 		if (client->handle2.ptr)
 		{
 			SSL_shutdown ((SSL*)client->handle2.ptr); /* is this needed? */
 			SSL_free ((SSL*)client->handle2.ptr);
 		}
+#endif
 	}
 }
 
@@ -1463,8 +1490,10 @@ int httpd_main (int argc, qse_char_t* argv[])
 	}
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+#if defined(HAVE_SSL)
 	xtn->ssl_ctx = QSE_NULL;
 	init_xtn_ssl (xtn, "http01.pem", "http01.key");
+#endif
 
 	for (i = 1; i < argc; i++)
 	{
@@ -1490,7 +1519,12 @@ int httpd_main (int argc, qse_char_t* argv[])
 	if (ret <= -1) qse_fprintf (QSE_STDERR, QSE_T("Httpd error\n"));
 
 oops:
-	if (xtn && xtn->ssl_ctx) fini_xtn_ssl (xtn);
+	if (xtn) 
+	{
+#if defined(HAVE_SSL)
+		if (xtn->ssl_ctx) fini_xtn_ssl (xtn);
+#endif
+	}
 	if (httpd) qse_httpd_close (httpd);
 	return ret;
 }

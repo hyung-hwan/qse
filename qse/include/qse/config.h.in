@@ -250,6 +250,12 @@
 /* Define to 1 if you have the `sqrtl' function. */
 #undef HAVE_SQRTL
 
+/* ssl support */
+#undef HAVE_SSL
+
+/* Define to 1 if you have the `SSL_library_init' function. */
+#undef HAVE_SSL_LIBRARY_INIT
+
 /* Define to 1 if you have the `stat64' function. */
 #undef HAVE_STAT64
 
