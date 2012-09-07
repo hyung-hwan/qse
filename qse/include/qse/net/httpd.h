@@ -560,6 +560,10 @@ void* qse_httpd_getxtnstd (
 	qse_httpd_t* httpd
 );
 
+int qse_httpd_loopstd (
+	qse_httpd_t*     httpd, 
+	qse_ntime_t      timeout
+);
 
 #ifdef __cplusplus
 }

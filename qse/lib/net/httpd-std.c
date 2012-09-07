@@ -44,7 +44,11 @@
 #	if defined(HAVE_EPOLL) && defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #	endif
+#	if defined(__linux__)
+#		include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
+#	endif
 #endif
+
 
 
 #if defined(HAVE_SSL)
@@ -410,7 +414,7 @@ static int sockaddr_to_nwad (
 			in = (struct sockaddr_in*)addr;
 			addrsize = QSE_SIZEOF(*in);
 
-			memset (nwad, 0, QSE_SIZEOF(*nwad));
+			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
 			nwad->type = QSE_NWAD_IN4;
 			nwad->u.in4.addr.value = in->sin_addr.s_addr;
 			nwad->u.in4.port = in->sin_port;
@@ -424,9 +428,9 @@ static int sockaddr_to_nwad (
 			in = (struct sockaddr_in6*)addr;
 			addrsize = QSE_SIZEOF(*in);
 
-			memset (nwad, 0, QSE_SIZEOF(*nwad));
+			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
 			nwad->type = QSE_NWAD_IN6;
-			memcpy (&nwad->u.in6.addr, &in->sin6_addr, QSE_SIZEOF(nwad->u.in6.addr));
+			QSE_MEMCPY (&nwad->u.in6.addr, &in->sin6_addr, QSE_SIZEOF(nwad->u.in6.addr));
 			nwad->u.in6.scope = in->sin6_scope_id;
 			nwad->u.in6.port = in->sin6_port;
 			break;
@@ -450,7 +454,7 @@ static int nwad_to_sockaddr (
 
 			in = (struct sockaddr_in*)addr;
 			addrsize = QSE_SIZEOF(*in);
-			memset (in, 0, addrsize);
+			QSE_MEMSET (in, 0, addrsize);
 
 			in->sin_family = AF_INET;
 			in->sin_addr.s_addr = nwad->u.in4.addr.value;
@@ -465,10 +469,10 @@ static int nwad_to_sockaddr (
 
 			in = (struct sockaddr_in6*)addr;
 			addrsize = QSE_SIZEOF(*in);
-			memset (in, 0, addrsize);
+			QSE_MEMSET (in, 0, addrsize);
 
 			in->sin6_family = AF_INET6;
-			memcpy (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
+			QSE_MEMCPY (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
 			in->sin6_scope_id = nwad->u.in6.scope;
 			in->sin6_port = nwad->u.in6.port;
 #endif
@@ -607,6 +611,8 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	{
 		client->orgdst_addr = client->local_addr;
 	}
+#else
+	client->orgdst_addr = client->local_addr;
 #endif
 
 	client->handle.i = fd;
@@ -740,7 +746,7 @@ static void* mux_open (qse_httpd_t* httpd)
 	mux = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mux));
 	if (mux == QSE_NULL) return QSE_NULL;
 
-	memset (mux, 0, QSE_SIZEOF(*mux));
+	QSE_MEMSET (mux, 0, QSE_SIZEOF(*mux));
 
 #if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
 	mux->fd = epoll_create1 (O_CLOEXEC);
@@ -978,7 +984,7 @@ static int file_stat (
 		return -1;
 	}
 
-	memset (hst, 0, QSE_SIZEOF(*hst));
+	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 
 	hst->size = st.st_size;
 #if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
@@ -1545,7 +1551,7 @@ oops:
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	if (memcmp (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
+	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
 	{
 		return process_request (httpd, client, req, 1);
 	}
@@ -1558,7 +1564,7 @@ static int peek_request (
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-	if (memcmp (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
+	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
 	{
 		return process_request (httpd, client, req, 0);
 	}
