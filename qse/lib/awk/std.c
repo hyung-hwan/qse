@@ -1478,7 +1478,7 @@ static qse_ssize_t awk_rio_console (
 	return -1;
 }
 
-static void fini_rxtn (qse_awk_rtx_t* rtx, void* ctx)
+static void fini_rxtn (qse_awk_rtx_t* rtx)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
 
@@ -1876,11 +1876,10 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	const qse_char_t*const ocf[],
 	qse_cmgr_t*            cmgr)
 {
-	static qse_awk_rcb_t rcb =
+	static qse_awk_rtx_ecb_t ecb =
 	{
-		fini_rxtn,	
-		QSE_NULL,
-		QSE_NULL
+		QSE_FV (.close, fini_rxtn),
+		QSE_FV (.stmt,  QSE_NULL)
 	};
 
 	qse_awk_rtx_t* rtx;
@@ -1921,7 +1920,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 		rxtn->cmgrtab_inited = 1;
 	}
 
-	qse_awk_rtx_pushrcb (rtx, &rcb);
+	qse_awk_rtx_pushecb (rtx, &ecb);
 
 	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: (qse_long_t)now;
 	/* i don't care if the seed becomes negative or overflows.

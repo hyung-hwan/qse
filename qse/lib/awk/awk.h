@@ -235,6 +235,7 @@ struct qse_awk_t
 	qse_awk_errinf_t errinf;
 
 	qse_bool_t stopall;
+	qse_awk_ecb_t* ecb;
 };
 
 struct qse_awk_chain_t
@@ -371,7 +372,7 @@ struct qse_awk_rtx_t
 	qse_awk_errinf_t errinf;
 
 	qse_awk_t* awk;
-	qse_awk_rcb_t* rcb;
+	qse_awk_rtx_ecb_t* ecb;
 };
 
 

@@ -350,8 +350,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 }
 
 #ifdef ENABLE_CALLBACK
-static void on_statement (
-	qse_awk_rtx_t* rtx, qse_awk_nde_t* nde, void* data)
+static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	dprint (QSE_T("running %d at line %d\n"), (int)nde->type, (int)nde->loc.line);
 }
@@ -975,12 +974,17 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_t* awk = QSE_NULL;
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
-#ifdef ENABLE_CALLBACK
-	qse_awk_rcb_t rcb;
-#endif
 	int i;
 	struct arg_t arg;
 	int ret = -1;
+
+#ifdef ENABLE_CALLBACK
+	static qse_awk_rtx_ecb_t rtx_ecb =
+	{
+		QSE_FV(.close, QSE_NULL),
+		QSE_FV(.stmt, on_statement)
+	};
+#endif
 
 	/* TODO: change it to support multiple source files */
 	qse_awk_parsestd_t psin;
@@ -1080,12 +1084,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-#ifdef ENABLE_CALLBACK
-	qse_memset (&rcb, 0, QSE_SIZEOF(rcb));
-	rcb.stmt = on_statement;
-	rcb.ctx = &arg;
-#endif
-
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
 		(const qse_char_t*const*)arg.icf.ptr,
@@ -1104,7 +1102,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	
 	app_rtx = rtx;
 #ifdef ENABLE_CALLBACK
-	qse_awk_rtx_pushrcb (rtx, &rcb);
+	qse_awk_rtx_pushecb (rtx, &rtx_ecb);
 #endif
 
 	set_intr_run ();

@@ -84,6 +84,11 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 void qse_httpd_close (qse_httpd_t* httpd)
 {
+	qse_httpd_ecb_t* ecb;
+
+	for (ecb = httpd->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (httpd);
+
 	qse_httpd_fini (httpd);
 	QSE_MMGR_FREE (httpd->mmgr, httpd);
 }
@@ -127,6 +132,23 @@ void qse_httpd_setoption (qse_httpd_t* httpd, int option)
 {
 	httpd->option = option;
 }
+
+/* --------------------------------------------------- */
+
+qse_httpd_ecb_t* qse_httpd_popecb (qse_httpd_t* httpd)
+{
+	qse_httpd_ecb_t* top = httpd->ecb;
+	if (top) httpd->ecb = top->next;
+	return top;
+}
+
+void qse_httpd_pushecb (qse_httpd_t* httpd, qse_httpd_ecb_t* ecb)
+{
+	ecb->next = httpd->ecb;
+	httpd->ecb = ecb;
+}
+
+/* --------------------------------------------------- */
 
 QSE_INLINE void* qse_httpd_allocmem (qse_httpd_t* httpd, qse_size_t size)
 {

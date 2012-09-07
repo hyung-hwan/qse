@@ -345,6 +345,32 @@ typedef int (*qse_sed_lformatter_t) (
 	int (*cwriter) (qse_sed_t*, qse_char_t)
 );
 
+/**
+ * The qse_sed_ecb_close_t type defines the callback function
+ * called when an sed object is closed.
+ */
+typedef void (*qse_sed_ecb_close_t) (
+	qse_sed_t* sed  /**< sed */
+);
+
+/**
+ * The qse_sed_ecb_t type defines an event callback set.
+ * You can register a callback function set with
+ * qse_sed_pushecb().  The callback functions in the registered
+ * set are called in the reverse order of registration.
+ */
+typedef struct qse_sed_ecb_t qse_sed_ecb_t;
+struct qse_sed_ecb_t
+{
+	/**
+	 * called by qse_sed_close().
+	 */
+	qse_sed_ecb_close_t close;
+
+	/* internal use only. don't touch this field */
+	qse_sed_ecb_t* next;
+};
+
 #ifdef QSE_ENABLE_SEDTRACER
 enum qse_sed_exec_op_t
 {
@@ -513,6 +539,23 @@ void qse_sed_seterror (
 	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
 	                              *   an error message */
 	const qse_sed_loc_t* errloc  /**< error location */
+);
+
+/**
+ * The qse_sed_popecb() function pops an sed event callback set
+ * and returns the pointer to it. If no callback set can be popped,
+ * it returns #QSE_NULL.
+ */
+qse_sed_ecb_t* qse_sed_popecb (
+	qse_sed_t* sed /**< sed */
+);
+
+/**
+ * The qse_sed_pushecb() function register a runtime callback set.
+ */
+void qse_sed_pushecb (
+	qse_sed_t*     sed, /**< sed */
+	qse_sed_ecb_t* ecb  /**< callback set */
 );
 
 /**

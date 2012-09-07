@@ -744,10 +744,10 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 
 void qse_awk_rtx_close (qse_awk_rtx_t* rtx)
 {
-	qse_awk_rcb_t* rcb;
+	qse_awk_rtx_ecb_t* ecb;
 
-	for (rcb = rtx->rcb; rcb; rcb = rcb->next)
-		if (rcb->close) rcb->close (rtx, rcb->ctx);
+	for (ecb = rtx->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (rtx);
 
 	/* NOTE:
 	 *  the close callbacks are called before data in rtx
@@ -784,17 +784,17 @@ void qse_awk_rtx_setrio (qse_awk_rtx_t* rtx, const qse_awk_rio_t* rio)
 	rtx->rio.handler[QSE_AWK_RIO_CONSOLE] = rio->console;
 }
 
-qse_awk_rcb_t* qse_awk_rtx_poprcb (qse_awk_rtx_t* rtx)
+qse_awk_rtx_ecb_t* qse_awk_rtx_popecb (qse_awk_rtx_t* rtx)
 {
-	qse_awk_rcb_t* top = rtx->rcb;
-	if (top) rtx->rcb = top->next;
+	qse_awk_rtx_ecb_t* top = rtx->ecb;
+	if (top) rtx->ecb = top->next;
 	return top;
 }
 
-void qse_awk_rtx_pushrcb (qse_awk_rtx_t* rtx, qse_awk_rcb_t* rcb)
+void qse_awk_rtx_pushecb (qse_awk_rtx_t* rtx, qse_awk_rtx_ecb_t* ecb)
 {
-	rcb->next = rtx->rcb;
-	rtx->rcb = rcb;
+	ecb->next = rtx->ecb;
+	rtx->ecb = ecb;
 }
 
 static void free_namedval (qse_htb_t* map, void* dptr, qse_size_t dlen)
@@ -1826,10 +1826,10 @@ static int run_block0 (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 }
 
 #define ON_STATEMENT(rtx,nde) QSE_BLOCK ( \
-	qse_awk_rcb_t* rcb; \
+	qse_awk_rtx_ecb_t* ecb; \
 	if ((rtx)->awk->stopall) (rtx)->exit_level = EXIT_ABORT; \
-	for (rcb = (rtx)->rcb; rcb; rcb = rcb->next) \
-		if (rcb->stmt) rcb->stmt (rtx, nde, rcb->ctx);  \
+	for (ecb = (rtx)->ecb; ecb; ecb = ecb->next) \
+		if (ecb->stmt) ecb->stmt (rtx, nde);  \
 )
 
 static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)

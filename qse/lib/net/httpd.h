@@ -29,7 +29,8 @@ struct qse_httpd_t
 {
 	QSE_DEFINE_COMMON_FIELDS (httpd)
 	qse_httpd_errnum_t errnum;
-	qse_httpd_cbs_t* cbs;
+	qse_httpd_ecb_t* ecb; /* event callbacks */
+	qse_httpd_cbs_t* cbs; 
 
 	int option;
 	int stopreq;
