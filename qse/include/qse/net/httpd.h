@@ -305,6 +305,32 @@ struct qse_httpd_client_t
 	} task;
 };
 
+/**
+ * The qse_httpd_ecb_close_t type defines the callback function
+ * called when an httpd object is closed.
+ */
+typedef void (*qse_httpd_ecb_close_t) (
+	qse_httpd_t* httpd  /**< httpd */
+);
+
+/**
+ * The qse_httpd_ecb_t type defines an event callback set.
+ * You can register a callback function set with
+ * qse_httpd_pushecb().  The callback functions in the registered
+ * set are called in the reverse order of registration.
+ */
+typedef struct qse_httpd_ecb_t qse_httpd_ecb_t;
+struct qse_httpd_ecb_t
+{
+	/**
+	 * called by qse_httpd_close().
+	 */
+	qse_httpd_ecb_close_t close;
+
+	/* internal use only. don't touch this field */
+	qse_httpd_ecb_t* next;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -345,6 +371,23 @@ void qse_httpd_setoption (
 );
 
 /**
+ * The qse_httpd_popecb() function pops an httpd event callback set
+ * and returns the pointer to it. If no callback set can be popped,
+ * it returns #QSE_NULL.
+ */
+qse_httpd_ecb_t* qse_httpd_popecb (
+	qse_httpd_t* httpd /**< httpd */
+);
+
+/**
+ * The qse_httpd_pushecb() function register a runtime callback set.
+ */
+void qse_httpd_pushecb (
+	qse_httpd_t*     httpd, /**< httpd */
+	qse_httpd_ecb_t* ecb  /**< callback set */
+);
+
+/**
  * The qse_httpd_loop() function starts a httpd server loop.
  */
 int qse_httpd_loop (
@@ -359,7 +402,6 @@ int qse_httpd_loop (
 void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
-
 
 int qse_httpd_addserver (
 	qse_httpd_t*      httpd,
@@ -501,6 +543,23 @@ void qse_httpd_freemem (
 	qse_httpd_t* httpd,
 	void*        ptr
 );
+
+/* -------------------------------------------- */
+
+
+qse_httpd_t* qse_httpd_openstd (
+	qse_size_t xtnsize
+);
+
+qse_httpd_t* qse_httpd_openstdwithmmgr (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize
+);
+
+void* qse_httpd_getxtnstd (
+	qse_httpd_t* httpd
+);
+
 
 #ifdef __cplusplus
 }

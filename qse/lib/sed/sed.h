@@ -99,6 +99,8 @@ struct qse_sed_t
 		} rex;
 	} depth;
 
+	qse_sed_ecb_t* ecb;
+
 	/** source text pointers */
 	struct
 	{

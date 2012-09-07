@@ -617,6 +617,8 @@ struct qse_awk_prm_t
 };
 typedef struct qse_awk_prm_t qse_awk_prm_t;
 
+/* ------------------------------------------------------------------------ */
+
 /**
  * The qse_awk_sio_t type defines a script stream handler set.
  * The qse_awk_parse() function calls the input and output handler to parse
@@ -664,6 +666,8 @@ struct qse_awk_sio_t
 };
 typedef struct qse_awk_sio_t qse_awk_sio_t;
 
+/* ------------------------------------------------------------------------ */
+
 /**
  * The qse_awk_rio_t type defines a runtime I/O handler set.
  * @sa qse_awk_rtx_t
@@ -676,55 +680,92 @@ struct qse_awk_rio_t
 };
 typedef struct qse_awk_rio_t qse_awk_rio_t;
 
+/* ------------------------------------------------------------------------ */
+
 /**
- * The qse_awk_rcb_close_t type defines the callback function
+ * The qse_awk_ecb_close_t type defines the callback function
+ * called when an awk object is closed.
+ */
+typedef void (*qse_awk_ecb_close_t) (
+	qse_awk_t* awk  /**< awk */
+);
+
+/**
+ * The qse_awk_ecb_clear_t type defines the callback function
+ * called when an awk object is cleared.
+ */
+typedef void (*qse_awk_ecb_clear_t) (
+	qse_awk_t* awk  /**< awk */
+);
+
+/**
+ * The qse_awk_ecb_t type defines an event callback set.
+ * You can register a callback function set with
+ * qse_awk_pushecb().  The callback functions in the registered
+ * set are called in the reverse order of registration.
+ */
+typedef struct qse_awk_ecb_t qse_awk_ecb_t;
+struct qse_awk_ecb_t
+{
+	/**
+	 * called by qse_awk_close().
+	 */
+	qse_awk_ecb_close_t close;
+
+	/**
+	 * called by qse_awk_clear().
+	 */
+	qse_awk_ecb_clear_t clear;
+
+	/* internal use only. don't touch this field */
+	qse_awk_ecb_t* next;
+};
+
+/* ------------------------------------------------------------------------ */
+
+/**
+ * The qse_awk_rtx_ecb_close_t type defines the callback function
  * called when the runtime context is closed.
  */
-typedef void (*qse_awk_rcb_close_t) (
-	qse_awk_rtx_t* rtx, /**< runtime context */
-	void*          ctx  /**< user-defined data */
+typedef void (*qse_awk_rtx_ecb_close_t) (
+	qse_awk_rtx_t* rtx  /**< runtime context */
 );
 
 
 /**
- * The qse_awk_rcb_stmt_t type defines the callback function for each
+ * The qse_awk_rtx_ecb_stmt_t type defines the callback function for each
  * statement.
  */
-typedef void (*qse_awk_rcb_stmt_t) (
+typedef void (*qse_awk_rtx_ecb_stmt_t) (
 	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_awk_nde_t* nde, /**< node */
-	void*          ctx  /**< user-defined data */
+	qse_awk_nde_t* nde  /**< node */
 );
 
 /**
- * The qse_awk_rcb_t type defines a runtime callback set. You can 
- * register a callback function set with qse_awk_rtx_pushrcb(). 
- * The callback functions in the set registered are called in a 
- * proper context in the reverse order of registeration.
+ * The qse_awk_rtx_ecb_t type defines an event callback set for a
+ * runtime context. You can register a callback function set with
+ * qse_awk_rtx_pushecb().  The callback functions in the registered
+ * set are called in the reverse order of registration.
  */
-typedef struct qse_awk_rcb_t qse_awk_rcb_t;
-struct qse_awk_rcb_t
+typedef struct qse_awk_rtx_ecb_t qse_awk_rtx_ecb_t;
+struct qse_awk_rtx_ecb_t
 {
 	/**
 	 * called by qse_awk_rtx_close().
 	 */
-	qse_awk_rcb_close_t close;
+	qse_awk_rtx_ecb_close_t close;
 
 	/**
 	 * called by qse_awk_rtx_loop() and qse_awk_rtx_call() for
 	 * each statement executed.
 	 */
-	qse_awk_rcb_stmt_t stmt;
-
-	/**
-	 * A caller may store a user-defined data pointer into this field. This
-	 * is passed to an actual callback.
-	 */
-	void* ctx;
+	qse_awk_rtx_ecb_stmt_t stmt;
 
 	/* internal use only. don't touch this field */
-	qse_awk_rcb_t* next;
+	qse_awk_rtx_ecb_t* next;
 };
+
+/* ------------------------------------------------------------------------ */
 
 /**
  * The qse_awk_option_t type defines various options to change the behavior
@@ -1382,6 +1423,23 @@ void qse_awk_setmaxdepth (
 );
 
 /**
+ * The qse_awk_popecb() function pops an awk event callback set
+ * and returns the pointer to it. If no callback set can be popped,
+ * it returns #QSE_NULL.
+ */
+qse_awk_ecb_t* qse_awk_popecb (
+	qse_awk_t* awk /**< awk */
+);
+
+/**
+ * The qse_awk_pushecb() function register a runtime callback set.
+ */
+void qse_awk_pushecb (
+	qse_awk_t*     awk, /**< awk */
+	qse_awk_ecb_t* ecb  /**< callback set */
+);
+
+/**
  * The qse_awk_addgbl() function adds an intrinsic global variable.
  * @return the ID of the global variable added on success, -1 on failure.
  */
@@ -1717,20 +1775,20 @@ void qse_awk_rtx_setrio (
 );
 
 /**
- * The qse_awk_rtx_poprcb() function pops a runtime callback set
+ * The qse_awk_rtx_popecb() function pops a runtime callback set
  * and returns the pointer to it. If no callback set can be popped,
  * it returns #QSE_NULL.
  */
-qse_awk_rcb_t* qse_awk_rtx_poprcb (
+qse_awk_rtx_ecb_t* qse_awk_rtx_popecb (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
 /**
- * The qse_awk_rtx_pushrcb() function register a runtime callback set.
+ * The qse_awk_rtx_pushecb() function register a runtime callback set.
  */
-void qse_awk_rtx_pushrcb (
-	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_awk_rcb_t* rcb  /**< callback set */
+void qse_awk_rtx_pushecb (
+	qse_awk_rtx_t*     rtx, /**< runtime context */
+	qse_awk_rtx_ecb_t* ecb  /**< callback set */
 );
 
 /**

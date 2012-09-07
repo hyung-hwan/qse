@@ -216,6 +216,15 @@
 		} \
 	)
 
+/**
+ * The QSE_FV() macro is used to specify a initial value
+ * for a field of an aggregate type.
+ */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
+#	define QSE_FV(field,value) field = value
+#else
+#	define QSE_FV(field,value) value
+#endif
 
 /* number of characters to number of bytes */
 #define QSE_NCTONB(x) ((x)*sizeof(qse_char_t))

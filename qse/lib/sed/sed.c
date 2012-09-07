@@ -75,6 +75,11 @@ qse_sed_t* qse_sed_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 void qse_sed_close (qse_sed_t* sed)
 {
+	qse_sed_ecb_t* ecb;
+
+	for (ecb = sed->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (sed);
+
 	qse_sed_fini (sed);
 	QSE_MMGR_FREE (sed->mmgr, sed);
 }
@@ -4140,6 +4145,19 @@ qse_size_t qse_sed_getlinenum (qse_sed_t* sed)
 void qse_sed_setlinenum (qse_sed_t* sed, qse_size_t num)
 {
 	sed->e.in.num = num;
+}
+
+qse_sed_ecb_t* qse_sed_popecb (qse_sed_t* sed)
+{
+	qse_sed_ecb_t* top = sed->ecb;
+	if (top) sed->ecb = top->next;
+	return top;
+}
+
+void qse_sed_pushecb (qse_sed_t* sed, qse_sed_ecb_t* ecb)
+{
+	ecb->next = sed->ecb;
+	sed->ecb = ecb;
 }
 
 #ifdef QSE_ENABLE_SEDTRACER

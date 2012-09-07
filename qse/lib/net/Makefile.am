@@ -16,6 +16,7 @@ libqsenet_la_SOURCES = \
 	httpd-cgi.c \
 	httpd-proxy.c \
 	httpd-resol.c \
+	httpd-std.c \
 	httpd-task.c \
 	upxd.c
 

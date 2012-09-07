@@ -262,8 +262,14 @@ oops:
 
 int qse_awk_close (qse_awk_t* awk)
 {
+	qse_awk_ecb_t* ecb;
+
 	if (qse_awk_clear (awk) <= -1) return -1;
 	/*qse_awk_clrfnc (awk);*/
+
+	for (ecb = awk->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (awk);
+
 	qse_htb_close (awk->fnc.user);
 
 	qse_lda_close (awk->parse.params);
@@ -287,6 +293,11 @@ int qse_awk_close (qse_awk_t* awk)
 
 int qse_awk_clear (qse_awk_t* awk)
 {
+	qse_awk_ecb_t* ecb;
+
+     for (ecb = awk->ecb; ecb; ecb = ecb->next)
+          if (ecb->clear) ecb->clear (awk);
+
 	awk->stopall = QSE_FALSE;
 
 	clear_token (&awk->tok);
@@ -439,3 +450,18 @@ void qse_awk_setmaxdepth (qse_awk_t* awk, int types, qse_size_t depth)
 		awk->parse.depth.max.incl = depth;
 	}
 }
+
+
+qse_awk_ecb_t* qse_awk_popecb (qse_awk_t* awk)
+{
+	qse_awk_ecb_t* top = awk->ecb;
+	if (top) awk->ecb = top->next;
+	return top;
+}
+
+void qse_awk_pushecb (qse_awk_t* awk, qse_awk_ecb_t* ecb)
+{
+	ecb->next = awk->ecb;
+	awk->ecb = ecb;
+}
+
