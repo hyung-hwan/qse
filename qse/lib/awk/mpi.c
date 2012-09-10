@@ -34,7 +34,9 @@ struct xtn_t
 typedef struct rxtn_t rxtn_t;
 struct rxtn_t
 {
-	int dummy;
+	MPI_Comm comm;
+	int size;
+	int rank;
 };
 
 qse_awk_t* qse_awk_openmpi (qse_size_t xtnsize)
@@ -60,9 +62,8 @@ qse_awk_t* qse_awk_openmpiwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		QSE_MEMSET (xtn, 0, QSE_SIZEOF(*xtn));
 
 		xtn->gbl_mpi[0] = qse_awk_addgbl (awk, QSE_T("MPI_HOST"), 8);
-
-		xtn->gbl_mpi[1] = qse_awk_addgbl (awk, QSE_T("MPI_RANK"), 8);
-		xtn->gbl_mpi[2] = qse_awk_addgbl (awk, QSE_T("MPI_SIZE"), 8);
+		xtn->gbl_mpi[1] = qse_awk_addgbl (awk, QSE_T("MPI_SIZE"), 8);
+		xtn->gbl_mpi[2] = qse_awk_addgbl (awk, QSE_T("MPI_RANK"), 8);
 
 		xtn->gbl_mpi[3] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MIN"),  14);
 		xtn->gbl_mpi[4] = qse_awk_addgbl (awk, QSE_T("MPI_REDUCE_MAX"),  14);
@@ -123,6 +124,7 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 		rxtn = (rxtn_t*) qse_awk_rtx_getxtnstd (rtx);
 
 		QSE_MEMSET (rxtn, 0, QSE_SIZEOF(*rxtn));
+		rxtn->comm = MPI_COMM_WORLD;
 
 		/* set the value of some MPI constants */
 		for (i = 0; i < QSE_COUNTOF(xtn->gbl_mpi); i++)
@@ -142,7 +144,6 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 					qse_mmgr_t* mmgr;
 					qse_char_t* tmp;	
 #endif
-
 					if (MPI_Get_processor_name(buf, &len) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
@@ -168,26 +169,26 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 					break;
 				}
 
-				case 1: /* MPI_RANK */
-					if (MPI_Comm_rank (MPI_COMM_WORLD, &iv) != MPI_SUCCESS)
+				case 1: /* MPI_SIZE */
+					if (MPI_Comm_size (rxtn->comm, &rxtn->size) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
 						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
 						return QSE_NULL;
 					}
-					v_tmp = qse_awk_rtx_makeintval (rtx, iv);
+					v_tmp = qse_awk_rtx_makeintval (rtx, rxtn->size);
 					break;
 
-				case 2: /* MPI_SIZE */
-					if (MPI_Comm_size (MPI_COMM_WORLD, &iv) != MPI_SUCCESS)
+				case 2: /* MPI_RANK */
+					if (MPI_Comm_rank (rxtn->comm, &rxtn->rank) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
 						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
 						return QSE_NULL;
 					}
-					v_tmp = qse_awk_rtx_makeintval (rtx, iv);
+					v_tmp = qse_awk_rtx_makeintval (rtx, rxtn->rank);
 					break;
-	
+
 				default: /* MPI_REDUCE_XXXX */
 					v_tmp = qse_awk_rtx_makeintval (rtx, i - 3);
 					break;
@@ -219,6 +220,57 @@ qse_cmgr_t* qse_awk_rtx_getcmgrmpi (
 	return qse_awk_rtx_getcmgrstd (rtx, ioname);
 }
 
+static int fnc_hash (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* tmp, * a0;
+	qse_long_t hv;
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 1);
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+
+	hv = qse_awk_rtx_hashval (rtx, a0);
+
+	tmp = qse_awk_rtx_makeintval (rtx, hv);
+
+	if (tmp == QSE_NULL) return -1;
+	qse_awk_rtx_setretval (rtx, tmp);
+
+	return 0;
+}
+
+static int fnc_assign (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+{
+	qse_size_t nargs;
+	qse_awk_val_t* tmp, * a0;
+	qse_long_t lv;
+	rxtn_t* rxtn;
+	qse_awk_nrflt_t nrflt;
+
+	rxtn = (rxtn_t*) qse_awk_rtx_getxtnstd (rtx);
+
+	nargs = qse_awk_rtx_getnargs (rtx);
+	QSE_ASSERT (nargs == 1);
+
+	a0 = qse_awk_rtx_getarg (rtx, 0);
+
+	if (qse_awk_rtx_valtolong (rtx, a0, &lv) <= -1) return -1;
+
+	tmp = qse_awk_rtx_makeintval (rtx, lv);
+
+	nrflt.limit = lv;
+	nrflt.size = rxtn->size;
+	nrflt.rank = rxtn->rank;
+	qse_awk_rtx_setnrflt (rtx, &nrflt);
+
+	if (tmp == QSE_NULL) return -1;
+	qse_awk_rtx_setretval (rtx, tmp);
+
+	return 0;
+}
+
 static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	qse_size_t nargs;
@@ -226,6 +278,7 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	qse_long_t opidx, lv;
 	qse_flt_t rv;
 	int n;
+	rxtn_t* rxtn;
 
 	static MPI_Op optab[] =
 	{
@@ -237,28 +290,30 @@ static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 		MPI_LOR
 	};
 
+	rxtn = (rxtn_t*) qse_awk_rtx_getxtnstd (rtx);
+
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 2);
 
 	a0 = qse_awk_rtx_getarg (rtx, 0);
 	a1 = qse_awk_rtx_getarg (rtx, 1);
 
-	if (qse_awk_rtx_valtolong (rtx, a1, &opidx) <= -1 ||
-	    (opidx < 0 || opidx >= QSE_COUNTOF(optab)) ||
-         (n = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv)) <= -1) return -1;
+	if (qse_awk_rtx_valtolong (rtx, a1, &opidx) <= -1) return -1;
+	if (opidx < 0 || opidx >= QSE_COUNTOF(optab)) goto softfail;
+	if ((n = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv)) <= -1) return -1;
 
 /* TODO: determine it to be MPI_LONG or MPI_INT, OR MPI_LONG_LONG_INT depending on the size of qse_long_t */
 /* TODO: how to tell normal -1 from the soft failure??? */
 	if (n == 0) 
 	{
 		qse_long_t lout;
-		if (MPI_Allreduce (&lv, &lout, 1, MPI_LONG_LONG_INT, optab[opidx], MPI_COMM_WORLD) != MPI_SUCCESS) goto softfail;
+		if (MPI_Allreduce (&lv, &lout, 1, MPI_LONG_LONG_INT, optab[opidx], rxtn->comm) != MPI_SUCCESS) goto softfail;
 		tmp = qse_awk_rtx_makeintval (rtx, lout);
 	}
 	else
 	{
 		qse_flt_t fout;
-		if (MPI_Allreduce (&rv, &fout, 1, MPI_LONG_DOUBLE, optab[opidx], MPI_COMM_WORLD) != MPI_SUCCESS) goto softfail;
+		if (MPI_Allreduce (&rv, &fout, 1, MPI_LONG_DOUBLE, optab[opidx], rxtn->comm) != MPI_SUCCESS) goto softfail;
 		tmp = qse_awk_rtx_makefltval (rtx, fout);
 	}
 	
@@ -278,8 +333,11 @@ static int fnc_barrier (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 {
 	int x;
 	qse_awk_val_t* tmp;
+	rxtn_t* rxtn;
 
-	x = (MPI_Barrier (MPI_COMM_WORLD) == MPI_SUCCESS)? 0: -1;
+	rxtn = (rxtn_t*) qse_awk_rtx_getxtnstd (rtx);
+
+	x = (MPI_Barrier (rxtn->comm) == MPI_SUCCESS)? 0: -1;
 
 	tmp = qse_awk_rtx_makeintval (rtx, x);
 	if (tmp == QSE_NULL) return -1;
@@ -289,6 +347,8 @@ static int fnc_barrier (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 static int add_functions (qse_awk_t* awk)
 {
+	if (qse_awk_addfnc (awk, QSE_T("mpi_hash"), 8, 0, 1, 1, QSE_NULL, fnc_hash) == QSE_NULL) return -1;
+	if (qse_awk_addfnc (awk, QSE_T("mpi_assign"), 10, 0, 1, 1, QSE_NULL, fnc_assign) == QSE_NULL) return -1;
 	if (qse_awk_addfnc (awk, QSE_T("mpi_reduce"), 10, 0, 2, 2, QSE_NULL, fnc_reduce) == QSE_NULL) return -1;
 	if (qse_awk_addfnc (awk, QSE_T("mpi_barrier"), 11, 0, 0, 0, QSE_NULL, fnc_barrier) == QSE_NULL) return -1;
      return 0;

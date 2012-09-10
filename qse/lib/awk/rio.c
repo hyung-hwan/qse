@@ -198,7 +198,7 @@ static int find_rio_in (
 }
 
 static QSE_INLINE int resolve_rs (
-	qse_awk_rtx_t* run, qse_awk_val_t* rs, qse_xstr_t* rrs)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* rs, qse_xstr_t* rrs)
 {
 	int ret = 0;
 
@@ -215,7 +215,7 @@ static QSE_INLINE int resolve_rs (
 			break;
 
 		default:
-			rrs->ptr = qse_awk_rtx_valtocpldup (run, rs, &rrs->len);
+			rrs->ptr = qse_awk_rtx_valtocpldup (rtx, rs, &rrs->len);
 			if (rrs->ptr == QSE_NULL) ret = -1;
 			break;
 	}
@@ -374,7 +374,7 @@ int qse_awk_rtx_readio (
 					 * is empty */
 					ret = 0;
 				}
-				else if (rrs.ptr != QSE_NULL && rrs.len == 0)
+				else if (rrs.ptr && rrs.len == 0)
 				{
 					/* TODO: handle different line terminator */
 					/* drop the line terminator from the record
@@ -630,8 +630,8 @@ int qse_awk_rtx_readio (
 		}
 	}
 
-	if (rrs.ptr != QSE_NULL &&
-	    rs->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, rrs.ptr);
+	if (rrs.ptr && rs->type != QSE_AWK_VAL_STR) 
+		QSE_AWK_FREE (run->awk, rrs.ptr);
 	qse_awk_rtx_refdownval (run, rs);
 
 	return ret;

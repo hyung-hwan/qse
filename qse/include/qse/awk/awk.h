@@ -1191,6 +1191,16 @@ struct qse_awk_rtx_valtostr_out_t
 };
 typedef struct qse_awk_rtx_valtostr_out_t qse_awk_rtx_valtostr_out_t;
 
+
+/* record filter using NR */
+struct qse_awk_nrflt_t
+{
+	qse_long_t limit;
+	qse_long_t size;
+	qse_long_t rank;
+};
+typedef struct qse_awk_nrflt_t qse_awk_nrflt_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -2367,6 +2377,26 @@ int qse_awk_rtx_strtonum (
 	qse_size_t        len, /**< number of characters in a string */
 	qse_long_t*       l,   /**< stores a converted integer */
 	qse_flt_t*        r    /**< stores a converted floating-poing number */
+);
+
+/**
+ * The qse_awk_rtx_hashval() functions hashes a simple value
+ * to a positive integer. It returns -1 for a inhashable value.
+ */
+qse_long_t qse_awk_rtx_hashval (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* v
+);
+
+
+void qse_awk_rtx_setnrflt (
+	qse_awk_rtx_t*         rtx,
+	const qse_awk_nrflt_t* nrflt
+);
+
+void qse_awk_rtx_getnrflt (
+	qse_awk_rtx_t*         rtx,
+	qse_awk_nrflt_t*       nrflt
 );
 
 /**

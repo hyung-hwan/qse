@@ -559,6 +559,12 @@ static int set_global (
 				rss = out.u.cpldup;
 			}
 
+			if (rtx->gbl.rs)
+			{
+				QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
+				rtx->gbl.rs = QSE_NULL;
+			}
+
 			if (rss.len > 1)
 			{
 				void* rex;
@@ -575,9 +581,6 @@ static int set_global (
 					return -1;
 				}
 
-				if (rtx->gbl.rs != QSE_NULL)
-					QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
-				
 				rtx->gbl.rs = rex;
 			}
 
@@ -852,65 +855,21 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->inrec.nflds = 0;
 	rtx->inrec.maxflds = 0;
 	rtx->inrec.d0 = qse_awk_val_nil;
-	if (qse_str_init (
-		&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1)
-	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
 
-	if (qse_str_init (
-		&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1)
-	{
-		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (qse_str_init (&rtx->inrec.line, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_0;
+	if (qse_str_init (&rtx->inrec.linew, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_1;
+	if (qse_str_init (&rtx->inrec.lineg, MMGR(rtx), DEF_BUF_CAPA) <= -1) goto oops_2;
+	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) <= -1) goto oops_3;
+	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) <= -1) goto oops_4;
 
-	if (qse_str_init (&rtx->format.out, MMGR(rtx), 256) <= -1)
-	{
-		qse_str_fini (&rtx->inrec.linew);
-		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
-
-	if (qse_str_init (&rtx->format.fmt, MMGR(rtx), 256) <= -1)
-	{
-		qse_str_fini (&rtx->format.out);
-		qse_str_fini (&rtx->inrec.linew);
-		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
-
-	rtx->named = qse_htb_open (
-		MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1
-	);
-	if (rtx->named == QSE_NULL)
-	{
-		qse_str_fini (&rtx->format.fmt);
-		qse_str_fini (&rtx->format.out);
-		qse_str_fini (&rtx->inrec.linew);
-		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	rtx->named = qse_htb_open (MMGR(rtx), QSE_SIZEOF(rtx), 1024, 70, QSE_SIZEOF(qse_char_t), 1);
+	if (rtx->named == QSE_NULL) goto oops_5;
 	*(qse_awk_rtx_t**)QSE_XTN(rtx->named) = rtx;
 	qse_htb_setmancbs (rtx->named, &mancbs_for_named);
 
 	rtx->format.tmp.ptr = (qse_char_t*)
 		QSE_AWK_ALLOC (rtx->awk, 4096*QSE_SIZEOF(qse_char_t*));
-	if (rtx->format.tmp.ptr == QSE_NULL)
-	{
-		qse_htb_close (rtx->named);
-		qse_str_fini (&rtx->format.fmt);
-		qse_str_fini (&rtx->format.out);
-		qse_str_fini (&rtx->inrec.linew);
-		qse_str_fini (&rtx->inrec.line);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return -1;
-	}
+	if (rtx->format.tmp.ptr == QSE_NULL) goto oops_6;
 	rtx->format.tmp.len = 4096;
 	rtx->format.tmp.inc = 4096*2;
 
@@ -918,17 +877,7 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	{
 		rtx->pattern_range_state = (qse_byte_t*) QSE_AWK_ALLOC (
 			rtx->awk, rtx->awk->tree.chain_size*QSE_SIZEOF(qse_byte_t));
-		if (rtx->pattern_range_state == QSE_NULL)
-		{
-			QSE_AWK_FREE (rtx->awk, rtx->format.tmp.ptr);
-			qse_htb_close (rtx->named);
-			qse_str_fini (&rtx->format.fmt);
-			qse_str_fini (&rtx->format.out);
-			qse_str_fini (&rtx->inrec.linew);
-			qse_str_fini (&rtx->inrec.line);
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
-		}
+		if (rtx->pattern_range_state == QSE_NULL) goto oops_7;
 
 		QSE_MEMSET (
 			rtx->pattern_range_state, 0, 
@@ -954,6 +903,24 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->depth.cur.expr = 0;
 
 	return 0;
+
+oops_7:
+	QSE_AWK_FREE (rtx->awk, rtx->format.tmp.ptr);
+oops_6:
+	qse_htb_close (rtx->named);
+oops_5:
+	qse_str_fini (&rtx->format.fmt);
+oops_4:
+	qse_str_fini (&rtx->format.out);
+oops_3:
+	qse_str_fini (&rtx->inrec.lineg);
+oops_2:
+	qse_str_fini (&rtx->inrec.linew);
+oops_1:
+	qse_str_fini (&rtx->inrec.line);
+oops_0:
+	qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return -1;
 }
 
 static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
@@ -966,12 +933,12 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	qse_awk_rtx_cleario (rtx);
 	QSE_ASSERT (rtx->rio.chain == QSE_NULL);
 
-	if (rtx->gbl.rs != QSE_NULL) 
+	if (rtx->gbl.rs)
 	{
 		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.rs);
 		rtx->gbl.rs = QSE_NULL;
 	}
-	if (rtx->gbl.fs != QSE_NULL)
+	if (rtx->gbl.fs)
 	{
 		QSE_AWK_FREEREX (rtx->awk, rtx->gbl.fs);
 		rtx->gbl.fs = QSE_NULL;
@@ -1028,19 +995,20 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	 * before the stack has been destroyed because it may try
 	 * to change the value to QSE_AWK_GBL_NF. */
 	qse_awk_rtx_clrrec (rtx, QSE_FALSE);  
-	if (rtx->inrec.flds != QSE_NULL) 
+	if (rtx->inrec.flds)
 	{
 		QSE_AWK_FREE (rtx->awk, rtx->inrec.flds);
 		rtx->inrec.flds = QSE_NULL;
 		rtx->inrec.maxflds = 0;
 	}
+	qse_str_fini (&rtx->inrec.lineg);
 	qse_str_fini (&rtx->inrec.linew);
 	qse_str_fini (&rtx->inrec.line);
 
 	if (fini_globals) refdown_globals (rtx, 1);
 
 	/* destroy the stack if necessary */
-	if (rtx->stack != QSE_NULL)
+	if (rtx->stack)
 	{
 		QSE_ASSERT (rtx->stack_top == 0);
 
@@ -1583,12 +1551,6 @@ static int run_pblocks (qse_awk_rtx_t* run)
 			return -1; /* error */
 		}
 		if (n == 0) break; /* end of input */
-
-		if (update_fnr (run, run->gbl.fnr+1, run->gbl.nr+1) == -1) 
-		{
-			ADJUST_ERROR (run);
-			return -1;
-		}
 
 		if (run->awk->tree.chain != QSE_NULL)
 		{
@@ -6227,14 +6189,13 @@ static qse_awk_val_t* eval_pos (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	return v;
 }
 
-static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
+static qse_awk_val_t* eval_getline (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 {
 	qse_awk_nde_getline_t* p;
-	qse_awk_val_t* v, * res;
-	qse_char_t* in = QSE_NULL;
-	const qse_char_t* dst;
-	qse_str_t buf;
-	int n;
+	qse_awk_val_t* v, * tmp;
+	qse_char_t* dst;
+	qse_str_t* buf;
+	int n, x;
 
 	p = (qse_awk_nde_getline_t*)nde;
 
@@ -6244,121 +6205,132 @@ static qse_awk_val_t* eval_getline (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		(p->in_type == QSE_AWK_IN_FILE && p->in != QSE_NULL) ||
 		(p->in_type == QSE_AWK_IN_CONSOLE && p->in == QSE_NULL));
 
-	if (p->in != QSE_NULL)
+	if (p->in)
 	{
 		qse_size_t len;
 		qse_awk_rtx_valtostr_out_t out;
 
-		v = eval_expression (run, p->in);
+		v = eval_expression (rtx, p->in);
 		if (v == QSE_NULL) return QSE_NULL;
 
-		/* TODO: distinction between v->type == QSE_AWK_VAL_STR 
-		 *       and v->type != QSE_AWK_VAL_STR
-		 *       if you use the buffer the v directly when
-		 *       v->type == QSE_AWK_VAL_STR, qse_awk_rtx_refdownval(v)
-		 *       should not be called immediately below */
-		qse_awk_rtx_refupval (run, v);
-
-		out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-		if (qse_awk_rtx_valtostr (run, v, &out) <= -1)
+		qse_awk_rtx_refupval (rtx, v);
+		if (v->type == QSE_AWK_VAL_STR)
 		{
-			qse_awk_rtx_refdownval (run, v);
-			return QSE_NULL;
+			dst = ((qse_awk_val_str_t*)v)->val.ptr;
+			len = ((qse_awk_val_str_t*)v)->val.len;
 		}
-		qse_awk_rtx_refdownval (run, v);
+		else
+		{
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			x = qse_awk_rtx_valtostr (rtx, v, &out);
+			qse_awk_rtx_refdownval (rtx, v);
+			if (x <= -1) return QSE_NULL;
 
-		in = out.u.cpldup.ptr;
-		len = out.u.cpldup.len;
+			dst = out.u.cpldup.ptr;
+			len = out.u.cpldup.len;
+		}
 
 		if (len <= 0) 
 		{
 			/* the input source name is empty.
 			 * make getline return -1 */
-			QSE_AWK_FREE (run->awk, in);
+			if (v->type == QSE_AWK_VAL_STR) 
+				qse_awk_rtx_refdownval (rtx, v);
+			else QSE_AWK_FREE (rtx->awk, dst);
+
 			n = -1;
 			goto skip_read;
 		}
 
 		while (len > 0)
 		{
-			if (in[--len] == QSE_T('\0'))
+			if (dst[--len] == QSE_T('\0'))
 			{
 				/* the input source name contains a null 
 				 * character. make getline return -1.
 				 * unlike print & printf, it is not a hard
 				 * error  */
-				QSE_AWK_FREE (run->awk, in);
+				if (v->type == QSE_AWK_VAL_STR) 
+					qse_awk_rtx_refdownval (rtx, v);
+				else QSE_AWK_FREE (rtx->awk, dst);
+
 				n = -1;
 				goto skip_read;
 			}
 		}
 	}
+	else dst = (qse_char_t*)QSE_T("");
 
-	dst = (in == QSE_NULL)? QSE_T(""): in;
+	buf = &rtx->inrec.lineg;
+read_console_again:
+	qse_str_clear (&rtx->inrec.lineg);
 
-	/* TODO: optimize the line buffer management */
-	if (qse_str_init (&buf, MMGR(run), DEF_BUF_CAPA) <= -1)
+	n = qse_awk_rtx_readio (rtx, p->in_type, dst, buf);
+
+	if (p->in)
 	{
-		if (in != QSE_NULL) QSE_AWK_FREE (run->awk, in);
-		SETERR_LOC (run, QSE_AWK_ENOMEM, &nde->loc);
-		return QSE_NULL;
+		if (v->type == QSE_AWK_VAL_STR) 
+			qse_awk_rtx_refdownval (rtx, v);
+		else QSE_AWK_FREE (rtx->awk, dst);
 	}
-
-	n = qse_awk_rtx_readio (run, p->in_type, dst, &buf);
-	if (in != QSE_NULL) QSE_AWK_FREE (run->awk, in);
 
 	if (n <= -1) 
 	{
 		/* make getline return -1 */
 		n = -1;
 	}
-
-	if (n > 0)
+	else if (n > 0)
 	{
+		if (p->in_type == QSE_AWK_IN_CONSOLE)
+		{
+			QSE_ASSERT (p->in == QSE_NULL);
+			if (rtx->nrflt.limit > 0)
+			{
+				if (((rtx->gbl.nr / rtx->nrflt.limit) % rtx->nrflt.size) != rtx->nrflt.rank)
+				{
+					if (update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return QSE_NULL;
+					/* this jump is a bit dirty. the 'if' block below qse_awk_rtx_readion()
+					 * will never be true. but this makes code confusing */
+					goto read_console_again; 
+				}
+			}
+		}
+
 		if (p->var == QSE_NULL)
 		{
 			/* set $0 with the input value */
-			if (qse_awk_rtx_setrec (run, 0,
-				QSE_STR_PTR(&buf),
-				QSE_STR_LEN(&buf)) <= -1)
-			{
-				qse_str_fini (&buf);
-				return QSE_NULL;
-			}
-
-			qse_str_fini (&buf);
+			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_PTR(buf), QSE_STR_LEN(buf));
+			if (x <= -1) return QSE_NULL;
 		}
 		else
 		{
 			qse_awk_val_t* v;
 
-			v = qse_awk_rtx_makestrval (run, 
-				QSE_STR_PTR(&buf), QSE_STR_LEN(&buf));
-			qse_str_fini (&buf);
+			v = qse_awk_rtx_makestrval (rtx, QSE_STR_PTR(buf), QSE_STR_LEN(buf));
 			if (v == QSE_NULL)
 			{
-				ADJERR_LOC (run, &nde->loc);
+				ADJERR_LOC (rtx, &nde->loc);
 				return QSE_NULL;
 			}
 
-			qse_awk_rtx_refupval (run, v);
-			if (do_assignment(run, p->var, v) == QSE_NULL)
-			{
-				qse_awk_rtx_refdownval (run, v);
-				return QSE_NULL;
-			}
-			qse_awk_rtx_refdownval (run, v);
+			qse_awk_rtx_refupval (rtx, v);
+			tmp = do_assignment(rtx, p->var, v);
+			qse_awk_rtx_refdownval (rtx, v);
+			if (tmp == QSE_NULL) return QSE_NULL;
 		}
-	}
-	else
-	{
-		qse_str_fini (&buf);
+
+		/* update FNR & NR if reading from console */
+		if (p->in_type == QSE_AWK_IN_CONSOLE &&
+		    update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) 
+		{
+			return QSE_NULL;
+		}
 	}
 	
 skip_read:
-	res = qse_awk_rtx_makeintval (run, n);
-	if (res == QSE_NULL) ADJERR_LOC (run, &nde->loc);
-	return res;
+	tmp = qse_awk_rtx_makeintval (rtx, n);
+	if (tmp == QSE_NULL) ADJERR_LOC (rtx, &nde->loc);
+	return tmp;
 }
 
 static qse_awk_val_t* eval_print (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
@@ -6398,35 +6370,44 @@ static int __raw_push (qse_awk_rtx_t* run, void* val)
 	return 0;
 }
 
-static int read_record (qse_awk_rtx_t* run)
+static int read_record (qse_awk_rtx_t* rtx)
 {
 	qse_ssize_t n;
+	qse_str_t* buf;
+	qse_awk_rtx_ecb_t* ecb;
 
-	if (qse_awk_rtx_clrrec (run, QSE_FALSE) == -1) return -1;
+read_again:
+	if (qse_awk_rtx_clrrec (rtx, QSE_FALSE) == -1) return -1;
 
-	n = qse_awk_rtx_readio (
-		run, QSE_AWK_IN_CONSOLE, QSE_T(""), &run->inrec.line);
+	buf = &rtx->inrec.line;
+	n = qse_awk_rtx_readio (rtx, QSE_AWK_IN_CONSOLE, QSE_T(""), buf);
 	if (n <= -1) 
 	{
-		qse_awk_rtx_clrrec (run, QSE_FALSE);
+		qse_awk_rtx_clrrec (rtx, QSE_FALSE);
 		return -1;
 	}
 
 #ifdef DEBUG_RUN
 	qse_dprintf (QSE_T("record len = %d str=[%.*s]\n"), 
-			(int)QSE_STR_LEN(&run->inrec.line),
-			(int)QSE_STR_LEN(&run->inrec.line),
-			QSE_STR_PTR(&run->inrec.line));
+			(int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
 #endif
 	if (n == 0) 
 	{
-		QSE_ASSERT (QSE_STR_LEN(&run->inrec.line) == 0);
+		QSE_ASSERT (QSE_STR_LEN(buf) == 0);
 		return 0;
 	}
 
-	if (qse_awk_rtx_setrec (run, 0, 
-		QSE_STR_PTR(&run->inrec.line), 
-		QSE_STR_LEN(&run->inrec.line)) <= -1) return -1;
+	if (rtx->nrflt.limit > 0)
+	{
+		if (((rtx->gbl.nr / rtx->nrflt.limit) % rtx->nrflt.size) != rtx->nrflt.rank)
+		{
+			if (update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return -1;
+			goto read_again;
+		}
+	}
+
+	if (qse_awk_rtx_setrec (rtx, 0, QSE_STR_PTR(buf), QSE_STR_LEN(buf)) <= -1 ||
+	    update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return -1;
 
 	return 1;
 }
@@ -6820,7 +6801,7 @@ wp_mod_main:
 			}
 			else
 			{
-				if (val != QSE_NULL) 
+				if (val) 
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
@@ -7309,7 +7290,7 @@ wp_mod_main:
 			}
 			else
 			{
-				if (val != QSE_NULL) 
+				if (val)
 				{
 					if (stack_arg_idx >= nargs_on_stack)
 					{
@@ -7409,15 +7390,19 @@ wp_mod_main:
 			}
 
 			qse_awk_rtx_refdownval (rtx, v);
+
 		}
-		else /*if (fmt[i] == QSE_T('%'))*/
+		else 
 		{
-			OUT_STR (QSE_STR_PTR(fbu), QSE_STR_LEN(fbu));
+			if (fmt[i] != QSE_T('%')) 
+				OUT_STR (QSE_STR_PTR(fbu), QSE_STR_LEN(fbu));
 			OUT_CHAR (fmt[i]);
+			goto skip_taking_arg;
 		}
 
 		if (args == QSE_NULL || val != QSE_NULL) stack_arg_idx++;
 		else args = args->next;
+	skip_taking_arg:
 		qse_str_clear (fbu);
 	}
 
@@ -7428,3 +7413,12 @@ wp_mod_main:
 	return QSE_STR_PTR(out);
 }
 
+void qse_awk_rtx_setnrflt (qse_awk_rtx_t* rtx, const qse_awk_nrflt_t* nrflt)
+{
+	rtx->nrflt = *nrflt;
+}
+
+void qse_awk_rtx_getnrflt (qse_awk_rtx_t* rtx, qse_awk_nrflt_t* nrflt)
+{
+	*nrflt = rtx->nrflt;
+}

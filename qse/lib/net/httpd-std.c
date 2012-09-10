@@ -342,7 +342,6 @@ static void fini_xtn_ssl (httpd_xtn_t* xtn)
  TODO: CRYPTO_set_locking_callback (QSE_NULL); */
 	SSL_CTX_free (xtn->ssl_ctx);
 
-
 	/*ERR_remove_state ();*/
 	ENGINE_cleanup ();
 

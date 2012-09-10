@@ -1165,7 +1165,7 @@ int qse_awk_rtx_valtonum (
 
 #ifdef DEBUG_VAL
 	qse_dprintf (
-		QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum\n"),
+		QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_valtonum()\n"),
 		v->type
 	);
 #endif
@@ -1223,6 +1223,52 @@ int qse_awk_rtx_strtonum (
 
 	if (strict && endptr < ptr + len) return -1;
 	return 0; /* long */
+}
+
+static qse_ulong_t hash (qse_uint8_t* ptr, qse_size_t len)
+{
+	qse_ulong_t h = 5381;
+	while (len > 0) h = ((h << 5) + h) + ptr[--len];
+	return h;
+}
+
+qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
+{
+	qse_long_t hv;
+
+	switch (v->type)
+	{
+		case QSE_AWK_VAL_NIL:
+			hv = 0;
+			break;
+
+		case QSE_AWK_VAL_INT:
+			/*hv = ((qse_awk_val_int_t*)v)->val;*/
+			hv = (qse_long_t)hash (&((qse_awk_val_int_t*)v)->val, QSE_SIZEOF(((qse_awk_val_int_t*)v)->val));
+			break;
+
+		case QSE_AWK_VAL_FLT:
+			hv = (qse_long_t)hash (&((qse_awk_val_flt_t*)v)->val, QSE_SIZEOF(((qse_awk_val_flt_t*)v)->val));
+			break;
+
+		case QSE_AWK_VAL_STR:
+			hv = (qse_long_t)hash (((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len * QSE_SIZEOF(qse_char_t));
+			break;
+
+		default:
+
+#ifdef DEBUG_VAL
+			qse_dprintf (
+				QSE_T(">>WRONG VALUE TYPE [%d] in qse_awk_rtx_hashval()\n"), 
+				v->type
+			);
+#endif
+
+			qse_awk_rtx_seterrnum (rtx, QSE_AWK_EVALTYPE, QSE_NULL);
+			return -1;
+	}
+
+	return hv  & ~(((qse_ulong_t)1) << ((QSE_SIZEOF(qse_ulong_t) * 8) - 1));
 }
 
 #if 0
