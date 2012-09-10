@@ -285,6 +285,7 @@ struct qse_awk_rtx_t
 
 		qse_str_t line; /* entire line */
 		qse_str_t linew; /* line for manipulation, if necessary */
+		qse_str_t lineg; /* line buffer for getline */
 
 		qse_awk_val_t* d0; /* $0 */
 
@@ -297,6 +298,8 @@ struct qse_awk_rtx_t
 			qse_awk_val_t*    val; /* $1 .. $NF */
 		}* flds;
 	} inrec;
+
+	qse_awk_nrflt_t nrflt;
 
 	struct
 	{
