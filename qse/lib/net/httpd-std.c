@@ -1423,9 +1423,14 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 #else
 			if (peek)
 			{
+				qse_stat_t st;
+
 				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskfile (
-					httpd, client, QSE_NULL, qpath, req);
+
+				if (QSE_LSTAT (qpath, &st) == 0 && S_ISDIR(st.st_mode))
+					task = qse_httpd_entaskdir (httpd, client, QSE_NULL, qpath, req);
+				else
+					task = qse_httpd_entaskfile (httpd, client, QSE_NULL, qpath, req);
 				if (task == QSE_NULL) goto oops;
 			}
 #endif
@@ -1573,11 +1578,6 @@ static int handle_request (
 	}
 }
 
-int list_directory (qse_httpd_t* httpd, const qse_mchar_t* path)
-{
-	return 404;
-}
-
 static qse_httpd_cbs_t httpd_standard_callbacks =
 {
 	/* server */
@@ -1622,8 +1622,6 @@ static qse_httpd_cbs_t httpd_standard_callbacks =
 	/* http request */
 	peek_request,
 	handle_request,
-
-	list_directory
 };
 
 int qse_httpd_loopstd (qse_httpd_t* httpd, qse_ntime_t timeout)

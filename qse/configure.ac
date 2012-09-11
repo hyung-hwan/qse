@@ -82,7 +82,7 @@ AC_SUBST(LIBM, $LIBM)
 
 dnl check header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h])
+AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
 AC_CHECK_HEADERS([net/if.h])
@@ -100,7 +100,7 @@ AC_CHECK_FUNCS([mbrlen mbrtowc wcrtomb])
 AC_CHECK_FUNCS([mbsnrtowcs mbsrtowcs wcsnrtombs wcsrtombs])
 AC_CHECK_FUNCS([wctype iswctype wctrans towctrans])
 AC_CHECK_FUNCS([isblank iswblank])
-AC_CHECK_FUNCS([lseek64 stat64 fstat64 lstat64 ftruncate64])
+AC_CHECK_FUNCS([lseek64 stat64 fstat64 lstat64 ftruncate64 readdir64])
 AC_CHECK_FUNCS([timegm timelocal])
 AC_CHECK_FUNCS([utime utimes])
 AC_CHECK_FUNCS([sysconf])

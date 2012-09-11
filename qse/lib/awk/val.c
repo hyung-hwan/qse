@@ -1268,6 +1268,7 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 			return -1;
 	}
 
+	/* turn off the sign bit */
 	return hv  & ~(((qse_ulong_t)1) << ((QSE_SIZEOF(qse_ulong_t) * 8) - 1));
 }
 

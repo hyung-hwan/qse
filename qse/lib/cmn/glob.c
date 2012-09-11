@@ -34,9 +34,7 @@
 #	include <dos.h>
 #	include <errno.h>
 #else
-#	include <dirent.h>
-#	include <sys/stat.h>
-#	include <unistd.h>
+#	include "syscall.h"
 #endif
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
@@ -326,40 +324,41 @@ static int get_next_segment (glob_t* g, segment_t* seg)
 
 #if defined(_WIN32)
 
-struct DIR
+struct qse_dir_t
 {
 	HANDLE h;
 	WIN32_FIND_DATA wfd;	
 	int done;
 };
-typedef struct DIR DIR;
+typedef struct qse_dir_t qse_dir_t;
 
 #elif defined(__OS2__)
 
-struct DIR
+struct qse_dir_t
 {
 	HDIR h;
 	FILEFINDBUF3L ffb;	
 	ULONG count;
 };
-typedef struct DIR DIR;
+typedef struct qse_dir_t qse_dir_t;
 
 #elif defined(__DOS__)
-struct DIR
+
+struct qse_dir_t
 {
 	struct find_t f;
 	int done;
 };
-typedef struct DIR DIR;
+typedef struct qse_dir_t qse_dir_t;
 
 #endif
 
-static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
+static qse_dir_t* xopendir (glob_t* g, const qse_cstr_t* path)
 {
 #if defined(_WIN32)
 
 	/* ------------------------------------------------------------------- */
-	DIR* dp;
+	qse_dir_t* dp;
 
 	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
 	if (dp == QSE_NULL) return QSE_NULL;
@@ -400,7 +399,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 #elif defined(__OS2__)
 
 	/* ------------------------------------------------------------------- */
-	DIR* dp;
+	qse_dir_t* dp;
 	APIRET rc;
 	qse_mchar_t* mptr;
 
@@ -463,7 +462,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 #elif defined(__DOS__)
 
 	/* ------------------------------------------------------------------- */
-	DIR* dp;
+	qse_dir_t* dp;
 	unsigned int rc;
 	qse_mchar_t* mptr;
 	qse_size_t wl, ml;
@@ -519,13 +518,12 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 #else
 
 	/* ------------------------------------------------------------------- */
-
 #if defined(QSE_CHAR_IS_MCHAR)
-	return opendir ((path->len <= 0)? QSE_T("."): path->ptr);
+	return QSE_OPENDIR ((path->len <= 0)? QSE_T("."): path->ptr);
 #else
 	if (path->len <= 0)
 	{
-		return opendir (QSE_MT("."));
+		return QSE_OPENDIR (QSE_MT("."));
 	}
 	else
 	{
@@ -534,7 +532,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 		mptr = wcs_to_mbuf (g, path->ptr, &g->mbuf);
 		if (mptr == QSE_NULL) return QSE_NULL;
 
-		return opendir (mptr);
+		return QSE_OPENDIR (mptr);
 	}
 #endif 
 	/* ------------------------------------------------------------------- */
@@ -542,7 +540,7 @@ static DIR* xopendir (glob_t* g, const qse_cstr_t* path)
 #endif
 }
 
-static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
+static int xreaddir (glob_t* g, qse_dir_t* dp, qse_str_t* path)
 {
 #if defined(_WIN32)
 
@@ -615,14 +613,14 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 #else
 
 	/* ------------------------------------------------------------------- */
-	struct dirent* de;
+	qse_dirent_t* de;
 #if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing */
 #else
 	qse_size_t ml, wl, tmp;
 #endif
 
-	de = readdir (dp);
+	de = QSE_READDIR (dp);
 	if (de == NULL) return 0;
 
 #if defined(QSE_CHAR_IS_MCHAR)
@@ -640,7 +638,7 @@ static int xreaddir (glob_t* g, DIR* dp, qse_str_t* path)
 #endif
 }
 
-static void xclosedir (glob_t* g, DIR* dp)
+static void xclosedir (glob_t* g, qse_dir_t* dp)
 {
 #if defined(_WIN32)
 	FindClose (dp->h);
@@ -652,7 +650,7 @@ static void xclosedir (glob_t* g, DIR* dp)
 	_dos_findclose (&dp->f);
 	QSE_MMGR_FREE (g->mmgr, dp);
 #else
-	closedir (dp);
+	QSE_CLOSEDIR (dp);
 #endif
 }
 
@@ -722,7 +720,7 @@ struct stack_node_t
 {
 	qse_size_t tmp;
 	qse_size_t tmp2;
-	DIR* dp;
+	qse_dir_t* dp;
 	segment_t seg;
 
 	stack_node_t* next;
@@ -731,7 +729,7 @@ struct stack_node_t
 
 static int search (glob_t* g, segment_t* seg)
 {
-	DIR* dp;
+	qse_dir_t* dp;
 	qse_size_t tmp, tmp2;
 
 #if defined(NO_RECURSION)

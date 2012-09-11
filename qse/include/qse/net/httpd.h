@@ -104,6 +104,12 @@ typedef int (*qse_httpd_muxcb_t) (
 	void*        cbarg
 );
 
+typedef struct qse_httpd_dirent_t qse_httpd_dirent_t;
+struct qse_httpd_dirent_t
+{
+};
+
+
 typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
 struct qse_httpd_cbs_t
 {
@@ -211,8 +217,6 @@ struct qse_httpd_cbs_t
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
-
-	int (*listdir) (qse_httpd_t* httpd, const qse_mchar_t* path);
 };
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;
@@ -495,6 +499,14 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 );
 
 qse_httpd_task_t* qse_httpd_entaskfile (
+	qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	const qse_mchar_t*        name,
+	qse_htre_t*               req
+);
+
+qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,

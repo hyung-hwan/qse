@@ -79,8 +79,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libqsenet_la_DEPENDENCIES =
 am_libqsenet_la_OBJECTS = http.lo htre.lo htrd.lo httpd.lo \
-	httpd-cgi.lo httpd-proxy.lo httpd-resol.lo httpd-std.lo \
-	httpd-task.lo upxd.lo
+	httpd-cgi.lo httpd-dir.lo httpd-file.lo httpd-proxy.lo \
+	httpd-resol.lo httpd-std.lo httpd-task.lo upxd.lo
 libqsenet_la_OBJECTS = $(am_libqsenet_la_OBJECTS)
 libqsenet_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -271,6 +271,8 @@ libqsenet_la_SOURCES = \
 	htrd.c \
 	httpd.c \
 	httpd-cgi.c \
+	httpd-dir.c \
+	httpd-file.c \
 	httpd-proxy.c \
 	httpd-resol.c \
 	httpd-std.c \
@@ -357,6 +359,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/htre.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-cgi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-dir.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-file.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-proxy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-resol.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd-std.Plo@am__quote@

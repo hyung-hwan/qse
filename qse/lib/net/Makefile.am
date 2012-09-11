@@ -14,6 +14,8 @@ libqsenet_la_SOURCES = \
 	htrd.c \
 	httpd.c \
 	httpd-cgi.c \
+	httpd-dir.c \
+	httpd-file.c \
 	httpd-proxy.c \
 	httpd-resol.c \
 	httpd-std.c \
