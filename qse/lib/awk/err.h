@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-const qse_char_t* qse_awk_dflerrstr (qse_awk_t* awk, qse_awk_errnum_t errnum);
+const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errnum);
 
 #ifdef __cplusplus
 }

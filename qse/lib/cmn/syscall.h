@@ -23,38 +23,41 @@
 
 /* This file defines unix/linux system calls */
 
-#ifdef HAVE_SYS_TYPES_H
+#if defined(HAVE_SYS_TYPES_H)
 #	include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
+#if defined(HAVE_UNISTD_H)
 #	include <unistd.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
+#if defined(HAVE_SYS_WAIT_H)
 #	include <sys/wait.h>
 #endif
-#ifdef HAVE_SIGNAL_H
+#if defined(HAVE_SIGNAL_H)
 #	include <signal.h>
 #endif
-#ifdef HAVE_ERRNO_H
+#if defined(HAVE_ERRNO_H)
 #	include <errno.h>
 #endif
-#ifdef HAVE_FCNTL_H
+#if defined(HAVE_FCNTL_H)
 #	include <fcntl.h>
 #endif
-#ifdef HAVE_TIME_H
+#if defined(HAVE_TIME_H)
 #	include <time.h>
 #endif
-#ifdef HAVE_SYS_TIME_H
+#if defined(HAVE_SYS_TIME_H)
 #	include <sys/time.h>
 #endif
-#ifdef HAVE_UTIME_H
+#if defined(HAVE_UTIME_H)
 #	include <utime.h>
 #endif
-#ifdef HAVE_SYS_RESOURCE_H
+#if defined(HAVE_SYS_RESOURCE_H)
 #	include <sys/resource.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
+#if defined(HAVE_SYS_STAT_H)
 #	include <sys/stat.h>
+#endif
+#if defined(HAVE_DIRENT_H)
+#	include <dirent.h>
 #endif
 
 #if defined(QSE_USE_SYSCALL) && defined(HAVE_SYS_SYSCALL_H)
@@ -353,6 +356,19 @@
 #	define QSE_UTIMES(path,t) syscall(SYS_utimes,path,t)
 #else
 #	define QSE_UTIMES(path,t) utimes(path,t)
+#endif
+
+/* ===== DIRECTORY - not really system calls ===== */
+typedef DIR qse_dir_t;
+#define QSE_OPENDIR(name) opendir(name)
+#define QSE_CLOSEDIR(name) closedir(name)
+
+#if defined(HAVE_READDIR64)
+	typedef struct dirent64 qse_dirent_t;
+#	define QSE_READDIR(x) readdir64(x)
+#else
+	typedef struct dirent qse_dirent_t;
+#	define QSE_READDIR(x) readdir(x)
 #endif
 
 /* ------------------------------------------------------------------------ */

@@ -199,15 +199,21 @@ QSEAWK implements the language described in the book
 <a class="el" href="http://cm.bell-labs.com/cm/cs/awkbook/"> 
 The AWK Proramming Language</a> with various @ref awk_ext "extensions".
 
-An AWK program, at the top level, can composed of the following elements shown below. Each language element requires the option in the second column to be on. 
+An AWK program can be composed of the following elements shown below. 
+Each language element requires the option in the second column to be on. 
 
 <table>
 <tr><th>Element                    </th><th>Option             </th></tr>
+<tr><td>Comment                    </td><td>                   </td></tr>
 <tr><td>Global variable declaration</td><td>#QSE_AWK_EXPLICIT  </td></tr>
 <tr><td>Pattern-action block       </td><td>#QSE_AWK_PABLOCK   </td></tr>
 <tr><td>User-defined function      </td><td>                   </td></tr>
 <tr><td>\@include                  </td><td>#QSE_AWK_INCLUDE   </td></tr>
 </table>
+
+Single line comments begin with the '#' letter and end at the end of the
+same line. The C style multi-line comments are supported as well.
+Comments are ignored.
 
 - pattern-action-block := pattern action-block
 - pattern := BEGIN | END | expression | expression-range

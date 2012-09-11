@@ -202,6 +202,9 @@
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
 
+/* Define to 1 if you have the `readdir64' function. */
+#undef HAVE_READDIR64
+
 /* Define to 1 if you have the `round' function. */
 #undef HAVE_ROUND
 
