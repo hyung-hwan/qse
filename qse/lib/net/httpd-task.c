@@ -18,20 +18,24 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
-/* UNSUPPORTED YET..  */
-/* TODO: IMPLEMENT THIS */
-#else
-
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
-#include <qse/cmn/stdio.h> /* TODO: remove this */
+#if defined(_WIN32)
+	/* TODO */
+#elif defined(__DOS__)
+	/* TODO */
+#elif defined(__OS2__)
+	/* TODO */
+#else
+#	include "../cmn/syscall.h"
+#endif
 
 #include <stdarg.h>
-#include <stdio.h>
+#include <qse/cmn/stdio.h> /* TODO: remove this */
+
 
 /* TODO:
  * many functions in this file use qse_size_t.
@@ -43,7 +47,7 @@
 static int task_main_disconnect (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	httpd->cbs->client.shutdown (httpd, client);
+	httpd->scb->client.shutdown (httpd, client);
 	return 0;
 }
 
@@ -75,7 +79,7 @@ static int task_main_statictext (
 	}
 
 /* TODO: do i need to add code to skip this send if count is 0? */
-	n = httpd->cbs->client.send (httpd, client, task->ctx, count);
+	n = httpd->scb->client.send (httpd, client, task->ctx, count);
 	if (n <= -1) return -1;
 
 	ptr = (const qse_mchar_t*)task->ctx + n;
@@ -133,7 +137,7 @@ static int task_main_text (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: do i need to add code to skip this send if count is 0? */
-	n = httpd->cbs->client.send (httpd, client, ctx->ptr, count);
+	n = httpd->scb->client.send (httpd, client, ctx->ptr, count);
 	if (n <= -1) return -1;
 
 	ctx->left -= n;
@@ -206,7 +210,7 @@ static int task_main_format (
 	count = MAX_SEND_SIZE;
 	if (count >= ctx->left) count = ctx->left;
 
-	n = httpd->cbs->client.send (httpd, client, ctx->ptr, count);
+	n = httpd->scb->client.send (httpd, client, ctx->ptr, count);
 	if (n <= -1) return -1;
 
 	ctx->left -= n;
@@ -438,6 +442,21 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 }
 
 /*------------------------------------------------------------------------*/
+qse_httpd_task_t* qse_httpd_entaskpath (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_mchar_t* name, qse_htre_t* req)
+{
+	qse_stat_t st;
+	qse_httpd_task_t* task;
+
+	if (QSE_LSTAT (name, &st) == 0 && S_ISDIR(st.st_mode))
+		task = qse_httpd_entaskdir (httpd, client, pred, name, req);
+	else
+		task = qse_httpd_entaskfile (httpd, client, pred, name, req);
+
+	return task;
+}
+/*------------------------------------------------------------------------*/
 
 #if 0
 qse_httpd_task_t* qse_httpd_entaskconnect (
@@ -451,4 +470,3 @@ qse_httpd_task_t* qse_httpd_entaskconnect (
 }
 #endif
 
-#endif

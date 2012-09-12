@@ -187,9 +187,22 @@ int qse_parsehttpdatetime (
 );
 */
 
+/* percent-decode a string */
 qse_size_t qse_perdechttpstr (
 	const qse_mchar_t* str, 
 	qse_mchar_t*       buf
+);
+
+
+/* percent-encode a string */
+qse_size_t qse_perenchttpstr (
+	const qse_mchar_t* str, 
+	qse_mchar_t*       buf
+);
+
+qse_mchar_t* qse_perenchttpstrdup (
+	const qse_mchar_t* str, 
+	qse_mmgr_t*        mmgr
 );
 
 #ifdef __cplusplus

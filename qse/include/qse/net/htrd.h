@@ -51,11 +51,12 @@ enum qse_htrd_option_t
 {
 	QSE_HTRD_SKIPEMPTYLINES  = (1 << 0), /**< skip leading empty lines before the initial line */
 	QSE_HTRD_SKIPINITIALLINE = (1 << 1), /**< skip processing an initial line */
-	QSE_HTRD_PEEKONLY        = (1 << 2), /**< trigger a peek callback after headers without processing contents */
-	QSE_HTRD_REQUEST         = (1 << 3), /**< parse input as a request */
-	QSE_HTRD_RESPONSE        = (1 << 4), /**< parse input as a response */
-	QSE_HTRD_TRAILERS        = (1 << 5), /**< store trailers in a separate table */
-	QSE_HTRD_STRICT          = (1 << 6)  /**< be more picky */
+	QSE_HTRD_CANONQPATH      = (1 << 2), /**< canonicalize the query path */
+	QSE_HTRD_PEEKONLY        = (1 << 3), /**< trigger a peek callback after headers without processing contents */
+	QSE_HTRD_REQUEST         = (1 << 4), /**< parse input as a request */
+	QSE_HTRD_RESPONSE        = (1 << 5), /**< parse input as a response */
+	QSE_HTRD_TRAILERS        = (1 << 6), /**< store trailers in a separate table */
+	QSE_HTRD_STRICT          = (1 << 7)  /**< be more picky */
 };
 
 typedef enum qse_htrd_option_t qse_htrd_option_t;

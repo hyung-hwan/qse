@@ -34,8 +34,6 @@
 
 #else
 #	include "../cmn/syscall.h"
-#	include <errno.h>
-#	include <sys/stat.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	if defined(HAVE_SYS_SENDFILE_H)
@@ -48,8 +46,6 @@
 #		include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
 #	endif
 #endif
-
-
 
 #if defined(HAVE_SSL)
 #	include <openssl/ssl.h>
@@ -543,13 +539,13 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 oops:
 	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-	if (fd >= 0) close (fd);
+	if (fd >= 0) QSE_CLOSE (fd);
 	return -1;
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	close (server->handle.i);
+	QSE_CLOSE (server->handle.i);
 }
 
 static int server_accept (
@@ -578,7 +574,7 @@ static int server_accept (
 	{
 qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		/*TODO: qse_httpd_seterrnum (httpd, QSE_HTTPD_EXXXXX);*/
-		close (fd);
+		QSE_CLOSE (fd);
 		return -1;
 	}
 #endif
@@ -659,13 +655,13 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 oops:
 	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-	if (fd >= 0) close (fd);
+	if (fd >= 0) QSE_CLOSE (fd);
 	return -1;
 }
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-	close (peer->handle.i);
+	QSE_CLOSE (peer->handle.i);
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
@@ -782,7 +778,7 @@ static void mux_close (qse_httpd_t* httpd, void* vmux)
 			if (mux->mev.ptr[i]) qse_httpd_freemem (httpd, mux->mev.ptr[i]);
 		qse_httpd_freemem (httpd, mux->mev.ptr);
 	}
-	close (mux->fd);
+	QSE_CLOSE (mux->fd);
 	qse_httpd_freemem (httpd, mux);
 }
 
@@ -998,7 +994,10 @@ static int file_stat (
 	            qse_mbsend (path, QSE_MT(".txt"))?  QSE_MT("text/plain"):
 	            qse_mbsend (path, QSE_MT(".jpg"))?  QSE_MT("image/jpeg"):
 	            qse_mbsend (path, QSE_MT(".mp4"))?  QSE_MT("video/mp4"):
-	            qse_mbsend (path, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): QSE_NULL;
+	            qse_mbsend (path, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): 
+	            qse_mbsend (path, QSE_MT(".c"))?    QSE_MT("text/plain"): 
+	            qse_mbsend (path, QSE_MT(".h"))?    QSE_MT("text/plain"): 
+	                                                QSE_NULL;
 	return 0;
 }
 
@@ -1014,7 +1013,7 @@ static int file_ropen (
 #endif
 
 qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
-	fd = open (path, flags, 0);
+	fd = QSE_OPEN (path, flags, 0);
 	if (fd <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -1042,7 +1041,7 @@ static int file_wopen (
 #endif
 
 qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
-	fd = open (path, flags, 0644);
+	fd = QSE_OPEN (path, flags, 0644);
 	if (fd <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -1056,28 +1055,28 @@ qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
 qse_printf (QSE_T("closing file %d\n"), handle.i);
-	close (handle.i);
+	QSE_CLOSE (handle.i);
 }
 
 static qse_ssize_t file_read (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	qse_mchar_t* buf, qse_size_t len)
 {
-	return read (handle.i, buf, len);
+	return QSE_READ (handle.i, buf, len);
 }
 
 static qse_ssize_t file_write (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	const qse_mchar_t* buf, qse_size_t len)
 {
-	return write (handle.i, buf, len);
+	return QSE_WRITE (handle.i, buf, len);
 }
 
 /* ------------------------------------------------------------------- */
 static void client_close (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	close (client->handle.i);
+	QSE_CLOSE (client->handle.i);
 }
 
 static void client_shutdown (
@@ -1264,8 +1263,10 @@ static int process_request (
 
 	/* percent-decode the query path to the original buffer
 	 * since i'm not gonna need it in the original form
-	 * any more */
-	qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
+	 * any more. once it's decoded in the peek mode,
+	 * the decoded query path is made available in the
+	 * non-peek mode as well */
+	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
 
 qse_printf (QSE_T("================================\n"));
 qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"),
@@ -1423,14 +1424,8 @@ qse_printf (QSE_T("Entasking chunked CGI...\n"));
 #else
 			if (peek)
 			{
-				qse_stat_t st;
-
 				qse_httpd_discardcontent (httpd, req);
-
-				if (QSE_LSTAT (qpath, &st) == 0 && S_ISDIR(st.st_mode))
-					task = qse_httpd_entaskdir (httpd, client, QSE_NULL, qpath, req);
-				else
-					task = qse_httpd_entaskfile (httpd, client, QSE_NULL, qpath, req);
+				task = qse_httpd_entaskpath (httpd, client, QSE_NULL, qpath, req);
 				if (task == QSE_NULL) goto oops;
 			}
 #endif
@@ -1578,7 +1573,7 @@ static int handle_request (
 	}
 }
 
-static qse_httpd_cbs_t httpd_standard_callbacks =
+static qse_httpd_scb_t httpd_system_callbacks =
 {
 	/* server */
 	{ server_open, server_close, server_accept },
@@ -1617,14 +1612,17 @@ static qse_httpd_cbs_t httpd_standard_callbacks =
 	  client_send,
 	  client_sendfile,
 	  client_accepted,
-	  client_closed },
-
-	/* http request */
-	peek_request,
-	handle_request,
+	  client_closed }
 };
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, qse_ntime_t timeout)
+static qse_httpd_rcb_t httpd_request_callbacks =
 {
-	return qse_httpd_loop (httpd, &httpd_standard_callbacks, timeout);	
+	peek_request,
+	handle_request
+};
+
+int qse_httpd_loopstd (qse_httpd_t* httpd, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
+{
+	if (rcb == QSE_NULL) rcb = &httpd_request_callbacks;
+	return qse_httpd_loop (httpd, &httpd_system_callbacks, rcb, timeout);	
 }

@@ -34,7 +34,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = http01$(EXEEXT) upxd01$(EXEEXT)
+bin_PROGRAMS = httpd01$(EXEEXT) httpd02$(EXEEXT) upxd01$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/net
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -52,13 +52,16 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_http01_OBJECTS = http01.$(OBJEXT)
-http01_OBJECTS = $(am_http01_OBJECTS)
+am_httpd01_OBJECTS = httpd01.$(OBJEXT)
+httpd01_OBJECTS = $(am_httpd01_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
-http01_DEPENDENCIES = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1)
+httpd01_DEPENDENCIES = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1)
+am_httpd02_OBJECTS = httpd02.$(OBJEXT)
+httpd02_OBJECTS = $(am_httpd02_OBJECTS)
+httpd02_DEPENDENCIES = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1)
 am_upxd01_OBJECTS = upxd01.$(OBJEXT)
 upxd01_OBJECTS = $(am_upxd01_OBJECTS)
 upxd01_LDADD = $(LDADD)
@@ -77,8 +80,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(http01_SOURCES) $(upxd01_SOURCES)
-DIST_SOURCES = $(http01_SOURCES) $(upxd01_SOURCES)
+SOURCES = $(httpd01_SOURCES) $(httpd02_SOURCES) $(upxd01_SOURCES)
+DIST_SOURCES = $(httpd01_SOURCES) $(httpd02_SOURCES) $(upxd01_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -243,9 +246,11 @@ AM_CPPFLAGS = \
 
 LDADD = -lqsenet -lqsecmn $(PTHREAD_LIBS) $(SOCKET_LIBS) \
 	$(SENDFILE_LIBS) $(am__append_1)
-http01_SOURCES = http01.c
+httpd01_SOURCES = httpd01.c
+httpd02_SOURCES = httpd02.c
 upxd01_SOURCES = upxd01.c
-http01_LDADD = $(LDADD) $(SSL_LIBS)
+httpd01_LDADD = $(LDADD) $(SSL_LIBS)
+httpd02_LDADD = $(LDADD) $(SSL_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -323,9 +328,12 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
-http01$(EXEEXT): $(http01_OBJECTS) $(http01_DEPENDENCIES) $(EXTRA_http01_DEPENDENCIES) 
-	@rm -f http01$(EXEEXT)
-	$(LINK) $(http01_OBJECTS) $(http01_LDADD) $(LIBS)
+httpd01$(EXEEXT): $(httpd01_OBJECTS) $(httpd01_DEPENDENCIES) $(EXTRA_httpd01_DEPENDENCIES) 
+	@rm -f httpd01$(EXEEXT)
+	$(LINK) $(httpd01_OBJECTS) $(httpd01_LDADD) $(LIBS)
+httpd02$(EXEEXT): $(httpd02_OBJECTS) $(httpd02_DEPENDENCIES) $(EXTRA_httpd02_DEPENDENCIES) 
+	@rm -f httpd02$(EXEEXT)
+	$(LINK) $(httpd02_OBJECTS) $(httpd02_LDADD) $(LIBS)
 upxd01$(EXEEXT): $(upxd01_OBJECTS) $(upxd01_DEPENDENCIES) $(EXTRA_upxd01_DEPENDENCIES) 
 	@rm -f upxd01$(EXEEXT)
 	$(LINK) $(upxd01_OBJECTS) $(upxd01_LDADD) $(LIBS)
@@ -336,7 +344,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/httpd02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/upxd01.Po@am__quote@
 
 .c.o:

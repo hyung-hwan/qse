@@ -33,7 +33,7 @@ static void sigint (int sig)
 	if (g_httpd) qse_httpd_stop (g_httpd);
 }
 
-int httpd_main (int argc, qse_char_t* argv[])
+static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
 	int ret = -1, i;
@@ -66,7 +66,7 @@ int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loopstd (httpd, 10000);
+	ret = qse_httpd_loopstd (httpd, QSE_NULL, 10000);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);

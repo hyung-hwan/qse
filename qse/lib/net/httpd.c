@@ -245,7 +245,7 @@ static QSE_INLINE int dequeue_task (
 	{
 		if (client->status & CLIENT_TASK_TRIGGER_IN_MUX(i))
 		{
-			httpd->cbs->mux.delhnd (httpd, httpd->mux, task->trigger[i].handle);
+			httpd->scb->mux.delhnd (httpd, httpd->mux, task->trigger[i].handle);
 			client->status &= ~CLIENT_TASK_TRIGGER_IN_MUX(i);
 		}
 	}
@@ -281,13 +281,13 @@ static QSE_INLINE void purge_tasks (
 static int htrd_peek_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	return xtn->httpd->cbs->peek_request (xtn->httpd, xtn->client, req);
+	return xtn->httpd->rcb->peek_request (xtn->httpd, xtn->client, req);
 }
 
 static int htrd_handle_request (qse_htrd_t* htrd, qse_htre_t* req)
 {
 	htrd_xtn_t* xtn = (htrd_xtn_t*) qse_htrd_getxtn (htrd);
-	return xtn->httpd->cbs->handle_request (xtn->httpd, xtn->client, req);
+	return xtn->httpd->rcb->handle_request (xtn->httpd, xtn->client, req);
 }
 
 static qse_htrd_recbs_t htrd_recbs =
@@ -317,9 +317,9 @@ static qse_httpd_client_t* new_client (
 		return QSE_NULL;
 	}
 
-	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS);
+	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
-	if (httpd->cbs->client.accepted == QSE_NULL) 
+	if (httpd->scb->client.accepted == QSE_NULL) 
 		client->status |= CLIENT_READY;
 
 	client->status = tmpl->status;
@@ -351,16 +351,16 @@ qse_printf (QSE_T("Debug: CLOSING SOCKET %d\n"), client->handle.i);
 
 	if (client->status & CLIENT_HANDLE_IN_MUX)
 	{
-		httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
+		httpd->scb->mux.delhnd (httpd, httpd->mux, client->handle);
 		client->status &= ~CLIENT_HANDLE_IN_MUX;
 	}
 
 	/* note that client.closed is not a counterpart to client.accepted. 
 	 * so it is called even if client.close() failed. */
-	if (httpd->cbs->client.closed)
-		httpd->cbs->client.closed (httpd, client);
+	if (httpd->scb->client.closed)
+		httpd->scb->client.closed (httpd, client);
 	
-	httpd->cbs->client.close (httpd, client);
+	httpd->scb->client.close (httpd, client);
 
 	qse_httpd_freemem (httpd, client);
 }
@@ -434,7 +434,7 @@ static int accept_client (
 
 		QSE_MEMSET (&clibuf, 0, QSE_SIZEOF(clibuf));
 
-		if (httpd->cbs->server.accept (httpd, server, &clibuf) <= -1) 
+		if (httpd->scb->server.accept (httpd, server, &clibuf) <= -1) 
 		{
 /* TODO: proper logging */
 qse_char_t tmp[128];
@@ -451,12 +451,12 @@ qse_printf (QSE_T("failed to accept from server %s\n"), tmp);
 		client = new_client (httpd, &clibuf);
 		if (client == QSE_NULL)
 		{
-			httpd->cbs->client.close (httpd, &clibuf);
+			httpd->scb->client.close (httpd, &clibuf);
 			return -1;
 		}
 
 qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
-		if (httpd->cbs->mux.addhnd (
+		if (httpd->scb->mux.addhnd (
 			httpd, mux, client->handle, QSE_HTTPD_MUX_READ, 
 			perform_client_task, client) <= -1)
 		{
@@ -540,8 +540,8 @@ static void deactivate_servers (qse_httpd_t* httpd)
 	{
 		if (server->active)
 		{
-			httpd->cbs->mux.delhnd (httpd, httpd->mux, server->handle);
-			httpd->cbs->server.close (httpd, server);
+			httpd->scb->mux.delhnd (httpd, httpd->mux, server->handle);
+			httpd->scb->server.close (httpd, server);
 			server->active = 0;
 			httpd->server.nactive--;
 		}
@@ -554,7 +554,7 @@ static int activate_servers (qse_httpd_t* httpd)
 
 	for (server = httpd->server.list; server; server = server->next)
 	{
-		if (httpd->cbs->server.open (httpd, server) <= -1)
+		if (httpd->scb->server.open (httpd, server) <= -1)
 		{
 qse_char_t buf[64];
 qse_nwadtostr (&server->nwad, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ALL);
@@ -563,12 +563,12 @@ qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....[%s]\n"), buf);
 		}
 
 qse_printf (QSE_T("MUX ADDHND SERVER %d\n"), server->handle.i);
-		if (httpd->cbs->mux.addhnd (
+		if (httpd->scb->mux.addhnd (
 			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, 
 			accept_client, server) <= -1)
 		{
 qse_printf (QSE_T("FAILED TO ADD SERVER HANDLE TO MUX....\n"));
-			httpd->cbs->server.close (httpd, server);
+			httpd->scb->server.close (httpd, server);
 			continue;
 		}
 
@@ -585,7 +585,7 @@ static void free_server_list (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	{
 		qse_httpd_server_t* next = server->next;
 
-		httpd->cbs->server.close (httpd, server);
+		httpd->scb->server.close (httpd, server);
 		qse_httpd_freemem (httpd, server);
 		httpd->server.navail--;
 
@@ -689,11 +689,11 @@ static int read_from_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	qse_mchar_t buf[4096]; /* TODO: adjust this buffer size */
 	qse_ssize_t m;
 	
-	QSE_ASSERT (httpd->cbs->client.recv != QSE_NULL);
+	QSE_ASSERT (httpd->scb->client.recv != QSE_NULL);
 
 reread:
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	m = httpd->cbs->client.recv (httpd, client, buf, QSE_SIZEOF(buf));
+	m = httpd->scb->client.recv (httpd, client, buf, QSE_SIZEOF(buf));
 	if (m <= -1)
 	{
 		if (httpd->errnum == QSE_HTTPD_EAGAIN)
@@ -840,7 +840,7 @@ qse_printf (QSE_T("ERROR: mute client got no more task [%d] failed...\n"), (int)
 	{
 		/* the task is invoked for triggers. 
 		 * check if the client handle is writable */
-		if (httpd->cbs->mux.writable (httpd, client->handle, 0) <= 0) 
+		if (httpd->scb->mux.writable (httpd, client->handle, 0) <= 0) 
 		{
 			/* it is not writable yet. so just skip 
 			 * performing the actual task */
@@ -891,12 +891,12 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 		if ((client->status & CLIENT_HANDLE_IN_MUX) != 
 		    (mux_status & CLIENT_HANDLE_IN_MUX))
 		{
-			httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
+			httpd->scb->mux.delhnd (httpd, httpd->mux, client->handle);
 			client->status &= ~CLIENT_HANDLE_IN_MUX;
 
 			if (mux_status)
 			{
-				if (httpd->cbs->mux.addhnd (
+				if (httpd->scb->mux.addhnd (
 					httpd, httpd->mux, client->handle, 
 					mux_mask, perform_client_task, client) <= -1) 
 				{
@@ -937,7 +937,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 			{
 				if (client->status & CLIENT_TASK_TRIGGER_IN_MUX(i))
 				{
-					httpd->cbs->mux.delhnd (httpd, httpd->mux, client->trigger[i].handle);
+					httpd->scb->mux.delhnd (httpd, httpd->mux, client->trigger[i].handle);
 					client->status &= ~CLIENT_TASK_TRIGGER_IN_MUX(i);
 				}
 			}
@@ -983,7 +983,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 					}
 					else
 					{
-						if (httpd->cbs->mux.addhnd (
+						if (httpd->scb->mux.addhnd (
 							httpd, httpd->mux, task->trigger[i].handle,
 							trigger_mux_mask, perform_client_task, client) <= -1) 
 						{
@@ -1012,12 +1012,12 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 			if ((client->status & CLIENT_HANDLE_IN_MUX) != 
 			    (client_handle_mux_status & CLIENT_HANDLE_IN_MUX))
 			{
-				httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
+				httpd->scb->mux.delhnd (httpd, httpd->mux, client->handle);
 				client->status &= ~CLIENT_HANDLE_IN_MUX;
 	
 				if (client_handle_mux_mask)
 				{
-					if (httpd->cbs->mux.addhnd (
+					if (httpd->scb->mux.addhnd (
 						httpd, httpd->mux, client->handle,
 						client_handle_mux_mask, perform_client_task, client) <= -1) 
 					{
@@ -1045,7 +1045,7 @@ static int perform_client_task (
 	if (!(client->status & CLIENT_READY))
 	{
 		int x;
-		x = httpd->cbs->client.accepted (httpd, client);
+		x = httpd->scb->client.accepted (httpd, client);
 		if (x <= -1) goto oops;
 		if (x >= 1) 
 		{
@@ -1139,11 +1139,11 @@ qse_httpd_task_t* qse_httpd_entask (
 		/* arrange to invokde this task so long as 
 		 * the client-side handle is writable. */
 		QSE_ASSERT (client->status & CLIENT_HANDLE_IN_MUX);
-		httpd->cbs->mux.delhnd (httpd, httpd->mux, client->handle);
+		httpd->scb->mux.delhnd (httpd, httpd->mux, client->handle);
 		client->status &= ~CLIENT_HANDLE_IN_MUX;
 
 qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
-		if (httpd->cbs->mux.addhnd (
+		if (httpd->scb->mux.addhnd (
 			httpd, httpd->mux, client->handle, 
 			QSE_HTTPD_MUX_READ | QSE_HTTPD_MUX_WRITE, 
 			perform_client_task, client) <= -1)
@@ -1158,30 +1158,28 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 	return new_task;
 }
 
-int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_cbs_t* cbs, qse_ntime_t timeout)
+int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
 {
-	httpd->stopreq = 0;
-	httpd->cbs = cbs;
-
 	QSE_ASSERTX (httpd->server.list != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");	
 
 	QSE_ASSERTX (httpd->client.list.head == QSE_NULL,
 		"No client should exist when this loop is started");
 
-	QSE_ASSERTX (httpd->cbs != QSE_NULL,
-		"Set httpd callbacks before calling qse_httpd_loop()");	
-
-	if (httpd->server.list == QSE_NULL)
+	if (scb == QSE_NULL || rcb == QSE_NULL || 
+	    httpd->server.list == QSE_NULL) 
 	{
-		/* no listener specified */
 		httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;
 	}
 
+	httpd->stopreq = 0;
+	httpd->scb = scb;
+	httpd->rcb = rcb;
+
 	QSE_ASSERT (httpd->server.navail > 0);
 
-	httpd->mux = httpd->cbs->mux.open (httpd);
+	httpd->mux = httpd->scb->mux.open (httpd);
 	if (httpd->mux == QSE_NULL)
 	{
 qse_printf (QSE_T("can't open mux....\n"));
@@ -1190,13 +1188,13 @@ qse_printf (QSE_T("can't open mux....\n"));
 
 	if (activate_servers (httpd) <= -1) 
 	{
-		httpd->cbs->mux.close (httpd, httpd->mux);
+		httpd->scb->mux.close (httpd, httpd->mux);
 		return -1;
 	}
 	if (httpd->server.nactive <= 0)
 	{
 qse_printf (QSE_T("no servers are active....\n"));
-		httpd->cbs->mux.close (httpd, httpd->mux);
+		httpd->scb->mux.close (httpd, httpd->mux);
 		return -1;
 	}
 
@@ -1204,7 +1202,7 @@ qse_printf (QSE_T("no servers are active....\n"));
 	{
 		int count;
 
-		count = httpd->cbs->mux.poll (httpd, httpd->mux, timeout);
+		count = httpd->scb->mux.poll (httpd, httpd->mux, timeout);
 		if (count <= -1)
 		{
 			httpd->errnum = QSE_HTTPD_EIOMUX;
@@ -1220,7 +1218,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: mux returned failure\n"));
 
 	purge_client_list (httpd);
 	deactivate_servers (httpd);
-	httpd->cbs->mux.close (httpd, httpd->mux);
+	httpd->scb->mux.close (httpd, httpd->mux);
 	return 0;
 }
 

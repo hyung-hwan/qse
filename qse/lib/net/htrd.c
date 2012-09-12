@@ -389,6 +389,9 @@ static qse_mchar_t* parse_initial_line (
 			htrd->re.u.q.param = QSE_NULL;
 		}
 #endif
+
+		if (htrd->option & QSE_HTRD_CANONQPATH)
+			qse_canonmbspath (htrd->re.u.q.path, htrd->re.u.q.path, 0);
 	
 		/* skip spaces after the url part */
 		do { p++; } while (is_space_octet(*p));

@@ -22,6 +22,7 @@
 #include "../cmn/mem.h"
 #include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 typedef struct task_file_t task_file_t;
@@ -54,7 +55,7 @@ static void task_fini_fseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_fseg_t* ctx = (task_fseg_t*)task->ctx;
-	httpd->cbs->file.close (httpd, ctx->handle);
+	httpd->scb->file.close (httpd, ctx->handle);
 }
 
 static int task_main_fseg (
@@ -68,7 +69,7 @@ static int task_main_fseg (
 	if (count >= ctx->left) count = ctx->left;
 
 /* TODO: more adjustment needed for OS with different sendfile semantics... */
-	n = httpd->cbs->client.sendfile (
+	n = httpd->scb->client.sendfile (
 		httpd, client, ctx->handle, &ctx->offset, count);
 	if (n <= -1) 
 	{
@@ -147,7 +148,7 @@ static QSE_INLINE int task_main_file (
 qse_printf (QSE_T("opening file %hs\n"), file->path);
 		
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->cbs->file.stat (httpd, file->path, &st) <= -1)
+	if (httpd->scb->file.stat (httpd, file->path, &st) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -159,7 +160,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	}
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->cbs->file.ropen (httpd, file->path, &handle) <= -1)
+	if (httpd->scb->file.ropen (httpd, file->path, &handle) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -266,11 +267,11 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	}
 
 	if (x) return 0;
-	httpd->cbs->file.close (httpd, handle);
+	httpd->scb->file.close (httpd, handle);
 	return -1;
 
 no_file_send:
-	if (fileopen) httpd->cbs->file.close (httpd, handle);
+	if (fileopen) httpd->scb->file.close (httpd, handle);
 	return (x == QSE_NULL)? -1: 0;
 }
 

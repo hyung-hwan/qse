@@ -608,7 +608,7 @@ qse_printf (QSE_T("FORWARD: CLEARING REQCON FOR ERROR\n"));
 
 			if (writable) goto forward;
 
-			n = httpd->cbs->mux.writable (httpd, proxy->peer.handle, 0);
+			n = httpd->scb->mux.writable (httpd, proxy->peer.handle, 0);
 if (n == 0) qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@NOT WRITABLE\n"));
 			if (n >= 1)
 			{
@@ -617,7 +617,7 @@ if (n == 0) qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@NOT WRITABLE\n"));
 qse_printf (QSE_T("PROXY FORWARD: @@@@@@@@@@WRITING[%.*hs]\n"),
 	(int)QSE_MBS_LEN(proxy->reqfwdbuf),
 	QSE_MBS_PTR(proxy->reqfwdbuf));
-				n = httpd->cbs->peer.send (
+				n = httpd->scb->peer.send (
 					httpd, &proxy->peer,
 					QSE_MBS_PTR(proxy->reqfwdbuf),
 					QSE_MBS_LEN(proxy->reqfwdbuf)
@@ -866,7 +866,7 @@ static void task_fini_proxy (
 	task_proxy_t* proxy = (task_proxy_t*)task->ctx;
 
 	if (proxy->peer_status & PROXY_PEER_OPEN) 
-		httpd->cbs->peer.close (httpd, &proxy->peer);
+		httpd->scb->peer.close (httpd, &proxy->peer);
 
 	if (proxy->res) qse_mbs_close (proxy->res);
 	if (proxy->peer_htrd) qse_htrd_close (proxy->peer_htrd);
@@ -902,7 +902,7 @@ qse_printf (QSE_T("task_main_proxy_5 trigger[0].mask=%d trigger[1].mask=%d trigg
 		{
 /* TODO: check if proxy outputs more than content-length if it is set... */
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->cbs->client.send (httpd, client, proxy->buf, proxy->buflen);
+			n = httpd->scb->client.send (httpd, client, proxy->buf, proxy->buflen);
 			if (n <= -1)
 			{
 			/* can't return internal server error any more... */
@@ -950,7 +950,7 @@ qse_printf (QSE_T("task_main_proxy_4 about to read from PEER...\n"));
 		{
 qse_printf (QSE_T("task_main_proxy_4 reading from PEER... %d %d\n"), (int)proxy->peer_output_length, (int)proxy->peer_output_received);
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->cbs->peer.recv (
+			n = httpd->scb->peer.recv (
 				httpd, &proxy->peer,
 				&proxy->buf[proxy->buflen], 
 				QSE_SIZEOF(proxy->buf) - proxy->buflen
@@ -1005,7 +1005,7 @@ qse_printf (QSE_T("task_main_proxy_4 read from PEER...%d\n"), (int)n);
 		 * side is writable. it should be safe to write whenever
 		 * this task function is called. */
 		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->client.send (httpd, client, proxy->buf, proxy->buflen);
+		n = httpd->scb->client.send (httpd, client, proxy->buf, proxy->buflen);
 		if (n <= -1)
 		{
 			/* can't return internal server error any more... */
@@ -1057,7 +1057,7 @@ qse_printf (QSE_T("[PROXY-----3 SENDING XXXXX]\n"));
 		{
 qse_printf (QSE_T("[proxy_3 sending %d bytes]\n"), (int)count);
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->cbs->client.send (
+			n = httpd->scb->client.send (
 				httpd, client, 
 				&QSE_MBS_CHAR(proxy->res,proxy->res_consumed), 
 				count
@@ -1150,7 +1150,7 @@ for (i = 0; i < count; i++) qse_printf (QSE_T("%hc"), QSE_MBS_CHAR(proxy->res,pr
 qse_printf (QSE_T("]\n"));
 
 			httpd->errnum = QSE_HTTPD_ENOERR;
-			n = httpd->cbs->client.send (
+			n = httpd->scb->client.send (
 				httpd, client, 
 				QSE_MBS_CPTR(proxy->res,proxy->res_consumed), 
 				count
@@ -1181,7 +1181,7 @@ qse_printf (QSE_T("[proxy-2 send failure....\n"));
 
 		/* there is something to read from peer */
 		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->peer.recv (
+		n = httpd->scb->peer.recv (
 			httpd, &proxy->peer,
 			&proxy->buf[proxy->buflen], 
 			QSE_SIZEOF(proxy->buf) - proxy->buflen
@@ -1307,7 +1307,7 @@ qse_printf (QSE_T("task_main_proxy_1....\n"));
 		int n;
 
 		httpd->errnum = QSE_HTTPD_ENOERR;
-		n = httpd->cbs->peer.connected (httpd, &proxy->peer);
+		n = httpd->scb->peer.connected (httpd, &proxy->peer);
 		if (n <= -1) 
 		{
 			/* improve error conversion */
@@ -1378,7 +1378,7 @@ qse_printf (QSE_T("task_main_proxy....\n"));
 	proxy->res_pending = 0;
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	n = httpd->cbs->peer.open (httpd, &proxy->peer);
+	n = httpd->scb->peer.open (httpd, &proxy->peer);
 	if (n <= -1)
 	{
 /* TODO: translate error code to http error... */
