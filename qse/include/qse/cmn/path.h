@@ -70,34 +70,34 @@ const qse_wchar_t* qse_wcsbasename (
 );
 
 /**
- * The qse_isabspath() function determines if a path name is absolute.
+ * The qse_ismbsabspath() function determines if a path name is absolute.
  * A path name beginning with a segment separator is absolute.
  * On Win32/OS2/DOS, it also returns 1 if a path name begins with a drive 
  * letter followed by a colon.
  * @return 1 if absolute, 0 if not.
  */
-int qse_isabspath (
-	const qse_char_t* path
+int qse_ismbsabspath (
+	const qse_mchar_t* path
 );
 
 /**
- * The qse_isdrivepath() function determines if a path name begins with
+ * The qse_ismbsdrivepath() function determines if a path name begins with
  * a drive letter followed by a colon like A:.
  */
-int qse_isdrivepath (
-	const qse_char_t* path
+int qse_ismbsdrivepath (
+	const qse_mchar_t* path
 );
 
 /**
- * The qse_isdrivecurpath() function determines if a path name is in the form
+ * The qse_ismbsdrivecurpath() function determines if a path name is in the form
  * of a drive letter followed by a colon like A:, without any trailing path.
  */
-int qse_isdrivecurpath (
-	const qse_char_t* path
+int qse_ismbsdrivecurpath (
+	const qse_mchar_t* path
 );
 
 /**
- * The qse_canonpath() function canonicalizes a path name @a path by deleting 
+ * The qse_canonmbspath() function canonicalizes a path name @a path by deleting 
  * unnecessary path segments from it and stores the result to a memory buffer 
  * pointed to by @a canon. Canonicalization is purely performed on the path
  * name without refering to actual file systems. It null-terminates the 
@@ -105,9 +105,9 @@ int qse_isdrivecurpath (
  * the terminating null. 
  *
  * @code
- * qse_char_t buf[64];
- * qse_canonpath ("/usr/local/../bin/sh", buf);
- * qse_printf (QSE_T("%s\n")); // prints /usr/bin/sh
+ * qse_mchar_t buf[64];
+ * qse_canonmbspath (QSE_MT("/usr/local/../bin/sh"), buf);
+ * qse_printf (QSE_T("%hs\n")); // prints /usr/bin/sh
  * @endcode
  *
  * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
@@ -129,11 +129,89 @@ int qse_isdrivecurpath (
  * @return number of characters in the resulting canonical path excluding
  *         the terminating null.
  */
-qse_size_t qse_canonpath (
-	const qse_char_t* path,
-	qse_char_t*       canon,
-	int               flags
+qse_size_t qse_canonmbspath (
+	const qse_mchar_t* path,
+	qse_mchar_t*       canon,
+	int                flags
 );
+
+/**
+ * The qse_iswcsabspath() function determines if a path name is absolute.
+ * A path name beginning with a segment separator is absolute.
+ * On Win32/OS2/DOS, it also returns 1 if a path name begins with a drive 
+ * letter followed by a colon.
+ * @return 1 if absolute, 0 if not.
+ */
+int qse_iswcsabspath (
+	const qse_wchar_t* path
+);
+
+/**
+ * The qse_iswcsdrivepath() function determines if a path name begins with
+ * a drive letter followed by a colon like A:.
+ */
+int qse_iswcsdrivepath (
+	const qse_wchar_t* path
+);
+
+/**
+ * The qse_iswcsdrivecurpath() function determines if a path name is in the form
+ * of a drive letter followed by a colon like A:, without any trailing path.
+ */
+int qse_iswcsdrivecurpath (
+	const qse_wchar_t* path
+);
+
+/**
+ * The qse_canonwcspath() function canonicalizes a path name @a path by deleting 
+ * unnecessary path segments from it and stores the result to a memory buffer 
+ * pointed to by @a canon. Canonicalization is purely performed on the path
+ * name without refering to actual file systems. It null-terminates the 
+ * canonical path in @a canon and returns the number of characters excluding
+ * the terminating null. 
+ *
+ * @code
+ * qse_wchar_t buf[64];
+ * qse_canonwcspath (QSE_WT("/usr/local/../bin/sh"), buf);
+ * qse_printf (QSE_T("%ls\n")); // prints /usr/bin/sh
+ * @endcode
+ *
+ * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
+ * is produced if the input @path resolves to the current directory logically.
+ * For example, dir/.. is canonicalized to a single period; If it is set, 
+ * an empty string is produced. Even a single period as an input produces
+ * an empty string if it is set.
+ *
+ * The output is empty returning 0 regardless of @a flags if the input 
+ * @a path is empty.
+ * 
+ * The caller must ensure that it is large enough to hold the resulting 
+ * canonical path before calling because this function does not check the
+ * size of the memory buffer. Since the canonical path cannot be larger 
+ * than the original path, you can simply ensure this by providing a memory
+ * buffer as long as the number of characters and a terminating null in 
+ * the original path.
+ *
+ * @return number of characters in the resulting canonical path excluding
+ *         the terminating null.
+ */
+qse_size_t qse_canonwcspath (
+	const qse_wchar_t* path,
+	qse_wchar_t*       canon,
+	int                flags
+);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_isabspath(p)      qse_ismbsabspath(p)
+#	define qse_isdrivepath(p)    qse_ismbsdrivepath(p)
+#	define qse_isdrivecurpath(p) qse_ismbsdrivecurpath(p)
+#	define qse_canonpath(p,c,f)  qse_canonmbspath(p,c,f)
+#else
+#	define qse_isabspath(p)      qse_iswcsabspath(p)
+#	define qse_isdrivepath(p)    qse_iswcsdrivepath(p)
+#	define qse_isdrivecurpath(p) qse_iswcsdrivecurpath(p)
+#	define qse_canonpath(p,c,f)  qse_canonwcspath(p,c,f)
+#endif
 
 #ifdef __cplusplus
 }

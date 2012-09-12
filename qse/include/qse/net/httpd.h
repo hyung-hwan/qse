@@ -104,14 +104,8 @@ typedef int (*qse_httpd_muxcb_t) (
 	void*        cbarg
 );
 
-typedef struct qse_httpd_dirent_t qse_httpd_dirent_t;
-struct qse_httpd_dirent_t
-{
-};
-
-
-typedef struct qse_httpd_cbs_t qse_httpd_cbs_t;
-struct qse_httpd_cbs_t
+typedef struct qse_httpd_scb_t qse_httpd_scb_t;
+struct qse_httpd_scb_t
 {
 	struct
 	{
@@ -212,7 +206,11 @@ struct qse_httpd_cbs_t
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);  /* optional */
 	} client;
+};
 
+typedef struct qse_httpd_rcb_t qse_httpd_rcb_t;
+struct qse_httpd_rcb_t
+{
 	int (*peek_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_request) (
@@ -335,6 +333,7 @@ struct qse_httpd_ecb_t
 	qse_httpd_ecb_t* next;
 };
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -396,7 +395,8 @@ void qse_httpd_pushecb (
  */
 int qse_httpd_loop (
 	qse_httpd_t*     httpd, 
-	qse_httpd_cbs_t* cbs,
+	qse_httpd_scb_t* scb,
+	qse_httpd_rcb_t* rcb,
 	qse_ntime_t      timeout
 );
 
@@ -506,7 +506,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskdir (
+qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -574,6 +574,7 @@ void* qse_httpd_getxtnstd (
 
 int qse_httpd_loopstd (
 	qse_httpd_t*     httpd, 
+	qse_httpd_rcb_t* rcb,
 	qse_ntime_t      timeout
 );
 

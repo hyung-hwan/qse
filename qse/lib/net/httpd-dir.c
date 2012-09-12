@@ -22,6 +22,7 @@
 #include "../cmn/mem.h"
 #include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/path.h>
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 typedef struct task_dir_t task_dir_t;
@@ -35,15 +36,24 @@ struct task_dir_t
 typedef struct task_dseg_t task_dseg_t;
 struct task_dseg_t
 {
+	qse_http_version_t version;
+	int                keepalive;
+	int                chunked;
+
 	const qse_mchar_t* path;
 	qse_dir_t* handle;
 	qse_dirent_t* dent;
 
-	int header_added;
-	int footer_pending;
+#define HEADER_ADDED   (1 << 0)
+#define FOOTER_ADDED   (1 << 1)
+#define FOOTER_PENDING (1 << 2)
+#define DIRENT_PENDING (1 << 3)
+	int state;
 
-	/*qse_mchar_t buf[4096];*/
-	qse_mchar_t buf[512]; /* TOOD: increate size */
+	qse_size_t  tcount; /* total directory entries */
+	qse_size_t  dcount; /* the number of items in the buffer */
+
+	qse_mchar_t buf[4096];
 	qse_size_t  bufpos;
 	qse_size_t  buflen;
 	qse_size_t  bufrem;
@@ -70,14 +80,88 @@ static void task_fini_dseg (
 	QSE_CLOSEDIR (ctx->handle);
 }
 
-static int task_main_dseg_chunked (
+#define SIZE_CHLEN     4 /* the space size to hold the hexadecimal chunk length */
+#define SIZE_CHLENCRLF 2 /* the space size to hold CRLF after the chunk length */
+#define SIZE_CHENDCRLF 2 /* the sapce size to hold CRLF after the chunk data */
+
+static QSE_INLINE void close_chunk_data (task_dseg_t* ctx, qse_size_t len)
+{
+	ctx->chunklen = len;
+
+	/* CHENDCRLF - there is always space for these two. 
+	 * reserved with SIZE_CHENDCRLF */
+	ctx->buf[ctx->buflen++] = QSE_MT('\r');
+	ctx->buf[ctx->buflen++] = QSE_MT('\n');
+}
+
+static void fill_chunk_length (task_dseg_t* ctx)
+{
+	int x;
+
+	/* right alignment with space padding on the left */
+/* TODO: change snprintf to qse_fmtuintmaxtombs() */
+	x = snprintf (
+		ctx->buf, (SIZE_CHLEN + SIZE_CHLENCRLF) - 1, 
+		QSE_MT("%*lX"), (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
+		(unsigned long)(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)));	
+
+	/* i don't check the error of snprintf because i've secured the 
+	 * suffient space for the chunk length at the beginning of the buffer */
+	
+	/* CHLENCRLF */
+	ctx->buf[x] = QSE_MT('\r');
+	ctx->buf[x+1] = QSE_MT('\n');
+
+	/* skip leading space padding */
+	QSE_ASSERT (ctx->bufpos == 0);
+	while (ctx->buf[ctx->bufpos] == QSE_MT(' ')) ctx->bufpos++;
+}
+
+static int add_footer (task_dseg_t* ctx)
+{
+	int x;
+
+	if (ctx->chunked)
+	{
+		x = snprintf (
+			&ctx->buf[ctx->buflen], ctx->bufrem,
+			QSE_MT("</ul>Total %lu entries</body></html>\r\n0\r\n"), (unsigned long)ctx->tcount);
+	}
+	else
+	{
+		x = snprintf (
+			&ctx->buf[ctx->buflen], ctx->bufrem,
+			QSE_MT("</ul>Total %lu entries</body></html>"), (unsigned long)ctx->tcount);
+	}
+	
+	if (x == -1 || x >= ctx->bufrem) 
+	{
+		/* return an error if the buffer is too small to hold the 
+		 * trailing footer. you need to increate the buffer size */
+		return -1;
+	}
+
+	ctx->buflen += x;
+	ctx->bufrem -= x;
+
+	/* -5 for \r\n0\r\n added above */
+	if (ctx->chunked) close_chunk_data (ctx, ctx->buflen - 5);
+
+	return 0;
+}
+
+static int task_main_dseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dseg_t* ctx = (task_dseg_t*)task->ctx;
 	qse_ssize_t n;
 	int x;
 
-	if (ctx->bufpos < ctx->buflen) goto send_dirlist;
+	if (ctx->bufpos < ctx->buflen) 
+	{
+		/* buffer contents not fully sent yet */
+		goto send_dirlist;
+	}
 
 	/* the buffer size is fixed to QSE_COUNTOF(ctx->buf).
 	 * the number of digits need to hold the the size converted to
@@ -103,122 +187,149 @@ static int task_main_dseg_chunked (
 	 * the size of the buffer arrray, you should check this size. 
 	 */
 	
-#define SIZE_CHLEN     4
-#define SIZE_CHLENCRLF 2
-#define SIZE_CHENDCRLF 2
-
-	/* reserve space to fill with the chunk length
-	 * 4 for the actual chunk length and +2 for \r\n */
-	ctx->buflen = SIZE_CHLEN + SIZE_CHLENCRLF; 
-
-	/* free space remaing in the buffer for the chunk data */
-	ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - SIZE_CHENDCRLF; 
-
-	if (ctx->footer_pending)
+	/* initialize buffer */
+	ctx->dcount = 0; /* reset the entry counter */
+	ctx->bufpos = 0;
+	if (ctx->chunked)
 	{
-		x = snprintf (
-			&ctx->buf[ctx->buflen], 
-			ctx->bufrem,
-			QSE_MT("</ul></body></html>\r\n0\r\n"));
-		if (x == -1 || x >= ctx->bufrem) 
+		/* reserve space to fill with the chunk length
+		 * 4 for the actual chunk length and +2 for \r\n */
+		ctx->buflen = SIZE_CHLEN + SIZE_CHLENCRLF; 
+		/* free space remaing in the buffer for the chunk data */
+		ctx->bufrem = QSE_COUNTOF(ctx->buf) - ctx->buflen - SIZE_CHENDCRLF; 
+	}
+	else
+	{
+		ctx->buflen = 0;
+		ctx->bufrem = QSE_COUNTOF(ctx->buf);
+	}
+
+	if (ctx->state & FOOTER_PENDING)
+	{
+		/* only footers yet to be sent */
+		if (add_footer (ctx) <= -1)
 		{
 			/* return an error if the buffer is too small to hold the 
 			 * trailing footer. you need to increate the buffer size */
+			httpd->errnum = QSE_HTTPD_EINTERN;
 			return -1;
 		}
 
-		ctx->buflen += x;
-		ctx->chunklen = ctx->buflen - 5; /* -5 for \r\n0\r\n added above */
+		ctx->state &= ~FOOTER_PENDING;
+		ctx->state |= FOOTER_ADDED;
 
-		/* CHENDCRLF */
-		ctx->buf[ctx->buflen++] = QSE_MT('\r');
-		ctx->buf[ctx->buflen++] = QSE_MT('\n');
-
-		goto set_chunklen;
+		if (ctx->chunked) fill_chunk_length (ctx);
+		goto send_dirlist;
 	}
 
-	if (!ctx->header_added)
+	if (!(ctx->state & HEADER_ADDED))
 	{
-		/* compose the header since this is the first time. */
+		int is_root;
 
+		is_root = (qse_mbscmp (ctx->path, QSE_MT("/")) == 0);
+
+		/* compose the header since this is the first time. */
+/* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
 		x = snprintf (
-			&ctx->buf[ctx->buflen], 
-			ctx->bufrem,
-			QSE_MT("<html><head><title>Directory Listing</title></head><body><b>%s</b><ul><li><a href='../'>..</a></li>"),
-			ctx->path
+			&ctx->buf[ctx->buflen], ctx->bufrem,
+			QSE_MT("<html><head></head><body><b>%s</b><ul>%s"), 
+			ctx->path, (is_root? QSE_MT(""): QSE_MT("<li><a href='../'>..</a></li>"))
 		);
 		if (x == -1 || x >= ctx->bufrem) 
 		{
 			/* return an error if the buffer is too small to hold the header.
-			 * you need to increate the buffer size */
+			 * you need to increate the buffer size. or i have make the buffer 
+			 * dynamic. */
+			httpd->errnum = QSE_HTTPD_EINTERN;
 			return -1;
 		}
 
 		ctx->buflen += x;
 		ctx->bufrem -= x;
 
-		ctx->header_added = 1;
+		ctx->state |= HEADER_ADDED;
+		ctx->dcount++;  
 	}
 
-	if (!ctx->dent)
+	/*if (!ctx->dent) ctx->dent = QSE_READDIR (ctx->handle); */
+	if (ctx->state & DIRENT_PENDING) 
+		ctx->state &= ~DIRENT_PENDING;
+	else 
 		ctx->dent = QSE_READDIR (ctx->handle);
 
 	do
 	{
 		if (!ctx->dent)
 		{
-			// TODO: check if errno has changed from before QSE_READDIR().
-			//       and return -1 if so.
-			x = snprintf (
-				&ctx->buf[ctx->buflen], 
-				ctx->bufrem,
-				QSE_MT("</ul></body></html>\r\n0\r\n"));
-			if (x == -1 || x >= ctx->bufrem) 
+			/* TODO: check if errno has changed from before QSE_READDIR().
+			         and return -1 if so. */ 
+			if (add_footer (ctx) <= -1) 
 			{
-				ctx->footer_pending = 1;
-				ctx->chunklen = ctx->buflen;
-
-				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = QSE_MT('\r');
-				ctx->buf[ctx->buflen++] = QSE_MT('\n');
+				/* failed to add the footer part */
+				if (ctx->chunked)
+				{
+					close_chunk_data (ctx, ctx->buflen);
+					fill_chunk_length (ctx);
+				}
+				ctx->state |= FOOTER_PENDING;
 			}
-			else
-			{
-				ctx->buflen += x;
-				ctx->chunklen = ctx->buflen - 5;
-
-				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = QSE_MT('\r');
-				ctx->buf[ctx->buflen++] = QSE_MT('\n');
-			}
+			else if (ctx->chunked) fill_chunk_length (ctx);
 			break;	
 		}
 		else if (qse_mbscmp (ctx->dent->d_name, QSE_MT(".")) != 0 &&
 		         qse_mbscmp (ctx->dent->d_name, QSE_MT("..")) != 0)
 		{
+			qse_mchar_t* encname;
+
+			/* TODO: better buffer management in case there are 
+			 *       a lot of file names to escape. */
+			encname = qse_perenchttpstrdup (ctx->dent->d_name, httpd->mmgr);
+			if (encname == QSE_NULL)
+			{
+				httpd->errnum = QSE_HTTPD_ENOMEM;
+				return -1;
+			}
+
 			x = snprintf (
 				&ctx->buf[ctx->buflen], 
 				ctx->bufrem,
 				QSE_MT("<li><a href='%s%s'>%s%s</a></li>"),
-				ctx->dent->d_name,
+				encname,
 				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT("")),
 				ctx->dent->d_name,
 				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT(""))
 			);
+
+			if (encname != ctx->dent->d_name) QSE_MMGR_FREE (httpd->mmgr, encname);
+
 			if (x == -1 || x >= ctx->bufrem)
 			{
 				/* buffer not large enough to hold this entry */
-				ctx->chunklen = ctx->buflen;
+				if (ctx->dcount <= 0) 
+				{
+					/* neither directory entry nor the header 
+					 * has been added to the buffer so far. and 
+					 * this attempt has failed. the buffer size must 
+					 * be too small. you must increase it */
+					httpd->errnum = QSE_HTTPD_EINTERN;
+					return -1;
+				}
 
-				/* CHENDCRLF */
-				ctx->buf[ctx->buflen++] = QSE_MT('\r');
-				ctx->buf[ctx->buflen++] = QSE_MT('\n');
+				if (ctx->chunked)
+				{
+					close_chunk_data (ctx, ctx->buflen);
+					fill_chunk_length (ctx);
+				}
+
+				ctx->state |= DIRENT_PENDING;
 				break;
 			}
 			else
 			{
 				ctx->buflen += x;
 				ctx->bufrem -= x;
+				ctx->dcount++;
+				ctx->tcount++;
 			}
 		}
 
@@ -226,167 +337,41 @@ static int task_main_dseg_chunked (
 	}
 	while (1);
 
-set_chunklen:
-	/* right alignment with space padding on the left */
-/* TODO: change snprintf to qse_fmtuintmaxtombs() */
-	x = snprintf (
-		ctx->buf, (SIZE_CHLEN + SIZE_CHLENCRLF) - 1, 
-		QSE_MT("%*lX"), (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
-		(unsigned long)(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)));
-
-	/* CHLENCRLF */
-	ctx->buf[x] = QSE_MT('\r');
-	ctx->buf[x+1] = QSE_MT('\n');
-
-	/* skip leading space padding */
-	for (x = 0; ctx->buf[x] == QSE_MT(' '); x++) ctx->buflen--;
-	ctx->bufpos = x;
 
 send_dirlist:
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	n = httpd->cbs->client.send (
-		httpd, client, &ctx->buf[ctx->bufpos], ctx->buflen);
+	n = httpd->scb->client.send (
+		httpd, client, &ctx->buf[ctx->bufpos], ctx->buflen - ctx->bufpos);
 	if (n <= -1) return -1;
 
 	/* NOTE if (n == 0), it will enter an infinite loop */
 		
 	ctx->bufpos += n;
-	ctx->buflen -= n;
-	return (ctx->bufpos < ctx->buflen || ctx->footer_pending || ctx->dent)? 1: 0;
-}
-
-static int task_main_dseg_nochunk (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	task_dseg_t* ctx = (task_dseg_t*)task->ctx;
-	qse_ssize_t n;
-	int x;
-
-	if (ctx->bufpos < ctx->buflen) goto send_dirlist;
-
-	ctx->bufpos = 0;
-	ctx->buflen = 0;
-	ctx->bufrem = QSE_COUNTOF(ctx->buf);
-
-	if (ctx->footer_pending)
-	{
-		x = snprintf (
-			&ctx->buf[ctx->buflen], 
-			ctx->bufrem,
-			"</ul></body></html>");
-		if (x == -1 || x >= ctx->bufrem) 
-		{
-			/* return an error if the buffer is too small to hold the 
-			 * trailing footer. you need to increate the buffer size */
-			return -1;
-		}
-
-		ctx->buflen += x;
-		goto send_dirlist;
-	}
-
-	if (!ctx->header_added)
-	{
-		/* compose the header since this is the first time. */
-		x = snprintf (
-			&ctx->buf[ctx->buflen], 
-			ctx->bufrem,
-			QSE_MT("<html><head><title>Directory Listing</title></head><body><b>%s</b><ul><li><a href='../'>..</a></li>"),
-			ctx->path
-		);
-		if (x == -1 || x >= ctx->bufrem) 
-		{
-			/* return an error if the buffer is too small to hold the header.
-			 * you need to increate the buffer size */
-			return -1;
-		}
-
-		ctx->buflen += x;
-		ctx->bufrem -= x;
-		ctx->header_added = 1;
-	}
-
-	if (ctx->dent == QSE_NULL) 
-		ctx->dent = QSE_READDIR (ctx->handle);
-
-	do
-	{
-		if (ctx->dent == QSE_NULL)
-		{
-			// TODO: check if errno has changed from before QSE_READDIR().
-			//       and return -1 if so.
-			x = snprintf (
-				&ctx->buf[ctx->buflen], 
-				ctx->bufrem,
-				"</ul></body></html>");
-			if (x == -1 || x >= ctx->bufrem) 
-			{
-				ctx->footer_pending = 1;
-			}
-			else
-			{
-				ctx->buflen += x;
-			}
-			break;	
-		}
-		else if (qse_mbscmp (ctx->dent->d_name, QSE_MT(".")) != 0 &&
-		         qse_mbscmp (ctx->dent->d_name, QSE_MT("..")) != 0)
-		{
-			x = snprintf (
-				&ctx->buf[ctx->buflen], 
-				ctx->bufrem,
-				"<li><a href='%s%s'>%s%s</a></li>", 
-				ctx->dent->d_name,
-				(ctx->dent->d_type == DT_DIR? "/": ""),
-				ctx->dent->d_name,
-				(ctx->dent->d_type == DT_DIR? "/": "")
-			);
-			if (x == -1 || x >= ctx->bufrem)
-			{
-				/* buffer not large enough to hold this entry */
-				break;
-			}
-			else
-			{
-				ctx->buflen += x;
-				ctx->bufrem -= x;
-			}
-		}
-
-		ctx->dent = QSE_READDIR (ctx->handle);
-	}
-	while (1);
-
-send_dirlist:
-	httpd->errnum = QSE_HTTPD_ENOERR;
-	n = httpd->cbs->client.send (
-		httpd, client, &ctx->buf[ctx->bufpos], ctx->buflen);
-	if (n <= -1) return -1;
-
-	ctx->bufpos += n;
-	ctx->buflen -= n;
-	return (ctx->bufpos < ctx->buflen || ctx->footer_pending || ctx->dent)? 1: 0;
+	return (ctx->bufpos < ctx->buflen || (ctx->state & FOOTER_PENDING) || ctx->dent)? 1: 0;
 }
 
 static qse_httpd_task_t* entask_directory_segment (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, qse_dir_t* handle, const qse_mchar_t* path, int keepalive)
+	qse_httpd_task_t* pred, qse_dir_t* handle, task_dir_t* dir)
 {
 	qse_httpd_task_t task;
 	task_dseg_t data;
 	
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.handle = handle;
-	data.path = path;
+	data.version = dir->version;
+	data.keepalive = dir->keepalive;
+	data.chunked = dir->keepalive;
+	data.path = dir->path;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_dseg;
-	task.main = (keepalive)? task_main_dseg_chunked: task_main_dseg_nochunk;
+	task.main = task_main_dseg;
 	task.fini = task_fini_dseg;
 	task.ctx = &data;
 
 qse_printf (QSE_T("Debug: entasking directory segment (%d)\n"), client->handle.i);
-	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + qse_mbslen(path) + 1);
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + qse_mbslen(data.path) + 1);
 }
 
 /*------------------------------------------------------------------------*/
@@ -398,6 +383,7 @@ static int task_init_dir (
 
 	/* deep-copy the context data to the extension area */
 	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
+
 	qse_mbscpy ((qse_mchar_t*)(xtn + 1), xtn->path);
 	xtn->path = (qse_mchar_t*)(xtn + 1);
 
@@ -429,7 +415,7 @@ static QSE_INLINE int task_main_dir (
 				(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 				(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
 			);
-			if (x) x = entask_directory_segment (httpd, client, x, handle, dir->path, dir->keepalive);
+			if (x) x = entask_directory_segment (httpd, client, x, handle, dir);
 			if (x) return 0;
 
 			QSE_CLOSEDIR (handle);
