@@ -181,10 +181,11 @@ static int cgi_capture_script_header (qse_htre_t* req, const qse_mchar_t* key, c
 {
 	task_cgi_t* cgi = (task_cgi_t*)ctx;
 
-	/* capture a header excluding Status and Connection */
+	/* capture a header except Status, Connection, Transfer-Encoding, and Server */
 	if (qse_mbscasecmp (key, QSE_MT("Status")) != 0 && 
 	    qse_mbscasecmp (key, QSE_MT("Connection")) != 0 &&
-	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0)
+	    qse_mbscasecmp (key, QSE_MT("Transfer-Encoding")) != 0 &&
+	    qse_mbscasecmp (key, QSE_MT("Server")) != 0) 
 	{
 		return cgi_add_header_to_buffer (cgi, cgi->res, key, val);
 	}
@@ -265,6 +266,28 @@ static int cgi_htrd_peek_script_output (qse_htrd_t* htrd, qse_htre_t* req)
 				cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
+		}
+	}
+
+	/* Add the server header. the server header in the cgi output will
+	 * be ignored by cgi_capture_script_header() */
+	if (qse_mbs_cat (cgi->res, QSE_MT("Server: ")) == (qse_size_t)-1 ||
+	    qse_mbs_cat (cgi->res, qse_httpd_getname (cgi->httpd)) == (qse_size_t)-1 ||
+	    qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1)
+	{
+		cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+		return -1;
+	}
+
+	if (qse_htre_getheaderval (req, QSE_MT("Date")) == QSE_NULL)
+	{
+		/* generate the Date header if it's not included in the script output */
+		if (qse_mbs_cat (cgi->res, QSE_MT("Date: ")) == (qse_size_t)-1 ||
+		    qse_mbs_cat (cgi->res, qse_httpd_fmtgmtimetobb (cgi->httpd, QSE_NULL, 0)) == (qse_size_t)-1 ||
+		    qse_mbs_cat (cgi->res, QSE_MT("\r\n")) == (qse_size_t)-1)
+		{
+			cgi->httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
 		}
 	}
 

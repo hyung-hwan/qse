@@ -24,6 +24,8 @@
 #include <qse/cmn/htb.h>
 #include "../cmn/mem.h"
 
+#include <qse/cmn/stdio.h> /* for snprintf. TODO: remove this. */
+
 int qse_comparehttpversions (
 	const qse_http_version_t* v1,
 	const qse_http_version_t* v2)
@@ -188,12 +190,58 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 }
 
 #if 0
-int qse_parsehttpdatetime (const qse_mchar_t* str, qse_ntime_t* t)
+int qse_parsehttptime (const qse_mchar_t* str, qse_ntime_t* t)
 {
 /* TODO: */
 	return -1;
 }
 #endif
+
+qse_mchar_t* qse_fmthttptime (
+	qse_ntime_t nt, qse_mchar_t* buf, qse_size_t bufsz)
+{
+	static const qse_mchar_t* wday_name[] =
+	{
+		QSE_MT("Sun"),
+		QSE_MT("Mon"),
+		QSE_MT("Tue"),
+		QSE_MT("Wed"),
+		QSE_MT("Thu"),
+		QSE_MT("Fri"),
+		QSE_MT("Sat")
+	};
+
+	static const qse_mchar_t* mon_name[] =
+	{
+		QSE_MT("Jan"),
+		QSE_MT("Feb"),
+		QSE_MT("Mar"),
+		QSE_MT("Apr"),
+		QSE_MT("May"), 
+		QSE_MT("Jun"),
+		QSE_MT("Jul"),
+		QSE_MT("Aug"),
+		QSE_MT("Sep"),
+		QSE_MT("Oct"),
+		QSE_MT("Nov"),
+		QSE_MT("Dec")
+	};
+
+	qse_btime_t bt;
+
+	qse_gmtime (nt, &bt);
+
+/* TODO: avoid using snprintf () */
+	snprintf (buf, bufsz,
+		QSE_MT("%s, %d %s %d %02d:%02d:%02d GMT"),
+		wday_name[bt.wday],
+		bt.mday,
+		mon_name[bt.mon],
+		bt.year + QSE_BTIME_YEAR_BASE,
+		bt.hour, bt.min, bt.sec);
+
+	return buf;
+}
 
 qse_size_t qse_perdechttpstr (const qse_mchar_t* str, qse_mchar_t* buf)
 {

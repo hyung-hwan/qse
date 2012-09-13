@@ -22,7 +22,9 @@
 #include "../cmn/mem.h"
 #include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/time.h>
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 typedef struct task_file_t task_file_t;
@@ -30,6 +32,7 @@ struct task_file_t
 {
 	const qse_mchar_t* path;
 	qse_http_range_t   range;
+	qse_ntime_t        if_modified_since;
 	qse_http_version_t version;
 	int                keepalive;
 };
@@ -174,6 +177,8 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 
 	if (file->range.type != QSE_HTTP_RANGE_NONE)
 	{ 
+		qse_mchar_t tmp[4][64];
+
 		if (file->range.type == QSE_HTTP_RANGE_SUFFIX)
 		{
 			if (file->range.to > st.size) file->range.to = st.size;
@@ -191,37 +196,23 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 
 		if (file->range.to >= st.size) file->range.to = st.size - 1;
 
-#if (QSE_SIZEOF_LONG_LONG > 0)
+		qse_fmtuintmaxtombs (tmp[0], QSE_COUNTOF(tmp[0]), (file->range.to - file->range.from + 1), 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[1], QSE_COUNTOF(tmp[1]), file->range.from, 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
+		qse_fmtuintmaxtombs (tmp[3], QSE_COUNTOF(tmp[3]), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
+
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\nContent-Range: bytes %llu-%llu/%llu\r\n\r\n"), 
-			file->version.major,
-			file->version.minor,
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nContent-Range: bytes %s-%s/%s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\n\r\n"), 
+			file->version.major, file->version.minor,
+			qse_httpd_getname (httpd),
+			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
 			(st.mime? st.mime: QSE_MT("")),
 			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long long)(file->range.to - file->range.from + 1),
-			(unsigned long long)file->range.from,
-			(unsigned long long)file->range.to,
-			(unsigned long long)st.size
+			tmp[0], tmp[1], tmp[2], tmp[3]
 		);
-#else
-		x = qse_httpd_entaskformat (
-			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\nContent-Range: bytes %lu-%lu/%lu\r\n\r\n"), 
-			file->version.major,
-			file->version.minor,
-			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
-			(st.mime? st.mime: QSE_MT("")),
-			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long)(file->range.to - file->range.from + 1),
-			(unsigned long)file->range.from,
-			(unsigned long)file->range.to,
-			(unsigned long)st.size
-		);
-#endif
 		if (x)
 		{
 			x = entask_file_segment (
@@ -234,36 +225,28 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	}
 	else
 	{
-/* TODO: int64 format.... don't hard code it llu */
+		qse_mchar_t b_fsize[64];
+
+		qse_fmtuintmaxtombs (b_fsize, QSE_COUNTOF(b_fsize), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
+
 		/* wget 1.8.2 set 'Connection: keep-alive' in the http 1.0 header.
 		 * if the reply doesn't contain 'Connection: keep-alive', it didn't
 		 * close connection.*/
-#if (QSE_SIZEOF_LONG_LONG > 0)
-		x = qse_httpd_entaskformat (
-			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %llu\r\n\r\n"), 
-			file->version.major, file->version.minor,
-			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
-			(st.mime? st.mime: QSE_MT("")),
-			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long long)st.size
-		);
-#else
-		x = qse_httpd_entaskformat (
-			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\n%s%s%sContent-Length: %lu\r\n\r\n"), 
-			file->version.major,
-			file->version.minor,
-			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
-			(st.mime? st.mime: QSE_MT("")),
-			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
-			(unsigned long)st.size
-		);
-#endif
-		if (x) x = entask_file_segment (httpd, client, x, handle, 0, st.size);
 
+		x = qse_httpd_entaskformat (
+			httpd, client, x,
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\n\r\n"), 
+			file->version.major, file->version.minor,
+			qse_httpd_getname (httpd),
+			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
+			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
+			(st.mime? st.mime: QSE_MT("")),
+			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
+			b_fsize,
+			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1)
+		);
+		if (x) x = entask_file_segment (httpd, client, x, handle, 0, st.size);
 	}
 
 	if (x) return 0;
@@ -305,11 +288,13 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		data.range.type = QSE_HTTP_RANGE_NONE;
 	}
 
+	data.if_modified_since = QSE_TYPE_MIN(qse_ntime_t);
 /*
 TODO: If-Modified-Since...
 	tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
 	if (tmp)
 	{
+		qse_httpd_parsegmtime (tmp, &
 	}
 */
 	

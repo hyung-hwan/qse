@@ -23,18 +23,24 @@
 
 #if defined(_WIN32)
 #	include <windows.h>
+#	include <time.h>
 #elif defined(__OS2__)
 #	define INCL_DOSDATETIME
 #	define INCL_DOSERRORS
 #	include <os2.h>
+#	include <time.h>
 #elif defined(__DOS__)
 #	include <dos.h>
+#	include <time.h>
 #else
 #	include "syscall.h"
-#	include <sys/time.h>
+#	if defined(HAVE_SYS_TIME_H)
+#		include <sys/time.h>
+#	endif
+#	if defined(HAVE_TIME_H)
+#		include <time.h>
+#	endif
 #endif
-
-#include <time.h>
 
 #if defined(_WIN32)
 	#define WIN_EPOCH_YEAR   (1601)
@@ -479,4 +485,3 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	return 0;
 #endif
 }
-

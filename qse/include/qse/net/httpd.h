@@ -422,6 +422,38 @@ void qse_httpd_completecontent (
 	qse_htre_t*         req
 );
 
+
+
+/**
+ * The qse_httpd_setname() function changes the string
+ * to be used as the value for the server header. 
+ */
+void qse_httpd_setname (
+	qse_httpd_t*       httpd,
+	const qse_mchar_t* name
+);
+
+
+/**
+ * The qse_httpd_getname() function returns the
+ * pointer to the string used as the value for the server
+ * header.
+ */
+qse_mchar_t* qse_httpd_getname (
+	qse_httpd_t* httpd
+);
+
+/**
+ * The qse_httpd_fmtgmtimetobb() function converts a numeric time @a nt
+ * to a string and stores it in a built-in buffer. 
+ * If @a nt is QSE_NULL, the current time is used.
+ */
+const qse_mchar_t* qse_httpd_fmtgmtimetobb (
+	qse_httpd_t*       httpd,
+	const qse_ntime_t* nt,
+	int                idx
+);
+
 #define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
 
 qse_httpd_task_t* qse_httpd_entask (
@@ -506,6 +538,12 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_htre_t*               req
 );
 
+/**
+ * The qse_httpd_entaskphat() functions a dispatcher between
+ * qse_httpd_entaskdir() and qse_httpd_entaskfile(). It calls
+ * the former if @a name is a directory and calls the latter
+ * otherwise.
+ */
 qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,

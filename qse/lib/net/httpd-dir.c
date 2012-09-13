@@ -164,6 +164,7 @@ static int task_main_dseg (
 	}
 
 	/* the buffer size is fixed to QSE_COUNTOF(ctx->buf).
+	 * 
 	 * the number of digits need to hold the the size converted to
 	 * a hexadecimal notation is roughly (log16(QSE_COUNTOF(ctx->buf) + 1).
 	 * it should be safter to use ceil(log16(QSE_COUNTOF(ctx->buf)) + 1
@@ -410,8 +411,10 @@ static QSE_INLINE int task_main_dir (
 		{
 			x = qse_httpd_entaskformat (
 				httpd, client, x,
-    				QSE_MT("HTTP/%d.%d 200 OK\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
+    				QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\n%s\r\n"), 
 				dir->version.major, dir->version.minor,
+				qse_httpd_getname (httpd),
+				qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 				(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 				(dir->keepalive? QSE_MT("Transfer-Encoding: chunked\r\n"): QSE_MT(""))
 			);
@@ -438,8 +441,10 @@ static QSE_INLINE int task_main_dir (
 	{
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-			QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\nContent-Length: 0\r\nConnection: %s\r\nLocation: %s/\r\n\r\n"),
+			QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\nServer: %s\r\nDate: %s\r\nContent-Length: 0\r\nConnection: %s\r\nLocation: %s/\r\n\r\n"),
 			dir->version.major, dir->version.minor,
+			qse_httpd_getname (httpd),
+			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 			dir->path
 		);

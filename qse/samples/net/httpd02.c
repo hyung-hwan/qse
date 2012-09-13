@@ -209,6 +209,8 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGINT, sigint);
 	signal (SIGPIPE, SIG_IGN);
 
+	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
+
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
 	ret = qse_httpd_loopstd (httpd, &rcb, 10000);
 
