@@ -987,7 +987,7 @@ static int file_stat (
 #elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
 	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
 #else
-	hst->mtime = st.st_mtime * QSE_MSECS_PER_SEC;
+	hst->mtime = QSE_SEC_TO_MSEC(st.st_mtime);
 #endif
 
 	hst->mime = qse_mbsend (path, QSE_MT(".html"))? QSE_MT("text/html"):

@@ -18,14 +18,10 @@
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
-/* UNSUPPORTED YET..  */ 
-/* TODO: IMPLEMENT THIS */
-#else
-
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include "../cmn/syscall.h"
+
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
@@ -97,6 +93,7 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 {
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
+	qse_mbscpy (httpd->sname, QSE_MT("QSE-HTTPD " QSE_PACKAGE_VERSION));
 	return 0;
 }
 
@@ -593,8 +590,7 @@ static void free_server_list (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	}
 }
 
-static qse_httpd_server_t* parse_server_uri (
-	qse_httpd_t* httpd, const qse_char_t* uri)
+static qse_httpd_server_t* parse_server_uri (qse_httpd_t* httpd, const qse_char_t* uri)
 {
 	qse_httpd_server_t* server;
 	qse_uint16_t default_port;
@@ -1234,4 +1230,31 @@ void qse_httpd_completecontent (qse_httpd_t* httpd, qse_htre_t* req)
 	qse_htre_completecontent (req);
 }
 
-#endif
+/* --------------------------------------------------- */
+
+void qse_httpd_setname (qse_httpd_t* httpd, const qse_mchar_t* name)
+{
+	qse_mbsxcpy (httpd->sname, QSE_COUNTOF(httpd->sname), name);
+}
+
+qse_mchar_t* qse_httpd_getname (qse_httpd_t* httpd)
+{
+	return httpd->sname;
+}
+
+const qse_mchar_t* qse_httpd_fmtgmtimetobb (
+	qse_httpd_t* httpd, const qse_ntime_t* nt, int idx)
+{
+	qse_ntime_t now;
+
+	QSE_ASSERT (idx >= 0 && idx < QSE_COUNTOF(httpd->gtbuf));
+
+	if (nt == QSE_NULL) 
+	{
+		if (qse_gettime(&now) <= -1) now = 0;
+		nt = &now;
+	}
+
+	qse_fmthttptime (*nt, httpd->gtbuf[idx], QSE_COUNTOF(httpd->gtbuf[idx]));
+	return httpd->gtbuf[idx];
+}

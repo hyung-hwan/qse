@@ -181,11 +181,17 @@ int qse_parsehttprange (
 );
 
 /*
-int qse_parsehttpdatetime (
+int qse_parsehttptime (
 	const qse_mchar_t* str,
 	qse_ntime_t*       t
 );
 */
+
+qse_mchar_t* qse_fmthttptime (
+	qse_ntime_t        nt,
+	qse_mchar_t*       buf,
+	qse_size_t         bufsz
+);
 
 /* percent-decode a string */
 qse_size_t qse_perdechttpstr (

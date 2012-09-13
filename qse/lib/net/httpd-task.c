@@ -392,8 +392,10 @@ qse_httpd_task_t* qse_httpd_entask_error (
 
 	return qse_httpd_entaskformat (
 		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d %d %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"), 
+		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"), 
 		version->major, version->minor, code, smsg,
+		qse_httpd_getname (httpd),
+		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
 		(unsigned long)qse_mbslen(lmsg) + 4, lmsg
 	);
@@ -435,8 +437,10 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 
 	return qse_httpd_entaskformat (
 		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
+		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
 		version->major, version->minor, 
+		qse_httpd_getname (httpd),
+		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
 		realm, (unsigned long)qse_mbslen(lmsg) + 4, lmsg);
 }
