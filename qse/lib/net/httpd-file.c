@@ -227,6 +227,23 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	{
 		qse_mchar_t b_fsize[64];
 
+		if (file->if_modified_since > 0 && 
+		    QSE_MSEC_TO_SEC(st.mtime) <= QSE_MSEC_TO_SEC(file->if_modified_since)) 
+		{
+			/* i've converted milliseconds to seconds before comparison
+			 * because st.mtime has the actual milliseconds less than 1 second
+			 * while if_modified_since doesn't have such small milliseconds */
+			x = qse_httpd_entaskformat (
+				httpd, client, x,
+				QSE_MT("HTTP/%d.%d 304 Not Modified\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Length: 0\r\n\r\n"),
+				file->version.major, file->version.minor,
+				qse_httpd_getname (httpd),
+				qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+				(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close"))
+			);
+			goto no_file_send;
+		}
+
 		qse_fmtuintmaxtombs (b_fsize, QSE_COUNTOF(b_fsize), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
 
 		/* wget 1.8.2 set 'Connection: keep-alive' in the http 1.0 header.
@@ -288,15 +305,15 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		data.range.type = QSE_HTTP_RANGE_NONE;
 	}
 
-	data.if_modified_since = QSE_TYPE_MIN(qse_ntime_t);
-/*
-TODO: If-Modified-Since...
+/* TODO: support Etag and If-None-Match */
+	data.if_modified_since = 0; /* 0 should be old enough */
 	tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
 	if (tmp)
 	{
-		qse_httpd_parsegmtime (tmp, &
+		while (tmp->next) tmp = tmp->next; /* get the last value */
+		if (qse_parsehttptime (tmp->ptr, &data.if_modified_since) <= -1)
+			data.if_modified_since = 0;
 	}
-*/
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_file;

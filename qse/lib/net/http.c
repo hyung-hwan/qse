@@ -189,44 +189,127 @@ int qse_parsehttprange (const qse_mchar_t* str, qse_http_range_t* range)
 	return 0;
 }
 
-#if 0
-int qse_parsehttptime (const qse_mchar_t* str, qse_ntime_t* t)
+typedef struct mname_t mname_t;
+struct mname_t
 {
-/* TODO: */
-	return -1;
+	const qse_mchar_t* s;
+	const qse_mchar_t* l;
+};
+	
+static mname_t wday_name[] =
+{
+	{ QSE_MT("Sun"), QSE_MT("Sunday") },
+	{ QSE_MT("Mon"), QSE_MT("Monday") },
+	{ QSE_MT("Tue"), QSE_MT("Tuesday") },
+	{ QSE_MT("Wed"), QSE_MT("Wednesday") },
+	{ QSE_MT("Thu"), QSE_MT("Thursday") },
+	{ QSE_MT("Fri"), QSE_MT("Friday") },
+	{ QSE_MT("Sat"), QSE_MT("Saturday") }
+};
+
+static mname_t mon_name[] =
+{
+	{ QSE_MT("Jan"), QSE_MT("January") },
+	{ QSE_MT("Feb"), QSE_MT("February") },
+	{ QSE_MT("Mar"), QSE_MT("March") },
+	{ QSE_MT("Apr"), QSE_MT("April") },
+	{ QSE_MT("May"), QSE_MT("May") },
+	{ QSE_MT("Jun"), QSE_MT("June") },
+	{ QSE_MT("Jul"), QSE_MT("July") },
+	{ QSE_MT("Aug"), QSE_MT("August") },
+	{ QSE_MT("Sep"), QSE_MT("September") },
+	{ QSE_MT("Oct"), QSE_MT("October") },
+	{ QSE_MT("Nov"), QSE_MT("November") },
+	{ QSE_MT("Dec"), QSE_MT("December") }
+};
+
+int qse_parsehttptime (const qse_mchar_t* str, qse_ntime_t* nt)
+{
+	qse_btime_t bt;
+	const qse_mchar_t* word;
+	qse_size_t wlen, i;
+
+	/* TODO: support more formats */
+
+	QSE_MEMSET (&bt, 0, QSE_SIZEOF(bt));
+
+	/* weekday */
+	while (QSE_ISMSPACE(*str)) str++;
+	for (word = str; QSE_ISMALPHA(*str); str++);
+	wlen = str - word;
+	for (i = 0; i < QSE_COUNTOF(wday_name); i++)
+	{
+		if (qse_mbsxcmp (word, wlen, wday_name[i].s) == 0)
+		{
+			bt.wday = i;
+			break;
+		}
+	}
+	if (i >= QSE_COUNTOF(wday_name)) return -1;
+
+	/* comma - i'm just loose as i don't care if it doesn't exist */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (*str == QSE_MT(',')) str++;
+
+	/* day */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (!QSE_ISMDIGIT(*str)) return -1;
+	do bt.mday = bt.mday * 10 + *str++ - QSE_MT('0'); while (QSE_ISMDIGIT(*str));
+
+	/* month */
+	while (QSE_ISMSPACE(*str)) str++;
+	for (word = str; QSE_ISMALPHA(*str); str++);
+	wlen = str - word;
+	for (i = 0; i < QSE_COUNTOF(mon_name); i++)
+	{
+		if (qse_mbsxcmp (word, wlen, mon_name[i].s) == 0)
+		{
+			bt.mon = i;
+			break;
+		}
+	}
+	if (i >= QSE_COUNTOF(mon_name)) return -1;
+
+	/* year */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (!QSE_ISMDIGIT(*str)) return -1;
+	do bt.year = bt.year * 10 + *str++ - QSE_MT('0'); while (QSE_ISMDIGIT(*str));
+	bt.year -= QSE_BTIME_YEAR_BASE;
+
+	/* hour */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (!QSE_ISMDIGIT(*str)) return -1;
+	do bt.hour = bt.hour * 10 + *str++ - QSE_MT('0'); while (QSE_ISMDIGIT(*str));
+	if (*str != QSE_MT(':'))  return -1;
+	str++;
+
+	/* min */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (!QSE_ISMDIGIT(*str)) return -1;
+	do bt.min = bt.min * 10 + *str++ - QSE_MT('0'); while (QSE_ISMDIGIT(*str));
+	if (*str != QSE_MT(':'))  return -1;
+	str++;
+
+	/* sec */
+	while (QSE_ISMSPACE(*str)) str++;
+	if (!QSE_ISMDIGIT(*str)) return -1;
+	do bt.sec = bt.sec * 10 + *str++ - QSE_MT('0'); while (QSE_ISMDIGIT(*str));
+
+	/* GMT */
+	while (QSE_ISMSPACE(*str)) str++;
+	for (word = str; QSE_ISMALPHA(*str); str++);
+	wlen = str - word;
+	if (qse_mbsxcmp (word, wlen, QSE_MT("GMT")) != 0) return -1;
+
+	while (QSE_ISMSPACE(*str)) str++;
+	if (*str != QSE_MT('\0')) return -1;
+
+	return qse_timegm (&bt, nt);
 }
-#endif
 
 qse_mchar_t* qse_fmthttptime (
 	qse_ntime_t nt, qse_mchar_t* buf, qse_size_t bufsz)
 {
-	static const qse_mchar_t* wday_name[] =
-	{
-		QSE_MT("Sun"),
-		QSE_MT("Mon"),
-		QSE_MT("Tue"),
-		QSE_MT("Wed"),
-		QSE_MT("Thu"),
-		QSE_MT("Fri"),
-		QSE_MT("Sat")
-	};
-
-	static const qse_mchar_t* mon_name[] =
-	{
-		QSE_MT("Jan"),
-		QSE_MT("Feb"),
-		QSE_MT("Mar"),
-		QSE_MT("Apr"),
-		QSE_MT("May"), 
-		QSE_MT("Jun"),
-		QSE_MT("Jul"),
-		QSE_MT("Aug"),
-		QSE_MT("Sep"),
-		QSE_MT("Oct"),
-		QSE_MT("Nov"),
-		QSE_MT("Dec")
-	};
-
 	qse_btime_t bt;
 
 	qse_gmtime (nt, &bt);
@@ -234,9 +317,9 @@ qse_mchar_t* qse_fmthttptime (
 /* TODO: avoid using snprintf () */
 	snprintf (buf, bufsz,
 		QSE_MT("%s, %d %s %d %02d:%02d:%02d GMT"),
-		wday_name[bt.wday],
+		wday_name[bt.wday].s,
 		bt.mday,
-		mon_name[bt.mon],
+		mon_name[bt.mon].s,
 		bt.year + QSE_BTIME_YEAR_BASE,
 		bt.hour, bt.min, bt.sec);
 

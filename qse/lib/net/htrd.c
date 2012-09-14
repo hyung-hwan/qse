@@ -20,6 +20,7 @@
 
 #include <qse/net/htrd.h>
 #include <qse/cmn/chr.h>
+#include <qse/cmn/path.h>
 #include "../cmn/mem.h"
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (htrd)
@@ -185,11 +186,10 @@ void qse_htrd_fini (qse_htrd_t* htrd)
 #endif
 }
 
-static qse_mchar_t* parse_initial_line (
-	qse_htrd_t* htrd, qse_mchar_t* line)
+static qse_mchar_t* parse_initial_line (qse_htrd_t* htrd, qse_mchar_t* line)
 {
 	qse_mchar_t* p = line;
-	qse_mcstr_t tmp;
+	qse_mxstr_t tmp;
 
 #if 0
 	/* ignore leading spaces excluding crlf */
@@ -293,7 +293,9 @@ static qse_mchar_t* parse_initial_line (
 	}
 	else
 	{
+#if 0
 		qse_mchar_t* out;
+#endif
 		qse_mcstr_t param;
 
 		/* skip spaces */
