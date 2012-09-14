@@ -180,12 +180,10 @@ int qse_parsehttprange (
 	qse_http_range_t* range
 );
 
-/*
 int qse_parsehttptime (
 	const qse_mchar_t* str,
-	qse_ntime_t*       t
+	qse_ntime_t*       nt
 );
-*/
 
 qse_mchar_t* qse_fmthttptime (
 	qse_ntime_t        nt,

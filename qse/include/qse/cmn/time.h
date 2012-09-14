@@ -64,6 +64,8 @@
 	(((qse_ntime_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_ntime_t)(nsec) / QSE_NSECS_PER_MSEC))
 
 #define QSE_SEC_TO_MSEC(sec) ((sec) * QSE_MSECS_PER_SEC)
+#define QSE_MSEC_TO_SEC(sec) ((sec) / QSE_MSECS_PER_SEC)
+
 /**
  * The qse_ntime_t type defines a numeric time type expressed in the 
  *  number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970).
