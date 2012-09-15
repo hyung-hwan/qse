@@ -379,10 +379,10 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	if (httpd == QSE_NULL) return QSE_NULL;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	QSE_MEMSET (xtn, 0, xtnsize);
 
 #if defined(HAVE_SSL)
-	xtn->ssl_ctx = QSE_NULL;
-	init_xtn_ssl (xtn, "http01.pem", "http01.key");
+	/*init_xtn_ssl (xtn, "http01.pem", "http01.key");*/
 #endif
 
 	qse_httpd_pushecb (httpd, &std_ecb);
@@ -396,12 +396,23 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 /* ------------------------------------------------------------------- */
 
-static int sockaddr_to_nwad (
-	const struct sockaddr_storage* addr, qse_nwad_t* nwad)
+union sockaddr_t
+{
+	struct sockaddr_in in4;
+#if defined(AF_INET6)
+	struct sockaddr_in6 in6;
+#endif
+};
+
+typedef union sockaddr_t sockaddr_t;
+
+#define SOCKADDR_FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
+
+static int sockaddr_to_nwad (const sockaddr_t* addr, qse_nwad_t* nwad)
 {
 	int addrsize = -1;
 
-	switch (addr->ss_family)
+	switch (SOCKADDR_FAMILY(addr))
 	{
 		case AF_INET:
 		{
@@ -436,8 +447,7 @@ static int sockaddr_to_nwad (
 	return addrsize;
 }
 
-static int nwad_to_sockaddr (
-	const qse_nwad_t* nwad, struct sockaddr_storage* addr)
+static int nwad_to_sockaddr (const qse_nwad_t* nwad, sockaddr_t* addr)
 {
 	int addrsize = -1;
 
@@ -483,9 +493,7 @@ static int nwad_to_sockaddr (
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	int fd = -1, flag;
-/* TODO: if AF_INET6 is not defined sockaddr_storage is not available...
- * create your own union or somehting similar... */
-	struct sockaddr_storage addr;
+	sockaddr_t addr;
 	int addrsize;
 
 	addrsize = nwad_to_sockaddr (&server->nwad, &addr);
@@ -495,7 +503,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		return -1;
 	}
 
-	fd = socket (addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	fd = socket (SOCKADDR_FAMILY(&addr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
 	flag = fcntl (fd, F_GETFD);
@@ -518,7 +526,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
 #if defined(IPV6_V6ONLY)
-		if (errno == EADDRINUSE && addr.ss_family == AF_INET6)
+		if (errno == EADDRINUSE && SOCKADDR_FAMILY(&addr) == AF_INET6)
 		{
 			int on = 1;
 			setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
@@ -552,7 +560,7 @@ static int server_accept (
 	qse_httpd_t* httpd,
 	qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
-	struct sockaddr_storage addr;
+	sockaddr_t addr;
 
 #ifdef HAVE_SOCKLEN_T
 	socklen_t addrlen;
@@ -619,9 +627,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 	int fd = -1, flag;
-/* TODO: if AF_INET6 is not defined sockaddr_storage is not available...
- * create your own union or somehting similar... */
-	struct sockaddr_storage addr;
+	sockaddr_t addr;
 	int addrsize;
 	int connected = 1;
 
@@ -632,7 +638,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		return -1;
 	}
 
-	fd = socket (addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	fd = socket (SOCKADDR_FAMILY(&addr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
 	flag = fcntl (fd, F_GETFD);
@@ -1093,7 +1099,7 @@ static qse_ssize_t client_recv (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
-	if (client->secure)
+	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
 		int ret = SSL_read (client->handle2.ptr, buf, bufsize);
@@ -1121,7 +1127,7 @@ static qse_ssize_t client_send (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
-	if (client->secure)
+	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
 		int ret = SSL_write (client->handle2.ptr, buf, bufsize);
@@ -1149,7 +1155,7 @@ static qse_ssize_t client_sendfile (
 	qse_httpd_t* httpd, qse_httpd_client_t* client,
 	qse_ubi_t handle, qse_foff_t* offset, qse_size_t count)
 {
-	if (client->secure)
+	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
 		return xsendfile_ssl (client->handle2.ptr, handle.i, offset, count);
@@ -1167,22 +1173,26 @@ static int client_accepted (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	httpd_xtn_t* xtn = (httpd_xtn_t*) qse_httpd_getxtn (httpd);
 
-	if (client->secure)
+	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
 		int ret;
 		SSL* ssl;
 
+		if (!xtn->ssl_ctx)
+		{
+			/* delayed initialization of ssl */
+			if (init_xtn_ssl (xtn, "http01.pem", "http01.key") <= -1) 
+			{
+				return -1;
+			}
+		}
+	
+		QSE_ASSERT (xtn->ssl_ctx != QSE_NULL);
+
 		if (client->handle2.ptr)
 		{
 			ssl = client->handle2.ptr;
-		}
-		else if (!xtn->ssl_ctx)
-		{
-			/* no ssl */
-qse_printf (QSE_T("NO SSL\n"));
-qse_fflush (QSE_STDOUT);
-			return -1;
 		}
 		else
 		{
@@ -1224,7 +1234,7 @@ qse_fflush (QSE_STDOUT);
 
 static void client_closed (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
-	if (client->secure)
+	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
 		if (client->handle2.ptr)

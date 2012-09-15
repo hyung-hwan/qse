@@ -286,7 +286,6 @@ struct qse_httpd_client_t
 
 	/* == PRIVATE == */
 	qse_htrd_t*              htrd;
-	int                      secure;
 	int                      status;
 	qse_httpd_task_trigger_t trigger[QSE_HTTPD_TASK_TRIGGER_MAX];
 	qse_ntime_t              last_active;
