@@ -42,17 +42,6 @@ QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443
 
-/* client->status */
-#define CLIENT_BAD                    (1 << 0)
-#define CLIENT_READY                  (1 << 1)
-#define CLIENT_SECURE                 (1 << 2)
-#define CLIENT_MUTE                   (1 << 3)
-#define CLIENT_MUTE_DELETED           (1 << 4)
-#define CLIENT_HANDLE_READ_IN_MUX     (1 << 5)
-#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 6)
-#define CLIENT_HANDLE_IN_MUX          (CLIENT_HANDLE_READ_IN_MUX|CLIENT_HANDLE_WRITE_IN_MUX)
-#define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 7))
-
 static void free_server_list (
 	qse_httpd_t* httpd, qse_httpd_server_t* server);
 static int perform_client_task (
@@ -316,10 +305,11 @@ static qse_httpd_client_t* new_client (
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
+	client->status = tmpl->status;
+
 	if (httpd->scb->client.accepted == QSE_NULL) 
 		client->status |= CLIENT_READY;
 
-	client->status = tmpl->status;
 	client->handle = tmpl->handle;
 	client->handle2 = tmpl->handle2;
 	client->remote_addr = tmpl->remote_addr;
