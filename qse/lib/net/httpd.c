@@ -758,6 +758,25 @@ qse_printf (QSE_T("]\n"));
 
 		return -1;
 	}
+qse_printf (QSE_T("!!!!!FEEDING OK OK OK OK %d from %d\n"), (int)m, (int)client->handle.i);
+
+	if (client->status & CLIENT_PENDING) 
+	{
+		/* this CLIENT_PENDING thing is a dirty hack for SSL.
+		 * In SSL, data is transmitted in a record. a record can be
+		 * as large as 16K bytes since its length field is 2 bytes.
+		 * If SSL_read() has record a record but it's given a
+		 * smaller buffer than the actuaal record, the next call
+		 * to select() won't return. there is no data to read
+		 * at the socket layer. SSL_pending() can tell you the
+		 * amount of data in the SSL buffer. I try to consume
+		 * the pending data if the client.recv handler set CLIENT_PENDING.
+		 *
+		 * TODO: Investigate if there is any starvation issues.
+		 *       What if a single client never stops sending? 
+		 */
+		goto reread;
+	}
 
 	return 0;
 }
@@ -771,6 +790,7 @@ static int invoke_client_task (
 	int n, trigger_fired, client_handle_writable;
 
 /* TODO: handle comparison callback ... */
+qse_printf (QSE_T("INVOKE CLIENT TASK..........\n"));
 	if (handle.i == client->handle.i && (mask & QSE_HTTPD_MUX_READ)) /* TODO: no direct comparision */
 	{
 		if (!(client->status & CLIENT_MUTE) && 
@@ -899,7 +919,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 	{
 		/* the code here is pretty fragile. there is a high chance
 		 * that something can go wrong if the task handler plays
-		 * with the trigger field in an unexpected mannger. 
+		 * with the trigger field in an unexpected manner. 
 		 */
 
 		for (i = 0; i < QSE_COUNTOF(task->trigger); i++)

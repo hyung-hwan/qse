@@ -27,11 +27,14 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
+#define ETAG_LEN_MAX 127
+
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
 	const qse_mchar_t* path;
 	qse_http_range_t   range;
+	qse_mchar_t        if_none_match[ETAG_LEN_MAX + 1];
 	qse_ntime_t        if_modified_since;
 	qse_http_version_t version;
 	int                keepalive;
@@ -178,6 +181,8 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	if (file->range.type != QSE_HTTP_RANGE_NONE)
 	{ 
 		qse_mchar_t tmp[4][64];
+		qse_mchar_t etag[ETAG_LEN_MAX + 1];
+		qse_size_t etag_len;
 
 		if (file->range.type == QSE_HTTP_RANGE_SUFFIX)
 		{
@@ -201,9 +206,17 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
 		qse_fmtuintmaxtombs (tmp[3], QSE_COUNTOF(tmp[3]), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
 
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag) - etag_len, st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.ino, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.dev, 16, -1, QSE_MT('\0'), QSE_NULL);
+
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nContent-Range: bytes %s-%s/%s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 206 Partial Content\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nContent-Range: bytes %s-%s/%s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\nETag: %s\r\n\r\n"), 
 			file->version.major, file->version.minor,
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
@@ -211,7 +224,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
 			(st.mime? st.mime: QSE_MT("")),
 			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
-			tmp[0], tmp[1], tmp[2], tmp[3]
+			tmp[0], tmp[1], tmp[2], tmp[3], etag
 		);
 		if (x)
 		{
@@ -226,13 +239,24 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	else
 	{
 		qse_mchar_t b_fsize[64];
+		qse_mchar_t etag[ETAG_LEN_MAX + 1];
+		qse_size_t etag_len;
 
-		if (file->if_modified_since > 0 && 
-		    QSE_MSEC_TO_SEC(st.mtime) <= QSE_MSEC_TO_SEC(file->if_modified_since)) 
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag) - etag_len, st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.ino, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.dev, 16, -1, QSE_MT('\0'), QSE_NULL);
+
+		if ((file->if_none_match[0] != QSE_MT('\0') && qse_mbscmp (etag, file->if_none_match) == 0) ||
+		    (file->if_modified_since > 0 && QSE_MSEC_TO_SEC(st.mtime) <= QSE_MSEC_TO_SEC(file->if_modified_since))) 
 		{
-			/* i've converted milliseconds to seconds before comparison
+			/* i've converted milliseconds to seconds before timestamp comparison
 			 * because st.mtime has the actual milliseconds less than 1 second
 			 * while if_modified_since doesn't have such small milliseconds */
+
 			x = qse_httpd_entaskformat (
 				httpd, client, x,
 				QSE_MT("HTTP/%d.%d 304 Not Modified\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Length: 0\r\n\r\n"),
@@ -252,7 +276,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 
 		x = qse_httpd_entaskformat (
 			httpd, client, x,
-    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\n\r\n"), 
+    			QSE_MT("HTTP/%d.%d 200 OK\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\n%s%s%sContent-Length: %s\r\nAccept-Ranges: bytes\r\nLast-Modified: %s\r\nETag: %s\r\n\r\n"), 
 			file->version.major, file->version.minor,
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
@@ -261,7 +285,8 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 			(st.mime? st.mime: QSE_MT("")),
 			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
 			b_fsize,
-			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1)
+			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
+			etag
 		);
 		if (x) x = entask_file_segment (httpd, client, x, handle, 0, st.size);
 	}
@@ -305,14 +330,31 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		data.range.type = QSE_HTTP_RANGE_NONE;
 	}
 
-/* TODO: support Etag and If-None-Match */
-	data.if_modified_since = 0; /* 0 should be old enough */
-	tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
+	tmp = qse_htre_getheaderval(req, QSE_MT("If-None-Match"));
 	if (tmp)
 	{
 		while (tmp->next) tmp = tmp->next; /* get the last value */
-		if (qse_parsehttptime (tmp->ptr, &data.if_modified_since) <= -1)
-			data.if_modified_since = 0;
+		qse_mbsxcpy (data.if_none_match, QSE_COUNTOF(data.if_none_match), tmp->ptr);
+	}
+	if (data.if_none_match[0] == QSE_MT('\0'))
+	{
+		/* Both ETag and Last-Modified are included in the reply.
+		 * If the client understand ETag, it can choose to include 
+		 * If-None-Match in the request. If it understands Last-Modified,
+		 * it can choose to include If-Modified-Since. I don't care
+		 * the client understands both and include both of them
+		 * in the request.
+		 *
+		 * I check If-None-Match if it's included.
+		 * I check If-Modified-Since if If-None-Match is not included.
+		 */
+		tmp = qse_htre_getheaderval(req, QSE_MT("If-Modified-Since"));
+		if (tmp)
+		{
+			while (tmp->next) tmp = tmp->next; /* get the last value */
+			if (qse_parsehttptime (tmp->ptr, &data.if_modified_since) <= -1)
+				data.if_modified_since = 0;
+		}
 	}
 	
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));

@@ -111,7 +111,7 @@ if (qse_htre_getqparam(req))
 				else
 				{
 					task = qse_httpd_entaskcgi (
-						httpd, client, QSE_NULL, qpath, req);
+						httpd, client, QSE_NULL, qpath, QSE_NULL, QSE_NULL, 0, req);
 					if (task == QSE_NULL) goto oops;
 				}
 			}

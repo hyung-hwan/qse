@@ -18,11 +18,6 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
-/* UNSUPPORTED YET..  */
-/* TODO: IMPLEMENT THIS */
-#else
-
 #include "httpd.h"
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
@@ -34,9 +29,11 @@
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 
 {
-	const qse_mchar_t* path;
-	qse_htre_t* req;
+	qse_mcstr_t path;
+	qse_mcstr_t script;
+	qse_mcstr_t suffix;
 	int nph;
+	qse_htre_t* req;
 };
 
 typedef struct task_cgi_t task_cgi_t;
@@ -46,6 +43,8 @@ struct task_cgi_t
 	qse_httpd_t* httpd;
 
 	const qse_mchar_t* path;
+	const qse_mchar_t* script;
+	const qse_mchar_t* suffix;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 	int nph;
@@ -407,8 +406,13 @@ static qse_htrd_recbs_t cgi_script_htrd_cbs =
 
 static int cgi_add_env (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_env_t* env, qse_htre_t* req, const 
-	qse_mchar_t* path, qse_size_t length, int chunked)
+	qse_env_t* env, qse_htre_t* req, 
+	const qse_mchar_t* path, 
+	const qse_mchar_t* script,
+	const qse_mchar_t* suffix,
+	const qse_mchar_t* content_type,
+	qse_size_t content_length, 
+	int chunked)
 {
 /* TODO: error check */
 	cgi_client_req_hdr_ctx_t ctx;
@@ -430,22 +434,21 @@ static int cgi_add_env (
 	snprintf (buf, QSE_COUNTOF(buf), QSE_MT("HTTP/%d.%d"), (int)v->major, (int)v->minor);
 	qse_env_insertmbs (env, QSE_MT("SERVER_PROTOCOL"), buf);
 
-{
+	qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
+	qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), script);
+	if (suffix && suffix[0] != QSE_MT('\0')) 
+		qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix);
+
 /* TODO: corrent all these name???  */
-	//qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), qse_htre_getqpath(req));
-	//qse_env_insertmbs (env, QSE_MT("PATH_INFO"), qse_htre_getqpath(req));
 	//qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), qse_htre_getqpath(req));
-	//qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), QSE_MT("/"));
-}
 
-
-	//qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
 	qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
 	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req));
 	if (qparam) qse_env_insertmbs (env, QSE_MT("QUERY_STRING"), qparam);
 
-	qse_fmtuintmaxtombs (buf, QSE_COUNTOF(buf), length, 10, -1, QSE_MT('\0'), QSE_NULL);
+	qse_fmtuintmaxtombs (buf, QSE_COUNTOF(buf), content_length, 10, -1, QSE_MT('\0'), QSE_NULL);
 	qse_env_insertmbs (env, QSE_MT("CONTENT_LENGTH"), buf);
+	if (content_type) qse_env_insertmbs (env, QSE_MT("CONTENT_TYPE"), content_type);
 
 	if (chunked) qse_env_insertmbs (env, QSE_MT("TRANSFER_ENCODING"), QSE_MT("chunked"));
 
@@ -459,6 +462,7 @@ static int cgi_add_env (
 	qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf);
 
 #if 0
+	//qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), QSE_MT("/"));
 	qse_env_insertmbs (env, "SERVER_NAME",
 	qse_env_insertmbs (env, "SERVER_ROOT", 
 	qse_env_insertmbs (env, "DOCUMENT_ROOT", 
@@ -680,7 +684,8 @@ static int task_init_cgi (
 	qse_size_t content_length;
 	qse_size_t len;
 	const qse_mchar_t* ptr;
-
+	const qse_htre_hdrval_t* tmp;
+	
 	cgi = (task_cgi_t*)qse_httpd_gettaskxtn (httpd, task);
 	arg = (task_cgi_arg_t*)task->ctx;
 
@@ -692,8 +697,13 @@ static int task_init_cgi (
 	QSE_MEMSET (cgi, 0, QSE_SIZEOF(*cgi));
 	cgi->httpd = httpd;
 
-	qse_mbscpy ((qse_mchar_t*)(cgi + 1), arg->path);
 	cgi->path = (qse_mchar_t*)(cgi + 1);
+	cgi->script = cgi->path + arg->path.len + 1;
+	cgi->suffix = cgi->script + arg->script.len + 1;
+	qse_mbscpy ((qse_mchar_t*)cgi->path, arg->path.ptr);
+	qse_mbscpy ((qse_mchar_t*)cgi->script, arg->script.ptr);
+	qse_mbscpy ((qse_mchar_t*)cgi->suffix, arg->suffix.ptr);
+
 	cgi->version = *qse_htre_getversion(arg->req);
 	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 	cgi->nph = arg->nph;
@@ -826,8 +836,14 @@ done:
 		goto oops;
 	}
 
+	/* get the content type header value */
+     tmp = qse_htre_getheaderval(arg->req, QSE_MT("Content-Type"));
+     if (tmp) while (tmp->next) tmp = tmp->next; /* get the last value */
+
 	if (cgi_add_env (
-		httpd, client, cgi->env, arg->req, arg->path, content_length, 
+		httpd, client, cgi->env, arg->req, 
+		cgi->path, cgi->script, cgi->suffix,
+		(tmp? tmp->ptr: QSE_NULL), content_length, 
 		(cgi->reqflags & CGI_REQ_FWDCHUNKED)) <= -1)
 	{
 		goto oops;
@@ -1434,15 +1450,28 @@ oops:
 *        non-blocking pio read ...
 */
 
-static QSE_INLINE qse_httpd_task_t* entask_cgi (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_httpd_task_t* pred, const qse_mchar_t* path,
-	qse_htre_t* req, int nph)
+qse_httpd_task_t* qse_httpd_entaskcgi (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* pred,
+	const qse_mchar_t* path, 
+	const qse_mchar_t* script,
+	const qse_mchar_t* suffix,
+	int                nph,
+	qse_htre_t*        req)
 {
 	qse_httpd_task_t task;
 	task_cgi_arg_t arg;
 
-	arg.path = path;
+	if (script == QSE_NULL) script = qse_htre_getqpath(req);
+	if (suffix == QSE_NULL) suffix = QSE_MT("");
+
+	arg.path.ptr = path;
+	arg.path.len = qse_mbslen(path);
+	arg.script.ptr = script;
+	arg.script.len = qse_mbslen(script);
+	arg.suffix.ptr = suffix;
+	arg.suffix.len = qse_mbslen(suffix);
 	arg.req = req;
 	arg.nph = nph;
 
@@ -1454,22 +1483,10 @@ static QSE_INLINE qse_httpd_task_t* entask_cgi (
 
 	return qse_httpd_entask (
 		httpd, client, pred, &task, 
-		QSE_SIZEOF(task_cgi_t) + ((qse_mbslen(path) + 1) * QSE_SIZEOF(*path))
+		QSE_SIZEOF(task_cgi_t) + 
+		((arg.path.len + 1) * QSE_SIZEOF(*path)) + 
+		((arg.script.len + 1) * QSE_SIZEOF(*script)) + 
+		((arg.suffix.len + 1) * QSE_SIZEOF(*suffix))
 	);
 }
 
-qse_httpd_task_t* qse_httpd_entaskcgi (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
-{
-	return entask_cgi (httpd, client, pred, path, req, 0);
-}
-
-qse_httpd_task_t* qse_httpd_entasknph (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_httpd_task_t* pred, const qse_mchar_t* path, qse_htre_t* req)
-{
-	return entask_cgi (httpd, client, pred, path, req, 1);
-}
-
-#endif
