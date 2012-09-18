@@ -155,6 +155,13 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 			return QSE_HTTPD_EACCES;
 
 		case ENOENT:
+		case ENOTDIR:
+			/* ENOTDIR can be returned in this situation.
+			 *   i want to access /tmp/t1.cgi/abc/def
+			 *   while /tmp/t1.cgi is an existing file.
+			 * I'm not sure if it is really good to translate
+			 * ENOTDIR to QSE_HTTPD_ENOENT.	
+			 */
 			return QSE_HTTPD_ENOENT;
 
 		case EEXIST:
@@ -328,6 +335,7 @@ static int init_xtn_ssl (
 /* TODO: CRYPTO_set_id_callback ();
  TODO: CRYPTO_set_locking_callback ();*/
 
+	SSL_CTX_set_read_ahead (ctx, 0);
 	xtn->ssl_ctx = ctx;
 	return 0;
 }
@@ -987,6 +995,8 @@ static int file_stat (
 
 	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 
+	hst->dev = st.st_dev;
+	hst->ino = st.st_ino;
 	hst->size = st.st_size;
 #if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
 	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
@@ -1110,6 +1120,12 @@ static qse_ssize_t client_recv (
 			else
 				qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		}
+
+		if (SSL_pending (client->handle2.ptr) > 0) 
+			client->status |= CLIENT_PENDING;
+		else
+			client->status &= ~CLIENT_PENDING;
+
 		return ret;
 #else
 		return -1;
@@ -1209,6 +1225,8 @@ qse_fflush (QSE_STDOUT);
 				 * will free it */
 				return -1;
 			}
+
+			SSL_set_read_ahead (ssl, 0);
 		}
 
 		ret = SSL_accept (ssl);
@@ -1224,7 +1242,10 @@ qse_fflush (QSE_STDOUT);
 			/* SSL_free (ssl); */
 			return -1;
 		}
+qse_printf (QSE_T("SSL ACCEPTED %d\n"), client->handle.i);
+qse_fflush (QSE_STDOUT);
 #else
+		qse_fprintf (QSE_STDERR, QSE_T("Error: NO SSL SUPPORT\n"));
 		return -1;
 #endif
 	}
@@ -1258,6 +1279,178 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 		val = val->next;
 	}
 	return QSE_HTB_WALK_FORWARD;
+}
+
+typedef struct target_t target_t;
+struct target_t
+{
+	enum
+	{
+		TARGET_DIR,
+		TARGET_FILE,
+		TARGET_CGI
+	} type;
+	union 
+	{
+		const qse_mchar_t* dir;
+		const qse_mchar_t* file;
+		struct 
+		{
+			qse_mchar_t* path;
+			qse_mchar_t* script;
+			qse_mchar_t* suffix;
+			int nph;
+		} cgi;	
+	} u;
+};
+
+static void dispose_target (qse_httpd_t* httpd, target_t* target)
+{
+	if (target->type == TARGET_CGI)
+	{
+		if (target->u.cgi.suffix) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.suffix);
+		if (target->u.cgi.script) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.script);
+		if (target->u.cgi.path) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.path);
+	}
+}
+
+static int resolve_target (
+	qse_httpd_t* httpd, qse_htre_t* req, target_t* target)
+{
+	static struct extinfo_t
+	{
+		const qse_mchar_t* ptr;
+		qse_size_t         len;
+		int                nph;
+	} extinfo[] = 
+	{
+		{ QSE_MT(".cgi"), 4, 0 },
+		{ QSE_MT(".nph"), 4, 1 }
+	};
+
+	qse_size_t i;
+	const qse_mchar_t* qpath;
+	qse_stat_t st;
+
+	qpath = qse_htre_getqpath(req);
+
+	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
+
+	if (QSE_STAT (qpath, &st) == 0 && S_ISDIR(st.st_mode))
+	{
+/* TODO: attempt the index file like index.html, index.cgi, etc. */
+		/* it is a directory */
+		target->type = TARGET_DIR;
+		target->u.dir = qpath;
+	}
+	else
+	{
+/* TODO: attempt other segments if qpath is like
+ *       /abc/x.cgi/y.cgi/ttt. currently, it tries x.cgi only.
+ *       x.cgi could be a directory name .
+ */
+		for (i = 0; i < QSE_COUNTOF(extinfo); i++)
+		{
+			const qse_mchar_t* ext;
+
+			ext = qse_mbsstr (qpath, extinfo[i].ptr);
+			if (ext && (ext[extinfo[i].len] == QSE_MT('/') || 
+			            ext[extinfo[i].len] == QSE_MT('\0')))
+			{
+				target->type = TARGET_CGI;
+				target->u.cgi.nph = extinfo[i].nph;
+
+				if (ext[extinfo[i].len] == QSE_MT('/')) 
+				{
+					/* TODO: combine path with document root */
+					target->u.cgi.path = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
+
+					target->u.cgi.script = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
+					target->u.cgi.suffix = qse_mbsdup (&ext[extinfo[i].len], httpd->mmgr);
+
+					if (target->u.cgi.path == QSE_NULL ||
+					    target->u.cgi.script == QSE_NULL ||
+					    target->u.cgi.suffix == QSE_NULL) 
+					{
+						dispose_target (httpd, target);
+						return -1;
+					}
+				}
+				else
+				{
+					/* TODO: combine path with document root */
+					target->u.cgi.path = qse_mbsdup (qpath, httpd->mmgr);
+
+					target->u.cgi.script = qse_mbsdup (qpath, httpd->mmgr);
+
+					if (target->u.cgi.path == QSE_NULL ||
+					    target->u.cgi.script == QSE_NULL) 
+					{
+						dispose_target (httpd, target);
+						return -1;
+					}
+				}
+
+				return 0;
+			}
+		}
+
+
+		target->type = TARGET_FILE;
+		target->u.file = qpath;
+	}
+
+	return 0;
+}
+
+static qse_httpd_task_t* entask_target (
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	qse_htre_t* req, target_t* target)
+{
+	qse_httpd_task_t* task;
+
+	switch (target->type)
+	{
+		case TARGET_DIR:
+			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, target->u.dir, req);
+			break;
+	
+		case TARGET_FILE:
+			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskfile (httpd, client, QSE_NULL, target->u.file, req);
+			break;
+	
+		case TARGET_CGI:
+			if (qse_htre_getqmethodtype(req) == QSE_HTTP_POST &&
+			    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+			    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+			{
+				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+
+				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 411, req);
+				if (task) 
+				{
+					/* 411 Length Required - can't keep alive */
+					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				}
+			}
+			else
+			{
+				task = qse_httpd_entaskcgi (
+					httpd, client, QSE_NULL, target->u.cgi.path,
+					target->u.cgi.script, target->u.cgi.suffix, 
+					target->u.cgi.nph, req);
+			}
+			break;
+
+		default:
+			task = QSE_NULL;
+			break;
+	}
+
+	return task;
 }
 
 static int process_request (
@@ -1315,7 +1508,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			/* "expect" in the header, version 1.1 or higher,
 			 * and no content received yet */
 
-				/* TODO: determine if to return 100-continue or other errors */
+			/* TODO: determine if to return 100-continue or other errors */
 {
 qse_ntime_t now;
 qse_gettime (&now);
@@ -1333,117 +1526,60 @@ if (qse_htre_getcontentlen(req) > 0)
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
-		const qse_mchar_t* qpath = qse_htre_getqpath(req);
-		const qse_mchar_t* dot = qse_mbsrchr (qpath, QSE_MT('.'));
-
-		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
+		if (peek)
 		{
-			if (peek)
-			{
-				/* cgi */
-#if 0
-				if (req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
-				{
-qse_printf (QSE_T("chunked cgi... delaying until contents are received\n"));
-				#if 0
-					req->attr.keepalive = 0;
-					task = qse_httpd_entaskerror (
-						httpd, client, QSE_NULL, 411, req);
-					/* 411 can't keep alive */
-					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-				#endif
-				}
-				else
-#endif
+			target_t target;
 
-				/*if (method == QSE_HTTP_POST && !(req->attr.flags & QSE_HTRE_ATTR_LENGTH))*/
-				if (method == QSE_HTTP_POST &&
-				    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-				    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
-				{
-					req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
-					task = qse_httpd_entaskerror (
-						httpd, client, QSE_NULL, 411, req);
-					/* 411 can't keep alive */
-					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-				}
-				else
-				{
-					task = qse_httpd_entaskcgi (
-						httpd, client, QSE_NULL, qpath, req);
-					if (task == QSE_NULL) goto oops;
-				}
-			}
-#if 0
-			else
-			{
-				/* to support the chunked request,
-				 * i need to wait until it's completed and invoke cgi */
-				if (req->attr.flags & QSE_HTRE_ATTR_CHUNKED)
-				{
-qse_printf (QSE_T("Entasking chunked CGI...\n"));
-					task = qse_httpd_entaskcgi (
-						httpd, client, QSE_NULL, qpath, req);
-					if (task == QSE_NULL) goto oops;
-				}
-			}
-#endif
-			return 0;
-		}
-		else if (dot && qse_mbscmp (dot, QSE_MT(".nph")) == 0)
-		{
-			if (peek)
-			{
-				const qse_htre_hdrval_t* auth;
-				int authorized = 0;
-
-				auth = qse_htre_getheaderval (req, QSE_MT("Authorization"));
-				if (auth)
-				{
-					/* TODO: PERFORM authorization... */
-					/* BASE64 decode... */
-					while (auth->next) auth = auth->next;
-					authorized = 1;
-				}
-
-				if (authorized)
-				{
-					/* nph-cgi */
-					task = qse_httpd_entasknph (
-						httpd, client, QSE_NULL, qpath, req);
-				}
-				else
-				{
-					task = qse_httpd_entaskauth (
-						httpd, client, QSE_NULL, QSE_MT("Secure Area"), req);
-				}
-				if (task == QSE_NULL) goto oops;
-			}
-			return 0;
-		}
-		else
-		{
-#if 0
-			if (!peek)
-			{
-				/* file or directory */
-				task = qse_httpd_entaskfile (
-					httpd, client, QSE_NULL, qpath, req);
-				if (task == QSE_NULL) goto oops;
-			}
-#else
-			if (peek)
+			if (resolve_target (httpd, req, &target) <= -1)
 			{
 				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskpath (httpd, client, QSE_NULL, qpath, req);
-				if (task == QSE_NULL) goto oops;
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 500, req);
 			}
-#endif
+			else
+			{
+				task = entask_target (httpd, client, req, &target);
+				dispose_target (httpd, &target);
+			}
+			if (task == QSE_NULL) goto oops;
 		}
+
+#if 0
+		if (peek)
+		{
+			const qse_htre_hdrval_t* auth;
+			int authorized = 0;
+
+			auth = qse_htre_getheaderval (req, QSE_MT("Authorization"));
+			if (auth)
+			{
+				/* TODO: PERFORM authorization... */
+				/* BASE64 decode... */
+				while (auth->next) auth = auth->next;
+				authorized = 1;
+			}
+
+			if (authorized)
+			{
+				/* nph-cgi */
+				task = qse_httpd_entasknph (
+					httpd, client, QSE_NULL, qpath, req);
+			}
+			else
+			{
+				task = qse_httpd_entaskauth (
+					httpd, client, QSE_NULL, QSE_MT("Secure Area"), req);
+			}
+			if (task == QSE_NULL) goto oops;
+		}
+#endif
 	}
 	else
 	{
-		if (!peek)
+		if (peek)
+		{
+			qse_httpd_discardcontent (httpd, req);
+		}
+		else
 		{
 			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 405, req);
 			if (task == QSE_NULL) goto oops;

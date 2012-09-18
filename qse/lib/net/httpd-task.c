@@ -446,6 +446,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 }
 
 /*------------------------------------------------------------------------*/
+
 qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* name, qse_htre_t* req)
@@ -453,13 +454,16 @@ qse_httpd_task_t* qse_httpd_entaskpath (
 	qse_stat_t st;
 	qse_httpd_task_t* task;
 
-	if (QSE_LSTAT (name, &st) == 0 && S_ISDIR(st.st_mode))
+/* TODO: LSTAT or STAT? should i not follow the  symbolic link? */
+/*	if (QSE_LSTAT (name, &st) == 0 && S_ISDIR(st.st_mode))*/
+	if (QSE_STAT (name, &st) == 0 && S_ISDIR(st.st_mode))
 		task = qse_httpd_entaskdir (httpd, client, pred, name, req);
 	else
 		task = qse_httpd_entaskfile (httpd, client, pred, name, req);
 
 	return task;
 }
+
 /*------------------------------------------------------------------------*/
 
 #if 0

@@ -74,12 +74,13 @@ struct qse_httpd_t
 #define CLIENT_BAD                    (1 << 0)
 #define CLIENT_READY                  (1 << 1)
 #define CLIENT_SECURE                 (1 << 2)
-#define CLIENT_MUTE                   (1 << 3)
-#define CLIENT_MUTE_DELETED           (1 << 4)
-#define CLIENT_HANDLE_READ_IN_MUX     (1 << 5)
-#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 6)
+#define CLIENT_PENDING                (1 << 3)
+#define CLIENT_MUTE                   (1 << 4)
+#define CLIENT_MUTE_DELETED           (1 << 5)
+#define CLIENT_HANDLE_READ_IN_MUX     (1 << 6)
+#define CLIENT_HANDLE_WRITE_IN_MUX    (1 << 7)
 #define CLIENT_HANDLE_IN_MUX          (CLIENT_HANDLE_READ_IN_MUX|CLIENT_HANDLE_WRITE_IN_MUX)
-#define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 7))
+#define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 8))
 
 #ifdef __cplusplus
 extern "C" {

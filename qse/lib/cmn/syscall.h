@@ -64,39 +64,39 @@
 #	include <sys/syscall.h>
 #endif
 
-#if defined(SYS_open)
+#if defined(SYS_open) && defined(QSE_USE_SYSCALL)
 #	define QSE_OPEN(path,flags,mode) syscall(SYS_open,path,flags,mode)
 #else
 #	define QSE_OPEN(path,flags,mode) open(path,flags,mode)
 #endif
 
-#if defined(SYS_close)
+#if defined(SYS_close) && defined(QSE_USE_SYSCALL)
 #	define QSE_CLOSE(handle) syscall(SYS_close,handle)
 #else
 #	define QSE_CLOSE(handle) close(handle)
 #endif
 
-#if defined(SYS_read)
+#if defined(SYS_read) && defined(QSE_USE_SYSCALL)
 #	define QSE_READ(handle,buf,size) syscall(SYS_read,handle,buf,size)
 #else
 #	define QSE_READ(handle,buf,size) read(handle,buf,size)
 #endif
 
-#if defined(SYS_write)
+#if defined(SYS_write) && defined(QSE_USE_SYSCALL)
 #	define QSE_WRITE(handle,buf,size) syscall(SYS_write,handle,buf,size)
 #else
 #	define QSE_WRITE(handle,buf,size) write(handle,buf,size)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS__llseek)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS__llseek) && defined(QSE_USE_SYSCALL)
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) syscall(SYS__llseek,handle,hoffset,loffset,out,whence)
-#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE__LLSEEK)
+#elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE__LLSEEK) && defined(QSE_USE_SYSCALL)
 #	define QSE_LLSEEK(handle,hoffset,loffset,out,whence) _llseek(handle,hoffset,loffset,out,whence)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lseek64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lseek64) && defined(QSE_USE_SYSCALL)
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek64,handle,offset,whence)
-#elif defined(SYS_lseek)
+#elif defined(SYS_lseek) && defined(QSE_USE_SYSCALL)
 #	define QSE_LSEEK(handle,offset,whence) syscall(SYS_lseek,handle,offset,whence)
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_LSEEK64)
 #	define QSE_LSEEK(handle,offset,whence) lseek64(handle,offset,whence)
@@ -104,10 +104,10 @@
 #	define QSE_LSEEK(handle,offset,whence) lseek(handle,offset,whence)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_fstat64) && defined(QSE_USE_SYSCALL)
 #	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat64,handle,stbuf)
 	typedef struct stat64 qse_fstat_t;
-#elif defined(SYS_fstat)
+#elif defined(SYS_fstat) && defined(QSE_USE_SYSCALL)
 #	define QSE_FSTAT(handle,stbuf) syscall(SYS_fstat,handle,stbuf)
 	typedef struct stat qse_fstat_t;
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FSTAT64)
@@ -118,9 +118,9 @@
 	typedef struct stat qse_fstat_t;
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_ftruncate64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_ftruncate64) && defined(QSE_USE_SYSCALL)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate64,handle,size)
-#elif defined(SYS_ftruncate)
+#elif defined(SYS_ftruncate) && defined(QSE_USE_SYSCALL)
 #	define QSE_FTRUNCATE(handle,size) syscall(SYS_ftruncate,handle,size)
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_FTRUNCATE64)
 #	define QSE_FTRUNCATE(handle,size) ftruncate64(handle,size)
@@ -128,127 +128,127 @@
 #	define QSE_FTRUNCATE(handle,size) ftruncate(handle,size)
 #endif
 
-#if defined(SYS_fchmod)
+#if defined(SYS_fchmod) && defined(QSE_USE_SYSCALL)
 #	define QSE_FCHMOD(handle,mode) syscall(SYS_fchmod,handle,mode)
 #else
 #	define QSE_FCHMOD(handle,mode) fchmod(handle,mode)
 #endif
 
-#if defined(SYS_fchown)
+#if defined(SYS_fchown) && defined(QSE_USE_SYSCALL)
 #	define QSE_FCHOWN(handle,owner,group) syscall(SYS_fchown,handle,owner,group)
 #else
 #	define QSE_FCHOWN(handle,owner,group) fchown(handle,owner,group)
 #endif
 
-#if defined(SYS_fsync)
+#if defined(SYS_fsync) && defined(QSE_USE_SYSCALL)
 #	define QSE_FSYNC(handle) syscall(SYS_fsync,handle)
 #else
 #	define QSE_FSYNC(handle) fsync(handle)
 #endif
 
-#if defined(SYS_fcntl)
+#if defined(SYS_fcntl) && defined(QSE_USE_SYSCALL)
 #	define QSE_FCNTL(handle,cmd,arg) syscall(SYS_fcntl,handle,cmd,arg)
 #else
 #	define QSE_FCNTL(handle,cmd,arg) fcntl(handle,cmd,arg)
 #endif
 
-#if defined(SYS_dup2)
+#if defined(SYS_dup2) && defined(QSE_USE_SYSCALL)
 #	define QSE_DUP2(ofd,nfd) syscall(SYS_dup2,ofd,nfd)
 #else
 #	define QSE_DUP2(ofd,nfd) dup2(ofd,nfd)
 #endif
 
-#if defined(SYS_pipe)
+#if defined(SYS_pipe) && defined(QSE_USE_SYSCALL)
 #	define QSE_PIPE(pfds) syscall(SYS_pipe,pfds)
 #else
 #	define QSE_PIPE(pfds) pipe(pfds)
 #endif
 
-#if defined(SYS_exit)
+#if defined(SYS_exit) && defined(QSE_USE_SYSCALL)
 #	define QSE_EXIT(code) syscall(SYS_exit,code)
 #else
 #	define QSE_EXIT(code) _exit(code)
 #endif
 
-#if defined(SYS_fork)
+#if defined(SYS_fork) && defined(QSE_USE_SYSCALL)
 #	define QSE_FORK() syscall(SYS_fork)
 #else
 #	define QSE_FORK() fork()
 #endif
 
-#if defined(SYS_vfork)
+#if defined(SYS_vfork) && defined(QSE_USE_SYSCALL)
 #	define QSE_VFORK() syscall(SYS_vfork)
 #else
 #	define QSE_VFORK() vfork()
 #endif
 
-#if defined(SYS_execve)
+#if defined(SYS_execve) && defined(QSE_USE_SYSCALL)
 #	define QSE_EXECVE(path,argv,envp) syscall(SYS_execve,path,argv,envp)
 #else
 #	define QSE_EXECVE(path,argv,envp) execve(path,argv,envp)
 #endif
 
-#if defined(SYS_waitpid)
+#if defined(SYS_waitpid) && defined(QSE_USE_SYSCALL)
 #	define QSE_WAITPID(pid,status,options) syscall(SYS_waitpid,pid,status,options)
 #else
 #	define QSE_WAITPID(pid,status,options) waitpid(pid,status,options)
 #endif
 
-#if defined(SYS_kill)
+#if defined(SYS_kill) && defined(QSE_USE_SYSCALL)
 #	define QSE_KILL(pid,sig) syscall(SYS_kill,pid,sig)
 #else
 #	define QSE_KILL(pid,sig) kill(pid,sig)
 #endif
 
-#if defined(SYS_getpid)
+#if defined(SYS_getpid) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETPID() syscall(SYS_getpid)
 #else
 #	define QSE_GETPID() getpid()
 #endif
 
-#if defined(SYS_getuid)
+#if defined(SYS_getuid) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETUID() syscall(SYS_getuid)
 #else
 #	define QSE_GETUID() getuid()
 #endif
 
-#if defined(SYS_geteuid)
+#if defined(SYS_geteuid) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETEUID() syscall(SYS_geteuid)
 #else
 #	define QSE_GETEUID() geteuid()
 #endif
 
-#if defined(SYS_getgid)
+#if defined(SYS_getgid) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETGID() syscall(SYS_getgid)
 #else
 #	define QSE_GETGID() getgid()
 #endif
 
-#if defined(SYS_getegid)
+#if defined(SYS_getegid) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETEGID() syscall(SYS_getegid)
 #else
 #	define QSE_GETEGID() getegid()
 #endif
 
-#if defined(SYS_gettimeofday)
+#if defined(SYS_gettimeofday) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETTIMEOFDAY(tv,tz) syscall(SYS_gettimeofday,tv,tz)
 #else
 #	define QSE_GETTIMEOFDAY(tv,tz) gettimeofday(tv,tz)
 #endif
 
-#if defined(SYS_settimeofday)
+#if defined(SYS_settimeofday) && defined(QSE_USE_SYSCALL)
 #	define QSE_SETTIMEOFDAY(tv,tz) syscall(SYS_settimeofday,tv,tz)
 #else
 #	define QSE_SETTIMEOFDAY(tv,tz) settimeofday(tv,tz)
 #endif
 
-#if defined(SYS_getrlimit)
+#if defined(SYS_getrlimit) && defined(QSE_USE_SYSCALL)
 #	define QSE_GETRLIMIT(res,lim) syscall(SYS_getrlimit,res,lim)
 #else
 #	define QSE_GETRLIMIT(res,lim) getrlimit(res,lim)
 #endif
 
-#if defined(SYS_setrlimit)
+#if defined(SYS_setrlimit) && defined(QSE_USE_SYSCALL)
 #	define QSE_SETRLIMIT(res,lim) syscall(SYS_setrlimit,res,lim)
 #else
 #	define QSE_SETRLIMIT(res,lim) setrlimit(res,lim)
@@ -257,40 +257,40 @@
 
 /* ===== FILE SYSTEM CALLS ===== */
 
-#if defined(SYS_chmod)
+#if defined(SYS_chmod) && defined(QSE_USE_SYSCALL)
 #	define QSE_CHMOD(path,mode) syscall(SYS_chmod,path,mode)
 #else
 #	define QSE_CHMOD(path,mode) chmod(path,mode)
 #endif
 
-#if defined(SYS_chown)
+#if defined(SYS_chown) && defined(QSE_USE_SYSCALL)
 #	define QSE_CHOWN(path,owner,group) syscall(SYS_chown,path,owner,group)
 #else
 #	define QSE_CHOWN(path,owner,group) chown(path,owner,group)
 #endif
 
-#if defined(SYS_chroot)
+#if defined(SYS_chroot) && defined(QSE_USE_SYSCALL)
 #	define QSE_CHROOT(path) syscall(SYS_chroot,path)
 #else
 #	define QSE_CHROOT(path) chroot(path)
 #endif
 
-#if defined(SYS_lchown)
+#if defined(SYS_lchown) && defined(QSE_USE_SYSCALL)
 #	define QSE_LCHOWN(path,owner,group) syscall(SYS_lchown,path,owner,group)
 #else
 #	define QSE_LCHOWN(path,owner,group) lchown(path,owner,group)
 #endif
 
-#if defined(SYS_link)
+#if defined(SYS_link) && defined(QSE_USE_SYSCALL)
 #	define QSE_LINK(oldpath,newpath) syscall(SYS_link,oldpath,newpath)
 #else
 #	define QSE_LINK(oldpath,newpath) link(oldpath,newpath)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lstat64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_lstat64) && defined(QSE_USE_SYSCALL)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
 	typedef struct stat64 qse_lstat_t;
-#elif defined(SYS_lstat)
+#elif defined(SYS_lstat) && defined(QSE_USE_SYSCALL)
 #	define QSE_LSTAT(path,stbuf) syscall(SYS_lstat,path,stbuf)
 	typedef struct stat qse_lstat_t;
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_LSTAT64)
@@ -301,29 +301,29 @@
 	typedef struct stat qse_lstat_t;
 #endif
 
-#if defined(SYS_access)
+#if defined(SYS_access) && defined(QSE_USE_SYSCALL)
 #	define QSE_ACCESS(path,mode) syscall(SYS_access,path,mode)
 #else
 #	define QSE_ACCESS(path,mode) access(path,mode)
 #endif
 
-#if defined(SYS_rename)
+#if defined(SYS_rename) && defined(QSE_USE_SYSCALL)
 #	define QSE_RENAME(oldpath,newpath) syscall(SYS_rename,oldpath,newpath)
 #else
 	int rename(const char *oldpath, const char *newpath); /* not to include stdio.h */
 #	define QSE_RENAME(oldpath,newpath) rename(oldpath,newpath)
 #endif
 
-#if defined(SYS_rmdir)
+#if defined(SYS_rmdir) && defined(QSE_USE_SYSCALL)
 #	define QSE_RMDIR(path) syscall(SYS_rmdir,path)
 #else
 #	define QSE_RMDIR(path) rmdir(path)
 #endif
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_stat64)
+#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(SYS_stat64) && defined(QSE_USE_SYSCALL)
 #	define QSE_STAT(path,stbuf) syscall(SYS_stat64,path,stbuf)
 	typedef struct stat64 qse_stat_t;
-#elif defined(SYS_stat)
+#elif defined(SYS_stat) && defined(QSE_USE_SYSCALL)
 #	define QSE_STAT(path,stbuf) syscall(SYS_stat,path,stbuf)
 	typedef struct stat qse_stat_t;
 #elif !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_STAT64)
@@ -334,25 +334,25 @@
 	typedef struct stat qse_stat_t;
 #endif
 
-#if defined(SYS_symlink)
+#if defined(SYS_symlink) && defined(QSE_USE_SYSCALL)
 #	define QSE_SYMLINK(oldpath,newpath) syscall(SYS_symlink,oldpath,newpath)
 #else
 #	define QSE_SYMLINK(oldpath,newpath) symlink(oldpath,newpath)
 #endif
 
-#if defined(SYS_unlink)
+#if defined(SYS_unlink) && defined(QSE_USE_SYSCALL)
 #	define QSE_UNLINK(path) syscall(SYS_unlink,path)
 #else
 #	define QSE_UNLINK(path) unlink(path)
 #endif
 
-#if defined(SYS_utime)
+#if defined(SYS_utime) && defined(QSE_USE_SYSCALL)
 #	define QSE_UTIME(path,t) syscall(SYS_utime,path,t)
 #else
 #	define QSE_UTIME(path,t) utime(path,t)
 #endif
 
-#if defined(SYS_utimes)
+#if defined(SYS_utimes) && defined(QSE_USE_SYSCALL)
 #	define QSE_UTIMES(path,t) syscall(SYS_utimes,path,t)
 #else
 #	define QSE_UTIMES(path,t) utimes(path,t)

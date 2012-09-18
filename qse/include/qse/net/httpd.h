@@ -65,6 +65,8 @@ enum qse_httpd_option_t
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
 struct qse_httpd_stat_t
 {
+	qse_long_t dev;
+	qse_long_t ino;
 	qse_foff_t size;
 	qse_ntime_t mtime;
 	const qse_mchar_t* mime;
@@ -556,14 +558,9 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        path,
-	qse_htre_t*               req
-);
-
-qse_httpd_task_t* qse_httpd_entasknph (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client,
-	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        path,
+	const qse_mchar_t*        script,
+	const qse_mchar_t*        suffix,
+	int                       nph,
 	qse_htre_t*               req
 );
 
