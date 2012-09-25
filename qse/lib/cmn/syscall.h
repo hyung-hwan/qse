@@ -381,29 +381,29 @@ typedef DIR qse_dir_t;
 #define QSE_SYSCALL0(ret,num) \
 	__asm__ volatile ( \
 		"movq %1, %%rax\n\t" \
-		"syscall\n":  \
-		"=&a"(ret):  \
-		"g"((qse_uint64_t)num): \
-		"%rcx", "%r11")
+		"syscall\n"  \
+		: "=&a"(ret)  \
+		: "g"((qse_uint64_t)num) \
+		: "%rcx", "%r11")
 
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
 		"movq %1, %%rax\n\t" \
 		"movq %2, %%rdi\n\t" \
-		"syscall\n":  \
-		"=&a"(ret):  \
-		"g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1): \
-		"%rdi", "%rcx", "%r11")
+		"syscall\n"  \
+		: "=&a"(ret)  \
+		: "g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1) \
+		: "%rdi", "%rcx", "%r11")
 
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
 		"movq %1, %%rax\n\t" \
 		"movq %2, %%rdi\n\t" \
 		"movq %3, %%rsi\n\t" \
-		"syscall\n":  \
-		"=&a"(ret): \
-		"g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1), "g"((qse_uint64_t)arg2): \
-		"%rdi", "%rsi", "%rcx", "%r11")
+		"syscall\n"  \
+		: "=&a"(ret) \
+		: "g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1), "g"((qse_uint64_t)arg2) \
+		: "%rdi", "%rsi", "%rcx", "%r11")
 
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
@@ -411,39 +411,39 @@ typedef DIR qse_dir_t;
 		"movq %2, %%rdi\n\t" \
 		"movq %3, %%rsi\n\t" \
 		"movq %4, %%rdx\n\t" \
-		"syscall\n":  \
-		"=&a"(ret):  \
-		"g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1), "g"((qse_uint64_t)arg2), "g"((qse_uint64_t)arg3): \
-		"%rdi", "%rsi", "%rdx", "%rcx", "%r11")
+		"syscall\n"  \
+		: "=&a"(ret)  \
+		: "g"((qse_uint64_t)num), "g"((qse_uint64_t)arg1), "g"((qse_uint64_t)arg2), "g"((qse_uint64_t)arg3) \
+		: "%rdi", "%rsi", "%rdx", "%rcx", "%r11")
 */
 
 #define QSE_SYSCALL0(ret,num) \
 	__asm__ volatile ( \
-		"syscall\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint64_t)num) : \
-		"%rcx", "%r11")
+		"syscall\n" \
+		: "=a"(ret) \
+		:"a"((qse_uint64_t)num) \
+		: "%rcx", "%r11")
 
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
-		"syscall\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1): \
-		"%rcx", "%r11")
+		"syscall\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1) \
+		: "%rcx", "%r11")
 
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
-		"syscall\n":  \
-		"=a"(ret): \
-		"a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2): \
-		"%rcx", "%r11")
+		"syscall\n"  \
+		: "=a"(ret) \
+		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2) \
+		: "%rcx", "%r11")
 
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
-		"syscall\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2), "d"((qse_uint64_t)arg3): \
-		"%rcx", "%r11")
+		"syscall\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2), "d"((qse_uint64_t)arg3) \
+		: "%rcx", "%r11")
 
 #elif defined(__linux) && defined(__GNUC__) && defined(__i386) 
 
@@ -451,27 +451,65 @@ typedef DIR qse_dir_t;
 
 #define QSE_SYSCALL0(ret,num) \
 	__asm__ volatile ( \
-		"int $0x80\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint32_t)num))
+		"int $0x80\n"  \
+		: "=a"(ret)  \
+		: "a"((qse_uint32_t)num) \
+		: "memory")
 
+/*
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
-		"int $0x80\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1))
+		"int $0x80\n"  \
+		: "=a"(ret)  \
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1))
 
+GCC in x86 PIC mode uses ebx to store the GOT table. so the macro shouldn't
+clobber the ebx register. this modified version stores ebx before interrupt
+and restores it after interrupt.
+*/
+#define QSE_SYSCALL1(ret,num,arg1) \
+	__asm__ volatile ( \
+		"push %%ebx\n" \
+		"movl %2, %%ebx\n" \
+		"int $0x80\n" \
+		"pop %%ebx\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1) \
+		: "memory")
+
+/*
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
-		"int $0x80\n":  \
-		"=a"(ret): \
-		"a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2))
+		"int $0x80\n"  \
+		: "=a"(ret) \
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2))
+*/
+#define QSE_SYSCALL2(ret,num,arg1,arg2) \
+	__asm__ volatile ( \
+		"push %%ebx\n" \
+		"movl %2, %%ebx\n" \
+		"int $0x80\n"  \
+		"pop %%ebx\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2) \
+		: "memory")
 
+/*
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
-		"int $0x80\n":  \
-		"=a"(ret):  \
-		"a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3))
+		"int $0x80\n"  \
+		: "=a"(ret)  \
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3))
+*/
+#define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
+	__asm__ volatile ( \
+		"push %%ebx\n" \
+		"movl %2, %%ebx\n" \
+		"int $0x80\n" \
+		"pop %%ebx\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3) \
+		: "memory")
 
 #endif
 

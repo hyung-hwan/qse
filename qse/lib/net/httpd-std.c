@@ -47,6 +47,7 @@
 #		include <sys/epoll.h>
 #	endif
 #	if defined(__linux__)
+#		include <limits.h>
 #		include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
 #	endif
 #endif
@@ -1737,27 +1738,35 @@ oops:
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
+/*
 	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
 	{
+*/
 		return process_request (httpd, client, req, 1);
+/*
 	}
 	else
 	{
 		return proxy_request (httpd, client, req, 1);
 	}
+*/
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
+/*
 	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
 	{
+*/
 		return process_request (httpd, client, req, 0);
+/*
 	}
 	else
 	{
 		return proxy_request (httpd, client, req, 0);
 	}
+*/
 }
 
 static qse_httpd_scb_t httpd_system_callbacks =
