@@ -35,135 +35,14 @@ struct xtn_t
 	qse_mchar_t basedir[4096];
 };
 
-static int process_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_htre_t* req, int peek)
+static int makersrc (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
 {
-	int method;
-	qse_httpd_task_t* task;
-	int content_received;
-	xtn_t* xtn;
-
-	method = qse_htre_getqmethodtype(req);
-	content_received = (qse_htre_getcontentlen(req) > 0);
-
-	xtn = (xtn_t*) qse_httpd_getxtn (httpd);
-
-	if (peek) qse_perdechttpstr (qse_htre_getqpath(req), qse_htre_getqpath(req));
-
-qse_printf (QSE_T("================================\n"));
-qse_printf (QSE_T("[%lu] %hs REQUEST ==> [%hs] version[%d.%d %hs] method[%hs]\n"),
-	(unsigned long)time(NULL),
-	(peek? QSE_MT("PEEK"): QSE_MT("HANDLE")),
-	qse_htre_getqpath(req),
-	qse_htre_getmajorversion(req),
-	qse_htre_getminorversion(req),
-	qse_htre_getverstr(req),
-	qse_htre_getqmethodname(req)
-);
-if (qse_htre_getqparam(req))
-	qse_printf (QSE_T("PARAMS ==> [%hs]\n"), qse_htre_getqparam(req));
-
-	if (peek)
-	{
-		if (method != QSE_HTTP_POST && method != QSE_HTTP_PUT)
-		{
-			/* i'll discard request contents if the method is none of
-			 * post and put */
-			qse_httpd_discardcontent (httpd, req);
-		}
-
-		if ((req->attr.flags & QSE_HTRE_ATTR_EXPECT100) &&
-		    (req->version.major > 1 ||
-		     (req->version.major == 1 && req->version.minor >= 1)) &&
-		    !content_received)
-		{
-/* TODO: check method.... */
-			/* "expect" in the header, version 1.1 or higher,
-			 * and no content received yet */
-
-			/* TODO: determine if to return 100-continue or other errors */
-			if (qse_httpd_entaskcontinue (
-				httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
-		}
-	}
-
-	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
-	{
-		const qse_mchar_t* qpath = qse_htre_getqpath(req);
-		const qse_mchar_t* dot = qse_mbsrchr (qpath, QSE_MT('.'));
-
-		if (dot && qse_mbscmp (dot, QSE_MT(".cgi")) == 0)
-		{
-			if (peek)
-			{
-				/* cgi */
-				if (method == QSE_HTTP_POST &&
-				    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-				    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
-				{
-					req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
-					task = qse_httpd_entaskerror (
-						httpd, client, QSE_NULL, 411, req);
-					/* 411 can't keep alive */
-					if (task) qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-				}
-				else
-				{
-					task = qse_httpd_entaskcgi (
-						httpd, client, QSE_NULL, qpath, QSE_NULL, QSE_NULL, 0, req);
-					if (task == QSE_NULL) goto oops;
-				}
-			}
-
-			return 0;
-		}
-		else
-		{
-			if (peek)
-			{
-/* TODO: combine qpath with xtn->basedir */
-				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskpath (httpd, client, QSE_NULL, qpath, req);
-				if (task == QSE_NULL) goto oops;
-			}
-		}
-	}
-	else
-	{
-		if (!peek)
-		{
-			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 405, req);
-			if (task == QSE_NULL) goto oops;
-		}
-	}
-
-	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
-	{
-		if (!peek)
-		{
-			task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-			if (task == QSE_NULL) goto oops;
-		}
-	}
-
-	return 0;
-
-oops:
-	/*qse_httpd_markbadclient (httpd, client);*/
 	return -1;
 }
 
-static int peek_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
+static void freersrc (qse_httpd_t* httpd, qse_httpd_rsrc_t* rsrc)
 {
-	return process_request (httpd, client, req, 1);
-}
-
-static int handle_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
-{
-	return process_request (httpd, client, req, 0);
 }
 
 /* --------------------------------------------------------------------- */
@@ -180,7 +59,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
 	int ret = -1, i;
-	static qse_httpd_rcb_t rcb = { peek_request, handle_request };
+	static qse_httpd_cbstd_t cbstd = { makersrc, freersrc };
 
 	if (argc <= 1)
 	{
@@ -197,7 +76,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_addserver (httpd, argv[i]) <= -1)
+		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
@@ -212,7 +91,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loopstd (httpd, &rcb, 10000);
+	ret = qse_httpd_loopstd (httpd, &cbstd, 10000);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);

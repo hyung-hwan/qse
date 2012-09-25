@@ -38,11 +38,11 @@ struct qse_gdl_t
 };
 
 /**
- * The QSE_GDL_INIT macro initializes a host link to be used for internal
+ * The QSE_GDL_INIT macro initializes a link to be used for internal
  * management.
  */
-#define QSE_GDL_INIT(host) QSE_BLOCK ( \
-	(host)->next = (host); (host)->prev = (host); \
+#define QSE_GDL_INIT(link) QSE_BLOCK ( \
+	(link)->next = (link); (link)->prev = (link); \
 )
 
 /**
@@ -59,17 +59,17 @@ struct qse_gdl_t
 /**
  * The QSE_GDL_ISEMPTY macro checks if the chain is empty.
  */
-#define QSE_GDL_ISEMPTY(host) ((host)->next == (host))
+#define QSE_GDL_ISEMPTY(link) ((link)->next == (link))
 
 /**
  * The QSE_GDL_HEAD macro get the first node in the chain.
  */
-#define QSE_GDL_HEAD(host) ((host)->next)
+#define QSE_GDL_HEAD(link) ((link)->next)
 
 /**
  * The QSE_GDL_TAIL macro gets the last node in the chain.
  */
-#define QSE_GDL_TAIL(host) ((host)->prev)
+#define QSE_GDL_TAIL(link) ((link)->prev)
 
 #ifdef __cplusplus
 extern "C" {

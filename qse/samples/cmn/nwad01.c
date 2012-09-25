@@ -103,7 +103,8 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 		QSE_WT("[::ffff:0:0]:60"),
 		QSE_WT("[::ffff:192.168.1.1]:70"),
 		QSE_WT("[::ffff:192.168.1.1%999]:70"),
-		QSE_WT("[::ffff:192.168.1.1%eth0]:70")
+		QSE_WT("[::ffff:192.168.1.1%eth0]:70"),
+		QSE_WT("[::ffff:192.168.1.1%1]:70")
 	};
 
 	for (i = 0; i < QSE_COUNTOF(ipstr); i++)

@@ -33,9 +33,9 @@
 typedef struct task_proxy_arg_t task_proxy_arg_t;
 struct task_proxy_arg_t 
 {
-	qse_nwad_t peer_nwad;
+	qse_nwad_t* peer_nwad;
+	qse_nwad_t* peer_local;
 	qse_htre_t* req;
-	int nph;
 };
 
 typedef struct task_proxy_t task_proxy_t;
@@ -684,7 +684,10 @@ static int task_init_proxy (
 
 	proxy->version = *qse_htre_getversion(arg->req);
 	proxy->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
-	proxy->peer.nwad = arg->peer_nwad;
+	proxy->peer.nwad = *arg->peer_nwad;
+	if (arg->peer_local) proxy->peer.local = *arg->peer_local;
+	else proxy->peer.local.type = arg->peer_nwad->type;
+
 	proxy->req = QSE_NULL;
 
 /* -------------------------------------------------------------------- 
@@ -694,6 +697,7 @@ static int task_init_proxy (
 
 /* TODO: DETERMINE THIS SIZE */
 len = 1024;
+
 	proxy->reqfwdbuf = qse_mbs_open (httpd->mmgr, 0, (len < 512? 512: len));
 	if (proxy->reqfwdbuf == QSE_NULL) goto oops;
 
@@ -1442,13 +1446,15 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
 	qse_httpd_task_t* pred, 
-	const qse_nwad_t* nwad,
+	const qse_nwad_t* dst,
+	const qse_nwad_t* src,
 	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_proxy_arg_t arg;
 
-	arg.peer_nwad = *nwad;
+	arg.peer_nwad = dst;
+	arg.peer_local = src;
 	arg.req = req;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));

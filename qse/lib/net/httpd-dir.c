@@ -28,7 +28,8 @@
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
-	const qse_mchar_t* path;
+	qse_mcstr_t        path;
+	qse_mcstr_t        qpath;
 	qse_http_version_t version;
 	int                keepalive;
 };
@@ -39,8 +40,9 @@ struct task_dseg_t
 	qse_http_version_t version;
 	int                keepalive;
 	int                chunked;
-
-	const qse_mchar_t* path;
+	
+	qse_mcstr_t path;
+	qse_mcstr_t qpath;
 	qse_dir_t* handle;
 	qse_dirent_t* dent;
 
@@ -64,10 +66,15 @@ static int task_init_dseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dseg_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+	task_dseg_t* arg = (task_dseg_t*)task->ctx;
 
-	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
-	qse_mbscpy ((qse_mchar_t*)(xtn + 1), xtn->path);
-	xtn->path = (qse_mchar_t*)(xtn + 1);
+	QSE_MEMCPY (xtn, arg, QSE_SIZEOF(*xtn));
+
+	xtn->path.ptr = (qse_mchar_t*)(xtn + 1);
+	qse_mbscpy ((qse_mchar_t*)xtn->path.ptr, arg->path.ptr);
+	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
+
 	task->ctx = xtn;
 
 	return 0;
@@ -227,14 +234,15 @@ static int task_main_dseg (
 	{
 		int is_root;
 
-		is_root = (qse_mbscmp (ctx->path, QSE_MT("/")) == 0);
+		is_root = (qse_mbscmp (ctx->qpath.ptr, QSE_MT("/")) == 0);
 
 		/* compose the header since this is the first time. */
 /* TODO: page encoding?? utf-8??? or derive name from cmgr or current locale??? */
+/* TODO: html escaping of ctx->qpath.ptr */
 		x = snprintf (
 			&ctx->buf[ctx->buflen], ctx->bufrem,
 			QSE_MT("<html><head></head><body><b>%s</b><ul>%s"), 
-			ctx->path, (is_root? QSE_MT(""): QSE_MT("<li><a href='../'>..</a></li>"))
+			ctx->qpath.ptr, (is_root? QSE_MT(""): QSE_MT("<li><a href='../'>..</a></li>"))
 		);
 		if (x == -1 || x >= ctx->bufrem) 
 		{
@@ -297,7 +305,7 @@ static int task_main_dseg (
 				QSE_MT("<li><a href='%s%s'>%s%s</a></li>"),
 				encname,
 				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT("")),
-				ctx->dent->d_name,
+				ctx->dent->d_name, /* TODO: html escaping */
 				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT(""))
 			);
 
@@ -364,6 +372,7 @@ static qse_httpd_task_t* entask_directory_segment (
 	data.keepalive = dir->keepalive;
 	data.chunked = dir->keepalive;
 	data.path = dir->path;
+	data.qpath = dir->qpath;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
 	task.init = task_init_dseg;
@@ -372,7 +381,7 @@ static qse_httpd_task_t* entask_directory_segment (
 	task.ctx = &data;
 
 qse_printf (QSE_T("Debug: entasking directory segment (%d)\n"), client->handle.i);
-	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + qse_mbslen(data.path) + 1);
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.qpath.len + 1);
 }
 
 /*------------------------------------------------------------------------*/
@@ -381,12 +390,15 @@ static int task_init_dir (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dir_t* xtn = qse_httpd_gettaskxtn (httpd, task);
+	task_dir_t* arg = (task_dir_t*)task->ctx;
 
 	/* deep-copy the context data to the extension area */
-	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
+	QSE_MEMCPY (xtn, arg, QSE_SIZEOF(*xtn));
 
-	qse_mbscpy ((qse_mchar_t*)(xtn + 1), xtn->path);
-	xtn->path = (qse_mchar_t*)(xtn + 1);
+	xtn->path.ptr = (qse_mchar_t*)(xtn + 1);
+	qse_mbscpy ((qse_mchar_t*)xtn->path.ptr, arg->path.ptr);
+	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
 
 	/* switch the context to the extension area */
 	task->ctx = xtn;
@@ -404,9 +416,9 @@ static QSE_INLINE int task_main_dir (
 	dir = (task_dir_t*)task->ctx;
 	x = task;
 
-	if (qse_mbsend (dir->path, QSE_MT("/")))
+	if (qse_mbsend (dir->path.ptr, QSE_MT("/")))
 	{
-		handle = QSE_OPENDIR (dir->path);
+		handle = QSE_OPENDIR (dir->path.ptr);
 		if (handle)
 		{
 			x = qse_httpd_entaskformat (
@@ -446,7 +458,7 @@ static QSE_INLINE int task_main_dir (
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(dir->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			dir->path
+			dir->qpath.ptr
 		);
 		return (x == QSE_NULL)? -1: 0;
 	}
@@ -463,7 +475,10 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	task_dir_t data;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	data.path = path;
+	data.path.ptr = path;
+	data.path.len = qse_mbslen(data.path.ptr);
+	data.qpath.ptr = qse_htre_getqpath(req);
+	data.qpath.len = qse_mbslen(data.qpath.ptr);
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 
@@ -473,6 +488,6 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	task.ctx = &data;
 
 	return qse_httpd_entask (httpd, client, pred, &task,
-		QSE_SIZEOF(task_dir_t) + qse_mbslen(path) + 1);
+		QSE_SIZEOF(task_dir_t) + data.path.len + 1 + data.qpath.len + 1);
 }
 

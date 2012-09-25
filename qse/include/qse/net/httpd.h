@@ -69,26 +69,37 @@ struct qse_httpd_stat_t
 	qse_long_t ino;
 	qse_foff_t size;
 	qse_ntime_t mtime;
-	const qse_mchar_t* mime;
+};
+
+enum qse_httpd_server_flag_t
+{
+	QSE_HTTPD_SERVER_ACTIVE     = (1 << 0),
+	QSE_HTTPD_SERVER_SECURE     = (1 << 1),
+	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
 };
 
 typedef struct qse_httpd_server_t qse_httpd_server_t;
 struct qse_httpd_server_t
 {
-	qse_httpd_server_t* next;
-	int        active;
-
-	qse_nwad_t nwad;
-	int        secure;
+	/* ---------------------------------------------- */
+	int          flags;
+	qse_nwad_t   nwad; /* binding address */
+	unsigned int nwif; /* interface number to bind to */
+	void (*predetach) (qse_httpd_t*, qse_httpd_server_t*);
 
 	/* set by server.open callback */
 	qse_ubi_t  handle;
+
+	/* private  */
+	qse_httpd_server_t* next;
+	qse_httpd_server_t* prev;
 };
 
 typedef struct qse_httpd_peer_t qse_httpd_peer_t;
 struct qse_httpd_peer_t
 {
 	qse_nwad_t nwad;
+	qse_nwad_t local; /* local side address facing the peer */
 	qse_ubi_t  handle;
 };
 
@@ -285,6 +296,8 @@ struct qse_httpd_client_t
 	qse_nwad_t               remote_addr;
 	qse_nwad_t               local_addr;
 	qse_nwad_t               orgdst_addr;
+	qse_httpd_server_t*      server;
+	int                      initial_ifindex;
 
 	/* == PRIVATE == */
 	qse_htrd_t*              htrd;
@@ -306,6 +319,73 @@ struct qse_httpd_client_t
 		qse_httpd_task_t* head;
 		qse_httpd_task_t* tail;
 	} task;
+};
+
+/**
+ * The qse_httpd_rsrc_type_t defines the resource type than can 
+ * be entasked with qse_httpd_entaskrsrc().
+ */
+enum qse_httpd_rsrc_type_t
+{
+	QSE_HTTPD_RSRC_AUTH,
+	QSE_HTTPD_RSRC_CGI,
+	QSE_HTTPD_RSRC_DIR,
+	QSE_HTTPD_RSRC_ERROR,
+	QSE_HTTPD_RSRC_FILE,
+	QSE_HTTPD_RSRC_PROXY,
+	QSE_HTTPD_RSRC_RELOC,
+	QSE_HTTPD_RSRC_TEXT
+};
+typedef enum qse_httpd_rsrc_type_t qse_httpd_rsrc_type_t;
+
+typedef struct qse_httpd_rsrc_t qse_httpd_rsrc_t;
+
+struct qse_httpd_rsrc_t
+{
+	qse_httpd_rsrc_type_t type;
+	union 
+	{
+		struct
+		{
+			const qse_mchar_t* realm;
+		} auth;
+		struct 
+		{
+			const qse_mchar_t* path;
+			const qse_mchar_t* script;
+			const qse_mchar_t* suffix;
+			const qse_mchar_t* docroot;
+			int nph;
+		} cgi;	
+		struct
+		{
+			const qse_mchar_t* path;
+		} dir;
+
+		int error;
+
+		struct
+		{
+			const qse_mchar_t* path;
+			const qse_mchar_t* mime;
+		} file;
+
+		struct
+		{
+			qse_nwad_t dst;
+			qse_nwad_t src;
+		} proxy;
+		struct
+		{
+			const qse_mchar_t* dst;
+		} reloc;	
+
+		struct
+		{
+			const qse_mchar_t* ptr;
+			const qse_mchar_t* mime;
+		} text;
+	} u;
 };
 
 /**
@@ -334,6 +414,13 @@ struct qse_httpd_ecb_t
 	qse_httpd_ecb_t* next;
 };
 
+
+typedef struct qse_httpd_cbstd_t qse_httpd_cbstd_t;
+struct qse_httpd_cbstd_t
+{
+	int (*makersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* required */
+	void (*freersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* optional */
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -408,9 +495,17 @@ void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
 
-int qse_httpd_addserver (
-	qse_httpd_t*      httpd,
-	const qse_char_t* uri
+#define qse_httpd_getserverxtn(httpd,server) ((void*)(server+1))
+
+qse_httpd_server_t* qse_httpd_attachserver (
+	qse_httpd_t*              httpd,
+	const qse_httpd_server_t* tmpl,
+	qse_size_t                xtnsize
+);
+
+void qse_httpd_detachserver (
+	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
 );
 
 void qse_httpd_discardcontent (
@@ -422,7 +517,6 @@ void qse_httpd_completecontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
 );
-
 
 
 /**
@@ -473,19 +567,6 @@ qse_httpd_task_t* qse_httpd_entaskdisconnect (
 	qse_httpd_task_t*       pred
 );
 
-qse_httpd_task_t* qse_httpd_entasktext (
-	qse_httpd_t*            httpd,
-	qse_httpd_client_t*     client,
-	qse_httpd_task_t*       pred,
-	const qse_mchar_t*      text
-);
-
-qse_httpd_task_t* qse_httpd_entaskstatictext (
-     qse_httpd_t*            httpd,
-	qse_httpd_client_t*     client,
-	qse_httpd_task_t*       pred,
-	const qse_mchar_t*      text
-);
 
 qse_httpd_task_t* qse_httpd_entaskformat (
 	qse_httpd_t*            httpd,
@@ -496,6 +577,15 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 );
 
 /* -------------------------------------------- */
+
+qse_httpd_task_t* qse_httpd_entasktext (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	qse_httpd_task_t*       pred,
+	const qse_mchar_t*      text,
+	const qse_mchar_t*      mime,
+	qse_htre_t*             req
+);
 
 qse_httpd_task_t* qse_httpd_entaskerror (
      qse_httpd_t*              httpd,
@@ -523,6 +613,14 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_htre_t*               req
 );
 
+qse_httpd_task_t* qse_httpd_entaskreloc (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	const qse_mchar_t*        dst,
+	qse_htre_t*               req
+);
+
 qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
@@ -536,20 +634,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        name,
-	qse_htre_t*               req
-);
-
-/**
- * The qse_httpd_entaskphat() functions a dispatcher between
- * qse_httpd_entaskdir() and qse_httpd_entaskfile(). It calls
- * the former if @a name is a directory and calls the latter
- * otherwise.
- */
-qse_httpd_task_t* qse_httpd_entaskpath (
-	qse_httpd_t*              httpd,
-	qse_httpd_client_t*       client,
-	qse_httpd_task_t*         pred,
-	const qse_mchar_t*        name,
+	const qse_mchar_t*        mime,
 	qse_htre_t*               req
 );
 
@@ -560,6 +645,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	const qse_mchar_t*        path,
 	const qse_mchar_t*        script,
 	const qse_mchar_t*        suffix,
+	const qse_mchar_t*        docroot,
 	int                       nph,
 	qse_htre_t*               req
 );
@@ -568,7 +654,18 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
-	const qse_nwad_t*       nwad,
+	const qse_nwad_t*       dst,
+	const qse_nwad_t*       src,
+	qse_htre_t*             req
+);
+
+/* -------------------------------------------- */
+
+qse_httpd_task_t* qse_httpd_entaskrsrc (
+	qse_httpd_t*            httpd,
+	qse_httpd_client_t*     client,
+	qse_httpd_task_t*       pred,
+	qse_httpd_rsrc_t*       rsrc,
 	qse_htre_t*             req
 );
 
@@ -606,10 +703,16 @@ void* qse_httpd_getxtnstd (
 	qse_httpd_t* httpd
 );
 
+qse_httpd_server_t* qse_httpd_attachserverstd (
+	qse_httpd_t*      httpd,
+	const qse_char_t* uri,
+	qse_size_t        xtnsize
+);
+
 int qse_httpd_loopstd (
-	qse_httpd_t*     httpd, 
-	qse_httpd_rcb_t* rcb,
-	qse_ntime_t      timeout
+	qse_httpd_t*       httpd, 
+	qse_httpd_cbstd_t* cbstd,
+	qse_ntime_t        timeout
 );
 
 #ifdef __cplusplus

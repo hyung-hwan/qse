@@ -32,6 +32,7 @@ struct task_cgi_arg_t
 	qse_mcstr_t path;
 	qse_mcstr_t script;
 	qse_mcstr_t suffix;
+	qse_mcstr_t docroot;
 	int nph;
 	qse_htre_t* req;
 };
@@ -45,6 +46,7 @@ struct task_cgi_t
 	const qse_mchar_t* path;
 	const qse_mchar_t* script;
 	const qse_mchar_t* suffix;
+	const qse_mchar_t* docroot;
 	qse_http_version_t version;
 	int keepalive; /* taken from the request */
 	int nph;
@@ -410,11 +412,13 @@ static int cgi_add_env (
 	const qse_mchar_t* path, 
 	const qse_mchar_t* script,
 	const qse_mchar_t* suffix,
+	const qse_mchar_t* docroot,
 	const qse_mchar_t* content_type,
 	qse_size_t content_length, 
 	int chunked)
 {
-/* TODO: error check */
+/* TODO: error check for various insert... */
+
 	cgi_client_req_hdr_ctx_t ctx;
 	qse_mchar_t buf[128];
 	const qse_http_version_t* v;
@@ -436,11 +440,13 @@ static int cgi_add_env (
 
 	qse_env_insertmbs (env, QSE_MT("SCRIPT_FILENAME"), path);
 	qse_env_insertmbs (env, QSE_MT("SCRIPT_NAME"), script);
+	qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), docroot);
 	if (suffix && suffix[0] != QSE_MT('\0')) 
+	{
+		const qse_mchar_t* tmp[3] = { docroot, suffix, QSE_NULL};
 		qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix);
-
-/* TODO: corrent all these name???  */
-	//qse_env_insertmbs (env, QSE_MT("PATH_TRANSLATED"), qse_htre_getqpath(req));
+		qse_env_insertmbsa (env, QSE_MT("PATH_TRANSLATED"), tmp);
+	}
 
 	qse_env_insertmbs (env, QSE_MT("REQUEST_METHOD"), qse_htre_getqmethodname(req));
 	qse_env_insertmbs (env, QSE_MT("REQUEST_URI"), qse_htre_getqpath(req));
@@ -452,21 +458,19 @@ static int cgi_add_env (
 
 	if (chunked) qse_env_insertmbs (env, QSE_MT("TRANSFER_ENCODING"), QSE_MT("chunked"));
 
+	qse_env_insertmbs (env, "SERVER_SOFTWARE", qse_httpd_getname(httpd));
 	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
 	qse_env_insertmbs (env, QSE_MT("SERVER_PORT"), buf);
 	qse_nwadtombs (&client->local_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
 	qse_env_insertmbs (env, QSE_MT("SERVER_ADDR"), buf);
+	qse_env_insertmbs (env, QSE_MT("SERVER_NAME"), buf); /* TODO:  convert it to a host name */
+
 	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_PORT);
 	qse_env_insertmbs (env, QSE_MT("REMOTE_PORT"), buf);
 	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
 	qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf);
 
 #if 0
-	//qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), QSE_MT("/"));
-	qse_env_insertmbs (env, "SERVER_NAME",
-	qse_env_insertmbs (env, "SERVER_ROOT", 
-	qse_env_insertmbs (env, "DOCUMENT_ROOT", 
-	qse_env_insertmbs (env, "REMOTE_PORT", 
 	qse_env_insertmbs (env, "REMOTE_USER",
 #endif
 
@@ -700,9 +704,11 @@ static int task_init_cgi (
 	cgi->path = (qse_mchar_t*)(cgi + 1);
 	cgi->script = cgi->path + arg->path.len + 1;
 	cgi->suffix = cgi->script + arg->script.len + 1;
+	cgi->docroot = cgi->suffix + arg->suffix.len + 1;
 	qse_mbscpy ((qse_mchar_t*)cgi->path, arg->path.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->script, arg->script.ptr);
 	qse_mbscpy ((qse_mchar_t*)cgi->suffix, arg->suffix.ptr);
+	qse_mbscpy ((qse_mchar_t*)cgi->docroot, arg->docroot.ptr);
 
 	cgi->version = *qse_htre_getversion(arg->req);
 	cgi->keepalive = (arg->req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
@@ -842,7 +848,7 @@ done:
 
 	if (cgi_add_env (
 		httpd, client, cgi->env, arg->req, 
-		cgi->path, cgi->script, cgi->suffix,
+		cgi->path, cgi->script, cgi->suffix, cgi->docroot, 
 		(tmp? tmp->ptr: QSE_NULL), content_length, 
 		(cgi->reqflags & CGI_REQ_FWDCHUNKED)) <= -1)
 	{
@@ -1457,6 +1463,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	const qse_mchar_t* path, 
 	const qse_mchar_t* script,
 	const qse_mchar_t* suffix,
+	const qse_mchar_t* docroot,
 	int                nph,
 	qse_htre_t*        req)
 {
@@ -1465,6 +1472,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 
 	if (script == QSE_NULL) script = qse_htre_getqpath(req);
 	if (suffix == QSE_NULL) suffix = QSE_MT("");
+	if (docroot == QSE_NULL) docroot = QSE_MT("");
 
 	arg.path.ptr = path;
 	arg.path.len = qse_mbslen(path);
@@ -1472,6 +1480,8 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	arg.script.len = qse_mbslen(script);
 	arg.suffix.ptr = suffix;
 	arg.suffix.len = qse_mbslen(suffix);
+	arg.docroot.ptr = docroot;
+	arg.docroot.len = qse_mbslen(docroot);
 	arg.req = req;
 	arg.nph = nph;
 
@@ -1486,7 +1496,8 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 		QSE_SIZEOF(task_cgi_t) + 
 		((arg.path.len + 1) * QSE_SIZEOF(*path)) + 
 		((arg.script.len + 1) * QSE_SIZEOF(*script)) + 
-		((arg.suffix.len + 1) * QSE_SIZEOF(*suffix))
+		((arg.suffix.len + 1) * QSE_SIZEOF(*suffix)) +
+		((arg.docroot.len + 1) * QSE_SIZEOF(*docroot))
 	);
 }
 

@@ -53,9 +53,10 @@ SOURCES =
 DIST_SOURCES =
 am__pkginclude_HEADERS_DIST = alg.h chr.h cp949.h cp950.h dll.h env.h \
 	fio.h fma.h fmt.h fs.h gdl.h glob.h htb.h hton.h ipad.h lda.h \
-	main.h map.h mbwc.h mem.h nwad.h nwio.h oht.h opt.h path.h \
-	pio.h pma.h rbt.h rex.h sio.h sll.h slmb.h stdio.h str.h \
-	time.h tio.h tre.h utf8.h xma.h Mmgr.hpp StdMmgr.hpp Mmged.hpp
+	main.h map.h mbwc.h mem.h nwad.h nwif.h nwio.h oht.h opt.h \
+	path.h pio.h pma.h rbt.h rex.h sio.h sll.h slmb.h stdio.h \
+	str.h time.h tio.h tre.h utf8.h xma.h Mmgr.hpp StdMmgr.hpp \
+	Mmged.hpp
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -244,9 +245,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkginclude_HEADERS = alg.h chr.h cp949.h cp950.h dll.h env.h fio.h \
 	fma.h fmt.h fs.h gdl.h glob.h htb.h hton.h ipad.h lda.h main.h \
-	map.h mbwc.h mem.h nwad.h nwio.h oht.h opt.h path.h pio.h \
-	pma.h rbt.h rex.h sio.h sll.h slmb.h stdio.h str.h time.h \
-	tio.h tre.h utf8.h xma.h $(am__append_1)
+	map.h mbwc.h mem.h nwad.h nwif.h nwio.h oht.h opt.h path.h \
+	pio.h pma.h rbt.h rex.h sio.h sll.h slmb.h stdio.h str.h \
+	time.h tio.h tre.h utf8.h xma.h $(am__append_1)
 all: all-am
 
 .SUFFIXES:

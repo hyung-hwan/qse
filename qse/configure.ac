@@ -85,7 +85,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
-AC_CHECK_HEADERS([net/if.h])
+AC_CHECK_HEADERS([sys/ioctl.h net/if.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 

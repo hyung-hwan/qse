@@ -20,6 +20,10 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
+#include <qse/cmn/hton.h>
+#include <qse/cmn/nwif.h>
+#include <qse/cmn/mbwc.h>
+#include <qse/cmn/str.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -54,6 +58,16 @@
 #endif
 
 #include <qse/cmn/stdio.h> /* TODO: remove this */
+
+#define DEFAULT_PORT        80
+#define DEFAULT_SECURE_PORT 443
+
+struct server_xtn_t
+{
+	qse_mxstr_t docroot;
+};
+
+typedef struct server_xtn_t server_xtn_t;
 
 /* ------------------------------------------------------------------- */
 
@@ -296,6 +310,7 @@ static qse_ssize_t xsendfile_ssl (
 typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
+	qse_httpd_cbstd_t* cbstd;
 #if defined(HAVE_SSL)
 	SSL_CTX* ssl_ctx;
 #endif
@@ -387,7 +402,7 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	if (httpd == QSE_NULL) return QSE_NULL;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
-	QSE_MEMSET (xtn, 0, xtnsize);
+	QSE_MEMSET (xtn, 0, QSE_SIZEOF(httpd_xtn_t) + xtnsize);
 
 #if defined(HAVE_SSL)
 	/*init_xtn_ssl (xtn, "http01.pem", "http01.key");*/
@@ -400,6 +415,132 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 {
 	return (void*)((httpd_xtn_t*)QSE_XTN(httpd) + 1);
+}
+
+static int parse_server_uri (
+	qse_httpd_t* httpd, const qse_char_t* uri, 
+	qse_httpd_server_t* server, const qse_char_t** docroot)
+{
+	qse_uint16_t default_port;
+	qse_cstr_t tmp;
+
+	server->flags = 0;
+
+	/* check the protocol part */
+	tmp.ptr = uri;
+	while (*uri != QSE_T(':')) 
+	{
+		if (*uri == QSE_T('\0'))
+		{
+			httpd->errnum = QSE_HTTPD_EINVAL;
+			return -1;
+		}
+		uri++;
+	}
+	tmp.len = uri - tmp.ptr;
+	if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
+	{
+		default_port = DEFAULT_PORT;
+	}
+	else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
+	{
+		server->flags |= QSE_HTTPD_SERVER_SECURE;
+		default_port = DEFAULT_SECURE_PORT;
+	}
+	else 
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		return -1;
+	}
+	
+	uri++; /* skip : */ 
+	if (*uri != QSE_T('/')) 
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		return -1;
+	}
+	uri++; /* skip / */
+	if (*uri != QSE_T('/')) 
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		return -1;
+	}
+	uri++; /* skip / */
+
+	
+	tmp.ptr = uri;
+	while (*uri != QSE_T('\0') && *uri != QSE_T('/')) uri++;
+	tmp.len = uri - tmp.ptr;
+
+	if (qse_strntonwad (tmp.ptr, tmp.len, &server->nwad) <= -1)
+	{
+		httpd->errnum = QSE_HTTPD_EINVAL;
+		return -1;
+	}
+
+	*docroot = uri; 
+
+	if (server->nwad.type == QSE_NWAD_IN4)
+	{
+		if (server->nwad.u.in4.port == 0) 
+			server->nwad.u.in4.port = qse_hton16(default_port);
+	}
+	else if (server->nwad.type == QSE_NWAD_IN6)
+	{
+		if (server->nwad.u.in6.port == 0) 
+			server->nwad.u.in6.port = qse_hton16(default_port);
+	}
+
+	return 0;
+}
+
+static void predetach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	server_xtn_t* server_xtn;
+
+	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
+	if (server_xtn->docroot.ptr) 
+	{
+		QSE_MMGR_FREE (httpd->mmgr, server_xtn->docroot.ptr);
+		server_xtn->docroot.ptr = QSE_NULL;
+		server_xtn->docroot.len = 0;
+	}
+}
+
+qse_httpd_server_t* qse_httpd_attachserverstd (
+	qse_httpd_t* httpd, const qse_char_t* uri, qse_size_t xtnsize)
+{
+	qse_httpd_server_t server, * xserver;
+	const qse_char_t* docroot;
+	server_xtn_t* server_xtn;
+
+	if (parse_server_uri (httpd, uri, &server, &docroot) <= -1) return QSE_NULL;
+	server.predetach = predetach_server;
+
+	xserver = qse_httpd_attachserver (
+		httpd, &server, QSE_SIZEOF(*server_xtn) + xtnsize);
+	if (xserver == QSE_NULL) return QSE_NULL;
+
+	if (docroot[0] == QSE_T('/') && docroot[1] != QSE_T('\0'))
+	{
+		server_xtn = qse_httpd_getserverxtn (httpd, xserver);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+		server_xtn->docroot.ptr = qse_mbsdup (docroot, httpd->mmgr);
+#else
+		server_xtn->docroot.ptr = qse_wcstombsdup (docroot, httpd->mmgr);
+#endif
+		if (server_xtn->docroot.ptr == QSE_NULL)
+		{
+			qse_httpd_detachserver (httpd, xserver);	
+			httpd->errnum = QSE_HTTPD_ENOMEM;
+			return QSE_NULL;
+		}
+
+		server_xtn->docroot.len = qse_mbslen(server_xtn->docroot.ptr);
+	}
+
+	return xserver;
 }
 
 /* ------------------------------------------------------------------- */
@@ -524,9 +665,47 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	/* remove the ip routing restriction that a packet can only
 	 * be sent using a local ip address. this option is useful
 	 * if transparency is achieved with TPROXY */
+
+/*
+ip rule add fwmark 0x1/0x1 lookup 100
+ip route add local 0.0.0.0/0 dev lo table 100
+
+iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
+iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
+iptables -t mangle -A DIVERT -j ACCEPT
+
+iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-port 8000
+
+----------------------------------------------------------------------
+
+if the socket is bound to 99.99.99.99:8000, you may do...
+iptables -t mangle -A PREROUTING -p tcp --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 99.99.99.99 --on-port 8000
+
+iptables -t mangle -A PREROUTING -p tcp  ! -s 127.0.0.0/255.0.0.0 --dport 80 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 0.0.0.0 --on-port 8000
+
+IP_TRANSPRENT is needed for:
+- accepting TPROXYed connections
+- binding to a non-local IP address (IP address the local system doesn't have)
+- using a non-local IP address as a source
+- 
+ */
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 #endif
+
+	if (server->flags & QSE_HTTPD_SERVER_BINDTONWIF)
+	{
+		qse_mchar_t tmp[64];
+		qse_size_t len;
+
+		len = qse_nwifindextombs (server->nwif, tmp, QSE_COUNTOF(tmp));
+
+		if (len <= 0 || setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE, tmp, len) <= -1)
+		{
+			/* TODO: logging ... */
+			goto oops;
+		}
+	}
 
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the
 	 * address size for AF_INET. */
@@ -545,6 +724,8 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		goto oops;
 #endif
 	}
+
+
 	if (listen (fd, 10) <= -1) goto oops;
 
 	flag = fcntl (fd, F_GETFL);
@@ -565,8 +746,7 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 }
 
 static int server_accept (
-	qse_httpd_t* httpd,
-	qse_httpd_server_t* server, qse_httpd_client_t* client)
+	qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
 	sockaddr_t addr;
 
@@ -616,6 +796,10 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	}
 
 #if defined(SO_ORIGINAL_DST)
+	/* if REDIRECT is used, SO_ORIGINAL_DST returns the original
+	 * destination. If TPROXY is used, getsockname() above returns
+	 * the original address. */
+
 	addrlen = QSE_SIZEOF(addr);
 	if (getsockopt (fd, SOL_IP, SO_ORIGINAL_DST, (char*)&addr, &addrlen) <= -1 ||
 	    sockaddr_to_nwad (&addr, &client->orgdst_addr) <= -1)
@@ -624,6 +808,16 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	}
 #else
 	client->orgdst_addr = client->local_addr;
+#endif
+
+
+#if 0
+	client->initial_ifindex = resolve_ifindex (fd, client->local_addr);
+	if (client->ifindex <= -1)
+	{
+		/* the local_address is not one of a local address.
+		 * it's probably proxied. */
+	}
 #endif
 
 	client->handle.i = fd;
@@ -635,19 +829,30 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
 	int fd = -1, flag;
-	sockaddr_t addr;
-	int addrsize;
+	sockaddr_t connaddr, bindaddr;
+	int connaddrsize, bindaddrsize;
 	int connected = 1;
 
-	addrsize = nwad_to_sockaddr (&peer->nwad, &addr);
-	if (addrsize <= -1)
+	connaddrsize = nwad_to_sockaddr (&peer->nwad, &connaddr);
+	bindaddrsize = nwad_to_sockaddr (&peer->local, &bindaddr);
+	if (connaddrsize <= -1 || bindaddrsize <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
 		return -1;
 	}
 
-	fd = socket (SOCKADDR_FAMILY(&addr), SOCK_STREAM, IPPROTO_TCP);
+	fd = socket (SOCKADDR_FAMILY(&connaddr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
+
+#if defined(IP_TRANSPARENT)
+	flag = 1;
+	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
+#endif
+	if (bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
+	{
+		/* i won't care about binding faiulre */
+		/* TODO: some logging for this failure though */
+	}
 
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
@@ -655,7 +860,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
 
-	if (connect (fd, (struct sockaddr*)&addr, addrsize) <= -1)
+	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
 	{
 		if (errno != EINPROGRESS) goto oops;
 		connected = 0;
@@ -1006,14 +1211,6 @@ static int file_stat (
 	hst->mtime = QSE_SEC_TO_MSEC(st.st_mtime);
 #endif
 
-	hst->mime = qse_mbsend (path, QSE_MT(".html"))? QSE_MT("text/html"):
-	            qse_mbsend (path, QSE_MT(".txt"))?  QSE_MT("text/plain"):
-	            qse_mbsend (path, QSE_MT(".jpg"))?  QSE_MT("image/jpeg"):
-	            qse_mbsend (path, QSE_MT(".mp4"))?  QSE_MT("video/mp4"):
-	            qse_mbsend (path, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): 
-	            qse_mbsend (path, QSE_MT(".c"))?    QSE_MT("text/plain"): 
-	            qse_mbsend (path, QSE_MT(".h"))?    QSE_MT("text/plain"): 
-	                                                QSE_NULL;
 	return 0;
 }
 
@@ -1133,7 +1330,8 @@ static qse_ssize_t client_recv (
 	}
 	else
 	{
-		ssize_t ret = recv (client->handle.i, buf, bufsize, 0);
+		ssize_t ret;
+		ret = recv (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return ret;
 	}
@@ -1281,185 +1479,15 @@ qse_printf (QSE_T("HEADER OK %d[%hs] %d[%hs]\n"),  (int)QSE_HTB_KLEN(pair), QSE_
 	return QSE_HTB_WALK_FORWARD;
 }
 
-typedef struct target_t target_t;
-struct target_t
-{
-	enum
-	{
-		TARGET_DIR,
-		TARGET_FILE,
-		TARGET_CGI
-	} type;
-	union 
-	{
-		const qse_mchar_t* dir;
-		const qse_mchar_t* file;
-		struct 
-		{
-			qse_mchar_t* path;
-			qse_mchar_t* script;
-			qse_mchar_t* suffix;
-			int nph;
-		} cgi;	
-	} u;
-};
-
-static void dispose_target (qse_httpd_t* httpd, target_t* target)
-{
-	if (target->type == TARGET_CGI)
-	{
-		if (target->u.cgi.suffix) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.suffix);
-		if (target->u.cgi.script) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.script);
-		if (target->u.cgi.path) QSE_MMGR_FREE (httpd->mmgr, target->u.cgi.path);
-	}
-}
-
-static int resolve_target (
-	qse_httpd_t* httpd, qse_htre_t* req, target_t* target)
-{
-	static struct extinfo_t
-	{
-		const qse_mchar_t* ptr;
-		qse_size_t         len;
-		int                nph;
-	} extinfo[] = 
-	{
-		{ QSE_MT(".cgi"), 4, 0 },
-		{ QSE_MT(".nph"), 4, 1 }
-	};
-
-	qse_size_t i;
-	const qse_mchar_t* qpath;
-	qse_stat_t st;
-
-	qpath = qse_htre_getqpath(req);
-
-	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
-
-	if (QSE_STAT (qpath, &st) == 0 && S_ISDIR(st.st_mode))
-	{
-/* TODO: attempt the index file like index.html, index.cgi, etc. */
-		/* it is a directory */
-		target->type = TARGET_DIR;
-		target->u.dir = qpath;
-	}
-	else
-	{
-/* TODO: attempt other segments if qpath is like
- *       /abc/x.cgi/y.cgi/ttt. currently, it tries x.cgi only.
- *       x.cgi could be a directory name .
- */
-		for (i = 0; i < QSE_COUNTOF(extinfo); i++)
-		{
-			const qse_mchar_t* ext;
-
-			ext = qse_mbsstr (qpath, extinfo[i].ptr);
-			if (ext && (ext[extinfo[i].len] == QSE_MT('/') || 
-			            ext[extinfo[i].len] == QSE_MT('\0')))
-			{
-				target->type = TARGET_CGI;
-				target->u.cgi.nph = extinfo[i].nph;
-
-				if (ext[extinfo[i].len] == QSE_MT('/')) 
-				{
-					/* TODO: combine path with document root */
-					target->u.cgi.path = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
-
-					target->u.cgi.script = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
-					target->u.cgi.suffix = qse_mbsdup (&ext[extinfo[i].len], httpd->mmgr);
-
-					if (target->u.cgi.path == QSE_NULL ||
-					    target->u.cgi.script == QSE_NULL ||
-					    target->u.cgi.suffix == QSE_NULL) 
-					{
-						dispose_target (httpd, target);
-						return -1;
-					}
-				}
-				else
-				{
-					/* TODO: combine path with document root */
-					target->u.cgi.path = qse_mbsdup (qpath, httpd->mmgr);
-
-					target->u.cgi.script = qse_mbsdup (qpath, httpd->mmgr);
-
-					if (target->u.cgi.path == QSE_NULL ||
-					    target->u.cgi.script == QSE_NULL) 
-					{
-						dispose_target (httpd, target);
-						return -1;
-					}
-				}
-
-				return 0;
-			}
-		}
-
-
-		target->type = TARGET_FILE;
-		target->u.file = qpath;
-	}
-
-	return 0;
-}
-
-static qse_httpd_task_t* entask_target (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_htre_t* req, target_t* target)
-{
-	qse_httpd_task_t* task;
-
-	switch (target->type)
-	{
-		case TARGET_DIR:
-			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, target->u.dir, req);
-			break;
-	
-		case TARGET_FILE:
-			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskfile (httpd, client, QSE_NULL, target->u.file, req);
-			break;
-	
-		case TARGET_CGI:
-			if (qse_htre_getqmethodtype(req) == QSE_HTTP_POST &&
-			    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
-			    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
-			{
-				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
-
-				qse_httpd_discardcontent (httpd, req);
-				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 411, req);
-				if (task) 
-				{
-					/* 411 Length Required - can't keep alive */
-					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-				}
-			}
-			else
-			{
-				task = qse_httpd_entaskcgi (
-					httpd, client, QSE_NULL, target->u.cgi.path,
-					target->u.cgi.script, target->u.cgi.suffix, 
-					target->u.cgi.nph, req);
-			}
-			break;
-
-		default:
-			task = QSE_NULL;
-			break;
-	}
-
-	return task;
-}
-
 static int process_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client,
-	qse_htre_t* req, int peek)
+	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
 {
 	int method;
 	qse_httpd_task_t* task;
 	int content_received;
+	httpd_xtn_t* xtn;
+
+	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
 
 	method = qse_htre_getqmethodtype(req);
 	content_received = (qse_htre_getcontentlen(req) > 0);
@@ -1528,17 +1556,30 @@ if (qse_htre_getcontentlen(req) > 0)
 	{
 		if (peek)
 		{
-			target_t target;
+			qse_httpd_rsrc_t rsrc;
 
-			if (resolve_target (httpd, req, &target) <= -1)
+			if (method == QSE_HTTP_POST &&
+			    !(req->attr.flags & QSE_HTRE_ATTR_LENGTH) &&
+			    !(req->attr.flags & QSE_HTRE_ATTR_CHUNKED))
+			{
+				req->attr.flags &= ~QSE_HTRE_ATTR_KEEPALIVE;
+				qse_httpd_discardcontent (httpd, req);
+				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 411, req);
+				if (task) 
+				{
+					/* 411 Length Required - can't keep alive. Force disconnect */
+					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
+				}
+			}
+			else if (xtn->cbstd->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
 				qse_httpd_discardcontent (httpd, req);
 				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 500, req);
 			}
 			else
 			{
-				task = entask_target (httpd, client, req, &target);
-				dispose_target (httpd, &target);
+				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
+				if (xtn->cbstd->freersrc) xtn->cbstd->freersrc (httpd, client, req, &rsrc);
 			}
 			if (task == QSE_NULL) goto oops;
 		}
@@ -1674,7 +1715,7 @@ qse_printf (QSE_T("Host not included....\n"));
 #if 0
 		}
 #endif
-		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, req);
+		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, QSE_NULL, req);
 		if (task == QSE_NULL) goto oops;
 	}
 
@@ -1722,7 +1763,9 @@ static int handle_request (
 static qse_httpd_scb_t httpd_system_callbacks =
 {
 	/* server */
-	{ server_open, server_close, server_accept },
+	{ server_open,
+	  server_close,
+	  server_accept },
 
 	{ peer_open,
 	  peer_close,
@@ -1767,8 +1810,196 @@ static qse_httpd_rcb_t httpd_request_callbacks =
 	handle_request
 };
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
+
+static void free_resource (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_htre_t* req, qse_httpd_rsrc_t* target)
 {
-	if (rcb == QSE_NULL) rcb = &httpd_request_callbacks;
-	return qse_httpd_loop (httpd, &httpd_system_callbacks, rcb, timeout);	
+	const qse_mchar_t* qpath = qse_htre_getqpath(req);
+ 
+	switch (target->type)
+	{
+		case QSE_HTTPD_RSRC_CGI:
+			if (target->u.cgi.suffix) 
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.suffix);
+			if (target->u.cgi.script != qpath) 
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.script);
+			if (target->u.cgi.path != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
+
+			break;
+
+		case QSE_HTTPD_RSRC_DIR:
+			if (target->u.dir.path != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.dir.path);
+			break;
+
+		case QSE_HTTPD_RSRC_FILE:
+			if (target->u.cgi.path != qpath)
+				QSE_MMGR_FREE (httpd->mmgr, (qse_mchar_t*)target->u.cgi.path);
+			break;
+
+		default:
+			/* nothing to do */
+			break;
+	}
+}
+
+static int make_resource (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_htre_t* req, qse_httpd_rsrc_t* target)
+{
+	static struct extinfo_t
+	{
+		const qse_mchar_t* ptr;
+		qse_size_t         len;
+		int                nph;
+	} extinfo[] = 
+	{
+		{ QSE_MT(".cgi"), 4, 0 },
+		{ QSE_MT(".nph"), 4, 1 }
+	};
+
+	qse_size_t i;
+	const qse_mchar_t* qpath;
+	qse_stat_t st;
+	server_xtn_t* server_xtn;
+	qse_mchar_t* xpath;
+
+	qpath = qse_htre_getqpath(req);
+
+	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
+
+	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
+#if 0
+target->type = QSE_HTTPD_RSRC_PROXY;
+target->u.proxy.dst = client->orgdst_addr;
+target->u.proxy.src = client->remote_addr;
+target->u.proxy.src.u.in4.port = 0;
+return 0;
+#endif
+
+	if (server_xtn->docroot.ptr)
+	{
+		const qse_mchar_t* ta[3];
+		ta[0] = server_xtn->docroot.ptr;
+		ta[1] = qpath;
+		ta[2] = QSE_NULL;
+		xpath = qse_mbsadup (ta, httpd->mmgr);
+		if (xpath == QSE_NULL)
+		{
+			httpd->errnum = QSE_HTTPD_ENOMEM;
+			return -1;
+		}
+	}
+	else xpath = qpath;
+
+	if (QSE_STAT (xpath, &st) == 0 && S_ISDIR(st.st_mode))
+	{
+/* TODO: attempt the index file like index.html, index.cgi, etc. */
+		/* it is a directory */
+		target->type = QSE_HTTPD_RSRC_DIR;
+		target->u.dir.path = xpath;
+	}
+	else
+	{
+/* TODO: attempt other segments if qpath is like
+ *       /abc/x.cgi/y.cgi/ttt. currently, it tries x.cgi only.
+ *       x.cgi could be a directory name .
+ */
+		for (i = 0; i < QSE_COUNTOF(extinfo); i++)
+		{
+			const qse_mchar_t* ext;
+
+			ext = qse_mbsstr (qpath, extinfo[i].ptr);
+			if (ext && (ext[extinfo[i].len] == QSE_MT('/') || 
+			            ext[extinfo[i].len] == QSE_MT('\0')))
+			{
+				qse_mchar_t* script, * suffix, * docroot;
+
+				if (ext[extinfo[i].len] == QSE_MT('/')) 
+				{
+					if (xpath != qpath) 
+						QSE_MMGR_FREE (httpd->mmgr, xpath);
+
+					if (server_xtn->docroot.ptr)
+					{
+						xpath = qse_mbsxdup2 (
+							server_xtn->docroot.ptr, server_xtn->docroot.len,
+							qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
+					}
+					else
+					{
+						xpath = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
+					}
+
+					script = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
+					suffix = qse_mbsdup (&ext[extinfo[i].len], httpd->mmgr);
+
+					if (xpath == QSE_NULL || script == QSE_NULL || suffix == QSE_NULL) 
+					{
+						if (suffix) QSE_MMGR_FREE (httpd->mmgr, suffix);
+						if (script) QSE_MMGR_FREE (httpd->mmgr, script);
+						if (xpath) QSE_MMGR_FREE (httpd->mmgr, xpath);
+						httpd->errnum = QSE_HTTPD_ENOMEM;
+						return -1;
+					}
+
+					docroot = server_xtn->docroot.ptr;
+				}
+				else
+				{
+					script = qpath;
+					suffix = QSE_NULL;
+					docroot = QSE_NULL;
+				}
+
+				target->type = QSE_HTTPD_RSRC_CGI;
+				target->u.cgi.nph = extinfo[i].nph;
+				target->u.cgi.path = xpath;
+				target->u.cgi.script = script;
+				target->u.cgi.suffix = suffix;
+				target->u.cgi.docroot = docroot;
+
+				return 0;
+			}
+		}
+
+
+		target->type = QSE_HTTPD_RSRC_FILE;
+		target->u.file.path = xpath;
+		target->u.file.mime =
+			qse_mbsend (qpath, QSE_MT(".html"))? QSE_MT("text/html"):
+			qse_mbsend (qpath, QSE_MT(".txt"))?  QSE_MT("text/plain"):
+			qse_mbsend (qpath, QSE_MT(".css"))?  QSE_MT("text/css"):
+			qse_mbsend (qpath, QSE_MT(".xml"))?  QSE_MT("text/xml"):
+			qse_mbsend (qpath, QSE_MT(".js"))?   QSE_MT("application/javascript"):
+			qse_mbsend (qpath, QSE_MT(".jpg"))?  QSE_MT("image/jpeg"):
+			qse_mbsend (qpath, QSE_MT(".png"))?  QSE_MT("image/png"):
+			qse_mbsend (qpath, QSE_MT(".mp4"))?  QSE_MT("video/mp4"):
+			qse_mbsend (qpath, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): 
+			qse_mbsend (qpath, QSE_MT(".c"))?    QSE_MT("text/plain"): 
+			qse_mbsend (qpath, QSE_MT(".h"))?    QSE_MT("text/plain"): 
+			                                     QSE_NULL;
+	}
+
+	return 0;
+}
+
+static qse_httpd_cbstd_t httpd_cbstd =
+{
+	make_resource,
+	free_resource	
+};
+
+int qse_httpd_loopstd (qse_httpd_t* httpd, qse_httpd_cbstd_t* cbstd, qse_ntime_t timeout)
+{
+	httpd_xtn_t* xtn;
+
+	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+
+	if (cbstd) xtn->cbstd = cbstd;
+	else xtn->cbstd = &httpd_cbstd;
+
+	return qse_httpd_loop (httpd, &httpd_system_callbacks, &httpd_request_callbacks, timeout);	
 }

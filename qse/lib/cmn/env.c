@@ -160,13 +160,13 @@ static int expandstr (qse_env_t* env, qse_size_t inc)
 }
 
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
-static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
+static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value[])
 {
-	qse_size_t nl, vl, tl;
+	qse_size_t nl, vl, tl, i;
 
 	nl = qse_wcslen (name);
-	vl = qse_wcslen (value);
-
+	for (i = 0, vl = 0; value[i]; i++) vl += qse_wcslen(value[i]);
+	
 	if (env->arr.len >= env->arr.capa &&
 	    expandarr(env) <= -1) return -1;
 
@@ -179,7 +179,8 @@ static int insertw (qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* 
 
 	env->str.len += qse_wcscpy (&env->str.ptr[env->str.len], name);
 	env->str.ptr[env->str.len++] = QSE_WT('=');
-	env->str.len += qse_wcscpy (&env->str.ptr[env->str.len], value);
+	for (i = 0; value[i]; i++) 
+		env->str.len += qse_wcscpy (&env->str.ptr[env->str.len], value[i]);
 	env->str.ptr[++env->str.len] = QSE_WT('\0'); 
 
 	return 0;
@@ -239,12 +240,12 @@ static int deletew (qse_env_t* env, const qse_wchar_t* name)
 }
 
 #else
-static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
+static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value[])
 {
-	qse_size_t nl, vl, tl;
+	qse_size_t nl, vl, tl, i;
 
 	nl = qse_mbslen (name);
-	vl = qse_mbslen (value);
+	for (i = 0, vl = 0; value[i]; i++) vl += qse_mbslen(value[i]);
 
 	if (env->arr.len >= env->arr.capa &&
 	    expandarr(env) <= -1) return -1;
@@ -258,7 +259,8 @@ static int insertm (qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* 
 
 	env->str.len += qse_mbscpy (&env->str.ptr[env->str.len], name);
 	env->str.ptr[env->str.len++] = QSE_MT('=');
-	env->str.len += qse_mbscpy (&env->str.ptr[env->str.len], value);
+	for (i = 0; value[i]; i++)
+		env->str.len += qse_mbscpy (&env->str.ptr[env->str.len], value[i]);
 	env->str.ptr[++env->str.len] = QSE_MT('\0'); 
 
 	return 0;
@@ -319,26 +321,27 @@ static int deletem (qse_env_t* env, const qse_mchar_t* name)
 #endif
 
 static QSE_INLINE int insert_wcs (
-	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
+	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value[])
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* no conversion -> wchar */
 	return insertw (env, name, value);
 #else
 	/* convert wchar to mchar */
-	qse_mchar_t* namedup, * valuedup;
+	qse_mchar_t* namedup, * valuedup[2];
 	int n;
 
 	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup == QSE_NULL) return -1;
-	valuedup = qse_wcstombsdup (value, env->mmgr); /* TODO: ignore mbwcerr */
+	valuedup[0] = qse_wcsatombsdup (value, env->mmgr); /* TODO: ignore mbwcerr */
 	if (valuedup == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
 		return -1;
 	}
+	valuedup[1] = QSE_NULL;
 	n = insertm (env, namedup, valuedup);
-	QSE_MMGR_FREE (env->mmgr, valuedup);
+	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
 	QSE_MMGR_FREE (env->mmgr, namedup);
 
 	return n;
@@ -346,23 +349,24 @@ static QSE_INLINE int insert_wcs (
 }
 
 static QSE_INLINE int insert_mbs (
-	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
+	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value[])
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
 	/* convert mchar to wchar */
-	qse_wchar_t* namedup, * valuedup;
+	qse_wchar_t* namedup, * valuedup[2];
 	int n;
 
 	namedup = qse_mbstowcsalldup (name, env->mmgr); 
 	if (namedup == QSE_NULL) return -1;
-	valuedup = qse_mbstowcsalldup (value, env->mmgr); 
-	if (valuedup == QSE_NULL)
+	valuedup[0] = qse_mbsatowcsalldup (value, env->mmgr); 
+	if (valuedup[0] == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
 		return -1;
 	}
+	valuedup[1] = QSE_NULL;
 	n = insertw (env, namedup, valuedup);
-	QSE_MMGR_FREE (env->mmgr, valuedup);
+	QSE_MMGR_FREE (env->mmgr, valuedup[0]);
 	QSE_MMGR_FREE (env->mmgr, namedup);
 
 	return n;
@@ -473,15 +477,16 @@ static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name)
 {
 #if defined(QSE_ENV_CHAR_IS_WCHAR)
-	qse_wchar_t* v;
+	qse_wchar_t* v[2];
 	int free;
 	int ret = -1; 
 
-	v = get_env (env, name, &free);
-	if (v)
+	v[0] = get_env (env, name, &free);
+	if (v[0])
 	{
+		v[1] = QSE_NULL;
 		ret = insertw (env, name, v);
-		if (free) QSE_MMGR_FREE (env->mmgr, v);
+		if (free) QSE_MMGR_FREE (env->mmgr, v[0]);
 	}
 	return ret;
 #else
@@ -516,15 +521,16 @@ static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
 
 	return ret;
 #else
-	qse_mchar_t* v;
+	qse_mchar_t* v[2];
 	int free;
 	int ret = -1; 
 
-	v = get_env (env, name, &free);
-	if (v)
+	v[0] = get_env (env, name, &free);
+	if (v[0])
 	{
+		v[1] = QSE_NULL;
 		ret = insertm (env, name, v);
-		if (free) QSE_MMGR_FREE (env->mmgr, v);
+		if (free) QSE_MMGR_FREE (env->mmgr, v[0]);
 	}
 	return ret;
 #endif
@@ -621,15 +627,40 @@ done:
 int qse_env_insertwcs (
 	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value)
 {
+	if (value)
+	{
+		const qse_wchar_t* va[2];
+		va[0] = value;
+		va[1] = QSE_NULL;
+		return insert_wcs (env, name, va);
+	}
+	else return insert_sys_wcs (env, name);
+}
+
+int qse_env_insertwcsa (
+	qse_env_t* env, const qse_wchar_t* name, const qse_wchar_t* value[])
+{
 	return value? insert_wcs (env, name, value): insert_sys_wcs (env, name);
 }
 
 int qse_env_insertmbs (
 	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value)
 {
-	return value? insert_mbs (env, name, value): insert_sys_mbs (env, name);
+	if (value)
+	{
+		const qse_mchar_t* va[2];
+		va[0] = value;
+		va[1] = QSE_NULL;
+		return insert_mbs (env, name, va);
+	}
+	else return insert_sys_mbs (env, name);
 }
 
+int qse_env_insertmbsa (
+	qse_env_t* env, const qse_mchar_t* name, const qse_mchar_t* value[])
+{
+	return value? insert_mbs (env, name, value): insert_sys_mbs (env, name);
+}
 
 int qse_env_deletewcs (qse_env_t* env, const qse_wchar_t* name)
 {
