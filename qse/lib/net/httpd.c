@@ -25,7 +25,6 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/hton.h>
 
 #include <qse/cmn/stdio.h>
 
@@ -39,11 +38,7 @@ struct htrd_xtn_t
 
 QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
 
-#define DEFAULT_PORT        80
-#define DEFAULT_SECURE_PORT 443
-
-static void free_server_list (
-	qse_httpd_t* httpd, qse_httpd_server_t* server);
+static void free_server_list (qse_httpd_t* httpd);
 static int perform_client_task (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
 
@@ -83,15 +78,14 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 	QSE_MEMSET (httpd, 0, QSE_SIZEOF(*httpd));
 	httpd->mmgr = mmgr;
 	qse_mbscpy (httpd->sname, QSE_MT("QSE-HTTPD " QSE_PACKAGE_VERSION));
+
 	return 0;
 }
 
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
 /* TODO */
-	free_server_list (httpd, httpd->server.list);
-	QSE_ASSERT (httpd->server.navail == 0);
-	httpd->server.list = QSE_NULL;
+	free_server_list (httpd);
 }
 
 void qse_httpd_stop (qse_httpd_t* httpd)
@@ -305,16 +299,18 @@ static qse_httpd_client_t* new_client (
 
 	qse_htrd_setoption (client->htrd, QSE_HTRD_REQUEST | QSE_HTRD_TRAILERS | QSE_HTRD_CANONQPATH);
 
+	/* copy the public fields, 
+	 * keep the private fields initialized at 0 */
 	client->status = tmpl->status;
-
 	if (httpd->scb->client.accepted == QSE_NULL) 
 		client->status |= CLIENT_READY;
-
 	client->handle = tmpl->handle;
 	client->handle2 = tmpl->handle2;
 	client->remote_addr = tmpl->remote_addr;
 	client->local_addr = tmpl->local_addr;
 	client->orgdst_addr = tmpl->orgdst_addr;
+	client->server = tmpl->server;
+	client->initial_ifindex = tmpl->initial_ifindex;
 
 	xtn = (htrd_xtn_t*)qse_htrd_getxtn (client->htrd);	
 	xtn->httpd = httpd;
@@ -433,7 +429,8 @@ qse_printf (QSE_T("failed to accept from server %s\n"), tmp);
 
 /* TODO: check maximum number of client. if exceed call client.close */
 
-		if (server->secure) clibuf.status |= CLIENT_SECURE;
+		if (server->flags & QSE_HTTPD_SERVER_SECURE) clibuf.status |= CLIENT_SECURE;
+		clibuf.server = server;
 
 		client = new_client (httpd, &clibuf);
 		if (client == QSE_NULL)
@@ -523,13 +520,13 @@ static void deactivate_servers (qse_httpd_t* httpd)
 {
 	qse_httpd_server_t* server;
 
-	for (server = httpd->server.list; server; server = server->next)
+	for (server = httpd->server.list.head; server; server = server->next)
 	{
-		if (server->active)
+		if (server->flags & QSE_HTTPD_SERVER_ACTIVE)
 		{
 			httpd->scb->mux.delhnd (httpd, httpd->mux, server->handle);
 			httpd->scb->server.close (httpd, server);
-			server->active = 0;
+			server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
 			httpd->server.nactive--;
 		}
 	}
@@ -539,7 +536,7 @@ static int activate_servers (qse_httpd_t* httpd)
 {
 	qse_httpd_server_t* server;
 
-	for (server = httpd->server.list; server; server = server->next)
+	for (server = httpd->server.list.head; server; server = server->next)
 	{
 		if (httpd->scb->server.open (httpd, server) <= -1)
 		{
@@ -559,113 +556,75 @@ qse_printf (QSE_T("FAILED TO ADD SERVER HANDLE TO MUX....\n"));
 			continue;
 		}
 
-		server->active = 1;
+		server->flags |= QSE_HTTPD_SERVER_ACTIVE;
 		httpd->server.nactive++;
 	}
 
 	return 0;
 }
 
-static void free_server_list (qse_httpd_t* httpd, qse_httpd_server_t* server)
+static void free_server_list (qse_httpd_t* httpd)
 {
+	qse_httpd_server_t* server;
+
+	server = httpd->server.list.head;
+
 	while (server)
 	{
 		qse_httpd_server_t* next = server->next;
-
-		httpd->scb->server.close (httpd, server);
-		qse_httpd_freemem (httpd, server);
-		httpd->server.navail--;
-
+		qse_httpd_detachserver (httpd, server);
 		server = next;
 	}
+
+	QSE_ASSERT (httpd->server.navail == 0);
+	QSE_ASSERT (httpd->server.list.head == QSE_NULL);
+	QSE_ASSERT (httpd->server.list.tail == QSE_NULL);
 }
 
-static qse_httpd_server_t* parse_server_uri (qse_httpd_t* httpd, const qse_char_t* uri)
-{
-	qse_httpd_server_t* server;
-	qse_uint16_t default_port;
-	qse_cstr_t tmp;
-
-	server = qse_httpd_allocmem (httpd, QSE_SIZEOF(*server));
-	if (server == QSE_NULL) goto oops; /* alloc set error number. */
-
-	QSE_MEMSET (server, 0, QSE_SIZEOF(*server));
-
-	/* check the protocol part */
-	tmp.ptr = uri;
-	while (*uri != QSE_T(':')) 
-	{
-		if (*uri == QSE_T('\0'))
-		{
-			httpd->errnum = QSE_HTTPD_EINVAL;
-			goto oops;
-		}
-		uri++;
-	}
-	tmp.len = uri - tmp.ptr;
-	if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("http")) == 0) 
-	{
-		server->secure = 0;
-		default_port = DEFAULT_PORT;
-	}
-	else if (qse_strxcmp (tmp.ptr, tmp.len, QSE_T("https")) == 0) 
-	{
-		server->secure = 1;
-		default_port = DEFAULT_SECURE_PORT;
-	}
-	else goto oops;
-	
-	uri++; /* skip : */ 
-	if (*uri != QSE_T('/')) 
-	{
-		httpd->errnum = QSE_HTTPD_EINVAL;
-		goto oops;
-	}
-	uri++; /* skip / */
-	if (*uri != QSE_T('/')) 
-	{
-		httpd->errnum = QSE_HTTPD_EINVAL;
-		goto oops;
-	}
-	uri++; /* skip / */
-
-	if (qse_strtonwad (uri, &server->nwad) <= -1)
-	{
-		httpd->errnum = QSE_HTTPD_EINVAL;
-		goto oops;
-	}
-
-	if (server->nwad.type == QSE_NWAD_IN4)
-	{
-		if (server->nwad.u.in4.port == 0) 
-			server->nwad.u.in4.port = qse_hton16(default_port);
-	}
-	else if (server->nwad.type == QSE_NWAD_IN6)
-	{
-		if (server->nwad.u.in6.port == 0) 
-			server->nwad.u.in6.port = qse_hton16(default_port);
-	}
-
-	return server;
-
-oops:
-	if (server) qse_httpd_freemem (httpd, server);
-	return QSE_NULL;
-}
-
-
-int qse_httpd_addserver (qse_httpd_t* httpd, const qse_char_t* uri)
+qse_httpd_server_t* qse_httpd_attachserver (
+	qse_httpd_t* httpd, const qse_httpd_server_t* tmpl, qse_size_t xtnsize)
 {
 	qse_httpd_server_t* server;
 
-	server = parse_server_uri (httpd, uri);
-	if (server == QSE_NULL) return -1;
+	server = qse_httpd_allocmem (httpd, QSE_SIZEOF(*server) + xtnsize);
+	if (server == QSE_NULL) return QSE_NULL;
 
-	server->next = httpd->server.list;
-	httpd->server.list = server;
+	QSE_MEMCPY (server, tmpl, QSE_SIZEOF(*server)); 
+	QSE_MEMSET (server + 1, 0, xtnsize);
+
+	server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
+
+	/* chain the server to the tail of the list */
+	server->prev = httpd->server.list.tail;
+	server->next = QSE_NULL;
+	if (httpd->server.list.tail)
+		httpd->server.list.tail->next = server;
+	else
+		httpd->server.list.head = server;
+	httpd->server.list.tail = server;
 	httpd->server.navail++;
 	
-	return 0;
+	return server;
+}
+
+void qse_httpd_detachserver (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	qse_httpd_server_t* prev, * next;
+
+	prev = server->prev;
+	next = server->next;
+
+	QSE_ASSERT (!(server->flags & QSE_HTTPD_SERVER_ACTIVE));
+
+	if (server->predetach) server->predetach (httpd, server);
+
+	qse_httpd_freemem (httpd, server);
+	httpd->server.navail--;
+
+	if (prev) prev->next = next;
+	else httpd->server.list.head = next;
+	if (next) next->prev = prev;
+	else httpd->server.list.tail = prev;
 }
 
 /* --------------------------------------------------- */
@@ -1166,14 +1125,14 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 
 int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
 {
-	QSE_ASSERTX (httpd->server.list != QSE_NULL,
+	QSE_ASSERTX (httpd->server.list.head != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");	
 
 	QSE_ASSERTX (httpd->client.list.head == QSE_NULL,
 		"No client should exist when this loop is started");
 
 	if (scb == QSE_NULL || rcb == QSE_NULL || 
-	    httpd->server.list == QSE_NULL) 
+	    httpd->server.list.head == QSE_NULL) 
 	{
 		httpd->errnum = QSE_HTTPD_EINVAL;
 		return -1;

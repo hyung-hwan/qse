@@ -22,6 +22,7 @@ pkginclude_HEADERS = \
 	mbwc.h \
 	mem.h \
 	nwad.h \
+	nwif.h \
 	nwio.h \
 	oht.h \
 	opt.h \

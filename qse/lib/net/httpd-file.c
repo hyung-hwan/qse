@@ -32,7 +32,9 @@
 typedef struct task_file_t task_file_t;
 struct task_file_t
 {
-	const qse_mchar_t* path;
+	qse_mcstr_t path;
+	qse_mcstr_t mime;
+
 	qse_http_range_t   range;
 	qse_mchar_t        if_none_match[ETAG_LEN_MAX + 1];
 	qse_ntime_t        if_modified_since;
@@ -128,11 +130,20 @@ qse_printf (QSE_T("Debug: entasking file segment (%d)\n"), client->handle.i);
 static int task_init_file (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
-	task_file_t* xtn = qse_httpd_gettaskxtn (httpd, task);
-	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
-	qse_mbscpy ((qse_mchar_t*)(xtn + 1), xtn->path);
-	xtn->path = (qse_mchar_t*)(xtn + 1);
-	task->ctx = xtn;
+	task_file_t* file = qse_httpd_gettaskxtn (httpd, task);
+	task_file_t* arg = (task_file_t*)task->ctx;
+
+	QSE_MEMCPY (file, arg, QSE_SIZEOF(*file));
+
+	file->path.ptr = (qse_mchar_t*)(file + 1);
+     qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
+	if (arg->mime.ptr)
+	{
+		file->mime.ptr = file->path.ptr + file->path.len + 1;
+		qse_mbscpy ((qse_mchar_t*)file->mime.ptr, arg->mime.ptr);
+	}
+
+	task->ctx = file;
 	return 0;
 }
 
@@ -154,7 +165,7 @@ static QSE_INLINE int task_main_file (
 qse_printf (QSE_T("opening file %hs\n"), file->path);
 		
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->scb->file.stat (httpd, file->path, &st) <= -1)
+	if (httpd->scb->file.stat (httpd, file->path.ptr, &st) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -166,7 +177,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 	}
 
 	httpd->errnum = QSE_HTTPD_ENOERR;
-	if (httpd->scb->file.ropen (httpd, file->path, &handle) <= -1)
+	if (httpd->scb->file.ropen (httpd, file->path.ptr, &handle) <= -1)
 	{
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
@@ -206,7 +217,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
 		qse_fmtuintmaxtombs (tmp[3], QSE_COUNTOF(tmp[3]), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
 
-		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag) - etag_len, st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
@@ -221,9 +232,9 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
-			(st.mime? st.mime: QSE_MT("")),
-			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
+			(file->mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
+			(file->mime.len > 0? file->mime.ptr: QSE_MT("")),
+			(file->mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
 			tmp[0], tmp[1], tmp[2], tmp[3], etag
 		);
 		if (x)
@@ -242,7 +253,7 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 		qse_mchar_t etag[ETAG_LEN_MAX + 1];
 		qse_size_t etag_len;
 
-		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag) - etag_len, st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
@@ -281,9 +292,9 @@ qse_printf (QSE_T("opening file %hs\n"), file->path);
 			qse_httpd_getname (httpd),
 			qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 			(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-			(st.mime? QSE_MT("Content-Type: "): QSE_MT("")),
-			(st.mime? st.mime: QSE_MT("")),
-			(st.mime? QSE_MT("\r\n"): QSE_MT("")),
+			(file->mime.len > 0? QSE_MT("Content-Type: "): QSE_MT("")),
+			(file->mime.len > 0? file->mime.ptr: QSE_MT("")),
+			(file->mime.len > 0? QSE_MT("\r\n"): QSE_MT("")),
 			b_fsize,
 			qse_httpd_fmtgmtimetobb (httpd, &st.mtime, 1),
 			etag
@@ -305,6 +316,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred,
 	const qse_mchar_t* path,
+	const qse_mchar_t* mime,
 	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
@@ -312,7 +324,13 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	const qse_htre_hdrval_t* tmp;
 
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	data.path = path;
+	data.path.ptr = path;
+	data.path.len = qse_mbslen(path);
+	if (mime)
+	{
+		data.mime.ptr = mime;
+		data.mime.len = qse_mbslen(mime);
+	}
 	data.version = *qse_htre_getversion(req);
 	data.keepalive = (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE);
 
@@ -363,6 +381,6 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	task.ctx = &data;
 
 	return qse_httpd_entask (httpd, client, pred, &task, 
-		QSE_SIZEOF(task_file_t) + qse_mbslen(path) + 1);
+		QSE_SIZEOF(task_file_t) + data.path.len + 1 + data.mime.len + 1);
 }
 

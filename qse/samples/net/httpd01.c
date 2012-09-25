@@ -53,7 +53,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_addserver (httpd, argv[i]) <= -1)
+		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);

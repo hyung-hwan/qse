@@ -86,16 +86,17 @@ am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo gdl.lo htb.lo \
 	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \
 	hton.lo ipad.lo lda.lo main.lo mbwc.lo mbwc-str.lo mem.lo \
-	nwad.lo nwio.lo oht.lo opt.lo path-basename.lo path-canon.lo \
-	pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo slmb.lo stdio.lo \
-	str-beg.lo str-cat.lo str-chr.lo str-cnv.lo str-cmp.lo \
-	str-cpy.lo str-del.lo str-dup.lo str-dynm.lo str-dynw.lo \
-	str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo str-incl.lo \
-	str-len.lo str-pac.lo str-pbrk.lo str-put.lo str-rev.lo \
-	str-rot.lo str-set.lo str-spl.lo str-spn.lo str-str.lo \
-	str-subst.lo str-tok.lo str-trm.lo str-word.lo time.lo tio.lo \
-	tre.lo tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
-	tre-match-parallel.lo tre-parse.lo tre-stack.lo utf8.lo xma.lo
+	nwad.lo nwif.lo nwio.lo oht.lo opt.lo path-basename.lo \
+	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
+	slmb.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
+	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
+	str-dynw.lo str-end.lo str-excl.lo str-fcpy.lo str-fnmat.lo \
+	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
+	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
+	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
+	time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
+	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
+	tre-stack.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -337,6 +338,7 @@ libqsecmn_la_SOURCES = \
 	mbwc-str.c \
 	mem.c \
 	nwad.c \
+	nwif.c \
 	nwio.c \
 	oht.c \
 	opt.c \
@@ -502,6 +504,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Plo@am__quote@

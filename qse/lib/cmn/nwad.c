@@ -20,104 +20,10 @@
 
 #include <qse/cmn/nwad.h>
 #include <qse/cmn/hton.h>
+#include <qse/cmn/nwif.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 #include "mem.h"
-
-#if defined(HAVE_NET_IF_H)
-#include <net/if.h>
-#include <qse/cmn/mbwc.h>
-
-#if !defined(IF_NAMESIZE)
-#	define IF_NAMESIZE 63
-#endif
-
-#if defined(HAVE_IF_NAMETOINDEX)
-static QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
-{
-	qse_mchar_t tmp[IF_NAMESIZE + 1];
-	if (qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), ptr, len) < len) 
-	{
-		/* name too long */
-		return 0;
-	}
-	return if_nametoindex (tmp);
-}
-
-static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
-{
-	qse_mchar_t tmp[IF_NAMESIZE + 1];
-	qse_size_t wl, ml;
-
-	wl = len; ml = QSE_COUNTOF(tmp) - 1;
-	if (qse_wcsntombsn (ptr, &wl, tmp, &ml) <= -1) return 0;
-	tmp[ml] = QSE_MT('\0');
-	return if_nametoindex (tmp);
-}
-#else
-static QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
-{
-	return 0U;
-}
-static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
-{
-	return 0U;
-}
-#endif /* HAVE_IF_NAMETOINDEX */
-
-#if defined(HAVE_IF_INDEXTONAME)
-static QSE_INLINE int ifindex_to_mbsn (unsigned int index, qse_mchar_t* buf, qse_size_t len)
-{
-	qse_mchar_t tmp[IF_NAMESIZE + 1];
-	if (if_indextoname (index, tmp) == QSE_NULL) return 0;
-	return qse_mbsxcpy (buf, len, tmp);
-}
-
-static QSE_INLINE int ifindex_to_wcsn (unsigned int index, qse_wchar_t* buf, qse_size_t len)
-{
-	qse_mchar_t tmp[IF_NAMESIZE + 1];
-	qse_size_t ml, wl;
-	int x;
-
-	if (if_indextoname (index, tmp) == QSE_NULL) return 0;
-	wl = len;
-	x = qse_mbstowcs (tmp, &ml, buf, &wl);
-	if (x == -2 && wl > 1) buf[wl - 1] = QSE_WT('\0');
-	else if (x != 0) return 0;
-	return wl;
-}
-
-#else
-static QSE_INLINE int ifindex_to_mbsn (unsigned int index, qse_mchar_t* buf, qse_size_t len)
-{
-	return 0;
-}
-static QSE_INLINE int ifindex_to_wcsn (unsigned int index, qse_wchar_t* buf, qse_size_t len)
-{
-	return 0;
-}
-#endif /* HAVE_IF_INDEXTONAME */
-
-#else /* HAVE_NET_IF_H */
-
-static QSE_INLINE unsigned int mbsn_to_ifindex (const qse_mchar_t* ptr, qse_size_t len)
-{
-	return 0U;
-}
-static QSE_INLINE unsigned int wcsn_to_ifindex (const qse_wchar_t* ptr, qse_size_t len)
-{
-	return 0U;
-}
-
-static QSE_INLINE int ifindex_to_mbsn (unsigned int index, qse_mchar_t* buf, qse_size_t len)
-{
-	return 0;
-}
-static QSE_INLINE int ifindex_to_wcsn (unsigned int index, qse_wchar_t* buf, qse_size_t len)
-{
-	return 0;
-}
-#endif /* HAVE_NET_IF_H */
 
 int qse_mbstonwad (const qse_mchar_t* str, qse_nwad_t* nwad)
 {
@@ -178,7 +84,7 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 				/* interface name as a scope id? */
 				const qse_mchar_t* stmp = p;
 				do p++; while (p < end && *p != QSE_MT(']'));
-				tmpad.u.in6.scope = mbsn_to_ifindex (stmp, p - stmp);
+				tmpad.u.in6.scope = qse_nwifmbsntoindex (stmp, p - stmp);
 				if (tmpad.u.in6.scope <= 0) return -1;
 			}
 
@@ -240,7 +146,7 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 					/* interface name as a scope id? */
 					const qse_mchar_t* stmp = p;
 					do p++; while (p < end);
-					tmpad.u.in6.scope = mbsn_to_ifindex (stmp, p - stmp);
+					tmpad.u.in6.scope = qse_nwifmbsntoindex (stmp, p - stmp);
 					if (tmpad.u.in6.scope <= 0) return -1;
 				}
 			}
@@ -342,7 +248,7 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 				/* interface name as a scope id? */
 				const qse_wchar_t* stmp = p;
 				do p++; while (p < end && *p != QSE_WT(']'));
-				tmpad.u.in6.scope = wcsn_to_ifindex (stmp, p - stmp);
+				tmpad.u.in6.scope = qse_nwifwcsntoindex (stmp, p - stmp);
 				if (tmpad.u.in6.scope <= 0) return -1;
 			}
 
@@ -404,7 +310,7 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 					/* interface name as a scope id? */
 					const qse_wchar_t* stmp = p;
 					do p++; while (p < end);
-					tmpad.u.in6.scope = wcsn_to_ifindex (stmp, p - stmp);
+					tmpad.u.in6.scope = qse_nwifwcsntoindex (stmp, p - stmp);
 					if (tmpad.u.in6.scope <= 0) return -1;
 				}
 			}
@@ -489,8 +395,11 @@ qse_size_t qse_nwadtombs (
 				if (!(flags & QSE_NWADTOMBS_ADDR) || 
 				    nwad->u.in6.port != 0)
 				{
-					if (xlen + 1 >= len) goto done;
-					buf[xlen++] = QSE_MT('[');	
+					if (flags & QSE_NWADTOMBS_ADDR)
+					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_MT('[');	
+					}
 				}
 			}
 
@@ -509,7 +418,7 @@ qse_size_t qse_nwadtombs (
 
 					if (xlen + 1 >= len) goto done;
 
-					tmp = ifindex_to_mbsn (nwad->u.in6.scope, &buf[xlen], len - xlen);
+					tmp = qse_nwifindextombs (nwad->u.in6.scope, &buf[xlen], len - xlen);
 					if (tmp <= 0)
 					{
 						xlen += qse_fmtuintmaxtombs (
@@ -525,11 +434,11 @@ qse_size_t qse_nwadtombs (
 				if (!(flags & QSE_NWADTOMBS_ADDR) || 
 				    nwad->u.in6.port != 0) 
 				{
-					if (xlen + 1 >= len) goto done;
-					buf[xlen++] = QSE_MT(']');	
-
 					if (flags & QSE_NWADTOMBS_ADDR)
 					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_MT(']');	
+
 						if (xlen + 1 >= len) goto done;
 						buf[xlen++] = QSE_MT(':');
 					}
@@ -594,8 +503,11 @@ qse_size_t qse_nwadtowcs (
 				if (!(flags & QSE_NWADTOMBS_ADDR) || 
 				    nwad->u.in6.port != 0)
 				{
-					if (xlen + 1 >= len) goto done;
-					buf[xlen++] = QSE_WT('[');	
+					if (flags & QSE_NWADTOMBS_ADDR)
+					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_WT('[');	
+					}
 				}
 			}
 
@@ -613,7 +525,7 @@ qse_size_t qse_nwadtowcs (
 
 					if (xlen + 1 >= len) goto done;
 
-					tmp = ifindex_to_wcsn (nwad->u.in6.scope, &buf[xlen], len - xlen);
+					tmp = qse_nwifindextowcs (nwad->u.in6.scope, &buf[xlen], len - xlen);
 					if (tmp <= 0)
 					{
 						xlen += qse_fmtuintmaxtowcs (
@@ -629,11 +541,11 @@ qse_size_t qse_nwadtowcs (
 				if (!(flags & QSE_NWADTOMBS_ADDR) || 
 				    nwad->u.in6.port != 0) 
 				{
-					if (xlen + 1 >= len) goto done;
-					buf[xlen++] = QSE_WT(']');	
-
 					if (flags & QSE_NWADTOMBS_ADDR)
 					{
+						if (xlen + 1 >= len) goto done;
+						buf[xlen++] = QSE_WT(']');	
+
 						if (xlen + 1 >= len) goto done;
 						buf[xlen++] = QSE_WT(':');
 					}

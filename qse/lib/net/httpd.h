@@ -58,7 +58,11 @@ struct qse_httpd_t
 
 	struct
 	{
-		qse_httpd_server_t* list;
+		struct
+		{
+			qse_httpd_server_t* head;
+			qse_httpd_server_t* tail;
+		} list;
 		qse_size_t          navail;
 		qse_size_t          nactive;
 	} server;
@@ -104,6 +108,14 @@ qse_httpd_task_t* qse_httpd_entask_error (
 	int code,
      const qse_http_version_t* version,
 	int keepalive
+);
+
+qse_httpd_task_t* qse_httpd_entask_text (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+     qse_httpd_task_t* pred,
+	const qse_mchar_t* ptr,
+	qse_size_t len;
 );
 
 #ifdef __cplusplus

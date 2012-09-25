@@ -20,6 +20,7 @@ libqsenet_la_SOURCES = \
 	httpd-resol.c \
 	httpd-std.c \
 	httpd-task.c \
+	httpd-text.c \
 	upxd.c
 
 libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)

@@ -66,111 +66,6 @@ qse_httpd_task_t* qse_httpd_entaskdisconnect (
 
 /*------------------------------------------------------------------------*/
 
-static int task_main_statictext (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	qse_ssize_t n;
-	qse_size_t count = 0;
-	const qse_mchar_t* ptr = (const qse_mchar_t*)task->ctx;
-
-	while (*ptr != QSE_MT('\0') && count < MAX_SEND_SIZE)
-	{
-		ptr++; count++;
-	}
-
-/* TODO: do i need to add code to skip this send if count is 0? */
-	n = httpd->scb->client.send (httpd, client, task->ctx, count);
-	if (n <= -1) return -1;
-
-	ptr = (const qse_mchar_t*)task->ctx + n;
-	if (*ptr == QSE_MT('\0')) return 0;
-
-	task->ctx = (void*)ptr;
-	return 1; /* more work to do */
-}
-
-qse_httpd_task_t* qse_httpd_entaskstatictext (
-     qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-	qse_httpd_task_t* pred, 
-	const qse_mchar_t* text)
-{
-	qse_httpd_task_t task;
-
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.main = task_main_statictext;
-	task.ctx = (void*)text;
-
-	return qse_httpd_entask (httpd, client, pred, &task, 0);
-}
-
-/*------------------------------------------------------------------------*/
-
-typedef struct task_text_t task_text_t;
-struct task_text_t
-{
-	const qse_mchar_t* ptr;
-	qse_size_t         left;
-};
-
-static int task_init_text (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	task_text_t* xtn = qse_httpd_gettaskxtn (httpd, task);
-
-	QSE_MEMCPY (xtn, task->ctx, QSE_SIZEOF(*xtn));
-	QSE_MEMCPY (xtn + 1, xtn->ptr, xtn->left);
-	xtn->ptr = (qse_mchar_t*)(xtn + 1);
-
-	task->ctx = xtn;
-	return 0;
-}
-
-static int task_main_text (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
-{
-	qse_ssize_t n;
-	qse_size_t count;
-	task_text_t* ctx = (task_text_t*)task->ctx;
-
-	count = MAX_SEND_SIZE;
-	if (count >= ctx->left) count = ctx->left;
-
-/* TODO: do i need to add code to skip this send if count is 0? */
-	n = httpd->scb->client.send (httpd, client, ctx->ptr, count);
-	if (n <= -1) return -1;
-
-	ctx->left -= n;
-	if (ctx->left <= 0) return 0;
-
-	ctx->ptr += n;
-	return 1; /* more work to do */
-}
-
-qse_httpd_task_t* qse_httpd_entasktext (
-     qse_httpd_t* httpd,
-	qse_httpd_client_t* client,
-	qse_httpd_task_t* pred, 
-	const qse_mchar_t* text)
-{
-	qse_httpd_task_t task;
-	task_text_t data;
-
-	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
-	data.ptr = text;
-	data.left = qse_mbslen(text);
-
-	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
-	task.init = task_init_text;
-	task.main = task_main_text;
-	task.ctx = &data;
-
-	return qse_httpd_entask (
-		httpd, client, pred, &task, QSE_SIZEOF(data) + data.left);
-}
-
-/*------------------------------------------------------------------------*/
-
 /* TODO: send wide character string when QSE_CHAR_IS_WCHAR */
 
 /*------------------------------------------------------------------------*/
@@ -447,21 +342,22 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 
 /*------------------------------------------------------------------------*/
 
-qse_httpd_task_t* qse_httpd_entaskpath (
+qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, const qse_mchar_t* name, qse_htre_t* req)
+	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
 {
-	qse_stat_t st;
-	qse_httpd_task_t* task;
+	const qse_http_version_t* version;
 
-/* TODO: LSTAT or STAT? should i not follow the  symbolic link? */
-/*	if (QSE_LSTAT (name, &st) == 0 && S_ISDIR(st.st_mode))*/
-	if (QSE_STAT (name, &st) == 0 && S_ISDIR(st.st_mode))
-		task = qse_httpd_entaskdir (httpd, client, pred, name, req);
-	else
-		task = qse_httpd_entaskfile (httpd, client, pred, name, req);
+	version = qse_htre_getversion(req);
 
-	return task;
+	return qse_httpd_entaskformat (
+		httpd, client, pred,
+		QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\nServer: %s\r\nDate: %s\r\nContent-Length: 0\r\nConnection: %s\r\nLocation: %s\r\n\r\n"),
+		version->major, version->minor,
+		qse_httpd_getname (httpd),
+		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
+		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
+		dst);
 }
 
 /*------------------------------------------------------------------------*/
@@ -478,3 +374,61 @@ qse_httpd_task_t* qse_httpd_entaskconnect (
 }
 #endif
 
+
+qse_httpd_task_t* qse_httpd_entaskrsrc (
+	qse_httpd_t* httpd,
+	qse_httpd_client_t* client,
+	qse_httpd_task_t* pred, 
+	qse_httpd_rsrc_t* rsrc,
+	qse_htre_t* req)
+{
+	qse_httpd_task_t* task;
+
+	switch (rsrc->type)
+	{
+		case QSE_HTTPD_RSRC_AUTH:
+			task = qse_httpd_entaskauth (httpd, client, QSE_NULL, rsrc->u.auth.realm, req);
+			break;
+
+		case QSE_HTTPD_RSRC_CGI:
+			task = qse_httpd_entaskcgi (
+				httpd, client, QSE_NULL, rsrc->u.cgi.path,
+				rsrc->u.cgi.script, rsrc->u.cgi.suffix, 
+				rsrc->u.cgi.docroot, rsrc->u.cgi.nph, req);
+			break;
+
+		case QSE_HTTPD_RSRC_DIR:
+			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, req);
+			break;
+
+		case QSE_HTTPD_RSRC_ERROR:
+			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, rsrc->u.error, req);
+
+		case QSE_HTTPD_RSRC_FILE:
+			qse_httpd_discardcontent (httpd, req);
+			task = qse_httpd_entaskfile (httpd, client, QSE_NULL, rsrc->u.file.path, rsrc->u.file.mime, req);
+			break;
+	
+		case QSE_HTTPD_RSRC_PROXY:
+			task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &rsrc->u.proxy.dst, &rsrc->u.proxy.src, req);
+			break;
+
+		case QSE_HTTPD_RSRC_RELOC:
+			task = qse_httpd_entaskreloc (httpd, client, QSE_NULL, rsrc->u.reloc.dst, req);
+			break;
+
+		case QSE_HTTPD_RSRC_TEXT:
+			task = qse_httpd_entasktext (httpd, client, QSE_NULL, rsrc->u.text.ptr, rsrc->u.text.mime, req);
+			break;
+
+		default:
+			qse_httpd_discardcontent (httpd, req);
+			task = QSE_NULL;
+			httpd->errnum = QSE_HTTPD_EINVAL;
+			break;
+	}
+
+	return task;
+}

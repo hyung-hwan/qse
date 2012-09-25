@@ -119,10 +119,22 @@ int qse_env_insertwcs (
 	const qse_wchar_t* value
 );
 
+int qse_env_insertwcsa (
+	qse_env_t*         env,
+	const qse_wchar_t* name,
+	const qse_wchar_t* value[]
+);
+
 int qse_env_insertmbs (
 	qse_env_t*         env,
 	const qse_mchar_t* name,
 	const qse_mchar_t* value
+);
+
+int qse_env_insertmbsa (
+	qse_env_t*         env,
+	const qse_mchar_t* name,
+	const qse_mchar_t* value[]
 );
 
 int qse_env_deletewcs (
@@ -135,12 +147,14 @@ int qse_env_deletembs (
 	const qse_mchar_t* name
 );
 
-#if defined(QSE_CHAR_IS_WCHAR)
-#	define qse_env_insert(env,name,value) qse_env_insertwcs(env,name,value)
-#	define qse_env_delete(env,name) qse_env_deletewcs(env,name)
-#else
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_env_insert(env,name,value) qse_env_insertmbs(env,name,value)
+#	define qse_env_inserta(env,name,value) qse_env_insertmbsa(env,name,value)
 #	define qse_env_delete(env,name) qse_env_deletembs(env,name)
+#else
+#	define qse_env_insert(env,name,value) qse_env_insertwcs(env,name,value)
+#	define qse_env_inserta(env,name,value) qse_env_insertwcsa(env,name,value)
+#	define qse_env_delete(env,name) qse_env_deletewcs(env,name)
 #endif
 
 #ifdef __cplusplus
