@@ -49,6 +49,9 @@
 #	if defined(__linux__)
 #		include <limits.h>
 #		include <linux/netfilter_ipv4.h> /* SO_ORIGINAL_DST */
+#		if !defined(IP_TRANSPARENT)
+#			define IP_TRANSPARENT 19
+#		endif
 #	endif
 #endif
 
@@ -662,6 +665,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
 
+/* TODO: linux. use capset() to set required capabilities just in case */
 #if defined(IP_TRANSPARENT)
 	/* remove the ip routing restriction that a packet can only
 	 * be sent using a local ip address. this option is useful
@@ -671,6 +675,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 ip rule add fwmark 0x1/0x1 lookup 100
 ip route add local 0.0.0.0/0 dev lo table 100
 
+iptables -t mangle -N DIVERT
 iptables -t mangle -A PREROUTING -p tcp -m socket --transparent -j DIVERT
 iptables -t mangle -A DIVERT -j MARK --set-mark 0x1/0x1
 iptables -t mangle -A DIVERT -j ACCEPT
