@@ -378,6 +378,35 @@ typedef DIR qse_dir_t;
 #include <sys/syscall.h>
 
 /*
+
+http://www.x86-64.org/documentation/abi.pdf
+
+A.2 AMD64 Linux Kernel Conventions
+The section is informative only.
+
+A.2.1 Calling Conventions
+The Linux AMD64 kernel uses internally the same calling conventions as user-
+level applications (see section 3.2.3 for details). User-level applications 
+that like to call system calls should use the functions from the C library. 
+The interface between the C library and the Linux kernel is the same as for
+the user-level applications with the following differences:
+
+1. User-level applications use as integer registers for passing the sequence
+   %rdi, %rsi, %rdx, %rcx, %r8 and %r9. The kernel interface uses %rdi,
+   %rsi, %rdx, %r10, %r8 and %r9.
+2. A system-call is done via the syscall instruction. The kernel destroys
+   registers %rcx and %r11.
+3. The number of the syscall has to be passed in register %rax.
+4. System-calls are limited to six arguments, no argument is passed directly 
+   on the stack.
+5. Returning from the syscall, register %rax contains the result of the
+   system-call. A value in the range between -4095 and -1 indicates an error,
+   it is -errno.
+6. Only values of class INTEGER or class MEMORY are passed to the kernel.
+
+*/
+
+/*
 #define QSE_SYSCALL0(ret,num) \
 	__asm__ volatile ( \
 		"movq %1, %%rax\n\t" \
@@ -421,29 +450,42 @@ typedef DIR qse_dir_t;
 	__asm__ volatile ( \
 		"syscall\n" \
 		: "=a"(ret) \
-		:"a"((qse_uint64_t)num) \
-		: "%rcx", "%r11")
+		: "a"((qse_uint64_t)num) \
+		: "memory", "cc", "%rcx", "%r11" \
+	)
+ 
 
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
 		"syscall\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1) \
-		: "%rcx", "%r11")
+		: "memory", "cc", "%rcx", "%r11" \
+	)
 
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
 		"syscall\n"  \
 		: "=a"(ret) \
 		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2) \
-		: "%rcx", "%r11")
+		: "memory", "cc", "%rcx", "%r11" \
+	)
 
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
 		"syscall\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2), "d"((qse_uint64_t)arg3) \
-		: "%rcx", "%r11")
+		: "memory", "cc", "%rcx", "%r11" \
+	)
+
+#define QSE_SYSCALL4(ret,num,arg1,arg2,arg3,arg4) \
+	__asm__ volatile ( \
+		"syscall\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint64_t)num), "D"((qse_uint64_t)arg1), "S"((qse_uint64_t)arg2), "d"((qse_uint64_t)arg3),  "c"((qse_uint64_t)arg4) \
+		: "memory", "cc", "%rcx", "%r11" \
+	)
 
 #elif defined(__linux) && defined(__GNUC__) && defined(__i386) 
 
@@ -454,14 +496,17 @@ typedef DIR qse_dir_t;
 		"int $0x80\n"  \
 		: "=a"(ret)  \
 		: "a"((qse_uint32_t)num) \
-		: "memory")
+		: "memory" \
+	)
 
 /*
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
 		"int $0x80\n"  \
 		: "=a"(ret)  \
-		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1))
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1) \
+		: "memory" \
+	)
 
 GCC in x86 PIC mode uses ebx to store the GOT table. so the macro shouldn't
 clobber the ebx register. this modified version stores ebx before interrupt
@@ -475,14 +520,17 @@ and restores it after interrupt.
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1) \
-		: "memory")
+		: "memory" \
+	)
 
 /*
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
 		"int $0x80\n"  \
 		: "=a"(ret) \
-		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2))
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2) \
+		: "memory" \
+	)
 */
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
@@ -492,14 +540,17 @@ and restores it after interrupt.
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2) \
-		: "memory")
+		: "memory" \
+	)
 
 /*
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
 		"int $0x80\n"  \
 		: "=a"(ret)  \
-		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3))
+		: "a"((qse_uint32_t)num), "b"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3) \
+		: "memory" \
+	)
 */
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
@@ -509,7 +560,19 @@ and restores it after interrupt.
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3) \
-		: "memory")
+		: "memory" \
+	)
+
+#define QSE_SYSCALL4(ret,num,arg1,arg2,arg3,arg4) \
+	__asm__ volatile ( \
+		"push %%ebx\n" \
+		"movl %2, %%ebx\n" \
+		"int $0x80\n" \
+		"pop %%ebx\n" \
+		: "=a"(ret) \
+		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3), "S"((qse_uint32_t)arg4) \
+		: "memory" \
+	)
 
 #endif
 
