@@ -1675,34 +1675,7 @@ qse_printf (QSE_T("Host not included....\n"));
 #endif
 
 
-#if 0
-	if (peek)
-	{
-		if (req->attr.expect &&
-		    (req->version.major > 1 ||
-		     (req->version.major == 1 && req->version.minor >= 1)) &&
-		    !content_received)
-		{
-/* TODO: check method.... */
-			/* "expect" in the header, version 1.1 or higher,
-			 * and no content received yet */
-
-			if (qse_mbscasecmp(req->attr.expect, QSE_MT("100-continue")) != 0)
-			{
-				if (qse_httpd_entaskerror (
-					httpd, client, QSE_NULL, 417, req) == QSE_NULL) return -1;
-				if (qse_httpd_entaskdisconnect (
-					httpd, client, QSE_NULL) == QSE_NULL) return -1;
-			}
-			else
-			{
-				/* TODO: determine if to return 100-continue or other errors */
-				if (qse_httpd_entaskcontinue (
-					httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
-			}
-		}
-	}
-#endif
+	/* TODO: investigate if the proxy need to handle 100-continue */
 
 	if (peek)
 	{
@@ -1893,12 +1866,15 @@ target->u.proxy.src.u.in4.port = 0;
 return 0;
 #endif
 
-	if (server_xtn->docroot.ptr)
+	if (server_xtn->docroot.ptr || qpath[0] != QSE_MT('/'))
 	{
-		const qse_mchar_t* ta[3];
-		ta[0] = server_xtn->docroot.ptr;
-		ta[1] = qpath;
-		ta[2] = QSE_NULL;
+		const qse_mchar_t* ta[4];
+		qse_size_t idx = 0;
+		
+		if (server_xtn->docroot.ptr) ta[idx++] = server_xtn->docroot.ptr;
+		if (qpath[0] != QSE_MT('/')) ta[idx++] = QSE_MT("/");	
+		ta[idx++] = qpath;
+		ta[idx++] = QSE_NULL;
 		xpath = qse_mbsadup (ta, httpd->mmgr);
 		if (xpath == QSE_NULL)
 		{
@@ -1985,6 +1961,7 @@ return 0;
 		target->u.file.mime =
 			qse_mbsend (qpath, QSE_MT(".html"))? QSE_MT("text/html"):
 			qse_mbsend (qpath, QSE_MT(".txt"))?  QSE_MT("text/plain"):
+			qse_mbsend (qpath, QSE_MT(".log"))?  QSE_MT("text/plain"):
 			qse_mbsend (qpath, QSE_MT(".css"))?  QSE_MT("text/css"):
 			qse_mbsend (qpath, QSE_MT(".xml"))?  QSE_MT("text/xml"):
 			qse_mbsend (qpath, QSE_MT(".js"))?   QSE_MT("application/javascript"):

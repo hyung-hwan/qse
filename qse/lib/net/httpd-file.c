@@ -20,11 +20,21 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
-#include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/time.h>
+
+#if defined(_WIN32)
+	/* TODO: */
+#elif defined(__OS2__)
+	/* TODO: */
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+#	include "../cmn/syscall.h"
+#endif
+
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 #define ETAG_LEN_MAX 127
@@ -120,7 +130,6 @@ static qse_httpd_task_t* entask_file_segment (
 	task.fini = task_fini_fseg;
 	task.ctx = &data;
 
-qse_printf (QSE_T("Debug: entasking file segment (%d)\n"), client->handle.i);
 	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data));
 }
 
@@ -162,8 +171,6 @@ static QSE_INLINE int task_main_file (
 /* TODO: if you should deal with files on a network-mounted drive,
          setting a trigger or non-blocking I/O are needed. */
 
-qse_printf (QSE_T("opening file %hs\n"), file->path);
-		
 	httpd->errnum = QSE_HTTPD_ENOERR;
 	if (httpd->scb->file.stat (httpd, file->path.ptr, &st) <= -1)
 	{

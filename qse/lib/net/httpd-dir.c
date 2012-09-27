@@ -20,9 +20,20 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
-#include "../cmn/syscall.h"
 #include <qse/cmn/str.h>
+#include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
+
+#if defined(_WIN32)
+	/* TODO: */
+#elif defined(__OS2__)
+	/* TODO: */
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+#	include "../cmn/syscall.h"
+#endif
+
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 typedef struct task_dir_t task_dir_t;
@@ -106,13 +117,15 @@ static void fill_chunk_length (task_dseg_t* ctx)
 	int x;
 
 	/* right alignment with space padding on the left */
-/* TODO: change snprintf to qse_fmtuintmaxtombs() */
-	x = snprintf (
+	x = qse_fmtuintmaxtombs (
 		ctx->buf, (SIZE_CHLEN + SIZE_CHLENCRLF) - 1, 
-		QSE_MT("%*lX"), (int)(SIZE_CHLEN + SIZE_CHLENCRLF - 2), 
-		(unsigned long)(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)));	
-
-	/* i don't check the error of snprintf because i've secured the 
+		(ctx->chunklen - (SIZE_CHLEN + SIZE_CHLENCRLF)), /* value to convert */
+		16 | QSE_FMTUINTMAXTOMBS_UPPERCASE, /* uppercase hexadecimal letters */
+		-1, /* no particular precision - want space filled if less than 4 digits */
+		QSE_MT(' '),  /* fill with space */
+		QSE_NULL
+	);
+	/* i don't check the buffer size error because i've secured the 
 	 * suffient space for the chunk length at the beginning of the buffer */
 	
 	/* CHLENCRLF */
@@ -380,7 +393,6 @@ static qse_httpd_task_t* entask_directory_segment (
 	task.fini = task_fini_dseg;
 	task.ctx = &data;
 
-qse_printf (QSE_T("Debug: entasking directory segment (%d)\n"), client->handle.i);
 	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.qpath.len + 1);
 }
 
