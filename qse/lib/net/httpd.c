@@ -20,8 +20,6 @@
 
 #include "httpd.h"
 #include "../cmn/mem.h"
-#include "../cmn/syscall.h"
-
 #include <qse/cmn/chr.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
@@ -661,7 +659,7 @@ qse_printf (QSE_T("Error: failed to read from a client %d\n"), client->handle.i)
 	}
 	else if (m == 0)
 	{
-qse_printf (QSE_T("Debug: connection closed %d - errno %d\n"), client->handle.i, errno);
+qse_printf (QSE_T("Debug: connection closed %d\n"), client->handle.i);
 		/* reading from the client returned 0. this typically
 		 * happens when the client closes the connection or
 		 * shutdown the writing half of the socket. it's

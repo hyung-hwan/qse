@@ -1049,20 +1049,21 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 		if (cgi->resflags & CGI_RES_CLIENT_CHUNK)
 		{
 			qse_size_t count, extra;
-			qse_mchar_t chunklen[7];
 
 			/* this function assumes that the chunk length does not 
 			 * exceed 4 hexadecimal digits. */
 			QSE_ASSERT (QSE_SIZEOF(cgi->buf) <= 0xFFFF);
 	
+#define CHLEN_RESERVE 6 
+
 	qse_printf (QSE_T("READING CHUNKED MODE...\n"));
-			extra = (QSE_SIZEOF(chunklen) - 1) + 2;
+			extra = CHLEN_RESERVE + 2;
 			count = QSE_SIZEOF(cgi->buf) - cgi->buflen;
 			if (count > extra)
 			{
 				n = qse_pio_read (
 					&cgi->pio, QSE_PIO_OUT,
-					&cgi->buf[cgi->buflen + QSE_SIZEOF(chunklen) - 1], 
+					&cgi->buf[cgi->buflen + CHLEN_RESERVE], 
 					count - extra
 				);
 				if (n <= -1)
@@ -1085,14 +1086,20 @@ qse_printf (QSE_T("TASK_MAIN_CGI_4\n"));
 					return 1;
 				}
 	
-				/* set the chunk length */
-/* TODO: chagne snprintf to qse_fmtuintmaxtombs() */
-				snprintf (chunklen, QSE_COUNTOF(chunklen), 
-					QSE_MT("%-4lX\r\n"), (unsigned long)n);
-				QSE_MEMCPY (&cgi->buf[cgi->buflen],
-					chunklen, QSE_SIZEOF(chunklen) - 1);
-				cgi->buflen += QSE_SIZEOF(chunklen) - 1 + n;
-		
+				/* set the chunk length. if the length string is less 
+				 * than 4 digits, the right side of the string is filled
+				 * with space letters. for example, the chunk length line
+				 * for the length 10 will be "A   \r\n". */
+				cgi->buflen += qse_fmtuintmaxtombs (
+					&cgi->buf[cgi->buflen], CHLEN_RESERVE - 2 + 1,
+					n, 16 | QSE_FMTUINTMAXTOMBS_UPPERCASE | QSE_FMTUINTMAXTOMBS_FILLRIGHT, 
+					-1, QSE_MT(' '), QSE_NULL
+				); 
+				cgi->buf[cgi->buflen++] = QSE_MT('\r');
+				cgi->buf[cgi->buflen++] = QSE_MT('\n');
+
+				cgi->buflen += n; /* +n for the data read above */
+
 				/* set the trailing CR & LF for a chunk */
 				cgi->buf[cgi->buflen++] = QSE_MT('\r');
 				cgi->buf[cgi->buflen++] = QSE_MT('\n');

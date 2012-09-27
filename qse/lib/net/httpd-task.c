@@ -19,19 +19,10 @@
  */
 
 #include "httpd.h"
-#include "../cmn/mem.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
+#include "../cmn/mem.h"
 
-#if defined(_WIN32)
-	/* TODO */
-#elif defined(__DOS__)
-	/* TODO */
-#elif defined(__OS2__)
-	/* TODO */
-#else
-#	include "../cmn/syscall.h"
-#endif
 
 #include <stdarg.h>
 #include <qse/cmn/stdio.h> /* TODO: remove this */

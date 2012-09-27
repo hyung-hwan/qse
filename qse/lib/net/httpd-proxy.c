@@ -18,10 +18,6 @@
     License along with QSE. If not, see <htrd://www.gnu.org/licenses/>.
  */
 
-#if defined(_WIN32) || defined(__DOS__) || defined(__OS2__)
-/* UNSUPPORTED YET..  */
-/* TODO: IMPLEMENT THIS */
-#else
 
 #include "httpd.h"
 #include "../cmn/mem.h"
@@ -447,10 +443,15 @@ qse_printf (QSE_T("NORMAL REPLY 222222222222222222222 NORMAL REPLY\n"));
 		if (proxy->resflags & PROXY_RES_CLIENT_CHUNK &&
 		    qse_comparehttpversions (&res->version, &qse_http_v11) < 0)
 		{
-			qse_mchar_t vbuf[64];
-			snprintf (vbuf, QSE_COUNTOF(vbuf), QSE_MT("HTTP/%d.%d"), 
-				(int)proxy->version.major, (int)proxy->version.minor);
-			if (qse_mbs_cat (proxy->res, vbuf) == (qse_size_t)-1) 
+			qse_mchar_t major[32], minor[32];
+
+			qse_fmtuintmaxtombs (major, QSE_COUNTOF(major), proxy->version.major, 10, -1, QSE_MT('\0'), QSE_NULL);
+			qse_fmtuintmaxtombs (minor, QSE_COUNTOF(minor), proxy->version.minor, 10, -1, QSE_MT('\0'), QSE_NULL);
+
+			if (qse_mbs_cat (proxy->res, QSE_MT("HTTP/")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, major) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, QSE_MT(".")) == (qse_size_t)-1 ||
+			    qse_mbs_cat (proxy->res, minor) == (qse_size_t)-1)
 			{
 				proxy->httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
@@ -1468,4 +1469,3 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 	);
 }
 
-#endif

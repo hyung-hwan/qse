@@ -21,6 +21,10 @@
 #ifndef _QSE_LIB_CMN_SYSCALL_H_
 #define _QSE_LIB_CMN_SYSCALL_H_
 
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#	error Do not include this file
+#endif
+
 /* This file defines unix/linux system calls */
 
 #if defined(HAVE_SYS_TYPES_H)
