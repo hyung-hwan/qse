@@ -55,6 +55,46 @@ static void sigint (int sig)
 }
 
 /* --------------------------------------------------------------------- */
+static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, const qse_char_t* uri)
+{
+	qse_httpd_server_t server, * xserver;
+	const qse_char_t* docroot;
+	server_xtn_t* server_xtn;
+	qse_uri_t xuri;
+
+	if (qse_ripuri (uri, &xuri, QSE_RIPURI_NOQUERY | QSE_RIP_URI_NOFRAGMENT) <= -1)
+		return QSE_NULL;
+
+/*	if (parse_server_uri (httpd, uri, &server, &docroot) <= -1) return QSE_NULL;*/
+	server.predetach = predetach_server;
+
+	xserver = qse_httpd_attachserver (
+		httpd, &server, QSE_SIZEOF(*server_xtn) + xtnsize);
+	if (xserver == QSE_NULL) return QSE_NULL;
+
+	if (docroot[0] == QSE_T('/') && docroot[1] != QSE_T('\0'))
+	{
+		server_xtn = qse_httpd_getserverxtn (httpd, xserver);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+		server_xtn->docroot.ptr = qse_mbsdup (docroot, httpd->mmgr);
+#else
+		server_xtn->docroot.ptr = qse_wcstombsdup (docroot, httpd->mmgr);
+#endif
+		if (server_xtn->docroot.ptr == QSE_NULL)
+		{
+			qse_httpd_detachserver (httpd, xserver);	
+			httpd->errnum = QSE_HTTPD_ENOMEM;
+			return QSE_NULL;
+		}
+
+		server_xtn->docroot.len = qse_mbslen(server_xtn->docroot.ptr);
+	}
+
+	return xserver;
+}
+
+/* --------------------------------------------------------------------- */
 static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
@@ -76,7 +116,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
+		if (attach_server (httpd, argv[i]) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
