@@ -212,6 +212,11 @@ qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
 	return qse_wcstombsdupwithcmgr (wcs, mmgr, dfl_cmgr);
 }
 
+qse_mchar_t* qse_wcsntombsdup (const qse_wchar_t* wcs, qse_size_t len, qse_mmgr_t* mmgr)
+{
+	return qse_wcsntombsdupwithcmgr (wcs, len, mmgr, dfl_cmgr);
+}
+
 qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
 {
 	return qse_wcsatombsdupwithcmgr (wcs, mmgr, dfl_cmgr);

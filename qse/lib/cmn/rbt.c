@@ -210,6 +210,7 @@ rbt_t* qse_rbt_open (mmgr_t* mmgr, size_t xtnsize, int kscale, int vscale)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (rbt + 1, 0, xtnsize);
 	return rbt;
 }
 

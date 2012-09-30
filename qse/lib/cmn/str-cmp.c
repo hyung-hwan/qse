@@ -130,6 +130,21 @@ int qse_mbszcmp (const qse_mchar_t* s1, const qse_mchar_t* s2, qse_size_t n)
 	return (*s1 > *s2)? 1: -1;
 }
 
+int qse_mbszcasecmp (const qse_mchar_t* s1, const qse_mchar_t* s2, qse_size_t n)
+{
+	if (n == 0) return 0;
+
+	while (QSE_TOMUPPER(*s1) == QSE_TOMUPPER(*s2)) 
+	{
+		if (*s1 == QSE_MT('\0') || n == 1) return 0;
+		s1++, s2++, n--;
+	}
+
+	return (QSE_TOMUPPER(*s1) > QSE_TOMUPPER(*s2))? 1: -1;
+}
+
+/* ------------------------------------------------------------- */
+
 int qse_wcscmp (const qse_wchar_t* s1, const qse_wchar_t* s2)
 {
 	while (*s1 == *s2) 
@@ -236,4 +251,17 @@ int qse_wcszcmp (const qse_wchar_t* s1, const qse_wchar_t* s2, qse_size_t n)
 	}
 
 	return (*s1 > *s2)? 1: -1;
+}
+
+int qse_wcszcasecmp (const qse_wchar_t* s1, const qse_wchar_t* s2, qse_size_t n)
+{
+	if (n == 0) return 0;
+
+	while (QSE_TOWUPPER(*s1) == QSE_TOWUPPER(*s2)) 
+	{
+		if (*s1 == QSE_WT('\0') || n == 1) return 0;
+		s1++, s2++, n--;
+	}
+
+	return (QSE_TOWUPPER(*s1) > QSE_TOWUPPER(*s2))? 1: -1;
 }

@@ -82,11 +82,11 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
-	assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo gdl.lo htb.lo \
-	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \
-	hton.lo ipad.lo lda.lo main.lo mbwc.lo mbwc-str.lo mem.lo \
-	nwad.lo nwif.lo nwio.lo oht.lo opt.lo path-basename.lo \
+am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
+	alg-sort.lo assert.lo chr.lo cp949.lo cp950.lo dll.lo env.lo \
+	gdl.lo htb.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo \
+	glob.lo hton.lo ipad.lo lda.lo main.lo mbwc.lo mbwc-str.lo \
+	mem.lo nwad.lo nwif.lo nwio.lo oht.lo opt.lo path-basename.lo \
 	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
 	slmb.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
 	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
@@ -96,7 +96,7 @@ am_libqsecmn_la_OBJECTS = alg-rand.lo alg-search.lo alg-sort.lo \
 	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
 	time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
 	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
-	tre-stack.lo utf8.lo xma.lo
+	tre-stack.lo uri.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -312,6 +312,7 @@ noinst_HEADERS = \
 	tre-stack.h
 
 libqsecmn_la_SOURCES = \
+	alg-base64.c \
 	alg-rand.c \
 	alg-search.c  \
 	alg-sort.c \
@@ -390,6 +391,7 @@ libqsecmn_la_SOURCES = \
 	tre-match-parallel.c \
 	tre-parse.c \
 	tre-stack.c \
+	uri.c \
 	utf8.c \
 	xma.c
 
@@ -478,6 +480,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StdMmgr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-base64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-rand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-search.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alg-sort.Plo@am__quote@
@@ -556,6 +559,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-stack.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uri.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Plo@am__quote@
 

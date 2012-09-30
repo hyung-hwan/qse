@@ -489,6 +489,21 @@ qse_mchar_t* qse_wcstombsdupwithcmgr (const qse_wchar_t* wcs, qse_mmgr_t* mmgr, 
 	return mbs;
 }
 
+qse_mchar_t* qse_wcsntombsdupwithcmgr (const qse_wchar_t* wcs, qse_size_t len, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	qse_size_t mbslen;
+	qse_mchar_t* mbs;
+
+	if (qse_wcsntombsnwithcmgr (wcs, &len, QSE_NULL, &mbslen, cmgr) <= -1) return QSE_NULL;
+
+	mbs = QSE_MMGR_ALLOC (mmgr, (mbslen + 1) * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	qse_wcsntombsnwithcmgr (wcs, &len, mbs, &mbslen, cmgr);
+	mbs[mbslen] = QSE_MT('\0');
+	return mbs;
+}
+
 qse_mchar_t* qse_wcsatombsdupwithcmgr (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	qse_mchar_t* buf, * ptr;

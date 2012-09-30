@@ -60,6 +60,7 @@ qse_dll_t* qse_dll_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (dll + 1, 0, xtnsize);
 	return dll;
 }
 
@@ -71,7 +72,7 @@ void qse_dll_close (qse_dll_t* dll)
 
 int qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 {
-	/* do not zero out the xtnsizeension */
+	/* do not zero out the extension */
 	QSE_MEMSET (dll, 0, QSE_SIZEOF(*dll));
 
 	dll->mmgr = mmgr;

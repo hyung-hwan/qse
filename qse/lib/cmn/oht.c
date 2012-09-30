@@ -57,6 +57,7 @@ qse_oht_t* qse_oht_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (oht + 1, 0, xtnsize);
 	return oht;
 }
 

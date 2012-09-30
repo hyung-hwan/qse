@@ -57,6 +57,7 @@ qse_httpd_t* qse_httpd_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (httpd + 1, 0, xtnsize);
 	return httpd;
 }
 
@@ -82,7 +83,6 @@ int qse_httpd_init (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
 
 void qse_httpd_fini (qse_httpd_t* httpd)
 {
-/* TODO */
 	free_server_list (httpd);
 }
 

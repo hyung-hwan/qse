@@ -274,6 +274,7 @@ htb_t* qse_htb_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (htb + 1, 0, xtnsize);
 	return htb;
 }
 

@@ -67,6 +67,7 @@ qse_fs_t* qse_fs_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (fs + 1, 0, xtnsize);
 	return fs;
 }
 

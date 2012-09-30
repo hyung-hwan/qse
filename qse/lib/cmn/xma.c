@@ -118,6 +118,7 @@ qse_xma_t* qse_xma_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (xma + 1, 0, xtnsize);
 	return xma;
 }
 
