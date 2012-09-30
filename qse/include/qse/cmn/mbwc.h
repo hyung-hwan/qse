@@ -187,6 +187,13 @@ qse_mchar_t* qse_wcstombsdupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
+qse_mchar_t* qse_wcntombsdupwithcmgr (
+	const qse_wchar_t* wcs,
+	qse_size_t         len,
+	qse_mmgr_t*        mmgr,
+	qse_cmgr_t*        cmgr
+);
+
 qse_mchar_t* qse_wcsatombsdupwithcmgr (
 	const qse_wchar_t* wcs[],
 	qse_mmgr_t*        mmgr,
@@ -366,6 +373,12 @@ int qse_wcsntombsn (
 
 qse_mchar_t* qse_wcstombsdup (
 	const qse_wchar_t* wcs,
+	qse_mmgr_t*        mmgr
+);
+
+qse_mchar_t* qse_wcsntombsdup (
+	const qse_wchar_t* wcs,
+	qse_size_t         len,
 	qse_mmgr_t*        mmgr
 );
 

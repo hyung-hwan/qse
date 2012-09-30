@@ -22,6 +22,7 @@ noinst_HEADERS = \
 	tre-stack.h
 
 libqsecmn_la_SOURCES = \
+	alg-base64.c \
 	alg-rand.c \
 	alg-search.c  \
 	alg-sort.c \
@@ -100,6 +101,7 @@ libqsecmn_la_SOURCES = \
 	tre-match-parallel.c \
 	tre-parse.c \
 	tre-stack.c \
+	uri.c \
 	utf8.c \
 	xma.c
 

@@ -106,6 +106,7 @@ qse_sio_t* qse_sio_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (sio + 1, 0, xtnsize);
 	return sio;
 }
 

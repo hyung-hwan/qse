@@ -50,6 +50,7 @@ qse_env_t* qse_env_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int fromcurenv)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (env + 1, 0, xtnsize);
 	return env;
 }
 

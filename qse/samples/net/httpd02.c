@@ -55,6 +55,7 @@ static void sigint (int sig)
 }
 
 /* --------------------------------------------------------------------- */
+#if 0
 static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, const qse_char_t* uri)
 {
 	qse_httpd_server_t server, * xserver;
@@ -93,6 +94,7 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, const qse_char_t* 
 
 	return xserver;
 }
+#endif
 
 /* --------------------------------------------------------------------- */
 static int httpd_main (int argc, qse_char_t* argv[])
@@ -116,7 +118,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (attach_server (httpd, argv[i]) == QSE_NULL)
+		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);

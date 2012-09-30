@@ -709,6 +709,12 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	qse_size_t        xtnsize
 );
 
+void* qse_httpd_getserverxtnstd (
+	qse_httpd_t*         httpd,
+	qse_httpd_server_t*  server
+);
+	
+
 int qse_httpd_loopstd (
 	qse_httpd_t*       httpd, 
 	qse_httpd_cbstd_t* cbstd,

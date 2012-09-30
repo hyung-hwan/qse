@@ -38,6 +38,7 @@ qse_fma_t* qse_fma_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (fma + 1, 0, xtnsize);
 	return fma;
 }
 

@@ -45,6 +45,7 @@ qse_tio_t* qse_tio_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, int flags)
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (tio + 1, 0, xtnsize);
 	return tio;
 }
 

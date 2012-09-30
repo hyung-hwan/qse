@@ -929,12 +929,23 @@ int qse_mbszcmp (
 	qse_size_t         n
 );
 
+int qse_mbszcasecmp (
+	const qse_mchar_t* s1,
+	const qse_mchar_t* s2,
+	qse_size_t         n
+);
+
 int qse_wcszcmp (
 	const qse_wchar_t* s1,
 	const qse_wchar_t* s2,
 	qse_size_t         n
 );
 
+int qse_wcszcasecmp (
+	const qse_wchar_t* s1,
+	const qse_wchar_t* s2,
+	qse_size_t         n
+);
 
 #ifdef QSE_CHAR_IS_MCHAR
 #	define qse_strcmp(s1,s2)               qse_mbscmp(s1,s2)
@@ -944,6 +955,7 @@ int qse_wcszcmp (
 #	define qse_strxcasecmp(s1,ln1,s2)      qse_mbsxcasecmp(s1,ln1,s2)
 #	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_mbsxncasecmp(s1,ln1,s2,ln2)
 #	define qse_strzcmp(s1,s2,n)            qse_mbszcmp(s1,s2,n)
+#	define qse_strzcasecmp(s1,s2,n)        qse_mbszcasecmp(s1,s2,n)
 #else
 #	define qse_strcmp(s1,s2)               qse_wcscmp(s1,s2)
 #	define qse_strxcmp(s1,ln1,s2)          qse_wcsxcmp(s1,ln1,s2)
@@ -952,6 +964,7 @@ int qse_wcszcmp (
 #	define qse_strxcasecmp(s1,ln1,s2)      qse_wcsxcasecmp(s1,ln1,s2)
 #	define qse_strxncasecmp(s1,ln1,s2,ln2) qse_wcsxncasecmp(s1,ln1,s2,ln2)
 #	define qse_strzcmp(s1,s2,n)            qse_wcszcmp(s1,s2,n)
+#	define qse_strzcasecmp(s1,s2,n)        qse_wcszcasecmp(s1,s2,n)
 #endif
 
 qse_mchar_t* qse_mbsdup (
@@ -984,6 +997,11 @@ qse_mchar_t* qse_mbsadup (
 	qse_mmgr_t*        mmgr
 );
 
+qse_mchar_t* qse_mbsxadup (
+	const qse_mcstr_t str[],
+	qse_mmgr_t*       mmgr
+);
+
 qse_wchar_t* qse_wcsdup (
 	const qse_wchar_t* str,
 	qse_mmgr_t*        mmgr
@@ -1014,18 +1032,25 @@ qse_wchar_t* qse_wcsadup (
 	qse_mmgr_t*        mmgr
 );
 
+qse_wchar_t* qse_wcsxadup (
+	const qse_wcstr_t str[],
+	qse_mmgr_t*       mmgr
+);
+
 #ifdef QSE_CHAR_IS_MCHAR
 #	define qse_strdup(s,mmgr)             qse_mbsdup(s,mmgr)
 #	define qse_strdup2(s1,s2,mmgr)        qse_mbsdup2(s1,s2,mmgr)
 #	define qse_strxdup(s,l,mmgr)          qse_mbsxdup(s,l,mmgr)
 #	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_mbsxdup(s1,l1,s2,l2,mmgr)
 #	define qse_stradup(sa,mmgr)           qse_mbsadup(sa,mmgr)
+#	define qse_strxadup(sa,mmgr)          qse_mbsxadup(sa,mmgr)
 #else
 #	define qse_strdup(s,mmgr)             qse_wcsdup(s,mmgr)
 #	define qse_strdup2(s1,s2,mmgr)        qse_wcsdup2(s1,s2,mmgr)
 #	define qse_strxdup(s,l,mmgr)          qse_wcsxdup(s,l,mmgr)
 #	define qse_strxdup2(s1,l1,s2,l2,mmgr) qse_wcsxdup(s1,l1,s2,l2,mmgr)
 #	define qse_stradup(sa,mmgr)           qse_wcsadup(sa,mmgr)
+#	define qse_strxadup(sa,mmgr)          qse_wcsxadup(sa,mmgr)
 #endif
 
 /**

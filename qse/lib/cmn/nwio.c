@@ -343,6 +343,7 @@ qse_nwio_t* qse_nwio_open (
 		return QSE_NULL;
 	}
 
+	QSE_MEMSET (nwio + 1, 0, xtnsize);
 	return nwio;
 }
 

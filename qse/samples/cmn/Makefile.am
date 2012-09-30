@@ -39,6 +39,7 @@ bin_PROGRAMS = \
 	str01 \
 	time \
 	tre01 \
+	uri01 \
 	xma 
 	
 LDFLAGS = -L../../lib/cmn 
