@@ -25,6 +25,27 @@
 #include <qse/cmn/fmt.h>
 #include "mem.h"
 
+int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
+{
+	if (x->type != y->type) return 0;
+
+	switch (x->type)
+	{
+		case QSE_NWAD_IN4:
+			return (x->u.in4.port == y->u.in4.port &&
+			        QSE_MEMCMP (&x->u.in4.addr, &y->u.in4.addr, QSE_SIZEOF(x->u.in4.addr)) == 0)? 1: 0;
+
+		case QSE_NWAD_IN6:
+			return (x->u.in6.port == y->u.in6.port &&
+			        x->u.in6.scope == y->u.in6.scope &&
+			        QSE_MEMCMP (&x->u.in6.addr, &y->u.in6.addr, QSE_SIZEOF(x->u.in6.addr)) == 0)? 1: 0;
+
+		default: 
+			/* can't compare */
+			return -1;
+	}
+}
+
 int qse_mbstonwad (const qse_mchar_t* str, qse_nwad_t* nwad)
 {
 	return qse_mbsntonwad (str, qse_mbslen(str), nwad);

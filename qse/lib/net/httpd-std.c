@@ -337,10 +337,6 @@ static int init_xtn_ssl (
 {
 	SSL_CTX* ctx;
 
-	SSL_library_init ();
-	SSL_load_error_strings ();
-	/*SSLeay_add_ssl_algorithms();*/
-
 	ctx = SSL_CTX_new (SSLv23_server_method());
 	if (ctx == QSE_NULL) return -1;
 
@@ -353,14 +349,15 @@ static int init_xtn_ssl (
 	{
 		qse_mchar_t buf[128];
 		ERR_error_string_n(ERR_get_error(), buf, QSE_COUNTOF(buf));
-		qse_fprintf (QSE_STDERR, QSE_T("Error: %hs\n"), buf);
+/* TODO: logging */
+qse_fprintf (QSE_STDERR, QSE_T("Error: %hs\n"), buf);
 		SSL_CTX_free (ctx);
 		return -1;
 	}
 
 
-/* TODO: CRYPTO_set_id_callback ();
- TODO: CRYPTO_set_locking_callback ();*/
+	/* TODO: CRYPTO_set_id_callback (); */
+	/* TODO: CRYPTO_set_locking_callback (); */
 
 	SSL_CTX_set_read_ahead (ctx, 0);
 	xtn->ssl_ctx = ctx;
@@ -369,16 +366,9 @@ static int init_xtn_ssl (
 
 static void fini_xtn_ssl (httpd_xtn_t* xtn)
 {
-/* TODO: CRYPTO_set_id_callback (QSE_NULL);
- TODO: CRYPTO_set_locking_callback (QSE_NULL); */
+	/* TODO: CRYPTO_set_id_callback (QSE_NULL); */
+	/* TODO: CRYPTO_set_locking_callback (QSE_NULL); */
 	SSL_CTX_free (xtn->ssl_ctx);
-
-	/*ERR_remove_state ();*/
-	ENGINE_cleanup ();
-
-	ERR_free_strings ();
-	EVP_cleanup ();
-	CRYPTO_cleanup_all_ex_data ();
 }
 #endif
 
@@ -464,11 +454,11 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 
 	if (qse_strtouri (uri, &xuri, QSE_STRTOURI_NOQUERY) <= -1)  goto invalid;
 
-	if (qse_strxcmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("http")) == 0) 
+	if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("http")) == 0) 
 	{
 		default_port = DEFAULT_PORT;
 	}
-	else if (qse_strxcmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("https")) == 0) 
+	else if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("https")) == 0) 
 	{
 		server.flags |= QSE_HTTPD_SERVER_SECURE;
 		default_port = DEFAULT_SECURE_PORT;
@@ -1540,7 +1530,7 @@ if (qse_htre_getqparam(req))
 qse_htb_walk (&req->hdrtab, walk, QSE_NULL);
 if (qse_htre_getcontentlen(req) > 0)
 {
-	qse_printf (QSE_T("CONTENT before discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
+	qse_printf (QSE_T("CONTENT [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
 }
 
 	if (peek)
@@ -1562,20 +1552,10 @@ if (qse_htre_getcontentlen(req) > 0)
 			 * and no content received yet */
 
 			/* TODO: determine if to return 100-continue or other errors */
-{
-qse_ntime_t now;
-qse_gettime (&now);
-qse_printf (QSE_T("entasking continue at %lld\n"), (long long)now);
-}
 			if (qse_httpd_entaskcontinue (
 				httpd, client, QSE_NULL, req) == QSE_NULL) return -1;
 		}
 	}
-
-if (qse_htre_getcontentlen(req) > 0)
-{
-	qse_printf (QSE_T("CONTENT after discard = [%.*S]\n"), (int)qse_htre_getcontentlen(req), qse_htre_getcontentptr(req));
-}
 
 	if (method == QSE_HTTP_GET || method == QSE_HTTP_POST)
 	{
@@ -1638,81 +1618,16 @@ oops:
 	return -1;
 }
 
-static int proxy_request (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, int peek)
-{
-	qse_httpd_task_t* task;
-
-	/* TODO: investigate if the proxy need to handle 100-continue */
-
-	if (peek)
-	{
-		qse_nwad_t nwad;
-
-#if 0
-		if (qse_nwadequal (&client->local_addr, &client->orgdst_addr))
-		{
-			//qse_strtonwad (QSE_T("192.168.1.55:9000"), &nwad);
-			//qse_strtonwad (QSE_T("1.234.53.142:80"), &nwad);
-		}
-		else
-		{
-#endif
-			nwad = client->orgdst_addr;
-#if 0
-		}
-#endif
-		task = qse_httpd_entaskproxy (httpd, client, QSE_NULL, &nwad, QSE_NULL, req);
-		if (task == QSE_NULL) goto oops;
-	}
-
-	if (!(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE))
-	{
-		if (!peek)
-		{
-			task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
-			if (task == QSE_NULL) goto oops;
-		}
-	}
-
-	return 0;
-
-oops:
-	return -1;
-}
-
 static int peek_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-/*
-	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
-	{
-*/
-		return process_request (httpd, client, req, 1);
-/*
-	}
-	else
-	{
-		return proxy_request (httpd, client, req, 1);
-	}
-*/
+	return process_request (httpd, client, req, 1);
 }
 
 static int handle_request (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req)
 {
-/*
-	if (QSE_MEMCMP (&client->local_addr, &client->orgdst_addr, sizeof(client->orgdst_addr)) == 0)
-	{
-*/
-		return process_request (httpd, client, req, 0);
-/*
-	}
-	else
-	{
-		return proxy_request (httpd, client, req, 0);
-	}
-*/
+	return process_request (httpd, client, req, 0);
 }
 
 static qse_httpd_scb_t httpd_system_callbacks =
@@ -1972,6 +1887,11 @@ static qse_httpd_cbstd_t httpd_cbstd =
 	make_resource,
 	free_resource	
 };
+
+qse_httpd_cbstd_t* qse_httpd_getdflcbstd (qse_httpd_t* httpd)
+{
+	return &httpd_cbstd;
+}
 
 int qse_httpd_loopstd (qse_httpd_t* httpd, qse_httpd_cbstd_t* cbstd, qse_ntime_t timeout)
 {

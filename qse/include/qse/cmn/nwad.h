@@ -75,6 +75,11 @@ enum qse_nwadtostr_flag_t
 extern "C" {
 #endif
 
+int qse_nwadequal (
+	const qse_nwad_t* x,
+	const qse_nwad_t* y
+);
+
 int qse_mbstonwad (
 	const qse_mchar_t* mbs,
 	qse_nwad_t*        nwad
