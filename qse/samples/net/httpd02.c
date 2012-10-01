@@ -27,22 +27,83 @@
 #endif
 
 
+#if defined(HAVE_SSL)
+#	include <openssl/ssl.h>
+#	include <openssl/err.h>
+#	include <openssl/engine.h>
+#endif
+
 /* --------------------------------------------------------------------- */
 
-typedef struct xtn_t xtn_t;
-struct xtn_t
+typedef struct server_xtn_t server_xtn_t;
+struct server_xtn_t
 {
-	qse_mchar_t basedir[4096];
+	int tproxy;
 };
 
 static int makersrc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
 {
-	return -1;
+	server_xtn_t* server_xtn;
+
+	server_xtn = qse_httpd_getserverxtnstd (httpd, client->server);
+
+	if (server_xtn->tproxy)
+	{
+		if (qse_nwadequal(&client->orgdst_addr, &client->local_addr)) /* both equal and error */
+		{
+			/* TODO: implement a better check that the
+			 *       destination is not one of the local addresses */
+
+			rsrc->type = QSE_HTTPD_RSRC_ERROR;
+			rsrc->u.error.code = 500;
+		}
+		else
+		{
+			rsrc->type = QSE_HTTPD_RSRC_PROXY;
+			rsrc->u.proxy.dst = client->orgdst_addr;
+			rsrc->u.proxy.src = client->remote_addr;
+	
+			if (rsrc->u.proxy.src.type == QSE_NWAD_IN4)
+				rsrc->u.proxy.src.u.in4.port = 0; /* reset the port to 0. */
+			else if (rsrc->u.proxy.src.type == QSE_NWAD_IN6)
+				rsrc->u.proxy.src.u.in6.port = 0; /* reset the port to 0. */
+		}
+
+		return 0;
+	}
+	else
+	{
+		qse_httpd_cbstd_t* dflcbstd = qse_httpd_getdflcbstd (httpd);
+#if 0
+		if (dflcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
+		if (rsrc->type == QSE_HTTPD_RSRC_DIR)
+		{
+			/* no directory listing - */
+			rsrc->type = QSE_HTTPD_RSRC_ERROR;
+			rsrc->u.error.code = 500;
+		}
+		return 0;
+#endif
+		return dflcbstd->makersrc (httpd, client, req, rsrc);
+	}
 }
 
-static void freersrc (qse_httpd_t* httpd, qse_httpd_rsrc_t* rsrc)
+static void freersrc (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
 {
+	server_xtn_t* server_xtn;
+
+	server_xtn = qse_httpd_getserverxtnstd (httpd, client->server);
+
+	if (server_xtn->tproxy)
+	{
+		/* nothing to do */
+	}
+	else
+	{
+		qse_httpd_cbstd_t* dflcbstd = qse_httpd_getdflcbstd (httpd);
+		return dflcbstd->freersrc (httpd, client, req, rsrc);
+	}
 }
 
 /* --------------------------------------------------------------------- */
@@ -55,46 +116,26 @@ static void sigint (int sig)
 }
 
 /* --------------------------------------------------------------------- */
-#if 0
-static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, const qse_char_t* uri)
+static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, qse_char_t* uri)
 {
-	qse_httpd_server_t server, * xserver;
-	const qse_char_t* docroot;
+	qse_httpd_server_t* server;
 	server_xtn_t* server_xtn;
-	qse_uri_t xuri;
+	int tproxy = 0;
 
-	if (qse_ripuri (uri, &xuri, QSE_RIPURI_NOQUERY | QSE_RIP_URI_NOFRAGMENT) <= -1)
-		return QSE_NULL;
-
-/*	if (parse_server_uri (httpd, uri, &server, &docroot) <= -1) return QSE_NULL;*/
-	server.predetach = predetach_server;
-
-	xserver = qse_httpd_attachserver (
-		httpd, &server, QSE_SIZEOF(*server_xtn) + xtnsize);
-	if (xserver == QSE_NULL) return QSE_NULL;
-
-	if (docroot[0] == QSE_T('/') && docroot[1] != QSE_T('\0'))
+	if (qse_strzcasecmp (uri, QSE_T("http-tproxy://"), 14) == 0)
 	{
-		server_xtn = qse_httpd_getserverxtn (httpd, xserver);
-
-#if defined(QSE_CHAR_IS_MCHAR)
-		server_xtn->docroot.ptr = qse_mbsdup (docroot, httpd->mmgr);
-#else
-		server_xtn->docroot.ptr = qse_wcstombsdup (docroot, httpd->mmgr);
-#endif
-		if (server_xtn->docroot.ptr == QSE_NULL)
-		{
-			qse_httpd_detachserver (httpd, xserver);	
-			httpd->errnum = QSE_HTTPD_ENOMEM;
-			return QSE_NULL;
-		}
-
-		server_xtn->docroot.len = qse_mbslen(server_xtn->docroot.ptr);
+		tproxy = 1;
+		qse_strcpy (&uri[4], &uri[11]); 
 	}
 
-	return xserver;
+	server = qse_httpd_attachserverstd (httpd, uri, QSE_SIZEOF(server_xtn_t));
+	if (server == QSE_NULL) return QSE_NULL;
+
+	server_xtn = qse_httpd_getserverxtnstd (httpd, server);
+	server_xtn->tproxy = tproxy;
+	
+	return server;
 }
-#endif
 
 /* --------------------------------------------------------------------- */
 static int httpd_main (int argc, qse_char_t* argv[])
@@ -109,7 +150,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	httpd = qse_httpd_openstd (QSE_SIZEOF(xtn_t));
+	httpd = qse_httpd_openstd (QSE_SIZEOF(server_xtn_t));
 	if (httpd == QSE_NULL)
 	{
 		qse_fprintf (QSE_STDERR, QSE_T("Cannot open httpd\n"));
@@ -118,7 +159,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
+		if (attach_server (httpd, argv[i]) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
@@ -148,9 +189,14 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int ret;
+
 #if defined(_WIN32)
 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();
+	UINT codepage;
+	WSADATA wsadata;
+
+	codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -162,11 +208,38 @@ int qse_main (int argc, qse_achar_t* argv[])
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
+
+
+	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
+		return -1;
+	}
+
 #else
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
-	return qse_runmain (argc, argv, httpd_main);
+#if defined(HAVE_SSL)    
+	SSL_load_error_strings ();
+	SSL_library_init ();
+#endif
+
+     ret = qse_runmain (argc, argv, httpd_main);
+
+#if defined(HAVE_SSL)
+	/*ERR_remove_state ();*/
+	ENGINE_cleanup ();
+	ERR_free_strings ();
+	EVP_cleanup ();
+	CRYPTO_cleanup_all_ex_data ();
+#endif
+
+#if defined(_WIN32)
+	WSACleanup ();	
+#endif
+
+	return ret;
 }
 

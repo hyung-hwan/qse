@@ -350,14 +350,9 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
 	qse_httpd_client_t* prev;
 	qse_httpd_client_t* next;
-	qse_httpd_client_t* prev_tasked;
-	qse_httpd_client_t* next_tasked;
 
 	prev = client->prev;
 	next = client->next;
-
-	prev_tasked = client->prev_tasked;
-	next_tasked = client->next_tasked;
 
 	free_client (httpd, client);
 
@@ -365,11 +360,6 @@ static void purge_client (qse_httpd_t* httpd, qse_httpd_client_t* client)
 	else httpd->client.list.head = next;
 	if (next) next->prev = prev;
 	else httpd->client.list.tail = prev;
-
-	if (prev_tasked) prev_tasked->next_tasked = next_tasked;
-	else httpd->client.tasked.head = next_tasked;
-	if (next_tasked) next_tasked->prev_tasked = prev_tasked;
-	else httpd->client.tasked.tail = prev_tasked;
 }
 
 static void purge_client_list (qse_httpd_t* httpd)
@@ -472,44 +462,6 @@ qse_printf (QSE_T("connection %d accepted %s(%s from %s\n"), client->handle.i, t
 }
 	}
 	return 0;
-}
-
-static void insert_client_to_tasked_list (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	QSE_ASSERT (client->prev_tasked == QSE_NULL);
-	QSE_ASSERT (client->next_tasked == QSE_NULL);
-
-	if (httpd->client.tasked.tail)
-	{
-		QSE_ASSERT (httpd->client.tasked.head);
-		client->prev_tasked = httpd->client.tasked.tail;
-		httpd->client.tasked.tail->next_tasked = client;
-		httpd->client.tasked.tail = client;
-	}
-	else
-	{
-		httpd->client.tasked.head = client;
-		httpd->client.tasked.tail = client;
-	}
-}
-
-static void delete_client_from_tasked_list (
-	qse_httpd_t* httpd, qse_httpd_client_t* client)
-{
-	qse_httpd_client_t* prev_tasked;
-	qse_httpd_client_t* next_tasked;
-
-	prev_tasked = client->prev_tasked;
-	next_tasked = client->next_tasked;
-
-	if (prev_tasked) prev_tasked->next_tasked = next_tasked;
-	else httpd->client.tasked.head = next_tasked;
-	if (next_tasked) next_tasked->prev_tasked = prev_tasked;
-	else httpd->client.tasked.tail = prev_tasked;
-
-	client->prev_tasked = QSE_NULL;
-	client->next_tasked = QSE_NULL;
 }
 
 /* --------------------------------------------------- */
@@ -1096,9 +1048,6 @@ qse_httpd_task_t* qse_httpd_entask (
 	}
 	else if (new_task->prev == QSE_NULL)
 	{
-		/* this new task is the first task for a client */
-		/*insert_client_to_tasked_list (httpd, client);*/
-
 		/* arrange to invokde this task so long as 
 		 * the client-side handle is writable. */
 		QSE_ASSERT (client->status & CLIENT_HANDLE_IN_MUX);

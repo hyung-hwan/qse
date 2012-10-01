@@ -395,7 +395,8 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 
 		case QSE_HTTPD_RSRC_ERROR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, rsrc->u.error, req);
+			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, rsrc->u.error.code, req);
+			break;
 
 		case QSE_HTTPD_RSRC_FILE:
 			qse_httpd_discardcontent (httpd, req);

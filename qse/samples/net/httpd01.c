@@ -26,6 +26,12 @@
 #	include <errno.h>
 #endif
 
+#if defined(HAVE_SSL)
+#	include <openssl/ssl.h>
+#	include <openssl/err.h>
+#	include <openssl/engine.h>
+#endif
+
 static qse_httpd_t* g_httpd = QSE_NULL;
 
 static void sigint (int sig)
@@ -81,9 +87,14 @@ oops:
 
 int qse_main (int argc, qse_achar_t* argv[])
 {
+	int ret;
+
 #if defined(_WIN32)
 	char locale[100];
-	UINT codepage = GetConsoleOutputCP();
+	UINT codepage;
+	WSADATA wsadata;
+
+	codepage = GetConsoleOutputCP();
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
@@ -95,11 +106,37 @@ int qse_main (int argc, qse_achar_t* argv[])
 		setlocale (LC_ALL, locale);
 		qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 	}
+
+	if (WSAStartup (MAKEWORD(2,0), &wsadata) != 0)
+	{
+		qse_fprintf (QSE_STDERR, QSE_T("Failed to start up winsock\n"));
+		return -1;
+	}
+
 #else
 	setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
-	return qse_runmain (argc, argv, httpd_main);
+#if defined(HAVE_SSL)	
+	SSL_load_error_strings ();
+	SSL_library_init ();
+#endif
+
+	ret = qse_runmain (argc, argv, httpd_main);
+
+#if defined(HAVE_SSL)
+	/*ERR_remove_state ();*/
+	ENGINE_cleanup ();
+	ERR_free_strings ();
+	EVP_cleanup ();
+	CRYPTO_cleanup_all_ex_data ();
+#endif
+
+#if defined(_WIN32)
+	WSACleanup ();
+#endif
+
+	return ret;
 }
 

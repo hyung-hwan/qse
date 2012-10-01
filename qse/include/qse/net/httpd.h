@@ -310,9 +310,6 @@ struct qse_httpd_client_t
  
 	qse_httpd_client_t*      bad_next;
 
-	qse_httpd_client_t*      prev_tasked;
-	qse_httpd_client_t*      next_tasked;
-
 	struct
 	{
 		int count;
@@ -362,7 +359,10 @@ struct qse_httpd_rsrc_t
 			const qse_mchar_t* path;
 		} dir;
 
-		int error;
+		struct
+		{
+			int code;
+		} error;
 
 		struct
 		{
@@ -713,7 +713,10 @@ void* qse_httpd_getserverxtnstd (
 	qse_httpd_t*         httpd,
 	qse_httpd_server_t*  server
 );
-	
+
+qse_httpd_cbstd_t* qse_httpd_getdflcbstd (
+	qse_httpd_t*         httpd
+);
 
 int qse_httpd_loopstd (
 	qse_httpd_t*       httpd, 
