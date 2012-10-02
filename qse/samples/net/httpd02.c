@@ -35,10 +35,20 @@
 
 /* --------------------------------------------------------------------- */
 
+static qse_httpd_t* g_httpd = QSE_NULL;
+
+static void sigint (int sig)
+{
+	if (g_httpd) qse_httpd_stop (g_httpd);
+}
+
+/* --------------------------------------------------------------------- */
+
 typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
 	int tproxy;
+	qse_httpd_server_cbstd_t* orgcbstd;
 };
 
 static int makersrc (
@@ -74,7 +84,6 @@ static int makersrc (
 	}
 	else
 	{
-		qse_httpd_cbstd_t* dflcbstd = qse_httpd_getdflcbstd (httpd);
 #if 0
 		if (dflcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
 		if (rsrc->type == QSE_HTTPD_RSRC_DIR)
@@ -85,7 +94,7 @@ static int makersrc (
 		}
 		return 0;
 #endif
-		return dflcbstd->makersrc (httpd, client, req, rsrc);
+		return server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc);
 	}
 }
 
@@ -101,26 +110,27 @@ static void freersrc (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t
 	}
 	else
 	{
-		qse_httpd_cbstd_t* dflcbstd = qse_httpd_getdflcbstd (httpd);
-		return dflcbstd->freersrc (httpd, client, req, rsrc);
+		if (server_xtn->orgcbstd->freersrc) 
+			server_xtn->orgcbstd->freersrc (httpd, client, req, rsrc);
 	}
 }
 
 /* --------------------------------------------------------------------- */
 
-static qse_httpd_t* g_httpd = QSE_NULL;
-
-static void sigint (int sig)
-{
-	if (g_httpd) qse_httpd_stop (g_httpd);
-}
-
-/* --------------------------------------------------------------------- */
-static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, qse_char_t* uri)
+static qse_httpd_server_t* attach_server (
+	qse_httpd_t* httpd, qse_char_t* uri, qse_httpd_server_cbstd_t* cbstd)
 {
 	qse_httpd_server_t* server;
+	qse_httpd_server_xtn_t* server_xtn_inner;
 	server_xtn_t* server_xtn;
 	int tproxy = 0;
+
+	static qse_httpd_server_idxstd_t idxstd[] =
+	{
+		{ QSE_MT("index.cgi")  },
+		{ QSE_MT("index.html") },
+		{ QSE_NULL             }
+	};
 
 	if (qse_strzcasecmp (uri, QSE_T("http-tproxy://"), 14) == 0)
 	{
@@ -128,21 +138,35 @@ static qse_httpd_server_t* attach_server (qse_httpd_t* httpd, qse_char_t* uri)
 		qse_strcpy (&uri[4], &uri[11]); 
 	}
 
-	server = qse_httpd_attachserverstd (httpd, uri, QSE_SIZEOF(server_xtn_t));
+	server = qse_httpd_attachserverstd (
+		httpd, uri, QSE_NULL, QSE_SIZEOF(server_xtn_t));
 	if (server == QSE_NULL) return QSE_NULL;
 
+	/* qse_httpd_getserverxtnstd() returns the pointer to 
+	 * the extension space requested above, of the size
+	 * QSE_SIZEOF(server_xtn_t) */
 	server_xtn = qse_httpd_getserverxtnstd (httpd, server);
 	server_xtn->tproxy = tproxy;
+
+	/* qse_httpd_getserverxtn() returns the pointer to the
+	 * extension space created by qse_httpd_attachserverstd()
+	 * internally.
+	 */
+	server_xtn_inner = qse_httpd_getserverxtn (httpd, server);
+	/* remember the callback set in qse_httpd_attachserverstd() */
+	server_xtn->orgcbstd = server_xtn_inner->cbstd; 
+	/* override it with a new callback for chaining */
+	server_xtn_inner->cbstd = cbstd;
+	server_xtn_inner->idxstd = idxstd; /* override index file list */
 	
 	return server;
 }
-
 /* --------------------------------------------------------------------- */
 static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
 	int ret = -1, i;
-	static qse_httpd_cbstd_t cbstd = { makersrc, freersrc };
+	static qse_httpd_server_cbstd_t cbstd = { makersrc, freersrc };
 
 	if (argc <= 1)
 	{
@@ -159,7 +183,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (attach_server (httpd, argv[i]) == QSE_NULL)
+		if (attach_server (httpd, argv[i], &cbstd) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
@@ -174,7 +198,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loopstd (httpd, &cbstd, 10000);
+	ret = qse_httpd_loopstd (httpd, 10000);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);

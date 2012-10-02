@@ -33,9 +33,10 @@
 	 (x == QSE_MT('+'))? 62: 63)
 
 qse_size_t qse_enbase64 (
-	const qse_uint8_t* in, qse_size_t isz,
+	const void* in, qse_size_t isz,
 	qse_mchar_t* out, qse_size_t osz, qse_size_t* xsz)
 {
+	const qse_uint8_t* ib = (const qse_uint8_t*)in;
 	qse_size_t idx = 0, idx2 = 0, i;
 
 	/* 3 8-bit values to 4 6-bit values */
@@ -45,9 +46,9 @@ qse_size_t qse_enbase64 (
 		qse_uint8_t b1, b2, b3;
 		qse_uint8_t c1, c2, c3, c4;
 
-		b1 = in[i];
-		b2 = (i + 1 < isz)? in[i + 1]: 0;
-		b3 = (i + 2 < isz)? in[i + 2]: 0;
+		b1 = ib[i];
+		b2 = (i + 1 < isz)? ib[i + 1]: 0;
+		b3 = (i + 2 < isz)? ib[i + 2]: 0;
 
 		c1 = b1 >> 2;
 		c2 = ((b1 & 0x03) << 4) | (b2 >> 4);
@@ -70,8 +71,9 @@ qse_size_t qse_enbase64 (
 
 qse_size_t qse_debase64 (
 	const qse_mchar_t* in, qse_size_t isz,
-	qse_uint8_t* out, qse_size_t osz, qse_size_t* xsz)
+	void* out, qse_size_t osz, qse_size_t* xsz)
 {
+	qse_uint8_t* ob = (qse_uint8_t*)out;
 	qse_size_t idx = 0, idx2 = 0, i;
 
 	for (i = 0; i < isz; i += 4)  
@@ -90,17 +92,17 @@ qse_size_t qse_debase64 (
 		b4 = DEC(c4);
 
 		idx2++;
-		if (idx < osz) out[idx++] = (b1 << 2) | (b2 >> 4);
+		if (idx < osz) ob[idx++] = (b1 << 2) | (b2 >> 4);
 
 		if (c3 != QSE_MT('=')) 
 		{
 			idx2++;	
-			if (idx < osz) out[idx++] = ((b2 & 0x0F) << 4) | (b3 >> 2);
+			if (idx < osz) ob[idx++] = ((b2 & 0x0F) << 4) | (b3 >> 2);
 		}
 		if (c4 != QSE_MT('=')) 
 		{
 			idx2++;	
-			if (idx < osz) out[idx++] = ((b3 & 0x03) << 6) | b4;
+			if (idx < osz) ob[idx++] = ((b3 & 0x03) << 6) | b4;
 		}
 	}
 

@@ -79,20 +79,26 @@ enum qse_httpd_server_flag_t
 };
 
 typedef struct qse_httpd_server_t qse_httpd_server_t;
+
+typedef void (*qse_httpd_server_predetach_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
+);
+
 struct qse_httpd_server_t
 {
 	/* ---------------------------------------------- */
 	int          flags;
 	qse_nwad_t   nwad; /* binding address */
 	unsigned int nwif; /* interface number to bind to */
-	void (*predetach) (qse_httpd_t*, qse_httpd_server_t*);
 
 	/* set by server.open callback */
 	qse_ubi_t  handle;
 
 	/* private  */
-	qse_httpd_server_t* next;
-	qse_httpd_server_t* prev;
+	qse_httpd_server_predetach_t predetach;
+	qse_httpd_server_t*          next;
+	qse_httpd_server_t*          prev;
 };
 
 typedef struct qse_httpd_peer_t qse_httpd_peer_t;
@@ -414,13 +420,60 @@ struct qse_httpd_ecb_t
 	qse_httpd_ecb_t* next;
 };
 
-
-typedef struct qse_httpd_cbstd_t qse_httpd_cbstd_t;
-struct qse_httpd_cbstd_t
+typedef struct qse_httpd_server_cbstd_t qse_httpd_server_cbstd_t;
+struct qse_httpd_server_cbstd_t
 {
 	int (*makersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* required */
 	void (*freersrc) (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc); /* optional */
 };
+
+typedef struct qse_httpd_server_cgistd_t qse_httpd_server_cgistd_t;
+struct qse_httpd_server_cgistd_t
+{
+	const qse_mchar_t* ext;
+	qse_size_t         len;
+	int                nph;
+};
+
+typedef struct qse_httpd_server_mimestd_t qse_httpd_server_mimestd_t;
+struct qse_httpd_server_mimestd_t
+{
+	const qse_mchar_t* ext;
+	const qse_mchar_t* type;
+};
+
+/**
+ * The qse_httpd_server_idxstd_t type defines a structure to hold
+ * an index file name.
+ */
+typedef struct qse_httpd_server_idxstd_t qse_httpd_server_idxstd_t;
+struct qse_httpd_server_idxstd_t
+{
+	const qse_mchar_t* name;
+};
+
+enum qse_httpd_server_xtn_cfg_idx_t
+{
+	QSE_HTTPD_SERVER_XTN_CFG_DOCROOT = 0,
+	QSE_HTTPD_SERVER_XTN_CFG_REALM,
+	QSE_HTTPD_SERVER_XTN_CFG_USERNAME,
+	QSE_HTTPD_SERVER_XTN_CFG_PASSWORD,
+	QSE_HTTPD_SERVER_XTN_CFG_BASICAUTH,
+	QSE_HTTPD_SERVER_XTN_CFG_MAX
+};
+
+struct qse_httpd_server_xtn_t
+{
+	qse_mxstr_t                  cfg[QSE_HTTPD_SERVER_XTN_CFG_MAX];
+	qse_httpd_server_cbstd_t*    cbstd;
+	qse_httpd_server_cgistd_t*   cgistd;	
+	qse_httpd_server_mimestd_t*  mimestd;
+	qse_httpd_server_idxstd_t*   idxstd;
+
+	/* private */
+	qse_httpd_server_predetach_t predetach;
+};
+typedef struct qse_httpd_server_xtn_t qse_httpd_server_xtn_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -498,9 +551,10 @@ void qse_httpd_stop (
 #define qse_httpd_getserverxtn(httpd,server) ((void*)(server+1))
 
 qse_httpd_server_t* qse_httpd_attachserver (
-	qse_httpd_t*              httpd,
-	const qse_httpd_server_t* tmpl,
-	qse_size_t                xtnsize
+	qse_httpd_t*                 httpd,
+	const qse_httpd_server_t*    tmpl,
+	qse_httpd_server_predetach_t predetach,	
+	qse_size_t                   xtnsize
 );
 
 void qse_httpd_detachserver (
@@ -689,7 +743,6 @@ void qse_httpd_freemem (
 
 /* -------------------------------------------- */
 
-
 qse_httpd_t* qse_httpd_openstd (
 	qse_size_t xtnsize
 );
@@ -704,9 +757,10 @@ void* qse_httpd_getxtnstd (
 );
 
 qse_httpd_server_t* qse_httpd_attachserverstd (
-	qse_httpd_t*      httpd,
-	const qse_char_t* uri,
-	qse_size_t        xtnsize
+	qse_httpd_t*                 httpd,
+	const qse_char_t*            uri,
+	qse_httpd_server_predetach_t predetach,	
+	qse_size_t                   xtnsize
 );
 
 void* qse_httpd_getserverxtnstd (
@@ -714,15 +768,11 @@ void* qse_httpd_getserverxtnstd (
 	qse_httpd_server_t*  server
 );
 
-qse_httpd_cbstd_t* qse_httpd_getdflcbstd (
-	qse_httpd_t*         httpd
-);
-
 int qse_httpd_loopstd (
 	qse_httpd_t*       httpd, 
-	qse_httpd_cbstd_t* cbstd,
 	qse_ntime_t        timeout
 );
+
 
 #ifdef __cplusplus
 }

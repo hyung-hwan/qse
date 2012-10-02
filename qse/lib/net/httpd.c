@@ -532,7 +532,8 @@ static void free_server_list (qse_httpd_t* httpd)
 }
 
 qse_httpd_server_t* qse_httpd_attachserver (
-	qse_httpd_t* httpd, const qse_httpd_server_t* tmpl, qse_size_t xtnsize)
+	qse_httpd_t* httpd, const qse_httpd_server_t* tmpl, 
+	qse_httpd_server_predetach_t predetach, qse_size_t xtnsize)
 {
 	qse_httpd_server_t* server;
 
@@ -543,6 +544,7 @@ qse_httpd_server_t* qse_httpd_attachserver (
 	QSE_MEMSET (server + 1, 0, xtnsize);
 
 	server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
+	server->predetach = predetach;
 
 	/* chain the server to the tail of the list */
 	server->prev = httpd->server.list.tail;

@@ -59,7 +59,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_attachserverstd (httpd, argv[i], 0) == QSE_NULL)
+		if (qse_httpd_attachserverstd (httpd, argv[i], QSE_NULL, 0) == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
@@ -72,7 +72,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loopstd (httpd, QSE_NULL, 10000);
+	ret = qse_httpd_loopstd (httpd, 10000);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);
