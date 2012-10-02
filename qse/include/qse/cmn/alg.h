@@ -170,11 +170,10 @@ qse_uint64_t qse_randxs64 (
 #endif
 
 
-
 qse_size_t qse_enbase64 (
-	const qse_uint8_t* in,
+	const void*        in,
 	qse_size_t         isz,
-        qse_mchar_t*       out,
+	qse_mchar_t*       out,
 	qse_size_t         osz,
 	qse_size_t*        xsz
 );
@@ -182,7 +181,7 @@ qse_size_t qse_enbase64 (
 qse_size_t qse_debase64 (
 	const qse_mchar_t* in,
 	qse_size_t         isz,
-	qse_uint8_t*       out, 
+	void*              out,
 	qse_size_t         osz,
 	qse_size_t*        xsz
 );

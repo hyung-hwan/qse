@@ -26,6 +26,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/uri.h>
 #include <qse/cmn/alg.h>
+#include <qse/cmn/path.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -68,19 +69,12 @@
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443
 
-struct server_xtn_t
-{
-#define CFG_DOCROOT       0
-#define CFG_REALM         1
-#define CFG_USERNAME      2
-#define CFG_PASSWORD      3
-#define CFG_BASICAUTH     4
-#define CFG_BASICAUTH_B64 5
-	qse_mxstr_t cfg[6];
-};
-
-typedef struct server_xtn_t server_xtn_t;
-
+#define server_xtn_t qse_httpd_server_xtn_t
+#define SERVER_XTN_CFG_DOCROOT   QSE_HTTPD_SERVER_XTN_CFG_DOCROOT
+#define SERVER_XTN_CFG_REALM     QSE_HTTPD_SERVER_XTN_CFG_REALM
+#define SERVER_XTN_CFG_USERNAME  QSE_HTTPD_SERVER_XTN_CFG_USERNAME
+#define SERVER_XTN_CFG_PASSWORD  QSE_HTTPD_SERVER_XTN_CFG_PASSWORD
+#define SERVER_XTN_CFG_BASICAUTH QSE_HTTPD_SERVER_XTN_CFG_BASICAUTH
 /* ------------------------------------------------------------------- */
 
 #if defined(_WIN32)
@@ -322,7 +316,6 @@ static qse_ssize_t xsendfile_ssl (
 typedef struct httpd_xtn_t httpd_xtn_t;
 struct httpd_xtn_t
 {
-	qse_httpd_cbstd_t* cbstd;
 #if defined(HAVE_SSL)
 	SSL_CTX* ssl_ctx;
 #endif
@@ -419,143 +412,6 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 	return (void*)((httpd_xtn_t*)QSE_XTN(httpd) + 1);
 }
 
-static void predetach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
-{
-	server_xtn_t* server_xtn;
-	qse_size_t i;
-
-	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
-	
-	for (i = QSE_COUNTOF(server_xtn->cfg); i > 0; )
-	{
-		i--;
-		if (server_xtn->cfg[i].ptr)
-		{
-			QSE_MMGR_FREE (httpd->mmgr, server_xtn->cfg[i].ptr);
-			server_xtn->cfg[i].ptr = QSE_NULL;
-			server_xtn->cfg[i].len = 0;
-		}
-	}
-}
-
-qse_httpd_server_t* qse_httpd_attachserverstd (
-	qse_httpd_t* httpd, const qse_char_t* uri, qse_size_t xtnsize)
-{
-	qse_httpd_server_t server;
-	qse_httpd_server_t* xserver;
-	server_xtn_t* server_xtn;
-	qse_mcstr_t tmp[4];
-
-	qse_uint16_t default_port;
-	qse_size_t i;
-	qse_uri_t xuri;
-
-	QSE_MEMSET (&server, 0, QSE_SIZEOF(server));
-
-	if (qse_strtouri (uri, &xuri, QSE_STRTOURI_NOQUERY) <= -1)  goto invalid;
-
-	if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("http")) == 0) 
-	{
-		default_port = DEFAULT_PORT;
-	}
-	else if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("https")) == 0) 
-	{
-		server.flags |= QSE_HTTPD_SERVER_SECURE;
-		default_port = DEFAULT_SECURE_PORT;
-	}
-	else goto invalid;
-
-	if (qse_strntonwad (
-		xuri.host.ptr, 
-		xuri.host.len + (xuri.port.ptr? (xuri.port.len + 1): 0),
-		&server.nwad) <= -1) goto invalid;
-
-	if (server.nwad.type == QSE_NWAD_IN4)
-	{
-		if (server.nwad.u.in4.port == 0)
-			server.nwad.u.in4.port = qse_hton16(default_port);
-	}
-	else if (server.nwad.type == QSE_NWAD_IN6)
-	{
-		if (server.nwad.u.in6.port == 0) 
-			server.nwad.u.in6.port = qse_hton16(default_port);
-	}
-
-	server.predetach = predetach_server;
-	xserver = qse_httpd_attachserver (httpd, &server, QSE_SIZEOF(*server_xtn) + xtnsize);
-	if (xserver == QSE_NULL) return QSE_NULL;
-
-	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	if (xuri.path.ptr) server_xtn->cfg[CFG_DOCROOT].ptr = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
-	if (xuri.auth.user.ptr) server_xtn->cfg[CFG_USERNAME].ptr = qse_mbsxdup (xuri.auth.user.ptr, xuri.auth.user.len, httpd->mmgr);
-	if (xuri.auth.pass.ptr) server_xtn->cfg[CFG_PASSWORD].ptr = qse_mbsxdup (xuri.auth.pass.ptr, xuri.auth.pass.len, httpd->mmgr);
-	if (xuri.frag.ptr) server_xtn->cfg[CFG_REALM].ptr = qse_mbsxdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
-
-#else
-	if (xuri.path.ptr) server_xtn->cfg[CFG_DOCROOT].ptr = qse_wcsntombsdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
-	if (xuri.auth.user.ptr) server_xtn->cfg[CFG_USERNAME].ptr = qse_wcsntombsdup (xuri.auth.user.ptr, xuri.auth.user.len, httpd->mmgr);
-	if (xuri.auth.pass.ptr) server_xtn->cfg[CFG_PASSWORD].ptr = qse_wcsntombsdup (xuri.auth.pass.ptr, xuri.auth.pass.len, httpd->mmgr);
-	if (xuri.frag.ptr) server_xtn->cfg[CFG_REALM].ptr = qse_wcsntombsdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
-
-#endif
-	if ((xuri.path.ptr && !server_xtn->cfg[CFG_DOCROOT].ptr) ||
-	    (xuri.auth.user.ptr && !server_xtn->cfg[CFG_USERNAME].ptr) ||
-	    (xuri.auth.pass.ptr && !server_xtn->cfg[CFG_PASSWORD].ptr) ||
-	    (xuri.frag.ptr && !server_xtn->cfg[CFG_REALM].ptr)) goto nomem_after_attach;
-
-	for (i = 0; i < QSE_COUNTOF(server_xtn->cfg); i++) 
-	{
-		if (server_xtn->cfg[i].ptr)
-			server_xtn->cfg[i].len = qse_mbslen(server_xtn->cfg[i].ptr);
-	}
-
-	tmp[0].ptr = server_xtn->cfg[CFG_USERNAME].ptr? server_xtn->cfg[CFG_USERNAME].ptr: QSE_MT("");
-	tmp[0].len = server_xtn->cfg[CFG_USERNAME].len;
-	tmp[1].ptr = QSE_MT(":");
-	tmp[1].len = 1;
-	tmp[2].ptr = server_xtn->cfg[CFG_PASSWORD].ptr? server_xtn->cfg[CFG_PASSWORD].ptr: QSE_MT("");
-	tmp[2].len = server_xtn->cfg[CFG_PASSWORD].len;
-	tmp[3].ptr = QSE_NULL;
-	tmp[3].len = 0;
-
-	server_xtn->cfg[CFG_BASICAUTH].ptr = qse_mbsxadup (tmp, httpd->mmgr);
-	if (!server_xtn->cfg[CFG_BASICAUTH].ptr) goto nomem_after_attach;
-	server_xtn->cfg[CFG_BASICAUTH].len = qse_mbslen (server_xtn->cfg[CFG_BASICAUTH].ptr);
-
-	server_xtn->cfg[CFG_BASICAUTH_B64].len = ((server_xtn->cfg[CFG_BASICAUTH].len / 3) + 1) * 4;
-	server_xtn->cfg[CFG_BASICAUTH_B64].ptr = QSE_MMGR_ALLOC (
-		httpd->mmgr, 
-		(server_xtn->cfg[CFG_BASICAUTH_B64].len + 1) * QSE_SIZEOF(qse_mchar_t));
-	if (!server_xtn->cfg[CFG_BASICAUTH_B64].ptr) goto nomem_after_attach;
-
-	qse_enbase64 (
-		server_xtn->cfg[CFG_BASICAUTH].ptr,
-		server_xtn->cfg[CFG_BASICAUTH].len,
-		server_xtn->cfg[CFG_BASICAUTH_B64].ptr,
-		server_xtn->cfg[CFG_BASICAUTH_B64].len,
-		&server_xtn->cfg[CFG_BASICAUTH_B64].len
-	);
-	server_xtn->cfg[CFG_BASICAUTH_B64].ptr[server_xtn->cfg[CFG_BASICAUTH_B64].len] = QSE_MT('\0');
-
-	return xserver;
-
-invalid:
-	httpd->errnum = QSE_HTTPD_EINVAL;
-	return QSE_NULL;
-
-nomem_after_attach:
-	qse_httpd_detachserver (httpd, xserver);	
-	httpd->errnum = QSE_HTTPD_ENOMEM;
-	return QSE_NULL;
-}
-
-void* qse_httpd_getserverxtnstd (qse_httpd_t* httpd, qse_httpd_server_t* server)
-{
-	server_xtn_t* xtn = qse_httpd_getserverxtn (httpd, server);
-	return (void*)(xtn + 1);
-}
 /* ------------------------------------------------------------------- */
 
 union sockaddr_t
@@ -1500,9 +1356,9 @@ static int process_request (
 	int method;
 	qse_httpd_task_t* task;
 	int content_received;
-	httpd_xtn_t* xtn;
+	server_xtn_t* server_xtn;
 
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	server_xtn = (server_xtn_t*)qse_httpd_getserverxtn (httpd, client->server);
 
 	method = qse_htre_getqmethodtype(req);
 	content_received = (qse_htre_getcontentlen(req) > 0);
@@ -1576,7 +1432,7 @@ if (qse_htre_getcontentlen(req) > 0)
 					task = qse_httpd_entaskdisconnect (httpd, client, QSE_NULL);
 				}
 			}
-			else if (xtn->cbstd->makersrc (httpd, client, req, &rsrc) <= -1)
+			else if (server_xtn->cbstd->makersrc (httpd, client, req, &rsrc) <= -1)
 			{
 				qse_httpd_discardcontent (httpd, req);
 				task = qse_httpd_entaskerror (httpd, client, QSE_NULL, 500, req);
@@ -1584,7 +1440,7 @@ if (qse_htre_getcontentlen(req) > 0)
 			else
 			{
 				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
-				if (xtn->cbstd->freersrc) xtn->cbstd->freersrc (httpd, client, req, &rsrc);
+				if (server_xtn->cbstd->freersrc) server_xtn->cbstd->freersrc (httpd, client, req, &rsrc);
 			}
 			if (task == QSE_NULL) goto oops;
 		}
@@ -1680,6 +1536,7 @@ static qse_httpd_rcb_t httpd_request_callbacks =
 	handle_request
 };
 
+/* ------------------------------------------------------------------- */
 
 static void free_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
@@ -1715,41 +1572,127 @@ static void free_resource (
 	}
 }
 
+static qse_mchar_t* merge_paths (
+	qse_httpd_t* httpd, const qse_mchar_t* base, const qse_mchar_t* path)
+{
+	qse_mchar_t* xpath;
+	const qse_mchar_t* ta[4];
+	qse_size_t idx = 0;
+		
+	ta[idx++] = base;
+	ta[idx++] = QSE_MT("/");	
+	ta[idx++] = path;
+	ta[idx++] = QSE_NULL;
+	xpath = qse_mbsadup (ta, httpd->mmgr);
+	if (xpath == QSE_NULL)
+	{
+		httpd->errnum = QSE_HTTPD_ENOMEM;
+		return QSE_NULL;
+	}
+
+	qse_canonmbspath (xpath, xpath, 0);
+	return xpath;
+}
+
+static int attempt_cgi (
+	qse_httpd_t* httpd, const qse_mchar_t* docroot, 
+	qse_mchar_t* xpath, const qse_mchar_t* qpath, const qse_mchar_t* idxfile,
+	qse_httpd_server_cgistd_t cgistd[], qse_httpd_rsrc_t* target)
+{
+	qse_mchar_t* ext;
+	qse_mchar_t* script, * suffix;
+	qse_size_t i;
+
+	if (idxfile)
+	{
+		for (i = 0; cgistd[i].ext; i++)
+		{
+			if (qse_mbsend (idxfile, cgistd[i].ext))
+			{
+				script = merge_paths (httpd, qpath, idxfile);
+				if (script == QSE_NULL) return -1;
+
+				target->type = QSE_HTTPD_RSRC_CGI;
+				target->u.cgi.nph = cgistd[i].nph;
+				target->u.cgi.path = xpath;
+				target->u.cgi.script = script;
+				target->u.cgi.suffix = QSE_NULL;
+				target->u.cgi.docroot = docroot;
+				return 1;
+			}
+		}
+	}
+	else
+	{
+		for (i = 0; cgistd[i].ext; i++)
+		{
+	/* TODO: attempt other segments if qpath is like
+	 *       /abc/x.cgi/y.cgi/ttt. currently, it tries x.cgi only.
+	 *       x.cgi could be a directory name .
+	 */
+			ext = qse_mbsstr (qpath, cgistd[i].ext);
+	
+			if (ext && (ext[cgistd[i].len] == QSE_MT('/') || 
+			            ext[cgistd[i].len] == QSE_MT('\0'))) 
+			{
+				if (ext[cgistd[i].len] == QSE_MT('/')) 
+				{
+					/* it has a path suffix */
+					script = qse_mbsxdup (qpath, ext - qpath + cgistd[i].len, httpd->mmgr);
+					suffix = qse_mbsdup (&ext[cgistd[i].len], httpd->mmgr);
+					if (script == QSE_NULL || suffix == QSE_NULL)
+					{
+						if (suffix) QSE_MMGR_FREE (httpd->mmgr, suffix);
+						if (script) QSE_MMGR_FREE (httpd->mmgr, script);
+						httpd->errnum = QSE_HTTPD_ENOMEM;
+						return -1;
+					}
+	
+					/* drop the suffix part */
+					xpath[qse_mbslen(xpath) - qse_mbslen(suffix)] = QSE_MT('\0');
+				}
+				else
+				{
+					/* it has no path suffix  */
+					script = qpath;
+					suffix = QSE_NULL;
+				}
+	
+				target->type = QSE_HTTPD_RSRC_CGI;
+				target->u.cgi.nph = cgistd[i].nph;
+				target->u.cgi.path = xpath;
+				target->u.cgi.script = script;
+				target->u.cgi.suffix = suffix;
+				target->u.cgi.docroot = docroot;
+				return 1;
+			}
+		}
+
+	}
+
+	return 0;
+}
+
 static int make_resource (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_htre_t* req, qse_httpd_rsrc_t* target)
 {
-	static struct extinfo_t
-	{
-		const qse_mchar_t* ptr;
-		qse_size_t         len;
-		int                nph;
-	} extinfo[] = 
-	{
-		{ QSE_MT(".cgi"), 4, 0 },
-		{ QSE_MT(".nph"), 4, 1 }
-	};
-
-	qse_size_t i;
-	const qse_mchar_t* qpath;
-	qse_stat_t st;
 	server_xtn_t* server_xtn;
-	qse_mchar_t* xpath;
+	const qse_mchar_t* qpath;
+	const qse_mchar_t* idxfile;
+	qse_mchar_t* xpath; 
+	qse_stat_t st;
+	qse_size_t i;
+	int n;
 
 	qpath = qse_htre_getqpath(req);
 
 	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
-#if 0
-target->type = QSE_HTTPD_RSRC_PROXY;
-target->u.proxy.dst = client->orgdst_addr;
-target->u.proxy.src = client->remote_addr;
-target->u.proxy.src.u.in4.port = 0;
-return 0;
-#endif
 
-	if (server_xtn->cfg[CFG_REALM].ptr && server_xtn->cfg[CFG_BASICAUTH_B64].ptr)
+	if (server_xtn->cfg[SERVER_XTN_CFG_REALM].ptr &&
+	    server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr)
 	{
 		const qse_htre_hdrval_t* auth;
 
@@ -1760,148 +1703,289 @@ return 0;
 
 			if (qse_mbszcasecmp(auth->ptr, QSE_MT("Basic "), 6) == 0) 
 			{
-				if (qse_mbscmp (&auth->ptr[6], server_xtn->cfg[CFG_BASICAUTH_B64].ptr) == 0) goto auth_ok;
+				if (qse_mbscmp (&auth->ptr[6], server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr) == 0) goto auth_ok;
 			}
 		}
 
 		target->type = QSE_HTTPD_RSRC_AUTH;
-		target->u.auth.realm = server_xtn->cfg[CFG_REALM].ptr;
+		target->u.auth.realm = server_xtn->cfg[SERVER_XTN_CFG_REALM].ptr;
 		return 0;
 	}
 
 auth_ok:
-	if (server_xtn->cfg[CFG_DOCROOT].ptr || qpath[0] != QSE_MT('/'))
-	{
-		const qse_mchar_t* ta[4];
-		qse_size_t idx = 0;
-		
-		if (server_xtn->cfg[CFG_DOCROOT].ptr) ta[idx++] = server_xtn->cfg[CFG_DOCROOT].ptr;
-		if (qpath[0] != QSE_MT('/')) ta[idx++] = QSE_MT("/");	
-		ta[idx++] = qpath;
-		ta[idx++] = QSE_NULL;
-		xpath = qse_mbsadup (ta, httpd->mmgr);
-		if (xpath == QSE_NULL)
-		{
-			httpd->errnum = QSE_HTTPD_ENOMEM;
-			return -1;
-		}
-	}
-	else xpath = qpath;
+	idxfile = QSE_NULL;
+	xpath = merge_paths (httpd, server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr, qpath);
+	if (xpath == QSE_NULL) return -1;
 
 	if (QSE_STAT (xpath, &st) == 0 && S_ISDIR(st.st_mode))
 	{
-/* TODO: attempt the index file like index.html, index.cgi, etc. */
 		/* it is a directory */
+		if (server_xtn->idxstd)
+		{
+			/* try to locate an index file */
+			for (i = 0; server_xtn->idxstd[i].name; i++)
+			{
+				qse_mchar_t* tpath;
+
+				tpath = merge_paths (httpd, xpath, server_xtn->idxstd[i].name);
+				if (tpath == QSE_NULL) 
+				{
+					QSE_MMGR_FREE (httpd->mmgr, xpath);
+					return -1;
+				}
+
+				if (QSE_STAT (tpath, &st) == 0 && S_ISREG(st.st_mode))
+				{
+					/* the index file is found */
+					QSE_MMGR_FREE (httpd->mmgr, xpath);
+					xpath = tpath;
+					idxfile = server_xtn->idxstd[i].name;
+					goto attempt_file;
+				}	
+
+				QSE_MMGR_FREE (httpd->mmgr, tpath);
+			}
+		}
+
 		target->type = QSE_HTTPD_RSRC_DIR;
 		target->u.dir.path = xpath;
 	}
 	else
 	{
-/* TODO: attempt other segments if qpath is like
- *       /abc/x.cgi/y.cgi/ttt. currently, it tries x.cgi only.
- *       x.cgi could be a directory name .
- */
-		for (i = 0; i < QSE_COUNTOF(extinfo); i++)
+	attempt_file:
+		if (server_xtn->cgistd)
 		{
-			const qse_mchar_t* ext;
-
-			ext = qse_mbsstr (qpath, extinfo[i].ptr);
-			if (ext && (ext[extinfo[i].len] == QSE_MT('/') || 
-			            ext[extinfo[i].len] == QSE_MT('\0')))
+			/* check if the request can resolve to a cgi script */
+			n = attempt_cgi (httpd, server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr, 
+			                 xpath, qpath, idxfile, server_xtn->cgistd, target);
+			if (n <= -1) 
 			{
-				qse_mchar_t* script, * suffix, * docroot;
-
-				if (ext[extinfo[i].len] == QSE_MT('/')) 
-				{
-					if (xpath != qpath) 
-						QSE_MMGR_FREE (httpd->mmgr, xpath);
-
-					if (server_xtn->cfg[CFG_DOCROOT].ptr)
-					{
-						xpath = qse_mbsxdup2 (
-							server_xtn->cfg[CFG_DOCROOT].ptr, 
-							server_xtn->cfg[CFG_DOCROOT].len,
-							qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
-					}
-					else
-					{
-						xpath = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
-					}
-
-					script = qse_mbsxdup (qpath, ext - qpath + extinfo[i].len, httpd->mmgr);
-					suffix = qse_mbsdup (&ext[extinfo[i].len], httpd->mmgr);
-
-					if (xpath == QSE_NULL || script == QSE_NULL || suffix == QSE_NULL) 
-					{
-						if (suffix) QSE_MMGR_FREE (httpd->mmgr, suffix);
-						if (script) QSE_MMGR_FREE (httpd->mmgr, script);
-						if (xpath) QSE_MMGR_FREE (httpd->mmgr, xpath);
-						httpd->errnum = QSE_HTTPD_ENOMEM;
-						return -1;
-					}
-
-					docroot = server_xtn->cfg[CFG_DOCROOT].ptr;
-				}
-				else
-				{
-					script = qpath;
-					suffix = QSE_NULL;
-					docroot = QSE_NULL;
-				}
-
-				target->type = QSE_HTTPD_RSRC_CGI;
-				target->u.cgi.nph = extinfo[i].nph;
-				target->u.cgi.path = xpath;
-				target->u.cgi.script = script;
-				target->u.cgi.suffix = suffix;
-				target->u.cgi.docroot = docroot;
-
-				return 0;
+				QSE_MMGR_FREE (httpd->mmgr, xpath);
+				return -1;
 			}
+			if (n >= 1) return 0;
 		}
 
-
+		/* fall back to a normal file. */
 		target->type = QSE_HTTPD_RSRC_FILE;
 		target->u.file.path = xpath;
-		target->u.file.mime =
-			qse_mbsend (qpath, QSE_MT(".html"))? QSE_MT("text/html"):
-			qse_mbsend (qpath, QSE_MT(".txt"))?  QSE_MT("text/plain"):
-			qse_mbsend (qpath, QSE_MT(".log"))?  QSE_MT("text/plain"):
-			qse_mbsend (qpath, QSE_MT(".css"))?  QSE_MT("text/css"):
-			qse_mbsend (qpath, QSE_MT(".xml"))?  QSE_MT("text/xml"):
-			qse_mbsend (qpath, QSE_MT(".js"))?   QSE_MT("application/javascript"):
-			qse_mbsend (qpath, QSE_MT(".jpg"))?  QSE_MT("image/jpeg"):
-			qse_mbsend (qpath, QSE_MT(".png"))?  QSE_MT("image/png"):
-			qse_mbsend (qpath, QSE_MT(".mp4"))?  QSE_MT("video/mp4"):
-			qse_mbsend (qpath, QSE_MT(".mp3"))?  QSE_MT("audio/mpeg"): 
-			qse_mbsend (qpath, QSE_MT(".c"))?    QSE_MT("text/plain"): 
-			qse_mbsend (qpath, QSE_MT(".h"))?    QSE_MT("text/plain"): 
-			                                     QSE_NULL;
+		target->u.file.mime = QSE_NULL;
+		if (server_xtn->mimestd)
+		{
+			for (i = 0; server_xtn->mimestd[i].ext; i++)
+			{
+/* TODO: require the table sorted and so the binary search */
+				if (qse_mbsend (qpath, server_xtn->mimestd[i].ext))
+					target->u.file.mime = server_xtn->mimestd[i].type; 
+			}
+		}
 	}
 
 	return 0;
 }
 
-static qse_httpd_cbstd_t httpd_cbstd =
+static qse_httpd_server_cbstd_t server_cbstd =
 {
 	make_resource,
 	free_resource	
 };
+/* ------------------------------------------------------------------- */
 
-qse_httpd_cbstd_t* qse_httpd_getdflcbstd (qse_httpd_t* httpd)
+static void predetach_server (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
-	return &httpd_cbstd;
+	server_xtn_t* server_xtn;
+	qse_size_t i;
+
+	server_xtn = (server_xtn_t*) qse_httpd_getserverxtn (httpd, server);
+	
+	if (server_xtn->predetach) server_xtn->predetach (httpd, server);
+
+	for (i = QSE_COUNTOF(server_xtn->cfg); i > 0; )
+	{
+		i--;
+		if (server_xtn->cfg[i].ptr)
+		{
+			QSE_MMGR_FREE (httpd->mmgr, server_xtn->cfg[i].ptr);
+			server_xtn->cfg[i].ptr = QSE_NULL;
+			server_xtn->cfg[i].len = 0;
+		}
+	}
 }
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, qse_httpd_cbstd_t* cbstd, qse_ntime_t timeout)
+qse_httpd_server_t* qse_httpd_attachserverstd (
+	qse_httpd_t* httpd, const qse_char_t* uri, 
+	qse_httpd_server_predetach_t predetach, qse_size_t xtnsize)
 {
-	httpd_xtn_t* xtn;
+	qse_httpd_server_t server;
+	qse_httpd_server_t* xserver;
+	server_xtn_t* server_xtn;
+	qse_mcstr_t tmp[4];
+	qse_mxstr_t ba;
 
-	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
+	qse_uint16_t default_port;
+	qse_size_t i;
+	qse_uri_t xuri;
 
-	if (cbstd) xtn->cbstd = cbstd;
-	else xtn->cbstd = &httpd_cbstd;
+	static qse_httpd_server_cgistd_t server_cgistd[] = 
+	{
+		{ QSE_MT(".cgi"), 4, 0 },
+		{ QSE_MT(".nph"), 4, 1 },
+		{ QSE_NULL,       0, 0 }
+	};
 
+	static qse_httpd_server_mimestd_t server_mimestd[] =
+	{
+		{ QSE_MT(".html"), QSE_MT("text/html") },
+		{ QSE_MT(".htm"),  QSE_MT("text/htm") },
+		{ QSE_MT(".txt"),  QSE_MT("text/plain") },
+		{ QSE_MT(".log"),  QSE_MT("text/plain") },
+		{ QSE_MT(".css"),  QSE_MT("text/css") },
+		{ QSE_MT(".xml"),  QSE_MT("text/xml") },
+		{ QSE_MT(".js"),   QSE_MT("application/javascript") },
+		{ QSE_MT(".jpg"),  QSE_MT("image/jpeg") },
+		{ QSE_MT(".png"),  QSE_MT("image/png") },
+		{ QSE_MT(".mp4"),  QSE_MT("video/mp4") },
+		{ QSE_MT(".mp3"),  QSE_MT("audio/mpeg") }, 
+		{ QSE_MT(".c"),    QSE_MT("text/plain") }, 
+		{ QSE_MT(".h"),    QSE_MT("text/plain") },
+		{ QSE_MT(".cpp"),  QSE_MT("text/plain") }, 
+		{ QSE_MT(".hpp"),  QSE_MT("text/plain") },
+		{ QSE_NULL,        QSE_NULL }
+	};
+
+	QSE_MEMSET (&server, 0, QSE_SIZEOF(server));
+
+	if (qse_strtouri (uri, &xuri, QSE_STRTOURI_NOQUERY) <= -1)  goto invalid;
+
+	if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("http")) == 0) 
+	{
+		default_port = DEFAULT_PORT;
+	}
+	else if (qse_strxcasecmp (xuri.scheme.ptr, xuri.scheme.len, QSE_T("https")) == 0) 
+	{
+		server.flags |= QSE_HTTPD_SERVER_SECURE;
+		default_port = DEFAULT_SECURE_PORT;
+	}
+	else goto invalid;
+
+	if (qse_strntonwad (
+		xuri.host.ptr, 
+		xuri.host.len + (xuri.port.ptr? (xuri.port.len + 1): 0),
+		&server.nwad) <= -1) goto invalid;
+
+	if (server.nwad.type == QSE_NWAD_IN4)
+	{
+		if (server.nwad.u.in4.port == 0)
+			server.nwad.u.in4.port = qse_hton16(default_port);
+	}
+	else if (server.nwad.type == QSE_NWAD_IN6)
+	{
+		if (server.nwad.u.in6.port == 0) 
+			server.nwad.u.in6.port = qse_hton16(default_port);
+	}
+
+	xserver = qse_httpd_attachserver (
+		httpd, &server, predetach_server, QSE_SIZEOF(*server_xtn) + xtnsize);
+	if (xserver == QSE_NULL) return QSE_NULL;
+
+	server_xtn = qse_httpd_getserverxtn (httpd, xserver);
+
+	if (!xuri.path.ptr)
+	{
+#if defined(QSE_CHAR_IS_MCHAR)
+		xuri.path.ptr = QSE_MT("/");
+#else
+		xuri.path.ptr = QSE_WT("/");
+#endif
+		xuri.path.len = 1;
+	}
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
+	if (xuri.path.ptr) server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
+	if (xuri.auth.user.ptr) server_xtn->cfg[SERVER_XTN_CFG_USERNAME].ptr = qse_mbsxdup (xuri.auth.user.ptr, xuri.auth.user.len, httpd->mmgr);
+	if (xuri.auth.pass.ptr) server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].ptr = qse_mbsxdup (xuri.auth.pass.ptr, xuri.auth.pass.len, httpd->mmgr);
+	if (xuri.frag.ptr) server_xtn->cfg[SERVER_XTN_CFG_REALM].ptr = qse_mbsxdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
+
+#else
+	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr = qse_wcsntombsdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
+	if (xuri.auth.user.ptr) server_xtn->cfg[SERVER_XTN_CFG_USERNAME].ptr = qse_wcsntombsdup (xuri.auth.user.ptr, xuri.auth.user.len, httpd->mmgr);
+	if (xuri.auth.pass.ptr) server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].ptr = qse_wcsntombsdup (xuri.auth.pass.ptr, xuri.auth.pass.len, httpd->mmgr);
+	if (xuri.frag.ptr) server_xtn->cfg[SERVER_XTN_CFG_REALM].ptr = qse_wcsntombsdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
+
+#endif
+	if ((!server_xtn->cfg[SERVER_XTN_CFG_DOCROOT].ptr) ||
+	    (xuri.auth.user.ptr && !server_xtn->cfg[SERVER_XTN_CFG_USERNAME].ptr) ||
+	    (xuri.auth.pass.ptr && !server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].ptr) ||
+	    (xuri.frag.ptr && !server_xtn->cfg[SERVER_XTN_CFG_REALM].ptr)) goto nomem_after_attach;
+
+	for (i = 0; i < QSE_COUNTOF(server_xtn->cfg); i++) 
+	{
+		if (server_xtn->cfg[i].ptr)
+			server_xtn->cfg[i].len = qse_mbslen(server_xtn->cfg[i].ptr);
+	}
+
+	tmp[0].ptr = server_xtn->cfg[SERVER_XTN_CFG_USERNAME].ptr? server_xtn->cfg[SERVER_XTN_CFG_USERNAME].ptr: QSE_MT("");
+	tmp[0].len = server_xtn->cfg[SERVER_XTN_CFG_USERNAME].len;
+	tmp[1].ptr = QSE_MT(":");
+	tmp[1].len = 1;
+	tmp[2].ptr = server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].ptr? server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].ptr: QSE_MT("");
+	tmp[2].len = server_xtn->cfg[SERVER_XTN_CFG_PASSWORD].len;
+	tmp[3].ptr = QSE_NULL;
+	tmp[3].len = 0;
+
+	ba.ptr = qse_mbsxadup (tmp, httpd->mmgr);
+	if (!ba.ptr) goto nomem_after_attach;
+	ba.len = tmp[0].len + tmp[1].len + tmp[2].len;
+
+	server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].len = ((ba.len / 3) + 1) * 4;
+	server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr = QSE_MMGR_ALLOC (
+		httpd->mmgr, 
+		(server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].len + 1) * QSE_SIZEOF(qse_mchar_t)
+	);
+	if (!server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr) 
+	{
+		QSE_MMGR_FREE (httpd->mmgr, ba.ptr);
+		goto nomem_after_attach;
+	}
+
+	qse_enbase64 (
+		ba.ptr, ba.len,
+		server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr,
+		server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].len,
+		&server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].len
+	);
+	QSE_MMGR_FREE (httpd->mmgr, ba.ptr);
+	server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].ptr[server_xtn->cfg[SERVER_XTN_CFG_BASICAUTH].len] = QSE_MT('\0');
+
+	server_xtn->predetach = predetach;
+	server_xtn->cbstd = &server_cbstd;
+	server_xtn->cgistd = server_cgistd;
+	server_xtn->mimestd = server_mimestd;
+	server_xtn->idxstd = QSE_NULL;
+
+	return xserver;
+
+invalid:
+	httpd->errnum = QSE_HTTPD_EINVAL;
+	return QSE_NULL;
+
+nomem_after_attach:
+	qse_httpd_detachserver (httpd, xserver);	
+	httpd->errnum = QSE_HTTPD_ENOMEM;
+	return QSE_NULL;
+}
+
+void* qse_httpd_getserverxtnstd (qse_httpd_t* httpd, qse_httpd_server_t* server)
+{
+	server_xtn_t* xtn = qse_httpd_getserverxtn (httpd, server);
+	return (void*)(xtn + 1);
+}
+
+/* ------------------------------------------------------------------- */
+
+int qse_httpd_loopstd (qse_httpd_t* httpd, qse_ntime_t timeout)
+{
 	return qse_httpd_loop (
 		httpd, &httpd_system_callbacks,
 		&httpd_request_callbacks, timeout);	
