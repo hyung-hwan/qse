@@ -84,16 +84,18 @@ static int makersrc (
 	}
 	else
 	{
-#if 0
-		if (dflcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
+	#if 0
+		if (server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
 		if (rsrc->type == QSE_HTTPD_RSRC_DIR)
 		{
 			/* no directory listing - */
+			if (server_xtn->orgcbstd->freersrc)
+				server_xtn->orgcbstd->freersrc (httpd, client, req, rsrc);
 			rsrc->type = QSE_HTTPD_RSRC_ERROR;
-			rsrc->u.error.code = 500;
+			rsrc->u.error.code = 403;
 		}
 		return 0;
-#endif
+	#endif
 		return server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc);
 	}
 }
