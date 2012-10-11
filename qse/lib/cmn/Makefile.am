@@ -92,6 +92,7 @@ libqsecmn_la_SOURCES = \
 	str-tok.c \
 	str-trm.c \
 	str-word.c \
+	task.c \
 	time.c \
 	tio.c \
 	tre.c \

@@ -83,7 +83,7 @@ AC_SUBST(LIBM, $LIBM)
 dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
-AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h])
+AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
 AC_CHECK_HEADERS([sys/ioctl.h net/if.h])
 
@@ -107,6 +107,7 @@ AC_CHECK_FUNCS([sysconf])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid])
+AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
 AC_CHECK_FUNCS([if_nametoindex if_indextoname])
 
 OLDLIBS="$LIBS"

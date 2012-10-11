@@ -112,6 +112,9 @@
 /* Define to 1 if you have the `ftruncate64' function. */
 #undef HAVE_FTRUNCATE64
 
+/* Define to 1 if you have the `getcontext' function. */
+#undef HAVE_GETCONTEXT
+
 /* Define to 1 if you have the `gethostbyname' function. */
 #undef HAVE_GETHOSTBYNAME
 
@@ -159,6 +162,9 @@
 
 /* Define to 1 if you have the `lstat64' function. */
 #undef HAVE_LSTAT64
+
+/* Define to 1 if you have the `makecontext' function. */
+#undef HAVE_MAKECONTEXT
 
 /* Define to 1 if you have the `mbrlen' function. */
 #undef HAVE_MBRLEN
@@ -226,6 +232,9 @@
 /* Define to 1 if you have the `sendfilev64' function. */
 #undef HAVE_SENDFILEV64
 
+/* Define to 1 if you have the `setcontext' function. */
+#undef HAVE_SETCONTEXT
+
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
 
@@ -289,6 +298,9 @@
 /* Define to 1 if `st_mtim.tv_nsec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
 
+/* Define to 1 if you have the `swapcontext' function. */
+#undef HAVE_SWAPCONTEXT
+
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
 
@@ -347,6 +359,9 @@
 
 /* Define to 1 if you have the `towctrans' function. */
 #undef HAVE_TOWCTRANS
+
+/* Define to 1 if you have the <ucontext.h> header file. */
+#undef HAVE_UCONTEXT_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

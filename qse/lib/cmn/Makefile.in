@@ -94,7 +94,7 @@ am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	str-incl.lo str-len.lo str-pac.lo str-pbrk.lo str-put.lo \
 	str-rev.lo str-rot.lo str-set.lo str-spl.lo str-spn.lo \
 	str-str.lo str-subst.lo str-tok.lo str-trm.lo str-word.lo \
-	time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
+	task.lo time.lo tio.lo tre.lo tre-ast.lo tre-compile.lo \
 	tre-match-backtrack.lo tre-match-parallel.lo tre-parse.lo \
 	tre-stack.lo uri.lo utf8.lo xma.lo
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
@@ -382,6 +382,7 @@ libqsecmn_la_SOURCES = \
 	str-tok.c \
 	str-trm.c \
 	str-word.c \
+	task.c \
 	time.c \
 	tio.c \
 	tre.c \
@@ -550,6 +551,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-tok.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-trm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str-word.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-ast.Plo@am__quote@
