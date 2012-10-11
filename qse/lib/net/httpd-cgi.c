@@ -470,10 +470,6 @@ static int cgi_add_env (
 	qse_nwadtombs (&client->remote_addr, buf, QSE_COUNTOF(buf), QSE_NWADTOMBS_ADDR);
 	qse_env_insertmbs (env, QSE_MT("REMOTE_ADDR"), buf);
 
-#if 0
-	qse_env_insertmbs (env, "REMOTE_USER",
-#endif
-
 	ctx.httpd = httpd;
 	ctx.env = env;
 	if (qse_htre_walkheaders (req, cgi_capture_client_header, &ctx) <= -1) return -1;

@@ -36,6 +36,7 @@ pkginclude_HEADERS = \
 	slmb.h \
 	stdio.h \
 	str.h \
+	task.h \
 	time.h \
 	tio.h \
 	tre.h \

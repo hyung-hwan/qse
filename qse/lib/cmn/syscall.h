@@ -518,9 +518,9 @@ and restores it after interrupt.
 */
 #define QSE_SYSCALL1(ret,num,arg1) \
 	__asm__ volatile ( \
-		"push %%ebx\n" \
-		"movl %2, %%ebx\n" \
-		"int $0x80\n" \
+		"push %%ebx\n\t" \
+		"movl %2, %%ebx\n\t" \
+		"int $0x80\n\t" \
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1) \
@@ -538,9 +538,9 @@ and restores it after interrupt.
 */
 #define QSE_SYSCALL2(ret,num,arg1,arg2) \
 	__asm__ volatile ( \
-		"push %%ebx\n" \
-		"movl %2, %%ebx\n" \
-		"int $0x80\n"  \
+		"push %%ebx\n\t" \
+		"movl %2, %%ebx\n\t" \
+		"int $0x80\n\t"  \
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2) \
@@ -558,9 +558,9 @@ and restores it after interrupt.
 */
 #define QSE_SYSCALL3(ret,num,arg1,arg2,arg3) \
 	__asm__ volatile ( \
-		"push %%ebx\n" \
-		"movl %2, %%ebx\n" \
-		"int $0x80\n" \
+		"push %%ebx\n\t" \
+		"movl %2, %%ebx\n\t" \
+		"int $0x80\n\t" \
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3) \
@@ -569,9 +569,9 @@ and restores it after interrupt.
 
 #define QSE_SYSCALL4(ret,num,arg1,arg2,arg3,arg4) \
 	__asm__ volatile ( \
-		"push %%ebx\n" \
-		"movl %2, %%ebx\n" \
-		"int $0x80\n" \
+		"push %%ebx\n\t" \
+		"movl %2, %%ebx\n\t" \
+		"int $0x80\n\t" \
 		"pop %%ebx\n" \
 		: "=a"(ret) \
 		: "a"((qse_uint32_t)num), "r"((qse_uint32_t)arg1), "c"((qse_uint32_t)arg2), "d"((qse_uint32_t)arg3), "S"((qse_uint32_t)arg4) \
