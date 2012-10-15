@@ -195,7 +195,7 @@ static int test3 (void)
 int main ()
 {
 #if defined(_WIN32)
-     char locale[100];
+ 	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
 	{
