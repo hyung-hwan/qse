@@ -390,7 +390,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 
 		case QSE_HTTPD_RSRC_DIR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, req);
+			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, rsrc->u.dir.css, req);
 			break;
 
 		case QSE_HTTPD_RSRC_ERROR:

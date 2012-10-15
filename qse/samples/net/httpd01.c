@@ -59,12 +59,20 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	for (i = 1; i < argc; i++)
 	{
-		if (qse_httpd_attachserverstd (httpd, argv[i], QSE_NULL, 0) == QSE_NULL)
+		qse_httpd_server_t* server;
+		qse_httpd_server_xtn_t* server_xtn;
+
+		server = qse_httpd_attachserverstd (httpd, argv[i], QSE_NULL, 0);
+		if (server == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR,
 				QSE_T("Failed to add httpd listener - %s\n"), argv[i]);
 			goto oops;
 		}
+
+		server_xtn = qse_httpd_getserverxtn (httpd, server);
+		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].ptr = QSE_MT("body { background-color:#d0e4fe; font-size: 0.9em; font-family: Ubuntu,'Trebuchet MS',sans-serif; }");
+		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].len = qse_mbslen(server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].ptr);
 	}
 
 	g_httpd = httpd;
