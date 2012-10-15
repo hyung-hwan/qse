@@ -24,7 +24,7 @@ static void xxx (const qse_wchar_t* ptr, qse_size_t len)
 	}
 }
 
-static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
+static int test_main (int argc, qse_char_t* argv[])
 {
 	static const qse_wchar_t* wcs[] =
 	{
@@ -114,10 +114,10 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 	return 0;
 }
 
-int qse_main (int argc, qse_achar_t* argv[], qse_achar_t* envp[])
+int qse_main (int argc, qse_achar_t* argv[])
 {
 #if defined(_WIN32)
-     char locale[100];
+ 	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
 	{
@@ -134,6 +134,6 @@ int qse_main (int argc, qse_achar_t* argv[], qse_achar_t* envp[])
      setlocale (LC_ALL, "");
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
-     return qse_runmainwithenv (argc, argv, envp, test_main);
+     return qse_runmain (argc, argv, test_main);
 }
 
