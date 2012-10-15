@@ -24,27 +24,54 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-typedef void (*qse_task_fnc_t) (void* ctx);
-
 typedef struct qse_task_t qse_task_t;
+typedef struct qse_task_slice_t qse_task_slice_t;
+
+typedef qse_task_slice_t* (*qse_task_fnc_t) (
+	qse_task_t*       task,
+	qse_task_slice_t* slice,
+	void*             ctx
+);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int qse_gettaskid (
+qse_task_t* qse_task_open (
+	qse_mmgr_t* mmgr,
+	qse_size_t  xtnsize	
+);
+
+void qse_task_close (
 	qse_task_t* task
 );
 
-qse_task_t* qse_maketask (
+qse_mmgr_t* qse_task_getmmgr (
+	qse_task_t* task
+);
+
+void* qse_task_getxtn (
+	qse_task_t* task
+);
+
+qse_task_slice_t* qse_task_create (
+	qse_task_t*    task,
 	qse_task_fnc_t fnc,
 	void*          ctx,
-	qse_size_t     stsize
+	qse_size_t     stksize
 );
 
 int qse_task_boot (
-	void
+	qse_task_t*       task,
+	qse_task_slice_t* to
 );
+
+void qse_task_schedule (
+	qse_task_t*       task,
+	qse_task_slice_t* from,
+	qse_task_slice_t* to
+);
+
 
 #ifdef __cplusplus
 }

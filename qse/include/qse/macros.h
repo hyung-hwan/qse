@@ -105,15 +105,14 @@
  * The QSE_OFFSETOF() macro returns the offset of a field from the beginning
  * of a structure.
  */
-#define QSE_OFFSETOF(type,member) \
-	((qse_size_t)&((type*)0)->member)
+#define QSE_OFFSETOF(type,member) ((qse_size_t)&((type*)0)->member)
 
 /**
  * The QSE_ALIGNOF() macro returns the alignment size of a structure.
  * Note that this macro may not work reliably depending on the type given.
  */
-#define QSE_ALIGNOF(type) QSE_OFFSETOF(struct { qse_uint8_t d1; type d2 }, d2)
-	/*(sizeof(struct { qse_uint8_t d1; type d2 }) - sizeof(type))*/
+#define QSE_ALIGNOF(type) QSE_OFFSETOF(struct { qse_uint8_t d1; type d2; }, d2)
+	/*(sizeof(struct { qse_uint8_t d1; type d2; }) - sizeof(type))*/
 
 /**
  * The QSE_TYPE_IS_SIGNED() macro determines if a type is signed. 

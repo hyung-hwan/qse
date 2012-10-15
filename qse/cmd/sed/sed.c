@@ -17,6 +17,7 @@
     You should have received a copy of the GNU Lesser General Public 
     License along with QSE. If not, see <http://www.gnu.org/licenses/>.
  */
+#if 0
 
 #include <qse/sed/std.h>
 #include <qse/cmn/str.h>
@@ -1037,3 +1038,6 @@ int qse_main (int argc, qse_achar_t* argv[])
 
 	return qse_runmain (argc, argv, sed_main);
 }
+#endif
+
+#include "../../samples/cmn/task01.c"

@@ -31,38 +31,36 @@ int qse_runmain (
 	return handler (argc, (qse_char_t**)argv);
 
 #else
+	int i, ret;
+	qse_char_t** v;
+	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
+
+	v = (qse_char_t**) QSE_MMGR_ALLOC (
+		mmgr, (argc + 1) * QSE_SIZEOF(qse_char_t*));
+	if (v == QSE_NULL) return -1;
+
+	for (i = 0; i < argc + 1; i++) v[i] = QSE_NULL;
+
+	for (i = 0; i < argc; i++)
 	{
-		int i, ret;
-		qse_char_t** v;
-		qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
-
-		v = (qse_char_t**) QSE_MMGR_ALLOC (
-			mmgr, (argc + 1) * QSE_SIZEOF(qse_char_t*));
-		if (v == QSE_NULL) return -1;
-
-		for (i = 0; i < argc + 1; i++) v[i] = QSE_NULL;
-
-		for (i = 0; i < argc; i++)
+		v[i]= qse_mbstowcsalldup (argv[i], mmgr);
+		if (v[i] == QSE_NULL)
 		{
-			v[i]= qse_mbstowcsalldup (argv[i], mmgr);
-			if (v[i] == QSE_NULL)
-			{
-				ret = -1;
-				goto oops;
-			}
+			ret = -1;
+			goto oops;
 		}
-
-		ret = handler (argc, v);
-
-	oops:
-		for (i = 0; i < argc + 1; i++)
-		{
-			if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
-		}
-		QSE_MMGR_FREE (mmgr, v);
-
-		return ret;
 	}
+
+	ret = handler (argc, v);
+
+oops:
+	for (i = 0; i < argc + 1; i++)
+	{
+		if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
+	}
+	QSE_MMGR_FREE (mmgr, v);
+
+	return ret;
 #endif
 }
 
@@ -72,50 +70,47 @@ int qse_runmainwithenv (
 {
 #if (defined(QSE_ACHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
     (defined(QSE_ACHAR_IS_WCHAR) && defined(QSE_CHAR_IS_WCHAR))
-	{
-		return handler (argc, (qse_char_t**)argv, (qse_char_t**)envp);
-	}
+	return handler (argc, (qse_char_t**)argv, (qse_char_t**)envp);
 #else
+	int i, ret, envc;
+	qse_char_t** v;
+	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
+
+	if (envp) for (envc = 0; envp[envc]; envc++) ; /* count the number of env items */
+	else envc = 0;
+
+	v = (qse_char_t**) QSE_MMGR_ALLOC (
+		mmgr, (argc + 1 + envc + 1) * QSE_SIZEOF(qse_char_t*));
+	if (v == QSE_NULL) return -1;
+
+	for (i = 0; i < argc + 1 + envc + 1; i++) v[i] = QSE_NULL;
+
+	for (i = 0; i < argc + 1 + envc; i++)
 	{
-		int i, ret, envc;
-		qse_char_t** v;
-		qse_mmgr_t* mmgr = QSE_MMGR_GETDFL ();
+		qse_achar_t* x;
 
-		for (envc = 0; envp[envc]; envc++) ; /* count the number of env items */
+		if (i < argc) x = argv[i];
+		else if (i == argc) continue;
+		else x = envp[i - argc - 1];
 
-		v = (qse_char_t**) QSE_MMGR_ALLOC (
-			mmgr, (argc + 1 + envc + 1) * QSE_SIZEOF(qse_char_t*));
-		if (v == QSE_NULL) return -1;
-
-		for (i = 0; i < argc + 1 + envc + 1; i++) v[i] = QSE_NULL;
-
-		for (i = 0; i < argc + 1 + envc; i++)
+		v[i]= qse_mbstowcsalldup (x, mmgr);
+		if (v[i] == QSE_NULL)
 		{
-			qse_achar_t* x;
-
-			if (i < argc) x = argv[i];
-			else if (i == argc) continue;
-			else x = envp[i - argc - 1];
-
-			v[i]= qse_mbstowcsalldup (x, mmgr);
-			if (v[i] == QSE_NULL)
-			{
-				ret = -1;
-				goto oops;
-			}
+			ret = -1;
+			goto oops;
 		}
-
-		ret = handler (argc, v, &v[argc + 1]);
-
-	oops:
-		for (i = 0; i < argc + 1 + envc + 1; i++)
-		{
-			if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
-		}
-		QSE_MMGR_FREE (mmgr, v);
-
-		return ret;
 	}
+
+	ret = handler (argc, v, &v[argc + 1]);
+
+oops:
+	for (i = 0; i < argc + 1 + envc + 1; i++)
+	{
+		if (v[i] != QSE_NULL) QSE_MMGR_FREE (mmgr, v[i]);
+	}
+	QSE_MMGR_FREE (mmgr, v);
+
+	return ret;
 #endif
 }
 

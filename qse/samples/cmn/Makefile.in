@@ -41,8 +41,8 @@ bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
 	mbwc02$(EXEEXT) nwad01$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) \
 	pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) \
 	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) \
-	slmb01$(EXEEXT) str01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
-	uri01$(EXEEXT) xma$(EXEEXT)
+	slmb01$(EXEEXT) str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) \
+	tre01$(EXEEXT) uri01$(EXEEXT) xma$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -182,6 +182,10 @@ am_str01_OBJECTS = str01.$(OBJEXT)
 str01_OBJECTS = $(am_str01_OBJECTS)
 str01_LDADD = $(LDADD)
 str01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+task01_SOURCES = task01.c
+task01_OBJECTS = task01.$(OBJEXT)
+task01_LDADD = $(LDADD)
+task01_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_time_OBJECTS = time.$(OBJEXT)
 time_OBJECTS = $(am_time_OBJECTS)
 time_LDADD = $(LDADD)
@@ -220,7 +224,7 @@ SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
 	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) $(time_SOURCES) \
+	$(slmb01_SOURCES) $(str01_SOURCES) task01.c $(time_SOURCES) \
 	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
 DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
@@ -231,7 +235,7 @@ DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
 	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
 	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) $(time_SOURCES) \
+	$(slmb01_SOURCES) $(str01_SOURCES) task01.c $(time_SOURCES) \
 	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
@@ -596,6 +600,9 @@ slmb01$(EXEEXT): $(slmb01_OBJECTS) $(slmb01_DEPENDENCIES) $(EXTRA_slmb01_DEPENDE
 str01$(EXEEXT): $(str01_OBJECTS) $(str01_DEPENDENCIES) $(EXTRA_str01_DEPENDENCIES) 
 	@rm -f str01$(EXEEXT)
 	$(LINK) $(str01_OBJECTS) $(str01_LDADD) $(LIBS)
+task01$(EXEEXT): $(task01_OBJECTS) $(task01_DEPENDENCIES) $(EXTRA_task01_DEPENDENCIES) 
+	@rm -f task01$(EXEEXT)
+	$(LINK) $(task01_OBJECTS) $(task01_LDADD) $(LIBS)
 time$(EXEEXT): $(time_OBJECTS) $(time_DEPENDENCIES) $(EXTRA_time_DEPENDENCIES) 
 	@rm -f time$(EXEEXT)
 	$(LINK) $(time_OBJECTS) $(time_LDADD) $(LIBS)
@@ -645,6 +652,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sll.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/slmb01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/task01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/time.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uri01.Po@am__quote@

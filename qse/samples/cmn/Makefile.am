@@ -37,6 +37,7 @@ bin_PROGRAMS = \
 	sll \
 	slmb01 \
 	str01 \
+	task01 \
 	time \
 	tre01 \
 	uri01 \

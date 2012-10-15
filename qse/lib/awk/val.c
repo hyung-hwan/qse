@@ -1244,15 +1244,21 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 		case QSE_AWK_VAL_INT:
 			/*hv = ((qse_awk_val_int_t*)v)->val;*/
-			hv = (qse_long_t)hash (&((qse_awk_val_int_t*)v)->val, QSE_SIZEOF(((qse_awk_val_int_t*)v)->val));
+			hv = (qse_long_t)hash (
+				(qse_uint8_t*)&((qse_awk_val_int_t*)v)->val,
+				QSE_SIZEOF(((qse_awk_val_int_t*)v)->val));
 			break;
 
 		case QSE_AWK_VAL_FLT:
-			hv = (qse_long_t)hash (&((qse_awk_val_flt_t*)v)->val, QSE_SIZEOF(((qse_awk_val_flt_t*)v)->val));
+			hv = (qse_long_t)hash (
+				(qse_uint8_t*)&((qse_awk_val_flt_t*)v)->val,
+				QSE_SIZEOF(((qse_awk_val_flt_t*)v)->val));
 			break;
 
 		case QSE_AWK_VAL_STR:
-			hv = (qse_long_t)hash (((qse_awk_val_str_t*)v)->val.ptr, ((qse_awk_val_str_t*)v)->val.len * QSE_SIZEOF(qse_char_t));
+			hv = (qse_long_t)hash (
+				(qse_uint8_t*)((qse_awk_val_str_t*)v)->val.ptr,
+				((qse_awk_val_str_t*)v)->val.len * QSE_SIZEOF(qse_char_t));
 			break;
 
 		default:
