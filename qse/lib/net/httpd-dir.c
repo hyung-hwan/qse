@@ -24,22 +24,13 @@
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
 
-#if defined(_WIN32)
-	/* TODO: */
-#elif defined(__OS2__)
-	/* TODO: */
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-#	include "../cmn/syscall.h"
-#endif
-
 #include <qse/cmn/stdio.h> /* TODO: remove this */
 
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
 	qse_mcstr_t        path;
+	qse_mcstr_t        css;
 	qse_mcstr_t        qpath;
 	qse_http_version_t version;
 	int                keepalive;
@@ -53,18 +44,23 @@ struct task_dseg_t
 	int                chunked;
 	
 	qse_mcstr_t path;
+	qse_mcstr_t css;
 	qse_mcstr_t qpath;
-	qse_dir_t* handle;
-	qse_dirent_t* dent;
+	qse_ubi_t handle;
+	qse_httpd_dirent_t dent;
 
 #define HEADER_ADDED   (1 << 0)
 #define FOOTER_ADDED   (1 << 1)
 #define FOOTER_PENDING (1 << 2)
 #define DIRENT_PENDING (1 << 3)
+#define DIRENT_NOMORE  (1 << 4)
 	int state;
 
 	qse_size_t  tcount; /* total directory entries */
 	qse_size_t  dcount; /* the number of items in the buffer */
+
+	qse_mchar_t tmbuf[128];
+	qse_mchar_t fszbuf[128];
 
 	qse_mchar_t buf[4096];
 	qse_size_t  bufpos;
@@ -83,7 +79,9 @@ static int task_init_dseg (
 
 	xtn->path.ptr = (qse_mchar_t*)(xtn + 1);
 	qse_mbscpy ((qse_mchar_t*)xtn->path.ptr, arg->path.ptr);
-	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
+	xtn->css.ptr = xtn->path.ptr + xtn->path.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->css.ptr, arg->css.ptr);
+	xtn->qpath.ptr = xtn->css.ptr + xtn->css.len + 1;
 	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
 
 	task->ctx = xtn;
@@ -95,7 +93,7 @@ static void task_fini_dseg (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_httpd_task_t* task)
 {
 	task_dseg_t* ctx = (task_dseg_t*)task->ctx;
-	QSE_CLOSEDIR (ctx->handle);
+	httpd->scb->dir.close (httpd, ctx->handle);
 }
 
 #define SIZE_CHLEN     4 /* the space size to hold the hexadecimal chunk length */
@@ -145,13 +143,13 @@ static int add_footer (task_dseg_t* ctx)
 	{
 		x = snprintf (
 			&ctx->buf[ctx->buflen], ctx->bufrem,
-			QSE_MT("</ul>Total %lu entries</body></html>\r\n0\r\n"), (unsigned long)ctx->tcount);
+			QSE_MT("</table></body></html>\r\n0\r\n"));
 	}
 	else
 	{
 		x = snprintf (
 			&ctx->buf[ctx->buflen], ctx->bufrem,
-			QSE_MT("</ul>Total %lu entries</body></html>"), (unsigned long)ctx->tcount);
+			QSE_MT("</table></body></html>"));
 	}
 	
 	if (x == -1 || x >= ctx->bufrem) 
@@ -254,8 +252,12 @@ static int task_main_dseg (
 /* TODO: html escaping of ctx->qpath.ptr */
 		x = snprintf (
 			&ctx->buf[ctx->buflen], ctx->bufrem,
-			QSE_MT("<html><head></head><body><b>%s</b><ul>%s"), 
-			ctx->qpath.ptr, (is_root? QSE_MT(""): QSE_MT("<li><a href='../'>..</a></li>"))
+			QSE_MT("<html><head>%s%s%s</head><body><b>%s</b><table>%s"), 
+			(ctx->css.len > 0? QSE_MT("<style type='text/css'>"): QSE_MT("")),
+			(ctx->css.len > 0? ctx->css.ptr: QSE_MT("")),
+			(ctx->css.len > 0? QSE_MT("</style>"): QSE_MT("")),
+			ctx->qpath.ptr, 
+			(is_root? QSE_MT(""): QSE_MT("<tr><td><a href='../'>..</a></td><td></td><td></td></tr>"))
 		);
 		if (x == -1 || x >= ctx->bufrem) 
 		{
@@ -273,18 +275,22 @@ static int task_main_dseg (
 		ctx->dcount++;  
 	}
 
-	/*if (!ctx->dent) ctx->dent = QSE_READDIR (ctx->handle); */
 	if (ctx->state & DIRENT_PENDING) 
+	{
 		ctx->state &= ~DIRENT_PENDING;
+	}
 	else 
-		ctx->dent = QSE_READDIR (ctx->handle);
+	{
+		if (httpd->scb->dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
+			ctx->state |= DIRENT_NOMORE;	
+	}
 
 	do
 	{
-		if (!ctx->dent)
+		if (ctx->state & DIRENT_NOMORE)
 		{
-			/* TODO: check if errno has changed from before QSE_READDIR().
-			         and return -1 if so. */ 
+			/* no more directory entry */
+
 			if (add_footer (ctx) <= -1) 
 			{
 				/* failed to add the footer part */
@@ -298,31 +304,55 @@ static int task_main_dseg (
 			else if (ctx->chunked) fill_chunk_length (ctx);
 			break;	
 		}
-		else if (qse_mbscmp (ctx->dent->d_name, QSE_MT(".")) != 0 &&
-		         qse_mbscmp (ctx->dent->d_name, QSE_MT("..")) != 0)
+
+
+		if (qse_mbscmp (ctx->dent.name, QSE_MT(".")) != 0 &&
+		    qse_mbscmp (ctx->dent.name, QSE_MT("..")) != 0)
 		{
 			qse_mchar_t* encname;
+			qse_btime_t bt;
 
 			/* TODO: better buffer management in case there are 
 			 *       a lot of file names to escape. */
-			encname = qse_perenchttpstrdup (ctx->dent->d_name, httpd->mmgr);
+			encname = qse_perenchttpstrdup (ctx->dent.name, httpd->mmgr);
 			if (encname == QSE_NULL)
 			{
 				httpd->errnum = QSE_HTTPD_ENOMEM;
 				return -1;
 			}
 
+qse_printf (QSE_T("ADDING [%hs]\n"), ctx->dent.name);
+
+			qse_localtime (ctx->dent.stat.mtime, &bt);
+			snprintf (ctx->tmbuf, QSE_COUNTOF(ctx->tmbuf),
+				QSE_MT("%04d-%02d-%02d %02d:%02d:%02d"),
+          		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
+				bt.hour, bt.min, bt.sec);
+
+			if (ctx->dent.stat.isdir)
+			{
+				ctx->fszbuf[0] = QSE_MT('\0');
+			}
+			else
+			{
+				qse_fmtuintmaxtombs (
+					ctx->fszbuf, QSE_COUNTOF(ctx->fszbuf),
+					ctx->dent.stat.size, 10, -1, QSE_MT('\0'), QSE_NULL
+				);
+			}
+
 			x = snprintf (
 				&ctx->buf[ctx->buflen], 
 				ctx->bufrem,
-				QSE_MT("<li><a href='%s%s'>%s%s</a></li>"),
+				QSE_MT("<tr><td><a href='%s%s'>%s%s</a></td><td>%s</td><td align='right'>%s</td></tr>"),
 				encname,
-				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT("")),
-				ctx->dent->d_name, /* TODO: html escaping */
-				(ctx->dent->d_type == DT_DIR? QSE_MT("/"): QSE_MT(""))
+				(ctx->dent.stat.isdir? QSE_MT("/"): QSE_MT("")),
+				ctx->dent.name, /* TODO: html escaping */
+				(ctx->dent.stat.isdir? QSE_MT("/"): QSE_MT("")),
+				ctx->tmbuf, ctx->fszbuf
 			);
 
-			if (encname != ctx->dent->d_name) QSE_MMGR_FREE (httpd->mmgr, encname);
+			if (encname != ctx->dent.name) QSE_MMGR_FREE (httpd->mmgr, encname);
 
 			if (x == -1 || x >= ctx->bufrem)
 			{
@@ -355,7 +385,8 @@ static int task_main_dseg (
 			}
 		}
 
-		ctx->dent = QSE_READDIR (ctx->handle);
+		if (httpd->scb->dir.read (httpd, ctx->handle, &ctx->dent) <= 0)
+			ctx->state |= DIRENT_NOMORE;
 	}
 	while (1);
 
@@ -369,12 +400,12 @@ send_dirlist:
 	/* NOTE if (n == 0), it will enter an infinite loop */
 		
 	ctx->bufpos += n;
-	return (ctx->bufpos < ctx->buflen || (ctx->state & FOOTER_PENDING) || ctx->dent)? 1: 0;
+	return (ctx->bufpos < ctx->buflen || (ctx->state & FOOTER_PENDING) || !(ctx->state & DIRENT_NOMORE))? 1: 0;
 }
 
 static qse_httpd_task_t* entask_directory_segment (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, qse_dir_t* handle, task_dir_t* dir)
+	qse_httpd_task_t* pred, qse_ubi_t handle, task_dir_t* dir)
 {
 	qse_httpd_task_t task;
 	task_dseg_t data;
@@ -385,6 +416,7 @@ static qse_httpd_task_t* entask_directory_segment (
 	data.keepalive = dir->keepalive;
 	data.chunked = dir->keepalive;
 	data.path = dir->path;
+	data.css = dir->css;
 	data.qpath = dir->qpath;
 
 	QSE_MEMSET (&task, 0, QSE_SIZEOF(task));
@@ -393,7 +425,7 @@ static qse_httpd_task_t* entask_directory_segment (
 	task.fini = task_fini_dseg;
 	task.ctx = &data;
 
-	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.qpath.len + 1);
+	return qse_httpd_entask (httpd, client, pred, &task, QSE_SIZEOF(data) + data.path.len + 1 + data.css.len + 1 + data.qpath.len + 1);
 }
 
 /*------------------------------------------------------------------------*/
@@ -409,7 +441,9 @@ static int task_init_dir (
 
 	xtn->path.ptr = (qse_mchar_t*)(xtn + 1);
 	qse_mbscpy ((qse_mchar_t*)xtn->path.ptr, arg->path.ptr);
-	xtn->qpath.ptr = xtn->path.ptr + xtn->path.len + 1;
+	xtn->css.ptr = xtn->path.ptr + xtn->path.len + 1;
+	qse_mbscpy ((qse_mchar_t*)xtn->css.ptr, arg->css.ptr);
+	xtn->qpath.ptr = xtn->css.ptr + xtn->css.len + 1;
 	qse_mbscpy ((qse_mchar_t*)xtn->qpath.ptr, arg->qpath.ptr);
 
 	/* switch the context to the extension area */
@@ -423,15 +457,25 @@ static QSE_INLINE int task_main_dir (
 {
 	task_dir_t* dir;
 	qse_httpd_task_t* x;
-	qse_dir_t* handle = QSE_NULL;
+	qse_ubi_t handle;
 
 	dir = (task_dir_t*)task->ctx;
 	x = task;
 
 	if (qse_mbsend (dir->path.ptr, QSE_MT("/")))
 	{
-		handle = QSE_OPENDIR (dir->path.ptr);
-		if (handle)
+		if (httpd->scb->dir.open (httpd, dir->path.ptr, &handle) <= -1)
+		{
+			int http_errnum;
+			http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
+					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
+			x = qse_httpd_entask_error (
+				httpd, client, x, http_errnum,
+				&dir->version, dir->keepalive);
+	
+			return (x == QSE_NULL)? -1: 0;
+		}
+		else
 		{
 			x = qse_httpd_entaskformat (
 				httpd, client, x,
@@ -445,20 +489,8 @@ static QSE_INLINE int task_main_dir (
 			if (x) x = entask_directory_segment (httpd, client, x, handle, dir);
 			if (x) return 0;
 
-			QSE_CLOSEDIR (handle);
+			httpd->scb->dir.close (httpd, handle);
 			return -1;
-		}
-		else
-		{
-			int http_errnum;
-			http_errnum = (errno == ENOENT)? 404:
-					    (errno == EACCES)? 403: 500;
-			x = qse_httpd_entask_error (
-				httpd, client, x, http_errnum,
-				&dir->version, dir->keepalive);
-	
-			QSE_CLOSEDIR (handle);
-			return (x == QSE_NULL)? -1: 0;
 		}
 	}
 	else
@@ -481,14 +513,19 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred,
 	const qse_mchar_t* path,
+	const qse_mchar_t* css,
 	qse_htre_t* req)
 {
 	qse_httpd_task_t task;
 	task_dir_t data;
 
+	if (css == QSE_NULL) css = QSE_MT("");
+
 	QSE_MEMSET (&data, 0, QSE_SIZEOF(data));
 	data.path.ptr = path;
 	data.path.len = qse_mbslen(data.path.ptr);
+	data.css.ptr = css;
+	data.css.len = qse_mbslen(data.css.ptr);
 	data.qpath.ptr = qse_htre_getqpath(req);
 	data.qpath.len = qse_mbslen(data.qpath.ptr);
 	data.version = *qse_htre_getversion(req);
@@ -500,6 +537,6 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	task.ctx = &data;
 
 	return qse_httpd_entask (httpd, client, pred, &task,
-		QSE_SIZEOF(task_dir_t) + data.path.len + 1 + data.qpath.len + 1);
+		QSE_SIZEOF(task_dir_t) + data.path.len + 1 + data.css.len + 1 +  data.qpath.len + 1);
 }
 

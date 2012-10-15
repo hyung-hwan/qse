@@ -65,6 +65,7 @@ enum qse_httpd_option_t
 typedef struct qse_httpd_stat_t qse_httpd_stat_t;
 struct qse_httpd_stat_t
 {
+	int        isdir;
 	qse_long_t dev;
 	qse_long_t ino;
 	qse_foff_t size;
@@ -122,6 +123,14 @@ typedef int (*qse_httpd_muxcb_t) (
 	int          mask, /* ORed of qse_httpd_mux_mask_t */
 	void*        cbarg
 );
+
+typedef struct qse_httpd_dirent_t qse_httpd_dirent_t;
+
+struct qse_httpd_dirent_t
+{
+	qse_mchar_t*     name;
+	qse_httpd_stat_t stat;
+};
 
 typedef struct qse_httpd_scb_t qse_httpd_scb_t;
 struct qse_httpd_scb_t
@@ -193,6 +202,17 @@ struct qse_httpd_scb_t
 
 	struct
 	{
+		int (*open) (
+			qse_httpd_t* httpd, const qse_mchar_t* path, 
+			qse_ubi_t* handle);
+		void (*close) (qse_httpd_t* httpd, qse_ubi_t handle);
+		int (*read) (
+			qse_httpd_t* httpd, qse_ubi_t handle,
+			qse_httpd_dirent_t* ent);
+	} dir;
+
+	struct
+	{
 		void (*close) (
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);
@@ -225,6 +245,7 @@ struct qse_httpd_scb_t
 			qse_httpd_t* httpd,
 			qse_httpd_client_t* client);  /* optional */
 	} client;
+
 };
 
 typedef struct qse_httpd_rcb_t qse_httpd_rcb_t;
@@ -363,6 +384,7 @@ struct qse_httpd_rsrc_t
 		struct
 		{
 			const qse_mchar_t* path;
+			const qse_mchar_t* css;
 		} dir;
 
 		struct
@@ -459,6 +481,8 @@ enum qse_httpd_server_xtn_cfg_idx_t
 	QSE_HTTPD_SERVER_XTN_CFG_USERNAME,
 	QSE_HTTPD_SERVER_XTN_CFG_PASSWORD,
 	QSE_HTTPD_SERVER_XTN_CFG_BASICAUTH,
+	QSE_HTTPD_SERVER_XTN_CFG_DIRCSS, /* can't be too long due to internal buffer size  */
+	QSE_HTTPD_SERVER_XTN_CFG_ERRORCSS,
 	QSE_HTTPD_SERVER_XTN_CFG_MAX
 };
 
@@ -680,6 +704,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        name,
+	const qse_mchar_t*        css,
 	qse_htre_t*               req
 );
 

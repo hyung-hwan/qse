@@ -75,6 +75,7 @@
 #define SERVER_XTN_CFG_USERNAME  QSE_HTTPD_SERVER_XTN_CFG_USERNAME
 #define SERVER_XTN_CFG_PASSWORD  QSE_HTTPD_SERVER_XTN_CFG_PASSWORD
 #define SERVER_XTN_CFG_BASICAUTH QSE_HTTPD_SERVER_XTN_CFG_BASICAUTH
+#define SERVER_XTN_CFG_DIRCSS    QSE_HTTPD_SERVER_XTN_CFG_DIRCSS
 /* ------------------------------------------------------------------- */
 
 #if defined(_WIN32)
@@ -1042,20 +1043,14 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 
 /* ------------------------------------------------------------------- */
 
-static int file_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
-{
-	if (access (path, X_OK) == -1)
-		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
-	return 1; /* yes */
-}
 
-static int file_stat (
-	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
+static int stat_file (
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst, int regonly)
 {
 	struct stat st;
 
 /* TODO: lstat? or stat? */
-	if (stat (path, &st) <= -1)
+	if (QSE_STAT (path, &st) <= -1)
      {
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
@@ -1063,7 +1058,7 @@ static int file_stat (
 
 	/* stating for a file. it should be a regular file.
 	 * i don't allow other file types. */
-	if (!S_ISREG(st.st_mode))
+	if (regonly && !S_ISREG(st.st_mode))
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_EACCES);
 		return -1;
@@ -1071,6 +1066,7 @@ static int file_stat (
 
 	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 
+	hst->isdir = S_ISDIR(st.st_mode);
 	hst->dev = st.st_dev;
 	hst->ino = st.st_ino;
 	hst->size = st.st_size;
@@ -1083,6 +1079,21 @@ static int file_stat (
 #endif
 
 	return 0;
+}
+
+/* ------------------------------------------------------------------- */
+
+static int file_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
+{
+	if (access (path, X_OK) == -1)
+		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
+	return 1; /* yes */
+}
+
+static int file_stat (
+	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
+{
+	return stat_file (httpd, path, hst, 1);	
 }
 
 static int file_ropen (
@@ -1154,6 +1165,93 @@ static qse_ssize_t file_write (
 	const qse_mchar_t* buf, qse_size_t len)
 {
 	return QSE_WRITE (handle.i, buf, len);
+}
+
+/* ------------------------------------------------------------------- */
+
+typedef struct dir_t dir_t;
+struct dir_t
+{
+	qse_mchar_t* path;
+	qse_dir_t* dp;
+};
+
+static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
+{
+	dir_t* d;
+
+	d = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*d));
+	if (d == QSE_NULL) 
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	d->path = qse_mbsdup (path, httpd->mmgr);
+	if (d->path == QSE_NULL)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		QSE_MMGR_FREE (httpd->mmgr, d);
+		return -1;
+	}
+
+	d->dp = QSE_OPENDIR (path);
+	if (d->dp == QSE_NULL)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		QSE_MMGR_FREE (httpd->mmgr, d->path);
+		QSE_MMGR_FREE (httpd->mmgr, d);
+		return -1;
+	}
+		
+	handle->ptr = d;
+	return 0;
+}
+
+static void dir_close (qse_httpd_t* httpd, qse_ubi_t handle)
+{
+	dir_t* d;
+
+	d = (dir_t*)handle.ptr;
+
+	QSE_CLOSEDIR (d->dp);
+
+	QSE_MMGR_FREE (httpd->mmgr, d->path);
+	QSE_MMGR_FREE (httpd->mmgr, d);
+}
+
+static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* dirent)
+{
+	dir_t* d;
+	qse_dirent_t* de;
+	qse_mchar_t* fpath;
+	int n;
+
+	d = (dir_t*)handle.ptr;
+
+	errno = 0;
+	de = QSE_READDIR (d->dp);
+	if (de == QSE_NULL) 
+	{
+		if (errno == 0) return 0;
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		return -1;
+	}
+
+	/* i assume that d->path ends with a slash */
+	fpath = qse_mbsdup2 (d->path, de->d_name, httpd->mmgr);
+	if (fpath == QSE_NULL)
+	{
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	n = stat_file (httpd, fpath, &dirent->stat, 0);	
+	QSE_MMGR_FREE (httpd->mmgr, fpath);
+	if (n <= -1) QSE_MEMSET (dirent, 0, QSE_SIZEOF(*dirent));
+
+	dirent->name = de->d_name;
+	return 1;
 }
 
 /* ------------------------------------------------------------------- */
@@ -1520,6 +1618,13 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	  file_write
 	},
 
+	/* directory operation */
+	{ dir_open,
+	  dir_close,
+	  dir_read
+	},
+	
+
 	/* client connection */
 	{ client_close,
 	  client_shutdown,
@@ -1749,6 +1854,7 @@ auth_ok:
 
 		target->type = QSE_HTTPD_RSRC_DIR;
 		target->u.dir.path = xpath;
+		target->u.dir.css = server_xtn->cfg[SERVER_XTN_CFG_DIRCSS].ptr;
 	}
 	else
 	{
