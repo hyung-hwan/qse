@@ -155,12 +155,12 @@ static int test_main (int argc, qse_char_t* argv[], qse_char_t* envp[])
 int qse_main (int argc, qse_achar_t* argv[], qse_achar_t* envp[])
 {
 #if defined(_WIN32)
-     char locale[100];
+	char locale[100];
 	UINT codepage = GetConsoleOutputCP();	
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgr (qse_utf8cmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
 	}
 	else
 	{

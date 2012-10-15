@@ -19,250 +19,254 @@
  */
 
 #include <qse/cmn/task.h>
+#include "mem.h"
 
 #if defined(_WIN64)
 #	include <windows.h>
 #else 
+#	include <setjmp.h>
 #	if defined(HAVE_UCONTEXT_H)
 #		include <ucontext.h>
 #	endif
-#	include <setjmp.h>
+#	if defined(HAVE_MAKECONTEXT) && defined(HAVE_SWAPCONTEXT) && \
+	   defined(HAVE_GETCONTEXT) && defined(HAVE_SETCONTEXT)
+#		define USE_UCONTEXT
+#	endif
 #endif
 
-typedef struct tmgr_t tmgr_t;
-struct tmgr_t
+struct qse_task_t
 {
-	int count;
-	int idinc;
+	qse_mmgr_t* mmgr;
 
-	qse_task_t* dead;
-	qse_task_t* current;
-	qse_task_t* head;
-	qse_task_t* tail;
+	qse_task_slice_t* dead;
+	qse_task_slice_t* current;
+
+	qse_size_t count;
+	qse_task_slice_t* head;
+	qse_task_slice_t* tail;
 
 #if defined(_WIN64)
 	void* fiber;
-#elif defined(HAVE_SWAPCONTEXT)
+#elif defined(USE_UCONTEXT)
 	ucontext_t uctx;
 #else
 	jmp_buf backjmp;
 #endif
 };
 
-struct qse_task_t
+struct qse_task_slice_t
 {
-     /* queue */
-	tmgr_t* tmgr;
-
-	int id;
-
-	qse_task_fnc_t fnc;
-	void* ctx;
-	qse_size_t stsize;
-
 #if defined(_WIN64)
 	void* fiber;
-#elif defined(HAVE_SWAPCONTEXT)
+#elif defined(USE_UCONTEXT)
 	ucontext_t uctx;	
 #else
 	jmp_buf jmpbuf;
 #endif
 
-	qse_task_t* prev;
-	qse_task_t* next;
+	qse_task_t* task;
+
+	int id;
+	qse_task_fnc_t fnc;
+	void* ctx;
+	qse_size_t stksize;
+
+	qse_task_slice_t* prev;
+	qse_task_slice_t* next;
 };
 
-static tmgr_t* tmgr;
+int qse_task_init (qse_task_t* task, qse_mmgr_t* mmgr);
+void qse_task_fini (qse_task_t* task);
 
-qse_task_t* qse_task_alloc (qse_task_fnc_t fnc, void* ctx, qse_size_t stsize)
+static void purge_slice (qse_task_t* task, qse_task_slice_t* slice);
+static void purge_dead_slices (qse_task_t* task);
+static void purge_current_slice (qse_task_slice_t* slice, qse_task_slice_t* to);
+
+qse_task_t* qse_task_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_task_t* task;
 
-	task = malloc (QSE_SIZEOF(*task) + stsize);
+	task = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*task) + xtnsize);
 	if (task == QSE_NULL) return QSE_NULL;
-
-	//QSE_MEMSET (task, 0, QSE_SIZEOF(*task));
-	QSE_MEMSET (task, 0, QSE_SIZEOF(*task) + stsize);
-	task->tmgr = tmgr;
-	task->fnc = fnc;
-	task->ctx = ctx;
-	task->stsize = stsize;
-
-	if (tmgr->head)
+	
+	if (qse_task_init (task, mmgr) <= -1)
 	{
-		task->next= tmgr->head;
-		tmgr->head->prev = task;
-		tmgr->head = task;
-	}
-	else
-	{
-		tmgr->head = task;
-		tmgr->tail = task;
+		QSE_MMGR_FREE (task->mmgr, task);
+		return QSE_NULL;
 	}
 
-	task->id = tmgr->idinc;
-	tmgr->count++;
-	tmgr->idinc++;
-
+	QSE_MEMSET (task + 1, 0, xtnsize);
 	return task;
 }
 
-static void purge_dead_tasks (void)
+void qse_task_close (qse_task_t* task)
 {
-	qse_task_t* x;
+	qse_task_fini (task);
+	QSE_MMGR_FREE (task->mmgr, task);
+}
 
-	while (tmgr->dead)
+int qse_task_init (qse_task_t* task, qse_mmgr_t* mmgr)
+{
+	QSE_MEMSET (task, 0, QSE_SIZEOF(*task));
+	task->mmgr = mmgr;
+	return 0;
+}
+
+void qse_task_fini (qse_task_t* task)
+{
+	QSE_ASSERT (task->dead == QSE_NULL);
+	QSE_ASSERT (task->current == QSE_NULL);
+
+	if (task->count > 0)
 	{
-		x = tmgr->dead;
-		tmgr->dead = x->next;
-#if defined(_WIN64)
-		DeleteFiber (x->fiber);
-#endif
-		free (x);
+		/* am i closing after boot failure? */
+		qse_task_slice_t* slice, * next;
+
+		slice = task->head;
+		while (slice)
+		{
+			next = slice->next;
+			purge_slice (task, slice);
+			slice = next;	
+		}
+			
+		task->count = 0;
+		task->head = QSE_NULL;
+		task->tail = QSE_NULL;
 	}
 }
 
-void qse_task_schedule (void)
+qse_mmgr_t* qse_task_getmmgr (qse_task_t* task)
 {
-	qse_task_t* current;
+	return task->mmgr;
+}
 
-	current = tmgr->current; /* old current */
-	tmgr->current = current->next? current->next: tmgr->head;
-		
-#if defined(_WIN64)
-	/* current->fiber is handled by SwitchToFiber() implicitly */
-	SwitchToFiber (tmgr->current->fiber);
-	purge_dead_tasks ();
-#elif defined(HAVE_SWAPCONTEXT)
-	swapcontext (&current->uctx, &tmgr->current->uctx);
-	purge_dead_tasks ();
-#else
-//printf ("switch from %d to %d\n", current->id, tmgr->current->id);
-	if (setjmp (current->jmpbuf) != 0) 
+void* qse_task_getxtn (qse_task_t* task)
+{
+	return (void*)(task + 1);
+}
+
+static qse_task_slice_t* alloc_slice (
+	qse_task_t* task, qse_task_fnc_t fnc,
+	void* ctx, qse_size_t stksize)
+{
+	qse_task_slice_t* slice;
+
+	slice = QSE_MMGR_ALLOC (task->mmgr, QSE_SIZEOF(*slice) + stksize);
+	if (slice == QSE_NULL) return QSE_NULL;
+
+	QSE_MEMSET (slice, 0, QSE_SIZEOF(*slice));
+	slice->task = task;
+	slice->fnc = fnc;
+	slice->ctx = ctx;
+	slice->stksize = stksize;
+
+	return slice;
+}
+
+static void link_task (qse_task_t* task, qse_task_slice_t* slice)
+{
+	if (task->head)
 	{
-		purge_dead_tasks ();
-		return;
+		slice->next = task->head;
+		task->head->prev = slice;
+		task->head = slice;
 	}
-	longjmp (tmgr->current->jmpbuf, 1);
-#endif
-}
-
-static void purge_current_task (void)
-{
-	qse_task_t* current;
-
-	if (tmgr->count == 1)
+	else
 	{
-		/* to purge later */
-		tmgr->current->next = tmgr->dead;
-		tmgr->dead = tmgr->current;
-
-		tmgr->current = QSE_NULL;
-		tmgr->head = QSE_NULL;
-		tmgr->tail = QSE_NULL;
-		tmgr->count = 0;
-		tmgr->idinc = 0;
-		
-#if defined(_WIN64)
-		SwitchToFiber (tmgr->fiber);
-#elif defined(HAVE_SWAPCONTEXT)
-		setcontext (&tmgr->uctx);
-#else
-		longjmp (tmgr->backjmp, 1);
-#endif
-		assert (!"must not reach here....");
+		task->head = slice;
+		task->tail = slice;
 	}
-	
-	current = tmgr->current;
-	tmgr->current = current->next? current->next: tmgr->head;
 
-	if (current->prev) current->prev->next = current->next;
-	if (current->next) current->next->prev = current->prev;
-	if (current == tmgr->head) tmgr->head = current->next;
-	if (current == tmgr->tail) tmgr->tail = current->prev;
-	tmgr->count--;
-
-	/* to purge later */
-	current->next = tmgr->dead;
-	tmgr->dead = current;
+	task->count++;
+}
 
 #if defined(_WIN64)
-	SwitchToFiber (tmgr->current->fiber);
-#elif defined(HAVE_SWAPCONTEXT)
-	setcontext (&tmgr->current->uctx);
+#	define __CALL_BACK__ __stdcall
 #else
-	longjmp (tmgr->current->jmpbuf, 1);
+#	define __CALL_BACK__
 #endif
-}
 
-#if defined(_WIN64)
-static void __stdcall execute_current_task (void* task)
+static void __CALL_BACK__ execute_current_slice (qse_task_slice_t* slice)
 {
-	assert (tmgr->current != QSE_NULL);
-	tmgr->current->fnc (tmgr->current->ctx);
-	purge_current_task ();
-}
-#else
+	qse_task_slice_t* to;
 
-static void execute_current_task (void)
-{
-	assert (tmgr->current != QSE_NULL);
-
-	tmgr->current->fnc (tmgr->current->ctx);
+	QSE_ASSERT (slice->task->current == slice);
+	to = slice->fnc (slice->task, slice, slice->ctx);
 
 	/* the task function is now terminated. we need to
-	 * purge it from the task list */
-	purge_current_task ();
+	 * purge it from the slice list and switch to the next
+	 * slice. */
+	purge_current_slice (slice, to);
+	QSE_ASSERT (!"must never reach here...");
 }
-#endif
-
-static qse_task_t* xxtask;
-static void* xxoldsp;
 
 #if defined(__WATCOMC__)
 /* for watcom, i support i386/32bit only */
-extern void* set_sp (void*);
-#pragma aux set_sp = \
-	"xchg eax, esp"  \
+
+extern void* prepare_sp (void*);
+#pragma aux prepare_sp = \
+	"mov dword ptr[eax+4], esp" \
+	"mov esp, eax" \
+	"mov eax, dword ptr[esp+0]" \
 	parm [eax] value [eax] modify [esp]
+
+extern void* restore_sp (void);
+#pragma aux restore_sp = \
+	"mov esp, dword ptr[esp+4]" \
+	modify [esp]
+
+extern void* get_slice (void);
+#pragma aux get_slice = \
+	"mov eax, dword ptr[esp+0]" \
+	value [eax]
+
 #endif
 
-qse_task_t* qse_maketask (qse_task_fnc_t fnc, void* ctx, qse_size_t stsize)
+qse_task_slice_t* qse_task_create (
+	qse_task_t* task, qse_task_fnc_t fnc,
+	void* ctx, qse_size_t stksize)
 {
-	qse_task_t* task;
-	void* newsp;
+	qse_task_slice_t* slice;
+	register void* tmp;
 
+	stksize = ((stksize + QSE_SIZEOF(void*) - 1) / QSE_SIZEOF(void*)) * QSE_SIZEOF(void*);
 
 #if defined(_WIN64)  
-	task = qse_task_alloc (fnc, ctx, 0);
-	if (task == QSE_NULL) return QSE_NULL;
+	slice = alloc_slice (task, fnc, ctx, 0);
+	if (slice == QSE_NULL) return QSE_NULL;
 
-	task->fiber = CreateFiberEx (stsize, stsize, FIBER_FLAG_FLOAT_SWITCH, execute_current_task, QSE_NULL);
-	if (task->fiber == QSE_NULL)
+	slice->fiber = CreateFiberEx (
+		stksize, stksize, FIBER_FLAG_FLOAT_SWITCH, 
+		execute_current_slice, slice);
+	if (slice->fiber == QSE_NULL)
 	{
-/* TODO: delete task */
+		QSE_MMGR_FREE (task->mmgr, slice);
 		return QSE_NULL;
 	}
 
-#elif defined(HAVE_SWAPCONTEXT)
+#elif defined(USE_UCONTEXT)
 
-	task = qse_task_alloc (fnc, ctx, stsize);
-	if (task == QSE_NULL) return QSE_NULL;
+	slice = alloc_slice (task, fnc, ctx, stksize);
+	if (slice == QSE_NULL) return QSE_NULL;
 	
-	if (getcontext (&task->uctx) <= -1)
+	if (getcontext (&slice->uctx) <= -1)
 	{
-/* TODO: delete task */
+		QSE_MMGR_FREE (task->mmgr, slice);
 		return QSE_NULL;
 	}
-	task->uctx.uc_stack.ss_sp = task + 1;
-	task->uctx.uc_stack.ss_size = stsize;
-	task->uctx.uc_link = QSE_NULL;
-	makecontext (&task->uctx, execute_current_task, 0);
+	slice->uctx.uc_stack.ss_sp = slice + 1;
+	slice->uctx.uc_stack.ss_size = stksize;
+	slice->uctx.uc_link = QSE_NULL;
+	makecontext (&slice->uctx, execute_current_slice, 1, slice);
 
 #else
 
-	task = qse_task_alloc (fnc, ctx, stsize);
-	if (task == QSE_NULL) return QSE_NULL;
+	if (stksize < QSE_SIZEOF(void*) * 3) 
+		stksize = QSE_SIZEOF(void*) * 3; /* for t1 & t2 */
+
+	slice = alloc_slice (task, fnc, ctx, stksize);
+	if (slice == QSE_NULL) return QSE_NULL;
 
 	/* setjmp() doesn't allow different stacks for
 	 * each execution content. let me use some assembly
@@ -271,71 +275,65 @@ qse_task_t* qse_maketask (qse_task_fnc_t fnc, void* ctx, qse_size_t stsize)
 	 *
 	 * this stack is used for the task function when
 	 * longjmp() is made. */
-	xxtask = task;
-	newsp = ((qse_uint8_t*)(task + 1)) + stsize - QSE_SIZEOF(void*);
+	tmp = ((qse_uint8_t*)(slice + 1)) + stksize - QSE_SIZEOF(void*);
+
+	tmp = (qse_uint8_t*)tmp - QSE_SIZEOF(void*);
+	*(void**)tmp = NULL; /* t1 */
+
+	tmp = (qse_uint8_t*)tmp - QSE_SIZEOF(void*);
+	*(void**)tmp = slice; /* t2 */
 
 #if defined(__WATCOMC__)
 
-	xxoldsp = set_sp (newsp);
+	tmp = prepare_sp (tmp);
 
 #elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
 
-	/*
 	__asm__ volatile (
-		"xchgq %0, %%rsp\n"
-		: "=r"(xxoldsp)
-		: "0"(newsp) 
-		: "%rsp"
-	);
-	*/
-
-	__asm__ volatile (
-		"movq %%rsp, %0\n\t" 
-		"movq %1, %%rsp\n" 
-		: "=m"(xxoldsp)
-		: "r"(newsp)
+		"movq %%rsp, 8(%1)\n\t" /* t1 = %rsp */
+		"movq %1, %%rsp\n\t"    /* %rsp = tmp */
+		"movq 0(%%rsp), %0\n"   /* tmp = t2 */
+		: "=r"(tmp)
+		: "0"(tmp)
 		: "%rsp", "memory"
 	);
 
 #elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+
 	__asm__ volatile (
-		"xchgl %0, %%esp\n"
-		: "=r"(xxoldsp)
-		: "0"(newsp)
-		: "%esp"
+		"movl %%esp, 4(%1)\n\t"  /* t1 = %esp */
+		"movl %1, %%esp\n\t"     /* %esp = tmp */
+		"movl 0(%%esp), %0\n"    /* tmp = t2 */
+		: "=r"(tmp)
+		: "0"(tmp)
+		: "%esp", "memory"
 	);
+
 #elif defined(__GNUC__) && (defined(__mips) || defined(mips))
+
 	__asm__ volatile (
-		"sw $sp, %0\n\t" /* store $sp to xxoldsp */
-		"move $sp, %1\n" /* move the register content for newsp to $sp */
-		: "=m"(xxoldsp)
-		: "r"(newsp)
+ 		"sw $sp, 4(%1)\n\t"   /* t1 = $sp */
+		"move $sp, %1\n\t"    /* %sp = tmp */
+		"lw %0, 0($sp)\n"     /* tmp = t2 */
+		: "=r"(tmp)
+		: "0"(tmp)
 		: "$sp", "memory"
 	);
-	/*
-	__asm__ volatile (
-		"move %0, $sp\n\t"
-		"move $sp, %1\n"
-		: "=&r"(xxoldsp)
-		: "r"(newsp)
-		: "$sp", "memory"
-	);
-	*/
 
 #elif defined(__GNUC__) && defined(__arm__)
 	__asm__ volatile (
-		"str sp, %0\n\t" 
-		"mov sp, %1\n"
-		: "=m"(xxoldsp)
-		: "r"(newsp)
+		"str sp, [%1, #4]\n\t"  /* t1 = sp */
+		"mov sp, %1\n"          /* sp = tmp */
+		"ldr %0, [sp, #0]\n"     /* tmp = t2 */
+		: "=r"(tmp)
+		: "0"(tmp)
 		: "sp", "memory"
 	);
 
-/* TODO: support more architecture */
 #else
+	/* TODO: support more architecture */
 
-	/* TODO: destroy task */
-	//tmgr->errnum = QSE_TMGR_ENOIMPL;
+	QSE_MMGR_FREE (task->mmgr, task);
 	return QSE_NULL;
 
 #endif /* __WATCOMC__ */
@@ -349,112 +347,254 @@ qse_task_t* qse_maketask (qse_task_fnc_t fnc, void* ctx, qse_size_t stsize)
 	 * this approach makes this function thread-unsafe.
 	 */
 
-	/* when qse_maketask() is called,
+	/* when qse_task_task_create() is called,
 	 * setjmp() saves the context and return 0.
 	 *
 	 * subsequently, when longjmp() is made
 	 * for this saved context, setjmp() returns
 	 * a non-zero value. 
 	 */
-	if (setjmp (xxtask->jmpbuf) != 0)
+	if (setjmp (((qse_task_slice_t*)tmp)->jmpbuf) != 0)
 	{
 		/* longjmp() is made to here. */
-		execute_current_task ();
-		assert (!"must never reach here....\n");
+#if defined(__WATCOMC__)
+		tmp = get_slice ();
+
+#elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
+		__asm__ volatile (
+			"movq 0(%%rsp), %0\n"  /* tmp = t2 */
+			: "=r"(tmp)
+		);
+#elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+		__asm__ volatile (
+			"movl 0(%%esp), %0\n"  /* tmp = t2 */
+			: "=r"(tmp)
+		);
+#elif defined(__GNUC__) && (defined(__mips) || defined(mips))
+		__asm__ volatile (
+			"lw %0, 0($sp)\n"    /* tmp = t2 */
+			: "=r"(tmp)
+		);
+#elif defined(__GNUC__) && defined(__arm__)
+		__asm__ volatile (
+			"ldr %0, [sp, #0]\n"    /* tmp = t2 */
+			: "=r"(tmp)
+		);
+#endif /* __WATCOMC__ */
+
+		execute_current_slice ((qse_task_slice_t*)tmp);
+		QSE_ASSERT (!"must never reach here....\n");
 	}
 
 	/* restore the stack pointer once i finish saving the longjmp() context.
-	 * this part is reached only when qse_maketask() is invoked. */
+	 * this part is reached only when qse_task_task_create() is invoked. */
 #if defined(__WATCOMC__)
 
-	set_sp (xxoldsp);
+	restore_sp ();
 
 #elif defined(__GNUC__) && (defined(__x86_64) || defined(__amd64))
+	/* i assume that %rsp didn't change after the call to setjmp() */
 	__asm__ volatile (
-		"movq %0, %%rsp\n"
-		: 
-		: "m"(xxoldsp) /*"r"(xxoldsp)*/
-		: "%rsp" 
+		"movq 8(%%rsp), %%rsp\n" /* %rsp = t1 */
+		:
+		:
+		: "%rsp"
 	);
 
 #elif defined(__GNUC__) && (defined(__i386) || defined(i386))
+
 	__asm__ volatile (
-		"movl %0, %%esp\n" 
-		: 
-		: "r"(xxoldsp)
-		: "%esp" 
+		"movl 4(%%esp), %%esp\n" /* %esp = t1 */
+		:
+		:
+		: "%esp"
 	);
 
 #elif defined(__GNUC__) && (defined(__mips) || defined(mips))
+
 	__asm__ volatile (
-		"lw $sp, %0\n" /*"move $sp, %0\n" */
-		: 
-		: "m"(xxoldsp) /* "r"(xxoldsp) */
+		"lw $sp, 4($sp)\n" /* $sp = t1 */
+		:
+		:
 		: "$sp"
 	);
+
 #elif defined(__GNUC__) && defined(__arm__)
 	__asm__ volatile (
-		"ldr sp, %0\n" 
-		: 
-		: "m"(xxoldsp)
+		"ldr sp, [sp, #4]\n"  /* sp = t1 */
+		:
+		:
 		: "sp"
 	);
+
 #endif /* __WATCOMC__ */
 
 #endif
 
-	return task;
+	link_task (task, slice);
+	return slice;
 }
 
-int qse_gettaskid (qse_task_t* task)
+int qse_task_boot (qse_task_t* task, qse_task_slice_t* to)
 {
-	return task->id;
-}
+	QSE_ASSERT (task->current == QSE_NULL);
 
-int qse_task_boot (void)
-{
-	if (tmgr->count <= 0) return -1;
+	if (to == QSE_NULL) to = task->head; 
 
 #if defined(_WIN64)
-	tmgr->fiber = ConvertThreadToFiberEx (QSE_NULL, FIBER_FLAG_FLOAT_SWITCH);
-	if (tmgr->fiber == QSE_NULL) 
-	{
-/*TODO: destroy all the tasks created */
-		return -1;
-	}
+	task->fiber = ConvertThreadToFiberEx (QSE_NULL, FIBER_FLAG_FLOAT_SWITCH);
+	if (task->fiber == QSE_NULL) return -1;
 
-	tmgr->current = tmgr->tail;
-	SwitchToFiber (tmgr->current->fiber);
+	task->current = to;
+	SwitchToFiber (task->current->fiber);
 	ConvertFiberToThread ();
 
-#elif defined(HAVE_SWAPCONTEXT)
+#elif defined(USE_UCONTEXT)
 
-	tmgr->current = tmgr->tail;
-	if (swapcontext (&tmgr->uctx, &tmgr->current->uctx) <= -1)
+	task->current = to;
+	if (swapcontext (&task->uctx, &task->current->uctx) <= -1) 
 	{
-/*TODO: destroy all the tasks created */
+		task->current = QSE_NULL;
 		return -1;
 	}
 
 #else
-	if (setjmp (tmgr->backjmp) != 0) 
+	if (setjmp (task->backjmp) != 0) 
 	{
 		/* longjmp() back */
 		goto done;
 	}
 	
-	tmgr->current = tmgr->tail;
-	longjmp (tmgr->current->jmpbuf, 1);
-	assert (!"must never reach here");
+	task->current = to;
+	longjmp (task->current->jmpbuf, 1);
+	QSE_ASSERT (!"must never reach here");
 
 done:
 #endif
 
-	assert (tmgr->current == QSE_NULL);
-	assert (tmgr->count == 0);
+	QSE_ASSERT (task->current == QSE_NULL);
+	QSE_ASSERT (task->count == 0);
 
-	purge_dead_tasks ();
-	printf ("END OF TASK_BOOT...\n");
+	if (task->dead) purge_dead_slices (task);
 	return 0;
+}
+
+/* NOTE for __WATCOMC__.
+   when the number of parameters are more than 2 for qse_task_schedule(),
+   this setjmp()/longjmp() based tasking didn't work.
+
+   if i change this to
+void qse_task_schedule (qse_task_slice_t* from, qse_task_slice_t* to)
+{
+	qse_task_t* task = from->task
+	....
+}
+
+   it worked. i stopped investigating this problem. so i don't know the
+   real cause of this problem. let me get back to this later when i have
+   time for this.
+*/
+
+void qse_task_schedule (
+	qse_task_t* task, qse_task_slice_t* from, qse_task_slice_t* to)
+{
+	QSE_ASSERT (from != QSE_NULL);
+
+	if (to == QSE_NULL)
+	{
+		/* round-robin if the target is not specified */
+		to = from->next? from->next: task->head;
+	}
+
+	QSE_ASSERT (task == to->task);
+	QSE_ASSERT (task == from->task);
+	QSE_ASSERT (task->current == from);
+
+	if (to == from) return;
+	task->current = to;
+
+#if defined(_WIN64)
+	/* current->fiber is handled by SwitchToFiber() implicitly */
+	SwitchToFiber (to->fiber);
+	if (task->dead) purge_dead_slices (task);
+#elif defined(USE_UCONTEXT)
+	swapcontext (&from->uctx, &to->uctx);
+	if (task->dead) purge_dead_slices (task);
+#else
+	if (setjmp (from->jmpbuf) != 0) 
+	{
+		if (task->dead) purge_dead_slices (task);
+		return;
+	}
+	longjmp (to->jmpbuf, 1);
+#endif
+}
+
+static void purge_dead_slices (qse_task_t* task)
+{
+	qse_task_slice_t* slice;
+
+	while (task->dead)
+	{
+		slice = task->dead;
+		task->dead = slice->next;
+		purge_slice (task, slice);
+	}
+}
+
+static void purge_slice (qse_task_t* task, qse_task_slice_t* slice)
+{
+#if defined(_WIN64)
+	if (slice->fiber) DeleteFiber (slice->fiber);
+#endif
+	QSE_MMGR_FREE (task->mmgr, slice);
+}
+
+static void purge_current_slice (qse_task_slice_t* slice, qse_task_slice_t* to)
+{
+	qse_task_t* task = slice->task;
+
+	QSE_ASSERT (task->current == slice);
+
+	if (task->count == 1)
+	{
+		/* to purge later */
+		slice->next = task->dead;
+		task->dead = slice;
+
+		task->current = QSE_NULL;
+		task->head = QSE_NULL;
+		task->tail = QSE_NULL;
+		task->count = 0;
+		
+#if defined(_WIN64)
+		SwitchToFiber (task->fiber);
+#elif defined(USE_UCONTEXT)
+		setcontext (&task->uctx);
+#else
+		longjmp (task->backjmp, 1);
+#endif
+		QSE_ASSERT (!"must not reach here....");
+	}
+	
+	task->current = (to && to != slice)? to: (slice->next? slice->next: task->head);
+
+	if (slice->prev) slice->prev->next = slice->next;
+	if (slice->next) slice->next->prev = slice->prev;
+	if (slice == task->head) task->head = slice->next;
+	if (slice == task->tail) task->tail = slice->prev;
+	task->count--;
+
+	/* to purge later */
+	slice->next = task->dead;
+	task->dead = slice;
+
+#if defined(_WIN64)
+	SwitchToFiber (task->current->fiber);
+#elif defined(USE_UCONTEXT)
+	setcontext (&task->current->uctx);
+#else
+	longjmp (task->current->jmpbuf, 1);
+#endif
 }
 

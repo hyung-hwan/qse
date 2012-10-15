@@ -194,7 +194,7 @@ int qse_main (int argc, qse_achar_t* argv[], qse_achar_t* envp[])
 	if (codepage == CP_UTF8)
 	{
 		/*SetConsoleOUtputCP (CP_UTF8);*/
-		qse_setdflcmgr (qse_utf8cmgr);
+		qse_setdflcmgrbyid (QSE_CMGR_UTF8);
 	}
 	else
 	{
