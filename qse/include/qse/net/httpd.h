@@ -46,6 +46,7 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_EEXIST,
 	QSE_HTTPD_EINTR,
 	QSE_HTTPD_EAGAIN,
+	QSE_HTTPD_ENOBUF,
 
 	QSE_HTTPD_EIOMUX,
 	QSE_HTTPD_EDISCON, /* client disconnnected */
@@ -255,6 +256,14 @@ struct qse_httpd_rcb_t
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
+
+	int (*format_error) (
+		qse_httpd_t* httpd, qse_httpd_client_t* client, 
+		int code, qse_mchar_t* buf, int bufsz);
+	int (*format_dir) (
+		qse_httpd_t* httpd, qse_httpd_client_t* client, 
+		const qse_mchar_t* qpath, const qse_httpd_dirent_t* dirent,
+		qse_mchar_t* buf, int bufsz);
 };
 
 typedef struct qse_httpd_task_t qse_httpd_task_t;
@@ -358,6 +367,7 @@ enum qse_httpd_rsrc_type_t
 	QSE_HTTPD_RSRC_FILE,
 	QSE_HTTPD_RSRC_PROXY,
 	QSE_HTTPD_RSRC_RELOC,
+	QSE_HTTPD_RSRC_REDIR,
 	QSE_HTTPD_RSRC_TEXT
 };
 typedef enum qse_httpd_rsrc_type_t qse_httpd_rsrc_type_t;
@@ -384,7 +394,6 @@ struct qse_httpd_rsrc_t
 		struct
 		{
 			const qse_mchar_t* path;
-			const qse_mchar_t* css;
 		} dir;
 
 		struct
@@ -403,10 +412,16 @@ struct qse_httpd_rsrc_t
 			qse_nwad_t dst;
 			qse_nwad_t src;
 		} proxy;
+
 		struct
 		{
 			const qse_mchar_t* dst;
 		} reloc;	
+
+		struct
+		{
+			const qse_mchar_t* dst;
+		} redir;	
 
 		struct
 		{
@@ -488,7 +503,7 @@ enum qse_httpd_server_xtn_cfg_idx_t
 
 struct qse_httpd_server_xtn_t
 {
-	qse_mxstr_t                  cfg[QSE_HTTPD_SERVER_XTN_CFG_MAX];
+	qse_mchar_t*                 cfg[QSE_HTTPD_SERVER_XTN_CFG_MAX];
 	qse_httpd_server_cbstd_t*    cbstd;
 	qse_httpd_server_cgistd_t*   cgistd;	
 	qse_httpd_server_mimestd_t*  mimestd;
@@ -699,12 +714,27 @@ qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_htre_t*               req
 );
 
+qse_httpd_task_t* qse_httpd_entaskredir (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	const qse_mchar_t*        dst,
+	qse_htre_t*               req
+);
+
+
+qse_httpd_task_t* qse_httpd_entasknomod (
+     qse_httpd_t*              httpd,
+	qse_httpd_client_t*       client,
+	qse_httpd_task_t*         pred,
+	qse_htre_t*               req
+);
+
 qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	const qse_mchar_t*        name,
-	const qse_mchar_t*        css,
 	qse_htre_t*               req
 );
 

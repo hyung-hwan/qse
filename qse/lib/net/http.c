@@ -34,6 +34,67 @@ int qse_comparehttpversions (
 	return v1->major - v2->major;
 }
 
+const qse_mchar_t* qse_httpstatustombs (int code)
+{
+	const qse_mchar_t* msg;
+
+	switch (code)
+	{
+		case 100: msg = QSE_MT("Continue"); break;
+		case 101: msg = QSE_MT("Switching Protocols"); break;
+
+		case 200: msg = QSE_MT("OK"); break;
+		case 201: msg = QSE_MT("Created"); break;
+		case 202: msg = QSE_MT("Accepted"); break;
+		case 203: msg = QSE_MT("Non-Authoritative Information"); break;
+		case 204: msg = QSE_MT("No Content"); break;
+		case 205: msg = QSE_MT("Reset Content"); break;
+		case 206: msg = QSE_MT("Partial Content"); break;
+		
+		case 300: msg = QSE_MT("Multiple Choices"); break;
+		case 301: msg = QSE_MT("Moved Permanently"); break;
+		case 302: msg = QSE_MT("Found"); break;
+		case 303: msg = QSE_MT("See Other"); break;
+		case 304: msg = QSE_MT("Not Modified"); break;
+		case 305: msg = QSE_MT("Use Proxy"); break;
+		case 307: msg = QSE_MT("Temporary Redirect"); break;
+
+		case 400: msg = QSE_MT("Bad Request"); break;
+		case 401: msg = QSE_MT("Unauthorized"); break;
+		case 402: msg = QSE_MT("Payment Required"); break;
+		case 403: msg = QSE_MT("Forbidden"); break;
+		case 404: msg = QSE_MT("Not Found"); break;
+		case 405: msg = QSE_MT("Method Not Allowed"); break;
+		case 406: msg = QSE_MT("Not Acceptable"); break;
+		case 407: msg = QSE_MT("Proxy Authentication Required"); break;
+		case 408: msg = QSE_MT("Request Timeout"); break;
+		case 409: msg = QSE_MT("Conflict"); break;
+		case 410: msg = QSE_MT("Gone"); break;
+		case 411: msg = QSE_MT("Length Required"); break;
+		case 412: msg = QSE_MT("Precondition Failed"); break;
+		case 413: msg = QSE_MT("Request Entity Too Large"); break;
+		case 414: msg = QSE_MT("Request-URI Too Long"); break;
+		case 415: msg = QSE_MT("Unsupported Media Type"); break;
+		case 416: msg = QSE_MT("Requested Range Not Satisfiable"); break;
+		case 417: msg = QSE_MT("Expectation Failed"); break;
+		case 426: msg = QSE_MT("Upgrade Required"); break;
+		case 428: msg = QSE_MT("Precondition Required"); break;
+		case 429: msg = QSE_MT("Too Many Requests"); break;
+		case 431: msg = QSE_MT("Request Header Fields Too Large"); break;
+
+		case 500: msg = QSE_MT("Internal Server Error"); break;
+		case 501: msg = QSE_MT("Not Implemented"); break;
+		case 502: msg = QSE_MT("Bad Gateway"); break;
+		case 503: msg = QSE_MT("Service Unavailable"); break;
+		case 504: msg = QSE_MT("Gateway Timeout"); break;
+		case 505: msg = QSE_MT("HTTP Version Not Supported"); break;
+
+		default: msg = QSE_MT("Unknown Error"); break;
+	}
+
+	return msg;
+}
+
 const qse_mchar_t* qse_httpmethodtombs (qse_http_method_t type)
 {
 	/* keep this table in the same order as qse_httpd_method_t enumerators */
@@ -410,3 +471,4 @@ qse_mchar_t* qse_perenchttpstrdup (const qse_mchar_t* str, qse_mmgr_t* mmgr)
 
 	return buf;
 }
+

@@ -5,7 +5,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mem.h>
 #include <qse/cmn/mbwc.h>
-#include <qse/cmn/time.h>
 
 #include <signal.h>
 #include <locale.h>
@@ -71,8 +70,12 @@ static int httpd_main (int argc, qse_char_t* argv[])
 		}
 
 		server_xtn = qse_httpd_getserverxtn (httpd, server);
-		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].ptr = QSE_MT("body { background-color:#d0e4fe; font-size: 0.9em; font-family: Ubuntu,'Trebuchet MS',sans-serif; }");
-		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].len = qse_mbslen(server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS].ptr);
+		/* don't care about failure */
+		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS] =
+			qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
+
+		server_xtn->cfg[QSE_HTTPD_SERVER_XTN_CFG_ERRORCSS] =
+			qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
 	}
 
 	g_httpd = httpd;

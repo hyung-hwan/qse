@@ -199,7 +199,7 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 
 	tmp_name[idx] = QSE_NULL;
 
-	fsname = qse_stradup (tmp_name, fs->mmgr);
+	fsname = qse_stradup (tmp_name, QSE_NULL, fs->mmgr);
 	if (fsname == QSE_NULL) 
 	{
 		fs->errnum = QSE_FS_ENOMEM; 
@@ -260,7 +260,7 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 	tmp_name[idx++] = name;
 	tmp_name[idx] = QSE_NULL;
 
-	fsname = qse_stradup (tmp_name, fs->mmgr);
+	fsname = qse_stradup (tmp_name, QSE_NULL, fs->mmgr);
 	if (fsname == QSE_NULL)
 	{	
 		fs->errnum = QSE_FS_ENOMEM;
@@ -453,7 +453,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 			tmp_name[1] = QSE_T("\\");
 			tmp_name[2] = info->wfd.cFileName;
 			tmp_name[3] = QSE_NULL;
-			fname = qse_stradup (tmp_name, fs->mmgr);
+			fname = qse_stradup (tmp_name, QSE_NULL, fs->mmgr);
 			if (fname == QSE_NULL)
 			{
 				fs->errnum = QSE_FS_ENOMEM;
@@ -564,7 +564,7 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 		tmp_name[1] = QSE_MT("/");
 		tmp_name[2] = ent->d_name;
 		tmp_name[3] = QSE_NULL;
-		mfname = qse_mbsadup (tmp_name, fs->mmgr);
+		mfname = qse_mbsadup (tmp_name, QSE_NULL, fs->mmgr);
 		if (mfname == QSE_NULL)
 		{
 			fs->errnum = QSE_FS_ENOMEM;

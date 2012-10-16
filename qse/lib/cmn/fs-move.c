@@ -270,7 +270,7 @@ int qse_fs_move (
 				arr[2] = qse_basename(oldpath);
 				arr[3] = QSE_NULL;
 			#if defined(QSE_CHAR_IS_MCHAR)
-				fop.new_path2 = qse_stradup (arr, fs->mmgr);
+				fop.new_path2 = qse_stradup (arr, QSE_NULL, fs->mmgr);
 			#else
 				fop.new_path2 = qse_wcsatombsdup (arr, fs->mmgr);	
 			#endif
