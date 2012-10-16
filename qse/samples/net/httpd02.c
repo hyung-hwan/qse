@@ -160,6 +160,12 @@ static qse_httpd_server_t* attach_server (
 	/* override it with a new callback for chaining */
 	server_xtn_inner->cbstd = cbstd;
 	server_xtn_inner->idxstd = idxstd; /* override index file list */
+
+	/* don't care about failure */
+	server_xtn_inner->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS] =
+		qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
+	server_xtn_inner->cfg[QSE_HTTPD_SERVER_XTN_CFG_ERRORCSS] =
+		qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
 	
 	return server;
 }
