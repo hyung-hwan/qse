@@ -1046,16 +1046,17 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 
 
 static int stat_file (
-	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst, int regonly)
+	qse_httpd_t* httpd, const qse_mchar_t* path,
+	qse_httpd_stat_t* hst, int regonly)
 {
-	struct stat st;
+	qse_stat_t st;
 
 /* TODO: lstat? or stat? */
 	if (QSE_STAT (path, &st) <= -1)
-     {
+	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return -1;
-     }
+	}
 
 	/* stating for a file. it should be a regular file.
 	 * i don't allow other file types. */
