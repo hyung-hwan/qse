@@ -163,6 +163,10 @@ int qse_comparehttpversions (
 	const qse_http_version_t* v2
 );
 
+const qse_mchar_t* qse_httpstatustombs (
+	int code
+);
+
 const qse_mchar_t* qse_httpmethodtombs (
 	qse_http_method_t type
 );

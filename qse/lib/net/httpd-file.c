@@ -22,8 +22,6 @@
 #include "../cmn/mem.h"
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
-#include <qse/cmn/path.h>
-#include <qse/cmn/time.h>
 
 #if defined(_WIN32)
 	/* TODO: */
@@ -274,15 +272,7 @@ static QSE_INLINE int task_main_file (
 			/* i've converted milliseconds to seconds before timestamp comparison
 			 * because st.mtime has the actual milliseconds less than 1 second
 			 * while if_modified_since doesn't have such small milliseconds */
-
-			x = qse_httpd_entaskformat (
-				httpd, client, x,
-				QSE_MT("HTTP/%d.%d 304 Not Modified\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Length: 0\r\n\r\n"),
-				file->version.major, file->version.minor,
-				qse_httpd_getname (httpd),
-				qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-				(file->keepalive? QSE_MT("keep-alive"): QSE_MT("close"))
-			);
+			x = qse_httpd_entask_nomod (httpd, client, x, &file->version, file->keepalive);
 			goto no_file_send;
 		}
 

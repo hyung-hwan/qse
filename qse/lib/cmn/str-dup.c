@@ -72,7 +72,7 @@ qse_mchar_t* qse_mbsxdup2 (
 	return tmp;
 }
 
-qse_mchar_t* qse_mbsadup (const qse_mchar_t* str[], qse_mmgr_t* mmgr)
+qse_mchar_t* qse_mbsadup (const qse_mchar_t* str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf, * ptr;
 	qse_size_t i;
@@ -88,10 +88,11 @@ qse_mchar_t* qse_mbsadup (const qse_mchar_t* str[], qse_mmgr_t* mmgr)
 	ptr = buf;
 	for (i = 0; str[i]; i++) ptr += qse_mbscpy (ptr, str[i]);
 
+	if (len) *len = capa;
 	return buf;
 }
 
-qse_mchar_t* qse_mbsxadup (const qse_mcstr_t str[], qse_mmgr_t* mmgr)
+qse_mchar_t* qse_mbsxadup (const qse_mcstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_mchar_t* buf, * ptr;
 	qse_size_t i;
@@ -107,6 +108,7 @@ qse_mchar_t* qse_mbsxadup (const qse_mcstr_t str[], qse_mmgr_t* mmgr)
 	ptr = buf;
 	for (i = 0; str[i].ptr; i++) ptr += qse_mbsncpy (ptr, str[i].ptr, str[i].len);
 
+	if (len) *len = capa;
 	return buf;
 }
 
@@ -165,7 +167,7 @@ qse_wchar_t* qse_wcsxdup2 (
 	return tmp;
 }
 
-qse_wchar_t* qse_wcsadup (const qse_wchar_t* str[], qse_mmgr_t* mmgr)
+qse_wchar_t* qse_wcsadup (const qse_wchar_t* str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* buf, * ptr;
 	qse_size_t i;
@@ -181,10 +183,11 @@ qse_wchar_t* qse_wcsadup (const qse_wchar_t* str[], qse_mmgr_t* mmgr)
 	ptr = buf;
 	for (i = 0; str[i]; i++) ptr += qse_wcscpy (ptr, str[i]);
 
+	if (len) *len = capa;
 	return buf;
 }
 
-qse_wchar_t* qse_wcsxadup (const qse_wcstr_t str[], qse_mmgr_t* mmgr)
+qse_wchar_t* qse_wcsxadup (const qse_wcstr_t str[], qse_size_t* len, qse_mmgr_t* mmgr)
 {
 	qse_wchar_t* buf, * ptr;
 	qse_size_t i;
@@ -200,5 +203,6 @@ qse_wchar_t* qse_wcsxadup (const qse_wcstr_t str[], qse_mmgr_t* mmgr)
 	ptr = buf;
 	for (i = 0; str[i].ptr; i++) ptr += qse_wcsncpy (ptr, str[i].ptr, str[i].len);
 
+	if (len) *len = capa;
 	return buf;
 }

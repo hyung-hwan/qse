@@ -205,96 +205,76 @@ qse_printf (QSE_T("SEND: [%.*hs]\n"), (int)l, buf);
 
 /*------------------------------------------------------------------------*/
 
-qse_httpd_task_t* qse_httpd_entask_error (
+typedef struct status_reloc_t status_reloc_t;
+struct status_reloc_t
+{
+	const qse_mchar_t* dst;
+	int redir;
+};
+
+static qse_httpd_task_t* entask_status (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
-	qse_httpd_task_t* pred, int code, 
+	qse_httpd_task_t* pred, int code, void* extra,
 	const qse_http_version_t* version, int keepalive)
 {
-	const qse_mchar_t* smsg;
-	const qse_mchar_t* lmsg;
+	const qse_mchar_t* msg;
 
-	switch (code)
+	const qse_mchar_t* extrapre = QSE_MT(""); 
+	const qse_mchar_t* extrapst = QSE_MT("");
+	const qse_mchar_t* extraval = QSE_MT("");
+
+	qse_mchar_t text[1024] = QSE_MT(""); /* TODO: make this buffer dynamic or scalable */
+	
+	msg = qse_httpstatustombs (code);
+	if (code == 301 || code == 307) 
 	{
-		case 403:
-			smsg = QSE_MT("Forbidden");
-			lmsg = QSE_MT("<html><head><title>Forbidden</title></head><body><b>FORBIDDEN<b></body></html>");
-			break;
-
-		case 404:
-			smsg = QSE_MT("Not Found");
-			lmsg = QSE_MT("<html><head><title>Not Found</title></head><body><b>REQUESTED PATH NOT FOUND<b></body></html>");
-			break;
-
-		case 405:
-			smsg = QSE_MT("Method Not Allowed");
-			lmsg = QSE_MT("<html><head><title>Method Not Allowed</title></head><body><b>REQUESTED METHOD NOT ALLOWED<b></body></html>");
-			break;
-
-		case 411:
-			smsg = QSE_MT("Length Required");
-			lmsg = QSE_MT("<html><head><title>Length Required</title></head><body><b>LENGTH REQUIRED<b></body></html>");
-			break;
-
-		case 416:
-			smsg = QSE_MT("Requested Range Not Satisfiable");
-			lmsg = QSE_MT("<html><head><title>Requested Range Not Satsfiable</title></head><body><b>REQUESTED RANGE NOT SATISFIABLE<b></body></html>");
-			break;
-
-		case 417:
-			smsg = QSE_MT("Expectation Failed");
-			lmsg = QSE_MT("<html><head><title>Expectation Failed</title></head><body><b>EXPECTATION FAILED<b></body></html>");
-			break;
-
-		case 500:
-			smsg = QSE_MT("Internal Server Error");
-			lmsg = QSE_MT("<html><head><title>Internal Server Error</title></head><body><b>INTERNAL SERVER ERROR<b></body></html>");
-			break;
-
-		case 501:
-			smsg = QSE_MT("Not Implemented");
-			lmsg = QSE_MT("<html><head><title>Not Implemented</title></head><body><b>NOT IMPLEMENTED<b></body></html>");
-			break;
-
-		case 502:
-			smsg = QSE_MT("Bad Gateway");
-			lmsg = QSE_MT("<html><head><title>Bad Gateway</title></head><body><b>BAD GATEWAY<b></body></html>");
-			break;
-
-		case 503:
-			smsg = QSE_MT("Service Unavailable");
-			lmsg = QSE_MT("<html><head><title>Service Unavailable</title></head><body><b>SERVICE UNAVAILABLE<b></body></html>");
-			break;
-
-		case 504:
-			smsg = QSE_MT("Gateway Timeout");
-			lmsg = QSE_MT("<html><head><title>Gateway Timeout</title></head><body><b>GATEWAY TIMEOUT<b></body></html>");
-			break;
-		
-		default:
-			smsg = QSE_MT("Unknown");
-			lmsg = QSE_MT("<html><head><title>Unknown Error</title></head><body><b>UNKNOWN ERROR<b></body></html>");
-			break;
+		status_reloc_t* reloc = (status_reloc_t*)extra;
+		extrapre = QSE_MT("Location: ");
+		extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
+		extraval = reloc->dst;
+	}
+	else if (code == 304)
+	{
+		/* nothing to do */
+	}
+	else
+	{
+		if (httpd->rcb->format_error (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) return -1;
+		if (code == 401)
+		{
+			extrapre = QSE_MT("WWW-Authenticate: Basic realm=\"");
+			extrapst = QSE_MT("\"\r\n");
+			extraval = (const qse_mchar_t*)extra;
+		}
 	}
 
 	return qse_httpd_entaskformat (
 		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"), 
-		version->major, version->minor, code, smsg,
-		qse_httpd_getname (httpd),
+		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n%s%s%s\r\n%s"),
+		version->major, version->minor, 
+		code, msg, qse_httpd_getname (httpd),
 		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-		(unsigned long)qse_mbslen(lmsg) + 4, lmsg
-	);
+		(unsigned long)qse_mbslen(text),
+		extrapre, extraval, extrapst, text);
+}
+/*------------------------------------------------------------------------*/
+
+qse_httpd_task_t* qse_httpd_entask_error (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, int code,
+	const qse_http_version_t* version, int keepalive)
+{
+	return entask_status (httpd, client, pred, code, QSE_NULL, version, keepalive);
 }
 
 qse_httpd_task_t* qse_httpd_entaskerror (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
-	return qse_httpd_entask_error (
-		httpd, client, pred, code,
-		qse_htre_getversion(req), 
-		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+	return entask_status (
+		httpd, client, pred, code, QSE_NULL, 
+		qse_htre_getversion(req), (req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 /*------------------------------------------------------------------------*/
@@ -315,40 +295,94 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* realm, qse_htre_t* req)
 {
-	const qse_http_version_t* version;
-	const qse_mchar_t* lmsg;
-
-	version = qse_htre_getversion(req);
-	lmsg = QSE_MT("<html><head><title>Unauthorized</title></head><body><b>UNAUTHORIZED<b></body></html>");
-
-	return qse_httpd_entaskformat (
-		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d 401 Unauthorized\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nWWW-Authenticate: Basic realm=\"%s\"\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n%s\r\n\r\n"),
-		version->major, version->minor, 
-		qse_httpd_getname (httpd),
-		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
-		realm, (unsigned long)qse_mbslen(lmsg) + 4, lmsg);
+	return entask_status (
+		httpd, client, pred, 401, (void*)realm, 
+		qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
+
 /*------------------------------------------------------------------------*/
+
+qse_httpd_task_t* qse_httpd_entask_reloc (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_mchar_t* dst,
+	const qse_http_version_t* version, int keepalive)
+{
+	status_reloc_t reloc;
+
+	reloc.dst = dst;
+	reloc.redir = 0;
+
+	return entask_status (
+		httpd, client, pred, 301, (void*)&reloc,
+		version, keepalive);
+}
 
 qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
 {
-	const qse_http_version_t* version;
+	status_reloc_t reloc;
 
-	version = qse_htre_getversion(req);
+	reloc.dst = dst;
+	reloc.redir = 0;
 
-	return qse_httpd_entaskformat (
-		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d 301 Moved Permanently\r\nServer: %s\r\nDate: %s\r\nContent-Length: 0\r\nConnection: %s\r\nLocation: %s\r\n\r\n"),
-		version->major, version->minor,
-		qse_httpd_getname (httpd),
-		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
-		((req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE)? QSE_MT("keep-alive"): QSE_MT("close")),
-		dst);
+	return entask_status (
+		httpd, client, pred, 301, (void*)&reloc,
+		qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+}
+
+qse_httpd_task_t* qse_httpd_entask_redir (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_mchar_t* dst,
+	const qse_http_version_t* version, int keepalive)
+{
+	status_reloc_t reloc;
+
+	reloc.dst = dst;
+	reloc.redir = 1;
+
+	return entask_status (
+		httpd, client, pred, 301, (void*)&reloc,
+		version, keepalive);
+}
+
+qse_httpd_task_t* qse_httpd_entaskredir (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_mchar_t* dst, qse_htre_t* req)
+{
+	status_reloc_t reloc;
+
+	reloc.dst = dst;
+	reloc.redir = 1;
+
+	return entask_status (
+		httpd, client, pred, 301, (void*)&reloc,
+		qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
+}
+
+/*------------------------------------------------------------------------*/
+
+qse_httpd_task_t* qse_httpd_entask_nomod (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, const qse_http_version_t* version, int keepalive)
+{
+	return entask_status (
+		httpd, client, pred, 304,
+		QSE_NULL, version, keepalive);
+}
+
+qse_httpd_task_t* qse_httpd_entasknomod (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_httpd_task_t* pred, qse_htre_t* req)
+{
+	return entask_status (
+		httpd, client, pred, 304,
+		QSE_NULL, qse_htre_getversion(req), 
+		(req->attr.flags & QSE_HTRE_ATTR_KEEPALIVE));
 }
 
 /*------------------------------------------------------------------------*/
@@ -390,7 +424,7 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 
 		case QSE_HTTPD_RSRC_DIR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, rsrc->u.dir.css, req);
+			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, req);
 			break;
 
 		case QSE_HTTPD_RSRC_ERROR:
@@ -409,6 +443,10 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 
 		case QSE_HTTPD_RSRC_RELOC:
 			task = qse_httpd_entaskreloc (httpd, client, QSE_NULL, rsrc->u.reloc.dst, req);
+			break;
+
+		case QSE_HTTPD_RSRC_REDIR:
+			task = qse_httpd_entaskredir (httpd, client, QSE_NULL, rsrc->u.redir.dst, req);
 			break;
 
 		case QSE_HTTPD_RSRC_TEXT:
