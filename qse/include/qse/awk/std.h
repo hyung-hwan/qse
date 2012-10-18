@@ -162,12 +162,12 @@ int qse_awk_parsestd (
  * streams created with @a icf and @a ocf if it is not #QSE_NULL.
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*             awk,
-	qse_size_t             xtn,
-	const qse_char_t*      id,
-	const qse_char_t*const icf[],
-	const qse_char_t*const ocf[],
-	qse_cmgr_t*            cmgr
+	qse_awk_t*        awk,
+	qse_size_t        xtn,
+	const qse_char_t* id,
+	const qse_char_t* icf[],
+	const qse_char_t* ocf[],
+	qse_cmgr_t*       cmgr
 );
 
 /**

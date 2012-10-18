@@ -1867,12 +1867,12 @@ static int make_additional_globals (
 }
 
 qse_awk_rtx_t* qse_awk_rtx_openstd (
-	qse_awk_t*             awk,
-	qse_size_t             xtnsize,
-	const qse_char_t*      id,
-	const qse_char_t*const icf[],
-	const qse_char_t*const ocf[],
-	qse_cmgr_t*            cmgr)
+	qse_awk_t*        awk,
+	qse_size_t        xtnsize,
+	const qse_char_t* id,
+	const qse_char_t* icf[],
+	const qse_char_t* ocf[],
+	qse_cmgr_t*       cmgr)
 {
 	static qse_awk_rtx_ecb_t ecb =
 	{
