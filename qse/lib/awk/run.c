@@ -1518,6 +1518,43 @@ qse_awk_val_t* qse_awk_rtx_call (
 	return qse_awk_rtx_callfun (rtx, fun, args, nargs);
 }
 
+qse_awk_val_t* qse_awk_rtx_callwithstrs (
+	qse_awk_rtx_t* rtx, const qse_char_t* name,
+	const qse_char_t** args, qse_size_t nargs)
+{
+	qse_size_t i;
+	qse_awk_val_t** v, * ret;
+
+	v = QSE_MMGR_ALLOC (rtx->awk->mmgr, QSE_SIZEOF(*v) * nargs);
+	if (v == QSE_NULL)
+	{
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	for (i = 0; i < nargs; i++)
+	{
+		v[i] = qse_awk_rtx_makestrval0 (rtx, args[i]);
+		if (v[i] == QSE_NULL)
+		{
+			ret = QSE_NULL;
+			goto oops;
+		}
+
+		qse_awk_rtx_refupval (rtx, v[i]);
+	}
+
+	ret = qse_awk_rtx_call (rtx, name, v, nargs);
+
+oops:
+	while (i > 0) 
+	{
+		qse_awk_rtx_refdownval (rtx, v[--i]);
+	}
+	QSE_MMGR_FREE  (rtx->awk->mmgr, v);
+	return ret;
+}
+
 static int run_pblocks (qse_awk_rtx_t* run)
 {
 	int n;

@@ -420,7 +420,7 @@ struct opttab_t
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
 	{ QSE_T("striprecspc"),  QSE_AWK_STRIPRECSPC,    QSE_T("strip spaces in splitting a record") },
-	{ QSE_T("stripstrspc"),  QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in converting a string to a number") },
+	{ QSE_T("stripstrspc"),  QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in string-to-number conversion") },
 	{ QSE_T("nextofile"),    QSE_AWK_NEXTOFILE,      QSE_T("enable 'nextofile'") },
 	{ QSE_T("reset"),        QSE_AWK_RESET,          QSE_T("enable 'reset'") },
 	{ QSE_T("crlf"),         QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
@@ -447,7 +447,8 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" --version                         print version\n"));
 	qse_fprintf (out, QSE_T(" -D                                show extra information\n"));
 	qse_fprintf (out, QSE_T(" -c/--call            name         call a function instead of entering\n"));
-	qse_fprintf (out, QSE_T("                                   the pattern-action loop\n"));
+	qse_fprintf (out, QSE_T("                                   the pattern-action loop. [datafile]* is\n"));
+	qse_fprintf (out, QSE_T("                                   passed to the function as parameters\n"));
 	qse_fprintf (out, QSE_T(" -f/--file            sourcefile   set the source script file\n"));
 	qse_fprintf (out, QSE_T(" -d/--deparsed-file   deparsedfile set the deparsing output file\n"));
 	qse_fprintf (out, QSE_T(" -F/--field-separator string       set a field separator(FS)\n"));
@@ -1078,7 +1079,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	}
 	
 	if (qse_awk_parsestd (awk, &psin, 
-		((arg.osf == QSE_NULL)? QSE_NULL: &psout)) == -1)
+		((arg.osf == QSE_NULL)? QSE_NULL: &psout)) <= -1)
 	{
 		print_awkerr (awk);
 		goto oops;
@@ -1086,8 +1087,10 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	rtx = qse_awk_rtx_openstd (
 		awk, 0, QSE_T("qseawk"),
-		(const qse_char_t*const*)arg.icf.ptr,
-		QSE_NULL, arg.console_cmgr);
+		(arg.call? QSE_NULL: arg.icf.ptr), /* console input */
+		QSE_NULL,  /* console output */
+		arg.console_cmgr
+	);
 	if (rtx == QSE_NULL) 
 	{
 		print_awkerr (awk);
@@ -1107,9 +1110,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	set_intr_run ();
 
-	retv = (arg.call == QSE_NULL)?
-		qse_awk_rtx_loop (rtx):
-		qse_awk_rtx_call (rtx, arg.call, QSE_NULL, 0);
+	retv = arg.call?
+		qse_awk_rtx_callwithstrs (rtx, arg.call, arg.icf.ptr, arg.icf.size):
+		qse_awk_rtx_loop (rtx);
 	if (retv)
 	{
 		qse_long_t tmp;

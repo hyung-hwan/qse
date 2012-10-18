@@ -1743,6 +1743,19 @@ qse_awk_val_t* qse_awk_rtx_call (
 );
 
 /**
+ * The qse_awk_rtx_callwithstrs() function is the same as qse_awk_rtx_call()
+ * except that you pass pointers to null-terminated strings. It creates values
+ * from the null-terminated strings and calls qse_awk_rtx_call() with the 
+ * values created.
+ */
+qse_awk_val_t* qse_awk_rtx_callwithstrs (
+	qse_awk_rtx_t*     rtx,  /**< runtime context */
+	const qse_char_t*  name, /**< function name */
+	const qse_char_t** args, /**< arguments to the function */
+	qse_size_t         nargs /**< the number of arguments */
+);
+
+/**
  * The qse_awk_stopall() function aborts all active runtime contexts
  * associated with @a awk.
  */
