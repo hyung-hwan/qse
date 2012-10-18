@@ -451,7 +451,7 @@ int qse_fio_init (
 		{
 			/* the static buffer is too small.
 			 * dynamically allocate a buffer */
-			path_mb = qse_wcstombsdup (path, mmgr);
+			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
 			if (path_mb == QSE_NULL) 
 			{
 				fio->errnum = QSE_FIO_ENOMEM;
@@ -574,7 +574,7 @@ int qse_fio_init (
 		px = qse_wcstombs (path, &wl, path_mb, &ml);
 		if (px == -2)
 		{
-			path_mb = qse_wcstombsdup (path, mmgr);
+			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
 			if (path_mb == QSE_NULL) 
 			{
 				fio->errnum = QSE_FIO_ENOMEM;
@@ -784,7 +784,7 @@ int qse_fio_init (
 		{
 			/* the static buffer is too small.
 			 * allocate a buffer */
-			path_mb = qse_wcstombsdup (path, mmgr);
+			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
 			if (path_mb == QSE_NULL) 
 			{
 				fio->errnum = QSE_FIO_ENOMEM;

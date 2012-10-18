@@ -1320,7 +1320,7 @@ qse_printf (QSE_T("TRAILING DATA=[%.*hs]\n"), (int)QSE_MBS_LEN(cgi->res), QSE_MB
 	return 1;
 
 oops:
-	return (qse_httpd_entask_error (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, 500, &cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_cgi (
@@ -1450,7 +1450,7 @@ oops:
 		cgi->script_htrd = QSE_NULL;
 	}
 
-	return (qse_httpd_entask_error (
+	return (qse_httpd_entask_err (
 		httpd, client, task, http_errnum, 
 		&cgi->version, cgi->keepalive) == QSE_NULL)? -1: 0;
 }

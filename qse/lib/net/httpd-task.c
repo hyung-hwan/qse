@@ -239,7 +239,9 @@ static qse_httpd_task_t* entask_status (
 	}
 	else
 	{
-		if (httpd->rcb->format_error (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) return -1;
+		if (httpd->rcb->format_err (httpd, client, code, text, QSE_COUNTOF(text)) <= -1) 
+			return QSE_NULL;
+
 		if (code == 401)
 		{
 			extrapre = QSE_MT("WWW-Authenticate: Basic realm=\"");
@@ -260,7 +262,7 @@ static qse_httpd_task_t* entask_status (
 }
 /*------------------------------------------------------------------------*/
 
-qse_httpd_task_t* qse_httpd_entask_error (
+qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code,
 	const qse_http_version_t* version, int keepalive)
@@ -268,7 +270,7 @@ qse_httpd_task_t* qse_httpd_entask_error (
 	return entask_status (httpd, client, pred, code, QSE_NULL, version, keepalive);
 }
 
-qse_httpd_task_t* qse_httpd_entaskerror (
+qse_httpd_task_t* qse_httpd_entaskerr (
 	qse_httpd_t* httpd, qse_httpd_client_t* client, 
 	qse_httpd_task_t* pred, int code, qse_htre_t* req)
 {
@@ -427,9 +429,9 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 			task = qse_httpd_entaskdir (httpd, client, QSE_NULL, rsrc->u.dir.path, req);
 			break;
 
-		case QSE_HTTPD_RSRC_ERROR:
+		case QSE_HTTPD_RSRC_ERR:
 			qse_httpd_discardcontent (httpd, req);
-			task = qse_httpd_entaskerror (httpd, client, QSE_NULL, rsrc->u.error.code, req);
+			task = qse_httpd_entaskerr (httpd, client, QSE_NULL, rsrc->u.err.code, req);
 			break;
 
 		case QSE_HTTPD_RSRC_FILE:

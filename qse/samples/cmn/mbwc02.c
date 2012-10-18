@@ -235,7 +235,7 @@ static int test3 (void)
 
 	for (i = 0; i < QSE_COUNTOF(x); i++)
 	{
-		qse_mchar_t* m = qse_wcstombsdup (x[i], QSE_MMGR_GETDFL());
+		qse_mchar_t* m = qse_wcstombsdup (x[i], QSE_NULL, QSE_MMGR_GETDFL());
 		if (m == QSE_NULL)
 		{
 			qse_printf (QSE_T("[ERROR]\n"), m);
@@ -277,7 +277,7 @@ static int test4 (void)
 
 	x[1] = unistr;
 
-	m = qse_wcsatombsdup (x, QSE_MMGR_GETDFL());
+	m = qse_wcsatombsdup (x, QSE_NULL, QSE_MMGR_GETDFL());
 	if (m == QSE_NULL)
 	{
 		qse_printf (QSE_T("[ERROR]\n"), m);

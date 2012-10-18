@@ -171,24 +171,28 @@ int qse_mbsntowcsnupto (
 		mbs, mbslen, wcs, wcslen, stopper, dfl_cmgr);
 }
 
-qse_wchar_t* qse_mbstowcsdup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbstowcsdup (
+	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr)
 {
-	return qse_mbstowcsdupwithcmgr (mbs, mmgr, dfl_cmgr);
+	return qse_mbstowcsdupwithcmgr (mbs, wcslen, mmgr, dfl_cmgr);
 }
 
-qse_wchar_t* qse_mbstowcsalldup (const qse_mchar_t* mbs, qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbstowcsalldup (
+	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr)
 {
-	return qse_mbstowcsalldupwithcmgr (mbs, mmgr, dfl_cmgr);
+	return qse_mbstowcsalldupwithcmgr (mbs, wcslen, mmgr, dfl_cmgr);
 }
 
-qse_wchar_t* qse_mbsatowcsdup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbsatowcsdup (
+	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr)
 {
-	return qse_mbsatowcsdupwithcmgr (mbs, mmgr, dfl_cmgr);
+	return qse_mbsatowcsdupwithcmgr (mbs, wcslen, mmgr, dfl_cmgr);
 }
 
-qse_wchar_t* qse_mbsatowcsalldup (const qse_mchar_t* mbs[], qse_mmgr_t* mmgr)
+qse_wchar_t* qse_mbsatowcsalldup (
+	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr)
 {
-	return qse_mbsatowcsalldupwithcmgr (mbs, mmgr, dfl_cmgr);
+	return qse_mbsatowcsalldupwithcmgr (mbs, wcslen, mmgr, dfl_cmgr);
 }
 
 /* -------------------------------------------------------------- */
@@ -207,18 +211,27 @@ int qse_wcsntombsn (
 	return qse_wcsntombsnwithcmgr (wcs, wcslen, mbs, mbslen, dfl_cmgr);
 }
 
-qse_mchar_t* qse_wcstombsdup (const qse_wchar_t* wcs, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcstombsdup (
+	const qse_wchar_t* wcs, qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcstombsdupwithcmgr (wcs, mmgr, dfl_cmgr);
+	return qse_wcstombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
 }
 
-qse_mchar_t* qse_wcsntombsdup (const qse_wchar_t* wcs, qse_size_t len, qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcsntombsdup (
+	const qse_wchar_t* wcs, qse_size_t wcslen, 
+	qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcsntombsdupwithcmgr (wcs, len, mmgr, dfl_cmgr);
+	return qse_wcsntombsdupwithcmgr (wcs, wcslen, mbslen, mmgr, dfl_cmgr);
 }
 
-qse_mchar_t* qse_wcsatombsdup (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr)
+qse_mchar_t* qse_wcsatombsdup (
+	const qse_wchar_t* wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
 {
-	return qse_wcsatombsdupwithcmgr (wcs, mmgr, dfl_cmgr);
+	return qse_wcsatombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
 }
 
+qse_mchar_t* qse_wcsnatombsdup (
+	const qse_wcstr_t wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr)
+{
+	return qse_wcsnatombsdupwithcmgr (wcs, mbslen, mmgr, dfl_cmgr);
+}

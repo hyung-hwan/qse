@@ -272,7 +272,7 @@ int qse_fs_chdir (qse_fs_t* fs, const qse_char_t* name)
 #if defined(QSE_CHAR_IS_MCHAR)
 	mfsname = fsname;
 #else
-	mfsname = qse_wcstombsdup (fsname, fs->mmgr);
+	mfsname = qse_wcstombsdup (fsname, QSE_NULL, fs->mmgr);
 	if (mfsname == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;

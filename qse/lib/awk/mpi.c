@@ -155,7 +155,7 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 #else
 		
 					mmgr = qse_awk_getmmgr(awk);
-					tmp = qse_mbstowcsdup (buf, mmgr);
+					tmp = qse_mbstowcsdup (buf, QSE_NULL, mmgr);
 					if (tmp == QSE_NULL)
 					{
 						qse_awk_rtx_close (rtx);

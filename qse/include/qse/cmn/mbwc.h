@@ -140,24 +140,28 @@ int qse_mbsntowcsnuptowithcmgr (
 
 qse_wchar_t* qse_mbstowcsdupwithcmgr (
 	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
 qse_wchar_t* qse_mbstowcsalldupwithcmgr (
 	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
 qse_wchar_t* qse_mbsatowcsdupwithcmgr (
 	const qse_mchar_t* mbs[],
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
 qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
 	const qse_mchar_t* mbs[],
+	qse_size_t*        wcslen, 
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
@@ -183,23 +187,33 @@ int qse_wcsntombsnwithcmgr (
 
 qse_mchar_t* qse_wcstombsdupwithcmgr (
 	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
 qse_mchar_t* qse_wcntombsdupwithcmgr (
 	const qse_wchar_t* wcs,
-	qse_size_t         len,
+	qse_size_t         wcslen,
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
 qse_mchar_t* qse_wcsatombsdupwithcmgr (
 	const qse_wchar_t* wcs[],
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
+
+qse_mchar_t* qse_wcsnatombsdupwithcmgr (
+	const qse_wcstr_t wcs[],
+	qse_size_t*       mbslen,
+	qse_mmgr_t*       mmgr,
+	qse_cmgr_t*       cmgr
+);
 
 /* --------------------------------------------------- */
 /* STRING CONVERSION WITH DEFAULT GLOBAL CMGR          */
@@ -283,21 +297,25 @@ int qse_mbsntowcsnupto (
 
 qse_wchar_t* qse_mbstowcsdup (
 	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
 qse_wchar_t* qse_mbstowcsalldup (
 	const qse_mchar_t* mbs,
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
 qse_wchar_t* qse_mbsatowcsdup (
 	const qse_mchar_t* mbs[],
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
 qse_wchar_t* qse_mbsatowcsalldup (
 	const qse_mchar_t* mbs[],
+	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
@@ -373,18 +391,27 @@ int qse_wcsntombsn (
 
 qse_mchar_t* qse_wcstombsdup (
 	const qse_wchar_t* wcs,
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr
 );
 
 qse_mchar_t* qse_wcsntombsdup (
 	const qse_wchar_t* wcs,
-	qse_size_t         len,
+	qse_size_t         wcslen,
+	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr
 );
 
 qse_mchar_t* qse_wcsatombsdup (
 	const qse_wchar_t* wcs[],
+	qse_size_t*       mbslen,
 	qse_mmgr_t*        mmgr
+);
+
+qse_mchar_t* qse_wcsnatombsdup (
+	const qse_wcstr_t wcs[],
+	qse_size_t*       mbslen,
+	qse_mmgr_t*       mmgr
 );
 
 #ifdef __cplusplus

@@ -1628,8 +1628,8 @@ static int __build_environ (
 
 			*eq = QSE_MT('\0');
 
-			kptr = qse_mbstowcsdup (envarr[count], rtx->awk->mmgr); 
-			vptr = qse_mbstowcsdup (eq + 1, rtx->awk->mmgr);
+			kptr = qse_mbstowcsdup (envarr[count], &klen, rtx->awk->mmgr); 
+			vptr = qse_mbstowcsdup (eq + 1, QSE_NULL, rtx->awk->mmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
@@ -1642,7 +1642,6 @@ static int __build_environ (
 				return -1;
 			}			
 
-			klen = qse_wcslen (kptr);
 			*eq = QSE_MT('=');
 		#else
 			eq = qse_wcschr (envarr[count], QSE_WT('='));
@@ -1650,8 +1649,8 @@ static int __build_environ (
 
 			*eq = QSE_WT('\0');
 
-			kptr = qse_wcstombsdup (envarr[count], rtx->awk->mmgr); 
-			vptr = qse_wcstombsdup (eq + 1, rtx->awk->mmgr);
+			kptr = qse_wcstombsdup (envarr[count], &klen, rtx->awk->mmgr); 
+			vptr = qse_wcstombsdup (eq + 1, QSE_NULL, rtx->awk->mmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (rtx->awk->mmgr, kptr);
@@ -1664,7 +1663,6 @@ static int __build_environ (
 				return -1;
 			}			
 
-			klen = qse_mbslen (kptr);
 			*eq = QSE_WT('=');
 		#endif
 
@@ -2083,7 +2081,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 	{
 		qse_mchar_t* mbs;
-		mbs = qse_wcstombsdup (str, rtx->awk->mmgr);
+		mbs = qse_wcstombsdup (str, QSE_NULL, rtx->awk->mmgr);
 		if (mbs == QSE_NULL) 
 		{
 			n = -1;

@@ -167,7 +167,7 @@ static int test3 (void)
 	{
 		qse_wchar_t* wcs;
 
-		wcs = qse_mbstowcsdup (x[i], QSE_MMGR_GETDFL());
+		wcs = qse_mbstowcsdup (x[i], QSE_NULL, QSE_MMGR_GETDFL());
 		if (wcs == QSE_NULL)
 		{
 			qse_printf (QSE_T("[ERROR]"));
@@ -198,7 +198,7 @@ static int test4 (void)
 	};
 	qse_wchar_t* wcs;
 
-	wcs = qse_mbsatowcsdup (x, QSE_MMGR_GETDFL());
+	wcs = qse_mbsatowcsdup (x, QSE_NULL, QSE_MMGR_GETDFL());
 	if (wcs == QSE_NULL)
 	{
 		qse_printf (QSE_T("[ERROR]\n"));

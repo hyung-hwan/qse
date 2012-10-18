@@ -253,8 +253,8 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 
 			*eq = QSE_MT('\0');
 
-			kptr = qse_mbstowcsdup (envarr[count], mmgr);
-			vptr = qse_mbstowcsdup (eq + 1, mmgr);
+			kptr = qse_mbstowcsdup (envarr[count], &klen, mmgr);
+			vptr = qse_mbstowcsdup (eq + 1, QSE_NULL, mmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
@@ -266,7 +266,6 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 				return -1;
 			}			
 
-			klen = qse_wcslen (kptr);
 			*eq = QSE_MT('=');
 		#else
 			eq = qse_wcschr (envarr[count], QSE_WT('='));
@@ -274,8 +273,8 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 
 			*eq = QSE_WT('\0');
 
-			kptr = qse_wcstombsdup (envarr[count], mmgr); 
-			vptr = qse_wcstombsdup (eq + 1, mmgr);
+			kptr = qse_wcstombsdup (envarr[count], &klen, mmgr); 
+			vptr = qse_wcstombsdup (eq + 1, QSE_NULL, mmgr);
 			if (kptr == QSE_NULL || vptr == QSE_NULL)
 			{
 				if (kptr) QSE_MMGR_FREE (mmgr, kptr);
@@ -287,7 +286,6 @@ int StdAwk::__build_environ (Run* run, void* envptr)
 				return -1;
 			}			
 
-			klen = qse_mbslen (kptr);
 			*eq = QSE_WT('=');
 		#endif
 
@@ -459,7 +457,7 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 #else
 
 	qse_mchar_t* mbs;
-	mbs = qse_wcstombsdup (ptr, ((Awk*)run)->getMmgr());
+	mbs = qse_wcstombsdup (ptr, QSE_NULL, ((Awk*)run)->getMmgr());
 	if (mbs == QSE_NULL) return -1;
 	int n = ret.setInt ((long_t)::system(mbs));
 	QSE_MMGR_FREE (((Awk*)run)->getMmgr(), mbs);

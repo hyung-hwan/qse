@@ -756,7 +756,7 @@ create_process:
 			x[0] = mcmdname[create_retried];
 			x[1] = (const qse_mchar_t*)cmd;
 			x[2] = QSE_NULL;
-			dupcmd = qse_mbsatowcsdup (x, mmgr);
+			dupcmd = qse_mbsatowcsdup (x, QSE_NULL, mmgr);
 		}
 		else
 		{
@@ -771,7 +771,7 @@ create_process:
 	#if defined(QSE_CHAR_IS_WCHAR)
 		if (flags & QSE_PIO_MBSCMD)
 		{
-			dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, mmgr);
+			dupcmd = qse_mbstowcsdup ((const qse_mchar_t*)cmd, QSE_NULL, mmgr);
 		}
 		else
 		{

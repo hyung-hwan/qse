@@ -1294,7 +1294,7 @@ qse_printf (QSE_T("TRAILING DATA=%d, [%hs]\n"), (int)QSE_MBS_LEN(proxy->res), QS
 
 oops:
 	if (proxy->resflags & PROXY_RES_EVER_SENTBACK) return -1;
-	return (qse_httpd_entask_error (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_proxy_1 (
@@ -1352,7 +1352,7 @@ qse_printf (QSE_T("FINALLY connected to peer ...............................\n")
 	return 1;
 
 oops:
-	return (qse_httpd_entask_error (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
+	return (qse_httpd_entask_err (httpd, client, task, http_errnum, &proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }
 
 static int task_main_proxy (
@@ -1438,7 +1438,7 @@ oops:
 		proxy->peer_htrd = QSE_NULL;
 	}
 
-	return (qse_httpd_entask_error (
+	return (qse_httpd_entask_err (
 		httpd, client, task, http_errnum, 
 		&proxy->version, proxy->keepalive) == QSE_NULL)? -1: 0;
 }

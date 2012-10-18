@@ -106,8 +106,8 @@ int qse_fs_move (
 	fop.old_path = oldpath;
 	fop.new_path = newpath;
 	#else
-	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
-	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	fop.old_path = qse_wcstombsdup (oldpath, QSE_NULL, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -156,8 +156,8 @@ int qse_fs_move (
 	fop.old_path = oldpath;
 	fop.new_path = newpath;
 	#else
-	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
-	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	fop.old_path = qse_wcstombsdup (oldpath, QSE_NULL, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -201,8 +201,8 @@ int qse_fs_move (
 	fop.old_path = oldpath;
 	fop.new_path = newpath;
 	#else
-	fop.old_path = qse_wcstombsdup (oldpath, fs->mmgr);
-	fop.new_path = qse_wcstombsdup (newpath, fs->mmgr);	
+	fop.old_path = qse_wcstombsdup (oldpath, QSE_NULL, fs->mmgr);
+	fop.new_path = qse_wcstombsdup (newpath, QSE_NULL, fs->mmgr);	
 	if (fop.old_path == QSE_NULL || fop.old_path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -272,7 +272,7 @@ int qse_fs_move (
 			#if defined(QSE_CHAR_IS_MCHAR)
 				fop.new_path2 = qse_stradup (arr, QSE_NULL, fs->mmgr);
 			#else
-				fop.new_path2 = qse_wcsatombsdup (arr, fs->mmgr);	
+				fop.new_path2 = qse_wcsatombsdup (arr, QSE_NULL, fs->mmgr);	
 			#endif
 				if (fop.new_path2 == QSE_NULL)
 				{
@@ -392,7 +392,7 @@ int qse_fs_delete (qse_fs_t* fs, const qse_char_t* path)
 	#if defined(QSE_CHAR_IS_MCHAR)
 	dop.path = path;
 	#else
-	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
 	if (dop.path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -435,7 +435,7 @@ oops:
 	#if defined(QSE_CHAR_IS_MCHAR)
 	dop.path = path;
 	#else
-	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
 	if (dop.path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
@@ -477,7 +477,7 @@ oops:
 	#if defined(QSE_CHAR_IS_MCHAR)
 	dop.path = path;
 	#else
-	dop.path = qse_wcstombsdup (path, fs->mmgr);
+	dop.path = qse_wcstombsdup (path, QSE_NULL, fs->mmgr);
 	if (dop.path == QSE_NULL)
 	{
 		fs->errnum = QSE_FS_ENOMEM;
