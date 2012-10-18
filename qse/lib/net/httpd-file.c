@@ -175,7 +175,7 @@ static QSE_INLINE int task_main_file (
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-		x = qse_httpd_entask_error (
+		x = qse_httpd_entask_err (
 			httpd, client, x, http_errnum, 
 			&file->version, file->keepalive);
 		goto no_file_send;
@@ -187,7 +187,7 @@ static QSE_INLINE int task_main_file (
 		int http_errnum;
 		http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 		              (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-		x = qse_httpd_entask_error (
+		x = qse_httpd_entask_err (
 			httpd, client, x, http_errnum, 
 			&file->version, file->keepalive);
 		goto no_file_send;
@@ -210,7 +210,7 @@ static QSE_INLINE int task_main_file (
 
 		if (file->range.from >= st.size)
 		{
-			x = qse_httpd_entask_error (
+			x = qse_httpd_entask_err (
 				httpd, client, x, 416, &file->version, file->keepalive);
 			goto no_file_send;
 		}
@@ -337,7 +337,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		while (tmp->next) tmp = tmp->next; /* get the last value */
 		if (qse_parsehttprange (tmp->ptr, &data.range) <= -1)
 		{
-			return qse_httpd_entaskerror (httpd, client, pred, 416, req);
+			return qse_httpd_entaskerr (httpd, client, pred, 416, req);
 		}
 	}
 	else 

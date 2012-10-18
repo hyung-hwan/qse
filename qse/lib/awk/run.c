@@ -6374,7 +6374,6 @@ static int read_record (qse_awk_rtx_t* rtx)
 {
 	qse_ssize_t n;
 	qse_str_t* buf;
-	qse_awk_rtx_ecb_t* ecb;
 
 read_again:
 	if (qse_awk_rtx_clrrec (rtx, QSE_FALSE) == -1) return -1;

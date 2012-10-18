@@ -246,45 +246,47 @@ int qse_mbsntowcsnuptowithcmgr (
 }
 
 static qse_wchar_t* mbs_to_wcs_dup_with_cmgr (
-	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
+	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
 {
-	qse_size_t mbslen, wcslen;
+	qse_size_t ml, wl;
 	qse_wchar_t* wcs;
 
 	if (mbs_to_wcs_with_cmgr (
-		mbs, &mbslen, QSE_NULL, &wcslen, cmgr, all) <= -1) return QSE_NULL;
+		mbs, &ml, QSE_NULL, &wl, cmgr, all) <= -1) return QSE_NULL;
 
-	wcslen++; /* for terminating null */
-	wcs = QSE_MMGR_ALLOC (mmgr, wcslen * QSE_SIZEOF(*wcs));	
+	wl++; /* for terminating null */
+	wcs = QSE_MMGR_ALLOC (mmgr, wl * QSE_SIZEOF(*wcs));	
 	if (wcs == QSE_NULL) return QSE_NULL;
 
-	mbs_to_wcs_with_cmgr (mbs, &mbslen, wcs, &wcslen, cmgr, all);
+	mbs_to_wcs_with_cmgr (mbs, &ml, wcs, &wl, cmgr, all);
+
+	if (wcslen) *wcslen = wl;
 	return wcs;
 }
 
 qse_wchar_t* qse_mbstowcsdupwithcmgr (
-	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 0);
+	return mbs_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 0);
 }
 
 qse_wchar_t* qse_mbstowcsalldupwithcmgr (
-	const qse_mchar_t* mbs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbs_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 1);
+	return mbs_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 1);
 }
 
 static qse_wchar_t* mbsa_to_wcs_dup_with_cmgr (
-	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
+	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
 {
-	qse_wchar_t* buf, * ptr;
+	qse_wchar_t* buf;
 	qse_size_t i;
-	qse_size_t capa = 0;
+	qse_size_t capa, pos;
 	qse_size_t wl, ml;
 
 	QSE_ASSERT (mmgr != QSE_NULL);
 
-	for (i = 0; mbs[i]; i++) 
+	for (capa = 0, i = 0; mbs[i]; i++) 
 	{
 		if (mbs_to_wcs_with_cmgr (mbs[i], &ml, QSE_NULL, &wl, cmgr, all) <= -1) 
 			return QSE_NULL;
@@ -295,28 +297,29 @@ static qse_wchar_t* mbsa_to_wcs_dup_with_cmgr (
 		mmgr, (capa + 1) * QSE_SIZEOF(*buf));
 	if (buf == QSE_NULL) return QSE_NULL;
 
-	ptr = buf;
-	for (i = 0; mbs[i]; i++) 
+	for (pos = 0, i = 0; mbs[i]; i++) 
 	{
-		wl = capa + 1;
-		mbs_to_wcs_with_cmgr (mbs[i], &ml, ptr, &wl, cmgr, all);
-		ptr += wl;
-		capa -= wl;
+		wl = capa - pos + 1;
+		mbs_to_wcs_with_cmgr (mbs[i], &ml, &buf[pos], &wl, cmgr, all);
+		pos += wl;
 	}
 
+	QSE_ASSERT (pos == capa);
+
+	if (wcslen) *wcslen = capa;
 	return buf;
 }
 
 qse_wchar_t* qse_mbsatowcsdupwithcmgr (
-	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbsa_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 0);
+	return mbsa_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 0);
 }
 
 qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
-	const qse_mchar_t* mbs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	return mbsa_to_wcs_dup_with_cmgr (mbs, mmgr, cmgr, 1);
+	return mbsa_to_wcs_dup_with_cmgr (mbs, wcslen, mmgr, cmgr, 1);
 }
 
 /* ======================================================================== */
@@ -473,64 +476,99 @@ int qse_wcsntombsnwithcmgr (
 	return ret;
 }
 
-qse_mchar_t* qse_wcstombsdupwithcmgr (const qse_wchar_t* wcs, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+qse_mchar_t* qse_wcstombsdupwithcmgr (
+	const qse_wchar_t* wcs, qse_size_t* mbslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
-	qse_size_t wcslen, mbslen;
-	qse_mchar_t* mbs;
-
-	if (qse_wcstombswithcmgr (wcs, &wcslen, QSE_NULL, &mbslen, cmgr) <= -1) return QSE_NULL;
-
-	mbslen++; /* for the terminating null character */
-
-	mbs = QSE_MMGR_ALLOC (mmgr, mbslen * QSE_SIZEOF(*mbs));	
-	if (mbs == QSE_NULL) return QSE_NULL;
-
-	qse_wcstombswithcmgr (wcs, &wcslen, mbs, &mbslen, cmgr);
-	return mbs;
-}
-
-qse_mchar_t* qse_wcsntombsdupwithcmgr (const qse_wchar_t* wcs, qse_size_t len, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
-{
-	qse_size_t mbslen;
-	qse_mchar_t* mbs;
-
-	if (qse_wcsntombsnwithcmgr (wcs, &len, QSE_NULL, &mbslen, cmgr) <= -1) return QSE_NULL;
-
-	mbs = QSE_MMGR_ALLOC (mmgr, (mbslen + 1) * QSE_SIZEOF(*mbs));	
-	if (mbs == QSE_NULL) return QSE_NULL;
-
-	qse_wcsntombsnwithcmgr (wcs, &len, mbs, &mbslen, cmgr);
-	mbs[mbslen] = QSE_MT('\0');
-	return mbs;
-}
-
-qse_mchar_t* qse_wcsatombsdupwithcmgr (const qse_wchar_t* wcs[], qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
-{
-	qse_mchar_t* buf, * ptr;
-	qse_size_t i;
 	qse_size_t wl, ml;
-	qse_size_t capa = 0;
+	qse_mchar_t* mbs;
+
+	if (qse_wcstombswithcmgr (wcs, &wl, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
+
+	ml++; /* for the terminating null character */
+
+	mbs = QSE_MMGR_ALLOC (mmgr, ml * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	qse_wcstombswithcmgr (wcs, &wl, mbs, &ml, cmgr);
+
+	if (mbslen) *mbslen = ml;
+	return mbs;
+}
+
+qse_mchar_t* qse_wcsntombsdupwithcmgr (
+	const qse_wchar_t* wcs, qse_size_t wcslen,
+	qse_size_t* mbslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	qse_size_t ml;
+	qse_mchar_t* mbs;
+
+	if (qse_wcsntombsnwithcmgr (wcs, &wcslen, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
+
+	mbs = QSE_MMGR_ALLOC (mmgr, (ml + 1) * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	qse_wcsntombsnwithcmgr (wcs, &wcslen, mbs, &ml, cmgr);
+	mbs[ml] = QSE_MT('\0');
+
+	if (mbslen) *mbslen = ml;
+	return mbs;
+}
+
+qse_mchar_t* qse_wcsatombsdupwithcmgr (
+	const qse_wchar_t* wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	qse_size_t wl, ml, capa, pos, i;
+	qse_mchar_t* mbs;
 
 	QSE_ASSERT (mmgr != QSE_NULL);
 
-	for (i = 0; wcs[i]; i++) 
+	for (capa = 0, i = 0; wcs[i]; i++) 
 	{
 		if (qse_wcstombswithcmgr (wcs[i], &wl, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
 		capa += ml;
 	}
 
-	buf = (qse_mchar_t*) QSE_MMGR_ALLOC (
-		mmgr, (capa + 1) * QSE_SIZEOF(*buf));
-	if (buf == QSE_NULL) return QSE_NULL;
+	mbs = (qse_mchar_t*) QSE_MMGR_ALLOC (mmgr, (capa + 1) * QSE_SIZEOF(*mbs));
+	if (mbs == QSE_NULL) return QSE_NULL;
 
-	ptr = buf;
-	for (i = 0; wcs[i]; i++) 
+	for (pos = 0, i = 0; wcs[i]; i++) 
 	{
-		ml = capa + 1;
-		qse_wcstombswithcmgr (wcs[i], &wl, ptr, &ml, cmgr);
-		ptr += ml;
-		capa -= ml;
+		ml = capa - pos + 1;
+		qse_wcstombswithcmgr (wcs[i], &wl, &mbs[pos], &ml, cmgr);
+		pos += ml;
 	}
 
-	return buf;
+	if (mbslen) *mbslen = capa;
+	return mbs;
+}
+
+qse_mchar_t* qse_wcsnatombsdupwithcmgr (
+	const qse_wcstr_t wcs[], qse_size_t* mbslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	qse_size_t wl, ml, capa, pos, i;
+	qse_mchar_t* mbs;
+
+	for (capa = 0, i = 0; wcs[i].ptr; i++)
+	{
+		wl = wcs[i].len;
+		if (qse_wcsntombsnwithcmgr (wcs[i].ptr, &wl, QSE_NULL, &ml, cmgr) <= -1) return QSE_NULL;
+		capa += ml;
+	}
+
+	mbs = QSE_MMGR_ALLOC (mmgr, (capa + 1) * QSE_SIZEOF(*mbs));	
+	if (mbs == QSE_NULL) return QSE_NULL;
+
+	for (pos = 0, i = 0; wcs[i].ptr; i++)
+	{
+		wl = wcs[i].len;
+		ml = capa - pos + 1;
+		qse_wcsntombsnwithcmgr (wcs[i].ptr, &wl, &mbs[pos], &ml, cmgr);
+		pos += ml;
+	}
+	mbs[pos] = QSE_MT('\0');
+
+	QSE_ASSERT (pos == capa);
+
+	if (mbslen) *mbslen = capa;
+	return mbs;
 }

@@ -52,7 +52,8 @@ struct server_xtn_t
 };
 
 static int makersrc (
-	qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
+	qse_httpd_t* httpd, qse_httpd_client_t* client,
+	qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
 {
 	server_xtn_t* server_xtn;
 
@@ -65,8 +66,8 @@ static int makersrc (
 			/* TODO: implement a better check that the
 			 *       destination is not one of the local addresses */
 
-			rsrc->type = QSE_HTTPD_RSRC_ERROR;
-			rsrc->u.error.code = 500;
+			rsrc->type = QSE_HTTPD_RSRC_ERR;
+			rsrc->u.err.code = 500;
 		}
 		else
 		{
@@ -100,7 +101,9 @@ static int makersrc (
 	}
 }
 
-static void freersrc (qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
+static void freersrc (
+	qse_httpd_t* httpd, qse_httpd_client_t* client, 
+	qse_htre_t* req, qse_httpd_rsrc_t* rsrc)
 {
 	server_xtn_t* server_xtn;
 
@@ -123,7 +126,6 @@ static qse_httpd_server_t* attach_server (
 	qse_httpd_t* httpd, qse_char_t* uri, qse_httpd_server_cbstd_t* cbstd)
 {
 	qse_httpd_server_t* server;
-	qse_httpd_server_xtn_t* server_xtn_inner;
 	server_xtn_t* server_xtn;
 	int tproxy = 0;
 
@@ -154,18 +156,27 @@ static qse_httpd_server_t* attach_server (
 	 * extension space created by qse_httpd_attachserverstd()
 	 * internally.
 	 */
-	server_xtn_inner = qse_httpd_getserverxtn (httpd, server);
 	/* remember the callback set in qse_httpd_attachserverstd() */
-	server_xtn->orgcbstd = server_xtn_inner->cbstd; 
+	qse_httpd_getserveroptstd (
+		httpd, server, 
+		QSE_HTTPD_SERVER_CBSTD, (void**)&server_xtn->orgcbstd);
 	/* override it with a new callback for chaining */
-	server_xtn_inner->cbstd = cbstd;
-	server_xtn_inner->idxstd = idxstd; /* override index file list */
+	qse_httpd_setserveroptstd (
+		httpd, server,
+		QSE_HTTPD_SERVER_CBSTD, cbstd);
 
-	/* don't care about failure */
-	server_xtn_inner->cfg[QSE_HTTPD_SERVER_XTN_CFG_DIRCSS] =
-		qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
-	server_xtn_inner->cfg[QSE_HTTPD_SERVER_XTN_CFG_ERRORCSS] =
-		qse_mbsdup (QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>"), qse_httpd_getmmgr(httpd));
+	/* totally override idxstd without remembering the old idxstd */
+	qse_httpd_setserveroptstd (
+		httpd, server,
+		QSE_HTTPD_SERVER_IDXSTD, idxstd);
+
+	qse_httpd_setserveroptstd (
+		httpd, server, QSE_HTTPD_SERVER_DIRCSS, 
+		QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; } table { font-size: 0.9em; } td { white-space: nowrap; } td.size { text-align: right; }</style>"));
+
+	qse_httpd_setserveroptstd (
+		httpd, server, QSE_HTTPD_SERVER_ERRCSS, 
+		QSE_MT("<style type='text/css'>body { background-color:#d0e4fe; font-size: 0.9em; } div.header { font-weight: bold; margin-bottom: 5px; } div.footer { border-top: 1px solid #99AABB; text-align: right; }</style>"));
 	
 	return server;
 }

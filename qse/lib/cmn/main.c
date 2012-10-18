@@ -43,7 +43,7 @@ int qse_runmain (
 
 	for (i = 0; i < argc; i++)
 	{
-		v[i]= qse_mbstowcsalldup (argv[i], mmgr);
+		v[i]= qse_mbstowcsalldup (argv[i], QSE_NULL, mmgr);
 		if (v[i] == QSE_NULL)
 		{
 			ret = -1;
@@ -93,7 +93,7 @@ int qse_runmainwithenv (
 		else if (i == argc) continue;
 		else x = envp[i - argc - 1];
 
-		v[i]= qse_mbstowcsalldup (x, mmgr);
+		v[i]= qse_mbstowcsalldup (x, QSE_NULL, mmgr);
 		if (v[i] == QSE_NULL)
 		{
 			ret = -1;

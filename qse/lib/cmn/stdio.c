@@ -389,8 +389,8 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 	qse_mchar_t* path_mb;
 	qse_mchar_t* mode_mb;
 
-	path_mb = qse_wcstombsdup (path, QSE_MMGR_GETDFL());
-	mode_mb = qse_wcstombsdup (mode, QSE_MMGR_GETDFL());
+	path_mb = qse_wcstombsdup (path, QSE_NULL, QSE_MMGR_GETDFL());
+	mode_mb = qse_wcstombsdup (mode, QSE_NULL, QSE_MMGR_GETDFL());
 
 	if (path_mb && mode_mb)
 	{
@@ -428,7 +428,7 @@ QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
 	QSE_FILE* fp = QSE_NULL;
 	qse_mchar_t* cmd_mb;
 
-	cmd_mb = qse_wcstombsdup (cmd, QSE_MMGR_GETDFL());
+	cmd_mb = qse_wcstombsdup (cmd, QSE_NULL, QSE_MMGR_GETDFL());
 	if (cmd_mb)
 	{
 		char mode_mb[3];

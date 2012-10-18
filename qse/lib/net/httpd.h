@@ -101,7 +101,7 @@ void qse_httpd_fini (
 	qse_httpd_t* httpd
 );
 
-qse_httpd_task_t* qse_httpd_entask_error (
+qse_httpd_task_t* qse_httpd_entask_err (
 	qse_httpd_t* httpd,
 	qse_httpd_client_t* client,
      qse_httpd_task_t* pred,

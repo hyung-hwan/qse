@@ -257,7 +257,7 @@ struct qse_httpd_rcb_t
 	int (*handle_request) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, qse_htre_t* req);
 
-	int (*format_error) (
+	int (*format_err) (
 		qse_httpd_t* httpd, qse_httpd_client_t* client, 
 		int code, qse_mchar_t* buf, int bufsz);
 	int (*format_dir) (
@@ -363,7 +363,7 @@ enum qse_httpd_rsrc_type_t
 	QSE_HTTPD_RSRC_AUTH,
 	QSE_HTTPD_RSRC_CGI,
 	QSE_HTTPD_RSRC_DIR,
-	QSE_HTTPD_RSRC_ERROR,
+	QSE_HTTPD_RSRC_ERR,
 	QSE_HTTPD_RSRC_FILE,
 	QSE_HTTPD_RSRC_PROXY,
 	QSE_HTTPD_RSRC_RELOC,
@@ -399,7 +399,7 @@ struct qse_httpd_rsrc_t
 		struct
 		{
 			int code;
-		} error;
+		} err;
 
 		struct
 		{
@@ -489,30 +489,20 @@ struct qse_httpd_server_idxstd_t
 	const qse_mchar_t* name;
 };
 
-enum qse_httpd_server_xtn_cfg_idx_t
+enum qse_httpd_server_optstd_t
 {
-	QSE_HTTPD_SERVER_XTN_CFG_DOCROOT = 0,
-	QSE_HTTPD_SERVER_XTN_CFG_REALM,
-	QSE_HTTPD_SERVER_XTN_CFG_USERNAME,
-	QSE_HTTPD_SERVER_XTN_CFG_PASSWORD,
-	QSE_HTTPD_SERVER_XTN_CFG_BASICAUTH,
-	QSE_HTTPD_SERVER_XTN_CFG_DIRCSS, /* can't be too long due to internal buffer size  */
-	QSE_HTTPD_SERVER_XTN_CFG_ERRORCSS,
-	QSE_HTTPD_SERVER_XTN_CFG_MAX
-};
+	QSE_HTTPD_SERVER_DOCROOT = 0, /* const qse_mchar_t* */
+	QSE_HTTPD_SERVER_REALM,       /* const qse_mchar_t* */
+	QSE_HTTPD_SERVER_AUTH,        /* const qse_mchar_t* */
+	QSE_HTTPD_SERVER_DIRCSS,      /* const qse_mchar_t* */
+	QSE_HTTPD_SERVER_ERRCSS,      /* const qse_mchar_t* */
 
-struct qse_httpd_server_xtn_t
-{
-	qse_mchar_t*                 cfg[QSE_HTTPD_SERVER_XTN_CFG_MAX];
-	qse_httpd_server_cbstd_t*    cbstd;
-	qse_httpd_server_cgistd_t*   cgistd;	
-	qse_httpd_server_mimestd_t*  mimestd;
-	qse_httpd_server_idxstd_t*   idxstd;
-
-	/* private */
-	qse_httpd_server_predetach_t predetach;
+	QSE_HTTPD_SERVER_CBSTD,       /* qse_httpd_server_cbstd_t* */
+	QSE_HTTPD_SERVER_CGISTD,      /* qse_httpd_server_cgistd_t[] */
+	QSE_HTTPD_SERVER_MIMESTD,     /* qse_httpd_server_mimestd_t[] */
+	QSE_HTTPD_SERVER_IDXSTD       /* qse_httpd_server_idxstd_t[] */
 };
-typedef struct qse_httpd_server_xtn_t qse_httpd_server_xtn_t;
+typedef enum qse_httpd_server_optstd_t qse_httpd_server_optstd_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -680,7 +670,7 @@ qse_httpd_task_t* qse_httpd_entasktext (
 	qse_htre_t*             req
 );
 
-qse_httpd_task_t* qse_httpd_entaskerror (
+qse_httpd_task_t* qse_httpd_entaskerr (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -816,6 +806,20 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	const qse_char_t*            uri,
 	qse_httpd_server_predetach_t predetach,	
 	qse_size_t                   xtnsize
+);
+
+int qse_httpd_getserveroptstd (
+	qse_httpd_t*              httpd,
+	qse_httpd_server_t*       server,
+	qse_httpd_server_optstd_t id,
+	void**                    value
+);
+
+int qse_httpd_setserveroptstd (
+	qse_httpd_t*              httpd,
+	qse_httpd_server_t*       server,
+	qse_httpd_server_optstd_t id,
+	void*                     value
 );
 
 void* qse_httpd_getserverxtnstd (

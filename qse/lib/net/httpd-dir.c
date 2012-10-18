@@ -408,7 +408,7 @@ static QSE_INLINE int task_main_dir (
 			int http_errnum;
 			http_errnum = (httpd->errnum == QSE_HTTPD_ENOENT)? 404:
 					    (httpd->errnum == QSE_HTTPD_EACCES)? 403: 500;
-			x = qse_httpd_entask_error (
+			x = qse_httpd_entask_err (
 				httpd, client, x, http_errnum,
 				&dir->version, dir->keepalive);
 	

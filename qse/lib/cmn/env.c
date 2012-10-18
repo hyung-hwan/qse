@@ -332,9 +332,9 @@ static QSE_INLINE int insert_wcs (
 	qse_mchar_t* namedup, * valuedup[2];
 	int n;
 
-	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
+	namedup = qse_wcstombsdup (name, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup == QSE_NULL) return -1;
-	valuedup[0] = qse_wcsatombsdup (value, env->mmgr); /* TODO: ignore mbwcerr */
+	valuedup[0] = qse_wcsatombsdup (value, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (valuedup == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
@@ -357,9 +357,9 @@ static QSE_INLINE int insert_mbs (
 	qse_wchar_t* namedup, * valuedup[2];
 	int n;
 
-	namedup = qse_mbstowcsalldup (name, env->mmgr); 
+	namedup = qse_mbstowcsalldup (name, QSE_NULL, env->mmgr); 
 	if (namedup == QSE_NULL) return -1;
-	valuedup[0] = qse_mbsatowcsalldup (value, env->mmgr); 
+	valuedup[0] = qse_mbsatowcsalldup (value, QSE_NULL, env->mmgr); 
 	if (valuedup[0] == QSE_NULL)
 	{
 		QSE_MMGR_FREE (env->mmgr, namedup);
@@ -495,7 +495,7 @@ static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name)
 	qse_mchar_t* namedup;
 	int ret = -1;
 
-	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
+	namedup = qse_wcstombsdup (name, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup)
 	{
 		ret = insert_sys_mbs (env, namedup);
@@ -513,7 +513,7 @@ static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name)
 	qse_wchar_t* namedup;
 	int ret = -1;
 
-	namedup = qse_mbstowcsdup (name, env->mmgr); /* TODO: ignroe mbwcerr */
+	namedup = qse_mbstowcsdup (name, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup)
 	{
 		ret = insert_sys_wcs (env, namedup);
@@ -672,7 +672,7 @@ int qse_env_deletewcs (qse_env_t* env, const qse_wchar_t* name)
 	qse_mchar_t* namedup;
 	int n;
 
-	namedup = qse_wcstombsdup (name, env->mmgr); /* TODO: ignore mbwcerr */
+	namedup = qse_wcstombsdup (name, QSE_NULL, env->mmgr); /* TODO: ignore mbwcerr */
 	if (namedup == QSE_NULL) return -1;
 
 	n = deletem (env, namedup);
@@ -689,7 +689,7 @@ int qse_env_deletembs (qse_env_t* env, const qse_mchar_t* name)
 	qse_wchar_t* namedup;
 	int n;
 
-	namedup = qse_mbstowcsalldup (name, env->mmgr);
+	namedup = qse_mbstowcsalldup (name, QSE_NULL, env->mmgr);
 	if (namedup == QSE_NULL) return -1;
 
 	n = deletew (env, namedup);
