@@ -113,7 +113,7 @@ void qse_tio_setcmgr (qse_tio_t* tio, qse_cmgr_t* cmgr)
 }
 
 int qse_tio_attachin (
-	qse_tio_t* tio, qse_tio_io_fun_t input,
+	qse_tio_t* tio, qse_tio_io_impl_t input,
 	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
 	qse_mchar_t* xbufptr;
@@ -206,7 +206,7 @@ int qse_tio_detachin (qse_tio_t* tio)
 }
 
 int qse_tio_attachout (
-	qse_tio_t* tio, qse_tio_io_fun_t output, 
+	qse_tio_t* tio, qse_tio_io_impl_t output, 
 	qse_mchar_t* bufptr, qse_size_t bufcapa)
 {
 	qse_mchar_t* xbufptr;

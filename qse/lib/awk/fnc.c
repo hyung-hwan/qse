@@ -99,7 +99,7 @@ void* qse_awk_addfnc (
 	int when_valid, 
 	qse_size_t min_args, qse_size_t max_args, 
 	const qse_char_t* arg_spec, 
-	qse_awk_fnc_fun_t handler)
+	qse_awk_fnc_impl_t handler)
 {
 	qse_awk_fnc_t* fnc;
 	qse_size_t fnc_size;
@@ -110,6 +110,10 @@ void* qse_awk_addfnc (
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
 	}
+
+	/* Note it doesn't check if it conflicts with a keyword.
+	 * such a function registered won't take effect because
+	 * the word is treated as a keyword */
 
 	if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
 	{

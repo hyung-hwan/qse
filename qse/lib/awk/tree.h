@@ -198,7 +198,7 @@ struct qse_awk_nde_fncall_t
 				const qse_char_t* spec;
 			} arg;
 
-			qse_awk_fnc_fun_t handler;
+			qse_awk_fnc_impl_t handler;
 		} fnc;
 	} u;
 	qse_awk_nde_t* args;

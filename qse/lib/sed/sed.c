@@ -1965,7 +1965,7 @@ static int get_command (qse_sed_t* sed, qse_sed_cmd_t* cmd)
 	return 0;
 }
 
-int qse_sed_comp (qse_sed_t* sed, qse_sed_io_fun_t inf)
+int qse_sed_comp (qse_sed_t* sed, qse_sed_io_impl_t inf)
 {
 	qse_cint_t c;
 	qse_sed_cmd_t* cmd = QSE_NULL;
@@ -3902,8 +3902,7 @@ static int emit_output (qse_sed_t* sed, int skipline)
 	return 0;
 }
 
-
-int qse_sed_exec (qse_sed_t* sed, qse_sed_io_fun_t inf, qse_sed_io_fun_t outf)
+int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 {
 	qse_ssize_t n;
 	int ret = 0;

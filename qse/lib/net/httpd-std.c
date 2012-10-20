@@ -345,6 +345,7 @@ struct httpd_xtn_t
 #if defined(HAVE_SSL)
 	SSL_CTX* ssl_ctx;
 #endif
+	qse_httpd_ecb_t ecb;
 };
 
 #if defined(HAVE_SSL)
@@ -412,22 +413,17 @@ qse_httpd_t* qse_httpd_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	qse_httpd_t* httpd;
 	httpd_xtn_t* xtn;
 
-	static qse_httpd_ecb_t std_ecb = 
-	{
-		QSE_FV(.close, cleanup_standard_httpd)
-	};
-
 	httpd = qse_httpd_open (mmgr, QSE_SIZEOF(httpd_xtn_t) + xtnsize);
 	if (httpd == QSE_NULL) return QSE_NULL;
 
 	xtn = (httpd_xtn_t*)qse_httpd_getxtn (httpd);
-	QSE_MEMSET (xtn, 0, QSE_SIZEOF(httpd_xtn_t) + xtnsize);
 
 #if defined(HAVE_SSL)
 	/*init_xtn_ssl (xtn, "http01.pem", "http01.key");*/
 #endif
 
-	qse_httpd_pushecb (httpd, &std_ecb);
+	xtn->ecb.close = cleanup_standard_httpd;
+	qse_httpd_pushecb (httpd, &xtn->ecb);
 	return httpd;	
 }
 

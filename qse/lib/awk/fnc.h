@@ -22,7 +22,6 @@
 #define _QSE_LIB_AWK_FNC_H_
 
 typedef struct qse_awk_fnc_t qse_awk_fnc_t;
-
 struct qse_awk_fnc_t
 {
 	struct
@@ -42,7 +41,7 @@ struct qse_awk_fnc_t
 		qse_char_t* spec;
 	} arg;
 
-	qse_awk_fnc_fun_t handler;
+	qse_awk_fnc_impl_t handler;
 
 	/*qse_awk_fnc_t* next;*/
 };

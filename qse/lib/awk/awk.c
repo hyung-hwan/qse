@@ -72,7 +72,7 @@ static void clear_token (qse_awk_tok_t* tok)
 	tok->loc.colm = 0;
 }
 
-qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
+qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* prm)
 {
 	qse_awk_t* awk;
 
@@ -109,11 +109,11 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtn, qse_awk_prm_t* prm)
 	};
 
 	/* allocate the object */
-	awk = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_awk_t) + xtn);
+	awk = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_awk_t) + xtnsize);
 	if (awk == QSE_NULL) return QSE_NULL;
 
-	/* zero out the object */
-	QSE_MEMSET (awk, 0, QSE_SIZEOF(qse_awk_t) + xtn);
+	/* zero out the object + extension area */
+	QSE_MEMSET (awk, 0, QSE_SIZEOF(qse_awk_t) + xtnsize);
 
 	/* remember the memory manager */
 	awk->mmgr = mmgr;
