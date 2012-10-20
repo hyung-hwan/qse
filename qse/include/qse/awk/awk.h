@@ -418,9 +418,9 @@ typedef qse_bool_t (*qse_awk_isemptyrex_t) (
 );
 
 /**
- * The qse_awk_fnc_fun_t type defines a intrinsic function handler.
+ * The qse_awk_fnc_impl_t type defines a intrinsic function handler.
  */
-typedef int (*qse_awk_fnc_fun_t) (
+typedef int (*qse_awk_fnc_impl_t) (
 	qse_awk_rtx_t*    rtx,  /**< runtime context */
 	const qse_cstr_t* name  /**< function name */
 );
@@ -472,9 +472,9 @@ struct qse_awk_sio_arg_t
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 
 /**
- * The qse_awk_sio_fun_t type defines a source IO function
+ * The qse_awk_sio_impl_t type defines a source IO function
  */
-typedef qse_ssize_t (*qse_awk_sio_fun_t) (
+typedef qse_ssize_t (*qse_awk_sio_impl_t) (
 	qse_awk_t*         awk,
 	qse_awk_sio_cmd_t  cmd, 
 	qse_awk_sio_arg_t* arg,
@@ -571,9 +571,9 @@ struct qse_awk_rio_arg_t
 typedef struct qse_awk_rio_arg_t qse_awk_rio_arg_t;
 
 /**
- * The qse_awk_rio_fun_t type defines a runtime I/O handler.
+ * The qse_awk_rio_impl_t type defines a runtime I/O handler.
  */
-typedef qse_ssize_t (*qse_awk_rio_fun_t) (
+typedef qse_ssize_t (*qse_awk_rio_impl_t) (
 	qse_awk_rtx_t*      rtx,
 	qse_awk_rio_cmd_t   cmd,
 	qse_awk_rio_arg_t*  riod,
@@ -661,8 +661,8 @@ typedef struct qse_awk_prm_t qse_awk_prm_t;
  */
 struct qse_awk_sio_t
 {
-	qse_awk_sio_fun_t in;  /**< input script stream handler */
-	qse_awk_sio_fun_t out; /**< output script stream handler */
+	qse_awk_sio_impl_t in;  /**< input script stream handler */
+	qse_awk_sio_impl_t out; /**< output script stream handler */
 };
 typedef struct qse_awk_sio_t qse_awk_sio_t;
 
@@ -674,11 +674,53 @@ typedef struct qse_awk_sio_t qse_awk_sio_t;
  */
 struct qse_awk_rio_t
 {
-	qse_awk_rio_fun_t pipe;    /**< pipe handler */
-	qse_awk_rio_fun_t file;    /**< file handler */
-	qse_awk_rio_fun_t console; /**< console handler */
+	qse_awk_rio_impl_t pipe;    /**< pipe handler */
+	qse_awk_rio_impl_t file;    /**< file handler */
+	qse_awk_rio_impl_t console; /**< console handler */
 };
 typedef struct qse_awk_rio_t qse_awk_rio_t;
+
+/* ------------------------------------------------------------------------ */
+
+typedef struct qse_awk_mod_t qse_awk_mod_t;
+typedef struct qse_awk_mod_info_t qse_awk_mod_info_t;
+
+enum qse_awk_mod_type_t
+{
+	QSE_AWK_MOD_FNC = 0 /*,
+	QSE_AWK_MOD_VAR */
+};
+typedef enum qse_awk_mod_type_t qse_awk_mod_type_t;
+
+struct qse_awk_mod_info_t
+{
+	qse_awk_mod_type_t type; 
+	union
+	{
+		struct
+		{
+			struct
+			{
+				int min; /* min. numbers of argument for a function */
+				int max; /* max. numbers of argument for a function */
+			} arg;
+			qse_awk_fnc_impl_t impl;
+		} f;
+	} u;
+};
+
+typedef int (*qse_awk_mod_query_t) (
+	qse_awk_t*          awk, 
+	const qse_char_t*   name,
+	qse_awk_mod_info_t* info
+);
+
+struct qse_awk_mod_t
+{
+	qse_awk_mod_query_t query;
+	int (*init) (qse_awk_t* awk, qse_awk_rtx_t* rtx);
+	void (*fini) (qse_awk_t* awk, qse_awk_rtx_t* rtx);
+};
 
 /* ------------------------------------------------------------------------ */
 
@@ -973,15 +1015,15 @@ enum qse_awk_errnum_t
 	QSE_AWK_EGBLTM,    /**< too many global variables */
 	QSE_AWK_ELCLTM,    /**< too many local variables */
 	QSE_AWK_EPARTM,    /**< too many parameters */
-	QSE_AWK_EDELETE,   /**< 'delete' not followed by variable */
-	QSE_AWK_ERESET,    /**< 'reset' not followed by variable */
+	QSE_AWK_ESEGTM,    /**< too many identifier segments */
+	QSE_AWK_EBADARG,   /**< bad argument */
+	QSE_AWK_ENOARG,    /**< no argument */
 	QSE_AWK_EBREAK,    /**< 'break' outside a loop */
 	QSE_AWK_ECONTINUE, /**< 'continue' outside a loop */
 	QSE_AWK_ENEXTBEG,  /**< 'next' illegal in BEGIN block */
 	QSE_AWK_ENEXTEND,  /**< 'next' illegal in END block */
 	QSE_AWK_ENEXTFBEG, /**< 'nextfile' illegal in BEGIN block */
 	QSE_AWK_ENEXTFEND, /**< 'nextfile' illegal in END block */
-	QSE_AWK_EPRINTFARG,/**< 'printf' not followed by argument */
 	QSE_AWK_EPREPST,   /**< both prefix and postfix incr/decr operator present */
 	QSE_AWK_EINCDECOPR,/**< illegal operand for incr/decr operator */
 	QSE_AWK_EINCLSTR,  /**< 'include' not followed by a string */
@@ -1008,8 +1050,6 @@ enum qse_awk_errnum_t
 	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
 	QSE_AWK_EMAPNA,        /**< map not allowed */
 	QSE_AWK_EVALTYPE,      /**< invalid value type */
-	QSE_AWK_ERDELETE,      /**< 'delete' called with wrong target */
-	QSE_AWK_ERRESET,       /**< 'reset' called with wrong target */
 	QSE_AWK_ERNEXTBEG,     /**< 'next' called from BEGIN block */
 	QSE_AWK_ERNEXTEND,     /**< 'next' called from END block */
 	QSE_AWK_ERNEXTFBEG,    /**< 'nextfile' called from BEGIN block */
@@ -1247,9 +1287,9 @@ extern qse_awk_val_t* qse_awk_val_one;
  * @return a pointer to a qse_awk_t object on success, #QSE_NULL on failure.
  */
 qse_awk_t* qse_awk_open ( 
-	qse_mmgr_t*    mmgr, /**< memory manager */
-	qse_size_t     xtn,  /**< extension size in bytes */
-	qse_awk_prm_t* prm   /**< pointer to a primitive function structure */
+	qse_mmgr_t*    mmgr,    /**< memory manager */
+	qse_size_t     xtnsize, /**< extension size in bytes */
+	qse_awk_prm_t* prm      /**< pointer to a primitive function structure */
 );
 
 /**
@@ -1484,14 +1524,14 @@ int qse_awk_findgbl (
  * The qse_awk_addfnc() function adds an intrinsic function.
  */
 void* qse_awk_addfnc (
-	qse_awk_t*        awk,
-	const qse_char_t* name,
-	qse_size_t        name_len, 
-	int               when_valid,
-	qse_size_t        min_args,
-	qse_size_t        max_args, 
-	const qse_char_t* arg_spec, 
-	qse_awk_fnc_fun_t handler
+	qse_awk_t*         awk,
+	const qse_char_t*  name,
+	qse_size_t         name_len, 
+	int                when_valid,
+	qse_size_t         min_args,
+	qse_size_t         max_args, 
+	const qse_char_t*  arg_spec, 
+	qse_awk_fnc_impl_t handler
 );
 
 /**

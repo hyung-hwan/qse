@@ -64,9 +64,9 @@ struct qse_stx_io_arg_t
 typedef struct qse_stx_io_arg_t qse_stx_io_arg_t;
 
 /**
- * The qse_stx_io_fun_t type defines an I/O handler function.
+ * The qse_stx_io_impl_t type defines an I/O handler function.
  */
-typedef qse_ssize_t (*qse_stx_io_fun_t) (
+typedef qse_ssize_t (*qse_stx_io_impl_t) (
 	qse_stx_t*        stx,
 	qse_stx_io_cmd_t  cmd,
 	qse_stx_io_arg_t* arg,
@@ -79,8 +79,8 @@ typedef qse_ssize_t (*qse_stx_io_fun_t) (
  */
 struct qse_stx_io_t
 {
-	qse_stx_io_fun_t in;
-	qse_stx_io_fun_t out;
+	qse_stx_io_impl_t in;
+	qse_stx_io_impl_t out;
 };
 typedef struct qse_stx_io_t qse_stx_io_t;
 

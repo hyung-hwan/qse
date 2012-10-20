@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 104 LINE 3 COLUMN 2 - recursion detected in format conversion
+ERROR: CODE 102 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2453,6 +2453,10 @@ BEGIN {
 255.0.255.0
 127.0.0.1
 192.168.1.1
+--------------------------------------------------------------------------------
+[CMD]  qseawk  --newline=on -d- -f lang-049.awk  </dev/stdin 2>&1 
+--------------------------------------------------------------------------------
+ERROR: CODE 60 LINE 2 COLUMN 9 - no argument provided
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -F: -f columnate.awk passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

@@ -174,8 +174,8 @@ struct qse_awk_t
 	/* source code management */
 	struct
 	{
-		qse_awk_sio_fun_t inf;
-		qse_awk_sio_fun_t outf;
+		qse_awk_sio_impl_t inf;
+		qse_awk_sio_impl_t outf;
 
 		qse_awk_sio_lxc_t last; 
 
@@ -236,6 +236,7 @@ struct qse_awk_t
 
 	qse_bool_t stopall;
 	qse_awk_ecb_t* ecb;
+	qse_awk_mod_t* mod;
 };
 
 struct qse_awk_chain_t
@@ -340,7 +341,7 @@ struct qse_awk_rtx_t
 	/* rio chain */
 	struct
 	{
-		qse_awk_rio_fun_t handler[QSE_AWK_RIO_NUM];
+		qse_awk_rio_impl_t handler[QSE_AWK_RIO_NUM];
 		qse_awk_rio_arg_t* chain;
 	} rio;
 
@@ -352,7 +353,7 @@ struct qse_awk_rtx_t
 		struct
 		{
 			qse_char_t* ptr;
-			qse_size_t len;	/* length */
+			qse_size_t len; /* length */
 			qse_size_t inc; /* increment */
 		} tmp;
 	} format;

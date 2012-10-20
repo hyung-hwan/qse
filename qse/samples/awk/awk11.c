@@ -25,7 +25,7 @@ const qse_char_t* src = QSE_T("BEGIN { print \"hello, world\" | \"dir\"; }");
 
 struct rtx_xtn_t
 {
-	qse_awk_rio_fun_t old_pipe_handler;
+	qse_awk_rio_impl_t old_pipe_handler;
 };
 
 static qse_ssize_t new_pipe_handler (

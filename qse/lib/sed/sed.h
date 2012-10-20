@@ -104,7 +104,7 @@ struct qse_sed_t
 	/** source text pointers */
 	struct
 	{
-		qse_sed_io_fun_t  fun; /**< input stream handler */
+		qse_sed_io_impl_t  fun; /**< input stream handler */
 		qse_sed_io_arg_t  arg;
 		qse_char_t        buf[1024];
 		int               eof;
@@ -156,7 +156,7 @@ struct qse_sed_t
 		/** data needed for output streams and files */
 		struct
 		{
-			qse_sed_io_fun_t fun; /**< an output handler */
+			qse_sed_io_impl_t fun; /**< an output handler */
 			qse_sed_io_arg_t arg; /**< output handling data */
 
 			qse_char_t buf[2048];
@@ -174,7 +174,7 @@ struct qse_sed_t
 		/** data needed for input streams */
 		struct
 		{
-			qse_sed_io_fun_t fun; /**< an input handler */
+			qse_sed_io_impl_t fun; /**< an input handler */
 			qse_sed_io_arg_t arg; /**< input handling data */
 
 			qse_char_t xbuf[1]; /**< a read-ahead buffer */

@@ -163,7 +163,7 @@ int qse_awk_parsestd (
  */
 qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*        awk,
-	qse_size_t        xtn,
+	qse_size_t        xtnsize,
 	const qse_char_t* id,
 	const qse_char_t* icf[],
 	const qse_char_t* ocf[],

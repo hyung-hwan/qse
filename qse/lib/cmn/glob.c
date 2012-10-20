@@ -79,7 +79,7 @@ typedef struct stack_node_t stack_node_t;
 
 struct glob_t
 {
-	qse_glob_cbfun_t cbfun;
+	qse_glob_cbimpl_t cbimpl;
 	void* cbctx;
 
 	qse_mmgr_t* mmgr;
@@ -707,7 +707,7 @@ static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 		if (!seg->next && path_exists(g, QSE_STR_PTR(&g->path)) > 0)
 		{
 			/* reached the last segment. match if the path exists */
-			if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) return -1;
+			if (g->cbimpl (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) return -1;
 			g->expanded = 1;
 		}
 	}
@@ -803,7 +803,7 @@ entry:
 					}
 					else
 					{
-						if (g->cbfun (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) goto oops;
+						if (g->cbimpl (QSE_STR_CSTR(&g->path), g->cbctx) <= -1) goto oops;
 						g->expanded = 1;
 					}
 				}
@@ -871,14 +871,14 @@ oops:
 	return -1;
 }
 
-int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* cbctx, int flags, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
 {
 	segment_t seg;
 	glob_t g;
 	int x;
 
 	QSE_MEMSET (&g, 0, QSE_SIZEOF(g));
-	g.cbfun = cbfun;
+	g.cbimpl = cbimpl;
 	g.cbctx = cbctx;
 	g.mmgr = mmgr;
 	g.cmgr = cmgr;
@@ -928,8 +928,8 @@ int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* c
 	return g.expanded;
 }
 
-int qse_glob (const qse_char_t* pattern, qse_glob_cbfun_t cbfun, void* cbctx, int flags, qse_mmgr_t* mmgr)
+int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr)
 {
-	return qse_globwithcmgr (pattern, cbfun, cbctx, flags, mmgr, qse_getdflcmgr());
+	return qse_globwithcmgr (pattern, cbimpl, cbctx, flags, mmgr, qse_getdflcmgr());
 }
 

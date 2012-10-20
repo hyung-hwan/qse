@@ -81,9 +81,9 @@ enum qse_tio_misc_t
 typedef struct qse_tio_t qse_tio_t;
 
 /**
- * The qse_tio_io_fun_t types define a text I/O handler.
+ * The qse_tio_io_impl_t types define a text I/O handler.
  */
-typedef qse_ssize_t (*qse_tio_io_fun_t) (
+typedef qse_ssize_t (*qse_tio_io_impl_t) (
 	qse_tio_t*    tio,
 	qse_tio_cmd_t cmd, 
 	void*         data, 
@@ -92,7 +92,7 @@ typedef qse_ssize_t (*qse_tio_io_fun_t) (
 
 struct qse_tio_io_t
 {
-	qse_tio_io_fun_t fun;
+	qse_tio_io_impl_t fun;
 	struct
 	{
 		qse_size_t   capa;
@@ -200,7 +200,7 @@ void qse_tio_setcmgr (
  */
 int qse_tio_attachin (
 	qse_tio_t*       tio,
-	qse_tio_io_fun_t input,
+	qse_tio_io_impl_t input,
 	qse_mchar_t*     bufptr,
 	qse_size_t       bufcapa
 );
@@ -219,7 +219,7 @@ int qse_tio_detachin (
  */
 int qse_tio_attachout (
 	qse_tio_t*       tio,
-	qse_tio_io_fun_t output,
+	qse_tio_io_impl_t output,
 	qse_mchar_t*     bufptr,
 	qse_size_t       bufcapa
 );

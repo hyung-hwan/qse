@@ -29,7 +29,7 @@
  * in a path name.
  */
 
-typedef int (*qse_glob_cbfun_t) (
+typedef int (*qse_glob_cbimpl_t) (
 	const qse_cstr_t* path,
 	void*             cbctx
 );
@@ -54,24 +54,24 @@ extern "C" {
 
 /**
  * The qse_glob() function finds path names matchin the @a pattern.
- * It calls the call-back function @a cbfun for each path name found.
+ * It calls the call-back function @a cbimpl for each path name found.
  * 
  * @return -1 on failure, 0 on no match, 1 if matches are found.
  */
 int qse_glob (
-	const qse_char_t* pattern,
-	qse_glob_cbfun_t  cbfun,
-	void*             cbctx,
-	int               flags,
-	qse_mmgr_t*       mmgr
+	const qse_char_t*  pattern,
+	qse_glob_cbimpl_t  cbimpl,
+	void*              cbctx,
+	int                flags,
+	qse_mmgr_t*        mmgr
 );
 
 int qse_globwithcmgr (
-	const qse_char_t* pattern,
-	qse_glob_cbfun_t  cbfun,
-	void*             cbctx,
-	int               flags,
-	qse_mmgr_t*       mmgr,
+	const qse_char_t*  pattern,
+	qse_glob_cbimpl_t  cbimpl,
+	void*              cbctx,
+	int                flags,
+	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*       cmgr
 );
 

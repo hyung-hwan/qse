@@ -695,7 +695,7 @@ qse_htb_t* qse_awk_rtx_getnvmap (qse_awk_rtx_t* rtx)
 }
 
 qse_awk_rtx_t* qse_awk_rtx_open (
-	qse_awk_t* awk, qse_size_t xtn, qse_awk_rio_t* rio)
+	qse_awk_t* awk, qse_size_t xtnsize, qse_awk_rio_t* rio)
 {
 	qse_awk_rtx_t* rtx;
 
@@ -718,7 +718,7 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 	
 	/* allocate the storage for the rtx object */
 	rtx = (qse_awk_rtx_t*) QSE_AWK_ALLOC (
-		awk, QSE_SIZEOF(qse_awk_rtx_t) + xtn);
+		awk, QSE_SIZEOF(qse_awk_rtx_t) + xtnsize);
 	if (rtx == QSE_NULL)
 	{
 		/* if it fails, the failure is reported thru 
@@ -727,7 +727,8 @@ qse_awk_rtx_t* qse_awk_rtx_open (
 		return QSE_NULL;
 	}
 
-	/* initialize the run object */
+	/* initialize the rtx object */
+	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t) + xtnsize);
 	if (init_rtx (rtx, awk, rio) <= -1) 
 	{
 		QSE_AWK_FREE (awk, rtx);
@@ -829,9 +830,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 		QSE_HTB_SIZER_DEFAULT,
 		QSE_HTB_HASHER_DEFAULT
 	};
-
-	/* zero out the runtime context excluding the extension */
-	QSE_MEMSET (rtx, 0, QSE_SIZEOF(qse_awk_rtx_t));
 
 	rtx->awk = awk;
 
@@ -2629,14 +2627,13 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 		case QSE_AWK_NDE_LCLIDX:
 		case QSE_AWK_NDE_ARGIDX:
 			return run_delete_nonnamed (rtx, var);
-
 	}
 
 	QSE_ASSERTX (
 		!"should never happen - wrong target for delete",
 		"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
 
-	SETERR_LOC (rtx, QSE_AWK_ERDELETE, &var->loc);
+	SETERR_LOC (rtx, QSE_AWK_EBADARG, &var->loc);
 	return -1;
 }
 
@@ -2687,7 +2684,7 @@ static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
 			!"should never happen - wrong target for reset",
 			"the reset statement can only be called with plain variables");
 
-		SETERR_LOC (rtx, QSE_AWK_ERRESET, &var->loc);
+		SETERR_LOC (rtx, QSE_AWK_EBADARG, &var->loc);
 		return -1;
 	}
 

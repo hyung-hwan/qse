@@ -61,7 +61,7 @@
  *
  * The input and output streams needed by qse_sed_exec() are implemented in
  * the form of callback functions. You should implement two functions 
- * conforming to the ::qse_sed_io_fun_t type.
+ * conforming to the ::qse_sed_io_impl_t type.
  */
 typedef struct qse_sed_t qse_sed_t;
 
@@ -324,10 +324,10 @@ struct qse_sed_io_arg_t
 typedef struct qse_sed_io_arg_t qse_sed_io_arg_t;
 
 /** 
- * The qse_sed_io_fun_t type defines an I/O handler. I/O handlers are called by
+ * The qse_sed_io_impl_t type defines an I/O handler. I/O handlers are called by
  * qse_sed_exec().
  */
-typedef qse_ssize_t (*qse_sed_io_fun_t) (
+typedef qse_ssize_t (*qse_sed_io_impl_t) (
 	qse_sed_t*        sed,
 	qse_sed_io_cmd_t  cmd,
 	qse_sed_io_arg_t* arg,
@@ -564,7 +564,7 @@ void qse_sed_pushecb (
  */
 int qse_sed_comp (
 	qse_sed_t*        sed, /**< stream editor */
-	qse_sed_io_fun_t  inf  /**< script stream reader */
+	qse_sed_io_impl_t  inf  /**< script stream reader */
 );
 
 /**
@@ -573,8 +573,8 @@ int qse_sed_comp (
  */
 int qse_sed_exec (
 	qse_sed_t*        sed,  /**< stream editor */
-	qse_sed_io_fun_t  inf,  /**< stream reader */
-	qse_sed_io_fun_t  outf  /**< stream writer */
+	qse_sed_io_impl_t  inf,  /**< stream reader */
+	qse_sed_io_impl_t  outf  /**< stream writer */
 );
 
 /**
