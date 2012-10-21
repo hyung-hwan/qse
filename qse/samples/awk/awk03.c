@@ -45,7 +45,7 @@ int main ()
 
 	qse_awk_parsestd_t psin;
 
-	int ret, i;
+	int ret, i, opt;
 
 	/* create a main processor */
 	awk = qse_awk_openstd (0);
@@ -55,8 +55,10 @@ int main ()
 		ret = -1; goto oops;
 	}
 
+	qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
 	/* don't allow BEGIN, END, pattern-action blocks */
-	qse_awk_setoption (awk, qse_awk_getoption(awk) & ~QSE_AWK_PABLOCK);
+	opt &= ~QSE_AWK_PABLOCK;
+	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
 	psin.type = QSE_AWK_PARSESTD_STR;
 	psin.u.str.ptr = src;

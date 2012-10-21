@@ -53,11 +53,16 @@ public:
 	typedef qse_awk_errstr_t errstr_t;
 	typedef qse_awk_errinf_t errinf_t;
 
-	/// The depth_t type redefines #qse_awk_depth_t.
-	typedef qse_awk_depth_t depth_t;
-
-	/// The option_t type redefines #qse_awk_option_t.
-	typedef qse_awk_option_t option_t;
+	enum depth_t
+	{
+		DEPTH_INCLUDE     = QSE_AWK_DEPTH_INCLUDE,
+		DEPTH_BLOCK_PARSE = QSE_AWK_DEPTH_BLOCK_PARSE,
+		DEPTH_BLOCK_RUN   = QSE_AWK_DEPTH_BLOCK_RUN,
+		DEPTH_EXPR_PARSE  = QSE_AWK_DEPTH_EXPR_PARSE,
+		DEPTH_EXPR_RUN    = QSE_AWK_DEPTH_EXPR_RUN,
+		DEPTH_REX_BUILD   = QSE_AWK_DEPTH_REX_BUILD,
+		DEPTH_REX_MATCH   = QSE_AWK_DEPTH_REX_MATCH
+	};
 
 	/// The gbl_id_t type redefines #qse_awk_gbl_id_t.
 	typedef qse_awk_gbl_id_t gbl_id_t;
@@ -948,16 +953,16 @@ public:
 	///
 
 	///
-	/// The getOption() function gets the current options.
-	/// @return 0 or current options ORed of #option_t enumerators.
+	/// The getTrait() function gets the current options.
+	/// @return current traits
 	///
-	int getOption () const;
+	int getTrait () const;
 
 	///
-	/// The setOption() function changes the current options.
+	/// The setTrait() function changes the current traits.
 	///
-	void setOption (
-		int opt ///< options ORed of #option_t enumerators.
+	void setTrait (
+		int trait 
 	);
 
 	/// 
@@ -965,7 +970,7 @@ public:
 	/// for operations identified by @a ids.
 	///
 	void setMaxDepth (
-		int ids,     ///< number ORed of #depth_t enumerators
+		depth_t id,  ///< depth identifier
 		size_t depth ///< new depth
 	);
 
@@ -974,7 +979,7 @@ public:
 	/// type identified by @a id.
 	///
 	size_t getMaxDepth (
-		depth_t id   ///< operation identifier
+		depth_t id   ///< depth identifier
 	) const;
 
 	///

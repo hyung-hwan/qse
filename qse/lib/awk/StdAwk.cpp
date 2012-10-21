@@ -185,7 +185,7 @@ StdAwk::Run* StdAwk::parse (Source& in, Source& out)
 		// parse() result.
 		qse_htb_clear (&this->cmgrtab);
 	}
-	else if (run && (this->getOption() & QSE_AWK_RIO))
+	else if (run && (this->getTrait() & QSE_AWK_RIO))
 	{
 		// it initialized cmgrtab only if QSE_AWK_RIO is set.
 		// but if you call parse() multiple times while

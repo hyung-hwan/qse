@@ -136,8 +136,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 	int ret = awk.open();
 
 	// allow returning a map from a function and enable 'reset'
-	awk.setOption (
-		awk.getOption() | 
+	awk.setTrait (
+		awk.getTrait() | 
 		QSE_AWK_MAPTOVAR |
 		QSE_AWK_RESET);
 

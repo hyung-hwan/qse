@@ -405,6 +405,8 @@ AC_CONFIG_FILES([
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
 	cmd/stx/Makefile 
+	mod/Makefile
+	mod/awk/Makefile
 	samples/Makefile 
 	samples/cmn/Makefile 
 	samples/awk/Makefile 

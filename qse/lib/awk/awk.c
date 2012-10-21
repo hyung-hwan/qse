@@ -209,9 +209,9 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 
-	awk->option = QSE_AWK_CLASSIC;
+	awk->opt.trait = QSE_AWK_CLASSIC;
 #if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
-	awk->option |= QSE_AWK_CRLF;
+	awk->opt.trait |= QSE_AWK_CRLF;
 #endif
 
 	awk->errinf.num = QSE_AWK_ENOERR;
@@ -316,10 +316,10 @@ int qse_awk_clear (qse_awk_t* awk)
 	qse_htb_clear (awk->parse.funs);
 
 	awk->parse.nlcls_max = 0; 
-	awk->parse.depth.cur.block = 0;
-	awk->parse.depth.cur.loop = 0;
-	awk->parse.depth.cur.expr = 0;
-	awk->parse.depth.cur.incl = 0;
+	awk->parse.depth.block = 0;
+	awk->parse.depth.loop = 0;
+	awk->parse.depth.expr = 0;
+	awk->parse.depth.incl = 0;
 
 	/* clear parse trees */	
 	/*awk->tree.ngbls_base = 0;
@@ -387,70 +387,58 @@ qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)
 	return &awk->prm;
 }
 
-int qse_awk_getoption (const qse_awk_t* awk)
+int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 {
-	return awk->option;
+	switch (id)
+	{
+		case QSE_AWK_TRAIT:
+			awk->opt.trait = *(const int*)value;
+			return 0;
+
+		case QSE_AWK_DEPTH_INCLUDE:
+		case QSE_AWK_DEPTH_BLOCK_PARSE:
+		case QSE_AWK_DEPTH_BLOCK_RUN:
+		case QSE_AWK_DEPTH_EXPR_PARSE:
+		case QSE_AWK_DEPTH_EXPR_RUN:
+		case QSE_AWK_DEPTH_REX_BUILD:
+		case QSE_AWK_DEPTH_REX_MATCH:
+			awk->opt.depth.a[id - QSE_AWK_DEPTH_INCLUDE] = *(const qse_size_t*)value;
+			return 0;
+	}
+
+	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
 }
 
-void qse_awk_setoption (qse_awk_t* awk, int opt)
+int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t  id, void* value)
 {
-	awk->option = opt;
+	switch  (id)
+	{
+		case QSE_AWK_TRAIT:
+			*(int*)value = awk->opt.trait;
+			return 0;
+
+		case QSE_AWK_DEPTH_INCLUDE:
+		case QSE_AWK_DEPTH_BLOCK_PARSE:
+		case QSE_AWK_DEPTH_BLOCK_RUN:
+		case QSE_AWK_DEPTH_EXPR_PARSE:
+		case QSE_AWK_DEPTH_EXPR_RUN:
+		case QSE_AWK_DEPTH_REX_BUILD:
+		case QSE_AWK_DEPTH_REX_MATCH:
+			*(qse_size_t*)value = awk->opt.depth.a[id - QSE_AWK_DEPTH_INCLUDE];
+			return 0;
+	};
+
+	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
 }
 
 void qse_awk_stopall (qse_awk_t* awk)
 {
 	awk->stopall = QSE_TRUE;
+	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
 }
-
-qse_size_t qse_awk_getmaxdepth (const qse_awk_t* awk, qse_awk_depth_t type)
-{
-	return (type == QSE_AWK_DEPTH_BLOCK_PARSE)? awk->parse.depth.max.block:
-	       (type == QSE_AWK_DEPTH_BLOCK_RUN)? awk->run.depth.max.block:
-	       (type == QSE_AWK_DEPTH_EXPR_PARSE)? awk->parse.depth.max.expr:
-	       (type == QSE_AWK_DEPTH_EXPR_RUN)? awk->run.depth.max.expr:
-	       (type == QSE_AWK_DEPTH_REX_BUILD)? awk->rex.depth.max.build:
-	       (type == QSE_AWK_DEPTH_REX_MATCH)? awk->rex.depth.max.match: 
-	       (type == QSE_AWK_DEPTH_INCLUDE)? awk->parse.depth.max.incl: 0;
-}
-
-void qse_awk_setmaxdepth (qse_awk_t* awk, int types, qse_size_t depth)
-{
-	if (types & QSE_AWK_DEPTH_BLOCK_PARSE)
-	{
-		awk->parse.depth.max.block = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_EXPR_PARSE)
-	{
-		awk->parse.depth.max.expr = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_BLOCK_RUN)
-	{
-		awk->run.depth.max.block = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_EXPR_RUN)
-	{
-		awk->run.depth.max.expr = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_REX_BUILD)
-	{
-		awk->rex.depth.max.build = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_REX_MATCH)
-	{
-		awk->rex.depth.max.match = depth;
-	}
-
-	if (types & QSE_AWK_DEPTH_INCLUDE)
-	{
-		awk->parse.depth.max.incl = depth;
-	}
-}
-
 
 qse_awk_ecb_t* qse_awk_popecb (qse_awk_t* awk)
 {

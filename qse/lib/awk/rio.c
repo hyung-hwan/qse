@@ -382,7 +382,7 @@ int qse_awk_rtx_readio (
 					if (QSE_STR_LASTCHAR(buf) == QSE_T('\n'))
 					{
 						QSE_STR_LEN(buf) -= 1;
-						if (run->awk->option & QSE_AWK_CRLF)
+						if (run->awk->opt.trait & QSE_AWK_CRLF)
 						{
 							/* drop preceding CR */
 							if (QSE_STR_LEN(buf) > 0 &&
@@ -494,7 +494,7 @@ int qse_awk_rtx_readio (
 
 						/* we don't drop CR from the record buffer 
 						 * if we're in CRLF mode. POINT-X */	
-						if (!(run->awk->option & QSE_AWK_CRLF))
+						if (!(run->awk->opt.trait & QSE_AWK_CRLF))
 							QSE_STR_LEN(buf) -= 1;
 					}
 
@@ -502,7 +502,7 @@ int qse_awk_rtx_readio (
 					{
 						/* we got a blank line */
 
-						if (run->awk->option & QSE_AWK_CRLF)
+						if (run->awk->opt.trait & QSE_AWK_CRLF)
 						{
 							if (QSE_STR_LEN(buf) > 0 && 
 							    QSE_STR_LASTCHAR(buf) == QSE_T('\r'))

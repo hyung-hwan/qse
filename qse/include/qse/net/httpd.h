@@ -812,14 +812,14 @@ int qse_httpd_getserveroptstd (
 	qse_httpd_t*              httpd,
 	qse_httpd_server_t*       server,
 	qse_httpd_server_optstd_t id,
-	void**                    value
+	void*                     value
 );
 
 int qse_httpd_setserveroptstd (
 	qse_httpd_t*              httpd,
 	qse_httpd_server_t*       server,
 	qse_httpd_server_optstd_t id,
-	void*                     value
+	const void*               value
 );
 
 void* qse_httpd_getserverxtnstd (

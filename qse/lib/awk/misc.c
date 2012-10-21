@@ -68,7 +68,7 @@ qse_long_t qse_awk_strxtolong (
 	p = str; 
 	end = str + len;
 	
-	if (awk->option & QSE_AWK_STRIPSTRSPC)
+	if (awk->opt.trait & QSE_AWK_STRIPSTRSPC)
 	{
 		/* strip off leading spaces */
 		while (p < end && QSE_AWK_ISSPACE(awk,*p)) p++;
@@ -195,7 +195,7 @@ qse_flt_t qse_awk_strtoreal (qse_awk_t* awk, const qse_char_t* str)
 
 	p = str;
 
-	if (awk->option & QSE_AWK_STRIPSTRSPC)
+	if (awk->opt.trait & QSE_AWK_STRIPSTRSPC)
 	{
 		/* strip off leading spaces */ 
 		while (QSE_AWK_ISSPACE(awk,*p)) p++;
@@ -891,7 +891,7 @@ qse_char_t* qse_awk_rtx_strxntokbyrex (
 			cursub.ptr++;
 			cursub.len--;
 		}
-		else if (rtx->awk->option & QSE_AWK_STRIPRECSPC)
+		else if (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)
 		{
 			/* match at the beginning of the input string */
 			if (match.ptr == substr) 
@@ -941,7 +941,7 @@ exit_loop:
 
 	/* the match is all spaces */
 	*errnum = QSE_AWK_ENOERR;
-	if (rtx->awk->option & QSE_AWK_STRIPRECSPC)
+	if (rtx->awk->opt.trait & QSE_AWK_STRIPRECSPC)
 	{
 		/* if the match reached the last character in the input string,
 		 * it returns QSE_NULL to terminate tokenization. */
@@ -1070,8 +1070,8 @@ void* qse_awk_buildrex (
 	void* p;
 
 	p = qse_buildrex (
-		awk->mmgr, awk->rex.depth.max.build, 
-		((awk->option&QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
+		awk->mmgr, awk->opt.depth.s.rex_build,
+		((awk->opt.trait&QSE_AWK_REXBOUND)? 0: QSE_REX_NOBOUND),
 		ptn, len, &err
 	);
 	if (p == QSE_NULL) *errnum = QSE_AWK_REXERRTOERR(err);
@@ -1087,7 +1087,7 @@ int qse_awk_matchrex (
 	qse_rex_errnum_t err;
 
 	x = qse_matchrex (
-		awk->mmgr, awk->rex.depth.max.match,
+		awk->mmgr, awk->opt.depth.s.rex_match,
 		code, option, str, substr, match, &err);
 	if (x <= -1) *errnum = QSE_AWK_REXERRTOERR(err);
 	return x;

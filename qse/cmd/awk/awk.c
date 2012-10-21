@@ -54,6 +54,8 @@
 #else
 #	include <unistd.h>
 #	include <errno.h>
+#	include <ltdl.h>
+#	define USE_LTDL
 #endif
 
 #if defined(ENABLE_MPI)
@@ -355,41 +357,6 @@ static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 	dprint (QSE_T("running %d at line %d\n"), (int)nde->type, (int)nde->loc.line);
 }
 #endif
-
-static int fnc_sleep (qse_awk_rtx_t* run, const qse_cstr_t* fnm)
-{
-	qse_size_t nargs;
-	qse_awk_val_t* a0;
-	qse_long_t lv;
-	qse_flt_t rv;
-	qse_awk_val_t* r;
-	int n;
-
-	nargs = qse_awk_rtx_getnargs (run);
-	QSE_ASSERT (nargs == 1);
-
-	a0 = qse_awk_rtx_getarg (run, 0);
-
-	n = qse_awk_rtx_valtonum (run, a0, &lv, &rv);
-	if (n == -1) return -1;
-	if (n == 1) lv = (qse_long_t)rv;
-
-#if defined(_WIN32)
-	Sleep ((DWORD)(lv * 1000));
-	n = 0;
-#elif defined(__OS2__)
-	DosSleep ((ULONG)(lv * 1000));
-	n = 0;
-#else
-	n = sleep (lv);	
-#endif
-
-	r = qse_awk_rtx_makeintval (run, n);
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (run, r);
-	return 0;
-}
 
 static void print_version (void)
 {
@@ -1050,24 +1017,22 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	i = qse_awk_getoption (awk);
+	qse_awk_getopt (awk, QSE_AWK_TRAIT, &i);
 	if (arg.opton) i |= arg.opton;
 	if (arg.optoff) i &= ~arg.optoff;
-	qse_awk_setoption (awk, i);
+	qse_awk_setopt (awk, QSE_AWK_TRAIT, &i);
 
 	/* TODO: get depth from command line */
-	qse_awk_setmaxdepth (
-		awk, QSE_AWK_DEPTH_BLOCK_PARSE | QSE_AWK_DEPTH_EXPR_PARSE, 50);
-	qse_awk_setmaxdepth (
-		awk, QSE_AWK_DEPTH_BLOCK_RUN | QSE_AWK_DEPTH_EXPR_RUN, 500);
-	qse_awk_setmaxdepth (awk, QSE_AWK_DEPTH_INCLUDE, 32);
-
-	if (qse_awk_addfnc (awk, 
-		QSE_T("sleep"), 5, 0,
-		1, 1, QSE_NULL, fnc_sleep) == QSE_NULL)
 	{
-		print_awkerr (awk);
-		goto oops;
+		qse_size_t tmp;
+		tmp = 50;
+		qse_awk_setopt (awk, QSE_AWK_DEPTH_BLOCK_PARSE, &tmp);
+		qse_awk_setopt (awk, QSE_AWK_DEPTH_EXPR_PARSE, &tmp);
+		tmp = 500;
+		qse_awk_setopt (awk, QSE_AWK_DEPTH_BLOCK_RUN, &tmp);
+		qse_awk_setopt (awk, QSE_AWK_DEPTH_EXPR_RUN, &tmp);
+		tmp = 64;
+		qse_awk_setopt (awk, QSE_AWK_DEPTH_INCLUDE, &tmp);
 	}
 
 	qse_awk_seterrnum (awk, QSE_AWK_ENOERR, QSE_NULL);
@@ -1202,7 +1167,15 @@ int qse_main (int argc, qse_achar_t* argv[])
 	MPI_Comm_set_errhandler (MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 #endif
 
+#if defined(USE_LTDL)
+	lt_dlinit ();
+#endif
+
 	ret = qse_runmain (argc, argv, awk_main);
+
+#if defined(USE_LTDL)
+	lt_dlexit ();
+#endif
 
 #if defined(ENABLE_MPI)
 	MPI_Finalize ();
