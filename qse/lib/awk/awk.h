@@ -119,7 +119,24 @@ struct qse_awk_t
 	qse_awk_prm_t  prm;
 
 	/* options */
-	int option;
+	struct
+	{
+		int trait;
+		union
+		{
+			qse_size_t a[7];
+			struct
+			{
+				qse_size_t incl;
+				qse_size_t block_parse;
+				qse_size_t block_run;
+				qse_size_t expr_parse;
+				qse_size_t expr_run;
+				qse_size_t rex_build;
+				qse_size_t rex_match;
+			} s;
+		} depth;
+	} opt;
 
 	/* parse tree */
 	qse_awk_tree_t tree;
@@ -136,20 +153,10 @@ struct qse_awk_t
 
 		struct
 		{
-			struct
-			{
-				qse_size_t block;
-				qse_size_t loop;
-				qse_size_t expr; /* expression */
-				qse_size_t incl;
-			} cur;
-
-			struct
-			{
-				qse_size_t block;
-				qse_size_t expr;
-				qse_size_t incl;
-			} max;
+			qse_size_t block;
+			qse_size_t loop;
+			qse_size_t expr; /* expression */
+			qse_size_t incl;
 		} depth;
 
 		/* function calls */
@@ -200,30 +207,6 @@ struct qse_awk_t
 		qse_awk_fnc_t* sys;
 		qse_htb_t* user;
 	} fnc;
-
-	struct
-	{
-		struct
-		{
-			struct
-			{
-				qse_size_t block;
-				qse_size_t expr;
-			} max;
-		} depth;
-	} run;
-
-	struct
-	{
-		struct
-		{
-			struct
-			{
-				qse_size_t build;
-				qse_size_t match;
-			} max;
-		} depth;
-	} rex;
 
 	struct
 	{
@@ -360,17 +343,8 @@ struct qse_awk_rtx_t
 
 	struct
 	{
-		struct
-		{
-			qse_size_t block;
-			qse_size_t expr; /* expression */
-		} cur;
-
-		struct
-		{
-			qse_size_t block;
-			qse_size_t expr;
-		} max;
+		qse_size_t block;
+		qse_size_t expr; /* expression */
 	} depth;
 
 	qse_awk_errinf_t errinf;

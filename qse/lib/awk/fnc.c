@@ -206,7 +206,7 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	for (fnc = sys_fnc; fnc->name.ptr != QSE_NULL; fnc++)
 	{
 		if (fnc->valid != 0 && 
-		    (awk->option & fnc->valid) != fnc->valid) continue;
+		    (awk->opt.trait & fnc->valid) != fnc->valid) continue;
 
 		if (qse_strxncmp (
 			fnc->name.ptr, fnc->name.len,
@@ -217,7 +217,7 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
-	if (fnc->valid != 0 && (awk->option & fnc->valid) == 0) return QSE_NULL;
+	if (fnc->valid != 0 && (awk->opt.trait & fnc->valid) == 0) return QSE_NULL;
 
 	return fnc;
 }

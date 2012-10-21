@@ -109,7 +109,7 @@ static const qse_char_t* print_outop_str[] =
 )
 
 #define PUT_NL(awk) QSE_BLOCK (\
-	if (awk->option & QSE_AWK_CRLF) PUT_SRCSTR (awk, QSE_T("\r")); \
+	if (awk->opt.trait & QSE_AWK_CRLF) PUT_SRCSTR (awk, QSE_T("\r")); \
 	PUT_SRCSTR (awk, QSE_T("\n")); \
 )
 
@@ -226,7 +226,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			QSE_ASSERT (px->left->next == QSE_NULL);
 
 			PUT_SRCSTR (awk, QSE_T(" "));
-			PUT_SRCSTR (awk, binop_str[px->opcode][(awk->option & QSE_AWK_IMPLICIT)? 0: 1]);
+			PUT_SRCSTR (awk, binop_str[px->opcode][(awk->opt.trait & QSE_AWK_IMPLICIT)? 0: 1]);
 			PUT_SRCSTR (awk, QSE_T(" "));
 
 			if (px->right->type == QSE_AWK_NDE_ASS) 
@@ -478,8 +478,8 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
 
-				if ((awk->option & QSE_AWK_EXPLICIT) && 
-				    !(awk->option & QSE_AWK_IMPLICIT))
+				if ((awk->opt.trait & QSE_AWK_EXPLICIT) && 
+				    !(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
@@ -520,8 +520,8 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
-				if ((awk->option & QSE_AWK_EXPLICIT) && 
-				    !(awk->option & QSE_AWK_IMPLICIT))
+				if ((awk->opt.trait & QSE_AWK_EXPLICIT) && 
+				    !(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */

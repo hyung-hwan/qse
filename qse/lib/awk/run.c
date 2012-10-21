@@ -656,7 +656,7 @@ int qse_awk_rtx_setofilename (
 	qse_awk_val_t* tmp;
 	int n;
 
-	if (rtx->awk->option & QSE_AWK_NEXTOFILE)
+	if (rtx->awk->opt.trait & QSE_AWK_NEXTOFILE)
 	{
 		if (len == 0) tmp = qse_awk_val_zls;
 		else
@@ -894,11 +894,6 @@ static int init_rtx (qse_awk_rtx_t* rtx, qse_awk_t* awk, qse_awk_rio_t* rio)
 	rtx->gbl.rs = QSE_NULL;
 	rtx->gbl.fs = QSE_NULL;
 	rtx->gbl.ignorecase = 0;
-
-	rtx->depth.max.block = awk->run.depth.max.block;
-	rtx->depth.max.expr = awk->run.depth.max.expr;
-	rtx->depth.cur.block = 0; 
-	rtx->depth.cur.expr = 0;
 
 	return 0;
 
@@ -1154,7 +1149,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 	qse_awk_val_t* tmp;
 	qse_size_t i, j;
 
-	if (rtx->awk->option & QSE_AWK_CRLF)
+	if (rtx->awk->opt.trait & QSE_AWK_CRLF)
 	{
 		/* ugly */
 		gtab[5].str = DEFAULT_ORS_CRLF;
@@ -1310,7 +1305,7 @@ static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR) 
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression() to
+		 * this trait is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1329,7 +1324,7 @@ static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression() to
+		 * this trait is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1361,7 +1356,7 @@ static qse_awk_val_t* run_bpae_loop (qse_awk_rtx_t* rtx)
 	if (ret <= -1 && rtx->errinf.num == QSE_AWK_ENOERR)
 	{
 		/* an error is returned with no error number set.
-		 * this feature is used by eval_expression() to
+		 * this trait is used by eval_expression() to
 		 * abort the evaluation when exit() is executed 
 		 * during function evaluation */
 		ret = 0;
@@ -1715,16 +1710,16 @@ static int run_block (qse_awk_rtx_t* rtx, qse_awk_nde_blk_t* nde)
 {
 	int n;
 
-	if (rtx->depth.max.block > 0 &&
-	    rtx->depth.cur.block >= rtx->depth.max.block)
+	if (rtx->awk->opt.depth.s.block_run > 0 &&
+	    rtx->depth.block >= rtx->awk->opt.depth.s.block_run)
 	{
 		SETERR_LOC (rtx, QSE_AWK_EBLKNST, &nde->loc);
 		return -1;;
 	}
 
-	rtx->depth.cur.block++;
+	rtx->depth.block++;
 	n = run_block0 (rtx, nde);
-	rtx->depth.cur.block--;
+	rtx->depth.block--;
 	
 	return n;
 }
@@ -1897,12 +1892,12 @@ static int run_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 			break;
 
 		case QSE_AWK_NDE_PRINT:
-			if (rtx->awk->option & QSE_AWK_TOLERANT) goto __fallback__;
+			if (rtx->awk->opt.trait & QSE_AWK_TOLERANT) goto __fallback__;
 			xret = run_print (rtx, (qse_awk_nde_print_t*)nde);
 			break;
 
 		case QSE_AWK_NDE_PRINTF:
-			if (rtx->awk->option & QSE_AWK_TOLERANT) goto __fallback__;
+			if (rtx->awk->opt.trait & QSE_AWK_TOLERANT) goto __fallback__;
 			xret = run_printf (rtx, (qse_awk_nde_print_t*)nde);
 			break;
 
@@ -2245,7 +2240,7 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 		val = eval_expression (run, nde->val);
 		if (val == QSE_NULL) return -1;
 
-		if ((run->awk->option & QSE_AWK_MAPTOVAR) == 0)
+		if ((run->awk->opt.trait & QSE_AWK_MAPTOVAR) == 0)
 		{
 			if (val->type == QSE_AWK_VAL_MAP)
 			{
@@ -2627,14 +2622,16 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 		case QSE_AWK_NDE_LCLIDX:
 		case QSE_AWK_NDE_ARGIDX:
 			return run_delete_nonnamed (rtx, var);
+
+		default:
+			QSE_ASSERTX (
+				!"should never happen - wrong target for delete",
+				"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
+
+			SETERR_LOC (rtx, QSE_AWK_EBADARG, &var->loc);
+			return -1;
 	}
 
-	QSE_ASSERTX (
-		!"should never happen - wrong target for delete",
-		"the delete statement cannot be called with other nodes than the variables such as a named variable, a named indexed variable, etc");
-
-	SETERR_LOC (rtx, QSE_AWK_EBADARG, &var->loc);
-	return -1;
 }
 
 static int run_reset (qse_awk_rtx_t* rtx, qse_awk_nde_reset_t* nde)
@@ -2771,7 +2768,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 			QSE_STR_LEN(&rtx->inrec.line));
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
-			if (rtx->awk->option & QSE_AWK_TOLERANT)
+			if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 			{
 				xret = PRINT_IOERR;
 			}
@@ -2807,7 +2804,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 					rtx->gbl.ofs.len);
 				if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 				{
-					if (rtx->awk->option & QSE_AWK_TOLERANT)
+					if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 					{
 						xret = PRINT_IOERR;
 					}
@@ -2832,7 +2829,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 				rtx, nde->out_type, dst, v);
 			if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 			{
-				if (rtx->awk->option & QSE_AWK_TOLERANT)
+				if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 				{
 					xret = PRINT_IOERR;
 				}
@@ -2855,7 +2852,7 @@ static int run_print (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		rtx->gbl.ors.ptr, rtx->gbl.ors.len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 	{
-		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 		{
 			xret = PRINT_IOERR;
 		}
@@ -2971,7 +2968,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 		n = qse_awk_rtx_writeio_val (rtx, nde->out_type, dst, v);
 		if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/)
 		{
-			if (rtx->awk->option & QSE_AWK_TOLERANT)
+			if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 			{
 				xret = PRINT_IOERR;
 			}
@@ -3010,7 +3007,7 @@ static int run_printf (qse_awk_rtx_t* rtx, qse_awk_nde_print_t* nde)
 /*skip_write:*/
 	if (qse_awk_rtx_flushio (rtx, nde->out_type, dst) <= -1)
 	{
-		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 		{
 			xret = PRINT_IOERR;
 		}
@@ -3040,7 +3037,7 @@ static int output_formatted (
 	n = qse_awk_rtx_writeio_str (rtx, out_type, dst, ptr, len);
 	if (n <= -1 /*&& rtx->errinf.num != QSE_AWK_EIOIMPL*/) 
 	{
-		if (rtx->awk->option & QSE_AWK_TOLERANT)
+		if (rtx->awk->opt.trait & QSE_AWK_TOLERANT)
 		{
 			return PRINT_IOERR;
 		}
@@ -3314,7 +3311,7 @@ static qse_awk_val_t* do_assignment (
 	    var->type == QSE_AWK_NDE_LCL ||
 	    var->type == QSE_AWK_NDE_ARG) 
 	{
-		if ((run->awk->option & QSE_AWK_MAPTOVAR) == 0)
+		if ((run->awk->opt.trait & QSE_AWK_MAPTOVAR) == 0)
 		{
 			if (val->type == QSE_AWK_VAL_MAP)
 			{
@@ -3375,7 +3372,7 @@ static qse_awk_val_t* do_assignment_scalar (
 	QSE_ASSERT (var->idx == QSE_NULL);
 
 	QSE_ASSERT (
-		(run->awk->option & QSE_AWK_MAPTOVAR) ||
+		(run->awk->opt.trait & QSE_AWK_MAPTOVAR) ||
 		val->type != QSE_AWK_VAL_MAP);
 
 	switch (var->type)
@@ -4008,7 +4005,7 @@ static int __cmp_int_str (
 	int n;
 
 	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		qse_long_t ll;
 		qse_flt_t rr;
@@ -4094,7 +4091,7 @@ static int __cmp_flt_str (
 	int n;
 
 	/* SCO CC doesn't seem to handle right->nstr > 0 properly */
-	if (rtx->awk->option & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
+	if (rtx->awk->opt.trait & QSE_AWK_NCMPONSTR || right->nstr /*> 0*/)
 	{
 		const qse_char_t* end;
 		qse_flt_t rr;

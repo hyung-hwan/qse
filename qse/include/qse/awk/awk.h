@@ -391,6 +391,7 @@ typedef qse_flt_t (*qse_awk_math2_t) (
 );
 
 
+#if 0
 typedef void* (*qse_awk_buildrex_t) (
 	qse_awk_t*        awk,
 	const qse_char_t* ptn, 
@@ -416,6 +417,7 @@ typedef qse_bool_t (*qse_awk_isemptyrex_t) (
 	qse_awk_t* awk,
 	void*      code
 );
+#endif
 
 /**
  * The qse_awk_fnc_impl_t type defines a intrinsic function handler.
@@ -809,11 +811,26 @@ struct qse_awk_rtx_ecb_t
 
 /* ------------------------------------------------------------------------ */
 
+enum qse_awk_opt_t
+{
+	QSE_AWK_TRAIT = 0,
+	QSE_AWK_DEPTH_INCLUDE,
+	QSE_AWK_DEPTH_BLOCK_PARSE,
+	QSE_AWK_DEPTH_BLOCK_RUN,
+	QSE_AWK_DEPTH_EXPR_PARSE,
+	QSE_AWK_DEPTH_EXPR_RUN,
+	QSE_AWK_DEPTH_REX_BUILD,
+	QSE_AWK_DEPTH_REX_MATCH
+};
+typedef enum qse_awk_opt_t qse_awk_opt_t;
+
+/* ------------------------------------------------------------------------ */
+
 /**
- * The qse_awk_option_t type defines various options to change the behavior
+ * The qse_awk_trait_t type defines various options to change the behavior
  * of #qse_awk_t.
  */
-enum qse_awk_option_t
+enum qse_awk_trait_t
 { 
 	/**
 	 * allows undeclared variables and implicit concatenation 
@@ -942,7 +959,8 @@ enum qse_awk_option_t
 	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
 	                   QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
 };
-typedef enum qse_awk_option_t qse_awk_option_t;
+
+/* ------------------------------------------------------------------------ */
 
 /**
  * The qse_awk_errnum_t type defines error codes.
@@ -1105,22 +1123,6 @@ typedef const qse_char_t* (*qse_awk_errstr_t) (
 	const qse_awk_t* awk,   /**< awk */
 	qse_awk_errnum_t num    /**< error number */
 );
-
-/**
- * The qse_awk_depth_t type defines operation types requiring recursion depth
- * control.
- */
-enum qse_awk_depth_t
-{
-	QSE_AWK_DEPTH_BLOCK_PARSE = (1 << 0),
-	QSE_AWK_DEPTH_BLOCK_RUN   = (1 << 1),
-	QSE_AWK_DEPTH_EXPR_PARSE  = (1 << 2),
-	QSE_AWK_DEPTH_EXPR_RUN    = (1 << 3),
-	QSE_AWK_DEPTH_REX_BUILD   = (1 << 4),
-	QSE_AWK_DEPTH_REX_MATCH   = (1 << 5),
-	QSE_AWK_DEPTH_INCLUDE     = (1 << 6)
-};
-typedef enum qse_awk_depth_t qse_awk_depth_t;
 
 /**
  * The qse_awk_gbl_id_t type defines intrinsic globals variable IDs.
@@ -1435,41 +1437,16 @@ void qse_awk_seterror (
 	const qse_awk_loc_t* errloc  /**< error location */
 );
 
-/**
- * The qse_awk_getoption() function gets the current options set.
- * @return 0 or a number ORed of #qse_awk_option_t enumerators.
- */
-int qse_awk_getoption (
-	const qse_awk_t* awk /**< awk */
+int qse_awk_getopt (
+	qse_awk_t*    awk,
+	qse_awk_opt_t id,
+	void*         value
 );
 
-/**
- * The qse_awk_setoption() function sets the options.
- */
-void qse_awk_setoption (
-	qse_awk_t* awk, /**< awk */
-	int        opt  /**< 0 or a number ORed of 
-	                 *   #qse_awk_option_t enumerators */
-);
-
-/**
- * The qse_awk_getmaxdepth() function gets the current maximum recursing depth 
- * for a specified operation @a type.
- * @return maximum depth
- */
-qse_size_t qse_awk_getmaxdepth (
-	const qse_awk_t* awk, /**< awk */
-	qse_awk_depth_t  type /**< operation type */
-);
-
-/**
- * The qse_awk_setmaxdepth() function sets the maximum recursing depth for
- * operations indicated by @a types.
- */
-void qse_awk_setmaxdepth (
-	qse_awk_t* awk,   /**< awk */
-	int        types, /**< number ORed of #qse_awk_depth_t enumerators */
-	qse_size_t depth  /**< maximum depth */
+int qse_awk_setopt (
+	qse_awk_t*    awk,
+	qse_awk_opt_t id,
+	const void*   value
 );
 
 /**

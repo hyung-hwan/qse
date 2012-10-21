@@ -41,7 +41,7 @@ int main ()
 	qse_awk_rtx_t* rtx = QSE_NULL;
 	qse_awk_val_t* retv;
 	qse_awk_parsestd_t psin;
-	int ret = -1;
+	int ret = -1, opt;
 
 	const qse_char_t* output_files[] = 
 	{
@@ -63,7 +63,9 @@ int main ()
 		goto oops;
 	}
 
-	qse_awk_setoption (awk, qse_awk_getoption(awk) | QSE_AWK_NEXTOFILE);
+	qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
+	opt |= QSE_AWK_NEXTOFILE;
+	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
 	psin.type = QSE_AWK_PARSESTD_STR;
 	psin.u.str.ptr = src;

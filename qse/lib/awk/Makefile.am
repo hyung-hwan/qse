@@ -3,7 +3,8 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
-	-I$(includedir)
+	-I$(includedir) \
+	-DDEFAULT_MODDIR=\"$(libdir)/qseawk\"
 
 lib_LTLIBRARIES = libqseawk.la
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h 

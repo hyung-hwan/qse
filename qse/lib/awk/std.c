@@ -112,7 +112,13 @@ typedef struct xtn_t
 	int gbl_environ;
 	int gbl_procinfo;
 
+	struct
+	{
+		qse_xstr_t moddir;
+	} opt;
+
 	qse_rbt_t modtab;
+
 	qse_awk_ecb_t ecb;
 } xtn_t;
 
@@ -151,6 +157,12 @@ typedef struct ioattr_t
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
 	int tmout[4];
 } ioattr_t;
+
+typedef struct mod_data_t
+{
+	lt_dlhandle dh;
+	qse_awk_mod_query_t query;
+} mod_data_t;
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
 
@@ -335,6 +347,10 @@ static void fini_xtn (qse_awk_t* awk)
 {
 	xtn_t* xtn;
 	xtn = (xtn_t*) QSE_XTN (awk);
+
+	if (xtn->opt.moddir.ptr)
+		QSE_MMGR_FREE (awk->mmgr, xtn->opt.moddir.ptr);
+
 	qse_rbt_fini (&xtn->modtab);
 }
 
@@ -383,11 +399,15 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 /* TODO: change the way to set this... */
 	awk->mod = &awk_mod;
 
-	if (qse_rbt_init (&xtn->modtab, mmgr, QSE_SIZEOF(qse_char_t), 0) <= -1)
+	if (qse_rbt_init (&xtn->modtab, mmgr, QSE_SIZEOF(qse_char_t), 1) <= -1)
 	{
 		qse_awk_close (awk);
 		return QSE_NULL;
 	}
+	qse_rbt_setmancbs (
+		&xtn->modtab,
+		qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS)
+	);
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;
@@ -399,6 +419,65 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 void* qse_awk_getxtnstd (qse_awk_t* awk)
 {
 	return (void*)((xtn_t*)QSE_XTN(awk) + 1);
+}
+
+int qse_awk_getoptstd (qse_awk_t* awk, qse_awk_optstd_t  id, void* value)
+{
+	xtn_t* xtn;
+
+	xtn = (xtn_t*) QSE_XTN (awk);
+
+	switch (id)
+	{
+		case QSE_AWK_MODDIR:
+		{
+			*(const qse_char_t**)value = xtn->opt.moddir.ptr;
+			return 0;
+		}
+	}
+
+	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
+}
+
+int qse_awk_setoptstd (qse_awk_t* awk, qse_awk_optstd_t id, const void* value)
+{
+	xtn_t* xtn;
+
+	xtn = (xtn_t*) QSE_XTN (awk);
+
+	switch (id)
+	{
+		case QSE_AWK_MODDIR:
+		{
+			qse_xstr_t tmp;
+
+			if (value)
+			{
+				tmp.ptr = qse_strdup (value, awk->mmgr);
+				if (tmp.ptr == QSE_NULL)
+				{
+					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+					return -1;
+				}
+				tmp.len = qse_strlen (tmp.ptr);
+			}
+			else
+			{
+				tmp.ptr = QSE_NULL;
+				tmp.len = 0;
+			}
+
+			if (xtn->opt.moddir.ptr)
+				QSE_MMGR_FREE (awk->mmgr, xtn->opt.moddir.ptr);
+
+			xtn->opt.moddir = tmp;
+			return 0;
+		}
+	}
+
+	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
+	return -1;
 }
 
 static qse_sio_t* open_sio (qse_awk_t* awk, const qse_char_t* file, int flags)
@@ -1940,7 +2019,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 
-	if (rtx->awk->option & QSE_AWK_RIO)
+	if (rtx->awk->opt.trait & QSE_AWK_RIO)
 	{
 		if (qse_htb_init (
 			&rxtn->cmgrtab, awk->mmgr, 256, 70, 
@@ -2476,15 +2555,19 @@ static int query_module (
 	qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_info_t* info)
 {
 	const qse_char_t* dc;
-	qse_awk_mod_query_t query;
 	xtn_t* xtn;
 	qse_rbt_pair_t* pair;
+	qse_size_t namelen;
+	mod_data_t md;
+	qse_cstr_t ea;
 
 	xtn = (xtn_t*)QSE_XTN(awk);
 
 	/* TODO: support module calls with deeper levels ... */
 	dc = qse_strstr (name, QSE_T("::"));
 	QSE_ASSERT (dc != QSE_NULL);
+
+	namelen = dc - name;
 
 #if defined(_WIN32)
 	/*TODO: implemente this */
@@ -2499,20 +2582,56 @@ static int query_module (
 	return -1;
 #else
 
-	pair = qse_rbt_search (&xtn->modtab, name, dc - name);
+	pair = qse_rbt_search (&xtn->modtab, name, namelen);
 	if (pair)
 	{
-		/*query = QSE_RBT_VPTR(pair)->query;*/
+		md = *(mod_data_t*)QSE_RBT_VPTR(pair);
 	}
 	else
 	{
-		void* dh;
-		const qse_mchar_t* mod;
+		qse_mchar_t* mod;
+	#if defined(QSE_CHAR_IS_MCHAR)
+		qse_mcstr_t tmp[5] = 
+		{
+			{ QSE_WT(""),    0 },
+			{ QSE_WT("/"),   0 },
+			{ QSE_MT("lib"), 3 },
+			{ QSE_NULL,      0 },
+			{ QSE_NULL,      0 }
+		};
+	#else
+		qse_wcstr_t tmp[5] = 
+		{
+			{ QSE_WT(""),    0 },
+			{ QSE_WT("/"),   0 },
+			{ QSE_WT("lib"), 3 },
+			{ QSE_NULL,      0 },
+			{ QSE_NULL,      0 }
+		};
+	#endif
+
+		if (xtn->opt.moddir.len > 0)
+		{
+			tmp[0].ptr = xtn->opt.moddir.ptr;
+			tmp[0].len = xtn->opt.moddir.len; 
+			tmp[1].len = 1;
+		}
+	#if defined(DEFAULT_MODDIR)
+		else
+		{
+			tmp[0].ptr = QSE_T(DEFAULT_MODDIR);
+			tmp[0].len = qse_strlen(tmp[0].ptr);
+			tmp[1].len = 1;
+		}
+	#endif
+
+		tmp[3].ptr = name;
+		tmp[3].len = namelen;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		mod = qse_mbsxdup (name, dc - name, QSE_NULL, awk->mmgr);
+		mod = qse_mbsxadup (tmp, QSE_NULL, awk->mmgr);
 	#else
-		mod = qse_wcsntombsdup (name, dc - name, QSE_NULL, awk->mmgr);
+		mod = qse_wcsnatombsdup (tmp, QSE_NULL, awk->mmgr);
 	#endif
 		if (!mod)
 		{
@@ -2520,25 +2639,41 @@ static int query_module (
 			return -1;
 		}
 
-		dh = lt_dlopen (mod);
+		md.dh = lt_dlopenext (mod);
 		QSE_MMGR_FREE (awk->mmgr, mod);
-
-		if (!dh) 
+		if (!md.dh) 
 		{
+			ea.ptr = name;
+			ea.len = namelen;
+			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 			return -1;
 		}
 
-		query = lt_dlsym (dh, QSE_MT("query"));
-		if (!query) 
+		md.query = lt_dlsym (md.dh, QSE_MT("query"));
+		if (!md.query)
 		{
-			lt_dlclose (dh);
+			lt_dlclose (md.dh);
+
+			ea.ptr = QSE_MT("query");
+			ea.len = 5;
+			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+			return -1;
+		}
+
+/*
+		md.init = lt_dlsym (md.dh, QSE_MT("init"));
+		md.fini = lt_dlsym (md.dh, QSE_MT("fini"));
+*/
+		if (qse_rbt_insert (&xtn->modtab, (void*)name, namelen, &md, QSE_SIZEOF(md)) == QSE_NULL)
+		{
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+			lt_dlclose (md.dh);
 			return -1;
 		}
 	}
 
-	return query (awk, dc + 2, info);
+	return md.query (awk, dc + 2, info);
 #endif
-
 }
 
 static int init_module (qse_awk_t* awk, qse_awk_rtx_t* rtx)

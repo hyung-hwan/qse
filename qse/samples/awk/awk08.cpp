@@ -356,7 +356,7 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 	cmdline_t cmdline;
 	int n;
 
-	awk.setOption (awk.getOption() | QSE_AWK_INCLUDE | 
+	awk.setTrait (awk.getTrait() | QSE_AWK_INCLUDE | 
 		QSE_AWK_MAPTOVAR | QSE_AWK_RWPIPE | QSE_AWK_EXTRAOPS);
 
 	// ARGV[0]

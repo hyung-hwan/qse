@@ -2230,7 +2230,7 @@ nomem_after_attach:
 
 int qse_httpd_getserveroptstd (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
-	qse_httpd_server_optstd_t id, void** value)
+	qse_httpd_server_optstd_t id, void* value)
 {
 	server_xtn_t* server_xtn;
 
@@ -2243,14 +2243,14 @@ int qse_httpd_getserveroptstd (
 		case QSE_HTTPD_SERVER_AUTH:
 		case QSE_HTTPD_SERVER_ERRCSS:
 		case QSE_HTTPD_SERVER_DIRCSS:
-			*value = (void*)server_xtn->cfg[id - QSE_HTTPD_SERVER_DOCROOT];
+			*(qse_mchar_t**)value = server_xtn->cfg[id - QSE_HTTPD_SERVER_DOCROOT];
 			return 0;
 
 		case QSE_HTTPD_SERVER_CBSTD:
 		case QSE_HTTPD_SERVER_CGISTD:
 		case QSE_HTTPD_SERVER_MIMESTD:
 		case QSE_HTTPD_SERVER_IDXSTD:
-			*value = (void*)server_xtn->cfg2.a[id - QSE_HTTPD_SERVER_CBSTD];
+			*(qse_mchar_t**)value = (void*)server_xtn->cfg2.a[id - QSE_HTTPD_SERVER_CBSTD];
 			return 0;
 	}	
 
@@ -2260,7 +2260,7 @@ int qse_httpd_getserveroptstd (
 
 int qse_httpd_setserveroptstd (
 	qse_httpd_t* httpd, qse_httpd_server_t* server,
-	qse_httpd_server_optstd_t id, void* value)
+	qse_httpd_server_optstd_t id, const void* value)
 {
 	server_xtn_t* server_xtn;
 	qse_mchar_t* mctmp;

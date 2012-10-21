@@ -79,8 +79,6 @@ int main ()
 		goto oops;
 	}
 
-	//qse_awk_setoption (awk, qse_awk_getoption(awk) | QSE_AWK_RWPIPE);
-
 	psin.type = QSE_AWK_PARSESTD_STR;
 	psin.u.str.ptr = src;
 	psin.u.str.len = qse_strlen(src);

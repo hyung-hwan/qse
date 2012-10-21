@@ -1306,28 +1306,33 @@ void Awk::fini_runctx ()
 	}
 }
 
-int Awk::getOption () const 
+int Awk::getTrait () const 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_getoption (awk);
+	int val;
+	qse_awk_getopt (awk, QSE_AWK_TRAIT, &val);
+	return val;
 }
 
-void Awk::setOption (int opt) 
+void Awk::setTrait (int trait) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_setoption (awk, opt);
-}
-
-void Awk::setMaxDepth (int ids, size_t depth) 
-{
-	QSE_ASSERT (awk != QSE_NULL);
-	qse_awk_setmaxdepth (awk, ids, depth);
+	qse_awk_setopt (awk, QSE_AWK_TRAIT, &trait);
 }
 
 Awk::size_t Awk::getMaxDepth (depth_t id) const 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	return qse_awk_getmaxdepth (awk, id);
+
+	size_t depth;
+	qse_awk_getopt (awk, (qse_awk_opt_t)id, &depth);
+	return depth;
+}
+
+void Awk::setMaxDepth (depth_t id, size_t depth) 
+{
+	QSE_ASSERT (awk != QSE_NULL);
+	qse_awk_setopt (awk, (qse_awk_opt_t)id, &depth);
 }
 
 int Awk::dispatch_function (Run* run, const cstr_t* name)
