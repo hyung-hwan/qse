@@ -390,6 +390,22 @@ typedef qse_flt_t (*qse_awk_math2_t) (
 	qse_flt_t y
 );
 
+typedef void* (*qse_awk_modopen_t) (
+	qse_awk_t*        awk,
+	const qse_char_t* dir,
+	const qse_char_t* name
+);
+
+typedef void* (*qse_awk_modsym_t) (
+	qse_awk_t*        awk,
+	void*             handle,
+	const qse_char_t* name
+);
+
+typedef void (*qse_awk_modclose_t) (
+	qse_awk_t* awk,
+	void*      handle
+);
 
 #if 0
 typedef void* (*qse_awk_buildrex_t) (
@@ -413,7 +429,7 @@ typedef void (*qse_awk_freerex_t) (
 	void*      code
 );
 
-typedef qse_bool_t (*qse_awk_isemptyrex_t) (
+typedef int (*qse_awk_isemptyrex_t) (
 	qse_awk_t* awk,
 	void*      code
 );
@@ -606,6 +622,10 @@ struct qse_awk_prm_t
 		qse_awk_math1_t sqrt;
 	} math;
 
+	qse_awk_modopen_t modopen;
+	qse_awk_modclose_t modclose;
+	qse_awk_modsym_t modsym;
+
 #if 0
 	struct 
 	{
@@ -685,18 +705,56 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 /* ------------------------------------------------------------------------ */
 
 typedef struct qse_awk_mod_t qse_awk_mod_t;
-typedef struct qse_awk_mod_info_t qse_awk_mod_info_t;
+typedef struct qse_awk_mod_sym_t qse_awk_mod_sym_t;
 
-enum qse_awk_mod_type_t
+typedef int (*qse_awk_mod_load_t) (
+	qse_awk_mod_t* mod,
+	qse_awk_t*     awk
+);
+
+typedef int (*qse_awk_mod_query_t) (
+	qse_awk_mod_t*     mod,
+	qse_awk_t*         awk,
+	const qse_char_t*  name,
+	qse_awk_mod_sym_t* sym
+);
+
+typedef void (*qse_awk_mod_unload_t) (
+	qse_awk_mod_t* mod,
+	qse_awk_t*     awk
+);
+
+typedef int (*qse_awk_mod_init_t) (
+	qse_awk_mod_t* mod,
+	qse_awk_rtx_t* rtx
+);
+
+typedef void (*qse_awk_mod_fini_t) (
+	qse_awk_mod_t* mod,
+	qse_awk_rtx_t* rtx
+);
+
+struct qse_awk_mod_t
+{
+	qse_awk_mod_query_t  query;
+	qse_awk_mod_unload_t unload;
+
+	qse_awk_mod_init_t   init;
+	qse_awk_mod_fini_t   fini;
+
+	void*                ctx;
+};
+
+enum qse_awk_mod_sym_type_t
 {
 	QSE_AWK_MOD_FNC = 0 /*,
 	QSE_AWK_MOD_VAR */
 };
-typedef enum qse_awk_mod_type_t qse_awk_mod_type_t;
+typedef enum qse_awk_mod_sym_type_t qse_awk_mod_sym_type_t;
 
-struct qse_awk_mod_info_t
+struct qse_awk_mod_sym_t
 {
-	qse_awk_mod_type_t type; 
+	qse_awk_mod_sym_type_t type; 
 	union
 	{
 		struct
@@ -709,19 +767,6 @@ struct qse_awk_mod_info_t
 			qse_awk_fnc_impl_t impl;
 		} f;
 	} u;
-};
-
-typedef int (*qse_awk_mod_query_t) (
-	qse_awk_t*          awk, 
-	const qse_char_t*   name,
-	qse_awk_mod_info_t* info
-);
-
-struct qse_awk_mod_t
-{
-	qse_awk_mod_query_t query;
-	int (*init) (qse_awk_t* awk, qse_awk_rtx_t* rtx);
-	void (*fini) (qse_awk_t* awk, qse_awk_rtx_t* rtx);
 };
 
 /* ------------------------------------------------------------------------ */
@@ -814,6 +859,8 @@ struct qse_awk_rtx_ecb_t
 enum qse_awk_opt_t
 {
 	QSE_AWK_TRAIT = 0,
+	QSE_AWK_MODDIR,
+
 	QSE_AWK_DEPTH_INCLUDE,
 	QSE_AWK_DEPTH_BLOCK_PARSE,
 	QSE_AWK_DEPTH_BLOCK_RUN,
@@ -1784,7 +1831,7 @@ void qse_awk_stopall (
  * The qse_awk_rtx_isstop() function tests if qse_awk_rtx_stop() has been 
  * called.
  */
-qse_bool_t qse_awk_rtx_isstop (
+int qse_awk_rtx_isstop (
 	qse_awk_rtx_t* rtx /**< runtime context */
 );
 
@@ -2015,7 +2062,7 @@ void qse_awk_rtx_seterror (
  */
 int qse_awk_rtx_clrrec (
 	qse_awk_rtx_t* rtx, /**< runtime context */
-	qse_bool_t     skip_inrec_line 
+	int            skip_inrec_line 
 );
 
 /**
@@ -2191,7 +2238,7 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
  * is closed.
  * @return QSE_TRUE if @a val is static, QSE_FALSE if @a val is false
  */
-qse_bool_t qse_awk_rtx_isstaticval (
+int qse_awk_rtx_isstaticval (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_awk_val_t* val  /**< value to check */
 );
@@ -2228,7 +2275,7 @@ void qse_awk_rtx_refdownval_nofree (
  * The qse_awk_rtx_valtobool() function converts a value @a val to a boolean
  * value.
  */
-qse_bool_t qse_awk_rtx_valtobool (
+int qse_awk_rtx_valtobool (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val  /**< value pointer */
 );

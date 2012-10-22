@@ -27,6 +27,7 @@
 #include <qse/cmn/htb.h>
 #include <qse/cmn/lda.h>
 #include <qse/cmn/rex.h>
+#include <qse/cmn/rbt.h>
 
 typedef struct qse_awk_chain_t qse_awk_chain_t;
 typedef struct qse_awk_tree_t qse_awk_tree_t;
@@ -122,6 +123,8 @@ struct qse_awk_t
 	struct
 	{
 		int trait;
+		qse_xstr_t moddir;
+
 		union
 		{
 			qse_size_t a[7];
@@ -217,9 +220,10 @@ struct qse_awk_t
 	qse_awk_errstr_t errstr;
 	qse_awk_errinf_t errinf;
 
-	qse_bool_t stopall;
+	int stopall;
 	qse_awk_ecb_t* ecb;
-	qse_awk_mod_t* mod;
+
+	qse_rbt_t* modtab;
 };
 
 struct qse_awk_chain_t
@@ -265,7 +269,7 @@ struct qse_awk_rtx_t
 		qse_char_t buf[1024];
 		qse_size_t buf_pos;
 		qse_size_t buf_len;
-		qse_bool_t eof;
+		int        eof;
 
 		qse_str_t line; /* entire line */
 		qse_str_t linew; /* line for manipulation, if necessary */
@@ -353,6 +357,12 @@ struct qse_awk_rtx_t
 	qse_awk_rtx_ecb_t* ecb;
 };
 
+typedef struct qse_awk_mod_data_t qse_awk_mod_data_t;
+struct qse_awk_mod_data_t
+{
+	void* handle;
+	qse_awk_mod_t mod;
+};
 
 #define QSE_AWK_FREEREX(awk,code) qse_freerex((awk)->mmgr,code)
 #define QSE_AWK_BUILDREX(awk,ptn,len,errnum) \

@@ -582,13 +582,13 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
 	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
 
-qse_bool_t qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
+int qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	return IS_STATICVAL(val);
 }
 
 void qse_awk_rtx_freeval (	
-	qse_awk_rtx_t* rtx, qse_awk_val_t* val, qse_bool_t cache)
+	qse_awk_rtx_t* rtx, qse_awk_val_t* val, int cache)
 {
 	if (IS_STATICVAL(val)) return;
 
@@ -710,7 +710,7 @@ void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	val->ref--;
 	if (val->ref <= 0) 
 	{
-		qse_awk_rtx_freeval(rtx, val, QSE_TRUE);
+		qse_awk_rtx_freeval(rtx, val, 1);
 	}
 }
 
@@ -734,14 +734,14 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 	}
 }
 
-qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
+int qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 {
-	if (val == QSE_NULL) return QSE_FALSE;
+	if (val == QSE_NULL) return 0;
 
 	switch (val->type)
 	{
 		case QSE_AWK_VAL_NIL:
-			return QSE_FALSE;
+			return 0;
 		case QSE_AWK_VAL_INT:
 			return ((qse_awk_val_int_t*)val)->val != 0;
 		case QSE_AWK_VAL_FLT:
@@ -751,15 +751,15 @@ qse_bool_t qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
 			return ((qse_awk_val_rex_t*)val)->len > 0;
 		case QSE_AWK_VAL_MAP:
-			return QSE_FALSE; /* TODO: is this correct? */
+			return 0; /* TODO: is this correct? */
 		case QSE_AWK_VAL_REF:
-			return QSE_FALSE; /* TODO: is this correct? */
+			return 0; /* TODO: is this correct? */
 	}
 
 	QSE_ASSERTX (
 		!"should never happen - invalid value type",
 		"the type of a value should be one of QSE_AWK_VAL_XXX's defined in awk.h");
-	return QSE_FALSE;
+	return 0;
 }
 
 static int str_to_str (

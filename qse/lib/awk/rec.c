@@ -36,15 +36,15 @@ int qse_awk_rtx_setrec (
 		if (str == QSE_STR_PTR(&run->inrec.line) &&
 		    len == QSE_STR_LEN(&run->inrec.line))
 		{
-			if (qse_awk_rtx_clrrec (run, QSE_TRUE) == -1) return -1;
+			if (qse_awk_rtx_clrrec (run, 1) == -1) return -1;
 		}
 		else
 		{
-			if (qse_awk_rtx_clrrec (run, QSE_FALSE) == -1) return -1;
+			if (qse_awk_rtx_clrrec (run, 0) == -1) return -1;
 
 			if (qse_str_ncpy (&run->inrec.line, str, len) == (qse_size_t)-1)
 			{
-				qse_awk_rtx_clrrec (run, QSE_FALSE);
+				qse_awk_rtx_clrrec (run, 0);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
@@ -54,7 +54,7 @@ int qse_awk_rtx_setrec (
 
 		if (v == QSE_NULL)
 		{
-			qse_awk_rtx_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, 0);
 			return -1;
 		}
 
@@ -66,7 +66,7 @@ int qse_awk_rtx_setrec (
 
 		if (split_record (run) == -1) 
 		{
-			qse_awk_rtx_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, 0);
 			return -1;
 		}
 	}
@@ -74,7 +74,7 @@ int qse_awk_rtx_setrec (
 	{
 		if (recomp_record_fields (run, idx, str, len) == -1)
 		{
-			qse_awk_rtx_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, 0);
 			return -1;
 		}
 	
@@ -84,7 +84,7 @@ int qse_awk_rtx_setrec (
 			QSE_STR_LEN(&run->inrec.line));
 		if (v == QSE_NULL)
 		{
-			qse_awk_rtx_clrrec (run, QSE_FALSE);
+			qse_awk_rtx_clrrec (run, 0);
 			return -1;
 		}
 
@@ -363,7 +363,7 @@ static int split_record (qse_awk_rtx_t* rtx)
 	return 0;
 }
 
-int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, qse_bool_t skip_inrec_line)
+int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, int skip_inrec_line)
 {
 	qse_size_t i;
 	int n = 0;

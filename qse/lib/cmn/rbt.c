@@ -561,6 +561,7 @@ static pair_t* insert (
 	}
 
 	rbt->root->color = QSE_RBT_BLACK;
+	rbt->size++;
 	return x_new;
 }
 
@@ -680,6 +681,7 @@ pair_t* qse_rbt_cbsert (
 	}
 
 	rbt->root->color = QSE_RBT_BLACK;
+	rbt->size++;
 	return x_new;
 }
 

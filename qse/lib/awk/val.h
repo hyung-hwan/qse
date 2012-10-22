@@ -57,7 +57,7 @@ extern "C" {
 void qse_awk_rtx_freeval (
         qse_awk_rtx_t* rtx,
         qse_awk_val_t* val,
-        qse_bool_t     cache
+        int            cache
 );
 
 void qse_awk_rtx_freevalchunk (
