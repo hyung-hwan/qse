@@ -44,13 +44,6 @@
  *
  */
 
-enum qse_awk_optstd_t
-{
-	QSE_AWK_MODDIR = 0
-};
-
-typedef enum qse_awk_optstd_t qse_awk_optstd_t;
-
 /**
  * The qse_awk_parsestd_type_t type defines the types of source I/O.
  */
@@ -133,18 +126,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (
  */
 void* qse_awk_getxtnstd (
 	qse_awk_t* awk
-);
-
-int qse_awk_getoptstd (
-	qse_awk_t*       awk,
-	qse_awk_optstd_t id,
-	void*            value
-);
-
-int qse_awk_setoptstd (
-	qse_awk_t*       awk,
-	qse_awk_optstd_t id,
-	const void*      value
 );
 
 /**

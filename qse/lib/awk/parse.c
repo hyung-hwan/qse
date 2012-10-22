@@ -161,16 +161,16 @@ static void adjust_static_globals (qse_awk_t* awk);
 static qse_size_t find_global (
 	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
 static qse_awk_t* collect_locals (
-	qse_awk_t* awk, qse_size_t nlcls, qse_bool_t istop);
+	qse_awk_t* awk, qse_size_t nlcls, int istop);
 
 static qse_awk_nde_t* parse_function (qse_awk_t* awk);
 static qse_awk_nde_t* parse_begin (qse_awk_t* awk);
 static qse_awk_nde_t* parse_end (qse_awk_t* awk);
 static qse_awk_chain_t* parse_action_block (
-	qse_awk_t* awk, qse_awk_nde_t* ptn, qse_bool_t blockless);
+	qse_awk_t* awk, qse_awk_nde_t* ptn, int blockless);
 
 static qse_awk_nde_t* parse_block_dc (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_bool_t istop);
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop);
 
 static qse_awk_nde_t* parse_statement (
 	qse_awk_t* awk, const qse_awk_loc_t* xloc);
@@ -239,6 +239,10 @@ static qse_htb_walk_t deparse_func (
 	qse_htb_t* map, qse_htb_pair_t* pair, void* arg);
 static int put_char (qse_awk_t* awk, qse_char_t c);
 static int flush_out (qse_awk_t* awk);
+
+static int query_module (
+	qse_awk_t* awk, const qse_xstr_t* segs, int nsegs,
+	qse_awk_mod_sym_t* sym);
 
 typedef struct kwent_t kwent_t;
 
@@ -933,8 +937,7 @@ retry:
 		}
 
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
-		if (parse_action_block (
-			awk, QSE_NULL, QSE_FALSE) == QSE_NULL) return QSE_NULL;
+		if (parse_action_block (awk, QSE_NULL, 0) == QSE_NULL) return QSE_NULL;
 
 		/* skip a semicolon after an action block if any */
 		if (MATCH(awk,TOK_SEMICOLON) && 
@@ -989,11 +992,11 @@ retry:
 		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_SEMICOLON) || MATCH(awk,TOK_EOF))
 		{
 			/* blockless pattern */
-			qse_bool_t eof = MATCH(awk,TOK_EOF);
+			int eof = MATCH(awk,TOK_EOF);
 			qse_awk_loc_t ploc = awk->ptok.loc;
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
-			if (parse_action_block (awk, ptn, QSE_TRUE) == QSE_NULL)
+			if (parse_action_block (awk, ptn, 1) == QSE_NULL)
 			{
 				qse_awk_clrpt (awk, ptn);
 				return QSE_NULL;	
@@ -1031,7 +1034,7 @@ retry:
 			}
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
-			if (parse_action_block (awk, ptn, QSE_FALSE) == QSE_NULL) 
+			if (parse_action_block (awk, ptn, 0) == QSE_NULL) 
 			{
 				qse_awk_clrpt (awk, ptn);
 				return QSE_NULL;	
@@ -1264,7 +1267,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* actual function body */
 	{
 		qse_awk_loc_t xloc = awk->ptok.loc;
-		body = parse_block_dc (awk, &xloc, QSE_TRUE);
+		body = parse_block_dc (awk, &xloc, 1);
 	}
 
 	/* clear the current function name remembered */
@@ -1330,7 +1333,7 @@ static qse_awk_nde_t* parse_begin (qse_awk_t* awk)
 	QSE_ASSERT (MATCH(awk,TOK_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
-	nde = parse_block_dc (awk, &xloc, QSE_TRUE);
+	nde = parse_block_dc (awk, &xloc, 1);
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	if (awk->tree.begin == QSE_NULL)
@@ -1355,7 +1358,7 @@ static qse_awk_nde_t* parse_end (qse_awk_t* awk)
 	QSE_ASSERT (MATCH(awk,TOK_LBRACE));
 
 	if (get_token(awk) <= -1) return QSE_NULL; 
-	nde = parse_block_dc (awk, &xloc, QSE_TRUE);
+	nde = parse_block_dc (awk, &xloc, 1);
 	if (nde == QSE_NULL) return QSE_NULL;
 
 	if (awk->tree.end == QSE_NULL)
@@ -1372,7 +1375,7 @@ static qse_awk_nde_t* parse_end (qse_awk_t* awk)
 }
 
 static qse_awk_chain_t* parse_action_block (
-	qse_awk_t* awk, qse_awk_nde_t* ptn, qse_bool_t blockless)
+	qse_awk_t* awk, qse_awk_nde_t* ptn, int blockless)
 {
 	qse_awk_nde_t* nde;
 	qse_awk_chain_t* chain;
@@ -1383,7 +1386,7 @@ static qse_awk_chain_t* parse_action_block (
 	{
 		QSE_ASSERT (MATCH(awk,TOK_LBRACE));
 		if (get_token(awk) <= -1) return QSE_NULL; 
-		nde = parse_block_dc (awk, &xloc, QSE_TRUE);
+		nde = parse_block_dc (awk, &xloc, 1);
 		if (nde == QSE_NULL) return QSE_NULL;
 	}
 
@@ -1417,7 +1420,7 @@ static qse_awk_chain_t* parse_action_block (
 }
 
 static qse_awk_nde_t* parse_block (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_bool_t istop) 
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop) 
 {
 	qse_awk_nde_t* head, * curr, * nde;
 	qse_awk_nde_blk_t* block;
@@ -1574,7 +1577,7 @@ static qse_awk_nde_t* parse_block (
 }
 
 static qse_awk_nde_t* parse_block_dc (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, qse_bool_t istop) 
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, int istop) 
 {
 	qse_awk_nde_t* nde;
 		
@@ -1901,7 +1904,7 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 }
 
 static qse_awk_t* collect_locals (
-	qse_awk_t* awk, qse_size_t nlcls, qse_bool_t istop)
+	qse_awk_t* awk, qse_size_t nlcls, int istop)
 {
 	if (MATCH(awk,TOK_NEWLINE))
 	{
@@ -3016,7 +3019,7 @@ static qse_awk_nde_t* parse_statement (
 		/* a block statemnt { ... } */
 		qse_awk_loc_t tloc = awk->ptok.loc;
 		if (get_token(awk) <= -1) return QSE_NULL; 
-		nde = parse_block_dc (awk, &tloc, QSE_FALSE);
+		nde = parse_block_dc (awk, &tloc, 0);
 	}
 	else 
 	{
@@ -3525,7 +3528,7 @@ static qse_awk_nde_t* parse_binary (
 	{
 		qse_awk_loc_t rloc;
 		const binmap_t* p = binmap;
-		qse_bool_t matched = QSE_FALSE;
+		int matched = 0;
 		int opcode, fold;
 		folded_t folded;
 
@@ -3534,7 +3537,7 @@ static qse_awk_nde_t* parse_binary (
 			if (MATCH(awk,p->token)) 
 			{
 				opcode = p->binop;
-				matched = QSE_TRUE;
+				matched = 1;
 				break;
 			}
 			p++;
@@ -4990,29 +4993,30 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 }
 
 static qse_awk_nde_t* parse_primary_ident_segs (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full)
+	qse_awk_t* awk, const qse_awk_loc_t* xloc, const qse_xstr_t* full, 
+	const qse_xstr_t segs[], int nsegs)
 {
 	qse_awk_nde_t* nde = QSE_NULL;
-	qse_awk_mod_info_t info;
+	qse_awk_mod_sym_t sym;
 	qse_awk_fnc_t fnc;
 
 	CLRERR (awk);
-	if (!awk->mod || awk->mod->query (awk, full->ptr, &info) <= -1)
+	if (query_module (awk, segs, nsegs, &sym) <= -1)
 	{
 		if (ISNOERR(awk)) SETERR_LOC (awk, QSE_AWK_ENOSUP, xloc);
 	}
 	else
 	{
-		if (info.type == QSE_AWK_MOD_FNC)
+		if (sym.type == QSE_AWK_MOD_FNC)
 		{
 			if (MATCH(awk,TOK_LPAREN))
 			{
 				QSE_MEMSET (&fnc, 0, QSE_SIZEOF(fnc));
 				fnc.name.ptr = full->ptr; 
 				fnc.name.len = full->len;
-				fnc.arg.min = info.u.f.arg.min;
-				fnc.arg.max = info.u.f.arg.max;
-				fnc.handler = info.u.f.impl;
+				fnc.arg.min = sym.u.f.arg.min;
+				fnc.arg.max = sym.u.f.arg.max;
+				fnc.handler = sym.u.f.impl;
 
 				nde = parse_fncall (awk, full, &fnc, xloc, 0);
 			}
@@ -5067,7 +5071,7 @@ static qse_awk_nde_t* parse_primary_ident (
 			full.ptr[capa] = QSE_T('\0');
 			full.len = capa;
 
-			nde = parse_primary_ident_segs (awk, xloc, &full);
+			nde = parse_primary_ident_segs (awk, xloc, &full, name, nsegs);
 			if (!nde) QSE_MMGR_FREE (awk->mmgr, full.ptr);
 		}
 		else
@@ -5457,7 +5461,7 @@ static int get_number (qse_awk_t* awk, qse_awk_tok_t* tok)
 
 static int get_string (
 	qse_awk_t* awk, qse_char_t end_char, 
-	qse_char_t esc_char, qse_bool_t keep_esc_char,
+	qse_char_t esc_char, int keep_esc_char,
 	int preescaped, qse_awk_tok_t* tok)
 {
 	qse_cint_t c;
@@ -5619,7 +5623,7 @@ static int get_charstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 		 * has been called */
 		ADD_TOKEN_CHAR (awk, tok, awk->sio.last.c);
 	}
-	return get_string (awk, QSE_T('\"'), QSE_T('\\'), QSE_FALSE, 0, tok);
+	return get_string (awk, QSE_T('\"'), QSE_T('\\'), 0, 0, tok);
 }
 
 static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
@@ -5654,7 +5658,7 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok)
 			ADD_TOKEN_CHAR (awk, tok, awk->sio.last.c);
 		}
 		return get_string (
-			awk, QSE_T('/'), QSE_T('\\'), QSE_TRUE, escaped, tok);
+			awk, QSE_T('/'), QSE_T('\\'), 1, escaped, tok);
 	}
 }
 
@@ -6487,3 +6491,72 @@ int qse_awk_putsrcstrn (
 
 	return 0;
 }
+
+static int query_module (
+	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs, qse_awk_mod_sym_t* sym)
+{
+	qse_rbt_pair_t* pair;
+	qse_awk_mod_data_t md;
+	qse_cstr_t ea;
+
+	QSE_ASSERT (nsegs == 2);
+
+	pair = qse_rbt_search (awk->modtab, segs[0].ptr, segs[0].len);
+	if (pair)
+	{
+		md = *(qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
+	}
+	else
+	{
+		qse_awk_mod_load_t load;
+		const qse_char_t* moddir;
+
+		if (awk->opt.moddir.len > 0)
+		{
+			moddir = awk->opt.moddir.ptr;
+		}
+	#if defined(DEFAULT_MODDIR)
+		else
+		{
+			moddir = QSE_T(DEFAULT_MODDIR);
+		}
+	#endif
+		
+		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
+		md.handle = awk->prm.modopen (awk, moddir, segs[0].ptr);
+		if (!md.handle) 
+		{
+			ea.ptr = segs[0].ptr;
+			ea.len = segs[0].len;
+			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+			return -1;
+		}
+
+		load = awk->prm.modsym (awk, md.handle, QSE_T("load"));
+		if (!load)
+		{
+			awk->prm.modclose (awk, md.handle);
+
+			ea.ptr = QSE_T("load");
+			ea.len = 4;
+			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
+			return -1;
+		}
+
+		if (load (&md.mod, awk) <= -1)
+		{
+			awk->prm.modclose (awk, md.handle);
+			return -1;		
+		}
+
+		if (qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md)) == QSE_NULL)
+		{
+			awk->prm.modclose (awk, md.handle);
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+			return -1;
+		}
+	}
+
+	return md.mod.query (&md.mod, awk, segs[1].ptr, sym);
+}
+

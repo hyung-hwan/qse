@@ -28,7 +28,6 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/path.h>
 #include <qse/cmn/htb.h>
-#include <qse/cmn/rbt.h>
 #include <qse/cmn/env.h>
 #include <qse/cmn/alg.h>
 #include <qse/cmn/stdio.h> /* TODO: remove dependency on qse_vsprintf */
@@ -112,13 +111,6 @@ typedef struct xtn_t
 	int gbl_environ;
 	int gbl_procinfo;
 
-	struct
-	{
-		qse_xstr_t moddir;
-	} opt;
-
-	qse_rbt_t modtab;
-
 	qse_awk_ecb_t ecb;
 } xtn_t;
 
@@ -157,12 +149,6 @@ typedef struct ioattr_t
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
 	int tmout[4];
 } ioattr_t;
-
-typedef struct mod_data_t
-{
-	lt_dlhandle dh;
-	qse_awk_mod_query_t query;
-} mod_data_t;
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
 
@@ -323,20 +309,104 @@ static int custom_awk_sprintf (
 	return n;
 }
 
+static void* custom_awk_modopen (
+	qse_awk_t* awk, const qse_char_t* dir, const qse_char_t* name)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this - use LoadLibrary... */
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return -1;
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return -1;
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return -1;
+#else
+
+	void* h;
+	qse_mchar_t* modpath;
+	qse_char_t* tmp[5];
+	int count = 0;
+
+	if (dir && dir[0] != QSE_T('\0')) 
+	{
+		tmp[count++] = dir;
+		tmp[count++] = QSE_T("/");
+	}
+	tmp[count++] = QSE_T("lib");
+	tmp[count++] = name;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	#endif
+
+	h = lt_dlopenext (modpath);
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+
+	return h;
+
+#endif
+}
+
+static void custom_awk_modclose (qse_awk_t* awk, void* handle)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this */
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+#else
+	lt_dlclose (handle);
+#endif
+}
+
+static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this */
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+#else
+
+	void* s;
+	qse_mchar_t* mname;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	mname = name;
+	#else
+	mname = qse_wcstombsdup (name, QSE_NULL, awk->mmgr);	
+	if (!mname)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+	#endif
+
+	s = lt_dlsym (handle, mname);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	QSE_MMGR_FREE (awk->mmgr, mname);
+	#endif
+
+	return s;
+
+#endif
+}
+
 static int add_globals (qse_awk_t* awk);
 static int add_functions (qse_awk_t* awk);
-
-static int query_module (
-	qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_info_t* info);
-static int init_module (qse_awk_t* awk, qse_awk_rtx_t* rtx);
-static void fini_module (qse_awk_t* awk, qse_awk_rtx_t* rtx);
-
-static qse_awk_mod_t awk_mod =
-{
-	query_module,
-	init_module,
-	fini_module
-};
 
 qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 {
@@ -345,20 +415,12 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 
 static void fini_xtn (qse_awk_t* awk)
 {
-	xtn_t* xtn;
-	xtn = (xtn_t*) QSE_XTN (awk);
-
-	if (xtn->opt.moddir.ptr)
-		QSE_MMGR_FREE (awk->mmgr, xtn->opt.moddir.ptr);
-
-	qse_rbt_fini (&xtn->modtab);
+	/* nothing to do */
 }
 
 static void clear_xtn (qse_awk_t* awk)
 {
-	xtn_t* xtn;
-	xtn = (xtn_t*) QSE_XTN (awk);
-	qse_rbt_clear (&xtn->modtab);
+	/* nothing to do */
 }
 
 qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
@@ -380,6 +442,9 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	prm.math.log10 = custom_awk_log10;
 	prm.math.exp = custom_awk_exp;
 	prm.math.sqrt = custom_awk_sqrt;
+	prm.modopen = custom_awk_modopen;
+	prm.modclose = custom_awk_modclose;
+	prm.modsym = custom_awk_modsym;
 
 	/* create an object */
 	awk = qse_awk_open (mmgr, QSE_SIZEOF(xtn_t) + xtnsize, &prm);
@@ -396,19 +461,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 		return QSE_NULL;
 	}
 
-/* TODO: change the way to set this... */
-	awk->mod = &awk_mod;
-
-	if (qse_rbt_init (&xtn->modtab, mmgr, QSE_SIZEOF(qse_char_t), 1) <= -1)
-	{
-		qse_awk_close (awk);
-		return QSE_NULL;
-	}
-	qse_rbt_setmancbs (
-		&xtn->modtab,
-		qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS)
-	);
-
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;
 	qse_awk_pushecb (awk, &xtn->ecb);
@@ -419,65 +471,6 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 void* qse_awk_getxtnstd (qse_awk_t* awk)
 {
 	return (void*)((xtn_t*)QSE_XTN(awk) + 1);
-}
-
-int qse_awk_getoptstd (qse_awk_t* awk, qse_awk_optstd_t  id, void* value)
-{
-	xtn_t* xtn;
-
-	xtn = (xtn_t*) QSE_XTN (awk);
-
-	switch (id)
-	{
-		case QSE_AWK_MODDIR:
-		{
-			*(const qse_char_t**)value = xtn->opt.moddir.ptr;
-			return 0;
-		}
-	}
-
-	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
-	return -1;
-}
-
-int qse_awk_setoptstd (qse_awk_t* awk, qse_awk_optstd_t id, const void* value)
-{
-	xtn_t* xtn;
-
-	xtn = (xtn_t*) QSE_XTN (awk);
-
-	switch (id)
-	{
-		case QSE_AWK_MODDIR:
-		{
-			qse_xstr_t tmp;
-
-			if (value)
-			{
-				tmp.ptr = qse_strdup (value, awk->mmgr);
-				if (tmp.ptr == QSE_NULL)
-				{
-					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-					return -1;
-				}
-				tmp.len = qse_strlen (tmp.ptr);
-			}
-			else
-			{
-				tmp.ptr = QSE_NULL;
-				tmp.len = 0;
-			}
-
-			if (xtn->opt.moddir.ptr)
-				QSE_MMGR_FREE (awk->mmgr, xtn->opt.moddir.ptr);
-
-			xtn->opt.moddir = tmp;
-			return 0;
-		}
-	}
-
-	qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
-	return -1;
 }
 
 static qse_sio_t* open_sio (qse_awk_t* awk, const qse_char_t* file, int flags)
@@ -1605,6 +1598,7 @@ static qse_ssize_t awk_rio_console (
 static void fini_rxtn (qse_awk_rtx_t* rtx)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
+	/*xtn_t* xtn = (xtn_t*) QSE_XTN (rtx->awk);*/
 
 	if (rxtn->cmgrtab_inited)
 	{
@@ -2550,9 +2544,10 @@ static int add_functions (qse_awk_t* awk)
 	return 0;
 }
 
+#if 0
 
 static int query_module (
-	qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_info_t* info)
+	qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
 	const qse_char_t* dc;
 	xtn_t* xtn;
@@ -2589,7 +2584,9 @@ static int query_module (
 	}
 	else
 	{
-		qse_mchar_t* mod;
+		qse_mchar_t* modpath;
+		qse_awk_modstd_load_t load;
+
 	#if defined(QSE_CHAR_IS_MCHAR)
 		qse_mcstr_t tmp[5] = 
 		{
@@ -2629,18 +2626,18 @@ static int query_module (
 		tmp[3].len = namelen;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		mod = qse_mbsxadup (tmp, QSE_NULL, awk->mmgr);
+		modpath = qse_mbsxadup (tmp, QSE_NULL, awk->mmgr);
 	#else
-		mod = qse_wcsnatombsdup (tmp, QSE_NULL, awk->mmgr);
+		modpath = qse_wcsnatombsdup (tmp, QSE_NULL, awk->mmgr);
 	#endif
-		if (!mod)
+		if (!modpath)
 		{
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			return -1;
 		}
 
-		md.dh = lt_dlopenext (mod);
-		QSE_MMGR_FREE (awk->mmgr, mod);
+		md.dh = lt_dlopenext (modpath);
+		QSE_MMGR_FREE (awk->mmgr, modpath);
 		if (!md.dh) 
 		{
 			ea.ptr = name;
@@ -2649,21 +2646,23 @@ static int query_module (
 			return -1;
 		}
 
-		md.query = lt_dlsym (md.dh, QSE_MT("query"));
-		if (!md.query)
+		load = lt_dlsym (md.dh, QSE_MT("load"));
+		if (!load)
 		{
 			lt_dlclose (md.dh);
 
-			ea.ptr = QSE_MT("query");
-			ea.len = 5;
+			ea.ptr = QSE_T("load");
+			ea.len = 4;
 			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 			return -1;
 		}
 
-/*
-		md.init = lt_dlsym (md.dh, QSE_MT("init"));
-		md.fini = lt_dlsym (md.dh, QSE_MT("fini"));
-*/
+		if (load (&md.modstd, awk) <= -1)
+		{
+			lt_dlclose (md.dh);
+			return -1;		
+		}
+
 		if (qse_rbt_insert (&xtn->modtab, (void*)name, namelen, &md, QSE_SIZEOF(md)) == QSE_NULL)
 		{
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
@@ -2672,15 +2671,9 @@ static int query_module (
 		}
 	}
 
-	return md.query (awk, dc + 2, info);
+	return md.modstd.query (&md.modstd, awk, dc + 2, sym);
 #endif
 }
 
-static int init_module (qse_awk_t* awk, qse_awk_rtx_t* rtx)
-{
-	return 0;
-}
 
-static void fini_module (qse_awk_t* awk, qse_awk_rtx_t* rtx)
-{
-}
+#endif
