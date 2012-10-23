@@ -310,6 +310,7 @@ static qse_rbt_walk_t unload_module (qse_rbt_t* rbt, qse_rbt_pair_t* pair, void*
 	qse_awk_mod_data_t* md;
 
 	md = QSE_RBT_VPTR(pair);	
+	if (md->mod.unload) md->mod.unload (&md->mod, awk);
 	awk->prm.modclose (awk, md->handle);
 
 	return QSE_RBT_WALK_FORWARD;

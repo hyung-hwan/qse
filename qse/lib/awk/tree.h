@@ -189,7 +189,7 @@ struct qse_awk_nde_fncall_t
 		 * needed during run-time. */
 		struct
 		{
-			qse_xstr_t name;
+			qse_awk_fnc_info_t info;
 
 			struct
 			{

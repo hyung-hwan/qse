@@ -42,6 +42,7 @@ struct qse_awk_fnc_t
 	} arg;
 
 	qse_awk_fnc_impl_t handler;
+	qse_awk_mod_t* mod; /* if it's associated to a module */
 
 	/*qse_awk_fnc_t* next;*/
 };

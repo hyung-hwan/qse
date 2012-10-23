@@ -328,7 +328,7 @@ static void* custom_awk_modopen (
 
 	void* h;
 	qse_mchar_t* modpath;
-	qse_char_t* tmp[5];
+	const qse_char_t* tmp[5];
 	int count = 0;
 
 	if (dir && dir[0] != QSE_T('\0')) 
@@ -336,7 +336,7 @@ static void* custom_awk_modopen (
 		tmp[count++] = dir;
 		tmp[count++] = QSE_T("/");
 	}
-	tmp[count++] = QSE_T("lib");
+	tmp[count++] = QSE_T("libawk");
 	tmp[count++] = name;
 	tmp[count] = QSE_NULL;
 
@@ -2083,7 +2083,7 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 	return (void*)((rxtn_t*)QSE_XTN(rtx) + 1);
 }
 
-static int fnc_rand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 #if (QSE_SIZEOF_ULONG_T == 2)
 #	define RANDV_MAX 0x7FFFl
@@ -2111,7 +2111,7 @@ static int fnc_rand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* a0;
@@ -2153,7 +2153,7 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static int fnc_system (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* v;
@@ -2214,7 +2214,7 @@ skip_system:
 	return 0;
 }
 
-static int fnc_time (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_time (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* r;
 	qse_ntime_t now;
@@ -2281,7 +2281,7 @@ static ioattr_t* find_or_make_ioattr (
 	return (ioattr_t*)QSE_HTB_VPTR(pair);
 }
 
-static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	rxtn_t* rxtn;
 	qse_size_t nargs;
@@ -2406,7 +2406,7 @@ done:
 	return ret;
 }
 
-static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	rxtn_t* rxtn;
 	qse_size_t nargs;

@@ -62,6 +62,11 @@ qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
 qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
 qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
 
+qse_awk_val_t* qse_awk_rtx_makenilval (qse_awk_rtx_t* rtx)
+{
+	return &awk_nil;
+}
+
 qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 {
 	qse_awk_val_int_t* val;

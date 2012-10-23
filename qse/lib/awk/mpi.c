@@ -220,7 +220,7 @@ qse_cmgr_t* qse_awk_rtx_getcmgrmpi (
 	return qse_awk_rtx_getcmgrstd (rtx, ioname);
 }
 
-static int fnc_hash (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_hash (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* tmp, * a0;
@@ -241,7 +241,7 @@ static int fnc_hash (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static int fnc_assign (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_assign (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* tmp, * a0;
@@ -271,7 +271,7 @@ static int fnc_assign (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	return 0;
 }
 
-static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_reduce (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
 	qse_awk_val_t* tmp, * a0, * a1;
@@ -329,7 +329,7 @@ softfail:
 	return 0;
 }
 
-static int fnc_barrier (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_barrier (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	int x;
 	qse_awk_val_t* tmp;

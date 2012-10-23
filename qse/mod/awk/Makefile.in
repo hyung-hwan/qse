@@ -37,8 +37,9 @@ host_triplet = @host@
 subdir = mod/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_numval.m4 \
-	$(top_srcdir)/m4/ax_pthread.m4 $(top_srcdir)/m4/libtool.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/argz.m4 \
+	$(top_srcdir)/m4/ax_numval.m4 $(top_srcdir)/m4/ax_pthread.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltdl.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
 	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/lx_find_mpi.m4 $(top_srcdir)/configure.ac
@@ -77,12 +78,19 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(moddir)"
 LTLIBRARIES = $(mod_LTLIBRARIES)
-libsys_la_DEPENDENCIES =
-am_libsys_la_OBJECTS = sys.lo
-libsys_la_OBJECTS = $(am_libsys_la_OBJECTS)
-libsys_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+libawksys_la_DEPENDENCIES =
+am_libawksys_la_OBJECTS = sys.lo
+libawksys_la_OBJECTS = $(am_libawksys_la_OBJECTS)
+libawksys_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libsys_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libawksys_la_LDFLAGS) $(LDFLAGS) -o $@
+am__DEPENDENCIES_1 =
+libawkuci_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libawkuci_la_OBJECTS = uci.lo
+libawkuci_la_OBJECTS = $(am_libawkuci_la_OBJECTS)
+libawkuci_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libawkuci_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -96,14 +104,15 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libsys_la_SOURCES)
-DIST_SOURCES = $(libsys_la_SOURCES)
+SOURCES = $(libawksys_la_SOURCES) $(libawkuci_la_SOURCES)
+DIST_SOURCES = $(libawksys_la_SOURCES) $(libawkuci_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AR = @AR@
+ARGZ_H = @ARGZ_H@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -134,6 +143,7 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX = @HAVE_CXX@
+INCLTDL = @INCLTDL@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -141,6 +151,11 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBADD_DL = @LIBADD_DL@
+LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
+LIBADD_DLOPEN = @LIBADD_DLOPEN@
+LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
+LIBLTDL = @LIBLTDL@
 LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -148,7 +163,13 @@ LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LTDLDEPS = @LTDLDEPS@
+LTDLINCL = @LTDLINCL@
+LTDLOPEN = @LTDLOPEN@
 LTLIBOBJS = @LTLIBOBJS@
+LT_CONFIG_H = @LT_CONFIG_H@
+LT_DLLOADERS = @LT_DLLOADERS@
+LT_DLPREOPEN = @LT_DLPREOPEN@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
@@ -198,6 +219,7 @@ SOCKET_LIBS = @SOCKET_LIBS@
 SSL_LIBS = @SSL_LIBS@
 STRIP = @STRIP@
 TRUE = @TRUE@
+UCI_LIBS = @UCI_LIBS@
 UNICOWS_LIBS = @UNICOWS_LIBS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
@@ -239,6 +261,8 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+ltdl_LIBOBJS = @ltdl_LIBOBJS@
+ltdl_LTLIBOBJS = @ltdl_LTLIBOBJS@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -249,6 +273,8 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
+sys_symbol_underscore = @sys_symbol_underscore@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -260,11 +286,16 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-moddir = $(libdir)/qseawk
-mod_LTLIBRARIES = libsys.la
-libsys_la_SOURCES = sys.c
-libsys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
-libsys_la_LIBADD = -lqseawk -lqsecmn 
+moddir = $(libdir)/qse
+
+#if HAVE_LIBUCI
+mod_LTLIBRARIES = libawksys.la libawkuci.la
+libawksys_la_SOURCES = sys.c
+libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+libawksys_la_LIBADD = -lqseawk -lqsecmn 
+libawkuci_la_SOURCES = uci.c
+libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -330,8 +361,10 @@ clean-modLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libsys.la: $(libsys_la_OBJECTS) $(libsys_la_DEPENDENCIES) $(EXTRA_libsys_la_DEPENDENCIES) 
-	$(libsys_la_LINK) -rpath $(moddir) $(libsys_la_OBJECTS) $(libsys_la_LIBADD) $(LIBS)
+libawksys.la: $(libawksys_la_OBJECTS) $(libawksys_la_DEPENDENCIES) $(EXTRA_libawksys_la_DEPENDENCIES) 
+	$(libawksys_la_LINK) -rpath $(moddir) $(libawksys_la_OBJECTS) $(libawksys_la_LIBADD) $(LIBS)
+libawkuci.la: $(libawkuci_la_OBJECTS) $(libawkuci_la_DEPENDENCIES) $(EXTRA_libawkuci_la_DEPENDENCIES) 
+	$(libawkuci_la_LINK) -rpath $(moddir) $(libawkuci_la_OBJECTS) $(libawkuci_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -340,6 +373,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sys.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uci.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -574,6 +608,8 @@ uninstall-am: uninstall-modLTLIBRARIES
 	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-modLTLIBRARIES
 
+
+#endif
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

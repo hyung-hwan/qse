@@ -240,8 +240,8 @@ static qse_htb_walk_t deparse_func (
 static int put_char (qse_awk_t* awk, qse_char_t c);
 static int flush_out (qse_awk_t* awk);
 
-static int query_module (
-	qse_awk_t* awk, const qse_xstr_t* segs, int nsegs,
+static qse_awk_mod_t* query_module (
+	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs,
 	qse_awk_mod_sym_t* sym);
 
 typedef struct kwent_t kwent_t;
@@ -4899,7 +4899,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 				QSE_ASSERT (qse_htb_search (
 					awk->parse.named, name->ptr, name->len) == QSE_NULL);
 
-				nde = parse_fncall (awk, name, QSE_NULL, xloc,  0);
+				nde = parse_fncall (awk, name, QSE_NULL, xloc, 0);
 			}
 			else
 			{
@@ -4979,7 +4979,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 			{
 				/* it is a function call as the name is followed 
 				 * by ( and implicit variables are disabled. */
-				nde = parse_fncall (awk, name, QSE_NULL, xloc,  0);
+				nde = parse_fncall (awk, name, QSE_NULL, xloc, 0);
 			}
 			else
 			{
@@ -4997,11 +4997,13 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 	const qse_xstr_t segs[], int nsegs)
 {
 	qse_awk_nde_t* nde = QSE_NULL;
+	qse_awk_mod_t* mod;
 	qse_awk_mod_sym_t sym;
 	qse_awk_fnc_t fnc;
 
 	CLRERR (awk);
-	if (query_module (awk, segs, nsegs, &sym) <= -1)
+	mod = query_module (awk, segs, nsegs, &sym);
+	if (mod == QSE_NULL)
 	{
 		if (ISNOERR(awk)) SETERR_LOC (awk, QSE_AWK_ENOSUP, xloc);
 	}
@@ -5012,11 +5014,13 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 			if (MATCH(awk,TOK_LPAREN))
 			{
 				QSE_MEMSET (&fnc, 0, QSE_SIZEOF(fnc));
+
 				fnc.name.ptr = full->ptr; 
 				fnc.name.len = full->len;
-				fnc.arg.min = sym.u.f.arg.min;
-				fnc.arg.max = sym.u.f.arg.max;
-				fnc.handler = sym.u.f.impl;
+				fnc.arg.min = sym.u.fnc.arg.min;
+				fnc.arg.max = sym.u.fnc.arg.max;
+				fnc.handler = sym.u.fnc.impl;
+				fnc.mod = mod;
 
 				nde = parse_fncall (awk, full, &fnc, xloc, 0);
 			}
@@ -5316,9 +5320,10 @@ make_node:
 		call->loc = *xloc;
 		call->next = QSE_NULL;
 
-		/*call->u.fnc = fnc; */
-		call->u.fnc.name.ptr = name->ptr;
-		call->u.fnc.name.len = name->len;
+		call->u.fnc.info.name.ptr = name->ptr;
+		call->u.fnc.info.name.len = name->len;
+		call->u.fnc.info.mod = fnc->mod;
+
 		call->u.fnc.arg.min = fnc->arg.min;
 		call->u.fnc.arg.max = fnc->arg.max;
 		call->u.fnc.arg.spec = fnc->arg.spec;
@@ -6492,24 +6497,27 @@ int qse_awk_putsrcstrn (
 	return 0;
 }
 
-static int query_module (
-	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs, qse_awk_mod_sym_t* sym)
+static qse_awk_mod_t* query_module (
+	qse_awk_t* awk, const qse_xstr_t segs[], int nsegs,
+	qse_awk_mod_sym_t* sym)
 {
 	qse_rbt_pair_t* pair;
-	qse_awk_mod_data_t md;
+	qse_awk_mod_data_t* mdp;
 	qse_cstr_t ea;
+	int n;
 
 	QSE_ASSERT (nsegs == 2);
 
 	pair = qse_rbt_search (awk->modtab, segs[0].ptr, segs[0].len);
 	if (pair)
 	{
-		md = *(qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
+		mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
 	}
 	else
 	{
 		qse_awk_mod_load_t load;
 		const qse_char_t* moddir;
+		qse_awk_mod_data_t md;
 
 		if (awk->opt.moddir.len > 0)
 		{
@@ -6523,40 +6531,51 @@ static int query_module (
 	#endif
 		
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
-		md.handle = awk->prm.modopen (awk, moddir, segs[0].ptr);
+		if (awk->prm.modopen && awk->prm.modsym && awk->prm.modclose)
+			md.handle = awk->prm.modopen (awk, moddir, segs[0].ptr);
+		else 
+			md.handle = QSE_NULL;
+
 		if (!md.handle) 
 		{
 			ea.ptr = segs[0].ptr;
 			ea.len = segs[0].len;
 			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-			return -1;
+			return QSE_NULL;
 		}
 
 		load = awk->prm.modsym (awk, md.handle, QSE_T("load"));
 		if (!load)
 		{
-			awk->prm.modclose (awk, md.handle);
 
 			ea.ptr = QSE_T("load");
 			ea.len = 4;
 			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-			return -1;
+
+			awk->prm.modclose (awk, md.handle);
+			return QSE_NULL;
 		}
 
-		if (load (&md.mod, awk) <= -1)
+		/* i copy-insert 'md' into the table before calling 'load'.
+		 * to pass the same address to load(), query(), etc */
+		pair = qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md));
+		if (pair == QSE_NULL)
 		{
-			awk->prm.modclose (awk, md.handle);
-			return -1;		
-		}
-
-		if (qse_rbt_insert (awk->modtab, segs[0].ptr, segs[0].len, &md, QSE_SIZEOF(md)) == QSE_NULL)
-		{
-			awk->prm.modclose (awk, md.handle);
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
+			awk->prm.modclose (awk, md.handle);
+			return QSE_NULL;
+		}
+
+		mdp = (qse_awk_mod_data_t*)QSE_RBT_VPTR(pair);
+		if (load (&mdp->mod, awk) <= -1)
+		{
+			qse_rbt_delete (awk->modtab, segs[0].ptr, segs[0].len);
+			awk->prm.modclose (awk, mdp->handle);
+			return QSE_NULL;
 		}
 	}
 
-	return md.mod.query (&md.mod, awk, segs[1].ptr, sym);
+	n = mdp->mod.query (&mdp->mod, awk, segs[1].ptr, sym);
+	return (n <= -1)? QSE_NULL: &mdp->mod;
 }
 
