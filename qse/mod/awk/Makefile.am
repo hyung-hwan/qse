@@ -5,13 +5,18 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-moddir = $(libdir)/qseawk
-mod_LTLIBRARIES = libsys.la libuci.la
+moddir = $(libdir)/qse
+mod_LTLIBRARIES = libawksys.la 
 
-libsys_la_SOURCES = sys.c
-libsys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
-libsys_la_LIBADD = -lqseawk -lqsecmn 
+libawksys_la_SOURCES = sys.c
+libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+libawksys_la_LIBADD = -lqseawk -lqsecmn 
 
-libuci_la_SOURCES = uci.c
-libuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
-libuci_la_LIBADD = -lqseawk -lqsecmn 
+#if HAVE_LIBUCI
+
+mod_LTLIBRARIES += libawkuci.la
+libawkuci_la_SOURCES = uci.c
+libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
+
+#endif

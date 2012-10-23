@@ -4341,7 +4341,25 @@ static int __cmp_val (
 static qse_awk_val_t* eval_binop_eq (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val (rtx, left, right);
+	int n;
+
+	if (left == right) 
+	{
+		/* array comparison is not allowed but this special check
+		   allows comparsion of an array with itself. let's not
+		   care about this loophole. */
+		return qse_awk_val_one;
+	}
+
+/*
+	if (left->type != right->type &&
+	    (left->type == QSE_AWK_VAL_MAP || right->type == QSE_AWK_VAL_MAP))
+	{
+		return qse_awk_val_zero;
+	}
+*/
+
+	n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n == 0)? qse_awk_val_one: qse_awk_val_zero;
 }
@@ -4349,7 +4367,25 @@ static qse_awk_val_t* eval_binop_eq (
 static qse_awk_val_t* eval_binop_ne (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n = __cmp_val (rtx, left, right);
+	int n;
+
+	if (left == right)
+	{
+		/* array comparison is not allowed but this special check
+		   allows comparsion of an array with itself. let's not
+		   care about this loophole. */
+		return qse_awk_val_zero;
+	}
+
+/*
+	if (left->type != right->type &&
+	    (left->type == QSE_AWK_VAL_MAP || right->type == QSE_AWK_VAL_MAP))
+	{
+		return qse_awk_val_one;
+	}
+*/
+
+	n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n != 0)? qse_awk_val_one: qse_awk_val_zero;
 }
@@ -5463,9 +5499,7 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		return QSE_NULL;
 	}
 
-	return eval_call (
-		run, nde, call->u.fnc.arg.spec, 
-		QSE_NULL, QSE_NULL, QSE_NULL);
+	return eval_call (run, nde, call->u.fnc.arg.spec, QSE_NULL, QSE_NULL, QSE_NULL);
 }
 
 static qse_awk_val_t* eval_fun_ex (
@@ -5683,10 +5717,7 @@ static qse_awk_val_t* __eval_call (
 		{
 			run->errinf.num = QSE_AWK_ENOERR;
 
-			n = call->u.fnc.handler (
-				run,
-				xstr_to_cstr(&call->u.fnc.name)
-			);
+			n = call->u.fnc.handler (run, &call->u.fnc.info);
 
 			if (n <= -1)
 			{
@@ -5696,7 +5727,7 @@ static qse_awk_val_t* __eval_call (
 					 * fix it */ 
 					SETERR_ARGX_LOC (
 						run, QSE_AWK_EFNCIMPL, 
-						xstr_to_cstr(&call->u.fnc.name),
+						xstr_to_cstr(&call->u.fnc.info.name),
 						&nde->loc
 					);
 				}

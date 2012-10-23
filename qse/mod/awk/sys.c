@@ -17,7 +17,7 @@
 #	include <errno.h>
 #endif
 
-static int fnc_fork (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 #if defined(_WIN32)
 	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
@@ -33,35 +33,30 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 
 #else
 	pid_t pid;
-	qse_awk_val_t* r;
+	qse_awk_val_t* retv;
 
 	pid = fork ();
-	r = qse_awk_rtx_makeintval (rtx, pid);
-	if (r == QSE_NULL) return -1;
-	qse_awk_rtx_setretval (rtx, r);
+	retv = qse_awk_rtx_makeintval (rtx, pid);
+	if (retv == QSE_NULL) return -1;
+	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 #endif
 }
 
-static int fnc_wait (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0;
 	qse_long_t lv;
-	qse_flt_t rv;
-	qse_awk_val_t* r;
+	qse_awk_val_t* retv;
 	int n;
 
 	nargs = qse_awk_rtx_getnargs (rtx);
 	QSE_ASSERT (nargs == 1);
 
-/* TODO: handel more parameters */
+/* TODO: handle more parameters */
 
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-
-	n = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv);
-	if (n == -1) return -1;
-	if (n == 1) lv = (qse_long_t)rv;
+	n = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &lv);
+	if (n <= -1) return -1;
 
 #if defined(_WIN32)
 	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
@@ -79,30 +74,23 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	n = waitpid (lv, QSE_NULL, 0);
 #endif
 
-	r = qse_awk_rtx_makeintval (rtx, n);
-	if (r == QSE_NULL) return -1;
+	retv = qse_awk_rtx_makeintval (rtx, n);
+	if (retv == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (rtx, r);
+	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
 
-static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
+static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_size_t nargs;
-	qse_awk_val_t* a0;
 	qse_long_t lv;
-	qse_flt_t rv;
-	qse_awk_val_t* r;
+	qse_awk_val_t* retv;
 	int n;
 
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 1);
-
-	a0 = qse_awk_rtx_getarg (rtx, 0);
-
-	n = qse_awk_rtx_valtonum (rtx, a0, &lv, &rv);
-	if (n == -1) return -1;
-	if (n == 1) lv = (qse_long_t)rv;
+	n = qse_awk_rtx_valtolong (
+		rtx, qse_awk_rtx_getarg (rtx, 0), &lv);
+	if (n <= -1) return -1;
 
 #if defined(_WIN32)
 	Sleep ((DWORD)(lv * 1000));
@@ -116,51 +104,51 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_cstr_t* fnm)
 	n = sleep (lv);	
 #endif
 
-	r = qse_awk_rtx_makeintval (rtx, n);
-	if (r == QSE_NULL) return -1;
+	retv = qse_awk_rtx_makeintval (rtx, n);
+	if (retv == QSE_NULL) return -1;
 
-	qse_awk_rtx_setretval (rtx, r);
+	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
+
+typedef struct fnctab_t fnctab_t;
+struct fnctab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_fnc_t info;
+};
+
+static fnctab_t fnctab[] =
+{
+	{ QSE_T("fork"),  { { 0, 0 }, fnc_fork } },
+	{ QSE_T("sleep"), { { 1, 1 }, fnc_sleep  } },
+	{ QSE_T("wait"),  { { 1, 1 }, fnc_wait  } }
+};
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
 	qse_cstr_t ea;
+	int i;
 
-/* TODO: tabulation and binary search or something better */
+/* TODO: binary search */
+	for (i = 0; i < QSE_COUNTOF(fnctab); i++)
+	{
+		if (qse_strcmp (fnctab[i].name, name) == 0)
+		{
+			sym->type = QSE_AWK_MOD_FNC;
+			sym->u.fnc = fnctab[i].info;
+			return 0;
+		}
+	}
 
-	if (qse_strcmp (name, QSE_T("fork")) == 0)
-	{
-		sym->type = QSE_AWK_MOD_FNC;
-		sym->u.f.arg.min = 0;
-		sym->u.f.arg.max = 0;
-		sym->u.f.impl = fnc_fork;
-		return 0;
-	}
-	else if (qse_strcmp (name, QSE_T("wait")) == 0)
-	{
-		sym->type = QSE_AWK_MOD_FNC;
-		sym->u.f.arg.min = 1; /* TODO: accept more parameters.. */
-		sym->u.f.arg.max = 1;
-		sym->u.f.impl = fnc_wait;
-		return 0;
-	}
 /*
-	else if (qse_strcmp (name, QSE_T("WNOHANG")) == 0)
+	if (qse_strcmp (name, QSE_T("WNOHANG")) == 0)
 	{
 		sym->type = QSE_AWK_MOD_INTCON;
 		sym->u.c.ivalue = WNOHANG;
 		return 0;
 	}
 */
-	else if (qse_strcmp (name, QSE_T("sleep")) == 0)
-	{
-		sym->type = QSE_AWK_MOD_FNC;
-		sym->u.f.arg.min = 1;
-		sym->u.f.arg.max = 1;
-		sym->u.f.impl = fnc_sleep;
-		return 0;
-	}
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);

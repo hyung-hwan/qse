@@ -1,2 +1,2 @@
-SUBDIRS = cmn awk sed net stx
+SUBDIRS = cmn awk sed net 
 DIST_SUBDIRS = $(SUBDIRS) 

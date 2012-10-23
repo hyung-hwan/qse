@@ -43,6 +43,11 @@ dnl initialize libtool
 LT_INIT
 AC_SUBST(LIBTOOL_DEPS)
 
+dnl 'recursive' type seems to have problems in setting LT_CONFIG_H
+dnl so i use the classic 'subproject' type here
+LT_CONFIG_LTDL_DIR([libltdl])
+LTDL_INIT
+
 dnl overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" != "set"
 then
@@ -86,6 +91,7 @@ AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
 AC_CHECK_HEADERS([sys/ioctl.h net/if.h])
+AC_CHECK_HEADERS([uci.h])
 
 dnl check data types
 AC_CHECK_TYPE([wchar_t], 
@@ -212,10 +218,15 @@ else
 fi
 AC_SUBST(SSL_LIBS)
 
-dnl MPI
+dnl MPI (optional)
 LX_FIND_MPI(C)
 AM_CONDITIONAL(HAVE_C_MPI, test "${have_C_mpi}" = "yes" )
 dnl AM_CONDITIONAL(HAVE_CXX_MPI, test "${have_CXX_mpi}" = "yes" )
+
+dnl libuci (optional)
+AC_CHECK_LIB([uci], [uci_alloc_context], [UCI_LIBS="-luci"])
+AC_SUBST(UCI_LIBS)
+AM_CONDITIONAL(HAVE_LIBUCI, test "${ac_cv_lib_uci_uci_alloc_context}" = "yes" -a "${ac_cv_header_uci_h}" = "yes")
 
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([struct stat.st_birthtime])
@@ -320,6 +331,7 @@ if test "${enable_more_cmgrs_is}" = "yes"
 then
 	AC_DEFINE([QSE_INCLUDE_MORE_CMGRS],[],[include more built-in cmgrs like cp949 and cp950])
 fi
+AM_CONDITIONAL(INCLUDE_MORE_CMGRS, test "${enable_more_cmgrs_is}" = "yes" )
 
 AC_ARG_ENABLE([syscall], [AS_HELP_STRING([--enable-syscall],[use the syscall() function to call system calls (default. no)])],
 	enable_syscall_is=$enableval,enable_syscall_is=no)
@@ -393,18 +405,15 @@ AC_CONFIG_FILES([
 	include/qse/cmn/Makefile
 	include/qse/awk/Makefile
 	include/qse/sed/Makefile
-	include/qse/stx/Makefile
 	include/qse/net/Makefile
 	lib/Makefile 
 	lib/cmn/Makefile 
 	lib/awk/Makefile 
 	lib/sed/Makefile 
-	lib/stx/Makefile 
 	lib/net/Makefile 
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
-	cmd/stx/Makefile 
 	mod/Makefile
 	mod/awk/Makefile
 	samples/Makefile 

@@ -1335,14 +1335,14 @@ void Awk::setMaxDepth (depth_t id, size_t depth)
 	qse_awk_setopt (awk, (qse_awk_opt_t)id, &depth);
 }
 
-int Awk::dispatch_function (Run* run, const cstr_t* name)
+int Awk::dispatch_function (Run* run, const fnc_info_t* fi)
 {
 	pair_t* pair;
 
-	pair = qse_htb_search (functionMap, name->ptr, name->len);
+	pair = qse_htb_search (functionMap, fi->name.ptr, fi->name.len);
 	if (pair == QSE_NULL) 
 	{
-		run->setError (QSE_AWK_EFUNNF, name);
+		run->setError (QSE_AWK_EFUNNF, (cstr_t*)&fi->name);
 		return -1;
 	}
 
@@ -1390,7 +1390,7 @@ int Awk::dispatch_function (Run* run, const cstr_t* name)
 
 	int n;
 
-	try { n = (this->*handler) (*run, ret, args, nargs, name); }
+	try { n = (this->*handler) (*run, ret, args, nargs, fi); }
 	catch (...) { n = -1; }
 
 #ifdef PASS_BY_REFERENCE
@@ -1925,10 +1925,10 @@ int Awk::nextConsole (Console& io)
 	return -1;
 }
 
-int Awk::functionHandler (rtx_t* rtx, const cstr_t* name)
+int Awk::functionHandler (rtx_t* rtx, const fnc_info_t* fi)
 {
 	rxtn_t* rxtn = (rxtn_t*) QSE_XTN (rtx);
-	return rxtn->run->awk->dispatch_function (rxtn->run, name);
+	return rxtn->run->awk->dispatch_function (rxtn->run, fi);
 }	
 	
 int Awk::sprintf (awk_t* awk, char_t* buf, size_t size,

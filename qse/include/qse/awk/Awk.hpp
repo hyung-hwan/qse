@@ -82,6 +82,8 @@ public:
 
 	typedef qse_awk_sio_cmd_t sio_cmd_t;
 
+	typedef qse_awk_fnc_info_t fnc_info_t;
+
 	class Run;
 	friend class Run;
 
@@ -1063,11 +1065,11 @@ public:
 	/// The FunctionHandler type defines a intrinsic function handler.
 	///
 	typedef int (Awk::*FunctionHandler) (
-		Run&          run,
-		Value&        ret,
-		const Value*  args,
-		size_t        nargs, 
-		const cstr_t* name
+		Run&              run,
+		Value&            ret,
+		const Value*      args,
+		size_t            nargs, 
+		const fnc_info_t* fi
 	);
 
 	/// 
@@ -1240,7 +1242,7 @@ protected:
 		rtx_t* rtx, rio_cmd_t cmd, rio_arg_t* riod,
 		char_t* data, size_t count);
 
-	static int functionHandler (rtx_t* rtx, const cstr_t* name);
+	static int functionHandler (rtx_t* rtx, const fnc_info_t* fi);
 
 
 	static int   sprintf (awk_t* data, char_t* buf, size_t size,
@@ -1292,7 +1294,7 @@ private:
 	int init_runctx ();
 	void fini_runctx ();
 
-	int dispatch_function (Run* run, const cstr_t* name);
+	int dispatch_function (Run* run, const fnc_info_t* fi);
 
 	static const char_t* xerrstr (const awk_t* a, errnum_t num);
 

@@ -436,14 +436,6 @@ typedef int (*qse_awk_isemptyrex_t) (
 #endif
 
 /**
- * The qse_awk_fnc_impl_t type defines a intrinsic function handler.
- */
-typedef int (*qse_awk_fnc_impl_t) (
-	qse_awk_rtx_t*    rtx,  /**< runtime context */
-	const qse_cstr_t* name  /**< function name */
-);
-
-/**
  * The qse_awk_sio_cmd_t type defines I/O commands for a script stream.
  */
 enum qse_awk_sio_cmd_t
@@ -706,6 +698,21 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 
 typedef struct qse_awk_mod_t qse_awk_mod_t;
 typedef struct qse_awk_mod_sym_t qse_awk_mod_sym_t;
+typedef struct qse_awk_fnc_info_t qse_awk_fnc_info_t;
+
+/**
+ * The qse_awk_fnc_impl_t type defines a intrinsic function handler.
+ */
+typedef int (*qse_awk_fnc_impl_t) (
+	qse_awk_rtx_t*            rtx,  /**< runtime context */
+	const qse_awk_fnc_info_t* fi    /**< function information */
+);
+
+struct qse_awk_fnc_info_t
+{
+	qse_xstr_t name;
+	qse_awk_mod_t* mod;
+};
 
 typedef int (*qse_awk_mod_load_t) (
 	qse_awk_mod_t* mod,
@@ -752,20 +759,23 @@ enum qse_awk_mod_sym_type_t
 };
 typedef enum qse_awk_mod_sym_type_t qse_awk_mod_sym_type_t;
 
+typedef struct qse_awk_mod_sym_fnc_t qse_awk_mod_sym_fnc_t;
+struct qse_awk_mod_sym_fnc_t
+{
+	struct
+	{
+		int min; /* min. numbers of argument for a function */
+		int max; /* max. numbers of argument for a function */
+	} arg;
+	qse_awk_fnc_impl_t impl;
+};
+
 struct qse_awk_mod_sym_t
 {
 	qse_awk_mod_sym_type_t type; 
 	union
 	{
-		struct
-		{
-			struct
-			{
-				int min; /* min. numbers of argument for a function */
-				int max; /* max. numbers of argument for a function */
-			} arg;
-			qse_awk_fnc_impl_t impl;
-		} f;
+		qse_awk_mod_sym_fnc_t fnc;
 	} u;
 };
 
@@ -2074,6 +2084,15 @@ int qse_awk_rtx_setrec (
 	qse_size_t        idx, /**< 0 for $0, N for $N */
 	const qse_char_t* str, /**< string pointer */
 	qse_size_t        len  /**< string length */
+);
+
+/**
+ * The qse_awk_rtx_makenilval() function create a nil value.
+ * It always returns the pointer to the statically allocated
+ * nil value. So it never fails.
+ */
+qse_awk_val_t* qse_awk_rtx_makenilval (
+	qse_awk_rtx_t* rtx
 );
 
 /**

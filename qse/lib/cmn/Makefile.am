@@ -28,8 +28,6 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
-	cp949.c \
-	cp950.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -105,6 +103,13 @@ libqsecmn_la_SOURCES = \
 	uri.c \
 	utf8.c \
 	xma.c
+
+
+if INCLUDE_MORE_CMGRS
+libqsecmn_la_SOURCES += \
+	cp949.c \
+	cp950.c
+endif
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS)
