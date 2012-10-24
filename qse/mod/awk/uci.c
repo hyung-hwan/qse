@@ -6,26 +6,7 @@
 #if defined(HAVE_UCI_H)
 #	include <uci.h>
 #else
-/*#	error this module needs uci.h*/
-
-#include <stdlib.h>
-struct uci_context
-{
-	int a;
-	int b;
-};
-
-struct uci_context* uci_alloc_context(void)
-{
-	qse_printf (QSE_T("uci_alloc_context....\n"));
-	return malloc (sizeof(struct uci_context));
-}
-
-void uci_free_context (struct uci_context* c)
-{
-	qse_printf (QSE_T("uci_free_context....\n"));
-	free (c);
-}
+#	error this module needs uci.h
 #endif
 
 typedef struct uctx_list_t uctx_list_t;
@@ -45,6 +26,7 @@ struct uctx_list_t
 	uctx_node_t* tail;
 	uctx_node_t* free;
 	
+	/* mapping table to map 'id' to 'node' */
 	struct
 	{
 		uctx_node_t** tab;
@@ -124,17 +106,18 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 
 	list->map.tab[node->id] = QSE_NULL;
 
+	uci_free_context (node->ctx);
+
 	if (list->map.high == node->id + 1)
 	{
 		/* destroy the actual node if the node to be freed has the
 		 * highest id */
-		uci_free_context (node->ctx);
 		QSE_MMGR_FREE (qse_awk_rtx_getmmgr(rtx), node);
 		list->map.high--;
 	}
 	else
 	{
-		/* otherwise, chain it to the free list */
+		/* otherwise, chain the node to the free list */
 		node->next = list->free;
 		list->free = node;
 	}
@@ -156,6 +139,7 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 			QSE_MMGR_FREE (mmgr, curnode);
 		}
 
+qse_printf (QSE_T("freeing map...\n"));
 		QSE_MMGR_FREE (mmgr, list->map.tab);
 		list->map.high = 0;
 		list->map.capa = 0;
@@ -211,7 +195,7 @@ static int fnc_uci_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	list = rtx_to_list (rtx, fi);
 
 	n = qse_awk_rtx_valtolong (
-		rtx, qse_awk_rtx_getarg(rtx, 0), &id);
+		rtx, qse_awk_rtx_getarg (rtx, 0), &id);
 	if (n <= -1) return -1;
 
 	retv = qse_awk_rtx_makeintval (
