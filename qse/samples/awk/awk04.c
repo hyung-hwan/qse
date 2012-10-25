@@ -53,7 +53,6 @@ int main ()
 	/* don't allow BEGIN, END, pattern-action blocks */
 	opt &= ~QSE_AWK_PABLOCK;
 	/* enable ** */
-	opt |= QSE_AWK_EXTRAOPS;
      qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
 

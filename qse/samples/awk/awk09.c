@@ -64,7 +64,7 @@ int main ()
 	}
 
 	qse_awk_getopt (awk, QSE_AWK_TRAIT, &opt);
-	opt |= QSE_AWK_NEXTOFILE;
+	opt |= QSE_AWK_EXTRAKWS;
 	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
 	psin.type = QSE_AWK_PARSESTD_STR;

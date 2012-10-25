@@ -652,9 +652,12 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	if ((*a1_ref)->type != QSE_AWK_VAL_NIL &&
 	    (*a1_ref)->type != QSE_AWK_VAL_MAP)
 	{
-		/* cannot change a scalar value to a map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
-		return -1;
+		if (!(run->awk->opt.trait & QSE_AWK_MAPTOVAR))
+		{
+			/* cannot change a scalar value to a map */
+			qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
+			return -1;
+		}
 	}
 
 	if (a0->type == QSE_AWK_VAL_STR)
@@ -976,7 +979,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		if ((*a2_ref)->type == QSE_AWK_VAL_MAP)
 		{
 			/* a map is not allowed as the third parameter */
-			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPNA, QSE_NULL);
+			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPPH, QSE_NULL);
 			goto oops;
 		}
 

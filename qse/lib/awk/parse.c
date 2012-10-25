@@ -28,8 +28,8 @@ enum tok_t
 	/* special token to direct the parser to include a file specified */
 	TOK_INCLUDE,
 
-	/* TOK_XXX_ASSNs should be in sync
-	 * with assop in assign_to_opcode */
+	/* TOK_XXX_ASSNs should be in sync with assop in assign_to_opcode. 
+	 * it also should be in the order as qse_awk_assop_type_t in run.h */
 	TOK_ASSN,
 	TOK_PLUS_ASSN,
 	TOK_MINUS_ASSN,
@@ -46,12 +46,15 @@ enum tok_t
 	TOK_BOR_ASSN,
 	/* end of TOK_XXX_ASSN */
 
+	TOK_TEQ,
+	TOK_TNE,
 	TOK_EQ,
 	TOK_NE,
 	TOK_LE,
 	TOK_LT,
 	TOK_GE,
 	TOK_GT,
+	TOK_MA,   /* match */
 	TOK_NM,   /* not match */
 	TOK_LNOT, /* logical negation ! */
 	TOK_PLUS,
@@ -67,7 +70,7 @@ enum tok_t
 	TOK_BOR,
 	TOK_BXOR,
 	TOK_BAND,
-	TOK_TILDE, /* used for unary bitwise-not and regex match */
+	TOK_BNOT, /* used for unary bitwise-not and regex match */
 	TOK_RS,
 	TOK_LS,
 	TOK_IN,
@@ -259,7 +262,7 @@ static kwent_t kwtab[] =
 	 * also keep it sorted by the first field for binary search */
 	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
 	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
-	{ { QSE_T("abort"),        5 }, TOK_ABORT,       QSE_AWK_ABORT },
+	{ { QSE_T("abort"),        5 }, TOK_ABORT,       QSE_AWK_EXTRAKWS },
 	{ { QSE_T("break"),        5 }, TOK_BREAK,       0 },
 	{ { QSE_T("continue"),     8 }, TOK_CONTINUE,    0 },
 	{ { QSE_T("delete"),       6 }, TOK_DELETE,      0 },
@@ -272,14 +275,14 @@ static kwent_t kwtab[] =
 	{ { QSE_T("global"),       6 }, TOK_GLOBAL,      QSE_AWK_EXPLICIT },
 	{ { QSE_T("if"),           2 }, TOK_IF,          0 },
 	{ { QSE_T("in"),           2 }, TOK_IN,          0 },
-	{ { QSE_T("include"),      7 }, TOK_INCLUDE,     QSE_AWK_INCLUDE },
+	{ { QSE_T("include"),      7 }, TOK_INCLUDE,     QSE_AWK_EXTRAKWS },
 	{ { QSE_T("local"),        5 }, TOK_LOCAL,       QSE_AWK_EXPLICIT },
 	{ { QSE_T("next"),         4 }, TOK_NEXT,        QSE_AWK_PABLOCK },
 	{ { QSE_T("nextfile"),     8 }, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
-	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
+	{ { QSE_T("nextofile"),    9 }, TOK_NEXTOFILE,   QSE_AWK_PABLOCK | QSE_AWK_EXTRAKWS },
 	{ { QSE_T("print"),        5 }, TOK_PRINT,       QSE_AWK_RIO },
 	{ { QSE_T("printf"),       6 }, TOK_PRINTF,      QSE_AWK_RIO },
-	{ { QSE_T("reset"),        5 }, TOK_RESET,       QSE_AWK_RESET },
+	{ { QSE_T("reset"),        5 }, TOK_RESET,       QSE_AWK_EXTRAKWS },
 	{ { QSE_T("return"),       6 }, TOK_RETURN,      0 },
 	{ { QSE_T("while"),        5 }, TOK_WHILE,       0 }
 };
@@ -319,7 +322,7 @@ static global_t gtab[] =
 	{ QSE_T("NR"),           2,  QSE_AWK_PABLOCK },
 
 	/* current output file name */
-	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_NEXTOFILE },
+	{ QSE_T("OFILENAME"),    9,  QSE_AWK_PABLOCK | QSE_AWK_EXTRAKWS },
 
 	/* output real-to-str conversion format for 'print' */
 	{ QSE_T("OFMT"),         4,  QSE_AWK_RIO }, 
@@ -385,12 +388,7 @@ static global_t gtab[] =
 	qse_awk_seterror (awk, QSE_AWK_ENOERR, QSE_NULL, QSE_NULL)
 
 #define SETERR_TOK(awk,code) \
-	do { \
-		qse_cstr_t __ea; \
-		__ea.len = QSE_STR_LEN((awk)->tok.name); \
-		__ea.ptr = QSE_STR_PTR((awk)->tok.name); \
-		qse_awk_seterror (awk, code, &__ea, &(awk)->tok.loc); \
-	} while (0)
+	qse_awk_seterror (awk, code, QSE_STR_CSTR((awk)->tok.name), &(awk)->tok.loc)
 
 #define SETERR_COD(awk,code) \
 	qse_awk_seterror (awk, code, QSE_NULL, QSE_NULL)
@@ -673,6 +671,46 @@ int qse_awk_parse (qse_awk_t* awk, qse_awk_sio_t* sio)
 	return n;
 }
 
+static int end_include (qse_awk_t* awk)
+{
+	int x;
+	qse_awk_sio_arg_t* cur;
+
+	if (awk->sio.inp == &awk->sio.arg) return 0; /* no include */
+
+	/* if it is an included file, close it and
+	 * retry to read a character from an outer file */
+
+	CLRERR (awk);
+	x = awk->sio.inf (
+		awk, QSE_AWK_SIO_CLOSE, 
+		awk->sio.inp, QSE_NULL, 0);
+
+	/* if closing has failed, still destroy the
+	 * sio structure first as normal and return
+	 * the failure below. this way, the caller 
+	 * does not call QSE_AWK_SIO_CLOSE on 
+	 * awk->sio.inp again. */
+
+	cur = awk->sio.inp;
+	awk->sio.inp = awk->sio.inp->next;
+
+	QSE_ASSERT (cur->name != QSE_NULL);
+	QSE_MMGR_FREE (awk->mmgr, cur);
+	awk->parse.depth.incl--;
+
+	if (x != 0)
+	{
+		/* the failure mentioned above is returned here */
+		if (ISNOERR(awk))
+			SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SIN>"), 5);
+		return -1;
+	}
+
+	awk->sio.last = awk->sio.inp->last;
+	return 1; /* ended the included file successfully */
+}
+
 static int begin_include (qse_awk_t* awk)
 {
 	qse_ssize_t op;
@@ -747,50 +785,21 @@ static int begin_include (qse_awk_t* awk)
 	awk->sio.inp->line = 1;
 	awk->sio.inp->colm = 1;
 
-	return 0;
-
-oops:
-	if (arg != QSE_NULL) QSE_MMGR_FREE (awk->mmgr, arg);
-	return -1;
-}
-
-static int end_include (qse_awk_t* awk)
-{
-	int x;
-	qse_awk_sio_arg_t* cur;
-
-	if (awk->sio.inp == &awk->sio.arg) return 0; /* no include */
-
-	/* if it is an included file, close it and
-	 * retry to read a character from an outer file */
-
-	CLRERR (awk);
-	x = awk->sio.inf (
-		awk, QSE_AWK_SIO_CLOSE, 
-		awk->sio.inp, QSE_NULL, 0);
-
-	/* if closing has failed, still destroy the
-	 * sio structure first as normal and return
-	 * the failure below. this way, the caller 
-	 * does not call QSE_AWK_SIO_CLOSE on 
-	 * awk->sio.inp again. */
-
-	cur = awk->sio.inp;
-	awk->sio.inp = awk->sio.inp->next;
-
-	QSE_ASSERT (cur->name != QSE_NULL);
-	QSE_MMGR_FREE (awk->mmgr, cur);
-	awk->parse.depth.incl--;
-
-	if (x != 0)
+	/* read in the first character in the included file. 
+	 * so the next call to get_token() sees the character read
+	 * from this file. */
+	if (get_char (awk) <= -1) 
 	{
-		/* the failure mentioned above is returned here */
-		if (ISNOERR(awk))
-			SETERR_ARG (awk, QSE_AWK_ECLOSE, QSE_T("<SIN>"), 5);
+		end_include (awk); 
+		/* since i've called end_include(), i don't go to oops */
 		return -1;
 	}
 
-	return 1; /* ended the included file successfully */
+	return 0;
+
+oops:
+	if (arg) QSE_MMGR_FREE (awk->mmgr, arg);
+	return -1;
 }
 
 static qse_awk_t* parse_progunit (qse_awk_t* awk)
@@ -849,9 +858,10 @@ retry:
 			}
 
 			if (begin_include (awk) <= -1) return QSE_NULL;
-			
-			/* read the first meaningful token from the included file 
-			 * and recheck it by jumping to retry: */
+
+			/* i'm retrying to get the first top-level
+			 * element as if parse_progunit() is called. 
+			 * so i need to skip NEWLINE tokens */
 			do
 			{
 				if (get_token(awk) <= -1) return QSE_NULL; 
@@ -898,6 +908,10 @@ retry:
 
 		awk->parse.id.block = PARSE_BEGIN_BLOCK;
 		if (parse_begin (awk) == QSE_NULL) return QSE_NULL;
+
+		/* skip a semicolon after an action block if any */
+		if (MATCH(awk,TOK_SEMICOLON) && 
+		    get_token (awk) <= -1) return QSE_NULL;
 	}
 	else if (MATCH(awk,TOK_END)) 
 	{
@@ -926,6 +940,10 @@ retry:
 
 		awk->parse.id.block = PARSE_END_BLOCK;
 		if (parse_end (awk) == QSE_NULL) return QSE_NULL;
+
+		/* skip a semicolon after an action block if any */
+		if (MATCH(awk,TOK_SEMICOLON) && 
+		    get_token (awk) <= -1) return QSE_NULL;
 	}
 	else if (MATCH(awk,TOK_LBRACE))
 	{
@@ -3629,8 +3647,7 @@ oops:
 	return QSE_NULL;
 }
 
-static qse_awk_nde_t* parse_logical_or (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_logical_or (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3641,8 +3658,7 @@ static qse_awk_nde_t* parse_logical_or (
 	return parse_binary (awk, xloc, 1, map, parse_logical_and);
 }
 
-static qse_awk_nde_t* parse_logical_and (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_logical_and (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3653,8 +3669,7 @@ static qse_awk_nde_t* parse_logical_and (
 	return parse_binary (awk, xloc, 1, map, parse_in);
 }
 
-static qse_awk_nde_t* parse_in (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_in (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	/* 
 	static binmap_t map[] =
@@ -3708,21 +3723,19 @@ oops:
 	return QSE_NULL;
 }
 
-static qse_awk_nde_t* parse_regex_match (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_regex_match (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] =
 	{
-		{ TOK_TILDE, QSE_AWK_BINOP_MA },
-		{ TOK_NM,    QSE_AWK_BINOP_NM },
-		{ TOK_EOF,   0 },
+		{ TOK_MA,  QSE_AWK_BINOP_MA },
+		{ TOK_NM,  QSE_AWK_BINOP_NM },
+		{ TOK_EOF, 0 },
 	};
 
 	return parse_binary (awk, xloc, 0, map, parse_bitwise_or);
 }
 
-static qse_awk_nde_t* parse_bitwise_or (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_bitwise_or (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3733,8 +3746,7 @@ static qse_awk_nde_t* parse_bitwise_or (
 	return parse_binary (awk, xloc, 0, map, parse_bitwise_xor);
 }
 
-static qse_awk_nde_t* parse_bitwise_xor (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_bitwise_xor (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3745,8 +3757,7 @@ static qse_awk_nde_t* parse_bitwise_xor (
 	return parse_binary (awk, xloc, 0, map, parse_bitwise_and);
 }
 
-static qse_awk_nde_t* parse_bitwise_and (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_bitwise_and (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3757,11 +3768,12 @@ static qse_awk_nde_t* parse_bitwise_and (
 	return parse_binary (awk, xloc, 0, map, parse_equality);
 }
 
-static qse_awk_nde_t* parse_equality (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_equality (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
+		{ TOK_TEQ, QSE_AWK_BINOP_TEQ },
+		{ TOK_TNE, QSE_AWK_BINOP_TNE },
 		{ TOK_EQ, QSE_AWK_BINOP_EQ },
 		{ TOK_NE, QSE_AWK_BINOP_NE },
 		{ TOK_EOF, 0 }
@@ -3770,8 +3782,7 @@ static qse_awk_nde_t* parse_equality (
 	return parse_binary (awk, xloc, 0, map, parse_relational);
 }
 
-static qse_awk_nde_t* parse_relational (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_relational (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3782,12 +3793,10 @@ static qse_awk_nde_t* parse_relational (
 		{ TOK_EOF, 0 }
 	};
 
-	return parse_binary (awk, xloc, 0, map, 
-		((awk->opt.trait & QSE_AWK_EXTRAOPS)? parse_shift: parse_concat));
+	return parse_binary (awk, xloc, 0, map, parse_shift);
 }
 
-static qse_awk_nde_t* parse_shift (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_shift (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3799,8 +3808,7 @@ static qse_awk_nde_t* parse_shift (
 	return parse_binary (awk, xloc, 0, map, parse_concat);
 }
 
-static qse_awk_nde_t* parse_concat (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* left = QSE_NULL; 
 	qse_awk_nde_t* right = QSE_NULL;
@@ -3853,8 +3861,7 @@ oops:
 	return QSE_NULL;
 }
 
-static qse_awk_nde_t* parse_additive (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_additive (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3866,8 +3873,7 @@ static qse_awk_nde_t* parse_additive (
 	return parse_binary (awk, xloc, 0, map, parse_multiplicative);
 }
 
-static qse_awk_nde_t* parse_multiplicative (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_multiplicative (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -3882,8 +3888,7 @@ static qse_awk_nde_t* parse_multiplicative (
 	return parse_binary (awk, xloc, 0, map, parse_unary);
 }
 
-static qse_awk_nde_t* parse_unary (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* left;
 	qse_awk_loc_t uloc;
@@ -3894,8 +3899,7 @@ static qse_awk_nde_t* parse_unary (
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         ((awk->opt.trait & QSE_AWK_EXTRAOPS) && MATCH(awk,TOK_TILDE))? 
-	                                   QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
 
 	/*if (opcode <= -1) return parse_increment (awk);*/
 	if (opcode <= -1) return parse_exponent (awk, xloc);
@@ -4023,8 +4027,7 @@ static qse_awk_nde_t* parse_unary (
 	}
 }
 
-static qse_awk_nde_t* parse_exponent (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_exponent (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	static binmap_t map[] = 
 	{
@@ -4035,8 +4038,7 @@ static qse_awk_nde_t* parse_exponent (
 	return parse_binary (awk, xloc, 0, map, parse_unary_exp);
 }
 
-static qse_awk_nde_t* parse_unary_exp (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_exp_t* nde; 
 	qse_awk_nde_t* left;
@@ -4046,8 +4048,7 @@ static qse_awk_nde_t* parse_unary_exp (
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         ((awk->opt.trait & QSE_AWK_EXTRAOPS) && MATCH(awk,TOK_TILDE))? 
-	                                   QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
 
 	if (opcode <= -1) return parse_increment (awk, xloc);
 
@@ -4085,8 +4086,7 @@ static qse_awk_nde_t* parse_unary_exp (
 	return (qse_awk_nde_t*)nde;
 }
 
-static qse_awk_nde_t* parse_increment (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_increment (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_exp_t* nde;
 	qse_awk_nde_t* left;
@@ -5805,16 +5805,18 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 
 	static struct ops_t ops[] = 
 	{
+		{ QSE_T("==="), 3, TOK_TEQ,          0 },
 		{ QSE_T("=="),  2, TOK_EQ,           0 },
 		{ QSE_T("="),   1, TOK_ASSN,         0 },
+		{ QSE_T("!=="), 3, TOK_TNE,          0 },
 		{ QSE_T("!="),  2, TOK_NE,           0 },
 		{ QSE_T("!~"),  2, TOK_NM,           0 },
 		{ QSE_T("!"),   1, TOK_LNOT,         0 },
-		{ QSE_T(">>="), 3, TOK_RS_ASSN,      QSE_AWK_EXTRAOPS },
+		{ QSE_T(">>="), 3, TOK_RS_ASSN,      0 },
 		{ QSE_T(">>"),  2, TOK_RS,           0 },
 		{ QSE_T(">="),  2, TOK_GE,           0 },
 		{ QSE_T(">"),   1, TOK_GT,           0 },
-		{ QSE_T("<<="), 3, TOK_LS_ASSN,      QSE_AWK_EXTRAOPS },
+		{ QSE_T("<<="), 3, TOK_LS_ASSN,      0 },
 		{ QSE_T("<<"),  2, TOK_LS,           0 },
 		{ QSE_T("<="),  2, TOK_LE,           0 },
 		{ QSE_T("<"),   1, TOK_LT,           0 },
@@ -5824,8 +5826,8 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("&&"),  2, TOK_LAND,         0 },
 		{ QSE_T("&="),  2, TOK_BAND_ASSN,    0 },
 		{ QSE_T("&"),   1, TOK_BAND,         0 },
-		{ QSE_T("^^="), 3, TOK_BXOR_ASSN,    QSE_AWK_EXTRAOPS },
-		{ QSE_T("^^"),  2, TOK_BXOR,         QSE_AWK_EXTRAOPS },
+		{ QSE_T("^^="), 3, TOK_BXOR_ASSN,    0 },
+		{ QSE_T("^^"),  2, TOK_BXOR,         0 },
 		{ QSE_T("^="),  2, TOK_EXP_ASSN,     0 },
 		{ QSE_T("^"),   1, TOK_EXP,          0 },
 		{ QSE_T("++"),  2, TOK_PLUSPLUS,     0 },
@@ -5834,19 +5836,20 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("--"),  2, TOK_MINUSMINUS,   0 },
 		{ QSE_T("-="),  2, TOK_MINUS_ASSN,   0 },
 		{ QSE_T("-"),   1, TOK_MINUS,        0 },
-		{ QSE_T("**="), 3, TOK_EXP_ASSN,     QSE_AWK_EXTRAOPS },
-		{ QSE_T("**"),  2, TOK_EXP,          QSE_AWK_EXTRAOPS },
+		{ QSE_T("**="), 3, TOK_EXP_ASSN,     0 },
+		{ QSE_T("**"),  2, TOK_EXP,          0 },
 		{ QSE_T("*="),  2, TOK_MUL_ASSN,     0 },
 		{ QSE_T("*"),   1, TOK_MUL,          0 },
 		{ QSE_T("/="),  2, TOK_DIV_ASSN,     0 },
 		{ QSE_T("/"),   1, TOK_DIV,          0 },
-		{ QSE_T("\\="), 2, TOK_IDIV_ASSN,    QSE_AWK_EXTRAOPS },
-		{ QSE_T("\\"),  1, TOK_IDIV,         QSE_AWK_EXTRAOPS },
-		{ QSE_T("%%="), 3, TOK_CONCAT_ASSN,  QSE_AWK_EXPLICIT },
-		{ QSE_T("%%"),  2, TOK_CONCAT,       QSE_AWK_EXPLICIT },
+		{ QSE_T("\\="), 2, TOK_IDIV_ASSN,    0 },
+		{ QSE_T("\\"),  1, TOK_IDIV,         0 },
+		{ QSE_T("%%="), 3, TOK_CONCAT_ASSN,  0 },
+		{ QSE_T("%%"),  2, TOK_CONCAT,       0 },
 		{ QSE_T("%="),  2, TOK_MOD_ASSN,     0 },
 		{ QSE_T("%"),   1, TOK_MOD,          0 },
-		{ QSE_T("~"),   1, TOK_TILDE,        0 },
+		{ QSE_T("~~"),  2, TOK_BNOT,         0 },
+		{ QSE_T("~"),   1, TOK_MA,           0 },
 		{ QSE_T("("),   1, TOK_LPAREN,       0 },
 		{ QSE_T(")"),   1, TOK_RPAREN,       0 },
 		{ QSE_T("{"),   1, TOK_LBRACE,       0 },
@@ -5898,6 +5901,7 @@ static int get_token_into (qse_awk_t* awk, qse_awk_tok_t* tok)
 {
 	qse_cint_t c;
 	int n;
+	int skip_semicolon_after_include = 0;
 
 retry:
 	do 
@@ -5920,7 +5924,9 @@ retry:
 		if (n <= -1) return -1;
 		if (n >= 1) 
 		{
-			awk->sio.last = awk->sio.inp->last;
+			/*awk->sio.last = awk->sio.inp->last;*/
+			/* mark that i'm retrying after end of an included file */
+			skip_semicolon_after_include = 1; 
 			goto retry;
 		}
 
@@ -5977,50 +5983,6 @@ retry:
 			QSE_STR_PTR(tok->name), 
 			QSE_STR_LEN(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);
-
-#if 0
-		if (type == TOK_IDENT)
-		{
-			qse_awk_sio_lxc_t lc;
-
-			while (c == QSE_T(':'));
-			{
-				lc = awk->sio.last;
-				GET_CHAR_TO (awk, c);
-				if (c == QSE_T(':'))
-				{
-					GET_CHAR_TO (awk, c);
-					if (c == QSE_T('_') || QSE_AWK_ISALPHA (awk, c))
-					{
-						do 
-						{
-							ADD_TOKEN_CHAR (awk, tok, c);
-							GET_CHAR_TO (awk, c);
-						} 
-						while (c == QSE_T('_') || 
-						       QSE_AWK_ISALPHA (awk, c) ||
-						       QSE_AWK_ISDIGIT (awk, c));
-
-						/* this set_token_type may get executed 
-						 * more than necessary if there are many
-						 * segments. but never mind */
-						SET_TOKEN_TYPE (awk, tok, TOK_SEGIDENT); 
-					}
-					else
-					{
-						/* TODO: return an error for the 
-						 *       incomplete segmented identifier */
-					}
-				}
-				else
-				{
-					unget_char (awk, &awk->sio.last);
-					awk->sio.last = lc;
-					break;
-				}
-			}
-		}
-#endif
 	}
 	else if (c == QSE_T('\"')) 
 	{
@@ -6044,11 +6006,26 @@ retry:
 			else
 			{
 				qse_char_t cc = (qse_char_t)c;
-				SETERR_ARG_LOC (
-					awk, QSE_AWK_ELXCHR, &cc, 1, &tok->loc);
+				SETERR_ARG_LOC (awk, QSE_AWK_ELXCHR, &cc, 1, &tok->loc);
 			}
 			return -1;
 		}
+
+		if (skip_semicolon_after_include && (tok->type == TOK_SEMICOLON || tok->type == TOK_NEWLINE))
+		{
+			/* this handles the optional semicolon after the 
+			 * included file named as in @include "file-name"; */
+			skip_semicolon_after_include = 0;
+			goto retry;
+		}
+	}
+
+	if (skip_semicolon_after_include && !(awk->opt.trait & QSE_AWK_NEWLINE))
+	{
+		/* semiclon has not been skipped yet and the 
+		 * newline option is not set. */
+		qse_awk_seterror (awk, QSE_AWK_ESCOLON, QSE_STR_CSTR(tok->name), &tok->loc);
+		return -1;
 	}
 
 	return 0;

@@ -106,7 +106,7 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 
 	list->map.tab[node->id] = QSE_NULL;
 
-	uci_free_context (node->ctx);
+	if (node->ctx) uci_free_context (node->ctx);
 
 	if (list->map.high == node->id + 1)
 	{
@@ -118,6 +118,7 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 	else
 	{
 		/* otherwise, chain the node to the free list */
+		node->ctx = QSE_NULL;
 		node->next = list->free;
 		list->free = node;
 	}
@@ -135,7 +136,7 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 		{
 			curnode = list->free;
 			list->free = list->free->next;
-			uci_free_context (curnode->ctx);
+			QSE_ASSERT (curnode->ctx == QSE_NULL);
 			QSE_MMGR_FREE (mmgr, curnode);
 		}
 

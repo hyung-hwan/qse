@@ -3,7 +3,8 @@
 @section awk_content CONTENTS
 - @ref awk_intro "INTRODUCTION"
 - @ref awk_lang "AWK LANGUAGE"
-- @ref awk_ext "AWK LANGUAGE EXTENSIONS"
+ - @ref awk_litvar        "LITERAL AND VARIABLE"
+ - @ref awk_ext_teq       "TEQ OPERATOR"
  - @ref awk_ext_vardecl   "VARIABLE DECLARATION"
  - @ref awk_ext_include   "INCLUDE"
  - @ref awk_ext_print     "EXTENDED PRINT/PRINTF"
@@ -255,9 +256,74 @@ AWK has the following statement constructs.
 - printf
 - expression
 
-@section awk_ext AWK LANGUAGE EXTENSIONS
-Some language extensions are implemented and those can be enabled by setting 
-the corresponding options.
+@subsection awk_litvar LITERAL AND VARIABLE
+
+Value type
+- Scalar
+-- String
+-- Integer
+-- Floating-Pointer number
+- Hashed Map
+- Regular expression
+
+Scalar values are immutable while a hashed map value is mutable.
+A regular expression value is specially treated.
+
+A variable is tied to a value when it is assigned with a value.
+If the variable is tied to a map value, it can't be assigned again.
+You can use 'reset' to untie the variable from the value, and thus
+restore the variable to the 'nil' state.
+
+....
+
+@subsection awk_ext_teq TEQ OPERATOR
+
+The === operator compares two values and evaluates to a non-zero value 
+if both have the same internal type and the actual values are the same.
+so 1 is not equal to 1.0 for the === operator.
+
+A map comparison for the === operator is a bit special. The contents of
+the map is never inspected. Comparing two maps always result in inequality.
+
+However, if two variables points to the same map value, it can evaluate
+to a non-zero value. This is possible if you allow assigning a map to 
+another non-map variable with #QSE_AWK_MAPTOVAR. In this case, a map
+is not deep-copied but the reference to it is copied.
+
+@code
+BEGIN { 
+	a[10]=20; 
+	b=a; 
+	b[20]=40;
+	for (i in a) print i, a[i];  
+	print a===b;
+}
+@endcode
+
+
+The === operator may be also useful when you want to indicate an error
+with an uninitialized variable. The following code check if the function
+returned a map. Since the variable 'nil' has never been assigned, its 
+internal type is 'NIL' and 
+
+@code
+function a ()
+{
+	x[10] = 2;
+	return x;
+}
+
+BEGIN {
+	t = a();
+	if (t === nil)
+		print "nil";
+	else
+		print "ok";
+}
+@endcode.
+
+The !== operator is a negated form of the === operator.
+
 
 @subsection awk_ext_vardecl VARIABLE DECLARATION
 
@@ -302,6 +368,16 @@ blocks appear. To use \@include, you must turn on #QSE_AWK_INCLUDE.
 @include "abc.awk"
 BEGIN { func_in_abc (); }
 @endcode
+
+A semicolon is optional after the included file name. The following is the 
+same as the sample above.
+@code
+@include "abc.awk";
+BEGIN { func_in_abc(); }
+@endcode
+
+If #QSE_AWK_NEWLINE is off, the semicolon is required.
+
 
 @subsection awk_ext_print EXTENDED PRINT/PRINTF
 When #QSE_AWK_TOLERANT is on, print and printf are treated as if

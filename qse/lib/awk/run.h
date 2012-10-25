@@ -24,7 +24,12 @@
 enum qse_awk_assop_type_t
 {
 	/* if you change this, you have to change assop_str in tree.c.
-	 * synchronize it with binop_func of eval_assignment in run.c */
+	 * synchronize it wit: 
+	 *   - binop_func in eval_assignment of run.c 
+	 *   - assop in assing_to_opcode of parse.c
+	 *   - TOK_XXX_ASSN in tok_t in parse.c
+	 *   - assop_str in tree.c
+	 */
 	QSE_AWK_ASSOP_NONE, 
 	QSE_AWK_ASSOP_PLUS,   /* += */
 	QSE_AWK_ASSOP_MINUS,  /* -= */
@@ -37,7 +42,7 @@ enum qse_awk_assop_type_t
 	QSE_AWK_ASSOP_RS,     /* >>= */
 	QSE_AWK_ASSOP_LS,     /* <<= */
 	QSE_AWK_ASSOP_BAND,   /* &= */
-	QSE_AWK_ASSOP_BXOR,   /* ^= */
+	QSE_AWK_ASSOP_BXOR,   /* ^^= */
 	QSE_AWK_ASSOP_BOR     /* |= */
 };
 
@@ -53,6 +58,8 @@ enum  qse_awk_binop_type_t
 	QSE_AWK_BINOP_BXOR,
 	QSE_AWK_BINOP_BAND,
 
+	QSE_AWK_BINOP_TEQ,
+	QSE_AWK_BINOP_TNE,
 	QSE_AWK_BINOP_EQ,
 	QSE_AWK_BINOP_NE,
 	QSE_AWK_BINOP_GT,

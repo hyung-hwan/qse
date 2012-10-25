@@ -161,6 +161,11 @@ static qse_awk_val_t* eval_binop_bxor (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 static qse_awk_val_t* eval_binop_band (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
+
+static qse_awk_val_t* eval_binop_teq (
+	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
+static qse_awk_val_t* eval_binop_tne (
+	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 static qse_awk_val_t* eval_binop_eq (
 	qse_awk_rtx_t* run, qse_awk_val_t* left, qse_awk_val_t* right);
 static qse_awk_val_t* eval_binop_ne (
@@ -309,12 +314,12 @@ static int set_global (
 		/* once a variable becomes a map,
 		 * it cannot be changed to a scalar variable */
 
-		if (var != QSE_NULL)
+		if (var)
 		{
 			/* global variable */
 			SETERR_ARGX_LOC (
 				rtx,
-				QSE_AWK_EMAPTOSCALAR, 
+				QSE_AWK_EMAPNA, 
 				xstr_to_cstr(&var->id.name),
 				&var->loc
 			);
@@ -324,7 +329,7 @@ static int set_global (
 			/* qse_awk_rtx_setgbl has been called */
 			qse_cstr_t ea;
 			ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
-			SETERR_ARGX (rtx, QSE_AWK_EMAPTOSCALAR, &ea);
+			SETERR_ARGX (rtx, QSE_AWK_EMAPNA, &ea);
 		}
 
 		return -1;
@@ -656,7 +661,7 @@ int qse_awk_rtx_setofilename (
 	qse_awk_val_t* tmp;
 	int n;
 
-	if (rtx->awk->opt.trait & QSE_AWK_NEXTOFILE)
+	if (rtx->awk->opt.trait & QSE_AWK_EXTRAKWS)
 	{
 		if (len == 0) tmp = qse_awk_val_zls;
 		else
@@ -2319,8 +2324,7 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 				/* cannot return a map */
 				qse_awk_rtx_refupval (run, val);
 				qse_awk_rtx_refdownval (run, val);
-
-				SETERR_LOC (run, QSE_AWK_EMAPNA, &nde->loc);
+				SETERR_LOC (run, QSE_AWK_EMAPPH, &nde->loc);
 				return -1;
 			}
 		}
@@ -2590,7 +2594,7 @@ static int run_delete_named (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 	return 0;
 }
 
-static int run_delete_nonnamed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
+static int run_delete_unnamed (qse_awk_rtx_t* rtx, qse_awk_nde_var_t* var)
 {
 	qse_awk_val_t* val;
 
@@ -2693,7 +2697,7 @@ static int run_delete (qse_awk_rtx_t* rtx, qse_awk_nde_delete_t* nde)
 		case QSE_AWK_NDE_GBLIDX:
 		case QSE_AWK_NDE_LCLIDX:
 		case QSE_AWK_NDE_ARGIDX:
-			return run_delete_nonnamed (rtx, var);
+			return run_delete_unnamed (rtx, var);
 
 		default:
 			QSE_ASSERTX (
@@ -3321,6 +3325,7 @@ static qse_awk_val_t* eval_assignment (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		qse_awk_val_t* val2, * tmp;
 		static binop_func_t binop_func[] =
 		{
+			/* this table must match qse_awk_assop_type_t in run.h */
 			QSE_NULL, /* QSE_AWK_ASSOP_NONE */
 			eval_binop_plus,
 			eval_binop_minus,
@@ -3455,13 +3460,12 @@ static qse_awk_val_t* do_assignment_scalar (
 
 			pair = qse_htb_search (
 				run->named, var->id.name.ptr, var->id.name.len);
-			if (pair != QSE_NULL && 
-			    ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
+			if (pair && ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
 			{
 				/* once a variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPTOSCALAR,
+					run, QSE_AWK_EMAPNA,
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
@@ -3495,7 +3499,7 @@ static qse_awk_val_t* do_assignment_scalar (
 				/* once the variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPTOSCALAR, 
+					run, QSE_AWK_EMAPNA, 
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
@@ -3514,7 +3518,7 @@ static qse_awk_val_t* do_assignment_scalar (
 				/* once the variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPTOSCALAR, 
+					run, QSE_AWK_EMAPNA, 
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
@@ -3718,6 +3722,8 @@ static qse_awk_val_t* eval_binary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		eval_binop_bxor,
 		eval_binop_band,
 
+		eval_binop_teq,
+		eval_binop_tne,
 		eval_binop_eq,
 		eval_binop_ne,
 		eval_binop_gt,
@@ -4338,28 +4344,67 @@ static int __cmp_val (
 	return func[left->type*4+right->type] (rtx, left, right);
 }
 
-static qse_awk_val_t* eval_binop_eq (
-	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+static int teq_val (qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
 	int n;
 
-	if (left == right) 
+	if (left == right) n = 1;
+	else if (left->type != right->type) n = 0;
+	else
 	{
-		/* array comparison is not allowed but this special check
-		   allows comparsion of an array with itself. let's not
-		   care about this loophole. */
-		return qse_awk_val_one;
+		switch (left->type)
+		{
+			case QSE_AWK_VAL_NIL:
+				n = 1; 
+				break;
+
+			case QSE_AWK_VAL_INT:
+				n = ((qse_awk_val_int_t*)left)->val == 
+				    ((qse_awk_val_int_t*)right)->val;
+				break;
+
+			case QSE_AWK_VAL_FLT:
+				n = ((qse_awk_val_flt_t*)left)->val == 
+				    ((qse_awk_val_flt_t*)right)->val;
+				break;
+
+			case QSE_AWK_VAL_STR:
+				n = qse_strxncmp (
+					((qse_awk_val_str_t*)left)->val.ptr,
+					((qse_awk_val_str_t*)left)->val.len,
+					((qse_awk_val_str_t*)right)->val.ptr,
+					((qse_awk_val_str_t*)right)->val.len) == 0;
+				break;
+
+			default:
+				/* map-x and map-y are always different regardless of
+				 * their contents. however, if they are pointing to the
+				 * same map value, it won't reach here but will be 
+				 * handled by the first check in this function */
+				n = 0;
+				break;
+		}
 	}
 
-/*
-	if (left->type != right->type &&
-	    (left->type == QSE_AWK_VAL_MAP || right->type == QSE_AWK_VAL_MAP))
-	{
-		return qse_awk_val_zero;
-	}
-*/
+	return n;
+}
 
-	n = __cmp_val (rtx, left, right);
+static qse_awk_val_t* eval_binop_teq (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+{
+	return teq_val (rtx, left, right)? qse_awk_val_one: qse_awk_val_zero;
+}
+
+static qse_awk_val_t* eval_binop_tne (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+{
+	return teq_val (rtx, left, right)? qse_awk_val_zero: qse_awk_val_one;
+}
+
+static qse_awk_val_t* eval_binop_eq (
+	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
+{
+	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n == 0)? qse_awk_val_one: qse_awk_val_zero;
 }
@@ -4367,25 +4412,7 @@ static qse_awk_val_t* eval_binop_eq (
 static qse_awk_val_t* eval_binop_ne (
 	qse_awk_rtx_t* rtx, qse_awk_val_t* left, qse_awk_val_t* right)
 {
-	int n;
-
-	if (left == right)
-	{
-		/* array comparison is not allowed but this special check
-		   allows comparsion of an array with itself. let's not
-		   care about this loophole. */
-		return qse_awk_val_zero;
-	}
-
-/*
-	if (left->type != right->type &&
-	    (left->type == QSE_AWK_VAL_MAP || right->type == QSE_AWK_VAL_MAP))
-	{
-		return qse_awk_val_one;
-	}
-*/
-
-	n = __cmp_val (rtx, left, right);
+	int n = __cmp_val (rtx, left, right);
 	if (n == CMP_ERROR) return QSE_NULL;
 	return (n != 0)? qse_awk_val_one: qse_awk_val_zero;
 }

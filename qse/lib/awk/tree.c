@@ -23,6 +23,7 @@
 
 static const qse_char_t* assop_str[] =
 {
+	/* this table must match qse_awk_assop_type_t in run.h */
 	QSE_T("="),
 	QSE_T("+="),
 	QSE_T("-="),
@@ -30,11 +31,12 @@ static const qse_char_t* assop_str[] =
 	QSE_T("/="),
 	QSE_T("\\="),
 	QSE_T("%="),
-	QSE_T("**="),
+	QSE_T("**="), /* exponentation, also ^= */
+	QSE_T("%%="),
 	QSE_T(">>="),
 	QSE_T("<<="),
 	QSE_T("&="),
-	QSE_T("^="),
+	QSE_T("^^="),
 	QSE_T("|=")
 };
 
@@ -45,9 +47,11 @@ static const qse_char_t* binop_str[][2] =
 	{ QSE_T("in"), QSE_T("in") },
 
 	{ QSE_T("|"),  QSE_T("|") },
-	{ QSE_T("^"),  QSE_T("^") },
+	{ QSE_T("^^"), QSE_T("^^") },
 	{ QSE_T("&"),  QSE_T("&") },
 
+	{ QSE_T("==="), QSE_T("===") },
+	{ QSE_T("!=="), QSE_T("!==") },
 	{ QSE_T("=="), QSE_T("==") },
 	{ QSE_T("!="), QSE_T("!=") },
 	{ QSE_T(">"),  QSE_T(">") },
@@ -64,9 +68,9 @@ static const qse_char_t* binop_str[][2] =
 	{ QSE_T("/"),  QSE_T("/") },
 	{ QSE_T("\\"), QSE_T("\\") },
 	{ QSE_T("%"),  QSE_T("%") },
-	{ QSE_T("**"), QSE_T("**") },
+	{ QSE_T("**"), QSE_T("**") }, /* exponentation, also ^ */
 
-	{ QSE_T(" "),  QSE_T(".") },
+	{ QSE_T(" "),  QSE_T("%%") }, /* take note of this entry */
 	{ QSE_T("~"),  QSE_T("~") },
 	{ QSE_T("!~"), QSE_T("!~") }
 };
@@ -76,7 +80,7 @@ static const qse_char_t* unrop_str[] =
 	QSE_T("+"),
 	QSE_T("-"),
 	QSE_T("!"),
-	QSE_T("~")
+	QSE_T("~~")
 };
 
 static const qse_char_t* incop_str[] =
