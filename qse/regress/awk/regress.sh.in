@@ -174,11 +174,11 @@ PROGS="
 	lang-045.awk!!!--newline=on -d-
 	lang-046.awk!lang-046.dat2!!--newline=on -d- -vdatadir=@abs_srcdir@ -vdatafile=lang-046.dat1
 	lang-047.awk!!!--newline=on --tolerant=on -d-
-	lang-048.awk!!!--newline=on --extraops=on -d-
+	lang-048.awk!!!--newline=on -d-
 	lang-049.awk!!!--newline=on -d-
 
 	columnate.awk!passwd.dat!!--newline=on -F:
-	levenshtein-utests.awk!!!--newline=on --include=on
+	levenshtein-utests.awk!!!--newline=on --extrakws=on
 	rcalc.awk!!!--newline=on -v target=89000
 	quicksort.awk!quicksort.dat!!
 	quicksort2.awk!quicksort2.dat!!-vQSEAWK=\"${QSEAWK}\" -vSCRIPT_PATH=\"${SCRIPT_DIR}\"

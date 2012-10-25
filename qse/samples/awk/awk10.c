@@ -59,8 +59,6 @@ int main ()
 	opt &= ~QSE_AWK_PABLOCK;
 	/* can assign a map to a variable */
 	opt |= QSE_AWK_MAPTOVAR;
-	/* enable ** */
-	opt |= QSE_AWK_EXTRAOPS;
 	qse_awk_setopt (awk, QSE_AWK_TRAIT, &opt);
 
 	psin.type = QSE_AWK_PARSESTD_STR;

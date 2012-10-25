@@ -139,7 +139,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	awk.setTrait (
 		awk.getTrait() | 
 		QSE_AWK_MAPTOVAR |
-		QSE_AWK_RESET);
+		QSE_AWK_EXTRAKWS);
 
 	if (ret >= 0) ret = run_awk (awk);
 	if (ret <= -1) 

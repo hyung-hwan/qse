@@ -460,6 +460,7 @@ struct qse_awk_sio_lxc_t
 };
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
+typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 struct qse_awk_sio_arg_t 
 {
 	const qse_char_t* name;   /**< [IN] name of I/O object */
@@ -477,9 +478,8 @@ struct qse_awk_sio_arg_t
 	qse_size_t colm;
 
 	qse_awk_sio_lxc_t last;
-	struct qse_awk_sio_arg_t* next;
+	qse_awk_sio_arg_t* next;
 };
-typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 
 /**
  * The qse_awk_sio_impl_t type defines a source IO function
@@ -892,23 +892,18 @@ enum qse_awk_trait_t
 	/**
 	 * allows undeclared variables and implicit concatenation 
 	 **/
-	QSE_AWK_IMPLICIT    = (1 << 0),
+	QSE_AWK_IMPLICIT = (1 << 0),
 
 	/** 
 	 * allows explicit variable declaration, the concatenation
 	 * operator, a period, and performs the parse-time function check. 
 	 */
-	QSE_AWK_EXPLICIT    = (1 << 1), 
+	QSE_AWK_EXPLICIT = (1 << 1), 
 
-	/** 
-	 * supports extra operators:
-	 * - @b <<, <<= left-shift
-	 * - @b >>, >>= right-shiftt
-	 * - @b ^^, ^^= xor
-	 * - @b ~  bitwise-not
-	 * - @b // idiv (get quotient)
+	/**
+	 * enable abort,reset,nextofile,OFILENAME,@include.
 	 */
-	QSE_AWK_EXTRAOPS = (1 << 2), 
+	QSE_AWK_EXTRAKWS = (1 << 2),
 
 	/** supports @b getline and @b print */
 	QSE_AWK_RIO = (1 << 3), 
@@ -950,12 +945,6 @@ enum qse_awk_trait_t
 	 * strips off leading spaces when converting a string to a number.
 	 */
 	QSE_AWK_STRIPSTRSPC = (1 << 7),
-
-	/** enables @b nextofile */
-	QSE_AWK_NEXTOFILE = (1 << 8),
-
-	/** enables @b reset */
-	QSE_AWK_RESET = (1 << 9),
 
 	/** CR + LF by default */
 	QSE_AWK_CRLF = (1 << 10),
@@ -1004,9 +993,6 @@ enum qse_awk_trait_t
 	 * - e.g.) a = (1, 3 * 3, 4, 5 + 1);  # a is assigned 6.
 	 */
 	QSE_AWK_TOLERANT = (1 << 17),
-
-	/** enables @b abort */
-	QSE_AWK_ABORT = (1 << 18),
 
 	/** 
 	 * makes #qse_awk_t to behave compatibly with classical AWK
@@ -1112,18 +1098,18 @@ enum qse_awk_errnum_t
 	QSE_AWK_EARGTF,        /**< too few arguments */
 	QSE_AWK_EARGTM,        /**< too many arguments */
 	QSE_AWK_EFUNNF,        /**< function '${0}' not found */
-	QSE_AWK_ENOTIDX,       /**< variable not indexable */
-	QSE_AWK_ENOTDEL,       /**< variable '${0}' not deletable */
+	QSE_AWK_ENOTIDX,       /**< not indexable */
+	QSE_AWK_ENOTDEL,       /**< '${0}' not deletable */
 	QSE_AWK_ENOTMAP,       /**< value not a map */
 	QSE_AWK_ENOTMAPIN,     /**< right-hand side of 'in' not a map */
 	QSE_AWK_ENOTMAPNILIN,  /**< right-hand side of 'in' not a map nor nil */
 	QSE_AWK_ENOTREF,       /**< value not referenceable */
 	QSE_AWK_ENOTASS,       /**< value not assignable */
-	QSE_AWK_EIDXVALASSMAP, /**< an indexed value cannot be assigned a map */
-	QSE_AWK_EPOSVALASSMAP, /**< a positional cannot be assigned a map */
-	QSE_AWK_EMAPTOSCALAR,  /**< map '${0}' not assignable with a scalar */
+	QSE_AWK_EIDXVALASSMAP, /**< indexed value cannot be assigned a map */
+	QSE_AWK_EPOSVALASSMAP, /**< positional cannot be assigned a map */
+	QSE_AWK_EMAPNA,        /**< map '${0}' not assignable */
+	QSE_AWK_EMAPPH,        /**< map prohibited */
 	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
-	QSE_AWK_EMAPNA,        /**< map not allowed */
 	QSE_AWK_EVALTYPE,      /**< invalid value type */
 	QSE_AWK_ERNEXTBEG,     /**< 'next' called from BEGIN block */
 	QSE_AWK_ERNEXTEND,     /**< 'next' called from END block */
