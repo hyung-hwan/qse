@@ -158,7 +158,7 @@ struct binmap_t
 	int binop;
 };
 
-static qse_awk_t* parse_progunit (qse_awk_t* awk);
+static int parse_progunit (qse_awk_t* awk);
 static qse_awk_t* collect_globals (qse_awk_t* awk);
 static void adjust_static_globals (qse_awk_t* awk);
 static qse_size_t find_global (
@@ -531,20 +531,18 @@ static int parse (qse_awk_t* awk)
 	 * when op is positive, which means there are something to parse */
 	if (op > 0)
 	{
-		/* get the first character */
-		if (get_char(awk) <= -1) goto oops; 
-		/* get the first token */
-		if (get_token(awk) <= -1) goto oops;
+		/* get the first character and the first token */
+		if (get_char (awk) <= -1 || get_token (awk)) goto oops; 
 
 		while (1) 
 		{
 			while (MATCH(awk,TOK_NEWLINE)) 
 			{
-				if (get_token(awk) <= -1) goto oops;
+				if (get_token (awk) <= -1) goto oops;
 			}
 			if (MATCH(awk,TOK_EOF)) break;
 
-			if (parse_progunit(awk) == QSE_NULL) goto oops;
+			if (parse_progunit (awk) <= -1) goto oops;
 		}
 
 		if ((awk->opt.trait & QSE_AWK_EXPLICIT) &&
@@ -788,7 +786,7 @@ static int begin_include (qse_awk_t* awk)
 	/* read in the first character in the included file. 
 	 * so the next call to get_token() sees the character read
 	 * from this file. */
-	if (get_char (awk) <= -1) 
+	if (get_char (awk) <= -1 || get_token (awk) <= -1) 
 	{
 		end_include (awk); 
 		/* since i've called end_include(), i don't go to oops */
@@ -802,7 +800,7 @@ oops:
 	return -1;
 }
 
-static qse_awk_t* parse_progunit (qse_awk_t* awk)
+static int parse_progunit (qse_awk_t* awk)
 {
 	/*
 	@include "xxxx"
@@ -815,14 +813,13 @@ static qse_awk_t* parse_progunit (qse_awk_t* awk)
 
 	QSE_ASSERT (awk->parse.depth.loop == 0);
 
-retry:
 	if ((awk->opt.trait & QSE_AWK_EXPLICIT) && MATCH(awk,TOK_GLOBAL)) 
 	{
 		qse_size_t ngbls;
 
 		awk->parse.id.block = PARSE_GBL;
 
-		if (get_token(awk) <= -1) return QSE_NULL;
+		if (get_token(awk) <= -1) return -1;
 
 		QSE_ASSERT (awk->tree.ngbls == QSE_LDA_SIZE(awk->parse.gbls));
 		ngbls = awk->tree.ngbls;
@@ -832,118 +829,112 @@ retry:
 				awk->parse.gbls, ngbls, 
 				QSE_LDA_SIZE(awk->parse.gbls) - ngbls);
 			awk->tree.ngbls = ngbls;
-			return QSE_NULL;
+			return -1;
 		}
 	}
 	else if (MATCH(awk,TOK_ATSIGN))
 	{
-		if (get_token(awk) <= -1) return QSE_NULL;
+		if (get_token(awk) <= -1) return -1;
 
-		if (MATCH(awk,TOK_INCLUDE))
+		if (MATCH(awk,TOK_INCLUDE)) /* TOOD: INCLUDE must not be a separate keyword... */
 		{
 			if (awk->opt.depth.s.incl > 0 &&
 			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
 			{
 				SETERR_LOC (awk, QSE_AWK_EINCLTD, &awk->ptok.loc);
-				return QSE_NULL;
+				return -1;
 			}
 
-			if (get_token(awk) <= -1) return QSE_NULL;
+			if (get_token(awk) <= -1) return -1;
 
 			if (!MATCH(awk,TOK_STR))
 			{
 				SETERR_LOC (
 					awk, QSE_AWK_EINCLSTR, &awk->ptok.loc);
-				return QSE_NULL;
+				return -1;
 			}
 
-			if (begin_include (awk) <= -1) return QSE_NULL;
+			if (begin_include (awk) <= -1) return -1;
 
-			/* i'm retrying to get the first top-level
-			 * element as if parse_progunit() is called. 
-			 * so i need to skip NEWLINE tokens */
-			do
-			{
-				if (get_token(awk) <= -1) return QSE_NULL; 
-			}
-			while (MATCH(awk,TOK_NEWLINE));
-
-			goto retry;
+			/* i just return without doing anything special
+			 * after having setting up the environment for file 
+			 * inclusion. the loop in parse() proceeds to call 
+			 * parse_progunit() */
 		}
 		else
 		{
 			SETERR_TOK (awk, QSE_AWK_EDIRECNR);
-			return QSE_NULL;
+			return -1;
 		}
 	}
 	else if (MATCH(awk,TOK_FUNCTION)) 
 	{
 		awk->parse.id.block = PARSE_FUNCTION;
-		if (parse_function (awk) == QSE_NULL) return QSE_NULL;
+		if (parse_function (awk) == QSE_NULL) return -1;
 	}
 	else if (MATCH(awk,TOK_BEGIN)) 
 	{
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
 			SETERR_TOK (awk, QSE_AWK_EKWFNC);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_BEGIN;
-		if (get_token(awk) <= -1) return QSE_NULL; 
+		if (get_token(awk) <= -1) return -1; 
 
 		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_EOF))
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * BEGIN and { should be located on the same line */
 			SETERR_LOC (awk, QSE_AWK_EBLKBEG, &awk->ptok.loc);
-			return QSE_NULL;
+			return -1;
 		}
 
 		if (!MATCH(awk,TOK_LBRACE)) 
 		{
 			SETERR_TOK (awk, QSE_AWK_ELBRACE);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_BEGIN_BLOCK;
-		if (parse_begin (awk) == QSE_NULL) return QSE_NULL;
+		if (parse_begin (awk) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
 		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return QSE_NULL;
+		    get_token (awk) <= -1) return -1;
 	}
 	else if (MATCH(awk,TOK_END)) 
 	{
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
 			SETERR_TOK (awk, QSE_AWK_EKWFNC);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_END;
-		if (get_token(awk) <= -1) return QSE_NULL; 
+		if (get_token(awk) <= -1) return -1; 
 
 		if (MATCH(awk,TOK_NEWLINE) || MATCH(awk,TOK_EOF))
 		{
 			/* when QSE_AWK_NEWLINE is set,
 	   		 * END and { should be located on the same line */
 			SETERR_LOC (awk, QSE_AWK_EBLKEND, &awk->ptok.loc);
-			return QSE_NULL;
+			return -1;
 		}
 
 		if (!MATCH(awk,TOK_LBRACE)) 
 		{
 			SETERR_TOK (awk, QSE_AWK_ELBRACE);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_END_BLOCK;
-		if (parse_end (awk) == QSE_NULL) return QSE_NULL;
+		if (parse_end (awk) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
 		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return QSE_NULL;
+		    get_token (awk) <= -1) return -1;
 	}
 	else if (MATCH(awk,TOK_LBRACE))
 	{
@@ -951,15 +942,15 @@ retry:
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
 			SETERR_TOK (awk, QSE_AWK_EKWFNC);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_ACTION_BLOCK;
-		if (parse_action_block (awk, QSE_NULL, 0) == QSE_NULL) return QSE_NULL;
+		if (parse_action_block (awk, QSE_NULL, 0) == QSE_NULL) return -1;
 
 		/* skip a semicolon after an action block if any */
 		if (MATCH(awk,TOK_SEMICOLON) && 
-		    get_token (awk) <= -1) return QSE_NULL;
+		    get_token (awk) <= -1) return -1;
 	}
 	else
 	{
@@ -978,14 +969,14 @@ retry:
 		if ((awk->opt.trait & QSE_AWK_PABLOCK) == 0)
 		{
 			SETERR_TOK (awk, QSE_AWK_EKWFNC);
-			return QSE_NULL;
+			return -1;
 		}
 
 		awk->parse.id.block = PARSE_PATTERN;
 
 		eloc = awk->tok.loc;
 		ptn = parse_expr_dc (awk, &eloc);
-		if (ptn == QSE_NULL) return QSE_NULL;
+		if (ptn == QSE_NULL) return -1;
 
 		QSE_ASSERT (ptn->next == QSE_NULL);
 
@@ -994,7 +985,7 @@ retry:
 			if (get_token (awk) <= -1) 
 			{
 				qse_awk_clrpt (awk, ptn);
-				return QSE_NULL;
+				return -1;
 			}	
 
 			eloc = awk->tok.loc;
@@ -1003,7 +994,7 @@ retry:
 			if (ptn->next == QSE_NULL) 
 			{
 				qse_awk_clrpt (awk, ptn);
-				return QSE_NULL;
+				return -1;
 			}
 		}
 
@@ -1017,7 +1008,7 @@ retry:
 			if (parse_action_block (awk, ptn, 1) == QSE_NULL)
 			{
 				qse_awk_clrpt (awk, ptn);
-				return QSE_NULL;	
+				return -1;	
 			}
 
 			if (!eof)
@@ -1028,7 +1019,7 @@ retry:
 					 * it doesn't have to be cleared here
 					 * as qse_awk_clear does it */
 					/*qse_awk_clrpt (awk, ptn);*/
-					return QSE_NULL;
+					return -1;
 				}	
 			}
 
@@ -1038,7 +1029,7 @@ retry:
 				 * to be ON because the implicit block is
 				 * "print $0" */
 				SETERR_LOC (awk, QSE_AWK_ENOSUP, &ploc);
-				return QSE_NULL;
+				return -1;
 			}
 		}
 		else
@@ -1048,23 +1039,23 @@ retry:
 			{
 				qse_awk_clrpt (awk, ptn);
 				SETERR_TOK (awk, QSE_AWK_ELBRACE);
-				return QSE_NULL;
+				return -1;
 			}
 
 			awk->parse.id.block = PARSE_ACTION_BLOCK;
 			if (parse_action_block (awk, ptn, 0) == QSE_NULL) 
 			{
 				qse_awk_clrpt (awk, ptn);
-				return QSE_NULL;	
+				return -1;	
 			}
 
 			/* skip a semicolon after an action block if any */
 			if (MATCH(awk,TOK_SEMICOLON) && 
-			    get_token (awk) <= -1) return QSE_NULL;
+			    get_token (awk) <= -1) return -1;
 		}
 	}
 
-	return awk;
+	return 0;
 }
 
 static qse_awk_nde_t* parse_function (qse_awk_t* awk)
