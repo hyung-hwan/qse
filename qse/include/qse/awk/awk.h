@@ -754,12 +754,18 @@ struct qse_awk_mod_t
 
 enum qse_awk_mod_sym_type_t
 {
-	QSE_AWK_MOD_FNC = 0 /*,
-	QSE_AWK_MOD_VAR */
+	QSE_AWK_MOD_FNC = 0, 
+	QSE_AWK_MOD_INT, /* constant */
+	QSE_AWK_MOD_FLT  /* constant */
+	/*QSE_AWK_MOD_STR,
+	QSE_AWK_MOD_VAR,
+	*/
 };
 typedef enum qse_awk_mod_sym_type_t qse_awk_mod_sym_type_t;
-
 typedef struct qse_awk_mod_sym_fnc_t qse_awk_mod_sym_fnc_t;
+typedef struct qse_awk_mod_sym_int_t qse_awk_mod_sym_int_t;
+typedef struct qse_awk_mod_sym_flt_t qse_awk_mod_sym_flt_t;
+
 struct qse_awk_mod_sym_fnc_t
 {
 	struct
@@ -770,12 +776,24 @@ struct qse_awk_mod_sym_fnc_t
 	qse_awk_fnc_impl_t impl;
 };
 
+struct qse_awk_mod_sym_int_t
+{
+	qse_long_t val;
+};
+
+struct qse_awk_mod_sym_flt_t
+{
+	qse_flt_t val;
+};
+
 struct qse_awk_mod_sym_t
 {
 	qse_awk_mod_sym_type_t type; 
 	union
 	{
 		qse_awk_mod_sym_fnc_t fnc;
+		qse_awk_mod_sym_int_t in;
+		qse_awk_mod_sym_flt_t flt;
 	} u;
 };
 

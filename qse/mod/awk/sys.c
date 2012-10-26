@@ -45,13 +45,9 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_size_t nargs;
 	qse_long_t lv;
 	qse_awk_val_t* retv;
 	int n;
-
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 1);
 
 /* TODO: handle more parameters */
 
@@ -83,7 +79,6 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_size_t nargs;
 	qse_long_t lv;
 	qse_awk_val_t* retv;
 	int n;
@@ -118,11 +113,23 @@ struct fnctab_t
 	qse_awk_mod_sym_fnc_t info;
 };
 
+typedef struct inttab_t inttab_t;
+struct inttab_t
+{
+	const qse_char_t* name;
+	qse_awk_mod_sym_int_t info;
+};
+
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("fork"),  { { 0, 0 }, fnc_fork } },
-	{ QSE_T("sleep"), { { 1, 1 }, fnc_sleep  } },
-	{ QSE_T("wait"),  { { 1, 1 }, fnc_wait  } }
+	{ QSE_T("fork"),    { { 0, 0 }, fnc_fork } },
+	{ QSE_T("sleep"),   { { 1, 1 }, fnc_sleep  } },
+	{ QSE_T("wait"),    { { 1, 1 }, fnc_wait  } }
+};
+
+static inttab_t inttab[] =
+{
+	{ QSE_T("WNOHANG"), { WNOHANG } }
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
@@ -130,7 +137,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 	qse_cstr_t ea;
 	int i;
 
-/* TODO: binary search */
+/* TODO: binary search or something better */
 	for (i = 0; i < QSE_COUNTOF(fnctab); i++)
 	{
 		if (qse_strcmp (fnctab[i].name, name) == 0)
@@ -141,14 +148,15 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		}
 	}
 
-/*
-	if (qse_strcmp (name, QSE_T("WNOHANG")) == 0)
+	for (i = 0; i < QSE_COUNTOF(inttab); i++)
 	{
-		sym->type = QSE_AWK_MOD_INTCON;
-		sym->u.c.ivalue = WNOHANG;
-		return 0;
+		if (qse_strcmp (inttab[i].name, name) == 0)
+		{
+			sym->type = QSE_AWK_MOD_INT;
+			sym->u.in = inttab[i].info;
+			return 0;
+		}
 	}
-*/
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);
