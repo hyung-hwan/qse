@@ -2079,6 +2079,10 @@ static qse_awk_nde_t* parse_if (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		goto oops;
 	}
 
+/* TODO: optimization. if you know 'tese' evaluates to true or false,
+ *       you can drop the 'if' statement and take either the 'then_part'
+ *       or 'else_part'. */
+
 	if (get_token(awk) <= -1) goto oops;
 
 	tloc = awk->tok.loc;
@@ -5000,30 +5004,41 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 	}
 	else
 	{
-		if (sym.type == QSE_AWK_MOD_FNC)
+		switch (sym.type)
 		{
-			if (MATCH(awk,TOK_LPAREN))
-			{
-				QSE_MEMSET (&fnc, 0, QSE_SIZEOF(fnc));
+			case QSE_AWK_MOD_FNC:
+				if (MATCH(awk,TOK_LPAREN))
+				{
+					QSE_MEMSET (&fnc, 0, QSE_SIZEOF(fnc));
+					fnc.name.ptr = full->ptr; 
+					fnc.name.len = full->len;
+					fnc.arg.min = sym.u.fnc.arg.min;
+					fnc.arg.max = sym.u.fnc.arg.max;
+					fnc.handler = sym.u.fnc.impl;
+					fnc.mod = mod;
+	
+					nde = parse_fncall (awk, full, &fnc, xloc, 0);
+				}
+				else
+				{
+					SETERR_TOK (awk, QSE_AWK_ELPAREN);
+				}
+				break;
 
-				fnc.name.ptr = full->ptr; 
-				fnc.name.len = full->len;
-				fnc.arg.min = sym.u.fnc.arg.min;
-				fnc.arg.max = sym.u.fnc.arg.max;
-				fnc.handler = sym.u.fnc.impl;
-				fnc.mod = mod;
+			case QSE_AWK_MOD_INT:
+				nde = new_int_node (awk, sym.u.in.val, xloc);
+				/* i don't remember the symbol in the original form */
+				break;
 
-				nde = parse_fncall (awk, full, &fnc, xloc, 0);
-			}
-			else
-			{
-				SETERR_TOK (awk, QSE_AWK_ELPAREN);
-			}
-		}
-		else
-		{ 
-			/* TODO: support MOD_VAR */
-			SETERR_ARG_LOC (awk, QSE_AWK_EUNDEF, full->ptr, full->len, xloc);
+			case QSE_AWK_MOD_FLT:
+				nde = new_flt_node (awk, sym.u.flt.val, xloc);
+				/* i don't remember the symbol in the original form */
+				break;
+
+			default:
+				/* TODO: support MOD_VAR */
+				SETERR_ARG_LOC (awk, QSE_AWK_EUNDEF, full->ptr, full->len, xloc);
+				break;
 		}
 	}
 

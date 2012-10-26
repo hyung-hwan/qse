@@ -7,6 +7,7 @@
  - @ref awk_ext_teq       "TEQ OPERATOR"
  - @ref awk_ext_vardecl   "VARIABLE DECLARATION"
  - @ref awk_ext_include   "INCLUDE"
+ - @ref awk_ext_funcall   "FUNCTION CALL"
  - @ref awk_ext_print     "EXTENDED PRINT/PRINTF"
  - @ref awk_ext_exprgroup "GROUPED EXPRESSION"
  - @ref awk_ext_rwpipe    "TWO-WAY PIPE"
@@ -19,6 +20,7 @@
  - @ref awk_ext_binnum    "BINARY NUMBER"
  - @ref awk_ext_unicode   "UNICODE ESCAPE SEQUENCE"
  - @ref awk_ext_ioenc     "I/O ENCODING"
+
 
 
 @section awk_intro INTRODUCTION
@@ -378,6 +380,33 @@ BEGIN { func_in_abc(); }
 
 If #QSE_AWK_NEWLINE is off, the semicolon is required.
 
+
+@subsection awk_ext_funcall FUNCTIONC CALL
+
+
+name(1);
+if there is no space between 'name' and the left parenthesis, the 
+name is treated as a function name.
+
+name (1);
+If there is a space, the name is treated as a function name if the 
+name has been declared as the function or if #QSE_AWK_IMPLICIT is on,
+it may be 'name' concatenated with the expression in the parentheses.
+
+The following is a valid program.
+@code
+@pragma implicit off
+BEGIN { name (1); }
+function name(a) { print a; }'
+@endcode
+
+However, in this program, the first 'name' becomes a named global variable.
+so the function declaration with 'name' triggers the variable redefinition 
+error.
+@pragma implicit on
+BEGIN { name (1); }
+function name(a) { print a; }'
+@endcode
 
 @subsection awk_ext_print EXTENDED PRINT/PRINTF
 When #QSE_AWK_TOLERANT is on, print and printf are treated as if
