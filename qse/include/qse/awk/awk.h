@@ -964,6 +964,8 @@ enum qse_awk_trait_t
 	 */
 	QSE_AWK_STRIPSTRSPC = (1 << 7),
 
+	QSE_AWK_BLANKCONCAT = (1 << 8),
+
 	/** CR + LF by default */
 	QSE_AWK_CRLF = (1 << 10),
 
@@ -1016,9 +1018,10 @@ enum qse_awk_trait_t
 	 * makes #qse_awk_t to behave compatibly with classical AWK
 	 * implementations
 	 */
-	QSE_AWK_CLASSIC  = QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
-	                   QSE_AWK_NEWLINE | QSE_AWK_PABLOCK | 
-	                   QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
+	QSE_AWK_CLASSIC  = 
+		QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
+		QSE_AWK_NEWLINE | QSE_AWK_BLANKCONCAT | QSE_AWK_PABLOCK | 
+		QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
 };
 
 /* ------------------------------------------------------------------------ */
