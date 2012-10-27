@@ -230,7 +230,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			QSE_ASSERT (px->left->next == QSE_NULL);
 
 			PUT_SRCSTR (awk, QSE_T(" "));
-			PUT_SRCSTR (awk, binop_str[px->opcode][(awk->opt.trait & QSE_AWK_IMPLICIT)? 0: 1]);
+			PUT_SRCSTR (awk, binop_str[px->opcode][(awk->opt.trait & QSE_AWK_BLANKCONCAT)? 0: 1]);
 			PUT_SRCSTR (awk, QSE_T(" "));
 
 			if (px->right->type == QSE_AWK_NDE_ASS) 

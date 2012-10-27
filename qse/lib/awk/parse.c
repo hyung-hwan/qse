@@ -3533,13 +3533,13 @@ static qse_awk_nde_t* parse_binary (
 {
 	qse_awk_nde_t* left = QSE_NULL; 
 	qse_awk_nde_t* right = QSE_NULL;
+	qse_awk_loc_t rloc;
 
 	left = next_level_func (awk, xloc);
 	if (left == QSE_NULL) goto oops;
 
 	do
 	{
-		qse_awk_loc_t rloc;
 		const binmap_t* p = binmap;
 		int matched = 0;
 		int opcode, fold;
@@ -3626,8 +3626,7 @@ static qse_awk_nde_t* parse_binary (
 
 				tmp = new_exp_bin_node (awk, xloc, opcode, left, right);
 				if (tmp == QSE_NULL) goto oops;
-				left = tmp;
-				right = QSE_NULL;
+				left = tmp; right = QSE_NULL;
 				break;
 			}
 		}
@@ -3807,6 +3806,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* left = QSE_NULL; 
 	qse_awk_nde_t* right = QSE_NULL;
+	qse_awk_loc_t rloc;
 
 	left = parse_additive (awk, xloc);
 	if (left == QSE_NULL) goto oops;
@@ -3814,25 +3814,26 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	do
 	{
 		qse_awk_nde_t* tmp;
-		qse_awk_loc_t rloc;
 
 		if (MATCH(awk,TOK_CONCAT))
 		{
 			if (get_token(awk) <= -1) goto oops;
 		}
-		else if (MATCH(awk,TOK_LPAREN) ||
-		         MATCH(awk,TOK_DOLLAR) ||
-		         MATCH(awk,TOK_PLUS) ||
-		         MATCH(awk,TOK_MINUS) ||
-		         MATCH(awk,TOK_PLUSPLUS) ||
-		         MATCH(awk,TOK_MINUSMINUS) ||
-		         MATCH(awk,TOK_LNOT) ||
-			    ((awk->opt.trait & QSE_AWK_TOLERANT) && 
-		          (awk->tok.type == TOK_PRINT || awk->tok.type == TOK_PRINTF)) ||
-		         awk->tok.type >= TOK_GETLINE)
+		else if (awk->opt.trait & QSE_AWK_BLANKCONCAT)
 		{
-			/* TODO: is the check above sufficient? */
-			if (!(awk->opt.trait & QSE_AWK_IMPLICIT)) break;
+		    if (MATCH(awk,TOK_LPAREN) || MATCH(awk,TOK_DOLLAR) ||
+			   /* unary operators */
+			   MATCH(awk,TOK_PLUS) || MATCH(awk,TOK_MINUS) ||
+			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) ||
+			   /* increment operators */
+			   MATCH(awk,TOK_PLUSPLUS) || MATCH(awk,TOK_MINUSMINUS) ||
+			   ((awk->opt.trait & QSE_AWK_TOLERANT) && 
+			    (awk->tok.type == TOK_PRINT || awk->tok.type == TOK_PRINTF)) ||
+			   awk->tok.type >= TOK_GETLINE)
+			{
+				/* proceed to handle concatenation expression */
+			}
+			else break;
 		}
 		else break;
 
@@ -3840,11 +3841,9 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		right = parse_additive (awk, &rloc);
 		if (right == QSE_NULL) goto oops;
 
-		tmp = new_exp_bin_node (
-			awk, xloc, QSE_AWK_BINOP_CONCAT, left, right);
-		if (left == QSE_NULL) goto oops;
-		left = tmp;
-		right = QSE_NULL;
+		tmp = new_exp_bin_node (awk, xloc, QSE_AWK_BINOP_CONCAT, left, right);
+		if (tmp == QSE_NULL) goto oops;
+		left = tmp; right = QSE_NULL;
 	}
 	while (1);
 
@@ -4523,32 +4522,43 @@ static qse_awk_nde_t* parse_primary_nogetline (
 
 		if (get_token(awk) <= -1) return QSE_NULL;
 
-		if (MATCH(awk,TOK_IDENT))
+		if (MATCH(awk,TOK_IDENT) || MATCH(awk,TOK_DOLLAR))
 		{
-			/* getline var */
+			/* getline var 
+			 * getline $XXX */
 			qse_awk_loc_t gloc = awk->tok.loc;
 			var = parse_primary (awk, &gloc);
 			if (var == QSE_NULL) return QSE_NULL;
+
+			if (!is_var(var) && var->type != QSE_AWK_NDE_POS)
+			{
+				/* this is 'getline' followed by an expression probably.
+				 *    getline a() 
+				 *    getline sys::WNOHANG
+				 */
+				SETERR_LOC (awk, QSE_AWK_EBADARG, &gloc);
+				qse_awk_clrpt (awk, var);
+				return QSE_NULL;
+			}
 		}
 
 		if (MATCH(awk, TOK_LT))
 		{
+			qse_awk_loc_t ploc;
 			/* getline [var] < file */
 			if (get_token(awk) <= -1)
 			{
-				if (var != QSE_NULL) qse_awk_clrpt (awk, var);
+				if (var) qse_awk_clrpt (awk, var);
 				return QSE_NULL;
 			}
 
-			{
-				qse_awk_loc_t ploc = awk->tok.loc;
-				/* TODO: is this correct? */
-				/*in = parse_expr_dc (awk, &ploc);*/
-				in = parse_primary (awk, &ploc);
-			}
+			ploc = awk->tok.loc;
+			/* TODO: is this correct? */
+			/*in = parse_expr_dc (awk, &ploc);*/
+			in = parse_primary (awk, &ploc);
 			if (in == QSE_NULL)
 			{
-				if (var != QSE_NULL) qse_awk_clrpt (awk, var);
+				if (var) qse_awk_clrpt (awk, var);
 				return QSE_NULL;
 			}
 		}
@@ -4557,9 +4567,9 @@ static qse_awk_nde_t* parse_primary_nogetline (
 			awk, QSE_SIZEOF(qse_awk_nde_getline_t));
 		if (nde == QSE_NULL)
 		{
-			if (var != QSE_NULL) qse_awk_clrpt (awk, var);
-			if (in != QSE_NULL) qse_awk_clrpt (awk, in);
 			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
+			if (var) qse_awk_clrpt (awk, var);
+			if (in) qse_awk_clrpt (awk, in);
 			return QSE_NULL;
 		}
 
@@ -4602,12 +4612,11 @@ static qse_awk_nde_t* parse_primary_nogetline (
 	return QSE_NULL;
 }
 
-static qse_awk_nde_t* parse_primary (
-	qse_awk_t* awk, const qse_awk_loc_t* xloc)
+static qse_awk_nde_t* parse_primary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 {
 	qse_awk_nde_t* left;
 	qse_awk_nde_getline_t* nde;
-	qse_awk_nde_t* var;
+	qse_awk_nde_t* var = QSE_NULL;
 
 	left = parse_primary_nogetline (awk, xloc);
 
@@ -4621,46 +4630,40 @@ static qse_awk_nde_t* parse_primary (
 			{
 				intype = QSE_AWK_IN_PIPE;
 			}
-			else if (MATCH(awk,TOK_LOR)) 
+			else if (MATCH(awk,TOK_LOR) && 
+			         (awk->opt.trait & QSE_AWK_RWPIPE)) 
 			{
-				if (awk->opt.trait & QSE_AWK_RWPIPE) 
-					intype = QSE_AWK_IN_RWPIPE;
+				intype = QSE_AWK_IN_RWPIPE;
 			}
 		}
 		
 		if (intype == -1) break;
 
-		if (preget_token(awk) <= -1) 
-		{
-			qse_awk_clrpt (awk, left);
-			return QSE_NULL;
-		}
+		if (preget_token(awk) <= -1) goto oops;
 	
 		if (awk->ntok.type != TOK_GETLINE) break;
 
-		var = QSE_NULL;
-
-		/* consume ntok */
+		/* consume ntok('getline') */
 		get_token (awk);
 
 		/* get the next token */
-		if (get_token(awk) <= -1)
-		{
-			qse_awk_clrpt (awk, left);
-			return QSE_NULL;
-		}
+		if (get_token(awk) <= -1) goto oops;
 
 		/* TODO: is this correct? */
-		if (MATCH(awk,TOK_IDENT))
+		if (MATCH(awk,TOK_IDENT) || MATCH(awk,TOK_DOLLAR))
 		{
 			/* command | getline var 
 			 * command || getline var */
 			qse_awk_loc_t gloc = awk->tok.loc;
-			var = parse_primary_ident (awk, &gloc);
-			if (var == QSE_NULL) 
+			var = parse_primary (awk, &gloc);
+			if (var == QSE_NULL) goto oops;
+
+			if (!is_var(var) & var->type != QSE_AWK_NDE_POS)
 			{
-				qse_awk_clrpt (awk, left);
-				return QSE_NULL;
+				/* fucntion a() {}
+				 * print ("ls -laF" | getline a()) */
+				SETERR_LOC (awk, QSE_AWK_EBADARG, &gloc);
+				goto oops;
 			}
 		}
 
@@ -4668,9 +4671,8 @@ static qse_awk_nde_t* parse_primary (
 			awk, QSE_SIZEOF(qse_awk_nde_getline_t));
 		if (nde == QSE_NULL)
 		{
-			qse_awk_clrpt (awk, left);
 			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			return QSE_NULL;
+			goto oops;
 		}
 
 		nde->type = QSE_AWK_NDE_GETLINE;
@@ -4681,10 +4683,16 @@ static qse_awk_nde_t* parse_primary (
 		nde->in = left;
 
 		left = (qse_awk_nde_t*)nde;
+		var = QSE_NULL;
 	}
 	while (1);
 
 	return left;
+
+oops:
+	if (var) qse_awk_clrpt (awk, var);
+	qse_awk_clrpt (awk, left);
+	return QSE_NULL;
 }
 
 #define FNTYPE_UNKNOWN 0
