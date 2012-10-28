@@ -2176,7 +2176,7 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 #if defined(QSE_CHAR_IS_MCHAR)
 	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
 	if (xuri.frag.ptr) server_xtn->cfg[SERVER_XTN_CFG_REALM] = qse_mbsxdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
-	ba.ptr = qse_mbsxadup (tmp, &ba.len, httpd->mmgr);
+	ba.ptr = qse_mcstradup (tmp, &ba.len, httpd->mmgr);
 	
 #else
 	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_wcsntombsdup (xuri.path.ptr, xuri.path.len, QSE_NULL, httpd->mmgr);

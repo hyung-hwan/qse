@@ -1595,12 +1595,8 @@ qse_awk_val_t* qse_awk_rtx_callwithstrs (
 	qse_size_t i;
 	qse_awk_val_t** v, * ret;
 
-	v = QSE_MMGR_ALLOC (rtx->awk->mmgr, QSE_SIZEOF(*v) * nargs);
-	if (v == QSE_NULL)
-	{
-		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+	v = qse_awk_rtx_allocmem (rtx, QSE_SIZEOF(*v) * nargs);
+	if (v == QSE_NULL) return QSE_NULL;
 
 	for (i = 0; i < nargs; i++)
 	{

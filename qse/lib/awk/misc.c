@@ -23,7 +23,15 @@
 void* qse_awk_allocmem (qse_awk_t* awk, qse_size_t size)
 {
 	void* ptr = QSE_AWK_ALLOC (awk, size);
-	if (ptr == QSE_NULL)  qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
+}
+
+void* qse_awk_callocmem (qse_awk_t* awk, qse_size_t size)
+{
+	void* ptr = QSE_AWK_ALLOC (awk, size);
+	if (ptr) QSE_MEMSET (ptr, 0, size);
+	else qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return ptr;
 }
 
@@ -49,6 +57,13 @@ qse_char_t* qse_awk_strdup (qse_awk_t* awk, const qse_char_t* s)
 qse_char_t* qse_awk_strxdup (qse_awk_t* awk, const qse_char_t* s, qse_size_t l)
 {
 	qse_char_t* ptr = QSE_AWK_STRXDUP (awk, s, l);
+	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
+}
+
+qse_char_t* qse_awk_cstrdup (qse_awk_t* awk, const qse_cstr_t* s)
+{
+	qse_char_t* ptr = qse_cstrdup (s, awk->mmgr);
 	if (ptr == QSE_NULL) qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 	return ptr;
 }
@@ -1095,17 +1110,29 @@ int qse_awk_matchrex (
 
 void* qse_awk_rtx_allocmem (qse_awk_rtx_t* rtx, qse_size_t size)
 {
-	return qse_awk_allocmem (rtx->awk, size);
+	void* ptr = QSE_AWK_ALLOC (rtx->awk, size);
+	if (ptr == QSE_NULL) qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
 }
 
 void* qse_awk_rtx_reallocmem (qse_awk_rtx_t* rtx, void* ptr, qse_size_t size)
 {
-	return qse_awk_reallocmem (rtx->awk, ptr, size);
+	void* nptr = QSE_AWK_REALLOC (rtx->awk, ptr, size);
+	if (nptr == QSE_NULL) qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+	return nptr;
+}
+
+void* qse_awk_rtx_callocmem (qse_awk_rtx_t* rtx, qse_size_t size)
+{
+	void* ptr = QSE_AWK_ALLOC (rtx->awk, size);
+	if (ptr) QSE_MEMSET (ptr, 0, size);
+	else qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
+	return ptr;
 }
 
 void qse_awk_rtx_freemem (qse_awk_rtx_t* rtx, void* ptr)
 {
-	qse_awk_freemem (rtx->awk, ptr);
+	QSE_AWK_FREE (rtx->awk, ptr);
 }
 
 int qse_awk_sprintflt (
