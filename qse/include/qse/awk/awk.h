@@ -1658,6 +1658,16 @@ void* qse_awk_reallocmem (
 );
 
 /**
+ * The qse_awk_callocmem() function allocates a memory block of 
+ * the size of @a size bytes and initializes it with 0.
+ * @return a pointer to a memory block on success, #QSE_NULL on failure
+ */
+void* qse_awk_callocmem (
+	qse_awk_t* awk,  /**< awk */
+	qse_size_t size  /**< size of memory to allocate in bytes */
+);
+
+/**
  * The qse_awk_freemem() function frees dynamic memory allocated.
  */
 void qse_awk_freemem (
@@ -1668,7 +1678,8 @@ void qse_awk_freemem (
 /**
  * The qse_awk_strdup() function is used to duplicate a string using
  * the memory manager used by the associated qse_awk_t instance.
- * The new string should be freed using the qse_awk_free() function.
+ * The new string must be freed using the qse_awk_freemem() function when
+ * it's not needed any more.
  *
  * @return a pointer to a new string duplicated of @a s on success, 
  *         #QSE_NULL on failure.
@@ -1681,8 +1692,8 @@ qse_char_t* qse_awk_strdup (
 /**
  * The qse_awk_strxdup() function is used to duplicate a string whose length
  * is as long as len characters using the memory manager used by the 
- * qse_awk_t instance. The new string should be freed using the qse_awk_free()
- * function.
+ * qse_awk_t instance. The new string must be freed using the qse_awk_freemem()
+ * function it's not needed any more.
  *
  * @return a pointer to a new string duplicated of @a s on success, 
  *         #QSE_NULL on failure.
@@ -1691,6 +1702,19 @@ qse_char_t* qse_awk_strxdup (
 	qse_awk_t*        awk, /**< awk */
 	const qse_char_t* str, /**< string pointer */
 	qse_size_t        len  /**< string length */
+);
+
+/**
+ * The qse_awk_cstrdup() funcation duplicates @a str->len characters from a 
+ * string pointed to by @str->ptr. The duplicated string must be freed with
+ * the qse_awk_freemem() function when it's not needed any more.
+ * 
+ * @return pointer to a duplicated string on success,
+ *         #QSE_NULL on failure.
+ */
+qse_char_t* qse_awk_cstrdup (
+	qse_awk_t*        awk, /**< awk */
+	const qse_cstr_t* str  /**< string */
 );
 
 /**
@@ -2521,6 +2545,16 @@ void* qse_awk_rtx_allocmem (
 void* qse_awk_rtx_reallocmem (
 	qse_awk_rtx_t* rtx, /**< runtime context */
 	void*          ptr, /**< memory block */
+	qse_size_t     size /**< block size in bytes */
+);
+
+/**
+ * The qse_awk_rtx_callocmem() function allocates a memory block of 
+ * the size of @a size bytes and initializes it with 0.
+ * @return a pointer to a memory block on success, #QSE_NULL on failure
+ */
+void* qse_awk_rtx_callocmem (
+	qse_awk_rtx_t* rtx, /**< runtime context */
 	qse_size_t     size /**< block size in bytes */
 );
 

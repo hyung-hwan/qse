@@ -607,15 +607,10 @@ static qse_ssize_t sf_in_open (
 			totlen = qse_strlen(arg->name) + xtn->s.in.u.file.dir.len;
 			if (totlen >= QSE_COUNTOF(fbuf))
 			{
-				dbuf = QSE_MMGR_ALLOC (
-					awk->mmgr,
-					QSE_SIZEOF(qse_char_t) * (totlen + 1)
+				dbuf = qse_awk_allocmem (
+					awk, QSE_SIZEOF(qse_char_t) * (totlen + 1)
 				);
-				if (dbuf == QSE_NULL)
-				{
-					qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-					return -1;
-				}
+				if (dbuf == QSE_NULL) return -1;
 
 				file = dbuf;
 			}
@@ -2626,7 +2621,7 @@ static int query_module (
 		tmp[3].len = namelen;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		modpath = qse_mbsxadup (tmp, QSE_NULL, awk->mmgr);
+		modpath = qse_mcstradup (tmp, QSE_NULL, awk->mmgr);
 	#else
 		modpath = qse_wcsnatombsdup (tmp, QSE_NULL, awk->mmgr);
 	#endif
