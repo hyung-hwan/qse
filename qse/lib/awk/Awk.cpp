@@ -593,7 +593,7 @@ int Awk::Value::setStr (const char_t* str)
 int Awk::Value::setStr (Run* r, const char_t* str)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrval0 (r->rtx, str);
+	tmp = qse_awk_rtx_makestrvalwithstr (r->rtx, str);
 	if (tmp == QSE_NULL) 
 	{
 		r->awk->retrieveError (r);
@@ -751,7 +751,7 @@ int Awk::Value::setIndexedStr (const Index& idx, const char_t* str)
 int Awk::Value::setIndexedStr (Run* r, const Index& idx, const char_t* str)
 {
 	val_t* tmp;
-	tmp = qse_awk_rtx_makestrval0 (r->rtx, str);
+	tmp = qse_awk_rtx_makestrvalwithstr (r->rtx, str);
 	if (tmp == QSE_NULL)
 	{
 		r->awk->retrieveError (r);

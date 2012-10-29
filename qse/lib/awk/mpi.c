@@ -137,35 +137,17 @@ qse_awk_rtx_t* qse_awk_rtx_openmpi (
 				case 0: /* MPI_HOST */
 				{
 					char buf[MPI_MAX_PROCESSOR_NAME];
-					int len;
-#if defined(QSE_CHAR_IS_MCHAR)
-					/* nothing */
-#else
-					qse_mmgr_t* mmgr;
-					qse_char_t* tmp;	
-#endif
-					if (MPI_Get_processor_name(buf, &len) != MPI_SUCCESS)
+					qse_mcstr_t mcstr;
+
+					if (MPI_Get_processor_name(buf, &mcstr.len) != MPI_SUCCESS)
 					{
 						qse_awk_rtx_close (rtx);
 						qse_awk_seterrnum (awk, QSE_AWK_ESYSERR, QSE_NULL);	
 						return QSE_NULL;
 					}
-#if defined(QSE_CHAR_IS_MCHAR)
-					v_tmp = qse_awk_rtx_makestrval (rtx, buf, len);
-#else
-		
-					mmgr = qse_awk_getmmgr(awk);
-					tmp = qse_mbstowcsdup (buf, QSE_NULL, mmgr);
-					if (tmp == QSE_NULL)
-					{
-						qse_awk_rtx_close (rtx);
-						qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);	
-						return QSE_NULL;
-					}
-				
-					v_tmp = qse_awk_rtx_makestrval0 (rtx, tmp);
-					QSE_MMGR_FREE (mmgr, tmp);
-#endif
+
+					mcstr.ptr = buf;
+					v_tmp = qse_awk_rtx_makestrvalwithmcstr (rtx, &mcstr);
 					break;
 				}
 

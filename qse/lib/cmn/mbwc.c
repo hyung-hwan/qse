@@ -183,6 +183,18 @@ qse_wchar_t* qse_mbstowcsalldup (
 	return qse_mbstowcsalldupwithcmgr (mbs, wcslen, mmgr, dfl_cmgr);
 }
 
+qse_wchar_t* qse_mbsntowcsdup (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, qse_size_t* wcslen, qse_mmgr_t* mmgr)
+{
+	return qse_mbsntowcsdupwithcmgr (mbs, mbslen, wcslen, mmgr, dfl_cmgr);
+}
+
+qse_wchar_t* qse_mbsntowcsalldup (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, qse_size_t* wcslen, qse_mmgr_t* mmgr)
+{
+	return qse_mbsntowcsalldupwithcmgr (mbs, mbslen, wcslen, mmgr, dfl_cmgr);
+}
+
 qse_wchar_t* qse_mbsatowcsdup (
 	const qse_mchar_t* mbs[], qse_size_t* wcslen, qse_mmgr_t* mmgr)
 {

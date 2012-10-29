@@ -245,6 +245,40 @@ int qse_mbsntowcsnuptowithcmgr (
 	return ret;
 }
 
+static qse_wchar_t* mbsn_to_wcs_dup_with_cmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, qse_size_t* wcslen,
+	qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
+{
+	qse_size_t ml, wl;
+	qse_wchar_t* wcs;
+
+	ml = *mbslen;
+	if (mbsn_to_wcsn_with_cmgr (
+		mbs, &ml, QSE_NULL, &wl, cmgr, all) <= -1) return QSE_NULL;
+
+	wl++; /* for terminating null */
+	wcs = QSE_MMGR_ALLOC (mmgr, wl * QSE_SIZEOF(*wcs));	
+	if (wcs == QSE_NULL) return QSE_NULL;
+
+	mbsn_to_wcsn_with_cmgr (mbs, mbslen, wcs, &wl, cmgr, all);
+	wcs[wl] = QSE_WT('\0');
+
+	if (wcslen) *wcslen = wl;
+	return wcs;
+}
+
+qse_wchar_t* qse_mbsntowcsdupwithcmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbsn_to_wcs_dup_with_cmgr (mbs, mbslen, wcslen, mmgr, cmgr, 0);
+}
+
+qse_wchar_t* qse_mbsntowcsalldupwithcmgr (
+	const qse_mchar_t* mbs, qse_size_t* mbslen, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+{
+	return mbsn_to_wcs_dup_with_cmgr (mbs, mbslen, wcslen, mmgr, cmgr, 1);
+}
+
 static qse_wchar_t* mbs_to_wcs_dup_with_cmgr (
 	const qse_mchar_t* mbs, qse_size_t* wcslen, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr, int all)
 {

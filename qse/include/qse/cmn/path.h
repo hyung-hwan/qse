@@ -33,7 +33,7 @@
  * segment in a path name. It maps to qse_mbsbasename() if #QSE_CHAR_IS_MCHAR
  * is defined; it maps to qse_wcsbasename() if #QSE_CHAR_IS_WCHAR is defined.
  */
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define	qse_basename(path) qse_mbsbasename(path)
 #else
 #	define	qse_basename(path) qse_wcsbasename(path)

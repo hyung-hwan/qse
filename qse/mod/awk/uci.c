@@ -1,6 +1,7 @@
 #include <qse/awk/std.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
+#include <qse/cmn/mbwc.h>
 #include "../../lib/cmn/mem.h"
 
 #if defined(HAVE_UCI_H)
@@ -8,6 +9,8 @@
 #else
 #	error this module needs uci.h
 #endif
+
+#define ERR_WRONG_HANDLE 999
 
 typedef struct uctx_list_t uctx_list_t;
 typedef struct uctx_node_t uctx_node_t;
@@ -33,21 +36,21 @@ struct uctx_list_t
 		int capa;
 		int high;
 	} map;
+
+	int errnum;
 };
 
 static uctx_node_t* new_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list)
 {
 	/* create a new context node and append it to the list tail */
 	uctx_node_t* node;
-	qse_mmgr_t* mmgr;
 
 	node = QSE_NULL;
-	mmgr = qse_awk_rtx_getmmgr(rtx);
 
 	if (list->free) node = list->free;
 	else
 	{
-		node = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(*node));
+		node = qse_awk_rtx_callocmem (rtx, QSE_SIZEOF(*node));
 		if (!node) goto oops;
 	}
 
@@ -65,8 +68,8 @@ static uctx_node_t* new_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list)
 			newcapa = list->map.capa + 64;
 			if (newcapa < list->map.capa) goto oops; /* overflow */
 
-			tmp = (uctx_node_t**) QSE_MMGR_REALLOC (
-				mmgr, list->map.tab, QSE_SIZEOF(*tmp) * newcapa);
+			tmp = (uctx_node_t**) qse_awk_rtx_reallocmem (
+				rtx, list->map.tab, QSE_SIZEOF(*tmp) * newcapa);
 			if (!tmp) goto oops;
 
 			QSE_MEMSET (&tmp[list->map.capa], 0, 
@@ -92,7 +95,7 @@ static uctx_node_t* new_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list)
 	return node;
 
 oops:
-	if (node) QSE_MMGR_FREE (mmgr, node);
+	if (node) qse_awk_rtx_freemem (rtx, node);
 	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 	return QSE_NULL;
 }
@@ -106,7 +109,10 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 
 	list->map.tab[node->id] = QSE_NULL;
 
-	if (node->ctx) uci_free_context (node->ctx);
+	if (node->ctx) 
+	{
+		uci_free_context (node->ctx);
+	}
 
 	if (list->map.high == node->id + 1)
 	{
@@ -140,7 +146,6 @@ static void free_uctx_node (qse_awk_rtx_t* rtx, uctx_list_t* list, uctx_node_t* 
 			QSE_MMGR_FREE (mmgr, curnode);
 		}
 
-qse_printf (QSE_T("freeing map...\n"));
 		QSE_MMGR_FREE (mmgr, list->map.tab);
 		list->map.high = 0;
 		list->map.capa = 0;
@@ -148,16 +153,309 @@ qse_printf (QSE_T("freeing map...\n"));
 	}
 }
 
-static int free_uctx_node_byid (qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id)
+/* ------------------------------------------------------------------------ */
+
+static int close_byid (qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id)
 {
+	int x = ERR_WRONG_HANDLE;
+
 	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
 	{
 		free_uctx_node (rtx, list, list->map.tab[id]);
+		x = UCI_OK;
+	}
+	
+	return -x;
+}
+
+static int setconfdir_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id, const qse_char_t* path)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		x = uci_set_confdir (list->map.tab[id]->ctx, path);
+	#else
+		qse_mchar_t* tmp;
+		qse_mmgr_t* mmgr = qse_awk_rtx_getmmgr(rtx);
+		tmp = qse_wcstombsdup (path, QSE_NULL, mmgr);
+		if (tmp)
+		{
+			x = uci_set_confdir (list->map.tab[id]->ctx, tmp);
+			QSE_MMGR_FREE (mmgr, tmp);
+		}
+		else x = UCI_ERR_MEM;
+	#endif
+	}
+	
+	return -x;
+}
+
+static int setsavedir_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id, const qse_char_t* path)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		x = uci_set_savedir (list->map.tab[id]->ctx, path);
+	#else
+		qse_mchar_t* tmp;
+		qse_mmgr_t* mmgr = qse_awk_rtx_getmmgr(rtx);
+		tmp = qse_wcstombsdup (path, QSE_NULL, mmgr);
+		if (tmp)
+		{
+			x = uci_set_savedir (list->map.tab[id]->ctx, tmp);
+			QSE_MMGR_FREE (mmgr, tmp);
+		}
+		else x = UCI_ERR_MEM;
+	#endif
+	}
+	
+	return -x;
+}
+
+static int load_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id, const qse_char_t* path)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+	#if defined(QSE_CHAR_IS_MCHAR)
+		x = uci_load (list->map.tab[id]->ctx, path, QSE_NULL);
+	#else
+		qse_mchar_t* tmp;
+		qse_mmgr_t* mmgr = qse_awk_rtx_getmmgr(rtx);
+		tmp = qse_wcstombsdup (path, QSE_NULL, mmgr);
+		if (tmp)
+		{
+			x = uci_load (list->map.tab[id]->ctx, tmp, QSE_NULL);
+			QSE_MMGR_FREE (mmgr, tmp);
+		}
+		else x = UCI_ERR_MEM;
+	#endif
+	}
+	
+	return -x;
+}
+
+static int unload_byid (qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		x = uci_unload (list->map.tab[id]->ctx, QSE_NULL);
 		return 0;
 	}
 	
-	return -1;
+	return -x;
 }
+
+static int save_byid (qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		x = uci_save (list->map.tab[id]->ctx, QSE_NULL);
+	}
+	
+	return -x;
+}
+
+#if 0
+	else if (e->type == UCI_TYPE_PACKAGE)
+	{
+		/* anything to do? */
+		[type] = "PACKAGE";
+		[section.type] = "xxxxxxxxxx";
+		[option.type] = "string";
+		[option.type] = "list";
+		[option.value] = "xxxxxxx";
+		[option.value.num] = "xxxxxxx";
+		[option.value.1]
+		[option.value.2]
+	}
+#endif
+
+static int getsection_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id,
+	const qse_char_t* tuple, qse_awk_val_t** retv)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		qse_mmgr_t* mmgr;
+		qse_mchar_t* mtuple;
+		struct uci_ptr ptr;
+
+		mmgr = qse_awk_rtx_getmmgr (rtx);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		mtuple = qse_mbsdup (tuple, mmgr);
+	#else
+		mtuple = qse_wcstombsdup (tuple, QSE_NULL, mmgr);
+	#endif
+		if (mtuple)
+		{
+			x = uci_lookup_ptr (list->map.tab[id]->ctx, &ptr, mtuple, 1);
+			if (x == UCI_OK)
+			{
+				if (ptr.flags & UCI_LOOKUP_COMPLETE)
+				{
+					struct uci_element* e;
+
+					e = ptr.last;	
+					if (e->type == UCI_TYPE_SECTION)
+					{
+						qse_awk_val_map_data_t md[4];
+						qse_long_t lv;
+						qse_awk_val_t* tmp;
+
+						QSE_MEMSET (md, 0, QSE_SIZEOF(md));
+		
+						md[0].key.ptr = QSE_T("type");
+						md[0].key.len = 4;
+						md[0].type = QSE_AWK_VAL_MAP_DATA_MBS;
+						md[0].vptr = ptr.s->type;
+
+						md[1].key.ptr = QSE_T("name");
+						md[1].key.len = 4;
+						md[1].type = QSE_AWK_VAL_MAP_DATA_MBS;
+						md[1].vptr = ptr.s->e.name; /* e->name == ptr.s->e.name */
+
+						md[2].key.ptr = QSE_T("anon");
+						md[2].key.len = 4;
+						md[2].vptr = QSE_AWK_VAL_MAP_DATA_INT;
+						lv = ptr.s->anonymous;
+						md[2].vptr = &lv;
+
+						tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
+						if (tmp) *retv = tmp;
+						else x = UCI_ERR_MEM;
+					}
+					else x = UCI_ERR_NOTFOUND;
+					
+				}
+				else x = UCI_ERR_NOTFOUND;
+			}
+
+			QSE_MMGR_FREE (mmgr, mtuple);
+		}
+		else x = UCI_ERR_MEM;
+	}
+
+	return -x;
+}
+
+static int getoption_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id,
+	const qse_char_t* tuple, qse_awk_val_t** retv)
+{
+	int x = ERR_WRONG_HANDLE;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		qse_mmgr_t* mmgr;
+		qse_mchar_t* mtuple;
+		struct uci_ptr ptr;
+
+		mmgr = qse_awk_rtx_getmmgr (rtx);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+		mtuple = qse_mbsdup (tuple, mmgr);
+	#else
+		mtuple = qse_wcstombsdup (tuple, QSE_NULL, mmgr);
+	#endif
+		if (mtuple)
+		{
+			x = uci_lookup_ptr (list->map.tab[id]->ctx, &ptr, mtuple, 1);
+			if (x == UCI_OK)
+			{
+				if (ptr.flags & UCI_LOOKUP_COMPLETE)
+				{
+					struct uci_element* e;
+
+					e = ptr.last;	
+					if (e->type == UCI_TYPE_OPTION)
+					{
+						struct uci_option* uo = ptr.o;
+
+						if (uo->type == UCI_TYPE_STRING)
+						{
+							qse_awk_val_map_data_t md[3];
+							qse_awk_val_t* tmp;
+
+							QSE_MEMSET (md, 0, QSE_SIZEOF(md));
+
+							md[0].key.ptr = QSE_T("type");
+							md[0].key.len = 4;
+							md[0].type = QSE_AWK_VAL_MAP_DATA_STR;
+							md[0].vptr = QSE_T("string");
+
+							md[1].key.ptr = QSE_T("value");
+							md[1].key.len = 5;
+							md[1].type = QSE_AWK_VAL_MAP_DATA_MBS;
+							md[1].vptr = uo->v.string;
+
+							tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
+							if (tmp) *retv = tmp;
+							else x = UCI_ERR_MEM;
+						}
+						else if (uo->type == UCI_TYPE_LIST)
+						{
+							struct uci_element* tmp;
+							qse_size_t count = 0;
+							qse_awk_val_map_data_t* md;
+
+							uci_foreach_element(&uo->v.list, tmp) { count++; }
+
+							md = qse_awk_rtx_callocmem (rtx, (count + 2) * QSE_SIZEOF(*md));
+							if (md == QSE_NULL) x = UCI_ERR_MEM;
+							else
+							{
+								md[0].key.ptr = QSE_T("type");
+								md[0].key.len = 4;
+								md[0].type = QSE_AWK_VAL_MAP_DATA_STR;
+								md[0].vptr = QSE_T("list");
+
+								count = 1;
+								uci_foreach_element(&uo->v.list, tmp)
+								{	
+									md[count].key.ptr = QSE_T("value.idx");
+									md[count].key.len = 7;
+									md[count].type = QSE_AWK_VAL_MAP_DATA_MBS;
+									md[count].vptr = tmp->name;
+									count++;
+								}
+
+								tmp = qse_awk_rtx_makemapvalwithdata (rtx, md);
+								qse_awk_rtx_freemem (rtx, md);
+								if (tmp) *retv = tmp;
+								else x = UCI_ERR_MEM;
+							}
+						}
+					}
+					else x = UCI_ERR_NOTFOUND;
+					
+				}
+				else x = UCI_ERR_NOTFOUND;
+			}
+
+			QSE_MMGR_FREE (mmgr, mtuple);
+		}
+		else x = UCI_ERR_MEM;
+	}
+
+	return -x;
+}
+/* ------------------------------------------------------------------------ */
 
 static QSE_INLINE uctx_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -167,23 +465,42 @@ static QSE_INLINE uctx_list_t* rtx_to_list (qse_awk_rtx_t* rtx, const qse_awk_fn
 	return (uctx_list_t*)QSE_RBT_VPTR(pair);
 }
 
+static int fnc_uci_errno (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+
+	list = rtx_to_list (rtx, fi);
+
+	retv = qse_awk_rtx_makeintval (rtx, list->errnum);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
 static int fnc_uci_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	uctx_list_t* list;
 	uctx_node_t* node;
-	qse_long_t ret = -1;
+	qse_long_t ret;
 	qse_awk_val_t* retv;
 
 	list = rtx_to_list (rtx, fi);
 	node = new_uctx_node (rtx, list);
-	if (node) ret = node->id;
+	ret = node? node->id: -UCI_ERR_MEM;
 	
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
 	retv = qse_awk_rtx_makeintval (rtx, ret);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
-
 }
 
 static int fnc_uci_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -191,16 +508,21 @@ static int fnc_uci_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	uctx_list_t* list;
 	qse_awk_val_t* retv;
 	qse_long_t id;
-	int n;
+	int ret;
 	
 	list = rtx_to_list (rtx, fi);
 
-	n = qse_awk_rtx_valtolong (
-		rtx, qse_awk_rtx_getarg (rtx, 0), &id);
-	if (n <= -1) return -1;
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else ret = close_byid (rtx, list, id);
 
-	retv = qse_awk_rtx_makeintval (
-		rtx, free_uctx_node_byid (rtx, list, id));
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -209,12 +531,286 @@ static int fnc_uci_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_uci_load  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return 0 ;
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else
+	{
+		qse_awk_val_t* v;
+
+		v = qse_awk_rtx_getarg(rtx, 1);
+		if (v->type == QSE_AWK_VAL_STR)
+		{
+			ret = load_byid (rtx, list, id, ((qse_awk_val_str_t*)v)->val.ptr);
+		}
+		else
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			ret = qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 1), &out);
+			if (ret <= -1) ret = -UCI_ERR_MEM;
+			else
+			{
+				ret = load_byid (rtx, list, id, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			}
+		}
+	}
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_uci_unload  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else ret = unload_byid (rtx, list, id);
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
 }
 
 static int fnc_uci_save  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	return 0 ;
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else ret = save_byid (rtx, list, id);
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_uci_setconfdir  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else
+	{
+		qse_awk_val_t* v;
+
+		v = qse_awk_rtx_getarg(rtx, 1);
+		if (v->type == QSE_AWK_VAL_STR)
+		{
+			ret = setconfdir_byid (rtx, list, id, ((qse_awk_val_str_t*)v)->val.ptr);
+		}
+		else
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			ret = qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 1), &out);
+			if (ret <= -1) ret = -UCI_ERR_MEM;
+			else
+			{
+				ret = setconfdir_byid (rtx, list, id, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			}
+		}
+	}
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+
+static int fnc_uci_setsavedir  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else
+	{
+		qse_awk_val_t* v;
+
+		v = qse_awk_rtx_getarg(rtx, 1);
+		if (v->type == QSE_AWK_VAL_STR)
+		{
+			ret = setsavedir_byid (rtx, list, id, ((qse_awk_val_str_t*)v)->val.ptr);
+		}
+		else
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			ret = qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 1), &out);
+			if (ret <= -1) ret = -UCI_ERR_MEM;
+			else
+			{
+				ret = setsavedir_byid (rtx, list, id, out.u.cpldup.ptr);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			}
+		}
+
+	}
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else
+	{
+		qse_awk_val_t* v;
+
+		v = qse_awk_rtx_getarg(rtx, 1);
+		if (v->type == QSE_AWK_VAL_STR)
+		{
+			ret = getoption_byid (rtx, list, id, ((qse_awk_val_str_t*)v)->val.ptr, &retv);
+		}
+		else
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			ret = qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 1), &out);
+			if (ret <= -1) ret = -UCI_ERR_MEM;
+			else
+			{
+				ret = getoption_byid (rtx, list, id, out.u.cpldup.ptr, &retv);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			}
+		}
+	}
+
+	if (ret <= -1) 
+	{
+		list->errnum = ret;
+	}
+	else
+	{
+		qse_awk_rtx_setretval (rtx, retv);
+	}
+	return 0;
+}
+
+static int fnc_uci_getsection (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret >= 0)
+	{
+		qse_awk_val_t* v;
+
+		v = qse_awk_rtx_getarg(rtx, 1);
+		if (v->type == QSE_AWK_VAL_STR)
+		{
+			ret = getsection_byid (rtx, list, id, ((qse_awk_val_str_t*)v)->val.ptr, &retv);
+		}
+		else
+		{
+			qse_awk_rtx_valtostr_out_t out;
+			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+			ret = qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 1), &out);
+			if (ret <= -1) ret = -UCI_ERR_MEM;
+			else
+			{
+				ret = getsection_byid (rtx, list, id, out.u.cpldup.ptr, &retv);
+				qse_awk_rtx_freemem (rtx, out.u.cpldup.ptr);
+			}
+		}
+	}
+
+	if (ret <= -1)
+	{
+		list->errnum = ret;
+	}
+	else 
+	{
+		qse_awk_rtx_setretval (rtx, retv);
+	}
+	return 0;
 }
 
 static int fnc_uci_commit (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -229,6 +825,7 @@ static int fnc_uci_revert (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+/* ------------------------------------------------------------------------ */
 
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
@@ -239,13 +836,21 @@ struct fnctab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("close"),   { { 1, 1 }, fnc_uci_close } },
-	{ QSE_T("commit"),  { { 0, 0 }, fnc_uci_commit  } },
-	{ QSE_T("load"),    { { 1, 1 }, fnc_uci_load  } },
-	{ QSE_T("open"),    { { 0, 0 }, fnc_uci_open  } },
-	{ QSE_T("revert"),  { { 0, 0 }, fnc_uci_revert  } },
-	{ QSE_T("save"),    { { 0, 0 }, fnc_uci_save  } }
+	{ QSE_T("close"),       { { 1, 1 }, fnc_uci_close      } },
+	{ QSE_T("commit"),      { { 1, 1 }, fnc_uci_commit     } },
+	{ QSE_T("errno"),       { { 0, 0 }, fnc_uci_errno      } },
+	{ QSE_T("getoption"),   { { 2, 2 }, fnc_uci_getoption  } },
+	{ QSE_T("getsection"),  { { 2, 2 }, fnc_uci_getsection } },
+	{ QSE_T("load"),        { { 2, 2 }, fnc_uci_load       } },
+	{ QSE_T("open"),        { { 0, 0 }, fnc_uci_open       } },
+	{ QSE_T("revert"),      { { 1, 1 }, fnc_uci_revert     } },
+	{ QSE_T("save"),        { { 1, 1 }, fnc_uci_save       } },
+	{ QSE_T("setconfdir"),  { { 2, 2 }, fnc_uci_setconfdir } }, 
+	{ QSE_T("setsavedir"),  { { 2, 2 }, fnc_uci_setsavedir } }, 
+	{ QSE_T("unload"),      { { 1, 1 }, fnc_uci_unload     } }
 };
+
+/* ------------------------------------------------------------------------ */
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
@@ -282,7 +887,6 @@ static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 		qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 		return -1;
 	}
-qse_printf (QSE_T("initialized ... module... %p %p\n"), mod, mod->ctx);
 
 	return 0;
 }
@@ -292,7 +896,6 @@ static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 	qse_rbt_t* rbt;
 	qse_rbt_pair_t* pair;
 	
-qse_printf (QSE_T("fini ... module...%p\n"), mod);
 	rbt = (qse_rbt_t*)mod->ctx;
 
 	/* garbage clean-up */
@@ -321,7 +924,6 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 
 	rbt = (qse_rbt_t*)mod->ctx;
 
-qse_printf (QSE_T("unloaded ... module...%p\n"), mod);
 	QSE_ASSERT (QSE_RBT_SIZE(rbt) == 0);
 	qse_rbt_close (rbt);
 }
@@ -344,7 +946,6 @@ int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 	}
 	qse_rbt_setmancbs (rbt, qse_getrbtmancbs(QSE_RBT_MANCBS_INLINE_COPIERS));
 
-qse_printf (QSE_T("loaded ... module...%p\n"), mod);
 	mod->ctx = rbt;
 	return 0;
 }
