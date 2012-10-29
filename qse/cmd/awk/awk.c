@@ -105,8 +105,7 @@ struct arg_t
 struct gvmv_t
 {
 	int         idx;
-	qse_char_t* ptr;
-	qse_size_t  len;
+	qse_cstr_t  str;
 };
 
 static void dprint (const qse_char_t* fmt, ...)
@@ -285,7 +284,7 @@ static qse_htb_walk_t set_global (
 	qse_awk_rtx_t* rtx = (qse_awk_rtx_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	v = qse_awk_rtx_makenstrval (rtx, gvmv->ptr, gvmv->len);
+	v = qse_awk_rtx_makenstrvalwithcstr (rtx, &gvmv->str);
 	if (v == QSE_NULL) return QSE_HTB_WALK_STOP;
 
 	qse_awk_rtx_refupval (rtx, v);
@@ -302,7 +301,7 @@ static int apply_fs_and_gvm (qse_awk_rtx_t* rtx, struct arg_t* arg)
 		qse_awk_val_t* fs;
 
 		/* compose a string value to use to set FS to */
-		fs = qse_awk_rtx_makestrval0 (rtx, arg->fs);
+		fs = qse_awk_rtx_makestrvalwithstr (rtx, arg->fs);
 		if (fs == QSE_NULL) return -1;
 
 		/* change FS according to the command line argument */
@@ -666,8 +665,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				*eq = QSE_T('\0');
 
 				gvmv.idx = -1;
-				gvmv.ptr = ++eq;
-				gvmv.len = qse_strlen(eq);
+				gvmv.str.ptr = ++eq;
+				gvmv.str.len = qse_strlen(eq);
 
 				if (qse_htb_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
 				{

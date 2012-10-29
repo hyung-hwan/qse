@@ -1093,9 +1093,9 @@ static void fini_rtx (qse_awk_rtx_t* rtx, int fini_globals)
 	qse_htb_close (rtx->named);
 
 	/* destroy values in free list */
-	while (rtx->fcache_count > 0)
+	while (rtx->rcache_count > 0)
 	{
-		qse_awk_val_ref_t* tmp = rtx->fcache[--rtx->fcache_count];
+		qse_awk_val_ref_t* tmp = rtx->rcache[--rtx->rcache_count];
 		qse_awk_rtx_freeval (rtx, (qse_awk_val_t*)tmp, 0);
 	}
 
@@ -1240,7 +1240,7 @@ static int defaultify_globals (qse_awk_rtx_t* rtx)
 		}
 		else 
 		{
-			tmp = qse_awk_rtx_makestrval0 (rtx, gtab[i].str);
+			tmp = qse_awk_rtx_makestrvalwithstr (rtx, gtab[i].str);
 			if (tmp == QSE_NULL) return -1;
 		}
 		
@@ -1600,7 +1600,7 @@ qse_awk_val_t* qse_awk_rtx_callwithstrs (
 
 	for (i = 0; i < nargs; i++)
 	{
-		v[i] = qse_awk_rtx_makestrval0 (rtx, args[i]);
+		v[i] = qse_awk_rtx_makestrvalwithstr (rtx, args[i]);
 		if (v[i] == QSE_NULL)
 		{
 			ret = QSE_NULL;
@@ -3695,7 +3695,7 @@ static qse_awk_val_t* do_assignment_pos (
 		str = out.u.cpldup;
 	}
 	
-	n = qse_awk_rtx_setrec (run, (qse_size_t)lv, str.ptr, str.len);
+	n = qse_awk_rtx_setrec (run, (qse_size_t)lv, &str);
 
 	if (val->type != QSE_AWK_VAL_STR) QSE_AWK_FREE (run->awk, str.ptr);
 
@@ -6456,14 +6456,14 @@ read_console_again:
 		if (p->var == QSE_NULL)
 		{
 			/* set $0 with the input value */
-			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_PTR(buf), QSE_STR_LEN(buf));
+			x = qse_awk_rtx_setrec (rtx, 0, QSE_STR_CSTR(buf));
 			if (x <= -1) return QSE_NULL;
 		}
 		else
 		{
 			qse_awk_val_t* v;
 
-			v = qse_awk_rtx_makestrval (rtx, QSE_STR_PTR(buf), QSE_STR_LEN(buf));
+			v = qse_awk_rtx_makestrvalwithcstr (rtx, QSE_STR_CSTR(buf));
 			if (v == QSE_NULL)
 			{
 				ADJERR_LOC (rtx, &nde->loc);
@@ -6562,7 +6562,7 @@ read_again:
 		}
 	}
 
-	if (qse_awk_rtx_setrec (rtx, 0, QSE_STR_PTR(buf), QSE_STR_LEN(buf)) <= -1 ||
+	if (qse_awk_rtx_setrec (rtx, 0, QSE_STR_CSTR(buf)) <= -1 ||
 	    update_fnr (rtx, rtx->gbl.fnr + 1, rtx->gbl.nr + 1) <= -1) return -1;
 
 	return 1;
@@ -6644,8 +6644,7 @@ static int shorten_record (qse_awk_rtx_t* run, qse_size_t nflds)
 	if (ofs_free != QSE_NULL) QSE_AWK_FREE (run->awk, ofs_free);
 	if (nflds > 1) qse_awk_rtx_refdownval (run, v);
 
-	v = (qse_awk_val_t*) qse_awk_rtx_makestrval (
-		run, QSE_STR_PTR(&tmp), QSE_STR_LEN(&tmp));
+	v = (qse_awk_val_t*) qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_CSTR(&tmp));
 	if (v == QSE_NULL) 
 	{
 		qse_str_fini (&tmp);

@@ -1620,7 +1620,7 @@ static int build_argcv (
 	qse_awk_rtx_refupval (rtx, v_argv);
 
 	/* make ARGV[0] */
-	v_tmp = qse_awk_rtx_makestrval0 (rtx, id);
+	v_tmp = qse_awk_rtx_makestrvalwithstr (rtx, id);
 	if (v_tmp == QSE_NULL) 
 	{
 		qse_awk_rtx_refdownval (rtx, v_argv);
@@ -1652,7 +1652,7 @@ static int build_argcv (
 	{
 		for (argc = 1, p = icf; *p; p++, argc++) 
 		{
-			v_tmp = qse_awk_rtx_makestrval0 (rtx, *p);
+			v_tmp = qse_awk_rtx_makestrvalwithstr (rtx, *p);
 			if (v_tmp == QSE_NULL)
 			{
 				qse_awk_rtx_refdownval (rtx, v_argv);
@@ -1779,7 +1779,7 @@ static int __build_environ (
 			*eq = QSE_WT('=');
 		#endif
 
-			v_tmp = qse_awk_rtx_makestrval0 (rtx, vptr);
+			v_tmp = qse_awk_rtx_makestrvalwithstr (rtx, vptr);
 			if (v_tmp == QSE_NULL)
 			{
 		#if ((defined(QSE_ENV_CHAR_IS_MCHAR) && defined(QSE_CHAR_IS_MCHAR)) || \
@@ -2461,7 +2461,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
 	{
-		rv = qse_awk_rtx_makestrval0 (rtx, ioattr->cmgr_name);
+		rv = qse_awk_rtx_makestrvalwithstr (rtx, ioattr->cmgr_name);
 		if (rv == QSE_NULL)
 		{
 			ret = -1;

@@ -22,19 +22,17 @@
 
 static int split_record (qse_awk_rtx_t* run);
 static int recomp_record_fields (
-	qse_awk_rtx_t* run, qse_size_t lv, 
-	const qse_char_t* str, qse_size_t len);
+	qse_awk_rtx_t* run, qse_size_t lv, const qse_cstr_t* str);
 
 int qse_awk_rtx_setrec (
-	qse_awk_rtx_t* run, qse_size_t idx, 
-	const qse_char_t* str, qse_size_t len)
+	qse_awk_rtx_t* run, qse_size_t idx, const qse_cstr_t* str)
 {
 	qse_awk_val_t* v;
 
 	if (idx == 0)
 	{
-		if (str == QSE_STR_PTR(&run->inrec.line) &&
-		    len == QSE_STR_LEN(&run->inrec.line))
+		if (str->ptr == QSE_STR_PTR(&run->inrec.line) &&
+		    str->len == QSE_STR_LEN(&run->inrec.line))
 		{
 			if (qse_awk_rtx_clrrec (run, 1) == -1) return -1;
 		}
@@ -42,7 +40,7 @@ int qse_awk_rtx_setrec (
 		{
 			if (qse_awk_rtx_clrrec (run, 0) == -1) return -1;
 
-			if (qse_str_ncpy (&run->inrec.line, str, len) == (qse_size_t)-1)
+			if (qse_str_ncpy (&run->inrec.line, str->ptr, str->len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_clrrec (run, 0);
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
@@ -50,7 +48,7 @@ int qse_awk_rtx_setrec (
 			}
 		}
 
-		v = qse_awk_rtx_makenstrval (run, str, len);
+		v = qse_awk_rtx_makenstrvalwithcstr (run, str);
 
 		if (v == QSE_NULL)
 		{
@@ -72,16 +70,14 @@ int qse_awk_rtx_setrec (
 	}
 	else
 	{
-		if (recomp_record_fields (run, idx, str, len) == -1)
+		if (recomp_record_fields (run, idx, str) <= -1)
 		{
 			qse_awk_rtx_clrrec (run, 0);
 			return -1;
 		}
 	
 		/* recompose $0 */
-		v = qse_awk_rtx_makestrval (run,
-			QSE_STR_PTR(&run->inrec.line), 
-			QSE_STR_LEN(&run->inrec.line));
+		v = qse_awk_rtx_makestrvalwithcstr (run, QSE_STR_CSTR(&run->inrec.line));
 		if (v == QSE_NULL)
 		{
 			qse_awk_rtx_clrrec (run, 0);
@@ -328,14 +324,11 @@ static int split_record (qse_awk_rtx_t* rtx)
 
 		rtx->inrec.flds[rtx->inrec.nflds].ptr = tok.ptr;
 		rtx->inrec.flds[rtx->inrec.nflds].len = tok.len;
-
-		rtx->inrec.flds[rtx->inrec.nflds].val =
-			qse_awk_rtx_makenstrval (rtx, tok.ptr, tok.len);
+		rtx->inrec.flds[rtx->inrec.nflds].val = qse_awk_rtx_makenstrvalwithcstr (rtx, &tok);
 
 		if (rtx->inrec.flds[rtx->inrec.nflds].val == QSE_NULL)
 		{
-			if (fs_free != QSE_NULL) 
-				QSE_AWK_FREE (rtx->awk, fs_free);
+			if (fs_free) QSE_AWK_FREE (rtx->awk, fs_free);
 			return -1;
 		}
 
@@ -402,8 +395,7 @@ int qse_awk_rtx_clrrec (qse_awk_rtx_t* run, int skip_inrec_line)
 }
 
 static int recomp_record_fields (
-	qse_awk_rtx_t* run, qse_size_t lv, 
-	const qse_char_t* str, qse_size_t len)
+	qse_awk_rtx_t* run, qse_size_t lv, const qse_cstr_t* str)
 {
 	qse_awk_val_t* v;
 	qse_size_t max, i, nflds;
@@ -444,10 +436,7 @@ static int recomp_record_fields (
 	{
 		if (i > 0)
 		{
-			if (qse_str_ncat (
-				&run->inrec.line, 
-				run->gbl.ofs.ptr, 
-				run->gbl.ofs.len) == (qse_size_t)-1) 
+			if (qse_str_ncat (&run->inrec.line, run->gbl.ofs.ptr, run->gbl.ofs.len) == (qse_size_t)-1) 
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
@@ -461,16 +450,15 @@ static int recomp_record_fields (
 			run->inrec.flds[i].ptr = 
 				QSE_STR_PTR(&run->inrec.line) +
 				QSE_STR_LEN(&run->inrec.line);
-			run->inrec.flds[i].len = len;
+			run->inrec.flds[i].len = str->len;
 
-			if (qse_str_ncat (
-				&run->inrec.line, str, len) == (qse_size_t)-1)
+			if (qse_str_ncat (&run->inrec.line, str->ptr, str->len) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;
 			}
 
-			tmp = qse_awk_rtx_makestrval (run, str,len);
+			tmp = qse_awk_rtx_makestrvalwithcstr (run, str);
 			if (tmp == QSE_NULL) return -1;
 
 			if (i < nflds)
@@ -487,8 +475,7 @@ static int recomp_record_fields (
 				QSE_STR_LEN(&run->inrec.line);
 			run->inrec.flds[i].len = 0;
 
-			if (qse_str_cat (
-				&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
+			if (qse_str_cat (&run->inrec.line, QSE_T("")) == (qse_size_t)-1)
 			{
 				qse_awk_rtx_seterrnum (run, QSE_AWK_ENOMEM, QSE_NULL);
 				return -1;

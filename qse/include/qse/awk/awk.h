@@ -279,6 +279,31 @@ typedef struct qse_awk_val_map_itr_t qse_awk_val_map_itr_t;
 #define QSE_AWK_VAL_MAP_ITR_VAL(itr) \
 	((const qse_awk_val_t*)QSE_HTB_VPTR((itr)->pair))
 
+
+enum qse_awk_val_map_data_type_t
+{
+	QSE_AWK_VAL_MAP_DATA_INT  = 0,
+	QSE_AWK_VAL_MAP_DATA_FLT,
+	QSE_AWK_VAL_MAP_DATA_STR,
+	QSE_AWK_VAL_MAP_DATA_MBS,
+	QSE_AWK_VAL_MAP_DATA_WCS,
+	QSE_AWK_VAL_MAP_DATA_CSTR,
+	QSE_AWK_VAL_MAP_DATA_XSTR,
+	QSE_AWK_VAL_MAP_DATA_MCSTR,
+	QSE_AWK_VAL_MAP_DATA_MXSTR,
+	QSE_AWK_VAL_MAP_DATA_WCSTR,
+	QSE_AWK_VAL_MAP_DATA_WXSTR
+};
+typedef enum qse_awk_val_map_data_type_t qse_awk_val_map_data_type_t;
+
+struct qse_awk_val_map_data_t
+{
+	qse_cstr_t                   key;
+	qse_awk_val_map_data_type_t  type;
+	void*                        vptr;
+};
+typedef struct qse_awk_val_map_data_t qse_awk_val_map_data_t;
+
 /**
  * The qse_awk_nde_type_t defines the node types.
  */
@@ -2113,8 +2138,7 @@ int qse_awk_rtx_clrrec (
 int qse_awk_rtx_setrec (
 	qse_awk_rtx_t*    rtx, /**< runtime context */
 	qse_size_t        idx, /**< 0 for $0, N for $N */
-	const qse_char_t* str, /**< string pointer */
-	qse_size_t        len  /**< string length */
+	const qse_cstr_t* str  /**< string */
 );
 
 /**
@@ -2145,12 +2169,51 @@ qse_awk_val_t* qse_awk_rtx_makefltval (
 );
 
 /**
- * The qse_awk_rtx_makestrval0() function creates a string value.
+ * The qse_awk_rtx_makestrvalwithstr() function creates a string value.
  * @return value on success, QSE_NULL on failure
  */
-qse_awk_val_t* qse_awk_rtx_makestrval0 (
+qse_awk_val_t* qse_awk_rtx_makestrvalwithstr (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str
+);
+
+/**
+ * The qse_awk_rtx_makestrvalwithmbs() function creates a string value
+ * from a null-terminated multibyte string.
+ * @return value on success, QSE_NULL on failure
+ */
+qse_awk_val_t* qse_awk_rtx_makestrvalwithmbs (
+     qse_awk_rtx_t*     rtx,
+	const qse_mchar_t* mbs
+);
+
+/**
+ * The qse_awk_rtx_makestrvalwithwcs() function creates a string value
+ * from a null-terminated wide-character string.
+ * @return value on success, QSE_NULL on failure
+ */
+qse_awk_val_t* qse_awk_rtx_makestrvalwithwcs (
+     qse_awk_rtx_t*     rtx,
+	const qse_wchar_t* wcs
+);
+
+/**
+ * The qse_awk_rtx_makestrvalwithcstr() function creates a string value.
+ * @return value on success, QSE_NULL on failure
+ */
+qse_awk_val_t* qse_awk_rtx_makestrvalwithcstr (
+	qse_awk_rtx_t*    rtx,
+	const qse_cstr_t* str
+);
+
+qse_awk_val_t* qse_awk_rtx_makestrvalwithmcstr (
+	qse_awk_rtx_t*     rtx,
+	const qse_mcstr_t* mcstr
+);
+
+qse_awk_val_t* qse_awk_rtx_makestrvalwithwcstr (
+	qse_awk_rtx_t*     rtx,
+	const qse_wcstr_t* wcstr
 );
 
 /**
@@ -2161,18 +2224,6 @@ qse_awk_val_t* qse_awk_rtx_makestrval (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* str,
 	qse_size_t        len
-);
-
-/**
- * The qse_awk_rtx_makestrval_nodup() function creates a string value. 
- * The @a len character array pointed to by @a str is not duplicated. 
- * Instead the pointer and the lengh are just reused.
- * @return value on success, QSE_NULL on failure
- */
-qse_awk_val_t* qse_awk_rtx_makestrval_nodup (
-	qse_awk_rtx_t* rtx,
-	qse_char_t*    str,
-	qse_size_t     len
 );
 
 /**
@@ -2194,10 +2245,9 @@ qse_awk_val_t* qse_awk_rtx_makestrval2 (
  * is 1.
  * @return value on success, QSE_NULL on failure
  */
-qse_awk_val_t* qse_awk_rtx_makenstrval (
+qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (
 	qse_awk_rtx_t*    rtx,
-	const qse_char_t* str,
-	qse_size_t        len
+	const qse_cstr_t* str 
 );
 
 /**
@@ -2219,6 +2269,10 @@ qse_awk_val_t* qse_awk_rtx_makemapval (
 	qse_awk_rtx_t* rtx
 );
 
+qse_awk_val_t* qse_awk_rtx_makemapvalwithdata (
+	qse_awk_rtx_t*         rtx,
+	qse_awk_val_map_data_t data[]
+);
 
 /**
  * The qse_awk_rtx_setmapvalfld() function sets a field value in a map.

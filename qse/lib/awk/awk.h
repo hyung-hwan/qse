@@ -244,8 +244,8 @@ struct qse_awk_rtx_t
 	qse_size_t stack_limit;
 	int exit_level;
 
-	qse_awk_val_ref_t* fcache[128];
-	qse_size_t fcache_count;
+	qse_awk_val_ref_t* rcache[128];
+	qse_size_t rcache_count;
 
 #ifdef ENABLE_FEATURE_SCACHE
 	qse_awk_val_str_t* scache
