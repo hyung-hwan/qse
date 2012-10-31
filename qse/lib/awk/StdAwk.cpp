@@ -44,6 +44,7 @@
 	/* anything ? */
 #else
 #    include <unistd.h>
+#    include <ltdl.h>
 #endif
 
 #ifndef QSE_HAVE_CONFIG_H
@@ -1378,6 +1379,106 @@ StdAwk::flt_t StdAwk::sqrt (flt_t x)
 	return ::sqrtf (x);
 #else
 	#error ### no sqrt function available ###
+#endif
+}
+
+void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this - use LoadLibrary... */
+	this->setError (QSE_AWK_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+	this->setError (QSE_AWK_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+	this->setError (QSE_AWK_ENOIMPL);
+	return -1;
+#else
+
+	void* h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[5];
+	int count = 0;
+
+	if (dir && dir[0] != QSE_T('\0')) 
+	{
+		tmp[count++] = dir;
+		tmp[count++] = QSE_T("/");
+	}
+	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = name;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, this->getMmgr());
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, this->getMmgr());
+	#endif
+	if (!modpath)
+	{
+		this->setError (QSE_AWK_ENOMEM);
+		return QSE_NULL;
+	}
+
+	h = lt_dlopenext (modpath);
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+
+	return h;
+
+#endif
+}
+
+void StdAwk::modclose (void* handle)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this */
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+#else
+	lt_dlclose ((lt_dlhandle)handle);
+#endif
+}
+
+void* StdAwk::modsym (void* handle, const qse_char_t* name)
+{
+#if defined(_WIN32)
+	/*TODO: implemente this */
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+#else
+
+	void* s;
+	qse_mchar_t* mname;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	mname = name;
+	#else
+	mname = qse_wcstombsdup (name, QSE_NULL, this->getMmgr());
+	if (!mname)
+	{
+		this->setError (QSE_AWK_ENOMEM);
+		return QSE_NULL;
+	}
+	#endif
+
+	s = lt_dlsym ((lt_dlhandle)handle, mname);
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	/* nothing to do */
+	#else
+	QSE_MMGR_FREE (awk->mmgr, mname);
+	#endif
+
+	return s;
+
 #endif
 }
 

@@ -1093,6 +1093,9 @@ int Awk::open ()
 	prm.math.log10 = log10;
 	prm.math.exp = exp;
 	prm.math.sqrt = sqrt;
+	prm.modopen  = modopen;
+	prm.modclose = modclose;
+	prm.modsym  = modsym;
 
 	awk = qse_awk_open (this->getMmgr(), QSE_SIZEOF(xtn_t), &prm);
 	if (awk == QSE_NULL)
@@ -2009,6 +2012,23 @@ Awk::flt_t Awk::sqrt (awk_t* awk, flt_t x)
 	return xtn->awk->sqrt (x);
 }
 
+void* Awk::modopen (awk_t* awk, const char_t* dir, const char_t* name)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->modopen (dir, name);
+}
+
+void Awk::modclose (awk_t* awk, void* handle)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	xtn->awk->modclose (handle);
+}
+
+void* Awk::modsym (awk_t* awk, void* handle, const char_t* name)
+{
+	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
+	return xtn->awk->modsym (handle, name);
+}
 /////////////////////////////////
 QSE_END_NAMESPACE(QSE)
 /////////////////////////////////

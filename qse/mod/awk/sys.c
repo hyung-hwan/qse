@@ -46,6 +46,34 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid;
+	qse_awk_val_t* retv;
+
+#if defined(_WIN32)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__OS2__)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	pid = -1;
+
+#else
+	pid = getpid ();
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, pid);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
 static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_long_t pid;
@@ -77,6 +105,35 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
 }
+
+static int fnc_getppid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid;
+	qse_awk_val_t* retv;
+
+#if defined(_WIN32)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__OS2__)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	pid = -1;
+
+#else
+	pid = getppid ();
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, pid);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
 
 static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -159,6 +216,8 @@ struct inttab_t
 static fnctab_t fnctab[] =
 {
 	{ QSE_T("fork"),    { { 0, 0 }, fnc_fork  } },
+	{ QSE_T("getpid"),  { { 0, 0 }, fnc_getpid  } },
+	{ QSE_T("getppid"), { { 0, 0 }, fnc_getppid  } },
 	{ QSE_T("kill"),    { { 2, 2 }, fnc_kill  } },
 	{ QSE_T("sleep"),   { { 1, 1 }, fnc_sleep } },
 	{ QSE_T("wait"),    { { 1, 1 }, fnc_wait  } }
