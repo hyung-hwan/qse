@@ -94,6 +94,8 @@ struct arg_t
 	qse_cmgr_t*  script_cmgr;
 	qse_cmgr_t*  console_cmgr;
 
+	unsigned int modern: 1;
+	unsigned int classic: 1;
 	int          opton;
 	int          optoff;
 	qse_ulong_t  memlimit;
@@ -380,7 +382,7 @@ struct opttab_t
 } opttab[] =
 {
 	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("explicit"),     QSE_AWK_EXPLICIT,       QSE_T("allow declared variables(local,global)") },
+	{ QSE_T("explicit"),     QSE_AWK_EXPLICIT,       QSE_T("enable local,global for variable declaration") },
 	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable abort,reset,nextofile,OFILENAME,@include") },
 	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
@@ -426,6 +428,8 @@ static void print_usage (QSE_FILE* out, const qse_char_t* argv0)
 	qse_fprintf (out, QSE_T(" --script-encoding    string       specify script file encoding name\n"));
 	qse_fprintf (out, QSE_T(" --console-encoding   string       specify console encoding name\n"));
 #endif
+	qse_fprintf (out, QSE_T(" --modern                          run in the modern mode(default)\n"));
+	qse_fprintf (out, QSE_T(" --classic                         run in the classic mode\n"));
 
 	for (j = 0; opttab[j].name; j++)
 	{
@@ -519,6 +523,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 {
 	static qse_opt_lng_t lng[] = 
 	{
+
 		{ QSE_T(":implicit"),        QSE_T('\0') },
 		{ QSE_T(":explicit"),        QSE_T('\0') },
 		{ QSE_T(":extrakws"),        QSE_T('\0') },
@@ -545,6 +550,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 		{ QSE_T(":script-encoding"),  QSE_T('\0') },
 		{ QSE_T(":console-encoding"), QSE_T('\0') },
+
+		{ QSE_T("modern"),           QSE_T('\0') },
+		{ QSE_T("classic"),          QSE_T('\0') },
 
 		{ QSE_T("version"),          QSE_T('\0') },
 		{ QSE_T("help"),             QSE_T('h') },
@@ -727,25 +735,35 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 						goto oops;
 					}
 				}
-
-				for (i = 0; opttab[i].name; i++)
+				else if (qse_strcmp(opt.lngopt, QSE_T("modern")) == 0)
 				{
-					if (qse_strcmp (opt.lngopt, opttab[i].name) == 0)
-					{
-						if (qse_strcmp (opt.arg, QSE_T("off")) == 0)
-							arg->optoff |= opttab[i].opt;
-						else if (qse_strcmp (opt.arg, QSE_T("on")) == 0)
-							arg->opton |= opttab[i].opt;
-						else
-						{
-							print_error (QSE_T("invalid value '%s' for '%s' - use 'on' or 'off'\n"), opt.arg, opt.lngopt);
-							oops_ret = 3;
-							goto oops;
-						}
-						break;
-					}
+					arg->modern = 1;
 				}
+				else if (qse_strcmp(opt.lngopt, QSE_T("classic")) == 0)
+				{
+					arg->classic = 1;
+				}
+				else
+				{
+					for (i = 0; opttab[i].name; i++)
+					{
+						if (qse_strcmp (opt.lngopt, opttab[i].name) == 0)
+						{
+							if (qse_strcmp (opt.arg, QSE_T("off")) == 0)
+								arg->optoff |= opttab[i].opt;
+							else if (qse_strcmp (opt.arg, QSE_T("on")) == 0)
+								arg->opton |= opttab[i].opt;
+							else
+							{
+								print_error (QSE_T("invalid value '%s' for '%s' - use 'on' or 'off'\n"), opt.arg, opt.lngopt);
+								oops_ret = 3;
+								goto oops;
+							}
+							break;
+						}
+					}
 
+				}
 				break;
 			}
 			
@@ -1010,7 +1028,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 
-	qse_awk_getopt (awk, QSE_AWK_TRAIT, &i);
+	if (arg.modern) i = QSE_AWK_MODERN;
+	else if (arg.classic) i = QSE_AWK_CLASSIC;
+	else qse_awk_getopt (awk, QSE_AWK_TRAIT, &i);
 	if (arg.opton) i |= arg.opton;
 	if (arg.optoff) i &= ~arg.optoff;
 	qse_awk_setopt (awk, QSE_AWK_TRAIT, &i);

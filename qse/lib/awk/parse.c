@@ -5206,6 +5206,7 @@ static qse_awk_nde_t* parse_fncall (
 	qse_awk_loc_t eloc;
 
 	head = curr = QSE_NULL;
+	call = QSE_NULL;
 	nargs = 0;
 
 	if (noarg) goto make_node;
@@ -5277,6 +5278,17 @@ make_node:
 
 		call->args = head;
 		call->nargs = nargs;
+
+		if (nargs > call->u.fnc.arg.max)
+		{
+	          SETERR_LOC (awk, QSE_AWK_EARGTM, xloc);
+			goto oops;
+		}
+		else if (nargs < call->u.fnc.arg.min)
+		{
+	          SETERR_LOC (awk, QSE_AWK_EARGTF, xloc);
+			goto oops;
+		}
 	}
 	else
 	{
@@ -5293,7 +5305,6 @@ make_node:
 			awk->parse.funs, name->ptr, name->len, call, 0) == QSE_NULL)
 		{
 			SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
-			QSE_AWK_FREE (awk, call);
 			goto oops;
 		}
 	}
@@ -5301,6 +5312,7 @@ make_node:
 	return (qse_awk_nde_t*)call;
 
 oops:
+	if (call) QSE_AWK_FREE (awk, call);
 	if (head) qse_awk_clrpt (awk, head);
 	return QSE_NULL;
 }
