@@ -298,31 +298,11 @@ struct qse_awk_rtx_t
 		qse_long_t nr;
 		qse_long_t fnr;
 
-		struct 
-		{
-			qse_char_t* ptr;
-			qse_size_t len;
-		} convfmt;
-		struct
-		{
-			qse_char_t* ptr;
-			qse_size_t len;
-		} ofmt;
-		struct
-		{
-			qse_char_t* ptr;
-			qse_size_t len;
-		} ofs;
-		struct
-		{
-			qse_char_t* ptr;
-			qse_size_t len;
-		} ors;
-		struct
-		{
-			qse_char_t* ptr;
-			qse_size_t len;
-		} subsep;
+		qse_xstr_t convfmt;
+		qse_xstr_t ofmt;
+		qse_xstr_t ofs;
+		qse_xstr_t ors;
+		qse_xstr_t subsep;
 	} gbl;
 
 	/* rio chain */

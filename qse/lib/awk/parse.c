@@ -4948,6 +4948,7 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 	if (mod == QSE_NULL)
 	{
 		if (ISNOERR(awk)) SETERR_LOC (awk, QSE_AWK_ENOSUP, xloc);
+		else ADJERR_LOC (awk, xloc);
 	}
 	else
 	{

@@ -245,7 +245,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		name = qse_awk_rtx_valtocpldup (rtx, a0, &len);
+		name = qse_awk_rtx_valtostrdup (rtx, a0, &len);
 		if (name == QSE_NULL) return -1;
 	}
 
@@ -258,7 +258,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			opt = qse_awk_rtx_valtocpldup (rtx, a1, &optlen);
+			opt = qse_awk_rtx_valtostrdup (rtx, a1, &optlen);
 			if (opt == QSE_NULL) 
 			{
 				if (a1->type != QSE_AWK_VAL_STR)
@@ -386,7 +386,7 @@ static int fnc_fflush (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			str0 = qse_awk_rtx_valtocpldup (run, a0, &len0);
+			str0 = qse_awk_rtx_valtostrdup (run, a0, &len0);
 			if (str0 == QSE_NULL) return -1;
 		}
 
@@ -462,7 +462,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		str0 = qse_awk_rtx_valtocpldup (rtx, a0, &len0);
+		str0 = qse_awk_rtx_valtostrdup (rtx, a0, &len0);
 		if (str0 == QSE_NULL) return -1;
 	}
 
@@ -473,7 +473,7 @@ static int fnc_index (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		str1 = qse_awk_rtx_valtocpldup (rtx, a1, &len1);
+		str1 = qse_awk_rtx_valtostrdup (rtx, a1, &len1);
 		if (str1 == QSE_NULL)
 		{
 			if (a0->type != QSE_AWK_VAL_STR) 
@@ -526,7 +526,7 @@ static int fnc_length (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			str = qse_awk_rtx_valtocpldup (rtx, v, &len);
+			str = qse_awk_rtx_valtostrdup (rtx, v, &len);
 			if (str == QSE_NULL) return -1;
 			QSE_AWK_FREE (rtx->awk, str);
 		}
@@ -562,7 +562,7 @@ static int fnc_substr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else 
 	{
-		str = qse_awk_rtx_valtocpldup (rtx, a0, &len);
+		str = qse_awk_rtx_valtostrdup (rtx, a0, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -667,7 +667,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	}
 	else 
 	{
-		str.ptr = qse_awk_rtx_valtocpldup (run, a0, &str.len);
+		str.ptr = qse_awk_rtx_valtostrdup (run, a0, &str.len);
 		if (str.ptr == QSE_NULL) return -1;
 		str_free = (qse_char_t*)str.ptr;
 	}
@@ -688,7 +688,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			fs.ptr = qse_awk_rtx_valtocpldup (run, t1, &fs.len);
+			fs.ptr = qse_awk_rtx_valtostrdup (run, t1, &fs.len);
 			if (fs.ptr == QSE_NULL) goto oops;
 			fs_free = (qse_char_t*)fs.ptr;
 		}
@@ -714,7 +714,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			fs.ptr = qse_awk_rtx_valtocpldup (run, a2, &fs.len);
+			fs.ptr = qse_awk_rtx_valtostrdup (run, a2, &fs.len);
 			if (fs.ptr == QSE_NULL) goto oops;
 			fs_free = (qse_char_t*)fs.ptr;
 		}
@@ -831,7 +831,7 @@ static int fnc_tolower (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	}
 	else 
 	{
-		str.ptr = qse_awk_rtx_valtocpldup (run, a0, &str.len);
+		str.ptr = qse_awk_rtx_valtostrdup (run, a0, &str.len);
 		if (str.ptr == QSE_NULL) return -1;
 	}
 
@@ -868,7 +868,7 @@ static int fnc_toupper (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	}
 	else 
 	{
-		str.ptr = qse_awk_rtx_valtocpldup (run, a0, &str.len);
+		str.ptr = qse_awk_rtx_valtostrdup (run, a0, &str.len);
 		if (str.ptr == QSE_NULL) return -1;
 	}
 
@@ -928,7 +928,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 	else
 	{
-		s0.ptr = qse_awk_rtx_valtocpldup (run, a0, &s0.len);
+		s0.ptr = qse_awk_rtx_valtostrdup (run, a0, &s0.len);
 		if (s0.ptr == QSE_NULL) goto oops;
 		s0_free = (qse_char_t*)s0.ptr;
 	}
@@ -940,7 +940,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 	}
 	else
 	{
-		s1.ptr = qse_awk_rtx_valtocpldup (run, a1, &s1.len);
+		s1.ptr = qse_awk_rtx_valtostrdup (run, a1, &s1.len);
 		if (s1.ptr == QSE_NULL) goto oops;
 		s1_free = (qse_char_t*)s1.ptr;
 	}
@@ -990,7 +990,7 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 		}
 		else
 		{
-			s2.ptr = qse_awk_rtx_valtocpldup (run, *a2_ref, &s2.len);
+			s2.ptr = qse_awk_rtx_valtostrdup (run, *a2_ref, &s2.len);
 			if (s2.ptr == QSE_NULL) goto oops;
 			s2_free = (qse_char_t*)s2.ptr;
 		}
@@ -1241,7 +1241,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		str0 = qse_awk_rtx_valtocpldup (rtx, a0, &len0);
+		str0 = qse_awk_rtx_valtostrdup (rtx, a0, &len0);
 		if (str0 == QSE_NULL) return -1;
 	}
 
@@ -1260,7 +1260,7 @@ static int fnc_match (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			str1 = qse_awk_rtx_valtocpldup (rtx, a1, &len1);
+			str1 = qse_awk_rtx_valtostrdup (rtx, a1, &len1);
 			if (str1 == QSE_NULL)
 			{
 				if (a0->type != QSE_AWK_VAL_STR) 
@@ -1379,7 +1379,7 @@ static int fnc_sprintf (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		cs0.ptr = qse_awk_rtx_valtocpldup (run, a0, &cs0.len);
+		cs0.ptr = qse_awk_rtx_valtostrdup (run, a0, &cs0.len);
 		if (cs0.ptr == QSE_NULL) goto oops;
 	}
 

@@ -103,7 +103,7 @@ int main ()
 			ret = -1; goto oops;
 		}
 
-		str = qse_awk_rtx_valtocpldup (rtx, v, &len);
+		str = qse_awk_rtx_valtostrdup (rtx, v, &len);
 		if (str == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 

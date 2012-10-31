@@ -105,7 +105,7 @@ int main ()
 	{
 		qse_awk_val_t* v, * fv;
 
-		fv = qse_awk_rtx_makestrval0 (rtx, xxx[i].vptr);
+		fv = qse_awk_rtx_makestrvalwithstr (rtx, xxx[i].vptr);
 		if (fv == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 
@@ -143,7 +143,7 @@ int main ()
 		{
 			qse_xstr_t str;
 
-			str.ptr = qse_awk_rtx_valtocpldup (
+			str.ptr = qse_awk_rtx_valtostrdup (
 				rtx, QSE_AWK_VAL_MAP_ITR_VAL(iptr), &str.len);
 			if (str.ptr == QSE_NULL)
 			{
@@ -166,7 +166,7 @@ int main ()
 	{
 		qse_xstr_t str;
 
-		str.ptr = qse_awk_rtx_valtocpldup (rtx, rtv, &str.len);
+		str.ptr = qse_awk_rtx_valtostrdup (rtx, rtv, &str.len);
 		if (str.ptr == QSE_NULL)
 		{
 			qse_fprintf (QSE_STDERR, QSE_T("error: %s\n"), 

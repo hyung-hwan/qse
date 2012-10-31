@@ -245,7 +245,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithmcstr (
 	return qse_awk_rtx_makestrvalwithcstr (rtx, mcstr);
 #else
 	qse_awk_val_t* v;
-	qse_wcstr_t tmp;
+	qse_wxstr_t tmp;
 	qse_size_t mbslen;
 
 	mbslen = mcstr->len;
@@ -267,7 +267,7 @@ qse_awk_val_t* qse_awk_rtx_makestrvalwithwcstr (
 {
 #if defined(QSE_CHAR_IS_MCHAR)
 	qse_awk_val_t* v;
-	qse_mcstr_t tmp;
+	qse_mxstr_t tmp;
 	qse_size_t wcslen;
 
 	wcslen = wcstr->len;
@@ -1266,7 +1266,7 @@ int qse_awk_rtx_valtostr (
 	return -1;
 }
 
-qse_char_t* qse_awk_rtx_valtocpldup (
+qse_char_t* qse_awk_rtx_valtostrdup (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
 {
 	qse_awk_rtx_valtostr_out_t out;
@@ -1274,8 +1274,56 @@ qse_char_t* qse_awk_rtx_valtocpldup (
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
 
-	*len = out.u.cpldup.len;
+	if (len) *len = out.u.cpldup.len;
 	return out.u.cpldup.ptr;
+}
+
+qse_mchar_t* qse_awk_rtx_valtombsdup (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_awk_rtx_valtostr_out_t out;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+
+	if (len) *len = out.u.cpldup.len;
+	return out.u.cpldup.ptr;
+#else
+	qse_awk_rtx_valtostr_out_t out;
+	qse_mchar_t* mbs;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+
+	mbs = qse_wcsntombsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
+	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	return mbs;
+#endif
+}
+
+qse_wchar_t* qse_awk_rtx_valtowcsdup (
+	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_size_t* len)
+{
+#if defined(QSE_CHAR_IS_MCHAR)
+	qse_awk_rtx_valtostr_out_t out;
+	qse_wchar_t* wcs;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+
+	wcs = qse_mbsntombsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
+	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
+	return wcs;
+#else
+	qse_awk_rtx_valtostr_out_t out;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
+	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
+
+	if (len) *len = out.u.cpldup.len;
+	return out.u.cpldup.ptr;
+#endif
 }
 
 int qse_awk_rtx_valtonum (
