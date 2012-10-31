@@ -36,6 +36,8 @@
 #	include <unistd.h>
 #	include <signal.h>
 #	include <errno.h>
+#	include <ltdl.h>
+#	define USE_LTDL
 #endif
 
 /* these three definitions for doxygen cross-reference */
@@ -468,7 +470,15 @@ int qse_main (int argc, qse_achar_t* argv[])
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
+#if defined(USE_LTDL)
+	lt_dlinit ();
+#endif
+
 	ret = qse_runmain (argc, argv, awk_main);
+
+#if defined(USE_LTDL)
+	lt_dlexit ();
+#endif
 
 #if defined(_WIN32)
 	WSACleanup ();

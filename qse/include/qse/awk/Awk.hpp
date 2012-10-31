@@ -1224,6 +1224,10 @@ protected:
 	virtual flt_t exp (flt_t x) = 0;
 	virtual flt_t sqrt (flt_t x) = 0;
 
+	virtual void* modopen (const char_t* dir, const char_t* name) = 0;
+	virtual void  modclose (void* handle) = 0;
+	virtual void* modsym (void* handle, const char_t* name) = 0;
+
 	// static glue members for various handlers
 	static ssize_t readSource (
 		awk_t* awk, sio_cmd_t cmd, sio_arg_t* arg,
@@ -1245,19 +1249,23 @@ protected:
 	static int functionHandler (rtx_t* rtx, const fnc_info_t* fi);
 
 
-	static int   sprintf (awk_t* data, char_t* buf, size_t size,
+	static int   sprintf (awk_t* awk, char_t* buf, size_t size,
 	                      const char_t* fmt, ...);
-	static flt_t pow     (awk_t* data, flt_t x, flt_t y);
-	static flt_t mod     (awk_t* data, flt_t x, flt_t y);
-	static flt_t sin     (awk_t* data, flt_t x);
-	static flt_t cos     (awk_t* data, flt_t x);
-	static flt_t tan     (awk_t* data, flt_t x);
-	static flt_t atan    (awk_t* data, flt_t x);
-	static flt_t atan2   (awk_t* data, flt_t x, flt_t y);
-	static flt_t log     (awk_t* data, flt_t x);
-	static flt_t log10   (awk_t* data, flt_t x);
-	static flt_t exp     (awk_t* data, flt_t x);
-	static flt_t sqrt    (awk_t* data, flt_t x);
+	static flt_t pow     (awk_t* awk, flt_t x, flt_t y);
+	static flt_t mod     (awk_t* awk, flt_t x, flt_t y);
+	static flt_t sin     (awk_t* awk, flt_t x);
+	static flt_t cos     (awk_t* awk, flt_t x);
+	static flt_t tan     (awk_t* awk, flt_t x);
+	static flt_t atan    (awk_t* awk, flt_t x);
+	static flt_t atan2   (awk_t* awk, flt_t x, flt_t y);
+	static flt_t log     (awk_t* awk, flt_t x);
+	static flt_t log10   (awk_t* awk, flt_t x);
+	static flt_t exp     (awk_t* awk, flt_t x);
+	static flt_t sqrt    (awk_t* awk, flt_t x);
+
+	static void* modopen  (awk_t* awk, const char_t* dir, const char_t* name);
+	static void  modclose (awk_t* awk, void* handle);
+	static void* modsym   (awk_t* awk, void* handle, const char_t* name);
 
 protected:
 	awk_t* awk;

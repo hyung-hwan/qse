@@ -200,6 +200,10 @@ protected:
 	flt_t exp (flt_t x);
 	flt_t sqrt (flt_t x);
 
+     void* modopen (const char_t* dir, const char_t* name);
+     void  modclose (void* handle);
+     void* modsym (void* handle, const char_t* name);
+
 protected:
 	qse_long_t seed; 
 	qse_ulong_t prand;

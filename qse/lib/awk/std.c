@@ -345,6 +345,11 @@ static void* custom_awk_modopen (
 	#else
 	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
 	#endif
+	if (!modpath)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
 
 	h = lt_dlopenext (modpath);
 
@@ -2539,136 +2544,3 @@ static int add_functions (qse_awk_t* awk)
 	return 0;
 }
 
-#if 0
-
-static int query_module (
-	qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
-{
-	const qse_char_t* dc;
-	xtn_t* xtn;
-	qse_rbt_pair_t* pair;
-	qse_size_t namelen;
-	mod_data_t md;
-	qse_cstr_t ea;
-
-	xtn = (xtn_t*)QSE_XTN(awk);
-
-	/* TODO: support module calls with deeper levels ... */
-	dc = qse_strstr (name, QSE_T("::"));
-	QSE_ASSERT (dc != QSE_NULL);
-
-	namelen = dc - name;
-
-#if defined(_WIN32)
-	/*TODO: implemente this */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#elif defined(__OS2__)
-	/*TODO: implemente this */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#elif defined(__DOS__)
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#else
-
-	pair = qse_rbt_search (&xtn->modtab, name, namelen);
-	if (pair)
-	{
-		md = *(mod_data_t*)QSE_RBT_VPTR(pair);
-	}
-	else
-	{
-		qse_mchar_t* modpath;
-		qse_awk_modstd_load_t load;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-		qse_mcstr_t tmp[5] = 
-		{
-			{ QSE_WT(""),    0 },
-			{ QSE_WT("/"),   0 },
-			{ QSE_MT("lib"), 3 },
-			{ QSE_NULL,      0 },
-			{ QSE_NULL,      0 }
-		};
-	#else
-		qse_wcstr_t tmp[5] = 
-		{
-			{ QSE_WT(""),    0 },
-			{ QSE_WT("/"),   0 },
-			{ QSE_WT("lib"), 3 },
-			{ QSE_NULL,      0 },
-			{ QSE_NULL,      0 }
-		};
-	#endif
-
-		if (xtn->opt.moddir.len > 0)
-		{
-			tmp[0].ptr = xtn->opt.moddir.ptr;
-			tmp[0].len = xtn->opt.moddir.len; 
-			tmp[1].len = 1;
-		}
-	#if defined(DEFAULT_MODDIR)
-		else
-		{
-			tmp[0].ptr = QSE_T(DEFAULT_MODDIR);
-			tmp[0].len = qse_strlen(tmp[0].ptr);
-			tmp[1].len = 1;
-		}
-	#endif
-
-		tmp[3].ptr = name;
-		tmp[3].len = namelen;
-
-	#if defined(QSE_CHAR_IS_MCHAR)
-		modpath = qse_mcstradup (tmp, QSE_NULL, awk->mmgr);
-	#else
-		modpath = qse_wcsnatombsdup (tmp, QSE_NULL, awk->mmgr);
-	#endif
-		if (!modpath)
-		{
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
-		}
-
-		md.dh = lt_dlopenext (modpath);
-		QSE_MMGR_FREE (awk->mmgr, modpath);
-		if (!md.dh) 
-		{
-			ea.ptr = name;
-			ea.len = namelen;
-			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-			return -1;
-		}
-
-		load = lt_dlsym (md.dh, QSE_MT("load"));
-		if (!load)
-		{
-			lt_dlclose (md.dh);
-
-			ea.ptr = QSE_T("load");
-			ea.len = 4;
-			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-			return -1;
-		}
-
-		if (load (&md.modstd, awk) <= -1)
-		{
-			lt_dlclose (md.dh);
-			return -1;		
-		}
-
-		if (qse_rbt_insert (&xtn->modtab, (void*)name, namelen, &md, QSE_SIZEOF(md)) == QSE_NULL)
-		{
-			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-			lt_dlclose (md.dh);
-			return -1;
-		}
-	}
-
-	return md.modstd.query (&md.modstd, awk, dc + 2, sym);
-#endif
-}
-
-
-#endif

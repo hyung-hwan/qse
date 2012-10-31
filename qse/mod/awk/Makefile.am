@@ -13,10 +13,17 @@ libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../l
 libawksys_la_LIBADD = -lqseawk -lqsecmn 
 
 if HAVE_LIBUCI
-
 mod_LTLIBRARIES += libawkuci.la
 libawkuci_la_SOURCES = uci.c
 libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
 libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
+endif
 
+
+if HAVE_C_MPI
+mod_LTLIBRARIES += libawkmpi.la
+libawkmpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+libawkmpi_la_SOURCES = mpi.c
+libawkmpi_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined  $(MPI_CLDFLAGS)
+libawkmpi_la_LIBADD = -lqseawk -lqsecmn 
 endif
