@@ -209,7 +209,7 @@ qse_awk_t* qse_awk_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_awk_prm_t* pr
 	qse_lda_setscale (awk->parse.params, QSE_SIZEOF(qse_char_t));
 	qse_lda_setcopier (awk->parse.params, QSE_LDA_COPIER_INLINE);
 
-	awk->opt.trait = QSE_AWK_CLASSIC;
+	awk->opt.trait = QSE_AWK_MODERN;
 #if defined(__OS2__) || defined(_WIN32) || defined(__DOS__)
 	awk->opt.trait |= QSE_AWK_CRLF;
 #endif

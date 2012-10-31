@@ -5512,9 +5512,16 @@ static qse_awk_val_t* eval_cnd (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 {
+	/* intrinsic function */
+
 	qse_awk_nde_fncall_t* call = (qse_awk_nde_fncall_t*)nde;
 
-	/* intrinsic function */
+	/* the parser must make sure taht the number of arguments 
+	 * is proper */ 
+	QSE_ASSERT (call->nargs >= call->u.fnc.arg.min && 
+	           call->nargs <= call->u.fnc.arg.max); 
+
+#if 0
 	if (call->nargs < call->u.fnc.arg.min)
 	{
 		SETERR_LOC (run, QSE_AWK_EARGTF, &nde->loc);
@@ -5526,6 +5533,7 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		SETERR_LOC (run, QSE_AWK_EARGTM, &nde->loc);
 		return QSE_NULL;
 	}
+#endif
 
 	return eval_call (run, nde, call->u.fnc.arg.spec, QSE_NULL, QSE_NULL, QSE_NULL);
 }

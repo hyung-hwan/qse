@@ -1022,11 +1022,6 @@ enum qse_awk_trait_t
 	QSE_AWK_STRICTNAMING = (1 << 15),
 
 	/**
-	 * supports file inclusion by enabling a keyword 'include'
-	 */
-	QSE_AWK_INCLUDE = (1 << 16),
-
-	/**
 	 * makes AWK more fault-tolerant.
 	 * - prevents termination due to print and printf failure.
 	 * - achieves this by handling print and printf as if
@@ -1043,10 +1038,14 @@ enum qse_awk_trait_t
 	 * makes #qse_awk_t to behave compatibly with classical AWK
 	 * implementations
 	 */
-	QSE_AWK_CLASSIC  = 
+	QSE_AWK_CLASSIC = 
 		QSE_AWK_IMPLICIT | QSE_AWK_RIO | 
 		QSE_AWK_NEWLINE | QSE_AWK_BLANKCONCAT | QSE_AWK_PABLOCK | 
-		QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING
+		QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING,
+
+	QSE_AWK_MODERN =
+		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_MAPTOVAR |
+		QSE_AWK_RWPIPE | QSE_AWK_REXBOUND | QSE_AWK_TOLERANT
 };
 
 /* ------------------------------------------------------------------------ */
