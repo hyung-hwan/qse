@@ -13,64 +13,99 @@
 #	include <dos.h>
 #else
 #	include <unistd.h>
+#	include <signal.h>
 #	include <sys/wait.h>
 #	include <errno.h>
 #endif
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-#if defined(_WIN32)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-	
-#elif defined(__OS2__)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-	
-#elif defined(__DOS__)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-
-#else
-	pid_t pid;
+	qse_long_t pid;
 	qse_awk_val_t* retv;
 
+#if defined(_WIN32)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__OS2__)
+	/* TOOD: implement this*/
+	pid = -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	pid = -1;
+
+#else
 	pid = fork ();
+#endif
+
 	retv = qse_awk_rtx_makeintval (rtx, pid);
 	if (retv == QSE_NULL) return -1;
+
 	qse_awk_rtx_setretval (rtx, retv);
 	return 0;
-#endif
 }
 
 static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t lv;
+	qse_long_t pid;
 	qse_awk_val_t* retv;
-	int n;
+	int rx;
 
 /* TODO: handle more parameters */
 
-	n = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &lv);
-	if (n <= -1) return -1;
-
+	rx = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid);
+	if (rx >= 0)
+	{
 #if defined(_WIN32)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-	
+		/* TOOD: implement this*/
+		rx = -1;
 #elif defined(__OS2__)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-	
+		/* TOOD: implement this*/
+		rx = -1;
 #elif defined(__DOS__)
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-
+		/* TOOD: implement this*/
+		rx = -1;
 #else
-	n = waitpid (lv, QSE_NULL, 0);
+		rx = waitpid (pid, QSE_NULL, 0);
 #endif
+	}
 
-	retv = qse_awk_rtx_makeintval (rtx, n);
+	retv = qse_awk_rtx_makeintval (rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid, sig;
+	qse_awk_val_t* retv;
+	int rx;
+
+	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
+	{
+		rx = -1;
+	}
+	else
+	{
+#if defined(_WIN32)
+		/* TOOD: implement this*/
+		rx = -1;
+#elif defined(__OS2__)
+		/* TOOD: implement this*/
+		rx = -1;
+#elif defined(__DOS__)
+		/* TOOD: implement this*/
+		rx = -1;
+#else
+		rx = kill (pid, sig);
+#endif
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -81,25 +116,26 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_long_t lv;
 	qse_awk_val_t* retv;
-	int n;
+	int rx;
 
-	n = qse_awk_rtx_valtolong (
+	rx = qse_awk_rtx_valtolong (
 		rtx, qse_awk_rtx_getarg (rtx, 0), &lv);
-	if (n <= -1) return -1;
-
+	if (rx >= 0)
+	{
 #if defined(_WIN32)
-	Sleep ((DWORD)(lv * 1000));
-	n = 0;
+		Sleep ((DWORD)(lv * 1000));
+		rx = 0;
 #elif defined(__OS2__)
-	DosSleep ((ULONG)(lv * 1000));
-	n = 0;
+		DosSleep ((ULONG)(lv * 1000));
+		rx = 0;
 #elif defined(__DOS__)
-	n = sleep (lv);	
+		rx = sleep (lv);	
 #else
-	n = sleep (lv);	
+		rx = sleep (lv);	
 #endif
+	}
 
-	retv = qse_awk_rtx_makeintval (rtx, n);
+	retv = qse_awk_rtx_makeintval (rtx, rx);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -122,14 +158,51 @@ struct inttab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("fork"),    { { 0, 0 }, fnc_fork } },
-	{ QSE_T("sleep"),   { { 1, 1 }, fnc_sleep  } },
+	{ QSE_T("fork"),    { { 0, 0 }, fnc_fork  } },
+	{ QSE_T("kill"),    { { 2, 2 }, fnc_kill  } },
+	{ QSE_T("sleep"),   { { 1, 1 }, fnc_sleep } },
 	{ QSE_T("wait"),    { { 1, 1 }, fnc_wait  } }
 };
 
+#if !defined(SIGHUP)
+#	define SIGHUP 1
+#endif
+#if !defined(SIGINT)
+#	define SIGINT 2
+#endif
+#if !defined(SIGQUIT)
+#	define SIGQUIT 3
+#endif
+#if !defined(SIGABRT)
+#	define SIGABRT 6
+#endif
+#if !defined(SIGKILL)
+#	define SIGKILL 9
+#endif
+#if !defined(SIGSEGV)
+#	define SIGSEGV 11
+#endif
+#if !defined(SIGALRM)
+#	define SIGALRM 14
+#endif
+#if !defined(SIGTERM)
+#	define SIGKILL 15
+#endif
+
 static inttab_t inttab[] =
 {
-	{ QSE_T("WNOHANG"), { WNOHANG } }
+	{ QSE_T("SIGABRT"), { SIGABRT } },
+	{ QSE_T("SIGALRM"), { SIGALRM } },
+	{ QSE_T("SIGHUP"),  { SIGHUP } },
+	{ QSE_T("SIGINT"),  { SIGINT } },
+	{ QSE_T("SIGKILL"), { SIGKILL } },
+	{ QSE_T("SIGSEGV"), { SIGSEGV } },
+	{ QSE_T("SIGTERM"), { SIGTERM } },
+	{ QSE_T("SIGQUIT"), { SIGQUIT } }
+
+/*
+	{ QSE_T("WNOHANG"), { WNOHANG } },
+*/
 };
 
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)

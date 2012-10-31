@@ -299,6 +299,11 @@ QSE_INLINE qse_awk_val_t* qse_awk_rtx_getgbl (qse_awk_rtx_t* run, int id)
 	return STACK_GBL (run, id);
 }
 
+const qse_xstr_t* qse_awk_rtx_getsubsep (qse_awk_rtx_t* run)
+{
+	return &run->gbl.subsep;
+}
+
 /* internal function to set a value to a global variable.
  * this function can handle a few special global variables that
  * require special treatment. */
@@ -602,7 +607,7 @@ static int set_global (
 			out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 			if (qse_awk_rtx_valtostr (rtx, val, &out) <= -1) return -1;
 
-			if (rtx->gbl.subsep.ptr != QSE_NULL)
+			if (rtx->gbl.subsep.ptr)
 				QSE_AWK_FREE (rtx->awk, rtx->gbl.subsep.ptr);
 			rtx->gbl.subsep.ptr = out.u.cpldup.ptr;
 			rtx->gbl.subsep.len = out.u.cpldup.len;

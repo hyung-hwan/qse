@@ -215,7 +215,7 @@ static QSE_INLINE int resolve_rs (
 			break;
 
 		default:
-			rrs->ptr = qse_awk_rtx_valtocpldup (rtx, rs, &rrs->len);
+			rrs->ptr = qse_awk_rtx_valtostrdup (rtx, rs, &rrs->len);
 			if (rrs->ptr == QSE_NULL) ret = -1;
 			break;
 	}

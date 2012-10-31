@@ -1961,6 +1961,15 @@ qse_awk_val_t* qse_awk_rtx_getarg (
 );
 
 /**
+ * The qse_awk_rtx_getsubsep() function returns the
+ * pointer to the internal value of SUBSEP. It's a specialized
+ * version of qse_awk_rtx_getgbl (rtx, QSE_AWK_GBL_SUBSEP).
+ */
+const qse_xstr_t* qse_awk_rtx_getsubsep (
+	qse_awk_rtx_t* rtx  /**< runtime context */
+);
+
+/**
  * The qse_awk_rtx_getgbl() gets the value of a global variable.
  * The global variable ID @a id is one of the predefined global 
  * variable IDs or a value returned by qse_awk_addgbl().
@@ -2473,14 +2482,14 @@ int qse_awk_rtx_valtostr (
 );
 
 /**
- * The qse_awk_rtx_valtocpldup() function provides a shortcut to the 
+ * The qse_awk_rtx_valtostrdup() function provides a shortcut to the 
  * qse_awk_rtx_valtostr() function with the #QSE_AWK_RTX_VALTOSTR_CPLDUP type.
  * It returns the pointer to a string converted from @a val and stores its 
  * length to memory pointed to by @a len. You should free the returned
  * memory block after use. See the code snippet below for a simple usage.
  *
  * @code
- * ptr = qse_awk_rtx_valtocpldup (rtx, v, &len);
+ * ptr = qse_awk_rtx_valtostrdup (rtx, v, &len);
  * if (str == QSE_NULL) handle_error();
  * qse_printf (QSE_T("%.*s\n"), (int)len, ptr);
  * qse_awk_rtx_free (rtx, ptr);
@@ -2489,7 +2498,19 @@ int qse_awk_rtx_valtostr (
  * @return character pointer to a string converted on success,
  *         #QSE_NULL on failure
  */
-qse_char_t* qse_awk_rtx_valtocpldup (
+qse_char_t* qse_awk_rtx_valtostrdup (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_size_t*          len  /**< result length */
+);
+
+qse_mchar_t* qse_awk_rtx_valtombsdup (
+	qse_awk_rtx_t*       rtx, /**< runtime context */
+	const qse_awk_val_t* val, /**< value to convert */
+	qse_size_t*          len  /**< result length */
+);
+
+qse_wchar_t* qse_awk_rtx_valtowcsdup (
 	qse_awk_rtx_t*       rtx, /**< runtime context */
 	const qse_awk_val_t* val, /**< value to convert */
 	qse_size_t*          len  /**< result length */

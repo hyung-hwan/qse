@@ -251,7 +251,7 @@ static qse_htb_walk_t print_awk_value (
 
 	qse_awk_rtx_geterrinf (rtx, &oerrinf);
 
-	str = qse_awk_rtx_valtocpldup (rtx, QSE_HTB_VPTR(pair), &len);
+	str = qse_awk_rtx_valtostrdup (rtx, QSE_HTB_VPTR(pair), &len);
 	if (str == QSE_NULL)
 	{
 		if (qse_awk_rtx_geterrnum(rtx) == QSE_AWK_EVALTYPE)
@@ -333,7 +333,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	}
 	else
 	{
-		str = qse_awk_rtx_valtocpldup (rtx, ret, &len);
+		str = qse_awk_rtx_valtostrdup (rtx, ret, &len);
 		if (str == QSE_NULL)
 		{
 			dprint (QSE_T("[RETURN] - ***OUT OF MEMORY***\n"));
@@ -1071,6 +1071,9 @@ static int awk_main (int argc, qse_char_t* argv[])
 	retv = arg.call?
 		qse_awk_rtx_callwithstrs (rtx, arg.call, arg.icf.ptr, arg.icf.size):
 		qse_awk_rtx_loop (rtx);
+
+	unset_intr_run ();
+
 	if (retv)
 	{
 		qse_long_t tmp;
@@ -1081,10 +1084,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		ret = 0;
 		if (qse_awk_rtx_valtolong (rtx, retv, &tmp) >= 0) ret = tmp;
 	}
-
-	unset_intr_run ();
-
-	if (ret <= -1)
+	else
 	{
 		print_rtxerr (rtx);
 		goto oops;

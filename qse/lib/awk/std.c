@@ -2167,7 +2167,7 @@ static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	}
 	else
 	{
-		str = qse_awk_rtx_valtocpldup (rtx, v, &len);
+		str = qse_awk_rtx_valtostrdup (rtx, v, &len);
 		if (str == QSE_NULL) return -1;
 	}
 
@@ -2302,7 +2302,7 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			ptr[i] = qse_awk_rtx_valtocpldup (rtx, v[i], &len[i]);
+			ptr[i] = qse_awk_rtx_valtostrdup (rtx, v[i], &len[i]);
 			if (ptr[i] == QSE_NULL) 
 			{
 				ret = -1;
@@ -2431,7 +2431,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 		else
 		{
-			ptr[i] = qse_awk_rtx_valtocpldup (rtx, v[i], &len[i]);
+			ptr[i] = qse_awk_rtx_valtostrdup (rtx, v[i], &len[i]);
 			if (ptr[i] == QSE_NULL) 
 			{
 				ret = -1;
