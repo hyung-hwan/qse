@@ -3,7 +3,8 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
-	-I$(includedir) 
+	-I$(includedir) \
+	-DDEFAULT_MODDIR=\"$(libdir)/qse\"
 
 #####################################################################3
 
@@ -18,4 +19,3 @@ if WCHAR
 qseawk_LDADD += $(UNICOWS_LIBS)
 endif
 endif
-

@@ -45,6 +45,7 @@
 #else
 #    include <unistd.h>
 #    include <ltdl.h>
+#	define USE_LTDL
 #endif
 
 #ifndef QSE_HAVE_CONFIG_H
@@ -134,8 +135,7 @@ int StdAwk::open ()
 	    this->gbl_environ <= -1 ||
 	    this->gbl_procinfo <= -1) 
 	{
-		Awk::close ();
-		return -1;
+		goto oops;
 	}
 
 	if (addFunction (QSE_T("rand"),       0, 0, (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
@@ -145,9 +145,16 @@ int StdAwk::open ()
 	    addFunction (QSE_T("setioattr"),  3, 3, (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
 	    addFunction (QSE_T("getioattr"),  2, 2, (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
 	{
-		Awk::close ();
-		return -1;
+		goto oops;
 	}
+
+#if defined(USE_LTDL)
+	/* lt_dlinit() can be called more than once and 
+	 * lt_dlexit() shuts down libltdl if it's called as many times as
+	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
+	 * and lt_dlexit() at the library level. */
+	if (lt_dlinit() != 0) goto oops;
+#endif
 
 	qse_ntime_t now;
 
@@ -160,6 +167,10 @@ int StdAwk::open ()
 
 	this->cmgrtab_inited = false;
 	return 0;
+
+oops:
+	Awk::close ();
+	return -1;
 }
 
 void StdAwk::close () 
@@ -171,8 +182,13 @@ void StdAwk::close ()
 		this->cmgrtab_inited = false;
 	}
 #endif
+
 	clearConsoleOutputs ();
 	Awk::close ();
+
+#if defined(USE_LTDL)
+	lt_dlexit ();
+#endif
 }
 
 StdAwk::Run* StdAwk::parse (Source& in, Source& out)

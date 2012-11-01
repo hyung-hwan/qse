@@ -1045,7 +1045,7 @@ enum qse_awk_trait_t
 
 	QSE_AWK_MODERN =
 		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_MAPTOVAR |
-		QSE_AWK_RWPIPE | QSE_AWK_REXBOUND | QSE_AWK_TOLERANT
+		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT
 };
 
 /* ------------------------------------------------------------------------ */

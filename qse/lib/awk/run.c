@@ -827,13 +827,13 @@ void qse_awk_rtx_close (qse_awk_rtx_t* rtx)
 	qse_awk_rtx_ecb_t* ecb;
 	struct module_fini_ctx_t mfc;
 
-	for (ecb = rtx->ecb; ecb; ecb = ecb->next)
-		if (ecb->close) ecb->close (rtx);
-
 	mfc.limit = 0;
 	mfc.count = 0;
 	mfc.rtx = rtx;
 	qse_rbt_walk (rtx->awk->modtab, fini_module, &mfc);
+
+	for (ecb = rtx->ecb; ecb; ecb = ecb->next)
+		if (ecb->close) ecb->close (rtx);
 
 	/* NOTE:
 	 *  the close callbacks are called before data in rtx

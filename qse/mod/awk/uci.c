@@ -1,4 +1,4 @@
-#include <qse/awk/std.h>
+#include <qse/awk/awk.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/rbt.h>
 #include <qse/cmn/mbwc.h>
