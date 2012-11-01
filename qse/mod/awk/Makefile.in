@@ -303,14 +303,14 @@ AM_CPPFLAGS = \
 moddir = $(libdir)/qse
 mod_LTLIBRARIES = libawksys.la $(am__append_1) $(am__append_2)
 libawksys_la_SOURCES = sys.c
-libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
 libawksys_la_LIBADD = -lqseawk -lqsecmn 
 @HAVE_LIBUCI_TRUE@libawkuci_la_SOURCES = uci.c
-@HAVE_LIBUCI_TRUE@libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined
+@HAVE_LIBUCI_TRUE@libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
 @HAVE_LIBUCI_TRUE@libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
 @HAVE_C_MPI_TRUE@libawkmpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
 @HAVE_C_MPI_TRUE@libawkmpi_la_SOURCES = mpi.c
-@HAVE_C_MPI_TRUE@libawkmpi_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -version-info 1:0:0 -no-undefined  $(MPI_CLDFLAGS)
+@HAVE_C_MPI_TRUE@libawkmpi_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0 $(MPI_CLDFLAGS)
 @HAVE_C_MPI_TRUE@libawkmpi_la_LIBADD = -lqseawk -lqsecmn 
 all: all-am
 

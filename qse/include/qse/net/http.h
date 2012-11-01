@@ -158,57 +158,57 @@ typedef struct qse_http_range_t qse_http_range_t;
 extern "C" {
 #endif
 
-int qse_comparehttpversions (
+QSE_EXPORT int qse_comparehttpversions (
 	const qse_http_version_t* v1,
 	const qse_http_version_t* v2
 );
 
-const qse_mchar_t* qse_httpstatustombs (
+QSE_EXPORT const qse_mchar_t* qse_httpstatustombs (
 	int code
 );
 
-const qse_mchar_t* qse_httpmethodtombs (
+QSE_EXPORT const qse_mchar_t* qse_httpmethodtombs (
 	qse_http_method_t type
 );
 
-qse_http_method_t qse_mbstohttpmethod (
+QSE_EXPORT qse_http_method_t qse_mbstohttpmethod (
 	const qse_mchar_t* name
 );
 
-qse_http_method_t qse_mcstrtohttpmethod (
+QSE_EXPORT qse_http_method_t qse_mcstrtohttpmethod (
 	const qse_mcstr_t* name
 );
 
-int qse_parsehttprange (
+QSE_EXPORT int qse_parsehttprange (
 	const qse_mchar_t* str,
 	qse_http_range_t* range
 );
 
-int qse_parsehttptime (
+QSE_EXPORT int qse_parsehttptime (
 	const qse_mchar_t* str,
 	qse_ntime_t*       nt
 );
 
-qse_mchar_t* qse_fmthttptime (
+QSE_EXPORT qse_mchar_t* qse_fmthttptime (
 	qse_ntime_t        nt,
 	qse_mchar_t*       buf,
 	qse_size_t         bufsz
 );
 
 /* percent-decode a string */
-qse_size_t qse_perdechttpstr (
+QSE_EXPORT qse_size_t qse_perdechttpstr (
 	const qse_mchar_t* str, 
 	qse_mchar_t*       buf
 );
 
 
 /* percent-encode a string */
-qse_size_t qse_perenchttpstr (
+QSE_EXPORT qse_size_t qse_perenchttpstr (
 	const qse_mchar_t* str, 
 	qse_mchar_t*       buf
 );
 
-qse_mchar_t* qse_perenchttpstrdup (
+QSE_EXPORT qse_mchar_t* qse_perenchttpstrdup (
 	const qse_mchar_t* str, 
 	qse_mmgr_t*        mmgr
 );

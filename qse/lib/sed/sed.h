@@ -79,7 +79,7 @@ struct qse_sed_unknown_cid_t
  */
 struct qse_sed_t
 {
-	QSE_DEFINE_COMMON_FIELDS (sed)
+	qse_mmgr_t* mmgr;
 
 	qse_sed_errstr_t errstr; /**< error string getter */
 	qse_sed_errnum_t errnum; /**< stores an error number */

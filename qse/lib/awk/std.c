@@ -40,8 +40,12 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <tchar.h>
+#	if defined(QSE_HAVE_CONFIG_H)
+#		include <ltdl.h>
+#		define USE_LTDL
+#	endif
 #elif defined(__OS2__)
-#	define INCL_DOSPROCESS
+#	define INCL_DOSMODULEMGR
 #	define INCL_DOSERRORS
 #    include <os2.h>
 #elif defined(__DOS__)
@@ -52,7 +56,7 @@
 #	define USE_LTDL
 #endif
 
-#ifndef QSE_HAVE_CONFIG_H
+#if !defined(QSE_HAVE_CONFIG_H)
 #	if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 #		define HAVE_POW
 #		define HAVE_FMOD
@@ -313,25 +317,13 @@ static int custom_awk_sprintf (
 static void* custom_awk_modopen (
 	qse_awk_t* awk, const qse_char_t* dir, const qse_char_t* name)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this - use LoadLibrary... */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#elif defined(__OS2__)
-	/*TODO: implemente this */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#elif defined(__DOS__)
-	/*TODO: implemente this */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
-#else
-
+#if defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
-	const qse_char_t* tmp[5];
-	int count = 0;
+	const qse_char_t* tmp[6];
+	int count;
 
+	count = 0;
 	if (dir && dir[0] != QSE_T('\0')) 
 	{
 		tmp[count++] = dir;
@@ -358,38 +350,102 @@ static void* custom_awk_modopen (
 
 	return h;
 
+#elif defined(_WIN32)
+	HMODULE h;
+	qse_char_t* path;
+	const qse_char_t* tmp[5];
+	int count = 0;
+
+	if (dir && dir[0] != QSE_T('\0')) 
+	{
+		tmp[count++] = dir;
+		tmp[count++] = QSE_T("/");
+	}
+
+	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = name;
+	tmp[count] = QSE_NULL;
+
+	path = qse_stradup (tmp, QSE_NULL, awk->mmgr);
+	if (!path)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	h = LoadLibrary (path);
+
+	QSE_MMGR_FREE (awk->mmgr, path);
+	
+	return h;
+#elif defined(__OS2__)
+	HMODULE h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[6];
+	int count;
+
+	count = 0;
+	if (dir && dir[0] != QSE_T('\0')) 
+	{
+		tmp[count++] = dir;
+		tmp[count++] = QSE_T("/");
+	}
+	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = name;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	#endif
+	if (!modpath)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf), modpath, &h) != NO_ERROR) h = QSE_NULL;
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+
+	return h;
+
+#elif defined(__DOS__)
+
+	/*TODO: implemente this */
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return -1;
+
+#else
+	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
+	return QSE_NULL;
 #endif
 }
 
 static void custom_awk_modclose (qse_awk_t* awk, void* handle)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this */
+#if defined(USE_LTDL)
+	lt_dlclose (handle);
+#elif defined(_WIN32)
+	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
-	/*TODO: implemente this */
+	DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__)
 	/*TODO: implemente this */
 #else
-	lt_dlclose (handle);
+	/* nothing to do */
 #endif
 }
 
 static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* name)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this */
-#elif defined(__OS2__)
-	/*TODO: implemente this */
-#elif defined(__DOS__)
-	/*TODO: implemente this */
-#else
-
 	void* s;
 	qse_mchar_t* mname;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	mname = name;
-	#else
+#else
 	mname = qse_wcstombsdup (name, QSE_NULL, awk->mmgr);	
 	if (!mname)
 	{
@@ -398,17 +454,30 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 	}
 	#endif
 
+#if defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);
 
-	#if defined(QSE_CHAR_IS_MCHAR)
+#elif defined(_WIN32)
+	s = GetProcAddress ((HMODULE)handle, mname);
+
+#elif defined(__OS2__)
+	if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
+
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+	s = QSE_NULL;
+#else
+	s = QSE_NULL;
+#endif
+
+#if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing to do */
-	#else
+#else
 	QSE_MMGR_FREE (awk->mmgr, mname);
-	#endif
+#endif
 
 	return s;
 
-#endif
 }
 
 static int add_globals (qse_awk_t* awk);
@@ -2098,16 +2167,7 @@ void* qse_awk_rtx_getxtnstd (qse_awk_rtx_t* rtx)
 
 static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-#if (QSE_SIZEOF_ULONG_T == 2)
-#	define RANDV_MAX 0x7FFFl
-#elif (QSE_SIZEOF_ULONG_T == 4)
-#	define RANDV_MAX 0x7FFFFFFFl
-#elif (QSE_SIZEOF_ULONG_T == 8)
-#	define RANDV_MAX 0x7FFFFFFFFFFFFFFl
-#else
-#	error Unsupported
-#endif
-
+#define RANDV_MAX QSE_TYPE_MAX(qse_long_t)
 	qse_awk_val_t* r;
 	qse_long_t randv;
 	rxtn_t* rxtn;
@@ -2122,6 +2182,7 @@ static int fnc_rand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	qse_awk_rtx_setretval (rtx, r);
 	return 0;
+#undef RANDV_MAX
 }
 
 static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)

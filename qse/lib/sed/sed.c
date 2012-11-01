@@ -35,8 +35,6 @@
 #	endif
 #endif
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (sed)
-
 static void free_command (qse_sed_t* sed, qse_sed_cmd_t* cmd);
 static void free_all_command_blocks (qse_sed_t* sed);
 static void free_all_cids (qse_sed_t* sed);
@@ -143,6 +141,21 @@ void qse_sed_fini (qse_sed_t* sed)
 	qse_map_fini (&sed->tmp.labs);
 	qse_str_fini (&sed->tmp.lab);
 	qse_str_fini (&sed->tmp.rex);
+}
+
+void qse_sed_setmmgr (qse_sed_t* sed, qse_mmgr_t* mmgr)
+{
+	sed->mmgr = mmgr;
+}
+
+qse_mmgr_t* qse_sed_getmmgr (qse_sed_t* sed)
+{
+	return sed->mmgr;
+}
+
+void* qse_sed_getxtn (qse_sed_t* sed)
+{
+	return QSE_XTN (sed);
 }
 
 void qse_sed_setoption (qse_sed_t* sed, int option)
@@ -3958,7 +3971,7 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 	sed->e.in.len = 0;
 	sed->e.in.pos = 0;
 	sed->e.in.num = 0;
-	if (qse_str_init (&sed->e.in.line, QSE_MMGR(sed), 256) <= -1)
+	if (qse_str_init (&sed->e.in.line, sed->mmgr, 256) <= -1)
 	{
 		qse_map_fini (&sed->e.out.files);
 		SETERR0 (sed, QSE_SED_ENOMEM, QSE_NULL);

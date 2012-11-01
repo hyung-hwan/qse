@@ -392,20 +392,17 @@ typedef void (*qse_sed_exec_tracer_t) (
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (sed)
-
 /**
  * The qse_sed_open() function creates a stream editor object. A memory
  * manager provided is used to allocate and destory the object and any dynamic
  * data through out its lifetime. An extension area is allocated if an
  * extension size greater than 0 is specified. You can access it with the
  * qse_sed_getxtn() function and use it to store arbitrary data associated
- * with the object. See #QSE_DEFINE_COMMON_FUNCTIONS() for qse_sed_getxtn().
- * When done, you should destroy the object with the qse_sed_close() function
- * to avoid any resource leaks including memory. 
+ * with the object.  When done, you should destroy the object with the 
+ * qse_sed_close() function to avoid any resource leaks including memory. 
  * @return pointer to a stream editor on success, QSE_NULL on failure
  */
-qse_sed_t* qse_sed_open (
+QSE_EXPORT qse_sed_t* qse_sed_open (
 	qse_mmgr_t*    mmgr,   /**< memory manager */
 	qse_size_t     xtnsize /**< extension size in bytes */
 );
@@ -413,8 +410,21 @@ qse_sed_t* qse_sed_open (
 /**
  * The qse_sed_close() function destroys a stream editor.
  */
-void qse_sed_close (
+QSE_EXPORT void qse_sed_close (
 	qse_sed_t* sed /**< stream editor */
+);
+
+QSE_EXPORT void qse_sed_setmmgr (
+	qse_sed_t*   sed,
+	qse_mmgr_t*  mmgr
+);
+
+QSE_EXPORT qse_mmgr_t* qse_sed_getmmgr (
+	qse_sed_t* sed
+); 
+
+QSE_EXPORT void* qse_sed_getxtn (
+	qse_sed_t* sed
 );
 
 /**
@@ -422,14 +432,14 @@ void qse_sed_close (
  * a stream editor.
  * @return 0 or a number OR'ed of #qse_sed_option_t values 
  */
-int qse_sed_getoption (
+QSE_EXPORT int qse_sed_getoption (
 	const qse_sed_t* sed /**< stream editor */
 );
 
 /**
  * The qse_sed_setoption() function sets the option code.
  */
-void qse_sed_setoption (
+QSE_EXPORT void qse_sed_setoption (
 	qse_sed_t* sed, /**< stream editor */
 	int        opt  /**< 0 or a number OR'ed of #qse_sed_option_t values */
 );
@@ -437,7 +447,7 @@ void qse_sed_setoption (
 /**
  * The qse_sed_geterrstr() gets an error string getter.
  */
-qse_sed_errstr_t qse_sed_geterrstr (
+QSE_EXPORT qse_sed_errstr_t qse_sed_geterrstr (
 	const qse_sed_t* sed    /**< stream editor */
 );
 
@@ -465,7 +475,7 @@ qse_sed_errstr_t qse_sed_geterrstr (
  * }
  * @endcode
  */
-void qse_sed_seterrstr (
+QSE_EXPORT void qse_sed_seterrstr (
 	qse_sed_t*       sed,   /**< stream editor */
 	qse_sed_errstr_t errstr /**< an error string getter */
 );
@@ -474,7 +484,7 @@ void qse_sed_seterrstr (
  * The qse_sed_geterrnum() function gets the number of the last error.
  * @return the number of the last error
  */
-qse_sed_errnum_t qse_sed_geterrnum (
+QSE_EXPORT qse_sed_errnum_t qse_sed_geterrnum (
 	const qse_sed_t* sed /**< stream editor */
 );
 
@@ -483,7 +493,7 @@ qse_sed_errnum_t qse_sed_geterrnum (
  * has occurred.
  * @return error location
  */
-const qse_sed_loc_t* qse_sed_geterrloc (
+QSE_EXPORT const qse_sed_loc_t* qse_sed_geterrloc (
 	const qse_sed_t* sed /**< stream editor */
 );
 
@@ -491,7 +501,7 @@ const qse_sed_loc_t* qse_sed_geterrloc (
  * The qse_sed_geterrmsg() function gets a string describing the last error.
  * @return a pointer to an error message
  */
-const qse_char_t* qse_sed_geterrmsg (
+QSE_EXPORT const qse_char_t* qse_sed_geterrmsg (
 	const qse_sed_t* sed /**< stream editor */
 );
 
@@ -500,7 +510,7 @@ const qse_char_t* qse_sed_geterrmsg (
  * and an error message. The information is set to the memory area pointed 
  * to by each parameter.
  */
-void qse_sed_geterror (
+QSE_EXPORT void qse_sed_geterror (
 	const qse_sed_t*   sed,    /**< stream editor */
 	qse_sed_errnum_t*  errnum, /**< error number */
 	const qse_char_t** errmsg, /**< error message */
@@ -511,7 +521,7 @@ void qse_sed_geterror (
  * The qse_sed_seterrnum() function sets error information omitting error
  * location.
  */
-void qse_sed_seterrnum (
+QSE_EXPORT void qse_sed_seterrnum (
 	qse_sed_t*        sed,    /**< stream editor */
 	qse_sed_errnum_t  errnum, /**< error number */
 	const qse_cstr_t* errarg  /**< argument for formatting error message */
@@ -521,7 +531,7 @@ void qse_sed_seterrnum (
  * The qse_sed_seterrmsg() function sets error information with a customized 
  * message for a given error number.
  */
-void qse_sed_seterrmsg (
+QSE_EXPORT void qse_sed_seterrmsg (
 	qse_sed_t*        sed,      /**< stream editor */
 	qse_sed_errnum_t  errnum,   /**< error number */
 	const qse_char_t* errmsg,   /**< error message */
@@ -533,7 +543,7 @@ void qse_sed_seterrmsg (
  * an error message. An error string is composed of a formatting string
  * and an array of formatting parameters.
  */
-void qse_sed_seterror (
+QSE_EXPORT void qse_sed_seterror (
 	qse_sed_t*           sed,    /**< stream editor */
 	qse_sed_errnum_t     errnum, /**< error number */
 	const qse_cstr_t*    errarg, /**< array of arguments for formatting 
@@ -546,14 +556,14 @@ void qse_sed_seterror (
  * and returns the pointer to it. If no callback set can be popped,
  * it returns #QSE_NULL.
  */
-qse_sed_ecb_t* qse_sed_popecb (
+QSE_EXPORT qse_sed_ecb_t* qse_sed_popecb (
 	qse_sed_t* sed /**< sed */
 );
 
 /**
  * The qse_sed_pushecb() function register a runtime callback set.
  */
-void qse_sed_pushecb (
+QSE_EXPORT void qse_sed_pushecb (
 	qse_sed_t*     sed, /**< sed */
 	qse_sed_ecb_t* ecb  /**< callback set */
 );
@@ -562,7 +572,7 @@ void qse_sed_pushecb (
  * The qse_sed_comp() function compiles editing commands into an internal form.
  * @return 0 on success, -1 on error 
  */
-int qse_sed_comp (
+QSE_EXPORT int qse_sed_comp (
 	qse_sed_t*        sed, /**< stream editor */
 	qse_sed_io_impl_t  inf  /**< script stream reader */
 );
@@ -571,7 +581,7 @@ int qse_sed_comp (
  * The qse_sed_exec() function executes the compiled commands.
  * @return 0 on success, -1 on error
  */
-int qse_sed_exec (
+QSE_EXPORT int qse_sed_exec (
 	qse_sed_t*        sed,  /**< stream editor */
 	qse_sed_io_impl_t  inf,  /**< stream reader */
 	qse_sed_io_impl_t  outf  /**< stream writer */
@@ -581,14 +591,14 @@ int qse_sed_exec (
  * The qse_sed_stop() function breaks running loop in qse_sed_exec().
  * It doesn't affect blocking calls in stream handlers.
  */
-void qse_sed_stop (
+QSE_EXPORT void qse_sed_stop (
 	qse_sed_t* sed   /**< stream editor */
 );
 
 /**
  * The qse_sed_isstop() functions tests if qse_sed_stop() is called.
  */
-int qse_sed_isstop (
+QSE_EXPORT int qse_sed_isstop (
 	qse_sed_t* sed   /**< stream editor */
 );
 	
@@ -596,7 +606,7 @@ int qse_sed_isstop (
  * The qse_sed_getlformatter() function gets the text formatter for the 'l'
  * command.
  */
-qse_sed_lformatter_t qse_sed_getlformatter (
+QSE_EXPORT qse_sed_lformatter_t qse_sed_getlformatter (
 	qse_sed_t* sed /**< stream editor */
 );
 
@@ -605,7 +615,7 @@ qse_sed_lformatter_t qse_sed_getlformatter (
  * command. The text formatter must output the text with a character writer
  * provided and return -1 on failure and 0 on success.
  */
-void qse_sed_setlformatter (
+QSE_EXPORT void qse_sed_setlformatter (
 	qse_sed_t*           sed,       /**< stream editor */
 	qse_sed_lformatter_t lformatter /**< text formatter */
 );
@@ -614,7 +624,7 @@ void qse_sed_setlformatter (
  * The qse_sed_getcompid() function returns the latest
  * identifier successfully set with qse_sed_setcompid(). 
  */
-const qse_char_t* qse_sed_getcompid (
+QSE_EXPORT const qse_char_t* qse_sed_getcompid (
 	qse_sed_t* sed
 );
 
@@ -627,7 +637,7 @@ const qse_char_t* qse_sed_getcompid (
  * If this function fails, the location set in the command
  * may be wrong.
  */
-const qse_char_t* qse_sed_setcompid (
+QSE_EXPORT const qse_char_t* qse_sed_setcompid (
 	qse_sed_t*        sed,
 	const qse_char_t* id
 );
@@ -636,14 +646,14 @@ const qse_char_t* qse_sed_setcompid (
  * The qse_sed_getlinnum() function gets the current input line number.
  * @return current input line number
  */
-qse_size_t qse_sed_getlinenum (
+QSE_EXPORT qse_size_t qse_sed_getlinenum (
 	qse_sed_t* sed /**< stream editor */
 );
 
 /**
  * The qse_sed_setlinenum() function changes the current input line number.
  */
-void qse_sed_setlinenum (
+QSE_EXPORT void qse_sed_setlinenum (
 	qse_sed_t* sed,   /**< stream editor */
 	qse_size_t num    /**< a line number */
 );
@@ -653,7 +663,7 @@ void qse_sed_setlinenum (
  * The qse_sed_getexectracer() function returns the execution tracer 
  * function.
  */
-qse_sed_exec_tracer_t qse_sed_getexectracer (
+QSE_EXPORT qse_sed_exec_tracer_t qse_sed_getexectracer (
 	qse_sed_t* sed
 );
 
@@ -661,7 +671,7 @@ qse_sed_exec_tracer_t qse_sed_getexectracer (
  * The qse_sed_getexectracer() function sets a hook function via which 
  * you can trace commands being executed.
  */
-void qse_sed_setexectracer (
+QSE_EXPORT void qse_sed_setexectracer (
 	qse_sed_t*            sed,
 	qse_sed_exec_tracer_t tracer
 );

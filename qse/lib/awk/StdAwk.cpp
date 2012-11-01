@@ -36,6 +36,10 @@
 #if defined(_WIN32)
 #	include <windows.h>
 #	include <tchar.h>
+#	if defined(QSE_HAVE_CONFIG_H)
+#		include <ltdl.h>
+#		define USE_LTDL
+#	endif
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
@@ -420,19 +424,11 @@ int StdAwk::make_additional_globals (Run* run)
 int StdAwk::rand (Run& run, Value& ret, const Value* args, size_t nargs,
 	const char_t* name, size_t len)
 {
-#if (QSE_SIZEOF_ULONG_T == 2)
-#	define RANDV_MAX 0x7FFFl
-#elif (QSE_SIZEOF_ULONG_T == 4)
-#	define RANDV_MAX 0x7FFFFFFFl
-#elif (QSE_SIZEOF_ULONG_T == 8)
-#	define RANDV_MAX 0x7FFFFFFFFFFFFFFl
-#else
-#	error Unsupported
-#endif
-
+#define RANDV_MAX QSE_TYPE_MAX(long_t)
 	this->prand = qse_randxsulong (this->prand);
      long_t randv = this->prand % RANDV_MAX;
 	return ret.setFlt ((flt_t)randv / RANDV_MAX);
+#undef RANDV_MAX 
 }
 
 int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -1400,19 +1396,7 @@ StdAwk::flt_t StdAwk::sqrt (flt_t x)
 
 void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this - use LoadLibrary... */
-	this->setError (QSE_AWK_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/*TODO: implemente this */
-	this->setError (QSE_AWK_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/*TODO: implemente this */
-	this->setError (QSE_AWK_ENOIMPL);
-	return -1;
-#else
+#if defined(USE_LTDL)
 
 	void* h;
 	qse_mchar_t* modpath;
@@ -1445,32 +1429,43 @@ void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
 
 	return h;
 
+#elif defined(_WIN32)
+	/*TODO: implemente this - use LoadLibrary... */
+	this->setError (QSE_AWK_ENOIMPL);
+	return QSE_NULL;
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+	this->setError (QSE_AWK_ENOIMPL);
+	return QSE_NULL;
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+	this->setError (QSE_AWK_ENOIMPL);
+	return QSE_NULL;
+#else
+
+	this->setError (QSE_AWK_ENOIMPL);
+	return QSE_NULL;
+
 #endif
 }
 
 void StdAwk::modclose (void* handle)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this */
+#if defined(USE_LTDL)
+	lt_dlclose ((lt_dlhandle)handle);
+#elif defined(_WIN32)
+	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
 	/*TODO: implemente this */
 #elif defined(__DOS__)
 	/*TODO: implemente this */
 #else
-	lt_dlclose ((lt_dlhandle)handle);
+	/* nothing to do */
 #endif
 }
 
 void* StdAwk::modsym (void* handle, const qse_char_t* name)
 {
-#if defined(_WIN32)
-	/*TODO: implemente this */
-#elif defined(__OS2__)
-	/*TODO: implemente this */
-#elif defined(__DOS__)
-	/*TODO: implemente this */
-#else
-
 	void* s;
 	qse_mchar_t* mname;
 
@@ -1485,7 +1480,19 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 	}
 	#endif
 
+#if defined(USE_LTDL)
 	s = lt_dlsym ((lt_dlhandle)handle, mname);
+#elif defined(_WIN32)
+	s = (void*)GetProcAddress ((HMODULE)handle, mname);
+#elif defined(__OS2__)
+	/*TODO: implemente this */
+	s = QSE_NULL;
+#elif defined(__DOS__)
+	/*TODO: implemente this */
+	s = QSE_NULL;
+#else
+	s = QSE_NULL;
+#endif
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing to do */
@@ -1495,7 +1502,6 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 
 	return s;
 
-#endif
 }
 
 int StdAwk::SourceFile::open (Data& io)

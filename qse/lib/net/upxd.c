@@ -21,8 +21,6 @@
 #include "upxd.h"
 #include <qse/cmn/str.h>
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (upxd)
-
 static void disable_all_servers (qse_upxd_t* upxd);
 static void free_all_servers (qse_upxd_t* upxd);
 static qse_upxd_server_session_t* find_server_session (
@@ -73,6 +71,22 @@ void qse_upxd_fini (qse_upxd_t* upxd)
 	}
 	
 	free_all_servers (upxd);
+}
+
+
+void qse_upxd_setmmgr (qse_upxd_t* upxd, qse_mmgr_t* mmgr)
+{
+	upxd->mmgr = mmgr;
+}
+
+qse_mmgr_t* qse_upxd_getmmgr (qse_upxd_t* upxd)
+{
+	return upxd->mmgr;
+}
+
+void* qse_upxd_getxtn (qse_upxd_t* upxd)
+{
+	return QSE_XTN (upxd);
 }
 
 qse_upxd_errnum_t qse_upxd_geterrnum (qse_upxd_t* upxd)

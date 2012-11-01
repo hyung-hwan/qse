@@ -52,12 +52,14 @@ static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 
 #if defined(_WIN32)
-	/* TOOD: implement this*/
-	pid = -1;
+	pid = GetCurrentProcessId();
 	
 #elif defined(__OS2__)
-	/* TOOD: implement this*/
-	pid = -1;
+	PTIB tib;
+	PPIB pib;
+
+	pid = (DosGetInfoBlocks (&tib, &pib) == NO_ERROR)?
+		pib->pib_ulpid: -1;
 	
 #elif defined(__DOS__)
 	/* TOOD: implement this*/
@@ -245,7 +247,7 @@ static fnctab_t fnctab[] =
 #	define SIGALRM 14
 #endif
 #if !defined(SIGTERM)
-#	define SIGKILL 15
+#	define SIGTERM 15
 #endif
 
 static inttab_t inttab[] =
@@ -316,7 +318,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	/* TODO: anything */
 }
 
-int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod->query = query;
 	mod->unload = unload;

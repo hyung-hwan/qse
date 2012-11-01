@@ -39,7 +39,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// The Awk class implements an AWK interpreter by wrapping around 
 /// #qse_awk_t and #qse_awk_rtx_t.
 ///
-class Awk: public Mmged
+class QSE_EXPORT Awk: public Mmged
 {
 public:
 	typedef qse_htb_t htb_t;
@@ -171,7 +171,7 @@ public:
 	/// source script I/O. The Awk::parse function requires a concrete
 	/// object instantiated from its child class.
 	///
-	class Source
+	class QSE_EXPORT Source
 	{
 	public:
 		///
@@ -187,7 +187,7 @@ public:
 		/// The Data class encapsulates information passed in and out
 		/// for source script I/O. 
 		///
-		class Data
+		class QSE_EXPORT Data
 		{
 		public:
 			friend class Awk;
@@ -254,7 +254,7 @@ public:
 	};
 
 protected:
-	class NoSource: public Source
+	class QSE_EXPORT NoSource: public Source
 	{
 	public:
 		int open (Data& io) { return -1; }
@@ -269,7 +269,7 @@ public:
 	/// operations. The Console, File, Pipe classes implement more specific
 	/// I/O operations by inheriting this class.
 	///
-	class RIOBase
+	class QSE_EXPORT RIOBase
 	{
 	protected:
 		RIOBase (Run* run, rio_arg_t* riod);
@@ -302,7 +302,7 @@ public:
 	/// The Pipe class encapsulates the pipe operations indicated by
 	/// the | and || operators.
 	///
-	class Pipe: public RIOBase
+	class QSE_EXPORT Pipe: public RIOBase
 	{
 	public:
 		friend class Awk;
@@ -330,7 +330,7 @@ public:
 			CLOSE_WRITE = QSE_AWK_RIO_CLOSE_WRITE
 		};
 
-		class Handler 
+		class QSE_EXPORT Handler 
 		{
 		public:
 			virtual int     open  (Pipe& io) = 0;
@@ -360,7 +360,7 @@ public:
 	///
 	/// The File class encapsulates file operations by inheriting RIOBase.
 	///
-	class File: public RIOBase
+	class QSE_EXPORT File: public RIOBase
 	{
 	public:
 		friend class Awk;
@@ -372,7 +372,7 @@ public:
 			APPEND = QSE_AWK_RIO_FILE_APPEND
 		};
 
-		class Handler 
+		class QSE_EXPORT Handler 
 		{
 		public:
 			virtual int     open  (File& io) = 0;
@@ -393,7 +393,7 @@ public:
 	/// The Console class encapsulates the console operations by 
 	/// inheriting RIOBase.
 	///
-	class Console: public RIOBase
+	class QSE_EXPORT Console: public RIOBase
 	{
 	public:
 		friend class Awk;
@@ -404,7 +404,7 @@ public:
 			WRITE = QSE_AWK_RIO_CONSOLE_WRITE
 		};
 
-		class Handler 
+		class QSE_EXPORT Handler 
 		{
 		public:
 			virtual int     open  (Console& io) = 0;
@@ -433,7 +433,7 @@ public:
 	/// The Value class wraps around #qse_awk_val_t to provide a more 
 	/// comprehensive interface.
 	///
-	class Value
+	class QSE_EXPORT Value
 	{
 	public:
 		friend class Awk;
@@ -455,7 +455,7 @@ public:
 		///
 		/// The Index class encapsulates an index of an arrayed value.
 		///
-		class Index: protected qse_cstr_t
+		class QSE_EXPORT Index: protected qse_cstr_t
 		{
 		public:
 			friend class Value;
@@ -512,7 +512,7 @@ public:
 		///
 		/// Represents a numeric index of an arrayed value
 		///
-		class IntIndex: public Index
+		class QSE_EXPORT IntIndex: public Index
 		{
 		public:
 			IntIndex (long_t num);
@@ -540,7 +540,7 @@ public:
 		/// The IndexIterator class is a helper class to make simple
 		/// iteration over array elements.
 		///
-		class IndexIterator: public qse_awk_val_map_itr_t
+		class QSE_EXPORT IndexIterator: public qse_awk_val_map_itr_t
 		{
 		public:
 			friend class Value;
@@ -769,7 +769,7 @@ public:
 	/// The Run class wraps around #qse_awk_rtx_t to represent the
 	/// runtime context.
 	///
-	class Run
+	class QSE_EXPORT Run
 	{
 	protected:
 		friend class Awk;

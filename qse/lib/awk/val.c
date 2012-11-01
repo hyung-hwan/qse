@@ -416,7 +416,7 @@ qse_awk_val_t* qse_awk_rtx_makenstrvalwithcstr (qse_awk_rtx_t* rtx, const qse_cs
 }
 
 qse_awk_val_t* qse_awk_rtx_makerexval (
-	qse_awk_rtx_t* rtx, const qse_char_t* buf, qse_size_t len, void* code)
+	qse_awk_rtx_t* rtx, const qse_cstr_t* str, void* code)
 {
 	qse_awk_val_rex_t* val;
 	qse_size_t totsz;
@@ -426,7 +426,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	 * - a raw string plus with added a terminating '\0'
 	 * the total size is just large enough for all these.
 	 */
-	totsz = QSE_SIZEOF(*val) + (QSE_SIZEOF(*buf) * (len + 1));
+	totsz = QSE_SIZEOF(*val) + (QSE_SIZEOF(*str->ptr) * (str->len + 1));
 	val = (qse_awk_val_rex_t*) QSE_AWK_ALLOC (rtx->awk, totsz);
 	if (val == QSE_NULL) 
 	{
@@ -437,10 +437,10 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 	val->type = QSE_AWK_VAL_REX;
 	val->ref = 0;
 	val->nstr = 0;
-	val->len = len;
+	val->str.len = str->len;
 
-	val->ptr = (qse_char_t*)(val + 1);
-	qse_strncpy (val->ptr, buf, len);
+	val->str.ptr = (qse_char_t*)(val + 1);
+	qse_strncpy (val->str.ptr, str->ptr, str->len);
 
 	val->code = code;
 
@@ -898,7 +898,7 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 		case QSE_AWK_VAL_STR:
 			return ((qse_awk_val_str_t*)val)->val.len > 0;
 		case QSE_AWK_VAL_REX: /* TODO: is this correct? */
-			return ((qse_awk_val_rex_t*)val)->len > 0;
+			return ((qse_awk_val_rex_t*)val)->str.len > 0;
 		case QSE_AWK_VAL_MAP:
 			return 0; /* TODO: is this correct? */
 		case QSE_AWK_VAL_REF:

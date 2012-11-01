@@ -1306,7 +1306,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	qse_rbt_close (rbt);
 }
 
-int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	qse_rbt_t* rbt;
 

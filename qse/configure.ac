@@ -48,6 +48,18 @@ dnl so i use the classic 'subproject' type here
 LT_CONFIG_LTDL_DIR([libltdl])
 LTDL_INIT
 
+dnl The lt_dladvise_init symbol was added with libtool-2.2
+if test "x$with_included_ltdl" != "xyes"; then
+	save_CFLAGS="$CFLAGS"
+	save_LDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS $LTDLINCL"
+	LDFLAGS="$LDFLAGS $LIBLTDL"
+	AC_CHECK_LIB([ltdl], [lt_dladvise_init], [],
+	             [AC_MSG_ERROR([installed libltdl is too old])])
+	LDFLAGS="$save_LDFLAGS"
+	CFLAGS="$save_CFLAGS"
+fi
+
 dnl overrides the default CFLAGS setting
 if test "$ac_test_CFLAGS" != "set"
 then

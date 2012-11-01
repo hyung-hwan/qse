@@ -27,7 +27,7 @@
 
 struct qse_httpd_t
 {
-	QSE_DEFINE_COMMON_FIELDS (httpd)
+	qse_mmgr_t* mmgr;
 	qse_httpd_errnum_t errnum;
 	qse_httpd_ecb_t* ecb; /* event callbacks */
 	qse_httpd_scb_t* scb; /* system callbacks */
