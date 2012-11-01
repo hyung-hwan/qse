@@ -1511,7 +1511,7 @@ qse_awk_fun_t* qse_awk_rtx_findfun (qse_awk_rtx_t* rtx, const qse_char_t* name)
 /* call an AWK function by the function structure */
 qse_awk_val_t* qse_awk_rtx_callfun (
 	qse_awk_rtx_t* rtx, qse_awk_fun_t* fun,
-	qse_awk_val_t** args, qse_size_t nargs)
+	qse_awk_val_t* args[], qse_size_t nargs)
 {
 	struct capture_retval_data_t crdata;
 	qse_awk_val_t* v;
@@ -1583,7 +1583,7 @@ qse_awk_val_t* qse_awk_rtx_callfun (
 /* call an AWK function by name */
 qse_awk_val_t* qse_awk_rtx_call (
 	qse_awk_rtx_t* rtx, const qse_char_t* name, 
-	qse_awk_val_t** args, qse_size_t nargs)
+	qse_awk_val_t* args[], qse_size_t nargs)
 {
 	qse_awk_fun_t* fun;
 
@@ -1595,7 +1595,7 @@ qse_awk_val_t* qse_awk_rtx_call (
 
 qse_awk_val_t* qse_awk_rtx_callwithstrs (
 	qse_awk_rtx_t* rtx, const qse_char_t* name,
-	const qse_char_t** args, qse_size_t nargs)
+	const qse_char_t* args[], qse_size_t nargs)
 {
 	qse_size_t i;
 	qse_awk_val_t** v, * ret;
@@ -6157,12 +6157,8 @@ static qse_awk_val_t* eval_int (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_val_t* val;
 
 	val = qse_awk_rtx_makeintval (run, ((qse_awk_nde_int_t*)nde)->val);
-	if (val == QSE_NULL)
-	{
-		ADJERR_LOC (run, &nde->loc);
-		return QSE_NULL;
-	}
-	((qse_awk_val_int_t*)val)->nde = nde;
+	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+	else ((qse_awk_val_int_t*)val)->nde = nde;
 
 	return val;
 }
@@ -6172,12 +6168,8 @@ static qse_awk_val_t* eval_real (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_val_t* val;
 
 	val = qse_awk_rtx_makefltval (run, ((qse_awk_nde_flt_t*)nde)->val);
-	if (val == QSE_NULL) 
-	{
-		ADJERR_LOC (run, &nde->loc);
-		return QSE_NULL;
-	}
-	((qse_awk_val_flt_t*)val)->nde = nde;
+	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
+	else ((qse_awk_val_flt_t*)val)->nde = nde;
 
 	return val;
 }
@@ -6189,11 +6181,7 @@ static qse_awk_val_t* eval_str (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	val = qse_awk_rtx_makestrval (run,
 		((qse_awk_nde_str_t*)nde)->ptr,
 		((qse_awk_nde_str_t*)nde)->len);
-	if (val == QSE_NULL)
-	{
-		ADJERR_LOC (run, &nde->loc);
-		return QSE_NULL;
-	}
+	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 
 	return val;
 }
@@ -6203,14 +6191,9 @@ static qse_awk_val_t* eval_rex (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 	qse_awk_val_t* val;
 
 	val = qse_awk_rtx_makerexval (run,
-		((qse_awk_nde_rex_t*)nde)->ptr,
-		((qse_awk_nde_rex_t*)nde)->len,
+		&((qse_awk_nde_rex_t*)nde)->str,
 		((qse_awk_nde_rex_t*)nde)->code);
-	if (val == QSE_NULL) 
-	{
-		ADJERR_LOC (run, &nde->loc);
-		return QSE_NULL;
-	}
+	if (val == QSE_NULL) ADJERR_LOC (run, &nde->loc);
 
 	return val;
 }
@@ -6558,7 +6541,7 @@ read_again:
 
 #ifdef DEBUG_RUN
 	qse_dprintf (QSE_T("record len = %d str=[%.*s]\n"), 
-			(int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
+		(int)QSE_STR_LEN(buf), (int)QSE_STR_LEN(buf), QSE_STR_PTR(buf));
 #endif
 	if (n == 0) 
 	{

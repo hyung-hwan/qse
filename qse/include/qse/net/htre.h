@@ -151,48 +151,48 @@ typedef int (*qse_htre_header_walker_t) (
 extern "C" {
 #endif
 
-int qse_htre_init (
+QSE_EXPORT int qse_htre_init (
 	qse_htre_t* re,
 	qse_mmgr_t* mmgr
 );
 
-void qse_htre_fini (
+QSE_EXPORT void qse_htre_fini (
 	qse_htre_t* re
 );
 
-void qse_htre_clear (
+QSE_EXPORT void qse_htre_clear (
 	qse_htre_t* re
 );
 
-int qse_htre_setstrfromcstr (
+QSE_EXPORT int qse_htre_setstrfromcstr (
 	qse_htre_t*        re,
 	qse_mbs_t*         str,
 	const qse_mcstr_t* cstr
 );
 
-int qse_htre_setstrfromxstr (
+QSE_EXPORT int qse_htre_setstrfromxstr (
 	qse_htre_t*        re,
 	qse_mbs_t*         str,
 	const qse_mxstr_t* xstr
 );
 
-const qse_htre_hdrval_t* qse_htre_getheaderval (
+QSE_EXPORT const qse_htre_hdrval_t* qse_htre_getheaderval (
 	const qse_htre_t*  re, 
 	const qse_mchar_t* key
 );
 
-const qse_htre_hdrval_t* qse_htre_gettrailerval (
+QSE_EXPORT const qse_htre_hdrval_t* qse_htre_gettrailerval (
 	const qse_htre_t*  re, 
 	const qse_mchar_t* key
 );
 
-int qse_htre_walkheaders (
+QSE_EXPORT int qse_htre_walkheaders (
 	qse_htre_t*              re,
 	qse_htre_header_walker_t walker,
 	void*                    ctx
 );
 
-int qse_htre_walktrailers (
+QSE_EXPORT int qse_htre_walktrailers (
 	qse_htre_t*              re,
 	qse_htre_header_walker_t walker,
 	void*                    ctx
@@ -205,25 +205,25 @@ int qse_htre_walktrailers (
  * content buffer. 
  * @return 1 on success, -1 on failure, 0 if adding is skipped.
  */
-int qse_htre_addcontent (
+QSE_EXPORT int qse_htre_addcontent (
 	qse_htre_t*        re,
 	const qse_mchar_t* ptr,
 	qse_size_t         len
 );
 
-void qse_htre_completecontent (
+QSE_EXPORT void qse_htre_completecontent (
 	qse_htre_t*      re
 );
 
-void qse_htre_discardcontent (
+QSE_EXPORT void qse_htre_discardcontent (
 	qse_htre_t*      re
 );
 
-void qse_htre_unsetconcb (
+QSE_EXPORT void qse_htre_unsetconcb (
 	qse_htre_t*      re
 );
 
-void qse_htre_setconcb (
+QSE_EXPORT void qse_htre_setconcb (
 	qse_htre_t*      re,
 	qse_htre_concb_t concb, 
 	void*            ctx

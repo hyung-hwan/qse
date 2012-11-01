@@ -105,7 +105,7 @@ extern "C" {
  * standard intrinsic functions like atan, system, etc. Use this function
  * over qse_awk_open() if you don't need finer-grained customization.
  */
-qse_awk_t* qse_awk_openstd (
+QSE_EXPORT qse_awk_t* qse_awk_openstd (
 	qse_size_t xtnsize  /**< extension size in bytes */
 );
 
@@ -114,7 +114,7 @@ qse_awk_t* qse_awk_openstd (
  * user-defined memory manager. It is equivalent to qse_awk_openstd(), 
  * except that you can specify your own memory manager.
  */
-qse_awk_t* qse_awk_openstdwithmmgr (
+QSE_EXPORT qse_awk_t* qse_awk_openstdwithmmgr (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize  /**< extension size in bytes */
 );
@@ -124,7 +124,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (
  * Note that you must not call qse_awk_getxtn() for an awk object
  * created with qse_awk_openstd() and qse_awk_openstdwithmmgr().
  */
-void* qse_awk_getxtnstd (
+QSE_EXPORT void* qse_awk_getxtnstd (
 	qse_awk_t* awk
 );
 
@@ -149,7 +149,7 @@ void* qse_awk_getxtnstd (
  * }
  * @endcode
  */
-int qse_awk_parsestd (
+QSE_EXPORT int qse_awk_parsestd (
 	qse_awk_t*          awk,
 	qse_awk_parsestd_t* in,
 	qse_awk_parsestd_t* out
@@ -161,7 +161,7 @@ int qse_awk_parsestd (
  * the lifetime of the runtime context created. The @a cmgr is set to the
  * streams created with @a icf and @a ocf if it is not #QSE_NULL.
  */
-qse_awk_rtx_t* qse_awk_rtx_openstd (
+QSE_EXPORT qse_awk_rtx_t* qse_awk_rtx_openstd (
 	qse_awk_t*        awk,
 	qse_size_t        xtnsize,
 	const qse_char_t* id,
@@ -173,7 +173,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 /**
  * The qse_awk_rtx_getxtnstd() function gets the pointer to extension space.
  */
-void* qse_awk_rtx_getxtnstd (
+QSE_EXPORT void* qse_awk_rtx_getxtnstd (
 	qse_awk_rtx_t* rtx
 );
 
@@ -184,7 +184,7 @@ void* qse_awk_rtx_getxtnstd (
  * @a ioname if #QSE_CHAR_IS_WCHAR is defined. It always returns #QSE_NULL
  * if #QSE_CHAR_IS_MCHAR is defined.
  */
-qse_cmgr_t* qse_awk_rtx_getcmgrstd (
+QSE_EXPORT qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	qse_awk_rtx_t*    rtx,
 	const qse_char_t* ioname
 );

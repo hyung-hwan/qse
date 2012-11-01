@@ -1140,7 +1140,9 @@ typedef struct mpi_t mpi_t;
 
 static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 {
+#if defined(USE_LTDL)
 	lt_dladvise adv;
+#endif
 
 	qse_memset (mpi, 0, QSE_SIZEOF(*mpi));
 

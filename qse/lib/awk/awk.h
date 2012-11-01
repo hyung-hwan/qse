@@ -114,7 +114,7 @@ struct qse_awk_tok_t
 
 struct qse_awk_t
 {
-	QSE_DEFINE_COMMON_FIELDS (sed)
+	qse_mmgr_t* mmgr;
 
 	/* primitive functions */
 	qse_awk_prm_t  prm;

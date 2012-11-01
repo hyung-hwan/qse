@@ -20,8 +20,6 @@
 
 #include "awk.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (awk)
-
 static void free_fun (qse_htb_t* map, void* vptr, qse_size_t vlen)
 {
 	qse_awk_t* awk = *(qse_awk_t**)QSE_XTN(map);
@@ -408,6 +406,21 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->sio.arg.b.len = 0;
 
 	return 0;
+}
+
+void qse_awk_setmmgr (qse_awk_t* awk, qse_mmgr_t* mmgr)
+{
+	awk->mmgr = mmgr;
+}
+
+qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk)
+{
+	return awk->mmgr;
+}
+
+void* qse_awk_getxtn (qse_awk_t* awk)
+{
+	return QSE_XTN (awk);
 }
 
 qse_awk_prm_t* qse_awk_getprm (qse_awk_t* awk)

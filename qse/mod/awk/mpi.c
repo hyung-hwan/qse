@@ -221,7 +221,7 @@ static void unload (qse_awk_mod_t* mod, qse_awk_t* awk)
 	/* TODO: anything */
 }
 
-int load (qse_awk_mod_t* mod, qse_awk_t* awk)
+QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 {
 	mod->query = query;
 	mod->unload = unload;
@@ -244,7 +244,7 @@ int load (qse_awk_mod_t* mod, qse_awk_t* awk)
  * and the module wasn't built. So you can't access mpi::xxx symbols either 
  */
 
-int mpi_init (int argc, qse_achar_t* argv[])
+QSE_EXPORT int mpi_init (int argc, qse_achar_t* argv[])
 {
 	int rx;
 
@@ -258,7 +258,7 @@ int mpi_init (int argc, qse_achar_t* argv[])
 	return rx;
 }
 
-void mpi_fini (void)
+QSE_EXPORT void mpi_fini (void)
 {
 	MPI_Finalize ();
 }

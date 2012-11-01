@@ -34,8 +34,6 @@ struct htrd_xtn_t
 	qse_httpd_client_t* client;
 };
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (httpd)
-
 static void free_server_list (qse_httpd_t* httpd);
 static int perform_client_task (
 	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
@@ -99,6 +97,21 @@ qse_httpd_errnum_t qse_httpd_geterrnum (qse_httpd_t* httpd)
 void qse_httpd_seterrnum (qse_httpd_t* httpd, qse_httpd_errnum_t errnum)
 {
 	httpd->errnum = errnum;
+}
+
+void qse_httpd_setmmgr (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
+{
+	httpd->mmgr = mmgr;
+}
+
+qse_mmgr_t* qse_httpd_getmmgr (qse_httpd_t* httpd)
+{
+	return httpd->mmgr;
+}
+
+void* qse_httpd_getxtn (qse_httpd_t* httpd)
+{
+	return QSE_XTN (httpd);
 }
 
 int qse_httpd_getoption (qse_httpd_t* httpd)

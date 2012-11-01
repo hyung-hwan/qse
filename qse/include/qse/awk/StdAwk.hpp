@@ -63,13 +63,13 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// primitive methods, and implementing the file handler, the pipe handler, 
 /// and common intrinsic functions.
 ///
-class StdAwk: public Awk
+class QSE_EXPORT StdAwk: public Awk
 {
 public:
 	///
 	/// The SourceFile class implements script I/O from and to a file.
 	///
-	class SourceFile: public Source 
+	class QSE_EXPORT SourceFile: public Source 
 	{
 	public:
 		SourceFile (const char_t* name, qse_cmgr_t* cmgr = QSE_NULL): 
@@ -93,7 +93,7 @@ public:
 	/// The SourceString class implements script input from a string. 
 	/// Deparsing is not supported.
 	///
-	class SourceString: public Source
+	class QSE_EXPORT SourceString: public Source
 	{
 	public:
 		SourceString (const char_t* str): str (str) {}

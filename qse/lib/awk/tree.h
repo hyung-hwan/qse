@@ -154,8 +154,7 @@ struct qse_awk_nde_str_t
 struct qse_awk_nde_rex_t
 {
 	QSE_AWK_NDE_HDR;
-	qse_char_t* ptr;
-	qse_size_t  len;
+	qse_xstr_t  str;
 	void*       code;
 };
 

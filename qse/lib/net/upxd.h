@@ -71,7 +71,7 @@ struct qse_upxd_server_session_t
 
 struct qse_upxd_t
 {
-	QSE_DEFINE_COMMON_FIELDS (upxd)
+	qse_mmgr_t* mmgr;
 	qse_upxd_errnum_t errnum;
 
 	int stopreq;

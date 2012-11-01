@@ -73,7 +73,7 @@ extern "C" {
  * to get the pointer to the extension area.
  * @return pointer to a stream editor on success, #QSE_NULL on failure.
  */
-qse_sed_t* qse_sed_openstd (
+QSE_EXPORT qse_sed_t* qse_sed_openstd (
 	qse_size_t xtnsize  /**< extension size in bytes */
 );
 
@@ -84,7 +84,7 @@ qse_sed_t* qse_sed_openstd (
  * not qse_getxtn() to get the pointer to the extension area.
  * @return pointer to a stream editor on success, #QSE_NULL on failure.
  */
-qse_sed_t* qse_sed_openstdwithmmgr (
+QSE_EXPORT qse_sed_t* qse_sed_openstdwithmmgr (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize  /**< extension size in bytes */
 );
@@ -94,7 +94,7 @@ qse_sed_t* qse_sed_openstdwithmmgr (
  * Note that you must not call qse_sed_getxtn() for a stream editor
  * created with qse_sed_openstd() and qse_sed_openstdwithmmgr().
  */
-void* qse_sed_getxtnstd (
+QSE_EXPORT void* qse_sed_getxtnstd (
 	qse_sed_t* sed /**< stream editor */
 );
 
@@ -109,7 +109,7 @@ void* qse_sed_getxtnstd (
  *
  * @return 0 on success, -1 on failure
  */
-int qse_sed_compstd (
+QSE_EXPORT int qse_sed_compstd (
 	qse_sed_t*        sed,  /**< stream editor */
 	qse_sed_iostd_t   in[], /**< input scripts */
 	qse_size_t*       count /**< number of input scripts opened */
@@ -125,7 +125,7 @@ int qse_sed_compstd (
  * the default interface. It calls cmgr->mbtowc() for conversion.
  * @return 0 on success, -1 on failure
  */
-int qse_sed_compstdfile (
+QSE_EXPORT int qse_sed_compstdfile (
 	qse_sed_t*        sed, 
 	const qse_char_t* infile,
 	qse_cmgr_t*       cmgr
@@ -136,7 +136,7 @@ int qse_sed_compstdfile (
  * in a null-terminated string pointed to by @a script.
  * @return 0 on success, -1 on failure
  */
-int qse_sed_compstdstr (
+QSE_EXPORT int qse_sed_compstdstr (
 	qse_sed_t*        sed, 
 	const qse_char_t* script
 );
@@ -156,7 +156,7 @@ int qse_sed_compstdstr (
  *
  * @return 0 on success, -1 on failure
  */
-int qse_sed_execstd (
+QSE_EXPORT int qse_sed_execstd (
 	qse_sed_t*       sed,
 	qse_sed_iostd_t  in[],
 	qse_sed_iostd_t* out
@@ -171,7 +171,7 @@ int qse_sed_execstd (
  *
  * @return 0 on success, -1 on failure
  */
-int qse_sed_execstdfile (
+QSE_EXPORT int qse_sed_execstdfile (
      qse_sed_t*        sed,
 	const qse_char_t* infile,
 	const qse_char_t* outfile,

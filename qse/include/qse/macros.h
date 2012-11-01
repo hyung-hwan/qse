@@ -316,15 +316,6 @@
 #define QSE_DEFINE_COMMON_FIELDS(name) \
 	qse_mmgr_t* mmgr; 
 	
-
-#define QSE_BEGIN_CLASS(name) \
-	typedef struct name name; \
-	struct name \
-	{ \
-		qse_mmgr_t* mmgr; \
-
-#define QSE_END_CLASS(name) };
-
 /**
  * The QSE_DEFINE_COMMON_FUNCTIONS() macro defines common object functions.
  * - @code void qse_xxx_setmmgr (qse_xxx_t* xxx, qse_mmgr_t* mmgr); @endcode
@@ -342,12 +333,6 @@ void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 
-
-/**
- * The QSE_MMGR() macro gets the memory manager field from an object.
- */
-#define QSE_MMGR(obj) ((obj)->mmgr)
-
 /**
  * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
  * extension space located at the end of an object. The type of the object
@@ -362,11 +347,11 @@ void* qse_##name##_getxtn (qse_##name##_t* name);
 #define QSE_IMPLEMENT_COMMON_FUNCTIONS(name) \
 void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
 { \
-	QSE_MMGR(name) = mmgr; \
+	(name)->mmgr = mmgr; \
 } \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name) \
 { \
-	return QSE_MMGR(name); \
+	return (name)->mmgr; \
 } \
 void* qse_##name##_getxtn (qse_##name##_t* name) \
 { \

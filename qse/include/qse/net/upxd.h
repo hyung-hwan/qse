@@ -134,93 +134,104 @@ typedef struct qse_upxd_cbs_t qse_upxd_cbs_t;
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (upxd)
-
-qse_upxd_t* qse_upxd_open (
+QSE_EXPORT qse_upxd_t* qse_upxd_open (
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  xtnsize /**< extension size in bytes */
 );
 
-void qse_upxd_close (
+QSE_EXPORT void qse_upxd_close (
 	qse_upxd_t* upxd
 );
 
-qse_upxd_errnum_t qse_upxd_geterrnum (
+QSE_EXPORT qse_upxd_errnum_t qse_upxd_geterrnum (
 	qse_upxd_t* upxd
 );
 
-void qse_upxd_seterrnum (
+QSE_EXPORT void qse_upxd_seterrnum (
 	qse_upxd_t*       upxd,
 	qse_upxd_errnum_t errnum
 );
 
-qse_upxd_cbs_t* qse_upxd_getcbs (
+QSE_EXPORT void qse_upxd_setmmgr (
+	qse_upxd_t*   upxd,
+	qse_mmgr_t*  mmgr
+);
+
+QSE_EXPORT qse_mmgr_t* qse_upxd_getmmgr (
+	qse_upxd_t* upxd
+); 
+
+QSE_EXPORT void* qse_upxd_getxtn (
 	qse_upxd_t* upxd
 );
 
-void qse_upxd_setcbs (
+QSE_EXPORT qse_upxd_cbs_t* qse_upxd_getcbs (
+	qse_upxd_t* upxd
+);
+
+QSE_EXPORT void qse_upxd_setcbs (
 	qse_upxd_t*     upxd,
 	qse_upxd_cbs_t* cbs
 );
 
-void* qse_upxd_allocmem (
+QSE_EXPORT void* qse_upxd_allocmem (
 	qse_upxd_t* upxd,
 	qse_size_t  size
 );
 
-void* qse_upxd_reallocmem (
+QSE_EXPORT void* qse_upxd_reallocmem (
 	qse_upxd_t* upxd,
 	void*       ptr,
 	qse_size_t  size
 );
 
-void qse_upxd_freemem (
+QSE_EXPORT void qse_upxd_freemem (
 	qse_upxd_t* upxd,
 	void*       ptr
 );
 
-qse_upxd_server_t* qse_upxd_addserver (
+QSE_EXPORT qse_upxd_server_t* qse_upxd_addserver (
 	qse_upxd_t*       upxd,
 	const qse_nwad_t* nwad,
 	const qse_char_t* dev
 );
 
-void qse_upxd_delserver (
+QSE_EXPORT void qse_upxd_delserver (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server
 );
 	
-void* qse_upxd_getserverctx (
+QSE_EXPORT void* qse_upxd_getserverctx (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server
 );
 
-void qse_upxd_setserverctx (
+QSE_EXPORT void qse_upxd_setserverctx (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server,
 	void*              ctx
 );
 
-void qse_upxd_stop (
+QSE_EXPORT void qse_upxd_stop (
 	qse_upxd_t* upxd
 );
 
-int qse_upxd_loop (
+QSE_EXPORT int qse_upxd_loop (
 	qse_upxd_t* upxd,
 	qse_ntime_t timeout
 );
 
-int qse_upxd_enableserver (
+QSE_EXPORT int qse_upxd_enableserver (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server
 );
 
-int qse_upxd_disableserver (
+QSE_EXPORT int qse_upxd_disableserver (
 	qse_upxd_t*        upxd,
 	qse_upxd_server_t* server
 );
 
-int qse_upxd_poll (
+QSE_EXPORT int qse_upxd_poll (
 	qse_upxd_t*  upxd,
 	qse_ntime_t  timeout
 );

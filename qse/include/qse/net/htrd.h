@@ -71,7 +71,7 @@ struct qse_htrd_recbs_t
 
 struct qse_htrd_t
 {
-	QSE_DEFINE_COMMON_FIELDS (htrd)
+	qse_mmgr_t* mmgr;
 	qse_htrd_errnum_t errnum;
 	int option;
 
@@ -111,12 +111,10 @@ struct qse_htrd_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (htrd)
-
 /**
  * The qse_htrd_open() function creates a htrd processor.
  */
-qse_htrd_t* qse_htrd_open (
+QSE_EXPORT qse_htrd_t* qse_htrd_open (
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  xtnsize /**< extension size in bytes */
 );
@@ -124,37 +122,50 @@ qse_htrd_t* qse_htrd_open (
 /**
  * The qse_htrd_close() function destroys a htrd processor.
  */
-void qse_htrd_close (
+QSE_EXPORT void qse_htrd_close (
 	qse_htrd_t* htrd 
 );
 
-int qse_htrd_init (
+QSE_EXPORT int qse_htrd_init (
 	qse_htrd_t* htrd,
 	qse_mmgr_t* mmgr
 );
 
-void qse_htrd_fini (
+QSE_EXPORT void qse_htrd_fini (
 	qse_htrd_t* htrd
 );
 
-void qse_htrd_clear (
+QSE_EXPORT void qse_htrd_setmmgr (
+	qse_htrd_t*   htrd,
+	qse_mmgr_t*  mmgr
+);
+
+QSE_EXPORT qse_mmgr_t* qse_htrd_getmmgr (
+	qse_htrd_t* htrd
+); 
+
+QSE_EXPORT void* qse_htrd_getxtn (
 	qse_htrd_t* htrd
 );
 
-int qse_htrd_getoption (
+QSE_EXPORT void qse_htrd_clear (
+	qse_htrd_t* htrd
+);
+
+QSE_EXPORT int qse_htrd_getoption (
 	qse_htrd_t* htrd	
 );
 
-void qse_htrd_setoption (
+QSE_EXPORT void qse_htrd_setoption (
 	qse_htrd_t* htrd,
 	int         opts
 );
 
-const qse_htrd_recbs_t* qse_htrd_getrecbs (
+QSE_EXPORT const qse_htrd_recbs_t* qse_htrd_getrecbs (
 	qse_htrd_t* htrd
 );
 
-void qse_htrd_setrecbs (
+QSE_EXPORT void qse_htrd_setrecbs (
 	qse_htrd_t*             htrd,
 	const qse_htrd_recbs_t* recbs
 );
@@ -163,7 +174,7 @@ void qse_htrd_setrecbs (
  * The qse_htrd_feed() function accepts htrd request octets and invokes a 
  * callback function if it has processed a proper htrd request. 
  */
-int qse_htrd_feed (
+QSE_EXPORT int qse_htrd_feed (
 	qse_htrd_t*        htrd, /**< htrd */
 	const qse_mchar_t* req,  /**< request octets */
 	qse_size_t         len   /**< number of octets */
@@ -174,11 +185,11 @@ int qse_htrd_feed (
  * if the current response should be processed until the 
  * connection is closed.
  */ 
-int qse_htrd_halt (
+QSE_EXPORT int qse_htrd_halt (
 	qse_htrd_t* htrd
 );
 
-int qse_htrd_scanqparam (
+QSE_EXPORT int qse_htrd_scanqparam (
 	qse_htrd_t*        http,
 	const qse_mcstr_t* cstr
 );

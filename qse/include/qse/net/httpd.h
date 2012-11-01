@@ -508,12 +508,10 @@ typedef enum qse_httpd_server_optstd_t qse_httpd_server_optstd_t;
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (httpd)
-
 /**
  * The qse_httpd_open() function creates a httpd processor.
  */
-qse_httpd_t* qse_httpd_open (
+QSE_EXPORT qse_httpd_t* qse_httpd_open (
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  xtnsize /**< extension size in bytes */
 );
@@ -521,24 +519,37 @@ qse_httpd_t* qse_httpd_open (
 /**
  * The qse_httpd_close() function destroys a httpd processor.
  */
-void qse_httpd_close (
+QSE_EXPORT void qse_httpd_close (
 	qse_httpd_t* httpd 
 );
 
-qse_httpd_errnum_t qse_httpd_geterrnum (
+QSE_EXPORT void qse_httpd_setmmgr (
+	qse_httpd_t*   httpd,
+	qse_mmgr_t*  mmgr
+);
+
+QSE_EXPORT qse_mmgr_t* qse_httpd_getmmgr (
+	qse_httpd_t* httpd
+); 
+
+QSE_EXPORT void* qse_httpd_getxtn (
 	qse_httpd_t* httpd
 );
 
-void qse_httpd_seterrnum (
+QSE_EXPORT qse_httpd_errnum_t qse_httpd_geterrnum (
+	qse_httpd_t* httpd
+);
+
+QSE_EXPORT void qse_httpd_seterrnum (
 	qse_httpd_t*       httpd,
 	qse_httpd_errnum_t errnum
 );
 
-int qse_httpd_getoption (
+QSE_EXPORT int qse_httpd_getoption (
 	qse_httpd_t* httpd
 );
 
-void qse_httpd_setoption (
+QSE_EXPORT void qse_httpd_setoption (
 	qse_httpd_t* httpd,
 	int          option
 );
@@ -548,14 +559,14 @@ void qse_httpd_setoption (
  * and returns the pointer to it. If no callback set can be popped,
  * it returns #QSE_NULL.
  */
-qse_httpd_ecb_t* qse_httpd_popecb (
+QSE_EXPORT qse_httpd_ecb_t* qse_httpd_popecb (
 	qse_httpd_t* httpd /**< httpd */
 );
 
 /**
  * The qse_httpd_pushecb() function register a runtime callback set.
  */
-void qse_httpd_pushecb (
+QSE_EXPORT void qse_httpd_pushecb (
 	qse_httpd_t*     httpd, /**< httpd */
 	qse_httpd_ecb_t* ecb  /**< callback set */
 );
@@ -563,7 +574,7 @@ void qse_httpd_pushecb (
 /**
  * The qse_httpd_loop() function starts a httpd server loop.
  */
-int qse_httpd_loop (
+QSE_EXPORT int qse_httpd_loop (
 	qse_httpd_t*     httpd, 
 	qse_httpd_scb_t* scb,
 	qse_httpd_rcb_t* rcb,
@@ -573,30 +584,30 @@ int qse_httpd_loop (
 /**
  * The qse_httpd_stop() function requests to stop qse_httpd_loop()
  */
-void qse_httpd_stop (
+QSE_EXPORT void qse_httpd_stop (
 	qse_httpd_t* httpd
 );
 
 #define qse_httpd_getserverxtn(httpd,server) ((void*)(server+1))
 
-qse_httpd_server_t* qse_httpd_attachserver (
+QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserver (
 	qse_httpd_t*                 httpd,
 	const qse_httpd_server_t*    tmpl,
 	qse_httpd_server_predetach_t predetach,	
 	qse_size_t                   xtnsize
 );
 
-void qse_httpd_detachserver (
+QSE_EXPORT void qse_httpd_detachserver (
 	qse_httpd_t*        httpd,
 	qse_httpd_server_t* server
 );
 
-void qse_httpd_discardcontent (
+QSE_EXPORT void qse_httpd_discardcontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
 );
 
-void qse_httpd_completecontent (
+QSE_EXPORT void qse_httpd_completecontent (
 	qse_httpd_t*        httpd,
 	qse_htre_t*         req
 );
@@ -606,7 +617,7 @@ void qse_httpd_completecontent (
  * The qse_httpd_setname() function changes the string
  * to be used as the value for the server header. 
  */
-void qse_httpd_setname (
+QSE_EXPORT void qse_httpd_setname (
 	qse_httpd_t*       httpd,
 	const qse_mchar_t* name
 );
@@ -617,7 +628,7 @@ void qse_httpd_setname (
  * pointer to the string used as the value for the server
  * header.
  */
-qse_mchar_t* qse_httpd_getname (
+QSE_EXPORT qse_mchar_t* qse_httpd_getname (
 	qse_httpd_t* httpd
 );
 
@@ -626,7 +637,7 @@ qse_mchar_t* qse_httpd_getname (
  * to a string and stores it in a built-in buffer. 
  * If @a nt is QSE_NULL, the current time is used.
  */
-const qse_mchar_t* qse_httpd_fmtgmtimetobb (
+QSE_EXPORT const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 	qse_httpd_t*       httpd,
 	const qse_ntime_t* nt,
 	int                idx
@@ -634,7 +645,7 @@ const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 
 #define qse_httpd_gettaskxtn(httpd,task) ((void*)(task+1))
 
-qse_httpd_task_t* qse_httpd_entask (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entask (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
@@ -644,14 +655,14 @@ qse_httpd_task_t* qse_httpd_entask (
 
 /* -------------------------------------------- */
 
-qse_httpd_task_t* qse_httpd_entaskdisconnect (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskdisconnect (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred
 );
 
 
-qse_httpd_task_t* qse_httpd_entaskformat (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskformat (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
@@ -661,7 +672,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 
 /* -------------------------------------------- */
 
-qse_httpd_task_t* qse_httpd_entasktext (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entasktext (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
@@ -670,7 +681,7 @@ qse_httpd_task_t* qse_httpd_entasktext (
 	qse_htre_t*             req
 );
 
-qse_httpd_task_t* qse_httpd_entaskerr (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskerr (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -678,7 +689,7 @@ qse_httpd_task_t* qse_httpd_entaskerr (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskcontinue (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcontinue (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -688,7 +699,7 @@ qse_httpd_task_t* qse_httpd_entaskcontinue (
 /**
  * The qse_httpd_entaskauth() function adds a basic authorization task.
  */
-qse_httpd_task_t* qse_httpd_entaskauth (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskauth (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -696,7 +707,7 @@ qse_httpd_task_t* qse_httpd_entaskauth (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskreloc (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskreloc (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -704,7 +715,7 @@ qse_httpd_task_t* qse_httpd_entaskreloc (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskredir (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskredir (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -713,14 +724,14 @@ qse_httpd_task_t* qse_httpd_entaskredir (
 );
 
 
-qse_httpd_task_t* qse_httpd_entasknomod (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entasknomod (
      qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskdir (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -728,7 +739,7 @@ qse_httpd_task_t* qse_httpd_entaskdir (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskfile (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -737,7 +748,7 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskcgi (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_httpd_t*              httpd,
 	qse_httpd_client_t*       client,
 	qse_httpd_task_t*         pred,
@@ -749,7 +760,7 @@ qse_httpd_task_t* qse_httpd_entaskcgi (
 	qse_htre_t*               req
 );
 
-qse_httpd_task_t* qse_httpd_entaskproxy (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskproxy (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
@@ -760,7 +771,7 @@ qse_httpd_task_t* qse_httpd_entaskproxy (
 
 /* -------------------------------------------- */
 
-qse_httpd_task_t* qse_httpd_entaskrsrc (
+QSE_EXPORT qse_httpd_task_t* qse_httpd_entaskrsrc (
 	qse_httpd_t*            httpd,
 	qse_httpd_client_t*     client,
 	qse_httpd_task_t*       pred,
@@ -770,64 +781,64 @@ qse_httpd_task_t* qse_httpd_entaskrsrc (
 
 /* -------------------------------------------- */
 
-void* qse_httpd_allocmem (
+QSE_EXPORT void* qse_httpd_allocmem (
 	qse_httpd_t* httpd, 
 	qse_size_t   size
 );
 
-void* qse_httpd_reallocmem (
+QSE_EXPORT void* qse_httpd_reallocmem (
 	qse_httpd_t* httpd,
 	void*        ptr,
 	qse_size_t   size
 );
 
-void qse_httpd_freemem (
+QSE_EXPORT void qse_httpd_freemem (
 	qse_httpd_t* httpd,
 	void*        ptr
 );
 
 /* -------------------------------------------- */
 
-qse_httpd_t* qse_httpd_openstd (
+QSE_EXPORT qse_httpd_t* qse_httpd_openstd (
 	qse_size_t xtnsize
 );
 
-qse_httpd_t* qse_httpd_openstdwithmmgr (
+QSE_EXPORT qse_httpd_t* qse_httpd_openstdwithmmgr (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize
 );
 
-void* qse_httpd_getxtnstd (
+QSE_EXPORT void* qse_httpd_getxtnstd (
 	qse_httpd_t* httpd
 );
 
-qse_httpd_server_t* qse_httpd_attachserverstd (
+QSE_EXPORT qse_httpd_server_t* qse_httpd_attachserverstd (
 	qse_httpd_t*                 httpd,
 	const qse_char_t*            uri,
 	qse_httpd_server_predetach_t predetach,	
 	qse_size_t                   xtnsize
 );
 
-int qse_httpd_getserveroptstd (
+QSE_EXPORT int qse_httpd_getserveroptstd (
 	qse_httpd_t*              httpd,
 	qse_httpd_server_t*       server,
 	qse_httpd_server_optstd_t id,
 	void*                     value
 );
 
-int qse_httpd_setserveroptstd (
+QSE_EXPORT int qse_httpd_setserveroptstd (
 	qse_httpd_t*              httpd,
 	qse_httpd_server_t*       server,
 	qse_httpd_server_optstd_t id,
 	const void*               value
 );
 
-void* qse_httpd_getserverxtnstd (
+QSE_EXPORT void* qse_httpd_getserverxtnstd (
 	qse_httpd_t*         httpd,
 	qse_httpd_server_t*  server
 );
 
-int qse_httpd_loopstd (
+QSE_EXPORT int qse_httpd_loopstd (
 	qse_httpd_t*       httpd, 
 	qse_ntime_t        timeout
 );
