@@ -591,11 +591,13 @@ IP_TRANSPRENT is needed for:
 
 		len = qse_nwifindextombs (server->nwif, tmp, QSE_COUNTOF(tmp));
 
+#if defined(SO_BINDTODEVICE)
 		if (len <= 0 || setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE, tmp, len) <= -1)
 		{
 			/* TODO: logging ... */
 			goto oops;
 		}
+#endif
 	}
 
 	/* Solaris 8 returns EINVAL if QSE_SIZEOF(addr) is passed in as the

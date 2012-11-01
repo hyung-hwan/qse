@@ -142,7 +142,7 @@ qse_httpd_task_t* qse_httpd_entask_text (
 	qse_httpd_client_t* client,
      qse_httpd_task_t* pred,
 	const qse_mchar_t* ptr,
-	qse_size_t len;
+	qse_size_t len
 );
 
 #ifdef __cplusplus

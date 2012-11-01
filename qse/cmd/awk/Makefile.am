@@ -4,7 +4,7 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
 	-I$(includedir) \
-	-DDEFAULT_MODDIR=\"$(libdir)/qse\"
+	-DDEFAULT_MODDIR=\"$(libdir)/qse\" $(LTDLINCL)
 
 #####################################################################3
 
@@ -12,7 +12,7 @@ bin_PROGRAMS = qseawk
 
 qseawk_SOURCES = awk.c
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir)
-qseawk_LDADD = -lqseawk -lqsecmn $(LIBM)
+qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL)
 
 if WIN32
 if WCHAR

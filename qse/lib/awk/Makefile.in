@@ -35,7 +35,6 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_CXX_TRUE@am__append_1 = libqseawkxx.la
-@HAVE_C_MPI_TRUE@am__append_2 = libqseawkmp.la
 subdir = lib/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -89,15 +88,8 @@ libqseawk_la_OBJECTS = $(am_libqseawk_la_OBJECTS)
 libqseawk_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libqseawk_la_LDFLAGS) $(LDFLAGS) -o $@
-@HAVE_C_MPI_TRUE@libqseawkmp_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__libqseawkmp_la_SOURCES_DIST = mpi.c
-@HAVE_C_MPI_TRUE@am_libqseawkmp_la_OBJECTS = libqseawkmp_la-mpi.lo
-libqseawkmp_la_OBJECTS = $(am_libqseawkmp_la_OBJECTS)
-libqseawkmp_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libqseawkmp_la_LDFLAGS) $(LDFLAGS) -o $@
-@HAVE_C_MPI_TRUE@am_libqseawkmp_la_rpath = -rpath $(libdir)
-@ENABLE_CXX_TRUE@libqseawkxx_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@ENABLE_CXX_TRUE@libqseawkxx_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@ENABLE_CXX_TRUE@	$(am__DEPENDENCIES_1)
 am__libqseawkxx_la_SOURCES_DIST = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@am_libqseawkxx_la_OBJECTS = Awk.lo StdAwk.lo
 libqseawkxx_la_OBJECTS = $(am_libqseawkxx_la_OBJECTS)
@@ -127,10 +119,8 @@ CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libqseawk_la_SOURCES) $(libqseawkmp_la_SOURCES) \
-	$(libqseawkxx_la_SOURCES)
+SOURCES = $(libqseawk_la_SOURCES) $(libqseawkxx_la_SOURCES)
 DIST_SOURCES = $(libqseawk_la_SOURCES) \
-	$(am__libqseawkmp_la_SOURCES_DIST) \
 	$(am__libqseawkxx_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
@@ -313,17 +303,13 @@ AM_CPPFLAGS = \
 	-I$(includedir) \
 	-DDEFAULT_MODDIR=\"$(libdir)/qse\" $(LTDLINCL)
 
-lib_LTLIBRARIES = libqseawk.la $(am__append_1) $(am__append_2)
+lib_LTLIBRARIES = libqseawk.la $(am__append_1)
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h 
 libqseawk_la_LDFLAGS = -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
 libqseawk_la_LIBADD = -lqsecmn $(LIBM) $(LIBLTDL)
 @ENABLE_CXX_TRUE@libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 @ENABLE_CXX_TRUE@libqseawkxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM)
-@HAVE_C_MPI_TRUE@libqseawkmp_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-@HAVE_C_MPI_TRUE@libqseawkmp_la_SOURCES = mpi.c
-@HAVE_C_MPI_TRUE@libqseawkmp_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined $(MPI_CLDFLAGS)
-@HAVE_C_MPI_TRUE@libqseawkmp_la_LIBADD = -lqseawk -lqsecmn $(LIBM)
+@ENABLE_CXX_TRUE@libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM) $(LIBLTDL)
 all: all-am
 
 .SUFFIXES:
@@ -391,8 +377,6 @@ clean-libLTLIBRARIES:
 	done
 libqseawk.la: $(libqseawk_la_OBJECTS) $(libqseawk_la_DEPENDENCIES) $(EXTRA_libqseawk_la_DEPENDENCIES) 
 	$(libqseawk_la_LINK) -rpath $(libdir) $(libqseawk_la_OBJECTS) $(libqseawk_la_LIBADD) $(LIBS)
-libqseawkmp.la: $(libqseawkmp_la_OBJECTS) $(libqseawkmp_la_DEPENDENCIES) $(EXTRA_libqseawkmp_la_DEPENDENCIES) 
-	$(libqseawkmp_la_LINK) $(am_libqseawkmp_la_rpath) $(libqseawkmp_la_OBJECTS) $(libqseawkmp_la_LIBADD) $(LIBS)
 libqseawkxx.la: $(libqseawkxx_la_OBJECTS) $(libqseawkxx_la_DEPENDENCIES) $(EXTRA_libqseawkxx_la_DEPENDENCIES) 
 	$(libqseawkxx_la_LINK) $(am_libqseawkxx_la_rpath) $(libqseawkxx_la_OBJECTS) $(libqseawkxx_la_LIBADD) $(LIBS)
 
@@ -407,7 +391,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/awk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fnc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawkmp_la-mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rec.Plo@am__quote@
@@ -437,13 +420,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-
-libqseawkmp_la-mpi.lo: mpi.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkmp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawkmp_la-mpi.lo -MD -MP -MF $(DEPDIR)/libqseawkmp_la-mpi.Tpo -c -o libqseawkmp_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawkmp_la-mpi.Tpo $(DEPDIR)/libqseawkmp_la-mpi.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='libqseawkmp_la-mpi.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawkmp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawkmp_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
