@@ -1,4 +1,4 @@
-#include <qse/awk/std.h>
+#include <qse/awk/awk.h>
 #include <qse/cmn/str.h>
 
 #if defined(_WIN32)
@@ -298,12 +298,12 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 
 /* TODO: proper resource management */
 
-int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
+static int init (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
 	return 0;
 }
 
-void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
+static void fini (qse_awk_mod_t* mod, qse_awk_rtx_t* rtx)
 {
 	/* TODO: 
 	for (each pid for rtx) kill (pid, SIGKILL);

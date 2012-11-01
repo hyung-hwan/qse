@@ -49,6 +49,7 @@
 #else
 #	include <unistd.h>
 #	include <ltdl.h>
+#	define USE_LTDL
 #endif
 
 #ifndef QSE_HAVE_CONFIG_H
@@ -421,6 +422,9 @@ qse_awk_t* qse_awk_openstd (qse_size_t xtnsize)
 static void fini_xtn (qse_awk_t* awk)
 {
 	/* nothing to do */
+#if defined(USE_LTDL)
+	lt_dlexit ();
+#endif
 }
 
 static void clear_xtn (qse_awk_t* awk)
@@ -447,6 +451,7 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 	prm.math.log10 = custom_awk_log10;
 	prm.math.exp = custom_awk_exp;
 	prm.math.sqrt = custom_awk_sqrt;
+
 	prm.modopen = custom_awk_modopen;
 	prm.modclose = custom_awk_modclose;
 	prm.modsym = custom_awk_modsym;
@@ -460,17 +465,25 @@ qse_awk_t* qse_awk_openstdwithmmgr (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 
 	/* add intrinsic global variables and functions */
 	if (add_globals(awk) <= -1 ||
-	    add_functions (awk) <= -1)
-	{
-		qse_awk_close (awk);
-		return QSE_NULL;
-	}
+	    add_functions (awk) <= -1) goto oops;
+
+#if defined(USE_LTDL)
+	/* lt_dlinit() can be called more than once and 
+	 * lt_dlexit() shuts down libltdl if it's called as many times as
+	 * corresponding lt_dlinit(). so it's safe to call lt_dlinit()
+	 * and lt_dlexit() at the library level. */
+	if (lt_dlinit () != 0) goto oops;
+#endif
 
 	xtn->ecb.close = fini_xtn;
 	xtn->ecb.clear = clear_xtn;
 	qse_awk_pushecb (awk, &xtn->ecb);
 
 	return awk;
+
+oops:
+	if (awk) qse_awk_close (awk);
+	return QSE_NULL;
 }
 
 void* qse_awk_getxtnstd (qse_awk_t* awk)

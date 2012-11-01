@@ -966,7 +966,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 	qse_awk_parsestd_t psout;
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 
-	memset (&arg, 0, QSE_SIZEOF(arg));
+	qse_memset (&arg, 0, QSE_SIZEOF(arg));
 	arg.icf.mmgr = mmgr;
 
 	i = comparg (argc, argv, &arg);
@@ -1129,9 +1129,88 @@ oops:
 	return ret;
 }
 
+struct mpi_t
+{
+	void* h;
+	int (*i) (int argc, qse_achar_t* argv[]);
+	void (*f) (void);
+};
+
+typedef struct mpi_t mpi_t;
+
+static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
+{
+	lt_dladvise adv;
+
+	qse_memset (mpi, 0, QSE_SIZEOF(*mpi));
+
+#if defined(USE_LTDL)
+
+	#if defined(QSE_ACHAR_IS_MCHAR)
+	if (qse_mbscmp (qse_mbsbasename(argv[0]), QSE_MT("qseawkmp")) != 0 &&
+	    qse_mbscmp (qse_mbsbasename(argv[0]), QSE_MT("qseawkmpi")) != 0) return;
+	#else
+	if (qse_wcscmp (qse_wcsbasename(argv[0]), QSE_WT("qseawkmp")) != 0 &&
+	    qse_wcscmp (qse_wcsbasename(argv[0]), QSE_WT("qseawkmpi")) != 0) return;
+	#endif
+
+	if (lt_dlinit () != 0) return;
+
+	if (lt_dladvise_init (&adv) != 0) goto oops;
+
+	/* If i don't set the global option, loading may end up with an error
+	 * like this depending on your MPI library.
+	 *
+	 *  symbol lookup error: /usr/lib/openmpi/lib/openmpi/mca_paffinity_linux.so: undefined symbol: mca_base_param_reg_int
+	 */
+
+	if (lt_dladvise_global (&adv) != 0 || lt_dladvise_ext (&adv) != 0)
+	{
+		lt_dladvise_destroy (&adv);
+		goto oops;
+	}
+
+	mpi->h = lt_dlopenadvise (DEFAULT_MODDIR "/libawkmpi", adv);
+	lt_dladvise_destroy (&adv);
+
+	if (mpi->h)
+	{
+		mpi->i = lt_dlsym (mpi->h, "mpi_init");
+		mpi->f = lt_dlsym (mpi->h, "mpi_fini");
+
+		if (mpi->i == QSE_NULL || 
+		    mpi->f == QSE_NULL ||
+		    mpi->i (argc, argv) <= -1)
+		{
+			lt_dlclose (mpi->h);
+			mpi->h = QSE_NULL;
+		}
+	}
+
+	return;
+
+oops:
+	lt_dlexit ();
+#endif
+}
+
+static void close_mpi (mpi_t* mpi)
+{
+	if (mpi->h)
+	{
+#if defined(USE_LTDL)
+		mpi->f ();
+		lt_dlclose (mpi->h);
+		mpi->h = QSE_NULL;
+		lt_dlexit ();
+#endif
+	}
+}
+
 int qse_main (int argc, qse_achar_t* argv[])
 {
 	int ret;
+	mpi_t mpi;
 
 #if defined(_WIN32)
 	char locale[100];
@@ -1162,15 +1241,11 @@ int qse_main (int argc, qse_achar_t* argv[])
 	qse_setdflcmgrbyid (QSE_CMGR_SLMB);
 #endif
 
-#if defined(USE_LTDL)
-	lt_dlinit ();
-#endif
-
+	open_mpi (&mpi, argc, argv);
+	
 	ret = qse_runmain (argc, argv, awk_main);
 
-#if defined(USE_LTDL)
-	lt_dlexit ();
-#endif
+	close_mpi (&mpi);
 
 #if defined(_WIN32)
 	WSACleanup ();
