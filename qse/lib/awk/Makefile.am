@@ -15,13 +15,6 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqseawkxx.la
 libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM)
+libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM) $(LIBLTDL)
 endif
 
-if HAVE_C_MPI
-lib_LTLIBRARIES += libqseawkmp.la
-libqseawkmp_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-libqseawkmp_la_SOURCES = mpi.c
-libqseawkmp_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined $(MPI_CLDFLAGS)
-libqseawkmp_la_LIBADD = -lqseawk -lqsecmn $(LIBM)
-endif

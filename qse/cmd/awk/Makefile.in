@@ -57,7 +57,8 @@ am_qseawk_OBJECTS = awk.$(OBJEXT)
 qseawk_OBJECTS = $(am_qseawk_OBJECTS)
 am__DEPENDENCIES_1 =
 @WCHAR_TRUE@@WIN32_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
-qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
+qseawk_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 qseawk_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(qseawk_LDFLAGS) \
 	$(LDFLAGS) -o $@
@@ -255,11 +256,11 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
 	-I$(includedir) \
-	-DDEFAULT_MODDIR=\"$(libdir)/qse\"
+	-DDEFAULT_MODDIR=\"$(libdir)/qse\" $(LTDLINCL)
 
 qseawk_SOURCES = awk.c
 qseawk_LDFLAGS = -L../../lib/awk -L../../lib/cmn -L$(libdir)
-qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(am__append_1)
+qseawk_LDADD = -lqseawk -lqsecmn $(LIBM) $(LIBLTDL) $(am__append_1)
 all: all-am
 
 .SUFFIXES:

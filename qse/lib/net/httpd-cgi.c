@@ -443,7 +443,12 @@ static int cgi_add_env (
 	qse_env_insertmbs (env, QSE_MT("DOCUMENT_ROOT"), docroot);
 	if (suffix && suffix[0] != QSE_MT('\0')) 
 	{
-		const qse_mchar_t* tmp[3] = { docroot, suffix, QSE_NULL};
+		const qse_mchar_t* tmp[3];
+
+		tmp[0] = docroot; 
+		tmp[1] = suffix; 
+		tmp[2] = QSE_NULL;
+
 		qse_env_insertmbs (env, QSE_MT("PATH_INFO"), suffix);
 		qse_env_insertmbsa (env, QSE_MT("PATH_TRANSLATED"), tmp);
 	}
