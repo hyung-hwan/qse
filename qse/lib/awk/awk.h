@@ -123,7 +123,7 @@ struct qse_awk_t
 	struct
 	{
 		int trait;
-		qse_xstr_t moddir;
+		qse_xstr_t mod[2];
 
 		union
 		{

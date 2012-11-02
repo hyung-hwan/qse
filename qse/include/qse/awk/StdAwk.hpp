@@ -200,7 +200,7 @@ protected:
 	flt_t exp (flt_t x);
 	flt_t sqrt (flt_t x);
 
-     void* modopen (const char_t* dir, const char_t* name);
+     void* modopen (const mod_info_t* info);
      void  modclose (void* handle);
      void* modsym (void* handle, const char_t* name);
 

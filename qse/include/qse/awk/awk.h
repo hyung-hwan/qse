@@ -414,10 +414,18 @@ typedef qse_flt_t (*qse_awk_math2_t) (
 	qse_flt_t y
 );
 
+typedef struct qse_awk_mod_info_t qse_awk_mod_info_t;
+
+struct qse_awk_mod_info_t
+{
+	const qse_char_t* prefix;
+	const qse_char_t* postfix;
+	const qse_char_t* name;
+};
+
 typedef void* (*qse_awk_modopen_t) (
-	qse_awk_t*        awk,
-	const qse_char_t* dir,
-	const qse_char_t* name
+	qse_awk_t*                awk,
+	const qse_awk_mod_info_t* info
 );
 
 typedef void* (*qse_awk_modsym_t) (
@@ -821,6 +829,7 @@ struct qse_awk_mod_sym_t
 	} u;
 };
 
+
 /* ------------------------------------------------------------------------ */
 
 /**
@@ -911,7 +920,9 @@ struct qse_awk_rtx_ecb_t
 enum qse_awk_opt_t
 {
 	QSE_AWK_TRAIT = 0,
-	QSE_AWK_MODDIR,
+
+	QSE_AWK_MODPREFIX,
+	QSE_AWK_MODPOSTFIX,
 
 	QSE_AWK_DEPTH_INCLUDE,
 	QSE_AWK_DEPTH_BLOCK_PARSE,

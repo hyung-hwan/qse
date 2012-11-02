@@ -46,6 +46,7 @@
 #	endif
 #elif defined(__OS2__)
 #	define INCL_DOSMODULEMGR
+#	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
 #    include <os2.h>
 #elif defined(__DOS__)
@@ -314,23 +315,18 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-static void* custom_awk_modopen (
-	qse_awk_t* awk, const qse_char_t* dir, const qse_char_t* name)
+static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_info_t* info)
 {
 #if defined(USE_LTDL)
 	void* h;
 	qse_mchar_t* modpath;
-	const qse_char_t* tmp[6];
+	const qse_char_t* tmp[4];
 	int count;
 
 	count = 0;
-	if (dir && dir[0] != QSE_T('\0')) 
-	{
-		tmp[count++] = dir;
-		tmp[count++] = QSE_T("/");
-	}
-	tmp[count++] = QSE_T("libqseawk-");
-	tmp[count++] = name;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -351,19 +347,16 @@ static void* custom_awk_modopen (
 	return h;
 
 #elif defined(_WIN32)
+
 	HMODULE h;
 	qse_char_t* path;
-	const qse_char_t* tmp[5];
-	int count = 0;
+	const qse_char_t* tmp[4];
+	int count;
 
-	if (dir && dir[0] != QSE_T('\0')) 
-	{
-		tmp[count++] = dir;
-		tmp[count++] = QSE_T("/");
-	}
-
-	tmp[count++] = QSE_T("libqseawk-");
-	tmp[count++] = name;
+	count = 0;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
 	tmp[count] = QSE_NULL;
 
 	path = qse_stradup (tmp, QSE_NULL, awk->mmgr);
@@ -377,21 +370,21 @@ static void* custom_awk_modopen (
 
 	QSE_MMGR_FREE (awk->mmgr, path);
 	
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
+
 #elif defined(__OS2__)
+
 	HMODULE h;
 	qse_mchar_t* modpath;
-	const qse_char_t* tmp[6];
+	const qse_char_t* tmp[4];
 	int count;
+	UCHAR errbuf[CCHMAXPATH];
 
 	count = 0;
-	if (dir && dir[0] != QSE_T('\0')) 
-	{
-		tmp[count++] = dir;
-		tmp[count++] = QSE_T("/");
-	}
-	tmp[count++] = QSE_T("libqseawk-");
-	tmp[count++] = name;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -405,10 +398,11 @@ static void* custom_awk_modopen (
 		return QSE_NULL;
 	}
 
-	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf), modpath, &h) != NO_ERROR) h = QSE_NULL;
+	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h) != NO_ERROR) h = QSE_NULL;
 
 	QSE_MMGR_FREE (awk->mmgr, modpath);
 
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
 
 #elif defined(__DOS__)
@@ -452,7 +446,7 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
-	#endif
+#endif
 
 #if defined(USE_LTDL)
 	s = lt_dlsym (handle, mname);

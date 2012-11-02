@@ -2012,10 +2012,10 @@ Awk::flt_t Awk::sqrt (awk_t* awk, flt_t x)
 	return xtn->awk->sqrt (x);
 }
 
-void* Awk::modopen (awk_t* awk, const char_t* dir, const char_t* name)
+void* Awk::modopen (awk_t* awk, const mod_info_t* info)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->modopen (dir, name);
+	return xtn->awk->modopen (info);
 }
 
 void Awk::modclose (awk_t* awk, void* handle)

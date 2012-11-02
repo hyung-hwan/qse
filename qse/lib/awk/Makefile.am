@@ -3,8 +3,15 @@ AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = \
 	-I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
-	-I$(includedir) \
-	-DDEFAULT_MODDIR=\"$(libdir)\" $(LTDLINCL)
+	-I$(includedir) $(LTDLINCL)
+
+if WIN32
+# you must adjust the value of DEFAULT_MODPOSTFIX according to
+# -version-info in ../../mod/awk/Makefile.am
+AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
+else
+AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
+endif
 
 lib_LTLIBRARIES = libqseawk.la
 libqseawk_la_SOURCES = awk.c err.c tree.c parse.c run.c rec.c val.c fnc.c misc.c rio.c std.c awk.h err.h rio.h val.h fnc.h misc.h parse.h run.h tree.h 
