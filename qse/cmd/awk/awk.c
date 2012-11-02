@@ -1172,7 +1172,7 @@ static void open_mpi (mpi_t* mpi, int argc, qse_achar_t* argv[])
 		goto oops;
 	}
 
-	mpi->h = lt_dlopenadvise (DEFAULT_MODDIR "/libawkmpi", adv);
+	mpi->h = lt_dlopenadvise (DEFAULT_MODPREFIX "mpi" DEFAULT_MODPOSTFIX, adv);
 	lt_dladvise_destroy (&adv);
 
 	if (mpi->h)

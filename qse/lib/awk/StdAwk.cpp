@@ -1394,22 +1394,19 @@ StdAwk::flt_t StdAwk::sqrt (flt_t x)
 #endif
 }
 
-void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
+void* StdAwk::modopen (const mod_info_t* info)
 {
 #if defined(USE_LTDL)
 
 	void* h;
 	qse_mchar_t* modpath;
-	const qse_char_t* tmp[5];
-	int count = 0;
+	const qse_char_t* tmp[4];
+	int count;
 
-	if (dir && dir[0] != QSE_T('\0')) 
-	{
-		tmp[count++] = dir;
-		tmp[count++] = QSE_T("/");
-	}
-	tmp[count++] = QSE_T("libqseawk-");
-	tmp[count++] = name;
+	count = 0;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -1430,14 +1427,66 @@ void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
 	return h;
 
 #elif defined(_WIN32)
-	/*TODO: implemente this - use LoadLibrary... */
-	this->setError (QSE_AWK_ENOIMPL);
-	return QSE_NULL;
+
+	HMODULE h;
+	qse_char_t* path;
+	const qse_char_t* tmp[4];
+	int count;
+
+	count = 0;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
+	tmp[count] = QSE_NULL;
+
+	path = qse_stradup (tmp, QSE_NULL, this->getMmgr());
+	if (!path)
+	{
+		this->setError (QSE_AWK_ENOMEM);
+		return QSE_NULL;
+	}
+
+	h = LoadLibrary (path);
+
+	QSE_MMGR_FREE (awk->mmgr, path);
+
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
+
 #elif defined(__OS2__)
-	/*TODO: implemente this */
-	this->setError (QSE_AWK_ENOIMPL);
-	return QSE_NULL;
+
+	void* h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[4];
+	int count;
+	UCHAR errbuf[CCHMAXPATH];
+
+	count = 0;
+	if (info->prefix) tmp[count++] = info->prefix;
+	tmp[count++] = info->name;
+	if (info->postfix) tmp[count++] = info->postfix;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, this->getMmgr());
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, this->getMmgr());
+	#endif
+	if (!modpath)
+	{
+		this->setError (QSE_AWK_ENOMEM);
+		return QSE_NULL;
+	}
+
+	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h) != NO_ERROR) h = QSE_NULL;
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+
+     QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
+
 #elif defined(__DOS__)
+
 	/*TODO: implemente this */
 	this->setError (QSE_AWK_ENOIMPL);
 	return QSE_NULL;
@@ -1456,7 +1505,7 @@ void StdAwk::modclose (void* handle)
 #elif defined(_WIN32)
 	FreeLibrary ((HMODULE)handle);
 #elif defined(__OS2__)
-	/*TODO: implemente this */
+     DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__)
 	/*TODO: implemente this */
 #else
@@ -1469,24 +1518,23 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 	void* s;
 	qse_mchar_t* mname;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	mname = name;
-	#else
+#else
 	mname = qse_wcstombsdup (name, QSE_NULL, this->getMmgr());
 	if (!mname)
 	{
 		this->setError (QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
-	#endif
+#endif
 
 #if defined(USE_LTDL)
 	s = lt_dlsym ((lt_dlhandle)handle, mname);
 #elif defined(_WIN32)
 	s = (void*)GetProcAddress ((HMODULE)handle, mname);
 #elif defined(__OS2__)
-	/*TODO: implemente this */
-	s = QSE_NULL;
+     if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
 #elif defined(__DOS__)
 	/*TODO: implemente this */
 	s = QSE_NULL;
@@ -1494,11 +1542,11 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 	s = QSE_NULL;
 #endif
 
-	#if defined(QSE_CHAR_IS_MCHAR)
+#if defined(QSE_CHAR_IS_MCHAR)
 	/* nothing to do */
-	#else
+#else
 	QSE_MMGR_FREE (awk->mmgr, mname);
-	#endif
+#endif
 
 	return s;
 

@@ -269,6 +269,7 @@ oops:
 int qse_awk_close (qse_awk_t* awk)
 {
 	qse_awk_ecb_t* ecb;
+	int i;
 
 	if (qse_awk_clear (awk) <= -1) return -1;
 	/*qse_awk_clrfnc (awk);*/
@@ -293,8 +294,11 @@ int qse_awk_close (qse_awk_t* awk)
 	fini_token (&awk->ptok);
 
 	/* destroy dynamically allocated options */
-	if (awk->opt.moddir.ptr) 
-		QSE_MMGR_FREE (awk->mmgr, awk->opt.moddir.ptr);
+	for (i = 0; i < QSE_COUNTOF(awk->opt.mod); i++)
+	{
+		if (awk->opt.mod[i].ptr) 
+			QSE_MMGR_FREE (awk->mmgr, awk->opt.mod[i].ptr);
+	}
 
 	/* QSE_AWK_ALLOC, QSE_AWK_FREE, etc can not be used 
 	 * from the next line onwards */
@@ -436,10 +440,13 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 			awk->opt.trait = *(const int*)value;
 			return 0;
 
-		case QSE_AWK_MODDIR:
+		case QSE_AWK_MODPREFIX:
+		case QSE_AWK_MODPOSTFIX:
 		{
 			qse_xstr_t tmp;
+			int idx;
 
+			idx = id - QSE_AWK_MODPREFIX;
 			if (value)
 			{
 				tmp.ptr = qse_strdup (value, awk->mmgr);
@@ -456,10 +463,10 @@ int qse_awk_setopt (qse_awk_t* awk, qse_awk_opt_t id, const void* value)
 				tmp.len = 0;
 			}
 
-			if (awk->opt.moddir.ptr)
-				QSE_MMGR_FREE (awk->mmgr, awk->opt.moddir.ptr);
+			if (awk->opt.mod[idx].ptr)
+				QSE_MMGR_FREE (awk->mmgr, awk->opt.mod[idx].ptr);
 
-			awk->opt.moddir = tmp;
+			awk->opt.mod[idx] = tmp;
 			return 0;
 		}
 
@@ -486,10 +493,10 @@ int qse_awk_getopt (qse_awk_t* awk, qse_awk_opt_t  id, void* value)
 			*(int*)value = awk->opt.trait;
 			return 0;
 
-		case QSE_AWK_MODDIR:
-			*(const qse_char_t**)value = awk->opt.moddir.ptr;
+		case QSE_AWK_MODPREFIX:
+		case QSE_AWK_MODPOSTFIX:
+			*(const qse_char_t**)value = awk->opt.mod[id - QSE_AWK_MODPREFIX].ptr;
 			return 0;
-
 
 		case QSE_AWK_DEPTH_INCLUDE:
 		case QSE_AWK_DEPTH_BLOCK_PARSE:

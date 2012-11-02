@@ -25,9 +25,6 @@ enum tok_t
 	TOK_EOF,
 	TOK_NEWLINE,
 
-	/* special token to direct the parser to include a file specified */
-	TOK_INCLUDE,
-
 	/* TOK_XXX_ASSNs should be in sync with assop in assign_to_opcode. 
 	 * it also should be in the order as qse_awk_assop_type_t in run.h */
 	TOK_ASSN,
@@ -274,7 +271,6 @@ static kwent_t kwtab[] =
 	{ { QSE_T("global"),       6 }, TOK_GLOBAL,      QSE_AWK_EXPLICIT },
 	{ { QSE_T("if"),           2 }, TOK_IF,          0 },
 	{ { QSE_T("in"),           2 }, TOK_IN,          0 },
-	{ { QSE_T("include"),      7 }, TOK_INCLUDE,     QSE_AWK_EXTRAKWS },
 	{ { QSE_T("local"),        5 }, TOK_LOCAL,       QSE_AWK_EXPLICIT },
 	{ { QSE_T("next"),         4 }, TOK_NEXT,        QSE_AWK_PABLOCK },
 	{ { QSE_T("nextfile"),     8 }, TOK_NEXTFILE,    QSE_AWK_PABLOCK },
@@ -836,7 +832,8 @@ static int parse_progunit (qse_awk_t* awk)
 	{
 		if (get_token(awk) <= -1) return -1;
 
-		if (MATCH(awk,TOK_INCLUDE)) /* TOOD: INCLUDE must not be a separate keyword... */
+		if (MATCH(awk,TOK_IDENT) && 
+		    qse_strcmp (QSE_STR_PTR(awk->tok.name), QSE_T("include")) == 0)
 		{
 			if (awk->opt.depth.s.incl > 0 &&
 			    awk->parse.depth.incl >=  awk->opt.depth.s.incl)
@@ -6450,25 +6447,30 @@ static qse_awk_mod_t* query_module (
 	else
 	{
 		qse_awk_mod_load_t load;
-		const qse_char_t* moddir;
+		qse_awk_mod_info_t info;
 		qse_awk_mod_data_t md;
 
-		if (awk->opt.moddir.len > 0)
-		{
-			moddir = awk->opt.moddir.ptr;
-		}
-	#if defined(DEFAULT_MODDIR)
-		else
-		{
-			moddir = QSE_T(DEFAULT_MODDIR);
-		}
+		QSE_MEMSET (&info, 0, QSE_SIZEOF(info));
+
+		if (awk->opt.mod[0].len > 0)
+			info.prefix = awk->opt.mod[0].ptr;
+	#if defined(DEFAULT_MODPREFIX)
+		else info.prefix = QSE_T(DEFAULT_MODPREFIX);
+	#endif
+
+		if (awk->opt.mod[1].len > 0)
+			info.postfix = awk->opt.mod[1].ptr;
+	#if defined(DEFAULT_MODPOSTFIX)
+		else info.postfix = QSE_T(DEFAULT_MODPOSTFIX);
 	#endif
 		
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
 		if (awk->prm.modopen && awk->prm.modsym && awk->prm.modclose)
-			md.handle = awk->prm.modopen (awk, moddir, segs[0].ptr);
-		else 
-			md.handle = QSE_NULL;
+		{
+			info.name = segs[0].ptr;
+			md.handle = awk->prm.modopen (awk, &info);
+		}
+		else md.handle = QSE_NULL;
 
 		if (!md.handle) 
 		{
