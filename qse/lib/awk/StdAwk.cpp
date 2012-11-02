@@ -1408,7 +1408,7 @@ void* StdAwk::modopen (const qse_char_t* dir, const qse_char_t* name)
 		tmp[count++] = dir;
 		tmp[count++] = QSE_T("/");
 	}
-	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = QSE_T("libqseawk-");
 	tmp[count++] = name;
 	tmp[count] = QSE_NULL;
 

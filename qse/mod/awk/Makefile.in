@@ -34,8 +34,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@HAVE_LIBUCI_TRUE@am__append_1 = libawkuci.la
-@HAVE_C_MPI_TRUE@am__append_2 = libawkmpi.la
+@HAVE_LIBUCI_TRUE@am__append_1 = libqseawk-uci.la
+@HAVE_C_MPI_TRUE@am__append_2 = libqseawk-mpi.la
 subdir = mod/awk
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -80,29 +80,32 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(moddir)"
 LTLIBRARIES = $(mod_LTLIBRARIES)
-libawkmpi_la_DEPENDENCIES =
-am__libawkmpi_la_SOURCES_DIST = mpi.c
-@HAVE_C_MPI_TRUE@am_libawkmpi_la_OBJECTS = libawkmpi_la-mpi.lo
-libawkmpi_la_OBJECTS = $(am_libawkmpi_la_OBJECTS)
-libawkmpi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libawkmpi_la_LDFLAGS) $(LDFLAGS) -o $@
-@HAVE_C_MPI_TRUE@am_libawkmpi_la_rpath = -rpath $(moddir)
-libawksys_la_DEPENDENCIES =
-am_libawksys_la_OBJECTS = sys.lo
-libawksys_la_OBJECTS = $(am_libawksys_la_OBJECTS)
-libawksys_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libawksys_la_LDFLAGS) $(LDFLAGS) -o $@
 am__DEPENDENCIES_1 =
-@HAVE_LIBUCI_TRUE@libawkuci_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__libawkuci_la_SOURCES_DIST = uci.c
-@HAVE_LIBUCI_TRUE@am_libawkuci_la_OBJECTS = uci.lo
-libawkuci_la_OBJECTS = $(am_libawkuci_la_OBJECTS)
-libawkuci_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_DEPENDENCIES =  \
+@HAVE_C_MPI_TRUE@	$(am__DEPENDENCIES_1)
+am__libqseawk_mpi_la_SOURCES_DIST = mpi.c
+@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_OBJECTS =  \
+@HAVE_C_MPI_TRUE@	libqseawk_mpi_la-mpi.lo
+libqseawk_mpi_la_OBJECTS = $(am_libqseawk_mpi_la_OBJECTS)
+libqseawk_mpi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libawkuci_la_LDFLAGS) $(LDFLAGS) -o $@
-@HAVE_LIBUCI_TRUE@am_libawkuci_la_rpath = -rpath $(moddir)
+	$(libqseawk_mpi_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_C_MPI_TRUE@am_libqseawk_mpi_la_rpath = -rpath $(moddir)
+libqseawk_sys_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqseawk_sys_la_OBJECTS = sys.lo
+libqseawk_sys_la_OBJECTS = $(am_libqseawk_sys_la_OBJECTS)
+libqseawk_sys_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_sys_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_DEPENDENCIES =  \
+@HAVE_LIBUCI_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am__libqseawk_uci_la_SOURCES_DIST = uci.c
+@HAVE_LIBUCI_TRUE@am_libqseawk_uci_la_OBJECTS = uci.lo
+libqseawk_uci_la_OBJECTS = $(am_libqseawk_uci_la_OBJECTS)
+libqseawk_uci_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_uci_la_LDFLAGS) $(LDFLAGS) -o $@
+@HAVE_LIBUCI_TRUE@am_libqseawk_uci_la_rpath = -rpath $(moddir)
 DEFAULT_INCLUDES = 
 depcomp = $(SHELL) $(top_srcdir)/ac/depcomp
 am__depfiles_maybe = depfiles
@@ -116,10 +119,11 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libawkmpi_la_SOURCES) $(libawksys_la_SOURCES) \
-	$(libawkuci_la_SOURCES)
-DIST_SOURCES = $(am__libawkmpi_la_SOURCES_DIST) \
-	$(libawksys_la_SOURCES) $(am__libawkuci_la_SOURCES_DIST)
+SOURCES = $(libqseawk_mpi_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
+	$(libqseawk_uci_la_SOURCES)
+DIST_SOURCES = $(am__libqseawk_mpi_la_SOURCES_DIST) \
+	$(libqseawk_sys_la_SOURCES) \
+	$(am__libqseawk_uci_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -300,18 +304,20 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-moddir = $(libdir)/qse
-mod_LTLIBRARIES = libawksys.la $(am__append_1) $(am__append_2)
-libawksys_la_SOURCES = sys.c
-libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
-libawksys_la_LIBADD = -lqseawk -lqsecmn 
-@HAVE_LIBUCI_TRUE@libawkuci_la_SOURCES = uci.c
-@HAVE_LIBUCI_TRUE@libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
-@HAVE_LIBUCI_TRUE@libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
-@HAVE_C_MPI_TRUE@libawkmpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-@HAVE_C_MPI_TRUE@libawkmpi_la_SOURCES = mpi.c
-@HAVE_C_MPI_TRUE@libawkmpi_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0 $(MPI_CLDFLAGS)
-@HAVE_C_MPI_TRUE@libawkmpi_la_LIBADD = -lqseawk -lqsecmn 
+LDFLAGS_COMMON = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
+LIBADD_COMMON = -lqseawk -lqsecmn
+moddir = $(libdir)
+mod_LTLIBRARIES = libqseawk-sys.la $(am__append_1) $(am__append_2)
+libqseawk_sys_la_SOURCES = sys.c
+libqseawk_sys_la_LDFLAGS = $(LDFLAGS_COMMON)
+libqseawk_sys_la_LIBADD = $(LIBADD_COMMON)
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_SOURCES = uci.c
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_LDFLAGS = $(LDFLAGS_COMMON)
+@HAVE_LIBUCI_TRUE@libqseawk_uci_la_LIBADD = $(LIBADD_COMMON) $(UCI_LIBS)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_SOURCES = mpi.c
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_COMMON) $(MPI_CLDFLAGS)
+@HAVE_C_MPI_TRUE@libqseawk_mpi_la_LIBADD = $(LIBADD_COMMON)
 all: all-am
 
 .SUFFIXES:
@@ -377,12 +383,12 @@ clean-modLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libawkmpi.la: $(libawkmpi_la_OBJECTS) $(libawkmpi_la_DEPENDENCIES) $(EXTRA_libawkmpi_la_DEPENDENCIES) 
-	$(libawkmpi_la_LINK) $(am_libawkmpi_la_rpath) $(libawkmpi_la_OBJECTS) $(libawkmpi_la_LIBADD) $(LIBS)
-libawksys.la: $(libawksys_la_OBJECTS) $(libawksys_la_DEPENDENCIES) $(EXTRA_libawksys_la_DEPENDENCIES) 
-	$(libawksys_la_LINK) -rpath $(moddir) $(libawksys_la_OBJECTS) $(libawksys_la_LIBADD) $(LIBS)
-libawkuci.la: $(libawkuci_la_OBJECTS) $(libawkuci_la_DEPENDENCIES) $(EXTRA_libawkuci_la_DEPENDENCIES) 
-	$(libawkuci_la_LINK) $(am_libawkuci_la_rpath) $(libawkuci_la_OBJECTS) $(libawkuci_la_LIBADD) $(LIBS)
+libqseawk-mpi.la: $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_DEPENDENCIES) $(EXTRA_libqseawk_mpi_la_DEPENDENCIES) 
+	$(libqseawk_mpi_la_LINK) $(am_libqseawk_mpi_la_rpath) $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_LIBADD) $(LIBS)
+libqseawk-sys.la: $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_DEPENDENCIES) $(EXTRA_libqseawk_sys_la_DEPENDENCIES) 
+	$(libqseawk_sys_la_LINK) -rpath $(moddir) $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_LIBADD) $(LIBS)
+libqseawk-uci.la: $(libqseawk_uci_la_OBJECTS) $(libqseawk_uci_la_DEPENDENCIES) $(EXTRA_libqseawk_uci_la_DEPENDENCIES) 
+	$(libqseawk_uci_la_LINK) $(am_libqseawk_uci_la_rpath) $(libqseawk_uci_la_OBJECTS) $(libqseawk_uci_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -390,7 +396,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libawkmpi_la-mpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mpi_la-mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sys.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uci.Plo@am__quote@
 
@@ -415,12 +421,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libawkmpi_la-mpi.lo: mpi.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libawkmpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libawkmpi_la-mpi.lo -MD -MP -MF $(DEPDIR)/libawkmpi_la-mpi.Tpo -c -o libawkmpi_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libawkmpi_la-mpi.Tpo $(DEPDIR)/libawkmpi_la-mpi.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='libawkmpi_la-mpi.lo' libtool=yes @AMDEPBACKSLASH@
+libqseawk_mpi_la-mpi.lo: mpi.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libqseawk_mpi_la-mpi.lo -MD -MP -MF $(DEPDIR)/libqseawk_mpi_la-mpi.Tpo -c -o libqseawk_mpi_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libqseawk_mpi_la-mpi.Tpo $(DEPDIR)/libqseawk_mpi_la-mpi.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mpi.c' object='libqseawk_mpi_la-mpi.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libawkmpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libawkmpi_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libqseawk_mpi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libqseawk_mpi_la-mpi.lo `test -f 'mpi.c' || echo '$(srcdir)/'`mpi.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
