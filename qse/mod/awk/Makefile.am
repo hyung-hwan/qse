@@ -5,24 +5,27 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-moddir = $(libdir)/qse
-mod_LTLIBRARIES = libawksys.la 
+LDFLAGS_COMMON = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
+LIBADD_COMMON = -lqseawk -lqsecmn
 
-libawksys_la_SOURCES = sys.c
-libawksys_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
-libawksys_la_LIBADD = -lqseawk -lqsecmn 
+moddir = $(libdir)
+
+mod_LTLIBRARIES = libqseawk-sys.la 
+libqseawk_sys_la_SOURCES = sys.c
+libqseawk_sys_la_LDFLAGS = $(LDFLAGS_COMMON)
+libqseawk_sys_la_LIBADD = $(LIBADD_COMMON)
 
 if HAVE_LIBUCI
-mod_LTLIBRARIES += libawkuci.la
-libawkuci_la_SOURCES = uci.c
-libawkuci_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
-libawkuci_la_LIBADD = -lqseawk -lqsecmn $(UCI_LIBS)
+mod_LTLIBRARIES += libqseawk-uci.la
+libqseawk_uci_la_SOURCES = uci.c
+libqseawk_uci_la_LDFLAGS = $(LDFLAGS_COMMON)
+libqseawk_uci_la_LIBADD = $(LIBADD_COMMON) $(UCI_LIBS)
 endif
 
 if HAVE_C_MPI
-mod_LTLIBRARIES += libawkmpi.la
-libawkmpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
-libawkmpi_la_SOURCES = mpi.c
-libawkmpi_la_LDFLAGS = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0 $(MPI_CLDFLAGS)
-libawkmpi_la_LIBADD = -lqseawk -lqsecmn 
+mod_LTLIBRARIES += libqseawk-mpi.la
+libqseawk_mpi_la_CPPFLAGS = $(AM_CPPFLAGS) $(MPI_CFLAGS)
+libqseawk_mpi_la_SOURCES = mpi.c
+libqseawk_mpi_la_LDFLAGS = $(LDFLAGS_COMMON) $(MPI_CLDFLAGS)
+libqseawk_mpi_la_LIBADD = $(LIBADD_COMMON)
 endif

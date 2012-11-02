@@ -329,7 +329,7 @@ static void* custom_awk_modopen (
 		tmp[count++] = dir;
 		tmp[count++] = QSE_T("/");
 	}
-	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = QSE_T("libqseawk-");
 	tmp[count++] = name;
 	tmp[count] = QSE_NULL;
 
@@ -362,7 +362,7 @@ static void* custom_awk_modopen (
 		tmp[count++] = QSE_T("/");
 	}
 
-	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = QSE_T("libqseawk-");
 	tmp[count++] = name;
 	tmp[count] = QSE_NULL;
 
@@ -390,7 +390,7 @@ static void* custom_awk_modopen (
 		tmp[count++] = dir;
 		tmp[count++] = QSE_T("/");
 	}
-	tmp[count++] = QSE_T("libawk");
+	tmp[count++] = QSE_T("libqseawk-");
 	tmp[count++] = name;
 	tmp[count] = QSE_NULL;
 
