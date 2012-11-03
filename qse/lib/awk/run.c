@@ -5518,24 +5518,12 @@ static qse_awk_val_t* eval_fnc (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 
 	/* the parser must make sure taht the number of arguments 
 	 * is proper */ 
-	QSE_ASSERT (call->nargs >= call->u.fnc.arg.min && 
-	           call->nargs <= call->u.fnc.arg.max); 
+	QSE_ASSERT (call->nargs >= call->u.fnc.spec.arg.min && 
+	            call->nargs <= call->u.fnc.spec.arg.max); 
 
-#if 0
-	if (call->nargs < call->u.fnc.arg.min)
-	{
-		SETERR_LOC (run, QSE_AWK_EARGTF, &nde->loc);
-		return QSE_NULL;
-	}
-
-	if (call->nargs > call->u.fnc.arg.max)
-	{
-		SETERR_LOC (run, QSE_AWK_EARGTM, &nde->loc);
-		return QSE_NULL;
-	}
-#endif
-
-	return eval_call (run, nde, call->u.fnc.arg.spec, QSE_NULL, QSE_NULL, QSE_NULL);
+	return eval_call (
+		run, nde, call->u.fnc.spec.arg.spec,
+		QSE_NULL, QSE_NULL, QSE_NULL);
 }
 
 static qse_awk_val_t* eval_fun_ex (
@@ -5746,14 +5734,14 @@ static qse_awk_val_t* __eval_call (
 
 		/* intrinsic function */
 		QSE_ASSERT (
-			call->nargs >= call->u.fnc.arg.min &&
-			call->nargs <= call->u.fnc.arg.max);
+			call->nargs >= call->u.fnc.spec.arg.min &&
+			call->nargs <= call->u.fnc.spec.arg.max);
 
-		if (call->u.fnc.handler != QSE_NULL)
+		if (call->u.fnc.spec.impl)
 		{
 			run->errinf.num = QSE_AWK_ENOERR;
 
-			n = call->u.fnc.handler (run, &call->u.fnc.info);
+			n = call->u.fnc.spec.impl (run, &call->u.fnc.info);
 
 			if (n <= -1)
 			{

@@ -44,8 +44,7 @@ static int fnc_exp     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_sqrt    (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 
-#undef MAX
-#define MAX QSE_TYPE_UNSIGNED_MAX(qse_size_t)
+#define A_MAX QSE_TYPE_MAX(int)
 
 /* Argument Specifier 
  *
@@ -63,49 +62,43 @@ static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
 static qse_awk_fnc_t sys_fnc[] = 
 {
 	/* io functions */
-	{ {QSE_T("close"),   5}, 0, QSE_AWK_RIO, {1, 2, QSE_NULL}, fnc_close,  QSE_NULL},
-	{ {QSE_T("fflush"),  6}, 0, QSE_AWK_RIO, {0, 1, QSE_NULL}, fnc_fflush, QSE_NULL},
+	{ {QSE_T("close"),   5}, 0, { {1,     2, QSE_NULL},     fnc_close,    QSE_AWK_RIO }, QSE_NULL},
+	{ {QSE_T("fflush"),  6}, 0, { {0,     1, QSE_NULL},     fnc_fflush,   QSE_AWK_RIO }, QSE_NULL},
 
 	/* string functions */
-	{ {QSE_T("index"),   5}, 0, 0,  {2,   3, QSE_NULL},     fnc_index,   QSE_NULL},
-	{ {QSE_T("substr"),  6}, 0, 0,  {2,   3, QSE_NULL},     fnc_substr,  QSE_NULL},
-	{ {QSE_T("length"),  6}, 1, 0,  {0,   1, QSE_NULL},     fnc_length,  QSE_NULL},
-	{ {QSE_T("split"),   5}, 0, 0,  {2,   3, QSE_T("vrx")}, fnc_split,   QSE_NULL},
-	{ {QSE_T("tolower"), 7}, 0, 0,  {1,   1, QSE_NULL},     fnc_tolower, QSE_NULL},
-	{ {QSE_T("toupper"), 7}, 0, 0,  {1,   1, QSE_NULL},     fnc_toupper, QSE_NULL},
-	{ {QSE_T("gsub"),    4}, 0, 0,  {2,   3, QSE_T("xvr")}, fnc_gsub,    QSE_NULL},
-	{ {QSE_T("sub"),     3}, 0, 0,  {2,   3, QSE_T("xvr")}, fnc_sub,     QSE_NULL},
-	{ {QSE_T("match"),   5}, 0, 0,  {2,   3, QSE_T("vxv")}, fnc_match,   QSE_NULL},
-	{ {QSE_T("sprintf"), 7}, 0, 0,  {1, MAX, QSE_NULL},     fnc_sprintf, QSE_NULL},
+	{ {QSE_T("index"),   5}, 0, { {2,     3, QSE_NULL},     fnc_index,    0 }, QSE_NULL},
+	{ {QSE_T("substr"),  6}, 0, { {2,     3, QSE_NULL},     fnc_substr,   0 }, QSE_NULL},
+	{ {QSE_T("length"),  6}, 1, { {0,     1, QSE_NULL},     fnc_length,   0 }, QSE_NULL},
+	{ {QSE_T("split"),   5}, 0, { {2,     3, QSE_T("vrx")}, fnc_split,    0 }, QSE_NULL},
+	{ {QSE_T("tolower"), 7}, 0, { {1,     1, QSE_NULL},     fnc_tolower,  0 }, QSE_NULL},
+	{ {QSE_T("toupper"), 7}, 0, { {1,     1, QSE_NULL},     fnc_toupper,  0 }, QSE_NULL},
+	{ {QSE_T("gsub"),    4}, 0, { {2,     3, QSE_T("xvr")}, fnc_gsub,     0 }, QSE_NULL},
+	{ {QSE_T("sub"),     3}, 0, { {2,     3, QSE_T("xvr")}, fnc_sub,      0 }, QSE_NULL},
+	{ {QSE_T("match"),   5}, 0, { {2,     3, QSE_T("vxv")}, fnc_match,    0 }, QSE_NULL},
+	{ {QSE_T("sprintf"), 7}, 0, { {1, A_MAX, QSE_NULL},     fnc_sprintf,  0 }, QSE_NULL},
 
 	/* math functions */
-	{ {QSE_T("sin"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_sin,   QSE_NULL},
-	{ {QSE_T("cos"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_cos,   QSE_NULL},
-	{ {QSE_T("tan"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_tan,   QSE_NULL},
-	{ {QSE_T("atan"),    4}, 0, 0,  {1,   1, QSE_NULL},     fnc_atan,  QSE_NULL},
-	{ {QSE_T("atan2"),   5}, 0, 0,  {2,   2, QSE_NULL},     fnc_atan2, QSE_NULL},
-	{ {QSE_T("log"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_log,   QSE_NULL},
-	{ {QSE_T("log10"),   5}, 0, 0,  {1,   1, QSE_NULL},     fnc_log10, QSE_NULL},
-	{ {QSE_T("exp"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_exp,   QSE_NULL},
-	{ {QSE_T("sqrt"),    4}, 0, 0,  {1,   1, QSE_NULL},     fnc_sqrt,  QSE_NULL},
-	{ {QSE_T("int"),     3}, 0, 0,  {1,   1, QSE_NULL},     fnc_int,   QSE_NULL},
+	{ {QSE_T("sin"),     3}, 0, { {1,     1, QSE_NULL},     fnc_sin,      0 }, QSE_NULL},
+	{ {QSE_T("cos"),     3}, 0, { {1,     1, QSE_NULL},     fnc_cos,      0 }, QSE_NULL},
+	{ {QSE_T("tan"),     3}, 0, { {1,     1, QSE_NULL},     fnc_tan,      0 }, QSE_NULL},
+	{ {QSE_T("atan"),    4}, 0, { {1,     1, QSE_NULL},     fnc_atan,     0 }, QSE_NULL},
+	{ {QSE_T("atan2"),   5}, 0, { {2,     2, QSE_NULL},     fnc_atan2,    0 }, QSE_NULL},
+	{ {QSE_T("log"),     3}, 0, { {1,     1, QSE_NULL},     fnc_log,      0 }, QSE_NULL},
+	{ {QSE_T("log10"),   5}, 0, { {1,     1, QSE_NULL},     fnc_log10,    0 }, QSE_NULL},
+	{ {QSE_T("exp"),     3}, 0, { {1,     1, QSE_NULL},     fnc_exp,      0 }, QSE_NULL},
+	{ {QSE_T("sqrt"),    4}, 0, { {1,     1, QSE_NULL},     fnc_sqrt,     0 }, QSE_NULL},
+	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},     fnc_int,      0 }, QSE_NULL},
 
-	{ {QSE_NULL,         0}, 0, 0,  {0,   0, QSE_NULL},     QSE_NULL,  QSE_NULL}
+	{ {QSE_NULL,         0}, 0, { {0,     0, QSE_NULL},     QSE_NULL,     0 },  QSE_NULL}
 };
 
-void* qse_awk_addfnc (
-	qse_awk_t* awk,
-	const qse_char_t* name, qse_size_t name_len, 
-	int when_valid, 
-	qse_size_t min_args, qse_size_t max_args, 
-	const qse_char_t* arg_spec, 
-	qse_awk_fnc_impl_t handler)
+void* qse_awk_addfnc (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_fnc_spec_t* spec)
 {
 	qse_awk_fnc_t* fnc;
 	qse_size_t fnc_size;
 	qse_size_t spec_len;
 
-	if (name_len <= 0)
+	if (name->len <= 0)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
@@ -115,69 +108,59 @@ void* qse_awk_addfnc (
 	 * such a function registered won't take effect because
 	 * the word is treated as a keyword */
 
-	if (qse_awk_getfnc (awk, name, name_len) != QSE_NULL)
+	if (qse_awk_getfnc (awk, name) != QSE_NULL)
 	{
 		qse_cstr_t errarg;
 
-		errarg.ptr = name;
-		errarg.len = name_len;
+		errarg.ptr = name->ptr;
+		errarg.len = name->len;
 
 		qse_awk_seterrnum (awk, QSE_AWK_EEXIST, &errarg);
 		return QSE_NULL;
 	}
 
-	spec_len = (arg_spec == QSE_NULL)? 0: qse_strlen(arg_spec);
+	spec_len = spec->arg.spec? qse_strlen(spec->arg.spec): 0;
 
 	fnc_size = 
 		QSE_SIZEOF(qse_awk_fnc_t) + 
-		(name_len+1) * QSE_SIZEOF(qse_char_t) +
+		(name->len+1) * QSE_SIZEOF(qse_char_t) +
 		(spec_len+1) * QSE_SIZEOF(qse_char_t);
-	fnc = (qse_awk_fnc_t*) QSE_AWK_ALLOC (awk, fnc_size);
-	if (fnc == QSE_NULL)
+	fnc = (qse_awk_fnc_t*) qse_awk_callocmem (awk, fnc_size);
+	if (fnc)
 	{
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
-	}
+		qse_char_t* tmp;
 
-	QSE_MEMSET (fnc, 0, fnc_size);
+		tmp = (qse_char_t*)(fnc + 1);
+		fnc->name.len = qse_strxncpy (tmp, name->len+1, name, name->len);
+		fnc->name.ptr = tmp;
 
-	fnc->name.ptr = (qse_char_t*)(fnc + 1);
-	fnc->name.len = name_len;
-	qse_strxncpy (fnc->name.ptr, name_len+1, name, name_len);
+		fnc->spec = *spec;
+		if (spec->arg.spec)
+		{
+			tmp = fnc->name.ptr + fnc->name.len + 1;
+			qse_strxcpy (tmp, spec_len + 1, spec->arg.spec); 
+			fnc->spec.arg.spec = tmp;
+		}
 
-	fnc->valid = when_valid;
-	fnc->arg.min = min_args;
-	fnc->arg.max = max_args;
-
-	if (arg_spec == QSE_NULL) fnc->arg.spec = QSE_NULL;
-	else
-	{
-		fnc->arg.spec = fnc->name.ptr + fnc->name.len + 1;
-		qse_strxcpy (fnc->arg.spec, spec_len+1, arg_spec); 
-	}
-
-	fnc->handler = handler;
-
-	if (qse_htb_insert (awk->fnc.user,
-		(qse_char_t*)name, name_len, fnc, 0) == QSE_NULL)
-	{
-		QSE_AWK_FREE (awk, fnc);
-		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
-		return QSE_NULL;
+		if (qse_htb_insert (awk->fnc.user,
+			(qse_char_t*)name->ptr, name->len, fnc, 0) == QSE_NULL)
+		{
+			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+			QSE_AWK_FREE (awk, fnc); fnc = QSE_NULL;
+		}
 	}
 
 	return fnc;
 }
 
-int qse_awk_delfnc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t name_len)
+int qse_awk_delfnc (qse_awk_t* awk, const qse_cstr_t* name)
 {
-	if (qse_htb_delete (awk->fnc.user, name, name_len) <= -1)
+	if (qse_htb_delete (awk->fnc.user, name->ptr, name->len) <= -1)
 	{
 		qse_cstr_t errarg;
 
-		errarg.ptr = name;
-		errarg.len = name_len;
+		errarg.ptr = name->ptr;
+		errarg.len = name->len;
 
 		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &errarg);
 		return -1;
@@ -191,8 +174,7 @@ void qse_awk_clrfnc (qse_awk_t* awk)
 	qse_htb_clear (awk->fnc.user);
 }
 
-qse_awk_fnc_t* qse_awk_getfnc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+qse_awk_fnc_t* qse_awk_getfnc (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_awk_fnc_t* fnc;
 	qse_htb_pair_t* pair;
@@ -202,22 +184,22 @@ qse_awk_fnc_t* qse_awk_getfnc (
 	 * speed up the search, i don't do that since this
 	 * function is called durting parse-time only. 
 	 * TODO: binary search.
-      */
+	 */
 	for (fnc = sys_fnc; fnc->name.ptr != QSE_NULL; fnc++)
 	{
-		if (fnc->valid != 0 && 
-		    (awk->opt.trait & fnc->valid) != fnc->valid) continue;
+		if (fnc->spec.trait != 0 && 
+		    (awk->opt.trait & fnc->spec.trait) != fnc->spec.trait) continue;
 
 		if (qse_strxncmp (
 			fnc->name.ptr, fnc->name.len,
-			name, len) == 0) return fnc;
+			name->ptr, name->len) == 0) return fnc;
 	}
 
-	pair = qse_htb_search (awk->fnc.user, name, len);
+	pair = qse_htb_search (awk->fnc.user, name->ptr, name->len);
 	if (pair == QSE_NULL) return QSE_NULL;
 
 	fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
-	if (fnc->valid != 0 && (awk->opt.trait & fnc->valid) == 0) return QSE_NULL;
+	if (fnc->spec.trait != 0 && (awk->opt.trait & fnc->spec.trait) == 0) return QSE_NULL;
 
 	return fnc;
 }

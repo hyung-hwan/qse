@@ -82,9 +82,11 @@ public:
 
 	typedef qse_awk_sio_cmd_t sio_cmd_t;
 
+	typedef qse_awk_fnc_spec_t fnc_spec_t;
+
 	typedef qse_awk_fnc_info_t fnc_info_t;
 
-	typedef qse_awk_mod_info_t mod_info_t;
+	typedef qse_awk_mod_spec_t mod_spec_t;
 
 	class Run;
 	friend class Run;
@@ -1226,7 +1228,7 @@ protected:
 	virtual flt_t exp (flt_t x) = 0;
 	virtual flt_t sqrt (flt_t x) = 0;
 
-	virtual void* modopen (const mod_info_t* info) = 0;
+	virtual void* modopen (const mod_spec_t* spec) = 0;
 	virtual void  modclose (void* handle) = 0;
 	virtual void* modsym (void* handle, const char_t* name) = 0;
 
@@ -1265,7 +1267,7 @@ protected:
 	static flt_t exp     (awk_t* awk, flt_t x);
 	static flt_t sqrt    (awk_t* awk, flt_t x);
 
-	static void* modopen  (awk_t* awk, const mod_info_t* info);
+	static void* modopen  (awk_t* awk, const mod_spec_t* spec);
 	static void  modclose (awk_t* awk, void* handle);
 	static void* modsym   (awk_t* awk, void* handle, const char_t* name);
 

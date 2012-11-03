@@ -194,6 +194,9 @@
 /* Define if libdlloader will be built on this platform */
 #undef HAVE_LIBDLLOADER
 
+/* Define to 1 if you have the `ltdl' library (-lltdl). */
+#undef HAVE_LIBLTDL
+
 /* Define to 1 if you have the `log' function. */
 #undef HAVE_LOG
 

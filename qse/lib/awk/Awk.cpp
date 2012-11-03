@@ -1493,7 +1493,10 @@ int Awk::addGlobal (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	int n = qse_awk_addgbl (awk, name, qse_strlen(name));
+	qse_cstr_t nx;
+	nx.ptr = name;
+	nx.len = qse_strlen(name);
+	int n = qse_awk_addgbl (awk, &nx);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1501,7 +1504,10 @@ int Awk::addGlobal (const char_t* name)
 int Awk::deleteGlobal (const char_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_delgbl (awk, name, qse_strlen(name));
+	qse_cstr_t nx;
+	nx.ptr = name;
+	nx.len = qse_strlen(name);
+	int n = qse_awk_delgbl (awk, &nx);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1509,7 +1515,10 @@ int Awk::deleteGlobal (const char_t* name)
 int Awk::findGlobal (const char_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	int n = qse_awk_findgbl (awk, name, qse_strlen(name));
+	qse_cstr_t nx;
+	nx.ptr = name;
+	nx.len = qse_strlen(name);
+	int n = qse_awk_findgbl (awk, &nx);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1547,27 +1556,31 @@ int Awk::addFunction (
 	QSE_ASSERT (awk != QSE_NULL);
 
 	FunctionHandler* tmp = (FunctionHandler*) 
-		qse_awk_allocmem (awk, QSE_SIZEOF(handler));
+		qse_awk_callocmem (awk, QSE_SIZEOF(handler));
 	if (tmp == QSE_NULL)
 	{
 		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
 
-	//QSE_MEMCPY (tmp, &handler, QSE_SIZEOF(handler));
 	*tmp = handler;
 	
-	size_t nameLen = qse_strlen(name);
+	qse_cstr_t nx;
+	nx.ptr = name;
+	nx.len = qse_strlen(name);
 
-	void* p = qse_awk_addfnc (
-		awk, name, nameLen,
-		validOpts, minArgs, maxArgs,
+	fnc_spec_t spec;
+
+	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
+	spec.arg.min = minArgs;
+	spec.arg.max = maxArgs;
 #ifdef PASS_BY_REFERENCE
-		QSE_T("R"), // pass all arguments by reference
-#else
-		QSE_NULL,
+	spec.arg.spec = QSE_T("R"); // pass all arguments by reference
 #endif
-		functionHandler);
+	spec.impl = functionHandler;
+	spec.trait = validOpts;
+
+	void* p = qse_awk_addfnc (awk, &nx, &spec);
 	if (p == QSE_NULL) 
 	{
 		qse_awk_freemem (awk, tmp);
@@ -1576,12 +1589,11 @@ int Awk::addFunction (
 	}
 
 	pair_t* pair = qse_htb_upsert (
-		functionMap, (char_t*)name, nameLen, tmp, 0);
+		functionMap, (char_t*)nx.ptr, nx.len, tmp, 0);
 	if (pair == QSE_NULL)
 	{
-		qse_awk_delfnc (awk, name, nameLen);
+		qse_awk_delfnc (awk, &nx);
 		qse_awk_freemem (awk, tmp);
-
 		setError (QSE_AWK_ENOMEM);
 		return -1;
 	}
@@ -1593,10 +1605,12 @@ int Awk::deleteFunction (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	size_t nameLen = qse_strlen(name);
+	qse_cstr_t nx;
+	nx.ptr = name;
+	nx.len = qse_strlen(name);
 
-	int n = qse_awk_delfnc (awk, name, nameLen);
-	if (n == 0) qse_htb_delete (functionMap, name, nameLen);
+	int n = qse_awk_delfnc (awk, &nx);
+	if (n == 0) qse_htb_delete (functionMap, nx.ptr, nx.len);
 	else retrieveError ();
 
 	return n;
@@ -2012,10 +2026,10 @@ Awk::flt_t Awk::sqrt (awk_t* awk, flt_t x)
 	return xtn->awk->sqrt (x);
 }
 
-void* Awk::modopen (awk_t* awk, const mod_info_t* info)
+void* Awk::modopen (awk_t* awk, const mod_spec_t* spec)
 {
 	xtn_t* xtn = (xtn_t*) QSE_XTN (awk);
-	return xtn->awk->modopen (info);
+	return xtn->awk->modopen (spec);
 }
 
 void Awk::modclose (awk_t* awk, void* handle)

@@ -32,27 +32,16 @@ struct qse_awk_fnc_t
 
 	int dfl0; /* if set, ($0) is assumed if () is missing. 
 	           * this ia mainly for the weird length() function */
-	int valid; /* the entry is valid when this option is set */
 
-	struct
-	{
-		qse_size_t min;
-		qse_size_t max;
-		qse_char_t* spec;
-	} arg;
-
-	qse_awk_fnc_impl_t handler;
+	qse_awk_fnc_spec_t spec;
 	qse_awk_mod_t* mod; /* if it's associated to a module */
-
-	/*qse_awk_fnc_t* next;*/
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-qse_awk_fnc_t* qse_awk_getfnc (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
+qse_awk_fnc_t* qse_awk_getfnc (qse_awk_t* awk, const qse_cstr_t* name);
 
 #ifdef __cplusplus
 }
