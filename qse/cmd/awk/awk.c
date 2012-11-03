@@ -880,7 +880,7 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 	qse_awk_t* awk = (qse_awk_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTR(pair), QSE_HTB_KLEN(pair));
+	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTL(pair));
 	if (gvmv->idx <= -1)
 	{
 		return QSE_HTB_WALK_STOP;

@@ -315,7 +315,7 @@ static int custom_awk_sprintf (
 	return n;
 }
 
-static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_info_t* info)
+static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 {
 #if defined(USE_LTDL)
 	void* h;
@@ -324,9 +324,9 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_info_t* info)
 	int count;
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -354,9 +354,9 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_info_t* info)
 	int count;
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	path = qse_stradup (tmp, QSE_NULL, awk->mmgr);
@@ -382,9 +382,9 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_info_t* info)
 	UCHAR errbuf[CCHMAXPATH];
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -2584,16 +2584,24 @@ qse_cmgr_t* qse_awk_rtx_getcmgrstd (
 	return QSE_NULL;
 }
 
+static int QSE_INLINE add_global (qse_awk_t* awk, const qse_char_t* ptr, qse_size_t len)
+{
+	qse_cstr_t nx;
+	nx.ptr = ptr;
+	nx.len = len;
+	return qse_awk_addgbl (awk, &nx);
+}
+
 static int add_globals (qse_awk_t* awk)
 {
 	xtn_t* xtn;
 
 	xtn = (xtn_t*) QSE_XTN (awk);
 
-	xtn->gbl_argc = qse_awk_addgbl (awk, QSE_T("ARGC"), 4);
-	xtn->gbl_argv = qse_awk_addgbl (awk, QSE_T("ARGV"), 4);
-	xtn->gbl_environ = qse_awk_addgbl (awk,  QSE_T("ENVIRON"), 7);
-	xtn->gbl_procinfo = qse_awk_addgbl (awk,  QSE_T("PROCINFO"), 8);
+	xtn->gbl_argc = add_global (awk, QSE_T("ARGC"), 4);
+	xtn->gbl_argv = add_global (awk, QSE_T("ARGV"), 4);
+	xtn->gbl_environ = add_global (awk,  QSE_T("ENVIRON"), 7);
+	xtn->gbl_procinfo = add_global (awk,  QSE_T("PROCINFO"), 8);
 
 	if (xtn->gbl_argc <= -1 || xtn->gbl_argv <= -1 ||
 	    xtn->gbl_environ <= -1 || xtn->gbl_procinfo <= -1) return -1;
@@ -2601,14 +2609,32 @@ static int add_globals (qse_awk_t* awk)
 	return 0;
 }
 
+struct fnctab_t 
+{
+	qse_cstr_t name;
+	qse_awk_fnc_spec_t spec;
+	int valid;
+};
+
+static struct fnctab_t fnctab[] =
+{
+	{ {QSE_T("rand"),      4}, { {0, 0, QSE_NULL}, fnc_rand,      0           } },
+	{ {QSE_T("srand"),     5}, { {0, 1, QSE_NULL}, fnc_srand,     0           } },
+	{ {QSE_T("system"),    6}, { {1, 1, QSE_NULL}, fnc_system ,   0           } },
+	{ {QSE_T("time"),      4}, { {0, 0, QSE_NULL}, fnc_time,      0           } },
+	{ {QSE_T("setioattr"), 9}, { {3, 3, QSE_NULL}, fnc_setioattr, QSE_AWK_RIO } },
+	{ {QSE_T("getioattr"), 9}, { {2, 2, QSE_NULL}, fnc_getioattr, QSE_AWK_RIO } }
+};
+
 static int add_functions (qse_awk_t* awk)
 {
-	if (qse_awk_addfnc (awk, QSE_T("rand"),      4, 0,           0, 0, QSE_NULL, fnc_rand) == QSE_NULL ||
-	    qse_awk_addfnc (awk, QSE_T("srand"),     5, 0,           0, 1, QSE_NULL, fnc_srand) == QSE_NULL ||
-	    qse_awk_addfnc (awk, QSE_T("system"),    6, 0,           1, 1, QSE_NULL, fnc_system) == QSE_NULL ||
-	    qse_awk_addfnc (awk, QSE_T("time"),      4, 0,           0, 0, QSE_NULL, fnc_time) == QSE_NULL ||
-	    qse_awk_addfnc (awk, QSE_T("setioattr"), 9, QSE_AWK_RIO, 3, 3, QSE_NULL, fnc_setioattr) == QSE_NULL ||
-	    qse_awk_addfnc (awk, QSE_T("getioattr"), 9, QSE_AWK_RIO, 2, 2, QSE_NULL, fnc_getioattr) == QSE_NULL) return -1;
+	int i;
+
+	for (i = 0; i < QSE_COUNTOF(fnctab); i++)
+	{
+		if (qse_awk_addfnc (awk, &fnctab[i].name, &fnctab[i].spec) == QSE_NULL) return -1;
+	}
+
 	return 0;
 }
 

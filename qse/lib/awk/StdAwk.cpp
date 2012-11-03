@@ -1394,7 +1394,7 @@ StdAwk::flt_t StdAwk::sqrt (flt_t x)
 #endif
 }
 
-void* StdAwk::modopen (const mod_info_t* info)
+void* StdAwk::modopen (const mod_spec_t* spec)
 {
 #if defined(USE_LTDL)
 
@@ -1404,9 +1404,9 @@ void* StdAwk::modopen (const mod_info_t* info)
 	int count;
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -1434,9 +1434,9 @@ void* StdAwk::modopen (const mod_info_t* info)
 	int count;
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	path = qse_stradup (tmp, QSE_NULL, this->getMmgr());
@@ -1462,9 +1462,9 @@ void* StdAwk::modopen (const mod_info_t* info)
 	UCHAR errbuf[CCHMAXPATH];
 
 	count = 0;
-	if (info->prefix) tmp[count++] = info->prefix;
-	tmp[count++] = info->name;
-	if (info->postfix) tmp[count++] = info->postfix;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
 	#if defined(QSE_CHAR_IS_MCHAR)

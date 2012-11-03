@@ -189,15 +189,7 @@ struct qse_awk_nde_fncall_t
 		struct
 		{
 			qse_awk_fnc_info_t info;
-
-			struct
-			{
-				qse_size_t min;
-				qse_size_t max;
-				const qse_char_t* spec;
-			} arg;
-
-			qse_awk_fnc_impl_t handler;
+			qse_awk_fnc_spec_t spec;
 		} fnc;
 	} u;
 	qse_awk_nde_t* args;

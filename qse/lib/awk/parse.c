@@ -158,8 +158,7 @@ struct binmap_t
 static int parse_progunit (qse_awk_t* awk);
 static qse_awk_t* collect_globals (qse_awk_t* awk);
 static void adjust_static_globals (qse_awk_t* awk);
-static qse_size_t find_global (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
+static qse_size_t find_global (qse_awk_t* awk, const qse_cstr_t* name);
 static qse_awk_t* collect_locals (
 	qse_awk_t* awk, qse_size_t nlcls, int istop);
 
@@ -230,8 +229,7 @@ static int get_rexstr (qse_awk_t* awk, qse_awk_tok_t* tok);
 
 static int skip_spaces (qse_awk_t* awk);
 static int skip_comment (qse_awk_t* awk);
-static int classify_ident (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len);
+static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name);
 
 static int deparse (qse_awk_t* awk);
 static qse_htb_walk_t deparse_func (
@@ -249,7 +247,7 @@ struct kwent_t
 { 
 	qse_cstr_t name;
 	int type; 
-	int valid; /* the entry is valid when this option is set */
+	int trait; /* the entry is valid when this option is set */
 };
 
 static kwent_t kwtab[] = 
@@ -288,7 +286,7 @@ struct global_t
 {
 	const qse_char_t* name;
 	qse_size_t namelen;
-	int valid;
+	int trait;
 };
 
 static global_t gtab[] =
@@ -1083,13 +1081,13 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* note that i'm assigning to rederr in the 'if' conditions below.
  	 * i'm not checking equality */
 	    /* check if it is a builtin function */
-	if ((qse_awk_getfnc (awk, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
+	if ((qse_awk_getfnc (awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
 	    /* check if it has already been defined as a function */
 	    (qse_htb_search (awk->tree.funs, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EFUNRED)) ||
 	    /* check if it conflicts with a named variable */
 	    (qse_htb_search (awk->parse.named, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EVARRED)) ||
 	    /* check if it coincides to be a global variable name */
-	    (((g = find_global (awk, name.ptr, name.len)) != QSE_LDA_NIL) && (rederr = QSE_AWK_EGBLRED)))
+	    (((g = find_global (awk, &name)) != QSE_LDA_NIL) && (rederr = QSE_AWK_EGBLRED)))
 	{
 		SETERR_ARG_LOC (awk, rederr, name.ptr, name.len, &awk->tok.loc);
 		return QSE_NULL;
@@ -1640,8 +1638,7 @@ static void adjust_static_globals (qse_awk_t* awk)
 
 	for (id = QSE_AWK_MIN_GBL_ID; id <= QSE_AWK_MAX_GBL_ID; id++)
 	{
-		if (gtab[id].valid != 0 && 
-		    (awk->opt.trait & gtab[id].valid) != gtab[id].valid)
+		if ((awk->opt.trait & gtab[id].trait) != gtab[id].trait)
 		{
 			QSE_LDA_DLEN(awk->parse.gbls,id) = 0;
 		}
@@ -1669,8 +1666,7 @@ static qse_size_t get_global (qse_awk_t* awk, const qse_xstr_t* name)
 	return QSE_LDA_NIL;
 }
 
-static qse_size_t find_global (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+static qse_size_t find_global (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_size_t i;
 	qse_lda_t* gbls = awk->parse.gbls;
@@ -1679,51 +1675,51 @@ static qse_size_t find_global (
 	{
 		if (qse_strxncmp (
 			QSE_LDA_DPTR(gbls,i), QSE_LDA_DLEN(gbls,i), 
-			name, len) == 0) return i;
+			name->ptr, name->len) == 0) return i;
 	}
 
 	return QSE_LDA_NIL;
 }
 
 static int add_global (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len, 
+	qse_awk_t* awk, const qse_cstr_t* name,
 	qse_awk_loc_t* xloc, int disabled)
 {
 	qse_size_t ngbls;
 
 	/* check if it is a keyword */
-	if (classify_ident (awk, name, len) != TOK_IDENT)
+	if (classify_ident (awk, name) != TOK_IDENT)
 	{
-		SETERR_ARG_LOC (awk, QSE_AWK_EKWRED, name, len, xloc);
+		SETERR_ARG_LOC (awk, QSE_AWK_EKWRED, name->ptr, name->len, xloc);
 		return -1;
 	}
 
 	/* check if it conflicts with a builtin function name */
-	if (qse_awk_getfnc (awk, name, len) != QSE_NULL)
+	if (qse_awk_getfnc (awk, name) != QSE_NULL)
 	{
-		SETERR_ARG_LOC (awk, QSE_AWK_EFNCRED, name, len, xloc);
+		SETERR_ARG_LOC (awk, QSE_AWK_EFNCRED, name->ptr, name->len, xloc);
 		return -1;
 	}
 
 	/* check if it conflicts with a function name */
-	if (qse_htb_search (awk->tree.funs, name, len) != QSE_NULL) 
+	if (qse_htb_search (awk->tree.funs, name->ptr, name->len) != QSE_NULL) 
 	{
-		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name, len, xloc);
+		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name->ptr, name->len, xloc);
 		return -1;
 	}
 
 	/* check if it conflicts with a function name 
 	 * caught in the function call table */
-	if (qse_htb_search (awk->parse.funs, name, len) != QSE_NULL)
+	if (qse_htb_search (awk->parse.funs, name->ptr, name->len) != QSE_NULL)
 	{
-		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name, len, xloc);
+		SETERR_ARG_LOC (awk, QSE_AWK_EFUNRED, name->ptr, name->len, xloc);
 		return -1;
 	}
 
 	/* check if it conflicts with other global variable names */
-	if (find_global (awk, name, len) != QSE_LDA_NIL)
+	if (find_global (awk, name) != QSE_LDA_NIL)
 	{ 
-		SETERR_ARG_LOC (awk, QSE_AWK_EDUPGBL, name, len, xloc);
+		SETERR_ARG_LOC (awk, QSE_AWK_EDUPGBL, name->ptr, name->len, xloc);
 		return -1;
 	}
 
@@ -1750,7 +1746,7 @@ static int add_global (
 
 	if (qse_lda_insert (awk->parse.gbls, 
 		QSE_LDA_SIZE(awk->parse.gbls), 
-		(qse_char_t*)name, len) == QSE_LDA_NIL)
+		(qse_char_t*)name->ptr, name->len) == QSE_LDA_NIL)
 	{
 		SETERR_LOC (awk, QSE_AWK_ENOMEM, xloc);
 		return -1;
@@ -1769,11 +1765,11 @@ static int add_global (
 	return (int)ngbls;
 }
 
-int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+int qse_awk_addgbl (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	int n;
 
-	if (len <= 0)
+	if (name->len <= 0)
 	{
 		SETERR_COD (awk, QSE_AWK_EINVAL);
 		return -1;
@@ -1786,7 +1782,7 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 		return -1;
 	}
 
-	n = add_global (awk, name, len, QSE_NULL, 0);
+	n = add_global (awk, name, QSE_NULL, 0);
 
 	/* update the count of the static globals. 
 	 * the total global count has been updated inside add_global. */
@@ -1798,8 +1794,7 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
 #define QSE_AWK_NUM_STATIC_GBLS \
 	(QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1)
 
-int qse_awk_delgbl (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+int qse_awk_delgbl (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_size_t n;
 
@@ -1811,10 +1806,10 @@ int qse_awk_delgbl (
 	}
 
 	n = qse_lda_search (awk->parse.gbls, 
-		QSE_AWK_NUM_STATIC_GBLS, name, len);
+		QSE_AWK_NUM_STATIC_GBLS, name->ptr, name->len);
 	if (n == QSE_LDA_NIL)
 	{
-		SETERR_ARG (awk, QSE_AWK_ENOENT, name, len);
+		SETERR_ARG (awk, QSE_AWK_ENOENT, name->ptr, name->len);
 		return -1;
 	}
 
@@ -1833,16 +1828,15 @@ int qse_awk_delgbl (
 	return 0;
 }
 
-int qse_awk_findgbl (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+int qse_awk_findgbl (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	qse_size_t n;
 
 	n = qse_lda_search (awk->parse.gbls, 
-		QSE_AWK_NUM_STATIC_GBLS, name, len);
+		QSE_AWK_NUM_STATIC_GBLS, name->ptr, name->len);
 	if (n == QSE_LDA_NIL)
 	{
-		SETERR_ARG (awk, QSE_AWK_ENOENT, name, len);
+		SETERR_ARG (awk, QSE_AWK_ENOENT, name->ptr, name->len);
 		return -1;
 	}
 
@@ -1868,9 +1862,7 @@ static qse_awk_t* collect_globals (qse_awk_t* awk)
 		}
 
 		if (add_global (
-			awk,
-			QSE_STR_PTR(awk->tok.name),
-			QSE_STR_LEN(awk->tok.name),
+			awk, QSE_STR_CSTR(awk->tok.name),
 			&awk->tok.loc, 0) <= -1) return QSE_NULL;
 
 		if (get_token(awk) <= -1) return QSE_NULL;
@@ -1931,7 +1923,7 @@ static qse_awk_t* collect_locals (
 
 		/* check if it conflicts with a builtin function name 
 		 * function f() { local length; } */
-		if (qse_awk_getfnc (awk, lcl.ptr, lcl.len) != QSE_NULL)
+		if (qse_awk_getfnc (awk, &lcl) != QSE_NULL)
 		{
 			SETERR_ARG_LOC (
 				awk, QSE_AWK_EFNCRED, 
@@ -1974,10 +1966,7 @@ static qse_awk_t* collect_locals (
 		}
 
 		/* check if it conflicts with other local variable names */
-		n = qse_lda_search (
-			awk->parse.lcls, 
-			nlcls,
-			lcl.ptr, lcl.len);
+		n = qse_lda_search (awk->parse.lcls, nlcls, lcl.ptr, lcl.len);
 		if (n != QSE_LDA_NIL)
 		{
 			SETERR_ARG_LOC (
@@ -1987,7 +1976,7 @@ static qse_awk_t* collect_locals (
 		}
 
 		/* check if it conflicts with global variable names */
-		n = find_global (awk, lcl.ptr, lcl.len);
+		n = find_global (awk, &lcl);
 		if (n != QSE_LDA_NIL)
 		{
 			if (n < awk->tree.ngbls_base)
@@ -4139,7 +4128,7 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_xstr_t* name)
 
 static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_xstr_t* name)
 {
-	if (qse_awk_getfnc (awk, name->ptr, name->len) != QSE_NULL) 
+	if (qse_awk_getfnc (awk, name) != QSE_NULL) 
 	{
 		/* implicit function */
 		return FNTYPE_FNC;
@@ -4775,7 +4764,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 	qse_awk_nde_t* nde = QSE_NULL;
 
 	/* check if name is an intrinsic function name */
-	fnc = qse_awk_getfnc (awk, name->ptr, name->len);
+	fnc = qse_awk_getfnc (awk, name);
 	if (fnc)
 	{
 		if (MATCH(awk,TOK_LPAREN))
@@ -4952,14 +4941,18 @@ static qse_awk_nde_t* parse_primary_ident_segs (
 		switch (sym.type)
 		{
 			case QSE_AWK_MOD_FNC:
+				if ((awk->opt.trait & sym.u.fnc.trait) != sym.u.fnc.trait)
+				{
+					SETERR_ARG_LOC (awk, QSE_AWK_EUNDEF, full->ptr, full->len, xloc);
+					break;
+				}
+
 				if (MATCH(awk,TOK_LPAREN))
 				{
 					QSE_MEMSET (&fnc, 0, QSE_SIZEOF(fnc));
 					fnc.name.ptr = full->ptr; 
 					fnc.name.len = full->len;
-					fnc.arg.min = sym.u.fnc.arg.min;
-					fnc.arg.max = sym.u.fnc.arg.max;
-					fnc.handler = sym.u.fnc.impl;
+					fnc.spec = sym.u.fnc;
 					fnc.mod = mod;
 	
 					nde = parse_fncall (awk, full, &fnc, xloc, 0);
@@ -5267,23 +5260,19 @@ make_node:
 		call->u.fnc.info.name.ptr = name->ptr;
 		call->u.fnc.info.name.len = name->len;
 		call->u.fnc.info.mod = fnc->mod;
-
-		call->u.fnc.arg.min = fnc->arg.min;
-		call->u.fnc.arg.max = fnc->arg.max;
-		call->u.fnc.arg.spec = fnc->arg.spec;
-		call->u.fnc.handler = fnc->handler;
+		call->u.fnc.spec = fnc->spec;
 
 		call->args = head;
 		call->nargs = nargs;
 
-		if (nargs > call->u.fnc.arg.max)
+		if (nargs > call->u.fnc.spec.arg.max)
 		{
-	          SETERR_LOC (awk, QSE_AWK_EARGTM, xloc);
+			SETERR_LOC (awk, QSE_AWK_EARGTM, xloc);
 			goto oops;
 		}
-		else if (nargs < call->u.fnc.arg.min)
+		else if (nargs < call->u.fnc.spec.arg.min)
 		{
-	          SETERR_LOC (awk, QSE_AWK_EARGTF, xloc);
+			SETERR_LOC (awk, QSE_AWK_EARGTF, xloc);
 			goto oops;
 		}
 	}
@@ -5933,9 +5922,7 @@ retry:
 		       QSE_AWK_ISALPHA (awk, c) || 
 		       QSE_AWK_ISDIGIT (awk, c));
 
-		type = classify_ident (awk, 
-			QSE_STR_PTR(tok->name), 
-			QSE_STR_LEN(tok->name));
+		type = classify_ident (awk, QSE_STR_CSTR(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
 	else if (c == QSE_T('\"')) 
@@ -6014,8 +6001,7 @@ static int preget_token (qse_awk_t* awk)
 	return get_token_into (awk, &awk->ntok);
 }
 
-static int classify_ident (
-	qse_awk_t* awk, const qse_char_t* name, qse_size_t len)
+static int classify_ident (qse_awk_t* awk, const qse_cstr_t* name)
 {
 	/* perform binary search */
 
@@ -6031,7 +6017,7 @@ static int classify_ident (
 		mid = (left + right) / 2;	
 		kwp = &kwtab[mid];
 
-		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name, len);
+		n = qse_strxncmp (kwp->name.ptr, kwp->name.len, name->ptr, name->len);
 		if (n > 0) 
 		{
 			/* if left, right, mid were of qse_size_t,
@@ -6043,10 +6029,7 @@ static int classify_ident (
 		else if (n < 0) left = mid + 1;
 		else
 		{
-			if (kwp->valid != 0 && 
-			    (awk->opt.trait & kwp->valid) != kwp->valid)
-				break;
-
+			if ((awk->opt.trait & kwp->trait) != kwp->trait) break;
 			return kwp->type;
 		}
 	}
@@ -6447,28 +6430,28 @@ static qse_awk_mod_t* query_module (
 	else
 	{
 		qse_awk_mod_load_t load;
-		qse_awk_mod_info_t info;
+		qse_awk_mod_spec_t spec;
 		qse_awk_mod_data_t md;
 
-		QSE_MEMSET (&info, 0, QSE_SIZEOF(info));
+		QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
 
 		if (awk->opt.mod[0].len > 0)
-			info.prefix = awk->opt.mod[0].ptr;
+			spec.prefix = awk->opt.mod[0].ptr;
 	#if defined(DEFAULT_MODPREFIX)
-		else info.prefix = QSE_T(DEFAULT_MODPREFIX);
+		else spec.prefix = QSE_T(DEFAULT_MODPREFIX);
 	#endif
 
 		if (awk->opt.mod[1].len > 0)
-			info.postfix = awk->opt.mod[1].ptr;
+			spec.postfix = awk->opt.mod[1].ptr;
 	#if defined(DEFAULT_MODPOSTFIX)
-		else info.postfix = QSE_T(DEFAULT_MODPOSTFIX);
+		else spec.postfix = QSE_T(DEFAULT_MODPOSTFIX);
 	#endif
 		
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
 		if (awk->prm.modopen && awk->prm.modsym && awk->prm.modclose)
 		{
-			info.name = segs[0].ptr;
-			md.handle = awk->prm.modopen (awk, &info);
+			spec.name = segs[0].ptr;
+			md.handle = awk->prm.modopen (awk, &spec);
 		}
 		else md.handle = QSE_NULL;
 

@@ -303,6 +303,8 @@ struct qse_awk_val_map_data_t
 };
 typedef struct qse_awk_val_map_data_t qse_awk_val_map_data_t;
 
+/* ------------------------------------------------------------------------ */
+
 /**
  * The qse_awk_nde_type_t defines the node types.
  */
@@ -378,6 +380,8 @@ struct qse_awk_nde_t
 	QSE_AWK_NDE_HDR;
 };
 
+/* ------------------------------------------------------------------------ */
+
 /**
  * The qse_awk_fun_t type defines a structure to maintain functions
  * defined with the keyword 'function'.
@@ -390,10 +394,7 @@ struct qse_awk_fun_t
 };
 typedef struct qse_awk_fun_t qse_awk_fun_t;
 
-#define QSE_AWK_FUN_NAME(fun)     ((const qse_xstr_t*)&(fun)->name)
-#define QSE_AWK_FUN_NAME_PTR(fun) ((const qse_char_t*)(fun)->name.ptr)
-#define QSE_AWK_FUN_NAME_LEN(fun) (*(const qse_size_t*)&(fun)->name.len)
-#define QSE_AWK_FUN_NARGS(fun)    (*(const qse_size_t*)&(fun)->nargs)
+/* ------------------------------------------------------------------------ */
 
 typedef int (*qse_awk_sprintf_t) (
 	qse_awk_t*        awk,
@@ -414,9 +415,11 @@ typedef qse_flt_t (*qse_awk_math2_t) (
 	qse_flt_t y
 );
 
-typedef struct qse_awk_mod_info_t qse_awk_mod_info_t;
+/* ------------------------------------------------------------------------ */
 
-struct qse_awk_mod_info_t
+typedef struct qse_awk_mod_spec_t qse_awk_mod_spec_t;
+
+struct qse_awk_mod_spec_t
 {
 	const qse_char_t* prefix;
 	const qse_char_t* postfix;
@@ -425,7 +428,7 @@ struct qse_awk_mod_info_t
 
 typedef void* (*qse_awk_modopen_t) (
 	qse_awk_t*                awk,
-	const qse_awk_mod_info_t* info
+	const qse_awk_mod_spec_t* spec
 );
 
 typedef void* (*qse_awk_modsym_t) (
@@ -438,6 +441,8 @@ typedef void (*qse_awk_modclose_t) (
 	qse_awk_t* awk,
 	void*      handle
 );
+
+/* ------------------------------------------------------------------------ */
 
 #if 0
 typedef void* (*qse_awk_buildrex_t) (
@@ -728,8 +733,7 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 
 /* ------------------------------------------------------------------------ */
 
-typedef struct qse_awk_mod_t qse_awk_mod_t;
-typedef struct qse_awk_mod_sym_t qse_awk_mod_sym_t;
+typedef struct qse_awk_fnc_spec_t qse_awk_fnc_spec_t;
 typedef struct qse_awk_fnc_info_t qse_awk_fnc_info_t;
 
 /**
@@ -740,11 +744,47 @@ typedef int (*qse_awk_fnc_impl_t) (
 	const qse_awk_fnc_info_t* fi    /**< function information */
 );
 
+/**
+ * The qse_awk_fnc_spec_t type defines a structure to hold the specification
+ * of an intrinsic function or a module function.
+ */ 
+struct qse_awk_fnc_spec_t
+{
+	/** parameter specification */
+	struct
+	{
+		int min; /**< min. numbers of argument for a function */
+		int max; /**< max. numbers of argument for a function */
+		const qse_char_t* spec;
+	} arg;
+
+	/** pointer to the function implementing this function */
+	qse_awk_fnc_impl_t impl;
+
+	/** 
+	 * when this field is set to a non-zero value bitwise-ORed of 
+	 * #qse_awk_trait_t enumerators, the function is available if 
+	 * this field bitwise-ANDed the global trait option produces
+	 * this field itself.
+	 * 
+	 * this field doesn't take effect for a module function.
+	 */
+	int trait; 
+};
+
+/* ------------------------------------------------------------------------ */
+
+typedef struct qse_awk_mod_t qse_awk_mod_t;
+typedef struct qse_awk_mod_sym_t qse_awk_mod_sym_t;
+
 struct qse_awk_fnc_info_t
 {
 	qse_xstr_t name;
-	qse_awk_mod_t* mod;
+
+	/** #QSE_NULL if the function is not registered from module */
+	qse_awk_mod_t* mod; 
 };
+
 
 typedef int (*qse_awk_mod_load_t) (
 	qse_awk_mod_t* mod,
@@ -794,19 +834,9 @@ enum qse_awk_mod_sym_type_t
 	*/
 };
 typedef enum qse_awk_mod_sym_type_t qse_awk_mod_sym_type_t;
-typedef struct qse_awk_mod_sym_fnc_t qse_awk_mod_sym_fnc_t;
+typedef qse_awk_fnc_spec_t qse_awk_mod_sym_fnc_t;
 typedef struct qse_awk_mod_sym_int_t qse_awk_mod_sym_int_t;
 typedef struct qse_awk_mod_sym_flt_t qse_awk_mod_sym_flt_t;
-
-struct qse_awk_mod_sym_fnc_t
-{
-	struct
-	{
-		int min; /* min. numbers of argument for a function */
-		int max; /* max. numbers of argument for a function */
-	} arg;
-	qse_awk_fnc_impl_t impl;
-};
 
 struct qse_awk_mod_sym_int_t
 {
@@ -1057,6 +1087,7 @@ enum qse_awk_trait_t
 		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_MAPTOVAR |
 		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT
 };
+typedef enum qse_awk_trait_t qse_awk_trait_t;
 
 /* ------------------------------------------------------------------------ */
 
@@ -1581,8 +1612,7 @@ QSE_EXPORT void qse_awk_pushecb (
  */
 QSE_EXPORT int qse_awk_addgbl (
 	qse_awk_t*        awk,   /**< awk */
-	const qse_char_t* name,  /**< variable name */
-	qse_size_t        len    /**< name length */
+	const qse_cstr_t* name   /**< variable name */
 );
 
 /**
@@ -1591,8 +1621,7 @@ QSE_EXPORT int qse_awk_addgbl (
  */
 QSE_EXPORT int qse_awk_delgbl (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name, /**< variable name */
-	qse_size_t        len   /**< name length */
+	const qse_cstr_t* name  /**< variable name */
 );
 
 /**
@@ -1602,22 +1631,16 @@ QSE_EXPORT int qse_awk_delgbl (
  */
 QSE_EXPORT int qse_awk_findgbl (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name, /**< variable name */
-	qse_size_t        len   /**< name length */
+	const qse_cstr_t* name  /**< variable name */
 );
 
 /**
  * The qse_awk_addfnc() function adds an intrinsic function.
  */
 QSE_EXPORT void* qse_awk_addfnc (
-	qse_awk_t*         awk,
-	const qse_char_t*  name,
-	qse_size_t         name_len, 
-	int                when_valid,
-	qse_size_t         min_args,
-	qse_size_t         max_args, 
-	const qse_char_t*  arg_spec, 
-	qse_awk_fnc_impl_t handler
+	qse_awk_t*                awk,
+	const qse_cstr_t*         name,
+	const qse_awk_fnc_spec_t* spec
 );
 
 /**
@@ -1626,8 +1649,7 @@ QSE_EXPORT void* qse_awk_addfnc (
  */
 QSE_EXPORT int qse_awk_delfnc (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_char_t* name, /**< function name */
-	qse_size_t        len   /**< name length */
+	const qse_cstr_t* name  /**< function name */
 );
 
 /**
