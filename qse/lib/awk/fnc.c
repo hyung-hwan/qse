@@ -131,7 +131,7 @@ void* qse_awk_addfnc (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_fnc_
 		qse_char_t* tmp;
 
 		tmp = (qse_char_t*)(fnc + 1);
-		fnc->name.len = qse_strxncpy (tmp, name->len+1, name, name->len);
+		fnc->name.len = qse_strxncpy (tmp, name->len+1, name->ptr, name->len);
 		fnc->name.ptr = tmp;
 
 		fnc->spec = *spec;

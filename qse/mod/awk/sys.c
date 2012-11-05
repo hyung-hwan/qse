@@ -1,5 +1,6 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/str.h>
+#include <qse/cmn/time.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -12,11 +13,14 @@
 #elif defined(__DOS__)
 #	include <dos.h>
 #else
-#	include <unistd.h>
-#	include <signal.h>
-#	include <sys/wait.h>
-#	include <errno.h>
+#	include "../../lib/cmn/syscall.h"
+#	if defined(HAVE_SYS_SYSCALL_H)
+#		include <sys/syscall.h>
+#	endif
 #endif
+
+#include <stdlib.h> /* getenv */
+
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -37,36 +41,6 @@ static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 #else
 	pid = fork ();
-#endif
-
-	retv = qse_awk_rtx_makeintval (rtx, pid);
-	if (retv == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, retv);
-	return 0;
-}
-
-static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	qse_long_t pid;
-	qse_awk_val_t* retv;
-
-#if defined(_WIN32)
-	pid = GetCurrentProcessId();
-	
-#elif defined(__OS2__)
-	PTIB tib;
-	PPIB pib;
-
-	pid = (DosGetInfoBlocks (&tib, &pib) == NO_ERROR)?
-		pib->pib_ulpid: -1;
-	
-#elif defined(__DOS__)
-	/* TOOD: implement this*/
-	pid = -1;
-
-#else
-	pid = getpid ();
 #endif
 
 	retv = qse_awk_rtx_makeintval (rtx, pid);
@@ -108,6 +82,40 @@ static int fnc_wait (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid, sig;
+	qse_awk_val_t* retv;
+	int rx;
+
+	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
+	    qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
+	{
+		rx = -1;
+	}
+	else
+	{
+#if defined(_WIN32)
+		/* TOOD: implement this*/
+		rx = -1;
+#elif defined(__OS2__)
+		/* TOOD: implement this*/
+		rx = -1;
+#elif defined(__DOS__)
+		/* TOOD: implement this*/
+		rx = -1;
+#else
+		rx = kill (pid, sig);
+#endif
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
 static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_long_t pid;
@@ -136,6 +144,71 @@ static int fnc_getpgrp (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_getpid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid;
+	qse_awk_val_t* retv;
+
+#if defined(_WIN32)
+	pid = GetCurrentProcessId();
+	
+#elif defined(__OS2__)
+	PTIB tib;
+	PPIB pib;
+
+	pid = (DosGetInfoBlocks (&tib, &pib) == NO_ERROR)?
+		pib->pib_ulpid: -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	pid = -1;
+
+#else
+	pid = getpid ();
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, pid);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_gettid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t pid;
+	qse_awk_val_t* retv;
+
+#if defined(_WIN32)
+	pid = GetCurrentThreadId();
+	
+#elif defined(__OS2__)
+	PTIB tib;
+	PPIB pib;
+
+	pid = (DosGetInfoBlocks (&tib, &pib) == NO_ERROR && tib->tib_ptib2)?
+		 tib->tib_ptib2->tib2_ultid: -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	pid = -1;
+
+#else
+	#if defined(SYS_gettid) && defined(QSE_SYSCALL0)
+	QSE_SYSCALL0 (pid, SYS_gettid);
+	#elif defined(SYS_gettid)
+	pid = syscall (SYS_gettid);
+	#else
+	pid = -1;
+	#endif
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, pid);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
 
 static int fnc_getppid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -221,34 +294,56 @@ static int fnc_getgid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_kill (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int fnc_geteuid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_long_t pid, sig;
+	qse_long_t uid;
 	qse_awk_val_t* retv;
-	int rx;
 
-	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &pid) <= -1 ||
-	    qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &sig) <= -1)
-	{
-		rx = -1;
-	}
-	else
-	{
 #if defined(_WIN32)
-		/* TOOD: implement this*/
-		rx = -1;
+	/* TOOD: implement this*/
+	uid = -1;
+	
 #elif defined(__OS2__)
-		/* TOOD: implement this*/
-		rx = -1;
+	/* TOOD: implement this*/
+	uid = -1;
+	
 #elif defined(__DOS__)
-		/* TOOD: implement this*/
-		rx = -1;
-#else
-		rx = kill (pid, sig);
-#endif
-	}
+	/* TOOD: implement this*/
+	uid = -1;
 
-	retv = qse_awk_rtx_makeintval (rtx, rx);
+#else
+	uid = geteuid ();
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, uid);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_getegid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_long_t gid;
+	qse_awk_val_t* retv;
+
+#if defined(_WIN32)
+	/* TOOD: implement this*/
+	gid = -1;
+	
+#elif defined(__OS2__)
+	/* TOOD: implement this*/
+	gid = -1;
+	
+#elif defined(__DOS__)
+	/* TOOD: implement this*/
+	gid = -1;
+
+#else
+	gid = getegid ();
+#endif
+
+	retv = qse_awk_rtx_makeintval (rtx, gid);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -285,6 +380,64 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_gettime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* retv;
+	qse_ntime_t now;
+
+	if (qse_gettime (&now) <= -1) now = 0;
+
+	retv = qse_awk_rtx_makeintval (rtx, now);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_awk_val_t* retv;
+	qse_long_t now;
+	int rx;
+
+	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &now) <= -1 ||
+	    qse_settime (now) <= -1) rx = -1;
+	else rx = 0;
+
+	retv = qse_awk_rtx_makeintval (rtx, rx);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
+static int fnc_getenv (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_mchar_t* var;
+	qse_size_t len;
+	qse_awk_val_t* retv;
+
+	var = qse_awk_rtx_valtombsdup (
+		rtx, qse_awk_rtx_getarg (rtx, 0), &len);
+	if (var)
+	{
+		qse_mchar_t* val;
+
+		val = getenv (var);	
+		if (val) 
+		{
+			retv = qse_awk_rtx_makestrvalwithmbs (rtx, val);
+			if (retv == QSE_NULL) return -1;
+
+			qse_awk_rtx_setretval (rtx, retv);
+		}
+
+		qse_awk_rtx_freemem (rtx, var);
+	}
+
+	return 0;
+}
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -302,12 +455,18 @@ struct inttab_t
 static fnctab_t fnctab[] =
 {
 	{ QSE_T("fork"),    { { 0, 0, QSE_NULL }, fnc_fork,    0  } },
+	{ QSE_T("getegid"), { { 0, 0, QSE_NULL }, fnc_getegid, 0  } },
+	{ QSE_T("getenv"),  { { 1, 1, QSE_NULL }, fnc_getenv,  0  } },
+	{ QSE_T("geteuid"), { { 0, 0, QSE_NULL }, fnc_geteuid, 0  } },
 	{ QSE_T("getgid"),  { { 0, 0, QSE_NULL }, fnc_getgid,  0  } },
 	{ QSE_T("getpgrp"), { { 0, 0, QSE_NULL }, fnc_getpgrp, 0  } },
 	{ QSE_T("getpid"),  { { 0, 0, QSE_NULL }, fnc_getpid,  0  } },
 	{ QSE_T("getppid"), { { 0, 0, QSE_NULL }, fnc_getppid, 0  } },
+	{ QSE_T("gettid"),  { { 0, 0, QSE_NULL }, fnc_gettid,  0  } },
+	{ QSE_T("gettime"), { { 0, 0, QSE_NULL }, fnc_gettime, 0  } },
 	{ QSE_T("getuid"),  { { 0, 0, QSE_NULL }, fnc_getuid,  0  } },
 	{ QSE_T("kill"),    { { 2, 2, QSE_NULL }, fnc_kill,    0  } },
+	{ QSE_T("settime"), { { 1, 1, QSE_NULL }, fnc_settime, 0  } },
 	{ QSE_T("sleep"),   { { 1, 1, QSE_NULL }, fnc_sleep,   0  } },
 	{ QSE_T("wait"),    { { 1, 1, QSE_NULL }, fnc_wait,    0  } }
 };
@@ -419,3 +578,7 @@ QSE_EXPORT int load (qse_awk_mod_t* mod, qse_awk_t* awk)
 	return 0;
 }
 
+#if defined(__DOS__)
+/* kind of DllMain() for Causeway DLL */
+int main (int eax) { return 0; }
+#endif

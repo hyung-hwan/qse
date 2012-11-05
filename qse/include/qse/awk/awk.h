@@ -139,12 +139,14 @@ typedef struct qse_awk_loc_t qse_awk_loc_t;
 #if QSE_SIZEOF_INT == 2
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
-		unsigned int ref: 11; \
+		unsigned int ref: 10; \
+		unsigned int stat: 1; \
 		unsigned int nstr: 2
 #else
 #	define QSE_AWK_VAL_HDR \
 		unsigned int type: 3; \
-		unsigned int ref: 27; \
+		unsigned int ref: 26; \
+		unsigned int stat: 1; \
 		unsigned int nstr: 2
 #endif
 
@@ -753,8 +755,8 @@ struct qse_awk_fnc_spec_t
 	/** parameter specification */
 	struct
 	{
-		int min; /**< min. numbers of argument for a function */
-		int max; /**< max. numbers of argument for a function */
+		qse_size_t min; /**< min. numbers of argument for a function */
+		qse_size_t max; /**< max. numbers of argument for a function */
 		const qse_char_t* spec;
 	} arg;
 

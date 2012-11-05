@@ -5771,6 +5771,7 @@ static qse_awk_val_t* __eval_call (
 #ifdef DEBUG_RUN
 	qse_dprintf (QSE_T("block run complete nargs = %d\n"), (int)nargs); 
 #endif
+
 	for (i = 0; i < nargs; i++)
 	{
 		qse_awk_rtx_refdownval (run, STACK_ARG(run,i));

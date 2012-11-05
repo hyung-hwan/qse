@@ -27,36 +27,36 @@
 
 #define CHUNKSIZE QSE_AWK_VAL_CHUNK_SIZE
 
-static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 0 };
-static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 0, { QSE_T(""), 0 } };
+static qse_awk_val_nil_t awk_nil = { QSE_AWK_VAL_NIL, 0, 1, 0 };
+static qse_awk_val_str_t awk_zls = { QSE_AWK_VAL_STR, 0, 1, 0,  { QSE_T(""), 0 } };
 
 qse_awk_val_t* qse_awk_val_nil = (qse_awk_val_t*)&awk_nil;
 qse_awk_val_t* qse_awk_val_zls = (qse_awk_val_t*)&awk_zls; 
 
 static qse_awk_val_int_t awk_int[] =
 {
-	{ QSE_AWK_VAL_INT, 0, 0, -1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  0, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  1, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  2, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  3, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  4, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  5, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  6, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  7, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  8, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0,  9, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 10, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 11, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 12, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 13, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 14, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 15, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 16, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 17, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 18, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 19, QSE_NULL },
-	{ QSE_AWK_VAL_INT, 0, 0, 20, QSE_NULL }
+	{ QSE_AWK_VAL_INT, 0, 1, 0, -1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  0, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  1, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  2, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  3, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  4, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  5, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  6, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  7, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  8, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0,  9, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 10, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 11, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 12, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 13, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 14, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 15, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 16, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 17, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 18, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 19, QSE_NULL },
+	{ QSE_AWK_VAL_INT, 0, 1, 0, 20, QSE_NULL }
 };
 
 qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
@@ -123,6 +123,7 @@ qse_awk_val_t* qse_awk_rtx_makeintval (qse_awk_rtx_t* rtx, qse_long_t v)
 
 	val->type = QSE_AWK_VAL_INT;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->val = v;
 	val->nde = QSE_NULL;
@@ -178,6 +179,7 @@ qse_awk_val_t* qse_awk_rtx_makefltval (qse_awk_rtx_t* rtx, qse_flt_t v)
 
 	val->type = QSE_AWK_VAL_FLT;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->val = v;
 	val->nde = QSE_NULL;
@@ -322,6 +324,7 @@ init:
 #endif
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->val.len = str->len;
 	val->val.ptr = (qse_char_t*)(val + 1);
@@ -380,6 +383,7 @@ init:
 #endif
 	val->type = QSE_AWK_VAL_STR;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->val.len = len1 + len2;
 	val->val.ptr = (qse_char_t*)(val + 1);
@@ -436,6 +440,7 @@ qse_awk_val_t* qse_awk_rtx_makerexval (
 
 	val->type = QSE_AWK_VAL_REX;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->str.len = str->len;
 
@@ -506,6 +511,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->map = qse_htb_open (
 		run, 256, 70, free_mapval, same_mapval, run->awk->mmgr);
@@ -530,6 +536,7 @@ qse_awk_val_t* qse_awk_rtx_makemapval (qse_awk_rtx_t* rtx)
 
 	val->type = QSE_AWK_VAL_MAP;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->map = (qse_htb_t*)(val + 1);
 
@@ -715,12 +722,22 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 
 	val->type = QSE_AWK_VAL_REF;
 	val->ref = 0;
+	val->stat = 0;
 	val->nstr = 0;
 	val->id = id;
 	val->adr = adr;
 
 	return (qse_awk_val_t*)val;
 }
+
+/* 
+ * if shared objects link a static library, statically defined objects
+ * in the static library will be instatiated in the multiple shared objects.
+ *
+ * so equality check with a value pointer doesn't work
+ * if the code crosses the library boundaries. instead, i decided to
+ * add a field to indicate if a value is static.
+ * 
 
 #define IS_STATICVAL(val) \
 	((val) == QSE_NULL || \
@@ -730,6 +747,8 @@ qse_awk_val_t* qse_awk_rtx_makerefval (
 	 (val) == qse_awk_val_one || \
 	 ((val) >= (qse_awk_val_t*)&awk_int[0] && \
 	  (val) <= (qse_awk_val_t*)&awk_int[QSE_COUNTOF(awk_int)-1]))
+*/
+#define IS_STATICVAL(val) ((val)->stat)
 
 int qse_awk_rtx_isstaticval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
@@ -853,8 +872,8 @@ void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 #endif
 
 	QSE_ASSERTX (val->ref > 0, 
-		"the reference count of a value should be greater than zero for it"
-		" to be decremented. check the source code for any bugs");
+		"the reference count of a value should be greater than zero for it "
+		"to be decremented. check the source code for any bugs");
 
 	val->ref--;
 	if (val->ref <= 0) 
