@@ -454,6 +454,8 @@ struct inttab_t
 
 static fnctab_t fnctab[] =
 {
+	/* keep this table sorted for binary search in query(). */
+
 	{ QSE_T("fork"),    { { 0, 0, QSE_NULL }, fnc_fork,    0  } },
 	{ QSE_T("getegid"), { { 0, 0, QSE_NULL }, fnc_getegid, 0  } },
 	{ QSE_T("getenv"),  { { 1, 1, QSE_NULL }, fnc_getenv,  0  } },
@@ -498,14 +500,16 @@ static fnctab_t fnctab[] =
 
 static inttab_t inttab[] =
 {
+	/* keep this table sorted for binary search in query(). */
+
 	{ QSE_T("SIGABRT"), { SIGABRT } },
 	{ QSE_T("SIGALRM"), { SIGALRM } },
 	{ QSE_T("SIGHUP"),  { SIGHUP } },
 	{ QSE_T("SIGINT"),  { SIGINT } },
 	{ QSE_T("SIGKILL"), { SIGKILL } },
+	{ QSE_T("SIGQUIT"), { SIGQUIT } },
 	{ QSE_T("SIGSEGV"), { SIGSEGV } },
-	{ QSE_T("SIGTERM"), { SIGTERM } },
-	{ QSE_T("SIGQUIT"), { SIGQUIT } }
+	{ QSE_T("SIGTERM"), { SIGTERM } }
 
 /*
 	{ QSE_T("WNOHANG"), { WNOHANG } },
@@ -515,28 +519,40 @@ static inttab_t inttab[] =
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
 	qse_cstr_t ea;
-	int i;
+     int left, right, mid, n;
 
-/* TODO: binary search or something better */
-	for (i = 0; i < QSE_COUNTOF(fnctab); i++)
+	left = 0; right = QSE_COUNTOF(fnctab) - 1;
+
+	while (left <= right)
 	{
-		if (qse_strcmp (fnctab[i].name, name) == 0)
+		mid = (left + right) / 2;
+
+		n = qse_strcmp (fnctab[mid].name, name);
+          if (n > 0) right = mid - 1; 
+		else if (n < 0) left = mid + 1;
+		else
 		{
 			sym->type = QSE_AWK_MOD_FNC;
-			sym->u.fnc = fnctab[i].info;
+			sym->u.fnc = fnctab[mid].info;
 			return 0;
 		}
-	}
+     }
 
-	for (i = 0; i < QSE_COUNTOF(inttab); i++)
+	left = 0; right = QSE_COUNTOF(inttab) - 1;
+	while (left <= right)
 	{
-		if (qse_strcmp (inttab[i].name, name) == 0)
+		mid = (left + right) / 2;
+
+		n = qse_strcmp (inttab[mid].name, name);
+          if (n > 0) right = mid - 1; 
+		else if (n < 0) left = mid + 1;
+		else
 		{
 			sym->type = QSE_AWK_MOD_INT;
-			sym->u.in = inttab[i].info;
+			sym->u.in = inttab[mid].info;
 			return 0;
 		}
-	}
+     }
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);
