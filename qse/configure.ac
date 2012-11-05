@@ -55,7 +55,7 @@ if test "x$with_included_ltdl" != "xyes"; then
 	CFLAGS="$CFLAGS $LTDLINCL"
 	LDFLAGS="$LDFLAGS $LIBLTDL"
 	AC_CHECK_LIB([ltdl], [lt_dladvise_init], [],
-	             [AC_MSG_ERROR([installed libltdl is too old])])
+	             [AC_MSG_ERROR([installed libltdl is too old. install a newer libltdl or specify --with-included-ltdl])])
 	LDFLAGS="$save_LDFLAGS"
 	CFLAGS="$save_CFLAGS"
 fi

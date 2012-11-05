@@ -16991,7 +16991,7 @@ _ACEOF
   LIBS="-lltdl $LIBS"
 
 else
-  as_fn_error $? "installed libltdl is too old" "$LINENO" 5
+  as_fn_error $? "installed libltdl is too old. install a newer libltdl or specify --with-included-ltdl" "$LINENO" 5
 fi
 
 	LDFLAGS="$save_LDFLAGS"

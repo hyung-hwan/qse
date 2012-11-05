@@ -2500,13 +2500,11 @@ static int add_globals (qse_awk_t* awk)
 
 	xtn->gbl_argc = add_global (awk, QSE_T("ARGC"), 4);
 	xtn->gbl_argv = add_global (awk, QSE_T("ARGV"), 4);
-
-	if (xtn->gbl_argc <= -1 || xtn->gbl_argv <= -1) return -1;
-
 	xtn->gbl_environ = add_global (awk,  QSE_T("ENVIRON"), 7);
-	if (xtn->gbl_environ <= -1) return -1;
 
-	return 0;
+	return (xtn->gbl_argc <= -1 || 
+	        xtn->gbl_argv <= -1 ||
+	        xtn->gbl_environ <= -1)? -1: 0;
 }
 
 struct fnctab_t 

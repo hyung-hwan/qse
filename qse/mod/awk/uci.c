@@ -1233,18 +1233,24 @@ static fnctab_t fnctab[] =
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
 	qse_cstr_t ea;
-	int i;
+     int left, right, mid, n;
 
-/* TODO: binary search */
-	for (i = 0; i < QSE_COUNTOF(fnctab); i++)
+	left = 0; right = QSE_COUNTOF(fnctab) - 1;
+
+	while (left <= right)
 	{
-		if (qse_strcmp (fnctab[i].name, name) == 0) 
+		mid = (left + right) / 2;
+
+		n = qse_strcmp (fnctab[mid].name, name);
+          if (n > 0) right = mid - 1; 
+		else if (n < 0) left = mid + 1;
+		else
 		{
 			sym->type = QSE_AWK_MOD_FNC;
-			sym->u.fnc = fnctab[i].info;
+			sym->u.fnc = fnctab[mid].info;
 			return 0;
 		}
-	}
+     }
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);
