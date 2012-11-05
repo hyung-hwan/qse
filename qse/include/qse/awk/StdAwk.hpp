@@ -139,7 +139,6 @@ protected:
 	int build_argcv (Run* run);
 	int build_environ (Run* run);
 	int __build_environ (Run* run, void* envptr);
-	int build_procinfo (Run* run);
 
 	// intrinsic functions 
 	int rand (Run& run, Value& ret, const Value* args, size_t nargs,
@@ -147,8 +146,6 @@ protected:
 	int srand (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 	int system (Run& run, Value& ret, const Value* args, size_t nargs,
-		const char_t* name, size_t len);
-	int time (Run& run, Value& ret, const Value* args, size_t nargs,
 		const char_t* name, size_t len);
 
 	qse_cmgr_t* getcmgr (const char_t* ioname);
@@ -216,7 +213,6 @@ protected:
 	int gbl_argc;
 	int gbl_argv;
 	int gbl_environ;
-	int gbl_procinfo;
 
 	// standard input console - reuse runarg 
 	size_t runarg_index;

@@ -50,7 +50,7 @@
 #	define INCL_DOSERRORS
 #    include <os2.h>
 #elif defined(__DOS__)
-	/* anything ? */
+#	include <cwdllfnc.h>
 #else
 #	include <unistd.h>
 #	include <ltdl.h>
@@ -115,7 +115,6 @@ typedef struct xtn_t
 	int gbl_argc;
 	int gbl_argv;
 	int gbl_environ;
-	int gbl_procinfo;
 
 	qse_awk_ecb_t ecb;
 } xtn_t;
@@ -349,7 +348,7 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 #elif defined(_WIN32)
 
 	HMODULE h;
-	qse_char_t* path;
+	qse_char_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
 
@@ -359,16 +358,16 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
-	path = qse_stradup (tmp, QSE_NULL, awk->mmgr);
-	if (!path)
+	modpath = qse_stradup (tmp, QSE_NULL, awk->mmgr);
+	if (!modpath)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 		return QSE_NULL;
 	}
 
-	h = LoadLibrary (path);
+	h = LoadLibrary (modpath);
 
-	QSE_MMGR_FREE (awk->mmgr, path);
+	QSE_MMGR_FREE (awk->mmgr, modpath);
 	
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -407,9 +406,34 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 
 #elif defined(__DOS__)
 
-	/*TODO: implemente this */
-	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
-	return -1;
+	void* h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[4];
+	int count;
+
+	count = 0;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	#endif
+	if (!modpath)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	h = LoadModule (modpath);
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+	
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
 
 #else
 	qse_awk_seterrnum (awk, QSE_AWK_ENOIMPL, QSE_NULL);
@@ -426,7 +450,7 @@ static void custom_awk_modclose (qse_awk_t* awk, void* handle)
 #elif defined(__OS2__)
 	DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__)
-	/*TODO: implemente this */
+	FreeModule (handle);
 #else
 	/* nothing to do */
 #endif
@@ -458,8 +482,8 @@ static void* custom_awk_modsym (qse_awk_t* awk, void* handle, const qse_char_t* 
 	if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
 
 #elif defined(__DOS__)
-	/*TODO: implemente this */
-	s = QSE_NULL;
+	s = GetProcAddress (handle, mname);
+	
 #else
 	s = QSE_NULL;
 #endif
@@ -1788,7 +1812,7 @@ static int build_argcv (
 
 	return 0;
 }
-
+ 
 static int __build_environ (
 	qse_awk_rtx_t* rtx, int gbl_id, qse_env_char_t* envarr[])
 {
@@ -1940,122 +1964,12 @@ static int build_environ (qse_awk_rtx_t* rtx, int gbl_id)
 	return xret;
 }
 
-static int build_procinfo (qse_awk_rtx_t* rtx, int gbl_id)
-{
-	qse_awk_val_t* v_info;
-	qse_awk_val_t* v_tmp;
-	qse_size_t i;
-
-#if defined(__OS2__)
-	PTIB tib;
-	PPIB pib;
-#endif
-
-	static qse_cstr_t names[] =
-	{
-		{ QSE_T("pid"),    3 },
-		{ QSE_T("ppid"),   5 },
-		{ QSE_T("pgrp"),   4 },
-		{ QSE_T("uid"),    3 },
-		{ QSE_T("gid"),    3 },
-		{ QSE_T("euid"),   4 },
-		{ QSE_T("egid"),   4 },
-		{ QSE_T("tid"),    3 }
-	};
-
-	v_info = qse_awk_rtx_makemapval (rtx);
-	if (v_info == QSE_NULL) return -1;
-
-	qse_awk_rtx_refupval (rtx, v_info);
-
-#if defined(__OS2__)
-	if (DosGetInfoBlocks (&tib, &pib) != NO_ERROR)
-	{
-		tib = QSE_NULL;
-		pib = QSE_NULL;
-	}
-#endif
-
-	for (i = 0; i < QSE_COUNTOF(names); i++)
-	{
-		qse_long_t val = -99931; /* -99931 randomly chosen */
-
-#if defined(_WIN32)
-		switch (i)
-		{
-			case 0: val = GetCurrentProcessId(); break;
-			case 7: val = GetCurrentThreadId(); break;
-		}
-#elif defined(__OS2__)
-		switch (i)
-		{
-			case 0: if (pib) val = pib->pib_ulpid; break;
-			case 7: if (tib && tib->tib_ptib2) val = tib->tib_ptib2->tib2_ultid; break;
-		}
-#elif defined(__DOS__)
-		/* TODO: */
-#else
-		switch (i)
-		{
-			case 0: val = getpid(); break;
-			case 1: val = getppid(); break;
-			case 2: val = getpgrp(); break;
-			case 3: val = getuid(); break;
-			case 4: val = getgid(); break;
-			case 5: val = geteuid(); break;
-			case 6: val = getegid(); break;
-		#if defined(HAVE_GETTID)
-			case 7: val = gettid(); break;
-		#endif
-		}
-#endif
-		if (val == -99931) continue;
-
-		v_tmp = qse_awk_rtx_makeintval (rtx, val);
-		if (v_tmp == QSE_NULL)
-		{
-			qse_awk_rtx_refdownval (rtx, v_info);
-			return -1;
-		}
-
-		/* increment reference count of v_tmp in advance as if 
-		 * it has successfully been assigned into ARGV. */
-		qse_awk_rtx_refupval (rtx, v_tmp);
-
-		if (qse_htb_upsert (
-			((qse_awk_val_map_t*)v_info)->map,
-			(void*)names[i].ptr, names[i].len, v_tmp, 0) == QSE_NULL)
-		{
-			/* if the assignment operation fails, decrements
-			 * the reference of v_tmp to free it */
-			qse_awk_rtx_refdownval (rtx, v_tmp);
-
-			/* the values previously assigned into the
-			 * map will be freeed when v_env is freed */
-			qse_awk_rtx_refdownval (rtx, v_info);
-
-			qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
-			return -1;
-		}
-	}
-
-	if (qse_awk_rtx_setgbl (rtx, gbl_id, v_info) == -1)
-	{
-		qse_awk_rtx_refdownval (rtx, v_info);
-		return -1;
-	}
-
-	qse_awk_rtx_refdownval (rtx, v_info);
-	return 0;
-}
-
 static int make_additional_globals (
 	qse_awk_rtx_t* rtx, xtn_t* xtn, 
 	const qse_char_t* id, const qse_char_t*const icf[])
 {
 	if (build_argcv (rtx, xtn->gbl_argc, xtn->gbl_argv, id, icf) <= -1 ||
-	    build_environ (rtx, xtn->gbl_environ) <= -1 ||
-	    build_procinfo (rtx, xtn->gbl_procinfo) <= -1) return -1;
+	    build_environ (rtx, xtn->gbl_environ) <= -1) return -1;
 
 	return 0;
 }
@@ -2279,20 +2193,6 @@ skip_system:
 	if (v == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, v);
-	return 0;
-}
-
-static int fnc_time (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
-{
-	qse_awk_val_t* r;
-	qse_ntime_t now;
-
-	if (qse_gettime (&now) <= -1) now = 0;
-
-	r = qse_awk_rtx_makeintval (rtx, now);
-	if (r == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, r);
 	return 0;
 }
 
@@ -2600,11 +2500,11 @@ static int add_globals (qse_awk_t* awk)
 
 	xtn->gbl_argc = add_global (awk, QSE_T("ARGC"), 4);
 	xtn->gbl_argv = add_global (awk, QSE_T("ARGV"), 4);
-	xtn->gbl_environ = add_global (awk,  QSE_T("ENVIRON"), 7);
-	xtn->gbl_procinfo = add_global (awk,  QSE_T("PROCINFO"), 8);
 
-	if (xtn->gbl_argc <= -1 || xtn->gbl_argv <= -1 ||
-	    xtn->gbl_environ <= -1 || xtn->gbl_procinfo <= -1) return -1;
+	if (xtn->gbl_argc <= -1 || xtn->gbl_argv <= -1) return -1;
+
+	xtn->gbl_environ = add_global (awk,  QSE_T("ENVIRON"), 7);
+	if (xtn->gbl_environ <= -1) return -1;
 
 	return 0;
 }
@@ -2621,7 +2521,6 @@ static struct fnctab_t fnctab[] =
 	{ {QSE_T("rand"),      4}, { {0, 0, QSE_NULL}, fnc_rand,      0           } },
 	{ {QSE_T("srand"),     5}, { {0, 1, QSE_NULL}, fnc_srand,     0           } },
 	{ {QSE_T("system"),    6}, { {1, 1, QSE_NULL}, fnc_system ,   0           } },
-	{ {QSE_T("time"),      4}, { {0, 0, QSE_NULL}, fnc_time,      0           } },
 	{ {QSE_T("setioattr"), 9}, { {3, 3, QSE_NULL}, fnc_setioattr, QSE_AWK_RIO } },
 	{ {QSE_T("getioattr"), 9}, { {2, 2, QSE_NULL}, fnc_getioattr, QSE_AWK_RIO } }
 };

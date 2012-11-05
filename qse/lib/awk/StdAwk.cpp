@@ -41,11 +41,12 @@
 #		define USE_LTDL
 #	endif
 #elif defined(__OS2__)
+#	define INCL_DOSMODULEMGR
 #	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
 #	include <os2.h>
 #elif defined(__DOS__)
-	/* anything ? */
+#	include <cwdllfnc.h>
 #else
 #    include <unistd.h>
 #    include <ltdl.h>
@@ -133,11 +134,9 @@ int StdAwk::open ()
 	this->gbl_argc = addGlobal (QSE_T("ARGC"));
 	this->gbl_argv = addGlobal (QSE_T("ARGV"));
 	this->gbl_environ = addGlobal (QSE_T("ENVIRON"));
-	this->gbl_procinfo = addGlobal (QSE_T("PROCINFO"));
 	if (this->gbl_argc <= -1 ||
 	    this->gbl_argv <= -1 ||
-	    this->gbl_environ <= -1 ||
-	    this->gbl_procinfo <= -1) 
+	    this->gbl_environ <= -1)
 	{
 		goto oops;
 	}
@@ -145,7 +144,6 @@ int StdAwk::open ()
 	if (addFunction (QSE_T("rand"),       0, 0, (FunctionHandler)&StdAwk::rand,      0) <= -1 ||
 	    addFunction (QSE_T("srand"),      0, 1, (FunctionHandler)&StdAwk::srand,     0) <= -1 ||
 	    addFunction (QSE_T("system"),     1, 1, (FunctionHandler)&StdAwk::system,    0) <= -1 ||
-	    addFunction (QSE_T("time"),       0, 0, (FunctionHandler)&StdAwk::time,      0) <= -1 ||
 	    addFunction (QSE_T("setioattr"),  3, 3, (FunctionHandler)&StdAwk::setioattr, QSE_AWK_RIO) <= -1 ||
 	    addFunction (QSE_T("getioattr"),  2, 2, (FunctionHandler)&StdAwk::getioattr, QSE_AWK_RIO) <= -1)
 	{
@@ -342,81 +340,10 @@ int StdAwk::build_environ (Run* run)
 	return xret;
 }
 
-int StdAwk::build_procinfo (Run* run)
-{
-	static qse_cstr_t names[] =
-	{
-		{ QSE_T("pid"),    3 },
-		{ QSE_T("ppid"),   5 },
-		{ QSE_T("pgrp"),   4 },
-		{ QSE_T("uid"),    3 },
-		{ QSE_T("gid"),    3 },
-		{ QSE_T("euid"),   4 },
-		{ QSE_T("egid"),   4 },
-		{ QSE_T("tid"),    3 }
-	};
-
-#if defined(__OS2__)
-	PTIB tib;
-	PPIB pib;
-	
-	if (DosGetInfoBlocks (&tib, &pib) != NO_ERROR)
-	{
-		tib = QSE_NULL;
-		pib = QSE_NULL;
-	}
-#endif
-
-	Value v_procinfo (run);
-
-	for (size_t i = 0; i < QSE_COUNTOF(names); i++)
-	{
-		qse_long_t val = -99931; /* -99931 randomly chosen */
-
-#if defined(_WIN32)
-		switch (i)
-		{
-			case 0: val = GetCurrentProcessId(); break;
-			case 7: val = GetCurrentThreadId(); break;
-		}
-#elif defined(__OS2__)
-		switch (i)
-		{
-			case 0: if (pib) val = pib->pib_ulpid; break;
-			case 7: if (tib && tib->tib_ptib2) val = tib->tib_ptib2->tib2_ultid; break;
-		}
-#elif defined(__DOS__)
-		/* TODO: */
-#else
-		switch (i)
-		{
-			case 0: val = getpid(); break;
-			case 1: val = getppid(); break;
-			case 2: val = getpgrp(); break;
-			case 3: val = getuid(); break;
-			case 4: val = getgid(); break;
-			case 5: val = geteuid(); break;
-			case 6: val = getegid(); break;
-		#if defined(HAVE_GETTID)
-			case 7: val = gettid(); break;
-		#endif
-		}
-#endif
-		if (val == -99931) continue;
-
-		if (v_procinfo.setIndexedInt (
-			Value::Index (names[i].ptr, names[i].len), val) <= -1) return -1;
-
-	}
-	
-	return run->setGlobal (this->gbl_procinfo, v_procinfo);
-}
-
 int StdAwk::make_additional_globals (Run* run)
 {
 	if (build_argcv (run) <= -1 ||
-	    build_environ (run) <= -1 ||
-	    build_procinfo (run) <= -1) return -1;
+	    build_environ (run) <= -1) return -1;
 	    
 	return 0;
 }
@@ -476,16 +403,6 @@ int StdAwk::system (Run& run, Value& ret, const Value* args, size_t nargs,
 	QSE_MMGR_FREE (((Awk*)run)->getMmgr(), mbs);
 	return n;
 #endif
-}
-
-int StdAwk::time (Run& run, Value& ret, const Value* args, size_t nargs,
-	const char_t* name, size_t len)
-{
-	qse_ntime_t now;
-
-	if (qse_gettime (&now) <= -1) now = 0;
-
-	return ret.setInt (now);
 }
 
 qse_cmgr_t* StdAwk::getcmgr (const char_t* ioname)
@@ -1429,7 +1346,7 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 #elif defined(_WIN32)
 
 	HMODULE h;
-	qse_char_t* path;
+	qse_char_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
 
@@ -1439,16 +1356,16 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 	if (spec->postfix) tmp[count++] = spec->postfix;
 	tmp[count] = QSE_NULL;
 
-	path = qse_stradup (tmp, QSE_NULL, this->getMmgr());
-	if (!path)
+	modpath = qse_stradup (tmp, QSE_NULL, this->getMmgr());
+	if (!modpath)
 	{
 		this->setError (QSE_AWK_ENOMEM);
 		return QSE_NULL;
 	}
 
-	h = LoadLibrary (path);
+	h = LoadLibrary (modpath);
 
-	QSE_MMGR_FREE (awk->mmgr, path);
+	QSE_MMGR_FREE (awk->mmgr, modpath);
 
 	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
 	return h;
@@ -1487,9 +1404,35 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 
 #elif defined(__DOS__)
 
-	/*TODO: implemente this */
-	this->setError (QSE_AWK_ENOIMPL);
-	return QSE_NULL;
+	void* h;
+	qse_mchar_t* modpath;
+	const qse_char_t* tmp[4];
+	int count;
+
+	count = 0;
+	if (spec->prefix) tmp[count++] = spec->prefix;
+	tmp[count++] = spec->name;
+	if (spec->postfix) tmp[count++] = spec->postfix;
+	tmp[count] = QSE_NULL;
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	modpath = qse_mbsadup (tmp, QSE_NULL, awk->mmgr);
+	#else
+	modpath = qse_wcsatombsdup (tmp, QSE_NULL, awk->mmgr);
+	#endif
+	if (!modpath)
+	{
+		qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
+		return QSE_NULL;
+	}
+
+	h = LoadModule (modpath);
+
+	QSE_MMGR_FREE (awk->mmgr, modpath);
+	
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return h;
+
 #else
 
 	this->setError (QSE_AWK_ENOIMPL);
@@ -1507,7 +1450,7 @@ void StdAwk::modclose (void* handle)
 #elif defined(__OS2__)
      DosFreeModule ((HMODULE)handle);
 #elif defined(__DOS__)
-	/*TODO: implemente this */
+	FreeModule (handle);
 #else
 	/* nothing to do */
 #endif
@@ -1536,8 +1479,7 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 #elif defined(__OS2__)
      if (DosQueryProcAddr ((HMODULE)handle, 0, mname, (PFN*)&s) != NO_ERROR) s = QSE_NULL;
 #elif defined(__DOS__)
-	/*TODO: implemente this */
-	s = QSE_NULL;
+	s = GetProcAddress (handle, mname);
 #else
 	s = QSE_NULL;
 #endif

@@ -8,9 +8,9 @@ AM_CPPFLAGS = \
 if WIN32
 # you must adjust the value of DEFAULT_MODPOSTFIX according to
 # -version-info in ../../mod/awk/Makefile.am
-AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"libqseawk-\" -DDEFAULT_MODPOSTFIX=\"-1\"
+AM_CPPFLAGS += -DQSE_AWK_DEFAULT_MODPREFIX=\"libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"-1\"
 else
-AM_CPPFLAGS += -DDEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DDEFAULT_MODPOSTFIX=\"\"
+AM_CPPFLAGS += -DQSE_AWK_DEFAULT_MODPREFIX=\"$(libdir)/libqseawk-\" -DQSE_AWK_DEFAULT_MODPOSTFIX=\"\"
 endif
 
 lib_LTLIBRARIES = libqseawk.la

@@ -208,7 +208,7 @@ qse_mchar_t* qse_wcstombsdupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_mchar_t* qse_wcntombsdupwithcmgr (
+qse_mchar_t* qse_wcsntombsdupwithcmgr (
 	const qse_wchar_t* wcs,
 	qse_size_t         wcslen,
 	qse_size_t*        mbslen,

@@ -153,12 +153,12 @@ struct inttab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("assign"),   { { 1, 1, QSE_NULL }, fnc_assign  }, 0 },
-	{ QSE_T("barrier"),  { { 0, 0, QSE_NULL }, fnc_barrier }, 0 },
-	{ QSE_T("hash"),     { { 1, 1, QSE_NULL }, fnc_hash    }, 0 },
-	{ QSE_T("rank"),     { { 0, 0, QSE_NULL }, fnc_rank    }, 0 },
-	{ QSE_T("reduce"),   { { 2, 2, QSE_NULL }, fnc_reduce  }, 0 },
-	{ QSE_T("size"),     { { 0, 0, QSE_NULL }, fnc_size    }, 0 }
+	{ QSE_T("assign"),   { { 1, 1, QSE_NULL }, fnc_assign,  0 } },
+	{ QSE_T("barrier"),  { { 0, 0, QSE_NULL }, fnc_barrier, 0 } },
+	{ QSE_T("hash"),     { { 1, 1, QSE_NULL }, fnc_hash,    0 } },
+	{ QSE_T("rank"),     { { 0, 0, QSE_NULL }, fnc_rank,    0 } },
+	{ QSE_T("reduce"),   { { 2, 2, QSE_NULL }, fnc_reduce,  0 } },
+	{ QSE_T("size"),     { { 0, 0, QSE_NULL }, fnc_size,    0 } }
 };
 
 static inttab_t inttab[] =

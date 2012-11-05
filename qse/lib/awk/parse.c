@@ -6437,14 +6437,14 @@ static qse_awk_mod_t* query_module (
 
 		if (awk->opt.mod[0].len > 0)
 			spec.prefix = awk->opt.mod[0].ptr;
-	#if defined(DEFAULT_MODPREFIX)
-		else spec.prefix = QSE_T(DEFAULT_MODPREFIX);
+	#if defined(QSE_AWK_DEFAULT_MODPREFIX)
+		else spec.prefix = QSE_T(QSE_AWK_DEFAULT_MODPREFIX);
 	#endif
 
 		if (awk->opt.mod[1].len > 0)
 			spec.postfix = awk->opt.mod[1].ptr;
-	#if defined(DEFAULT_MODPOSTFIX)
-		else spec.postfix = QSE_T(DEFAULT_MODPOSTFIX);
+	#if defined(QSE_AWK_DEFAULT_MODPOSTFIX)
+		else spec.postfix = QSE_T(QSE_AWK_DEFAULT_MODPOSTFIX);
 	#endif
 		
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
@@ -6464,15 +6464,22 @@ static qse_awk_mod_t* query_module (
 		}
 
 		load = awk->prm.modsym (awk, md.handle, QSE_T("load"));
-		if (!load)
+		if (!load) 
 		{
+			load = awk->prm.modsym (awk, md.handle, QSE_T("_load"));
+			if (!load)
+			{
+				load = awk->prm.modsym (awk, md.handle, QSE_T("load_"));
+				if (!load)
+				{
+					ea.ptr = QSE_T("load");
+					ea.len = 4;
+					qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
 
-			ea.ptr = QSE_T("load");
-			ea.len = 4;
-			qse_awk_seterror (awk, QSE_AWK_ENOENT, &ea, QSE_NULL);
-
-			awk->prm.modclose (awk, md.handle);
-			return QSE_NULL;
+					awk->prm.modclose (awk, md.handle);
+					return QSE_NULL;
+				}
+			}
 		}
 
 		/* i copy-insert 'md' into the table before calling 'load'.
