@@ -735,6 +735,7 @@ typedef struct qse_awk_rio_t qse_awk_rio_t;
 
 /* ------------------------------------------------------------------------ */
 
+typedef struct qse_awk_fnc_t      qse_awk_fnc_t;
 typedef struct qse_awk_fnc_spec_t qse_awk_fnc_spec_t;
 typedef struct qse_awk_fnc_info_t qse_awk_fnc_info_t;
 
@@ -1614,7 +1615,7 @@ QSE_EXPORT void qse_awk_pushecb (
  */
 QSE_EXPORT int qse_awk_addgbl (
 	qse_awk_t*        awk,   /**< awk */
-	const qse_cstr_t* name   /**< variable name */
+	const qse_char_t* name   /**< variable name */
 );
 
 /**
@@ -1623,25 +1624,25 @@ QSE_EXPORT int qse_awk_addgbl (
  */
 QSE_EXPORT int qse_awk_delgbl (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_cstr_t* name  /**< variable name */
+	const qse_char_t* name  /**< variable name */
 );
 
 /**
- * The qse_awk_findgbl function returns the numeric ID of an intrinsic global
+ * The qse_awk_findgbl() function returns the numeric ID of an intrinsic global
  * variable.
  * @return number >= 0 on success, -1 on failure
  */
 QSE_EXPORT int qse_awk_findgbl (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_cstr_t* name  /**< variable name */
+	const qse_char_t* name  /**< variable name */
 );
 
 /**
  * The qse_awk_addfnc() function adds an intrinsic function.
  */
-QSE_EXPORT void* qse_awk_addfnc (
+QSE_EXPORT qse_awk_fnc_t* qse_awk_addfnc (
 	qse_awk_t*                awk,
-	const qse_cstr_t*         name,
+	const qse_char_t*         name,
 	const qse_awk_fnc_spec_t* spec
 );
 
@@ -1651,7 +1652,7 @@ QSE_EXPORT void* qse_awk_addfnc (
  */
 QSE_EXPORT int qse_awk_delfnc (
 	qse_awk_t*        awk,  /**< awk */
-	const qse_cstr_t* name  /**< function name */
+	const qse_char_t* name  /**< function name */
 );
 
 /**

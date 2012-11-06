@@ -21,7 +21,6 @@
 #ifndef _QSE_LIB_AWK_FNC_H_
 #define _QSE_LIB_AWK_FNC_H_
 
-typedef struct qse_awk_fnc_t qse_awk_fnc_t;
 struct qse_awk_fnc_t
 {
 	struct
@@ -41,7 +40,7 @@ struct qse_awk_fnc_t
 extern "C" {
 #endif
 
-qse_awk_fnc_t* qse_awk_getfnc (qse_awk_t* awk, const qse_cstr_t* name);
+qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name);
 
 #ifdef __cplusplus
 }

@@ -59,7 +59,7 @@ static int fnc_int     (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi);
  * parameters are passed by reference regarless of the remaining
  * chracters.
  */
-static qse_awk_fnc_t sys_fnc[] = 
+static qse_awk_fnc_t sysfnctab[] = 
 {
 	/* io functions */
 	{ {QSE_T("close"),   5}, 0, { {1,     2, QSE_NULL},     fnc_close,    QSE_AWK_RIO }, QSE_NULL},
@@ -87,18 +87,20 @@ static qse_awk_fnc_t sys_fnc[] =
 	{ {QSE_T("log10"),   5}, 0, { {1,     1, QSE_NULL},     fnc_log10,    0 }, QSE_NULL},
 	{ {QSE_T("exp"),     3}, 0, { {1,     1, QSE_NULL},     fnc_exp,      0 }, QSE_NULL},
 	{ {QSE_T("sqrt"),    4}, 0, { {1,     1, QSE_NULL},     fnc_sqrt,     0 }, QSE_NULL},
-	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},     fnc_int,      0 }, QSE_NULL},
-
-	{ {QSE_NULL,         0}, 0, { {0,     0, QSE_NULL},     QSE_NULL,     0 },  QSE_NULL}
+	{ {QSE_T("int"),     3}, 0, { {1,     1, QSE_NULL},     fnc_int,      0 }, QSE_NULL}
 };
 
-void* qse_awk_addfnc (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_fnc_spec_t* spec)
+qse_awk_fnc_t* qse_awk_addfnc (qse_awk_t* awk, const qse_char_t* name, const qse_awk_fnc_spec_t* spec)
 {
 	qse_awk_fnc_t* fnc;
 	qse_size_t fnc_size;
-	qse_size_t spec_len;
+	qse_size_t speclen;
+	qse_cstr_t ncs;
 
-	if (name->len <= 0)
+	ncs.ptr = name;
+	ncs.len = qse_strlen (name);
+
+	if (ncs.len <= 0)
 	{
 		qse_awk_seterrnum (awk, QSE_AWK_EINVAL, QSE_NULL);
 		return QSE_NULL;
@@ -108,42 +110,34 @@ void* qse_awk_addfnc (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_fnc_
 	 * such a function registered won't take effect because
 	 * the word is treated as a keyword */
 
-	if (qse_awk_getfnc (awk, name) != QSE_NULL)
+	if (qse_awk_findfnc (awk, &ncs) != QSE_NULL)
 	{
-		qse_cstr_t errarg;
-
-		errarg.ptr = name->ptr;
-		errarg.len = name->len;
-
-		qse_awk_seterrnum (awk, QSE_AWK_EEXIST, &errarg);
+		qse_awk_seterrnum (awk, QSE_AWK_EEXIST, &ncs);
 		return QSE_NULL;
 	}
 
-	spec_len = spec->arg.spec? qse_strlen(spec->arg.spec): 0;
+	speclen = spec->arg.spec? qse_strlen(spec->arg.spec): 0;
 
-	fnc_size = 
-		QSE_SIZEOF(qse_awk_fnc_t) + 
-		(name->len+1) * QSE_SIZEOF(qse_char_t) +
-		(spec_len+1) * QSE_SIZEOF(qse_char_t);
+	fnc_size = QSE_SIZEOF(*fnc) + (ncs.len + 1 + speclen + 1) * QSE_SIZEOF(qse_char_t);
 	fnc = (qse_awk_fnc_t*) qse_awk_callocmem (awk, fnc_size);
 	if (fnc)
 	{
 		qse_char_t* tmp;
 
 		tmp = (qse_char_t*)(fnc + 1);
-		fnc->name.len = qse_strxncpy (tmp, name->len+1, name->ptr, name->len);
+		fnc->name.len = qse_strcpy (tmp, ncs.ptr);
 		fnc->name.ptr = tmp;
 
 		fnc->spec = *spec;
 		if (spec->arg.spec)
 		{
 			tmp = fnc->name.ptr + fnc->name.len + 1;
-			qse_strxcpy (tmp, spec_len + 1, spec->arg.spec); 
+			qse_strcpy (tmp, spec->arg.spec); 
 			fnc->spec.arg.spec = tmp;
 		}
 
 		if (qse_htb_insert (awk->fnc.user,
-			(qse_char_t*)name->ptr, name->len, fnc, 0) == QSE_NULL)
+			(qse_char_t*)ncs.ptr, ncs.len, fnc, 0) == QSE_NULL)
 		{
 			qse_awk_seterrnum (awk, QSE_AWK_ENOMEM, QSE_NULL);
 			QSE_AWK_FREE (awk, fnc); fnc = QSE_NULL;
@@ -153,16 +147,16 @@ void* qse_awk_addfnc (qse_awk_t* awk, const qse_cstr_t* name, const qse_awk_fnc_
 	return fnc;
 }
 
-int qse_awk_delfnc (qse_awk_t* awk, const qse_cstr_t* name)
+int qse_awk_delfnc (qse_awk_t* awk, const qse_char_t* name)
 {
-	if (qse_htb_delete (awk->fnc.user, name->ptr, name->len) <= -1)
+	qse_cstr_t ncs;
+
+	ncs.ptr = name;
+	ncs.len = qse_strlen (name);
+
+	if (qse_htb_delete (awk->fnc.user, ncs.ptr, ncs.len) <= -1)
 	{
-		qse_cstr_t errarg;
-
-		errarg.ptr = name->ptr;
-		errarg.len = name->len;
-
-		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &errarg);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
 		return -1;
 	}
 
@@ -174,34 +168,34 @@ void qse_awk_clrfnc (qse_awk_t* awk)
 	qse_htb_clear (awk->fnc.user);
 }
 
-qse_awk_fnc_t* qse_awk_getfnc (qse_awk_t* awk, const qse_cstr_t* name)
+qse_awk_fnc_t* qse_awk_findfnc (qse_awk_t* awk, const qse_cstr_t* name)
 {
-	qse_awk_fnc_t* fnc;
 	qse_htb_pair_t* pair;
+	int i;
 
 	/* search the system function table 
 	 * though some optimization like binary search can
 	 * speed up the search, i don't do that since this
 	 * function is called durting parse-time only. 
-	 * TODO: binary search.
 	 */
-	for (fnc = sys_fnc; fnc->name.ptr != QSE_NULL; fnc++)
+	for (i = 0; i < QSE_COUNTOF(sysfnctab); i++)
 	{
-		if (fnc->spec.trait != 0 && 
-		    (awk->opt.trait & fnc->spec.trait) != fnc->spec.trait) continue;
+		if ((awk->opt.trait & sysfnctab[i].spec.trait) != sysfnctab[i].spec.trait) continue;
 
 		if (qse_strxncmp (
-			fnc->name.ptr, fnc->name.len,
-			name->ptr, name->len) == 0) return fnc;
+			sysfnctab[i].name.ptr, sysfnctab[i].name.len,
+			name->ptr, name->len) == 0) return &sysfnctab[i];
 	}
 
 	pair = qse_htb_search (awk->fnc.user, name->ptr, name->len);
-	if (pair == QSE_NULL) return QSE_NULL;
+	if (pair)
+	{
+		qse_awk_fnc_t* fnc;
+		fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
+		if ((awk->opt.trait & fnc->spec.trait) == fnc->spec.trait) return fnc;
+	}
 
-	fnc = (qse_awk_fnc_t*)QSE_HTB_VPTR(pair);
-	if (fnc->spec.trait != 0 && (awk->opt.trait & fnc->spec.trait) == 0) return QSE_NULL;
-
-	return fnc;
+	return QSE_NULL;
 }
 
 static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
@@ -275,7 +269,7 @@ static int fnc_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		}
 	}	
 
-	if (opt != QSE_NULL)
+	if (opt)
 	{
 		if (optlen != 1 || 
 		    (opt[0] != QSE_T('r') && opt[0] != QSE_T('w')))

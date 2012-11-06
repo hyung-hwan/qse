@@ -672,7 +672,8 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				gvmv.str.ptr = ++eq;
 				gvmv.str.len = qse_strlen(eq);
 
-				if (qse_htb_upsert (gvm, opt.arg, qse_strlen(opt.arg), &gvmv, 1) == QSE_NULL)
+				/* +1 for null-termination of the key in the table */
+				if (qse_htb_upsert (gvm, opt.arg, qse_strlen(opt.arg) + 1, &gvmv, 1) == QSE_NULL)
 				{
 					print_error (QSE_T("out of memory\n"));
 					goto oops;
@@ -880,12 +881,11 @@ qse_htb_walk_t add_global (qse_htb_t* map, qse_htb_pair_t* pair, void* arg)
 	qse_awk_t* awk = (qse_awk_t*)arg;
 	struct gvmv_t* gvmv = (struct gvmv_t*)QSE_HTB_VPTR(pair);
 
-	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTL(pair));
-	if (gvmv->idx <= -1)
-	{
-		return QSE_HTB_WALK_STOP;
-	}
-
+	/* the key was inserted to the table with a null at the end
+	 * and the key length was even incremetned for that.
+	 * so i can pass the pointer without other adjustments. */
+	gvmv->idx = qse_awk_addgbl (awk, QSE_HTB_KPTR(pair));
+	if (gvmv->idx <= -1) return QSE_HTB_WALK_STOP;
 	return QSE_HTB_WALK_FORWARD;
 }
 
