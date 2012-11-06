@@ -1081,7 +1081,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	/* note that i'm assigning to rederr in the 'if' conditions below.
  	 * i'm not checking equality */
 	    /* check if it is a builtin function */
-	if ((qse_awk_getfnc (awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
+	if ((qse_awk_findfnc (awk, &name) != QSE_NULL && (rederr = QSE_AWK_EFNCRED)) ||
 	    /* check if it has already been defined as a function */
 	    (qse_htb_search (awk->tree.funs, name.ptr, name.len) != QSE_NULL && (rederr = QSE_AWK_EFUNRED)) ||
 	    /* check if it conflicts with a named variable */
@@ -1089,7 +1089,7 @@ static qse_awk_nde_t* parse_function (qse_awk_t* awk)
 	    /* check if it coincides to be a global variable name */
 	    (((g = find_global (awk, &name)) != QSE_LDA_NIL) && (rederr = QSE_AWK_EGBLRED)))
 	{
-		SETERR_ARG_LOC (awk, rederr, name.ptr, name.len, &awk->tok.loc);
+		qse_awk_seterror (awk, rederr, &name, &awk->tok.loc);
 		return QSE_NULL;
 	}
 
@@ -1695,7 +1695,7 @@ static int add_global (
 	}
 
 	/* check if it conflicts with a builtin function name */
-	if (qse_awk_getfnc (awk, name) != QSE_NULL)
+	if (qse_awk_findfnc (awk, name) != QSE_NULL)
 	{
 		SETERR_ARG_LOC (awk, QSE_AWK_EFNCRED, name->ptr, name->len, xloc);
 		return -1;
@@ -1765,11 +1765,14 @@ static int add_global (
 	return (int)ngbls;
 }
 
-int qse_awk_addgbl (qse_awk_t* awk, const qse_cstr_t* name)
+int qse_awk_addgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	int n;
+	qse_cstr_t ncs;
 
-	if (name->len <= 0)
+	ncs.ptr = name;
+	ncs.len = qse_strlen(name);;
+	if (ncs.len <= 0)
 	{
 		SETERR_COD (awk, QSE_AWK_EINVAL);
 		return -1;
@@ -1782,7 +1785,7 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_cstr_t* name)
 		return -1;
 	}
 
-	n = add_global (awk, name, QSE_NULL, 0);
+	n = add_global (awk, &ncs, QSE_NULL, 0);
 
 	/* update the count of the static globals. 
 	 * the total global count has been updated inside add_global. */
@@ -1794,22 +1797,26 @@ int qse_awk_addgbl (qse_awk_t* awk, const qse_cstr_t* name)
 #define QSE_AWK_NUM_STATIC_GBLS \
 	(QSE_AWK_MAX_GBL_ID-QSE_AWK_MIN_GBL_ID+1)
 
-int qse_awk_delgbl (qse_awk_t* awk, const qse_cstr_t* name)
+int qse_awk_delgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	qse_size_t n;
+	qse_cstr_t ncs;
+
+	ncs.ptr = name;
+	ncs.len = qse_strlen (name);
 
 	if (awk->tree.ngbls > awk->tree.ngbls_base) 
 	{
 		/* this function is not allow after qse_awk_parse is called */
-		SETERR_COD (awk, QSE_AWK_ENOPER);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOPER, QSE_NULL);
 		return -1;
 	}
 
 	n = qse_lda_search (awk->parse.gbls, 
-		QSE_AWK_NUM_STATIC_GBLS, name->ptr, name->len);
+		QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
 	if (n == QSE_LDA_NIL)
 	{
-		SETERR_ARG (awk, QSE_AWK_ENOENT, name->ptr, name->len);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
 		return -1;
 	}
 
@@ -1828,15 +1835,19 @@ int qse_awk_delgbl (qse_awk_t* awk, const qse_cstr_t* name)
 	return 0;
 }
 
-int qse_awk_findgbl (qse_awk_t* awk, const qse_cstr_t* name)
+int qse_awk_findgbl (qse_awk_t* awk, const qse_char_t* name)
 {
 	qse_size_t n;
+	qse_cstr_t ncs;
+
+	ncs.ptr = name;
+	ncs.len = qse_strlen (name);
 
 	n = qse_lda_search (awk->parse.gbls, 
-		QSE_AWK_NUM_STATIC_GBLS, name->ptr, name->len);
+		QSE_AWK_NUM_STATIC_GBLS, ncs.ptr, ncs.len);
 	if (n == QSE_LDA_NIL)
 	{
-		SETERR_ARG (awk, QSE_AWK_ENOENT, name->ptr, name->len);
+		qse_awk_seterrnum (awk, QSE_AWK_ENOENT, &ncs);
 		return -1;
 	}
 
@@ -1923,7 +1934,7 @@ static qse_awk_t* collect_locals (
 
 		/* check if it conflicts with a builtin function name 
 		 * function f() { local length; } */
-		if (qse_awk_getfnc (awk, &lcl) != QSE_NULL)
+		if (qse_awk_findfnc (awk, &lcl) != QSE_NULL)
 		{
 			SETERR_ARG_LOC (
 				awk, QSE_AWK_EFNCRED, 
@@ -4128,7 +4139,7 @@ static QSE_INLINE int isfunname (qse_awk_t* awk, const qse_xstr_t* name)
 
 static QSE_INLINE int isfnname (qse_awk_t* awk, const qse_xstr_t* name)
 {
-	if (qse_awk_getfnc (awk, name) != QSE_NULL) 
+	if (qse_awk_findfnc (awk, name) != QSE_NULL) 
 	{
 		/* implicit function */
 		return FNTYPE_FNC;
@@ -4764,7 +4775,7 @@ static qse_awk_nde_t* parse_primary_ident_noseg (
 	qse_awk_nde_t* nde = QSE_NULL;
 
 	/* check if name is an intrinsic function name */
-	fnc = qse_awk_getfnc (awk, name);
+	fnc = qse_awk_findfnc (awk, name);
 	if (fnc)
 	{
 		if (MATCH(awk,TOK_LPAREN))
@@ -5020,7 +5031,12 @@ static qse_awk_nde_t* parse_primary_ident (
 			full.len = capa;
 
 			nde = parse_primary_ident_segs (awk, xloc, &full, name, nsegs);
-			if (!nde) QSE_MMGR_FREE (awk->mmgr, full.ptr);
+			if (!nde || nde->type != QSE_AWK_NDE_FNC) 
+			{
+				/* the FNC node takes the full name but other 
+				 * nodes don't. so i need to free it. i know it's ugly. */
+				QSE_MMGR_FREE (awk->mmgr, full.ptr);
+			}
 		}
 		else
 		{

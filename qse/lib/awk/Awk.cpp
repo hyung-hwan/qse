@@ -1492,11 +1492,7 @@ void Awk::clearArguments ()
 int Awk::addGlobal (const char_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-
-	qse_cstr_t nx;
-	nx.ptr = name;
-	nx.len = qse_strlen(name);
-	int n = qse_awk_addgbl (awk, &nx);
+	int n = qse_awk_addgbl (awk, name);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1504,10 +1500,7 @@ int Awk::addGlobal (const char_t* name)
 int Awk::deleteGlobal (const char_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_cstr_t nx;
-	nx.ptr = name;
-	nx.len = qse_strlen(name);
-	int n = qse_awk_delgbl (awk, &nx);
+	int n = qse_awk_delgbl (awk, name);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1515,10 +1508,7 @@ int Awk::deleteGlobal (const char_t* name)
 int Awk::findGlobal (const char_t* name) 
 {
 	QSE_ASSERT (awk != QSE_NULL);
-	qse_cstr_t nx;
-	nx.ptr = name;
-	nx.len = qse_strlen(name);
-	int n = qse_awk_findgbl (awk, &nx);
+	int n = qse_awk_findgbl (awk, name);
 	if (n <= -1) retrieveError ();
 	return n;
 }
@@ -1565,10 +1555,6 @@ int Awk::addFunction (
 
 	*tmp = handler;
 	
-	qse_cstr_t nx;
-	nx.ptr = name;
-	nx.len = qse_strlen(name);
-
 	fnc_spec_t spec;
 
 	QSE_MEMSET (&spec, 0, QSE_SIZEOF(spec));
@@ -1580,8 +1566,8 @@ int Awk::addFunction (
 	spec.impl = functionHandler;
 	spec.trait = validOpts;
 
-	void* p = qse_awk_addfnc (awk, &nx, &spec);
-	if (p == QSE_NULL) 
+	qse_awk_fnc_t* fnc = qse_awk_addfnc (awk, name, &spec);
+	if (fnc == QSE_NULL) 
 	{
 		qse_awk_freemem (awk, tmp);
 		retrieveError ();
@@ -1589,10 +1575,10 @@ int Awk::addFunction (
 	}
 
 	pair_t* pair = qse_htb_upsert (
-		functionMap, (char_t*)nx.ptr, nx.len, tmp, 0);
+		functionMap, (char_t*)name, qse_strlen(name), tmp, 0);
 	if (pair == QSE_NULL)
 	{
-		qse_awk_delfnc (awk, &nx);
+		qse_awk_delfnc (awk, name);
 		qse_awk_freemem (awk, tmp);
 		setError (QSE_AWK_ENOMEM);
 		return -1;
@@ -1605,12 +1591,8 @@ int Awk::deleteFunction (const char_t* name)
 {
 	QSE_ASSERT (awk != QSE_NULL);
 
-	qse_cstr_t nx;
-	nx.ptr = name;
-	nx.len = qse_strlen(name);
-
-	int n = qse_awk_delfnc (awk, &nx);
-	if (n == 0) qse_htb_delete (functionMap, nx.ptr, nx.len);
+	int n = qse_awk_delfnc (awk, name);
+	if (n == 0) qse_htb_delete (functionMap, name, qse_strlen(name));
 	else retrieveError ();
 
 	return n;
