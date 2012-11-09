@@ -28,6 +28,7 @@ libqsecmn_la_SOURCES = \
 	alg-sort.c \
 	assert.c \
 	chr.c \
+	dir.c \
 	dll.c \
 	env.c \
 	gdl.c \
@@ -46,6 +47,7 @@ libqsecmn_la_SOURCES = \
 	mbwc.c \
 	mbwc-str.c \
 	mem.c \
+	mux.c \
 	nwad.c \
 	nwif.c \
 	nwio.c \

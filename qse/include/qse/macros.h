@@ -329,7 +329,6 @@
  *   of a relevant object created with an extension size greater than 0.
  */
 #define QSE_DEFINE_COMMON_FUNCTIONS(name) \
-void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr); \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
 void* qse_##name##_getxtn (qse_##name##_t* name);
 
@@ -345,10 +344,6 @@ void* qse_##name##_getxtn (qse_##name##_t* name);
  * an object.
  */
 #define QSE_IMPLEMENT_COMMON_FUNCTIONS(name) \
-void qse_##name##_setmmgr (qse_##name##_t* name, qse_mmgr_t* mmgr) \
-{ \
-	(name)->mmgr = mmgr; \
-} \
 qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name) \
 { \
 	return (name)->mmgr; \

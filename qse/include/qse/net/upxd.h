@@ -152,11 +152,6 @@ QSE_EXPORT void qse_upxd_seterrnum (
 	qse_upxd_errnum_t errnum
 );
 
-QSE_EXPORT void qse_upxd_setmmgr (
-	qse_upxd_t*   upxd,
-	qse_mmgr_t*  mmgr
-);
-
 QSE_EXPORT qse_mmgr_t* qse_upxd_getmmgr (
 	qse_upxd_t* upxd
 ); 

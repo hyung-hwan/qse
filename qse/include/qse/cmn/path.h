@@ -49,6 +49,17 @@ enum qse_canonpath_flag_t
 	QSE_CANONPATH_DROPTRAILINGSEP = (1 << 2)
 };
 
+
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+#	define QSE_ISPATHSEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
+#	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
+#	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
+#else
+#	define QSE_ISPATHSEP(c) ((c) == QSE_T('/'))
+#	define QSE_ISPATHMBSEP(c) ((c) == QSE_MT('/'))
+#	define QSE_ISPATHWCSEP(c) ((c) == QSE_WT('/'))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

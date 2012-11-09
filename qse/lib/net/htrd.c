@@ -448,11 +448,6 @@ void qse_htrd_clear (qse_htrd_t* htrd)
 	clear_feed (htrd);
 }
 
-void qse_htrd_setmmgr (qse_htrd_t* htrd, qse_mmgr_t* mmgr)
-{
-	htrd->mmgr = mmgr;
-}
-
 qse_mmgr_t* qse_htrd_getmmgr (qse_htrd_t* htrd)
 {
 	return htrd->mmgr;

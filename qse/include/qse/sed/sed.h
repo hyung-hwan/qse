@@ -414,11 +414,6 @@ QSE_EXPORT void qse_sed_close (
 	qse_sed_t* sed /**< stream editor */
 );
 
-QSE_EXPORT void qse_sed_setmmgr (
-	qse_sed_t*   sed,
-	qse_mmgr_t*  mmgr
-);
-
 QSE_EXPORT qse_mmgr_t* qse_sed_getmmgr (
 	qse_sed_t* sed
 ); 

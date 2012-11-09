@@ -1432,11 +1432,6 @@ QSE_EXPORT int qse_awk_close (
 	qse_awk_t* awk /**< awk */
 );
 
-QSE_EXPORT void qse_awk_setmmgr (
-	qse_awk_t*   awk,
-	qse_mmgr_t*  mmgr
-);
-
 QSE_EXPORT qse_mmgr_t* qse_awk_getmmgr (
 	qse_awk_t* awk
 ); 

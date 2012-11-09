@@ -28,6 +28,8 @@
 #include <qse/cmn/alg.h>
 #include <qse/cmn/fmt.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/mux.h>
+#include <qse/cmn/dir.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
@@ -47,7 +49,7 @@
 #	if defined(HAVE_SYS_SENDFILE_H)
 #		include <sys/sendfile.h>
 #	endif
-#	if defined(HAVE_EPOLL) && defined(HAVE_SYS_EPOLL_H)
+#	if defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #	endif
 #	if defined(__linux__)
@@ -544,11 +546,15 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 	fd = socket (SOCKADDR_FAMILY(&addr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
+#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+#endif
 
+#if defined(SO_REUSEADDR)
 	flag = 1;
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
+#endif
 
 /* TODO: linux. use capset() to set required capabilities just in case */
 #if defined(IP_TRANSPARENT)
@@ -621,21 +627,41 @@ IP_TRANSPRENT is needed for:
 
 	if (listen (fd, 10) <= -1) goto oops;
 
+#if defined(O_NONBLOCK)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
+#endif
 
 	server->handle.i = fd;
 	return 0;
 
 oops:
+#if defined(_WIN32)
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(WSAGetLastError()));
+	if (fd != INVALID_SOCKET) closesocket (fd);
+#elif defined(__OS2__)
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(sock_errno()));
+	if (fd >= 0) soclose (fd);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
 	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	if (fd >= 0) QSE_CLOSE (fd);
+#endif
 	return -1;
 }
 
 static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
+#if defined(_WIN32)
+	closesocket (server->handle.i);
+#elif defined(__OS2__)
+	soclose (server->handle.i);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
 	QSE_CLOSE (server->handle.i);
+#endif
 }
 
 static int server_accept (
@@ -643,7 +669,7 @@ static int server_accept (
 {
 	sockaddr_t addr;
 
-#ifdef HAVE_SOCKLEN_T
+#if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
 #else
 	int addrlen;
@@ -667,12 +693,16 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 		return -1;
 	}
 #endif
+
+#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+#endif
 
+#if defined(O_NONBLOCK)
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
-
+#endif
 
 	if (sockaddr_to_nwad (&addr, &client->remote_addr) <= -1)
 	{
@@ -721,10 +751,22 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-	int fd = -1, flag;
 	sockaddr_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
+#if defined(_WIN32)
+	SOCKET fd = -1; 
+	unsigned long cmd;
+#elif defined(__OS2__)
+	int fd = -1; 
+	int flag;
+#elif defined(__DOS__)
+	int fd = -1; 
+	int flag;
+#else
+	int fd = -1; 
+	int flag;
+#endif
 
 	connaddrsize = nwad_to_sockaddr (&peer->nwad, &connaddr);
 	bindaddrsize = nwad_to_sockaddr (&peer->local, &bindaddr);
@@ -741,14 +783,37 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	flag = 1;
 	setsockopt (fd, SOL_IP, IP_TRANSPARENT, &flag, QSE_SIZEOF(flag));
 #endif
+
 	if (bind (fd, (struct sockaddr*)&bindaddr, bindaddrsize) <= -1) 
 	{
 		/* i won't care about binding faiulre */
 		/* TODO: some logging for this failure though */
 	}
 
+
+#if defined(_WIN32)
+	cmd = 1;
+	if (ioctlsocket(fd, FIONBIO, &cmd) == SOCKET_ERROR) goto oops;
+
+	if (connect (fd, (struct sockaddr*)&connaddr, connaddrsize) <= -1)
+	{
+		if (WSAGetLastError() != WSAEWOULDBLOCK) goto oops;
+		connected = 0;
+	}
+
+	cmd = 0;
+	if (ioctlsocket(fd, FIONBIO, &cmd) == SOCKET_ERROR) goto oops;
+#elif defined(__OS2__)
+	/* TODO: */
+
+#elif defined(__DOS__)
+	/* TODO: */
+#else
+
+	#if defined(FD_CLOEXEC)
 	flag = fcntl (fd, F_GETFD);
 	if (flag >= 0) fcntl (fd, F_SETFD, flag | FD_CLOEXEC);
+	#endif
 
 	flag = fcntl (fd, F_GETFL);
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
@@ -761,32 +826,85 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 
 	/* restore flags */
 	if (fcntl (fd, F_SETFL, flag) <= -1) goto oops;
+#endif
 
 	peer->handle.i = fd;
 	return connected;
 
 oops:
+#if defined(_WIN32)
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(WSAGetLastError()));
+	if (fd != INVALID_SOCKET) closesocket (fd);
+#elif defined(__OS2__)
+	qse_httpd_seterrnum (httpd, syserr_to_errnum(sock_errno()));
+	if (fd >= 0) soclose (fd);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
 	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	if (fd >= 0) QSE_CLOSE (fd);
+#endif
 	return -1;
 }
 
 static void peer_close (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
+#if defined(_WIN32)
+	closesocket (peer->handle.i);
+#elif defined(__OS2__)
+	soclose (peer->handle.i);
+#elif defined(__DOS__)
+	/* TODO: */
+#else
 	QSE_CLOSE (peer->handle.i);
+#endif
 }
 
 static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-#ifdef HAVE_SOCKLEN_T
-	socklen_t len;
-#else
+#if defined(_WIN32)
 	int len;
-#endif
+	DWORD ret;
+
+	len = QSE_SIZEOF(ret);
+	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == SOCKET_ERROR) 
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		return -1;
+	}
+
+	if (ret == WSAEWOULDBLOCK) return 0;
+	if (ret != 0)
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		return -1;
+	}
+
+	return 1; /* connection completed */
+
+#elif defined(__OS2__)
+	/* TODO */
+	httpd->errnum = QSE_HTTPD_ENOIMPL;
+	return -1;
+#elif defined(__DOS__)
+	/* TODO */
+	httpd->errnum = QSE_HTTPD_ENOIMPL;
+	return -1;
+#else
+
+	#if defined(HAVE_SOCKLEN_T)
+	socklen_t len;
+	#else
+	int len;
+	#endif
 	int ret;
 
 	len = QSE_SIZEOF(ret);
-	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) return -1;
+	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) 
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		return -1;
+	}
 
 	if (ret == EINPROGRESS) return 0;
 	if (ret != 0)
@@ -796,13 +914,14 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	}
 
 	return 1; /* connection completed */
+#endif
 }
 
 static qse_ssize_t peer_recv (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
-	ssize_t ret = read (peer->handle.i, buf, bufsize);
+	ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	return ret;
 }
@@ -811,216 +930,101 @@ static qse_ssize_t peer_send (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
-	ssize_t ret = write (peer->handle.i, buf, bufsize);
+	ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	return ret;
 }
 
 /* ------------------------------------------------------------------- */
 
-struct mux_ev_t
+typedef struct mux_xtn_t mux_xtn_t;
+struct mux_xtn_t
 {
-	qse_ubi_t handle;
-	int reqmask;
+	qse_httpd_t* httpd;
 	qse_httpd_muxcb_t cbfun;
-	void* cbarg;
 };
 
-struct mux_t
+static void dispatch_muxcb (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
-	int fd;
+	mux_xtn_t* xtn;
+	qse_ubi_t ubi;
 
-	struct
-	{
-		struct epoll_event* ptr;
-		qse_size_t len;
-		qse_size_t capa;
-	} ee;
+	xtn = qse_mux_getxtn (mux);
+	ubi.i = evt->hnd;
+	xtn->cbfun (xtn->httpd, mux, ubi, evt->mask, evt->data);
+}
 
-	struct
-	{
-		struct mux_ev_t** ptr;
-		qse_size_t        capa;
-	} mev;
-};
-
-#define MUX_EV_ALIGN 64
-
-static void* mux_open (qse_httpd_t* httpd)
+static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
 {
-	struct mux_t* mux;
+	qse_mux_t* mux;
+	mux_xtn_t* xtn;
 
-	mux = qse_httpd_allocmem (httpd, QSE_SIZEOF(*mux));
-	if (mux == QSE_NULL) return QSE_NULL;
-
-	QSE_MEMSET (mux, 0, QSE_SIZEOF(*mux));
-
-#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
-	mux->fd = epoll_create1 (O_CLOEXEC);
-#else
-	mux->fd = epoll_create (100);
-#endif
-	if (mux->fd <= -1)
+	mux = qse_mux_open (httpd->mmgr, QSE_SIZEOF(*xtn), dispatch_muxcb, 256);
+	if (!mux)
 	{
-		qse_httpd_freemem (httpd, mux);
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+/* TODO 
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
+*/
 		return QSE_NULL;
 	}
 
-#if defined(HAVE_EPOLL_CREATE1) && defined(O_CLOEXEC)
-	/* nothing else to do */
-#else
-	{
-		int flag = fcntl (mux->fd, F_GETFD);
-		if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
-	}
-#endif
-
+	xtn = qse_mux_getxtn (mux);
+	xtn->httpd = httpd;
+	xtn->cbfun = cbfun;
 	return mux;
 }
 
 static void mux_close (qse_httpd_t* httpd, void* vmux)
 {
-	struct mux_t* mux = (struct mux_t*)vmux;
-	if (mux->ee.ptr) qse_httpd_freemem (httpd, mux->ee.ptr);
-	if (mux->mev.ptr)
-	{
-		qse_size_t i;
-		for (i = 0; i < mux->mev.capa; i++)
-			if (mux->mev.ptr[i]) qse_httpd_freemem (httpd, mux->mev.ptr[i]);
-		qse_httpd_freemem (httpd, mux->mev.ptr);
-	}
-	QSE_CLOSE (mux->fd);
-	qse_httpd_freemem (httpd, mux);
+	qse_mux_close ((qse_mux_t*)vmux);
 }
 
 static int mux_addhnd (
-	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle,
-	int mask, qse_httpd_muxcb_t cbfun, void* cbarg)
+	qse_httpd_t* httpd, void* vmux, qse_ubi_t handle, int mask, void* data)
 {
-	struct mux_t* mux = (struct mux_t*)vmux;
-	struct epoll_event ev;
-	struct mux_ev_t* mev;
+	qse_mux_evt_t evt;	
 
-	ev.events = 0;
-	if (mask & QSE_HTTPD_MUX_READ) ev.events |= EPOLLIN;
-	if (mask & QSE_HTTPD_MUX_WRITE) ev.events |= EPOLLOUT;
+	evt.hnd = handle.i;	
+	evt.mask = 0;
+	if (mask & QSE_HTTPD_MUX_READ) evt.mask |= QSE_MUX_IN;
+	if (mask & QSE_HTTPD_MUX_WRITE) evt.mask |= QSE_MUX_OUT;
+	evt.data = data;
 
-	if (ev.events == 0 || handle.i <= -1)
+	if (qse_mux_insert ((qse_mux_t*)vmux, &evt) <= -1)
 	{
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);
+/* TODO 
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
+*/
 		return -1;
 	}
 
-	if (handle.i >= mux->mev.capa)
-	{
-		struct mux_ev_t** tmp;
-		qse_size_t tmpcapa, i;
-
-		tmpcapa = (((handle.i + MUX_EV_ALIGN) / MUX_EV_ALIGN) * MUX_EV_ALIGN);
-
-		tmp = (struct mux_ev_t**) qse_httpd_reallocmem (
-			httpd, mux->mev.ptr,
-			QSE_SIZEOF(*mux->mev.ptr) * tmpcapa);
-		if (tmp == QSE_NULL) return -1;
-
-		for (i = mux->mev.capa; i < tmpcapa; i++) tmp[i] = QSE_NULL;
-		mux->mev.ptr = tmp;
-		mux->mev.capa = tmpcapa;
-	}
-
-	if (mux->mev.ptr[handle.i] == QSE_NULL)
-	{
-		/* the location of the data passed to epoll_ctl()
-		 * must not change unless i update the info with epoll()
-		 * whenever there is reallocation. so i simply
-		 * make mux-mev.ptr reallocatable but auctual
-		 * data fixed once allocated. */
-		mux->mev.ptr[handle.i] = qse_httpd_allocmem (
-			httpd, QSE_SIZEOF(*mux->mev.ptr[handle.i]));
-		if (mux->mev.ptr[handle.i] == QSE_NULL) return -1;
-	}
-
-	if (mux->ee.len >= mux->ee.capa)
-	{
-		struct epoll_event* tmp;
-
-		tmp = qse_httpd_reallocmem (
-			httpd, mux->ee.ptr,
-			QSE_SIZEOF(*mux->ee.ptr) * (mux->ee.capa + 1) * 2);
-		if (tmp == QSE_NULL) return -1;
-
-		mux->ee.ptr = tmp;
-		mux->ee.capa = (mux->ee.capa + 1) * 2;
-	}
-
-	mev = mux->mev.ptr[handle.i];
-	mev->handle = handle;
-	mev->reqmask = mask;
-	mev->cbfun = cbfun;
-	mev->cbarg = cbarg;
-
-	ev.data.ptr = mev;
-
-	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, handle.i, &ev) <= -1)
-	{
-		/* don't rollback ee.ptr */
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
-		return -1;
-	}
-
-	mux->ee.len++;
 	return 0;
 }
 
 static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 {
-	struct mux_t* mux = (struct mux_t*)vmux;
-
-	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, handle.i, QSE_NULL) <= -1)
+	qse_mux_evt_t evt;	
+	evt.hnd = handle.i;	
+	if (qse_mux_delete ((qse_mux_t*)vmux, &evt) <= -1)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+/* TODO 
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
+*/
 		return -1;
 	}
-
-	mux->ee.len--;
 	return 0;
 }
 
 static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 {
-	struct mux_t* mux = (struct mux_t*)vmux;
-	struct mux_ev_t* mev;
-	int mask, nfds, i;
-
-	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
-	if (nfds <= -1)
+	if (qse_mux_poll ((qse_mux_t*)vmux, timeout) <= -1)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+/* TODO 
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
+*/
 		return -1;
 	}
 
-	for (i = 0; i < nfds; i++)
-	{
-		mev = mux->ee.ptr[i].data.ptr;
-
-		mask = 0;
-
-		if (mux->ee.ptr[i].events & EPOLLIN)
-			mask |= QSE_HTTPD_MUX_READ;
-		if (mux->ee.ptr[i].events & EPOLLOUT)
-			mask |= QSE_HTTPD_MUX_WRITE;
-
-		if (mux->ee.ptr[i].events & EPOLLHUP)
-		{
-			if (mev->reqmask & QSE_HTTPD_MUX_READ)
-				mask |= QSE_HTTPD_MUX_READ;
-			if (mev->reqmask & QSE_HTTPD_MUX_WRITE)
-				mask |= QSE_HTTPD_MUX_WRITE;
-		}
-
-		mev->cbfun (httpd, mux, mev->handle, mask, mev->cbarg);
-	}
 	return 0;
 }
 
@@ -1064,11 +1068,24 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 
 /* ------------------------------------------------------------------- */
 
-
 static int stat_file (
 	qse_httpd_t* httpd, const qse_mchar_t* path,
 	qse_httpd_stat_t* hst, int regonly)
 {
+
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	qse_stat_t st;
 
 /* TODO: lstat? or stat? */
@@ -1092,24 +1109,39 @@ static int stat_file (
 	hst->dev = st.st_dev;
 	hst->ino = st.st_ino;
 	hst->size = st.st_size;
-#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
+	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
 	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
-#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
+	#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
 	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
-#else
+	#else
 	hst->mtime = QSE_SEC_TO_MSEC(st.st_mtime);
-#endif
+	#endif
 
 	return 0;
+#endif
 }
 
 /* ------------------------------------------------------------------- */
 
 static int file_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	if (access (path, X_OK) == -1)
 		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
 	return 1; /* yes */
+#endif
 }
 
 static int file_stat (
@@ -1121,13 +1153,27 @@ static int file_stat (
 static int file_ropen (
 	qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
+
 	int fd;
 	int flags;
 
 	flags = O_RDONLY;
-#if defined(O_LARGEFILE)
+	#if defined(O_LARGEFILE)
 	flags |= O_LARGEFILE;
-#endif
+	#endif
 
 qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 	fd = QSE_OPEN (path, flags, 0);
@@ -1143,19 +1189,34 @@ qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
 	handle->i = fd;
 qse_printf (QSE_T("opened file %hs\n"), path);
 	return 0;
+
+#endif
 }
 
 static int file_wopen (
 	qse_httpd_t* httpd, const qse_mchar_t* path,
 	qse_ubi_t* handle)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	int fd;
 	int flags;
 
 	flags = O_WRONLY | O_CREAT | O_TRUNC;
-#if defined(O_LARGEFILE)
+	#if defined(O_LARGEFILE)
 	flags |= O_LARGEFILE;
-#endif
+	#endif
 
 qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 	fd = QSE_OPEN (path, flags, 0644);
@@ -1167,26 +1228,69 @@ qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
 
 	handle->i = fd;
 	return 0;
+#endif
 }
 
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 qse_printf (QSE_T("closing file %d\n"), handle.i);
 	QSE_CLOSE (handle.i);
+#endif
 }
 
 static qse_ssize_t file_read (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	qse_mchar_t* buf, qse_size_t len)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	return QSE_READ (handle.i, buf, len);
+#endif
 }
 
 static qse_ssize_t file_write (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	const qse_mchar_t* buf, qse_size_t len)
 {
+#if defined(_WIN32)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__OS2__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#elif defined(__DOS__)
+	/* TODO: */
+	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
+	return -1;
+#else
 	return QSE_WRITE (handle.i, buf, len);
+#endif
 }
 
 /* ------------------------------------------------------------------- */
@@ -1217,7 +1321,7 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 
-	d->dp = QSE_OPENDIR (path);
+	d->dp = qse_dir_open (httpd->mmgr, 0, (const qse_char_t*)path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
 	if (d->dp == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -1236,7 +1340,7 @@ static void dir_close (qse_httpd_t* httpd, qse_ubi_t handle)
 
 	d = (dir_t*)handle.ptr;
 
-	QSE_CLOSEDIR (d->dp);
+	qse_dir_close (d->dp);
 
 	QSE_MMGR_FREE (httpd->mmgr, d->path);
 	QSE_MMGR_FREE (httpd->mmgr, d);
@@ -1245,23 +1349,22 @@ static void dir_close (qse_httpd_t* httpd, qse_ubi_t handle)
 static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* dirent)
 {
 	dir_t* d;
-	qse_dirent_t* de;
+	qse_dir_ent_t de;
 	qse_mchar_t* fpath;
 	int n;
 
 	d = (dir_t*)handle.ptr;
 
-	errno = 0;
-	de = QSE_READDIR (d->dp);
-	if (de == QSE_NULL) 
+	n = qse_dir_read (d->dp, &de);
+	if (n <= -1)
 	{
-		if (errno == 0) return 0;
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return -1;
 	}
+	else if (n == 0) return 0;
 
 	/* i assume that d->path ends with a slash */
-	fpath = qse_mbsdup2 (d->path, de->d_name, httpd->mmgr);
+	fpath = qse_mbsdup2 (d->path, (const qse_mchar_t*)de.name, httpd->mmgr);
 	if (fpath == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
@@ -1272,7 +1375,7 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 	QSE_MMGR_FREE (httpd->mmgr, fpath);
 	if (n <= -1) QSE_MEMSET (dirent, 0, QSE_SIZEOF(*dirent));
 
-	dirent->name = de->d_name;
+	dirent->name = (const qse_mchar_t*)de.name;
 	return 1;
 }
 
@@ -1966,7 +2069,17 @@ auth_ok:
 	xpath = merge_paths (httpd, server_xtn->cfg[SERVER_XTN_CFG_DOCROOT], qpath);
 	if (xpath == QSE_NULL) return -1;
 
+#if defined(_WIN32)
+	/* TODO */
+#elif defined(__OS2__)
+
+	/* TODO */
+#elif defined(__DOS__)
+
+	/* TODO */
+#else
 	if (QSE_STAT (xpath, &st) == 0 && S_ISDIR(st.st_mode))
+#endif
 	{
 		/* it is a directory */
 		if (server_xtn->cfg2.s.idxstd)

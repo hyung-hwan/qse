@@ -7,12 +7,12 @@ MComponent
 0
 2
 WString
-4
-ODLL
+5
+CWDLL
 3
 WString
 5
-o_2do
+dx2do
 1
 0
 1
@@ -25,11 +25,11 @@ MCommand
 6
 MItem
 11
-awk-sys.dll
+awk-dir.dll
 7
 WString
-4
-ODLL
+5
+CWDLL
 8
 WVList
 4
@@ -62,8 +62,8 @@ WString
 1
 16
 WString
-14
-qsecmn  qseawk
+13
+qsecmn qseawk
 0
 17
 MVState
@@ -74,7 +74,7 @@ WLINK
 19
 WString
 21
-o????Export names(,):
+dx???Export names(,):
 1
 20
 WString
@@ -123,12 +123,12 @@ WCC
 31
 WString
 25
-o?2??Include directories:
+d????Include directories:
 1
 32
 WString
-54
-"$(%watcom)/h;$(%watcom)/h/os2;../../../../../include"
+37
+"$(%watcom)/h;../../../../../include"
 0
 33
 MVState
@@ -168,7 +168,7 @@ WVList
 41
 MItem
 28
-../../../../../mod/awk/sys.c
+../../../../../mod/awk/dir.c
 42
 WString
 4

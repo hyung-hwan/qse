@@ -88,11 +88,11 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libqsecmn_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
-	alg-sort.c assert.c chr.c dll.c env.c gdl.c htb.c fio.c fma.c \
-	fmt.c fs.c fs-err.c fs-move.c glob.c hton.c ipad.c lda.c \
-	main.c mbwc.c mbwc-str.c mem.c nwad.c nwif.c nwio.c oht.c \
-	opt.c path-basename.c path-canon.c pio.c pma.c rbt.c rex.c \
-	sio.c sll.c slmb.c stdio.c str-beg.c str-cat.c str-chr.c \
+	alg-sort.c assert.c chr.c dir.c dll.c env.c gdl.c htb.c fio.c \
+	fma.c fmt.c fs.c fs-err.c fs-move.c glob.c hton.c ipad.c lda.c \
+	main.c mbwc.c mbwc-str.c mem.c mux.c nwad.c nwif.c nwio.c \
+	oht.c opt.c path-basename.c path-canon.c pio.c pma.c rbt.c \
+	rex.c sio.c sll.c slmb.c stdio.c str-beg.c str-cat.c str-chr.c \
 	str-cnv.c str-cmp.c str-cpy.c str-del.c str-dup.c str-dynm.c \
 	str-dynw.c str-end.c str-excl.c str-fcpy.c str-fnmat.c \
 	str-incl.c str-len.c str-pac.c str-pbrk.c str-put.c str-rev.c \
@@ -103,10 +103,10 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	xma.c cp949.c cp950.c
 @INCLUDE_MORE_CMGRS_TRUE@am__objects_1 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
-	alg-sort.lo assert.lo chr.lo dll.lo env.lo gdl.lo htb.lo \
-	fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \
+	alg-sort.lo assert.lo chr.lo dir.lo dll.lo env.lo gdl.lo \
+	htb.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \
 	hton.lo ipad.lo lda.lo main.lo mbwc.lo mbwc-str.lo mem.lo \
-	nwad.lo nwif.lo nwio.lo oht.lo opt.lo path-basename.lo \
+	mux.lo nwad.lo nwif.lo nwio.lo oht.lo opt.lo path-basename.lo \
 	path-canon.lo pio.lo pma.lo rbt.lo rex.lo sio.lo sll.lo \
 	slmb.lo stdio.lo str-beg.lo str-cat.lo str-chr.lo str-cnv.lo \
 	str-cmp.lo str-cpy.lo str-del.lo str-dup.lo str-dynm.lo \
@@ -350,9 +350,9 @@ noinst_HEADERS = \
 	tre-stack.h
 
 libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
-	assert.c chr.c dll.c env.c gdl.c htb.c fio.c fma.c fmt.c fs.c \
-	fs-err.c fs-move.c glob.c hton.c ipad.c lda.c main.c mbwc.c \
-	mbwc-str.c mem.c nwad.c nwif.c nwio.c oht.c opt.c \
+	assert.c chr.c dir.c dll.c env.c gdl.c htb.c fio.c fma.c fmt.c \
+	fs.c fs-err.c fs-move.c glob.c hton.c ipad.c lda.c main.c \
+	mbwc.c mbwc-str.c mem.c mux.c nwad.c nwif.c nwio.c oht.c opt.c \
 	path-basename.c path-canon.c pio.c pma.c rbt.c rex.c sio.c \
 	sll.c slmb.c stdio.c str-beg.c str-cat.c str-chr.c str-cnv.c \
 	str-cmp.c str-cpy.c str-del.c str-dup.c str-dynm.c str-dynw.c \
@@ -455,6 +455,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cp949.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cp950.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fio.Plo@am__quote@
@@ -473,6 +474,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc-str.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwio.Plo@am__quote@

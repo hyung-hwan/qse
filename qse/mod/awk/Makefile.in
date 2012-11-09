@@ -81,6 +81,12 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(moddir)"
 LTLIBRARIES = $(mod_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+libqseawk_dir_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libqseawk_dir_la_OBJECTS = dir.lo
+libqseawk_dir_la_OBJECTS = $(am_libqseawk_dir_la_OBJECTS)
+libqseawk_dir_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libqseawk_dir_la_LDFLAGS) $(LDFLAGS) -o $@
 @HAVE_C_MPI_TRUE@libqseawk_mpi_la_DEPENDENCIES =  \
 @HAVE_C_MPI_TRUE@	$(am__DEPENDENCIES_1)
 am__libqseawk_mpi_la_SOURCES_DIST = mpi.c
@@ -119,9 +125,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libqseawk_mpi_la_SOURCES) $(libqseawk_sys_la_SOURCES) \
-	$(libqseawk_uci_la_SOURCES)
-DIST_SOURCES = $(am__libqseawk_mpi_la_SOURCES_DIST) \
+SOURCES = $(libqseawk_dir_la_SOURCES) $(libqseawk_mpi_la_SOURCES) \
+	$(libqseawk_sys_la_SOURCES) $(libqseawk_uci_la_SOURCES)
+DIST_SOURCES = $(libqseawk_dir_la_SOURCES) \
+	$(am__libqseawk_mpi_la_SOURCES_DIST) \
 	$(libqseawk_sys_la_SOURCES) \
 	$(am__libqseawk_uci_la_SOURCES_DIST)
 ETAGS = etags
@@ -307,10 +314,14 @@ AM_CPPFLAGS = \
 LDFLAGS_COMMON = -L$(abs_builddir)/../../lib/cmn -L$(abs_builddir)/../../lib/awk -L$(libdir) -no-undefined -version-info 1:0:0
 LIBADD_COMMON = -lqseawk -lqsecmn
 moddir = $(libdir)
-mod_LTLIBRARIES = libqseawk-sys.la $(am__append_1) $(am__append_2)
+mod_LTLIBRARIES = libqseawk-sys.la libqseawk-dir.la $(am__append_1) \
+	$(am__append_2)
 libqseawk_sys_la_SOURCES = sys.c
 libqseawk_sys_la_LDFLAGS = $(LDFLAGS_COMMON)
 libqseawk_sys_la_LIBADD = $(LIBADD_COMMON)
+libqseawk_dir_la_SOURCES = dir.c
+libqseawk_dir_la_LDFLAGS = $(LDFLAGS_COMMON)
+libqseawk_dir_la_LIBADD = $(LIBADD_COMMON)
 @HAVE_LIBUCI_TRUE@libqseawk_uci_la_SOURCES = uci.c
 @HAVE_LIBUCI_TRUE@libqseawk_uci_la_LDFLAGS = $(LDFLAGS_COMMON)
 @HAVE_LIBUCI_TRUE@libqseawk_uci_la_LIBADD = $(LIBADD_COMMON) $(UCI_LIBS)
@@ -383,6 +394,8 @@ clean-modLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+libqseawk-dir.la: $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_DEPENDENCIES) $(EXTRA_libqseawk_dir_la_DEPENDENCIES) 
+	$(libqseawk_dir_la_LINK) -rpath $(moddir) $(libqseawk_dir_la_OBJECTS) $(libqseawk_dir_la_LIBADD) $(LIBS)
 libqseawk-mpi.la: $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_DEPENDENCIES) $(EXTRA_libqseawk_mpi_la_DEPENDENCIES) 
 	$(libqseawk_mpi_la_LINK) $(am_libqseawk_mpi_la_rpath) $(libqseawk_mpi_la_OBJECTS) $(libqseawk_mpi_la_LIBADD) $(LIBS)
 libqseawk-sys.la: $(libqseawk_sys_la_OBJECTS) $(libqseawk_sys_la_DEPENDENCIES) $(EXTRA_libqseawk_sys_la_DEPENDENCIES) 
@@ -396,6 +409,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libqseawk_mpi_la-mpi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sys.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uci.Plo@am__quote@

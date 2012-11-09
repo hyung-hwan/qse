@@ -80,13 +80,13 @@ struct qse_nwio_tmout_t
 typedef struct qse_nwio_tmout_t qse_nwio_tmout_t;
 
 #if defined(_WIN32)
-	typedef qse_intptr_t qse_nwio_hnd_t;
+	typedef qse_uintptr_t qse_nwio_hnd_t;
 #elif defined(__OS2__)
-     typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
+     typedef int qse_nwio_hnd_t;
 #elif defined(__DOS__)
-     typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
+     typedef int qse_nwio_hnd_t;
 #else
-     typedef int qse_nwio_hnd_t; /**< defines a pipe handle type */
+     typedef int qse_nwio_hnd_t;
 #endif
 
 typedef struct qse_nwio_t qse_nwio_t;

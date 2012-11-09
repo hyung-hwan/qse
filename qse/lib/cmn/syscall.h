@@ -363,7 +363,6 @@
 #endif
 
 /* ===== DIRECTORY - not really system calls ===== */
-typedef DIR qse_dir_t;
 #define QSE_OPENDIR(name) opendir(name)
 #define QSE_CLOSEDIR(name) closedir(name)
 

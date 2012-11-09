@@ -99,11 +99,6 @@ void qse_httpd_seterrnum (qse_httpd_t* httpd, qse_httpd_errnum_t errnum)
 	httpd->errnum = errnum;
 }
 
-void qse_httpd_setmmgr (qse_httpd_t* httpd, qse_mmgr_t* mmgr)
-{
-	httpd->mmgr = mmgr;
-}
-
 qse_mmgr_t* qse_httpd_getmmgr (qse_httpd_t* httpd)
 {
 	return httpd->mmgr;
@@ -300,6 +295,7 @@ static qse_httpd_client_t* new_client (
 
 	QSE_MEMSET (client, 0, QSE_SIZEOF(*client));
 
+	client->type = QSE_HTTPD_CLIENT;
 	client->htrd = qse_htrd_open (httpd->mmgr, QSE_SIZEOF(*xtn));
 	if (client->htrd == QSE_NULL) 
 	{
@@ -442,8 +438,7 @@ qse_printf (QSE_T("failed to accept from server %s\n"), tmp);
 
 qse_printf (QSE_T("MUX ADDHND CLIENT READ %d\n"), client->handle.i);
 		if (httpd->scb->mux.addhnd (
-			httpd, mux, client->handle, QSE_HTTPD_MUX_READ, 
-			perform_client_task, client) <= -1)
+			httpd, mux, client->handle, QSE_HTTPD_MUX_READ, client) <= -1)
 		{
 			free_client (httpd, client);
 			return -1;
@@ -511,8 +506,7 @@ qse_printf (QSE_T("FAILED TO ACTIVATE SERVER....[%s]\n"), buf);
 
 qse_printf (QSE_T("MUX ADDHND SERVER %d\n"), server->handle.i);
 		if (httpd->scb->mux.addhnd (
-			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, 
-			accept_client, server) <= -1)
+			httpd, httpd->mux, server->handle, QSE_HTTPD_MUX_READ, server) <= -1)
 		{
 qse_printf (QSE_T("FAILED TO ADD SERVER HANDLE TO MUX....\n"));
 			httpd->scb->server.close (httpd, server);
@@ -556,6 +550,7 @@ qse_httpd_server_t* qse_httpd_attachserver (
 	QSE_MEMCPY (server, tmpl, QSE_SIZEOF(*server)); 
 	QSE_MEMSET (server + 1, 0, xtnsize);
 
+	server->type = QSE_HTTPD_SERVER;
 	server->flags &= ~QSE_HTTPD_SERVER_ACTIVE;
 	server->predetach = predetach;
 
@@ -827,8 +822,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 			if (mux_status)
 			{
 				if (httpd->scb->mux.addhnd (
-					httpd, httpd->mux, client->handle, 
-					mux_mask, perform_client_task, client) <= -1) 
+					httpd, httpd->mux, client->handle, mux_mask, client) <= -1) 
 				{
 					return -1;
 				}
@@ -915,7 +909,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 					{
 						if (httpd->scb->mux.addhnd (
 							httpd, httpd->mux, task->trigger[i].handle,
-							trigger_mux_mask, perform_client_task, client) <= -1) 
+							trigger_mux_mask, client) <= -1) 
 						{
 							return -1;
 						}
@@ -949,7 +943,7 @@ qse_printf (QSE_T("REMOVING XXXXX FROM READING NO MORE TASK....\n"));
 				{
 					if (httpd->scb->mux.addhnd (
 						httpd, httpd->mux, client->handle,
-						client_handle_mux_mask, perform_client_task, client) <= -1) 
+						client_handle_mux_mask, client) <= -1) 
 					{
 						return -1;
 					}
@@ -1073,7 +1067,7 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 		if (httpd->scb->mux.addhnd (
 			httpd, httpd->mux, client->handle, 
 			QSE_HTTPD_MUX_READ | QSE_HTTPD_MUX_WRITE, 
-			perform_client_task, client) <= -1)
+			client) <= -1)
 		{
 			/*purge_client (httpd, client);*/
 			client->status |= CLIENT_BAD;
@@ -1083,6 +1077,14 @@ qse_printf (QSE_T("MUX ADDHND CLIENT RW(ENTASK) %d\n"), client->handle.i);
 	}
 
 	return new_task;
+}
+
+static int dispatch_mux (
+	qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg)
+{
+	return ((qse_httpd_server_t*)cbarg)->type == QSE_HTTPD_SERVER?
+		accept_client (httpd, mux, handle, mask, cbarg):
+		perform_client_task (httpd, mux, handle, mask, cbarg);
 }
 
 int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
@@ -1106,7 +1108,7 @@ int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* r
 
 	QSE_ASSERT (httpd->server.navail > 0);
 
-	httpd->mux = httpd->scb->mux.open (httpd);
+	httpd->mux = httpd->scb->mux.open (httpd, dispatch_mux);
 	if (httpd->mux == QSE_NULL)
 	{
 qse_printf (QSE_T("can't open mux....\n"));
