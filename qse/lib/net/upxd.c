@@ -73,12 +73,6 @@ void qse_upxd_fini (qse_upxd_t* upxd)
 	free_all_servers (upxd);
 }
 
-
-void qse_upxd_setmmgr (qse_upxd_t* upxd, qse_mmgr_t* mmgr)
-{
-	upxd->mmgr = mmgr;
-}
-
 qse_mmgr_t* qse_upxd_getmmgr (qse_upxd_t* upxd)
 {
 	return upxd->mmgr;

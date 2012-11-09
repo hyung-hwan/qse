@@ -412,11 +412,6 @@ int qse_awk_clear (qse_awk_t* awk)
 	return 0;
 }
 
-void qse_awk_setmmgr (qse_awk_t* awk, qse_mmgr_t* mmgr)
-{
-	awk->mmgr = mmgr;
-}
-
 qse_mmgr_t* qse_awk_getmmgr (qse_awk_t* awk)
 {
 	return awk->mmgr;

@@ -29,6 +29,7 @@
 #include <qse/cmn/time.h>
 
 typedef struct qse_httpd_t        qse_httpd_t;
+typedef struct qse_httpd_server_t qse_httpd_server_t;
 typedef struct qse_httpd_client_t qse_httpd_client_t;
 
 enum qse_httpd_errnum_t
@@ -71,36 +72,6 @@ struct qse_httpd_stat_t
 	qse_long_t ino;
 	qse_foff_t size;
 	qse_ntime_t mtime;
-};
-
-enum qse_httpd_server_flag_t
-{
-	QSE_HTTPD_SERVER_ACTIVE     = (1 << 0),
-	QSE_HTTPD_SERVER_SECURE     = (1 << 1),
-	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
-};
-
-typedef struct qse_httpd_server_t qse_httpd_server_t;
-
-typedef void (*qse_httpd_server_predetach_t) (
-	qse_httpd_t*        httpd,
-	qse_httpd_server_t* server
-);
-
-struct qse_httpd_server_t
-{
-	/* ---------------------------------------------- */
-	int          flags;
-	qse_nwad_t   nwad; /* binding address */
-	unsigned int nwif; /* interface number to bind to */
-
-	/* set by server.open callback */
-	qse_ubi_t  handle;
-
-	/* private  */
-	qse_httpd_server_predetach_t predetach;
-	qse_httpd_server_t*          next;
-	qse_httpd_server_t*          prev;
 };
 
 typedef struct qse_httpd_peer_t qse_httpd_peer_t;
@@ -162,11 +133,9 @@ struct qse_httpd_scb_t
 
 	struct
 	{
-		void* (*open)   (qse_httpd_t* httpd);
+		void* (*open)   (qse_httpd_t* httpd, qse_httpd_muxcb_t muxcb);
 		void  (*close)  (qse_httpd_t* httpd, void* mux);
-		int   (*addhnd) (
-			qse_httpd_t* httpd, void* mux, qse_ubi_t handle, 
-			int mask, qse_httpd_muxcb_t cbfun, void* cbarg);
+		int   (*addhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
 		int   (*delhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle);
 		int   (*poll)   (qse_httpd_t* httpd, void* mux, qse_ntime_t timeout);
 
@@ -266,6 +235,8 @@ struct qse_httpd_rcb_t
 		qse_mchar_t* buf, int bufsz);
 };
 
+/* -------------------------------------------------------------------------- */
+
 typedef struct qse_httpd_task_t qse_httpd_task_t;
 
 typedef int (*qse_httpd_task_init_t) (
@@ -285,7 +256,6 @@ typedef int (*qse_httpd_task_main_t) (
 	qse_httpd_client_t* client,
 	qse_httpd_task_t*   task
 );
-
 
 enum qse_httpd_task_trigger_mask_t
 {
@@ -322,11 +292,19 @@ struct qse_httpd_task_t
 	qse_httpd_task_t*     next;
 };
 
+enum qse_httpd_sctype_t 
+{
+	QSE_HTTPD_SERVER,
+	QSE_HTTPD_CLIENT
+};
+typedef enum qse_httpd_sctype_t  qse_httpd_sctype_t;
 
 struct qse_httpd_client_t
 {
-	/* == PUBLIC  == */
+	/* == PRIVATE == */
+	qse_httpd_sctype_t       type;
 
+	/* == PUBLIC  == */
 	qse_ubi_t                handle;
 	qse_ubi_t                handle2;
 	qse_nwad_t               remote_addr;
@@ -353,6 +331,38 @@ struct qse_httpd_client_t
 		qse_httpd_task_t* tail;
 	} task;
 };
+
+enum qse_httpd_server_flag_t
+{
+	QSE_HTTPD_SERVER_ACTIVE     = (1 << 0),
+	QSE_HTTPD_SERVER_SECURE     = (1 << 1),
+	QSE_HTTPD_SERVER_BINDTONWIF = (1 << 2)
+};
+
+typedef void (*qse_httpd_server_predetach_t) (
+	qse_httpd_t*        httpd,
+	qse_httpd_server_t* server
+);
+
+struct qse_httpd_server_t
+{
+	qse_httpd_sctype_t       type;
+
+	/* ---------------------------------------------- */
+	int          flags;
+	qse_nwad_t   nwad; /* binding address */
+	unsigned int nwif; /* interface number to bind to */
+
+	/* set by server.open callback */
+	qse_ubi_t  handle;
+
+	/* private  */
+	qse_httpd_server_predetach_t predetach;
+	qse_httpd_server_t*          next;
+	qse_httpd_server_t*          prev;
+};
+
+/* -------------------------------------------------------------------------- */
 
 /**
  * The qse_httpd_rsrc_type_t defines the resource type than can 
@@ -521,11 +531,6 @@ QSE_EXPORT qse_httpd_t* qse_httpd_open (
  */
 QSE_EXPORT void qse_httpd_close (
 	qse_httpd_t* httpd 
-);
-
-QSE_EXPORT void qse_httpd_setmmgr (
-	qse_httpd_t*   httpd,
-	qse_mmgr_t*  mmgr
 );
 
 QSE_EXPORT qse_mmgr_t* qse_httpd_getmmgr (

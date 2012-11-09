@@ -22,6 +22,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/path.h>
+#include <qse/cmn/dir.h>
 #include "mem.h"
 
 #if defined(_WIN32) 
@@ -44,17 +45,7 @@
 #	define IS_ESC(c) ((c) == QSE_T('\\'))
 #endif
 
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define SEPC QSE_T('\\')
-#else
-#	define SEPC QSE_T('/')
-#endif
-
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define IS_SEP(c) ((c) == QSE_T('/') || (c) == QSE_T('\\'))
-#else
-#	define IS_SEP(c) ((c) == QSE_T('/'))
-#endif
+#define IS_SEP(c) QSE_ISPATHSEP(c)
 
 #define IS_NIL(c) ((c) == QSE_T('\0'))
 #define IS_SEP_OR_NIL(c) (IS_SEP(c) || IS_NIL(c))
@@ -83,7 +74,6 @@ struct glob_t
 	void* cbctx;
 
 	qse_mmgr_t* mmgr;
-	qse_cmgr_t* cmgr;
 
 	qse_str_t path;
 	qse_str_t tbuf; /* temporary buffer */
@@ -108,10 +98,10 @@ static qse_mchar_t* wcs_to_mbuf (glob_t* g, const qse_wchar_t* wcs, qse_mbs_t* m
 {
 	qse_size_t ml, wl;
 
-	if (qse_wcstombswithcmgr (wcs, &wl, QSE_NULL, &ml, g->cmgr) <= -1 ||
+	if (qse_wcstombs (wcs, &wl, QSE_NULL, &ml) <= -1 ||
 	    qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) return QSE_NULL;
 
-	qse_wcstombswithcmgr (wcs, &wl, QSE_MBS_PTR(mbs), &ml, g->cmgr);
+	qse_wcstombs (wcs, &wl, QSE_MBS_PTR(mbs), &ml);
 	return QSE_MBS_PTR(mbs);
 }
 
@@ -322,338 +312,6 @@ static int get_next_segment (glob_t* g, segment_t* seg)
 	return seg->type;
 }
 
-#if defined(_WIN32)
-
-struct qse_dir_t
-{
-	HANDLE h;
-	WIN32_FIND_DATA wfd;	
-	int done;
-};
-typedef struct qse_dir_t qse_dir_t;
-
-#elif defined(__OS2__)
-
-struct qse_dir_t
-{
-	HDIR h;
-	FILEFINDBUF3L ffb;	
-	ULONG count;
-};
-typedef struct qse_dir_t qse_dir_t;
-
-#elif defined(__DOS__)
-
-struct qse_dir_t
-{
-	struct find_t f;
-	int done;
-};
-typedef struct qse_dir_t qse_dir_t;
-
-#endif
-
-static qse_dir_t* xopendir (glob_t* g, const qse_cstr_t* path)
-{
-#if defined(_WIN32)
-
-	/* ------------------------------------------------------------------- */
-	qse_dir_t* dp;
-
-	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
-	if (dp == QSE_NULL) return QSE_NULL;
-
-	dp->done = 0;
-
-	if (path->len <= 0)
-	{
-		if (qse_str_cpy (&g->tbuf, QSE_T("*")) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-	else
-	{
-		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
-		    (!IS_SEP(path->ptr[path->len-1]) && 
-		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_ccat (&g->tbuf, QSE_T('*')) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-
-	dp->h = FindFirstFile (QSE_STR_PTR(&g->tbuf), &dp->wfd);
-	if (dp->h == INVALID_HANDLE_VALUE) 
-	{
-		QSE_MMGR_FREE (g->mmgr, dp);
-		return QSE_NULL;
-	}
-
-	return dp;
-	/* ------------------------------------------------------------------- */
-
-#elif defined(__OS2__)
-
-	/* ------------------------------------------------------------------- */
-	qse_dir_t* dp;
-	APIRET rc;
-	qse_mchar_t* mptr;
-
-	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
-	if (dp == QSE_NULL) return QSE_NULL;
-
-	if (path->len <= 0)
-	{
-		if (qse_str_cpy (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-	else
-	{
-		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
-		    (!IS_SEP(path->ptr[path->len-1]) && 
-		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_cat (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-
-	dp->h = HDIR_CREATE;
-	dp->count = 1;
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	mptr = QSE_STR_PTR(&g->tbuf);
-#else
-	mptr = wcs_to_mbuf (g, QSE_STR_PTR(&g->tbuf), &g->mbuf);
-	if (mptr == QSE_NULL)
-	{
-		QSE_MMGR_FREE (g->mmgr, dp);
-		return QSE_NULL;
-	}
-#endif
-
-	rc = DosFindFirst (
-		mptr,
-		&dp->h, 
-		FILE_DIRECTORY | FILE_READONLY,
-		&dp->ffb,
-		QSE_SIZEOF(dp->ffb),
-		&dp->count,
-		FIL_STANDARDL);
-
-	if (rc != NO_ERROR)
-	{
-		QSE_MMGR_FREE (g->mmgr, dp);
-		return QSE_NULL;
-	}
-
-	return dp;
-	/* ------------------------------------------------------------------- */
-
-#elif defined(__DOS__)
-
-	/* ------------------------------------------------------------------- */
-	qse_dir_t* dp;
-	unsigned int rc;
-	qse_mchar_t* mptr;
-	qse_size_t wl, ml;
-
-	dp = QSE_MMGR_ALLOC (g->mmgr, QSE_SIZEOF(*dp));
-	if (dp == QSE_NULL) return QSE_NULL;
-
-	dp->done = 0;
-
-	if (path->len <= 0)
-	{
-		if (qse_str_cpy (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-	else
-	{
-		if (qse_str_cpy (&g->tbuf, path->ptr) == (qse_size_t)-1 ||
-		    (!IS_SEP(path->ptr[path->len-1]) && 
-		     !qse_isdrivecurpath(path->ptr) &&
-		     qse_str_ccat (&g->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
-		    qse_str_cat (&g->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
-		{
-			QSE_MMGR_FREE (g->mmgr, dp);
-			return QSE_NULL;
-		}
-	}
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	mptr = QSE_STR_PTR(&g->tbuf);
-#else
-	mptr = wcs_to_mbuf (g, QSE_STR_PTR(&g->tbuf), &g->mbuf);
-	if (mptr == QSE_NULL) 
-	{
-		QSE_MMGR_FREE (g->mmgr, dp);
-		return QSE_NULL;
-	}
-#endif
-
-	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dp->f);
-
-	if (rc != 0)
-	{
-		QSE_MMGR_FREE (g->mmgr, dp);
-		return QSE_NULL;
-	}
-
-	return dp;
-	/* ------------------------------------------------------------------- */
-
-#else
-
-	/* ------------------------------------------------------------------- */
-#if defined(QSE_CHAR_IS_MCHAR)
-	return QSE_OPENDIR ((path->len <= 0)? QSE_T("."): path->ptr);
-#else
-	if (path->len <= 0)
-	{
-		return QSE_OPENDIR (QSE_MT("."));
-	}
-	else
-	{
-		qse_mchar_t* mptr;
-
-		mptr = wcs_to_mbuf (g, path->ptr, &g->mbuf);
-		if (mptr == QSE_NULL) return QSE_NULL;
-
-		return QSE_OPENDIR (mptr);
-	}
-#endif 
-	/* ------------------------------------------------------------------- */
-
-#endif
-}
-
-static int xreaddir (glob_t* g, qse_dir_t* dp, qse_str_t* path)
-{
-#if defined(_WIN32)
-
-	/* ------------------------------------------------------------------- */
-	if (dp->done) return (dp->done > 0)? 0: -1;
-
-	if (qse_str_cat (path, dp->wfd.cFileName) == (qse_size_t)-1) return -1;
-
-	if (FindNextFile (dp->h, &dp->wfd) == FALSE) 
-		dp->done = (GetLastError() == ERROR_NO_MORE_FILES)? 1: -1;
-
-	return 1;
-	/* ------------------------------------------------------------------- */
-
-#elif defined(__OS2__)
-
-	/* ------------------------------------------------------------------- */
-	APIRET rc;
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing */
-#else
-	qse_size_t ml, wl, tmp;
-#endif
-
-	if (dp->count <= 0) return 0;
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cat (path, dp->ffb.achName) == (qse_size_t)-1) return -1;
-#else
-	tmp = QSE_STR_LEN(path);
-	if (qse_mbstowcswithcmgr (dp->ffb.achName, &ml, QSE_NULL, &wl, g->cmgr) <= -1 ||
-	    qse_str_setlen (path, tmp + wl) == (qse_size_t)-1) return -1;
-	qse_mbstowcswithcmgr (dp->ffb.achName, &ml, QSE_STR_CPTR(&g->path,tmp), &wl, g->cmgr);
-#endif
-
-	rc = DosFindNext (dp->h, &dp->ffb, QSE_SIZEOF(dp->ffb), &dp->count);
-	if (rc == ERROR_NO_MORE_FILES) dp->count = 0;
-	else if (rc != NO_ERROR) return -1;
-
-	return 1;
-	/* ------------------------------------------------------------------- */
-
-#elif defined(__DOS__)
-
-	/* ------------------------------------------------------------------- */
-	unsigned int rc;
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing */
-#else
-	qse_size_t ml, wl, tmp;
-#endif
-
-	if (dp->done) return (dp->done > 0)? 0: -1;
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cat (path, dp->f.name) == (qse_size_t)-1) return -1;
-#else
-	tmp = QSE_STR_LEN(path);
-	if (qse_mbstowcswithcmgr (dp->f.name, &ml, QSE_NULL, &wl, g->cmgr) <= -1 ||
-	    qse_str_setlen (path, tmp + wl) == (qse_size_t)-1) return -1;
-	qse_mbstowcswithcmgr (dp->f.name, &ml, QSE_STR_CPTR(&g->path,tmp), &wl, g->cmgr);
-#endif
-
-	rc = _dos_findnext (&dp->f);
-	if (rc != 0) dp->done = (errno == ENOENT)? 1: -1;
-
-	return 1;
-	/* ------------------------------------------------------------------- */
-
-#else
-
-	/* ------------------------------------------------------------------- */
-	qse_dirent_t* de;
-#if defined(QSE_CHAR_IS_MCHAR)
-	/* nothing */
-#else
-	qse_size_t ml, wl, tmp;
-#endif
-
-	de = QSE_READDIR (dp);
-	if (de == NULL) return 0;
-
-#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cat (path, de->d_name) == (qse_size_t)-1) return -1;
-#else
-	tmp = QSE_STR_LEN(path);
-	if (qse_mbstowcswithcmgr (de->d_name, &ml, QSE_NULL, &wl, g->cmgr) <= -1 ||
-	    qse_str_setlen (path, tmp + wl) == (qse_size_t)-1) return -1;
-	qse_mbstowcswithcmgr (de->d_name, &ml, QSE_STR_CPTR(&g->path,tmp), &wl, g->cmgr);
-#endif	
-
-	return 1;
-	/* ------------------------------------------------------------------- */
-
-#endif
-}
-
-static void xclosedir (glob_t* g, qse_dir_t* dp)
-{
-#if defined(_WIN32)
-	FindClose (dp->h);
-	QSE_MMGR_FREE (g->mmgr, dp);
-#elif defined(__OS2__)
-	DosFindClose (dp->h);
-	QSE_MMGR_FREE (g->mmgr, dp);
-#elif defined(__DOS__)
-	_dos_findclose (&dp->f);
-	QSE_MMGR_FREE (g->mmgr, dp);
-#else
-	QSE_CLOSEDIR (dp);
-#endif
-}
-
 static int handle_non_wild_segments (glob_t* g, segment_t* seg)
 {
 	while (get_next_segment(g, seg) != NONE && !seg->wild)
@@ -731,6 +389,8 @@ static int search (glob_t* g, segment_t* seg)
 {
 	qse_dir_t* dp;
 	qse_size_t tmp, tmp2;
+	qse_dir_ent_t ent;
+	int x;
 
 #if defined(NO_RECURSION)
 	stack_node_t* r;
@@ -744,7 +404,7 @@ entry:
 
 	if (seg->wild)
 	{
-		dp = xopendir (g, QSE_STR_CSTR(&g->path));
+		dp = qse_dir_open (g->mmgr, 0, QSE_STR_PTR(&g->path), 0);
 		if (dp)
 		{
 			tmp = QSE_STR_LEN(&g->path);
@@ -756,7 +416,11 @@ entry:
 			{
 				qse_str_setlen (&g->path, tmp2);
 
-				if (xreaddir (g, dp, &g->path) <= 0) break;
+				x = qse_dir_read (dp, &ent);
+				if (x <= -1) goto oops;
+				if (x == 0) break;
+
+				if (qse_str_cat (&g->path, ent.name) == (qse_size_t)-1) goto oops;
 
 				if (qse_strnfnmat (QSE_STR_CPTR(&g->path,tmp2), seg->ptr, seg->len, g->fnmat_flags) > 0)
 				{
@@ -810,7 +474,7 @@ entry:
 			}
 
 			qse_str_setlen (&g->path, tmp);
-			xclosedir (g, dp); dp = QSE_NULL;
+			qse_dir_close (dp); dp = QSE_NULL;
 		}
 	}
 
@@ -850,14 +514,14 @@ entry:
 	return 0;
 
 oops:
-	if (dp) xclosedir (g, dp);	
+	if (dp) qse_dir_close (dp);	
 
 #if defined(NO_RECURSION)
 	while (g->stack)
 	{
 		r = g->stack;
 		g->stack = r->next;
-		xclosedir (g, r->dp);
+		qse_dir_close (r->dp);
 		QSE_MMGR_FREE (g->mmgr, r);
 	}
 
@@ -871,7 +535,7 @@ oops:
 	return -1;
 }
 
-int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr, qse_cmgr_t* cmgr)
+int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr)
 {
 	segment_t seg;
 	glob_t g;
@@ -881,7 +545,6 @@ int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void*
 	g.cbimpl = cbimpl;
 	g.cbctx = cbctx;
 	g.mmgr = mmgr;
-	g.cmgr = cmgr;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	g.fnmat_flags |= QSE_STRFNMAT_IGNORECASE;
@@ -926,10 +589,5 @@ int qse_globwithcmgr (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void*
 
 	if (x <= -1) return -1;
 	return g.expanded;
-}
-
-int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, int flags, qse_mmgr_t* mmgr)
-{
-	return qse_globwithcmgr (pattern, cbimpl, cbctx, flags, mmgr, qse_getdflcmgr());
 }
 

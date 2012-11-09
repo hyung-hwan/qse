@@ -24,12 +24,7 @@
 /*  MBS IMPLEMENTATION                                                */
 /* ------------------------------------------------------------------ */
 
-
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define IS_MSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
-#else
-#	define IS_MSEP(c) ((c) == QSE_MT('/'))
-#endif
+#define IS_MSEP(c) QSE_ISPATHMBSEP(c)
 
 #define IS_MNIL(c) ((c) == QSE_MT('\0'))
 #define IS_MSEP_OR_MNIL(c) (IS_MSEP(c) || IS_MNIL(c))

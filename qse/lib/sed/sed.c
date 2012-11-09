@@ -143,11 +143,6 @@ void qse_sed_fini (qse_sed_t* sed)
 	qse_str_fini (&sed->tmp.rex);
 }
 
-void qse_sed_setmmgr (qse_sed_t* sed, qse_mmgr_t* mmgr)
-{
-	sed->mmgr = mmgr;
-}
-
 qse_mmgr_t* qse_sed_getmmgr (qse_sed_t* sed)
 {
 	return sed->mmgr;

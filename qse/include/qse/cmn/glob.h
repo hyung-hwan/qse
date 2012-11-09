@@ -66,15 +66,6 @@ int qse_glob (
 	qse_mmgr_t*        mmgr
 );
 
-int qse_globwithcmgr (
-	const qse_char_t*  pattern,
-	qse_glob_cbimpl_t  cbimpl,
-	void*              cbctx,
-	int                flags,
-	qse_mmgr_t*        mmgr,
-	qse_cmgr_t*       cmgr
-);
-
 #ifdef __cplusplus
 }
 #endif

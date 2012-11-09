@@ -20,13 +20,8 @@
 
 #include <qse/cmn/path.h>
 
-#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
-#	define IS_MSEP(c) ((c) == QSE_MT('/') || (c) == QSE_MT('\\'))
-#	define IS_WSEP(c) ((c) == QSE_WT('/') || (c) == QSE_WT('\\'))
-#else
-#	define IS_MSEP(c) ((c) == QSE_MT('/'))
-#	define IS_WSEP(c) ((c) == QSE_WT('/'))
-#endif
+#define IS_MSEP(c) QSE_ISPATHMBSEP(c)
+#define IS_WSEP(c) QSE_ISPATHWCSEP(c)
 
 const qse_mchar_t* qse_mbsbasename (const qse_mchar_t* path)
 {

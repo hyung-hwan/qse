@@ -135,11 +135,6 @@ QSE_EXPORT void qse_htrd_fini (
 	qse_htrd_t* htrd
 );
 
-QSE_EXPORT void qse_htrd_setmmgr (
-	qse_htrd_t*   htrd,
-	qse_mmgr_t*  mmgr
-);
-
 QSE_EXPORT qse_mmgr_t* qse_htrd_getmmgr (
 	qse_htrd_t* htrd
 ); 

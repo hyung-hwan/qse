@@ -5,6 +5,7 @@ pkginclude_HEADERS = \
 	chr.h \
 	cp949.h \
 	cp950.h \
+	dir.h \
 	dll.h \
 	env.h \
 	fio.h \
@@ -21,6 +22,7 @@ pkginclude_HEADERS = \
 	map.h \
 	mbwc.h \
 	mem.h \
+	mux.h \
 	nwad.h \
 	nwif.h \
 	nwio.h \
