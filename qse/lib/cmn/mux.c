@@ -43,6 +43,9 @@
 #	include <unistd.h>
 #	include <fcntl.h>
 #	include <errno.h>
+#	if defined(HAVE_SYS_TIME_H)
+#		include <sys/time.h>
+#	endif
 #	if defined(HAVE_SYS_EPOLL_H)
 #		include <sys/epoll.h>
 #		if defined(HAVE_EPOLL_CREATE)
@@ -385,7 +388,6 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	QSE_MEMSET (&ev, 0, QSE_SIZEOF(ev));
 	if (evt->mask & QSE_MUX_IN) ev.events |= EPOLLIN;
 	if (evt->mask & QSE_MUX_OUT) ev.events |= EPOLLOUT;
-	ev.data.fd = evt->hnd;
 
 	if (ev.events == 0 || evt->hnd < 0)
 	{
@@ -422,6 +424,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 			return -1;
 		}
 	}
+
+	/*ev.data.fd = evt->hnd;*/
+	ev.data.ptr = mux->me.ptr[evt->hnd];
 
 	if (mux->ee.len >= mux->ee.capa)
 	{
@@ -530,7 +535,6 @@ done:
 
 int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 {
-
 #if defined(USE_SELECT)
 	struct timeval tv;
 	int n;
@@ -557,7 +561,7 @@ int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 		qse_mux_hnd_t i;
 		qse_mux_evt_t* evt, xevt;
 
-		for (i = 0 ; i < mux->maxhnd; i++)
+		for (i = 0 ; i <= mux->maxhnd; i++)
 		{
 			evt = mux->me.ptr[i];
 			if (!evt || evt->hnd != i) continue;
@@ -575,7 +579,7 @@ int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 	return n;
 
 #elif defined(USE_EPOLL)
-	int nfds, hnd, i, mask;
+	int nfds, i, mask;
 	qse_mux_evt_t* evt, xevt;
 
 	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
@@ -587,10 +591,11 @@ int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 
 	for (i = 0; i < nfds; i++) 
 	{
-		hnd = mux->ee.ptr[i].data.fd;
+		/*int hnd = mux->ee.ptr[i].data.fd;
 		evt = mux->me.ptr[hnd];
+		QSE_ASSERT (evt->hnd == hnd); */
 
-		QSE_ASSERT (evt->hnd == hnd);
+		evt = mux->ee.ptr[i].data.ptr;
 
 		QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
 
