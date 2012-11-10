@@ -1117,6 +1117,7 @@ static int stat_file (
 	hst->mtime = QSE_SEC_TO_MSEC(st.st_mtime);
 	#endif
 
+qse_printf (QSE_T("mtime => %ld %ld\n"), (long)st.st_mtime, (long)hst->mtime);
 	return 0;
 #endif
 }
