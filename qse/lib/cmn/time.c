@@ -48,9 +48,8 @@
 	#define WIN_EPOCH_DAY    (1)
 
 	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-WIN_EPOCH_YEAR)
-	#define EPOCH_DIFF_DAYS  ((qse_ntime_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
-	#define EPOCH_DIFF_SECS  ((qse_ntime_t)EPOCH_DIFF_DAYS*24*60*60)
-	#define EPOCH_DIFF_MSECS ((qse_ntime_t)EPOCH_DIFF_SECS*QSE_MSECS_PER_SEC)
+	#define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
+	#define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
 #endif
 
 static const int mdays[2][QSE_MONS_PER_YEAR] = 
@@ -89,6 +88,7 @@ int qse_gettime (qse_ntime_t* t)
 #if defined(_WIN32)
 	SYSTEMTIME st;
 	FILETIME ft;
+	ULARGE_INTEGER li;
 
 	/* 
 	 * MSDN: The FILETIME structure is a 64-bit value representing the 
@@ -97,8 +97,14 @@ int qse_gettime (qse_ntime_t* t)
 
 	GetSystemTime (&st);
 	if (SystemTimeToFileTime (&st, &ft) == FALSE) return -1;
-	*t = ((qse_ntime_t)(*((qse_int64_t*)&ft)) / (10 * 1000));
-	*t -= EPOCH_DIFF_MSECS;
+
+	li.LowPart = ft.dwLowDateTime;
+	li.HighPart = ft.dwHighDateTime;
+
+     /* li.QuadPart is in the 100-nanosecond intervals */
+	t->sec = (li.QuadPart / (QSE_NSECS_PER_SEC / 100)) - EPOCH_DIFF_SECS;
+	t->nsec = (li.QuadPart % (QSE_NSECS_PER_SEC / 100)) * 100;
+
 	return 0;
 
 #elif defined(__OS2__)
@@ -121,10 +127,11 @@ int qse_gettime (qse_ntime_t* t)
 	bt.hour = dt.hours;
 	bt.min = dt.minutes;
 	bt.sec = dt.seconds;
-	bt.msec = dt.hundredths * 10;
+	/*bt.msec = dt.hundredths * 10;*/
 	bt.isdst = -1; /* determine dst for me */
 
 	if (qse_timelocal (&bt, t) <= -1) return -1;
+	t->nsec = QSE_MSEC_TO_NSEC(dt.hundredths * 10);
 	return 0;
 
 #elif defined(__DOS__)
@@ -142,10 +149,11 @@ int qse_gettime (qse_ntime_t* t)
 	bt.hour = dt.hour;
 	bt.min = dt.minute;
 	bt.sec = dt.second;
-	bt.msec = dt.hsecond * 10;
+	/*bt.msec = dt.hsecond * 10; */
 	bt.isdst = -1; /* determine dst for me */
 
 	if (qse_timelocal (&bt, t) <= -1) return -1;
+	t->nsec = QSE_MSEC_TO_NSEC(dt.hsecond * 10);
 	return 0;
 
 #else
@@ -155,19 +163,21 @@ int qse_gettime (qse_ntime_t* t)
 	n = QSE_GETTIMEOFDAY (&tv, QSE_NULL);
 	if (n == -1) return -1;
 
-	*t = (qse_ntime_t)tv.tv_sec * QSE_MSECS_PER_SEC + 
-	     (qse_ntime_t)tv.tv_usec / QSE_USECS_PER_MSEC;
+	t->sec = tv.tv_sec;
+	t->nsec = QSE_USEC_TO_NSEC(tv.tv_usec);
 	return 0;
 #endif
 }
 
-int qse_settime (qse_ntime_t t)
+int qse_settime (const qse_ntime_t* t)
 {
 #if defined(_WIN32)
 	FILETIME ft;
 	SYSTEMTIME st;
 
-	*((qse_int64_t*)&ft) = ((t + EPOCH_DIFF_MSECS) * (10 * 1000));
+	/**((qse_int64_t*)&ft) = ((t + EPOCH_DIFF_MSECS) * (10 * 1000));*/
+	*((qse_int64_t*)&ft) = 
+		(QSE_SEC_TO_NSEC(t->sec + EPOCH_DIFF_SECS) / 100)  + (t->nsec / 100);
 	if (FileTimeToSystemTime (&ft, &st) == FALSE) return -1;
 	if (SetSystemTime(&st) == FALSE) return -1;
 	return 0;
@@ -187,7 +197,7 @@ int qse_settime (qse_ntime_t t)
 	dt.hours = bt.hour;
 	dt.minutes = bt.min;
 	dt.seconds = bt.sec;
-	dt.hundredths = bt.msec / 10;
+	dt.hundredths = QSE_NSEC_TO_MSEC(t->nsec) / 10;
 
 	rc = DosSetDateTime (&dt);
 	return (rc != NO_ERROR)? -1: 0;
@@ -206,7 +216,7 @@ int qse_settime (qse_ntime_t t)
 	dt.hour = bt.hour;
 	dt.minute = bt.min;
 	dt.second = bt.sec;
-	dt.hsecond = bt.msec / 10;
+	dt.hsecond = QSE_NSEC_TO_MSEC(t->nsec) / 10;
 
 	if (_dos_settime (&dt) != 0) return -1;
 	if (_dos_setdate (&dd) != 0) return -1;
@@ -217,8 +227,8 @@ int qse_settime (qse_ntime_t t)
 	struct timeval tv;
 	int n;
 
-	tv.tv_sec = t / QSE_MSECS_PER_SEC;
-	tv.tv_usec = (t % QSE_MSECS_PER_SEC) * QSE_USECS_PER_MSEC;
+	tv.tv_sec = t->sec;
+	tv.tv_usec = QSE_NSEC_TO_USEC(t->nsec);
 
 /*
 #if defined CLOCK_REALTIME && HAVE_CLOCK_SETTIME
@@ -237,19 +247,14 @@ int qse_settime (qse_ntime_t t)
 #endif
 }
 
-static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntoff_t offset)
+static void breakdown_time (const qse_ntime_t* nt, qse_btime_t* bt, qse_long_t offset)
 {
 	int midx;
-	qse_ntime_t days; /* total days */
-	qse_ntime_t secs; /* the remaining seconds */
-	qse_ntime_t year = QSE_EPOCH_YEAR;
+	qse_long_t days; /* total days */
+	qse_long_t secs; /* the remaining seconds */
+	qse_long_t year = QSE_EPOCH_YEAR;
 	
-	nt += offset;
-
-	bt->msec = nt % QSE_MSECS_PER_SEC;
-	if (bt->msec < 0) bt->msec = QSE_MSECS_PER_SEC + bt->msec;
-
-	secs = nt / QSE_MSECS_PER_SEC;
+	secs = nt->sec + offset; /* offset in seconds */
 	days = secs / QSE_SECS_PER_DAY;
 	secs %= QSE_SECS_PER_DAY;
 
@@ -305,17 +310,16 @@ static void breakdown_time (qse_ntime_t nt, qse_btime_t* bt, qse_ntoff_t offset)
 	/*bt->offset = offset;*/
 }
 
-int qse_gmtime (qse_ntime_t nt, qse_btime_t* bt)
+int qse_gmtime (const qse_ntime_t* nt, qse_btime_t* bt)
 {
 	breakdown_time (nt, bt, 0);
 	return 0;
 }
 
-int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
+int qse_localtime (const qse_ntime_t* nt, qse_btime_t* bt)
 {
 	struct tm* tm;
-	time_t t = (time_t)(nt / QSE_MSECS_PER_SEC);
-	qse_ntime_t rem = nt % QSE_MSECS_PER_SEC;
+	time_t t = nt->sec;
 
 	/* TODO: remove dependency on localtime/localtime_r */
 #if defined(_WIN32)
@@ -342,7 +346,6 @@ int qse_localtime (qse_ntime_t nt, qse_btime_t* bt)
 	
 	QSE_MEMSET (bt, 0, QSE_SIZEOF(*bt));
 
-	bt->msec = (rem >= 0)? rem: (QSE_MSECS_PER_SEC + rem);
 	bt->sec = tm->tm_sec;
 	bt->min = tm->tm_min;
 	bt->hour = tm->tm_hour;
@@ -409,7 +412,7 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 #endif
 #endif
 
-	qse_ntime_t n = 0;
+	qse_long_t n = 0;
 	int y = bt->year + QSE_BTIME_YEAR_BASE;
 	int midx = QSE_IS_LEAPYEAR(y)? 1: 0;
 
@@ -434,10 +437,13 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 
 		n = (n + QSE_HOURS_PER_DAY - bt->hour - 1) * QSE_MINS_PER_HOUR;
 		n = (n + QSE_MINS_PER_HOUR - bt->min - 1) * QSE_SECS_PER_MIN;
-		n = (n + QSE_SECS_PER_MIN - bt->sec) * QSE_MSECS_PER_SEC;
+		n = (n + QSE_SECS_PER_MIN - bt->sec); /* * QSE_MSECS_PER_SEC;
 
 		if (bt->msec > 0) n += QSE_MSECS_PER_SEC - bt->msec;
-		*nt = -n;
+		*nt = -n; */
+
+		nt->sec = -n;
+		nt->nsec = 0;
 	} 
 	else
 	{
@@ -454,9 +460,12 @@ int qse_timegm (const qse_btime_t* bt, qse_ntime_t* nt)
 		n = (n + bt->mday - 1) * QSE_HOURS_PER_DAY;
 		n = (n + bt->hour) * QSE_MINS_PER_HOUR;
 		n = (n + bt->min) * QSE_SECS_PER_MIN;
-		n = (n + bt->sec) * QSE_MSECS_PER_SEC;
+		n = (n + bt->sec); /* QSE_MSECS_PER_SEC;
 
-		*nt = n + bt->msec;
+		*nt = n + bt->msec;*/
+
+		nt->sec = n;
+		nt->nsec = 0;		
 	}
 
 	return 0;
@@ -467,6 +476,7 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	/* TODO: qse_timelocal - remove dependency on timelocal */
 	struct tm tm;
 
+	QSE_MEMSET (&tm, 0, QSE_SIZEOF(tm));
 	tm.tm_sec = bt->sec;
 	tm.tm_min = bt->min;
 	tm.tm_hour = bt->hour;
@@ -477,11 +487,12 @@ int qse_timelocal (const qse_btime_t* bt, qse_ntime_t* nt)
 	tm.tm_yday = bt->yday;
 	tm.tm_isdst = bt->isdst;
 
-#ifdef HAVE_TIMELOCAL
-	*nt = ((qse_ntime_t)timelocal(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
-	return 0;
+#if defined(HAVE_TIMELOCAL)
+	nt->sec = timelocal (&tm);
 #else
-	*nt = ((qse_ntime_t)mktime(&tm)*QSE_MSECS_PER_SEC) + bt->msec;
-	return 0;
+	nt->sec = mktime (&tm);
 #endif
+
+	nt->nsec = 0;
+	return 0;
 }

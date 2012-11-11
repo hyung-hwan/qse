@@ -533,14 +533,14 @@ done:
 #endif
 }
 
-int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
+int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 {
 #if defined(USE_SELECT)
 	struct timeval tv;
 	int n;
 
-	tv.tv_sec = timeout / QSE_MSECS_PER_SEC;
-	tv.tv_usec = (timeout % QSE_MSECS_PER_SEC) * QSE_USECS_PER_MSEC;
+	tv.tv_sec = tmout->sec;
+	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
 
 	mux->tmprset = mux->rset;
 	mux->tmpwset = mux->wset;
@@ -579,10 +579,10 @@ int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 	return n;
 
 #elif defined(USE_EPOLL)
-	int nfds, i, mask;
+	int nfds, i;
 	qse_mux_evt_t* evt, xevt;
 
-	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, timeout);
+	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec));
 	if (nfds <= -1)
 	{
 		mux->errnum = syserr_to_errnum(errno);
@@ -605,10 +605,8 @@ int qse_mux_poll (qse_mux_t* mux, qse_ntime_t timeout)
 
 		if (mux->ee.ptr[i].events & EPOLLHUP)
 		{
-			if (evt->mask & QSE_MUX_IN)
-				xevt.mask |= QSE_MUX_IN;
-			if (evt->mask & QSE_MUX_OUT)
-				xevt.mask |= QSE_MUX_OUT;
+			if (evt->mask & QSE_MUX_IN) xevt.mask |= QSE_MUX_IN;
+			if (evt->mask & QSE_MUX_OUT) xevt.mask |= QSE_MUX_OUT;
 		}
 
 		mux->evtfun (mux, &xevt);

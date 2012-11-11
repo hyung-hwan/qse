@@ -369,7 +369,7 @@ int qse_parsehttptime (const qse_mchar_t* str, qse_ntime_t* nt)
 }
 
 qse_mchar_t* qse_fmthttptime (
-	qse_ntime_t nt, qse_mchar_t* buf, qse_size_t bufsz)
+	const qse_ntime_t* nt, qse_mchar_t* buf, qse_size_t bufsz)
 {
 	qse_btime_t bt;
 

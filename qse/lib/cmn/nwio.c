@@ -65,6 +65,8 @@ union sockaddr_t
 };
 #endif
 
+#define TMOUT_ENABLED(tmout) (tmout.sec >= 0 && tmout.nsec >= 0)
+
 static int nwad_to_sockaddr (const qse_nwad_t* nwad, int* family, void* addr)
 {
 	int addrsize = -1;
@@ -252,7 +254,7 @@ static qse_nwio_errnum_t tio_errnum_to_nwio_errnum (qse_tio_t* tio)
 	}
 }
 
-static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
+static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 {
 	int xret;
 
@@ -265,8 +267,8 @@ static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
 
 	FD_SET (nwio->handle, &fds[what]);
 
-	tv.tv_sec = tmout / QSE_MSECS_PER_SEC;
-	tv.tv_usec = (tmout % QSE_MSECS_PER_SEC) * QSE_USECS_PER_MSEC;
+	tv.tv_sec = tmout->sec;
+	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
 
 	xret = select (nwio->handle + 1, &fds[0], &fds[1], QSE_NULL, &tv);
 	if (xret == SOCKET_ERROR)
@@ -281,10 +283,12 @@ static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
 	}
 #elif defined(__OS2__)
 	int count[2] = { 0, 0 };
+	long tmout_msecs; 
 	
 	count[what]++;
 
-	xret = os2_select (&nwio->handle, count[0], count[1], 0, tmout);
+	tmout_msecs = QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec);
+	xret = os2_select (&nwio->handle, count[0], count[1], 0, tmout_msecs);
 	if (xret <= -1)
 	{	
 		nwio->errnum = syserr_to_errnum (sock_errno());
@@ -309,8 +313,8 @@ static int wait_for_data (qse_nwio_t* nwio, int tmout, int what)
 
 	FD_SET (nwio->handle, &fds[what]);
 
-	tv.tv_sec = tmout / QSE_MSECS_PER_SEC;
-	tv.tv_usec = (tmout % QSE_MSECS_PER_SEC) * QSE_USECS_PER_MSEC;
+	tv.tv_sec = tmout->sec;
+	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
 
 	xret = select (nwio->handle + 1, &fds[0], &fds[1], QSE_NULL, &tv);
 	if (xret <= -1)
@@ -375,10 +379,10 @@ int qse_nwio_init (
 	if (tmout) nwio->tmout = *tmout;
 	else
 	{
-		nwio->tmout.r = -1;
-		nwio->tmout.w = -1;
-		nwio->tmout.c = -1;
-		nwio->tmout.a = -1;
+		nwio->tmout.r.sec = -1;
+		nwio->tmout.w.sec = -1;
+		nwio->tmout.c.sec = -1;
+		nwio->tmout.a.sec = -1;
 	}
 	
 #if defined(AF_INET)
@@ -437,8 +441,8 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (nwio->tmout.a >= 0 &&
-			    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) goto oops;
+			if (TMOUT_ENABLED(nwio->tmout.a) &&
+			    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) goto oops;
 
 			handle = accept (nwio->handle, (struct sockaddr*)&addr, &addrlen);
 			if (handle == INVALID_SOCKET)
@@ -459,7 +463,7 @@ int qse_nwio_init (
 	{
 		int xret;
 
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			unsigned long cmd = 1;
 
@@ -472,7 +476,7 @@ int qse_nwio_init (
 
 		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			unsigned long cmd = 0;
 			
@@ -483,7 +487,7 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (wait_for_data (nwio, nwio->tmout.c, 1) <= -1) goto oops;
+			if (wait_for_data (nwio, &nwio->tmout.c, 1) <= -1) goto oops;
 			else 
 			{
 				int xlen;
@@ -550,8 +554,8 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (nwio->tmout.a >= 0 &&
-			    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) goto oops;
+			if (TMOUT_ENABLED(nwio->tmout.a) &&
+			    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) goto oops;
 
 			handle = accept (nwio->handle, (struct sockaddr*)&addr, &addrlen);
 			if (handle <= -1)
@@ -572,7 +576,7 @@ int qse_nwio_init (
 	{
 		int xret;
 
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			int noblk = 1;
 
@@ -585,7 +589,7 @@ int qse_nwio_init (
 
 		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			int noblk = 0;
 			
@@ -596,7 +600,7 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (wait_for_data (nwio, nwio->tmout.c, 1) <= -1) goto oops;
+			if (wait_for_data (nwio, &nwio->tmout.c, 1) <= -1) goto oops;
 			else 
 			{
 				int xlen, xerr;
@@ -679,8 +683,8 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (nwio->tmout.a >= 0 &&
-			    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) goto oops;
+			if (TMOUT_ENABLED(nwio->tmout.a) &&
+			    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) goto oops;
 
 			handle = accept (nwio->handle, (struct sockaddr*)&addr, &addrlen);
 			if (handle <= -1)
@@ -701,7 +705,7 @@ int qse_nwio_init (
 	{
 		int orgfl, xret;
 		
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			orgfl = fcntl (nwio->handle, F_GETFL, 0);
 			if (orgfl <= -1 ||
@@ -714,7 +718,7 @@ int qse_nwio_init (
 		
 		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 		
-		if (nwio->tmout.c >= 0 && (flags & QSE_NWIO_TCP))
+		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
 			if ((xret <= -1 && errno != EINPROGRESS) ||
 			    fcntl (nwio->handle, F_SETFL, orgfl) <= -1) 
@@ -723,7 +727,7 @@ int qse_nwio_init (
 				goto oops;
 			}
 
-			if (wait_for_data (nwio, nwio->tmout.c, 1) <= -1) goto oops;
+			if (wait_for_data (nwio, &nwio->tmout.c, 1) <= -1) goto oops;
 			else 
 			{
 			#if defined(HAVE_SOCKLEN_T)
@@ -908,8 +912,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 
 		addrlen = QSE_SIZEOF(addr);
 
-		if (nwio->tmout.a >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.a) &&
+		    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) return -1;
 
 		count = recvfrom (
 			nwio->handle, buf, size, 0, 
@@ -932,8 +936,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 	}
 	else
 	{
-		if (nwio->tmout.r >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.r, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		count = recv (nwio->handle, buf, size, 0);
 		if (count == SOCKET_ERROR) nwio->errnum = syserr_to_errnum (WSAGetLastError());
@@ -952,8 +956,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 
 		addrlen = QSE_SIZEOF(addr);
 
-		if (nwio->tmout.a >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.a) &&
+		    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) return -1;
 
 		n = recvfrom (
 			nwio->handle, buf, size, 0, 
@@ -976,8 +980,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 	}
 	else
 	{
-		if (nwio->tmout.r >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.r, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		n = recv (nwio->handle, buf, size, 0);
 		if (n <= -1) nwio->errnum = syserr_to_errnum (sock_errno());
@@ -1012,8 +1016,8 @@ reread:
 		 * like the 'nc' utility does.
 		 * so i treat this recvfrom() as if it is accept(). 
 		 */
-		if (nwio->tmout.a >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.a, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.a) &&
+		    wait_for_data (nwio, &nwio->tmout.a, 0) <= -1) return -1;
 
 		n = recvfrom (
 			nwio->handle, buf, size, 0, 
@@ -1045,8 +1049,8 @@ reread:
 	}
 	else
 	{
-		if (nwio->tmout.r >= 0 &&
-		    wait_for_data (nwio, nwio->tmout.r, 0) <= -1) return -1;
+		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		n = recv (nwio->handle, buf, size, 0);
 		if (n <= -1) 
@@ -1102,8 +1106,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int)))
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int);
 
-	if (nwio->tmout.w >= 0 &&
-	    wait_for_data (nwio, nwio->tmout.w, 1) <= -1) return -1;
+	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	count = send (nwio->handle, data, size, 0);
 	if (count == SOCKET_ERROR) nwio->errnum = syserr_to_errnum (WSAGetLastError());
@@ -1114,8 +1118,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int)))
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int);
 
-	if (nwio->tmout.w >= 0 &&
-	    wait_for_data (nwio, nwio->tmout.w, 1) <= -1) return -1;
+	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	n = send (nwio->handle, data, size, 0);
 	if (n <= -1) nwio->errnum = syserr_to_errnum (sock_errno());
@@ -1132,8 +1136,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 rewrite:
-	if (nwio->tmout.w >= 0 &&
-	    wait_for_data (nwio, nwio->tmout.w, 1) <= -1) return -1;
+	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	n = send (nwio->handle, data, size, 0);
 	if (n <= -1) 

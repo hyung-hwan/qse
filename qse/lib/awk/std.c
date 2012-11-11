@@ -152,7 +152,7 @@ typedef struct ioattr_t
 {
 	qse_cmgr_t* cmgr;
 	qse_char_t cmgr_name[64]; /* i assume that the cmgr name never exceeds this length */
-	int tmout[4];
+	qse_ntime_t tmout[4];
 } ioattr_t;
 
 static ioattr_t* get_ioattr (qse_htb_t* tab, const qse_char_t* ptr, qse_size_t len);
@@ -2021,7 +2021,7 @@ qse_awk_rtx_t* qse_awk_rtx_openstd (
 	rxtn->ecb.close = fini_rxtn;
 	qse_awk_rtx_pushecb (rtx, &rxtn->ecb);
 
-	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: (qse_long_t)now;
+	rxtn->seed = (qse_gettime (&now) <= -1)? 0u: ((qse_long_t)now.sec + (qse_long_t)now.nsec);
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
 	rxtn->prand = (qse_ulong_t)(rxtn->seed * rxtn->seed * rxtn->seed);
@@ -2113,7 +2113,7 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	if (nargs <= 0)
 	{
 		rxtn->seed = (qse_gettime (&now) <= -1)? 
-			(rxtn->seed * rxtn->seed): (qse_long_t)now;
+			(rxtn->seed * rxtn->seed): ((qse_long_t)now.sec + (qse_long_t)now.nsec);
 	}
 	else
 	{
@@ -2212,7 +2212,8 @@ static QSE_INLINE void init_ioattr (ioattr_t* ioattr)
 	for (i = 0; i < QSE_COUNTOF(ioattr->tmout); i++) 
 	{
 		/* a negative number for no timeout */
-		ioattr->tmout[i] = -999;
+		ioattr->tmout[i].sec = -999;
+		ioattr->tmout[i].nsec = 0;
 	}
 }
 
@@ -2301,14 +2302,8 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		/* no error is returned by qse_awk_rtx_strnum() if the second 
 		 * parameter is 0. so i don't check for an error */
 		x = qse_awk_rtx_strtonum (rtx, 0, ptr[2], len[2], &l, &r);
-		if (x >= 1) l = (qse_long_t)r;
+		if (x == 0) r = (qse_flt_t)l;
 
-		if (l < QSE_TYPE_MIN(int) || l > QSE_TYPE_MAX(int)) 
-		{
-			fret = -1;
-			goto done;
-		}
-	
 		ioattr = find_or_make_ioattr (rtx, &rxtn->cmgrtab, ptr[0], len[0]);
 		if (ioattr == QSE_NULL) 
 		{
@@ -2316,7 +2311,18 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			goto done;
 		}
 
-		ioattr->tmout[tmout] = l;
+		if (x == 0)
+		{
+			ioattr->tmout[tmout].sec = l;
+			ioattr->tmout[tmout].nsec = 0;
+		}
+		else if (x >= 1)
+		{
+			qse_flt_t nsec;
+			ioattr->tmout[tmout].sec = (qse_long_t)r;
+			nsec = r - ioattr->tmout[tmout].sec;
+			ioattr->tmout[tmout].nsec = QSE_SEC_TO_NSEC(nsec);
+		}
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)
@@ -2424,7 +2430,10 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		rv = qse_awk_rtx_makeintval (rtx, ioattr->tmout[tmout]);
+		if (ioattr->tmout[tmout].nsec == 0)
+			rv = qse_awk_rtx_makeintval (rtx, ioattr->tmout[tmout].sec);
+		else
+			rv = qse_awk_rtx_makefltval (rtx, (qse_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_flt_t)ioattr->tmout[tmout].nsec));
 		if (rv == QSE_NULL) 
 		{
 			ret = -1;

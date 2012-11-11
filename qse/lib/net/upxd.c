@@ -226,7 +226,8 @@ static qse_upxd_server_session_t* find_server_session (
 	session->inner.client = *from;
 
 	/* set the default dormancy */
-	session->inner.config.dormancy = QSE_UPXD_SESSION_DORMANCY;
+	session->inner.config.dormancy.sec = QSE_UPXD_SESSION_DORMANCY;
+	session->inner.config.dormancy.nsec = 0;
 
 	/* call the configurationc callback for configuration data */
 	if (upxd->cbs->session.config (upxd, &session->inner) <= -1)
@@ -455,9 +456,9 @@ static QSE_INLINE void purge_idle_sessions_in_server (
 	{
 		next = session->next;
 
-		if (session->inner.config.dormancy > 0 &&
-		    now > session->modified &&
-		    now - session->modified > session->inner.config.dormancy)
+		if (session->inner.config.dormancy.sec > 0 &&
+		    now.sec > session->modified.sec &&
+		    now.sec - session->modified.sec > session->inner.config.dormancy.sec)
 		{
 			release_session (upxd, session);
 		}

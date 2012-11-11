@@ -258,7 +258,7 @@ int qse_fio_init (
 		}
 
 		qse_gettime (&now);
-		temp_no += (now & 0xFFFFFFFFlu);
+		temp_no += (now.sec & 0xFFFFFFFFlu);
 
 		temp_tries = 0;
 		temp_ptr -= 4;

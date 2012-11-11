@@ -124,7 +124,7 @@ AC_CHECK_FUNCS([utime utimes])
 AC_CHECK_FUNCS([sysconf])
 AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
-AC_CHECK_FUNCS([fork vfork posix_spawn gettid])
+AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
 AC_CHECK_FUNCS([if_nametoindex if_indextoname])
 
@@ -243,7 +243,9 @@ AM_CONDITIONAL(HAVE_LIBUCI, test "${ac_cv_lib_uci_uci_alloc_context}" = "yes" -a
 AC_STRUCT_DIRENT_D_TYPE
 AC_CHECK_MEMBERS([struct stat.st_birthtime])
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
+AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 
 dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char,,[[]])

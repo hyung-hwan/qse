@@ -373,23 +373,54 @@ static int fnc_getegid (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_long_t lv;
+	qse_flt_t fv;
 	qse_awk_val_t* retv;
 	int rx;
 
-	rx = qse_awk_rtx_valtolong (
-		rtx, qse_awk_rtx_getarg (rtx, 0), &lv);
-	if (rx >= 0)
+	rx = qse_awk_rtx_valtonum (rtx, qse_awk_rtx_getarg (rtx, 0), &lv, &fv);
+	if (rx == 0)
 	{
 #if defined(_WIN32)
-		Sleep ((DWORD)(lv * 1000));
+		Sleep ((DWORD)QSE_SEC_TO_MSEC(lv));
 		rx = 0;
 #elif defined(__OS2__)
-		DosSleep ((ULONG)(lv * 1000));
+		DosSleep ((ULONG)(QSE_SEC_TO_MSEC(lv));
 		rx = 0;
 #elif defined(__DOS__)
 		rx = sleep (lv);	
+#elif defined(HAVE_NANOSLEEP)
+		struct timespec req;
+		req.tv_sec = lv;
+		req.tv_nsec = 0;
+		rx = nanosleep (&req, QSE_NULL);
 #else
 		rx = sleep (lv);	
+#endif
+	}
+	else if (rx >= 1)
+	{
+#if defined(_WIN32)
+		Sleep ((DWORD)QSE_SEC_TO_MSEC(fv));
+		rx = 0;
+#elif defined(__OS2__)
+		DosSleep ((ULONG)QSE_SEC_TO_MSEC(fv));
+		rx = 0;
+#elif defined(__DOS__)
+		/* no high-resolution sleep() is available */
+		rx = sleep ((qse_long_t)fv);	
+#elif defined(HAVE_NANOSLEEP)
+		struct timespec req;
+		req.tv_sec = (qse_long_t)fv;
+		req.tv_nsec = QSE_SEC_TO_NSEC(fv - req.tv_sec);
+		rx = nanosleep (&req, QSE_NULL);
+#elif defined(HAVE_SELECT)
+		struct timeval req;
+		req.tv_sec = (qse_long_t)fv;
+		req.tv_nsec = QSE_SEC_TO_USEC(fv - req.tv_sec);
+		rx = select (0, QSE_NULL, QSE_NULL, QSE_NULL, &req);
+#else
+		/* no high-resolution sleep() is available */
+		rx = sleep ((qse_long_t)fv);	
 #endif
 	}
 
@@ -405,9 +436,9 @@ static int fnc_gettime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	qse_awk_val_t* retv;
 	qse_ntime_t now;
 
-	if (qse_gettime (&now) <= -1) now = 0;
+	if (qse_gettime (&now) <= -1) now.sec = 0;
 
-	retv = qse_awk_rtx_makeintval (rtx, now);
+	retv = qse_awk_rtx_makeintval (rtx, now.sec);
 	if (retv == QSE_NULL) return -1;
 
 	qse_awk_rtx_setretval (rtx, retv);
@@ -417,11 +448,13 @@ static int fnc_gettime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static int fnc_settime (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	qse_awk_val_t* retv;
-	qse_long_t now;
+	qse_ntime_t now;
 	int rx;
 
-	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &now) <= -1 ||
-	    qse_settime (now) <= -1) rx = -1;
+	now.nsec = 0;
+
+	if (qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &now.sec) <= -1 ||
+	    qse_settime (&now) <= -1) rx = -1;
 	else rx = 0;
 
 	retv = qse_awk_rtx_makeintval (rtx, rx);

@@ -80,7 +80,7 @@ struct qse_upxd_session_t
 		/** binding device for peer socket */
 		qse_char_t         dev[QSE_UPXD_SESSION_DEV_LEN + 1];
 
-#define QSE_UPXD_SESSION_DORMANCY (30000)
+#define QSE_UPXD_SESSION_DORMANCY (30)
 		/** session's idle-timeout */
 		qse_ntime_t        dormancy;
 	} config;

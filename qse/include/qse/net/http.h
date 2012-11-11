@@ -190,7 +190,7 @@ QSE_EXPORT int qse_parsehttptime (
 );
 
 QSE_EXPORT qse_mchar_t* qse_fmthttptime (
-	qse_ntime_t        nt,
+	const qse_ntime_t* nt,
 	qse_mchar_t*       buf,
 	qse_size_t         bufsz
 );
