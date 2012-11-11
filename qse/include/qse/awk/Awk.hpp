@@ -648,6 +648,7 @@ public:
 
 		int getInt (long_t* v) const;
 		int getFlt (flt_t* v) const;
+		int getNum (long_t* lv, flt_t* fv) const;
 		int getStr (const char_t** str, size_t* len) const;
 
 		int setVal (val_t* v);

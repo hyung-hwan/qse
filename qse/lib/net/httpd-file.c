@@ -222,7 +222,9 @@ static QSE_INLINE int task_main_file (
 		qse_fmtuintmaxtombs (tmp[2], QSE_COUNTOF(tmp[2]), file->range.to, 10, -1, QSE_MT('\0'), QSE_NULL);
 		qse_fmtuintmaxtombs (tmp[3], QSE_COUNTOF(tmp[3]), st.size, 10, -1, QSE_MT('\0'), QSE_NULL);
 
-		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime.sec, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag), st.mtime.nsec, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
@@ -258,7 +260,9 @@ static QSE_INLINE int task_main_file (
 		qse_mchar_t etag[ETAG_LEN_MAX + 1];
 		qse_size_t etag_len;
 
-		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag_len = qse_fmtuintmaxtombs (&etag[0], QSE_COUNTOF(etag), st.mtime.sec, 16, -1, QSE_MT('\0'), QSE_NULL);
+		etag[etag_len++] = QSE_MT('-');
+		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag), st.mtime.nsec, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.size, 16, -1, QSE_MT('\0'), QSE_NULL);
 		etag[etag_len++] = QSE_MT('-');
@@ -267,7 +271,7 @@ static QSE_INLINE int task_main_file (
 		etag_len += qse_fmtuintmaxtombs (&etag[etag_len], QSE_COUNTOF(etag) - etag_len, st.dev, 16, -1, QSE_MT('\0'), QSE_NULL);
 
 		if ((file->if_none_match[0] != QSE_MT('\0') && qse_mbscmp (etag, file->if_none_match) == 0) ||
-		    (file->if_modified_since > 0 && QSE_MSEC_TO_SEC(st.mtime) <= QSE_MSEC_TO_SEC(file->if_modified_since))) 
+		    (file->if_modified_since.sec > 0 && st.mtime.sec <= file->if_modified_since.sec)) 
 		{
 			/* i've converted milliseconds to seconds before timestamp comparison
 			 * because st.mtime has the actual milliseconds less than 1 second
@@ -368,7 +372,10 @@ qse_httpd_task_t* qse_httpd_entaskfile (
 		{
 			while (tmp->next) tmp = tmp->next; /* get the last value */
 			if (qse_parsehttptime (tmp->ptr, &data.if_modified_since) <= -1)
-				data.if_modified_since = 0;
+			{
+				data.if_modified_since.sec = 0;
+				data.if_modified_since.nsec = 0;
+			}
 		}
 	}
 	

@@ -765,7 +765,10 @@ qse_printf (QSE_T("ERROR: mute client got no more task [%d] failed...\n"), (int)
 	{
 		/* the task is invoked for triggers. 
 		 * check if the client handle is writable */
-		if (httpd->scb->mux.writable (httpd, client->handle, 0) <= 0) 
+		qse_ntime_t tmout;
+		tmout.sec = 0;
+		tmout.nsec = 0;
+		if (httpd->scb->mux.writable (httpd, client->handle, &tmout) <= 0) 
 		{
 			/* it is not writable yet. so just skip 
 			 * performing the actual task */
@@ -1029,10 +1032,10 @@ static void purge_idle_clients (qse_httpd_t* httpd)
 	while (client)
 	{
 		next_client = client->next;
-		if (now <= client->last_active) break;
-		if (now - client->last_active < 30000) break; /* TODO: make this time configurable... */
+		if (now.sec <= client->last_active.sec) break;
+		if (now.sec - client->last_active.sec < 30) break; /* TODO: make this time configurable... */
 
-qse_printf (QSE_T("PURGING IDLE CLIENT XXXXXXXXXXXXXX %d\n"), (int)(now - client->last_active));
+qse_printf (QSE_T("PURGING IDLE CLIENT XXXXXXXXXXXXXX %d\n"), (int)(now.sec - client->last_active.sec));
 		purge_client (httpd, client);
 		client = next_client;
 	}
@@ -1087,7 +1090,7 @@ static int dispatch_mux (
 		perform_client_task (httpd, mux, handle, mask, cbarg);
 }
 
-int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, qse_ntime_t timeout)
+int qse_httpd_loop (qse_httpd_t* httpd, qse_httpd_scb_t* scb, qse_httpd_rcb_t* rcb, const qse_ntime_t* tmout)
 {
 	QSE_ASSERTX (httpd->server.list.head != QSE_NULL,
 		"Add listeners before calling qse_httpd_loop()");	
@@ -1131,7 +1134,7 @@ qse_printf (QSE_T("no servers are active....\n"));
 	{
 		int count;
 
-		count = httpd->scb->mux.poll (httpd, httpd->mux, timeout);
+		count = httpd->scb->mux.poll (httpd, httpd->mux, tmout);
 		if (count <= -1)
 		{
 			httpd->errnum = QSE_HTTPD_EIOMUX;
@@ -1184,10 +1187,14 @@ const qse_mchar_t* qse_httpd_fmtgmtimetobb (
 
 	if (nt == QSE_NULL) 
 	{
-		if (qse_gettime(&now) <= -1) now = 0;
+		if (qse_gettime(&now) <= -1) 
+		{
+			now.sec = 0;
+			now.nsec = 0;
+		}
 		nt = &now;
 	}
 
-	qse_fmthttptime (*nt, httpd->gtbuf[idx], QSE_COUNTOF(httpd->gtbuf[idx]));
+	qse_fmthttptime (nt, httpd->gtbuf[idx], QSE_COUNTOF(httpd->gtbuf[idx]));
 	return httpd->gtbuf[idx];
 }

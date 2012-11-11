@@ -112,8 +112,8 @@ int qse_mux_delete (
 );
 
 int qse_mux_poll (
-	qse_mux_t*  mux,
-	qse_ntime_t timeout
+	qse_mux_t*         mux,
+	const qse_ntime_t* tmout
 );
 
 #ifdef __cplusplus

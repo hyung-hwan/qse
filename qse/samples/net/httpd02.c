@@ -184,6 +184,7 @@ static qse_httpd_server_t* attach_server (
 static int httpd_main (int argc, qse_char_t* argv[])
 {
 	qse_httpd_t* httpd = QSE_NULL;
+	qse_ntime_t tmout;
 	int ret = -1, i;
 	static qse_httpd_server_cbstd_t cbstd = { makersrc, freersrc };
 
@@ -217,7 +218,10 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
-	ret = qse_httpd_loopstd (httpd, 10000);
+
+	tmout.sec = 10;
+	tmout.nsec = 0;
+	ret = qse_httpd_loopstd (httpd, &tmout);
 
 	signal (SIGINT, SIG_DFL);
 	signal (SIGPIPE, SIG_DFL);

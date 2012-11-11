@@ -160,7 +160,7 @@ int StdAwk::open ()
 
 	qse_ntime_t now;
 
-	this->seed = (qse_gettime(&now) <= -1)? 0u: (long_t)now;
+	this->seed = (qse_gettime(&now) <= -1)? 0u: ((long_t)now.sec + (long_t)now.nsec);
 	/* i don't care if the seed becomes negative or overflows.
 	 * i just convert the signed value to the unsigned one. */
 	this->prand = (qse_ulong_t)(this->seed * this->seed * this->seed);
@@ -368,7 +368,7 @@ int StdAwk::srand (Run& run, Value& ret, const Value* args, size_t nargs,
 	if (nargs <= 0)
 	{
 		this->seed = (qse_gettime (&now) <= -1)?
-			(this->seed * this->seed): (long_t)now;
+			(this->seed * this->seed): ((long_t)now.sec + (long_t)now.nsec);
 	}
 	else
 	{
@@ -478,16 +478,28 @@ int StdAwk::setioattr (
 	int tmout;
 	if ((tmout = timeout_code (ptr[1])) >= 0)
 	{
-		long_t tmout_val = args[2].toInt();
+		long_t lv;
+		flt_t fv;
+		int n;
 
-		if (tmout_val < QSE_TYPE_MIN(int) || 
-		    tmout_val > QSE_TYPE_MAX(int))
-			return ret.setInt ((long_t)-1);
-			
+		n = args[2].getNum(&lv, &fv);
+		if (n <= -1) return -1;
+
 		ioattr_t* ioattr = find_or_make_ioattr (ptr[0], l[0]);
 		if (ioattr == QSE_NULL) return -1;
 
-		ioattr->tmout[tmout] = tmout_val;
+		if (n == 0)
+		{
+			ioattr->tmout[tmout].sec = lv;
+			ioattr->tmout[tmout].nsec = 0;
+		}
+		else
+		{
+			qse_flt_t nsec;
+			ioattr->tmout[tmout].sec = (qse_long_t)fv;
+			nsec = fv - ioattr->tmout[tmout].sec;
+			ioattr->tmout[tmout].nsec = QSE_SEC_TO_NSEC(nsec);
+		}
 		return ret.setInt ((long_t)0);
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
@@ -541,7 +553,10 @@ int StdAwk::getioattr (
 	int tmout;
 	if ((tmout = timeout_code(ptr[1])) >= 0)
 	{
-		return ret.setInt ((long_t)ioattr->tmout[tmout]);
+		if (ioattr->tmout[tmout].nsec == 0)
+			return ret.setInt ((long_t)ioattr->tmout[tmout].sec);
+		else
+			return ret.setFlt ((qse_flt_t)ioattr->tmout[tmout].sec + QSE_NSEC_TO_SEC((qse_flt_t)ioattr->tmout[tmout].nsec));
 	}
 #if defined(QSE_CHAR_IS_WCHAR)
 	else if (qse_strcasecmp (ptr[1], QSE_T("codepage")) == 0)

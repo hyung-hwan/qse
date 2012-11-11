@@ -1015,9 +1015,9 @@ static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 	return 0;
 }
 
-static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
+static int mux_poll (qse_httpd_t* httpd, void* vmux, const qse_ntime_t* tmout)
 {
-	if (qse_mux_poll ((qse_mux_t*)vmux, timeout) <= -1)
+	if (qse_mux_poll ((qse_mux_t*)vmux, tmout) <= -1)
 	{
 /* TODO 
 		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
@@ -1028,15 +1028,15 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, qse_ntime_t timeout)
 	return 0;
 }
 
-static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
+static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
 	fd_set r;
 	struct timeval tv, * tvp;
 
-	if (msec >= 0)
+	if (tmout)
 	{
-		tv.tv_sec = (msec / 1000);
-		tv.tv_usec = ((msec % 1000) * 1000);
+		tv.tv_sec = tmout->sec;
+		tv.tv_usec = tmout->nsec;
 		tvp = &tv;
 	}
 	else tvp = QSE_NULL;
@@ -1047,15 +1047,15 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
 	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp);
 }
 
-static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t msec)
+static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
 	fd_set w;
 	struct timeval tv, * tvp;
 
-	if (msec >= 0)
+	if (tmout)
 	{
-		tv.tv_sec = (msec / 1000);
-		tv.tv_usec = ((msec % 1000) * 1000);
+		tv.tv_sec = tmout->sec;
+		tv.tv_usec = tmout->nsec;
 		tvp = &tv;
 	}
 	else tvp = QSE_NULL;
@@ -1110,14 +1110,16 @@ static int stat_file (
 	hst->ino = st.st_ino;
 	hst->size = st.st_size;
 	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
-	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
+	hst->mtime.sec = st.st_mtim.tv_sec;
+	hst->mtime.nsec = st.st_mtim.tv_nsec;
 	#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
-	hst->mtime = QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
+	hst->mtime.sec = st.st_mtimespec.tv_sec;
+	hst->mtime.nsec = st.st_mtimespec.tv_nsec;
 	#else
-	hst->mtime = QSE_SEC_TO_MSEC(st.st_mtime);
+	hst->mtime.sec = st.st_mtime;
+	hst->mtime.nsec = 0;
 	#endif
 
-qse_printf (QSE_T("mtime => %ld %ld\n"), (long)st.st_mtime, (long)hst->mtime);
 	return 0;
 #endif
 }
@@ -1790,7 +1792,7 @@ static int format_dir (
 			return -1;
 		}
 
-		qse_localtime (dirent->stat.mtime, &bt);
+		qse_localtime (&dirent->stat.mtime, &bt);
 		snprintf (tmbuf, QSE_COUNTOF(tmbuf),
 			QSE_MT("%04d-%02d-%02d %02d:%02d:%02d"),
          		bt.year + QSE_BTIME_YEAR_BASE, bt.mon + 1, bt.mday,
@@ -2431,9 +2433,9 @@ void* qse_httpd_getserverxtnstd (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 /* ------------------------------------------------------------------- */
 
-int qse_httpd_loopstd (qse_httpd_t* httpd, qse_ntime_t timeout)
+int qse_httpd_loopstd (qse_httpd_t* httpd, const qse_ntime_t* tmout)
 {
 	return qse_httpd_loop (
 		httpd, &httpd_system_callbacks,
-		&httpd_request_callbacks, timeout);	
+		&httpd_request_callbacks, tmout);	
 }

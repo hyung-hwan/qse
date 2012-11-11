@@ -29,6 +29,7 @@
 #include <qse/macros.h>
 #include <qse/cmn/tio.h>
 #include <qse/cmn/nwad.h>
+#include <qse/cmn/time.h>
 
 enum qse_nwio_flag_t
 {
@@ -74,7 +75,7 @@ typedef enum qse_nwio_errnum_t qse_nwio_errnum_t;
 
 struct qse_nwio_tmout_t 
 {
-	int r, w, c, a;
+	qse_ntime_t r, w, c, a;
 };
 
 typedef struct qse_nwio_tmout_t qse_nwio_tmout_t;

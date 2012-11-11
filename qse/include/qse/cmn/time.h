@@ -55,42 +55,44 @@
 #define QSE_NSECS_PER_USEC (1000)
 #define QSE_NSECS_PER_MSEC (QSE_NSECS_PER_USEC*QSE_USECS_PER_MSEC)
 #define QSE_USECS_PER_SEC  (QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
+#define QSE_NSECS_PER_SEC  (QSE_NSECS_PER_USEC*QSE_USECS_PER_MSEC*QSE_MSECS_PER_SEC)
 
 #define QSE_IS_LEAPYEAR(year) ((!((year)%4) && ((year)%100)) || !((year)%400))
 #define QSE_DAYS_PER_YEAR(year) \
 	(QSE_IS_LEAPYEAR(year)? QSE_DAYS_PER_LEAPYEAR: QSE_DAYS_PER_NORMYEAR)
 
 #define QSE_SECNSEC_TO_MSEC(sec,nsec) \
-	(((qse_ntime_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_ntime_t)(nsec) / QSE_NSECS_PER_MSEC))
+	(((qse_long_t)(sec) * QSE_MSECS_PER_SEC) + ((qse_long_t)(nsec) / QSE_NSECS_PER_MSEC))
 
 #define QSE_SEC_TO_MSEC(sec) ((sec) * QSE_MSECS_PER_SEC)
 #define QSE_MSEC_TO_SEC(sec) ((sec) / QSE_MSECS_PER_SEC)
+
+#define QSE_USEC_TO_NSEC(usec) ((usec) * QSE_NSECS_PER_USEC)
+#define QSE_NSEC_TO_USEC(nsec) ((nsec) / QSE_NSECS_PER_USEC)
+
+#define QSE_MSEC_TO_NSEC(msec) ((msec) * QSE_NSECS_PER_MSEC)
+#define QSE_NSEC_TO_MSEC(nsec) ((nsec) / QSE_NSECS_PER_MSEC)
+
+#define QSE_SEC_TO_NSEC(sec) ((sec) * QSE_NSECS_PER_SEC)
+#define QSE_NSEC_TO_SEC(nsec) ((nsec) / QSE_NSECS_PER_SEC)
+
+#define QSE_SEC_TO_USEC(sec) ((sec) * QSE_USECS_PER_SEC)
+#define QSE_USEC_TO_SEC(usec) ((usec) / QSE_USECS_PER_SEC)
 
 /**
  * The qse_ntime_t type defines a numeric time type expressed in the 
  *  number of milliseconds since the Epoch (00:00:00 UTC, Jan 1, 1970).
  */
-typedef qse_long_t qse_ntime_t;
-
-/**
- * The qse_ntprd_t type represents a time period between two time points.
- * This is period is defined to be unsigned since a time point is signed.
- */
-typedef qse_ulong_t qse_ntprd_t;
-
-/**
- * The qse_ntoff_t type represents the amount of increment or decrement
- * from a certain time point. It is defined to be type-compatible with
- * #qse_ntime_t and expresses that you're dealing with time offset or amount, 
- * not an absolute time point.
- */
-typedef qse_ntime_t qse_ntoff_t;
+typedef struct qse_ntime_t qse_ntime_t;
+struct qse_ntime_t
+{
+	qse_long_t  sec;
+	qse_int32_t nsec; /* nanoseconds */
+};
 
 typedef struct qse_btime_t qse_btime_t;
-
 struct qse_btime_t
 {
-	int msec; /* 0-999 */
 	int sec;  /* 0-61 */
 	int min;  /* 0-59 */
 	int hour; /* 0-23 */
@@ -118,7 +120,7 @@ int qse_gettime (
  * The qse_settime() function sets the current time.
  */
 int qse_settime (
-	qse_ntime_t nt
+	const qse_ntime_t* nt
 );
 
 
@@ -126,16 +128,16 @@ int qse_settime (
  * The qse_gmtime() function converts numeric time to broken-down time.
  */
 int qse_gmtime (
-	qse_ntime_t  nt, 
-	qse_btime_t* bt
+	const qse_ntime_t*  nt, 
+	qse_btime_t*        bt
 );
 
 /**
  * The qse_localtime() converts numeric time to broken-down time 
  */
 int qse_localtime (
-	qse_ntime_t  nt, 
-	qse_btime_t* bt
+	const qse_ntime_t*  nt, 
+	qse_btime_t*        bt
 ); 
 
 /**
@@ -155,16 +157,6 @@ int qse_timegm (
 int qse_timelocal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
-);
-
-/**
- * The qse_strftime() functions formats time.
- */
-qse_size_t qse_strftime (
-	qse_char_t*       buf, 
-	qse_size_t        size, 
-	const qse_char_t* fmt,
-	qse_btime_t*      bt
 );
 
 #ifdef __cplusplus

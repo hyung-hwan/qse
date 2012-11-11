@@ -368,10 +368,11 @@ static int set_entry_name (qse_fs_t* fs, const qse_mchar_t* name)
 }
 
 #if defined(_WIN32)
-static QSE_INLINE qse_ntime_t filetime_to_ntime (const FILETIME* ft)
+static QSE_INLINE void filetime_to_ntime (const FILETIME* ft, qse_ntime_t* nt)
 {
 	/* reverse of http://support.microsoft.com/kb/167296/en-us */
 	ULARGE_INTEGER li;
+
 	li.LowPart = ft->dwLowDateTime;
 	li.HighPart = ft->dwHighDateTime;
 
@@ -383,9 +384,12 @@ static QSE_INLINE qse_ntime_t filetime_to_ntime (const FILETIME* ft)
 #	error Unsupported 64bit integer type
 #endif
 	/*li.QuadPart /= 10000000;*/
-	li.QuadPart /= 10000;
+	/*li.QuadPart /= 10000;
+	return li.QuadPart;*/
 
-	return li.QuadPart;
+	/* li.QuadPart is in the 100-nanosecond intervals */
+	nt->sec =  li.QuadPart / (QSE_NSECS_PER_SEC / 100);
+	nt->nsec = (li.QuadPart % (QSE_NSECS_PER_SEC / 100)) * 100;
 }
 #endif
 
@@ -511,9 +515,9 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 
 	if (flags & QSE_FS_ENT_TIME)
 	{
-		fs->ent.time.create = filetime_to_ntime (&info->wfd.ftCreationTime);
-		fs->ent.time.access = filetime_to_ntime (&info->wfd.ftLastAccessTime);
-		fs->ent.time.modify = filetime_to_ntime (&info->wfd.ftLastWriteTime);
+		filetime_to_ntime (&info->wfd.ftCreationTime, &fs->ent.time.create);
+		filetime_to_ntime (&info->wfd.ftLastAccessTime, &fs->ent.time.access);
+		filetime_to_ntime (&info->wfd.ftLastWriteTime, &fs->ent.time.modify);
 		fs->ent.type |= QSE_FS_ENT_TIME;
 	}
 
@@ -642,34 +646,36 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 	if (flags & QSE_FS_ENT_TIME)
 	{
 	#if defined(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)
-		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
-		fs->ent.time.create = 
-			QSE_SECNSEC_TO_MSEC(st.st_birthtim.tv_sec,st.st_birthtim.tv_nsec);
+		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIM_TV_NSEC)
+		fs->ent.time.create.secs = st.st_birthtim.tv_sec;
+		fs->ent.time.create.nsecs = st.st_birthtim.tv_nsec;
 		#endif
-		fs->ent.time.access = 
-			QSE_SECNSEC_TO_MSEC(st.st_atim.tv_sec,st.st_atim.tv_nsec);
-		fs->ent.time.modify = 
-			QSE_SECNSEC_TO_MSEC(st.st_mtim.tv_sec,st.st_mtim.tv_nsec);
-		fs->ent.time.change =
-			QSE_SECNSEC_TO_MSEC(st.st_ctim.tv_sec,st.st_ctim.tv_nsec);
+
+		fs->ent.time.access.sec = st.st_atim.tv_sec;
+		fs->ent.time.access.nsec = st.st_atim.tv_nsec;
+		fs->ent.time.modify.sec = st.st_mtim.tv_sec;
+		fs->ent.time.modify.nsec = st.st_mtim.tv_nsec;
+		fs->ent.time.change.sec = st.st_ctim.tv_sec;
+		fs->ent.time.change.nsec = st.st_ctim.tv_nsec;
 	#elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)
-		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
-		fs->ent.time.create = st.st_birthtime;
-			QSE_SECNSEC_TO_MSEC(st.st_birthtimespec.tv_sec,st.st_birthtimespec.tv_nsec);
+		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC)
+		fs->ent.time.create.sec = st.st_birthtimespec.tv_sec;
+		fs->ent.time.create.nsec = st.st_birthtimespec.tv_nsec;
 		#endif
-		fs->ent.time.access = 
-			QSE_SECNSEC_TO_MSEC(st.st_atimespec.tv_sec,st.st_atimespec.tv_nsec);
-		fs->ent.time.modify = 
-			QSE_SECNSEC_TO_MSEC(st.st_mtimespec.tv_sec,st.st_mtimespec.tv_nsec);
-		fs->ent.time.change =
-			QSE_SECNSEC_TO_MSEC(st.st_ctimespec.tv_sec,st.st_ctimespec.tv_nsec);
+
+		fs->ent.time.access.sec = st.st_atimspec.tv_sec;
+		fs->ent.time.access.nsec = st.st_atimspec.tv_nsec;
+		fs->ent.time.modify.sec = st.st_mtimspec.tv_sec;
+		fs->ent.time.modify.nsec = st.st_mtimspec.tv_nsec;
+		fs->ent.time.change.sec = st.st_ctimspec.tv_sec;
+		fs->ent.time.change.nsec = st.st_ctimspec.tv_nsec;
 	#else
 		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
-		fs->ent.time.create = st.st_birthtime * QSE_MSECS_PER_SEC;
+		fs->ent.time.create.sec = st.st_birthtime;
 		#endif
-		fs->ent.time.access = st.st_atime * QSE_MSECS_PER_SEC;
-		fs->ent.time.modify = st.st_mtime * QSE_MSECS_PER_SEC;
-		fs->ent.time.change = st.st_ctime * QSE_MSECS_PER_SEC;
+		fs->ent.time.access.sec = st.st_atime;
+		fs->ent.time.modify.sec = st.st_mtime;
+		fs->ent.time.change.sec = st.st_ctime;
 	#endif
 		fs->ent.flags |= QSE_FS_ENT_TIME;
 	}

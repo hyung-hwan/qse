@@ -23,6 +23,7 @@
 
 #include <qse/awk/Awk.hpp>
 #include <qse/cmn/StdMmgr.hpp>
+#include <qse/cmn/time.h>
 
 /// @file
 /// Standard AWK Interpreter
@@ -228,13 +229,16 @@ public:
 	{
 		qse_cmgr_t* cmgr;
 		char_t cmgr_name[64]; // i assume that the cmgr name never exceeds this length.
-		int tmout[4];
+		qse_ntime_t tmout[4];
 
 		ioattr_t (): cmgr (QSE_NULL)
 		{
 			this->cmgr_name[0] = QSE_T('\0');
 			for (size_t i = 0; i < QSE_COUNTOF(this->tmout); i++)
-				this->tmout[i] = -999;
+			{
+				this->tmout[i].sec = -999;
+				this->tmout[i].nsec = 0;
+			}
 		}
 	};
 

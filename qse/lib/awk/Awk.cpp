@@ -377,7 +377,7 @@ Awk::Value::operator const Awk::char_t* () const
 {
 	const Awk::char_t* ptr;
 	size_t len;
-	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = QSE_T("");
+	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = EMPTY_STRING;
 	return ptr;
 }
 
@@ -385,16 +385,14 @@ int Awk::Value::getInt (long_t* v) const
 {
 	long_t lv = 0;
 
-	QSE_ASSERT (val != QSE_NULL);
+	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (run != QSE_NULL && 
-	    val->type != QSE_AWK_VAL_NIL &&
-	    val->type != QSE_AWK_VAL_MAP)
+	if (run != QSE_NULL)
 	{
-		int n = qse_awk_rtx_valtolong (run->rtx, val, &lv);
+		int n = qse_awk_rtx_valtolong (this->run->rtx, this->val, &lv);
 		if (n <= -1) 
 		{
-			run->awk->retrieveError (run);
+			run->awk->retrieveError (this->run);
 			return -1;
 		}
 	}
@@ -407,16 +405,14 @@ int Awk::Value::getFlt (flt_t* v) const
 {
 	flt_t rv = 0;
 
-	QSE_ASSERT (val != QSE_NULL);
+	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (run != QSE_NULL && 
-	    val->type != QSE_AWK_VAL_NIL &&
-	    val->type != QSE_AWK_VAL_MAP)
+	if (this->run)
 	{
-		int n = qse_awk_rtx_valtoflt (run->rtx, val, &rv);
+		int n = qse_awk_rtx_valtoflt (this->run->rtx, this->val, &rv);
 		if (n <= -1)
 		{
-			run->awk->retrieveError (run);
+			run->awk->retrieveError (this->run);
 			return -1;
 		}
 	}
@@ -425,21 +421,38 @@ int Awk::Value::getFlt (flt_t* v) const
 	return 0;
 }
 
+int Awk::Value::getNum (long_t* lv, flt_t* fv) const
+{
+	QSE_ASSERT (this->val != QSE_NULL);
+
+	if (this->run != QSE_NULL)
+	{
+		int n = qse_awk_rtx_valtonum (this->run->rtx, this->val, lv, fv);
+		if (n <= -1)
+		{
+			run->awk->retrieveError (this->run);
+			return -1;
+		}
+		return n;
+	}
+
+	*lv = 0;
+	return 0;
+}
+
 int Awk::Value::getStr (const char_t** str, size_t* len) const
 {
 	const char_t* p = EMPTY_STRING;
 	size_t l = 0;
 
-	QSE_ASSERT (val != QSE_NULL);
+	QSE_ASSERT (this->val != QSE_NULL);
 
-	if (run != QSE_NULL && 
-	    val->type != QSE_AWK_VAL_NIL &&
-	    val->type != QSE_AWK_VAL_MAP)
+	if (this->run != QSE_NULL)
 	{
-		if (val->type == QSE_AWK_VAL_STR)
+		if (this->val->type == QSE_AWK_VAL_STR)
 		{
-			p = ((qse_awk_val_str_t*)val)->val.ptr;
-			l = ((qse_awk_val_str_t*)val)->val.len;
+			p = ((qse_awk_val_str_t*)this->val)->val.ptr;
+			l = ((qse_awk_val_str_t*)this->val)->val.len;
 		}
 		else
 		{
@@ -447,9 +460,9 @@ int Awk::Value::getStr (const char_t** str, size_t* len) const
 			{
 				qse_awk_rtx_valtostr_out_t out;
 				out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
-				if (qse_awk_rtx_valtostr (run->rtx, val, &out) <= -1)
+				if (qse_awk_rtx_valtostr (this->run->rtx, this->val, &out) <= -1)
 				{
-					run->awk->retrieveError (run);
+					run->awk->retrieveError (this->run);
 					return -1;
 				}
 

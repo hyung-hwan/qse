@@ -137,12 +137,12 @@ struct qse_httpd_scb_t
 		void  (*close)  (qse_httpd_t* httpd, void* mux);
 		int   (*addhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle, int mask, void* cbarg);
 		int   (*delhnd) (qse_httpd_t* httpd, void* mux, qse_ubi_t handle);
-		int   (*poll)   (qse_httpd_t* httpd, void* mux, qse_ntime_t timeout);
+		int   (*poll)   (qse_httpd_t* httpd, void* mux, const qse_ntime_t* tmout);
 
 		int (*readable) (
-			qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+			qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
 		int (*writable) (
-			qse_httpd_t* httpd, qse_ubi_t handle, qse_ntoff_t timeout);
+			qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout);
 	} mux;
 
 	struct
@@ -580,10 +580,10 @@ QSE_EXPORT void qse_httpd_pushecb (
  * The qse_httpd_loop() function starts a httpd server loop.
  */
 QSE_EXPORT int qse_httpd_loop (
-	qse_httpd_t*     httpd, 
-	qse_httpd_scb_t* scb,
-	qse_httpd_rcb_t* rcb,
-	qse_ntime_t      timeout
+	qse_httpd_t*        httpd, 
+	qse_httpd_scb_t*    scb,
+	qse_httpd_rcb_t*    rcb,
+	const qse_ntime_t*  tmout
 );
 
 /**
@@ -845,7 +845,7 @@ QSE_EXPORT void* qse_httpd_getserverxtnstd (
 
 QSE_EXPORT int qse_httpd_loopstd (
 	qse_httpd_t*       httpd, 
-	qse_ntime_t        timeout
+	const qse_ntime_t* tmout
 );
 
 
