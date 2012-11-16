@@ -1331,7 +1331,7 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 	out.type = QSE_AWK_RTX_VALTOSTR_CPLDUP;
 	if (qse_awk_rtx_valtostr (rtx, v, &out) <= -1) return QSE_NULL;
 
-	wcs = qse_mbsntombsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
+	wcs = qse_mbsntowcsdup (out.u.cpldup.ptr, out.u.cpldup.len, len, rtx->awk->mmgr);
 	QSE_AWK_FREE (rtx->awk, out.u.cpldup.ptr);
 	return wcs;
 #else

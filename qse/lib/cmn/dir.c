@@ -104,6 +104,8 @@ void* qse_dir_getxtn (qse_dir_t* dir)
 
 int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
 {
+	int n;
+
 	QSE_MEMSET (dir, 0, QSE_SIZEOF(*dir));
 
 	dir->mmgr = mmgr;
@@ -120,7 +122,14 @@ int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int 
 	dir->h = INVALID_HANDLE_VALUE;
 #endif
 
-	return reset_to_path  (dir, path);
+	n = reset_to_path  (dir, path);
+	if (n <= -1)
+	{
+		qse_mbs_fini (&dir->mbuf);
+		qse_str_fini (&dir->tbuf);
+	}
+
+	return n;
 }
 
 static void close_dir_safely (qse_dir_t* dir)
@@ -384,6 +393,7 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		}
 	}
 	#endif 
+	if (dp == QSE_NULL) return -1;
 
 	dir->dp = dp;
 	return 0;
