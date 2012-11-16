@@ -49,7 +49,9 @@ libqsecmn_la_SOURCES = \
 	mem.c \
 	mux.c \
 	nwad.c \
+	nwad-skad.c \
 	nwif.c \
+	nwif-cfg.c \
 	nwio.c \
 	oht.c \
 	opt.c \

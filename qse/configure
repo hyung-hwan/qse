@@ -17307,7 +17307,7 @@ fi
 
 done
 
-for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h
+for ac_header in sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h sys/ioctl.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -17320,13 +17320,39 @@ fi
 
 done
 
-for ac_header in sys/ioctl.h net/if.h
+for ac_header in sys/socket.h sys/sockio.h ifaddrs.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in net/if.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "#include <sys/socket.h>
+"
+if test "x$ac_cv_header_net_if_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_NET_IF_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in net/if_dl.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "net/if_dl.h" "ac_cv_header_net_if_dl_h" "#include <sys/socket.h>
+"
+if test "x$ac_cv_header_net_if_dl_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_NET_IF_DL_H 1
 _ACEOF
 
 fi
@@ -17508,18 +17534,6 @@ _ACEOF
 fi
 done
 
-for ac_func in if_nametoindex if_indextoname
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
@@ -17672,6 +17686,22 @@ then
 	SOCKET_LIBS="$SOCKET_LIBS -lws2_32"
 fi
 
+
+OLDLIBS="$LIBS"
+LIBS="$SOCKET_LIBS $LIBS"
+for ac_func in if_nametoindex if_indextoname getifaddrs
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+LIBS="$OLDLIBS"
 
 for ac_func in sendfile sendfile64 sendfilev sendfilev64
 do :
@@ -18598,6 +18628,37 @@ _ACEOF
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_ifindex" "ac_cv_member_struct_ifreq_ifr_ifindex" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif
+"
+if test "x$ac_cv_member_struct_ifreq_ifr_ifindex" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_IFREQ_IFR_IFINDEX 1
+_ACEOF
+
+
+fi
+
+ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_mtu" "ac_cv_member_struct_ifreq_ifr_mtu" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif
+"
+if test "x$ac_cv_member_struct_ifreq_ifr_mtu" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_IFREQ_IFR_MTU 1
+_ACEOF
+
+
+fi
+
+
 # The cast to long int works around a bug in the HP C Compiler
 # version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
 # declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
@@ -19441,6 +19502,177 @@ _ACEOF
 
 
 
+if test "${platform_win32}" == "yes"
+then
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_in" >&5
+$as_echo_n "checking size of struct sockaddr_in... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_in+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_in))" "ac_cv_sizeof_struct_sockaddr_in"        "
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_in" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_in)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_in=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_in" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_in" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_IN $ac_cv_sizeof_struct_sockaddr_in
+_ACEOF
+
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_in6" >&5
+$as_echo_n "checking size of struct sockaddr_in6... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_in6+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_in6))" "ac_cv_sizeof_struct_sockaddr_in6"        "
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_in6" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_in6)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_in6=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_in6" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_in6" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_IN6 $ac_cv_sizeof_struct_sockaddr_in6
+_ACEOF
+
+
+else
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_in" >&5
+$as_echo_n "checking size of struct sockaddr_in... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_in+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_in))" "ac_cv_sizeof_struct_sockaddr_in"        "
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_in" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_in)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_in=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_in" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_in" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_IN $ac_cv_sizeof_struct_sockaddr_in
+_ACEOF
+
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of struct sockaddr_in6" >&5
+$as_echo_n "checking size of struct sockaddr_in6... " >&6; }
+if ${ac_cv_sizeof_struct_sockaddr_in6+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (struct sockaddr_in6))" "ac_cv_sizeof_struct_sockaddr_in6"        "
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+"; then :
+
+else
+  if test "$ac_cv_type_struct_sockaddr_in6" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (struct sockaddr_in6)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_struct_sockaddr_in6=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_struct_sockaddr_in6" >&5
+$as_echo "$ac_cv_sizeof_struct_sockaddr_in6" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_STRUCT_SOCKADDR_IN6 $ac_cv_sizeof_struct_sockaddr_in6
+_ACEOF
+
+
+fi
+
+if test ${ac_cv_sizeof___int128_t} -gt 0
+then
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+__int128_t x = 0; x %= 10;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+else
+  ac_cv_sizeof___int128_t=0
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_SIZEOF_CHAR ${ac_cv_sizeof_char}
@@ -19546,6 +19778,17 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define QSE_MBLEN_MAX ${ax_cv_numvalof_MB_LEN_MAX}
+_ACEOF
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_STRUCT_SOCKADDR_IN ${ac_cv_sizeof_struct_sockaddr_in}
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 ${ac_cv_sizeof_struct_sockaddr_in6}
 _ACEOF
 
 

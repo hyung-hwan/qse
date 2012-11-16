@@ -167,8 +167,14 @@
 /* Define to 1 if you have the `gethostbyname' function. */
 #undef HAVE_GETHOSTBYNAME
 
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
 /* Define to 1 if you have the `gettid' function. */
 #undef HAVE_GETTID
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
 
 /* Define to 1 if you have the `if_indextoname' function. */
 #undef HAVE_IF_INDEXTONAME
@@ -253,6 +259,9 @@
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
+
+/* Define to 1 if you have the <net/if_dl.h> header file. */
+#undef HAVE_NET_IF_DL_H
 
 /* Define to 1 if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
@@ -377,6 +386,12 @@
 /* Define to 1 if `d_type' is a member of `struct dirent'. */
 #undef HAVE_STRUCT_DIRENT_D_TYPE
 
+/* Define to 1 if `ifr_ifindex' is a member of `struct ifreq'. */
+#undef HAVE_STRUCT_IFREQ_IFR_IFINDEX
+
+/* Define to 1 if `ifr_mtu' is a member of `struct ifreq'. */
+#undef HAVE_STRUCT_IFREQ_IFR_MTU
+
 /* Define to 1 if `st_birthtime' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIME
 
@@ -420,6 +435,12 @@
 
 /* Define to 1 if you have the <sys/sendfile.h> header file. */
 #undef HAVE_SYS_SENDFILE_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -643,6 +664,12 @@
 /* sizeof(short) */
 #undef QSE_SIZEOF_SHORT
 
+/* sizeof(struct sockaddr_in) */
+#undef QSE_SIZEOF_STRUCT_SOCKADDR_IN
+
+/* sizeof(struct sockaddr_in6) */
+#undef QSE_SIZEOF_STRUCT_SOCKADDR_IN6
+
 /* sizeof(void*) */
 #undef QSE_SIZEOF_VOID_P
 
@@ -705,6 +732,12 @@
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
+
+/* The size of `struct sockaddr_in', as computed by sizeof. */
+#undef SIZEOF_STRUCT_SOCKADDR_IN
+
+/* The size of `struct sockaddr_in6', as computed by sizeof. */
+#undef SIZEOF_STRUCT_SOCKADDR_IN6
 
 /* The size of `void *', as computed by sizeof. */
 #undef SIZEOF_VOID_P

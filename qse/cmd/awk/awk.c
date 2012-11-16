@@ -489,6 +489,7 @@ static int expand_wildcard (int argc, qse_char_t* argv[], int glob, xarg_t* xarg
 		if (glob)
 		{
 			x = qse_glob (argv[i], collect_into_xarg, xarg, 
+				QSE_GLOB_TOLERANT |
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 				QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE, 
 #else
@@ -816,7 +817,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		/* the remaining arguments are input console file names */
 		if (expand_wildcard (argc - opt.ind,  &argv[opt.ind], do_glob, &arg->icf) <= -1)
 		{
-			print_error (QSE_T("out of memory\n"));
+			print_error (QSE_T("failed to expand wildcard\n"));
 			goto oops;
 		}
 	}

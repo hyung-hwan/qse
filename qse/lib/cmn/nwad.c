@@ -440,7 +440,7 @@ qse_size_t qse_nwadtombs (
 					if (xlen + 1 >= len) goto done;
 
 					tmp = qse_nwifindextombs (nwad->u.in6.scope, &buf[xlen], len - xlen);
-					if (tmp <= 0)
+					if (tmp <= -1)
 					{
 						xlen += qse_fmtuintmaxtombs (
 							&buf[xlen], len - xlen, 
@@ -547,7 +547,7 @@ qse_size_t qse_nwadtowcs (
 					if (xlen + 1 >= len) goto done;
 
 					tmp = qse_nwifindextowcs (nwad->u.in6.scope, &buf[xlen], len - xlen);
-					if (tmp <= 0)
+					if (tmp <= -1)
 					{
 						xlen += qse_fmtuintmaxtowcs (
 							&buf[xlen], len - xlen, 

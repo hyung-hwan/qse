@@ -55,62 +55,7 @@ static qse_ssize_t socket_output (
 static qse_ssize_t socket_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
 
-#if defined(AF_INET)
-union sockaddr_t
-{
-	struct sockaddr_in in4;
-#if defined(AF_INET6) && !defined(__OS2__)
-	struct sockaddr_in6 in6;
-#endif
-};
-#endif
-
 #define TMOUT_ENABLED(tmout) (tmout.sec >= 0 && tmout.nsec >= 0)
-
-static int nwad_to_sockaddr (const qse_nwad_t* nwad, int* family, void* addr)
-{
-	int addrsize = -1;
-
-	switch (nwad->type)
-	{
-		case QSE_NWAD_IN4:
-		{
-#if defined(AF_INET)
-			struct sockaddr_in* in; 
-
-			in = (struct sockaddr_in*)addr;
-			addrsize = QSE_SIZEOF(*in);
-			QSE_MEMSET (in, 0, addrsize);
-
-			*family = AF_INET;
-			in->sin_family = AF_INET;
-			in->sin_addr.s_addr = nwad->u.in4.addr.value;
-			in->sin_port = nwad->u.in4.port;
-#endif
-			break;
-		}
-
-		case QSE_NWAD_IN6:
-		{
-#if defined(AF_INET6) && !defined(__OS2__)
-			struct sockaddr_in6* in; 
-
-			in = (struct sockaddr_in6*)addr;
-			addrsize = QSE_SIZEOF(*in);
-			QSE_MEMSET (in, 0, addrsize);
-
-			*family = AF_INET6;
-			in->sin6_family = AF_INET6;
-			memcpy (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
-			in->sin6_scope_id = nwad->u.in6.scope;
-			in->sin6_port = nwad->u.in6.port;
-#endif
-			break;
-		}
-	}
-
-	return addrsize;
-}
 
 #if defined(_WIN32)
 static qse_nwio_errnum_t syserr_to_errnum (DWORD e)
@@ -361,16 +306,13 @@ int qse_nwio_init (
 	qse_nwio_t* nwio, qse_mmgr_t* mmgr, const qse_nwad_t* nwad, 
 	int flags, const qse_nwio_tmout_t* tmout)
 {
-#if defined(AF_INET)
-	union sockaddr_t addr;
-#endif
+	qse_skad_t addr;
 #if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
 #else
 	int addrlen;
 #endif
-	int family, type;
-	int tmp;
+	int family, type, tmp;
 
 	QSE_MEMSET (nwio, 0, QSE_SIZEOF(*nwio));
 	nwio->mmgr = mmgr;
@@ -385,8 +327,7 @@ int qse_nwio_init (
 		nwio->tmout.a.sec = -1;
 	}
 	
-#if defined(AF_INET)
-	tmp = nwad_to_sockaddr (nwad, &family, &addr);
+	tmp = qse_nwadtoskad (nwad, &addr);
 	if (tmp <= -1) 
 	{
 		nwio->errnum = QSE_NWIO_EINVAL;
@@ -394,6 +335,8 @@ int qse_nwio_init (
 	}
 	addrlen = tmp;
 
+
+#if defined(SOCK_STREAM) && defined(SOCK_DGRAM)
 	if (flags & QSE_NWIO_TCP) type = SOCK_STREAM;
 	else if (flags & QSE_NWIO_UDP) type = SOCK_DGRAM;
 	else
@@ -402,6 +345,8 @@ int qse_nwio_init (
 		nwio->errnum = QSE_NWIO_EINVAL;
 		return -1;
 	}
+
+	family = qse_skadfamily (&addr);
 
 #if defined(_WIN32)
 	nwio->handle = socket (family, type, 0);
@@ -703,10 +648,12 @@ int qse_nwio_init (
 	}
 	else
 	{
-		int orgfl, xret;
+		int xret;
 		
 		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
 		{
+			int orgfl;
+
 			orgfl = fcntl (nwio->handle, F_GETFL, 0);
 			if (orgfl <= -1 ||
 			    fcntl (nwio->handle, F_SETFL, orgfl | O_NONBLOCK) <= -1)
@@ -714,12 +661,9 @@ int qse_nwio_init (
 				nwio->errnum = syserr_to_errnum (errno);
 				goto oops;
 			}
-		}
 		
-		xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
+			xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 		
-		if (TMOUT_ENABLED(nwio->tmout.c) && (flags & QSE_NWIO_TCP))
-		{
 			if ((xret <= -1 && errno != EINPROGRESS) ||
 			    fcntl (nwio->handle, F_SETFL, orgfl) <= -1) 
 			{
@@ -750,6 +694,7 @@ int qse_nwio_init (
 		}
 		else
 		{
+			xret = connect (nwio->handle, (struct sockaddr*)&addr, addrlen);
 			if (xret <= -1)
 			{	
 				nwio->errnum = syserr_to_errnum (errno);
@@ -907,7 +852,7 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 
 	if (nwio->status & STATUS_UDP_CONNECT)
 	{
-		union sockaddr_t addr;
+		qse_skad_t addr;
 		int addrlen;
 
 		addrlen = QSE_SIZEOF(addr);
@@ -951,7 +896,7 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 
 	if (nwio->status & STATUS_UDP_CONNECT)
 	{
-		union sockaddr_t addr;
+		qse_skad_t addr;
 		int addrlen;
 
 		addrlen = QSE_SIZEOF(addr);
@@ -1002,7 +947,7 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 reread:
 	if (nwio->status & STATUS_UDP_CONNECT)
 	{
-		union sockaddr_t addr;
+		qse_skad_t addr;
 #if defined(HAVE_SOCKLEN_T)
 		socklen_t addrlen;
 #else

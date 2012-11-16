@@ -101,8 +101,10 @@ dnl check header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
-AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h])
-AC_CHECK_HEADERS([sys/ioctl.h net/if.h])
+AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h sys/ioctl.h])
+AC_CHECK_HEADERS([sys/socket.h sys/sockio.h ifaddrs.h])
+AC_CHECK_HEADERS([net/if.h], [], [], [#include <sys/socket.h>])
+AC_CHECK_HEADERS([net/if_dl.h], [], [], [#include <sys/socket.h>])
 AC_CHECK_HEADERS([uci.h])
 
 dnl check data types
@@ -126,7 +128,6 @@ AC_CHECK_FUNCS([backtrace backtrace_symbols])
 AC_CHECK_FUNCS([fdopendir])
 AC_CHECK_FUNCS([fork vfork posix_spawn gettid nanosleep select])
 AC_CHECK_FUNCS([makecontext swapcontext getcontext setcontext])
-AC_CHECK_FUNCS([if_nametoindex if_indextoname])
 
 OLDLIBS="$LIBS"
 LIBS="$LIBM $LIBS"
@@ -163,6 +164,11 @@ then
 	SOCKET_LIBS="$SOCKET_LIBS -lws2_32"
 fi
 AC_SUBST(SOCKET_LIBS)
+
+OLDLIBS="$LIBS"
+LIBS="$SOCKET_LIBS $LIBS"
+AC_CHECK_FUNCS([if_nametoindex if_indextoname getifaddrs])
+LIBS="$OLDLIBS"
 
 dnl check if sendfile and its variants exist in the standard c library
 dnl it inspects the existence of each missing function in the sendfile library.
@@ -247,6 +253,19 @@ AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 
+AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex], [], [],
+	[#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif])
+AC_CHECK_MEMBERS([struct ifreq.ifr_mtu], [], [],
+	[#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif])
+
 dnl check the size of primitive data types
 AC_CHECK_SIZEOF(char,,[[]])
 AC_CHECK_SIZEOF(short,,[[]])
@@ -277,6 +296,42 @@ AC_CHECK_SIZEOF(off64_t)
 AC_CHECK_SIZEOF(mbstate_t,,[#include <wchar.h>])
 AX_CHECK_NUMVALOF(MB_LEN_MAX,[32],[#include <limits.h>])
 
+if test "${platform_win32}" == "yes"
+then
+AC_CHECK_SIZEOF(struct sockaddr_in,,[
+	#include <winsock2.h>
+	#include <ws2tcpip.h>])
+AC_CHECK_SIZEOF(struct sockaddr_in6,, [
+	#include <winsock2.h>
+	#include <ws2tcpip.h>])
+else
+AC_CHECK_SIZEOF(struct sockaddr_in,,[
+	#include <sys/socket.h>
+	#include <netinet/in.h>])
+AC_CHECK_SIZEOF(struct sockaddr_in6,, [
+	#include <sys/socket.h>
+	#include <netinet/in.h>])
+fi
+
+dnl gcc 3.4.3 on opensolaris x86 gave this warning without -msse or 
+dnl something similar.
+dnl    SSE vector argument without SSE enabled changes the ABI
+dnl it also ended with an internal compiler error while compiling 
+dnl some expressions like 'v % base' where v is of the __int128_t type.
+dnl so i've added this check to determine if the compiler has
+dnl proper support for __int128_t.
+dnl 
+dnl Changing ac_cv_sizeof___int128_t here doesn't corret SIZEOF___INT128_T
+dnl since it's already generated. It only affects QSE_SIZEOF___INT128_T below.
+if test ${ac_cv_sizeof___int128_t} -gt 0
+then
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM([], [__int128_t x = 0; x %= 10;])],
+		[],
+		[ac_cv_sizeof___int128_t=0]
+	)
+fi
+
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_CHAR, ${ac_cv_sizeof_char}, [sizeof(char)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_SHORT, ${ac_cv_sizeof_short}, [sizeof(short)])
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_INT, ${ac_cv_sizeof_int}, [sizeof(int)])
@@ -300,6 +355,9 @@ AC_DEFINE_UNQUOTED(QSE_SIZEOF_OFF64_T, ${ac_cv_sizeof_off64_t}, [sizeof(off64_t)
 
 AC_DEFINE_UNQUOTED(QSE_SIZEOF_MBSTATE_T, ${ac_cv_sizeof_mbstate_t}, [sizeof(mbstate_t)])
 AC_DEFINE_UNQUOTED(QSE_MBLEN_MAX, ${ax_cv_numvalof_MB_LEN_MAX}, [MB_LEN_MAX])
+
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN, ${ac_cv_sizeof_struct_sockaddr_in}, [sizeof(struct sockaddr_in)])
+AC_DEFINE_UNQUOTED(QSE_SIZEOF_STRUCT_SOCKADDR_IN6, ${ac_cv_sizeof_struct_sockaddr_in6}, [sizeof(struct sockaddr_in6)])
 
 qse_package_version_major="`echo ${PACKAGE_VERSION} | cut -d. -f1`"
 qse_package_version_minor="`echo ${PACKAGE_VERSION} | cut -d. -f2`"

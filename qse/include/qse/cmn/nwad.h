@@ -37,7 +37,6 @@ typedef struct qse_nwad_t qse_nwad_t;
 struct qse_nwad_t
 {
 	qse_nwad_type_t type;
-
 	union
 	{
 		struct
@@ -70,6 +69,21 @@ enum qse_nwadtostr_flag_t
 #define QSE_NWADTOWCS_ALL  QSE_NWADTOSTR_ALL
 };
 
+typedef struct qse_skad_t qse_skad_t;
+
+struct qse_skad_t
+{
+#if (QSE_SIZEOF_STRUCT_SOCKADDR_IN > 0) && \
+    (QSE_SIZEOF_STRUCT_SOCKADDR_IN >= QSE_SIZEOF_STRUCT_SOCKADDR_IN6)
+	qse_uint8_t data[QSE_SIZEOF_STRUCT_SOCKADDR_IN];
+#elif (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 > 0) && \
+      (QSE_SIZEOF_STRUCT_SOCKADDR_IN6 >= QSE_SIZEOF_STRUCT_SOCKADDR_IN)
+	qse_uint8_t data[QSE_SIZEOF_STRUCT_SOCKADDR_IN6];
+#else
+	/* no sockaddr_xxx is available */
+	qse_uint8_t data[QSE_SIZEOF(qse_nwad_t)];
+#endif
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,6 +139,20 @@ qse_size_t qse_nwadtowcs (
 #	define qse_strntonwad(ptr,len,nwad)      qse_wcsntonwad(ptr,len,nwad)
 #	define qse_nwadtostr(nwad,ptr,len,flags) qse_nwadtowcs(nwad,ptr,len,flags)
 #endif
+
+int qse_skadtonwad (
+	const qse_skad_t* skad,
+	qse_nwad_t*       nwad
+);
+
+int qse_nwadtoskad (
+	const qse_nwad_t* nwad,
+	qse_skad_t*       skad
+);
+
+int qse_skadfamily (
+	const qse_skad_t* skad
+);
 
 #ifdef __cplusplus
 }
