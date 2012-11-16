@@ -1477,7 +1477,7 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 	qse_mchar_t* mname;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	mname = name;
+	mname = (qse_mchar_t*)name;
 #else
 	mname = qse_wcstombsdup (name, QSE_NULL, this->getMmgr());
 	if (!mname)
