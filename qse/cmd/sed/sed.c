@@ -653,7 +653,12 @@ static int expand_wildcards (int argc, qse_char_t* argv[], int glob, xarg_t* xar
 		if (glob)
 		{
 			x = qse_glob (argv[i], collect_into_xarg, xarg, 
-				QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE, 
+				QSE_GLOB_TOLERANT |
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+				QSE_GLOB_NOESCAPE | QSE_GLOB_PERIOD | QSE_GLOB_IGNORECASE,
+#else
+				QSE_GLOB_PERIOD,
+#endif
 				xarg->mmgr
 			);
 

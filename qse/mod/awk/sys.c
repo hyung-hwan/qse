@@ -384,7 +384,7 @@ static int fnc_sleep (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		Sleep ((DWORD)QSE_SEC_TO_MSEC(lv));
 		rx = 0;
 #elif defined(__OS2__)
-		DosSleep ((ULONG)(QSE_SEC_TO_MSEC(lv));
+		DosSleep ((ULONG)QSE_SEC_TO_MSEC(lv));
 		rx = 0;
 #elif defined(__DOS__)
 		rx = sleep (lv);	

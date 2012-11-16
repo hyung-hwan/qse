@@ -38,11 +38,12 @@ bin_PROGRAMS = chr01$(EXEEXT) env$(EXEEXT) dll$(EXEEXT) fio01$(EXEEXT) \
 	fio02$(EXEEXT) fma$(EXEEXT) fmt01$(EXEEXT) fmt02$(EXEEXT) \
 	fs01$(EXEEXT) htb$(EXEEXT) glob01$(EXEEXT) ipad01$(EXEEXT) \
 	lda$(EXEEXT) main01$(EXEEXT) main02$(EXEEXT) mbwc01$(EXEEXT) \
-	mbwc02$(EXEEXT) nwad01$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) \
-	pio$(EXEEXT) pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) \
-	sio01$(EXEEXT) sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) \
-	slmb01$(EXEEXT) str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) \
-	tre01$(EXEEXT) uri01$(EXEEXT) xma$(EXEEXT)
+	mbwc02$(EXEEXT) nwad01$(EXEEXT) nwif01$(EXEEXT) \
+	nwif02$(EXEEXT) oht$(EXEEXT) path01$(EXEEXT) pio$(EXEEXT) \
+	pma$(EXEEXT) rex01$(EXEEXT) rbt$(EXEEXT) sio01$(EXEEXT) \
+	sio02$(EXEEXT) sio03$(EXEEXT) sll$(EXEEXT) slmb01$(EXEEXT) \
+	str01$(EXEEXT) task01$(EXEEXT) time$(EXEEXT) tre01$(EXEEXT) \
+	uri01$(EXEEXT) xma$(EXEEXT)
 @WCHAR_TRUE@@WIN32_TRUE@am__append_1 = $(UNICOWS_LIBS)
 subdir = samples/cmn
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -135,6 +136,14 @@ am_nwad01_OBJECTS = nwad01.$(OBJEXT)
 nwad01_OBJECTS = $(am_nwad01_OBJECTS)
 nwad01_LDADD = $(LDADD)
 nwad01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+nwif01_SOURCES = nwif01.c
+nwif01_OBJECTS = nwif01.$(OBJEXT)
+nwif01_LDADD = $(LDADD)
+nwif01_DEPENDENCIES = $(am__DEPENDENCIES_2)
+nwif02_SOURCES = nwif02.c
+nwif02_OBJECTS = nwif02.$(OBJEXT)
+nwif02_LDADD = $(LDADD)
+nwif02_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_oht_OBJECTS = oht.$(OBJEXT)
 oht_OBJECTS = $(am_oht_OBJECTS)
 oht_LDADD = $(LDADD)
@@ -221,23 +230,23 @@ SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
 	$(lda_SOURCES) $(main01_SOURCES) $(main02_SOURCES) \
-	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) task01.c $(time_SOURCES) \
-	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
+	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c \
+	nwif02.c $(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) \
+	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) task01.c \
+	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
 DIST_SOURCES = $(chr01_SOURCES) $(dll_SOURCES) $(env_SOURCES) \
 	$(fio01_SOURCES) $(fio02_SOURCES) $(fma_SOURCES) \
 	$(fmt01_SOURCES) $(fmt02_SOURCES) $(fs01_SOURCES) \
 	$(glob01_SOURCES) $(htb_SOURCES) $(ipad01_SOURCES) \
 	$(lda_SOURCES) $(main01_SOURCES) $(main02_SOURCES) \
-	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) \
-	$(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) $(pma_SOURCES) \
-	$(rbt_SOURCES) $(rex01_SOURCES) $(sio01_SOURCES) \
-	$(sio02_SOURCES) $(sio03_SOURCES) $(sll_SOURCES) \
-	$(slmb01_SOURCES) $(str01_SOURCES) task01.c $(time_SOURCES) \
-	$(tre01_SOURCES) uri01.c $(xma_SOURCES)
+	$(mbwc01_SOURCES) $(mbwc02_SOURCES) $(nwad01_SOURCES) nwif01.c \
+	nwif02.c $(oht_SOURCES) $(path01_SOURCES) $(pio_SOURCES) \
+	$(pma_SOURCES) $(rbt_SOURCES) $(rex01_SOURCES) \
+	$(sio01_SOURCES) $(sio02_SOURCES) $(sio03_SOURCES) \
+	$(sll_SOURCES) $(slmb01_SOURCES) $(str01_SOURCES) task01.c \
+	$(time_SOURCES) $(tre01_SOURCES) uri01.c $(xma_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -583,6 +592,12 @@ mbwc02$(EXEEXT): $(mbwc02_OBJECTS) $(mbwc02_DEPENDENCIES) $(EXTRA_mbwc02_DEPENDE
 nwad01$(EXEEXT): $(nwad01_OBJECTS) $(nwad01_DEPENDENCIES) $(EXTRA_nwad01_DEPENDENCIES) 
 	@rm -f nwad01$(EXEEXT)
 	$(LINK) $(nwad01_OBJECTS) $(nwad01_LDADD) $(LIBS)
+nwif01$(EXEEXT): $(nwif01_OBJECTS) $(nwif01_DEPENDENCIES) $(EXTRA_nwif01_DEPENDENCIES) 
+	@rm -f nwif01$(EXEEXT)
+	$(LINK) $(nwif01_OBJECTS) $(nwif01_LDADD) $(LIBS)
+nwif02$(EXEEXT): $(nwif02_OBJECTS) $(nwif02_DEPENDENCIES) $(EXTRA_nwif02_DEPENDENCIES) 
+	@rm -f nwif02$(EXEEXT)
+	$(LINK) $(nwif02_OBJECTS) $(nwif02_LDADD) $(LIBS)
 oht$(EXEEXT): $(oht_OBJECTS) $(oht_DEPENDENCIES) $(EXTRA_oht_DEPENDENCIES) 
 	@rm -f oht$(EXEEXT)
 	$(LINK) $(oht_OBJECTS) $(oht_LDADD) $(LIBS)
@@ -659,6 +674,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbwc02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwad01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif01.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nwif02.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oht.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/path01.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pio.Po@am__quote@

@@ -74,6 +74,7 @@ struct glob_t
 	void* cbctx;
 
 	qse_mmgr_t* mmgr;
+	int flags;
 
 	qse_str_t path;
 	qse_str_t tbuf; /* temporary buffer */
@@ -417,7 +418,11 @@ entry:
 				qse_str_setlen (&g->path, tmp2);
 
 				x = qse_dir_read (dp, &ent);
-				if (x <= -1) goto oops;
+				if (x <= -1) 
+				{
+					if (g->flags & QSE_GLOB_TOLERANT) break;
+					else goto oops;
+				}
 				if (x == 0) break;
 
 				if (qse_str_cat (&g->path, ent.name) == (qse_size_t)-1) goto oops;
@@ -545,6 +550,7 @@ int qse_glob (const qse_char_t* pattern, qse_glob_cbimpl_t cbimpl, void* cbctx, 
 	g.cbimpl = cbimpl;
 	g.cbctx = cbctx;
 	g.mmgr = mmgr;
+	g.flags = flags;
 
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	g.fnmat_flags |= QSE_STRFNMAT_IGNORECASE;

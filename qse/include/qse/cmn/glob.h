@@ -45,7 +45,10 @@ enum qse_glob_flags_t
 
 	/** Perform case-insensitive matching. 
 	 *  This option is always on in Win32/OS2/DOS. */
-	QSE_GLOB_IGNORECASE = (1 << 2)
+	QSE_GLOB_IGNORECASE = (1 << 2),
+
+	/** Make the function to be more fault-resistent */
+	QSE_GLOB_TOLERANT   = (1 << 3)
 };
 
 #ifdef __cplusplus

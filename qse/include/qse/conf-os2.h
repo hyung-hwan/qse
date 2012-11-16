@@ -59,6 +59,10 @@
 #	define QSE_MBLEN_MAX          8
 #
 #	define QSE_CHAR_IS_WCHAR
+#
+#	/* these two have only to be large enough */
+#	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
+#	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
 #else
 #	error Define the size of various data types.
 #endif

@@ -25,6 +25,8 @@ bin_PROGRAMS = \
 	mbwc01 \
 	mbwc02 \
 	nwad01 \
+	nwif01 \
+	nwif02 \
 	oht \
 	path01 \
 	pio \

@@ -436,107 +436,13 @@ void* qse_httpd_getxtnstd (qse_httpd_t* httpd)
 
 /* ------------------------------------------------------------------- */
 
-union sockaddr_t
-{
-	struct sockaddr_in in4;
-#if defined(AF_INET6)
-	struct sockaddr_in6 in6;
-#endif
-};
-
-typedef union sockaddr_t sockaddr_t;
-
-#define SOCKADDR_FAMILY(x) (((struct sockaddr_in*)(x))->sin_family)
-
-static int sockaddr_to_nwad (const sockaddr_t* addr, qse_nwad_t* nwad)
-{
-	int addrsize = -1;
-
-	switch (SOCKADDR_FAMILY(addr))
-	{
-		case AF_INET:
-		{
-			struct sockaddr_in* in;
-			in = (struct sockaddr_in*)addr;
-			addrsize = QSE_SIZEOF(*in);
-
-			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
-			nwad->type = QSE_NWAD_IN4;
-			nwad->u.in4.addr.value = in->sin_addr.s_addr;
-			nwad->u.in4.port = in->sin_port;
-			break;
-		}
-
-#if defined(AF_INET6)
-		case AF_INET6:
-		{
-			struct sockaddr_in6* in;
-			in = (struct sockaddr_in6*)addr;
-			addrsize = QSE_SIZEOF(*in);
-
-			QSE_MEMSET (nwad, 0, QSE_SIZEOF(*nwad));
-			nwad->type = QSE_NWAD_IN6;
-			QSE_MEMCPY (&nwad->u.in6.addr, &in->sin6_addr, QSE_SIZEOF(nwad->u.in6.addr));
-			nwad->u.in6.scope = in->sin6_scope_id;
-			nwad->u.in6.port = in->sin6_port;
-			break;
-		}
-#endif
-	}
-
-	return addrsize;
-}
-
-static int nwad_to_sockaddr (const qse_nwad_t* nwad, sockaddr_t* addr)
-{
-	int addrsize = -1;
-
-	switch (nwad->type)
-	{
-		case QSE_NWAD_IN4:
-		{
-			struct sockaddr_in* in;
-
-			in = (struct sockaddr_in*)addr;
-			addrsize = QSE_SIZEOF(*in);
-			QSE_MEMSET (in, 0, addrsize);
-
-			in->sin_family = AF_INET;
-			in->sin_addr.s_addr = nwad->u.in4.addr.value;
-			in->sin_port = nwad->u.in4.port;
-			break;
-		}
-
-		case QSE_NWAD_IN6:
-		{
-#if defined(AF_INET6)
-			struct sockaddr_in6* in;
-
-			in = (struct sockaddr_in6*)addr;
-			addrsize = QSE_SIZEOF(*in);
-			QSE_MEMSET (in, 0, addrsize);
-
-			in->sin6_family = AF_INET6;
-			QSE_MEMCPY (&in->sin6_addr, &nwad->u.in6.addr, QSE_SIZEOF(nwad->u.in6.addr));
-			in->sin6_scope_id = nwad->u.in6.scope;
-			in->sin6_port = nwad->u.in6.port;
-#endif
-			break;
-		}
-	}
-
-	return addrsize;
-}
-
-/* ------------------------------------------------------------------- */
-
 static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 {
 	int fd = -1, flag;
-	sockaddr_t addr;
+	qse_skad_t addr;
 	int addrsize;
 
-	addrsize = nwad_to_sockaddr (&server->nwad, &addr);
+	addrsize = qse_nwadtoskad (&server->nwad, &addr);
 	if (addrsize <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
@@ -667,7 +573,7 @@ static void server_close (qse_httpd_t* httpd, qse_httpd_server_t* server)
 static int server_accept (
 	qse_httpd_t* httpd, qse_httpd_server_t* server, qse_httpd_client_t* client)
 {
-	sockaddr_t addr;
+	qse_skad_t addr;
 
 #if defined(HAVE_SOCKLEN_T)
 	socklen_t addrlen;
@@ -704,7 +610,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 	if (flag >= 0) fcntl (fd, F_SETFL, flag | O_NONBLOCK);
 #endif
 
-	if (sockaddr_to_nwad (&addr, &client->remote_addr) <= -1)
+	if (qse_skadtonwad (&addr, &client->remote_addr) <= -1)
 	{
 /* TODO: logging */
 		client->remote_addr = server->nwad;
@@ -712,7 +618,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 
 	addrlen = QSE_SIZEOF(addr);
 	if (getsockname (fd, (struct sockaddr*)&addr, &addrlen) <= -1 ||
-	    sockaddr_to_nwad (&addr, &client->local_addr) <= -1)
+	    qse_skadtonwad (&addr, &client->local_addr) <= -1)
 	{
 /* TODO: logging */
 		client->local_addr = server->nwad;
@@ -725,7 +631,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 
 	addrlen = QSE_SIZEOF(addr);
 	if (getsockopt (fd, SOL_IP, SO_ORIGINAL_DST, (char*)&addr, &addrlen) <= -1 ||
-	    sockaddr_to_nwad (&addr, &client->orgdst_addr) <= -1)
+	    qse_skadtonwad (&addr, &client->orgdst_addr) <= -1)
 	{
 		client->orgdst_addr = client->local_addr;
 	}
@@ -751,7 +657,7 @@ qse_fprintf (QSE_STDERR, QSE_T("Error: too many client?\n"));
 
 static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 {
-	sockaddr_t connaddr, bindaddr;
+	qse_skad_t connaddr, bindaddr;
 	int connaddrsize, bindaddrsize;
 	int connected = 1;
 #if defined(_WIN32)
@@ -768,8 +674,8 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	int flag;
 #endif
 
-	connaddrsize = nwad_to_sockaddr (&peer->nwad, &connaddr);
-	bindaddrsize = nwad_to_sockaddr (&peer->local, &bindaddr);
+	connaddrsize = qse_nwadtoskad (&peer->nwad, &connaddr);
+	bindaddrsize = qse_nwadtoskad (&peer->local, &bindaddr);
 	if (connaddrsize <= -1 || bindaddrsize <= -1)
 	{
 		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
@@ -1239,15 +1145,12 @@ static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 #if defined(_WIN32)
 	/* TODO: */
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
 #elif defined(__OS2__)
 	/* TODO: */
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
 #elif defined(__DOS__)
 	/* TODO: */
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
 #else
 qse_printf (QSE_T("closing file %d\n"), handle.i);
 	QSE_CLOSE (handle.i);
@@ -1386,7 +1289,15 @@ static int dir_read (qse_httpd_t* httpd, qse_ubi_t handle, qse_httpd_dirent_t* d
 static void client_close (
 	qse_httpd_t* httpd, qse_httpd_client_t* client)
 {
+#if defined(_WIN32)
+	/* TODO: */
+#elif defined(__OS2__)
+	/* TODO: */
+#elif defined(__DOS__)
+	/* TODO: */
+#else
 	QSE_CLOSE (client->handle.i);
+#endif
 }
 
 static void client_shutdown (
@@ -2075,7 +1986,6 @@ auth_ok:
 #if defined(_WIN32)
 	/* TODO */
 #elif defined(__OS2__)
-
 	/* TODO */
 #elif defined(__DOS__)
 
@@ -2099,7 +2009,16 @@ auth_ok:
 					return -1;
 				}
 
+#if defined(_WIN32)
+	/* TODO */
+#elif defined(__OS2__)
+	/* TODO */
+#elif defined(__DOS__)
+
+	/* TODO */
+#else
 				if (QSE_STAT (tpath, &st) == 0 && S_ISREG(st.st_mode))
+#endif
 				{
 					/* the index file is found */
 					QSE_MMGR_FREE (httpd->mmgr, xpath);

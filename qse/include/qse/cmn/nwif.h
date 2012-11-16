@@ -23,6 +23,40 @@
 
 #include <qse/types.h>
 #include <qse/macros.h>
+#include <qse/cmn/nwad.h>
+
+typedef struct qse_nwifcfg_t qse_nwifcfg_t;
+
+enum qse_nwifcfg_flag_t
+{
+	QSE_NWIFCFG_UP      = (1 << 0),
+	QSE_NWIFCFG_RUNNING = (1 << 1),
+	QSE_NWIFCFG_BCAST   = (1 << 2),
+	QSE_NWIFCFG_PTOP    = (1 << 3)
+};
+
+enum qse_nwifcfg_type_t
+{
+	QSE_NWIFCFG_IN4,
+	QSE_NWIFCFG_IN6
+};
+
+typedef enum qse_nwifcfg_type_t qse_nwifcfg_type_t;
+struct qse_nwifcfg_t
+{
+	qse_nwifcfg_type_t type;
+	qse_char_t         name[64];
+
+	/* TODO: add hwaddr?? */	
+
+	int          flags;
+	unsigned int index;
+	qse_nwad_t   addr;
+	qse_nwad_t   mask;
+	qse_nwad_t   ptop;
+	qse_nwad_t   bcast;
+	int          mtu;
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,13 +80,13 @@ unsigned int qse_nwifwcsntoindex (
 	qse_size_t         len
 );
 
-qse_size_t qse_nwifindextombs (
+int qse_nwifindextombs (
 	unsigned int index,
 	qse_mchar_t* buf,
 	qse_size_t   len
 );
 
-qse_size_t qse_nwifindextowcs (
+int qse_nwifindextowcs (
 	unsigned int index,
 	qse_wchar_t* buf,
 	qse_size_t   len

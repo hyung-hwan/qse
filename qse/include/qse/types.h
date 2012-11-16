@@ -346,7 +346,7 @@ typedef enum qse_tri_t qse_tri_t;
 #	define QSE_HAVE_UINT128_T
 	typedef __int128 qse_int128_t;
 	typedef unsigned __int128 qse_uint128_t;
-#elif QSE_SIZEOF___INT128_T == 16
+#elif (QSE_SIZEOF___INT128_T == 16)
 #	define QSE_HAVE_INT128_T
 #	define QSE_HAVE_UINT128_T
 	typedef __int128_t qse_int128_t;
