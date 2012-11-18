@@ -8,9 +8,9 @@
 #	include <windows.h>
 #endif
 
-static int test_ipad4 (void)
+static int test_ip4ad (void)
 {
-	qse_ipad4_t ipad4;
+	qse_ip4ad_t ip4ad;
 	qse_char_t buf[32];
 	qse_mchar_t mbsbuf[32];
 	qse_wchar_t wcsbuf[32];
@@ -51,13 +51,13 @@ static int test_ipad4 (void)
 
 	for (i = 0; i < QSE_COUNTOF(ipstr); i++)
 	{
-		if (qse_strtoipad4 (ipstr[i], &ipad4) <= -1)
+		if (qse_strtoip4ad (ipstr[i], &ip4ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %s\n"), ipstr[i]);
 		}
 		else
 		{
-			qse_ipad4tostr (&ipad4, buf, QSE_COUNTOF(buf));
+			qse_ip4adtostr (&ip4ad, buf, QSE_COUNTOF(buf));
 			qse_printf (QSE_T("Converted [%s] to [%s]\n"), ipstr[i], buf);
 		}
 	}
@@ -65,13 +65,13 @@ static int test_ipad4 (void)
 	qse_printf (QSE_T("-------------------\n"));
 	for (i = 0; i < QSE_COUNTOF(ipstr_mbs); i++)
 	{
-		if (qse_mbstoipad4 (ipstr_mbs[i], &ipad4) <= -1)
+		if (qse_mbstoip4ad (ipstr_mbs[i], &ip4ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %hs\n"), ipstr_mbs[i]);
 		}
 		else
 		{
-			qse_ipad4tombs (&ipad4, mbsbuf, QSE_COUNTOF(mbsbuf));
+			qse_ip4adtombs (&ip4ad, mbsbuf, QSE_COUNTOF(mbsbuf));
 			qse_printf (QSE_T("Converted [%hs] to [%hs]\n"), ipstr[i], mbsbuf);
 		}
 	}
@@ -79,13 +79,13 @@ static int test_ipad4 (void)
 	qse_printf (QSE_T("-------------------\n"));
 	for (i = 0; i < QSE_COUNTOF(ipstr_wcs); i++)
 	{
-		if (qse_wcstoipad4 (ipstr_wcs[i], &ipad4) <= -1)
+		if (qse_wcstoip4ad (ipstr_wcs[i], &ip4ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %ls\n"), ipstr_wcs[i]);
 		}
 		else
 		{
-			qse_ipad4towcs (&ipad4, wcsbuf, QSE_COUNTOF(wcsbuf));
+			qse_ip4adtowcs (&ip4ad, wcsbuf, QSE_COUNTOF(wcsbuf));
 			qse_printf (QSE_T("Converted [%ls] to [%ls]\n"), ipstr[i], wcsbuf);
 		}
 	}
@@ -93,9 +93,9 @@ static int test_ipad4 (void)
 	return 0;
 }
 
-static int test_ipad6 (void)
+static int test_ip6ad (void)
 {
-	qse_ipad6_t ipad6;
+	qse_ip6ad_t ip6ad;
 	qse_char_t buf[32];
 	qse_mchar_t mbsbuf[32];
 	qse_wchar_t wcsbuf[32];
@@ -136,13 +136,13 @@ static int test_ipad6 (void)
 
 	for (i = 0; i < QSE_COUNTOF(ipstr); i++)
 	{
-		if (qse_strtoipad6 (ipstr[i], &ipad6) <= -1)
+		if (qse_strtoip6ad (ipstr[i], &ip6ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %s\n"), ipstr[i]);
 		}
 		else
 		{
-			qse_ipad6tostr (&ipad6, buf, QSE_COUNTOF(buf));
+			qse_ip6adtostr (&ip6ad, buf, QSE_COUNTOF(buf));
 			qse_printf (QSE_T("Converted [%s] to [%s]\n"), ipstr[i], buf);
 		}
 	}
@@ -150,13 +150,13 @@ static int test_ipad6 (void)
 	qse_printf (QSE_T("-------------------\n"));
 	for (i = 0; i < QSE_COUNTOF(ipstr_mbs); i++)
 	{
-		if (qse_mbstoipad6 (ipstr_mbs[i], &ipad6) <= -1)
+		if (qse_mbstoip6ad (ipstr_mbs[i], &ip6ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %hs\n"), ipstr_mbs[i]);
 		}
 		else
 		{
-			qse_ipad6tombs (&ipad6, mbsbuf, QSE_COUNTOF(mbsbuf));
+			qse_ip6adtombs (&ip6ad, mbsbuf, QSE_COUNTOF(mbsbuf));
 			qse_printf (QSE_T("Converted [%hs] to [%hs]\n"), ipstr_mbs[i], mbsbuf);
 		}
 	}
@@ -164,13 +164,13 @@ static int test_ipad6 (void)
 	qse_printf (QSE_T("-------------------\n"));
 	for (i = 0; i < QSE_COUNTOF(ipstr_wcs); i++)
 	{
-		if (qse_wcstoipad6 (ipstr_wcs[i], &ipad6) <= -1)
+		if (qse_wcstoip6ad (ipstr_wcs[i], &ip6ad) <= -1)
 		{
 			qse_printf (QSE_T("Failed to convert %ls\n"), ipstr_wcs[i]);
 		}
 		else
 		{
-			qse_ipad6towcs (&ipad6, wcsbuf, QSE_COUNTOF(wcsbuf));
+			qse_ip6adtowcs (&ip6ad, wcsbuf, QSE_COUNTOF(wcsbuf));
 			qse_printf (QSE_T("Converted [%ls] to [%ls]\n"), ipstr_wcs[i], wcsbuf);
 		}
 	}
@@ -180,9 +180,9 @@ static int test_ipad6 (void)
 
 static int test_main (int argc, qse_char_t* argv[])
 {
-	test_ipad4 ();
+	test_ip4ad ();
 	qse_printf (QSE_T("==============\n"));
-	test_ipad6 ();
+	test_ip6ad ();
 	return 0;
 }
 

@@ -28,6 +28,7 @@ static void print_nwifcfg (qse_nwifcfg_t* ptr)
 	}
 
 	qse_printf (QSE_T("mtu=[%d] "), (int)ptr->mtu);
+	qse_printf (QSE_T("hwaddr=[%02X:%02X:%02X:%02X:%02X:%02X] "), ptr->ethw[0], ptr->ethw[1], ptr->ethw[2], ptr->ethw[3], ptr->ethw[4], ptr->ethw[5]);
 	qse_printf (QSE_T("\n"));
 }
 

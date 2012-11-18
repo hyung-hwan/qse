@@ -35,7 +35,7 @@ static int test_main (int argc, qse_char_t* argv[])
 {
 	qse_char_t name[100];
 	unsigned int index;
-	int i;
+	unsigned int i;
 
 	for (i = 1; ;i++)
 	{
@@ -45,8 +45,7 @@ static int test_main (int argc, qse_char_t* argv[])
 			break;
 		}
 		
-		index = qse_nwifstrtoindex (name);
-		if (index == 0)
+		if (qse_nwifstrtoindex (name, &index) <= -1)
 		{
 			qse_printf (QSE_T("ifname %s failed\n"), name);
 			break;
@@ -54,11 +53,11 @@ static int test_main (int argc, qse_char_t* argv[])
 		
 		if (i != index)
 		{
-			qse_printf (QSE_T("index mismatch %d %d %s\n"), i, index, name);
+			qse_printf (QSE_T("index mismatch %u %u %s\n"), i, index, name);
 			break;
 		}
 
-		qse_printf (QSE_T("OK %d %s\n"), index, name);
+		qse_printf (QSE_T("OK %u %s\n"), index, name);
 	}
 
 	qse_printf (QSE_T("================================================\n"));

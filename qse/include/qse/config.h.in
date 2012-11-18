@@ -392,6 +392,15 @@
 /* Define to 1 if `ifr_mtu' is a member of `struct ifreq'. */
 #undef HAVE_STRUCT_IFREQ_IFR_MTU
 
+/* Define to 1 if the system has the type `struct if_laddrreq'. */
+#undef HAVE_STRUCT_IF_LADDRREQ
+
+/* Define to 1 if the system has the type `struct lifconf'. */
+#undef HAVE_STRUCT_LIFCONF
+
+/* Define to 1 if the system has the type `struct lifreq'. */
+#undef HAVE_STRUCT_LIFREQ
+
 /* Define to 1 if `st_birthtime' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BIRTHTIME
 
@@ -426,6 +435,9 @@
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
 
+/* Define to 1 if you have the <sys/macstat.h> header file. */
+#undef HAVE_SYS_MACSTAT_H
+
 /* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_NDIR_H
@@ -445,8 +457,14 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/stropts.h> header file. */
+#undef HAVE_SYS_STROPTS_H
+
 /* Define to 1 if you have the <sys/syscall.h> header file. */
 #undef HAVE_SYS_SYSCALL_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H

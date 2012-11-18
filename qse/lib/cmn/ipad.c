@@ -41,12 +41,12 @@
 #include "mem.h"
 
 #if 0
-const qse_ipad4_t qse_ipad4_any =
+const qse_ip4ad_t qse_ip4ad_any =
 {
 	0 /* 0.0.0.0 */
 };
 
-const qse_ipad4_t qse_ipad4_loopback =
+const qse_ip4ad_t qse_ip4ad_loopback =
 {
 #if defined(QSE_ENDIAN_BIG)
 	0x7F000001u /* 127.0.0.1 */
@@ -57,18 +57,18 @@ const qse_ipad4_t qse_ipad4_loopback =
 #endif
 };
 
-const qse_ipad6_t qse_ipad6_any =
+const qse_ip6ad_t qse_ip6ad_any =
 {
 	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } /* :: */
 };
 
-const qse_ipad6_t qse_ipad6_loopback =
+const qse_ip6ad_t qse_ip6ad_loopback =
 {
 	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } /* ::1 */
 };
 #endif
 
-static int str_to_ipad4 (int mbs, const void* str, qse_size_t len, qse_ipad4_t* ipad)
+static int str_to_ip4ad (int mbs, const void* str, qse_size_t len, qse_ip4ad_t* ipad)
 {
 	const void* end;
 	int dots = 0, digits = 0;
@@ -119,24 +119,24 @@ static int str_to_ipad4 (int mbs, const void* str, qse_size_t len, qse_ipad4_t* 
 	return 0;
 }
 
-int qse_mbstoipad4 (const qse_mchar_t* str, qse_ipad4_t* ipad)
+int qse_mbstoip4ad (const qse_mchar_t* str, qse_ip4ad_t* ipad)
 {
-	return str_to_ipad4 (1, str, qse_mbslen(str), ipad);
+	return str_to_ip4ad (1, str, qse_mbslen(str), ipad);
 }
 
-int qse_wcstoipad4 (const qse_wchar_t* str, qse_ipad4_t* ipad)
+int qse_wcstoip4ad (const qse_wchar_t* str, qse_ip4ad_t* ipad)
 {
-	return str_to_ipad4 (0, str, qse_wcslen(str), ipad);
+	return str_to_ip4ad (0, str, qse_wcslen(str), ipad);
 }
 
-int qse_mbsntoipad4 (const qse_mchar_t* str, qse_size_t len, qse_ipad4_t* ipad)
+int qse_mbsntoip4ad (const qse_mchar_t* str, qse_size_t len, qse_ip4ad_t* ipad)
 {
-	return str_to_ipad4 (1, str, len, ipad);
+	return str_to_ip4ad (1, str, len, ipad);
 }
 
-int qse_wcsntoipad4 (const qse_wchar_t* str, qse_size_t len, qse_ipad4_t* ipad)
+int qse_wcsntoip4ad (const qse_wchar_t* str, qse_size_t len, qse_ip4ad_t* ipad)
 {
-	return str_to_ipad4 (0, str, len, ipad);
+	return str_to_ip4ad (0, str, len, ipad);
 }
 
 #define __BTOA(type_t,b,p,end) \
@@ -164,8 +164,8 @@ int qse_wcsntoipad4 (const qse_wchar_t* str, qse_size_t len, qse_ipad4_t* ipad)
 		*p++ = '.'; \
 	} while (0)
 
-qse_size_t qse_ipad4tombs (
-	const qse_ipad4_t* ipad, qse_mchar_t* buf, qse_size_t size)
+qse_size_t qse_ip4adtombs (
+	const qse_ip4ad_t* ipad, qse_mchar_t* buf, qse_size_t size)
 {
 	qse_byte_t b;
 	qse_mchar_t* p, * end;
@@ -196,8 +196,8 @@ qse_size_t qse_ipad4tombs (
 	return p - buf;
 }
 
-qse_size_t qse_ipad4towcs (
-	const qse_ipad4_t* ipad, qse_wchar_t* buf, qse_size_t size)
+qse_size_t qse_ip4adtowcs (
+	const qse_ip4ad_t* ipad, qse_wchar_t* buf, qse_size_t size)
 {
 	qse_byte_t b;
 	qse_wchar_t* p, * end;
@@ -228,14 +228,14 @@ qse_size_t qse_ipad4towcs (
 	return p - buf;
 }
 
-int qse_mbstoipad6 (const qse_mchar_t* src, qse_ipad6_t* ipad)
+int qse_mbstoip6ad (const qse_mchar_t* src, qse_ip6ad_t* ipad)
 {
-	return qse_mbsntoipad6 (src, qse_mbslen(src), ipad);
+	return qse_mbsntoip6ad (src, qse_mbslen(src), ipad);
 }
 
-int qse_mbsntoipad6 (const qse_mchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
+int qse_mbsntoip6ad (const qse_mchar_t* src, qse_size_t len, qse_ip6ad_t* ipad)
 {
-	qse_ipad6_t tmp;
+	qse_ip6ad_t tmp;
 	qse_uint8_t* tp, * endp, * colonp;
 	const qse_mchar_t* curtok;
 	qse_mchar_t ch;
@@ -305,10 +305,10 @@ int qse_mbsntoipad6 (const qse_mchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
 			continue;
 		}
 
-		if (ch == QSE_MT('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
-		    qse_mbsntoipad4(curtok, src_end - curtok, (qse_ipad4_t*)tp) == 0) 
+		if (ch == QSE_MT('.') && ((tp + QSE_SIZEOF(qse_ip4ad_t)) <= endp) &&
+		    qse_mbsntoip4ad(curtok, src_end - curtok, (qse_ip4ad_t*)tp) == 0) 
 		{
-			tp += QSE_SIZEOF(qse_ipad4_t);
+			tp += QSE_SIZEOF(qse_ip4ad_t);
 			saw_xdigit = 0;
 			break; 
 		}
@@ -346,14 +346,14 @@ int qse_mbsntoipad6 (const qse_mchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
 }
 
 
-int qse_wcstoipad6 (const qse_wchar_t* src, qse_ipad6_t* ipad)
+int qse_wcstoip6ad (const qse_wchar_t* src, qse_ip6ad_t* ipad)
 {
-	return qse_wcsntoipad6 (src, qse_wcslen(src), ipad);
+	return qse_wcsntoip6ad (src, qse_wcslen(src), ipad);
 }
 
-int qse_wcsntoipad6 (const qse_wchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
+int qse_wcsntoip6ad (const qse_wchar_t* src, qse_size_t len, qse_ip6ad_t* ipad)
 {
-	qse_ipad6_t tmp;
+	qse_ip6ad_t tmp;
 	qse_uint8_t* tp, * endp, * colonp;
 	const qse_wchar_t* curtok;
 	qse_wchar_t ch;
@@ -423,10 +423,10 @@ int qse_wcsntoipad6 (const qse_wchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
 			continue;
 		}
 
-		if (ch == QSE_WT('.') && ((tp + QSE_SIZEOF(qse_ipad4_t)) <= endp) &&
-		    qse_wcsntoipad4(curtok, src_end - curtok, (qse_ipad4_t*)tp) == 0) 
+		if (ch == QSE_WT('.') && ((tp + QSE_SIZEOF(qse_ip4ad_t)) <= endp) &&
+		    qse_wcsntoip4ad(curtok, src_end - curtok, (qse_ip4ad_t*)tp) == 0) 
 		{
-			tp += QSE_SIZEOF(qse_ipad4_t);
+			tp += QSE_SIZEOF(qse_ip4ad_t);
 			saw_xdigit = 0;
 			break; 
 		}
@@ -463,8 +463,8 @@ int qse_wcsntoipad6 (const qse_wchar_t* src, qse_size_t len, qse_ipad6_t* ipad)
 	return 0;
 }
 
-qse_size_t qse_ipad6tombs (
-	const qse_ipad6_t* ipad, qse_mchar_t* buf, qse_size_t size)
+qse_size_t qse_ip6adtombs (
+	const qse_ip6ad_t* ipad, qse_mchar_t* buf, qse_size_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
@@ -544,9 +544,9 @@ qse_size_t qse_ipad6tombs (
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) 
 		{
-			qse_ipad4_t ipad4;
-			QSE_MEMCPY (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
-			tp += qse_ipad4tombs (&ipad4, tp, QSE_COUNTOF(tmp) - (tp - tmp));
+			qse_ip4ad_t ip4ad;
+			QSE_MEMCPY (&ip4ad.value, ipad->value+12, QSE_SIZEOF(ip4ad.value));
+			tp += qse_ip4adtombs (&ip4ad, tp, QSE_COUNTOF(tmp) - (tp - tmp));
 			break;
 		}
 
@@ -565,8 +565,8 @@ qse_size_t qse_ipad6tombs (
 #undef IP6ADDR_NWORDS
 }
 
-qse_size_t qse_ipad6towcs (
-	const qse_ipad6_t* ipad, qse_wchar_t* buf, qse_size_t size)
+qse_size_t qse_ip6adtowcs (
+	const qse_ip6ad_t* ipad, qse_wchar_t* buf, qse_size_t size)
 {
 	/*
 	 * Note that int32_t and int16_t need only be "at least" large enough
@@ -646,9 +646,9 @@ qse_size_t qse_ipad6towcs (
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) 
 		{
-			qse_ipad4_t ipad4;
-			QSE_MEMCPY (&ipad4.value, ipad->value+12, QSE_SIZEOF(ipad4.value));
-			tp += qse_ipad4towcs (&ipad4, tp, QSE_COUNTOF(tmp) - (tp - tmp));
+			qse_ip4ad_t ip4ad;
+			QSE_MEMCPY (&ip4ad.value, ipad->value+12, QSE_SIZEOF(ip4ad.value));
+			tp += qse_ip4adtowcs (&ip4ad, tp, QSE_COUNTOF(tmp) - (tp - tmp));
 			break;
 		}
 
@@ -667,3 +667,62 @@ qse_size_t qse_ipad6towcs (
 #undef IP6ADDR_NWORDS
 }
 
+int qse_prefixtoip4ad (int prefix, qse_ip4ad_t* ipad)
+{
+	static qse_uint32_t tab[] =
+	{
+		0x00000000,
+		0x80000000, 0xC0000000, 0xE0000000, 0xF0000000,
+		0xF8000000, 0xFC000000, 0xFE000000, 0xFF000000,
+		0xFF800000, 0xFFC00000, 0xFFE00000, 0xFFF00000,
+		0xFFF80000, 0xFFFC0000, 0xFFFE0000, 0xFFFF0000,
+		0xFFFF8000, 0xFFFFC000, 0xFFFFE000, 0xFFFFF000,
+		0xFFFFF800, 0xFFFFFC00, 0xFFFFFE00, 0xFFFFFF00,
+		0xFFFFFF80, 0xFFFFFFC0, 0xFFFFFFE0, 0xFFFFFFF0,
+		0xFFFFFFF8, 0xFFFFFFFC, 0xFFFFFFFE, 0xFFFFFFFF
+	};
+
+	if (prefix < 0 || prefix > QSE_SIZEOF(*ipad) * 8) return -1;
+	ipad->value = qse_hton32(tab[prefix]);
+	return 0;
+
+	/*
+	int p, k;
+	qse_uint32_t mask = 0;
+
+	for (k = 24; prefix > 0; k -= 8) 
+	{
+		p = (prefix >= 8)? 0: (8 - prefix);
+		mask |= ((0xFF << p) & 0xFF) << k;
+		prefix -= 8;
+	}
+
+	ipad->value = qse_hton32(mask);
+	return 0;
+	*/
+}
+
+int qse_prefixtoip6ad (int prefix, qse_ip6ad_t* ipad)
+{
+	int i;
+
+	if (prefix < 0 || prefix > QSE_SIZEOF(*ipad) * 8) return -1;	
+
+	QSE_MEMSET (ipad, 0, QSE_SIZEOF(*ipad));
+	for (i = 0; ; i++)
+	{
+		if (prefix > 8) 
+		{
+			ipad->value[i] = 0xFF;
+			prefix -= 8;
+		}
+		else
+		{
+			ipad->value[i] = 0xFF << (8 - prefix);
+			break;
+		}
+
+	}
+
+	return 0;
+}

@@ -25,15 +25,15 @@
 #include <qse/macros.h>
 
 typedef struct qse_ipad_t  qse_ipad_t;
-typedef struct qse_ipad4_t qse_ipad4_t;
-typedef struct qse_ipad6_t qse_ipad6_t;
+typedef struct qse_ip4ad_t qse_ip4ad_t;
+typedef struct qse_ip6ad_t qse_ip6ad_t;
 
 #include <qse/pack1.h>
-struct qse_ipad4_t
+struct qse_ip4ad_t
 {
 	qse_uint32_t value;
 };
-struct qse_ipad6_t
+struct qse_ip6ad_t
 {
 	qse_uint8_t value[16];
 };
@@ -43,93 +43,115 @@ struct qse_ipad6_t
 extern "C" {
 #endif
 
-int qse_mbstoipad4 (
+int qse_mbstoip4ad (
 	const qse_mchar_t* mbs,
-	qse_ipad4_t*       ipad
+	qse_ip4ad_t*       ipad
 );
 
-int qse_mbsntoipad4 (
+int qse_mbsntoip4ad (
 	const qse_mchar_t* mbs,
 	qse_size_t         len,
-	qse_ipad4_t*       ipad
+	qse_ip4ad_t*       ipad
 );
 
-int qse_wcstoipad4 (
+int qse_wcstoip4ad (
 	const qse_wchar_t* wcs,
-	qse_ipad4_t*       ipad
+	qse_ip4ad_t*       ipad
 );
 
-int qse_wcsntoipad4 (
+int qse_wcsntoip4ad (
 	const qse_wchar_t* wcs,
 	qse_size_t         len,
-	qse_ipad4_t*       ipad
+	qse_ip4ad_t*       ipad
 );
 
-qse_size_t qse_ipad4tombs (
-	const qse_ipad4_t* ipad,
+qse_size_t qse_ip4adtombs (
+	const qse_ip4ad_t* ipad,
 	qse_mchar_t*       mbs,
 	qse_size_t         len
 );
 
-qse_size_t qse_ipad4towcs (
-	const qse_ipad4_t* ipad,
+qse_size_t qse_ip4adtowcs (
+	const qse_ip4ad_t* ipad,
 	qse_wchar_t*       wcs,
 	qse_size_t         len
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strtoipad4(ptr,ipad)      qse_mbstoipad4(ptr,ipad)
-#	define qse_strntoipad4(ptr,len,ipad) qse_mbsntoipad4(ptr,len,ipad)
-#	define qse_ipad4tostr(ipad,ptr,len)  qse_ipad4tombs(ipad,ptr,len)
+#	define qse_strtoip4ad(ptr,ipad)      qse_mbstoip4ad(ptr,ipad)
+#	define qse_strntoip4ad(ptr,len,ipad) qse_mbsntoip4ad(ptr,len,ipad)
+#	define qse_ip4adtostr(ipad,ptr,len)  qse_ip4adtombs(ipad,ptr,len)
 #else
-#	define qse_strtoipad4(ptr,ipad)      qse_wcstoipad4(ptr,ipad)
-#	define qse_strntoipad4(ptr,len,ipad) qse_wcsntoipad4(ptr,len,ipad)
-#	define qse_ipad4tostr(ipad,ptr,len)  qse_ipad4towcs(ipad,ptr,len)
+#	define qse_strtoip4ad(ptr,ipad)      qse_wcstoip4ad(ptr,ipad)
+#	define qse_strntoip4ad(ptr,len,ipad) qse_wcsntoip4ad(ptr,len,ipad)
+#	define qse_ip4adtostr(ipad,ptr,len)  qse_ip4adtowcs(ipad,ptr,len)
 #endif
 
-int qse_mbstoipad6 (
+int qse_mbstoip6ad (
 	const qse_mchar_t* mbs,
-	qse_ipad6_t*       ipad
+	qse_ip6ad_t*       ipad
 );
 
-int qse_mbsntoipad6 (
+int qse_mbsntoip6ad (
 	const qse_mchar_t* mbs,
 	qse_size_t         len,
-	qse_ipad6_t*       ipad
+	qse_ip6ad_t*       ipad
 );
 
-int qse_wcstoipad6 (
+int qse_wcstoip6ad (
 	const qse_wchar_t* wcs,
-	qse_ipad6_t*       ipad
+	qse_ip6ad_t*       ipad
 );
 
-int qse_wcsntoipad6 (
+int qse_wcsntoip6ad (
 	const qse_wchar_t* wcs,
 	qse_size_t         len,
-	qse_ipad6_t*       ipad
+	qse_ip6ad_t*       ipad
 );
 
-qse_size_t qse_ipad6tombs (
-	const qse_ipad6_t* ipad,
+qse_size_t qse_ip6adtombs (
+	const qse_ip6ad_t* ipad,
 	qse_mchar_t*       mbs,
 	qse_size_t         len
 );
 
-qse_size_t qse_ipad6towcs (
-	const qse_ipad6_t* ipad,
+qse_size_t qse_ip6adtowcs (
+	const qse_ip6ad_t* ipad,
 	qse_wchar_t*       wcs,
 	qse_size_t         len
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_strtoipad6(ptr,ipad)      qse_mbstoipad6(ptr,ipad)
-#	define qse_strntoipad6(ptr,len,ipad) qse_mbsntoipad6(ptr,len,ipad)
-#	define qse_ipad6tostr(ipad,ptr,len)  qse_ipad6tombs(ipad,ptr,len)
+#	define qse_strtoip6ad(ptr,ipad)      qse_mbstoip6ad(ptr,ipad)
+#	define qse_strntoip6ad(ptr,len,ipad) qse_mbsntoip6ad(ptr,len,ipad)
+#	define qse_ip6adtostr(ipad,ptr,len)  qse_ip6adtombs(ipad,ptr,len)
 #else
-#	define qse_strtoipad6(ptr,ipad)      qse_wcstoipad6(ptr,ipad)
-#	define qse_strntoipad6(ptr,len,ipad) qse_wcsntoipad6(ptr,len,ipad)
-#	define qse_ipad6tostr(ipad,ptr,len)  qse_ipad6towcs(ipad,ptr,len)
-#endif
+#	define qse_strtoip6ad(ptr,ipad)      qse_wcstoip6ad(ptr,ipad)
+#	define qse_strntoip6ad(ptr,len,ipad) qse_wcsntoip6ad(ptr,len,ipad)
+#	define qse_ip6adtostr(ipad,ptr,len)  qse_ip6adtowcs(ipad,ptr,len)
+#endif 
+
+/*
+ * The qse_prefixtoip4ad() function converts the prefix length
+ * to an IPv4 address mask.  The prefix length @a prefix must be
+ * between 0 and 32 inclusive.
+ * @return 0 on success, -1 on failure
+ */
+int qse_prefixtoip4ad (
+	int          prefix,
+	qse_ip4ad_t* ipad
+);
+
+/*
+ * The qse_prefixtoip4ad() function converts the prefix length
+ * to an IPv6 address mask. The prefix length @a prefix must be
+ * between 0 and 128 inclusive.
+ * @return 0 on success, -1 on failure
+ */
+int qse_prefixtoip6ad (
+	int          prefix,
+	qse_ip6ad_t* ipad
+);
 
 #ifdef __cplusplus
 }

@@ -44,40 +44,50 @@ enum qse_nwifcfg_type_t
 typedef enum qse_nwifcfg_type_t qse_nwifcfg_type_t;
 struct qse_nwifcfg_t
 {
-	qse_nwifcfg_type_t type;
-	qse_char_t         name[64];
+	qse_nwifcfg_type_t type;     /* in */
+	qse_char_t         name[64]; /* in/out */
+	unsigned int       index;    /* in/out */
+
+	/* ---------------- */
+	int                flags;    /* out */
+	int                mtu;      /* out */
+
+	qse_nwad_t         addr;     /* out */
+	qse_nwad_t         mask;     /* out */
+	qse_nwad_t         ptop;     /* out */
+	qse_nwad_t         bcast;    /* out */
+
+	/* ---------------- */
 
 	/* TODO: add hwaddr?? */	
-
-	int          flags;
-	unsigned int index;
-	qse_nwad_t   addr;
-	qse_nwad_t   mask;
-	qse_nwad_t   ptop;
-	qse_nwad_t   bcast;
-	int          mtu;
+	/* i support ethernet only currently */
+	qse_uint8_t        ethw[6];  /* out */
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-unsigned int qse_nwifmbstoindex (
-	const qse_mchar_t* ptr
-);
-
-unsigned int qse_nwifwcstoindex (
-	const qse_wchar_t* ptr
-);
-
-unsigned int qse_nwifmbsntoindex (
+int qse_nwifmbstoindex (
 	const qse_mchar_t* ptr,
-	qse_size_t         len
+	unsigned int*      index
 );
 
-unsigned int qse_nwifwcsntoindex (
+int qse_nwifwcstoindex (
 	const qse_wchar_t* ptr,
-	qse_size_t         len
+	unsigned int*      index
+);
+
+int qse_nwifmbsntoindex (
+	const qse_mchar_t* ptr,
+	qse_size_t         len,
+	unsigned int*      index
+);
+
+int qse_nwifwcsntoindex (
+	const qse_wchar_t* ptr,
+	qse_size_t         len,
+	unsigned int*      index
 );
 
 int qse_nwifindextombs (
@@ -93,14 +103,18 @@ int qse_nwifindextowcs (
 );
 
 #if defined(QSE_CHAR_IS_MCHAR)
-#	define qse_nwifstrtoindex(ptr)           qse_nwifmbstoindex(ptr)
-#	define qse_nwifstrntoindex(ptr,len)      qse_nwifmbsntoindex(ptr,len)
-#	define qse_nwifindextostr(index,buf,len) qse_nwifindextombs(index,buf,len)
+#	define qse_nwifstrtoindex(ptr,index)      qse_nwifmbstoindex(ptr,index)
+#	define qse_nwifstrntoindex(ptr,len,index) qse_nwifmbsntoindex(ptr,len,index)
+#	define qse_nwifindextostr(index,buf,len)  qse_nwifindextombs(index,buf,len)
 #else
-#	define qse_nwifstrtoindex(ptr)           qse_nwifwcstoindex(ptr)
-#	define qse_nwifstrntoindex(ptr,len)      qse_nwifwcsntoindex(ptr,len)
-#	define qse_nwifindextostr(index,buf,len) qse_nwifindextowcs(index,buf,len)
+#	define qse_nwifstrtoindex(ptr,index)      qse_nwifwcstoindex(ptr,index)
+#	define qse_nwifstrntoindex(ptr,len,index) qse_nwifwcsntoindex(ptr,len,index)
+#	define qse_nwifindextostr(index,buf,len)  qse_nwifindextowcs(index,buf,len)
 #endif
+
+int qse_getnwifcfg (
+	qse_nwifcfg_t* cfg
+);
 
 #ifdef __cplusplus
 }

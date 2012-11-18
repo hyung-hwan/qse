@@ -663,12 +663,12 @@ qse_fs_ent_t* qse_fs_read (qse_fs_t* fs, int flags)
 		fs->ent.time.create.nsec = st.st_birthtimespec.tv_nsec;
 		#endif
 
-		fs->ent.time.access.sec = st.st_atimspec.tv_sec;
-		fs->ent.time.access.nsec = st.st_atimspec.tv_nsec;
-		fs->ent.time.modify.sec = st.st_mtimspec.tv_sec;
-		fs->ent.time.modify.nsec = st.st_mtimspec.tv_nsec;
-		fs->ent.time.change.sec = st.st_ctimspec.tv_sec;
-		fs->ent.time.change.nsec = st.st_ctimspec.tv_nsec;
+		fs->ent.time.access.sec = st.st_atimespec.tv_sec;
+		fs->ent.time.access.nsec = st.st_atimespec.tv_nsec;
+		fs->ent.time.modify.sec = st.st_mtimespec.tv_sec;
+		fs->ent.time.modify.nsec = st.st_mtimespec.tv_nsec;
+		fs->ent.time.change.sec = st.st_ctimespec.tv_sec;
+		fs->ent.time.change.nsec = st.st_ctimespec.tv_nsec;
 	#else
 		#if defined(HAVE_STRUCT_STAT_ST_BIRTHTIME)
 		fs->ent.time.create.sec = st.st_birthtime;

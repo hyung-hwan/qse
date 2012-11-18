@@ -47,14 +47,25 @@
 #	if defined(HAVE_NET_IF_H)
 #		include <net/if.h>
 #	endif
+#	if defined(HAVE_NET_IF_DL_H)
+#		include <net/if_dl.h>
+#	endif
 #	if defined(HAVE_SYS_SOCKIO_H)
 #		include <sys/sockio.h>
 #	endif
 #	if defined(HAVE_IFADDRS_H)
 #		include <ifaddrs.h>
 #	endif
+#	if defined(HAVE_SYS_SYSCTL_H)
+#		include <sys/sysctl.h>
+#	endif
+#	if defined(HAVE_SYS_STROPTS_H)
+#		include <sys/stropts.h> /* stream options */
+#	endif
+#	if defined(HAVE_SYS_MACSTAT_H)
+#		include <sys/macstat.h>
+#	endif
 #endif
-
 
 /*
 
@@ -79,7 +90,8 @@
 */
 
 
-#if defined(SIOCGLIFCONF)
+#if defined(SIOCGLIFCONF) && defined(SIOCGLIFNUM) && \
+    defined(HAVE_STRUCT_LIFCONF) && defined(HAVE_STRUCT_LIFREQ)
 static int get_nwifs (qse_mmgr_t* mmgr, int s, int f, qse_xptl_t* nwifs)
 {
 	struct lifnum ifn;
@@ -259,46 +271,193 @@ void qse_freenwifcfg (qse_nwifcfg_t* cfg)
 
 static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 {
-#if defined(SIOCGLIFADDR)
-	struct lifreq ifrbuf;
+#if defined(SIOCGLIFADDR) && defined(SIOCGLIFINDEX) && \
+    defined(HAVE_STRUCT_LIFCONF) && defined(HAVE_STRUCT_LIFREQ)
+	/* opensolaris */
+	struct lifreq lifrbuf;
+	qse_size_t ml, wl;
+	
+	QSE_MEMSET (&lifrbuf, 0, QSE_SIZEOF(lifrbuf));
+
+	#if defined(QSE_CHAR_IS_MCHAR)
+	qse_mbsxcpy (lifrbuf.lifr_name, QSE_SIZEOF(lifrbuf.lifr_name), cfg->name);
+	#else
+	ml = QSE_COUNTOF(lifrbuf.lifr_name);
+	if (qse_wcstombs (cfg->name, &wl, lifrbuf.lifr_name, &ml) <= -1) return -1;
+	#endif
+
+	if (ioctl (s, SIOCGLIFINDEX, &lifrbuf) <= -1) return -1;		
+	cfg->index = lifrbuf.lifr_index;
+
+	if (ioctl (s, SIOCGLIFFLAGS, &lifrbuf) <= -1) return -1;
+	cfg->flags = 0;
+	if (lifrbuf.lifr_flags & IFF_UP) cfg->flags |= QSE_NWIFCFG_UP;
+	if (lifrbuf.lifr_flags & IFF_RUNNING) cfg->flags |= QSE_NWIFCFG_RUNNING;
+	if (lifrbuf.lifr_flags & IFF_BROADCAST) cfg->flags |= QSE_NWIFCFG_BCAST;
+	if (lifrbuf.lifr_flags & IFF_POINTOPOINT) cfg->flags |= QSE_NWIFCFG_PTOP;
+
+	if (ioctl (s, SIOCGLIFMTU, &lifrbuf) <= -1) return -1;
+	cfg->mtu = lifrbuf.lifr_mtu;
+	
+	if (ioctl (s, SIOCGLIFADDR, &lifrbuf) <= -1) return -1;
+	qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->addr);
+
+	if (ioctl (s, SIOCGLIFNETMASK, &lifrbuf) <= -1) return -1;
+	qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->mask);
+
+	if (cfg->flags & QSE_NWIFCFG_BCAST)
+	{
+		if (ioctl (s, SIOCGLIFBRDADDR, &lifrbuf) <= -1) return -1;
+		qse_skadtonwad (&lifrbuf.lifr_broadaddr, &cfg->bcast);
+	}
+	else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
+	if (cfg->flags & QSE_NWIFCFG_PTOP)
+	{
+		if (ioctl (s, SIOCGLIFDSTADDR, &lifrbuf) <= -1) return -1;
+		qse_skadtonwad (&lifrbuf.lifr_dstaddr, &cfg->ptop);
+	}
+	else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
+
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
+
+	#if defined(SIOCGENADDR)
+	{
+		struct ifreq ifrbuf;
+		QSE_MEMSET (&ifrbuf, 0, QSE_SIZEOF(ifrbuf));
+		qse_mbsxcpy (ifrbuf.ifr_name, QSE_COUNTOF(ifrbuf.ifr_name), lifrbuf.lifr_name);
+		if (ioctl (s, SIOCGENADDR, &ifrbuf) >= 0 && 
+		    QSE_SIZEOF(ifrbuf.ifr_enaddr) >= QSE_SIZEOF(cfg->ethw))
+		{
+			QSE_MEMCPY (cfg->ethw, ifrbuf.ifr_enaddr, QSE_SIZEOF(cfg->ethw));
+		}
+		/* TODO: try DLPI if SIOCGENADDR fails... */
+	}
+	#endif
+
+	return 0;
+
+#elif defined(SIOCGLIFADDR) && defined(HAVE_STRUCT_IF_LADDRREQ) && !defined(SIOCGLIFINDEX)
+	/* freebsd */
+	struct ifreq ifrbuf;
+	struct if_laddrreq iflrbuf;
 	qse_size_t ml, wl;
 	
 	QSE_MEMSET (&ifrbuf, 0, QSE_SIZEOF(ifrbuf));
+	QSE_MEMSET (&iflrbuf, 0, QSE_SIZEOF(iflrbuf));
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	qse_mbsxcpy (ifrbuf.lifr_name, QSE_SIZEOF(ifrbuf.lifr_name), cfg->name);
+	qse_mbsxcpy (iflrbuf.iflr_name, QSE_SIZEOF(iflrbuf.iflr_name), cfg->name);
+
+	qse_mbsxcpy (ifrbuf.ifr_name, QSE_SIZEOF(ifrbuf.ifr_name), cfg->name);
 	#else
-	ml = QSE_COUNTOF(ifrbuf.lifr_name);
-	if (qse_wcstombs (cfg->name, &wl, ifrbuf.lifr_name, &ml) <= -1) return -1;
+	ml = QSE_COUNTOF(iflrbuf.iflr_name);
+	if (qse_wcstombs (cfg->name, &wl, iflrbuf.iflr_name, &ml) <= -1) return -1;
+
+	ml = QSE_COUNTOF(ifrbuf.ifr_name);
+	if (qse_wcstombs (cfg->name, &wl, ifrbuf.ifr_name, &ml) <= -1) return -1;
 	#endif
 
-	if (ioctl (s, SIOCGLIFINDEX, &ifrbuf) <= -1) return -1;		
-	cfg->index = ifrbuf.lifr_index;
+	#if defined(SIOCGIFINDEX)
+	if (ioctl (s, SIOCGIFINDEX, &ifrbuf) <= -1) return -1;		
+	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
+	cfg->index = ifrbuf.ifr_ifindex;
+	#else
+	cfg->index = ifrbuf.ifr_index;
+	#endif
+	#else
+	cfg->index = 0;
+	#endif
+
+	if (ioctl (s, SIOCGIFFLAGS, &ifrbuf) <= -1) return -1;
+	cfg->flags = 0;
+	if (ifrbuf.ifr_flags & IFF_UP) cfg->flags |= QSE_NWIFCFG_UP;
+	if (ifrbuf.ifr_flags & IFF_RUNNING) cfg->flags |= QSE_NWIFCFG_RUNNING;
+	if (ifrbuf.ifr_flags & IFF_BROADCAST) cfg->flags |= QSE_NWIFCFG_BCAST;
+	if (ifrbuf.ifr_flags & IFF_POINTOPOINT) cfg->flags |= QSE_NWIFCFG_PTOP;
+
+	if (ioctl (s, SIOCGIFMTU, &ifrbuf) <= -1) return -1;
+	#if defined(HAVE_STRUCT_IFREQ_IFR_MTU)
+	cfg->mtu = ifrbuf.ifr_mtu;
+	#else
+	/* well, this is a bit dirty. but since all these are unions, 
+	 * the name must not really matter. some OSes just omitts defining
+	 * the MTU field */
+	cfg->mtu = ifrbuf.ifr_metric; 
+	#endif
 	
-	if (ioctl (s, SIOCGLIFADDR, &ifrbuf) <= -1) return -1;
-	qse_skadtonwad (&ifrbuf.lifr_addr, &cfg->addr);
-
-	if (ioctl (s, SIOCGLIFNETMASK, &ifrbuf) <= -1) return -1;
-	qse_skadtonwad (&ifrbuf.lifr_addr, &cfg->mask);
-
-	if (ioctl (s, SIOCGLIFMTU, &ifrbuf) <= -1) return -1;
-	cfg->mtu = ifrbuf.lifr_mtu;
-
-	if (ioctl (s, SIOCGLIFFLAGS, &ifrbuf) <= -1) return -1;
-	if (ifrbuf.lifr_flags & IFF_UP) cfg->flags |= QSE_NWIFCFG_UP;
-	if (ifrbuf.lifr_flags & IFF_RUNNING) cfg->flags |= QSE_NWIFCFG_RUNNING;
-	if (ifrbuf.lifr_flags & IFF_BROADCAST) 
+	if (cfg->type == QSE_NWIFCFG_IN6)
 	{
-		if (ioctl (s, SIOCGLIFBRDADDR, &ifrbuf) <= -1) return -1;
-		qse_skadtonwad (&ifrbuf.lifr_broadaddr, &cfg->bcast);
-		cfg->flags |= QSE_NWIFCFG_BCAST;
+		if (ioctl (s, SIOCGLIFADDR, &iflrbuf) <= -1) return -1;
+		qse_skadtonwad (&iflrbuf.addr, &cfg->addr);
+
+		QSE_MEMSET (&cfg->mask, 0, QSE_SIZEOF(cfg->mask));
+		cfg->mask.type = QSE_NWAD_IN6;
+		qse_prefixtoip6ad (iflrbuf.prefixlen, &cfg->mask.u.in6.addr);
+
+		QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
+		if (cfg->flags & QSE_NWIFCFG_PTOP)
+			qse_skadtonwad (&iflrbuf.dstaddr, &cfg->ptop);
+		else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
 	}
-	if (ifrbuf.lifr_flags & IFF_POINTOPOINT) 
+	else
 	{
-		if (ioctl (s, SIOCGLIFDSTADDR, &ifrbuf) <= -1) return -1;
-		qse_skadtonwad (&ifrbuf.lifr_dstaddr, &cfg->ptop);
-		cfg->flags |= QSE_NWIFCFG_PTOP;
+		if (ioctl (s, SIOCGIFADDR, &ifrbuf) <= -1) return -1;
+		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
+
+		if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) <= -1) return -1;
+		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
+
+		if (cfg->flags & QSE_NWIFCFG_BCAST)
+		{
+			if (ioctl (s, SIOCGIFBRDADDR, &ifrbuf) <= -1) return -1;
+			qse_skadtonwad (&ifrbuf.ifr_broadaddr, &cfg->bcast);
+		}
+		else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
+
+		if (cfg->flags & QSE_NWIFCFG_PTOP)
+		{
+			if (ioctl (s, SIOCGIFDSTADDR, &ifrbuf) <= -1) return -1;
+			qse_skadtonwad (&ifrbuf.ifr_dstaddr, &cfg->ptop);
+		}
+		else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
 	}
+
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
+	#if defined(CTL_NET) && defined(AF_ROUTE) && defined(AF_LINK)
+	{
+		int mib[6];
+		size_t len;
+
+		mib[0] = CTL_NET;
+		mib[1] = AF_ROUTE;
+		mib[2] = 0;
+		mib[3] = AF_LINK;
+		mib[4] = NET_RT_IFLIST;
+		mib[5] = cfg->index;
+		if (sysctl (mib, QSE_COUNTOF(mib), QSE_NULL, &len, QSE_NULL, 0) >= 0)
+		{
+			qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
+			void* buf;
+
+			buf = QSE_MMGR_ALLOC (mmgr, len);
+			if (buf)
+			{
+				if (sysctl (mib, QSE_COUNTOF(mib), buf, &len, QSE_NULL, 0) >= 0)
+				{
+					struct sockaddr_dl* sadl;
+					sadl = ((struct if_msghdr*)buf + 1);
+
+					/* i don't really care if it's really ethernet
+					 * so long as the data is long enough */
+					if (sadl->sdl_alen >= QSE_COUNTOF(cfg->ethw))
+						QSE_MEMCPY (cfg->ethw, LLADDR(sadl), QSE_SIZEOF(cfg->ethw));
+				}
+
+				QSE_MMGR_FREE (mmgr, buf);
+			}
+		}
+	}
+	#endif
 
 	return 0;
 
@@ -325,6 +484,23 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 	#else
 	cfg->index = 0;
 	#endif
+
+	if (ioctl (s, SIOCGIFFLAGS, &ifrbuf) <= -1) return -1;
+	cfg->flags = 0;
+	if (ifrbuf.ifr_flags & IFF_UP) cfg->flags |= QSE_NWIFCFG_UP;
+	if (ifrbuf.ifr_flags & IFF_RUNNING) cfg->flags |= QSE_NWIFCFG_RUNNING;
+	if (ifrbuf.ifr_flags & IFF_BROADCAST) cfg->flags |= QSE_NWIFCFG_BCAST;
+	if (ifrbuf.ifr_flags & IFF_POINTOPOINT) cfg->flags |= QSE_NWIFCFG_PTOP;
+
+	if (ioctl (s, SIOCGIFMTU, &ifrbuf) <= -1) return -1;
+	#if defined(HAVE_STRUCT_IFREQ_IFR_MTU)
+	cfg->mtu = ifrbuf.ifr_mtu;
+	#else
+	/* well, this is a bit dirty. but since all these are unions, 
+	 * the name must not really matter. SCO just omits defining
+	 * the MTU field, and uses ifr_metric instead */
+	cfg->mtu = ifrbuf.ifr_metric; 
+	#endif
 	
 	if (ioctl (s, SIOCGIFADDR, &ifrbuf) <= -1) return -1;
 	qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
@@ -332,33 +508,52 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 	if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) <= -1) return -1;
 	qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
 
-	if (ioctl (s, SIOCGIFMTU, &ifrbuf) <= -1) return -1;
-	#if defined(HAVE_STRUCT_IFREQ_IFR_MTU)
-	cfg->mtu = ifrbuf.ifr_mtu;
-	#else
-	/* well, this is a bit dirty. but since all these are unions, 
-	 * the name must not really matter. some OSes just omitts defining
-	 * the MTU field */
-	cfg->mtu = ifrbuf.ifr_metric; 
-	#endif
-
-	if (ioctl (s, SIOCGIFFLAGS, &ifrbuf) <= -1) return -1;
-	if (ifrbuf.ifr_flags & IFF_UP) cfg->flags |= QSE_NWIFCFG_UP;
-	if (ifrbuf.ifr_flags & IFF_RUNNING) cfg->flags |= QSE_NWIFCFG_RUNNING;
-	if (ifrbuf.ifr_flags & IFF_BROADCAST) 
+	if (cfg->flags & QSE_NWIFCFG_BCAST)
 	{
 		if (ioctl (s, SIOCGIFBRDADDR, &ifrbuf) <= -1) return -1;
 		qse_skadtonwad (&ifrbuf.ifr_broadaddr, &cfg->bcast);
-		cfg->flags |= QSE_NWIFCFG_BCAST;
 	}
 	else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
-	if (ifrbuf.ifr_flags & IFF_POINTOPOINT) 
+
+	if (cfg->flags & QSE_NWIFCFG_PTOP)
 	{
 		if (ioctl (s, SIOCGIFDSTADDR, &ifrbuf) <= -1) return -1;
 		qse_skadtonwad (&ifrbuf.ifr_dstaddr, &cfg->ptop);
-		cfg->flags |= QSE_NWIFCFG_PTOP;
 	}
 	else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
+
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
+	#if defined(SIOCGIFHWADDR)
+	if (ioctl (s, SIOCGIFHWADDR, &ifrbuf) >= 0)
+	{ 
+		QSE_MEMCPY (cfg->ethw, ifrbuf.ifr_hwaddr.sa_data, QSE_SIZEOF(cfg->ethw));
+	}
+	#elif defined(MACIOC_GETADDR)
+	{
+		/* sco openserver
+		 * use the streams interface to get the hardware address. 
+		 */
+		int strfd;
+		qse_mchar_t devname[QSE_COUNTOF(ifrbuf.ifr_name) + 5 + 1] = QSE_MT("/dev/");
+		qse_mbscpy (&devname[5], ifrbuf.ifr_name);
+		if ((strfd = QSE_OPEN (devname, O_RDONLY, 0)) >= 0)
+		{
+			qse_uint8_t buf[QSE_SIZEOF(cfg->ethw)];
+			struct strioctl strioc;
+
+			strioc.ic_cmd = MACIOC_GETADDR;
+			strioc.ic_timout = -1;
+			strioc.ic_len = QSE_SIZEOF (buf);
+			strioc.ic_dp = buf;
+			if (ioctl (strfd, I_STR, (char *) &strioc) >= 0) 
+			{
+				QSE_MEMCPY (cfg->ethw, buf, QSE_SIZEOF(cfg->ethw));
+			}
+
+			QSE_CLOSE (strfd);
+		}
+	}
+	#endif
 
 	return 0;
 #else
@@ -386,5 +581,10 @@ int qse_getnwifcfg (qse_nwifcfg_t* cfg)
 	}
 	if (s <= -1) return -1;
 	
+	if (cfg->name[0] == QSE_T('\0')&& cfg->index >= 1)
+	{
+/* TODO: support lookup by ifindex */
+	}
+
 	return get_nwifcfg (s, cfg);
 }

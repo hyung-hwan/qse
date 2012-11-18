@@ -104,16 +104,17 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 			{
 				/* interface name as a scope id? */
 				const qse_mchar_t* stmp = p;
+				unsigned int index;
 				do p++; while (p < end && *p != QSE_MT(']'));
-				tmpad.u.in6.scope = qse_nwifmbsntoindex (stmp, p - stmp);
-				if (tmpad.u.in6.scope <= 0) return -1;
+				if (qse_nwifmbsntoindex (stmp, p - stmp, &index) <= -1) return -1;
+				tmpad.u.in6.scope = index;
 			}
 
 			if (p >= end || *p != QSE_MT(']')) return -1;
 		}
 		p++; /* skip ] */
 
-		if (qse_mbsntoipad6 (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) return -1;
+		if (qse_mbsntoip6ad (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) return -1;
 		tmpad.type = QSE_NWAD_IN6;
 	}
 	else
@@ -123,7 +124,7 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 		while (p < end && *p != QSE_MT(':')) p++;
 		tmp.len = p - tmp.ptr;
 
-		if (qse_mbsntoipad4 (tmp.ptr, tmp.len, &tmpad.u.in4.addr) <= -1)
+		if (qse_mbsntoip4ad (tmp.ptr, tmp.len, &tmpad.u.in4.addr) <= -1)
 		{
 			if (p >= end || *p != QSE_MT(':')) return -1;
 			
@@ -133,7 +134,7 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 			while (p < end && *p != QSE_MT('%')) p++;
 			tmp.len = p - tmp.ptr;
 
-			if (qse_mbsntoipad6 (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) 
+			if (qse_mbsntoip6ad (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) 
 				return -1;
 
 			if (p < end && *p == QSE_MT('%'))
@@ -166,9 +167,10 @@ int qse_mbsntonwad (const qse_mchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 				{
 					/* interface name as a scope id? */
 					const qse_mchar_t* stmp = p;
+					unsigned int index;
 					do p++; while (p < end);
-					tmpad.u.in6.scope = qse_nwifmbsntoindex (stmp, p - stmp);
-					if (tmpad.u.in6.scope <= 0) return -1;
+					if (qse_nwifmbsntoindex (stmp, p - stmp, &index) <= -1) return -1;
+					tmpad.u.in6.scope = index;
 				}
 			}
 
@@ -268,16 +270,17 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 			{
 				/* interface name as a scope id? */
 				const qse_wchar_t* stmp = p;
+				unsigned int index;
 				do p++; while (p < end && *p != QSE_WT(']'));
-				tmpad.u.in6.scope = qse_nwifwcsntoindex (stmp, p - stmp);
-				if (tmpad.u.in6.scope <= 0) return -1;
+				if (qse_nwifwcsntoindex (stmp, p - stmp, &index) <= -1) return -1;
+				tmpad.u.in6.scope = index;
 			}
 
 			if (p >= end || *p != QSE_WT(']')) return -1;
 		}
 		p++; /* skip ] */
 
-		if (qse_wcsntoipad6 (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) return -1;
+		if (qse_wcsntoip6ad (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) return -1;
 		tmpad.type = QSE_NWAD_IN6;
 	}
 	else
@@ -287,7 +290,7 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 		while (p < end && *p != QSE_WT(':')) p++;
 		tmp.len = p - tmp.ptr;
 
-		if (qse_wcsntoipad4 (tmp.ptr, tmp.len, &tmpad.u.in4.addr) <= -1)
+		if (qse_wcsntoip4ad (tmp.ptr, tmp.len, &tmpad.u.in4.addr) <= -1)
 		{
 			if (p >= end || *p != QSE_WT(':')) return -1;
 
@@ -297,7 +300,7 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 			while (p < end && *p != QSE_WT('%')) p++;
 			tmp.len = p - tmp.ptr;
 
-			if (qse_wcsntoipad6 (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) 
+			if (qse_wcsntoip6ad (tmp.ptr, tmp.len, &tmpad.u.in6.addr) <= -1) 
 				return -1;
 
 			if (p < end && *p == QSE_WT('%'))
@@ -330,9 +333,10 @@ int qse_wcsntonwad (const qse_wchar_t* str, qse_size_t len, qse_nwad_t* nwad)
 				{
 					/* interface name as a scope id? */
 					const qse_wchar_t* stmp = p;
+					unsigned int index;
 					do p++; while (p < end);
-					tmpad.u.in6.scope = qse_nwifwcsntoindex (stmp, p - stmp);
-					if (tmpad.u.in6.scope <= 0) return -1;
+					if (qse_nwifwcsntoindex (stmp, p - stmp, &index) <= -1) return -1;
+					tmpad.u.in6.scope = index;
 				}
 			}
 
@@ -387,7 +391,7 @@ qse_size_t qse_nwadtombs (
 			if (flags & QSE_NWADTOMBS_ADDR)
 			{
 				if (xlen + 1 >= len) goto done;
-				xlen += qse_ipad4tombs (&nwad->u.in4.addr, buf, len);
+				xlen += qse_ip4adtombs (&nwad->u.in4.addr, buf, len);
 			}
 
 			if (flags & QSE_NWADTOMBS_PORT)
@@ -428,7 +432,7 @@ qse_size_t qse_nwadtombs (
 			{
 
 				if (xlen + 1 >= len) goto done;
-				xlen += qse_ipad6tombs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
+				xlen += qse_ip6adtombs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
 			
 				if (nwad->u.in6.scope != 0)
 				{
@@ -495,7 +499,7 @@ qse_size_t qse_nwadtowcs (
 			if (flags & QSE_NWADTOWCS_ADDR)
 			{
 				if (xlen + 1 >= len) goto done;
-				xlen += qse_ipad4towcs (&nwad->u.in4.addr, buf, len);
+				xlen += qse_ip4adtowcs (&nwad->u.in4.addr, buf, len);
 			}
 
 			if (flags & QSE_NWADTOWCS_PORT)
@@ -535,7 +539,7 @@ qse_size_t qse_nwadtowcs (
 			if (flags & QSE_NWADTOWCS_ADDR)
 			{
 				if (xlen + 1 >= len) goto done;
-				xlen += qse_ipad6towcs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
+				xlen += qse_ip6adtowcs (&nwad->u.in6.addr, &buf[xlen], len - xlen);
 			
 				if (nwad->u.in6.scope != 0)
 				{
