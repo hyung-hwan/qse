@@ -21,6 +21,8 @@
 #include <qse/awk/awk.h>
 #include <qse/cmn/str.h>
 #include <qse/cmn/time.h>
+#include <qse/cmn/nwif.h>
+#include <qse/cmn/nwad.h>
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -491,6 +493,37 @@ static int fnc_getenv (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
+static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	qse_nwifcfg_t cfg;
+	qse_awk_rtx_valtostr_out_t out;
+
+	out.type = QSE_AWK_RTX_VALTOSTR_CPLCPY;
+	out.u.cplcpy.ptr = cfg.name;
+	out.u.cplcpy.len = QSE_COUNTOF(cfg.name);
+	if (qse_awk_rtx_valtostr (rtx, qse_awk_rtx_getarg (rtx, 0), &out) >= 0)
+	{
+		qse_long_t type;
+		int rx;
+
+		rx = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 1), &type);
+		if (rx >= 0)
+		{
+			cfg.type = type;
+
+			if (qse_getnwifcfg (&cfg) >= 0)
+			{
+				/* make a map value containg configuration */	
+qse_char_t buf[100];
+qse_nwadtostr (&cfg.addr, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ADDR);
+qse_printf (QSE_T("%s\n"), buf);
+			}
+		}
+	}
+
+	return 0;
+}
+
 typedef struct fnctab_t fnctab_t;
 struct fnctab_t
 {
@@ -509,21 +542,22 @@ static fnctab_t fnctab[] =
 {
 	/* keep this table sorted for binary search in query(). */
 
-	{ QSE_T("fork"),    { { 0, 0, QSE_NULL }, fnc_fork,    0  } },
-	{ QSE_T("getegid"), { { 0, 0, QSE_NULL }, fnc_getegid, 0  } },
-	{ QSE_T("getenv"),  { { 1, 1, QSE_NULL }, fnc_getenv,  0  } },
-	{ QSE_T("geteuid"), { { 0, 0, QSE_NULL }, fnc_geteuid, 0  } },
-	{ QSE_T("getgid"),  { { 0, 0, QSE_NULL }, fnc_getgid,  0  } },
-	{ QSE_T("getpgrp"), { { 0, 0, QSE_NULL }, fnc_getpgrp, 0  } },
-	{ QSE_T("getpid"),  { { 0, 0, QSE_NULL }, fnc_getpid,  0  } },
-	{ QSE_T("getppid"), { { 0, 0, QSE_NULL }, fnc_getppid, 0  } },
-	{ QSE_T("gettid"),  { { 0, 0, QSE_NULL }, fnc_gettid,  0  } },
-	{ QSE_T("gettime"), { { 0, 0, QSE_NULL }, fnc_gettime, 0  } },
-	{ QSE_T("getuid"),  { { 0, 0, QSE_NULL }, fnc_getuid,  0  } },
-	{ QSE_T("kill"),    { { 2, 2, QSE_NULL }, fnc_kill,    0  } },
-	{ QSE_T("settime"), { { 1, 1, QSE_NULL }, fnc_settime, 0  } },
-	{ QSE_T("sleep"),   { { 1, 1, QSE_NULL }, fnc_sleep,   0  } },
-	{ QSE_T("wait"),    { { 1, 1, QSE_NULL }, fnc_wait,    0  } }
+	{ QSE_T("fork"),       { { 0, 0, QSE_NULL }, fnc_fork,       0  } },
+	{ QSE_T("getegid"),    { { 0, 0, QSE_NULL }, fnc_getegid,    0  } },
+	{ QSE_T("getenv"),     { { 1, 1, QSE_NULL }, fnc_getenv,     0  } },
+	{ QSE_T("geteuid"),    { { 0, 0, QSE_NULL }, fnc_geteuid,    0  } },
+	{ QSE_T("getgid"),     { { 0, 0, QSE_NULL }, fnc_getgid,     0  } },
+	{ QSE_T("getnwifcfg"), { { 2, 2, QSE_NULL }, fnc_getnwifcfg, 0  } },
+	{ QSE_T("getpgrp"),    { { 0, 0, QSE_NULL }, fnc_getpgrp,    0  } },
+	{ QSE_T("getpid"),     { { 0, 0, QSE_NULL }, fnc_getpid,     0  } },
+	{ QSE_T("getppid"),    { { 0, 0, QSE_NULL }, fnc_getppid,    0  } },
+	{ QSE_T("gettid"),     { { 0, 0, QSE_NULL }, fnc_gettid,     0  } },
+	{ QSE_T("gettime"),    { { 0, 0, QSE_NULL }, fnc_gettime,    0  } },
+	{ QSE_T("getuid"),     { { 0, 0, QSE_NULL }, fnc_getuid,     0  } },
+	{ QSE_T("kill"),       { { 2, 2, QSE_NULL }, fnc_kill,       0  } },
+	{ QSE_T("settime"),    { { 1, 1, QSE_NULL }, fnc_settime,    0  } },
+	{ QSE_T("sleep"),      { { 1, 1, QSE_NULL }, fnc_sleep,      0  } },
+	{ QSE_T("wait"),       { { 1, 1, QSE_NULL }, fnc_wait,       0  } }
 };
 
 #if !defined(SIGHUP)
@@ -554,6 +588,9 @@ static fnctab_t fnctab[] =
 static inttab_t inttab[] =
 {
 	/* keep this table sorted for binary search in query(). */
+
+	{ QSE_T("NWIFCFG_IN4"), { QSE_NWIFCFG_IN4 } },
+	{ QSE_T("NWIFCFG_IN6"), { QSE_NWIFCFG_IN6 } },
 
 	{ QSE_T("SIGABRT"), { SIGABRT } },
 	{ QSE_T("SIGALRM"), { SIGALRM } },
