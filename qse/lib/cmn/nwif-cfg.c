@@ -565,7 +565,17 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 
 int qse_getnwifcfg (qse_nwifcfg_t* cfg)
 {
-	int s = -1;
+#if defined(_WIN32)
+	/* TODO */
+	return -1;
+#elif defined(__OS2__)
+	/* TODO */
+	return -1;
+#elif defined(__DOS__)
+	/* TODO */
+	return -1;
+#else
+	int x, s = -1;
 
 	if (cfg->type == QSE_NWIFCFG_IN4)
 	{
@@ -586,5 +596,9 @@ int qse_getnwifcfg (qse_nwifcfg_t* cfg)
 /* TODO: support lookup by ifindex */
 	}
 
-	return get_nwifcfg (s, cfg);
+	x = get_nwifcfg (s, cfg);
+
+	QSE_CLOSE (s);
+	return x;
+#endif
 }
