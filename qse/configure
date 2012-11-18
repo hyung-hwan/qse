@@ -17320,7 +17320,7 @@ fi
 
 done
 
-for ac_header in sys/socket.h sys/sockio.h ifaddrs.h
+for ac_header in sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -17333,26 +17333,29 @@ fi
 
 done
 
-for ac_header in net/if.h
+for ac_header in net/if.h net/if_dl.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "#include <sys/socket.h>
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "
+	#include <sys/types.h>
+	#include <sys/socket.h>
 "
-if test "x$ac_cv_header_net_if_h" = xyes; then :
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_NET_IF_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 fi
 
 done
 
-for ac_header in net/if_dl.h
+for ac_header in sys/stropts.h sys/macstat.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "net/if_dl.h" "ac_cv_header_net_if_dl_h" "#include <sys/socket.h>
-"
-if test "x$ac_cv_header_net_if_dl_h" = xyes; then :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_NET_IF_DL_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -18642,7 +18645,6 @@ _ACEOF
 
 
 fi
-
 ac_fn_c_check_member "$LINENO" "struct ifreq" "ifr_mtu" "ac_cv_member_struct_ifreq_ifr_mtu" "#include <sys/types.h>
 	 #include <sys/socket.h>
 	 #ifdef HAVE_NET_IF_H
@@ -18653,6 +18655,50 @@ if test "x$ac_cv_member_struct_ifreq_ifr_mtu" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_IFREQ_IFR_MTU 1
+_ACEOF
+
+
+fi
+
+
+ac_fn_c_check_type "$LINENO" "struct lifconf" "ac_cv_type_struct_lifconf" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif
+"
+if test "x$ac_cv_type_struct_lifconf" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_LIFCONF 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "struct lifreq" "ac_cv_type_struct_lifreq" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif
+"
+if test "x$ac_cv_type_struct_lifreq" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_LIFREQ 1
+_ACEOF
+
+
+fi
+ac_fn_c_check_type "$LINENO" "struct if_laddrreq" "ac_cv_type_struct_if_laddrreq" "#include <sys/types.h>
+	 #include <sys/socket.h>
+	 #ifdef HAVE_NET_IF_H
+	 #include <net/if.h>
+	 #endif
+"
+if test "x$ac_cv_type_struct_if_laddrreq" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_IF_LADDRREQ 1
 _ACEOF
 
 

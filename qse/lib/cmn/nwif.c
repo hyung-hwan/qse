@@ -46,9 +46,7 @@
 #	endif
 #endif
 
-#if !defined(SIOCGIFINDEX) && !defined(SIOCGIFNAME) && \
-    !defined(HAVE_IF_NAMETOINDEX) && !defined(HAVE_IF_INDEXTONAME) && \
-    defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
+#if defined(_SCO_DS)
 static int get_sco_ifconf (struct ifconf* ifc)
 {
 	/* SCO doesn't have have any IFINDEX thing.
@@ -97,17 +95,17 @@ static QSE_INLINE void free_sco_ifconf (struct ifconf* ifc)
 #endif
 
 
-unsigned int qse_nwifmbstoindex (const qse_mchar_t* ptr)
+int qse_nwifmbstoindex (const qse_mchar_t* ptr, unsigned int* index)
 {
 #if defined(_WIN32)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__OS2__)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__DOS__)
 	/* TODO: */
-	return 0u;
+	return -1;
 
 #elif defined(SIOCGIFINDEX)
 	int h, x;
@@ -115,35 +113,45 @@ unsigned int qse_nwifmbstoindex (const qse_mchar_t* ptr)
 	struct ifreq ifr;
 
 	h = socket (AF_INET, SOCK_DGRAM, 0); 
-	if (h <= -1) return 0u;
+	if (h <= -1) return -1;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
 	len = qse_mbsxcpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), ptr);
-	if (ptr[len] != QSE_MT('\0')) return 0u; /* name too long */
+	if (ptr[len] != QSE_MT('\0')) return -1; /* name too long */
 
 	x = ioctl (h, SIOCGIFINDEX, &ifr);
 	QSE_CLOSE (h);
 
+	if (x >= 0)
+	{
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
-	return (x <= -1)? 0u: ifr.ifr_ifindex;
+		*index = ifr.ifr_ifindex;
 	#else
-	return (x <= -1)? 0u: ifr.ifr_index;
+		*index = ifr.ifr_index;
 	#endif
+	}
+
+	return x;
 
 #elif defined(HAVE_IF_NAMETOINDEX)
 	qse_mchar_t tmp[IF_NAMESIZE + 1];
 	qse_size_t len;
+	unsigned int tmpidx;
 
 	len = qse_mbsxcpy (tmp, QSE_COUNTOF(tmp), ptr);
-	if (ptr[len] != QSE_MT('\0')) return 0u; /* name too long */
-	return if_nametoindex (tmp);
+	if (ptr[len] != QSE_MT('\0')) return -1; /* name too long */
 
-#elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
+	tmpidx = if_nametoindex (tmp);
+	if (tmpidx == 0) return -1;
+	*index = tmpidx;
+	return 0;
+
+#elif defined(_SCO_DS)
 
 	struct ifconf ifc;
 	int num, i;
 
-	if (get_sco_ifconf (&ifc) <= -1) return 0u;
+	if (get_sco_ifconf (&ifc) <= -1) return -1;
 
 	num = ifc.ifc_len / QSE_SIZEOF(struct ifreq);
 	for (i = 0; i < num; i++)
@@ -151,60 +159,72 @@ unsigned int qse_nwifmbstoindex (const qse_mchar_t* ptr)
 		if (qse_mbscmp (ptr, ifc.ifc_req[i].ifr_name) == 0) 
 		{
 			free_sco_ifconf (&ifc);
-			return i + 1;
+			*index = i + 1;
+			return 0;
 		}
 	}
 
 	free_sco_ifconf (&ifc);
-	return 0u;
+	return -1;
 
 #else
-	return 0u;
+	return -1;
 #endif
 }
 
-unsigned int qse_nwifmbsntoindex (const qse_mchar_t* ptr, qse_size_t len)
+int qse_nwifmbsntoindex (const qse_mchar_t* ptr, qse_size_t len, unsigned int* index)
 {
 #if defined(_WIN32)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__OS2__)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__DOS__)
 	/* TODO: */
-	return 0u;
+	return -1;
 
 #elif defined(SIOCGIFINDEX)
 	int h, x;
 	struct ifreq ifr;
 
 	h = socket (AF_INET, SOCK_DGRAM, 0); 
-	if (h <= -1) return 0u;
+	if (h <= -1) return -1;
 
 	QSE_MEMSET (&ifr, 0, QSE_SIZEOF(ifr));
-	if (qse_mbsxncpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), ptr, len) < len) return 0u; /* name too long */
+	if (qse_mbsxncpy (ifr.ifr_name, QSE_COUNTOF(ifr.ifr_name), ptr, len) < len) return -1; /* name too long */
 
 	x = ioctl (h, SIOCGIFINDEX, &ifr);
 	QSE_CLOSE (h);
 
+	if (x >= 0)
+	{
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
-	return (x <= -1)? 0u: ifr.ifr_ifindex;
+		*index = ifr.ifr_ifindex;
 	#else
-	return (x <= -1)? 0u: ifr.ifr_index;
+		*index = ifr.ifr_index;
 	#endif
+	}
+
+	return x;
 
 #elif defined(HAVE_IF_NAMETOINDEX)
 	qse_mchar_t tmp[IF_NAMESIZE + 1];
-	if (qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), ptr, len) < len) return 0u; /* name too long */
-	return if_nametoindex (tmp);
+	unsigned int tmpidx;
 
-#elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
+	if (qse_mbsxncpy (tmp, QSE_COUNTOF(tmp), ptr, len) < len) return -1;
+
+	tmpidx = if_nametoindex (tmp);
+	if (tmpidx == 0) return -1;
+	*index = tmpidx;
+	return 0;
+
+#elif defined(_SCO_DS)
 
 	struct ifconf ifc;
 	int num, i;
 
-	if (get_sco_ifconf (&ifc) <= -1) return 0u;
+	if (get_sco_ifconf (&ifc) <= -1) return -1;
 
 	num = ifc.ifc_len / QSE_SIZEOF(struct ifreq);
 	for (i = 0; i < num; i++)
@@ -212,29 +232,30 @@ unsigned int qse_nwifmbsntoindex (const qse_mchar_t* ptr, qse_size_t len)
 		if (qse_mbsxcmp (ptr, len, ifc.ifc_req[i].ifr_name) == 0) 
 		{
 			free_sco_ifconf (&ifc);
-			return i + 1;
+			*index = i + 1;
+			return 0;
 		}
 	}
 
 	free_sco_ifconf (&ifc);
-	return 0u;
+	return -1;
 
 #else
-	return 0u;
+	return -1;
 #endif
 }
 
-unsigned int qse_nwifwcstoindex (const qse_wchar_t* ptr)
+int qse_nwifwcstoindex (const qse_wchar_t* ptr, unsigned int* index)
 {
 #if defined(_WIN32)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__OS2__)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__DOS__)
 	/* TODO: */
-	return 0u;
+	return -1;
 
 #elif defined(SIOCGIFINDEX)
 	int h, x;
@@ -242,28 +263,37 @@ unsigned int qse_nwifwcstoindex (const qse_wchar_t* ptr)
 	qse_size_t wl, ml;
 
 	h = socket (AF_INET, SOCK_DGRAM, 0); 
-	if (h <= -1) return 0u;
+	if (h <= -1) return -1;
 
 	ml = QSE_COUNTOF(ifr.ifr_name);
-	if (qse_wcstombs (ptr, &wl, ifr.ifr_name, &ml) <= -1) return 0u;
+	if (qse_wcstombs (ptr, &wl, ifr.ifr_name, &ml) <= -1) return -1;
 
 	x = ioctl (h, SIOCGIFINDEX, &ifr);
 	QSE_CLOSE (h);
 
+	if (x >= 0)
+	{
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
-	return (x <= -1)? 0u: ifr.ifr_ifindex;
+		*index = ifr.ifr_ifindex;
 	#else
-	return (x <= -1)? 0u: ifr.ifr_index;
+		*index = ifr.ifr_index;
 	#endif
+	}
+
+	return x;
 
 #elif defined(HAVE_IF_NAMETOINDEX)
 	qse_mchar_t tmp[IF_NAMESIZE + 1];
 	qse_size_t wl, ml;
+	unsigned int tmpidx;
 
 	ml = QSE_COUNTOF(tmp);
-	if (qse_wcstombs (ptr, &wl, tmp, &ml) <= -1) return 0u;
+	if (qse_wcstombs (ptr, &wl, tmp, &ml) <= -1) return -1;
 
-	return if_nametoindex (tmp);
+	tmpidx = if_nametoindex (tmp);
+	if (tmpidx == 0) return -1;
+	*index = tmpidx;
+	return 0;
 
 #elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
 
@@ -273,9 +303,9 @@ unsigned int qse_nwifwcstoindex (const qse_wchar_t* ptr)
 	qse_size_t wl, ml;
 
 	ml = QSE_COUNTOF(tmp);
-	if (qse_wcstombs (ptr, &wl, tmp, &ml) <= -1) return 0u;
+	if (qse_wcstombs (ptr, &wl, tmp, &ml) <= -1) return -1;
 
-	if (get_sco_ifconf (&ifc) <= -1) return 0u;
+	if (get_sco_ifconf (&ifc) <= -1) return -1;
 
 	num = ifc.ifc_len / QSE_SIZEOF(struct ifreq);
 	for (i = 0; i < num; i++)
@@ -283,29 +313,30 @@ unsigned int qse_nwifwcstoindex (const qse_wchar_t* ptr)
 		if (qse_mbscmp (tmp, ifc.ifc_req[i].ifr_name) == 0) 
 		{
 			free_sco_ifconf (&ifc);
-			return i + 1;
+			*index = i + 1;
+			return 0;
 		}
 	}
 
 	free_sco_ifconf (&ifc);
-	return 0u;
+	return -1;
 
 #else
-	return 0u;
+	return -1;
 #endif
 }
 
-unsigned int qse_nwifwcsntoindex (const qse_wchar_t* ptr, qse_size_t len)
+int qse_nwifwcsntoindex (const qse_wchar_t* ptr, qse_size_t len, unsigned int* index)
 {
 #if defined(_WIN32)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__OS2__)
 	/* TODO: */
-	return 0u;
+	return -1;
 #elif defined(__DOS__)
 	/* TODO: */
-	return 0u;
+	return -1;
 
 #elif defined(SIOCGIFINDEX)
 	int h, x;
@@ -313,29 +344,39 @@ unsigned int qse_nwifwcsntoindex (const qse_wchar_t* ptr, qse_size_t len)
 	qse_size_t wl, ml;
 
 	h = socket (AF_INET, SOCK_DGRAM, 0); 
-	if (h <= -1) return 0u;
+	if (h <= -1) return -1;
 
 	wl = len; ml = QSE_COUNTOF(ifr.ifr_name) - 1;
-	if (qse_wcsntombsn (ptr, &wl, ifr.ifr_name, &ml) <= -1) return 0;
+	if (qse_wcsntombsn (ptr, &wl, ifr.ifr_name, &ml) <= -1) return -1;
 	ifr.ifr_name[ml] = QSE_MT('\0');
 
 	x = ioctl (h, SIOCGIFINDEX, &ifr);
 	QSE_CLOSE (h);
 
+	if (x >= 0)
+	{
 	#if defined(HAVE_STRUCT_IFREQ_IFR_IFINDEX)
-	return (x <= -1)? 0u: ifr.ifr_ifindex;
+		*index = ifr.ifr_ifindex;
 	#else
-	return (x <= -1)? 0u: ifr.ifr_index;
+		*index = ifr.ifr_index;
 	#endif
+	}
+
+	return x;
 
 #elif defined(HAVE_IF_NAMETOINDEX)
 	qse_mchar_t tmp[IF_NAMESIZE + 1];
 	qse_size_t wl, ml;
+	unsigned int tmpidx;
 
 	wl = len; ml = QSE_COUNTOF(tmp) - 1;
-	if (qse_wcsntombsn (ptr, &wl, tmp, &ml) <= -1) return 0u;
+	if (qse_wcsntombsn (ptr, &wl, tmp, &ml) <= -1) return -1;
 	tmp[ml] = QSE_MT('\0');
-	return if_nametoindex (tmp);
+
+	tmpidx = if_nametoindex (tmp);
+	if (tmpidx == 0) return -1;
+	*index = tmpidx;
+	return 0;
 
 #elif defined(SIOCGIFCONF) && (defined(SIOCGIFANUM) || defined(SIOCGIFNUM))
 	struct ifconf ifc;
@@ -344,7 +385,7 @@ unsigned int qse_nwifwcsntoindex (const qse_wchar_t* ptr, qse_size_t len)
 	qse_size_t wl, ml;
 
 	wl = len; ml = QSE_COUNTOF(tmp) - 1;
-	if (qse_wcsntombsn (ptr, &wl, tmp, &ml) <= -1) return 0u;
+	if (qse_wcsntombsn (ptr, &wl, tmp, &ml) <= -1) return -1;
 	tmp[ml] = QSE_MT('\0');
 
 	if (get_sco_ifconf (&ifc) <= -1) return -1;
@@ -355,14 +396,15 @@ unsigned int qse_nwifwcsntoindex (const qse_wchar_t* ptr, qse_size_t len)
 		if (qse_mbscmp (tmp, ifc.ifc_req[i].ifr_name) == 0) 
 		{
 			free_sco_ifconf (&ifc);
-			return i + 1;
+			*index = i + 1;
+			return 0;
 		}
 	}
 
 	free_sco_ifconf (&ifc);
-	return 0u;
+	return -1;
 #else
-	return 0u;
+	return -1;
 #endif
 }
 

@@ -102,9 +102,11 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([stddef.h wchar.h wctype.h errno.h signal.h fcntl.h dirent.h])
 AC_CHECK_HEADERS([time.h sys/time.h utime.h spawn.h execinfo.h ucontext.h])
 AC_CHECK_HEADERS([sys/resource.h sys/wait.h sys/syscall.h sys/sendfile.h sys/epoll.h sys/ioctl.h])
-AC_CHECK_HEADERS([sys/socket.h sys/sockio.h ifaddrs.h])
-AC_CHECK_HEADERS([net/if.h], [], [], [#include <sys/socket.h>])
-AC_CHECK_HEADERS([net/if_dl.h], [], [], [#include <sys/socket.h>])
+AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h])
+AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
+	#include <sys/types.h>
+	#include <sys/socket.h>])
+AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h])
 AC_CHECK_HEADERS([uci.h])
 
 dnl check data types
@@ -253,13 +255,14 @@ AC_CHECK_MEMBERS([struct stat.st_birthtim.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 
-AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex], [], [],
+AC_CHECK_MEMBERS([struct ifreq.ifr_ifindex, struct ifreq.ifr_mtu], [], [],
 	[#include <sys/types.h>
 	 #include <sys/socket.h>
 	 #ifdef HAVE_NET_IF_H
 	 #include <net/if.h>
 	 #endif])
-AC_CHECK_MEMBERS([struct ifreq.ifr_mtu], [], [],
+
+AC_CHECK_TYPES([struct lifconf, struct lifreq, struct if_laddrreq], [], [],
 	[#include <sys/types.h>
 	 #include <sys/socket.h>
 	 #ifdef HAVE_NET_IF_H

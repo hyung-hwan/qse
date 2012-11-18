@@ -42,13 +42,13 @@ struct qse_nwad_t
 		struct
 		{
 			qse_uint16_t port;
-			qse_ipad4_t  addr;
+			qse_ip4ad_t  addr;
 		} in4;
 
 		struct
 		{
 			qse_uint16_t port;
-			qse_ipad6_t  addr;
+			qse_ip6ad_t  addr;
 			qse_uint32_t scope;
 		} in6;	
 	} u;	
@@ -73,6 +73,7 @@ typedef struct qse_skad_t qse_skad_t;
 
 struct qse_skad_t
 {
+	/* TODO: is this large enough?? */
 #if (QSE_SIZEOF_STRUCT_SOCKADDR_IN > 0) && \
     (QSE_SIZEOF_STRUCT_SOCKADDR_IN >= QSE_SIZEOF_STRUCT_SOCKADDR_IN6)
 	qse_uint8_t data[QSE_SIZEOF_STRUCT_SOCKADDR_IN];
