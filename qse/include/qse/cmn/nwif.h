@@ -37,8 +37,8 @@ enum qse_nwifcfg_flag_t
 
 enum qse_nwifcfg_type_t
 {
-	QSE_NWIFCFG_IN4,
-	QSE_NWIFCFG_IN6
+	QSE_NWIFCFG_IN4 = QSE_NWAD_IN4,
+	QSE_NWIFCFG_IN6 = QSE_NWAD_IN6
 };
 
 typedef enum qse_nwifcfg_type_t qse_nwifcfg_type_t;

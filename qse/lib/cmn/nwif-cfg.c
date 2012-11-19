@@ -299,26 +299,28 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 	if (ioctl (s, SIOCGLIFMTU, &lifrbuf) <= -1) return -1;
 	cfg->mtu = lifrbuf.lifr_mtu;
 	
-	if (ioctl (s, SIOCGLIFADDR, &lifrbuf) <= -1) return -1;
-	qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->addr);
+	qse_clearnwad (&cfg->addr, cfg->type);
+	qse_clearnwad (&cfg->mask, cfg->type);
+	qse_clearnwad (&cfg->bcast, cfg->type);
+	qse_clearnwad (&cfg->ptop, cfg->type);
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 
-	if (ioctl (s, SIOCGLIFNETMASK, &lifrbuf) <= -1) return -1;
-	qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->mask);
+	if (ioctl (s, SIOCGLIFADDR, &lifrbuf) >= 0) 
+		qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->addr);
 
-	if (cfg->flags & QSE_NWIFCFG_BCAST)
+	if (ioctl (s, SIOCGLIFNETMASK, &lifrbuf) >= 0) 
+		qse_skadtonwad (&lifrbuf.lifr_addr, &cfg->mask);
+
+	if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
+	    ioctl (s, SIOCGLIFBRDADDR, &lifrbuf) >= 0)
 	{
-		if (ioctl (s, SIOCGLIFBRDADDR, &lifrbuf) <= -1) return -1;
 		qse_skadtonwad (&lifrbuf.lifr_broadaddr, &cfg->bcast);
 	}
-	else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
-	if (cfg->flags & QSE_NWIFCFG_PTOP)
+	if ((cfg->flags & QSE_NWIFCFG_PTOP) &&
+	    ioctl (s, SIOCGLIFDSTADDR, &lifrbuf) >= 0)
 	{
-		if (ioctl (s, SIOCGLIFDSTADDR, &lifrbuf) <= -1) return -1;
 		qse_skadtonwad (&lifrbuf.lifr_dstaddr, &cfg->ptop);
 	}
-	else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
-
-	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 
 	#if defined(SIOCGENADDR)
 	{
@@ -385,44 +387,46 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 	cfg->mtu = ifrbuf.ifr_metric; 
 	#endif
 	
+	qse_clearnwad (&cfg->addr, cfg->type);
+	qse_clearnwad (&cfg->mask, cfg->type);
+	qse_clearnwad (&cfg->bcast, cfg->type);
+	qse_clearnwad (&cfg->ptop, cfg->type);
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
+
 	if (cfg->type == QSE_NWIFCFG_IN6)
 	{
-		if (ioctl (s, SIOCGLIFADDR, &iflrbuf) <= -1) return -1;
-		qse_skadtonwad (&iflrbuf.addr, &cfg->addr);
+		if (ioctl (s, SIOCGLIFADDR, &iflrbuf) >= 0) 
+		{
+			qse_skadtonwad (&iflrbuf.addr, &cfg->addr);
 
-		QSE_MEMSET (&cfg->mask, 0, QSE_SIZEOF(cfg->mask));
-		cfg->mask.type = QSE_NWAD_IN6;
-		qse_prefixtoip6ad (iflrbuf.prefixlen, &cfg->mask.u.in6.addr);
+			cfg->mask.type = QSE_NWAD_IN6;
+			qse_prefixtoip6ad (iflrbuf.prefixlen, &cfg->mask.u.in6.addr);
 
-		QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
-		if (cfg->flags & QSE_NWIFCFG_PTOP)
-			qse_skadtonwad (&iflrbuf.dstaddr, &cfg->ptop);
-		else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
+			if (cfg->flags & QSE_NWIFCFG_PTOP)
+				qse_skadtonwad (&iflrbuf.dstaddr, &cfg->ptop);
+		}
 	}
 	else
 	{
-		if (ioctl (s, SIOCGIFADDR, &ifrbuf) <= -1) return -1;
-		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
+		if (ioctl (s, SIOCGIFADDR, &ifrbuf) >= 0)
+			qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
 
-		if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) <= -1) return -1;
-		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
+		if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) >= 0)
+			qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
 
-		if (cfg->flags & QSE_NWIFCFG_BCAST)
+		if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
+		    ioctl (s, SIOCGIFBRDADDR, &ifrbuf) >= 0) 
 		{
-			if (ioctl (s, SIOCGIFBRDADDR, &ifrbuf) <= -1) return -1;
 			qse_skadtonwad (&ifrbuf.ifr_broadaddr, &cfg->bcast);
 		}
-		else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
 
-		if (cfg->flags & QSE_NWIFCFG_PTOP)
+		if ((cfg->flags & QSE_NWIFCFG_PTOP) &&
+		    ioctl (s, SIOCGIFDSTADDR, &ifrbuf) >= 0) 
 		{
-			if (ioctl (s, SIOCGIFDSTADDR, &ifrbuf) <= -1) return -1;
 			qse_skadtonwad (&ifrbuf.ifr_dstaddr, &cfg->ptop);
 		}
-		else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
 	}
 
-	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 	#if defined(CTL_NET) && defined(AF_ROUTE) && defined(AF_LINK)
 	{
 		int mib[6];
@@ -501,28 +505,31 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 	 * the MTU field, and uses ifr_metric instead */
 	cfg->mtu = ifrbuf.ifr_metric; 
 	#endif
+
+	qse_clearnwad (&cfg->addr, cfg->type);
+	qse_clearnwad (&cfg->mask, cfg->type);
+	qse_clearnwad (&cfg->bcast, cfg->type);
+	qse_clearnwad (&cfg->ptop, cfg->type);
+	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 	
-	if (ioctl (s, SIOCGIFADDR, &ifrbuf) <= -1) return -1;
-	qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
+	if (ioctl (s, SIOCGIFADDR, &ifrbuf) >= 0)
+		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->addr);
+		
+	if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) >= 0)
+		qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
 
-	if (ioctl (s, SIOCGIFNETMASK, &ifrbuf) <= -1) return -1;
-	qse_skadtonwad (&ifrbuf.ifr_addr, &cfg->mask);
-
-	if (cfg->flags & QSE_NWIFCFG_BCAST)
+	if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
+	    ioctl (s, SIOCGIFBRDADDR, &ifrbuf) >= 0)
 	{
-		if (ioctl (s, SIOCGIFBRDADDR, &ifrbuf) <= -1) return -1;
 		qse_skadtonwad (&ifrbuf.ifr_broadaddr, &cfg->bcast);
 	}
-	else QSE_MEMSET (&cfg->bcast, 0, QSE_SIZEOF(cfg->bcast));
 
-	if (cfg->flags & QSE_NWIFCFG_PTOP)
+	if ((cfg->flags & QSE_NWIFCFG_PTOP) &&
+	    ioctl (s, SIOCGIFDSTADDR, &ifrbuf) >= 0)
 	{
-		if (ioctl (s, SIOCGIFDSTADDR, &ifrbuf) <= -1) return -1;
 		qse_skadtonwad (&ifrbuf.ifr_dstaddr, &cfg->ptop);
 	}
-	else QSE_MEMSET (&cfg->ptop, 0, QSE_SIZEOF(cfg->ptop));
 
-	QSE_MEMSET (cfg->ethw, 0, QSE_SIZEOF(cfg->ethw));
 	#if defined(SIOCGIFHWADDR)
 	if (ioctl (s, SIOCGIFHWADDR, &ifrbuf) >= 0)
 	{ 
@@ -546,9 +553,7 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg)
 			strioc.ic_len = QSE_SIZEOF (buf);
 			strioc.ic_dp = buf;
 			if (ioctl (strfd, I_STR, (char *) &strioc) >= 0) 
-			{
 				QSE_MEMCPY (cfg->ethw, buf, QSE_SIZEOF(cfg->ethw));
-			}
 
 			QSE_CLOSE (strfd);
 		}

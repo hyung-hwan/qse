@@ -411,6 +411,18 @@ static int setsavedir_byid (
 	return -x;
 }
 
+static int adddeltapath_byid (
+	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id, qse_mchar_t* path)
+{
+	int x = UCI_ERR_INVAL;
+
+	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
+	{
+		x = uci_add_delta_path (list->map.tab[id]->ctx, path);
+	}
+	
+	return -x;
+}
 
 static int getsection_byid (
 	qse_awk_rtx_t* rtx, uctx_list_t* list, qse_long_t id,
@@ -1147,6 +1159,43 @@ static int fnc_uci_setsavedir  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi
 	return 0;
 }
 
+static int fnc_uci_adddeltapath  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+{
+	uctx_list_t* list;
+	qse_awk_val_t* retv;
+	qse_long_t id;
+	int ret;
+	
+	list = rtx_to_list (rtx, fi);
+
+	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
+	if (ret <= -1) ret = -UCI_ERR_INVAL;
+	else
+	{
+		qse_mchar_t* item;
+
+		item = qse_awk_rtx_valtombsdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
+		if (item)
+		{
+			ret = adddeltapath_byid (rtx, list, id, item);
+			qse_awk_rtx_freemem (rtx, item);
+		}
+		else ret = -UCI_ERR_MEM;
+	}
+
+	if (ret <= -1) 
+	{
+		list->errnum = -ret;
+		ret = -1;
+	}
+
+	retv = qse_awk_rtx_makeintval (rtx, ret);
+	if (retv == QSE_NULL) return -1;
+
+	qse_awk_rtx_setretval (rtx, retv);
+	return 0;
+}
+
 static int fnc_uci_getoption (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	uctx_list_t* list;
@@ -1228,24 +1277,25 @@ struct fnctab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("addlist"),     { { 2, 2, QSE_NULL }, fnc_uci_addlist,    0 } },
-	{ QSE_T("addsection"),  { { 3, 3, QSE_NULL }, fnc_uci_addsection, 0 } },
-	{ QSE_T("close"),       { { 1, 1, QSE_NULL }, fnc_uci_close,      0 } },
-	{ QSE_T("commit"),      { { 2, 2, QSE_NULL }, fnc_uci_commit,     0 } },
-	{ QSE_T("delete"),      { { 2, 2, QSE_NULL }, fnc_uci_delete,     0 } },
-	{ QSE_T("errno"),       { { 0, 0, QSE_NULL }, fnc_uci_errno,      0 } },
-	{ QSE_T("errstr"),      { { 0, 1, QSE_NULL }, fnc_uci_errstr,     0 } },
-	{ QSE_T("getoption"),   { { 2, 2, QSE_NULL }, fnc_uci_getoption,  0 } },
-	{ QSE_T("getsection"),  { { 2, 2, QSE_NULL }, fnc_uci_getsection, 0 } },
-	{ QSE_T("load"),        { { 2, 2, QSE_NULL }, fnc_uci_load,       0 } },
-	{ QSE_T("open"),        { { 0, 0, QSE_NULL }, fnc_uci_open,       0 } },
-	{ QSE_T("rename"),      { { 2, 2, QSE_NULL }, fnc_uci_rename,     0 } },
-	{ QSE_T("revert"),      { { 2, 2, QSE_NULL }, fnc_uci_revert,     0 } },
-	{ QSE_T("save"),        { { 2, 2, QSE_NULL }, fnc_uci_save,       0 } },
-	{ QSE_T("set"),         { { 2, 2, QSE_NULL }, fnc_uci_set,        0 } }, 
-	{ QSE_T("setconfdir"),  { { 2, 2, QSE_NULL }, fnc_uci_setconfdir, 0 } }, 
-	{ QSE_T("setsavedir"),  { { 2, 2, QSE_NULL }, fnc_uci_setsavedir, 0 } }, 
-	{ QSE_T("unload"),      { { 1, 1, QSE_NULL }, fnc_uci_unload,     0 } }
+	{ QSE_T("adddeltapath"), { { 2, 2, QSE_NULL }, fnc_uci_adddeltapath, 0 } },
+	{ QSE_T("addlist"),      { { 2, 2, QSE_NULL }, fnc_uci_addlist,      0 } },
+	{ QSE_T("addsection"),   { { 3, 3, QSE_NULL }, fnc_uci_addsection,   0 } },
+	{ QSE_T("close"),        { { 1, 1, QSE_NULL }, fnc_uci_close,        0 } },
+	{ QSE_T("commit"),       { { 2, 2, QSE_NULL }, fnc_uci_commit,       0 } },
+	{ QSE_T("delete"),       { { 2, 2, QSE_NULL }, fnc_uci_delete,       0 } },
+	{ QSE_T("errno"),        { { 0, 0, QSE_NULL }, fnc_uci_errno,        0 } },
+	{ QSE_T("errstr"),       { { 0, 1, QSE_NULL }, fnc_uci_errstr,       0 } },
+	{ QSE_T("getoption"),    { { 2, 2, QSE_NULL }, fnc_uci_getoption,    0 } },
+	{ QSE_T("getsection"),   { { 2, 2, QSE_NULL }, fnc_uci_getsection,   0 } },
+	{ QSE_T("load"),         { { 2, 2, QSE_NULL }, fnc_uci_load,         0 } },
+	{ QSE_T("open"),         { { 0, 0, QSE_NULL }, fnc_uci_open,         0 } },
+	{ QSE_T("rename"),       { { 2, 2, QSE_NULL }, fnc_uci_rename,       0 } },
+	{ QSE_T("revert"),       { { 2, 2, QSE_NULL }, fnc_uci_revert,       0 } },
+	{ QSE_T("save"),         { { 2, 2, QSE_NULL }, fnc_uci_save,         0 } },
+	{ QSE_T("set"),          { { 2, 2, QSE_NULL }, fnc_uci_set,          0 } }, 
+	{ QSE_T("setconfdir"),   { { 2, 2, QSE_NULL }, fnc_uci_setconfdir,   0 } }, 
+	{ QSE_T("setsavedir"),   { { 2, 2, QSE_NULL }, fnc_uci_setsavedir,   0 } }, 
+	{ QSE_T("unload"),       { { 1, 1, QSE_NULL }, fnc_uci_unload,       0 } }
 };
 
 /* ------------------------------------------------------------------------ */
