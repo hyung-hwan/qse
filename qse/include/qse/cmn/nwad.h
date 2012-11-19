@@ -95,6 +95,15 @@ int qse_nwadequal (
 	const qse_nwad_t* y
 );
 
+/**
+ * The qse_clearnwad() function zeros out the address
+ * for the address @a type. 
+ */
+void qse_clearnwad (
+	qse_nwad_t*     nwad,
+	qse_nwad_type_t type
+);
+
 int qse_mbstonwad (
 	const qse_mchar_t* mbs,
 	qse_nwad_t*        nwad

@@ -46,6 +46,12 @@ int qse_nwadequal (const qse_nwad_t* x, const qse_nwad_t* y)
 	}
 }
 
+void qse_clearnwad (qse_nwad_t* nwad, qse_nwad_type_t type)
+{
+	QSE_MEMSET (nwad,  0, QSE_SIZEOF(*nwad));
+	nwad->type = type;
+}
+
 int qse_mbstonwad (const qse_mchar_t* str, qse_nwad_t* nwad)
 {
 	return qse_mbsntonwad (str, qse_mbslen(str), nwad);
