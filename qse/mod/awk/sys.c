@@ -23,6 +23,7 @@
 #include <qse/cmn/time.h>
 #include <qse/cmn/nwif.h>
 #include <qse/cmn/nwad.h>
+#include "../../lib/cmn/mem.h"
 
 #if defined(_WIN32)
 #	include <windows.h>
@@ -42,7 +43,7 @@
 #endif
 
 #include <stdlib.h> /* getenv */
-
+#include <qse/cmn/stdio.h> /* qse_sprintf */
 
 static int fnc_fork (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
@@ -514,9 +515,50 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 			if (qse_getnwifcfg (&cfg) >= 0)
 			{
 				/* make a map value containg configuration */	
-qse_char_t buf[100];
-qse_nwadtostr (&cfg.addr, buf, QSE_COUNTOF(buf), QSE_NWADTOSTR_ADDR);
-qse_printf (QSE_T("%s\n"), buf);
+				qse_long_t index, mtu;
+				qse_char_t addr[128];
+				qse_char_t mask[128];
+				qse_char_t ethw[32];
+				qse_awk_val_map_data_t md[6];
+				qse_awk_val_t* retv;
+
+				QSE_MEMSET (md, 0, QSE_SIZEOF(md));
+
+				md[0].key.ptr = QSE_T("index");
+				md[0].key.len = 5;
+				md[0].type = QSE_AWK_VAL_MAP_DATA_INT;
+				index = cfg.index;
+				md[0].vptr = &index;
+
+				md[1].key.ptr = QSE_T("mtu");
+				md[1].key.len = 3;
+				md[1].type = QSE_AWK_VAL_MAP_DATA_INT;
+				mtu = cfg.mtu;
+				md[1].vptr = &mtu;
+		
+				md[2].key.ptr = QSE_T("addr");
+				md[2].key.len = 4;
+				md[2].type = QSE_AWK_VAL_MAP_DATA_STR;
+				qse_nwadtostr (&cfg.addr, addr, QSE_COUNTOF(addr), QSE_NWADTOSTR_ADDR);
+				md[2].vptr = addr;
+
+				md[3].key.ptr = QSE_T("mask");
+				md[3].key.len = 4;
+				md[3].type = QSE_AWK_VAL_MAP_DATA_STR;
+				qse_nwadtostr (&cfg.mask, mask, QSE_COUNTOF(mask), QSE_NWADTOSTR_ADDR);
+				md[3].vptr = mask;
+
+				md[4].key.ptr = QSE_T("ethw");
+				md[4].key.len = 4;
+				md[4].type = QSE_AWK_VAL_MAP_DATA_STR;
+				qse_sprintf (ethw, QSE_COUNTOF(ethw), QSE_T("%02X:%02X:%02X:%02X:%02X:%02X"), 
+					cfg.ethw[0], cfg.ethw[1], cfg.ethw[2], cfg.ethw[3], cfg.ethw[4], cfg.ethw[5]);
+				md[4].vptr = ethw;
+
+				retv = qse_awk_rtx_makemapvalwithdata (rtx, md);
+				if (retv == QSE_NULL) return -1;
+
+				qse_awk_rtx_setretval (rtx, retv);
 			}
 		}
 	}
