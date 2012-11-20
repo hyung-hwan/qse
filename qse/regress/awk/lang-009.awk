@@ -3,7 +3,7 @@ function a (a) {
 }
 
 BEGIN {
-	local a;
+	@local a;
 	a = 20; 
 }
 

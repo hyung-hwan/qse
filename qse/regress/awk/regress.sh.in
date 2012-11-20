@@ -130,11 +130,11 @@ PROGS="
 	lang-002.awk!!!--newline=on -d-
 	lang-003.awk!!!--newline=on -d-
 	lang-004.awk!!!--newline=on -d-
-	lang-005.awk!!!--implicit=off --explicit=on --newline=on -d-
-	lang-006.awk!!!--implicit=off --explicit=on --newline=on -d-
-	lang-007.awk!!!--implicit=on --explicit=on --newline=on -d-
-	lang-008.awk!!!--implicit=off --explicit=on --newline=on -d-
-	lang-009.awk!lang-009.awk!!--implicit=off --explicit=on --newline=on --strictnaming=off -d-
+	lang-005.awk!!!--implicit=off --newline=on -d-
+	lang-006.awk!!!--implicit=off --newline=on -d-
+	lang-007.awk!!!--implicit=on --newline=on -d-
+	lang-008.awk!!!--implicit=off --newline=on -d-
+	lang-009.awk!lang-009.awk!!--implicit=off --newline=on --strictnaming=off -d-
 	lang-010.awk!this is just a test!!--newline=on -d-
 	lang-011.awk!!!--newline=on -d-
 	lang-012.awk!!!--newline=on -d-
@@ -144,18 +144,18 @@ PROGS="
 	lang-016.awk!!!--newline=on -d-
 	lang-017.awk!!!--newline=on -d-
 	lang-017.awk!!!--call main --newline=on -d-
-	lang-018.awk!!!--explicit=on --newline=on -d-
-	lang-019.awk!!!--explicit=on --newline=on -d-
-	lang-020.awk!!!--explicit=on --newline=on -d-
-	lang-021.awk!!!--explicit=on --newline=on -d-
+	lang-018.awk!!!--newline=on -d-
+	lang-019.awk!!!--newline=on -d-
+	lang-020.awk!!!--newline=on -d-
+	lang-021.awk!!!--newline=on -d-
 	lang-022.awk!!!--newline=on -d-
-	lang-023.awk!!!--explicit=on --newline=on -d-
-	lang-024.awk!!!--explicit=on --newline=on -d-
+	lang-023.awk!!!--newline=on -d-
+	lang-024.awk!!!--newline=on -d-
 	lang-025.awk!!!--newline=on -d-
 	lang-026.awk!!!--newline=on -d-
 	lang-027.awk!!!--newline=on -d-
 	lang-028.awk!!!--newline=on -d-
-	lang-029.awk!!!--explicit=on --newline=on -d-
+	lang-029.awk!!!--newline=on -d-
 	lang-030.awk!!!--newline=on -d-
 	lang-031.awk!!!--newline=on -d-
 	lang-032.awk!!!--newline=on -d-

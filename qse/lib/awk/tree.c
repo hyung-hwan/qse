@@ -482,8 +482,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
 
-				if ((awk->opt.trait & QSE_AWK_EXPLICIT) && 
-				    !(awk->opt.trait & QSE_AWK_IMPLICIT))
+				if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
@@ -524,8 +523,7 @@ static int print_expr (qse_awk_t* awk, qse_awk_nde_t* nde)
 
 			if (px->id.idxa != (qse_size_t)-1) 
 			{
-				if ((awk->opt.trait & QSE_AWK_EXPLICIT) && 
-				    !(awk->opt.trait & QSE_AWK_IMPLICIT))
+				if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
 				{
 					/* no implicit(named) variable is allowed.
 					 * use the actual name */
@@ -744,7 +742,8 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 			if (px->nlcls > 0) 
 			{
 				PRINT_TABS (awk, depth + 1);
-				qse_awk_getkwname (awk, QSE_AWK_KWID_LOCAL, &kw);
+
+				qse_awk_getkwname (awk, QSE_AWK_KWID_XLOCAL, &kw);
 				PUT_SRCSTRN (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 
@@ -973,14 +972,14 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 
 			if (px->val == QSE_NULL) 
 			{
-				qse_awk_getkwname (awk, (px->abort? QSE_AWK_KWID_ABORT: QSE_AWK_KWID_EXIT), &kw);
+				qse_awk_getkwname (awk, (px->abort? QSE_AWK_KWID_XABORT: QSE_AWK_KWID_EXIT), &kw);
 				PUT_SRCSTRN (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(";"));
 				PUT_NL (awk);
 			}
 			else 
 			{
-				qse_awk_getkwname (awk, (px->abort? QSE_AWK_KWID_ABORT: QSE_AWK_KWID_EXIT), &kw);
+				qse_awk_getkwname (awk, (px->abort? QSE_AWK_KWID_XABORT: QSE_AWK_KWID_EXIT), &kw);
 				PUT_SRCSTRN (awk, kw.ptr, kw.len);
 				PUT_SRCSTR (awk, QSE_T(" "));
 				QSE_ASSERT (px->val->next == QSE_NULL);
@@ -1032,7 +1031,7 @@ static int print_stmt (qse_awk_t* awk, qse_awk_nde_t* p, int depth)
 		case QSE_AWK_NDE_RESET:
 		{
 			PRINT_TABS (awk, depth);
-			qse_awk_getkwname (awk, QSE_AWK_KWID_RESET, &kw);
+			qse_awk_getkwname (awk, QSE_AWK_KWID_XRESET, &kw);
 			PUT_SRCSTRN (awk, kw.ptr, kw.len);
 			PUT_SRCSTR (awk, QSE_T(" "));
 			qse_awk_prnpt (awk, ((qse_awk_nde_reset_t*)p)->var);

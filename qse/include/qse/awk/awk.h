@@ -980,12 +980,6 @@ enum qse_awk_trait_t
 	 **/
 	QSE_AWK_IMPLICIT = (1 << 0),
 
-	/** 
-	 * allows explicit variable declaration, the concatenation
-	 * operator, a period, and performs the parse-time function check. 
-	 */
-	QSE_AWK_EXPLICIT = (1 << 1), 
-
 	/**
 	 * enable abort,reset,nextofile,OFILENAME,@include.
 	 */
@@ -1178,7 +1172,8 @@ enum qse_awk_errnum_t
 	QSE_AWK_EINCDECOPR,/**< illegal operand for incr/decr operator */
 	QSE_AWK_EINCLSTR,  /**< 'include' not followed by a string */
 	QSE_AWK_EINCLTD,   /**< include level too deep */
-	QSE_AWK_EDIRECNR,  /**< directive '${0}' not recognized */
+	QSE_AWK_EXKWNR,    /**< @word '${0}' not recognized */
+	QSE_AWK_EXKWEM,    /**< @ not followed by a valid word  */
 
 	/* run time error */
 	QSE_AWK_EDIVBY0,       /**< divide by zero */

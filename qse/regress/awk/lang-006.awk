@@ -1,5 +1,5 @@
 #
 # a global variable can not have the same name as a function name
 #
-global a;
+@global a;
 function a () { }

@@ -9,7 +9,7 @@ function fn ()
 	return a;
 }
 
-global a;
+@global a;
 
 BEGIN { 
 	a = 30

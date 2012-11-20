@@ -449,7 +449,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 		return -1;
 	}
 
-	fd = socket (SOCKADDR_FAMILY(&addr), SOCK_STREAM, IPPROTO_TCP);
+	fd = socket (qse_skadfamily(&addr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
 #if defined(FD_CLOEXEC)
@@ -518,7 +518,7 @@ IP_TRANSPRENT is needed for:
 	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
 #if defined(IPV6_V6ONLY)
-		if (errno == EADDRINUSE && SOCKADDR_FAMILY(&addr) == AF_INET6)
+		if (errno == EADDRINUSE && qse_skadfamily(&addr) == AF_INET6)
 		{
 			int on = 1;
 			setsockopt (fd, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
@@ -682,7 +682,7 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 		return -1;
 	}
 
-	fd = socket (SOCKADDR_FAMILY(&connaddr), SOCK_STREAM, IPPROTO_TCP);
+	fd = socket (qse_skadfamily(&connaddr), SOCK_STREAM, IPPROTO_TCP);
 	if (fd <= -1) goto oops;
 
 #if defined(IP_TRANSPARENT)
