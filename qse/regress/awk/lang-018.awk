@@ -1,4 +1,4 @@
-global ARGV;
+@global ARGV;
 
 BEGIN {
 	print ARGC;

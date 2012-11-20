@@ -2,15 +2,15 @@
 # a local variable can shade a global variable
 #
 
-global x;
+@global x;
 
 BEGIN {
 	x = 1;
 	{
-		local x;
+		@local x;
 		x = 2;
 		{
-			local x;
+			@local x;
 			x = 3;
 			print x;
 		}

@@ -2,11 +2,11 @@
 function abc ()
 {
 
-	local x;
+	@local x;
 	print x = 20;
 
 	{
-		local abc;
+		@local abc;
 
 		abc = 30;
 		print abc;

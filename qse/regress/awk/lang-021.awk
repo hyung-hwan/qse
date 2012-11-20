@@ -1,5 +1,5 @@
 BEGIN {
 
-	local +;
+	@local +;
 
 }

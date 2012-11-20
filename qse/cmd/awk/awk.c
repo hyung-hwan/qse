@@ -378,8 +378,7 @@ struct opttab_t
 } opttab[] =
 {
 	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("explicit"),     QSE_AWK_EXPLICIT,       QSE_T("enable local,global for variable declaration") },
-	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable abort,reset,nextofile,OFILENAME,@include") },
+	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable abort,reset,nextofile,OFILENAME,@include,@global,@local") },
 	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
@@ -522,7 +521,6 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	{
 
 		{ QSE_T(":implicit"),        QSE_T('\0') },
-		{ QSE_T(":explicit"),        QSE_T('\0') },
 		{ QSE_T(":extrakws"),        QSE_T('\0') },
 		{ QSE_T(":rio"),             QSE_T('\0') },
 		{ QSE_T(":rwpipe"),          QSE_T('\0') },

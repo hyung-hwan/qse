@@ -7,10 +7,10 @@ function a (x) { print x; }
 BEGIN {
 
 	{
-		local a;
+		@local a;
 		a = 50;
 		{
-			local a;
+			@local a;
 			a = 30;
 			print a;
 		}
