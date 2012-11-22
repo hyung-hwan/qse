@@ -106,7 +106,7 @@ AC_CHECK_HEADERS([sys/sysctl.h sys/socket.h sys/sockio.h ifaddrs.h])
 AC_CHECK_HEADERS([net/if.h net/if_dl.h], [], [], [
 	#include <sys/types.h>
 	#include <sys/socket.h>])
-AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h])
+AC_CHECK_HEADERS([sys/stropts.h sys/macstat.h linux/ethtool.h linux/sockios.h])
 AC_CHECK_HEADERS([uci.h])
 
 dnl check data types
