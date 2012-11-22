@@ -29,10 +29,12 @@ typedef struct qse_nwifcfg_t qse_nwifcfg_t;
 
 enum qse_nwifcfg_flag_t
 {
-	QSE_NWIFCFG_UP      = (1 << 0),
-	QSE_NWIFCFG_RUNNING = (1 << 1),
-	QSE_NWIFCFG_BCAST   = (1 << 2),
-	QSE_NWIFCFG_PTOP    = (1 << 3)
+	QSE_NWIFCFG_UP       = (1 << 0),
+	QSE_NWIFCFG_RUNNING  = (1 << 1),
+	QSE_NWIFCFG_BCAST    = (1 << 2),
+	QSE_NWIFCFG_PTOP     = (1 << 3),
+	QSE_NWIFCFG_LINKUP   = (1 << 4),
+	QSE_NWIFCFG_LINKDOWN = (1 << 5)
 };
 
 enum qse_nwifcfg_type_t

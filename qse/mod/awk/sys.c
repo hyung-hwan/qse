@@ -519,7 +519,7 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				qse_char_t addr[128];
 				qse_char_t mask[128];
 				qse_char_t ethw[32];
-				qse_awk_val_map_data_t md[6];
+				qse_awk_val_map_data_t md[7];
 				qse_awk_val_t* retv;
 
 				QSE_MEMSET (md, 0, QSE_SIZEOF(md));
@@ -554,6 +554,14 @@ static int fnc_getnwifcfg (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 				qse_sprintf (ethw, QSE_COUNTOF(ethw), QSE_T("%02X:%02X:%02X:%02X:%02X:%02X"), 
 					cfg.ethw[0], cfg.ethw[1], cfg.ethw[2], cfg.ethw[3], cfg.ethw[4], cfg.ethw[5]);
 				md[4].vptr = ethw;
+
+				if (cfg.flags & (QSE_NWIFCFG_LINKUP | QSE_NWIFCFG_LINKDOWN))
+				{
+					md[5].key.ptr = QSE_T("link");
+					md[5].key.len = 4;
+					md[5].type = QSE_AWK_VAL_MAP_DATA_STR;
+					md[5].vptr = (cfg.flags & QSE_NWIFCFG_LINKUP)? QSE_T("up"): QSE_T("down");
+				}
 
 				retv = qse_awk_rtx_makemapvalwithdata (rtx, md);
 				if (retv == QSE_NULL) return -1;

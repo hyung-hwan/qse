@@ -27,6 +27,7 @@
 
 enum qse_nwad_type_t
 {
+	QSE_NWAD_NX, /* non-existent */
 	QSE_NWAD_IN4,
 	QSE_NWAD_IN6
 };

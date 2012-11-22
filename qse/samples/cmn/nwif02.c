@@ -14,6 +14,9 @@ static void print_nwifcfg (qse_nwifcfg_t* ptr)
 {
 	qse_char_t tmp[128];
 
+	if (ptr->flags & QSE_NWIFCFG_UP) qse_printf (QSE_T("UP "));
+	if (ptr->flags & QSE_NWIFCFG_LINKUP) qse_printf (QSE_T("LINKUP "));
+	if (ptr->flags & QSE_NWIFCFG_LINKDOWN) qse_printf (QSE_T("LINKDOWN "));
 	qse_printf (QSE_T("[%s] ifindex=[%u] "), ptr->name, ptr->index);
 		
 	qse_nwadtostr (&ptr->addr, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
@@ -25,6 +28,11 @@ static void print_nwifcfg (qse_nwifcfg_t* ptr)
 	{
 		qse_nwadtostr (&ptr->bcast, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
 		qse_printf (QSE_T("bcast=[%s] "), tmp);
+	}
+	if (ptr->flags & QSE_NWIFCFG_PTOP)
+	{
+		qse_nwadtostr (&ptr->ptop, tmp, QSE_COUNTOF(tmp), QSE_NWADTOSTR_ALL);
+		qse_printf (QSE_T("ptop=[%s] "), tmp);
 	}
 
 	qse_printf (QSE_T("mtu=[%d] "), (int)ptr->mtu);
