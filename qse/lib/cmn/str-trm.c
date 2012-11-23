@@ -25,23 +25,161 @@
 qse_mchar_t* qse_mbstrmx (qse_mchar_t* str, int opt)
 {
 	qse_mchar_t* p = str;
-	qse_mchar_t* s = QSE_NULL, * e = QSE_NULL;
 
-	while (*p != QSE_MT('\0'))
+	if (*p != QSE_MT('\0')) 
 	{
-		if (!QSE_ISMSPACE(*p))
-		{
-			if (s == QSE_NULL) s = p;
-			e = p;
-		}
-		p++;
-	}
+		qse_mchar_t* s = QSE_NULL, * e = QSE_NULL;
 
-	if (opt & QSE_MBSTRMX_RIGHT) e[1] = QSE_MT('\0');
-	if (opt & QSE_MBSTRMX_LEFT) str = s;
+		do
+		{
+			if (!QSE_ISMSPACE(*p))
+			{
+				if (s == QSE_NULL) s = p;
+				e = p;
+			}
+			p++;
+		}
+		while (*p != QSE_MT('\0'));
+
+
+		if (e)
+		{
+			if (opt & QSE_MBSTRMX_RIGHT) e[1] = QSE_MT('\0');
+			if (opt & QSE_MBSTRMX_LEFT) str = s;
+		}
+		else
+		{
+			/* the entire string need to ne deleted */
+			if ((opt & QSE_MBSTRMX_RIGHT) || 
+			    (opt && QSE_MBSTRMX_LEFT)) str[0] = QSE_MT('\0');
+		}
+	}
 
 	return str;
 }
+
+qse_mchar_t* qse_mbsxtrmx (qse_mchar_t* str, qse_size_t* len, int opt)
+{
+	qse_mchar_t* p = str, * end = str + *len;
+
+	if (p < end)
+	{
+		qse_mchar_t* s = QSE_NULL, * e = QSE_NULL;
+
+		do
+		{
+			if (!QSE_ISMSPACE(*p))
+			{
+				if (s == QSE_NULL) s = p;
+				e = p;
+			}
+			p++;
+		}
+		while (p < end);
+
+		if (e)
+		{
+			if (opt & QSE_MBSTRMX_RIGHT) 
+			{
+				*len -= end - e - 1;
+			}
+			if (opt & QSE_MBSTRMX_LEFT) 
+			{
+				*len -= s - str;
+				str = s;
+			}
+		}
+		else
+		{
+			/* the entire string need to ne deleted */
+			if ((opt & QSE_MBSTRMX_RIGHT) || 
+			    (opt && QSE_MBSTRMX_LEFT)) *len = 0;
+		}
+	}
+
+	return str;
+}
+
+
+qse_wchar_t* qse_wcstrmx (qse_wchar_t* str, int opt)
+{
+	qse_wchar_t* p = str;
+
+	if (*p != QSE_MT('\0')) 
+	{
+		qse_wchar_t* s = QSE_NULL, * e = QSE_NULL;
+
+		do
+		{
+			if (!QSE_ISWSPACE(*p))
+			{
+				if (s == QSE_NULL) s = p;
+				e = p;
+			}
+			p++;
+		}
+		while (*p != QSE_MT('\0'));
+
+
+		if (e)
+		{
+			if (opt & QSE_WCSTRMX_RIGHT) e[1] = QSE_MT('\0');
+			if (opt & QSE_WCSTRMX_LEFT) str = s;
+		}
+		else
+		{
+			/* the entire string need to ne deleted */
+			if ((opt & QSE_WCSTRMX_RIGHT) || 
+			    (opt && QSE_WCSTRMX_LEFT)) str[0] = QSE_MT('\0');
+		}
+	}
+
+	return str;
+}
+
+qse_wchar_t* qse_wcsxtrmx (qse_wchar_t* str, qse_size_t* len, int opt)
+{
+	qse_wchar_t* p = str, * end = str + *len;
+
+	if (p < end)
+	{
+		qse_wchar_t* s = QSE_NULL, * e = QSE_NULL;
+
+		do
+		{
+			if (!QSE_ISWSPACE(*p))
+			{
+				if (s == QSE_NULL) s = p;
+				e = p;
+			}
+			p++;
+		}
+		while (p < end);
+
+		if (e)
+		{
+			if (opt & QSE_WCSTRMX_RIGHT) 
+			{
+				*len -= end - e - 1;
+			}
+			if (opt & QSE_WCSTRMX_LEFT) 
+			{
+				*len -= s - str;
+				str = s;
+			}
+		}
+		else
+		{
+			/* the entire string need to ne deleted */
+			if ((opt & QSE_WCSTRMX_RIGHT) || 
+			    (opt && QSE_WCSTRMX_LEFT)) *len = 0;
+		}
+	}
+
+	return str;
+}
+
+/* -------------------------------------------------------------- */
 
 qse_size_t qse_mbstrm (qse_mchar_t* str)
 {
@@ -58,7 +196,7 @@ qse_size_t qse_mbstrm (qse_mchar_t* str)
 		p++;
 	}
 
-	if (e != QSE_NULL) 
+	if (e)
 	{
 		e[1] = QSE_MT('\0');
 		if (str != s)
@@ -99,27 +237,6 @@ qse_size_t qse_mbsxtrm (qse_mchar_t* str, qse_size_t len)
 	return 0;
 }
 
-qse_wchar_t* qse_wcstrmx (qse_wchar_t* str, int opt)
-{
-	qse_wchar_t* p = str;
-	qse_wchar_t* s = QSE_NULL, * e = QSE_NULL;
-
-	while (*p != QSE_MT('\0'))
-	{
-		if (!QSE_ISWSPACE(*p))
-		{
-			if (s == QSE_NULL) s = p;
-			e = p;
-		}
-		p++;
-	}
-
-	if (opt & QSE_WCSTRMX_RIGHT) e[1] = QSE_MT('\0');
-	if (opt & QSE_WCSTRMX_LEFT) str = s;
-
-	return str;
-}
-
 qse_size_t qse_wcstrm (qse_wchar_t* str)
 {
 	qse_wchar_t* p = str;
@@ -135,7 +252,7 @@ qse_size_t qse_wcstrm (qse_wchar_t* str)
 		p++;
 	}
 
-	if (e != QSE_NULL) 
+	if (e)
 	{
 		e[1] = QSE_MT('\0');
 		if (str != s)

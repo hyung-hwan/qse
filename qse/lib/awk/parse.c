@@ -5566,7 +5566,7 @@ static int get_string (
 	return 0;
 }
 
-static int get_charstr (qse_awk_t* awk, qse_awk_tok_t* tok)
+static int get_charstr (qse_awk_t* awk, qse_awk_tok_t* tok, qse_char_t c)
 {
 	if (awk->sio.last.c != QSE_T('\"')) 
 	{
@@ -5961,10 +5961,11 @@ retry:
 		type = classify_ident (awk, QSE_STR_CSTR(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
-	else if (c == QSE_T('\"')) 
+	else if (c == QSE_T('\"') || c == QSE_T('\''))
 	{
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
-		if (get_charstr(awk, tok) <= -1) return -1;
+		/*if (get_charstr(awk, tok, c) <= -1) return -1;*/
+		if (get_string (awk, c, QSE_T('\\'), 0, 0, tok) <= -1) return -1;
 	}
 	else
 	{

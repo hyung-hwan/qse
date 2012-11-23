@@ -274,6 +274,29 @@ void qse_freenwifcfg (qse_nwifcfg_t* cfg)
 
 #endif
 
+#if defined(__linux)
+static void read_proc_net_if_inet6 (qse_nwifcfg_t* cfg, struct ifreq* ifr)
+{
+#if 0
+	qse_sio_t* sio;
+	qse_mchar_t line[128];
+
+	/* TODO */
+	sio = qse_sio_open (QSE_MMGR_GETDFL(), 0, 
+		QSE_T("proc/net/if_inet6"), QSE_SIO_IGNOREMBWCERR | QSE_SIO_READ); 
+	if (sio)
+	{
+		qse_ssize_t x;
+		while (1)
+		{
+			x = qse_sio_getmbs (sio, line, QSE_COUNTOF(line));
+			if (x == -1) break;
+		}
+		qse_sio_close (sio);
+	}
+#endif
+}
+#endif
 
 static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 {
@@ -488,9 +511,18 @@ static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 	
 	if (ioctl (s, SIOCGIFADDR, ifr) >= 0)
 		qse_skadtonwad (&ifr->ifr_addr, &cfg->addr);
-		
+
 	if (ioctl (s, SIOCGIFNETMASK, ifr) >= 0)
 		qse_skadtonwad (&ifr->ifr_addr, &cfg->mask);
+
+	#if defined(__linux)
+	if (cfg->addr.type == QSE_NWAD_NX && cfg->mask.type == QSE_NWAD_NX)
+	{
+		/* access /proc/net/if_inet6 */
+		read_proc_net_if_inet6 (cfg, ifr);
+	}
+	#endif
+		
 
 	if ((cfg->flags & QSE_NWIFCFG_BCAST) &&
 	    ioctl (s, SIOCGIFBRDADDR, ifr) >= 0)
@@ -588,6 +620,9 @@ for (i = 0; i  < drvinfo.n_stats; i++)
 #endif
 #endif
 }
+
+/* TOOD: consider how to handle multiple IPv6 addresses on a single interfce.
+ *       consider how to get IPv4 addresses on an aliased interface? so mutliple ipv4 addresses */
 
 int qse_getnwifcfg (qse_nwifcfg_t* cfg)
 {
