@@ -344,7 +344,7 @@ static int fnc_dir_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	return 0;
 }
 
-static int fnc_dir_reset  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
+static int fnc_dir_reset (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	dir_list_t* list;
 	qse_awk_val_t* retv;

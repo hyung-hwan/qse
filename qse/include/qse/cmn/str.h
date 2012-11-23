@@ -78,7 +78,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
 	qse_size_t hint
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define QSE_STR_XSTR(s)     ((qse_xstr_t*)QSE_MBS_XSTR(s))
 #	define QSE_STR_CSTR(s)     ((qse_cstr_t*)QSE_MBS_XSTR(s))
 #	define QSE_STR_LEN(s)      QSE_MBS_LEN(s)
@@ -147,7 +147,7 @@ typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
 	void*              ctx
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strxsubst_subst_t qse_mbsxsubst_subst_t
 #else
 #	define qse_strxsubst_subst_t qse_wcsxsubst_subst_t
@@ -298,9 +298,9 @@ typedef qse_wchar_t* (*qse_wcsxsubst_subst_t) (
 } while(0)
 
 /**
- * The qse_mbstrmx_op_t defines a string trimming operation. 
+ * The qse_mbstrmx_flag_t defines a string trimming operation. 
  */
-enum qse_mbstrmx_op_t
+enum qse_mbstrmx_flag_t
 {
 	QSE_MBSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
 #define QSE_MBSTRMX_LEFT QSE_MBSTRMX_LEFT
@@ -309,9 +309,9 @@ enum qse_mbstrmx_op_t
 };
 
 /**
- * The qse_wcstrmx_op_t defines a string trimming operation. 
+ * The qse_wcstrmx_flag_t defines a string trimming operation. 
  */
-enum qse_wcstrmx_op_t
+enum qse_wcstrmx_flag_t
 {
 	QSE_WCSTRMX_LEFT  = (1 << 0), /**< trim leading spaces */
 #define QSE_WCSTRMX_LEFT QSE_WCSTRMX_LEFT
@@ -319,7 +319,7 @@ enum qse_wcstrmx_op_t
 #define QSE_WCSTRMX_RIGHT QSE_WCSTRMX_RIGHT
 };
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define QSE_STRTRMX_LEFT QSE_MBSTRMX_LEFT
 #	define QSE_STRTRMX_RIGHT QSE_MBSTRMX_RIGHT
 #else
@@ -351,7 +351,7 @@ enum qse_wcsfnmat_flag_t
 #define QSE_WCSFNMAT_IGNORECASE QSE_WCSFNMAT_IGNORECASE
 };
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define QSE_STRFNMAT_PATHNAME   QSE_MBSFNMAT_PATHNAME
 #	define QSE_STRFNMAT_NOESCAPE   QSE_MBSFNMAT_NOESCAPE
 #	define QSE_STRFNMAT_PERIOD     QSE_MBSFNMAT_PERIOD
@@ -405,7 +405,7 @@ qse_size_t qse_wcsbytes (
 	const qse_wchar_t* str
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strlen(str)   qse_mbslen(str)
 #	define qse_strbytes(str) qse_mbsbytes(str)
 #else
@@ -477,7 +477,7 @@ qse_size_t qse_wcsxncpy (
 	qse_size_t         len  /**< string length */
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strcpy(buf,str)           qse_mbscpy(buf,str)
 #	define qse_strxcpy(buf,bsz,str)      qse_mbsxcpy(buf,bsz,str)
 #	define qse_strncpy(buf,str,len)      qse_mbsncpy(buf,str,len)
@@ -535,7 +535,7 @@ qse_size_t qse_wcsxnput (
 	qse_size_t         len
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strput(buf,str)           qse_mbsput(buf,str)
 #	define qse_strxput(buf,bsz,str)      qse_mbsxput(buf,bsz,str)
 #	define qse_strxnput(buf,bsz,str,len) qse_mbsxnput(buf,bsz,str,len)
@@ -667,7 +667,7 @@ qse_size_t qse_wcsxfncpy (
 	const qse_wcstr_t  str[]
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strfcpy(buf,fmt,str)        qse_mbsfcpy(buf,fmt,str)
 #	define qse_strfncpy(buf,fmt,str)       qse_mbsfncpy(buf,fmt,str)
 #	define qse_strxfcpy(buf,bsz,fmt,str)   qse_mbsxfcpy(buf,bsz,fmt,str)
@@ -731,7 +731,7 @@ qse_size_t qse_wcsxsubst (
 	void*                  ctx
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_mbsxsubst(buf,bsz,fmt,subst,ctx)
 #else
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
@@ -797,7 +797,7 @@ qse_size_t qse_wcsxncat (
 	qse_size_t         len
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strcat(buf,str)           qse_mbscat(buf,str)
 #	define qse_strncat(buf,str,len)      qse_mbsncat(buf,str,len)
 #	define qse_strcatn(buf,str,n)        qse_mbscatn(buf,str,n)
@@ -947,7 +947,7 @@ int qse_wcszcasecmp (
 	qse_size_t         n
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strcmp(s1,s2)               qse_mbscmp(s1,s2)
 #	define qse_strxcmp(s1,ln1,s2)          qse_mbsxcmp(s1,ln1,s2)
 #	define qse_strxncmp(s1,ln1,s2,ln2)     qse_mbsxncmp(s1,ln1,s2,ln2)
@@ -1029,7 +1029,7 @@ qse_wchar_t* qse_wcsadup (
 	qse_mmgr_t*        mmgr
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strdup(s,mmgr)             qse_mbsdup(s,mmgr)
 #	define qse_strdup2(s1,s2,mmgr)        qse_mbsdup2(s1,s2,mmgr)
 #	define qse_strxdup(s,l,mmgr)          qse_mbsxdup(s,l,mmgr)
@@ -1065,7 +1065,7 @@ qse_wchar_t* qse_wcstradup (
 	qse_mmgr_t*       mmgr
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_cstrdup(sa,mmgr)           qse_mcstrdup(sa,mmgr)
 #	define qse_cstradup(sa,len,mmgr)      qse_mcstradup(sa,len,mmgr)
 #else
@@ -1241,7 +1241,7 @@ qse_wchar_t* qse_wcsxnrcasestr (
 	qse_size_t         subsz
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strstr(str,sub)                    qse_mbsstr(str,sub)
 #	define qse_strxstr(str,size,sub)              qse_mbsxstr(str,size,sub)
 #	define qse_strxnstr(str,strsz,sub,subsz)      qse_mbsxnstr(str,strsz,sub,subsz)
@@ -1327,7 +1327,7 @@ const qse_wchar_t* qse_wcsxcaseword (
 	const qse_wchar_t* word
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strword(str,word)          qse_mbsword(str,word)
 #	define qse_strxword(str,len,word)     qse_mbsxword(str,len,word)
 #	define qse_strcaseword(str,word)      qse_mbscaseword(str,word)
@@ -1389,7 +1389,7 @@ qse_wchar_t* qse_wcsxrchr (
 	qse_wcint_t        c
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strchr(str,c)        qse_mbschr(str,c)
 #	define qse_strxchr(str,len,c)   qse_mbsxchr(str,len,c)
 #	define qse_strrchr(str,c)       qse_mbsrchr(str,c)
@@ -1469,7 +1469,7 @@ qse_wchar_t* qse_wcscasebeg (
 	const qse_wchar_t* sub
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strbeg(str,sub)             qse_mbsbeg(str,sub)
 #	define qse_strxbeg(str,len,sub)        qse_mbsxbeg(str,len,sub)
 #	define qse_strnbeg(str,sub,len)        qse_mbsnbeg(str,sub,len)
@@ -1541,7 +1541,7 @@ qse_wchar_t* qse_wcsxnend (
 	qse_size_t         len2
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strend(str,sub)             qse_mbsxend(str,sub)
 #	define qse_strxend(str,len,sub)        qse_mbsxend(str,len,sub)
 #	define qse_strnend(str,sub,len)        qse_mbsnend(str,sub,len)
@@ -1573,7 +1573,7 @@ qse_size_t qse_wcscspn (
 	const qse_wchar_t* str2
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strspn(str1,str2) qse_mbsspn(str1,str2)
 #	define qse_strcspn(str1,str2) qse_mbscspn(str1,str2)
 #else
@@ -1637,7 +1637,7 @@ qse_wchar_t* qse_wcsxrpbrk (
 	const qse_wchar_t* str2
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strpbrk(str1,str2)       qse_mbspbrk(str1,str2)
 #	define qse_strxpbrk(str1,len,str2)  qse_mbsxpbrk(str1,len,str2)
 #	define qse_strrpbrk(str1,str2)      qse_mbsrpbrk(str1,str2)
@@ -1751,7 +1751,7 @@ qse_size_t qse_wcsxdel (
 	qse_size_t   n
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strdel(str,pos,n)      qse_mbsdel(str,pos,n)
 #	define qse_strxdel(str,len,pos,n) qse_mbsxdel(str,len,pos,n)
 #else
@@ -1782,7 +1782,7 @@ qse_size_t qse_wcsxexcl (
 	const qse_wchar_t* cs
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strexcl(str,cs)      qse_mbsexcl(str,cs)
 #	define qse_strxexcl(str,len,cs) qse_mbsxexcl(str,len,cs)
 #else
@@ -1812,7 +1812,7 @@ qse_size_t qse_wcsxincl (
 	const qse_wchar_t* cs
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strincl(str,cs)      qse_mbsincl(str,cs)
 #	define qse_strxincl(str,len,cs) qse_mbsxincl(str,len,cs)
 #else
@@ -1847,7 +1847,7 @@ qse_size_t qse_wcsxset (
 	qse_size_t   n
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strset(buf,c,n) qse_mbsset(buf,c,n)
 #	define qse_strxset(buf,bsz,c,n) qse_mbsxset(buf,bsz,c,n)
 #else
@@ -1873,7 +1873,7 @@ qse_size_t qse_wcsupr (
 	qse_wchar_t* str
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strlwr(str) qse_mbslwr(str);
 #	define qse_strupr(str) qse_mbsupr(str);
 #else
@@ -1900,7 +1900,7 @@ qse_size_t qse_wcsxrev (
 	qse_size_t   len
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strrev(str)      qse_mbsrev(str)
 #	define qse_strxrev(str,len) qse_mbsxrev(str,len)
 #else
@@ -1934,7 +1934,7 @@ qse_size_t qse_wcsxrot (
 	qse_size_t   n
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strrot(str,dir,n)      qse_mbsrot(str,dir,n)
 #	define qse_strxrot(str,len,dir,n) qse_mbsrot(str,len,dir,n)
 #else
@@ -2028,7 +2028,7 @@ int qse_wcsspltrn (
 	const qse_wchar_t* trset
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strspl(str,delim,lquote,rquote,escape) qse_mbsspl(str,delim,lquote,rquote,escape)
 #	define qse_strspltrn(str,delim,lquote,rquote,escape,trset) qse_mbsspltrn(str,delim,lquote,rquote,escape,trset)
 #else
@@ -2079,7 +2079,7 @@ qse_wchar_t* qse_wcsxntok (
 	qse_wcstr_t*       tok
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strtok(s,d,t)          qse_mbstok(s,d,t)
 #	define qse_strxtok(s,len,d,t)     qse_mbsxtok(s,len,d,t)
 #	define qse_strxntok(s,len,d,dl,t) qse_mbsxntok(s,len,d,dl,t)
@@ -2111,8 +2111,14 @@ qse_wchar_t* qse_wcsxntok (
  * @return pointer to a trimmed string.
  */
 qse_mchar_t* qse_mbstrmx (
-	qse_mchar_t* str, /**< string */
-	int          opt  /**< option OR'ed of #qse_mbstrmx_op_t values */
+	qse_mchar_t* str,   /**< string */
+	int          flags  /**< option OR'ed of #qse_mbstrmx_flag_t values */
+);
+
+qse_mchar_t* qse_mbsxtrmx (
+	qse_mchar_t* str,   /**< string */
+	qse_size_t*  len,   /**< [IN/OUT] length */
+	int          flags  /**< option OR'ed of #qse_mbstrmx_flag_t values */
 );
 
 /**
@@ -2137,8 +2143,14 @@ qse_mchar_t* qse_mbstrmx (
  * @return pointer to a trimmed string.
  */
 qse_wchar_t* qse_wcstrmx (
-	qse_wchar_t* str, /**< a string */
-	int          opt   /**< option OR'ed of #qse_wcstrmx_op_t values */
+	qse_wchar_t* str,   /**< string */
+	int          flags  /**< option OR'ed of #qse_wcstrmx_flag_t values */
+);
+
+qse_wchar_t* qse_wcsxtrmx (
+	qse_wchar_t* str,   /**< string */
+	qse_size_t*  len,   /**< [IN/OUT] length */
+	int          flags  /**< option OR'ed of #qse_wcstrmx_flag_t values */
 );
 
 /**
@@ -2187,14 +2199,16 @@ qse_size_t qse_wcsxtrm (
 	qse_size_t   len  /**< length */
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
-#	define qse_strtrmx(str,opt)  qse_mbstrmx(str,opt)
-#	define qse_strtrm(str)       qse_mbstrm(str)
-#	define qse_strxtrm(str,len)  qse_mbsxtrm(str,len)
+#if defined(QSE_CHAR_IS_MCHAR)
+#	define qse_strtrmx(str,opt)      qse_mbstrmx(str,opt)
+#	define qse_strxtrmx(str,len,opt) qse_mbsxtrmx(str,len,opt)
+#	define qse_strtrm(str)           qse_mbstrm(str)
+#	define qse_strxtrm(str,len)      qse_mbsxtrm(str,len)
 #else
-#	define qse_strtrmx(str,opt)  qse_wcstrmx(str,opt)
-#	define qse_strtrm(str)       qse_wcstrm(str)
-#	define qse_strxtrm(str,len)  qse_wcsxtrm(str,len)
+#	define qse_strtrmx(str,opt)       qse_wcstrmx(str,opt)
+#	define qse_strxtrmx(str,len,opt)  qse_wcsxtrmx(str,len,opt)
+#	define qse_strtrm(str)            qse_wcstrm(str)
+#	define qse_strxtrm(str,len)       qse_wcsxtrm(str,len)
 #endif
 
 /**
@@ -2236,7 +2250,7 @@ qse_size_t qse_wcsxpac (
 	qse_size_t   len  /**< length */
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strpac(str)      qse_mbspac(str)
 #	define qse_strxpac(str,len) qse_mbsxpac(str,len)
 #else
@@ -2300,7 +2314,7 @@ int qse_wcsxnfnmat (
 	int                flags
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_strfnmat(str,ptn,flags)             qse_mbsfnmat(str,ptn,flags)
 #	define qse_strxfnmat(str,slen,ptn,flags)       qse_mbsxfnmat(str,slen,ptn,flags)
 #	define qse_strnfnmat(str,ptn,plen,flags)       qse_mbsnfnmat(str,ptn,plen,flags)
@@ -2671,7 +2685,7 @@ qse_size_t qse_wcs_pac (
 	qse_wcs_t* str
 );
 
-#ifdef QSE_CHAR_IS_MCHAR
+#if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_str_setmmgr(str,mmgr)    qse_mbs_wetmmgr(str,mmgr)
 #	define qse_str_getmmgr(str)         qse_mbs_getmmgr(str)
 #	define qse_str_open(mmgr,ext,capa)  qse_mbs_open(mmgr,ext,capa)
