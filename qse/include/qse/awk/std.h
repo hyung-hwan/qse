@@ -49,9 +49,9 @@
  */
 enum qse_awk_parsestd_type_t
 {
-	QSE_AWK_PARSESTD_NULL = 0, /**< invalid type */
-	QSE_AWK_PARSESTD_FILE = 1, /**< file */
-	QSE_AWK_PARSESTD_STR  = 2  /**< length-bounded string */
+	QSE_AWK_PARSESTD_NULL  = 0, /**< invalid type */
+	QSE_AWK_PARSESTD_FILE  = 1, /**< files */
+	QSE_AWK_PARSESTD_STR   = 2  /**< length-bounded string */
 };
 
 typedef enum qse_awk_parsestd_type_t qse_awk_parsestd_type_t;
@@ -65,18 +65,10 @@ struct qse_awk_parsestd_t
 
 	union
 	{
-		/**
-		 * You can create a sio stream in advance and pass it to 
-		 * qse_awk_parsestd() via this field. */
-		qse_sio_t* sio;
-
 		struct
 		{
 			/** file path to open. QSE_NULL or '-' for stdin/stdout. */
-			const qse_char_t* path; 
-			/* the streams created with the file path is set with this
-			 * cmgr if it is not #QSE_NULL. */
-			qse_cmgr_t*       cmgr; 
+			const qse_char_t*  path; 
 		} file;
 
 		/** 
@@ -91,6 +83,10 @@ struct qse_awk_parsestd_t
 		 */
 		qse_xstr_t str;
 	} u;
+
+	/* the streams created with the file path is set with this
+	 * cmgr if it is not #QSE_NULL. */
+	qse_cmgr_t*  cmgr; 
 };
 
 typedef struct qse_awk_parsestd_t qse_awk_parsestd_t;
@@ -134,14 +130,15 @@ QSE_EXPORT void* qse_awk_getxtnstd (
  * and deparses it out to a buffer 'buf'.
  * @code
  * int n;
- * qse_awk_parsestd_t in;
+ * qse_awk_parsestd_t in[2];
  * qse_awk_parsestd_t out;
  *
- * in.type = QSE_AWK_PARSESTD_STR;
- * in.u.str.ptr = QSE_T("BEGIN { print 10; }");
- * in.u.str.len = qse_strlen(in.u.str.ptr);
+ * in[0].type = QSE_AWK_PARSESTD_STR;
+ * in[0].u.str.ptr = QSE_T("BEGIN { print 10; }");
+ * in[0].u.str.len = qse_strlen(in.u.str.ptr);
+ * in[1].type = QSE_AWK_PARSESTD_NULL;
  * out.type = QSE_AWK_PARSESTD_STR;
- * n = qse_awk_parsestd (awk, &in, &out);
+ * n = qse_awk_parsestd (awk, in, &out);
  * if (n >= 0) 
  * {
  *   qse_printf (QSE_T("%s\n"), out.u.str.ptr);
@@ -151,7 +148,7 @@ QSE_EXPORT void* qse_awk_getxtnstd (
  */
 QSE_EXPORT int qse_awk_parsestd (
 	qse_awk_t*          awk,
-	qse_awk_parsestd_t* in,
+	qse_awk_parsestd_t  in[], 
 	qse_awk_parsestd_t* out
 );
 

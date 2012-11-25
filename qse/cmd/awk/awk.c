@@ -74,14 +74,10 @@ struct xarg_t
 
 struct arg_t
 {
-	qse_awk_parsestd_type_t ist;  /* input source type */
-	union
-	{
-		qse_char_t*  str;
-		qse_char_t** files;
-	} isp;
-	qse_size_t   isfl; /* the number of input source files */
+	int incl_conv;
+	qse_awk_parsestd_t* psin; /* input source streams */
 	qse_char_t*  osf;  /* output source file */
+
 	xarg_t       icf; /* input console files */
 
 	qse_htb_t*   gvm;  /* global variable map */
@@ -94,6 +90,7 @@ struct arg_t
 	unsigned int classic: 1;
 	int          opton;
 	int          optoff;
+
 	qse_ulong_t  memlimit;
 #if defined(QSE_BUILD_DEBUG)
 	qse_ulong_t  failmalloc;
@@ -378,7 +375,7 @@ struct opttab_t
 } opttab[] =
 {
 	{ QSE_T("implicit"),     QSE_AWK_IMPLICIT,       QSE_T("allow undeclared variables") },
-	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable abort,reset,nextofile,OFILENAME,@include,@global,@local") },
+	{ QSE_T("extrakws"),     QSE_AWK_EXTRAKWS,       QSE_T("enable nextofile,OFILENAME") },
 	{ QSE_T("rio"),          QSE_AWK_RIO,            QSE_T("enable builtin I/O including getline & print") },
 	{ QSE_T("rwpipe"),       QSE_AWK_RWPIPE,         QSE_T("allow a dual-directional pipe") },
 	{ QSE_T("newline"),      QSE_AWK_NEWLINE,        QSE_T("enable a newline to terminate a statement") },
@@ -566,10 +563,13 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 	qse_cint_t c;
 
+	qse_size_t i;
 	qse_size_t isfc = 16; /* the capacity of isf */
 	qse_size_t isfl = 0; /* number of input source files */
-	qse_char_t** isf = QSE_NULL; /* input source files */
-	qse_char_t*  osf = QSE_NULL; /* output source file */
+	qse_awk_parsestd_t* isf = QSE_NULL; /* input source files */
+
+	qse_char_t* osf = QSE_NULL; /* output source file */
+
 	qse_htb_t* gvm = QSE_NULL;  /* global variable map */
 	qse_char_t* fs = QSE_NULL; /* field separator */
 	qse_char_t* call = QSE_NULL; /* function to call */
@@ -577,7 +577,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	int oops_ret = -1;
 	int do_glob = 0;
 
-	isf = (qse_char_t**) malloc (QSE_SIZEOF(*isf) * isfc);
+	isf = (qse_char_t**) QSE_MMGR_ALLOC (arg->icf.mmgr, QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
 	{
 		print_error (QSE_T("out of memory\n"));
@@ -620,10 +620,10 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			
 			case QSE_T('f'):
 			{
-				if (isfl >= isfc-1) /* -1 for last QSE_NULL */
+				if (isfl >= isfc - 1) /* -1 for last QSE_NULL */
 				{
-					qse_char_t** tmp;
-					tmp = (qse_char_t**) realloc (isf, QSE_SIZEOF(*isf)*(isfc+16));
+					qse_awk_parsestd_t** tmp;
+					tmp = (qse_char_t**) QSE_MMGR_REALLOC (arg->icf.mmgr, isf, QSE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == QSE_NULL)
 					{
 						print_error (QSE_T("out of memory\n"));
@@ -634,7 +634,10 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					isfc = isfc + 16;
 				}
 
-				isf[isfl++] = opt.arg;
+				isf[isfl].type = QSE_AWK_PARSESTD_FILE;
+				isf[isfl].u.file.path = opt.arg;
+				isf[isfl].cmgr = QSE_NULL;
+				isfl++;
 				break;
 			}
 
@@ -788,10 +791,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		}
 	}
 
-	isf[isfl] = QSE_NULL;
-
 	if (isfl <= 0)
 	{
+		/* no -f specified */
 		if (opt.ind >= argc)
 		{
 			/* no source code specified */
@@ -799,16 +801,45 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		}
 
 		/* the source code is the string, not from the file */
-		arg->ist = QSE_AWK_PARSESTD_STR;
-		arg->isp.str = argv[opt.ind++];
+		isf[isfl].type = QSE_AWK_PARSESTD_STR;
+		isf[isfl].u.str.ptr = argv[opt.ind++];
+		isf[isfl].u.str.len = qse_strlen(isf[isfl].u.str.ptr);
 
-		free (isf);
+		isfl++;
 	}
-	else
+	else if (isfl >= 2)
 	{
-		arg->ist = QSE_AWK_PARSESTD_FILE;
-		arg->isp.files = isf;
+		/* if more than one -f has been specified, attempt to convert 
+		 * it to a single script containing @include statements. this way
+		 * a parse error in a particular script file can be pin-pointed. 
+		 * qse_awk_parsestd() treats multiple QSE_AWK_PARSED_FILEs as
+		 * a single stream concatenated. so this is a workaround. */
+		qse_str_t script;
+		if (qse_str_init (&script, arg->icf.mmgr, 256) >= 0)
+		{
+			for (i = 0; i < isfl; i++)
+			{
+				if (qse_str_cat (&script, QSE_T("@include \"")) == (qse_size_t)-1 ||
+				    qse_str_cat (&script, isf[i].u.file.path) == (qse_size_t)-1 ||
+				    qse_str_cat (&script, QSE_T("\";")) == (qse_size_t)-1)
+				{
+					goto incl_conv_oops;
+				}
+			}		
+			qse_str_yield (&script, &isf[0].u.str, 0);
+			isf[0].type = QSE_AWK_PARSESTD_STR;
+			isfl = 1;
+			arg->incl_conv = 1;
+
+		incl_conv_oops:
+			qse_str_fini (&script);	
+		}
 	}
+
+	for (i = 0; i < isfl ; i++) isf[isfl].cmgr = arg->script_cmgr;
+
+	isf[isfl].type = QSE_AWK_PARSESTD_NULL;
+	arg->psin = isf;
 
 	if (opt.ind < argc) 
 	{
@@ -830,14 +861,22 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 oops:
 	if (gvm != QSE_NULL) qse_htb_close (gvm);
 	purge_xarg (&arg->icf);
-	if (isf != QSE_NULL) free (isf);
+	if (isf) 
+	{
+		if (arg->incl_conv) QSE_MMGR_FREE (arg->icf.mmgr, isf[0].u.str.ptr);
+		QSE_MMGR_FREE (arg->icf.mmgr, isf);
+	}
 	return oops_ret;
 }
 
 static void freearg (struct arg_t* arg)
 {
-	if (arg->ist == QSE_AWK_PARSESTD_FILE &&
-	    arg->isp.files != QSE_NULL) free (arg->isp.files);
+	if (arg->psin) 
+	{
+		if (arg->incl_conv) QSE_MMGR_FREE (arg->icf.mmgr, arg->psin[0].u.str.ptr);
+		QSE_MMGR_FREE (arg->icf.mmgr, arg->psin);
+	}
+
 	/*if (arg->osf != QSE_NULL) free (arg->osf);*/
 	purge_xarg (&arg->icf);
 	if (arg->gvm != QSE_NULL) qse_htb_close (arg->gvm);
@@ -961,7 +1000,6 @@ static int awk_main (int argc, qse_char_t* argv[])
 #endif
 
 	/* TODO: change it to support multiple source files */
-	qse_awk_parsestd_t psin;
 	qse_awk_parsestd_t psout;
 	qse_mmgr_t* mmgr = QSE_MMGR_GETDFL();
 
@@ -977,23 +1015,11 @@ static int awk_main (int argc, qse_char_t* argv[])
 	if (i == 2) return 0;
 	if (i == 3) return -1;
 
-	psin.type = arg.ist;
-	if (arg.ist == QSE_AWK_PARSESTD_STR) 
-	{
-		psin.u.str.ptr = arg.isp.str;
-		psin.u.str.len = qse_strlen(arg.isp.str);
-	}
-	else 
-	{
-		psin.u.file.path = arg.isp.files[0];
-		psin.u.file.cmgr = arg.script_cmgr;
-	}
-
-	if (arg.osf != QSE_NULL)
+	if (arg.osf)
 	{
 		psout.type = QSE_AWK_PARSESTD_FILE;
 		psout.u.file.path = arg.osf;
-		psout.u.file.cmgr = arg.script_cmgr;
+		psout.cmgr = arg.script_cmgr;
 	}
 
 #if defined(QSE_BUILD_DEBUG)
@@ -1051,7 +1077,7 @@ static int awk_main (int argc, qse_char_t* argv[])
 		goto oops;
 	}
 	
-	if (qse_awk_parsestd (awk, &psin, 
+	if (qse_awk_parsestd (awk, arg.psin,
 		((arg.osf == QSE_NULL)? QSE_NULL: &psout)) <= -1)
 	{
 		print_awkerr (awk);
