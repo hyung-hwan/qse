@@ -234,7 +234,7 @@ int qse_tio_attachout (
 	}
 
 	tio->errnum = QSE_TIO_ENOERR;
-	if (output (tio, QSE_TIO_OPEN, QSE_NULL, 0) == -1) 
+	if (output (tio, QSE_TIO_OPEN, QSE_NULL, 0) <= -1) 
 	{
 		if (tio->errnum == QSE_TIO_ENOERR) tio->errnum = QSE_TIO_EOTHER;
 		if (xbufptr != bufptr) QSE_MMGR_FREE (tio->mmgr, xbufptr);

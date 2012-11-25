@@ -383,16 +383,8 @@ static int open_script_stream (qse_sed_t* sed)
 	sed->src.loc.line = 1;
 	sed->src.loc.colm = 0;
 
-	if (n == 0) 
-	{
-		sed->src.eof = 1;
-		return 0; /* end of file */
-	}
-	else
-	{
-		sed->src.eof = 0;
-		return 1;
-	}
+	sed->src.eof = 0;
+	return 0;
 }
 
 static int close_script_stream (qse_sed_t* sed)
@@ -2516,16 +2508,6 @@ static int write_str_to_file (
 			else sed->errloc = cmd->loc;
 			return -1;
 		}
-		if (n == 0)
-		{
-			/* EOF is returned upon opening a write stream.
-			 * it is also an error as it can't write 
-			 * a requested string */
-			sed->e.out.fun (sed, QSE_SED_IO_CLOSE, ap, QSE_NULL, 0);
-			ap->handle = QSE_NULL;
-			SETERR1 (sed, QSE_SED_EIOFIL, path, plen, &cmd->loc);
-			return -1;
-		}
 	}
 
 	while (len > 0)
@@ -2581,12 +2563,6 @@ static int write_file (
 		 *return -1;*/
 		/* it is ok if it is not able to open a file */
 		return 0;	
-	}
-	if (n == 0) 
-	{
-		/* EOF - no data */
-		sed->e.in.fun (sed, QSE_SED_IO_CLOSE, &arg, QSE_NULL, 0);
-		return 0;
 	}
 
 	while (1)
@@ -3983,12 +3959,6 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
 		goto done3;
 	}
-	if (n == 0) 
-	{
-		/* EOF reached upon opening an input stream.
-		 * no data to process. this is success */
-		goto done2;
-	}
 	
 	sed->errnum = QSE_SED_ENOERR;
 	sed->e.out.arg.path = QSE_NULL;
@@ -3999,12 +3969,6 @@ int qse_sed_exec (qse_sed_t* sed, qse_sed_io_impl_t inf, qse_sed_io_impl_t outf)
 		if (sed->errnum == QSE_SED_ENOERR) 
 			SETERR0 (sed, QSE_SED_EIOUSR, QSE_NULL);
 		goto done2;
-	}
-	if (n == 0) 
-	{
-		/* still don't know if we will write something.
-		 * just mark EOF on the output stream and continue */
-		sed->e.out.eof = 1;
 	}
 
 	if (init_all_commands_for_exec (sed) <= -1)

@@ -496,12 +496,19 @@ static int fnc_length (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	else
 	{
 		v = qse_awk_rtx_getarg (rtx, 0);
-		if (v->type == QSE_AWK_VAL_STR)
+		if (v->type == QSE_AWK_VAL_MAP)
 		{
+			/* map size */
+			len = QSE_HTB_SIZE(((qse_awk_val_map_t*)v)->map);
+		}
+		else if (v->type == QSE_AWK_VAL_STR)
+		{
+			/* string length */
 			len = ((qse_awk_val_str_t*)v)->val.len;
 		}
 		else
 		{
+			/* convert to string and get length */
 			str = qse_awk_rtx_valtostrdup (rtx, v, &len);
 			if (str == QSE_NULL) return -1;
 			QSE_AWK_FREE (rtx->awk, str);

@@ -182,13 +182,6 @@ static int find_rio_in (
 		/* chain it */
 		p->next = run->rio.chain;
 		run->rio.chain = p;
-
-		/* usually, x == 0 indicates that it has reached the end
-		 * of the input. the user I/O handler can return 0 for the
-		 * open request if it doesn't have any files to open. One
-		 * advantage of doing this would be that you can skip the
-		 * entire pattern-block matching and execution. */
-		if (x == 0) p->in.eos = 1;
 	}
 
 	*rio = p;
@@ -761,17 +754,6 @@ int qse_awk_rtx_writeio_str (
 		/* chain it */
 		p->next = run->rio.chain;
 		run->rio.chain = p;
-
-		/* usually, n == 0 indicates that it has reached the end 
-		 * of the input. the user I/O handler can return 0 for the
-		 * open request if it doesn't have any files to open. One 
-		 * advantage of doing this would be that you can skip the 
-		 * entire pattern-block matching and execution. */
-		if (n == 0) 
-		{
-			p->out.eos = 1;
-			return 0;
-		}
 	}
 
 	if (p->out.eos) 

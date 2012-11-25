@@ -255,11 +255,11 @@ static kwent_t kwtab[] =
 {
 	/* keep this table in sync with the kw_t enums in <parse.h>.
 	 * also keep it sorted by the first field for binary search */
-	{ { QSE_T("@abort"),       6 }, TOK_XABORT,      QSE_AWK_EXTRAKWS },
-	{ { QSE_T("@global"),      7 }, TOK_XGLOBAL,     QSE_AWK_EXTRAKWS },
-	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE,    QSE_AWK_EXTRAKWS },
-	{ { QSE_T("@local"),       6 }, TOK_XLOCAL,      QSE_AWK_EXTRAKWS },
-	{ { QSE_T("@reset"),       6 }, TOK_XRESET,      QSE_AWK_EXTRAKWS },
+	{ { QSE_T("@abort"),       6 }, TOK_XABORT,      0 },
+	{ { QSE_T("@global"),      7 }, TOK_XGLOBAL,     0 },
+	{ { QSE_T("@include"),     8 }, TOK_XINCLUDE,    0 },
+	{ { QSE_T("@local"),       6 }, TOK_XLOCAL,      0 },
+	{ { QSE_T("@reset"),       6 }, TOK_XRESET,      0 },
 	{ { QSE_T("BEGIN"),        5 }, TOK_BEGIN,       QSE_AWK_PABLOCK },
 	{ { QSE_T("END"),          3 }, TOK_END,         QSE_AWK_PABLOCK },
 	{ { QSE_T("break"),        5 }, TOK_BREAK,       0 },
@@ -522,60 +522,53 @@ static int parse (qse_awk_t* awk)
 
 	adjust_static_globals (awk);
 
-	/* the user io handler for the source code input returns 0 when
-	 * it doesn't have any files to open. this is the same condition
-	 * as the source code file is empty. so it will perform the parsing
-	 * when op is positive, which means there are something to parse */
-	if (op > 0)
+	/* get the first character and the first token */
+	if (get_char (awk) <= -1 || get_token (awk)) goto oops; 
+
+	while (1) 
 	{
-		/* get the first character and the first token */
-		if (get_char (awk) <= -1 || get_token (awk)) goto oops; 
-
-		while (1) 
+		while (MATCH(awk,TOK_NEWLINE)) 
 		{
-			while (MATCH(awk,TOK_NEWLINE)) 
-			{
-				if (get_token (awk) <= -1) goto oops;
-			}
-			if (MATCH(awk,TOK_EOF)) break;
-
-			if (parse_progunit (awk) <= -1) goto oops;
+			if (get_token (awk) <= -1) goto oops;
 		}
+		if (MATCH(awk,TOK_EOF)) break;
 
-		if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
+		if (parse_progunit (awk) <= -1) goto oops;
+	}
+
+	if (!(awk->opt.trait & QSE_AWK_IMPLICIT))
+	{
+		/* ensure that all functions called are defined 
+		 * in the EXPLICIT-only mode */
+
+		qse_htb_pair_t* p;
+		qse_size_t buckno;
+
+		p = qse_htb_getfirstpair (awk->parse.funs, &buckno);
+		while (p != QSE_NULL)
 		{
-			/* ensure that all functions called are defined 
-			 * in the EXPLICIT-only mode */
-
-			qse_htb_pair_t* p;
-			qse_size_t buckno;
-
-			p = qse_htb_getfirstpair (awk->parse.funs, &buckno);
-			while (p != QSE_NULL)
+			if (qse_htb_search (awk->tree.funs, 
+				QSE_HTB_KPTR(p), QSE_HTB_KLEN(p)) == QSE_NULL)
 			{
-				if (qse_htb_search (awk->tree.funs, 
-					QSE_HTB_KPTR(p), QSE_HTB_KLEN(p)) == QSE_NULL)
-				{
-					
-					qse_awk_nde_t* nde;
+				
+				qse_awk_nde_t* nde;
 
-					/* see parse_fncall() for what is
-					 * stored into awk->tree.funs */
-					nde = (qse_awk_nde_t*)QSE_HTB_VPTR(p);
+				/* see parse_fncall() for what is
+				 * stored into awk->tree.funs */
+				nde = (qse_awk_nde_t*)QSE_HTB_VPTR(p);
 
-					SETERR_ARG_LOC (
-						awk, 
-						QSE_AWK_EFUNNF, 
-						QSE_HTB_KPTR(p),
-						QSE_HTB_KLEN(p),
-						&nde->loc
-					);
+				SETERR_ARG_LOC (
+					awk, 
+					QSE_AWK_EFUNNF, 
+					QSE_HTB_KPTR(p),
+					QSE_HTB_KLEN(p),
+					&nde->loc
+				);
 
-					goto oops;
-				}
-
-				p = qse_htb_getnextpair (awk->parse.funs, p, &buckno);
+				goto oops;
 			}
+
+			p = qse_htb_getnextpair (awk->parse.funs, p, &buckno);
 		}
 	}
 
@@ -757,18 +750,6 @@ static int begin_include (qse_awk_t* awk)
 		if (ISNOERR(awk)) SETERR_TOK (awk, QSE_AWK_EOPEN);
 		else awk->errinf.loc = awk->tok.loc; /* adjust error location */
 		goto oops;
-	}
-
-	if (op == 0)
-	{
-		CLRERR (awk);
-		op = awk->sio.inf (awk, QSE_AWK_SIO_CLOSE, arg, QSE_NULL, 0);
-		if (op != 0)
-		{
-			if (ISNOERR(awk)) SETERR_TOK (awk, QSE_AWK_ECLOSE);
-			else awk->errinf.loc = awk->tok.loc;
-			goto oops;
-		}
 	}
 
 	arg->next = awk->sio.inp;
@@ -6107,23 +6088,6 @@ static int deparse (qse_awk_t* awk)
 		if (ISNOERR(awk)) 
 			SETERR_ARG (awk, QSE_AWK_EOPEN, QSE_T("<SOUT>"), 6);
 		return -1;
-	}
-
-	if (op == 0)
-	{
-		/* the result of the open operation indicates that the 
-		 * file has been open but reached the end. so it has to 
-		 * skip the entire deparsing procedure as it can't write 
-		 * any single characters on such an io handler. but note 
-		 * that this is not really an error for the parse and deparser. 
-		 *
-		 * in fact, there are two ways to skip deparsing.
-		 *    1. set awk->sio.inf to NULL.
-		 *    2. set awk->sio.inf to a normal handler but
-		 *       make it return 0 on the OPEN request.
-		 */
-		n = 0;
-		goto exit_deparse;
 	}
 
 #define EXIT_DEPARSE() do { n = -1; goto exit_deparse; } while(0)
