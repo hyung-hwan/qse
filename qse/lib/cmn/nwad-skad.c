@@ -29,6 +29,9 @@
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
+	/* though AF_INET6 is defined, there is no support
+	 * for it. so undefine it */
+#	undef AF_INET6
 #	pragma library("tcpip32.lib")
 #elif defined(__DOS__)
  	/* TODO:  consider watt-32 */

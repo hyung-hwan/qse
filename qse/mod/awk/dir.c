@@ -439,7 +439,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 		mid = (left + right) / 2;
 
 		n = qse_strcmp (fnctab[mid].name, name);
-          if (n > 0) right = mid - 1; 
+		if (n > 0) right = mid - 1; 
 		else if (n < 0) left = mid + 1;
 		else
 		{
@@ -447,7 +447,7 @@ static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qs
 			sym->u.fnc = fnctab[mid].info;
 			return 0;
 		}
-     }
+	}
 
 	ea.ptr = name;
 	ea.len = qse_strlen(name);
