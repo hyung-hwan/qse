@@ -1031,8 +1031,11 @@ enum qse_awk_trait_t
 	/** CR + LF by default */
 	QSE_AWK_CRLF = (1 << 10),
 
-	/** allows the assignment of a map value to a variable */
-	QSE_AWK_MAPTOVAR = (1 << 11),
+	/** treats a map value more flexibly. a function can return
+	 *  a map. you can override a map with a scalar value without 
+	 *  'delete' or '@reset'. 
+	 */
+	QSE_AWK_FLEXMAP = (1 << 11),
 
 	/** allows @b BEGIN, @b END, pattern-action blocks */
 	QSE_AWK_PABLOCK = (1 << 12),
@@ -1081,7 +1084,7 @@ enum qse_awk_trait_t
 		QSE_AWK_STRIPSTRSPC | QSE_AWK_STRICTNAMING,
 
 	QSE_AWK_MODERN =
-		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_MAPTOVAR |
+		QSE_AWK_CLASSIC | QSE_AWK_EXTRAKWS | QSE_AWK_FLEXMAP |
 		QSE_AWK_RWPIPE | QSE_AWK_TOLERANT
 };
 typedef enum qse_awk_trait_t qse_awk_trait_t;
@@ -1188,10 +1191,11 @@ enum qse_awk_errnum_t
 	QSE_AWK_ENOTMAPIN,     /**< right-hand side of 'in' not a map */
 	QSE_AWK_ENOTMAPNILIN,  /**< right-hand side of 'in' not a map nor nil */
 	QSE_AWK_ENOTREF,       /**< value not referenceable */
-	QSE_AWK_ENOTASS,       /**< value not assignable */
-	QSE_AWK_EIDXVALASSMAP, /**< indexed value cannot be assigned a map */
-	QSE_AWK_EPOSVALASSMAP, /**< positional cannot be assigned a map */
-	QSE_AWK_EMAPNA,        /**< map '${0}' not assignable */
+	QSE_AWK_EIDXVALMAP,    /**< indexed value cannot be a map */
+	QSE_AWK_EPOSVALMAP,    /**< positional cannot be a map */
+	QSE_AWK_EMAPNA,        /**< map cannot be assigned to variable */
+	QSE_AWK_EMAPNRA,       /**< map '${0}' cannot be reassigned */
+	QSE_AWK_EMAPUR,        /**< map unreturnable */
 	QSE_AWK_EMAPPH,        /**< map prohibited */
 	QSE_AWK_ESCALARTOMAP,  /**< cannot change a scalar value to a map */
 	QSE_AWK_EVALTYPE,      /**< invalid value type */

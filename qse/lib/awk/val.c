@@ -1273,6 +1273,13 @@ int qse_awk_rtx_valtostr (
 			qse_awk_val_str_t* vs = (qse_awk_val_str_t*)v;
 			return str_to_str (rtx, vs->val.ptr, vs->val.len, out);
 		}
+
+		case QSE_AWK_VAL_MAP:
+		{
+			if (rtx->awk->opt.trait & QSE_AWK_FLEXMAP)
+				return str_to_str (rtx, QSE_T("#MAP"), 4, out);
+			break;
+		}
 	}
 
 #ifdef DEBUG_VAL

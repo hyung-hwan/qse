@@ -314,17 +314,17 @@ static int set_global (
 	qse_awk_val_t* old;
        
 	old = STACK_GBL (rtx, idx);
-	if (old->type == QSE_AWK_VAL_MAP)
+	if (!(rtx->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
 	{	
 		/* once a variable becomes a map,
-		 * it cannot be changed to a scalar variable */
-
+		 * it cannot be assigned with another value.
+		 * you can only add a member using indexing. */
 		if (var)
 		{
 			/* global variable */
 			SETERR_ARGX_LOC (
 				rtx,
-				QSE_AWK_EMAPNA, 
+				QSE_AWK_EMAPNRA, 
 				xstr_to_cstr(&var->id.name),
 				&var->loc
 			);
@@ -334,7 +334,7 @@ static int set_global (
 			/* qse_awk_rtx_setgbl has been called */
 			qse_cstr_t ea;
 			ea.ptr = qse_awk_getgblname (rtx->awk, idx, &ea.len);
-			SETERR_ARGX (rtx, QSE_AWK_EMAPNA, &ea);
+			SETERR_ARGX (rtx, QSE_AWK_EMAPNRA, &ea);
 		}
 
 		return -1;
@@ -2318,14 +2318,14 @@ static int run_return (qse_awk_rtx_t* run, qse_awk_nde_return_t* nde)
 		val = eval_expression (run, nde->val);
 		if (val == QSE_NULL) return -1;
 
-		if ((run->awk->opt.trait & QSE_AWK_MAPTOVAR) == 0)
+		if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
 		{
 			if (val->type == QSE_AWK_VAL_MAP)
 			{
 				/* cannot return a map */
 				qse_awk_rtx_refupval (run, val);
 				qse_awk_rtx_refdownval (run, val);
-				SETERR_LOC (run, QSE_AWK_EMAPPH, &nde->loc);
+				SETERR_LOC (run, QSE_AWK_EMAPUR, &nde->loc);
 				return -1;
 			}
 		}
@@ -3389,11 +3389,12 @@ static qse_awk_val_t* do_assignment (
 	    var->type == QSE_AWK_NDE_LCL ||
 	    var->type == QSE_AWK_NDE_ARG) 
 	{
-		if ((run->awk->opt.trait & QSE_AWK_MAPTOVAR) == 0)
+		if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
 		{
+			/* a map value cannot be assigned to another variable */
 			if (val->type == QSE_AWK_VAL_MAP)
 			{
-				errnum = QSE_AWK_ENOTASS;
+				errnum = QSE_AWK_EMAPNA;
 				goto exit_on_error;
 			}
 		}
@@ -3407,7 +3408,7 @@ static qse_awk_val_t* do_assignment (
 	{
 		if (val->type == QSE_AWK_VAL_MAP)
 		{
-			errnum = QSE_AWK_ENOTASS;
+			errnum = QSE_AWK_EMAPNA;
 			goto exit_on_error;
 		}
 
@@ -3417,7 +3418,7 @@ static qse_awk_val_t* do_assignment (
 	{
 		if (val->type == QSE_AWK_VAL_MAP)
 		{
-			errnum = QSE_AWK_ENOTASS;
+			errnum = QSE_AWK_EMAPNA;
 			goto exit_on_error;
 		}
 	
@@ -3450,7 +3451,7 @@ static qse_awk_val_t* do_assignment_scalar (
 	QSE_ASSERT (var->idx == QSE_NULL);
 
 	QSE_ASSERT (
-		(run->awk->opt.trait & QSE_AWK_MAPTOVAR) ||
+		(run->awk->opt.trait & QSE_AWK_FLEXMAP) ||
 		val->type != QSE_AWK_VAL_MAP);
 
 	switch (var->type)
@@ -3461,12 +3462,13 @@ static qse_awk_val_t* do_assignment_scalar (
 
 			pair = qse_htb_search (
 				run->named, var->id.name.ptr, var->id.name.len);
-			if (pair && ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && 
+			    pair && ((qse_awk_val_t*)QSE_HTB_VPTR(pair))->type == QSE_AWK_VAL_MAP)
 			{
 				/* once a variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNA,
+					run, QSE_AWK_EMAPNRA,
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
@@ -3495,12 +3497,12 @@ static qse_awk_val_t* do_assignment_scalar (
 		case QSE_AWK_NDE_LCL:
 		{
 			qse_awk_val_t* old = STACK_LCL(run,var->id.idxa);
-			if (old->type == QSE_AWK_VAL_MAP)
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
 			{	
 				/* once the variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNA, 
+					run, QSE_AWK_EMAPNRA, 
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
@@ -3514,12 +3516,12 @@ static qse_awk_val_t* do_assignment_scalar (
 		case QSE_AWK_NDE_ARG:
 		{
 			qse_awk_val_t* old = STACK_ARG(run,var->id.idxa);
-			if (old->type == QSE_AWK_VAL_MAP)
+			if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP) && old->type == QSE_AWK_VAL_MAP)
 			{	
 				/* once the variable becomes a map,
 				 * it cannot be changed to a scalar variable */
 				SETERR_ARGX_LOC (
-					run, QSE_AWK_EMAPNA, 
+					run, QSE_AWK_EMAPNRA, 
 					xstr_to_cstr(&var->id.name), &var->loc);
 				return QSE_NULL;
 			}
