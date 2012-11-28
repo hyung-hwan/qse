@@ -577,7 +577,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	int oops_ret = -1;
 	int do_glob = 0;
 
-	isf = (qse_char_t**) QSE_MMGR_ALLOC (arg->icf.mmgr, QSE_SIZEOF(*isf) * isfc);
+	isf = QSE_MMGR_ALLOC (arg->icf.mmgr, QSE_SIZEOF(*isf) * isfc);
 	if (isf == QSE_NULL)
 	{
 		print_error (QSE_T("out of memory\n"));
@@ -623,7 +623,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 				if (isfl >= isfc - 1) /* -1 for last QSE_NULL */
 				{
 					qse_awk_parsestd_t** tmp;
-					tmp = (qse_char_t**) QSE_MMGR_REALLOC (arg->icf.mmgr, isf, QSE_SIZEOF(*isf)*(isfc+16));
+					tmp = QSE_MMGR_REALLOC (arg->icf.mmgr, isf, QSE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == QSE_NULL)
 					{
 						print_error (QSE_T("out of memory\n"));

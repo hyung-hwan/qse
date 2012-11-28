@@ -96,6 +96,7 @@
 */
 
 
+#if 0
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFNUM) && \
     defined(HAVE_STRUCT_LIFCONF) && defined(HAVE_STRUCT_LIFREQ)
 static int get_nwifs (qse_mmgr_t* mmgr, int s, int f, qse_xptl_t* nwifs)
@@ -151,6 +152,7 @@ oops:
 	if (b.ptr) QSE_MMGR_FREE (mmgr, b.ptr);
 	return -1;
 }
+#endif
 #endif
 
 #if 0
@@ -300,7 +302,19 @@ static void read_proc_net_if_inet6 (qse_nwifcfg_t* cfg, struct ifreq* ifr)
 
 static int get_nwifcfg (int s, qse_nwifcfg_t* cfg, struct ifreq* ifr)
 {
-#if defined(SIOCGLIFADDR) && defined(SIOCGLIFINDEX) && \
+#if defined(_WIN32)
+	return -1;
+
+#elif defined(__OS2__)
+
+	return -1;
+
+#elif defined(__DOS__)
+
+	return -1;
+
+
+#elif defined(SIOCGLIFADDR) && defined(SIOCGLIFINDEX) && \
     defined(HAVE_STRUCT_LIFCONF) && defined(HAVE_STRUCT_LIFREQ)
 	/* opensolaris */
 	struct lifreq lifrbuf;
