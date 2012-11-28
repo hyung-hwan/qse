@@ -144,19 +144,19 @@ USA	3615	237	North America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-019.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Canada	3852	25	North America
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: China	3705	1032	Asia
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USA	3615	237	North America
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: Canada	3852	25	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: China	3705	1032	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: USA	3615	237	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-020.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Canada	3852	25	North America
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: China	3705	1032	Asia
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: USA	3615	237	North America
-/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: USSR	8649	275	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: Canada	3852	25	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: China	3705	1032	Asia
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: USA	3615	237	North America
+/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/cou.dat: Brazil	3286	134	South America
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000  -f cou-021.awk cou.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -958,7 +958,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 ERROR: CODE 43 LINE 3 COLUMN 9 - function 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -966,7 +966,7 @@ function a (__p0)
 }
 
 BEGIN {
-	local __l0, __l1;
+	@local __l0, __l1;
 	{
 		__l0 = 50;
 		{
@@ -982,13 +982,13 @@ BEGIN {
 50
 100
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 44 LINE 5 COLUMN 10 - global variable 'a' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=on --explicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-global __g19;
+@global __g18;
 
 function fn ()
 {
@@ -997,20 +997,20 @@ function fn ()
 }
 
 BEGIN {
-	__g19 = 30;
+	__g18 = 30;
 	print fn();
-	print __g19;
+	print __g18;
 }
 
 20
 30
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on -d- -f lang-008.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --newline=on -d- -f lang-008.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-global x;
+@global x;
 
 BEGIN {
-	local __l0, __l1;
+	@local __l0, __l1;
 	x = 1;
 	{
 		__l0 = 2;
@@ -1027,7 +1027,7 @@ BEGIN {
 2
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --implicit=off --explicit=on --newline=on --strictnaming=off -d- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --implicit=off --newline=on --strictnaming=off -d- -f lang-009.awk lang-009.awk </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function a (__p0)
 {
@@ -1035,7 +1035,7 @@ function a (__p0)
 }
 
 BEGIN {
-	local __l0;
+	@local __l0;
 	__l0 = 20;
 }
 
@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 102 LINE 3 COLUMN 2 - recursion detected in format conversion
+ERROR: CODE 104 LINE 3 COLUMN 2 - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1479,34 +1479,34 @@ END {
 0
 2
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 48 LINE 1 COLUMN 8 - duplicate global variable 'ARGV'
+ERROR: CODE 48 LINE 1 COLUMN 9 - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 50 LINE 1 COLUMN 15 - '+' not a valid parameter name
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 51 LINE 1 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 51 LINE 1 COLUMN 9 - '+' not a valid variable name
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 51 LINE 3 COLUMN 8 - '+' not a valid variable name
+ERROR: CODE 51 LINE 3 COLUMN 9 - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 24 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 ERROR: CODE 29 LINE 5 COLUMN 20 - colon expected in place of ';'
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
-	local __l0;
+	@local __l0;
 	__l0 = 21;
 	print ((__l0 > 20))?1:2;
 	c = ((__l0)++   ++(b));
@@ -1515,7 +1515,7 @@ BEGIN {
 	print c;
 	print (99   ++(c));
 	x = (("he"   "ll")   "o");
-	x >>= " world";
+	x %%= " world";
 	print x;
 }
 
@@ -1533,7 +1533,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 79 LINE 3 COLUMN 9 - variable 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 80 LINE 3 COLUMN 9 - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1545,7 +1545,7 @@ BEGIN {
 }
 
 abc
-ERROR: CODE 87 LINE 4 COLUMN 2 - map 'abc' not assignable with a scalar
+10
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1555,9 +1555,9 @@ ERROR: CODE 18 LINE 2 COLUMN 1 - invalid character '<NUL>'
 --------------------------------------------------------------------------------
 ERROR: CODE 42 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --explicit=on --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 9 COLUMN 9 - function 'abc' redefined
+ERROR: CODE 43 LINE 9 COLUMN 10 - function 'abc' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk -m 500000 --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1667,7 +1667,7 @@ BEGIN {
 ---------------------
 9210
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=passwd.dat -f lang-033.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk -vdatafile=passwd.dat -f lang-033.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	while (((((("cat "   datadir)   "/")   datafile) | getline x) > 0))
@@ -1734,7 +1734,7 @@ xx: 13
 xx: 14
 xx: 15
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk -vdatafile=lang-035.dat1 -vgroupname=lang-035 -f lang-035.awk lang-035.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 BEGIN {
 	max_cid_vars = 100;
@@ -2344,7 +2344,7 @@ nan
 8103.08
 3
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk -vdatafile=lang-046.dat1 -f lang-046.awk lang-046.dat2 </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -vdatadir=/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk -vdatafile=lang-046.dat1 -f lang-046.awk lang-046.dat2 </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 1
 
@@ -2419,7 +2419,7 @@ that is wonderful
 hello world 45
 1
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on --extraops=on -d- -f lang-048.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on -d- -f lang-048.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 function int2ip (__p0, __p1, __p2)
 {
@@ -2499,7 +2499,7 @@ mysql              x  117    124    MySQL Server,,,                     /var/lib
 openldap           x  118    125    OpenLDAP Server Account,,,          /nonexistent                /bin/false
 postfix            x  119    126                                        /var/spool/postfix          /bin/false
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 --newline=on --include=on -f levenshtein-utests.awk  </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 --newline=on --extrakws=on -f levenshtein-utests.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 3:	Correct distance between 'kitten' and 'sitting'
 3:	Correct distance between 'Saturday' and 'Sunday'
@@ -2544,7 +2544,7 @@ Result      Ra   Rb  Connect    Error
 1.E12
 99X
 --------------------------------------------------------------------------------
-[CMD]  qseawk -m 500000 -vQSEAWK="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/cmd/awk/qseawk" -vSCRIPT_PATH="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug/../../src/regress/awk" -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
+[CMD]  qseawk -m 500000 -vQSEAWK="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/cmd/awk/.libs/qseawk" -vSCRIPT_PATH="/home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk" -f quicksort2.awk quicksort2.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
 0.0000000000
 0.11111111111111111111111111111

@@ -383,7 +383,7 @@ struct opttab_t
 	{ QSE_T("stripstrspc"),  QSE_AWK_STRIPSTRSPC,    QSE_T("strip spaces in string-to-number conversion") },
 	{ QSE_T("blankconcat"),  QSE_AWK_BLANKCONCAT,    QSE_T("enable concatenation by blanks") },
 	{ QSE_T("crlf"),         QSE_AWK_CRLF,           QSE_T("use CRLF for a newline") },
-	{ QSE_T("maptovar"),     QSE_AWK_MAPTOVAR,       QSE_T("allow a map to be assigned or returned") },
+	{ QSE_T("flexmap"),      QSE_AWK_FLEXMAP,        QSE_T("allow a map to be assigned or returned") },
 	{ QSE_T("pablock"),      QSE_AWK_PABLOCK,        QSE_T("enable pattern-action loop") },
 	{ QSE_T("rexbound"),     QSE_AWK_REXBOUND,       QSE_T("enable {n,m} in a regular expression") },
 	{ QSE_T("ncmponstr"),    QSE_AWK_NCMPONSTR,      QSE_T("perform numeric comparsion on numeric strings") },
@@ -526,7 +526,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{ QSE_T(":stripstrspc"),     QSE_T('\0') },
 		{ QSE_T(":blankconcat"),     QSE_T('\0') },
 		{ QSE_T(":crlf"),            QSE_T('\0') },
-		{ QSE_T(":maptovar"),        QSE_T('\0') },
+		{ QSE_T(":flexmap"),         QSE_T('\0') },
 		{ QSE_T(":pablock"),         QSE_T('\0') },
 		{ QSE_T(":rexbound"),        QSE_T('\0') },
 		{ QSE_T(":ncmponstr"),       QSE_T('\0') },
@@ -819,6 +819,10 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 		{
 			for (i = 0; i < isfl; i++)
 			{
+				/* TOOD: use an absolute path for this conversion
+				 *       to avoid any conflicts with the search path
+				 *       for the included file. you can combine the
+				 *       file name with the current working directory. */
 				if (qse_str_cat (&script, QSE_T("@include \"")) == (qse_size_t)-1 ||
 				    qse_str_cat (&script, isf[i].u.file.path) == (qse_size_t)-1 ||
 				    qse_str_cat (&script, QSE_T("\";")) == (qse_size_t)-1)
@@ -826,6 +830,9 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 					goto incl_conv_oops;
 				}
 			}		
+
+			/* after successful conversion, only 1 string stream
+			 * should take place */
 			qse_str_yield (&script, &isf[0].u.str, 0);
 			isf[0].type = QSE_AWK_PARSESTD_STR;
 			isfl = 1;

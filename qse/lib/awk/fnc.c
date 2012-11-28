@@ -620,14 +620,14 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	    ((qse_awk_val_ref_t*)a1)->id <= QSE_AWK_VAL_REF_ARGIDX)
 	{
 		/* an indexed value should not be assigned another map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EIDXVALASSMAP, QSE_NULL);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EIDXVALMAP, QSE_NULL);
 		return -1;
 	}
 
 	if (((qse_awk_val_ref_t*)a1)->id == QSE_AWK_VAL_REF_POS)
 	{
 		/* a positional should not be assigned a map */
-		qse_awk_rtx_seterrnum (run, QSE_AWK_EPOSVALASSMAP, QSE_NULL);
+		qse_awk_rtx_seterrnum (run, QSE_AWK_EPOSVALMAP, QSE_NULL);
 		return -1;
 	}
 
@@ -635,7 +635,7 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	if ((*a1_ref)->type != QSE_AWK_VAL_NIL &&
 	    (*a1_ref)->type != QSE_AWK_VAL_MAP)
 	{
-		if (!(run->awk->opt.trait & QSE_AWK_MAPTOVAR))
+		if (!(run->awk->opt.trait & QSE_AWK_FLEXMAP))
 		{
 			/* cannot change a scalar value to a map */
 			qse_awk_rtx_seterrnum (run, QSE_AWK_ESCALARTOMAP, QSE_NULL);
@@ -961,7 +961,12 @@ static int __substitute (qse_awk_rtx_t* run, qse_long_t max_count)
 
 		if ((*a2_ref)->type == QSE_AWK_VAL_MAP)
 		{
-			/* a map is not allowed as the third parameter */
+			/* a map is not allowed as the third parameter. 
+			 * this is a prohibited condition regardless of QSE_AWK_FLEXMAP.
+			 * i don't accept this.
+			 *
+			 * TODO: can i extend to replace something in a map??? 
+			 */
 			qse_awk_rtx_seterrnum (run, QSE_AWK_EMAPPH, QSE_NULL);
 			goto oops;
 		}
