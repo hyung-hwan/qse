@@ -59,12 +59,6 @@
 extern "C" {
 #endif
 
-/** 
- * The qse_mmgr global variable holds a pointer to the default memory 
- * manager. Use QSE_MMGR_GETDFL() and QSE_MMGR_SETDFL() to manipulate it.
- */
-extern qse_mmgr_t* qse_mmgr;
-
 /**
  * The qse_memcpy() functions copies @a n bytes from the source memory block 
  * @a src to the destinaion memory block @a dst. The memory blocks must not 

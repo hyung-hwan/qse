@@ -188,11 +188,14 @@ static void print_error (MyAwk& awk)
 {
 	MyAwk::loc_t loc = awk.getErrorLocation();
 
-	print_error ( 
-		QSE_T("LINE [%u] %s\n"), 
-		(unsigned)loc.line,
-		awk.getErrorMessage()
-	);
+	if (loc.file)
+	{
+		print_error (QSE_T("line %u at %s - %s\n"), (unsigned)loc.line, loc.file, awk.getErrorMessage());
+	}
+	else
+	{
+		print_error (QSE_T("line %u - %s\n"), (unsigned)loc.line, awk.getErrorMessage());
+	}
 }
 
 #ifdef _WIN32
@@ -358,7 +361,7 @@ static int awk_main_2 (MyAwk& awk, int argc, qse_char_t* argv[])
 	cmdline_t cmdline;
 	int n;
 
-	awk.setTrait (awk.getTrait() | QSE_AWK_EXTRAKWS | QSE_AWK_MAPTOVAR | QSE_AWK_RWPIPE);
+	awk.setTrait (awk.getTrait() | QSE_AWK_EXTRAKWS | QSE_AWK_FLEXMAP | QSE_AWK_RWPIPE);
 
 	// ARGV[0]
 	if (awk.addArgument (QSE_T("awk08")) <= -1)

@@ -81,7 +81,7 @@ typedef struct qse_xma_blk_t qse_xma_blk_t;
 
 struct qse_xma_t
 {
-	QSE_DEFINE_COMMON_FIELDS (xma)
+	qse_mmgr_t* mmgr;
 
 	/** pointer to the first memory block */
 	qse_xma_blk_t* head; 
@@ -118,8 +118,6 @@ typedef int (*qse_xma_dumper_t) (
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (xma)
-
 /**
  * The qse_xma_open() function creates a memory allocator. It obtains a memory
  * zone of the @a zonesize bytes with the memory manager @a mmgr. It also makes
@@ -128,7 +126,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (xma)
  *
  * @return pointer to a memory allocator on success, #QSE_NULL on failure
  */
-qse_xma_t* qse_xma_open (
+QSE_EXPORT qse_xma_t* qse_xma_open (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize, /**< extension size in bytes */
 	qse_size_t  zonesize /**< zone size in bytes */
@@ -140,8 +138,16 @@ qse_xma_t* qse_xma_open (
  * the zone. Call this function to destroy a memory allocator created with
  * qse_xma_open().
  */
-void qse_xma_close (
+QSE_EXPORT void qse_xma_close (
 	qse_xma_t* xma /**< memory allocator */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_xma_getmmgr (
+	qse_xma_t* xma
+);
+
+QSE_EXPORT void* qse_xma_getxtn (
+	qse_xma_t* xma
 );
 
 /**
@@ -152,7 +158,7 @@ void qse_xma_close (
  * it does not accept the extension size, thus not creating an extention area.
  * @return 0 on success, -1 on failure
  */
-int qse_xma_init (
+QSE_EXPORT int qse_xma_init (
 	qse_xma_t*  xma,     /**< memory allocator */
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  zonesize /**< zone size in bytes */
@@ -162,7 +168,7 @@ int qse_xma_init (
  * The qse_xma_fini() function finalizes a memory allocator. Call this 
  * function to finalize a memory allocator initialized with qse_xma_init().
  */
-void qse_xma_fini (
+QSE_EXPORT void qse_xma_fini (
 	qse_xma_t* xma /**< memory allocator */
 );
 
@@ -170,12 +176,12 @@ void qse_xma_fini (
  * The qse_xma_alloc() function allocates @a size bytes.
  * @return pointer to a memory block on success, #QSE_NULL on failure
  */
-void* qse_xma_alloc (
+QSE_EXPORT void* qse_xma_alloc (
 	qse_xma_t* xma, /**< memory allocator */
 	qse_size_t size /**< size in bytes */
 );
 
-void* qse_xma_calloc (
+QSE_EXPORT void* qse_xma_calloc (
 	qse_xma_t* xma,
 	qse_size_t size
 );
@@ -184,7 +190,7 @@ void* qse_xma_calloc (
  * The qse_xma_alloc() function resizes the memory block @a b to @a size bytes.
  * @return pointer to a resized memory block on success, #QSE_NULL on failure
  */
-void* qse_xma_realloc (
+QSE_EXPORT void* qse_xma_realloc (
 	qse_xma_t* xma,  /**< memory allocator */
 	void*      b,    /**< memory block */
 	qse_size_t size  /**< new size in bytes */
@@ -193,7 +199,7 @@ void* qse_xma_realloc (
 /**
  * The qse_xma_alloc() function frees the memory block @a b.
  */
-void qse_xma_free (
+QSE_EXPORT void qse_xma_free (
 	qse_xma_t* xma, /**< memory allocator */
 	void*      b    /**< memory block */
 );
@@ -203,7 +209,7 @@ void qse_xma_free (
  * with the output function @a dumper provided. The debug build shows
  * more statistical counters.
  */
-void qse_xma_dump (
+QSE_EXPORT void qse_xma_dump (
 	qse_xma_t*       xma,    /**< memory allocator */
 	qse_xma_dumper_t dumper, /**< output function */
 	void*            ctx     /**< first parameter to output function */

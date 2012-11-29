@@ -31,8 +31,6 @@
 #define STRSIZE 4096
 #define ARRSIZE 128
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS(env)
-
 static int load_curenv (qse_env_t* env);
 static int insert_sys_wcs (qse_env_t* env, const qse_wchar_t* name);
 static int insert_sys_mbs (qse_env_t* env, const qse_mchar_t* name);
@@ -73,6 +71,16 @@ void qse_env_fini (qse_env_t* env)
 {
 	if (env->arr.ptr) QSE_MMGR_FREE (env->mmgr, env->arr.ptr);
 	if (env->str.ptr) QSE_MMGR_FREE (env->mmgr, env->str.ptr);
+}
+
+qse_mmgr_t* qse_env_getmmgr (qse_env_t* env)
+{
+	return env->mmgr;
+}
+
+void* qse_env_getxtn (qse_env_t* env)
+{
+	return QSE_XTN (env);
 }
 
 void qse_env_clear (qse_env_t* env)

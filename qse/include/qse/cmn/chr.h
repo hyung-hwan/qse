@@ -166,43 +166,43 @@ typedef qse_ctype_t qse_wctype_t;
 extern "C" {
 #endif
 
-int qse_ismctype (
+QSE_EXPORT int qse_ismctype (
 	qse_mcint_t    c,
 	qse_mctype_t   type
 );
 
-int qse_iswctype (
+QSE_EXPORT int qse_iswctype (
 	qse_wcint_t    c,
 	qse_wctype_t   type
 );
 
-qse_mcint_t qse_tomctype (
+QSE_EXPORT qse_mcint_t qse_tomctype (
 	qse_mcint_t    c,
 	qse_mctype_t   type
 );
 
-qse_wcint_t qse_towctype (
+QSE_EXPORT qse_wcint_t qse_towctype (
 	qse_wcint_t      c,
 	qse_wctype_t   type
 );
 
-int qse_mbstoctype (
+QSE_EXPORT int qse_mbstoctype (
 	const qse_mchar_t* name,
 	qse_mctype_t*    id
 );
 
-int qse_mbsntoctype (
+QSE_EXPORT int qse_mbsntoctype (
 	const qse_mchar_t* name,
 	qse_size_t         len,
 	qse_mctype_t*      id
 );
 
-int qse_wcstoctype (
+QSE_EXPORT int qse_wcstoctype (
 	const qse_wchar_t* name,
 	qse_wctype_t* id
 );
 
-int qse_wcsntoctype (
+QSE_EXPORT int qse_wcsntoctype (
 	const qse_wchar_t* name,
 	qse_size_t         len,
 	qse_wctype_t*      id

@@ -937,7 +937,7 @@ my hello
 my hello
 my hello
 my hello
-ERROR: CODE 16 LINE 6 COLUMN 1 - block nested too deeply
+ERROR: CODE 16 LINE 6 COLUMN 1 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-002.awk - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-003.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -956,7 +956,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-004.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 3 COLUMN 9 - function 'a' redefined
+ERROR: CODE 43 LINE 3 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-004.awk - function 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=off --newline=on -d- -f lang-005.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -984,7 +984,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=off --newline=on -d- -f lang-006.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 44 LINE 5 COLUMN 10 - global variable 'a' redefined
+ERROR: CODE 44 LINE 5 COLUMN 10 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-006.awk - global variable 'a' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --implicit=on --newline=on -d- -f lang-007.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1352,7 +1352,7 @@ BEGIN {
 	printf ("%s\n",10.34);
 }
 
-ERROR: CODE 104 LINE 3 COLUMN 2 - recursion detected in format conversion
+ERROR: CODE 104 LINE 3 COLUMN 2 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-013.awk - recursion detected in format conversion
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-014.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1367,7 +1367,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-015.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 16 LINE 3 COLUMN 50 - block nested too deeply
+ERROR: CODE 16 LINE 3 COLUMN 50 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-015.awk - block nested too deeply
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-016.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1481,27 +1481,27 @@ END {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-018.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 48 LINE 1 COLUMN 9 - duplicate global variable 'ARGV'
+ERROR: CODE 48 LINE 1 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-018.awk - duplicate global variable 'ARGV'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-019.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 50 LINE 1 COLUMN 15 - '+' not a valid parameter name
+ERROR: CODE 50 LINE 1 COLUMN 15 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-019.awk - '+' not a valid parameter name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-020.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 51 LINE 1 COLUMN 9 - '+' not a valid variable name
+ERROR: CODE 51 LINE 1 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-020.awk - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-021.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 51 LINE 3 COLUMN 9 - '+' not a valid variable name
+ERROR: CODE 51 LINE 3 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-021.awk - '+' not a valid variable name
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-022.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 24 LINE 2 COLUMN 9 - left parenthesis expected in place of '='
+ERROR: CODE 24 LINE 2 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-022.awk - left parenthesis expected in place of '='
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-023.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 29 LINE 5 COLUMN 20 - colon expected in place of ';'
+ERROR: CODE 29 LINE 5 COLUMN 20 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-023.awk - colon expected in place of ';'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-024.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1533,7 +1533,7 @@ BEGIN {
 	delete iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix;
 }
 
-ERROR: CODE 80 LINE 3 COLUMN 9 - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
+ERROR: CODE 80 LINE 3 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-025.awk - 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiix' not deletable
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-026.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -1549,15 +1549,15 @@ abc
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-027.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 18 LINE 2 COLUMN 1 - invalid character '<NUL>'
+ERROR: CODE 18 LINE 2 COLUMN 1 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-027.awk - invalid character '<NUL>'
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-028.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 42 LINE 2 COLUMN 10 - intrinsic function 'substr' redefined
+ERROR: CODE 42 LINE 2 COLUMN 10 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-028.awk - intrinsic function 'substr' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-029.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 43 LINE 9 COLUMN 10 - function 'abc' redefined
+ERROR: CODE 43 LINE 9 COLUMN 10 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-029.awk - function 'abc' redefined
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-030.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
@@ -2456,7 +2456,7 @@ BEGIN {
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -d- -f lang-049.awk  </dev/stdin 2>&1 
 --------------------------------------------------------------------------------
-ERROR: CODE 60 LINE 2 COLUMN 9 - no argument provided
+ERROR: CODE 60 LINE 2 COLUMN 9 FILE /home/hyung-hwan/nfs.exports/workspace/qse/x86_64/linux-wchar-debug-shared/../../src/regress/awk/lang-049.awk - no argument provided
 --------------------------------------------------------------------------------
 [CMD]  qseawk  --newline=on -F: -f columnate.awk passwd.dat </dev/stdin 2>&1 
 --------------------------------------------------------------------------------

@@ -322,7 +322,7 @@ static void dprint_return (qse_awk_rtx_t* rtx, qse_awk_val_t* ret)
 	qse_size_t len;
 	qse_char_t* str;
 
-	if (ret == qse_awk_val_nil)
+	if (qse_awk_rtx_isnilval (rtx, ret))
 	{
 		dprint (QSE_T("[RETURN] - ***nil***\n"));
 	}
@@ -807,6 +807,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 		isfl++;
 	}
+#if 0
 	else if (isfl >= 2)
 	{
 		/* if more than one -f has been specified, attempt to convert 
@@ -842,6 +843,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			qse_str_fini (&script);	
 		}
 	}
+#endif
 
 	for (i = 0; i < isfl ; i++) isf[isfl].cmgr = arg->script_cmgr;
 

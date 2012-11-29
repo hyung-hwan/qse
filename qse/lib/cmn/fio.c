@@ -53,8 +53,6 @@ enum
 	STATUS_NOCLOSE = (1 << 1)	
 };
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (fio)
-
 #if defined(_WIN32)
 static qse_fio_errnum_t syserr_to_errnum (DWORD e)
 {
@@ -886,6 +884,16 @@ void qse_fio_fini (qse_fio_t* fio)
 		QSE_CLOSE (fio->handle);
 #endif
 	}
+}
+
+qse_mmgr_t* qse_fio_getmmgr (qse_fio_t* fio)
+{
+	return fio->mmgr;
+}
+
+void* qse_fio_getxtn (qse_fio_t* fio)
+{
+	return QSE_XTN (fio);
 }
 
 qse_fio_errnum_t qse_fio_geterrnum (const qse_fio_t* fio)

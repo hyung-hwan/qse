@@ -499,11 +499,39 @@ struct qse_awk_sio_lxc_t
 };
 typedef struct qse_awk_sio_lxc_t qse_awk_sio_lxc_t;
 
+enum qse_awk_sio_arg_flag_t
+{
+	QSE_AWK_SIO_INCLUDED = (1 << 0)
+};
+
 typedef struct qse_awk_sio_arg_t qse_awk_sio_arg_t;
 struct qse_awk_sio_arg_t 
 {
-	const qse_char_t* name;   /**< [IN] name of I/O object */
-	void* handle;             /**< [OUT] I/O handle set by a handler */
+	/** 
+	 * [IN] bitwise-ORed of #qse_awk_sio_arg_flag_t.
+	 * The field is set with #QSE_AWK_SIO_INCLUDED if an included file
+	 * is handled. 
+	 */
+	int flags;  
+
+	/** 
+	 * [IN/OUT] name of I/O object. 
+	 * if #QSE_AWK_SIO_INCLUDED is not set, the name is set to #QSE_NULL.
+	 * the source stream handler(#qse_awk_sio_impl_t) can change this field
+	 * to give useful information back to the parser.
+	 *
+	 * if #QSE_AWK_SIO_INCLUDED is set in the flags field,  
+	 * the name field is set to the name of the included file.
+	 */
+	const qse_char_t* name;   
+
+	/** 
+	 * [OUT] I/O handle set by a handler. 
+	 * The source stream handler can set this field when it opens a stream.
+	 * All subsequent operations on the stream see this field as set
+	 * during opening.
+	 */
+	void* handle;
 
 	/*-- from here down, internal use only --*/
 	struct
@@ -1378,21 +1406,6 @@ typedef struct qse_awk_nrflt_t qse_awk_nrflt_t;
 extern "C" {
 #endif
 
-/** represents a nil value */
-QSE_EXPORT extern qse_awk_val_t* qse_awk_val_nil;
-
-/** represents an empty string  */
-QSE_EXPORT extern qse_awk_val_t* qse_awk_val_zls;
-
-/** represents a numeric value -1 */
-QSE_EXPORT extern qse_awk_val_t* qse_awk_val_negone;
-
-/** represents a numeric value 0 */
-QSE_EXPORT extern qse_awk_val_t* qse_awk_val_zero;
-
-/** represents a numeric value 1 */
-QSE_EXPORT extern qse_awk_val_t* qse_awk_val_one;
-
 /**
  * The qse_awk_open() function creates a new qse_awk_t object. The object 
  * created can be passed to other qse_awk_xxx() functions and is valid until 
@@ -2190,7 +2203,16 @@ QSE_EXPORT int qse_awk_rtx_setrec (
 );
 
 /**
- * The qse_awk_rtx_makenilval() function create a nil value.
+ * The qse_awk_rtx_isnilval(0 function determines if a value
+ * is a nil value.
+ */
+QSE_EXPORT int qse_awk_rtx_isnilval (
+	qse_awk_rtx_t* rtx,
+	qse_awk_val_t* val
+);
+
+/**
+ * The qse_awk_rtx_makenilval() function creates a nil value.
  * It always returns the pointer to the statically allocated
  * nil value. So it never fails.
  */

@@ -45,12 +45,12 @@ static int run_awk (QSE::StdAwk& awk)
 
 	QSE::StdAwk::SourceString in (QSE_T(
 		"function pa (x) {\n"
-		"	reset ret;\n"
+		"	@reset ret;\n"
 		"	for (i in x) { print i, \"=>\", x[i]; ret += x[i]; }\n"
 		"	return ret + FOO++;\n"
 		"}\n"
 		"function pb (x) {\n"
-		"	reset ret;\n"
+		"	@reset ret;\n"
 		"	for (i in x) { ret[-i] = -x[i]; }\n"
 		"	return ret;\n"
 		"}"
@@ -135,11 +135,8 @@ static int awk_main (int argc, qse_char_t* argv[])
 
 	int ret = awk.open();
 
-	// allow returning a map from a function and enable 'reset'
-	awk.setTrait (
-		awk.getTrait() | 
-		QSE_AWK_MAPTOVAR |
-		QSE_AWK_EXTRAKWS);
+	// allow returning a map from a function
+	awk.setTrait (awk.getTrait() | QSE_AWK_FLEXMAP);
 
 	if (ret >= 0) ret = run_awk (awk);
 	if (ret <= -1) 

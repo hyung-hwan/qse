@@ -52,7 +52,7 @@ extern "C" {
  * This function doesn't check invalid unicode code points and performs
  * conversion compuationally.
  */
-qse_size_t qse_uctocp950 (
+QSE_EXPORT qse_size_t qse_uctocp950 (
 	qse_wchar_t  uc,
 	qse_mchar_t* cp950,
 	qse_size_t   size
@@ -66,7 +66,7 @@ qse_size_t qse_uctocp950 (
  *   not complete.
  * - An integer between 1 and size inclusive is returned in all other cases.
  */
-qse_size_t qse_cp950touc (
+QSE_EXPORT qse_size_t qse_cp950touc (
 	const qse_mchar_t* cp950,
 	qse_size_t         size, 
 	qse_wchar_t*       uc
@@ -82,7 +82,7 @@ qse_size_t qse_cp950touc (
  *   not complete.
  * - An integer between 1 and size inclusive is returned in all other cases.
  */ 
-qse_size_t qse_cp950len (
+QSE_EXPORT qse_size_t qse_cp950len (
 	const qse_mchar_t* cp950,
 	qse_size_t         size
 );
@@ -92,7 +92,7 @@ qse_size_t qse_cp950len (
  * to form a single unicode character. Use #QSE_CP950LEN_MAX if you need a 
  * compile-time constant.
  */
-qse_size_t qse_cp950lenmax (
+QSE_EXPORT qse_size_t qse_cp950lenmax (
 	void
 );
 

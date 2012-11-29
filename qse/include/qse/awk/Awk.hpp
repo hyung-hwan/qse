@@ -205,32 +205,44 @@ public:
 		public:
 			Mode getMode() const
 			{
-				return mode;
+				return this->mode;
+			}
+
+			int getFlags () const
+			{
+				return arg->flags;
 			}
 
 			const char_t* getName() const
 			{
-				return arg->name;
+				return this->arg->name;
+			}
+
+			// since it doesn't copy the contents,
+			// it should point to something that outlives this object.
+			void setName (const char_t* name) 
+			{
+				this->arg->name = name;
 			}
 
 			void* getHandle () const
 			{
-				return arg->handle;
+				return this->arg->handle;
 			}
 
 			void setHandle (void* handle)
 			{
-				arg->handle = handle;
+				this->arg->handle = handle;
 			}
 
 			operator Awk* () const
 			{
-				return awk;
+				return this->awk;
 			}
 
 			operator awk_t* () const
 			{
-				return awk->awk;
+				return this->awk->awk;
 			}
 
 		protected:

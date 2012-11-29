@@ -72,31 +72,31 @@ struct qse_dir_ent_t
 extern "C" {
 #endif
 
-qse_dir_t* qse_dir_open (
+QSE_EXPORT qse_dir_t* qse_dir_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        xtnsize,
 	const qse_char_t* path, 
 	int               flags
 );
 
-void qse_dir_close (
+QSE_EXPORT void qse_dir_close (
 	qse_dir_t* dir
 );
 
-qse_mmgr_t* qse_dir_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_dir_getmmgr (
 	qse_dir_t* dir
 );
 
-void* qse_dir_getxtn (
+QSE_EXPORT void* qse_dir_getxtn (
 	qse_dir_t* dir
 );
 
-int qse_dir_reset (
+QSE_EXPORT int qse_dir_reset (
 	qse_dir_t*        dir,
 	const qse_char_t* path
 );
 
-int qse_dir_read (
+QSE_EXPORT int qse_dir_read (
 	qse_dir_t*     dir,
 	qse_dir_ent_t* ent
 );

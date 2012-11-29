@@ -54,6 +54,22 @@ struct qse_awk_val_rchunk_t
 extern "C" {
 #endif
 
+/* represents a nil value */
+extern qse_awk_val_t* qse_awk_val_nil;
+
+/* represents an empty string  */
+extern qse_awk_val_t* qse_awk_val_zls;
+
+/* represents a numeric value -1 */
+extern qse_awk_val_t* qse_awk_val_negone;
+
+/* represents a numeric value 0 */
+extern qse_awk_val_t* qse_awk_val_zero;
+
+/* represents a numeric value 1 */
+extern qse_awk_val_t* qse_awk_val_one;
+
+
 void qse_awk_rtx_freeval (
         qse_awk_rtx_t* rtx,
         qse_awk_val_t* val,
