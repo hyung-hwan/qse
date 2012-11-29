@@ -50,7 +50,7 @@ typedef struct qse_env_t qse_env_t;
 
 struct qse_env_t
 {
-	QSE_DEFINE_COMMON_FIELDS(env)
+	qse_mmgr_t* mmgr;
 
 	struct
 	{
@@ -72,37 +72,43 @@ struct qse_env_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS(env)
-
-qse_env_t* qse_env_open (
+QSE_EXPORT qse_env_t* qse_env_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize,
 	int         fromcurenv
 );
 
-void qse_env_close (
+QSE_EXPORT void qse_env_close (
 	qse_env_t* env
 );
 
-int qse_env_init (
+QSE_EXPORT int qse_env_init (
 	qse_env_t*  env,
 	qse_mmgr_t* mmgr,
 	int         fromcurenv
 );
 
-void qse_env_fini (
+QSE_EXPORT void qse_env_fini (
 	qse_env_t* env
 );
 
-void qse_env_clear (
+QSE_EXPORT qse_mmgr_t* qse_env_getmmgr (
 	qse_env_t* env
 );
 
-const qse_env_char_t* qse_env_getstr (
+QSE_EXPORT void* qse_env_getxtn (
 	qse_env_t* env
 );
 
-qse_env_char_t** qse_env_getarr (
+QSE_EXPORT void qse_env_clear (
+	qse_env_t* env
+);
+
+QSE_EXPORT const qse_env_char_t* qse_env_getstr (
+	qse_env_t* env
+);
+
+QSE_EXPORT qse_env_char_t** qse_env_getarr (
 	qse_env_t* env
 );
 
@@ -113,36 +119,36 @@ qse_env_char_t** qse_env_getarr (
  *
  * @return 0 on success, -1 on failure
  */
-int qse_env_insertwcs (
+QSE_EXPORT int qse_env_insertwcs (
 	qse_env_t*         env,
 	const qse_wchar_t* name,
 	const qse_wchar_t* value
 );
 
-int qse_env_insertwcsa (
+QSE_EXPORT int qse_env_insertwcsa (
 	qse_env_t*         env,
 	const qse_wchar_t* name,
 	const qse_wchar_t* value[]
 );
 
-int qse_env_insertmbs (
+QSE_EXPORT int qse_env_insertmbs (
 	qse_env_t*         env,
 	const qse_mchar_t* name,
 	const qse_mchar_t* value
 );
 
-int qse_env_insertmbsa (
+QSE_EXPORT int qse_env_insertmbsa (
 	qse_env_t*         env,
 	const qse_mchar_t* name,
 	const qse_mchar_t* value[]
 );
 
-int qse_env_deletewcs (
+QSE_EXPORT int qse_env_deletewcs (
 	qse_env_t*         env,
 	const qse_wchar_t* name
 );
 
-int qse_env_deletembs (
+QSE_EXPORT int qse_env_deletembs (
 	qse_env_t*         env,
 	const qse_mchar_t* name
 );

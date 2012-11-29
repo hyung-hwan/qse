@@ -1512,9 +1512,8 @@ void* StdAwk::modsym (void* handle, const qse_char_t* name)
 int StdAwk::SourceFile::open (Data& io)
 {
 	qse_sio_t* sio;
-	const char_t* ioname = io.getName();
 
-	if (ioname == QSE_NULL)
+	if (!(io.getFlags() & QSE_AWK_SIO_INCLUDED))
 	{
 		// open the main source file.
 
@@ -1552,14 +1551,20 @@ int StdAwk::SourceFile::open (Data& io)
 				dir.len = base - this->name;
 			}
 		}
+
+		io.setName (this->name);
 	}
 	else
 	{
 		// open an included file
-		const char_t* file = ioname;
+		const char_t* ioname, * file;
 		char_t fbuf[64];
 		char_t* dbuf = QSE_NULL;
 	
+		ioname = io.getName();
+		QSE_ASSERT (ioname != QSE_NULL);
+
+		file = ioname;
 		if (dir.len > 0 && ioname[0] != QSE_T('/'))
 		{
 			size_t tmplen, totlen;
@@ -1622,9 +1627,8 @@ StdAwk::ssize_t StdAwk::SourceFile::write (Data& io, const char_t* buf, size_t l
 int StdAwk::SourceString::open (Data& io)
 {
 	qse_sio_t* sio;
-	const char_t* ioname = io.getName();
 
-	if (ioname == QSE_NULL)
+	if (!(io.getFlags() & QSE_AWK_SIO_INCLUDED))
 	{
 		// open the main source file.
 		// SourceString does not support writing.
@@ -1633,6 +1637,8 @@ int StdAwk::SourceString::open (Data& io)
 	}
 	else
 	{
+		const char_t* ioname = io.getName();
+
 		// open an included file 
 		sio = qse_sio_open (
 			((Awk*)io)->getMmgr(),

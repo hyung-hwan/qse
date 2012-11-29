@@ -54,8 +54,6 @@ struct qse_xma_blk_t
 	} b;
 };
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (xma)
-
 static QSE_INLINE_ALWAYS qse_size_t szlog2 (qse_size_t n) 
 {
 	/*
@@ -181,6 +179,16 @@ void qse_xma_fini (qse_xma_t* xma)
 	/* the head must point to the free chunk allocated in init().
 	 * let's deallocate it */
 	QSE_MMGR_FREE (xma->mmgr, xma->head);
+}
+
+qse_mmgr_t* qse_xma_getmmgr (qse_xma_t* xma)
+{
+	return xma->mmgr;
+}
+
+void* qse_xma_getxtn (qse_xma_t* xma)
+{
+	return QSE_XTN (xma);
 }
 
 static QSE_INLINE void attach_to_freelist (qse_xma_t* xma, qse_xma_blk_t* b)

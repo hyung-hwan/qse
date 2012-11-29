@@ -741,6 +741,7 @@ static int begin_include (qse_awk_t* awk)
 		goto oops;
 	}
 
+	arg->flags = QSE_AWK_SIO_INCLUDED;
 	arg->name = QSE_HTB_KPTR(pair);
 
 	CLRERR (awk);
@@ -765,7 +766,8 @@ static int begin_include (qse_awk_t* awk)
 	if (get_char (awk) <= -1 || get_token (awk) <= -1) 
 	{
 		end_include (awk); 
-		/* since i've called end_include(), i don't go to oops */
+		/* i don't jump to oops since i've called 
+		 * end_include() where awk->sio.inp/arg is freed. */
 		return -1;
 	}
 

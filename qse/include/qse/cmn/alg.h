@@ -90,7 +90,7 @@ extern "C" {
  * }
  * @endcode
  */
-void* qse_bsearch (
+QSE_EXPORT void* qse_bsearch (
 	const void*         key,
 	const void*         base,
 	qse_size_t          nmemb,
@@ -102,7 +102,7 @@ void* qse_bsearch (
 /**
  * The qse_lsearch() function performs linear search over an array.
  */
-void* qse_lsearch (
+QSE_EXPORT void* qse_lsearch (
 	const void*         key,
 	const void*         base,
 	qse_size_t          nmemb,
@@ -115,7 +115,7 @@ void* qse_lsearch (
 /**
  * The qse_qsort() function performs quick-sorting over an array.
  */
-void qse_qsort (
+QSE_EXPORT void qse_qsort (
 	void*             base,
 	qse_size_t        nmemb,
 	qse_size_t        size,
@@ -128,7 +128,7 @@ void qse_qsort (
  * The qse_rand31() function implements Park-Miller's minimal standard
  * 32 bit pseudo-random number generator.
  */
-qse_uint32_t qse_rand31 (
+QSE_EXPORT qse_uint32_t qse_rand31 (
 	qse_uint32_t seed
 );
 
@@ -138,7 +138,7 @@ qse_uint32_t qse_rand31 (
  * The qse_randxs32() function implements the xorshift random number generator
  * by George Marsaglia. 
  */
-qse_uint32_t qse_randxs32 (
+QSE_EXPORT qse_uint32_t qse_randxs32 (
 	qse_uint32_t seed
 );
 #endif
@@ -148,7 +148,7 @@ qse_uint32_t qse_randxs32 (
  * The qse_randxs64() function implements the xorshift random number generator
  * by George Marsaglia. 
  */
-qse_uint64_t qse_randxs64 (
+QSE_EXPORT qse_uint64_t qse_randxs64 (
 	qse_uint64_t seed
 );
 #endif
@@ -169,8 +169,7 @@ qse_uint64_t qse_randxs64 (
 #	error Unsupported
 #endif
 
-
-qse_size_t qse_enbase64 (
+QSE_EXPORT qse_size_t qse_enbase64 (
 	const void*        in,
 	qse_size_t         isz,
 	qse_mchar_t*       out,
@@ -178,7 +177,7 @@ qse_size_t qse_enbase64 (
 	qse_size_t*        xsz
 );
 
-qse_size_t qse_debase64 (
+QSE_EXPORT qse_size_t qse_debase64 (
 	const qse_mchar_t* in,
 	qse_size_t         isz,
 	void*              out,

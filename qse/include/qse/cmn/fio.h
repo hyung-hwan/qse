@@ -141,7 +141,7 @@ typedef struct qse_fio_lck_t qse_fio_lck_t;
 
 struct qse_fio_t
 {
-	QSE_DEFINE_COMMON_FIELDS (fio)
+	qse_mmgr_t*      mmgr;
 	qse_fio_errnum_t errnum;
 	qse_fio_hnd_t    handle;
 	int              status; 
@@ -161,8 +161,6 @@ struct qse_fio_lck_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (fio)
-
 /**
  * The qse_fio_open() function opens a file.
  * To open a file, you should set the flags with at least one of
@@ -178,7 +176,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (fio)
  * returns. So, you must not pass a constant string to the @a path 
  * parameter when #QSE_FIO_TEMPORARY is set.
  */
-qse_fio_t* qse_fio_open (
+QSE_EXPORT qse_fio_t* qse_fio_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        ext,
 	const qse_char_t* path,
@@ -189,14 +187,14 @@ qse_fio_t* qse_fio_open (
 /**
  * The qse_fio_close() function closes a file.
  */
-void qse_fio_close (
+QSE_EXPORT void qse_fio_close (
 	qse_fio_t* fio
 );
 
 /**
  * The qse_fio_close() function opens a file into @a fio.
  */
-int qse_fio_init (
+QSE_EXPORT int qse_fio_init (
 	qse_fio_t*        fio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* path,
@@ -208,29 +206,37 @@ int qse_fio_init (
  * The qse_fio_close() function finalizes a file by closing the handle 
  * stored in @a fio.
  */
-void qse_fio_fini (
+QSE_EXPORT void qse_fio_fini (
 	qse_fio_t* fio
 );
 
-qse_fio_errnum_t qse_fio_geterrnum (
+QSE_EXPORT qse_mmgr_t* qse_fio_getmmgr (
+	qse_fio_t* fio
+);
+
+QSE_EXPORT void* qse_fio_getxtn (
+	qse_fio_t* fio
+);
+
+QSE_EXPORT qse_fio_errnum_t qse_fio_geterrnum (
 	const qse_fio_t* fio
 );
 
 /**
  * The qse_fio_gethandle() function returns the native file handle.
  */
-qse_fio_hnd_t qse_fio_gethandle (
+QSE_EXPORT qse_fio_hnd_t qse_fio_gethandle (
 	const qse_fio_t* fio
 );
 
-qse_ubi_t qse_fio_gethandleasubi (
+QSE_EXPORT qse_ubi_t qse_fio_gethandleasubi (
 	const qse_fio_t* fio
 );
 
 /**
  * The qse_fio_seek() function changes the current file position.
  */
-qse_fio_off_t qse_fio_seek (
+QSE_EXPORT qse_fio_off_t qse_fio_seek (
 	qse_fio_t*    fio,
 	qse_fio_off_t offset,
 	qse_fio_ori_t origin
@@ -239,7 +245,7 @@ qse_fio_off_t qse_fio_seek (
 /**
  * The qse_fio_truncate() function truncates a file to @a size.
  */
-int qse_fio_truncate (
+QSE_EXPORT int qse_fio_truncate (
 	qse_fio_t*    fio,
 	qse_fio_off_t size
 );
@@ -247,7 +253,7 @@ int qse_fio_truncate (
 /**
  * The qse_fio_read() function reads data.
  */
-qse_ssize_t qse_fio_read (
+QSE_EXPORT qse_ssize_t qse_fio_read (
 	qse_fio_t*  fio,
 	void*       buf,
 	qse_size_t  size
@@ -256,7 +262,7 @@ qse_ssize_t qse_fio_read (
 /**
  * The qse_fio_write() function writes data.
  */
-qse_ssize_t qse_fio_write (
+QSE_EXPORT qse_ssize_t qse_fio_write (
 	qse_fio_t*  fio,
 	const void* data,
 	qse_size_t  size
@@ -271,7 +277,7 @@ qse_ssize_t qse_fio_write (
  * - The file size is 0.
  * - The file is opened without #QSE_FIO_READ.
  */
-int qse_fio_chmod (
+QSE_EXPORT int qse_fio_chmod (
 	qse_fio_t* fio,
 	int        mode
 );
@@ -281,26 +287,25 @@ int qse_fio_chmod (
  * It is useful in determining the media error, without which qse_fio_close() 
  * may succeed despite such an error.
  */
-int qse_fio_sync (
+QSE_EXPORT int qse_fio_sync (
 	qse_fio_t* fio
 );
 
 
 /* TODO: qse_fio_lock, qse_fio_unlock */
-int qse_fio_lock ( 
+QSE_EXPORT int qse_fio_lock ( 
 	qse_fio_t*     fio, 
 	qse_fio_lck_t* lck,
 	int            flags
 );
 
-int qse_fio_unlock (
+QSE_EXPORT int qse_fio_unlock (
 	qse_fio_t*     fio,
 	qse_fio_lck_t* lck,
 	int            flags
 );
 
-
-int qse_getstdfiohandle (
+QSE_EXPORT int qse_getstdfiohandle (
 	qse_fio_std_t  std,
 	qse_fio_hnd_t* hnd
 );

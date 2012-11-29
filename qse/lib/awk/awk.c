@@ -404,6 +404,8 @@ int qse_awk_clear (qse_awk_t* awk)
 	awk->sio.last.file = QSE_NULL;
 	awk->sio.nungots = 0;
 
+	awk->sio.arg.flags = 0;
+	awk->sio.arg.name = QSE_NULL;
 	awk->sio.arg.line = 1;
 	awk->sio.arg.colm = 1;
 	awk->sio.arg.b.pos = 0;
