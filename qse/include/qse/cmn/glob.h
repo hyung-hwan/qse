@@ -61,7 +61,7 @@ extern "C" {
  * 
  * @return -1 on failure, 0 on no match, 1 if matches are found.
  */
-int qse_glob (
+QSE_EXPORT int qse_glob (
 	const qse_char_t*  pattern,
 	qse_glob_cbimpl_t  cbimpl,
 	void*              cbctx,

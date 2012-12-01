@@ -21,7 +21,6 @@
 #include <qse/cmn/htb.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (htb)
 
 #define htb_t           qse_htb_t
 #define pair_t          qse_htb_pair_t
@@ -327,6 +326,16 @@ void qse_htb_fini (htb_t* htb)
 {
 	qse_htb_clear (htb);
 	QSE_MMGR_FREE (htb->mmgr, htb->bucket);
+}
+
+qse_mmgr_t* qse_htb_getmmgr (qse_htb_t* htb)
+{
+	return htb->mmgr;
+}
+
+void* qse_htb_getxtn (qse_htb_t* htb)
+{
+	return QSE_XTN (htb);
 }
 
 const mancbs_t* qse_htb_getmancbs (const htb_t* htb)

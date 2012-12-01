@@ -21,8 +21,6 @@
 #include <qse/cmn/dll.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (dll)
-
 #define TOB(dll,len) ((len)*(dll)->scale)
 #define DPTR(node) QSE_DLL_DPTR(node)
 #define DLEN(node) QSE_DLL_DLEN(node)
@@ -88,6 +86,16 @@ int qse_dll_init (qse_dll_t* dll, qse_mmgr_t* mmgr)
 void qse_dll_fini (qse_dll_t* dll)
 {
 	qse_dll_clear (dll);
+}
+
+qse_mmgr_t* qse_dll_getmmgr (qse_dll_t* dll)
+{
+	return dll->mmgr;
+}
+
+void* qse_dll_getxtn (qse_dll_t* dll)
+{
+	return QSE_XTN (dll);
 }
 
 int qse_dll_getscale (qse_dll_t* dll)

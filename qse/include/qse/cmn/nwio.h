@@ -97,7 +97,7 @@ typedef struct qse_nwio_t qse_nwio_t;
  */
 struct qse_nwio_t
 {
-	QSE_DEFINE_COMMON_FIELDS (nwio)
+	qse_mmgr_t*        mmgr;
 	int                flags;
 	qse_nwio_errnum_t  errnum;
 	qse_nwio_tmout_t tmout;
@@ -112,8 +112,6 @@ struct qse_nwio_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (nwio)
-
 /**
  * The qse_nwio_open() function opens a file.
  * To open a file, you should set the flags with at least one of
@@ -122,7 +120,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (nwio)
  * If the #QSE_NWIO_HANDLE flag is set, the @a nwad parameter is interpreted
  * as a pointer to qse_nwio_hnd_t.
  */
-qse_nwio_t* qse_nwio_open (
+QSE_EXPORT qse_nwio_t* qse_nwio_open (
 	qse_mmgr_t*               mmgr,
 	qse_size_t                ext,
 	const qse_nwad_t*         nwad,
@@ -133,14 +131,14 @@ qse_nwio_t* qse_nwio_open (
 /**
  * The qse_nwio_close() function closes a file.
  */
-void qse_nwio_close (
+QSE_EXPORT void qse_nwio_close (
 	qse_nwio_t* nwio
 );
 
 /**
  * The qse_nwio_close() function opens a file into @a nwio.
  */
-int qse_nwio_init (
+QSE_EXPORT int qse_nwio_init (
 	qse_nwio_t*             nwio,
 	qse_mmgr_t*             mmgr,
 	const qse_nwad_t*       nwad,
@@ -152,48 +150,56 @@ int qse_nwio_init (
  * The qse_nwio_close() function finalizes a file by closing the handle 
  * stored in @a nwio.
  */
-void qse_nwio_fini (
+QSE_EXPORT void qse_nwio_fini (
 	qse_nwio_t* nwio
 );
 
-qse_nwio_errnum_t qse_nwio_geterrnum (
+QSE_EXPORT qse_mmgr_t* qse_nwio_getmmgr (
+	qse_nwio_t* nwio
+);
+
+QSE_EXPORT void* qse_nwio_getxtn (
+	qse_nwio_t* nwio
+);
+
+QSE_EXPORT qse_nwio_errnum_t qse_nwio_geterrnum (
 	const qse_nwio_t* nwio
 );
 
 /**
  * The qse_nwio_gethandle() function returns the native file handle.
  */
-qse_nwio_hnd_t qse_nwio_gethandle (
+QSE_EXPORT qse_nwio_hnd_t qse_nwio_gethandle (
 	const qse_nwio_t* nwio
 );
 
-qse_ubi_t qse_nwio_gethandleasubi (
+QSE_EXPORT qse_ubi_t qse_nwio_gethandleasubi (
 	const qse_nwio_t* nwio
 );
 
 
-qse_cmgr_t* qse_nwio_getcmgr (
+QSE_EXPORT qse_cmgr_t* qse_nwio_getcmgr (
 	qse_nwio_t* nwio
 );
 
-void qse_nwio_setcmgr (
+QSE_EXPORT void qse_nwio_setcmgr (
 	qse_nwio_t* nwio,
 	qse_cmgr_t* cmgr
 );
 
 
-qse_ssize_t qse_nwio_flush (
+QSE_EXPORT qse_ssize_t qse_nwio_flush (
 	qse_nwio_t*  nwio
 );
 
-void qse_nwio_purge (
+QSE_EXPORT void qse_nwio_purge (
 	qse_nwio_t*  nwio
 );
 
 /**
  * The qse_nwio_read() function reads data.
  */
-qse_ssize_t qse_nwio_read (
+QSE_EXPORT qse_ssize_t qse_nwio_read (
 	qse_nwio_t*  nwio,
 	void*        buf,
 	qse_size_t   size
@@ -205,7 +211,7 @@ qse_ssize_t qse_nwio_read (
  * the function treats the data parameter as a pointer to a null-terminated
  * string.
  */
-qse_ssize_t qse_nwio_write (
+QSE_EXPORT qse_ssize_t qse_nwio_write (
 	qse_nwio_t*  nwio,
 	const void*  data,
 	qse_size_t   size

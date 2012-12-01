@@ -88,7 +88,7 @@ struct qse_stx_charobj_t
 
 struct qse_stx_t
 {
-	QSE_DEFINE_COMMON_FIELDS (stx)
+	qse_mmgr_t* mmgr;
 
      /** error information */
 	struct

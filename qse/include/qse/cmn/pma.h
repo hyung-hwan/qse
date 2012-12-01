@@ -56,7 +56,7 @@ typedef struct qse_pma_t qse_pma_t;
 
 struct qse_pma_t
 {
-	QSE_DEFINE_COMMON_FIELDS (pma)
+	qse_mmgr_t* mmgr;
 
 	qse_pma_blk_t* blocks;
 	qse_pma_blk_t* current;
@@ -70,12 +70,10 @@ struct qse_pma_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (pma)
-
 /**
  * The qse_pma_open() function creates a pool-based memory allocator.
  */
-qse_pma_t* qse_pma_open (
+QSE_EXPORT qse_pma_t* qse_pma_open (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize  /**< extension size in bytes */
 );
@@ -83,24 +81,32 @@ qse_pma_t* qse_pma_open (
 /**
  * The qse_pma_close() function destroys a pool-based memory allocator.
  */
-void qse_pma_close (
+QSE_EXPORT void qse_pma_close (
 	qse_pma_t* pma /**< memory allocator */
 );
 
-int qse_pma_init (
+QSE_EXPORT int qse_pma_init (
 	qse_pma_t*  pma, /**< memory allocator */
 	qse_mmgr_t* mmgr /**< memory manager */
 );
 
-void qse_pma_fini (
+QSE_EXPORT void qse_pma_fini (
 	qse_pma_t* pma /**< memory allocator */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_pma_getmmgr (
+	qse_pma_t* pma
+);
+
+QSE_EXPORT void* qse_pma_getxtn (
+	qse_pma_t* pma
 );
 
 /** 
  * The qse_pma_clear() function frees all the allocated memory blocks 
  * by freeing the entire memory pool. 
  */
-void qse_pma_clear (
+QSE_EXPORT void qse_pma_clear (
 	qse_pma_t* pma /**< memory allocator */
 );
 
@@ -108,7 +114,7 @@ void qse_pma_clear (
  * The qse_pma_alloc() function allocates a memory block of the @a size bytes.
  * @return pointer to a allocated block on success, #QSE_NULL on failure.
  */
-void* qse_pma_alloc (
+QSE_EXPORT void* qse_pma_alloc (
 	qse_pma_t* pma, /**< memory allocator */
 	qse_size_t size /**< block size */
 );	
@@ -118,7 +124,7 @@ void* qse_pma_alloc (
  * and initializes the whole block with 0.
  * @return pointer to a allocated block on success, #QSE_NULL on failure.
  */
-void* qse_pma_calloc (
+QSE_EXPORT void* qse_pma_calloc (
 	qse_pma_t* pma, /**< memory allocator */
 	qse_size_t size /**< block size */
 );	
@@ -127,7 +133,7 @@ void* qse_pma_calloc (
  * The qse_pma_free() function is provided for completeness, and doesn't
  * resize an individual block @a blk. 
  */
-void* qse_pma_realloc (
+QSE_EXPORT void* qse_pma_realloc (
 	qse_pma_t* pma,  /**< memory allocator */
 	void*      blk,  /**< memory block */
 	qse_size_t size  /**< new size in bytes */
@@ -137,7 +143,7 @@ void* qse_pma_realloc (
  * The qse_pma_free() function is provided for completeness, and doesn't
  * free an individual block @a blk. 
  */
-void qse_pma_free (
+QSE_EXPORT void qse_pma_free (
 	qse_pma_t* pma, /**< memory allocator */
 	void*      blk  /**< memory block */
 );

@@ -220,7 +220,7 @@ typedef enum qse_rbt_mancbs_kind_t  qse_rbt_mancbs_kind_t;
  */
 struct qse_rbt_t
 {
-	QSE_DEFINE_COMMON_FIELDS (rbt)
+	qse_mmgr_t* mmgr;
 
 	const qse_rbt_mancbs_t* mancbs;
 
@@ -270,13 +270,11 @@ struct qse_rbt_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (rbt)
-
 /**
  * The qse_getrbtmancbs() functions returns a predefined callback set for
  * pair manipulation.
  */
-const qse_rbt_mancbs_t* qse_getrbtmancbs (
+QSE_EXPORT const qse_rbt_mancbs_t* qse_getrbtmancbs (
 	qse_rbt_mancbs_kind_t kind
 );
 
@@ -284,7 +282,7 @@ const qse_rbt_mancbs_t* qse_getrbtmancbs (
  * The qse_rbt_open() function creates a red-black tree.
  * @return qse_rbt_t pointer on success, QSE_NULL on failure.
  */
-qse_rbt_t* qse_rbt_open (
+QSE_EXPORT qse_rbt_t* qse_rbt_open (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize, /**< extension size in bytes */
 	int         kscale,  /**< key scale */
@@ -294,14 +292,14 @@ qse_rbt_t* qse_rbt_open (
 /**
  * The qse_rbt_close() function destroys a red-black tree.
  */
-void qse_rbt_close (
+QSE_EXPORT void qse_rbt_close (
 	qse_rbt_t* rbt   /**< red-black tree */
 );
 
 /**
  * The qse_rbt_init() function initializes a red-black tree
  */
-int qse_rbt_init (
+QSE_EXPORT int qse_rbt_init (
 	qse_rbt_t*  rbt,    /**< red-black tree */
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	int         kscale, /**< key scale */
@@ -311,14 +309,22 @@ int qse_rbt_init (
 /**
  * The qse_rbt_fini() funtion finalizes a red-black tree
  */
-void qse_rbt_fini (
+QSE_EXPORT void qse_rbt_fini (
 	qse_rbt_t* rbt  /**< red-black tree */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_rbt_getmmgr (
+	qse_rbt_t* rbt
+);
+
+QSE_EXPORT void* qse_rbt_getxtn (
+	qse_rbt_t* rbt
 );
 
 /**
  * The qse_rbt_getmancbs() function gets manipulation callback function set.
  */
-const qse_rbt_mancbs_t* qse_rbt_getmancbs (
+QSE_EXPORT const qse_rbt_mancbs_t* qse_rbt_getmancbs (
 	const qse_rbt_t* rbt /**< red-black tree */
 );
 
@@ -326,7 +332,7 @@ const qse_rbt_mancbs_t* qse_rbt_getmancbs (
  * The qse_rbt_setmancbs() function sets internal manipulation callback 
  * functions for data construction, destruction, comparison, etc.
  */
-void qse_rbt_setmancbs (
+QSE_EXPORT void qse_rbt_setmancbs (
 	qse_rbt_t*              rbt,   /**< red-black tree */
 	const qse_rbt_mancbs_t* mancbs /**< callback function set */
 );
@@ -334,7 +340,7 @@ void qse_rbt_setmancbs (
 /**
  * The qse_rbt_getsize() function gets the number of pairs in red-black tree.
  */
-qse_size_t qse_rbt_getsize (
+QSE_EXPORT qse_size_t qse_rbt_getsize (
 	const qse_rbt_t* rbt  /**< red-black tree */
 );
 
@@ -345,7 +351,7 @@ qse_size_t qse_rbt_getsize (
  * @return pointer to the pair with a maching key, 
  *         or QSE_NULL if no match is found.
  */
-qse_rbt_pair_t* qse_rbt_search (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_search (
 	const qse_rbt_t* rbt,   /**< red-black tree */
 	const void*      kptr,  /**< key pointer */
 	qse_size_t       klen   /**< the size of the key */
@@ -359,7 +365,7 @@ qse_rbt_pair_t* qse_rbt_search (
  * @return a pointer to the updated or inserted pair on success, 
  *         QSE_NULL on failure. 
  */
-qse_rbt_pair_t* qse_rbt_upsert (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_upsert (
 	qse_rbt_t* rbt,   /**< red-black tree */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -373,7 +379,7 @@ qse_rbt_pair_t* qse_rbt_upsert (
  * the pair containing the key.
  * @return pointer to a pair on success, QSE_NULL on failure. 
  */
-qse_rbt_pair_t* qse_rbt_ensert (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_ensert (
 	qse_rbt_t* rbt,   /**< red-black tree */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -387,7 +393,7 @@ qse_rbt_pair_t* qse_rbt_ensert (
  * QSE_NULL without channging the value.
  * @return pointer to the pair created on success, QSE_NULL on failure. 
  */
-qse_rbt_pair_t* qse_rbt_insert (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_insert (
 	qse_rbt_t* rbt,   /**< red-black tree */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -400,7 +406,7 @@ qse_rbt_pair_t* qse_rbt_insert (
  * with a matching key.
  * @return pointer to the pair on success, QSE_NULL on no matching pair
  */
-qse_rbt_pair_t* qse_rbt_update (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_update (
 	qse_rbt_t* rbt,   /**< red-black tree */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -495,7 +501,7 @@ qse_rbt_pair_t* qse_rbt_update (
  * }
  * @endcode
  */
-qse_rbt_pair_t* qse_rbt_cbsert (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_cbsert (
 	qse_rbt_t*         rbt,      /**< red-black tree */
 	void*              kptr,     /**< key pointer */
 	qse_size_t         klen,     /**< key length */
@@ -507,7 +513,7 @@ qse_rbt_pair_t* qse_rbt_cbsert (
  * The qse_rbt_delete() function deletes a pair with a matching key 
  * @return 0 on success, -1 on failure
  */
-int qse_rbt_delete (
+QSE_EXPORT int qse_rbt_delete (
 	qse_rbt_t* rbt,   /**< red-black tree */
 	const void* kptr, /**< key pointer */
 	qse_size_t klen   /**< key size */
@@ -516,7 +522,7 @@ int qse_rbt_delete (
 /**
  * The qse_rbt_clear() function empties a red-black tree.
  */
-void qse_rbt_clear (
+QSE_EXPORT void qse_rbt_clear (
 	qse_rbt_t* rbt /**< red-black tree */
 );
 
@@ -524,7 +530,7 @@ void qse_rbt_clear (
  * The qse_rbt_walk() function traverses a red-black tree in preorder 
  * from the leftmost child.
  */
-void qse_rbt_walk (
+QSE_EXPORT void qse_rbt_walk (
 	qse_rbt_t*       rbt,    /**< red-black tree */
 	qse_rbt_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
@@ -534,7 +540,7 @@ void qse_rbt_walk (
  * The qse_rbt_walk() function traverses a red-black tree in preorder 
  * from the rightmost child.
  */
-void qse_rbt_rwalk (
+QSE_EXPORT void qse_rbt_rwalk (
 	qse_rbt_t*       rbt,    /**< red-black tree */
 	qse_rbt_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
@@ -552,7 +558,7 @@ void qse_rbt_rwalk (
  * - If @a vptr is #QSE_NULL, the value space of the size @a vlen is reserved
  *   but not propagated with any data.
  */
-qse_rbt_pair_t* qse_rbt_allocpair (
+QSE_EXPORT qse_rbt_pair_t* qse_rbt_allocpair (
 	qse_rbt_t* rbt,
 	void*      kptr, 
 	qse_size_t klen,	
@@ -565,7 +571,7 @@ qse_rbt_pair_t* qse_rbt_allocpair (
  * the pair destroyed from the red-black tree @a rbt. Use this function at your
  * own risk.
  */
-void qse_rbt_freepair (
+QSE_EXPORT void qse_rbt_freepair (
 	qse_rbt_t*      rbt,
 	qse_rbt_pair_t* pair
 );
@@ -573,7 +579,7 @@ void qse_rbt_freepair (
 /**
  * The qse_rbt_dflcomp() function defines the default key comparator.
  */
-int qse_rbt_dflcomp (
+QSE_EXPORT int qse_rbt_dflcomp (
 	const qse_rbt_t* rbt,
 	const void*      kptr1,
 	qse_size_t       klen1,

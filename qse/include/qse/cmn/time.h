@@ -112,14 +112,14 @@ extern "C" {
 /**
  * The qse_gettime() function gets the current time.
  */
-int qse_gettime (
+QSE_EXPORT int qse_gettime (
 	qse_ntime_t* nt
 );
 
 /**
  * The qse_settime() function sets the current time.
  */
-int qse_settime (
+QSE_EXPORT int qse_settime (
 	const qse_ntime_t* nt
 );
 
@@ -127,7 +127,7 @@ int qse_settime (
 /**
  * The qse_gmtime() function converts numeric time to broken-down time.
  */
-int qse_gmtime (
+QSE_EXPORT int qse_gmtime (
 	const qse_ntime_t*  nt, 
 	qse_btime_t*        bt
 );
@@ -135,7 +135,7 @@ int qse_gmtime (
 /**
  * The qse_localtime() converts numeric time to broken-down time 
  */
-int qse_localtime (
+QSE_EXPORT int qse_localtime (
 	const qse_ntime_t*  nt, 
 	qse_btime_t*        bt
 ); 
@@ -145,7 +145,7 @@ int qse_localtime (
  * inverse of qse_gmtime(). It is useful if the broken-down time is in UTC
  * and the local environment is not.
  */
-int qse_timegm (
+QSE_EXPORT int qse_timegm (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );
@@ -154,7 +154,7 @@ int qse_timegm (
  * The qse_timelocal() converts broken-down time to numeric time. It is the
  * inverse of qse_localtime();
  */
-int qse_timelocal (
+QSE_EXPORT int qse_timelocal (
 	const qse_btime_t* bt,
 	qse_ntime_t*       nt
 );

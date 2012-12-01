@@ -21,8 +21,6 @@
 #include <qse/cmn/sll.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (sll)
-
 #define sll_t    qse_sll_t
 #define node_t   qse_sll_node_t
 #define copier_t qse_sll_copier_t
@@ -139,6 +137,16 @@ int qse_sll_init (sll_t* sll, mmgr_t* mmgr)
 void qse_sll_fini (sll_t* sll)
 {
 	qse_sll_clear (sll);
+}
+
+qse_mmgr_t* qse_sll_getmmgr (qse_sll_t* sll)
+{
+	return sll->mmgr;
+}
+
+void* qse_sll_getxtn (qse_sll_t* sll)
+{
+	return QSE_XTN (sll);
 }
 
 int qse_sll_getscale (sll_t* sll)

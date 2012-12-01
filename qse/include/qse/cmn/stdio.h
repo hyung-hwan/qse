@@ -67,28 +67,35 @@ typedef int (*qse_getdelim_t) (const qse_char_t* ptr,qse_size_t len,void* arg);
 extern "C" {
 #endif
 
-int qse_vsprintf (
+QSE_EXPORT int qse_vsprintf (
 	qse_char_t*       buf,
 	qse_size_t        size,
 	const qse_char_t* fmt,
 	va_list ap
 );
 
-int qse_sprintf (
+QSE_EXPORT int qse_sprintf (
 	qse_char_t* buf,
 	qse_size_t size,
 	const qse_char_t* fmt,
 	...
 );
 
-int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap);
-int qse_vprintf (const qse_char_t* fmt, va_list ap);
-int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...);
-int qse_printf (const qse_char_t* fmt, ...);
+QSE_EXPORT int qse_vfprintf (
+	QSE_FILE *stream, const qse_char_t* fmt, va_list ap);
+QSE_EXPORT int qse_vprintf (
+	const qse_char_t* fmt, va_list ap);
+QSE_EXPORT int qse_fprintf (
+	QSE_FILE* file, const qse_char_t* fmt, ...);
+QSE_EXPORT int qse_printf (
+	const qse_char_t* fmt, ...);
 
-int qse_dprintf (const qse_char_t* fmt, ...);
-QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode);
-QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode);
+QSE_EXPORT int qse_dprintf (
+	const qse_char_t* fmt, ...);
+QSE_EXPORT QSE_FILE* qse_fopen (
+	const qse_char_t* path, const qse_char_t* mode);
+QSE_EXPORT QSE_FILE* qse_popen (
+	const qse_char_t* cmd, const qse_char_t* mode);
 
 /**
  * The qse_getline() function read a line from a file pointer @a fp
@@ -96,7 +103,7 @@ QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode);
  *
  * @return -2 on error, -1 on eof, length of data read on success 
  */
-qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);
+QSE_EXPORT qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);
 
 /**
  * The qse_getdelim() function reads characters from a file pointer @a fp 
@@ -105,7 +112,7 @@ qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);
  * @return -3 on line breaker error, -2 on error, -1 on eof, 
  *         length of data read on success 
  */
-qse_ssize_t qse_getdelim (
+QSE_EXPORT qse_ssize_t qse_getdelim (
 	qse_char_t **buf, qse_size_t *n, 
 	qse_getdelim_t fn, void* fnarg, QSE_FILE *fp);
 

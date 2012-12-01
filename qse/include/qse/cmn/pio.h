@@ -175,7 +175,7 @@ struct qse_pio_pin_t
  */
 struct qse_pio_t
 {
-	QSE_DEFINE_COMMON_FIELDS(pio)
+	qse_mmgr_t*      mmgr;
 	int              flags;  /**< options */
 	qse_pio_errnum_t errnum;  /**< error number */
 	qse_pio_pid_t    child;   /**< handle to a child process */
@@ -193,8 +193,6 @@ struct qse_pio_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (pio)
-
 /**
  * The qse_pio_open() function executes a command @a cmd and establishes
  * pipes to it. #QSE_PIO_SHELL causes the function to execute @a cmd via 
@@ -207,7 +205,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (pio)
  * character type is #qse_mchar_t.
  * @return #qse_pio_t object on success, #QSE_NULL on failure
  */
-qse_pio_t* qse_pio_open (
+QSE_EXPORT qse_pio_t* qse_pio_open (
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	qse_size_t        ext,    /**< extension size */
 	const qse_char_t* cmd,    /**< command to execute */
@@ -220,7 +218,7 @@ qse_pio_t* qse_pio_open (
  * The qse_pio_close() function closes pipes to a child process and waits for
  * the child process to exit.
  */
-void qse_pio_close (
+QSE_EXPORT void qse_pio_close (
 	qse_pio_t* pio /**< pio object */
 );
 
@@ -230,7 +228,7 @@ void qse_pio_close (
  * function.
  * @return 0 on success, -1 on failure
  */
-int qse_pio_init (
+QSE_EXPORT int qse_pio_init (
 	qse_pio_t*        pio,    /**< pio object */
 	qse_mmgr_t*       mmgr,   /**< memory manager */
 	const qse_char_t* cmd,    /**< command to execute */
@@ -243,8 +241,16 @@ int qse_pio_init (
  * The qse_pio_fini() function performs the same task as qse_pio_close()
  * except that it does not destroy a #qse_pio_t structure pointed to by @a pio.
  */
-void qse_pio_fini (
+QSE_EXPORT void qse_pio_fini (
 	qse_pio_t* pio /**< pio object */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_pio_getmmgr (
+	qse_pio_t* pio
+);
+
+QSE_EXPORT void* qse_pio_getxtn (
+	qse_pio_t* pio
 );
 
 /**
@@ -252,7 +258,7 @@ void qse_pio_fini (
  * occurred. 
  * @return error number
  */
-qse_pio_errnum_t qse_pio_geterrnum (
+QSE_EXPORT qse_pio_errnum_t qse_pio_geterrnum (
 	const qse_pio_t* pio /**< pio object */
 );
 
@@ -260,7 +266,7 @@ qse_pio_errnum_t qse_pio_geterrnum (
  * The qse_pio_getcmgr() function returns the current character manager.
  * It returns #QSE_NULL is @a pio is not opened with #QSE_PIO_TEXT.
  */
-qse_cmgr_t* qse_pio_getcmgr (
+QSE_EXPORT qse_cmgr_t* qse_pio_getcmgr (
 	qse_pio_t*    pio,
 	qse_pio_hid_t hid
 );
@@ -269,7 +275,7 @@ qse_cmgr_t* qse_pio_getcmgr (
  * The qse_pio_setcmgr() function changes the character manager to @a cmgr.
  * The character manager is used only if @a pio is opened with #QSE_PIO_TEXT.
  */
-void qse_pio_setcmgr (
+QSE_EXPORT void qse_pio_setcmgr (
 	qse_pio_t*    pio,
 	qse_pio_hid_t hid,
 	qse_cmgr_t*   cmgr
@@ -279,7 +285,7 @@ void qse_pio_setcmgr (
  * The qse_pio_gethandle() function gets a pipe handle.
  * @return pipe handle
  */
-qse_pio_hnd_t qse_pio_gethandle (
+QSE_EXPORT qse_pio_hnd_t qse_pio_gethandle (
 	const qse_pio_t* pio, /**< pio object */
 	qse_pio_hid_t    hid  /**< handle ID */
 );
@@ -289,7 +295,7 @@ qse_pio_hnd_t qse_pio_gethandle (
  * in the #qse_ubi_t type.
  * @return pipe handle
  */
-qse_ubi_t qse_pio_gethandleasubi (
+QSE_EXPORT qse_ubi_t qse_pio_gethandleasubi (
 	const qse_pio_t* pio, /**< pio object */
 	qse_pio_hid_t    hid  /**< handle ID */
 );
@@ -298,7 +304,7 @@ qse_ubi_t qse_pio_gethandleasubi (
  * The qse_pio_getchild() function gets a process handle.
  * @return process handle
  */
-qse_pio_pid_t qse_pio_getchild (
+QSE_EXPORT qse_pio_pid_t qse_pio_getchild (
 	const qse_pio_t* pio /**< pio object */
 );
 
@@ -307,7 +313,7 @@ qse_pio_pid_t qse_pio_getchild (
  * and stores them to the buffer pointed to by @a buf.
  * @return -1 on failure, 0 on EOF, data length read on success
  */
-qse_ssize_t qse_pio_read (
+QSE_EXPORT qse_ssize_t qse_pio_read (
 	qse_pio_t*    pio,  /**< pio object */
 	qse_pio_hid_t hid,  /**< handle ID */
 	void*         buf,  /**< buffer to fill */
@@ -321,7 +327,7 @@ qse_ssize_t qse_pio_read (
  * the @a data parameter as a pointer to a null-terminated string.
  * @return -1 on failure, data length written on success
  */
-qse_ssize_t qse_pio_write (
+QSE_EXPORT qse_ssize_t qse_pio_write (
 	qse_pio_t*    pio,   /**< pio object */
 	qse_pio_hid_t hid,   /**< handle ID */
 	const void*   data,  /**< data to write */
@@ -332,7 +338,7 @@ qse_ssize_t qse_pio_write (
  * The qse_pio_flush() flushes buffered data if #QSE_PIO_TEXT has been 
  * specified to qse_pio_open() and qse_pio_init().
  */
-qse_ssize_t qse_pio_flush (
+QSE_EXPORT qse_ssize_t qse_pio_flush (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );
@@ -341,7 +347,7 @@ qse_ssize_t qse_pio_flush (
  * The qse_pio_purge() drops unflushed input and output data in the 
  * buffer. 
  */
-void qse_pio_purge (
+QSE_EXPORT void qse_pio_purge (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );
@@ -349,7 +355,7 @@ void qse_pio_purge (
 /**
  * The qse_pio_end() function closes a pipe to a child process
  */
-void qse_pio_end (
+QSE_EXPORT void qse_pio_end (
 	qse_pio_t*    pio, /**< pio object */
 	qse_pio_hid_t hid  /**< handle ID */
 );
@@ -367,7 +373,7 @@ void qse_pio_end (
  *  a number between 0 and 255 inclusive if the child process ends normally,
  *  256 + signal number if the child process is terminated by a signal.
  */
-int qse_pio_wait (
+QSE_EXPORT int qse_pio_wait (
 	qse_pio_t* pio /**< pio object */
 );
 
@@ -378,7 +384,7 @@ int qse_pio_wait (
  * there is a new process with the same process handle.
  * @return 0 on success, -1 on failure
  */ 
-int qse_pio_kill (
+QSE_EXPORT int qse_pio_kill (
 	qse_pio_t* pio /**< pio object */
 );
 

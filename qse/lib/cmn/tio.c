@@ -22,8 +22,6 @@
 #include <qse/cmn/mbwc.h> 
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (tio)
-
 #define STATUS_OUTPUT_DYNBUF (1 << 0)
 #define STATUS_INPUT_DYNBUF  (1 << 1)
 #define STATUS_INPUT_ILLSEQ  (1 << 2)
@@ -90,6 +88,16 @@ int qse_tio_fini (qse_tio_t* tio)
 	if (detach_out (tio, 1) <= -1) ret = -1;
 
 	return ret;
+}
+
+qse_mmgr_t* qse_tio_getmmgr (qse_tio_t* tio)
+{
+	return tio->mmgr;
+}
+
+void* qse_tio_getxtn (qse_tio_t* tio)
+{
+	return QSE_XTN (tio);
 }
 
 qse_tio_errnum_t qse_tio_geterrnum (const qse_tio_t* tio)

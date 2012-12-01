@@ -91,7 +91,7 @@ struct qse_skad_t
 extern "C" {
 #endif
 
-int qse_nwadequal (
+QSE_EXPORT int qse_nwadequal (
 	const qse_nwad_t* x,
 	const qse_nwad_t* y
 );
@@ -100,41 +100,41 @@ int qse_nwadequal (
  * The qse_clearnwad() function zeros out the address
  * for the address @a type. 
  */
-void qse_clearnwad (
+QSE_EXPORT void qse_clearnwad (
 	qse_nwad_t*     nwad,
 	qse_nwad_type_t type
 );
 
-int qse_mbstonwad (
+QSE_EXPORT int qse_mbstonwad (
 	const qse_mchar_t* mbs,
 	qse_nwad_t*        nwad
 );
 
-int qse_mbsntonwad (
+QSE_EXPORT int qse_mbsntonwad (
 	const qse_mchar_t* mbs,
 	qse_size_t         len,
 	qse_nwad_t*        nwad
 );
 
-int qse_wcstonwad (
+QSE_EXPORT int qse_wcstonwad (
 	const qse_wchar_t* wcs,
 	qse_nwad_t*        nwad
 );
 
-int qse_wcsntonwad (
+QSE_EXPORT int qse_wcsntonwad (
 	const qse_wchar_t* wcs,
 	qse_size_t         len,
 	qse_nwad_t*        nwad
 );
 
-qse_size_t qse_nwadtombs (
+QSE_EXPORT qse_size_t qse_nwadtombs (
 	const qse_nwad_t* nwad,
 	qse_mchar_t*      mbs,
 	qse_size_t        len,
 	int               flags
 );
 
-qse_size_t qse_nwadtowcs (
+QSE_EXPORT qse_size_t qse_nwadtowcs (
 	const qse_nwad_t* nwad,
 	qse_wchar_t*      wcs,
 	qse_size_t        len,
@@ -151,17 +151,17 @@ qse_size_t qse_nwadtowcs (
 #	define qse_nwadtostr(nwad,ptr,len,flags) qse_nwadtowcs(nwad,ptr,len,flags)
 #endif
 
-int qse_skadtonwad (
+QSE_EXPORT int qse_skadtonwad (
 	const qse_skad_t* skad,
 	qse_nwad_t*       nwad
 );
 
-int qse_nwadtoskad (
+QSE_EXPORT int qse_nwadtoskad (
 	const qse_nwad_t* nwad,
 	qse_skad_t*       skad
 );
 
-int qse_skadfamily (
+QSE_EXPORT int qse_skadfamily (
 	const qse_skad_t* skad
 );
 

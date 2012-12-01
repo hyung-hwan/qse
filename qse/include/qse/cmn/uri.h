@@ -70,13 +70,13 @@ enum qse_wcstouri_flag_t
 extern "C" {
 #endif
 
-int qse_mbstouri (
+QSE_EXPORT int qse_mbstouri (
 	const qse_mchar_t* str,
 	qse_uri_t*         uri,
 	int                flags
 );
 
-int qse_wcstouri (
+QSE_EXPORT int qse_wcstouri (
 	const qse_wchar_t* str,
 	qse_uri_t*         uri,
 	int                flags

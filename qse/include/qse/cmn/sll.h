@@ -105,7 +105,7 @@ typedef qse_sll_walk_t (*qse_sll_walker_t) (
  */
 struct qse_sll_t
 {
-	QSE_DEFINE_COMMON_FIELDS (sll)
+	qse_mmgr_t* mmgr;
 
 	qse_sll_copier_t copier; /**< data copier */
 	qse_sll_freeer_t freeer; /**< data freeer */
@@ -154,8 +154,6 @@ struct qse_sll_node_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (sll)
-
 /**
  * The qse_sll_open() function creates an empty singly linked list.
  * If the memory manager mmgr is QSE_NULL, the function gets the default
@@ -173,7 +171,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (sll)
  *  QSE_NULL and @a mmgr is QSE_NULL. In the release build, it returns QSE_NULL
  *  in such case.
  */
-qse_sll_t* qse_sll_open (
+QSE_EXPORT qse_sll_t* qse_sll_open (
 	qse_mmgr_t* mmgr, /* memory manager */ 
 	qse_size_t  ext   /* size of extension area in bytes */
 );
@@ -182,7 +180,7 @@ qse_sll_t* qse_sll_open (
  * The qse_sll_close() function destroys a singly linked list freeing up
  * the memory.
  */
-void qse_sll_close (
+QSE_EXPORT void qse_sll_close (
 	qse_sll_t* sll /**< singly linked list */
 );
 
@@ -196,7 +194,7 @@ void qse_sll_close (
  *  The qse_sll_init() function returns the first parameter on success and
  *  QSE_NULL on failure.
  */
-int qse_sll_init (
+QSE_EXPORT int qse_sll_init (
 	qse_sll_t*  sll,  /* singly linked list */
 	qse_mmgr_t* mmgr  /* memory manager */
 );
@@ -204,14 +202,22 @@ int qse_sll_init (
 /**
  * The qse_sll_fini() function finalizes a statically initialized list.
  */
-void qse_sll_fini (
+QSE_EXPORT void qse_sll_fini (
 	qse_sll_t* sll  /**< singly linked list */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_sll_getmmgr (
+	qse_sll_t* sll
+);
+
+QSE_EXPORT void* qse_sll_getxtn (
+	qse_sll_t* sll
 );
 
 /**
  * The qse_sll_getscale() function gets the scale factor
  */
-int qse_sll_getscale (
+QSE_EXPORT int qse_sll_getscale (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
@@ -221,7 +227,7 @@ int qse_sll_getscale (
  *  linked list created with a scale factor of 1. The scale factor should be
  *  larger than 0 and less than 256.
  */
-void qse_sll_setscale (
+QSE_EXPORT void qse_sll_setscale (
 	qse_sll_t* sll,     /**< singly linked list */
 	int        scale    /**< scale factor */
 );
@@ -229,7 +235,7 @@ void qse_sll_setscale (
 /**
  * The qse_sll_getfreeer() function gets the data copier.
  */
-qse_sll_copier_t qse_sll_getcopier (
+QSE_EXPORT qse_sll_copier_t qse_sll_getcopier (
 	qse_sll_t* sll  /* singly linked list */
 );
 
@@ -240,7 +246,7 @@ qse_sll_copier_t qse_sll_getcopier (
  * when the node is freeed. You may set the copier to QSE_NULL to perform 
  * no special operation when the data pointer is rememebered.
  */
-void qse_sll_setcopier (
+QSE_EXPORT void qse_sll_setcopier (
 	qse_sll_t*       sll,   /**< singly linked list */
 	qse_sll_copier_t copier /**< data copier */
 );
@@ -248,7 +254,7 @@ void qse_sll_setcopier (
 /**
  * The qse_sll_getfreeer() function returns the element freeer.
  */
-qse_sll_freeer_t qse_sll_getfreeer (
+QSE_EXPORT qse_sll_freeer_t qse_sll_getfreeer (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
@@ -256,7 +262,7 @@ qse_sll_freeer_t qse_sll_getfreeer (
  * The qse_sll_setfreeer() function changes the element freeer.
  * The freeer is called when a node containing the element is destroyed.
  */
-void qse_sll_setfreeer (
+QSE_EXPORT void qse_sll_setfreeer (
 	qse_sll_t*       sll,   /**< singly linked list */
 	qse_sll_freeer_t freeer /**< data freeer */
 );
@@ -264,14 +270,14 @@ void qse_sll_setfreeer (
 /**
  * The qse_sll_getcomper() function returns the data comparator.
  */
-qse_sll_comper_t qse_sll_getcomper (
+QSE_EXPORT qse_sll_comper_t qse_sll_getcomper (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
 /**
  * The qse_sll_setcomper() function changes  the data comparator
  */
-void qse_sll_setcomper (
+QSE_EXPORT void qse_sll_setcomper (
 	qse_sll_t*       sll,    /**< singly linked list */
 	qse_sll_comper_t comper  /**< comparator */
 );
@@ -280,7 +286,7 @@ void qse_sll_setcomper (
  * The qse_sll_getsize() function returns the number of the data nodes held
  * in a singly linked list.
  */
-qse_size_t qse_sll_getsize (
+QSE_EXPORT qse_size_t qse_sll_getsize (
 	qse_sll_t* sll  /** singly linked list */
 );
 
@@ -288,7 +294,7 @@ qse_size_t qse_sll_getsize (
  * The qse_sll_gethead() function gets the head node. You may use the 
  * #QSE_SLL_HEAD macro instead.
  */
-qse_sll_node_t* qse_sll_gethead (
+QSE_EXPORT qse_sll_node_t* qse_sll_gethead (
 	qse_sll_t* sll  /**< a singly linked list */
 );
 
@@ -296,7 +302,7 @@ qse_sll_node_t* qse_sll_gethead (
  * The qse_sll_gettail() function gets the head node. You may use the 
  * #QSE_SLL_TAIL macro instead.
  */
-qse_sll_node_t* qse_sll_gettail (
+QSE_EXPORT qse_sll_node_t* qse_sll_gettail (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
@@ -311,7 +317,7 @@ qse_sll_node_t* qse_sll_gettail (
  *
  * @return pointer to the node found. QSE_NULL if no match is found
  */
-qse_sll_node_t* qse_sll_search (
+QSE_EXPORT qse_sll_node_t* qse_sll_search (
 	qse_sll_t*      sll,   /**< singly linked list */
 	qse_sll_node_t* pos,   /**< positional node */
 	const void*     dptr,  /**< data pointer */
@@ -326,7 +332,7 @@ qse_sll_node_t* qse_sll_search (
  * into a random position.
  * @return pointer to a new node on success, QSE_NULL on failure
  */
-qse_sll_node_t* qse_sll_insert (
+QSE_EXPORT qse_sll_node_t* qse_sll_insert (
 	qse_sll_t*      sll,  /**< singly linked list */
 	qse_sll_node_t* pos,  /**< node before which a new node is inserted */
 	void*           dptr, /**< the pointer to the data */
@@ -336,7 +342,7 @@ qse_sll_node_t* qse_sll_insert (
 /**
  * The qse_sll_delete() function deletes a node. 
  */
-void qse_sll_delete (
+QSE_EXPORT void qse_sll_delete (
 	qse_sll_t*      sll, /**< singly linked list */
 	qse_sll_node_t* pos  /**< node to delete */
 );
@@ -345,7 +351,7 @@ void qse_sll_delete (
  * The qse_sll_clear() function empties a singly linked list by deletinng
  * all the nodes.
  */
-void qse_sll_clear (
+QSE_EXPORT void qse_sll_clear (
 	qse_sll_t* sll  /**< singly linked list */
 );
 
@@ -360,29 +366,29 @@ void qse_sll_clear (
  *  user-defined data passed as the third parameter in a call to the 
  *  qse_sll_walk() function.
  */
-void qse_sll_walk (
+QSE_EXPORT void qse_sll_walk (
 	qse_sll_t*       sll,     /**< singly linked list */
 	qse_sll_walker_t walker,  /**< user-defined walker function */
 	void*            ctx      /**< the pointer to user-defined data */
 );
 
-qse_sll_node_t* qse_sll_pushhead (
+QSE_EXPORT qse_sll_node_t* qse_sll_pushhead (
 	qse_sll_t* sll /**< singly linked list */,
 	void*      dptr, 
 	qse_size_t dlen
 );
 
-qse_sll_node_t* qse_sll_pushtail (
+QSE_EXPORT qse_sll_node_t* qse_sll_pushtail (
 	qse_sll_t* sll /**< singly linked list */, 
 	void*      dptr, 
 	qse_size_t dlen
 );
 
-void qse_sll_pophead (
+QSE_EXPORT void qse_sll_pophead (
 	qse_sll_t* sll
 );
 
-void qse_sll_poptail (
+QSE_EXPORT void qse_sll_poptail (
 	qse_sll_t* sll
 );
 

@@ -192,7 +192,7 @@ struct qse_fma_blk_t
 typedef struct qse_fma_t qse_fma_t;
 struct qse_fma_t
 {
-	QSE_DEFINE_COMMON_FIELDS (fma)
+	qse_mmgr_t* mmgr; /**< memory manager */
 
 	qse_size_t blksize; /**< block size */
 	qse_size_t maxblks; /**< maximum blocks in a chunk */
@@ -207,13 +207,11 @@ struct qse_fma_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (fma)
-
 /**
  * The qse_fma_open() function creates a memory allocator with an outer
  * memory manager.
  */
-qse_fma_t* qse_fma_open (
+QSE_EXPORT qse_fma_t* qse_fma_open (
 	qse_mmgr_t* mmgr,   /**< outer memory manager */
 	qse_size_t xtnsize, /**< extension size in bytes */
 	qse_size_t blksize, /**< fixed block size in bytes */
@@ -224,7 +222,7 @@ qse_fma_t* qse_fma_open (
 /**
  * The qse_fma_close() function destroys an memory allocator.
  */
-void qse_fma_close (
+QSE_EXPORT void qse_fma_close (
 	qse_fma_t* fma      /**< memory allocator */
 );
 
@@ -232,7 +230,7 @@ void qse_fma_close (
  * The qse_fma_init() function initializes an memory allocator statically 
  * declared.
  */
-int qse_fma_init (
+QSE_EXPORT int qse_fma_init (
 	qse_fma_t* fma,     /**< memory allocator */
 	qse_mmgr_t* mmgr,   /**< outer memory manager */
 	qse_size_t blksize, /**< fixed block size in bytes */
@@ -243,8 +241,16 @@ int qse_fma_init (
 /**
  * The qse_fma_fini() function finalizes an memory allocator.
  */
-void qse_fma_fini (
+QSE_EXPORT void qse_fma_fini (
 	qse_fma_t* fma      /**< memory allocator */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_fma_getmmgr (
+	qse_fma_t* fma
+);
+
+QSE_EXPORT void* qse_fma_getxtn (
+	qse_fma_t* fma
 );
 
 /**
@@ -255,12 +261,12 @@ void qse_fma_fini (
  * 
  * @return block pointer on success, #QSE_NULL on failure
  */
-void* qse_fma_alloc (
+QSE_EXPORT void* qse_fma_alloc (
 	qse_fma_t* fma,     /**< memory allocator */
 	qse_size_t size     /**< block size in bytes*/
 );
 
-void* qse_fma_calloc (
+QSE_EXPORT void* qse_fma_calloc (
 	qse_fma_t* fma,
 	qse_size_t size
 );
@@ -280,7 +286,7 @@ void* qse_fma_calloc (
  *
  * @return block pointer on success, #QSE_NULL on failure
  */
-void* qse_fma_realloc (
+QSE_EXPORT void* qse_fma_realloc (
 	qse_fma_t* fma,     /**< memory allocator */
 	void*      blk,     /**< memory block */
 	qse_size_t size     /**< block size in bytes*/
@@ -289,7 +295,7 @@ void* qse_fma_realloc (
 /**
  * The qse_fma_free() function deallocates a block.
  */
-void qse_fma_free (
+QSE_EXPORT void qse_fma_free (
 	qse_fma_t* fma,     /**< memory allocator */
 	void*      blk      /**< memory block to free */
 );

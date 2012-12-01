@@ -237,7 +237,7 @@ typedef enum qse_htb_mancbs_kind_t  qse_htb_mancbs_kind_t;
  */
 struct qse_htb_t
 {
-	QSE_DEFINE_COMMON_FIELDS (htb)
+	qse_mmgr_t* mmgr;
 
 	const qse_htb_mancbs_t* mancbs;
 
@@ -299,13 +299,11 @@ struct qse_htb_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (htb)
-
 /**
  * The qse_gethtbmancbs() functions returns a predefined callback set for
  * pair manipulation.
  */
-const qse_htb_mancbs_t* qse_gethtbmancbs (
+QSE_EXPORT const qse_htb_mancbs_t* qse_gethtbmancbs (
 	qse_htb_mancbs_kind_t kind
 );
 
@@ -321,7 +319,7 @@ const qse_htb_mancbs_t* qse_gethtbmancbs (
  * value size. 
  * @return #qse_htb_t pointer on success, #QSE_NULL on failure.
  */
-qse_htb_t* qse_htb_open (
+QSE_EXPORT qse_htb_t* qse_htb_open (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize, /**< extension size in bytes */
 	qse_size_t  capa,    /**< initial capacity */
@@ -334,14 +332,14 @@ qse_htb_t* qse_htb_open (
 /**
  * The qse_htb_close() function destroys a hash table.
  */
-void qse_htb_close (
+QSE_EXPORT void qse_htb_close (
 	qse_htb_t* htb /**< hash table */
 );
 
 /**
  * The qse_htb_init() function initializes a hash table
  */
-int qse_htb_init (
+QSE_EXPORT int qse_htb_init (
 	qse_htb_t*  htb,    /**< hash table */
 	qse_mmgr_t* mmgr,   /**< memory manager */
 	qse_size_t  capa,   /**< initial capacity */
@@ -353,14 +351,22 @@ int qse_htb_init (
 /**
  * The qse_htb_fini() funtion finalizes a hash table
  */
-void qse_htb_fini (
+QSE_EXPORT void qse_htb_fini (
+	qse_htb_t* htb
+);
+
+QSE_EXPORT qse_mmgr_t* qse_htb_getmmgr (
+	qse_htb_t* htb
+);
+
+QSE_EXPORT void* qse_htb_getxtn (
 	qse_htb_t* htb
 );
 
 /**
  * The qse_htb_getmancbs() function gets manipulation callback function set.
  */
-const qse_htb_mancbs_t* qse_htb_getmancbs (
+QSE_EXPORT const qse_htb_mancbs_t* qse_htb_getmancbs (
 	const qse_htb_t* htb /**< hash table */
 );
 
@@ -368,7 +374,7 @@ const qse_htb_mancbs_t* qse_htb_getmancbs (
  * The qse_htb_setmancbs() function sets internal manipulation callback 
  * functions for data construction, destruction, resizing, hashing, etc.
  */
-void qse_htb_setmancbs (
+QSE_EXPORT void qse_htb_setmancbs (
 	qse_htb_t*              htb,   /**< hash table */
 	const qse_htb_mancbs_t* mancbs /**< callback function set */
 );
@@ -376,7 +382,7 @@ void qse_htb_setmancbs (
 /**
  * The qse_htb_getsize() function gets the number of pairs in hash table.
  */
-qse_size_t qse_htb_getsize (
+QSE_EXPORT qse_size_t qse_htb_getsize (
 	const qse_htb_t* htb
 );
 
@@ -384,7 +390,7 @@ qse_size_t qse_htb_getsize (
  * The qse_htb_getcapa() function gets the number of slots allocated 
  * in a hash bucket.
  */
-qse_size_t qse_htb_getcapa (
+QSE_EXPORT qse_size_t qse_htb_getcapa (
 	const qse_htb_t* htb /**< hash table */
 );
 
@@ -395,7 +401,7 @@ qse_size_t qse_htb_getcapa (
  * @return pointer to the pair with a maching key, 
  *         or #QSE_NULL if no match is found.
  */
-qse_htb_pair_t* qse_htb_search (
+QSE_EXPORT qse_htb_pair_t* qse_htb_search (
 	const qse_htb_t* htb,   /**< hash table */
 	const void*      kptr,  /**< key pointer */
 	qse_size_t       klen   /**< key length */
@@ -409,7 +415,7 @@ qse_htb_pair_t* qse_htb_search (
  * @return pointer to the updated or inserted pair on success, 
  *         #QSE_NULL on failure. 
  */
-qse_htb_pair_t* qse_htb_upsert (
+QSE_EXPORT qse_htb_pair_t* qse_htb_upsert (
 	qse_htb_t* htb,   /**< hash table */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -423,7 +429,7 @@ qse_htb_pair_t* qse_htb_upsert (
  * the pair containing the key.
  * @return pointer to a pair on success, #QSE_NULL on failure. 
  */
-qse_htb_pair_t* qse_htb_ensert (
+QSE_EXPORT qse_htb_pair_t* qse_htb_ensert (
 	qse_htb_t* htb,   /**< hash table */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -437,7 +443,7 @@ qse_htb_pair_t* qse_htb_ensert (
  * #QSE_NULL without channging the value.
  * @return pointer to the pair created on success, #QSE_NULL on failure. 
  */
-qse_htb_pair_t* qse_htb_insert (
+QSE_EXPORT qse_htb_pair_t* qse_htb_insert (
 	qse_htb_t* htb,   /**< hash table */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -450,7 +456,7 @@ qse_htb_pair_t* qse_htb_insert (
  * with a matching key.
  * @return pointer to the pair on success, #QSE_NULL on no matching pair
  */
-qse_htb_pair_t* qse_htb_update (
+QSE_EXPORT qse_htb_pair_t* qse_htb_update (
 	qse_htb_t* htb,   /**< hash table */
 	void*      kptr,  /**< key pointer */
 	qse_size_t klen,  /**< key length */
@@ -545,7 +551,7 @@ qse_htb_pair_t* qse_htb_update (
  * }
  * @endcode
  */
-qse_htb_pair_t* qse_htb_cbsert (
+QSE_EXPORT qse_htb_pair_t* qse_htb_cbsert (
 	qse_htb_t*         htb,      /**< hash table */
 	void*              kptr,     /**< key pointer */
 	qse_size_t         klen,     /**< key length */
@@ -557,7 +563,7 @@ qse_htb_pair_t* qse_htb_cbsert (
  * The qse_htb_delete() function deletes a pair with a matching key 
  * @return 0 on success, -1 on failure
  */
-int qse_htb_delete (
+QSE_EXPORT int qse_htb_delete (
 	qse_htb_t* htb,   /**< hash table */
 	const void* kptr, /**< key pointer */
 	qse_size_t klen   /**< key length */
@@ -566,14 +572,14 @@ int qse_htb_delete (
 /**
  * The qse_htb_clear() function empties a hash table
  */
-void qse_htb_clear (
+QSE_EXPORT void qse_htb_clear (
 	qse_htb_t* htb /**< hash table */
 );
 
 /**
  * The qse_htb_walk() function traverses a hash table.
  */
-void qse_htb_walk (
+QSE_EXPORT void qse_htb_walk (
 	qse_htb_t*       htb,    /**< hash table */
 	qse_htb_walker_t walker, /**< callback function for each pair */
 	void*            ctx     /**< pointer to user-specific data */
@@ -583,7 +589,7 @@ void qse_htb_walk (
  * The qse_htb_getfirstpair() function returns the pointer to the first pair
  * in a hash table.
  */
-qse_htb_pair_t* qse_htb_getfirstpair (
+QSE_EXPORT qse_htb_pair_t* qse_htb_getfirstpair (
 	qse_htb_t*   htb,     /**< hash table */
 	qse_size_t*  buckno   /**< bucket number */
 );
@@ -592,7 +598,7 @@ qse_htb_pair_t* qse_htb_getfirstpair (
  * The qse_htb_getnextpair() function returns the pointer to the next pair 
  * to the current pair @a pair in a hash table.
  */
-qse_htb_pair_t* qse_htb_getnextpair (
+QSE_EXPORT qse_htb_pair_t* qse_htb_getnextpair (
 	qse_htb_t*      htb,    /**< hash table */
 	qse_htb_pair_t* pair,   /**< current pair  */
 	qse_size_t*     buckno  /**< bucket number */
@@ -610,7 +616,7 @@ qse_htb_pair_t* qse_htb_getnextpair (
  * - If @a vptr is #QSE_NULL, the value space of the size @a vlen is reserved
  *   but not propagated with any data.
  */
-qse_htb_pair_t* qse_htb_allocpair (
+QSE_EXPORT qse_htb_pair_t* qse_htb_allocpair (
 	qse_htb_t* htb,
 	void*      kptr, 
 	qse_size_t klen,	
@@ -623,7 +629,7 @@ qse_htb_pair_t* qse_htb_allocpair (
  * the pair destroyed from the hash table @a htb. Use this function at your
  * own risk.
  */
-void qse_htb_freepair (
+QSE_EXPORT void qse_htb_freepair (
 	qse_htb_t*      htb,
 	qse_htb_pair_t* pair
 );
@@ -631,7 +637,7 @@ void qse_htb_freepair (
 /**
  * The qse_htb_dflhash() function is a default hash function.
  */
-qse_size_t qse_htb_dflhash (
+QSE_EXPORT qse_size_t qse_htb_dflhash (
 	const qse_htb_t*  htb,
 	const void*       kptr,
 	qse_size_t        klen
@@ -640,7 +646,7 @@ qse_size_t qse_htb_dflhash (
 /**
  * The qse_htb_dflcomp() function is default comparator.
  */
-int qse_htb_dflcomp (
+QSE_EXPORT int qse_htb_dflcomp (
 	const qse_htb_t* htb,
 	const void*      kptr1,
 	qse_size_t       klen1,

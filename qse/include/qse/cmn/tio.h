@@ -109,7 +109,7 @@ typedef struct qse_tio_io_t qse_tio_io_t;
  */
 struct qse_tio_t
 {
-	QSE_DEFINE_COMMON_FIELDS (tio)
+	qse_mmgr_t*      mmgr;
 	qse_tio_errnum_t errnum;
 	int              flags;
 	qse_cmgr_t*      cmgr;
@@ -128,12 +128,10 @@ struct qse_tio_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (tio)
-
 /**
  * The qse_tio_open() function creates an text stream processoor.
  */
-qse_tio_t* qse_tio_open (
+QSE_EXPORT qse_tio_t* qse_tio_open (
 	qse_mmgr_t* mmgr,    /**< memory manager */
 	qse_size_t  xtnsize, /**< extension size in bytes */
 	int         flags    /**< ORed of qse_tio_flag_t enumerators */
@@ -142,7 +140,7 @@ qse_tio_t* qse_tio_open (
 /**
  * The qse_tio_close() function destroys an text stream processor.
  */
-int qse_tio_close (
+QSE_EXPORT int qse_tio_close (
 	qse_tio_t* tio
 );
 
@@ -150,7 +148,7 @@ int qse_tio_close (
  * The qse_tio_init() function  initialize a statically declared 
  * text stream processor.
  */
-int qse_tio_init (
+QSE_EXPORT int qse_tio_init (
 	qse_tio_t*  tio,
 	qse_mmgr_t* mmgr,
 	int         flags
@@ -159,14 +157,22 @@ int qse_tio_init (
 /**
  * The qse_tio_fini() function finalizes a text stream processor
  */
-int qse_tio_fini (
+QSE_EXPORT int qse_tio_fini (
+	qse_tio_t* tio
+);
+
+QSE_EXPORT qse_mmgr_t* qse_tio_getmmgr (
+	qse_tio_t* tio
+);
+
+QSE_EXPORT void* qse_tio_getxtn (
 	qse_tio_t* tio
 );
 
 /**
  * The qse_tio_geterrnum() function returns the current error code.
  */
-qse_tio_errnum_t qse_tio_geterrnum (
+QSE_EXPORT qse_tio_errnum_t qse_tio_geterrnum (
 	const qse_tio_t* tio
 );
 
@@ -174,7 +180,7 @@ qse_tio_errnum_t qse_tio_geterrnum (
  * The qse_tio_geterrnum() function changes the current error code.
  * typically from within the I/O handler attached.
  */
-void qse_tio_seterrnum (
+QSE_EXPORT void qse_tio_seterrnum (
 	qse_tio_t*       tio,
 	qse_tio_errnum_t errnum
 );
@@ -182,14 +188,14 @@ void qse_tio_seterrnum (
 /**
  * The qse_tio_getcmgr() function returns the character manager.
  */
-qse_cmgr_t* qse_tio_getcmgr (
+QSE_EXPORT qse_cmgr_t* qse_tio_getcmgr (
 	qse_tio_t* tio
 );
 
 /**
  * The qse_tio_setcmgr() function changes the character manager.
  */
-void qse_tio_setcmgr (
+QSE_EXPORT void qse_tio_setcmgr (
 	qse_tio_t*  tio,
 	qse_cmgr_t* cmgr
 );
@@ -198,7 +204,7 @@ void qse_tio_setcmgr (
  * The qse_tio_attachin() function attachs an input handler .
  * @return 0 on success, -1 on failure
  */
-int qse_tio_attachin (
+QSE_EXPORT int qse_tio_attachin (
 	qse_tio_t*       tio,
 	qse_tio_io_impl_t input,
 	qse_mchar_t*     bufptr,
@@ -209,7 +215,7 @@ int qse_tio_attachin (
  * The qse_tio_detachin() function detaches an input handler .
  * @return 0 on success, -1 on failure
  */
-int qse_tio_detachin (
+QSE_EXPORT int qse_tio_detachin (
 	qse_tio_t* tio
 );
 
@@ -217,7 +223,7 @@ int qse_tio_detachin (
  * The qse_tio_attachout() function attaches an output handler.
  * @return 0 on success, -1 on failure
  */
-int qse_tio_attachout (
+QSE_EXPORT int qse_tio_attachout (
 	qse_tio_t*       tio,
 	qse_tio_io_impl_t output,
 	qse_mchar_t*     bufptr,
@@ -228,7 +234,7 @@ int qse_tio_attachout (
  * The qse_tio_detachout() function detaches an output handler .
  * @return 0 on success, -1 on failure
  */
-int qse_tio_detachout (
+QSE_EXPORT int qse_tio_detachout (
 	qse_tio_t* tio
 );
 
@@ -236,24 +242,24 @@ int qse_tio_detachout (
  * The qse_tio_flush() function flushes the output buffer. It returns the 
  * number of bytes written on success, -1 on failure.
  */
-qse_ssize_t qse_tio_flush (
+QSE_EXPORT qse_ssize_t qse_tio_flush (
 	qse_tio_t* tio
 );
 
 /**
  * The qse_tio_purge() function empties input and output buffers.
  */
-void qse_tio_purge (
+QSE_EXPORT void qse_tio_purge (
 	qse_tio_t* tio
 );
 
-qse_ssize_t qse_tio_readmbs (
+QSE_EXPORT qse_ssize_t qse_tio_readmbs (
 	qse_tio_t*   tio, 
 	qse_mchar_t* buf, 
 	qse_size_t   size
 );
 
-qse_ssize_t qse_tio_readwcs (
+QSE_EXPORT qse_ssize_t qse_tio_readwcs (
 	qse_tio_t*   tio, 
 	qse_wchar_t* buf, 
 	qse_size_t   size
@@ -276,7 +282,7 @@ qse_ssize_t qse_tio_readwcs (
  * write more than QSE_TYPE_MAX(qse_ssize_t) characters.
  * @return number of characters written on success, -1 on failure.
  */
-qse_ssize_t qse_tio_writembs (
+QSE_EXPORT qse_ssize_t qse_tio_writembs (
 	qse_tio_t*         tio,
 	const qse_mchar_t* str,
 	qse_size_t         size
@@ -289,7 +295,7 @@ qse_ssize_t qse_tio_writembs (
  * more than QSE_TYPE_MAX(qse_ssize_t) characters.
  * @return number of characters written on success, -1 on failure.
  */
-qse_ssize_t qse_tio_writewcs (
+QSE_EXPORT qse_ssize_t qse_tio_writewcs (
 	qse_tio_t*         tio,
 	const qse_wchar_t* str,
 	qse_size_t         size

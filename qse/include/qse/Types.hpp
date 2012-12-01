@@ -31,7 +31,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /**
  * The Types class defines handy aliases for various QSE types.
  */
-class Types
+class QSE_EXPORT Types
 {
 public:
 	/** boolean data type */

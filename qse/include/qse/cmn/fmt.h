@@ -171,7 +171,7 @@ extern "C" {
  *  - number of characters written to the buffer excluding a terminating 
  *    null in all other cases.
  */
-int qse_fmtintmaxtombs (
+QSE_EXPORT int qse_fmtintmaxtombs (
 	qse_mchar_t*       buf,             /**< buffer pointer */
 	int                bufsize,         /**< buffer size */
 	qse_intmax_t       value,           /**< integer to format */
@@ -231,7 +231,7 @@ int qse_fmtintmaxtombs (
  *  - number of characters written to the buffer excluding a terminating 
  *    null in all other cases.
  */
-int qse_fmtintmaxtowcs (
+QSE_EXPORT int qse_fmtintmaxtowcs (
 	qse_wchar_t*       buf,             /**< buffer pointer */
 	int                bufsize,         /**< buffer size */
 	qse_intmax_t       value,           /**< integer to format */
@@ -256,7 +256,7 @@ int qse_fmtintmaxtowcs (
  * to a multibyte string buffer. It behaves the same as qse_fmtuintmaxtombs() 
  * except that it handles an unsigned integer.
  */
-int qse_fmtuintmaxtombs (
+QSE_EXPORT int qse_fmtuintmaxtombs (
 	qse_mchar_t*       buf,             /**< buffer pointer */
 	int                bufsize,         /**< buffer size */
 	qse_uintmax_t      value,           /**< integer to format */
@@ -271,7 +271,7 @@ int qse_fmtuintmaxtombs (
  * to a wide-character string buffer. It behaves the same as 
  * qse_fmtuintmaxtowcs() except that it handles an unsigned integer.
  */
-int qse_fmtuintmaxtowcs (
+QSE_EXPORT int qse_fmtuintmaxtowcs (
 	qse_wchar_t*       buf,             /**< buffer pointer */
 	int                bufsize,         /**< buffer size */
 	qse_uintmax_t      value,           /**< integer to format */

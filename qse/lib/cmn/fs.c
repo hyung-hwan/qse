@@ -52,8 +52,6 @@ struct info_t
 #endif
 };
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (fs)
-
 qse_fs_t* qse_fs_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_fs_t* fs;
@@ -130,6 +128,16 @@ void qse_fs_fini (qse_fs_t* fs)
 		QSE_MMGR_FREE (fs->mmgr, fs->curdir);
 		fs->curdir = QSE_NULL;
 	}
+}
+
+qse_mmgr_t* qse_fs_getmmgr (qse_fs_t* fs)
+{
+	return fs->mmgr;
+}
+
+void* qse_fs_getxtn (qse_fs_t* fs)
+{
+	return QSE_XTN (fs);
 }
 
 static QSE_INLINE info_t* get_info (qse_fs_t* fs)

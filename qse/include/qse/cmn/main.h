@@ -86,7 +86,7 @@ extern "C" {
  * The qse_runmain() function helps to invoke a main function independent of
  * the character mode configured for the library.
  */
-int qse_runmain (
+QSE_EXPORT int qse_runmain (
 	int                   argc,
 	qse_achar_t*          argv[],
 	qse_runmain_handler_t handler
@@ -97,7 +97,7 @@ int qse_runmain (
  * independent of the character mode configured for the library providing
  * the enviroment list.
  */
-int qse_runmainwithenv (
+QSE_EXPORT int qse_runmainwithenv (
 	int                          argc,
 	qse_achar_t*                 argv[],
 	qse_achar_t*                 envp[],

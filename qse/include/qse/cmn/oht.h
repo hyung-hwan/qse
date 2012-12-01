@@ -112,7 +112,7 @@ typedef void (*qse_oht_copier_t) (
  */
 struct qse_oht_t
 {
-	QSE_DEFINE_COMMON_FIELDS(oht)
+	qse_mmgr_t* mmgr;
 
 	int scale;
 	struct
@@ -144,12 +144,10 @@ typedef qse_oht_walk_t (*qse_oht_walker_t) (
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (oht)
-
 /**
  * The qse_oht_open() function creates an open-addressed hash table.
  */
-qse_oht_t* qse_oht_open (
+QSE_EXPORT qse_oht_t* qse_oht_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize,
 	int         scale,
@@ -160,14 +158,14 @@ qse_oht_t* qse_oht_open (
 /**
  * The qse_oht_close() function destroys an open-addressed hash table.
  */
-void qse_oht_close (
+QSE_EXPORT void qse_oht_close (
 	qse_oht_t* oht  /**< open-addressed hash table */
 );
 
 /**
  * The qse_oht_open() function initializes an open-addressed hash table.
  */
-int qse_oht_init (
+QSE_EXPORT int qse_oht_init (
 	qse_oht_t*  oht,
 	qse_mmgr_t* mmgr,
 	int         scale,
@@ -178,21 +176,29 @@ int qse_oht_init (
 /**
  * The qse_oht_close() function finalizes an open-addressed hash table.
  */
-void qse_oht_fini (
+QSE_EXPORT void qse_oht_fini (
 	qse_oht_t* oht  /**< open-addressed hash table */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_oht_getmmgr (
+	qse_oht_t* oht
+);
+
+QSE_EXPORT void* qse_oht_getxtn (
+	qse_oht_t* oht
 );
 
 /**
  * The qse_oht_getcomper() function returns the data hasher.
  */
-qse_oht_hasher_t qse_oht_gethasher (
+QSE_EXPORT qse_oht_hasher_t qse_oht_gethasher (
 	qse_oht_t* oht  /**< open-addressed hash table */
 );
 
 /**
  * The qse_oht_setcomper() function changes the data hasher
  */
-void qse_oht_sethasher (
+QSE_EXPORT void qse_oht_sethasher (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	qse_oht_hasher_t hasher  /**< hasher */
 );
@@ -200,14 +206,14 @@ void qse_oht_sethasher (
 /**
  * The qse_oht_getcomper() function returns the data comparator.
  */
-qse_oht_comper_t qse_oht_getcomper (
+QSE_EXPORT qse_oht_comper_t qse_oht_getcomper (
 	qse_oht_t* oht  /**< open-addressed hash table */
 );
 
 /**
  * The qse_oht_setcomper() function changes the data comparator
  */
-void qse_oht_setcomper (
+QSE_EXPORT void qse_oht_setcomper (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	qse_oht_comper_t comper  /**< comparator */
 );
@@ -215,14 +221,14 @@ void qse_oht_setcomper (
 /**
  * The qse_oht_getcomper() function returns the data copier.
  */
-qse_oht_copier_t qse_oht_getcopier (
+QSE_EXPORT qse_oht_copier_t qse_oht_getcopier (
 	qse_oht_t*       oht     /**< open-addressed hash table */
 );
 
 /**
  * The qse_oht_setcomper() function changes the data copier.
  */
-void qse_oht_setcopier (
+QSE_EXPORT void qse_oht_setcopier (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	qse_oht_copier_t copier  /**< copier */
 );
@@ -234,7 +240,7 @@ void qse_oht_setcopier (
  * @return slot index if a match if found,
  *         #QSE_OHT_NIL if no match is found.
  */
-qse_size_t qse_oht_search (
+QSE_EXPORT qse_size_t qse_oht_search (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	void*            data    /**< data pointer */
 );
@@ -245,7 +251,7 @@ qse_size_t qse_oht_search (
  * @return slot index where the new datum is inserted on success,
  *         #QSE_OHT_NIL on failure.
  */
-qse_size_t qse_oht_insert (
+QSE_EXPORT qse_size_t qse_oht_insert (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	const void*      data    /**< data pointer */
 );
@@ -255,7 +261,7 @@ qse_size_t qse_oht_insert (
  * datum or updates an exsting datum if finds a matching datum.
  * @return slot index where the datum is inserted or updated.
  */
-qse_size_t qse_oht_upsert (
+QSE_EXPORT qse_size_t qse_oht_upsert (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	const void*      data    /**< data pointer */
 );
@@ -266,7 +272,7 @@ qse_size_t qse_oht_upsert (
  * @return slot index where an existing datum is updated on success,
  *         #QSE_OHT_NIL on failure.
  */
-qse_size_t qse_oht_update (
+QSE_EXPORT qse_size_t qse_oht_update (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	const void*      data    /**< data pointer */
 );
@@ -277,7 +283,7 @@ qse_size_t qse_oht_update (
  * @return slot index where an existing datum is deleted on success,
  *         #QSE_OHT_NIL on failure.
  */
-qse_size_t qse_oht_delete (
+QSE_EXPORT qse_size_t qse_oht_delete (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	const void*      data    /**< data pointer */
 );
@@ -285,7 +291,7 @@ qse_size_t qse_oht_delete (
 /**
  * The qse_oht_clear() functions deletes all data items.
  */
-void qse_oht_clear (
+QSE_EXPORT void qse_oht_clear (
 	qse_oht_t*       oht     /**< open-addressed hash table */
 );
 
@@ -293,7 +299,7 @@ void qse_oht_clear (
  * The qse_oht_walk() function executes the callback function @a walker for
  * each valid data item.
  */
-void qse_oht_walk (
+QSE_EXPORT void qse_oht_walk (
 	qse_oht_t*       oht,    /**< open-addressed hash table */
 	qse_oht_walker_t walker, /**< callback function */
 	void*            ctx     /**< context */

@@ -51,7 +51,7 @@ extern "C" {
 /**
  * The qse_findcmgrbyid() function returns a built-in cmgr for a given @a id.
  */
-qse_cmgr_t* qse_findcmgrbyid (
+QSE_EXPORT qse_cmgr_t* qse_findcmgrbyid (
 	qse_cmgr_id_t id
 );
 
@@ -62,26 +62,26 @@ qse_cmgr_t* qse_findcmgrbyid (
  * empty string. Calling this function with an empty string is the same
  * as calling qse_getdflcmgr().
  */
-qse_cmgr_t* qse_findcmgr (
+QSE_EXPORT qse_cmgr_t* qse_findcmgr (
 	const qse_char_t* name
 );
 
-void qse_setcmgrfinder (
+QSE_EXPORT void qse_setcmgrfinder (
 	qse_cmgr_finder_t finder
 );
 
-qse_cmgr_finder_t qse_getcmgrfinder (
+QSE_EXPORT qse_cmgr_finder_t qse_getcmgrfinder (
 	void
 );
 
 /* --------------------------------------------------- */
 /* DEFAULT GLOBAL CMGR                                 */
 /* --------------------------------------------------- */
-qse_cmgr_t* qse_getdflcmgr (
+QSE_EXPORT qse_cmgr_t* qse_getdflcmgr (
 	void
 );
 
-void qse_setdflcmgr (
+QSE_EXPORT void qse_setdflcmgr (
 	qse_cmgr_t* cmgr
 );
 
@@ -89,7 +89,7 @@ void qse_setdflcmgr (
  * The qse_setdflcmgrbyid() function finds a built-in
  * cmgr for the @a id and sets it as a default cmgr.
  */
-void qse_setdflcmgrbyid (
+QSE_EXPORT void qse_setdflcmgrbyid (
 	qse_cmgr_id_t id
 );
 
@@ -97,7 +97,7 @@ void qse_setdflcmgrbyid (
 /* STRING CONVERSION USING CMGR                        */
 /* --------------------------------------------------- */
 
-int qse_mbstowcswithcmgr (
+QSE_EXPORT int qse_mbstowcswithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -105,7 +105,7 @@ int qse_mbstowcswithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-int qse_mbstowcsallwithcmgr (
+QSE_EXPORT int qse_mbstowcsallwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -113,7 +113,7 @@ int qse_mbstowcsallwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-int qse_mbsntowcsnwithcmgr (
+QSE_EXPORT int qse_mbsntowcsnwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -121,7 +121,7 @@ int qse_mbsntowcsnwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-int qse_mbsntowcsnallwithcmgr (
+QSE_EXPORT int qse_mbsntowcsnallwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -129,7 +129,7 @@ int qse_mbsntowcsnallwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-int qse_mbsntowcsnuptowithcmgr (
+QSE_EXPORT int qse_mbsntowcsnuptowithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -138,7 +138,7 @@ int qse_mbsntowcsnuptowithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbsntowcsdupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbsntowcsdupwithcmgr (
      const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_size_t*        wcslen,
@@ -146,7 +146,7 @@ qse_wchar_t* qse_mbsntowcsdupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbsntowcsalldupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbsntowcsalldupwithcmgr (
      const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_size_t*        wcslen,
@@ -154,35 +154,35 @@ qse_wchar_t* qse_mbsntowcsalldupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbstowcsdupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbstowcsdupwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbstowcsalldupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbstowcsalldupwithcmgr (
 	const qse_mchar_t* mbs,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbsatowcsdupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbsatowcsdupwithcmgr (
 	const qse_mchar_t* mbs[],
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
-qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
+QSE_EXPORT qse_wchar_t* qse_mbsatowcsalldupwithcmgr (
 	const qse_mchar_t* mbs[],
 	qse_size_t*        wcslen, 
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
-int qse_wcstombswithcmgr (
+QSE_EXPORT int qse_wcstombswithcmgr (
 	const qse_wchar_t* wcs,    /**< [in] wide-character string to convert*/
 	qse_size_t*        wcslen, /**< [out] number of wide-characters handled */
 	qse_mchar_t*       mbs,    /**< [out] #QSE_NULL or buffer pointer */
@@ -191,7 +191,7 @@ int qse_wcstombswithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-int qse_wcsntombsnwithcmgr (
+QSE_EXPORT int qse_wcsntombsnwithcmgr (
 	const qse_wchar_t* wcs,    /**< [in] wide string */
 	qse_size_t*        wcslen, /**< [in,out] wide string length for in,
 	                               number of wide characters handled for out */
@@ -201,14 +201,14 @@ int qse_wcsntombsnwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_mchar_t* qse_wcstombsdupwithcmgr (
+QSE_EXPORT qse_mchar_t* qse_wcstombsdupwithcmgr (
 	const qse_wchar_t* wcs,
 	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr,
 	qse_cmgr_t*        cmgr
 );
 
-qse_mchar_t* qse_wcsntombsdupwithcmgr (
+QSE_EXPORT qse_mchar_t* qse_wcsntombsdupwithcmgr (
 	const qse_wchar_t* wcs,
 	qse_size_t         wcslen,
 	qse_size_t*        mbslen,
@@ -216,7 +216,7 @@ qse_mchar_t* qse_wcsntombsdupwithcmgr (
 	qse_cmgr_t*        cmgr
 );
 
-qse_mchar_t* qse_wcsatombsdupwithcmgr (
+QSE_EXPORT qse_mchar_t* qse_wcsatombsdupwithcmgr (
 	const qse_wchar_t* wcs[],
 	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr,
@@ -224,7 +224,7 @@ qse_mchar_t* qse_wcsatombsdupwithcmgr (
 );
 
 
-qse_mchar_t* qse_wcsnatombsdupwithcmgr (
+QSE_EXPORT qse_mchar_t* qse_wcsnatombsdupwithcmgr (
 	const qse_wcstr_t wcs[],
 	qse_size_t*       mbslen,
 	qse_mmgr_t*       mmgr,
@@ -256,7 +256,7 @@ qse_mchar_t* qse_wcsnatombsdupwithcmgr (
  *         -2 if the wide-character string buffer is too small.
  *         -3 if @a mbs is not a complete sequence.
  */
-int qse_mbstowcs (
+QSE_EXPORT int qse_mbstowcs (
 	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
 	qse_size_t*        mbslen, /**< [out] number of multibyte characters
 	                                      handled */
@@ -265,7 +265,7 @@ int qse_mbstowcs (
 	                                number of characters in the buffer for out */
 );
 
-int qse_mbstowcsall (
+QSE_EXPORT int qse_mbstowcsall (
 	const qse_mchar_t* mbs,    /**< [in] multibyte string to convert */
 	qse_size_t*        mbslen, /**< [out] number of multibyte characters
 	                                      handled */
@@ -285,14 +285,14 @@ int qse_mbstowcsall (
  *         -2 if the wide-character string buffer is too small.
  *         -3 if @a mbs is not a complete sequence.
  */
-int qse_mbsntowcsn (
+QSE_EXPORT int qse_mbsntowcsn (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
 	qse_size_t*        wcslen
 );
 
-int qse_mbsntowcsnall (
+QSE_EXPORT int qse_mbsntowcsnall (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -303,7 +303,7 @@ int qse_mbsntowcsnall (
  * The qse_mbsntowcsnupto() function is the same as qse_mbsntowcsn()
  * except that it stops once it has processed the @a stopper character.
  */
-int qse_mbsntowcsnupto (
+QSE_EXPORT int qse_mbsntowcsnupto (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_wchar_t*       wcs,
@@ -311,39 +311,39 @@ int qse_mbsntowcsnupto (
 	qse_wchar_t        stopper
 );
 
-qse_wchar_t* qse_mbsntowcsdup (
+QSE_EXPORT qse_wchar_t* qse_mbsntowcsdup (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_mbsntowcsalldup (
+QSE_EXPORT qse_wchar_t* qse_mbsntowcsalldup (
 	const qse_mchar_t* mbs,
 	qse_size_t*        mbslen,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_mbstowcsdup (
+QSE_EXPORT qse_wchar_t* qse_mbstowcsdup (
 	const qse_mchar_t* mbs,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_mbstowcsalldup (
+QSE_EXPORT qse_wchar_t* qse_mbstowcsalldup (
 	const qse_mchar_t* mbs,
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_mbsatowcsdup (
+QSE_EXPORT qse_wchar_t* qse_mbsatowcsdup (
 	const qse_mchar_t* mbs[],
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_mbsatowcsalldup (
+QSE_EXPORT qse_wchar_t* qse_mbsatowcsalldup (
 	const qse_mchar_t* mbs[],
 	qse_size_t*        wcslen,
 	qse_mmgr_t*        mmgr
@@ -378,7 +378,7 @@ qse_wchar_t* qse_mbsatowcsalldup (
  *   }
  * @endcode
  */
-int qse_wcstombs (
+QSE_EXPORT int qse_wcstombs (
 	const qse_wchar_t* wcs,    /**< [in] wide-character string to convert*/
 	qse_size_t*        wcslen, /**< [out] number of wide-characters handled */
 	qse_mchar_t*       mbs,    /**< [out] #QSE_NULL or buffer pointer */
@@ -410,7 +410,7 @@ int qse_wcstombs (
  *         -1 if @a wcs contains an illegal character,
  *         -2 if the multibyte string buffer is too small.
  */
-int qse_wcsntombsn (
+QSE_EXPORT int qse_wcsntombsn (
 	const qse_wchar_t* wcs,   /**< [in] wide string */
 	qse_size_t*        wcslen,/**< [in,out] wide string length for in,
 	                               number of wide characters handled for out */
@@ -419,26 +419,26 @@ int qse_wcsntombsn (
 	                                        actual size for out */
 );
 
-qse_mchar_t* qse_wcstombsdup (
+QSE_EXPORT qse_mchar_t* qse_wcstombsdup (
 	const qse_wchar_t* wcs,
 	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_wcsntombsdup (
+QSE_EXPORT qse_mchar_t* qse_wcsntombsdup (
 	const qse_wchar_t* wcs,
 	qse_size_t         wcslen,
 	qse_size_t*        mbslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_wcsatombsdup (
+QSE_EXPORT qse_mchar_t* qse_wcsatombsdup (
 	const qse_wchar_t* wcs[],
 	qse_size_t*       mbslen,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_wcsnatombsdup (
+QSE_EXPORT qse_mchar_t* qse_wcsnatombsdup (
 	const qse_wcstr_t wcs[],
 	qse_size_t*       mbslen,
 	qse_mmgr_t*       mmgr

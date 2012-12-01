@@ -21,8 +21,6 @@
 #include <qse/cmn/fma.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (fma)
-
 qse_fma_t* qse_fma_open (
 	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
 	qse_size_t blksize, qse_size_t maxblks, qse_size_t maxcnks)
@@ -75,6 +73,16 @@ void qse_fma_fini (qse_fma_t* fma)
 		QSE_MMGR_FREE (fma->mmgr, fma->cnkhead);
 		fma->cnkhead = next;
 	}
+}
+
+qse_mmgr_t* qse_fma_getmmgr (qse_fma_t* fma)
+{
+	return fma->mmgr;
+}
+
+void* qse_fma_getxtn (qse_fma_t* fma)
+{
+	return QSE_XTN (fma);
 }
 
 static QSE_INLINE qse_fma_cnk_t* add_chunk (qse_fma_t* fma)
@@ -131,7 +139,7 @@ void* qse_fma_alloc (qse_fma_t* fma, qse_size_t size)
 void* qse_fma_calloc (qse_fma_t* fma, qse_size_t size)
 {
 	void* ptr = qse_fma_alloc (fma, size);
-	if (size) QSE_MEMSET (ptr, 0, size);
+	if (ptr) QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
 

@@ -22,6 +22,6 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqseawkxx.la
 libqseawkxx_la_SOURCES = Awk.cpp StdAwk.cpp
 libqseawkxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-libqseawkxx_la_LIBADD = -lqseawk  -lqsecmn $(LIBM) $(LIBLTDL)
+libqseawkxx_la_LIBADD = -lqseawk -lqsecmnxx -lqsecmn $(LIBM) $(LIBLTDL)
 endif
 
