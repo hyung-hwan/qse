@@ -34,7 +34,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// write code in more object-oriented fashion. An inheriting class should 
 /// implement three pure virtual functions.
 /// 
-class Mmgr: public Types, public qse_mmgr_t
+class QSE_EXPORT Mmgr: public Types, public qse_mmgr_t
 {
 public:
 	/// defines an alias type to #qse_mmgr_t 

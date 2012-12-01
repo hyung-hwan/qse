@@ -304,7 +304,7 @@ libqsesed_la_LDFLAGS = -L../cmn  -L$(libdir)  -version-info 1:0:0 -no-undefined
 libqsesed_la_LIBADD = -lqsecmn 
 @ENABLE_CXX_TRUE@libqsesedxx_la_SOURCES = Sed.cpp StdSed.cpp
 @ENABLE_CXX_TRUE@libqsesedxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-@ENABLE_CXX_TRUE@libqsesedxx_la_LIBADD = -lqsesed  -lqsecmn 
+@ENABLE_CXX_TRUE@libqsesedxx_la_LIBADD = -lqsesed -lqsecmnxx -lqsecmn 
 all: all-am
 
 .SUFFIXES:

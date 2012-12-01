@@ -29,41 +29,41 @@ extern "C" {
 #endif
 
 #if defined(QSE_HAVE_UINT16_T)
-qse_uint16_t qse_ntoh16 (
+QSE_EXPORT qse_uint16_t qse_ntoh16 (
 	qse_uint16_t x
 );
 
-qse_uint16_t qse_hton16 (
+QSE_EXPORT qse_uint16_t qse_hton16 (
 	qse_uint16_t x
 );
 #endif
 
 #if defined(QSE_HAVE_UINT32_T)
-qse_uint32_t qse_ntoh32 (
+QSE_EXPORT qse_uint32_t qse_ntoh32 (
 	qse_uint32_t x
 );
 
-qse_uint32_t qse_hton32 (
+QSE_EXPORT qse_uint32_t qse_hton32 (
 	qse_uint32_t x
 );
 #endif
 
 #if defined(QSE_HAVE_UINT64_T)
-qse_uint64_t qse_ntoh64 (
+QSE_EXPORT qse_uint64_t qse_ntoh64 (
 	qse_uint64_t x
 );
 
-qse_uint64_t qse_hton64 (
+QSE_EXPORT qse_uint64_t qse_hton64 (
 	qse_uint64_t x
 );
 #endif
 
 #if defined(QSE_HAVE_UINT128_T)
-qse_uint128_t qse_ntoh128 (
+QSE_EXPORT qse_uint128_t qse_ntoh128 (
 	qse_uint128_t x
 );
 
-qse_uint128_t qse_hton128 (
+QSE_EXPORT qse_uint128_t qse_hton128 (
 	qse_uint128_t x
 );
 #endif

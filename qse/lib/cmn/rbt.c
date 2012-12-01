@@ -21,8 +21,6 @@
 #include <qse/cmn/rbt.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (rbt)
-
 #define rbt_t           qse_rbt_t
 #define pair_t          qse_rbt_pair_t
 #define id_t            qse_rbt_id_t
@@ -247,6 +245,16 @@ int qse_rbt_init (rbt_t* rbt, mmgr_t* mmgr, int kscale, int vscale)
 void qse_rbt_fini (rbt_t* rbt)
 {
 	qse_rbt_clear (rbt);
+}
+
+qse_mmgr_t* qse_rbt_getmmgr (qse_rbt_t* rbt)
+{
+	return rbt->mmgr;
+}
+
+void* qse_rbt_getxtn (qse_rbt_t* rbt)
+{
+	return QSE_XTN (rbt);
 }
 
 const mancbs_t* qse_rbt_getmancbs (const rbt_t* rbt)

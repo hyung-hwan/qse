@@ -116,8 +116,6 @@ struct cand_t
 	const qse_char_t* mptr; 
 };
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (rex)
-
 int qse_rex_init (qse_rex_t* rex, qse_mmgr_t* mmgr, qse_rex_node_t* code)
 {
 	QSE_MEMSET (rex, 0, QSE_SIZEOF(*rex));
@@ -191,6 +189,16 @@ void qse_rex_close (qse_rex_t* rex)
 {
 	qse_rex_fini (rex);
 	QSE_MMGR_FREE (rex->mmgr, rex);
+}
+
+qse_mmgr_t* qse_rex_getmmgr (qse_rex_t* rex)
+{
+	return rex->mmgr;
+}
+
+void* qse_rex_getxtn (qse_rex_t* rex)
+{
+	return QSE_XTN (rex);
 }
 
 qse_rex_node_t* qse_rex_yield (qse_rex_t* rex)

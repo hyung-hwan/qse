@@ -226,6 +226,16 @@ void qse_sio_fini (qse_sio_t* sio)
 	qse_fio_fini (&sio->file);
 }
 
+qse_mmgr_t* qse_sio_getmmgr (qse_sio_t* sio)
+{
+	return sio->mmgr;
+}
+
+void* qse_sio_getxtn (qse_sio_t* sio)
+{
+	return QSE_XTN (sio);
+}
+
 qse_sio_errnum_t qse_sio_geterrnum (const qse_sio_t* sio)
 {
 	return sio->errnum;

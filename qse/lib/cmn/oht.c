@@ -4,8 +4,6 @@
 #define DATA_PTR(oht,index) \
 	((void*)(((qse_byte_t*)(oht)->data) + ((index) * (oht)->scale)))
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (oht)
-
 static QSE_INLINE_ALWAYS qse_size_t default_hasher (
 	qse_oht_t* oht, const void* data)
 {
@@ -108,6 +106,16 @@ void qse_oht_fini (qse_oht_t* oht)
 	QSE_MMGR_FREE (oht->mmgr, oht->mark);
 	QSE_MMGR_FREE (oht->mmgr, oht->data);
 	oht->size = 0;
+}
+
+qse_mmgr_t* qse_oht_getmmgr (qse_oht_t* oht)
+{
+	return oht->mmgr;
+}
+
+void* qse_oht_getxtn (qse_oht_t* oht)
+{
+	return QSE_XTN (oht);
 }
 
 qse_oht_hasher_t qse_oht_gethasher (qse_oht_t* oht)

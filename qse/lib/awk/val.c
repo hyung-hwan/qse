@@ -63,6 +63,11 @@ qse_awk_val_t* qse_awk_val_negone = (qse_awk_val_t*)&awk_int[0];
 qse_awk_val_t* qse_awk_val_zero = (qse_awk_val_t*)&awk_int[1];
 qse_awk_val_t* qse_awk_val_one = (qse_awk_val_t*)&awk_int[2];
 
+qse_awk_val_t* qse_getawknilval (void)
+{
+	return (qse_awk_val_t*)&awk_nil;
+}
+
 int qse_awk_rtx_isnilval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 {
 	return val->type == QSE_AWK_VAL_NIL;

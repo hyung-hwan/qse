@@ -66,7 +66,7 @@ extern "C" {
  *
  * @return destination memory block @a dst.
  */
-void* qse_memcpy (
+QSE_EXPORT void* qse_memcpy (
 	void*       dst, /**< destination memory block */
 	const void* src, /**< source memory block */
 	qse_size_t  n    /**< number of bytes to copy */
@@ -79,7 +79,7 @@ void* qse_memcpy (
  *
  * @return destination memory block @a dst.
  */
-void* qse_memmove (
+QSE_EXPORT void* qse_memmove (
 	void*       dst, /**< destination memory block */
 	const void* src, /**< source memory block */
 	qse_size_t  n    /**< number of bytes to copy */
@@ -91,7 +91,7 @@ void* qse_memmove (
  *
  * @return destination memory block @a dst.
  */
-void* qse_memset (
+QSE_EXPORT void* qse_memset (
 	void*       dst, /**< destination memory block */
 	int         val, /**< value fill the memory block with */
 	qse_size_t   n   /**< number of bytes to fill */
@@ -106,7 +106,7 @@ void* qse_memset (
  * positive number if the first different byte of s1 is greater than that of s2.
  * negative number if the first different byte of s1 is less than that of s2.
  */
-int qse_memcmp (
+QSE_EXPORT int qse_memcmp (
 	const void* s1, /**< first memory block to compare */
 	const void* s2, /**< second memory block to compare */ 
 	qse_size_t  n   /**< the number of bytes to compare */
@@ -123,7 +123,7 @@ int qse_memcmp (
  *  pointer to the location in the memory block @a s matching the byte @a val
  *  if a match is found.
  */
-void* qse_membyte (
+QSE_EXPORT void* qse_membyte (
 	const void* s,     /**< memory block to scan */
 	int         val,   /**< byte to find */
 	qse_size_t  n      /**< number of bytes to scan */ 
@@ -140,7 +140,7 @@ void* qse_membyte (
  *  pointer to the location in the memory block s matching the byte val
  *  if a match is found.
  */
-void* qse_memrbyte (
+QSE_EXPORT void* qse_memrbyte (
 	const void* s,     /**< memory block to scan */
 	int         val,   /**< byte to find */
 	qse_size_t  n      /**< number of bytes to scan */ 
@@ -154,7 +154,7 @@ void* qse_memrbyte (
  *  #QSE_NULL if no match is found.
  *  pointer to the start of the matching location if a match is found.
  */
-void* qse_memmem (
+QSE_EXPORT void* qse_memmem (
 	const void* hs,  /**< memory block to scan */
 	qse_size_t  hl,  /**< number of bytes to scan */
 	const void* nd,  /**< byte block to find */
@@ -170,7 +170,7 @@ void* qse_memmem (
  * #QSE_NULL if no match is found.
  * pointer to the start of the matching location if a match is found.
  */
-void* qse_memrmem (
+QSE_EXPORT void* qse_memrmem (
 	const void* hs,  /**< memory block to scan */
 	qse_size_t  hl,  /**< number of bytes to scan */
 	const void* nd,  /**< byte block to find */
@@ -180,7 +180,7 @@ void* qse_memrmem (
 /**
  * The qse_getdflmmgr() function returns the default memory manager.
  */
-qse_mmgr_t* qse_getdflmmgr (
+QSE_EXPORT qse_mmgr_t* qse_getdflmmgr (
 	void
 );
 
@@ -189,7 +189,7 @@ qse_mmgr_t* qse_getdflmmgr (
  * If mmgr is #QSE_NULL, the memory manager is set to the builtin
  * default.
  */
-void qse_setdflmmgr (
+QSE_EXPORT void qse_setdflmmgr (
 	qse_mmgr_t* mmgr
 );
 

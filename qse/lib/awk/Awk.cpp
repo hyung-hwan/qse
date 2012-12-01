@@ -280,19 +280,19 @@ void Awk::Value::operator delete[] (void* ptr)
 	qse_awk_rtx_freemem ((*(Run**)p)->rtx, p);
 }
 
-Awk::Value::Value (): run (QSE_NULL), val (qse_awk_val_nil) 
+Awk::Value::Value (): run (QSE_NULL), val (qse_getawknilval()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
 }
 
-Awk::Value::Value (Run& run): run (&run), val (qse_awk_val_nil) 
+Awk::Value::Value (Run& run): run (&run), val (qse_getawknilval()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
 }
 
-Awk::Value::Value (Run* run): run (run), val (qse_awk_val_nil) 
+Awk::Value::Value (Run* run): run (run), val (qse_getawknilval()) 
 {
 	cached.str.ptr = QSE_NULL;
 	cached.str.len = 0;
@@ -355,7 +355,7 @@ void Awk::Value::clear ()
 		}
 
 		run = QSE_NULL;
-		val = qse_awk_val_nil;
+		val = qse_getawknilval();
 	}
 }
 

@@ -27,12 +27,12 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-class StdMmgr: public Mmgr
+class QSE_EXPORT StdMmgr: public Mmgr
 {
 public:
-        void* allocMem (size_t n);
-        void* reallocMem (void* ptr, size_t n);
-        virtual void freeMem (void* ptr);
+	void* allocMem (size_t n);
+	void* reallocMem (void* ptr, size_t n);
+	virtual void freeMem (void* ptr);
 
 public:
 	static StdMmgr DFL;

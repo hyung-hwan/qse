@@ -294,7 +294,7 @@
 #	ifdef __cplusplus
 		extern "C" {
 #	endif
-		void qse_assert_failed (
+		QSE_EXPORT void qse_assert_failed (
         		const qse_char_t* expr, const qse_char_t* desc,
         		const qse_char_t* file, qse_size_t line);
 #	ifdef __cplusplus
@@ -315,46 +315,10 @@
 #endif
 
 /**
- * The QSE_DEFINE_COMMON_FIELDS() macro defines common object fields.
- */
-#define QSE_DEFINE_COMMON_FIELDS(name) \
-	qse_mmgr_t* mmgr; 
-	
-/**
- * The QSE_DEFINE_COMMON_FUNCTIONS() macro defines common object functions.
- * - @code void qse_xxx_setmmgr (qse_xxx_t* xxx, qse_mmgr_t* mmgr); @endcode
- *   The qse_xxx_setmmgr() function change the memory manager of a relevant
- *   object. Take extreme care if you want to use this function.
- * - @code qse_mmgr_t* qse_xxx_getmmgr (qse_xxx_t* xxx); @endcode
- *   The qse_xxx_getmmgr() function returns the memory manager of a relevant
- *   object.
- * - @code void qse_xxx_getxtn (qse_xxx_t* xxx); @endcode
- *   The qse_xxx_getxtn() function returns the pointer to an extension area
- *   of a relevant object created with an extension size greater than 0.
- */
-#define QSE_DEFINE_COMMON_FUNCTIONS(name) \
-qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name); \
-void* qse_##name##_getxtn (qse_##name##_t* name);
-
-/**
  * The QSE_XTN() macro is a convenience macro to retrieve the pointer to 
  * extension space located at the end of an object. The type of the object
  * should be known in advance for it to work properly.
  */
 #define QSE_XTN(obj) ((void*)(obj + 1))
-
-/**
- * The QSE_IMPLEMENT_COMMON_FUNCTIONS() implement common functions for 
- * an object.
- */
-#define QSE_IMPLEMENT_COMMON_FUNCTIONS(name) \
-qse_mmgr_t* qse_##name##_getmmgr (qse_##name##_t* name) \
-{ \
-	return (name)->mmgr; \
-} \
-void* qse_##name##_getxtn (qse_##name##_t* name) \
-{ \
-	return QSE_XTN(name); \
-}
 
 #endif

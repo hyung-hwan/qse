@@ -33,7 +33,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /// a subclass that uses a memory manager.
 ///
 
-class Mmged: public Types
+class QSE_EXPORT Mmged: public Types
 {
 public:
 	Mmged (Mmgr* mmgr): mmgr (mmgr) {}

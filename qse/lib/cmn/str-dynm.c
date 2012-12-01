@@ -21,21 +21,23 @@
 #include <qse/cmn/str.h>
 #include "mem.h"
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (mbs)
-
-qse_mbs_t* qse_mbs_open (qse_mmgr_t* mmgr, qse_size_t ext, qse_size_t capa)
+qse_mbs_t* qse_mbs_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, qse_size_t capa)
 {
 	qse_mbs_t* str;
 
-	str = (qse_mbs_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_mbs_t) + ext);
-	if (str == QSE_NULL) return QSE_NULL;
-
-	if (qse_mbs_init (str, mmgr, capa) <= -1)
+	str = (qse_mbs_t*) QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_mbs_t) + xtnsize);
+	if (str)
 	{
-		QSE_MMGR_FREE (mmgr, str);
-		return QSE_NULL;
+		if (qse_mbs_init (str, mmgr, capa) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, str);
+			str = QSE_NULL;
+		}
+		else
+		{
+			QSE_MEMSET (str + 1, 0, xtnsize);
+		}
 	}
-
 	return str;
 }
 
@@ -70,6 +72,16 @@ int qse_mbs_init (qse_mbs_t* str, qse_mmgr_t* mmgr, qse_size_t capa)
 void qse_mbs_fini (qse_mbs_t* str)
 {
 	if (str->val.ptr != QSE_NULL) QSE_MMGR_FREE (str->mmgr, str->val.ptr);
+}
+
+qse_mmgr_t* qse_mbs_getmmgr (qse_mbs_t* mbs)
+{
+	return mbs->mmgr;
+}
+
+void* qse_mbs_getxtn (qse_mbs_t* mbs)
+{
+	return QSE_XTN (mbs);
 }
 
 int qse_mbs_yield (qse_mbs_t* str, qse_mxstr_t* buf, qse_size_t newcapa)

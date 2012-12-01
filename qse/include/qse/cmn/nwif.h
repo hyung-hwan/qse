@@ -70,35 +70,35 @@ struct qse_nwifcfg_t
 extern "C" {
 #endif
 
-int qse_nwifmbstoindex (
+QSE_EXPORT int qse_nwifmbstoindex (
 	const qse_mchar_t* ptr,
 	unsigned int*      index
 );
 
-int qse_nwifwcstoindex (
+QSE_EXPORT int qse_nwifwcstoindex (
 	const qse_wchar_t* ptr,
 	unsigned int*      index
 );
 
-int qse_nwifmbsntoindex (
+QSE_EXPORT int qse_nwifmbsntoindex (
 	const qse_mchar_t* ptr,
 	qse_size_t         len,
 	unsigned int*      index
 );
 
-int qse_nwifwcsntoindex (
+QSE_EXPORT int qse_nwifwcsntoindex (
 	const qse_wchar_t* ptr,
 	qse_size_t         len,
 	unsigned int*      index
 );
 
-int qse_nwifindextombs (
+QSE_EXPORT int qse_nwifindextombs (
 	unsigned int index,
 	qse_mchar_t* buf,
 	qse_size_t   len
 );
 
-int qse_nwifindextowcs (
+QSE_EXPORT int qse_nwifindextowcs (
 	unsigned int index,
 	qse_wchar_t* buf,
 	qse_size_t   len
@@ -114,7 +114,7 @@ int qse_nwifindextowcs (
 #	define qse_nwifindextostr(index,buf,len)  qse_nwifindextowcs(index,buf,len)
 #endif
 
-int qse_getnwifcfg (
+QSE_EXPORT int qse_getnwifcfg (
 	qse_nwifcfg_t* cfg
 );
 

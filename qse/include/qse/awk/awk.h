@@ -2702,6 +2702,14 @@ QSE_EXPORT void qse_awk_rtx_freemem (
 	void*          ptr  /**< memory block pointer */
 );
 
+/**
+ * The qse_getawknilval() function returns the pointer to the predefined
+ * nil value. you can call this without creating a runtime context. 
+ */
+QSE_EXPORT qse_awk_val_t* qse_getawknilval (
+	void
+);
+
 #ifdef __cplusplus
 }
 #endif

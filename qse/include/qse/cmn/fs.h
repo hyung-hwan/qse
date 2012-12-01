@@ -91,7 +91,7 @@ typedef struct qse_fs_ent_t qse_fs_ent_t;
 
 struct qse_fs_t
 {
-	QSE_DEFINE_COMMON_FIELDS (fs)
+	qse_mmgr_t*     mmgr;
 	qse_fs_errnum_t errnum;
 	qse_fs_ent_t    ent;
 	qse_char_t*     curdir;
@@ -113,57 +113,63 @@ enum qse_fs_option_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (fs)
-
-qse_fs_t* qse_fs_open (
+QSE_EXPORT qse_fs_t* qse_fs_open (
 	qse_mmgr_t* mmgr, 
 	qse_size_t  xtnsize
 );
 
-void qse_fs_close (
+QSE_EXPORT void qse_fs_close (
 	qse_fs_t* fs
 );
 
-int qse_fs_init (
+QSE_EXPORT int qse_fs_init (
 	qse_fs_t*   fs,
 	qse_mmgr_t* mmgr
 );
 
-void qse_fs_fini (
+QSE_EXPORT void qse_fs_fini (
 	qse_fs_t* fs
 );
 
-qse_fs_errnum_t qse_fs_geterrnum (
+QSE_EXPORT qse_mmgr_t* qse_fs_getmmgr (
 	qse_fs_t* fs
 );
 
-qse_fs_ent_t* qse_fs_read (
+QSE_EXPORT void* qse_fs_getxtn (
+	qse_fs_t* fs
+);
+
+QSE_EXPORT qse_fs_errnum_t qse_fs_geterrnum (
+	qse_fs_t* fs
+);
+
+QSE_EXPORT qse_fs_ent_t* qse_fs_read (
 	qse_fs_t* fs,
 	int       flags
 );
 
-int qse_fs_chdir (
+QSE_EXPORT int qse_fs_chdir (
 	qse_fs_t*         fs,
 	const qse_char_t* name
 );
 
-int qse_fs_push (
+QSE_EXPORT int qse_fs_push (
 	qse_fs_t* fs,
 	const qse_char_t* name
 );
 
-int qse_fs_pop (
+QSE_EXPORT int qse_fs_pop (
 	qse_fs_t* fs,
 	const qse_char_t* name
 );
 
-int qse_fs_move (
+QSE_EXPORT int qse_fs_move (
 	qse_fs_t*         fs,
 	const qse_char_t* oldpath,
 	const qse_char_t* newpath
 );
 	
-int qse_fs_delete (
+QSE_EXPORT int qse_fs_delete (
 	qse_fs_t*         fs,
 	const qse_char_t* path
 );

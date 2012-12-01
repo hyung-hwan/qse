@@ -78,7 +78,7 @@ extern "C" {
  *
  * @return an option character on success, QSE_CHAR_EOF on no more options.
  */
-qse_cint_t qse_getopt (
+QSE_EXPORT qse_cint_t qse_getopt (
 	int                argc, /* argument count */ 
 	qse_char_t* const* argv, /* argument array */
 	qse_opt_t*         opt   /* option configuration */

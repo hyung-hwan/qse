@@ -204,7 +204,7 @@ struct qse_dll_node_t
  */
 struct qse_dll_t
 {
-	QSE_DEFINE_COMMON_FIELDS (dll)
+	qse_mmgr_t* mmgr;
 
 	qse_dll_node_t gdl;
 	qse_size_t     size;
@@ -227,8 +227,6 @@ struct qse_dll_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (dll)
-
 /** 
  *  The qse_dll_open() function creates an empty doubly linked list.
  *  If the memory manager mmgr is QSE_NULL, the function gets the default
@@ -242,7 +240,7 @@ QSE_DEFINE_COMMON_FUNCTIONS (dll)
  *  the pointer to a newly created doubly linked list on success.
  *  QSE_NULL on failure.
  */
-qse_dll_t* qse_dll_open (
+QSE_EXPORT qse_dll_t* qse_dll_open (
 	qse_mmgr_t* mmgr,   /**< memory manager */ 
 	qse_size_t  xtnsize /**< size of extension area in bytes */
 );
@@ -250,14 +248,14 @@ qse_dll_t* qse_dll_open (
 /** 
  * The qse_dll_close() function destroys a doubly linked list.
  */
-void qse_dll_close (
+QSE_EXPORT void qse_dll_close (
 	qse_dll_t* dll /** doubly linked list */
 );
 
 /**
  * The qse_dll_init() function initializes a statically declared list.
  */
-int qse_dll_init (
+QSE_EXPORT int qse_dll_init (
 	qse_dll_t*  dll, /**< doubly linked list */
 	qse_mmgr_t* mmgr /**< memory manager */
 );
@@ -265,14 +263,22 @@ int qse_dll_init (
 /**
  * The qse_dll_fini() function finalizes a statically initialized list.
  */
-void qse_dll_fini (
+QSE_EXPORT void qse_dll_fini (
 	qse_dll_t* dll /**< doubly linked list */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_dll_getmmgr (
+	qse_dll_t* dll
+);
+
+QSE_EXPORT void* qse_dll_getxtn (
+	qse_dll_t* dll
 );
 
 /**
  * The qse_dll_getscale() function gets the scale factor
  */
-int qse_dll_getscale (
+QSE_EXPORT int qse_dll_getscale (
 	qse_dll_t* dll  /**< doubly linked list */
 );
 
@@ -282,7 +288,7 @@ int qse_dll_getscale (
  *  linked list created with a scale factor of 1. The scale factor should be
  *  larger than 0 and less than 256.
  */
-void qse_dll_setscale (
+QSE_EXPORT void qse_dll_setscale (
 	qse_dll_t* dll,     /**< doubly linked list */
 	int        scale    /**< scale factor */
 );
@@ -294,7 +300,7 @@ void qse_dll_setscale (
  * when the node is freeed. You may set the copier to QSE_NULL to perform
  * no special operation when the data pointer is rememebered.
  */
-void qse_dll_setcopier (
+QSE_EXPORT void qse_dll_setcopier (
 	qse_dll_t*       dll,   /**< doubly linked list */
 	qse_dll_copier_t copier /**< element copier */
 );
@@ -302,7 +308,7 @@ void qse_dll_setcopier (
 /**
  * The qse_dll_getcopier() function returns the element copier.
  */
-qse_dll_copier_t qse_dll_getcopier (
+QSE_EXPORT qse_dll_copier_t qse_dll_getcopier (
 	qse_dll_t* dll /**< doubly linked list */
 );
 
@@ -310,7 +316,7 @@ qse_dll_copier_t qse_dll_getcopier (
  * The qse_dll_setfreeer() function changes the element freeer.
  * The freeer is called when a node containing the element is destroyed.
  */
-void qse_dll_setfreeer (
+QSE_EXPORT void qse_dll_setfreeer (
 	qse_dll_t*       dll,   /**< doubly linked list */
 	qse_dll_freeer_t freeer /**< element freeer */
 );
@@ -318,21 +324,21 @@ void qse_dll_setfreeer (
 /**
  * The qse_dll_getfreeer() function returns the element freeer.
  */
-qse_dll_freeer_t qse_dll_getfreeer (
+QSE_EXPORT qse_dll_freeer_t qse_dll_getfreeer (
 	qse_dll_t* dll /**< doubly linked list */
 );
 
 /**
  * The qse_dll_getcomper() function returns the data comparator.
  */
-qse_dll_comper_t qse_dll_getcomper (
+QSE_EXPORT qse_dll_comper_t qse_dll_getcomper (
 	qse_dll_t* dll  /**< doubly linked list */
 );
 
 /**
  * The qse_dll_setcomper() function changes the data comparator
  */
-void qse_dll_setcomper (
+QSE_EXPORT void qse_dll_setcomper (
 	qse_dll_t*       dll,    /**< doubly linked list */
 	qse_dll_comper_t comper  /**< comparator */
 );
@@ -341,7 +347,7 @@ void qse_dll_setcomper (
  * The qse_dll_getsize() function returns the number of the data nodes held
  * in a doubly linked list.
  */
-qse_size_t qse_dll_getsize (
+QSE_EXPORT qse_size_t qse_dll_getsize (
 	qse_dll_t* dll  /**< doubly linked list */
 );
 
@@ -349,7 +355,7 @@ qse_size_t qse_dll_getsize (
  * The qse_dll_gethead() function gets the head node. You may use the 
  * #QSE_DLL_HEAD macro instead.
  */
-qse_dll_node_t* qse_dll_gethead (
+QSE_EXPORT qse_dll_node_t* qse_dll_gethead (
 	qse_dll_t* dll  /**< doubly linked list */
 );
 
@@ -357,19 +363,19 @@ qse_dll_node_t* qse_dll_gethead (
  * The qse_dll_gettail() function gets the head node. You may use the 
  * #QSE_DLL_TAIL macro instead.
  */
-qse_dll_node_t* qse_dll_gettail (
+QSE_EXPORT qse_dll_node_t* qse_dll_gettail (
 	qse_dll_t* dll  /**< doubly linked list */
 );
 
 
-qse_dll_node_t* qse_dll_search (
+QSE_EXPORT qse_dll_node_t* qse_dll_search (
 	qse_dll_t*      dll,   /**< doubly linked list */
 	qse_dll_node_t* pos,   /**< positional node */
 	const void*     dptr,  /**< data pointer */
 	qse_size_t      dlen   /**< data length */
 );
 
-qse_dll_node_t* qse_dll_rsearch (
+QSE_EXPORT qse_dll_node_t* qse_dll_rsearch (
 	qse_dll_t*      dll,   /**< doubly linked list */
 	qse_dll_node_t* pos,   /**< positional node */
 	const void*     dptr,  /**< data pointer */
@@ -379,14 +385,14 @@ qse_dll_node_t* qse_dll_rsearch (
 /**
  * The qse_dll_insert() function insert an element into a list 
  */
-qse_dll_node_t* qse_dll_insert (
+QSE_EXPORT qse_dll_node_t* qse_dll_insert (
 	qse_dll_t*      dll,  /**< doubly linked list */
 	qse_dll_node_t* pos,  /**< node before which a new node is inserted */
 	void*           dptr, /**< data pointer */
 	qse_size_t      dlen  /**< data length */
 );
 
-void qse_dll_delete (
+QSE_EXPORT void qse_dll_delete (
 	qse_dll_t*      dll, 
 	qse_dll_node_t* pos
 );
@@ -394,39 +400,39 @@ void qse_dll_delete (
 /** 
  * The qse_dll_clear() functions deletes all elements of a list
  */
-void qse_dll_clear (
+QSE_EXPORT void qse_dll_clear (
 	qse_dll_t* dll /**< doubly linked list */
 );
 
-void qse_dll_walk (
+QSE_EXPORT void qse_dll_walk (
 	qse_dll_t*       dll,    /**< doubly linked list */
 	qse_dll_walker_t walker, /**< user-defined walker function */
 	void*            ctx     /**< pointer to user-defined data */
 );
 
-void qse_dll_rwalk (
+QSE_EXPORT void qse_dll_rwalk (
 	qse_dll_t*       dll,    /**< doubly linked list */
 	qse_dll_walker_t walker, /**< user-defined walker function */
 	void*            ctx     /**< pointer to user-defined data */
 );
 
-qse_dll_node_t* qse_dll_pushhead (
+QSE_EXPORT qse_dll_node_t* qse_dll_pushhead (
 	qse_dll_t* dll, /* doubly linked list */
 	void*      dptr, 
 	qse_size_t dlen
 );
 
-qse_dll_node_t* qse_dll_pushtail (
+QSE_EXPORT qse_dll_node_t* qse_dll_pushtail (
 	qse_dll_t* dll, /* doubly linked list */ 
 	void*      dptr, 
 	qse_size_t dlen
 );
 
-void qse_dll_pophead (
+QSE_EXPORT void qse_dll_pophead (
 	qse_dll_t* dll
 );
 
-void qse_dll_poptail (
+QSE_EXPORT void qse_dll_poptail (
 	qse_dll_t* dll
 );
 

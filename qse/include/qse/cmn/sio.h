@@ -95,7 +95,7 @@ typedef struct qse_sio_t qse_sio_t;
 
 struct qse_sio_t
 {
-	QSE_DEFINE_COMMON_FIELDS (sio)
+	qse_mmgr_t*      mmgr;
 	qse_sio_errnum_t errnum;
 
 	qse_fio_t file;
@@ -124,14 +124,14 @@ extern "C" {
 /**
  * The qse_sio_open() fucntion creates a stream object.
  */
-qse_sio_t* qse_sio_open (
+QSE_EXPORT qse_sio_t* qse_sio_open (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	const qse_char_t* file,    /**< file name */
 	int               flags   /**< number OR'ed of #qse_sio_flag_t */
 );
 
-qse_sio_t* qse_sio_openstd (
+QSE_EXPORT qse_sio_t* qse_sio_openstd (
 	qse_mmgr_t*       mmgr,    /**< memory manager */
 	qse_size_t        xtnsize, /**< extension size in bytes */
 	qse_sio_std_t     std,     /**< standard I/O identifier */
@@ -141,74 +141,82 @@ qse_sio_t* qse_sio_openstd (
 /**
  * The qse_sio_close() function destroys a stream object.
  */
-void qse_sio_close (
+QSE_EXPORT void qse_sio_close (
 	qse_sio_t* sio  /**< stream */
 );
 
-int qse_sio_init (
+QSE_EXPORT int qse_sio_init (
 	qse_sio_t*        sio,
 	qse_mmgr_t*       mmgr,
 	const qse_char_t* file,
 	int               flags
 );
 
-int qse_sio_initstd (
+QSE_EXPORT int qse_sio_initstd (
 	qse_sio_t*        sio,
 	qse_mmgr_t*       mmgr,
 	qse_sio_std_t     std,
 	int               flags
 );
 
-void qse_sio_fini (
+QSE_EXPORT void qse_sio_fini (
 	qse_sio_t* sio
 );
 
-qse_sio_errnum_t qse_sio_geterrnum (
+QSE_EXPORT qse_mmgr_t* qse_sio_getmmgr (
+	qse_sio_t* sio
+);
+
+QSE_EXPORT void* qse_sio_getxtn (
+	qse_sio_t* sio
+);
+
+QSE_EXPORT qse_sio_errnum_t qse_sio_geterrnum (
 	const qse_sio_t* sio
 );
 
-qse_cmgr_t* qse_sio_getcmgr (
+QSE_EXPORT qse_cmgr_t* qse_sio_getcmgr (
 	qse_sio_t* sio
 );
 
-void qse_sio_setcmgr (
+QSE_EXPORT void qse_sio_setcmgr (
 	qse_sio_t*  sio,
 	qse_cmgr_t* cmgr
 );
 
-qse_sio_hnd_t qse_sio_gethandle (
+QSE_EXPORT qse_sio_hnd_t qse_sio_gethandle (
 	const qse_sio_t* sio
 );
 
-qse_ubi_t qse_sio_gethandleasubi (
+QSE_EXPORT qse_ubi_t qse_sio_gethandleasubi (
 	const qse_sio_t* sio
 );
 
-qse_ssize_t qse_sio_flush (
+QSE_EXPORT qse_ssize_t qse_sio_flush (
 	qse_sio_t* sio
 );
 
-void qse_sio_purge (
+QSE_EXPORT void qse_sio_purge (
 	qse_sio_t* sio
 );
 
-qse_ssize_t qse_sio_getmc (
+QSE_EXPORT qse_ssize_t qse_sio_getmc (
 	qse_sio_t*   sio,
 	qse_mchar_t* c
 );
 
-qse_ssize_t qse_sio_getwc (
+QSE_EXPORT qse_ssize_t qse_sio_getwc (
 	qse_sio_t*   sio,
 	qse_wchar_t* c
 );
 
-qse_ssize_t qse_sio_getmbs (
+QSE_EXPORT qse_ssize_t qse_sio_getmbs (
 	qse_sio_t*   sio,
 	qse_mchar_t* buf,
 	qse_size_t   size
 );
 
-qse_ssize_t qse_sio_getmbsn (
+QSE_EXPORT qse_ssize_t qse_sio_getmbsn (
 	qse_sio_t*   sio,
 	qse_mchar_t* buf,
 	qse_size_t   size
@@ -219,7 +227,7 @@ qse_ssize_t qse_sio_getmbsn (
  * from the stream @a sio into the buffer @a buf. If a new line or EOF
  * is encountered, it stops reading from the stream. It null-terminates
  * the buffer if @a size is greater than 0. */
-qse_ssize_t qse_sio_getwcs (
+QSE_EXPORT qse_ssize_t qse_sio_getwcs (
 	qse_sio_t*   sio,
 	qse_wchar_t* buf,
 	qse_size_t   size
@@ -230,7 +238,7 @@ qse_ssize_t qse_sio_getwcs (
  * from the stream @a sio into the buffer @a buf. If a new line or EOF
  * is encountered, it stops reading from the stream. 
  */
-qse_ssize_t qse_sio_getwcsn (
+QSE_EXPORT qse_ssize_t qse_sio_getwcsn (
 	qse_sio_t*   sio,
 	qse_wchar_t* buf,
 	qse_size_t   size
@@ -246,34 +254,34 @@ qse_ssize_t qse_sio_getwcsn (
 #	define qse_sio_getstrn(sio,buf,size) qse_sio_getwcsn(sio,buf,size)
 #endif
 
-qse_ssize_t qse_sio_putmb (
+QSE_EXPORT qse_ssize_t qse_sio_putmb (
 	qse_sio_t*  sio, 
 	qse_mchar_t c
 );
 
-qse_ssize_t qse_sio_putwc (
+QSE_EXPORT qse_ssize_t qse_sio_putwc (
 	qse_sio_t*  sio, 
 	qse_wchar_t c
 );
 
-qse_ssize_t qse_sio_putmbs (
+QSE_EXPORT qse_ssize_t qse_sio_putmbs (
 	qse_sio_t*         sio,
 	const qse_mchar_t* str
 );
 
-qse_ssize_t qse_sio_putwcs (
+QSE_EXPORT qse_ssize_t qse_sio_putwcs (
 	qse_sio_t*         sio,
 	const qse_wchar_t* str
 );
 
 
-qse_ssize_t qse_sio_putmbsn (
+QSE_EXPORT qse_ssize_t qse_sio_putmbsn (
 	qse_sio_t*         sio, 
 	const qse_mchar_t* str,
 	qse_size_t         size
 );
 
-qse_ssize_t qse_sio_putwcsn (
+QSE_EXPORT qse_ssize_t qse_sio_putwcsn (
 	qse_sio_t*         sio, 
 	const qse_wchar_t* str,
 	qse_size_t         size
@@ -294,7 +302,7 @@ qse_ssize_t qse_sio_putwcsn (
  * Note that it may not return the desired postion due to buffering.
  * @return 0 on success, -1 on failure
  */
-int qse_sio_getpos (
+QSE_EXPORT int qse_sio_getpos (
 	qse_sio_t*     sio,  /**< stream */
 	qse_sio_pos_t* pos   /**< position */
 );
@@ -303,7 +311,7 @@ int qse_sio_getpos (
  * The qse_sio_setpos() changes the current position in a stream.
  * @return 0 on success, -1 on failure
  */
-int qse_sio_setpos (
+QSE_EXPORT int qse_sio_setpos (
 	qse_sio_t*    sio,   /**< stream */
 	qse_sio_pos_t pos    /**< position */
 );

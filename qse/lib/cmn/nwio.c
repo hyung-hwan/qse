@@ -43,11 +43,11 @@
 #	include <sys/time.h>
 #endif
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (nwio)
-
 enum
 {
-	STATUS_UDP_CONNECT = (1 << 0)
+	STATUS_UDP_CONNECT    = (1 << 0),
+	STATUS_TMOUT_R_PRESET = (1 << 1),
+	STATUS_TMOUT_W_PRESET = (1 << 2)
 };
 
 static qse_ssize_t socket_output (
@@ -250,16 +250,16 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 	return -1;
 
 #else
+
 	fd_set fds[2];
 	struct timeval tv;
 
-	FD_ZERO (&fds[0]);
-	FD_ZERO (&fds[1]);
-
-	FD_SET (nwio->handle, &fds[what]);
-
 	tv.tv_sec = tmout->sec;
 	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
+
+	FD_ZERO (&fds[0]);
+	FD_ZERO (&fds[1]);
+	FD_SET (nwio->handle, &fds[what]);
 
 	xret = select (nwio->handle + 1, &fds[0], &fds[1], QSE_NULL, &tv);
 	if (xret <= -1)
@@ -300,6 +300,54 @@ void qse_nwio_close (qse_nwio_t* nwio)
 {
 	qse_nwio_fini (nwio);
 	QSE_MMGR_FREE (nwio->mmgr, nwio);
+}
+
+static int preset_tmout (qse_nwio_t* nwio)
+{
+#if defined(SO_RCVTIMEO) && defined(SO_SNDTIMEO)
+	#if defined(_WIN32)
+	DWORD tv;
+	#else
+	struct timeval tv;
+	#endif
+
+	if (TMOUT_ENABLED(nwio->tmout.r))
+	{
+	#if defined(_WIN32)
+		tv = QSE_SEC_TO_MSEC(nwio->tmout.r.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.r.nsec);
+	#else
+		tv.tv_sec = nwio->tmout.r.sec;
+		tv.tv_usec = QSE_NSEC_TO_USEC (nwio->tmout.r.nsec);
+	#endif
+
+		if (setsockopt (nwio->handle, SOL_SOCKET, SO_RCVTIMEO, (void*)&tv, QSE_SIZEOF(tv)) <= -1)
+		{
+			return -1; /* tried to set but failed */
+		}
+
+		nwio->status |= STATUS_TMOUT_R_PRESET;
+	}
+
+	if (TMOUT_ENABLED(nwio->tmout.w))
+	{
+	#if defined(_WIN32)
+		tv = QSE_SEC_TO_MSEC(nwio->tmout.w.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.w.nsec);
+	#else
+		tv.tv_sec = nwio->tmout.w.sec;
+		tv.tv_usec = QSE_NSEC_TO_USEC (nwio->tmout.w.nsec);
+	#endif
+		if (setsockopt (nwio->handle, SOL_SOCKET, SO_SNDTIMEO, (void*)&tv, QSE_SIZEOF(tv)) <= -1)
+		{
+			return -1; /* tried to set but failed */
+		}
+
+		nwio->status |= STATUS_TMOUT_W_PRESET;
+	}
+
+	return 1; /* set successfully - don't need a multiplexer */
+#endif
+
+	return 0; /* no measn to set it */
 }
 
 int qse_nwio_init (
@@ -730,6 +778,7 @@ int qse_nwio_init (
 		}
 	}
 
+	preset_tmout (nwio);
 	return 0;
 
 oops:
@@ -773,6 +822,16 @@ void qse_nwio_fini (qse_nwio_t* nwio)
 #else
 	QSE_CLOSE (nwio->handle);
 #endif
+}
+
+qse_mmgr_t* qse_nwio_getmmgr (qse_nwio_t* nwio)
+{
+	return nwio->mmgr;
+}
+
+void* qse_nwio_getxtn (qse_nwio_t* nwio)
+{
+	return QSE_XTN (nwio);
 }
 
 qse_nwio_errnum_t qse_nwio_geterrnum (const qse_nwio_t* nwio)
@@ -881,7 +940,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 	}
 	else
 	{
-		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		if (!(nwio->status & STATUS_TMOUT_R_PRESET) && 
+		    TMOUT_ENABLED(nwio->tmout.r) &&
 		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		count = recv (nwio->handle, buf, size, 0);
@@ -925,7 +985,8 @@ static qse_ssize_t nwio_read (qse_nwio_t* nwio, void* buf, qse_size_t size)
 	}
 	else
 	{
-		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		if (!(nwio->status & STATUS_TMOUT_R_PRESET) && 
+		    TMOUT_ENABLED(nwio->tmout.r) &&
 		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		n = recv (nwio->handle, buf, size, 0);
@@ -994,7 +1055,8 @@ reread:
 	}
 	else
 	{
-		if (TMOUT_ENABLED(nwio->tmout.r) &&
+		if (!(nwio->status & STATUS_TMOUT_R_PRESET) && 
+		    TMOUT_ENABLED(nwio->tmout.r) &&
 		    wait_for_data (nwio, &nwio->tmout.r, 0) <= -1) return -1;
 
 		n = recv (nwio->handle, buf, size, 0);
@@ -1051,7 +1113,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int)))
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int);
 
-	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	if (!(nwio->status & STATUS_TMOUT_W_PRESET) && 
+	    TMOUT_ENABLED(nwio->tmout.w) &&
 	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	count = send (nwio->handle, data, size, 0);
@@ -1063,7 +1126,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int)))
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(int);
 
-	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	if (!(nwio->status & STATUS_TMOUT_W_PRESET) && 
+	    TMOUT_ENABLED(nwio->tmout.w) &&
 	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	n = send (nwio->handle, data, size, 0);
@@ -1081,7 +1145,8 @@ static qse_ssize_t nwio_write (qse_nwio_t* nwio, const void* data, qse_size_t si
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(size_t);
 
 rewrite:
-	if (TMOUT_ENABLED(nwio->tmout.w) &&
+	if (!(nwio->status & STATUS_TMOUT_W_PRESET) && 
+	    TMOUT_ENABLED(nwio->tmout.w) &&
 	    wait_for_data (nwio, &nwio->tmout.w, 1) <= -1) return -1;
 
 	n = send (nwio->handle, data, size, 0);

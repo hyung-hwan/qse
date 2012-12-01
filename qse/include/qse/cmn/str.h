@@ -108,7 +108,7 @@ typedef qse_size_t (*qse_wcs_sizer_t) (
  */
 struct qse_mbs_t
 {
-	QSE_DEFINE_COMMON_FIELDS (mbs)
+	qse_mmgr_t*     mmgr;
 	qse_mbs_sizer_t sizer; /**< buffer resizer function */
 	qse_mxstr_t     val;   /**< buffer/string pointer and lengh */
 	qse_size_t      capa;  /**< buffer capacity */
@@ -119,7 +119,7 @@ struct qse_mbs_t
  */
 struct qse_wcs_t
 {
-	QSE_DEFINE_COMMON_FIELDS (wcs)
+	qse_mmgr_t*     mmgr;
 	qse_wcs_sizer_t sizer; /**< buffer resizer function */
 	qse_wxstr_t     val;   /**< buffer/string pointer and lengh */
 	qse_size_t      capa;  /**< buffer capacity */
@@ -376,7 +376,7 @@ extern "C" {
  * multibyte null-terminated string. The length returned excludes a 
  * terminating null.
  */
-qse_size_t qse_mbslen (
+QSE_EXPORT qse_size_t qse_mbslen (
 	const qse_mchar_t* mbs
 );
 
@@ -385,7 +385,7 @@ qse_size_t qse_mbslen (
  * wide-character null-terminated string. The length returned excludes 
  * a terminating null.
  */
-qse_size_t qse_wcslen (
+QSE_EXPORT qse_size_t qse_wcslen (
 	const qse_wchar_t* wcs
 );
 
@@ -393,7 +393,7 @@ qse_size_t qse_wcslen (
  * The qse_mbsbytes() function returns the number of bytes a null-terminated
  * string is holding excluding a terminating null.
  */
-qse_size_t qse_mbsbytes (
+QSE_EXPORT qse_size_t qse_mbsbytes (
 	const qse_mchar_t* str
 );
 
@@ -401,7 +401,7 @@ qse_size_t qse_mbsbytes (
  * The qse_wcsbytes() function returns the number of bytes a null-terminated
  * string is holding excluding a terminating null.
  */
-qse_size_t qse_wcsbytes (
+QSE_EXPORT qse_size_t qse_wcsbytes (
 	const qse_wchar_t* str
 );
 
@@ -413,23 +413,23 @@ qse_size_t qse_wcsbytes (
 #	define qse_strbytes(str) qse_wcsbytes(str)
 #endif
 
-qse_size_t qse_mbscpy (
+QSE_EXPORT qse_size_t qse_mbscpy (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* str
 );
 
-qse_size_t qse_wcscpy (
+QSE_EXPORT qse_size_t qse_wcscpy (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* str
 );
 
-qse_size_t qse_mbsxcpy (
+QSE_EXPORT qse_size_t qse_mbsxcpy (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_mchar_t* str
 );
 
-qse_size_t qse_wcsxcpy (
+QSE_EXPORT qse_size_t qse_wcsxcpy (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_wchar_t* str
@@ -439,7 +439,7 @@ qse_size_t qse_wcsxcpy (
  * The qse_mbsncpy() function copies a length-bounded string into
  * a buffer with unknown size. 
  */
-qse_size_t qse_mbsncpy (
+QSE_EXPORT qse_size_t qse_mbsncpy (
 	qse_mchar_t*       buf, /**< buffer with unknown length */
 	const qse_mchar_t* str, /**< length-bounded string */
 	qse_size_t         len  /**< string length */
@@ -449,7 +449,7 @@ qse_size_t qse_mbsncpy (
  * The qse_wcsncpy() function copies a length-bounded string into
  * a buffer with unknown size. 
  */
-qse_size_t qse_wcsncpy (
+QSE_EXPORT qse_size_t qse_wcsncpy (
 	qse_wchar_t*       buf, /**< buffer with unknown length */
 	const qse_wchar_t* str, /**< length-bounded string */
 	qse_size_t         len  /**< string length */
@@ -459,7 +459,7 @@ qse_size_t qse_wcsncpy (
  * The qse_mbsxncpy() function copies a length-bounded string into
  * a length-bounded buffer.
  */
-qse_size_t qse_mbsxncpy (
+QSE_EXPORT qse_size_t qse_mbsxncpy (
 	qse_mchar_t*       buf, /**< length-bounded buffer */
 	qse_size_t         bsz, /**< buffer length */
 	const qse_mchar_t* str, /**< length-bounded string */
@@ -470,7 +470,7 @@ qse_size_t qse_mbsxncpy (
  * The qse_wcsxncpy() function copies a length-bounded string into
  * a length-bounded buffer.
  */
-qse_size_t qse_wcsxncpy (
+QSE_EXPORT qse_size_t qse_wcsxncpy (
 	qse_wchar_t*       buf, /**< length-bounded buffer */
 	qse_size_t         bsz, /**< buffer length */
 	const qse_wchar_t* str, /**< length-bounded string */
@@ -489,12 +489,12 @@ qse_size_t qse_wcsxncpy (
 #	define qse_strxncpy(buf,bsz,str,len) qse_wcsxncpy(buf,bsz,str,len)
 #endif
 
-qse_size_t qse_mbsput (
+QSE_EXPORT qse_size_t qse_mbsput (
 	qse_mchar_t*       buf, 
 	const qse_mchar_t* str
 );
 
-qse_size_t qse_wcsput (
+QSE_EXPORT qse_size_t qse_wcsput (
 	qse_wchar_t*       buf, 
 	const qse_wchar_t* str
 );
@@ -504,7 +504,7 @@ qse_size_t qse_wcsput (
  * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
  * buffer.
  */
-qse_size_t qse_mbsxput (
+QSE_EXPORT qse_size_t qse_mbsxput (
 	qse_mchar_t*       buf, 
 	qse_size_t         bsz,
 	const qse_mchar_t* str
@@ -515,20 +515,20 @@ qse_size_t qse_mbsxput (
  * of the size @a bsz. Unlike qse_strxcpy(), it does not null-terminate the
  * buffer.
  */
-qse_size_t qse_wcsxput (
+QSE_EXPORT qse_size_t qse_wcsxput (
 	qse_wchar_t*       buf, 
 	qse_size_t         bsz,
 	const qse_wchar_t* str
 );
 
-qse_size_t qse_mbsxnput (
+QSE_EXPORT qse_size_t qse_mbsxnput (
 	qse_mchar_t*       buf,
 	qse_size_t        bsz,
 	const qse_mchar_t* str,
 	qse_size_t        len
 );
 
-qse_size_t qse_wcsxnput (
+QSE_EXPORT qse_size_t qse_wcsxnput (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_wchar_t* str,
@@ -557,7 +557,7 @@ qse_size_t qse_wcsxnput (
  * @endcode
  * @sa qse_mbsfncpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
-qse_size_t qse_mbsfcpy (
+QSE_EXPORT qse_size_t qse_mbsfcpy (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* fmt,
 	const qse_mchar_t* str[]
@@ -575,7 +575,7 @@ qse_size_t qse_mbsfcpy (
  * @endcode
  * @sa qse_wcsfncpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
-qse_size_t qse_wcsfcpy (
+QSE_EXPORT qse_size_t qse_wcsfcpy (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* fmt,
 	const qse_wchar_t* str[]
@@ -587,7 +587,7 @@ qse_size_t qse_wcsfcpy (
  * #qse_mcstr_t type.
  * @sa qse_mbsfcpy, qse_mbsxfcpy, qse_mbsxfncpy
  */
-qse_size_t qse_mbsfncpy (
+QSE_EXPORT qse_size_t qse_mbsfncpy (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* fmt,
 	const qse_mcstr_t  str[]
@@ -599,7 +599,7 @@ qse_size_t qse_mbsfncpy (
  * #qse_wcstr_t type.
  * @sa qse_wcsfcpy, qse_wcsxfcpy, qse_wcsxfncpy
  */
-qse_size_t qse_wcsfncpy (
+QSE_EXPORT qse_size_t qse_wcsfncpy (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* fmt,
 	const qse_wcstr_t  str[]
@@ -616,7 +616,7 @@ qse_size_t qse_wcsfncpy (
  * @endcode
  * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfncpy
  */
-qse_size_t qse_mbsxfcpy (
+QSE_EXPORT qse_size_t qse_mbsxfcpy (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_mchar_t* fmt,
@@ -634,7 +634,7 @@ qse_size_t qse_mbsxfcpy (
  * @endcode
  * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfncpy
  */
-qse_size_t qse_wcsxfcpy (
+QSE_EXPORT qse_size_t qse_wcsxfcpy (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_wchar_t* fmt,
@@ -647,7 +647,7 @@ qse_size_t qse_wcsxfcpy (
  * characters and @a str is an array of the #qse_mcstr_t type.
  * @sa qse_mbsfcpy, qse_mbsfncpy, qse_mbsxfcpy
  */
-qse_size_t qse_mbsxfncpy (
+QSE_EXPORT qse_size_t qse_mbsxfncpy (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_mchar_t* fmt,
@@ -660,7 +660,7 @@ qse_size_t qse_mbsxfncpy (
  * characters and @a str is an array of the #qse_wcstr_t type.
  * @sa qse_wcsfcpy, qse_wcsfncpy, qse_wcsxfcpy
  */
-qse_size_t qse_wcsxfncpy (
+QSE_EXPORT qse_size_t qse_wcsxfncpy (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz, 
 	const qse_wchar_t* fmt,
@@ -697,7 +697,7 @@ qse_size_t qse_wcsxfncpy (
  * qse_mbsxsubst (buf, i, QSE_MT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
  * @endcode
  */
-qse_size_t qse_mbsxsubst (
+QSE_EXPORT qse_size_t qse_mbsxsubst (
 	qse_mchar_t*           buf,
 	qse_size_t             bsz,
 	const qse_mchar_t*     fmt,
@@ -723,7 +723,7 @@ qse_size_t qse_mbsxsubst (
  * qse_wcsxsubst (buf, i, QSE_WT("user=${USER},group=${GROUP}"), subst, QSE_NULL);
  * @endcode
  */
-qse_size_t qse_wcsxsubst (
+QSE_EXPORT qse_size_t qse_wcsxsubst (
 	qse_wchar_t*           buf,
 	qse_size_t             bsz,
 	const qse_wchar_t*     fmt,
@@ -737,60 +737,60 @@ qse_size_t qse_wcsxsubst (
 #	define qse_strxsubst(buf,bsz,fmt,subst,ctx) qse_wcsxsubst(buf,bsz,fmt,subst,ctx)
 #endif
 
-qse_size_t qse_mbscat (
+QSE_EXPORT qse_size_t qse_mbscat (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* str
 );
 
-qse_size_t qse_mbsncat (
+QSE_EXPORT qse_size_t qse_mbsncat (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* str,
 	qse_size_t         len
 );
 
-qse_size_t qse_mbscatn (
+QSE_EXPORT qse_size_t qse_mbscatn (
 	qse_mchar_t*       buf,
 	const qse_mchar_t* str,
 	qse_size_t         n
 );
 
-qse_size_t qse_mbsxcat (
+QSE_EXPORT qse_size_t qse_mbsxcat (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_mchar_t* str
 );
 
-qse_size_t qse_mbsxncat (
+QSE_EXPORT qse_size_t qse_mbsxncat (
 	qse_mchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_mchar_t* str,
 	qse_size_t         len
 );
 
-qse_size_t qse_wcscat (
+QSE_EXPORT qse_size_t qse_wcscat (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* str
 );
 
-qse_size_t qse_wcsncat (
+QSE_EXPORT qse_size_t qse_wcsncat (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* str,
 	qse_size_t         len
 );
 
-qse_size_t qse_wcscatn (
+QSE_EXPORT qse_size_t qse_wcscatn (
 	qse_wchar_t*       buf,
 	const qse_wchar_t* str,
 	qse_size_t         n
 );
 
-qse_size_t qse_wcsxcat (
+QSE_EXPORT qse_size_t qse_wcsxcat (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_wchar_t* str
 );
 
-qse_size_t qse_wcsxncat (
+QSE_EXPORT qse_size_t qse_wcsxncat (
 	qse_wchar_t*       buf,
 	qse_size_t         bsz,
 	const qse_wchar_t* str,
@@ -811,59 +811,59 @@ qse_size_t qse_wcsxncat (
 #	define qse_strxncat(buf,bsz,str,len) qse_wcsxncat(buf,bsz,str,len)
 #endif
 
-int qse_mbscmp (
+QSE_EXPORT int qse_mbscmp (
 	const qse_mchar_t* s1,
 	const qse_mchar_t* s2
 );
 
-int qse_wcscmp (
+QSE_EXPORT int qse_wcscmp (
 	const qse_wchar_t* s1,
 	const qse_wchar_t* s2
 );
 
-int qse_mbsxcmp (
+QSE_EXPORT int qse_mbsxcmp (
 	const qse_mchar_t* s1,
 	qse_size_t         ln1,
 	const qse_mchar_t* s2
 );
 
-int qse_wcsxcmp (
+QSE_EXPORT int qse_wcsxcmp (
 	const qse_wchar_t* s1,
 	qse_size_t         ln1,
 	const qse_wchar_t* s2
 );
 
-int qse_mbsxncmp (
+QSE_EXPORT int qse_mbsxncmp (
 	const qse_mchar_t* s1,
 	qse_size_t         ln1, 
 	const qse_mchar_t* s2,
 	qse_size_t         ln2
 );
 
-int qse_wcsxncmp (
+QSE_EXPORT int qse_wcsxncmp (
 	const qse_wchar_t* s1,
 	qse_size_t         ln1, 
 	const qse_wchar_t* s2,
 	qse_size_t         ln2
 );
 
-int qse_mbscasecmp (
+QSE_EXPORT int qse_mbscasecmp (
 	const qse_mchar_t* s1,
 	const qse_mchar_t* s2
 );
 
-int qse_wcscasecmp (
+QSE_EXPORT int qse_wcscasecmp (
 	const qse_wchar_t* s1,
 	const qse_wchar_t* s2
 );
 
-int qse_mbsxcasecmp (
+QSE_EXPORT int qse_mbsxcasecmp (
 	const qse_mchar_t* s1,
 	qse_size_t         ln,
 	const qse_mchar_t* s2
 );
 
-int qse_wcsxcasecmp (
+QSE_EXPORT int qse_wcsxcasecmp (
 	const qse_wchar_t* s1,
 	qse_size_t         ln,
 	const qse_wchar_t* s2
@@ -889,7 +889,7 @@ int qse_wcsxcasecmp (
  *         -1 if the second string is larger.
  *
  */
-int qse_mbsxncasecmp (
+QSE_EXPORT int qse_mbsxncasecmp (
 	const qse_mchar_t* s1,  /**< pointer to the first string */
 	qse_size_t         ln1, /**< length of the first string */ 
 	const qse_mchar_t* s2,  /**< pointer to the second string */
@@ -916,32 +916,32 @@ int qse_mbsxncasecmp (
  *         -1 if the second string is larger.
  *
  */
-int qse_wcsxncasecmp (
+QSE_EXPORT int qse_wcsxncasecmp (
 	const qse_wchar_t* s1,  /**< pointer to the first string */
 	qse_size_t         ln1, /**< length of the first string */ 
 	const qse_wchar_t* s2,  /**< pointer to the second string */
 	qse_size_t         ln2  /**< length of the second string */
 );
 
-int qse_mbszcmp (
+QSE_EXPORT int qse_mbszcmp (
 	const qse_mchar_t* s1,
 	const qse_mchar_t* s2,
 	qse_size_t         n
 );
 
-int qse_mbszcasecmp (
+QSE_EXPORT int qse_mbszcasecmp (
 	const qse_mchar_t* s1,
 	const qse_mchar_t* s2,
 	qse_size_t         n
 );
 
-int qse_wcszcmp (
+QSE_EXPORT int qse_wcszcmp (
 	const qse_wchar_t* s1,
 	const qse_wchar_t* s2,
 	qse_size_t         n
 );
 
-int qse_wcszcasecmp (
+QSE_EXPORT int qse_wcszcasecmp (
 	const qse_wchar_t* s1,
 	const qse_wchar_t* s2,
 	qse_size_t         n
@@ -967,24 +967,24 @@ int qse_wcszcasecmp (
 #	define qse_strzcasecmp(s1,s2,n)        qse_wcszcasecmp(s1,s2,n)
 #endif
 
-qse_mchar_t* qse_mbsdup (
+QSE_EXPORT qse_mchar_t* qse_mbsdup (
 	const qse_mchar_t* str,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_mbsdup2 (
+QSE_EXPORT qse_mchar_t* qse_mbsdup2 (
 	const qse_mchar_t* str1,
 	const qse_mchar_t* str2,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_mbsxdup (
+QSE_EXPORT qse_mchar_t* qse_mbsxdup (
 	const qse_mchar_t* str,
 	qse_size_t         len, 
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_mbsxdup2 (
+QSE_EXPORT qse_mchar_t* qse_mbsxdup2 (
 	const qse_mchar_t* str1,
 	qse_size_t         len1,
 	const qse_mchar_t* str2,
@@ -992,30 +992,30 @@ qse_mchar_t* qse_mbsxdup2 (
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_mbsadup (
+QSE_EXPORT qse_mchar_t* qse_mbsadup (
 	const qse_mchar_t* str[],
 	qse_size_t*        len,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcsdup (
+QSE_EXPORT qse_wchar_t* qse_wcsdup (
 	const qse_wchar_t* str,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcsdup2 (
+QSE_EXPORT qse_wchar_t* qse_wcsdup2 (
 	const qse_wchar_t* str1,
 	const qse_wchar_t* str2,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcsxdup (
+QSE_EXPORT qse_wchar_t* qse_wcsxdup (
 	const qse_wchar_t* str,
 	qse_size_t         len, 
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcsxdup2 (
+QSE_EXPORT qse_wchar_t* qse_wcsxdup2 (
 	const qse_wchar_t* str1,
 	qse_size_t         len1,
 	const qse_wchar_t* str2,
@@ -1023,7 +1023,7 @@ qse_wchar_t* qse_wcsxdup2 (
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcsadup (
+QSE_EXPORT qse_wchar_t* qse_wcsadup (
 	const qse_wchar_t* str[],
 	qse_size_t*        len,
 	qse_mmgr_t*        mmgr
@@ -1043,23 +1043,23 @@ qse_wchar_t* qse_wcsadup (
 #	define qse_stradup(sa,len,mmgr)       qse_wcsadup(sa,len,mmgr)
 #endif
 
-qse_mchar_t* qse_mcstrdup (
+QSE_EXPORT qse_mchar_t* qse_mcstrdup (
 	const qse_mcstr_t* str,
 	qse_mmgr_t*        mmgr
 );
 
-qse_mchar_t* qse_mcstradup (
+QSE_EXPORT qse_mchar_t* qse_mcstradup (
 	const qse_mcstr_t str[],
 	qse_size_t*       len,
 	qse_mmgr_t*       mmgr
 );
 
-qse_wchar_t* qse_wcstrdup (
+QSE_EXPORT qse_wchar_t* qse_wcstrdup (
 	const qse_wcstr_t* str,
 	qse_mmgr_t*        mmgr
 );
 
-qse_wchar_t* qse_wcstradup (
+QSE_EXPORT qse_wchar_t* qse_wcstradup (
 	const qse_wcstr_t str[],
 	qse_size_t*       len,
 	qse_mmgr_t*       mmgr
@@ -1079,7 +1079,7 @@ qse_wchar_t* qse_wcstradup (
  * @return pointer to the first occurrence in @a str if @a sub is found, 
  *         #QSE_NULL if not.
  */
-qse_mchar_t* qse_mbsstr (
+QSE_EXPORT qse_mchar_t* qse_mbsstr (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
@@ -1090,67 +1090,67 @@ qse_mchar_t* qse_mbsstr (
  * @return pointer to the first occurrence in @a str if @a sub is found, 
  *         #QSE_NULL if not.
  */
-qse_wchar_t* qse_wcsstr (
+QSE_EXPORT qse_wchar_t* qse_wcsstr (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxstr (
+QSE_EXPORT qse_mchar_t* qse_mbsxstr (
 	const qse_mchar_t* str,
 	qse_size_t         size,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxstr (
+QSE_EXPORT qse_wchar_t* qse_wcsxstr (
 	const qse_wchar_t* str,
 	qse_size_t         size,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxnstr (
+QSE_EXPORT qse_mchar_t* qse_mbsxnstr (
 	const qse_mchar_t* str,
 	qse_size_t         strsz, 
 	const qse_mchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_wchar_t* qse_wcsxnstr (
+QSE_EXPORT qse_wchar_t* qse_wcsxnstr (
 	const qse_wchar_t* str,
 	qse_size_t         strsz, 
 	const qse_wchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_mchar_t* qse_mbscasestr (
+QSE_EXPORT qse_mchar_t* qse_mbscasestr (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcscasestr (
+QSE_EXPORT qse_wchar_t* qse_wcscasestr (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxcasestr (
+QSE_EXPORT qse_mchar_t* qse_mbsxcasestr (
 	const qse_mchar_t* str,
 	qse_size_t         size,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxcasestr (
+QSE_EXPORT qse_wchar_t* qse_wcsxcasestr (
 	const qse_wchar_t* str,
 	qse_size_t         size,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxncasestr (
+QSE_EXPORT qse_mchar_t* qse_mbsxncasestr (
 	const qse_mchar_t* str,
 	qse_size_t         strsz, 
 	const qse_mchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_wchar_t* qse_wcsxncasestr (
+QSE_EXPORT qse_wchar_t* qse_wcsxncasestr (
 	const qse_wchar_t* str,
 	qse_size_t         strsz, 
 	const qse_wchar_t* sub,
@@ -1163,7 +1163,7 @@ qse_wchar_t* qse_wcsxncasestr (
  * @return pointer to the last occurrence in @a str if @a sub is found, 
  *         #QSE_NULL if not.
  */
-qse_mchar_t* qse_mbsrstr (
+QSE_EXPORT qse_mchar_t* qse_mbsrstr (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
@@ -1174,67 +1174,67 @@ qse_mchar_t* qse_mbsrstr (
  * @return pointer to the last occurrence in @a str if @a sub is found, 
  *         #QSE_NULL if not.
  */
-qse_wchar_t* qse_wcsrstr (
+QSE_EXPORT qse_wchar_t* qse_wcsrstr (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxrstr (
+QSE_EXPORT qse_mchar_t* qse_mbsxrstr (
 	const qse_mchar_t* str,
 	qse_size_t         size,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxrstr (
+QSE_EXPORT qse_wchar_t* qse_wcsxrstr (
 	const qse_wchar_t* str,
 	qse_size_t         size,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxnrstr (
+QSE_EXPORT qse_mchar_t* qse_mbsxnrstr (
 	const qse_mchar_t* str,
 	qse_size_t         strsz, 
 	const qse_mchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_wchar_t* qse_wcsxnrstr (
+QSE_EXPORT qse_wchar_t* qse_wcsxnrstr (
 	const qse_wchar_t* str,
 	qse_size_t         strsz, 
 	const qse_wchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_mchar_t* qse_mbsrcasestr (
+QSE_EXPORT qse_mchar_t* qse_mbsrcasestr (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsrcasestr (
+QSE_EXPORT qse_wchar_t* qse_wcsrcasestr (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxrcasestr (
+QSE_EXPORT qse_mchar_t* qse_mbsxrcasestr (
 	const qse_mchar_t* str,
 	qse_size_t         size,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxrcasestr (
+QSE_EXPORT qse_wchar_t* qse_wcsxrcasestr (
 	const qse_wchar_t* str,
 	qse_size_t         size,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxnrcasestr (
+QSE_EXPORT qse_mchar_t* qse_mbsxnrcasestr (
 	const qse_mchar_t* str,
 	qse_size_t         strsz, 
 	const qse_mchar_t* sub,
 	qse_size_t         subsz
 );
 
-qse_wchar_t* qse_wcsxnrcasestr (
+QSE_EXPORT qse_wchar_t* qse_wcsxnrcasestr (
 	const qse_wchar_t* str,
 	qse_size_t         strsz, 
 	const qse_wchar_t* sub,
@@ -1342,7 +1342,7 @@ const qse_wchar_t* qse_wcsxcaseword (
 /**
  * The qse_mbschr() function finds a chracter in a string. 
  */
-qse_mchar_t* qse_mbschr (
+QSE_EXPORT qse_mchar_t* qse_mbschr (
 	const qse_mchar_t* str,
 	qse_mcint_t        c
 );
@@ -1350,40 +1350,40 @@ qse_mchar_t* qse_mbschr (
 /**
  * The qse_wcschr() function finds a chracter in a string. 
  */
-qse_wchar_t* qse_wcschr (
+QSE_EXPORT qse_wchar_t* qse_wcschr (
 	const qse_wchar_t* str,
 	qse_wcint_t        c
 );
 
-qse_mchar_t* qse_mbsxchr (
+QSE_EXPORT qse_mchar_t* qse_mbsxchr (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	qse_mcint_t        c
 );
 
-qse_wchar_t* qse_wcsxchr (
+QSE_EXPORT qse_wchar_t* qse_wcsxchr (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	qse_wcint_t        c
 );
 
-qse_wchar_t* qse_wcsrchr (
+QSE_EXPORT qse_wchar_t* qse_wcsrchr (
 	const qse_wchar_t* str,
 	qse_wcint_t        c
 );
 
-qse_mchar_t* qse_mbsrchr (
+QSE_EXPORT qse_mchar_t* qse_mbsrchr (
 	const qse_mchar_t* str,
 	qse_mcint_t        c
 );
 
-qse_mchar_t* qse_mbsxrchr (
+QSE_EXPORT qse_mchar_t* qse_mbsxrchr (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	qse_mcint_t        c
 );
 
-qse_wchar_t* qse_wcsxrchr (
+QSE_EXPORT qse_wchar_t* qse_wcsxrchr (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	qse_wcint_t        c
@@ -1406,7 +1406,7 @@ qse_wchar_t* qse_wcsxrchr (
  * @return pointer to the beginning of a matching beginning, 
  *         #SE_NULL if no match is found.
  */
-qse_mchar_t* qse_mbsbeg (
+QSE_EXPORT qse_mchar_t* qse_mbsbeg (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
@@ -1416,55 +1416,55 @@ qse_mchar_t* qse_mbsbeg (
  * @return pointer to the beginning of a matching beginning, 
  *         #QSE_NULL if no match is found.
  */
-qse_wchar_t* qse_wcsbeg (
+QSE_EXPORT qse_wchar_t* qse_wcsbeg (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxbeg (
+QSE_EXPORT qse_mchar_t* qse_mbsxbeg (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxbeg (
+QSE_EXPORT qse_wchar_t* qse_wcsxbeg (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsnbeg (
+QSE_EXPORT qse_mchar_t* qse_mbsnbeg (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub,
 	qse_size_t         len
 );
 
-qse_wchar_t* qse_wcsnbeg (
+QSE_EXPORT qse_wchar_t* qse_wcsnbeg (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub,
 	qse_size_t         len
 );
 
-qse_mchar_t* qse_mbsxnbeg (
+QSE_EXPORT qse_mchar_t* qse_mbsxnbeg (
 	const qse_mchar_t* str,
 	qse_size_t         len1, 
 	const qse_mchar_t* sub,
 	qse_size_t         len2
 );
 
-qse_wchar_t* qse_wcsxnbeg (
+QSE_EXPORT qse_wchar_t* qse_wcsxnbeg (
 	const qse_wchar_t* str,
 	qse_size_t         len1, 
 	const qse_wchar_t* sub,
 	qse_size_t         len2
 );
 
-qse_mchar_t* qse_mbscasebeg (
+QSE_EXPORT qse_mchar_t* qse_mbscasebeg (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcscasebeg (
+QSE_EXPORT qse_wchar_t* qse_wcscasebeg (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
@@ -1488,7 +1488,7 @@ qse_wchar_t* qse_wcscasebeg (
  * @return pointer to the beginning of a matching ending, 
  *         #SE_NULL if no match is found.
  */
-qse_mchar_t* qse_mbsend (
+QSE_EXPORT qse_mchar_t* qse_mbsend (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub
 );
@@ -1498,43 +1498,43 @@ qse_mchar_t* qse_mbsend (
  * @return pointer to the beginning of a matching ending, 
  *         #QSE_NULL if no match is found.
  */
-qse_wchar_t* qse_wcsend (
+QSE_EXPORT qse_wchar_t* qse_wcsend (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsxend (
+QSE_EXPORT qse_mchar_t* qse_mbsxend (
 	const qse_mchar_t* str,
 	qse_size_t         len,
 	const qse_mchar_t* sub
 );
 
-qse_wchar_t* qse_wcsxend (
+QSE_EXPORT qse_wchar_t* qse_wcsxend (
 	const qse_wchar_t* str,
 	qse_size_t         len,
 	const qse_wchar_t* sub
 );
 
-qse_mchar_t* qse_mbsnend (
+QSE_EXPORT qse_mchar_t* qse_mbsnend (
 	const qse_mchar_t* str,
 	const qse_mchar_t* sub,
 	qse_size_t         len
 );
 
-qse_wchar_t* qse_wcsnend (
+QSE_EXPORT qse_wchar_t* qse_wcsnend (
 	const qse_wchar_t* str,
 	const qse_wchar_t* sub,
 	qse_size_t         len
 );
 
-qse_mchar_t* qse_mbsxnend (
+QSE_EXPORT qse_mchar_t* qse_mbsxnend (
 	const qse_mchar_t* str,
 	qse_size_t         len1, 
 	const qse_mchar_t* sub,
 	qse_size_t         len2
 );
 
-qse_wchar_t* qse_wcsxnend (
+QSE_EXPORT qse_wchar_t* qse_wcsxnend (
 	const qse_wchar_t* str,
 	qse_size_t         len1, 
 	const qse_wchar_t* sub,
@@ -1553,22 +1553,22 @@ qse_wchar_t* qse_wcsxnend (
 #	define qse_strxnend(str,len1,sub,len2) qse_wcsxnend(str,len1,sub,len2)
 #endif
 
-qse_size_t qse_mbsspn (
+QSE_EXPORT qse_size_t qse_mbsspn (
 	const qse_mchar_t* str1,
 	const qse_mchar_t* str2
 );
 
-qse_size_t qse_wcsspn (
+QSE_EXPORT qse_size_t qse_wcsspn (
 	const qse_wchar_t* str1,
 	const qse_wchar_t* str2
 );
 
-qse_size_t qse_mbscspn (
+QSE_EXPORT qse_size_t qse_mbscspn (
 	const qse_mchar_t* str1,
 	const qse_mchar_t* str2
 );
 
-qse_size_t qse_wcscspn (
+QSE_EXPORT qse_size_t qse_wcscspn (
 	const qse_wchar_t* str1,
 	const qse_wchar_t* str2
 );
@@ -1587,23 +1587,23 @@ qse_size_t qse_wcscspn (
  * @return pointer to the first occurrence in @a str1 if one is found.
  *         QSE_NULL if none is found.
  */
-qse_mchar_t* qse_mbspbrk (
+QSE_EXPORT qse_mchar_t* qse_mbspbrk (
 	const qse_mchar_t* str1,
 	const qse_mchar_t* str2
 );
 
-qse_mchar_t* qse_mbsxpbrk (
+QSE_EXPORT qse_mchar_t* qse_mbsxpbrk (
 	const qse_mchar_t* str1,
 	qse_size_t         len,
 	const qse_mchar_t* str2
 );
 
-qse_mchar_t* qse_mbsrpbrk (
+QSE_EXPORT qse_mchar_t* qse_mbsrpbrk (
 	const qse_mchar_t* str1,
 	const qse_mchar_t* str2
 );
 
-qse_mchar_t* qse_mbsxrpbrk (
+QSE_EXPORT qse_mchar_t* qse_mbsxrpbrk (
 	const qse_mchar_t* str1,
 	qse_size_t         len,
 	const qse_mchar_t* str2
@@ -1615,23 +1615,23 @@ qse_mchar_t* qse_mbsxrpbrk (
  * @return pointer to the first occurrence in @a str1 if one is found.
  *         QSE_NULL if none is found.
  */
-qse_wchar_t* qse_wcspbrk (
+QSE_EXPORT qse_wchar_t* qse_wcspbrk (
 	const qse_wchar_t* str1,
 	const qse_wchar_t* str2
 );
 
-qse_wchar_t* qse_wcsxpbrk (
+QSE_EXPORT qse_wchar_t* qse_wcsxpbrk (
 	const qse_wchar_t* str1,
 	qse_size_t         len,
 	const qse_wchar_t* str2
 );
 
-qse_wchar_t* qse_wcsrpbrk (
+QSE_EXPORT qse_wchar_t* qse_wcsrpbrk (
 	const qse_wchar_t* str1,
 	const qse_wchar_t* str2
 );
 
-qse_wchar_t* qse_wcsxrpbrk (
+QSE_EXPORT qse_wchar_t* qse_wcsxrpbrk (
 	const qse_wchar_t* str1,
 	qse_size_t         len,
 	const qse_wchar_t* str2
@@ -1652,99 +1652,99 @@ qse_wchar_t* qse_wcsxrpbrk (
 /* 
  * string conversion
  */
-int qse_strtoi (
+QSE_EXPORT int qse_strtoi (
 	const qse_char_t* str
 );
 
-long qse_strtol (
+QSE_EXPORT long qse_strtol (
 	const qse_char_t* str
 );
 
-unsigned int qse_strtoui (
+QSE_EXPORT unsigned int qse_strtoui (
 	const qse_char_t* str
 );
 
-unsigned long qse_strtoul (
+QSE_EXPORT unsigned long qse_strtoul (
 	const qse_char_t* str
 );
 
-int qse_strxtoi (
+QSE_EXPORT int qse_strxtoi (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-long qse_strxtol (
+QSE_EXPORT long qse_strxtol (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-unsigned int qse_strxtoui (
+QSE_EXPORT unsigned int qse_strxtoui (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-unsigned long qse_strxtoul (
+QSE_EXPORT unsigned long qse_strxtoul (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-qse_int_t qse_strtoint (
+QSE_EXPORT qse_int_t qse_strtoint (
 	const qse_char_t* str
 );
 
-qse_long_t qse_strtolong (
+QSE_EXPORT qse_long_t qse_strtolong (
 	const qse_char_t* str
 );
 
-qse_uint_t qse_strtouint (
+QSE_EXPORT qse_uint_t qse_strtouint (
 	const qse_char_t* str
 );
 
-qse_ulong_t qse_strtoulong (
+QSE_EXPORT qse_ulong_t qse_strtoulong (
 	const qse_char_t* str
 );
 
-qse_int_t qse_strxtoint (
+QSE_EXPORT qse_int_t qse_strxtoint (
 	const qse_char_t* str, qse_size_t len
 );
 
-qse_long_t qse_strxtolong (
+QSE_EXPORT qse_long_t qse_strxtolong (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-qse_uint_t qse_strxtouint (
+QSE_EXPORT qse_uint_t qse_strxtouint (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
-qse_ulong_t qse_strxtoulong (
+QSE_EXPORT qse_ulong_t qse_strxtoulong (
 	const qse_char_t* str,
 	qse_size_t        len
 );
 
 
 
-qse_size_t qse_mbsdel (
+QSE_EXPORT qse_size_t qse_mbsdel (
 	qse_mchar_t* str, 
 	qse_size_t   pos,
 	qse_size_t   n
 );
 
-qse_size_t qse_wcsdel (
+QSE_EXPORT qse_size_t qse_wcsdel (
 	qse_wchar_t* str, 
 	qse_size_t   pos,
 	qse_size_t   n
 );
 
-qse_size_t qse_mbsxdel (
+QSE_EXPORT qse_size_t qse_mbsxdel (
 	qse_mchar_t* str, 
 	qse_size_t   len,
 	qse_size_t   pos,
 	qse_size_t   n
 );
 
-qse_size_t qse_wcsxdel (
+QSE_EXPORT qse_size_t qse_wcsxdel (
 	qse_wchar_t* str, 
 	qse_size_t   len,
 	qse_size_t   pos,
@@ -1760,23 +1760,23 @@ qse_size_t qse_wcsxdel (
 #endif
 
 
-qse_size_t qse_mbsexcl (
+QSE_EXPORT qse_size_t qse_mbsexcl (
 	qse_mchar_t*       str,
 	const qse_mchar_t* cs
 );
 
-qse_size_t qse_mbsxexcl (
+QSE_EXPORT qse_size_t qse_mbsxexcl (
 	qse_mchar_t*       str,
 	qse_size_t         len,
 	const qse_mchar_t* cs
 );
 
-qse_size_t qse_wcsexcl (
+QSE_EXPORT qse_size_t qse_wcsexcl (
 	qse_wchar_t*       str,
 	const qse_wchar_t* cs
 );
 
-qse_size_t qse_wcsxexcl (
+QSE_EXPORT qse_size_t qse_wcsxexcl (
 	qse_wchar_t*       str,
 	qse_size_t         len,
 	const qse_wchar_t* cs
@@ -1790,23 +1790,23 @@ qse_size_t qse_wcsxexcl (
 #	define qse_strxexcl(str,len,cs) qse_wcsxexcl(str,len,cs)
 #endif
 
-qse_size_t qse_mbsincl (
+QSE_EXPORT qse_size_t qse_mbsincl (
 	qse_mchar_t*       str,
 	const qse_mchar_t* cs
 );
 
-qse_size_t qse_mbsxincl (
+QSE_EXPORT qse_size_t qse_mbsxincl (
 	qse_mchar_t*       str,
 	qse_size_t         len,
 	const qse_mchar_t* cs
 );
 
-qse_size_t qse_wcsincl (
+QSE_EXPORT qse_size_t qse_wcsincl (
 	qse_wchar_t*       str,
 	const qse_wchar_t* cs
 );
 
-qse_size_t qse_wcsxincl (
+QSE_EXPORT qse_size_t qse_wcsxincl (
 	qse_wchar_t*       str,
 	qse_size_t         len,
 	const qse_wchar_t* cs
@@ -1820,19 +1820,19 @@ qse_size_t qse_wcsxincl (
 #	define qse_strxincl(str,len,cs) qse_wcsxincl(str,len,cs)
 #endif
 
-qse_size_t qse_mbsset (
+QSE_EXPORT qse_size_t qse_mbsset (
 	qse_mchar_t* buf,
 	qse_mchar_t  c,
 	qse_size_t   n
 );
 
-qse_size_t qse_wcsset (
+QSE_EXPORT qse_size_t qse_wcsset (
 	qse_wchar_t* buf,
 	qse_wchar_t  c,
 	qse_size_t   n
 );
 
-qse_size_t qse_mbsxset (
+QSE_EXPORT qse_size_t qse_mbsxset (
 	qse_mchar_t* buf,
 	qse_size_t   bsz,
 	qse_mchar_t  c,
@@ -1840,7 +1840,7 @@ qse_size_t qse_mbsxset (
 );
 
 
-qse_size_t qse_wcsxset (
+QSE_EXPORT qse_size_t qse_wcsxset (
 	qse_wchar_t* buf,
 	qse_size_t   bsz,
 	qse_wchar_t  c,
@@ -1857,19 +1857,19 @@ qse_size_t qse_wcsxset (
 
 /* case conversion */
 
-qse_size_t qse_mbslwr (
+QSE_EXPORT qse_size_t qse_mbslwr (
 	qse_mchar_t* str
 );
 
-qse_size_t qse_wcslwr (
+QSE_EXPORT qse_size_t qse_wcslwr (
 	qse_wchar_t* str
 );
 
-qse_size_t qse_mbsupr (
+QSE_EXPORT qse_size_t qse_mbsupr (
 	qse_mchar_t* str
 );
 
-qse_size_t qse_wcsupr (
+QSE_EXPORT qse_size_t qse_wcsupr (
 	qse_wchar_t* str
 );
 
@@ -1882,20 +1882,20 @@ qse_size_t qse_wcsupr (
 #endif
 
 
-qse_size_t qse_mbsrev (
+QSE_EXPORT qse_size_t qse_mbsrev (
 	qse_mchar_t* str
 );
 
-qse_size_t qse_wcsrev (
+QSE_EXPORT qse_size_t qse_wcsrev (
 	qse_wchar_t* str
 );
 
-qse_size_t qse_mbsxrev (	
+QSE_EXPORT qse_size_t qse_mbsxrev (	
 	qse_mchar_t* str,
 	qse_size_t   len
 );
 
-qse_size_t qse_wcsxrev (	
+QSE_EXPORT qse_size_t qse_wcsxrev (	
 	qse_wchar_t* str,
 	qse_size_t   len
 );
@@ -1908,26 +1908,26 @@ qse_size_t qse_wcsxrev (
 #	define qse_strxrev(str,len) qse_wcsxrev(str,len)
 #endif
 
-qse_size_t qse_mbsrot (
+QSE_EXPORT qse_size_t qse_mbsrot (
 	qse_mchar_t* str,
 	int          dir,
 	qse_size_t   n
 );
 
-qse_size_t qse_wcsrot (
+QSE_EXPORT qse_size_t qse_wcsrot (
 	qse_wchar_t* str,
 	int          dir,
 	qse_size_t   n
 );
 
-qse_size_t qse_mbsxrot (
+QSE_EXPORT qse_size_t qse_mbsxrot (
 	qse_mchar_t* str,
 	qse_size_t   len,
 	int          dir,
 	qse_size_t   n
 );
 
-qse_size_t qse_wcsxrot (
+QSE_EXPORT qse_size_t qse_wcsxrot (
 	qse_wchar_t* str,
 	qse_size_t   len,
 	int          dir,
@@ -1945,7 +1945,7 @@ qse_size_t qse_wcsxrot (
 /**
  * The qse_mbsspl() function splits a string into fields.
  */
-int qse_mbsspl (
+QSE_EXPORT int qse_mbsspl (
 	qse_mchar_t*       str,
 	const qse_mchar_t* delim,
 	qse_mchar_t        lquote,
@@ -1956,7 +1956,7 @@ int qse_mbsspl (
 /**
  * The qse_wcsspl() function splits a string into fields.
  */
-int qse_wcsspl (
+QSE_EXPORT int qse_wcsspl (
 	qse_wchar_t*       str,
 	const qse_wchar_t* delim,
 	qse_wchar_t        lquote,
@@ -1987,7 +1987,7 @@ int qse_wcsspl (
  * If you don't need translation, you may call qse_mbsspl() instead.
  * @return number of resulting fields on success, -1 on failure
  */
-int qse_mbsspltrn (
+QSE_EXPORT int qse_mbsspltrn (
 	qse_mchar_t*       str,
 	const qse_mchar_t* delim,
 	qse_mchar_t        lquote,
@@ -2019,7 +2019,7 @@ int qse_mbsspltrn (
  * If you don't need translation, you may call qse_wcsspl() instead.
  * @return number of resulting fields on success, -1 on failure
  */
-int qse_wcsspltrn (
+QSE_EXPORT int qse_wcsspltrn (
 	qse_wchar_t*       str,
 	const qse_wchar_t* delim,
 	qse_wchar_t        lquote,
@@ -2037,20 +2037,20 @@ int qse_wcsspltrn (
 #endif
 
 
-qse_mchar_t* qse_mbstok (
+QSE_EXPORT qse_mchar_t* qse_mbstok (
 	const qse_mchar_t* s,
 	const qse_mchar_t* delim, 
 	qse_mcstr_t*       tok
 );
 
-qse_mchar_t* qse_mbsxtok (
+QSE_EXPORT qse_mchar_t* qse_mbsxtok (
 	const qse_mchar_t* s,
 	qse_size_t         len,
 	const qse_mchar_t* delim,
 	qse_mcstr_t*       tok
 );
 
-qse_mchar_t* qse_mbsxntok (
+QSE_EXPORT qse_mchar_t* qse_mbsxntok (
 	const qse_mchar_t* s,
 	qse_size_t         len,
 	const qse_mchar_t* delim,
@@ -2058,20 +2058,20 @@ qse_mchar_t* qse_mbsxntok (
 	qse_mcstr_t*       tok
 );
 
-qse_wchar_t* qse_wcstok (
+QSE_EXPORT qse_wchar_t* qse_wcstok (
 	const qse_wchar_t* s,
 	const qse_wchar_t* delim, 
 	qse_wcstr_t*       tok
 );
 
-qse_wchar_t* qse_wcsxtok (
+QSE_EXPORT qse_wchar_t* qse_wcsxtok (
 	const qse_wchar_t* s,
 	qse_size_t         len,
 	const qse_wchar_t* delim,
 	qse_wcstr_t*       tok
 );
 
-qse_wchar_t* qse_wcsxntok (
+QSE_EXPORT qse_wchar_t* qse_wcsxntok (
 	const qse_wchar_t* s,
 	qse_size_t         len,
 	const qse_wchar_t* delim,
@@ -2110,12 +2110,12 @@ qse_wchar_t* qse_wcsxntok (
  *
  * @return pointer to a trimmed string.
  */
-qse_mchar_t* qse_mbstrmx (
+QSE_EXPORT qse_mchar_t* qse_mbstrmx (
 	qse_mchar_t* str,   /**< string */
 	int          flags  /**< option OR'ed of #qse_mbstrmx_flag_t values */
 );
 
-qse_mchar_t* qse_mbsxtrmx (
+QSE_EXPORT qse_mchar_t* qse_mbsxtrmx (
 	qse_mchar_t* str,   /**< string */
 	qse_size_t*  len,   /**< [IN/OUT] length */
 	int          flags  /**< option OR'ed of #qse_mbstrmx_flag_t values */
@@ -2142,12 +2142,12 @@ qse_mchar_t* qse_mbsxtrmx (
  *
  * @return pointer to a trimmed string.
  */
-qse_wchar_t* qse_wcstrmx (
+QSE_EXPORT qse_wchar_t* qse_wcstrmx (
 	qse_wchar_t* str,   /**< string */
 	int          flags  /**< option OR'ed of #qse_wcstrmx_flag_t values */
 );
 
-qse_wchar_t* qse_wcsxtrmx (
+QSE_EXPORT qse_wchar_t* qse_wcsxtrmx (
 	qse_wchar_t* str,   /**< string */
 	qse_size_t*  len,   /**< [IN/OUT] length */
 	int          flags  /**< option OR'ed of #qse_wcstrmx_flag_t values */
@@ -2160,7 +2160,7 @@ qse_wchar_t* qse_wcsxtrmx (
  * by @a str; QSE_MT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_mbstrm (
+QSE_EXPORT qse_size_t qse_mbstrm (
 	qse_mchar_t* str /**< string */
 );
 
@@ -2171,7 +2171,7 @@ qse_size_t qse_mbstrm (
  * by @a str; QSE_WT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_wcstrm (
+QSE_EXPORT qse_size_t qse_wcstrm (
 	qse_wchar_t* str /**< string */
 );
 
@@ -2182,7 +2182,7 @@ qse_size_t qse_wcstrm (
  * by @a str; QSE_MT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_mbsxtrm (
+QSE_EXPORT qse_size_t qse_mbsxtrm (
 	qse_mchar_t* str, /**< string */
 	qse_size_t   len  /**< length */
 );
@@ -2194,7 +2194,7 @@ qse_size_t qse_mbsxtrm (
  * by @a str; QSE_WT('\0') is inserted after the last non-space character.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_wcsxtrm (
+QSE_EXPORT qse_size_t qse_wcsxtrm (
 	qse_wchar_t* str, /**< string */
 	qse_size_t   len  /**< length */
 );
@@ -2216,7 +2216,7 @@ qse_size_t qse_wcsxtrm (
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_mbspac (
+QSE_EXPORT qse_size_t qse_mbspac (
 	qse_mchar_t* str /**< string */
 );
 
@@ -2225,7 +2225,7 @@ qse_size_t qse_mbspac (
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_wcspac (
+QSE_EXPORT qse_size_t qse_wcspac (
 	qse_wchar_t* str /**< string */
 );
 
@@ -2235,7 +2235,7 @@ qse_size_t qse_wcspac (
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_mbsxpac (
+QSE_EXPORT qse_size_t qse_mbsxpac (
 	qse_mchar_t* str, /**< string */
 	qse_size_t   len  /**< length */
 );
@@ -2245,7 +2245,7 @@ qse_size_t qse_mbsxpac (
  * as stripping leading whitespaces and trailing whitespaces.
  * @return length of the string without leading and trailing spaces.
  */
-qse_size_t qse_wcsxpac (
+QSE_EXPORT qse_size_t qse_wcsxpac (
 	qse_wchar_t* str, /**< string */
 	qse_size_t   len  /**< length */
 );
@@ -2258,27 +2258,27 @@ qse_size_t qse_wcsxpac (
 #	define qse_strxpac(str,len) qse_wcsxpac(str,len)
 #endif
 
-int qse_mbsfnmat (
+QSE_EXPORT int qse_mbsfnmat (
 	const qse_mchar_t* str,
 	const qse_mchar_t* ptn,
 	int                flags
 );
 
-int qse_mbsxfnmat  (
+QSE_EXPORT int qse_mbsxfnmat  (
      const qse_mchar_t* str,
 	qse_size_t         slen,
 	const qse_mchar_t* ptn,
 	int                flags
 );
 
-int qse_mbsnfnmat  (
+QSE_EXPORT int qse_mbsnfnmat  (
      const qse_mchar_t* str,
 	const qse_mchar_t* ptn,
 	qse_size_t         plen,
 	int                flags
 );
 
-int qse_mbsxnfnmat (
+QSE_EXPORT int qse_mbsxnfnmat (
 	const qse_mchar_t* str,
 	qse_size_t         slen,
 	const qse_mchar_t* ptn,
@@ -2286,27 +2286,27 @@ int qse_mbsxnfnmat (
 	int                flags
 );
 
-int qse_wcsfnmat (
+QSE_EXPORT int qse_wcsfnmat (
 	const qse_wchar_t* str,
 	const qse_wchar_t* ptn,
 	int                flags
 );
 
-int qse_wcsxfnmat  (
+QSE_EXPORT int qse_wcsxfnmat  (
      const qse_wchar_t* str,
 	qse_size_t         slen,
 	const qse_wchar_t* ptn,
 	int                flags
 );
 
-int qse_wcsnfnmat  (
+QSE_EXPORT int qse_wcsnfnmat  (
      const qse_wchar_t* str,
 	const qse_wchar_t* ptn,
 	qse_size_t         plen,
 	int                flags
 );
 
-int qse_wcsxnfnmat (
+QSE_EXPORT int qse_wcsxnfnmat (
 	const qse_wchar_t* str,
 	qse_size_t         slen,
 	const qse_wchar_t* ptn,
@@ -2327,18 +2327,16 @@ int qse_wcsxnfnmat (
 #endif
 
 
-QSE_DEFINE_COMMON_FUNCTIONS (mbs)
-
 /**
  * The qse_mbs_open() function creates a dynamically resizable multibyte string.
  */
-qse_mbs_t* qse_mbs_open (
+QSE_EXPORT qse_mbs_t* qse_mbs_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext,
 	qse_size_t  capa
 );
 
-void qse_mbs_close (
+QSE_EXPORT void qse_mbs_close (
 	qse_mbs_t* mbs
 );
 
@@ -2348,7 +2346,7 @@ void qse_mbs_close (
  * in advance and always succeeds.
  * @return 0 on success, -1 on failure.
  */
-int qse_mbs_init (
+QSE_EXPORT int qse_mbs_init (
 	qse_mbs_t*  mbs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
@@ -2357,7 +2355,15 @@ int qse_mbs_init (
 /**
  * The qse_mbs_fini() function finalizes a dynamically resizable string.
  */
-void qse_mbs_fini (
+QSE_EXPORT void qse_mbs_fini (
+	qse_mbs_t* mbs
+);
+
+QSE_EXPORT qse_mmgr_t* qse_mbs_getmmgr (
+	qse_mbs_t* mbs
+);
+
+QSE_EXPORT void* qse_mbs_getxtn (
 	qse_mbs_t* mbs
 );
 
@@ -2367,13 +2373,13 @@ void qse_mbs_fini (
  * The function fails if it fails to allocate a new buffer.
  * @return 0 on success, and -1 on failure.
  */
-int qse_mbs_yield (
+QSE_EXPORT int qse_mbs_yield (
 	qse_mbs_t*   str,    /**< string */
 	qse_mxstr_t* buf,    /**< buffer pointer */
 	qse_size_t   newcapa /**< new capacity */
 );
 
-qse_mchar_t* qse_mbs_yieldptr (
+QSE_EXPORT qse_mchar_t* qse_mbs_yieldptr (
 	qse_mbs_t*   str,    /**< string */
 	qse_size_t   newcapa /**< new capacity */
 );
@@ -2382,7 +2388,7 @@ qse_mchar_t* qse_mbs_yieldptr (
  * The qse_mbs_getsizer() function gets the sizer.
  * @return sizer function set or QSE_NULL if no sizer is set.
  */
-qse_mbs_sizer_t qse_mbs_getsizer (
+QSE_EXPORT qse_mbs_sizer_t qse_mbs_getsizer (
 	qse_mbs_t* str
 );
 
@@ -2394,7 +2400,7 @@ qse_mbs_sizer_t qse_mbs_getsizer (
  * The string is truncated if the sizer function returns a smaller number
  * than the hint passed.
  */
-void qse_mbs_setsizer (
+QSE_EXPORT void qse_mbs_setsizer (
 	qse_mbs_t*      str,
 	qse_mbs_sizer_t sizer
 );
@@ -2404,7 +2410,7 @@ void qse_mbs_setsizer (
  * You may use QSE_STR_CAPA(str) macro for performance sake.
  * @return current capacity in number of characters.
  */
-qse_size_t qse_mbs_getcapa (
+QSE_EXPORT qse_size_t qse_mbs_getcapa (
 	qse_mbs_t* str
 );
 
@@ -2414,7 +2420,7 @@ qse_size_t qse_mbs_getcapa (
  * from the buffer.
  * @return (qse_size_t)-1 on failure, new capacity on success 
  */
-qse_size_t qse_mbs_setcapa (
+QSE_EXPORT qse_size_t qse_mbs_setcapa (
 	qse_mbs_t* str,
 	qse_size_t capa
 );
@@ -2422,7 +2428,7 @@ qse_size_t qse_mbs_setcapa (
 /**
  * The qse_mbs_getlen() function return the string length.
  */
-qse_size_t qse_mbs_getlen (
+QSE_EXPORT qse_size_t qse_mbs_getlen (
 	qse_mbs_t* str
 );
 
@@ -2430,7 +2436,7 @@ qse_size_t qse_mbs_getlen (
  * The qse_mbs_setlen() function changes the string length.
  * @return (qse_size_t)-1 on failure, new length on success 
  */
-qse_size_t qse_mbs_setlen (
+QSE_EXPORT qse_size_t qse_mbs_setlen (
 	qse_mbs_t* str,
 	qse_size_t len
 );
@@ -2439,7 +2445,7 @@ qse_size_t qse_mbs_setlen (
  * The qse_mbs_clear() funtion deletes all characters in a string and sets
  * the length to 0. It doesn't resize the internal buffer.
  */
-void qse_mbs_clear (
+QSE_EXPORT void qse_mbs_clear (
 	qse_mbs_t* str
 );
 
@@ -2447,78 +2453,75 @@ void qse_mbs_clear (
  * The qse_mbs_swap() function exchanges the pointers to a buffer between
  * two strings. It updates the length and the capacity accordingly.
  */
-void qse_mbs_swap (
+QSE_EXPORT void qse_mbs_swap (
 	qse_mbs_t* str1,
 	qse_mbs_t* str2
 );
 
-qse_size_t qse_mbs_cpy (
+QSE_EXPORT qse_size_t qse_mbs_cpy (
 	qse_mbs_t*         str,
 	const qse_mchar_t* s
 );
 
-qse_size_t qse_mbs_ncpy (
+QSE_EXPORT qse_size_t qse_mbs_ncpy (
 	qse_mbs_t*         str,
 	const qse_mchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_mbs_cat (
+QSE_EXPORT qse_size_t qse_mbs_cat (
 	qse_mbs_t*         str,
 	const qse_mchar_t* s
 );
 
-qse_size_t qse_mbs_ncat (
+QSE_EXPORT qse_size_t qse_mbs_ncat (
 	qse_mbs_t*         str,
 	const qse_mchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_mbs_nrcat (
+QSE_EXPORT qse_size_t qse_mbs_nrcat (
 	qse_mbs_t*         str,
 	const qse_mchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_mbs_ccat (
+QSE_EXPORT qse_size_t qse_mbs_ccat (
 	qse_mbs_t*  str,
 	qse_mchar_t c
 );
 
-qse_size_t qse_mbs_nccat (
+QSE_EXPORT qse_size_t qse_mbs_nccat (
 	qse_mbs_t*  str,
 	qse_mchar_t c,
 	qse_size_t  len
 );
 
-qse_size_t qse_mbs_del (
+QSE_EXPORT qse_size_t qse_mbs_del (
 	qse_mbs_t* str,
 	qse_size_t index,
 	qse_size_t size
 );
 
-qse_size_t qse_mbs_trm (
+QSE_EXPORT qse_size_t qse_mbs_trm (
 	qse_mbs_t* str
 );
 
-qse_size_t qse_mbs_pac (
+QSE_EXPORT qse_size_t qse_mbs_pac (
 	qse_mbs_t* str
 );
-
-QSE_DEFINE_COMMON_FUNCTIONS (wcs)
-
 
 /**
  * The qse_wcs_open() function creates a dynamically resizable wide-character
  * string.
  */
-qse_wcs_t* qse_wcs_open (
+QSE_EXPORT qse_wcs_t* qse_wcs_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  ext,
 	qse_size_t  capa
 );
 
-void qse_wcs_close (
+QSE_EXPORT void qse_wcs_close (
 	qse_wcs_t* wcs
 );
 
@@ -2528,7 +2531,7 @@ void qse_wcs_close (
  * in advance and always succeeds.
  * @return 0 on success, -1 on failure.
  */
-int qse_wcs_init (
+QSE_EXPORT int qse_wcs_init (
 	qse_wcs_t*  wcs,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
@@ -2537,7 +2540,15 @@ int qse_wcs_init (
 /**
  * The qse_wcs_fini() function finalizes a dynamically resizable string.
  */
-void qse_wcs_fini (
+QSE_EXPORT void qse_wcs_fini (
+	qse_wcs_t* wcs
+);
+
+QSE_EXPORT qse_mmgr_t* qse_wcs_getmmgr (
+	qse_wcs_t* wcs
+);
+
+QSE_EXPORT void* qse_wcs_getxtn (
 	qse_wcs_t* wcs
 );
 
@@ -2547,13 +2558,13 @@ void qse_wcs_fini (
  * The function fails if it fails to allocate a new buffer.
  * @return 0 on success, and -1 on failure.
  */
-int qse_wcs_yield (
+QSE_EXPORT int qse_wcs_yield (
 	qse_wcs_t*   str,     /**< string */
 	qse_wxstr_t* buf,     /**< buffer pointer */
 	qse_size_t   new_capa /**< new capacity */
 );
 
-qse_wchar_t* qse_wcs_yieldptr (
+QSE_EXPORT qse_wchar_t* qse_wcs_yieldptr (
 	qse_wcs_t*   str,    /**< string */
 	qse_size_t   newcapa /**< new capacity */
 );
@@ -2562,7 +2573,7 @@ qse_wchar_t* qse_wcs_yieldptr (
  * The qse_wcs_getsizer() function gets the sizer.
  * @return sizer function set or QSE_NULL if no sizer is set.
  */
-qse_wcs_sizer_t qse_wcs_getsizer (
+QSE_EXPORT qse_wcs_sizer_t qse_wcs_getsizer (
 	qse_wcs_t* str
 );
 
@@ -2574,7 +2585,7 @@ qse_wcs_sizer_t qse_wcs_getsizer (
  * The string is truncated if the sizer function returns a smaller number
  * than the hint passed.
  */
-void qse_wcs_setsizer (
+QSE_EXPORT void qse_wcs_setsizer (
 	qse_wcs_t*      str,
 	qse_wcs_sizer_t sizer
 );
@@ -2584,7 +2595,7 @@ void qse_wcs_setsizer (
  * You may use QSE_STR_CAPA(str) macro for performance sake.
  * @return current capacity in number of characters.
  */
-qse_size_t qse_wcs_getcapa (
+QSE_EXPORT qse_size_t qse_wcs_getcapa (
 	qse_wcs_t* str
 );
 
@@ -2594,7 +2605,7 @@ qse_size_t qse_wcs_getcapa (
  * from the buffer.
  * @return (qse_size_t)-1 on failure, new capacity on success 
  */
-qse_size_t qse_wcs_setcapa (
+QSE_EXPORT qse_size_t qse_wcs_setcapa (
 	qse_wcs_t* str,
 	qse_size_t capa
 );
@@ -2602,7 +2613,7 @@ qse_size_t qse_wcs_setcapa (
 /**
  * The qse_wcs_getlen() function return the string length.
  */
-qse_size_t qse_wcs_getlen (
+QSE_EXPORT qse_size_t qse_wcs_getlen (
 	qse_wcs_t* str
 );
 
@@ -2610,7 +2621,7 @@ qse_size_t qse_wcs_getlen (
  * The qse_wcs_setlen() function changes the string length.
  * @return (qse_size_t)-1 on failure, new length on success 
  */
-qse_size_t qse_wcs_setlen (
+QSE_EXPORT qse_size_t qse_wcs_setlen (
 	qse_wcs_t* str,
 	qse_size_t len
 );
@@ -2619,7 +2630,7 @@ qse_size_t qse_wcs_setlen (
  * The qse_wcs_clear() funtion deletes all characters in a string and sets
  * the length to 0. It doesn't resize the internal buffer.
  */
-void qse_wcs_clear (
+QSE_EXPORT void qse_wcs_clear (
 	qse_wcs_t* str
 );
 
@@ -2627,61 +2638,61 @@ void qse_wcs_clear (
  * The qse_wcs_swap() function exchanges the pointers to a buffer between
  * two strings. It updates the length and the capacity accordingly.
  */
-void qse_wcs_swap (
+QSE_EXPORT void qse_wcs_swap (
 	qse_wcs_t* str1,
 	qse_wcs_t* str2
 );
 
-qse_size_t qse_wcs_cpy (
+QSE_EXPORT qse_size_t qse_wcs_cpy (
 	qse_wcs_t*         str,
 	const qse_wchar_t* s
 );
 
-qse_size_t qse_wcs_ncpy (
+QSE_EXPORT qse_size_t qse_wcs_ncpy (
 	qse_wcs_t*         str,
 	const qse_wchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_wcs_cat (
+QSE_EXPORT qse_size_t qse_wcs_cat (
 	qse_wcs_t*         str,
 	const qse_wchar_t* s
 );
 
-qse_size_t qse_wcs_ncat (
+QSE_EXPORT qse_size_t qse_wcs_ncat (
 	qse_wcs_t*         str,
 	const qse_wchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_wcs_nrcat (
+QSE_EXPORT qse_size_t qse_wcs_nrcat (
 	qse_wcs_t*         str,
 	const qse_wchar_t* s,
 	qse_size_t         len
 );
 
-qse_size_t qse_wcs_ccat (
+QSE_EXPORT qse_size_t qse_wcs_ccat (
 	qse_wcs_t*  str,
 	qse_wchar_t c
 );
 
-qse_size_t qse_wcs_nccat (
+QSE_EXPORT qse_size_t qse_wcs_nccat (
 	qse_wcs_t*  str,
 	qse_wchar_t c,
 	qse_size_t  len
 );
 
-qse_size_t qse_wcs_del (
+QSE_EXPORT qse_size_t qse_wcs_del (
 	qse_wcs_t* str,
 	qse_size_t index,
 	qse_size_t size
 );
 
-qse_size_t qse_wcs_trm (
+QSE_EXPORT qse_size_t qse_wcs_trm (
 	qse_wcs_t* str
 );
 
-qse_size_t qse_wcs_pac (
+QSE_EXPORT qse_size_t qse_wcs_pac (
 	qse_wcs_t* str
 );
 

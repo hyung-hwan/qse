@@ -43,35 +43,35 @@ struct qse_ip6ad_t
 extern "C" {
 #endif
 
-int qse_mbstoip4ad (
+QSE_EXPORT int qse_mbstoip4ad (
 	const qse_mchar_t* mbs,
 	qse_ip4ad_t*       ipad
 );
 
-int qse_mbsntoip4ad (
+QSE_EXPORT int qse_mbsntoip4ad (
 	const qse_mchar_t* mbs,
 	qse_size_t         len,
 	qse_ip4ad_t*       ipad
 );
 
-int qse_wcstoip4ad (
+QSE_EXPORT int qse_wcstoip4ad (
 	const qse_wchar_t* wcs,
 	qse_ip4ad_t*       ipad
 );
 
-int qse_wcsntoip4ad (
+QSE_EXPORT int qse_wcsntoip4ad (
 	const qse_wchar_t* wcs,
 	qse_size_t         len,
 	qse_ip4ad_t*       ipad
 );
 
-qse_size_t qse_ip4adtombs (
+QSE_EXPORT qse_size_t qse_ip4adtombs (
 	const qse_ip4ad_t* ipad,
 	qse_mchar_t*       mbs,
 	qse_size_t         len
 );
 
-qse_size_t qse_ip4adtowcs (
+QSE_EXPORT qse_size_t qse_ip4adtowcs (
 	const qse_ip4ad_t* ipad,
 	qse_wchar_t*       wcs,
 	qse_size_t         len
@@ -87,35 +87,35 @@ qse_size_t qse_ip4adtowcs (
 #	define qse_ip4adtostr(ipad,ptr,len)  qse_ip4adtowcs(ipad,ptr,len)
 #endif
 
-int qse_mbstoip6ad (
+QSE_EXPORT int qse_mbstoip6ad (
 	const qse_mchar_t* mbs,
 	qse_ip6ad_t*       ipad
 );
 
-int qse_mbsntoip6ad (
+QSE_EXPORT int qse_mbsntoip6ad (
 	const qse_mchar_t* mbs,
 	qse_size_t         len,
 	qse_ip6ad_t*       ipad
 );
 
-int qse_wcstoip6ad (
+QSE_EXPORT int qse_wcstoip6ad (
 	const qse_wchar_t* wcs,
 	qse_ip6ad_t*       ipad
 );
 
-int qse_wcsntoip6ad (
+QSE_EXPORT int qse_wcsntoip6ad (
 	const qse_wchar_t* wcs,
 	qse_size_t         len,
 	qse_ip6ad_t*       ipad
 );
 
-qse_size_t qse_ip6adtombs (
+QSE_EXPORT qse_size_t qse_ip6adtombs (
 	const qse_ip6ad_t* ipad,
 	qse_mchar_t*       mbs,
 	qse_size_t         len
 );
 
-qse_size_t qse_ip6adtowcs (
+QSE_EXPORT qse_size_t qse_ip6adtowcs (
 	const qse_ip6ad_t* ipad,
 	qse_wchar_t*       wcs,
 	qse_size_t         len
@@ -137,7 +137,7 @@ qse_size_t qse_ip6adtowcs (
  * between 0 and 32 inclusive.
  * @return 0 on success, -1 on failure
  */
-int qse_prefixtoip4ad (
+QSE_EXPORT int qse_prefixtoip4ad (
 	int          prefix,
 	qse_ip4ad_t* ipad
 );
@@ -148,7 +148,7 @@ int qse_prefixtoip4ad (
  * between 0 and 128 inclusive.
  * @return 0 on success, -1 on failure
  */
-int qse_prefixtoip6ad (
+QSE_EXPORT int qse_prefixtoip6ad (
 	int          prefix,
 	qse_ip6ad_t* ipad
 );

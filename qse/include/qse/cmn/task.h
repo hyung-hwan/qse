@@ -37,36 +37,36 @@ typedef qse_task_slice_t* (*qse_task_fnc_t) (
 extern "C" {
 #endif
 
-qse_task_t* qse_task_open (
+QSE_EXPORT qse_task_t* qse_task_open (
 	qse_mmgr_t* mmgr,
 	qse_size_t  xtnsize	
 );
 
-void qse_task_close (
+QSE_EXPORT void qse_task_close (
 	qse_task_t* task
 );
 
-qse_mmgr_t* qse_task_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_task_getmmgr (
 	qse_task_t* task
 );
 
-void* qse_task_getxtn (
+QSE_EXPORT void* qse_task_getxtn (
 	qse_task_t* task
 );
 
-qse_task_slice_t* qse_task_create (
+QSE_EXPORT qse_task_slice_t* qse_task_create (
 	qse_task_t*    task,
 	qse_task_fnc_t fnc,
 	void*          ctx,
 	qse_size_t     stksize
 );
 
-int qse_task_boot (
+QSE_EXPORT int qse_task_boot (
 	qse_task_t*       task,
 	qse_task_slice_t* to
 );
 
-void qse_task_schedule (
+QSE_EXPORT void qse_task_schedule (
 	qse_task_t*       task,
 	qse_task_slice_t* from,
 	qse_task_slice_t* to

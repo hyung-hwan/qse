@@ -68,7 +68,7 @@ extern "C" {
  * The qse_mbsbasename() function returns the pointer to the file name 
  * segment in a multibyte path name.
  */
-const qse_mchar_t* qse_mbsbasename (
+QSE_EXPORT const qse_mchar_t* qse_mbsbasename (
 	const qse_mchar_t* path
 );
 
@@ -76,7 +76,7 @@ const qse_mchar_t* qse_mbsbasename (
  * The qse_wcsbasename() function returns the pointer to the file name 
  * segment in a wide-character path name.
  */
-const qse_wchar_t* qse_wcsbasename (
+QSE_EXPORT const qse_wchar_t* qse_wcsbasename (
 	const qse_wchar_t* path
 );
 
@@ -87,7 +87,7 @@ const qse_wchar_t* qse_wcsbasename (
  * letter followed by a colon.
  * @return 1 if absolute, 0 if not.
  */
-int qse_ismbsabspath (
+QSE_EXPORT int qse_ismbsabspath (
 	const qse_mchar_t* path
 );
 
@@ -95,7 +95,7 @@ int qse_ismbsabspath (
  * The qse_ismbsdrivepath() function determines if a path name begins with
  * a drive letter followed by a colon like A:.
  */
-int qse_ismbsdrivepath (
+QSE_EXPORT int qse_ismbsdrivepath (
 	const qse_mchar_t* path
 );
 
@@ -103,7 +103,7 @@ int qse_ismbsdrivepath (
  * The qse_ismbsdrivecurpath() function determines if a path name is in the form
  * of a drive letter followed by a colon like A:, without any trailing path.
  */
-int qse_ismbsdrivecurpath (
+QSE_EXPORT int qse_ismbsdrivecurpath (
 	const qse_mchar_t* path
 );
 
@@ -140,7 +140,7 @@ int qse_ismbsdrivecurpath (
  * @return number of characters in the resulting canonical path excluding
  *         the terminating null.
  */
-qse_size_t qse_canonmbspath (
+QSE_EXPORT qse_size_t qse_canonmbspath (
 	const qse_mchar_t* path,
 	qse_mchar_t*       canon,
 	int                flags
@@ -153,7 +153,7 @@ qse_size_t qse_canonmbspath (
  * letter followed by a colon.
  * @return 1 if absolute, 0 if not.
  */
-int qse_iswcsabspath (
+QSE_EXPORT int qse_iswcsabspath (
 	const qse_wchar_t* path
 );
 
@@ -161,7 +161,7 @@ int qse_iswcsabspath (
  * The qse_iswcsdrivepath() function determines if a path name begins with
  * a drive letter followed by a colon like A:.
  */
-int qse_iswcsdrivepath (
+QSE_EXPORT int qse_iswcsdrivepath (
 	const qse_wchar_t* path
 );
 
@@ -169,7 +169,7 @@ int qse_iswcsdrivepath (
  * The qse_iswcsdrivecurpath() function determines if a path name is in the form
  * of a drive letter followed by a colon like A:, without any trailing path.
  */
-int qse_iswcsdrivecurpath (
+QSE_EXPORT int qse_iswcsdrivecurpath (
 	const qse_wchar_t* path
 );
 
@@ -206,7 +206,7 @@ int qse_iswcsdrivecurpath (
  * @return number of characters in the resulting canonical path excluding
  *         the terminating null.
  */
-qse_size_t qse_canonwcspath (
+QSE_EXPORT qse_size_t qse_canonwcspath (
 	const qse_wchar_t* path,
 	qse_wchar_t*       canon,
 	int                flags

@@ -193,7 +193,7 @@ enum qse_rex_cset_code_t
 typedef struct qse_rex_t qse_rex_t;
 struct qse_rex_t
 {
-	QSE_DEFINE_COMMON_FIELDS (rex)
+	qse_mmgr_t* mmgr;
 	qse_rex_errnum_t errnum;
 	int option;
 	qse_rex_node_t* code;
@@ -203,19 +203,17 @@ struct qse_rex_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (rex)
-
-qse_rex_t* qse_rex_open (
+QSE_EXPORT qse_rex_t* qse_rex_open (
 	qse_mmgr_t*     mmgr, /**< memory manager */
 	qse_size_t      xtn,  /**< extension size */
 	qse_rex_node_t* code  /**< compiled regular expression code */
 );
 
-void qse_rex_close (
+QSE_EXPORT void qse_rex_close (
 	qse_rex_t* rex
 );
 
-int qse_rex_init (
+QSE_EXPORT int qse_rex_init (
 	qse_rex_t* rex, 
 	qse_mmgr_t* mmgr,
 	qse_rex_node_t* code
@@ -225,7 +223,15 @@ int qse_rex_init (
  * The qse_rex_fini() function finalizes a statically initialized 
  * regular expression object @a rex.
  */
-void qse_rex_fini (
+QSE_EXPORT void qse_rex_fini (
+	qse_rex_t* rex
+);
+
+QSE_EXPORT qse_mmgr_t* qse_rex_getmmgr (
+	qse_rex_t* rex
+);
+
+QSE_EXPORT void* qse_rex_getxtn (
 	qse_rex_t* rex
 );
 
@@ -235,40 +241,40 @@ void qse_rex_fini (
  * when @a rex is closed or finalized. 
  * @return start node of a compiled regular expression
  */
-qse_rex_node_t* qse_rex_yield (
+QSE_EXPORT qse_rex_node_t* qse_rex_yield (
 	qse_rex_t* rex /**< regular expression processor */
 );
 
 /**
  * The qse_rex_getoption() function returns the current options.
  */
-int qse_rex_getoption (
+QSE_EXPORT int qse_rex_getoption (
 	const qse_rex_t* rex /**< regular expression processor */
 );
 
 /**
  * The qse_rex_setoption() function overrides the current options with options.
  */
-void qse_rex_setoption (
+QSE_EXPORT void qse_rex_setoption (
 	qse_rex_t* rex, /**< regular expression processor */
 	int        opts /**< 0 or number XORed of ::qse_rex_option_t enumerators */
 );
 
-qse_rex_errnum_t qse_rex_geterrnum (
+QSE_EXPORT qse_rex_errnum_t qse_rex_geterrnum (
 	const qse_rex_t* rex
 );
 
-const qse_char_t* qse_rex_geterrmsg (
+QSE_EXPORT const qse_char_t* qse_rex_geterrmsg (
 	const qse_rex_t* rex
 );
 
-qse_rex_node_t* qse_rex_comp (
+QSE_EXPORT qse_rex_node_t* qse_rex_comp (
 	qse_rex_t*        rex,
 	const qse_char_t* ptn,
 	qse_size_t        len
 );
 
-int qse_rex_exec (
+QSE_EXPORT int qse_rex_exec (
 	qse_rex_t*        rex,
 	const qse_cstr_t* str, 
 	const qse_cstr_t* substr,
@@ -276,7 +282,7 @@ int qse_rex_exec (
 );
 
 
-void* qse_buildrex (
+QSE_EXPORT void* qse_buildrex (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        depth,
 	int               option,
@@ -285,7 +291,7 @@ void* qse_buildrex (
 	qse_rex_errnum_t* errnum
 );
 
-int qse_matchrex (
+QSE_EXPORT int qse_matchrex (
 	qse_mmgr_t*        mmgr,
 	qse_size_t         depth,
 	void*              code, 
@@ -296,7 +302,7 @@ int qse_matchrex (
 	qse_rex_errnum_t*  errnum
 );
 
-void qse_freerex (
+QSE_EXPORT void qse_freerex (
 	qse_mmgr_t* mmgr,
 	void*       code
 );

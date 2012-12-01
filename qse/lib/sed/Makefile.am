@@ -14,6 +14,6 @@ if ENABLE_CXX
 lib_LTLIBRARIES += libqsesedxx.la
 libqsesedxx_la_SOURCES = Sed.cpp StdSed.cpp
 libqsesedxx_la_LDFLAGS = -L. -L../cmn -L$(libdir) -version-info 1:0:0 -no-undefined
-libqsesedxx_la_LIBADD = -lqsesed  -lqsecmn 
+libqsesedxx_la_LIBADD = -lqsesed -lqsecmnxx -lqsecmn 
 endif
 

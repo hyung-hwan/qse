@@ -53,20 +53,20 @@ struct qse_mbstate_t
 extern "C" {
 #endif
 
-qse_size_t qse_slmbrlen (
+QSE_EXPORT qse_size_t qse_slmbrlen (
 	const qse_mchar_t* mb,
 	qse_size_t         mblen,
 	qse_mbstate_t*     state
 );
 
-qse_size_t qse_slmbrtoslwc (
+QSE_EXPORT qse_size_t qse_slmbrtoslwc (
 	const qse_mchar_t* mb,
 	qse_size_t         mblen,
 	qse_wchar_t*       wc,
 	qse_mbstate_t*     state
 );
 
-qse_size_t qse_slwcrtoslmb (
+QSE_EXPORT qse_size_t qse_slwcrtoslmb (
 	qse_wchar_t        wc,
 	qse_mchar_t*       mb,
 	qse_size_t         mblen,
@@ -81,7 +81,7 @@ qse_size_t qse_slwcrtoslmb (
  * @note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
-qse_size_t qse_slmbtoslwc (
+QSE_EXPORT qse_size_t qse_slmbtoslwc (
 	const qse_mchar_t* mb,
 	qse_size_t         mblen,
 	qse_wchar_t*       wc
@@ -95,7 +95,7 @@ qse_size_t qse_slmbtoslwc (
  * @note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
-qse_size_t qse_slwctoslmb (
+QSE_EXPORT qse_size_t qse_slwctoslmb (
 	qse_wchar_t        wc,
 	qse_mchar_t*       mb,
 	qse_size_t         mblen
@@ -111,7 +111,7 @@ qse_size_t qse_slwctoslmb (
  * @note This function can not handle conversion producing non-initial
  *       states. For each call, it assumes initial state.
  */
-qse_size_t qse_slmblen (
+QSE_EXPORT qse_size_t qse_slmblen (
 	const qse_mchar_t* mb,
 	qse_size_t         mblen
 );
@@ -120,7 +120,7 @@ qse_size_t qse_slmblen (
  * The qse_slmblenmax() function returns the value of MB_CUR_MAX.
  * Note that QSE_MBLEN_MAX defines MB_LEN_MAX.
  */
-qse_size_t qse_slmblenmax (
+QSE_EXPORT qse_size_t qse_slmblenmax (
 	void
 );
 

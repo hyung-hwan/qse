@@ -47,8 +47,6 @@
 		(QSE_SIZEOF(type) - (((qse_uintptr_t)ptr) % QSE_SIZEOF(type))) : 0)
 
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (pma)
-
 qse_pma_t* qse_pma_open (qse_mmgr_t* mmgr, qse_size_t xtnsize) 
 {
 	qse_pma_t* pma;
@@ -83,6 +81,16 @@ int qse_pma_init (qse_pma_t* pma, qse_mmgr_t* mmgr)
 void qse_pma_fini (qse_pma_t* pma)
 {
 	qse_pma_clear (pma);
+}
+
+qse_mmgr_t* qse_pma_getmmgr (qse_pma_t* pma)
+{
+	return pma->mmgr;
+}
+
+void* qse_pma_getxtn (qse_pma_t* pma)
+{
+	return QSE_XTN (pma);
 }
 
 void qse_pma_clear (qse_pma_t* pma)
@@ -152,7 +160,7 @@ void* qse_pma_alloc (qse_pma_t* pma, qse_size_t size)
 void* qse_pma_calloc (qse_pma_t* pma, qse_size_t size)
 {
 	void* ptr = qse_pma_alloc (pma, size);
-	if (size) QSE_MEMSET (ptr, 0, size);
+	if (ptr) QSE_MEMSET (ptr, 0, size);
 	return ptr;
 }
 

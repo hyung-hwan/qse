@@ -130,8 +130,7 @@ typedef qse_lda_walk_t (*qse_lda_walker_t) (
  */
 struct qse_lda_t
 {
-	QSE_DEFINE_COMMON_FIELDS (lda)
-
+	qse_mmgr_t* mmgr;
 	qse_lda_copier_t copier; /* data copier */
 	qse_lda_freeer_t freeer; /* data freeer */
 	qse_lda_comper_t comper; /* data comparator */
@@ -155,12 +154,10 @@ struct qse_lda_slot_t
 extern "C" {
 #endif
 
-QSE_DEFINE_COMMON_FUNCTIONS (lda)
-
 /**
  * The qse_lda_open() function creates a linear dynamic array.
  */
-qse_lda_t* qse_lda_open (
+QSE_EXPORT qse_lda_t* qse_lda_open (
 	qse_mmgr_t* mmgr, /**< memory manager */
 	qse_size_t  ext,  /**< extension size in bytes */
 	qse_size_t  capa  /**< initial array capacity */
@@ -169,14 +166,14 @@ qse_lda_t* qse_lda_open (
 /**
  * The qse_lda_close() function destroys a linear dynamic array.
  */
-void qse_lda_close (
+QSE_EXPORT void qse_lda_close (
 	qse_lda_t* lda /**< array */
 );
 
 /**
  * The qse_lda_init() function initializes a linear dynamic array.
  */
-int qse_lda_init (
+QSE_EXPORT int qse_lda_init (
 	qse_lda_t*  lda,
 	qse_mmgr_t* mmgr,
 	qse_size_t  capa
@@ -185,14 +182,22 @@ int qse_lda_init (
 /**
  * The qse_lda_fini() function finalizes a linear dynamic array.
  */
-void qse_lda_fini (
+QSE_EXPORT void qse_lda_fini (
 	qse_lda_t* lda /**< array */
+);
+
+QSE_EXPORT qse_mmgr_t* qse_lda_getmmgr (
+	qse_lda_t* lda
+);
+
+QSE_EXPORT void* qse_lda_getxtn (
+	qse_lda_t* lda
 );
 
 /**
  * The qse_lda_getscale() function returns the scale factor
  */
-int qse_lda_getscale (
+QSE_EXPORT int qse_lda_getscale (
 	qse_lda_t* lda   /**< array */
 );
 
@@ -203,12 +208,12 @@ int qse_lda_getscale (
  * The scale factor should be larger than 0 and less than 256.
  * It is a bad idea to change the scale factor when @a lda is not empty.
  */
-void qse_lda_setscale (
+QSE_EXPORT void qse_lda_setscale (
 	qse_lda_t* lda   /**< array */,
 	int scale        /**< scale factor */
 );
 
-qse_lda_copier_t qse_lda_getcopier (
+QSE_EXPORT qse_lda_copier_t qse_lda_getcopier (
 	qse_lda_t* lda   /* array */
 );
 
@@ -219,7 +224,7 @@ qse_lda_copier_t qse_lda_getcopier (
  * #QSE_LDA_COPIER_SIMPLE to perform no special operation when the data 
  * pointer is stored.
  */
-void qse_lda_setcopier (
+QSE_EXPORT void qse_lda_setcopier (
 	qse_lda_t* lda           /** lda */, 
 	qse_lda_copier_t copier  /** element copier */
 );
@@ -227,7 +232,7 @@ void qse_lda_setcopier (
 /**
  * The qse_lda_getfreeer() function returns a custom element destroyer.
  */
-qse_lda_freeer_t qse_lda_getfreeer (
+QSE_EXPORT qse_lda_freeer_t qse_lda_getfreeer (
 	qse_lda_t*   lda  /**< lda */
 );
 
@@ -235,12 +240,12 @@ qse_lda_freeer_t qse_lda_getfreeer (
  * The qse_lda_setfreeer() function specifies how to destroy an element.
  * The @a freeer is called when a slot containing the element is destroyed.
  */
-void qse_lda_setfreeer (
+QSE_EXPORT void qse_lda_setfreeer (
 	qse_lda_t* lda           /**< lda */,
 	qse_lda_freeer_t freeer  /**< element freeer */
 );
 
-qse_lda_comper_t qse_lda_getcomper (
+QSE_EXPORT qse_lda_comper_t qse_lda_getcomper (
 	qse_lda_t*   lda  /**< lda */
 );
 
@@ -249,71 +254,71 @@ qse_lda_comper_t qse_lda_getcomper (
  * for equality test. The comparator @a comper must return 0 if two elements
  * compared are equal, or a non-zero number otherwise.
  */
-void qse_lda_setcomper (
+QSE_EXPORT void qse_lda_setcomper (
 	qse_lda_t*       lda     /**< lda */,
 	qse_lda_comper_t comper  /**< comparator */
 );
 
-qse_lda_keeper_t qse_lda_getkeeper (
+QSE_EXPORT qse_lda_keeper_t qse_lda_getkeeper (
         qse_lda_t* lda
 );
 
-void qse_lda_setkeeper (
+QSE_EXPORT void qse_lda_setkeeper (
         qse_lda_t* lda,
         qse_lda_keeper_t keeper 
 );
 
-qse_lda_sizer_t qse_lda_getsizer (
+QSE_EXPORT qse_lda_sizer_t qse_lda_getsizer (
         qse_lda_t* lda
 );
 
-void qse_lda_setsizer (
+QSE_EXPORT void qse_lda_setsizer (
         qse_lda_t* lda,
         qse_lda_sizer_t sizer
 );
 
-qse_size_t qse_lda_getsize (
+QSE_EXPORT qse_size_t qse_lda_getsize (
 	qse_lda_t* lda
 );
 
-qse_size_t qse_lda_getcapa (
+QSE_EXPORT qse_size_t qse_lda_getcapa (
 	qse_lda_t* lda
 );
 
-qse_lda_t* qse_lda_setcapa (
+QSE_EXPORT qse_lda_t* qse_lda_setcapa (
 	qse_lda_t* lda,
 	qse_size_t capa
 );
 
-qse_size_t qse_lda_search (
+QSE_EXPORT qse_size_t qse_lda_search (
 	qse_lda_t*  lda,
 	qse_size_t  pos,
 	const void* dptr,
 	qse_size_t  dlen
 );
 
-qse_size_t qse_lda_rsearch (
+QSE_EXPORT qse_size_t qse_lda_rsearch (
 	qse_lda_t*  lda,
 	qse_size_t  pos,
 	const void* dptr,
 	qse_size_t  dlen
 );
 
-qse_size_t qse_lda_upsert (
+QSE_EXPORT qse_size_t qse_lda_upsert (
 	qse_lda_t* lda,
 	qse_size_t index, 
 	void*      dptr,
 	qse_size_t dlen
 );
 
-qse_size_t qse_lda_insert (
+QSE_EXPORT qse_size_t qse_lda_insert (
 	qse_lda_t* lda,
 	qse_size_t index, 
 	void*      dptr,
 	qse_size_t dlen
 );
 
-qse_size_t qse_lda_update (
+QSE_EXPORT qse_size_t qse_lda_update (
 	qse_lda_t* lda,
 	qse_size_t pos,
 	void*      dptr,
@@ -324,7 +329,7 @@ qse_size_t qse_lda_update (
  * The qse_lda_delete() function deletes the as many data as the count 
  * from the index. It returns the number of data deleted.
  */
-qse_size_t qse_lda_delete (
+QSE_EXPORT qse_size_t qse_lda_delete (
 	qse_lda_t* lda,
 	qse_size_t index,
 	qse_size_t count
@@ -334,13 +339,13 @@ qse_size_t qse_lda_delete (
  *  The qse_lda_uplete() function deletes data slot without compaction.
  *  It returns the number of data affected.
  */
-qse_size_t qse_lda_uplete (
+QSE_EXPORT qse_size_t qse_lda_uplete (
 	qse_lda_t* lda,
 	qse_size_t index,
 	qse_size_t count
 );
 
-void qse_lda_clear (
+QSE_EXPORT void qse_lda_clear (
 	qse_lda_t* lda
 );
 
@@ -351,7 +356,7 @@ void qse_lda_clear (
  * #QSE_LDA_WALK_STOP.
  * @return number of calls to the @a walker fucntion made
  */
-qse_size_t qse_lda_walk (
+QSE_EXPORT qse_size_t qse_lda_walk (
 	qse_lda_t*       lda,
 	qse_lda_walker_t walker,
 	void*            ctx
@@ -364,7 +369,7 @@ qse_size_t qse_lda_walk (
  * #QSE_LDA_WALK_STOP.
  * @return number of calls to the @a walker fucntion made
  */
-qse_size_t qse_lda_rwalk (
+QSE_EXPORT qse_size_t qse_lda_rwalk (
 	qse_lda_t*       lda,
 	qse_lda_walker_t walker,
 	void*            ctx
@@ -375,7 +380,7 @@ qse_size_t qse_lda_rwalk (
  * function to allow stack-like operations over an array. To do so, you should
  * not play with other non-stack related functions.
  */
-qse_size_t qse_lda_pushstack (
+QSE_EXPORT qse_size_t qse_lda_pushstack (
 	qse_lda_t* lda,
 	void*      dptr, 
 	qse_size_t dlen
@@ -387,7 +392,7 @@ qse_size_t qse_lda_pushstack (
  * not play with other non-stack related functions. 
  * @note You must not call this function if @a lda is empty.
  */
-void qse_lda_popstack (
+QSE_EXPORT void qse_lda_popstack (
 	qse_lda_t* lda
 );
 
@@ -399,7 +404,7 @@ void qse_lda_popstack (
  * @note You must not mess up the array with other non-heap related functions
  *       to keep the heap property.
  */
-qse_size_t qse_lda_pushheap (
+QSE_EXPORT qse_size_t qse_lda_pushheap (
 	qse_lda_t* lda,
 	void*      dptr,
 	qse_size_t dlen
@@ -412,7 +417,7 @@ qse_size_t qse_lda_pushheap (
  * @note You must not mess up the array with other non-heap related functions
  *       to keep the heap property.
  */
-void qse_lda_popheap (
+QSE_EXPORT void qse_lda_popheap (
 	qse_lda_t* lda
 );
 

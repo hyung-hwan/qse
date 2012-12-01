@@ -40,8 +40,6 @@
 #	endif
 #endif
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (pio)
-
 static qse_ssize_t pio_input (
 	qse_tio_t* tio, qse_tio_cmd_t cmd, void* buf, qse_size_t size);
 static qse_ssize_t pio_output (
@@ -191,18 +189,23 @@ static qse_pio_errnum_t tio_errnum_to_pio_errnum (qse_tio_t* tio)
 }
 
 qse_pio_t* qse_pio_open (
-	qse_mmgr_t* mmgr, qse_size_t ext, 
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
 	const qse_char_t* cmd, qse_env_t* env, int flags)
 {
 	qse_pio_t* pio;
 
-	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + ext);
-	if (pio == QSE_NULL) return QSE_NULL;
-
-	if (qse_pio_init (pio, mmgr, cmd, env, flags) <= -1)
+	pio = QSE_MMGR_ALLOC (mmgr, QSE_SIZEOF(qse_pio_t) + xtnsize);
+	if (pio)
 	{
-		QSE_MMGR_FREE (mmgr, pio);
-		return QSE_NULL;
+		if (qse_pio_init (pio, mmgr, cmd, env, flags) <= -1)
+		{
+			QSE_MMGR_FREE (mmgr, pio);
+			pio = QSE_NULL;
+		}
+		else
+		{
+			QSE_MEMSET (pio + 1, 0, xtnsize);
+		}
 	}
 
 	return pio;
@@ -1963,6 +1966,16 @@ void qse_pio_fini (qse_pio_t* pio)
 	pio->flags &= ~QSE_PIO_WAITNOBLOCK;
 	pio->flags &= ~QSE_PIO_WAITNORETRY;
 	qse_pio_wait (pio);
+}
+
+qse_mmgr_t* qse_pio_getmmgr (qse_pio_t* pio)
+{
+	return pio->mmgr;
+}
+
+void* qse_pio_getxtn (qse_pio_t* pio)
+{
+	return QSE_XTN (pio);
 }
 
 qse_pio_errnum_t qse_pio_geterrnum (const qse_pio_t* pio)

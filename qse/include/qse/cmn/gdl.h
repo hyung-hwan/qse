@@ -21,6 +21,8 @@
 #ifndef _QSE_CMN_GDL_H_
 #define _QSE_CMN_GDL_H_
 
+#include <qse/types.h>
+#include <qse/macros.h>
 /** @file
  * This file defins a generic double link and provides basic macros to 
  * manipulate a chain of links.
@@ -75,13 +77,13 @@ struct qse_gdl_t
 extern "C" {
 #endif
 
-void qse_gdl_chain (
+QSE_EXPORT void qse_gdl_chain (
 	qse_gdl_t* p,
 	qse_gdl_t* x,
 	qse_gdl_t* n
 );
 
-void qse_gdl_unchain (
+QSE_EXPORT void qse_gdl_unchain (
 	qse_gdl_t* x
 );
 

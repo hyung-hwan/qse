@@ -22,8 +22,6 @@
 #include "tre-compile.h"
 #include <qse/cmn/str.h>
 
-QSE_IMPLEMENT_COMMON_FUNCTIONS (tre)
-
 qse_tre_t* qse_tre_open (qse_mmgr_t* mmgr, qse_size_t xtnsize)
 {
 	qse_tre_t* tre;
@@ -62,6 +60,16 @@ void qse_tre_fini (qse_tre_t* tre)
 		tre_free (tre);
 		tre->TRE_REGEX_T_FIELD = QSE_NULL;
 	}
+}
+
+qse_mmgr_t* qse_tre_getmmgr (qse_tre_t* tre)
+{
+	return tre->mmgr;
+}
+
+void* qse_tre_getxtn (qse_tre_t* tre)
+{
+	return QSE_XTN (tre);
 }
 
 int qse_tre_compx (
