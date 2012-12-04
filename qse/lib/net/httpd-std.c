@@ -30,11 +30,15 @@
 #include <qse/cmn/path.h>
 #include <qse/cmn/mux.h>
 #include <qse/cmn/dir.h>
+#include <qse/cmn/fio.h>
 
 #if defined(_WIN32)
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
+#	define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
+#	define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
+#	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
 
 #elif defined(__OS2__)
 	/* TODO */
@@ -232,41 +236,38 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 
 #define MAX_SEND_SIZE 4096
 
-#if defined(_WIN32)
-	/* TODO */
-	/* TODO: WIN32 TransmitFile */
-#elif defined(__OS2__)
-	/* TODO */
-#elif defined(__DOS__)
- 	/* TODO */
+static qse_ssize_t send_file (
+	int out_fd, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
+{
+#if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
 
-#elif defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
-#	if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
-#		define xsendfile(out,in,offset,count) sendfile64(out,in,offset,count)
-#	else
-#		define xsendfile(out,in,offset,count) sendfile(out,in,offset,count)
-#	endif
+	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
+
+	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+	return sendfile64 (out_f_fdd, infd.i, offset, count);
+	#else
+	return sendfile (out_fd, infd.i, offset, count);
+	#endif
 
 #elif defined(HAVE_SENDFILE)
-#	define xsendfile(out,in,offset,count) sendfile(out,in,offset,count)
+	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
+	return sendfile (out_fd, infd.i, offset, count);
 
 #elif defined(HAVE_SENDFILE64)
-#	define xsendfile(out,in,offset,count) sendfile64(out,in,offset,count)
+	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
+	return sendfile64 (out_fd, in_fd.i, offset, count);
 
 #elif defined(HAVE_SENDFILEV) || defined(HAVE_SENDFILEV64)
 
-static qse_ssize_t xsendfile (
-	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
-{
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 	struct sendfilevec64 vec;
-#else
+	#else
 	struct sendfilevec vec;
-#endif
+	#endif
 	size_t xfer;
 	ssize_t n;
 
-	vec.sfv_fd = in_fd;
+	vec.sfv_fd = in_fd.i;
 	vec.sfv_flag = 0;
 	if (offset)
 	{
@@ -274,16 +275,16 @@ static qse_ssize_t xsendfile (
 	}
 	else
 	{
-		vec.sfv_off = QSE_LSEEK (in_fd, 0, SEEK_CUR); 
+		vec.sfv_off = QSE_LSEEK (in_fd.i, 0, SEEK_CUR); 
 		if (vec.sfv_off == (off_t)-1) return (qse_ssize_t)-1;
 	}
 	vec.sfv_len = count;
 
-#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
+	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
 	n = sendfilev64 (out_fd, &vec, 1, &xfer);
-#else
+	#else
 	n = sendfilev (out_fd, &vec, 1, &xfer);
-#endif
+	#endif
 	if (offset) *offset = *offset + xfer;
 
 /* TODO: xfer contains number of byte written even on failure
@@ -291,45 +292,58 @@ on success xfer == n.
 on failure xfer != n.
  */
 	return n;
-}
 
 #else
 
-static qse_ssize_t xsendfile (
-	int out_fd, int in_fd, qse_foff_t* offset, qse_size_t count)
-{
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t n;
 
-	if (offset && QSE_LSEEK (in_fd, *offset, SEEK_SET) != *offset)  
+	#if 0
+	if (offset && QSE_LSEEK (in_fd.i, *offset, SEEK_SET) != *offset)  
 		return (qse_ssize_t)-1;
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = read (in_fd, buf, count);
+	n = QSE_READ (in_fd.i, buf, count);
+	if (n == (qse_ssize_t)-1 || n == 0) return n;
+	#endif
+
+	if (offset && qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN) != *offset)  
+		return (qse_ssize_t)-1;
+
+	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
+	n = qse_fio_read (in_fd.ptr, buf, count);
 	if (n == (qse_ssize_t)-1 || n == 0) return n;
 
 	n = send (out_fd, buf, n, 0);
 	if (n > 0 && offset) *offset = *offset + n;
 
 	return n;
-}
 
 #endif
+}
 
 /* ------------------------------------------------------------------- */
 
 #if defined(HAVE_SSL)
-static qse_ssize_t xsendfile_ssl (
-	SSL* out, int in_fd, qse_foff_t* offset, qse_size_t count)
+static qse_ssize_t send_file_ssl (
+	SSL* out, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
 {
 	qse_mchar_t buf[MAX_SEND_SIZE];
 	qse_ssize_t n;
 
-	if (offset && QSE_LSEEK (in_fd, *offset, SEEK_SET) != *offset)  
+#if 0
+	if (offset && QSE_LSEEK (in_fd.i, *offset, SEEK_SET) != *offset)  
 		return (qse_ssize_t)-1;
 
 	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
-	n = read (in_fd, buf, count);
+	n = QSE_READ (in_fd.i, buf, count);
+	if (n == (qse_ssize_t)-1 || n == 0) return n;
+#endif
+	if (offset && qse_fio_seek (in_fd.ptr, *offset, QSE_FIO_BEGIN) != *offset)  
+		return (qse_ssize_t)-1;
+
+	if (count > QSE_COUNTOF(buf)) count = QSE_COUNTOF(buf);
+	n = qse_fio_read (in_fd.ptr, buf, count);
 	if (n == (qse_ssize_t)-1 || n == 0) return n;
 
 	n = SSL_write (out, buf, count);
@@ -498,12 +512,12 @@ IP_TRANSPRENT is needed for:
 
 	if (server->flags & QSE_HTTPD_SERVER_BINDTONWIF)
 	{
+#if defined(SO_BINDTODEVICE)
 		qse_mchar_t tmp[64];
 		qse_size_t len;
 
 		len = qse_nwifindextombs (server->nwif, tmp, QSE_COUNTOF(tmp));
 
-#if defined(SO_BINDTODEVICE)
 		if (len <= 0 || setsockopt (fd, SOL_SOCKET, SO_BINDTODEVICE, tmp, len) <= -1)
 		{
 			/* TODO: logging ... */
@@ -980,13 +994,84 @@ static int stat_file (
 {
 
 #if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+
+	HANDLE fh;
+	WIN32_FIND_DATAA fdata;
+	ULARGE_INTEGER li;
+
+	/* fail if the path name contains a wilecard letter */
+	if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
+
+	if (path[0] == QSE_MT('/') && path[1] ==  QSE_MT('\0'))
+	{
+		/* the root directory won't work well with FindFirstFile().*/
+		QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
+		hst->isdir = 1;
+		/* TODO: hst->dev can be set to the drive letter's index. */
+	}
+	else
+	{
+		/* TODO: hst->dev can be set to the drive letter's index. */
+
+		fh = FindFirstFileA (path, &fdata);
+		if (fh == INVALID_HANDLE_VALUE) return -1;
+
+		QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) hst->isdir = 1;
+
+		hst->size = ((qse_foff_t)fdata.nFileSizeHigh << 32) | fdata.nFileSizeLow;
+		li.LowPart = fdata.ftLastWriteTime.dwLowDateTime;
+		li.HighPart = fdata.ftLastWriteTime.dwHighDateTime;
+
+		/* li.QuadPart is in the 100-nanosecond intervals */
+		hst->mtime.sec = (li.QuadPart / (QSE_NSECS_PER_SEC / 100)) - EPOCH_DIFF_SECS;
+		hst->mtime.nsec = (li.QuadPart % (QSE_NSECS_PER_SEC / 100)) * 100;
+
+		FindClose (fh);
+	}
+	
+	return 0;
+
 #elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
+	APIRET rc;
+	HDIR h;
+	FILEFINDBUF3L ffb;
+	ULONG count;
+	qse_btime_t bt;
+	qse_ntime_t nt;
+
+	/* fail if the path name contains a wilecard letter */
+	if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
+
+	rc = DosFindFirst (
+		mptr,
+		&h,
+		FILE_DIRECTORY | FILE_READONLY,
+		&ffb,
+		QSE_SIZEOF(ffb),
+		&count,
+		FIL_STANDARDL);
+	if (rc != NO_ERROR) return -1;
+
+	DosFindClose (&h);
+
+	QSE_MEMSET (&bt, 0, QSE_SIZEOF(bt));
+	bt.mday = ffb.fdateLastWrite.day;
+	bt.mon = ffb.fdateLastWrite.month - 1;
+	bt.year = ffb.fdateLastWrite.year + 80;
+	bt.hour = ffb.ftimeLastWrite.hours;
+	bt.min = ffb.ftimeLastWrite.minutes;
+	bt.min = ffb.ftimeLastWrite.twosecs * 2;
+	bt.isdst = -1;
+	if (qse_timelocal (&bt, &nt) <= -1) return -1;
+
+	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
+	if (ffb.attrFile & FILE_DIRECTORY) hst->isdir = 1;
+	hst->size = ffb.cbFile;
+	hst->mtime = nt;
+
+	return 0;
+
 #elif defined(__DOS__)
 	/* TODO: */
 	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
@@ -1032,27 +1117,6 @@ static int stat_file (
 
 /* ------------------------------------------------------------------- */
 
-static int file_executable (qse_httpd_t* httpd, const qse_mchar_t* path)
-{
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	if (access (path, X_OK) == -1)
-		return (errno == EACCES)? 0 /*no*/: -1 /*error*/;
-	return 1; /* yes */
-#endif
-}
-
 static int file_stat (
 	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
 {
@@ -1062,141 +1126,66 @@ static int file_stat (
 static int file_ropen (
 	qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
 {
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
+	qse_fio_t* fio;
 
-	int fd;
-	int flags;
-
-	flags = O_RDONLY;
-	#if defined(O_LARGEFILE)
-	flags |= O_LARGEFILE;
-	#endif
-
-qse_printf (QSE_T("opening file [%hs] for reading\n"), path);
-	fd = QSE_OPEN (path, flags, 0);
-	if (fd <= -1)
+	fio = qse_fio_open (
+		httpd->mmgr, 0, (const qse_char_t*)path,
+		QSE_FIO_READ | QSE_FIO_MBSPATH, 0);
+	if (fio == QSE_NULL)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		/* TODO: translate fio error to a proper error code */
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
 		return -1;
 	}
 
-	flags = fcntl (fd, F_GETFD);
-	if (flags >= 0) fcntl (fd, F_SETFD, flags | FD_CLOEXEC);
-
-	handle->i = fd;
-qse_printf (QSE_T("opened file %hs\n"), path);
+	handle->ptr = fio;
+qse_printf (QSE_T("opened rfile [%hs][%p][%p]\n"), path, handle->ptr, fio->handle);
 	return 0;
 
-#endif
 }
 
 static int file_wopen (
 	qse_httpd_t* httpd, const qse_mchar_t* path,
 	qse_ubi_t* handle)
 {
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	int fd;
-	int flags;
+	qse_fio_t* fio;
 
-	flags = O_WRONLY | O_CREAT | O_TRUNC;
-	#if defined(O_LARGEFILE)
-	flags |= O_LARGEFILE;
-	#endif
-
-qse_printf (QSE_T("opening file [%hs] for writing\n"), path);
-	fd = QSE_OPEN (path, flags, 0644);
-	if (fd <= -1)
+	fio = qse_fio_open (
+		httpd->mmgr, 0, (const qse_char_t*)path, 
+		QSE_FIO_WRITE | QSE_FIO_CREATE | 
+		QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644);
+	if (fio == QSE_NULL)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		/* TODO: translate fio error to a proper error code */
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
 		return -1;
 	}
 
-	handle->i = fd;
+	handle->ptr = fio;
+qse_printf (QSE_T("opened wfile [%hs][%p][%p]\n"), path, handle->ptr, fio->handle);
 	return 0;
-#endif
 }
 
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-#else
-qse_printf (QSE_T("closing file %d\n"), handle.i);
-	QSE_CLOSE (handle.i);
-#endif
+qse_printf (QSE_T("closed file....%p\n"), handle.ptr);
+	qse_fio_close (handle.ptr);
 }
 
 static qse_ssize_t file_read (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	qse_mchar_t* buf, qse_size_t len)
 {
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	return QSE_READ (handle.i, buf, len);
-#endif
+	/* TODO: error code conversion */
+	return qse_fio_read (handle.ptr, buf, len);
 }
 
 static qse_ssize_t file_write (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	const qse_mchar_t* buf, qse_size_t len)
 {
-#if defined(_WIN32)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__OS2__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#elif defined(__DOS__)
-	/* TODO: */
-	qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOIMPL);
-	return -1;
-#else
-	return QSE_WRITE (handle.i, buf, len);
-#endif
+	/* TODO: error code conversion */
+	return qse_fio_write (handle.ptr, buf, len);
 }
 
 /* ------------------------------------------------------------------- */
@@ -1227,7 +1216,9 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 
-	d->dp = qse_dir_open (httpd->mmgr, 0, (const qse_char_t*)path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
+qse_printf (QSE_T("OPENDING DIRECTORY [%hs]\n"), path);
+	d->dp = qse_dir_open (httpd->mmgr, 0, 
+		(const qse_char_t*)path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
 	if (d->dp == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -1236,6 +1227,7 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 		
+qse_printf (QSE_T("OPENED DIRECTORY [%hs]\n"), path);
 	handle->ptr = d;
 	return 0;
 }
@@ -1380,14 +1372,14 @@ static qse_ssize_t client_sendfile (
 	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
-		return xsendfile_ssl (client->handle2.ptr, handle.i, offset, count);
+		return send_file_ssl (client->handle2.ptr, handle, offset, count);
 #else
 		return -1;
 #endif
 	}
 	else
 	{
-		return xsendfile (client->handle.i, handle.i, offset, count);
+		return send_file (client->handle.i, handle, offset, count);
 	}
 }
 
@@ -1768,8 +1760,7 @@ static qse_httpd_scb_t httpd_system_callbacks =
 	},
 
 	/* file operation */
-	{ file_executable,
-	  file_stat,
+	{ file_stat,
 	  file_ropen,
 	  file_wopen,
 	  file_close,
@@ -1947,7 +1938,7 @@ static int make_resource (
 	const qse_mchar_t* qpath;
 	const qse_mchar_t* idxfile;
 	qse_mchar_t* xpath; 
-	qse_stat_t st;
+	qse_httpd_stat_t st;
 	qse_size_t i;
 	int n;
 
@@ -1955,6 +1946,7 @@ static int make_resource (
 
 	QSE_MEMSET (target, 0, QSE_SIZEOF(*target));
 
+qse_printf (QSE_T(">>> MAKING RESOURCE [%hs]\n"), qpath);
 	server_xtn = qse_httpd_getserverxtn (httpd, client->server);
 
 	if (server_xtn->cfg[SERVER_XTN_CFG_REALM] &&
@@ -1983,17 +1975,10 @@ auth_ok:
 	xpath = merge_paths (httpd, server_xtn->cfg[SERVER_XTN_CFG_DOCROOT], qpath);
 	if (xpath == QSE_NULL) return -1;
 
-#if defined(_WIN32)
-	/* TODO */
-#elif defined(__OS2__)
-	/* TODO */
-#elif defined(__DOS__)
-
-	/* TODO */
-#else
-	if (QSE_STAT (xpath, &st) == 0 && S_ISDIR(st.st_mode))
-#endif
+qse_printf (QSE_T(">>> check if [%hs] is a directory\n"), xpath);
+	if (httpd->scb->file.stat (httpd, xpath, &st) >= 0 && st.isdir)
 	{
+qse_printf (QSE_T(">>> [%hs] is a directory\n"), xpath);
 		/* it is a directory */
 		if (server_xtn->cfg2.s.idxstd)
 		{
@@ -2009,16 +1994,7 @@ auth_ok:
 					return -1;
 				}
 
-#if defined(_WIN32)
-	/* TODO */
-#elif defined(__OS2__)
-	/* TODO */
-#elif defined(__DOS__)
-
-	/* TODO */
-#else
-				if (QSE_STAT (tpath, &st) == 0 && S_ISREG(st.st_mode))
-#endif
+				if (httpd->scb->file.stat (httpd, tpath, &st) >= 0 && st.isdir)
 				{
 					/* the index file is found */
 					QSE_MMGR_FREE (httpd->mmgr, xpath);
@@ -2033,9 +2009,11 @@ auth_ok:
 
 		target->type = QSE_HTTPD_RSRC_DIR;
 		target->u.dir.path = xpath;
+qse_printf (QSE_T(">>> MADE DIREcTORY RESOURCE [%hs]\n"), xpath);
 	}
 	else
 	{
+qse_printf (QSE_T(">>> [%hs] is a file\n"), xpath);
 	attempt_file:
 		if (server_xtn->cfg2.s.cgistd)
 		{

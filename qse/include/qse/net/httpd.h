@@ -147,9 +147,6 @@ struct qse_httpd_scb_t
 
 	struct
 	{
-		int (*executable) (
-			qse_httpd_t* httpd, const qse_mchar_t* path);
-
 		int (*stat) (
 			qse_httpd_t* httpd, const qse_mchar_t* path, 
 			qse_httpd_stat_t* stat);

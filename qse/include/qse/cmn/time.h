@@ -33,6 +33,11 @@
 #define QSE_EPOCH_DAY   (1)
 #define QSE_EPOCH_WDAY  (4)
 
+/* windows specific epoch time */
+#define QSE_EPOCH_YEAR_WIN   (1601)
+#define QSE_EPOCH_MON_WIN    (1)
+#define QSE_EPOCH_DAY_WIN    (1)
+
 #define QSE_BTIME_YEAR_BASE (1900)
 
 #define QSE_DAYS_PER_NORMYEAR  (365)

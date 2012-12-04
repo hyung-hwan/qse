@@ -43,11 +43,7 @@
 #endif
 
 #if defined(_WIN32)
-	#define WIN_EPOCH_YEAR   (1601)
-	#define WIN_EPOCH_MON    (1)
-	#define WIN_EPOCH_DAY    (1)
-
-	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-WIN_EPOCH_YEAR)
+	#define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
 	#define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 	#define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
 #endif

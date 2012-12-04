@@ -50,7 +50,8 @@ enum qse_mux_errnum_t
 typedef enum qse_mux_errnum_t qse_mux_errnum_t;
 
 #if defined(_WIN32)
-	typedef qse_uintptr_t qse_mux_hnd_t;
+	/*TODO: typedef qse_uintptr_t qse_mux_hnd_t;*/
+	typedef int qse_mux_hnd_t;
 #elif defined(__OS2__)
 	typedef int qse_mux_hnd_t;
 #elif defined(__DOS__)
@@ -82,36 +83,36 @@ struct qse_mux_evt_t
 extern "C" {
 #endif
 
-qse_mux_t* qse_mux_open (
+QSE_EXPORT qse_mux_t* qse_mux_open (
 	qse_mmgr_t*      mmgr,
 	qse_size_t       xtnsize,
 	qse_mux_evtfun_t evtfun,
 	qse_size_t       capahint
 );
 
-void qse_mux_close (
+QSE_EXPORT void qse_mux_close (
 	qse_mux_t* mux
 );
 
-qse_mmgr_t* qse_mux_getmmgr (
+QSE_EXPORT qse_mmgr_t* qse_mux_getmmgr (
 	qse_mux_t* mux
 );
 
-void* qse_mux_getxtn (
+QSE_EXPORT void* qse_mux_getxtn (
 	qse_mux_t* mux
 );
 
-int qse_mux_insert (
+QSE_EXPORT int qse_mux_insert (
 	qse_mux_t*           mux,
 	const qse_mux_evt_t* evt
 );
 
-int qse_mux_delete (
+QSE_EXPORT int qse_mux_delete (
 	qse_mux_t*           mux,
 	const qse_mux_evt_t* evt
 );
 
-int qse_mux_poll (
+QSE_EXPORT int qse_mux_poll (
 	qse_mux_t*         mux,
 	const qse_ntime_t* tmout
 );

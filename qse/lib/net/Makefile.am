@@ -24,4 +24,5 @@ libqsenet_la_SOURCES = \
 	upxd.c
 
 libqsenet_la_LDFLAGS = -version-info 1:0:0 -no-undefined -L../cmn -L$(libdir)
-libqsenet_la_LIBADD = -lqsecmn
+libqsenet_la_LIBADD = -lqsecmn $(SOCKET_LIBS) $(SENDFILE_LIBS) $(SSL_LIBS)
+
