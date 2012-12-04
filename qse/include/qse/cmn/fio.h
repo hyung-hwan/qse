@@ -44,6 +44,9 @@ enum qse_fio_flag_t
 	/** don't close an I/O handle in qse_fio_fini() and qse_fio_close() */
 	QSE_FIO_NOCLOSE       = (1 << 10),
 
+	/** treat the path name as a multi-byte string */
+	QSE_FIO_MBSPATH       = (1 << 11), 
+
 	/* normal open flags */
 	QSE_FIO_READ          = (1 << 14),
 	QSE_FIO_WRITE         = (1 << 15),

@@ -561,7 +561,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 		qse_mux_hnd_t i;
 		qse_mux_evt_t* evt, xevt;
 
-		for (i = 0 ; i <= mux->maxhnd; i++)
+		for (i = 0; i <= mux->maxhnd; i++)
 		{
 			evt = mux->me.ptr[i];
 			if (!evt || evt->hnd != i) continue;

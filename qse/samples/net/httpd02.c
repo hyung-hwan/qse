@@ -213,7 +213,9 @@ static int httpd_main (int argc, qse_char_t* argv[])
 
 	g_httpd = httpd;
 	signal (SIGINT, sigint);
+#if defined(SIGPIPE)
 	signal (SIGPIPE, SIG_IGN);
+#endif
 
 	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
 
@@ -224,7 +226,9 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	ret = qse_httpd_loopstd (httpd, &tmout);
 
 	signal (SIGINT, SIG_DFL);
+#if defined(SIGPIPE)
 	signal (SIGPIPE, SIG_DFL);
+#endif
 	g_httpd = QSE_NULL;
 
 	if (ret <= -1) qse_fprintf (QSE_STDERR, QSE_T("Httpd error\n"));

@@ -234,9 +234,10 @@ int qse_fio_init (
 	{
 		qse_ntime_t now;
 
-		if (flags & QSE_FIO_HANDLE)
+		if (flags & (QSE_FIO_HANDLE | QSE_FIO_MBSPATH))
 		{
-			/* QSE_FIO_TEMPORARY and QSE_FIO_HANDLE are mutually exclusive */
+			/* QSE_FIO_TEMPORARY and QSE_FIO_HANDLE/QSE_FIO_MBSPATH 
+			 * are mutually exclusive */
 			fio->errnum = QSE_FIO_EINVAL;
 			return -1;
 		}
@@ -364,11 +365,22 @@ int qse_fio_init (
 		if (flags & QSE_FIO_SEQUENTIAL) 
 			flag_and_attr |= FILE_FLAG_SEQUENTIAL_SCAN;
 
-		handle = CreateFile (
-			path, desired_access, share_mode, 
-			QSE_NULL, /* set noinherit by setting no secattr */
-			creation_disposition, flag_and_attr, 0
-		);
+		if (flags & QSE_FIO_MBSPATH)
+		{
+			handle = CreateFileA (
+				(const qse_mchar_t*)path, desired_access, share_mode, 
+				QSE_NULL, /* set noinherit by setting no secattr */
+				creation_disposition, flag_and_attr, 0
+			);
+		}
+		else
+		{
+			handle = CreateFile (
+				path, desired_access, share_mode, 
+				QSE_NULL, /* set noinherit by setting no secattr */
+				creation_disposition, flag_and_attr, 0
+			);
+		}
 		if (handle == INVALID_HANDLE_VALUE) 
 		{
 			DWORD e = GetLastError();	
@@ -388,11 +400,22 @@ int qse_fio_init (
 					desired_access |= GENERIC_WRITE;
 				}
 			
-				handle = CreateFile (
-					path, desired_access, share_mode, 
-					QSE_NULL, /* set noinherit by setting no secattr */
-					creation_disposition, flag_and_attr, 0
-				);
+				if (flags & QSE_FIO_MBSPATH)
+				{
+					handle = CreateFileA (
+						path, desired_access, share_mode, 
+						QSE_NULL, /* set noinherit by setting no secattr */
+						creation_disposition, flag_and_attr, 0
+					);
+				}
+				else
+				{
+					handle = CreateFile (
+						path, desired_access, share_mode, 
+						QSE_NULL, /* set noinherit by setting no secattr */
+						creation_disposition, flag_and_attr, 0
+					);
+				}
 				if (handle == INVALID_HANDLE_VALUE) 
 				{
 					if (flags & QSE_FIO_TEMPORARY) goto retry_temporary;
@@ -442,24 +465,31 @@ int qse_fio_init (
 		qse_size_t wl, ml;
 		int px;
 
-		path_mb = path_mb_buf;
-		ml = QSE_COUNTOF(path_mb_buf);
-		px = qse_wcstombs (path, &wl, path_mb, &ml);
-		if (px == -2)
+		if (flags & QSE_FIO_MBSPATH)
 		{
-			/* the static buffer is too small.
-			 * dynamically allocate a buffer */
-			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
-			if (path_mb == QSE_NULL) 
+			path_mb = (qse_mchar_t*)path;
+		}
+		else
+		{
+			path_mb = path_mb_buf;
+			ml = QSE_COUNTOF(path_mb_buf);
+			px = qse_wcstombs (path, &wl, path_mb, &ml);
+			if (px == -2)
 			{
-				fio->errnum = QSE_FIO_ENOMEM;
+				/* the static buffer is too small.
+				 * dynamically allocate a buffer */
+				path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
+				if (path_mb == QSE_NULL) 
+				{
+					fio->errnum = QSE_FIO_ENOMEM;
+					return -1;
+				}
+			}
+			else if (px <= -1) 
+			{
+				fio->errnum = QSE_FIO_EINVAL;
 				return -1;
 			}
-		}
-		else if (px <= -1) 
-		{
-			fio->errnum = QSE_FIO_EINVAL;
-			return -1;
 		}
 	#endif
 
@@ -651,24 +681,31 @@ int qse_fio_init (
 		qse_size_t wl, ml;
 		int px;
 
-		path_mb = path_mb_buf;
-		ml = QSE_COUNTOF(path_mb_buf);
-		px = qse_wcstombs (path, &wl, path_mb, &ml);
-		if (px == -2)
+		if (flags & QSE_FIO_MBSPATH)
 		{
-			/* the static buffer is too small.
-			 * allocate a buffer */
-			path_mb = qse_wcstombsdup (path, mmgr);
-			if (path_mb == QSE_NULL) 
+			path_mb = (qse_mchar_t*)path;
+		}
+		else
+		{
+			path_mb = path_mb_buf;
+			ml = QSE_COUNTOF(path_mb_buf);
+			px = qse_wcstombs (path, &wl, path_mb, &ml);
+			if (px == -2)
 			{
-				fio->errnum = QSE_FIO_ENOMEM;
+				/* the static buffer is too small.
+				 * allocate a buffer */
+				path_mb = qse_wcstombsdup (path, mmgr);
+				if (path_mb == QSE_NULL) 
+				{
+					fio->errnum = QSE_FIO_ENOMEM;
+					return -1;
+				}
+			}
+			else if (px <= -1) 
+			{
+				fio->errnum = QSE_FIO_EINVAL;
 				return -1;
 			}
-		}
-		else if (px <= -1) 
-		{
-			fio->errnum = QSE_FIO_EINVAL;
-			return -1;
 		}
 	#endif
 
@@ -775,24 +812,31 @@ int qse_fio_init (
 		qse_size_t wl, ml;
 		int px;
 
-		path_mb = path_mb_buf;
-		ml = QSE_COUNTOF(path_mb_buf);
-		px = qse_wcstombs (path, &wl, path_mb, &ml);
-		if (px == -2)
+		if (flags & QSE_FIO_MBSPATH)
 		{
-			/* the static buffer is too small.
-			 * allocate a buffer */
-			path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
-			if (path_mb == QSE_NULL) 
+			path_mb = (qse_mchar_t*)path;
+		}
+		else
+		{
+			path_mb = path_mb_buf;
+			ml = QSE_COUNTOF(path_mb_buf);
+			px = qse_wcstombs (path, &wl, path_mb, &ml);
+			if (px == -2)
 			{
-				fio->errnum = QSE_FIO_ENOMEM;
+				/* the static buffer is too small.
+				 * allocate a buffer */
+				path_mb = qse_wcstombsdup (path, QSE_NULL, mmgr);
+				if (path_mb == QSE_NULL) 
+				{
+					fio->errnum = QSE_FIO_ENOMEM;
+					return -1;
+				}
+			}
+			else if (px <= -1) 
+			{
+				fio->errnum = QSE_FIO_EINVAL;
 				return -1;
 			}
-		}
-		else if (px <= -1) 
-		{
-			fio->errnum = QSE_FIO_EINVAL;
-			return -1;
 		}
 	#endif
 		/*
@@ -1098,10 +1142,10 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 #if defined(_WIN32)
 
 	DWORD count;
+
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
-	if (ReadFile (fio->handle, 
-		buf, (DWORD)size, &count, QSE_NULL) == FALSE) 
+	if (ReadFile (fio->handle, buf, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
 		fio->errnum = syserr_to_errnum (GetLastError());
 		return -1;

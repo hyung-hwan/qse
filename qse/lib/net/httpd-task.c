@@ -252,12 +252,12 @@ static qse_httpd_task_t* entask_status (
 
 	return qse_httpd_entaskformat (
 		httpd, client, pred,
-		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n%s%s%s\r\n%s"),
+		QSE_MT("HTTP/%d.%d %d %s\r\nServer: %s\r\nDate: %s\r\nConnection: %s\r\nContent-Type: text/html\r\nContent-Length: %u\r\n%s%s%s\r\n%s"),
 		version->major, version->minor, 
 		code, msg, qse_httpd_getname (httpd),
 		qse_httpd_fmtgmtimetobb (httpd, QSE_NULL, 0),
 		(keepalive? QSE_MT("keep-alive"): QSE_MT("close")),
-		(unsigned long)qse_mbslen(text),
+		(unsigned int)qse_mbslen(text), /* unsigned int should be large enough since text is small */
 		extrapre, extraval, extrapst, text);
 }
 /*------------------------------------------------------------------------*/
