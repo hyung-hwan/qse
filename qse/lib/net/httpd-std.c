@@ -41,7 +41,16 @@
 #	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
 
 #elif defined(__OS2__)
-	/* TODO */
+#	define INCL_DOSERRORS
+#	define INCL_DOSFILEMGR
+#	include <os2.h>
+#	include <types.h>
+#	include <sys/socket.h>
+#	include <netinet/in.h>
+#	include <tcpustd.h>
+#	include <sys/ioctl.h>
+#	include <nerrno.h>
+#	pragma library("tcpip32.lib")
 
 #elif defined(__DOS__)
 	/* TODO */
@@ -236,7 +245,7 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 
 #define MAX_SEND_SIZE 4096
 
-static qse_ssize_t send_file (
+static qse_ssize_t __send_file (
 	int out_fd, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
 {
 #if defined(HAVE_SENDFILE) && defined(HAVE_SENDFILE64)
@@ -325,7 +334,7 @@ on failure xfer != n.
 /* ------------------------------------------------------------------- */
 
 #if defined(HAVE_SSL)
-static qse_ssize_t send_file_ssl (
+static qse_ssize_t __send_file_ssl (
 	SSL* out, qse_ubi_t in_fd, qse_foff_t* offset, qse_size_t count)
 {
 	qse_mchar_t buf[MAX_SEND_SIZE];
@@ -950,27 +959,42 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, const qse_ntime_t* tmout)
 
 static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
+#if defined(__OS2__)
+	long tv;
+
+	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
+	return os2_select (&handle.i, 1, 0, 0, tv);
+#else
 	fd_set r;
 	struct timeval tv, * tvp;
-
-	if (tmout)
-	{
-		tv.tv_sec = tmout->sec;
-		tv.tv_usec = tmout->nsec;
-		tvp = &tv;
-	}
-	else tvp = QSE_NULL;
 
 	FD_ZERO (&r);
 	FD_SET (handle.i, &r);
 
+	if (tmout)
+	{
+		tv.tv_sec = tmout->sec;
+		tv.tv_usec = tmout->nsec;
+		tvp = &tv;
+	}
+	else tvp = QSE_NULL;
+
 	return select (handle.i + 1, &r, QSE_NULL, QSE_NULL, tvp);
+#endif
 }
 
 static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
+#if defined(__OS2__)
+	long tv;
+	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
+	return os2_select (&handle.i, 0, 1, 0, tv);
+#else
 	fd_set w;
 	struct timeval tv, * tvp;
+
+	FD_ZERO (&w);
+	FD_SET (handle.i, &w);
 
 	if (tmout)
 	{
@@ -980,10 +1004,8 @@ static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 	}
 	else tvp = QSE_NULL;
 
-	FD_ZERO (&w);
-	FD_SET (handle.i, &w);
-
 	return select (handle.i + 1, QSE_NULL, &w, QSE_NULL, tvp);
+#endif
 }
 
 /* ------------------------------------------------------------------- */
@@ -1034,17 +1056,19 @@ static int stat_file (
 
 #elif defined(__OS2__)
 	APIRET rc;
-	HDIR h;
 	FILEFINDBUF3L ffb;
-	ULONG count;
 	qse_btime_t bt;
 	qse_ntime_t nt;
+
+#if 0
+	HDIR h;
+	ULONG count;
 
 	/* fail if the path name contains a wilecard letter */
 	if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
 
 	rc = DosFindFirst (
-		mptr,
+		path,
 		&h,
 		FILE_DIRECTORY | FILE_READONLY,
 		&ffb,
@@ -1053,7 +1077,10 @@ static int stat_file (
 		FIL_STANDARDL);
 	if (rc != NO_ERROR) return -1;
 
-	DosFindClose (&h);
+	DosFindClose (h);
+#endif
+	rc = DosQueryPathInfo (path, FIL_STANDARDL, &ffb, QSE_SIZEOF(ffb));
+	if (rc != NO_ERROR) return -1;
 
 	QSE_MEMSET (&bt, 0, QSE_SIZEOF(bt));
 	bt.mday = ffb.fdateLastWrite.day;
@@ -1067,8 +1094,21 @@ static int stat_file (
 
 	QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 	if (ffb.attrFile & FILE_DIRECTORY) hst->isdir = 1;
-	hst->size = ffb.cbFile;
+	hst->size = ((qse_foff_t)ffb.cbFile.ulHi << 32) | ffb.cbFile.ulLo;
 	hst->mtime = nt;
+
+	if (path[0] != QSE_MT('\0') && path[1] == QSE_MT(':'))
+	{
+		if (path[0] >= QSE_MT('a') && path[0] <= QSE_MT('z')) 
+			hst->dev = path[0] - QSE_MT('a');
+		else if (path[0] >= QSE_MT('A') && path[0] <= QSE_MT('Z')) 
+			hst->dev = path[0] - QSE_MT('A');
+	}
+	else
+	{
+		ULONG num, map;
+		if (DosQueryCurrentDisk (&num, &map) == NO_ERROR) hst->dev = num - 1;
+	}
 
 	return 0;
 
@@ -1372,14 +1412,14 @@ static qse_ssize_t client_sendfile (
 	if (client->status & CLIENT_SECURE)
 	{
 #if defined(HAVE_SSL)
-		return send_file_ssl (client->handle2.ptr, handle, offset, count);
+		return __send_file_ssl (client->handle2.ptr, handle, offset, count);
 #else
 		return -1;
 #endif
 	}
 	else
 	{
-		return send_file (client->handle.i, handle, offset, count);
+		return __send_file (client->handle.i, handle, offset, count);
 	}
 }
 

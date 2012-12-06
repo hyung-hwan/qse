@@ -108,12 +108,14 @@ libqsecmn_la_SOURCES = \
 	utf8.c \
 	xma.c
 
+if ENABLE_BUNDLED_UNICODE
+libqsecmn_la_SOURCES += uni.c 
+endif
 
 if INCLUDE_MORE_CMGRS
-libqsecmn_la_SOURCES += \
-	cp949.c \
-	cp950.c
+libqsecmn_la_SOURCES += cp949.c cp950.c
 endif
+
 
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS)

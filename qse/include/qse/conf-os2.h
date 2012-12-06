@@ -36,35 +36,66 @@
 #	define QSE_SIZEOF_INT         4
 #	define QSE_SIZEOF_LONG        4
 #	define QSE_SIZEOF_LONG_LONG   8
-#
 #	define QSE_SIZEOF_VOID_P      4
 #	define QSE_SIZEOF_FLOAT       4
 #	define QSE_SIZEOF_DOUBLE      8
 #	define QSE_SIZEOF_LONG_DOUBLE 8
 #	define QSE_SIZEOF_WCHAR_T     2
-#
+
 #	define QSE_SIZEOF___INT8      1
 #	define QSE_SIZEOF___INT16     2
 #	define QSE_SIZEOF___INT32     4
 #	define QSE_SIZEOF___INT64     8
 #	define QSE_SIZEOF___INT128    0
-#
+
 #	define QSE_SIZEOF_OFF64_T     0
 #	define QSE_SIZEOF_OFF_T       8
-#
+
 /* I don't know the exact mbstate size. 
  * but this should be large enough */
 #	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
 /* TODO: check the exact value */
 #	define QSE_MBLEN_MAX          8
-#
-#	define QSE_CHAR_IS_WCHAR
-#
-#	/* these two have only to be large enough */
+
+	/* these two have only to be large enough */
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
+
+#	define QSE_CHAR_IS_WCHAR      1
+#	undef QSE_ENABLE_BUNDLED_UNICODE
+
+#elif defined(__BORLANDC__)
+#	define QSE_SIZEOF_CHAR        1
+#	define QSE_SIZEOF_SHORT       2
+#	define QSE_SIZEOF_INT         4
+#	define QSE_SIZEOF_LONG        4
+#	define QSE_SIZEOF_LONG_LONG   0
+#	define QSE_SIZEOF_VOID_P      4
+#	define QSE_SIZEOF_FLOAT       4
+#	define QSE_SIZEOF_DOUBLE      8
+#	define QSE_SIZEOF_LONG_DOUBLE 8
+#	define QSE_SIZEOF_WCHAR_T     2
+
+#	define QSE_SIZEOF___INT8      0
+#	define QSE_SIZEOF___INT16     0
+#	define QSE_SIZEOF___INT32     0
+#	define QSE_SIZEOF___INT64     0
+#	define QSE_SIZEOF___INT128    0
+
+#	define QSE_SIZEOF_OFF64_T     0
+#	define QSE_SIZEOF_OFF_T       4
+
+#	define QSE_SIZEOF_MBSTATE_T   QSE_SIZEOF_LONG
+#	define QSE_MBLEN_MAX          8
+
+#	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
+#	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
+
+#	define QSE_CHAR_IS_WCHAR          1
+#	define QSE_ENABLE_BUNDLED_UNICODE 1
+
 #else
 #	error Define the size of various data types.
 #endif
 
-#include "conf-inf.h"
+#include <qse/conf-inf.h>

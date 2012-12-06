@@ -307,13 +307,15 @@ static int preset_tmout (qse_nwio_t* nwio)
 #if defined(SO_RCVTIMEO) && defined(SO_SNDTIMEO)
 	#if defined(_WIN32)
 	DWORD tv;
+	#elif defined(__OS2__)
+	long	tv;
 	#else
 	struct timeval tv;
 	#endif
 
 	if (TMOUT_ENABLED(nwio->tmout.r))
 	{
-	#if defined(_WIN32)
+	#if defined(_WIN32) || defined(__OS2__)
 		tv = QSE_SEC_TO_MSEC(nwio->tmout.r.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.r.nsec);
 	#else
 		tv.tv_sec = nwio->tmout.r.sec;
@@ -322,6 +324,13 @@ static int preset_tmout (qse_nwio_t* nwio)
 
 		if (setsockopt (nwio->handle, SOL_SOCKET, SO_RCVTIMEO, (void*)&tv, QSE_SIZEOF(tv)) <= -1)
 		{
+	#if defined(_WIN32)
+			nwio->errnum = syserr_to_errnum (WSAGetLastError());
+	#elif defined(__OS2__)
+			nwio->errnum = syserr_to_errnum (sock_errno());
+	#else
+			nwio->errnum = syserr_to_errnum (errno);
+	#endif
 			return -1; /* tried to set but failed */
 		}
 
@@ -330,7 +339,7 @@ static int preset_tmout (qse_nwio_t* nwio)
 
 	if (TMOUT_ENABLED(nwio->tmout.w))
 	{
-	#if defined(_WIN32)
+	#if defined(_WIN32) || defined(__OS2__)
 		tv = QSE_SEC_TO_MSEC(nwio->tmout.w.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.w.nsec);
 	#else
 		tv.tv_sec = nwio->tmout.w.sec;
@@ -338,6 +347,13 @@ static int preset_tmout (qse_nwio_t* nwio)
 	#endif
 		if (setsockopt (nwio->handle, SOL_SOCKET, SO_SNDTIMEO, (void*)&tv, QSE_SIZEOF(tv)) <= -1)
 		{
+	#if defined(_WIN32)
+			nwio->errnum = syserr_to_errnum (WSAGetLastError());
+	#elif defined(__OS2__)
+			nwio->errnum = syserr_to_errnum (sock_errno());
+	#else
+			nwio->errnum = syserr_to_errnum (errno);
+	#endif
 			return -1; /* tried to set but failed */
 		}
 

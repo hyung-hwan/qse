@@ -22,13 +22,18 @@
 #include <qse/cmn/str.h>
 
 #include <ctype.h>
-#include <wctype.h>
+
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+#	include <qse/cmn/uni.h>
+#else
+#	include <wctype.h>
+#endif
 
 static QSE_INLINE int is_malpha (qse_mcint_t c) { return isalpha(c); }
 static QSE_INLINE int is_malnum (qse_mcint_t c) { return isalnum(c); }
 static QSE_INLINE int is_mblank (qse_mcint_t c) 
 { 
-#ifdef HAVE_ISBLANK
+#if defined(HAVE_ISBLANK)
 	return isblank(c); 
 #else
 	return c == QSE_MT(' ') || c == QSE_MT('\t');
@@ -45,25 +50,105 @@ static QSE_INLINE int is_mupper (qse_mcint_t c) { return isupper(c); }
 static QSE_INLINE int is_mxdigit (qse_mcint_t c) { return isxdigit(c); }
 
 
-static QSE_INLINE int is_walpha (qse_wcint_t c) { return iswalpha(c); }
-static QSE_INLINE int is_walnum (qse_wcint_t c) { return iswalnum(c); }
+static QSE_INLINE int is_walpha (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunialpha (c);
+#else
+	return iswalpha(c); 
+#endif
+}
+static QSE_INLINE int is_walnum (qse_wcint_t c) 
+{
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunialnum (c);
+#else
+	return iswalnum(c); 
+#endif
+}
 static QSE_INLINE int is_wblank (qse_wcint_t c) 
 { 
-#ifdef HAVE_ISWBLANK
+#if defined(HAVE_ISWBLANK)
 	return iswblank(c); 
 #else
 	return c == QSE_WT(' ') || c == QSE_WT('\t');
 #endif
 }
-static QSE_INLINE int is_wcntrl (qse_wcint_t c) { return iswcntrl(c); }
-static QSE_INLINE int is_wdigit (qse_wcint_t c) { return iswdigit(c); }
-static QSE_INLINE int is_wgraph (qse_wcint_t c) { return iswgraph(c); }
-static QSE_INLINE int is_wlower (qse_wcint_t c) { return iswlower(c); }
-static QSE_INLINE int is_wprint (qse_wcint_t c) { return iswprint(c); }
-static QSE_INLINE int is_wpunct (qse_wcint_t c) { return iswpunct(c); }
-static QSE_INLINE int is_wspace (qse_wcint_t c) { return iswspace(c); }
-static QSE_INLINE int is_wupper (qse_wcint_t c) { return iswupper(c); }
-static QSE_INLINE int is_wxdigit (qse_wcint_t c) { return iswxdigit(c); }
+static QSE_INLINE int is_wcntrl (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunicntrl (c);
+#else
+	return iswcntrl(c); 
+#endif
+}
+static QSE_INLINE int is_wdigit (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunidigit (c);
+#else
+	return iswdigit(c); 
+#endif
+}
+
+static QSE_INLINE int is_wgraph (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunigraph (c);
+#else
+	return iswgraph(c); 
+#endif
+}
+
+static QSE_INLINE int is_wlower (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunilower (c);
+#else
+	return iswlower(c); 
+#endif
+}
+
+static QSE_INLINE int is_wprint (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isuniprint (c);
+#else
+	return iswprint(c); 
+#endif
+}
+static QSE_INLINE int is_wpunct (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunipunct (c);
+#else
+	return iswpunct(c); 
+#endif
+}
+static QSE_INLINE int is_wspace (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunispace (c);
+#else
+	return iswspace(c); 
+#endif
+}
+static QSE_INLINE int is_wupper (qse_wcint_t c) 
+{ 
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isuniupper (c);
+#else
+	return iswupper(c); 
+#endif
+}
+static QSE_INLINE int is_wxdigit (qse_wcint_t c) 
+{
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	return qse_isunixdigit (c);
+#else
+	return iswxdigit(c); 
+#endif
+}
 
 int qse_ismctype (qse_mcint_t c, qse_mctype_t type)
 { 
@@ -172,6 +257,21 @@ int qse_iswctype (qse_wcint_t c, qse_wctype_t type)
 		is_wupper,
 		is_wxdigit
 #endif
+
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+		qse_isunialnum,
+		qse_isunialpha,
+		is_wblank,
+		qse_isunicntrl,
+		qse_isunidigit,
+		qse_isunigraph,
+		qse_isunilower,
+		qse_isuniprint,
+		qse_isunipunct,
+		qse_isunispace,
+		qse_isuniupper,
+		qse_isunixdigit
+#else
 		iswalnum,
 		iswalpha,
 		is_wblank,
@@ -184,6 +284,7 @@ int qse_iswctype (qse_wcint_t c, qse_wctype_t type)
 		iswspace,
 		iswupper,
 		iswxdigit
+#endif
 	};
 
 	QSE_ASSERTX (type >= QSE_WCTYPE_ALNUM && type <= QSE_WCTYPE_XDIGIT,
@@ -219,8 +320,13 @@ qse_wcint_t qse_towctype (qse_wcint_t c, qse_wctype_t type)
 */
 	QSE_ASSERTX (type == QSE_WCTYPE_UPPER || type == QSE_WCTYPE_LOWER,
 		"The type should be one of QSE_WCTYPE_UPPER and QSE_WCTYPE_LOWER");
+#if defined(QSE_ENABLE_BUNDLED_UNICODE)
+	if (type == QSE_WCTYPE_UPPER) return qse_touniupper(c);
+	if (type == QSE_WCTYPE_LOWER) return qse_tounilower(c);
+#else
 	if (type == QSE_WCTYPE_UPPER) return towupper(c);
 	if (type == QSE_WCTYPE_LOWER) return towlower(c);
+#endif
 	return c;
 /*
 #endif

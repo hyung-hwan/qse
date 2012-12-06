@@ -22,7 +22,7 @@
 #	pragma pack(1)
 #elif defined(__HP_aCC) || defined(__HP_cc)
 #	pragma PACK 1
-#elif defined(_MSC_VER) || defined(__BORLANDC__)
+#elif defined(_MSC_VER) || (defined(__BORLANDC__) && (__BORLANDC__ >= 0x0500))
 #	pragma pack(push,1)
 #elif defined(__DECC)
 #	pragma pack(push,1)

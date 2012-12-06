@@ -455,7 +455,11 @@ int qse_fio_init (
 		APIRET ret;
 		ULONG action_taken = 0;
 		ULONG open_action, open_mode, open_attr;
+	#if defined(FIL_STANDARDL)
 		LONGLONG zero;
+	#else
+		ULONG zero;	
+	#endif
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 		const qse_mchar_t* path_mb = path;
@@ -493,8 +497,12 @@ int qse_fio_init (
 		}
 	#endif
 
+	#if defined(FIL_STANDARDL)
 		zero.ulLo = 0;
 		zero.ulHi = 0;
+	#else
+		zero = 0;
+	#endif
 
 		if (flags & QSE_FIO_APPEND) 
 			fio->status |= STATUS_APPEND;
@@ -549,7 +557,11 @@ int qse_fio_init (
 
 		open_attr = (mode & QSE_FIO_WUSR)? FILE_NORMAL: FILE_READONLY;
 		
+	#if defined(FIL_STANDARDL)
 		ret = DosOpenL (
+	#else
+		ret = DosOpen (
+	#endif
 			path_mb,       /* file name */
 			&handle,       /* file handle */
 			&action_taken, /* store action taken */
@@ -1015,6 +1027,8 @@ qse_fio_off_t qse_fio_seek (
 		FILE_END
 	};
 
+	#if defined(FIL_STANDARDL)
+
 	LONGLONG pos, newpos;
 	APIRET ret;
 
@@ -1030,7 +1044,22 @@ qse_fio_off_t qse_fio_seek (
 		return (qse_fio_off_t)-1;
 	}
 
-	return ((qse_fio_off_t)pos.ulHi << 32) | pos.ulLo;
+	return ((qse_fio_off_t)newpos.ulHi << 32) | newpos.ulLo;
+
+	#else
+	ULONG newpos;
+	APIRET ret;
+
+	ret = DosSetFilePtr (fio->handle, offset, seek_map[origin], &newpos);
+	if (ret != NO_ERROR) 
+	{
+		fio->errnum = syserr_to_errnum (ret);
+		return (qse_fio_off_t)-1;
+	}
+
+	return newpos;
+	#endif
+
 #elif defined(__DOS__)
 	static int seek_map[] =
 	{
@@ -1093,7 +1122,10 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 
 	return 0;
 #elif defined(__OS2__)
+
 	APIRET ret;
+
+	#if defined(FIL_STANDARDL)
 	LONGLONG sz;
 	/* the file must have the write access for it to succeed */
 
@@ -1101,11 +1133,14 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	sz.ulHi = (ULONG)(size>>32);
 
 	ret = DosSetFileSizeL (fio->handle, sz);
+	#else
+	ret = DosSetFileSize (fio->handle, size);
+	#endif
+
 	if (ret != NO_ERROR)
 	{
 		fio->errnum = syserr_to_errnum (ret);
 		return -1;
-		
 	}
 	return 0;
 
@@ -1235,10 +1270,15 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
    	if (fio->status & STATUS_APPEND)
 	{
 		/* i do this on a best-effort basis */
+	#if defined(FIL_STANDARDL)
 		LONGLONG pos, newpos;
 		pos.ulLo = (ULONG)0;
 		pos.ulHi = (ULONG)0;
     		DosSetFilePtrL (fio->handle, pos, FILE_END, &newpos);
+	#else
+		ULONG newpos;
+    		DosSetFilePtr (fio->handle, 0, FILE_END, &newpos);
+	#endif
     	}
 
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(ULONG))) 
@@ -1452,10 +1492,18 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 
 	APIRET n;
 	int flags = FILE_NORMAL;
+	#if defined(FIL_STANDARDL)
 	FILESTATUS3L stat;
+	#else
+	FILESTATUS3 stat;
+	#endif
 	ULONG size = QSE_SIZEOF(stat);
 
+	#if defined(FIL_STANDARDL)
 	n = DosQueryFileInfo (fio->handle, FIL_STANDARDL, &stat, size);
+	#else
+	n = DosQueryFileInfo (fio->handle, FIL_STANDARD, &stat, size);
+	#endif
 	if (n != NO_ERROR)
 	{
 		fio->errnum = syserr_to_errnum (n);
@@ -1465,7 +1513,11 @@ int qse_fio_chmod (qse_fio_t* fio, int mode)
 	if (!(mode & QSE_FIO_WUSR)) flags = FILE_READONLY;
 	
 	stat.attrFile = flags;
+	#if defined(FIL_STANDARDL)
 	n = DosSetFileInfo (fio->handle, FIL_STANDARDL, &stat, size);
+	#else
+	n = DosSetFileInfo (fio->handle, FIL_STANDARD, &stat, size);
+	#endif
 	if (n != NO_ERROR)
 	{
 		fio->errnum = syserr_to_errnum (n);
