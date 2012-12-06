@@ -51,7 +51,11 @@ struct qse_dir_t
 	int done;
 #elif defined(__OS2__)
 	HDIR h;
+	#if defined(FIL_STANDARDL) 
 	FILEFINDBUF3L ffb;	
+	#else
+	FILEFINDBUF3 ffb;	
+	#endif
 	ULONG count;
 	int opened;
 #elif defined(__DOS__)
@@ -326,7 +330,12 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		&dir->ffb,
 		QSE_SIZEOF(dir->ffb),
 		&dir->count,
-		FIL_STANDARDL);
+#if defined(FIL_STANDARDL) 
+		FIL_STANDARDL
+#else
+		FIL_STANDARD
+#endif
+	);
 
 	if (rc != NO_ERROR) return -1;
 

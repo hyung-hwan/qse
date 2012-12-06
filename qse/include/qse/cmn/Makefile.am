@@ -42,6 +42,7 @@ pkginclude_HEADERS = \
 	time.h \
 	tio.h \
 	tre.h \
+	uni.h \
 	uri.h \
 	utf8.h \
 	xma.h 

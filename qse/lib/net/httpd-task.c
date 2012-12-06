@@ -223,19 +223,23 @@ static qse_httpd_task_t* entask_status (
 	const qse_mchar_t* extrapst = QSE_MT("");
 	const qse_mchar_t* extraval = QSE_MT("");
 
-	qse_mchar_t text[1024] = QSE_MT(""); /* TODO: make this buffer dynamic or scalable */
+	qse_mchar_t text[1024]; /* TODO: make this buffer dynamic or scalable */
 	
 	msg = qse_httpstatustombs (code);
 	if (code == 301 || code == 307) 
 	{
-		status_reloc_t* reloc = (status_reloc_t*)extra;
+		status_reloc_t* reloc;
+
+		reloc = (status_reloc_t*)extra;
 		extrapre = QSE_MT("Location: ");
 		extrapst = reloc->redir? QSE_MT("/\r\n"): QSE_MT("\r\n");
 		extraval = reloc->dst;
+
+		text[0] = QSE_MT('\0');
 	}
 	else if (code == 304)
 	{
-		/* nothing to do */
+		text[0] = QSE_MT('\0');
 	}
 	else
 	{

@@ -643,6 +643,8 @@ ENABLE_CXX_TRUE
 BUILD_MODE
 INCLUDE_MORE_CMGRS_FALSE
 INCLUDE_MORE_CMGRS_TRUE
+ENABLE_BUNDLED_UNICODE_FALSE
+ENABLE_BUNDLED_UNICODE_TRUE
 WCHAR_FALSE
 WCHAR_TRUE
 CHAR_MODE
@@ -820,6 +822,7 @@ with_ltdl_include
 with_ltdl_lib
 enable_ltdl_install
 enable_wchar
+enable_bundled_unicode
 enable_more_cmgrs
 enable_syscall
 enable_debug
@@ -1470,6 +1473,8 @@ Optional Features:
   --enable-ltdl-install   install libltdl
   --enable-wchar          use wchar_t a default charater type when enabled
                           (default. yes)
+  --enable-bundled-unicode
+                          use thn bundled unicode routines (default. no)
   --enable-more-cmgrs     include more built-in cmgrs like cp949 and cp950
                           when enabled (default. yes)
   --enable-syscall        use the syscall() function to call system calls
@@ -20136,12 +20141,35 @@ $as_echo "#define QSE_CHAR_IS_MCHAR /**/" >>confdefs.h
 	CHAR_MODE="QSE_CHAR_IS_MCHAR"
 
 fi
- if test "${enable_wchar_is}" = "yes" ; then
+ if test "${enable_wchar_is}" = "yes"; then
   WCHAR_TRUE=
   WCHAR_FALSE='#'
 else
   WCHAR_TRUE='#'
   WCHAR_FALSE=
+fi
+
+
+# Check whether --enable-bundled-unicode was given.
+if test "${enable_bundled_unicode+set}" = set; then :
+  enableval=$enable_bundled_unicode; enable_bundled_unicode_is=$enableval
+else
+  enable_bundled_unicode_is=yes
+fi
+
+if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
+then
+
+$as_echo "#define QSE_ENABLE_BUNDLED_UNICODE /**/" >>confdefs.h
+
+	enable_bundled_unicode_is=yes
+fi
+ if test "${enable_bundled_unicode_is}" = "yes"; then
+  ENABLE_BUNDLED_UNICODE_TRUE=
+  ENABLE_BUNDLED_UNICODE_FALSE='#'
+else
+  ENABLE_BUNDLED_UNICODE_TRUE='#'
+  ENABLE_BUNDLED_UNICODE_FALSE=
 fi
 
 
@@ -20695,7 +20723,7 @@ QSE_PROJECT_AUTHOR="${PACKAGE_BUGREPORT}"
 QSE_PROJECT_URL="${PACKAGE_URL}"
 
 
-ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/net/Makefile lib/Makefile lib/cmn/Makefile lib/awk/Makefile lib/sed/Makefile lib/net/Makefile cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile mod/Makefile mod/awk/Makefile samples/Makefile samples/cmn/Makefile samples/awk/Makefile samples/sed/Makefile samples/net/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/page/Makefile doc/image/Makefile doc/Doxyfile tools/Makefile"
+ac_config_files="$ac_config_files Makefile README include/Makefile include/qse/Makefile include/qse/cmn/Makefile include/qse/awk/Makefile include/qse/sed/Makefile include/qse/net/Makefile lib/Makefile lib/cmn/Makefile lib/awk/Makefile lib/sed/Makefile lib/net/Makefile cmd/Makefile cmd/awk/Makefile cmd/sed/Makefile cmd/net/Makefile mod/Makefile mod/awk/Makefile samples/Makefile samples/cmn/Makefile samples/awk/Makefile samples/sed/Makefile samples/net/Makefile regress/Makefile regress/awk/Makefile regress/awk/regress.sh regress/sed/Makefile regress/sed/regress.sh doc/Makefile doc/page/Makefile doc/image/Makefile doc/Doxyfile tools/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20866,6 +20894,10 @@ fi
 
 if test -z "${WCHAR_TRUE}" && test -z "${WCHAR_FALSE}"; then
   as_fn_error $? "conditional \"WCHAR\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ENABLE_BUNDLED_UNICODE_TRUE}" && test -z "${ENABLE_BUNDLED_UNICODE_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_BUNDLED_UNICODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${INCLUDE_MORE_CMGRS_TRUE}" && test -z "${INCLUDE_MORE_CMGRS_FALSE}"; then
@@ -21875,6 +21907,7 @@ do
     "cmd/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/Makefile" ;;
     "cmd/awk/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/awk/Makefile" ;;
     "cmd/sed/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/sed/Makefile" ;;
+    "cmd/net/Makefile") CONFIG_FILES="$CONFIG_FILES cmd/net/Makefile" ;;
     "mod/Makefile") CONFIG_FILES="$CONFIG_FILES mod/Makefile" ;;
     "mod/awk/Makefile") CONFIG_FILES="$CONFIG_FILES mod/awk/Makefile" ;;
     "samples/Makefile") CONFIG_FILES="$CONFIG_FILES samples/Makefile" ;;

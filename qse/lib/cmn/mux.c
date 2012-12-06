@@ -94,6 +94,16 @@ struct qse_mux_t
 		qse_mux_evt_t** ptr;
 		int ubound;
 	} me;
+#elif defined(__OS2__)
+	int fdarr;
+	int rsize;
+	int wsize;
+
+	struct
+	{
+		qse_mux_evt_t** ptr;
+		int ubound;
+	} me;
 #endif
 };
 
@@ -131,27 +141,27 @@ static qse_mux_errnum_t syserr_to_errnum (DWORD e)
 	}
 }
 #elif defined(__OS2__)
-static qse_mux_errnum_t syserr_to_errnum (APIRET e)
+static qse_mux_errnum_t syserr_to_errnum (int e)
 {
 	switch (e)
 	{
-		case ERROR_NOT_ENOUGH_MEMORY:
+		case SOCENOMEM:
 			return QSE_MUX_ENOMEM;
 
-		case ERROR_INVALID_PARAMETER:
-		case ERROR_INVALID_HANDLE:
-		case ERROR_INVALID_NAME:
+		case SOCEINVAL:
 			return QSE_MUX_EINVAL;
 
-		case ERROR_ACCESS_DENIED:
+		case SOCEACCES:
 			return QSE_MUX_EACCES;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
+		case SOCENOENT:
 			return QSE_MUX_ENOENT;
 
-		case ERROR_ALREADY_EXISTS:
+		case SOCEEXIST:
 			return QSE_MUX_EEXIST;
+	
+		case SOCEINTR:
+			return QSE_MUX_EINTR;
 
 		default:
 			return QSE_MUX_ESYSERR;
@@ -272,6 +282,11 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 		if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
 	}
 	#endif
+#elif defined(__OS2__)
+
+	mux->errnum = QSE_MUX_ENOIMPL;
+	return -1;
+
 #else
 	/* TODO: */
 	mux->errnum = QSE_MUX_ENOIMPL;
@@ -458,6 +473,9 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	*mux->me.ptr[evt->hnd] = *evt;
 	mux->ee.len++;
 	return 0;
+#elif defined(__OS2__)
+	mux->errnum = QSE_MUX_ENOIMPL;
+	return -1;
 #else
 	/* TODO: */
 	mux->errnum = QSE_MUX_ENOIMPL;
@@ -526,6 +544,12 @@ done:
 
 	mux->ee.len--;
 	return 0;
+#elif defined(__OS2__)
+
+	/* TODO */
+	mux->errnum = QSE_MUX_ENOIMPL;
+	return -1;
+	
 #else
 	/* TODO */
 	mux->errnum = QSE_MUX_ENOIMPL;
@@ -550,6 +574,8 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	{
 	#if defined(_WIN32)
 		mux->errnum = syserr_to_errnum(WSAGetLastError());
+	#elif defined(__OS2__)
+		mux->errnum = syserr_to_errnum(sock_errno());
 	#else
 		mux->errnum = syserr_to_errnum(errno);
 	#endif
@@ -613,6 +639,27 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	}
 
 	return nfds;
+
+#elif defined(__OS2__)
+
+	/*
+	long tv;
+	int n;
+
+	tv = QSE_SEC_TO_MSEC(nwio->tmout.r.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.r.nsec);
+
+	n = os2_select (handle_array, read_count, write_count, 0, &tv);
+	if (n < = 1)
+	{
+		mux->errnum = syserr_to_errnum(sock_errno());
+		return -1;
+	}
+
+
+	return n;
+	*/
+	mux->errnum = QSE_MUX_ENOIMPL;
+	return -1;
 
 #else
 	/* TODO */

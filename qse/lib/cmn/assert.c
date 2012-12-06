@@ -21,12 +21,12 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#ifndef NDEBUG
+#if !defined(NDEBUG)
 
 #include <qse/cmn/sio.h>
 #include "mem.h"
 
-#ifdef HAVE_EXECINFO_H
+#if defined(HAVE_EXECINFO_H)
 #	include <execinfo.h>
 #	include <stdlib.h>
 #	include <qse/cmn/str.h>
@@ -91,7 +91,7 @@ void qse_assert_failed (
 	const qse_char_t* expr, const qse_char_t* desc, 
 	const qse_char_t* file, qse_size_t line)
 {
-#ifdef HAVE_BACKTRACE
+#if defined(HAVE_BACKTRACE)
 	void *btarray[128];
 	qse_size_t btsize, i;
 	char **btsyms;
@@ -138,7 +138,7 @@ void qse_assert_failed (
 		qse_sio_putmbs (sio, QSE_MT("\n"));
 	}
 
-#ifdef HAVE_BACKTRACE
+#if defined(HAVE_BACKTRACE)
 	btsize = backtrace (btarray, QSE_COUNTOF(btarray));
 	btsyms = backtrace_symbols (btarray, btsize);
 	if (btsyms != QSE_NULL)

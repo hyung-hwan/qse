@@ -398,7 +398,16 @@ else
 	AC_DEFINE([QSE_CHAR_IS_MCHAR],[],[char is mchar])
 	AC_SUBST(CHAR_MODE, "QSE_CHAR_IS_MCHAR")
 fi
-AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes" )
+AM_CONDITIONAL(WCHAR, test "${enable_wchar_is}" = "yes")
+
+AC_ARG_ENABLE([bundled-unicode], [AS_HELP_STRING([--enable-bundled-unicode],[use thn bundled unicode routines (default. no)])],
+	enable_bundled_unicode_is=$enableval,enable_bundled_unicode_is=yes)
+if test "${ac_cv_header_wctype_h}" = "no" -o "${ac_cv_func_wctrans}" = "no" -o "${ac_cv_func_wctype}" = "no"
+then
+	AC_DEFINE([QSE_ENABLE_BUNDLED_UNICODE],[],[use the bundled unicode routines])
+	enable_bundled_unicode_is=yes
+fi
+AM_CONDITIONAL(ENABLE_BUNDLED_UNICODE, test "${enable_bundled_unicode_is}" = "yes")
 
 AC_ARG_ENABLE([more-cmgrs], [AS_HELP_STRING([--enable-more-cmgrs],[include more built-in cmgrs like cp949 and cp950 when enabled (default. yes)])],
 	enable_more_cmgrs_is=$enableval,enable_more_cmgrs_is=yes)
@@ -489,6 +498,7 @@ AC_CONFIG_FILES([
 	cmd/Makefile 
 	cmd/awk/Makefile 
 	cmd/sed/Makefile 
+	cmd/net/Makefile 
 	mod/Makefile
 	mod/awk/Makefile
 	samples/Makefile 

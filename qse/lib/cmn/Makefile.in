@@ -35,11 +35,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@INCLUDE_MORE_CMGRS_TRUE@am__append_1 = \
-@INCLUDE_MORE_CMGRS_TRUE@	cp949.c \
-@INCLUDE_MORE_CMGRS_TRUE@	cp950.c
-
-@ENABLE_CXX_TRUE@am__append_2 = libqsecmnxx.la
+@ENABLE_BUNDLED_UNICODE_TRUE@am__append_1 = uni.c 
+@INCLUDE_MORE_CMGRS_TRUE@am__append_2 = cp949.c cp950.c
+@ENABLE_CXX_TRUE@am__append_3 = libqsecmnxx.la
 subdir = lib/cmn
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -100,8 +98,9 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
 	task.c time.c tio.c tre.c tre-ast.c tre-compile.c \
 	tre-match-backtrack.c tre-match-parallel.c tre-parse.c \
-	tre-stack.c uri.c utf8.c xma.c cp949.c cp950.c
-@INCLUDE_MORE_CMGRS_TRUE@am__objects_1 = cp949.lo cp950.lo
+	tre-stack.c uri.c utf8.c xma.c uni.c cp949.c cp950.c
+@ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
+@INCLUDE_MORE_CMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	alg-sort.lo assert.lo chr.lo dir.lo dll.lo env.lo gdl.lo \
 	htb.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \
@@ -117,7 +116,7 @@ am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	str-trm.lo str-word.lo task.lo time.lo tio.lo tre.lo \
 	tre-ast.lo tre-compile.lo tre-match-backtrack.lo \
 	tre-match-parallel.lo tre-parse.lo tre-stack.lo uri.lo utf8.lo \
-	xma.lo $(am__objects_1)
+	xma.lo $(am__objects_1) $(am__objects_2)
 libqsecmn_la_OBJECTS = $(am_libqsecmn_la_OBJECTS)
 libqsecmn_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -336,7 +335,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(includedir)
 
-lib_LTLIBRARIES = libqsecmn.la $(am__append_2)
+lib_LTLIBRARIES = libqsecmn.la $(am__append_3)
 noinst_HEADERS = \
 	cp949.h \
 	cp950.h \
@@ -363,7 +362,7 @@ libqsecmn_la_SOURCES = alg-base64.c alg-rand.c alg-search.c alg-sort.c \
 	str-spn.c str-str.c str-subst.c str-tok.c str-trm.c str-word.c \
 	task.c time.c tio.c tre.c tre-ast.c tre-compile.c \
 	tre-match-backtrack.c tre-match-parallel.c tre-parse.c \
-	tre-stack.c uri.c utf8.c xma.c $(am__append_1)
+	tre-stack.c uri.c utf8.c xma.c $(am__append_1) $(am__append_2)
 libqsecmn_la_LDFLAGS = -L$(libdir) -version-info 1:0:0 -no-undefined
 libqsecmn_la_LIBADD = $(SOCKET_LIBS)
 @ENABLE_CXX_TRUE@libqsecmnxx_la_SOURCES = \
@@ -533,6 +532,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre-stack.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tre.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uni.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uri.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xma.Plo@am__quote@
