@@ -992,23 +992,23 @@ qse_fio_off_t qse_fio_seek (
 		FILE_END
 	};
 	LARGE_INTEGER x;
-#if 0
+	#if defined(_WIN64)
 	LARGE_INTEGER y;
-#endif
+	#endif
 
 	QSE_ASSERT (QSE_SIZEOF(offset) <= QSE_SIZEOF(x.QuadPart));
 
-	/* SetFilePointerEx is not available on Windows NT 4.
-	 * So let's use SetFilePointer */
-#if 0
+	#if defined(_WIN64)
 	x.QuadPart = offset;
 	if (SetFilePointerEx (fio->handle, x, &y, seek_map[origin]) == FALSE)
 	{
 		return (qse_fio_off_t)-1;
 	}
 	return (qse_fio_off_t)y.QuadPart;
-#endif
+	#else
 
+	/* SetFilePointerEx is not available on Windows NT 4.
+	 * So let's use SetFilePointer */
 	x.QuadPart = offset;
 	x.LowPart = SetFilePointer (
 		fio->handle, x.LowPart, &x.HighPart, seek_map[origin]);
@@ -1018,6 +1018,7 @@ qse_fio_off_t qse_fio_seek (
 		return (qse_fio_off_t)-1;
 	}
 	return (qse_fio_off_t)x.QuadPart;
+	#endif
 
 #elif defined(__OS2__)
 	static int seek_map[] =
@@ -1106,20 +1107,12 @@ qse_fio_off_t qse_fio_seek (
 int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 {
 #if defined(_WIN32)
-#if 0
-	LARGE_INTEGER x;
-	x.QuadPart = size;
-
-	if (SetFilePointerEx(fio->handle,x,NULL,FILE_BEGIN) == FALSE ||
-	    SetEndOfFile(fio->handle) == FALSE) return -1;
-#endif
 	if (qse_fio_seek (fio, size, QSE_FIO_BEGIN) == (qse_fio_off_t)-1) return -1;
 	if (SetEndOfFile(fio->handle) == FALSE) 
 	{
 		fio->errnum = syserr_to_errnum (GetLastError());
 		return -1;
 	}
-
 	return 0;
 #elif defined(__OS2__)
 
@@ -1249,7 +1242,13 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	{
 /* TODO: only when FILE_APPEND_DATA failed???  how do i know this??? */
 		/* i do this on a best-effort basis */
+	#if defined(_WIN64)
+		LARGE_INTEGER x;
+		x.QuadPart = 0;
+    		SetFilePointerEx (fio->handle, x, QSE_NULL, FILE_END);
+	#else
     		SetFilePointer (fio->handle, 0, QSE_NULL, FILE_END);
+	#endif
     	}
 
 	if (size > (QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD))) 
