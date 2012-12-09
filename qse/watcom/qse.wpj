@@ -252,7 +252,7 @@ WRect
 1240
 5690
 4200
-0
+1
 0
 56
 WFileName
@@ -460,7 +460,7 @@ WRect
 240
 5700
 4280
-0
+1
 0
 95
 WFileName
@@ -476,7 +476,7 @@ WRect
 1040
 5700
 4280
-0
+1
 0
 98
 WFileName
@@ -492,7 +492,7 @@ WRect
 480
 5700
 4280
-0
+1
 0
 101
 WFileName
@@ -500,4 +500,4 @@ WFileName
 debug/win32/cmd/awk/qseawk.tgt
 0
 0
-99
+39

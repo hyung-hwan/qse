@@ -62,17 +62,23 @@ struct qse_mux_t
 {
 	qse_mmgr_t*      mmgr;
 	qse_mux_errnum_t errnum;
-
 	qse_mux_evtfun_t evtfun;
 
-#if defined(USE_SELECT)
+#if defined(__OS2__)
+	int* fdarr;
+	int  size;
+	struct
+	{
+		qse_mux_evt_t** ptr;
+		int ubound;
+	} me;
+#elif defined(USE_SELECT)
 	fd_set rset;
 	fd_set wset;
 	fd_set tmprset;
 	fd_set tmpwset;
 	int size;
 	int maxhnd;
-
 	struct
 	{
 		qse_mux_evt_t** ptr;
@@ -81,24 +87,12 @@ struct qse_mux_t
 
 #elif defined(USE_EPOLL)
 	int fd;
-
 	struct
 	{
 		struct epoll_event* ptr;
 		qse_size_t len;
 		qse_size_t capa;
-     } ee;
-
-	struct
-	{
-		qse_mux_evt_t** ptr;
-		int ubound;
-	} me;
-#elif defined(__OS2__)
-	int fdarr;
-	int rsize;
-	int wsize;
-
+	} ee;
 	struct
 	{
 		qse_mux_evt_t** ptr;
@@ -257,7 +251,10 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 	 * event buffers */
 	if (capahint <= 0) capahint = 1;
 
-#if defined(USE_SELECT)
+#if defined(__OS2__)
+	/* nothing special to do */
+
+#elif defined(USE_SELECT)
 	FD_ZERO (&mux->rset);
 	FD_ZERO (&mux->wset);
 	mux->maxhnd = -1;
@@ -282,10 +279,6 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 		if (flag >= 0) fcntl (mux->fd, F_SETFD, flag | FD_CLOEXEC);
 	}
 	#endif
-#elif defined(__OS2__)
-
-	mux->errnum = QSE_MUX_ENOIMPL;
-	return -1;
 
 #else
 	/* TODO: */
@@ -298,7 +291,24 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 
 void qse_mux_fini (qse_mux_t* mux)
 {
-#if defined(USE_SELECT)
+#if defined(__OS2__)
+	if (mux->me.ptr)
+	{
+		int i;
+
+		for (i = 0; i < mux->me.ubound; i++)
+		{
+			if (mux->me.ptr[i]) 
+				QSE_MMGR_FREE (mux->mmgr, mux->me.ptr[i]);
+		}
+
+		QSE_MMGR_FREE (mux->mmgr, mux->me.ptr);
+		mux->me.ubound = 0;
+	}
+
+	if (mux->fdarr) QSE_MMGR_FREE (mux->mmgr, mux->fdarr);
+
+#elif defined(USE_SELECT)
 	FD_ZERO (&mux->rset);
 	FD_ZERO (&mux->wset);
 
@@ -357,8 +367,60 @@ void* qse_mux_getxtn (qse_mux_t* mux)
 
 int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
-#if defined(USE_SELECT)
+#if defined(__OS2__)
 
+if (evt) qse_printf (QSE_T("INSERTING HANDLE %d\n"), (int)evt->hnd);
+else qse_printf (QSE_T("WHAT..... NULL\n"));
+	if (evt->hnd >= mux->me.ubound)
+	{
+		qse_mux_evt_t** tmp;
+		int* fatmp;
+		int ubound;
+
+		ubound = evt->hnd + 1;
+		ubound = ALIGN_TO (ubound, 128);
+
+		tmp = QSE_MMGR_REALLOC (mux->mmgr, mux->me.ptr, QSE_SIZEOF(*mux->me.ptr) * ubound);
+		if (tmp == QSE_NULL)
+		{
+			mux->errnum = QSE_MUX_ENOMEM;
+			return -1;
+		}
+
+		/* maintain this array double the size of the highest handle + 1 */
+		fatmp = QSE_MMGR_REALLOC (mux->mmgr, mux->fdarr, QSE_SIZEOF(*mux->fdarr) * (ubound * 2));
+		if (fatmp == QSE_NULL)
+		{
+			QSE_MMGR_FREE (mux->mmgr, tmp);
+			mux->errnum = QSE_MUX_ENOMEM;
+			return -1;
+		}
+
+		QSE_MEMSET (&tmp[mux->me.ubound], 0, QSE_SIZEOF(*mux->me.ptr) * (ubound - mux->me.ubound));
+		mux->me.ptr = tmp;
+		mux->me.ubound = ubound;
+		mux->fdarr = fatmp;
+	}
+
+	if (!mux->me.ptr[evt->hnd])
+	{
+		mux->me.ptr[evt->hnd] = QSE_MMGR_ALLOC (mux->mmgr, QSE_SIZEOF(*evt));
+		if (!mux->me.ptr[evt->hnd])
+		{
+			mux->errnum = QSE_MUX_ENOMEM;
+			return -1;
+		}
+	}
+
+	*mux->me.ptr[evt->hnd] = *evt;
+	mux->size++;
+	return 0;
+
+#elif defined(USE_SELECT)
+
+	/* TODO: windows seems to return a pretty high file descriptors
+	 *       using an array to store information may not be so effcient.
+	 *       devise a different way to maintain information */
 	if (evt->hnd >= mux->me.ubound)
 	{
 		qse_mux_evt_t** tmp;
@@ -473,9 +535,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	*mux->me.ptr[evt->hnd] = *evt;
 	mux->ee.len++;
 	return 0;
-#elif defined(__OS2__)
-	mux->errnum = QSE_MUX_ENOIMPL;
-	return -1;
+
 #else
 	/* TODO: */
 	mux->errnum = QSE_MUX_ENOIMPL;
@@ -485,7 +545,29 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 int qse_mux_delete (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
-#if defined(USE_SELECT)
+#if defined(__OS2__)
+
+	qse_mux_evt_t* mevt;
+
+	if (mux->size <= 0 || evt->hnd < 0 || evt->hnd >= mux->me.ubound) 
+	{
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+	mevt = mux->me.ptr[evt->hnd];
+	if (mevt->hnd != evt->hnd) 
+	{
+		/* already deleted??? */
+		mux->errnum = QSE_MUX_EINVAL;
+		return -1;
+	}
+
+	mevt->hnd = -1;
+	mux->size--;
+	return 0;	
+
+#elif defined(USE_SELECT)
 	qse_mux_evt_t* mevt;
 
 	if (mux->size <= 0 || evt->hnd < 0 || evt->hnd >= mux->me.ubound) 
@@ -544,11 +626,6 @@ done:
 
 	mux->ee.len--;
 	return 0;
-#elif defined(__OS2__)
-
-	/* TODO */
-	mux->errnum = QSE_MUX_ENOIMPL;
-	return -1;
 	
 #else
 	/* TODO */
@@ -559,7 +636,66 @@ done:
 
 int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 {
-#if defined(USE_SELECT)
+#if defined(__OS2__)
+
+	qse_mux_evt_t* evt;
+	long tv;
+	int n, i, count, rcount, wcount;
+	
+	tv = QSE_SEC_TO_MSEC(tmout->sec) + QSE_NSEC_TO_MSEC (tmout->nsec);
+
+	/* 
+	 * be aware that reconstructing this array every time is pretty 
+	 * inefficient.
+	 */
+	count = 0;
+	for (i = 0; i < mux->me.ubound; i++)
+	{
+		evt = mux->me.ptr[i];
+		if (evt && (evt->mask & QSE_MUX_IN))
+			mux->fdarr[count++] = evt->hnd;
+	}
+	rcount = count;
+	for (i = 0; i < mux->me.ubound; i++)
+	{
+		evt = mux->me.ptr[i];
+		if (evt && (evt->mask & QSE_MUX_OUT)) 
+			mux->fdarr[count++] = evt->hnd;
+	}
+	wcount = count - rcount;
+
+	n = os2_select (mux->fdarr, rcount, wcount, 0, tv);
+	if (n <= -1)
+	{
+		mux->errnum = syserr_to_errnum(sock_errno());
+		return -1;
+	}
+
+	if (n >= 1)
+	{
+		qse_mux_evt_t xevt;
+
+		for (i = 0; i < count; i++)
+		{
+			evt = mux->me.ptr[i];
+			if (!evt || evt->hnd != i || mux->fdarr[i] == -1) continue;
+
+			QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
+
+			xevt.mask = 0;
+			if ((evt->mask & QSE_MUX_IN) && i < rcount)
+				xevt.mask |= QSE_MUX_IN;
+			if ((evt->mask & QSE_MUX_OUT) && i >= rcount)
+				xevt.mask |= QSE_MUX_OUT;
+
+			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+		}
+	}
+
+
+	return n;
+
+#elif defined(USE_SELECT)
 	struct timeval tv;
 	int n;
 
@@ -595,8 +731,10 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
 
 			xevt.mask = 0;
-			if ((evt->mask & QSE_MUX_IN) && FD_ISSET(evt->hnd, &mux->tmprset)) xevt.mask |= QSE_MUX_IN;
-			if ((evt->mask & QSE_MUX_OUT) && FD_ISSET(evt->hnd, &mux->tmpwset)) xevt.mask |= QSE_MUX_OUT;
+			if ((evt->mask & QSE_MUX_IN) && 
+			    FD_ISSET(evt->hnd, &mux->tmprset)) xevt.mask |= QSE_MUX_IN;
+			if ((evt->mask & QSE_MUX_OUT) &&
+			    FD_ISSET(evt->hnd, &mux->tmpwset)) xevt.mask |= QSE_MUX_OUT;
 
 			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
 		}
@@ -608,7 +746,10 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	int nfds, i;
 	qse_mux_evt_t* evt, xevt;
 
-	nfds = epoll_wait (mux->fd, mux->ee.ptr, mux->ee.len, QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec));
+	nfds = epoll_wait (
+		mux->fd, mux->ee.ptr, mux->ee.len, 
+		QSE_SECNSEC_TO_MSEC(tmout->sec,tmout->nsec)
+	);
 	if (nfds <= -1)
 	{
 		mux->errnum = syserr_to_errnum(errno);
@@ -639,27 +780,6 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	}
 
 	return nfds;
-
-#elif defined(__OS2__)
-
-	/*
-	long tv;
-	int n;
-
-	tv = QSE_SEC_TO_MSEC(nwio->tmout.r.sec) + QSE_NSEC_TO_MSEC (nwio->tmout.r.nsec);
-
-	n = os2_select (handle_array, read_count, write_count, 0, &tv);
-	if (n < = 1)
-	{
-		mux->errnum = syserr_to_errnum(sock_errno());
-		return -1;
-	}
-
-
-	return n;
-	*/
-	mux->errnum = QSE_MUX_ENOIMPL;
-	return -1;
 
 #else
 	/* TODO */
