@@ -354,6 +354,7 @@ struct del_op_t
 {
 #if defined(_WIN32)
 	/* nothing */
+	int __dummy; /* just a placeholder */
 #elif defined(__OS2__)
 	qse_mchar_t* path;
 #elif defined(__DOS__)

@@ -48,6 +48,7 @@ typedef struct server_xtn_t server_xtn_t;
 struct server_xtn_t
 {
 	int tproxy;
+	int nodir; /* no directory listing */
 	qse_httpd_server_cbstd_t* orgcbstd;
 };
 
@@ -85,19 +86,16 @@ static int makersrc (
 	}
 	else
 	{
-	#if 0
 		if (server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc) <= -1) return -1;
-		if (rsrc->type == QSE_HTTPD_RSRC_DIR)
+		if (server_xtn->nodir && rsrc->type == QSE_HTTPD_RSRC_DIR)
 		{
-			/* no directory listing - */
+			/* prohibit no directory listing */
 			if (server_xtn->orgcbstd->freersrc)
 				server_xtn->orgcbstd->freersrc (httpd, client, req, rsrc);
-			rsrc->type = QSE_HTTPD_RSRC_ERROR;
-			rsrc->u.error.code = 403;
+			rsrc->type = QSE_HTTPD_RSRC_ERR;
+			rsrc->u.err.code = 403;
 		}
 		return 0;
-	#endif
-		return server_xtn->orgcbstd->makersrc (httpd, client, req, rsrc);
 	}
 }
 
@@ -217,7 +215,7 @@ static int httpd_main (int argc, qse_char_t* argv[])
 	signal (SIGPIPE, SIG_IGN);
 #endif
 
-	qse_httpd_setname (httpd, QSE_MT("httpd02/qse 1.0"));
+	qse_httpd_setname (httpd, QSE_MT("qsehttpd 1.0"));
 
 	qse_httpd_setoption (httpd, QSE_HTTPD_CGIERRTONUL);
 

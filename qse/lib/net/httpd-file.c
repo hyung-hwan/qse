@@ -143,7 +143,7 @@ static int task_init_file (
 	QSE_MEMCPY (file, arg, QSE_SIZEOF(*file));
 
 	file->path.ptr = (qse_mchar_t*)(file + 1);
-     qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
+	qse_mbscpy ((qse_mchar_t*)file->path.ptr, arg->path.ptr);
 	if (arg->mime.ptr)
 	{
 		file->mime.ptr = file->path.ptr + file->path.len + 1;
