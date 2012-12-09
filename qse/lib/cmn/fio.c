@@ -403,7 +403,7 @@ int qse_fio_init (
 				if (flags & QSE_FIO_MBSPATH)
 				{
 					handle = CreateFileA (
-						path, desired_access, share_mode, 
+						(const qse_mchar_t*)path, desired_access, share_mode, 
 						QSE_NULL, /* set noinherit by setting no secattr */
 						creation_disposition, flag_and_attr, 0
 					);
@@ -892,7 +892,10 @@ int qse_fio_init (
 	#if defined(QSE_CHAR_IS_MCHAR)
 		/* nothing to do */
 	#else
-		if (path_mb != path_mb_buf) QSE_MMGR_FREE (mmgr, path_mb);
+		if (path_mb != path_mb_buf && path_mb != path) 
+		{
+			QSE_MMGR_FREE (mmgr, path_mb);
+		}
 	#endif
 		if (handle == -1) 
 		{
@@ -1361,7 +1364,7 @@ static int get_devname_from_handle (
 	}
 
 	getmappedfilename = (getmappedfilename_t) 
-		GetProcAddress (psapi, QSE_T("GetMappedFileName"));
+		GetProcAddress (psapi, QSE_MT("GetMappedFileName"));
 	if (!getmappedfilename)
 	{
 		fio->errnum = syserr_to_errnum (GetLastError());

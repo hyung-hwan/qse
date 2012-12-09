@@ -253,7 +253,7 @@ static qse_ssize_t __send_file (
 	qse_ubi_t infd = qse_fio_gethandleasubi (in_fd.ptr);
 
 	#if !defined(_LP64) && (QSE_SIZEOF_VOID_P<8) && defined(HAVE_SENDFILE64)
-	return sendfile64 (out_f_fdd, infd.i, offset, count);
+	return sendfile64 (out_fd, infd.i, offset, count);
 	#else
 	return sendfile (out_fd, infd.i, offset, count);
 	#endif
@@ -1060,7 +1060,7 @@ static int stat_file (
 	qse_btime_t bt;
 	qse_ntime_t nt;
 
-#if 0
+	#if 0
 	HDIR h;
 	ULONG count;
 
@@ -1078,7 +1078,8 @@ static int stat_file (
 	if (rc != NO_ERROR) return -1;
 
 	DosFindClose (h);
-#endif
+	#endif
+
 	rc = DosQueryPathInfo (path, FIL_STANDARDL, &ffb, QSE_SIZEOF(ffb));
 	if (rc != NO_ERROR) return -1;
 
@@ -1120,6 +1121,7 @@ static int stat_file (
 	qse_stat_t st;
 
 /* TODO: lstat? or stat? */
+
 	if (QSE_STAT (path, &st) <= -1)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -1160,6 +1162,10 @@ static int stat_file (
 static int file_stat (
 	qse_httpd_t* httpd, const qse_mchar_t* path, qse_httpd_stat_t* hst)
 {
+	/* this callback is not required to be a general stat function
+	 * for a file. it is mainly used to get a file size and timestamps
+	 * of a regular file. so it should fail for a non-regular file.
+	 * note that 1 passes 1 to stat_file for it */
 	return stat_file (httpd, path, hst, 1);	
 }
 
@@ -1610,7 +1616,8 @@ if (qse_htre_getcontentlen(req) > 0)
 			else
 			{
 				task = qse_httpd_entaskrsrc (httpd, client, QSE_NULL, &rsrc, req);
-				if (server_xtn->cfg2.s.cbstd->freersrc) server_xtn->cfg2.s.cbstd->freersrc (httpd, client, req, &rsrc);
+				if (server_xtn->cfg2.s.cbstd->freersrc) 
+					server_xtn->cfg2.s.cbstd->freersrc (httpd, client, req, &rsrc);
 			}
 			if (task == QSE_NULL) goto oops;
 		}
@@ -2016,7 +2023,7 @@ auth_ok:
 	if (xpath == QSE_NULL) return -1;
 
 qse_printf (QSE_T(">>> check if [%hs] is a directory\n"), xpath);
-	if (httpd->scb->file.stat (httpd, xpath, &st) >= 0 && st.isdir)
+	if (stat_file (httpd, xpath, &st, 0) >= 0 && st.isdir)
 	{
 qse_printf (QSE_T(">>> [%hs] is a directory\n"), xpath);
 		/* it is a directory */
