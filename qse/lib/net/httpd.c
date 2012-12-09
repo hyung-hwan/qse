@@ -1134,7 +1134,9 @@ qse_printf (QSE_T("no servers are active....\n"));
 	{
 		int count;
 
+qse_printf (QSE_T("POLLING %d tmout ..\n"), tmout->sec);
 		count = httpd->scb->mux.poll (httpd, httpd->mux, tmout);
+qse_printf (QSE_T("POLLING %d return ..\n"), count);
 		if (count <= -1)
 		{
 			httpd->errnum = QSE_HTTPD_EIOMUX;
