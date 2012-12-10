@@ -56,7 +56,6 @@ enum
 #if defined(_WIN32)
 static qse_fio_errnum_t syserr_to_errnum (DWORD e)
 {
-
 	switch (e)
 	{
 		case ERROR_NOT_ENOUGH_MEMORY:
@@ -69,6 +68,7 @@ static qse_fio_errnum_t syserr_to_errnum (DWORD e)
 			return QSE_FIO_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_FIO_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
@@ -97,6 +97,7 @@ static qse_fio_errnum_t syserr_to_errnum (APIRET e)
 			return QSE_FIO_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_FIO_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:

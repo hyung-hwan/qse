@@ -41,6 +41,7 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_FS_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
@@ -70,6 +71,7 @@ qse_fs_errnum_t qse_fs_syserrtoerrnum (qse_fs_t* fs, qse_fs_syserr_t e)
 			return QSE_FS_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_FS_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
