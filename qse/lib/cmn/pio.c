@@ -60,6 +60,7 @@ static qse_pio_errnum_t syserr_to_errnum (DWORD e)
 			return QSE_PIO_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_PIO_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
@@ -91,6 +92,7 @@ static qse_pio_errnum_t syserr_to_errnum (APIRET e)
 			return QSE_PIO_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_PIO_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:

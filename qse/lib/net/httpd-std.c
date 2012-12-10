@@ -134,6 +134,7 @@ static qse_httpd_errnum_t syserr_to_errnum (DWORD e)
 			return QSE_HTTPD_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_HTTPD_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
@@ -162,6 +163,7 @@ static qse_httpd_errnum_t syserr_to_errnum (APIRET e)
 			return QSE_HTTPD_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_HTTPD_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
@@ -268,6 +270,34 @@ static qse_httpd_errnum_t muxerr_to_errnum (qse_mux_errnum_t e)
                return QSE_HTTPD_ESYSERR;
      }
 }
+
+static qse_httpd_errnum_t fioerr_to_errnum (qse_fio_errnum_t e)
+{
+     switch (e)
+     {
+          case QSE_FIO_ENOMEM:
+               return QSE_HTTPD_ENOMEM;
+
+          case QSE_FIO_EINVAL:
+               return QSE_HTTPD_EINVAL;
+
+          case QSE_FIO_EACCES:
+               return QSE_HTTPD_EACCES;
+
+          case QSE_FIO_ENOENT:
+               return QSE_HTTPD_ENOENT;
+
+          case QSE_FIO_EEXIST:
+               return QSE_HTTPD_EEXIST;
+
+          case QSE_FIO_EINTR:
+               return QSE_HTTPD_EINTR;
+
+          default:
+               return QSE_HTTPD_ESYSERR;
+     }
+}
+
 
 
 /* ------------------------------------------------------------------- */
@@ -511,7 +541,7 @@ static int server_open (qse_httpd_t* httpd, qse_httpd_server_t* server)
 
 #if defined(SO_REUSEADDR)
 	flag = 1;
-	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flag, QSE_SIZEOF(flag));
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void*)&flag, QSE_SIZEOF(flag));
 #endif
 
 /* TODO: linux. use capset() to set required capabilities just in case */
@@ -569,7 +599,7 @@ IP_TRANSPRENT is needed for:
 	/*if (bind (s, (struct sockaddr*)&addr, QSE_SIZEOF(addr)) <= -1) goto oops_esocket;*/
 	if (bind (fd, (struct sockaddr*)&addr, addrsize) <= -1)
 	{
-#if defined(IPV6_V6ONLY)
+#if defined(IPV6_V6ONLY) && defined(EADDRINUSE)
 		if (errno == EADDRINUSE && qse_skadfamily(&addr) == AF_INET6)
 		{
 			int on = 1;
@@ -1062,7 +1092,11 @@ static int stat_file (
 		if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
 
 		fh = FindFirstFileA (path, &fdata);
-		if (fh == INVALID_HANDLE_VALUE) return -1;
+		if (fh == INVALID_HANDLE_VALUE) 
+		{
+			qse_httpd_seterrnum (httpd, syserr_to_errnum(GetLastError()));
+			return -1;
+		}
 
 		QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) hst->isdir = 1;
@@ -1088,7 +1122,11 @@ static int stat_file (
 	FILESTATUS3L ffb;
 
 	rc = DosQueryPathInfo (path, FIL_STANDARDL, &ffb, QSE_SIZEOF(ffb));
-	if (rc != NO_ERROR) return -1;
+	if (rc != NO_ERROR) 
+	{
+		qse_httpd_seterrnum (httpd, syserr_to_errnum(rc));
+		return -1;
+	}
 
 	QSE_MEMSET (&bt, 0, QSE_SIZEOF(bt));
 	bt.mday = ffb.fdateLastWrite.day;
@@ -1181,13 +1219,19 @@ static int file_ropen (
 {
 	qse_fio_t* fio;
 
-	fio = qse_fio_open (
-		httpd->mmgr, 0, (const qse_char_t*)path,
-		QSE_FIO_READ | QSE_FIO_MBSPATH, 0);
+	fio = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*fio));
 	if (fio == QSE_NULL)
 	{
-		/* TODO: translate fio error to a proper error code */
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	if (qse_fio_init (
+		fio, httpd->mmgr, (const qse_char_t*)path,
+		QSE_FIO_READ | QSE_FIO_MBSPATH, 0) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));	
+		QSE_MMGR_FREE (httpd->mmgr, fio);
 		return -1;
 	}
 
@@ -1203,14 +1247,20 @@ static int file_wopen (
 {
 	qse_fio_t* fio;
 
-	fio = qse_fio_open (
-		httpd->mmgr, 0, (const qse_char_t*)path, 
-		QSE_FIO_WRITE | QSE_FIO_CREATE | 
-		QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644);
+	fio = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*fio));
 	if (fio == QSE_NULL)
 	{
-		/* TODO: translate fio error to a proper error code */
-		qse_httpd_seterrnum (httpd, QSE_HTTPD_EINVAL);	
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ENOMEM);
+		return -1;
+	}
+
+	if (qse_fio_init (
+		fio, httpd->mmgr, (const qse_char_t*)path, 
+		QSE_FIO_WRITE | QSE_FIO_CREATE | 
+		QSE_FIO_TRUNCATE | QSE_FIO_MBSPATH, 0644) <= -1)
+	{
+		qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(fio)));	
+		QSE_MMGR_FREE (httpd->mmgr, fio);
 		return -1;
 	}
 
@@ -1222,23 +1272,28 @@ qse_printf (QSE_T("opened wfile [%hs][%p][%p]\n"), path, handle->ptr, fio->handl
 static void file_close (qse_httpd_t* httpd, qse_ubi_t handle)
 {
 qse_printf (QSE_T("closed file....%p\n"), handle.ptr);
-	qse_fio_close (handle.ptr);
+	qse_fio_fini (handle.ptr);
+	QSE_MMGR_FREE (httpd->mmgr, handle.ptr);
 }
 
 static qse_ssize_t file_read (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	qse_mchar_t* buf, qse_size_t len)
 {
-	/* TODO: error code conversion */
-	return qse_fio_read (handle.ptr, buf, len);
+	qse_ssize_t n;
+	n = qse_fio_read (handle.ptr, buf, len);
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));	
+	return n;
 }
 
 static qse_ssize_t file_write (
 	qse_httpd_t* httpd, qse_ubi_t handle,
 	const qse_mchar_t* buf, qse_size_t len)
 {
-	/* TODO: error code conversion */
-	return qse_fio_write (handle.ptr, buf, len);
+	qse_ssize_t n;
+	n = qse_fio_write (handle.ptr, buf, len);
+	if (n <= -1) qse_httpd_seterrnum (httpd, fioerr_to_errnum(qse_fio_geterrnum(handle.ptr)));	
+	return n;
 }
 
 /* ------------------------------------------------------------------- */

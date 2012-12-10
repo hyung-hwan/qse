@@ -120,6 +120,7 @@ static qse_mux_errnum_t syserr_to_errnum (DWORD e)
 			return QSE_MUX_EINVAL;
 
 		case ERROR_ACCESS_DENIED:
+		case ERROR_SHARING_VIOLATION:
 			return QSE_MUX_EACCES;
 
 		case ERROR_FILE_NOT_FOUND:
