@@ -1042,12 +1042,17 @@ static int stat_file (
 	WIN32_FIND_DATAA fdata;
 	ULARGE_INTEGER li;
 
-	if (path[0] == QSE_MT('/') && path[1] ==  QSE_MT('\0'))
+	if ((path[0] == QSE_MT('/') && path[1] ==  QSE_MT('\0')) ||
+	    (qse_ismbsdriveabspath(path) && qse_mbslen(path) == 3))
 	{
-		/* the root directory won't work well with FindFirstFile().*/
+		/* the root directory doesn't work well with FindFirstFile()
+		 * if it's not appened with an wildcard letter like C:\*.*.
+		 * since i'm not interested in the files under the root 
+		 * directory, let me just hard-code it to indicate that
+		 * it is a directory.	
+		 */
 		QSE_MEMSET (hst, 0, QSE_SIZEOF(*hst));
 		hst->isdir = 1;
-		/* TODO: hst->dev can be set to the drive letter's index. */
 	}
 	else
 	{
@@ -1264,9 +1269,8 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 
-qse_printf (QSE_T("OPENDING DIRECTORY [%hs]\n"), path);
 	d->dp = qse_dir_open (httpd->mmgr, 0, 
-		(const qse_char_t*)path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
+		(const qse_char_t*)d->path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
 	if (d->dp == QSE_NULL)
 	{
 		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
@@ -2028,8 +2032,9 @@ auth_ok:
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	if (stx <= -1)
 	{
-		/* these OS may fail if the path contains the trailing separator.
-		 * i work around it here */
+		/* this OS may fail in stat_file() if the path contains the trailing 
+		 * separator. it 's beause of the way FindFirstFile() or DosQueryPathInfo()
+		 * is ussed in stat_file(). let me work around it here. */
 		qse_size_t pl = qse_mbslen(xpath);
 		if (pl > 1 && xpath[pl - 1] == QSE_MT('/')) 
 		{
@@ -2056,7 +2061,7 @@ auth_ok:
 					return -1;
 				}
 
-				if (httpd->scb->file.stat (httpd, tpath, &st) >= 0 && st.isdir)
+				if (httpd->scb->file.stat (httpd, tpath, &st) >= 0 && !st.isdir)
 				{
 					/* the index file is found */
 					QSE_MMGR_FREE (httpd->mmgr, xpath);
