@@ -363,14 +363,17 @@ void* qse_mux_getxtn (qse_mux_t* mux)
 	return QSE_XTN (mux);
 }
 
+qse_mux_errnum_t qse_mux_geterrnum (qse_mux_t* mux)
+{
+	return mux->errnum;
+}
+
 #define ALIGN_TO(num,align) ((((num) + (align) - 1) / (align)) * (align))
 
 int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 {
 #if defined(__OS2__)
 
-if (evt) qse_printf (QSE_T("INSERTING HANDLE %d\n"), (int)evt->hnd);
-else qse_printf (QSE_T("WHAT..... NULL\n"));
 	if (evt->hnd >= mux->me.ubound)
 	{
 		qse_mux_evt_t** tmp;
@@ -564,6 +567,7 @@ int qse_mux_delete (qse_mux_t* mux, const qse_mux_evt_t* evt)
 	}
 
 	mevt->hnd = -1;
+	mevt->mask = 0;
 	mux->size--;
 	return 0;	
 
@@ -608,6 +612,7 @@ int qse_mux_delete (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 done:
 	mevt->hnd = -1;
+	mevt->mask = 0;
 	mux->size--;
 	return 0;	
 
@@ -652,15 +657,13 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	for (i = 0; i < mux->me.ubound; i++)
 	{
 		evt = mux->me.ptr[i];
-		if (evt && (evt->mask & QSE_MUX_IN))
-			mux->fdarr[count++] = evt->hnd;
+		if (evt && (evt->mask & QSE_MUX_IN)) mux->fdarr[count++] = evt->hnd;
 	}
 	rcount = count;
 	for (i = 0; i < mux->me.ubound; i++)
 	{
 		evt = mux->me.ptr[i];
-		if (evt && (evt->mask & QSE_MUX_OUT)) 
-			mux->fdarr[count++] = evt->hnd;
+		if (evt && (evt->mask & QSE_MUX_OUT)) mux->fdarr[count++] = evt->hnd;
 	}
 	wcount = count - rcount;
 
@@ -677,21 +680,20 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 
 		for (i = 0; i < count; i++)
 		{
-			evt = mux->me.ptr[i];
-			if (!evt || evt->hnd != i || mux->fdarr[i] == -1) continue;
+			if (mux->fdarr[i] == -1) continue;
 
-			QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
+			evt = mux->me.ptr[mux->fdarr[i]];
+			if (!evt || evt->hnd != mux->fdarr[i]) continue;
 
-			xevt.mask = 0;
-			if ((evt->mask & QSE_MUX_IN) && i < rcount)
-				xevt.mask |= QSE_MUX_IN;
-			if ((evt->mask & QSE_MUX_OUT) && i >= rcount)
-				xevt.mask |= QSE_MUX_OUT;
+			xevt = *evt;
 
-			if (xevt.mask > 0) mux->evtfun (mux, &xevt);
+			/* due to the way i check 'fdarr' , it can't have
+			 * both IN and OUT at the same time. they are 
+			 * triggered separately */
+			xevt.mask = (i < rcount)? QSE_MUX_IN: QSE_MUX_OUT;
+			mux->evtfun (mux, &xevt);
 		}
 	}
-
 
 	return n;
 
@@ -728,8 +730,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 			evt = mux->me.ptr[i];
 			if (!evt || evt->hnd != i) continue;
 
-			QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
-
+			xevt = *evt;
 			xevt.mask = 0;
 			if ((evt->mask & QSE_MUX_IN) && 
 			    FD_ISSET(evt->hnd, &mux->tmprset)) xevt.mask |= QSE_MUX_IN;
@@ -764,8 +765,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 
 		evt = mux->ee.ptr[i].data.ptr;
 
-		QSE_MEMCPY (&xevt, evt, QSE_SIZEOF(xevt));
-
+		xevt = *evt;
 		xevt.mask = 0;
 		if (mux->ee.ptr[i].events & EPOLLIN) xevt.mask |= QSE_MUX_IN;
 		if (mux->ee.ptr[i].events & EPOLLOUT) xevt.mask |= QSE_MUX_OUT;

@@ -100,6 +100,14 @@ QSE_EXPORT int qse_ismbsdrivepath (
 );
 
 /**
+ * The qse_ismbsdriveabspath() function determines if a path name is in the form
+ * of a drive letter followed by a colon like A: and a path separator.
+ */
+QSE_EXPORT int qse_ismbsdriveabspath (
+	const qse_mchar_t* path
+);
+
+/**
  * The qse_ismbsdrivecurpath() function determines if a path name is in the form
  * of a drive letter followed by a colon like A:, without any trailing path.
  */
@@ -166,6 +174,14 @@ QSE_EXPORT int qse_iswcsdrivepath (
 );
 
 /**
+ * The qse_iswcsdriveabspath() function determines if a path name is in the form
+ * of a drive letter followed by a colon like A: and a path separtor.
+ */
+QSE_EXPORT int qse_iswcsdriveabspath (
+	const qse_wchar_t* path
+);
+
+/**
  * The qse_iswcsdrivecurpath() function determines if a path name is in the form
  * of a drive letter followed by a colon like A:, without any trailing path.
  */
@@ -215,11 +231,13 @@ QSE_EXPORT qse_size_t qse_canonwcspath (
 #if defined(QSE_CHAR_IS_MCHAR)
 #	define qse_isabspath(p)      qse_ismbsabspath(p)
 #	define qse_isdrivepath(p)    qse_ismbsdrivepath(p)
+#	define qse_isdriveabspath(p) qse_ismbsdriveabspath(p)
 #	define qse_isdrivecurpath(p) qse_ismbsdrivecurpath(p)
 #	define qse_canonpath(p,c,f)  qse_canonmbspath(p,c,f)
 #else
 #	define qse_isabspath(p)      qse_iswcsabspath(p)
 #	define qse_isdrivepath(p)    qse_iswcsdrivepath(p)
+#	define qse_isdriveabspath(p) qse_iswcsdriveabspath(p)
 #	define qse_isdrivecurpath(p) qse_iswcsdrivecurpath(p)
 #	define qse_canonpath(p,c,f)  qse_canonwcspath(p,c,f)
 #endif

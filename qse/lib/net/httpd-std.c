@@ -241,6 +241,35 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 }
 #endif
 
+
+static qse_httpd_errnum_t muxerr_to_errnum (qse_mux_errnum_t e)
+{
+     switch (e)
+     {
+          case QSE_MUX_ENOMEM:
+               return QSE_HTTPD_ENOMEM;
+
+          case QSE_MUX_EINVAL:
+               return QSE_HTTPD_EINVAL;
+
+          case QSE_MUX_EACCES:
+               return QSE_HTTPD_EACCES;
+
+          case QSE_MUX_ENOENT:
+               return QSE_HTTPD_ENOENT;
+
+          case QSE_MUX_EEXIST:
+               return QSE_HTTPD_EEXIST;
+
+          case QSE_MUX_EINTR:
+               return QSE_HTTPD_EINTR;
+
+          default:
+               return QSE_HTTPD_ESYSERR;
+     }
+}
+
+
 /* ------------------------------------------------------------------- */
 
 #define MAX_SEND_SIZE 4096
@@ -891,9 +920,7 @@ static void* mux_open (qse_httpd_t* httpd, qse_httpd_muxcb_t cbfun)
 	mux = qse_mux_open (httpd->mmgr, QSE_SIZEOF(*xtn), dispatch_muxcb, 256);
 	if (!mux)
 	{
-/* TODO 
-		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
-*/
+		qse_httpd_seterrnum (httpd, QSE_HTTPD_ESYSERR);
 		return QSE_NULL;
 	}
 
@@ -921,9 +948,7 @@ static int mux_addhnd (
 
 	if (qse_mux_insert ((qse_mux_t*)vmux, &evt) <= -1)
 	{
-/* TODO 
-		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
-*/
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(qse_mux_geterrnum((qse_mux_t*)vmux)));
 		return -1;
 	}
 
@@ -936,9 +961,7 @@ static int mux_delhnd (qse_httpd_t* httpd, void* vmux, qse_ubi_t handle)
 	evt.hnd = handle.i;	
 	if (qse_mux_delete ((qse_mux_t*)vmux, &evt) <= -1)
 	{
-/* TODO 
-		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
-*/
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(qse_mux_geterrnum((qse_mux_t*)vmux)));
 		return -1;
 	}
 	return 0;
@@ -948,9 +971,7 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, const qse_ntime_t* tmout)
 {
 	if (qse_mux_poll ((qse_mux_t*)vmux, tmout) <= -1)
 	{
-/* TODO 
-		qse_httpd_seterrnum (httpd, muxerr_to_errnum(mux));
-*/
+		qse_httpd_seterrnum (httpd, muxerr_to_errnum(qse_mux_geterrnum((qse_mux_t*)vmux)));
 		return -1;
 	}
 
@@ -1021,9 +1042,6 @@ static int stat_file (
 	WIN32_FIND_DATAA fdata;
 	ULARGE_INTEGER li;
 
-	/* fail if the path name contains a wilecard letter */
-	if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
-
 	if (path[0] == QSE_MT('/') && path[1] ==  QSE_MT('\0'))
 	{
 		/* the root directory won't work well with FindFirstFile().*/
@@ -1034,6 +1052,9 @@ static int stat_file (
 	else
 	{
 		/* TODO: hst->dev can be set to the drive letter's index. */
+
+		/* fail if the path name contains a wilecard letter */
+		if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
 
 		fh = FindFirstFileA (path, &fdata);
 		if (fh == INVALID_HANDLE_VALUE) return -1;
@@ -1056,29 +1077,10 @@ static int stat_file (
 
 #elif defined(__OS2__)
 	APIRET rc;
-	FILEFINDBUF3L ffb;
 	qse_btime_t bt;
 	qse_ntime_t nt;
 
-	#if 0
-	HDIR h;
-	ULONG count;
-
-	/* fail if the path name contains a wilecard letter */
-	if (qse_mbspbrk (path, QSE_MT("?*")) != QSE_NULL) return -1;
-
-	rc = DosFindFirst (
-		path,
-		&h,
-		FILE_DIRECTORY | FILE_READONLY,
-		&ffb,
-		QSE_SIZEOF(ffb),
-		&count,
-		FIL_STANDARDL);
-	if (rc != NO_ERROR) return -1;
-
-	DosFindClose (h);
-	#endif
+	FILESTATUS3L ffb;
 
 	rc = DosQueryPathInfo (path, FIL_STANDARDL, &ffb, QSE_SIZEOF(ffb));
 	if (rc != NO_ERROR) return -1;
@@ -1987,7 +1989,7 @@ static int make_resource (
 	qse_mchar_t* xpath; 
 	qse_httpd_stat_t st;
 	qse_size_t i;
-	int n;
+	int n, stx;
 
 	qpath = qse_htre_getqpath(req);
 
@@ -2022,10 +2024,23 @@ auth_ok:
 	xpath = merge_paths (httpd, server_xtn->cfg[SERVER_XTN_CFG_DOCROOT], qpath);
 	if (xpath == QSE_NULL) return -1;
 
-qse_printf (QSE_T(">>> check if [%hs] is a directory\n"), xpath);
-	if (stat_file (httpd, xpath, &st, 0) >= 0 && st.isdir)
+	stx = stat_file (httpd, xpath, &st, 0);
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (stx <= -1)
 	{
-qse_printf (QSE_T(">>> [%hs] is a directory\n"), xpath);
+		/* these OS may fail if the path contains the trailing separator.
+		 * i work around it here */
+		qse_size_t pl = qse_mbslen(xpath);
+		if (pl > 1 && xpath[pl - 1] == QSE_MT('/')) 
+		{
+			xpath[pl-1] = QSE_MT('\0');
+			stx = stat_file (httpd, xpath, &st, 0);
+			xpath[pl-1] = QSE_MT('/');
+		}
+	}
+#endif
+	if (stx >= 0 && st.isdir)
+	{
 		/* it is a directory */
 		if (server_xtn->cfg2.s.idxstd)
 		{
@@ -2056,11 +2071,9 @@ qse_printf (QSE_T(">>> [%hs] is a directory\n"), xpath);
 
 		target->type = QSE_HTTPD_RSRC_DIR;
 		target->u.dir.path = xpath;
-qse_printf (QSE_T(">>> MADE DIREcTORY RESOURCE [%hs]\n"), xpath);
 	}
 	else
 	{
-qse_printf (QSE_T(">>> [%hs] is a file\n"), xpath);
 	attempt_file:
 		if (server_xtn->cfg2.s.cgistd)
 		{
@@ -2216,6 +2229,7 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 
 	if (!xuri.path.ptr)
 	{
+		/* the path part is not specified */
 #if defined(QSE_CHAR_IS_MCHAR)
 		xuri.path.ptr = QSE_MT("/");
 #else
@@ -2236,12 +2250,18 @@ qse_httpd_server_t* qse_httpd_attachserverstd (
 	}
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
+	if (qse_ismbsdriveabspath((const qse_mchar_t*)xuri.path.ptr + 1))
+		server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_mbsxdup ((const qse_mchar_t*)xuri.path.ptr + 1, xuri.path.len - 1, httpd->mmgr);
+	else
+		server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_mbsxdup (xuri.path.ptr, xuri.path.len, httpd->mmgr);
 	if (xuri.frag.ptr) server_xtn->cfg[SERVER_XTN_CFG_REALM] = qse_mbsxdup (xuri.frag.ptr, xuri.frag.len, httpd->mmgr);
 	ba.ptr = qse_mcstradup (tmp, &ba.len, httpd->mmgr);
 	
 #else
-	server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_wcsntombsdup (xuri.path.ptr, xuri.path.len, QSE_NULL, httpd->mmgr);
+	if (qse_iswcsdriveabspath((const qse_wchar_t*)xuri.path.ptr + 1))
+		server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_wcsntombsdup ((const qse_wchar_t*)xuri.path.ptr + 1, xuri.path.len - 1, QSE_NULL, httpd->mmgr);
+	else
+		server_xtn->cfg[SERVER_XTN_CFG_DOCROOT] = qse_wcsntombsdup (xuri.path.ptr, xuri.path.len, QSE_NULL, httpd->mmgr);
 	if (xuri.frag.ptr) server_xtn->cfg[SERVER_XTN_CFG_REALM] = qse_wcsntombsdup (xuri.frag.ptr, xuri.frag.len, QSE_NULL, httpd->mmgr);
 	ba.ptr = qse_wcsnatombsdup (tmp, &ba.len, httpd->mmgr);
 #endif

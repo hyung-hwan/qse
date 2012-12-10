@@ -53,6 +53,14 @@ int qse_ismbsdrivepath (const qse_mchar_t* path)
 	return 0;
 }
 
+int qse_ismbsdriveabspath (const qse_mchar_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (IS_MDRIVE(path) && IS_MSEP(path[2])) return 1;
+#endif
+	return 0;
+}
+
 int qse_ismbsdrivecurpath (const qse_mchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
@@ -356,6 +364,14 @@ int qse_iswcsdrivepath (const qse_wchar_t* path)
 {
 #if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
 	if (IS_WDRIVE(path)) return 1;
+#endif
+	return 0;
+}
+
+int qse_iswcsdriveabspath (const qse_wchar_t* path)
+{
+#if defined(_WIN32) || defined(__OS2__) || defined(__DOS__)
+	if (IS_WDRIVE(path) && IS_WSEP(path[2])) return 1;
 #endif
 	return 0;
 }

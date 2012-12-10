@@ -102,6 +102,10 @@ QSE_EXPORT void* qse_mux_getxtn (
 	qse_mux_t* mux
 );
 
+QSE_EXPORT qse_mux_errnum_t qse_mux_geterrnum (
+	qse_mux_t* mux
+);
+
 QSE_EXPORT int qse_mux_insert (
 	qse_mux_t*           mux,
 	const qse_mux_evt_t* evt

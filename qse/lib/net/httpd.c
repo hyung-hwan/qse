@@ -647,10 +647,12 @@ qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
 	}
 	
 qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
+#if !defined(__OS2__)
 {
 int i;
 for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
 }
+#endif
 qse_printf (QSE_T("]\n"));
 
 	/* qse_htrd_feed() may call the request callback 
@@ -1134,15 +1136,12 @@ qse_printf (QSE_T("no servers are active....\n"));
 	{
 		int count;
 
-qse_printf (QSE_T("POLLING %d tmout ..\n"), tmout->sec);
 		count = httpd->scb->mux.poll (httpd, httpd->mux, tmout);
-qse_printf (QSE_T("POLLING %d return ..\n"), count);
 		if (count <= -1)
 		{
-			httpd->errnum = QSE_HTTPD_EIOMUX;
 /* TODO: call user callback for this multiplexer error */
 			/*if (errno == EINTR) continue;*/
-qse_fprintf (QSE_STDERR, QSE_T("Error: mux returned failure\n"));
+qse_fprintf (QSE_STDERR, QSE_T("Error: mux returned failure %d\n"), (int)httpd->errnum);
 			/* break; */
 		}
 
