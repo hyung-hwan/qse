@@ -381,6 +381,7 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	const qse_char_t* tmp[4];
 	int count;
 	UCHAR errbuf[CCHMAXPATH];
+	APIRET rc;
 
 	count = 0;
 	if (spec->prefix) tmp[count++] = spec->prefix;
@@ -399,7 +400,10 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 		return QSE_NULL;
 	}
 
-	if (DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h) != NO_ERROR) h = QSE_NULL;
+	/* DosLoadModule() seems to have severe limitation on 
+	 * the file name it can load (max-8-letters.xxx) */
+	rc = DosLoadModule (errbuf, QSE_COUNTOF(errbuf) - 1, modpath, &h);
+	if (rc != NO_ERROR) h = QSE_NULL;
 
 	QSE_MMGR_FREE (awk->mmgr, modpath);
 

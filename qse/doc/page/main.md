@@ -1,5 +1,5 @@
-/** @mainpage QSE
-
+QSE                                       {#mainpage}
+===================
 @image html qse-logo.png 
 
 @section qse_intro INTRODUCTION
@@ -28,6 +28,7 @@ See the subpages for various modules available in this library.
 - @subpage io  "I/O Handling"
 - @subpage awk "AWK Interpreter" 
 - @subpage sed "SED Stream Editor" 
+- @subpage awk-lang "QSEAWK Language" 
 
 @section installation INSTALLATION
 
@@ -100,4 +101,3 @@ Under the wide character mode:
 - #qse_char_t maps to #qse_wchar_t.
 
 #qse_mchar_t maps to @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
-*/

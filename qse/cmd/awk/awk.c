@@ -622,7 +622,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 			{
 				if (isfl >= isfc - 1) /* -1 for last QSE_NULL */
 				{
-					qse_awk_parsestd_t** tmp;
+					qse_awk_parsestd_t* tmp;
 					tmp = QSE_MMGR_REALLOC (arg->icf.mmgr, isf, QSE_SIZEOF(*isf)*(isfc+16));
 					if (tmp == QSE_NULL)
 					{
