@@ -24,15 +24,8 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-/** @file
- *  The file provides interface to a stx interpreter.
- */
-
 typedef struct qse_stx_t qse_stx_t;
 
-/** 
- * The qse_stx_loc_t defines a structure to store location information.
- */
 struct qse_stx_loc_t
 {
 	const qse_char_t* file; /**< file */
@@ -41,9 +34,6 @@ struct qse_stx_loc_t
 };
 typedef struct qse_stx_loc_t qse_stx_loc_t;
 
-/**
- * The qse_stx_io_cmd_t type defines I/O commands.
- */
 enum qse_stx_io_cmd_t
 {
 	QSE_STX_IO_OPEN   = 0,
@@ -53,9 +43,6 @@ enum qse_stx_io_cmd_t
 };
 typedef enum qse_stx_io_cmd_t qse_stx_io_cmd_t;
 
-/**
- * The qse_stx_io_arg_t type defines a data structure for an I/O handler.
- */
 struct qse_stx_io_arg_t
 {
 	void*             handle;
@@ -63,9 +50,6 @@ struct qse_stx_io_arg_t
 };
 typedef struct qse_stx_io_arg_t qse_stx_io_arg_t;
 
-/**
- * The qse_stx_io_impl_t type defines an I/O handler function.
- */
 typedef qse_ssize_t (*qse_stx_io_impl_t) (
 	qse_stx_t*        stx,
 	qse_stx_io_cmd_t  cmd,
@@ -74,9 +58,6 @@ typedef qse_ssize_t (*qse_stx_io_impl_t) (
 	qse_size_t        count
 );
 
-/**
- * The qse_stx_io_t type defines a I/O handler set.
- */
 struct qse_stx_io_t
 {
 	qse_stx_io_impl_t in;
@@ -84,9 +65,6 @@ struct qse_stx_io_t
 };
 typedef struct qse_stx_io_t qse_stx_io_t;
 
-/**
- * The qse_stx_errnum_t type defines error numbers.
- */
 enum qse_stx_errnum_t
 {
 	QSE_STX_ENOERR,
@@ -189,21 +167,11 @@ void qse_stx_seterror (
 	const qse_stx_loc_t* errloc  /**< error location */
 );
 
-/**
- * The qse_stx_attachio() function attaches I/O handlers.
- * Upon attachment, it opens input and output streams by calling
- * the I/O handlers with the #QSE_STX_IO_OPEN command. 
- */
 int qse_stx_attachio (
 	qse_stx_t*    stx,  /**< stx */
 	qse_stx_io_t* io    /**< I/O handler set */
 );
 
-/**
- * The qse_stx_detachio() function detaches I/O handlers.
- * It closes the streams for both input and output by calling the I/O handlers
- * with the #QSE_STX_IO_CLOSE command.
- */
 void qse_stx_detachio (
 	qse_stx_t* stx   /**< stx */
 );

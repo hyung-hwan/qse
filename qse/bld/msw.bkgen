@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+
+<bakefile-gen xmlns="http://www.bakefile.org/schema/bakefile-gen">
+
+	<input>
+		qse.bkl
+	</input>
+
+	<add-formats>
+		borland,msvc,watcom
+	</add-formats>
+
+	<add-flags>
+		-DPLATFORM_WIN32=1
+	</add-flags>
+
+	<add-flags formats="borland">
+		-o$(INPUT_FILE_DIR)/msw-borland/makefile.bcc
+	</add-flags>
+
+	<add-flags formats="msvc">
+		-o$(INPUT_FILE_DIR)/msw-msvc/makefile.bcc
+	</add-flags>
+
+	<add-flags formats="watcom">
+		-o$(INPUT_FILE_DIR)/msw-watcom/makefile.wat
+	</add-flags>
+
+</bakefile-gen>

@@ -1,0 +1,191 @@
+<?xml version="1.0" ?>
+<makefile>
+	<set var="EOL_STYLE">unix</set>
+
+
+<!--
+	<if cond="FORMAT!='autoconf'">
+		<set var="OBJS" make_var="1">
+			$(COMPILER)
+		</set>
+
+		<set var="BUILDDIR">$(OBJS)</set>
+	</if>
+-->
+
+	<dll id="dllqsecmn">
+		<libname>qsecmn</libname>
+		<dllname>qsecmn</dllname>
+		<set-srcdir>../../lib/cmn</set-srcdir>
+		<include>../../include</include>
+		<sources>
+			alg-base64.c 
+			alg-rand.c 
+			alg-search.c  
+			alg-sort.c 
+			assert.c 
+			chr.c 
+			dir.c 
+			dll.c 
+			env.c 
+			gdl.c 
+			htb.c 
+			fio.c 
+			fma.c 
+			fmt.c 
+			fs.c 
+			fs-err.c 
+			fs-move.c 
+			glob.c 
+			hton.c 
+			ipad.c 
+			lda.c 
+			main.c 
+			mbwc.c 
+			mbwc-str.c 
+			mem.c 
+			mux.c 
+			nwad.c 
+			nwad-skad.c 
+			nwif.c 
+			nwif-cfg.c 
+			nwio.c 
+			oht.c 
+			opt.c 
+			path-basename.c 
+			path-canon.c 
+			pio.c 
+			pma.c 
+			rbt.c 
+			rex.c 
+			sio.c 
+			sll.c 
+			slmb.c 
+			stdio.c 
+			str-beg.c 
+			str-cat.c 
+			str-chr.c 
+			str-cnv.c 
+			str-cmp.c 
+			str-cpy.c 
+			str-del.c 
+			str-dup.c 
+			str-dynm.c 
+			str-dynw.c 
+			str-end.c 
+			str-excl.c 
+			str-fcpy.c 
+			str-fnmat.c 
+			str-incl.c 
+			str-len.c 
+			str-pac.c 
+			str-pbrk.c 
+			str-put.c 
+			str-rev.c 
+			str-rot.c 
+			str-set.c 
+			str-spl.c 
+			str-spn.c 
+			str-str.c 
+			str-subst.c 
+			str-tok.c 
+			str-trm.c 
+			str-word.c 
+			task.c 
+			time.c 
+			tio.c 
+			tre.c 
+			tre-ast.c 
+			tre-compile.c 
+			tre-match-backtrack.c 
+			tre-match-parallel.c 
+			tre-parse.c 
+			tre-stack.c 
+			uri.c 
+			utf8.c 
+			xma.c
+		</sources>
+		<warnings>max</warnings>
+		<debug-info>off</debug-info>
+		<threading>multi</threading>
+		<optimize>speed</optimize>
+	</dll>
+
+	<dll id="dllqseawk">
+		<libname>qseawk</libname>
+		<dllname>qseawk</dllname>
+		<set-srcdir>../../lib/awk</set-srcdir>
+		<include>../../include</include>
+		<if cond="PLATFORM_OS2=='1'">
+			<cppflags>
+				-DQSE_AWK_DEFAULT_MODPREFIX="awk-"
+				-DQSE_AWK_DEFAULT_MODPOSTFIX=".dll"
+			</cppflags>
+		</if>
+		<if cond="PLATFORM_MSDOS=='1'">
+			<cppflags>
+				-DQSE_AWK_DEFAULT_MODPREFIX="awk-"
+				-DQSE_AWK_DEFAULT_MODPOSTFIX=".dll"
+			</cppflags>
+		</if>
+		<if cond="PLATFORM_WIN32=='1'">
+			<cppflags>
+				-DQSE_AWK_DEFAULT_MODPREFIX="qseawk-"
+				-DQSE_AWK_DEFAULT_MODPOSTFIX=""
+			</cppflags>
+		</if>
+		<if cond="PLATFORM_UNIX=='1'">
+			<cppflags>
+				-DQSE_AWK_DEFAULT_MODPREFIX="libqseawk-"
+				-DQSE_AWK_DEFAULT_MODPOSTFIX=""
+			</cppflags>
+		</if>
+		<sources>
+			awk.c 
+			err.c 
+			tree.c 
+			parse.c 
+			run.c 
+			rec.c 
+			val.c 
+			fnc.c 
+			misc.c
+			rio.c 
+			std.c 
+		</sources>
+		<library>dllqsecmn</library>
+		<warnings>max</warnings>
+		<debug-info>off</debug-info>
+		<threading>multi</threading>
+		<optimize>speed</optimize>
+	</dll>
+
+	<dll id="modqseawksys">
+		<dllname>awk-sys</dllname>
+		<libname>awk-sys</libname>
+		<set-srcdir>../../mod/awk</set-srcdir>
+		<include>../../include</include>
+		<sources>sys.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqseawk</library>
+		<warnings>max</warnings>
+		<debug-info>off</debug-info>
+		<threading>multi</threading>
+		<optimize>speed</optimize>
+	</dll>
+
+	<exe id="exeqseawk">
+		<exename>qseawk</exename>
+		<app-type>console</app-type>
+		<set-srcdir>../../cmd/awk</set-srcdir>
+		<include>../../include</include>
+		<sources>awk.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqseawk</library>
+		<warnings>max</warnings>
+		<debug-info>off</debug-info>
+		<threading>multi</threading>
+		<optimize>speed</optimize>
+	</exe>
+
+</makefile>
