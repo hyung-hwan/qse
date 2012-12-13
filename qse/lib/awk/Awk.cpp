@@ -86,8 +86,8 @@ Awk::RIOBase::operator Awk* () const
 
 Awk::RIOBase::operator Awk::awk_t* () const 
 {
-	QSE_ASSERT (qse_awk_rtx_getawk(this->run->rtx) == this->run->awk->awk);
-	return this->run->awk->awk;
+	QSE_ASSERT (qse_awk_rtx_getawk(this->run->rtx) == this->run->awk->getHandle());
+	return this->run->awk->getHandle();
 }
 
 Awk::RIOBase::operator Awk::rio_arg_t* () const
@@ -191,8 +191,13 @@ Awk::Console::Mode Awk::Console::getMode () const
 // Awk::Value
 //////////////////////////////////////////////////////////////////
 
-const Awk::char_t* Awk::Value::EMPTY_STRING = QSE_T("");
 Awk::Value::IndexIterator Awk::Value::IndexIterator::END;
+
+const Awk::char_t* Awk::Value::getEmptyStr()
+{
+	static const Awk::char_t* EMPTY_STRING = QSE_T("");
+	return EMPTY_STRING;
+}
 
 Awk::Value::IntIndex::IntIndex (long_t x)
 {
@@ -256,7 +261,7 @@ void* Awk::Value::operator new[] (size_t n, Run* run) throw ()
 	return (char*)ptr+QSE_SIZEOF(run);
 }
 
-#if !defined(__BORLANDC__)
+#if !defined(__BORLANDC__) && !defined(__WATCOMC__)
 void Awk::Value::operator delete (void* ptr, Run* run) 
 {
 	qse_awk_rtx_freemem (run->rtx, (char*)ptr-QSE_SIZEOF(run));
@@ -377,7 +382,7 @@ Awk::Value::operator const Awk::char_t* () const
 {
 	const Awk::char_t* ptr;
 	size_t len;
-	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = EMPTY_STRING;
+	if (Awk::Value::getStr (&ptr, &len) <= -1) ptr = getEmptyStr();
 	return ptr;
 }
 
@@ -442,7 +447,7 @@ int Awk::Value::getNum (long_t* lv, flt_t* fv) const
 
 int Awk::Value::getStr (const char_t** str, size_t* len) const
 {
-	const char_t* p = EMPTY_STRING;
+	const char_t* p = getEmptyStr();
 	size_t l = 0;
 
 	QSE_ASSERT (this->val != QSE_NULL);

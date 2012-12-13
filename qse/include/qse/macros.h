@@ -243,7 +243,7 @@
  */
 #define QSE_MT(txt)   (txt)
 
-#define QSE_WQ_I(val)  (L ## QSE_MQ_I(val))
+#define QSE_WQ_I(val)  (L ## #val)
 #define QSE_WQ(val)    QSE_WQ_I(val)
 #define QSE_WC(ch)     ((qse_wchar_t)L ## ch)
 #define QSE_WS(str)    ((const qse_wchar_t*)L ## str)

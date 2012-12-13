@@ -1387,11 +1387,11 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 
 #elif defined(__OS2__)
 
-	void* h;
+	HMODULE h;
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
-	UCHAR errbuf[CCHMAXPATH];
+	char errbuf[CCHMAXPATH];
 
 	count = 0;
 	if (spec->prefix) tmp[count++] = spec->prefix;
@@ -1414,8 +1414,8 @@ void* StdAwk::modopen (const mod_spec_t* spec)
 
 	QSE_MMGR_FREE (awk->mmgr, modpath);
 
-     QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
-	return h;
+	QSE_ASSERT (QSE_SIZEOF(h) <= QSE_SIZEOF(void*));
+	return (void*)h;
 
 #elif defined(__DOS__)
 

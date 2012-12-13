@@ -20,6 +20,22 @@
 
 #include "awk.h"
 
+#if !defined(QSE_AWK_DEFAULT_MODPREFIX)
+#	if defined(_WIN32)
+#		define QSE_AWK_DEFAULT_MODPREFIX "qseawk-"
+#	elif defined(__OS2__)
+#		define QSE_AWK_DEFAULT_MODPREFIX "awk-"
+#	elif defined(__DOS__)
+#		define QSE_AWK_DEFAULT_MODPREFIX "awk-"
+#	else
+#		define QSE_AWK_DEFAULT_MODPREFIX "libqseawk-"
+#	endif
+#endif
+
+#if !defined(QSE_AWK_DEFAULT_MODPOSTFIX)
+#	define QSE_AWK_DEFAULT_MODPOSTFIX ""
+#endif
+
 enum tok_t
 {
 	TOK_EOF,
@@ -6435,15 +6451,11 @@ static qse_awk_mod_t* query_module (
 
 		if (awk->opt.mod[0].len > 0)
 			spec.prefix = awk->opt.mod[0].ptr;
-	#if defined(QSE_AWK_DEFAULT_MODPREFIX)
 		else spec.prefix = QSE_T(QSE_AWK_DEFAULT_MODPREFIX);
-	#endif
 
 		if (awk->opt.mod[1].len > 0)
 			spec.postfix = awk->opt.mod[1].ptr;
-	#if defined(QSE_AWK_DEFAULT_MODPOSTFIX)
 		else spec.postfix = QSE_T(QSE_AWK_DEFAULT_MODPOSTFIX);
-	#endif
 		
 		QSE_MEMSET (&md, 0, QSE_SIZEOF(md));
 		if (awk->prm.modopen && awk->prm.modsym && awk->prm.modclose)

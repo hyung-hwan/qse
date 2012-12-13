@@ -37,7 +37,7 @@ QSE_BEGIN_NAMESPACE(QSE)
 /**
  * The Sed class implements a stream editor by wrapping around #qse_sed_t.
  */
-class Sed: public Mmged
+class QSE_EXPORT Sed: public Mmged
 {
 public:
 	/// The sed_t type redefines a stream editor type
@@ -63,7 +63,7 @@ public:
 	/// The Stream class is a base class for I/O operation during
 	/// execution.
 	///
-	class Stream: public Types
+	class QSE_EXPORT Stream: public Types
 	{
 	public:
 		/// The Mode type defines I/O modes.
@@ -74,7 +74,7 @@ public:
 		};
 
 		/// The Data class conveys information need for I/O operations. 
-		class Data
+		class QSE_EXPORT Data
 		{
 		public:
 			friend class Sed;
@@ -86,27 +86,27 @@ public:
 		public:
 			/// The getMode() function returns the I/O mode
 			/// requested.
-			Mode getMode() const { return mode; }
+			Mode getMode() const { return this->mode; }
 
 			/// The getHandle() function returns the I/O handle 
 			/// saved by setHandle().
-			void* getHandle () const { return arg->handle; }
+			void* getHandle () const { return this->arg->handle; }
 
 			/// The setHandle() function sets an I/O handle
 			/// typically in the Stream::open() function. 
-			void setHandle (void* handle) { arg->handle = handle; }
+			void setHandle (void* handle) { this->arg->handle = handle; }
 
 			/// The getName() function returns an I/O name.
 			/// @return #QSE_NULL for the main data stream,
 			///         file path for explicit file stream
-			const char_t* getName () const { return arg->path; }
+			const char_t* getName () const { return this->arg->path; }
 
 			/// The Sed* operator returns the associated Sed class.
-			operator Sed* () const { return sed; }
+			operator Sed* () const { return this->sed; }
 
 			/// The sed_t* operator returns a pointer to the 
 			/// underlying stream editor.
-			operator sed_t* () const { return sed->sed; }
+			operator sed_t* () const { return this->sed->getHandle(); }
 
 		protected:
 			Sed* sed;
@@ -297,6 +297,10 @@ protected:
 	virtual const char_t* getErrorString (
 		errnum_t num ///< an error number
 	) const;
+
+public:
+	// use this with care
+	sed_t* getHandle() const { return this->sed; }
 
 protected:
 	/// handle to a primitive sed object

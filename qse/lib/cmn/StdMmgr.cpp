@@ -25,7 +25,6 @@
 QSE_BEGIN_NAMESPACE(QSE)
 /////////////////////////////////
 
-StdMmgr StdMmgr::DFL;
 
 void* StdMmgr::allocMem (size_t n) 
 {
@@ -40,6 +39,12 @@ void* StdMmgr::reallocMem (void* ptr, size_t n)
 void StdMmgr::freeMem (void* ptr) 
 { 
 	return ::free (ptr); 
+}
+
+StdMmgr* StdMmgr::getDFL ()
+{
+	static StdMmgr DFL;
+	return &DFL;
 }
 
 /////////////////////////////////

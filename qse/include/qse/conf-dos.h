@@ -59,7 +59,9 @@
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
 
-#	define QSE_CHAR_IS_WCHAR      1
+#	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
+#		define QSE_CHAR_IS_WCHAR      1
+#	endif
 #	undef QSE_ENABLE_BUNDLED_UNICODE
 
 #elif defined(__WATCOMC__) && !defined(__386__)
@@ -91,7 +93,9 @@
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN 32
 #	define QSE_SIZEOF_STRUCT_SOCKADDR_IN6 64
 
-#	define QSE_CHAR_IS_WCHAR      1
+#	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
+#		define QSE_CHAR_IS_WCHAR      1
+#	endif
 #	undef QSE_ENABLE_BUNDLED_UNICODE
 
 #else

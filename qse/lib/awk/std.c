@@ -380,7 +380,7 @@ static void* custom_awk_modopen (qse_awk_t* awk, const qse_awk_mod_spec_t* spec)
 	qse_mchar_t* modpath;
 	const qse_char_t* tmp[4];
 	int count;
-	UCHAR errbuf[CCHMAXPATH];
+	char errbuf[CCHMAXPATH];
 	APIRET rc;
 
 	count = 0;

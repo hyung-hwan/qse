@@ -111,6 +111,9 @@ static int path_exists (glob_t* g, const qse_char_t* name)
 #if defined(_WIN32)
 
 	/* ------------------------------------------------------------------- */
+	#if !defined(INVALID_FILE_ATTRIBUTES)
+	#define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
+	#endif
 	return (GetFileAttributes(name) != INVALID_FILE_ATTRIBUTES)? 1: 0;
 	/* ------------------------------------------------------------------- */
 

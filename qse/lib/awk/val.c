@@ -882,8 +882,7 @@ void qse_awk_rtx_refdownval (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 #endif
 
 	QSE_ASSERTX (val->ref > 0, 
-		"the reference count of a value should be greater than zero for it "
-		"to be decremented. check the source code for any bugs");
+		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 
 	val->ref--;
 	if (val->ref <= 0) 
@@ -897,8 +896,7 @@ void qse_awk_rtx_refdownval_nofree (qse_awk_rtx_t* rtx, qse_awk_val_t* val)
 	if (IS_STATICVAL(val)) return;
 
 	QSE_ASSERTX (val->ref > 0,
-		"the reference count of a value should be greater than zero for it"
-		" to be decremented. check the source code for any bugs");
+		"the reference count of a value should be greater than zero for it to be decremented. check the source code for any bugs");
 	val->ref--;
 }
 

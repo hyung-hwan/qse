@@ -86,6 +86,12 @@ struct qse_httpd_t
 #define CLIENT_HANDLE_IN_MUX          (CLIENT_HANDLE_READ_IN_MUX|CLIENT_HANDLE_WRITE_IN_MUX)
 #define CLIENT_TASK_TRIGGER_IN_MUX(i) (1 << ((i) + 8))
 
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#	define snprintf _snprintf
+#	define vsnprintf _vsnprintf
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

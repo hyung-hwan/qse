@@ -647,7 +647,7 @@ qse_printf (QSE_T(">>>>> Returning failure for client %d\n"), client->handle.i);
 	}
 	
 qse_printf (QSE_T("!!!!!FEEDING %d from %d ["), (int)m, (int)client->handle.i);
-#if !defined(__OS2__)
+#if !defined(__WATCOMC__)
 {
 int i;
 for (i = 0; i < m; i++) qse_printf (QSE_T("%hc"), buf[i]);
