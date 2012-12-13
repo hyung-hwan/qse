@@ -2,22 +2,126 @@
 <makefile>
 	<set var="EOL_STYLE">unix</set>
 
+	<!-- =========================================================
+	 OPTIONS
+	 ========================================================= -->
+	<option name="BUILD">
+		<values>debug,release</values>
+		<default-value>release</default-value>
+	</option>
+	<option name="CHAR">
+		<values>wchar,mchar</values>
+		<default-value>wchar</default-value>
+	</option>
+	<option name="XCMGRS">
+		<values>on,off</values>
+		<default-value>on</default-value>
+	</option>
+	<option name="BUNDLED_UNICODE">
+		<values>on,off</values>
+		<default-value>on</default-value>
+	</option>
 
-<!--
-	<if cond="FORMAT!='autoconf'">
-		<set var="OBJS" make_var="1">
-			$(COMPILER)
-		</set>
+	<!-- =========================================================
+	 AWK MODULE DATA
+	  the values here must match QSE_AWK_DEFAULT_MODPREFIX and
+	  QSE_AWK_DEFAULT_MODPOSTFIX in lib/awk/parse.c since we don't
+	  redefine and pass them to the compiler.
+	 ========================================================= -->
+	<set var="AWKMODPREFIX">
+		<if cond="PLATFORM_WIN32=='1'">qseawk-</if>
+		<if cond="PLATFORM_OS2=='1'">awk-</if>
+		<if cond="PLATFORM_MSDOS=='1'">awk-</if>
+		<if cond="PLATFORM_UNIX=='1'">libqseawk-</if>
+	</set>
+	<set var="AWKMODPOSTFIX">
+		<if cond="PLATFORM_WIN32=='1'"></if>
+		<if cond="PLATFORM_OS2=='1'"></if>
+		<if cond="PLATFORM_MSDOS=='1'"></if>
+		<if cond="PLATFORM_UNIX=='1'"></if>
+	</set>
+	
+	<!-- =========================================================
+	 BUILD DIRECTORY
+	 ========================================================= -->
+	<set var="BUILDDIR_BUILD">
+		<if cond="BUILD=='debug'">debug</if>
+		<if cond="BUILD=='release'">release</if>
+	</set>
+	<set var="BUILDDIR_CHAR">
+		<if cond="CHAR=='wchar'">wchar</if>
+		<if cond="CHAR=='mchar'">mchar</if>
+	</set>
+	<set var="BUILDDIR">
+		$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)
+	</set>
 
-		<set var="BUILDDIR">$(OBJS)</set>
-	</if>
--->
+	<!-- =========================================================
+	 EXTRA CPPFLAGS
+	 ========================================================= -->
+	<set var="CPPFLAGS_BUILD">
+		<if cond="BUILD=='debug'">-DQSE_BUILD_DEBUG -DDEBUG -D_DEBUG</if>
+		<if cond="BUILD=='release'">-D_NDEBUG -UDEBUG -U_DEBUG</if>
+	</set>
+	<set var="CPPFLAGS_CHAR">
+		<if cond="CHAR=='wchar'">-DQSE_CHAR_IS_WCHAR=1</if>
+		<if cond="CHAR=='mchar'">-DQSE_CHAR_IS_MCHAR=1</if>
+	</set>
+	<set var="CPPFLAGS_XCMGRS">
+		<if cond="XCMGRS=='on'">-DQSE_INCLUDE_MORE_CMGRS=1</if>
+		<if cond="XCMGRS=='off'">-UQSE_INCLUDE_MORE_CMGRS</if>
+	</set>
+	<set var="CPPFLAGS_BUNDLED_UNICODE">
+		<if cond="BUNDLED_UNICODE=='on'">-DQSE_ENABLE_BUNDLED_UNICODE=1</if>
+		<if cond="BUNDLED_UNICODE=='off'">-UQSE_ENABLE_BUNDLED_UNICODE</if>
+	</set>
+	<set var="CPPFLAGS_EXTRA">
+		$(CPPFLAGS_BUILD)
+		$(CPPFLAGS_CHAR)
+		$(CPPFLAGS_XCMGRS)
+		$(CPPFLAGS_BUNDLED_UNICODE)
+	</set>
 
-	<dll id="dllqsecmn">
+	<!-- =========================================================
+	 DEBUG INFORMATION
+	 ========================================================= -->
+	<set var="DEBUG_INFO">
+		<if cond="BUILD=='debug'">on</if>
+		<if cond="BUILD=='release'">off</if>
+	</set>
+
+	<!-- =========================================================
+	 CONDITIONAL SOURCE FILES
+	 ========================================================= -->
+	<set var="SOURCES_XCMGRS">
+		<if cond="XCMGRS=='on'">cp949.c cp950.c</if>
+	</set>
+	<set var="SOURCES_BUNDLED_UNICODE">
+		<if cond="BUNDLED_UNICODE=='on'">uni.c</if>
+	</set>
+
+	<!-- =========================================================
+	 TEMPLATES
+	 ========================================================= -->
+	<template id="base">
+		<include>../../include</include>
+		<cppflags>$(CPPFLAGS_EXTRA)</cppflags>
+		<warnings>max</warnings>
+		<debug-info>$(DEBUG_INFO)</debug-info>
+		<threading>multi</threading>
+		<optimize>speed</optimize>
+	</template>
+	<template id="basexx">
+		<cxx-exceptions>on</cxx-exceptions>
+	</template>
+
+	<!-- =========================================================
+	 TARGETS
+	 ========================================================= -->
+	<dll id="dllqsecmn" template="base">
 		<libname>qsecmn</libname>
 		<dllname>qsecmn</dllname>
 		<set-srcdir>../../lib/cmn</set-srcdir>
-		<include>../../include</include>
 		<sources>
 			alg-base64.c 
 			alg-rand.c 
@@ -104,42 +208,15 @@
 			uri.c 
 			utf8.c 
 			xma.c
+			$(SOURCES_XCMGRS)
+			$(SOURCES_BUNDLED_UNICODE)
 		</sources>
-		<warnings>max</warnings>
-		<debug-info>off</debug-info>
-		<threading>multi</threading>
-		<optimize>speed</optimize>
 	</dll>
 
-	<dll id="dllqseawk">
+	<dll id="dllqseawk" template="base">
 		<libname>qseawk</libname>
 		<dllname>qseawk</dllname>
 		<set-srcdir>../../lib/awk</set-srcdir>
-		<include>../../include</include>
-		<if cond="PLATFORM_OS2=='1'">
-			<cppflags>
-				-DQSE_AWK_DEFAULT_MODPREFIX="awk-"
-				-DQSE_AWK_DEFAULT_MODPOSTFIX=".dll"
-			</cppflags>
-		</if>
-		<if cond="PLATFORM_MSDOS=='1'">
-			<cppflags>
-				-DQSE_AWK_DEFAULT_MODPREFIX="awk-"
-				-DQSE_AWK_DEFAULT_MODPOSTFIX=".dll"
-			</cppflags>
-		</if>
-		<if cond="PLATFORM_WIN32=='1'">
-			<cppflags>
-				-DQSE_AWK_DEFAULT_MODPREFIX="qseawk-"
-				-DQSE_AWK_DEFAULT_MODPOSTFIX=""
-			</cppflags>
-		</if>
-		<if cond="PLATFORM_UNIX=='1'">
-			<cppflags>
-				-DQSE_AWK_DEFAULT_MODPREFIX="libqseawk-"
-				-DQSE_AWK_DEFAULT_MODPOSTFIX=""
-			</cppflags>
-		</if>
 		<sources>
 			awk.c 
 			err.c 
@@ -154,38 +231,131 @@
 			std.c 
 		</sources>
 		<library>dllqsecmn</library>
-		<warnings>max</warnings>
-		<debug-info>off</debug-info>
-		<threading>multi</threading>
-		<optimize>speed</optimize>
 	</dll>
 
-	<dll id="modqseawksys">
-		<dllname>awk-sys</dllname>
-		<libname>awk-sys</libname>
+	<dll id="modqseawkdir" template="base">
+		<dllname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</dllname>
+		<libname>$(AWKMODPREFIX)dir$(AWKMODPOSTFIX)</libname>
 		<set-srcdir>../../mod/awk</set-srcdir>
-		<include>../../include</include>
+		<sources>dir.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqseawk</library>
+	</dll>
+
+	<dll id="modqseawkstr" template="base">
+		<dllname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</dllname>
+		<libname>$(AWKMODPREFIX)str$(AWKMODPOSTFIX)</libname>
+		<set-srcdir>../../mod/awk</set-srcdir>
+		<sources>str.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqseawk</library>
+	</dll>
+
+	<dll id="modqseawksys" template="base">
+		<dllname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</dllname>
+		<libname>$(AWKMODPREFIX)sys$(AWKMODPOSTFIX)</libname>
+		<set-srcdir>../../mod/awk</set-srcdir>
 		<sources>sys.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
-		<warnings>max</warnings>
-		<debug-info>off</debug-info>
-		<threading>multi</threading>
-		<optimize>speed</optimize>
 	</dll>
 
-	<exe id="exeqseawk">
+	<dll id="dllqsesed" template="base">
+		<libname>qsesed</libname>
+		<dllname>qsesed</dllname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>
+			sed.c
+			err.c
+			std.c 
+		</sources>
+		<library>dllqsecmn</library>
+	</dll>
+
+	<dll id="dllqsenet" template="base">
+		<libname>qsenet</libname>
+		<dllname>qsenet</dllname>
+		<set-srcdir>../../lib/net</set-srcdir>
+		<sources>
+			http.c 
+			htre.c
+			htrd.c 
+			httpd.c 
+			httpd-cgi.c 
+			httpd-dir.c
+			httpd-file.c
+			httpd-proxy.c
+			httpd-resol.c 
+			httpd-std.c
+			httpd-task.c
+			httpd-text.c 
+			upxd.c   
+		</sources>
+		<library>dllqsecmn</library>
+	</dll>
+
+	<exe id="exeqseawk" template="base">
 		<exename>qseawk</exename>
 		<app-type>console</app-type>
 		<set-srcdir>../../cmd/awk</set-srcdir>
-		<include>../../include</include>
 		<sources>awk.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
-		<warnings>max</warnings>
-		<debug-info>off</debug-info>
-		<threading>multi</threading>
-		<optimize>speed</optimize>
 	</exe>
+
+	<exe id="exeqsesed" template="base">
+		<exename>qsesed</exename>
+		<app-type>console</app-type>
+		<set-srcdir>../../cmd/sed</set-srcdir>
+		<sources>sed.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqsesed</library>
+	</exe>
+
+	<exe id="exeqsehttpd" template="base">
+		<exename>qsehttpd</exename>
+		<app-type>console</app-type>
+		<set-srcdir>../../cmd/net</set-srcdir>
+		<sources>httpd.c</sources>
+		<library>dllqsecmn</library>
+		<library>dllqsenet</library>
+	</exe>
+
+	<dll id="dllqsecmnxx" template="base,basexx">
+		<libname>qsecmnxx</libname>
+		<dllname>qsecmnxx</dllname>
+		<set-srcdir>../../lib/cmn</set-srcdir>
+		<sources>
+			Mmgr.cpp
+			StdMmgr.cpp
+		</sources>
+		<library>dllqsecmn</library>
+	</dll>
+
+	<dll id="dllqseawkxx" template="base,basexx">
+		<libname>qseawkxx</libname>
+		<dllname>qseawkxx</dllname>
+		<set-srcdir>../../lib/awk</set-srcdir>
+		<sources>
+			Awk.cpp
+			StdAwk.cpp
+		</sources>
+		<library>dllqsecmn</library>
+		<library>dllqsecmnxx</library>
+		<library>dllqseawk</library>
+	</dll>
+
+	<dll id="dllqsesedxx" template="base,basexx">
+		<libname>qsesedxx</libname>
+		<dllname>qsesedxx</dllname>
+		<set-srcdir>../../lib/sed</set-srcdir>
+		<sources>
+			Sed.cpp
+			StdSed.cpp
+		</sources>
+		<library>dllqsecmn</library>
+		<library>dllqsecmnxx</library>
+		<library>dllqsesed</library>
+	</dll>
 
 </makefile>

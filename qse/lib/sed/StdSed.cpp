@@ -38,7 +38,7 @@ static qse_sio_t* open_sio (StdSed::Stream::Data& io, const qse_char_t* file, in
 		qse_cstr_t ea;
 		ea.ptr = file;
 		ea.len = qse_strlen (file);
-		((StdSed::Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
+		((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
 	}
 	return sio;
 }
@@ -59,7 +59,7 @@ static qse_sio_t* open_sio_std (StdSed::Stream::Data& io, qse_sio_std_t std, int
 		qse_cstr_t ea;
 		ea.ptr = std_names[std];
 		ea.len = qse_strlen (std_names[std]);
-		((StdSed::Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
+		((Sed*)io)->setError (QSE_SED_EIOFIL, &ea);
 	}
 	return sio;
 }

@@ -376,7 +376,12 @@ qse_mchar_t* qse_fmthttptime (
 	qse_gmtime (nt, &bt);
 
 /* TODO: avoid using snprintf () */
+
+#if defined(_WIN32) && defined(_MSC_VER)
+	_snprintf (buf, bufsz,
+#else
 	snprintf (buf, bufsz,
+#endif
 		QSE_MT("%s, %d %s %d %02d:%02d:%02d GMT"),
 		wday_name[bt.wday].s,
 		bt.mday,

@@ -26,6 +26,8 @@
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
+#	pragma library("ws2_32.lib") /* watcom */
+#	pragma comment(lib,"ws2_32.lib") /* msvc and borland */
 #elif defined(__OS2__)
 #	include <types.h>
 #	include <sys/socket.h>

@@ -3170,9 +3170,7 @@ static qse_awk_val_t* eval_expression (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 		{
 			QSE_ASSERTX (
 				rtx->inrec.d0->type == QSE_AWK_VAL_STR,
-				"the internal value representing $0 should "
-				"always be of the string type once it has "
-				"been set/updated. it is nil initially.");
+				"the internal value representing $0 should always be of the string type once it has been set/updated. it is nil initially.");
 
 			vs.ptr = ((qse_awk_val_str_t*)rtx->inrec.d0)->val.ptr;
 			vs.len = ((qse_awk_val_str_t*)rtx->inrec.d0)->val.len;
@@ -4677,8 +4675,7 @@ static qse_awk_val_t* eval_binop_mod (
 	qse_awk_val_t* res;
 
 	QSE_ASSERTX (rtx->awk->prm.math.mod != QSE_NULL,
-		"the mod function must be provided when the awk object"
-		" is created to be able to calculate floating-pointer remainder.");
+		"the mod function must be provided when the awk object is created to be able to calculate floating-pointer remainder.");
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);
@@ -4736,8 +4733,7 @@ static qse_awk_val_t* eval_binop_exp (
 	qse_awk_val_t* res;
 
 	QSE_ASSERTX (rtx->awk->prm.math.pow != QSE_NULL,
-		"the pow function must be provided when the awk object"
-		" is created to make exponentiation work properly.");
+		"the pow function must be provided when the awk object is created to make exponentiation work properly.");
 
 	n1 = qse_awk_rtx_valtonum (rtx, left, &l1, &r1);
 	n2 = qse_awk_rtx_valtonum (rtx, right, &l2, &r2);

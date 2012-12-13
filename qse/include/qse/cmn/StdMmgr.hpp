@@ -34,8 +34,7 @@ public:
 	void* reallocMem (void* ptr, size_t n);
 	virtual void freeMem (void* ptr);
 
-public:
-	static StdMmgr DFL;
+	static StdMmgr* getDFL();
 };
 
 /////////////////////////////////

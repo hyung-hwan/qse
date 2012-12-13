@@ -42,7 +42,7 @@
  * choice of the default character type #qse_char_t.
  */
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && defined(_MSC_VER)
 #	if defined(QSE_CHAR_IS_MCHAR)
 #		define qse_main main
 #		define QSE_ACHAR_IS_MCHAR

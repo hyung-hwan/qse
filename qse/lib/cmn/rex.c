@@ -1154,8 +1154,7 @@ static void freegroupstack (group_t* gs, qse_mmgr_t* mmgr)
 {
 	QSE_ASSERT (gs != QSE_NULL);
 	QSE_ASSERTX (gs->node == QSE_NULL, 
-		"The head of a group stack must point to QSE_NULL for "
-		"management purpose.");
+		"The head of a group stack must point to QSE_NULL for management purpose.");
 
 	freegroupstackmembers (gs, mmgr);
 }
@@ -1165,8 +1164,7 @@ static void refupgroupstack (group_t* gs)
 	if (gs != QSE_NULL)
 	{
 		QSE_ASSERTX (gs->node == QSE_NULL, 
-			"The head of a group stack must point to QSE_NULL for "
-			"management purpose.");
+			"The head of a group stack must point to QSE_NULL for management purpose.");
 		gs->occ++;
 	}
 }
@@ -1176,8 +1174,7 @@ static void refdowngroupstack (group_t* gs, qse_mmgr_t* mmgr)
 	if (gs != QSE_NULL)
 	{
 		QSE_ASSERTX (gs->node == QSE_NULL, 
-			"The head of a group stack must point to QSE_NULL for "
-			"management purpose.");
+			"The head of a group stack must point to QSE_NULL for management purpose.");
 		if (--gs->occ <= 0)
 		{
 			freegroupstack (gs, mmgr);
@@ -1219,8 +1216,7 @@ static group_t* dupgroupstack (exec_t* e, group_t* gs)
 
 	QSE_ASSERT (gs != QSE_NULL);
 	QSE_ASSERTX (gs->node == QSE_NULL, 
-		"The head of a group stack must point to QSE_NULL for "
-		"management purpose.");
+		"The head of a group stack must point to QSE_NULL for management purpose.");
 
 	head = dupgroupstackmembers (e, gs);
 	if (head == QSE_NULL) return QSE_NULL;
@@ -1315,8 +1311,7 @@ static group_t* dupgroupstackpop (exec_t* e, group_t* gs)
 
 	QSE_ASSERT (gs != QSE_NULL);
 	QSE_ASSERTX (gs->node == QSE_NULL, 
-		"The head of a group stack must point to QSE_NULL for "
-		"management purpose.");
+		"The head of a group stack must point to QSE_NULL for management purpose.");
 	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
 		"dupgroupstackpop() needs at least two data elements");
 
@@ -1344,8 +1339,7 @@ static group_t* groupstackpop (exec_t* e, group_t* gs)
 
 	QSE_ASSERT (gs != QSE_NULL);
 	QSE_ASSERTX (gs->node == QSE_NULL, 
-		"The head of a group stack must point to QSE_NULL for "
-		"management purpose.");
+		"The head of a group stack must point to QSE_NULL for management purpose.");
 	QSE_ASSERTX (gs->next != QSE_NULL && gs->next->next != QSE_NULL, 
 		"groupstackpop() needs at least two data elements");
 
@@ -1541,8 +1535,7 @@ warpback:
 			occ = top->occ;
 			node = top->node;
 			QSE_ASSERTX (node == curcand->u.ge.group, 
-				"The GROUP node in the group stack must be the "
-				"one pairing up with the GROUPEND node."
+				"The GROUP node in the group stack must be the one pairing up with the GROUPEND node."
 			);
 	
 			if (occ >= node->occ.min)
@@ -1687,11 +1680,7 @@ static int charset_matched (exec_t* e, qse_rex_node_t* node, qse_char_t c)
 			default:
 			{
 				QSE_ASSERTX (0, 
-					"SHOUL NEVER HAPPEN - membership code "
-					"for a character set must be one of "
-					"QSE_REX_CSET_CHAR, "
-					"QSE_REX_CSET_RANGE, "
-					"QSE_REX_CSET_CLASS");
+					"SHOUL NEVER HAPPEN - membership code for a character set must be one of QSE_REX_CSET_CHAR, QSE_REX_CSET_RANGE, QSE_REX_CSET_CLASS");
 
 				/* return no match if this part is reached.
 				 * however, something is totally wrong if it
@@ -1794,14 +1783,7 @@ static qse_lda_walk_t walk_cands_for_match (
 		default:
 		{
 			QSE_ASSERTX (0, 
-				"SHOULD NEVER HAPPEN - node ID must be"
-				"one of QSE_REX_NODE_BOL, "
-				"QSE_REX_NODE_EOL, "
-				"QSE_REX_NODE_ANY, "
-				"QSE_REX_NODE_CHAR, "
-				"QSE_REX_NODE_CSET, "
-				"QSE_REX_NODE_NOP");
-
+				"SHOULD NEVER HAPPEN - node ID must be one of QSE_REX_NODE_BOL, QSE_REX_NODE_EOL, QSE_REX_NODE_ANY, QSE_REX_NODE_CHAR, QSE_REX_NODE_CSET, QSE_REX_NODE_NOP");
 			break;
 		}
 	}

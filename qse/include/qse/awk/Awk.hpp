@@ -161,7 +161,7 @@ public:
 	///
 	void clearError ();
 
-protected:
+//protected: can't make it protected for borland 
 	void retrieveError ();
 	void retrieveError (Run* run);
 	/// @}
@@ -242,7 +242,7 @@ public:
 
 			operator awk_t* () const
 			{
-				return this->awk->awk;
+				return this->awk->getHandle();
 			}
 
 		protected:
@@ -458,7 +458,7 @@ public:
 		void* operator new (size_t n, Run* run) throw ();
 		void* operator new[] (size_t n, Run* run) throw ();
 
-	#if !defined(__BORLANDC__) 
+	#if !defined(__BORLANDC__) && !defined(__WATCOMC__)
 		// deletion when initialization fails
 		void operator delete (void* p, Run* run);
 		void operator delete[] (void* p, Run* run);
@@ -479,7 +479,7 @@ public:
 			/// The Index() function creates an empty array index.
 			Index ()
 			{
-				this->ptr = EMPTY_STRING;
+				this->ptr = Value::getEmptyStr();
 				this->len = 0;
 			}
 
@@ -650,7 +650,7 @@ public:
 
 			if (getStr (&p, &l) == -1) 
 			{
-				p = EMPTY_STRING;
+				p = getEmptyStr();
 				l = 0;
 			}
 			
@@ -778,7 +778,8 @@ public:
 			qse_xstr_t str;
 		} cached;
 
-		static const char_t* EMPTY_STRING;
+	public:
+		static const char_t* getEmptyStr();
 	};
 
 public:
@@ -1284,6 +1285,10 @@ protected:
 	static void  modclose (awk_t* awk, void* handle);
 	static void* modsym   (awk_t* awk, void* handle, const char_t* name);
 
+public:
+	// use this with care
+	awk_t* getHandle() const { return this->awk; }
+
 protected:
 	awk_t* awk;
 
@@ -1318,7 +1323,6 @@ private:
 
 	int init_runctx ();
 	void fini_runctx ();
-
 	int dispatch_function (Run* run, const fnc_info_t* fi);
 
 	static const char_t* xerrstr (const awk_t* a, errnum_t num);

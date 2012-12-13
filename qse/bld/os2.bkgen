@@ -15,7 +15,7 @@
 	</add-flags>
 
 	<add-flags formats="watcom">
-		-o$(INPUT_FILE_DIR)/os2-watcom/makefile.wat
+		-o$(INPUT_FILE_DIR)/os2-watcom/makefile
 	</add-flags>
 
 </bakefile-gen>

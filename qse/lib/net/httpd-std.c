@@ -36,6 +36,9 @@
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
+#	pragma library("ws2_32.lib") /* watcom */
+#	pragma comment(lib,"ws2_32.lib") /* msvc and borland */
+
 #	define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
 #	define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 #	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
@@ -909,7 +912,7 @@ static qse_ssize_t peer_recv (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
-	ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
+	qse_ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	return ret;
 }
@@ -918,7 +921,7 @@ static qse_ssize_t peer_send (
 	qse_httpd_t* httpd, qse_httpd_peer_t* peer,
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
-	ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
+	qse_ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
 	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	return ret;
 }
@@ -1437,7 +1440,7 @@ static qse_ssize_t client_recv (
 	}
 	else
 	{
-		ssize_t ret;
+		qse_ssize_t ret;
 		ret = recv (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return ret;
@@ -1466,7 +1469,7 @@ static qse_ssize_t client_send (
 	}
 	else
 	{
-		ssize_t ret = send (client->handle.i, buf, bufsize, 0);
+		qse_ssize_t ret = send (client->handle.i, buf, bufsize, 0);
 		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 		return ret;
 	}

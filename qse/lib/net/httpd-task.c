@@ -121,11 +121,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 	int bytes_req, l;
 
 	va_start (ap, fmt);
-#if defined(_WIN32) && defined(_MSC_VER)
-	bytes_req = _vsnprintf (n, 1, fmt, ap);
-#else
 	bytes_req = vsnprintf (n, 1, fmt, ap);
-#endif
 	va_end (ap);
 
 	if (bytes_req == -1) 
@@ -141,11 +137,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 		for (;;) 
 		{
 			va_start (ap, fmt);
-#if defined(_WIN32) && defined(_MSC_VER)
-			l = _vsnprintf (buf, capa + 1, fmt, ap);
-#else
 			l = vsnprintf (buf, capa + 1, fmt, ap);
-#endif
 			va_end (ap);
 
 			if (l == -1)
@@ -169,11 +161,7 @@ qse_httpd_task_t* qse_httpd_entaskformat (
 		if (buf == QSE_NULL) return QSE_NULL;
 
 		va_start (ap, fmt);
-#if defined(_WIN32) && defined(_MSC_VER)
-		l = _vsnprintf (buf, bytes_req + 1, fmt, ap);
-#else
 		l = vsnprintf (buf, bytes_req + 1, fmt, ap);
-#endif
 		va_end (ap);
 
 		if (l != bytes_req) 

@@ -39,12 +39,12 @@ QSE_BEGIN_NAMESPACE(QSE)
  * I/O stream class, and sets the default memory manager.
  *
  */
-class StdSed: public Sed
+class QSE_EXPORT StdSed: public Sed
 {
 public:
-	StdSed (Mmgr* mmgr = &StdMmgr::DFL): Sed (mmgr) {}
+	StdSed (Mmgr* mmgr = StdMmgr::getDFL()): Sed (mmgr) {}
 
-	class FileStream: public Stream
+	class QSE_EXPORT FileStream: public Stream
 	{
 	public:
 		FileStream (const char_t* infile = QSE_NULL,
@@ -65,7 +65,7 @@ public:
 		qse_cmgr_t*   cmgr;
 	};
 
-	class StringStream: public Stream
+	class QSE_EXPORT StringStream: public Stream
 	{
 	public:
 		StringStream (const char_t* in);

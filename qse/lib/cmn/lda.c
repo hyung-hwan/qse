@@ -159,8 +159,7 @@ int qse_lda_getscale (lda_t* lda)
 void qse_lda_setscale (lda_t* lda, int scale)
 {
 	QSE_ASSERTX (scale > 0 && scale <= QSE_TYPE_MAX(qse_byte_t), 
-		"The scale should be larger than 0 and less than or "
-		"equal to the maximum value that the qse_byte_t type can hold");
+		"The scale should be larger than 0 and less than or equal to the maximum value that the qse_byte_t type can hold");
 
 	if (scale <= 0) scale = 1;
 	if (scale > QSE_TYPE_MAX(qse_byte_t)) scale = QSE_TYPE_MAX(qse_byte_t);

@@ -22,6 +22,9 @@
 #include "mem.h"
 
 #if defined(_WIN64)
+#	if !defined(_WIN32_WINNT)
+#		define _WIN32_WINNT 0x0400
+#	endif
 #	include <windows.h>
 #else 
 #	include <setjmp.h>
