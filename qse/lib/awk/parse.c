@@ -69,6 +69,7 @@ enum tok_t
 	TOK_GT,
 	TOK_MA,   /* match */
 	TOK_NM,   /* not match */
+	TOK_ND,   /* not defined, is-nil */
 	TOK_LNOT, /* logical negation ! */
 	TOK_PLUS,
 	TOK_PLUSPLUS,
@@ -3725,10 +3726,11 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 		}
 		else if (awk->opt.trait & QSE_AWK_BLANKCONCAT)
 		{
-		    if (MATCH(awk,TOK_LPAREN) || MATCH(awk,TOK_DOLLAR) ||
+			if (MATCH(awk,TOK_LPAREN) || MATCH(awk,TOK_DOLLAR) ||
 			   /* unary operators */
 			   MATCH(awk,TOK_PLUS) || MATCH(awk,TOK_MINUS) ||
-			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) ||
+			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) || 
+			   MATCH(awk,TOK_ND) ||
 			   /* increment operators */
 			   MATCH(awk,TOK_PLUSPLUS) || MATCH(awk,TOK_MINUSMINUS) ||
 			   ((awk->opt.trait & QSE_AWK_TOLERANT) && 
@@ -3798,7 +3800,8 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT:
+	         (MATCH(awk,TOK_ND))?    QSE_AWK_UNROP_ND: -1;
 
 	/*if (opcode <= -1) return parse_increment (awk);*/
 	if (opcode <= -1) return parse_exponent (awk, xloc);
@@ -3945,7 +3948,8 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, const qse_awk_loc_t* xloc
 	opcode = (MATCH(awk,TOK_PLUS))?  QSE_AWK_UNROP_PLUS:
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
-	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: -1;
+	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: 
+	         (MATCH(awk,TOK_ND))?    QSE_AWK_UNROP_ND: -1;
 
 	if (opcode <= -1) return parse_increment (awk, xloc);
 
@@ -5756,6 +5760,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("!=="), 3, TOK_TNE,          0 },
 		{ QSE_T("!="),  2, TOK_NE,           0 },
 		{ QSE_T("!~"),  2, TOK_NM,           0 },
+		{ QSE_T("!:"),  2, TOK_ND,           0 },
 		{ QSE_T("!"),   1, TOK_LNOT,         0 },
 		{ QSE_T(">>="), 3, TOK_RS_ASSN,      0 },
 		{ QSE_T(">>"),  2, TOK_RS,           0 },
@@ -5960,11 +5965,40 @@ retry:
 		type = classify_ident (awk, QSE_STR_CSTR(tok->name));
 		SET_TOKEN_TYPE (awk, tok, type);
 	}
-	else if (c == QSE_T('\"') || c == QSE_T('\''))
+	else if (c == QSE_T('\"'))
 	{
+		/* double-quoted string */
 		SET_TOKEN_TYPE (awk, tok, TOK_STR);
 		/*if (get_charstr(awk, tok, c) <= -1) return -1;*/
 		if (get_string (awk, c, QSE_T('\\'), 0, 0, tok) <= -1) return -1;
+	}
+	else if (c == QSE_T('\''))
+	{
+		/* single-quoted string - no escaping */
+		qse_cint_t c;
+
+		SET_TOKEN_TYPE (awk, tok, TOK_STR);
+
+		while (1)
+		{
+			GET_CHAR_TO (awk, c);
+
+			if (c == QSE_CHAR_EOF)
+			{
+				SETERR_TOK (awk, QSE_AWK_ESTRNC);
+				return -1;
+			}
+
+			if (c == QSE_T('\''))
+			{
+				/* terminating quote */
+				GET_CHAR (awk);
+				break;
+			}
+
+			ADD_TOKEN_CHAR (awk, tok, c);
+		}
+		return 0;
 	}
 	else
 	{
