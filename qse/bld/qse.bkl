@@ -21,6 +21,11 @@
 		<values>on,off</values>
 		<default-value>on</default-value>
 	</option>
+	<option name="TCPV40HDRS">
+		<!-- this is OS/2 specific. no effect on other platforms -->
+		<values>on,off</values>
+		<default-value>off</default-value>
+	</option>
 
 	<!-- =========================================================
 	 AWK MODULE DATA
@@ -61,25 +66,30 @@
 	 ========================================================= -->
 	<set var="CPPFLAGS_BUILD">
 		<if cond="BUILD=='debug'">-DQSE_BUILD_DEBUG -DDEBUG -D_DEBUG</if>
-		<if cond="BUILD=='release'">-D_NDEBUG -UDEBUG -U_DEBUG</if>
+		<if cond="BUILD=='release'">-DNDEBUG</if>
 	</set>
 	<set var="CPPFLAGS_CHAR">
 		<if cond="CHAR=='wchar'">-DQSE_CHAR_IS_WCHAR=1</if>
 		<if cond="CHAR=='mchar'">-DQSE_CHAR_IS_MCHAR=1</if>
 	</set>
 	<set var="CPPFLAGS_XCMGRS">
-		<if cond="XCMGRS=='on'">-DQSE_INCLUDE_MORE_CMGRS=1</if>
-		<if cond="XCMGRS=='off'">-UQSE_INCLUDE_MORE_CMGRS</if>
+		<if cond="XCMGRS=='on'">-DQSE_ENABLE_XCMGRS=1</if>
+		<if cond="XCMGRS=='off'">-UQSE_ENABLE_XCMGRS</if>
 	</set>
 	<set var="CPPFLAGS_BUNDLED_UNICODE">
 		<if cond="BUNDLED_UNICODE=='on'">-DQSE_ENABLE_BUNDLED_UNICODE=1</if>
 		<if cond="BUNDLED_UNICODE=='off'">-UQSE_ENABLE_BUNDLED_UNICODE</if>
+	</set>
+	<set var="CPPFLAGS_TCPV40HDRS">
+		<if cond="TCPV40HDRS=='on'">-DTCPV40HDRS</if>
+		<if cond="TCPV40HDRS=='off'">-UTCPV40HDRS</if>
 	</set>
 	<set var="CPPFLAGS_EXTRA">
 		$(CPPFLAGS_BUILD)
 		$(CPPFLAGS_CHAR)
 		$(CPPFLAGS_XCMGRS)
 		$(CPPFLAGS_BUNDLED_UNICODE)
+		$(CPPFLAGS_TCPV40HDRS)
 	</set>
 
 	<!-- =========================================================
@@ -98,6 +108,18 @@
 	</set>
 	<set var="SOURCES_BUNDLED_UNICODE">
 		<if cond="BUNDLED_UNICODE=='on'">uni.c</if>
+	</set>
+
+	<!-- =========================================================
+	 CONDITIONAL SYSTEM LIBRARIES
+	 ========================================================= -->
+	<set var="SYSLIB_SOCKET">
+		<if cond="PLATFORM_WIN32=='1'">ws2_32</if>
+		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='on'">tcp32dll</if>
+		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='off'">tcpip32</if>
+	</set>
+	<set var="SYSLIB_SOCKET2">
+		<if cond="PLATFORM_OS2=='1' and TCPV40HDRS=='on'">so32dll</if>
 	</set>
 
 	<!-- =========================================================
@@ -211,6 +233,8 @@
 			$(SOURCES_XCMGRS)
 			$(SOURCES_BUNDLED_UNICODE)
 		</sources>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
 
 	<dll id="dllqseawk" template="base">
@@ -231,6 +255,7 @@
 			std.c 
 		</sources>
 		<library>dllqsecmn</library>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<dll id="modqseawkdir" template="base">
@@ -240,6 +265,7 @@
 		<sources>dir.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="modqseawkstr" template="base">
@@ -249,6 +275,7 @@
 		<sources>str.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="modqseawksys" template="base">
@@ -258,6 +285,7 @@
 		<sources>sys.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="dllqsesed" template="base">
@@ -270,6 +298,7 @@
 			std.c 
 		</sources>
 		<library>dllqsecmn</library>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<dll id="dllqsenet" template="base">
@@ -292,6 +321,9 @@
 			upxd.c   
 		</sources>
 		<library>dllqsecmn</library>
+		<depends>dllqsecmn</depends>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</dll>
 
 	<exe id="exeqseawk" template="base">
@@ -301,6 +333,9 @@
 		<sources>awk.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqseawk</library>
+		<depends>dllqseawk</depends>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
 
 	<exe id="exeqsesed" template="base">
@@ -310,6 +345,7 @@
 		<sources>sed.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqsesed</library>
+		<depends>dllqsesed</depends>
 	</exe>
 
 	<exe id="exeqsehttpd" template="base">
@@ -319,6 +355,9 @@
 		<sources>httpd.c</sources>
 		<library>dllqsecmn</library>
 		<library>dllqsenet</library>
+		<depends>dllqsenet</depends>
+		<sys-lib>$(SYSLIB_SOCKET)</sys-lib>
+		<sys-lib>$(SYSLIB_SOCKET2)</sys-lib>
 	</exe>
 
 	<dll id="dllqsecmnxx" template="base,basexx">
@@ -330,6 +369,7 @@
 			StdMmgr.cpp
 		</sources>
 		<library>dllqsecmn</library>
+		<depends>dllqsecmn</depends>
 	</dll>
 
 	<dll id="dllqseawkxx" template="base,basexx">
@@ -343,6 +383,8 @@
 		<library>dllqsecmn</library>
 		<library>dllqsecmnxx</library>
 		<library>dllqseawk</library>
+		<depends>dllqsecmnxx</depends>
+		<depends>dllqseawk</depends>
 	</dll>
 
 	<dll id="dllqsesedxx" template="base,basexx">
@@ -356,6 +398,8 @@
 		<library>dllqsecmn</library>
 		<library>dllqsecmnxx</library>
 		<library>dllqsesed</library>
+		<depends>dllqsecmnxx</depends>
+		<depends>dllqsesed</depends>
 	</dll>
 
 </makefile>

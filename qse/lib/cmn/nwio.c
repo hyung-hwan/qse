@@ -26,16 +26,19 @@
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
-#	pragma library("ws2_32.lib") /* watcom */
-#	pragma comment(lib,"ws2_32.lib") /* msvc and borland */
+#	define  USE_SELECT
 #elif defined(__OS2__)
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <tcpustd.h>
 #	include <sys/ioctl.h>
 #	include <nerrno.h>
-#	pragma library("tcpip32.lib")
+#	if defined(TCPV40HDRS)
+#		define  USE_SELECT
+#		include <sys/select.h>
+#	else
+#		include <unistd.h>
+#	endif
 #elif defined(__DOS__)
  	/* TODO:  consider watt-32 */
 #else
@@ -43,6 +46,7 @@
 #	include <sys/socket.h>
 #	include <netinet/in.h>
 #	include <sys/time.h>
+#	define  USE_SELECT
 #endif
 
 enum
@@ -92,8 +96,10 @@ static qse_nwio_errnum_t syserr_to_errnum (int e)
 {
 	switch (e)
 	{
+	#if defined(SOCENOMEM)
 		case SOCENOMEM:
 			return QSE_NWIO_ENOMEM;
+	#endif
 
 		case SOCEINVAL:
 			return QSE_NWIO_EINVAL;
@@ -101,11 +107,15 @@ static qse_nwio_errnum_t syserr_to_errnum (int e)
 		case SOCEACCES:
 			return QSE_NWIO_EACCES;
 
+	#if defined(SOCENOENT)
 		case SOCENOENT:
 			return QSE_NWIO_ENOENT;
+	#endif
 
+	#if defined(SOCEXIST)
 		case SOCEEXIST:
 			return QSE_NWIO_EEXIST;
+	#endif
 	
 		case SOCEINTR:
 			return QSE_NWIO_EINTR;
@@ -205,7 +215,7 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 {
 	int xret;
 
-#if defined(_WIN32)
+#if defined(USE_SELECT)
 	fd_set fds[2];
 	struct timeval tv;
 
@@ -218,9 +228,19 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
 
 	xret = select (nwio->handle + 1, &fds[0], &fds[1], QSE_NULL, &tv);
+	#if defined(_WIN32)
 	if (xret == SOCKET_ERROR)
+	#else
+	if (xret <= -1)
+	#endif
 	{	
+	#if defined(_WIN32)
 		nwio->errnum = syserr_to_errnum (WSAGetLastError());
+	#elif defined(__OS2__)
+		nwio->errnum = syserr_to_errnum (sock_errno());
+	#else		
+		nwio->errnum = syserr_to_errnum (errno);
+	#endif
 		return -1;
 	}
 	else if (xret == 0)
@@ -228,6 +248,8 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 		nwio->errnum = QSE_NWIO_ETMOUT;
 		return -1;
 	}
+	return 0;
+
 #elif defined(__OS2__)
 	int count[2] = { 0, 0 };
 	long tmout_msecs; 
@@ -246,37 +268,13 @@ static int wait_for_data (qse_nwio_t* nwio, const qse_ntime_t* tmout, int what)
 		nwio->errnum = QSE_NWIO_ETMOUT;
 		return -1;
 	}
-
-#elif defined(__DOS__)
-	nwio->errnum = QSE_NWIO_ENOIMPL;
-	return -1;
+	return 0;
 
 #else
-
-	fd_set fds[2];
-	struct timeval tv;
-
-	tv.tv_sec = tmout->sec;
-	tv.tv_usec = QSE_NSEC_TO_USEC (tmout->nsec);
-
-	FD_ZERO (&fds[0]);
-	FD_ZERO (&fds[1]);
-	FD_SET (nwio->handle, &fds[what]);
-
-	xret = select (nwio->handle + 1, &fds[0], &fds[1], QSE_NULL, &tv);
-	if (xret <= -1)
-	{
-		nwio->errnum = syserr_to_errnum (errno);
-		return -1;
-	}
-	else if (xret == 0)
-	{
-		nwio->errnum = QSE_NWIO_ETMOUT;
-		return -1;
-	}
+	nwio->errnum = QSE_NWIO_ENOIMPL;
+	return -1;
 #endif
 
-	return 0;
 }
 
 qse_nwio_t* qse_nwio_open (
@@ -591,7 +589,7 @@ int qse_nwio_init (
 		{
 			int noblk = 1;
 
-			if (ioctl (nwio->handle, FIONBIO, &noblk, QSE_SIZEOF(noblk)) <= -1)
+			if (ioctl (nwio->handle, FIONBIO, (void*)&noblk, QSE_SIZEOF(noblk)) <= -1)
 			{
 				nwio->errnum = syserr_to_errnum (sock_errno());
 				goto oops;
@@ -605,7 +603,7 @@ int qse_nwio_init (
 			int noblk = 0;
 			
 			if ((xret <= -1 && sock_errno() != SOCEINPROGRESS) ||
-			    ioctl (nwio->handle, FIONBIO, &noblk, QSE_SIZEOF(noblk)) <= -1)
+			    ioctl (nwio->handle, FIONBIO, (void*)&noblk, QSE_SIZEOF(noblk)) <= -1)
 			{
 				nwio->errnum = syserr_to_errnum (sock_errno());
 				goto oops;

@@ -31,10 +31,13 @@
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <tcpustd.h>
 #	include <sys/ioctl.h>
 #	include <nerrno.h>
-#	pragma library("tcpip32.lib")
+#	if defined(TCPV40HDRS)
+#		include <sys/select.h>
+#	else
+#		include <unistd.h>
+#	endif
 #elif defined(__DOS__)
 	/* TODO: */
 #else

@@ -641,8 +641,8 @@ ax_pthread_config
 ENABLE_CXX_FALSE
 ENABLE_CXX_TRUE
 BUILD_MODE
-INCLUDE_MORE_CMGRS_FALSE
-INCLUDE_MORE_CMGRS_TRUE
+ENABLE_XCMGRS_FALSE
+ENABLE_XCMGRS_TRUE
 ENABLE_BUNDLED_UNICODE_FALSE
 ENABLE_BUNDLED_UNICODE_TRUE
 WCHAR_FALSE
@@ -823,7 +823,7 @@ with_ltdl_lib
 enable_ltdl_install
 enable_wchar
 enable_bundled_unicode
-enable_more_cmgrs
+enable_xcmgrs
 enable_syscall
 enable_debug
 enable_cxx
@@ -1475,7 +1475,7 @@ Optional Features:
                           (default. yes)
   --enable-bundled-unicode
                           use thn bundled unicode routines (default. no)
-  --enable-more-cmgrs     include more built-in cmgrs like cp949 and cp950
+  --enable-xcmgrs         include more built-in cmgrs like cp949 and cp950
                           when enabled (default. yes)
   --enable-syscall        use the syscall() function to call system calls
                           (default. no)
@@ -20173,25 +20173,25 @@ else
 fi
 
 
-# Check whether --enable-more-cmgrs was given.
-if test "${enable_more_cmgrs+set}" = set; then :
-  enableval=$enable_more_cmgrs; enable_more_cmgrs_is=$enableval
+# Check whether --enable-xcmgrs was given.
+if test "${enable_xcmgrs+set}" = set; then :
+  enableval=$enable_xcmgrs; enable_xcmgrs_is=$enableval
 else
-  enable_more_cmgrs_is=yes
+  enable_xcmgrs_is=yes
 fi
 
-if test "${enable_more_cmgrs_is}" = "yes"
+if test "${enable_xcmgrs_is}" = "yes"
 then
 
-$as_echo "#define QSE_INCLUDE_MORE_CMGRS /**/" >>confdefs.h
+$as_echo "#define QSE_ENABLE_XCMGRS /**/" >>confdefs.h
 
 fi
- if test "${enable_more_cmgrs_is}" = "yes" ; then
-  INCLUDE_MORE_CMGRS_TRUE=
-  INCLUDE_MORE_CMGRS_FALSE='#'
+ if test "${enable_xcmgrs_is}" = "yes" ; then
+  ENABLE_XCMGRS_TRUE=
+  ENABLE_XCMGRS_FALSE='#'
 else
-  INCLUDE_MORE_CMGRS_TRUE='#'
-  INCLUDE_MORE_CMGRS_FALSE=
+  ENABLE_XCMGRS_TRUE='#'
+  ENABLE_XCMGRS_FALSE=
 fi
 
 
@@ -20900,8 +20900,8 @@ if test -z "${ENABLE_BUNDLED_UNICODE_TRUE}" && test -z "${ENABLE_BUNDLED_UNICODE
   as_fn_error $? "conditional \"ENABLE_BUNDLED_UNICODE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${INCLUDE_MORE_CMGRS_TRUE}" && test -z "${INCLUDE_MORE_CMGRS_FALSE}"; then
-  as_fn_error $? "conditional \"INCLUDE_MORE_CMGRS\" was never defined.
+if test -z "${ENABLE_XCMGRS_TRUE}" && test -z "${ENABLE_XCMGRS_FALSE}"; then
+  as_fn_error $? "conditional \"ENABLE_XCMGRS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ENABLE_CXX_TRUE}" && test -z "${ENABLE_CXX_FALSE}"; then

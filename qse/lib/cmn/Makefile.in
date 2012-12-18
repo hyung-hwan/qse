@@ -36,7 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @ENABLE_BUNDLED_UNICODE_TRUE@am__append_1 = uni.c 
-@INCLUDE_MORE_CMGRS_TRUE@am__append_2 = cp949.c cp950.c
+@ENABLE_XCMGRS_TRUE@am__append_2 = cp949.c cp950.c
 @ENABLE_CXX_TRUE@am__append_3 = libqsecmnxx.la
 subdir = lib/cmn
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
@@ -100,7 +100,7 @@ am__libqsecmn_la_SOURCES_DIST = alg-base64.c alg-rand.c alg-search.c \
 	tre-match-backtrack.c tre-match-parallel.c tre-parse.c \
 	tre-stack.c uri.c utf8.c xma.c uni.c cp949.c cp950.c
 @ENABLE_BUNDLED_UNICODE_TRUE@am__objects_1 = uni.lo
-@INCLUDE_MORE_CMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
+@ENABLE_XCMGRS_TRUE@am__objects_2 = cp949.lo cp950.lo
 am_libqsecmn_la_OBJECTS = alg-base64.lo alg-rand.lo alg-search.lo \
 	alg-sort.lo assert.lo chr.lo dir.lo dll.lo env.lo gdl.lo \
 	htb.lo fio.lo fma.lo fmt.lo fs.lo fs-err.lo fs-move.lo glob.lo \

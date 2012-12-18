@@ -32,6 +32,8 @@
 #	include <tchar.h>
 #elif defined(__OS2__)
 #	define INCL_DOSFILEMGR
+#	define INCL_DOSMODULEMGR
+#	define INCL_DOSPROCESS
 #	define INCL_DOSERRORS
 #	include <os2.h>
 #elif defined(__DOS__)
@@ -178,6 +180,34 @@ static qse_fio_errnum_t syserr_to_errnum (int e)
 }
 #endif
 
+#if defined(__OS2__)
+
+typedef APIRET (*DosOpenLType) (
+	PSZ pszFileName, PHFILE pHf, PULONG pulAction,
+	LONGLONG cbFile, ULONG ulAttribute,
+	ULONG fsOpenFlags, ULONG fsOpenMode,
+	PEAOP2 peaop2
+);
+
+typedef APIRET (*DosSetFilePtrLType) (
+	HFILE hFile,
+	LONGLONG ib,
+	ULONG method,
+	PLONGLONG ibActual
+);
+
+typedef APIRET (*DosSetFileSizeLType) (
+	HFILE hFile,
+	LONGLONG cbSize
+);
+
+static int dos_set = 0;
+static DosOpenLType dos_open_l = QSE_NULL;
+static DosSetFilePtrLType dos_set_file_ptr_l = QSE_NULL;
+static DosSetFileSizeLType dos_set_file_size_l = QSE_NULL;
+
+#endif
+
 qse_fio_t* qse_fio_open (
 	qse_mmgr_t* mmgr, qse_size_t ext,
 	const qse_char_t* path, int flags, int mode)
@@ -214,6 +244,27 @@ int qse_fio_init (
 
 #if defined(_WIN32)
 	int fellback = 0;
+#endif
+
+#if defined(__OS2__)
+	if (!dos_set)
+	{
+		DosEnterCritSec ();
+		if (!dos_set)
+		{
+			HMODULE mod;
+			if (DosLoadModule(NULL, 0, "DOSCALL1", &mod) == NO_ERROR)
+			{
+				/* look up routines by ordinal */
+				DosQueryProcAddr (mod, 981, NULL, (PFN*)&dos_open_l);
+				DosQueryProcAddr (mod, 988, NULL, (PFN*)&dos_set_file_ptr_l);
+				DosQueryProcAddr (mod, 989, NULL, (PFN*)&dos_set_file_size_l);
+			}
+
+			dos_set = 1;
+		}
+		DosExitCritSec ();
+	}
 #endif
 
 	QSE_MEMSET (fio, 0, QSE_SIZEOF(*fio));
@@ -456,11 +507,6 @@ int qse_fio_init (
 		APIRET ret;
 		ULONG action_taken = 0;
 		ULONG open_action, open_mode, open_attr;
-	#if defined(FIL_STANDARDL)
-		LONGLONG zero;
-	#else
-		ULONG zero;	
-	#endif
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 		const qse_mchar_t* path_mb = path;
@@ -496,13 +542,6 @@ int qse_fio_init (
 				return -1;
 			}
 		}
-	#endif
-
-	#if defined(FIL_STANDARDL)
-		zero.ulLo = 0;
-		zero.ulHi = 0;
-	#else
-		zero = 0;
 	#endif
 
 		if (flags & QSE_FIO_APPEND) 
@@ -559,19 +598,39 @@ int qse_fio_init (
 		open_attr = (mode & QSE_FIO_WUSR)? FILE_NORMAL: FILE_READONLY;
 		
 	#if defined(FIL_STANDARDL)
-		ret = DosOpenL (
-	#else
-		ret = DosOpen (
+		if (dos_open_l)
+		{
+			LONGLONG zero;
+
+			zero.ulLo = 0;
+			zero.ulHi = 0;
+			ret = dos_open_l (
+				path_mb,       /* file name */
+				&handle,       /* file handle */
+				&action_taken, /* store action taken */
+				zero,          /* size */
+				open_attr,     /* attribute */
+				open_action,   /* action if it exists */
+				open_mode,     /* open mode */
+				0L                            
+			);
+		}
+		else
+		{
 	#endif
-			path_mb,       /* file name */
-			&handle,       /* file handle */
-			&action_taken, /* store action taken */
-			zero,          /* size */
-			open_attr,     /* attribute */
-			open_action,   /* action if it exists */
-			open_mode,     /* open mode */
-			0L                            
-		);
+			ret = DosOpen (
+				path_mb,       /* file name */
+				&handle,       /* file handle */
+				&action_taken, /* store action taken */
+				0,             /* size */
+				open_attr,     /* attribute */
+				open_action,   /* action if it exists */
+				open_mode,     /* open mode */
+				0L                            
+			);
+	#if defined(FIL_STANDARDL)
+		}
+	#endif
 
 	#if defined(QSE_CHAR_IS_MCHAR)
 		/* nothing to do */
@@ -1033,36 +1092,41 @@ qse_fio_off_t qse_fio_seek (
 	};
 
 	#if defined(FIL_STANDARDL)
-
-	LONGLONG pos, newpos;
-	APIRET ret;
-
-	QSE_ASSERT (QSE_SIZEOF(offset) >= QSE_SIZEOF(pos));
-
-	pos.ulLo = (ULONG)(offset&0xFFFFFFFFlu);
-	pos.ulHi = (ULONG)(offset>>32);
-
-	ret = DosSetFilePtrL (fio->handle, pos, seek_map[origin], &newpos);
-	if (ret != NO_ERROR) 
+	if (dos_set_file_ptr_l)
 	{
-		fio->errnum = syserr_to_errnum (ret);
-		return (qse_fio_off_t)-1;
+		LONGLONG pos, newpos;
+		APIRET ret;
+
+		QSE_ASSERT (QSE_SIZEOF(offset) >= QSE_SIZEOF(pos));
+
+		pos.ulLo = (ULONG)(offset&0xFFFFFFFFlu);
+		pos.ulHi = (ULONG)(offset>>32);
+
+		ret = dos_set_file_ptr_l (fio->handle, pos, seek_map[origin], &newpos);
+		if (ret != NO_ERROR) 
+		{
+			fio->errnum = syserr_to_errnum (ret);
+			return (qse_fio_off_t)-1;
+		}
+
+		return ((qse_fio_off_t)newpos.ulHi << 32) | newpos.ulLo;
 	}
-
-	return ((qse_fio_off_t)newpos.ulHi << 32) | newpos.ulLo;
-
-	#else
-	ULONG newpos;
-	APIRET ret;
-
-	ret = DosSetFilePtr (fio->handle, offset, seek_map[origin], &newpos);
-	if (ret != NO_ERROR) 
+	else
 	{
-		fio->errnum = syserr_to_errnum (ret);
-		return (qse_fio_off_t)-1;
-	}
+	#endif
+		ULONG newpos;
+		APIRET ret;
 
-	return newpos;
+		ret = DosSetFilePtr (fio->handle, offset, seek_map[origin], &newpos);
+		if (ret != NO_ERROR) 
+		{
+			fio->errnum = syserr_to_errnum (ret);
+			return (qse_fio_off_t)-1;
+		}
+
+		return newpos;
+	#if defined(FIL_STANDARDL)
+	}
 	#endif
 
 #elif defined(__DOS__)
@@ -1123,15 +1187,22 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 	APIRET ret;
 
 	#if defined(FIL_STANDARDL)
-	LONGLONG sz;
-	/* the file must have the write access for it to succeed */
+	if (dos_set_file_size_l)
+	{
+		LONGLONG sz;
+		/* the file must have the write access for it to succeed */
 
-	sz.ulLo = (ULONG)(size&0xFFFFFFFFlu);
-	sz.ulHi = (ULONG)(size>>32);
+		sz.ulLo = (ULONG)(size&0xFFFFFFFFlu);
+		sz.ulHi = (ULONG)(size>>32);
 
-	ret = DosSetFileSizeL (fio->handle, sz);
-	#else
-	ret = DosSetFileSize (fio->handle, size);
+		ret = DosSetFileSizeL (fio->handle, sz);
+	}
+	else
+	{
+	#endif
+		ret = DosSetFileSize (fio->handle, size);
+	#if defined(FIL_STANDARDL)
+	}
 	#endif
 
 	if (ret != NO_ERROR)
@@ -1274,13 +1345,20 @@ qse_ssize_t qse_fio_write (qse_fio_t* fio, const void* data, qse_size_t size)
 	{
 		/* i do this on a best-effort basis */
 	#if defined(FIL_STANDARDL)
-		LONGLONG pos, newpos;
-		pos.ulLo = (ULONG)0;
-		pos.ulHi = (ULONG)0;
-    		DosSetFilePtrL (fio->handle, pos, FILE_END, &newpos);
-	#else
-		ULONG newpos;
-    		DosSetFilePtr (fio->handle, 0, FILE_END, &newpos);
+		if (dos_set_file_ptr_l)
+		{
+			LONGLONG pos, newpos;
+			pos.ulLo = (ULONG)0;
+			pos.ulHi = (ULONG)0;
+    			dos_set_file_ptr_l (fio->handle, pos, FILE_END, &newpos);
+		}
+		else
+		{
+	#endif
+			ULONG newpos;
+    			DosSetFilePtr (fio->handle, 0, FILE_END, &newpos);
+	#if defined(FIL_STANDARDL)
+		}
 	#endif
     	}
 

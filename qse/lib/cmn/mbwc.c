@@ -39,7 +39,7 @@ static qse_cmgr_t builtin_cmgr[] =
 		qse_slwctoslmb
 	},
 
-#if defined(QSE_INCLUDE_MORE_CMGRS)
+#if defined(QSE_ENABLE_XCMGRS)
 	{
 		qse_cp949touc,
 		qse_uctocp949
@@ -91,7 +91,7 @@ qse_cmgr_t* qse_findcmgr (const qse_char_t* name)
 	} tab[] =
 	{
 		{ QSE_T("utf8"),   QSE_CMGR_UTF8 },
-#if defined(QSE_INCLUDE_MORE_CMGRS)
+#if defined(QSE_ENABLE_XCMGRS)
 		{ QSE_T("cp949"),  QSE_CMGR_CP949 },
 		{ QSE_T("cp950"),  QSE_CMGR_CP950 },
 #endif

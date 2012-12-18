@@ -62,7 +62,12 @@
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
+
+        /* old watcom c/c++ compiler requires this */
+#	if (__WATCOMC__ < 1200)
+#		undef QSE_ENABLE_BUNDLED_UNICODE
+#		define QSE_ENABLE_BUNDLED_UNICODE 1
+#	endif
 
 #elif defined(__WATCOMC__) && !defined(__386__)
 #	define QSE_SIZEOF_CHAR        1
@@ -96,10 +101,15 @@
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
+
+        /* old watcom c/c++ compiler requires this */
+#	if (__WATCOMC__ < 1200)
+#		undef QSE_ENABLE_BUNDLED_UNICODE
+#		define QSE_ENABLE_BUNDLED_UNICODE 1
+#	endif
 
 #else
 #	error Define the size of various data types.
 #endif
 
-#include "conf-inf.h"
+#include <qse/conf-inf.h>

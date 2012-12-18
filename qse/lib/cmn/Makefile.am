@@ -112,7 +112,7 @@ if ENABLE_BUNDLED_UNICODE
 libqsecmn_la_SOURCES += uni.c 
 endif
 
-if INCLUDE_MORE_CMGRS
+if ENABLE_XCMGRS
 libqsecmn_la_SOURCES += cp949.c cp950.c
 endif
 

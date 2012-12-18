@@ -49,7 +49,11 @@ _M_X64 x64 platform
 #	define QSE_SIZEOF_SHORT       2
 #	define QSE_SIZEOF_INT         4
 #	define QSE_SIZEOF_LONG        4
-#	define QSE_SIZEOF_LONG_LONG   8
+#	if (__WATCOMC__ < 1200)
+#		define QSE_SIZEOF_LONG_LONG   0
+#	else
+#		define QSE_SIZEOF_LONG_LONG   8
+#	endif
 
 #	if defined(_WIN64)
 #		define QSE_SIZEOF_VOID_P      8
@@ -80,7 +84,12 @@ _M_X64 x64 platform
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
+
+	/* old watcom c/c++ compiler requires this */
+#	if (__WATCOMC__ < 1200)
+#		undef QSE_ENABLE_BUNDLED_UNICODE
+#		define QSE_ENABLE_BUNDLED_UNICODE 1
+#	endif
 
 #elif defined(__GNUC__) || defined(__DMC__) || defined(__POCC__)
 #	define QSE_SIZEOF_CHAR        1
@@ -118,7 +127,6 @@ _M_X64 x64 platform
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
 
 #elif defined(_MSC_VER)
 #	define QSE_SIZEOF_CHAR        1
@@ -160,7 +168,6 @@ _M_X64 x64 platform
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
 
 #elif defined(__BORLANDC__)
 
@@ -199,10 +206,9 @@ _M_X64 x64 platform
 #	if !defined(QSE_CHAR_IS_WCHAR) && !defined(QSE_CHAR_IS_MCHAR)
 #		define QSE_CHAR_IS_WCHAR      1
 #	endif
-#	undef QSE_ENABLE_BUNDLED_UNICODE
 
 #else
 #	error Define the size of various data types.
 #endif
 
-#include "conf-inf.h"
+#include <qse/conf-inf.h>

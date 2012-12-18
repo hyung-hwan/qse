@@ -36,11 +36,12 @@ typedef qse_cmgr_t* (*qse_cmgr_finder_t) (const qse_char_t* name);
 enum qse_cmgr_id_t
 {
 	QSE_CMGR_SLMB,
-#if defined(QSE_INCLUDE_MORE_CMGRS)
-	QSE_CMGR_CP949,
-	QSE_CMGR_CP950,
-#endif
 	QSE_CMGR_UTF8
+#if defined(QSE_ENABLE_XCMGRS)
+	,
+	QSE_CMGR_CP949,
+	QSE_CMGR_CP950
+#endif
 };
 typedef enum qse_cmgr_id_t qse_cmgr_id_t;
 

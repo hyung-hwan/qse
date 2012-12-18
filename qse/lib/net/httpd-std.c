@@ -36,24 +36,25 @@
 #	include <winsock2.h>
 #	include <ws2tcpip.h> /* sockaddr_in6 */
 #	include <windows.h>
-#	pragma library("ws2_32.lib") /* watcom */
-#	pragma comment(lib,"ws2_32.lib") /* msvc and borland */
 
 #	define EPOCH_DIFF_YEARS (QSE_EPOCH_YEAR-QSE_EPOCH_YEAR_WIN)
 #	define EPOCH_DIFF_DAYS  ((qse_long_t)EPOCH_DIFF_YEARS*365+EPOCH_DIFF_YEARS/4-3)
 #	define EPOCH_DIFF_SECS  ((qse_long_t)EPOCH_DIFF_DAYS*24*60*60)
 
 #elif defined(__OS2__)
-#	define INCL_DOSERRORS
-#	define INCL_DOSFILEMGR
-#	include <os2.h>
 #	include <types.h>
 #	include <sys/socket.h>
 #	include <netinet/in.h>
-#	include <tcpustd.h>
 #	include <sys/ioctl.h>
 #	include <nerrno.h>
-#	pragma library("tcpip32.lib")
+#	if defined(TCPV40HDRS)
+#		include <sys/select.h>
+#	else
+#		include <unistd.h>
+#	endif
+#	define INCL_DOSERRORS
+#	define INCL_DOSFILEMGR
+#	include <os2.h>
 
 #elif defined(__DOS__)
 	/* TODO */
@@ -1013,7 +1014,7 @@ static int mux_poll (qse_httpd_t* httpd, void* vmux, const qse_ntime_t* tmout)
 
 static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
-#if defined(__OS2__)
+#if defined(__OS2__) && !defined(TCPV40HDRS)
 	long tv;
 
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
@@ -1039,7 +1040,7 @@ static int mux_readable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t
 
 static int mux_writable (qse_httpd_t* httpd, qse_ubi_t handle, const qse_ntime_t* tmout)
 {
-#if defined(__OS2__)
+#if defined(__OS2__) && !defined(TCPV40HDRS)
 	long tv;
 	tv = tmout? QSE_SECNSEC_TO_MSEC (tmout->sec, tmout->nsec): -1;
 	return os2_select (&handle.i, 0, 1, 0, tv);
