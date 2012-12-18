@@ -377,7 +377,7 @@ qse_mchar_t* qse_fmthttptime (
 
 /* TODO: avoid using snprintf () */
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 	_snprintf (buf, bufsz,
 #else
 	snprintf (buf, bufsz,

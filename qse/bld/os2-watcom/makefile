@@ -40,6 +40,9 @@ XCMGRS = on
 #  [on,off]
 BUNDLED_UNICODE = on
 
+#  [on,off]
+TCPV40HDRS = off
+
 
 
 # -------------------------------------------------------------------------
@@ -86,7 +89,7 @@ CPPFLAGS_BUILD =
 CPPFLAGS_BUILD = -DQSE_BUILD_DEBUG -DDEBUG -D_DEBUG
 !endif
 !ifeq BUILD release
-CPPFLAGS_BUILD = -D_NDEBUG -UDEBUG -U_DEBUG
+CPPFLAGS_BUILD = -DNDEBUG
 !endif
 CPPFLAGS_CHAR =
 !ifeq CHAR mchar
@@ -97,10 +100,10 @@ CPPFLAGS_CHAR = -DQSE_CHAR_IS_WCHAR=1
 !endif
 CPPFLAGS_XCMGRS =
 !ifeq XCMGRS off
-CPPFLAGS_XCMGRS = -UQSE_INCLUDE_MORE_CMGRS
+CPPFLAGS_XCMGRS = -UQSE_ENABLE_XCMGRS
 !endif
 !ifeq XCMGRS on
-CPPFLAGS_XCMGRS = -DQSE_INCLUDE_MORE_CMGRS=1
+CPPFLAGS_XCMGRS = -DQSE_ENABLE_XCMGRS=1
 !endif
 CPPFLAGS_BUNDLED_UNICODE =
 !ifeq BUNDLED_UNICODE off
@@ -108,6 +111,13 @@ CPPFLAGS_BUNDLED_UNICODE = -UQSE_ENABLE_BUNDLED_UNICODE
 !endif
 !ifeq BUNDLED_UNICODE on
 CPPFLAGS_BUNDLED_UNICODE = -DQSE_ENABLE_BUNDLED_UNICODE=1
+!endif
+CPPFLAGS_TCPV40HDRS =
+!ifeq TCPV40HDRS off
+CPPFLAGS_TCPV40HDRS = -UTCPV40HDRS
+!endif
+!ifeq TCPV40HDRS on
+CPPFLAGS_TCPV40HDRS = -DTCPV40HDRS
 !endif
 ____SOURCES_XCMGRS_FILENAMES_OBJECTS =
 !ifeq XCMGRS on
@@ -119,6 +129,17 @@ ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =
 !ifeq BUNDLED_UNICODE on
 ____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_uni.obj
+!endif
+__SYSLIB_SOCKET_p =
+!ifeq TCPV40HDRS off
+__SYSLIB_SOCKET_p = tcpip32.lib
+!endif
+!ifeq TCPV40HDRS on
+__SYSLIB_SOCKET_p = tcp32dll.lib
+!endif
+__SYSLIB_SOCKET2_p =
+!ifeq TCPV40HDRS on
+__SYSLIB_SOCKET2_p = so32dll.lib
 !endif
 __DEBUG_INFO =
 !ifeq BUILD debug
@@ -138,8 +159,8 @@ __DEBUG_INFO_1_0 =
 ### Variables: ###
 
 DLLQSECMN_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 DLLQSECMN_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_alg_base64.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn_alg_rand.obj &
@@ -229,8 +250,8 @@ DLLQSECMN_OBJECTS =  &
 	$(____SOURCES_XCMGRS_FILENAMES_OBJECTS) &
 	$(____SOURCES_BUNDLED_UNICODE_FILENAMES_OBJECTS)
 DLLQSEAWK_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 DLLQSEAWK_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_awk.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_err.obj &
@@ -244,30 +265,30 @@ DLLQSEAWK_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_rio.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk_std.obj
 MODQSEAWKDIR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKDIR_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir_dir.obj
 MODQSEAWKSTR_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSTR_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr_str.obj
 MODQSEAWKSYS_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 MODQSEAWKSYS_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys_sys.obj
 DLLQSESED_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 DLLQSESED_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_sed.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_err.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed_std.obj
 DLLQSENET_CFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 DLLQSENET_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet_http.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet_htre.obj &
@@ -283,35 +304,35 @@ DLLQSENET_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet_httpd_text.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet_upxd.obj
 EXEQSEAWK_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSEAWK_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk_awk.obj
 EXEQSESED_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSESED_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed_sed.obj
 EXEQSEHTTPD_CFLAGS = -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	$(CPPFLAGS) $(CFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox $(CPPFLAGS) $(CFLAGS)
 EXEQSEHTTPD_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd_httpd.obj
 DLLQSECMNXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	-xs $(CPPFLAGS) $(CXXFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) $(CXXFLAGS)
 DLLQSECMNXX_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx_Mmgr.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx_StdMmgr.obj
 DLLQSEAWKXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	-xs $(CPPFLAGS) $(CXXFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) $(CXXFLAGS)
 DLLQSEAWKXX_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx_Awk.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx_StdAwk.obj
 DLLQSESEDXX_CXXFLAGS = -bd -i=..\..\include $(CPPFLAGS_BUILD) $(CPPFLAGS_CHAR) &
-	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) -wx $(__DEBUG_INFO) -bm -ot -ox &
-	-xs $(CPPFLAGS) $(CXXFLAGS)
+	$(CPPFLAGS_XCMGRS) $(CPPFLAGS_BUNDLED_UNICODE) $(CPPFLAGS_TCPV40HDRS) -wx &
+	$(__DEBUG_INFO) -bm -ot -ox -xs $(CPPFLAGS) $(CXXFLAGS)
 DLLQSESEDXX_OBJECTS =  &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesedxx_Sed.obj &
 	$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesedxx_StdSed.obj
@@ -362,13 +383,13 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll :  $(DLLQSECMN_OBJECTS)
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc option caseexact
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
 	@for %i in ($(DLLQSECMN_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc file %i
-	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc library %i
+	@for %i in ( $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc system os2v2 dll
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmn.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll :  $(DLLQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll :  $(DLLQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk.lbc name $^@
@@ -381,7 +402,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll :  $(DLLQSEAWK_OBJECTS) $(BUILDDIR
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawk.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll :  $(MODQSEAWKDIR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll :  $(MODQSEAWKDIR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc name $^@
@@ -394,7 +415,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.dll :  $(MODQSEAWKDIR_OBJECTS) $(BUIL
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkdir.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-dir.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll :  $(MODQSEAWKSTR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll :  $(MODQSEAWKSTR_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc name $^@
@@ -407,7 +428,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.dll :  $(MODQSEAWKSTR_OBJECTS) $(BUIL
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawkstr.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-str.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll :  $(MODQSEAWKSYS_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll :  $(MODQSEAWKSYS_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc name $^@
@@ -420,7 +441,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.dll :  $(MODQSEAWKSYS_OBJECTS) $(BUIL
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\modqseawksys.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\awk-sys.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll :  $(DLLQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll :  $(DLLQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed.lbc name $^@
@@ -433,32 +454,32 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll :  $(DLLQSESED_OBJECTS) $(BUILDDIR
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesed.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll :  $(DLLQSENET_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll :  $(DLLQSENET_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc option caseexact
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc  $(__DEBUG_INFO_1_0)  $(LDFLAGS)
 	@for %i in ($(DLLQSENET_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc library %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc system os2v2 dll
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsenet.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.exe :  $(EXEQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.exe :  $(EXEQSEAWK_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option caseexact
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc  $(__DEBUG_INFO_1_0)  system os2v2 $(LDFLAGS)
 	@for %i in ($(EXEQSEAWK_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc library %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
 	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqseawk.lbc
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe :  $(EXEQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe :  $(EXEQSESED_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc name $^@
@@ -470,19 +491,19 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.exe :  $(EXEQSESED_OBJECTS) $(BUILDDIR
 	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsesed.lbc
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsehttpd.exe :  $(EXEQSEHTTPD_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc name $^@
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option caseexact
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc  $(__DEBUG_INFO_1_0)  system os2v2 $(LDFLAGS)
 	@for %i in ($(EXEQSEHTTPD_OBJECTS)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc file %i
-	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc library %i
+	@for %i in ( $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.lib $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsenet.lib $(__SYSLIB_SOCKET_p) $(__SYSLIB_SOCKET2_p)) do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc library %i
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
 	@for %i in () do @%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc option stack=%i
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\exeqsehttpd.lbc
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll :  $(DLLQSECMNXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll :  $(DLLQSECMNXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx.lbc name $^@
@@ -495,7 +516,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll :  $(DLLQSECMNXX_OBJECTS) $(BUIL
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsecmnxx.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll :  $(DLLQSEAWKXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll :  $(DLLQSEAWKXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawk.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx.lbc name $^@
@@ -508,7 +529,7 @@ $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.dll :  $(DLLQSEAWKXX_OBJECTS) $(BUIL
 	wlink @$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqseawkxx.lbc
 	wlib -q -n -b $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qseawkxx.lib +$^@
 
-$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.dll :  $(DLLQSESEDXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
+$(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesedxx.dll :  $(DLLQSESEDXX_OBJECTS) $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmn.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsecmnxx.dll $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\qsesed.dll
 	@%create $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesedxx.lbc
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesedxx.lbc option quiet
 	@%append $(BUILDDIR_BUILD)-$(BUILDDIR_CHAR)\dllqsesedxx.lbc name $^@

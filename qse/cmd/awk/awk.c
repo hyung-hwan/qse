@@ -45,8 +45,6 @@
 #	include <windows.h>
 #	include <tchar.h>
 #	include <process.h>
-#	pragma library("ws2_32.lib")
-#	pragma comment(lib,"ws2_32.lib")
 #elif defined(__OS2__)
 #	define INCL_DOSPROCESS
 #	define INCL_DOSEXCEPTIONS

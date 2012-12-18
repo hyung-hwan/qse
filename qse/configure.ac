@@ -409,13 +409,13 @@ then
 fi
 AM_CONDITIONAL(ENABLE_BUNDLED_UNICODE, test "${enable_bundled_unicode_is}" = "yes")
 
-AC_ARG_ENABLE([more-cmgrs], [AS_HELP_STRING([--enable-more-cmgrs],[include more built-in cmgrs like cp949 and cp950 when enabled (default. yes)])],
-	enable_more_cmgrs_is=$enableval,enable_more_cmgrs_is=yes)
-if test "${enable_more_cmgrs_is}" = "yes"
+AC_ARG_ENABLE([xcmgrs], [AS_HELP_STRING([--enable-xcmgrs],[include more built-in cmgrs like cp949 and cp950 when enabled (default. yes)])],
+	enable_xcmgrs_is=$enableval,enable_xcmgrs_is=yes)
+if test "${enable_xcmgrs_is}" = "yes"
 then
-	AC_DEFINE([QSE_INCLUDE_MORE_CMGRS],[],[include more built-in cmgrs like cp949 and cp950])
+	AC_DEFINE([QSE_ENABLE_XCMGRS],[],[include more built-in cmgrs like cp949 and cp950])
 fi
-AM_CONDITIONAL(INCLUDE_MORE_CMGRS, test "${enable_more_cmgrs_is}" = "yes" )
+AM_CONDITIONAL(ENABLE_XCMGRS, test "${enable_xcmgrs_is}" = "yes" )
 
 AC_ARG_ENABLE([syscall], [AS_HELP_STRING([--enable-syscall],[use the syscall() function to call system calls (default. no)])],
 	enable_syscall_is=$enableval,enable_syscall_is=no)

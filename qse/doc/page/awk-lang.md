@@ -12,7 +12,7 @@ tranforms them to an internal form for execution.
 
 A single-line comment is introduced by a hash character #, and is terminated at 
 the end of the same line. Additionally, it supports a C-style multi-line comment
-enclosed in /* and */. The multi-line comment can't nest and can't appear within 
+enclosed in /* and */. The multi-line comment can't nest and can't appear within
 string literals and regular expressions.
 
     x = y; # assign y to x.
@@ -62,6 +62,19 @@ represents the value of 0.
 ### Strings ###
 
 A string is enclosed in a pair of double quotes or single quotes.
+
+A character in a string encosed in the double-quotes can be preceeded with 
+a back-slash to change the meaning of the character.
+
+\\
+\a
+\b
+\uXXXX
+\UXXXXXXXX
+
+There are no escaping sequences supported for a string enclosed in the single
+quotes. For that reason, you can't specify the single quote itself within
+a single-quoted string.
 
 ### Regular Expressions ###
 
@@ -620,16 +633,15 @@ C:\> chcp
 Active code page: 949
 C:\> type s.awk
 BEGIN {
-     sock = "tcpd://0.0.0.0:9999";
-     setioattr (sock, "codepage", "cp949"); # this is not needed since the active 
-                                            # code page is already 949.
-     do {
-
-          if ((sock || getline x) <= 0) break;
-          print "PEER: " x;
-          print x || sock;
-     }
-     while(1);
+    sock = "tcpd://0.0.0.0:9999";
+    setioattr (sock, "codepage", "cp949"); # this is not needed since the active
+                                           # code page is already 949.
+    do {
+         if ((sock || getline x) <= 0) break;
+         print "PEER: " x;
+         print x || sock;
+    }
+    while(1);
 }
 C:\> qseawk --rwpipe=on -f r.awk
 PEER: 안녕
@@ -666,6 +678,36 @@ Note that 你 has been converted to a question mark since the letter is
 not supported by cp949.
 
 
+## Built-in Functions ##
 
+QSEAWK provides the following built-in functions.
+
+### setioattr (io-name, attr-name, attr-value) ###
+
+It changes the I/O attribute of the name attr-name to the value attr-value 
+for an I/O stream identified by io-name. It returns 0 on success and -1 on 
+failure.
+
+- io-name is a source or target name used in getline, print, printf combined
+  with |, ||, >, <, >>.
+- attr-name is one of codepage, ctimeout, atimeout, rtimeout, wtimeout.
+- attr-value varies depending on attr-name.
+-- codepage: cp949, cp950, utf8
+-- ctimeout, atimeout, rtimeout, wtimeout: the number of seconds. applies to socket based stream only. you may use a floating-point number for lower resoluation than a second. a negative value turns off timeout. 
+
+#
+# Convert a document encoded in cp949 to a current codepage
+#
+BEGIN 
+{ 
+	setioattr ("README.INS", "codepage", "cp949"); 
+	while ((getline x < "README.INS") > 0) print x; 
+}
+
+### getioattr (io-name, attr-name) ###
+
+It returns the current attribute value of the attribute named attr-name for
+the stream identified by io-name. See setioattr for description on io-name and
+attr-name. It returns the attribute value on success and -1 on failure.
 
 [awkbook]: http://cm.bell-labs.com/cm/cs/awkbook/ 

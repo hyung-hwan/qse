@@ -116,4 +116,4 @@
 #define QSE_MBLEN_MAX          8
 
 
-#include "conf-inf.h"
+#include <qse/conf-inf.h>

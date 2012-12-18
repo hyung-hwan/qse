@@ -35,7 +35,11 @@
 #	define QSE_SIZEOF_SHORT       2
 #	define QSE_SIZEOF_INT         4
 #	define QSE_SIZEOF_LONG        4
-#	define QSE_SIZEOF_LONG_LONG   8
+#	if (__WATCOMC__ < 1200)
+#		define QSE_SIZEOF_LONG_LONG   0
+#	else
+#		define QSE_SIZEOF_LONG_LONG   8
+#	endif
 #	define QSE_SIZEOF_VOID_P      4
 #	define QSE_SIZEOF_FLOAT       4
 #	define QSE_SIZEOF_DOUBLE      8
@@ -65,7 +69,11 @@
 #		define QSE_CHAR_IS_WCHAR 1
 #	endif
 
-#	undef QSE_ENABLE_BUNDLED_UNICODE
+	/* old watcom c/c++ compiler requires this */
+#	if (__WATCOMC__ < 1200)
+#		undef QSE_ENABLE_BUNDLED_UNICODE
+#		define QSE_ENABLE_BUNDLED_UNICODE 1
+#	endif
 
 #elif defined(__BORLANDC__)
 #	define QSE_SIZEOF_CHAR        1

@@ -954,6 +954,7 @@ create_process:
 		zero.ulLo = 0;
 		zero.ulHi = 0;
 
+		/* TODO: selective between DosOpenL and DosOpen */
 		rc = DosOpenL (
 			QSE_MT("NUL"),
 			&os2devnul,
