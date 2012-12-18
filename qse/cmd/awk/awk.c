@@ -25,11 +25,11 @@
 #include <qse/cmn/chr.h>
 #include <qse/cmn/opt.h>
 #include <qse/cmn/path.h>
-#include <qse/cmn/stdio.h>
 #include <qse/cmn/main.h>
 #include <qse/cmn/mbwc.h>
 #include <qse/cmn/xma.h>
 #include <qse/cmn/glob.h>
+#include <qse/cmn/stdio.h>
 
 #include <string.h>
 #include <signal.h>

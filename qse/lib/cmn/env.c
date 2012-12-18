@@ -421,40 +421,46 @@ static qse_wchar_t* get_env (qse_env_t* env, const qse_wchar_t* name, int* free)
 	extern qse_wchar_t** _wenviron;
 	qse_wchar_t** p = _wenviron;
 
-	while (*p)
+	if (p)
 	{
-		qse_wchar_t* eq;
-		eq = qse_wcsbeg (*p, name);
-		if (eq && *eq == QSE_WT('=')) 
+		while (*p)
 		{
-			*free = 0;
-			return eq + 1;
+			qse_wchar_t* eq;
+			eq = qse_wcsbeg (*p, name);
+			if (eq && *eq == QSE_WT('=')) 
+			{
+				*free = 0;
+				return eq + 1;
+			}
+			p++;	
 		}
-		p++;	
 	}
 	*/
 
 	extern char** environ;
 	qse_mchar_t** p = environ;
 
-	while (*p)
+	if (p)
 	{
-		qse_wchar_t* dup;
-		qse_wchar_t* eq;
-
-		dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
-		if (dup == QSE_NULL) return QSE_NULL;
-
-		eq = qse_wcsbeg (dup, name);
-		if (eq && *eq == QSE_WT('=')) 
+		while (*p)
 		{
-			*free = 1;
-			return eq + 1;
+			qse_wchar_t* dup;
+			qse_wchar_t* eq;
+
+			dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
+			if (dup == QSE_NULL) return QSE_NULL;
+
+			eq = qse_wcsbeg (dup, name);
+			if (eq && *eq == QSE_WT('=')) 
+			{
+				*free = 1;
+				return eq + 1;
+			}
+
+			QSE_MMGR_FREE (env->mmgr, dup);
+
+			p++;	
 		}
-
-		QSE_MMGR_FREE (env->mmgr, dup);
-
-		p++;	
 	}
 				
 	return 0;
@@ -467,16 +473,19 @@ static qse_mchar_t* get_env (qse_env_t* env, const qse_mchar_t* name, int* free)
 	extern char** environ;
 	qse_mchar_t** p = environ;
 
-	while (*p)
+	if (p)
 	{
-		qse_mchar_t* eq;
-		eq = qse_mbsbeg (*p, name);
-		if (eq && *eq == QSE_MT('=')) 
+		while (*p)
 		{
-			*free = 0;
-			return eq + 1;
+			qse_mchar_t* eq;
+			eq = qse_mbsbeg (*p, name);
+			if (eq && *eq == QSE_MT('=')) 
+			{
+				*free = 0;
+				return eq + 1;
+			}
+			p++;	
 		}
-		p++;	
 	}
 				
 	return 0;
@@ -590,28 +599,34 @@ done:
 	extern qse_wchar_t** _wenviron;
 	qse_wchar_t** p = _wenviron;
 
-	while (*p)
+	if (p)
 	{
-		if (add_envstrw (env, *p) <= -1) return -1;
-		p++;	
+		while (*p)
+		{
+			if (add_envstrw (env, *p) <= -1) return -1;
+			p++;	
+		}
 	}
 	*/
 
 	extern char** environ;
 	qse_mchar_t** p = environ;
 
-	while (*p)
+	if (p)
 	{
-		qse_wchar_t* dup;
-		int n;
+		while (*p)
+		{
+			qse_wchar_t* dup;
+			int n;
 
-		dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
-		if (dup == QSE_NULL) return -1;
-		n = add_envstrw (env, dup);
-		QSE_MMGR_FREE (env->mmgr, dup);
-		if (n <= -1) return -1;
+			dup = qse_mbstowcsdup (*p, env->mmgr); /* TODO: ignroe mbwcerr */
+			if (dup == QSE_NULL) return -1;
+			n = add_envstrw (env, dup);
+			QSE_MMGR_FREE (env->mmgr, dup);
+			if (n <= -1) return -1;
 
-		p++;	
+			p++;	
+		}
 	}
 				
 				
@@ -621,10 +636,13 @@ done:
 	extern char** environ;
 	qse_mchar_t** p = environ;
 
-	while (*p)
+	if (p)
 	{
-		if (add_envstrm (env, *p) <= -1) return -1;
-		p++;	
+		while (*p)
+		{
+			if (add_envstrm (env, *p) <= -1) return -1;
+			p++;	
+		}
 	}
 				
 	return 0;

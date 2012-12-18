@@ -949,17 +949,19 @@ create_process:
 	    (flags & QSE_PIO_ERRTONUL))
 	{
 		ULONG action_taken;
+		/*
 		LONGLONG zero;
 
 		zero.ulLo = 0;
 		zero.ulHi = 0;
+		*/
 
 		/* TODO: selective between DosOpenL and DosOpen */
-		rc = DosOpenL (
+		rc = DosOpen /*DosOpenL*/ (
 			QSE_MT("NUL"),
 			&os2devnul,
 			&action_taken,
-			zero,
+			0, /*zero,*/
 			FILE_NORMAL,		
 			OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW,
 			OPEN_FLAGS_NOINHERIT | OPEN_SHARE_DENYNONE,
