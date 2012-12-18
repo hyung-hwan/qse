@@ -36,7 +36,9 @@ static qse_char_t* __adjust_format (const qse_char_t* format);
 int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 {
 	int n;
-	qse_char_t* nf = __adjust_format (fmt);
+	qse_char_t* nf;
+
+	nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
@@ -70,7 +72,7 @@ int qse_printf (const qse_char_t* fmt, ...)
 	va_list ap;
 
 	va_start (ap, fmt);
-	n = qse_vprintf (fmt, ap);
+	n = qse_vfprintf (QSE_STDOUT, fmt, ap);
 	va_end (ap);
 	return n;
 }
@@ -82,13 +84,13 @@ int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_li
 	if (nf == NULL) return -1;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-		#if defined(_WIN32) && !defined(__WATCOMC__)
+		#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 			n = _vsnprintf (buf, size, nf, ap);
 		#else
 			n = vsnprintf (buf, size, nf, ap);
 		#endif
 	#else
-		#if defined(_WIN32) && !defined(__WATCOMC__)
+		#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
 			n = _vsnwprintf (buf, size, nf, ap);
 		#else
 			n = vswprintf (buf, size, nf, ap);

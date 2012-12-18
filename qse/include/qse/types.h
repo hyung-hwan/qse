@@ -509,9 +509,11 @@ typedef int qse_mcint_t;
  * The qse_wcint_t type defines a type that can hold a qse_wchar_t value and 
  * #QSE_WCHAR_EOF.
  */
-#if defined(__cplusplus) && \
-    (!(defined(_MSC_VER) || defined(_SCO_DS)) || \
-     (defined(_MSC_VER) && defined(_NATIVE_WCHAR_T_DEFINED)))
+#if defined(__cplusplus) && !( \
+      (defined(_MSC_VER) && !defined(_NATIVE_WCHAR_T_DEFINED)) || \
+      (defined(__WATCOMC__) && (__WATCOMC__ < 1200)) || \
+      defined(_SCO_DS) \
+    )
 	/* C++ */
 
 	typedef wchar_t qse_wchar_t;
