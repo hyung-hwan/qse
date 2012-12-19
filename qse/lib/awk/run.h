@@ -91,7 +91,7 @@ enum qse_awk_unrop_type_t
 	QSE_AWK_UNROP_MINUS,
 	QSE_AWK_UNROP_LNOT,
 	QSE_AWK_UNROP_BNOT,
-	QSE_AWK_UNROP_ND
+	QSE_AWK_UNROP_DEF  /* : in the unary operation context */
 };
 
 enum qse_awk_incop_type_t

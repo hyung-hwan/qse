@@ -36,7 +36,7 @@ void* Mmgr::realloc_mem (void* ctx, void* ptr, size_t n)
 
 void Mmgr::free_mem (void* ctx, void* ptr) 
 {
-	return ((Mmgr*)ctx)->freeMem (ptr);
+	((Mmgr*)ctx)->freeMem (ptr);
 }
 
 /////////////////////////////////

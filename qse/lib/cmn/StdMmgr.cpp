@@ -38,7 +38,7 @@ void* StdMmgr::reallocMem (void* ptr, size_t n)
 
 void StdMmgr::freeMem (void* ptr) 
 { 
-	return ::free (ptr); 
+	::free (ptr); 
 }
 
 StdMmgr* StdMmgr::getDFL ()
