@@ -50,12 +50,6 @@
 	#define qse_fputc(x,s) fputwc(x,s)
 #endif
 
-#define qse_feof(s)     feof(s)
-#define qse_ferror(s)   ferror(s)
-#define qse_clearerr(s) clearerr(s)
-#define qse_fflush(s)   fflush(s)
-#define qse_fclose(s)   fclose(s)
-
 #define QSE_FILE        FILE
 #define QSE_STDIN       stdin
 #define QSE_STDOUT      stdout
@@ -71,7 +65,7 @@ QSE_EXPORT int qse_vsprintf (
 	qse_char_t*       buf,
 	qse_size_t        size,
 	const qse_char_t* fmt,
-	va_list ap
+	va_list           ap
 );
 
 QSE_EXPORT int qse_sprintf (
@@ -94,8 +88,12 @@ QSE_EXPORT int qse_dprintf (
 	const qse_char_t* fmt, ...);
 QSE_EXPORT QSE_FILE* qse_fopen (
 	const qse_char_t* path, const qse_char_t* mode);
-QSE_EXPORT QSE_FILE* qse_popen (
-	const qse_char_t* cmd, const qse_char_t* mode);
+
+QSE_EXPORT void qse_fclose (QSE_FILE* fp);
+QSE_EXPORT int qse_fflush (QSE_FILE* fp);
+QSE_EXPORT void qse_clearerr (QSE_FILE* fp);
+QSE_EXPORT int qse_feof (QSE_FILE* fp);
+QSE_EXPORT int qse_ferror (QSE_FILE* fp);
 
 /**
  * The qse_getline() function read a line from a file pointer @a fp

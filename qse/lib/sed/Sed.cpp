@@ -67,7 +67,7 @@ int Sed::execute (Stream& iostream)
 void Sed::stop ()
 {
 	QSE_ASSERT (sed != QSE_NULL);
-	return qse_sed_stop (sed);
+	qse_sed_stop (sed);
 }
 
 bool Sed::isStop () const

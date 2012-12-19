@@ -5038,7 +5038,7 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 		exp->opcode == QSE_AWK_UNROP_MINUS ||
 		exp->opcode == QSE_AWK_UNROP_LNOT ||
 		exp->opcode == QSE_AWK_UNROP_BNOT ||
-		exp->opcode == QSE_AWK_UNROP_ND);
+		exp->opcode == QSE_AWK_UNROP_DEF);
 
 	QSE_ASSERT (exp->left->next == QSE_NULL);
 	left = eval_expression (run, exp->left);
@@ -5087,9 +5087,9 @@ static qse_awk_val_t* eval_unary (qse_awk_rtx_t* run, qse_awk_nde_t* nde)
 			                qse_awk_rtx_makefltval (run, r);
 			break;
 
-		case QSE_AWK_UNROP_ND:
+		case QSE_AWK_UNROP_DEF:
 			res = qse_awk_rtx_makeintval (
-				run, ((left->type == QSE_AWK_VAL_NIL)? 1: 0));
+				run, ((left->type == QSE_AWK_VAL_NIL)? 0: 1));
 			break;
 	}
 

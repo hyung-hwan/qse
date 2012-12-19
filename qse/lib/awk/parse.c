@@ -69,8 +69,8 @@ enum tok_t
 	TOK_GT,
 	TOK_MA,   /* match */
 	TOK_NM,   /* not match */
-	TOK_ND,   /* not defined, is-nil */
 	TOK_LNOT, /* logical negation ! */
+	TOK_BQUOTE,  /* ` */
 	TOK_PLUS,
 	TOK_PLUSPLUS,
 	TOK_MINUS,
@@ -3730,7 +3730,7 @@ static qse_awk_nde_t* parse_concat (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 			   /* unary operators */
 			   MATCH(awk,TOK_PLUS) || MATCH(awk,TOK_MINUS) ||
 			   MATCH(awk,TOK_LNOT) || MATCH(awk,TOK_BNOT) || 
-			   MATCH(awk,TOK_ND) ||
+			   MATCH(awk,TOK_COLON) ||
 			   /* increment operators */
 			   MATCH(awk,TOK_PLUSPLUS) || MATCH(awk,TOK_MINUSMINUS) ||
 			   ((awk->opt.trait & QSE_AWK_TOLERANT) && 
@@ -3801,7 +3801,7 @@ static qse_awk_nde_t* parse_unary (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
 	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT:
-	         (MATCH(awk,TOK_ND))?    QSE_AWK_UNROP_ND: -1;
+	         (MATCH(awk,TOK_BQUOTE))? QSE_AWK_UNROP_DEF: -1;
 
 	/*if (opcode <= -1) return parse_increment (awk);*/
 	if (opcode <= -1) return parse_exponent (awk, xloc);
@@ -3949,7 +3949,7 @@ static qse_awk_nde_t* parse_unary_exp (qse_awk_t* awk, const qse_awk_loc_t* xloc
 	         (MATCH(awk,TOK_MINUS))? QSE_AWK_UNROP_MINUS:
 	         (MATCH(awk,TOK_LNOT))?  QSE_AWK_UNROP_LNOT:
 	         (MATCH(awk,TOK_BNOT))?  QSE_AWK_UNROP_BNOT: 
-	         (MATCH(awk,TOK_ND))?    QSE_AWK_UNROP_ND: -1;
+	         (MATCH(awk,TOK_BQUOTE))? QSE_AWK_UNROP_DEF: -1;
 
 	if (opcode <= -1) return parse_increment (awk, xloc);
 
@@ -5760,7 +5760,6 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T("!=="), 3, TOK_TNE,          0 },
 		{ QSE_T("!="),  2, TOK_NE,           0 },
 		{ QSE_T("!~"),  2, TOK_NM,           0 },
-		{ QSE_T("!:"),  2, TOK_ND,           0 },
 		{ QSE_T("!"),   1, TOK_LNOT,         0 },
 		{ QSE_T(">>="), 3, TOK_RS_ASSN,      0 },
 		{ QSE_T(">>"),  2, TOK_RS,           0 },
@@ -5813,6 +5812,7 @@ static int get_symbols (qse_awk_t* awk, qse_cint_t c, qse_awk_tok_t* tok)
 		{ QSE_T(":"),   1, TOK_COLON,        0 },
 		{ QSE_T("?"),   1, TOK_QUEST,        0 },
 		{ QSE_T("@"),   1, TOK_ATSIGN,       0 },
+		{ QSE_T("`"),   1, TOK_BQUOTE,       0 },
 		{ QSE_NULL,     0, 0,                0 }
 	};
 

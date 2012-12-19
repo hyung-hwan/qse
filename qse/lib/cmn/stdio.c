@@ -52,17 +52,40 @@ int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 
 int qse_vprintf (const qse_char_t* fmt, va_list ap)
 {
-	return qse_vfprintf (stdout, fmt, ap);
+	int n;
+	qse_char_t* nf;
+
+	nf = __adjust_format (fmt);
+	if (nf == NULL) return -1;
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = vfprintf (QSE_STDOUT, nf, ap);
+#else
+	n = vfwprintf (QSE_STDOUT, nf, ap);
+#endif
+
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
+	return n;
 }
 
 int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
+	qse_char_t* nf;
+
+	nf = __adjust_format (fmt);
+	if (nf == NULL) return -1;
 
 	va_start (ap, fmt);
-	n = qse_vfprintf (file, fmt, ap);
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = vfprintf (file, nf, ap);
+#else
+	n = vfwprintf (file, nf, ap);
+#endif
 	va_end (ap);
+
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
 
@@ -70,10 +93,41 @@ int qse_printf (const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
+	qse_char_t* nf;
+
+	nf = __adjust_format (fmt);
+	if (nf == NULL) return -1;
 
 	va_start (ap, fmt);
-	n = qse_vfprintf (QSE_STDOUT, fmt, ap);
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = vfprintf (QSE_STDOUT, nf, ap);
+#else
+	n = vfwprintf (QSE_STDOUT, nf, ap);
+#endif
 	va_end (ap);
+
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
+	return n;
+}
+
+int qse_dprintf (const qse_char_t* fmt, ...)
+{
+	int n;
+	va_list ap;
+	qse_char_t* nf;
+
+	nf = __adjust_format (fmt);
+	if (nf == NULL) return -1;
+
+	va_start (ap, fmt);
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = vfprintf (QSE_STDERR, nf, ap);
+#else
+	n = vfwprintf (QSE_STDOUT, nf, ap);
+#endif
+	va_end (ap);
+
+	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
 
@@ -83,19 +137,19 @@ int qse_vsprintf (qse_char_t* buf, qse_size_t size, const qse_char_t* fmt, va_li
 	qse_char_t* nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-		#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-			n = _vsnprintf (buf, size, nf, ap);
-		#else
-			n = vsnprintf (buf, size, nf, ap);
-		#endif
+#if defined(QSE_CHAR_IS_MCHAR)
+	#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+		n = _vsnprintf (buf, size, nf, ap);
 	#else
-		#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
-			n = _vsnwprintf (buf, size, nf, ap);
-		#else
-			n = vswprintf (buf, size, nf, ap);
-		#endif
+		n = vsnprintf (buf, size, nf, ap);
 	#endif
+#else
+	#if defined(_MSC_VER) || (defined(__WATCOMC__) && (__WATCOMC__ < 1200))
+		n = _vsnwprintf (buf, size, nf, ap);
+	#else
+		n = vswprintf (buf, size, nf, ap);
+	#endif
+#endif
 
 	if (n < 0 || (size_t)n >= size)
 	{
@@ -368,16 +422,6 @@ done:
 	return buf.ptr;
 }
 
-int qse_dprintf (const qse_char_t* fmt, ...)
-{
-	int n;
-	va_list ap;
-
-	va_start (ap, fmt);
-	n = qse_vfprintf (QSE_STDERR, fmt, ap);
-	va_end (ap);
-	return n;
-}
 
 QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 {
@@ -407,56 +451,29 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 #endif
 }
 
-QSE_FILE* qse_popen (const qse_char_t* cmd, const qse_char_t* mode)
+void qse_fclose (QSE_FILE* fp)
 {
-#if defined(QSE_CHAR_IS_MCHAR)
+	fclose (fp);
+}
 
-	#if defined(__OS2__)
-	return _popen (cmd, mode);
-	#elif defined(__DOS__)
-	return QSE_NULL;
-	#else
-	return popen (cmd, mode);
-	#endif
+int qse_fflush (QSE_FILE* fp)
+{
+	return fflush (fp);
+}
 
-#elif defined(_WIN32) || defined(__OS2__) 
-	return _wpopen (cmd, mode);
+void qse_clearerr (QSE_FILE* fp)
+{
+	clearerr (fp);
+}
 
-#elif defined(__DOS__)
-	return QSE_NULL;
+int qse_feof (QSE_FILE* fp)
+{
+	return feof (fp);
+}
 
-#else
-
-	QSE_FILE* fp = QSE_NULL;
-	qse_mchar_t* cmd_mb;
-
-	cmd_mb = qse_wcstombsdup (cmd, QSE_NULL, QSE_MMGR_GETDFL());
-	if (cmd_mb)
-	{
-		char mode_mb[3];
-		int mode_mb_len;
-		int mode_flag = 0;
-
-		fp = popen (cmd_mb, mode_mb);
-
-		while (*mode)
-		{
-			if (*mode == QSE_T('r')) mode_flag |= 1;
-			else if (*mode == QSE_T('w')) mode_flag |= 2;
-			mode++;
-		}
-
-		mode_mb_len = 0;
-		if (mode_flag & 1) mode_mb[mode_mb_len++] = QSE_MT('r');
-		if (mode_flag & 2) mode_mb[mode_mb_len++] = QSE_MT('w');
-		mode_mb[mode_mb_len++] = QSE_MT('\0');
-	
-		QSE_MMGR_FREE (QSE_MMGR_GETDFL(), cmd_mb);
-	}
-
-	return fp;
-
-#endif
+int qse_ferror (QSE_FILE* fp)
+{
+	return ferror (fp);
 }
 
 static int isnl (const qse_char_t* ptr, qse_size_t len, void* delim)
