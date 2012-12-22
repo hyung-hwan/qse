@@ -2208,15 +2208,11 @@ static int fnc_srand (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 
 static int fnc_system (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
-	qse_size_t nargs;
 	qse_awk_val_t* v;
 	qse_char_t* str;
 	qse_size_t len;
 	int n = 0;
 
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 1);
-	
 	v = qse_awk_rtx_getarg (rtx, 0);
 	if (v->type == QSE_AWK_VAL_STR)
 	{
@@ -2324,7 +2320,6 @@ static ioattr_t* find_or_make_ioattr (
 static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	rxtn_t* rxtn;
-	qse_size_t nargs;
 	qse_awk_val_t* v[3];
 	qse_char_t* ptr[3];
 	qse_size_t len[3];
@@ -2334,9 +2329,6 @@ static int fnc_setioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 3);
-	
 	for (i = 0; i < 3; i++)
 	{
 		v[i] = qse_awk_rtx_getarg (rtx, i);
@@ -2454,7 +2446,6 @@ done:
 static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	rxtn_t* rxtn;
-	qse_size_t nargs;
 	qse_awk_val_t* v[2];
 	qse_char_t* ptr[2];
 	qse_size_t len[2];
@@ -2468,9 +2459,6 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	rxtn = (rxtn_t*) QSE_XTN (rtx);
 	QSE_ASSERT (rxtn->cmgrtab_inited == 1);
 
-	nargs = qse_awk_rtx_getnargs (rtx);
-	QSE_ASSERT (nargs == 2);
-	
 	for (i = 0; i < 2; i++)
 	{
 		v[i] = qse_awk_rtx_getarg (rtx, i);
@@ -2492,7 +2480,7 @@ static int fnc_getioattr (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 		if (qse_strxchr (ptr[i], len[i], QSE_T('\0'))) goto done;
 	}
 
-	ioattr = get_ioattr  (&rxtn->cmgrtab, ptr[0], len[0]);
+	ioattr = get_ioattr (&rxtn->cmgrtab, ptr[0], len[0]);
 	if (ioattr == QSE_NULL) 
 	{
 		init_ioattr (&ioattr_buf);
@@ -2538,11 +2526,15 @@ done:
 
 	if (ret >= 0)
 	{
-		/* the return value of -1 for an error may be confusing since 
-		 * a literal value of -1 can be returned for some attribute 
-		 * names */
-		if (rv == QSE_NULL) rv = qse_awk_val_negone;
-		qse_awk_rtx_setretval (rtx, rv);
+		if (rv)
+		{
+			qse_awk_rtx_setrefval (rtx, qse_awk_rtx_getarg (rtx, 2), rv);
+			qse_awk_rtx_setretval (rtx, qse_awk_val_zero);
+		}
+		else
+		{
+			qse_awk_rtx_setretval (rtx, qse_awk_val_negone);
+		}
 	}
 
 	return ret;
@@ -2586,11 +2578,11 @@ struct fnctab_t
 
 static struct fnctab_t fnctab[] =
 {
-	{ QSE_T("rand"),      { {0, 0, QSE_NULL}, fnc_rand,      0           } },
-	{ QSE_T("srand"),     { {0, 1, QSE_NULL}, fnc_srand,     0           } },
-	{ QSE_T("system"),    { {1, 1, QSE_NULL}, fnc_system ,   0           } },
-	{ QSE_T("setioattr"), { {3, 3, QSE_NULL}, fnc_setioattr, QSE_AWK_RIO } },
-	{ QSE_T("getioattr"), { {2, 2, QSE_NULL}, fnc_getioattr, QSE_AWK_RIO } }
+	{ QSE_T("rand"),      { {0, 0, QSE_NULL},     fnc_rand,      0           } },
+	{ QSE_T("srand"),     { {0, 1, QSE_NULL},     fnc_srand,     0           } },
+	{ QSE_T("system"),    { {1, 1, QSE_NULL},     fnc_system ,   0           } },
+	{ QSE_T("setioattr"), { {3, 3, QSE_NULL},     fnc_setioattr, QSE_AWK_RIO } },
+	{ QSE_T("getioattr"), { {3, 3, QSE_T("vvr")}, fnc_getioattr, QSE_AWK_RIO } }
 };
 
 static int add_functions (qse_awk_t* awk)

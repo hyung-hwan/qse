@@ -355,7 +355,7 @@ static void on_statement (qse_awk_rtx_t* rtx, qse_awk_nde_t* nde)
 
 static void print_version (void)
 {
-	qse_printf (QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
+	qse_fprintf (QSE_STDOUT, QSE_T("QSEAWK version %hs\n"), QSE_PACKAGE_VERSION);
 }
 
 static void print_error (const qse_char_t* fmt, ...)

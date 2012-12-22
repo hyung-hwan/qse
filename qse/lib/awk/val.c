@@ -910,7 +910,45 @@ void qse_awk_rtx_freevalchunk (qse_awk_rtx_t* rtx, qse_awk_val_chunk_t* chunk)
 	}
 }
 
-int qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
+static int val_ref_to_bool (
+	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref)
+{
+	if (ref->id == QSE_AWK_VAL_REF_POS)
+	{
+		qse_size_t idx;
+	       
+		idx = (qse_size_t)ref->adr;
+		if (idx == 0)
+		{
+			return QSE_STR_LEN(&rtx->inrec.line) > 0;
+		}
+		else if (idx <= rtx->inrec.nflds)
+		{
+			return rtx->inrec.flds[idx-1].len > 0;
+		}
+		else
+		{
+			/* the index is greater than the number of records.
+			 * it's an empty string. so false */
+			return 0;
+		}
+	}
+	else
+	{
+		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+
+		/* A reference value is not able to point to another 
+		 * refernce value for the way values are represented
+		 * in QSEAWK */
+		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+		/* make a recursive call back to the caller */
+		return qse_awk_rtx_valtobool (rtx, *xref);
+	}
+}
+
+
+int qse_awk_rtx_valtobool (qse_awk_rtx_t* rtx, const qse_awk_val_t* val)
 {
 	if (val == QSE_NULL) return 0;
 
@@ -929,7 +967,8 @@ int qse_awk_rtx_valtobool (qse_awk_rtx_t* run, const qse_awk_val_t* val)
 		case QSE_AWK_VAL_MAP:
 			return 0; /* TODO: is this correct? */
 		case QSE_AWK_VAL_REF:
-			return 0; /* TODO: is this correct? */
+			return val_ref_to_bool (rtx, (qse_awk_val_ref_t*)val);
+
 	}
 
 	QSE_ASSERTX (
@@ -1253,6 +1292,55 @@ oops:
 	return -1;
 }
 
+static int val_ref_to_str (
+	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref,
+	qse_awk_rtx_valtostr_out_t* out)
+{
+	if (ref->id == QSE_AWK_VAL_REF_POS)
+	{
+		qse_size_t idx;
+	       
+		/* special case when the reference value is 
+		 * pointing to the positional */
+
+		idx = (qse_size_t)ref->adr;
+		if (idx == 0)
+		{
+			return str_to_str (
+				rtx,
+				QSE_STR_PTR(&rtx->inrec.line),
+				QSE_STR_LEN(&rtx->inrec.line),
+				out
+			);
+		}
+		else if (idx <= rtx->inrec.nflds)
+		{
+			return str_to_str (
+				rtx,
+				rtx->inrec.flds[idx-1].ptr,
+				rtx->inrec.flds[idx-1].len,
+				out
+			);
+		}
+		else
+		{
+			return str_to_str (rtx, QSE_T(""), 0, out);
+		}
+	}
+	else
+	{
+		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+
+		/* A reference value is not able to point to another 
+		 * refernce value for the way values are represented
+		 * in QSEAWK */
+		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+		/* make a recursive call back to the caller */
+		return qse_awk_rtx_valtostr (rtx, *xref, out);
+	}
+}
+
 int qse_awk_rtx_valtostr (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v,
 	qse_awk_rtx_valtostr_out_t* out)
@@ -1288,7 +1376,14 @@ int qse_awk_rtx_valtostr (
 				return str_to_str (rtx, QSE_T("#MAP"), 4, out);
 			break;
 		}
+
+		case QSE_AWK_VAL_REF:
+		{
+			return val_ref_to_str (
+				rtx, (qse_awk_val_ref_t*)v, out);
+		}
 	}
+
 
 #ifdef DEBUG_VAL
 	qse_dprintf (
@@ -1360,6 +1455,54 @@ qse_wchar_t* qse_awk_rtx_valtowcsdup (
 #endif
 }
 
+static int val_ref_to_num (
+	qse_awk_rtx_t* rtx, const qse_awk_val_ref_t* ref, qse_long_t* l, qse_flt_t* r)
+{
+	if (ref->id == QSE_AWK_VAL_REF_POS)
+	{
+		qse_size_t idx;
+	       
+		idx = (qse_size_t)ref->adr;
+		if (idx == 0)
+		{
+			return qse_awk_rtx_strtonum (
+				rtx, 0,
+				QSE_STR_PTR(&rtx->inrec.line),
+				QSE_STR_LEN(&rtx->inrec.line),
+				l, r
+			);
+		}
+		else if (idx <= rtx->inrec.nflds)
+		{
+			return qse_awk_rtx_strtonum (
+				rtx, 0,
+				rtx->inrec.flds[idx-1].ptr,
+				rtx->inrec.flds[idx-1].len,
+				l, r
+			);
+		}
+		else
+		{
+			return qse_awk_rtx_strtonum (
+				rtx, 0, QSE_T(""), 0, l, r
+			);
+		}
+	}
+	else
+	{
+		qse_awk_val_t** xref = (qse_awk_val_t**)ref->adr;
+
+		/* A reference value is not able to point to another 
+		 * refernce value for the way values are represented
+		 * in QSEAWK */
+		QSE_ASSERT ((*xref)->type != QSE_AWK_VAL_REF); 
+
+		/* make a recursive call back to the caller */
+		return qse_awk_rtx_valtonum (rtx, *xref, l, r);
+	}
+}
+
+
 int qse_awk_rtx_valtonum (
 	qse_awk_rtx_t* rtx, const qse_awk_val_t* v, qse_long_t* l, qse_flt_t* r)
 {
@@ -1391,6 +1534,11 @@ int qse_awk_rtx_valtonum (
 				((qse_awk_val_str_t*)v)->val.len,
 				l, r
 			);
+		}
+
+		case QSE_AWK_VAL_REF:
+		{
+			return val_ref_to_num (rtx, (qse_awk_val_str_t*)v, l, r);
 		}
 	}
 
@@ -1507,6 +1655,59 @@ qse_long_t qse_awk_rtx_hashval (qse_awk_rtx_t* rtx, qse_awk_val_t* v)
 
 	/* turn off the sign bit */
 	return hv  & ~(((qse_ulong_t)1) << ((QSE_SIZEOF(qse_ulong_t) * 8) - 1));
+}
+
+int qse_awk_rtx_setrefval (qse_awk_rtx_t* rtx, qse_awk_val_ref_t* ref, qse_awk_val_t* val)
+{
+	if (val->type == QSE_AWK_VAL_REX)
+	{
+		/* though it is possible that an intrinsic function handler
+		 * can accept a regular expression withtout evaluation when 'x'
+		 * is specified for the parameter, this function doesn't allow
+		 * regular expression to be set to a reference variable to
+		 * avoid potential chaos. the nature of performing '/rex/ ~ $0' 
+		 * for a regular expression without the match operator 	
+		 * makes it difficult to be implemented. */
+		qse_awk_rtx_seterrnum (rtx, QSE_AWK_EINVAL, QSE_NULL);
+		return -1;
+	}
+
+	if (ref->id == QSE_AWK_VAL_REF_POS)
+	{
+		if (val->type == QSE_AWK_VAL_STR)
+		{
+			return qse_awk_rtx_setrec (
+				rtx, (qse_size_t)ref->adr, 
+				&((qse_awk_val_str_t*)val)->val
+			);
+		}
+		else
+		{
+			qse_xstr_t str;
+			int x;
+
+			str.ptr = qse_awk_rtx_valtostrdup (rtx, val, &str.len);
+			x = qse_awk_rtx_setrec (rtx, (qse_size_t)ref->adr, &str);
+			QSE_AWK_FREE (rtx->awk, str.ptr);
+			return x;
+		}
+	}
+	else
+	{
+		qse_awk_val_t** rref;
+
+/* TODO: handle QSE_AWK_FLEXMAP...
+if FLEXMAP is not set.. check if rref is nil or map if value is map.
+also check if rref is nil... scalar if valeu is scalar.. 
+but is this really necessary? i feel all these awk quarkiness is nasty..
+*/
+
+		rref = (qse_awk_val_t**)ref->adr;
+		qse_awk_rtx_refdownval (rtx, *rref);
+		*rref = val;
+		qse_awk_rtx_refupval (rtx, *rref);
+		return 0;
+	}
 }
 
 #if 0

@@ -5887,7 +5887,7 @@ static qse_size_t push_arg_from_nde (
 			(fnc_arg_spec != QSE_NULL && 
 			 qse_strlen(fnc_arg_spec) > nargs));
 
-		if (fnc_arg_spec != QSE_NULL && 
+		if (fnc_arg_spec && 
 		    (fnc_arg_spec[nargs] == QSE_T('r') ||
 		     fnc_arg_spec[0] == QSE_T('R')))
 		{
@@ -5904,7 +5904,7 @@ static qse_size_t push_arg_from_nde (
 			v = qse_awk_rtx_makerefval (
 				rtx, p->type-QSE_AWK_NDE_NAMED, ref);
 		}
-		else if (fnc_arg_spec != QSE_NULL && 
+		else if (fnc_arg_spec && 
 		         fnc_arg_spec[nargs] == QSE_T('x'))
 		{
 			/* a regular expression is passed to 
