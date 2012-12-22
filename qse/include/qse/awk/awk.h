@@ -2005,7 +2005,8 @@ QSE_EXPORT qse_size_t qse_awk_rtx_getnargs (
 );
 
 /**
- * The qse_awk_rtx_getarg() function gets an argument passed to qse_awk_run().
+ * The qse_awk_rtx_getarg() function gets an argument passed to an intrinsic 
+ * function. it doesn't touch the reference count of the value.
  */
 QSE_EXPORT qse_awk_val_t* qse_awk_rtx_getarg (
 	qse_awk_rtx_t* rtx,
@@ -2642,7 +2643,7 @@ QSE_EXPORT int qse_awk_rtx_strtonum (
 );
 
 /**
- * The qse_awk_rtx_hashval() functions hashes a simple value
+ * The qse_awk_rtx_hashval() function hashes a simple value
  * to a positive integer. It returns -1 for a inhashable value.
  */
 QSE_EXPORT qse_long_t qse_awk_rtx_hashval (
@@ -2650,6 +2651,16 @@ QSE_EXPORT qse_long_t qse_awk_rtx_hashval (
 	qse_awk_val_t* v
 );
 
+/**
+ * The qse_awk_rtx_setrefval() function changes the value
+ * of a variable referenced in @a ref. 
+ * @return 0 on success, -1 on failure.
+ */
+QSE_EXPORT int qse_awk_rtx_setrefval (
+	qse_awk_rtx_t*     rtx,
+	qse_awk_val_ref_t* ref,
+	qse_awk_val_t*     val
+);
 
 QSE_EXPORT void qse_awk_rtx_setnrflt (
 	qse_awk_rtx_t*         rtx,
