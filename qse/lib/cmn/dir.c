@@ -40,6 +40,7 @@
 struct qse_dir_t
 {
 	qse_mmgr_t* mmgr;
+	qse_dir_errnum_t errnum;
 	int flags;
 
 	qse_str_t tbuf;
@@ -72,7 +73,12 @@ void qse_dir_fini (qse_dir_t* dir);
 
 static int reset_to_path (qse_dir_t* dir, const qse_char_t* path);
 
-qse_dir_t* qse_dir_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t* path, int flags)
+#include "syserr.h"
+IMPLEMENT_SYSERR_TO_ERRNUM (dir, DIR)
+
+qse_dir_t* qse_dir_open (
+	qse_mmgr_t* mmgr, qse_size_t xtnsize, 
+	const qse_char_t* path, int flags, qse_dir_errnum_t* errnum)
 {
 	qse_dir_t* dir;
 
@@ -81,10 +87,15 @@ qse_dir_t* qse_dir_open (qse_mmgr_t* mmgr, qse_size_t xtnsize, const qse_char_t*
 	{
 		if (qse_dir_init (dir, mmgr, path, flags) <= -1)
 		{
+			if (errnum) *errnum = qse_dir_geterrnum (dir);
 			QSE_MMGR_FREE (mmgr, dir);
 			dir = QSE_NULL;
 		}
 		else QSE_MEMSET (dir + 1, 0, xtnsize);
+	}
+	else
+	{
+		if (errnum) *errnum = QSE_DIR_ENOMEM;
 	}
 
 	return dir;
@@ -104,6 +115,11 @@ qse_mmgr_t* qse_dir_getmmgr (qse_dir_t* dir)
 void* qse_dir_getxtn (qse_dir_t* dir)
 {
 	return QSE_XTN (dir);
+}
+
+qse_dir_errnum_t qse_dir_geterrnum (qse_dir_t* dir)
+{
+	return dir->errnum;
 }
 
 int qse_dir_init (qse_dir_t* dir, qse_mmgr_t* mmgr, const qse_char_t* path, int flags)
@@ -177,8 +193,17 @@ static qse_mchar_t* wcs_to_mbuf (qse_dir_t* dir, const qse_wchar_t* wcs, qse_mbs
 {
 	qse_size_t ml, wl;
 
-	if (qse_wcstombs (wcs, &wl, QSE_NULL, &ml) <= -1 ||
-	    qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) return QSE_NULL;
+	if (qse_wcstombs (wcs, &wl, QSE_NULL, &ml) <= -1)
+	{
+		dir->errnum = QSE_DIR_EINVAL;
+		return QSE_NULL;
+	}
+
+	if (qse_mbs_setlen (mbs, ml) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return QSE_NULL;
+	}
 
 	qse_wcstombs (wcs, &wl, QSE_MBS_PTR(mbs), &ml);
 	return QSE_MBS_PTR(mbs);
@@ -188,8 +213,16 @@ static qse_wchar_t* mbs_to_wbuf (qse_dir_t* dir, const qse_mchar_t* mbs, qse_wcs
 {
 	qse_size_t ml, wl;
 
-	if (qse_mbstowcs (mbs, &ml, QSE_NULL, &wl) <= -1 ||
-	    qse_wcs_setlen (wcs, wl) == (qse_size_t)-1) return QSE_NULL;
+	if (qse_mbstowcs (mbs, &ml, QSE_NULL, &wl) <= -1)
+	{
+		dir->errnum = QSE_DIR_EINVAL;
+		return QSE_NULL;
+	}
+	if (qse_wcs_setlen (wcs, wl) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return QSE_NULL;
+	}
 
 	qse_mbstowcs (mbs, &ml, QSE_WCS_PTR(wcs), &wl);
 	return QSE_WCS_PTR(wcs);
@@ -199,7 +232,11 @@ static qse_mchar_t* make_mbsdos_path (qse_dir_t* dir, const qse_mchar_t* mpath)
 {
 	if (mpath[0] == QSE_MT('\0'))
 	{
-		if (qse_mbs_cpy (&dir->mbuf, QSE_MT("*.*")) == (qse_size_t)-1) return QSE_NULL;
+		if (qse_mbs_cpy (&dir->mbuf, QSE_MT("*.*")) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
 	}
 	else
 	{
@@ -210,6 +247,7 @@ static qse_mchar_t* make_mbsdos_path (qse_dir_t* dir, const qse_mchar_t* mpath)
 		     qse_mbs_ccat (&dir->mbuf, QSE_MT('\\')) == (qse_size_t)-1) ||
 		    qse_mbs_cat (&dir->mbuf, QSE_MT("*.*")) == (qse_size_t)-1)
 		{
+			dir->errnum = QSE_DIR_ENOMEM;
 			return QSE_NULL;
 		}
 	}
@@ -221,7 +259,11 @@ static qse_char_t* make_dos_path (qse_dir_t* dir, const qse_char_t* path)
 {
 	if (path[0] == QSE_T('\0'))
 	{
-		if (qse_str_cpy (&dir->tbuf, QSE_T("*.*")) == (qse_size_t)-1) return QSE_NULL;
+		if (qse_str_cpy (&dir->tbuf, QSE_T("*.*")) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return QSE_NULL;
+		}
 	}
 	else
 	{
@@ -232,6 +274,7 @@ static qse_char_t* make_dos_path (qse_dir_t* dir, const qse_char_t* path)
 		     qse_str_ccat (&dir->tbuf, QSE_T('\\')) == (qse_size_t)-1) ||
 		    qse_str_cat (&dir->tbuf, QSE_T("*.*")) == (qse_size_t)-1)
 		{
+			dir->errnum = QSE_DIR_ENOMEM;
 			return QSE_NULL;
 		}
 	}
@@ -293,7 +336,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	if (tptr == QSE_NULL) return -1;
 
 	dir->h = FindFirstFile (tptr, &dir->wfd);
-	if (dir->h == INVALID_HANDLE_VALUE) return -1;
+	if (dir->h == INVALID_HANDLE_VALUE) 
+	{
+		dir->errnum = syserr_to_errnum (GetLastError());
+		return -1;
+	}
 
 	return 0;
 	/* ------------------------------------------------------------------- */
@@ -337,7 +384,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 #endif
 	);
 
-	if (rc != NO_ERROR) return -1;
+	if (rc != NO_ERROR)
+	{
+		dir->errnum = syserr_to_errnum (rc);
+		return -1;
+	}
 
 	dir->opened = 1;
 	return 0;
@@ -368,7 +419,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 	if (mptr == QSE_NULL) return -1;
 
 	rc = _dos_findfirst (mptr, _A_NORMAL | _A_SUBDIR, &dir->f);
-	if (rc != 0) return -1;
+	if (rc != 0) 
+	{
+		dir->errnum = syserr_to_errnum (errno);
+		return -1;
+	}
 
 	dir->opened = 1;
 	return 0;
@@ -402,7 +457,11 @@ static int reset_to_path (qse_dir_t* dir, const qse_char_t* path)
 		}
 	}
 	#endif 
-	if (dp == QSE_NULL) return -1;
+	if (dp == QSE_NULL) 
+	{
+		dir->errnum = syserr_to_errnum (errno);
+		return -1;
+	}
 
 	dir->dp = dp;
 	return 0;
@@ -423,7 +482,11 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	if (dir->done) return (dir->done > 0)? 0: -1;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) return -1;
+	if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return -1;
+	}
 	*name = QSE_STR_PTR(&dir->tbuf);
 	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
@@ -433,13 +496,25 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	}
 	else
 	{
-		if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) return -1;
+		if (qse_str_cpy (&dir->tbuf, dir->wfd.cFileName) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return -1;
+		}
 		*name = QSE_STR_PTR(&dir->tbuf);
 	}
 	#endif
 
 	if (FindNextFile (dir->h, &dir->wfd) == FALSE) 
-		dir->done = (GetLastError() == ERROR_NO_MORE_FILES)? 1: -1;
+	{
+		DWORD x = GetLastError();
+		if (x == ERROR_NO_MORE_FILES) dir->done = 1;
+		else
+		{
+			dir->errnum = syserr_to_errnum (x);
+			dir->done = -1;
+		}
+	}
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -452,12 +527,20 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	if (dir->count <= 0) return 0;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->ffb.achName) == (qse_size_t)-1) return -1;
+	if (qse_str_cpy (&dir->tbuf, dir->ffb.achName) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return -1;
+	}
 	*name = QSE_STR_PTR(&dir->tbuf);
 	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, dir->ffb.achName) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cpy (&dir->mbuf, dir->ffb.achName) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return -1;
+		}
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
@@ -469,7 +552,11 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	rc = DosFindNext (dir->h, &dir->ffb, QSE_SIZEOF(dir->ffb), &dir->count);
 	if (rc == ERROR_NO_MORE_FILES) dir->count = 0;
-	else if (rc != NO_ERROR) return -1;
+	else if (rc != NO_ERROR)
+	{
+		dir->errnum = syserr_to_errnum (rc);
+		return -1;
+	}
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -477,17 +564,24 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 #elif defined(__DOS__)
 
 	/* ------------------------------------------------------------------- */
-	unsigned int rc;
 
 	if (dir->done) return (dir->done > 0)? 0: -1;
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, dir->f.name) == (qse_size_t)-1) return -1;
+	if (qse_str_cpy (&dir->tbuf, dir->f.name) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return -1;
+	}
 	*name = QSE_STR_PTR(&dir->tbuf);
 	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, dir->f.name) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cpy (&dir->mbuf, dir->f.name) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return -1;
+		}
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else
@@ -497,8 +591,15 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 	}
 	#endif
 
-	rc = _dos_findnext (&dir->f);
-	if (rc != 0) dir->done = (errno == ENOENT)? 1: -1;
+	if (_dos_findnext (&dir->f) != 0)
+	{
+		if (errno == ENOENT) dir->done = 1;
+		else
+		{
+			dir->errnum = syserr_to_errnum (errno);
+			dir->done = -1;
+		}
+	}
 
 	return 1;
 	/* ------------------------------------------------------------------- */
@@ -510,15 +611,29 @@ static int read_dir_to_tbuf (qse_dir_t* dir, void** name)
 
 	errno = 0;
 	de = QSE_READDIR (dir->dp);
-	if (de == NULL) return (errno == 0)? 0: -1;
+	if (de == NULL) 
+	{
+		if (errno == 0) return 0;
+		dir->errnum = syserr_to_errnum (errno);
+		return -1;
+	}
 
 	#if defined(QSE_CHAR_IS_MCHAR)
-	if (qse_str_cpy (&dir->tbuf, de->d_name) == (qse_size_t)-1) return -1;
+	if (qse_str_cpy (&dir->tbuf, de->d_name) == (qse_size_t)-1) 
+	{
+		dir->errnum = QSE_DIR_ENOMEM;
+		return -1;
+	}
+
 	*name = QSE_STR_PTR(&dir->tbuf);
 	#else
 	if (dir->flags & QSE_DIR_MBSPATH)
 	{
-		if (qse_mbs_cpy (&dir->mbuf, de->d_name) == (qse_size_t)-1) return -1;
+		if (qse_mbs_cpy (&dir->mbuf, de->d_name) == (qse_size_t)-1) 
+		{
+			dir->errnum = QSE_DIR_ENOMEM;
+			return -1;
+		}
 		*name = QSE_MBS_PTR(&dir->mbuf);
 	}
 	else

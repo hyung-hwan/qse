@@ -32,6 +32,7 @@ const qse_char_t* qse_awk_dflerrstr (const qse_awk_t* awk, qse_awk_errnum_t errn
 
 		QSE_T("insufficient memory"),
 		QSE_T("invalid parameter or data"),
+		QSE_T("access denied"),
 		QSE_T("not supported"),
 		QSE_T("operation not allowed"),
 		QSE_T("'${0}' not found"),

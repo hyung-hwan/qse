@@ -83,7 +83,8 @@ enum qse_fio_errnum_t
 	QSE_FIO_EACCES,     /**< access denied */
 	QSE_FIO_ENOENT,     /**< no such file */
 	QSE_FIO_EEXIST,     /**< already exist */
-	QSE_FIO_EINTR       /**< interrupted */
+	QSE_FIO_EINTR,      /**< interrupted */
+	QSE_FIO_EPIPE,      /**< broken pipe */
 };
 typedef enum qse_fio_errnum_t qse_fio_errnum_t;
 

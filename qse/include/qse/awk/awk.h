@@ -1133,6 +1133,7 @@ enum qse_awk_errnum_t
 	/* common errors */
 	QSE_AWK_ENOMEM,  /**< insufficient memory */
 	QSE_AWK_EINVAL,  /**< invalid parameter or data */
+	QSE_AWK_EACCES,  /**< access denied */
 	QSE_AWK_ENOSUP,  /**< not supported */
 	QSE_AWK_ENOPER,  /**< operation not allowed */
 	QSE_AWK_ENOENT,  /**< '${0}' not found */

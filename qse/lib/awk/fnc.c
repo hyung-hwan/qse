@@ -718,6 +718,10 @@ static int fnc_split (qse_awk_rtx_t* run, const qse_awk_fnc_info_t* fi)
 	t1 = qse_awk_rtx_makemapval (run);
 	if (t1 == QSE_NULL) goto oops;
 
+	/* use the following 3 lines intead of
+	 *  qse_awk_rtx_setrefval (run, a1, t1);
+	 * just for less overhead.
+	 */
 	qse_awk_rtx_refdownval (run, *a1_ref);
 	*a1_ref = t1;
 	qse_awk_rtx_refupval (run, *a1_ref);

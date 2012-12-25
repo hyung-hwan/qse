@@ -2,7 +2,7 @@ The directory contains makefiles generated with bakefile(www.bakefile.org)
 for non-autoconf environments. 
 
  - os2-watcom/makefile       Watcom C/C++ for OS/2
- - win32-watcom/makefile     Watcom C/C++ for OS/2
+ - win32-watcom/makefile     Watcom C/C++ for Windows
  - win32-borland/makefile    Borland C/C++ for Windows
  - win32-msvc/makefile       Microsoft Visual C/C++ for Windows
 

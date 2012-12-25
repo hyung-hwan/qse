@@ -30,8 +30,11 @@ typedef struct dir_node_t dir_node_t;
 enum
 {
 	DIR_ENOERR,
+	DIR_EOTHER,
+	DIR_ESYSERR,
 	DIR_ENOMEM,
 	DIR_EINVAL,
+	DIR_EACCES,
 	DIR_ENOENT
 };
 
@@ -60,10 +63,49 @@ struct dir_list_t
 	int errnum;
 };
 
+static int dir_err_to_errnum (qse_dir_errnum_t num)
+{
+	switch (num)
+	{
+		case QSE_DIR_ESYSERR:
+			return DIR_ESYSERR;
+		case QSE_DIR_ENOMEM:
+			return DIR_ENOMEM;
+		case QSE_DIR_EINVAL:
+			return DIR_EINVAL;
+		case QSE_DIR_EACCES:
+			return DIR_EACCES;
+		case QSE_DIR_ENOENT:
+			return DIR_ENOENT;
+		default:	
+			return DIR_EOTHER;
+	}
+}
+
+static int awk_err_to_errnum (qse_awk_errnum_t num)
+{
+	switch (num)
+	{
+		case QSE_AWK_ESYSERR:
+			return DIR_ESYSERR;
+		case QSE_AWK_ENOMEM:
+			return DIR_ENOMEM;
+		case QSE_AWK_EINVAL:
+			return DIR_EINVAL;
+		case QSE_AWK_EACCES:
+			return DIR_EACCES;
+		case QSE_AWK_ENOENT:
+			return DIR_ENOENT;
+		default:	
+			return DIR_EOTHER;
+	}
+}
+
 static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse_char_t* path)
 {
 	/* create a new context node and append it to the list tail */
 	dir_node_t* node;
+	qse_dir_errnum_t oe;
 
 	node = QSE_NULL;
 
@@ -71,11 +113,19 @@ static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse
 	else
 	{
 		node = qse_awk_rtx_callocmem (rtx, QSE_SIZEOF(*node));
-		if (!node) goto oops;
+		if (!node) 
+		{
+			list->errnum = DIR_ENOMEM;
+			goto oops;
+		}
 	}
 
-	node->ctx = qse_dir_open (qse_awk_rtx_getmmgr(rtx), 0, path, 0);
-	if (!node->ctx) goto oops;
+	node->ctx = qse_dir_open (qse_awk_rtx_getmmgr(rtx), 0, path, 0, &oe);
+	if (!node->ctx) 
+	{
+		list->errnum = dir_err_to_errnum (oe);
+		goto oops;
+	}
 
 	if (node == list->free) list->free = node->next;
 	else
@@ -90,7 +140,11 @@ static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse
 
 			tmp = (dir_node_t**) qse_awk_rtx_reallocmem (
 				rtx, list->map.tab, QSE_SIZEOF(*tmp) * newcapa);
-			if (!tmp) goto oops;
+			if (!tmp) 
+			{
+				list->errnum = DIR_ENOMEM;
+				goto oops;
+			}
 
 			QSE_MEMSET (&tmp[list->map.capa], 0, 
 				QSE_SIZEOF(*tmp) * (newcapa - list->map.capa));
@@ -116,7 +170,6 @@ static dir_node_t* new_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, const qse
 
 oops:
 	if (node) qse_awk_rtx_freemem (rtx, node);
-	qse_awk_rtx_seterrnum (rtx, QSE_AWK_ENOMEM, QSE_NULL);
 	return QSE_NULL;
 }
 
@@ -177,53 +230,68 @@ static void free_dir_node (qse_awk_rtx_t* rtx, dir_list_t* list, dir_node_t* nod
 
 static int close_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id)
 {
-	int x = DIR_EINVAL;
-
 	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
 	{
 		free_dir_node (rtx, list, list->map.tab[id]);
-		x = DIR_ENOERR;
+		return 0;
 	}
-	
-	return -x;
+	else
+	{
+		list->errnum = DIR_EINVAL;
+		return -1;
+	}
 }
 
 static int reset_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, const qse_char_t* path)
 {
-	int x = DIR_EINVAL;
-
 	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
 	{
-		if (qse_dir_reset (list->map.tab[id]->ctx, path) >= 0) x = DIR_ENOERR;
+		if (qse_dir_reset (list->map.tab[id]->ctx, path) <= -1)
+		{
+			list->errnum = dir_err_to_errnum (qse_dir_geterrnum (list->map.tab[id]->ctx));
+			return -1;
+		}
+		return 0;
 	}
-	
-	return -x;
+	else
+	{
+		list->errnum = DIR_EINVAL;
+		return -1;
+	}
 }
 
-static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_awk_val_t** retv)
+static int read_byid (qse_awk_rtx_t* rtx, dir_list_t* list, qse_long_t id, qse_awk_val_ref_t* ref) 
 {
-	int x = DIR_EINVAL;
-
 	if (id >= 0 && id < list->map.high && list->map.tab[id]) 
 	{
 		int y;
 		qse_dir_ent_t ent;	
+		qse_awk_val_t* tmp;
+
 		y = qse_dir_read (list->map.tab[id]->ctx, &ent);
-		if (y == 0) x = DIR_ENOENT;
-		else if (y >= 1)
+		if (y <= -1) 
 		{
-			qse_awk_val_t* tmp;
-			tmp = qse_awk_rtx_makestrvalwithstr (rtx, ent.name);	
-			if (tmp) 
-			{
-				*retv = tmp;
-				x = DIR_ENOERR;
-			}
-			else x = DIR_ENOMEM;
+			list->errnum = dir_err_to_errnum (qse_dir_geterrnum (list->map.tab[id]->ctx));
+			return -1;
 		}
+
+		if (y == 0) return 0;
+
+		tmp = qse_awk_rtx_makestrvalwithstr (rtx, ent.name);	
+		if (!tmp || qse_awk_rtx_setrefval (rtx, ref, tmp) <= -1) 
+		{
+			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+			if (tmp) qse_awk_rtx_freemem (rtx, tmp);
+			return -1;
+		}
+
+		return 1;
 	}
-	
-	return -x;
+	else
+	{
+		list->errnum = DIR_EINVAL;
+		return -1;	
+	}
 }
 
 /* ------------------------------------------------------------------------ */
@@ -253,8 +321,11 @@ static int fnc_dir_errno (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 static qse_char_t* errmsg[] =
 {
 	QSE_T("no error"),
-	QSE_T("out of memory"),
+	QSE_T("other error"),
+	QSE_T("system error"),
+	QSE_T("insufficient memory"),
 	QSE_T("invalid data"),
+	QSE_T("access denied"),
 	QSE_T("no entry"),
 	QSE_T("unknown error")
 };
@@ -287,122 +358,107 @@ static int fnc_dir_open (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 	dir_list_t* list;
 	dir_node_t* node;
 	qse_long_t ret;
-	qse_awk_val_t* retv;
 	qse_char_t* path;
 
 	list = rtx_to_list (rtx, fi);
 
 	path = qse_awk_rtx_valtostrdup (rtx, qse_awk_rtx_getarg (rtx, 0), QSE_NULL);
-	if (path == QSE_NULL)
+	if (path)
 	{
-		list->errnum = DIR_ENOMEM;
-		ret = -DIR_ENOMEM;
+		node = new_dir_node (rtx, list, path);
+		if (node) ret = node->id;
+		else ret = -1;
+		qse_awk_rtx_freemem (rtx, path);
 	}
 	else
 	{
-		node = new_dir_node (rtx, list, path);
-		ret = node? node->id: -DIR_ENOMEM;
-		qse_awk_rtx_freemem (rtx, path);
-	}
-	
-	if (ret <= -1) 
-	{
-		list->errnum = -ret;
+		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
 		ret = -1;
 	}
 
-	retv = qse_awk_rtx_makeintval (rtx, ret);
-	if (retv == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, retv);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
 static int fnc_dir_close (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	dir_list_t* list;
-	qse_awk_val_t* retv;
 	qse_long_t id;
 	int ret;
 	
 	list = rtx_to_list (rtx, fi);
 
 	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
-	if (ret <= -1) ret = -DIR_EINVAL;
-	else ret = close_byid (rtx, list, id);
-
-	if (ret <= -1) 
+	if (ret <= -1)
 	{
-		list->errnum = -ret;
+		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
 		ret = -1;
 	}
+	else
+	{
+		ret = close_byid (rtx, list, id);
+	}
 
-	retv = qse_awk_rtx_makeintval (rtx, ret);
-	if (retv == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, retv);
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
 static int fnc_dir_reset (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	dir_list_t* list;
-	qse_awk_val_t* retv;
 	qse_long_t id;
 	int ret;
+	qse_char_t* path;
 	
 	list = rtx_to_list (rtx, fi);
 
 	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
-	if (ret <= -1) ret = -DIR_EINVAL;
+	if (ret <= -1)
+	{
+		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+	}
 	else
 	{
-		qse_char_t* path;
-
 		path = qse_awk_rtx_valtostrdup (rtx, qse_awk_rtx_getarg(rtx, 1), QSE_NULL);
 		if (path)
 		{
 			ret = reset_byid (rtx, list, id, path);
 			qse_awk_rtx_freemem (rtx, path);
 		}
-		else ret = -DIR_ENOMEM;
+		else
+		{
+			list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
+			ret = -1;
+		}
 	}
 
-	if (ret <= -1) 
-	{
-		list->errnum = -ret;
-		ret = -1;
-	}
-
-	retv = qse_awk_rtx_makeintval (rtx, ret);
-	if (retv == QSE_NULL) return -1;
-
-	qse_awk_rtx_setretval (rtx, retv);
+	/* no error check for qse_awk_rtx_makeintval() here since ret 
+	 * is 0 or -1. it will never fail for those numbers */
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
 static int fnc_dir_read  (qse_awk_rtx_t* rtx, const qse_awk_fnc_info_t* fi)
 {
 	dir_list_t* list;
-	qse_awk_val_t* retv;
 	qse_long_t id;
 	int ret;
 	
 	list = rtx_to_list (rtx, fi);
 
 	ret = qse_awk_rtx_valtolong (rtx, qse_awk_rtx_getarg (rtx, 0), &id);
-	if (ret <= -1) ret = -DIR_EINVAL;
-	else ret = read_byid (rtx, list, id, &retv);
-
 	if (ret <= -1) 
 	{
-		list->errnum = -ret;
+		list->errnum = awk_err_to_errnum (qse_awk_rtx_geterrnum (rtx));
 	}
 	else
 	{
-		qse_awk_rtx_setretval (rtx, retv);
+		ret = read_byid (rtx, list, id, qse_awk_rtx_getarg (rtx, 1));
 	}
 
+	/* no error check for qse_awk_rtx_makeintval() here since ret 
+	 * is 0, 1, -1. it will never fail for those numbers */
+	qse_awk_rtx_setretval (rtx, qse_awk_rtx_makeintval (rtx, ret));
 	return 0;
 }
 
@@ -417,12 +473,12 @@ struct fnctab_t
 
 static fnctab_t fnctab[] =
 {
-	{ QSE_T("close"),       { { 1, 1, QSE_NULL }, fnc_dir_close,      0 } },
-	{ QSE_T("errno"),       { { 0, 0, QSE_NULL }, fnc_dir_errno,      0 } },
-	{ QSE_T("errstr"),      { { 0, 1, QSE_NULL }, fnc_dir_errstr,     0 } },
-	{ QSE_T("open"),        { { 1, 1, QSE_NULL }, fnc_dir_open,       0 } },
-	{ QSE_T("read"),        { { 1, 1, QSE_NULL }, fnc_dir_read,       0 } },
-	{ QSE_T("reset"),       { { 2, 2, QSE_NULL }, fnc_dir_reset,      0 } },
+	{ QSE_T("close"),       { { 1, 1, QSE_NULL    }, fnc_dir_close,      0 } },
+	{ QSE_T("errno"),       { { 0, 0, QSE_NULL    }, fnc_dir_errno,      0 } },
+	{ QSE_T("errstr"),      { { 0, 1, QSE_NULL    }, fnc_dir_errstr,     0 } },
+	{ QSE_T("open"),        { { 1, 1, QSE_NULL    }, fnc_dir_open,       0 } },
+	{ QSE_T("read"),        { { 2, 2, QSE_T("vr") }, fnc_dir_read,       0 } },
+	{ QSE_T("reset"),       { { 2, 2, QSE_NULL    }, fnc_dir_reset,      0 } },
 };
 
 /* ------------------------------------------------------------------------ */
@@ -430,7 +486,7 @@ static fnctab_t fnctab[] =
 static int query (qse_awk_mod_t* mod, qse_awk_t* awk, const qse_char_t* name, qse_awk_mod_sym_t* sym)
 {
 	qse_cstr_t ea;
-     int left, right, mid, n;
+	int left, right, mid, n;
 
 	left = 0; right = QSE_COUNTOF(fnctab) - 1;
 
