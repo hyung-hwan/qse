@@ -45,7 +45,8 @@ enum qse_dir_errnum_t
 	 QSE_DIR_EACCES,     /**< access denied */
 	 QSE_DIR_ENOENT,     /**< no such file */
 	 QSE_DIR_EEXIST,     /**< already exist */
-	 QSE_DIR_EINTR       /**< interrupted */
+	 QSE_DIR_EINTR,      /**< interrupted */
+	 QSE_DIR_EPIPE       /**< broken pipe */
 };
 typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 
@@ -76,7 +77,8 @@ QSE_EXPORT qse_dir_t* qse_dir_open (
 	qse_mmgr_t*       mmgr,
 	qse_size_t        xtnsize,
 	const qse_char_t* path, 
-	int               flags
+	int               flags,
+	qse_dir_errnum_t* errnum /** error number */
 );
 
 QSE_EXPORT void qse_dir_close (
@@ -88,6 +90,10 @@ QSE_EXPORT qse_mmgr_t* qse_dir_getmmgr (
 );
 
 QSE_EXPORT void* qse_dir_getxtn (
+	qse_dir_t* dir
+);
+
+QSE_EXPORT qse_dir_errnum_t qse_dir_geterrnum (
 	qse_dir_t* dir
 );
 

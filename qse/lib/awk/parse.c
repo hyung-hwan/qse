@@ -2155,7 +2155,6 @@ static qse_awk_nde_t* parse_while (qse_awk_t* awk, const qse_awk_loc_t* xloc)
 oops:
 	if (body) qse_awk_clrpt (awk, body);
 	if (test) qse_awk_clrpt (awk, test);
-	QSE_ASSERT (nde == QSE_NULL);
 	return QSE_NULL;
 }
 

@@ -408,7 +408,7 @@ entry:
 
 	if (seg->wild)
 	{
-		dp = qse_dir_open (g->mmgr, 0, QSE_STR_PTR(&g->path), 0);
+		dp = qse_dir_open (g->mmgr, 0, QSE_STR_PTR(&g->path), 0, QSE_NULL);
 		if (dp)
 		{
 			tmp = QSE_STR_LEN(&g->path);
