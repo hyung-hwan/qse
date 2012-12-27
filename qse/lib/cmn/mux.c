@@ -110,6 +110,7 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 void qse_mux_fini (qse_mux_t* mux);
 
 #if defined(_WIN32)
+/* TODO: change the error code handling. this is wrong... use WSA error codes .... */
 static qse_mux_errnum_t syserr_to_errnum (DWORD e)
 {
 
@@ -135,6 +136,9 @@ static qse_mux_errnum_t syserr_to_errnum (DWORD e)
 		case ERROR_ALREADY_EXISTS:
 		case ERROR_FILE_EXISTS:
 			return QSE_MUX_EEXIST;
+
+		case ERROR_BROKEN_PIPE:
+			return QSE_MUX_EPIPE;
 
 		default:
 			return QSE_MUX_ESYSERR;
@@ -220,6 +224,12 @@ static qse_mux_errnum_t syserr_to_errnum (int e)
 	
 		case EINTR:
 			return QSE_MUX_EINTR;
+
+		case EPIPE:
+			return QSE_MUX_EPIPE;
+
+		case EAGAIN:
+			return QSE_MUX_EAGAIN;
 
 		default:
 			return QSE_MUX_ESYSERR;

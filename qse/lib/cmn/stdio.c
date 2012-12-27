@@ -23,13 +23,30 @@
 #include <qse/cmn/mbwc.h>
 #include "mem.h"
 
+#include <stdio.h>
+
+#if defined(__GLIBC__)
+/* for vswprintf */
+#	define __USE_UNIX98
+#endif
 #include <wchar.h>
+
 #include <stdlib.h>
 #include <limits.h>
 
-#ifndef PATH_MAX
-#	define PATH_MAX 2048
+#if defined(_WIN32) && !defined(__WATCOMC__)
+#	include <tchar.h>
+#	define FGETC(x) _fgettc(x)
+#elif defined(QSE_CHAR_IS_MCHAR)
+#	define FGETC(x) fgetc(x)
+#else
+#	define FGETC(x) fgetwc(x)
 #endif
+
+#define STREAM_TO_FILE(stream) \
+	((stream == QSE_STDOUT)? stdout: \
+	 (stream == QSE_STDERR)? stderr: \
+	 (stream == QSE_STDIN)? stdin: (FILE*)stream)
 
 static qse_char_t* __adjust_format (const qse_char_t* format);
 
@@ -37,15 +54,18 @@ int qse_vfprintf (QSE_FILE *stream, const qse_char_t* fmt, va_list ap)
 {
 	int n;
 	qse_char_t* nf;
+	FILE* fp;
 
 	nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
-	#if defined(QSE_CHAR_IS_MCHAR)
-	n = vfprintf (stream, nf, ap);
-	#else
-	n = vfwprintf (stream, nf, ap);
-	#endif
+	fp = STREAM_TO_FILE (stream);
+
+#if defined(QSE_CHAR_IS_MCHAR)
+	n = vfprintf (fp, nf, ap);
+#else
+	n = vfwprintf (fp, nf, ap);
+#endif
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
@@ -59,29 +79,32 @@ int qse_vprintf (const qse_char_t* fmt, va_list ap)
 	if (nf == NULL) return -1;
 
 #if defined(QSE_CHAR_IS_MCHAR)
-	n = vfprintf (QSE_STDOUT, nf, ap);
+	n = vfprintf (stdout, nf, ap);
 #else
-	n = vfwprintf (QSE_STDOUT, nf, ap);
+	n = vfwprintf (stdout, nf, ap);
 #endif
 
 	QSE_MMGR_FREE (QSE_MMGR_GETDFL(), nf);
 	return n;
 }
 
-int qse_fprintf (QSE_FILE* file, const qse_char_t* fmt, ...)
+int qse_fprintf (QSE_FILE* stream, const qse_char_t* fmt, ...)
 {
 	int n;
 	va_list ap;
 	qse_char_t* nf;
+	FILE* fp;
 
 	nf = __adjust_format (fmt);
 	if (nf == NULL) return -1;
 
+	fp = STREAM_TO_FILE (stream);
+
 	va_start (ap, fmt);
 #if defined(QSE_CHAR_IS_MCHAR)
-	n = vfprintf (file, nf, ap);
+	n = vfprintf (fp, nf, ap);
 #else
-	n = vfwprintf (file, nf, ap);
+	n = vfwprintf (fp, nf, ap);
 #endif
 	va_end (ap);
 
@@ -100,9 +123,9 @@ int qse_printf (const qse_char_t* fmt, ...)
 
 	va_start (ap, fmt);
 #if defined(QSE_CHAR_IS_MCHAR)
-	n = vfprintf (QSE_STDOUT, nf, ap);
+	n = vfprintf (stdout, nf, ap);
 #else
-	n = vfwprintf (QSE_STDOUT, nf, ap);
+	n = vfwprintf (stdout, nf, ap);
 #endif
 	va_end (ap);
 
@@ -121,9 +144,9 @@ int qse_dprintf (const qse_char_t* fmt, ...)
 
 	va_start (ap, fmt);
 #if defined(QSE_CHAR_IS_MCHAR)
-	n = vfprintf (QSE_STDERR, nf, ap);
+	n = vfprintf (stderr, nf, ap);
 #else
-	n = vfwprintf (QSE_STDOUT, nf, ap);
+	n = vfwprintf (stderr, nf, ap);
 #endif
 	va_end (ap);
 
@@ -426,12 +449,12 @@ done:
 QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 {
 #if defined(QSE_CHAR_IS_MCHAR)
-	return fopen (path, mode);
+	return (QSE_FILE*)fopen (path, mode);
 #elif defined(_WIN32) || defined(__OS2__)
-	return _wfopen (path, mode);
+	return (QSE_FILE*)_wfopen (path, mode);
 #else
 
-	QSE_FILE* fp = QSE_NULL;
+	FILE* fp = QSE_NULL;
 	qse_mchar_t* path_mb;
 	qse_mchar_t* mode_mb;
 
@@ -446,33 +469,43 @@ QSE_FILE* qse_fopen (const qse_char_t* path, const qse_char_t* mode)
 	if (mode_mb) QSE_MMGR_FREE (QSE_MMGR_GETDFL(), mode_mb);
 	if (path_mb) QSE_MMGR_FREE (QSE_MMGR_GETDFL(), path_mb);
 
-	return fp;
+	return (QSE_FILE*)fp;
 
 #endif
 }
 
-void qse_fclose (QSE_FILE* fp)
+void qse_fclose (QSE_FILE* stream)
 {
+	FILE* fp;
+	fp = STREAM_TO_FILE (stream);
 	fclose (fp);
 }
 
-int qse_fflush (QSE_FILE* fp)
+int qse_fflush (QSE_FILE* stream)
 {
+	FILE* fp;
+	fp = STREAM_TO_FILE (stream);
 	return fflush (fp);
 }
 
-void qse_clearerr (QSE_FILE* fp)
+void qse_clearerr (QSE_FILE* stream)
 {
+	FILE* fp;
+	fp = STREAM_TO_FILE (stream);
 	clearerr (fp);
 }
 
-int qse_feof (QSE_FILE* fp)
+int qse_feof (QSE_FILE* stream)
 {
+	FILE* fp;
+	fp = STREAM_TO_FILE (stream);
 	return feof (fp);
 }
 
-int qse_ferror (QSE_FILE* fp)
+int qse_ferror (QSE_FILE* stream)
 {
+	FILE* fp;
+	fp = STREAM_TO_FILE (stream);
 	return ferror (fp);
 }
 
@@ -481,23 +514,26 @@ static int isnl (const qse_char_t* ptr, qse_size_t len, void* delim)
 	return (ptr[len-1] == *(qse_char_t*)delim)? 1: 0;
 }
 
-qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp)
+qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *stream)
 {
 	qse_char_t nl = QSE_T('\n');
-	return qse_getdelim (buf, n, isnl, &nl, fp);
+	return qse_getdelim (buf, n, isnl, &nl, stream);
 }
 
 qse_ssize_t qse_getdelim (
 	qse_char_t **buf, qse_size_t *n, 
-	qse_getdelim_t fn, void* fnarg, QSE_FILE *fp)
+	qse_getdelim_t fn, void* fnarg, QSE_FILE *stream)
 {
 	qse_char_t* b;
 	qse_size_t capa;
 	qse_size_t len = 0;
 	int x;
+	FILE* fp;
 
 	QSE_ASSERT (buf != QSE_NULL);
 	QSE_ASSERT (n != QSE_NULL);
+
+	fp = STREAM_TO_FILE (stream);
 
 	b = *buf;
 	capa = *n;
@@ -510,7 +546,7 @@ qse_ssize_t qse_getdelim (
 		if (b == QSE_NULL) return -2;
 	}
 
-	if (qse_feof(fp))
+	if (feof(fp))
 	{
 		len = (qse_size_t)-1;
 		goto exit_task;
@@ -518,10 +554,10 @@ qse_ssize_t qse_getdelim (
 
 	while (1)
 	{
-		qse_cint_t c = qse_fgetc(fp);
+		qse_cint_t c = FGETC (fp);
 		if (c == QSE_CHAR_EOF)
 		{
-			if (qse_ferror(fp)) 
+			if (ferror(fp)) 
 			{
 				len = (qse_size_t)-2;
 				goto exit_task;

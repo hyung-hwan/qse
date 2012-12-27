@@ -46,9 +46,10 @@ enum qse_httpd_errnum_t
 	QSE_HTTPD_ENOENT,
 	QSE_HTTPD_EEXIST,
 	QSE_HTTPD_EINTR,
+	QSE_HTTPD_EPIPE,
 	QSE_HTTPD_EAGAIN,
-	QSE_HTTPD_ENOBUF,
 
+	QSE_HTTPD_ENOBUF,  /* no buffer available */
 	QSE_HTTPD_EDISCON, /* client disconnnected */
 	QSE_HTTPD_EBADREQ, /* bad request */
 	QSE_HTTPD_ETASK

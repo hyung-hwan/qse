@@ -34,19 +34,20 @@ typedef struct qse_dir_ent_t qse_dir_ent_t;
 
 enum qse_dir_errnum_t
 {
-	 QSE_DIR_ENOERR = 0, /**< no error */
-	 QSE_DIR_EOTHER,     /**< other error */
-	 QSE_DIR_ENOIMPL,    /**< not implemented */
-	 QSE_DIR_ESYSERR,    /**< subsystem(system call) error */
-	 QSE_DIR_EINTERN,    /**< internal error */
+	QSE_DIR_ENOERR = 0, /**< no error */
+	QSE_DIR_EOTHER,     /**< other error */
+	QSE_DIR_ENOIMPL,    /**< not implemented */
+	QSE_DIR_ESYSERR,    /**< subsystem(system call) error */
+	QSE_DIR_EINTERN,    /**< internal error */
 
-	 QSE_DIR_ENOMEM,     /**< out of memory */
-	 QSE_DIR_EINVAL,     /**< invalid parameter */
-	 QSE_DIR_EACCES,     /**< access denied */
-	 QSE_DIR_ENOENT,     /**< no such file */
-	 QSE_DIR_EEXIST,     /**< already exist */
-	 QSE_DIR_EINTR,      /**< interrupted */
-	 QSE_DIR_EPIPE       /**< broken pipe */
+	QSE_DIR_ENOMEM,     /**< out of memory */
+	QSE_DIR_EINVAL,     /**< invalid parameter */
+	QSE_DIR_EACCES,     /**< access denied */
+	QSE_DIR_ENOENT,     /**< no such file */
+	QSE_DIR_EEXIST,     /**< already exist */
+	QSE_DIR_EINTR,      /**< interrupted */
+	QSE_DIR_EPIPE,      /**< broken pipe */
+	QSE_DIR_EAGAIN      /**< resource not available temporarily */
 };
 typedef enum qse_dir_errnum_t qse_dir_errnum_t;
 

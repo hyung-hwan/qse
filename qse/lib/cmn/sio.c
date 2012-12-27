@@ -31,7 +31,6 @@
 #	include "syscall.h"
 #endif
 
-
 /* internal status codes */
 enum
 {
@@ -60,6 +59,10 @@ static qse_sio_errnum_t fio_errnum_to_sio_errnum (qse_fio_t* fio)
 			return QSE_SIO_EEXIST;
 		case QSE_FIO_EINTR:
 			return QSE_SIO_EINTR;
+		case QSE_FIO_EPIPE:
+			return QSE_SIO_EPIPE;
+		case QSE_FIO_EAGAIN:
+			return QSE_SIO_EAGAIN;
 		case QSE_FIO_ESYSERR:
 			return QSE_SIO_ESYSERR;
 		case QSE_FIO_ENOIMPL:

@@ -73,6 +73,9 @@ enum qse_sio_errnum_t
 	QSE_SIO_ENOENT,     /**< no such file */
 	QSE_SIO_EEXIST,     /**< already exist */
 	QSE_SIO_EINTR,      /**< interrupted */
+	QSE_SIO_EPIPE,      /**< broken pipe */
+	QSE_SIO_EAGAIN,     /**< resource not available temporarily */
+
 	QSE_SIO_EILSEQ,     /**< illegal sequence */
 	QSE_SIO_EICSEQ,     /**< incomplete sequence */
 	QSE_SIO_EILCHR      /**< illegal character */

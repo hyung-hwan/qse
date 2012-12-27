@@ -108,6 +108,7 @@
 
 #elif defined(vms) || defined(__vms)
 
+	/* TODO: */
 	#define IMPLEMENT_SYSERR_TO_ERRNUM(obj1,obj2) \
 	static __SYSERRTYPE__(obj1) syserr_to_errnum (unsigned long e) \
 	{ \
@@ -128,10 +129,12 @@
 			case ENOMEM: return __SYSERRNUM__ (obj2, ENOMEM); \
 			case EINVAL: return __SYSERRNUM__ (obj2, EINVAL); \
 			case EACCES: return __SYSERRNUM__ (obj2, EACCES); \
+			case ENOTDIR: \
 			case ENOENT: return __SYSERRNUM__ (obj2, ENOENT); \
 			case EEXIST: return __SYSERRNUM__ (obj2, EEXIST); \
 			case EINTR:  return __SYSERRNUM__ (obj2, EINTR); \
 			case EPIPE:  return __SYSERRNUM__ (obj2, EPIPE); \
+			case EAGAIN: return __SYSERRNUM__ (obj2, EAGAIN); \
 			default:     return __SYSERRNUM__ (obj2, ESYSERR); \
 		} \
 	}

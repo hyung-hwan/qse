@@ -124,6 +124,8 @@ enum qse_pio_errnum_t
 	QSE_PIO_EEXIST,     /**< already exist */
 	QSE_PIO_EINTR,      /**< interrupted */
 	QSE_PIO_EPIPE,      /**< broken pipe */
+	QSE_PIO_EAGAIN,     /**< resource not available temporarily */
+
 	QSE_PIO_ENOHND,     /**< no handle available */
 	QSE_PIO_ECHILD,     /**< the child is not valid */
 	QSE_PIO_EILSEQ,     /**< illegal sequence */

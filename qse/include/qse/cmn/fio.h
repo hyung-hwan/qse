@@ -85,6 +85,7 @@ enum qse_fio_errnum_t
 	QSE_FIO_EEXIST,     /**< already exist */
 	QSE_FIO_EINTR,      /**< interrupted */
 	QSE_FIO_EPIPE,      /**< broken pipe */
+	QSE_FIO_EAGAIN      /**< resource not available temporarily */
 };
 typedef enum qse_fio_errnum_t qse_fio_errnum_t;
 
