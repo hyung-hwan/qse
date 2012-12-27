@@ -45,7 +45,9 @@ enum qse_mux_errnum_t
 	 QSE_MUX_EACCES,     /**< access denied */
 	 QSE_MUX_ENOENT,     /**< no such file */
 	 QSE_MUX_EEXIST,     /**< already exist */
-	 QSE_MUX_EINTR       /**< interrupted */
+	 QSE_MUX_EINTR,      /**< interrupted */
+	 QSE_MUX_EPIPE,      /**< broken pipe */
+	 QSE_MUX_EAGAIN,     /**< resource not available temporarily */
 };
 typedef enum qse_mux_errnum_t qse_mux_errnum_t;
 

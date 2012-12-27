@@ -1728,6 +1728,16 @@ static qse_ssize_t awk_rio_console (
 	
 				if (sio) qse_sio_close (sio);
 			}
+		
+		#if defined(_WIN32)
+			/* DIRTY HACK FOR WIN32.
+			 *  ReadFile returns failure with ERROR_BROKEN_PIPE 
+			 *  when an anonymous pipe is closed. it doesn't return EOF.
+			 *  Let me handle that specially here for console only.
+			 */
+			if (nn <= -1 && 
+			    qse_sio_geterrnum ((qse_sio_t*)riod->handle) == QSE_SIO_EPIPE) return 0;
+		#endif
 
 			return nn;
 		}

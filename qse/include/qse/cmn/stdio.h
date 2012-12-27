@@ -28,32 +28,13 @@
 #include <qse/types.h>
 #include <qse/macros.h>
 
-#include <stdio.h>
 #include <stdarg.h>
-#include <wchar.h>
 
-#if defined(_WIN32) && !defined(__WATCOMC__)
-	#include <tchar.h>
-	#define qse_fgets(x,y,s) _fgetts(x,y,s)
-	#define qse_fgetc(x) _fgettc(x)
-	#define qse_fputs(x,s) _fputts(x,s)
-	#define qse_fputc(x,s) _fputtc(x,s)
-#elif defined(QSE_CHAR_IS_MCHAR)
-	#define qse_fgets(x,y,s) fgets(x,y,s)
-	#define qse_fgetc(x) fgetc(x)
-	#define qse_fputs(x,s) fputs(x,s)
-	#define qse_fputc(x,s) fputc(x,s)
-#else
-	#define qse_fgets(x,y,s) fgetws(x,y,s)
-	#define qse_fgetc(x) fgetwc(x)
-	#define qse_fputs(x,s) fputws(x,s)
-	#define qse_fputc(x,s) fputwc(x,s)
-#endif
+typedef struct QSE_FILE QSE_FILE;
 
-#define QSE_FILE        FILE
-#define QSE_STDIN       stdin
-#define QSE_STDOUT      stdout
-#define QSE_STDERR      stderr
+#define QSE_STDIN       ((QSE_FILE*)1)
+#define QSE_STDOUT      ((QSE_FILE*)2)
+#define QSE_STDERR      ((QSE_FILE*)3)
 
 typedef int (*qse_getdelim_t) (const qse_char_t* ptr,qse_size_t len,void* arg);
 
@@ -89,11 +70,11 @@ QSE_EXPORT int qse_dprintf (
 QSE_EXPORT QSE_FILE* qse_fopen (
 	const qse_char_t* path, const qse_char_t* mode);
 
-QSE_EXPORT void qse_fclose (QSE_FILE* fp);
-QSE_EXPORT int qse_fflush (QSE_FILE* fp);
-QSE_EXPORT void qse_clearerr (QSE_FILE* fp);
-QSE_EXPORT int qse_feof (QSE_FILE* fp);
-QSE_EXPORT int qse_ferror (QSE_FILE* fp);
+QSE_EXPORT void qse_fclose (QSE_FILE* stream);
+QSE_EXPORT int qse_fflush (QSE_FILE* stream);
+QSE_EXPORT void qse_clearerr (QSE_FILE* stream);
+QSE_EXPORT int qse_feof (QSE_FILE* stream);
+QSE_EXPORT int qse_ferror (QSE_FILE* stream);
 
 /**
  * The qse_getline() function read a line from a file pointer @a fp
@@ -101,7 +82,8 @@ QSE_EXPORT int qse_ferror (QSE_FILE* fp);
  *
  * @return -2 on error, -1 on eof, length of data read on success 
  */
-QSE_EXPORT qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *fp);
+QSE_EXPORT qse_ssize_t qse_getline (
+	qse_char_t **buf, qse_size_t *n, QSE_FILE *stream);
 
 /**
  * The qse_getdelim() function reads characters from a file pointer @a fp 
@@ -112,7 +94,7 @@ QSE_EXPORT qse_ssize_t qse_getline (qse_char_t **buf, qse_size_t *n, QSE_FILE *f
  */
 QSE_EXPORT qse_ssize_t qse_getdelim (
 	qse_char_t **buf, qse_size_t *n, 
-	qse_getdelim_t fn, void* fnarg, QSE_FILE *fp);
+	qse_getdelim_t fn, void* fnarg, QSE_FILE* stream);
 
 #ifdef __cplusplus
 }

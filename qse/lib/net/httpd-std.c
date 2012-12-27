@@ -123,6 +123,8 @@ struct server_xtn_t
 /* ------------------------------------------------------------------- */
 
 #if defined(_WIN32)
+/* TODO: change the error code handling. this is wrong... use WSA error codes .... */
+/* sockerr_to_errnum??? */
 static qse_httpd_errnum_t syserr_to_errnum (DWORD e)
 {
 
@@ -149,33 +151,41 @@ static qse_httpd_errnum_t syserr_to_errnum (DWORD e)
 		case ERROR_FILE_EXISTS:
 			return QSE_HTTPD_EEXIST;
 
+		case ERROR_BROKEN_PIPE:
+			return QSE_HTTPD_EPIPE;
+
 		default:
 			return QSE_HTTPD_ESYSERR;
 	}
 }
 #elif defined(__OS2__)
-static qse_httpd_errnum_t syserr_to_errnum (APIRET e)
+static qse_httpd_errnum_t syserr_to_errnum (int e)
 {
 	switch (e)
 	{
-		case ERROR_NOT_ENOUGH_MEMORY:
+	#if defined(SOCENOMEM)
+		case SOCENOMEM:
 			return QSE_HTTPD_ENOMEM;
+	#endif
 
-		case ERROR_INVALID_PARAMETER:
-		case ERROR_INVALID_HANDLE:
-		case ERROR_INVALID_NAME:
+		case SOCEINVAL:
 			return QSE_HTTPD_EINVAL;
 
-		case ERROR_ACCESS_DENIED:
-		case ERROR_SHARING_VIOLATION:
+		case SOCEACCES:
 			return QSE_HTTPD_EACCES;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
+	#if defined(SOCENOENT)
+		case SOCENOENT:
 			return QSE_HTTPD_ENOENT;
+	#endif
 
-		case ERROR_ALREADY_EXISTS:
+	#if defined(SOCEEXIST)
+		case SOCEEXIST:
 			return QSE_HTTPD_EEXIST;
+	#endif
+	
+		case SOCEINTR:
+			return QSE_HTTPD_EINTR;
 
 		default:
 			return QSE_HTTPD_ESYSERR;
@@ -270,6 +280,12 @@ static qse_httpd_errnum_t muxerr_to_errnum (qse_mux_errnum_t e)
           case QSE_MUX_EINTR:
                return QSE_HTTPD_EINTR;
 
+          case QSE_MUX_EPIPE:
+               return QSE_HTTPD_EPIPE;
+
+          case QSE_MUX_EAGAIN:
+               return QSE_HTTPD_EAGAIN;
+
           default:
                return QSE_HTTPD_ESYSERR;
      }
@@ -296,6 +312,45 @@ static qse_httpd_errnum_t fioerr_to_errnum (qse_fio_errnum_t e)
 
           case QSE_FIO_EINTR:
                return QSE_HTTPD_EINTR;
+
+          case QSE_FIO_EPIPE:
+               return QSE_HTTPD_EPIPE;
+
+          case QSE_FIO_EAGAIN:
+               return QSE_HTTPD_EAGAIN;
+
+          default:
+               return QSE_HTTPD_ESYSERR;
+     }
+}
+
+static qse_httpd_errnum_t direrr_to_errnum (qse_dir_errnum_t e)
+{
+     switch (e)
+     {
+          case QSE_DIR_ENOMEM:
+               return QSE_HTTPD_ENOMEM;
+
+          case QSE_DIR_EINVAL:
+               return QSE_HTTPD_EINVAL;
+
+          case QSE_DIR_EACCES:
+               return QSE_HTTPD_EACCES;
+
+          case QSE_DIR_ENOENT:
+               return QSE_HTTPD_ENOENT;
+
+          case QSE_DIR_EEXIST:
+               return QSE_HTTPD_EEXIST;
+
+          case QSE_DIR_EINTR:
+               return QSE_HTTPD_EINTR;
+
+          case QSE_DIR_EPIPE:
+               return QSE_HTTPD_EPIPE;
+
+          case QSE_DIR_EAGAIN:
+               return QSE_HTTPD_EAGAIN;
 
           default:
                return QSE_HTTPD_ESYSERR;
@@ -1312,6 +1367,7 @@ struct dir_t
 static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* handle)
 {
 	dir_t* d;
+	qse_dir_errnum_t direrrnum;
 
 	d = QSE_MMGR_ALLOC (httpd->mmgr, QSE_SIZEOF(*d));
 	if (d == QSE_NULL) 
@@ -1328,11 +1384,15 @@ static int dir_open (qse_httpd_t* httpd, const qse_mchar_t* path, qse_ubi_t* han
 		return -1;
 	}
 
-	d->dp = qse_dir_open (httpd->mmgr, 0, 
-		(const qse_char_t*)d->path, QSE_DIR_MBSPATH | QSE_DIR_SORT);
+	d->dp = qse_dir_open (
+		httpd->mmgr, 0, 
+		(const qse_char_t*)d->path, 
+		QSE_DIR_MBSPATH | QSE_DIR_SORT,
+		&direrrnum
+	);
 	if (d->dp == QSE_NULL)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		qse_httpd_seterrnum (httpd, direrr_to_errnum(direrrnum));
 		QSE_MMGR_FREE (httpd->mmgr, d->path);
 		QSE_MMGR_FREE (httpd->mmgr, d);
 		return -1;

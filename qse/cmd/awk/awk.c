@@ -808,43 +808,6 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 
 		isfl++;
 	}
-#if 0
-	else if (isfl >= 2)
-	{
-		/* if more than one -f has been specified, attempt to convert 
-		 * it to a single script containing @include statements. this way
-		 * a parse error in a particular script file can be pin-pointed. 
-		 * qse_awk_parsestd() treats multiple QSE_AWK_PARSED_FILEs as
-		 * a single stream concatenated. so this is a workaround. */
-		qse_str_t script;
-		if (qse_str_init (&script, arg->icf.mmgr, 256) >= 0)
-		{
-			for (i = 0; i < isfl; i++)
-			{
-				/* TOOD: use an absolute path for this conversion
-				 *       to avoid any conflicts with the search path
-				 *       for the included file. you can combine the
-				 *       file name with the current working directory. */
-				if (qse_str_cat (&script, QSE_T("@include \"")) == (qse_size_t)-1 ||
-				    qse_str_cat (&script, isf[i].u.file.path) == (qse_size_t)-1 ||
-				    qse_str_cat (&script, QSE_T("\";")) == (qse_size_t)-1)
-				{
-					goto incl_conv_oops;
-				}
-			}		
-
-			/* after successful conversion, only 1 string stream
-			 * should take place */
-			qse_str_yield (&script, &isf[0].u.str, 0);
-			isf[0].type = QSE_AWK_PARSESTD_STR;
-			isfl = 1;
-			arg->incl_conv = 1;
-
-		incl_conv_oops:
-			qse_str_fini (&script);	
-		}
-	}
-#endif
 
 	for (i = 0; i < isfl ; i++) isf[isfl].cmgr = arg->script_cmgr;
 
@@ -869,7 +832,7 @@ static int comparg (int argc, qse_char_t* argv[], struct arg_t* arg)
 	return 1;
 
 oops:
-	if (gvm != QSE_NULL) qse_htb_close (gvm);
+	if (gvm) qse_htb_close (gvm);
 	purge_xarg (&arg->icf);
 	if (isf) 
 	{
