@@ -60,30 +60,87 @@ found in the *bld* subdirectory.
  - win32-msvc/makefile      (Microsoft Visual C/C++ for Windows)
 
 You can execute your native make utility for building in each subdirectory.
+For example, to build for OS/2 with Watcom C/C++ in the result mode using
+the wide character type, you can execute this:
+
+    cd bld\os2-watcom
+    wmake BUILD=release CHAR=wchar
 
 ## Build Options ## 
 
-### MULTI-BYTE CHARACTER MODE ###
+The configure script and the native makefiles provides some options that you
+can use to change the build environment. The options presented here can be
+specified to the command line of the configure script or the native make 
+utilities. 
 
-By default, the package is compiled for the wide character mode. However, 
-you can compile it for the multi-byte character mode by running @b configure 
-@b --disable-wchar.
+For the configure script, the options should prefixed with double 
+slashes and mutliples options can be specified together. See this example:
 
-@code
-$ ./configure --disable-wchar
-$ make
-$ make install
-@endcode
+    ./configure --enable-debug --disable-wchar
 
-Under the multi-byte character mode:
-- #QSE_CHAR_IS_MCHAR is defined.
-- #qse_char_t maps to #qse_mchar_t.
 
-Under the wide character mode:
-- #QSE_CHAR_IS_WCHAR is defined.
-- #qse_char_t maps to #qse_wchar_t.
+For the native makefiles, the options can be appened to the end of the command 
+line. See this example:
 
-#qse_mchar_t maps to @b char and #qse_wchar_t maps to @b wchar_t or equivalent.
+     make BUILD=debug CHAR=mchar
+
+### Build Mode ###
+
+You can choose to build the project in the **release** mode or in the **debug**
+mode. The resulting libraries and programs in the **debug** mode contain
+extra information useful for debugging. The default mode is **release**.
+
+ value   | configure      | native makefile
+ --------|----------------|-----------------
+ debug   | enable-debug   | BUILD=debug
+ release | disable-debug  | BUILD=release
+
+### Character Type ###
+
+You can choose between the wide charcter type and the multi-byte character
+type as a basic character type represented in the #qse_char_t type. The default
+character type is the wide character type.
+
+ value      | configure      | native makefile
+ -----------|----------------|-----------------
+ wide       | enable-wchar   | CHAR=wchar
+ multi-byte | disable-wchar  | CHAR=mchar
+
+If the wide charater type is chosen: 
+ - #QSE_CHAR_IS_WCHAR is defined.
+ - #qse_char_t maps to #qse_wchar_t.
+
+If the multi-byte charater type is chosen: 
+ - #QSE_CHAR_IS_MCHAR is defined.
+ - #qse_char_t maps to #qse_mchar_t.
+
+### Bundled Unicode Routines ###
+
+You can choose to use the bundled character classification routines 
+based on unicode. It is disabled by default.
+
+ value      | configure                | native makefile
+ -----------|--------------------------|-----------------
+ on         | enable-bundled-unicode   | BUNDLED_UNICODE=on
+ off        | disable-bundled-unicode  | BUNDLED_UNICODE=off
+
+Enabling this option makes the routines defined in <qse/cmn/uni.h> 
+to be included in the resulting library. It also affects somes routines
+defined in <qse/cmn/chr.h> to use these bundled unicode routines.
+
+### Character Encoding Conversion ###
+
+You can include extra routines for character encoding conversion into
+the resulting library. This option is disabled by default.
+
+ value      | configure       | native makefile
+ -----------|-----------------|---------------------
+ on         | enable-xcmgrs   | XCMGRS=on
+ off        | disable-xcmgrs  | XCMGRS=off
+
+More #qse_cmgr_t instances are made available when this option is enabled.
+The UTF-8 conversion and the locale-based conversion are included regardless
+of this option.
 
 ### TCPV40HDRS ###
 
@@ -94,4 +151,10 @@ available for the native makefile for Watcom C/C++ for OS/2 only.
 
     wmake TCPV40HDRS=on
 
+### More options ###
+
+More options are available for the configure script. Execute this for more 
+information:
+
+    ./configure --help
 
