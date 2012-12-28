@@ -24,7 +24,7 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
-#include <qse/cmn/stdio.h> /* TODO: remove this.*/
+#include <stdio.h> /* TODO: remove this.*/
 
 typedef struct task_proxy_arg_t task_proxy_arg_t;
 struct task_proxy_arg_t 
@@ -1317,7 +1317,8 @@ qse_printf (QSE_T("task_main_proxy_1....\n"));
 		{
 			/* improve error conversion */
 			if (httpd->errnum == QSE_HTTPD_ENOENT) http_errnum = 404;
-			else if (httpd->errnum == QSE_HTTPD_EACCES) http_errnum = 403;
+			else if (httpd->errnum == QSE_HTTPD_EACCES || 
+			         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 qse_printf (QSE_T("task_main_proxy_1.... ERROR \n"));
 			goto oops;
 		}
@@ -1388,7 +1389,8 @@ qse_printf (QSE_T("task_main_proxy....\n"));
 	{
 /* TODO: translate error code to http error... */
 		if (httpd->errnum == QSE_HTTPD_ENOENT) http_errnum = 404;
-		else if (httpd->errnum == QSE_HTTPD_EACCES) http_errnum = 403;
+		else if (httpd->errnum == QSE_HTTPD_EACCES ||
+		         httpd->errnum == QSE_HTTPD_ECONN) http_errnum = 403;
 qse_printf (QSE_T("caanot open peer....\n"));
 		goto oops;
 	}

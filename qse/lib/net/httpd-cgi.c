@@ -24,7 +24,7 @@
 #include <qse/cmn/pio.h>
 #include <qse/cmn/fmt.h>
 
-#include <qse/cmn/stdio.h> /* TOOD: remove this */
+#include <stdio.h> /* TODO: remove this */
 
 typedef struct task_cgi_arg_t task_cgi_arg_t;
 struct task_cgi_arg_t 

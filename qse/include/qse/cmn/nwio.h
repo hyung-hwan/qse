@@ -66,6 +66,8 @@ enum qse_nwio_errnum_t
 	QSE_NWIO_EINTR,      /**< interrupted */
 	QSE_NWIO_ETMOUT,     /**< timed out */
 	QSE_NWIO_EPIPE,      /**< broken pipe */
+	QSE_NWIO_EAGAIN,     /**< resource not available temporarily */
+
 	QSE_NWIO_ECONN,      /**< connection refused */
 	QSE_NWIO_EILSEQ,     /**< illegal sequence */
 	QSE_NWIO_EICSEQ,     /**< incomplete sequence */

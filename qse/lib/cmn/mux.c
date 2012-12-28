@@ -109,43 +109,31 @@ struct qse_mux_t
 int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse_size_t capahint);
 void qse_mux_fini (qse_mux_t* mux);
 
-#if defined(_WIN32)
-/* TODO: change the error code handling. this is wrong... use WSA error codes .... */
-static qse_mux_errnum_t syserr_to_errnum (DWORD e)
-{
 
+#if defined(_WIN32)
+static qse_mux_errnum_t skerr_to_errnum (DWORD e)
+{
 	switch (e)
 	{
-		case ERROR_NOT_ENOUGH_MEMORY:
-		case ERROR_OUTOFMEMORY:
+		case WSA_NOT_ENOUGH_MEMORY:
 			return QSE_MUX_ENOMEM;
 
-		case ERROR_INVALID_PARAMETER:
-		case ERROR_INVALID_HANDLE:
-		case ERROR_INVALID_NAME:
+		case WSA_INVALID_PARAMETER:
+		case WSA_INVALID_HANDLE:
 			return QSE_MUX_EINVAL;
 
-		case ERROR_ACCESS_DENIED:
-		case ERROR_SHARING_VIOLATION:
+		case WSAEACCES:
 			return QSE_MUX_EACCES;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_MUX_ENOENT;
-
-		case ERROR_ALREADY_EXISTS:
-		case ERROR_FILE_EXISTS:
-			return QSE_MUX_EEXIST;
-
-		case ERROR_BROKEN_PIPE:
-			return QSE_MUX_EPIPE;
+		case WSAEINTR:
+			return QSE_MUX_EINTR;
 
 		default:
 			return QSE_MUX_ESYSERR;
 	}
 }
 #elif defined(__OS2__)
-static qse_mux_errnum_t syserr_to_errnum (int e)
+static qse_mux_errnum_t skerr_to_errnum (int e)
 {
 	switch (e)
 	{
@@ -165,7 +153,7 @@ static qse_mux_errnum_t syserr_to_errnum (int e)
 			return QSE_MUX_ENOENT;
 	#endif
 
-	#if defined(SOCEEXIST)
+	#if defined(SOCEXIST)
 		case SOCEEXIST:
 			return QSE_MUX_EEXIST;
 	#endif
@@ -173,37 +161,22 @@ static qse_mux_errnum_t syserr_to_errnum (int e)
 		case SOCEINTR:
 			return QSE_MUX_EINTR;
 
+		case SOCEPIPE:
+			return QSE_MUX_EPIPE;
+
 		default:
 			return QSE_MUX_ESYSERR;
 	}
 }
+
 #elif defined(__DOS__)
-static qse_mux_errnum_t syserr_to_errnum (int e)
+static qse_mux_errnum_t skerr_to_errnum (int e)
 {
-	switch (e)
-	{
-		case ENOMEM:
-			return QSE_MUX_ENOMEM;
-
-		case EINVAL:
-			return QSE_MUX_EINVAL;
-
-		case EACCES:
-			return QSE_MUX_EACCES;
-
-		case ENOENT:
-			return QSE_MUX_ENOENT;
-
-		case EEXIST:
-			return QSE_MUX_EEXIST;
-	
-		default:
-			return QSE_MUX_ESYSERR;
-	}
+	/* TODO: */
+	return QSE_MUX_ESYSERR;
 }
-
 #else
-static qse_mux_errnum_t syserr_to_errnum (int e)
+static qse_mux_errnum_t skerr_to_errnum (int e)
 {
 	switch (e)
 	{
@@ -213,11 +186,11 @@ static qse_mux_errnum_t syserr_to_errnum (int e)
 		case EINVAL:
 			return QSE_MUX_EINVAL;
 
-		case ENOENT:
-			return QSE_MUX_ENOENT;
-
 		case EACCES:
 			return QSE_MUX_EACCES;
+
+		case ENOENT:
+			return QSE_MUX_ENOENT;
 
 		case EEXIST:
 			return QSE_MUX_EEXIST;
@@ -286,7 +259,7 @@ int qse_mux_init (qse_mux_t* mux, qse_mmgr_t* mmgr, qse_mux_evtfun_t evtfun, qse
 	#endif
 	if (mux->fd <= -1) 
 	{
-		mux->errnum = syserr_to_errnum (errno);
+		mux->errnum = skerr_to_errnum (errno);
 		return -1;
 	}
 
@@ -507,7 +480,7 @@ int qse_mux_insert (qse_mux_t* mux, const qse_mux_evt_t* evt)
 
 	if (epoll_ctl (mux->fd, EPOLL_CTL_ADD, evt->hnd, &ev) == -1) 
 	{
-		mux->errnum = syserr_to_errnum (errno);
+		mux->errnum = skerr_to_errnum (errno);
 		return -1;
 	}
 
@@ -626,7 +599,7 @@ done:
 
 	if (epoll_ctl (mux->fd, EPOLL_CTL_DEL, evt->hnd, QSE_NULL) <= -1)
 	{
-		mux->errnum = syserr_to_errnum(errno);
+		mux->errnum = skerr_to_errnum(errno);
 		return -1;
 	}
 
@@ -680,11 +653,11 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	if (n <= -1)
 	{
 	#if defined(_WIN32)
-		mux->errnum = syserr_to_errnum(WSAGetLastError());
+		mux->errnum = skerr_to_errnum(WSAGetLastError());
 	#elif defined(__OS2__)
-		mux->errnum = syserr_to_errnum(sock_errno());
+		mux->errnum = skerr_to_errnum(sock_errno());
 	#else
-		mux->errnum = syserr_to_errnum(errno);
+		mux->errnum = skerr_to_errnum(errno);
 	#endif
 		return -1;
 	}
@@ -722,7 +695,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	);
 	if (nfds <= -1)
 	{
-		mux->errnum = syserr_to_errnum(errno);
+		mux->errnum = skerr_to_errnum(errno);
 		return -1;
 	}
 
@@ -779,7 +752,7 @@ int qse_mux_poll (qse_mux_t* mux, const qse_ntime_t* tmout)
 	n = os2_select (mux->fdarr, rcount, wcount, 0, tv);
 	if (n <= -1)
 	{
-		mux->errnum = syserr_to_errnum(sock_errno());
+		mux->errnum = skerr_to_errnum(sock_errno());
 		return -1;
 	}
 

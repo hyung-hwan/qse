@@ -23,18 +23,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
-#if defined(_WIN32)
-	/* TODO: */
-#elif defined(__OS2__)
-	/* TODO: */
-#elif defined(__DOS__)
-	/* TODO: */
-#else
-#	include "../cmn/syscall.h"
-#endif
-
-#include <qse/cmn/stdio.h> /* TODO: remove this */
-
 #define ETAG_LEN_MAX 127
 
 typedef struct task_file_t task_file_t;
