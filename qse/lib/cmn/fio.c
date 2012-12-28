@@ -51,8 +51,9 @@
 /* internal status codes */
 enum
 {
-	STATUS_APPEND  = (1 << 0),
-	STATUS_NOCLOSE = (1 << 1)	
+	STATUS_APPEND      = (1 << 0),
+	STATUS_NOCLOSE     = (1 << 1),
+	STATUS_WIN32_STDIN = (1 << 2)
 };
 
 #include "syserr.h"
@@ -230,6 +231,9 @@ int qse_fio_init (
 			handle != INVALID_HANDLE_VALUE,
 			"Do not specify an invalid handle value"
 		);
+
+		if (handle == GetStdHandle (STD_INPUT_HANDLE))
+			fio->status |= STATUS_WIN32_STDIN;
 	}
 	else
 	{
@@ -1073,7 +1077,7 @@ int qse_fio_truncate (qse_fio_t* fio, qse_fio_off_t size)
 		sz.ulLo = (ULONG)(size&0xFFFFFFFFlu);
 		sz.ulHi = (ULONG)(size>>32);
 
-		ret = DosSetFileSizeL (fio->handle, sz);
+		ret = dos_set_file_size_l (fio->handle, sz);
 	}
 	else
 	{
@@ -1128,7 +1132,13 @@ qse_ssize_t qse_fio_read (qse_fio_t* fio, void* buf, qse_size_t size)
 		size = QSE_TYPE_MAX(qse_ssize_t) & QSE_TYPE_MAX(DWORD);
 	if (ReadFile (fio->handle, buf, (DWORD)size, &count, QSE_NULL) == FALSE)
 	{
-		fio->errnum = syserr_to_errnum (GetLastError());
+		DWORD e = GetLastError();
+		/* special case when ReadFile returns failure with ERROR_BROKEN_PIPE.
+		 * this happens when an anonymous pipe is a standard input for redirection.
+		 * assuming that ERROR_BROKEN_PIPE doesn't occur with normal 
+		 * input streams, i treat the condition as a normal EOF indicator. */
+		if ((fio->status & STATUS_WIN32_STDIN) && e == ERROR_BROKEN_PIPE) return 0;
+		fio->errnum = syserr_to_errnum (e);
 		return -1;
 	}
 	return (qse_ssize_t)count;

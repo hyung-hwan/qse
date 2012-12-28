@@ -23,9 +23,8 @@
 #include <qse/cmn/fmt.h>
 #include "../cmn/mem.h"
 
-
 #include <stdarg.h>
-#include <qse/cmn/stdio.h> /* TODO: remove this */
+#include <stdio.h> /* TODO: remove this */
 
 
 /* TODO:

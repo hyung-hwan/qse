@@ -4,9 +4,9 @@
 /* change this information whenever you update
  * package version in configure.ac */
 
-#define QSE_PACKAGE_VERSION "0.5.7"
+#define QSE_PACKAGE_VERSION "0.6.0"
 #define QSE_PACKAGE_VERSION_MAJOR 0
-#define QSE_PACKAGE_VERSION_MINOR 5
-#define QSE_PACKAGE_VERSION_PATCH 7
+#define QSE_PACKAGE_VERSION_MINOR 6
+#define QSE_PACKAGE_VERSION_PATCH 0
 
 #endif

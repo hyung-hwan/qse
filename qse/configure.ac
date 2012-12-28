@@ -4,7 +4,7 @@ dnl Make sure you change the version information
 dnl in include/qse/conf_*.h whenever you change the version 
 dnl here. Those files don't depend on autoconf, thus requiring
 dnl manual change.
-AC_INIT([qse],[0.5.7],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
+AC_INIT([qse],[0.6.0],[Chung, Hyung-Hwan (hyunghwan.chung@gmail.com)],[],[http://code.abiyo.net/@qse])
 
 AC_CONFIG_HEADER([include/qse/config.h])
 AC_CONFIG_AUX_DIR([ac])
@@ -512,8 +512,6 @@ AC_CONFIG_FILES([
 	regress/sed/Makefile
 	regress/sed/regress.sh
 	doc/Makefile
-	doc/page/Makefile
-	doc/image/Makefile
 	doc/Doxyfile
 	tools/Makefile
 ])

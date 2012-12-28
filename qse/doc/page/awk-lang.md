@@ -1,4 +1,4 @@
-QSEAWK LANGUAGE {#awk-lang}
+QSEAWK Language {#awk-lang}
 ===============
 
 QSEAWK implements the language described in the 

@@ -84,7 +84,7 @@
 #	include <openssl/engine.h>
 #endif
 
-#include <qse/cmn/stdio.h> /* TODO: remove this */
+#include <stdio.h> /* TODO: remove this */
 
 #define DEFAULT_PORT        80
 #define DEFAULT_SECURE_PORT 443
@@ -122,44 +122,42 @@ struct server_xtn_t
 
 /* ------------------------------------------------------------------- */
 
-#if defined(_WIN32)
-/* TODO: change the error code handling. this is wrong... use WSA error codes .... */
-/* sockerr_to_errnum??? */
-static qse_httpd_errnum_t syserr_to_errnum (DWORD e)
-{
+#include "../cmn/syserr.h"
+IMPLEMENT_SYSERR_TO_ERRNUM (httpd, HTTPD)
 
+#if defined(_WIN32)
+static qse_httpd_errnum_t skerr_to_errnum (DWORD e)
+{
 	switch (e)
 	{
-		case ERROR_NOT_ENOUGH_MEMORY:
-		case ERROR_OUTOFMEMORY:
+		case WSA_NOT_ENOUGH_MEMORY:
 			return QSE_HTTPD_ENOMEM;
 
-		case ERROR_INVALID_PARAMETER:
-		case ERROR_INVALID_HANDLE:
-		case ERROR_INVALID_NAME:
+		case WSA_INVALID_PARAMETER:
+		case WSA_INVALID_HANDLE:
 			return QSE_HTTPD_EINVAL;
 
-		case ERROR_ACCESS_DENIED:
-		case ERROR_SHARING_VIOLATION:
+		case WSAEACCES:
 			return QSE_HTTPD_EACCES;
 
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			return QSE_HTTPD_ENOENT;
+		case WSAEINTR:
+			return QSE_HTTPD_EINTR;
 
-		case ERROR_ALREADY_EXISTS:
-		case ERROR_FILE_EXISTS:
-			return QSE_HTTPD_EEXIST;
-
-		case ERROR_BROKEN_PIPE:
-			return QSE_HTTPD_EPIPE;
+		case WSAECONNREFUSED:
+		case WSAENETUNREACH:
+		case WSAEHOSTUNREACH:
+		case WSAEHOSTDOWN:
+			return QSE_HTTPD_ECONN;
 
 		default:
 			return QSE_HTTPD_ESYSERR;
 	}
 }
+
+#define SKERR_TO_ERRNUM() skerr_to_errnum(WSAGetLastError())
+
 #elif defined(__OS2__)
-static qse_httpd_errnum_t syserr_to_errnum (int e)
+static qse_httpd_errnum_t skerr_to_errnum (int e)
 {
 	switch (e)
 	{
@@ -179,7 +177,7 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 			return QSE_HTTPD_ENOENT;
 	#endif
 
-	#if defined(SOCEEXIST)
+	#if defined(SOCEXIST)
 		case SOCEEXIST:
 			return QSE_HTTPD_EEXIST;
 	#endif
@@ -187,12 +185,33 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 		case SOCEINTR:
 			return QSE_HTTPD_EINTR;
 
+		case SOCEPIPE:
+			return QSE_HTTPD_EPIPE;
+
+		case SOCECONNREFUSED:
+		case SOCENETUNREACH:
+		case SOCEHOSTUNREACH:
+		case SOCEHOSTDOWN:
+			return QSE_HTTPD_ECONN;
+
 		default:
 			return QSE_HTTPD_ESYSERR;
 	}
 }
+
+#define SKERR_TO_ERRNUM() skerr_to_errnum(sock_errno())
+
 #elif defined(__DOS__)
-static qse_httpd_errnum_t syserr_to_errnum (int e)
+static qse_httpd_errnum_t skerr_to_errnum (int e)
+{
+	/* TODO: */
+	return QSE_HTTPD_ESYSERR;
+}
+
+#define SKERR_TO_ERRNUM() skerr_to_errnum(errno)
+
+#else
+static qse_httpd_errnum_t skerr_to_errnum (int e)
 {
 	switch (e)
 	{
@@ -211,50 +230,37 @@ static qse_httpd_errnum_t syserr_to_errnum (int e)
 		case EEXIST:
 			return QSE_HTTPD_EEXIST;
 	
-		default:
-			return QSE_HTTPD_ESYSERR;
-	}
-}
-
-#else
-static qse_httpd_errnum_t syserr_to_errnum (int e)
-{
-	switch (e)
-	{
-		case ENOMEM:
-			return QSE_HTTPD_ENOMEM;
-
-		case EINVAL:
-			return QSE_HTTPD_EINVAL;
-
-		case EACCES:
-		case ECONNREFUSED:
-			return QSE_HTTPD_EACCES;
-
-		case ENOENT:
-		case ENOTDIR:
-			/* ENOTDIR can be returned in this situation.
-			 *   i want to access /tmp/t1.cgi/abc/def
-			 *   while /tmp/t1.cgi is an existing file.
-			 * I'm not sure if it is really good to translate
-			 * ENOTDIR to QSE_HTTPD_ENOENT.	
-			 */
-			return QSE_HTTPD_ENOENT;
-
-		case EEXIST:
-			return QSE_HTTPD_EEXIST;
-
 		case EINTR:
 			return QSE_HTTPD_EINTR;
 
+		case EPIPE:
+			return QSE_HTTPD_EPIPE;
+
 		case EAGAIN:
-		/*case EWOULDBLOCK:*/
 			return QSE_HTTPD_EAGAIN;
+
+#if defined(ECONNREFUSED) || defined(ENETUNREACH) || defined(EHOSTUNREACH) || defined(EHOSTDOWN)
+	#if defined(ECONNREFUSED) 
+		case ECONNREFUSED:
+	#endif
+	#if defined(ENETUNREACH) 
+		case ENETUNREACH:
+	#endif
+	#if defined(EHOSTUNREACH) 
+		case EHOSTUNREACH:
+	#endif
+	#if defined(EHOSTDOWN) 
+		case EHOSTDOWN:
+	#endif
+			return QSE_HTTPD_ECONN;
+#endif
 
 		default:
 			return QSE_HTTPD_ESYSERR;
 	}
 }
+
+#define SKERR_TO_ERRNUM() skerr_to_errnum(errno)
 #endif
 
 
@@ -683,16 +689,14 @@ IP_TRANSPRENT is needed for:
 	return 0;
 
 oops:
+	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 #if defined(_WIN32)
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(WSAGetLastError()));
 	if (fd != INVALID_SOCKET) closesocket (fd);
 #elif defined(__OS2__)
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(sock_errno()));
 	if (fd >= 0) soclose (fd);
 #elif defined(__DOS__)
 	/* TODO: */
 #else
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	if (fd >= 0) QSE_CLOSE (fd);
 #endif
 	return -1;
@@ -727,7 +731,7 @@ static int server_accept (
 	fd = accept (server->handle.i, (struct sockaddr*)&addr, &addrlen);
 	if (fd <= -1)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum (errno));
+		qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return -1;
 	}
 
@@ -879,16 +883,14 @@ static int peer_open (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	return connected;
 
 oops:
+	qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 #if defined(_WIN32)
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(WSAGetLastError()));
 	if (fd != INVALID_SOCKET) closesocket (fd);
 #elif defined(__OS2__)
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(sock_errno()));
 	if (fd >= 0) soclose (fd);
 #elif defined(__DOS__)
 	/* TODO: */
 #else
-	qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
 	if (fd >= 0) QSE_CLOSE (fd);
 #endif
 	return -1;
@@ -916,14 +918,14 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	len = QSE_SIZEOF(ret);
 	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, (char*)&ret, &len) == SOCKET_ERROR) 
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
 	}
 
 	if (ret == WSAEWOULDBLOCK) return 0;
 	if (ret != 0)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
 	}
 
@@ -949,14 +951,14 @@ static int peer_connected (qse_httpd_t* httpd, qse_httpd_peer_t* peer)
 	len = QSE_SIZEOF(ret);
 	if (getsockopt (peer->handle.i, SOL_SOCKET, SO_ERROR, &ret, &len) <= -1) 
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
 	}
 
 	if (ret == EINPROGRESS) return 0;
 	if (ret != 0)
 	{
-		qse_httpd_seterrnum (httpd, syserr_to_errnum (ret));
+		qse_httpd_seterrnum (httpd, skerr_to_errnum (ret));
 		return -1;
 	}
 
@@ -969,7 +971,7 @@ static qse_ssize_t peer_recv (
 	qse_mchar_t* buf, qse_size_t bufsize)
 {
 	qse_ssize_t ret = recv (peer->handle.i, buf, bufsize, 0);
-	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 }
 
@@ -978,7 +980,7 @@ static qse_ssize_t peer_send (
 	const qse_mchar_t* buf, qse_size_t bufsize)
 {
 	qse_ssize_t ret = send (peer->handle.i, buf, bufsize, 0);
-	if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+	if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 	return ret;
 }
 
@@ -1503,7 +1505,7 @@ static qse_ssize_t client_recv (
 	{
 		qse_ssize_t ret;
 		ret = recv (client->handle.i, buf, bufsize, 0);
-		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
 	}
 }
@@ -1531,7 +1533,7 @@ static qse_ssize_t client_send (
 	else
 	{
 		qse_ssize_t ret = send (client->handle.i, buf, bufsize, 0);
-		if (ret <= -1) qse_httpd_seterrnum (httpd, syserr_to_errnum(errno));
+		if (ret <= -1) qse_httpd_seterrnum (httpd, SKERR_TO_ERRNUM());
 		return ret;
 	}
 }

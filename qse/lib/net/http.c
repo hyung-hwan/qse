@@ -24,7 +24,7 @@
 #include <qse/cmn/htb.h>
 #include "../cmn/mem.h"
 
-#include <qse/cmn/stdio.h> /* for snprintf. TODO: remove this. */
+#include <stdio.h> /* for snprintf. TODO: remove this. */
 
 int qse_comparehttpversions (
 	const qse_http_version_t* v1,

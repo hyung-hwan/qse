@@ -23,8 +23,6 @@
 #include <qse/cmn/str.h>
 #include <qse/cmn/fmt.h>
 
-#include <qse/cmn/stdio.h> /* TODO: remove this */
-
 typedef struct task_dir_t task_dir_t;
 struct task_dir_t
 {
