@@ -14,6 +14,7 @@ noinst_HEADERS = \
 	fs.h \
 	mem.h \
 	syscall.h \
+	syserr.h \
 	tre.h \
 	tre-ast.h \
 	tre-compile.h \
