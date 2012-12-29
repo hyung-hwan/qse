@@ -59,31 +59,44 @@ enum
 #include "syserr.h"
 IMPLEMENT_SYSERR_TO_ERRNUM (fio, FIO)
 
-#if defined(__OS2__)
+#if defined(_WIN32)
 
-typedef APIRET (*DosOpenLType) (
-	PSZ pszFileName, PHFILE pHf, PULONG pulAction,
-	LONGLONG cbFile, ULONG ulAttribute,
-	ULONG fsOpenFlags, ULONG fsOpenMode,
+typedef DWORD WINAPI (*getmappedfilename_t) (
+	HANDLE hProcess,
+	LPVOID lpv,
+	LPTSTR lpFilename,
+	DWORD nSize
+);
+
+#elif defined(__OS2__)
+
+typedef APIRET APIENTRY (*dosopenl_t) (
+	PSZ pszFileName,
+	PHFILE pHf,
+	PULONG pulAction,
+	LONGLONG cbFile,
+	ULONG ulAttribute,
+	ULONG fsOpenFlags,
+	ULONG fsOpenMode,
 	PEAOP2 peaop2
 );
 
-typedef APIRET (*DosSetFilePtrLType) (
+typedef APIRET APIENTRY (*dossetfileptrl_t) (
 	HFILE hFile,
 	LONGLONG ib,
 	ULONG method,
 	PLONGLONG ibActual
 );
 
-typedef APIRET (*DosSetFileSizeLType) (
+typedef APIRET APIENTRY (*dossetfilesizel_t) (
 	HFILE hFile,
 	LONGLONG cbSize
 );
 
 static int dos_set = 0;
-static DosOpenLType dos_open_l = QSE_NULL;
-static DosSetFilePtrLType dos_set_file_ptr_l = QSE_NULL;
-static DosSetFileSizeLType dos_set_file_size_l = QSE_NULL;
+static dosopenl_t dos_open_l = QSE_NULL;
+static dossetfileptrl_t dos_set_file_ptr_l = QSE_NULL;
+static dossetfilesizel_t dos_set_file_size_l = QSE_NULL;
 
 #endif
 
@@ -1309,13 +1322,6 @@ static int get_devname_from_handle (
 	void* mem = NULL;
 	DWORD olen;
 	HINSTANCE psapi;
-
-	typedef DWORD (WINAPI*getmappedfilename_t) (
-		HANDLE hProcess,
-		LPVOID lpv,
-		LPTSTR lpFilename,
-		DWORD nSize
-	);
 	getmappedfilename_t getmappedfilename;
 
 	/* try to load psapi.dll dynamially for 
