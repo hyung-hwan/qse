@@ -677,37 +677,89 @@ PEER: ?好!
 Note that 你 has been converted to a question mark since the letter is
 not supported by cp949.
 
+## Built-in I/O ##
 
-## Built-in Functions ##
+QSEAWK comes with built-in I/O commands and functions in addition to the 
+implicit input streams for pattern-action blocks. The built-in I/O facility 
+is available only if QSEAWK is set with #QSE_AWK_RIO.
 
-QSEAWK provides the following built-in functions.
+### getline ###
+	
+The *getline* command has multiple forms of usage. It can be used with or 
+without a variable name and can also be associated with a pipe or a file 
+redirection. Basically, it reads a record from an input stream associated 
+and stores it.
+
+*getline* without a following variable reads a record from an associated
+input stream and updates $0 with the value. It also updates *NF*, *FNR*, *NR*.
+The sample below reads records from the console and prints them. 
+
+    BEGIN {
+        while (getline > 0) print $0;
+    }
+
+It is equivalent to 
+
+    { print $0 } 
+
+but performs the task in the *BEGIN* block.
+
+*getline* with a variable reads a record from an associated input stream
+and updates the variable with the value. It updates *FNR* and *NR*, too.
+
+    BEGIN {
+        while (getline line > 0) print line;
+    }
+
+*getline* is associated with the console by default. you can change it
+to a file or a pipe by using |, ||, <.
+
+The *getline* command acts like a function in that it returns a value: 1 on 
+success, 0 on EOF, -1 on error. But you can't place an empty parentheses
+when no variable name is specified nor can you parenthesize the optional 
+variable name. For example, *getline(a)* is different from *getline a* and 
+means the concatenation of the return value of *getline* and the variable *a*.
+
+### print ###
+
+### printf ###
 
 ### setioattr (io-name, attr-name, attr-value) ###
 
-It changes the I/O attribute of the name attr-name to the value attr-value 
-for an I/O stream identified by io-name. It returns 0 on success and -1 on 
+The *setioattr* function changes the I/O attribute of the name *attr-name* to 
+the value *attr-value* for a stream identified by *io-name*. It returns 0 on 
+success and -1 on failure.
+
+ - *io-name* is a source or target name used in *getline*, *print*, *printf* 
+   combined with |, ||, >, <, >>.
+ - *attr-name* is one of *codepage*, *ctimeout*, *atimeout*, *rtimeout*, 
+   *wtimeout*.
+ - *attr-value* varies depending on *attr-name*.
+   + codepage: *cp949*, *cp950*, *utf8*
+   + ctimeout, atimeout, rtimeout, wtimeout: the number of seconds. effective 
+    on socket based streams only. you may use a floating-point number for 
+    lower resoluation than a second. a negative value turns off timeout. 
+
+See this sample that prints the contents of a document encoded in cp949.
+
+    BEGIN { 
+        setioattr ("README.TXT", "codepage", "cp949"); 
+        while ((getline x < "README.TXT") > 0) print x; 
+    }
+
+### getioattr (io-name, attr-name, attr-value) ###
+
+The getioattr() function retrieves the current attribute value of the attribute
+named *attr-name* for the stream identified by *io-name*. The value retrieved 
+is set to the variable referenced by *attr-value*. See *setioattr* for 
+description on *io-name* and *attr-name*. It returns 0 on success and -1 on 
 failure.
 
-- io-name is a source or target name used in getline, print, printf combined
-  with |, ||, >, <, >>.
-- attr-name is one of codepage, ctimeout, atimeout, rtimeout, wtimeout.
-- attr-value varies depending on attr-name.
--- codepage: cp949, cp950, utf8
--- ctimeout, atimeout, rtimeout, wtimeout: the number of seconds. applies to socket based stream only. you may use a floating-point number for lower resoluation than a second. a negative value turns off timeout. 
-
-#
-# Convert a document encoded in cp949 to a current codepage
-#
-BEGIN 
-{ 
-	setioattr ("README.INS", "codepage", "cp949"); 
-	while ((getline x < "README.INS") > 0) print x; 
-}
-
-### getioattr (io-name, attr-name) ###
-
-It returns the current attribute value of the attribute named attr-name for
-the stream identified by io-name. See setioattr for description on io-name and
-attr-name. It returns the attribute value on success and -1 on failure.
+    BEGIN { 
+        setioattr ("README.TXT", "codepage", "cp949"); 
+        if (getioattr ("README.TXT", "codepage", codepage) <= -1)
+            print "codepage unknown";
+        else print "codepage: " codepage;
+    }
 
 [awkbook]: http://cm.bell-labs.com/cm/cs/awkbook/ 
