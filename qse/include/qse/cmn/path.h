@@ -130,7 +130,7 @@ QSE_EXPORT int qse_ismbsdrivecurpath (
  * @endcode
  *
  * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
- * is produced if the input @path resolves to the current directory logically.
+ * is produced if the input @a path resolves to the current directory logically.
  * For example, dir/.. is canonicalized to a single period; If it is set, 
  * an empty string is produced. Even a single period as an input produces
  * an empty string if it is set.
@@ -204,7 +204,7 @@ QSE_EXPORT int qse_iswcsdrivecurpath (
  * @endcode
  *
  * If #QSE_CANONPATH_EMPTYSINGLEDOT is clear in the @a flags, a single dot 
- * is produced if the input @path resolves to the current directory logically.
+ * is produced if the input @a path resolves to the current directory logically.
  * For example, dir/.. is canonicalized to a single period; If it is set, 
  * an empty string is produced. Even a single period as an input produces
  * an empty string if it is set.

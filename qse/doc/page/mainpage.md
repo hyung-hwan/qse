@@ -1,5 +1,6 @@
-QSE                                       {#mainpage}
-===================
+QSE                                                                  {#mainpage}
+================================================================================
+
 @image html qse-logo.png 
 
 The QSE library implements AWK, SED, and Unix commands in an embeddable form 
@@ -19,7 +20,7 @@ Chung, Hyung-Hwan <hyunghwan.chung@gmail.com>
 
 See the subpages for more information.
 
-- @subpage installation
+- @ref installation
 - @subpage mem "Memory Management"
 - @subpage cenc "Character Encoding"
 - @subpage io  "I/O Handling"

@@ -1132,7 +1132,7 @@ int qse_awk_rtx_closeio (
 			qse_awk_rio_impl_t handler;
 			qse_awk_rio_rwcmode_t rwcmode = QSE_AWK_RIO_CLOSE_FULL;
 
-			if (opt != QSE_NULL)
+			if (opt)
 			{
 				if (opt[0] == QSE_T('r'))
 				{
